@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 73;
+export const VERSION = 74;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -441,6 +441,20 @@ function wild(g, objs, exits, edges, keep = [], seed = 1) {
 
 export const REAL_TABLES = { cointable: { name: "Coin Flip" }, wheel: { name: "Wheel" }, hilo: { name: "Higher or Lower" }, mines: { name: "Mines" }, plinko: { name: "Plinko" }, scratch: { name: "Scratch-Off" },
   slots: { name: "Slots" }, dicetable: { name: "Dice" } };   /* slots and dice (v58) are EastScape-only games on the site's casino backend: functions/api/casino/{slots,dice} */
+/* THE RUSSIAN ROULETTE TABLE'S SEATS (v74), clockwise from the top left, round the 2x2 table at 21,11. The site seats at
+   most six; the n-th player at the site's table takes the n-th stool here. */
+export const RR_SEATS = [[21, 10], [22, 10], [23, 11], [23, 12], [22, 13], [21, 13]];
+/* How the window plays a settled table back (eastscape-casino.js rrPlay), as times: the room's slumps and the floor's "who
+   won" line follow the same clock. RR_LEAD is how long the room waits first, because a window only learns of the result on
+   its next poll (up to 2 s): the room must never be ahead of the window somebody is watching. */
+export const RR_T = { lead: 2200, reload: 700, spin: 1000, pull: 700, click: 340, bang: 1150 };
+export function rrTimeline(stages) {   // -> [{ at, seat }] for every shot, then { at, end: true }
+  const out = []; let t = RR_T.lead;
+  stages.forEach((g, k) => { if (k > 0) t += RR_T.reload; t += RR_T.spin; for (let c = 0; c <= g.live; c++) { t += RR_T.pull; if (c === g.live) { out.push({ at: t, seat: g.shot }); t += RR_T.bang; } else t += RR_T.click; } });
+  out.push({ at: t, end: true }); return out;
+}
+export const rrShowMs = (stages) => (rrTimeline(stages).pop()?.at || 0) + 600;
+export const RR_SHOT = { price: 1, everyMs: 5000 };   // Bino's bar cart: a shot of whiskey. It does nothing. That is the point.
 export const SCENES = {
   farm: {
     name: "Ludus Farm", exits: { e: "river", n: "forum" },
@@ -1047,6 +1061,11 @@ Object.assign(SCENES, {
          takes every buy-in, the house takes nothing. The window (eastscape-casino.js russian()) talks to /api/casino/pvp/*
          itself and the site's code is untouched; the game server only walks you to the table. */
       objs.push({ t: "rrtable", art: "o_rrtable", x: 21, y: 11, w: 2, h: 2, name: "Russian Roulette: real ZCoins, winner takes all" }); block(g, 21, 11, 2, 2);
+      /* v74: SIX SEATS round the table (RR_SEATS, in the site's seat order), a wall of fame, and Bino's bar cart. A seat is
+         soft (you stand where you'd sit) and clicking one is clicking the table. */
+      RR_SEATS.forEach(([x, y], i) => objs.push({ t: "rrseat", art: "o_stool", x, y, name: "A seat at the table", soft: true, seat: i }));
+      objs.push({ t: "rrboard", art: "o_notice", x: 26, y: 8, name: "The table's wall of fame" }); g[8][26] = "#";
+      objs.push({ t: "barcart", art: "o_barcart", x: 19, y: 11, name: "Bino's bar cart: a shot, 1 ticket" }); g[11][19] = "#";
       for (const [x, y] of [[15, 16], [27, 16]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
       for (const [x, y] of [[14, 9], [29, 9], [14, 13], [29, 13]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
       return { g, objs, blobs: [] };
@@ -1993,7 +2012,7 @@ export const EXAMINE = {
   lighthouse: ["A lighthouse. The light points inward, at the island. Nobody knows who it's warning.", "The door's painted on. The light is on anyway."],
   mule: ["A mule. It refuses to move. It has refused for eleven years.", "The mule looks at you. You feel judged by a professional."]
 };
-export const VERB = { rrtable: "Sit at", prizewheel: "Spin", fameboard: "Read", cart: "Ride", fight: "Bet on", coinstatue: "tickets in at", cooler: "Drink at", buffet: "Eat at", cashier: "tickets in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { rrtable: "Sit at", rrseat: "Sit at", rrboard: "Read", barcart: "Drink at", prizewheel: "Spin", fameboard: "Read", cart: "Ride", fight: "Bet on", coinstatue: "tickets in at", cooler: "Drink at", buffet: "Eat at", cashier: "tickets in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)

@@ -778,6 +778,7 @@ export function createCasino(env) {
     if (!rrOpen()) { clearInterval(rr.timer); rr.timer = null; return; } if (document.hidden && !first) return;
     const st = await ask("/api/casino/pvp/state?game=roulette"); if (!rrOpen()) return; if (!st.ok) { if (first) phase(st.message || "Couldn't reach the table", "bad"); return; }
     rr.st = st; rr.at = performance.now(); const last = st.last;
+    { const told = st.lobby ? `${st.lobby.id}:${st.lobby.players.length}` : ""; if (told && told !== rr.told) { rr.told = told; env.rrChanged?.(); } }   /* the room's seats and the floor's bell: the game server asks the site itself, this only says "look" */
     if (last && last.id !== rr.seen) { const fresh = rr.seen !== null || (last.players || []).some((x) => x.login === st.me?.login); rr.seen = last.id;
       if (last.status === "SETTLED" && last.result?.stages && fresh && last.settledAt && st.now - last.settledAt < RR_STALE && !rr.playing) return rrPlay(last);
       if (last.status === "VOID" && (last.players || []).some((x) => x.login === st.me?.login) && st.now - (last.settledAt || 0) < RR_STALE) { ZC.bal = (ZC.bal ?? 0) + (st.config?.stake ?? 20); phase("Nobody else sat down: your 20 ZC is back", "open"); } }

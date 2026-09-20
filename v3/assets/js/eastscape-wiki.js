@@ -50,6 +50,16 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-20", title: "A new carpet, and a proper Russian Roulette room",
+    items: [
+      "THE CASINO HAS A NEW CARPET: dark, with big stars. You, the tables and everyone else stand out on it now.",
+      "SIX SEATS AT THE RUSSIAN ROULETTE TABLE. Sit down and you walk to your stool. Get shot and the room sees you drop.",
+      "A BELL ON THE CASINO FLOOR: when someone sits down, everyone hears it, with a Walk there button.",
+      "A WALL OF FAME beside the table: today's biggest pots, the longest winning run, and who's been shot the most.",
+      "BINO'S BAR CART: a shot for 1 ticket. It does nothing. The room hears about it."
+    ]
+  },
+  {
     date: "2026-09-19", title: "Russian Roulette takes centre stage",
     items: [
       "RUSSIAN ROULETTE IS NOW THE MIDDLE OF THE ROULETTE ROOM, with Bino beside it.",
