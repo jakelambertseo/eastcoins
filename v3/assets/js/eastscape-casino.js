@@ -17,19 +17,22 @@
 const CART = "/v3/assets/img/glad/flat/casino/", CV = 1;
 const SUITS = ["♠", "♥", "♦", "♣"];
 const CSS = `
-#gameWin.cz{--ink:#0c0a09;--panel:#161311;--panel-2:#1e1a17;--panel-3:#241f1b;--line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);--text:#f4ede5;--muted:#aca298;--muted-2:#7d746a;
-  --gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);--green:#4ddb8b;--green-dim:rgba(77,219,139,.11);--red:#ff6b85;--red-dim:rgba(255,107,133,.1);
-  --display:"Bricolage Grotesque","Nunito","Segoe UI",system-ui,sans-serif;--body:"Figtree","Nunito","Segoe UI",system-ui,sans-serif;
-  width:min(880px,calc(100% - 20px));background:var(--ink);color:var(--text);border:1px solid #3a302a;border-radius:16px;font-family:var(--body);box-shadow:0 30px 80px rgba(0,0,0,.75)}
-#gameWin.cz .win-head{background:linear-gradient(#1c1613,#141110);color:var(--text);border-bottom:1px solid var(--line);margin:0;border-radius:16px 16px 0 0;padding:12px 16px}
-#gameWin.cz .win-head b{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:-.02em}
-#gameWin.cz .win-head small{color:var(--muted-2);font-weight:700}
-#gameWin.cz .win-head .win-x{color:var(--muted)}
-#gameWin.cz .win-body{padding:14px;background:var(--ink);border-radius:0 0 16px 16px}
+/* PARCHMENT (2026-09-19, the owner: "restyle the other windows towards the parchment look"). These windows used to wear
+   eastcoin.vip's dark casino; they now wear the game's own paper: the wood-and-bronze frame and brown header come from the
+   page's .win rules (nothing here overrides them), and the palette below is ink on parchment. Almost every rule in this
+   sheet reads these variables, so the swap is the restyle. The PROPS (slot cabinet, jackpot plaque, scratch ticket,
+   prize wheel, revolver cylinder) stay dark objects lying on the page: they get the old light-on-dark palette back
+   locally, in the block at the end of this sheet. */
+#gameWin.cz{--ink:#f3e7cc;--panel:#ecdcb6;--panel-2:#e4d2a6;--panel-3:#dbc797;--line:rgba(70,45,20,.2);--line-2:rgba(70,45,20,.38);--text:#2a2016;--muted:#6a5a40;--muted-2:#8a7858;
+  --gold:#96650a;--gold-dim:rgba(168,116,10,.16);--green:#1c7a3c;--green-dim:rgba(28,122,60,.14);--red:#b8202a;--red-dim:rgba(184,32,42,.12);
+  --display:"Nunito","Segoe UI",system-ui,sans-serif;--body:"Nunito","Segoe UI",system-ui,sans-serif;
+  width:min(880px,calc(100% - 20px));color:var(--text);font-family:var(--body)}
+#gameWin.cz .win-head b{font-family:var(--display);font-weight:900;font-size:19px}
+#gameWin.cz .win-body{padding:12px}
 #gameWin.cz [hidden]{display:none!important}
 .cz-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(230px,1fr);gap:12px;align-items:start}
 @media (max-width:760px){.cz-grid{grid-template-columns:minmax(0,1fr)}}
-.cz-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 16px 16px;border:1px solid var(--line);border-radius:13px;background:radial-gradient(70% 80% at 50% 0%,rgba(142,18,49,.32),transparent 60%),var(--panel);overflow:hidden}
+.cz-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 16px 16px;border:1px solid var(--line);border-radius:13px;background:radial-gradient(70% 80% at 50% 0%,rgba(142,18,49,.09),transparent 60%),var(--panel);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);overflow:hidden}
 .cz-phase{font-family:var(--display);font-weight:800;font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);min-height:1.3em;text-align:center}
 .cz-phase.open{color:var(--green)}.cz-phase.done{color:var(--gold)}.cz-phase.bad{color:var(--red)}
 .cz-board{display:grid;place-items:center;min-height:190px;width:100%}
@@ -171,7 +174,11 @@ const CSS = `
 .cz-rr.bang{animation:czrrshake .45s}.cz-rr.bang .cz-cyl{box-shadow:inset 0 0 0 2px rgba(255,107,133,.5),inset 0 0 40px rgba(0,0,0,.75),0 0 0 5px rgba(255,107,133,.35),0 0 50px rgba(255,107,133,.55)}
 @keyframes czrrshake{0%,100%{transform:translate(0,0)}20%{transform:translate(-6px,3px)}40%{transform:translate(5px,-4px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
 @media (prefers-reduced-motion:reduce){.cz-rr.bang{animation:none}.cz-cyl,.cz-cyl.spin{transition:none}}
-.cz-realtabs{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 10px}.cz-realtabs button{padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--muted);font:800 12.5px var(--body);cursor:pointer}.cz-realtabs button[aria-pressed=true]{background:var(--gold);color:#1a1405;border-color:var(--gold)}.cz-cur{align-items:center}.cz-curl{font:700 12px var(--body);color:var(--muted)}.cz-cur button[aria-pressed=true]{background:#ff9aa8;border-color:#ff9aa8}.cz-cur button:first-of-type[aria-pressed=true]{background:var(--gold);border-color:var(--gold)}
+.cz-lock,.cz-dexgo{background:linear-gradient(#f0c848,#cf9a2e);border-color:#8a6210;color:#2a1c04;box-shadow:0 2px 0 #8a6210}.cz-lock:disabled,.cz-dexgo:disabled{background:var(--panel-3);border-color:var(--line-2);color:var(--muted-2);box-shadow:none}
+.cz-peg{background:rgba(70,45,20,.5);box-shadow:none}.cz-need i,.cz-hpbar,.cz-dexbar{background:rgba(70,45,20,.2)}.cz-pick:hover:not(:disabled){border-color:#8a6210}.cz-pick.on{border-color:#8a6210;background:var(--gold-dim)}.cz-marker{background:#2a2016}.cz-pick.black.on{border-color:#1a1410;background:rgba(0,0,0,.1)}.cz-rrseat.aim img,.cz-rrseat.aim i{border-color:#2a2016;box-shadow:0 0 0 4px rgba(42,32,22,.22)}
+.cz-pop b{text-shadow:0 2px 0 rgba(255,255,255,.5)}.cz-pop span{color:#f4ede5}.cz-rrseat img,.cz-rrseat i{background:var(--panel-3)}
+.cz-jack,.cz-ticket,.cz-reels,.cz-rrcyl,.cz-rtk,.cz-tkgrid,.cz-pw{--text:#f4ede5;--muted:#c8b898;--muted-2:#a89878;--gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);--green:#4ddb8b;--red:#ff6b85;--line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);color:var(--text)}
+.cz-realtabs{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 10px}.cz-realtabs button{padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--muted);font:800 12.5px var(--body);cursor:pointer}.cz-realtabs button[aria-pressed=true]{background:linear-gradient(#f0c848,#cf9a2e);color:#2a1c04;border-color:#8a6210}.cz-cur{align-items:center}.cz-curl{font:700 12px var(--body);color:var(--muted)}.cz-cur button[aria-pressed=true]{background:#ff9aa8;border-color:#ff9aa8}.cz-cur button:first-of-type[aria-pressed=true]{background:linear-gradient(#f0c848,#cf9a2e);border-color:#8a6210}
 .cz-luck a{color:var(--gold)}
 .cz-total{font:800 54px var(--display);letter-spacing:-.04em;color:var(--gold);line-height:1;text-shadow:0 0 30px rgba(232,191,53,.35)}
 @media (prefers-reduced-motion:reduce){.cz-coin.spin,.cz-reel.spin .cz-strip{animation:none}}
