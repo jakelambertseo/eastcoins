@@ -329,6 +329,10 @@ export class World {
         const msg = { type: "rrbell", name: T.seats[0].name, left: Math.max(0, T.startsAt - now), n: T.seats.length };
         for (const p of this.pls.values()) if (FLOORS.has(String(p.C.scene).split(":")[0]) && key(p.login) !== key(T.seats[0].login)) p.out.push(msg); }
       if (S) { T.seats.forEach((x, i) => { const pl = this.playersIn(S).find((q) => key(q.login) === key(x.login)), [sx, sy] = G.RR_SEATS[i];
+          /* TWO PEOPLE, ONE STOOL: it can't happen between players who SAT, because nobody picks a stool: the site hands out seat
+             numbers (one per person, a unique index behind it) and the n-th seat is the n-th stool. What can happen is somebody
+             merely STANDING on a stool (they're soft tiles) when its owner arrives, so that bystander is stepped off it. */
+          for (const q of this.playersIn(S)) if (q !== pl && q.x === sx && q.y === sy && !q.path?.length) { const free = [[0, 2], [0, -2], [2, 0], [-2, 0], [1, 2], [-1, 2], [2, 1], [-2, 1]].map(([dx, dy]) => ({ x: sx + dx, y: sy + dy })).find((c) => G.walkableIn(S.g, c.x, c.y) && !G.RR_SEATS.some(([ax, ay]) => ax === c.x && ay === c.y)); const pq = free && G.findPath(S.g, this.from(q), free, 0); if (pq) { q.act = null; q.path = pq; this.kick(S, q, now); } }
           if (!pl || T.walked.has(pl.id)) return; T.walked.add(pl.id); if (pl.x === sx && pl.y === sy) return;
           const path = G.findPath(S.g, this.from(pl), { x: sx, y: sy }, 0); if (path) { pl.act = null; pl.path = path; this.kick(S, pl, now); } });
         const m = this.rrSeatsMsg(S); for (const p of this.playersIn(S)) p.out.push(m); }
