@@ -1,4 +1,4 @@
-const CART="/v3/assets/img/glad/flat/casino/",CV=1;const SUITS=["♠","♥","♦","♣"];const CSS=`
+const CART="/v3/assets/img/glad/flat/casino/",CV=2;const SUITS=["♠","♥","♦","♣"];const CSS=`
 /* PARCHMENT (2026-09-19, the owner: "restyle the other windows towards the parchment look"). These windows used to wear
    eastcoin.vip's dark casino; they now wear the game's own paper: the wood-and-bronze frame and brown header come from the
    page's .win rules (nothing here overrides them), and the palette below is ink on parchment. Almost every rule in this
