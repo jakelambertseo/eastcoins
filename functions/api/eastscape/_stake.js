@@ -1,6 +1,6 @@
 /* TICKET STAKES (2026-09-19) — a casino bet staked by the house instead of the player's wallet.
 
-   In GambaScape a player may bet TICKETS (what kills and catches pay) at a
+   In EastScape a player may bet TICKETS (what kills and catches pay) at a
    real table: 1,000 tickets stand in for 1 ZCoin, and the bet pays out in
    real ZCoins like any other. The tickets live on the game server, so the
    stake reaches a bet endpoint as a VOUCHER:

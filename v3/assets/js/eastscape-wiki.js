@@ -30,7 +30,7 @@ export const GUIDES = [
   },
   {
     id: "saving", title: "Saving (there's no button)", icon: "💾",
-    body: `<p>Your character lives on the GambaScape server. It's saved a few seconds after anything changes, and again the moment you close the tab or lose your connection. Come back on any browser, logged in with the same Twitch account, and you're exactly where you left off.</p>`
+    body: `<p>Your character lives on the EastScape server. It's saved a few seconds after anything changes, and again the moment you close the tab or lose your connection. Come back on any browser, logged in with the same Twitch account, and you're exactly where you left off.</p>`
   },
   {
     id: "group", title: "Working together", icon: "🤝",
@@ -123,7 +123,8 @@ export const UPDATES = [
   {
     date: "2026-09-19", title: "Buffs work out the arch now",
     items: [
-      "EVERY BUFF IN THE GAME NOW HELPS YOU FIGHT AND FISH, not bet. The tables are eastcoin.vip's own and nothing in GambaScape touches a bet, so the old gambling effects had nothing left to do. Same items, same names, same rarity, new jobs.",
+      "THE GAME IS CALLED EASTSCAPE AGAIN. Same game, same address, old name.",
+      "EVERY BUFF IN THE GAME NOW HELPS YOU FIGHT AND FISH, not bet. The tables are eastcoin.vip's own and nothing in EastScape touches a bet, so the old gambling effects had nothing left to do. Same items, same names, same rarity, new jobs.",
       "WORN GEAR: Gambler's ring, fish heal 50% more. Bookie's amulet, 5% more tickets. Loss adjuster's visor, 10% less damage taken. Card sharp's gloves, swing and fish 5% faster. Angel's ring, rare drops 15% more often. Stakeholder's loafers, still make your other buff gear 50% stronger.",
       "DINNERS LAST 20 MINUTES AND DRINKS 10, and the clock only runs while you're out the arch: sit in the casino as long as you like. Chicken dinner +10% tickets from kills. Steak +10% speed. Chops, rare drops +25%. Fisherman's platter, fish bite more and a 10% chance of two on one line. Lager +5% tickets. Whiskey +15% speed but you take 10% more damage. The Safety Net, 20% less damage. Champagne, a real ZCoin is 50% more likely to drop.",
       "LUCK IS FOR ZCOINS NOW: while you're lucky, a real ZCoin is 25% more likely to drop, and each kill or catch uses one up. Clovers still only come from fishing.",
@@ -165,7 +166,7 @@ export const UPDATES = [
   {
     date: "2026-09-19", title: "One currency: tickets. And the tables take tickets or ZCoins",
     items: [
-      "CHIPS AND CASH ARE GONE. There is one currency in GambaScape now: TICKETS. Kills, catches and daily jobs pay them, the Prize Counter takes them, and every table takes them. Your bag panel shows Tickets and your real ZCoins side by side. (Chips anyone was holding were wiped: the game is still in testing.)",
+      "CHIPS AND CASH ARE GONE. There is one currency in EastScape now: TICKETS. Kills, catches and daily jobs pay them, the Prize Counter takes them, and every table takes them. Your bag panel shows Tickets and your real ZCoins side by side. (Chips anyone was holding were wiped: the game is still in testing.)",
       "THE SIX REAL TABLES TAKE ZCOINS OR TICKETS. Coin Flip, the Wheel, Higher or Lower, Mines, Plinko and Scratch-Off have a 'Bet with' switch: ZCoins (your own) or Tickets, where 1,000 tickets stand in for each ZCoin. It is the very same eastcoin.vip game either way, same limits, same fairness seeds, and A WIN IS ALWAYS PAID IN REAL ZCOINS.",
       "Ticket bets have an allowance: 50 ZCoins' worth an hour. Banking ZCoins you found shares it. When it runs out the Tickets side waits for the hour to roll on; ZCoin bets still work.",
       "THE RUBY'S SCRATCH TICKETS AND ITS EXCHANGE ARE GONE: betting tickets is the way tickets become ZCoins now. The Prize Counter still banks any ZCoins you find, and still sells gear, dinners, drinks and Casino scrolls.",
@@ -177,7 +178,7 @@ export const UPDATES = [
     date: "2026-09-20", title: "The real tables are in the building",
     items: [
       "COIN FLIP, THE WHEELS, HIGHER OR LOWER, MINES, PLINKO AND SCRATCH-OFF ON THE CASINO'S MAIN FLOOR NOW PLAY FOR REAL ZCOINS, from your real eastcoin.vip balance. They're the same windows you know; behind them is the site's own casino. Click a table and it opens the moment you click (your character strolls over on its own).",
-      "They play by the site's rules, exactly: 1 to 20 ZCoins a bet, ten plays an hour at each game, 400 an hour out, the same fairness seeds (there's a \"check the last one's seed\" link in the window), the same Daily Jackpot, and your results show on your eastcoin.vip profile. Nothing in GambaScape (luck, dinners, drinks, gear, hunger, VIP) touches these tables.",
+      "They play by the site's rules, exactly: 1 to 20 ZCoins a bet, ten plays an hour at each game, 400 an hour out, the same fairness seeds (there's a \"check the last one's seed\" link in the window), the same Daily Jackpot, and your results show on your eastcoin.vip profile. Nothing in EastScape (luck, dinners, drinks, gear, hunger, VIP) touches these tables.",
       "COIN FLIP AND THE WHEEL ARE SHARED ROUNDS, as they are on the site: one flip every 30 seconds and one spin a minute for the whole room. Get your bet in and the window counts you down to it.",
       "A GAMES BUTTON (top left, or press G) opens them from anywhere on the main floor, and a strip across the top of the window hops between the six.",
       "HIT A LIMIT, OR OUT OF ZCOINS? That's what the arch is for: every kill and catch can drop a real ZCoin, and tickets buy Ruby scratch tickets at the Prize Counter.",
@@ -249,9 +250,9 @@ export const UPDATES = [
     ]
   },
   {
-    date: "2026-09-20", title: "GambaScape: three jobs, three rewards, and a bar",
+    date: "2026-09-20", title: "EastScape: three jobs, three rewards, and a bar",
     items: [
-      "The game is called GambaScape now.",
+      "The game is called EastScape now.",
       "FIGHTING PAYS PROPERLY. Every monster carries Cash on top of its drops, measured so a fighter of the right level earns a little MORE a minute than a miner of that level, for the risk. A cow is worth about $47 a kill, a boar $82, a Tax Wraith $240, the Understudy $350. Before this, everything past a cow paid worse than the rock next to it.",
       "SKILLING is now the only way to get Lucky: clovers turn up while you gather (and, rarely, a horseshoe). Monsters no longer drop horseshoes; the ones you have still work.",
       "FIGHTING has its own rewards. Any kill can turn up a house chip (red $250, black $1,000, gold $5,000), a free-play chip (your next bet is on the house, up to $100), a mystery box, Devil's dice (within two minutes of a win: triple it, one time in three, or lose it) or a rewind watch (within a minute of a loss: it never happened, up to $500). Bigger monsters turn them up far more often. One kill in eight makes you a HIGH ROLLER: every table takes double from you for your next 10 bets over the normal limit. Two pieces of gambling gear only ever drop: Card sharp's gloves (wins pay 1% more profit) and the Angel's ring (1 lost bet in 200 comes back whole).",

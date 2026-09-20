@@ -1,4 +1,4 @@
-/* SLOTS (2026-09-19) — a GambaScape-only table: endpoints here so it plays
+/* SLOTS (2026-09-19) — an EastScape-only table: endpoints here so it plays
    for real ZCoins under the casino's rules; no page or floor card on
    eastcoin.vip.
 

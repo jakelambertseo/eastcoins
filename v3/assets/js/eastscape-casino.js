@@ -193,7 +193,7 @@ export function createCasino(env) {
      the window is the same, but every bet goes to the site's endpoints (REALAPI, below) instead of the game server, and
      the answer is translated into the message shape the window already understands. The site decides everything: the
      limits (20 a bet, ten plays an hour a game, 400 an hour out), the result, the fairness seed, the ledger. Nothing of
-     GambaScape's (luck, dinners, drinks, gear, hunger, VIP, the High Roller Room) touches a real table. */
+     EastScape's (luck, dinners, drinks, gear, hunger, VIP, the High Roller Room) touches a real table. */
   let REAL = false; const ZC = { bal: null, me: null, uid: null, last: null };
   /* v57: a real table takes ZCOINS OR TICKETS. TIX: this bet is staked with tickets (G.DEX.rate of them a ZCoin). The game
      server takes the tickets and the site writes a one-use voucher (type:"stake"); the bet then goes to the very same
@@ -383,7 +383,7 @@ export function createCasino(env) {
     scratch: {
       title: "Scratch-Off", sub: "Nine boxes · three of a kind wins",
       build() {
-        R.board.innerHTML = `<div class="cz-ticket idle" id="czTicket"><div class="cz-tktop"><b>GambaScape Scratch</b><span id="czTkNo">match three</span></div><div class="cz-tkgrid"><div class="cz-tkcells" id="czCells">${"<div class='cz-tkcell'></div>".repeat(9)}</div><canvas class="cz-foil gone" id="czFoil" width="300" height="300"></canvas></div></div>`;
+        R.board.innerHTML = `<div class="cz-ticket idle" id="czTicket"><div class="cz-tktop"><b>EastScape Scratch</b><span id="czTkNo">match three</span></div><div class="cz-tkgrid"><div class="cz-tkcells" id="czCells">${"<div class='cz-tkcell'></div>".repeat(9)}</div><canvas class="cz-foil gone" id="czFoil" width="300" height="300"></canvas></div></div>`;
         R.lock = lockBtn(); R.lock.addEventListener("click", () => (scratch && !scratch.done ? this.reveal() : place(null))); R.note = el("p", "cz-note"); R.bet.append(stakeRow(), R.lock, R.note); sideCards("The prizes", "chance per card"); phase("Buy a card", "open");
         R.pays.innerHTML = G.SCRATCH.map((s) => `<div class="cz-rung" data-k="${s.k}"><span>${img(sym(s.k))}${img(sym(s.k))}${img(sym(s.k))} · ${(s.w / 10).toFixed(1)}%</span><strong>${s.x}×</strong></div>`).join("");
         const cv = $("czFoil"); let down = false, strokes = 0, last = null;
@@ -469,7 +469,7 @@ export function createCasino(env) {
      One function per kind of game. Each asks the site, then hands the window the SAME message the game server would have
      sent it (gameResult / run), so the windows above don't know the difference. A refusal is shown as the site worded it. */
   const REAL_KEY = { cointable: "flip", wheel: "wheel", hilo: "hilo", mines: "mines", plinko: "plinko", scratch: "scratch", dicetable: "dice", slots: "slots" };
-  /* the instant games: which endpoint takes the bet and what it calls its answer. Dice and slots are GambaScape-only site games (v58). */
+  /* the instant games: which endpoint takes the bet and what it calls its answer. Dice and slots are EastScape-only site games (v58). */
   const REAL_INSTANT = { plinko: ["drop", "drop"], scratch: ["buy", "card"], dicetable: ["roll", "roll"], slots: ["spin", "spin"] };
   const REAL_CFG = {};   /* what each game's state endpoint says about itself: the pay table is READ from the site, never copied here */
   const realDiceMult = (t) => Math.round((100 / (t - 1)) * 100) / 100;   // our table -> the site's name for the game

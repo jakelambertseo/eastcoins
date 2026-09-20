@@ -1,6 +1,6 @@
-/* POST /api/eastscape/exchange — called by the GambaScape game server, never by a page.
+/* POST /api/eastscape/exchange — called by the EastScape game server, never by a page.
 
-   The two ways GambaScape puts ZCoins into the world, on ONE hourly
+   The two ways EastScape puts ZCoins into the world, on ONE hourly
    allowance per player (CAP_HOUR, the owner's backstop, 2026-09-19):
 
      STAKE    A TICKET STAKE: the player bets tickets at a real table,
@@ -137,10 +137,10 @@ export async function onRequestPost(context) {
   if (!walletWritesEnabled(env)) return say({ ok: false, code: "WALLET_NOT_CONFIGURED", definite: true, left, message: "ZCoin transfers aren't switched on right now." }, 503);
   await ensureBans(db);
   if (await isBanned(db, userId)) return say({ ok: false, code: "BANNED", definite: true, left }, 403);
-  if (zc > left) return say({ ok: false, code: "CAP", definite: true, left, message: left ? `GambaScape has ${left} ZCoin${left === 1 ? "" : "s"} of play left for you this hour.` : "That's your GambaScape ZCoins for this hour. It refills as the hour rolls on." }, 429);
+  if (zc > left) return say({ ok: false, code: "CAP", definite: true, left, message: left ? `EastScape has ${left} ZCoin${left === 1 ? "" : "s"} of play left for you this hour.` : "That's your EastScape ZCoins for this hour. It refills as the hour rolls on." }, 429);
   const day = await db.prepare(`SELECT COALESCE(SUM(amount), 0) AS n FROM wallet_operations WHERE idempotency_key >= 'GAMBA:' AND idempotency_key < 'GAMBA;' AND status = 'CONFIRMED' AND created_at >= datetime('now', '-1 day')`).first();
   const dayStakes = await db.prepare(`SELECT COALESCE(SUM(zc), 0) AS n FROM gamba_stakes WHERE created_at >= datetime('now', '-1 day')`).first();
-  if (Number(day?.n || 0) + Number(dayStakes?.n || 0) + zc > DAY_BREAKER) return say({ ok: false, code: "BREAKER", definite: true, left, message: "GambaScape is out of ZCoins for today. A mod has been told." }, 429);
+  if (Number(day?.n || 0) + Number(dayStakes?.n || 0) + zc > DAY_BREAKER) return say({ ok: false, code: "BREAKER", definite: true, left, message: "EastScape is out of ZCoins for today. A mod has been told." }, 429);
 
   if (isStake) {
     // the id is the primary key, so a second ask finds this row instead of writing another

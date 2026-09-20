@@ -94,9 +94,9 @@ export async function ensureColumn(db, table, column, decl) {
   await db.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${decl}`).run().catch(() => {});
 }
 
-/* GAMBASCAPE'S TWO SHARED ROOMS (2026-09-19): classic roulette and the Fight Pit. They run on this engine like the Wheel
+/* EASTSCAPE'S TWO SHARED ROOMS (2026-09-19): classic roulette and the Fight Pit. They run on this engine like the Wheel
    (one round for the whole room, one bet a player a round, fair prices quoted and the play's own edge multiplied in at
-   settle) and are `hidden`: they have no page or floor card on eastcoin.vip, only a window in GambaScape.
+   settle) and are `hidden`: they have no page or floor card on eastcoin.vip, only a window in EastScape.
 
    ROULETTE (key "roul": "roulette" is the PvP Russian Roulette table everywhere else in this codebase). A single-zero
    wheel, 37 pockets. ONE spot a spin (the owner's call): an even-money spot, a dozen, or one number. The FAIR prices:
@@ -425,7 +425,7 @@ export async function hourlyNet(db, userId) {
   // The PvP tables. A refund is neither a win nor a loss.
   const pvp = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - stake WHEN status = 'LOST' THEN -stake ELSE 0 END), 0) AS net FROM pvp_entries WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`);
   const scratch = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM scratch_cards WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
-  // GambaScape's own tables (2026-09-19): dice and slots. A slots jackpot is in `payout`, so it counts.
+  // EastScape's own tables (2026-09-19): dice and slots. A slots jackpot is in `payout`, so it counts.
   const dice = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM dice_rolls WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
   const slots = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM slots_spins WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
   return coin + shared + hilo + mines + plinko + pvp + scratch + dice + slots;

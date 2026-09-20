@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 65;
+export const VERSION = 66;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -26,7 +26,7 @@ export const levelOf = (xp) => { let l = 1; while (l < 99 && xp >= XP_AT[l + 1])
 
 /* ------------------------------------------------------------ things you can carry */
 export const ITEMS = {
-  tickets: { name: "Tickets", icon: "🎟️", nocap: true, ex: "The one currency in GambaScape. They stay on you: they can't be dropped, banked or handed over, only spent. Every kill, catch and daily job pays tickets. They buy everything at the Prize Counter, and every table takes them: 1,000 tickets stand in for 1 ZCoin at the real tables, and what you win there is paid in real ZCoins." },
+  tickets: { name: "Tickets", icon: "🎟️", nocap: true, ex: "The one currency in EastScape. They stay on you: they can't be dropped, banked or handed over, only spent. Every kill, catch and daily job pays tickets. They buy everything at the Prize Counter, and every table takes them: 1,000 tickets stand in for 1 ZCoin at the real tables, and what you win there is paid in real ZCoins." },
   zcoin: { name: "ZCoin", icon: "🪙", ex: "A REAL ZCoin, from eastcoin.vip. Rare. Take it to the Prize Counter and it goes straight onto your ZCoin balance." }, wheat: { name: "Wheat", icon: "🌾" }, bones: { name: "Bones", icon: "🦴" },
   beef: { name: "Raw beef", icon: "🥩" }, hide: { name: "Cowhide", icon: "🟫" }, chicken: { name: "Raw chicken", icon: "🍗" },
   feather: { name: "Feather", icon: "🪶" }, sardine: { name: "Sardine", icon: "🐟", heal: 3, ex: "Sell it, or eat it as it comes. You're a gambler, not a chef." }, trout: { name: "Trout", icon: "🐠", heal: 5, ex: "Sell it or eat it. From Fishing 10 the Yard's pond gives these up too." },
@@ -424,7 +424,7 @@ function wild(g, objs, exits, edges, keep = [], seed = 1) {
 }
 
 export const REAL_TABLES = { cointable: { name: "Coin Flip" }, wheel: { name: "Wheel" }, hilo: { name: "Higher or Lower" }, mines: { name: "Mines" }, plinko: { name: "Plinko" }, scratch: { name: "Scratch-Off" },
-  slots: { name: "Slots" }, dicetable: { name: "Dice" } };   /* slots and dice (v58) are GambaScape-only games on the site's casino backend: functions/api/casino/{slots,dice} */
+  slots: { name: "Slots" }, dicetable: { name: "Dice" } };   /* slots and dice (v58) are EastScape-only games on the site's casino backend: functions/api/casino/{slots,dice} */
 export const SCENES = {
   farm: {
     name: "Ludus Farm", exits: { e: "river", n: "forum" },
@@ -851,7 +851,7 @@ Object.assign(SCENES, {
     wall: [{ t: "banner", x: 3 }, { t: "lamp", x: 7 }, { t: "lamp", x: 11 }, { t: "painting1", x: 14.5, dy: 7, frame: true }, { t: "lamp", x: 17 }, { t: "lamp", x: 24 }, { t: "painting2", x: 28, dy: 5 }, { t: "lamp", x: 31 }, { t: "neon", x: 35.5, dy: 16 }, { t: "lamp", x: 39.3 }, { t: "banner", x: 41 }],
     doorSigns: [{ x: 10, text: "FIGHTING" }],
     /* THE REAL TABLES (2026-09-20). On this floor, these tables are eastcoin.vip's own casino games, played for REAL
-       ZCoins. The WINDOW is GambaScape's own (the owner: "keep the current casino game interfaces... hook them up to
+       ZCoins. The WINDOW is EastScape's own (the owner: "keep the current casino game interfaces... hook them up to
        zcoin"); behind it, every bet goes from the page straight to the site's endpoints (eastscape-casino.js, REAL MODE),
        so the limits (20 a bet, ten an hour a game, 400 an hour out), the result, the fairness seed and the ledger are
        the site's. The game server never touches a ZCoin. Their tickets copies are retired HERE (the server refuses a tickets bet at them on a floor that lists
@@ -1013,7 +1013,7 @@ Object.assign(SCENES, {
       const g = room(14, 8, 29, 17, 21), objs = [];
       objs.push({ t: "roulette", x: 20, y: 11, w: 4, h: 2, name: "Roulette table" }); block(g, 20, 11, 4, 2);
       /* RUSSIAN ROULETTE (v59, the owner: "can we add that to the roulette room as well?"). It is eastcoin.vip's own PvP table,
-         the SAME table: a GambaScape player and someone on the website sit in one lobby. ZCoins only, 20 a seat, the winner
+         the SAME table: an EastScape player and someone on the website sit in one lobby. ZCoins only, 20 a seat, the winner
          takes every buy-in, the house takes nothing. The window (eastscape-casino.js russian()) talks to /api/casino/pvp/*
          itself and the site's code is untouched; the game server only walks you to the table. */
       objs.push({ t: "rrtable", art: "o_rrtable", x: 16, y: 11, w: 2, h: 2, name: "Russian Roulette: real ZCoins, winner takes all" }); block(g, 16, 11, 2, 2);
@@ -1445,7 +1445,7 @@ export const FX_CAP = { gear: { win: 0.015, back: 0.015, angel: 0.0075 }, all: {
 export const ROLLER = { kill: 0, bets: 10, max: 100, mult: 1 };   /* HIGH ROLLER is retired (the owner, 2026-09-19): nothing grants it and it doubles nothing */
 export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 1000 }, REWIND = { ms: 60000, max: 500 };
 /* BUFFS WORK OUT THE ARCH, AND NOWHERE ELSE (v65, 2026-09-19). Every casino game is eastcoin.vip's now and nothing in
-   GambaScape may touch a bet, so the old gambling effects had no table left to act on. The owner approved their
+   EastScape may touch a bet, so the old gambling effects had no table left to act on. The owner approved their
    conversion, item by item, into five things that matter to fighting and fishing:
      tix    more tickets from a kill; on a catch, that chance of landing a second fish
      speed  swing faster, and the line bites sooner
@@ -1542,7 +1542,7 @@ export const TOUR = [
 ];
 export const TOUR_CHIP = 10, TOUR_PAY = 60, TOUR_GIFT = "clover", TOUR_JOB = { fish: 5, chickens: 3 };
 export const tourOf = (c) => (c?.tour && c.tour.step < TOUR.length ? TOUR[c.tour.step] : null);
-export const HOWTO = `GambaScape is a casino. You'll spend most of your time right here.
+export const HOWTO = `EastScape is a casino. You'll spend most of your time right here.
 
 REAL ZCOINS: Coin Flip, the Wheels, Higher or Lower, Mines, Plinko, Scratch-Off, Slots and Dice on this floor are eastcoin.vip's own games, for REAL ZCoins, with the site's rules: 20 a bet, ten plays an hour a game, 400 an hour out. Click one (or the Games button, top left) and it opens. Hit a limit? That's what the arch is for.
 TICKETS OR ZCOINS: every one of those tables takes either. Pick "ZCoins" and you bet your own; pick "Tickets" and 1,000 tickets stand in for each ZCoin. Either way a win is paid in REAL ZCoins. Ticket bets have an allowance of 50 ZCoins' worth an hour.

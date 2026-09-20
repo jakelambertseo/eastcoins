@@ -1,4 +1,4 @@
-/* DICE (2026-09-19) — a GambaScape-only table: it has endpoints here so it
+/* DICE (2026-09-19) — an EastScape-only table: it has endpoints here so it
    plays for real ZCoins under the casino's rules, and no page or floor
    card on eastcoin.vip.
 
