@@ -125,6 +125,14 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-19", title: "New buttons, fewer words",
+    items: [
+      "THE GAME WINDOWS HAVE NEW HAND-DRAWN BUTTONS: a gold Spin / Bet / Drop button, wooden and gold pills for the games and the ZCoins / Tickets switch, wooden stake buttons, and proper poker chips at the roulette table.",
+      "FEWER WORDS. Every game's explainer is one short line now. The numbers you need are on the buttons and the pay table.",
+      "FISHING IN THE YARD AND THE GLOAM PAYS A LITTLE LESS: sardine 8, perch 10, trout 14, catfish 18 tickets. Fishing was paying as much as fighting out there; it's meant to be the quieter job for a bit less. The deeper waters were already right."
+    ]
+  },
+  {
     date: "2026-09-19", title: "Six scenes, thirteen new monsters, eight new fish",
     items: [
       "TODAY'S JOBS NOW COVER ALL SIX SCENES: there's a job for every monster and every fish out the arch, and the board only hands you ones your levels can reach. The wiki's area pages say each scene's levels, its fish and what dying there costs, and there's a new guide: The road west.",

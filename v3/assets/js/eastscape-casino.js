@@ -189,6 +189,9 @@ const CSS = `
 #gameWin.cz .cz-lock:disabled,#gameWin.cz .cz-dexgo:disabled{border-image-source:url(/v3/assets/img/glad/flat/ui/czbtn_off.png?v=1);background:none;color:#d9cdb6;text-shadow:0 1px 0 #1a0e08;cursor:default}
 #gameWin.cz .cz-realtabs button{border-style:solid;border-color:transparent;border-width:0 14px;border-image:url(/v3/assets/img/glad/flat/ui/czpill.png?v=1) 0 20 fill / 0 14px stretch;background:none;border-radius:0;box-shadow:none;min-height:30px;padding:0 2px;color:#f3e7cc;text-shadow:0 1px 0 #1a0e08;image-rendering:pixelated}
 #gameWin.cz .cz-realtabs button:hover{filter:brightness(1.12)}
+#gameWin.cz .cz-chip{height:42px;min-width:44px;padding:0 1px;border-style:solid;border-color:transparent;border-width:0 12px;border-image:url(/v3/assets/img/glad/flat/ui/czchip.png?v=1) 0 22 fill / 0 12px stretch;background:none;border-radius:0;box-shadow:none;color:#f3e7cc;text-shadow:0 1px 0 #1a0e08;image-rendering:pixelated}
+#gameWin.cz .cz-chip:hover:not(:disabled),#gameWin.cz .cz-chip[aria-pressed=true]{border-image-source:url(/v3/assets/img/glad/flat/ui/czchip_on.png?v=1);color:#3a2604;text-shadow:0 1px 0 rgba(255,246,196,.75)}
+#gameWin.cz .cz-chip:disabled{filter:grayscale(.7) brightness(.8);cursor:default}
 #gameWin.cz .cz-realtabs button[aria-pressed=true]{border-image-source:url(/v3/assets/img/glad/flat/ui/czpill_on.png?v=1);background:none;color:#3a2604;text-shadow:0 1px 0 rgba(255,246,196,.75)}
 .cz-realtabs{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 10px}.cz-realtabs button{padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--muted);font:800 12.5px var(--body);cursor:pointer}.cz-realtabs button[aria-pressed=true]{background:linear-gradient(#f0c848,#cf9a2e);color:#2a1c04;border-color:#8a6210}.cz-cur{align-items:center}.cz-curl{font:700 12px var(--body);color:var(--muted)}.cz-cur button[aria-pressed=true]{background:#ff9aa8;border-color:#ff9aa8}.cz-cur button:first-of-type[aria-pressed=true]{background:linear-gradient(#f0c848,#cf9a2e);border-color:#8a6210}
 .cz-luck a{color:var(--gold)}
@@ -243,7 +246,7 @@ export function createCasino(env) {
     R.phase = el("div", "cz-phase"); R.board = el("div", "cz-board"); R.mult = el("div", "cz-mult"); R.bet = el("div", "cz-bet"); R.pop = el("div", "cz-pop");
     if (REAL && REAL_KEY[GAME] && MENU) { const tabs = el("div", "cz-realtabs", Object.entries(REAL_KEY).map(([g, k]) => `<button type="button" data-g="${g}" aria-pressed="${g === GAME}">${esc(UI[g].title)}</button>`).join("")); tabs.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { if (b.dataset.g !== GAME) api.open(b.dataset.g, { real: true, menu: true }); })); body.append(tabs); }
     if (REAL && GAME !== "russian") {
-      const cur = el("div", "cz-realtabs cz-cur"); R.curZ = el("button", "", ""); R.curT = el("button", "", ""); R.curZ.type = R.curT.type = "button"; cur.append(el("span", "cz-curl", "Bet with"), R.curZ, R.curT, el("span", "cz-curl", "either way, a win is paid in real ZCoins"));
+      const cur = el("div", "cz-realtabs cz-cur"); R.curZ = el("button", "", ""); R.curT = el("button", "", ""); R.curZ.type = R.curT.type = "button"; cur.append(el("span", "cz-curl", "Bet with"), R.curZ, R.curT, el("span", "cz-curl", "wins pay ZCoins"));
       const pick = (v) => { if (busy) return; TIX = v;   /* (a run already going keeps the stake it started with: this only decides the NEXT bet) */ try { localStorage.setItem("gs_real_cur", v ? "tix" : "zc"); } catch (x) { /* fine */ } SFX.play("ui_click"); refresh(); };
       R.curZ.addEventListener("click", () => pick(false)); R.curT.addEventListener("click", () => pick(true)); body.append(cur); }
     stage.append(R.phase, R.board, R.mult, R.bet, R.pop); grid.append(stage, side); body.append(grid); R.side = side; R.stage = stage;
@@ -276,7 +279,7 @@ export function createCasino(env) {
     if (REAL && R.curZ) { R.curZ.textContent = `ZCoins · ${bet}`; R.curT.textContent = `🎟 Tickets · ${tixCost(bet).toLocaleString()}`; R.curZ.setAttribute("aria-pressed", String(!TIX)); R.curT.setAttribute("aria-pressed", String(TIX)); }
     R.stats.innerHTML = `<div class="cz-stat"><span>${REAL ? "Your ZCoins" : "Your tickets"}</span><strong>${money(cash())}</strong></div>${REAL ? `<div class="cz-stat"><span>Your tickets</span><strong>${G.fmtCash(tixHave())}</strong></div>` : ""}<div class="cz-stat"><span>Net</span><strong class="${s.net > 0 ? "up" : s.net < 0 ? "dn" : ""}">${s.net > 0 ? "+" : s.net < 0 ? "−" : ""}${money(Math.abs(s.net))}</strong></div><div class="cz-stat"><span>Bets</span><strong>${s.bets}</strong></div><div class="cz-stat"><span>Best win</span><strong>${s.best ? `+${money(s.best)}` : "–"}</strong></div>`;
     R.recent.innerHTML = s.recent.map((d) => `<span class="${d > 0 ? "w" : ""}">${d > 0 ? "+" : d < 0 ? "−" : ""}${Math.abs(d).toLocaleString()}</span>`).join("");
-    if (REAL) { R.needs.innerHTML = ""; R.luck.className = "cz-luck"; R.luck.innerHTML = realRules(); if (R.jack) R.jack.innerHTML = jack.pot == null ? "" : `<small>JACKPOT · REAL ZCOINS</small><b>${money(Math.floor(jack.pot))}</b><small>Three sevens wins it · a ${REAL_LIM.max} ZC spin wins it all, a smaller one its share · 2% of every spin feeds it${jack.last ? ` · last: ${esc(jack.last.name)} ${money(jack.last.amt)}` : ""}</small>`; UI[GAME]?.refresh?.(); return; }
+    if (REAL) { R.needs.innerHTML = ""; R.luck.className = "cz-luck"; R.luck.innerHTML = realRules(); if (R.jack) R.jack.innerHTML = jack.pot == null ? "" : `<small>JACKPOT</small><b>${money(Math.floor(jack.pot))}</b><small>Hit 7-7-7 to win it${jack.last ? ` · last: ${esc(jack.last.name)}, ${money(jack.last.amt)}` : ""}</small>`; UI[GAME]?.refresh?.(); return; }
     R.needs.innerHTML = [["thirst", "Thirst", ""], ["hunger", "Hunger", "food"]].map(([k, n, cls]) => { const v = Math.round(G.needOf(me, k)); return `<div class="cz-need ${cls}${v < G.NEEDS.floor ? " low" : ""}">${n} ${v}%<i><u style="width:${v}%"></u></i></div>`; }).join("");
     const luck = me?.luck | 0; R.luck.className = `cz-luck${luck ? " on" : ""}`;
     const others = G.buffsOf(me).filter((b) => b.id !== "luck").map((b) => `${b.name}${b.left != null ? ` × ${b.left}` : ""}`), lim = G.maxBetOf(me, env.room?.());
@@ -286,7 +289,7 @@ export function createCasino(env) {
     UI[GAME]?.refresh?.();
   }
   const empty = () => { const why = G.tooEmpty(env.me()); if (why) { phase(why === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[why]); SFX.play("ui_error"); } return !!why; };
-  const broke = () => { if (REAL && TIX) { if (tixCost(bet) > tixHave()) { phase(`That's ${tixCost(bet).toLocaleString()} tickets. You have ${tixHave().toLocaleString()}`, "bad"); note(`${G.DEX.rate.toLocaleString()} tickets stand in for 1 ZCoin. Out the arch: every kill and catch pays tickets.`); SFX.play("ui_error"); return true; } return false; }
+  const broke = () => { if (REAL && TIX) { if (tixCost(bet) > tixHave()) { phase(`That's ${tixCost(bet).toLocaleString()} tickets. You have ${tixHave().toLocaleString()}`, "bad"); note("Not enough tickets. Go hit something."); SFX.play("ui_error"); return true; } return false; }
     if (REAL) { if (ZC.bal != null && bet > ZC.bal) { phase(`You only have ${money(ZC.bal)}`, "bad"); note(REAL_NUDGE); SFX.play("ui_error"); return true; } return false; } if (empty()) return true; return brokeOnly(); };
   const brokeOnly = () => { if (bet > cash() + (env.me()?.free | 0)) { phase(`You only have ${money(cash())}`, "bad"); note("Out of tickets? Out the arch to the Yard: click a monster, or fish the pond. The Prize Counter (the big ruby) takes what you bring back for more."); SFX.play("ui_error"); return true; } return false; };
   function place(pick) {          // one bet, one answer
@@ -307,7 +310,7 @@ export function createCasino(env) {
   /* ---------------------------------------------------------- the tables */
   const UI = {
     cointable: {
-      title: "Coin Flip", sub: "Heads or tails · pays 1.95×", realSub: "Heads or tails · a flip for the whole room every 30 seconds · pays 2×",
+      title: "Coin Flip", sub: "Pick a side. Pays 2×.",
       build() {
         R.board.innerHTML = `<div class="cz-coinbox"><div class="cz-coin" id="czCoin">${`<img class="h" src="${CART}coin_heads.png?v=${CV}" alt=""><img class="t" src="${CART}coin_tails.png?v=${CV}" alt="">`}</div></div>`;
         const picks = el("div", "cz-picks"); R.picks = {};
@@ -322,7 +325,7 @@ export function createCasino(env) {
       async result(e) { const c = $("czCoin"), t = token; await wait(calm() ? 0 : 500); if (t !== token) return; c.classList.remove("spin"); c.style.transform = `rotateY(${1440 + (e.side === "tails" ? 180 : 0)}deg)`; await wait(calm() ? 50 : 1000); if (t !== token) return; c.style.transition = "none"; c.style.transform = `rotateY(${e.side === "tails" ? 180 : 0}deg)`; c.offsetWidth; c.style.transition = ""; settle(e, `${e.side === "heads" ? "Heads" : "Tails"} · ${e.payout ? `you win ${money(e.payout)}` : "you lose"}`); }
     },
     dicetable: {
-      title: "Dice", sub: "Roll under your number · the lower you go, the more it pays",
+      title: "Dice", sub: "Roll under your number.",
       build() {
         R.board.innerHTML = `<div style="width:100%;display:grid;justify-items:center"><div class="cz-roll" id="czRoll">–</div><div class="cz-track"><div class="cz-zone" id="czZone"></div><div class="cz-marker" id="czMark" style="left:50%"></div></div><div class="cz-ticks"><span>1</span><span>25</span><span>50</span><span>75</span><span>100</span></div></div>`;
         R.range = el("input", "cz-range"); R.range.type = "range"; R.range.min = G.DICE.min; R.range.max = G.DICE.max; R.range.value = diceTarget; R.range.setAttribute("aria-label", "Roll under");
@@ -336,7 +339,7 @@ export function createCasino(env) {
       async result(e) { const t = token; await wait(calm() ? 0 : 450); clearInterval(this.iv); if (t !== token) return; const r = $("czRoll"); r.textContent = e.roll; r.className = `cz-roll ${e.payout ? "w" : "l"}`; $("czMark").style.left = `${e.roll}%`; await wait(calm() ? 0 : 550); if (t !== token) return; settle(e, `Rolled ${e.roll} · needed under ${e.target} · ${e.payout ? `you win ${money(e.payout)}` : "you lose"}`); }
     },
     slots: {
-      title: "Slots", sub: "Three of a kind pays · three sevens takes the jackpot",
+      title: "Slots", sub: "Match three. 7-7-7 wins the jackpot.",
       build() {
         const strip = () => G.REELS.map((r) => `<img src="${CART}reel_${r.k}.png?v=${CV}" alt="">`).join("");
         R.board.innerHTML = `<div class="cz-reels">${[0, 1, 2].map((i) => `<div class="cz-reel" id="czReel${i}"><div class="cz-strip">${strip()}${strip()}</div></div>`).join("")}</div>`;
@@ -361,7 +364,7 @@ export function createCasino(env) {
       }
     },
     wheel: {
-      title: "Wheel", sub: "Red or black, or the gold sliver", realSub: "Red or black, or the gold sliver · one spin a minute for the whole room",
+      title: "Wheel", sub: "Red, black, or gold for 60×.",
       build() {
         const W = G.WHEEL, w = (360 - W.gold) / W.slices, parts = [`#e8b83a 0 ${W.gold}deg`]; for (let i = 0; i < W.slices; i++) parts.push(`${i % 2 ? "#1a1a1a" : "#c8202c"} ${W.gold + i * w}deg ${W.gold + (i + 1) * w}deg`);
         R.board.innerHTML = `<div class="cz-wheelbox"><div class="cz-wheel" id="czWheel" style="background:conic-gradient(${parts.join(",")});transform:rotate(${wheelRot}deg)"></div><div class="cz-hub"></div><div class="cz-pin"></div></div>`;
@@ -375,7 +378,7 @@ export function createCasino(env) {
       async result(e) { const w = $("czWheel"), t = token; wheelRot = Math.ceil(wheelRot / 360) * 360 + 360 * 4 + (360 - e.angle); w.style.transition = calm() ? "none" : "transform 2.8s cubic-bezier(.12,.72,.12,1)"; w.style.transform = `rotate(${wheelRot}deg)`; this.loop = SFX.play("roul_ball"); await wait(calm() ? 50 : 2900); this.loop?.stop(); if (t !== token) return; settle(e, `${e.color[0].toUpperCase()}${e.color.slice(1)} · ${e.payout ? `you win ${money(e.payout)}` : "you lose"}`); }
     },
     plinko: {
-      title: "Plinko", sub: "Twelve rows of pegs · the edges pay 25×",
+      title: "Plinko", sub: "Drop the ball. The edges pay 25×.",
       build() {
         const P = REAL ? { rows: 12, pays: REAL_PLINKO } : G.PLINKO; let rows = ""; for (let r = 0; r < P.rows; r++) rows += `<div class="cz-pkrow">${"<i class='cz-peg'></i>".repeat(r + 1)}</div>`;
         R.board.innerHTML = `<div class="cz-pkwrap"><div class="cz-pk" id="czPk"><div class="cz-ball" id="czBall"></div>${rows}</div><div class="cz-buckets">${P.pays.map((x, i) => `<div class="cz-bucket ${x >= 4 ? "big" : x >= 1 ? "mid" : ""}" data-b="${i}">${x}×</div>`).join("")}</div></div>`;
@@ -393,7 +396,7 @@ export function createCasino(env) {
       }
     },
     scratch: {
-      title: "Scratch-Off", sub: "Nine boxes · three of a kind wins",
+      title: "Scratch-Off", sub: "Match three to win.",
       build() {
         R.board.innerHTML = `<div class="cz-ticket idle" id="czTicket"><div class="cz-tktop"><b>EastScape Scratch</b><span id="czTkNo">match three</span></div><div class="cz-tkgrid"><div class="cz-tkcells" id="czCells">${"<div class='cz-tkcell'></div>".repeat(9)}</div><canvas class="cz-foil gone" id="czFoil" width="300" height="300"></canvas></div></div>`;
         R.lock = lockBtn(); R.lock.addEventListener("click", () => (scratch && !scratch.done ? this.reveal() : place(null))); R.note = el("p", "cz-note"); R.bet.append(stakeRow(), R.lock, R.note); sideCards("The prizes", "chance per card"); phase("Buy a card", "open");
@@ -410,7 +413,7 @@ export function createCasino(env) {
       reveal() { if (!scratch || scratch.done) return; scratch.done = true; const e = scratch.e; $("czFoil").classList.add("gone"); if (e.prize) { document.querySelectorAll(`.cz-tkcell[data-k="${e.prize}"]`).forEach((c) => c.classList.add("win")); R.pays.querySelector(`[data-k="${e.prize}"]`)?.classList.add("at"); } settle(e, e.payout > e.bet ? `Three of a kind · ${e.mult}× · you win ${money(e.payout)}` : e.payout ? "Three gems · your stake comes back" : "No three of a kind"); }
     },
     hilo: {
-      title: "Higher or Lower", sub: "Every right call multiplies your stake · cash out whenever you like", run: true,
+      title: "Higher or Lower", sub: "Guess right. Cash out any time.", run: true,
       build() {
         R.board.innerHTML = `<div class="cz-hl"><div class="cz-trail" id="czTrail"></div><div class="cz-cardx empty" id="czCard"><span>?</span></div></div>`;
         const calls = el("div", "cz-picks"); R.calls = {};
@@ -441,7 +444,7 @@ export function createCasino(env) {
       }
     },
     mines: {
-      title: "Mines", sub: "Twenty-five tiles, a few of them bombs · every gem pays more", run: true,
+      title: "Mines", sub: "Find gems. Dodge bombs. Cash out any time.", run: true,
       build() {
         const board = el("div", "cz-mines"); R.tiles = [];
         for (let i = 0; i < G.MINES.tiles; i++) { const b = el("button", "cz-tile"); b.type = "button"; b.addEventListener("click", () => { if (RUNS.mines) runOp("mines", "pick", { i }); }); R.tiles.push(b); board.append(b); }
@@ -487,7 +490,7 @@ export function createCasino(env) {
   const realDiceMult = (t) => Math.round((100 / (t - 1)) * 100) / 100;   // our table -> the site's name for the game
   const REAL_LIM = { min: 1, max: 20 }, REAL_WHEEL = { red: 2.03, black: 2.03, gold: 60 }, REAL_PLINKO = [25, 4, 2, 1.5, 1.1, 1.05, 0.3, 1.05, 1.1, 1.5, 2, 4, 25];
   const REAL_SYM = { crown: "seven", diamond: "diamond", fire: "star", clover: "bell", target: "lemon", football: "cherry", coin: "gem" };   // the site's scratch symbols -> our pictures (same seven prizes, same prices)
-  const REAL_NUDGE = "Out of ZCoins? Switch to Tickets: 1,000 stand in for a ZCoin, and everything out the arch pays them. Every kill and catch can drop a real ZCoin, too.";
+  const REAL_NUDGE = "Out of ZCoins? Bet tickets instead. Out of both? Go hit something.";
   const realMinesMult = (m, k) => { let f = 1; for (let i = 0; i < k; i++) f *= (25 - i) / (25 - m - i); return Math.round(f * 100) / 100; };
   const realMinesTop = (m) => { let last = 1; for (let k = 1; k <= 25 - m; k++) { if (realMinesMult(m, k) > 30) break; last = k; } return last; };
   async function ask(path, body) {
@@ -496,10 +499,8 @@ export function createCasino(env) {
   }
   function realRules() {
     const k = REAL_KEY[GAME] || (GAME === "fight" ? "pit" : GAME), me = ZC.me, left = me ? Math.max(0, (me.playsCap ?? 10) - (me.played?.[k] | 0)) : null, L = ZC.last;
-    return `<b>${TIX ? `Tickets in, real ZCoins out.</b> ${G.DEX.rate.toLocaleString()} tickets stand in for each ZCoin (${G.DEX.capHour} ZCoins' worth of ticket bets an hour). Same game,` : "Real ZCoins.</b>"} eastcoin.vip's own game and rules: ${REAL_LIM.max} ZC a bet, ten plays an hour at each game, ${me?.hourCap ?? 400} ZC an hour out.`
-      + (me ? ` <b>${left} of ${me.playsCap ?? 10}</b> plays left here this hour · ${me.hourNet >= 0 ? "+" : "−"}${Math.abs(me.hourNet | 0)} of ${me.hourCap} this hour.` : "")
-      + (L && L.g === GAME && L.seed ? ` <a href="/?view=verify&game=${k}&seed=${encodeURIComponent(L.seed)}${L.hash ? `&hash=${encodeURIComponent(L.hash)}` : ""}${L.mines ? `&mines=${L.mines}` : ""}${L.target ? `&target=${L.target}` : ""}" target="_blank" rel="noopener">Check the last one's seed →</a>` : "")
-      + ` ${esc(REAL_NUDGE)}`;
+    return (me ? `<b>${left} of ${me.playsCap ?? 10} plays left</b> this hour.` : "Log in on eastcoin.vip to play.") + (TIX ? ` ${G.DEX.rate.toLocaleString()} tickets = 1 ZCoin.` : "")
+      + (L && L.g === GAME && L.seed ? ` <a href="/?view=verify&game=${k}&seed=${encodeURIComponent(L.seed)}${L.hash ? `&hash=${encodeURIComponent(L.hash)}` : ""}${L.mines ? `&mines=${L.mines}` : ""}${L.target ? `&target=${L.target}` : ""}" target="_blank" rel="noopener">Check the last result →</a>` : "");
   }
   function realFail(g, r, t) {
     busy = false; if (t !== token || GAME !== g) return; UI[g].idle?.(); phase(r.message || "That didn't go through. Nothing was charged.", "bad");
@@ -548,7 +549,7 @@ export function createCasino(env) {
         return UI[g].result(g === "cointable" ? { g, bet: stake, payout, mult: Math.round(payout / stake * 100) / 100, side: String(res) }
           : { g, bet: stake, payout, mult: Math.round(payout / stake * 100) / 100, color: res.color, angle: res.color === "gold" ? Math.max(0, res.angle - 354) : res.angle + G.WHEEL.gold });
       }
-      if (live() && cur) { const left = Math.max(0, Math.ceil(((cur.flipsAt || cur.closesAt) - (st.now || Date.now())) / 1000)); phase(left ? `You're in on ${pick} · ${g === "cointable" ? "flips" : "spins"} in ${left}s` : g === "cointable" ? "In the air…" : "Spinning…", "open"); note(`${(st.bets || []).length} in this round. It's one ${g === "cointable" ? "flip" : "spin"} for the whole room.`); }
+      if (live() && cur) { const left = Math.max(0, Math.ceil(((cur.flipsAt || cur.closesAt) - (st.now || Date.now())) / 1000)); phase(left ? `You're in on ${pick} · ${g === "cointable" ? "flips" : "spins"} in ${left}s` : g === "cointable" ? "In the air…" : "Spinning…", "open"); note(`${(st.bets || []).length} in this round.`); }
       await wait(1500);
     }
     busy = false; if (live()) { UI[g].idle?.(); phase("That took too long to come back. Your bet stands: check your eastcoin.vip casino page.", "bad"); }
@@ -592,7 +593,7 @@ export function createCasino(env) {
   let fightSide = 0, fightTimer = 0, FV = null;
   const MART = "/v3/assets/img/glad/flat/";
   function fight(v, opening) {
-    FV = v; if (GAME !== "fight" || opening) { if (REAL !== !!v.real) { REAL = !!v.real; bet = REAL ? betZc : betCash; } GAME = "fight"; frame("The Fight Pit", "Two go in. Pick one. It's all luck."); sideCards("Money down", "this fight"); R.note = el("p", "cz-note"); }
+    FV = v; if (GAME !== "fight" || opening) { if (REAL !== !!v.real) { REAL = !!v.real; bet = REAL ? betZc : betCash; } GAME = "fight"; frame("The Fight Pit", "Two go in. Pick one."); sideCards("Money down", "this fight"); R.note = el("p", "cz-note"); }
     const names = v.f.map((f) => G.MOBS[f.t].name), mine = v.bets.filter((b) => b.me), myAmt = mine.reduce((a, b) => a + b.amt, 0), mySide = mine[0]?.side, betting = v.phase === "bet";
     if (mySide != null) fightSide = mySide;
     const pot = [0, 1].map((i) => v.bets.filter((b) => b.side === i).reduce((a, b) => a + b.amt, 0));
@@ -610,7 +611,7 @@ export function createCasino(env) {
       R.lock.textContent = v.real ? (myAmt ? `You're on ${names[mySide]}` : `Bet ${TIX ? `${tixCost(bet).toLocaleString()} tickets` : money(bet)} on ${names[fightSide]} · pays about ${v.pays[fightSide]}×`) : `${myAmt ? "Add" : "Bet"} ${money(bet)} on ${names[fightSide]} · pays ${v.pays[fightSide]}×`; if (v.real && myAmt) R.lock.disabled = true;
     }
     R.bet.append(R.note);
-    note(betting ? (myAmt ? `You have ${money(myAmt)} on ${names[mySide]}. If it wins you're paid ${money(Math.floor(myAmt * v.pays[mySide]))}.` : v.real ? "1 to 20 ZCoins, or tickets at 1,000 a ZCoin. One side, one bet a fight. Everyone in the room is on the same fight, and a win pays real ZCoins." : `Up to ${money(G.maxBetOf(env.me()))} a fight. One side only.`) : v.phase === "fight" ? (myAmt ? `${money(myAmt)} riding on ${names[mySide]}.` : "No money on this one. The next pair is out in a moment.") : "");
+    note(betting ? (myAmt ? `You have ${money(myAmt)} on ${names[mySide]}. If it wins you're paid ${money(Math.floor(myAmt * v.pays[mySide]))}.` : v.real ? "Pick a fighter. One bet a fight." : `Up to ${money(G.maxBetOf(env.me()))} a fight. One side only.`) : v.phase === "fight" ? (myAmt ? `${money(myAmt)} riding on ${names[mySide]}.` : "No money on this one. The next pair is out in a moment.") : "");
     R.pays.innerHTML = `<div class="cz-betlist">${v.bets.length ? v.bets.map((b) => `<div class="${b.me ? "me" : ""}"><span>${esc(b.me ? "You" : b.name)} · ${esc(names[b.side])}</span><strong>${money(b.amt)}</strong></div>`).join("") : `<div><span>Nobody yet. Be the first.</span></div>`}</div>${v.hist.length ? `<h2 style="margin:10px 0 6px">Lately<small>who won, at what price</small></h2><div class="cz-recent">${v.hist.map((h) => `<span class="${h.mult >= 2 ? "w" : ""}">${esc(G.MOBS[h.t].name)} ${h.mult}×</span>`).join("")}</div>` : ""}`;
     if (v.phase === "result" && fightPaid !== v.round) { fightPaid = v.round;   /* (kept outside the view: a shared round sends a fresh view every second) */ const w = v.last?.wins?.find((x) => x.name === env.you()?.name); if (myLast.round === v.round && myLast.amt) { record("fight", (w ? w.payout : 0) - myLast.amt); if (w) { pop(`+${money(w.payout - myLast.amt)}`, `${names[v.winner]} wins`); SFX.play(w.payout > myLast.amt * 3 ? "win_big" : "win_small"); } else SFX.play("lose"); } }
     if (myAmt) myLast = { round: v.round, amt: myAmt };
@@ -732,7 +733,7 @@ export function createCasino(env) {
     $("czRrBig").textContent = L ? `${L.pot} ZC` : "Empty"; $("czRrSmall").textContent = L ? (left ? `starts in ${left}s` : "loading…") : "first to sit opens the table";
     phase(cfg.paused ? "Closed for now" : L ? (L.youIn ? `You're in · starts in ${left}s` : `Table's open · starts in ${left}s`) : "Nobody at the table", cfg.paused ? "bad" : "open");
     R.lock.disabled = !can || rr.joining; R.lock.textContent = rr.joining ? "Sitting down…" : L?.youIn ? "You're seated" : !cfg.canBet ? "Log in on eastcoin.vip to play" : `Sit down · ${cfg.stake ?? 20} ZC`;
-    note(L ? (L.players.length < 2 ? "One more and it's a game. Alone when the clock runs out? You're refunded." : `${L.players.length} seated. Whoever is left standing takes all ${L.pot} ZC. The house takes nothing.`) : `Everyone pays ${cfg.stake ?? 20} ZC. The cylinder goes round until one is left, and they take every buy-in. It's the same table as eastcoin.vip's: you may be joined from there.`);
+    note(L ? (L.players.length < 2 ? "Waiting for one more. Alone at zero? You get your 20 back." : `Last one standing takes ${L.pot} ZC.`) : `${cfg.stake ?? 20} ZC a seat. Last one standing takes the pot.`);
     const last = st.last, res = last?.result, names = (last?.players || []).map((x) => x.displayName || x.login);
     R.rrSide.innerHTML = `<h2>Your ZCoins<small>on eastcoin.vip</small></h2><div class="cz-stats"><div class="cz-stat"><span>Balance</span><strong>${ZC.bal == null ? "–" : money(ZC.bal)}</strong></div><div class="cz-stat"><span>Tables this hour</span><strong>${st.me ? `${st.me.joinsThisHour ?? 0} of ${cfg.maxPerHour ?? 10}` : "–"}</strong></div></div>`
       + (last && last.status === "SETTLED" && res ? `<h2 style="margin-top:12px">Last table<small>${last.players.length} sat down</small></h2><div class="cz-betlist"><div class="me"><span>🏆 ${esc(names[res.winner] ?? "?")}</span><strong>+${last.pot} ZC</strong></div>${(res.order || []).map((sx, k) => `<div><span>${k + 1}. ${esc(names[sx] ?? "?")}</span><strong>out</strong></div>`).join("")}</div>${last.seed ? `<p class="cz-note" style="text-align:left"><a href="/?view=verify&game=roulette&seed=${encodeURIComponent(last.seed)}&hash=${encodeURIComponent(last.hash)}&players=${last.players.length}" target="_blank" rel="noopener">Check that table's seed →</a></p>` : ""}` : last && last.status === "VOID" ? `<h2 style="margin-top:12px">Last table</h2><p class="cz-note" style="text-align:left">Nobody else sat down, so the buy-in went back.</p>` : "");
@@ -784,9 +785,9 @@ export function createCasino(env) {
     if (r.balance != null) ZC.bal = Number(r.balance); if (rr.st && r.lobby) rr.st.lobby = r.lobby; rrDraw(); rrPoll();
   }
   async function russian() {
-    REAL = true; GAME = "russian"; frame("Russian Roulette", "Real ZCoins · 20 a seat · the last one standing takes every buy-in · the house takes nothing");
+    REAL = true; GAME = "russian"; frame("Russian Roulette", "20 ZC a seat. Last one standing takes the pot.");
     R.lock = lockBtn(); R.lock.textContent = "Asking the table…"; R.lock.disabled = true; R.lock.addEventListener("click", rrJoin); R.note = el("p", "cz-note"); R.bet.append(R.lock, R.note);
-    const side = el("section", "cz-card"); R.rrSide = side; R.side.append(side); const rules = el("section", "cz-card"); rules.innerHTML = `<h2>How it goes</h2><p class="cz-note" style="text-align:left">The first to sit opens the table and starts a 30 second clock. Whoever is in at zero plays. Each round the cylinder holds one live chamber; seats pull in turn; whoever gets it is out. Reload, again, until one is left. Every seat starts on exactly the same chance. eastcoin.vip's limits apply: ten tables an hour, 400 ZC an hour out.</p>`; R.side.append(rules);
+    const side = el("section", "cz-card"); R.rrSide = side; R.side.append(side); const rules = el("section", "cz-card"); rules.innerHTML = `<h2>How it goes</h2><p class="cz-note" style="text-align:left">Sit down for 20 ZC. The cylinder goes round. Last one standing takes the pot.</p>`; R.side.append(rules);
     rr = { st: null, seen: null, playing: false, timer: null, joining: false }; phase("Asking the table…", "open");
     if (ZC.bal == null) ask("/api/picks/bootstrap").then((b) => { const n = Number(b?.session?.wallet?.balance); if (Number.isFinite(n)) { ZC.bal = n; rrDraw(); } });
     await rrPoll(true); clearInterval(rr.timer); rr.timer = setInterval(() => { rrPoll(); if (!rr.playing && rr.st?.lobby) rrDraw(); }, RR_POLL);
@@ -864,7 +865,7 @@ export function createCasino(env) {
       const ui = UI[g]; if (!ui) return false; if (info.pot != null) { jack.pot = info.pot; jack.last = info.lastJack || null; }
       MENU = !!info.menu;   /* the strip of every game shows only when the window came from the Games button / G, never at a table you walked to */
       const real = !!info.real && !!REAL_KEY[g]; if (real !== REAL) { RUNS.hilo = RUNS.mines = null; } REAL = real; bet = REAL ? betZc : betCash;
-      GAME = g; frame(ui.title, REAL ? `ZCoins or tickets · pays REAL ZCoins · ${ui.realSub || ui.sub}` : "Tickets in, tickets out"); phase(""); ui.build();
+      GAME = g; frame(ui.title, ui.sub); phase(""); ui.build();
       if (REAL) realInit(g, token); else if (ui.run) send({ t: "run", g, op: "state" });
       refresh(); return true;
     },

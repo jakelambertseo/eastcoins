@@ -1,4 +1,4 @@
-// GambaScape: what an hour of grinding is worth, in Cash and in ZCoins. Monte Carlo on the game's OWN rules file
+// EastScape: what an hour of grinding is worth, in Cash and in ZCoins. Monte Carlo on the game's OWN rules file
 // (values, bounties, finds, recipes, hit chances), with the server's timings copied in below.
 //   node tools/eastscape-grind-sim.mjs [hours-per-scenario=200]
 //
@@ -23,7 +23,7 @@ const stat = (xs) => { const s = [...xs].sort((a, b) => a - b), q = (p) => s[Mat
 
 function mine(level, ore) { const p = Math.min(0.9, 0.4 + level * 0.02), v = G.valueOf(ore); let t = 0, cash = 0; while (t < HOUR) { t += 1.8; if (rnd() < p) { cash += v; t += HOP; } } return cash; }
 function chop(level, log) { const p = Math.min(0.9, 0.35 + level * 0.02), v = G.valueOf(log); let t = 0, cash = 0; while (t < HOUR) { t += 2; if (rnd() < p) { cash += v; if (rnd() < 0.2) t += HOP; } } return cash; }
-const ZC = { n: 0 };   /* real ZCoins dropped in the row being simulated */ function fish(level, named) { const F = G.FISHING; let t = 0, cash = 0; while (t < HOUR) { t += F.ms / 1000; if (rnd() >= F.chance(level)) continue; const k = named || (level >= F.troutAt && rnd() < F.troutShare ? "trout" : "sardine"); cash += G.valueOf(k); if (rnd() < (G.ZDROP.fish[k] || 0)) ZC.n += rnd() < G.ZDROP.big ? G.ZDROP.bigN : 1; } return cash; }
+const ZC = { n: 0 };   /* real ZCoins dropped in the row being simulated */ function fish(level, spot) { const F = G.FISHING; let t = 0, cash = 0; while (t < HOUR) { t += F.ms / 1000; if (rnd() >= F.chance(level)) continue; const k = G.fishAt(spot, level, rnd()); cash += G.valueOf(k); if (rnd() < (G.ZDROP.fish[k] || 0)) ZC.n += rnd() < G.ZDROP.big ? G.ZDROP.bigN : 1; } return cash; }
 
 const fighter = (level) => { const c = G.freshChar(); c.xp.melee = G.XP_AT[level]; c.xp.hp = Math.max(c.xp.hp, G.XP_AT[Math.max(10, level)]); const t = [...G.TIERS].reverse().find((x) => x.gate <= level);
   if (t) { for (const s of ["helm", "body", "legs", "shield", "boots", "gloves"]) if (G.ITEMS[`${t.key}_${s}`]) c.eq[s] = `${t.key}_${s}`; c.eq.weapon = `${t.key}_sword`; } return c; };
@@ -52,15 +52,21 @@ const rows = [];
 const add = (who, job, fn) => { ZC.n = 0; const cash = [], extra = []; for (let i = 0; i < HOURS; i++) { const r = fn(); if (typeof r === "number") cash.push(r); else { cash.push(r.cash - r.food); extra.push(r); } }
   const s = stat(cash), D = G.DEX; rows.push({ who, job, "ZCoins dropped/hr": +(ZC.n / HOURS).toFixed(1), "tickets/hr": s.avg, "slow hr (p10)": s.p10, "good hr (p90)": s.p90, "best hr seen": s.best, "ZC at $100 (uncapped)": +(s.avg / D.rate).toFixed(1), "ZC/hr you can take": Math.min(D.capHour, Math.floor(s.avg / D.rate)), "minutes to fill the 25": s.avg ? Math.round(D.capHour * D.rate / s.avg * 60) : "-", ...(extra.length ? { "kills/hr": Math.round(extra.reduce((a, r) => a + r.kills, 0) / extra.length), "food $/hr": Math.round(extra.reduce((a, r) => a + r.food, 0) / extra.length) } : {}) }); };
 
-const yard = G.SCENES.workyard.mobs, gloam = G.SCENES.gloam.mobs, cloud = G.SCENES.cloud.mobs, count = (list, keep) => Object.entries(list.reduce((a, [m]) => (keep.includes(m) ? { ...a, [m]: (a[m] || 0) + 1 } : a), {}));
-add("new (lvl 1)", "fish the Yard's pond", () => fish(1)); add("new (lvl 1)", "fight chickens + cows", () => fight(1, count(yard, ["chicken", "cow"])));
-add("regular (lvl 12)", "fish the Yard's pond", () => fish(12)); add("regular (lvl 12)", "fight the Yard's west end", () => fight(12, count(yard, ["boar", "hornworm", "rotten"])));
-add("grinder (lvl 20)", "fish lantern pools", () => fish(20, "lanternfish")); add("grinder (lvl 20)", "fight the Gloam (no wraiths)", () => fight(20, count(gloam, ["highwayman", "moth", "gnasher"])));
-add("grinder (lvl 30)", "fish lantern pools", () => fish(30, "lanternfish")); add("grinder (lvl 30)", "fight the Gloam", () => fight(30, count(gloam, ["taxwraith", "moth", "gnasher"])));
-add("no-lifer (lvl 42)", "fish sky eels", () => fish(42, "skyeel")); add("no-lifer (lvl 42)", "fight Cloudreach", () => fight(42, count(cloud, ["understudy", "chandelier", "ghoul", "ram"])));
-add("no-lifer (lvl 55)", "fight Cloudreach + geese", () => fight(55, count(cloud, ["ram", "goose", "understudy", "chandelier"])));
-console.log(`GambaScape grind simulation: ${HOURS} simulated hours per row, rules v${G.VERSION}. $${G.DEX.rate} = 1 ZC, ${G.DEX.capHour} ZC an hour.\n`);
+/* v70: THE SIX BANDS. For every scene, at the level it opens and five levels on (when its second fish bites): an hour fishing its
+   water against an hour fighting everything in it (the fighter always takes the best-paying monster that is up). The last column
+   is the point: fishing is meant to pay two thirds to nine tenths of fighting at the same level. */
+const BANDS = [["workyard", "the Yard"], ["gloam", "the Gloam"], ["mire", "the Lantern Mire"], ["boneyard", "the Boneyard"], ["cloud", "Cloudreach"], ["thunderhead", "the Thunderhead"]];
+const all = (scene) => Object.entries(G.SCENES[scene].mobs.reduce((a, [m]) => ({ ...a, [m]: (a[m] || 0) + 1 }), {}));
+const spotOf = (scene) => G.SCENES[scene].build().objs.find((o) => o.t === "spot");
+const pair = [];
+for (const [scene, name] of BANDS) { const lo = G.BANDS[scene][0], spot = spotOf(scene);
+  for (const lvl of [lo, Math.max(lo + 5, spot.fish2lvl || lo + 5)]) { const fightable = all(scene).filter(([m]) => G.MOBS[m].lvl <= lvl + 6);   // nobody fights a monster far over their level
+    add(`level ${lvl}`, `FISH ${name}`, () => fish(lvl, spot)); const f = rows[rows.length - 1]["tickets/hr"];
+    add(`level ${lvl}`, `FIGHT ${name}`, () => fight(lvl, fightable.length ? fightable : all(scene).slice(0, 1))); const g = rows[rows.length - 1]["tickets/hr"];
+    pair.push({ scene: name, level: lvl, "fishing/hr": f, "fighting/hr": g, "fishing as % of fighting": Math.round((f / g) * 100) }); } }
+console.log(`EastScape grind simulation: ${HOURS} simulated hours per row, rules v${G.VERSION}. $${G.DEX.rate} = 1 ZC, ${G.DEX.capHour} ZC an hour.\n`);
 console.table(rows);
+console.log("\nFISHING AGAINST FIGHTING, band by band (the target is 67-90%):"); console.table(pair);
 
 // the free money everyone gets, once a day
 const P = G.PRIZE, tw = P.slices.reduce((a, s) => a + s.w, 0), wheel = P.slices.reduce((a, s) => a + (s.cash || G.valueOf(s.k) * (s.n || 1)) * s.w, 0) / tw;
