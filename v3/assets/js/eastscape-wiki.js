@@ -121,6 +121,16 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-19", title: "Six scenes, thirteen new monsters, eight new fish",
+    items: [
+      "THE WORLD OUT THE ARCH NOW RUNS IN TEN-LEVEL BANDS, one scene each, in a line west from the casino: the Yard (1-9), the Gloam (10-19), THE LANTERN MIRE (20-29), THE BONEYARD (30-39), Cloudreach (40-49) and THE THUNDERHEAD (50 and up). Walk anywhere you like. You can't START a fight until your Combat reaches the scene's level, and you can't fish its water until your Fishing does: the label over a monster or a pond tells you what it needs. Something already attacking you can always be fought back.",
+      "THIRTEEN NEW MONSTERS. The Gloam: Sulking Toadstool (10), Bone Idle (16). The Mire: Paper Twister (20), Card Counter (24), Loan Shark (26, comes for you). The Boneyard: The Stagehand (32), One-Eyed Usher (36, comes for you). Cloudreach: Brainstorm (40), Sea-Goat of the Upper Air (46). The Thunderhead: Storm Golem (52), Thunderwolf (58, comes for you), Hail Drake (62, comes for you), and THE HOUSE (70), a walking slot machine in the far corner. Four old faces are back too: the Angry Olive, the Goat in a Toga, the Sulking Revenant and the Angel of Minor Inconvenience.",
+      "EVERY SCENE HAS ABOUT TWO DOZEN MONSTERS OF FIVE KINDS, like the Yard, and the deeper the scene the more a kill pays. The last band pays noticeably more than Cloudreach.",
+      "TWO FISH TO EVERY WATER. The Yard's pond: sardine, and perch from Fishing 5. The Gloam's black pond: trout (10), catfish (15). The Mire's lake: lanternfish (20), mudskipper (25). The Boneyard's flooded crypt: bonefish (30), ghost carp (35). Cloudreach: sky eel (40), cloud ray (45). The sea under the Thunderhead: storm marlin (50), thunder squid (58). Every one heals when eaten and trades in at the Prize Counter. (Trout left the Yard: it's a Gloam fish now.)",
+      "DYING NOW COSTS A HOSPITAL BILL: a tenth of the tickets you're carrying (a twentieth in the Yard), capped by how deep you were: 250 in the Yard up to 6,000 in the Thunderhead. Nothing else is ever taken: not your gear, your bag, your ZCoins or your levels."
+    ]
+  },
+  {
     date: "2026-09-19", title: "Buffs work out the arch now",
     items: [
       "THE GAME IS CALLED EASTSCAPE AGAIN. Same game, same address, old name.",

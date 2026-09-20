@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 67;
+export const VERSION = 68;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -110,6 +110,22 @@ export const ITEMS = {
   onyx_ore: { name: "Onyx ore", icon: "⚫", ex: "Lightning hit this and it held on to some. Your hair stands up when you carry it." },
   willowlogs: { name: "Gloomwillow logs", icon: "🪵", ex: "Damp, dark and faintly glowing at the ends. They burn blue." },
   skyashlogs: { name: "Skyash logs", icon: "🪵", ex: "Light enough to float. Please don't let go of them." },
+  /* v68: two fish to a band. The first bites at the band's Fishing level, the second five levels on (spot.fish2). All heal as caught. */
+  perch: { name: "Perch", icon: "🐟", heal: 4, ex: "Stripey, bony, and proud of neither. From the Yard's pond, once you've got the knack." },
+  catfish: { name: "Catfish", icon: "🐟", heal: 7, ex: "Whiskers, mud, and an expression like it was expecting you. From the Gloam." },
+  mudskipper: { name: "Mudskipper", icon: "🐟", heal: 11, ex: "It walked most of the way to your hook. From the lake in the Lantern Mire." },
+  bonefish: { name: "Bonefish", icon: "🐟", heal: 12, ex: "Mostly bones, as advertised. From the Boneyard's flooded crypt." },
+  ghostcarp: { name: "Ghost carp", icon: "🐟", heal: 13, ex: "You can see your hand through it. It still tastes of carp. From the Boneyard." },
+  cloudray: { name: "Cloud ray", icon: "🐟", heal: 16, ex: "It glides through open sky like it owns the place. From Cloudreach." },
+  stormmarlin: { name: "Storm marlin", icon: "🐟", heal: 18, ex: "The sword on its nose hums before rain. From the sea under the Thunderhead." },
+  thundersquid: { name: "Thunder squid", icon: "🦑", heal: 20, ex: "Every sucker carries a small charge. Hold it by the head. From the Thunderhead." },
+  sporecap: { name: "Sulky sporecap", icon: "🍄", ex: "It came off the toadstool still frowning." },
+  markedcard: { name: "Marked card", icon: "🃏", ex: "The ace of spades, with a thumbnail crease in one corner. The Prize Counter takes them off the floor." },
+  sharktooth: { name: "Gold shark tooth", icon: "🦷", ex: "He had it capped. You have it now." },
+  flashlight: { name: "Usher's flashlight", icon: "🔦", ex: "It only ever points at people who are talking." },
+  stormjelly: { name: "Storm jelly", icon: "🫧", ex: "A wobbling lump of bottled weather. It tingles." },
+  staticfur: { name: "Static pelt", icon: "🧶", ex: "It stands on end whether you like it or not." },
+  hailshard: { name: "Hail shard", icon: "🧊", ex: "A scale of ice that refuses to melt. Cold enough to ache." },
   lanternfish: { name: "Lanternfish", icon: "🐟", heal: 9, ex: "It has its own little light. It keeps it on even now." },
   clanternfish: { name: "Cooked lanternfish", icon: "🐟", heal: 12, ex: "The light goes out when it's cooked. That's how you know." },
   skyeel: { name: "Sky eel", icon: "🐍", heal: 14, ex: "Caught from a cloud, out of the open sky. It is very surprised about it too." },
@@ -575,71 +591,127 @@ Object.assign(SCENES, {
      every stop (rock, wood, fish), worth more the further out you go, and gated by level so there is somewhere to
      be heading. No monsters on this line (2026-09-20): fighting is the other arch. */
   gloam: {
-    name: "The Gloam", ground: "gloam", exits: { e: "workyard", w: "cloud" }, tint: "rgba(8,30,48,.32)",
+    name: "The Gloam", ground: "gloam", exits: { e: "workyard", w: "mire" }, tint: "rgba(8,30,48,.32)",
     build() {
       const g = grid(), objs = [], keep = [];
       for (let x = 0; x < COLS; x++) g[13][x] = ",";
       for (let y = 13; y <= 18; y++) g[y][19] = ",";
-      // the black pond, fished from its north bank
+      // the black pond, fished from its north bank: trout from Fishing 10, catfish from 15
       for (let y = 20; y <= 23; y++) for (let x = 13; x <= 25; x++) g[y][x] = "~";
-      for (const x of [15, 17, 19, 21, 23]) objs.push({ t: "spot", x, y: 20, name: "Lantern pool", req: { skill: "fishing", lvl: 15 }, fish: "lanternfish", xp: 60, glow: "#7ad8ff", tease: "Little lights drift under the surface. They move away when you lean closer." });
+      for (const x of [15, 17, 19, 21, 23]) objs.push({ t: "spot", x, y: 20, name: "Black pond", req: { skill: "fishing", lvl: 10 }, fish: "trout", fish2: "catfish", fish2lvl: 15, xp: 50, xp2: 65, glow: "#7ad8ff", tease: "Something heavy turns over under the black water. Fishing 10, the sign says." });
       for (let x = 12; x <= 26; x++) keep.push([x, 19], [x, 18]);
       objs.push({ t: "fire", x: 21, y: 16, name: "Campfire" }); g[16][21] = "#";   // somewhere to stand
-      objs.push({ t: "sign", x: 3, y: 11, name: "West: Cloudreach. Bring level 30 and a head for heights." }); g[11][3] = "#";
-      objs.push({ t: "sign", x: 16, y: 15, name: "SOUTH-WEST: Tax Wraiths. They come for you on sight. So do the Bog Gnashers in the clearing to the north. Everything else here minds its own business." }); g[15][16] = "#";
+      objs.push({ t: "sign", x: 3, y: 11, name: "West: the Lantern Mire. It opens at Combat 20, and Fishing 20 for the lake." }); g[11][3] = "#";
+      objs.push({ t: "sign", x: 16, y: 15, name: "THE GLOAM: Combat 10 to 19. NORTH, in the clearing: Bog Gnashers. They come for you on sight. Everything else here minds its own business." }); g[15][16] = "#";
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 9);
       return { g, objs, blobs: [] };
     },
-    // highwaymen north-west and by the pond, moths north-east. The two that attack on sight are boxed in by their own reach:
-    // gnashers in the north clearing, Tax Wraiths in the far south-west (tools/eastscape-aggro-check.mjs)
-    mobs: [["highwayman", 8, 5], ["highwayman", 12, 8], ["highwayman", 5, 9], ["highwayman", 28, 17], ["highwayman", 30, 21], ["highwayman", 34, 18],
-      ["moth", 31, 7], ["moth", 35, 8], ["moth", 37, 4], ["moth", 30, 10], ["moth", 38, 21], ["moth", 36, 16],
-      ["gnasher", 21, 3], ["gnasher", 21, 5], ["gnasher", 21, 4], ["taxwraith", 4, 20], ["taxwraith", 6, 21], ["taxwraith", 5, 22]],
+    // toadstools by the way in (east), highwaymen north-west and by the pond, goats in the middle, the idle dead in the south-west.
+    // The gnashers attack on sight and are boxed in by their own reach, in the north clearing (tools/eastscape-aggro-check.mjs)
+    mobs: [["toadstool", 31, 7], ["toadstool", 35, 8], ["toadstool", 37, 4], ["toadstool", 30, 10], ["toadstool", 38, 21], ["toadstool", 36, 16],
+      ["highwayman", 8, 5], ["highwayman", 12, 8], ["highwayman", 5, 9], ["highwayman", 28, 17], ["highwayman", 30, 21], ["highwayman", 34, 18],
+      ["goat", 27, 5], ["goat", 29, 8], ["goat", 32, 17], ["goat", 34, 22],
+      ["boneidle", 4, 20], ["boneidle", 6, 21], ["boneidle", 5, 17], ["boneidle", 9, 19],
+      ["gnasher", 21, 3], ["gnasher", 21, 5], ["gnasher", 21, 4], ["gnasher", 20, 4]],
+    npcs: [], bots: []
+  },
+  /* THE LANTERN MIRE, 20-29 (v68). The Gloam's ground gone green, and a LAKE where the Gloam had a pond. */
+  mire: {
+    name: "The Lantern Mire", ground: "gloam", exits: { e: "gloam", w: "boneyard" }, tint: "rgba(14,52,22,.34)",
+    build() {
+      const g = grid(), objs = [], keep = [];
+      for (let x = 0; x < COLS; x++) g[13][x] = ",";
+      for (let y = 13; y <= 16; y++) g[y][24] = ",";
+      for (let y = 18; y <= 23; y++) for (let x = 14; x <= 33; x++) g[y][x] = "~";   // the lake: most of the south
+      for (const x of [16, 20, 24, 28, 32]) objs.push({ t: "spot", x, y: 18, name: "Lantern lake", req: { skill: "fishing", lvl: 20 }, fish: "lanternfish", fish2: "mudskipper", fish2lvl: 25, xp: 80, xp2: 95, glow: "#a8ffb0", tease: "Little lights drift under the surface. They move away when you lean close. Fishing 20." });
+      for (let x = 13; x <= 34; x++) keep.push([x, 17], [x, 16]);
+      objs.push({ t: "sign", x: 3, y: 11, name: "West: the Boneyard. It opens at Combat 30, and Fishing 30 for the flooded crypt." }); g[11][3] = "#";
+      objs.push({ t: "sign", x: 30, y: 15, name: "THE LANTERN MIRE: Combat 20 to 29. Two things here come for you on sight: the Tax Wraiths in the north clearing, and the Loan Sharks in the far south-west. Everything else waits to be asked." }); g[15][30] = "#";
+      for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
+      wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 9);
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["twister", 36, 5], ["twister", 39, 8], ["twister", 33, 9], ["twister", 38, 3], ["twister", 41, 6], ["twister", 35, 10],
+      ["moth", 37, 16], ["moth", 40, 18], ["moth", 38, 21], ["moth", 41, 22], ["moth", 36, 19], ["moth", 39, 15],
+      ["counter", 8, 5], ["counter", 11, 8], ["counter", 6, 9], ["counter", 13, 4], ["counter", 9, 10],
+      ["taxwraith", 21, 2], ["taxwraith", 22, 3], ["taxwraith", 20, 3], ["taxwraith", 21, 4],
+      ["shark", 3, 21], ["shark", 5, 22], ["shark", 4, 23]],
     npcs: [], bots: []
   },
   cloud: {
-    name: "Cloudreach", ground: "cloud", exits: { e: "gloam" },
+    name: "Cloudreach", ground: "cloud", exits: { e: "boneyard", w: "thunderhead" },
     build() {
       const g = grid(), objs = [], keep = [];
-      for (let x = 5; x < COLS; x++) g[13][x] = ",";
+      for (let x = 0; x < COLS; x++) g[13][x] = ",";
       for (let y = 13; y <= 17; y++) g[y][31] = ",";
-      // a hole in the cloud: the sky below, and eels in it, fished from its north side
+      // a hole in the cloud: the sky below, fished from its north side. Sky eels from Fishing 40, cloud rays from 45
       for (let y = 19; y <= 22; y++) for (let x = 27; x <= 36; x++) g[y][x] = "~";
-      for (const x of [28, 30, 32, 34, 36]) objs.push({ t: "spot", x, y: 19, name: "Hole in the cloud", req: { skill: "fishing", lvl: 30 }, fish: "skyeel", xp: 110, glow: "#bfe8ff", tease: "Long shapes swim through the open sky below. Your line isn't long enough yet." });
+      for (const x of [28, 30, 32, 34, 36]) objs.push({ t: "spot", x, y: 19, name: "Hole in the cloud", req: { skill: "fishing", lvl: 40 }, fish: "skyeel", fish2: "cloudray", fish2lvl: 45, xp: 140, xp2: 165, glow: "#bfe8ff", tease: "Long shapes swim through the open sky below. Fishing 40." });
       for (let x = 26; x <= 37; x++) keep.push([x, 18], [x, 17]);
-      objs.push({ t: "fire", x: 22, y: 10, name: "Cloud-fire" }); g[10][22] = "#";
-      objs.push({ t: "sign", x: 26, y: 14, name: "SOUTH-WEST: a Chandelier Spider. It comes for you on sight. The ghouls, the rams and the Understudy and the Thunder Geese wait to be asked." }); g[14][26] = "#";
-      for (let x = 5; x < COLS; x++) keep.push([x, 12], [x, 14]);
+      objs.push({ t: "fire", x: 24, y: 10, name: "Cloud-fire" }); g[10][24] = "#";
+      objs.push({ t: "sign", x: 20, y: 11, name: "Further west: the Thunderhead. It opens at Combat 50, and Fishing 50 for the sea underneath it. Nothing past it." }); g[11][20] = "#";   /* (not at the west edge: the revenants can reach that) */
+      objs.push({ t: "sign", x: 26, y: 15, name: "CLOUDREACH: Combat 40 to 49. Sulking Revenants in the far north-west and Angels of Minor Inconvenience in the far south-west come for you on sight. The rams, the Brainstorms and the Sea-Goats wait to be asked." }); g[15][26] = "#";
+      for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "water", s: "water", w: "water", e: "water" }, [...keepOf(this), ...keep], 10);
       return { g, objs, blobs: [] };
     },
-    // ghouls and the Understudy in the middle north, rams by the way in, Thunder Geese at the far west end; the Chandelier Spider
-    // (it attacks on sight) has the south-west middle to itself
-    mobs: [["ghoul", 17, 4], ["ghoul", 21, 6], ["ghoul", 26, 4], ["ghoul", 23, 9], ["understudy", 30, 8], ["ram", 39, 16], ["ram", 40, 19], ["ram", 38, 7], ["ram", 35, 5],
-      ["goose", 8, 5], ["goose", 11, 8], ["goose", 7, 9], ["chandelier", 17, 21]],
+    mobs: [["ram", 39, 16], ["ram", 40, 19], ["ram", 38, 7], ["ram", 35, 5], ["ram", 33, 9], ["ram", 41, 10],
+      ["brainstorm", 22, 6], ["brainstorm", 27, 4], ["brainstorm", 29, 8], ["brainstorm", 25, 8], ["brainstorm", 21, 17], ["brainstorm", 23, 20],
+      ["seagoat", 15, 17], ["seagoat", 18, 20], ["seagoat", 16, 9],
+      ["revenant", 8, 2], ["revenant", 10, 3], ["revenant", 7, 4], ["revenant", 11, 2],
+      ["angel", 8, 22], ["angel", 11, 22], ["angel", 6, 21], ["angel", 9, 23]],
+    npcs: [], bots: []
+  },
+  /* THE THUNDERHEAD, 50 and up (v68). The end of the road: Cloudreach's ground under a storm, and open SEA to the south-west. */
+  thunderhead: {
+    name: "The Thunderhead", ground: "cloud", exits: { e: "cloud" }, tint: "rgba(18,16,56,.42)",
+    build() {
+      const g = grid(), objs = [], keep = [];
+      for (let x = 12; x < COLS; x++) g[13][x] = ",";
+      for (let y = 13; y <= 16; y++) g[y][14] = ",";
+      for (let y = 18; y <= 23; y++) for (let x = 3; x <= 22; x++) g[y][x] = "~";   // the sea, seen through the floor of the storm
+      for (const x of [6, 10, 14, 18, 21]) objs.push({ t: "spot", x, y: 18, name: "The sea below", req: { skill: "fishing", lvl: 50 }, fish: "stormmarlin", fish2: "thundersquid", fish2lvl: 58, xp: 190, xp2: 230, glow: "#ffe27a", tease: "Far below, something with a sword for a nose cuts the water. Fishing 50." });
+      for (let x = 2; x <= 23; x++) keep.push([x, 17], [x, 16]);
+      objs.push({ t: "sign", x: 40, y: 11, name: "THE THUNDERHEAD: Combat 50 and up. The end of the road. Thunderwolves in the north and Hail Drakes in the far south-east come for you on sight. So does THE HOUSE, in the north-west corner, and the House always wins. Usually." }); g[11][40] = "#";
+      for (let x = 12; x < COLS; x++) keep.push([x, 12], [x, 14]);
+      wild(g, objs, this.exits, { n: "water", s: "water", w: "water", e: "water" }, [...keepOf(this), ...keep], 10);
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["goose", 38, 5], ["goose", 40, 8], ["goose", 36, 9], ["goose", 39, 17], ["goose", 41, 19], ["goose", 35, 17],
+      ["golem", 30, 5], ["golem", 33, 8], ["golem", 28, 9], ["golem", 31, 10], ["golem", 27, 17], ["golem", 30, 19],
+      ["wolf", 18, 2], ["wolf", 21, 3], ["wolf", 24, 2], ["wolf", 26, 4], ["wolf", 22, 4],
+      ["drake", 33, 22], ["drake", 36, 23], ["drake", 39, 22], ["drake", 41, 23],
+      ["house", 5, 4]],
     npcs: [], bots: []
   },
   /* THE THIRD FIGHT MAP, past the Rough. It wears the Wilderness's clothes (dark: true) but nobody can attack you here
      but the residents. Gnashers and moths by the gate, ghouls and Tax Wraiths in the middle, a Chandelier Spider and
      the Understudy at the far end. Several of them come for you on sight. */
   boneyard: {
-    name: "The Boneyard", wikiHide: true, dark: true, exits: { w: "rough" }, tint: "rgba(60,20,70,.2)",
+    name: "The Boneyard", dark: true, exits: { e: "mire", w: "cloud" }, tint: "rgba(60,20,70,.2)",
     build() {
       const g = grid(), objs = [], keep = [];
-      for (let x = 0; x <= 39; x++) g[13][x] = ",";
-      for (let y = 5; y <= 13; y++) g[y][16] = ","; for (let y = 13; y <= 21; y++) g[y][29] = ",";
-      objs.push({ t: "fire", x: 5, y: 10, name: "Campfire" }); g[10][5] = "#";
-      for (const [x, y] of [[9, 5], [11, 6], [10, 8], [20, 18], [22, 19], [21, 21], [33, 5], [35, 6], [34, 8], [25, 5], [13, 20], [37, 20]]) { objs.push({ t: "gravestone", x, y, name: "Gravestone" }); g[y][x] = "#"; }
+      for (let x = 0; x < COLS; x++) g[13][x] = ",";
+      for (let y = 13; y <= 17; y++) g[y][35] = ",";
+      // the flooded crypt, fished from its north side: bonefish from Fishing 30, ghost carp from 35
+      for (let y = 19; y <= 22; y++) for (let x = 31; x <= 40; x++) g[y][x] = "~";
+      for (const x of [32, 34, 36, 38, 40]) objs.push({ t: "spot", x, y: 19, name: "Flooded crypt", req: { skill: "fishing", lvl: 30 }, fish: "bonefish", fish2: "ghostcarp", fish2lvl: 35, xp: 110, xp2: 130, glow: "#d8c8ff", tease: "Pale shapes slide between the sunken headstones. Fishing 30." });
+      for (let x = 30; x <= 41; x++) keep.push([x, 18], [x, 17]);
+      for (const [x, y] of [[9, 5], [11, 6], [10, 8], [20, 18], [22, 19], [21, 21], [33, 5], [35, 6], [34, 8], [25, 5], [13, 20]]) { objs.push({ t: "gravestone", x, y, name: "Gravestone" }); g[y][x] = "#"; }
       for (const [x, y] of [[7, 19], [27, 9], [38, 11]]) { objs.push({ t: "skeleton", x, y, name: "Somebody who stayed" }); g[y][x] = "#"; }
-      for (const [x, y] of [[4, 4], [18, 3], [30, 22], [40, 4], [6, 22], [24, 22], [41, 22]]) { objs.push({ t: "deadtree", x, y, name: "Dead tree" }); g[y][x] = "#"; }
-      for (let x = 0; x <= 39; x++) keep.push([x, 12], [x, 14]);
-      wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "rocky" }, [...keepOf(this), ...keep], 33);
+      for (const [x, y] of [[4, 4], [18, 3], [40, 4], [24, 22]]) { objs.push({ t: "deadtree", x, y, name: "Dead tree" }); g[y][x] = "#"; }
+      objs.push({ t: "sign", x: 3, y: 11, name: "West: Cloudreach. It opens at Combat 40, and Fishing 40. Bring a head for heights." }); g[11][3] = "#";
+      objs.push({ t: "sign", x: 28, y: 15, name: "THE BONEYARD: Combat 30 to 39. Chandelier Spiders in the north, One-Eyed Ushers in the far south-west: both come for you on sight. The ghouls, the Stagehands and the Understudies wait for their cue." }); g[15][28] = "#";
+      for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
+      wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 33);
       return { g, objs, blobs: [] };
     },
-    mobs: [["gnasher", 8, 8], ["gnasher", 10, 18], ["gnasher", 13, 9], ["moth", 17, 8], ["moth", 19, 17], ["moth", 21, 6], ["moth", 15, 19],
-      ["ghoul", 24, 8], ["ghoul", 26, 18], ["ghoul", 28, 6], ["taxwraith", 31, 9], ["taxwraith", 33, 18], ["taxwraith", 35, 16],
-      ["chandelier", 38, 7], ["understudy", 38, 19]],
+    mobs: [["ghoul", 36, 7], ["ghoul", 39, 9], ["ghoul", 31, 9], ["ghoul", 37, 3], ["ghoul", 41, 7], ["ghoul", 30, 6],
+      ["stagehand", 8, 8], ["stagehand", 13, 9], ["stagehand", 6, 6], ["stagehand", 14, 5], ["stagehand", 16, 17], ["stagehand", 18, 20],
+      ["understudy", 24, 17], ["understudy", 26, 20], ["understudy", 27, 16], ["understudy", 23, 8],
+      ["chandelier", 20, 2], ["chandelier", 22, 3], ["chandelier", 21, 4],
+      ["usher", 4, 21], ["usher", 6, 22], ["usher", 8, 21], ["usher", 5, 23]],
     npcs: [], bots: []
   },
   // east of the Forum: the great road, a toll post, highwaymen, and a barricade where the road washed out
@@ -715,14 +787,14 @@ Object.assign(SCENES, {
       for (let y = 13; y <= 17; y++) g[y][20] = ",";
       // the pond, south: fished from its north bank. The one quiet job out here.
       for (let y = 19; y <= 22; y++) for (let x = 15; x <= 25; x++) g[y][x] = "~";
-      for (const x of [16, 18, 20, 22, 24]) objs.push({ t: "spot", x, y: 19, name: "Fishing spot" });
+      for (const x of [16, 18, 20, 22, 24]) objs.push({ t: "spot", x, y: 19, name: "Fishing spot", fish: "sardine", fish2: "perch", fish2lvl: 5, xp: 20, xp2: 30 });
       for (let x = 14; x <= 26; x++) keep.push([x, 18], [x, 17]);
       /* A BANK CHEST in the Yard (the owner, 2026-09-19): a `booth` in a chest's clothes, so it IS the bank, the same
          window and the same rules as Aurelia's counters in town (tickets still can't go in). Saves the walk. */
       objs.push({ t: "booth", art: "o_chest", x: 35, y: 16, name: "Bank chest" }); g[16][35] = "#";
       objs.push({ t: "sign", x: 27, y: 15, name: "GEAR, CHIPS AND PRIZES are all at the Prize Counter now: the big ruby in the middle of the casino. Bring your tickets." }); g[15][27] = "#";
       objs.push({ t: "sign", x: 41, y: 11, name: "THE YARD. Click a monster to fight it. Chickens by the gate; it gets meaner the further west you walk. Nothing here attacks first. The pond is for anyone who'd rather fish." }); g[11][41] = "#";
-      objs.push({ t: "sign", x: 3, y: 11, name: "West: the Gloam. Bigger monsters, bigger tickets, better fish. Combat 12 or so." }); g[11][3] = "#";
+      objs.push({ t: "sign", x: 3, y: 11, name: "West: the Gloam. It opens at Combat 10 for its monsters, and Fishing 10 for its pond. Bigger tickets, better fish." }); g[11][3] = "#";
       for (const [x, y] of [[36, 7], [29, 22], [17, 6], [7, 8]]) { objs.push({ t: "hay", x, y, name: "Hay bale" }); g[y][x] = "#"; }
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, [...keepOf(this), ...keep], 12);
@@ -731,7 +803,7 @@ Object.assign(SCENES, {
     // east to west, easy to hard: chickens at the gate, then cows, bad tomatoes, hornworms, and boars at the far end
     mobs: [["chicken", 38, 5], ["chicken", 41, 8], ["chicken", 36, 9], ["chicken", 39, 18], ["chicken", 41, 21], ["chicken", 36, 20],
       ["cow", 30, 4], ["cow", 33, 7], ["cow", 27, 6], ["cow", 30, 21], ["cow", 34, 22],
-      ["rotten", 21, 4], ["rotten", 24, 7], ["rotten", 19, 8], ["rotten", 22, 10],
+      ["rotten", 21, 4], ["rotten", 24, 7], ["rotten", 19, 8], ["rotten", 22, 10], ["olive", 16, 4], ["olive", 17, 10], ["olive", 25, 10],
       ["hornworm", 12, 5], ["hornworm", 15, 8], ["hornworm", 10, 9], ["hornworm", 11, 17],
       ["boar", 5, 5], ["boar", 8, 17], ["boar", 4, 19], ["boar", 11, 21], ["boar", 6, 22]],
     npcs: [],   // (Brutus sold gear here for a few hours on 2026-09-20; it is behind the Prize Counter now)
@@ -1234,6 +1306,21 @@ export const MOBS = {
   ram: { name: "Cumulus Ram", size: "m", lvl: 42, hp: 66, att: 29, def: 26, max: 7, speed: 2600, box: [14, 25], drops: [["bones", 1], ["tickets", [30, 90]], ["dragonstone_ore", 1, 0.15]] },
   angel: { name: "Angel of Minor Inconvenience", size: "m", lvl: 48, hp: 84, att: 34, def: 30, max: 8, speed: 2400, aggro: 4, box: [8, 25], drops: [["tickets", [60, 160]], ["dragonstone_ore", 1, 0.25]] },
   goose: { name: "Thunder Goose", size: "l", lvl: 55, hp: 110, att: 40, def: 36, max: 10, speed: 2800, box: [21, 35], drops: [["bones", 2], ["feather", [10, 30]], ["tickets", [100, 250]], ["onyx_ore", 1, 0.3]] },
+  /* v68 (2026-09-19): THE BANDS' NEW RESIDENTS. Stats follow the old curve by level (hp about 1.6 x level before the
+     halving below, att .73, def .63, max level/6); what a kill PAYS is measured, not guessed (BOUNTY, tools/eastscape-balance.mjs). */
+  toadstool: { name: "Sulking Toadstool", size: "s", lvl: 10, hp: 18, att: 7, def: 6, max: 2, speed: 2600, box: [6, 15], drops: [] },
+  boneidle: { name: "Bone Idle", size: "m", lvl: 16, hp: 27, att: 12, def: 10, max: 3, speed: 2600, box: [8, 30], drops: [] },
+  twister: { name: "Paper Twister", size: "s", lvl: 20, hp: 30, att: 15, def: 12, max: 4, speed: 2200, box: [7, 16], drops: [] },
+  counter: { name: "Card Counter", size: "m", lvl: 24, hp: 38, att: 18, def: 15, max: 4, speed: 2400, box: [8, 26], drops: [] },
+  shark: { name: "Loan Shark", size: "m", lvl: 26, hp: 42, att: 19, def: 16, max: 5, speed: 2400, aggro: 3, box: [12, 28], drops: [] },
+  stagehand: { name: "The Stagehand", size: "m", lvl: 32, hp: 50, att: 23, def: 20, max: 5, speed: 2400, box: [8, 28], drops: [] },
+  usher: { name: "One-Eyed Usher", size: "m", lvl: 36, hp: 56, att: 26, def: 23, max: 6, speed: 2400, aggro: 4, box: [8, 26], drops: [] },
+  brainstorm: { name: "Brainstorm", size: "s", lvl: 40, hp: 60, att: 29, def: 25, max: 7, speed: 2200, box: [7, 16], drops: [] },
+  seagoat: { name: "Sea-Goat of the Upper Air", size: "l", lvl: 46, hp: 78, att: 33, def: 29, max: 8, speed: 2800, box: [20, 36], drops: [] },
+  golem: { name: "Storm Golem", size: "l", lvl: 52, hp: 100, att: 38, def: 35, max: 9, speed: 3000, box: [20, 40], drops: [] },
+  wolf: { name: "Thunderwolf", size: "m", lvl: 58, hp: 104, att: 43, def: 36, max: 10, speed: 2200, aggro: 4, box: [10, 28], drops: [] },
+  drake: { name: "Hail Drake", size: "l", lvl: 62, hp: 124, att: 46, def: 40, max: 11, speed: 2800, aggro: 5, box: [22, 36], drops: [] },
+  house: { name: "The House", size: "xl", lvl: 70, hp: 170, att: 52, def: 46, max: 13, speed: 3000, aggro: 5, box: [26, 56], drops: [] },
   goat: { name: "Goat in a Toga", size: "m", lvl: 12, hp: 24, att: 9, def: 8, max: 3, speed: 2400, box: [7, 26], drops: [["manifesto", 1], ["bones", 1], ["toga", 1, 0.25]] }
 };
 
@@ -1277,7 +1364,21 @@ export const LOOT = {
   understudy: { item: ["diamond_ore", [1, 2]], rare: [["sharps_gloves", 0.025]] },
   chandelier: { item: ["cobweb", 1], rare: [["lantern", 0.03], ["angels_ring", 0.02], ["spiderboots", 0.01]] },
   ram:        { item: ["dragonstone_ore", 1], rare: [["grudge", 0.02], ["stake_loafers", 0.015]] },
-  // the closed roads' residents, kept to the same rule for when they reopen
+  // v68: the bands' new residents. One thing each; the buff gear is spread so every band past the Yard can drop some
+  toadstool:  { item: ["sporecap", 1], rare: [["bookies_amulet", 0.006]] },
+  boneidle:   { item: ["bones", [2, 4]], rare: [["mask", 0.05], ["sharps_gloves", 0.008]] },
+  twister:    { item: ["receipt", 1], rare: [["adjusters_visor", 0.008]] },
+  counter:    { item: ["markedcard", 1], rare: [["sharps_gloves", 0.015], ["monocle", 0.03]] },
+  shark:      { item: ["sharktooth", 1], rare: [["bookies_amulet", 0.015], ["menace", 0.01]] },
+  stagehand:  { item: ["cobweb", 1], rare: [["stake_loafers", 0.01]] },
+  usher:      { item: ["flashlight", 1], rare: [["lantern", 0.03], ["adjusters_visor", 0.015]] },
+  brainstorm: { item: ["stormjelly", 1], rare: [["angels_ring", 0.012]] },
+  seagoat:    { item: ["dragonstone_ore", [1, 2]], rare: [["stake_loafers", 0.02], ["grudge", 0.02]] },
+  golem:      { item: ["onyx_ore", 1], rare: [["bogplate", 0.03], ["gamblers_ring", 0.02]] },
+  wolf:       { item: ["staticfur", 1], rare: [["sharps_gloves", 0.03], ["angels_ring", 0.015]] },
+  drake:      { item: ["hailshard", 1], rare: [["stake_loafers", 0.03], ["spiderboots", 0.015]] },
+  house:      { item: ["onyx_ore", [1, 3]], rare: [["angels_ring", 0.04], ["bookies_amulet", 0.04], ["spiderboots", 0.02]] },
+  // once the closed roads' residents: placed again in v68 (olive in the Yard, goat in the Gloam, revenant and angel in Cloudreach)
   olive:      { item: ["olives", [2, 5]], rare: [["monocle", 0.1]] },
   goat:       { item: ["manifesto", 1], rare: [["toga", 0.25]] },
   revenant:   { item: ["dragonstone_ore", 1], rare: [["grudge", 0.04], ["menace", 0.03]] },
@@ -1530,13 +1631,18 @@ export const buffsOf = (c) => {
    your COMBAT level reaches its band, and you can't fish its water until your FISHING level does (the two are separate,
    so a fisher reaches deep water without ever swinging a sword). A monster that is already attacking you can always be
    fought back. Ore and trees will take the same gate when they return; oceans and lakes are just more water in a band.
-   INTERIM: Cloudreach holds everything from 30 up until the scenes for 20-29, 30-39, 40-49 and 50+ are built. */
-export const BANDS = { workyard: [1, 9], gloam: [10, 19], cloud: [30, 99] };
+   v68: all six are built. West from the casino: the Yard, the Gloam, the Lantern Mire, the Boneyard, Cloudreach, the Thunderhead. */
+export const BANDS = { workyard: [1, 9], gloam: [10, 19], mire: [20, 29], boneyard: [30, 39], cloud: [40, 49], thunderhead: [50, 99] };
+/* THE HOSPITAL BILL (the owner, 2026-09-19: "lets do #1"): dying out the arch costs a share of the tickets you are CARRYING, capped by
+   where you died, so the Yard stays forgiving. Nothing else is ever touched: gear, the bag, ZCoins, experience, the bank. The tickets go
+   nowhere: a sink. (Tickets can't be banked, so there is always something for the bill to take from.) */
+export const DEATH = { workyard: { share: 0.05, cap: 250 }, gloam: { share: 0.1, cap: 1000 }, mire: { share: 0.1, cap: 2000 }, boneyard: { share: 0.1, cap: 3500 }, cloud: { share: 0.1, cap: 5000 }, thunderhead: { share: 0.1, cap: 6000 } };
+export const deathBill = (c, scene) => { const d = DEATH[String(scene || "").split(":")[0]]; return d ? Math.min(d.cap, Math.floor(tixIn(c) * d.share)) : 0; };
 export const bandOf = (scene) => BANDS[String(scene || "").split(":")[0]] || null;
 /** Why this character can't fight / fish in this scene yet, or null if they can. kind: "fight" | "fish". */
 export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) return null; const skill = kind === "fish" ? "fishing" : "melee", need = b[0], have = lvlOf(c, skill);
   return have >= need ? null : { need, have, skill, text: `needs ${kind === "fish" ? "Fishing" : "Combat"} ${need}` }; };
-export const OPEN = new Set(["casino", "roulette", "fightpit", /* "highroller": closed for now (the owner, 2026-09-19) */ "forum", "bathhouse", "workyard", "gloam", "cloud"]);   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
+export const OPEN = new Set(["casino", "roulette", "fightpit", /* "highroller": closed for now (the owner, 2026-09-19) */ "forum", "bathhouse", "workyard", "gloam", "mire", "boneyard", "cloud", "thunderhead"]);   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
 export const OPEN_DAILY = new Set(["sardine", "lantern", "cows", "chickens", "rotten", "boar", "highwayman", "moths", "ghouls", "rams"]);   // kills and fish: that's the world now
 for (const k of Object.keys(SCENES)) if (!OPEN.has(k)) SCENES[k].wikiHide = true;   // closed areas stay out of the wiki
 
@@ -1562,7 +1668,7 @@ SLOTS AND DICE are the same deal (the slots JACKPOT is real ZCoins: three sevens
 PLAY: every kind of game has its own roped-off room, named on the carpet at its way in. SLOTS fill the north-west. WHEELS and COIN FLIP are below them. The CARD ROOM is by the bar. The DICE PIT and the INSTANT WINS machines (Plinko, Mines, Scratch-Off) are in the south-east. Roulette is through the door in the back wall. Bets come out of the tickets in your bag.
 
 BROKE? Go and win some tickets. It's quick.
-  OUT THE ARCH: the Yard, then the Gloam, then Cloudreach. CLICK A MONSTER to fight it. Every kill pays the same three ways: TICKETS, the monster's own drop, and a roll at something rare. The further out you walk, the bigger all three get.
+  OUT THE ARCH, six scenes in a line, each one ten levels harder: the Yard (1-9), the Gloam (10-19), the Lantern Mire (20-29), the Boneyard (30-39), Cloudreach (40-49) and the Thunderhead (50 and up). You can walk anywhere, but you can't START a fight until your Combat reaches that scene's level, or fish its water until your Fishing does. DYING costs a hospital bill: a tenth of the tickets you're carrying (a twentieth in the Yard), capped by how deep you were. Nothing else is ever taken. CLICK A MONSTER to fight it. Every kill pays the same three ways: TICKETS, the monster's own drop, and a roll at something rare. The further out you walk, the bigger all three get.
   RATHER NOT FIGHT? Every scene has a pond. Fishing is safe, it never runs out, and it's the only place lucky clovers turn up. A fish is food, too: click one to eat it.
   THE PRIZE COUNTER is the big ruby in the middle of this floor (the Cashier windows work too). It takes your drops and fish for more tickets, and sells gear for every level, drinks, dinners and Casino scrolls.
   REAL ZCOINS also turn up, rarely, on a kill or a catch. Bank them at the counter.
@@ -1763,6 +1869,8 @@ export const VALUE = {
   logs: 10, copper: 10, tin: 10, sardine: 10, trout: 18, wheat: 4, olives: 3,   // (fish: see FISHING)
   willowlogs: 15, emerald_ore: 15, lanternfish: 20, diamond_ore: 22,            // the Gloam
   skyashlogs: 28, dragonstone_ore: 30, skyeel: 40, onyx_ore: 40,                // Cloudreach
+  perch: 12, catfish: 22, mudskipper: 28, bonefish: 28, ghostcarp: 36, cloudray: 48, stormmarlin: 44, thundersquid: 52,   // v68: two fish a band (see the scenes' spots)
+  sporecap: 12, markedcard: 22, sharktooth: 26, flashlight: 30, stormjelly: 34, staticfur: 42, hailshard: 46,            // v68: what the new monsters leave
   receipt: 15, cobweb: 25,                                                      // the Boneyard's leavings
   chip_red: 250, chip_black: 1000, chip_gold: 5000,                             // fighting's windfalls
   chicken: 8, feather: 1, bones: 3, beef: 12, hide: 14, tomatoe: 5, husk: 10, pork: 16, tusk: 18, pit: 2, mask: 60, monocle: 40, manifesto: 25
@@ -1772,7 +1880,9 @@ for (const [k, v] of Object.entries(SHOP.buys)) if (!(k in VALUE) && !ITEMS[k]?.
    `ms`, and your chance of a bite grows with your Fishing level exactly as mining's did. It is tuned to pay between two thirds and nine tenths of
    what fighting does at the same level (tools/eastscape-grind-sim.mjs): safe money is a little less money. It's also the
    only place lucky clovers come from now, and a fish is food as it comes out of the water. */
-export const FISHING = { ms: 2600, chance: (lvl) => Math.min(0.9, 0.4 + lvl * 0.02), troutAt: 10, troutShare: 0.35 };
+export const FISHING = { ms: 2600, chance: (lvl) => Math.min(0.9, 0.4 + lvl * 0.02), troutAt: 10, troutShare: 0.35, secondShare: 0.35 };
+/** What a cast at this spot lands, for a fisher of this level: the spot's fish, or (secondShare of the time, once you are fish2lvl) its second one. r: a roll 0..1 */
+export const fishAt = (ob, lvl, r) => (ob?.fish2 && lvl >= (ob.fish2lvl || 0) && r < FISHING.secondShare ? ob.fish2 : ob?.fish || "sardine");
 export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
 { // RAW[k]: the raw materials in one of a thing, and how many times it has been worked. Bars before the gear made of them.
   const RAW = Object.fromEntries(Object.entries(VALUE).map(([k, v]) => [k, { v, steps: 0 }]));
@@ -1791,7 +1901,11 @@ export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
    time (the owner: "mostly match, with fighting winning slightly"). Before this a hornworm paid a fifth of what the
    rock next to it did. 88% of it is the monster's own drops plus tickets it carries (a "tickets" drop fills the gap); the
    rest arrives as FINDS, below, which is why a bigger monster turns up more chips. */
-export const BOUNTY = { chicken: 18, cow: 28, rotten: 34, olive: 35, hornworm: 45, boar: 47, highwayman: 40, goat: 42, gnasher: 80, moth: 74, taxwraith: 142, ghoul: 177, chandelier: 185, understudy: 207, ram: 255, angel: 287, revenant: 289, goose: 316 };   // (re-measured 2026-09-20 for half-length fights: a kill pays less, and there are twice as many)
+export const BOUNTY = { chicken: 18, cow: 28, rotten: 34, olive: 35, hornworm: 45, boar: 47, highwayman: 40, goat: 42, gnasher: 80, moth: 74, taxwraith: 142, ghoul: 177, chandelier: 185, understudy: 207, ram: 255, angel: 287, revenant: 289, goose: 365,
+  toadstool: 36, boneidle: 79, twister: 73, counter: 88, shark: 143, stagehand: 185, usher: 192, brainstorm: 247, seagoat: 283,
+  /* THE 50+ BAND pays MORE than the tool asks: its reference wage goes flat at level 40 (there was no skilling past onyx), so left alone a level-70
+     kill would pay a level-42 minute. These are the tool's numbers times 1 + 1.2% a level past 42, so the last band is worth reaching. The goose moved with them. */
+  golem: 342, wolf: 360, drake: 414, house: 555 };   // (v68: measured with tools/eastscape-balance.mjs, like the rest)   // (re-measured 2026-09-20 for half-length fights: a kill pays less, and there are twice as many)
 for (const [t, want] of Object.entries(BOUNTY)) {
   const m = MOBS[t]; m.drops = m.drops.filter(([k]) => k !== "tickets");
   const other = m.drops.reduce((a, [k, n, p]) => a + (VALUE[k] ?? 0) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0), gap = Math.round(want * 0.88 - other);
@@ -1808,7 +1922,7 @@ export const findChance = (mob, [, share, worth]) => Math.min(0.25, share * (BOU
    the drop rate here can never out-run the cap. A kill's chance grows a little with the monster's level; a catch's with
    the water. One drop in twenty is a handful (`bigN`) instead of one. At these numbers an hour of fighting turns up
    about 2 to 5 ZCoins and an hour of fishing 1.5 to 5; tools/eastscape-grind-sim.mjs prints the measured figure. */
-export const ZDROP = { kill: (lvl) => 0.006 + lvl * 0.0002, fish: { sardine: 0.0025, trout: 0.0025, lanternfish: 0.003, skyeel: 0.0033 }, big: 0.05, bigN: 5 };
+export const ZDROP = { kill: (lvl) => 0.006 + lvl * 0.0002, fish: { sardine: 0.0025, perch: 0.0025, trout: 0.0025, catfish: 0.0027, lanternfish: 0.003, mudskipper: 0.003, bonefish: 0.0031, ghostcarp: 0.0032, skyeel: 0.0033, cloudray: 0.0034, stormmarlin: 0.0035, thundersquid: 0.0036 }, big: 0.05, bigN: 5 };
 /** A monster's whole rare line: its own named pieces, then the casino finds, each with its chance a kill. ONE roll decides. */
 export const raresOf = (mob) => [...(BOUNTY[mob] ? [["zcoin", ZDROP.kill(MOBS[mob].lvl)]] : []), ...(MOBS[mob]?.rare || []), ...(BOUNTY[mob] ? FINDS.map((f) => [f[0], findChance(mob, f)]) : [])];
 export const rollRare = (mob, r, fx) => { for (const [k, p0] of raresOf(mob)) { const p = p0 * (1 + (k === "zcoin" ? fx?.zdrop || 0 : fx?.rare || 0)); if (r < p) return k; r -= p; } return null; };   /* fx: fxOf(character) */
