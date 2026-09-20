@@ -77,9 +77,9 @@ const CART="/v3/assets/img/glad/flat/casino/",CV=1;const SUITS=["♠","♥","♦
 .cz-reel.stop .cz-strip{animation:czstop .28s cubic-bezier(.3,1.5,.5,1)}@keyframes czstop{from{transform:translateY(-60px)}}
 .cz-reel.hit{box-shadow:0 0 0 3px var(--gold),0 0 22px rgba(232,191,53,.6)}
 /* wheel */
-.cz-wheelbox{position:relative;width:230px;height:230px;margin-top:20px}.cz-wheel{width:100%;height:100%;border-radius:50%;box-shadow:0 0 0 6px #c8963a,0 0 0 10px #3a2410,0 14px 34px rgba(0,0,0,.6)}
-.cz-hub{position:absolute;left:50%;top:50%;width:38px;height:38px;margin:-19px;border-radius:50%;background:radial-gradient(#ffe27a,#c8963a);box-shadow:0 0 0 4px #3a2410}
-.cz-pin{position:absolute;left:50%;top:-16px;margin-left:-11px;border:11px solid transparent;border-top:20px solid #ffe27a;filter:drop-shadow(0 2px 0 #3a2410)}
+.cz-wheelbox{position:relative;width:230px;height:230px;margin-top:20px}.cz-wheel{position:absolute;inset:11.75%;border-radius:50%;filter:drop-shadow(0 10px 14px rgba(0,0,0,.45))}.cz-wheel::after{content:"";position:absolute;inset:-15.4%;background:url(/v3/assets/img/glad/flat/casino/wheel_frame.png?v=1) center/100% 100% no-repeat;image-rendering:pixelated}
+.cz-hub{display:none}
+.cz-pin{position:absolute;left:50%;top:-26px;width:44px;height:74px;margin-left:-22px;background:url(/v3/assets/img/glad/flat/casino/wheel_pin.png?v=1) center/100% 100% no-repeat;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(0,0,0,.35));z-index:2}
 /* cards */
 .cz-hl{display:flex;flex-direction:column;align-items:center;gap:10px}.cz-trail{display:flex;gap:5px;min-height:46px;flex-wrap:wrap;justify-content:center}
 .cz-cardx{display:grid;place-items:center;align-content:center;border-radius:12px;background:#f7f2e8;color:#1a1405;font:800 42px var(--display);box-shadow:0 8px 24px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.08);width:118px;height:162px;line-height:1}
