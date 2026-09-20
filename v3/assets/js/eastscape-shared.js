@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 63;
+export const VERSION = 64;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -785,6 +785,11 @@ Object.assign(SCENES, {
      fight is pure chance (FIGHTS, below); what you watch is the server's script of it. The pit itself is one big
      object (`fightring`) you click to bet; the floor round it is where the crowd stands. */
   fightpit: {
+    /* realRound (v64): this room's game is one of eastcoin.vip's SHARED ROUNDS (functions/api/casino/_engine.js GAMES.pit /
+       GAMES.roul), for ZCoins or tickets. The PAGE reads the site's round and builds the very view the ring, the wheel
+       and both windows already draw from (eastscape-casino.js, "SHARED ROUNDS"); the game server runs no rounds of its
+       own in a room that has this, takes no bets there, and never touches a ZCoin. */
+    realRound: "pit",
     name: "The Fight Pit", interior: true, floor: "wood", wallH: 34, room: [9, 5, 34, 20], exitTo: { scene: "casino", x: 10, y: 5 }, entry: { x: 21, y: 20 },
     pit: { x: 15, y: 9, w: 14, h: 7 },
     wall: [{ t: "banner", x: 10 }, { t: "lamp", x: 13 }, { t: "lamp", x: 17.5 }, { t: "lamp", x: 26 }, { t: "lamp", x: 30.5 }, { t: "banner", x: 33.5 }],
@@ -1001,6 +1006,7 @@ Object.assign(SCENES, {
   },
   // through the curtains at the back of the Casino: one big table everyone plays at once
   roulette: {
+    realRound: "roul",
     name: "The Roulette Room", interior: true, floor: "casino", carpet: "t_roulette", room: [14, 8, 29, 17], exitTo: { scene: "casino", x: 21, y: 5 }, entry: { x: 21, y: 17 },
     wall: [{ t: "banner", x: 15 }, { t: "lamp", x: 17.5 }, { t: "lamp", x: 21.5 }, { t: "lamp", x: 25.5 }, { t: "banner", x: 28.5 }],
     build() {
@@ -1525,7 +1531,7 @@ export const HOWTO = `GambaScape is a casino. You'll spend most of your time rig
 
 REAL ZCOINS: Coin Flip, the Wheels, Higher or Lower, Mines, Plinko, Scratch-Off, Slots and Dice on this floor are eastcoin.vip's own games, for REAL ZCoins, with the site's rules: 20 a bet, ten plays an hour a game, 400 an hour out. Click one (or the Games button, top left) and it opens. Hit a limit? That's what the arch is for.
 TICKETS OR ZCOINS: every one of those tables takes either. Pick "ZCoins" and you bet your own; pick "Tickets" and 1,000 tickets stand in for each ZCoin. Either way a win is paid in REAL ZCoins. Ticket bets have an allowance of 50 ZCoins' worth an hour.
-SLOTS AND DICE are the same deal (the slots JACKPOT is real ZCoins: three sevens wins it). TICKETS ONLY, for now: roulette upstairs and the Fight Pit take tickets and pay tickets. (The High Roller Room is closed.)
+SLOTS AND DICE are the same deal (the slots JACKPOT is real ZCoins: three sevens wins it). So are ROULETTE upstairs (one spot a spin, a spin a minute) and THE FIGHT PIT (one side a fight, a fight every minute and a half): everyone in the room is on the same spin and the same fight. (The High Roller Room is closed.)
 
 PLAY: every kind of game has its own roped-off room, named on the carpet at its way in. SLOTS fill the north-west. WHEELS and COIN FLIP are below them. The CARD ROOM is by the bar. The DICE PIT and the INSTANT WINS machines (Plinko, Mines, Scratch-Off) are in the south-east. Roulette is through the door in the back wall. Bets come out of the tickets in your bag.
 

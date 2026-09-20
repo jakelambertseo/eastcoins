@@ -221,7 +221,8 @@ export function createCasino(env) {
     const body = $("gameBody"); body.replaceChildren();
     const grid = el("div", "cz-grid"), stage = el("section", "cz-stage"), side = el("div", "cz-side");
     R.phase = el("div", "cz-phase"); R.board = el("div", "cz-board"); R.mult = el("div", "cz-mult"); R.bet = el("div", "cz-bet"); R.pop = el("div", "cz-pop");
-    if (REAL && REAL_KEY[GAME]) { const tabs = el("div", "cz-realtabs", Object.entries(REAL_KEY).map(([g, k]) => `<button type="button" data-g="${g}" aria-pressed="${g === GAME}">${esc(UI[g].title)}</button>`).join("")); tabs.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { if (b.dataset.g !== GAME) api.open(b.dataset.g, { real: true }); })); body.append(tabs);
+    if (REAL && REAL_KEY[GAME]) { const tabs = el("div", "cz-realtabs", Object.entries(REAL_KEY).map(([g, k]) => `<button type="button" data-g="${g}" aria-pressed="${g === GAME}">${esc(UI[g].title)}</button>`).join("")); tabs.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { if (b.dataset.g !== GAME) api.open(b.dataset.g, { real: true }); })); body.append(tabs); }
+    if (REAL && GAME !== "russian") {
       const cur = el("div", "cz-realtabs cz-cur"); R.curZ = el("button", "", ""); R.curT = el("button", "", ""); R.curZ.type = R.curT.type = "button"; cur.append(el("span", "cz-curl", "Bet with"), R.curZ, R.curT, el("span", "cz-curl", "either way, a win is paid in real ZCoins"));
       const pick = (v) => { if (busy) return; TIX = v;   /* (a run already going keeps the stake it started with: this only decides the NEXT bet) */ try { localStorage.setItem("gs_real_cur", v ? "tix" : "zc"); } catch (x) { /* fine */ } SFX.play("ui_click"); refresh(); };
       R.curZ.addEventListener("click", () => pick(false)); R.curT.addEventListener("click", () => pick(true)); body.append(cur); }
@@ -474,7 +475,7 @@ export function createCasino(env) {
     catch (e) { return { ok: false, message: "Couldn't reach the table. Check your connection and try again." }; }
   }
   function realRules() {
-    const k = REAL_KEY[GAME], me = ZC.me, left = me ? Math.max(0, (me.playsCap ?? 10) - (me.played?.[k] | 0)) : null, L = ZC.last;
+    const k = REAL_KEY[GAME] || (GAME === "fight" ? "pit" : GAME), me = ZC.me, left = me ? Math.max(0, (me.playsCap ?? 10) - (me.played?.[k] | 0)) : null, L = ZC.last;
     return `<b>${TIX ? `Tickets in, real ZCoins out.</b> ${G.DEX.rate.toLocaleString()} tickets stand in for each ZCoin (${G.DEX.capHour} ZCoins' worth of ticket bets an hour). Same game,` : "Real ZCoins.</b>"} eastcoin.vip's own game and rules: ${REAL_LIM.max} ZC a bet, ten plays an hour at each game, ${me?.hourCap ?? 400} ZC an hour out.`
       + (me ? ` <b>${left} of ${me.playsCap ?? 10}</b> plays left here this hour · ${me.hourNet >= 0 ? "+" : "−"}${Math.abs(me.hourNet | 0)} of ${me.hourCap} this hour.` : "")
       + (L && L.g === GAME && L.seed ? ` <a href="/?view=verify&game=${k}&seed=${encodeURIComponent(L.seed)}${L.hash ? `&hash=${encodeURIComponent(L.hash)}` : ""}${L.mines ? `&mines=${L.mines}` : ""}${L.target ? `&target=${L.target}` : ""}" target="_blank" rel="noopener">Check the last one's seed →</a>` : "")
@@ -484,7 +485,7 @@ export function createCasino(env) {
     busy = false; if (t !== token || GAME !== g) return; UI[g].idle?.(); phase(r.message || "That didn't go through. Nothing was charged.", "bad");
     note(["RATE_LIMIT", "WIN_CAP", "INSUFFICIENT_FUNDS"].includes(r.code) ? REAL_NUDGE : ""); SFX.play("ui_error"); refresh();
   }
-  const played = (g) => { if (ZC.me) { ZC.me.played ||= {}; ZC.me.played[REAL_KEY[g]] = (ZC.me.played[REAL_KEY[g]] | 0) + 1; } };
+  const played = (g) => { const k = REAL_KEY[g] || g; if (ZC.me) { ZC.me.played ||= {}; ZC.me.played[k] = (ZC.me.played[k] | 0) + 1; } };
   const hourNet = (d) => { if (ZC.me) ZC.me.hourNet = (ZC.me.hourNet | 0) + d; };
   async function realInit(g, t) {
     const k = REAL_KEY[g], state = ask(k === "flip" ? "/api/coin/state" : `/api/casino/${k}/state`), mine = ask("/api/casino/me");
@@ -571,7 +572,7 @@ export function createCasino(env) {
   let fightSide = 0, fightTimer = 0, FV = null;
   const MART = "/v3/assets/img/glad/flat/";
   function fight(v, opening) {
-    FV = v; if (GAME !== "fight" || opening) { GAME = "fight"; frame("The Fight Pit", "Two go in. Pick one. It's all luck."); sideCards("Money down", "this fight"); R.note = el("p", "cz-note"); }
+    FV = v; if (GAME !== "fight" || opening) { if (REAL !== !!v.real) { REAL = !!v.real; bet = REAL ? betZc : betCash; } GAME = "fight"; frame("The Fight Pit", "Two go in. Pick one. It's all luck."); sideCards("Money down", "this fight"); R.note = el("p", "cz-note"); }
     const names = v.f.map((f) => G.MOBS[f.t].name), mine = v.bets.filter((b) => b.me), myAmt = mine.reduce((a, b) => a + b.amt, 0), mySide = mine[0]?.side, betting = v.phase === "bet";
     if (mySide != null) fightSide = mySide;
     const pot = [0, 1].map((i) => v.bets.filter((b) => b.side === i).reduce((a, b) => a + b.amt, 0));
@@ -581,14 +582,17 @@ export function createCasino(env) {
     R.board.querySelectorAll("[data-side]").forEach((b) => b.addEventListener("click", () => { fightSide = +b.dataset.side; SFX.play("ui_click"); fight(FV); }));
     R.bet.replaceChildren();
     if (betting) {
-      R.lock = lockBtn(); R.lock.addEventListener("click", () => { if (!broke()) { send({ t: "fight", op: "bet", side: fightSide, amt: bet }); SFX.play("chip"); } });
-      R.bet.append(stakeRow(), R.lock); if (myAmt) { const back = lockBtn("alt"); back.textContent = `Take my ${money(myAmt)} back`; back.style.height = "40px"; back.addEventListener("click", () => send({ t: "fight", op: "clear" })); R.bet.append(back); }
-      R.lock.textContent = `${myAmt ? "Add" : "Bet"} ${money(bet)} on ${names[fightSide]} · pays ${v.pays[fightSide]}×`;
+      R.lock = lockBtn(); R.lock.addEventListener("click", async () => { if (broke()) return; SFX.play("chip");
+        if (!v.real) return send({ t: "fight", op: "bet", side: fightSide, amt: bet });
+        if (myAmt) return note("One side a fight, one bet a fight. You're on this one already.");
+        R.lock.disabled = true; const r = await roundBet("pit", fightSide ? "b" : "a", bet); if (r && !r.ok) { note(r.message); SFX.play("ui_error"); R.lock.disabled = false; } });
+      R.bet.append(stakeRow(), R.lock); if (myAmt && !v.real) { const back = lockBtn("alt"); back.textContent = `Take my ${money(myAmt)} back`; back.style.height = "40px"; back.addEventListener("click", () => send({ t: "fight", op: "clear" })); R.bet.append(back); }
+      R.lock.textContent = v.real ? (myAmt ? `You're on ${names[mySide]}` : `Bet ${TIX ? `${tixCost(bet).toLocaleString()} tickets` : money(bet)} on ${names[fightSide]} · pays about ${v.pays[fightSide]}×`) : `${myAmt ? "Add" : "Bet"} ${money(bet)} on ${names[fightSide]} · pays ${v.pays[fightSide]}×`; if (v.real && myAmt) R.lock.disabled = true;
     }
     R.bet.append(R.note);
-    note(betting ? (myAmt ? `You have ${money(myAmt)} on ${names[mySide]}. If it wins you're paid ${money(Math.floor(myAmt * v.pays[mySide]))}.` : `Up to ${money(G.maxBetOf(env.me()))} a fight. One side only.`) : v.phase === "fight" ? (myAmt ? `${money(myAmt)} riding on ${names[mySide]}.` : "No money on this one. The next pair is out in a moment.") : "");
+    note(betting ? (myAmt ? `You have ${money(myAmt)} on ${names[mySide]}. If it wins you're paid ${money(Math.floor(myAmt * v.pays[mySide]))}.` : v.real ? "1 to 20 ZCoins, or tickets at 1,000 a ZCoin. One side, one bet a fight. Everyone in the room is on the same fight, and a win pays real ZCoins." : `Up to ${money(G.maxBetOf(env.me()))} a fight. One side only.`) : v.phase === "fight" ? (myAmt ? `${money(myAmt)} riding on ${names[mySide]}.` : "No money on this one. The next pair is out in a moment.") : "");
     R.pays.innerHTML = `<div class="cz-betlist">${v.bets.length ? v.bets.map((b) => `<div class="${b.me ? "me" : ""}"><span>${esc(b.me ? "You" : b.name)} · ${esc(names[b.side])}</span><strong>${money(b.amt)}</strong></div>`).join("") : `<div><span>Nobody yet. Be the first.</span></div>`}</div>${v.hist.length ? `<h2 style="margin:10px 0 6px">Lately<small>who won, at what price</small></h2><div class="cz-recent">${v.hist.map((h) => `<span class="${h.mult >= 2 ? "w" : ""}">${esc(G.MOBS[h.t].name)} ${h.mult}×</span>`).join("")}</div>` : ""}`;
-    if (v.phase === "result" && FV._paid !== v.round) { FV._paid = v.round; const w = v.last?.wins?.find((x) => x.name === env.you()?.name); if (myLast.round === v.round && myLast.amt) { record("fight", (w ? w.payout : 0) - myLast.amt); if (w) { pop(`+${money(w.payout - myLast.amt)}`, `${names[v.winner]} wins`); SFX.play(w.payout > myLast.amt * 3 ? "win_big" : "win_small"); } else SFX.play("lose"); } }
+    if (v.phase === "result" && fightPaid !== v.round) { fightPaid = v.round;   /* (kept outside the view: a shared round sends a fresh view every second) */ const w = v.last?.wins?.find((x) => x.name === env.you()?.name); if (myLast.round === v.round && myLast.amt) { record("fight", (w ? w.payout : 0) - myLast.amt); if (w) { pop(`+${money(w.payout - myLast.amt)}`, `${names[v.winner]} wins`); SFX.play(w.payout > myLast.amt * 3 ? "win_big" : "win_small"); } else SFX.play("lose"); } }
     if (myAmt) myLast = { round: v.round, amt: myAmt };
     clearInterval(fightTimer); const tick = () => {
       if (GAME !== "fight" || $("gameWin").hidden) return clearInterval(fightTimer);
@@ -599,7 +603,75 @@ export function createCasino(env) {
     }; tick(); fightTimer = setInterval(tick, 200);
     refresh();
   }
-  let myLast = { round: 0, amt: 0 };
+  let myLast = { round: 0, amt: 0 }, fightPaid = 0;
+
+  /* ---------------------------------------------------------- SHARED ROUNDS (v64): classic roulette ("roul") and the Fight Pit ("pit")
+     Both are eastcoin.vip shared-round games (functions/api/casino/_engine.js, hidden from the site's floor). This reads
+     /api/casino/<key>/state and turns it into the SAME view object the game server used to send, so the ring, the wheel
+     and both windows draw as they always did. The site decides everything; the blows in the pit are written here to fit
+     the winner, from the round number, so everybody in the room watches the same fight.
+     POLLING, per player, only while they are IN that room (or the tab is showing, unless they have a bet riding): once
+     when a round opens (the card), every RW_BETS ms while bets are open (who else is in), and from the close until the
+     result comes back. About ten requests a round. A bet is ONE a round (the engine's rule). */
+  const RW = { roul: { cycle: 60000, bet: 40000, show: 12000 }, pit: { cycle: 90000, bet: 40000, show: 36000 } }, RW_BETS = 6000, rw = {};
+  const rwNow = (w) => Date.now() + (w.off || 0), myName = () => env.you()?.name || env.me()?.name || "You";
+  const rwBets = (st, key) => (st?.bets || []).map((b) => { const me = String(b.user?.id) === ZC.uid, name = me ? myName() : b.user?.displayName || b.user?.login || "?"; return key === "pit" ? { name, side: b.pick === "b" ? 1 : 0, amt: b.wager, me, payout: b.payout || 0 } : { name, kind: /^n\d+$/.test(b.pick) ? "num" : b.pick, pick: /^n\d+$/.test(b.pick) ? +b.pick.slice(1) : null, amt: b.wager, me, payout: b.payout || 0 }; });
+  function rwScript(no, winner) {   // the game server's own way of writing a fight to fit its winner, on a generator seeded by the round so every page writes the same one
+    let a = (no * 2654435761) >>> 0; const rnd = () => { a = (a + 0x6d2b79f5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const loser = 1 - winner, n = 22 + Math.floor(rnd() * 6), hp = [100, 100], keep = 6 + Math.floor(rnd() * 50), script = [], ms = RW.pit.show - 2000; let lossLeft = 100, winLeft = 100 - keep;
+    for (let i = 0; i < n; i++) { const last = i === n - 1, early = i < n * 0.6, by = last ? winner : (rnd() < (early ? 0.45 : 0.6) ? winner : loser), on = 1 - by, miss = !last && rnd() < 0.25;
+      let dmg = miss ? 0 : on === loser ? (last ? lossLeft : Math.min(lossLeft - 1, Math.round(lossLeft / (n - i) * (0.5 + rnd() * 1.4)))) : Math.min(winLeft, Math.round(winLeft / Math.max(1, n - i - 1) * (0.5 + rnd() * 1.6)));
+      dmg = Math.max(0, dmg); if (on === loser) lossLeft -= dmg; else winLeft -= dmg; hp[on] -= dmg; script.push({ at: 900 + Math.round(i * (ms - 3200) / (n - 1)), by, dmg, hp: [...hp] }); }
+    return script;
+  }
+  function rwView(key) {
+    const w = rw[key], st = w?.st; if (!st) return null; const C = RW[key], now = rwNow(w), no = Math.floor(now / C.cycle), tIn = now - no * C.cycle;
+    const cur = st.round?.no === no ? st : null, res = cur?.round?.result || null, bets = cur ? rwBets(cur, key) : [];
+    // what the last finished round was: this one once it has a result, else the one before
+    const done = res ? { no, result: res, bets, card: cur.card } : st.last?.result ? { no: st.last.no, result: st.last.result, bets: rwBets({ bets: st.last.bets }, key), card: st.last.card } : null;
+    if (done && w.seen !== done.no) { w.seen = done.no; w.hist = [key === "pit" ? { t: done.result.t, mult: Math.round((done.card?.price?.[done.result.winner] || 2) * 100) / 100 } : done.result.n, ...(w.hist || [])].slice(0, 14);
+      const mine = done.bets.find((b) => b.me); if (mine && w.paid !== done.no) { w.paid = done.no; if (mine.payout) ZC.bal = (ZC.bal ?? 0) + mine.payout; hourNet((mine.payout || 0) - mine.amt); } }
+    const wins = (done?.bets || []).filter((b) => b.payout > 0).map((b) => ({ name: b.name, payout: b.payout, label: key === "pit" ? "" : G.rouletteLabel(b.kind, b.pick) }));
+    if (key === "roul") {
+      const last = done ? { n: done.result.n, col: done.result.color, wins } : null;
+      if (tIn < C.bet) return { type: "roul", real: true, round: no, phase: "bet", left: C.bet - tIn, hold: 0, hist: w.hist || [], last, result: null, bets };
+      if (tIn < C.bet + C.show) return { type: "roul", real: true, round: no, phase: "spin", left: C.bet + C.show - tIn, hist: (w.hist || []).slice(res ? 1 : 0), last: res ? (st.last?.result ? { n: st.last.result.n, col: st.last.result.color, wins: [] } : null) : last, result: res ? res.n : null, bets };
+      return { type: "roul", real: true, round: no + 1, phase: "bet", left: C.cycle - tIn + C.bet, hold: C.cycle - tIn, hist: w.hist || [], last, result: null, bets: [] };
+    }
+    const card = cur?.card || null; if (!card) return null;
+    const f = card.f.map((x) => ({ t: x.t, title: G.FIGHTS.titles[x.title] || "" })), pays = [Math.round(card.price.a * 100) / 100, Math.round(card.price.b * 100) / 100], base = { type: "fight", real: true, round: no, f, pays, p: card.p, hist: w.hist || [], last: { wins }, bets, luck: 0 };
+    if (tIn < C.bet || !res) return { ...base, phase: tIn < C.bet ? "bet" : "fight", left: tIn < C.bet ? C.bet - tIn : Math.max(0, C.bet + C.show - tIn), script: tIn < C.bet ? null : [], startedAt: env.now() - (tIn - C.bet), winner: null, hist: (w.hist || []).slice(res ? 1 : 0) };
+    const winner = res.winner === "b" ? 1 : 0;
+    if (tIn < C.bet + C.show) return { ...base, phase: "fight", left: C.bet + C.show - tIn, script: (w.script?.no === no ? w.script : (w.script = { no, s: rwScript(no, winner) })).s, startedAt: env.now() - (tIn - C.bet), winner: null, hist: (w.hist || []).slice(1) };
+    return { ...base, phase: "result", left: C.cycle - tIn, script: null, startedAt: 0, winner };
+  }
+  function rwEmit(key) { const v = rwView(key); if (v) (key === "pit" ? env.onFight : env.onRoul)?.(v); }
+  async function rwFetch(key) { const w = rw[key]; if (!w || w.busy) return; w.busy = true; const st = await ask(`/api/casino/${key}/state`); w.busy = false; if (!rw[key] || !st.ok) return; w.st = st; w.off = Number(st.now) - Date.now(); w.at = Date.now(); if (st.me?.id) ZC.uid = String(st.me.id); rwEmit(key); }
+  function rwTick(key) {
+    const w = rw[key]; if (!w) return; const C = RW[key], now = rwNow(w), no = Math.floor(now / C.cycle), tIn = now - no * C.cycle, st = w.st, mineIn = st?.round?.no === no && (st.bets || []).some((b) => String(b.user?.id) === ZC.uid);
+    const stale = !st || st.round?.no !== no, since = Date.now() - (w.at || 0);
+    const want = stale ? since > 1500 : tIn < C.bet ? since > RW_BETS : !st.round.result ? since > 1500 : false;   /* a new round · who else is in · waiting for the result (the poll is what settles and pays it) */
+    if (want && (!document.hidden || mineIn || !st)) rwFetch(key); else if (st) rwEmit(key);
+  }
+  function roundWatch(key, on) {
+    if (!RW[key]) return; if (!on) { if (rw[key]) { clearInterval(rw[key].timer); delete rw[key]; } if (key === "pit" && GAME === "fight" && REAL) { REAL = false; } return; }
+    if (rw[key]) return; rw[key] = { st: null, off: 0, at: 0, hist: [], timer: setInterval(() => rwTick(key), 1000) };
+    if (ZC.bal == null) ask("/api/picks/bootstrap").then((b) => { const n = Number(b?.session?.wallet?.balance); if (Number.isFinite(n)) ZC.bal = n; });
+    ask("/api/casino/me").then((m) => { if (m?.me) ZC.me = m.me; }); rwFetch(key);
+  }
+  /** One bet on this round: { ok } | { ok:false, message }. ZCoins, or tickets through a voucher, exactly like the other real tables. */
+  async function roundBet(key, pick, amt) {
+    const w = rw[key]; if (!w?.st) return { ok: false, message: "The table isn't ready yet. Give it a second." }; if (w.betting) return null;
+    const zc = Math.max(REAL_LIM.min, Math.min(REAL_LIM.max, Math.floor(amt) || 1)), C = RW[key], now = rwNow(w), tIn = now - Math.floor(now / C.cycle) * C.cycle;
+    if (tIn >= C.bet) return { ok: false, message: `Bets are closed. The next ${key === "pit" ? "fight" : "spin"} opens in ${Math.ceil((C.cycle - tIn) / 1000)}s.` };
+    if (TIX ? tixCost(zc) > tixHave() : ZC.bal != null && zc > ZC.bal) return { ok: false, message: TIX ? `That's ${tixCost(zc).toLocaleString()} tickets and you have ${tixHave().toLocaleString()}. Out the arch: everything out there pays tickets.` : `You only have ${ZC.bal} ZCoins. Switch to tickets, or go and earn some.` };
+    w.betting = true; let voucher;
+    try {
+      if (TIX) { const v = await getStake(key, zc); if (!v.ok) return { ok: false, message: v.message }; voucher = v.voucher; }
+      const r = await ask(`/api/casino/${key}/bet`, { pick, wager: zc, voucher }); if (!r.ok) return { ok: false, message: r.message || "That didn't go through. Nothing was charged." };
+      if (r.balance != null) ZC.bal = Number(r.balance); played(key); await rwFetch(key); return { ok: true };
+    } finally { w.betting = false; }
+  }
 
   /* ---------------------------------------------------------- RUSSIAN ROULETTE: eastcoin.vip's PvP table, in this window (v59)
      The site runs all of it (/api/casino/pvp/state and /join, game "roulette"): the 30 s lobby, the fixed 20 ZC buy-in,
@@ -781,7 +853,8 @@ export function createCasino(env) {
     cashier() { lastCashed = null; dexSt = null; dexMsg = null; dexTicket = null; dexWait = false; send({ t: "dex", op: "status" }); cashier(); }, cashed(e) { cashier(e); }, dex, prize, fight,
     closed() { token++; busy = false; GAME = null; prizeHush(); prizeSpin = null; },
     blocked(k) { if (!GAME || GAME === "cashier") return; if (GAME === "fight") { phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); return note(G.NEED_TEXT[k]); } busy = false; UI[GAME]?.idle?.(); phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[k]); refresh(); },
-    stake, russian, get game() { return GAME; }, get real() { return REAL; }, realGames: () => Object.keys(REAL_KEY)
+    stake, russian, roundWatch, roundBet, get tix() { return TIX; }, setTix(v) { TIX = !!v; try { localStorage.setItem("gs_real_cur", TIX ? "tix" : "zc"); } catch (x) { /* fine */ } refresh(); },
+    get game() { return GAME; }, get real() { return REAL; }, realGames: () => Object.keys(REAL_KEY)
   };
   return api;
 }

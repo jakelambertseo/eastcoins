@@ -121,6 +121,16 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-19", title: "Roulette and the Fight Pit play for ZCoins (or tickets)",
+    items: [
+      "EVERY GAME IN THE BUILDING NOW TAKES ZCOINS OR TICKETS AND PAYS REAL ZCOINS. The last two joined today: ROULETTE upstairs and THE FIGHT PIT. Tickets stand in at 1,000 a ZCoin, as everywhere else, and the usual limits apply: 1 to 20 a bet, ten bets an hour at each game, 400 an hour out.",
+      "ROULETTE: a spin a minute, and everyone in the room is on the same spin. ONE SPOT A SPIN: red or black, odd or even, high or low, a dozen, or a single number (a number pays about 37x). 40 seconds to bet, then the ball rolls.",
+      "THE FIGHT PIT: a fight every minute and a half, the same fight for the whole room. Back one side, once: the price is on the card (a long shot pays about 4x). 40 seconds to bet, then they go at it, and you can watch it from the ring or from the window.",
+      "Both can be checked afterwards like any other game: the seed is published when the round closes.",
+      "ALSO: a bank chest in the Yard (by the road in from the casino), two revolvers on the Russian Roulette table so nobody mistakes it for the other one, Bino dealing it, and a real ZCoin or a rare find that lands on a full bag now goes to your bank instead of being lost."
+    ]
+  },
+  {
     date: "2026-09-19", title: "Russian Roulette is in the Roulette Room",
     items: [
       "THERE'S A NEW TABLE UPSTAIRS: Russian Roulette, on the left of the Roulette Room. It is eastcoin.vip's own table, the very same one, so you may find yourself sitting across from someone playing on the website.",
