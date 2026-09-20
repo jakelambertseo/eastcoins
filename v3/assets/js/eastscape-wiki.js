@@ -19,7 +19,7 @@ export const GUIDES = [
   { id: "start", title: "Start here", icon: "🧭",
     body: `<p><b>Click to walk. Click things to use them.</b></p><p>Play the tables in the casino. Out of tickets? Go out the arch and hit something, or fish.</p><p>Press <b>G</b> for the games list.</p>` },
   { id: "casino", title: "The casino", icon: "🎰",
-    body: `<p>Every game takes <b>ZCoins or tickets</b>. 1,000 tickets = 1 ZCoin. <b>Wins pay real ZCoins.</b></p><p>1 to 20 a bet. Ten plays an hour at each game.</p><p>Click a table and you walk over and play. Roulette, Russian Roulette and the Fight Pit are through the doors at the back.</p>` },
+    body: `<p>Every game takes <b>ZCoins or tickets</b>. 1,000 tickets = 1 ZCoin. <b>Wins pay real ZCoins.</b></p><p>1 to 20 a bet. Ten plays an hour at each game.</p><p>Click a table and you walk over and play. Russian Roulette and the Fight Pit are through the doors at the back.</p>` },
   { id: "tickets", title: "Tickets and the Prize Counter", icon: "🎟️",
     body: `<p>Kills, fish and daily jobs pay <b>tickets</b>.</p><p>The big ruby in the casino is the <b>Prize Counter</b>: trade in your drops, buy gear, food and drinks.</p><p>Tickets stay on you. They can't be dropped, banked or traded.</p>` },
   { id: "road", title: "The road west", icon: "🗺️",
@@ -49,6 +49,13 @@ export const GUIDES = [
 ];
 
 export const UPDATES = [
+  {
+    date: "2026-09-19", title: "Russian Roulette takes centre stage",
+    items: [
+      "RUSSIAN ROULETTE IS NOW THE MIDDLE OF THE ROULETTE ROOM, with Bino beside it.",
+      "The regular roulette wheel is away for repairs. It'll be back."
+    ]
+  },
   {
     date: "2026-09-19", title: "New buttons, fewer words",
     items: [

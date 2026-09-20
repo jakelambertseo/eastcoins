@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 72;
+export const VERSION = 73;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1033,25 +1033,28 @@ Object.assign(SCENES, {
   },
   // through the curtains at the back of the Casino: one big table everyone plays at once
   roulette: {
-    realRound: "roul",
+    /* v73 (the owner, 2026-09-19: "the regular roulette game is a bit glitchy. can we remove it from the roulette room for now
+       and have the russian roullete be center stage with bino"). The wheel, Rouge and `realRound: "roul"` are OUT of the room,
+       not deleted: the page's roulette window, the windows module's round watcher, the game server's roulette code and the
+       site's hidden `roul` game are all still there. To bring it back: `realRound: "roul"`, the table at 20,11 (4x2), Rouge at
+       22,10, and move this table and Bino back left (16,11 and 15,11). */
     name: "The Roulette Room", interior: true, floor: "casino", carpet: "t_roulette", room: [14, 8, 29, 17], exitTo: { scene: "casino", x: 21, y: 5 }, entry: { x: 21, y: 17 },
     wall: [{ t: "banner", x: 15 }, { t: "lamp", x: 17.5 }, { t: "lamp", x: 21.5 }, { t: "lamp", x: 25.5 }, { t: "banner", x: 28.5 }],
     build() {
       const g = room(14, 8, 29, 17, 21), objs = [];
-      objs.push({ t: "roulette", x: 20, y: 11, w: 4, h: 2, name: "Roulette table" }); block(g, 20, 11, 4, 2);
       /* RUSSIAN ROULETTE (v59, the owner: "can we add that to the roulette room as well?"). It is eastcoin.vip's own PvP table,
          the SAME table: an EastScape player and someone on the website sit in one lobby. ZCoins only, 20 a seat, the winner
          takes every buy-in, the house takes nothing. The window (eastscape-casino.js russian()) talks to /api/casino/pvp/*
          itself and the site's code is untouched; the game server only walks you to the table. */
-      objs.push({ t: "rrtable", art: "o_rrtable", x: 16, y: 11, w: 2, h: 2, name: "Russian Roulette: real ZCoins, winner takes all" }); block(g, 16, 11, 2, 2);
+      objs.push({ t: "rrtable", art: "o_rrtable", x: 21, y: 11, w: 2, h: 2, name: "Russian Roulette: real ZCoins, winner takes all" }); block(g, 21, 11, 2, 2);
       for (const [x, y] of [[15, 16], [27, 16]]) { objs.push({ t: "sofa", x, y, w: 2, h: 1, name: "Sofa" }); block(g, x, y, 2, 1); }
       for (const [x, y] of [[14, 9], [29, 9], [14, 13], [29, 13]]) { objs.push({ t: "plant", x, y, name: "Potted palm" }); g[y][x] = "#"; }
       return { g, objs, blobs: [] };
     },
     mobs: [], bots: [],
-    npcs: [{ name: "Rouge the Croupier", art: "rouge", x: 22, y: 10, still: true, reach: 3, hair: "#1a1a1a", shirt: "#1a1a1a", pants: "#1a1a1a", lines: ["Pick a spot. One a spin.", "Zero is green. Zero is mine."] },
+    npcs: [
       /* the Russian Roulette dealer (the owner, 2026-09-19): stands behind that table, striped jersey, ponytail, whiskey in hand */
-      { name: "Bino", art: "arbino", x: 15, y: 11,   /* (the owner's tile, 2026-09-19: beside the table, so his name isn't drawn over it) */ still: true, reach: 3, hair: "#5a3a1e", shirt: "#e8601c", pants: "#1a1a1a", lines: ["Twenty a seat. Last one standing takes the pot.", "The whiskey's for me.", "Who Dey."] }]
+      { name: "Bino", art: "arbino", x: 20, y: 11,   /* (beside the table, as the owner placed him, so his name isn't drawn over it) */ still: true, reach: 3, hair: "#5a3a1e", shirt: "#e8601c", pants: "#1a1a1a", lines: ["Twenty a seat. Last one standing takes the pot.", "The whiskey's for me.", "Who Dey."] }]
   },
   farmhouse: {
     name: "The Farmhouse", interior: true, floor: "wood", room: [6, 4, 15, 10], exitTo: { scene: "farm", x: 4, y: 5 }, entry: { x: 10, y: 10 },
