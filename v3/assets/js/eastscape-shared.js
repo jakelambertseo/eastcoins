@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 64;
+export const VERSION = 65;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -78,31 +78,31 @@ export const ITEMS = {
   chip_black: { name: "Black house chip", icon: "⚫", ex: "A thousand dollars of somebody else's bad night." },
   chip_gold: { name: "Gold house chip", icon: "🟡", ex: "There are maybe six of these. One of them was inside that thing you just killed." },
   // fighting's other finds: things you click
-  chip_free: { name: "Free-play chip", icon: "🟢", use: "free", ex: "Click it: your next bet at a machine or a table game is on the house, up to 100 tickets. Win and you keep the winnings." },
+  chip_free: { name: "Free-play chip", icon: "🟢", use: "bundle", worth: 100, ex: "A house chip from the old days. Click it: 100 tickets, straight into your bag." },
   mysterybox: { name: "Mystery box", icon: "🎁", use: "box", ex: "It rattles. Click it and find out." },
-  devils_dice: { name: "Devil's dice", icon: "🎲", use: "devil", ex: "Click within two minutes of a win: TRIPLE what you won, one time in three. The other two times, it's gone." },
-  rewind_watch: { name: "Rewind watch", icon: "⌚", use: "rewind", ex: "Click within a minute of losing a bet and it never happened: your stake comes back (up to 500 tickets). Works once." },
+  devils_dice: { name: "Devil's dice", icon: "🎲", use: "devil", ex: "Click it and the Devil takes up to 1,000 of your tickets: one time in three he gives back TRIPLE. The other two times, they're gone." },
+  rewind_watch: { name: "Rewind watch", icon: "⌚", use: "heal", ex: "Click it, even mid-fight: the hands spin back and you're at full health. Works once." },
   tp_scroll: { name: "Casino scroll", short: "Scroll", icon: "📜", use: "tp", ex: "Click it and you're standing on the casino floor, wherever you were. Dex sells them at the bar." },
   // gear (all of it DROPS since 2026-09-20: see LOOT)
-  gamblers_ring: { name: "Gambler's ring", short: "G. ring", icon: "💍", slot: "ring", fx: { thrift: 0.5 }, ex: "A rare drop, from the Yard's boars and hornworms." },
-  bookies_amulet: { name: "Bookie's amulet", short: "Bookie's", icon: "📿", slot: "amulet", fx: { limit: 250 }, ex: "A rare drop, from highwaymen and Bog Gnashers." },
-  adjusters_visor: { name: "Loss adjuster's visor", short: "Visor", icon: "🧢", slot: "helm", def: 1, fx: { back: 0.01 }, ex: "A rare drop, from Lantern Moths and Tax Wraiths. Insurance, of a sort." },
+  gamblers_ring: { name: "Gambler's ring", short: "G. ring", icon: "💍", slot: "ring", fx: { heal: 0.5 }, ex: "A rare drop, from the Yard's boars and hornworms." },
+  bookies_amulet: { name: "Bookie's amulet", short: "Bookie's", icon: "📿", slot: "amulet", fx: { tix: 0.05 }, ex: "A rare drop, from highwaymen and Bog Gnashers." },
+  adjusters_visor: { name: "Loss adjuster's visor", short: "Visor", icon: "🧢", slot: "helm", def: 1, fx: { tough: 0.1 }, ex: "A rare drop, from Lantern Moths and Tax Wraiths. Insurance, of a sort." },
   stake_loafers: { name: "Stakeholder's loafers", short: "Loafers", icon: "👞", slot: "boots", def: 1, fx: { power: 0.5 }, ex: "A rare drop, from Sorry Ghouls, Cumulus Rams and Thunder Geese. They do nothing on their own." },
   // gear, DROPPED: rare, and only from things that fight back
-  sharps_gloves: { name: "Card sharp's gloves", short: "Sharp's", icon: "🧤", slot: "gloves", def: 1, fx: { win: 0.01 }, ex: "A rare drop. There's still a card up one sleeve." },
-  angels_ring: { name: "Angel's ring", short: "Angel's", icon: "💍", slot: "ring", fx: { angel: 0.005 }, ex: "A rare drop. Somebody up there owes you one." },
+  sharps_gloves: { name: "Card sharp's gloves", short: "Sharp's", icon: "🧤", slot: "gloves", def: 1, fx: { speed: 0.05 }, ex: "A rare drop. There's still a card up one sleeve." },
+  angels_ring: { name: "Angel's ring", short: "Angel's", icon: "💍", slot: "ring", fx: { rare: 0.15 }, ex: "A rare drop. Somebody up there owes you one." },
   // meals, COOKED from something gathered and something killed: all of them leave you Well Fed (no hunger or thirst while they last)
-  chickendinner: { name: "Winner's chicken dinner", short: "Chicken d.", icon: "🍗", heal: 6, meal: { bets: 30, fx: { back: 0.01 } }, ex: "From Dex's kitchen." },
-  steakdinner: { name: "Steak dinner", icon: "🍽️", heal: 8, meal: { bets: 30, fx: { win: 0.02 } }, ex: "From Dex's kitchen." },
-  porkchops: { name: "High roller's chops", short: "Chops", icon: "🍖", heal: 10, meal: { bets: 30, fx: { limit: 250 } }, ex: "From Dex's kitchen." },
-  fishplatter: { name: "Fisherman's platter", short: "Platter", icon: "🐟", heal: 14, meal: { bets: 40, fx: { win: 0.015, back: 0.015 } }, ex: "From Dex's kitchen." },
+  chickendinner: { name: "Winner's chicken dinner", short: "Chicken d.", icon: "🍗", heal: 6, meal: { mins: 20, fx: { tix: 0.1 } }, ex: "From Dex's kitchen." },
+  steakdinner: { name: "Steak dinner", icon: "🍽️", heal: 8, meal: { mins: 20, fx: { speed: 0.1 } }, ex: "From Dex's kitchen." },
+  porkchops: { name: "High roller's chops", short: "Chops", icon: "🍖", heal: 10, meal: { mins: 20, fx: { rare: 0.25 } }, ex: "From Dex's kitchen." },
+  fishplatter: { name: "Fisherman's platter", short: "Platter", icon: "🐟", heal: 14, meal: { mins: 20, fx: { bite: 0.1, tix: 0.1 } }, ex: "From Dex's kitchen." },
   // drinks, from Dex's bar: one at a time
-  beer: { name: "House lager", short: "Lager", icon: "🍺", drink: { bets: 15, fx: { win: 0.01 } }, ex: "Dex pours it. Click to drink." },
-  whiskey: { name: "Top-shelf whiskey", short: "Whiskey", icon: "🥃", drink: { bets: 10, fx: { win: 0.03 } }, ex: "Liquid confidence. Click to drink." },
-  cocktail: { name: "The Safety Net", short: "Safety Net", icon: "🍸", drink: { bets: 15, fx: { back: 0.02 } }, ex: "Pink, strong, and it takes the edge off losing. Click to drink." },
-  champagne: { name: "Champagne", icon: "🍾", drink: { bets: 10, fx: { limit: 500, win: 0.01 } }, ex: "The pit bosses see the bottle and raise your limits. Click to drink." },
-  clover: { name: "Lucky clover", icon: "🍀", luck: 15, ex: "Turns up while you chop, mine, fish and pick. Click it: your next 15 bets pay more." },
-  horseshoe: { name: "Lucky horseshoe", icon: "🧲", luck: 25, ex: "Rare, and only found while skilling. Click it: your next 25 bets pay more." },
+  beer: { name: "House lager", short: "Lager", icon: "🍺", drink: { mins: 10, fx: { tix: 0.05 } }, ex: "Dex pours it. Click to drink." },
+  whiskey: { name: "Top-shelf whiskey", short: "Whiskey", icon: "🥃", drink: { mins: 10, fx: { speed: 0.15, tough: -0.1 } }, ex: "Liquid confidence. Click to drink." },
+  cocktail: { name: "The Safety Net", short: "Safety Net", icon: "🍸", drink: { mins: 10, fx: { tough: 0.2 } }, ex: "Pink, strong, and it takes the edge off. Click to drink." },
+  champagne: { name: "Champagne", icon: "🍾", drink: { mins: 10, fx: { zdrop: 0.5 } }, ex: "Pop it before a long session out the arch. Click to drink." },
+  clover: { name: "Lucky clover", icon: "🍀", luck: 15, ex: "Turns up while you fish. Click it: your next 15 kills or catches are LUCKY (a real ZCoin is 25% more likely to drop)." },
+  horseshoe: { name: "Lucky horseshoe", icon: "🧲", luck: 25, ex: "Rare, and only found while fishing. Click it: your next 25 kills or catches are LUCKY." },
   // the Gloam and Cloudreach (2026-09-18): where the tier ores actually live
   emerald_ore: { name: "Emerald ore", icon: "🟢", ex: "Green rock with greener bits. Smelt two for an Emerald bar." },
   diamond_ore: { name: "Diamond ore", icon: "💠", ex: "It was pressed into this shape in the dark for a very long time. It is not grateful." },
@@ -292,7 +292,7 @@ export function xpForDamage(c, dmg) {
 /* How long a swing takes. A weapon with no speed of its own swings at SWING_MS,
    which is what the game used for everything before weapons had speeds. */
 export const SWING_MS = 2400;
-export const swingMsOf = (c) => ITEMS[c?.eq?.weapon]?.speed || SWING_MS;
+export const swingMsOf = (c) => Math.round((ITEMS[c?.eq?.weapon]?.speed || SWING_MS) / (1 + fxOf(c).speed));   /* (fxOf: the outside buffs, further down; a function, so the order in this file does not matter) */
 export const TOOL_OF = { mining: "pickaxe", woodcutting: "axe", fishing: "rod" };
 export const INV_MAX = 20;   // (was 30 until 2026-09-20: a casino game wants a small bag that fills, so you walk back past the tables to the Cashier.
                              //  normChar re-packs an old 30-slot bag on load and sends what no longer fits to the bank, so nothing is lost.)
@@ -1386,7 +1386,7 @@ export function slotsPay(reels) {
    The whole game in a line: gamble in the casino; when you want better odds, go and skill or fight. Working in the
    world turns up lucky charms; using one makes your next N bets "lucky", and a lucky win pays `bonus` more. Even
    lucky, every game stays just under 100% back, so the casino can't be turned into a tickets printer. */
-export const LUCK = { bonus: 0.025, gather: 1 / 12, shoe: 1 / 150, max: 300 };   // luck is SKILLING's reward alone (2026-09-20): clovers, and rarely a horseshoe
+export const LUCK = { bonus: 0, zdrop: 0.25, gather: 1 / 12, shoe: 1 / 150, max: 300 };   // luck is SKILLING's reward alone (2026-09-20): clovers, and rarely a horseshoe
 /* THE FIGHT PIT'S NUMBERS. Two monsters are drawn from `pool`; the chance each wins comes from their levels (square
    roots, so a chicken against a revenant is a long shot, not a no-hoper) and is clamped to 25-75%; each side pays
    `edge` / its chance, so whichever you back the house keeps 5%. WHO WINS IS ONE RANDOM NUMBER against that chance and
@@ -1408,7 +1408,7 @@ export function fightOdds(a, b) {
 export const NEEDS = { floor: 20, sip: 20, food: 25, perBet: { thirst: 2, hunger: 1.25 } };
 export const needOf = (c, k) => Math.max(0, Math.min(100, c?.[k] ?? 100));
 /** Why the tables won't take this player's bet, or null if they will. */
-export const tooEmpty = (c) => (needOf(c, "thirst") < NEEDS.floor ? "thirst" : needOf(c, "hunger") < NEEDS.floor ? "hunger" : null);
+export const tooEmpty = () => null;   /* HUNGER AND THIRST are switched off (the owner, 2026-09-19; on the backlog as a possible future feature): nothing drains them and no table looks */
 export const NEED_TEXT = { thirst: "You're too thirsty to gamble. There's a water cooler on the card room's back wall, next to the bar, and two in the Fight Pit.", hunger: "You're too hungry to gamble. There's a buffet on the card room's back wall, next to the water cooler, and two in the Fight Pit." };
 
 /* ------------------------------------------------------------ FX: gear, meals, drinks and finds (2026-09-20)
@@ -1442,19 +1442,32 @@ export const NEED_TEXT = { thirst: "You're too thirsty to gamble. There's a wate
    its tickets exchange are gone: betting tickets is the conversion. */
 export const DEX = { rate: 1000, capHour: 50, maxStake: 20 };
 export const FX_CAP = { gear: { win: 0.015, back: 0.015, angel: 0.0075 }, all: { win: 0.05, back: 0.03, angel: 0.01 } };
-export const ROLLER = { kill: 1 / 8, bets: 10, max: 100, mult: 2 };
-export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 5000 }, REWIND = { ms: 60000, max: 500 };
-export function edgeOf(c) {
-  const worn = SLOTS.map((s) => ITEMS[c?.eq?.[s]]?.fx).filter(Boolean), power = 1 + worn.reduce((a, f) => a + (f.power || 0), 0);
-  const g = { win: 0, back: 0, angel: 0, limit: 0 }; let thrift = 1;
-  for (const f of worn) { for (const k of Object.keys(g)) g[k] += (f[k] || 0) * power; if (f.thrift) thrift = Math.min(thrift, f.thrift); }
-  for (const k of ["win", "back", "angel"]) g[k] = Math.min(FX_CAP.gear[k], g[k]);
-  const out = { ...g, thrift, power };
-  for (const st of [c?.meal, c?.drink]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k], f = it && (it.meal || it.drink)?.fx; if (f) for (const k of Object.keys(g)) out[k] += f[k] || 0; }
-  for (const k of ["win", "back", "angel"]) out[k] = Math.min(FX_CAP.all[k], out[k]);
-  out.fed = (c?.meal?.left | 0) > 0;
+export const ROLLER = { kill: 0, bets: 10, max: 100, mult: 1 };   /* HIGH ROLLER is retired (the owner, 2026-09-19): nothing grants it and it doubles nothing */
+export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 1000 }, REWIND = { ms: 60000, max: 500 };
+/* BUFFS WORK OUT THE ARCH, AND NOWHERE ELSE (v65, 2026-09-19). Every casino game is eastcoin.vip's now and nothing in
+   GambaScape may touch a bet, so the old gambling effects had no table left to act on. The owner approved their
+   conversion, item by item, into five things that matter to fighting and fishing:
+     tix    more tickets from a kill; on a catch, that chance of landing a second fish
+     speed  swing faster, and the line bites sooner
+     tough  take less damage (a negative one takes more: whiskey)
+     rare   the monster's rare drops and the casino finds come up more often
+     zdrop  a REAL ZCoin is more likely to drop. The only effect here that makes ZCoins, so it is small, it is mostly
+            temporary (Champagne, luck), and banking what drops still comes out of the 50-an-hour allowance.
+   plus `heal` (fish heal more, worn only), `bite` (fishing's own chance) and `power` (the loafers: other worn buff gear
+   is stronger). Dinners last `mins` minutes and drinks `mins` minutes, and the clock only runs while you are OUTSIDE
+   (the game server counts it down in scenes that have monsters). OUT_CAP is the ceiling from everything put together.
+   fxOf() is the ONE place this is added up. edgeOf() is kept, inert, for the old ticket-table code that still calls it. */
+export const OUT_CAP = { tix: 0.25, speed: 0.2, tough: 0.3, rare: 0.4, zdrop: 0.75, bite: 0.1, heal: 0.5 };
+const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal"];
+export function fxOf(c) {
+  const worn = SLOTS.map((k) => ITEMS[c?.eq?.[k]]?.fx).filter(Boolean), power = 1 + worn.reduce((a, f) => a + (f.power || 0), 0), out = Object.fromEntries(OUT_KEYS.map((k) => [k, 0]));
+  for (const f of worn) for (const k of OUT_KEYS) out[k] += (f[k] || 0) * power;
+  for (const st of [c?.meal, c?.drink]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k], f = it && (it.meal || it.drink)?.fx; if (f) for (const k of OUT_KEYS) out[k] += f[k] || 0; }
+  if ((c?.luck | 0) > 0) out.zdrop += LUCK.zdrop;
+  for (const k of OUT_KEYS) out[k] = Math.max(k === "tough" ? -0.5 : 0, Math.min(OUT_CAP[k], out[k]));
   return out;
 }
+export function edgeOf() { return { win: 0, back: 0, angel: 0, limit: 0, thrift: 1, power: 1, fed: true }; }
 /** The most this player may put on one bet right now: the table's limit, plus gear/meal/drink, doubled while a High Roller. */
 /* THE DAILY PRIZE WHEEL (2026-09-20): one free spin a Chicago day at the wheel by the casino's front door. A reason to
    show up, and a first stake for anyone who arrives broke. Twelve slices, weighted; ticket slices grow 10% for every
@@ -1469,14 +1482,17 @@ export const dayBefore = (day) => { const d = new Date(`${day}T12:00:00Z`); d.se
 /* VIP (2026-09-20): every dollar you've ever put on a table counts, win or lose, and the tier shows by your name for
    everyone to see. The long game for a grinder, and bragging rights for everybody else. Each tier raises every
    table's limit a little; nothing here touches what a bet is worth. */
-export const VIP = [{ name: "Guest", at: 0, limit: 0, col: "#aca298" }, { name: "Bronze", at: 10000, limit: 50, col: "#c8864a" }, { name: "Silver", at: 50000, limit: 100, col: "#d8d8e4" },
-  { name: "Gold", at: 250000, limit: 250, col: "#ffd84a" }, { name: "Platinum", at: 1000000, limit: 500, col: "#9ae8e0" }, { name: "Diamond", at: 5000000, limit: 1000, col: "#b8a0ff" }];
-export const vipOf = (c) => { const w = Math.max(0, Number(c?.wagered) || 0); let i = 0; while (VIP[i + 1] && w >= VIP[i + 1].at) i++; return { i, ...VIP[i], wagered: w, next: VIP[i + 1] || null }; };
+export const VIP = [{ name: "Guest", at: 0, limit: 0, off: 0, col: "#aca298" }, { name: "Bronze", at: 25000, limit: 0, off: 0.02, col: "#c8864a" }, { name: "Silver", at: 100000, limit: 0, off: 0.04, col: "#d8d8e4" },
+  { name: "Gold", at: 400000, limit: 0, off: 0.06, col: "#ffd84a" }, { name: "Platinum", at: 1500000, limit: 0, off: 0.08, col: "#9ae8e0" }, { name: "Diamond", at: 5000000, limit: 0, off: 0.1, col: "#b8a0ff" }];
+/* (v65) The tiers are earned by LIFETIME TICKETS EARNED (c.earned: kills, trade-ins, daily jobs), not by what you bet:
+   the betting is the site's now and the game cannot count it honestly. Each tier takes `off` off every Prize Counter price. */
+export const vipOf = (c) => { const w = Math.max(0, Number(c?.earned) || 0); let i = 0; while (VIP[i + 1] && w >= VIP[i + 1].at) i++; return { i, ...VIP[i], wagered: w, earned: w, next: VIP[i + 1] || null }; };
+export const counterPrice = (c, price) => Math.max(1, Math.ceil(price * (1 - vipOf(c).off)));
 
 /* `def` is the room you're standing in: the High Roller Room (def.limits) multiplies every table's limit and has a floor. */
 export const minBetOf = (def) => def?.limits?.min || CASINO.minBet;
 export const baseBetOf = (c, def) => (CASINO.maxBet + Math.round(edgeOf(c).limit) + vipOf(c).limit) * (def?.limits?.mult || 1);
-export const maxBetOf = (c, def) => baseBetOf(c, def) * ((c?.roller | 0) > 0 ? ROLLER.mult : 1);
+export const maxBetOf = (c, def) => baseBetOf(c, def);
 /* Luck and every effect cover the first FX_COVER of a stake and no more: a $5,000 bet in the High Roller Room gets the
    bonus a $1,500 one would. Without this the ceiling above is a percentage of ANY stake, and the biggest room in the
    building would be the best job in the game for anyone holding a dinner. */
@@ -1487,23 +1503,22 @@ export const payWith = (plain, stake, e, lucky) => (plain > 0 ? Math.round(plain
 /** What comes back from a LOST stake: all of it if the angel roll (0..1) lands, else the insured share. */
 export const backWith = (lost, e, roll) => (lost > 0 && e ? Math.round((roll < (e.angel || 0) ? lost : lost * (e.back || 0)) * cover(lost)) : 0);
 const pct = (n) => `${Math.round(n * 1000) / 10}%`;
-export const fxText = (f) => [f.win && `wins pay ${pct(f.win)} more profit`, f.back && `${pct(f.back)} of every loss comes back`, f.angel && `1 lost bet in ${Math.round(1 / f.angel)} comes back whole`,
-  f.limit && `every table lets you bet $${f.limit} more`, f.thrift && `betting makes you ${pct(1 - f.thrift)} less hungry and thirsty`, f.power && `your other worn gambling gear is ${pct(f.power)} stronger`].filter(Boolean).join("; ");
+export const fxText = (f) => [f.tix && `${pct(f.tix)} more tickets from kills, and that chance of a second fish on a catch`, f.speed && `you swing and fish ${pct(f.speed)} faster`,
+  f.tough > 0 && `you take ${pct(f.tough)} less damage`, f.tough < 0 && `you take ${pct(-f.tough)} MORE damage`, f.rare && `rare drops come up ${pct(f.rare)} more often`, f.zdrop && `a real ZCoin is ${pct(f.zdrop)} more likely to drop`,
+  f.bite && `fish bite ${pct(f.bite)} more often`, f.heal && `fish heal ${pct(f.heal)} more`, f.power && `your other worn buff gear is ${pct(f.power)} stronger`].filter(Boolean).join("; ");
 for (const it of Object.values(ITEMS)) {   // say what it does, once, from the numbers
   if (it.fx) it.ex = `Worn: ${fxText(it.fx)}. ${it.ex || ""}`.trim();
-  if (it.meal) it.ex = `${it.ex || ""} Eat it: WELL FED for ${it.meal.bets} bets (no hunger or thirst), and ${fxText(it.meal.fx)}.`.trim();
-  if (it.drink) it.ex = `${it.ex || ""} For ${it.drink.bets} bets: ${fxText(it.drink.fx)}.`.trim();
+  if (it.meal) it.ex = `${it.ex || ""} Eat it: for ${it.meal.mins} minutes out the arch, ${fxText(it.meal.fx)}.`.trim();
+  if (it.drink) it.ex = `${it.ex || ""} For ${it.drink.mins} minutes out the arch: ${fxText(it.drink.fx)}.`.trim();
 }
 
 /* BUFFS: whatever is changing how the casino treats you right now, shown top-right of the game. buffsOf returns them
    ready to draw: { id, name, icon (an item icon), ex, left (null for something worn), unit }. */
 export const buffsOf = (c) => {
-  const out = [], one = (id, name, icon, ex, left = null, unit = "bet") => out.push({ id, name, icon, ex, left, unit });
-  if ((c?.luck | 0) > 0) one("luck", "Lucky", "clover", `Every win pays ${LUCK.bonus * 100}% more. One is used up per bet. Only skilling finds clovers.`, c.luck | 0);
-  if ((c?.roller | 0) > 0) one("roller", "High Roller", "chip_black", "Every table's limit is doubled. One is used up each time you bet over the normal limit. From fighting.", c.roller | 0, "big bet");
-  if ((c?.free | 0) > 0) one("free", "Free play", "chip_free", `Your next bet at a machine or table game is on the house, up to $${c.free}.`, 1);
-  for (const st of [c?.meal, c?.drink]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k]; if (it) one(it.meal ? "meal" : "drink", it.meal ? "Well Fed" : it.short || it.name, st.k, `${it.name}: ${it.meal ? "no hunger or thirst, and " : ""}${fxText((it.meal || it.drink).fx)}.`, st.left | 0); }
-  for (const s of SLOTS) { const k = c?.eq?.[s], it = k && ITEMS[k]; if (it?.fx) one(`worn:${k}`, it.short || it.name, k, `${it.name} (worn): ${fxText(it.fx)}.`); }
+  const out = [], one = (id, name, icon, ex, left = null, unit = "kill or catch") => out.push({ id, name, icon, ex, left, unit });
+  if ((c?.luck | 0) > 0) one("luck", "Lucky", "clover", `A real ZCoin is ${LUCK.zdrop * 100}% more likely to drop. One is used up per kill or catch. Only fishing finds clovers.`, c.luck | 0);
+  for (const st of [c?.meal, c?.drink]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k]; if (it) one(it.meal ? "meal" : "drink", it.short || it.name, st.k, `${it.name}: ${fxText((it.meal || it.drink).fx)}. The clock only runs while you're out the arch.`, Math.max(1, Math.ceil((st.left | 0) / 60000)), "minute"); }
+  for (const k0 of SLOTS) { const k = c?.eq?.[k0], it = k && ITEMS[k]; if (it?.fx) one(`worn:${k}`, it.short || it.name, k, `${it.name} (worn): ${fxText(it.fx)}.`); }
   return out;
 };
 
@@ -1785,7 +1800,7 @@ export const findChance = (mob, [, share, worth]) => Math.min(0.25, share * (BOU
 export const ZDROP = { kill: (lvl) => 0.006 + lvl * 0.0002, fish: { sardine: 0.0025, trout: 0.0025, lanternfish: 0.003, skyeel: 0.0033 }, big: 0.05, bigN: 5 };
 /** A monster's whole rare line: its own named pieces, then the casino finds, each with its chance a kill. ONE roll decides. */
 export const raresOf = (mob) => [...(BOUNTY[mob] ? [["zcoin", ZDROP.kill(MOBS[mob].lvl)]] : []), ...(MOBS[mob]?.rare || []), ...(BOUNTY[mob] ? FINDS.map((f) => [f[0], findChance(mob, f)]) : [])];
-export const rollRare = (mob, r) => { for (const [k, p] of raresOf(mob)) { if (r < p) return k; r -= p; } return null; };
+export const rollRare = (mob, r, fx) => { for (const [k, p0] of raresOf(mob)) { const p = p0 * (1 + (k === "zcoin" ? fx?.zdrop || 0 : fx?.rare || 0)); if (r < p) return k; r -= p; } return null; };   /* fx: fxOf(character) */
 export const BOX = [["clover", 3], ["chip_red", 2], ["chip_free", 3], ["beer", 3], ["whiskey", 2], ["cocktail", 2], ["steakdinner", 2], ["tp_scroll", 3], ["devils_dice", 2], ["rewind_watch", 1], ["chip_black", 0.3]];   // what's in a mystery box, by weight
 export const valueOf = (k) => VALUE[k] ?? SHOP.buys[k] ?? 0;
 /** The first thing a raw material can be made into, and what that's worth each: the Cashier's "worth more made" nudge. */
@@ -2073,7 +2088,7 @@ function migrate(out) {
 
 export function freshChar() {
   return {
-    v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10, hunger: 100, thirst: 100, wagered: 0, spin: null, roller: 0, free: 0, meal: null, drink: null, tour: { step: 0, logs: 0, chickens: 0 },
+    v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10, hunger: 100, thirst: 100, wagered: 0, earned: 0, spin: null, roller: 0, free: 0, meal: null, drink: null, tour: { step: 0, logs: 0, chickens: 0 },
     inv: [{ k: "tickets", n: 25 }, { k: "rod", n: 1 }],
     eq: { helm: "cap", weapon: "rudis", body: "tunic", shield: "parma", legs: null, gloves: null, boots: "sandals", ring: null },
     stance: DEFAULT_STANCE,

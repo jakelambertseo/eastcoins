@@ -121,6 +121,18 @@ export const GUIDES = [
 // the Updates log, newest first: { date: "YYYY-MM-DD", title, items: [ ... ] }
 export const UPDATES = [
   {
+    date: "2026-09-19", title: "Buffs work out the arch now",
+    items: [
+      "EVERY BUFF IN THE GAME NOW HELPS YOU FIGHT AND FISH, not bet. The tables are eastcoin.vip's own and nothing in GambaScape touches a bet, so the old gambling effects had nothing left to do. Same items, same names, same rarity, new jobs.",
+      "WORN GEAR: Gambler's ring, fish heal 50% more. Bookie's amulet, 5% more tickets. Loss adjuster's visor, 10% less damage taken. Card sharp's gloves, swing and fish 5% faster. Angel's ring, rare drops 15% more often. Stakeholder's loafers, still make your other buff gear 50% stronger.",
+      "DINNERS LAST 20 MINUTES AND DRINKS 10, and the clock only runs while you're out the arch: sit in the casino as long as you like. Chicken dinner +10% tickets from kills. Steak +10% speed. Chops, rare drops +25%. Fisherman's platter, fish bite more and a 10% chance of two on one line. Lager +5% tickets. Whiskey +15% speed but you take 10% more damage. The Safety Net, 20% less damage. Champagne, a real ZCoin is 50% more likely to drop.",
+      "LUCK IS FOR ZCOINS NOW: while you're lucky, a real ZCoin is 25% more likely to drop, and each kill or catch uses one up. Clovers still only come from fishing.",
+      "THE FINDS: a Free-play chip cashes for 100 tickets, the Devil's dice play for up to 1,000 of the tickets in your bag (triple, one time in three), and the Rewind watch is a full heal you can use mid-fight.",
+      "VIP IS EARNED BY TICKETS EARNED (kills, trade-ins, daily jobs), and every tier takes a little off every Prize Counter price: 2% at Bronze up to 10% at Diamond.",
+      "GONE: hunger and thirst (the cooler and the buffet are scenery now), and High Roller."
+    ]
+  },
+  {
     date: "2026-09-19", title: "Roulette and the Fight Pit play for ZCoins (or tickets)",
     items: [
       "EVERY GAME IN THE BUILDING NOW TAKES ZCOINS OR TICKETS AND PAYS REAL ZCOINS. The last two joined today: ROULETTE upstairs and THE FIGHT PIT. Tickets stand in at 1,000 a ZCoin, as everywhere else, and the usual limits apply: 1 to 20 a bet, ten bets an hour at each game, 400 an hour out.",
