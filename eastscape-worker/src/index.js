@@ -243,7 +243,7 @@ export class World {
   }
   touch(pl) { pl.dirty = true; pl.needSave = true; pl.changedAt ??= Date.now(); }
 
-  meOf(pl) { const C = pl.C; return { isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
+  meOf(pl) { const C = pl.C; return { look: C.look || null, isle: { tier: C.isle.tier, themes: C.isle.themes }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats }; }
 
   /* ------------------------------------------------------------ scenes */
   scene(key) {
@@ -352,6 +352,17 @@ export class World {
     if (++T.tries < 8) this.rrDueAt = now + 2000;   /* the clock is out but the site hasn't finished paying: look again shortly */
     else { T.id = null; T.seats = []; this.rrDueAt = 0; if (S) { const m = this.rrSeatsMsg(S); for (const p of this.playersIn(S)) p.out.push(m); } }
   }
+  /* YOUR LOOK (v80): seven small numbers, checked against the lists in the rules file (G.normLook) so nothing odd can be stored
+     or sent to other people. The FIRST pick is taken wherever you are (it is the "Who are you?" screen on arrival); after
+     that it is the mirror's job, so you have to be standing at one. Free, as often as you like, but not faster than one
+     a second: every change is re-sent to the room. */
+  lookOp(S, pl, m) {
+    const look = G.normLook(m.look), now = Date.now(); if (!look) return this.say(pl, "That look didn't take. Try again.", "bad");
+    if (pl.C.look && !this.near(S, pl, "mirror", 3) && !pl.admin) return this.say(pl, "Change your look at the mirror by the casino's front door.");
+    if (now - (pl.lookAt || 0) < 1000) return; pl.lookAt = now;
+    const first = !pl.C.look; pl.C.look = look; this.touch(pl); pl.out.push({ type: "lookset", look });
+    if (first) this.say(pl, "Looking good. The mirror by the front door changes it any time.", "good");
+  }
   /* BINO'S BAR CART: a shot of whiskey for a ticket. It does nothing at all except tell the room. */
   rrShot(S, pl, now) {
     if (now - (pl.shotAt || 0) < G.RR_SHOT.everyMs) return this.say(pl, "Bino: Easy. Let that one land first.");
@@ -424,6 +435,7 @@ export class World {
       case "daily": return this.dailyOp(S, pl, m);
       case "roul": return S.def.realRound ? undefined : this.roulOp(S, pl, m, now);
       case "tour": return this.tourOp(S, pl, m);
+      case "look": return this.lookOp(S, pl, m);
       case "rr": return S.key === "roulette" ? this.rrLook(now) : undefined;   /* "the table changed": the page's window saw a lobby or sat down */
       case "use": return this.useItem(pl, m.i | 0);
       case "trade": return this.tradeOp(S, pl, m);
@@ -451,7 +463,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
-      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      const kind = { wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", olive: "olive", vine: "olive", hole: "hole", well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" && ob.door ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
@@ -1276,6 +1288,7 @@ export class World {
     if (a.kind === "fight" && S.def.realRound) { pl.act = null; return pl.out.push({ type: "roundopen", key: S.def.realRound }); }
     if (a.kind === "fight") { pl.act = null; return pl.out.push({ ...this.fightView(S, pl, now), open: true }); }
     if (a.kind === "prize") { pl.act = null; return this.prizeSpin(pl); }
+    if (a.kind === "mirror") { pl.act = null; return pl.out.push({ type: "mirror" }); }   /* the page opens the look screen; the pick comes back as t:"look" */
     if (a.kind === "rrboard") { pl.act = null; return pl.out.push({ type: "rrboard" }); }
     if (a.kind === "shot") { pl.act = null; return this.rrShot(S, pl, now); }
     if (a.kind === "rr") { pl.act = null; this.rrLook(now); return pl.out.push({ type: "rr" }); }   /* Russian Roulette is the site's table: the page opens its window and talks to the site */
@@ -1692,12 +1705,12 @@ export class World {
   // the parts of a player or bot that do not change every tick
   whoOf(S) {
     const out = [];
-    for (const p of this.playersIn(S)) out.push({ id: p.id, name: p.name, vip: G.vipOf(p.C).i || undefined, lvl: G.totalOf(p.C), weapon: p.C.eq.weapon, body: p.C.eq.body, maxHp: G.maxHpOf(p.C) });
+    for (const p of this.playersIn(S)) out.push({ id: p.id, name: p.name, vip: G.vipOf(p.C).i || undefined, lvl: G.totalOf(p.C), weapon: p.C.eq.weapon, body: p.C.eq.body, maxHp: G.maxHpOf(p.C), look: p.C.look || undefined });
     for (const b of S.bots) out.push({ id: b.id, name: b.name, level: b.level, art: b.art, hue: b.hue });
     return out;
   }
   // cheap enough to build every broadcast; it only ever SENDS when it differs
-  whoSigOf(who) { let sig = ""; for (const w of who) sig += `${w.id}|${w.name}|${w.vip || 0}|${w.lvl ?? w.level}|${w.weapon || ""}|${w.body || ""}|${w.maxHp || ""}|${w.art || ""}|${w.hue || ""};`; return sig; }
+  whoSigOf(who) { let sig = ""; for (const w of who) sig += `${w.id}|${w.name}|${w.vip || 0}|${w.lvl ?? w.level}|${w.weapon || ""}|${w.body || ""}|${w.maxHp || ""}|${w.art || ""}|${w.hue || ""}|${w.look ? w.look.join(".") : ""};`; return sig; }
 
   snapOf(S, now, withEvents = true) {
     const st = (e) => (e.step ? [e.step.fx, e.step.fy, e.step.tx, e.step.ty, e.step.t0, e.step.ms] : 0);
