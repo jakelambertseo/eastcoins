@@ -353,9 +353,9 @@ export class World {
       case "ex": return this.exOp(S, pl, m);
       case "bet": return this.bet(S, pl, m, now);
       case "run": return this.run(S, pl, m, now);
-      case "fight": return this.fightOp(S, pl, m, now);
+      case "fight": return S.def.realRound ? undefined : this.fightOp(S, pl, m, now);
       case "daily": return this.dailyOp(S, pl, m);
-      case "roul": return this.roulOp(S, pl, m, now);
+      case "roul": return S.def.realRound ? undefined : this.roulOp(S, pl, m, now);
       case "tour": return this.tourOp(S, pl, m);
       case "use": return this.useItem(pl, m.i | 0);
       case "trade": return this.tradeOp(S, pl, m);
@@ -755,10 +755,18 @@ export class World {
     C.luck = Math.min(G.LUCK.max, (C.luck | 0) + it.luck); this.touch(pl);
     this.say(pl, `You feel lucky. Your next ${C.luck} bets pay ${G.LUCK.bonus * 100}% more when they win.`, "good");
   }
+  /* A RARE THING IS NEVER LOST TO A FULL BAG (the owner, 2026-09-19): a real ZCoin or a rare find that won't fit goes
+     straight to the bank instead, and says so. Only a full bag AND a full bank can lose one. -> "bag" | "bank" | null */
+  keepRare(pl, k, n) {
+    const C = pl.C;
+    if (G.roomFor(C.inv, k) >= n) { G.addInv(C.inv, k, n); return "bag"; }
+    return this.bankAdd(pl, k, n) ? "bank" : null;
+  }
   zcoinDrop(pl, from) {
-    const C = pl.C, n = Math.random() < G.ZDROP.big ? G.ZDROP.bigN : 1;
-    if (G.roomFor(C.inv, "zcoin") < n) return this.say(pl, "A REAL ZCoin dropped, and your bag was too full to take it. That one hurts.", "bad");
-    G.addInv(C.inv, "zcoin", n); this.touch(pl); this.emit(pl, "loot", { k: "zcoin", n });
+    const C = pl.C, n = Math.random() < G.ZDROP.big ? G.ZDROP.bigN : 1, where = this.keepRare(pl, "zcoin", n);
+    if (!where) return this.say(pl, "A REAL ZCoin dropped, and your bag AND your bank were too full to take it. That one hurts.", "bad");
+    this.touch(pl); this.emit(pl, "loot", { k: "zcoin", n });
+    if (where === "bank") this.say(pl, "Your bag was full, so it went straight to your BANK. Take it out at a bank (there's a chest in the Yard) before you cash it in.", "good");
     C.found = C.found && typeof C.found === "object" ? C.found : {}; C.found.zcoin = (C.found.zcoin | 0) + n;
     this.say(pl, `💎 ${n > 1 ? `${n} REAL ZCoins` : "A REAL ZCoin"}! Bank ${n > 1 ? "them" : "it"} at the Prize Counter and ${n > 1 ? "they go" : "it goes"} onto your eastcoin.vip balance.`, "loot");
     for (const p of this.pls.values()) if (p !== pl && (n > 1 || p.C.scene === C.scene)) p.out.push({ type: "casinonote", text: `💎 ${pl.name} found ${n > 1 ? `${n} real ZCoins` : "a real ZCoin"} on ${from}!` });
@@ -771,14 +779,16 @@ export class World {
     if (k) {
       const it = G.ITEMS[k], worth = it.slot ? 0 : G.valueOf(k), name = it.name.toLowerCase();
       if (k === "zcoin") this.zcoinDrop(pl, `a ${G.MOBS[mob].name.toLowerCase()}`);
-      else if (G.roomFor(C.inv, k) < 1) this.say(pl, `It dropped a ${name}, and your bag was too full to take it. Ouch.`, "bad");
+      else { const where = this.keepRare(pl, k, 1);
+      if (!where) this.say(pl, `It dropped a ${name}, and your bag AND your bank were too full to take it. Ouch.`, "bad");
       else {
-      G.addInv(C.inv, k, 1); this.touch(pl); this.emit(pl, "loot", { k, n: 1 });
+      this.touch(pl); this.emit(pl, "loot", { k, n: 1 });
+      if (where === "bank") this.say(pl, `Your bag was full, so the ${name} went straight to your BANK.`, "good");
       C.found = C.found && typeof C.found === "object" ? C.found : {}; C.found[k] = (C.found[k] | 0) + 1;   // the collection log
       this.say(pl, it.slot ? `RARE DROP: ${it.name}! ${it.fx ? "Wear it and the tables treat you differently." : "You can't make that one: it only drops."}` : worth ? `It was carrying a ${name}! That's ${G.fmtCash(worth)} at the Ruby.` : `RARE DROP: a ${name}! Click it in your bag to see what it does.`, "loot");
       if (it.slot) for (const p of this.pls.values()) if (p !== pl && p.C.scene === C.scene) p.out.push({ type: "casinonote", text: `✨ ${pl.name} got a rare drop: ${it.name}, from a ${G.MOBS[mob].name.toLowerCase()}.` });
       if (worth >= 1000) for (const p of this.pls.values()) if (worth >= 5000 || p.C.scene === C.scene) p.out.push({ type: "casinonote", text: `💰 ${pl.name} found a ${name} (${G.fmtCash(worth)}) on a ${G.MOBS[mob].name.toLowerCase()}!` });
-      }
+      } }
     }
     if (Math.random() < G.ROLLER.kill && (C.roller | 0) < G.ROLLER.max) {
       C.roller = Math.min(G.ROLLER.max, (C.roller | 0) + G.ROLLER.bets); this.touch(pl);
@@ -939,7 +949,7 @@ export class World {
      Both count against the one hourly allowance, which the site owns. */
   async dexOp(S, pl, m, now) {
     const op = String(m.op), C = pl.C, stake = op === "stake";
-    if (stake ? String(S.key).split(":")[0] !== "casino" : !this.atCounter(S, pl)) return stake ? pl.out.push({ type: "stake", g: m.g, error: "The real tables are on the casino's main floor." }) : this.say(pl, "You need to be at the Prize Counter: the House Ruby or a Cashier's window, on the casino floor.", "bad");
+    if (stake ? !(S.def.real || S.def.realRound) : !this.atCounter(S, pl)) return stake ? pl.out.push({ type: "stake", g: m.g, error: "There's no ZCoin table in this room." }) : this.say(pl, "You need to be at the Prize Counter: the House Ruby or a Cashier's window, on the casino floor.", "bad");
     const fail = (error, status) => pl.out.push(stake ? { type: "stake", g: m.g, error, status } : { type: "dex", error, status });
     if (pl.dexBusy || now - (pl.lastDex || 0) < (stake ? 400 : 1500)) { if (stake) fail("One at a time. Try that again."); return; } pl.lastDex = now;
     pl.dexBusy = true;
@@ -1055,8 +1065,8 @@ export class World {
     this.restartTick(now);
     const live = new Set([...this.pls.values()].map((p) => p.C.scene));
     for (const [key, S] of this.scenes) {
-      if (key === "roulette") this.rouletteTick(S, now);
-      if (key === "fightpit") this.fightTick(S, now);
+      if (key === "roulette" && !S.def.realRound) this.rouletteTick(S, now);   /* (a realRound room's game is the site's: no rounds are run here) */
+      if (key === "fightpit" && !S.def.realRound) this.fightTick(S, now);
       if (!live.has(key)) { S.idleSince ||= now; if (now - S.idleSince > SCENE_IDLE_MS && !(S.def.pvp && S.mobs.some((m) => m.dead && now < m.respawnAt)) && !S.roulette?.bets.length && !S.fight?.bets.length) this.scenes.delete(key); continue; }
       S.idleSince = 0;
       for (const pl of this.playersIn(S)) this.playerTick(S, pl, now);
@@ -1190,6 +1200,7 @@ export class World {
     }
     if (a.kind === "bank") return pl.out.push({ type: "bank" });
     if (a.kind === "cashier") { pl.act = null; return pl.out.push({ type: "cashier", ruby: a.ob?.t === "coinstatue" }); }
+    if (a.kind === "fight" && S.def.realRound) { pl.act = null; return pl.out.push({ type: "roundopen", key: S.def.realRound }); }
     if (a.kind === "fight") { pl.act = null; return pl.out.push({ ...this.fightView(S, pl, now), open: true }); }
     if (a.kind === "prize") { pl.act = null; return this.prizeSpin(pl); }
     if (a.kind === "rr") { pl.act = null; return pl.out.push({ type: "rr" }); }   /* Russian Roulette is the site's table: the page opens its window and talks to the site */
@@ -1205,6 +1216,7 @@ export class World {
     if (a.kind === "game") { pl.act = null; return pl.out.push({ type: "game", g: a.ob.t, pot: Math.floor(this.jack.pot), lastJack: this.jack.wins?.[0] || null }); }
     if (a.kind === "howto") { pl.act = null; return pl.out.push({ type: "popup", title: "How GambaScape works", text: G.HOWTO, icon: "🎰" }); }
     if (a.kind === "board") { pl.act = null; this.tourStep(pl, "board"); return this.dailySend(pl); }
+    if (a.kind === "roulette" && S.def.realRound) { pl.act = null; return pl.out.push({ type: "roundopen", key: S.def.realRound }); }
     if (a.kind === "roulette") { pl.act = null; pl.out.push({ type: "roulopen" }); return this.roulSendTo(S, pl); }
     if (a.kind === "exchange") { pl.out.push({ type: "exchange" }); return this.exSend(pl); }
     if (a.kind === "hole") {

@@ -632,10 +632,10 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=72";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=73";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=42").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=43").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -826,6 +826,7 @@ function onEvent(e) {
   if (e.type === "cashier") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.cashier(!!e.ruby); }
   if (e.type === "dex") { if (e.done) zcRead(); return CZ.dex(e); }
   if (e.type === "stake") return CZ.stake(e);
+  if (e.type === "roundopen") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", e.key === "roul" ? "gameWin" : "roulWin"]) $(w).hidden = true; if (e.key === "roul") { $("roulWin").hidden = false; renderRoul(); } else if (FIGHT) CZ.fight(FIGHT, true); else say("The card's still being written. Try again in a second."); return; }
   if (e.type === "rr") { if ($("gameWin").hidden || CZ.game !== "russian") openRussian(); return; }
   if (e.type === "real") { if ($("gameWin").hidden || CZ.game !== e.g) openReal(e.g); return; }
   if (e.type === "prize") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.prize(e); }
@@ -844,10 +845,14 @@ let savedAt = 0;
 
 /* ------------------------------------------------------------ the scene you're in: built from the shared rules */
 let SFXfight = "";
+let realRoundOn = null;
 let FIGHT = null;   // the Fight Pit's fight, as the server last told it (only while you're in the room)
 function loadScene(key) {
   if (Z.key && (G.sceneDef(key)?.interior || Z.def?.interior)) SFX.play("door");
-  FIGHT = null; if (String(key).split(":")[0] === "fightpit") setTimeout(() => send({ t: "fight", op: "open" }), 300);
+  FIGHT = null; ROUL = null; roulPrevPhase = null; const rr0 = G.SCENES[String(key).split(":")[0]]?.realRound || null;
+  if (realRoundOn && realRoundOn !== rr0) { CZ.roundWatch(realRoundOn, false); realRoundOn = null; }
+  if (rr0 && realRoundOn !== rr0) { realRoundOn = rr0; CZ.roundWatch(rr0, true); }   /* this room's game is the site's shared round: the windows module reads it and hands back the usual views */
+  else if (!rr0 && String(key).split(":")[0] === "fightpit") setTimeout(() => send({ t: "fight", op: "open" }), 300);
   const b = G.buildScene(key);
   Object.assign(Z, { key, g: b.g, objs: b.objs, fadeAt: performance.now(), defs: {} });
   Z.def = G.sceneDef(key); Z.isle = null; Z.ground = [];
@@ -2225,12 +2230,12 @@ function isleSign(e) {
 
 /* ------------------------------------------------------------ THE REAL TABLES: on the casino's main floor six tables are
    eastcoin.vip's own games, for real ZCoins. The window is ours (CZ, real mode); it talks to the site's endpoints itself. */
-let ZCBAL = null, zcAt = 0;
+let ZCBAL = null, zcAt = -1e9;   /* (not 0: performance.now() is still under 4,000 on a fast load, and the very first read used to throttle itself away) */
 async function zcRead() {
   if (performance.now() - zcAt < 4000) return; zcAt = performance.now();
   try { const r = await fetch("/api/picks/bootstrap", { credentials: "same-origin" }), j = await r.json(), n = Number(j?.session?.wallet?.balance); if (Number.isFinite(n) && n !== ZCBAL) { ZCBAL = n; renderPanel(); } } catch (x) { /* no site behind this page (a dev server): the box shows a dash */ }
 }
-setTimeout(zcRead, 2500);
+setTimeout(zcRead, 2500); setTimeout(() => { if (ZCBAL == null) zcRead(); }, 12000);   /* and once more if the first one found no session yet */
 new MutationObserver(() => { if ($("gameWin").hidden) zcRead(); }).observe($("gameWin"), { attributes: true, attributeFilter: ["hidden"] });
 function openRussian() {
   for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin"]) $(w).hidden = true;
@@ -2403,10 +2408,13 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=15", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=16", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
 let czReal = null;
-const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, me: () => me, room: () => Z.def, you: () => you, calm: () => set("reducedMotion"), now: () => snow() }))));
-const CZ = new Proxy({}, { get: (_, k) => (czReal ? czReal[k] : k === "game" ? null : k === "real" ? false : k === "realGames" ? () => Object.keys(G.REAL_TABLES) : CZ_QUIET.has(k) ? () => {} : (...a) => { czLoad().then((z) => z[k](...a)).catch(() => say("Couldn't load the game windows. Check your connection and try again.")); }) });
+const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
+  /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
+  onFight: (v) => { const was = FIGHT; FIGHT = { ...v, until: performance.now() + v.left }; if (v.phase === "fight" && was?.phase !== "fight" && was) SFX.play("task_done"); if (CZ.game === "fight") CZ.fight(FIGHT, false); },
+  onRoul: (v) => roulSet(v), me: () => me, room: () => Z.def, you: () => you, calm: () => set("reducedMotion"), now: () => snow() }))));
+const CZ = new Proxy({}, { get: (_, k) => (czReal ? czReal[k] : k === "game" ? null : k === "real" || k === "tix" ? false : k === "realGames" ? () => Object.keys(G.REAL_TABLES) : CZ_QUIET.has(k) ? () => {} : (...a) => { czLoad().then((z) => z[k](...a)).catch(() => say("Couldn't load the game windows. Check your connection and try again.")); }) });
 setTimeout(czLoad, 6000);
 /* ------------------------------------------------------------ roulette: the shared table
    The server runs the clock and draws the number; this draws the board, everybody's chips and the wheel. */
@@ -2433,7 +2441,9 @@ function roulWheelBg() {
   return `conic-gradient(${G.ROULETTE_WHEEL.map((n, i) => `${{ red: "#b8202a", black: "#1a1a1a", green: "#1f7a3a" }[G.rouletteColor(n)]} ${(i * seg).toFixed(2)}deg ${((i + 1) * seg).toFixed(2)}deg`).join(",")})`;
 }
 function renderRoul() {
-  if (!ROUL) { $("roulBody").innerHTML = '<p class="note">Joining the table…</p>'; send({ t: "roul", op: "open" }); return; }
+  const REALR = realRoundOn === "roul", TIXR = REALR && CZ.tix, zc = (n) => (REALR ? `${Number(n).toLocaleString()} ZC` : G.fmtCash(n));
+  if (!ROUL) { $("roulBody").innerHTML = '<p class="note">Joining the table…</p>'; if (!REALR) send({ t: "roul", op: "open" }); return; }
+  if (REALR && ![1, 5, 10, 20].includes(roulChip)) roulChip = 5;
   const R = ROUL, betting = R.phase === "bet", left = Math.max(0, R.left - (performance.now() - roulGot));
   const cell = (label, kind, pick, cls = "", span = "") => {
     const on = R.bets.filter((b) => b.kind === kind && (kind !== "num" || b.pick === pick)), tot = on.reduce((a, b) => a + b.amt, 0), mine = on.some((b) => b.me);
@@ -2448,20 +2458,25 @@ function renderRoul() {
   const byName = new Map(); for (const b of R.bets) { const a = byName.get(b.name) || []; a.push(`${b.amt.toLocaleString()} on ${G.rouletteLabel(b.kind, b.pick)}`); byName.set(b.name, a); }
   const myStake = R.bets.filter((b) => b.me).reduce((a, b) => a + b.amt, 0);
   const last = R.last ? `<span class="rl-n ${R.last.col}">${R.last.n}</span>` : "—";
-  $("roulSub").textContent = `Round ${R.round} · up to ${G.fmtCash(G.maxBetOf(me))} a spin`;
+  $("roulSub").textContent = REALR ? "ZCoins or tickets · pays REAL ZCoins · ONE spot a spin, 1 to 20 · a spin a minute" : `Round ${R.round} · up to ${G.fmtCash(G.maxBetOf(me))} a spin`;
   const banner = roulBanner && performance.now() < roulBanner.until ? `<div class="rl-banner ${roulBanner.cls}">${esc(roulBanner.text)}<small>${esc(roulBanner.sub)}</small></div>` : "";
-  $("roulBody").innerHTML = `${luckLine()}<div class="rl-top">${banner}<div class="rl-wheelbox"><div class="rl-wheel" id="rlWheel" style="background:${roulWheelBg()};transform:rotate(${roulAngle}deg)"></div><div class="rl-hub"></div><div class="rl-ballring" id="rlBall" style="transform:rotate(${roulBallAngle}deg)"><i></i></div><div class="rl-pin"></div></div>
-      <div class="rl-state"><b>${betting ? `Place your bets · ${Math.ceil(left / 1000)}s` : "No more bets · the ball is rolling"}</b>
+  $("roulBody").innerHTML = `${REALR ? `<div class="rl-chips" style="margin-bottom:6px">Bet with <button type="button" data-cur="zc" aria-pressed="${!TIXR}" style="width:auto;border-radius:999px;padding:0 12px;background:#8a6a12">ZCoins</button><button type="button" data-cur="tix" aria-pressed="${!!TIXR}" style="width:auto;border-radius:999px;padding:0 12px;background:#a8405a">🎟 Tickets · ${(roulChip * G.DEX.rate).toLocaleString()}</button><small style="margin-left:auto">either way, a win is paid in real ZCoins</small></div>` : luckLine()}<div class="rl-top">${banner}<div class="rl-wheelbox"><div class="rl-wheel" id="rlWheel" style="background:${roulWheelBg()};transform:rotate(${roulAngle}deg)"></div><div class="rl-hub"></div><div class="rl-ballring" id="rlBall" style="transform:rotate(${roulBallAngle}deg)"><i></i></div><div class="rl-pin"></div></div>
+      <div class="rl-state"><b>${betting ? (R.hold > 0 ? `Next spin opens in ${Math.ceil((R.hold - (performance.now() - roulGot)) / 1000)}s` : `Place your bet · ${Math.ceil(left / 1000)}s`) : "No more bets · the ball is rolling"}</b>
         <small>${betting ? (R.last ? `Last: ${R.last.n} ${R.last.col}${R.last.wins.length ? ` · ${R.last.wins.map((w) => `${esc(w.name)} +${w.payout.toLocaleString()}`).join(", ")}` : " · no winners"}` : "Chips on the board, then wait for the wheel.") : "Good luck."}</small>
-        <div class="rl-timer"><i id="rlTime" style="width:${Math.round((left / (betting ? G.ROULETTE.betMs : G.ROULETTE.spinMs)) * 100)}%"></i></div>
+        <div class="rl-timer"><i id="rlTime" style="width:${Math.min(100, Math.round((left / (betting ? (REALR ? 40000 : G.ROULETTE.betMs) : (REALR ? 12000 : G.ROULETTE.spinMs))) * 100))}%"></i></div>
         <div class="rl-hist">${R.hist.map((n) => `<span class="rl-n ${G.rouletteColor(n)}">${n}</span>`).join("")}</div></div></div>
-    <div class="rl-chips">Chip ${ROUL_CHIPS.map(([v, c]) => `<button type="button" data-chip="${v}" style="background:${c}" aria-pressed="${v === roulChip}">${v}</button>`).join("")}
-      <small style="margin-left:auto">Your stake ${G.fmtCash(myStake)} · bag ${G.fmtCash(G.cashIn(me))}</small>
-      ${myStake && betting ? `<button class="btn plain" id="rlClear" style="width:auto;height:auto;border-radius:4px;border:0;color:inherit">Take back</button>` : ""}</div>
+    <div class="rl-chips">Chip ${(REALR ? [[1, "#6a6a72"], [5, "#2a5aa8"], [10, "#b8202a"], [20, "#1a1a1a"]] : ROUL_CHIPS).map(([v, c]) => `<button type="button" data-chip="${v}" style="background:${c}" aria-pressed="${v === roulChip}">${v}</button>`).join("")}
+      <small style="margin-left:auto">${REALR ? `Your bet ${zc(myStake)} · ${TIXR ? `tickets ${G.fmtCash(G.cashIn(me))}` : `ZCoins ${ZCBAL == null ? "–" : Number(ZCBAL).toLocaleString()}`}` : `Your stake ${G.fmtCash(myStake)} · bag ${G.fmtCash(G.cashIn(me))}`}</small>
+      ${myStake && betting && !REALR ? `<button class="btn plain" id="rlClear" style="width:auto;height:auto;border-radius:4px;border:0;color:inherit">Take back</button>` : ""}</div>
     ${board}
     <div class="rl-who">${byName.size ? [...byName].map(([n, list]) => `<div><b>${esc(n)}</b>: ${esc(list.join(", "))}</div>`).join("") : '<span class="note">Nobody has bet this round yet.</span>'}</div>`;
   $("roulBody").querySelectorAll("[data-chip]").forEach((b) => b.addEventListener("click", () => { roulChip = +b.dataset.chip; renderRoul(); }));
-  $("roulBody").querySelectorAll(".rl-cell").forEach((b) => b.addEventListener("click", () => send({ t: "roul", op: "bet", kind: b.dataset.k, pick: b.dataset.p != null ? +b.dataset.p : null, amt: roulChip })));
+  $("roulBody").querySelectorAll("[data-cur]").forEach((b) => b.addEventListener("click", () => { CZ.setTix(b.dataset.cur === "tix"); SFX.play("ui_click"); renderRoul(); }));
+  $("roulBody").querySelectorAll(".rl-cell").forEach((b) => b.addEventListener("click", async () => {
+    if (!REALR) return send({ t: "roul", op: "bet", kind: b.dataset.k, pick: b.dataset.p != null ? +b.dataset.p : null, amt: roulChip });
+    if (myStake) return say("One spot a spin at this table. You're already on this one.");
+    SFX.play("chip"); const r = await CZ.roundBet("roul", b.dataset.k === "num" ? `n${b.dataset.p}` : b.dataset.k, roulChip); if (r && !r.ok) { say(r.message, "bad"); SFX.play("ui_error"); } else if (r?.ok) zcRead();
+  }));
   $("rlClear")?.addEventListener("click", () => send({ t: "roul", op: "clear" }));
   // spin the wheel once per round, landing the drawn number under the pin when the ball stops
   if (!betting && R.result != null && roulSpunRound !== R.round) {
