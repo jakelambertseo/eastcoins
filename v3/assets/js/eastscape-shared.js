@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 68;
+export const VERSION = 69;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -602,7 +602,7 @@ Object.assign(SCENES, {
       for (let x = 12; x <= 26; x++) keep.push([x, 19], [x, 18]);
       objs.push({ t: "fire", x: 21, y: 16, name: "Campfire" }); g[16][21] = "#";   // somewhere to stand
       objs.push({ t: "sign", x: 3, y: 11, name: "West: the Lantern Mire. It opens at Combat 20, and Fishing 20 for the lake." }); g[11][3] = "#";
-      objs.push({ t: "sign", x: 16, y: 15, name: "THE GLOAM: Combat 10 to 19. NORTH, in the clearing: Bog Gnashers. They come for you on sight. Everything else here minds its own business." }); g[15][16] = "#";
+      objs.push({ t: "sign", x: 16, y: 15, name: "THE GLOAM: Combat 10 to 19. Nothing out here attacks first: click a monster to fight it. Toadstools by the way in, highwaymen and goats further on, Bog Gnashers in the north clearing, and the idle dead in the south-west." }); g[15][16] = "#";
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 9);
       return { g, objs, blobs: [] };
@@ -627,7 +627,7 @@ Object.assign(SCENES, {
       for (const x of [16, 20, 24, 28, 32]) objs.push({ t: "spot", x, y: 18, name: "Lantern lake", req: { skill: "fishing", lvl: 20 }, fish: "lanternfish", fish2: "mudskipper", fish2lvl: 25, xp: 80, xp2: 95, glow: "#a8ffb0", tease: "Little lights drift under the surface. They move away when you lean close. Fishing 20." });
       for (let x = 13; x <= 34; x++) keep.push([x, 17], [x, 16]);
       objs.push({ t: "sign", x: 3, y: 11, name: "West: the Boneyard. It opens at Combat 30, and Fishing 30 for the flooded crypt." }); g[11][3] = "#";
-      objs.push({ t: "sign", x: 30, y: 15, name: "THE LANTERN MIRE: Combat 20 to 29. Two things here come for you on sight: the Tax Wraiths in the north clearing, and the Loan Sharks in the far south-west. Everything else waits to be asked." }); g[15][30] = "#";
+      objs.push({ t: "sign", x: 30, y: 15, name: "THE LANTERN MIRE: Combat 20 to 29. Nothing here attacks first. Paper Twisters and moths to the east, Card Counters in the north-west, Tax Wraiths in the north clearing, Loan Sharks in the far south-west." }); g[15][30] = "#";
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 9);
       return { g, objs, blobs: [] };
@@ -651,7 +651,7 @@ Object.assign(SCENES, {
       for (let x = 26; x <= 37; x++) keep.push([x, 18], [x, 17]);
       objs.push({ t: "fire", x: 24, y: 10, name: "Cloud-fire" }); g[10][24] = "#";
       objs.push({ t: "sign", x: 20, y: 11, name: "Further west: the Thunderhead. It opens at Combat 50, and Fishing 50 for the sea underneath it. Nothing past it." }); g[11][20] = "#";   /* (not at the west edge: the revenants can reach that) */
-      objs.push({ t: "sign", x: 26, y: 15, name: "CLOUDREACH: Combat 40 to 49. Sulking Revenants in the far north-west and Angels of Minor Inconvenience in the far south-west come for you on sight. The rams, the Brainstorms and the Sea-Goats wait to be asked." }); g[15][26] = "#";
+      objs.push({ t: "sign", x: 26, y: 15, name: "CLOUDREACH: Combat 40 to 49. Nothing here attacks first. Rams by the way in, Brainstorms in the middle, Sea-Goats to the south-west, Sulking Revenants in the far north-west, Angels of Minor Inconvenience in the far south-west." }); g[15][26] = "#";
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "water", s: "water", w: "water", e: "water" }, [...keepOf(this), ...keep], 10);
       return { g, objs, blobs: [] };
@@ -673,7 +673,7 @@ Object.assign(SCENES, {
       for (let y = 18; y <= 23; y++) for (let x = 3; x <= 22; x++) g[y][x] = "~";   // the sea, seen through the floor of the storm
       for (const x of [6, 10, 14, 18, 21]) objs.push({ t: "spot", x, y: 18, name: "The sea below", req: { skill: "fishing", lvl: 50 }, fish: "stormmarlin", fish2: "thundersquid", fish2lvl: 58, xp: 190, xp2: 230, glow: "#ffe27a", tease: "Far below, something with a sword for a nose cuts the water. Fishing 50." });
       for (let x = 2; x <= 23; x++) keep.push([x, 17], [x, 16]);
-      objs.push({ t: "sign", x: 40, y: 11, name: "THE THUNDERHEAD: Combat 50 and up. The end of the road. Thunderwolves in the north and Hail Drakes in the far south-east come for you on sight. So does THE HOUSE, in the north-west corner, and the House always wins. Usually." }); g[11][40] = "#";
+      objs.push({ t: "sign", x: 40, y: 11, name: "THE THUNDERHEAD: Combat 50 and up. The end of the road. Nothing here attacks first, not even THE HOUSE, in the north-west corner. The House always wins. Usually." }); g[11][40] = "#";
       for (let x = 12; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "water", s: "water", w: "water", e: "water" }, [...keepOf(this), ...keep], 10);
       return { g, objs, blobs: [] };
@@ -702,7 +702,7 @@ Object.assign(SCENES, {
       for (const [x, y] of [[7, 19], [27, 9], [38, 11]]) { objs.push({ t: "skeleton", x, y, name: "Somebody who stayed" }); g[y][x] = "#"; }
       for (const [x, y] of [[4, 4], [18, 3], [40, 4], [24, 22]]) { objs.push({ t: "deadtree", x, y, name: "Dead tree" }); g[y][x] = "#"; }
       objs.push({ t: "sign", x: 3, y: 11, name: "West: Cloudreach. It opens at Combat 40, and Fishing 40. Bring a head for heights." }); g[11][3] = "#";
-      objs.push({ t: "sign", x: 28, y: 15, name: "THE BONEYARD: Combat 30 to 39. Chandelier Spiders in the north, One-Eyed Ushers in the far south-west: both come for you on sight. The ghouls, the Stagehands and the Understudies wait for their cue." }); g[15][28] = "#";
+      objs.push({ t: "sign", x: 28, y: 15, name: "THE BONEYARD: Combat 30 to 39. Nothing here attacks first. Ghouls to the east, Stagehands to the west, Understudies in the middle, Chandelier Spiders in the north, One-Eyed Ushers in the far south-west." }); g[15][28] = "#";
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 33);
       return { g, objs, blobs: [] };
@@ -1385,6 +1385,12 @@ export const LOOT = {
   angel:      { item: ["dragonstone_ore", 1] },
   goose:      { item: ["onyx_ore", 1], rare: [["stake_loafers", 0.02], ["spiderboots", 0.01]] }
 };
+/* NOTHING ATTACKS ON SIGHT, FOR NOW (the owner, 2026-09-19: "i dont want any monster to attack on site for now, its just too
+   aggressive for a relaxed chill game like this"). Every monster only fights back. Each one's old reach is kept as
+   `aggroWas`, so switching it back is this one flag; the scenes still keep those monsters in corners their old reach
+   can't leave (tools/eastscape-aggro-check.mjs reads aggroWas), so turning it on again needs no map work. */
+export const AGGRO_ON = false;
+for (const m of Object.values(MOBS)) if (m.aggro) { m.aggroWas = m.aggro; if (!AGGRO_ON) delete m.aggro; }
 for (const [t, L] of Object.entries(LOOT)) if (MOBS[t]) { MOBS[t].drops = [L.item]; MOBS[t].rare = L.rare || []; }
 
 /* ------------------------------------------------------------ words */
