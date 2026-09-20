@@ -286,7 +286,7 @@ button,input,select{font:inherit}
 .rl-cell{position:relative;min-height:30px;display:grid;place-items:center;border:1px solid #d8c890;color:#fff;font-weight:900;font-size:12.5px;cursor:pointer;border-radius:3px;background:transparent;font-family:inherit;padding:0}
 .rl-cell.red{background:#a81c26}.rl-cell.black{background:#1a1a1a}.rl-cell.green{background:#1f7a3a}.rl-cell.out{background:#16602f;font-size:11.5px}
 .rl-cell:hover{filter:brightness(1.25)}.rl-cell:disabled{cursor:default;filter:none;opacity:.85}
-.rl-cell.hit{box-shadow:0 0 0 3px #ffe27a;z-index:1}
+.rl-cell.hit{box-shadow:0 0 0 3px #fff,0 0 12px 3px rgba(255,255,255,.55);z-index:1}.rl-cell.mine{box-shadow:0 0 0 3px #ffe27a;z-index:2}
 .rl-cell em{position:absolute;right:-3px;top:-5px;min-width:18px;padding:0 3px;border-radius:9px;background:#e8e0c8;color:#2a2016;font:800 10px/15px Nunito,sans-serif;font-style:normal;box-shadow:0 1px 0 rgba(0,0,0,.4)}
 .rl-cell em.me{background:#ffd45a}
 .rl-who{margin-top:8px;font-size:12.5px;display:grid;gap:2px}.rl-who b{color:#3a2616}
@@ -639,10 +639,10 @@ button,input,select{font:inherit}
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=80";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=81";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=49").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=50").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=2";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -2422,7 +2422,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=22", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=23", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
@@ -2461,8 +2461,9 @@ function renderRoul() {
   const R = ROUL, betting = R.phase === "bet", left = Math.max(0, R.left - (performance.now() - roulGot));
   const cell = (label, kind, pick, cls = "", span = "") => {
     const on = R.bets.filter((b) => b.kind === kind && (kind !== "num" || b.pick === pick)), tot = on.reduce((a, b) => a + b.amt, 0), mine = on.some((b) => b.me);
-    const hit = R.last && !betting ? false : R.last && G.ROULETTE_BETS[kind]?.wins(R.last.n, pick);
-    return `<button class="rl-cell ${cls}${hit ? " hit" : ""}" data-k="${kind}"${pick != null ? ` data-p="${pick}"` : ""}${span ? ` style="${span}"` : ""}${betting ? "" : " disabled"}>${label}${tot ? `<em class="${mine ? "me" : ""}">${tot >= 1000 ? `${Math.round(tot / 100) / 10}k` : tot}</em>` : ""}</button>`;
+    /* the gold outline is YOUR bet. Where the last spin landed flashes only while its banner is up (it used to stay lit all round and read as a selection) */
+    const hit = !!(roulBanner && performance.now() < roulBanner.until && R.last && G.ROULETTE_BETS[kind]?.wins(R.last.n, pick));
+    return `<button class="rl-cell ${cls}${hit ? " hit" : ""}${mine ? " mine" : ""}" data-k="${kind}"${pick != null ? ` data-p="${pick}"` : ""}${span ? ` style="${span}"` : ""}${betting ? "" : " disabled"}>${label}${tot ? `<em class="${mine ? "me" : ""}">${tot >= 1000 ? `${Math.round(tot / 100) / 10}k` : tot}</em>` : ""}</button>`;
   };
   // the classic layout: 0 down the left, three rows of twelve (3,6,9… on top), dozens, then the even-money bets
   const rows = [3, 2, 1].map((r, i) => Array.from({ length: 12 }, (_, c) => { const n = c * 3 + r; return cell(n, "num", n, G.rouletteColor(n), `grid-row:${i + 1};grid-column:${c + 2}`); }).join("")).join("");
