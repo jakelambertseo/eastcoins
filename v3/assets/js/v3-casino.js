@@ -32,7 +32,7 @@
        with a ribbon and no link, no live line and no plays counter —
        there is nothing to poll and nowhere to click, so it must not
        pretend otherwise by looking like the seven that do. */
-    eastscape: { title: "EastScape", icon: "🗺️", sub: "EastCoin Casino MMO", soon: "Coming Soon!", blurb: "Every game on this floor, in a world you walk around. Fish, fight, mine, and play the same tables for the same ZCoins." },
+    eastscape: { title: "EastScape", icon: "🗺️", sub: "EastCoin Casino MMO", soon: "Coming Soon!", line: "Fight, mine, fish and craft for ZCoins.", blurb: "Every game on this floor, in a world you walk around. Fight, mine, fish and craft for ZCoins, and play the same tables at the same odds." },
     flip: { title: "Coin Flip", icon: "🪙", blurb: "Heads or tails, about 2×. One coin for the whole room, every 30 seconds.", route: "flip" },
     wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black about 2.03×, the gold sliver about 60×. One spin a minute.", route: "wheel" },
     race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2× to 14×. They're off every minute.", route: "race", hidden: true },
@@ -209,7 +209,7 @@
          refs, so the half-second repaint never looks for it. */
       if (g.soon) {
         tile.title = g.blurb;
-        tile.append(art, K.el("div", "cas-card-live", g.blurb.split(".")[0] + "."));
+        tile.append(art, K.el("div", "cas-card-live", g.line));
         refs.tiles.append(tile);
         continue;
       }
