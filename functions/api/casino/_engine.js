@@ -286,6 +286,26 @@ const parseResult = (text) => { try { return text ? JSON.parse(text) : null; } c
  * NULL runs first, and payouts are idempotent per bet regardless, so
  * a crash mid-way is finished by the next caller rather than doubled.
  */
+/* SETTLE WHATEVER WAS LEFT BEHIND (2026-09-21). Nothing but a state poll ever settles a shared round, and it only ever asked
+   about the current round and the one before it. So if the last player bets and closes the tab, and nobody opens the page
+   again for a minute, that round falls out of the window for good: the stake was taken and the bet stays ACTIVE — never paid
+   on a winning side, never marked LOST, and invisible to hourlyNet, the ledger, the book and the feed, all of which filter on
+   WON/LOST. On a quiet night with one player that is the ordinary case, not an edge case.
+
+   This finds any round that still has money on it and has already closed, oldest first, and settles it. Bounded, because it
+   runs on a hot public endpoint: a backlog drains over several calls rather than making one request do all the work.
+   Settlement itself is idempotent per bet, so two callers racing here is the case settleRound already handles. */
+export async function settleStale(env, db, game, now = Date.now(), limit = 8) {
+  const openNo = Math.floor(now / game.cycleMs);
+  const rows = await db
+    .prepare(`SELECT DISTINCT round_no FROM casino_bets WHERE game = ? AND status = 'ACTIVE' AND round_no < ? ORDER BY round_no LIMIT ?`)
+    .bind(game.key, openNo, limit)
+    .all()
+    .catch(() => ({ results: [] }));
+  for (const r of rows.results || []) await settleRound(env, db, game, Number(r.round_no), now).catch(() => {});
+  return (rows.results || []).length;
+}
+
 export async function settleRound(env, db, game, no, now = Date.now()) {
   const closesAt = no * game.cycleMs + game.betMs;
   if (now < closesAt) return null;

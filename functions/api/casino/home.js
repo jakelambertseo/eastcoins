@@ -4,8 +4,8 @@
    and who's in the room. Plus the biggest recent wins across every
    game, for the board. Public; a session adds nothing here. */
 
-import { ensureSchema as ensureCoin, roundAt as coinRoundAt, CYCLE_MS as COIN_CYCLE, BET_MS as COIN_BET } from "../coin/_coin.js";
-import { GAMES, ensureSchema, roundAt, ROOM_WINDOW_MS } from "./_engine.js";
+import { ensureSchema as ensureCoin, roundAt as coinRoundAt, settleStale as settleStaleCoin, CYCLE_MS as COIN_CYCLE, BET_MS as COIN_BET } from "../coin/_coin.js";
+import { GAMES, ensureSchema, roundAt, settleStale, ROOM_WINDOW_MS } from "./_engine.js";
 import { ensureHilo } from "./hilo/_hilo.js";
 import { ensureMines } from "./mines/_mines.js";
 import { ensurePlinko } from "./plinko/_plinko.js";
@@ -93,6 +93,17 @@ export async function onRequestGet(context) {
     people("casino_presence", "grind")
   ]);
   games.push({ key: "grind", name: "The Grind", route: "grind", round: null, inRound: Number(grindWorking?.n || 0), staked: 0, room: Number(grindRoom?.n || 0), people: grindPeople, work: true });
+
+  /* THE LAST RESORT FOR A ROUND NOBODY WATCHED (2026-09-21). A shared round is only settled by a state poll on its own page,
+     so a flip whose players all closed their tabs left the stake taken and the bet ACTIVE for good. The state endpoints sweep
+     their own backlog now; this is the case where nobody opened a game page at all.
+     ONE REQUEST IN TEN, because this endpoint is the hottest on the site and is not edge-cached: a backlog still drains within
+     a minute of anyone looking at the floor, without putting an extra query on every poll. Same reasoning as the ticket sweep
+     in eastscape/ticket.js. */
+  if (Math.random() < 0.1) {
+    await settleStaleCoin(context.env, db, now).catch(() => {});
+    for (const g of Object.values(GAMES)) await settleStale(context.env, db, g, now).catch(() => {});
+  }
 
   // The PvP tables. The floor is polled far more widely than either
   // table's own page, so settling here is what pays a round whose

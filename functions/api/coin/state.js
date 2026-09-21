@@ -4,7 +4,7 @@
    the clock, so the first poll after a flip is what pays the winners. */
 
 import { getSessionUser, walletWritesEnabled } from "../picks/_lib.js";
-import { ensureSchema, roundAt, ensureRound, settleRound, betsFor, roomFor, touchPresence, betsLastHour, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, BET_MS, CYCLE_MS } from "./_coin.js";
+import { ensureSchema, roundAt, ensureRound, settleRound, settleStale, betsFor, roomFor, touchPresence, betsLastHour, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR, BET_MS, CYCLE_MS } from "./_coin.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 
@@ -23,7 +23,7 @@ export async function onRequestGet(context) {
   // Whatever is due: this round once it has flipped, and the one before
   // in case nobody was looking when it flipped.
   const settledNow = round.phase === "result" ? await settleRound(context.env, db, round.no, now) : null;
-  await settleRound(context.env, db, round.no - 1, now);
+  await settleStale(context.env, db, now);   // (2026-09-21) anything older that still has money on it, not just the round before
 
   const [bets, last, room, prevRow] = await Promise.all([
     betsFor(db, round.no),
