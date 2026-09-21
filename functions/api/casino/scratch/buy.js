@@ -9,7 +9,7 @@ import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOpe
 import { stakeFor, reopenStake, BAD_VOUCHER } from "../../eastscape/_stake.js";
 import { settlePot } from "../_pot.js";
 import { ensureSchema, touchPresence, capCheck } from "../_engine.js";
-import { ensureScratch, commitFor, rotateCommit, outcomeFor, gridFor, publicCard, cardsLastHour, edgeFor, RETURN, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "./_scratch.js";
+import { ensureScratch, claimCommit, outcomeFor, gridFor, publicCard, cardsLastHour, edgeFor, RETURN, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "./_scratch.js";
 
 const SCRATCH = { key: "scratch" };
 
@@ -37,9 +37,11 @@ export async function onRequestPost(context) {
   if (balance === null) return fail("BALANCE_UNAVAILABLE", "Couldn't read your ZCoin balance.", 503);
   if (!body.voucher && stake > balance) return fail("INSUFFICIENT_FUNDS", `That's more than your ${balance.toLocaleString()} ZCoins.`, 409);
 
-  // The seed whose hash this player was already shown.
-  const commit = await commitFor(db, user.id);
-  if (!commit) return fail("NO_COMMIT", "Couldn't set up the card. Try again.", 500);
+  /* The seed whose hash this player was already shown — TAKEN here, not merely read, so two cards bought together cannot
+     share it and a burst cannot walk past the hourly limit or the win cap. See claimCommit in _scratch.js. */
+  const claim = await claimCommit(db, user.id);
+  if (!claim) return fail("CARD_BUSY", "One card at a time — that one is still going. Try again in a moment.", 409);
+  const commit = claim.used;
 
   const id = newId("sc");
   /* A GambaScape TICKET STAKE (eastscape/_stake.js): the house put this one up, so no ZCoin leaves the wallet and no
@@ -96,8 +98,7 @@ export async function onRequestPost(context) {
   // its line. Never lets the buy fail; the next bet tries again.
   await settlePot(context.env, db).catch(() => {});
 
-  // The seed is spent whatever happens next.
-  const next = await rotateCommit(db, user.id);
+  const next = claim.next;   // taken together with the seed, above
 
   let balanceAfter = debit.balance;
   if (payout > 0) {

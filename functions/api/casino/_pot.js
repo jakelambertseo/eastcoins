@@ -82,6 +82,9 @@ export async function ensurePot(db) {
     paid_at TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   )`).run();
+  /* when the day was claimed for settling, so a crashed claim can be taken back (see the note beside the claim). Added with a
+     forgiving ALTER so an existing table cannot break the request. */
+  await db.prepare(`ALTER TABLE casino_pots ADD COLUMN settling_at TEXT`).run().catch(() => {});
 }
 
 /* ---------------- the day's play ---------------- */
@@ -188,8 +191,16 @@ export async function settlePot(env, db, now = Date.now()) {
   const late = chicagoHour(now) >= LATE_HOUR;
   if (!late && total < Number(pot.trigger_at)) return null;
 
-  // Claim it. Two bets landing together: one wins this UPDATE.
-  const claimed = await db.prepare(`UPDATE casino_pots SET status = 'SETTLING' WHERE day = ? AND status = 'OPEN'`).bind(pot.day).run();
+  /* Claim it. Two bets landing together: one wins this UPDATE.
+     A CRASH USED TO KILL THE DAY'S MONEY. Every named failure below puts the row back to OPEN, but a worker timeout or an
+     isolate eviction between here and the credit — a window that contains a StreamElements round trip — left it SETTLING for
+     good: settlePot returns early on any status but OPEN, and potFor's roll-forward only sweeps OPEN days, so the amount was
+     neither paid nor carried. The PvP tables already reclaim a stalled SETTLING round (pvp/_pvp.js); this is the same guard.
+     Safe to re-claim because the payment below is idempotent per day. */
+  const claimed = await db
+    .prepare(`UPDATE casino_pots SET status = 'SETTLING', settling_at = CURRENT_TIMESTAMP WHERE day = ? AND (status = 'OPEN' OR (status = 'SETTLING' AND settling_at IS NOT NULL AND settling_at < datetime('now', '-2 minutes')))`)
+    .bind(pot.day)
+    .run();
   if (!claimed?.meta?.changes) return null;
 
   const shares = Object.fromEntries(stakes);
@@ -201,14 +212,43 @@ export async function settlePot(env, db, now = Date.now()) {
   const user = await db.prepare(`SELECT twitch_id, twitch_login, display_name FROM users WHERE twitch_id = ?`).bind(winner.userId).first();
   if (!user?.twitch_login) { await db.prepare(`UPDATE casino_pots SET status = 'OPEN' WHERE day = ?`).bind(pot.day).run(); return null; }
 
-  const opId = newId("op");
-  const begun = await beginOperation(db, { id: opId, idempotencyKey: `CASINO:POT:PAY:${pot.day}`, userId: user.twitch_id, marketId: null, pickId: null, type: "PAYOUT_CREDIT", amount: Number(pot.amount) });
-  if (begun.ok) {
+  /* PAY, AND ONLY THEN SAY IT WAS PAID (fixed 2026-09-21). A duplicate idempotency key was being read as "this already ran",
+     which is what it means everywhere else — but not here, because the one failure path above deliberately leaves the key
+     behind with the row back at OPEN so a later bet retries. On that retry beginOperation refused, the whole credit block was
+     skipped, and the code fell straight through to marking the day PAID with a winner and a paid_at. The pot was announced,
+     the banner fired, and not one coin moved — and it could not be recovered, because reconcile.js only refunds DEBITs and
+     this is a credit. So a refusal now asks what the existing operation actually SAYS, and only a CONFIRMED one counts. */
+  const base = `CASINO:POT:PAY:${pot.day}`;
+  const reopen = async () => { await db.prepare(`UPDATE casino_pots SET status = 'OPEN' WHERE day = ?`).bind(pot.day).run(); return null; };
+
+  /* HAS THIS DAY ALREADY BEEN PAID? One CONFIRMED credit for the day is the whole answer, and it is what stops a retry paying
+     twice — the check is on the day, not on one key, because a retry below deliberately uses a new key. */
+  const done = await db
+    .prepare(`SELECT id FROM wallet_operations WHERE status = 'CONFIRMED' AND (idempotency_key = ? OR substr(idempotency_key, 1, ?) = ?) LIMIT 1`)
+    .bind(base, base.length + 1, `${base}#`)
+    .first()
+    .catch(() => null);
+
+  if (!done) {
+    /* A RETRY NEEDS A KEY OF ITS OWN. The failure path leaves its key behind and puts the day back to OPEN so a later bet
+       tries again — but the retry was reusing the same key, beginOperation refused it as a duplicate, the credit block was
+       skipped entirely and the code fell through to marking the day PAID. A winner was announced and no coin moved, and the
+       reconcile tool could not undo it because it only refunds DEBITs. Numbering the key off the attempts ALREADY RECORDED is
+       safe in a way the store's count-of-purchases key is not: every attempt writes a row here, so the number always moves. */
+    const tries = await db
+      .prepare(`SELECT COUNT(*) AS n FROM wallet_operations WHERE idempotency_key = ? OR substr(idempotency_key, 1, ?) = ?`)
+      .bind(base, base.length + 1, `${base}#`)
+      .first()
+      .catch(() => ({ n: 0 }));
+    const n = Number(tries?.n || 0);
+    const key = n ? `${base}#${n}` : base;
+    const opId = newId("op");
+    const begun = await beginOperation(db, { id: opId, idempotencyKey: key, userId: user.twitch_id, marketId: null, pickId: null, type: "PAYOUT_CREDIT", amount: Number(pot.amount) });
+    if (!begun.ok) return reopen();   // another request is mid-flight on this very key: let it finish
     const moved = await moveBalance(env, user.twitch_login, Number(pot.amount));
     if (!moved.ok) {
       await finishOperation(db, opId, "NEEDS_RECONCILIATION", { error: moved.error });
-      await db.prepare(`UPDATE casino_pots SET status = 'OPEN' WHERE day = ?`).bind(pot.day).run();   // next bet tries again
-      return null;
+      return reopen();
     }
     await finishOperation(db, opId, "CONFIRMED", { balanceAfter: moved.balance });
   }

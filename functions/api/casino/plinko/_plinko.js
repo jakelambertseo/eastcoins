@@ -103,6 +103,29 @@ export async function commitFor(db, userId) {
   return db.prepare(`SELECT * FROM plinko_commits WHERE user_id = ?`).bind(userId).first();
 }
 
+/* TAKE THE SEED, ONCE (2026-09-21). commitFor only READ the row and the rotate happened much later, after the debit and the
+   payout maths — so two drops fired together read the SAME committed seed, walked the same path into the same bucket, and were
+   both paid. It also made the hourly limit and HOUR_WIN_CAP advisory: those are read-then-act counts with nothing serialising
+   them, so a burst of parallel requests all passed the check and the cap cannot claw back a win already paid.
+
+   Claiming the seed with a conditional UPDATE fixes both at once. Only one request can swap a given seed out, so the losers
+   get nothing to play and must try again — which serialises a player's drops and makes the counts above mean what they say.
+   It also restores what _plinko.js's own header promises: a seed is the commitment for ONE drop.
+
+   Returns the seed to play with and the fresh commitment to show for next time, or null if somebody else got there first. */
+export async function claimCommit(db, userId) {
+  const cur = await commitFor(db, userId);
+  if (!cur) return null;
+  const seed = randomSeed();
+  const hash = await sha256(seed);
+  const claimed = await db
+    .prepare(`UPDATE plinko_commits SET seed = ?, hash = ?, created_at = CURRENT_TIMESTAMP WHERE user_id = ? AND seed = ?`)
+    .bind(seed, hash, userId, cur.seed)
+    .run();
+  if (!claimed?.meta?.changes) return null;
+  return { used: { seed: cur.seed, hash: cur.hash }, next: { seed, hash } };
+}
+
 /** Replaces a used seed with a fresh commitment for the next drop. */
 export async function rotateCommit(db, userId) {
   const seed = randomSeed();
