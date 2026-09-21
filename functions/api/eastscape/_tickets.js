@@ -21,9 +21,40 @@ export async function ensureTickets(db) {
   )`).run();
 }
 
-// who gets the in-game admin panel (give xp, items, teleport...). Just the builder while it's being built.
+/* WHO CAN DO WHAT (2026-09-21). Three roles and nothing else: admin, mod, everybody else.
+
+   The line between admin and mod is MINTING versus STEWARDING. A mod keeps order — they can see anyone's numbers, mute,
+   kick, save and restart. They cannot create value or rewrite somebody's progress: giving items, giving xp, setting
+   levels, clearing an inventory and resetting a character are all admin-only, because those are the ones that either
+   print into the economy or destroy something a player earned, and neither is recoverable by the person holding the
+   button. God mode, heal and speed are admin-only for a different reason — they change the game for the person using
+   them rather than for anyone else.
+
+   This is the one place the roles are decided; everything downstream asks. Moving a tool between the two is a single
+   line in MOD_TOOLS below. */
 export const EASTSCAPE_ADMINS = new Set(["bootypaper"]);
-export const isAdminLogin = (login) => EASTSCAPE_ADMINS.has(String(login || "").toLowerCase());
+export const EASTSCAPE_MODS = new Set(["kellzifer"]);
+
+/** "admin" | "mod" | "user" — an admin is also a mod for every purpose. */
+export function roleOf(login) {
+  const l = String(login || "").toLowerCase();
+  if (EASTSCAPE_ADMINS.has(l)) return "admin";
+  if (EASTSCAPE_MODS.has(l)) return "mod";
+  return "user";
+}
+export const isAdminLogin = (login) => roleOf(login) === "admin";
+export const isModLogin = (login) => roleOf(login) !== "user";
+
+/* The admin-panel commands a MOD may run. Anything not in here is admin-only.
+   `mute`, `unmute` and `kick` are the chat tools and exist for mods first. */
+export const MOD_TOOLS = new Set([
+  "stats",        // their own and anyone else's — you cannot moderate what you cannot see
+  "saveall",      // safe, and what you want to do before a restart
+  "restart",      // announced with a countdown, never instant; see the note on the case
+  "tp",           // move THEMSELVES to wherever the trouble is
+  "mute", "unmute", "kick"
+]);
+export const canRun = (role, cmd) => role === "admin" || (role === "mod" && MOD_TOOLS.has(cmd));
 
 export function randomTicket() {
   const b = new Uint8Array(32); crypto.getRandomValues(b);

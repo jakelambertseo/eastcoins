@@ -1,7 +1,7 @@
 /* POST /api/eastscape/ticket — a one-minute, one-use ticket for the game server. Signed in only. */
 
 import { getSessionUser } from "../picks/_lib.js";
-import { ensureTickets, randomTicket, isAdminLogin, TICKET_TTL_S } from "./_tickets.js";
+import { ensureTickets, randomTicket, isAdminLogin, roleOf, TICKET_TTL_S } from "./_tickets.js";
 
 const WS_URL = "wss://play.eastcoin.vip/ws";   // the game server on our own domain (was *.workers.dev, which some networks block)
 const noStore = { "Cache-Control": "no-store" };
@@ -20,5 +20,5 @@ export async function onRequestPost(context) {
   // the small Twitch picture for the top bar (the site stores the 300px one; Twitch serves a 70px copy at the same path)
   const row = await db.prepare(`SELECT avatar_url FROM users WHERE twitch_id = ?`).bind(user.id).first().catch(() => null);
   const avatar = row?.avatar_url ? String(row.avatar_url).replace("-300x300.", "-70x70.") : null;
-  return Response.json({ ok: true, ticket, ws: WS_URL, login: user.login, name: user.displayName, avatar, admin: isAdminLogin(user.login) }, { headers: noStore });
+  return Response.json({ ok: true, ticket, ws: WS_URL, login: user.login, name: user.displayName, avatar, admin: isAdminLogin(user.login), role: roleOf(user.login) }, { headers: noStore });
 }
