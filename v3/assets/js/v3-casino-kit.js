@@ -133,9 +133,15 @@
     return { node: d, body };
   }
 
-  /** "Check this seed" under a verify block: opens /?view=verify with the
-      seed and hash filled in. null hides it (no seed revealed yet). */
-  function verifyLink(node, params) {
+  /* "Check this seed" used to sit under every game's verify block. The owner, 2026-09-21: "i noticed users dont care, cant
+     understand them and never click them." So it draws nothing now — but ONLY the link goes. The commit-and-reveal itself,
+     the hash shown in the fairness fold, /?view=verify and /api/casino/verify are all untouched and still work: anybody who
+     wants to check a seed still can, and the page is still there to do it on. This is the one place that decided to put a
+     link in front of everybody, so it is the one place that had to change.
+     Kept as a no-op rather than deleted from the five callers: a single return is easier to undo than five edits, and it
+     keeps every game's call site honest about where its seed came from. */
+  function verifyLink() { /* deliberately nothing — see the note above */ }
+  function verifyLinkDisabled(node, params) {
     if (!node) return;
     let a = node.querySelector(".cf-verify-link");
     if (!params) { if (a) a.hidden = true; return; }

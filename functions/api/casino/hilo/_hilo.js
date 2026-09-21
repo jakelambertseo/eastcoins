@@ -138,7 +138,9 @@ export async function gamesLastHour(db, userId) {
 /** Pays out a run. Idempotent per game: the operation key is the game id. */
 export async function cashOut(env, db, g, login) {
   // Rounded, not floored: flooring took 2-7% off small stakes on its own.
-  const payout = Math.round(Number(g.stake) * Number(g.multiplier) * Number(g.edge || 1));
+  /* Clamped again here, the way Mines does it: call.js already caps the stored multiplier, and a belt-and-braces Math.min
+     means a bad write can never overpay. */
+  const payout = Math.round(Number(g.stake) * Math.min(MAX_MULTIPLIER, Number(g.multiplier)) * Number(g.edge || 1));
   const base = `CASINO:HILO:PAY:${g.id}`;
 
   /* A FAILED PAYOUT USED TO END HI-LO FOR THAT PLAYER, PERMANENTLY (fixed 2026-09-21). The row was left LIVE on both failure
