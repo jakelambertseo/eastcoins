@@ -1,7 +1,7 @@
 /* POST /api/eastscape/verify {ticket} — called by the game server, never by a page.
    Spends the ticket and says whose it was. */
 
-import { ensureTickets, isAdminLogin } from "./_tickets.js";
+import { ensureTickets, isAdminLogin, roleOf } from "./_tickets.js";
 import { cosmeticsFor } from "../store/_store.js";
 
 const noStore = { "Cache-Control": "no-store" };
@@ -21,5 +21,8 @@ export async function onRequestPost(context) {
      must never stop a login: any failure just means a plain name. Nothing else about the member is sent. */
   let cos = null;
   try { const c = await cosmeticsFor(db, String(row.user_id)); if (c && (c.name || c.title)) cos = { name: c.name || null, title: c.title ? String(c.title).slice(0, 24) : null }; } catch (e) { /* plain name */ }
-  return Response.json({ ok: true, user: { id: String(row.user_id), login: row.login, name: row.display, admin: isAdminLogin(row.login), cos } }, { headers: noStore });
+  /* THIS is where the game server learns who somebody is — it reads this response, not the ticket it was minted with.
+     `role` therefore has to be sent from here or a mod arrives as an ordinary player. `admin` stays beside it because
+     older builds of the worker read that alone. */
+  return Response.json({ ok: true, user: { id: String(row.user_id), login: row.login, name: row.display, admin: isAdminLogin(row.login), role: roleOf(row.login), cos } }, { headers: noStore });
 }
