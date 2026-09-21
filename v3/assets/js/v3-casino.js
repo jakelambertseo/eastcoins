@@ -16,7 +16,7 @@
   /* The card art is served with an hour of cache and no version in its
      own path, so a redrawn card would take up to an hour to appear.
      Bump this whenever an image in /v3/assets/img/casino/ changes. */
-  const ART_V = 3;
+  const ART_V = 4;   // bumped whenever a card image changes: the art is cached at the edge for an hour with no version in its path
   let root = null;
   let refs = {};
   let data = null;
@@ -36,7 +36,13 @@
     scratch: { title: "Scratch-Off", icon: "🎟️", blurb: "Rub the foil off. Three of a kind pays, from money back on coins to 100× on crowns.", route: "scratch" },
     grind: { title: "The Grind", icon: "🔨", blurb: "Broke? Put in a shift: 100 clicks pays 5 ZC, sorting 35 chips pays 15. One shift of each every 4 hours, for anyone under 50.", route: "grind" },
     roulette: { title: "Russian Roulette - PVP", iconUrl: "https://cdn.7tv.app/emote/01G1FDHE4R0005G1MWWMPGSX71/1x.webp", icon: "🔫", blurb: "Everyone puts in 20. One live round. Whoever it fires on pays the rest.", route: "roulette" },
-    standing: { title: "Last One Standing - PVP", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing", hidden: true }
+    standing: { title: "Last One Standing - PVP", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing", hidden: true },
+    /* Not a game on this floor: a trailer for one. `soon` makes the card
+       a plain div with a ribbon and no link, no live line and no plays
+       counter — there is nothing to poll and nowhere to click, so it must
+       not pretend otherwise by looking like the seven that do. It sits
+       last so the floor still opens on things you can actually play. */
+    eastscape: { title: "EastScape", icon: "🗺️", sub: "EastCoin Casino MMO", soon: "Coming Soon!", blurb: "Every game on this floor, in a world you walk around. Fish, fight, mine, and play the same tables for the same ZCoins." }
   };
 
   // Polls the moment the tab comes back into view; see the note in
@@ -170,13 +176,15 @@
     refs.tiles = K.el("div", "cas-cards");
     for (const [key, g] of Object.entries(GAMES)) {
       if (g.hidden) continue;
-      const tile = K.el("a", `cas-card cas-${key}`);
-      tile.href = `/?view=${g.route}`;
-      tile.addEventListener("click", (event) => {
-        if (event.metaKey || event.ctrlKey || event.shiftKey) return;
-        event.preventDefault();
-        go(g.route);
-      });
+      const tile = K.el(g.soon ? "div" : "a", `cas-card cas-${key}${g.soon ? " soon" : ""}`);
+      if (!g.soon) {
+        tile.href = `/?view=${g.route}`;
+        tile.addEventListener("click", (event) => {
+          if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+          event.preventDefault();
+          go(g.route);
+        });
+      }
 
       const art = K.el("div", "cas-card-art");
       /* The painted art for this game. Every card is eager: all seven
@@ -192,8 +200,19 @@
       pic.addEventListener("error", () => { pic.remove(); art.classList.add("no-art"); });
       const icon = K.el("span", "cas-card-ico", g.icon || "");
       const name = K.el("div", "cas-card-name");
-      name.append(K.el("b", null, g.title), K.el("small", null, "EastCoin original"));
+      name.append(K.el("b", null, g.title), K.el("small", null, g.sub || "EastCoin original"));
       art.append(pic, icon, name);
+      if (g.soon) art.append(K.el("span", "cas-card-ribbon", g.soon));
+
+      /* A card with nothing behind it gets its pitch on the second line
+         and stops there: no live line, no plays counter, and no entry in
+         refs, so the half-second repaint never looks for it. */
+      if (g.soon) {
+        tile.title = g.blurb;
+        tile.append(art, K.el("div", "cas-card-live", g.blurb.split(".")[0] + "."));
+        refs.tiles.append(tile);
+        continue;
+      }
 
       const live = K.el("div", "cas-card-live");
       const dot = K.el("i", "cas-card-dot");
