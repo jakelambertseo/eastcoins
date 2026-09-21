@@ -287,6 +287,39 @@ export async function beginOperation(db, {
   }
 }
 
+/* WAS IT ACTUALLY PAID? (2026-09-21)
+
+   beginOperation returns { ok: false, duplicate: true } when the key already exists, and its comment above says that means
+   "this exact operation already ran". It does not. It means this operation was already TRIED — and the whole point of writing
+   the row BEFORE the money moves is that a try can fail. Every caller read those as the same thing, and four separate money
+   bugs came out of it:
+
+     · the Daily Pot marked a day PAID with a winner and no coins moved (fixed in casino/_pot.js),
+     · a PvP winner whose credit failed could never be paid, because the NEEDS_RECONCILIATION row blocked the key for good,
+     · a failed Hi-Lo payout left the run LIVE and locked that player out of Hi-Lo permanently,
+     · one failed debit bricked a store item — or all crate buying — for that account for good.
+
+   These two are the honest reading. opDone asks the row what happened instead of assuming; retryKey numbers a key off the
+   attempts ALREADY RECORDED, which is safe precisely because every attempt writes one, so the number always moves. The
+   store's old key counted PURCHASES, which a failed attempt never creates — that is exactly why it stuck. */
+
+/** True only if this operation is recorded as having completed. Pending, failed or needing a human are all not. */
+export async function opDone(db, idempotencyKey) {
+  const row = await db.prepare(`SELECT status FROM wallet_operations WHERE idempotency_key = ?`).bind(idempotencyKey).first().catch(() => null);
+  return String(row?.status || "") === "CONFIRMED";
+}
+
+/** A key for the NEXT attempt at `base`: base, then base#1, base#2 … so a real retry is never refused as a duplicate. */
+export async function retryKey(db, base) {
+  const r = await db
+    .prepare(`SELECT COUNT(*) AS n FROM wallet_operations WHERE idempotency_key = ? OR substr(idempotency_key, 1, ?) = ?`)
+    .bind(base, base.length + 1, `${base}#`)
+    .first()
+    .catch(() => ({ n: 0 }));
+  const n = Number(r?.n || 0);
+  return n ? `${base}#${n}` : base;
+}
+
 export async function finishOperation(db, id, status, { balanceAfter = null, error = null } = {}) {
   await db
     .prepare(

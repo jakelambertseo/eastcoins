@@ -5,7 +5,7 @@
    rule in _store.js). Cosmetic slots switch the new item on straight
    away; a custom title waits until its text is set. */
 
-import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../picks/_lib.js";
+import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, retryKey, newId, json, fail } from "../picks/_lib.js";
 import { ensureStore, itemById, mineFor, NEEDS_INPUT } from "./_store.js";
 
 export async function onRequestPost(context) {
@@ -53,8 +53,11 @@ export async function onRequestPost(context) {
   if (balance === null) return fail("BALANCE_UNAVAILABLE", "Couldn't read your ZCoin balance.", 503);
   if (item.price > balance) return fail("INSUFFICIENT_FUNDS", `${item.name} is ${item.price.toLocaleString()} ZC and you have ${balance.toLocaleString()}.`, 409);
 
-  const before = await db.prepare(`SELECT COUNT(*) AS n FROM store_purchases WHERE user_id = ? AND item = ?`).bind(user.id, item.id).first();
-  const opKey = `STORE:BUY:${user.id}:${item.id}:${Number(before?.n || 0)}`;
+  /* THE KEY IS NUMBERED OFF ATTEMPTS, NOT PURCHASES (fixed 2026-09-21). It used to count store_purchases rows — which a
+     failed attempt never creates — so after one StreamElements hiccup the next try recomputed the SAME key, beginOperation
+     refused it as a duplicate, and this item answered "already going through" for that account forever. retryKey counts the
+     wallet operations instead, and every attempt writes one of those, so the number always moves. */
+  const opKey = await retryKey(db, `STORE:BUY:${user.id}:${item.id}`);
   const opId = newId("op");
   const begun = await beginOperation(db, {
     id: opId, idempotencyKey: opKey, userId: user.id,

@@ -6,7 +6,7 @@
    granted from it: coins as a PAYOUT_CREDIT, an item as an owned store
    row. The reveal is sent back with the seed, so it can be checked. */
 
-import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../picks/_lib.js";
+import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, retryKey, newId, json, fail } from "../picks/_lib.js";
 import { ensureStore, ownedItems } from "../store/_store.js";
 import { sha256, randomSeed } from "../casino/_engine.js";
 import { ensureCrate, PRICE, FREE_EVERY_MS, lastFreeAt, nextFreeAt, drawFor, publicOpen } from "./_crate.js";
@@ -33,8 +33,10 @@ export async function onRequestPost(context) {
     const balance = await readBalance(context.env, user.login);
     if (balance === null) return fail("BALANCE_UNAVAILABLE", "Couldn't read your ZCoin balance.", 503);
     if (balance < PRICE) return fail("INSUFFICIENT_FUNDS", `A crate is ${PRICE} ZC and you have ${balance.toLocaleString()}.`, 409);
-    const bought = await db.prepare(`SELECT COUNT(*) AS n FROM crate_opens WHERE user_id = ? AND kind = 'buy'`).bind(user.id).first();
-    const opKey = `CRATE:BUY:${user.id}:${Number(bought?.n || 0)}`;
+    /* NUMBERED OFF ATTEMPTS, NOT CRATES OPENED (fixed 2026-09-21) — the same bug the store had, and worse here because this
+       key is not per-item: it counted crate_opens rows, which a failed attempt never creates, so one StreamElements hiccup
+       locked that account out of buying ANY crate for good. Every attempt writes a wallet operation, so retryKey always moves. */
+    const opKey = await retryKey(db, `CRATE:BUY:${user.id}`);
     debitOp = newId("op");
     const begun = await beginOperation(db, { id: debitOp, idempotencyKey: opKey, userId: user.id, marketId: null, pickId: null, type: "WAGER_DEBIT", amount: -PRICE });
     if (!begun.ok) return fail("DUPLICATE", "That crate is already opening.", 409);
