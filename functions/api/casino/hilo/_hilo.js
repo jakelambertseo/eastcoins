@@ -30,7 +30,7 @@
    stake and per-hour limits are the casino's.
    ============================================================ */
 
-import { moveBalance, beginOperation, finishOperation, newId } from "../../picks/_lib.js";
+import { moveBalance, beginOperation, finishOperation, opDone, retryKey, newId } from "../../picks/_lib.js";
 import { sha256, randomSeed, edgeFor, ensureColumn, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
 // 2026-09-14: the players' side. Per call, so a six-call run returns about
@@ -139,16 +139,28 @@ export async function gamesLastHour(db, userId) {
 export async function cashOut(env, db, g, login) {
   // Rounded, not floored: flooring took 2-7% off small stakes on its own.
   const payout = Math.round(Number(g.stake) * Number(g.multiplier) * Number(g.edge || 1));
+  const base = `CASINO:HILO:PAY:${g.id}`;
+
+  /* A FAILED PAYOUT USED TO END HI-LO FOR THAT PLAYER, PERMANENTLY (fixed 2026-09-21). The row was left LIVE on both failure
+     paths, so hilo/start.js refused every future deal with GAME_LIVE — and the retry could never work either, because the
+     NEEDS_RECONCILIATION row held the one idempotency key and beginOperation answered DUPLICATE for good. The only way out
+     was an admin editing the database. See opDone/retryKey in picks/_lib.js for why a duplicate key is not a payment. */
+  if (await opDone(db, base) || await opDone(db, await retryKey(db, base))) {
+    // Already paid on an earlier attempt: just make the row agree and report it.
+    await db.prepare(`UPDATE hilo_games SET status = 'CASHED', payout = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'LIVE'`).bind(payout, g.id).run();
+    return { ok: true, payout, balance: null };
+  }
+
   const opId = newId("op");
   const begun = await beginOperation(db, {
-    id: opId, idempotencyKey: `CASINO:HILO:PAY:${g.id}`, userId: g.user_id,
+    id: opId, idempotencyKey: await retryKey(db, base), userId: g.user_id,
     marketId: null, pickId: null, type: "PAYOUT_CREDIT", amount: payout
   });
-  if (!begun.ok) return { ok: false, code: "DUPLICATE" };
+  if (!begun.ok) return { ok: false, code: "DUPLICATE" };   // another request is mid-flight on this very key
   const credit = await moveBalance(env, login, payout);
   if (!credit.ok) {
     await finishOperation(db, opId, "NEEDS_RECONCILIATION", { error: credit.error });
-    return { ok: false, code: "PAYOUT_FAILED" };
+    return { ok: false, code: "PAYOUT_FAILED" };            // the run stays LIVE, and the NEXT try gets a key of its own
   }
   await finishOperation(db, opId, "CONFIRMED", { balanceAfter: credit.balance });
   await db.prepare(`UPDATE hilo_games SET status = 'CASHED', payout = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'LIVE'`).bind(payout, g.id).run();
