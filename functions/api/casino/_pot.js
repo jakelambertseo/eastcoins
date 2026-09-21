@@ -66,7 +66,13 @@ const stamp = (ms) => new Date(ms).toISOString().slice(0, 19).replace("T", " ");
 
 /* ---------------- schema ---------------- */
 
+/* Once per isolate, like every other ensure* in the casino. This one runs on EVERY bet at EVERY table (settlePot is called
+   after each stake lands) and on the floor's own poll, so without the guard it was two statements of DDL on the hottest
+   paths in the site, forever. */
+let potReady = false;
 export async function ensurePot(db) {
+  if (potReady) return;
+  potReady = true;
   await db.prepare(`CREATE TABLE IF NOT EXISTS casino_pots (
     day TEXT PRIMARY KEY,
     seed TEXT NOT NULL,

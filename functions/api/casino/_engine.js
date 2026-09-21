@@ -437,18 +437,24 @@ export async function hourlyNet(db, userId) {
   const q = async (sql) => {
     try { const r = await db.prepare(sql).bind(userId).first(); return Number(r?.net || 0); } catch { return 0; }
   };
-  const coin = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM coin_bets WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
-  const shared = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM casino_bets WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
-  const hilo = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM hilo_games WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`);
-  const mines = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM mines_games WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`);
-  const plinko = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM plinko_drops WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
-  // The PvP tables. A refund is neither a win nor a loss.
-  const pvp = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - stake WHEN status = 'LOST' THEN -stake ELSE 0 END), 0) AS net FROM pvp_entries WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`);
-  const scratch = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM scratch_cards WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
-  // EastScape's own tables (2026-09-19): dice and slots. A slots jackpot is in `payout`, so it counts.
-  const dice = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM dice_rolls WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
-  const slots = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM slots_spins WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
-  return coin + shared + hilo + mines + plinko + pvp + scratch + dice + slots;
+  /* NINE TABLES, ONE WAIT (2026-09-21). These used to be nine sequential awaits, so the endpoint paid nine D1 round trips
+     one after another — and it is called on EVERY state poll of every casino page to render a single number that can only
+     change when the viewer bets. On Hi-Lo's four-second poll that was nine of the sixteen queries in the request, about
+     345,000 a day from one tab left open. They do not depend on each other, so they go together; the latency is now one
+     round trip rather than nine, and D1 sees the same nine reads either way.
+     A refund is neither a win nor a loss (PvP). A slots jackpot is inside `payout`, so it counts. */
+  const parts = await Promise.all([
+    q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM coin_bets WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM casino_bets WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM hilo_games WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM mines_games WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM plinko_drops WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - stake WHEN status = 'LOST' THEN -stake ELSE 0 END), 0) AS net FROM pvp_entries WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM scratch_cards WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM dice_rolls WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM slots_spins WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`)
+  ]);
+  return parts.reduce((a, n) => a + n, 0);
 }
 
 /** Whether this person may place another bet, and where they stand. */
