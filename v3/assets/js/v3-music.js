@@ -229,6 +229,23 @@
 
   const player = { instance: null, host: null, shield: null, videoId: "", itemId: "" };
 
+  /* ONE PLAYER PER BROWSER (2026-09-21). EastScape's jukebox is a window onto this same room, so somebody with the game open
+     in another tab would hear two of everything. Whoever is playing announces it on this channel and answers anyone who asks;
+     the game yields to this page, because this page IS the room and the game is a view of it. Nothing here changes what this
+     page does — it only tells other tabs the truth about whether sound is coming out of it. */
+  let musicChan = null;
+  function tellPlayer(type) {
+    try {
+      if (!musicChan) {
+        musicChan = new BroadcastChannel("eastcoin-music-player");
+        musicChan.addEventListener("message", (event) => {
+          if (event.data?.type === "who" && player.instance) musicChan.postMessage({ type: "playing", who: "site" });
+        });
+      }
+      musicChan.postMessage({ type, who: "site" });
+    } catch { /* no BroadcastChannel: the game falls back to its own mute */ }
+  }
+
   function readVolume() {
     try {
       const stored = Number(window.localStorage.getItem(VOLUME_KEY));
@@ -351,6 +368,7 @@
     player.itemId = current.id;
 
     startDriftWatch();
+    tellPlayer("playing");
     player.instance = new YT.Player(slot, {
       videoId: current.videoId,
       playerVars: {
@@ -529,6 +547,7 @@
     player.shield = null;
     player.videoId = "";
     player.itemId = "";
+    tellPlayer("stopped");
   }
 
   /* ============================================================ catjam */
