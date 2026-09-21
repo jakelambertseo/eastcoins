@@ -27,6 +27,12 @@
   let boardPage = 1;
 
   const GAMES = {
+    /* Not a game on this floor: a trailer for one, and the first card on
+       the floor by the owner's call. `soon` makes the card a plain div
+       with a ribbon and no link, no live line and no plays counter —
+       there is nothing to poll and nowhere to click, so it must not
+       pretend otherwise by looking like the seven that do. */
+    eastscape: { title: "EastScape", icon: "🗺️", sub: "EastCoin Casino MMO", soon: "Coming Soon!", blurb: "Every game on this floor, in a world you walk around. Fish, fight, mine, and play the same tables for the same ZCoins." },
     flip: { title: "Coin Flip", icon: "🪙", blurb: "Heads or tails, about 2×. One coin for the whole room, every 30 seconds.", route: "flip" },
     wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black about 2.03×, the gold sliver about 60×. One spin a minute.", route: "wheel" },
     race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2× to 14×. They're off every minute.", route: "race", hidden: true },
@@ -36,13 +42,7 @@
     scratch: { title: "Scratch-Off", icon: "🎟️", blurb: "Rub the foil off. Three of a kind pays, from money back on coins to 100× on crowns.", route: "scratch" },
     grind: { title: "The Grind", icon: "🔨", blurb: "Broke? Put in a shift: 100 clicks pays 5 ZC, sorting 35 chips pays 15. One shift of each every 4 hours, for anyone under 50.", route: "grind" },
     roulette: { title: "Russian Roulette - PVP", iconUrl: "https://cdn.7tv.app/emote/01G1FDHE4R0005G1MWWMPGSX71/1x.webp", icon: "🔫", blurb: "Everyone puts in 20. One live round. Whoever it fires on pays the rest.", route: "roulette" },
-    standing: { title: "Last One Standing - PVP", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing", hidden: true },
-    /* Not a game on this floor: a trailer for one. `soon` makes the card
-       a plain div with a ribbon and no link, no live line and no plays
-       counter — there is nothing to poll and nowhere to click, so it must
-       not pretend otherwise by looking like the seven that do. It sits
-       last so the floor still opens on things you can actually play. */
-    eastscape: { title: "EastScape", icon: "🗺️", sub: "EastCoin Casino MMO", soon: "Coming Soon!", blurb: "Every game on this floor, in a world you walk around. Fish, fight, mine, and play the same tables for the same ZCoins." }
+    standing: { title: "Last One Standing - PVP", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing", hidden: true }
   };
 
   // Polls the moment the tab comes back into view; see the note in
