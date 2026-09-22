@@ -124,6 +124,29 @@ export function openedEmbed(markets) {
   };
 }
 
+/* 🔒 betting closed — the games that just locked, and what is riding on them (2026-09-21, the owner: "it didnt post
+   in streamelements or discoord that it closed"). Discord had three cards — opened, a pick locking, settled — and
+   nothing at all for the close, so the one moment people most want to check ("am I too late?") was the silent one.
+   Deliberately no odds: the prices are gone by now and repeating them invites a late pick nothing will accept. */
+export function closedEmbed(markets, riding = {}) {
+  if (!markets?.length) return null;
+  const rows = markets.map((m) => (isProp(m.sport)
+    ? `🎯 **${m.question}**`
+    : `**${label(m.away_name, m.league)}** ${versus(m.sport)} **${label(m.home_name, m.league)}**`));
+  const picks = Number(riding.picks || 0), staked = Number(riding.staked || 0);
+  const tail = picks
+    ? `\n\n${picks} pick${picks === 1 ? "" : "s"} riding · ${zc(staked)} staked. Results when the ${markets.length === 1 ? "game finishes" : "games finish"}.`
+    : "\n\nNobody got a pick on in time.";
+  return {
+    color: COLOR.grey,
+    title: markets.length === 1 ? `Betting closed: ${matchup(markets[0])}` : `Betting closed on ${markets.length} games`,
+    url: markets.length === 1 ? `${SITE}/g/${slugFor(markets[0])}` : `${SITE}/?view=picks`,
+    description: rows.join("\n") + tail,
+    footer: { text: "No more picks on these. Good luck." },
+    timestamp: new Date().toISOString()
+  };
+}
+
 /** ✅ a game settled — the score and every pick on it. */
 export function settledEmbed(entry) {
   if (!entry || entry.action === "skipped") return null;

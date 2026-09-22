@@ -23,7 +23,7 @@ import { dueReminders, markSent } from "./_reminders.js";
 import { autoOpenMarkets, quietInChat } from "./_autoopen.js";
 import { slugFor, etDate } from "./_slug.js";
 import { noteStatus, readStatus } from "./_ops.js";
-import { discordEnabled, postDiscord, openedEmbed, settledEmbed } from "./_discord.js";
+import { discordEnabled, postDiscord, openedEmbed, closedEmbed, settledEmbed } from "./_discord.js";
 import { lastOddsQuota } from "./_autoopen.js";
 import { MANUAL_SPORTS } from "./_fights.js";
 import {
@@ -571,28 +571,44 @@ export async function onRequestPost(context) {
   // Read the set BEFORE the update so chat can be told which games shut,
   // and so the count is what actually changed rather than what happens to
   // match a second later.
+  /* THE CLOSE LINE IS NOW DURABLE (2026-09-21). It used to be one fire-and-forget attempt on the single tick a
+     market crossed OPEN -> LOCKED: if StreamElements hiccuped at that moment the message was gone for good, with
+     only a console line to show for it — which is exactly what happened to Giants at Rams. Its neighbours were
+     already careful (the reminders skip markSent on failure so the next tick retries; the MLB slate line writes
+     its key only on success), so this is the odd one out being brought in line rather than a new idea.
+
+     Candidates are the markets ABOUT to close plus any that already locked and were never successfully announced.
+     The window is deliberately short: a "betting closed" line an hour late is worse than none, and it is what
+     stops a backlog of old games being announced the first time this runs. */
+  const CLOSE_RETRY_MIN = 30;
   const closing = await db
     .prepare(
-      `SELECT id, sport, away_name, home_name, question
+      `SELECT id, sport, league, away_name, home_name, question, starts_at
          FROM markets
-        WHERE state = 'OPEN'
-          AND datetime(starts_at) <= datetime('now')`
+        WHERE datetime(starts_at) <= datetime('now')
+          AND datetime(starts_at) > datetime('now', '-${CLOSE_RETRY_MIN} minutes')
+          AND (state = 'OPEN' OR (state = 'LOCKED' AND settled_at IS NULL))`
     )
     .all();
 
-  // Only the loud sports get a closing line; the totals are theirs too.
-  const closingRows = (closing.results || []).filter((m) => !quietInChat(m.sport));
+  /* Only the loud sports get a CHAT line; Discord hears every sport, as it does for opens and settlements.
+     Anything already announced is dropped here — that key is the whole retry mechanism. */
+  const closeCands = closing.results || [];
+  const closeKeys = closeCands.map((m) => `closed:${m.id}`);
+  const closeDone = closeKeys.length ? await readStatus(db, closeKeys).catch(() => ({})) : {};
+  const closingAll = closeCands.filter((m) => !closeDone[`closed:${m.id}`]);
+  const closingRows = closingAll.filter((m) => !quietInChat(m.sport));
   let riding = { picks: 0, staked: 0 };
 
-  if (closingRows.length) {
-    const marks = closingRows.map(() => "?").join(",");
+  if (closingAll.length) {
+    const marks = closingAll.map(() => "?").join(",");
     const totals = await db
       .prepare(
         `SELECT COUNT(*) AS picks, COALESCE(SUM(wager), 0) AS staked
            FROM picks
           WHERE status = 'ACTIVE' AND market_id IN (${marks})`
       )
-      .bind(...closingRows.map((m) => m.id))
+      .bind(...closingAll.map((m) => m.id))
       .first();
     riding = { picks: Number(totals?.picks || 0), staked: Number(totals?.staked || 0) };
   }
@@ -609,12 +625,21 @@ export async function onRequestPost(context) {
   // Safe to run every tick: a market crosses OPEN -> LOCKED exactly once,
   // so the next run finds nothing to announce. One message regardless of
   // how many closed at the same moment.
+  /* Discord hears every sport; chat hears the loud ones. The `closed:` key is written only once the CHAT line has
+     actually landed (or when there was never going to be one, for a quiet sport), so a failed post is retried on
+     the next tick instead of being lost. The one cost of a single key is that a chat failure re-posts the Discord
+     card on the retry — a rare duplicate, which is a far better failure than the silence this replaces. */
+  if (closingAll.length && discordEnabled(context.env)) {
+    await postDiscord(context.env, closedEmbed(closingAll, riding)).catch(() => {});
+  }
+  const closedDone = closingAll.filter((m) => quietInChat(m.sport)).map((m) => m.id);
   if (closingRows.length) {
-    const message = composeClosed(closingRows, riding);
-    const said = await sayInChat(context.env, message);
-    if (!said.ok) {
-      console.error(`Picks: couldn't announce ${closingRows.length} closing market(s): ${said.error}`);
-    }
+    const said = await sayInChat(context.env, composeClosed(closingRows, riding));
+    if (said.ok) closedDone.push(...closingRows.map((m) => m.id));
+    else console.error(`Picks: couldn't announce ${closingRows.length} closing market(s): ${said.error} — retrying next tick`);
+  }
+  for (const id of closedDone) {
+    await noteStatus(db, `closed:${id}`, { at: new Date().toISOString() }).catch(() => {});
   }
 
   // Anything past its start time and not yet finished is a candidate.
