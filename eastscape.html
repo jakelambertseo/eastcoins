@@ -463,6 +463,8 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 .wiki article h2 i{font-style:normal;font-size:34px}
 .wiki article h3{margin:14px 0 6px;font-size:15px;color:#5a2a1a}
 .wiki article .lede{color:#5a4a30;margin:0 0 8px}
+.wiki article .wguide{margin:0 0 10px;padding:8px 11px;border-radius:8px;background:rgba(200,161,60,.16);font-weight:700}
+.wiki article .wguide a{font-weight:800}
 .wiki article a,.wiki article [data-wiki]{color:#1a5a8a;font-weight:700;cursor:pointer;text-decoration:underline;text-decoration-thickness:1px}
 .wiki .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
 .wiki .card{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #bfb193;background:#e6dcc4;border-radius:5px;cursor:pointer;text-decoration:none!important;color:#2a2016!important}
@@ -913,7 +915,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 import * as G from "/v3/assets/js/eastscape-shared.js?v=195";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=114").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=115").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=12";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -4208,8 +4210,19 @@ function wikiGo(route, setNav = true) {
     const s = SKILLS[id], rows = [];
     for (const [k, list] of Object.entries(WIKI.sources)) for (const src of list) if (src.skill === id) rows.push({ k, ...src });
     rows.sort((a, b) => a.lvl - b.lvl);
+    /* (2026-09-23, the owner) THE GUIDE IS THE OTHER HALF AND NOTHING POINTED AT IT. This page is the REFERENCE —
+       what trains you, what you can make, the curve — and the hand-written guide is the EXPLANATION: the order to
+       do things in, and the traps. Two skills share one guide (Combat and Hitpoints both go to Fighting), and
+       Harvesting's guide is filed under its own name rather than the skill's internal one. */
+    const GUIDE_OF = { melee: "fighting", hp: "fighting", farming: "harvesting" };
+    const gid = GUIDE_OF[id] || id, guide = (WK.GUIDES || []).find((g) => g.id === gid);
+    /* What the skill MAKES, which the "train on" table says nothing about — it is the whole of Smithing and half
+       of Cooking, and it is exactly what people could not find. */
+    const made = Object.values(G.RECIPES || {}).filter((r) => r.skill === id).sort((a, b) => a.lvl - b.lvl || String(a.out[0]).localeCompare(String(b.out[0])));
     html = `<h2><i>${sico(id)}</i>${esc(s.name)}</h2><p class="lede">${esc(WK.SKILL_GUIDE[id] || "")}</p>
+      ${guide ? `<p class="wguide">${wl(`guides/${gid}`, `Read the ${esc(guide.title)} guide`)} &mdash; how to actually get going with it, and what to watch out for.</p>` : ""}
       ${rows.length ? `<h3>What you can train on</h3><table class="tbl"><tr><th>Level</th><th>What</th><th>Gives</th><th>Where</th></tr>${rows.map((r) => `<tr><td>${r.lvl}</td><td>${esc(r.obj)}</td><td>${wl(`items/${r.k}`, `${ico(r.k)} ${esc(ITEMS[r.k].name)}`)}</td><td>${areaLink(r.scene)}</td></tr>`).join("")}</table>` : ""}
+      ${made.length ? `<h3>What you can make</h3><table class="tbl"><tr><th>Level</th><th>Makes</th><th>From</th><th>xp</th></tr>${made.slice(0, 60).map((r) => `<tr><td>${r.lvl}</td><td>${wl(`items/${r.out[0]}`, `${ico(r.out[0])} ${esc(ITEMS[r.out[0]]?.name || r.out[0])}`)}${r.out[1] > 1 ? ` &times;${r.out[1]}` : ""}</td><td>${r.in.map(([k, n]) => `${n}&times; ${wl(`items/${k}`, esc(ITEMS[k]?.name || k))}`).join(" + ")}</td><td>${r.xp}</td></tr>`).join("")}</table>${made.length > 60 ? `<p class="note">The first 60 of ${made.length}.</p>` : ""}` : ""}
       ${Object.values(ITEMS).some((it) => it.tool === id) ? `<h3>Tool</h3><p>${Object.entries(ITEMS).filter(([, it]) => it.tool === id).map(([k, it]) => wl(`items/${k}`, `${ico(k)} ${esc(it.name)}`)).join(", ")}: hold it in your weapon hand.</p>` : ""}
       <h3>Levels</h3><p>Levels go from 1 to 99 on the classic curve: level 10 is ${XP_AT[10].toLocaleString()} xp, level 50 is ${XP_AT[50].toLocaleString()}, level 99 is ${XP_AT[99].toLocaleString()}.</p>`;
   }

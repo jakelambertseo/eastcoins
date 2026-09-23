@@ -131,15 +131,9 @@ export const GUIDES = [
       <p><b>Fastest clears are recorded.</b> That is the actual reason to go back.</p>` },
   { id: "fighting", title: "Fighting", icon: "⚔️",
     body: `<p><b>Click a monster.</b> You walk to it and keep swinging until one of you stops. Whoever hits it first owns it &mdash; nobody else can take your kill, except in the Wilderness where nothing is owned.</p>
-      <h3>The four stances</h3>
-      <p>The stance decides which skill your damage teaches. Every stance pays the same total, so none is faster overall &mdash; it only changes where it goes.</p>
-      <table class="tbl"><tr><th>Stance</th><th>Trains</th><th>What it does for you</th></tr>
-        <tr><td>&#127919; Accurate</td><td>Attack</td><td>You land more of your swings</td></tr>
-        <tr><td>&#128165; Aggressive</td><td>Strength</td><td>Your maximum hit goes up</td></tr>
-        <tr><td>&#128737;&#65039; Defensive</td><td>Defence</td><td>You get hit less</td></tr>
-        <tr><td>&#9878;&#65039; Controlled</td><td>All three</td><td>Slower to any one milestone, further along everywhere</td></tr>
-      </table>
-      <p><b>Hitpoints trains no matter what.</b> Every point of damage you deal pays combat xp and a third as much again into Hitpoints, so your health climbs whatever you are doing.</p>
+      <h3>One skill, not four</h3>
+      <p><b>Combat is a single skill and there are no stances to pick.</b> Every point of damage you deal trains it, and it does all three jobs at once: you land more of your swings, you hit harder, and you get hit less. Better weapons and armour ask for it.</p>
+      <p><b>Hitpoints trains alongside it, always.</b> Damage pays Combat xp and a third as much again into Hitpoints, so your health climbs whatever you are fighting.</p>
       <h3>Three weapons, one speed each</h3>
       <p>Every tier has the same three, and they are within a whisker of each other on damage over time. It is a feel choice, not a power one.</p>
       <table class="tbl"><tr><th>Weapon</th><th>Swings every</th><th>Leans</th></tr>
@@ -148,7 +142,7 @@ export const GUIDES = [
         <tr><td>Maul</td><td>3.0s</td><td>slow and heavy, big hits</td></tr>
       </table>
       <h3>The seven grades</h3>
-      <p>Weapons gate on <b>Attack</b>, armour on <b>Defence</b>, rings and amulets on <b>Hitpoints</b>. Bronze is the only tier Brutus sells; everything above it is <a data-wiki="guides/smoking">smithed</a> or dropped.</p>
+      <p>Weapons and armour gate on <b>Combat</b>, rings and amulets on <b>Hitpoints</b>. Bronze is the only tier Brutus sells; everything above it is <a data-wiki="guides/smoking">smithed</a> or dropped.</p>
       <table class="tbl"><tr><th>Grade</th><th>Needs</th><th>Full set defence</th><th>Weapon</th></tr>
         <tr><td>Bronze</td><td>10</td><td>20</td><td>+8 acc, +6 str</td></tr>
         <tr><td>Emerald</td><td>20</td><td>34</td><td>+12 acc, +10 str</td></tr>
@@ -1177,12 +1171,16 @@ export const UPDATES = [
 ];
 
 // how each skill is trained, in words (the resources and their levels are added from the rules)
+/* The one-line summary at the top of a skills/<id> page. Keep these SHORT — the page under them carries the
+   tables, and the hand-written guide linked beside them carries the explanation. */
 export const SKILL_GUIDE = {
   cooking: "Cook raw fish and meat at a range, hearth or campfire. Each food needs a level to cook and stops burning at a higher one. Cooked food heals when you eat it.",
-  melee: "Fight monsters with a weapon in hand. Every point of damage you deal gives Combat xp (and a little Hitpoints xp). One skill does it all: it makes you hit more often, hit harder and get hit less, and it's what better weapons and armour ask for.",
+  melee: "Fight monsters with a weapon in hand. Every point of damage you deal gives Combat xp, and a little Hitpoints xp with it. One skill does all three jobs \u2014 you land more swings, you hit harder and you get hit less \u2014 and it is what better weapons and armour ask for.",
   hp: "Goes up alongside Combat as you deal damage. Your Hitpoints level is your maximum health.",
-  fishing: "Hold a fishing rod and click the bubbling water. You fish from the bank, two tiles away. Trout start biting at level 10.",
-  farming: "Harvesting: pick wheat on the Ludus Farm and olives in the Olive Grove. No tool needed.",
-  mining: "Hold a pickaxe and click a rock. Small rocks give one ore and then need a moment to refill; the big vein at River Bend is slow but never runs dry.",
-  woodcutting: "Hold an axe and click a tree. Oaks are easier and rarely fall; other trees fall now and then and grow back."
+  fishing: "Hold a fishing rod and click the water. Every spot holds two fish: the second is better, needs a higher level, and turns up about a third of the time once you can catch it.",
+  farming: "Pick wheat, olives and vines out in the world \u2014 the only gathering skill that needs nothing in your hand \u2014 or grow your own on your island, where a plot keeps growing while you are logged off.",
+  mining: "Hold a pickaxe and click a rock. Every rock holds one to five ore and you work it until it is empty; a vein is slower per ore but never runs dry, which makes it the one to stand at.",
+  woodcutting: "Hold an axe and click a tree. A tree is good for about 25 logs before it falls and an oak for about 50; a felled one is back in fifteen seconds. Logs burn into the charcoal every smelt needs.",
+  smithing: "Burn logs into charcoal at the furnace \u2014 the only thing you can do at level 1 \u2014 then smelt ore and charcoal into bars, and hammer bars into gear at the anvil. The anvil also reforges what you already own.",
+  agility: "Run the obstacle course north of the Yard. Each obstacle pays, a finished lap pays far more, and what it buys you is movement speed everywhere else."
 };
