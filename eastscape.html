@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=191">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=192">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=8">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -523,6 +523,11 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 @media (prefers-reduced-motion:reduce){.slot.hint{animation:none;background:#ffe27a}}
 .slot em{position:absolute;left:0;top:0;font-style:normal;font-size:10px;font-weight:800;line-height:1;color:#ffe45c;background:rgba(26,16,8,.66);padding:1px 2px;border-radius:2px;text-shadow:none;pointer-events:none}
 .slot em.k{color:#fff}.slot em.m{color:#7dff6a}
+/* THE REFORGE BADGE (2026-09-23, the owner: "this is a chase mechanism for users"). A +2 was only ever visible at
+   the anvil, so the thing you gambled gear for was invisible everywhere you actually look at it. Gold, top right -
+   quantity owns top left - and it sits on .slot and .eq alike, both being position:relative already. */
+.fgn{position:absolute;right:0;top:0;font-style:normal;font-size:10px;font-weight:800;line-height:1;color:#ffd77a;background:rgba(26,16,8,.72);padding:1px 3px;border-radius:2px;pointer-events:none;text-shadow:0 0 5px rgba(255,190,60,.9);z-index:2}
+.eq .fgn{font-size:11px;right:1px;top:1px}
 .doll{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(4,64px);gap:6px;justify-content:center;padding:14px 6px 8px;
   grid-template-areas:". helm amulet" "weapon body shield" ". legs ." "gloves boots ring"}
 .eq{border:2px solid #8a7a5a;border-radius:4px;background:#d8cbac;display:grid;place-items:center;font-size:30px;position:relative;cursor:pointer;color:inherit;padding:0}
@@ -902,10 +907,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=191";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=192";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=110").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=111").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=8";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -3198,6 +3203,9 @@ function renderHs() {   /* (v96) the boards are G.HISCORES: the rules file says 
    printed the same numbers as a plain one everywhere except the fight itself. G.statOf folds the level in, and the
    comparison against what you are wearing is made on forged values BOTH sides or a +4 piece in your bag would look
    worse than the plain one on your back. */
+/* What a tool's speed is called, in the skill's own words: "+2.5% mining speed" reads as a pickaxe upgrade where
+   "+2.5% tool speed" reads as a spreadsheet. */
+const SKILL_VERB = { mining: "mining", woodcutting: "chopping", fishing: "fishing" };
 function statChips(k) {
   const it = ITEMS[k]; if (!it?.slot) return "";
   const wornKey = me?.eq?.[it.slot], rows = [["acc", "attack"], ["str", "strength"], ["def", "defence"]].filter(([f]) => it[f]);
@@ -3205,6 +3213,8 @@ function statChips(k) {
     const mine = G.statOf(me, k, f), theirs = wornKey ? G.statOf(me, wornKey, f) : 0, add = G.forgeAdd(me, k, f);
     return `<em class="${mine > theirs ? "up" : ""}" title="${f === "acc" ? "Accuracy" : f === "str" ? "Strength" : "Defence"}${add ? ` — ${ITEMS[k].name} is reforged, +${add} of this from the forge` : ""}">${sico(sk)}+${mine}${add ? `<b class="fgx">+${add}</b>` : ""}</em>`;
   });
+  if (it.tool) { const sp = (G.ITEMS[k].tspd || 1) + G.forgeSpeed(me, k), add = G.forgeSpeed(me, k);
+    chips.unshift(`<em class="${add ? "up" : ""}" title="${SKILL_VERB[it.tool] || "Tool"} speed${add ? ` — reforged, ${(add * 100).toFixed(1)}% of this from the forge` : ""}">${sico(it.tool)}+${Math.round((sp - 1) * 100)}%${add ? `<b class="fgx">+${(add * 100).toFixed(1)}%</b>` : ""}</em>`); }
   if (it.speed) chips.push(`<em title="Attack speed">${it.speed <= 1800 ? "fast" : it.speed >= 3000 ? "slow" : "medium"}</em>`);
   return chips.length ? `<span class="rst">${chips.join("")}</span>` : "";
 }
@@ -3276,7 +3286,7 @@ function openSmith(ob) {
       const why = cap ? "Fully reforged" : needLvl ? `Needs Smithing ${tier.gate}`
         : `${have}/${n} ${ITEMS[bk].name.toLowerCase()}${miss}`;
       /* What the NEXT level actually buys, in real numbers, so "is this worth bars" is answerable without maths. */
-      const gain = cap ? "" : G.forgeNext(me, k).map(([fd, d]) => `+${d} ${fd}`).join(", ");
+      const gain = cap ? "" : G.forgeNext(me, k).map(([fd, d]) => fd === "tspd" ? `+${(d * 100).toFixed(1)}% ${SKILL_VERB[it.tool] || "tool"} speed` : `+${d} ${fd}`).join(", ");
       return `<button type="button" class="rcpr an-row" data-forge="${esc(k)}"${cap || needLvl || short ? " disabled" : ""}>
         <i>${ico(k)}</i><span><b>${esc(it.name)}${f ? ` <em class="fg">+${f}</em>` : ""}</b>${statChips(k)}<small>${esc(why)}${gain ? ` · next: ${gain}` : ""}</small></span>
         <span class="an-odds${cap ? " max" : ""}">${cap ? "MAX" : `${odds}%`}${!cap && brk ? `<b class="an-brk">${brk}% break</b>` : ""}</span></button>`;
@@ -3313,7 +3323,10 @@ document.addEventListener("keydown", (e) => {
 setInterval(() => { if (PRED.on && PRED.step) for (const w of ["bankWin", "exWin"]) $(w).hidden = true; }, 300);
 // stack sizes the old-school way: in full to 9,999, then K (white) and M (green); the exact number is in the tooltip
 const qty = (n) => n >= 1e6 ? `<em class="m">${(n / 1e6).toFixed(n < 1e7 ? 1 : 0).replace(/\.0$/, "")}M</em>` : n >= 1e4 ? `<em class="k">${Math.floor(n / 1000)}K</em>` : `<em>${n.toLocaleString()}</em>`;
-const slotHtml = (s, i, attr = "data-i") => `<div class="slot" ${attr}="${i}" data-item="${s.k}" title="${esc(ITEMS[s.k].name)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`;
+/* Only ever for YOUR OWN items. A forge level lives on the character (c.forge[key]), not on the item, so drawing it
+   on a market listing or another player's offer would show the VIEWER's level on someone else's goods. */
+const fgTag = (k) => { const f = G.forgeLevel(me, k); return f ? `<em class="fgn">+${f}</em>` : ""; };
+const slotHtml = (s, i, attr = "data-i") => `<div class="slot" ${attr}="${i}" data-item="${s.k}" title="${esc(G.forgeName(me, s.k))}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(s.k)}</div>`;
 
 /* ------------------------------------------------------------ islands */
 function renderIsles(list) {
@@ -4297,7 +4310,7 @@ function renderPanel() {
        ordinary slot() would look it up in ITEMS, find nothing and draw an empty square over a pet you are wearing. */
     const petSlot = () => { const pet = G.activePet(me);
       return `<button type="button" class="eq${pet ? "" : " empty"}" data-slot="pet" title="${pet ? esc(G.petLabel(pet)) : "No pet"}">${pet ? `<img class="ico" src="${IART.replace("items/", "")}${G.PETS[pet.k].art}.png?v=${ART_V}" alt="">` : EMPTY.pet}</button>`; };
-    const slot = (area) => { if (area === "pet") return petSlot(); const k = me.eq[area], it = k && ITEMS[k]; return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}"${it ? ` data-item="${k}"` : ""} style="grid-area:${area}" title="${it ? `${esc(it.name)} — click to take off` : `${area}: empty`}"${it ? "" : " disabled"}>${it ? ico(k) : EQ_ART.has(area) ? artOf(`eq_${area}`) : EMPTY[area]}<small>${it ? esc(it.short || it.name) : ""}</small></button>`; };
+    const slot = (area) => { if (area === "pet") return petSlot(); const k = me.eq[area], it = k && ITEMS[k]; return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}"${it ? ` data-item="${k}"` : ""} style="grid-area:${area}" title="${it ? `${esc(G.forgeName(me, k))} — click to take off` : `${area}: empty`}"${it ? "" : " disabled"}>${it ? ico(k) : EQ_ART.has(area) ? artOf(`eq_${area}`) : EMPTY[area]}<small>${it ? esc(it.short || it.name) : ""}</small>${it ? fgTag(k) : ""}</button>`; };
     const b = G.bonusOf(me), tool = me.eq.weapon && ITEMS[me.eq.weapon].tool;
     const pets = G.petsOf(me);
     const petRows = pets.length ? pets.map((pt) => {

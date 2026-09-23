@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 179;
+export const VERSION = 180;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -482,7 +482,9 @@ export const toolSpec = (it) => {
 /** The best tool this character has for a skill: the hand first, then the bag unless the skill wants it held. */
 export function bestTool(c, skill) {
   let best = null, bn = -1;
-  const look = (k) => { const it = ITEMS[k]; if (it?.tool !== skill) return; const n = it.tlvl || 1; if (n > bn) { bn = n; best = k; } };
+  /* Same tier, one reforged: pick the reforged one. Strict > used to keep whichever was seen first, so a +3 axe in
+     the bag lost to the plain one on your back. Tiers still win outright - 3 levels is under a rung by design. */
+  const look = (k) => { const it = ITEMS[k]; if (it?.tool !== skill) return; const n = (it.tlvl || 1) + forgeLevel(c, k) * 0.001; if (n > bn) { bn = n; best = k; } };
   look(c?.eq?.weapon);
   if (!TOOL_HELD.has(skill)) for (const st of c?.inv || []) look(st.k);
   return best;
@@ -497,8 +499,10 @@ export function toolBlock(c, skill, lvl) {
   }
   return need.gate <= 1 || (ITEMS[have].tlvl || 1) >= need.gate ? null : { have, need, held: false };
 }
-/** How much faster the tool works. 1 with nothing, up to 1.48 at the top rung. */
-export const toolSpeed = (c, skill) => ITEMS[bestTool(c, skill)]?.tspd || 1;
+/** What reforging adds to a tool, as a fraction of speed: +2.5% a level, nothing on anything that is not a tool. */
+export const forgeSpeed = (c, key) => (isTool(key) ? forgeLevel(c, key) * FORGE.tspd : 0);
+/** How much faster the tool works. 1 with nothing, up to 1.48 at the top rung, plus any reforge on THAT tool. */
+export const toolSpeed = (c, skill) => { const k = bestTool(c, skill); return k ? (ITEMS[k].tspd || 1) + forgeSpeed(c, k) : 1; };
 
 /* A requirement is one {skill, lvl} or a list of them, so the maul can want
    both Attack and Strength. Both sides read it through here. */
@@ -2650,7 +2654,12 @@ const SMELT = {
 };
 // how many bars a piece takes — the big slots cost more, and a maul costs most
 /* (2026-09-22) the tool rungs smith like everything else, so a miner can make the next pickaxe out of what they mined. */
-const BARS = { body: 5, legs: 3, shield: 3, helm: 2, boots: 1, gloves: 1, gladius: 1, sword: 2, maul: 3, pickaxe: 2, axe: 2, rod: 1 };
+/* ring/amulet added 2026-09-23 (the owner). Jewelry is not smithed, so "a reforge costs what the piece cost" has
+   nothing to quote; these are priced against the armour scale by how much stat they carry (ring 3x jewel, amulet
+   3x jewel+1, i.e. between a helm and a shield). Be aware they are the best-value reforge in the game: the floor is
+   per STAT and jewelry is the only gear with three, so a level moves all three and +3 doubles a ring outright. If
+   that proves too strong the lever is these two numbers, not the floor. */
+const BARS = { body: 5, legs: 3, shield: 3, helm: 2, boots: 1, gloves: 1, gladius: 1, sword: 2, maul: 3, pickaxe: 2, axe: 2, rod: 1, ring: 2, amulet: 3 };
 
 /* ============================================================ CHARCOAL (2026-09-22)
 
@@ -2734,6 +2743,13 @@ export const FORGE = {
      hits you. Fewer levels is the lever, because the floor is what inflates. At three, a full set lands on +19
      against a tier of +14 and every single level moves. */
   max: 3,
+  /* A TOOL REFORGES ON ITS SKILL, NEVER ON COMBAT (2026-09-23, the owner: a reforged pickaxe was offering accuracy
+     and strength, which is nonsense on a skilling tool). Tools are deliberately poor weapons - see the TIERS note -
+     so buying combat with a reforge fought the design. They buy tool SPEED instead, which is what a tier rung buys
+     (+8% a rung), so a level is a legible fraction of a rung. 2.5% is chosen so three levels (+7.5%) stay just UNDER
+     a rung: a +3 bronze axe must never beat a plain iron one, or reforging would invert the ladder bestTool() sorts
+     by. It is flat, not a share of the tool's own stat the way gear is, because a bronze tool's stat is zero. */
+  tspd: 0.025,
   /* odds[level] is the chance of going level -> level+1. */
   odds: [1, 0.80, 0.55],
   /* brk[level] is the chance a FAILURE destroys the piece outright instead of knocking it down a level. Only a
@@ -2756,7 +2772,11 @@ export const FORGE = {
   bars: (slot) => Math.max(1, BARS[slot] || 2)
 };
 /** Which slot-suffix an item key ends in, e.g. "onyx_sword" -> "sword". Null when it is not a smithed piece. */
-export const forgeSlot = (key) => { const i = String(key || "").indexOf("_"); const sl = i < 0 ? "" : String(key).slice(i + 1); return BARS[sl] ? sl : null; };
+/* A key with no underscore falls back to the WHOLE key, which is what lets the three starter tools in: they are
+   `pickaxe`, `axe` and `rod`, not `bronze_pickaxe`, so the suffix rule read them as slotless and the anvil listed
+   every item a new smith owned except the ones in their hands. Checked: those three are the only bare keys that
+   match a BARS slot, so nothing else is swept in. */
+export const forgeSlot = (key) => { const k = String(key || ""), i = k.indexOf("_"); const sl = i < 0 ? k : k.slice(i + 1); return BARS[sl] ? sl : null; };
 /** Can this be reforged at all? It must be a smithed piece of a known tier with at least one combat stat on it. */
 /* AND IT HAS TO BE ABLE TO GAIN SOMETHING. The bonus is 4% of the piece's own stat, so a piece whose best stat is
    under 3 rounds to zero at every level including +5 - bronze boots and gloves (defence 1), emerald boots and
@@ -2765,7 +2785,11 @@ export const forgeSlot = (key) => { const i = String(key || "").indexOf("_"); co
 /* Every piece with a combat stat qualifies again: the floor above guarantees at least +1 a level, so the five
    pieces that used to be charged bars for literally nothing (bronze boots and gloves, emerald boots and gloves, the
    emerald pickaxe) now gain like everything else. */
-export const canForge = (key) => { const it = ITEMS[key]; if (!it || !it.tier || !forgeSlot(key)) return false; return !!(it.acc || it.str || it.def); };
+/** A skilling tool: a pickaxe, axe or rod. It reforges on its SKILL, not on combat. */
+export const isTool = (key) => !!ITEMS[key]?.tool;
+/* Rods qualify now. They have no acc/str at all, so the old combat-only test refused them outright - the one item
+   in the game you could not reforge, for the same reason the other two reforged into the wrong thing. */
+export const canForge = (key) => { const it = ITEMS[key]; if (!it || !it.tier || !forgeSlot(key)) return false; return isTool(key) || !!(it.acc || it.str || it.def); };
 export const forgeLevel = (c, key) => Math.max(0, Math.min(FORGE.max, (c?.forge?.[key] | 0) || 0));
 /** The chance the NEXT step succeeds, or 0 at the cap. */
 export const forgeOdds = (lvl) => (lvl >= FORGE.max ? 0 : FORGE.odds[lvl] ?? FORGE.odds[FORGE.odds.length - 1]);
@@ -2776,7 +2800,7 @@ export const forgeOdds = (lvl) => (lvl >= FORGE.max ? 0 : FORGE.odds[lvl] ?? FOR
    arithmetic lives, so a display can never drift from what the server actually rolls. */
 /* THE FLOOR IS THE POINT: at least +1 a level, so a level always moves a number however small the piece's stat is.
    A stat of zero stays zero - a helm does not quietly start granting strength. */
-export const forgeAdd = (c, key, f) => { const v = ITEMS[key]?.[f] || 0, l = forgeLevel(c, key); return v && l ? Math.max(l, Math.round(v * FORGE.step * l)) : 0; };
+export const forgeAdd = (c, key, f) => { if (isTool(key)) return 0; const v = ITEMS[key]?.[f] || 0, l = forgeLevel(c, key); return v && l ? Math.max(l, Math.round(v * FORGE.step * l)) : 0; };
 /** The chance a FAILURE at this level destroys the piece rather than knocking it down one. */
 export const forgeBreak = (lvl) => FORGE.brk[lvl] ?? 0;
 /** The stat a piece ACTUALLY has for this character, reforge included. */
@@ -2789,6 +2813,7 @@ export const forgeNext = (c, key) => {
   const l = forgeLevel(c, key);
   if (l >= FORGE.max) return [];
   const nx = { forge: { ...(c?.forge || {}), [key]: l + 1 } };
+  if (isTool(key)) return [["tspd", FORGE.tspd]];
   return ["acc", "str", "def"].map((f) => [f, forgeAdd(nx, key, f) - forgeAdd(c, key, f)]).filter(([, d]) => d > 0);
 };
 /** "Diamond axe +3", or just "Diamond axe" at +0. */
