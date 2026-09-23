@@ -1341,6 +1341,18 @@ function setChat(open, focus = true) {
   else $("chatIn").blur();
 }
 $("chatTab").addEventListener("click", () => setChat(!chatOpen));
+/* (2026-09-23, the owner) "T" TOGGLES CHAT — talk, the same letter every other game uses for it.
+   Enter already OPENS chat and Escape closes it, but Escape only fires while the cursor is actually in the input
+   (see the guard in the keydown below), so opening chat and then clicking the world left it up with no key to
+   shut it. This is the toggle that was missing, and it works from either side.
+   It opens WITHOUT stealing focus, so "t" is a way to read the log rather than a way to start typing — Enter is
+   still the one that puts the cursor in the box. Not bound near the movement hand, and never while typing. */
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "t" && e.key !== "T") return;
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) return;
+  e.preventDefault(); setChat(!chatOpen, false);
+});
 $("chatForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const text = $("chatIn").value.trim(); if (!text) return;
