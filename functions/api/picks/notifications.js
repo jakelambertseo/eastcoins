@@ -167,6 +167,30 @@ async function notices(db, from, user) {
   }).filter(Boolean);
 }
 
+/* EASTSCAPE ACHIEVEMENTS (2026-09-23). The game runs on its own Worker with its own storage, so it POSTs to
+   /api/eastscape/ach when somebody earns one and this reads the rows back. The bridge is one-way and
+   fire-and-forget by design: the game never waits on the site, and a site that is down never stops anybody
+   earning anything — it only means the bell missed one.
+
+   Retroactive awards are deliberately NOT sent by the game: a player logging in for the first time after the
+   feature shipped earns thirty at once, and thirty bell rows is a wall rather than a celebration. */
+async function escapeAch(db, user, from) {
+  const login = String(user?.login || "").toLowerCase();
+  if (!login) return [];
+  const rows = await db.prepare(
+    `SELECT ach_id, name, tier, pts, tix, created_at FROM escape_ach
+      WHERE login = ? AND created_at >= ? ORDER BY created_at DESC LIMIT 12`
+  ).bind(login, from).all().catch(() => ({ results: [] }));
+  const ICON = { novice: "\u{1F949}", skilled: "\u{1F948}", expert: "\u{1F947}", master: "\u{1F3C6}", legend: "\u{1F451}" };
+  return (rows.results || []).map((r) => ({
+    type: "ach", icon: ICON[r.tier] || "\u{1F396}\uFE0F", tone: "gold", at: utc(r.created_at),
+    href: "/eastscape",
+    strong: String(r.name).slice(0, 60),
+    text: "EastScape achievement",
+    sub: `${String(r.tier || "").replace(/^./, (c) => c.toUpperCase())} \u00b7 ${Number(r.pts) || 0} point${(Number(r.pts) || 0) === 1 ? "" : "s"}${Number(r.tix) > 0 ? ` \u00b7 ${Number(r.tix).toLocaleString()} tickets` : ""}`
+  }));
+}
+
 /** Badges are computed, never stored; a new one is one not in the remembered set. */
 async function newBadges(env, db, user, remembered) {
   let all = null;
@@ -199,11 +223,11 @@ export async function onRequestGet(context) {
   const since = seenAt ?? Date.now() - FIRST_LOOK_DAYS * 86400000;
   const from = stamp(floor);
 
-  const [picks, pots, team, said, badges, told] = await Promise.all([
+  const [picks, pots, team, said, badges, told, esc] = await Promise.all([
     settledPicks(db, user, from), jackpots(db, user, from), teamOpened(db, user, from), announces(db, from),
-    newBadges(context.env, db, user, remembered), notices(db, from, user)
+    newBadges(context.env, db, user, remembered), notices(db, from, user), escapeAch(db, user, from)
   ]);
-  const items = [...picks, ...pots, ...team, ...said, ...badges.items, ...told]
+  const items = [...picks, ...pots, ...team, ...said, ...badges.items, ...told, ...esc]
     .filter((i) => i.at && !Number.isNaN(new Date(i.at).getTime()))
     .map((i) => ({ ...i, unread: i.fresh || new Date(i.at).getTime() > since }))
     .sort((a, b) => new Date(b.at) - new Date(a.at))
