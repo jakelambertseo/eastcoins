@@ -33,16 +33,22 @@ and we have never watched anyone meet. That is the risk, not the feature list.
 
 ## 1. SHIP — blockers, hardest first
 
+*(5 open. Sprite sheets were listed here and were already done — see the struck item.)*
+
 - [ ] **A first-login tutorial for the tables.** The single highest-value item on this
       page. The tables ARE the game and a new player does not know tickets and ZCoins
       are the same bet — this is exactly where Kellzifer got lost, which is why it is
       a blocker and not a nice-to-have. Three or four skippable steps, triggered on
       first walking into the casino, NOT at login (`welcomeOnce` already owns that
       moment). Machinery to reuse: `welcomeOnce` and the `HOUSE TOUR` tour box.
-- [ ] **Sprite sheets.** Startup is **154 file requests against a 160 budget** — at the
-      ceiling, today, before launch traffic. Packing item icons into one sheet and core
-      scene art into 2-3 takes it to ~5. This was always scheduled for "the last week
-      once art settles"; that week is now, and art has settled.
+- [x] ~~**Sprite sheets.**~~ **ALREADY DONE — I put this on the blocker list in error on
+      2026-09-23 and corrected it the same day.** 58 sheets, 675 pictures, live in
+      production. I read `startup art requests 154 (budget 160)` as a live measurement;
+      it is the count a player would make *without* the sheets, which the budget tool
+      keeps as a worst case and states in a comment two lines further down. **Lesson,
+      and it is the same one this file already records about the furnace: check a thing
+      is REACHABLE — or here, already running — before believing a number that describes
+      it.** Read the tool, not just its output.
 - [ ] **More to do in the second thirty minutes.** Five quests exist (`firewood`,
       `cattle`, `catch`, `scrapline`, `theking`), two from the same NPC on the starting
       farm. The first ten minutes are fine and the next thirty have no thread. The
@@ -694,7 +700,13 @@ dark outline, flat shading".
 - [x] **Load test**: a script connecting 50–100 fake players (walking, fighting, chatting) against wrangler dev, then prod; measure tick time and CPU; fix whatever breaks first. **Tooling done 2026-09-18, and it found something — see Findings below. scratchpad/eastscape-loadtest.mjs (the world's tick, runs anywhere) and tools/eastscape-loadtest-ws.mjs (real sockets, needs wrangler dev). Still to do: run the socket half against prod.**
 - [x] **Backups**: nightly copy of every `char:*`, the Exchange and islands from DO storage to the site's R2 `BACKUPS` bucket, plus a tested restore path. **Done 2026-09-18. Nightly at 09:20 UTC via the picks cron (NOT 09:00 — the D1 backup owns that minute). Worker /export saves everyone then dumps; /api/eastscape/backup gzips to R2 eastscape/world/, prunes at 30 days, notes eastscape:backup:last. Restore refuses while anyone is connected and is a dry run without --apply.**
 - [x] **Graceful restarts**: an admin "server restarting in N minutes" broadcast, save everyone before deploy, client auto-reconnects quietly (a worker deploy drops every connection). Freeze deploys during launch hours unless urgent. **Done 2026-09-18. planRestart() counts down (10/5/2/1min, 30s, 10s), saveAll() writes every character and the Exchange, then close 4001 and the page waits out the deploy instead of racing it. Admin `restart <secs>` / `restart cancel`, or POST /restart?in=120 with X-Escape-Key before a deploy.**
-- [ ] **Sprite sheets** (last week before launch, once art settles): pack the item icons into one sheet and the core scene art into 2–3, with a build script that regenerates them; startup goes from ~143 requests to ~5. Then lower `startupFiles` in tools/eastscape-budget.mjs to ~30.
+- [x] **Sprite sheets.** **DONE and live** (verified 2026-09-23 against production): `tools/eastscape-pack.mjs`
+      builds 58 sheets holding 675 pictures — `core` (154), 30 `area-*` packs, 27 `f-*` character packs — and
+      `packs.json` maps every art key to its sheet and rectangle. `loadArt()` prefers the sheet and falls back to
+      the single file, so a stale or missing sheet degrades instead of breaking.
+      **`startupFiles: 160` in the budget tool is NOT a live request count** — it is deliberately the number a
+      player would fetch *without* the sheets, kept as the worst case, and the tool separately fails if the sheets
+      are stale. Do not read 154/160 as "at the ceiling"; the real startup is packs.json plus a handful of sheets.
 - [x] **Custom domain for the game server.** **DONE** — `ticket.js` serves `wss://play.eastcoin.vip/ws`; the `*.workers.dev` hardcode noted in the security pass is gone with it.
 - [x] Monitoring live (see Foundations) and watched on launch day. **Built; needs ESCAPE_WORKER_URL set to go live.**
 - [x] Content check script passing; every item, mob and NPC has art; no placeholder text. **Script passing 2026-09-18, 0 errors. Art and text still want a human pass.**
