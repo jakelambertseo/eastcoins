@@ -2294,7 +2294,10 @@ export class World {
      Asked for by NAME (a line in chat, a row on a board) or by ID (a click on them in the world), and answered whether they are
      online or not: online, straight off the player; otherwise the saved character, the way the admin lookup does it. Nothing
      private is in here — no tickets held, no bank, no ZCoins, no inventory, no position — because anyone may ask about anyone. */
+  /* biggest first, and only as many as a panel can show */
+  static profTop(map, n) { return Object.entries(map || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, n); }
   async profileOp(pl, m) {
+    const top = (map, n) => World.profTop(map, n), sl2 = (k) => !!G.ITEMS[k];
     const want = String(m.name || m.id || "").trim(); if (!want || want.length > 40) return;
     let p = m.id ? this.pls.get(want) : null;
     if (!p) { const low = want.toLowerCase(); p = [...this.pls.values()].find((q) => q.name.toLowerCase() === low || String(q.login).toLowerCase() === low) || null; }
@@ -2309,7 +2312,17 @@ export class World {
     pl.out.push({ type: "profile", name, online: !!p, look: C.look || null, van: G.wearsVanity(C.van) ? { on: C.van.on, col: C.van.col } : null, cos: p?.cos || null, vip: G.vipOf(C).i || 0,
       combat: G.combatOf(C), total: G.totalOf(C), skills,
       kills: Object.values(st.kills || {}).reduce((n, v) => n + v, 0), quests: G.questsDone(C), crypt: st.crypt | 0, deaths: st.deaths | 0,
-      earned: Math.round(Number(C.earned) || 0), mins: Math.round((st.playMs || 0) / 60000), since: st.firstSeen || Number(C.created) || 0 });
+      earned: Math.round(Number(C.earned) || 0), mins: Math.round((st.playMs || 0) / 60000), since: st.firstSeen || Number(C.created) || 0,
+      /* (2026-09-23, the owner) THREE MORE TABS' WORTH. All of it is already public in some form — a paper doll
+         shows what you can see them wearing anyway, and the totals are their own counters. Nothing here exposes a
+         balance, a bag or anything they could be robbed over. `top` trims the long maps to what a panel can show,
+         because `gathered` alone can run to fifty item keys and this message is sent per profile opened. */
+      eq: Object.fromEntries(G.SLOTS.map((sl) => [sl, C.eq[sl] || null]).filter(([, k]) => k && sl2(k))),
+      forge: Object.fromEntries(Object.entries(C.forge || {}).filter(([, v]) => v > 0)),
+      bonus: G.bonusOf(C),
+      casino: { staked: Math.round(Number(C.wagered) || 0), plays: st.casPlays | 0, net: st.casNet | 0, best: st.casBest | 0, worst: st.casWorst | 0, byGame: top(st.played, 8) },
+      totals: { xp: Math.round(st.xpTotal || 0), kills: top(st.kills, 6), gathered: top(st.gathered, 8), cooked: top(st.cooked, 5), crafted: top(st.crafted, 5),
+        looted: Object.values(st.looted || {}).reduce((n, v) => n + v, 0), burnt: st.burnt | 0, pvpKills: st.pvpKills | 0, pvpDeaths: st.pvpDeaths | 0, sessions: st.sessions | 0 } });
   }
   // cheap enough to build every broadcast; it only ever SENDS when it differs
   whoSigOf(who) { let sig = ""; for (const w of who) sig += `${w.id}|${w.name}|${w.vip || 0}|${w.lvl ?? w.level}|${w.weapon || ""}|${w.body || ""}|${w.maxHp || ""}|${w.art || ""}|${w.hue || ""}|${w.look ? w.look.join(".") : ""}|${G.vanityKey(w.van)}|${w.pet || ""}|${w.cos ? `${w.cos.name}/${w.cos.title}` : ""};`; return sig; }
@@ -2552,6 +2565,15 @@ export class World {
     pl.C.plays = G.recentPlays(pl.C.plays, now);
     pl.C.plays.push({ g, t: now, net: Math.round(net) });
     pl.C.plays = G.recentPlays(pl.C.plays, now);
+    /* (2026-09-23) AND THE LIFETIME LINE, here rather than in each table, for the same reason the hour's log is
+       here: one place, so no game can count differently. C.plays is a rolling window the limiter trims, so it
+       could never answer "how have I done at the wheel, ever". */
+    const st = (pl.C.stats ||= G.freshStats()), n = Math.round(net);
+    st.played = st.played || {}; st.played[g] = (st.played[g] | 0) + 1;
+    st.casPlays = (st.casPlays | 0) + 1;
+    st.casNet = (st.casNet | 0) + n;
+    if (n > (st.casBest | 0)) st.casBest = n;
+    if (n < (st.casWorst | 0)) st.casWorst = n;
   }
   bigBet(pl, before, after, def) {
     const C = pl.C, was = G.vipOf(C).i; C.wagered = (Number(C.wagered) || 0) + Math.max(0, after - before);

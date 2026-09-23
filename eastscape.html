@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=194">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=195">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=12">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -910,7 +910,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=194";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=195";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=113").then((m) => { WK = m; }));
@@ -1053,7 +1053,7 @@ const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String
 let TIP = null; const tipLoad = () => (tipLoad.p ||= import("/v3/assets/js/eastscape-tip.js?v=1").then((m) => (TIP = m.createTip({ G, esc, ico, me: () => me }))));
 document.addEventListener("pointerover", (e) => { if (e.pointerType === "touch") return; const el = e.target.closest?.("[data-item], [data-k], [data-rm]"), k = el && (el.dataset.item || el.dataset.k || el.dataset.rm); if (k && ITEMS[k]?.slot) tipLoad().then((t) => t.show(el, k)).catch(() => {}); });
 let PROF = null;
-const profLoad = () => (profLoad.p ||= import("/v3/assets/js/eastscape-profile.js?v=4").then((m) => (PROF = m.createProfile({ G, SFX, send, esc, $, sico, you: () => you,
+const profLoad = () => (profLoad.p ||= import("/v3/assets/js/eastscape-profile.js?v=5").then((m) => (PROF = m.createProfile({ G, SFX, send, esc, $, sico, ico, you: () => you,   /* (2026-09-23) ico: the Gear tab draws real item icons, and the PNG-or-emoji decision lives on the page */
   sprite: (look, d, name, van) => { const L = look && G.normLook(look), k = L ? lookSprite(L, d, van) : lookArt(G.lookFor({ name }), d); if (!k) return k === null ? null : ""; const im = IMG[k].im, c = document.createElement("canvas"); c.width = im.width; c.height = im.height; c.getContext("2d").drawImage(im, 0, 0); return c; },
   nearby: (name) => Z.players.find((p) => p.name === name && p.id !== you?.id)?.id || null }))));
 /* (2026-09-22) The net panel's switch. Zeroing the correction count on open matters: what you want to know is how

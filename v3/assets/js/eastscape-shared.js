@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 182;
+export const VERSION = 183;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -3292,12 +3292,21 @@ export function aliasKey(k) {
 }
 
 export const STAT_DAYS = 60;   // how many days of the xp-per-day log are kept
-const COUNT_MAPS = ["kills", "gathered", "looted", "cooked", "crafted"];
-const STAT_NUMS = ["burnt", "deaths", "pvpKills", "pvpDeaths", "questsDone", "cashIn", "cashOut", "xpTotal", "playMs", "sessions", "firstSeen", "lastSeen"];
+const COUNT_MAPS = ["kills", "gathered", "looted", "cooked", "crafted", "played"];
+const STAT_NUMS = ["burnt", "deaths", "pvpKills", "pvpDeaths", "questsDone", "cashIn", "cashOut", "xpTotal", "playMs", "sessions", "firstSeen", "lastSeen", "casPlays", "casNet", "casBest", "casWorst"];
 
 export function freshStats() {
   return {
     kills: {},      // mob type -> how many killed
+    /* (2026-09-23) THE CASINO'S LIFETIME LINE. C.wagered has always held all-time turnover, but nothing recorded
+       whether any of it came BACK — only C.plays, a rolling window the hourly limiter trims. These four and the
+       `played` map are written in recordPlay(), the one place every table's result lands, so no game can count
+       differently. Like every counter here they start from the day they shipped and cannot be backfilled. */
+    played: {},     // game key -> how many times played
+    casPlays: 0,    // plays across every table
+    casNet: 0,      // tickets up or DOWN across all of them; negative is normal and correct
+    casBest: 0,     // biggest single win
+    casWorst: 0,    // biggest single loss, as a negative
     gathered: {},   // item key  -> how many gathered by skilling (mined, chopped, fished, picked)
     looted: {},     // item key  -> how many taken off a monster
     cooked: {},     // item key  -> how many cooked successfully
@@ -3330,7 +3339,7 @@ export function normStats(s) {
       if (!Number.isFinite(n) || n <= 0) continue;
       // gathered/cooked/crafted are keyed by item, so they follow renames too;
       // if both the old and new key are present their counts add up.
-      const key2 = key === "kills" ? k : aliasKey(k);
+      const key2 = key === "kills" || key === "played" ? k : aliasKey(k);   // mob types and game keys are not items, so they do not follow item renames
       o[key2] = (o[key2] || 0) + Math.trunc(n);
     }
     out[key] = o;
