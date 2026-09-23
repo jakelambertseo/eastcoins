@@ -2318,7 +2318,9 @@ export class World {
          balance, a bag or anything they could be robbed over. `top` trims the long maps to what a panel can show,
          because `gathered` alone can run to fifty item keys and this message is sent per profile opened. */
       eq: Object.fromEntries(G.SLOTS.map((sl) => [sl, C.eq[sl] || null]).filter(([, k]) => k && sl2(k))),
-      forge: Object.fromEntries(Object.entries(C.forge || {}).filter(([, v]) => v > 0)),
+      /* only what they are WEARING. The doll reads no other key, and the whole map would quietly tell you what is
+         sitting reforged in their bank, which is nobody's business and is not on screen anyway. */
+      forge: Object.fromEntries(G.SLOTS.map((sl) => C.eq[sl]).filter((k) => k && (C.forge || {})[k] > 0).map((k) => [k, C.forge[k]])),
       bonus: G.bonusOf(C),
       casino: { staked: Math.round(Number(C.wagered) || 0), plays: st.casPlays | 0, net: st.casNet | 0, best: st.casBest | 0, worst: st.casWorst | 0, byGame: top(st.played, 8) },
       totals: { xp: Math.round(st.xpTotal || 0), kills: top(st.kills, 6), gathered: top(st.gathered, 8), cooked: top(st.cooked, 5), crafted: top(st.crafted, 5),

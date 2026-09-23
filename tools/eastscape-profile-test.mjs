@@ -73,4 +73,17 @@ for (const [label, payload] of [["full", full], ["bare", bare]]) {
   }
 }
 console.log(bad ? `\n${bad} panel(s) failed` : "\nevery panel drew, on a full profile and on a brand-new one");
+
+/* THE REFORGE BADGE on the doll. It is drawn from the `forge` map the profile payload carries, and this asserts
+   it actually reaches the slot rather than being dropped somewhere between the server and the tile. full.eq.weapon
+   is emerald_sword and full.forge says that sword is +2; nothing else worn is reforged, so exactly one badge. */
+P.open(full.name); P.on({ ...full });
+panelBox._html = "";
+for (const fn of tabButtons.find((b) => b.dataset.t === "gear").handlers.click || []) fn();
+const gear = panelBox._html;
+const shows = gear.includes("<em>+2</em>");
+const count = (gear.match(/<em>\+/g) || []).length;
+console.log(`reforge badge: ${shows ? "+2 drawn" : "MISSING"}, ${count} badge(s) on the doll (expected 1)`);
+if (!shows || count !== 1) bad++;
+
 process.exitCode = bad ? 1 : 0;
