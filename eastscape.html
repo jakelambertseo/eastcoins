@@ -758,7 +758,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
   <span class="logo"><img src="/v3/assets/img/eastcoin-icon-96.png?v=1" alt="" width="22" height="22">EastScape</span>
   <span class="clock" id="clock">--:--:--</span>
   <button type="button" class="wikib" id="gamesBtn" title="The real ZCoin games, one click (G)">🎰 Games</button>
-  <button type="button" class="wikib" id="wikiBtn" title="The EastScape wiki">📖 Wiki</button>
+  <button type="button" class="wikib" id="wikiBtn" title="The EastScape wiki (H)">📖 Wiki</button>
   <button type="button" class="wikib" id="netBtn" title="Network and lag (N)">📶 Net</button>
   <button type="button" class="wikib" id="hsBtn" title="Hiscores">🏆 Hiscores</button>
   <span class="spacer"></span>
@@ -4233,6 +4233,16 @@ document.addEventListener("contextmenu", (e) => {
   e.preventDefault(); wikiRoute = `items/${k}`; openWin("wikiWin");
 });
 $("wikiBtn").addEventListener("click", () => { if ($("wikiWin").hidden) openWin("wikiWin"); else $("wikiWin").hidden = true; });
+/* (2026-09-23, the owner) H OPENS THE WIKI, and "?" does too because that is the one key everybody already tries.
+   NOT "n": that is the Network panel, and the letters are getting crowded — d (staff dashboard), g (Game Room),
+   m (mute), n (net). It goes through the button's own click so the toggle, the sound and the route restore all
+   stay in one place. Guarded like its neighbours: never while typing, never with a modifier held. */
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "h" && e.key !== "H" && e.key !== "?") return;
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) return;
+  e.preventDefault(); $("wikiBtn").click();
+});
 // a shared link straight to a page: /eastscape#wiki/items/logs
 if (location.hash.startsWith("#wiki")) { wikiRoute = decodeURIComponent(location.hash.slice(6)) || "home"; setTimeout(() => openWin("wikiWin"), 0); }
 
