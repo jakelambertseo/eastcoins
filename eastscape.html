@@ -459,6 +459,8 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 .wiki article h2 i{font-style:normal;font-size:34px}
 .wiki article h3{margin:14px 0 6px;font-size:15px;color:#5a2a1a}
 .wiki article .lede{color:#5a4a30;margin:0 0 8px}
+.wiki article .gcat{margin:12px 0 5px;font-size:11.5px;font-weight:800;color:#6a5a40;text-transform:uppercase;letter-spacing:.05em}
+.wiki article .gcat:first-of-type{margin-top:4px}
 .wiki article .crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:0 0 10px;font-size:12px;font-weight:700}
 .wiki article .crumbs a{cursor:pointer;text-decoration:underline}
 .wiki article .crumbs span{color:#6a5a40}
@@ -917,7 +919,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 import * as G from "/v3/assets/js/eastscape-shared.js?v=196";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=117").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=118").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=12";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -4176,7 +4178,7 @@ const qn = (n) => (Array.isArray(n) ? `${n[0]}–${n[1]}` : n);
 const mico = (k, px = 26) => `<img class="mico" style="height:${px}px" src="${ART}${MOBS[k]?.art || k}.png?v=${ART_V}" alt="" onerror="this.replaceWith(document.createTextNode('👹'))">`;
 function wikiPages() {
   const pages = [{ route: "home", title: "Home", icon: "🏠", group: "" }, { route: "updates", title: "Updates", icon: "📰", group: "" }];
-  for (const g of WK.GUIDES) pages.push({ route: `guides/${g.id}`, title: g.title, icon: g.icon, group: "Guides" });
+  for (const g of WK.GUIDES) pages.push({ route: `guides/${g.id}`, title: g.title, icon: g.icon, group: "Guides", cat: g.cat || "More" });
   /* (2026-09-22) PETS ARE THEIR OWN CATEGORY, not a line in Guides: five things with stats, a drop rate and a
      picture each is a category, and the guide alone made them look like a footnote. Built from G.PETS, so a sixth
      pet appears here without anyone remembering to add it. */
@@ -4220,12 +4222,22 @@ function wikiGo(route, setNav = true) {
     return out;
   };
   const cards = (list) => `<div class="cards">${list.map((p) => `<a class="card" data-wiki="${esc(p.route)}"><i>${p.icon}</i>${esc(p.title)}</a>`).join("")}</div>`;
+  /* (2026-09-23, the owner) THE GUIDES ARE SUB-CATEGORISED. Twenty-six of them in one flat grid was a wall, and
+     the order they happened to be written in is not an order anybody needs them in. The category lives on the
+     guide itself (`cat` in eastscape-wiki.js), so a new guide files itself; anything untagged falls into "More"
+     rather than disappearing. GUIDE_CATS fixes the ORDER, which alphabetical would get wrong — "Starting out"
+     has to come first. */
+  const GUIDE_CATS = ["Starting out", "Skills", "Money", "Going further", "More"];
+  const byCat = (list) => GUIDE_CATS.map((c) => {
+    const inC = list.filter((x) => (x.cat || "More") === c);
+    return inC.length ? `<h4 class="gcat">${esc(c)}</h4>${cards(inC)}` : "";
+  }).join("");
   let html = "";
   if (kind === "home") html = `<h2><i>🎰</i>EastScape Wiki</h2><p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>
-    <h3>Start here</h3>${cards(wikiPages().filter((p) => p.group === "Guides"))}<h3>Browse</h3>${cards(["Skills", "Quests", "Monsters", "Areas", "People", "Items"].map((g) => ({ route: `list/${g}`, title: g, icon: { Skills: "📶", Quests: "📜", Monsters: "👹", Areas: "🗺️", People: "🧑", Items: "🎒" }[g] })))}
+    <h3>Guides</h3>${byCat(wikiPages().filter((p) => p.group === "Guides"))}<h3>Browse</h3>${cards(["Skills", "Quests", "Monsters", "Areas", "People", "Items"].map((g) => ({ route: `list/${g}`, title: g, icon: { Skills: "📶", Quests: "📜", Monsters: "👹", Areas: "🗺️", People: "🧑", Items: "🎒" }[g] })))}
     <h3>Latest update</h3>${wikiUpdate(WK.UPDATES[0])}`;
   else if (kind === "updates") html = `<h2><i>📰</i>Updates</h2><p class="lede">Every change to the game, newest first.</p>${WK.UPDATES.map(wikiUpdate).join("")}`;
-  else if (kind === "list") html = `<h2><i>📚</i>${esc(id)}</h2>${cards(wikiPages().filter((p) => p.group === id))}`;
+  else if (kind === "list") { const inG = wikiPages().filter((p) => p.group === id); html = `<h2><i>📚</i>${esc(id)}</h2>${id === "Guides" ? byCat(inG) : cards(inG)}`; }
   else if (kind === "search") { const q = id.toLowerCase(); const hits = wikiPages().filter((p) => p.title.toLowerCase().includes(q)); html = `<h2><i>🔎</i>“${esc(id)}”</h2>${hits.length ? cards(hits) : '<p class="lede">Nothing by that name.</p>'}`; }
   else if (kind === "guides") {
     const g = WK.GUIDES.find((x) => x.id === id);
