@@ -150,7 +150,91 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",body:`<p>A pet follows you abo
         <tr><td>Mud cat</td><td>60</td><td>88</td><td>26</td><td>116</td></tr>
         <tr><td>Bowfin</td><td>70</td><td>94</td><td>30</td><td>132</td></tr>
       </table>
-      <p><b>Seven of these can be smoked instead</b>, which heals more, sells for far more and gives a 20-minute buff. It needs charcoal, and the fire does it automatically when you are carrying some. See <a data-wiki="guides/smoking">Smoked fish</a>.</p>`},{id:"smoking",title:"Smoked fish",icon:"🐟",body:`<p><b>Smoking is cooking with charcoal.</b> Seven fish can be smoked instead of plainly cooked. A smoked fish heals more, sells for far more, and &mdash; the reason to bother &mdash; gives you a <b>20-minute buff</b> when you eat it.</p>
+      <p><b>Seven of these can be smoked instead</b>, which heals more, sells for far more and gives a 20-minute buff. It needs charcoal, and the fire does it automatically when you are carrying some. See <a data-wiki="guides/smoking">Smoked fish</a>.</p>`},{id:"smithing",title:"Smithing",icon:"🔨",body:`<p><b>The most common question about this skill is how to start it at all</b>, because at Smithing 1 you cannot make a single bar or a single piece of gear. Everything asks for level 10.</p>
+      <p><b>You start by burning logs.</b> That is the whole answer. Take logs to the <b>furnace</b> in the Yard's north court and it turns them into <b>charcoal</b> &mdash; a Smithing level 1 job, and the only one there is. Charcoal is then the fuel every smelt needs, so the logs you burn getting to level 10 are not wasted: you need them anyway.</p>
+      <table class="tbl"><tr><th>Burn</th><th>Gives</th><th>xp each</th></tr>
+        <tr><td>Logs, Gloomwillow logs</td><td>1 charcoal</td><td>5</td></tr>
+        <tr><td>Deadwood, Skyash, Rustpine logs</td><td>2 charcoal</td><td>10</td></tr>
+        <tr><td>Ancient yew logs</td><td>3 charcoal</td><td>15</td></tr>
+        <tr><td>Vaultwood, Bogwood logs</td><td>4 charcoal</td><td>20</td></tr>
+      </table>
+      <p><b>Level 10 is 1,154 xp</b>, so it is about 230 ordinary logs &mdash; or far fewer if you are already cutting something better. Burning has a small chance to fail and eat the log; that is normal and it does not stop.</p>
+      <h3>Then the chain</h3>
+      <p><b>Ore + charcoal &rarr; bar, at the furnace. Bars &rarr; gear, at the anvil.</b> Both are in the Yard's north court, beside the Crypt stairs.</p>
+      <table class="tbl"><tr><th>Bar</th><th>Smithing</th><th>Takes</th><th>xp</th></tr>
+        <tr><td>Bronze</td><td>10</td><td>1 copper + 1 tin + 1 charcoal</td><td>15</td></tr>
+        <tr><td>Emerald</td><td>20</td><td>2 emerald ore + 1 charcoal</td><td>30</td></tr>
+        <tr><td>Diamond</td><td>30</td><td>2 diamond ore + <b>2</b> charcoal</td><td>45</td></tr>
+        <tr><td>Dragonstone</td><td>40</td><td>2 dragonstone ore + <b>2</b> charcoal</td><td>60</td></tr>
+        <tr><td>Onyx</td><td>50</td><td>2 onyx ore + 1 <b>grimstone</b> + <b>3</b> charcoal</td><td>75</td></tr>
+        <tr><td>Starfall</td><td>60</td><td>2 starfall ore + 1 <b>onyx bar</b> + <b>3</b> charcoal</td><td>90</td></tr>
+        <tr><td>Eclipse</td><td>70</td><td>2 eclipse ore + 1 <b>voidglass</b> + <b>4</b> charcoal</td><td>105</td></tr>
+      </table>
+      <p><b>The top three want more than ore.</b> Onyx needs grimstone, starfall needs a finished onyx bar, and eclipse needs voidglass &mdash; so the last stretch is a chain, not a grind, and the charcoal bill climbs with it.</p>
+      <p><b>You do not choose what to make.</b> The furnace and the anvil always make the best thing you can, out of what is in your bag, which is why a furnace with logs AND ore in front of it burns, smelts, burns and smelts by itself.</p>
+      <h3>What a piece costs</h3>
+      <table class="tbl"><tr><th>Piece</th><th>Bars</th><th>xp at bronze</th></tr>
+        <tr><td>Cuirass</td><td>5</td><td>100</td></tr>
+        <tr><td>Greaves, shield, maul</td><td>3</td><td>60</td></tr>
+        <tr><td>Helm, longsword, ring</td><td>2</td><td>40</td></tr>
+        <tr><td>Amulet</td><td>3</td><td>60</td></tr>
+        <tr><td>Boots, gloves, gladius</td><td>1</td><td>20</td></tr>
+      </table>
+      <p>Each grade wants Smithing equal to its <a data-wiki="guides/fighting">gear tier</a> &mdash; emerald at 20, diamond at 30, and so on up to eclipse at 70.</p>
+      <h3>Why bother, when Bom sells gear</h3>
+      <p><b>Because he is not cheap.</b> A full eclipse set over his counter is around 819,000 tickets; the ore to smith one is about 4,250. Diamond is 31 times dearer bought, onyx 69, eclipse 193. Once you have a furnace and an anvil there is no sensible reason to buy gear again.</p>
+      <h3>Reforging</h3>
+      <p><b>Bars also push gear you already own further.</b> At the anvil, three levels, each worth 5.5% of that piece's own stats or +1, whichever is more &mdash; about a tier in total. A reforge costs the same bars the piece cost to make.</p>
+      <p><b>It can destroy the piece.</b> +1 always works. +2 is 80%, and a miss there has an 8% chance of breaking it; +3 is 55%, with a 15% chance. About one piece in seven is lost on the way to +3, and the bars go whether it works or not.</p>
+      <p>Tools reforge too, and they buy <b>speed</b> rather than combat &mdash; +2.5% a level at mining, chopping or fishing.</p>`},{id:"mining",title:"Mining",icon:"⛏️",body:`<p><b>Click a rock with a pickaxe in your hand</b> &mdash; in the weapon slot, not the bag. Every rock holds <b>1 to 5 ore</b>, and you keep working it until it is empty, so one rock is several swings rather than one.</p>
+      <p><b>The rock decides the pickaxe.</b> Emerald ore wants an emerald pickaxe or better; a bronze one will not touch it. See <a data-wiki="guides/tools">Tools</a>.</p>
+      <table class="tbl"><tr><th>Ore</th><th>Mining</th><th>Where</th></tr>
+        <tr><td>Copper, Tin</td><td>1</td><td>The Yard</td></tr>
+        <tr><td>Emerald</td><td>20</td><td>The Gloam</td></tr>
+        <tr><td>Diamond</td><td>30</td><td>The Lantern Mire</td></tr>
+        <tr><td>Dragonstone</td><td>40</td><td>The Boneyard</td></tr>
+        <tr><td>Onyx</td><td>50</td><td>Cloudreach</td></tr>
+        <tr><td>Starfall</td><td>60</td><td>The Vault</td></tr>
+        <tr><td>Eclipse</td><td>70</td><td>The Vault</td></tr>
+        <tr><td>Catalytic converter</td><td>65</td><td>The Trailer Park</td></tr>
+        <tr><td>Slagstone</td><td>85</td><td>The Trailer Park</td></tr>
+      </table>
+      <p><b>Copper and tin are a pair</b> &mdash; a bronze bar wants one of each, so mine them together.</p>
+      <p><b>A vein never runs dry.</b> It is slower per ore than a rock, but it does not empty, so it is what you stand at when you want to think about something else. The Yard's copper vein is the classic one.</p>
+      <p><b>Ore is only worth selling raw if you are desperate.</b> Smelt it: a bar is worth more, and it is the whole point of <a data-wiki="guides/smithing">Smithing</a>.</p>`},{id:"woodcutting",title:"Woodcutting",icon:"🪓",body:`<p><b>Click a tree with an axe in your hand.</b> A tree is good for about 25 logs before it falls, an oak for about 50, and a felled tree grows back in fifteen seconds.</p>
+      <p><b>Not every tree is choppable.</b> Most of what you see is scenery. The ones you can cut have their own art &mdash; in the Yard they are the two gnarled Old oaks, and every other zone names its tree.</p>
+      <table class="tbl"><tr><th>Tree</th><th>Woodcutting</th><th>Where</th><th>Burns into</th></tr>
+        <tr><td>Tree, Old oak</td><td>1</td><td>The Yard</td><td>1 charcoal</td></tr>
+        <tr><td>Gloomwillow</td><td>15</td><td>The Gloam</td><td>1 charcoal</td></tr>
+        <tr><td>Deadwood</td><td>20</td><td>The Lantern Mire</td><td>2 charcoal</td></tr>
+        <tr><td>Ancient yew</td><td>35</td><td>The Boneyard</td><td>3 charcoal</td></tr>
+        <tr><td>Skyash</td><td>45</td><td>Cloudreach</td><td>2 charcoal</td></tr>
+        <tr><td>Vaultwood</td><td>60</td><td>The Vault</td><td>4 charcoal</td></tr>
+        <tr><td>Rustpine</td><td>65</td><td>The Trailer Park</td><td>2 charcoal</td></tr>
+        <tr><td>Bogwood</td><td>80</td><td>The Trailer Park</td><td>4 charcoal</td></tr>
+      </table>
+      <p><b>Logs are not just for selling.</b> Every smelt in the game needs charcoal and charcoal is burnt logs, so woodcutting feeds <a data-wiki="guides/smithing">Smithing</a> exactly the way mining does. The better the log, the more charcoal it makes &mdash; a vaultwood log is worth four ordinary ones.</p>`},{id:"harvesting",title:"Harvesting",icon:"🌾",body:`<p><b>Two halves.</b> Picking things that grow in the world, and growing your own on <a data-wiki="guides/islands">your island</a>.</p>
+      <p><b>In the world</b>, wheat in the Yard, olives and vines on Tomatoe Hill. Click them; they grow back on their own. No tool needed &mdash; Harvesting is the only gathering skill that asks for nothing in your hand.</p>
+      <p><b>On your island</b>, a plot grows in real time whether you are logged in or not, and pays several of what you planted. That is where the levels are, and where the money is.</p>
+      <p><b>There are no seeds &mdash; the crop is the seed.</b> Planting spends one of the thing you are growing, so the first of each new kind has to be found. They drop from the monsters of the zone that grows them, at about one kill in eighty.</p>
+      <table class="tbl"><tr><th>Crop</th><th>Harvesting</th><th>Grows in</th><th>xp</th><th>Seeded by</th></tr>
+        <tr><td>Wheat</td><td>1</td><td>10 min</td><td>30</td><td>grows wild in the Yard</td></tr>
+        <tr><td>Tomatoe</td><td>5</td><td>20 min</td><td>70</td><td>Tomatoe Hill</td></tr>
+        <tr><td>Rattlebean</td><td>10</td><td>20 min</td><td>60</td><td>the Gloam</td></tr>
+        <tr><td>Lanternroot</td><td>20</td><td>40 min</td><td>150</td><td>the Lantern Mire</td></tr>
+        <tr><td>Bonegourd</td><td>30</td><td>1 hr</td><td>400</td><td>the Boneyard</td></tr>
+        <tr><td>Stormcorn</td><td>40</td><td>2 hr</td><td>700</td><td>Cloudreach &amp; the Thunderhead</td></tr>
+        <tr><td>Golden tomatoe</td><td>50</td><td>4 hr</td><td>600</td><td>&mdash;</td></tr>
+      </table>
+      <p><b>It is background work.</b> Plots pay while you are elsewhere, which is the whole appeal &mdash; nobody should be standing on their island waiting for corn.</p>`},{id:"agility",title:"Agility",icon:"🏃",body:`<p><b>The Run is an obstacle course</b>, up a rope ladder in the north of the Yard. You go round it; each obstacle pays xp, and finishing a full lap pays a lot more than the parts.</p>
+      <table class="tbl"><tr><th>What</th><th>xp</th></tr>
+        <tr><td>Each obstacle cleared</td><td>12</td></tr>
+        <tr><td>Clearing one perfectly</td><td>+10</td></tr>
+        <tr><td>Finishing a lap</td><td>150, more with company</td></tr>
+      </table>
+      <p><b>A lap is worth more when other people are running it</b>, so it is one of the few things in the game that rewards a crowd.</p>
+      <p><b>Your best lap is recorded</b>, which is most of the reason to keep doing it.</p>
+      <p><b>What Agility buys you is movement speed</b>, which quietly improves everything else &mdash; every walk to a rock, a tree or a bank booth is shorter.</p>`},{id:"smoking",title:"Smoked fish",icon:"🐟",body:`<p><b>Smoking is cooking with charcoal.</b> Seven fish can be smoked instead of plainly cooked. A smoked fish heals more, sells for far more, and &mdash; the reason to bother &mdash; gives you a <b>20-minute buff</b> when you eat it.</p>
       <p>Do it at <b>any fire or range</b>, with the fish and the charcoal in your bag. You do not switch anything on: the fire always makes the best thing it can, so it smokes while you have charcoal and drops back to plain cooking when you run out. Charcoal is <b>burnt logs</b>, made at the furnace.</p>
       <table class="tbl"><tr><th>Smoked</th><th>Catch at</th><th>Where</th><th>Smoke at</th><th>Coal</th><th>Heals</th><th>For 20 minutes</th></tr>
         <tr><td><b>Ghost carp</b></td><td>Fishing 35</td><td>Flooded crypt, the Boneyard</td><td>Cooking 40</td><td>1</td><td>24</td><td>+8% rare drops</td></tr>
