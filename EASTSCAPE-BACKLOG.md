@@ -355,6 +355,31 @@ Not Roman: the user wants new content original and imaginative (NGU / Dungeon Cr
   - 43 sounds are defined; 15 audio files exist today. The full table of what each one does is in the session
     notes for 2026-09-23.
 
+- **PETS NEED SPACE AND SOME LIFE (owner, 2026-09-23 night: "the pets are right in the players space, almost
+  attached to them, lets give them some simple animations and some spacing from the character").**
+
+  The draw, as it stands after the NaN fix the same night:
+  `spr(pv.art, p.px * T + 8 - fc * 11, p.py * T + 15 + bobOf(p.moving), fc < 0)`.
+  Two things follow from that one line. The pet sits at a **fixed 11px offset** behind the facing on a 16-pixel
+  tile, so it is permanently about two thirds of a tile away and never moves relative to its owner. And its only
+  animation is `bobOf(p.moving)` — the OWNER's bob, so it bobs when they walk and is otherwise a static sprite.
+
+  **The spacing fix worth doing is not a bigger number.** A fixed offset is what makes it read as attached: turn
+  around and the pet teleports to your other side. A pet should **lag along the path you walked** — keep a short
+  trail of the owner's recent positions (or ease the pet toward a point trailing them) so it swings out on corners
+  and catches up when you stop. That buys the spacing AND most of the animation for free, with no new art, and it
+  is what makes a follower read as alive in every game that has one.
+
+  **Animation, cheapest first:** its own bob on its own phase (not the owner's) so a standing pet still breathes;
+  a small hop or squash on arrival when it catches up; a flip that follows its own direction of travel rather than
+  the owner's facing. Only after those is it worth generating walk frames — the five pets are single sprites
+  (`pet_bonepup`, `pet_packrat`, `pet_cointoad`, `pet_lanternmoth`, `pet_housecat`, all in the `core` pack), so
+  real frames mean 5 x N generations and a sheet each. The Lantern Moth should probably hover rather than walk,
+  which is an argument for per-pet behaviour flags rather than one animation for all five.
+
+  Everything here is page-only: the server sends the owner's position and the pet key, and nothing about a pet's
+  position is authoritative.
+
 - **DAILY LOG-IN BONUS (owner, 2026-09-23, with an RPG MO screenshot as the reference; not built).** A panel on
   login: "Today is your no. 2 consecutive login day", with milestone tiles — Day 2 an xp reward, Day 5 currency,
   Day 10 a mystery box — the current day marked TODAY and the rest showing "3 days remaining".
