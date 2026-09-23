@@ -303,6 +303,58 @@ Not Roman: the user wants new content original and imaginative (NGU / Dungeon Cr
   **DECIDED: no seed drops in the Tower.** The Tower deliberately pays xp and nearly nothing else; seeds would make
   it the best farming spot in the game by accident.
 
+- **MAP-BY-MAP PASS: artwork, feel, layout (owner, 2026-09-23; not started).** Go through every scene one at a
+  time and finish it as a PLACE rather than as a set of nodes — art that belongs together, a layout that reads,
+  and somewhere to stand that feels like somewhere. The world was built outward fast (ten-plus areas since
+  2026-09-18) and it shows: scenes were laid out to hold the right resources at the right levels, which is a
+  different job from being worth walking through.
+
+  Do it one map per sitting, and finish one before starting the next — the failure mode is half-improving
+  everything. A rough order, worst-first by how many people see it: **the Yard** (the arrival scene and the busiest
+  in the game, and it has grown by accretion — the north court was extended twice, the jukebox moved, the Tower
+  and Crypt stairs bolted on), the **casino floor**, the **Gloam** (first zone past the start), then outward.
+
+  What "cleanup" means, concretely, from what has already come up:
+  - **Scenery that says what a place is.** The Yard has 128 tree objects of which two are choppable; that was
+    fixed by giving the two their own art, and the same question ("can I use this?") applies to every object in
+    every scene.
+  - **Signposting.** The Run's door was invisible until it became a rope ladder somewhere people walk. The
+    Wilderness ladder still has no sign. Anything you can enter should be findable without being told.
+  - **Layout for crowds, not just for content.** The arrival scene is the one place launch day puts everyone at
+    once, and egress is players x players in a room (see the load-test findings) — so the Yard's shape is a
+    performance decision as well as a feel one.
+  - **Per-area art budgets are already enforced** (`tools/eastscape-budget.mjs`, 120 KB an area, all currently
+    inside) and the sheets are built per area, so new art in one scene costs only that scene.
+
+- **CUSTOM, NON-SYNTHESIZED SOUNDS FOR EVERYTHING (owner, 2026-09-23; not started).** Replace the generated
+  sounds with real recordings.
+
+  **The architecture is already built for exactly this and needs no work.** Every sound in
+  `v3/assets/js/eastscape-sfx.js` is a little synthesis recipe rendered on first play, and each entry takes an
+  optional `file` (one URL) or `files` (several takes, picked at random, never the same one twice running). The
+  recipe stays as the fallback if the file does not arrive, and every call site is unchanged. **Swapping a sound
+  for a recording is one line.** Four already work this way — `chop` (4 takes), `mine` (5), `swing` (3) and `hit`
+  (2), supplied by the owner on 2026-09-20 and normalised by `tools/eastscape-sfx-import.mjs` to mono / 22 kHz /
+  trimmed / one loudness. `fish_water` is a CC0 recording. So the job is recording and importing, not coding.
+
+  **THE ONE RULE THAT MUST SURVIVE THIS: `steady: true`.** Seventeen sounds carry it, and it encodes the owner's
+  own 2026-09-21 note — "this is a semi-afk game, so it needs to be consistent and chill. just a few repeating
+  sounds". Those are the ones you hear hundreds of times an hour: chopping, mining, casting, cooking, smelting,
+  the anvil, picking, the bag. They are deliberately ONE take, ONE pitch and quieter than everything else. Fishing
+  was already rebuilt three times over exactly this — lively multi-take recordings were tiring within a session.
+  **A rich, characterful recording is the wrong answer for a steady sound and the right answer for a rare one**
+  (levelup, jackpot, die, door, task_done), so record the two groups to different briefs.
+
+  Housekeeping found in the audit (2026-09-23):
+  - **`SFX_V` must be bumped when a recording is replaced** — the files are cached hard, like the art.
+  - **`pickup` is defined and never played anywhere.** Either wire it to picking an item up (which currently
+    plays `gain`) or delete it; do not record a sound for it first.
+  - **Some triggers are regex matches on server chat text** — `mob_die` on `/^You defeat /`, `die` on `/^Oh dear,
+    you are dead/`, `idle_stop` on `/^You stop .*idle/`. Rewording one of those server lines silently kills the
+    sound, and nothing would fail. Worth turning into real events while touching this area.
+  - 43 sounds are defined; 15 audio files exist today. The full table of what each one does is in the session
+    notes for 2026-09-23.
+
 - **DAILY LOG-IN BONUS (owner, 2026-09-23, with an RPG MO screenshot as the reference; not built).** A panel on
   login: "Today is your no. 2 consecutive login day", with milestone tiles — Day 2 an xp reward, Day 5 currency,
   Day 10 a mystery box — the current day marked TODAY and the rest showing "3 days remaining".
