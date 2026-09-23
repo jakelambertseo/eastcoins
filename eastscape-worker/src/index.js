@@ -2821,6 +2821,15 @@ export class World {
     if (op === "start") {
       if (r) return pl.out.push(this.runView(pl, g));
       if (!this.near(S, pl, g, 2) && !S.def.real?.[g]) return this.say(pl, `You need to be at the ${game.name} table in the Casino.`, "bad");   /* (v107: see bet()) */
+      /* (2026-09-23, the owner) THE HOUR'S LIMITS, WHICH THESE TWO HAD ESCAPED. bet() has checked tixBlock since
+         2026-09-22, but a run STARTS here and this never did — so Hi-Lo and Mines were the two uncapped tables on
+         a floor whose whole point is that no table is a better bet than another. Checked before the stake is
+         taken, so a refused run costs nothing, and worded exactly as bet() words it. */
+      C.plays = G.recentPlays(C.plays, now);
+      const gate = G.tixBlock(C.plays, g, now);
+      if (gate && !pl.god) return this.say(pl, gate.why === "plays"
+        ? `That's ${gate.cap} goes on the ${game.name.toLowerCase()} this hour. Try another table, or come back later.`
+        : `You're up ${G.fmtTix(gate.n)} this hour, which is the house limit. Come back in a bit — you keep every ticket of it.`, "bad");
       const amt = Math.floor(Number(m.amt)), have = G.cashIn(C);
       if (!(amt >= G.minBetOf(S.def) && amt <= G.maxBetOf(C, S.def))) return this.say(pl, `Bets here are ${G.fmtCash(G.minBetOf(S.def))} to ${G.fmtCash(G.maxBetOf(C, S.def))}.`, "bad");
       if (have < amt) return this.say(pl, `You only have ${G.fmtCash(have)} in your bag.`, "bad");
