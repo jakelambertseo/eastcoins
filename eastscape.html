@@ -917,7 +917,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 import * as G from "/v3/assets/js/eastscape-shared.js?v=196";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=116").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=117").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=12";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -4227,7 +4227,17 @@ function wikiGo(route, setNav = true) {
   else if (kind === "updates") html = `<h2><i>📰</i>Updates</h2><p class="lede">Every change to the game, newest first.</p>${WK.UPDATES.map(wikiUpdate).join("")}`;
   else if (kind === "list") html = `<h2><i>📚</i>${esc(id)}</h2>${cards(wikiPages().filter((p) => p.group === id))}`;
   else if (kind === "search") { const q = id.toLowerCase(); const hits = wikiPages().filter((p) => p.title.toLowerCase().includes(q)); html = `<h2><i>🔎</i>“${esc(id)}”</h2>${hits.length ? cards(hits) : '<p class="lede">Nothing by that name.</p>'}`; }
-  else if (kind === "guides") { const g = WK.GUIDES.find((x) => x.id === id); html = g ? `<h2><i>${g.icon}</i>${esc(g.title)}</h2>${g.body}` : ""; }
+  else if (kind === "guides") {
+    const g = WK.GUIDES.find((x) => x.id === id);
+    /* (2026-09-23) THE LINK BACK. The skill page points at its guide; without this the guide was a dead end, and
+       the skill page — the tables, the curve, everything you can make — was reachable only by knowing to type
+       "skills/smithing". Two of them are filed under a different name from the skill's internal key. */
+    const SKILL_OF = { fighting: "melee", harvesting: "farming" };
+    const sk = g ? (SKILL_OF[g.id] || (SKILLS[g.id] ? g.id : null)) : null;
+    html = g ? `<h2><i>${g.icon}</i>${esc(g.title)}</h2>
+      ${sk ? `<p class="wguide">${wl(`skills/${sk}`, `The ${esc(SKILLS[sk].name)} skill page`)} &mdash; every level, every item and the xp, in tables.</p>` : ""}
+      ${g.body}` : "";
+  }
   else if (kind === "items" && ITEMS[id]) {
     const it = ITEMS[id], src = WIKI.sources[id] || [], dr = WIKI.drops[id] || [], qs = WIKI.inQuests[id] || [];
     const rewards = Object.entries(QUESTS).filter(([, q]) => (id === "coins" && q.reward.coins) || (q.reward.items || []).some(([k]) => k === id));
