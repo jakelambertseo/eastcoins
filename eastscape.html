@@ -448,12 +448,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 @keyframes winspark{0%{transform:translate(-50%,-50%) rotate(0);opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--r));opacity:0}}
 /* wiki */
 /* (v104) drawn plates behind Games / Wiki / Hiscores (PixelLab ui asset 9c9d3f82, cut into ui/nav_*.png): a 9-slice, so the gold corners never stretch */
-.top .wikib{border:8px solid transparent;border-radius:0;background:none;padding:0 6px;line-height:1.35;color:#ffe9a0;text-shadow:1px 1px 0 #000,0 0 3px #000;image-rendering:pixelated;border-image:url(/v3/assets/img/glad/flat/ui/nav_wiki.png?v=1) 20 fill / 8px stretch}
 .top #gamesBtn{border-image-source:url(/v3/assets/img/glad/flat/ui/nav_games.png?v=1)}.top #hsBtn{border-image-source:url(/v3/assets/img/glad/flat/ui/nav_hs.png?v=1)}
-.top .wikib:hover{background:none;filter:brightness(1.18)}
-.top .wikib.glow{border-color:#f2d22e;animation:gamesglow 1.6s ease-in-out infinite}
+.top .topl.glow{color:#ffd77a;animation:gamesglow 1.6s ease-in-out infinite}   /* (2026-09-23) follows the link, not the frame that is gone: this is what marks Games for somebody who has never opened it */
 @keyframes gamesglow{0%,100%{box-shadow:0 0 0 0 rgba(242,210,46,0)}50%{box-shadow:0 0 10px 2px rgba(242,210,46,.75)}}
-@media (prefers-reduced-motion:reduce){.top .wikib.glow{animation:none;box-shadow:0 0 8px 1px rgba(242,210,46,.6)}}
+@media (prefers-reduced-motion:reduce){.top .topl.glow{animation:none;text-decoration:underline}}
 .wiki{display:grid;grid-template-columns:190px minmax(0,1fr);gap:0;min-height:0;flex:1}
 .wiki nav{border-right:2px solid rgba(0,0,0,.1);overflow:auto;padding:8px;background:#ece0c2}
 .wiki nav button{display:block;width:100%;text-align:left;border:0;background:none;padding:5px 8px;border-radius:4px;font-weight:700;cursor:pointer;color:#2a2016;font-size:14px}
