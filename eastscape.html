@@ -4677,7 +4677,7 @@ function renderAdmin(p) {
       <div class="row"><input type="number" id="aQty" value="1" min="1" aria-label="Quantity"><button class="btn" data-a="item">Give</button><button class="btn danger" data-a="clearinv">Clear inventory</button></div>
     </fieldset>
     <fieldset><legend>You</legend>
-      <div class="row"><button class="btn" data-a="heal">Heal</button><button class="btn plain" data-a="respin" title="Makes your Daily Prize Wheel spin free again, for testing">Free spin again</button><button class="btn ${me.god ? "" : "plain"}" data-a="god">God mode: ${me.god ? "on" : "off"}</button></div>
+      <div class="row"><button class="btn" data-a="heal">Heal</button><button class="btn plain" data-a="respin" title="Makes your Daily Prize Wheel spin free again, for testing">Free spin again</button><button class="btn plain" data-a="achclear" title="Forget every achievement so the next one can be watched landing. Tickets already paid stay paid.">Reset achievements</button><button class="btn ${me.god ? "" : "plain"}" data-a="god">God mode: ${me.god ? "on" : "off"}</button></div>
       <div class="row"><select id="aScene">${opts(scenes)}</select><button class="btn" data-a="tp">Teleport</button></div>
       <div class="row"><button class="btn plain" data-a="resetscene">Reset this area</button><span class="tag">monsters, trees, rocks, bots</span></div>
     </fieldset>
@@ -4708,6 +4708,7 @@ function renderAdmin(p) {
     clearall: () => ({ cmd: "clearxp", skill: "all" }),
     item: () => ({ cmd: "item", k: v("aItem"), n: +v("aQty") }),
     clearinv: () => ({ cmd: "clearinv" }), heal: () => ({ cmd: "heal" }), god: () => ({ cmd: "god" }), respin: () => ({ cmd: "respin" }),
+    achclear: () => ({ cmd: "ach", k: "clear" }),   /* (2026-09-23) forget every achievement, so one can be watched landing */
     tp: () => ({ cmd: "tp", scene: v("aScene") }), resetscene: () => ({ cmd: "resetscene" }),
     quest: () => ({ cmd: "quest", k: v("aQuest"), state: v("aQState") }), resetquests: () => ({ cmd: "resetquests" }),
     reset: () => ({ cmd: "reset" }), speed: () => ({ cmd: "speed", n: +v("aSpeed") }),

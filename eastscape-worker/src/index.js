@@ -3033,10 +3033,19 @@ export class World {
     if (due.length) this.achAward(pl, due, false);
   }
   /* the login sweep: everything they already qualify for, paid quietly and all at once */
+  /* QUIET ONLY ON THE GENUINE BACKFILL. This ran on every login and always passed quiet:true, so anything a live
+     event missed came back labelled "for things you had already done" — which is how the owner played a hand,
+     earned Sat Down on the next reconnect, and saw nothing that looked like earning it. A deploy drops every
+     connection, so that path is walked constantly, not once.
+
+     `first` is true only when this character has never had an ach list at all. After that a sweep is catching up,
+     not backfilling, and it says so properly. A first sweep finding one or two also announces them normally: the
+     summary exists to stop a wall of thirty, and three is not a wall. */
   achSweep(pl) {
-    if (!Array.isArray(pl.C.ach)) pl.C.ach = [];
+    const first = !Array.isArray(pl.C.ach);
+    if (first) pl.C.ach = [];
     const due = G.achDue(pl.C);
-    if (due.length) this.achAward(pl, due, true);
+    if (due.length) this.achAward(pl, due, first && due.length > 3);
   }
   dailyEvent(pl, type, d) {
     const what = type === "cook" || type === "craft" ? "make" : type;
@@ -3164,6 +3173,15 @@ export class World {
       case "item": { const k = String(m.k), n = Math.max(1, Math.min(1000000, m.n | 0)); if (!G.ITEMS[k]) return; const got = this.giveUpTo(pl, k, n); if (got) note(`Gave ${got.toLocaleString()} × ${G.ITEMS[k].name}.`); return; }
       case "clearinv": C.inv = []; this.touch(pl); return note("Inventory cleared.");
       case "respin": C.spin = null; this.touch(pl); return note("Your Daily Prize Wheel spin is free again (your streak starts over).");
+      /* (2026-09-23) FOR TESTING ACHIEVEMENTS. `ach clear` forgets them all so the next qualifying event fires
+         properly, which is the only way to watch one land once you already have it. The tickets already paid are
+         not clawed back: they were earned, and a test should not cost anybody their money. */
+      case "ach": {
+        const op = String(m.k || m.cmd2 || "").trim().toLowerCase();
+        if (op === "clear") { C.ach = []; this.touch(pl); return note("Achievements forgotten. The next thing you do will earn them again (tickets already paid stay paid)."); }
+        const have = Array.isArray(C.ach) ? C.ach.length : 0;
+        return note(`${have} of ${Object.keys(G.ACH).length} earned, ${G.achPts(C)} points. Use "ach clear" to forget them and watch one land.`);
+      }
       // the House Ruby's held exchanges: list them, and let one go (after looking at the site's Wallet tab to see whether it paid)
       case "dexlist": return this.ctx.storage.list({ prefix: "dex:", limit: 50 }).then((all) => note(all.size ? [...all].map(([k, r]) => `${k} · ${r.name} · ${r.op} ${r.zc} ZC · ${r.back ? `${r.back.n} ${r.back.k}` : G.fmtCash(r.cash || 0)} held · ${new Date(r.at).toISOString().slice(0, 16)}${r.stuck ? " · STUCK" : ""}`).join(" | ") : "No held exchanges."));
       case "dexrelease": { const key = String(m.key || ""); if (!key.startsWith("dex:")) return; return this.ctx.storage.get(key).then(async (r) => { if (!r) return note("No such record."); await this.ctx.storage.delete(key); const who = key.split(":").slice(1, -1).join(":"), p = this.pls.get(who); if (m.refund) await this.dexRefund(p || { id: who, left: true }, r); note(`Released ${key}${m.refund ? ", what it took given back" : " (it paid: nothing given back)"}.`); }); }
