@@ -2654,11 +2654,12 @@ const SMELT = {
 };
 // how many bars a piece takes — the big slots cost more, and a maul costs most
 /* (2026-09-22) the tool rungs smith like everything else, so a miner can make the next pickaxe out of what they mined. */
-/* ring/amulet added 2026-09-23 (the owner). Jewelry is not smithed, so "a reforge costs what the piece cost" has
-   nothing to quote; these are priced against the armour scale by how much stat they carry (ring 3x jewel, amulet
-   3x jewel+1, i.e. between a helm and a shield). Be aware they are the best-value reforge in the game: the floor is
-   per STAT and jewelry is the only gear with three, so a level moves all three and +3 doubles a ring outright. If
-   that proves too strong the lever is these two numbers, not the floor. */
+/* ring/amulet added 2026-09-23 (the owner). They are SMITHED - RECIPES has <tier>_ring at 2 bars and <tier>_amulet
+   at 3 - so these are the ordinary rule, "a reforge costs what the piece cost", and not a judgement call. (They were
+   excluded for want of a BARS entry alone, nothing more.) Be aware they are the best-value reforge in the game: the
+   floor is per STAT and jewelry is the only gear carrying three, so a level moves all three and +3 doubles a ring
+   outright. If that proves too strong, the lever is the ladder or the floor - NOT these two numbers, which have to
+   keep matching the recipe. */
 const BARS = { body: 5, legs: 3, shield: 3, helm: 2, boots: 1, gloves: 1, gladius: 1, sword: 2, maul: 3, pickaxe: 2, axe: 2, rod: 1, ring: 2, amulet: 3 };
 
 /* ============================================================ CHARCOAL (2026-09-22)
