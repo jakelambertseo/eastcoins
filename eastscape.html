@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=193">
-<link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=8">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=9">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
      (eastscape-worker, a Cloudflare Durable Object), which also keeps your character: saving
@@ -914,7 +914,7 @@ import * as G from "/v3/assets/js/eastscape-shared.js?v=193";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=111").then((m) => { WK = m; }));
-import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=8";
+import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=9";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -956,7 +956,12 @@ const SWING_SFX = { mob: "swing", pvp: "swing", tree: "chop", rock: "mine", vein
 let sfxSwing = 0;
 function send(m) {
   if (ws && ws.readyState === 1) ws.send(JSON.stringify(m));
-  if (m.t === "equip" || m.t === "unequip") SFX.play("equip");
+  /* (2026-09-23) A SWORD AND A SHIRT SOUND DIFFERENT. `equip` sends the bag index and `unequip` sends the slot,
+     so both know which it is without the server being asked. Anything that is not the weapon slot is "clothes". */
+  if (m.t === "equip" || m.t === "unequip") {
+    const slot = m.t === "unequip" ? m.slot : ITEMS[me?.inv?.[m.i]?.k]?.slot;
+    SFX.play(slot === "weapon" ? "equip_weapon" : "equip");
+  }
   else if (m.t === "drop") SFX.play("drop");
   else if (m.t === "bank" || m.t === "sort") SFX.play("inv");   /* (a soft tick for putting things in, taking them out, tidying up) */
   else if (m.t === "eat") SFX.play("eat");
@@ -1130,7 +1135,7 @@ function onMsg(m) {
         if (onMe) { SFX.play(e.n ? "hurt" : "miss"); if (e.n && me && e.n >= G.maxHpOf(me) / 4) shakeUntil = performance.now() + 220; }
         else if (mine?.mob && e.who === mine.mob) { SFX.play(e.n ? "hit" : "miss", e.crit ? { rate: 0.7, vol: 1 } : undefined); if (e.crit && mineHit) { shakeUntil = performance.now() + 160; SFX.play("coins", { vol: 0.35, rate: 1.4 }); } if (e.kill && mineHit) SFX.play("task_done", { vol: 0.4, rate: 1.3 }); }
       }
-      if (e.type === "gain") { gains.push({ who: e.who, k: e.k, n: e.n, at: performance.now() }); if (e.who === you?.id) { if (mine?.act === "spot" && Z.objs.some((o) => o.t === "spot" && (o.fish === e.k || o.fish2 === e.k || (!o.fish && (e.k === "sardine" || e.k === "trout"))))) SFX.play("fish_catch");   /* (a catch is ONE splash, the same every time: see the note on steadiness in eastscape-sfx.js) */ else SFX.play("gain"); } }
+      if (e.type === "gain") { gains.push({ who: e.who, k: e.k, n: e.n, at: performance.now() }); if (e.who === you?.id) { if (mine?.act === "spot" && Z.objs.some((o) => o.t === "spot" && (o.fish === e.k || o.fish2 === e.k || (!o.fish && (e.k === "sardine" || e.k === "trout"))))) SFX.play("fish_catch");   /* (a catch is ONE splash, the same every time: see the note on steadiness in eastscape-sfx.js) */ else { const sl = ITEMS[e.k]?.slot; SFX.play(sl === "weapon" ? "gain_weapon" : sl && sl !== "pet" ? "gain_gear" : "gain"); } } }   /* (2026-09-23) finding GEAR is its own sound; ore, logs and fish stay the one quiet blip */
       if (e.type === "botbet") botBets.push({ id: e.id, n: e.n, at: performance.now() });   // (v88) a bot at a table just won or lost: floated over their head
       if (e.type === "bubble") { botBubbles.set(e.id, { text: e.text, at: performance.now() }); const b = Z.bots.find((x) => x.id === e.id); if (b) chatLine(b.name, e.text, "bot"); }
     }

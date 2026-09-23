@@ -1,0 +1,189 @@
+/* ============================================================
+   EastScape sound — every sound effect in the game, by name
+
+   The sounds are MADE here, not downloaded: each one is a little recipe (a wave, a pitch sweep, an envelope, a few
+   notes) rendered to audio the first time it plays, so the whole library costs nothing to load. Retro on purpose, to
+   sit with the pixel art.
+
+   Swapping a sound for a real recording is one line: give its entry a `file` (a URL to an .ogg/.mp3/.wav), or `files`
+   (several takes: one is picked at random each time, never the same one twice running, so a minute of mining doesn't
+   sound like a loop). They're fetched the first time that sound plays, and the recipe stays as the fallback if a file
+   doesn't arrive. Every call site stays the same. Chopping, mining, the sword's swing and its hit are recordings the
+   owner supplied (2026-09-20), made ready by tools/eastscape-sfx-import.mjs (mono, 22 kHz, trimmed, one loudness).
+
+   Browsers won't play audio before the player has clicked or pressed a key, so nothing plays until then.
+   On/off and volume live in this browser (localStorage), not on the account: sound is a per-device thing.
+   ============================================================ */
+
+const RATE = 22050;
+// note names -> Hz, for the jingles
+const N = (n) => 440 * 2 ** ((n - 69) / 12);
+const C5 = N(72), D5 = N(74), E5 = N(76), F5 = N(77), G5 = N(79), A5 = N(81), B5 = N(83), C6 = N(84), E6 = N(88), G6 = N(91), C7 = N(96);
+
+/* A layer: { w: "square"|"saw"|"sine"|"tri"|"noise", f: start Hz, f2: end Hz, a/s/d: attack/sustain/decay seconds,
+   t: start offset, v: volume, lp/hp: filter cutoffs, duty: square width, vib: [depth, Hz] }.
+   A sound is one layer or a list of them. */
+const tone = (f, t, d, v = 0.3, w = "square", extra = {}) => ({ w, f, t, d, v, ...extra });
+const notes = (list, step, d, v, w = "square", extra = {}) => list.map((f, i) => tone(f, i * step, d, v, w, extra));
+const ticks = (n, every, extra = {}) => Array.from({ length: n }, (_, i) => ({ w: "noise", t: i * every, d: 0.025, v: 0.35, lp: 3500, ...extra }));
+
+const SFX_V = 2;   // bump when a recording is replaced: the files are cached hard
+const takes = (name, n) => Array.from({ length: n }, (_, i) => `/v3/assets/sfx/${name}${i + 1}.wav?v=${SFX_V}`);
+/* The owner's second batch (2026-09-23) arrived as finished .ogg, already small and level, so they ship as they
+   came rather than through tools/eastscape-sfx-import.mjs — that tool is for raw .wav takes and re-encoding these
+   would only make them bigger. `fish_water.ogg` was already precedent. */
+const oggs = (name, n) => Array.from({ length: n }, (_, i) => `/v3/assets/sfx/${name}${i + 1}.ogg?v=${SFX_V}`);
+
+const FISH = "/v3/assets/audio/fish/";   // + "?v=" is not needed: a changed sound gets a new file name
+export const SOUNDS = {
+  // the interface
+  ui_click:   { vol: 0.35, files: oggs("click", 1), layers: [tone(1100, 0, 0.035, 0.25, "square", { f2: 850, duty: 0.5, lp: 5000 })] },
+  ui_open:    { vol: 0.35, files: oggs("menuopen", 1), layers: [tone(480, 0, 0.09, 0.3, "tri", { f2: 900 })] },
+  ui_close:   { vol: 0.35, files: oggs("menuclose", 1), layers: [tone(820, 0, 0.08, 0.3, "tri", { f2: 430 })] },
+  ui_error:   { vol: 0.4, layers: [tone(220, 0, 0.12, 0.25, "square", { f2: 165, s: 0.03, lp: 2400 })] },
+  chat:       { vol: 0.25, layers: [tone(880, 0, 0.06, 0.2, "sine"), tone(1320, 0.05, 0.07, 0.15, "sine")] },
+  // the bag
+  /* `pickup` was defined here and never played by anything — `gain` is the wired path — so it is gone rather than
+     given a recording. In its place: finding GEAR now sounds different from finding an ore, which the owner's
+     "Sword Pickup" / "Clothes Pickup" takes were clearly cut for. Neither is steady, because gear drops are rare;
+     the common case (ore, logs, fish) is still `gain`, one quiet blip, unchanged. */
+  gain_weapon: { vol: 0.3, files: oggs("getweapon", 4), layers: [tone(740, 0, 0.05, 0.2, "sine", { f2: 1040 })] },
+  gain_gear:   { vol: 0.3, files: oggs("getgear", 3), layers: [tone(700, 0, 0.05, 0.2, "sine", { f2: 980 })] },
+  drop:       { vol: 0.26, steady: true, files: oggs("slot", 2).slice(1), layers: [tone(520, 0, 0.07, 0.22, "sine", { f2: 330 })] },
+  /* EQUIPPING IS SLOT-AWARE (2026-09-23): the owner's recordings come as "Sword Equip" and "Clothes Equip", and
+     both call sites know which it is — `equip` carries the bag index, `unequip` carries the slot. `steady` is
+     deliberately OFF on these two: it is what forces one take, and equipping is a thing you do a few times a
+     session, not the hundreds-an-hour grind sound the steady rule was written for. Put `steady: true` back and
+     they drop to take one. */
+  equip:      { vol: 0.3, files: oggs("wear", 4), layers: [{ w: "noise", d: 0.03, v: 0.16, lp: 2400 }, tone(440, 0.005, 0.07, 0.2, "sine", { f2: 620 })] },
+  equip_weapon: { vol: 0.32, files: oggs("wield", 2), layers: [{ w: "noise", d: 0.03, v: 0.18, lp: 2600 }, tone(520, 0.005, 0.08, 0.22, "sine", { f2: 720 })] },
+  eat:        { vol: 0.32, steady: true, layers: ticks(3, 0.1, { d: 0.04, lp: 1300, v: 0.3 }) },
+  gain:       { vol: 0.24, steady: true, files: oggs("take", 1), layers: [tone(880, 0, 0.09, 0.16, "sine", { f2: 1175 })] },
+  inv:        { vol: 0.22, steady: true, files: oggs("slot", 1), layers: [tone(900, 0, 0.03, 0.18, "sine", { f2: 720 }), { w: "noise", d: 0.012, v: 0.1, lp: 2500 }] },   // moving a thing about in the bag or the bank
+  // gathering and making
+  chop:       { vol: 0.42, steady: true, files: takes("chop", 4), layers: [{ w: "noise", d: 0.09, v: 0.45, lp: 2200 }, tone(190, 0, 0.09, 0.35, "tri", { f2: 85 })] },
+  mine:       { vol: 0.38, steady: true, files: takes("mine", 5), layers: [tone(1850, 0, 0.06, 0.2, "square", { f2: 1450, duty: 0.25 }), { w: "noise", d: 0.05, v: 0.3, lp: 6000, hp: 1200 }] },
+  /* STEADY, SOFT AND OURS (the owner, 2026-09-21: "this is a semi-afk game, so it needs to be consistent and chill. just a few repeating
+     sounds"). Everything you hear over and over while skilling, fishing, cooking, the bag, chopping, mining, is `steady`: ONE take, ONE
+     pitch, quieter than the rest, so an hour beside it is an hour of the same small sound. Fishing went through three versions in a day:
+     recorded CC0 plops and splashes in several takes (lively, tiring), one take of each (better), and now these, made on the softsynth
+     below like every other sound here: short sine blips, nothing borrowed from any other game. Only the water is a recording
+     (CC0, "40 CC0 water / splash / slime SFX" by rubberduck, OpenGameArt; tools/eastscape-fish-audio.mjs). */
+  cast:       { vol: 0.26, steady: true, layers: [tone(520, 0, 0.12, 0.22, "sine", { f2: 360 }), tone(760, 0.16, 0.06, 0.16, "sine", { f2: 980 }), { w: "noise", t: 0.16, d: 0.05, v: 0.07, lp: 1800 }] },   // the line goes out, and lands
+  fish_catch: { vol: 0.3, steady: true, layers: [tone(300, 0, 0.11, 0.3, "sine", { f2: 620 }), tone(620, 0.1, 0.09, 0.15, "sine", { f2: 520 })] },   // a bloop
+  fish_water: { vol: 0.12, loop: 1, file: FISH + "water.ogg" },   // quiet water under a fishing session (no synthesized stand-in: silence is fine)
+  splash:     { vol: 0.4, layers: [{ w: "noise", d: 0.3, v: 0.35, lp: 2400 }] },
+  cook:       { vol: 0.26, steady: true, layers: [{ w: "noise", a: 0.04, s: 0.25, d: 0.3, v: 0.16, lp: 3200, hp: 900 }] },   // a low sizzle
+  smelt:      { vol: 0.34, steady: true, layers: [{ w: "noise", a: 0.06, s: 0.2, d: 0.25, v: 0.45, lp: 700 }] },
+  anvil:      { vol: 0.3, steady: true, layers: [tone(1480, 0, 0.3, 0.22, "square", { duty: 0.15 }), tone(2960, 0, 0.4, 0.12, "sine"), { w: "noise", d: 0.03, v: 0.3, lp: 5000 }] },
+  pick:       { vol: 0.26, steady: true, layers: [tone(620, 0, 0.05, 0.22, "tri", { f2: 820 })] },
+  // fighting
+  swing:      { vol: 0.4, files: takes("swing", 3), layers: [{ w: "noise", a: 0.01, d: 0.12, v: 0.3, lp: 5000, hp: 1400 }] },
+  hit:        { vol: 0.55, files: takes("hit", 2), layers: [{ w: "noise", d: 0.08, v: 0.45, lp: 1800 }, tone(150, 0, 0.09, 0.3, "square", { f2: 60, lp: 1500 })] },
+  miss:       { vol: 0.3, layers: [{ w: "noise", d: 0.05, v: 0.2, lp: 7000, hp: 3000 }] },
+  hurt:       { vol: 0.45, layers: [tone(300, 0, 0.15, 0.3, "square", { f2: 120, lp: 1800 })] },
+  mob_die:    { vol: 0.45, layers: [tone(420, 0, 0.35, 0.28, "square", { f2: 60, lp: 2000 }), { w: "noise", d: 0.22, v: 0.25, lp: 1000 }] },
+  die:        { vol: 0.5, layers: [tone(400, 0, 0.8, 0.3, "saw", { f2: 45, s: 0.2, lp: 1500 })] },
+  // getting better at things
+  levelup:    { vol: 0.5, layers: [...notes([C5, E5, G5], 0.1, 0.12, 0.28, "square", { duty: 0.25 }), tone(C6, 0.3, 0.45, 0.3, "square", { duty: 0.25, vib: [0.01, 6] }), ...notes([E5, G5, C6], 0.1, 0.12, 0.12, "tri"), tone(E6, 0.3, 0.45, 0.14, "tri")] },
+  task_done:  { vol: 0.45, layers: [...notes([G5, C6], 0.1, 0.12, 0.26, "square", { duty: 0.3 }), tone(E6, 0.2, 0.35, 0.26, "square", { duty: 0.3 })] },
+  idle_stop:  { vol: 0.35, layers: [tone(660, 0, 0.3, 0.2, "sine"), tone(440, 0.16, 0.4, 0.2, "sine")] },
+  // money and places
+  coins:      { vol: 0.4, files: oggs("coin", 2), layers: [tone(1318, 0, 0.07, 0.2, "square", { duty: 0.3 }), tone(1760, 0.07, 0.3, 0.2, "square", { duty: 0.3 })] },
+  door:       { vol: 0.45, layers: [{ w: "noise", a: 0.01, d: 0.12, v: 0.35, lp: 900 }, tone(120, 0.02, 0.16, 0.3, "tri", { f2: 80 })] },
+  // the Casino
+  chip:       { vol: 0.4, files: oggs("chip", 2), layers: [tone(2500, 0, 0.03, 0.2, "square", { f2: 2000 }), { w: "noise", d: 0.02, v: 0.2, hp: 4000 }] },
+  slots_spin: { vol: 0.3, loop: 0.56, layers: ticks(8, 0.07, { v: 0.3, lp: 3000 }) },
+  reel_stop:  { vol: 0.45, layers: [tone(180, 0, 0.06, 0.35, "square", { f2: 120, lp: 2000 }), { w: "noise", d: 0.04, v: 0.3, lp: 1500 }] },
+  win_small:  { vol: 0.45, files: oggs("coinbig", 3), layers: notes([E5, G5, C6], 0.08, 0.1, 0.25, "square", { duty: 0.3 }) },
+  win_big:    { vol: 0.5, files: oggs("coinhuge", 4), layers: [...notes([C5, E5, G5, C6, E6, G6], 0.07, 0.1, 0.26, "square", { duty: 0.25 }), tone(C7, 0.42, 0.5, 0.22, "square", { duty: 0.25, vib: [0.012, 7] })] },
+  jackpot:    { vol: 0.55, layers: [...[0, 0.5, 1].flatMap((o) => notes([C5, E5, G5, C6, E6, G6], 0.06, 0.09, 0.24, "square", { duty: 0.25 }).map((l) => ({ ...l, t: l.t + o }))), tone(C7, 1.4, 0.9, 0.24, "square", { duty: 0.25, vib: [0.015, 8] })] },
+  lose:       { vol: 0.35, layers: [tone(330, 0, 0.28, 0.22, "tri", { f2: 210, vib: [0.02, 5] })] },
+  coin_flip:  { vol: 0.35, layers: [0, 0.11, 0.2, 0.27, 0.32].map((t, i) => tone(2100 - i * 120, t, 0.06, 0.15, "sine")) },
+  dice:       { vol: 0.45, layers: [0, 0.06, 0.1, 0.17, 0.21, 0.3].map((t, i) => ({ w: "noise", t, d: 0.03 + (i % 2) * 0.02, v: 0.35, lp: 3200 })) },
+  roul_ball:  { vol: 0.25, loop: 0.48, layers: [{ w: "noise", s: 0.48, v: 0.12, lp: 3800, hp: 1500 }, ...ticks(6, 0.08, { v: 0.18, lp: 5000, hp: 2000, d: 0.015 })] },
+  roul_drop:  { vol: 0.45, layers: [tone(2200, 0, 0.02, 0.25, "square"), tone(1900, 0.09, 0.02, 0.22, "square"), tone(1700, 0.2, 0.03, 0.2, "square"), tone(140, 0.24, 0.12, 0.3, "tri", { f2: 90 })] }
+  // To use a recording instead: e.g.  door: { file: "/v3/assets/sfx/door.ogg", vol: 0.5 },
+};
+
+let ac = null, master = null, on = true, vol = 0.6, mute = false, all = 1;   // all: the ONE volume over everything (effects here, and the page's jukebox reads it too)
+const bufs = new Map(), last = new Map(), loading = new Map(), lastTake = new Map();
+try { on = localStorage.getItem("es_sfx") !== "0"; mute = localStorage.getItem("es_mute") === "1"; { const a = parseFloat(localStorage.getItem("es_all")); if (Number.isFinite(a)) all = Math.max(0, Math.min(1, a)); } const v = parseFloat(localStorage.getItem("es_vol")); if (Number.isFinite(v)) vol = v; } catch (e) { /* private mode */ }
+
+// the first click or key unlocks audio (browsers insist)
+function unlock() {
+  if (ac) return;
+  try { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = mute ? 0 : vol * all; master.connect(ac.destination); } catch (e) { ac = null; }
+}
+for (const ev of ["pointerdown", "keydown"]) addEventListener(ev, unlock, { once: true, capture: true });
+
+export const enabled = () => on;
+export const volume = () => vol;
+export function setEnabled(v) { on = !!v; try { localStorage.setItem("es_sfx", on ? "1" : "0"); } catch (e) { /* fine */ } }
+/* the top bar's one-click mute: everything off, whatever the Settings switch and slider say, and they are left as they were.
+   It goes on the master gain as well as play(), so a loop already running (the roulette ball) falls silent too. */
+/* THE GLOBAL VOLUME (the owner, 2026-09-21: "a global volume toggle / volume slider here beside buffs"): one number, 0 to 1, laid over the
+   effects volume here and over the jukebox's own volume in the page. This browser only (es_all). */
+export const allVolume = () => all;
+export function setAllVolume(v) { all = Math.max(0, Math.min(1, v)); if (master) master.gain.value = mute ? 0 : vol * all; try { localStorage.setItem("es_all", String(all)); } catch (e) { /* fine */ } }
+export const muted = () => mute;
+export function setMuted(v) { mute = !!v; if (master) master.gain.value = mute ? 0 : vol * all; try { localStorage.setItem("es_mute", mute ? "1" : "0"); } catch (e) { /* fine */ } }
+export function setVolume(v) { vol = Math.max(0, Math.min(1, v)); if (master) master.gain.value = mute ? 0 : vol * all; try { localStorage.setItem("es_vol", String(vol)); } catch (e) { /* fine */ } }
+
+function render(def) {
+  const len = Math.ceil(RATE * (def.loop || Math.max(...def.layers.map((l) => (l.t || 0) + (l.a || 0) + (l.s || 0) + (l.d || 0.1))) + 0.02));
+  const out = new Float32Array(len);
+  for (const L of def.layers) {
+    const start = Math.floor((L.t || 0) * RATE), a = (L.a || 0) * RATE, s = (L.s || 0) * RATE, d = (L.d || 0.1) * RATE, n = Math.min(len - start, Math.ceil(a + s + d));
+    let ph = 0, lpY = 0, hpY = 0, hpX = 0, noise = 0, nt = 0;
+    const lpK = L.lp ? 1 - Math.exp((-2 * Math.PI * L.lp) / RATE) : 1, hpK = L.hp ? Math.exp((-2 * Math.PI * L.hp) / RATE) : 0;
+    for (let i = 0; i < n; i++) {
+      const k = i / Math.max(1, n - 1), env = i < a ? i / a : i < a + s ? 1 : 1 - (i - a - s) / d;
+      let f = L.f ? (L.f2 ? L.f * (L.f2 / L.f) ** k : L.f) : 0;
+      if (L.vib) f *= 1 + L.vib[0] * Math.sin((2 * Math.PI * L.vib[1] * i) / RATE);
+      ph = (ph + f / RATE) % 1;
+      let x;
+      switch (L.w) {
+        case "noise": if (++nt > 1) { nt = 0; noise = Math.random() * 2 - 1; } x = noise; break;
+        case "sine": x = Math.sin(2 * Math.PI * ph); break;
+        case "tri": x = 1 - 4 * Math.abs(ph - 0.5); break;
+        case "saw": x = 2 * ph - 1; break;
+        default: x = ph < (L.duty || 0.5) ? 0.8 : -0.8;
+      }
+      lpY += lpK * (x - lpY); x = lpY;
+      if (L.hp) { const y = hpK * (hpY + x - hpX); hpX = x; hpY = y; x = y; }
+      out[start + i] += x * Math.max(0, env) * (L.v ?? 0.3);
+    }
+  }
+  const b = ac.createBuffer(1, len, RATE); b.copyToChannel(out, 0); return b;
+}
+async function bufferOf(name) {
+  if (bufs.has(name)) return bufs.get(name);
+  const def = SOUNDS[name]; let b = null;
+  const load = async (url) => { try { const r = await fetch(url); if (!r.ok || !/audio|octet/.test(r.headers.get("content-type") || "")) return null; return await ac.decodeAudioData(await r.arrayBuffer()); } catch (e) { return null; } };
+  const urls = (def.files || (def.file ? [def.file] : [])).slice(0, def.steady ? 1 : undefined);   // (steady: one take, so one file)
+  if (urls.length) { const got = (await Promise.all(urls.map(load))).filter(Boolean); if (got.length) b = got; }   // every take that arrived
+  if (!b && def.layers) b = [render(def)];
+  bufs.set(name, b); return b;
+}
+
+/* play a sound by name. { vol, rate, jitter } adjust one playing; returns a handle whose stop() ends a loop early.
+   The same sound can't fire more than once every 40ms, so a burst of events stays a sound, not a buzz. */
+export function play(name, o = {}) {
+  const def = SOUNDS[name]; if (!on || mute || !def) return { stop() {} };
+  unlock(); if (!ac) return { stop() {} };
+  if (ac.state === "suspended") ac.resume();
+  const now = performance.now(); if (now - (last.get(name) || 0) < 40) return { stop() {} }; last.set(name, now);
+  let src = null, stopped = false;
+  const pending = bufs.has(name) ? Promise.resolve(bufs.get(name)) : (loading.get(name) || loading.set(name, bufferOf(name)).get(name));
+  pending.then((list) => {
+    if (!list?.length || stopped) return;
+    let i = Math.floor(Math.random() * list.length); if (list.length > 1 && i === lastTake.get(name)) i = (i + 1) % list.length; lastTake.set(name, i);
+    const b = list[i];
+    src = ac.createBufferSource(); src.buffer = b; src.loop = !!def.loop;
+    const j = o.jitter ?? (def.loop || def.steady ? 0 : 0.05);   /* (steady: the same pitch every time) */ src.playbackRate.value = (o.rate || 1) * (1 + (Math.random() * 2 - 1) * j);
+    const g = ac.createGain(); g.gain.value = (def.vol ?? 0.4) * (o.vol ?? 1);
+    src.connect(g); g.connect(master); src.start();
+  });
+  return { stop() { stopped = true; try { src?.stop(); } catch (e) { /* already ended */ } } };
+}
