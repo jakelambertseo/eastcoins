@@ -160,10 +160,17 @@ async function ensureLive(db) {
 }
 
 /** The feed's game for this market, if it is on the board. */
+/* (2026-09-22) THE EVENT ID FIRST, here too. This is the live-score half of the doubleheader bug that mis-settled a
+   Yankees/Rays nightcap: two fixtures between the same clubs three hours apart both match on names inside the
+   twelve-hour window, and this returned whichever the feed listed first. That put the afternoon score on the
+   evening market's ticker. Unlike settlement there is no money in it, so an ambiguous match falls back to the old
+   first-match behaviour rather than refusing - a slightly wrong live score is better than none, and settlement
+   still refuses to guess when it matters. */
 function boardGameFor(board, market) {
   const wantAway = nickname(market.away_name);
   const wantHome = nickname(market.home_name);
   const started = new Date(market.starts_at).getTime();
+  const cands = [];
   for (const game of board.games) {
     const gotAway = nickname(game.away_team);
     const gotHome = nickname(game.home_team);
@@ -172,16 +179,17 @@ function boardGameFor(board, market) {
     if (!straight && !flipped) continue;
     const when = new Date(game.commence_time).getTime();
     if (Number.isFinite(when) && Number.isFinite(started) && Math.abs(when - started) > SAME_FIXTURE_MS) continue;
-    return { game, straight };
+    cands.push({ game, straight });
   }
-  return null;
+  const wantId = String(market.provider_event_id || "");
+  return (wantId && cands.find((c) => String(c.game.id || "") === wantId)) || cands[0] || null;
 }
 
 async function trackLiveScores(env, db, boards) {
   await ensureLive(db);
   const rows = await db
     .prepare(
-      `SELECT m.id, m.sport, m.away_name, m.home_name, m.starts_at, m.live_away_score, m.live_home_score
+      `SELECT m.id, m.provider_event_id, m.sport, m.away_name, m.home_name, m.starts_at, m.live_away_score, m.live_home_score
          FROM markets m
         WHERE m.state = 'LOCKED'
           AND datetime(m.starts_at) <= datetime('now')
@@ -261,19 +269,32 @@ async function findResult(env, market, boards) {
     statuses.push(`${sportKey}=${board.status}${board.note ? ` (${board.note})` : ""}`);
     seen += board.games.length;
 
+    /* (2026-09-22) DOUBLEHEADERS. This used to take the FIRST game whose team names matched inside a twelve-hour
+       window and grade the market from it. Two games between the same clubs on the same day are three to five hours
+       apart, so both fixtures matched both markets and whichever the feed happened to list first graded them BOTH.
+       A Yankees/Rays doubleheader settled one player's nightcap pick off the afternoon result, as a loss.
+
+       The market has carried `provider_event_id` since it was created and this never read it. Now: collect every
+       candidate, take the one whose id matches, and if there is no id match and MORE THAN ONE candidate, refuse to
+       guess - an ambiguous fixture goes to the admin page instead of being decided by feed order. A single match
+       still settles exactly as before, which is every ordinary game. */
+    const cands = [];
     for (const game of board.games) {
       const gotAway = nickname(game.away_team);
       const gotHome = nickname(game.home_team);
-
-      // Both sides must match, in either orientation.
       const straight = gotAway === wantAway && gotHome === wantHome;
       const flipped = gotAway === wantHome && gotHome === wantAway;
       if (!straight && !flipped) continue;
-
-      // Right teams, wrong night: keep looking.
       const when = new Date(game.commence_time).getTime();
       if (Number.isFinite(when) && Math.abs(when - started) > SAME_FIXTURE_MS) continue;
-
+      cands.push({ game, straight });
+    }
+    const wantId = String(market.provider_event_id || "");
+    const byId = wantId ? cands.find((c) => String(c.game.id || "") === wantId) : null;
+    if (!byId && cands.length > 1) {
+      return { skip: "ambiguous", detail: `${cands.length} fixtures match ${market.away_name} at ${market.home_name} near this time (doubleheader?) and none carries event id ${wantId || "(none)"} - settle it from the admin page` };
+    }
+    for (const { game, straight } of (byId ? [byId] : cands)) {
       if (!game.completed) {
         return { skip: "not-final", detail: `in progress, commenced ${game.commence_time}` };
       }
@@ -645,7 +666,7 @@ export async function onRequestPost(context) {
   // Anything past its start time and not yet finished is a candidate.
   const markets = await db
     .prepare(
-      `SELECT id, sport, league, away_name, home_name, starts_at, state
+      `SELECT id, provider_event_id, sport, league, away_name, home_name, starts_at, state
          FROM markets
         WHERE state IN ('OPEN', 'LOCKED', 'SETTLING')
           AND datetime(starts_at) < datetime('now')
