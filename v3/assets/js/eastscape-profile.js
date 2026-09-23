@@ -151,14 +151,24 @@ export function createProfile(env) {
   }
 
   function panelOverview(p) {
+    const fact = (src, v, l) => `<div>${art(src)}<b>${v}</b><small>${l}</small></div>`;
     return `<div class="pr-facts">${fact(UI + "combat.png?v=1", p.combat, "combat level")}${fact(UI + "p_kills.png?v=1", num(p.kills), "kills")}${fact(UI + "quests.png?v=1", p.quests, "quests done")}${fact(UI + "p_crypt.png?v=1", p.crypt, "crypts cleared")}${fact(UI + "p_time.png?v=1", p.mins < 60 ? `${p.mins}m` : `${Math.round(p.mins / 60)}h`, "played")}</div>`;
   }
 
+  /* (2026-09-23) THE TRY IS NOT DECORATION. paint() is called from draw() BEFORE the tab listeners are attached
+     and before the character is painted, so the first version of this — which threw a ReferenceError on a missing
+     helper — took the picture and the tab buttons down with it, and the window looked broken in three unrelated
+     ways at once. A panel that cannot render should cost its own panel and nothing else. */
   function paint() {
     const p = last; if (!p || !el) return;
     el.querySelectorAll(".pr-tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.t === tab)));
     const box = el.querySelector(".pr-panel"); if (!box) return;
-    box.innerHTML = tab === "gear" ? panelGear(p) : tab === "casino" ? panelCasino(p) : tab === "totals" ? panelTotals(p) : panelOverview(p);
+    try {
+      box.innerHTML = tab === "gear" ? panelGear(p) : tab === "casino" ? panelCasino(p) : tab === "totals" ? panelTotals(p) : panelOverview(p);
+    } catch (e) {
+      box.innerHTML = `<p class="pr-none">That tab could not be drawn.</p>`;
+      console.error("profile panel", tab, e);
+    }
   }
 
   function draw(p) {
