@@ -181,6 +181,16 @@ Not Roman: the user wants new content original and imaginative (NGU / Dungeon Cr
   **DECIDED: no seed drops in the Tower.** The Tower deliberately pays xp and nearly nothing else; seeds would make
   it the best farming spot in the game by accident.
 
+- **GOLDTOMATOE IS NOW THE WORST CROP IN THE GAME (found 2026-09-23 while shipping the four middle crops; one
+  line).** At level 50 it pays ~300 tickets/hr and 3,000 xp/hr against Stormcorn's 11,250 and 7,000 at level 40 —
+  for twice the wait. The top crop is strictly worse than the one ten levels below it in every dimension, which is
+  the first thing anyone who reaches 50 will notice. It is pre-existing (yield [1,3] on a 4-hour timer, selling 60),
+  but the four new crops are what make it visible, so it was flagged rather than quietly re-tuned with somebody
+  else's content. **Fix: yield [3, 6] and VALUE.goldtomatoe 400**, which puts 20 plots at ~7,000/hr, about 13% of
+  Thunderhead income and in line with the ladder. While there: wheat (1,440/hr at level 1) also pays more than
+  tomatoe (1,050 at level 5), so the two original crops run backwards against each other too — both are trivial next
+  to 4.7k-83k/hr from playing, so it is tidiness, not economy.
+
 - **SELL GEAR TO BOM (owner, 2026-09-23; not built).** Gear can be bought and won but never turned back into
   tickets, so a tier you have outgrown is dead weight in the bank.
 

@@ -677,6 +677,9 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 .dlg-opts button{border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch;border-radius:0;background:none;padding:2px 6px}
 .dlg-opts button:hover,.dlg-opts button:focus-visible{background:none;filter:brightness(1.08)}
 .dlg-face{border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch;background:none}
+.bank-sort{margin:0 0 6px;font-size:12px}
+.bank-sort button{padding:3px 8px;font-size:12px}
+.bank-hint{opacity:.7}
 .qty,.qty button{border-color:#6b4423}
 .qty button[aria-pressed="true"],.ex-tabs button[aria-pressed="true"]{background:#8a4a24;color:#fff3d8}
 .chat-form button{border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;border-radius:0;background:none;padding:0 10px}
@@ -865,11 +868,11 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
     <section class="win" id="bankWin" aria-label="Bank" hidden>
       <div class="win-head"><b>🏛️ The Bank</b><small id="bankCount"></small><button type="button" class="win-x" data-close="bankWin" aria-label="Close">×</button></div>
       <div class="win-body cols2">
-        <div><h4>In the bank</h4><input class="search" id="bankSearch" placeholder="Search the bank…" aria-label="Search the bank"><div class="grid8" id="bankGrid"></div></div>
+        <div><h4>In the bank</h4><input class="search" id="bankSearch" placeholder="Search the bank…" aria-label="Search the bank"><div class="qty bank-sort" id="bankSort" role="group" aria-label="Sort the bank"><button data-s="recent" aria-pressed="true">Recent</button><button data-s="az">A–Z</button><button data-s="value">Value</button><button data-s="amount">Amount</button></div><div class="grid8" id="bankGrid"></div></div>
         <div><h4>Your bag <small id="bagCount" style="opacity:.7;font-weight:400"></small></h4><div class="grid8" id="bankBag"></div><div id="bagUpRow"></div></div>
       </div>
       <div class="win-foot"><span>Move</span><div class="qty" id="bankQty"><button data-n="1" aria-pressed="true">1</button><button data-n="5">5</button><button data-n="10">10</button><button data-n="all">All</button></div>
-        <span style="flex:1"></span><button type="button" class="btn plain" id="depInv">Deposit bag</button><button type="button" class="btn plain" id="depEq">Deposit worn</button></div>
+        <small class="bank-hint">shift-click moves the whole stack</small><span style="flex:1"></span><button type="button" class="btn plain" id="depInv">Deposit bag</button><button type="button" class="btn plain" id="depEq">Deposit worn</button></div>
     </section>
     <section class="win" id="exWin" aria-label="The Exchange" hidden>
       <div class="win-head"><b>⚖️ Market</b><small>Everything lands in your bank · 1% of each sale to the house</small><button type="button" class="win-x" data-close="exWin" aria-label="Close">×</button></div>
@@ -3326,7 +3329,7 @@ const qty = (n) => n >= 1e6 ? `<em class="m">${(n / 1e6).toFixed(n < 1e7 ? 1 : 0
 /* Only ever for YOUR OWN items. A forge level lives on the character (c.forge[key]), not on the item, so drawing it
    on a market listing or another player's offer would show the VIEWER's level on someone else's goods. */
 const fgTag = (k) => { const f = G.forgeLevel(me, k); return f ? `<em class="fgn">+${f}</em>` : ""; };
-const slotHtml = (s, i, attr = "data-i") => `<div class="slot" ${attr}="${i}" data-item="${s.k}" title="${esc(G.forgeName(me, s.k))}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(s.k)}</div>`;
+const slotHtml = (s, i, attr = "data-i") => `<div class="slot" ${attr}="${i}" data-item="${s.k}" title="${esc(G.forgeName(me, s.k))}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}${G.valueOf(s.k) ? ` — worth ${G.fmtCash(G.valueOf(s.k) * s.n)}` : ""}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(s.k)}</div>`;
 
 /* ------------------------------------------------------------ islands */
 function renderIsles(list) {
@@ -3691,6 +3694,21 @@ function renderShop() {
 
 /* ------------------------------------------------------------ the bank */
 let bankN = 1;
+/* (2026-09-23, the owner: "with a small inventory, it needs a better UX"). SORTING IS DISPLAY ONLY and needs no
+   server change: renderBank already pairs every row with its TRUE bank index (`bank.map((s, i) => [s, i])`) and the
+   click handler sends that index, so reordering what is drawn cannot move what is moved. Keep that pairing if this
+   is ever rewritten — sorting a list whose handler used the drawn position would withdraw the wrong item. */
+let bankSort = (() => { try { return localStorage.getItem("es_bank_sort") || "recent"; } catch (e) { return "recent"; } })();
+const BANK_SORTS = {
+  recent: null,   /* insertion order: what the bank has always shown */
+  az: (a, b) => ITEMS[a[0].k].name.localeCompare(ITEMS[b[0].k].name),
+  value: (a, b) => G.valueOf(b[0].k) * b[0].n - G.valueOf(a[0].k) * a[0].n,
+  amount: (a, b) => b[0].n - a[0].n
+};
+$("bankSort").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+  bankSort = b.dataset.s; try { localStorage.setItem("es_bank_sort", bankSort); } catch (e) {}
+  SFX.play("ui_click"); renderBank();
+}));
 $("bankQty").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { bankN = b.dataset.n === "all" ? "all" : +b.dataset.n; $("bankQty").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }));
 $("bankSearch").addEventListener("input", () => renderBank());
 $("depInv").addEventListener("click", () => send({ t: "bank", op: "depinv" }));
@@ -3698,8 +3716,13 @@ $("depEq").addEventListener("click", () => send({ t: "bank", op: "depeq" }));
 function renderBank() {
   if (!me) return;
   const q = $("bankSearch").value.trim().toLowerCase(), bank = me.bank || [];
-  $("bankCount").textContent = `${bank.length}/${G.BANK_MAX} items`;
+  /* What the whole bank is worth, at what Bom pays. It is the one number that makes a 200-slot bank legible at a
+     glance, and it costs a reduce over rows that are already in hand. */
+  const worth = bank.reduce((a, s) => a + G.valueOf(s.k) * s.n, 0);
+  $("bankCount").textContent = `${bank.length}/${G.BANK_MAX} items${worth ? ` · worth ${G.fmtCash(worth)}` : ""}`;
+  $("bankSort").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.s === bankSort)));
   const shown = bank.map((s, i) => [s, i]).filter(([s]) => !q || ITEMS[s.k].name.toLowerCase().includes(q));
+  const cmp = BANK_SORTS[bankSort]; if (cmp) shown.sort(cmp);
   $("bankGrid").innerHTML = shown.length ? shown.map(([s, i]) => slotHtml(s, i, "data-b")).join("") : `<p class="note">${bank.length ? "Nothing matches." : "Your bank is empty. Click things in your bag to put them in."}</p>`;
   $("bankBag").innerHTML = me.inv.map((s, i) => slotHtml(s, i)).join("") || `<p class="note">Your bag is empty.</p>`;
   /* (2026-09-22) THE BAG UPGRADE LIVES HERE TOO. It was put on Bom's counter first, reasoning that a full bag is
@@ -3715,8 +3738,11 @@ function renderBank() {
     ? `<p class="note">Your bag is as big as Bom will make it.</p>`
     : `<p class="note">Bom will sew on another pocket for <b>${G.fmtTix(upCost)}</b> — ${G.BAG_UPGRADES.length - (me.bagUp | 0)} left, each dearer than the last.<br><button type="button" class="btn" id="bagUpGo"${G.tixIn(me) >= upCost ? "" : " disabled"}>Buy a slot · takes you to ${G.bagMax(me) + 1}</button></p>`;
   $("bagUpGo")?.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); send({ t: "counter", op: "bagup" }); });
-  $("bankGrid").querySelectorAll("[data-b]").forEach((el) => el.addEventListener("click", () => send({ t: "bank", op: "wd", i: +el.dataset.b, n: bankN })));
-  $("bankBag").querySelectorAll("[data-i]").forEach((el) => el.addEventListener("click", () => send({ t: "bank", op: "dep", i: +el.dataset.i, n: bankN })));
+  /* SHIFT-CLICK TAKES THE WHOLE STACK, the same gesture the trade window already uses and labels ("shift-click
+     offers the whole stack"), so this is one idiom in two places rather than a second thing to learn. The 1/5/10/All
+     selector still decides a plain click, which is what stops shift being the only way to move a lot. */
+  $("bankGrid").querySelectorAll("[data-b]").forEach((el) => el.addEventListener("click", (e) => send({ t: "bank", op: "wd", i: +el.dataset.b, n: e.shiftKey ? "all" : bankN })));
+  $("bankBag").querySelectorAll("[data-i]").forEach((el) => el.addEventListener("click", (e) => send({ t: "bank", op: "dep", i: +el.dataset.i, n: e.shiftKey ? "all" : bankN })));
 }
 
 /* ------------------------------------------------------------ the Exchange */
