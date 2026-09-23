@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=197">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=198">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=12">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -27,7 +27,15 @@
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:"Nunito",system-ui,sans-serif;overflow:hidden}
 button,input,select{font:inherit}
-.top{height:32px;display:flex;align-items:center;gap:22px;padding:0 12px;background:var(--bar);border-bottom:2px solid #2a2118;font-size:15px;white-space:nowrap;overflow:hidden}
+/* (2026-09-23, the owner: "its starting to get a little cluttered"). THREE GROUPS rather than one row of ten
+   things: what you have on the left, where you can go in the middle, how things are on the right. The middle is
+   the only part that grows when a feature is added and the only part allowed to shrink — below 860px the buttons
+   drop their words and keep their frames, which is what stops a sixth button breaking the bar. */
+.top{height:34px;display:flex;align-items:center;gap:14px;padding:0 10px;background:var(--bar);border-bottom:2px solid #2a2118;font-size:15px;white-space:nowrap;overflow:hidden}
+.top .tg{display:inline-flex;align-items:center;gap:10px;min-width:0}
+.top .tg-l{flex:0 0 auto}
+.top .tg-nav{flex:1 1 auto;justify-content:center;gap:4px;overflow:hidden}
+.top .tg-r{flex:0 0 auto;margin-left:auto;gap:12px}
 .top .logo{font-weight:800;color:#7ee07e;font-size:18px;display:inline-flex;align-items:center;gap:7px}
 /* (2026-09-22) the mark is a RENDERED illustration with a soft neon glow, not pixel art, so it is left to
    the browser to filter smoothly — image-rendering:pixelated, which everything under img/glad/flat wants,
@@ -442,6 +450,8 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 /* wiki */
 .top .wikib{border:1px solid #3a2e22;background:#1e1812;color:#f2d22e;font-weight:800;font-size:14px;padding:3px 10px;border-radius:5px;cursor:pointer}
 .top .wikib:hover{background:#2a2118}
+.top .wikib .bl{display:inline}
+@media (max-width:860px){ .top .wikib .bl{display:none} .top{gap:9px} .top .tg{gap:7px} }
 /* (v104) drawn plates behind Games / Wiki / Hiscores (PixelLab ui asset 9c9d3f82, cut into ui/nav_*.png): a 9-slice, so the gold corners never stretch */
 .top .wikib{border:8px solid transparent;border-radius:0;background:none;padding:0 6px;line-height:1.35;color:#ffe9a0;text-shadow:1px 1px 0 #000,0 0 3px #000;image-rendering:pixelated;border-image:url(/v3/assets/img/glad/flat/ui/nav_wiki.png?v=1) 20 fill / 8px stretch}
 .top #gamesBtn{border-image-source:url(/v3/assets/img/glad/flat/ui/nav_games.png?v=1)}.top #hsBtn{border-image-source:url(/v3/assets/img/glad/flat/ui/nav_hs.png?v=1)}
@@ -463,6 +473,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 #achBody .apill{padding:3px 9px;border-radius:99px;background:rgba(0,0,0,.07);font-weight:800;font-size:12px}
 #achBody .abar{height:9px;border-radius:99px;background:rgba(0,0,0,.12);overflow:hidden;margin:2px 0 12px}
 #achBody .abar i{display:block;height:100%;background:linear-gradient(90deg,#c8a13c,#ffd77a)}
+#achBody .atabs{display:flex;gap:2px;margin:0 0 10px;border-bottom:2px solid rgba(0,0,0,.12)}
+#achBody .atabs button{flex:1;border:0;background:none;padding:6px 3px;font-weight:800;font-size:12px;cursor:pointer;color:#6a5a40;border-bottom:3px solid transparent;border-radius:4px 4px 0 0}
+#achBody .atabs button:hover{background:rgba(0,0,0,.05)}
+#achBody .atabs button[aria-pressed="true"]{color:#2a2016;border-bottom-color:#c8a13c;background:rgba(200,161,60,.12)}
 #achBody .amile{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 12px}
 #achBody .amile span{padding:3px 8px;border-radius:6px;background:rgba(0,0,0,.06);font-size:11.5px;font-weight:700;opacity:.45}
 #achBody .amile span.on{opacity:1;background:rgba(200,161,60,.22)}
@@ -776,18 +790,9 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 </head>
 <body>
 <header class="top">
-  <span class="logo"><img src="/v3/assets/img/eastcoin-icon-96.png?v=1" alt="" width="22" height="22">EastScape</span>
-  <span class="clock" id="clock">--:--:--</span>
-  <button type="button" class="wikib" id="gamesBtn" title="The real ZCoin games, one click (G)">🎰 Games</button>
-  <button type="button" class="wikib" id="wikiBtn" title="The EastScape wiki (H)">📖 Wiki</button>
-  <button type="button" class="wikib" id="netBtn" title="Network and lag (N)">📶 Net</button>
-  <button type="button" class="wikib" id="achBtn" title="Achievements (Y)">🎖️ Achievements</button>
-  <button type="button" class="wikib" id="hsBtn" title="Hiscores">🏆 Hiscores</button>
-  <span class="spacer"></span>
-  <span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span>
-  <span class="online" id="online"></span>
-  <span class="topcash" title="Your tickets (in your bag)"><img src="/v3/assets/img/glad/flat/items/tickets.png?v=1" alt=""><b id="topCash">0</b></span>
-  <button type="button" class="me" id="topMe" title="Your profile"><img id="topAv" alt="" hidden><span id="topName">—</span></button>
+  <div class="tg tg-l"><span class="logo"><img src="/v3/assets/img/eastcoin-icon-96.png?v=1" alt="" width="22" height="22">EastScape</span><span class="topcash" title="Your tickets (in your bag)"><img src="/v3/assets/img/glad/flat/items/tickets.png?v=1" alt=""><b id="topCash">0</b></span></div>
+  <nav class="tg tg-nav" aria-label="Game"><button type="button" class="wikib" id="gamesBtn" title="The real ZCoin games, one click (G)">🎰 <span class="bl">Games</span></button><button type="button" class="wikib" id="achBtn" title="Achievements (Y)">🎖️ <span class="bl">Achievements</span></button><button type="button" class="wikib" id="hsBtn" title="Hiscores">🏆 <span class="bl">Hiscores</span></button><button type="button" class="wikib" id="wikiBtn" title="The EastScape wiki (H)">📖 <span class="bl">Wiki</span></button><button type="button" class="wikib" id="netBtn" title="Network and lag (N)">📶 <span class="bl">Net</span></button></nav>
+  <div class="tg tg-r"><span class="clock" id="clock">--:--:--</span><span class="online" id="online"></span><span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span><button type="button" class="me" id="topMe" title="Your profile"><img id="topAv" alt="" hidden><span id="topName">—</span></button></div>
 </header>
 <main class="wrap">
   <section class="game" aria-label="Game">
@@ -936,7 +941,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=197";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=198";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=119").then((m) => { WK = m; }));
@@ -4372,6 +4377,7 @@ $("wikiBtn").addEventListener("click", () => { if ($("wikiWin").hidden) openWin(
    Drawn entirely from what the character already carries — G.ACH is the list and me.ach is what they have — so
    there is nothing to fetch and nothing to keep in step. The panel repaints on the `ach` message, which is what
    the server sends when it awards one. */
+let achTab = "list";
 function renderAch() {
   if (!me) return;
   const have = new Set(me.ach || []), pts = G.achPts(me);
@@ -4386,10 +4392,20 @@ function renderAch() {
     return `<h4 style="color:${t.col}">${esc(t.name)} &middot; ${got}/${rows.length} &middot; ${t.pts} pt${t.pts === 1 ? "" : "s"} each</h4>` +
       rows.map(([id, a]) => `<div class="arow${have.has(id) ? " got" : ""}"><i>${have.has(id) ? "\u2713" : "\u00b7"}</i><span><b>${esc(a.name)}</b><small>${esc(a.blurb)}</small></span><em>${G.fmtCash(t.tix)}</em></div>`).join("");
   }).join("");
+  /* (2026-09-23, the owner: "it needs to be very obvious what each point tier does"). The pips along the top say
+     WHERE the rewards are; this tab says WHAT they are and what you have, which the pips cannot without a hover. */
+  const rewards = `<h4>What the points buy</h4>
+    ${G.ACH_MILES.map(([at, fx, what]) => `<div class="arow${pts >= at ? " got" : ""}"><i>${pts >= at ? "\u2713" : "\u00b7"}</i><span><b>${at} points</b><small>${esc(what)}</small></span><em>${pts >= at ? "yours" : `${at - pts} to go`}</em></div>`).join("")}
+    <h4>What each tier pays</h4>
+    ${Object.entries(G.ACH_TIERS).map(([tk, t]) => { const rows = all.filter(([, a]) => a.tier === tk); const got2 = rows.filter(([id]) => have.has(id)).length;
+      return `<div class="arow got" style="opacity:1"><i style="color:${t.col}">\u25c6</i><span><b>${esc(t.name)}</b><small>${t.pts} point${t.pts === 1 ? "" : "s"} and ${G.fmtCash(t.tix)} each &middot; ${got2} of ${rows.length} done</small></span><em>${t.pts * rows.length} pts</em></div>`; }).join("")}
+    <p class="note" style="margin-top:10px">Points are a score, not money &mdash; they are never spent, and the rewards above arrive on their own as you pass each mark. The tickets are paid the moment an achievement is earned.</p>`;
   $("achBody").innerHTML = `<div class="ah"><b>${pts}</b><span class="apill">of ${maxPts} points</span><span class="apill">${done}/${all.length} done</span></div>
     <div class="abar"><i style="width:${Math.round((pts / maxPts) * 100)}%"></i></div>
     <p class="note" style="margin:0 0 6px">${next ? `Next reward at <b>${next[0]}</b> points: ${esc(next[2])}.` : "Every reward unlocked."}</p>
-    <div class="amile">${miles}</div>${tiers}`;
+    <div class="atabs">${[["list", "Achievements"], ["rewards", "Rewards"]].map(([k, l]) => `<button type="button" data-at="${k}" aria-pressed="${k === achTab}">${esc(l)}</button>`).join("")}</div>
+    ${achTab === "rewards" ? rewards : `<div class="amile">${miles}</div>${tiers}`}`;
+  $("achBody").querySelectorAll("[data-at]").forEach((b) => b.addEventListener("click", () => { achTab = b.dataset.at; SFX.play("ui_click"); renderAch(); }));
 }
 const openAch = () => { if ($("achWin").hidden) { openWin("achWin"); renderAch(); } else $("achWin").hidden = true; };
 $("achBtn").addEventListener("click", openAch);

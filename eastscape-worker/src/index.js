@@ -3008,7 +3008,22 @@ export class World {
     /* a milestone crossed is worth its own line: it is the only part of this that changes how you play */
     for (const [at, , what] of G.ACH_MILES) if (pts >= at && pts - (G.ACH_TIERS[last.tier].pts) < at) this.say(pl, `${at} achievement points: ${what}.`, "good");
     pl.out.push({ type: "ach", ids, pts });
+    /* TO THE SITE'S BELL, but only what was earned LIVE. A retroactive sweep is thirty at once and would be a
+       wall rather than a celebration, so `quiet` never leaves the game. Fire and forget on purpose: the game
+       must never wait on the site, and a site that is down means a missed bell row and nothing worse. */
+    if (!quiet) this.bellAch(pl, ids);
     return ids.length;
+  }
+  bellAch(pl, ids) {
+    const login = String(pl.login || "").toLowerCase(); if (!login || !this.env?.SITE || !this.env?.ESCAPE_KEY) return;
+    const list = ids.map((id) => { const a = G.ACH[id]; return a && { id, name: a.name, tier: a.tier, pts: G.ACH_TIERS[a.tier].pts, tix: G.ACH_TIERS[a.tier].tix }; }).filter(Boolean);
+    if (!list.length) return;
+    try {
+      this.ctx.waitUntil(fetch(`${this.env.SITE}/api/eastscape/ach`, {
+        method: "POST", headers: { "content-type": "application/json", "X-Escape-Key": this.env.ESCAPE_KEY },
+        body: JSON.stringify({ login, list })
+      }).catch(() => {}));
+    } catch (e) { /* no waitUntil, or no network: the bell simply misses this one */ }
   }
   achEvent(pl, type) {
     const due = G.achDue(pl.C, type);
