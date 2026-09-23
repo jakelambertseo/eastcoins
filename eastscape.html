@@ -27,15 +27,14 @@
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:"Nunito",system-ui,sans-serif;overflow:hidden}
 button,input,select{font:inherit}
-/* (2026-09-23, the owner: "its starting to get a little cluttered"). THREE GROUPS rather than one row of ten
-   things: what you have on the left, where you can go in the middle, how things are on the right. The middle is
-   the only part that grows when a feature is added and the only part allowed to shrink — below 860px the buttons
-   drop their words and keep their frames, which is what stops a sixth button breaking the bar. */
-.top{height:34px;display:flex;align-items:center;gap:14px;padding:0 10px;background:var(--bar);border-bottom:2px solid #2a2118;font-size:15px;white-space:nowrap;overflow:hidden}
-.top .tg{display:inline-flex;align-items:center;gap:10px;min-width:0}
-.top .tg-l{flex:0 0 auto}
-.top .tg-nav{flex:1 1 auto;justify-content:center;gap:4px;overflow:hidden}
-.top .tg-r{flex:0 0 auto;margin-left:auto;gap:12px}
+/* (2026-09-23, the owner) THE BAR IS LINKS, NOT BUTTONS. It had grown five ornate framed buttons across the
+   middle, which read as five things demanding attention; plain white text beside the logo reads as a menu.
+   Gone with them: the Net button (a diagnostic, and the connection dot on the right already says it), the
+   ticket pill (the panel shows the count far more prominently) and the live clock. */
+.top{height:32px;display:flex;align-items:center;gap:16px;padding:0 12px;background:var(--bar);border-bottom:2px solid #2a2118;font-size:15px;white-space:nowrap;overflow:hidden}
+.top .topl{border:0;background:none;padding:0;margin:0;font:inherit;font-size:14px;font-weight:700;color:#fff;cursor:pointer;line-height:1}
+.top .topl:hover{color:#ffd77a;text-decoration:underline}
+.top .topl:focus-visible{outline:2px solid #f2d22e;outline-offset:3px}
 .top .logo{font-weight:800;color:#7ee07e;font-size:18px;display:inline-flex;align-items:center;gap:7px}
 /* (2026-09-22) the mark is a RENDERED illustration with a soft neon glow, not pixel art, so it is left to
    the browser to filter smoothly — image-rendering:pixelated, which everything under img/glad/flat wants,
@@ -448,10 +447,6 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 .winspark{position:absolute;left:50%;top:50%;width:7px;height:7px;border-radius:1px;pointer-events:none;animation:winspark 1.2s cubic-bezier(.15,.7,.3,1) forwards}
 @keyframes winspark{0%{transform:translate(-50%,-50%) rotate(0);opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--r));opacity:0}}
 /* wiki */
-.top .wikib{border:1px solid #3a2e22;background:#1e1812;color:#f2d22e;font-weight:800;font-size:14px;padding:3px 10px;border-radius:5px;cursor:pointer}
-.top .wikib:hover{background:#2a2118}
-.top .wikib .bl{display:inline}
-@media (max-width:860px){ .top .wikib .bl{display:none} .top{gap:9px} .top .tg{gap:7px} }
 /* (v104) drawn plates behind Games / Wiki / Hiscores (PixelLab ui asset 9c9d3f82, cut into ui/nav_*.png): a 9-slice, so the gold corners never stretch */
 .top .wikib{border:8px solid transparent;border-radius:0;background:none;padding:0 6px;line-height:1.35;color:#ffe9a0;text-shadow:1px 1px 0 #000,0 0 3px #000;image-rendering:pixelated;border-image:url(/v3/assets/img/glad/flat/ui/nav_wiki.png?v=1) 20 fill / 8px stretch}
 .top #gamesBtn{border-image-source:url(/v3/assets/img/glad/flat/ui/nav_games.png?v=1)}.top #hsBtn{border-image-source:url(/v3/assets/img/glad/flat/ui/nav_hs.png?v=1)}
@@ -790,9 +785,9 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 </head>
 <body>
 <header class="top">
-  <div class="tg tg-l"><span class="logo"><img src="/v3/assets/img/eastcoin-icon-96.png?v=1" alt="" width="22" height="22">EastScape</span><span class="topcash" title="Your tickets (in your bag)"><img src="/v3/assets/img/glad/flat/items/tickets.png?v=1" alt=""><b id="topCash">0</b></span></div>
-  <nav class="tg tg-nav" aria-label="Game"><button type="button" class="wikib" id="gamesBtn" title="The real ZCoin games, one click (G)">🎰 <span class="bl">Games</span></button><button type="button" class="wikib" id="achBtn" title="Achievements (Y)">🎖️ <span class="bl">Achievements</span></button><button type="button" class="wikib" id="hsBtn" title="Hiscores">🏆 <span class="bl">Hiscores</span></button><button type="button" class="wikib" id="wikiBtn" title="The EastScape wiki (H)">📖 <span class="bl">Wiki</span></button><button type="button" class="wikib" id="netBtn" title="Network and lag (N)">📶 <span class="bl">Net</span></button></nav>
-  <div class="tg tg-r"><span class="clock" id="clock">--:--:--</span><span class="online" id="online"></span><span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span><button type="button" class="me" id="topMe" title="Your profile"><img id="topAv" alt="" hidden><span id="topName">—</span></button></div>
+  <span class="logo"><img src="/v3/assets/img/eastcoin-icon-96.png?v=1" alt="" width="22" height="22">EastScape</span><button type="button" class="topl" id="gamesBtn" title="The real ZCoin games, one click (G)">🎰 Games</button><button type="button" class="topl" id="achBtn" title="Achievements (Y)">🎖️ Achievements</button><button type="button" class="topl" id="hsBtn" title="Hiscores">🏆 Hiscores</button><button type="button" class="topl" id="wikiBtn" title="The EastScape wiki (H)">📖 Wiki</button>
+  <span class="spacer"></span>
+  <span class="online" id="online"></span><span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span><button type="button" class="me" id="topMe" title="Your profile"><img id="topAv" alt="" hidden><span id="topName">—</span></button>
 </header>
 <main class="wrap">
   <section class="game" aria-label="Game">
@@ -1089,8 +1084,11 @@ const profLoad = () => (profLoad.p ||= import("/v3/assets/js/eastscape-profile.j
   nearby: (name) => Z.players.find((p) => p.name === name && p.id !== you?.id)?.id || null }))));
 /* (2026-09-22) The net panel's switch. Zeroing the correction count on open matters: what you want to know is how
    many the server has made SINCE you started watching, not since you logged in. */
-document.getElementById("netBtn").addEventListener("click", () => { NET.on = !NET.on; NET.corr = 0; $("netPanel").hidden = !NET.on; });
-document.addEventListener("keydown", (e) => { if ((e.key === "n" || e.key === "N") && !/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName || "") && !e.ctrlKey && !e.metaKey) $("netBtn").click(); });
+/* (2026-09-23) THE NET BUTTON WENT FROM THE BAR — it is a diagnostic, and the connection dot beside your name
+   already says the same thing. N still opens the panel, and it now toggles the panel directly rather than
+   clicking a button that is no longer there (which would have thrown on null and taken the page with it). */
+const netToggle = () => { NET.on = !NET.on; NET.corr = 0; $("netPanel").hidden = !NET.on; };
+document.addEventListener("keydown", (e) => { if ((e.key === "n" || e.key === "N") && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "") && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); netToggle(); } });
 document.getElementById("topMe").addEventListener("click", () => { if (you) openProfile({ id: you.id, name: you.name }); });   /* (your own name, top right, opens your own profile) */
 const openProfile = (who) => { profLoad().then(() => PROF.open(who)).catch(() => say("That didn't open. Try again in a moment.", "bad")); };
 let CRYPT = null; const cryptLoad = () => (cryptLoad.p ||= Promise.all([import("/v3/assets/js/eastscape-crypt.js?v=4"), cryptRules()]).then(([m]) => (CRYPT = m.createCrypt({ G, R: CRR, SFX, send, esc, $, ico, me: () => me, you: () => you, Z: () => Z, host: () => document.querySelector(".game"), popup, winFx }))));
@@ -4483,7 +4481,6 @@ let tab = "inv";
 const syncTabs = () => document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.tab === tab)));
 function renderStats() {
   if (!me) return;
-  $("topCash").textContent = G.cashIn(me).toLocaleString();
   $("stats").innerHTML = [
     ["hp", `${Math.max(0, me.hp)}/${maxHp()}${me.god ? " ⭐" : ""}`, "Hitpoints"], ["combat", G.combatOf(me), "Combat level"],
     ["total", total(), "Total level"], ["items/tickets", G.cashIn(me).toLocaleString(), "tickets"],   /* (the owner, 2026-09-21: it wore ui/cash.png, a stack of coins, from when the currency was Cash. The ticket is the item's own picture, the one in the top bar.) */
@@ -4757,10 +4754,8 @@ document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("cli
 window.__es = { CZ, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
 
 setInterval(() => {
-  const d = new Date(); $("clock").textContent = d.toTimeString().slice(0, 8);
   if (ws && ws.readyState === 1 && you) {
-    const ago = savedAt ? Math.round((Date.now() - savedAt) / 1000) : null;
-    net("ok", ago == null ? "Connected" : ago < 5 ? "Saved just now" : `Saved ${ago < 60 ? `${ago}s` : `${Math.round(ago / 60)}m`} ago`);
+    net("ok", "Connected");   /* (2026-09-23, the owner: "users trust this anyway") it used to count how long since the last save, which only ever invited doubt */
   }
 }, 1000);
 

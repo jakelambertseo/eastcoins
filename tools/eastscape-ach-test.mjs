@@ -2,6 +2,7 @@
    It proves three things and nothing else: no predicate throws, a new character earns only what they should,
    and the milestone buffs land in fxOf and bagMax rather than being computed and dropped. */
 import * as G from "file:///C:/Users/jake/code/eastcoins/v3/assets/js/eastscape-shared.js";
+import fs from "node:fs";
 
 const blank = () => G.normChar({ name: "Fresh" });
 
@@ -56,6 +57,26 @@ const gained = G.fxOf(rich).tix - G.fxOf(poor).tix;
 const slots = G.bagMax(rich) - G.bagMax(poor);
 console.log(`\n  milestone buffs reach fxOf: +${(gained * 100).toFixed(0)}% tickets   and bagMax: +${slots} slots`);
 if (gained <= 0 || slots <= 0) { console.log("  !! milestones computed but not applied"); bad++; }
+
+/* EVERY `on:` MUST BE A TYPE THE SERVER ACTUALLY EMITS. This is the assertion that would have caught the real
+   bug on the day it shipped: "Sat Down" listened for "play", nothing in the game emitted "play", and so every
+   casino achievement sat unearned until the next login swept it up. It reads the emit sites rather than trusting
+   a list written alongside them. */
+{
+  const src = fs.readFileSync("C:/Users/jake/code/eastcoins/eastscape-worker/src/index.js", "utf8")
+            + fs.readFileSync("C:/Users/jake/code/eastcoins/eastscape-worker/src/crypt.js", "utf8");
+  const emitted = new Set([...src.matchAll(/emit\(p[a-z]*,\s*"([a-z]+)"/g)].map((m) => m[1]));
+  // gained(S, pl, k, n, how) forwards its `how`, and these are the values it is called with
+  for (const k of ["gather", "cook", "craft"]) emitted.add(k);
+  // the login sweep tests every achievement with no type at all, so "login" needs no emit of its own
+  emitted.add("login");
+  const listen = new Set();
+  for (const a of Object.values(G.ACH)) for (const o of a.on || []) listen.add(o);
+  const orphan = [...listen].filter((t) => !emitted.has(t));
+  console.log(`\n  emitted: ${[...emitted].sort().join(", ")}`);
+  if (orphan.length) { console.log(`  !! listened for but NEVER emitted: ${orphan.join(", ")}`); bad++; }
+  else console.log("  every achievement listens for a type the game actually emits");
+}
 
 console.log(bad ? `\n${bad} problem(s)` : "\nall achievement predicates behave");
 process.exitCode = bad ? 1 : 0;

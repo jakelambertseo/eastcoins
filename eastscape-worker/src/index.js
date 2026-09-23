@@ -361,6 +361,7 @@ export class World {
     this.grant(pl, "smithing", Math.round(20 * (tier ? G.TIERS.indexOf(tier) + 1 : 1) * (win ? 1 : 0.4)));
     this.touch(pl);
     pl.out.push({ type: "forge", k: key, was: lvl, now: nowLvl, win, broke, odds });
+    this.emit(pl, "forge", { k: key, now: nowLvl, broke });
     this.say(pl, broke
       ? `The ${it.name.toLowerCase()} cracks clean through and falls apart in the fire. It's gone.`
       : win
@@ -1149,6 +1150,7 @@ export class World {
     C.eq[it.slot] = st.k;
     this.say(pl, `You ${it.slot === "weapon" ? "wield" : "put on"} the ${it.name.toLowerCase()}.`);
     this.touch(pl);
+    this.emit(pl, "equip", {});
   }
   // eating: a moment's pause, and your next swing waits a little
   // lucky charms: click one and your next N bets are lucky (see G.LUCK)
@@ -2580,6 +2582,7 @@ export class World {
     st.casNet = (st.casNet | 0) + n;
     if (n > (st.casBest | 0)) st.casBest = n;
     if (n < (st.casWorst | 0)) st.casWorst = n;
+    this.emit(pl, "play", { g, net: n });   /* (2026-09-23) THE MISSING EVENT. The counters above were being kept and nothing told anybody, so every casino achievement sat unearned until the next login swept it up. */
   }
   bigBet(pl, before, after, def) {
     const C = pl.C, was = G.vipOf(C).i; C.wagered = (Number(C.wagered) || 0) + Math.max(0, after - before);
