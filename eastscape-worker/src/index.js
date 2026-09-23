@@ -1938,6 +1938,11 @@ export class World {
   }
 
   killMob(S, pl, m, now) {
+    /* (2026-09-23) THE SOUND IS TOLD WHAT DIED. It used to be the page matching /^You defeat / on the chat line,
+       which said nothing about the creature, so a Sulking Toadstool and The House went out with the same scream.
+       Sending the type lets the page pitch it by size. This is also the fragile-trigger fix the backlog asks for:
+       reword that chat line now and the sound is unaffected. */
+    pl.out.push({ type: "mobdie", t: m.t });
     if (S.def.crypt) return this.cryptKill(S, pl, m, now);
     const def = G.MOBS[m.t];
     // the more people fighting here, the sooner it comes back (see G.respawnMs): same monsters on screen, less waiting

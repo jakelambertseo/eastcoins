@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=193">
-<link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=11">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=12">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
      (eastscape-worker, a Cloudflare Durable Object), which also keeps your character: saving
@@ -914,7 +914,7 @@ import * as G from "/v3/assets/js/eastscape-shared.js?v=193";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=111").then((m) => { WK = m; }));
-import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=11";
+import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=12";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -1216,6 +1216,12 @@ function onEvent(e) {
   if (e.type === "roul") { roulSet(e); return; }
   if (e.type === "fight") { const was = FIGHT; FIGHT = { ...e, until: performance.now() + e.left }; if (e.phase === "fight" && was?.phase !== "fight") SFX.play("task_done"); if (e.open || CZ.game === "fight") CZ.fight(FIGHT, e.open); return; }
   if (e.type === "exnote") { SFX.play("coins"); chatLine("Market", e.text.charAt(0).toUpperCase() + e.text.slice(1), "exnote"); say(`Market: ${e.text}`, "loot"); return; }
+  /* A DEATH IS PITCHED BY WHAT DIED (2026-09-23, the owner: "the mob on death one needs to be a lot more
+     varried"). One recording, four creature sizes: a small thing goes out high and quick, The House goes out low.
+     That is variety that MEANS something, where random wobble on its own is just noise — and the jitter on top
+     gives a different death within a size every time. Another take or two would widen it further; this is what the
+     one we have can do. */
+  if (e.type === "mobdie") { const z = MOBS[e.t]?.size; return void SFX.play("mob_die", { rate: z === "s" ? 1.42 : z === "m" ? 1.12 : z === "xl" ? 0.62 : 0.84, jitter: 0.14, vol: z === "xl" || z === "l" ? 1.15 : 0.95 }); }
   if (e.type === "fell") return void SFX.play("tree_fall");
   if (e.type === "tradereq") { SFX.play("chat"); tradeReqLine(e.from, e.name); return; }
   if (e.type === "levelup") return levelUp(e.k, e.lvl);
@@ -1349,7 +1355,6 @@ document.addEventListener("keydown", (e) => {
 /* ------------------------------------------------------------ messages */
 function say(text, cls = "sys") {
   if (/^Oh dear, you are dead/.test(text)) SFX.play("die");
-  else if (/^You defeat /.test(text)) SFX.play("mob_die");
   else if (/^You stop .*idle/.test(text)) SFX.play("idle_stop");
   else if (/^💎/.test(text)) SFX.play("jackpot");   /* a REAL ZCoin, off a monster or a line: it had no sound at all */
   else if (/^Daily task done/.test(text)) SFX.play("task_done");
