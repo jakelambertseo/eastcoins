@@ -386,6 +386,88 @@ Not Roman: the user wants new content original and imaginative (NGU / Dungeon Cr
   **And then stop.** Twelve bound letters is most of the comfortable range, and this game grows a system a week —
   every letter taken now is one unavailable to whatever lands after Oct 1.
 
+- **ACHIEVEMENTS (owner, 2026-09-23, modelled on FlatMMO's; designed here, not built).** A list of goals that does
+  two jobs: teaches a new player what the game contains, and gives a long player something to chase. Own icon in the
+  left-hand UI.
+
+  **MOST OF THIS IS ALREADY BUILT, which is why it is worth doing before launch rather than after.** `emit(pl,
+  type, d)` already fans out to four subscribers (counters, quests, dailies, the tour) and adding a fifth is one
+  line — the Foundations note that put it there on 2026-09-18 named achievements as the reason. And `C.stats` has
+  been recording since that same day: kills per mob, gathered / looted / cooked / crafted per item, burnt, deaths,
+  pvp, quests, xpTotal, playMs, sessions, and casino plays since 2026-09-23.
+
+  **So most of the list can be AWARDED RETROACTIVELY on first login.** That matters more than it sounds: the
+  alternative is every existing tester opening a new panel full of zeroes for things they demonstrably did weeks
+  ago. Anything that needs an event we never recorded (a first-time "you examined a player") starts from zero and
+  should be a Novice one, where it costs nothing.
+
+  ### Rewards: tickets and a score, NOT a third currency
+
+  FlatMMO pays Sleep Points, a spendable currency. **Do not copy that.** This game has exactly two currencies and a
+  deliberate wall between them; a third would need its own sinks, its own balance and its own explanation.
+
+  | | |
+  |---|---|
+  | **Tickets**, per achievement, scaled by tier | immediate, already balanced, and the economy knows what to do with it |
+  | **Achievement points**, a SCORE and nothing else | the collection feeling, a hiscores board and a line on the profile, with no spending to balance |
+  | **Permanent buffs at POINT MILESTONES** | see below — and never per achievement |
+
+  **Buffs must be per milestone, not per achievement, and that is the important one.** Sixty achievements each
+  granting even +1% compounds into +60% of something, which is not a number anybody chose. Milestones bound it by
+  construction. Use the `fx` keys the game already has (`tix`, `speed`, `rare`, `slots`, `tough`) so nothing new
+  has to be plumbed, and **never a key that could touch the casino** — the standing rule is that world buffs buy
+  access and action, never edge.
+
+  A first cut, ending at roughly +2 bag slots, +7% tickets, +3% speed, +3% rare:
+
+  | at | gives |
+  |---|---|
+  | 10 pts | +1 bag slot |
+  | 25 pts | +2% tickets from drops |
+  | 50 pts | +3% movement speed |
+  | 75 pts | +3% rare drops |
+  | 100 pts | +1 bag slot |
+  | 150 pts | +5% tickets from drops |
+
+  **Two things to decide before building that table.** Bag slots are Bom's business — he sells five for 50k to
+  400k, so giving two away is about 150,000 tickets of his revenue, and it may be better to give something he does
+  not sell. And +7% tickets is permanent inflation on every drop in the game; it sits inside the band the Coin Toad
+  pet already occupies (+15%), but it is the number to watch if both stack.
+
+  ### How many, and which
+
+  **About 60 to start**, in five tiers, most of them generated from tables that already exist so the list grows
+  with the game instead of going stale:
+
+  | tier | how many | shape | pays |
+  |---|---|---|---|
+  | Novice | ~18 | one per MECHANIC: catch a fish, cook it, burn a log, smelt a bar, swing at a rock, chop a tree, plant a crop, wear a pet, reforge a piece, bank something, trade someone, play a table, run a lap, open the wiki | 250 tickets, 1 pt |
+  | Skilled | ~18 | level 25 in each of the 9 skills; 100 kills; 500 gathered; a crypt cleared | 1,000 tickets, 2 pts |
+  | Expert | ~14 | level 50 in each skill; 1,000 of something gathered; Tower floor 10; every crop grown | 5,000 tickets, 3 pts |
+  | Master | ~8 | level 75; 5,000 kills; Tower floor 30; every area visited (13 of them) | 25,000 tickets, 5 pts |
+  | Legend | ~3 | every skill 50+; total level 500; every mob in the game killed | 100,000 tickets, 10 pts |
+
+  **The Novice tier is the whole point of the feature** and should be written last, by watching somebody play for
+  ten minutes — it is the same content as the first-login tutorial that is already a launch blocker, and the two
+  should be designed together rather than saying the same things twice.
+
+  **Generate the skill tiers rather than typing them**: 9 skills x 5 levels is 45 of the 60 and it writes itself
+  from `SKILLS` and `XP_AT`. Same for areas (13 scenes) and "kill one of each" (40 mobs).
+
+  ### Telling them
+
+  `say(pl, "...", "good")` with the `task_done` sound is what the daily tasks already do, and it is the right
+  shape: one line, no window stealing focus mid-fight. A completed achievement should ALSO go to the bell on the
+  site (`/api/picks/notifications` already carries game events) so it is there when they come back, and the
+  Novice ones should NOT be noisy — somebody doing their first five minutes would get a dozen lines at once.
+  Batch them: one line for the achievement, and hold the rest for the panel.
+
+  ### What it costs
+
+  The server side is a day: a `ACHIEVEMENTS` table in the rules file, `achEvent` in `emit`, a `C.ach` set of
+  earned ids, a retroactive sweep in `normChar`, and the milestone buffs folded into `fxOf`. The panel is another
+  day. The writing — 18 good Novice lines — is the part that cannot be rushed and is worth more than the rest.
+
 - **PETS NEED SPACE AND SOME LIFE (owner, 2026-09-23 night: "the pets are right in the players space, almost
   attached to them, lets give them some simple animations and some spacing from the character").**
 
