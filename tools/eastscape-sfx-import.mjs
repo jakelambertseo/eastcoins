@@ -13,7 +13,13 @@ const MAP = [[/^chop (\d+)\.wav$/i, "chop"], [/^mine (\d+)\.wav$/i, "mine"], [/^
   [/^GS1_Slash_(\d+)\.wav$/i, "swing", 0.6], [/^GS1_Hit_(\d+)\.wav$/i, "hit", 0.7],
   [/^GS1_Damage_(\d+)\.wav$/i, "hurt", 0.7], [/^GS1_Beast_Scream()\.wav$/i, "mobdie", 1.4],
   [/^UI_Button_Click_(\d+)\.wav$/i, "uiclick", 0.4],
-  [/^UI2_Window_Open_(\d+)\.wav$/i, "uiopen", 0.6], [/^UI2_Window_Close_(\d+)\.wav$/i, "uiclose", 0.6], [/^UI2_Window_Error_(\d+)\.wav$/i, "uierror", 0.8]];
+  [/^UI2_Window_Open_(\d+)\.wav$/i, "uiopen", 0.6], [/^UI2_Window_Close_(\d+)\.wav$/i, "uiclose", 0.6], [/^UI2_Window_Error_(\d+)\.wav$/i, "uierror", 0.8],
+  /* Gathering, 2026-09-23. The "$" anchors matter: "Mineral Mining - 4.wav" must NOT also catch
+     "Mineral Mining - 4 (with Gemstone).wav", which is the same swing with the gem baked in and is unused — the
+     separate gem take is more useful, because the game knows when a geode turns up and can play it on its own. */
+  [/^Mineral Mining - (\d+)\.wav$/i, "mine", 1.2], [/^Mineral Mining - (\d+) - Gemstone Separate\.wav$/i, "gem", 1.6],
+  [/^Tree Hit - (\d+)\.wav$/i, "chop", 1.0], [/^Tree Branch Break - (\d+)\.wav$/i, "treefall", 2.0],
+  [/^Casting Line - (\d+)\.wav$/i, "cast", 1.4], [/^Fish Biting - (\d+)\.wav$/i, "fishcatch", 1.4]];
 /* Takes are renumbered 1..N per sound, in filename order, rather than taking the number from the source: the
    pack's UI clicks arrive as 4..9 and `takes(name, n)` in eastscape-sfx.js always asks for 1..n. Feed a sound its
    whole set in one run, or the numbering shifts under it. */

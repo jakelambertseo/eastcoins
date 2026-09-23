@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=193">
-<link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=10">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=11">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
      (eastscape-worker, a Cloudflare Durable Object), which also keeps your character: saving
@@ -914,7 +914,7 @@ import * as G from "/v3/assets/js/eastscape-shared.js?v=193";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=111").then((m) => { WK = m; }));
-import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=10";
+import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=11";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -1135,7 +1135,8 @@ function onMsg(m) {
         if (onMe) { SFX.play(e.n ? "hurt" : "miss"); if (e.n && me && e.n >= G.maxHpOf(me) / 4) shakeUntil = performance.now() + 220; }
         else if (mine?.mob && e.who === mine.mob) { SFX.play(e.n ? "hit" : "miss", e.crit ? { rate: 0.7, vol: 1 } : undefined); if (e.crit && mineHit) { shakeUntil = performance.now() + 160; SFX.play("coins", { vol: 0.35, rate: 1.4 }); } if (e.kill && mineHit) SFX.play("task_done", { vol: 0.4, rate: 1.3 }); }
       }
-      if (e.type === "gain") { gains.push({ who: e.who, k: e.k, n: e.n, at: performance.now() }); if (e.who === you?.id) { if (mine?.act === "spot" && Z.objs.some((o) => o.t === "spot" && (o.fish === e.k || o.fish2 === e.k || (!o.fish && (e.k === "sardine" || e.k === "trout"))))) SFX.play("fish_catch");   /* (a catch is ONE splash, the same every time: see the note on steadiness in eastscape-sfx.js) */ else { const sl = ITEMS[e.k]?.slot; SFX.play(sl === "weapon" ? "gain_weapon" : sl && sl !== "pet" ? "gain_gear" : "gain"); } } }   /* (2026-09-23) finding GEAR is its own sound; ore, logs and fish stay the one quiet blip */
+      if (e.type === "gain") { gains.push({ who: e.who, k: e.k, n: e.n, at: performance.now() }); if (e.who === you?.id) { if (mine?.act === "spot" && Z.objs.some((o) => o.t === "spot" && (o.fish === e.k || o.fish2 === e.k || (!o.fish && (e.k === "sardine" || e.k === "trout"))))) SFX.play("fish_catch");   /* (a catch is ONE splash, the same every time: see the note on steadiness in eastscape-sfx.js) */ else if (e.k === "geode") SFX.play("gem");   /* the one gathering find that is genuinely rare */
+        else { const sl = ITEMS[e.k]?.slot; SFX.play(sl === "weapon" ? "gain_weapon" : sl && sl !== "pet" ? "gain_gear" : "gain"); } } }   /* (2026-09-23) finding GEAR is its own sound; ore, logs and fish stay the one quiet blip */
       if (e.type === "botbet") botBets.push({ id: e.id, n: e.n, at: performance.now() });   // (v88) a bot at a table just won or lost: floated over their head
       if (e.type === "bubble") { botBubbles.set(e.id, { text: e.text, at: performance.now() }); const b = Z.bots.find((x) => x.id === e.id); if (b) chatLine(b.name, e.text, "bot"); }
     }
@@ -1215,6 +1216,7 @@ function onEvent(e) {
   if (e.type === "roul") { roulSet(e); return; }
   if (e.type === "fight") { const was = FIGHT; FIGHT = { ...e, until: performance.now() + e.left }; if (e.phase === "fight" && was?.phase !== "fight") SFX.play("task_done"); if (e.open || CZ.game === "fight") CZ.fight(FIGHT, e.open); return; }
   if (e.type === "exnote") { SFX.play("coins"); chatLine("Market", e.text.charAt(0).toUpperCase() + e.text.slice(1), "exnote"); say(`Market: ${e.text}`, "loot"); return; }
+  if (e.type === "fell") return void SFX.play("tree_fall");
   if (e.type === "tradereq") { SFX.play("chat"); tradeReqLine(e.from, e.name); return; }
   if (e.type === "levelup") return levelUp(e.k, e.lvl);
   if (e.type === "chat") { if (e.id !== you?.id) SFX.play("chat", { vol: 0.6 }); if (e.scene === Z.key) botBubbles.set(e.id, { text: e.text, at: performance.now() }); chatLine(e.name, e.text, e.id === you?.id ? "mine" : "", e.role); return; }

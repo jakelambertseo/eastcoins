@@ -1897,7 +1897,7 @@ export class World {
            tree, and every fall also cleared pl.act, so it was a re-click as well as a wait. Now a tree is good for
            about 25 logs (~55s) and an oak for 50 (~110s). The three-minute AFK cutoff is untouched and is still
            what ends a long session; this only stops the tree itself interrupting you every few swings. */
-        if (Math.random() < (oak || ob.special ? 0.02 : 0.04)) { ob.stumpUntil = now + 15000; this.say(pl, `The ${oak ? "oak" : "tree"} falls.`); pl.act = null; }
+        if (Math.random() < (oak || ob.special ? 0.02 : 0.04)) { ob.stumpUntil = now + 15000; this.say(pl, `The ${oak ? "oak" : "tree"} falls.`); pl.out.push({ type: "fell" }); pl.act = null; }   /* (2026-09-23) a real event for the sound: mob_die, die and idle_stop are still matched off their chat TEXT, which would fail silently the day somebody rewords one */
       }
       return;
     }

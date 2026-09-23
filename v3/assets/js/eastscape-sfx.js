@@ -27,7 +27,7 @@ const tone = (f, t, d, v = 0.3, w = "square", extra = {}) => ({ w, f, t, d, v, .
 const notes = (list, step, d, v, w = "square", extra = {}) => list.map((f, i) => tone(f, i * step, d, v, w, extra));
 const ticks = (n, every, extra = {}) => Array.from({ length: n }, (_, i) => ({ w: "noise", t: i * every, d: 0.025, v: 0.35, lp: 3500, ...extra }));
 
-const SFX_V = 3;   // bump when a recording is replaced: the files are cached hard
+const SFX_V = 4;   // bump when a recording is replaced: the files are cached hard
 const takes = (name, n) => Array.from({ length: n }, (_, i) => `/v3/assets/sfx/${name}${i + 1}.wav?v=${SFX_V}`);
 /* The owner's second batch (2026-09-23) arrived as finished .ogg, already small and level, so they ship as they
    came rather than through tools/eastscape-sfx-import.mjs — that tool is for raw .wav takes and re-encoding these
@@ -62,20 +62,26 @@ export const SOUNDS = {
   inv:        { vol: 0.22, steady: true, files: oggs("slot", 1), layers: [tone(900, 0, 0.03, 0.18, "sine", { f2: 720 }), { w: "noise", d: 0.012, v: 0.1, lp: 2500 }] },   // moving a thing about in the bag or the bank
   // gathering and making
   chop:       { vol: 0.42, steady: true, files: takes("chop", 4), layers: [{ w: "noise", d: 0.09, v: 0.45, lp: 2200 }, tone(190, 0, 0.09, 0.35, "tri", { f2: 85 })] },
-  mine:       { vol: 0.38, steady: true, files: takes("mine", 5), layers: [tone(1850, 0, 0.06, 0.2, "square", { f2: 1450, duty: 0.25 }), { w: "noise", d: 0.05, v: 0.3, lp: 6000, hp: 1200 }] },
+  mine:       { vol: 0.38, steady: true, files: takes("mine", 4), layers: [tone(1850, 0, 0.06, 0.2, "square", { f2: 1450, duty: 0.25 }), { w: "noise", d: 0.05, v: 0.3, lp: 6000, hp: 1200 }] },
   /* STEADY, SOFT AND OURS (the owner, 2026-09-21: "this is a semi-afk game, so it needs to be consistent and chill. just a few repeating
      sounds"). Everything you hear over and over while skilling, fishing, cooking, the bag, chopping, mining, is `steady`: ONE take, ONE
      pitch, quieter than the rest, so an hour beside it is an hour of the same small sound. Fishing went through three versions in a day:
      recorded CC0 plops and splashes in several takes (lively, tiring), one take of each (better), and now these, made on the softsynth
      below like every other sound here: short sine blips, nothing borrowed from any other game. Only the water is a recording
      (CC0, "40 CC0 water / splash / slime SFX" by rubberduck, OpenGameArt; tools/eastscape-fish-audio.mjs). */
-  cast:       { vol: 0.26, steady: true, layers: [tone(520, 0, 0.12, 0.22, "sine", { f2: 360 }), tone(760, 0.16, 0.06, 0.16, "sine", { f2: 980 }), { w: "noise", t: 0.16, d: 0.05, v: 0.07, lp: 1800 }] },   // the line goes out, and lands
-  fish_catch: { vol: 0.3, steady: true, layers: [tone(300, 0, 0.11, 0.3, "sine", { f2: 620 }), tone(620, 0.1, 0.09, 0.15, "sine", { f2: 520 })] },   // a bloop
+  cast:       { vol: 0.26, steady: true, files: takes("cast", 2), layers: [tone(520, 0, 0.12, 0.22, "sine", { f2: 360 }), tone(760, 0.16, 0.06, 0.16, "sine", { f2: 980 }), { w: "noise", t: 0.16, d: 0.05, v: 0.07, lp: 1800 }] },   // the line goes out, and lands
+  fish_catch: { vol: 0.3, steady: true, files: takes("fishcatch", 4), layers: [tone(300, 0, 0.11, 0.3, "sine", { f2: 620 }), tone(620, 0.1, 0.09, 0.15, "sine", { f2: 520 })] },   // a bloop
   fish_water: { vol: 0.12, loop: 1, file: FISH + "water.ogg" },   // quiet water under a fishing session (no synthesized stand-in: silence is fine)
   splash:     { vol: 0.4, layers: [{ w: "noise", d: 0.3, v: 0.35, lp: 2400 }] },
   cook:       { vol: 0.26, steady: true, layers: [{ w: "noise", a: 0.04, s: 0.25, d: 0.3, v: 0.16, lp: 3200, hp: 900 }] },   // a low sizzle
   smelt:      { vol: 0.34, steady: true, layers: [{ w: "noise", a: 0.06, s: 0.2, d: 0.25, v: 0.45, lp: 700 }] },
   anvil:      { vol: 0.3, steady: true, layers: [tone(1480, 0, 0.3, 0.22, "square", { duty: 0.15 }), tone(2960, 0, 0.4, 0.12, "sine"), { w: "noise", d: 0.03, v: 0.3, lp: 5000 }] },
+  /* A GEODE IS A REAL EVENT (S.def.geode, a chance per gather in the Deep Wild) and it already emits a `gain`, so
+     the page plays this instead of the ordinary blip when the thing you found is a geode. The pack shipped the gem
+     both baked into a mining swing and on its own; on its own is what lets it land only when it actually happens. */
+  gem:        { vol: 0.42, files: takes("gem", 4), layers: [tone(1320, 0, 0.12, 0.22, "sine", { f2: 1980 }), tone(1980, 0.1, 0.3, 0.16, "sine")] },
+  /* A tree falling. Rare on purpose (4% a log, 2% for an oak), and it ends your chopping, so it earns a sound. */
+  tree_fall:  { vol: 0.4, files: takes("treefall", 3), layers: [{ w: "noise", a: 0.05, s: 0.1, d: 0.5, v: 0.3, lp: 1400 }, tone(140, 0.1, 0.5, 0.25, "tri", { f2: 70 })] },
   pick:       { vol: 0.26, steady: true, layers: [tone(620, 0, 0.05, 0.22, "tri", { f2: 820 })] },
   // fighting
   swing:      { vol: 0.4, files: takes("swing", 3), layers: [{ w: "noise", a: 0.01, d: 0.12, v: 0.3, lp: 5000, hp: 1400 }] },
@@ -173,7 +179,14 @@ async function bufferOf(name) {
   if (bufs.has(name)) return bufs.get(name);
   const def = SOUNDS[name]; let b = null;
   const load = async (url) => { try { const r = await fetch(url); if (!r.ok || !/audio|octet/.test(r.headers.get("content-type") || "")) return null; return await ac.decodeAudioData(await r.arrayBuffer()); } catch (e) { return null; } };
-  const urls = (def.files || (def.file ? [def.file] : [])).slice(0, def.steady ? 1 : undefined);   // (steady: one take, so one file)
+  /* (2026-09-23) `steady` USED TO MEAN ONE TAKE AS WELL AS ONE PITCH. It no longer limits takes. The rule was
+     written on 2026-09-21 against synthesised blips and a set of lively CC0 fishing plops that were tiring within
+     a session, and one take was the cheapest way to kill the variation that caused it. The owner has since bought
+     a pack that ships four takes each of mining, chopping and fishing, cut to be rotated. What actually tires the
+     ear is the PITCH WOBBLE, which `steady` still switches off below — so a steady sound now rotates its takes at
+     one constant pitch, which is both what the pack is for and what "consistent and chill" asked for. Put the
+     slice back if an hour of mining ever proves otherwise. */
+  const urls = def.files || (def.file ? [def.file] : []);
   if (urls.length) { const got = (await Promise.all(urls.map(load))).filter(Boolean); if (got.length) b = got; }   // every take that arrived
   if (!b && def.layers) b = [render(def)];
   bufs.set(name, b); return b;
