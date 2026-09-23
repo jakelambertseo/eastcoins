@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=193">
-<link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=9">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=10">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
      (eastscape-worker, a Cloudflare Durable Object), which also keeps your character: saving
@@ -914,7 +914,7 @@ import * as G from "/v3/assets/js/eastscape-shared.js?v=193";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=111").then((m) => { WK = m; }));
-import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=9";
+import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=10";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -2168,6 +2168,14 @@ function predFrom() {
   if (P.s) { const [fx, fy, tx, ty, t0, ms] = P.s, left = t0 + ms - snow(); if (left > 0) { PRED.x = fx; PRED.y = fy; PRED.step = { fx, fy, tx, ty, t0: performance.now() - (ms - left), ms }; } else { PRED.x = tx; PRED.y = ty; } }
   return PRED.step ? { x: PRED.step.tx, y: PRED.step.ty } : { x: PRED.x, y: PRED.y };
 }
+/* WHAT YOU ARE WALKING ON (2026-09-23). Interiors paint a room, so they are "floor"; "," is path and "s" is the
+   Cage's sand, so both are "dirt"; everything else you can stand on outdoors is grass. Keep this in step with the
+   `cell()` legend in paintBg, which reads the same letters to decide what to paint. */
+const stepSound = (x, y) => {
+  if (Z.def?.interior) return "step_floor";
+  const t = Z.g?.[y]?.[x];
+  return t === "," || t === "s" ? "step_dirt" : "step_grass";
+};
 function predGo(path) { if (!path) return; PRED.on = true; PRED.path = path; PRED.t = performance.now(); predTick(PRED.t); }
 function predTick(pnow) {
   if (!PRED.on) return;
@@ -2178,6 +2186,7 @@ function predTick(pnow) {
     if (Math.max(Math.abs(dx), Math.abs(dy)) !== 1 || !G.canStepIn(Z.g, PRED.x, PRED.y, dx, dy)) { PRED.path = []; return; }
     const base = me ? G.stepMsOf(me, me.speedTest || 0) : STEP;
     PRED.step = { fx: PRED.x, fy: PRED.y, tx: n.x, ty: n.y, t0: pnow, ms: Math.round(dx && dy ? base * 1.4 : base) };
+    SFX.play(stepSound(n.x, n.y));   /* (2026-09-23) one step per tile, yours only: predTick is the single place a step begins and it never runs for anybody else */
     PRED.dir = DIRS[`${dx},${dy}`]; if (dx) PRED.face = dx > 0 ? 1 : -1;
     return;
   }

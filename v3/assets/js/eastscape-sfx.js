@@ -27,7 +27,7 @@ const tone = (f, t, d, v = 0.3, w = "square", extra = {}) => ({ w, f, t, d, v, .
 const notes = (list, step, d, v, w = "square", extra = {}) => list.map((f, i) => tone(f, i * step, d, v, w, extra));
 const ticks = (n, every, extra = {}) => Array.from({ length: n }, (_, i) => ({ w: "noise", t: i * every, d: 0.025, v: 0.35, lp: 3500, ...extra }));
 
-const SFX_V = 2;   // bump when a recording is replaced: the files are cached hard
+const SFX_V = 3;   // bump when a recording is replaced: the files are cached hard
 const takes = (name, n) => Array.from({ length: n }, (_, i) => `/v3/assets/sfx/${name}${i + 1}.wav?v=${SFX_V}`);
 /* The owner's second batch (2026-09-23) arrived as finished .ogg, already small and level, so they ship as they
    came rather than through tools/eastscape-sfx-import.mjs — that tool is for raw .wav takes and re-encoding these
@@ -37,10 +37,10 @@ const oggs = (name, n) => Array.from({ length: n }, (_, i) => `/v3/assets/sfx/${
 const FISH = "/v3/assets/audio/fish/";   // + "?v=" is not needed: a changed sound gets a new file name
 export const SOUNDS = {
   // the interface
-  ui_click:   { vol: 0.35, files: oggs("click", 1), layers: [tone(1100, 0, 0.035, 0.25, "square", { f2: 850, duty: 0.5, lp: 5000 })] },
-  ui_open:    { vol: 0.35, files: oggs("menuopen", 1), layers: [tone(480, 0, 0.09, 0.3, "tri", { f2: 900 })] },
-  ui_close:   { vol: 0.35, files: oggs("menuclose", 1), layers: [tone(820, 0, 0.08, 0.3, "tri", { f2: 430 })] },
-  ui_error:   { vol: 0.4, layers: [tone(220, 0, 0.12, 0.25, "square", { f2: 165, s: 0.03, lp: 2400 })] },
+  ui_click:   { vol: 0.35, files: takes("uiclick", 6), layers: [tone(1100, 0, 0.035, 0.25, "square", { f2: 850, duty: 0.5, lp: 5000 })] },
+  ui_open:    { vol: 0.35, files: takes("uiopen", 3), layers: [tone(480, 0, 0.09, 0.3, "tri", { f2: 900 })] },
+  ui_close:   { vol: 0.35, files: takes("uiclose", 3), layers: [tone(820, 0, 0.08, 0.3, "tri", { f2: 430 })] },
+  ui_error:   { vol: 0.4, files: takes("uierror", 2), layers: [tone(220, 0, 0.12, 0.25, "square", { f2: 165, s: 0.03, lp: 2400 })] },
   chat:       { vol: 0.25, layers: [tone(880, 0, 0.06, 0.2, "sine"), tone(1320, 0.05, 0.07, 0.15, "sine")] },
   // the bag
   /* `pickup` was defined here and never played by anything — `gain` is the wired path — so it is gone rather than
@@ -79,11 +79,23 @@ export const SOUNDS = {
   pick:       { vol: 0.26, steady: true, layers: [tone(620, 0, 0.05, 0.22, "tri", { f2: 820 })] },
   // fighting
   swing:      { vol: 0.4, files: takes("swing", 3), layers: [{ w: "noise", a: 0.01, d: 0.12, v: 0.3, lp: 5000, hp: 1400 }] },
-  hit:        { vol: 0.55, files: takes("hit", 2), layers: [{ w: "noise", d: 0.08, v: 0.45, lp: 1800 }, tone(150, 0, 0.09, 0.3, "square", { f2: 60, lp: 1500 })] },
+  hit:        { vol: 0.55, files: takes("hit", 4), layers: [{ w: "noise", d: 0.08, v: 0.45, lp: 1800 }, tone(150, 0, 0.09, 0.3, "square", { f2: 60, lp: 1500 })] },
   miss:       { vol: 0.3, layers: [{ w: "noise", d: 0.05, v: 0.2, lp: 7000, hp: 3000 }] },
-  hurt:       { vol: 0.45, layers: [tone(300, 0, 0.15, 0.3, "square", { f2: 120, lp: 1800 })] },
-  mob_die:    { vol: 0.45, layers: [tone(420, 0, 0.35, 0.28, "square", { f2: 60, lp: 2000 }), { w: "noise", d: 0.22, v: 0.25, lp: 1000 }] },
+  hurt:       { vol: 0.45, files: takes("hurt", 3), layers: [tone(300, 0, 0.15, 0.3, "square", { f2: 120, lp: 1800 })] },
+  mob_die:    { vol: 0.45, files: takes("mobdie", 1), layers: [tone(420, 0, 0.35, 0.28, "square", { f2: 60, lp: 2000 }), { w: "noise", d: 0.22, v: 0.25, lp: 1000 }] },
   die:        { vol: 0.5, layers: [tone(400, 0, 0.8, 0.3, "saw", { f2: 45, s: 0.2, lp: 1500 })] },
+  /* FOOTSTEPS (2026-09-23). New: the game had none. Three surfaces, picked from the tile you step onto — the
+     interior scenes paint a room ("floor"), "," and "s" are path and sand ("dirt"), everything else outdoors is
+     grass. Only YOUR character makes them; thirty players in the Yard all stepping would be a stampede.
+
+     THESE ARE DELIBERATELY NOT `steady`, and they are the exception that explains the rule. Steady exists so a
+     sound you hear hundreds of times an hour does not tire you out, and it achieves that by never varying. For a
+     footstep the opposite is true: an identical step repeating is exactly what the ear locks onto and cannot
+     ignore, which is why every game round-robins them. Four takes and the default pitch jitter is what makes
+     walking disappear into the background. Quiet, too — 0.18 against 0.35 for a click. */
+  step_grass: { vol: 0.18, files: takes("stepgrass", 4), layers: [{ w: "noise", d: 0.06, v: 0.12, lp: 2600, hp: 600 }] },
+  step_dirt:  { vol: 0.18, files: takes("stepdirt", 4), layers: [{ w: "noise", d: 0.05, v: 0.12, lp: 1800 }] },
+  step_floor: { vol: 0.18, files: takes("stepfloor", 4), layers: [{ w: "noise", d: 0.04, v: 0.1, lp: 3400, hp: 900 }] },
   // getting better at things
   levelup:    { vol: 0.5, layers: [...notes([C5, E5, G5], 0.1, 0.12, 0.28, "square", { duty: 0.25 }), tone(C6, 0.3, 0.45, 0.3, "square", { duty: 0.25, vib: [0.01, 6] }), ...notes([E5, G5, C6], 0.1, 0.12, 0.12, "tri"), tone(E6, 0.3, 0.45, 0.14, "tri")] },
   task_done:  { vol: 0.45, layers: [...notes([G5, C6], 0.1, 0.12, 0.26, "square", { duty: 0.3 }), tone(E6, 0.2, 0.35, 0.26, "square", { duty: 0.3 })] },
