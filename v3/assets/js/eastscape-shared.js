@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 184;
+export const VERSION = 185;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -632,7 +632,7 @@ export const capOf = (k) => (ITEMS[k]?.nocap ? Infinity : STACK_MAX);
 export const BAG_UPGRADES = [50000, 100000, 200000, 300000, 400000];
 /** What the next slot costs, or null when they have them all. */
 export const bagUpCost = (c) => BAG_UPGRADES[Math.min(BAG_UPGRADES.length, Math.max(0, (c?.bagUp | 0)))] ?? null;
-export const bagMax = (c) => INV_MAX + (c ? petFx(c).slots + Math.min(BAG_UPGRADES.length, c.bagUp | 0) : 0);
+export const bagMax = (c) => INV_MAX + (c ? petFx(c).slots + (achFx(c).slots | 0) + Math.min(BAG_UPGRADES.length, c.bagUp | 0) : 0);   /* achFx: the two pockets the milestones give */
 export const roomFor = (inv, k, c = null) => {
   const cap = capOf(k), free = bagMax(c) - inv.length;
   if (cap === Infinity) return inv.some((s) => s.k === k) || free > 0 ? Infinity : 0;
@@ -2375,11 +2375,164 @@ export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 10
 export const COAL_STEADY_MIN = 0.10;
 export const OUT_CAP = { tix: 0.25, speed: 0.2, tough: 0.3, rare: 0.4, zdrop: 0.75, bite: 0.1, heal: 0.5 };
 const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal"];
+
+/* ============================================================ ACHIEVEMENTS (2026-09-23, the owner)
+
+   Two jobs, in the owner's words: introduce players to mechanics, and push them further with harder goals. The
+   FlatMMO model was the reference; what is NOT copied from it is Sleep Points. This game has two currencies and a
+   deliberate wall between them, and a third would need its own sinks and its own balance. So: tickets per
+   achievement, a POINT score that is only ever a score, and permanent buffs at point MILESTONES.
+
+   BUFFS ARE PER MILESTONE, NEVER PER ACHIEVEMENT, and that is the load-bearing decision. Sixty achievements each
+   granting 1% of something compounds into a number nobody chose. ACH_MILES bounds the whole feature by
+   construction: whatever gets added to ACH later, the buffs stop where this table stops.
+
+   EVERY TEST IS A PREDICATE OVER THE CHARACTER, not a counter of its own. That is what lets the same table be
+   evaluated live after an event AND swept retroactively on login — C.stats has recorded kills, gathering, cooking,
+   crafting, deaths and quests since 2026-09-18, so most of this list can be awarded for things people already did
+   rather than showing them a panel of zeroes. `on` narrows which events are worth re-testing, so an ore gathered
+   does not re-run sixty predicates.
+   ============================================================ */
+export const ACH_TIERS = {
+  novice:  { name: "Novice",  pts: 1,  tix: 60,    col: "#9ad8a0" },
+  skilled: { name: "Skilled", pts: 2,  tix: 250,   col: "#7fc8e8" },
+  expert:  { name: "Expert",  pts: 3,  tix: 1250,  col: "#c0a0ff" },
+  master:  { name: "Master",  pts: 5,  tix: 6000,  col: "#ffb03a" },
+  legend:  { name: "Legend",  pts: 10, tix: 25000, col: "#ff6ad5" }
+};
+/* Points -> a permanent effect. `slots` rides bagMax, the rest ride fxOf, so nothing new is plumbed and the
+   existing caps still apply. Two bag slots are deliberate (the owner, 2026-09-23) even though Bom sells five for
+   50k-400k: it is about 150,000 tickets of his trade given away, and that was a decision rather than an oversight. */
+export const ACH_MILES = [
+  [10,  { slots: 1 },      "a pocket sewn onto your bag"],
+  [25,  { tix: 0.02 },     "+2% tickets from everything you find"],
+  [50,  { speed: 0.03 },   "+3% movement speed"],
+  [75,  { rare: 0.03 },    "+3% chance at a rare drop"],
+  [100, { slots: 1 },      "another pocket"],
+  [150, { tix: 0.05 },     "+5% tickets from everything you find"]
+];
+
+const asum = (m) => Object.values(m || {}).reduce((a, v) => a + (Number(v) || 0), 0);
+const aOf = (c, map) => (c && c.stats && c.stats[map]) || {};
+const aHasKey = (c, map, re) => Object.keys(aOf(c, map)).some((k) => re.test(k));
+const aCount = (c, map, re) => Object.entries(aOf(c, map)).reduce((a, [k, v]) => a + (re.test(k) ? v : 0), 0);
+const aLvl = (c, sk) => lvlOf(c, sk);
+const aSkills = (n) => (c) => Object.keys(SKILLS).every((k) => lvlOf(c, k) >= n);
+const ORE = /^(copper|tin|grimstone|voidglass|slagstone|catalytic|[a-z]+_ore)$/;
+const LOG = /logs?$/;
+const FISHK = new RegExp(`^(${["sardine","perch","trout","catfish","lanternfish","mudskipper","bonefish","ghostcarp","skyeel","cloudray","stormmarlin","thundersquid","mudcat","bowfin"].join("|")})$`);
+const CROPK = () => new RegExp(`^(${Object.keys(CROPS).join("|")})$`);
+
+/** id -> { name, blurb, tier, on: [event types worth re-testing], has(c) } */
+export const ACH = {
+  /* ---- NOVICE: one per mechanic. This tier is the tutorial, and it is why the feature exists. ---- */
+  a_swing:    { name: "First Blood",        blurb: "Kill something. Anything.",                      tier: "novice", on: ["kill"],   has: (c) => asum(aOf(c, "kills")) >= 1 },
+  a_ore:      { name: "Pick and Mix",       blurb: "Mine your first ore.",                           tier: "novice", on: ["gather"], has: (c) => aHasKey(c, "gathered", ORE) },
+  a_log:      { name: "Timber",             blurb: "Chop your first log.",                           tier: "novice", on: ["gather"], has: (c) => aHasKey(c, "gathered", LOG) },
+  a_fish:     { name: "Something Bit",      blurb: "Catch your first fish.",                         tier: "novice", on: ["gather"], has: (c) => aHasKey(c, "gathered", FISHK) },
+  a_cook:     { name: "Edible",             blurb: "Cook something without ruining it.",             tier: "novice", on: ["cook"],   has: (c) => asum(aOf(c, "cooked")) >= 1 },
+  a_burn:     { name: "Charcoal Burner",    blurb: "Burn a log at the furnace. This is Smithing.",    tier: "novice", on: ["craft"],  has: (c) => (aOf(c, "crafted").charcoal | 0) >= 1 },
+  a_bar:      { name: "Smelter",            blurb: "Smelt your first bar.",                          tier: "novice", on: ["craft"],  has: (c) => aHasKey(c, "crafted", /_bar$/) },
+  a_gear:     { name: "Blacksmith",         blurb: "Hammer a bar into something wearable.",           tier: "novice", on: ["craft"],  has: (c) => Object.keys(aOf(c, "crafted")).some((k) => ITEMS[k] && ITEMS[k].slot) },
+  a_forge:    { name: "Sharper",            blurb: "Reforge a piece of gear at the anvil.",           tier: "novice", on: ["forge"],  has: (c) => Object.values(c && c.forge || {}).some((v) => v > 0) },
+  a_crop:     { name: "Green Fingers",      blurb: "Harvest something you grew.",                     tier: "novice", on: ["gather"], has: (c) => aHasKey(c, "gathered", CROPK()) },
+  a_quest:    { name: "Errand Boy",         blurb: "Finish a quest.",                                 tier: "novice", on: ["quest"],  has: (c) => questsDone(c) >= 1 },
+  a_table:    { name: "Sat Down",           blurb: "Play a table. Either currency counts.",           tier: "novice", on: ["play"],   has: (c) => (c && c.stats && c.stats.casPlays | 0) >= 1 },
+  a_win:      { name: "Beginner's Luck",    blurb: "Win a hand.",                                     tier: "novice", on: ["play"],   has: (c) => (c && c.stats && c.stats.casBest | 0) > 0 },
+  a_died:     { name: "It Happens",         blurb: "Die. Everybody does.",                            tier: "novice", on: ["death"],  has: (c) => (c && c.stats && c.stats.deaths | 0) >= 1 },
+  a_pet:      { name: "Company",            blurb: "Find a pet. One kill in a thousand.",             tier: "novice", on: ["kill"],   has: (c) => (c && c.pets || []).length >= 1 },
+  a_smoke:    { name: "Smoke Signals",      blurb: "Smoke a fish over charcoal.",                     tier: "novice", on: ["cook"],   has: (c) => aHasKey(c, "cooked", /^s[a-z]+$/) && aHasKey(c, "cooked", new RegExp(`^s(${["ghostcarp","cloudray","skyeel","stormmarlin","mudcat","thundersquid","bowfin"].join("|")})$`)) },
+  a_lap:      { name: "Warmed Up",          blurb: "Get round the Run once.",                         tier: "novice", on: ["xp"],     has: (c) => aLvl(c, "agility") >= 2 },
+  /* NOT "any skill": Hitpoints starts at 10, so that version was earned by making a character. */
+  a_lvl10:    { name: "Getting Somewhere",  blurb: "Reach level 10 in a skill you trained.",          tier: "novice", on: ["xp"],     has: (c) => Object.keys(SKILLS).some((k) => k !== "hp" && lvlOf(c, k) >= 10) },
+
+  /* ---- SKILLED ---- */
+  s_kill100:  { name: "Regular",            blurb: "Kill 100 monsters.",                             tier: "skilled", on: ["kill"],   has: (c) => asum(aOf(c, "kills")) >= 100 },
+  s_ore250:   { name: "Rock Bottom",        blurb: "Mine 250 ore.",                                  tier: "skilled", on: ["gather"], has: (c) => aCount(c, "gathered", ORE) >= 250 },
+  s_log250:   { name: "Lumberjack",         blurb: "Chop 250 logs.",                                 tier: "skilled", on: ["gather"], has: (c) => aCount(c, "gathered", LOG) >= 250 },
+  s_fish250:  { name: "Angler",             blurb: "Catch 250 fish.",                                tier: "skilled", on: ["gather"], has: (c) => aCount(c, "gathered", FISHK) >= 250 },
+  s_cook100:  { name: "Short Order",        blurb: "Cook 100 things.",                               tier: "skilled", on: ["cook"],   has: (c) => asum(aOf(c, "cooked")) >= 100 },
+  s_burn100:  { name: "Kiln",               blurb: "Burn 100 logs into charcoal.",                   tier: "skilled", on: ["craft"],  has: (c) => (aOf(c, "crafted").charcoal | 0) >= 100 },
+  s_bars50:   { name: "Foundry",            blurb: "Smelt 50 bars.",                                 tier: "skilled", on: ["craft"],  has: (c) => aCount(c, "crafted", /_bar$/) >= 50 },
+  s_lvl25:    { name: "Competent",          blurb: "Reach level 25 in any skill.",                   tier: "skilled", on: ["xp"],     has: (c) => Object.keys(SKILLS).some((k) => lvlOf(c, k) >= 25) },
+  s_lvl25all: { name: "Well Rounded",       blurb: "Reach level 25 in every skill.",                 tier: "skilled", on: ["xp"],     has: aSkills(25) },
+  s_quest3:   { name: "Useful",             blurb: "Finish three quests.",                           tier: "skilled", on: ["quest"],  has: (c) => questsDone(c) >= 3 },
+  s_crypt:    { name: "Not Alone",          blurb: "Clear a crypt with a party.",                    tier: "skilled", on: ["crypt"],  has: (c) => (c && c.stats && c.stats.crypt | 0) >= 1 },
+  s_tables:   { name: "Tourist",            blurb: "Play four different tables.",                    tier: "skilled", on: ["play"],   has: (c) => Object.keys(aOf(c, "played")).length >= 4 },
+  s_gear:     { name: "Kitted Out",         blurb: "Wear a weapon, a body and a helm at once.",      tier: "skilled", on: ["equip"],  has: (c) => !!(c && c.eq && c.eq.weapon && c.eq.body && c.eq.helm) },
+  s_smoke10:  { name: "Smokehouse",         blurb: "Smoke ten fish.",                                tier: "skilled", on: ["cook"],   has: (c) => aCount(c, "cooked", /^s(ghostcarp|cloudray|skyeel|stormmarlin|mudcat|thundersquid|bowfin)$/) >= 10 },
+  s_forge2:   { name: "Plus Two",           blurb: "Reforge something to +2.",                       tier: "skilled", on: ["forge"],  has: (c) => Object.values(c && c.forge || {}).some((v) => v >= 2) },
+  s_crops3:   { name: "Smallholding",       blurb: "Grow three different crops.",                    tier: "skilled", on: ["gather"], has: (c) => Object.keys(CROPS).filter((k) => (aOf(c, "gathered")[k] | 0) > 0).length >= 3 },
+  s_zcoin:    { name: "Real Money",         blurb: "Find a real ZCoin in the world.",                tier: "skilled", on: ["loot"],   has: (c) => (aOf(c, "looted").zcoin | 0) >= 1 },
+  s_sessions: { name: "Regular Face",       blurb: "Log in on twenty separate occasions.",           tier: "skilled", on: ["login"],  has: (c) => (c && c.stats && c.stats.sessions | 0) >= 20 },
+
+  /* ---- EXPERT ---- */
+  e_kill1k:   { name: "Body Count",         blurb: "Kill 1,000 monsters.",                           tier: "expert", on: ["kill"],   has: (c) => asum(aOf(c, "kills")) >= 1000 },
+  e_ore1k:    { name: "Open Cast",          blurb: "Mine 1,000 ore.",                                tier: "expert", on: ["gather"], has: (c) => aCount(c, "gathered", ORE) >= 1000 },
+  e_log1k:    { name: "Clear Felling",      blurb: "Chop 1,000 logs.",                               tier: "expert", on: ["gather"], has: (c) => aCount(c, "gathered", LOG) >= 1000 },
+  e_fish1k:   { name: "Trawlerman",         blurb: "Catch 1,000 fish.",                              tier: "expert", on: ["gather"], has: (c) => aCount(c, "gathered", FISHK) >= 1000 },
+  e_lvl50:    { name: "Serious",            blurb: "Reach level 50 in any skill.",                   tier: "expert", on: ["xp"],     has: (c) => Object.keys(SKILLS).some((k) => lvlOf(c, k) >= 50) },
+  e_lvl40all: { name: "No Weak Links",      blurb: "Reach level 40 in every skill.",                 tier: "expert", on: ["xp"],     has: aSkills(40) },
+  e_forge3:   { name: "Plus Three",         blurb: "Reforge something to +3, the top.",              tier: "expert", on: ["forge"],  has: (c) => Object.values(c && c.forge || {}).some((v) => v >= 3) },
+  e_allfish:  { name: "The Whole Shoal",    blurb: "Catch one of every fish in the game.",           tier: "expert", on: ["gather"], has: (c) => ["sardine","perch","trout","catfish","lanternfish","mudskipper","bonefish","ghostcarp","skyeel","cloudray","stormmarlin","thundersquid","mudcat","bowfin"].every((k) => (aOf(c, "gathered")[k] | 0) > 0) },
+  e_allcrop:  { name: "Full Rotation",      blurb: "Grow every crop there is.",                      tier: "expert", on: ["gather"], has: (c) => Object.keys(CROPS).every((k) => (aOf(c, "gathered")[k] | 0) > 0) },
+  e_tables:   { name: "Floor Walker",       blurb: "Play every table on the floor.",                 tier: "expert", on: ["play"],   has: (c) => Object.keys(GAMES).every((k) => (aOf(c, "played")[k] | 0) > 0) },
+  e_crypt10:  { name: "Grave Robber",       blurb: "Clear ten crypts.",                              tier: "expert", on: ["crypt"],  has: (c) => (c && c.stats && c.stats.crypt | 0) >= 10 },
+  e_quests:   { name: "Completionist",      blurb: "Finish every quest in the game.",                tier: "expert", on: ["quest"],  has: (c) => questsDone(c) >= Object.keys(QUESTS).length },
+  e_pets3:    { name: "Menagerie",          blurb: "Own three pets.",                                tier: "expert", on: ["kill"],   has: (c) => (c && c.pets || []).length >= 3 },
+  e_burn500:  { name: "Charcoal Baron",     blurb: "Burn 500 logs.",                                 tier: "expert", on: ["craft"],  has: (c) => (aOf(c, "crafted").charcoal | 0) >= 500 },
+
+  /* ---- MASTER ---- */
+  m_kill5k:   { name: "Industrial",         blurb: "Kill 5,000 monsters.",                           tier: "master", on: ["kill"],   has: (c) => asum(aOf(c, "kills")) >= 5000 },
+  m_lvl75:    { name: "Expert Hands",       blurb: "Reach level 75 in any skill.",                   tier: "master", on: ["xp"],     has: (c) => Object.keys(SKILLS).some((k) => lvlOf(c, k) >= 75) },
+  m_lvl60all: { name: "Across The Board",   blurb: "Reach level 60 in every skill.",                 tier: "master", on: ["xp"],     has: aSkills(60) },
+  m_gather5k: { name: "Hoarder",            blurb: "Gather 5,000 things.",                           tier: "master", on: ["gather"], has: (c) => asum(aOf(c, "gathered")) >= 5000 },
+  m_pets:     { name: "The Whole Kennel",   blurb: "Own all five pets.",                             tier: "master", on: ["kill"],   has: (c) => new Set((c && c.pets || []).map((x) => x.k)).size >= Object.keys(PETS).length },
+  m_total500: { name: "Five Hundred",       blurb: "Reach a total level of 500.",                    tier: "master", on: ["xp"],     has: (c) => totalOf(c) >= 500 },
+  m_zcoin10:  { name: "Prospector",         blurb: "Find ten real ZCoins.",                          tier: "master", on: ["loot"],   has: (c) => (aOf(c, "looted").zcoin | 0) >= 10 },
+  m_allmobs:  { name: "Exterminator",       blurb: "Kill at least one of every monster.",            tier: "master", on: ["kill"],   has: (c) => Object.keys(MOBS).every((k) => (aOf(c, "kills")[k] | 0) > 0) },
+
+  /* ---- LEGEND ---- */
+  l_lvl50all: { name: "Nothing Left Out",   blurb: "Reach level 50 in every single skill.",          tier: "legend", on: ["xp"],     has: aSkills(50) },
+  l_total700: { name: "Seven Hundred",      blurb: "Reach a total level of 700.",                    tier: "legend", on: ["xp"],     has: (c) => totalOf(c) >= 700 },
+  l_kill25k:  { name: "The Reaper",         blurb: "Kill 25,000 monsters.",                          tier: "legend", on: ["kill"],   has: (c) => asum(aOf(c, "kills")) >= 25000 },
+
+  /* ---- the odd ones. Not a tier of their own: they sit where their difficulty puts them. ---- */
+  o_burnt:    { name: "Smoke Alarm",        blurb: "Burn 50 fish to a crisp.",                       tier: "novice",  on: ["burn"],  has: (c) => (c && c.stats && c.stats.burnt | 0) >= 50 },
+  o_broke:    { name: "Easy Come",          blurb: "Lose a piece of gear at the anvil.",             tier: "skilled", on: ["forge"], has: (c) => (c && c.stats && c.stats.forgeBroke | 0) >= 1 },
+  o_deaths:   { name: "Persistent",         blurb: "Die fifty times and keep turning up.",           tier: "skilled", on: ["death"], has: (c) => (c && c.stats && c.stats.deaths | 0) >= 50 },
+  o_down:     { name: "The House Always Wins", blurb: "Be 10,000 tickets down across the tables.",   tier: "skilled", on: ["play"],  has: (c) => (c && c.stats && c.stats.casNet | 0) <= -10000 },
+  o_up:       { name: "Beating The House",  blurb: "Be 10,000 tickets up across the tables.",        tier: "expert",  on: ["play"],  has: (c) => (c && c.stats && c.stats.casNet | 0) >= 10000 },
+  o_hours:    { name: "Where Did It Go",    blurb: "Spend a full day of your life in here.",         tier: "expert",  on: ["login"], has: (c) => (c && c.stats && c.stats.playMs || 0) >= 24 * 3600 * 1000 }
+};
+
+/** every id this character has earned, as a Set */
+export const achSet = (c) => new Set(Array.isArray(c && c.ach) ? c.ach : []);
+/** their score */
+export const achPts = (c) => { let n = 0; for (const id of achSet(c)) { const a = ACH[id]; if (a) n += ACH_TIERS[a.tier].pts; } return n; };
+/** every milestone reached, folded into one fx object plus bag slots */
+export const achFx = (c) => {
+  const pts = achPts(c), out = { slots: 0 };
+  for (const [at, fx] of ACH_MILES) if (pts >= at) for (const k in fx) out[k] = (out[k] || 0) + fx[k];
+  return out;
+};
+/** which ids they now qualify for and do not have. Cheap: `on` narrows it unless the caller asks for everything. */
+export const achDue = (c, type) => {
+  const have = achSet(c), out = [];
+  for (const [id, a] of Object.entries(ACH)) {
+    if (have.has(id)) continue;
+    if (type && !(a.on || []).includes(type)) continue;
+    try { if (a.has(c)) out.push(id); } catch (e) { /* a save shaped oddly must never stop a kill from paying */ }
+  }
+  return out;
+};
+
 export function fxOf(c) {
   const worn = SLOTS.map((k) => ITEMS[c?.eq?.[k]]?.fx).filter(Boolean), power = 1 + worn.reduce((a, f) => a + (f.power || 0), 0), out = Object.fromEntries(OUT_KEYS.map((k) => [k, 0]));
   for (const f of worn) for (const k of OUT_KEYS) out[k] += (f[k] || 0) * power;
   for (const st of [c?.meal, c?.drink]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k], f = it && (it.meal || it.drink)?.fx; if (f) for (const k of OUT_KEYS) out[k] += f[k] || 0; }
   if ((c?.luck | 0) > 0) out.zdrop += LUCK.zdrop;
+  { const a = achFx(c); for (const k of OUT_KEYS) out[k] += a[k] || 0; }   /* (2026-09-23) achievement milestones, before the caps below so they cannot escape them */
   for (const k of OUT_KEYS) out[k] = Math.max(k === "tough" ? -0.5 : 0, Math.min(OUT_CAP[k], out[k]));
   return out;
 }
@@ -3299,7 +3452,7 @@ export function aliasKey(k) {
 
 export const STAT_DAYS = 60;   // how many days of the xp-per-day log are kept
 const COUNT_MAPS = ["kills", "gathered", "looted", "cooked", "crafted", "played"];
-const STAT_NUMS = ["burnt", "deaths", "pvpKills", "pvpDeaths", "questsDone", "cashIn", "cashOut", "xpTotal", "playMs", "sessions", "firstSeen", "lastSeen", "casPlays", "casNet", "casBest", "casWorst"];
+const STAT_NUMS = ["burnt", "deaths", "pvpKills", "pvpDeaths", "questsDone", "cashIn", "cashOut", "xpTotal", "playMs", "sessions", "firstSeen", "lastSeen", "casPlays", "casNet", "casBest", "casWorst", "forgeBroke", "crypt"];
 
 export function freshStats() {
   return {
@@ -3313,6 +3466,8 @@ export function freshStats() {
     casNet: 0,      // tickets up or DOWN across all of them; negative is normal and correct
     casBest: 0,     // biggest single win
     casWorst: 0,    // biggest single loss, as a negative
+    forgeBroke: 0,  // pieces destroyed at the anvil
+    crypt: 0,       // crypts cleared
     gathered: {},   // item key  -> how many gathered by skilling (mined, chopped, fished, picked)
     looted: {},     // item key  -> how many taken off a monster
     cooked: {},     // item key  -> how many cooked successfully

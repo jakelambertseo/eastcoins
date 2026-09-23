@@ -268,6 +268,7 @@ export class World {
     if (this.radio && HEARD.has(String(S.key).split(":")[0])) this.send(pl, { type: "ev", list: [{ type: "radio", radio: this.radio }] });   /* (v86) the jukebox is already playing when you log in on the floor */
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
     this.cryptHello(pl, S);
+    this.achSweep(pl);   /* (2026-09-23) everything they already qualify for, paid once and quietly */
     S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
     if (!stored) this.say(pl, "Welcome to EastScape. Play the tables. Broke? Go outside: hit something, or fish. Bom Trady, in the middle of the floor, turns what you find into tickets.");
     else this.say(pl, `Welcome back, ${pl.name}.`);
@@ -312,7 +313,7 @@ export class World {
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
-    pets: C.pets, isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, forge: C.forge || {} }; }   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
+    pets: C.pets, isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, forge: C.forge || {}, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
 
   /* ------------------------------------------------------------ reforging (2026-09-22)
      Spend bars to push a piece you own further. The odds and what a level is worth live in G.FORGE; this only
@@ -349,6 +350,7 @@ export class World {
     else nowLvl = Math.max(0, lvl - 1);
 
     if (broke) {
+      (C.stats ||= G.freshStats()).forgeBroke = (C.stats.forgeBroke | 0) + 1;   /* (2026-09-23) what the "Easy Come" achievement counts; nothing else recorded a break */
       delete C.forge[key];
       const slot = it.slot;
       if (slot && C.eq[slot] === key) C.eq[slot] = null;      // it was on your back
@@ -831,6 +833,7 @@ export class World {
     this.questEvent(pl, type, d);
     this.dailyEvent(pl, type, d);
     this.tourEvent(pl, type, d);
+    this.achEvent(pl, type);
     if (type === "gather") { this.luckDrop(pl, "clover", G.LUCK.gather); this.luckDrop(pl, "horseshoe", G.LUCK.shoe); }   // luck is skilling's alone
     else if (type === "kill") this.killFinds(pl, d);                                                                          // windfalls are fighting's
   }
@@ -2322,6 +2325,7 @@ export class World {
          sitting reforged in their bank, which is nobody's business and is not on screen anyway. */
       forge: Object.fromEntries(G.SLOTS.map((sl) => C.eq[sl]).filter((k) => k && (C.forge || {})[k] > 0).map((k) => [k, C.forge[k]])),
       bonus: G.bonusOf(C),
+      ach: { n: (Array.isArray(C.ach) ? C.ach.length : 0), pts: G.achPts(C) },
       casino: { staked: Math.round(Number(C.wagered) || 0), plays: st.casPlays | 0, net: st.casNet | 0, best: st.casBest | 0, worst: st.casWorst | 0, byGame: top(st.played, 8) },
       totals: { xp: Math.round(st.xpTotal || 0), kills: top(st.kills, 6), gathered: top(st.gathered, 8), cooked: top(st.cooked, 5), crafted: top(st.crafted, 5),
         looted: Object.values(st.looted || {}).reduce((n, v) => n + v, 0), burnt: st.burnt | 0, pvpKills: st.pvpKills | 0, pvpDeaths: st.pvpDeaths | 0, sessions: st.sessions | 0 } });
@@ -2979,6 +2983,43 @@ export class World {
     return C.daily;
   }
   dailySend(pl) { const D = this.dailyState(pl); pl.out.push({ type: "daily", day: D.day, tasks: D.tasks }); }
+  /* ACHIEVEMENTS (2026-09-23). One place awards them, whether the trigger was an event, a login sweep or an
+     admin poke, so the payment and the message can never be done twice or differently.
+
+     `quiet` is the retroactive case: somebody who has been playing for a fortnight qualifies for thirty of these
+     at once, and thirty chat lines is not a celebration, it is a wall. They get the tickets, the points and one
+     summary line instead. */
+  achAward(pl, ids, quiet = false) {
+    if (!ids || !ids.length) return 0;
+    const C = pl.C;
+    if (!Array.isArray(C.ach)) C.ach = [];
+    let tix = 0, last = null;
+    for (const id of ids) {
+      const a = G.ACH[id]; if (!a || C.ach.includes(id)) continue;
+      C.ach.push(id); tix += G.ACH_TIERS[a.tier].tix; last = a;
+    }
+    if (!last) return 0;
+    /* the tickets go through tixTo like every other payout, so the wallet, the caps and the books all see it */
+    if (tix > 0) this.tixTo(pl, tix);
+    this.touch(pl);
+    const pts = G.achPts(C);
+    if (quiet) this.say(pl, `You have earned ${ids.length} achievement${ids.length === 1 ? "" : "s"} for things you had already done \u2014 ${G.fmtCash(tix)} and ${pts} points. Have a look at the Achievements list.`, "good");
+    else for (const id of ids) { const a = G.ACH[id]; if (a) this.say(pl, `Achievement: ${a.name} \u2014 ${a.blurb} (+${G.fmtCash(G.ACH_TIERS[a.tier].tix)}, ${G.ACH_TIERS[a.tier].pts} pt${G.ACH_TIERS[a.tier].pts === 1 ? "" : "s"})`, "loot"); }
+    /* a milestone crossed is worth its own line: it is the only part of this that changes how you play */
+    for (const [at, , what] of G.ACH_MILES) if (pts >= at && pts - (G.ACH_TIERS[last.tier].pts) < at) this.say(pl, `${at} achievement points: ${what}.`, "good");
+    pl.out.push({ type: "ach", ids, pts });
+    return ids.length;
+  }
+  achEvent(pl, type) {
+    const due = G.achDue(pl.C, type);
+    if (due.length) this.achAward(pl, due, false);
+  }
+  /* the login sweep: everything they already qualify for, paid quietly and all at once */
+  achSweep(pl) {
+    if (!Array.isArray(pl.C.ach)) pl.C.ach = [];
+    const due = G.achDue(pl.C);
+    if (due.length) this.achAward(pl, due, true);
+  }
   dailyEvent(pl, type, d) {
     const what = type === "cook" || type === "craft" ? "make" : type;
     if (what !== "gather" && what !== "kill" && what !== "make") return;

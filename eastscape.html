@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=196">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=197">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=12">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -458,6 +458,21 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 .wiki article h2{margin:0 0 4px;font-size:22px;color:#7a2a1a;display:flex;align-items:center;gap:10px}
 .wiki article h2 i{font-style:normal;font-size:34px}
 .wiki article h3{margin:14px 0 6px;font-size:15px;color:#5a2a1a}
+#achBody .ah{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 10px}
+#achBody .ah b{font-size:22px}
+#achBody .apill{padding:3px 9px;border-radius:99px;background:rgba(0,0,0,.07);font-weight:800;font-size:12px}
+#achBody .abar{height:9px;border-radius:99px;background:rgba(0,0,0,.12);overflow:hidden;margin:2px 0 12px}
+#achBody .abar i{display:block;height:100%;background:linear-gradient(90deg,#c8a13c,#ffd77a)}
+#achBody .amile{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 12px}
+#achBody .amile span{padding:3px 8px;border-radius:6px;background:rgba(0,0,0,.06);font-size:11.5px;font-weight:700;opacity:.45}
+#achBody .amile span.on{opacity:1;background:rgba(200,161,60,.22)}
+#achBody h4{margin:12px 0 5px;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+#achBody .arow{display:flex;gap:9px;align-items:flex-start;padding:6px 9px;border-radius:7px;background:rgba(0,0,0,.05);margin-bottom:4px;opacity:.5}
+#achBody .arow.got{opacity:1;background:rgba(200,161,60,.13)}
+#achBody .arow i{font-style:normal;font-size:17px;line-height:1.2;flex:0 0 auto}
+#achBody .arow b{display:block;font-size:13px}
+#achBody .arow small{color:#6a5a40;font-weight:700;font-size:11.5px}
+#achBody .arow em{margin-left:auto;font-style:normal;font-weight:800;font-size:11.5px;white-space:nowrap;text-align:right}
 .wiki article .lede{color:#5a4a30;margin:0 0 8px}
 .wiki article .gcat{margin:12px 0 5px;font-size:11.5px;font-weight:800;color:#6a5a40;text-transform:uppercase;letter-spacing:.05em}
 .wiki article .gcat:first-of-type{margin-top:4px}
@@ -766,6 +781,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
   <button type="button" class="wikib" id="gamesBtn" title="The real ZCoin games, one click (G)">🎰 Games</button>
   <button type="button" class="wikib" id="wikiBtn" title="The EastScape wiki (H)">📖 Wiki</button>
   <button type="button" class="wikib" id="netBtn" title="Network and lag (N)">📶 Net</button>
+  <button type="button" class="wikib" id="achBtn" title="Achievements (Y)">🎖️ Achievements</button>
   <button type="button" class="wikib" id="hsBtn" title="Hiscores">🏆 Hiscores</button>
   <span class="spacer"></span>
   <span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span>
@@ -892,6 +908,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
       <div class="win-body" id="tradeBody"></div>
       <div class="win-foot" id="tradeFoot"></div>
     </section>
+    <section class="win" id="achWin" aria-label="Achievements" hidden style="width:min(560px,calc(100% - 28px));height:calc(100% - 60px)">
+      <div class="win-head"><b>🎖️ Achievements</b><small id="achSub"></small><button type="button" class="win-x" data-close="achWin" aria-label="Close">×</button></div>
+      <div class="win-body" id="achBody"></div>
+    </section>
     <section class="win" id="wikiWin" aria-label="Wiki" hidden style="width:min(980px,calc(100% - 28px));height:calc(100% - 28px)">
       <div class="win-head"><b>📖 EastScape Wiki</b><small>built from the game itself</small><button type="button" class="win-x" data-close="wikiWin" aria-label="Close">×</button></div>
       <div class="wiki"><nav id="wikiNav"></nav><article id="wikiPage"></article></div>
@@ -916,7 +936,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=196";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=197";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=119").then((m) => { WK = m; }));
@@ -1228,6 +1248,7 @@ function onEvent(e) {
      gives a different death within a size every time. Another take or two would widen it further; this is what the
      one we have can do. */
   if (e.type === "mobdie") { const z = MOBS[e.t]?.size; return void SFX.play("mob_die", { rate: z === "s" ? 1.42 : z === "m" ? 1.12 : z === "xl" ? 0.62 : 0.84, jitter: 0.14, vol: z === "xl" || z === "l" ? 1.15 : 0.95 }); }
+  if (e.type === "ach") { SFX.play("task_done"); if (!$("achWin").hidden) renderAch(); return; }
   if (e.type === "fell") return void SFX.play("tree_fall");
   if (e.type === "tradereq") { SFX.play("chat"); tradeReqLine(e.from, e.name); return; }
   if (e.type === "levelup") return levelUp(e.k, e.lvl);
@@ -3391,7 +3412,7 @@ function openSmith(ob) {
 
 function openWin(id) {
   SFX.play("ui_open");
-  for (const w of ["bankWin", "exWin", "wikiWin"]) if (w !== id && id !== "tradeWin") $(w).hidden = true;
+  for (const w of ["bankWin", "exWin", "wikiWin", "achWin"]) if (w !== id && id !== "tradeWin") $(w).hidden = true;
   $(id).hidden = false;
   if (id === "bankWin") renderBank();
   if (id === "shopWin") renderShop();
@@ -4346,6 +4367,39 @@ document.addEventListener("contextmenu", (e) => {
   e.preventDefault(); wikiRoute = `items/${k}`; openWin("wikiWin");
 });
 $("wikiBtn").addEventListener("click", () => { if ($("wikiWin").hidden) openWin("wikiWin"); else $("wikiWin").hidden = true; });
+
+/* ------------------------------------------------------------ ACHIEVEMENTS (2026-09-23, the owner)
+   Drawn entirely from what the character already carries — G.ACH is the list and me.ach is what they have — so
+   there is nothing to fetch and nothing to keep in step. The panel repaints on the `ach` message, which is what
+   the server sends when it awards one. */
+function renderAch() {
+  if (!me) return;
+  const have = new Set(me.ach || []), pts = G.achPts(me);
+  const all = Object.entries(G.ACH), done = all.filter(([id]) => have.has(id)).length;
+  const maxPts = all.reduce((a, [, x]) => a + G.ACH_TIERS[x.tier].pts, 0);
+  const next = G.ACH_MILES.find(([at]) => pts < at);
+  $("achSub").textContent = `${done} of ${all.length}`;
+  const miles = G.ACH_MILES.map(([at, , what]) => `<span class="${pts >= at ? "on" : ""}" title="${esc(what)}">${at} pts</span>`).join("");
+  const tiers = Object.entries(G.ACH_TIERS).map(([tk, t]) => {
+    const rows = all.filter(([, a]) => a.tier === tk);
+    const got = rows.filter(([id]) => have.has(id)).length;
+    return `<h4 style="color:${t.col}">${esc(t.name)} &middot; ${got}/${rows.length} &middot; ${t.pts} pt${t.pts === 1 ? "" : "s"} each</h4>` +
+      rows.map(([id, a]) => `<div class="arow${have.has(id) ? " got" : ""}"><i>${have.has(id) ? "\u2713" : "\u00b7"}</i><span><b>${esc(a.name)}</b><small>${esc(a.blurb)}</small></span><em>${G.fmtCash(t.tix)}</em></div>`).join("");
+  }).join("");
+  $("achBody").innerHTML = `<div class="ah"><b>${pts}</b><span class="apill">of ${maxPts} points</span><span class="apill">${done}/${all.length} done</span></div>
+    <div class="abar"><i style="width:${Math.round((pts / maxPts) * 100)}%"></i></div>
+    <p class="note" style="margin:0 0 6px">${next ? `Next reward at <b>${next[0]}</b> points: ${esc(next[2])}.` : "Every reward unlocked."}</p>
+    <div class="amile">${miles}</div>${tiers}`;
+}
+const openAch = () => { if ($("achWin").hidden) { openWin("achWin"); renderAch(); } else $("achWin").hidden = true; };
+$("achBtn").addEventListener("click", openAch);
+/* Y, because A is not free-looking enough to risk and this sits beside the other bar keys. */
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "y" && e.key !== "Y") return;
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) return;
+  e.preventDefault(); openAch();
+});
 /* (2026-09-23, the owner) H OPENS THE WIKI, and "?" does too because that is the one key everybody already tries.
    NOT "n": that is the Network panel, and the letters are getting crowded — d (staff dashboard), g (Game Room),
    m (mute), n (net). It goes through the button's own click so the toggle, the sound and the route restore all
