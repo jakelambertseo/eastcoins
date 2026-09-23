@@ -66,22 +66,135 @@ export const GUIDES = [
       <p>A better tool is also <b>quicker at everything below it</b>, so it is never wasted on easy work.</p>
       <p><b>Two ways to get one.</b> Buy it at the <a data-wiki="npcs/Bom Trady">Prize Counter</a> &mdash; tools are cheap for their grade on purpose &mdash; or <b>smith it</b>: two bars for a pickaxe or an axe, one for a rod, at the anvil.</p>
       <p><b>You have to be holding it.</b> Pickaxe, axe or rod, it goes in the weapon slot — one in your bag will not do. That is the whole cost of the ladder: while you are working you are not carrying a sword.</p>` },
-  { id: "start", title: "Start here", icon: "🧭",
-    body: `<p><b>Click to walk. Click things to use them.</b></p><p>Play the tables in the casino. Out of tickets? Go outside and hit something, or fish.</p><p>Press <b>G</b> for the games list.</p>` },
-  { id: "casino", title: "The casino", icon: "🎰",
-    body: `<p>Every table takes <b>ZCoins or tickets</b>, and there is a switch on each one.</p><p><b>ZCoins in, ZCoins out.</b> 1 to 20 ZCoins a bet, ten plays an hour at each game, off your eastcoin.vip balance.</p><p><b>Tickets in, tickets out.</b> 10 to 20,000 tickets a bet, as often as you like.</p><p>Either way the odds are the same: every play pays between <b>96% and 104%</b> of the fair price, drawn fresh each time. No table is the better bet.</p><p>Click a table and you walk over and play. Russian Roulette and the Fight Pit are through the doors at the back; the Pit takes tickets too.</p>` },
-  { id: "tickets", title: "Tickets and the Prize Counter", icon: "🎟️",
-    body: `<p>Kills, fish and daily jobs pay <b>tickets</b>.</p><p><b>Bom Trady</b>, in the middle of the casino, runs the <b>Prize Counter</b>: trade in your drops, buy gear, food and drinks.</p><p>Tickets can't be dropped or banked, but you can <b>trade</b> them: click a player, and type how many.</p><p><b>Tickets into ZCoins.</b> The counter trades them at <b>1,000 tickets to 1 ZCoin</b>, straight onto your eastcoin.vip balance. Up to 50 ZCoins an hour (ticket stakes on the Fight Pit and ZCoins you found share that hour).</p>` },
-  { id: "road", title: "The road out", icon: "🗺️",
-    body: `<p>Six scenes out from the casino. Each is ten levels harder. <b>Follow the signs</b>: the way on isn't always west.</p><ul><li><a data-wiki="areas/workyard">The Yard</a> 1-9</li><li><a data-wiki="areas/gloam">The Gloam</a> 10-19</li><li><a data-wiki="areas/mire">The Lantern Mire</a> 20-29</li><li><a data-wiki="areas/boneyard">The Boneyard</a> 30-39</li><li><a data-wiki="areas/cloud">Cloudreach</a> 40-49</li><li><a data-wiki="areas/thunderhead">The Thunderhead</a> 50+</li></ul><p>Walk anywhere. You can't fight or fish in a scene until your level matches it. <b>Nothing attacks first.</b></p>` },
-  { id: "crypt", title: "The Crypt (parties)", icon: "🗝️",
-    body: `<p>A dungeon for a <b>party of 2 to 4</b>. Click a player, <b>Invite to party</b>. The stairs are in the Yard, by the jukebox, a few steps from the casino's door.</p><p>Everybody antes up. Clear a chamber and its gate opens. Pull the lever together. Kill <b>the Hoodie</b>.</p><p><b>Don't stand in the red.</b> If the whole party is down at once, you lose the ante.</p><p>When he dies, <b>a chest each</b> appears by the throne: the clear's tickets and 2 to 6 other things, yours alone. About one and a half times what the same minutes pay alone. Three paid runs a day.</p>` },
+  { id: "start", title: "Start here", icon: "\u{1F9ED}",
+    body: `<p><b>This is a casino with a world attached.</b> The tables are the point; everything outside exists to pay for them.</p>
+      <h3>The first five minutes</h3>
+      <p><b>Play a table.</b> You start with enough to play. Every game takes tickets or real ZCoins &mdash; the window has a toggle, and the odds are identical either way.</p>
+      <p><b>When you run out, go outside.</b> Walk out of the casino into the Yard. Hit something, chop something, or fish. Take what you find to <a data-wiki="npcs/Bom Trady">Bom Trady</a> in the middle of the floor and it becomes tickets.</p>
+      <p><b>Cook your fish before you sell it.</b> Raw fish is worth nothing and Bom will not take it &mdash; the campfire is by the casino door, and cooking roughly doubles what a fish is worth.</p>
+      <h3>Then what</h3>
+      <p><b>Check the task board</b> inside the casino: three <a data-wiki="guides/jobs">jobs a day</a>, usually things you were going to do anyway.</p>
+      <p><b>Buy a better tool before better gear.</b> <a data-wiki="guides/tools">Tools</a> decide what you can gather at all, and a grade up is 8% off every swing forever.</p>
+      <p><b>Walk north when the Yard gets easy.</b> The world is a chain of areas about ten levels apart &mdash; see <a data-wiki="guides/road">The road out</a>.</p>
+      <h3>Worth knowing early</h3>
+      <p><b>Nothing is locked.</b> You can walk anywhere at level one, and die there.</p>
+      <p><b>Dying does not cost you your gear</b>, only some of the tickets in your pocket. Bank them before a long trip.</p>
+      <p><b>Press H</b> to open this wiki at any time.</p>` },
+  { id: "casino", title: "The casino", icon: "\u{1F3B0}",
+    body: `<p><b>Eight tables, and every one of them plays for tickets or for real ZCoins.</b> Same game, same odds, same server roll &mdash; the only difference is what you put in. The window has a toggle.</p>
+      <table class="tbl"><tr><th>Table</th><th>How it goes</th></tr>
+        <tr><td>&#127920; Slots</td><td>Three of a kind pays; two cherries pay 1.4&times;. Three sevens takes the jackpot</td></tr>
+        <tr><td>&#129689; Coin Flip</td><td>Heads or tails, pays 1.95&times;</td></tr>
+        <tr><td>&#127922; Dice</td><td>Roll under your number. The lower you call it, the more it pays</td></tr>
+        <tr><td>&#127905; Wheel</td><td>Red or black pays 1.97&times;. The thin gold sliver pays 58&times;</td></tr>
+        <tr><td>&#127183; Higher or Lower</td><td>Every right call multiplies your stake; cash out whenever. A tie is a push</td></tr>
+        <tr><td>&#128163; Mines</td><td>25 tiles, some are bombs. Every gem multiplies; cash out before you find one</td></tr>
+        <tr><td>&#128992; Plinko</td><td>Twelve rows of pegs. The edges pay 25&times;</td></tr>
+        <tr><td>&#127903;&#65039; Scratch-Off</td><td>Nine boxes; three of a kind wins that symbol's prize</td></tr>
+      </table>
+      <p><b>The odds are not a secret and they are not fixed per game.</b> Every play draws its own house edge inside a narrow band, sealed behind a committed hash before your stake is taken and revealed when the play is over. No table is a better bet than another &mdash; that is deliberate, because a game that pays better than the rest is one people would only play.</p>
+      <p><b>Limits.</b> Minimum 10 a bet, and a short pause between bets so nothing can be machine-gunned. The ZCoin side carries the same hourly limits the site's own floor has always had.</p>
+      <p><b>Wins get announced.</b> Anything from 5&times; tells the room; 25&times; and up tells everyone in the game.</p>
+      <p>Broke? <b>Go outside.</b> Hit something or fish, and take what you find to <a data-wiki="npcs/Bom Trady">Bom Trady</a>. See <a data-wiki="guides/tickets">Tickets</a>.</p>` },
+  { id: "tickets", title: "Tickets and the Prize Counter", icon: "\u{1F3AB}",
+    body: `<p><b>Tickets are the money and Bom Trady is the whole economy.</b> He stands in the middle of the casino floor. Everything you find outside becomes tickets at his counter, and everything you want comes back over it.</p>
+      <p><b>He buys loot and things you made</b> &mdash; ore, bars, logs, cooked fish, monster drops. He does <b>not</b> buy raw fish, so cook it first, and he leaves your tools, charms and anything wearable alone so you cannot cash in the set you are standing in by accident.</p>
+      <p><b>He sells</b> tools, bronze gear, food, drinks and your bag upgrades. Your <a data-wiki="guides/vip">VIP rank</a> is a standing discount on all of it.</p>
+      <p><b>Tickets stay on you.</b> They cannot be banked, dropped or given away in a trade &mdash; they only leave by being spent. What a death costs you is a share of the tickets in your pocket, which is the argument for spending them before a long trip out.</p>
+      <p><b>Real ZCoins are a different thing entirely.</b> Find one and the counter puts it straight onto your balance on the site. There is no exchange rate in either direction: you cannot buy ZCoins with tickets and you cannot turn ZCoins into tickets. That wall is deliberate &mdash; without it, fishing would print real currency.</p>
+      <p>Other players are usually the better price for anything rare. See <a data-wiki="guides/trading">Trading and the Market</a>.</p>` },
+  { id: "road", title: "The road out", icon: "\u{1F5FA}\uFE0F",
+    body: `<p><b>The world is a chain.</b> Each area is about ten levels past the last, and the way on is an edge of the map &mdash; walk off it and you are in the next one. Nothing is locked; you can walk anywhere at level one and die there.</p>
+      <table class="tbl"><tr><th>Area</th><th>Monsters</th><th>What it has</th></tr>
+        <tr><td>The Yard</td><td>1&ndash;8</td><td>the casino, the bank, the campfire, the furnace and anvil, sardines</td></tr>
+        <tr><td>The Gloam</td><td>10&ndash;18</td><td>emerald and diamond ore, gloomwillow, trout and catfish</td></tr>
+        <tr><td>The Lantern Mire</td><td>20&ndash;28</td><td>lanternfish, mudskipper, the first real gear drops</td></tr>
+        <tr><td>The Boneyard</td><td>30&ndash;38</td><td>bonefish, ghost carp, the Crypt &mdash; and <b>pets start dropping here</b></td></tr>
+        <tr><td>Cloudreach</td><td>40&ndash;48</td><td>dragonstone and onyx ore, skyash, sky eel and cloud ray</td></tr>
+        <tr><td>The Thunderhead</td><td>52&ndash;70</td><td>storm marlin, thunder squid, the way to the last two</td></tr>
+        <tr><td>The Vault</td><td>74&ndash;92</td><td>end-game fighting</td></tr>
+        <tr><td>The Trailer Park</td><td>80&ndash;98</td><td>the best gathering in the game, and the meanest neighbours</td></tr>
+      </table>
+      <p><b>Go one area past comfortable, not three.</b> Monsters hit harder than their level suggests once you are out of your depth, and dying costs a bigger share of your tickets the deeper you are &mdash; see <a data-wiki="guides/dying">Dying</a>.</p>
+      <p><b>Bank first.</b> A death takes a percentage of what you are <i>carrying</i>, so an empty pocket makes a long trip out nearly free.</p>
+      <p><b>The Wilderness is off this chain</b> and other players can attack you in it.</p>` },
+  { id: "crypt", title: "The Crypt (parties)", icon: "\u{1F5DD}\uFE0F",
+    body: `<p><b>The only thing in the game you cannot do alone.</b> The stairs are in the Boneyard. Two to four of you go in, the door shuts, and what is inside is yours &mdash; nobody else can wander through it.</p>
+      <h3>Getting a party</h3>
+      <p><b>Click someone and invite them.</b> They get a line with an Accept on it, good for a minute. While anyone in the party is inside, everybody sees everybody health and where they are.</p>
+      <p><b>Leaving the game does not leave the party.</b> Your place is held for three minutes, so a dropped connection is not a lost run &mdash; log back in and you are still in it, on the floor you were on.</p>
+      <h3>The run</h3>
+      <p><b>There is an ante</b>, taken on the way in, the same for everyone. A cleared crypt pays every member still in the party and still inside.</p>
+      <p><b>The boss scales to how many of you there are</b>, so four people do not make it four times easier &mdash; they make the deeper tiers survivable at all.</p>
+      <p><b>Monsters do not come back inside a run</b>, and the party shares them: you all hit the same thing instead of fighting over it.</p>
+      <p><b>Nothing drops on the floor in there.</b> The run pays at the end, which is why clearing it matters and killing things in it does not, on its own.</p>
+      <p><b>Fastest clears are recorded.</b> That is the actual reason to go back.</p>` },
   { id: "fighting", title: "Fighting", icon: "⚔️",
-    body: `<p>Click a monster. The further you walk, the more each kill pays. One kill in fifty is a <b>JACKPOT KILL</b>: five times the tickets.</p><p>Better gear means faster kills. Gear is at the Prize Counter. The best pieces only drop.</p><p>Eat a fish to heal.</p>` },
-  { id: "fishing", title: "Fishing", icon: "🎣",
-    body: `<p>Every scene has water with two fish. You need a rod.</p><p>Fish heal when eaten and trade in for tickets. It pays a bit less than fighting, and nothing hits you.</p><p>Lucky clovers only come from fishing.</p><p>Cook what you catch at the campfire by the Yard's entrance: it heals more and sells for double.</p>` },
-  { id: "cooking", title: "Cooking", icon: "🍳",
-    body: `<p>There is a <b>campfire</b> just inside the Yard, by the way in from the casino. Click it with raw fish in your bag.</p><p>Every fish can be cooked. A cooked fish <b>heals a lot more</b> and <b>sells for twice</b> the raw one, so it is worth stopping at the fire on the way back.</p><p>You will burn some at first. Each fish stops burning once your Cooking is high enough, and the fire always cooks the best thing in your bag that you can cook.</p>` },
+    body: `<p><b>Click a monster.</b> You walk to it and keep swinging until one of you stops. Whoever hits it first owns it &mdash; nobody else can take your kill, except in the Wilderness where nothing is owned.</p>
+      <h3>The four stances</h3>
+      <p>The stance decides which skill your damage teaches. Every stance pays the same total, so none is faster overall &mdash; it only changes where it goes.</p>
+      <table class="tbl"><tr><th>Stance</th><th>Trains</th><th>What it does for you</th></tr>
+        <tr><td>&#127919; Accurate</td><td>Attack</td><td>You land more of your swings</td></tr>
+        <tr><td>&#128165; Aggressive</td><td>Strength</td><td>Your maximum hit goes up</td></tr>
+        <tr><td>&#128737;&#65039; Defensive</td><td>Defence</td><td>You get hit less</td></tr>
+        <tr><td>&#9878;&#65039; Controlled</td><td>All three</td><td>Slower to any one milestone, further along everywhere</td></tr>
+      </table>
+      <p><b>Hitpoints trains no matter what.</b> Every point of damage you deal pays combat xp and a third as much again into Hitpoints, so your health climbs whatever you are doing.</p>
+      <h3>Three weapons, one speed each</h3>
+      <p>Every tier has the same three, and they are within a whisker of each other on damage over time. It is a feel choice, not a power one.</p>
+      <table class="tbl"><tr><th>Weapon</th><th>Swings every</th><th>Leans</th></tr>
+        <tr><td>Gladius</td><td>1.8s</td><td>fast and accurate, small hits</td></tr>
+        <tr><td>Longsword</td><td>2.4s</td><td>the middle of the three</td></tr>
+        <tr><td>Maul</td><td>3.0s</td><td>slow and heavy, big hits</td></tr>
+      </table>
+      <h3>The seven grades</h3>
+      <p>Weapons gate on <b>Attack</b>, armour on <b>Defence</b>, rings and amulets on <b>Hitpoints</b>. Bronze is the only tier Brutus sells; everything above it is <a data-wiki="guides/smoking">smithed</a> or dropped.</p>
+      <table class="tbl"><tr><th>Grade</th><th>Needs</th><th>Full set defence</th><th>Weapon</th></tr>
+        <tr><td>Bronze</td><td>10</td><td>20</td><td>+8 acc, +6 str</td></tr>
+        <tr><td>Emerald</td><td>20</td><td>34</td><td>+12 acc, +10 str</td></tr>
+        <tr><td>Diamond</td><td>30</td><td>48</td><td>+16 acc, +14 str</td></tr>
+        <tr><td>Dragonstone</td><td>40</td><td>62</td><td>+20 acc, +18 str</td></tr>
+        <tr><td>Onyx</td><td>50</td><td>76</td><td>+24 acc, +22 str</td></tr>
+        <tr><td>Starfall</td><td>60</td><td>90</td><td>+28 acc, +26 str</td></tr>
+        <tr><td>Eclipse</td><td>70</td><td>104</td><td>+32 acc, +30 str</td></tr>
+      </table>
+      <p><b>Reforging is the other way up.</b> Bars spent at the anvil push a piece you already own three levels further, which is worth about a tier &mdash; a way to keep going when the next grade is out of reach, not a way past it. It can also destroy the piece. See the anvil.</p>
+      <p><b>Eat before you need to.</b> Cooked fish is the whole healing system; there is no potion. See <a data-wiki="guides/cooking">Cooking</a>.</p>` },
+  { id: "fishing", title: "Fishing", icon: "\u{1F3A3}",
+    body: `<p><b>Click any fishing spot with a rod in your hand.</b> Not in your bag &mdash; in the weapon slot. You keep pulling fish out until you walk away or the three-minute idle cutoff stops you, so it is the most comfortable thing in the game to do while you are half watching something else.</p>
+      <p><b>Every spot holds two fish.</b> The second one is better, needs a higher level, and turns up about a third of the time once you can catch it. Until then you get the first one only.</p>
+      <table class="tbl"><tr><th>Spot</th><th>Where</th><th>First fish</th><th>Second fish</th></tr>
+        <tr><td>Fishing spot</td><td>The Yard</td><td>Sardine &mdash; level 1, 20 xp</td><td>Perch &mdash; level 5, 30 xp</td></tr>
+        <tr><td>Black pond</td><td>The Gloam</td><td>Trout &mdash; level 10, 50 xp</td><td>Catfish &mdash; level 15, 65 xp</td></tr>
+        <tr><td>Lantern lake</td><td>The Lantern Mire</td><td>Lanternfish &mdash; level 20, 80 xp</td><td>Mudskipper &mdash; level 25, 95 xp</td></tr>
+        <tr><td>Flooded crypt</td><td>The Boneyard</td><td>Bonefish &mdash; level 30, 110 xp</td><td>Ghost carp &mdash; level 35, 130 xp</td></tr>
+        <tr><td>Hole in the cloud</td><td>Cloudreach</td><td>Sky eel &mdash; level 40, 140 xp</td><td>Cloud ray &mdash; level 45, 165 xp</td></tr>
+        <tr><td>The sea below</td><td>The Thunderhead</td><td>Storm marlin &mdash; level 50, 190 xp</td><td>Thunder squid &mdash; level 58, 230 xp</td></tr>
+        <tr><td>Black water</td><td>The Trailer Park</td><td>Mud cat &mdash; level 80, 300 xp</td><td>Bowfin &mdash; level 88, 380 xp</td></tr>
+      </table>
+      <p><b>A better rod is faster, not better at catching.</b> Every rung up the seven <a data-wiki="guides/tools">tool grades</a> takes 8% off the time between casts, and a rod also has to be of the grade the water asks for. See <a data-wiki="guides/tools">Tools</a>.</p>
+      <p><b>Raw fish is not food and Bom will not buy it.</b> Cook it. That is not an inconvenience, it is the point &mdash; cooking roughly doubles what a fish is worth and makes it actually heal. See <a data-wiki="guides/cooking">Cooking</a>, and <a data-wiki="guides/smoking">Smoked fish</a> for the seven that can be smoked into a 20-minute buff.</p>` },
+  { id: "cooking", title: "Cooking", icon: "\u{1F373}",
+    body: `<p>There is a <b>campfire</b> just inside the Yard, by the way in from the casino, and a range in some interiors. Click it with raw fish in your bag.</p>
+      <p><b>Cooking roughly doubles a fish.</b> Raw fish cannot be eaten and Bom will not buy it, so every fish is worth a stop at the fire on the way home. The fire always cooks the best thing in your bag that you are able to cook, so there is nothing to choose.</p>
+      <p><b>You will burn some at first, and then you will stop.</b> Each fish has a level at which it never burns again &mdash; that is the second number below, and it is the one worth levelling towards.</p>
+      <table class="tbl"><tr><th>Fish</th><th>Cook at</th><th>Stops burning</th><th>Heals</th><th>Sells</th></tr>
+        <tr><td>Sardine</td><td>1</td><td>20</td><td>6</td><td>16</td></tr>
+        <tr><td>Perch</td><td>5</td><td>25</td><td>7</td><td>20</td></tr>
+        <tr><td>Trout</td><td>15</td><td>40</td><td>10</td><td>28</td></tr>
+        <tr><td>Catfish</td><td>18</td><td>45</td><td>12</td><td>36</td></tr>
+        <tr><td>Mudskipper</td><td>22</td><td>50</td><td>18</td><td>56</td></tr>
+        <tr><td>Lanternfish</td><td>30</td><td>60</td><td>16</td><td>40</td></tr>
+        <tr><td>Bonefish</td><td>32</td><td>62</td><td>20</td><td>56</td></tr>
+        <tr><td>Ghost carp</td><td>36</td><td>66</td><td>22</td><td>72</td></tr>
+        <tr><td>Cloud ray</td><td>45</td><td>75</td><td>26</td><td>96</td></tr>
+        <tr><td>Sky eel</td><td>50</td><td>80</td><td>24</td><td>80</td></tr>
+        <tr><td>Storm marlin</td><td>55</td><td>85</td><td>29</td><td>88</td></tr>
+        <tr><td>Thunder squid</td><td>60</td><td>90</td><td>32</td><td>104</td></tr>
+        <tr><td>Mud cat</td><td>60</td><td>88</td><td>26</td><td>116</td></tr>
+        <tr><td>Bowfin</td><td>70</td><td>94</td><td>30</td><td>132</td></tr>
+      </table>
+      <p><b>Seven of these can be smoked instead</b>, which heals more, sells for far more and gives a 20-minute buff. It needs charcoal, and the fire does it automatically when you are carrying some. See <a data-wiki="guides/smoking">Smoked fish</a>.</p>` },
   { id: "smoking", title: "Smoked fish", icon: "\u{1F41F}",
     body: `<p><b>Smoking is cooking with charcoal.</b> Seven fish can be smoked instead of plainly cooked. A smoked fish heals more, sells for far more, and &mdash; the reason to bother &mdash; gives you a <b>20-minute buff</b> when you eat it.</p>
       <p>Do it at <b>any fire or range</b>, with the fish and the charcoal in your bag. You do not switch anything on: the fire always makes the best thing it can, so it smokes while you have charcoal and drops back to plain cooking when you run out. Charcoal is <b>burnt logs</b>, made at the furnace.</p>
@@ -96,24 +209,116 @@ export const GUIDES = [
       </table>
       <p><b>Cooking is usually what holds you back, not fishing.</b> A sky eel comes out of the water at Fishing 40 and will not smoke until Cooking 55. Only the last two are the other way round, which is what makes the Trailer Park the end of the chain.</p>
       <p><b>Nothing here buffs experience</b>, and that is deliberate &mdash; a stacked xp buff would be a multiplier on the one thing the Tower exists to pay.</p>` },
-  { id: "buffs", title: "Food, drinks and luck", icon: "🍺",
-    body: `<p>A dinner lasts 20 minutes, a drink 10. The clock only runs outside.</p><p>They make you faster, tougher or richer out there. Never at the tables.</p><p>Lucky? A real ZCoin is more likely to drop.</p>` },
-  { id: "zcoins", title: "Finding ZCoins", icon: "💎",
-    body: `<p>Any kill or catch can drop a real ZCoin. Rarely.</p><p>Bank it with Bom Trady at the Prize Counter and it's on your eastcoin.vip balance.</p>` },
-  { id: "dying", title: "Dying", icon: "💀",
-    body: `<p>You wake up in the casino and pay a <b>hospital bill</b>: 5% of the tickets you are carrying in the Yard, 10% anywhere deeper, up to a cap.</p><p>Nothing else is taken: gear, bag, bank, xp and ZCoins are all safe.</p><p>Dying in <b>the Crypt</b> costs nothing. You wake at the bottom of the stairs and run back in.</p>` },
-  { id: "jobs", title: "Today's jobs", icon: "📋",
-    body: `<p>The board in the casino. Three jobs a day, paid in tickets. They match your levels.</p><p>There's a free spin on the Prize Wheel every day too.</p>` },
-  { id: "vip", title: "VIP", icon: "👑",
-    body: `<p>Earn tickets, climb the tiers. Each tier takes a bit more off Prize Counter prices, up to 10%.</p>` },
-  { id: "bank", title: "The bank", icon: "🏛️",
-    body: `<p>The chest in the Yard, by the jukebox. It holds anything except tickets.</p>` },
-  { id: "trading", title: "Trading and the Market", icon: "🤝",
-    body: `<p>Click a player to trade items or tickets. Both of you accept, twice.</p><p><a data-wiki="npcs/Livia the Broker">Livia's</a> stall in the Yard, by the jukebox, sells things to other players while you're away. She takes 1%.</p>` },
-  { id: "islands", title: "Your island", icon: "🏝️",
-    body: `<p><a data-wiki="npcs/Charon the Ferryman">Charon's</a> cart in the Yard, by the campfire, takes you to your own island. Plant something. It grows while you're gone.</p><p><b>Yahsmeena</b>, by your cottage, sells furniture and decorations for tickets. Buy a piece, press <b>Decorate</b>, click a tile.</p>` },
-  { id: "saving", title: "Saving", icon: "💾",
-    body: `<p>It saves itself.</p>` }
+  { id: "buffs", title: "Food, drinks and luck", icon: "\u{1F37A}",
+    body: `<p><b>Eating heals you. Some food also buffs you for twenty minutes, and a drink for ten.</b> You can have one meal and one drink running at once, so the good combination is a dinner plus a drink, not two dinners.</p>
+      <h3>Dinners &mdash; 20 minutes</h3>
+      <table class="tbl"><tr><th>Dish</th><th>Heals</th><th>Gives</th></tr>
+        <tr><td>Winner's chicken dinner</td><td>6</td><td>+10% tickets</td></tr>
+        <tr><td>Steak dinner</td><td>8</td><td>+10% speed</td></tr>
+        <tr><td>High roller's chops</td><td>10</td><td>+25% rare drops</td></tr>
+        <tr><td>Fisherman's platter</td><td>14</td><td>+10% bite rate and +10% tickets</td></tr>
+      </table>
+      <p>The seven <a data-wiki="guides/smoking">smoked fish</a> are dinners too, and they heal far more &mdash; up to 34. That page has their buffs.</p>
+      <h3>Drinks &mdash; 10 minutes</h3>
+      <table class="tbl"><tr><th>Drink</th><th>Gives</th></tr>
+        <tr><td>House lager</td><td>+5% tickets</td></tr>
+        <tr><td>Top-shelf whiskey</td><td>+15% speed, but <b>&minus;10% toughness</b></td></tr>
+        <tr><td>The Safety Net</td><td>+20% toughness</td></tr>
+        <tr><td>Champagne</td><td><b>+50% ZCoin drop chance</b></td></tr>
+      </table>
+      <p>Whiskey is the only thing in the game that makes you worse at something. Champagne is the one to drink before a long session outside.</p>
+      <h3>Luck</h3>
+      <p>A <b>Lucky clover</b> turns up while you fish. Click it and your next <b>15 kills or catches</b> are lucky &mdash; a real ZCoin is 5% more likely on each. It counts down by events, not by time, so there is no rush to use it.</p>
+      <p><b>None of this touches the casino.</b> Buffs work outside only; no drink, dinner or clover can move the odds at a table.</p>` },
+  { id: "zcoins", title: "Finding ZCoins", icon: "\u{1F48E}",
+    body: `<p><b>Real ZCoins drop in the world.</b> Not tickets &mdash; the actual currency from eastcoin.vip. They are rare on purpose and there is no way to buy them with tickets, in either direction.</p>
+      <p><b>Fishing drops them</b> at roughly <b>one cast in three hundred</b>, creeping up slightly with the better fish &mdash; a sardine is about 1 in 400, a thunder squid about 1 in 280. It is close enough to flat that you should fish wherever you actually enjoy fishing.</p>
+      <p><b>Fighting drops them too</b>, scaled to what you killed, so the Thunderhead pays better than the Yard.</p>
+      <p><b>A big one lands about one time in twenty</b>, worth five of the ordinary find.</p>
+      <p>Take a ZCoin to <a data-wiki="npcs/Bom Trady">the Prize Counter</a> and it goes straight onto your real balance on the site.</p>
+      <p><b>Nothing you can buy improves the rate</b> beyond the drop buffs the game already hands out, and no world buff can ever touch the casino's odds. The two are deliberately separate.</p>` },
+  { id: "dying", title: "Dying", icon: "\u{1F480}",
+    body: `<p><b>You keep everything you are wearing and carrying.</b> Dying costs you tickets, not gear &mdash; there is no gravestone to run back to and nothing to lose permanently.</p>
+      <p><b>What it costs is a share of the tickets on you, capped by where you died.</b> The cap is what matters: the deeper the zone, the more a death stings, but it is never everything.</p>
+      <table class="tbl"><tr><th>Where</th><th>You lose</th><th>At most</th></tr>
+        <tr><td>The Yard</td><td>5%</td><td>250</td></tr>
+        <tr><td>The Gloam</td><td>10%</td><td>1,000</td></tr>
+        <tr><td>The Lantern Mire</td><td>10%</td><td>2,000</td></tr>
+        <tr><td>The Boneyard</td><td>10%</td><td>3,500</td></tr>
+        <tr><td>Cloudreach</td><td>10%</td><td>5,000</td></tr>
+        <tr><td>The Thunderhead</td><td>10%</td><td>6,000</td></tr>
+        <tr><td>The Vault</td><td>10%</td><td>8,000</td></tr>
+        <tr><td>The Trailer Park</td><td>10%</td><td>9,000</td></tr>
+      </table>
+      <p><b>Bank your tickets before a long trip out</b> and a death costs you almost nothing &mdash; the percentage is of what you are carrying.</p>
+      <p><b>The Wilderness is different.</b> Other players can attack you there and the rules are its own; see the signs on the way in.</p>
+      <p><b>Eat before you need to.</b> There is no potion and no auto-heal &mdash; cooked fish is the entire system, and the fight does not pause while you find some.</p>` },
+  { id: "jobs", title: "Today's jobs", icon: "\u{1F4CB}",
+    body: `<p><b>Three jobs a day, from a pool of seventy</b>, on the task board inside the casino. They reset every day and they are the same three for you until you claim them.</p>
+      <p>They are things you were going to do anyway &mdash; gather fifty logs, catch twenty sardines, kill some number of something &mdash; so the trick is reading them <b>before</b> you go out, not after.</p>
+      <p><b>They count themselves.</b> Nothing to start and nothing to hand in: fishing a sardine counts a sardine job wherever you are. You go back to the board only to take the money.</p>
+      <p><b>The pool is level-aware.</b> Jobs you have no chance at will not be handed to you, so what you see is doable today.</p>
+      <p>Pays in tickets, and scales with what it asked for &mdash; a few hundred for an easy gather, more for the ones that send you somewhere unpleasant.</p>` },
+  { id: "vip", title: "VIP", icon: "\u{1F451}",
+    body: `<p><b>VIP is lifetime turnover, not a purchase.</b> It counts every ticket you have ever staked, so it goes up by playing and never goes down.</p>
+      <p>What it buys is a <b>standing discount at the Prize Counter</b> &mdash; everything Bom sells, permanently cheaper.</p>
+      <table class="tbl"><tr><th>Rank</th><th>Staked</th><th>Off at the counter</th></tr>
+        <tr><td>Guest</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr><td>Bronze</td><td>25,000</td><td>2%</td></tr>
+        <tr><td>Silver</td><td>100,000</td><td>4%</td></tr>
+        <tr><td>Gold</td><td>400,000</td><td>6%</td></tr>
+        <tr><td>Platinum</td><td>1,500,000</td><td>8%</td></tr>
+        <tr><td>Diamond</td><td>5,000,000</td><td>10%</td></tr>
+      </table>
+      <p><b>Those numbers are turnover, which climbs faster than it sounds.</b> The same tickets get staked again every time you re-bet them, so Bronze is a session or two rather than a fortune.</p>` },
+  { id: "bank", title: "The bank", icon: "\u{1F3DB}️",
+    body: `<p><b>A booth holds 200 different items</b> and everything in it is safe &mdash; a death never touches your bank.</p>
+      <p><b>Click to move one thing; the 1 / 5 / 10 / All selector at the foot decides how many.</b> Or <b>shift-click to move a whole stack</b> in either direction, which is the same gesture the trade window uses.</p>
+      <p><b>Sort it</b> by Recent, A&ndash;Z, Value or Amount &mdash; the chips sit under the search box, and your choice is remembered. The header shows what the whole bank is worth, and hovering any stack tells you what that stack is worth.</p>
+      <p><b>Deposit bag</b> and <b>Deposit worn</b> empty you out in one click. Neither will take your tickets: those stay on you always, and cannot be banked, dropped or given away.</p>
+      <p><b>Your bag is the thing worth upgrading.</b> Bom sews on extra pockets &mdash; five of them, each dearer than the last, from 50,000 up to 400,000 tickets, taking you to 25 slots. The button is in the bank as well as at his counter, because "I need more room" is a thought you have with the bank open.</p>
+      <p><b>The Market delivers here.</b> Anything you buy, and anything your sell offers earn, lands in your bank whether you are online or not. See <a data-wiki="guides/trading">Trading</a>.</p>` },
+  { id: "trading", title: "Trading and the Market", icon: "\u{1F91D}",
+    body: `<h3>Face to face</h3>
+      <p><b>Click another player and offer a trade.</b> Both sides put things up, both sides see exactly what is on the table, and both have to accept. <b>Shift-click offers a whole stack</b> rather than one of a thing.</p>
+      <p><b>Tickets can be traded</b>, but nothing else about them changes: they still cannot be banked or dropped.</p>
+      <p>The swap is worked out in full on the server before either side is touched, so the old trick of offering something and getting rid of it before the trade completes has nowhere to land.</p>
+      <h3>The Market</h3>
+      <p><b>The stall in the Yard is an offer book, not a shop.</b> You post what you will sell and at what price; somebody else posts what they will pay. When the two meet it happens &mdash; whether either of you is online.</p>
+      <p><b>Everything lands in your bank.</b> What you buy, and what your sales earn, is waiting there next time you log in. Nothing to collect, nothing expires.</p>
+      <p><b>The house takes 1% of each sale.</b> That is the only fee, and it is there to stop tickets piling up forever.</p>
+      <p><b>It sells out of your bag and your bank together</b>, so you do not have to fetch things before listing them.</p>
+      <p><b>Gear cannot be sold to other players yet.</b> A reforged piece belongs to whoever reforged it &mdash; a known limitation and a real project to fix, not an oversight.</p>` },
+  { id: "islands", title: "Your island", icon: "\u{1F3DD}️",
+    body: `<p><b>Charon runs a ferry at River Bend</b> and everyone gets an island. It is yours, it keeps growing things while you are logged off, and you decide whether anybody else can visit.</p>
+      <p><b>Three sizes.</b> You start with the first and buy the others from the ferry.</p>
+      <table class="tbl"><tr><th>Island</th><th>Costs</th><th>Plots</th><th>Pedestals</th></tr>
+        <tr><td>Island</td><td>&mdash;</td><td>8</td><td>6</td></tr>
+        <tr><td>Bigger island</td><td>5,000</td><td>12</td><td>9</td></tr>
+        <tr><td>The Far Shore</td><td>20,000</td><td>20</td><td>15</td></tr>
+      </table>
+      <h3>Growing things</h3>
+      <p><b>Plant a crop and it grows in real time, whether you are online or not.</b> Click an empty plot, pick what to put in it, come back when it is ready. A ripe plot pays several of what you planted, so one crop feeds the next.</p>
+      <p><b>There are no seeds &mdash; the crop IS the seed.</b> Planting spends one of the thing you are growing. The first of each new kind has to be found: they drop from the monsters of the zone that grows them, at roughly <b>one kill in eighty</b>. So what you can grow is decided by where you can survive, not by a level gate.</p>
+      <table class="tbl"><tr><th>Crop</th><th>Harvesting</th><th>Grows in</th><th>Yield</th><th>xp</th><th>Sells</th><th>Seeded by</th></tr>
+        <tr><td>Wheat</td><td>1</td><td>10 min</td><td>3&ndash;5</td><td>30</td><td>4</td><td>grows wild in the Yard</td></tr>
+        <tr><td>Tomatoe</td><td>5</td><td>20 min</td><td>3&ndash;6</td><td>70</td><td>5</td><td>Tomatoe Hill</td></tr>
+        <tr><td>Rattlebean</td><td>10</td><td>20 min</td><td>3&ndash;5</td><td>60</td><td>10</td><td>the Gloam</td></tr>
+        <tr><td>Lanternroot</td><td>20</td><td>40 min</td><td>3&ndash;6</td><td>150</td><td>35</td><td>the Lantern Mire</td></tr>
+        <tr><td>Bonegourd</td><td>30</td><td>1 hr</td><td>3&ndash;6</td><td>400</td><td>90</td><td>the Boneyard</td></tr>
+        <tr><td>Stormcorn</td><td>40</td><td>2 hr</td><td>4&ndash;7</td><td>700</td><td>250</td><td>Cloudreach &amp; the Thunderhead</td></tr>
+        <tr><td>Golden tomatoe</td><td>50</td><td>4 hr</td><td>1&ndash;3</td><td>600</td><td>60</td><td>&mdash;</td></tr>
+      </table>
+      <p><b>Farming is background money, not a living.</b> A full set of plots kept going comes to roughly a sixth of what fighting the same zone pays &mdash; it is something that happens while you do something else, which is the whole point of it running while you are logged off.</p>
+      <h3>The rest of the island</h3>
+      <p><b>Pedestals</b> put an item on display for visitors. <b>Themes</b> repaint the place &mdash; Meadow is free, Dunes is 2,500, and Gloom is not for sale. The <b>pet pen</b> is built but not open yet.</p>
+      <p><b>Open or closed.</b> The sign by the dock decides whether anyone can ferry over. Closing it sends any visitors home.</p>` },
+  { id: "saving", title: "Saving", icon: "\u{1F4BE}",
+    body: `<p><b>There is no save button and there is nothing to lose.</b> The server owns your character, not your browser &mdash; every level, item and ticket is written down as it happens.</p>
+      <p><b>Closing the tab is safe.</b> So is losing your connection, and so is your battery dying mid-fight. You come back where you were.</p>
+      <p><b>The world keeps going without you.</b> Crops on your island grow while you are logged off, and anything your Market offers sell is waiting in your bank when you return.</p>
+      <p><b>When the server restarts</b> &mdash; which it does when the game is updated &mdash; you get a countdown in chat first, everyone is saved, and the page waits it out and reconnects you. You do not need to do anything.</p>
+      <p><b>The whole world is backed up nightly</b>, every character and every offer.</p>` }
 ];
 
 export const UPDATES = [
