@@ -355,6 +355,37 @@ Not Roman: the user wants new content original and imaginative (NGU / Dungeon Cr
   - 43 sounds are defined; 15 audio files exist today. The full table of what each one does is in the session
     notes for 2026-09-23.
 
+- **MORE QUICK KEYS, AND A PLACE TO LEARN THEM (owner asked 2026-09-23 night; H shipped, the rest not built).**
+
+  Bound today: **G** Game Room, **H** wiki (and **?**), **M** mute, **N** network/lag, **`** staff dashboard.
+  **W, A, S and D are RESERVED and deliberately empty** — the dashboard was moved off `d` the same night for this
+  reason. Movement is click-only now, so they are free; they are the four letters a hand rests on, and binding one
+  makes WASD movement impossible later without breaking a habit somebody has already formed.
+
+  Proposed, in order of value. The first four are side-panel tabs (`.tabs button[data-tab]`, one line each: find
+  the button and click it, so the tab state and repaint stay in one place); the last two are windows people open
+  without walking to anything.
+
+  | key | opens | why it earns a letter |
+  |---|---|---|
+  | **I** | Inventory tab | the most-looked-at thing in the game, and checked mid-fight |
+  | **E** | Equipment tab | pairs with I; where the pet and the gear live |
+  | **K** | Skills tab | the MMO convention. NOT `s`, which is reserved with WASD |
+  | **Q** | Quests tab | the convention everywhere else |
+  | **J** | Today's jobs (`dailyWin`) | checked constantly and has no button at all |
+  | **L** | Hiscores (`hsBtn`) | the only button on the bar with no key |
+
+  **Deliberately not:** Picks, Movies & TV, the jukebox and the wardrobe (real windows, but opened occasionally —
+  a key used twice a session is a letter spent for nothing); `Tab` to cycle panels (the browser owns it for focus,
+  and taking it breaks keyboard navigation); and anything CONTEXTUAL — bank, anvil, shop — which would be dead
+  everywhere except the one tile it works on.
+
+  **Ship the wiki page in the same pass, not later.** Nothing here is discoverable: the only way to learn a key is
+  hovering a button, and two of them have no button at all. Six more keys without a Keys page is six more secrets.
+
+  **And then stop.** Twelve bound letters is most of the comfortable range, and this game grows a system a week —
+  every letter taken now is one unavailable to whatever lands after Oct 1.
+
 - **PETS NEED SPACE AND SOME LIFE (owner, 2026-09-23 night: "the pets are right in the players space, almost
   attached to them, lets give them some simple animations and some spacing from the character").**
 
