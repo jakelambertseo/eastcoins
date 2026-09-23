@@ -1,6 +1,122 @@
 # EastScape backlog
 
-Local only (like BACKLOG.md): never copied to the deploy repo. Newest ideas at the bottom of each section; move things to **Done** with the date when they ship. The in-game wiki's Updates log (`v3/assets/js/eastscape-wiki.js`) is the player-facing record; this file is the builder's.
+Local only (like BACKLOG.md): never copied to the deploy repo. The in-game wiki's Updates log
+(`v3/assets/js/eastscape-wiki.js`) is the player-facing record; this file is the builder's.
+
+**How this file is laid out** (sorted 2026-09-23, because it had become two documents in one):
+
+1. **ROAD TO V1** — immediately below. The plan for Oct 1: ship / test / launch day / explicitly not in v1.
+   If you read one section, read that one.
+2. **Open work** — `Next up`, `Later`, `Foundations`. Scoped items with the reasoning behind them.
+3. **Findings** — the load test, security, economy and phone passes of 2026-09-18. Several items in them are
+   now closed and are marked so in place; the *reasoning* is why they are kept rather than deleted.
+4. **History** — every dated `2026-09-XX: vNNN` section from `## Launch event` downward is an append-only log
+   of what shipped and why. Do not reorganise it; add to the bottom.
+
+Newest ideas go at the bottom of `Next up`. When something ships, mark it where it sits — do not delete it,
+because the reasoning is most of the value.
+
+---
+
+# ROAD TO V1 — Thursday 1 October (sorted 2026-09-23, 8 days out)
+
+This section is the plan; everything below it is the reference. Sections are ordered
+**Ship → Test → Launch day → Not in v1**. Anything not named here is not in v1, and
+that is a decision rather than an oversight. The launch date, the dress-rehearsal
+reasoning and the switchover itself live in `EASTSCAPE-LAUNCH.md` — this is the work.
+
+**The state of it: the game is content-complete for v1 and has been for days.** Nine
+skills work end to end, the world has ten-plus areas, the casino tables are real, the
+Crypt and the Tower are in, and the money paths were audited clean. What is left is
+almost entirely *first-contact* work — the bits a player meets in the first ten minutes
+and we have never watched anyone meet. That is the risk, not the feature list.
+
+## 1. SHIP — blockers, hardest first
+
+- [ ] **A first-login tutorial for the tables.** The single highest-value item on this
+      page. The tables ARE the game and a new player does not know tickets and ZCoins
+      are the same bet — this is exactly where Kellzifer got lost, which is why it is
+      a blocker and not a nice-to-have. Three or four skippable steps, triggered on
+      first walking into the casino, NOT at login (`welcomeOnce` already owns that
+      moment). Machinery to reuse: `welcomeOnce` and the `HOUSE TOUR` tour box.
+- [ ] **Sprite sheets.** Startup is **154 file requests against a 160 budget** — at the
+      ceiling, today, before launch traffic. Packing item icons into one sheet and core
+      scene art into 2-3 takes it to ~5. This was always scheduled for "the last week
+      once art settles"; that week is now, and art has settled.
+- [ ] **More to do in the second thirty minutes.** Five quests exist (`firewood`,
+      `cattle`, `catch`, `scrapline`, `theking`), two from the same NPC on the starting
+      farm. The first ten minutes are fine and the next thirty have no thread. The
+      2026-09-18 pass called this the biggest content gap before Oct 1 and it still is.
+      Cheapest fills, in order: Via Appia's Vibius quests (written, not built), a Nonna
+      Tomatoe quest, Cassia's cooking quest.
+- [ ] **Decide the game's admin list** (`EASTSCAPE_ADMINS` in `_tickets.js`). It is
+      `bootypaper` alone, deliberately, from when this was being built. It is a
+      different list from the site's `ADMIN_ALLOWLIST` on purpose. One line, but it
+      needs the owner to say whether zwades and andyreidisapawg get it, and launch day
+      is the worst time to discover only one person can moderate.
+- [ ] **`ESCAPE_WORKER_URL` / `ESCAPE_KEY` on Pages.** Still not confirmed live.
+      Backups and the dashboard's health card both wait on it, so today the nightly
+      world backup is not proven to be running. Verify before launch, not after.
+- [ ] **Wiki pass.** Guides for every skill and area; Updates log current. Partly done
+      as features landed — it needs one read-through, not a rewrite.
+
+## 2. TEST — nothing here is new code, it is confidence
+
+- [ ] **A real phone.** The only pass so far was static. Known from it: tiles land
+      ~18 CSS px on a 390px screen against the ~44px a finger wants. Nothing is known
+      to be broken; nothing is known to work either. **Highest-risk untested thing we
+      have**, because a meaningful share of a Twitch audience is on a phone.
+- [ ] **Someone fresh plays the first ten minutes**, watched, without help. This is how
+      the tutorial item above gets its content — do it before building the tutorial,
+      not after.
+- [ ] **The socket load test against prod.** Tooling is done and the in-process half
+      has run (200 players, p95 0.6ms of a 50ms budget). The real-socket half has never
+      been run against production.
+- [ ] **This week's shipped work, by players, not by me**: farming (planting switched
+      back on 2026-09-23, four new crops, nobody has grown one yet), the bank QOL
+      (shift-click and sorting, shipped today), reforging and tools, the Tower.
+- [ ] **A restore from the nightly backup**, end to end. It is written and documented
+      as tested; re-run it once while it is cheap to be wrong.
+
+## 3. LAUNCH DAY
+
+- [ ] **The switchover**: Casino in the nav opens the game. See `EASTSCAPE-LAUNCH.md`.
+- [ ] **Announcement** via the site bell — a notice, not chat, so it cannot surprise
+      anyone mid-stream — plus a known-issues list written BEFORE launch.
+- [ ] **Freeze deploys during launch hours** unless something is on fire. `planRestart`
+      exists for when it is: it counts down, saves everyone, and the client waits out
+      the deploy rather than racing it.
+- [ ] **Watch the dashboard card** (tick p50/p95, online, busiest scenes) — which
+      depends on the `ESCAPE_WORKER_URL` blocker above.
+
+## 4. EXPLICITLY NOT IN V1
+
+Named so nobody rediscovers them on 30 September and wonders.
+
+| | why not |
+|---|---|
+| **The Moon Is Stuck** (Halloween) | paused 2026-09-18 by the owner to run mid-October. Off the critical path by decision. It takes gear-on-character with it |
+| **Pet pen, breeding, farming part 4** | the pen is farming's sink and is designed, not built. After Oct 1 |
+| **Party quests + viewport culling** | culling is only needed past ~80 in one room; launch will not reach it. Both post-launch |
+| **Scavenger hunts, world boss, daily log-in bonus** | all three are social/retention features, which matter in week two, not week one |
+| **Instanced gear / player market** | its own project — it touches bank, shop, trade, drops and the Exchange |
+| **ASCENSION, Thieving, Trailer Park theft loop** | undesigned |
+| **Loading states for the older windows** | real, small, and a paper cut rather than a blocker. First thing after launch |
+
+## 5. THE HONEST RISK LIST
+
+1. **Nobody outside this project has played it.** Every item in section 2 is a variant
+   of this one sentence. The feature list is not what will go wrong.
+2. **Phones.** Untested, and a Twitch audience skews mobile.
+3. **The first five seconds are contested.** The welcome popup, the tutorial and the
+   daily log-in bonus all want the moment a player arrives. Decide the order once,
+   deliberately, instead of stacking them.
+4. **Launch-day scenes are the quadratic case.** Egress is players x players in a room;
+   the 2026-09-18 fix halved the constant without changing the shape. 30 in the Yard is
+   comfortable, 80 is ~0.7 Mbit/s each. If launch is much bigger than expected, the
+   lever is splitting the arrival scene, not shipping culling in a panic.
+
+---
 
 ## 2026-09-21: v104, the crypt dressed, reconnects, small asks
 
@@ -72,10 +188,10 @@ Not Roman: the user wants new content original and imaginative (NGU / Dungeon Cr
   Wraiths, Chandelier Spiders and Revenants, because a shop that sells Onyx
   makes the copper vein the best route to the best gear in the game.
   scratchpad/eastscape-combattest.mjs, 78 assertions.
-- **Still to do on gear**: item icons (all 55 new pieces fall back to emoji),
-  skill icons for Attack/Strength/Defence (the old skill_melee.png is unused
-  now), and an amulet slot — the user's RPG MO reference was a necklace, and
-  only the ring slot exists today.
+- **Still to do on gear**: item icons (all 55 new pieces fall back to emoji) and
+  skill icons for Attack/Strength/Defence (the old skill_melee.png is unused now).
+  ~~an amulet slot~~ **DONE** — `SLOTS` is helm, amulet, weapon, body, shield,
+  legs, gloves, boots, ring, pet.
 - Via Appia content: Centurion Vibius's quests (The Toll Road, The Chief's Head); the Bandit Camp past the barricade, with the Bandit Chief boss.
 - Tomatoe Hill content: a Nonna Tomatoe quest; what tomatoes are for (cooking: sauce, pizza?).
 - Remaining doc quests: Harvest Home, Cassia's "Supper for the Ludus" (cooking).
@@ -180,6 +296,33 @@ Not Roman: the user wants new content original and imaginative (NGU / Dungeon Cr
 
   **DECIDED: no seed drops in the Tower.** The Tower deliberately pays xp and nearly nothing else; seeds would make
   it the best farming spot in the game by accident.
+
+- **DAILY LOG-IN BONUS (owner, 2026-09-23, with an RPG MO screenshot as the reference; not built).** A panel on
+  login: "Today is your no. 2 consecutive login day", with milestone tiles — Day 2 an xp reward, Day 5 currency,
+  Day 10 a mystery box — the current day marked TODAY and the rest showing "3 days remaining".
+
+  **THERE IS ALREADY A CONSECUTIVE-DAY STREAK IN THE GAME AND THIS MUST USE IT, NOT ADD A SECOND.** The Daily
+  Prize Wheel (`prizeSpin`, worker ~2512) keeps `C.spin = { day, streak }`: one spin a Chicago day, the streak
+  incrementing only when the last spin was `dayBefore(day)` and resetting to 1 otherwise, worth +10% cash a day to
+  a cap of 7 (`PRIZE.streakStep` / `streakMax`). Two different "days in a row" counters that can disagree — because
+  one counts logins and the other counts spins — is the worst possible version of this feature, and it is the thing
+  to get right before any art is drawn. Either the popup reads `C.spin.streak` and the wheel keeps owning it, or
+  the streak moves out to `C.login = { day, streak }` and the wheel reads THAT; the second is cleaner, because a
+  login streak should not break when somebody logs in and forgets to walk to the wheel.
+
+  Decisions, and the first one is the real one:
+  - **Is this a second daily reward, or a better front end for the one we have?** RPG MO runs both. We already give
+    a wheel spin every day; a login popup that also pays turns one daily into two. Cheapest honest version: the
+    popup shows the streak and the milestones, and the CLAIM is still the wheel — one reward, two surfaces, and the
+    popup becomes the thing that reminds people the wheel exists.
+  - **Milestones are the new part.** The wheel is per-day random; the screenshot's appeal is a KNOWN prize on a
+    known day, which is what makes someone come back on day 4. Days 2/5/10 mirrored from the reference is a fine
+    start; anything past ~14 punishes the audience we have (casino-first, plays in bursts around football).
+  - **What it may never pay: ZCoins.** Same rule as the world boss — a daily, automatic, no-effort faucet is the
+    one shape that must not touch real currency. Tickets, xp, a mystery box, a consumable.
+  - Do not stack it on the login welcome popup: `welcomeOnce` already fires there, and the first-login tutorial for
+    the tables (in NOT BUILT) wants that moment too. Three things competing for the first five seconds is worse
+    than any one of them.
 
 - **GOLDTOMATOE IS NOW THE WORST CROP IN THE GAME (found 2026-09-23 while shipping the four middle crops; one
   line).** At level 50 it pays ~300 tickets/hr and 3,000 xp/hr against Stormcorn's 11,250 and 7,000 at level 40 —
@@ -407,9 +550,11 @@ is worth writing down why, so a later change does not undo it:
   the page sends, and `onMessage` refuses the whole admin branch without it.
 - Forty messages a second per connection, dropped above that.
 
-Three things to close:
+Three things to close. **(1) and the `workers.dev` note below are DONE** — `/kick?id=` exists on the worker and
+the ban endpoint calls it, and `ticket.js` points at `play.eastcoin.vip`. **(2) is still open and needs the
+owner's call.** (3) is still open and still minor.
 
-1. **A ban does not kick a live session.** `getSessionUser` returns null for a
+1. ~~**A ban does not kick a live session.**~~ **DONE.** `getSessionUser` returns null for a
    banned id, so a banned player cannot get a new ticket — but the game holds an
    open socket, and nothing re-checks. Ban someone mid-session and they keep
    playing until they close the tab. Needs a key-guarded `/kick?id=` on the
@@ -468,6 +613,12 @@ My read: (1), and it is worth doing before launch rather than after, because
 taking an income away from players who have got used to it is much worse than
 never having offered it.
 
+**DONE (2026-09-18 evening): option (1) shipped as AFK auto-stop** — `AFK_MS`,
+three idle minutes, which closes both loops. The rate question behind it was
+re-opened and re-measured on 2026-09-23 with tools/eastscape-grind-sim.mjs, which
+is now the authority on income per hour: 4.7k tickets/hr at level 1 rising to 83k
+at level 50. Use that, not the Cash/hr table above, which predates tickets.
+
 ## Findings from the phone and new-player pass (2026-09-18, static — still needs a real device)
 
 - **The canvas letterboxes correctly.** `fit()` uses `Math.min(w/W, h/H)` and
@@ -481,7 +632,9 @@ never having offered it.
   `.wiki nav { display: none }` with nothing replacing it, so a phone can open
   the wiki and then not move around it. A real bug, and cheap to fix.
 - **There are three quests in the whole game** — Firewood, Cattle Drive and
-  Catch of the Day, two of them from the same NPC on the starting farm. The
+  Catch of the Day, two of them from the same NPC on the starting farm.
+  **(2026-09-23: five now — `scrapline` and `theking` were added — but the point
+  stands and this is still the largest content gap before launch.)** The
   first ten minutes are fine; the second thirty have no thread to follow. This
   is the biggest content gap before Oct 1 and it is not on any checklist line
   yet.
@@ -542,7 +695,7 @@ dark outline, flat shading".
 - [x] **Backups**: nightly copy of every `char:*`, the Exchange and islands from DO storage to the site's R2 `BACKUPS` bucket, plus a tested restore path. **Done 2026-09-18. Nightly at 09:20 UTC via the picks cron (NOT 09:00 — the D1 backup owns that minute). Worker /export saves everyone then dumps; /api/eastscape/backup gzips to R2 eastscape/world/, prunes at 30 days, notes eastscape:backup:last. Restore refuses while anyone is connected and is a dry run without --apply.**
 - [x] **Graceful restarts**: an admin "server restarting in N minutes" broadcast, save everyone before deploy, client auto-reconnects quietly (a worker deploy drops every connection). Freeze deploys during launch hours unless urgent. **Done 2026-09-18. planRestart() counts down (10/5/2/1min, 30s, 10s), saveAll() writes every character and the Exchange, then close 4001 and the page waits out the deploy instead of racing it. Admin `restart <secs>` / `restart cancel`, or POST /restart?in=120 with X-Escape-Key before a deploy.**
 - [ ] **Sprite sheets** (last week before launch, once art settles): pack the item icons into one sheet and the core scene art into 2–3, with a build script that regenerates them; startup goes from ~143 requests to ~5. Then lower `startupFiles` in tools/eastscape-budget.mjs to ~30.
-- [ ] **Custom domain for the game server** (e.g. `play.eastcoin.vip`): some school/work networks and ad-blockers block `*.workers.dev`.
+- [x] **Custom domain for the game server.** **DONE** — `ticket.js` serves `wss://play.eastcoin.vip/ws`; the `*.workers.dev` hardcode noted in the security pass is gone with it.
 - [x] Monitoring live (see Foundations) and watched on launch day. **Built; needs ESCAPE_WORKER_URL set to go live.**
 - [x] Content check script passing; every item, mob and NPC has art; no placeholder text. **Script passing 2026-09-18, 0 errors. Art and text still want a human pass.**
 - [ ] Wiki pass: guides for every skill, area, and the Halloween event; Updates log current.
@@ -550,7 +703,7 @@ dark outline, flat shading".
 - [ ] New-player flow: first 10 minutes tried by someone fresh (tutorial hints, Waldy/Tom quests, where to go next).
 - [x] Economy sanity: starting Cash, shop prices, Exchange tax, drop rates; nothing that mints Cash endlessly. **Measured 2026-09-18 — see Findings. No money printer, but two AFK faucets at ~2,000 Cash/hr against a 1,350 Cash full gear set.**
 - [x] Security pass: tickets expire, admin commands only for the admin list, no client-trusted values (positions, damage, prices), bans respected. **Audited 2026-09-18 — see Findings. Nothing exploitable found in the money paths; two gaps worth closing (a ban does not kick a live session; the game's admin list is bootypaper only).**
-- [ ] Halloween event built, tested on dates faked forward, and switched on by date.
+- [x] ~~Halloween event built and switched on by date.~~ **NOT A LAUNCH ITEM** — the event was paused on 2026-09-18 to run mid-October, so it is off the Oct 1 critical path by decision, not by slippage.
 - [ ] Announcement ready (site notice via the bell, not chat) and a known-issues list for day one.
 
 ## Done
@@ -946,7 +1099,9 @@ money bugs took the time instead. Nothing here is blocked — they are just unst
   put a message in the body BEFORE the `import()`, replace it in the `.then`, and say something useful in the
   `.catch` instead of leaving the panel blank.
 
-## The Trailer Park (late-game map) — idea, 2026-09-22
+## The Trailer Park (late-game map) — **BUILT**; this is the original idea, kept for the parts not done
+
+**Shipped since.** The map, KnownSpade and the loot (catalytic, slagstone, pinelogs, bogwoodlogs, mudcat, bowfin) are in and it is the best gathering in the game. What is still only an idea below: the THEFT loop (converters as a node the locals object to) and Thieving as a skill.
 
 A late-game outdoor map: a trailer park full of rednecks. **KnownSpade is the boss there.**
 
@@ -963,7 +1118,7 @@ Worth thinking about when it is built:
 - KnownSpade as a named boss needs a drop table worth the trip, at Starfall/Eclipse tier or above.
 - Level gate: it is late game, so it sits past Cloudreach/Thunderhead in the outdoor chain.
 
-## The Run's door is hard to find (2026-09-22)
+## ~~The Run's door is hard to find~~ — **FIXED 2026-09-22**: it is a rope ladder at 10,2 in the Yard. Kept for the reasoning.
 
 The agility course entrance is a `roomdoor` at **6,5 in the Yard** — far north-west, the opposite
 corner from the casino exit people arrive through. The owner could not find it. Nothing signposts
