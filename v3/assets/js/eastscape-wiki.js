@@ -82,6 +82,20 @@ export const GUIDES = [
     body: `<p>Every scene has water with two fish. You need a rod.</p><p>Fish heal when eaten and trade in for tickets. It pays a bit less than fighting, and nothing hits you.</p><p>Lucky clovers only come from fishing.</p><p>Cook what you catch at the campfire by the Yard's entrance: it heals more and sells for double.</p>` },
   { id: "cooking", title: "Cooking", icon: "🍳",
     body: `<p>There is a <b>campfire</b> just inside the Yard, by the way in from the casino. Click it with raw fish in your bag.</p><p>Every fish can be cooked. A cooked fish <b>heals a lot more</b> and <b>sells for twice</b> the raw one, so it is worth stopping at the fire on the way back.</p><p>You will burn some at first. Each fish stops burning once your Cooking is high enough, and the fire always cooks the best thing in your bag that you can cook.</p>` },
+  { id: "smoking", title: "Smoked fish", icon: "\u{1F41F}",
+    body: `<p><b>Smoking is cooking with charcoal.</b> Seven fish can be smoked instead of plainly cooked. A smoked fish heals more, sells for far more, and &mdash; the reason to bother &mdash; gives you a <b>20-minute buff</b> when you eat it.</p>
+      <p>Do it at <b>any fire or range</b>, with the fish and the charcoal in your bag. You do not switch anything on: the fire always makes the best thing it can, so it smokes while you have charcoal and drops back to plain cooking when you run out. Charcoal is <b>burnt logs</b>, made at the furnace.</p>
+      <table class="tbl"><tr><th>Smoked</th><th>Catch at</th><th>Where</th><th>Smoke at</th><th>Coal</th><th>Heals</th><th>For 20 minutes</th></tr>
+        <tr><td><b>Ghost carp</b></td><td>Fishing 35</td><td>Flooded crypt, the Boneyard</td><td>Cooking 40</td><td>1</td><td>24</td><td>+8% rare drops</td></tr>
+        <tr><td><b>Sky eel</b></td><td>Fishing 40</td><td>Hole in the cloud, Cloudreach</td><td>Cooking 55</td><td>1</td><td>26</td><td>+8% speed</td></tr>
+        <tr><td><b>Cloud ray</b></td><td>Fishing 45</td><td>Hole in the cloud, Cloudreach</td><td>Cooking 50</td><td>1</td><td>28</td><td>+8% toughness</td></tr>
+        <tr><td><b>Storm marlin</b></td><td>Fishing 50</td><td>The sea below, the Thunderhead</td><td>Cooking 60</td><td>2</td><td>31</td><td>+10% tickets</td></tr>
+        <tr><td><b>Thunder squid</b></td><td>Fishing 58</td><td>The sea below, the Thunderhead</td><td>Cooking 65</td><td>2</td><td>34</td><td>+15% toughness</td></tr>
+        <tr><td><b>Mudcat</b></td><td>Fishing 80</td><td>Black water, the Trailer Park</td><td>Cooking 65</td><td>2</td><td>28</td><td>+15% rare drops</td></tr>
+        <tr><td><b>Bowfin</b></td><td>Fishing 88</td><td>Black water, the Trailer Park</td><td>Cooking 75</td><td>3</td><td>32</td><td>+10% tough and +15% rare</td></tr>
+      </table>
+      <p><b>Cooking is usually what holds you back, not fishing.</b> A sky eel comes out of the water at Fishing 40 and will not smoke until Cooking 55. Only the last two are the other way round, which is what makes the Trailer Park the end of the chain.</p>
+      <p><b>Nothing here buffs experience</b>, and that is deliberate &mdash; a stacked xp buff would be a multiplier on the one thing the Tower exists to pay.</p>` },
   { id: "buffs", title: "Food, drinks and luck", icon: "🍺",
     body: `<p>A dinner lasts 20 minutes, a drink 10. The clock only runs outside.</p><p>They make you faster, tougher or richer out there. Never at the tables.</p><p>Lucky? A real ZCoin is more likely to drop.</p>` },
   { id: "zcoins", title: "Finding ZCoins", icon: "💎",

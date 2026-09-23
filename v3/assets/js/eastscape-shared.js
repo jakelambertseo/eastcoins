@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 181;
+export const VERSION = 182;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -3371,7 +3371,16 @@ export const MIGRATIONS = [
     c.xp = { ...(c.xp || {}) };
     c.xp.melee = Math.max(Number(c.xp.melee) || 0, Number(c.xp.attack) || 0, Number(c.xp.strength) || 0, Number(c.xp.defence) || 0);
     delete c.xp.attack; delete c.xp.strength; delete c.xp.defence;
-  }
+  },
+  /* WEAR A PET SOMEBODY ALREADY OWNS (2026-09-23, the owner: "i still cant see peoples applied pets").
+     Nothing was broken. A pet drop has worn itself since 2026-09-22 when the slot is empty, but every pet found
+     BEFORE that went into `c.pets` and stayed there with `c.eq.pet` null — so activePet() returned null, the
+     roster carried no pet, and the thing was invisible to its owner and to everyone else. Correct behaviour for
+     an unworn pet; indistinguishable from a bug from the outside, which is exactly what happened here.
+     An unworn pet does nothing for anybody, so wearing it is strictly a gain, and the same reasoning the drop
+     already uses applies: one kill in a thousand should not need a toggle hunted for. An existing choice is never
+     displaced — if something IS worn, this leaves it alone. */
+  (c) => { if (!c.eq?.pet && Array.isArray(c.pets) && c.pets.length) c.eq.pet = c.pets[0].id; }
 ];
 export const SAVE_V = MIGRATIONS.length - 1;
 
