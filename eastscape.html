@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=195">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=196">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=12">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -237,12 +237,8 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 .slot.nobuy{opacity:.45}
 .cols2{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
 @media (max-width:620px){.cols2{grid-template-columns:1fr}}
-.stances{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 8px}
 .invsort{margin-right:6px;font:800 11px/1.4 Nunito,sans-serif;padding:1px 9px;border-radius:9px;border:1px solid #8a6a3a;background:#e8d8a8;color:#3a2616;cursor:pointer;vertical-align:1px}
 .invsort:hover{background:#fff3c8}.invsort:focus-visible{outline:2px solid #3a2616;outline-offset:1px}
-.stbtn{font-size:13px;padding:3px 6px;display:flex;align-items:center;justify-content:center;gap:5px}
-.stbtn .ico{width:22px;height:22px;image-rendering:pixelated;flex:none}
-.stbtn.on{color:#ffe45c;box-shadow:inset 0 0 0 2px rgba(255,228,92,.55)}
 .stnote{display:block;padding:4px 10px 2px;opacity:.75;font-size:12px;line-height:1.35}
 .skh{display:flex;align-items:center;gap:8px;margin:10px 10px 2px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;opacity:.6}
 .skh::after{content:"";flex:1;height:1px;background:currentColor;opacity:.35}
@@ -463,6 +459,12 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 .wiki article h2 i{font-style:normal;font-size:34px}
 .wiki article h3{margin:14px 0 6px;font-size:15px;color:#5a2a1a}
 .wiki article .lede{color:#5a4a30;margin:0 0 8px}
+.wiki article .crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:0 0 10px;font-size:12px;font-weight:700}
+.wiki article .crumbs a{cursor:pointer;text-decoration:underline}
+.wiki article .crumbs span{color:#6a5a40}
+.wiki article .crumbs i{font-style:normal;color:#9a8a68}
+#chatLog .wlink{cursor:pointer;font-weight:800;color:#c8a13c;text-decoration:underline;text-underline-offset:2px}
+#chatLog .wlink:hover{color:#ffd77a}
 .wiki article .wguide{margin:0 0 10px;padding:8px 11px;border-radius:8px;background:rgba(200,161,60,.16);font-weight:700}
 .wiki article .wguide a{font-weight:800}
 .wiki article a,.wiki article [data-wiki]{color:#1a5a8a;font-weight:700;cursor:pointer;text-decoration:underline;text-decoration-thickness:1px}
@@ -912,10 +914,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=195";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=196";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=115").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=116").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=12";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -1283,10 +1285,48 @@ let chatOpen = false, unread = 0;
    at login. A WORD that is exactly an emote's name becomes its picture; everything else stays text, put in as text nodes, so
    nothing a player types is ever read as HTML. Lines that arrived before the list did are redrawn when it lands. */
 let EMO = null; const emoLoad = () => (emoLoad.p ||= fetch("/api/eastscape/emotes").then((r) => r.json()).then((j) => { EMO = new Map((j?.emotes || []).map((e) => [e[0], e])); document.querySelectorAll("#chatLog span[data-t]").forEach((s) => emoFill(s, s.dataset.t)); }).catch(() => { EMO = new Map(); }));
-function emoFill(span, text) {
-  span.textContent = ""; if (!EMO?.size) { span.textContent = text; return; }
+function emoWords(span, text) {
+  if (!EMO?.size) { span.append(text); return; }
   for (const part of String(text).split(/(\s+)/)) { const e = EMO.get(part); if (!e) { span.append(part); continue; }
     const im = document.createElement("img"); im.src = e[1]; im.alt = im.title = e[0]; im.className = "emo"; im.loading = "lazy"; span.append(im); }
+}
+/* [[WIKI LINKS]] IN CHAT (2026-09-23, the owner: a way to link a wiki page so it opens for whoever clicks it).
+   Typing [[smithing]] or [[storm marlin]] puts a chip in the line; clicking it opens that page in the READER's own
+   wiki, which is the point — you are pointing somebody at a page, not dragging them anywhere.
+
+   Two rules it inherits from the emote code above and must keep. The label is put in with append() as a TEXT NODE,
+   never innerHTML, so nothing a player types is ever read as HTML. And the target is resolved AT CLICK TIME, not
+   when the line is drawn: the wiki module is lazy, so at render time there may be nothing to resolve against. */
+const WIKI_LINK = /\[\[([^\[\]\n]{1,48})\]\]/g;
+function wikiChip(label) {
+  const a = document.createElement("a");
+  a.className = "wlink"; a.textContent = label; a.title = `Open "${label}" in the wiki`;
+  a.addEventListener("click", (ev) => { ev.preventDefault(); openWikiFor(label); });
+  return a;
+}
+/** best page for what somebody typed: an exact title, then a route, then the search page, which always works */
+function openWikiFor(label) {
+  const go = () => {
+    const q = String(label).trim().toLowerCase();
+    const pages = wikiPages();
+    const hit = pages.find((x) => x.title.toLowerCase() === q)
+      || pages.find((x) => x.route.toLowerCase() === q)
+      || pages.find((x) => x.route.toLowerCase().endsWith(`/${q}`))
+      || pages.find((x) => x.title.toLowerCase().includes(q));
+    if ($("wikiWin").hidden) openWin("wikiWin");
+    wikiGo(hit ? hit.route : `search/${label}`);
+  };
+  if (WK.stub) loadWiki().then(go).catch(() => {}); else go();
+}
+function emoFill(span, text) {
+  span.textContent = "";
+  const str = String(text); let i = 0, m; WIKI_LINK.lastIndex = 0;
+  while ((m = WIKI_LINK.exec(str))) {
+    if (m.index > i) emoWords(span, str.slice(i, m.index));
+    span.append(wikiChip(m[1]));
+    i = m.index + m[0].length;
+  }
+  if (i < str.length) emoWords(span, str.slice(i));
 }
 /* (v130) THREE TIERS, SHOWN. A star and a colour beside the name, so it is obvious in a busy room who is staff — and so a
    mod asking somebody to pack it in is visibly a mod. The role rides on the chat line itself rather than being looked up,
@@ -1641,7 +1681,6 @@ function toolLine(skill, lvl) {
 const tixPrice = (n) => `${ico("tickets")}${Math.round(n).toLocaleString()}`;
 const ico = (k) => { const a = ART_ALIAS[k] || k; return ITEM_ART.has(a) ? artOf(a) : ITEMS[k]?.icon || ""; };
 // the stance buttons wear the skill each one trains; Controlled (all three) wears the old Melee icon
-const STANCE_ICO = { accurate: "attack", aggressive: "strength", defensive: "defence", controlled: "melee" };
 const sico = (k) => (SKILL_ART.has(k) ? artOf(`skill_${k}`) : SKILLS[k]?.icon || "");
 // on the canvas: centred on x, y, size pixels square
 function drawIco(k, x, y, size, skill) {
@@ -4163,6 +4202,23 @@ function wikiGo(route, setNav = true) {
   if (setNav) wikiNav(route);
   if (!location.hash.startsWith(`#wiki/${route}`)) history.replaceState(null, "", `#wiki/${route}`);
   const [kind, ...rest] = route.split("/"), id = decodeURIComponent(rest.join("/")), page = $("wikiPage");
+  /* BREADCRUMBS (2026-09-23, the owner). The wiki is 26 guides and a page for every item, monster, skill, quest,
+     place and person, and the only ways back were the nav and the browser. A crumb per level, built from the route
+     itself so a new kind of page gets one without anybody remembering to add it. `list/<Group>` is the section
+     index that already exists, which is what the middle crumb points at. */
+  const CRUMB_OF = { items: "Items", monsters: "Monsters", skills: "Skills", quests: "Quests", npcs: "People", areas: "Areas", guides: "Guides", pets: "Pets" };
+  const crumbs = () => {
+    const out = [["home", "Home"]];
+    if (kind === "list") out.push([null, id]);
+    else if (kind === "search") out.push([null, `Search: ${id}`]);
+    else if (kind === "updates") out.push([null, "Updates"]);
+    else if (CRUMB_OF[kind]) {
+      out.push([`list/${CRUMB_OF[kind]}`, CRUMB_OF[kind]]);
+      const t = wikiPages().find((x) => x.route === route);
+      out.push([null, t ? t.title : id]);
+    } else if (kind !== "home") out.push([null, id || kind]);
+    return out;
+  };
   const cards = (list) => `<div class="cards">${list.map((p) => `<a class="card" data-wiki="${esc(p.route)}"><i>${p.icon}</i>${esc(p.title)}</a>`).join("")}</div>`;
   let html = "";
   if (kind === "home") html = `<h2><i>🎰</i>EastScape Wiki</h2><p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>
@@ -4252,7 +4308,11 @@ function wikiGo(route, setNav = true) {
       ${qs.length ? `<h3>Quests</h3><p>${qs.map((k) => wl(`quests/${k}`, esc(QUESTS[k].name))).join(", ")}</p>` : ""}
       <h3>Says</h3><ul>${n.lines.map((l) => `<li>“${esc(l)}”</li>`).join("")}</ul>`;
   }
-  page.innerHTML = html || `<h2><i>❓</i>Not found</h2><p class="lede">There's no page here yet.</p>`;
+  const cr = crumbs();
+  const crumbHtml = cr.length > 1 ? `<nav class="crumbs">${cr.map(([r, t], n) => (r ? `<a data-wiki="${esc(r)}">${esc(t)}</a>` : `<span>${esc(t)}</span>`) + (n < cr.length - 1 ? `<i>\u203A</i>` : "")).join("")}</nav>` : "";
+  /* the parentheses matter: crumbHtml is non-empty on nearly every route, so `crumbHtml + html || fallback` would
+     make the whole thing truthy and the Not-found page could never appear. */
+  page.innerHTML = crumbHtml + (html || `<h2><i>❓</i>Not found</h2><p class="lede">There's no page here yet.</p>`);
   page.scrollTop = 0;
 }
 function wikiUpdate(u) { return `<div class="up"><small>${u.date}</small><h3 style="margin:2px 0 4px">${esc(u.title)}</h3><ul>${u.items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></div>`; }
@@ -4431,11 +4491,7 @@ function renderPanel() {
     }));
   }
   if (tab === "skills") {
-    // The stance decides where a hit's xp goes. Every stance pays the same
-    // total, so the copy says what you GET, never which is best.
-    const st = me.stance || G.DEFAULT_STANCE;
-    const stances = Object.entries(G.STANCES).map(([k, v]) =>
-      `<button type="button" class="btn stbtn${k === st ? " on" : ""}" data-stance="${k}" title="${esc(v.blurb)}">${STANCE_ICO[k] ? sico(STANCE_ICO[k]) : v.icon} ${esc(v.name)}</button>`).join("");
+    /* (2026-09-23) the stance buttons are gone: they were removed from the game on 2026-09-19 and had been sitting here ever since, four of them, promising xp splits that do not exist and doing nothing at all when clicked. */
     p.innerHTML = `      ${(() => {
       const rows = Object.entries(xpSess).filter(([k, r]) => SKILLS[k] && r.xp > 0).sort((a, b) => b[1].last - a[1].last);
       if (!rows.length) return "";
@@ -4601,11 +4657,7 @@ function renderAdmin(p) {
 document.addEventListener("click", (e) => {
   if (e.target.id === "xpReset") { xpSess = {}; renderPanel(); return; }
   if (e.target.id === "hsBtn" || e.target.closest?.("#hsBtn")) { openHiscores(); return; }
-  const b = e.target.closest?.("[data-stance]");
-  if (!b) return;
-  send({ t: "stance", k: b.dataset.stance });
-  if (me) me.stance = b.dataset.stance;          // paint it at once; the server confirms
-  renderPanel();
+  /* (2026-09-23) the [data-stance] handler went with the buttons; the server's own case for it has done nothing since 2026-09-19. */
 });
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tab; syncTabs(); renderPanel(); }));
 /* IMG and the two animation pickers are here for testing: the pictures a scene has actually loaded, and which frame a monster

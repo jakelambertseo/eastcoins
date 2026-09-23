@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 183;
+export const VERSION = 184;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -582,11 +582,17 @@ export const SKILL_GROUPS = [
 export const COMBAT_XP = 4;        // per point of damage, split by the stance
 export const HP_XP = 4 / 3;        // per point of damage, in every stance
 export const DEFAULT_STANCE = "controlled";
+/* STANCES WERE REMOVED ON 2026-09-19 and this is what is left of them: ONE entry, kept only because
+   xpForDamage() reads a share table and DEFAULT_STANCE indexes into this.
+
+   It used to hold four — Accurate, Aggressive, Defensive, Controlled — each with a blurb promising "Attack xp",
+   "Strength xp" and so on. Those three skills no longer exist (a migration folded them back into `melee`), the
+   server's `case "stance"` does nothing but `return`, and stanceOf() ignores its argument. The blurbs survived
+   anyway and were still on four buttons in the Skills tab that changed nothing when clicked — and they were
+   convincing enough that a wiki page got written from them on 2026-09-23 describing a feature the game has not
+   had for four days. If you are adding combat depth, build it; do not restore this. */
 export const STANCES = {
-  accurate:   { name: "Accurate",   icon: "🎯", share: { melee: 1 },                       blurb: "Every hit teaches you to land the next one. Attack xp." },
-  aggressive: { name: "Aggressive", icon: "💥", share: { melee: 1 },                     blurb: "Swing like you mean it. Strength xp, and a bigger maximum hit as it climbs." },
-  defensive:  { name: "Defensive",  icon: "🛡️", share: { melee: 1 },                      blurb: "Watch what they do before you do it. Defence xp, and you get hit less." },
-  controlled: { name: "Controlled", icon: "⚖️", share: { melee: 1 }, blurb: "A little of each. Slower to a milestone, further along everywhere." }
+  controlled: { name: "Combat", icon: "\u2694\uFE0F", share: { melee: 1 }, blurb: "Every hit trains Combat, and Hitpoints alongside it." }
 };
 export const stanceOf = () => DEFAULT_STANCE;   // stances were removed (2026-09-19): every hit trains all three evenly
 /** What one hit is worth, as [skill, xp] pairs. Always totals COMBAT_XP + HP_XP per damage. */
