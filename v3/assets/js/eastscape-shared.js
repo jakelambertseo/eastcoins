@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 185;
+export const VERSION = 186;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -2437,7 +2437,11 @@ export const ACH = {
   a_forge:    { name: "Sharper",            blurb: "Reforge a piece of gear at the anvil.",           tier: "novice", on: ["forge"],  has: (c) => Object.values(c && c.forge || {}).some((v) => v > 0) },
   a_crop:     { name: "Green Fingers",      blurb: "Harvest something you grew.",                     tier: "novice", on: ["gather"], has: (c) => aHasKey(c, "gathered", CROPK()) },
   a_quest:    { name: "Errand Boy",         blurb: "Finish a quest.",                                 tier: "novice", on: ["quest"],  has: (c) => questsDone(c) >= 1 },
-  a_table:    { name: "Sat Down",           blurb: "Play a table. Either currency counts.",           tier: "novice", on: ["play"],   has: (c) => (c && c.stats && c.stats.casPlays | 0) >= 1 },
+  /* TICKETS, NOT ZCOINS, AND THAT IS NOT A CHOICE. A ticket bet is sent to this server (`t: "bet"`) and lands in
+     recordPlay; a real ZCoin bet goes straight from the page to the SITE's /api/casino/* and never touches the
+     game server at all, so nothing here can see it. The blurb said "either currency counts" until 2026-09-23 and
+     was simply wrong. Making ZCoin plays count means the site telling the game, which is a real piece of work. */
+  a_table:    { name: "Sat Down",           blurb: "Play a table for tickets.",           tier: "novice", on: ["play"],   has: (c) => (c && c.stats && c.stats.casPlays | 0) >= 1 },
   a_win:      { name: "Beginner's Luck",    blurb: "Win a hand.",                                     tier: "novice", on: ["play"],   has: (c) => (c && c.stats && c.stats.casBest | 0) > 0 },
   a_died:     { name: "It Happens",         blurb: "Die. Everybody does.",                            tier: "novice", on: ["death"],  has: (c) => (c && c.stats && c.stats.deaths | 0) >= 1 },
   a_pet:      { name: "Company",            blurb: "Find a pet. One kill in a thousand.",             tier: "novice", on: ["kill"],   has: (c) => (c && c.pets || []).length >= 1 },

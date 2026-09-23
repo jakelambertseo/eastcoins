@@ -2798,7 +2798,14 @@ export class World {
     this.fameWin(pl, G.GAMES[g].name, payout - r.stake);
     if (payout > r.stake) pl.lastWin = { amt: payout - r.stake, at: Date.now() }; else if (payout < r.stake) pl.lastLoss = { amt: r.stake - payout, at: Date.now() };
     const mult = g === "hilo" ? Math.min(G.HILO.maxMult, r.mult) : G.minesMult(r.mines, r.open.length, r.edge);
-    delete pl.C.runs[g]; this.cashTo(pl, payout); this.touch(pl);
+    delete pl.C.runs[g]; this.cashTo(pl, payout);
+    /* (2026-09-23) A RUN IS A PLAY. bet() records one and this did not, so Hi-Lo and Mines were invisible to the
+       lifetime counters, to the profile's "where they play", and to every casino achievement — two of the eight
+       tables simply did not count. Recorded at the END because that is where the net is known.
+       NOTE: this does NOT put them under the hourly limiter. tixBlock is checked when a bet STARTS and the run
+       start never checks it, which is a separate and still-open gap. */
+    this.recordPlay(pl, g, payout - (r.stake | 0));
+    this.touch(pl);
     pl.out.push({ type: "run", g, run: null, luck: pl.C.luck | 0, over: { how, payout, stake: r.stake, mult: Math.round(mult * 100) / 100, ...(g === "mines" ? { bombs: r.bombs, open: r.open, mines: r.mines } : { card: r.card, suit: r.suit }), ...extra } });
     if (how === "cash" && mult >= G.CASINO.roomWin && payout > r.stake) {
       const text = `${pl.name} won ${G.fmtCash(payout)} on ${G.GAMES[g].name} (${Math.round(mult * 100) / 100}×)!`, world = mult >= G.CASINO.worldWin;
