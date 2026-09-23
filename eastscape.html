@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=192">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=193">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=8">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -907,7 +907,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=192";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=193";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=111").then((m) => { WK = m; }));
@@ -2800,7 +2800,7 @@ function frame() {
     if (ob.t === "plot") sprites.push({ y: ob.y * T + 12, draw: () => {
       const p = Z.isle?.plots?.[ob.i]; if (!p) return;
       const crop = G.CROPS[p.k], k = Math.min(1, (now - p.at) / crop.ms), X = ob.x * T, Y = ob.y * T;
-      const col = p.k === "wheat" ? "#f0d040" : p.k === "goldtomatoe" ? "#ffd84a" : "#d8322a";
+      const col = crop.col || "#d8322a";   /* (2026-09-23) the colour lives on CROPS now: a new crop is one table, not two */
       if (k < 0.34) { for (const dx of [3, 7, 11]) px(X + dx, Y + 9, 2, 3, "#5aa040"); return; }
       for (const dx of [2, 7, 12]) { const h = Math.round(4 + k * 8); px(X + dx + 1, Y + 14 - h, 1, h, "#4a8a34"); px(X + dx, Y + 14 - h, 3, 3, k >= 1 ? col : "#6ab04a"); }
     } });

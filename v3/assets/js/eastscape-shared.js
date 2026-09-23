@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 180;
+export const VERSION = 181;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -34,6 +34,14 @@ export const ITEMS = {
   pork: { name: "Raw boar", icon: "🥓" }, tusk: { name: "Boar tusk", icon: "🦷" },
   tomatoe: { name: "Tomatoe", icon: "🍅", ex: "Nonna insists on the e. Nobody has ever won that argument." },
   goldtomatoe: { name: "Golden tomatoe", icon: "🍅", ex: "Heavy as a coin and warm as a hug. It hums when it's ripe." },
+  /* FARMING'S MISSING MIDDLE (2026-09-23). Crops ran 1, 5, then 50 — a 45-level hole with nothing to plant in it,
+     which is why planting was switched off rather than finished. These four fill it. They are the CROP, not a seed:
+     planting spends one of the crop itself (see isleUse's "plant"), so a monster dropping the crop needs no new item
+     class and no new UI. Emoji for now; four 32px icons are the whole art bill when someone gets to it. */
+  rattlebean: { name: "Rattlebean", icon: "🫘", ex: "It rattles in the pod before you pick it, which growers say is the plant complaining." },
+  lanternroot: { name: "Lanternroot", icon: "🥕", ex: "Glows faintly from the inside. Mire farmers plant a row of it instead of owning a lamp." },
+  bonegourd: { name: "Bonegourd", icon: "🎃", ex: "Pale, heavy and hollow. It grows best where something used to be buried." },
+  stormcorn: { name: "Stormcorn", icon: "🌽", ex: "Each kernel holds a little charge. A full cob makes your teeth ache pleasantly." },
   husk: { name: "Hornworm husk", icon: "🐛", ex: "Still a little squishy. Still a little angry." },
   marble: { name: "Marble chunk", icon: "🪨", ex: "The same stone the Bank is made of. Someone will want this." },
   mask: { name: "Highwayman's mask", short: "Mask", icon: "🎭", slot: "helm", def: 1, acc: 1, ex: "Smells of the road. Makes you look shifty." },
@@ -1990,11 +1998,11 @@ export const LOOT = {
   rotten:     { item: ["tomatoe", [1, 3]] },
   hornworm:   { item: ["husk", 1], rare: [["gamblers_ring", 0.006]] },
   boar:       { item: ["pork", 1], rare: [["gamblers_ring", 0.01]] },
-  highwayman: { item: ["hide", 1], rare: [["mask", 0.1], ["bookies_amulet", 0.008], ["sharps_gloves", 0.006]] },
-  gnasher:    { item: ["emerald_ore", 1], rare: [["bogplate", 0.03], ["bookies_amulet", 0.01]] },
-  moth:       { item: ["emerald_ore", 1], rare: [["adjusters_visor", 0.01], ["angels_ring", 0.006]] },
-  taxwraith:  { item: ["receipt", 1], rare: [["wraithhood", 0.03], ["menace", 0.02], ["adjusters_visor", 0.01], ["angels_ring", 0.01], ["spiderboots", 0.004]] },
-  ghoul:      { item: ["diamond_ore", 1], rare: [["sharps_gloves", 0.012], ["stake_loafers", 0.008]] },
+  highwayman: { item: ["hide", 1], rare: [["rattlebean", 0.0125], ["mask", 0.1], ["bookies_amulet", 0.008], ["sharps_gloves", 0.006]] },
+  gnasher: { item: ["emerald_ore", 1], rare: [["rattlebean", 0.0125], ["bogplate", 0.03], ["bookies_amulet", 0.01]] },
+  moth: { item: ["emerald_ore", 1], rare: [["lanternroot", 0.0125], ["adjusters_visor", 0.01], ["angels_ring", 0.006]] },
+  taxwraith: { item: ["receipt", 1], rare: [["lanternroot", 0.0125], ["wraithhood", 0.03], ["menace", 0.02], ["adjusters_visor", 0.01], ["angels_ring", 0.01], ["spiderboots", 0.004]] },
+  ghoul: { item: ["diamond_ore", 1], rare: [["bonegourd", 0.0125], ["sharps_gloves", 0.012], ["stake_loafers", 0.008]] },
   /* the Trailer Park. The King is the only thing that drops his two, and at 8% and 5% he is meant to be killed
      many times over — he is a reason to come back, not a box you open once. */
   junkdog:    { item: ["bones", [1, 2]], rare: [["stake_loafers", 0.02], ["spiderboots", 0.01]] },
@@ -2002,29 +2010,29 @@ export const LOOT = {
   scrapper:   { item: ["catalytic", 1], rare: [["menace", 0.03], ["sharps_gloves", 0.02], ["grudge", 0.01]] },
   gator:      { item: ["hide", [1, 2]], rare: [["bogplate", 0.04], ["spiderboots", 0.02], ["angels_ring", 0.01]] },
   junkking:   { item: ["catalytic", [2, 4]], rare: [["kingcap", 0.08], ["wrench", 0.05], ["angels_ring", 0.04], ["slagstone", 0.5]] },
-  understudy: { item: ["diamond_ore", [1, 2]], rare: [["sharps_gloves", 0.025]] },
-  chandelier: { item: ["cobweb", 1], rare: [["lantern", 0.03], ["angels_ring", 0.02], ["spiderboots", 0.01]] },
-  ram:        { item: ["dragonstone_ore", 1], rare: [["grudge", 0.02], ["stake_loafers", 0.015]] },
+  understudy: { item: ["diamond_ore", [1, 2]], rare: [["bonegourd", 0.0125], ["sharps_gloves", 0.025]] },
+  chandelier: { item: ["cobweb", 1], rare: [["bonegourd", 0.0125], ["lantern", 0.03], ["angels_ring", 0.02], ["spiderboots", 0.01]] },
+  ram: { item: ["dragonstone_ore", 1], rare: [["stormcorn", 0.0125], ["grudge", 0.02], ["stake_loafers", 0.015]] },
   // v68: the bands' new residents. One thing each; the buff gear is spread so every band past the Yard can drop some
-  toadstool:  { item: ["sporecap", 1], rare: [["bookies_amulet", 0.006]] },
-  boneidle:   { item: ["bones", [2, 4]], rare: [["mask", 0.05], ["sharps_gloves", 0.008]] },
-  twister:    { item: ["receipt", 1], rare: [["adjusters_visor", 0.008]] },
-  counter:    { item: ["markedcard", 1], rare: [["sharps_gloves", 0.015], ["monocle", 0.03]] },
-  shark:      { item: ["sharktooth", 1], rare: [["bookies_amulet", 0.015], ["menace", 0.01]] },
-  stagehand:  { item: ["cobweb", 1], rare: [["stake_loafers", 0.01]] },
-  usher:      { item: ["flashlight", 1], rare: [["lantern", 0.03], ["adjusters_visor", 0.015]] },
-  brainstorm: { item: ["stormjelly", 1], rare: [["angels_ring", 0.012]] },
-  seagoat:    { item: ["dragonstone_ore", [1, 2]], rare: [["stake_loafers", 0.02], ["grudge", 0.02]] },
-  golem:      { item: ["onyx_ore", 1], rare: [["bogplate", 0.03], ["gamblers_ring", 0.02]] },
-  wolf:       { item: ["staticfur", 1], rare: [["sharps_gloves", 0.03], ["angels_ring", 0.015]] },
-  drake:      { item: ["hailshard", 1], rare: [["stake_loafers", 0.03], ["spiderboots", 0.015]] },
-  house:      { item: ["onyx_ore", [1, 3]], rare: [["angels_ring", 0.04], ["bookies_amulet", 0.04], ["spiderboots", 0.02]] },
+  toadstool: { item: ["sporecap", 1], rare: [["rattlebean", 0.0125], ["bookies_amulet", 0.006]] },
+  boneidle: { item: ["bones", [2, 4]], rare: [["rattlebean", 0.0125], ["mask", 0.05], ["sharps_gloves", 0.008]] },
+  twister: { item: ["receipt", 1], rare: [["lanternroot", 0.0125], ["adjusters_visor", 0.008]] },
+  counter: { item: ["markedcard", 1], rare: [["lanternroot", 0.0125], ["sharps_gloves", 0.015], ["monocle", 0.03]] },
+  shark: { item: ["sharktooth", 1], rare: [["lanternroot", 0.0125], ["bookies_amulet", 0.015], ["menace", 0.01]] },
+  stagehand: { item: ["cobweb", 1], rare: [["bonegourd", 0.0125], ["stake_loafers", 0.01]] },
+  usher: { item: ["flashlight", 1], rare: [["bonegourd", 0.0125], ["lantern", 0.03], ["adjusters_visor", 0.015]] },
+  brainstorm: { item: ["stormjelly", 1], rare: [["stormcorn", 0.0125], ["angels_ring", 0.012]] },
+  seagoat: { item: ["dragonstone_ore", [1, 2]], rare: [["stormcorn", 0.0125], ["stake_loafers", 0.02], ["grudge", 0.02]] },
+  golem: { item: ["onyx_ore", 1], rare: [["stormcorn", 0.0125], ["bogplate", 0.03], ["gamblers_ring", 0.02]] },
+  wolf: { item: ["staticfur", 1], rare: [["stormcorn", 0.0125], ["sharps_gloves", 0.03], ["angels_ring", 0.015]] },
+  drake: { item: ["hailshard", 1], rare: [["stormcorn", 0.0125], ["stake_loafers", 0.03], ["spiderboots", 0.015]] },
+  house: { item: ["onyx_ore", [1, 3]], rare: [["stormcorn", 0.0125], ["angels_ring", 0.04], ["bookies_amulet", 0.04], ["spiderboots", 0.02]] },
   // once the closed roads' residents: placed again in v68 (olive in the Yard, goat in the Gloam, revenant and angel in Cloudreach)
   olive:      { item: ["olives", [2, 5]], rare: [["monocle", 0.1]] },
-  goat:       { item: ["manifesto", 1], rare: [["toga", 0.25]] },
-  revenant:   { item: ["dragonstone_ore", 1], rare: [["grudge", 0.04], ["menace", 0.03]] },
-  angel:      { item: ["dragonstone_ore", 1] },
-  goose:      { item: ["onyx_ore", 1], rare: [["stake_loafers", 0.02], ["spiderboots", 0.01]] },
+  goat: { item: ["manifesto", 1], rare: [["rattlebean", 0.0125], ["toga", 0.25]] },
+  revenant: { item: ["dragonstone_ore", 1], rare: [["stormcorn", 0.0125], ["grudge", 0.04], ["menace", 0.03]] },
+  angel: { item: ["dragonstone_ore", 1], rare: [["stormcorn", 0.0125]] },
+  goose: { item: ["onyx_ore", 1], rare: [["stormcorn", 0.0125], ["stake_loafers", 0.02], ["spiderboots", 0.01]] },
   warden:     { item: ["starfall_ore", [1, 2]], rare: [["angels_ring", 0.03], ["bogplate", 0.02]] },
   pitboss:    { item: ["starfall_ore", [1, 2]], rare: [["bookies_amulet", 0.04], ["gamblers_ring", 0.03]] },
   hoard:      { item: ["eclipse_ore", 1], rare: [["gamblers_ring", 0.05], ["angels_ring", 0.03]] },
@@ -2911,6 +2919,10 @@ export const SHOP = {
    anvil earned twice what anyone else could: see tools/eastscape-balance.mjs.) One list, read by the Cashier, by Brutus,
    by the labels over rocks and monsters, and by the wiki. A made thing is never priced here by hand. */
 export const VALUE = {
+  /* The four middle crops. Prices are what make 20 plots come to ~14% of what fighting the same zone pays — see the
+     note on CROPS. VALUE is the authority: line ~2953 copies every VALUE key over SHOP.buys, so setting a price in
+     SHOP.buys alone does nothing (which is why the source there still reads wheat: 1 while the shop pays 4). */
+  rattlebean: 10, lanternroot: 35, bonegourd: 90, stormcorn: 250,
   logs: 10, copper: 10, tin: 10, sardine: 8, trout: 14, wheat: 4, olives: 3,   /* (v70: sardine 10 -> 8 and trout 18 -> 14 after the grind sim: the Yard and the Gloam paid fishers as much as fighters) */   // (fish: see FISHING)
   willowlogs: 15, emerald_ore: 15, lanternfish: 20, diamond_ore: 22,            // the Gloam
   skyashlogs: 28, dragonstone_ore: 30, skyeel: 40, onyx_ore: 40,                // Cloudreach
@@ -3051,10 +3063,24 @@ export const ISLE_TIERS = [null,
    the first load is on a budget and nobody needs a furniture catalogue to log in. The game server imports it; the page fetches
    it the first time you stand on an island with furniture on it. What stays here is only what a saved character needs. */
 export const ISLE_FERRY = { scene: "workyard", x: 38, y: 15 };   // (v108: Charon's cart is in the Yard.   // (was River Bend's ferry until 2026-09-20: Charon works from a cart in the square now)
+/* `col` is what the page paints a ripe crop (it draws plots procedurally — three stalks, height from the growth
+   fraction — so a new crop needs a colour here and no art at all). It lived as a ternary in eastscape.html until
+   2026-09-23; one list is better than two that can disagree.
+   THE PAY IS MEASURED, NOT PICKED. tools/eastscape-grind-sim.mjs says active play earns ~11.6k tickets/hr at the
+   Gloam, ~22k at the Mire, ~35k at the Boneyard, ~50k at Cloudreach and ~55k at the Thunderhead. Each crop below is
+   set so 20 plots kept going come to about 14% of what FIGHTING its own zone pays — background income, never a
+   reason to stop playing. Keep that ratio if you add one.
+   KNOWN, NOT FIXED HERE: wheat pays ~1,440/hr against goldtomatoe's ~300, so the two ORIGINAL crops run backwards
+   against each other. Both are trivial next to 11-83k/hr from playing, so it is a tidiness problem rather than an
+   economy one — but do not copy their numbers. */
 export const CROPS = {
-  wheat: { lvl: 1, ms: 10 * 60000, yield: [3, 5], xp: 30 },
-  tomatoe: { lvl: 5, ms: 20 * 60000, yield: [3, 6], xp: 70 },
-  goldtomatoe: { lvl: 50, ms: 4 * 3600000, yield: [1, 3], xp: 600 }
+  wheat: { lvl: 1, ms: 10 * 60000, yield: [3, 5], xp: 30, col: "#f0d040" },
+  tomatoe: { lvl: 5, ms: 20 * 60000, yield: [3, 6], xp: 70, col: "#d8322a" },
+  rattlebean: { lvl: 10, ms: 20 * 60000, yield: [3, 5], xp: 60, col: "#c8b06a" },
+  lanternroot: { lvl: 20, ms: 40 * 60000, yield: [3, 6], xp: 150, col: "#ffb03a" },
+  bonegourd: { lvl: 30, ms: 1 * 3600000, yield: [3, 6], xp: 400, col: "#e8e0c8" },
+  stormcorn: { lvl: 40, ms: 2 * 3600000, yield: [4, 7], xp: 700, col: "#9ad8ff" },
+  goldtomatoe: { lvl: 50, ms: 4 * 3600000, yield: [1, 3], xp: 600, col: "#ffd84a" }
 };
 // a theme repaints your island; price null means you can't buy it (events, quests)
 export const THEMES = {

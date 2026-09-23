@@ -1747,8 +1747,10 @@ export class World {
     }
     if (a.kind === "ferry") return pl.out.push({ type: "ferry" });
     if (a.kind === "boatback") { this.moveToScene(pl, G.ISLE_FERRY.scene, null, G.ISLE_FERRY); return this.say(pl, "Charon takes you back to the square without a word."); }
-    /* (the owner, 2026-09-21: the farm plots and the pet pen are not ready: "make it say Not ready yet, coming soon"). Planting is switched off here, in one place; isleUse() and the crops already growing on anybody's island are untouched, so bringing it back is deleting this line. */
-    if (a.kind === "plot" || a.kind === "pen") { pl.act = null; return this.say(pl, "Not ready yet, coming soon."); }
+    /* (2026-09-23) PLOTS ARE BACK; the PEN is not. Planting was switched off on 2026-09-21 because crops ran 1, 5,
+       then 50 and there was nothing to plant in the middle; four crops at 10/20/30/40 now fill it. The pen stays
+       shut until after launch - it has no feeding code at all, and it is the sink farming still wants. */
+    if (a.kind === "pen") { pl.act = null; return this.say(pl, "Not ready yet, coming soon."); }
     if (a.kind === "plot" || a.kind === "pedestal" || a.kind === "islesign") return this.isleUse(S, pl, a, now);
     if (a.kind === "well") return this.say(pl, "You look down the well. Something glints at the bottom, but it's too far down.");
     if (a.ob?.req && G.lvlOf(C, a.ob.req.skill) < a.ob.req.lvl) return this.say(pl, `You need a ${G.SKILLS[a.ob.req.skill].name} level of ${a.ob.req.lvl} to ${(G.VERB[a.kind] || "use").toLowerCase()} the ${a.ob.name}. ${a.ob.tease || ""}`, "bad");
@@ -2087,8 +2089,7 @@ export class World {
       if (!I.open) for (const p of [...this.pls.values()]) if (p !== pl && G.ownerOf(p.C.scene) === pl.id) { this.moveToScene(p, G.ISLE_FERRY.scene, null, G.ISLE_FERRY); this.say(p, `${pl.name} closed their island. Charon takes you back.`); }
       return this.say(pl, I.open ? "Your island is open: anyone can visit." : "Your island is closed to visitors.", "good");
     }
-    if (m.op === "plant") return this.say(pl, "Not ready yet, coming soon.");   /* (switched off with the plots: see actDo) */
-    if (m.op === "plant-off") {
+    if (m.op === "plant") {
       const i = m.i | 0, k = String(m.k), crop = G.CROPS[k];
       if (!crop || I.plots[i] !== null || !within("plot", i)) return;
       if (G.lvlOf(C, "farming") < crop.lvl) return this.say(pl, `You need a Harvesting level of ${crop.lvl} to grow ${G.ITEMS[k].name.toLowerCase()}.`, "bad");
