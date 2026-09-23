@@ -113,19 +113,21 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
         <tr><td>Eclipse</td><td>70</td><td>104</td><td>+32 acc, +30 str</td></tr>
       </table>
       <p><b>Reforging is the other way up.</b> Bars spent at the anvil push a piece you already own three levels further, which is worth about a tier &mdash; a way to keep going when the next grade is out of reach, not a way past it. It can also destroy the piece. See the anvil.</p>
-      <p><b>Eat before you need to.</b> Cooked fish is the whole healing system; there is no potion. See <a data-wiki="guides/cooking">Cooking</a>.</p>`},{id:"fishing",title:"Fishing",icon:"🎣",cat:"Skills",body:`<p><b>Click any fishing spot with a rod in your hand.</b> Not in your bag &mdash; in the weapon slot. You keep pulling fish out until you walk away or the three-minute idle cutoff stops you, so it is the most comfortable thing in the game to do while you are half watching something else.</p>
-      <p><b>Every spot holds two fish.</b> The second one is better, needs a higher level, and turns up about a third of the time once you can catch it. Until then you get the first one only.</p>
-      <table class="tbl"><tr><th>Spot</th><th>Where</th><th>First fish</th><th>Second fish</th></tr>
-        <tr><td>Fishing spot</td><td>The Yard</td><td>Sardine &mdash; level 1, 20 xp</td><td>Perch &mdash; level 5, 30 xp</td></tr>
-        <tr><td>Black pond</td><td>The Gloam</td><td>Trout &mdash; level 10, 50 xp</td><td>Catfish &mdash; level 15, 65 xp</td></tr>
-        <tr><td>Lantern lake</td><td>The Lantern Mire</td><td>Lanternfish &mdash; level 20, 80 xp</td><td>Mudskipper &mdash; level 25, 95 xp</td></tr>
-        <tr><td>Flooded crypt</td><td>The Boneyard</td><td>Bonefish &mdash; level 30, 110 xp</td><td>Ghost carp &mdash; level 35, 130 xp</td></tr>
-        <tr><td>Hole in the cloud</td><td>Cloudreach</td><td>Sky eel &mdash; level 40, 140 xp</td><td>Cloud ray &mdash; level 45, 165 xp</td></tr>
-        <tr><td>The sea below</td><td>The Thunderhead</td><td>Storm marlin &mdash; level 50, 190 xp</td><td>Thunder squid &mdash; level 58, 230 xp</td></tr>
-        <tr><td>Black water</td><td>The Trailer Park</td><td>Mud cat &mdash; level 80, 300 xp</td><td>Bowfin &mdash; level 88, 380 xp</td></tr>
+      <p><b>Eat before you need to.</b> Cooked fish is the whole healing system; there is no potion. See <a data-wiki="guides/cooking">Cooking</a>.</p>`},{id:"fishing",title:"Fishing",icon:"🎣",cat:"Skills",body:`<p><b>Click a fishing spot with a rod in your hand</b> &mdash; in the weapon slot, not the bag. You keep pulling fish out until you walk away or the three-minute idle cutoff stops you, which makes it the most comfortable thing in the game to do while you are half watching something else.</p>
+      <p><b>Every spot holds two fish.</b> The second is better, needs a higher level, and turns up about a third of the time once you can catch it. Until then you get the first one only.</p>
+      <p><b>The water gates your rod as well as your level</b>, the same way a rock gates a pickaxe.</p>
+      <table class="tbl"><tr><th>Spot</th><th>Where</th><th>Rod</th><th>First fish</th><th>Second fish</th></tr>
+        <tr><td>Fishing spot</td><td>The Yard</td><td>Bronze</td><td>Sardine &mdash; 1, 20 xp</td><td>Perch &mdash; 5, 30 xp</td></tr>
+        <tr><td>Black pond</td><td>The Gloam</td><td>Bronze</td><td>Trout &mdash; 10, 50 xp</td><td>Catfish &mdash; 15, 65 xp</td></tr>
+        <tr><td>Lantern lake</td><td>The Lantern Mire</td><td>Emerald</td><td>Lanternfish &mdash; 20, 80 xp</td><td>Mudskipper &mdash; 25, 95 xp</td></tr>
+        <tr><td>Flooded crypt</td><td>The Boneyard</td><td>Diamond</td><td>Bonefish &mdash; 30, 110 xp</td><td>Ghost carp &mdash; 35, 130 xp</td></tr>
+        <tr><td>Hole in the cloud</td><td>Cloudreach</td><td>Dragonstone</td><td>Sky eel &mdash; 40, 140 xp</td><td>Cloud ray &mdash; 45, 165 xp</td></tr>
+        <tr><td>The sea below</td><td>The Thunderhead</td><td>Onyx</td><td>Storm marlin &mdash; 50, 190 xp</td><td>Thunder squid &mdash; 58, 230 xp</td></tr>
+        <tr><td>Black water</td><td>The Trailer Park</td><td>Eclipse</td><td>Mud cat &mdash; 80, 300 xp</td><td>Bowfin &mdash; 88, 380 xp</td></tr>
       </table>
-      <p><b>A better rod is faster, not better at catching.</b> Every rung up the seven <a data-wiki="guides/tools">tool grades</a> takes 8% off the time between casts, and a rod also has to be of the grade the water asks for. See <a data-wiki="guides/tools">Tools</a>.</p>
-      <p><b>Raw fish is not food and Bom will not buy it.</b> Cook it. That is not an inconvenience, it is the point &mdash; cooking roughly doubles what a fish is worth and makes it actually heal. See <a data-wiki="guides/cooking">Cooking</a>, and <a data-wiki="guides/smoking">Smoked fish</a> for the seven that can be smoked into a 20-minute buff.</p>`},{id:"cooking",title:"Cooking",icon:"🍳",cat:"Skills",body:`<p>There is a <b>campfire</b> just inside the Yard, by the way in from the casino, and a range in some interiors. Click it with raw fish in your bag.</p>
+      <p><b>A better rod is faster, not luckier.</b> Each grade up takes 8% off the time between casts. See <a data-wiki="guides/tools">Tools</a>.</p>
+      <p><b>Raw fish is not food and Bom will not buy it.</b> That is the point rather than an inconvenience: cooking roughly doubles what a fish is worth and is the only thing that makes it heal. See <a data-wiki="guides/cooking">Cooking</a>, and <a data-wiki="guides/smoking">Smoked fish</a> for the seven that smoke into a 20-minute buff.</p>
+      <p><b>Fishing is also the best place to find a real ZCoin</b> &mdash; roughly one cast in three hundred, creeping up with the better fish. See <a data-wiki="guides/zcoins">Finding ZCoins</a>.</p>`},{id:"cooking",title:"Cooking",icon:"🍳",cat:"Skills",body:`<p>There is a <b>campfire</b> just inside the Yard, by the way in from the casino, and a range in some interiors. Click it with raw fish in your bag.</p>
       <p><b>Cooking roughly doubles a fish.</b> Raw fish cannot be eaten and Bom will not buy it, so every fish is worth a stop at the fire on the way home. The fire always cooks the best thing in your bag that you are able to cook, so there is nothing to choose.</p>
       <p><b>You will burn some at first, and then you will stop.</b> Each fish has a level at which it never burns again &mdash; that is the second number below, and it is the one worth levelling towards.</p>
       <table class="tbl"><tr><th>Fish</th><th>Cook at</th><th>Stops burning</th><th>Heals</th><th>Sells</th></tr>
@@ -180,55 +182,66 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
       <h3>Reforging</h3>
       <p><b>Bars also push gear you already own further.</b> At the anvil, three levels, each worth 5.5% of that piece's own stats or +1, whichever is more &mdash; about a tier in total. A reforge costs the same bars the piece cost to make.</p>
       <p><b>It can destroy the piece.</b> +1 always works. +2 is 80%, and a miss there has an 8% chance of breaking it; +3 is 55%, with a 15% chance. About one piece in seven is lost on the way to +3, and the bars go whether it works or not.</p>
-      <p>Tools reforge too, and they buy <b>speed</b> rather than combat &mdash; +2.5% a level at mining, chopping or fishing.</p>`},{id:"mining",title:"Mining",icon:"⛏️",cat:"Skills",body:`<p><b>Click a rock with a pickaxe in your hand</b> &mdash; in the weapon slot, not the bag. Every rock holds <b>1 to 5 ore</b>, and you keep working it until it is empty, so one rock is several swings rather than one.</p>
-      <p><b>The rock decides the pickaxe.</b> Emerald ore wants an emerald pickaxe or better; a bronze one will not touch it. See <a data-wiki="guides/tools">Tools</a>.</p>
-      <table class="tbl"><tr><th>Ore</th><th>Mining</th><th>Where</th></tr>
-        <tr><td>Copper, Tin</td><td>1</td><td>The Yard</td></tr>
-        <tr><td>Emerald</td><td>20</td><td>The Gloam</td></tr>
-        <tr><td>Diamond</td><td>30</td><td>The Lantern Mire</td></tr>
-        <tr><td>Dragonstone</td><td>40</td><td>The Boneyard</td></tr>
-        <tr><td>Onyx</td><td>50</td><td>Cloudreach</td></tr>
-        <tr><td>Starfall</td><td>60</td><td>The Vault</td></tr>
-        <tr><td>Eclipse</td><td>70</td><td>The Vault</td></tr>
-        <tr><td>Catalytic converter</td><td>65</td><td>The Trailer Park</td></tr>
-        <tr><td>Slagstone</td><td>85</td><td>The Trailer Park</td></tr>
+      <p>Tools reforge too, and they buy <b>speed</b> rather than combat &mdash; +2.5% a level at mining, chopping or fishing.</p>`},{id:"mining",title:"Mining",icon:"⛏️",cat:"Skills",body:`<p><b>Click a rock with a pickaxe in your hand</b> &mdash; in the weapon slot, not the bag. Every rock holds <b>1 to 5 ore</b> and you keep working it until it is empty, so one rock is several swings rather than one.</p>
+      <p><b>Two things gate a rock: your level AND your pickaxe.</b> They are not the same number. Emerald ore needs Mining 20 <i>and</i> an emerald pickaxe &mdash; having the level with a bronze pickaxe gets you nothing, which is the single most common reason a rock will not budge.</p>
+      <table class="tbl"><tr><th>Ore</th><th>Mining</th><th>Pickaxe</th><th>Where</th><th>Sells</th><th>Smelts into</th></tr>
+        <tr><td>Copper</td><td>1</td><td>Bronze</td><td>The Yard</td><td>10</td><td rowspan="2">Bronze bar (with tin)</td></tr>
+        <tr><td>Tin</td><td>1</td><td>Bronze</td><td>The Yard</td><td>10</td></tr>
+        <tr><td>Emerald</td><td>20</td><td>Emerald</td><td>The Gloam</td><td>15</td><td>Emerald bar</td></tr>
+        <tr><td>Diamond</td><td>30</td><td>Diamond</td><td>The Lantern Mire</td><td>22</td><td>Diamond bar</td></tr>
+        <tr><td>Dragonstone</td><td>40</td><td>Dragonstone</td><td>The Boneyard</td><td>30</td><td>Dragonstone bar</td></tr>
+        <tr><td>Onyx</td><td>50</td><td>Onyx</td><td>Cloudreach</td><td>40</td><td>Onyx bar</td></tr>
+        <tr><td>Starfall</td><td>60</td><td>Starfall</td><td>The Vault</td><td>55</td><td>Starfall bar</td></tr>
+        <tr><td>Eclipse</td><td>70</td><td>Eclipse</td><td>The Vault</td><td>90</td><td>Eclipse bar</td></tr>
+        <tr><td>Grimstone</td><td>1</td><td>Bronze</td><td>The Wilderness</td><td>45</td><td>needed for onyx bars</td></tr>
+        <tr><td>Voidglass</td><td>70</td><td>Eclipse</td><td>The Vault</td><td>70</td><td>needed for eclipse bars</td></tr>
+        <tr><td>Catalytic converter</td><td>65</td><td>Starfall</td><td>The Trailer Park</td><td>140</td><td>&mdash;</td></tr>
+        <tr><td>Slagstone</td><td>85</td><td>Eclipse</td><td>The Trailer Park</td><td>110</td><td>&mdash;</td></tr>
       </table>
-      <p><b>Copper and tin are a pair</b> &mdash; a bronze bar wants one of each, so mine them together.</p>
-      <p><b>A vein never runs dry.</b> It is slower per ore than a rock, but it does not empty, so it is what you stand at when you want to think about something else. The Yard's copper vein is the classic one.</p>
-      <p><b>Ore is only worth selling raw if you are desperate.</b> Smelt it: a bar is worth more, and it is the whole point of <a data-wiki="guides/smithing">Smithing</a>.</p>`},{id:"woodcutting",title:"Woodcutting",icon:"🪓",cat:"Skills",body:`<p><b>Click a tree with an axe in your hand.</b> A tree is good for about 25 logs before it falls, an oak for about 50, and a felled tree grows back in fifteen seconds.</p>
-      <p><b>Not every tree is choppable.</b> Most of what you see is scenery. The ones you can cut have their own art &mdash; in the Yard they are the two gnarled Old oaks, and every other zone names its tree.</p>
-      <table class="tbl"><tr><th>Tree</th><th>Woodcutting</th><th>Where</th><th>Burns into</th></tr>
-        <tr><td>Tree, Old oak</td><td>1</td><td>The Yard</td><td>1 charcoal</td></tr>
-        <tr><td>Gloomwillow</td><td>15</td><td>The Gloam</td><td>1 charcoal</td></tr>
-        <tr><td>Deadwood</td><td>20</td><td>The Lantern Mire</td><td>2 charcoal</td></tr>
-        <tr><td>Ancient yew</td><td>35</td><td>The Boneyard</td><td>3 charcoal</td></tr>
-        <tr><td>Skyash</td><td>45</td><td>Cloudreach</td><td>2 charcoal</td></tr>
-        <tr><td>Vaultwood</td><td>60</td><td>The Vault</td><td>4 charcoal</td></tr>
-        <tr><td>Rustpine</td><td>65</td><td>The Trailer Park</td><td>2 charcoal</td></tr>
-        <tr><td>Bogwood</td><td>80</td><td>The Trailer Park</td><td>4 charcoal</td></tr>
+      <p><b>Copper and tin are a pair.</b> A bronze bar wants one of each, so mine them together or you will be back.</p>
+      <p><b>A vein never runs dry.</b> It is slower per ore than a rock &mdash; about six seconds a swing against under two &mdash; but it does not empty and it does not stop you, so it is what you stand at while you are half watching something else. The three-minute idle cutoff still applies.</p>
+      <p><b>Grimstone and voidglass are not ore you smelt</b>, they are ingredients: the top two bars will not go without them, which is what makes the last stretch of <a data-wiki="guides/smithing">Smithing</a> a chain rather than a grind.</p>
+      <p><b>Selling raw ore is the worst thing you can do with it.</b> A bar is worth more than its ore, and gear is worth vastly more than bars &mdash; a full eclipse set is about 4,250 tickets of ore and 819,000 over Bom's counter.</p>`},{id:"woodcutting",title:"Woodcutting",icon:"🪓",cat:"Skills",body:`<p><b>Click a tree with an axe in your hand.</b> A tree is good for about 25 logs before it falls, an oak for about 50, and a felled one is back in fifteen seconds.</p>
+      <p><b>Most trees are scenery.</b> The ones you can actually cut have their own art &mdash; in the Yard they are the two gnarled Old oaks, and every zone past it names its tree. If clicking does nothing, it is not a tree.</p>
+      <p><b>Level and axe are separate gates</b>, same as mining: Deadwood wants Woodcutting 20 <i>and</i> an emerald axe.</p>
+      <table class="tbl"><tr><th>Tree</th><th>Woodcutting</th><th>Axe</th><th>Where</th><th>Sells</th><th>Burns into</th></tr>
+        <tr><td>Tree, Old oak</td><td>1</td><td>Bronze</td><td>The Yard</td><td>10</td><td>1 charcoal</td></tr>
+        <tr><td>Gloomwillow</td><td>15</td><td>Bronze</td><td>The Gloam</td><td>15</td><td>1 charcoal</td></tr>
+        <tr><td>Deadwood</td><td>20</td><td>Emerald</td><td>The Lantern Mire</td><td>28</td><td>2 charcoal</td></tr>
+        <tr><td>Ancient yew</td><td>35</td><td>Diamond</td><td>The Boneyard</td><td>70</td><td>3 charcoal</td></tr>
+        <tr><td>Skyash</td><td>45</td><td>Dragonstone</td><td>Cloudreach</td><td>28</td><td>2 charcoal</td></tr>
+        <tr><td>Vaultwood</td><td>60</td><td>Starfall</td><td>The Vault</td><td>85</td><td>4 charcoal</td></tr>
+        <tr><td>Rustpine</td><td>65</td><td>Starfall</td><td>The Trailer Park</td><td>40</td><td>2 charcoal</td></tr>
+        <tr><td>Bogwood</td><td>80</td><td>Eclipse</td><td>The Trailer Park</td><td>95</td><td>4 charcoal</td></tr>
       </table>
-      <p><b>Logs are not just for selling.</b> Every smelt in the game needs charcoal and charcoal is burnt logs, so woodcutting feeds <a data-wiki="guides/smithing">Smithing</a> exactly the way mining does. The better the log, the more charcoal it makes &mdash; a vaultwood log is worth four ordinary ones.</p>`},{id:"harvesting",title:"Harvesting",icon:"🌾",cat:"Skills",body:`<p><b>Two halves.</b> Picking things that grow in the world, and growing your own on <a data-wiki="guides/islands">your island</a>.</p>
-      <p><b>In the world</b>, wheat in the Yard, olives and vines on Tomatoe Hill. Click them; they grow back on their own. No tool needed &mdash; Harvesting is the only gathering skill that asks for nothing in your hand.</p>
-      <p><b>On your island</b>, a plot grows in real time whether you are logged in or not, and pays several of what you planted. That is where the levels are, and where the money is.</p>
-      <p><b>There are no seeds &mdash; the crop is the seed.</b> Planting spends one of the thing you are growing, so the first of each new kind has to be found. They drop from the monsters of the zone that grows them, at about one kill in eighty.</p>
-      <table class="tbl"><tr><th>Crop</th><th>Harvesting</th><th>Grows in</th><th>xp</th><th>Seeded by</th></tr>
-        <tr><td>Wheat</td><td>1</td><td>10 min</td><td>30</td><td>grows wild in the Yard</td></tr>
-        <tr><td>Tomatoe</td><td>5</td><td>20 min</td><td>70</td><td>Tomatoe Hill</td></tr>
-        <tr><td>Rattlebean</td><td>10</td><td>20 min</td><td>60</td><td>the Gloam</td></tr>
-        <tr><td>Lanternroot</td><td>20</td><td>40 min</td><td>150</td><td>the Lantern Mire</td></tr>
-        <tr><td>Bonegourd</td><td>30</td><td>1 hr</td><td>400</td><td>the Boneyard</td></tr>
-        <tr><td>Stormcorn</td><td>40</td><td>2 hr</td><td>700</td><td>Cloudreach &amp; the Thunderhead</td></tr>
-        <tr><td>Golden tomatoe</td><td>50</td><td>4 hr</td><td>600</td><td>&mdash;</td></tr>
+      <p><b>Logs are fuel, not just stock.</b> Every smelt in the game needs charcoal and charcoal is burnt logs, so woodcutting feeds <a data-wiki="guides/smithing">Smithing</a> exactly the way mining does. One vaultwood log is worth four ordinary ones at the furnace.</p>
+      <p><b>Ancient yew is the sweet spot for a long time.</b> Three charcoal a log and 70 tickets if you sell it instead &mdash; better on both counts than the two trees above it, which is worth knowing before you walk to Cloudreach for skyash.</p>
+      <p><b>Burning is the only Smithing you can do at level 1</b>, so a woodcutter already has a Smithing career started whether they meant to or not.</p>`},{id:"harvesting",title:"Harvesting",icon:"🌾",cat:"Skills",body:`<p><b>Two halves.</b> Picking things that grow in the world, and growing your own on <a data-wiki="guides/islands">your island</a>.</p>
+      <p><b>In the world</b>: wheat in the Yard, olives and vines on Tomatoe Hill. Click them and they grow back on their own. <b>It is the only gathering skill that needs nothing in your hand</b> &mdash; no tool, no grade, no gate but your level.</p>
+      <p><b>On your island</b> a plot grows in real time whether you are logged in or not, and pays back several of what you planted. That is where the levels are.</p>
+      <p><b>There are no seeds &mdash; the crop IS the seed.</b> Planting spends one of the thing you are growing, so the first of each new kind has to be found: they drop from the monsters of the zone that grows them, at about <b>one kill in eighty</b>. What you can grow is decided by where you can survive.</p>
+      <table class="tbl"><tr><th>Crop</th><th>Harvesting</th><th>Grows in</th><th>Pays back</th><th>xp</th><th>Sells</th><th>Seeded by</th></tr>
+        <tr><td>Wheat</td><td>1</td><td>10 min</td><td>3&ndash;5</td><td>30</td><td>4</td><td>grows wild in the Yard</td></tr>
+        <tr><td>Tomatoe</td><td>5</td><td>20 min</td><td>3&ndash;6</td><td>70</td><td>5</td><td>Tomatoe Hill</td></tr>
+        <tr><td>Rattlebean</td><td>10</td><td>20 min</td><td>3&ndash;5</td><td>60</td><td>10</td><td>the Gloam</td></tr>
+        <tr><td>Lanternroot</td><td>20</td><td>40 min</td><td>3&ndash;6</td><td>150</td><td>35</td><td>the Lantern Mire</td></tr>
+        <tr><td>Bonegourd</td><td>30</td><td>1 hr</td><td>3&ndash;6</td><td>400</td><td>90</td><td>the Boneyard</td></tr>
+        <tr><td>Stormcorn</td><td>40</td><td>2 hr</td><td>4&ndash;7</td><td>700</td><td>250</td><td>Cloudreach &amp; the Thunderhead</td></tr>
+        <tr><td>Golden tomatoe</td><td>50</td><td>4 hr</td><td>1&ndash;3</td><td>600</td><td>60</td><td>&mdash;</td></tr>
       </table>
-      <p><b>It is background work.</b> Plots pay while you are elsewhere, which is the whole appeal &mdash; nobody should be standing on their island waiting for corn.</p>`},{id:"agility",title:"Agility",icon:"🏃",cat:"Skills",body:`<p><b>The Run is an obstacle course</b>, up a rope ladder in the north of the Yard. You go round it; each obstacle pays xp, and finishing a full lap pays a lot more than the parts.</p>
-      <table class="tbl"><tr><th>What</th><th>xp</th></tr>
-        <tr><td>Each obstacle cleared</td><td>12</td></tr>
-        <tr><td>Clearing one perfectly</td><td>+10</td></tr>
-        <tr><td>Finishing a lap</td><td>150, more with company</td></tr>
+      <p><b>Plant the longest crop you can before you log off</b> and the short ones while you are around. A plot is doing nothing between ripening and your coming back, which is the only real skill in this skill.</p>
+      <p><b>Your island decides how many plots you have</b> &mdash; 8 to start, 12 for 5,000 tickets, 20 for 20,000. It multiplies everything above, so it is the upgrade that matters.</p>
+      <p><b>It is background money, not a living.</b> A full set of plots kept going comes to a fraction of what fighting the same zone pays; the appeal is that it happens while you are doing something else.</p>`},{id:"agility",title:"Agility",icon:"🏃",cat:"Skills",body:`<p><b>The Run is an obstacle course</b>, up a rope ladder in the north of the Yard. You go round it: each obstacle pays, and finishing a full lap pays far more than the parts do.</p>
+      <table class="tbl"><tr><th>What</th><th>Gives</th></tr>
+        <tr><td>Each obstacle cleared</td><td>12 xp</td></tr>
+        <tr><td>Clearing one perfectly</td><td>+10 xp on top</td></tr>
+        <tr><td>Finishing a lap</td><td>150 xp, and more when others are running</td></tr>
+        <tr><td>Marks picked up on the way</td><td>25 tickets each</td></tr>
       </table>
-      <p><b>A lap is worth more when other people are running it</b>, so it is one of the few things in the game that rewards a crowd.</p>
-      <p><b>Your best lap is recorded</b>, which is most of the reason to keep doing it.</p>
-      <p><b>What Agility buys you is movement speed</b>, which quietly improves everything else &mdash; every walk to a rock, a tree or a bank booth is shorter.</p>`},{id:"smoking",title:"Smoked fish",icon:"🐟",cat:"Skills",body:`<p><b>Smoking is cooking with charcoal.</b> Seven fish can be smoked instead of plainly cooked. A smoked fish heals more, sells for far more, and &mdash; the reason to bother &mdash; gives you a <b>20-minute buff</b> when you eat it.</p>
+      <p><b>What it buys is movement speed, everywhere.</b> It climbs steadily with the level &mdash; about <b>+5% at 50</b> and <b>+10% at 99</b> &mdash; and it applies to every step you take for the rest of the game: every walk to a rock, a tree, a fishing spot or the bank.</p>
+      <p><b>That is the argument for it.</b> Agility makes nothing and sells nothing, so it looks like the skill you can skip. What it actually does is shorten every other skill you will ever train.</p>
+      <p><b>A lap is worth more with company</b>, so it is one of the few things in the game that rewards a crowd rather than tolerating one.</p>
+      <p><b>Your best lap is recorded</b>, which is the other reason to keep going round.</p>`},{id:"smoking",title:"Smoked fish",icon:"🐟",cat:"Skills",body:`<p><b>Smoking is cooking with charcoal.</b> Seven fish can be smoked instead of plainly cooked. A smoked fish heals more, sells for far more, and &mdash; the reason to bother &mdash; gives you a <b>20-minute buff</b> when you eat it.</p>
       <p>Do it at <b>any fire or range</b>, with the fish and the charcoal in your bag. You do not switch anything on: the fire always makes the best thing it can, so it smokes while you have charcoal and drops back to plain cooking when you run out. Charcoal is <b>burnt logs</b>, made at the furnace.</p>
       <table class="tbl"><tr><th>Smoked</th><th>Catch at</th><th>Where</th><th>Smoke at</th><th>Coal</th><th>Heals</th><th>For 20 minutes</th></tr>
         <tr><td><b>Ghost carp</b></td><td>Fishing 35</td><td>Flooded crypt, the Boneyard</td><td>Cooking 40</td><td>1</td><td>24</td><td>+8% rare drops</td></tr>
