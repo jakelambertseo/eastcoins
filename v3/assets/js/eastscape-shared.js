@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 217;
+export const VERSION = 218;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -190,6 +190,11 @@ export const ITEMS = {
   large_vial: { name: "Large flask", icon: "\u{1F9EA}", ex: "Four measures, corded at the neck. Twenty minutes of the strong stuff." },
   scarabshell: { name: "Scarab shell", icon: "\u{1FAB2}", ex: "Iridescent, and hard enough to turn a blade. Ground down it does the same for you." },
   snakefang: { name: "Cobra fang", icon: "\u{1F9B7}", ex: "Still wet at the tip. Handle it by the blunt end." },
+  /* (2026-09-24) THE ONE THING THAT ONLY THE GREAT PYRAMID GIVES. Every chest in that dungeon holds one or two
+     and nothing else in the game drops it, which is what makes the raid worth running for something other than
+     tickets - it pays 41% less than the Black Crypt on purpose. It gates exactly one recipe, the best potion
+     there is. */
+  serpentvenom: { name: "Serpent venom", icon: "\u{1F40D}", ex: "Drawn from the Squeeze itself. It eats through the cork if you leave it long enough." },
   palmlogs: { name: "Palm logs", icon: "\u{1FAB5}", ex: "Fibrous and stringy rather than grained. Burns fast and sweet." },
   oasisperch: { name: "Oasis perch", icon: "\u{1F41F}", ex: "Fat, slow and entirely unbothered. Nothing else in the pool worries it.", raw: true },
   nilecarp: { name: "Temple carp", icon: "\u{1F41F}", ex: "Somebody has been feeding these for a very long time.", raw: true },
@@ -209,6 +214,9 @@ export const ITEMS = {
   pot_fang: { name: "Fang flask", icon: "\u{1F9EA}", drink: { mins: 20, fx: { bite: 0.045 } }, ex: "Two kinds of tooth in one bottle. 20 minutes outside: fish bite a great deal more often." },
   pot_salve3: { name: "Royal salve", icon: "\u{1F9EA}", heal: 44, ex: "What they packed the kings with. It still works." },
   pot_storm: { name: "Storm flask", icon: "\u{1F9EA}", drink: { mins: 20, fx: { speed: 0.12 } }, ex: "It fizzes against the glass and will not sit still. 20 minutes outside: very quick indeed." },
+  /* THE TOP OF ALCHEMY, and the only recipe in the game gated behind a dungeon. Better than the Pharaoh's
+     draught in both numbers and five minutes longer, because the venom has to be raided for rather than farmed. */
+  pot_coilbreaker: { name: "Coilbreaker draught", icon: "\u{1F9EA}", drink: { mins: 25, fx: { tough: 0.24, speed: 0.08 } }, ex: "Venom, cut with glass dust and gourd milk. 25 minutes outside: very hard to hurt, and quick with it. The best thing in the game." },
   pot_pharaoh: { name: "Pharaoh's draught", icon: "\u{1F9EA}", drink: { mins: 20, fx: { tough: 0.18, bite: 0.03 } }, ex: "The best thing anyone can make. 20 minutes outside: hard to hurt, and the fish come to you." },
   lanternfish: { name: "Lanternfish", icon: "🐟", heal: 9, ex: "It has its own little light. It keeps it on even now." },
   clanternfish: { name: "Cooked lanternfish", icon: "🐟", heal: 16, ex: "The light goes out when it's cooked. That's how you know." },
@@ -901,6 +909,10 @@ export const PETS = {
   packrat:     { name: "Pack Rat",     art: "pet_packrat",     fx: { slots: 4 },  ex: "Carries your things. Keeps some." },
   cointoad:    { name: "Coin Toad",    art: "pet_cointoad",    fx: { tix: 15 },   ex: "Sits on what it finds. Warm to the touch." },
   lanternmoth: { name: "Lantern Moth", art: "pet_lanternmoth", fx: { hp: 15 },    ex: "It keeps the dark an arm's length off." },
+  /* (2026-09-24) THE GREAT PYRAMID'S PET, and the only one that does not drop from PET_SCENES: it comes out of
+     the raid's chest, about one clear in twenty. Speed is the skilling buff ("you swing and fish faster"), and a
+     shade above the Bonepup's because this one has to be raided for. */
+  coilling: { name: "Coilling", art: "pet_coilling", fx: { speed: 10 }, ex: "It was in the sarcophagus with him. It has decided you are family now." },
   housecat:    { name: "House Cat",    art: "pet_housecat",    fx: { speed: 3, slots: 1, hp: 5, tix: 5 }, ex: "Wears the visor. Owns the room." }
 };
 export const PET_KEYS = Object.keys(PETS);
@@ -2612,9 +2624,13 @@ export const MOBS = {
      An ingredient nobody has to work for is not an ingredient, it is a pickup. */
   /* NO HAND-WRITTEN `tickets` ON THESE FOUR (2026-09-24). BOUNTY owns what a kill pays and the loop at the
      bottom of this file rebuilds the line from it, so a number written here is either ignored or misleading. */
-  cobra: { name: "Sand Cobra", size: "s", lvl: 48, hp: 62, att: 38, def: 33, max: 11, speed: 2000, aggro: null, box: [10, 20], drops: [["snakefang", 1]] },
+  /* AND THE INGREDIENTS ARE A GRIND (2026-09-24, the owner: "gift scarab and sand cobra should not drop fang and
+     shell everytime. it shoould be a grind, around a 10% drop rate"). The third number in a drop is its chance;
+     without one it is a certainty, which is what these two were. At a tenth, BOUNTY's loop raises their ticket
+     line on its own to keep the kill worth what it measures - the table prices a 10% shell at a tenth of a shell. */
+  cobra: { name: "Sand Cobra", size: "s", lvl: 48, hp: 62, att: 38, def: 33, max: 11, speed: 2000, aggro: null, box: [10, 20], drops: [["snakefang", 1, 0.1]] },
   mummy: { name: "Bandaged Debtor", size: "m", lvl: 43, hp: 35, att: 30, def: 27, max: 7, speed: 2800, aggro: null, box: [10, 26], drops: [["dragonstone_ore", 1]] },
-  scarab: { name: "Gilt Scarab", size: "s", lvl: 52, hp: 74, att: 42, def: 38, max: 12, speed: 2200, aggro: null, box: [12, 22], drops: [["scarabshell", 1]] },
+  scarab: { name: "Gilt Scarab", size: "s", lvl: 52, hp: 74, att: 42, def: 38, max: 12, speed: 2200, aggro: null, box: [12, 22], drops: [["scarabshell", 1, 0.1]] },
   jackal: { name: "Tomb Jackal", size: "m", lvl: 47, hp: 41, att: 34, def: 30, max: 8, speed: 2600, aggro: null, box: [10, 27], drops: [["dragonstone_ore", 1]] },
   drake: { name: "Hail Drake", size: "l", lvl: 62, hp: 124, att: 46, def: 40, max: 11, speed: 2800, aggro: 5, box: [22, 36], drops: [] },
   house: { name: "The House", size: "xl", lvl: 70, hp: 170, att: 52, def: 46, max: 13, speed: 3000, aggro: 5, box: [26, 56], drops: [] },
@@ -2827,6 +2843,8 @@ for (const [id, r] of Object.entries({
   brew_salve3: { in: [["large_vial", 1], ["lanternroot", 4], ["scarabshell", 1]], out: ["pot_salve3", 1], lvl: 84, xp: 275 },
   brew_storm: { in: [["large_vial", 1], ["staticfur", 1], ["stormjelly", 1], ["lanternroot", 1]], out: ["pot_storm", 1], lvl: 90, xp: 300 },
   brew_pharaoh: { in: [["large_vial", 1], ["scarabshell", 2], ["snakefang", 1], ["goldtomatoe", 1]], out: ["pot_pharaoh", 1], lvl: 100, xp: 360 },
+  /* the raid's own recipe: Alchemy 100 AND venom out of the Great Pyramid, which is the only place it exists */
+  brew_coilbreaker: { in: [["large_vial", 1], ["serpentvenom", 2], ["scarabshell", 2], ["bonegourd", 1]], out: ["pot_coilbreaker", 1], lvl: 100, xp: 420 },
 })) recipe(id, { skill: "alchemy", station: "cauldron", ms: 2200, ...r });
 /* THE STOP LEVEL, per recipe. A vial keeps a long tail on purpose - glass is the front of the whole chain, so
    blowing it should stay a real cost well past the level that unlocks it - and a potion settles down over the
@@ -2835,7 +2853,7 @@ for (const [id, failStop] of Object.entries({
   blow_small_vial: 30, blow_medium_vial: 64, blow_large_vial: 97,
   brew_swift: 22, brew_hide: 30, brew_keen: 40, brew_salve1: 44, brew_rattle: 48,
   brew_quick: 56, brew_gourd: 64, brew_salve2: 68, brew_ghost: 72, brew_purse: 80,
-  brew_prospect: 86, brew_fang: 92, brew_salve3: 96, brew_storm: 99, brew_pharaoh: 99,
+  brew_prospect: 86, brew_fang: 92, brew_salve3: 96, brew_storm: 99, brew_pharaoh: 99, brew_coilbreaker: 99,
 })) RECIPES[id].failStop = failStop;
 
 // cooking, unchanged in every number from when it lived in its own table
@@ -3917,6 +3935,22 @@ export const VALUE = {
   rattlebean: 10, lanternroot: 35, bonegourd: 90, stormcorn: 250,
   logs: 10, copper: 10, tin: 10, sardine: 8, trout: 14, wheat: 4, olives: 3,   /* (v70: sardine 10 -> 8 and trout 18 -> 14 after the grind sim: the Yard and the Gloam paid fishers as much as fighters) */   // (fish: see FISHING)
   willowlogs: 15, emerald_ore: 15, lanternfish: 20, diamond_ore: 22,            // the Gloam
+  /* THE GOLDEN SANDS AND ALCHEMY (2026-09-24). Every one of the map's raw materials shipped with NO value, which
+     is worse than it sounds: VALUE is the authority the shop's buy prices are copied from, so none of them could
+     be sold anywhere - and BOUNTY's loop prices a monster's drops out of this table, so a kill that dropped a
+     shell was paid as though it had dropped nothing. Found when the owner asked for the fang and the shell to be
+     a 10% grind and the ticket line did not move to compensate.
+
+     The two ingredients are pitched above a common junk drop (staticfur is 21) because they come off band-40
+     monsters one time in ten. Sand is deliberately cheap: four of them go into one large flask and the point of
+     sand is volume. The POTIONS AND VIALS stay unpriced on purpose, which is what beer and a chicken dinner do -
+     a consumable is something you buy or brew, not something the counter buys back. */
+  /* THESE ARE PRE-TIX_RATE, like every literal in this table: the loop at the foot of the file halves them, so a
+     6 here is a 3 in the game. Written at their intended EFFECTIVE value doubled - sand 6, the fang 24, the shell
+     28, palm logs 14 to match skyash logs, the two fish 20 and 24 like the sky eel, and venom 90 because it only
+     comes out of the Great Pyramid. First pass had them undoubled and palm logs were worth half a skyash log. */
+  sand: 12, snakefang: 48, scarabshell: 56, palmlogs: 28, serpentvenom: 180,
+  oasisperch: 40, nilecarp: 48, coasisperch: 48, cnilecarp: 56,
   skyashlogs: 28, dragonstone_ore: 30, skyeel: 40, onyx_ore: 40,                // Cloudreach
   perch: 10, catfish: 18, mudskipper: 28, bonefish: 28, ghostcarp: 36, cloudray: 48, stormmarlin: 44, thundersquid: 52,   // v68: two fish a band (see the scenes' spots)
   sporecap: 12, markedcard: 22, sharktooth: 26, flashlight: 30, stormjelly: 34, staticfur: 42, hailshard: 46,            // v68: what the new monsters leave
@@ -4860,7 +4894,7 @@ export function normChar(c) {
      what towerRejoin matches on to rebuild the room you were standing in. Without it a climber arrived at the
      door instead and re-entered at checkpointAt(best+1): floor 21, nine floors gone, which is precisely what was
      reported. A regex over both, so the next per-player scene is one word rather than another silent demotion. */
-  const inRun = /^(crypt|tower):/.test(String(out.scene));
+  const inRun = /^(crypt|tower|pyramid):/.test(String(out.scene));   /* (2026-09-24) the Great Pyramid is a run in progress too - see the tower note above for what leaving one out costs */
   if (!inRun && !OPEN.has(String(out.scene).split(":")[0])) Object.assign(out, START);
   if (!inRun && !SCENES[out.scene]) Object.assign(out, isIsle(out.scene) ? ISLE_FERRY : START);   // back from an island: the ferry at River Bend
   const fi = f.isle, ci = c.isle && typeof c.isle === "object" ? c.isle : {};

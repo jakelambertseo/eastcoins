@@ -16,7 +16,7 @@
    dissolves into a spiral funnel of sand") rather than describing a mood. A generator will draw a shape you
    specify and invent a blob if you only give it an adjective. */
 import sharp from "sharp"; import fs from "fs";
-const OBJ = "v3/assets/img/glad/flat/", TMP = "lt-pyr/"; fs.mkdirSync(TMP, { recursive: true });
+const OBJ = "v3/assets/img/glad/flat/", ITEM = "v3/assets/img/glad/flat/items/", TMP = "lt-pyr/"; fs.mkdirSync(TMP, { recursive: true });
 
 /* [key, pixellab id, target height] */
 const PIECES = [
@@ -26,10 +26,11 @@ const PIECES = [
   ["dustwraith", "1e398c8c-1796-4b6e-8e61-ad5902af0a50", 64], // redrawn
   ["swarm", "e145d317-f12d-4750-9d09-57f5825ca36c", 44],      // size s, low and wide
   ["pet_coilling", "6fefe303-0241-42a8-8b45-871b6327f08a", 32],   // every pet in the game is 32
+  ["serpentvenom", "36a2ecf3-2d6c-47b8-ad2e-ed525f66870b", 32, "item"],   // the ingredient only this dungeon gives
 ];
 
 let got = 0, bytes = 0; const missing = [];
-for (const [k, id, h] of PIECES) {
+for (const [k, id, h, kind] of PIECES) {
   const raw = `${TMP}${k}.png`;
   if (!fs.existsSync(raw)) {
     let ok = false;
@@ -40,10 +41,17 @@ for (const [k, id, h] of PIECES) {
     if (!ok) { missing.push(k); continue; }
   }
   const t = await sharp(raw).ensureAlpha().trim({ threshold: 1 }).toBuffer(), m = await sharp(t).metadata();
-  const w = Math.max(1, Math.round((m.width / m.height) * h));
-  await sharp(t).resize(w, h, { kernel: "nearest" }).png({ palette: true, colours: 64 }).toFile(OBJ + k + ".png");
-  const size = fs.statSync(OBJ + k + ".png").size;
-  console.log(`  ${k.padEnd(14)} ${String(w).padStart(3)}x${h}  ${(size / 1024).toFixed(1)} KB`);
+  const out = (kind === "item" ? ITEM : OBJ) + k + ".png";
+  if (kind === "item") {
+    /* an item icon is a squared 32x32 box, padded on both axes - see eastscape-sands-art.mjs for why both */
+    const box = await sharp(t).resize(32, 32, { kernel: "nearest", fit: "inside" }).toBuffer(), bm = await sharp(box).metadata();
+    await sharp(box).extend({ top: Math.floor((32 - bm.height) / 2), bottom: Math.ceil((32 - bm.height) / 2), left: Math.floor((32 - bm.width) / 2), right: Math.ceil((32 - bm.width) / 2), background: { r: 0, g: 0, b: 0, alpha: 0 } }).png({ palette: true, colours: 64 }).toFile(out);
+  } else {
+    const w = Math.max(1, Math.round((m.width / m.height) * h));
+    await sharp(t).resize(w, h, { kernel: "nearest" }).png({ palette: true, colours: 64 }).toFile(out);
+  }
+  const size = fs.statSync(out).size, mm = await sharp(out).metadata();
+  console.log(`  ${k.padEnd(14)} ${String(mm.width).padStart(3)}x${mm.height}  ${(size / 1024).toFixed(1)} KB  ${kind || "obj"}`);
   got++; bytes += size;
 }
 if (missing.length) console.log(`\n  NOT DOWNLOADED: ${missing.join(", ")}`);

@@ -22,11 +22,15 @@ import { createDecorRules } from "../../v3/assets/js/eastscape-decor-rules.js";
 import { createClosedScenes } from "../../v3/assets/js/eastscape-closed.js";
 Object.assign(G.SCENES, createClosedScenes(G, G._MAP));   // (2026-09-21) the closed areas' maps live in their own file so the page's first load doesn't carry them; the server knows every scene
 import { createCryptRules } from "../../v3/assets/js/eastscape-crypt-rules.js";
+import { createPyramidRules } from "../../v3/assets/js/eastscape-pyramid-rules.js";
 import { createTowerRules } from "../../v3/assets/js/eastscape-tower-rules.js";
 import { installCrypt } from "./crypt.js";
+import { installPyramid } from "./pyramid.js";
 import { installPit } from "./pit.js";
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
-const CR = createCryptRules(G, G._MAP); Object.assign(G.SCENES, CR.scenes); Object.assign(G.MOBS, CR.mobs);   // (v103) THE CRYPT, the party dungeon: its rules are their own file, its server side is ./crypt.js
+const CR = createCryptRules(G, G._MAP); Object.assign(G.SCENES, CR.scenes); Object.assign(G.MOBS, CR.mobs);
+/* (2026-09-24) THE GREAT PYRAMID, the second party dungeon: same shape, its own map, monsters and boss. */
+const PR = createPyramidRules(G, G._MAP); Object.assign(G.SCENES, PR.scenes); Object.assign(G.MOBS, PR.mobs);   // (v103) THE CRYPT, the party dungeon: its rules are their own file, its server side is ./crypt.js
 /* (2026-09-22) THE TOWER. Merged the same way and for the same reason as the Crypt: AFTER shared.js has run its
    pass that halves every monster's health, so the tower's generated rows keep the health the rules file computed.
    Its thirty monsters are reskins of ones that already exist, so this adds no art and no new sprite key. */
@@ -253,6 +257,7 @@ export class World {
     if (C.stats) { C.stats.sessions++; C.stats.firstSeen ||= Number(C.created) || Date.now(); C.stats.lastSeen = Date.now(); }
     if (sayHello) setTimeout(() => { for (const q of this.pls.values()) if (q.id !== user.id) q.out.push({ type: "casinonote", text: `\u{1F44B} ${pl.name} just logged on.` }); }, 400);
     this.cryptRejoin(pl);   /* (v104) saved inside a crypt run: back into it if it is still going, else to the stairs */
+    this.pyramidRejoin(pl);
     this.towerRejoin(pl);   /* (2026-09-22) saved inside the Tower: rebuild that floor, or the room comes back empty and unwinnable */
     this.pls.set(user.id, pl);
     this.ctx.storage.put(`who:${String(user.login).toLowerCase()}`, { id: user.id, name: pl.name }).catch(() => {});
@@ -268,6 +273,7 @@ export class World {
     if (this.radio && HEARD.has(String(S.key).split(":")[0])) this.send(pl, { type: "ev", list: [{ type: "radio", radio: this.radio }] });   /* (v86) the jukebox is already playing when you log in on the floor */
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
     this.cryptHello(pl, S);
+    this.pyramidHello(pl, S);
     this.achSweep(pl);   /* (2026-09-23) everything they already qualify for, paid once and quietly */
     S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
     if (!stored) this.say(pl, "Welcome to EastScape. Play the tables. Broke? Go outside: hit something, or fish. Bom Trady, in the middle of the floor, turns what you find into tickets.");
@@ -493,7 +499,7 @@ export class World {
     this.touch(pl);
     pl.out.push({ type: "scene", key });
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
-    if (S.run) pl.out.push(this.cryptGates(S));   /* (v103) a crypt run: which gates are open, and the boss's health */
+    if (S.run) pl.out.push(S.def.pyramid ? this.pyramidGates(S) : this.cryptGates(S));   /* (v103) a run: which gates are open, and the boss's health */
     if (S.tower) pl.out.push({ type: "tower", ...this.towerView(S) });   /* which floor, and whether the stairs are open */
     if (S.owner) { if (!S.decorLaid) this.decorLay(S); pl.out.push({ type: "decor", decor: this.isleOf(S)?.decor || [] }); }   /* (v101) what stands on this island: sent on the way in and on every change, never in the ten-a-second snapshot */
     if (HEARD.has(String(key).split(":")[0]) && (this.song || this.songQ?.length)) pl.out.push(this.songMsg());
@@ -776,6 +782,7 @@ export class World {
       case "tixgame": { const g = String(m.g); if (!G.GAMES[g] || !S.def.real?.[g]) return; return pl.out.push({ type: "game", g, tix: true, pot: Math.floor(this.jack.pot), lastJack: this.jack.wins?.[0] || null }); }   /* (v107) the window's Tickets toggle: open this table for TICKETS (the same message a ticket table has always opened with) */
       case "profile": return void this.profileOp(pl, m).catch(() => {});   /* (it reads storage, so it answers a moment later, through pl.out) */
       case "crypt": return m.op === "enter" ? this.cryptEnter(S, pl, m) : undefined;
+      case "pyramid": return m.op === "enter" ? this.pyramidEnter(S, pl) : undefined;
       case "tower": return m.op === "enter" ? this.towerEnter(S, pl) : undefined;
       case "forge": return this.forgeDo(S, pl, m);
       case "emote": { if (!G.EMOTES[m.k] || now - (pl.emoteAt || 0) < 1500) return; pl.emoteAt = now; for (const p of this.playersIn(S)) p.out.push({ type: "emote", id: pl.id, k: String(m.k) }); return; }
@@ -842,7 +849,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
-      const kind = { mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree",   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      const kind = { mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid",   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       if (!kind) return;
       const at = kind === "door" && ob.door ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
@@ -1644,7 +1651,7 @@ export class World {
       const gates = S.def?.gates; if (!gates) continue;
       for (const gt of gates) { const open = G.gateOpenAt(now, gt) ? "i" : "#"; for (const [gx, gy] of G.gateTiles(gt)) S.g[gy][gx] = open; }
     }
-    if (this.tickN % 20 === 0) { this.songTick(now); this.cryptTick(now); this.pitTick(now).catch(() => {}); }
+    if (this.tickN % 20 === 0) { this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.pitTick(now).catch(() => {}); }
     if (this.tickN % 20 === 0) for (const pl of this.pls.values()) {   /* once a second */
       const C = pl.C, dt = Math.min(5000, now - (pl.fxAt || now)); pl.fxAt = now; if (!(C.meal || C.drink) || !(G.SCENES[String(C.scene).split(":")[0]]?.mobs?.length)) continue;
       for (const k of ["meal", "drink"]) if (C[k]) { C[k].left = (C[k].left | 0) - dt; if (C[k].left <= 0) { this.say(pl, `Your ${G.ITEMS[C[k].k]?.name.toLowerCase() || k} has worn off.`); C[k] = null; } this.touch(pl); }
@@ -1788,7 +1795,7 @@ export class World {
            whose max hit is 2: every hit that was not a 1 flashed CRIT. Now it is the top TENTH, and never under 4 damage, so it is
            about one landed hit in nine and nobody sees one until their max hit reaches 5, around Combat 10.) */
         m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, crit: (dmg >= 4 && dmg > G.maxHitOf(C) * 0.9) || undefined, kill: m.hp <= 0 || undefined });
-        this.award(pl, dmg); if (S.def.crypt) this.cryptHit(S, pl, m, dmg);
+        this.award(pl, dmg); if (S.def.crypt) this.cryptHit(S, pl, m, dmg); else if (S.def.pyramid) this.pyramidHit(S, pl, m, dmg);
         /* (2026-09-22) ENRAGE. `m.enraged` was read by the mob's swing and set by NOTHING — the crypt declared an
            enrage and never wired it up, so the flag had been dead since the day it was written. It flips once, on
            the hit that takes a mob under its threshold, and everyone in the scene is told. */
@@ -1872,11 +1879,15 @@ export class World {
     if (a.kind === "game" && !G.GAMES[a.ob.t]) { pl.act = null; return; }
     if (a.kind === "game") { pl.act = null; return pl.out.push({ type: "game", g: a.ob.t, pot: Math.floor(this.jack.pot), lastJack: this.jack.wins?.[0] || null }); }
     if (a.kind === "crypt") { pl.act = null; return this.cryptDoor(S, pl); }
-    if (a.kind === "cryptlever") { pl.act = null; return this.cryptLever(S, pl); }
-    if (a.kind === "cryptexit") { pl.act = null; return this.cryptExit(S, pl); }
+    if (a.kind === "pyramid") { pl.act = null; return this.pyramidDoor(S, pl); }
+    /* (2026-09-24) THE PYRAMID BORROWS THE CRYPT'S FIXTURE ART, so these three kinds arrive from both
+       dungeons and each has to go to the right one. Branching on the scene is what keeps the tomb's lever from
+       calling the Crypt's. */
+    if (a.kind === "cryptlever") { pl.act = null; return S.def.pyramid ? this.pyramidLever(S, pl) : this.cryptLever(S, pl); }
+    if (a.kind === "cryptexit") { pl.act = null; return S.def.pyramid ? this.pyramidExit(S, pl) : this.cryptExit(S, pl); }
     if (a.kind === "tower") { pl.act = null; return this.towerDoor(S, pl); }        /* the door in the Yard: opens the page's window */
     if (a.kind === "towerup") { pl.act = null; return this.towerUp(S, pl); }        /* the stairs: refuses until the floor is clear */
-    if (a.kind === "cryptloot") { pl.act = null; return this.cryptLootOpen(S, pl); }
+    if (a.kind === "cryptloot") { pl.act = null; return S.def.pyramid ? this.pyramidLootOpen(S, pl) : this.cryptLootOpen(S, pl); }
     if (a.kind === "hiscores") { pl.act = null; return pl.out.push({ type: "hiscores" }); }   /* (v96) the board on the wall opens the page's own Hiscores window */
     if (a.kind === "howto") { pl.act = null; return pl.out.push({ type: "popup", title: "How EastScape works", text: G.HOWTO, icon: "🎰" }); }
     if (a.kind === "board") { pl.act = null; this.tourStep(pl, "play"); this.tourStep(pl, "board"); return this.dailySend(pl); }   /* (v96: the board also clears "play a game", so a player with no ZCoins is sent to work, not left stuck) */
@@ -2201,6 +2212,7 @@ export class World {
        reword that chat line now and the sound is unaffected. */
     pl.out.push({ type: "mobdie", t: m.t });
     if (S.def.crypt) return this.cryptKill(S, pl, m, now);
+    if (S.def.pyramid) return this.pyramidKill(S, pl, m, now);
     const def = G.MOBS[m.t];
     // the more people fighting here, the sooner it comes back (see G.respawnMs): same monsters on screen, less waiting
     const fighters = this.playersIn(S).filter((p) => now - (p.fightAt || 0) < 60000).length;
@@ -2244,6 +2256,7 @@ export class World {
   // killer: the player who landed the last hit, or { mob: name }
   die(pl, S, killer) {
     if (S?.def.crypt) return this.cryptDeath(pl, S);
+    if (S?.def.pyramid) return this.pyramidDeath(pl, S);
     if (S?.def.tower) return this.towerDeath(pl, S);   /* (2026-09-22) out of the Tower, back to the Yard: the climb is lost, the checkpoint is not */
     const now = Date.now(), C = pl.C, pk = killer?.C ? killer : null;
     pl.act = null; pl.path = [];
@@ -2455,7 +2468,10 @@ export class World {
       }
       const def = G.MOBS[m.t];
       let foe = players.find((p) => p.act?.kind === "mob" && p.act.id === m.id && G.cheb(p, m) === 1 && !p.step);
-      if (def.boss && S.def.crypt) { this.cryptBossTick(S, m, now, players); const tt = this.cryptThreat(S, m, players, now); if (tt) { m.target = tt.id; foe = G.cheb(tt, m) === 1 && !tt.step ? tt : null; } }   /* the boss goes for whoever has hurt him most */
+      if (def.boss && S.def.crypt) { this.cryptBossTick(S, m, now, players); const tt = this.cryptThreat(S, m, players, now); if (tt) { m.target = tt.id; foe = G.cheb(tt, m) === 1 && !tt.step ? tt : null; } }
+      /* (2026-09-24) the Squeeze's own turn: coil and burrow, and it goes for whoever has hurt it most, the
+         same as the Hoodie does. While it is under the sand pyramidBossTick suppresses its swing itself. */
+      if (def.boss && S.def.pyramid) { this.pyramidBossTick(S, m, now, players); const tt = this.pyramidThreat(S, m, players, now); if (tt) { m.target = tt.id; foe = G.cheb(tt, m) === 1 && !tt.step ? tt : null; } }   /* the boss goes for whoever has hurt him most */
       const aggro = m.aggro ?? def.aggro;   /* the placement wins over the type */
       if (!foe && aggro) {
         const ok = (p) => p.C.scene === S.key && !G.inCage(S.def, p.x, p.y) && G.cheb(p, { x: m.hx, y: m.hy }) <= aggro + 5;
@@ -3586,5 +3602,6 @@ export class World {
   }
 }
 installCrypt(World, { G, R: CR, rint });
+installPyramid(World, { G, R: PR, rint });
 installPit(World, { G });
 installTower(World, { G, R: TW, rint });

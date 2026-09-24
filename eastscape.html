@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=230">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=231">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1008,7 +1008,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=230";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=231";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=132").then((m) => { WK = m; }));
@@ -1137,8 +1137,12 @@ let CRR = null; const cryptRules = () => (cryptRules.p ||= import("/v3/assets/js
 /* (2026-09-22) THE TOWER's rules, lazily, exactly like the Crypt's: thirty generated monster rows and one room, which
    nobody who never opens the door should have to download. It also carries the art list for the room — which is the
    Crypt's own tiles, so entering the Tower warms the same pack. */
+/* (2026-09-24) THE GREAT PYRAMID's rules, loaded the first time anybody is in one - the Crypt's pattern
+   exactly, including handing AREA_ART its sheet at that moment so its six monsters cost nobody anything until
+   a party goes in. */
+let PYR = null; const pyramidRules = () => (pyramidRules.p ||= import("/v3/assets/js/eastscape-pyramid-rules.js?v=1").then((m) => { PYR = m.createPyramidRules(G, G._MAP); Object.assign(G.SCENES, PYR.scenes); Object.assign(G.MOBS, PYR.mobs); AREA_ART.pyramid = PYR.scenes.pyramid.art; }));
 let TWR = null; const towerRules = () => (towerRules.p ||= import("/v3/assets/js/eastscape-tower-rules.js?v=3").then((m) => { TWR = m.createTowerRules(G, G._MAP); Object.assign(G.SCENES, TWR.scenes); Object.assign(G.MOBS, TWR.mobs); AREA_ART.tower = TWR.scenes.tower.art; }));
-const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String(k).startsWith("tower") ? towerRules() : (moreScenes.p ||= import("/v3/assets/js/eastscape-closed.js?v=1").then((m) => { Object.assign(G.SCENES, m.createClosedScenes(G, G._MAP)); })));
+const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String(k).startsWith("pyramid") ? pyramidRules() : String(k).startsWith("tower") ? towerRules() : (moreScenes.p ||= import("/v3/assets/js/eastscape-closed.js?v=1").then((m) => { Object.assign(G.SCENES, m.createClosedScenes(G, G._MAP)); })));
 /* PARTIES AND THE CRYPT (v103; the server side is eastscape-worker/src/crypt.js, the numbers eastscape-crypt-rules.js, the windows eastscape-crypt.js,
    fetched on the first invitation, click on the stairway or step into a crypt). The page keeps only: the click menu's "Invite to
    party", the red tiles of a slam (TILEFX), and handing the crypt's messages to the module. */
@@ -1836,6 +1840,7 @@ const ITEM_ART = new Set([
      deliberately left on the emoji - they are the same bottle in fifteen colours, and one drawn vial per SIZE
      plus the name is more legible in a bag than ten near-identical pictures. */
   "sand", "small_vial", "medium_vial", "large_vial", "scarabshell", "snakefang",
+  "serpentvenom",   /* (2026-09-24) the Great Pyramid's own ingredient */
   /* and all fifteen potions (2026-09-24). The bottle SHAPE carries the tier - squat, round-bodied, broad and
      corded - and the liquid carries the effect, so a bag of them reads without reading a single name. */
   "pot_swift", "pot_hide", "pot_keen", "pot_salve1", "pot_rattle", "pot_quick", "pot_gourd", "pot_salve2",
@@ -2775,7 +2780,7 @@ const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.cl
 const KIND_OF = {
   /* (2026-09-24) Alchemy. The WORKER decides whether a click does anything (its own map, in index.js); this
      only labels it, so a new clickable object has to be added in BOTH or the cursor lies. */
-  cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "sign", mark: "mark", guildgate: "guildgate", towerdoor: "tower", towerup: "towerup", cryptdoor: "crypt", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", hsboard: "hiscores", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", prizewheel: "prize", fameboard: "fame", cart: "ferry", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", wildladder: "hole", agilend: "agilend", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+  cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", mark: "mark", guildgate: "guildgate", towerdoor: "tower", towerup: "towerup", cryptdoor: "crypt", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", hsboard: "hiscores", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", prizewheel: "prize", fameboard: "fame", cart: "ferry", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", wildladder: "hole", agilend: "agilend", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})${m.c && m.c !== you?.id ? " · someone's fighting it" : ""}` }; }
