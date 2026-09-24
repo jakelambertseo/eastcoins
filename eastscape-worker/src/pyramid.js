@@ -39,10 +39,14 @@ export function installPyramid(World, { G, R, rint }) {
 
   /* ------------------------------------------------------------ the door, on the Golden Sands */
   P.pyramidDoor = function (S, pl) {
-    const T = P_.tiers[1];
-    pl.out.push({ type: "pyramiddoor", tier: 1, name: T.name, lvl: T.lvl, rec: T.rec, ante: T.ante, pay: T.pay,
-      party: P_.party, runs: this.pyramidRunsToday(pl), runsPaid: P_.runsPaid,
-      lvlNow: G.lvlOf(pl.C, "melee"), god: !!pl.god });
+    const T = P_.tiers[1], pt = this.partyOf(pl);
+    /* `type: "pyramid"` and not "pyramiddoor", to match the Crypt: the page routes on this string and its
+       dungeon door is "crypt". The window reads partyN / lead / solo / runs / live off this and keeps no copy
+       of the party itself - eastscape-crypt.js owns the party box. */
+    pl.out.push({ type: "pyramid", tier: 1, name: T.name, lvl: T.lvl, rec: T.rec, ante: T.ante, pay: T.pay,
+      partyN: pt ? pt.members.length : 1, lead: !pt || pt.leader === pl.id, solo: !pt && !!pl.admin,
+      runs: this.pyramidRunsToday(pl), runsPaid: P_.runsPaid, live: !!P_.live || !!pl.admin,
+      lvlNow: G.lvlOf(pl.C, "melee") });
   };
 
   /* ------------------------------------------------------------ in */

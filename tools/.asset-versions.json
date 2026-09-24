@@ -39,6 +39,10 @@
     "v": 1,
     "hash": "16ac2f3ade83a08d"
   },
+  "eastscape-pyramid.js": {
+    "v": 1,
+    "hash": "610d640c7665e653"
+  },
   "eastscape-screen.js": {
     "v": 3,
     "hash": "50e5a33e3fd2697d"
@@ -48,8 +52,8 @@
     "hash": "6670648d71ae0518"
   },
   "eastscape-shared.js": {
-    "v": 231,
-    "hash": "701619f8d3a52da1"
+    "v": 232,
+    "hash": "17936044d7a0f72c"
   },
   "eastscape-tip.js": {
     "v": 3,

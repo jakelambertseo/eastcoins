@@ -1,0 +1,159 @@
+/* ============================================================
+   EastScape: THE GREAT PYRAMID, the page's side.
+
+   Loaded the first time it is needed (a click on the tomb door, or walking into a run), never at login. The GAME
+   SERVER decides everything (eastscape-worker/src/pyramid.js; the numbers are eastscape-pyramid-rules.js). This
+   file draws:
+     the TOMB DOOR   one difficulty, the ante, today's paid runs, who is ready, Go in
+     in a run        doors that grind open, the serpent's health across the top
+     THE COIL        the banner that says who it has hold of, and the bar showing how close the party is to
+                     breaking the grip - the one thing a player in this fight has to react to
+     THE HOARD       the chest at the head of the burial chamber, listing what was in YOUR chest
+
+   IT DOES NOT DRAW THE PARTY BOX. Parties are global and eastscape-crypt.js owns that UI, so this module
+   deliberately handles only its own four messages: a player who has both dungeons loaded should see one party
+   box, not two.
+
+   THE CSS IS ITS OWN (esPyrCss, `py-` classes). The Crypt injects .bossbar / .cr-tier / .lt-grid under its own
+   style id, and those only exist if the Crypt module happens to have loaded - so borrowing its class names
+   would make this window look correct or broken depending on where the player had been earlier. `.win`,
+   `.win-head`, `.win-body` and `.jk-msg` ARE safe: they are in the page's own stylesheet, which is why the
+   jukebox window can use them too.
+   ============================================================ */
+export function createPyramid(env) {
+  const { G, R, SFX, send, esc, $ } = env, C = R.PYRAMID, T = C.tiers[1];
+  let gates = null, barEl = null, winEl = null, lootEl = null, last = null, timer = 0;
+  const host = () => env.host();
+  const TIX = `<img src="/v3/assets/img/glad/flat/items/tickets.png?v=1" alt="" style="width:15px;height:15px;image-rendering:pixelated;vertical-align:-3px">`;
+
+  function css() {
+    if (document.getElementById("esPyrCss")) return;
+    const st = document.createElement("style"); st.id = "esPyrCss";
+    st.textContent = `
+.py-bar{position:absolute;left:50%;top:46px;transform:translateX(-50%);z-index:4;width:min(440px,62%);text-align:center;color:#f4ede5;font-weight:800;font-size:13px;text-shadow:1px 1px 0 #000}
+.py-bar[hidden]{display:none}
+.py-bar .hb{height:12px;border-radius:6px;background:#12180e;box-shadow:0 0 0 2px #000,0 0 0 3px #3a5a2a;overflow:hidden;margin-top:3px}
+.py-bar .hb i{display:block;height:100%;background:linear-gradient(180deg,#8fdc5a,#4e8c2a)}
+.py-bar.down .hb i{background:linear-gradient(180deg,#8a8a8a,#4a4a4a)}
+.py-coil{position:absolute;left:50%;top:92px;transform:translateX(-50%);z-index:5;width:min(380px,62%);text-align:center;color:#ffe9a8;font-weight:800;font-size:13px;text-shadow:1px 1px 0 #000}
+.py-coil[hidden]{display:none}
+.py-coil .hb{height:8px;border-radius:5px;background:#2a1010;box-shadow:0 0 0 2px #000;overflow:hidden;margin-top:3px}
+.py-coil .hb i{display:block;height:100%;background:linear-gradient(180deg,#ffd23f,#e0761c)}
+.py-coil.me{color:#ff8a7a;animation:pyPulse .8s ease-in-out infinite}
+@keyframes pyPulse{0%,100%{opacity:1}50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.py-coil.me{animation:none}}
+.py-tier{display:flex;gap:10px;align-items:center;padding:9px 11px;margin-bottom:6px;border-radius:7px;background:rgba(0,0,0,.07)}
+.py-tier>div{flex:1}.py-tier b{display:block}.py-tier small{color:#6a5c4e;display:block;margin-top:2px}
+.py-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:7px;margin-top:8px}
+.py-it{padding:8px 4px 6px;border-radius:8px;background:rgba(0,0,0,.07);text-align:center;font-weight:800;font-size:12px;line-height:1.2}
+.py-it.rare{background:rgba(242,210,46,.22);box-shadow:inset 0 0 0 2px #c8963a}
+.py-it .ico,.py-it img{width:34px;height:34px;image-rendering:pixelated;display:block;margin:0 auto 4px}
+.py-it b{display:block;font-size:14px}`;
+    document.head.append(st);
+  }
+
+  /* ---------------------------------------------------------------- the tomb door */
+  function renderDoor() {
+    css();
+    if (!winEl) {
+      winEl = document.createElement("section"); winEl.className = "win"; winEl.id = "pyrWin"; winEl.hidden = true;
+      winEl.style.width = "min(520px,calc(100% - 28px))"; winEl.setAttribute("aria-label", "The Great Pyramid");
+      winEl.innerHTML = `<div class="win-head"><b>\u{1F40D} The Great Pyramid</b><small>A party dungeon. Something very old is at the top.</small><button type="button" class="win-x" aria-label="Close">×</button></div><div class="win-body" id="pyrBody"></div>`;
+      $("jukeWin").parentElement.append(winEl);
+      winEl.querySelector(".win-x").addEventListener("click", () => { SFX.play("ui_close"); winEl.hidden = true; });
+    }
+    const d = last || {}, me = env.me(), you = env.you();
+    const lvl = G.lvlOf(me, "melee"), tix = G.tixIn(me || { inv: [] });
+    /* the party box is the Crypt module's, so this reads the party off the server's own reply rather than
+       keeping a second copy of it */
+    const n = d.partyN || 1, lead = d.lead !== false;
+    const okParty = d.solo || (n >= C.party[0] && n <= C.party[1]);
+    const left = Math.max(0, C.runsPaid - (d.runs | 0));
+    const can = okParty && lead && lvl >= T.lvl && tix >= T.ante && d.live !== false;
+    $("pyrBody").innerHTML = `
+      <div class="jk-msg">${d.solo ? "<b>No party.</b> You're an admin, so you may go in alone to test it."
+        : n >= C.party[0] ? `<b>Your party: ${n}.</b>` : `<b>You need a party of ${C.party[0]} to ${C.party[1]}.</b> Click a player and invite them.`}</div>
+      <div class="py-tier">
+        <div><b>${esc(T.name)}</b><small>Combat ${T.lvl}+ at the door · <b style="color:#ffd23f">bring ${T.rec}</b> to the fight</small></div>
+        <div style="flex:0 0 auto;text-align:right">${TIX} <b>${T.ante.toLocaleString()}</b><small>each</small></div>
+        <button type="button" class="lk-btn" data-go="1"${can ? "" : " disabled"}>Go in</button>
+      </div>
+      <div class="jk-msg" style="opacity:.85">The <b>Combat</b> number is what the door asks for. <b style="color:#ffd23f">Bring</b> is the level the Squeeze actually fights at &mdash; under it you land about one swing in ten, however long you stand there.</div>
+      <div class="jk-msg">${left ? `<b>${left} paid run${left === 1 ? "" : "s"} left today.</b>` : "<b>Today's paid runs are used:</b> a clear pays a quarter until tomorrow."}
+        Clear each chamber and its door grinds open; the lever opens the burial chamber once everyone alive is in the third.</div>
+      <div class="jk-msg" style="opacity:.85"><b>It pays less than the Crypt.</b> What it has instead is in the chest: <b>serpent venom</b>, which is the only way to brew a Coilbreaker draught, and now and then something alive.</div>
+      ${d.live === false ? `<div class="jk-msg"><b>Not open yet.</b> The tomb has never been run by four people, so only an admin can open the door.</div>` : ""}`;
+    $("pyrBody").querySelector("[data-go]").addEventListener("click", () => { SFX.play("door"); winEl.hidden = true; send({ t: "pyramid", op: "enter" }); });
+    winEl.hidden = false; SFX.play("ui_open");
+  }
+
+  /* ---------------------------------------------------------------- inside a run */
+  const inRun = () => String(env.Z().key).startsWith("pyramid:");
+
+  function applyGates() {
+    const Z = env.Z(); if (!gates || !inRun()) return;
+    for (const ob of Z.objs) if (ob.t === "cryptgate" && gates.open[ob.gate] && !ob.open) { ob.open = true; if (Z.g[ob.y]) Z.g[ob.y][ob.x] = "i"; SFX.play("door"); }
+    for (const ob of Z.objs) if (ob.t === "cryptloot" && gates.cleared && ob.open) { ob.open = false; SFX.play("coins"); }
+  }
+
+  function bossBar() {
+    const Z = env.Z(), here = inRun();
+    const hp = here && gates?.hp?.length ? gates.hp[0] : null;
+    const b = hp ? Z.mobs.find((m) => m.id === hp.id) : null;
+    if (!barEl) { if (!here) return; css(); barEl = document.createElement("div"); barEl.className = "py-bar"; barEl.innerHTML = `<span>THE SQUEEZE</span><div class="hb"><i></i></div>`; host().append(barEl); }
+    const down = here && gates && gates.down > Date.now();
+    const show = !!b && !b.dead && gates.open[2];
+    barEl.hidden = !show; if (!show) return;
+    barEl.classList.toggle("down", !!down);
+    barEl.firstChild.textContent = down ? "THE SQUEEZE · UNDER THE SAND" : "THE SQUEEZE";
+    barEl.querySelector("i").style.width = `${Math.max(0, Math.min(100, ((b.hp ?? hp.hp) / Math.max(1, hp.max)) * 100))}%`;
+  }
+
+  /* THE COIL BANNER. The only thing in this fight a player must react to, so it says plainly who is held and
+     how far off the party is from letting them go. Red and pulsing if it is you. */
+  let coilEl = null;
+  function coilBar() {
+    const here = inRun();
+    if (!coilEl) { if (!here) return; css(); coilEl = document.createElement("div"); coilEl.className = "py-coil"; coilEl.innerHTML = `<span></span><div class="hb"><i></i></div>`; host().append(coilEl); }
+    const c = here && gates ? gates.coil : null;
+    coilEl.hidden = !c; if (!c) return;
+    const you = env.you(), mine = you && c.on === you.id;
+    coilEl.classList.toggle("me", !!mine);
+    const left = Math.max(0, c.until - Date.now());
+    const who = mine ? "IT HAS YOU" : "IT HAS SOMEONE — HIT IT";
+    coilEl.firstChild.textContent = `${who} · ${(left / 1000).toFixed(1)}s`;
+    coilEl.querySelector("i").style.width = `${Math.max(0, Math.min(100, (left / C.coil.maxMs) * 100))}%`;
+  }
+
+  /* ---------------------------------------------------------------- the hoard */
+  function showLoot(e) {
+    css();
+    if (!lootEl) {
+      lootEl = document.createElement("section"); lootEl.className = "win"; lootEl.id = "pyrLootWin"; lootEl.hidden = true;
+      lootEl.style.width = "min(440px,calc(100% - 28px))"; lootEl.setAttribute("aria-label", "The Squeeze's hoard");
+      lootEl.innerHTML = `<div class="win-head"><b>The Squeeze's hoard</b><small id="pyrLootSub"></small><button type="button" class="win-x" aria-label="Close">×</button></div><div class="win-body" id="pyrLootBody"></div>`;
+      $("jukeWin").parentElement.append(lootEl);
+      lootEl.querySelector(".win-x").addEventListener("click", () => { SFX.play("ui_close"); lootEl.hidden = true; });
+    }
+    const items = e.items || [];
+    $("pyrLootSub").textContent = `${T.name} · yours alone`;
+    const name = (it) => (it.k === "pet" ? "A Coilling" : `${it.n > 1 ? it.n + " × " : ""}${G.ITEMS[it.k]?.name || it.k}`);
+    const rare = (it) => it.k === "pet" || it.k === "serpentvenom" || G.ITEMS[it.k]?.slot || it.k === "chip_gold" || it.k === "horseshoe";
+    $("pyrLootBody").innerHTML = `<div class="jk-msg">${e.sent ? "<b>You left this behind.</b> It was sent after you." : "<b>One each.</b> Nobody else's chest had this in it."}${items.some((x) => x.bank) ? " Some of it didn't fit in your bag: that is in your bank." : ""}</div>
+      <div class="py-grid">${items.map((it) => `<div class="py-it${rare(it) ? " rare" : ""}">${env.ico ? env.ico(it.k === "pet" ? "pet_coilling" : it.k) : ""}<b>${esc(name(it))}</b></div>`).join("")}</div>`;
+    lootEl.hidden = false;
+    SFX.play(items.some((x) => x.k === "pet") ? "jackpot" : "win_big");
+  }
+
+  function on(e) {
+    if (e.type === "pyramid") { last = e; renderDoor(); }
+    else if (e.type === "pyramidgates") { gates = e; applyGates(); bossBar(); coilBar(); }
+    else if (e.type === "pyramidwon") env.winFx("THE SQUEEZE IS DEAD", `open your chest, at the head of the chamber · ${Math.floor(e.secs / 60)}:${String(e.secs % 60).padStart(2, "0")}`);
+    else if (e.type === "pyramidloot") showLoot(e);
+    /* the bars are redrawn on a timer as well as on a message: the coil's countdown and the burrow both run
+       between server updates, and a bar that only moved when a packet arrived would stutter. */
+    clearInterval(timer); timer = setInterval(() => { applyGates(); bossBar(); coilBar(); }, 200);
+  }
+
+  return { on };
+}
