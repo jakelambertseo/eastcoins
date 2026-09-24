@@ -655,6 +655,13 @@ export class World {
       case "ping": return this.send(pl, { type: "pong", t: now, c: m.c });
       case "walk": {
         if (!Number.isInteger(m.x) || !Number.isInteger(m.y)) return;
+        /* (2026-09-24, reported by the owner: "while getting held ... i can still move slightly and then it
+           pulls me back close to it, is that intended") IT WAS NOT. The coil was enforced only from the boss's
+           tick, which cleared the path of whoever it had hold of - so a click still walked you a step or two and
+           the next tick yanked you back, which looks like the snake pulling you in and is really the server
+           arguing with the client. A hold is refused HERE, where the walk is accepted, so you simply do not
+           move and are told why. */
+        if (S.run && S.def.pyramid && S.run.coil && S.run.coil.id === pl.id) return this.say(pl, "It has you. You are not going anywhere until somebody breaks its grip.", "bad");
         // path from where you'll be when the current step lands, so a new click never stops you dead
         pl.act = null; const p = G.pathTowards(S.g, this.from(pl), { x: m.x, y: m.y }, 0); if (p) { pl.path = p; this.kick(S, pl, now); } return;
       }
@@ -2455,7 +2462,7 @@ export class World {
     const players = this.playersIn(S);
     for (const m of S.mobs) {
       if (m.dead) {
-        if (S.def.crypt || now < m.respawnAt) continue;   /* (nothing comes back in a crypt run) */
+        if (S.def.crypt || S.def.pyramid || now < m.respawnAt) continue;   /* (nothing comes back in a crypt or pyramid run) */   /* (2026-09-24) the pyramid relied on pyramidKill setting respawnAt to Infinity; saying it here too means a monster killed some other way cannot quietly come back and re-lock a cleared chamber */
         // back at home, or the nearest free tile to it: never on top of someone
         let spot = null;
         for (let r = 0; r <= 2 && !spot; r++) for (let dy = -r; dy <= r && !spot; dy++) for (let dx = -r; dx <= r && !spot; dx++) {
@@ -2474,7 +2481,14 @@ export class World {
       if (def.boss && S.def.pyramid) { this.pyramidBossTick(S, m, now, players); const tt = this.pyramidThreat(S, m, players, now); if (tt) { m.target = tt.id; foe = G.cheb(tt, m) === 1 && !tt.step ? tt : null; } }   /* the boss goes for whoever has hurt him most */
       const aggro = m.aggro ?? def.aggro;   /* the placement wins over the type */
       if (!foe && aggro) {
-        const ok = (p) => p.C.scene === S.key && !G.inCage(S.def, p.x, p.y) && G.cheb(p, { x: m.hx, y: m.hy }) <= aggro + 5;
+        /* (2026-09-24, reported by the owner: "when i cleared the first room, the mobs from the 2nd room all
+           flooded in. they should stay in their room") A MONSTER IN A PYRAMID CHAMBER NEVER LEAVES IT. The leash
+           here is distance from HOME (aggro + 5) with no notion of rooms, and the pyramid's chambers are stacked
+           with a door on the centre line - so a Scarab Swarm homed one tile from the gate could see straight
+           through it the moment it opened and follow you down. Comparing chambers instead of distance is what
+           makes a cleared room stay cleared. */
+        const ok = (p) => p.C.scene === S.key && !G.inCage(S.def, p.x, p.y) && G.cheb(p, { x: m.hx, y: m.hy }) <= aggro + 5
+          && (!S.def.pyramid || PR.roomOf(p.x, p.y) === PR.roomOf(m.hx, m.hy));
         const owner = this.claimOf(S, m, now);
         let tgt = owner || (m.target ? players.find((p) => p.id === m.target) : null);
         if (!tgt || !ok(tgt)) { tgt = players.filter((p) => ok(p) && G.cheb(p, m) <= aggro).sort((a, b) => G.cheb(a, m) - G.cheb(b, m))[0] || null; m.target = tgt ? tgt.id : null; }

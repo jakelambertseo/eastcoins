@@ -110,5 +110,43 @@ for (let i = 0; i < runs; i++) {
 if (venom !== runs) fail(`only ${venom} of ${runs} chests held venom; it is supposed to be every one`);
 else ok(`every one of ${runs} chests held serpent venom, and ${(pets / runs * 100).toFixed(1)}% held the pet`);
 
+/* ---------------------------------------------------------------- the three things live testing found
+   None of these can be PROVED without a running server, so what is checked is that the guard is still there.
+   Every one was a real bug in the first live run. */
+{
+  const fs = await import("node:fs");
+  const IDX = fs.readFileSync("C:/Users/jake/code/eastcoins/eastscape-worker/src/index.js", "utf8");
+  const PYR = fs.readFileSync("C:/Users/jake/code/eastcoins/eastscape-worker/src/pyramid.js", "utf8");
+
+  /* 1. a held player could still walk a step and be yanked back, because the hold was only enforced from the
+        boss's tick. It is refused where the walk is accepted. */
+  if (!IDX.includes("S.run.coil && S.run.coil.id === pl.id) return this.say"))
+    fail("the walk handler no longer refuses a held player, so the coil is back to arguing with the client");
+  else ok("a held player's click is refused where the walk is accepted, not undone a tick later");
+
+  /* 2. the serpent coiled people four chambers away, through three shut stone doors */
+  if (!PYR.includes("if (!run.gates[2]) return;"))
+    fail("the boss tick runs before the burial chamber is open - it will coil people in the entrance hall again");
+  else if (!PYR.includes("R.roomOf(p.x, p.y) === R.roomOf(m.x, m.y)"))
+    fail("the boss can target players outside its own chamber again");
+  else ok("the serpent does nothing until its door is open, and only takes hold of somebody in the room with it");
+
+  /* 3. clearing a chamber let the next one's monsters follow you through the opened door */
+  if (!IDX.includes("PR.roomOf(p.x, p.y) === PR.roomOf(m.hx, m.hy)"))
+    fail("a pyramid monster is leashed by distance again, not by chamber - a cleared room will not stay cleared");
+  else ok("a chamber's monsters cannot follow you out of it");
+
+  if (!IDX.includes("S.def.crypt || S.def.pyramid || now < m.respawnAt"))
+    fail("pyramid monsters can respawn again, and could re-lock a cleared chamber");
+  else ok("nothing killed in a run comes back");
+
+  /* the monster homed nearest a door is what exposed this, so the distance is worth printing */
+  const gate = P.gates[0];
+  const near = SPAWNS.filter(([r]) => r === 1)
+    .map(([r, t, x, y]) => [t, Math.max(Math.abs(x - gate.x), Math.abs(y - gate.y))])
+    .sort((a, b) => a[1] - b[1])[0];
+  console.log(`  (the second chamber's nearest monster to its door is a ${near[0]}, ${near[1]} tile away — it is the chamber check and not distance that holds it)`);
+}
+
 console.log(bad ? `\n${bad} problem(s)` : "\nthe Great Pyramid holds together");
 process.exitCode = bad ? 1 : 0;

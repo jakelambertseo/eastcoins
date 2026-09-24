@@ -149,6 +149,13 @@ export function installPyramid(World, { G, R, rint }) {
      burrowing serpent is moved and told not to swing. */
   P.pyramidBossTick = function (S, m, now, players) {
     const run = S.run; if (!run || run.cleared) return;
+    /* (2026-09-24, reported by the owner: "there was a ghost mob that was making me get held on the first room")
+       THAT WAS THE SERPENT, FOUR CHAMBERS AWAY. This ran from the first tick of the run and picked its target
+       out of everybody in the scene, so it coiled people standing in the entrance hall - through three shut
+       stone doors, with nothing visible anywhere near them. It does nothing until the burial chamber is open,
+       and it can only take hold of somebody standing in the chamber WITH it. */
+    if (!run.gates[2]) return;
+    const near = players.filter((p) => !p.dead && R.roomOf(p.x, p.y) === R.roomOf(m.x, m.y));
 
     /* BURROW: at each threshold, once. It does no damage - it resets where everybody is standing. */
     const frac = m.hp / Math.max(1, m.maxHp);
@@ -168,13 +175,14 @@ export function installPyramid(World, { G, R, rint }) {
     /* COIL: warn, then take hold of whoever has hurt it most. */
     if (!run.coil) {
       if (!run.warnAt && now >= run.nextCoilAt) {
+        if (!near.length) { run.nextCoilAt = now + P_.coil.everyMs; return; }   // do not telegraph at an empty chamber
         run.warnAt = now;
         for (const p of this.playersIn(S)) this.say(p, "It rears up and starts to gather itself.", "bad");
         this.pyramidTell(S);
       }
       if (run.warnAt && now - run.warnAt >= P_.coil.warnMs) {
-        const alive = players.filter((p) => !p.dead);
-        const target = this.pyramidThreat(S, m, alive, now) || alive[Math.floor(Math.random() * alive.length)];
+        if (!near.length) { run.warnAt = 0; run.nextCoilAt = now + P_.coil.everyMs; return; }   // nobody in the room to take hold of
+        const target = this.pyramidThreat(S, m, near, now) || near[Math.floor(Math.random() * near.length)];
         run.warnAt = 0;
         run.nextCoilAt = now + P_.coil.everyMs;
         if (target) {
@@ -189,6 +197,8 @@ export function installPyramid(World, { G, R, rint }) {
     /* held: they cannot walk off, and they bleed */
     const c = run.coil, held = this.pls.get(c.id);
     if (!held || held.dead || held.C.scene !== S.key) return this.pyramidFreeCoil(S, "gone");
+    /* the path is still cleared, but only as a belt to the braces: the walk handler refuses a held player's
+       click outright now, so this no longer has to fight one that already happened. */
     held.path = []; held.step = null;
     if (now - c.hurtAt >= 1000) {
       c.hurtAt = now;
