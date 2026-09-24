@@ -639,6 +639,203 @@ Not Roman: the user wants new content original and imaginative (NGU / Dungeon Cr
   mobs are the detail that makes it affordable at all - no pathfinding and no wander, so only the ones actually being
   fought cost anything.
 
+- **The wiki never says where a crop's FIRST seed comes from** (noticed 2026-09-23, from the owner asking
+  "how to get rattlebeans?"). The Harvesting tables list level, cycle, yield, xp, value and a location column
+  reading e.g. "the Gloam" - which a player reads as *where the crop grows*, not *where the bean comes from*.
+  Rattlebeans are actually a flat 1% rare from the five Gloam monsters (Highwayman, Bog Gnasher, Sulking
+  Toadstool, Bone Idle, Goat in a Toga) and there is no seed item and no shop that sells one, so a player who
+  hits Harvesting 10 and looks at the wiki has no way to learn what to do next. Planting consumes one of the
+  crop item itself and a harvest returns 3-5, so ONE drop is self-sustaining for ever - which is the actually
+  useful sentence and it is nowhere on the page. Fix: a "where the first one comes from" column (or a line
+  under each table) for every crop above wheat, naming the monsters and the rate, plus the compounding rule
+  stated once. Same gap exists for every crop the shop does not sell. Cheap: it is wiki copy only, no code.
+  While in there: Rattlebean is a SIDESTEP, not an upgrade - 60 xp on a 20-minute cycle against the Harvesting-5
+  tomato's 70 xp on the same cycle - and the page does not say so either.
+
+- **THIEVING (owner, 2026-09-23; first of three new skills before launch - the others are Alchemy and Breeding,
+  not yet designed). DESIGN SETTLED, BUILD STARTED.** A tenth skill, non-combat, in a new area south of the Yard.
+
+  **Decisions the owner made** (AskUserQuestion, 2026-09-23): permit costs 50,000 tickets OR a rare tradeable
+  Crypt-chest drop; drops are a NEW stolen-material line feeding NEW recipes; marks CANNOT be fought at all;
+  moderate art (4 mark sprites + a door). Room 4 ALSO drops the Vault three as a second route. Thieving does NOT
+  count toward the Crypt/Tower gates for now.
+
+  **The permit** is ONE tradeable item, consumed on use, granting permanent access (a flag on the character, so a
+  used permit cannot be resold). A fence in the Yard sells it at 50,000; the Crypt chest drops it rarely as a new
+  line in CRYPT.loot.table. Two routes into one item means the market prices it and the 50k is the ceiling nobody
+  pays - the sink and the prestige route without walling anyone out. 50k is ~18 hrs for a new player and ~1.4 hrs
+  at Combat 40, measured off the skill sim.
+
+  **The guild.** `workyard.exits` is {e: casino, n: gloam}, so `s: "guild"` was free and is where the owner wanted
+  it. FIRST HARD ENTRY GATE IN THE GAME - every existing gate is soft (bandBlock stops you fighting and fishing,
+  not walking in), so the door is new machinery. Four rooms behind internal doors gated on THIEVING LEVEL ONLY
+  (1 / 25 / 50 / 75), no combat band - that is what makes it a real alternative path. Reuses the Crypt's
+  roomOf(x) chamber trick.
+
+  **A mark is a NODE, not a monster** - reuses the mining/fishing `act` loop rather than the combat loop. Far less
+  new machinery and it makes the skill genuinely non-combat. Success is
+  `min(0.90, base + 0.02 * (level - mark.lvl))`, mirroring mining. THIS IS THE ANTI-AGILITY RULE: Agility takes
+  557 hours to 99 because a lap pays a flat 222 xp and nothing compounds, and the sim proved it (rate moves 12%
+  across 98 levels). Failure = stunned 3-5s and you drop one stolen item; NOT a hospital bill, which is the DEATH
+  table's job and is keyed to areas.
+
+  **The stolen line hooks into REFORGING**, which already exists (forgeDo, index.js): max +3, odds 100/80/55%,
+  and a failure at +2 destroys the piece 15% of the time. That is a system people already care about and it needs
+  no new gear tier.
+
+  | Room | Thieving | Stolen material | Feeds |
+  |---|---|---|---|
+  | 1 | 1-24 | Whetgrit | anvil: whetgrit x2 + any bar -> Temper |
+  | 2 | 25-49 | Quenching salts | anvil: salts x2 + whetgrit -> Flux |
+  | 3 | 50-74 | Guild seal wax | anvil: wax + flux -> Master's seal |
+  | 4 | 75-99 | Blackmarket ledger + the Vault three | fence value; starfall_ore/eclipse_ore/voidglass |
+
+  Temper: next reforge +20 points of odds. Flux: next reforge cannot DESTROY the piece (a failure downgrades).
+  Master's seal: one reforge past +3 to +4 on a single piece. Every room also drops plain fence goods.
+
+  **The xp ladder, checked against the real curve** (2.4s attempt, ~70% success = 1,050 picks/hr):
+  15 / 45 / 110 / 200 xp per pick by room = 0.5 + 2.0 + 9.6 + 56.3 = **68 hours to 99**, between mining (65) and
+  woodcutting (73). Ticket income targets 15-25k/hr, BELOW combat's 37k at level 40 or the guild is the farm.
+
+  **Two economy hazards.** (1) DROPS ARE GOODS, NEVER TICKETS: thieving pays instantly with no input cost, so a
+  direct ticket drop would be the best faucet in the game and undo the halving - goods mean the Cashier price is
+  the lever and TIX_RATE already covers it. (2) FLUX REMOVES A SINK: the 15% break currently destroys gear and
+  quietly drains the item economy, so flux must be genuinely scarce or +3 gear is everywhere in a fortnight.
+  Also +4 needs a real balance pass - tspd is only 7.5% -> 10%, but forgeAddAt scales armour and weapons too and
+  that was not modelled.
+
+  **SHIPPED LIVE 2026-09-23, VERSION 199.** Built in three passes (rules, worker, client), shipped DARK behind
+  `THIEF.live` first and flipped a day later. Three lessons worth more than the feature.
+
+  **A feature switch has to push, never declare.** Three separate temporal-dead-zone crashes came from adding
+  things to `SHOP.sells`, `OPEN` and `HISCORES` from the THIEVING block, which sits BELOW all three declarations.
+  The last one only fired when the flag was TRUE, so it sat invisible for the whole time the skill shipped dark
+  and would have taken the entire rules file down on the deploy that opened the guild. Anything a switch turns on
+  must be pushed from after the thing it pushes into, and the switch must be flipped and run locally before it is
+  deployed.
+
+  **The skill sim disproved the design's own arithmetic.** Priced by hand at "attempts x 70% success" the rooms
+  read 3k/8k/13k/24k tickets an hour and 68 hours to 99. The sim charges the hop to the next mark and the stun on
+  a miss, and measured HALF the income and 98 hours from the identical numbers - a level-80 thief earning less
+  than a level-40 miner. Retuned x1.5 on the fence and 3-5s stun down to 2-3.5s, landing at 2.3k/6.7k/11.1k/17.6k
+  and 92 hours. `eastscape-thieving-test.mjs` now uses the sim's model and reads 90; two independent
+  implementations agreeing is the check, and their disagreeing is what put a wrong number in the wiki.
+
+  **No new art was needed after all.** `drawPerson` already existed for NPCs, so marks draw as people with a
+  palette per room and look native from day one; the door reuses `o_roomdoor`. The "4 sprites" that were scoped
+  as a blocker became optional polish - sprite hooks wait at `o_mark_<kind>`. Worth checking for an existing
+  renderer before budgeting art. NOT DONE: the four mark sprites, and nobody has played it yet - every number
+  above is simulated.
+
+  **FIRST TEST ROUND, 2026-09-23 evening (VERSION 200-201).** Five things came out of the owner playing it, and
+  two were real bugs rather than taste.
+
+  **An interior scene could not show an internal wall.** `paintRoom` floors the WHOLE room rectangle, so a "v"
+  tile inside a room was painted over with floorboards: it blocked you and you could not see why. No interior had
+  ever had a divider in it before, so it had never shown. The owner read the symptom exactly right - "the rooms
+  need to have vertical walls in between them so they feel like real rooms". Fixed generally: paintRoom now draws
+  wall tiles (dark block, lit cap, shadow on the floor below) and the floor loop skips them, so any future
+  interior gets dividers for free.
+
+  **The rooms were a corridor.** Walls had a gap in them, so a level-1 thief could walk into the Quartermaster's
+  room and simply fail to pick anyone - each mark's `req` stops you PICKING above your level and never stopped
+  you WALKING. Each wall is solid now with a `guildgate` the server opens on Thieving level, and the test reads
+  the grid and fails if any wall has a walkable tile.
+
+  **A mark cannot move, and that is structural.** Marks are OBJECTS; object positions are built on the page and
+  never sync (only their timers ride the `dyn` message), so moving one server-side changes nothing on screen.
+  The life in a room therefore comes from NPCs, which are entities with steps that the server already paths -
+  four of them, one per room, each carrying a `level`, which is the flag that makes an NPC wander rather than
+  shuffle on the spot. Marks got a cosmetic client-side sway instead. TO DO PROPERLY: convert marks to NPCs, at
+  which point they really walk and the pick has to follow a moving target the way an attack does.
+
+  **Doors and marks are not the same ladder** (`THIEF.gates` = [10, 50, 75] against marks at 25/50/75). The first
+  door opening at 10 gives a new thief somewhere to walk to fifteen levels before they can work it. The test
+  allows a door BELOW its marks and fails one above them.
+
+  **Audio**: the owner's takes became `steal` and `caught`, three each, coins and nails mixed through both. A
+  lift is detected by standing among marks AND the item being something a mark carries - NOT by `mine.act`,
+  which is cleared on the same tick the gain event is sent.
+
+  Also fixed from a tester (Calvinthesneak): the House Tour's "See Bom Trady" step was hooked only to `cashout`,
+  so it cleared when you completed a ticket trade rather than when you went and saw him. The note beside that
+  step already said the trigger was the Prize Counter; opening it now clears it.
+
+  **Process note.** A commit message containing "VERSION 199 -> 200." was passed to `git commit -m` with broken
+  quoting, and bash read `> 200.` as a redirect and created an empty file called `200.` in the DEPLOY repo, which
+  then blocked the next `git add`. Commit messages go through a heredoc (`git commit -F-`), always.
+
+  **Scope, stated once and overruled deliberately:** permit + new material line + new recipes + a gated area +
+  4 sprites is the heaviest version of every choice, x3 skills, in 8 days, with the tables tutorial still the top
+  ship blocker. If it gets tight the clean seam is to ship the guild, permit, marks and fence goods first (a
+  complete playable skill) and land the stolen line + recipes as the week-two drop. The ladder and rooms do not
+  change either way.
+
+- **EVERY CRYPT'S LEVEL GATE IS WELL BELOW THE LEVEL YOU CAN ACTUALLY FIGHT ITS BOSS AT** (found 2026-09-23 while
+  the owner was setting up a 4-man Black Crypt test). Not a tuning nitpick: at all three stated gates, in the best
+  gear that level can even wear, you are on the 10% clamp and the boss takes over an hour.
+
+  The cause is one line - `hitChance = clamp(0.5 + (att - def) * 0.04, 0.10, 0.95)` - and the fact that a crypt
+  boss's DEFENCE is far above what its gate level can roll. `attackRollOf` is `melee level + 1 + worn accuracy`,
+  so below `def - 10` the clamp pins you at one swing in ten and NOTHING helps: at Combat 62 a Black Crypt party
+  in full Dragonstone and a party in full Eclipse are identical, both at 10%, because even Eclipse + a +3 weapon
+  only reaches a roll of 98 against defence 109. Levelling changes nothing until you cross the clamp, which is
+  the worst possible shape for a player to meet - it reads as "our gear is wrong" when it is purely levels.
+
+  | Crypt | Gate says | Boss def | Roll at the gate | Hit at the gate | REAL: beats 10% | REAL: 50% |
+  |---|---|---|---|---|---|---|
+  | The Crypt | melee 10 | 35 | 19 | 10% | melee 17 | melee 22 |
+  | The Deep Crypt | melee 30 | 68 | 47 | 10% | melee 40 | melee 47 |
+  | The Black Crypt | melee 40 | 109 | 61 | 10% | **melee 70** | melee 76 |
+
+  The Black Crypt is the worst by far - its gate is off by about 30 levels, and note the gate was LOWERED from 50
+  to 40 on 2026-09-22 ("four people each at 50 was the harshest gate in the game"), which made a real problem
+  worse rather than better. The right reading of that day's complaint was probably that the crypt was
+  overtuned, not that the gate was.
+
+  **Two ways to fix it and they are not the same.** (1) Raise the gates to the levels above, which is honest but
+  makes the Black Crypt a Combat 76+ activity and shuts out most of the server. (2) Bring the BOSSES' defence
+  down so the advertised gate is real - Black Crypt boss def 109 -> ~75 would make melee 40 a 10%-clearing,
+  melee 46 a 50% fight. (2) is probably right for a game this size, with the gate then meaning something.
+  Either way the clamp is the thing to design against: a gate should never sit below `bossDef - 10 - gearAcc`.
+
+  Also worth fixing while in there: **armour reforging does nothing against a crypt boss**, because armour carries
+  defence and every crypt boss is far enough above your defence roll to sit on the 95% clamp - the Black Crypt
+  boss hits you 95% of the time at any level in any gear. Only the WEAPON reforge matters (accuracy), and it is
+  worth 16-20 percentage points of hit chance. Players will waste a lot of bars learning that, and nothing in the
+  game says it.
+
+  Numbers were computed straight off the live rules; the working is in the session of 2026-09-23.
+
+- **BREEDING: what it should produce, after the owner shot down the first version** (2026-09-24). The first mock-up
+  was ten pets each tied to a skill - a Slagpig for mining, an Otter for fishing, and so on. The owner's objection
+  killed it and was right: "users having to switch between pets depending on which skill theyre using... this is
+  supposed to be a fun, beer in hand type of game, and that seems like a lot of micromanaging". A design whose
+  OPTIMAL play is tedious is a tax on everybody who cannot be bothered.
+
+  **The existing five pets already have it right.** Bonepup is speed, Pack Rat is slots, Coin Toad is tickets,
+  Lantern Moth is health - none of them is ABOUT a skill, each is about a way of playing, so there is never a
+  moment when yours is the wrong one and nobody ever swaps. Differentiate pets by EFFECT (yield, speed, luck,
+  carry, hardy), never by skill. It also costs far less: those ride levers that already exist (`speed`, `rare`,
+  `slots`, `tough`, `hp`) instead of teaching every skill a new trick.
+
+  **So Breeding produces two things, neither of them managed moment to moment:**
+  1. BETTER pets of the kinds that already exist - a bred Pack Rat carries 6 slots, not 4. Species comes from the
+     world, QUALITY comes from the pen. That is what makes a breeder worth buying from, and you still never swap
+     because your pet simply got better at what it already did.
+  2. MATERIALS, while you are not looking. Pairs live in a pen on the island and produce over real time the way
+     crops do - hides, eggs, wool - feeding Cooking and Alchemy. Zero attention while you are playing, which is
+     exactly why island farming works. This half is arguably the real skill; the pets are the prestige on top.
+
+  **Keep ONE ACTIVE PET.** Not for balance - because the moment you can run four there is a correct set, and
+  working out the correct set is the homework this game is trying not to have.
+
+  Against the economy philosophy it would eat from Farming (feed) and Combat (rare species) and feed Cooking,
+  Alchemy and every gathering skill - the first skill in the game to clear "feeds 2, eats 1" on both sides.
+  Pets are already INSTANCES (`c.pets` is [{id,k,name}], `eq.pet` holds an id), so a bred pet is a real tradeable
+  object with provenance and needs no new data model. Feed also gives Farming its first outlet: seven crops
+  currently feed NOTHING.
+
 ## Later
 
 - Wilderness v2: skull timer / "who attacked first", PvP hiscores, a Wilderness boss, deeper levels, a way to protect one item.
@@ -1330,3 +1527,49 @@ Options, cheapest first:
 - A sign beside it, the way the Gloam signs the Mire and the Wilderness ladder still needs one.
 - Move it somewhere people already walk: near the Yard's casino-side entrance, or on the path north.
 - Mention it in the House Tour once Agility is worth having.
+
+
+## Cloudreach has a woodcutting tree standing in the water — found 2026-09-24
+
+One of Cloudreach's TWO skyash trees cannot be chopped. In `cloud.build()` the trees go down
+first and set their own tile blocked:
+
+    for (const [tx, ty] of [[9, 6], [32, 20]]) { ... g[ty][tx] = "#"; }
+
+and then the hole in the cloud is painted straight over the top of one of them:
+
+    for (let y = 19; y <= 22; y++) for (let x = 27; x <= 36; x++) g[y][x] = "~";
+
+32,20 is inside that rectangle. The water wins, so the tree object sits on a water tile with
+water on every side: no reachable tile beside it, nothing to stand on, and `scatterSpots` can
+drop a fishing spot on the same tile (it does — skyash and spot are both at 32,20). Cloudreach is
+the Woodcutting 45 map, so half its supply of skyashlogs has never existed.
+
+Fix is one coordinate: move the second skyash out of x27-36 / y19-22. Worth doing at the same
+time as any Cloudreach polish rather than on its own.
+
+**The general lesson** is the ORDER in a build(): anything that paints a region — water, a road,
+a room — will silently overwrite a resource placed before it, and the object survives with no
+tile under it. Place regions first and resources after, or keep resources out of the region.
+
+### Two smaller ones from the same sweep
+
+- **The Thunderhead leaves 15 cut-off tiles** along its west edge and south row (2,20 2,21 1,22
+  2,22 2,23 2,24 3,24 4,24 5,24 11,24 12,24 18,24-21,24). Same class as the one-tile island the
+  Mire had: `markBanks` turns a tile beside water into "b", and `wild`'s repair only re-plants
+  "." tiles, so a bank tile it cannot reach stays visible and unstandable. The Mire now floods
+  anything with water on all four sides; the Thunderhead's are edge strips rather than islands,
+  so they need the shore pulled in, not flooding.
+- **The Vault draws a tree on top of its neon wall** (both at 15,23). Cosmetic, but one of them
+  is invisible.
+
+### And the checker gap that found them
+
+`tools/eastscape-content-check.mjs` proves spots are fishable and object ids line up, but nothing
+checked **that every walkable tile can be reached from an exit**, or that a mob is not standing
+inside a prop. A throwaway script did, and it caught the Mire's sealed court before it shipped.
+Worth promoting into `tools/`, but it needs three exemptions first or it is all false alarms:
+interior scenes (Forum, Bank, Fight Pit, Casino, the isles) have NO edge exits and are entered by
+a door or ferry, so the flood-fill needs a different seed; the Yard's chickens and cows are
+DELIBERATELY sealed into pens; and the Casino's rope lines share a tile with their posts on
+purpose. Spots must be left alone entirely — a rod reaches three tiles (`reachOf`).
