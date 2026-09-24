@@ -1738,3 +1738,29 @@ Sands' four. The owner should decide whether the Vault and the Trailer Park get 
 `tools/eastscape-content-check.mjs` now fails on any monster spawned on a map with no bounty, with
 those nine named as known exceptions — so the NEXT map cannot repeat this, and the list is the
 to-do. Remove a name from it when its zone gets measured.
+
+## Four one-letter server messages in the Pyramid's second chamber — 2026-09-24, UNEXPLAINED
+
+While testing, the owner saw four separate server messages in the log, each a single character:
+`m`, `s`, `e`, `e`. Reported alongside a door problem they then retracted ("nvm i was wrong").
+
+**What is known.** The page's `say(text, cls)` makes one `<p>` per call with `textContent = text` and
+keeps the last five, so four boxes means **four `say` calls whose text was one character**. The worker
+side is `say(pl, text, cls, tag)` pushing `{type:"say", ...}`.
+
+**What was ruled out.** Every `this.say` in eastscape-worker/src/pyramid.js passes a string literal or
+a template — none passes a bare variable. The page's only local `say(...)` callers are the definition
+itself, a `say(empty, ...)` and a callback parameter. `{type:"hurt"}` (which the coil pushes for the
+bleed) is NOT a message type the page handles at all, so it cannot be rendering as text; `"hurt"` at
+eastscape.html:1241 is an SFX name. The chamber monsters' `drops` are never paid out in a run, so that
+path is not it either. There is no mob taunt/lines system to index into.
+
+**The shape it suggests** is a random index into a STRING where an array was expected — `s[Math.floor(
+random * s.length)]` gives one character, and four of them in a row would look exactly like this. That
+did not turn up in the pyramid's own code, so the next place to look is whatever generic per-kill or
+per-tick path a NEW mob type reaches that the older ones do not.
+
+**Why it is not chased further now:** it is cosmetic, it did not repeat in the same session, and there
+is no reproduction. If it comes back, the thing to capture is what the player was doing in the tick
+before it appeared, and whether the letters are stable across runs (a fixed string being indexed) or
+different every time (a random one).

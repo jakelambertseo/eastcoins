@@ -2814,7 +2814,14 @@ cv.addEventListener("pointerdown", (e) => {
   if (DLG) closeTalk();
   if (DECO?.on && DECO.click(Math.floor(w.x / T), Math.floor(w.y / T))) return;   /* (decorate mode: the click places or picks up a piece) */
   const t = thingAt(w.x, w.y), from = predFrom();
-  if (t && t.kind === "player") { clickMark = { x: t.x, y: t.y, at: performance.now() }; popup(t.name, "", "🙂", [["📜 Profile", () => openProfile({ id: t.id, name: t.name })], ["🤝 Trade", () => send({ t: "trade", op: "req", to: t.id })], ["🗝️ Invite to party", () => send({ t: "party", op: "invite", to: t.id })], ["Never mind", null]]); return; }   /* (v103: parties; v107: profiles) */
+  /* (2026-09-24, the owner: "disallow clicking on players that pops up their trade with / add to party window
+     ... when fighting mobs in a small area in the dungeons it often pops up") NOT IN A DUNGEON. A crypt chamber
+     or a pyramid chamber is a small room with four people and several monsters standing on top of each other,
+     and a misdirected click there costs you a swing and puts a modal over the fight. The click falls THROUGH
+     instead, so it does what the player meant - walk, or hit the thing they were aiming at.
+     Nothing is lost by it: a party is formed before you go in, the party box still has Leave and Kick, and a
+     profile is one click away anywhere else in the game. */
+  if (t && t.kind === "player" && !/^(crypt|pyramid):/.test(String(Z.key))) { clickMark = { x: t.x, y: t.y, at: performance.now() }; popup(t.name, "", "🙂", [["📜 Profile", () => openProfile({ id: t.id, name: t.name })], ["🤝 Trade", () => send({ t: "trade", op: "req", to: t.id })], ["🗝️ Invite to party", () => send({ t: "party", op: "invite", to: t.id })], ["Never mind", null]]); return; }   /* (v103: parties; v107: profiles) */
   if (t && (t.kind === "pvp" || t.kind === "ground")) {
     send({ t: "act", kind: t.kind, id: t.id });
     if (from) predGo(G.findPath(Z.g, from, { x: t.x, y: t.y }, t.kind === "ground" ? 0 : 1));
