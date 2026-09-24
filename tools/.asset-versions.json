@@ -1,0 +1,62 @@
+{
+  "eastscape-casino.js": {
+    "v": 47,
+    "hash": "763affc534310703"
+  },
+  "eastscape-closed.js": {
+    "v": 1,
+    "hash": "16043f18c1907667"
+  },
+  "eastscape-crypt-rules.js": {
+    "v": 80,
+    "hash": "c2f291b7584b5b45"
+  },
+  "eastscape-crypt.js": {
+    "v": 5,
+    "hash": "8f28871cc7d84138"
+  },
+  "eastscape-decor-rules.js": {
+    "v": 3,
+    "hash": "bfc138de18dc5caa"
+  },
+  "eastscape-decor.js": {
+    "v": 2,
+    "hash": "80f6fc44be688a83"
+  },
+  "eastscape-green.js": {
+    "v": 9,
+    "hash": "eafd0f062c64ef2a"
+  },
+  "eastscape-picks.js": {
+    "v": 2,
+    "hash": "d6f1984c7b03051e"
+  },
+  "eastscape-profile.js": {
+    "v": 6,
+    "hash": "301dfe32e77175e1"
+  },
+  "eastscape-screen.js": {
+    "v": 3,
+    "hash": "50e5a33e3fd2697d"
+  },
+  "eastscape-sfx.js": {
+    "v": 13,
+    "hash": "6670648d71ae0518"
+  },
+  "eastscape-shared.js": {
+    "v": 228,
+    "hash": "dc83c6ac44344f46"
+  },
+  "eastscape-tip.js": {
+    "v": 3,
+    "hash": "6609aa18f6c6bf5b"
+  },
+  "eastscape-tower-rules.js": {
+    "v": 3,
+    "hash": "9f05d85dca3c656b"
+  },
+  "eastscape-wiki.js": {
+    "v": 131,
+    "hash": "2b8e0827701c270b"
+  }
+}

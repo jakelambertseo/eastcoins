@@ -1,0 +1,2147 @@
+/* ============================================================
+   EastCoin V3 — The Green Room
+
+   The room lives at /?view=music and nowhere else. There is
+   deliberately no floating dock: anything fixed to a corner sits
+   over the Twitch chat iframe, and Twitch disables the message
+   box for the broadcaster and moderators the moment it detects
+   something covering it. A player that costs the mods their chat
+   is not worth having.
+
+   The room only advances when a client reports a song ENDED —
+   there is no server-side timer on song length — so this uses the
+   real YouTube IFrame API rather than a plain autoplay embed. A
+   player that could not report that would quietly stall the queue
+   for everybody.
+   ============================================================ */
+(() => {
+  "use strict";
+
+  const CATJAM = "https://cdn.7tv.app/emote/01KWJNR4DE37RDZ816WYAYDG3K/3x.webp";
+  const JAMGIE = "https://cdn.7tv.app/emote/01GAJBNT780004XAVG6P7AZAK2/4x.webp";
+  const JAMGIE2 = "https://cdn.7tv.app/emote/01KXKXKF3D20SSJAGPWQY9YYA7/4x.webp";
+  const VOLUME_KEY = "ec_v3_music_volume";
+
+  // Order and labels are ours; the kinds themselves are fixed server-side,
+  // because a client able to invent one could grow the stored state
+  // without limit.
+  const REACTIONS = [
+    { kind: "up",    emoji: "\u{1F44D}", label: "Nice" },
+    { kind: "fire",  emoji: "\u{1F525}", label: "Banger" },
+    { kind: "trash", emoji: "\u{1F5D1}\uFE0F", label: "Bin it" },
+    { kind: "del",   emoji: "\u274C", label: "Delete this" }
+  ];
+
+  // Mirrors the room's own list. Cosmetic only — the server re-checks the
+  // verified login on every force-skip, so revealing the button proves
+  // nothing and grants nothing.
+  const MODS = new Set(["zwades", "andyreidisapawg", "bootypaper"]);
+
+  const config = window.EASTCOIN_MUSIC_CONFIG || {};
+  const ROOM = String(config.room || "main");
+  const BASE = String(config.websocketUrl || "").trim();
+
+  /* ============================================================ connection */
+
+  const conn = {
+    socket: null,
+    state: null,
+    token: null,
+    tokenExpiresAt: 0,
+    tokenTimer: 0,
+    login: "",
+    attempts: 0,
+    clientId: "",
+    listeners: new Set()
+  };
+
+  function clientId() {
+    if (conn.clientId) return conn.clientId;
+    try { conn.clientId = window.localStorage.getItem("ec_v3_music_client") || ""; } catch {}
+    if (!conn.clientId) {
+      conn.clientId = (crypto.randomUUID?.() || String(Math.random())).slice(0, 36);
+      try { window.localStorage.setItem("ec_v3_music_client", conn.clientId); } catch {}
+    }
+    return conn.clientId;
+  }
+
+  function emit() {
+    for (const fn of conn.listeners) {
+      try { fn(conn.state); } catch (error) { console.error("music listener threw", error); }
+    }
+  }
+
+  function subscribe(fn) {
+    conn.listeners.add(fn);
+    if (conn.state) fn(conn.state);
+    return () => conn.listeners.delete(fn);
+  }
+
+  function send(message) {
+    if (conn.socket?.readyState === 1) {
+      conn.socket.send(JSON.stringify(message));
+      return true;
+    }
+    return false;
+  }
+
+  async function fetchToken() {
+    try {
+      const response = await fetch("/api/music/token", {
+        credentials: "same-origin",
+        cache: "no-store"
+      });
+      const payload = await response.json();
+      if (payload?.ok && payload.authenticated) {
+        conn.token = payload.token || null;
+        conn.tokenExpiresAt = Number(payload.expiresAt) || 0;
+        conn.login = String(payload.login || "").toLowerCase();
+      } else {
+        conn.token = null;
+        conn.tokenExpiresAt = 0;
+        conn.login = "";
+      }
+    } catch {
+      conn.token = null;
+      conn.tokenExpiresAt = 0;
+      conn.login = "";
+    }
+    return conn.token;
+  }
+
+  /**
+   * These tokens last fifteen minutes.
+   *
+   * An expired one is still a non-empty string, so "do we have a token"
+   * is not the same question as "will the room accept it" — and a page
+   * left open past the quarter hour was cheerfully sending a dead token
+   * and being told to log in.
+   *
+   * A minute of headroom, because the room checks the expiry when the
+   * message lands and one that dies in flight is refused exactly like
+   * one long gone.
+   */
+  function tokenIsFresh() {
+    return Boolean(conn.token) && conn.tokenExpiresAt - Date.now() > 60000;
+  }
+
+  async function ensureToken() {
+    if (tokenIsFresh()) return conn.token;
+    await fetchToken();
+    // Re-announce: the room derives the verified login from the token it
+    // was given at identity time, so a refresh it never hears about
+    // leaves it holding the old one.
+    if (conn.token) {
+      send({ type: "identity", name: "", avatar: "", token: conn.token });
+    }
+    scheduleTokenRefresh();
+    return conn.token;
+  }
+
+  function scheduleTokenRefresh() {
+    window.clearTimeout(conn.tokenTimer);
+    if (!conn.tokenExpiresAt) return;
+    // Renew a minute early rather than on expiry, so nothing is ever sent
+    // during the gap.
+    const wait = Math.max(30000, conn.tokenExpiresAt - Date.now() - 60000);
+    conn.tokenTimer = window.setTimeout(() => { ensureToken(); }, wait);
+  }
+
+  function canForceSkip() {
+    return MODS.has(conn.login);
+  }
+
+  function connect() {
+    if (!BASE || conn.socket) return;
+
+    let url;
+    try {
+      url = new URL(`/room/${encodeURIComponent(ROOM)}`, BASE);
+      url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+      url.searchParams.set("client", clientId());
+    } catch {
+      return;
+    }
+
+    let socket;
+    try { socket = new WebSocket(url.href); } catch { return; }
+    conn.socket = socket;
+
+    socket.addEventListener("open", async () => {
+      conn.attempts = 0;
+      await fetchToken();
+      send({ type: "identity", name: "", avatar: "", token: conn.token });
+      scheduleTokenRefresh();
+      emit();
+    });
+
+    socket.addEventListener("message", (event) => {
+      let payload;
+      try { payload = JSON.parse(event.data); } catch { return; }
+      if (payload?.type === "state" && payload.state) {
+        conn.state = payload.state;
+        emit();
+      }
+      if (payload?.type === "error" && payload.message) {
+        setNotice(String(payload.message), true);
+      }
+    });
+
+    const drop = () => {
+      if (conn.socket !== socket) return;
+      conn.socket = null;
+      // Backing off matters: the room stops its polling alarm when empty,
+      // so a tight reconnect loop across many tabs is real load.
+      const delay = Math.min(30000, 1000 * 2 ** Math.min(conn.attempts++, 5));
+      window.setTimeout(connect, delay);
+    };
+    socket.addEventListener("close", drop);
+    socket.addEventListener("error", drop);
+  }
+
+  function disconnect() {
+    window.clearTimeout(conn.tokenTimer);
+    conn.tokenTimer = 0;
+    const socket = conn.socket;
+    conn.socket = null;
+    try { socket?.close(); } catch {}
+  }
+
+  /* ============================================================ player */
+
+  let ytReady = null;
+
+  function loadYouTubeApi() {
+    if (ytReady) return ytReady;
+    ytReady = new Promise((resolve) => {
+      if (window.YT?.Player) return resolve(window.YT);
+      const previous = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (typeof previous === "function") previous();
+        resolve(window.YT);
+      };
+      const script = document.createElement("script");
+      script.src = "https://www.youtube.com/iframe_api";
+      document.head.append(script);
+    });
+    return ytReady;
+  }
+
+  const player = { instance: null, host: null, shield: null, videoId: "", itemId: "" };
+
+  /* ONE PLAYER PER BROWSER (2026-09-21). EastScape's jukebox is a window onto this same room, so somebody with the game open
+     in another tab would hear two of everything. Whoever is playing announces it on this channel and answers anyone who asks;
+     the game yields to this page, because this page IS the room and the game is a view of it. Nothing here changes what this
+     page does — it only tells other tabs the truth about whether sound is coming out of it. */
+  let musicChan = null;
+  function tellPlayer(type) {
+    try {
+      if (!musicChan) {
+        musicChan = new BroadcastChannel("eastcoin-music-player");
+        musicChan.addEventListener("message", (event) => {
+          if (event.data?.type === "who" && player.instance) musicChan.postMessage({ type: "playing", who: "site" });
+        });
+      }
+      musicChan.postMessage({ type, who: "site" });
+    } catch { /* no BroadcastChannel: the game falls back to its own mute */ }
+  }
+
+  function readVolume() {
+    try {
+      const stored = Number(window.localStorage.getItem(VOLUME_KEY));
+      return Number.isFinite(stored) && stored >= 0 && stored <= 100 ? stored : 60;
+    } catch {
+      return 60;
+    }
+  }
+
+  function writeVolume(value) {
+    try { window.localStorage.setItem(VOLUME_KEY, String(value)); } catch {}
+  }
+
+  function setVolume(value) {
+    writeVolume(value);
+    applyAudioOwnership();
+  }
+
+  /* ---------------------------------------------------------- audio lock
+
+     Two tabs on the room means the same song playing twice, a second or
+     two apart, which sounds like a fault rather than a feature. Whichever
+     tab last had real focus owns audible sound; the others drop their
+     player to zero.
+
+     Volume, not mute: the visitor's own volume choice is never touched,
+     so ownership coming back is instant and silent. And the forced zero
+     is never written to storage — persisting it would rewrite the volume
+     they actually chose. */
+
+  const AUDIO_LOCK_CHANNEL = "eastcoin-music-audio-lock";
+  const audioId = (crypto.randomUUID?.() || String(Math.random())).slice(0, 36);
+  let audioChannel = null;
+  let isAudioOwner = true;
+
+  function applyAudioOwnership() {
+    try { player.instance?.setVolume?.(isAudioOwner ? readVolume() : 0); } catch {}
+  }
+
+  function initAudioLock() {
+    if (audioChannel || typeof BroadcastChannel === "undefined") return;
+
+    try {
+      audioChannel = new BroadcastChannel(AUDIO_LOCK_CHANNEL);
+    } catch {
+      return;
+    }
+
+    audioChannel.addEventListener("message", (event) => {
+      if (event.data?.type === "claim" && event.data.id !== audioId) {
+        isAudioOwner = false;
+        applyAudioOwnership();
+      }
+    });
+
+    const claim = () => {
+      isAudioOwner = true;
+      applyAudioOwnership();
+      try { audioChannel.postMessage({ type: "claim", id: audioId }); } catch {}
+    };
+
+    window.addEventListener("focus", claim);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") claim();
+    });
+
+    if (document.hasFocus()) claim();
+    else isAudioOwner = false;
+  }
+
+  function elapsedSeconds(state) {
+    if (!state?.startedAt) return 0;
+    return Math.max(0, Math.floor((Date.now() - Number(state.startedAt)) / 1000));
+  }
+
+  function reportEnded(reason) {
+    // Guarded server-side against a stale id, so several tabs reporting
+    // the same song is harmless — only the first advances anything.
+    if (player.itemId) send({ type: "ended", currentId: player.itemId, reason });
+  }
+
+  async function mountPlayer(host, state) {
+    const current = state?.current;
+    if (!host || !current?.videoId) return;
+
+    const YT = await loadYouTubeApi();
+    if (!host.isConnected) return;
+
+    // Same song AND still living in this exact element: leave it playing
+    // rather than restarting it on every state broadcast (a listener
+    // joining sends one). The host check matters — without it, a rebuilt
+    // stage leaves this returning early while the iframe it is guarding
+    // has already been removed from the document, which is a black box.
+    if (player.instance && player.host === host && player.videoId === current.videoId) {
+      player.itemId = current.id;
+      return;
+    }
+
+    destroyPlayer();
+    const slot = document.createElement("div");
+    host.replaceChildren(slot);
+
+    // controls:0 hides the bar but a click on the video still toggles
+    // playback, so the frame gets a transparent cover.
+    //
+    // It is only up WHILE PLAYING. Browsers refuse to autoplay audio
+    // until the person has interacted with the page, so the room opens
+    // showing YouTube's play button and needs exactly one real click to
+    // start — and a cover that is always on eats it, leaving a video that
+    // cannot be started at all.
+    const shield = document.createElement("div");
+    shield.className = "mstage-shield";
+    shield.title = "Playback is shared - use the volume slider";
+    shield.hidden = true;
+    host.append(shield);
+    player.shield = shield;
+
+    player.host = host;
+    player.videoId = current.videoId;
+    player.itemId = current.id;
+
+    startDriftWatch();
+    tellPlayer("playing");
+    player.instance = new YT.Player(slot, {
+      videoId: current.videoId,
+      playerVars: {
+        autoplay: 1,
+        start: elapsedSeconds(state),
+        rel: 0,
+        modestbranding: 1,
+        playsinline: 1,
+        // No transport controls. This is a shared room playing one
+        // timeline for everybody: pausing or scrubbing only desynchronises
+        // the person who did it, and they then hear something different
+        // from everyone else with no way to tell. Volume stays local and
+        // lives on our own slider.
+        controls: 0,
+        disablekb: 1,
+        fs: 0
+      },
+      events: {
+        onReady: (event) => {
+          try {
+            event.target.setVolume(isAudioOwner ? readVolume() : 0);
+
+            // Same stale-room case as correctDrift, caught at the point
+            // the duration first becomes knowable.
+            const duration = Number(event.target.getDuration?.()) || 0;
+            if (duration > 0 && elapsedSeconds(conn.state) >= duration - 1) {
+              reportEnded("overran");
+              return;
+            }
+            event.target.playVideo();
+          } catch {}
+        },
+        onAutoplayBlocked: () => {
+          // Not an error. The browser is waiting for a real click, and the
+          // cover is already down so YouTube's own play button is live —
+          // this just says so rather than leaving a still frame.
+          setNotice("Press play to join the room \u2014 your browser blocked autoplay.");
+        },
+        onStateChange: (event) => {
+          const YTS = window.YT.PlayerState;
+          // Cover it once it is actually playing; lift it any other time
+          // so the person can start, or restart, what they are watching.
+          if (player.shield) player.shield.hidden = event.data !== YTS.PLAYING;
+
+          if (event.data === YTS.PLAYING) {
+            // They have just pressed play, which may be long after the
+            // room moved on. Land them where everyone else is rather than
+            // waiting up to five seconds for the drift check.
+            correctDrift();
+          }
+          if (event.data === YTS.ENDED) reportEnded("ended");
+        },
+        onError: () => reportEnded("player-error")
+      }
+    });
+  }
+
+  /**
+   * Nudges a drifting player back onto the room's timeline.
+   *
+   * Buffering, a slow start, or a tab throttled in the background all
+   * pull a client out of step. Correcting only past a few seconds keeps
+   * this from fighting ordinary jitter, and only while actually playing,
+   * since seeking mid-buffer just makes it worse.
+   */
+  function correctDrift() {
+    const instance = player.instance;
+    const state = conn.state;
+    if (!instance || !state?.current) return;
+
+    let actual;
+    let playerState;
+    try {
+      actual = instance.getCurrentTime?.();
+      playerState = instance.getPlayerState?.();
+    } catch {
+      return;
+    }
+
+    // A video that finished without its ENDED event reaching us — or whose
+    // report never reached the room — leaves the whole room parked on a
+    // song nobody is playing. Nothing else notices, because the room only
+    // ever advances when a client tells it to.
+    if (playerState === window.YT?.PlayerState?.ENDED) {
+      reportEnded("safety-net");
+      return;
+    }
+
+    if (playerState !== window.YT?.PlayerState?.PLAYING) return;
+    if (!Number.isFinite(actual)) return;
+
+    const expected = elapsedSeconds(state);
+    let duration = 0;
+    try { duration = Number(instance.getDuration?.()) || 0; } catch {}
+
+    // The room only advances when a client reports ENDED, so a song left
+    // current with nobody connected keeps accumulating elapsed time. The
+    // next person to arrive would otherwise be told to seek past the end
+    // and just get a black frame. Report it finished instead.
+    if (duration > 0 && expected >= duration - 1) {
+      reportEnded("overran");
+      return;
+    }
+
+    if (Math.abs(actual - expected) > 3) {
+      const target = duration > 0 ? Math.min(expected, duration - 1) : expected;
+      try { instance.seekTo(Math.max(0, target), true); } catch {}
+    }
+  }
+
+  /* ------------------------------------------------------------ progress
+     Once a second: where the player actually is, over how long the video
+     is. With no player yet (or paused for the audio lock) it falls back
+     to the room's own clock so the bar still moves. */
+  let progressTimer = 0;
+  let prog = null;   // { bar, fill, now, end } — set when the stage is built
+
+  function mmss(seconds) {
+    const s = Math.max(0, Math.floor(Number(seconds) || 0));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  }
+
+  function tickProgress() {
+    const state = conn.state;
+    const bar = prog?.bar;
+    if (!bar) return;
+    if (!state?.current) { bar.hidden = true; return; }
+
+    let now = elapsedSeconds(state);
+    let duration = 0;
+    try {
+      const instance = player.instance;
+      const t = Number(instance?.getCurrentTime?.());
+      const d = Number(instance?.getDuration?.());
+      if (Number.isFinite(t) && t > 0) now = t;
+      if (Number.isFinite(d) && d > 0) duration = d;
+    } catch { /* player not ready; the room clock will do */ }
+
+    bar.hidden = false;
+    prog.now.textContent = mmss(now);
+    prog.end.textContent = duration ? mmss(duration) : "";
+    const pct = duration ? Math.max(0, Math.min(100, (100 * now) / duration)) : 0;
+    prog.fill.style.width = `${pct}%`;
+    bar.classList.toggle("is-unknown", !duration);
+  }
+
+  function startProgressTicker() {
+    if (progressTimer) return;
+    tickProgress();
+    progressTimer = window.setInterval(tickProgress, 1000);
+  }
+
+  function stopProgressTicker() {
+    window.clearInterval(progressTimer);
+    progressTimer = 0;
+    prog = null;
+  }
+
+  let driftTimer = 0;
+
+  function startDriftWatch() {
+    if (driftTimer) return;
+    driftTimer = window.setInterval(correctDrift, 5000);
+  }
+
+  function stopDriftWatch() {
+    window.clearInterval(driftTimer);
+    driftTimer = 0;
+  }
+
+  function destroyPlayer() {
+    stopDriftWatch();
+    try { player.instance?.destroy?.(); } catch {}
+    player.instance = null;
+    player.host = null;
+    player.shield = null;
+    player.videoId = "";
+    player.itemId = "";
+    tellPlayer("stopped");
+  }
+
+  /* ============================================================ catjam */
+
+  let jamTimer = 0;
+
+  function stopJam(surface) {
+    window.clearInterval(jamTimer);
+    jamTimer = 0;
+    surface?.classList.remove("is-jamming");
+    surface?.querySelectorAll(".jam-cat, .jam-floor, .jam-banner, .jam-flash").forEach((node) => node.remove());
+    document.body.classList.remove("is-rasputin");
+  }
+
+  /**
+   * The full catJAM treatment for a !rasputin block: a row of cats
+   * bouncing along the bottom of the stage, more cats floating up
+   * through it, a banner sliding across the top, a colour wash on the
+   * frame and the page, and a flash on the way in. All of it is CSS
+   * animation on decorative nodes — nothing here touches playback.
+   */
+  function startJam(surface) {
+    if (!surface || jamTimer) return;
+    surface.classList.add("is-jamming");
+    document.body.classList.add("is-rasputin");
+
+    // The flash on the way in.
+    const flash = document.createElement("div");
+    flash.className = "jam-flash";
+    surface.append(flash);
+    window.setTimeout(() => flash.remove(), 1400);
+
+    // The banner.
+    const banner = document.createElement("div");
+    banner.className = "jam-banner";
+    const strip = document.createElement("div");
+    strip.className = "jam-banner-strip";
+    for (let i = 0; i < 6; i += 1) {
+      const cat = document.createElement("img");
+      cat.src = CATJAM;
+      cat.alt = "";
+      strip.append(cat, el("span", null, "RASPUTIN"));
+    }
+    banner.append(strip);
+    surface.append(banner);
+
+    // The floor: a dozen cats bouncing out of phase with each other.
+    const floor = document.createElement("div");
+    floor.className = "jam-floor";
+    for (let i = 0; i < 12; i += 1) {
+      const cat = document.createElement("img");
+      cat.src = CATJAM;
+      cat.alt = "";
+      cat.style.animationDelay = `${(i % 4) * -0.16}s`;
+      cat.style.animationDuration = `${0.56 + (i % 3) * 0.08}s`;
+      floor.append(cat);
+    }
+    surface.append(floor);
+
+    // And the risers.
+    const spawn = () => {
+      if (!surface.isConnected) return stopJam(surface);
+      const cat = document.createElement("img");
+      cat.className = "jam-cat";
+      cat.src = CATJAM;
+      cat.alt = "";
+      cat.style.left = `${Math.random() * 88 + 2}%`;
+      cat.style.animationDuration = `${2.2 + Math.random() * 1.8}s`;
+      cat.style.setProperty("--drift", `${Math.random() * 80 - 40}px`);
+      cat.style.setProperty("--size", `${36 + Math.random() * 32}px`);
+      surface.append(cat);
+      window.setTimeout(() => cat.remove(), 4200);
+    };
+
+    spawn();
+    jamTimer = window.setInterval(spawn, 420);
+  }
+
+  /**
+   * A burst of the emoji that was just pressed.
+   *
+   * Anchored to the button rather than the stage so it reads as a
+   * response to the click. Purely decorative, and skipped entirely under
+   * prefers-reduced-motion.
+   */
+  function burst(button, emoji) {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches) return;
+
+    for (let i = 0; i < 7; i += 1) {
+      const bit = el("span", "react-bit", emoji);
+      bit.style.setProperty("--dx", `${Math.random() * 96 - 48}px`);
+      bit.style.setProperty("--dy", `${-46 - Math.random() * 46}px`);
+      bit.style.setProperty("--rot", `${Math.random() * 90 - 45}deg`);
+      bit.style.animationDelay = `${i * 26}ms`;
+      button.append(bit);
+      window.setTimeout(() => bit.remove(), 1200 + i * 26);
+    }
+
+    button.classList.remove("is-popped");
+    // Reading offsetWidth forces the class removal to take effect before
+    // it is added again, so a second click actually replays the pop.
+    void button.offsetWidth;
+    button.classList.add("is-popped");
+    window.setTimeout(() => button.classList.remove("is-popped"), 400);
+
+    // And the big one: the emoji floats up over the video, so a reaction
+    // is something the whole room can see happen, not just a counter.
+    // burst() lives outside the view closure, so find the stage by class.
+    const surface = document.querySelector(".mstage");
+    if (!surface) return;
+    for (let i = 0; i < 3; i += 1) {
+      const big = el("span", "react-float", emoji);
+      big.style.left = `${18 + Math.random() * 64}%`;
+      big.style.setProperty("--drift", `${Math.random() * 80 - 40}px`);
+      big.style.animationDelay = `${i * 140}ms`;
+      big.style.fontSize = `${2.2 + Math.random() * 1.4}rem`;
+      surface.append(big);
+      window.setTimeout(() => big.remove(), 2200 + i * 140);
+    }
+  }
+
+  function reactionTip(entry, label) {
+    const count = Number(entry?.count || 0);
+    if (!count) return `${label} — nobody yet`;
+
+    const names = (entry?.names || []).filter(Boolean);
+    const others = Math.max(0, count - names.length);
+
+    if (!names.length) {
+      return `${label} — ${count}, nobody logged in`;
+    }
+    const list = names.join(", ");
+    if (!others) return `${label} — ${list}`;
+    return `${label} — ${list} and ${others} other${others === 1 ? "" : "s"}`;
+  }
+
+  function isRasputin(state) {
+    return String(state?.current?.special || "") === "rasputin";
+  }
+
+  /* ============================================================ helpers */
+
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  let noticeEl = null;
+  let noticeTimer = 0;
+
+  function setNotice(text, isError) {
+    if (!noticeEl) return;
+    noticeEl.textContent = text;
+    noticeEl.classList.toggle("is-error", Boolean(isError));
+    noticeEl.hidden = !text;
+    window.clearTimeout(noticeTimer);
+    if (text) noticeTimer = window.setTimeout(() => { noticeEl.hidden = true; }, 5000);
+  }
+
+  /**
+   * YouTube's thumbnail for a video id. Derived rather than fetched: the
+   * room's queue entries carry no thumbnail field, and this needs neither
+   * a request nor an API key.
+   */
+  /* "Save to your YouTube": opens the song on YouTube in a new tab,
+     where Save is the button under the video. YouTube has no link that
+     opens its playlist picker directly, and adding to someone's playlist
+     from here would need a Google sign-in with YouTube access — so this
+     is the one-click-away version, on purpose. */
+  function saveLink(videoId, className, label) {
+    if (!/^[A-Za-z0-9_-]{11}$/.test(String(videoId || ""))) return null;
+    const a = el("a", className, label);
+    a.href = `https://www.youtube.com/watch?v=${videoId}`;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.title = "Opens on YouTube — press Save under the video to add it to a playlist";
+    return a;
+  }
+
+  function thumbUrl(videoId) {
+    return /^[A-Za-z0-9_-]{11}$/.test(String(videoId || ""))
+      ? `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`
+      : "";
+  }
+
+  function thumb(videoId, className) {
+    const url = thumbUrl(videoId);
+    if (!url) return null;
+    const img = document.createElement("img");
+    img.className = className;
+    img.src = url;
+    img.alt = "";
+    img.loading = "lazy";
+    return img;
+  }
+
+  /**
+   * The video id in whatever was typed, or "" if it looks like a search.
+   *
+   * Covers every youtube.com / youtu.be / shorts shape through the shared
+   * parser, plus a bare id pasted on its own — which the parser does not
+   * claim, since in isolation eleven characters could be anything.
+   */
+  function pastedVideoId(raw) {
+    const text = String(raw || "").trim();
+    if (!text) return "";
+    const parsed = window.EastcoinYouTube?.extractVideo?.(text)?.id || "";
+    if (parsed) return parsed;
+    return /^[A-Za-z0-9_-]{11}$/.test(text) ? text : "";
+  }
+
+  function timeAgo(timestamp) {
+    const seconds = Math.max(0, Math.floor((Date.now() - Number(timestamp || 0)) / 1000));
+    if (seconds < 60) return "just now";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
+  }
+
+  /* ============================================================ dock
+
+     The floating player. Toggled from the 🎵 button in the nav, it keeps
+     the room playing on every other page: same socket, same YouTube
+     player, same volume — only the host element changes. While the
+     Green Room page itself is open the dock steps aside and the page
+     owns playback; leave the page and, if the dock is on, it takes over
+     without a gap the room would notice. */
+
+  const DOCK_KEY = "ec_v3_music_dock";
+  const dock = { el: null, stage: null, title: null, titleText: null, by: null, unsub: null, min: false };
+  let dockWanted = false;
+  try { dockWanted = localStorage.getItem(DOCK_KEY) === "1"; } catch { /* private mode */ }
+  let pageMounted = false;
+
+  function dockButton() { return document.getElementById("musicDock"); }
+  function syncDockButton() {
+    const b = dockButton();
+    if (!b) return;
+    b.classList.toggle("on", dockWanted);
+    b.setAttribute("aria-pressed", String(dockWanted));
+    b.setAttribute("aria-checked", String(dockWanted));
+    const sw = b.querySelector(".switch");
+    if (sw) sw.dataset.on = dockWanted ? "1" : "0";
+    b.title = dockWanted ? "Floating player is on — click to turn it off" : "Keep the Green Room playing on every page";
+  }
+
+  function buildDock() {
+    const box = el("aside", "mdock");
+    box.setAttribute("aria-label", "Green Room player");
+
+    const head = el("div", "mdock-head");
+    const open = el("a", "mdock-open", "Green Room");
+    open.href = "/?view=music";
+    open.addEventListener("click", (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+      event.preventDefault();
+      history.pushState({ view: "music" }, "", "/?view=music");
+      window.ECV3?.go("music", { push: false });
+    });
+    const minBtn = el("button", "mdock-btn", "\u2013");
+    minBtn.type = "button";
+    minBtn.title = "Minimise";
+    minBtn.addEventListener("click", () => {
+      dock.min = !dock.min;
+      box.classList.toggle("min", dock.min);
+      minBtn.textContent = dock.min ? "\u25a1" : "\u2013";
+      minBtn.title = dock.min ? "Expand" : "Minimise";
+    });
+    const closeBtn = el("button", "mdock-btn", "\u2715");
+    closeBtn.type = "button";
+    closeBtn.title = "Close and stop playing";
+    closeBtn.addEventListener("click", () => closeDock());
+    const live = el("span", "mdock-live");
+    // The title rides in the header too, for when the dock is a bar:
+    // minimised, or on a page with a stream where it must stay small.
+    dock.headTitle = el("span", "mdock-head-title", "");
+    head.append(live, open, dock.headTitle, el("span", "mdock-spacer"), minBtn, closeBtn);
+    box.append(head);
+
+    dock.stage = el("div", "mdock-stage");
+    box.append(dock.stage);
+
+    const body = el("div", "mdock-body");
+    dock.title = el("strong", "mnow-v mdock-title");
+    dock.titleText = el("span", "mnow-v-text", "Nothing playing");
+    dock.title.append(dock.titleText);
+    dock.by = el("small", "mdock-by");
+    body.append(dock.title, dock.by);
+
+    // Progress, driven by the same ticker as the page.
+    const bar = el("div", "mprog mdock-prog");
+    bar.setAttribute("aria-hidden", "true");
+    const fill = el("i", "mprog-fill");
+    const track = el("div", "mprog-track");
+    track.append(fill);
+    const now = el("span", "mprog-t nums", "0:00");
+    const end = el("span", "mprog-t nums", "");
+    bar.append(now, track, end);
+    body.append(bar);
+    dock.prog = { bar, fill, now, end };
+
+    const vol = el("label", "mdock-vol");
+    vol.append(el("span", null, "\u{1F50A}"));
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = "0";
+    slider.max = "100";
+    slider.step = "1";
+    slider.value = String(readVolume());
+    slider.setAttribute("aria-label", "Playback volume");
+    slider.addEventListener("input", () => setVolume(Number(slider.value)));
+    vol.append(slider);
+    body.append(vol);
+    box.append(body);
+
+    document.body.append(box);
+    document.body.classList.add("has-dock");
+    dock.el = box;
+  }
+
+  function paintDock(state) {
+    if (!dock.el) return;
+    const current = state?.current;
+    dock.el.classList.toggle("is-playing", Boolean(current));
+    dock.titleText.textContent = current?.title || (state ? "Nothing playing" : "Connecting\u2026");
+    if (dock.headTitle) dock.headTitle.textContent = current?.title ? `· ${current.title}` : "";
+    dock.title.classList.remove("is-long");
+    requestAnimationFrame(() => {
+      if (!dock.title?.isConnected) return;
+      const gap = dock.titleText.scrollWidth - dock.title.clientWidth;
+      if (gap > 4) {
+        dock.title.classList.add("is-long");
+        dock.title.style.setProperty("--scroll", `-${gap + 12}px`);
+        dock.title.style.setProperty("--scroll-s", `${Math.max(6, Math.round(gap / 22) + 4)}s`);
+      }
+    });
+    dock.by.textContent = current?.requestedBy ? `requested by ${current.requestedBy}` : (state ? `${Number(state.listeners || 0)} listening` : "");
+    if (current) mountPlayer(dock.stage, state); else destroyPlayer();
+    // The full !rasputin treatment, scaled to the corner.
+    dock.el.classList.toggle("is-hot", isRasputin(state));
+    if (isRasputin(state)) startJam(dock.stage); else stopJam(dock.stage);
+  }
+
+  function teardownDock() {
+    if (!dock.el) return;
+    dock.unsub?.();
+    dock.unsub = null;
+    stopJam(dock.stage);
+    if (player.host === dock.stage) destroyPlayer();
+    if (prog === dock.prog) { stopProgressTicker(); prog = null; }
+    dock.el.remove();
+    document.body.classList.remove("has-dock");
+    dock.el = null;
+    dock.stage = null;
+  }
+
+  /** Puts the dock up or takes it down, from what is wanted and where we are. */
+  function syncDock() {
+    syncDockButton();
+    const show = dockWanted && !pageMounted;
+    if (!show) {
+      teardownDock();
+      // Nobody is listening from this tab any more: leave the room so the
+      // count and the skip threshold stay honest.
+      if (!pageMounted) disconnect();
+      return;
+    }
+    if (!dock.el) buildDock();
+    initAudioLock();
+    connect();
+    prog = dock.prog;
+    startProgressTicker();
+    if (!dock.unsub) dock.unsub = subscribe(paintDock);
+    paintDock(conn.state);
+  }
+
+  function openDock() { dockWanted = true; try { localStorage.setItem(DOCK_KEY, "1"); } catch {} syncDock(); }
+  function closeDock() { dockWanted = false; try { localStorage.removeItem(DOCK_KEY); } catch {} syncDock(); }
+  function toggleDock() { if (dockWanted) closeDock(); else openDock(); }
+
+  window.ECMusicDock = Object.freeze({ open: openDock, close: closeDock, toggle: toggleDock, isOpen: () => dockWanted });
+
+  /* ============================================================ view */
+
+  const view = (() => {
+    let root = null;
+    let unsub = null;
+    let stage = null;
+    let history = [];
+    let skips = [];
+    let requesters = [];
+    // Kept across repaints so a state broadcast — anyone joining, any
+    // reaction — does not throw you back to page one mid-browse.
+    let historyPage = 0;
+    const HISTORY_PER_PAGE = 5;
+    // The Skipped tab pages the same way, five at a time, and keeps its
+    // own place for the same reason.
+    let skipsPage = 0;
+    const SKIPS_PER_PAGE = 5;
+    // What was playing last time we painted. A history entry is only
+    // completed when a song leaves, so a change here is the one signal
+    // that there is something new to fetch.
+    let lastCurrentId = null;
+    let tab = "queue";
+    let searchResults = [];
+    let searching = false;
+    let searchNote = "";
+    // The field keeps its own value; this mirrors it so a remount restores
+    // what was typed.
+    let searchQuery = "";
+    // Ratings as of the last history fetch, so the next one can say who
+    // moved and by how much — the "+3" that makes a rating feel earned.
+    let lastRatings = new Map();
+    let eloDeltas = new Map();
+    let rankSeg = "elo";     // Rankings tab: "elo" | "requests"
+    let roomOpen = false;    // the "See who" list under the header
+    // Which song this browser has voted to skip. The room knows too, but
+    // it broadcasts one shared state to everybody and cannot say in it
+    // which of them is you.
+    let votedFor = "";
+
+    /* ---------------------------------------------------- add + search */
+
+    async function addVideo(videoId, title) {
+      // The room verifies the token carried BY THIS MESSAGE, not the one
+      // presented at identity time. Sending an add without it — or with a
+      // stale one — fails as "you need to be logged in" no matter how
+      // logged in you are.
+      await ensureToken();
+      if (!conn.token) {
+        setNotice("Log in with Twitch to add songs.", true);
+        return;
+      }
+      // Send the title when it is already known — a search result carries
+      // one — so the room does not have to look up what we can just tell
+      // it. It falls back to its own lookup when this is empty.
+      if (send({ type: "add", videoId, title: title || "", token: conn.token })) {
+        setNotice("Added to the queue.");
+      } else {
+        setNotice("Not connected to the room.", true);
+      }
+    }
+
+    async function runSearch(query) {
+      const raw = String(query || "").trim();
+      if (!raw) return;
+
+      // A pasted link never needs the search API — pull the id straight
+      // out of it and queue it, which also works when search has no key.
+      const pasted = pastedVideoId(raw);
+      if (pasted) {
+        addVideo(pasted);
+        searchResults = [];
+        searchNote = "";
+        renderResults();
+        return;
+      }
+
+      if (!BASE) return;
+      searching = true;
+      searchNote = "";
+      renderResults();
+
+      try {
+        const url = new URL("/search", BASE);
+        url.searchParams.set("q", raw);
+        const response = await fetch(url.href);
+        const payload = await response.json();
+        if (payload?.ok) {
+          searchResults = payload.results || [];
+          searchNote = searchResults.length ? "" : "Nothing found for that.";
+        } else {
+          searchResults = [];
+          // Pass the room's own explanation through — "search is not
+          // configured" is a very different problem from "search failed".
+          searchNote = payload?.message || "Search didn't work.";
+        }
+      } catch {
+        searchResults = [];
+        searchNote = "Couldn't reach search. You can still paste a link.";
+      }
+      searching = false;
+      renderResults();
+    }
+
+    async function loadHistory() {
+      if (!BASE) return;
+      try {
+        const url = new URL(`/history/${encodeURIComponent(ROOM)}`, BASE);
+        const response = await fetch(url.href);
+        const payload = await response.json();
+        // Newest first by when it actually PLAYED, falling back to the
+        // request for entries written before the room stamped that.
+        const when = (row) => Number(row?.playedAt || row?.requestedAt || 0);
+        history = Array.isArray(payload?.history)
+          ? payload.history.slice().sort((a, b) => when(b) - when(a))
+          : [];
+        // Comes back on the same request, already ordered by count.
+        requesters = Array.isArray(payload?.userStats) ? payload.userStats : [];
+        // Newest first from the room; absent on a room older than the log.
+        skips = Array.isArray(payload?.skips) ? payload.skips : [];
+        // Who moved since last time. Only meaningful once there is a
+        // "last time": the first fetch just records where everyone is.
+        const next = new Map(requesters.map((r) => [String(r.login || "").toLowerCase(), Math.round(Number(r.rating) || 1000)]));
+        if (lastRatings.size) {
+          const moved = new Map();
+          for (const [login, rating] of next) {
+            const before = lastRatings.get(login);
+            if (before !== undefined && rating !== before) moved.set(login, rating - before);
+          }
+          if (moved.size) {
+            eloDeltas = moved;
+            const mine = conn.login ? moved.get(conn.login) : undefined;
+            if (mine) setNotice(`Your last song: ${mine > 0 ? "+" : ""}${mine} ELO`, mine < 0);
+          }
+        }
+        lastRatings = next;
+      } catch {
+        history = [];
+        requesters = [];
+      }
+      if (root?.isConnected) { renderSide(conn.state); renderNow(conn.state); renderHead(conn.state); }
+    }
+
+    /* ---------------------------------------------------- panels */
+
+    /* ------------------------------------------------- search
+
+       The input is created once and kept. Results replace only their own
+       container, never the field — rebuilding an input while somebody is
+       typing into it loses the caret, and with autocomplete firing on
+       every keystroke that would be constant.
+
+       Debounced at 400ms with a three-character floor because each miss
+       is a real YouTube Data API search, which is 100 quota units. The
+       room caches repeats, so a backspace over a query already sent is
+       free, but a fresh one is not. */
+
+    const SEARCH_DEBOUNCE_MS = 400;
+    const SEARCH_MIN_CHARS = 3;
+    let searchDebounce = 0;
+
+    function buildSearchField() {
+      const box = el("div", "msearch");
+
+      const input = document.createElement("input");
+      input.className = "msearch-input";
+      input.type = "search";
+      input.placeholder = "Search YouTube, or paste a link";
+      input.setAttribute("aria-label", "Search YouTube or paste a link");
+      input.setAttribute("autocomplete", "off");
+      input.value = searchQuery;
+
+      input.addEventListener("input", () => {
+        searchQuery = input.value;
+        window.clearTimeout(searchDebounce);
+
+        const trimmed = searchQuery.trim();
+
+        // A pasted link resolves locally, so it never waits on the timer
+        // and never spends a search.
+        if (pastedVideoId(trimmed)) {
+          searchDebounce = window.setTimeout(() => runSearch(trimmed), 150);
+          return;
+        }
+
+        if (trimmed.length < SEARCH_MIN_CHARS) {
+          searchResults = [];
+          searchNote = "";
+          renderResults();
+          return;
+        }
+        searchDebounce = window.setTimeout(() => runSearch(trimmed), SEARCH_DEBOUNCE_MS);
+      });
+
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          window.clearTimeout(searchDebounce);
+          runSearch(input.value);
+        }
+        if (event.key === "Escape") {
+          window.clearTimeout(searchDebounce);
+          searchResults = [];
+          searchNote = "";
+          renderResults();
+        }
+      });
+
+      refs.searchInput = input;
+      box.append(input);
+
+      refs.searchSpinner = el("span", "msearch-icon", "\u2315");
+      box.append(refs.searchSpinner);
+
+      return box;
+    }
+
+    function renderResults() {
+      const slot = refs.resultsSlot;
+      if (!slot) return;
+      slot.replaceChildren();
+
+      if (refs.searchSpinner) {
+        refs.searchSpinner.classList.toggle("is-busy", searching);
+      }
+
+      if (searchNote) {
+        slot.append(el("p", "mq-empty", searchNote));
+        return;
+      }
+      if (!searchResults.length) return;
+
+      const panel = el("div", "mresults");
+
+      const head = el("div", "mresults-head");
+      head.append(el("span", "mq-k", `${searchResults.length} results - pick one to queue`));
+      const clear = el("button", "mresults-clear", "\u2715");
+      clear.type = "button";
+      clear.setAttribute("aria-label", "Clear results");
+      clear.addEventListener("click", () => {
+        searchResults = [];
+        searchNote = "";
+        renderResults();
+      });
+      head.append(clear);
+      panel.append(head);
+
+      const list = el("div", "mresults-list");
+      for (const result of searchResults.slice(0, 10)) {
+        const videoId = result.videoId || result.id;
+        const row = el("button", "mresult");
+        row.type = "button";
+
+        // Prefer the id-derived thumbnail: the API returns the 120px
+        // "default" size, which looks soft at the size this row uses.
+        const art = thumb(videoId, "mresult-thumb");
+        if (art) row.append(art);
+
+        const meta = el("div", "mresult-meta");
+        meta.append(el("strong", null, result.title || "Untitled"));
+        if (result.channelTitle) meta.append(el("small", null, result.channelTitle));
+        row.append(meta);
+        row.append(el("span", "mresult-add", "+ Add"));
+
+        row.addEventListener("click", () => {
+          addVideo(videoId, result.title || "");
+          searchResults = [];
+          searchNote = "";
+          searchQuery = "";
+          if (refs.searchInput) refs.searchInput.value = "";
+          renderResults();
+        });
+        list.append(row);
+      }
+      panel.append(list);
+      slot.append(panel);
+    }
+
+    function volumePanel() {
+      const box = el("div", "mvol");
+      box.append(el("span", "mvol-k", "Volume"));
+
+      const slider = document.createElement("input");
+      slider.type = "range";
+      slider.className = "mvol-range";
+      slider.min = "0";
+      slider.max = "100";
+      slider.step = "1";
+      slider.value = String(readVolume());
+      slider.setAttribute("aria-label", "Playback volume");
+
+      const readout = el("span", "mvol-v", `${slider.value}`);
+      slider.addEventListener("input", () => {
+        readout.textContent = slider.value;
+        setVolume(Number(slider.value));
+      });
+
+      box.append(slider, readout);
+      return box;
+    }
+
+    function profileLink(login, text, className) {
+      const a = el("a", `ulink${className ? " " + className : ""}`, text);
+      a.href = `/u/${encodeURIComponent(String(login || text || "").toLowerCase())}`;
+      return a;
+    }
+
+    /** A stacked pile of faces and a count, for the header. */
+    function roomSummary(state) {
+      const box = el("div", "room");
+      const names = state?.listenerNames || [];
+      const total = Number(state?.listeners || 0);
+      const profiles = Array.isArray(state?.listenerProfiles) ? state.listenerProfiles : [];
+      const avatarFor = (name) => {
+        const p = profiles.find((x) => x.name === name);
+        if (p?.avatar) return p.avatar;
+        const r = requesters.find((x) => String(x.displayName || "").toLowerCase() === String(name).toLowerCase());
+        return r?.avatar || "";
+      };
+      const pile = el("div", "room-pile");
+      for (const name of names.slice(0, 5)) {
+        const av = el("span", "room-av", String(name).slice(0, 1).toUpperCase());
+        const src = avatarFor(name);
+        if (src) {
+          const img = document.createElement("img");
+          img.alt = "";
+          img.addEventListener("load", () => av.classList.add("has-logo"));
+          img.addEventListener("error", () => img.remove());
+          img.src = src;
+          av.append(img);
+        }
+        av.title = name;
+        pile.append(av);
+      }
+      if (total > Math.min(names.length, 5)) pile.append(el("span", "room-av more", `+${total - Math.min(names.length, 5)}`));
+      box.append(pile);
+      const count = el("span", "room-count");
+      count.append(el("b", null, String(total)), document.createTextNode(total === 1 ? " listening" : " listening"));
+      box.append(count);
+      if (names.length) {
+        const btn = el("button", `room-btn${roomOpen ? " on" : ""}`, roomOpen ? "Hide" : "See who");
+        btn.type = "button";
+        btn.addEventListener("click", () => { roomOpen = !roomOpen; renderHead(conn.state); });
+        box.append(btn);
+      }
+      return box;
+    }
+
+    /** The full roster, shown under the header on request. */
+    function roomList(state) {
+      const names = state?.listenerNames || [];
+      const total = Number(state?.listeners || 0);
+      const list = el("div", "room-list");
+      const profiles = Array.isArray(state?.listenerProfiles) ? state.listenerProfiles : [];
+      const byName = new Map();
+      for (const r of requesters) if (r.displayName) byName.set(String(r.displayName).toLowerCase(), r.avatar);
+      for (const p of profiles) if (p.name) byName.set(String(p.name).toLowerCase(), p.avatar || byName.get(String(p.name).toLowerCase()));
+      for (const name of names) {
+        const login = profiles.find((p) => p.name === name)?.login || name;
+        const chip = profileLink(login, "", "mwho-chip");
+        const avatar = byName.get(String(name).toLowerCase());
+        const av = el("span", "mwho-av", String(name).slice(0, 1).toUpperCase());
+        if (avatar) {
+          const img = document.createElement("img");
+          img.alt = "";
+          img.addEventListener("load", () => av.classList.add("has-logo"));
+          img.addEventListener("error", () => img.remove());
+          img.src = avatar;
+          av.append(img);
+        }
+        chip.append(av, document.createTextNode(name));
+        window.ECBadges?.decorate(chip, login);
+        list.append(chip);
+      }
+      if (total > names.length) list.append(el("span", "mwho-none", `+${total - names.length} not logged in`));
+      return list;
+    }
+
+    function renderHead(state) {
+      if (!refs.room) return;
+      refs.room.replaceChildren(roomSummary(state));
+      refs.roomList.replaceChildren();
+      refs.roomList.hidden = !roomOpen;
+      if (roomOpen) refs.roomList.append(roomList(state));
+    }
+
+    function queueList(state) {
+      const wrap = el("div", "mq");
+      const items = state?.queue || [];
+      if (!items.length) {
+        wrap.append(el("p", "mq-empty", "Nothing queued. Use the search box under the video to add a song, or !sr in chat."));
+        return wrap;
+      }
+      // When each song will start: what is left of the current one, then
+      // every song ahead of it. Unknown lengths simply leave the ETA off.
+      let ahead = state?.current && Number(state.current.duration) > 0
+        ? Math.max(0, Number(state.current.duration) - elapsedSeconds(state))
+        : null;
+      items.forEach((item, index) => {
+        const mine = conn.login &&
+          String(item.requestedByLogin || "").toLowerCase() === conn.login;
+        const row = el("div", `mq-row${mine ? " mine" : ""}`);
+        row.append(el("span", "mq-n", String(index + 1)));
+        const art = thumb(item.videoId, "mq-thumb");
+        if (art) row.append(art);
+        const meta = el("div", "mq-meta");
+        const title = el("strong", null, item.title || "Untitled");
+        if (mine) title.append(el("span", "mq-you", "YOU"));
+        meta.append(title);
+        meta.append(el("small", null, item.requestedBy ? `added by ${item.requestedBy}` : "added from chat"));
+        row.append(meta);
+        if (item.special === "rasputin") row.append(el("span", "mq-tag", "RASPUTIN"));
+        if (ahead !== null) {
+          const mins = Math.round(ahead / 60);
+          row.append(el("span", "mq-eta", mins < 1 ? "next" : `in ${mins} min`));
+          ahead += Number(item.duration) > 0 ? Number(item.duration) : 0;
+          if (!(Number(item.duration) > 0)) ahead = null;
+        }
+
+        // Your own rows, plus everything if you run the room. The server
+        // re-checks on every removal, so showing the button is only ever
+        // about not offering one that would be refused.
+        if (mine || canForceSkip()) {
+          const drop = el("button", "mq-drop", "\u2715");
+          drop.type = "button";
+          drop.title = mine ? "Remove your song" : `Remove ${item.requestedBy}'s song`;
+          drop.setAttribute("aria-label", drop.title);
+          drop.addEventListener("click", () => send({ type: "remove", itemId: item.id }));
+          row.append(drop);
+        }
+
+        wrap.append(row);
+      });
+      return wrap;
+    }
+
+    /**
+     * Highest and lowest rated requesters.
+     *
+     * Only people with a song actually scored appear. Everyone starts at
+     * 1000 and stays there until the room reacts to something of theirs,
+     * so listing the unrated would be a wall of ties that says nothing.
+     */
+
+  /**
+   * Esports-style tiers from the rating. Rank 1 is whoever is on top;
+   * Gold is well above the 1000 everyone starts at, Silver is at or
+   * above it, Bronze is below — the room has turned on your songs.
+   */
+  function eloTier(rating, isTop, isLast) {
+    if (isTop) return { key: "rank1", label: "Rank 1" };
+    // Somebody is always at the bottom, and the bottom is always Bronze.
+    if (isLast) return { key: "bronze", label: "Bronze" };
+    const r = Number(rating) || 1000;
+    if (r >= 1015) return { key: "gold", label: "Gold" };
+    if (r >= 1000) return { key: "silver", label: "Silver" };
+    return { key: "bronze", label: "Bronze" };
+  }
+
+    function ratingsList() {
+      const wrap = el("div", "mq");
+
+      const rated = requesters
+        .filter((entry) => Number(entry.rated) > 0)
+        .sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0));
+
+      if (!rated.length) {
+        wrap.append(el("p", "mq-empty",
+          "No ratings yet. React to a song and its requester gets scored when it finishes."));
+        return wrap;
+      }
+
+      const topLogin = rated[0]?.login;
+      const lastLogin = rated.length > 1 ? rated[rated.length - 1]?.login : null;
+      const row = (entry, place) => {
+        const line = el("div", "mq-row elo-row");
+        line.append(el("span", "mq-n", String(place)));
+        const tier = eloTier(entry.rating, entry.login === topLogin, entry.login === lastLogin);
+        line.classList.add(`tier-${tier.key}`);
+
+        if (entry.avatar) {
+          const img = document.createElement("img");
+          img.className = "mtop-av";
+          img.src = window.ECAvatar ? window.ECAvatar.small(entry.avatar) : entry.avatar;
+          img.alt = "";
+          img.loading = "lazy";
+          line.append(img);
+        }
+
+        const meta = el("div", "mq-meta");
+        const nameEl = el("strong");
+        if (entry.login) {
+          const a = el("a", "ulink", entry.displayName || entry.login);
+          a.href = `/u/${encodeURIComponent(String(entry.login).toLowerCase())}`;
+          nameEl.append(a);
+        } else {
+          nameEl.textContent = entry.displayName || "someone";
+        }
+        meta.append(nameEl);
+        const good = Number(entry.up || 0) + Number(entry.fire || 0);
+        const bad = Number(entry.trash || 0) + Number(entry.del || 0);
+        const songs = Number(entry.rated || 0);
+        // Emoji instead of words so the line never has to truncate:
+        // 🎵 songs rated · 👍 good reactions · 👎 bad.
+        const meta2 = el("small", "elo-counts");
+        meta2.title = `${songs} song${songs === 1 ? "" : "s"} rated · ${good} good reaction${good === 1 ? "" : "s"}, ${bad} bad`;
+        meta2.textContent = `🎵 ${songs} · 👍 ${good} · 👎 ${bad}`;
+        meta.append(meta2);
+        line.append(meta);
+
+        const score = el("span", "elo-score", String(Math.round(Number(entry.rating) || 1000)));
+        score.classList.add(Number(entry.rating) >= 1000 ? "up" : "down");
+        const tierEl = el("span", `elo-tier ${tier.key}`, tier.label);
+        line.append(tierEl, score);
+        const delta = eloDeltas.get(String(entry.login || "").toLowerCase());
+        if (delta) {
+          const d = el("span", `elo-delta ${delta > 0 ? "up" : "down"}`, `${delta > 0 ? "▲" : "▼"}${Math.abs(delta)}`);
+          d.title = `${delta > 0 ? "+" : ""}${delta} since their last song`;
+          line.append(d);
+        }
+        return line;
+      };
+
+      const top = rated.slice(0, 5);
+      wrap.append(el("p", "elo-head", "Highest rated"));
+      top.forEach((entry, i) => wrap.append(row(entry, i + 1)));
+
+      // The bottom list is whoever is left below the top five, so nobody
+      // appears in both. With six rated people that is one row; with
+      // fewer than six there is no bottom list at all.
+      const rest = rated.slice(top.length);
+      if (rest.length) {
+        // Read top-down like the list above it: 6, 7, 8 — last place last.
+        wrap.append(el("p", "elo-head", "Lowest rated"));
+        rest.slice(-5).forEach((entry) => wrap.append(row(entry, rated.indexOf(entry) + 1)));
+      }
+
+      return wrap;
+    }
+
+    /** Everyone by how many songs they have queued, for the Rankings tab. */
+    function requestsList() {
+      const wrap = el("div", "mq");
+      if (!requesters.length) {
+        wrap.append(el("p", "mq-empty", "Nobody has queued anything yet."));
+        return wrap;
+      }
+      const sorted = requesters.slice().sort((a, b) => Number(b.count || 0) - Number(a.count || 0)).slice(0, 10);
+      sorted.forEach((entry, index) => {
+        const line = el("div", "mq-row elo-row");
+        line.append(el("span", "mq-n", String(index + 1)));
+        if (entry.avatar) {
+          const img = document.createElement("img");
+          img.className = "mtop-av";
+          img.src = window.ECAvatar ? window.ECAvatar.small(entry.avatar) : entry.avatar;
+          img.alt = "";
+          img.loading = "lazy";
+          line.append(img);
+        }
+        const meta = el("div", "mq-meta");
+        const nameEl = el("strong");
+        nameEl.append(profileLink(entry.login || entry.displayName, entry.displayName || entry.login || "someone"));
+        meta.append(nameEl);
+        const rated = Number(entry.rated || 0);
+        meta.append(el("small", "elo-counts", rated ? `🎵 ${rated} rated · ELO ${Math.round(Number(entry.rating) || 1000)}` : "unrated"));
+        line.append(meta);
+        line.append(el("span", "elo-score", `${Number(entry.count || 0)} songs`));
+        wrap.append(line);
+      });
+      return wrap;
+    }
+
+    /* The skip log: what left early and why, newest first, from the
+       room's own record (the worker's `skips`, 40 kept). A song that
+       simply finished is History's, not this. */
+    function skipReason(s) {
+      if (s.kind === "vote-skip") {
+        return { tag: "Voted off", cls: "vote", why: s.votes ? `${s.votes} vote${s.votes === 1 ? "" : "s"}${s.listeners ? ` of ${s.listeners} listening` : ""}` : "the room voted" };
+      }
+      if (s.kind === "error") return { tag: "Wouldn't play", cls: "error", why: "YouTube refused to play it here" };
+      const who = s.actor || "someone";
+      if (s.how === "mod") return { tag: "Mod skip", cls: "mod", why: `skipped by ${who}` };
+      if (s.how === "own") return { tag: "Own song", cls: "own", why: `${who} skipped their own request` };
+      if (s.how === "chat") return { tag: "!skip", cls: "chat", why: `${who} typed !skip in chat` };
+      return { tag: "Skipped", cls: "mod", why: `skipped by ${who}` };
+    }
+
+    function skipsList() {
+      const wrap = el("div", "mq");
+      if (!skips.length) {
+        wrap.append(el("p", "mq-empty", "Nothing has been skipped yet. Songs voted off, skipped or unplayable show here with the reason."));
+        return wrap;
+      }
+      const clock = (ms) => {
+        const t = Math.max(0, Math.round(Number(ms || 0) / 1000));
+        return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+      };
+      const pages = Math.max(1, Math.ceil(skips.length / SKIPS_PER_PAGE));
+      // Clamped: the room keeps the newest 40, so a page can vanish.
+      skipsPage = Math.min(Math.max(0, skipsPage), pages - 1);
+      const start = skipsPage * SKIPS_PER_PAGE;
+      for (const s of skips.slice(start, start + SKIPS_PER_PAGE)) {
+        const r = skipReason(s);
+        const row = el("div", "mq-row mskiprow");
+        const art = thumb(s.videoId, "mq-thumb");
+        if (art) row.append(art);
+        const meta = el("div", "mq-meta");
+        const title = el("strong", null, s.title || "Untitled");
+        meta.append(title);
+        const line = el("small", "mskip-why");
+        line.append(el("span", `mskip-tag ${r.cls}`, r.tag), document.createTextNode(` ${r.why}`));
+        meta.append(line);
+        meta.append(el("small", null,
+          `${s.requestedBy || "chat"}'s request · ${s.playedMs ? `after ${clock(s.playedMs)} · ` : ""}${timeAgo(s.at)}`));
+        row.append(meta);
+        const save = saveLink(s.videoId, "watchbtn mq-again msave", "Save ↗");
+        if (save) row.append(save);
+        wrap.append(row);
+      }
+      if (pages > 1) {
+        const pager = el("div", "mpager");
+        const step = (label, delta, disabled) => {
+          const btn = el("button", "mpager-btn", label);
+          btn.type = "button";
+          btn.disabled = disabled;
+          btn.addEventListener("click", () => {
+            skipsPage += delta;
+            renderSide(conn.state);
+          });
+          return btn;
+        };
+        pager.append(step("‹", -1, skipsPage === 0));
+        pager.append(el("span", "mpager-at",
+          `${start + 1}–${Math.min(start + SKIPS_PER_PAGE, skips.length)} of ${skips.length}`));
+        pager.append(step("›", 1, skipsPage >= pages - 1));
+        wrap.append(pager);
+      }
+      return wrap;
+    }
+
+    function historyList() {
+      const wrap = el("div", "mq");
+      if (!history.length) {
+        wrap.append(el("p", "mq-empty", "Nothing has played yet."));
+        return wrap;
+      }
+
+      const pages = Math.max(1, Math.ceil(history.length / HISTORY_PER_PAGE));
+      // Clamped rather than trusted: the room trims history as it grows,
+      // so the page you were on can stop existing under you.
+      historyPage = Math.min(Math.max(0, historyPage), pages - 1);
+
+      const start = historyPage * HISTORY_PER_PAGE;
+      for (const entry of history.slice(start, start + HISTORY_PER_PAGE)) {
+        const row = el("div", "mq-row");
+        const art = thumb(entry.videoId, "mq-thumb");
+        if (art) row.append(art);
+        const meta = el("div", "mq-meta");
+        meta.append(el("strong", null, entry.title || "Untitled"));
+        const sub = el("small", null,
+          entry.playedAt
+            ? `${entry.requestedBy || "chat"} · played ${timeAgo(entry.playedAt)}`
+            : `${entry.requestedBy || "chat"} · added ${timeAgo(entry.requestedAt)}`);
+        const delta = eloDeltas.get(String(entry.requestedByLogin || "").toLowerCase());
+        if (delta && history.indexOf(entry) === 0) {
+          sub.append(document.createTextNode(" · "), el("span", `elo-delta ${delta > 0 ? "up" : "down"}`, `${delta > 0 ? "▲" : "▼"}${Math.abs(delta)} ELO`));
+        }
+        meta.append(sub);
+        row.append(meta);
+
+        const again = el("button", "watchbtn mq-again", "Play again");
+        again.type = "button";
+        again.addEventListener("click", () => addVideo(entry.videoId, entry.title || ""));
+        const save = saveLink(entry.videoId, "watchbtn mq-again msave", "Save ↗");
+        if (save) row.append(save);
+        row.append(again);
+
+        wrap.append(row);
+      }
+
+      if (pages > 1) {
+        const pager = el("div", "mpager");
+
+        const step = (label, delta, disabled) => {
+          const btn = el("button", "mpager-btn", label);
+          btn.type = "button";
+          btn.disabled = disabled;
+          btn.addEventListener("click", () => {
+            historyPage += delta;
+            // Only the list is redrawn, so the player is never touched.
+            renderSide(conn.state);
+          });
+          return btn;
+        };
+
+        pager.append(step("\u2039", -1, historyPage === 0));
+        pager.append(el("span", "mpager-at",
+          `${start + 1}\u2013${Math.min(start + HISTORY_PER_PAGE, history.length)} of ${history.length}`));
+        pager.append(step("\u203a", 1, historyPage >= pages - 1));
+
+        wrap.append(pager);
+      }
+
+      return wrap;
+    }
+
+    /* ---------------------------------------------------- paint */
+
+    /* ------------------------------------------------------ structure
+
+       Built once, then only the changing parts are replaced.
+
+       This used to rebuild the whole view on every state broadcast,
+       which tore the stage — and the playing iframe inside it — out of
+       the document. mountPlayer then saw the same video id, assumed the
+       player was fine, and returned without remounting. The result was a
+       black box, appearing at what looked like random moments but was
+       actually any time somebody joined, left, voted or reacted.
+
+       So the stage and everything above it in the tree are created once
+       and never touched again. Only slots that cannot contain the player
+       get replaced. */
+
+    const refs = {};
+
+    /* ---------------- skins ----------------
+       Picked on the page, kept per device. A skin is one CSS block in
+       v3.css over the same layout: [data-skin] on the view's root, and
+       body[data-music-skin] so one of them can take the page to black.
+       Nothing about playback changes. The retro faces come from Google
+       Fonts and are fetched the first time a skin that uses them is on. */
+    const SKINS = [
+      ["", "Green Room"],
+      ["winamp", "Winamp"],
+      ["gameboy", "Game Boy"],
+      ["jukebox", "Jukebox"],
+      ["ipod", "iPod"],
+      ["jumbotron", "Jumbotron"],
+      ["void", "Super Ultra Dark Mode"],
+      ["minimal", "Super Ultra Minimal"],
+      ["trip", "I'm Fucked Up Bro"]
+    ];
+    const SKIN_KEY = "ec_music_skin";
+    const SKIN_FONTS = "https://fonts.googleapis.com/css2?family=VT323&family=Silkscreen&family=Righteous&family=Orbitron:wght@600;800&family=Rubik+Wet+Paint&display=swap";
+    const NEEDS_FONTS = new Set(["winamp", "gameboy", "jukebox", "jumbotron", "trip"]);
+    let skin = (() => {
+      try { const s = localStorage.getItem(SKIN_KEY) || ""; return SKINS.some(([k]) => k === s) ? s : ""; } catch { return ""; }
+    })();
+    let skinBox = null;
+    // ?view=music&theme=<name> picks a skin from a link and keeps it, like
+    // ?spooky= does. Names are forgiving: case, spaces and punctuation are
+    // dropped, and each skin has a few spellings. The param is then taken
+    // off the URL so a later pick from the chip isn't undone by a reload.
+    const SKIN_ALIASES = {
+      greenroom: "", default: "", off: "", none: "",
+      winamp: "winamp", gameboy: "gameboy", jukebox: "jukebox", ipod: "ipod", jumbotron: "jumbotron",
+      void: "void", dark: "void", superultradark: "void", superultradarkmode: "void",
+      minimal: "minimal", superultraminimal: "minimal",
+      trip: "trip", imgone: "trip", fuckedup: "trip", imfuckedupbro: "trip", imfuckedup: "trip", mushroom: "trip"
+    };
+    function skinFromUrl() {
+      let url;
+      try { url = new URL(location.href); } catch { return null; }
+      const raw = url.searchParams.get("theme") ?? url.searchParams.get("skin");
+      if (raw === null) return null;
+      const key = SKIN_ALIASES[String(raw).toLowerCase().replace(/[^a-z0-9]/g, "")];
+      url.searchParams.delete("theme");
+      url.searchParams.delete("skin");
+      // window. on purpose: `history` in this module is the History tab's list.
+      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+      return key === undefined ? null : key;
+    }
+    function loadSkinFonts() {
+      if (document.getElementById("mskin-fonts")) return;
+      const link = document.createElement("link");
+      link.id = "mskin-fonts";
+      link.rel = "stylesheet";
+      link.href = SKIN_FONTS;
+      document.head.append(link);
+    }
+    // The skins' stylesheet (about 8 KB) belongs to this page alone.
+    function needSkinsCss() {
+      if (document.getElementById("css-skins")) return;
+      const link = document.createElement("link");
+      link.id = "css-skins"; link.rel = "stylesheet"; link.href = "/v3/assets/css/v3-skins.css?v=2";
+      document.head.append(link);
+    }
+    function applySkin(key) {
+      needSkinsCss();
+      if (root) { if (key) root.dataset.skin = key; else delete root.dataset.skin; }
+      if (key) document.body.dataset.musicSkin = key; else delete document.body.dataset.musicSkin;
+      if (NEEDS_FONTS.has(key)) loadSkinFonts();
+    }
+    function skinPicker() {
+      const box = el("div", "mskin");
+      const btn = el("button", "mskin-btn");
+      btn.type = "button";
+      const label = () => `Skin · ${SKINS.find(([k]) => k === skin)?.[1] || "Green Room"} \u25BE`;
+      btn.textContent = label();
+      const menu = el("div", "mskin-menu");
+      menu.hidden = true;
+      for (const [key, name] of SKINS) {
+        const item = el("button", `mskin-item${key === skin ? " on" : ""}`, name);
+        item.type = "button";
+        item.addEventListener("click", () => {
+          skin = key;
+          try { localStorage.setItem(SKIN_KEY, key); } catch { /* the choice just won't stick */ }
+          applySkin(skin);
+          btn.textContent = label();
+          menu.querySelectorAll(".mskin-item").forEach((b) => b.classList.toggle("on", b === item));
+          menu.hidden = true;
+        });
+        menu.append(item);
+      }
+      btn.addEventListener("click", () => { menu.hidden = !menu.hidden; });
+      box.append(btn, menu);
+      skinBox = box;
+      return box;
+    }
+    document.addEventListener("click", (event) => {
+      if (skinBox && skinBox.isConnected && !skinBox.contains(event.target)) skinBox.querySelector(".mskin-menu").hidden = true;
+    });
+
+    function build() {
+      root.replaceChildren();
+
+      // The same live ticker the Sports page carries, above the title.
+      const ticker = document.createElement("section");
+      ticker.className = "ticker";
+      root.append(ticker);
+      const mountTicker = (tries = 0) => {
+        if (!ticker.isConnected) return;
+        if (window.ECActivity) window.ECActivity.mountTicker(ticker);
+        else if (tries < 100) window.setTimeout(() => mountTicker(tries + 1), 50);
+      };
+      mountTicker();
+
+      // Header: the title on the left, the room on the right.
+      const head = el("div", "mhead");
+      const title = el("h1", "mtitle");
+      const jamgie = document.createElement("img");
+      jamgie.className = "mtitle-emote";
+      jamgie.src = JAMGIE;
+      jamgie.alt = "";
+      const jamgie2 = document.createElement("img");
+      jamgie2.className = "mtitle-emote";
+      jamgie2.src = JAMGIE2;
+      jamgie2.alt = "";
+      title.append(el("span", "mtitle-text", "The Green Room"), jamgie, jamgie2);
+      refs.room = el("div", "room-slot");
+      refs.listeners = el("span", "mlisteners", BASE ? "Connecting\u2026" : "Room not configured");
+      refs.room.append(refs.listeners);
+      const right = el("div", "mhead-right");
+      right.append(skinPicker(), refs.room);
+      head.append(title, right);
+      root.append(head);
+      refs.roomList = el("div", "room-list-wrap");
+      refs.roomList.hidden = true;
+      root.append(refs.roomList);
+
+      noticeEl = el("p", "mnotice");
+      noticeEl.hidden = true;
+      root.append(noticeEl);
+
+      if (!BASE) {
+        root.append(el("p", "mq-empty", "No room server is configured for this build."));
+        return;
+      }
+
+      const shellEl = el("div", "mshell");
+      const left = el("div", "mleft");
+
+      // The stage, with what is playing written on it. The glow cannot
+      // follow the actual audio — the YouTube frame is cross-origin — so
+      // it is a steady pulse while something plays, lifted for !rasputin.
+      refs.stagewrap = el("div", "mstagewrap");
+      stage = el("div", "mstage");
+      refs.stagewrap.append(el("span", "mstage-glow"), stage);
+
+      // Now playing, over the bottom of the video.
+      refs.now = el("div", "mnow-ov");
+      refs.now.hidden = true;
+      refs.stagewrap.append(refs.now);
+
+      // Progress along the stage's bottom edge, read-only: it shows where
+      // the shared timeline is and cannot move it.
+      refs.progress = el("div", "mprog");
+      refs.progress.setAttribute("aria-hidden", "true");
+      refs.progressFill = el("i", "mprog-fill");
+      const track = el("div", "mprog-track");
+      track.append(refs.progressFill);
+      refs.progressNow = el("span", "mprog-t nums", "0:00");
+      refs.progressEnd = el("span", "mprog-t nums", "");
+      refs.progress.append(track);
+      refs.progress.hidden = true;
+      refs.stagewrap.append(refs.progress);
+      prog = { bar: refs.progress, fill: refs.progressFill, now: refs.progressNow, end: refs.progressEnd };
+      startProgressTicker();
+
+      // One control bar: reactions, skip, volume.
+      const bar = el("div", "mbar");
+      refs.reactSlot = el("div", "reactbar");
+      refs.reactBtns = null;   // a fresh build gets a fresh bar
+      refs.actions = el("div", "mactions");
+      bar.append(refs.reactSlot, refs.actions, el("span", "mbar-spacer"), volumePanel());
+      refs.bar = bar;
+
+      // One request box, with the queue rules under it.
+      refs.resultsSlot = el("div", "mslot");
+      refs.hint = el("p", "mhint");
+      left.append(refs.stagewrap, bar, buildSearchField(), refs.resultsSlot, refs.hint);
+      shellEl.append(left);
+
+      // One rail: three tabs.
+      refs.side = el("aside", "mside rail");
+      shellEl.append(refs.side);
+      root.append(shellEl);
+    }
+
+    /** Now playing, written on the stage. */
+    function renderNow(state) {
+      const box = refs.now;
+      if (!box) return;
+      const current = state?.current;
+      box.hidden = !current;
+      if (!current) return;
+      box.replaceChildren();
+      const art = thumb(current.videoId, "mnow-ov-art");
+      if (art) box.append(art); else box.append(el("span", "mnow-ov-art"));
+      const text = el("div", "mnow-ov-text");
+      text.append(el("span", "mnow-k", "Now playing"));
+      const title = el("strong", "mnow-v");
+      const titleText = el("span", "mnow-v-text", current.title || "Untitled");
+      title.append(titleText);
+      text.append(title);
+      requestAnimationFrame(() => {
+        if (!title.isConnected) return;
+        const gap = titleText.scrollWidth - title.clientWidth;
+        if (gap > 4) {
+          title.classList.add("is-long");
+          title.style.setProperty("--scroll", `-${gap + 12}px`);
+          title.style.setProperty("--scroll-s", `${Math.max(6, Math.round(gap / 22) + 4)}s`);
+        }
+      });
+      if (current.requestedBy) {
+        const by = el("small", "mnow-ov-by");
+        by.append(document.createTextNode("requested by "), profileLink(current.requestedByLogin || current.requestedBy, current.requestedBy));
+        text.append(by);
+      }
+      const save = saveLink(current.videoId, "msave msave-now", "Save to your YouTube ↗");
+      if (save) text.append(save);
+      box.append(text);
+      const time = el("span", "mnow-ov-time nums");
+      time.append(refs.progressNow, document.createTextNode(" / "), refs.progressEnd);
+      box.append(time);
+    }
+
+    /** Skip vote and force skip, in the control bar. */
+    function renderActions(state) {
+      const slot = refs.actions;
+      if (!slot) return;
+      slot.replaceChildren();
+      if (!state?.current) return;
+
+      const vote = el("button", "watchbtn mskip", `Skip · ${state.skipVotes} / ${state.skipThreshold}`);
+      vote.type = "button";
+      vote.title = skipVoterTip(state);
+      if (votedFor === state.current.id) vote.classList.add("mvoted");
+      vote.addEventListener("click", () => {
+        // currentId is required. Without it the room drops the vote on
+        // its very first line, silently.
+        if (!send({ type: "skip-vote", currentId: state.current.id })) return;
+        votedFor = votedFor === state.current.id ? "" : state.current.id;
+        renderActions(conn.state);
+      });
+      slot.append(vote);
+
+      // Mods, or whoever queued what is playing. The server re-checks the
+      // verified login on every skip, so this is presentation only.
+      const ownsCurrent = conn.login &&
+        String(state.current.requestedByLogin || "").toLowerCase() === conn.login;
+      const canPull = canForceSkip() || (ownsCurrent && !state.current.unskippable);
+      if (canPull) {
+        const mine = ownsCurrent && !canForceSkip();
+        const force = el("button", "watchbtn mforce", mine ? "Skip mine" : "Skip now");
+        force.type = "button";
+        force.title = mine ? "Take your own song off, no vote needed" : "Skip immediately, without a vote";
+        force.addEventListener("click", () => send({ type: "force-skip" }));
+        slot.append(force);
+      }
+    }
+
+    /** The line under the request box: chat command, how full the queue is. */
+    function renderHint(state) {
+      const h = refs.hint;
+      if (!h) return;
+      h.replaceChildren();
+      const limit = Number(state?.queueLimit) || 14;
+      const queued = (state?.queue || []).length;
+      h.append(el("b", null, "!song"), document.createTextNode(" in chat shows what's on"));
+      h.append(document.createTextNode(` · queue ${queued} of ${limit}`));
+      if (conn.login) {
+        const mine = (state?.queue || []).filter((i) => String(i.requestedByLogin || "").toLowerCase() === conn.login).length;
+        if (mine) h.append(document.createTextNode(` · ${mine} of them yours`));
+      } else {
+        h.append(document.createTextNode(" · log in with Twitch to add songs"));
+      }
+    }
+
+    /**
+   * Who is currently voting to skip.
+   *
+   * The room only names people it has verified through Twitch, so the
+   * count and the list can disagree — anyone logged out is real but
+   * anonymous. Saying "and 2 others" is honest about that rather than
+   * quietly under-reporting.
+   */
+    function skipVoterTip(state) {
+      const total = Number(state?.skipVotes || 0);
+      if (!total) return "Nobody has voted to skip yet";
+
+      const named = (state?.skipVoterNames || []).filter(Boolean);
+      const others = Math.max(0, total - named.length);
+
+      if (!named.length) {
+        return `${total} vote${total === 1 ? "" : "s"} to skip, nobody logged in`;
+      }
+      const list = named.join(", ");
+      if (!others) return `Voted to skip: ${list}`;
+      return `Voted to skip: ${list} and ${others} other${others === 1 ? "" : "s"}`;
+    }
+
+    function renderReactions(state) {
+      const slot = refs.reactSlot;
+      if (!slot) return;
+      slot.hidden = !state?.current;
+      if (!state?.current) return;
+
+      // Built once. Every broadcast used to rebuild the bar, which threw
+      // away the button — and the burst on it — about 100ms after a
+      // click, so a reaction flashed and vanished. Now only the counts
+      // and the tooltips change.
+      if (!refs.reactBtns) {
+        refs.reactBtns = {};
+        for (const { kind, emoji, label } of REACTIONS) {
+          const btn = el("button", "reactbtn");
+          btn.type = "button";
+          btn.dataset.kind = kind;
+          btn.append(el("span", "reactbtn-emoji", emoji));
+          const n = el("span", "reactbtn-n");
+          n.hidden = true;
+          btn.append(n);
+          btn.addEventListener("click", () => {
+            // currentId is required: the room refuses a reaction aimed at
+            // a song that has already changed, which is what stops a late
+            // click landing on whatever happens to be playing now.
+            const current = conn.state?.current;
+            if (!current) return;
+            send({ type: "react", kind, currentId: current.id });
+            burst(btn, emoji);
+          });
+          refs.reactBtns[kind] = { btn, n, label };
+          slot.append(btn);
+        }
+      }
+
+      const all = state.reactions || {};
+      for (const { kind } of REACTIONS) {
+        const { btn, n, label } = refs.reactBtns[kind];
+        const entry = all[kind] || { count: 0, names: [] };
+        const tip = reactionTip(entry, label);
+        btn.title = tip;
+        btn.setAttribute("aria-label", tip);
+        const count = Number(entry.count || 0);
+        if (count !== Number(n.textContent || 0)) {
+          n.textContent = count ? String(count) : "";
+          n.hidden = !count;
+          if (count) { n.classList.remove("bump"); void n.offsetWidth; n.classList.add("bump"); }
+        }
+        btn.classList.toggle("has-count", count > 0);
+      }
+    }
+
+    function renderSide(state) {
+      const side = refs.side;
+      if (!side) return;
+      side.replaceChildren();
+
+      const queued = (state?.queue || []).length;
+      const tabs = el("div", "mtabs");
+      for (const [key, label] of [["queue", queued ? `Up next · ${queued}` : "Up next"], ["history", "History"], ["skips", "Skipped"], ["elo", "Rankings"]]) {
+        const btn = el("button", `mtab${tab === key ? " active" : ""}`, label);
+        btn.type = "button";
+        btn.addEventListener("click", () => {
+          tab = key;
+          // All three come back on the same request, so any tab warms them.
+          if (key !== "queue" && !history.length) loadHistory();
+          renderSide(conn.state);
+        });
+        tabs.append(btn);
+      }
+      side.append(tabs);
+
+      if (tab === "elo") {
+        const seg = el("div", "mseg");
+        for (const [key, label] of [["elo", "Music ELO"], ["requests", "Most requests"]]) {
+          const b = el("button", `mseg-btn${rankSeg === key ? " on" : ""}`, label);
+          b.type = "button";
+          b.addEventListener("click", () => { rankSeg = key; renderSide(conn.state); });
+          seg.append(b);
+        }
+        side.append(seg);
+        side.append(rankSeg === "elo" ? ratingsList() : requestsList());
+      } else {
+        side.append(tab === "queue" ? queueList(state) : tab === "skips" ? skipsList() : historyList());
+      }
+    }
+
+    function paint(state) {
+      if (!root) return;
+      if (!refs.side && !refs.stagewrap) { build(); renderResults(); }
+      if (!BASE) return;
+
+      if (!state) refs.listeners.textContent = "Connecting\u2026";
+
+      refs.stagewrap.classList.toggle("is-playing", Boolean(state?.current));
+      refs.stagewrap.classList.toggle("is-hot", isRasputin(state));
+
+      // History was fetched once on mount and never again, so anything
+      // that played or was skipped after you opened the page simply never
+      // appeared — and Top Requesters and Ratings quietly froze with it.
+      const currentId = state?.current?.id || null;
+      if (currentId !== lastCurrentId) {
+        lastCurrentId = currentId;
+        loadHistory();
+      }
+
+      renderHead(state);
+      renderNow(state);
+      renderReactions(state);
+      renderActions(state);
+      if (refs.bar) refs.bar.hidden = !state?.current;
+      renderHint(state);
+      renderSide(state);
+
+      if (state?.current) mountPlayer(stage, state);
+      else destroyPlayer();
+
+      if (isRasputin(state)) startJam(stage); else stopJam(stage);
+    }
+
+    return {
+      async mount(container) {
+        root = container;
+        const linked = skinFromUrl();
+        if (linked !== null) {
+          skin = linked;
+          try { localStorage.setItem(SKIN_KEY, skin); } catch { /* the choice just won't stick */ }
+        }
+        applySkin(skin);
+        refs.side = null;
+        refs.stagewrap = null;
+        refs.room = null;
+        pageMounted = true;
+        // The page owns playback while it is open; the dock steps aside.
+        teardownDock();
+        syncDockButton();
+        document.body.classList.add("music-view");
+        initAudioLock();
+        connect();
+        paint(conn.state);
+        unsub = subscribe(paint);
+        loadHistory();
+      },
+      unmount() {
+        applySkin("");
+        document.body.classList.remove("music-view");
+        stopProgressTicker();
+        stopJam(stage);
+        destroyPlayer();
+        unsub?.();
+        unsub = null;
+        root = null;
+        stage = null;
+        noticeEl = null;
+        pageMounted = false;
+        // With the dock on, the room keeps playing from the corner and
+        // you stay counted as a listener. Otherwise leaving the page
+        // leaves the room, which keeps the skip threshold honest.
+        if (dockWanted) syncDock(); else disconnect();
+      }
+    };
+  })();
+
+  /* ============================================================ boot */
+
+  function boot() {
+    if (!window.ECV3) return window.setTimeout(boot, 30);
+    window.ECV3.register("music", view);
+    const b = dockButton();
+    if (b && !b.dataset.wired) {
+      b.dataset.wired = "1";
+      b.addEventListener("click", toggleDock);
+    }
+    syncDockButton();
+    // Remembered from last time: a page that is not the Green Room gets
+    // the dock straight away. The Green Room itself mounts its own player.
+    if (dockWanted && window.ECV3.state?.route !== "music") syncDock();
+  }
+  boot();
+
+  window.ECV3Music = Object.freeze({ subscribe, send, connect, state: () => conn.state });
+})();

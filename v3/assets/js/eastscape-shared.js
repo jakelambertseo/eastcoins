@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 214;
+export const VERSION = 215;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -172,6 +172,44 @@ export const ITEMS = {
   stormjelly: { name: "Storm jelly", icon: "🫧", ex: "A wobbling lump of bottled weather. It tingles." },
   staticfur: { name: "Static pelt", icon: "🧶", ex: "It stands on end whether you like it or not." },
   hailshard: { name: "Hail shard", icon: "🧊", ex: "A scale of ice that refuses to melt. Cold enough to ache." },
+  /* ---------------------------------------------------------------- ALCHEMY (2026-09-24)
+     Sand out of the pits in The Golden Sands, melted to glass at a cauldron, brewed with what the world already
+     drops. THE INGREDIENTS ARE MOSTLY THINGS THAT EXISTED AND DID NOTHING: the farm's seven crops had no recipe
+     anywhere - a dead end this fixes, six of the seven are used here - and staticfur, markedcard, receipt,
+     sharktooth, cobweb, sporecap, husk, bones and stormjelly were junk drops. Alchemy is what makes the rest of
+     the world worth looting.
+
+     THE VIAL SIZE IS THE TIER AND ALSO THE DURATION: small runs 10 minutes, medium 15, large 20. And the ladder
+     ALTERNATES a skilling buff with a combat one all the way up, so neither kind of player ever has a dead
+     stretch of levels. Every value sits under its OUT_CAP ceiling (speed .2, tough .3, rare .4, tix .25,
+     bite .1, steal .15) so a potion stacks with gear rather than replacing it. Keys are `pot_*` so one regex
+     answers "have you brewed anything at all". */
+  sand: { name: "Sand", icon: "\u231B", ex: "Fine, pale and everywhere out here. Melts into glass at a cauldron." },
+  small_vial: { name: "Small vial", icon: "\u{1F9EA}", ex: "One measure of glass. Holds the short draughts, ten minutes a go." },
+  medium_vial: { name: "Medium vial", icon: "\u{1F9EA}", ex: "Two measures, blown properly. Fifteen minutes to the bottle." },
+  large_vial: { name: "Large flask", icon: "\u{1F9EA}", ex: "Four measures, corded at the neck. Twenty minutes of the strong stuff." },
+  scarabshell: { name: "Scarab shell", icon: "\u{1FAB2}", ex: "Iridescent, and hard enough to turn a blade. Ground down it does the same for you." },
+  snakefang: { name: "Cobra fang", icon: "\u{1F9B7}", ex: "Still wet at the tip. Handle it by the blunt end." },
+  palmlogs: { name: "Palm logs", icon: "\u{1FAB5}", ex: "Fibrous and stringy rather than grained. Burns fast and sweet." },
+  oasisperch: { name: "Oasis perch", icon: "\u{1F41F}", ex: "Fat, slow and entirely unbothered. Nothing else in the pool worries it.", raw: true },
+  nilecarp: { name: "Temple carp", icon: "\u{1F41F}", ex: "Somebody has been feeding these for a very long time.", raw: true },
+  coasisperch: { name: "Cooked oasis perch", icon: "\u{1F41F}", heal: 16, ex: "Sweet white flesh. Worth the walk." },
+  cnilecarp: { name: "Cooked temple carp", icon: "\u{1F41F}", heal: 19, ex: "Rich, oily and faintly holy." },
+  pot_swift: { name: "Swift draught", icon: "\u{1F9EA}", drink: { mins: 10, fx: { speed: 0.04 } }, ex: "Mushroom and panic. 10 minutes outside: everything you do, a little faster." },
+  pot_hide: { name: "Hide tonic", icon: "\u{1F9EA}", drink: { mins: 10, fx: { tough: 0.05 } }, ex: "Thick, brown, and it sets slightly. 10 minutes outside: you take less." },
+  pot_keen: { name: "Keen-eye water", icon: "\u{1F9EA}", drink: { mins: 10, fx: { rare: 0.06 } }, ex: "Clears the head and sharpens the sight. 10 minutes outside: rare finds come looser." },
+  pot_salve1: { name: "Salt salve", icon: "\u{1F9EA}", heal: 14, ex: "Drink it and the bleeding stops. Nobody has asked what is in it." },
+  pot_rattle: { name: "Rattle brew", icon: "\u{1F9EA}", drink: { mins: 10, fx: { bite: 0.02 } }, ex: "It knocks against the glass on its own. 10 minutes outside: you hit harder." },
+  pot_quick: { name: "Quickhand philtre", icon: "\u{1F9EA}", drink: { mins: 15, fx: { speed: 0.07 } }, ex: "Brewed over a marked card. 15 minutes outside: properly quick hands." },
+  pot_gourd: { name: "Gourd draught", icon: "\u{1F9EA}", drink: { mins: 15, fx: { tough: 0.09 } }, ex: "Gourd milk and bonemeal. 15 minutes outside: hard to dent." },
+  pot_salve2: { name: "Field salve", icon: "\u{1F9EA}", heal: 26, ex: "A proper dressing in a bottle. Twice the salt salve and none of the questions." },
+  pot_ghost: { name: "Ghost grease", icon: "\u{1F9EA}", drink: { mins: 15, fx: { steal: 0.05 } }, ex: "Cobweb and husk, rendered down. 15 minutes outside: lighter fingers." },
+  pot_purse: { name: "Tax-dodger's tincture", icon: "\u{1F9EA}", drink: { mins: 15, fx: { tix: 0.09 } }, ex: "Distilled from a receipt nobody filed. 15 minutes outside: more tickets." },
+  pot_prospect: { name: "Prospector's flask", icon: "\u{1F9EA}", drink: { mins: 20, fx: { rare: 0.14 } }, ex: "Gold tomato, a marked card and a scarab's shell. 20 minutes outside: the good drops." },
+  pot_fang: { name: "Fang flask", icon: "\u{1F9EA}", drink: { mins: 20, fx: { bite: 0.045 } }, ex: "Two kinds of tooth in one bottle. 20 minutes outside: considerably harder." },
+  pot_salve3: { name: "Royal salve", icon: "\u{1F9EA}", heal: 44, ex: "What they packed the kings with. It still works." },
+  pot_storm: { name: "Storm flask", icon: "\u{1F9EA}", drink: { mins: 20, fx: { speed: 0.12 } }, ex: "It fizzes against the glass and will not sit still. 20 minutes outside: very quick indeed." },
+  pot_pharaoh: { name: "Pharaoh's draught", icon: "\u{1F9EA}", drink: { mins: 20, fx: { tough: 0.18, bite: 0.03 } }, ex: "The best thing anyone can make. 20 minutes outside: hard to hurt, and hitting like it." },
   lanternfish: { name: "Lanternfish", icon: "🐟", heal: 9, ex: "It has its own little light. It keeps it on even now." },
   clanternfish: { name: "Cooked lanternfish", icon: "🐟", heal: 16, ex: "The light goes out when it's cooked. That's how you know." },
   skyeel: { name: "Sky eel", icon: "🐍", heal: 14, ex: "Caught from a cloud, out of the open sky. It is very surprised about it too." },
@@ -593,14 +631,15 @@ export const SKILLS = {
   farming: { name: "Harvesting", icon: "🌾" }, mining: { name: "Mining", icon: "⛏️" }, woodcutting: { name: "Woodcutting", icon: "🪓" },
   smithing: { name: "Smithing", icon: "🔨" },
   agility: { name: "Agility", icon: "🤸" },
-  thieving: { name: "Thieving", icon: "🤏" }
+  thieving: { name: "Thieving", icon: "🤏" },
+  alchemy: { name: "Alchemy", icon: "🧪" }   /* (2026-09-24) sand to glass to potions, 1 to 100. The Golden Sands is its home. */
 };
 export const COMBAT_SKILLS = ["melee"];
 // how the skills panel groups them. Hitpoints sits with combat because that is
 // the only place it is earned, even though it is not something you choose.
 export const SKILL_GROUPS = [
   { name: "Combat", keys: ["melee", "hp"] },
-  { name: "Skilling", keys: ["fishing", "cooking", "farming", "woodcutting", "mining", "smithing", "agility"] }   /* "thieving" is pushed on below, when THIEF.live */   /* (v121) woodcutting, mining and smithing are back on the panel: every map has choppable trees again (1-2 a level, the owner's ask) and the Vault put the last two ore seams in the world, so the three of them lead somewhere once more. */
+  { name: "Skilling", keys: ["fishing", "cooking", "farming", "woodcutting", "mining", "smithing", "agility", "alchemy"] }   /* "thieving" is pushed on below, when THIEF.live */   /* (v121) woodcutting, mining and smithing are back on the panel: every map has choppable trees again (1-2 a level, the owner's ask) and the Vault put the last two ore seams in the world, so the three of them lead somewhere once more. */
 ];
 
 /* ------------------------------------------------------------ stances
@@ -1332,6 +1371,126 @@ Object.assign(SCENES, {
       ["shark", 7, 20, { aggro: 3 }], ["shark", 3, 21], ["shark", 4, 23]],
     npcs: [], bots: []
   },
+  /* THE GOLDEN SANDS, 40-49 (2026-09-24). West out of the Boneyard, and a SECOND ROUTE rather than a rung: at
+     Combat 40 you may go north to Cloudreach or west to here, and each has its own ore, tree and fish.
+
+     It is where ALCHEMY lives. The sand pits are the front of the whole chain - sand melts to glass at the
+     cauldron under the temple colonnade, and glass plus what the world drops makes every potion in the game - so
+     the pits, the cauldron and the crops-and-junk economy all meet on this one map. Sand is Mining 20, far below
+     the band, because the barrier is meant to be GETTING here, not a second grind once you have.
+
+     Ancient Egypt, from the owner's concept art: a sandstone temple precinct with a colonnade of obelisks, a
+     walled oasis of date palms, dug pits, and the pyramid on the eastern skyline. */
+  sands: {
+    name: "The Golden Sands", exits: { e: "boneyard" }, tint: "rgba(214,164,74,.16)",
+    build() {
+      const g = grid(), objs = [], keep = [];
+      const put = (t, x, y, name, extra) => { objs.push({ t, x, y, name, ...(extra || {}) }); g[y][x] = "#"; keep.push([x, y]); };
+
+      const path = [];
+      const runX = (y, x0, x1) => { for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) path.push([x, y]); };
+      const runY = (x, y0, y1) => { for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) path.push([x, y]); };
+      /* in from the Boneyard at the east, along the processional way, and out to the quarters */
+      runX(13, 33, COLS - 1); runY(33, 9, 13); runX(9, 22, 33); runY(22, 9, 16);
+      runX(16, 12, 22); runY(12, 16, 20); runX(20, 6, 12);        // down to the pits in the south-west
+      runY(22, 3, 9); runX(3, 14, 22);                            // and up to the oasis in the north-west
+      runX(13, 26, 33); runY(26, 13, 18); runX(18, 26, 31);       // the pyramid approach, south-east
+      for (const [x, y] of path) { g[y][x] = ","; keep.push([x, y]); }
+
+      /* THE OASIS, north-west, walled off the way the concept art has it. Ragged at its ends only, and it runs
+         to the map edge, because a strip of floor between water and the rim is floor nobody can reach - see the
+         Thunderhead for the three passes that lesson took. */
+      for (let y = 4; y <= 8; y++) for (let x = 0; x <= 11; x++) {
+        /* ragged at its EAST END ONLY. Ragging the south shore too left two tiles of floor inside the pool, and
+           `wild` seals that sort of island after build() returns - markBanks makes it a bank tile and wild's
+           repair only re-plants "." ones. Same lesson as the Thunderhead's tear: leave no floor inside water. */
+        if (x >= 9 && hashRand(x, y, 91) < 0.4) continue;
+        g[y][x] = "~";
+      }
+      /* A FLOOD FILL rather than the four-neighbour test, because a TWO-tile shelf holds itself up and the
+         neighbour test only ever catches a lone tile (the Thunderhead found that out). This oasis is inland, so
+         at build time the only thing that can disconnect the floor is the water just carved - walk the floor
+         from a tile on the processional way and anything in the oasis box the walk misses is part of the pool.
+         Blocked tiles count as floor: a prop standing on a tile does not stop it being connected. */
+      {
+        const seen = new Set([13 * COLS + 33]), q = [[33, 13]];
+        while (q.length) {
+          const [cx, cy] = q.pop();
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const nx = cx + dx, ny = cy + dy, k = ny * COLS + nx;
+            if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS || seen.has(k) || g[ny][nx] === "~") continue;
+            seen.add(k); q.push([nx, ny]);
+          }
+        }
+        for (let y = 3; y <= 9; y++) for (let x = 0; x <= 12; x++) if (g[y][x] !== "~" && !seen.has(y * COLS + x)) g[y][x] = "~";
+      }
+      scatterSpots(objs, 2, 8, 4, 4, [1, 2, 4], { name: "The oasis", req: { skill: "fishing", lvl: 40 }, fish: "oasisperch", fish2: "nilecarp", fish2lvl: 48, xp: 150, xp2: 180, glow: "#7fd8c8", tease: "Something fat turns over down there. Nothing has hunted this pool in a thousand years. Fishing 40." });
+      for (let x = 0; x <= 12; x++) keep.push([x, 9], [x, 10]);
+
+      /* THE SAND PITS: five of them, spread across the south and west so digging is a walk rather than a corner.
+         Mining 20 and 45 xp - poor xp for the level on purpose, because the value of sand is what it BECOMES. */
+      for (const [x, y] of [[8, 19], [5, 17], [11, 21], [16, 22], [7, 22]])
+        put("sandpit", x, y, "Sand pit", { ore: "sand", req: { skill: "mining", lvl: 20 }, xp: 45 });
+
+      /* the band's own ore and tree. Stardust at 50 is the 40-49 convention (a map's ore is band_top + 1) and it
+         had exactly ONE rock in the whole game before this, in the Forum. Date palms are Woodcutting 45. */
+      put("rock", 30, 4, "Stardust seam", { ore: "stardust", req: { skill: "mining", lvl: 50 }, xp: 150 });
+      put("rock", 38, 20, "Stardust seam", { ore: "stardust", req: { skill: "mining", lvl: 50 }, xp: 150 });
+      /* `datepalm`, NOT `palm`. The islands are planted with `t: "palm"` and theirs are DECORATIVE - no log,
+         no requirement - so reusing the type would have made ten island trees choppable and swapped their
+         picture for this one. A new resource wants a new type unless it really is the same tree. */
+      put("datepalm", 13, 6, "Date palm", { log: "palmlogs", req: { skill: "woodcutting", lvl: 45 }, xp: 190 });
+      put("datepalm", 4, 12, "Date palm", { log: "palmlogs", req: { skill: "woodcutting", lvl: 45 }, xp: 190 });
+
+      /* THE TEMPLE PRECINCT, middle of the map: a colonnade of obelisks either side of the processional way,
+         with the cauldron under it. The cauldron is the only one in the game, so this is where Alchemy is done. */
+      for (const x of [24, 27, 30]) { put("obelisk", x, 8, "Obelisk"); put("obelisk", x, 10, "Obelisk"); }
+      put("cauldron", 25, 12, "An alchemist's cauldron: melt sand into vials, and brew");
+      put("sarcophagus", 23, 11, "Sarcophagus");
+      put("sarcophagus", 29, 11, "Sarcophagus");
+      put("crypttorch", 22, 12, "Guttering torch");
+      put("crypttorch", 28, 12, "Guttering torch");
+
+      /* THE PYRAMID, on the eastern skyline. Its door is SEALED for now - the party dungeon behind it is its own
+         build, and a door that opens onto nothing is worse than one that says so. */
+      put("pyramid", 40, 7, "The Great Pyramid: the tomb door is sealed", { w: 2, h: 1 });
+      put("obelisk", 38, 10, "Obelisk");
+      put("obelisk", 42, 10, "Obelisk");
+
+      /* and the rest of the desert: fallen masonry, jars, bones in the sand */
+      put("cryptpillar", 18, 9, "Fallen column");
+      put("cryptpillar", 35, 15, "Fallen column");
+      put("cryptpillar", 14, 19, "Fallen column");
+      put("cryptrubble", 20, 6, "Rubble");
+      put("cryptrubble", 33, 21, "Rubble");
+      put("gargoyle", 36, 5, "Weathered sphinx", { art: "o_gargoyle" });
+      put("gargoyle", 12, 15, "Weathered sphinx", { art: "o_gargoyle" });
+      put("barrel", 26, 20, "Canopic jar", { art: "o_barrel" });
+      put("barrel", 31, 6, "Canopic jar", { art: "o_barrel" });
+      put("barrel", 9, 13, "Canopic jar", { art: "o_barrel" });
+      put("skullheap", 19, 23, "Skull heap");
+      put("bonepile", 34, 9, "Bone pile");
+      put("skeleton", 6, 8, "Somebody who ran out of water");
+      put("skeleton", 41, 17, "Somebody who ran out of water");
+      put("boulder", 16, 12, "Sandstone block");
+      put("boulder", 29, 17, "Sandstone block");
+      put("boulder", 21, 20, "Sandstone block");
+
+      put("sign", 34, 12, "THE GOLDEN SANDS: Combat 40 to 49, the same as Cloudreach \u2014 west out of the Boneyard instead of north. SAND comes out of the pits at Mining 20 and melts into vials at the cauldron under the colonnade: that is ALCHEMY, and every potion in the game starts here. Stardust at Mining 50, date palms at Woodcutting 45, the oasis at Fishing 40. ONE Tomb Jackal by the pyramid comes at you on sight.");
+      put("sign", 24, 13, "THE CAULDRON. Sand melts to glass here, and glass plus what the world drops makes potions. Small vials hold ten minutes, medium fifteen, large twenty.");
+      put("sign", 39, 12, "THE GREAT PYRAMID. The tomb door is sealed. Something is moving behind it.");
+      for (let x = 12; x < COLS; x++) keep.push([x, 12], [x, 14]);
+      wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 12);
+      return { g, objs, blobs: [] };
+    },
+    /* Cobras in the dunes, scarabs round the pits, mummies in the precinct, jackals at the pyramid. ONE aggro
+       placement, at the pyramid, so the tomb feels guarded without making the map a chore. */
+    mobs: [["cobra", 7, 15], ["cobra", 10, 17], ["cobra", 4, 20], ["cobra", 13, 22], ["cobra", 17, 19], ["cobra", 9, 11],
+      ["scarab", 6, 21], ["scarab", 12, 18], ["scarab", 15, 21], ["scarab", 18, 17], ["scarab", 3, 16],
+      ["mummy", 20, 11], ["mummy", 24, 15], ["mummy", 28, 15], ["mummy", 31, 10], ["mummy", 22, 4], ["mummy", 26, 5],
+      ["jackal", 39, 15, { aggro: 3 }], ["jackal", 41, 5], ["jackal", 37, 18], ["jackal", 43, 8], ["jackal", 36, 22]],
+    npcs: [], bots: []
+  },
   cloud: {
     name: "Cloudreach", ground: "cloud", exits: { e: "boneyard", w: "thunderhead" },
     build() {
@@ -1508,7 +1667,7 @@ Object.assign(SCENES, {
      but the residents. Gnashers and moths by the gate, ghouls and Tax Wraiths in the middle, a Chandelier Spider and
      the Understudy at the far end. Several of them come for you on sight. */
   boneyard: {
-    name: "The Boneyard", dark: true, exits: { e: "mire", n: "cloud" }, tint: "rgba(60,20,70,.2)",
+    name: "The Boneyard", dark: true, exits: { e: "mire", n: "cloud", w: "sands" }, tint: "rgba(60,20,70,.2)",
     build() {
       const g = grid(), objs = [], keep = [];
       /* (v122) woodcutting's next step. Every map has had choppable trees all along; these are the tiered ones, so the skill pays better as you go out further instead of paying `logs` forever. */
@@ -2425,6 +2584,13 @@ export const MOBS = {
   seagoat: { name: "Sea-Goat of the Upper Air", size: "l", lvl: 46, hp: 78, att: 33, def: 29, max: 8, speed: 2800, box: [20, 36], drops: [] },
   golem: { name: "Storm Golem", size: "l", lvl: 52, hp: 100, att: 38, def: 35, max: 9, speed: 3000, box: [20, 40], drops: [] },
   wolf: { name: "Thunderwolf", size: "m", lvl: 58, hp: 104, att: 43, def: 36, max: 10, speed: 2200, aggro: 4, box: [10, 28], drops: [] },
+  /* THE GOLDEN SANDS, 40-49 (2026-09-24). Stats sit inside the band's own envelope - Cloudreach's ram is 42
+     and its angel 48 - and the two ingredient drops are the only new items any of them carry. Like every other
+     map's monsters they also drop the PREVIOUS band's ore, which is dragonstone. */
+  cobra: { name: "Sand Cobra", size: "s", lvl: 41, hp: 31, att: 29, def: 24, max: 7, speed: 2000, aggro: null, box: [10, 20], drops: [["tickets", [57, 133]], ["snakefang", 1]] },
+  mummy: { name: "Bandaged Debtor", size: "m", lvl: 43, hp: 35, att: 30, def: 27, max: 7, speed: 2800, aggro: null, box: [10, 26], drops: [["tickets", [66, 154]], ["dragonstone_ore", 1]] },
+  scarab: { name: "Gilt Scarab", size: "s", lvl: 45, hp: 37, att: 32, def: 29, max: 8, speed: 2200, aggro: null, box: [12, 22], drops: [["tickets", [72, 168]], ["scarabshell", 1]] },
+  jackal: { name: "Tomb Jackal", size: "m", lvl: 47, hp: 41, att: 34, def: 30, max: 8, speed: 2600, aggro: null, box: [10, 27], drops: [["tickets", [80, 187]], ["dragonstone_ore", 1]] },
   drake: { name: "Hail Drake", size: "l", lvl: 62, hp: 124, att: 46, def: 40, max: 11, speed: 2800, aggro: 5, box: [22, 36], drops: [] },
   house: { name: "The House", size: "xl", lvl: 70, hp: 170, att: 52, def: 46, max: 13, speed: 3000, aggro: 5, box: [26, 56], drops: [] },
   /* (v121) THE VAULT'S FOUR. The House at 70 was the end of the road while the skills run to 99, so there was a thirty-level
@@ -2597,11 +2763,46 @@ export const STATIONS = {
   fire:    { skill: "cooking",  verb: "cook",  name: "campfire", auto: true,  kind: "cook" },
   range:   { skill: "cooking",  verb: "cook",  name: "range",    auto: true,  kind: "cook", kind2: "range" },
   furnace: { skill: "smithing", verb: "smelt", name: "furnace",  auto: true,  kind: "smelt" },
-  anvil:   { skill: "smithing", verb: "smith", name: "anvil",    auto: false, kind: "smith" }
+  anvil:   { skill: "smithing", verb: "smith", name: "anvil",    auto: false, kind: "smith" },
+  /* (2026-09-24) THE CAULDRON DOES BOTH JOBS, and that is deliberate. It melts sand into glass AND brews the
+     potions, because the level check one screen down reads `st.skill` - the STATION's skill, not the recipe's.
+     Vials at the furnace would therefore have been gated on Smithing, and a launch skill you cannot train
+     without levelling a second one is not a launch skill. A cross-skill requirement is a fine idea, but it has
+     to be CHOSEN, not inherited from which bench a recipe happens to sit on. */
+  cauldron: { skill: "alchemy",  verb: "brew",  name: "cauldron", auto: true,  kind: "brew" }
 };
 
 export const RECIPES = {};
 const recipe = (id, r) => { RECIPES[id] = { id, ms: 1800, ...r }; };
+
+/* ALCHEMY, 1 TO 100 (2026-09-24). Glass first, then the brews, all at the cauldron - see STATIONS for why the
+   sand does not go in the furnace. THE ORDER IS THE DESIGN: small vials from 1, medium from 34, large from 68,
+   each size holding a longer buff than the last; and the potions alternate a SKILLING buff with a COMBAT one
+   the whole way up, so neither sort of player ever hits a dead stretch. Six of the farm's seven crops are in
+   here, which is what turns Farming from a dead end into a supply line. */
+for (const [id, r] of Object.entries({
+  blow_small_vial: { in: [["sand", 1]], out: ["small_vial", 1], lvl: 1, xp: 10, ms: 1600 },
+  blow_medium_vial: { in: [["sand", 2]], out: ["medium_vial", 1], lvl: 34, xp: 30, ms: 2000 },
+  blow_large_vial: { in: [["sand", 4]], out: ["large_vial", 1], lvl: 68, xp: 70, ms: 2400 },
+  /* small - ten minutes a bottle */
+  brew_swift: { in: [["small_vial", 1], ["sporecap", 2]], out: ["pot_swift", 1], lvl: 1, xp: 22 },
+  brew_hide: { in: [["small_vial", 1], ["hide", 2]], out: ["pot_hide", 1], lvl: 10, xp: 34 },
+  brew_keen: { in: [["small_vial", 1], ["wheat", 2], ["sporecap", 1]], out: ["pot_keen", 1], lvl: 19, xp: 48 },
+  brew_salve1: { in: [["small_vial", 1], ["lanternroot", 2]], out: ["pot_salve1", 1], lvl: 23, xp: 56 },
+  brew_rattle: { in: [["small_vial", 1], ["rattlebean", 2]], out: ["pot_rattle", 1], lvl: 28, xp: 66 },
+  /* medium - fifteen */
+  brew_quick: { in: [["medium_vial", 1], ["markedcard", 1], ["lanternroot", 1]], out: ["pot_quick", 1], lvl: 36, xp: 96 },
+  brew_gourd: { in: [["medium_vial", 1], ["bonegourd", 2], ["bones", 1]], out: ["pot_gourd", 1], lvl: 45, xp: 118 },
+  brew_salve2: { in: [["medium_vial", 1], ["lanternroot", 3], ["bonegourd", 1]], out: ["pot_salve2", 1], lvl: 50, xp: 132 },
+  brew_ghost: { in: [["medium_vial", 1], ["cobweb", 1], ["husk", 1]], out: ["pot_ghost", 1], lvl: 54, xp: 145 },
+  brew_purse: { in: [["medium_vial", 1], ["receipt", 1], ["stormcorn", 1]], out: ["pot_purse", 1], lvl: 62, xp: 170 },
+  /* large - twenty */
+  brew_prospect: { in: [["large_vial", 1], ["goldtomatoe", 1], ["markedcard", 1], ["scarabshell", 1]], out: ["pot_prospect", 1], lvl: 70, xp: 220 },
+  brew_fang: { in: [["large_vial", 1], ["sharktooth", 1], ["snakefang", 1], ["rattlebean", 1]], out: ["pot_fang", 1], lvl: 78, xp: 250 },
+  brew_salve3: { in: [["large_vial", 1], ["lanternroot", 4], ["scarabshell", 1]], out: ["pot_salve3", 1], lvl: 84, xp: 275 },
+  brew_storm: { in: [["large_vial", 1], ["staticfur", 1], ["stormjelly", 1], ["lanternroot", 1]], out: ["pot_storm", 1], lvl: 90, xp: 300 },
+  brew_pharaoh: { in: [["large_vial", 1], ["scarabshell", 2], ["snakefang", 1], ["goldtomatoe", 1]], out: ["pot_pharaoh", 1], lvl: 100, xp: 360 },
+})) recipe(id, { skill: "alchemy", station: "cauldron", ms: 2200, ...r });
 
 // cooking, unchanged in every number from when it lived in its own table
 for (const [raw, c] of Object.entries({
@@ -2610,6 +2811,7 @@ for (const [raw, c] of Object.entries({
   trout: { to: "ctrout", lvl: 15, xp: 70, burnStop: 40 }, gloomfin: { to: "cgloomfin", lvl: 25, xp: 100, burnStop: 55 },
   mooncarp: { to: "cmooncarp", lvl: 40, xp: 150, burnStop: 70 },
   lanternfish: { to: "clanternfish", lvl: 30, xp: 120, burnStop: 60 }, skyeel: { to: "cskyeel", lvl: 50, xp: 190, burnStop: 80 },
+  oasisperch: { to: "coasisperch", lvl: 42, xp: 155, burnStop: 72 }, nilecarp: { to: "cnilecarp", lvl: 48, xp: 180, burnStop: 78 },   /* (2026-09-24) the oasis, in The Golden Sands */
   mudcat: { to: "cmudcat", lvl: 60, xp: 230, burnStop: 88 }, bowfin: { to: "cbowfin", lvl: 70, xp: 270, burnStop: 94 },   // the Trailer Park's swamp: the best food in the game, and the only reason to take Cooking past 50
   perch: { to: "cperch", lvl: 5, xp: 40, burnStop: 25 }, catfish: { to: "ccatfish", lvl: 18, xp: 80, burnStop: 45 }, mudskipper: { to: "cmudskipper", lvl: 22, xp: 95, burnStop: 50 },
   bonefish: { to: "cbonefish", lvl: 32, xp: 125, burnStop: 62 }, ghostcarp: { to: "cghostcarp", lvl: 36, xp: 140, burnStop: 66 }, cloudray: { to: "ccloudray", lvl: 45, xp: 170, burnStop: 75 },
@@ -2952,6 +3154,14 @@ export const ACH = {
      asked a question about a map that stopped being written: anybody who reforged before the migration kept
      qualifying off the frozen copy, and everybody who has reforged since qualified for NONE of the three. They
      go through topForge now, which reads what the character actually has. */
+  /* ALCHEMY (2026-09-24). `crafted` is the map the station already writes, so these cost nothing to track, and
+     every potion key is `pot_*` so one regex answers "have you brewed anything at all". */
+  a_sand:     { name: "Grain by Grain",     blurb: "Dig sand out of a pit in the Golden Sands.",      tier: "novice", on: ["gather"], has: (c) => (aOf(c, "gathered").sand | 0) >= 1 },
+  a_vial:     { name: "Glassblower",        blurb: "Melt sand into your first vial.",                 tier: "novice", on: ["craft"],  has: (c) => aHasKey(c, "crafted", /_vial$/) },
+  a_brew:     { name: "First Draught",      blurb: "Brew a potion at a cauldron.",                    tier: "novice", on: ["craft"],  has: (c) => aHasKey(c, "crafted", /^pot_/) },
+  s_alch34:   { name: "Apothecary",         blurb: "Reach Alchemy 34 and blow a medium vial.",       tier: "skilled", on: ["xp"],     has: (c) => lvlOf(c, "alchemy") >= 34 },
+  e_alch68:   { name: "Master Brewer",      blurb: "Reach Alchemy 68 and blow a large flask.",       tier: "expert", on: ["xp"],     has: (c) => lvlOf(c, "alchemy") >= 68 },
+  e_pharaoh:  { name: "The Best Thing Made", blurb: "Brew a Pharaoh's draught. It takes Alchemy 100.", tier: "expert", on: ["craft"],  has: (c) => (aOf(c, "crafted").pot_pharaoh | 0) >= 1 },
   a_forge:    { name: "Sharper",            blurb: "Reforge a piece of gear at the anvil.",           tier: "novice", on: ["forge"],  has: (c) => topForge(c) >= 1 },
   a_crop:     { name: "Green Fingers",      blurb: "Harvest something you grew.",                     tier: "novice", on: ["gather"], has: (c) => aHasKey(c, "gathered", CROPK()) },
   a_quest:    { name: "Errand Boy",         blurb: "Finish a quest.",                                 tier: "novice", on: ["quest"],  has: (c) => questsDone(c) >= 1 },
@@ -3122,17 +3332,17 @@ export const buffsOf = (c) => {
    so a fisher reaches deep water without ever swinging a sword). A monster that is already attacking you can always be
    fought back. Ore and trees will take the same gate when they return; oceans and lakes are just more water in a band.
    v68: all six are built. West from the casino: the Yard, the Gloam, the Lantern Mire, the Boneyard, Cloudreach, the Thunderhead. */
-export const BANDS = { workyard: [1, 9], gloam: [10, 19], mire: [20, 29], boneyard: [30, 39], cloud: [40, 49], thunderhead: [50, 99], trailer: [80, 99] };   /* (2026-09-22) the Trailer Park: Combat 80 to start a fight there, Fishing 80 for the black water — the same soft gate as everywhere, on the two skills separately */
+export const BANDS = { workyard: [1, 9], gloam: [10, 19], mire: [20, 29], boneyard: [30, 39], cloud: [40, 49], sands: [40, 49], thunderhead: [50, 99], trailer: [80, 99] }   /* (2026-09-24) The Golden Sands shares Cloudreach's band ON PURPOSE: it is a SECOND ROUTE west out of the Boneyard at 40, not a rung above it. */;   /* (2026-09-22) the Trailer Park: Combat 80 to start a fight there, Fishing 80 for the black water — the same soft gate as everywhere, on the two skills separately */
 /* THE HOSPITAL BILL (the owner, 2026-09-19: "lets do #1"): dying outside costs a share of the tickets you are CARRYING, capped by
    where you died, so the Yard stays forgiving. Nothing else is ever touched: gear, the bag, ZCoins, experience, the bank. The tickets go
    nowhere: a sink. (Tickets can't be banked, so there is always something for the bill to take from.) */
-export const DEATH = { workyard: { share: 0.05, cap: 250 }, gloam: { share: 0.1, cap: 1000 }, mire: { share: 0.1, cap: 2000 }, boneyard: { share: 0.1, cap: 3500 }, cloud: { share: 0.1, cap: 5000 }, thunderhead: { share: 0.1, cap: 6000 }, vault: { share: 0.1, cap: 8000 }, trailer: { share: 0.1, cap: 9000 } };
+export const DEATH = { workyard: { share: 0.05, cap: 250 }, gloam: { share: 0.1, cap: 1000 }, mire: { share: 0.1, cap: 2000 }, boneyard: { share: 0.1, cap: 3500 }, cloud: { share: 0.1, cap: 5000 }, sands: { share: 0.1, cap: 5000 }, thunderhead: { share: 0.1, cap: 6000 }, vault: { share: 0.1, cap: 8000 }, trailer: { share: 0.1, cap: 9000 } };
 export const deathBill = (c, scene) => { const d = DEATH[String(scene || "").split(":")[0]]; return d ? Math.min(d.cap, Math.floor(tixIn(c) * d.share)) : 0; };
 export const bandOf = (scene) => BANDS[String(scene || "").split(":")[0]] || null;
 /** Why this character can't fight / fish in this scene yet, or null if they can. kind: "fight" | "fish". */
 export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) return null; const skill = kind === "fish" ? "fishing" : "melee", need = b[0], have = lvlOf(c, skill);
   return have >= need ? null : { need, have, skill, text: `needs ${kind === "fish" ? "Fishing" : "Combat"} ${need}` }; };
-export const OPEN = new Set(["casino", "roulette", "theatre", "fightpit", "vault", "wild", "deep", "agility",   /* (2026-09-22) The Run. Built with the Agility skill but never added here, so its door in the Yard answered with the bouncer's "Room's shut" — a scene is not enterable until it is in this set. */   /* (2026-09-22) the Wilderness reopened, down the rope ladder on the Gloam */ /* "highroller": closed for now (the owner, 2026-09-19) */ /* "forum", "bathhouse": closed in v108, what mattered there is in the Yard */ "workyard", "gloam", "mire", "boneyard", "cloud", "thunderhead", "trailer",
+export const OPEN = new Set(["casino", "roulette", "theatre", "fightpit", "vault", "wild", "deep", "agility",   /* (2026-09-22) The Run. Built with the Agility skill but never added here, so its door in the Yard answered with the bouncer's "Room's shut" — a scene is not enterable until it is in this set. */   /* (2026-09-22) the Wilderness reopened, down the rope ladder on the Gloam */ /* "highroller": closed for now (the owner, 2026-09-19) */ /* "forum", "bathhouse": closed in v108, what mattered there is in the Yard */ "workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "trailer",
   ]);   /* (2026-09-23) the Thieves' Guild. Deliberately NOT in BANDS: its rooms gate on Thieving through each mark's own `req`, and a combat band here would undo the whole point of a skill you cannot fight your way into. */   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
 export const OPEN_DAILY = new Set([
   /* (2026-09-22) the top band's twelve. A task only reaches anyone whose levels allow it (dailyFor filters on

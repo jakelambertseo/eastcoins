@@ -8,28 +8,28 @@
    - startup art: every picture loaded at login (ART_FILES minus the per-area lists)
    - each area's art: what walking into it fetches the first time
    Exits 1 if anything is over budget. Raise a budget on purpose, never by accident. */
-import fs from "fs"; import zlib from "zlib"; import path from "path"; import { shipped } from "./eastscape-ship.mjs"; import { run as packRun } from "./eastscape-pack.mjs";
+import fs from "fs"; import zlib from "zlib"; import path from "path"; import { shipped } from "./eastscape-ship.mjs";
+import { lists } from "./eastscape-pack.mjs"; import { run as packRun } from "./eastscape-pack.mjs";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1")), "..");
 const FLAT = path.join(ROOT, "v3/assets/img/glad/flat");
 const BUDGET = {
   codeGzKB: 200,        // (the owner, 2026-09-21: "we can up the max load to 200kb"; it was 140, and the page had reached 139.6) page + rules + sounds AS SHIPPED (tools/eastscape-ship.mjs strips comments and whitespace), compressed. 175 before 2026-09-20, when the source itself was served; shipped it came to 124.
   startupArtKB: 300,    // pictures at login
-  startupFiles: 160,    // requests at login (drops to ~30 once the art is packed into sprite sheets before launch)
+  /* (2026-09-24) 160 -> 6. The comment beside this said it would drop to ~30 "once the art is packed", and the
+     art HAS been packed since 2026-09-20 - core.png is one request for all 167 pictures. The number stayed at
+     160 and the metric it guarded stayed broken, so it was failing builds for adding a 1 KB prop while a real
+     regression (a startup picture escaping the packs, one request each) would have sailed through. Six leaves
+     room for a handful of loose files and still notices if the packer stops covering the startup set. */
+  startupFiles: 6,
   areaArtKB: 120        // any one area's own pictures
 };
 
 const html = fs.readFileSync(path.join(ROOT, "eastscape.html"), "utf8");
-const grab = (name) => {
-  const i = html.indexOf(`const ${name} = `); if (i < 0) throw new Error(`${name} not found in eastscape.html`);
-  let depth = 0, j = html.indexOf("=", i) + 1;
-  for (let k = j; k < html.length; k++) { const c = html[k]; if (c === "[" || c === "{") depth++; if (c === "]" || c === "}") { depth--; if (!depth) return html.slice(j, k + 1); } }
-  throw new Error(`could not read ${name}`);
-};
-const ART_FILES = new Function(`return ${grab("ART_FILES")}`)();
-const WILD_ART = new Function(`return ${grab("WILD_ART")}`)();
-const CASINO_ART = new Function(`return ${grab("CASINO_ART")}`)();
-const AREA_ART = new Function("WILD_ART", "CASINO_ART", `return ${grab("AREA_ART")}`)(WILD_ART, CASINO_ART);
+/* The page's art lists are read by tools/eastscape-pack.mjs, which is the one place that knows how to resolve
+   them (they reference each other: AREA_ART is built from WILD_ART, CASINO_ART, ISLE_ART and a crop list). This
+   used to be a second copy of that logic and drifted the moment the islands changed. */
+const { ART_FILES, AREA_ART } = lists();
 
 const kb = (b) => Math.round(b / 102.4) / 10;
 const size = (k) => { try { return fs.statSync(path.join(FLAT, `${k}.png`)).size; } catch (e) { return 0; } };
@@ -50,8 +50,23 @@ line("wiki words (lazy)", kb(await gz("v3/assets/js/eastscape-wiki.js")), 60, "K
 
 const lazy = new Set(Object.values(AREA_ART).flat());
 const startup = [...new Set(ART_FILES)].filter((k) => !lazy.has(k));
-line("startup art", kb(startup.reduce((a, k) => a + size(k), 0)), BUDGET.startupArtKB, "KB");
-line("startup art requests", startup.length, BUDGET.startupFiles, "files");
+/* (2026-09-24) THIS LINE STOPPED MEASURING REQUESTS WHEN THE PACKER SHIPPED. It counted the number of PICTURES
+   in the startup set, which was the request count in September when a first visit really did fetch 208 little
+   PNGs. They are one sheet now: loadArt resolves a picture to its pack and fetches core.png, so 167 pictures is
+   167 pictures and exactly ONE request. Left alone it fails the build for adding a 1 KB prop to core, which is
+   the opposite of what it was written to protect - and the honest way to keep a guard is to make it measure the
+   thing again rather than to raise its number.
+
+   Startup art now costs: core.png (one request, and its bytes are the real budget), plus one request for every
+   startup picture that is in NO pack, because those still load on their own. */
+const startupBytes = size("../packs/core") || startup.reduce((a, k) => a + size(k), 0);
+line("startup art (core.png)", kb(startupBytes), BUDGET.startupArtKB, "KB");
+let packed = new Set();
+try { const pj = JSON.parse(fs.readFileSync(path.join(FLAT, "../packs/packs.json"), "utf8"));
+  for (const v of Object.values(pj)) for (const k of Object.keys(v.keys || {})) packed.add(k); } catch (e) { /* no packs yet */ }
+const loose = startup.filter((k) => !packed.has(k));
+line("startup art requests", 1 + loose.length, BUDGET.startupFiles, "files");
+if (loose.length) console.log(`         ${loose.length} startup picture(s) in no pack, one request each: ${loose.slice(0, 8).join(", ")}`);
 /* the pictures ship as SHEETS (tools/eastscape-pack.mjs): the count above is what a player would fetch WITHOUT them. Stale sheets
    never break the game (an unpacked picture loads on its own) but they quietly bring the requests back, so stale fails here. */
 const pk = await packRun({ check: true });

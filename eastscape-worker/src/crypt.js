@@ -58,7 +58,7 @@ export function installCrypt(World, { G, R, rint }) {
     if (S?.run && S.run.members.includes(pl.id)) { pl.afterJoin = ["You're back in the crypt, where you were.", "good"]; return; }
     pl.C.scene = C_.door.scene; pl.C.x = pl.x = C_.door.x; pl.C.y = pl.y = C_.door.y; pl.needSave = true;
     /* the run is gone. If the GAME lost it (a restart: nothing in memory remembers it ending), the ante comes back. If it ended or timed out, it doesn't. */
-    if (mine && mine.ante && !this.cryptGone?.has(key)) { G.addInv(pl.C.inv, "tickets", mine.ante); pl.afterJoin = [`The crypt run you were in was lost when the game restarted. Your ${G.fmtTix(mine.ante)} ante is back in your bag.`, "good"]; }
+    if (mine && mine.ante && !this.cryptGone?.has(key)) { G.addInv(pl.C.inv, "tickets", mine.ante, pl.C);   /* (2026-09-24) a refund into a full-looking bag could be dropped */ pl.afterJoin = [`The crypt run you were in was lost when the game restarted. Your ${G.fmtTix(mine.ante)} ante is back in your bag.`, "good"]; }
     else pl.afterJoin = ["The crypt run you were in is over. You're back at the stairs.", ""];
     if (mine) { delete pl.C.crypt.run; delete pl.C.crypt.ante; }
   };

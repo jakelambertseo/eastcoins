@@ -51,6 +51,53 @@ export const GUIDES = [
         <tr><td>Black water — mud cat and bowfin</td><td>Fishing 80, Eclipse rod</td></tr>
       </table>
       <p>Cook the fish and they are the <b>best food in the game</b>. Until this zone there was nothing above Vaultwood to cut and nothing above the Vault to mine, so the top of the <a data-wiki="guides/tools">tool ladder</a> had nothing to work on.</p>` },
+  { id: "alchemy", title: "Alchemy: sand into potions", icon: "\u{1F9EA}", cat: "Skills",
+    body: `<p><b>Alchemy runs 1 to 100 and it starts with sand.</b> Dig it out of the pits in <a data-wiki="sands">The Golden Sands</a> at <b>Mining 20</b>, melt it to glass at the <b>cauldron</b> under the temple colonnade, then brew the glass with whatever the world drops.</p>
+      <p><b>One cauldron does both jobs.</b> It is the only one in the game, and it both blows the vials and brews the potions &mdash; so everything to do with Alchemy happens on one tile, and you never need a single level of Smithing to train it.</p>
+      <h4>The vial is the tier, and the timer</h4>
+      <table class="tbl"><tr><th>Vial</th><th>Alchemy</th><th>Sand</th><th>Holds</th></tr>
+        <tr><td><b>Small vial</b></td><td>1</td><td>1</td><td>10 minutes</td></tr>
+        <tr><td><b>Medium vial</b></td><td>34</td><td>2</td><td>15 minutes</td></tr>
+        <tr><td><b>Large flask</b></td><td>68</td><td>4</td><td>20 minutes</td></tr>
+      </table>
+      <p>So a potion's strength and how long it lasts are both written on the bottle. There is nothing else to learn about the ladder.</p>
+      <h4>The ingredients are things you already throw away</h4>
+      <p>This is the point of the skill. <b>Six of the seven farm crops</b> go in a potion and had no other use at all; so do <b>staticfur</b> off a Thunderwolf, a <b>marked card</b> off a Card Counter, a <b>receipt</b> off a Tax Wraith, a <b>shark tooth</b>, a <b>cobweb</b>, a <b>sporecap</b>, a <b>husk</b>, <b>bones</b> and <b>stormjelly</b>. Two are native to the Sands: a <b>scarab shell</b> and a <b>cobra fang</b>.</p>
+      <h4>Every potion, in order</h4>
+      <p>The ladder <b>alternates a skilling buff with a combat one</b> all the way up, so whichever sort of player you are there is never a dead stretch.</p>
+      <table class="tbl"><tr><th>Alch</th><th>Potion</th><th>Does</th><th>Needs</th></tr>
+        <tr><td>1</td><td><b>Swift draught</b></td><td>skilling: +4% speed</td><td>small vial, 2 sporecap</td></tr>
+        <tr><td>10</td><td><b>Hide tonic</b></td><td>combat: +5% tough</td><td>small vial, 2 hide</td></tr>
+        <tr><td>19</td><td><b>Keen-eye water</b></td><td>skilling: +6% rare</td><td>small vial, 2 wheat, sporecap</td></tr>
+        <tr><td>23</td><td><b>Salt salve</b></td><td>heals 14 at once</td><td>small vial, 2 lanternroot</td></tr>
+        <tr><td>28</td><td><b>Rattle brew</b></td><td>combat: +2% bite</td><td>small vial, 2 rattlebean</td></tr>
+        <tr><td>36</td><td><b>Quickhand philtre</b></td><td>skilling: +7% speed</td><td>medium vial, marked card, lanternroot</td></tr>
+        <tr><td>45</td><td><b>Gourd draught</b></td><td>combat: +9% tough</td><td>medium vial, 2 bonegourd, bones</td></tr>
+        <tr><td>50</td><td><b>Field salve</b></td><td>heals 26 at once</td><td>medium vial, 3 lanternroot, bonegourd</td></tr>
+        <tr><td>54</td><td><b>Ghost grease</b></td><td>skilling: +5% steal</td><td>medium vial, cobweb, husk</td></tr>
+        <tr><td>62</td><td><b>Tax-dodger's tincture</b></td><td>combat: +9% tickets</td><td>medium vial, receipt, stormcorn</td></tr>
+        <tr><td>70</td><td><b>Prospector's flask</b></td><td>skilling: +14% rare</td><td>large flask, gold tomato, marked card, scarab shell</td></tr>
+        <tr><td>78</td><td><b>Fang flask</b></td><td>combat: +4.5% bite</td><td>large flask, shark tooth, cobra fang, rattlebean</td></tr>
+        <tr><td>84</td><td><b>Royal salve</b></td><td>heals 44 at once</td><td>large flask, 4 lanternroot, scarab shell</td></tr>
+        <tr><td>90</td><td><b>Storm flask</b></td><td>skilling: +12% speed</td><td>large flask, staticfur, stormjelly, lanternroot</td></tr>
+        <tr><td>100</td><td><b>Pharaoh's draught</b></td><td>combat: +18% tough, +3% bite</td><td>large flask, 2 scarab shell, cobra fang, gold tomato</td></tr>
+      </table>
+      <p><b>A potion stacks with your gear.</b> Every number above sits well under the ceiling the game caps each effect at, so drinking one adds to what you are wearing instead of replacing it.</p>
+      <p><b>They only work outside.</b> Like the bar's food and drink, a buff counts down in places that have monsters in them, not on the casino floor.</p>` },
+  { id: "sands", title: "The Golden Sands", icon: "\u{1F3DC}\uFE0F", cat: "Going further",
+    body: `<p><b>Combat 40 to 49, west out of <a data-wiki="road">the Boneyard</a></b> &mdash; and it is a <b>second route, not a rung</b>. At Combat 40 you may go north to Cloudreach or west to here, and each has its own ore, tree and fish. Neither is ahead of the other.</p>
+      <p>It is where <a data-wiki="alchemy">Alchemy</a> lives. The <b>sand pits</b> are the front of that whole chain, and the game's only <b>cauldron</b> stands under the temple colonnade in the middle of the map.</p>
+      <table class="tbl"><tr><th>What</th><th>Needs</th><th>Gives</th></tr>
+        <tr><td><b>Sand pits</b> (five of them)</td><td>Mining 20</td><td>sand &mdash; 45 xp</td></tr>
+        <tr><td><b>Stardust seams</b></td><td>Mining 50</td><td>stardust &mdash; 150 xp</td></tr>
+        <tr><td><b>Date palms</b></td><td>Woodcutting 45</td><td>palm logs &mdash; 190 xp</td></tr>
+        <tr><td><b>The oasis</b></td><td>Fishing 40 / 48</td><td>oasis perch, temple carp</td></tr>
+      </table>
+      <p><b>Sand is Mining 20 on purpose</b>, far below the map's own band: the barrier is meant to be <i>getting here</i>, not a second grind once you have. And <b>stardust had exactly one rock in the whole game</b> before this map &mdash; there are two more here.</p>
+      <h4>What lives there</h4>
+      <p><b>Sand Cobras</b> (41) in the dunes and <b>Gilt Scarabs</b> (45) round the pits &mdash; the cobra drops the <b>fang</b> and the scarab the <b>shell</b>, both of which go in the best potions. <b>Bandaged Debtors</b> (43) shuffle about the precinct and <b>Tomb Jackals</b> (47) hold the pyramid. Everything waits to be hit first except <b>one jackal by the pyramid door</b>, which comes at you on sight.</p>
+      <h4>The Great Pyramid</h4>
+      <p>It stands on the eastern skyline and <b>the tomb door is sealed</b>. The party fight behind it is still being built &mdash; when it opens it will work like <a data-wiki="crypt">the Crypt</a>: a private copy of the tomb for your group, an ante each, and something very old at the bottom of it.</p>` },
   { id: "tools", title: "Tools: the seven rungs", icon: "⛏️", cat: "Skills",
     body: `<p>A <b>pickaxe</b>, an <b>axe</b> and a <b>fishing rod</b> come in seven grades, the same seven as the armour: bronze, emerald, diamond, dragonstone, onyx, starfall, eclipse.</p>
       <p><b>The rock decides.</b> Whatever you are mining, cutting or fishing asks for a tool of its own grade or better &mdash; emerald ore wants an emerald pickaxe, and a bronze one will not touch it. The grade a thing wants is always the grade named on the thing itself, so if you can work it at all, the right tool is one you can hold.</p>
@@ -175,18 +222,18 @@ export const GUIDES = [
       <p><b>Cooking roughly doubles a fish.</b> Raw fish cannot be eaten and Bom will not buy it, so every fish is worth a stop at the fire on the way home. The fire always cooks the best thing in your bag that you are able to cook, so there is nothing to choose.</p>
       <p><b>You will burn some at first, and then you will stop.</b> Each fish has a level at which it never burns again &mdash; that is the second number below, and it is the one worth levelling towards.</p>
       <table class="tbl"><tr><th>Fish</th><th>Cook at</th><th>Stops burning</th><th>Heals</th><th>Sells</th></tr>
-        <tr><td>Sardine</td><td>1</td><td>20</td><td>6</td><td>16</td></tr>
-        <tr><td>Perch</td><td>5</td><td>25</td><td>7</td><td>20</td></tr>
-        <tr><td>Trout</td><td>15</td><td>40</td><td>10</td><td>28</td></tr>
-        <tr><td>Catfish</td><td>18</td><td>45</td><td>12</td><td>36</td></tr>
-        <tr><td>Mudskipper</td><td>22</td><td>50</td><td>18</td><td>56</td></tr>
-        <tr><td>Lanternfish</td><td>30</td><td>60</td><td>16</td><td>40</td></tr>
-        <tr><td>Bonefish</td><td>32</td><td>62</td><td>20</td><td>56</td></tr>
-        <tr><td>Ghost carp</td><td>36</td><td>66</td><td>22</td><td>72</td></tr>
-        <tr><td>Cloud ray</td><td>45</td><td>75</td><td>26</td><td>96</td></tr>
-        <tr><td>Sky eel</td><td>50</td><td>80</td><td>24</td><td>80</td></tr>
-        <tr><td>Storm marlin</td><td>55</td><td>85</td><td>29</td><td>88</td></tr>
-        <tr><td>Thunder squid</td><td>60</td><td>90</td><td>32</td><td>104</td></tr>
+        <tr><td>Sardine</td><td>1</td><td>20</td><td>6</td><td>8</td></tr>
+        <tr><td>Perch</td><td>5</td><td>25</td><td>7</td><td>10</td></tr>
+        <tr><td>Trout</td><td>15</td><td>40</td><td>10</td><td>14</td></tr>
+        <tr><td>Catfish</td><td>18</td><td>45</td><td>12</td><td>18</td></tr>
+        <tr><td>Mudskipper</td><td>22</td><td>50</td><td>18</td><td>28</td></tr>
+        <tr><td>Lanternfish</td><td>30</td><td>60</td><td>16</td><td>20</td></tr>
+        <tr><td>Bonefish</td><td>32</td><td>62</td><td>20</td><td>28</td></tr>
+        <tr><td>Ghost carp</td><td>36</td><td>66</td><td>22</td><td>36</td></tr>
+        <tr><td>Cloud ray</td><td>45</td><td>75</td><td>26</td><td>48</td></tr>
+        <tr><td>Sky eel</td><td>50</td><td>80</td><td>24</td><td>40</td></tr>
+        <tr><td>Storm marlin</td><td>55</td><td>85</td><td>29</td><td>44</td></tr>
+        <tr><td>Thunder squid</td><td>60</td><td>90</td><td>32</td><td>52</td></tr>
         <tr><td>Mud cat</td><td>60</td><td>88</td><td>26</td><td>116</td></tr>
         <tr><td>Bowfin</td><td>70</td><td>94</td><td>30</td><td>132</td></tr>
       </table>
@@ -224,14 +271,14 @@ export const GUIDES = [
       </table>
       <p>Each grade wants Smithing equal to its <a data-wiki="guides/fighting">gear tier</a> &mdash; emerald at 20, diamond at 30, and so on up to eclipse at 70.</p>
       <h3>Why bother, when Bom sells gear</h3>
-      <p><b>Because he is not cheap.</b> A full eclipse set over his counter is around 819,000 tickets; the ore to smith one is about 4,250. Diamond is 31 times dearer bought, onyx 69, eclipse 193. Once you have a furnace and an anvil there is no sensible reason to buy gear again.</p>
+      <p><b>Because he is not cheap.</b> A full eclipse set over his counter is around 819,000 tickets; the ore to smith one is about 2,125. Diamond is 62 times dearer bought, onyx 138, eclipse 386. Once you have a furnace and an anvil there is no sensible reason to buy gear again.</p>
       <h3>Reforging</h3>
       <p><b>Bars also push gear you already own further.</b> At the anvil, three levels, each worth 5.5% of that piece's own stats or +1, whichever is more &mdash; about a tier in total. A reforge costs the same bars the piece cost to make.</p>
       <p><b>It can destroy the piece.</b> +1 always works. +2 is 80%, and a miss there has an 8% chance of breaking it; +3 is 55%, with a 15% chance. About one piece in seven is lost on the way to +3, and the bars go whether it works or not.</p>
       <p>Tools reforge too, and they buy <b>speed</b> rather than combat &mdash; +2.5% a level at mining, chopping or fishing.</p>` },
 
   { id: "mining", title: "Mining", icon: "\u26CF\uFE0F", cat: "Skills",
-    body: `<p><b>Click a rock with a pickaxe in your hand</b> &mdash; in the weapon slot, not the bag. Every rock holds <b>1 to 5 ore</b> and you keep working it until it is empty, so one rock is several swings rather than one.</p>
+    body: `<p><b>Click a rock with a pickaxe in your hand</b> &mdash; in the weapon slot, not the bag. Every rock holds <b>2 to 12 ore</b> and you keep working it until it is empty, so one rock is several swings rather than one.</p>
       <p><b>Two things gate a rock: your level AND your pickaxe.</b> They are not the same number. Emerald ore needs Mining 20 <i>and</i> an emerald pickaxe &mdash; having the level with a bronze pickaxe gets you nothing, which is the single most common reason a rock will not budge.</p>
       <table class="tbl"><tr><th>Ore</th><th>Mining</th><th>Pickaxe</th><th>Where</th><th>Sells</th><th>Smelts into</th></tr>
         <tr><td>Copper</td><td>1</td><td>Bronze</td><td>The Yard</td><td>10</td><td rowspan="2">Bronze bar (with tin)</td></tr>
@@ -243,14 +290,14 @@ export const GUIDES = [
         <tr><td>Starfall</td><td>60</td><td>Starfall</td><td>The Vault</td><td>55</td><td>Starfall bar</td></tr>
         <tr><td>Eclipse</td><td>70</td><td>Eclipse</td><td>The Vault</td><td>90</td><td>Eclipse bar</td></tr>
         <tr><td>Grimstone</td><td>1</td><td>Bronze</td><td>The Wilderness</td><td>45</td><td>needed for onyx bars</td></tr>
-        <tr><td>Voidglass</td><td>70</td><td>Eclipse</td><td>The Vault</td><td>70</td><td>needed for eclipse bars</td></tr>
-        <tr><td>Catalytic converter</td><td>65</td><td>Starfall</td><td>The Trailer Park</td><td>140</td><td>&mdash;</td></tr>
-        <tr><td>Slagstone</td><td>85</td><td>Eclipse</td><td>The Trailer Park</td><td>110</td><td>&mdash;</td></tr>
+        <tr><td>Voidglass</td><td>70</td><td>Eclipse</td><td>The Vault</td><td>35</td><td>needed for eclipse bars</td></tr>
+        <tr><td>Catalytic converter</td><td>65</td><td>Starfall</td><td>The Trailer Park</td><td>70</td><td>&mdash;</td></tr>
+        <tr><td>Slagstone</td><td>85</td><td>Eclipse</td><td>The Trailer Park</td><td>55</td><td>&mdash;</td></tr>
       </table>
       <p><b>Copper and tin are a pair.</b> A bronze bar wants one of each, so mine them together or you will be back.</p>
       <p><b>A vein never runs dry.</b> It is slower per ore than a rock &mdash; about six seconds a swing against under two &mdash; but it does not empty and it does not stop you, so it is what you stand at while you are half watching something else. The three-minute idle cutoff still applies.</p>
       <p><b>Grimstone and voidglass are not ore you smelt</b>, they are ingredients: the top two bars will not go without them, which is what makes the last stretch of <a data-wiki="guides/smithing">Smithing</a> a chain rather than a grind.</p>
-      <p><b>Selling raw ore is the worst thing you can do with it.</b> A bar is worth more than its ore, and gear is worth vastly more than bars &mdash; a full eclipse set is about 4,250 tickets of ore and 819,000 over Bom's counter.</p>` },
+      <p><b>Selling raw ore is the worst thing you can do with it.</b> A bar is worth more than its ore, and gear is worth vastly more than bars &mdash; a full eclipse set is about 2,125 tickets of ore and 819,000 over Bom's counter.</p>` },
 
   { id: "woodcutting", title: "Woodcutting", icon: "\u{1FA93}", cat: "Skills",
     body: `<p><b>Click a tree with an axe in your hand.</b> A tree is good for about 25 logs before it falls, an oak for about 50, and a felled one is back in fifteen seconds.</p>
@@ -267,26 +314,97 @@ export const GUIDES = [
         <tr><td>Bogwood</td><td>80</td><td>Eclipse</td><td>The Trailer Park</td><td>95</td><td>4 charcoal</td></tr>
       </table>
       <p><b>Logs are fuel, not just stock.</b> Every smelt in the game needs charcoal and charcoal is burnt logs, so woodcutting feeds <a data-wiki="guides/smithing">Smithing</a> exactly the way mining does. One vaultwood log is worth four ordinary ones at the furnace.</p>
-      <p><b>Ancient yew is the sweet spot for a long time.</b> Three charcoal a log and 70 tickets if you sell it instead &mdash; better on both counts than the two trees above it, which is worth knowing before you walk to Cloudreach for skyash.</p>
+      <p><b>Ancient yew is the sweet spot for a long time.</b> Three charcoal a log and 35 tickets if you sell it instead &mdash; better on both counts than the two trees above it, which is worth knowing before you walk to Cloudreach for skyash.</p>
       <p><b>Burning is the only Smithing you can do at level 1</b>, so a woodcutter already has a Smithing career started whether they meant to or not.</p>` },
 
   { id: "harvesting", title: "Harvesting", icon: "\u{1F33E}", cat: "Skills",
     body: `<p><b>Two halves.</b> Picking things that grow in the world, and growing your own on <a data-wiki="guides/islands">your island</a>.</p>
-      <p><b>In the world</b>: wheat in the Yard, olives and vines on Tomatoe Hill. Click them and they grow back on their own. <b>It is the only gathering skill that needs nothing in your hand</b> &mdash; no tool, no grade, no gate but your level.</p>
+      <p><b>In the world</b>: <b>three patches of wheat grow wild in the Yard</b> &mdash; one in the north-west above the copper, one beside the path through the middle, and one out in the south-west meadow. Click them and they grow back on their own. <b>It is the only gathering skill that needs nothing in your hand</b> &mdash; no tool, no grade, no gate but your level.</p>
       <p><b>On your island</b> a plot grows in real time whether you are logged in or not, and pays back several of what you planted. That is where the levels are.</p>
       <p><b>There are no seeds &mdash; the crop IS the seed.</b> Planting spends one of the thing you are growing, so the first of each new kind has to be found: they drop from the monsters of the zone that grows them, at about <b>one kill in eighty</b>. What you can grow is decided by where you can survive.</p>
       <table class="tbl"><tr><th>Crop</th><th>Harvesting</th><th>Grows in</th><th>Pays back</th><th>xp</th><th>Sells</th><th>Seeded by</th></tr>
-        <tr><td>Wheat</td><td>1</td><td>10 min</td><td>3&ndash;5</td><td>30</td><td>4</td><td>grows wild in the Yard</td></tr>
-        <tr><td>Tomatoe</td><td>5</td><td>20 min</td><td>3&ndash;6</td><td>70</td><td>5</td><td>Tomatoe Hill</td></tr>
-        <tr><td>Rattlebean</td><td>10</td><td>20 min</td><td>3&ndash;5</td><td>60</td><td>10</td><td>the Gloam</td></tr>
-        <tr><td>Lanternroot</td><td>20</td><td>40 min</td><td>3&ndash;6</td><td>150</td><td>35</td><td>the Lantern Mire</td></tr>
-        <tr><td>Bonegourd</td><td>30</td><td>1 hr</td><td>3&ndash;6</td><td>400</td><td>90</td><td>the Boneyard</td></tr>
-        <tr><td>Stormcorn</td><td>40</td><td>2 hr</td><td>4&ndash;7</td><td>700</td><td>250</td><td>Cloudreach &amp; the Thunderhead</td></tr>
-        <tr><td>Golden tomatoe</td><td>50</td><td>4 hr</td><td>1&ndash;3</td><td>600</td><td>60</td><td>&mdash;</td></tr>
+        <tr><td>Wheat</td><td>1</td><td>10 min</td><td>3&ndash;5</td><td>30</td><td>2</td><td>grows wild in the Yard</td></tr>
+        <tr><td>Tomatoe</td><td>5</td><td>20 min</td><td>3&ndash;6</td><td>70</td><td>3</td><td>rotten tomatoes, in the Yard</td></tr>
+        <tr><td>Rattlebean</td><td>10</td><td>20 min</td><td>3&ndash;5</td><td>60</td><td>5</td><td>the Gloam</td></tr>
+        <tr><td>Lanternroot</td><td>20</td><td>40 min</td><td>3&ndash;6</td><td>150</td><td>18</td><td>the Lantern Mire</td></tr>
+        <tr><td>Bonegourd</td><td>30</td><td>1 hr</td><td>3&ndash;6</td><td>400</td><td>45</td><td>the Boneyard</td></tr>
+        <tr><td>Stormcorn</td><td>40</td><td>2 hr</td><td>4&ndash;7</td><td>700</td><td>125</td><td>Cloudreach &amp; the Thunderhead</td></tr>
+        <tr><td>Golden tomatoe</td><td>50</td><td>4 hr</td><td>1&ndash;3</td><td>600</td><td>30</td><td>&mdash;</td></tr>
       </table>
       <p><b>Plant the longest crop you can before you log off</b> and the short ones while you are around. A plot is doing nothing between ripening and your coming back, which is the only real skill in this skill.</p>
       <p><b>Your island decides how many plots you have</b> &mdash; 8 to start, 12 for 5,000 tickets, 20 for 20,000. It multiplies everything above, so it is the upgrade that matters.</p>
       <p><b>It is background money, not a living.</b> A full set of plots kept going comes to a fraction of what fighting the same zone pays; the appeal is that it happens while you are doing something else.</p>` },
+
+  { id: "thieving", title: "Thieving", icon: "\u{1F90F}", cat: "Skills",
+    body: `<p><b>The Thieves&rsquo; Guild is south of the Yard</b>, behind a door that wants a permit. Inside are four rooms of guild members, and you pick their pockets. <b>Nothing in there fights back and nothing can be attacked</b> &mdash; it is the only skill in the game that needs no combat level at all, no weapon and no armour.</p>
+
+      <h3>Getting in</h3>
+      <p>You need a <b>Thieves&rsquo; permit</b>, and there are two ways to hold one:</p>
+      <ul><li>Buy one at the shop for <b>50,000 tickets</b>.</li>
+        <li>Find one in <b>the Hoodie&rsquo;s hoard</b> at the end of a Crypt run &mdash; about one chest in 105, 62 or 39 depending on the difficulty. Not past your three paid runs for the day.</li></ul>
+      <p>It is an ordinary item, so it can be <b>bought and sold on the market</b>, which usually means it changes hands for rather less than the shop charges. The door takes it off you the first time and never asks again &mdash; so a permit you have already used cannot be sold on.</p>
+
+      <h3>The four rooms</h3>
+      <p>Each room is behind a door, and <b>the door and the marks are two different ladders</b>. The first door opens at Thieving 10 although the Grifters behind it cannot be picked until 25 &mdash; that is on purpose, so there is somewhere to walk to and look at while you are still learning.</p>
+      <table class="tbl"><tr><th>Room</th><th>Door opens</th><th>Pick at</th><th>xp a pick</th><th>Tickets an hour</th></tr>
+        <tr><td>The Back Room &mdash; Apprentice Lifters</td><td>&mdash;</td><td>1</td><td>19</td><td>~2,300</td></tr>
+        <tr><td>The Card Room &mdash; Grifters</td><td>10</td><td>25</td><td>56</td><td>~6,700</td></tr>
+        <tr><td>The Store Room &mdash; The Fixers</td><td>50</td><td>50</td><td>138</td><td>~11,100</td></tr>
+        <tr><td>The Vault Room &mdash; The Quartermaster</td><td>75</td><td>75</td><td>250</td><td>~17,600</td></tr>
+      </table>
+
+      <h3>How a pick works</h3>
+      <p>Click a mark and you keep trying, one attempt every <b>2.4 seconds</b>, until you stop or you land one. Against a mark of <b>your own level you land 55%</b>, and <b>every level above that adds 2%</b>, up to a ceiling of <b>90%</b>. So a room you have just unlocked is the hard one and the room behind you is nearly free.</p>
+      <p><b>Get caught</b> and the mark has your wrist: you are held for <b>two to three and a half seconds</b> and <b>one stolen thing falls out of your bag</b>. Only things taken in the guild can be lost that way &mdash; never tickets, never your gear, never your permit.</p>
+      <p><b>After a successful lift that mark keeps a hand on their pocket for six seconds.</b> There are three of each in every room, so you work the room rather than one pocket.</p>
+
+      <h3>What they carry</h3>
+      <table class="tbl"><tr><th>Room</th><th>What</th><th>How often</th><th>Fence</th></tr>
+        <tr><td rowspan="2">Apprentice Lifter</td><td>Brass button</td><td>80%</td><td>6</td></tr>
+        <tr><td>Whetgrit</td><td>20%</td><td>keep it</td></tr>
+        <tr><td rowspan="3">Grifter</td><td>Pocket watch</td><td>75%</td><td>15</td></tr>
+        <tr><td>Quenching salts</td><td>20%</td><td>keep it</td></tr>
+        <tr><td>Whetgrit</td><td>5%</td><td>keep it</td></tr>
+        <tr><td rowspan="3">The Fixer</td><td>Stolen signet</td><td>72%</td><td>26</td></tr>
+        <tr><td>Guild seal wax</td><td>18%</td><td>keep it</td></tr>
+        <tr><td>Quenching salts</td><td>10%</td><td>keep it</td></tr>
+        <tr><td rowspan="5">The Quartermaster</td><td>Black-market ledger</td><td>70%</td><td>29</td></tr>
+        <tr><td>Starfall ore</td><td>12%</td><td>28, but smelt it</td></tr>
+        <tr><td>Eclipse ore</td><td>9%</td><td>45, but smelt it</td></tr>
+        <tr><td>Voidglass</td><td>6%</td><td>35, but smelt it</td></tr>
+        <tr><td>Guild seal wax</td><td>3%</td><td>keep it</td></tr>
+      </table>
+      <p><b>Buttons, watches, signets and ledgers are just money</b> &mdash; sell them at the Prize Counter. Everything else goes to an anvil, and that is the half worth having.</p>
+
+      <h3>What the materials make</h3>
+      <p>Three things, all at the <b>anvil</b>, none of them sold anywhere. Each is spent on <b>one reforge attempt</b> whatever that attempt does; tick them on at the anvil before you swing and the odds shown move with them.</p>
+      <table class="tbl"><tr><th>What</th><th>Smithing</th><th>Made from</th><th>What it does</th></tr>
+        <tr><td><b>Temper</b></td><td>20</td><td>2 whetgrit, 1 bronze bar</td><td>Adds <b>20 points</b> to the odds of that reforge</td></tr>
+        <tr><td><b>Flux</b></td><td>40</td><td>2 quenching salts, 1 whetgrit</td><td>A failed reforge <b>cannot destroy the piece</b>; it only drops a level</td></tr>
+        <tr><td><b>Master&rsquo;s seal</b></td><td>60</td><td>1 guild seal wax, 1 flux</td><td>The only way to take a piece <b>past +3, to +4</b></td></tr>
+      </table>
+      <p>A seal eats a flux, so seals can never be commoner than flux. If you are reforging something you would hate to lose, the honest advice is <b>flux first and temper second</b>: a temper only improves your chances, a flux is what stops the piece cracking in half.</p>
+
+      <h3>The other way to the top of smithing</h3>
+      <p><b>The Quartermaster&rsquo;s room carries starfall ore, eclipse ore and voidglass.</b> Those three are otherwise only found in the Vault, and voidglass is not dropped by any monster at all &mdash; so a thief can supply their own Starfall and Eclipse gear without ever going down there. That is the real reason people want into the last room.</p>
+
+      <h3>The Ditched set</h3>
+      <p>Four pieces of a thief&rsquo;s kit that somebody threw in the water rather than be caught holding, and they come back out on a <b>fishing line</b>. Nobody in the guild sells them and nothing in the guild drops them &mdash; if you want them you fish, or you buy them off somebody who did.</p>
+      <table class="tbl"><tr><th>Piece</th><th>Slot</th><th>Each gives</th></tr>
+        <tr><td>Ditched hood</td><td>Helm</td><td rowspan="4">+2.5% to pick, +3% speed</td></tr>
+        <tr><td>Ditched coat</td><td>Body</td></tr>
+        <tr><td>Ditched gloves</td><td>Gloves</td></tr>
+        <tr><td>Ditched boots</td><td>Boots</td></tr>
+      </table>
+      <p><b>A full set is +10% on every pick and +12% speed</b>, which takes the climb to 99 from about 72 hours to 61 &mdash; and to around 58 if you also have a pet that hurries you along. It is worn in ordinary armour slots, so you are giving up your combat gear to wear it. Inside the guild that costs you nothing, because nothing in there fights back; the moment you walk out, it costs you everything.</p>
+      <p><b>The 90% ceiling still holds.</b> Gear helps while you are climbing towards it, which is the part that drags, and does nothing once you are already there.</p>
+      <p>A piece turns up about <b>once every two hours</b> of steady fishing, from any water, so a set is an evening. Gear that helps you find rare things helps here too.</p>
+
+      <h3>Who to talk to</h3>
+      <p>Four guild members wander the rooms and are not marks &mdash; you cannot pick them, and they will not mind you trying. <b>Sticky Pete</b>, in the first room, explains how picking works. <b>Marla Nine-Fingers</b>, in the card room, explains what the materials are for. <b>The Quiet Man</b> and <b>Odile the Clerk</b> keep the two back rooms.</p>
+
+      <h3>What it is worth</h3>
+      <p><b>1 to 99 is about 72 hours</b> if you always work the best room you can reach &mdash; about level with Woodcutting, and a good deal quicker than Combat&rsquo;s 149. A full Ditched set takes it to roughly 61. The top room earns about what a middling miner does. That is deliberate: a room where nothing fights back should not also be the best money in the game, and the guild&rsquo;s real payment is the materials.</p>` },
 
   { id: "agility", title: "Agility", icon: "\u{1F3C3}", cat: "Skills",
     body: `<p><b>The Run is an obstacle course</b>, up a rope ladder in the north of the Yard. You go round it: each obstacle pays, and finishing a full lap pays far more than the parts do.</p>
@@ -294,7 +412,7 @@ export const GUIDES = [
         <tr><td>Each obstacle cleared</td><td>12 xp</td></tr>
         <tr><td>Clearing one perfectly</td><td>+10 xp on top</td></tr>
         <tr><td>Finishing a lap</td><td>150 xp, and more when others are running</td></tr>
-        <tr><td>Marks picked up on the way</td><td>25 tickets each</td></tr>
+        <tr><td>Marks picked up on the way</td><td>13 tickets each</td></tr>
       </table>
       <p><b>What it buys is movement speed, everywhere.</b> It climbs steadily with the level &mdash; about <b>+5% at 50</b> and <b>+10% at 99</b> &mdash; and it applies to every step you take for the rest of the game: every walk to a rock, a tree, a fishing spot or the bank.</p>
       <p><b>That is the argument for it.</b> Agility makes nothing and sells nothing, so it looks like the skill you can skip. What it actually does is shorten every other skill you will ever train.</p>
@@ -338,7 +456,7 @@ export const GUIDES = [
       <p><b>None of this touches the casino.</b> Buffs work outside only; no drink, dinner or clover can move the odds at a table.</p>` },
   { id: "zcoins", title: "Finding ZCoins", icon: "\u{1F48E}", cat: "Money",
     body: `<p><b>Real ZCoins drop in the world.</b> Not tickets &mdash; the actual currency from eastcoin.vip. They are rare on purpose and there is no way to buy them with tickets, in either direction.</p>
-      <p><b>Fishing drops them</b> at roughly <b>one cast in three hundred</b>, creeping up slightly with the better fish &mdash; a sardine is about 1 in 400, a thunder squid about 1 in 280. It is close enough to flat that you should fish wherever you actually enjoy fishing.</p>
+      <p><b>Fishing drops them</b> at roughly <b>one cast in six hundred</b>, creeping up slightly with the better fish &mdash; a sardine is about 1 in 800, a thunder squid about 1 in 556. It is close enough to flat that you should fish wherever you actually enjoy fishing.</p>
       <p><b>Fighting drops them too</b>, scaled to what you killed, so the Thunderhead pays better than the Yard.</p>
       <p><b>A big one lands about one time in twenty</b>, worth five of the ordinary find.</p>
       <p>Take a ZCoin to <a data-wiki="npcs/Bom Trady">the Prize Counter</a> and it goes straight onto your real balance on the site.</p>
@@ -396,24 +514,27 @@ export const GUIDES = [
       <p><b>It sells out of your bag and your bank together</b>, so you do not have to fetch things before listing them.</p>
       <p><b>Gear cannot be sold to other players yet.</b> A reforged piece belongs to whoever reforged it &mdash; a known limitation and a real project to fix, not an oversight.</p>` },
   { id: "islands", title: "Your island", icon: "\u{1F3DD}️", cat: "Going further",
-    body: `<p><b>Charon runs a ferry at River Bend</b> and everyone gets an island. It is yours, it keeps growing things while you are logged off, and you decide whether anybody else can visit.</p>
-      <p><b>Three sizes.</b> You start with the first and buy the others from the ferry.</p>
+    body: `<p><b>Charon keeps a cart in the Yard</b>, a few steps out of the casino's front door, and everyone gets an island. It is yours, it keeps growing things while you are logged off, and you decide whether anybody else can visit.</p>
+      <p><b>Three sizes.</b> You start with the first and buy the others from Charon's cart. The Far Shore is a second island joined to yours by a bridge off the east side, so it is one walk, not a second trip.</p>
       <table class="tbl"><tr><th>Island</th><th>Costs</th><th>Plots</th><th>Pedestals</th></tr>
         <tr><td>Island</td><td>&mdash;</td><td>8</td><td>6</td></tr>
         <tr><td>Bigger island</td><td>5,000</td><td>12</td><td>9</td></tr>
         <tr><td>The Far Shore</td><td>20,000</td><td>20</td><td>15</td></tr>
       </table>
+      <h3>Yahsmeena's Decor</h3>
+      <p><b>Yahsmeena stands outside the cottage and sells furniture for your island and your cottage.</b> Buy a piece from her, then press <b>Decorate</b> and put it where you want it. She buys back at a quarter of what you paid, and a piece can be picked up and moved as often as you like.</p>
+      <p><b>The one piece that does something is the bank chest</b> (10,000). It opens the same bank as the chest in the Yard, so you can empty a full bag into it between harvests instead of sailing back. Everything else she sells is for show, which is the point of it.</p>
       <h3>Growing things</h3>
       <p><b>Plant a crop and it grows in real time, whether you are online or not.</b> Click an empty plot, pick what to put in it, come back when it is ready. A ripe plot pays several of what you planted, so one crop feeds the next.</p>
       <p><b>There are no seeds &mdash; the crop IS the seed.</b> Planting spends one of the thing you are growing. The first of each new kind has to be found: they drop from the monsters of the zone that grows them, at roughly <b>one kill in eighty</b>. So what you can grow is decided by where you can survive, not by a level gate.</p>
       <table class="tbl"><tr><th>Crop</th><th>Harvesting</th><th>Grows in</th><th>Yield</th><th>xp</th><th>Sells</th><th>Seeded by</th></tr>
-        <tr><td>Wheat</td><td>1</td><td>10 min</td><td>3&ndash;5</td><td>30</td><td>4</td><td>grows wild in the Yard</td></tr>
-        <tr><td>Tomatoe</td><td>5</td><td>20 min</td><td>3&ndash;6</td><td>70</td><td>5</td><td>Tomatoe Hill</td></tr>
-        <tr><td>Rattlebean</td><td>10</td><td>20 min</td><td>3&ndash;5</td><td>60</td><td>10</td><td>the Gloam</td></tr>
-        <tr><td>Lanternroot</td><td>20</td><td>40 min</td><td>3&ndash;6</td><td>150</td><td>35</td><td>the Lantern Mire</td></tr>
-        <tr><td>Bonegourd</td><td>30</td><td>1 hr</td><td>3&ndash;6</td><td>400</td><td>90</td><td>the Boneyard</td></tr>
-        <tr><td>Stormcorn</td><td>40</td><td>2 hr</td><td>4&ndash;7</td><td>700</td><td>250</td><td>Cloudreach &amp; the Thunderhead</td></tr>
-        <tr><td>Golden tomatoe</td><td>50</td><td>4 hr</td><td>1&ndash;3</td><td>600</td><td>60</td><td>&mdash;</td></tr>
+        <tr><td>Wheat</td><td>1</td><td>10 min</td><td>3&ndash;5</td><td>30</td><td>2</td><td>grows wild in the Yard</td></tr>
+        <tr><td>Tomatoe</td><td>5</td><td>20 min</td><td>3&ndash;6</td><td>70</td><td>3</td><td>rotten tomatoes, in the Yard</td></tr>
+        <tr><td>Rattlebean</td><td>10</td><td>20 min</td><td>3&ndash;5</td><td>60</td><td>5</td><td>the Gloam</td></tr>
+        <tr><td>Lanternroot</td><td>20</td><td>40 min</td><td>3&ndash;6</td><td>150</td><td>18</td><td>the Lantern Mire</td></tr>
+        <tr><td>Bonegourd</td><td>30</td><td>1 hr</td><td>3&ndash;6</td><td>400</td><td>45</td><td>the Boneyard</td></tr>
+        <tr><td>Stormcorn</td><td>40</td><td>2 hr</td><td>4&ndash;7</td><td>700</td><td>125</td><td>Cloudreach &amp; the Thunderhead</td></tr>
+        <tr><td>Golden tomatoe</td><td>50</td><td>4 hr</td><td>1&ndash;3</td><td>600</td><td>30</td><td>&mdash;</td></tr>
       </table>
       <p><b>Farming is background money, not a living.</b> A full set of plots kept going comes to roughly a sixth of what fighting the same zone pays &mdash; it is something that happens while you do something else, which is the whole point of it running while you are logged off.</p>
       <h3>The rest of the island</h3>
@@ -428,6 +549,74 @@ export const GUIDES = [
 ];
 
 export const UPDATES = [
+  {
+    date: "2026-09-23", title: "Rocks hold a lot more ore",
+    items: [
+      "EVERY ROCK IN THE WORLD NOW HOLDS 2 TO 12 ORE instead of 1 to 5. What you actually feel is the interruption going away: running a rock dry stops you and makes you pick another one, and that now happens less than half as often. Measured, that is about 4% more ore an hour at low levels and nearly 7% by level 40 &mdash; and a great deal less clicking, which is the part you will actually notice.",
+      "It counts ore TAKEN, not swings, so a failed swing costs you time but not depth &mdash; same as before.",
+      "Rocks already standing in a loaded area keep the number they were given until they next run out, so this arrives over a minute or two rather than all at once.",
+    ],
+  },
+  {
+    date: "2026-09-23", title: "A reforge belongs to the item now",
+    items: [
+      "YOU CAN SELL A REFORGED PIECE, AND THE BUYER GETS THE REFORGE. Until today a +3 belonged to YOU rather than to the axe: sell it and the buyer got a plain one, while you kept the +3 and would find it waiting on the next axe you picked up. The level lives on the piece now, so it goes where the piece goes.",
+      "WHICH MEANS YOU CAN OWN TWO OF A KIND AT DIFFERENT LEVELS. A plain Diamond axe and a +3 Diamond axe are different things and sit in different bag slots &mdash; so a reforged piece costs you a slot, which is the honest price of it.",
+      "NOTHING WILL EAT YOUR BEST PIECE. Selling, eating, banking or handing over several of something always spends the PLAIN ones first; the reforged one is only ever touched when you pick it out yourself.",
+      "AT THE MARKET you choose which one you are listing, the listing says &quot;+3&quot; in its name, and hovering it shows exactly what that reforge is worth. A buy offer for a plain one will never be filled with a reforged one, or the other way about.",
+      "AT THE ANVIL, if you are WEARING one it works on that; otherwise it takes the best one in your bag. So carrying a +2 up to +3 keeps working on the same piece, and a plain spare is only touched when it is all you have.",
+      "FACE-TO-FACE TRADES STILL PASS PLAIN PIECES ONLY, for the moment. A trade offer has nowhere to record a level yet, and rather than hand somebody a plain axe while destroying your +3 we have left reforged pieces out of it. The market handles them properly; the trade window is next.",
+      "AND YOUR EXISTING REFORGES HAVE MOVED ONTO YOUR ACTUAL GEAR &mdash; what you are wearing first, then your bag, then your bank. If you had a level recorded for something you no longer own, it is gone, which is the whole point of the change.",
+    ],
+  },
+  {
+    date: "2026-09-23", title: "Every rare drops at 1 in 100",
+    items: [
+      "ONE RATE FOR EVERY RARE. A monster's named rare drops — the rings, the hoods, the King's set, the seed crops — all land at exactly 1%, instead of the hand-set numbers between 0.4% and 25% they used to have. It is one rule you can hold in your head, and it applies to anything we add from here on without us having to pick a number for it.",
+      "SOME THINGS GOT RARER AND SOME GOT COMMONER. The goat's toga was one in four and is now one in a hundred; the Junk King's cap and wrench come down a long way too. Going the other way, the Loss adjuster's visor, the Bookie's amulet and a few others were under 1% and are now easier.",
+      "TWO THINGS ARE DELIBERATELY NOT ON THE FLAT RATE. Real ZCoins still climb with the monster's level, and the casino chips, boxes and dice still scale with what the monster pays — so a bigger monster still turns up more of them. Flattening those would have made farming chickens the best earning in the game.",
+      "And a correction: this guide still quoted the old ZCoin fishing rates after yesterday's halving. A sardine is about 1 in 800 and a thunder squid about 1 in 556.",
+    ],
+  },
+  {
+    date: "2026-09-23", title: "Bom will take your spare rares now",
+    items: [
+      "EVERY RARE HAS A BUYER. Twenty drops &mdash; the casino set, the Junk King's two, the Tax Wraith's hood, the mystery boxes &mdash; had nobody who would take them, so a second one was worth nothing at all unless another player happened to want it. Bom takes them now.",
+      "HE LOWBALLS YOU AND WE ARE NOT HIDING IT. He pays a quarter of what the piece is reckoned to be worth, which is the same deal he gives on gear: he buys an Eclipse gladius back for 539 and sells one for 92,400. Selling to another player will basically always be the better idea. This is a floor under a duplicate, not a price.",
+      "IT IS ONE CLICK PER ITEM, AND &quot;TRADE IN THE LOT&quot; STILL CANNOT TOUCH IT. Your rares are a separate list with their own buttons, deliberately, so no amount of clicking the big button can sell the ring you are wearing.",
+      "A Green house chip is not on the list on purpose: using one already pays 100 tickets, so a quick sell would only ever be the worse button.",
+    ],
+  },
+  {
+    date: "2026-09-23", title: "A bank on your island, and the island looks like one",
+    items: [
+      "YAHSMEENA SELLS A BANK CHEST, 10,000. Put it down anywhere on your island and it opens your bank &mdash; the same bank, the same rules &mdash; so a full bag of crops no longer means a trip back. It is the only thing in her shop that does anything; the rest is for show, and that is deliberate.",
+      "THE PLOTS ARE DRAWN NOW. Every crop has four growing stages, hand-drawn, and the last one means ripe: if it looks finished, it is. They had been three coloured rectangles because the pictures were made a week ago and never wired up.",
+      "SO IS THE DOCK. Real planking, running the length of the pier instead of a flat brown rectangle with lines ruled across it.",
+      "IF YOU OWN THE FAR SHORE, YOUR ISLAND WAS DRAWING ITSELF WRONG. The largest island was the one tier nobody had listed in the art, so its plots, palms, pedestals, pen, ferry and lighthouse were all falling back to rough shapes. Fixed.",
+      "And the guide for islands said Charon runs a ferry at River Bend. He has worked from a cart in the Yard since the Forum closed.",
+    ],
+  },
+  {
+    date: "2026-09-23", title: "Wheat in the Yard, and the medals are real",
+    items: [
+      "WHEAT GROWS IN THE YARD NOW &mdash; three patches, well apart: one in the north-west above the copper, one beside the path through the middle, and one out in the south-west meadow. They grow back on their own, they need nothing in your hand, and each one is 8 Harvesting xp.",
+      "WHICH MEANS HARVESTING CAN BE STARTED. It could not before, and that was our mistake rather than anything you were doing wrong: the only wheat in the game was in a part of the map that is shut, this guide has been pointing at the Yard the whole time, and every other crop needs a level you could only get by growing something. Wheat is the level 1 crop and it is now where the wiki always said it was.",
+      "THE ACHIEVEMENTS WINDOW HAS BEEN REDRAWN. Every tier wears its own medal &mdash; bronze, silver, gold, a cup and a crown &mdash; instead of its name in a colour that was close to unreadable on parchment. Ticket amounts show the real ticket rather than an emoji, tier headings say what the tier pays on a line of their own, and the button in the bar carries the same badge the window does.",
+      "SMALL, BUT WORTH SAYING: every 'Sells' column in these guides was still quoting yesterday's prices after the halving. Twenty-nine of them were wrong and they are right now, and the wiki checker reads those columns from the rules from here on so they cannot drift again.",
+    ],
+  },
+  {
+    date: "2026-09-23", title: "Half the tickets, and the tables take a cut",
+    items: [
+      "EVERYTHING YOU SELL NOW PAYS HALF. The Cashier, Brutus and the tickets a kill carries have all been halved together &mdash; fishing, mining, woodcutting, farming and fighting alike &mdash; so nothing has become a better or worse way to earn than it was yesterday. What things COST has not changed at all, so gear, bag pockets and island plots each take about twice as long to save for.",
+      "WHY. Tickets were being made a great deal faster than there was anything to spend them on: every price in the game put together came to about forty hours of play at the top band, and after that tickets had one use left. At 1,000 tickets to the ZCoin that was quietly minting more ZCoins than the whole of the rest of eastcoin.vip added together.",
+      "THE TABLES NOW TAKE A CUT. A ticket play pays between 93% and 99% of the fair price, drawn fresh every play, so the house keeps about 4% &mdash; a little under a roulette wheel. No play is ever better than fair any more, which means there is still no table worth shopping for. It was 96% to 104%, which averaged exactly 100% and so drained nothing at all. The ZCoin tables on eastcoin.vip are untouched and still pay 96% to 104%.",
+      "REAL ZCOIN DROPS ARE HALVED TOO, from kills and from fishing alike. They were never the big half of it &mdash; an hour of fighting dropped about four and converted about forty-five &mdash; but they are part of the same flow.",
+      "THE CRYPT CAME WITH IT. Antes and clears are both halved, so a clear is still worth about half again what the same minutes pay on your own. The slots ticket jackpot starts at 10,000 now for the same reason.",
+      "WHAT DID NOT CHANGE: the daily jobs, the prize wheel, achievement rewards, free-play chips, and every price in the game.",
+    ],
+  },
   {
     date: "2026-09-23", title: "Tools reforge into tools, and your +2 shows",
     items: [
@@ -611,7 +800,7 @@ export const UPDATES = [
     date: "2026-09-21", title: "THE CRYPT: bring a party",
     items: [
       "A DUNGEON YOU CAN'T DO ALONE. Stairs down to the Crypt are in town, beside the bank. It takes a PARTY of 2 to 4: click another player and choose Invite to party. Your party's health shows on the left.",
-      "HOW A RUN GOES. Everybody stands by the stairs and the leader picks a difficulty: the Crypt (Combat 10+), the Deep Crypt (30+) or the Black Crypt (50+). Each of you puts up an ante. Clear the Ossuary and its gate opens; clear the Haunted Hall and the next one does; then everybody alive gathers at the lever to open the Sanctum.",
+      "HOW A RUN GOES. Everybody stands by the stairs and the leader picks a difficulty: the Crypt, the Deep Crypt or the Black Crypt. THE DOOR'S NUMBER IS NOT THE FIGHT'S. The doors open at Combat 10, 30 and 40, but a crypt boss has far more defence than its own gate level can swing at: below Combat 22, 47 and 76 you hit it about one time in ten WHATEVER you are wearing, and the fight takes over an hour. Take the Black Crypt at 76 and up, or bring somebody who is. Each of you puts up an ante. Clear the Ossuary and its gate opens; clear the Haunted Hall and the next one does; then everybody alive gathers at the lever to open the Sanctum.",
       "THE HOODIE. Too much health to solo, and more of it the bigger your party. He goes for whoever has hurt him most, so let your toughest player start. When the floor around him turns RED, get out of it: the slam takes two fifths of your health. At half health he whistles up a skeleton for each of you. After five minutes he hits twice as hard.",
       "WHAT IT PAYS. About one and a half times what the same minutes pay solo: roughly 5,000, 14,000 or 22,000 tickets EACH on a clear, and everybody gets their own roll at a real ZCoin. Do under a tenth of the boss's damage and you're paid half. Three paid runs a day; after that a clear pays a quarter.",
       "DYING costs nothing in there: you wake at the bottom of the stairs and run back. But if the WHOLE party is down at once it's a wipe, and the crypt keeps the ante.",
@@ -1192,8 +1381,9 @@ export const SKILL_GUIDE = {
   hp: "Goes up alongside Combat as you deal damage. Your Hitpoints level is your maximum health.",
   fishing: "Hold a fishing rod and click the water. Every spot holds two fish: the second is better, needs a higher level, and turns up about a third of the time once you can catch it.",
   farming: "Pick wheat, olives and vines out in the world \u2014 the only gathering skill that needs nothing in your hand \u2014 or grow your own on your island, where a plot keeps growing while you are logged off.",
-  mining: "Hold a pickaxe and click a rock. Every rock holds one to five ore and you work it until it is empty; a vein is slower per ore but never runs dry, which makes it the one to stand at.",
+  mining: "Hold a pickaxe and click a rock. Every rock holds two to twelve ore and you work it until it is empty; a vein is slower per ore but never runs dry, which makes it the one to stand at.",
   woodcutting: "Hold an axe and click a tree. A tree is good for about 25 logs before it falls and an oak for about 50; a felled one is back in fifteen seconds. Logs burn into the charcoal every smelt needs.",
   smithing: "Burn logs into charcoal at the furnace \u2014 the only thing you can do at level 1 \u2014 then smelt ore and charcoal into bars, and hammer bars into gear at the anvil. The anvil also reforges what you already own.",
+  thieving: "Pick pockets in the Thieves' Guild, south of the Yard. Nobody there fights back. Each room further in holds better marks, and what they carry either sells or goes to the anvil.",
   agility: "Run the obstacle course north of the Yard. Each obstacle pays, a finished lap pays far more, and what it buys you is movement speed everywhere else."
 };

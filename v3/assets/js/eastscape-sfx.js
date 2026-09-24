@@ -42,6 +42,11 @@ export const SOUNDS = {
   ui_close:   { vol: 0.35, files: takes("uiclose", 3), layers: [tone(820, 0, 0.08, 0.3, "tri", { f2: 430 })] },
   ui_error:   { vol: 0.4, files: takes("uierror", 2), layers: [tone(220, 0, 0.12, 0.25, "square", { f2: 165, s: 0.03, lp: 2400 })] },
   chat:       { vol: 0.25, layers: [tone(880, 0, 0.06, 0.2, "sine"), tone(1320, 0.05, 0.07, 0.15, "sine")] },
+  /* Thieving (2026-09-23, the owner's takes). Three takes each, coins and nails mixed through both, so a pocket
+     sometimes sounds like money and sometimes like junk without the game deciding which. `caught` is what you
+     had hitting the floor. No SFX_V bump: these are new file names, so nothing is cached under them yet. */
+  steal:      { vol: 0.5, files: takes("steal", 3), layers: [tone(1200, 0, 0.05, 0.22, "tri", { f2: 1800 }), tone(1700, 0.04, 0.05, 0.14, "sine")] },
+  caught:     { vol: 0.55, files: takes("caught", 3), layers: [tone(320, 0, 0.13, 0.28, "square", { f2: 180, lp: 2600 }), ...ticks(3, 0.05, { v: 0.25 })] },
   // the bag
   /* `pickup` was defined here and never played by anything — `gain` is the wired path — so it is gone rather than
      given a recording. In its place: finding GEAR now sounds different from finding an ore, which the owner's

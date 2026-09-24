@@ -19,7 +19,14 @@ const MAP = [[/^chop (\d+)\.wav$/i, "chop"], [/^mine (\d+)\.wav$/i, "mine"], [/^
      separate gem take is more useful, because the game knows when a geode turns up and can play it on its own. */
   [/^Mineral Mining - (\d+)\.wav$/i, "mine", 1.2], [/^Mineral Mining - (\d+) - Gemstone Separate\.wav$/i, "gem", 1.6],
   [/^Tree Hit - (\d+)\.wav$/i, "chop", 1.0], [/^Tree Branch Break - (\d+)\.wav$/i, "treefall", 2.0],
-  [/^Casting Line - (\d+)\.wav$/i, "cast", 1.4], [/^Fish Biting - (\d+)\.wav$/i, "fishcatch", 1.4]];
+  [/^Casting Line - (\d+)\.wav$/i, "cast", 1.4], [/^Fish Biting - (\d+)\.wav$/i, "fishcatch", 1.4],
+  /* Thieving, 2026-09-23. Two sounds out of six takes, and the mix is the point: coins AND nails under each, so
+     a pocket sometimes gives money and sometimes gives junk without the game having to decide which. Lifting is
+     `steal`, being caught is `caught` — the same take played backwards in spirit, since what you hear then is
+     the thing you had hitting the floor. The .ogg beside "Pick Up Nails - 1.wav" is the same take already
+     encoded; the wav is taken and the ogg ignored, because this tool re-encodes anyway. */
+  [/^Pick Up Coins - (\d+)\.wav$/i, "steal", 1.2], [/^Pick Up Nails - (\d+)\.wav$/i, "steal", 1.2],
+  [/^Drop Coins - (\d+)\.wav$/i, "caught", 1.3], [/^Drop Nails - (\d+)\.wav$/i, "caught", 1.3]];
 /* Takes are renumbered 1..N per sound, in filename order, rather than taking the number from the source: the
    pack's UI clicks arrive as 4..9 and `takes(name, n)` in eastscape-sfx.js always asks for 1..n. Feed a sound its
    whole set in one run, or the numbering shifts under it. */

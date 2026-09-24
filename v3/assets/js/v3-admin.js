@@ -1,0 +1,1127 @@
+/* ============================================================
+   EastCoin V3 — Picks admin
+
+   A operating surface for the three admin logins. Everything here
+   already existed as an endpoint; the point is that opening a
+   market that real ZCoins get bet against should not require
+   hand-typing JSON into a browser console, where a mistyped line
+   becomes a real mispriced market.
+
+   Two habits it enforces:
+     · the payout is previewed from the entered odds before the
+       market can be created
+     · destructive-ish actions state what they will do first
+   ============================================================ */
+(() => {
+  "use strict";
+
+  const local = { health: null, markets: [], busy: false, message: null, announce: null };
+  let root = null;
+  let shell = null;
+
+  /* ---------------------------------------------------------- money
+     Mirrors the server's rule exactly so the preview cannot promise
+     a number settlement wouldn't pay. */
+
+  function totalReturn(stake, american) {
+    const amount = Math.max(0, Math.floor(Number(stake) || 0));
+    const line = Number(american);
+    if (!amount || !Number.isFinite(line) || line === 0) return 0;
+    const decimal = line < 0 ? 1 + 100 / Math.abs(line) : 1 + line / 100;
+    return Math.max(amount, Math.ceil(amount * decimal));
+  }
+
+  function formatLine(value) {
+    const line = Number(value);
+    if (!Number.isFinite(line) || line === 0) return "—";
+    return line > 0 ? `+${line}` : String(line);
+  }
+
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  // "+102", "102", "-122" and a typographic "−122" all mean what they say.
+  // The line boxes are plain text on purpose: a number box silently empties
+  // "+102" in some browsers (Firefox), which sent a blank line and got the
+  // open refused with no visible reason.
+  function parseLine(raw) {
+    const s = String(raw || "").trim().replace(/[\u2212\u2013\u2014]/g, "-").replace(/\s+/g, "");
+    if (!/^[+-]?\d{3,5}$/.test(s)) return NaN;
+    const n = parseInt(s, 10);
+    return Math.abs(n) >= 100 ? n : NaN;
+  }
+
+  /** "12 min ago", for when a market was last announced. */
+  function ago(iso) {
+    const ms = Date.now() - new Date(iso).getTime();
+    if (!Number.isFinite(ms) || ms < 60000) return "just now";
+    const m = Math.round(ms / 60000);
+    if (m < 60) return `${m} min ago`;
+    const h = Math.round(m / 60);
+    return h < 24 ? `${h} hr ago` : `${Math.round(h / 24)} day${Math.round(h / 24) === 1 ? "" : "s"} ago`;
+  }
+
+  // Fights have no scores feed: the result is entered here by hand.
+  const isFightSport = (sport) => sport === "boxing" || sport === "mma";
+  // Props (Yes / No on a question) are settled by hand too, any time.
+  const isPropSport = (sport) => sport === "prop";
+  const vsOf = (m) => (isFightSport(m.sport) ? "vs" : "at");
+  /** "Reds at Dodgers", "Garcia vs Benn", or the prop's question. */
+  const titleOf = (m) => (isPropSport(m.sport) ? String(m.question || "Prop bet") : `${m.away} ${vsOf(m)} ${m.home}`);
+  const sideOf = (m, side) => (isPropSport(m.sport) ? (side === "away" ? "Yes" : "No") : side === "away" ? m.away : m.home);
+  /** A datetime-local value for a Date, in the browser's own zone. */
+  const localInput = (d) => {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
+
+  /* ---------------------------------------------------------- data */
+
+  async function load() {
+    const [health, markets, announce, notices, reconcile] = await Promise.all([
+      fetch("/api/picks/wallet-health").then((r) => r.json()).catch(() => null),
+      fetch("/api/picks/admin/markets").then((r) => r.json()).catch(() => null),
+      fetch("/api/picks/admin/announce").then((r) => r.json()).catch(() => null),
+      fetch("/api/picks/admin/notice").then((r) => r.json()).catch(() => null),
+      fetch("/api/picks/admin/reconcile").then((r) => r.json()).catch(() => null)
+    ]);
+    local.stuckOps = reconcile?.ok ? reconcile.operations : local.stuckOps || [];
+    local.notices = notices?.ok ? notices.notices : local.notices || [];
+    local.announce = announce?.ok ? announce : null;
+    local.health = health;
+    local.markets = markets?.ok ? markets.markets : [];
+    local.forbidden = markets && !markets.ok && markets.code === "NOT_ADMIN";
+  }
+
+  async function post_(url, body) {
+    local.busy = true;
+    paint();
+    let payload = null;
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: body ? { "Content-Type": "application/json" } : {},
+        body: body ? JSON.stringify(body) : undefined,
+        credentials: "include"
+      });
+
+      // Read as text first. An HTML body here means the request never
+      // reached the function — a redeploy in flight, an auth redirect,
+      // or a 500 page — and reporting "unexpected token <" tells the
+      // operator nothing about which. The status code does.
+      const raw = await response.text();
+      try {
+        payload = JSON.parse(raw);
+      } catch {
+        const kind = raw.trimStart().startsWith("<") ? "an HTML page" : "a non-JSON body";
+        payload = {
+          ok: false,
+          message:
+            `Server returned ${response.status} with ${kind}. ` +
+            (response.status === 200
+              ? "The site is probably mid-deploy — wait a moment and try again."
+              : response.status === 500
+                ? "The endpoint threw. Check the Pages function logs."
+                : "Try again; if it persists the route may not be deployed.")
+        };
+      }
+    } catch (error) {
+      payload = { ok: false, message: String(error?.message || "Request failed") };
+    }
+    local.busy = false;
+    return payload;
+  }
+
+  /* ------------------------------------------------------- the headline */
+
+  /**
+   * Six numbers off the markets already in hand — no extra request. The
+   * money-wide figures (users, both sides' take) live on the Dashboard,
+   * which runs the queries for them; this is the state of the book the
+   * operator is about to act on.
+   */
+  function summaryStrip() {
+    const markets = local.markets || [];
+    const by = (state) => markets.filter((m) => m.state === state);
+    const open = by("OPEN");
+    const locked = by("LOCKED");
+    const live = [...open, ...locked];
+    const picksRiding = live.reduce((s, m) => s + Number(m.totals?.picks || 0), 0);
+    const staked = live.reduce((s, m) => s + Number(m.totals?.away?.staked || 0) + Number(m.totals?.home?.staked || 0), 0);
+    const exposure = live.reduce((s, m) => s + Number(m.totals?.away?.exposure || 0) + Number(m.totals?.home?.exposure || 0), 0);
+    const stuck = markets.reduce((s, m) => s + Number(m.needsAttention || 0), 0);
+    const next = open
+      .map((m) => new Date(m.startsAt).getTime())
+      .filter((t) => Number.isFinite(t) && t > Date.now())
+      .sort((a, b) => a - b)[0];
+    const fights = live.filter((m) => (isFightSport(m.sport) || isPropSport(m.sport)) && new Date(m.startsAt).getTime() <= Date.now()).length;
+
+    const q = (label, value, note, tone) => {
+      const box = el("div", `pf-q${tone ? " " + tone : ""}`);
+      box.append(el("span", null, label));
+      box.append(el("b", "nums", String(value)));
+      if (note) box.append(el("small", null, note));
+      return box;
+    };
+    const strip = el("div", "pf-quick adm-quick");
+    strip.append(
+      q("Taking bets", open.length, next ? `next locks ${new Date(next).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}` : "nothing due"),
+      q("In play", locked.length, fights ? `${fights} to settle by hand` : "closed, awaiting a final", fights ? "down" : ""),
+      q("Picks riding", picksRiding, `${staked.toLocaleString()} ZC staked`),
+      q("On the hook", exposure.toLocaleString(), "if every open pick wins"),
+      q("Settled", by("SETTLED").length, `${by("VOID").length} voided`),
+      // Stuck operations lead when there are any: a red "Ready" beside
+      // "2 stuck" reads as a contradiction.
+      q("Wallet", stuck ? `${stuck} stuck` : (local.health?.ok ? "Ready" : "Down"),
+        stuck ? "operations need reconciling" : (local.health?.ok ? "transfers enabled" : (local.health?.message || "").slice(0, 40)),
+        local.health?.ok && !stuck ? "up" : "down")
+    );
+    return strip;
+  }
+
+  /* ---------------------------------------------------------- health */
+
+  function healthCard() {
+    const card = el("div", "adm-card");
+    const h = local.health;
+
+    const state = !h ? "unknown" : h.status;
+    const ok = Boolean(h?.ok);
+
+    const row = el("div", "adm-health");
+    row.append(el("span", `adm-dot ${ok ? "good" : "bad"}`));
+
+    const copy = el("div");
+    copy.append(el("strong", null, ok ? "ZCoin transfers ready" : "ZCoin transfers unavailable"));
+    copy.append(el("small", null, h?.message || "Couldn't reach the wallet health check."));
+    row.append(copy);
+
+    const tag = el("span", "adm-tag", state);
+    row.append(tag);
+    card.append(row);
+
+    if (h?.channel) {
+      const detail = el("p", "adm-note");
+      detail.textContent = h.channel.matches
+        ? `Token belongs to ${h.channel.name || h.channel.tokenBelongsTo} — the channel being written to.`
+        : `Token belongs to ${h.channel.tokenBelongsTo}, but ${h.channel.configured} is configured. Nothing will be written.`;
+      card.append(detail);
+    }
+    return card;
+  }
+
+  /* ---------------------------------------------------------- stuck charges
+
+     ZCoin operations that never finished (/api/picks/admin/reconcile).
+     A casino stake that was taken but whose game was never created can
+     be refunded here, once: the refund's own idempotency key makes a
+     second press a no-op. Anything else is listed to check by hand. */
+
+  function stuckCard() {
+    const card = el("div", "adm-card");
+    card.append(el("h2", "adm-h", "Stuck ZCoin charges"));
+    const ops = local.stuckOps || [];
+    if (!ops.length) {
+      card.append(el("p", "adm-note", "Nothing stuck. Every ZCoin operation finished."));
+      return card;
+    }
+    card.append(el("p", "adm-note", "Charges that started and never finished. Refund returns the coins and records it, and can only happen once per charge."));
+    for (const op of ops) {
+      const row = el("div", "adm-market");
+      const top = el("div", "adm-market-top");
+      const who = el("div");
+      who.append(
+        el("strong", null, `${op.login || op.userId} · ${op.amount > 0 ? "+" : ""}${op.amount} ZC`),
+        el("small", null, `${op.what} · ${op.status} · ${new Date(op.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`)
+      );
+      top.append(who);
+      if (op.refundable) {
+        const b = el("button", "btn primary", `Refund ${Math.abs(op.amount)} ZC`);
+        b.type = "button";
+        b.disabled = local.busy;
+        b.addEventListener("click", async () => {
+          if (!window.confirm(`Refund ${Math.abs(op.amount)} ZC to ${op.login}?`)) return;
+          b.disabled = true;
+          b.textContent = "Refunding…";
+          let r = null;
+          try {
+            r = await fetch("/api/picks/admin/reconcile", {
+              method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ opId: op.id })
+            }).then((x) => x.json());
+          } catch { r = null; }
+          const note = el("p", `adm-message ${r?.ok ? "good" : "bad"}`, r?.ok ? r.message : (r?.message || "That didn't go through."));
+          row.append(note);
+          if (r?.ok) { b.textContent = "Refunded"; local.stuckOps = r.operations || []; }
+          else { b.disabled = false; b.textContent = `Refund ${Math.abs(op.amount)} ZC`; }
+        });
+        top.append(b);
+      } else {
+        top.append(el("span", "adm-tag bad", "check by hand"));
+      }
+      row.append(top);
+      if (op.why) row.append(el("small", "adm-note", op.why));
+      card.append(row);
+    }
+    return card;
+  }
+
+  /* ---------------------------------------------------------- open form */
+
+  function openForm() {
+    const card = el("div", "adm-card");
+    card.append(el("h2", "adm-h", "Open a market"));
+    card.append(el("p", "adm-note",
+      "Use full team names as the scores feed spells them — “Los Angeles Dodgers”, not “LAD”. " +
+      "Settlement matches on these names, and a market it can't match will never grade."));
+
+    const grid = el("div", "adm-grid");
+    const fields = {};
+
+    function field(key, label, attrs = {}) {
+      const wrap = el("label", "adm-field");
+      wrap.append(el("span", null, label));
+      const input = document.createElement(attrs.tag === "select" ? "select" : "input");
+      if (attrs.tag === "select") {
+        for (const [value, text] of attrs.options) {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = text;
+          input.append(option);
+        }
+      } else {
+        input.type = attrs.type || "text";
+        if (attrs.placeholder) input.placeholder = attrs.placeholder;
+        if (attrs.value) input.value = attrs.value;
+        if (attrs.step) input.step = attrs.step;
+      }
+      wrap.append(input);
+      fields[key] = input;
+      grid.append(wrap);
+      return input;
+    }
+
+    field("sport", "Sport", {
+      tag: "select",
+      options: [
+        ["baseball", "Baseball (MLB)"],
+        ["american-football", "Football (NFL / CFB)"],
+        ["basketball", "Basketball (NBA)"],
+        ["hockey", "Hockey (NHL)"],
+        ["boxing", "Boxing (settled by hand)"],
+        ["mma", "MMA / UFC (settled by hand)"]
+      ]
+    });
+    field("league", "League label", { placeholder: "MLB", value: "MLB" });
+    field("away", "Away team", { placeholder: "Cincinnati Reds" });
+    field("home", "Home team", { placeholder: "Los Angeles Dodgers" });
+    field("awayOdds", "Away line", { placeholder: "+150" });
+    field("homeOdds", "Home line", { placeholder: "-175" });
+    field("startsAt", "Starts at (local)", { type: "datetime-local" });
+
+    // Picking a sport fills in its usual league label, unless one was typed.
+    const LEAGUE_FOR = { baseball: "MLB", "american-football": "NFL", basketball: "NBA", hockey: "NHL", boxing: "Boxing", mma: "UFC" };
+    fields.sport.addEventListener("change", () => {
+      const now = fields.league.value.trim();
+      if (!now || Object.values(LEAGUE_FOR).includes(now) || now === "CFB") fields.league.value = LEAGUE_FOR[fields.sport.value] || "";
+      const fight = isFightSport(fields.sport.value);
+      fields.away.placeholder = fight ? "Ryan Garcia" : "Cincinnati Reds";
+      fields.home.placeholder = fight ? "Conor Benn" : "Los Angeles Dodgers";
+    });
+
+    // Every action on this page redraws the whole page, which used to wipe
+    // the form, so a refused open looked like nothing happened. What was
+    // typed is kept until a market actually opens.
+    const DRAFT_KEYS = ["sport", "league", "away", "home", "awayOdds", "homeOdds", "startsAt"];
+    if (local.draft) {
+      for (const k of DRAFT_KEYS) if (local.draft[k] !== undefined) fields[k].value = local.draft[k];
+      const fightNow = isFightSport(fields.sport.value);
+      fields.away.placeholder = fightNow ? "Ryan Garcia" : "Cincinnati Reds";
+      fields.home.placeholder = fightNow ? "Conor Benn" : "Los Angeles Dodgers";
+    }
+    const saveDraft = () => { local.draft = Object.fromEntries(DRAFT_KEYS.map((k) => [k, fields[k].value])); };
+    for (const k of DRAFT_KEYS) {
+      fields[k].addEventListener("input", saveDraft);
+      fields[k].addEventListener("change", saveDraft);
+    }
+
+    card.append(grid);
+
+    // Preview — the whole reason this form exists rather than a console.
+    const preview = el("div", "adm-preview");
+    function refresh() {
+      const away = parseLine(fields.awayOdds.value);
+      const home = parseLine(fields.homeOdds.value);
+      preview.replaceChildren();
+
+      if (!Number.isFinite(away) || !Number.isFinite(home) || !away || !home) {
+        preview.append(el("span", "adm-note", "Enter both lines to preview payouts."));
+        return;
+      }
+      const rows = [
+        [fields.away.value || "Away", away],
+        [fields.home.value || "Home", home]
+      ];
+      for (const [name, line] of rows) {
+        const row = el("div", "adm-preview-row");
+        row.append(el("strong", null, name));
+        row.append(el("span", "adm-line", formatLine(line)));
+        row.append(el("span", "adm-pays", `10 pays ${totalReturn(10, line)} · 100 pays ${totalReturn(100, line)}`));
+        preview.append(row);
+      }
+      if ((away > 0 && home > 0) || (away < 0 && home < 0)) {
+        preview.append(el("p", "adm-warn",
+          "Both sides are priced the same way. Usually one favourite is negative and the underdog positive — worth a second look."));
+      }
+    }
+    ["awayOdds", "homeOdds", "away", "home"].forEach((k) =>
+      fields[k].addEventListener("input", refresh));
+    refresh();
+    card.append(preview);
+
+    const actions = el("div", "adm-actions");
+    const submit = el("button", "btn primary", "Open market");
+    submit.type = "button";
+    submit.style.cssText = "flex:0 0 auto;padding:0 20px;height:38px";
+    submit.disabled = local.busy;
+
+    submit.addEventListener("click", async () => {
+      const startsAt = fields.startsAt.value
+        ? new Date(fields.startsAt.value).toISOString()
+        : "";
+      const body = {
+        sport: fields.sport.value,
+        league: fields.league.value.trim(),
+        away: fields.away.value.trim(),
+        home: fields.home.value.trim(),
+        awayOdds: parseLine(fields.awayOdds.value),
+        homeOdds: parseLine(fields.homeOdds.value),
+        startsAt
+      };
+      saveDraft();
+
+      // Say what is wrong here, rather than sending it and losing the answer.
+      const problems = [];
+      if (!body.away || !body.home) problems.push("Enter both names.");
+      if (!Number.isFinite(body.awayOdds) || !Number.isFinite(body.homeOdds)) {
+        problems.push("Lines must be American odds, like +102 or -122.");
+      }
+      if (!startsAt) problems.push("Pick a start time.");
+      else if (new Date(startsAt).getTime() <= Date.now()) problems.push("That start time has already passed.");
+      if (problems.length) {
+        local.formMsg = { tone: "bad", text: problems.join(" ") };
+        paint();
+        return;
+      }
+
+      const result = await post_("/api/picks/admin/open-market", body);
+      const joiner = isFightSport(body.sport) ? "vs" : "at";
+      if (result.ok) {
+        local.formMsg = { tone: "good", text: `Market open: ${body.away} ${formatLine(body.awayOdds)} ${joiner} ${body.home} ${formatLine(body.homeOdds)}. Betting is live now.` };
+        local.draft = null;
+      } else {
+        local.formMsg = { tone: "bad", text: result.message || "Couldn't open that market." };
+      }
+      await load();
+      paint();
+    });
+
+    actions.append(submit);
+    card.append(actions);
+    // The answer to the last press, where the eye already is.
+    if (local.formMsg) {
+      const note = el("div", `adm-message ${local.formMsg.tone}`, local.formMsg.text);
+      note.style.marginTop = "10px";
+      card.append(note);
+    }
+    return card;
+  }
+
+  /* ---------------------------------------------------------- props
+
+     A prop is a question with two answers. Type it, price the sides
+     (either way round: +200 / -250 or -110 both), say when betting
+     closes, open it. The server stores it as a market with sport
+     "prop" — Yes is the away side, No the home side — so wagers,
+     settlement, the ledger and profiles need nothing new. */
+
+  function propForm() {
+    const card = el("div", "adm-card adm-propcard");
+    card.append(el("h2", "adm-h", "Add a prop bet"));
+    card.append(el("p", "adm-note",
+      "One question, Yes or No. Price each side however you like — -110 both ways is the default, or make Yes the long shot at +250 and No -350. " +
+      "Betting closes at the time you set; you call the result from the Markets tab whenever it's known, even before the close."));
+
+    const grid = el("div", "adm-grid adm-propgrid");
+    const fields = {};
+    const field = (key, label, attrs = {}) => {
+      const wrap = el("label", `adm-field${attrs.wide ? " wide" : ""}`);
+      wrap.append(el("span", null, label));
+      const input = document.createElement("input");
+      input.type = attrs.type || "text";
+      if (attrs.placeholder) input.placeholder = attrs.placeholder;
+      if (attrs.value) input.value = attrs.value;
+      if (attrs.maxLength) input.maxLength = attrs.maxLength;
+      wrap.append(input);
+      fields[key] = input;
+      grid.append(wrap);
+      return input;
+    };
+    field("question", "The question", { placeholder: "Will Mahomes throw for 300 yards tonight?", maxLength: 140, wide: true });
+    field("yesOdds", "Yes line", { placeholder: "-110", value: "-110" });
+    field("noOdds", "No line", { placeholder: "-110", value: "-110" });
+    field("closesAt", "Betting closes (local)", { type: "datetime-local" });
+    card.append(grid);
+
+    // Quick closes: most props are "by the end of this game".
+    const chips = el("div", "adm-chips");
+    const chip = (label, fn) => {
+      const b = el("button", "adm-chip", label);
+      b.type = "button";
+      b.addEventListener("click", () => { fields.closesAt.value = localInput(fn(new Date())); saveDraft(); refresh(); });
+      chips.append(b);
+    };
+    chip("30 min", (d) => new Date(d.getTime() + 30 * 60000));
+    chip("1 hour", (d) => new Date(d.getTime() + 60 * 60000));
+    chip("2 hours", (d) => new Date(d.getTime() + 120 * 60000));
+    chip("3 hours", (d) => new Date(d.getTime() + 180 * 60000));
+    chip("Midnight", (d) => { const m = new Date(d); m.setHours(23, 59, 0, 0); return m; });
+    card.append(chips);
+
+    const DRAFT_KEYS = ["question", "yesOdds", "noOdds", "closesAt"];
+    if (local.propDraft) for (const k of DRAFT_KEYS) if (local.propDraft[k] !== undefined) fields[k].value = local.propDraft[k];
+    const saveDraft = () => { local.propDraft = Object.fromEntries(DRAFT_KEYS.map((k) => [k, fields[k].value])); };
+
+    // The preview: what each side pays, and the exact chat line.
+    const preview = el("div", "adm-preview adm-propreview");
+    function refresh() {
+      const yes = parseLine(fields.yesOdds.value);
+      const no = parseLine(fields.noOdds.value);
+      const q = fields.question.value.trim();
+      preview.replaceChildren();
+      if (!Number.isFinite(yes) || !Number.isFinite(no) || !yes || !no) {
+        preview.append(el("span", "adm-note", "Enter both lines to preview payouts."));
+        return;
+      }
+      preview.append(el("p", "adm-propq", q || "Your question here?"));
+      for (const [name, line] of [["Yes", yes], ["No", no]]) {
+        const row = el("div", "adm-preview-row");
+        row.append(el("strong", null, name));
+        row.append(el("span", "adm-line", formatLine(line)));
+        row.append(el("span", "adm-pays", `10 pays ${totalReturn(10, line)} · 100 pays ${totalReturn(100, line)}`));
+        preview.append(row);
+      }
+      if (yes > 0 && no > 0) preview.append(el("p", "adm-warn", "Both sides pay plus money — the house loses whichever way it goes. Usually one side is negative."));
+      const when = fields.closesAt.value ? new Date(fields.closesAt.value) : null;
+      const closes = when && !Number.isNaN(when.getTime()) ? ` · closes ${when.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "";
+      preview.append(el("pre", "adm-say", `Zcoin 🎯 Prop bet — "${q || "…"}" Yes ${formatLine(yes)} / No ${formatLine(no)}${closes} · !pick <amount> yes`));
+    }
+    for (const k of DRAFT_KEYS) {
+      fields[k].addEventListener("input", () => { saveDraft(); refresh(); });
+      fields[k].addEventListener("change", () => { saveDraft(); refresh(); });
+    }
+    refresh();
+    card.append(preview);
+
+    const actions = el("div", "adm-actions");
+    const submit = el("button", "btn primary", "Open the prop");
+    submit.type = "button";
+    submit.style.cssText = "flex:0 0 auto;padding:0 20px;height:38px";
+    submit.disabled = local.busy;
+    submit.addEventListener("click", async () => {
+      const startsAt = fields.closesAt.value ? new Date(fields.closesAt.value).toISOString() : "";
+      const body = {
+        sport: "prop",
+        question: fields.question.value.trim(),
+        awayOdds: parseLine(fields.yesOdds.value),
+        homeOdds: parseLine(fields.noOdds.value),
+        startsAt
+      };
+      saveDraft();
+      const problems = [];
+      if (body.question.length < 6) problems.push("Type the question.");
+      if (!Number.isFinite(body.awayOdds) || !Number.isFinite(body.homeOdds)) problems.push("Lines must be American odds, like +200 or -110.");
+      if (!startsAt) problems.push("Pick when betting closes.");
+      else if (new Date(startsAt).getTime() <= Date.now()) problems.push("That close time has already passed.");
+      if (problems.length) {
+        local.propMsg = { tone: "bad", text: problems.join(" ") };
+        paint();
+        return;
+      }
+      const result = await post_("/api/picks/admin/open-market", body);
+      if (result.ok) {
+        local.propMsg = {
+          tone: "good",
+          text: `Prop open: "${result.market.question}" Yes ${formatLine(body.awayOdds)} / No ${formatLine(body.homeOdds)}. Betting is live now.`,
+          marketId: result.market.id,
+          title: result.market.question
+        };
+        local.propDraft = null;
+      } else {
+        local.propMsg = { tone: "bad", text: result.message || "Couldn't open that prop." };
+      }
+      await load();
+      paint();
+    });
+    actions.append(submit);
+    card.append(actions);
+
+    if (local.propMsg) {
+      const note = el("div", `adm-message ${local.propMsg.tone}`, local.propMsg.text);
+      note.style.marginTop = "10px";
+      card.append(note);
+      // Straight to chat from here, the same way the Markets row does it.
+      if (local.propMsg.marketId) {
+        const row = el("div", "adm-actions");
+        const say = el("button", "btn", "Announce it in chat");
+        say.type = "button";
+        say.style.cssText = "flex:0 0 auto;padding:0 16px;height:36px";
+        say.disabled = local.busy;
+        say.addEventListener("click", () => announceMarket(local.propMsg.marketId, (r) => {
+          local.propMsg = { ...local.propMsg, tone: r.ok ? (r.partial ? "note" : "good") : "bad", text: r.ok ? r.summary : r.message || "Couldn't announce it.", marketId: r.ok ? null : local.propMsg.marketId };
+        }));
+        row.append(say);
+        card.append(row);
+      }
+    }
+    return card;
+  }
+
+  /** Preview, confirm, post — one market into Twitch chat and Discord. */
+  async function announceMarket(marketId, done) {
+    let preview = null;
+    try {
+      preview = await fetch(`/api/picks/admin/announce?marketId=${encodeURIComponent(marketId)}`, { credentials: "include" }).then((r) => r.json());
+    } catch { preview = null; }
+    if (!preview?.ok) { done({ ok: false, message: preview?.message || "Couldn't prepare the announcement." }); paint(); return; }
+    const where = preview.discord ? "Twitch chat and on Discord" : "Twitch chat";
+    if (!window.confirm(`Post this in ${where}?\n\n${preview.message}`)) return;
+    const result = await post_("/api/picks/admin/announce", { marketId });
+    done(result);
+    await load();
+    paint();
+  }
+
+  /* ---------------------------------------------------------- announce
+
+     Posting to chat is the only thing here that reaches people who
+     aren't looking at this page, so it shows the exact message first
+     and never sends without a press. */
+
+  function announceCard() {
+    const card = el("div", "adm-card");
+    card.append(el("h2", "adm-h", "Announce in chat"));
+
+    const a = local.announce;
+    if (!a) {
+      card.append(el("p", "adm-note", "Couldn't work out what would be posted."));
+      return card;
+    }
+
+    if (!a.canPost) {
+      card.append(el("p", "adm-note",
+        "Nothing is open, so there's nothing to announce. Open a market first."));
+      return card;
+    }
+
+    card.append(el("p", "adm-note",
+      "One message however many markets are open — named while that stays short, " +
+      "counted once it doesn't. This posts to real chat."));
+
+    const quote = el("pre", "adm-say");
+    quote.textContent = a.message;
+    card.append(quote);
+
+    const foot = el("div", "adm-actions");
+    foot.append(el("span", "adm-note", `${a.length} characters · ${a.open} market(s)`));
+
+    const post = el("button", "btn primary", "Post to chat");
+    post.type = "button";
+    post.style.cssText = "flex:0 0 auto;padding:0 20px;height:38px";
+    post.disabled = local.busy;
+    post.addEventListener("click", async () => {
+      const result = await post_("/api/picks/admin/announce");
+      local.message = result.ok
+        ? { tone: "good", text: `Posted to chat: ${result.posted}` }
+        : { tone: "bad", text: result.message || "Couldn't post that." };
+      await load();
+      paint();
+    });
+    foot.append(post);
+    card.append(foot);
+    return card;
+  }
+
+  /* ---------------------------------------------------------- notices
+
+     One line into everyone's bell. On-site only: nothing is sent to
+     chat or Discord, so this can never surprise a stream. Reposting
+     the same title updates that notice and makes it unread again. */
+
+  function noticeCard() {
+    const card = el("div", "adm-card");
+    card.append(el("h2", "adm-h", "Post a notice"));
+    card.append(el("p", "adm-note",
+      "Lands in everyone's bell as an unread item, and toasts within a minute on any tab that is open. " +
+      "Nothing goes to chat or Discord. Reposting the same title replaces that notice and makes it new again."));
+
+    const grid = el("div", "adm-grid adm-propgrid");
+    const fields = {};
+    const field = (key, label, attrs = {}) => {
+      const wrap = el("label", `adm-field${attrs.wide ? " wide" : ""}`);
+      wrap.append(el("span", null, label));
+      const input = document.createElement(attrs.tag === "select" ? "select" : "input");
+      if (attrs.tag === "select") {
+        for (const [value, text] of attrs.options) { const o = document.createElement("option"); o.value = value; o.textContent = text; input.append(o); }
+      } else {
+        input.type = "text";
+        if (attrs.placeholder) input.placeholder = attrs.placeholder;
+        if (attrs.maxLength) input.maxLength = attrs.maxLength;
+      }
+      if (attrs.value) input.value = attrs.value;
+      wrap.append(input);
+      fields[key] = input;
+      grid.append(wrap);
+      return input;
+    };
+    field("title", "Title", { placeholder: "Watch rooms are here", maxLength: 80, wide: true });
+    field("text", "The line under it", { placeholder: "Movies & TV: press Watch together and everyone follows your player.", maxLength: 200, wide: true });
+    field("icon", "Icon", { placeholder: "📣", maxLength: 4, value: "📣" });
+    field("href", "Opens", {
+      tag: "select",
+      options: [
+        ["/?view=screen", "Movies & TV"],
+        // {me} becomes each reader's own login when the bell is built.
+        ["/u/{me}", "Their own profile"],
+        ["/u/{me}#picks", "Their own profile · Picks"],
+        ["/u/{me}#casino", "Their own profile · Casino"],
+        ["/u/{me}#movies", "Their own profile · Movies"],
+        ["/?view=picks", "Picks"],
+        ["/?view=casino", "Casino"],
+        ["/?view=music", "Green Room"],
+        ["/", "Sports"],
+        ["/?view=activity", "Activity"]
+      ]
+    });
+    card.append(grid);
+
+    const NOTICE_KEYS = ["title", "text", "icon", "href"];
+    if (local.noticeDraft) for (const k of NOTICE_KEYS) if (local.noticeDraft[k] !== undefined) fields[k].value = local.noticeDraft[k];
+    const saveDraft = () => { local.noticeDraft = Object.fromEntries(NOTICE_KEYS.map((k) => [k, fields[k].value])); };
+
+    // Exactly how the row will read in the bell.
+    const preview = el("div", "adm-preview adm-noticepreview");
+    function refresh() {
+      preview.replaceChildren();
+      const row = el("div", "notif-row unread adm-noticerow");
+      row.append(el("span", "notif-ico gold", fields.icon.value || "📣"));
+      const t = el("span", "notif-t");
+      const head = el("span");
+      head.append(el("b", null, fields.title.value || "Your title here"));
+      t.append(head);
+      t.append(el("small", null, fields.text.value || "And the line underneath it."));
+      row.append(t, el("span", "notif-at", "now"));
+      preview.append(row);
+    }
+    for (const k of NOTICE_KEYS) { fields[k].addEventListener("input", () => { saveDraft(); refresh(); }); fields[k].addEventListener("change", () => { saveDraft(); refresh(); }); }
+    refresh();
+    card.append(preview);
+
+    const actions = el("div", "adm-actions");
+    const post = el("button", "btn primary", "Post to everyone");
+    post.type = "button";
+    post.style.cssText = "flex:0 0 auto;padding:0 20px;height:38px";
+    post.disabled = local.busy;
+    post.addEventListener("click", async () => {
+      const body = { title: fields.title.value.trim(), text: fields.text.value.trim(), icon: fields.icon.value.trim(), href: fields.href.value };
+      saveDraft();
+      if (body.title.length < 4 || body.text.length < 4) {
+        local.noticeMsg = { tone: "bad", text: "A notice needs a title and a line under it." };
+        paint();
+        return;
+      }
+      if (!window.confirm(`Post this to everyone's notifications?\n\n${body.icon} ${body.title}\n${body.text}`)) return;
+      const result = await post_("/api/picks/admin/notice", body);
+      if (result.ok) {
+        local.noticeMsg = { tone: "good", text: `Posted. Everyone sees it in the bell; open tabs toast it within a minute.` };
+        local.noticeDraft = null;
+        local.notices = result.notices || local.notices;
+      } else {
+        local.noticeMsg = { tone: "bad", text: result.message || "Couldn't post that." };
+      }
+      paint();
+    });
+    actions.append(post);
+    card.append(actions);
+
+    if (local.noticeMsg) {
+      const note = el("div", `adm-message ${local.noticeMsg.tone}`, local.noticeMsg.text);
+      note.style.marginTop = "10px";
+      card.append(note);
+    }
+
+    // What is already out there, and the way to pull one.
+    const live = local.notices || [];
+    if (live.length) {
+      card.append(el("h3", "adm-h adm-subh", "Posted"));
+      for (const n of live) {
+        const row = el("div", "adm-market adm-noticelive");
+        const top = el("div", "adm-market-top");
+        top.append(el("strong", null, `${n.icon} ${n.title}`));
+        top.append(el("span", `adm-tag${n.live ? "" : " "}`, n.live ? "IN THE BELL" : "EXPIRED"));
+        const pull = el("button", "adm-rowbtn", "Pull");
+        pull.type = "button";
+        pull.title = "Remove it from everyone's notifications";
+        pull.disabled = local.busy;
+        pull.addEventListener("click", async () => {
+          if (!window.confirm(`Pull "${n.title}"? It disappears from everyone's bell.`)) return;
+          const result = await post_("/api/picks/admin/notice", { action: "remove", key: n.key });
+          local.noticeMsg = result.ok ? { tone: "good", text: `Pulled “${n.title}”.` } : { tone: "bad", text: result.message || "Couldn't pull it." };
+          if (result.ok) local.notices = result.notices || [];
+          paint();
+        });
+        top.append(pull);
+        row.append(top);
+        row.append(el("p", "adm-note", `${n.text} · ${n.by ? n.by + " · " : ""}${ago(n.at)}`));
+        card.append(row);
+      }
+    }
+    return card;
+  }
+
+  /* ---------------------------------------------------------- markets */
+
+  function marketsCard() {
+    const card = el("div", "adm-card");
+    card.id = "admMarkets";
+
+    const head = el("div", "adm-cardhead");
+    head.append(el("h2", "adm-h", "Markets"));
+
+    const settle = el("button", "btn", "Run settlement");
+    settle.type = "button";
+    settle.style.cssText = "flex:0 0 auto;padding:0 16px;height:34px";
+    settle.disabled = local.busy;
+    settle.addEventListener("click", async () => {
+      const result = await post_("/api/picks/settle");
+      if (!result.ok) {
+        local.message = { tone: "bad", text: result.message || "Settlement failed." };
+      } else {
+        const acted = (result.results || []).filter((r) => r.action !== "skipped");
+        local.message = acted.length
+          ? {
+              tone: "good",
+              text: acted
+                .map((r) => `${r.outcome === "VOID" ? "Voided" : `Won by ${r.outcome}`} — ${r.won || 0} won, ${r.lost || 0} lost, ${r.refunded || 0} refunded, ${r.paid || 0} ZCoins paid${r.failed ? `, ${r.failed} FAILED` : ""}`)
+                .join(" · ")
+            }
+          : { tone: "note", text:
+              `Examined ${result.examined} market(s); none had a clear final yet.` +
+              (result.locked ? ` Closed betting on ${result.locked}.` : "") };
+      }
+      if (local.message) local.message.at = "markets";
+      await load();
+      paint();
+    });
+    head.append(settle);
+    if (local.message?.at === "markets") {
+      card.append(head);
+      card.append(el("div", `adm-message ${local.message.tone}`, local.message.text));
+      head.dataset.placed = "1";
+    }
+    if (!head.dataset.placed) card.append(head);
+
+    if (!local.markets.length) {
+      card.append(el("p", "adm-note", "No markets yet. Open one above."));
+      return card;
+    }
+
+    // Ten a page, like every other list on the site.
+    const PER = 10;
+    const pages = Math.max(1, Math.ceil(local.markets.length / PER));
+    local.marketPage = Math.min(pages, Math.max(1, local.marketPage || 1));
+    const shown = local.markets.slice((local.marketPage - 1) * PER, local.marketPage * PER);
+
+    for (const market of shown) {
+      const row = el("div", `adm-market ${market.state.toLowerCase()}${isPropSport(market.sport) ? " prop" : ""}`);
+
+      const top = el("div", "adm-market-top");
+      if (isPropSport(market.sport)) top.append(el("span", "adm-tag prop", "PROP"));
+      top.append(el("strong", null, titleOf(market)));
+      top.append(el("span", "adm-tag", market.state));
+      if (market.needsAttention) {
+        top.append(el("span", "adm-tag bad", `${market.needsAttention} stuck`));
+      }
+
+      // Closing refunds, so the confirm says what it will cost rather
+      // than asking "are you sure" about an unnamed amount.
+      if (market.state !== "SETTLED" && market.state !== "VOID") {
+        const close = el("button", "adm-rowbtn", "Close");
+        close.type = "button";
+        close.title = "Void this market and refund every pick";
+        close.disabled = local.busy;
+        close.addEventListener("click", async () => {
+          const staked = market.totals.away.staked + market.totals.home.staked;
+          const cost = market.totals.picks
+            ? `${market.totals.picks} pick(s) will be refunded ${staked} ZCoins.`
+            : "It has no picks on it.";
+          if (!window.confirm(`Close ${titleOf(market)}?
+
+${cost}`)) return;
+
+          const result = await post_("/api/picks/admin/void-market", { marketId: market.id });
+          local.message = result.ok
+            ? { tone: "good", text: `Closed ${titleOf(market)}` +
+                (result.refunded ? ` — ${result.refunded} pick(s) refunded.` : ".") }
+            : { tone: "bad", text: result.message || "Couldn't close that market." };
+          local.message.id = market.id;
+          await load();
+          paint();
+        });
+        top.append(close);
+      }
+
+      // Announce one market in chat and on Discord: for the one-off
+      // events (CFB, fights) the site opens by hand and never announces.
+      if (market.state === "OPEN" && new Date(market.startsAt).getTime() > Date.now()) {
+        const say = el("button", "adm-rowbtn", "Announce");
+        say.type = "button";
+        say.title = "Post this market in Twitch chat and on Discord";
+        say.disabled = local.busy;
+        say.addEventListener("click", async () => {
+          let preview = null;
+          try {
+            preview = await fetch(`/api/picks/admin/announce?marketId=${encodeURIComponent(market.id)}`, { credentials: "include" })
+              .then((r) => r.json());
+          } catch { preview = null; }
+          if (!preview?.ok) {
+            local.message = { tone: "bad", text: preview?.message || "Couldn't prepare the announcement.", id: market.id };
+            paint();
+            return;
+          }
+          const where = preview.discord ? "Twitch chat and on Discord" : "Twitch chat";
+          const again = market.lastAnnounced ? `\n\nThis market was already announced ${ago(market.lastAnnounced)}.` : "";
+          if (!window.confirm(`Post this in ${where}?\n\n${preview.message}${again}`)) return;
+          const result = await post_("/api/picks/admin/announce", { marketId: market.id });
+          local.message = result.ok
+            ? { tone: result.partial ? "note" : "good", text: result.summary || "Announced." }
+            : { tone: "bad", text: result.message || "Couldn't announce that market." };
+          local.message.id = market.id;
+          await load();
+          paint();
+        });
+        const firstButton = top.querySelector("button");
+        if (firstButton) top.insertBefore(say, firstButton);
+        else top.append(say);
+      }
+
+      row.append(top);
+      if (local.message?.id === market.id) {
+        row.append(el("div", `adm-message ${local.message.tone}`, local.message.text));
+      }
+
+      // Fights: once the first bell has gone, the result is entered
+      // here. Payouts use the same code as automatic settlement.
+      const started = new Date(market.startsAt).getTime() <= Date.now();
+      const prop = isPropSport(market.sport);
+      if ((prop || (isFightSport(market.sport) && started)) && market.state !== "SETTLED" && market.state !== "VOID" && market.state !== "SETTLING") {
+        const bar = el("div", "adm-settle");
+        bar.append(el("span", "adm-note", prop && !started ? "Call it (closes betting now):" : prop ? "Call it:" : "Result:"));
+        const choice = (label, winner, primary) => {
+          const b = el("button", `btn${primary ? " primary" : ""}`, label);
+          b.type = "button";
+          b.disabled = local.busy;
+          b.addEventListener("click", async () => {
+            const staked = market.totals.away.staked + market.totals.home.staked;
+            const side = winner === "draw" ? null : market.totals[winner];
+            const name = sideOf(market, winner);
+            const cost = winner === "draw"
+              ? `Every pick is refunded: ${staked} ZCoins back across ${market.totals.picks} pick(s).`
+              : `${side.picks} pick(s) on ${name} are paid ${side.exposure} ZCoins. ${market.totals.picks - side.picks} pick(s) lose.`;
+            const early = prop && !started ? "Betting is still open — this closes it now.\n\n" : "";
+            const note = window.prompt(
+              `Settle ${titleOf(market)}: ${label}?\n\n${early}${cost}\n\n` +
+              `Optional note for the result${prop ? "" : ", e.g. \"KO, round 6\""}. Cancel to go back.`, "");
+            if (note === null) return;
+            const result = await post_("/api/picks/admin/settle-market", { marketId: market.id, winner, note });
+            local.message = result.ok
+              ? { tone: "good", text: `Settled ${titleOf(market)}: ${label}` +
+                  (result.won ? `. ${result.won} winner(s), ${result.paid} ZC paid.` : result.refunded ? `. ${result.refunded} pick(s) refunded.` : ".") }
+              : { tone: "bad", text: result.message || `Couldn't settle that ${prop ? "prop" : "fight"}.` };
+            local.message.id = market.id;
+            await load();
+            paint();
+          });
+          return b;
+        };
+        bar.append(
+          choice(prop ? "Yes ✓" : `${market.away} won`, "away", true),
+          choice(prop ? "No ✗" : `${market.home} won`, "home", true),
+          choice(prop ? "Void, refund all" : "Draw, refund all", "draw", false)
+        );
+        row.append(bar);
+      }
+
+      const meta = el("p", "adm-note");
+      const when = new Date(market.startsAt);
+      meta.textContent =
+        `${formatLine(market.awayOdds)} / ${formatLine(market.homeOdds)} · ` +
+        `${Number.isNaN(when.getTime()) ? market.startsAt : when.toLocaleString()} · ` +
+        `${market.totals.picks} pick${market.totals.picks === 1 ? "" : "s"}` +
+        (market.finalScore ? ` · final ${market.finalScore}` : "") +
+        (market.winner ? ` · ${prop ? sideOf(market, market.winner) : market.winner} won` : "") +
+        (market.lastAnnounced ? ` · announced ${ago(market.lastAnnounced)}` : "");
+      row.append(meta);
+
+      if (market.totals.picks) {
+        const exposure = el("p", "adm-note");
+        exposure.textContent =
+          `${prop ? "Yes" : "Away"}: ${market.totals.away.picks} picks, ${market.totals.away.staked} staked, ` +
+          `${market.totals.away.exposure} owed if ${prop ? "yes" : "they win"} · ` +
+          `${prop ? "No" : "Home"}: ${market.totals.home.picks} picks, ${market.totals.home.staked} staked, ` +
+          `${market.totals.home.exposure} owed if ${prop ? "no" : "they win"}`;
+        row.append(exposure);
+
+        const list = el("div", "adm-bettors");
+        for (const b of market.bettors) {
+          const chip = el("span", `adm-bettor ${b.status.toLowerCase()}`);
+          chip.textContent =
+            `${b.login} ${b.wager} on ${sideOf(market, b.selection)} ` +
+            `${formatLine(b.odds)} → ${b.returnsIfWon}`;
+          list.append(chip);
+        }
+        row.append(list);
+      }
+
+      card.append(row);
+    }
+
+    if (pages > 1) {
+      const pager = el("div", "mpager pf-pager");
+      pager.style.marginTop = "12px";
+      const prev = el("button", "mpager-btn", "‹");
+      const next = el("button", "mpager-btn", "›");
+      prev.type = next.type = "button";
+      prev.disabled = local.marketPage <= 1;
+      next.disabled = local.marketPage >= pages;
+      const go = (n) => {
+        local.marketPage = n;
+        paint();
+        document.getElementById("admMarkets")?.scrollIntoView({ block: "start" });
+      };
+      prev.addEventListener("click", () => go(local.marketPage - 1));
+      next.addEventListener("click", () => go(local.marketPage + 1));
+      pager.append(prev, el("span", "mpager-at", `Page ${local.marketPage} of ${pages} · ${local.markets.length} markets`), next);
+      card.append(pager);
+    }
+    return card;
+  }
+
+  /* ---------------------------------------------------------- view */
+
+  function paint() {
+    root.replaceChildren();
+
+    const head = el("div", "viewhead");
+    const wrap = el("div");
+    wrap.append(el("h1", null, "Picks admin"));
+    head.append(wrap);
+
+    if (local.forbidden) {
+      root.append(head);
+      const empty = el("div", "empty");
+      empty.append(
+        el("strong", null, "Admins only"),
+        el("p", null, "This page is limited to the Picks admin accounts.")
+      );
+      root.append(empty);
+      return;
+    }
+
+    head.append(summaryStrip());
+    root.append(head);
+
+    if (local.message && !local.message.id && !local.message.at) {
+      const strip = el("div", `adm-message ${local.message.tone}`);
+      strip.textContent = local.message.text;
+      root.append(strip);
+    }
+
+    // Four jobs, four tabs — the same head/strip/tabs shape the Dashboard,
+    // Picks and the profiles use. Markets leads because it is the one the
+    // page is opened for; the form was pushing it below the fold.
+    const TABS = [
+      ["markets", "Markets", (local.markets || []).length],
+      ["open", "Open a market", 0],
+      ["prop", "Add a prop", 0],
+      ["announce", "Announce", local.announce?.open || 0],
+      ["health", "Wallet", 0]
+    ];
+    const bar = el("nav", "pf-tabs adm-tabs");
+    bar.setAttribute("aria-label", "Admin sections");
+    const panels = {};
+    const buttons = {};
+    for (const [key, label, count] of TABS) {
+      const btn = el("button", "pf-tab", label);
+      btn.type = "button";
+      btn.setAttribute("role", "tab");
+      if (count) btn.append(el("i", null, String(count)));
+      btn.addEventListener("click", () => select(key));
+      bar.append(btn);
+      buttons[key] = btn;
+      const panel = el("div", "pf-panel adm-panel");
+      panel.hidden = true;
+      panels[key] = panel;
+    }
+    function select(key) {
+      if (!panels[key]) key = "markets";
+      local.tab = key;
+      for (const [k2, panel] of Object.entries(panels)) {
+        panel.hidden = k2 !== key;
+        buttons[k2].classList.toggle("on", k2 === key);
+        buttons[k2].setAttribute("aria-selected", String(k2 === key));
+      }
+    }
+    root.append(bar);
+
+    panels.markets.append(marketsCard());
+    panels.open.append(openForm());
+    panels.prop.append(propForm());
+    panels.announce.append(announceCard());
+    panels.announce.append(noticeCard());
+    panels.health.append(healthCard());
+    panels.health.append(stuckCard());
+    for (const [key] of TABS) root.append(panels[key]);
+
+    // A message about something that lives on another tab would otherwise
+    // be posted to a panel nobody is looking at.
+    const wanted = local.message?.at === "markets" || local.message?.id ? "markets"
+      : local.message?.at === "announce" || local.noticeMsg ? "announce"
+        : local.formMsg ? "open" : local.propMsg ? "prop" : null;
+    select(wanted || local.tab || "markets");
+  }
+
+  const view = {
+    async mount(container, api) {
+      root = container;
+      shell = api;
+      local.message = null;
+      local.formMsg = null;
+      local.propMsg = null;
+      local.noticeMsg = null;
+      paint();
+      await load();
+      if (container.isConnected) paint();
+    }
+  };
+
+  function boot() {
+    if (!window.ECV3) return window.setTimeout(boot, 30);
+    window.ECV3.register("admin", view);
+  }
+  boot();
+})();

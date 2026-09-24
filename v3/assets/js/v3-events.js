@@ -1,0 +1,1054 @@
+/* ============================================================
+   EastCoin V3 — Events (home)
+
+   Reuses window.EastcoinStreamedAPI rather than re-implementing
+   the provider layer: it already handles the streamed.st /
+   streamed.pk fallback, caching and PPV merging.
+
+   Two deliberate carry-overs from V2, both worth keeping:
+     · first paint asks only for Live + Today
+     · the wider catalogue is fetched lazily, on demand
+   And two improvements:
+     · skeletons occupy the real card height, so nothing jumps
+     · a failed fetch says so and offers a retry, instead of
+       leaving an empty grid that looks like "no games today"
+   ============================================================ */
+(() => {
+  "use strict";
+
+  // Grouping, labels and the NFL/college/CFL running order live in
+  // v3-sports.js so this view and the MultiView picker cannot drift apart.
+  const Sports = window.ECV3Sports;
+  const SPORT_LABELS = Sports.SPORT_LABELS;
+
+  const local = {
+    filter: "all",
+    matches: [],
+    loaded: false,
+    failed: false,
+    search: ""
+  };
+
+  let shell = null;
+  let root = null;
+
+  /* ---------------------------------------------------------- data */
+
+  async function load(force = false) {
+    const API = window.EastcoinStreamedAPI;
+    if (!API) {
+      local.failed = true;
+      return;
+    }
+    try {
+      // getLive/getToday resolve a cache envelope, not a bare array:
+      // { data, savedAt, fromCache, stale }. Unwrap before use.
+      const unwrap = (result) => (Array.isArray(result) ? result : result?.data) || [];
+
+      const [liveRaw, todayRaw] = await Promise.all([
+        API.getLive(force).catch(() => null),
+        API.getToday(force).catch(() => null)
+      ]);
+      const live = unwrap(liveRaw);
+      const today = unwrap(todayRaw);
+
+      // Live wins on collision: a match that is on right now should
+      // never be rendered with its scheduled-kickoff styling.
+      const seen = new Map();
+      for (const match of [...(live || []), ...(today || [])]) {
+        if (!match?.id || seen.has(match.id)) continue;
+        seen.set(match.id, match);
+      }
+
+      // Different ids can still be the same game: drop the provider's
+      // bare, early-dated copies (see withoutCopies in v3-sports.js).
+      const all = Sports.withoutCopies ? Sports.withoutCopies([...seen.values()]) : [...seen.values()];
+      // Hidden sports and D2/D3 college games go here, before anything
+      // counts them (the All/Live chips read local.matches).
+      const kept = Sports.keep ? all.filter(Sports.keep) : all;
+      // NFL Sunday: football only. Everything else is still there on
+      // Picks; this is just what the cards show.
+      const football = nflSundayNow() ? kept.filter(isNflSunday) : [];
+      local.nflSunday = football.length > 0;
+      local.matches = local.nflSunday ? football : kept;
+      local.loaded = true;
+      // Only a genuine provider failure counts as failed. An empty but
+      // successful response is "nothing on today", which is a normal state.
+      local.failed = !liveRaw && !todayRaw;
+    } catch {
+      local.failed = true;
+    }
+  }
+
+  /* ---------------------------------------------------------- helpers */
+
+  const isLive = Sports.isLive;
+
+
+  function startsSoon(match) {
+    const start = Number(match?.date) || 0;
+    if (!start) return false;
+    const delta = start - Date.now();
+    return delta > 0 && delta < 60 * 60 * 1000;
+  }
+
+  function timeLabel(match) {
+    const start = Number(match?.date) || 0;
+    if (!start) return "Time TBC";
+    if (isLive(match)) return "Live now";
+
+    const date = new Date(start);
+    const today = new Date();
+    const sameDay = date.toDateString() === today.toDateString();
+    const time = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+    if (sameDay) {
+      const mins = Math.round((start - Date.now()) / 60000);
+      if (mins > 0 && mins < 60) return `Starts in ${mins}m`;
+      return time;
+    }
+    return `${date.toLocaleDateString([], { weekday: "short" })} ${time}`;
+  }
+
+  const sportKey = Sports.sportKey;
+
+  function matches(match) {
+    if (local.filter === "live" && !isLive(match)) return false;
+    if (local.filter === "soon" && !startsSoon(match)) return false;
+
+    const term = local.search.toLowerCase();
+    if (!term) return true;
+    const hay = [
+      match?.title,
+      match?.category,
+      match?.teams?.home?.name,
+      match?.teams?.away?.name
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return hay.includes(term);
+  }
+
+  /* ---------------------------------------------------------- render */
+
+  function crest(team, nfl, cfb) {
+    const API = window.EastcoinStreamedAPI;
+    const el = document.createElement("span");
+    el.className = "crest";
+    // Same reasoning as the poster: initials are written immediately and
+    // the badge fades in over them. Waiting for the image to fail before
+    // showing anything leaves an empty box for as long as it is pending.
+    const label = document.createElement("span");
+    label.textContent = initials(team?.name);
+    el.append(label);
+
+    // NFL clubs fall back to the league's own logo when the provider
+    // has no badge for them.
+    const url = (nfl ? nflLogo(team) : "") || (cfb ? cfbLogo(team) : "") || (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || "";
+    if (url) {
+      const img = document.createElement("img");
+      img.alt = "";
+      img.loading = nfl ? "eager" : "lazy";   // club logos are the card; do not make them wait
+      img.addEventListener("load", () => el.classList.add("has-badge"));
+      img.addEventListener("error", () => img.remove());
+      img.src = url;
+      el.append(img);
+    }
+    return el;
+  }
+
+  function initials(name) {
+    return String(name || "?")
+      .split(/\s+/)
+      .map((w) => w[0])
+      .filter(Boolean)
+      .slice(0, 3)
+      .join("")
+      .toUpperCase();
+  }
+
+  function card(match) {
+    const API = window.EastcoinStreamedAPI;
+    const live = isLive(match);
+
+    const el = document.createElement("article");
+    el.className = "eventcard";
+    // NFL games get the full treatment: turf, the shield, real logos,
+    // and the Picks line when a market is open.
+    const nfl = isNfl(match);
+    const cfb = isCollege(match);
+    if (nfl) {
+      el.classList.add("nfl");
+      el.dataset.nfl = "1";
+    }
+
+    const href = `/?view=watch&event=${encodeURIComponent(match.id)}`;
+    const openMatch = (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+      event.preventDefault();
+      history.pushState({ view: "watch" }, "", href);
+      shell.go("watch", { push: false });
+    };
+
+    // poster — the whole banner is the primary way into the event
+    const poster = document.createElement("a");
+    poster.className = "ec-poster";
+    poster.href = href;
+    poster.setAttribute("aria-label", `Watch ${match?.title || "event"}`);
+    poster.addEventListener("click", openMatch);
+
+    // posterUrl() takes the poster STRING; matchupPosterUrl() takes the
+    // match and composes one from the two team badges. Passing the match
+    // to posterUrl yields "[object Object]", which streamed.st happily
+    // answers with generic placeholder art — broken, but not an error.
+    const posterUrl =
+      (match?.poster && API?.posterUrl ? API.posterUrl(match.poster) : "") ||
+      (API?.matchupPosterUrl ? API.matchupPosterUrl(match) : "");
+    // The crest art is painted first and always. Streamed generates these
+    // posters on demand and they routinely take a second or more, so an
+    // image-only poster leaves a black rectangle on every card until it
+    // arrives. The photo fades in over the top when (and if) it loads.
+    poster.append(fallbackArt(match));
+
+    if (posterUrl) {
+      const img = document.createElement("img");
+      img.alt = "";
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.addEventListener("load", () => img.classList.add("in"));
+      img.addEventListener("error", () => img.remove());
+      img.src = posterUrl;
+      poster.append(img);
+    }
+
+    const flag = document.createElement("span");
+    flag.className = "ec-flag";
+    setFlag(flag, flagStateFor(match));
+    poster.append(flag);
+    // Who's watching this one right now, from the presence feed.
+    el.dataset.eventId = String(match.id || "");
+    const eyes = document.createElement("span");
+    eyes.className = "ec-watching";
+    eyes.hidden = true;
+    poster.append(eyes);
+    paintWatching(el, watchingNow[String(match.id || "")] || 0);
+    if (nfl) {
+      const shield = document.createElement("span");
+      shield.className = "ec-league";
+      shield.textContent = "NFL";
+      poster.append(shield);
+    }
+    el.append(poster);
+
+    // body --------------------------------------------------
+    const body = document.createElement("div");
+    body.className = "ec-body";
+
+    const title = document.createElement("h3");
+    title.className = "ec-title";
+
+    const home = match?.teams?.home;
+    const away = match?.teams?.away;
+    if (home?.name && away?.name) {
+      // One row per team, each with its own crest, so the matchup reads
+      // at a glance instead of as one long run-on string.
+      title.append(teamRow(home, nfl, cfb), teamRow(away, nfl, cfb));
+      title.classList.add("is-matchup");
+    } else {
+      title.textContent = match?.title || "Untitled event";
+    }
+
+    // The sport is already stated by the group heading this card sits
+    // under, so repeating it on every card is noise.
+    const meta = document.createElement("p");
+    meta.className = "ec-meta";
+    meta.textContent = timeLabel(match);
+
+    body.append(title, meta);
+
+    const score = document.createElement("div");
+    score.className = "ec-score";
+    score.hidden = true;
+    body.append(score);
+    el.append(body);
+
+    attachScore(match, score, title, flag);
+
+    // actions -----------------------------------------------
+    const actions = document.createElement("div");
+    actions.className = "ec-actions";
+
+    const watch = document.createElement("a");
+    watch.className = "btn primary";
+    watch.href = href;
+    watch.textContent = live ? "Watch live" : "Watch";
+    watch.addEventListener("click", openMatch);
+
+
+    actions.append(watch);
+    el.append(actions);
+
+    if (nfl) {
+      const strip = document.createElement("div");
+      strip.className = "ec-picks";
+      strip.hidden = true;
+      el.append(strip);
+      pendingPicks.push({ match, strip });
+    }
+
+    return el;
+  }
+
+  // "Upcoming" is only true of something that hasn't started. Once a
+  // start time is in the past the card must not claim otherwise — which
+  // is how a game could end up tagged Upcoming and Final at once.
+  // Viewer counts per event id, refreshed by the Who's here strip's poll.
+  let watchingNow = {};
+  function paintWatching(cardEl, n) {
+    const eyes = cardEl.querySelector(".ec-watching");
+    if (!eyes) return;
+    eyes.hidden = !n;
+    eyes.textContent = n ? `👀 ${n} watching` : "";
+  }
+  // Every view mounts into the same container, so root stays connected
+  // after the person has moved on to a stream. Anything that paints from
+  // a background event must check the route, not the node: a presence
+  // tick once rebuilt the Events grid over the player, which read as
+  // "the site sent me back to the homepage".
+  const showing = () => shell?.state?.route === "events" && Boolean(root?.isConnected);
+  document.addEventListener("ec-presence", (event) => {
+    const next = event.detail?.watching || {};
+    // The counts are a sort key, so a change in them can change the
+    // order. Repaint then (scroll is kept); otherwise just the pills.
+    const reorder = JSON.stringify(next) !== JSON.stringify(watchingNow);
+    watchingNow = next;
+    if (!showing()) return;
+    if (reorder && local.loaded) { paint(); return; }
+    for (const cardEl of document.querySelectorAll(".eventcard[data-event-id]")) {
+      paintWatching(cardEl, watchingNow[cardEl.dataset.eventId] || 0);
+    }
+  });
+
+  function flagStateFor(match) {
+    if (isLive(match)) return "live";
+    const start = Number(match?.date) || 0;
+    if (start && start <= Date.now()) return "";   // started already: say nothing
+    return startsSoon(match) ? "soon" : "upcoming";
+  }
+
+  function setFlag(flag, state) {
+    const copy = { live: "Live", soon: "Soon", upcoming: "Upcoming", final: "Final" };
+    flag.className = `ec-flag${state ? ` ${state}` : ""}`;
+    flag.textContent = copy[state] || "";
+    flag.hidden = !state;
+  }
+
+  function isNfl(match) {
+    return sportKey(match) === "american-football" && Sports.footballRank(match) === 0;
+  }
+
+  /* NFL Sunday — Sundays from September through January, Chicago time,
+     the Sports page shows football only: any listing naming an NFL
+     team (whatever category the provider filed it under), RedZone, and
+     the NFL Network feed. If a Sunday turns up nothing that fits, the
+     page shows everything as usual. ?allsports=1 shows everything on
+     any day, for a look. */
+  const NFL_MONTHS = new Set([9, 10, 11, 12, 1]);
+  function nflSundayNow() {
+    try { if (new URL(location.href).searchParams.get("allsports") === "1") return false; } catch { /* fine */ }
+    const ct = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }));
+    // Sunday all day, and Monday until the night game is done — 10:30 PM
+    // Central, when Monday Night Football is over and the room wants its
+    // baseball back. Nothing else needs a football-only screen after that.
+    if (!NFL_MONTHS.has(ct.getMonth() + 1)) return false;
+    if (ct.getDay() === 0) return true;
+    return ct.getDay() === 1 && ct.getHours() * 60 + ct.getMinutes() < 22 * 60 + 30;
+  }
+  const nflDayIsMonday = () => new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })).getDay() === 1;
+  const isNflSunday = (m) => Sports.footballRank(m) === 0 || isRedZone(m) || /^ppv-nfl-/.test(String(m?.id || "")) || /nfl/i.test(String(m?.title || ""));
+
+  /** College football: American football that isn't the NFL. */
+  function isCollege(match) {
+    return sportKey(match) === "american-football" && !isNfl(match);
+  }
+
+  /** ESPN's logo for a college team, when the name is one ESPN knows. */
+  function cfbLogo(team) {
+    return window.ECLogos ? window.ECLogos.url("american-football", "CFB", team?.name) : null;
+  }
+
+  /**
+   * College games often arrive as a title only ("Missouri Tigers at
+   * Kansas Jayhawks"). Both sides, when both are schools ESPN knows;
+   * otherwise null, so a random title never grows two initials.
+   */
+  function collegePair(title) {
+    const t = String(title || "");
+    const at = t.split(/\s+at\s+/i);
+    const vs = t.split(/\s+(?:vs\.?|v)\s+/i);
+    let home, away;
+    if (at.length === 2) { away = at[0]; home = at[1]; }
+    else if (vs.length === 2) { home = vs[0]; away = vs[1]; }
+    else return null;
+    const known = (n) => window.ECLogos?.collegeId?.(n);
+    return known(home) && known(away) ? { home: { name: home.trim() }, away: { name: away.trim() } } : null;
+  }
+
+  /** The league's own logo for an NFL club, when the provider has none. */
+  function nflLogo(team) {
+    return window.ECLogos ? window.ECLogos.url("american-football", "NFL", team?.name) : null;
+  }
+
+  function teamRow(team, nfl, cfb) {
+    const row = document.createElement("span");
+    row.className = "teamrow";
+
+    const badge = document.createElement("span");
+    badge.className = "teamlogo";
+    const API = window.EastcoinStreamedAPI;
+    // The provider hands every NFL club the same league badge, so for
+    // NFL the club's own logo comes first and the badge is the fallback.
+    const url = (nfl ? nflLogo(team) : "") || (cfb ? cfbLogo(team) : "") || (team?.badge && API?.badgeUrl ? API.badgeUrl(team.badge) : "") || "";
+    if (url) {
+      const img = document.createElement("img");
+      img.alt = "";
+      img.loading = nfl ? "eager" : "lazy";
+      img.addEventListener("load", () => badge.classList.add("has-badge"));
+      img.addEventListener("error", () => img.remove());
+      img.src = url;
+      badge.append(img);
+    }
+    const name = document.createElement("span");
+    name.className = "teamname";
+    name.textContent = team?.name || "TBC";
+
+    row.append(badge, name);
+    return row;
+  }
+
+  // Scores are additive: the card is complete without them, and a match
+  // that ESPN doesn't have simply never shows one.
+  async function attachScore(match, mount, titleEl, flag) {
+    if (!window.ECV3Scores) return;
+    if (window.ECV3Prefs && window.ECV3Prefs.scores === false) return;
+
+    let score = null;
+    try {
+      score = await window.ECV3Scores.forMatch(match);
+    } catch {
+      return;
+    }
+    if (!score || score.state === "pre" || !mount.isConnected) return;
+
+    // ESPN is authoritative about state; the schedule-derived guess isn't.
+    if (flag) setFlag(flag, score.state === "post" ? "final" : "live");
+
+    // A finished game drops below everything still going. The schedule
+    // still calls it live, so it was painted among the live ones; once
+    // the score says Final it moves to the back of its group. Order
+    // within the finals is whatever order the scores came back in.
+    if (score.state === "post") {
+      const cardEl = mount.closest(".eventcard");
+      const grid = cardEl?.parentElement;
+      if (cardEl && grid) {
+        cardEl.classList.add("is-final");
+        grid.append(cardEl);
+      }
+    }
+
+    const rows = titleEl.querySelectorAll(".teamrow");
+    const line = document.createElement("span");
+    line.className = "ec-score-state";
+    line.textContent = score.state === "post" ? "Final" : score.detail || "Live";
+    if (score.state === "in") line.classList.add("in");
+
+    // Prefer painting each score against its own team row.
+    if (rows.length === 2) {
+      appendScore(rows[0], score.home.score);
+      appendScore(rows[1], score.away.score);
+      mount.append(line);
+    } else {
+      const compact = document.createElement("span");
+      compact.className = "ec-score-compact nums";
+      compact.textContent = `${score.home.score ?? "-"}–${score.away.score ?? "-"}`;
+      mount.append(compact, line);
+    }
+    mount.hidden = false;
+  }
+
+  function appendScore(row, value) {
+    if (value === null || value === undefined) return;
+    const el = document.createElement("span");
+    el.className = "teamscore nums";
+    el.textContent = String(value);
+    row.append(el);
+  }
+
+  function fallbackArt(match) {
+    const wrap = document.createElement("div");
+    wrap.className = "fallback";
+    const home = match?.teams?.home;
+    const away = match?.teams?.away;
+    const nfl = isNfl(match);
+    const cfb = isCollege(match);
+    if (home || away) {
+      wrap.append(crest(home, nfl, cfb));
+      const vs = document.createElement("span");
+      vs.className = "vs";
+      vs.textContent = "VS";
+      wrap.append(vs, crest(away, nfl, cfb));
+    } else if (cfb && collegePair(match?.title)) {
+      const pair = collegePair(match.title);
+      wrap.append(crest(pair.home, false, true));
+      const vs = document.createElement("span");
+      vs.className = "vs";
+      vs.textContent = "VS";
+      wrap.append(vs, crest(pair.away, false, true));
+    } else {
+      const vs = document.createElement("span");
+      vs.className = "vs";
+      vs.textContent = (SPORT_LABELS[sportKey(match)] || "📺").split(" ")[0];
+      wrap.append(vs);
+    }
+    return wrap;
+  }
+
+  function skeletonGrid(count = 8) {
+    const grid = document.createElement("div");
+    grid.className = "eventgrid";
+    for (let i = 0; i < count; i += 1) {
+      const s = document.createElement("div");
+      s.className = "skel";
+      s.innerHTML =
+        '<div class="poster shimmer"></div>' +
+        '<div class="lines">' +
+        '<span class="bar w80"></span><span class="bar w50"></span><span class="bar w100"></span>' +
+        "</div>";
+      grid.append(s);
+    }
+    return grid;
+  }
+
+  // "Tonight on Picks": what is on the table right now, from
+  // v3-tonight.js — an open prop with a stake box, your picks with the
+  // score, tonight's slate, or what opens next. The old onboarding
+  // card below is the fallback if that module never loaded.
+  function picksBanner() {
+    if (window.ECTonight) {
+      const slot = document.createElement("div");
+      slot.className = "tonight-slot";
+      window.ECTonight.mount(slot, shell);
+      return slot;
+    }
+    const banner = document.createElement("a");
+    banner.className = "picksbanner";
+    banner.href = "/?view=picks";
+    banner.addEventListener("click", (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+      event.preventDefault();
+      shell.go("picks");
+    });
+
+    const coin = document.createElement("img");
+    coin.className = "picksbanner-coin";
+    coin.src = "/v3/assets/img/zcoin.webp";
+    coin.alt = "";
+    coin.width = 30;
+    coin.height = 30;
+
+    const tag = document.createElement("span");
+    tag.className = "picksbanner-tag";
+    tag.textContent = "New";
+
+    const copy = document.createElement("span");
+    copy.className = "picksbanner-copy";
+    const strong = document.createElement("strong");
+    strong.textContent = "Picks are now live";
+    const rest = document.createElement("span");
+    rest.textContent = " — back a team with your ZCoins and see where you land on the leaderboard.";
+    copy.append(strong, rest);
+
+    const cta = document.createElement("span");
+    cta.className = "picksbanner-cta";
+    cta.textContent = "Make your picks →";
+
+    banner.append(coin, tag, copy, cta);
+    return banner;
+  }
+
+  function filterBar() {
+    const bar = document.createElement("div");
+    bar.className = "filters";
+
+    const liveCount = local.matches.filter(isLive).length;
+    const options = [
+      ["all", `All (${local.matches.length})`],
+      ["live", `Live (${liveCount})`, liveCount > 0],
+      ["soon", "Starting soon"]
+    ];
+
+    for (const [key, label, showDot] of options) {
+      const chip = document.createElement("button");
+      chip.className = "chip";
+      chip.type = "button";
+      chip.setAttribute("aria-pressed", String(local.filter === key));
+      if (showDot) {
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        chip.append(dot);
+      }
+      chip.append(document.createTextNode(label));
+      chip.addEventListener("click", () => {
+        local.filter = key;
+        paint();
+      });
+      bar.append(chip);
+    }
+
+    const spacer = document.createElement("div");
+    spacer.className = "filters-spacer";
+
+    const note = document.createElement("span");
+    note.className = "filters-note";
+    note.textContent = local.search ? `Filtered by “${local.search}”` : local.nflSunday ? (nflDayIsMonday() ? "Monday Night Football · football only" : "NFL Sunday · football only") : "Live and today";
+
+    bar.append(spacer, note);
+    return bar;
+  }
+
+  // Rebuilding the page empties it for an instant, and the browser
+  // clamps the scroll to the top and leaves it there. Every caller —
+  // View more, a filter chip, the poll — wants the page to stay put, so
+  // the position is taken before the rebuild and restored after, in the
+  // same task, before anything is drawn.
+  function paint() {
+    const scrollY = window.scrollY;
+    paintNow();
+    window.scrollTo(0, scrollY);
+  }
+
+  function paintNow() {
+    root.replaceChildren();
+
+    // October: one dismissible line saying the site is dressed up.
+    const STRIP_KEY = "ec_spooky_strip_" + new Date().getFullYear();
+    let stripGone = false;
+    try { stripGone = localStorage.getItem(STRIP_KEY) === "1"; } catch { /* shown */ }
+    if (document.body.classList.contains("spooky") && !stripGone) {
+      const strip = document.createElement("div");
+      strip.className = "spookystrip";
+      strip.innerHTML = '<span class="pump">🎃</span><b>Spooky season</b><span>EastCoin is dressed up for Halloween. Same site, darker corners.</span>';
+      const close = document.createElement("button");
+      close.type = "button";
+      close.setAttribute("aria-label", "Hide");
+      close.textContent = "✕";
+      close.addEventListener("click", () => { try { localStorage.setItem(STRIP_KEY, "1"); } catch { /* fine */ } strip.remove(); });
+      strip.append(close);
+      root.append(strip);
+    }
+
+    const head = document.createElement("div");
+    head.className = "viewhead";
+    const titleWrap = document.createElement("div");
+    const h1 = document.createElement("h1");
+    h1.textContent = "Events";
+    titleWrap.append(h1);
+    head.append(titleWrap);
+    root.append(head);
+
+    // One scrolling line of what just happened, from the activity feed.
+    const ticker = document.createElement("section");
+    ticker.className = "ticker";
+    root.append(ticker);
+    const mountTicker = (tries = 0) => {
+      if (!ticker.isConnected) return;
+      if (window.ECActivity) window.ECActivity.mountTicker(ticker);
+      else if (tries < 100) window.setTimeout(() => mountTicker(tries + 1), 50);
+    };
+    mountTicker();
+
+    // Two columns up top: the Picks banner, and everyone on the site
+    // right now (guests counted) — Who's here.
+    const top = document.createElement("div");
+    top.className = "homegrid";
+    top.append(picksBanner());
+    const strip = document.createElement("section");
+    strip.className = "whoshere";
+    top.append(strip);
+    root.append(top);
+    // Mounted once it is in the page. The presence module loads with
+    // the shell, but a paint from cache can still beat it, so wait for
+    // it rather than skipping the strip.
+    const mountStrip = (tries = 0) => {
+      if (!strip.isConnected) return;
+      if (window.ECPresence) window.ECPresence.mountStrip(strip);
+      else if (tries < 100) window.setTimeout(() => mountStrip(tries + 1), 50);
+    };
+    mountStrip();
+
+    if (!local.loaded && !local.failed) {
+      root.append(skeletonGrid());
+      return;
+    }
+
+    if (local.failed) {
+      const strip = document.createElement("div");
+      strip.className = "notice-strip";
+      strip.append(
+        document.createTextNode(
+          "Couldn't reach the events provider. This is usually temporary."
+        )
+      );
+      const retry = document.createElement("button");
+      retry.className = "btn";
+      retry.type = "button";
+      retry.style.flex = "0 0 auto";
+      retry.style.padding = "0 16px";
+      retry.textContent = "Try again";
+      retry.addEventListener("click", async () => {
+        local.failed = false;
+        local.loaded = false;
+        paint();
+        await load(true);
+        paint();
+      });
+      strip.append(retry);
+      root.append(strip);
+      return;
+    }
+
+    root.append(filterBar());
+
+    const visible = local.matches.filter(matches);
+    if (!visible.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      const strong = document.createElement("strong");
+      strong.textContent = local.search ? "Nothing matches that" : "Nothing on right now";
+      const p = document.createElement("p");
+      p.textContent = local.search
+        ? "Try a team name, or clear the search."
+        : "Check back closer to kickoff — today's schedule fills up through the day.";
+      empty.append(strong, p);
+      root.append(empty);
+      return;
+    }
+
+    // RedZone gets the top of the page to itself on the days it is
+    // listed: one wide banner instead of a card, unless someone is
+    // searching, when it is just another result.
+    const zone = local.search ? null : visible.find(isRedZone) || null;
+    if (zone) root.append(redZoneHero(zone));
+
+    const ordered = Sports.grouped(zone ? visible.filter((m) => m !== zone) : visible, watchingNow);
+    pendingPicks = [];
+
+    for (const [key, list] of ordered) {
+      const group = document.createElement("section");
+      group.className = "sportgroup";
+      group.dataset.sport = key;
+
+      const gh = document.createElement("div");
+      gh.className = "sportgroup-head";
+      const h2 = document.createElement("h2");
+      h2.textContent = SPORT_LABELS[key] || SPORT_LABELS.other;
+      const count = document.createElement("span");
+      count.className = "count";
+      const liveHere = list.filter(isLive).length;
+      count.textContent = liveHere ? `${liveHere} live · ${list.length} total` : `${list.length}`;
+      const rule = document.createElement("span");
+      rule.className = "rule";
+      gh.append(h2, count, rule);
+
+      const grid = document.createElement("div");
+      grid.className = "eventgrid";
+      group.append(gh, grid);
+      root.append(group);
+
+      // A sport shows a few rows, then a "View more" button adds the same
+      // again. A row is however many columns the grid has at this width,
+      // measured now that it is in the page — eighty college games on a
+      // Saturday should not be eighty cards.
+      const cols = Math.max(1, String(getComputedStyle(grid).gridTemplateColumns || "").split(" ").filter(Boolean).length);
+      const page = Math.max(MIN_PAGE, cols * ROWS_PER_PAGE);
+      const limit = Math.min(list.length, Math.max(shownBy.get(key) || 0, page));
+      for (const match of list.slice(0, limit)) grid.append(card(match));
+      if (list.length > limit || limit > page) group.append(moreRow(key, list.length, limit, page));
+    }
+
+    // Under the last group on an NFL Sunday: why the page is short.
+    if (local.nflSunday && !local.search) {
+      const line = document.createElement("p");
+      line.className = "sundaynote";
+      line.append(nflDayIsMonday()
+        ? "🏈 It's Monday Night Football, football only on here today. No bets open except for football."
+        : "🏈 It's NFL Sunday, football only on here today. Sybau. Baseball and other shit will be back tomorrow");
+      root.append(line);
+    }
+
+    if (pendingPicks.length) decoratePicks(pendingPicks);
+  }
+
+  /* ---------------------------------------------------------- redzone
+
+     NFL RedZone is a single-title listing from the provider (no teams,
+     one poster). On the Sundays it appears it is the one thing most of
+     the room came for, so it takes a whole row at the top. */
+
+  const isRedZone = (m) => /\bnfl\b.*red\s*zone|red\s*zone.*\bnfl\b/i.test(String(m?.title || "")) || /^ppv-nfl-red-zone/.test(String(m?.id || ""));
+
+  function redZoneHero(match) {
+    const API = window.EastcoinStreamedAPI;
+    const href = `/?view=watch&event=${encodeURIComponent(match.id)}`;
+    const open = (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+      event.preventDefault();
+      history.pushState({ view: "watch" }, "", href);
+      shell.go("watch", { push: false });
+    };
+
+    const hero = document.createElement("section");
+    hero.className = "rz-hero";
+    hero.dataset.eventId = String(match.id || "");
+
+    const text = document.createElement("div");
+    text.className = "rz-text";
+
+    const mark = document.createElement("div");
+    mark.className = "rz-mark";
+    const lamp = document.createElement("span");
+    lamp.className = "rz-lamp";
+    const markText = document.createElement("span");
+    markText.textContent = "NFL RedZone";
+    const when = document.createElement("span");
+    when.className = "rz-when";
+    mark.append(lamp, markText, when);
+
+    const h = document.createElement("h2");
+    h.className = "rz-h";
+    h.textContent = "Football season is here.";
+
+    const p = document.createElement("p");
+    p.className = "rz-p";
+    p.textContent = "Every touchdown from every game, all Sunday, on one stream.";
+    const emote = document.createElement("img");
+    emote.className = "rz-emote";
+    emote.src = "https://cdn.betterttv.net/emote/6556e8cee047f20d72a4b449/2x.webp";
+    emote.alt = "";
+    emote.decoding = "async";
+    emote.addEventListener("error", () => emote.remove());
+    p.append(" ", emote);
+
+    const row = document.createElement("div");
+    row.className = "rz-row";
+    const cta = document.createElement("a");
+    cta.className = "rz-cta";
+    cta.href = href;
+    cta.textContent = "Watch RedZone →";
+    cta.addEventListener("click", open);
+    const eyes = document.createElement("span");
+    eyes.className = "rz-eyes";
+    row.append(cta, eyes);
+
+    text.append(mark, h, p, row);
+
+    const art = document.createElement("a");
+    art.className = "rz-art";
+    art.href = href;
+    art.setAttribute("aria-label", "Watch NFL RedZone");
+    art.addEventListener("click", open);
+    const posterUrl = match?.poster && API?.posterUrl ? API.posterUrl(match.poster) : "";
+    if (posterUrl) {
+      const img = document.createElement("img");
+      img.alt = "";
+      img.decoding = "async";
+      img.addEventListener("load", () => img.classList.add("in"));
+      img.addEventListener("error", () => img.remove());
+      img.src = posterUrl;
+      art.append(img);
+    }
+
+    hero.append(text, art);
+
+    // Kickoff or LIVE, and who's here, kept current while the hero is
+    // on the page; the interval lets go once it isn't.
+    const start = Number(match?.date) || 0;
+    // Kickoff time in the listing's own words, "11:55am CT".
+    const clockOf = (ms) => new Date(ms).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/Chicago" }).replace(" ", "").toLowerCase() + " CT";
+    const tick = () => {
+      const live = isLive(match);
+      hero.classList.toggle("live", live);
+      // Before kickoff the headline and the button both say so; once it's
+      // on they drop the hedge.
+      h.textContent = live ? "Football season is here." : "Football season is almost here.";
+      cta.textContent = live || !start ? "Watch RedZone →" : `Watch RedZone at ${clockOf(start)}`;
+      if (live) when.textContent = "LIVE";
+      else if (!start) when.textContent = "";
+      else {
+        const ms = start - Date.now();
+        const today = new Date(start).toDateString() === new Date().toDateString();
+        const clock = clockOf(start);
+        if (ms <= 0) when.textContent = "Kicking off";
+        else if (ms < 60 * 60000) when.textContent = `Kicks off in ${Math.max(1, Math.round(ms / 60000))} min · ${clock}`;
+        else if (today) when.textContent = `Kicks off today · ${clock}`;
+        else when.textContent = `Kicks off ${new Date(start).toLocaleDateString("en-US", { weekday: "long", timeZone: "America/Chicago" })} · ${clock}`;
+      }
+      const n = watchingNow[String(match.id || "")] || 0;
+      eyes.textContent = n ? `👀 ${n} watching now` : "";
+    };
+    // The first tick runs before the hero is in the page, so only the
+    // interval checks for it having left.
+    const timer = window.setInterval(() => { if (!hero.isConnected) window.clearInterval(timer); else tick(); }, 30000);
+    tick();
+    return hero;
+  }
+
+  /* ---------------------------------------------------------- view more
+
+     How many cards each sport is showing, by sport key, so a repaint
+     (a poll, a filter) keeps what someone has already opened. */
+
+  const ROWS_PER_PAGE = 4;
+  const MIN_PAGE = 6;          // one column on a phone still gets a handful
+  const shownBy = new Map();
+
+  // Just under the sticky nav, so the heading is the first thing seen.
+  function scrollToGroup(key) {
+    const head = root.querySelector(`.sportgroup[data-sport="${key}"] .sportgroup-head`);
+    if (!head) return;
+    const top = head.getBoundingClientRect().top + window.scrollY - 72;
+    window.scrollTo({ top: Math.max(0, top) });
+  }
+
+  function moreRow(key, total, limit, page) {
+    const row = document.createElement("div");
+    row.className = "evmore";
+    // The label carries its emoji; the button reads better without it.
+    const name = String(SPORT_LABELS[key] || SPORT_LABELS.other).replace(/^\S+\s+/, "");
+    if (total > limit) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "evmore-btn";
+      btn.append(document.createTextNode(`View more ${name} events`));
+      const left = document.createElement("span");
+      left.className = "evmore-left";
+      left.textContent = `${total - limit} more`;
+      btn.append(left);
+      btn.addEventListener("click", () => { shownBy.set(key, limit + page); paint(); });
+      row.append(btn);
+    }
+    if (limit > page) {
+      const less = document.createElement("button");
+      less.type = "button";
+      less.className = "evmore-less";
+      less.textContent = "Show fewer";
+      less.addEventListener("click", () => { shownBy.delete(key); paint(); scrollToGroup(key); });
+      row.append(less);
+    }
+    return row;
+  }
+
+  /* ---------------------------------------------------------- NFL picks
+
+     One fetch for the open markets and one for what is coming, then
+     every NFL card gets a line: the locked odds with a way in, or when
+     it opens. Nothing here blocks the page; the cards paint first. */
+
+  let pendingPicks = [];
+
+  async function decoratePicks(cards) {
+    const nick = (name) => (window.ECLogos ? window.ECLogos.nickname(name) : String(name || "").toLowerCase().split(" ").pop());
+    const line = (v) => { const n = Number(v); return !Number.isFinite(n) || n === 0 ? "—" : n > 0 ? `+${n}` : `−${Math.abs(n)}`; };
+    let open = [];
+    let upcoming = [];
+    try {
+      const [boot, up] = await Promise.all([
+        fetch("/api/picks/bootstrap", { credentials: "include" }).then((r) => r.json()).catch(() => null),
+        fetch("/api/picks/upcoming").then((r) => r.json()).catch(() => null)
+      ]);
+      open = (boot?.markets || []).filter((m) => m.state === "OPEN");
+      upcoming = up?.games || [];
+    } catch { return; }
+
+    for (const { match, strip } of cards) {
+      if (!strip.isConnected) continue;
+      const a = nick(match?.teams?.away?.name);
+      const h = nick(match?.teams?.home?.name);
+      const same = (x, y) => (nick(x) === a && nick(y) === h) || (nick(x) === h && nick(y) === a);
+
+      const market = open.find((m) => same(m.away?.name || m.away, m.home?.name || m.home));
+      if (market) {
+        const awayName = market.away?.name || market.away;
+        const homeName = market.home?.name || market.home;
+        strip.replaceChildren();
+        const link = document.createElement("a");
+        link.className = "ec-picks-link";
+        link.href = "/?view=picks";
+        link.addEventListener("click", (event) => {
+          if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+          event.preventDefault();
+          history.pushState({ view: "picks" }, "", "/?view=picks");
+          shell.go("picks", { push: false });
+        });
+        const coin = document.createElement("img");
+        coin.className = "zcoin-mark";
+        coin.src = "/v3/assets/img/zcoin.webp";
+        coin.alt = "";
+        coin.width = 14;
+        coin.height = 14;
+        link.append(coin, document.createTextNode(` Picks open · ${nick(awayName).toUpperCase()} ${line(market.awayOdds)} · ${nick(homeName).toUpperCase()} ${line(market.homeOdds)} · Bet →`));
+        strip.append(link);
+        strip.hidden = false;
+        continue;
+      }
+
+      const soon = upcoming.find((g) => same(g.away, g.home));
+      if (soon) {
+        const opens = new Date(soon.opensAt || new Date(soon.startsAt).getTime() - 60 * 60 * 1000);
+        strip.replaceChildren();
+        const coin = document.createElement("img");
+        coin.className = "zcoin-mark";
+        coin.src = "/v3/assets/img/zcoin.webp";
+        coin.alt = "";
+        coin.width = 14;
+        coin.height = 14;
+        const text = document.createElement("span");
+        text.textContent = `Picks open ${opens.toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })} · ${nick(soon.away).toUpperCase()} ${line(soon.awayLine)} · ${nick(soon.home).toUpperCase()} ${line(soon.homeLine)}`;
+        strip.append(coin, text);
+        strip.classList.add("soon");
+        strip.hidden = false;
+      }
+    }
+  }
+
+  /* ---------------------------------------------------------- view */
+
+  const view = {
+    async mount(container, api) {
+      shell = api;
+      root = container;
+      local.search = api.state.search || "";
+      paint();
+      if (!local.loaded) {
+        await load();
+        if (showing()) paint();
+      }
+    },
+    onSearch(term) {
+      local.search = term;
+      if (root?.isConnected) paint();
+    },
+    onPrefs() {
+      if (root?.isConnected) paint();
+    }
+  };
+
+  function boot() {
+    const ECV3 = window.ECV3;
+    if (!ECV3) return window.setTimeout(boot, 30);
+    ECV3.register("events", view);
+  }
+
+  boot();
+})();
