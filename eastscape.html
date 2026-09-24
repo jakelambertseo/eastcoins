@@ -1141,7 +1141,7 @@ let CRR = null; const cryptRules = () => (cryptRules.p ||= import("/v3/assets/js
    exactly, including handing AREA_ART its sheet at that moment so its six monsters cost nobody anything until
    a party goes in. */
 let PYR = null; const pyramidRules = () => (pyramidRules.p ||= import("/v3/assets/js/eastscape-pyramid-rules.js?v=4").then((m) => { PYR = m.createPyramidRules(G, G._MAP); Object.assign(G.SCENES, PYR.scenes); Object.assign(G.MOBS, PYR.mobs); AREA_ART.pyramid = PYR.scenes.pyramid.art; }));
-let PYRAMID = null; const pyramidLoad = () => (pyramidLoad.p ||= Promise.all([import("/v3/assets/js/eastscape-pyramid.js?v=4"), pyramidRules()]).then(([m]) => (PYRAMID = m.createPyramid({ G, R: PYR, SFX, send, esc, $, ico, artOf, me: () => me, you: () => you, Z: () => Z, host: () => document.querySelector(".game"), popup, winFx,
+let PYRAMID = null; const pyramidLoad = () => (pyramidLoad.p ||= Promise.all([import("/v3/assets/js/eastscape-pyramid.js?v=5"), pyramidRules()]).then(([m]) => (PYRAMID = m.createPyramid({ G, R: PYR, SFX, send, esc, $, ico, artOf, me: () => me, you: () => you, Z: () => Z, host: () => document.querySelector(".game"), popup, winFx, flatArt,
   /* WHO IS HELD, AND UNTIL WHEN. The page owns the consequences of a hold — no walk prediction, and the bleed
      icon over their head — so the dungeon only has to report it. See HELD, further down. */
   hold: (id, until) => { HELD = id ? { id, until } : null; } }))));
@@ -1896,6 +1896,16 @@ const TIX_ICO = `<img src="${IART}tickets.png?v=1" alt="" class="tixi">`;   /* ?
 const tixN = (n) => TIX_ICO + Math.round(n).toLocaleString();
 // (canvas icons are fetched the first time each is drawn; the <img> icons in windows load as they appear)
 const artOf = (k) => `<img class="ico" src="${IART}${k}.png?v=${IART_V}" alt="">`;
+/* (2026-09-24, the owner: "the coilings icon is missing in the drop list") OBJECT ART IS A DIFFERENT DIRECTORY.
+   artOf builds flat/ITEMS/ — item icons, skill icons, equipment slots — and a PET is object art in flat/, so
+   artOf("pet_coilling") asked for a file that does not exist and drew an empty box. The Crypt never caught it
+   because the Crypt has no pet; the Pyramid’s is the first, and its chest has never been opened live either,
+   so the loot window has the same hole. One helper for both, and the equipment panel’s
+   IART.replace("items/", "") stops being the only thing that knew.
+   flatArt, NOT objArt: there is already an objArt(ob, now) further down that resolves a SCENE OBJECT to its
+   drawn picture, and taking that name silently pointed the equipment panel's pet slot at it. esbuild refused
+   the duplicate, which is the only reason it was caught before it shipped. */
+const flatArt = (k) => `<img class="ico" src="${ART}${k}.png?v=${ART_VER[k] || ART_V}" alt="">`;
 const ART_ALIAS = { bronze_body: "bronzecuirass", bronze_helm: "bronzehelm", bronze_shield: "bronzeshield", bronze_sword: "bronzesword" };
 /* (2026-09-22) MARKET PRICES WEAR THE REAL TICKET. fmtCash writes a 🎟 emoji, which is right for chat and for the
    server's own lines — those are plain text and an <img> would show as markup. In the market the rows are HTML and
@@ -5021,7 +5031,7 @@ function renderPanel() {
     /* THE PET SQUARE (2026-09-22). Its own branch because eq.pet holds an ID into me.pets, not an item key — the
        ordinary slot() would look it up in ITEMS, find nothing and draw an empty square over a pet you are wearing. */
     const petSlot = () => { const pet = G.activePet(me);
-      return `<button type="button" class="eq${pet ? "" : " empty"}" data-slot="pet" title="${pet ? esc(G.petLabel(pet)) : "No pet"}">${pet ? `<img class="ico" src="${IART.replace("items/", "")}${G.PETS[pet.k].art}.png?v=${ART_V}" alt="">` : EMPTY.pet}</button>`; };
+      return `<button type="button" class="eq${pet ? "" : " empty"}" data-slot="pet" title="${pet ? esc(G.petLabel(pet)) : "No pet"}">${pet ? flatArt(G.PETS[pet.k].art) : EMPTY.pet}</button>`; };
     const slot = (area) => { if (area === "pet") return petSlot(); const k = me.eq[area], it = k && ITEMS[k], ef = G.fLevelOf(me, area); return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}"${it ? ` data-item="${k}"${ef ? ` data-f="${ef}"` : ""}` : ""} style="grid-area:${area}" title="${it ? `${esc(G.forgeNameAt(k, ef))} — click to take off` : `${area}: empty`}"${it ? "" : " disabled"}>${it ? ico(k) : EQ_ART.has(area) ? artOf(`eq_${area}`) : EMPTY[area]}<small>${it ? esc(it.short || it.name) : ""}</small>${fgTag(ef)}</button>`; };
     const b = G.bonusOf(me), tool = me.eq.weapon && ITEMS[me.eq.weapon].tool;
     const pets = G.petsOf(me);

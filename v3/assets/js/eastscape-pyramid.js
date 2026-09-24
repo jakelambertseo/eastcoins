@@ -78,6 +78,7 @@ export function createPyramid(env) {
      THE NUMBER IS PER CHEST, NOT PER ROLL, because a chest holds three to seven of these and "1.6%" would read
      as the answer to a question nobody asked. It is summed over the roll-count distribution rather than using
      its mean, so it is exact rather than close. Sorted rarest first: the ladder IS the pitch. */
+  const petPic = () => (env.flatArt ? env.flatArt("pet_coilling") : "🐍");
   const WT = (rows) => rows.reduce((a, [, w]) => a + w, 0);
   const rollP = (key) => { const r = C.loot.table.find(([k]) => k === key); return r ? r[1] / WT(C.loot.table) : 0; };
   const subP = (key, rows, pick) => { const r = rows.find(([k]) => k === pick); return rollP(key) * (r ? r[1] / WT(rows) : 0); };
@@ -103,13 +104,11 @@ export function createPyramid(env) {
     /* the venom leads, on its own terms: it is not a chance, it is the reason to come */
     rows.unshift({ k: "serpentvenom", c: 1, n: `${C.loot.venom[0]}–${C.loot.venom[1]}`, always: true });
     const nm = (r) => r.label || (r.k === "pet" ? "A Coilling" : G.ITEMS[r.k]?.name || r.k);
-    const pic = (r) => (r.k === "pet" ? (env.artOf ? env.artOf("pet_coilling") : "") : env.ico ? env.ico(r.k) : "");
+    const pic = (r) => (r.k === "pet" ? petPic() : env.ico ? env.ico(r.k) : "");
     const hot = (r) => r.always || r.k === "pet" || G.ITEMS[r.k]?.slot || r.k === "chip_gold" || r.k === "horseshoe";
     const pct = (r) => (r.always ? "always" : r.c >= 0.1 ? `${Math.round(r.c * 100)}%` : `${(r.c * 100).toFixed(1)}%`);
     return `<div class="py-drops"><h4>Possible Drops</h4>
-      <p>Everyone who clears it opens their own chest, and what is in yours is rolled for you alone. Every chest
-      holds the clear's tickets and <b>serpent venom</b>; the rest is ${C.loot.rolls[0][0]}&ndash;${C.loot.rolls[C.loot.rolls.length - 1][0]} more
-      rolls off this list, so the odds below are the chance <b>one chest</b> holds it.</p>
+      <p>Your own chest, rolled for you alone. Always tickets and <b>serpent venom</b>, plus ${C.loot.rolls[0][0]}&ndash;${C.loot.rolls[C.loot.rolls.length - 1][0]} more from this list.</p>
       <div class="py-grid">${rows.map((r) => `<div class="py-it${hot(r) ? " rare" : ""}">${pic(r)}<b>${esc(nm(r))}</b><em>${r.n ? `${esc(r.n)} &middot; ` : ""}${pct(r)}</em></div>`).join("")}</div></div>`;
   }
 
@@ -139,11 +138,14 @@ export function createPyramid(env) {
         <div style="flex:0 0 auto;text-align:right">${TIX} <b>${T.ante.toLocaleString()}</b><small>each</small></div>
         <button type="button" class="lk-btn" data-go="1"${can ? "" : " disabled"}>Go in</button>
       </div>
-      <div class="jk-msg" style="opacity:.85">The <b>Combat</b> number is what the door asks for. <b style="color:#ffd23f">Bring</b> is the level the Squeeze actually fights at &mdash; under it you land about one swing in ten, however long you stand there.</div>
-      <div class="jk-msg">${left ? `<b>${left} paid run${left === 1 ? "" : "s"} left today.</b>` : "<b>Today's paid runs are used:</b> a clear pays a quarter until tomorrow."}
-        Clear each chamber and its door grinds open; the lever opens the burial chamber once everyone alive is in the third.</div>
-      <div class="jk-msg" style="opacity:.85"><b>It pays less than the Crypt.</b> What it has instead is in the chest: <b>serpent venom</b>, which is the only way to brew a Coilbreaker draught, and now and then something alive.</div>
-      ${d.live === false ? `<div class="jk-msg"><b>Not open yet.</b> The tomb has never been run by four people, so only an admin can open the door.</div>` : ""}
+      <!-- (2026-09-24, the owner: "simplify all this text, its too loong and no one will read it") Four
+           paragraphs became four LINES. Everything cut was either already on the row above — the Combat and
+           bring numbers are in the tier row two lines up — or detail for the wiki, not for a door somebody is
+           standing at with a party waiting. The rule for anything added here: one line, or it goes in the wiki. -->
+      <div class="jk-msg" style="opacity:.85">Under <b style="color:#ffd23f">${T.rec}</b> you land about one swing in ten.</div>
+      <div class="jk-msg">${left ? `<b>${left} paid run${left === 1 ? "" : "s"} left today.</b>` : "<b>Paid runs used</b> &mdash; a clear pays a quarter today."} Clear a chamber, its door opens. The lever opens the tomb.</div>
+      <div class="jk-msg" style="opacity:.85">Fewer tickets than the Crypt. The <b>chest</b> is the reason.</div>
+      ${d.live === false ? `<div class="jk-msg"><b>Not open yet.</b> Admins only until a party has tested it.</div>` : ""}
       ${dropsBlock()}`;
     $("pyrBody").querySelector("[data-go]").addEventListener("click", () => { SFX.play("door"); winEl.hidden = true; send({ t: "pyramid", op: "enter" }); });
     winEl.hidden = false; SFX.play("ui_open");
@@ -206,10 +208,11 @@ export function createPyramid(env) {
     $("pyrLootSub").textContent = `${T.name} · yours alone`;
     const name = (it) => (it.k === "pet" ? "A Coilling" : `${it.n > 1 ? it.n + " × " : ""}${G.ITEMS[it.k]?.name || it.k}`);
     const rare = (it) => it.k === "pet" || it.k === "serpentvenom" || G.ITEMS[it.k]?.slot || it.k === "chip_gold" || it.k === "horseshoe";
-    /* THE PET NEEDS artOf, NOT ico. ico() resolves an ITEM icon, and a pet's picture is object art
-       (pet_coilling) with no ITEMS entry behind it - so ico would have drawn an empty box for the rarest thing
-       in the chest. */
-    const pic = (it) => (it.k === "pet" ? (env.artOf ? env.artOf("pet_coilling") : "") : env.ico ? env.ico(it.k) : "");
+    /* THE PET IS OBJECT ART, and neither of the two obvious helpers draws it. ico() resolves an ITEM icon and a
+       pet has no ITEMS entry at all; artOf() builds flat/ITEMS/, and pet_coilling.png lives in flat/. Both drew
+       an empty box for the rarest thing in the chest — which is what the owner saw on the door. petPic() is the
+       one place that knows, and it falls back to the snake rather than to nothing. */
+    const pic = (it) => (it.k === "pet" ? petPic() : env.ico ? env.ico(it.k) : "");
     $("pyrLootBody").innerHTML = `<div class="jk-msg">${e.sent ? "<b>You left this behind.</b> It was sent after you." : "<b>One each.</b> Nobody else's chest had this in it."}${items.some((x) => x.bank) ? " Some of it didn't fit in your bag: that is in your bank." : ""}</div>
       <div class="py-grid">${items.map((it) => `<div class="py-it${rare(it) ? " rare" : ""}">${pic(it)}<b>${esc(name(it))}</b></div>`).join("")}</div>`;
     lootEl.hidden = false;
