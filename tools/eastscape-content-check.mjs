@@ -343,5 +343,25 @@ scene objects
   if (!flat) console.log("\narmour ladder\n  ok  all " + n + " tier steps across " + slots.length + " slots gain defence");
 }
 
+/* ---------------------------------------------------------------- EVERY PET CAN ACTUALLY BE SEEN
+   (2026-09-24, the owner: "the coilings icon is missing in the drop list") The Coilling was in PETS, had a
+   picture on disk, and was in NEITHER of the two lists the page loads art from — so its icon drew an empty box
+   in the Pyramid's chest, AND an equipped one would have walked around invisible. Nothing else noticed: a pet
+   is not an item and not a scene object, so neither the item checks nor artreach covered it. A pet needs three
+   things to be visible and this is the only place that says so. */
+{
+  head("pets");
+  const listOf = (n) => (html.match(new RegExp(`const ${n} = \\[[\\s\\S]*?\\];`)) || [""])[0];
+  const AF = listOf("ART_FILES"), CA = listOf("CASINO_ART");
+  let n = 0;
+  for (const pt of Object.values(G.PETS)) {
+    const on = (l) => new RegExp(`"${pt.art}"`).test(l);
+    const miss = [!existsSync(join(ROOT, `v3/assets/img/glad/flat/${pt.art}.png`)) && "no picture on disk",
+      !on(AF) && "not in ART_FILES", !on(CA) && "not in CASINO_ART"].filter(Boolean);
+    if (miss.length) bad(`${pt.name} (${pt.art})`, miss.join(", ")); else n++;
+  }
+  if (n === Object.keys(G.PETS).length) console.log(`  ok  all ${n} pets have a picture, and both lists carry it`);
+}
+
 console.log(`\n${errors} error${errors === 1 ? "" : "s"}, ${warns} warning${warns === 1 ? "" : "s"}\n`);
 process.exit(errors ? 1 : 0);

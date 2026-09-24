@@ -910,8 +910,9 @@ export const PETS = {
   cointoad:    { name: "Coin Toad",    art: "pet_cointoad",    fx: { tix: 15 },   ex: "Sits on what it finds. Warm to the touch." },
   lanternmoth: { name: "Lantern Moth", art: "pet_lanternmoth", fx: { hp: 15 },    ex: "It keeps the dark an arm's length off." },
   /* (2026-09-24) THE GREAT PYRAMID'S PET, and the only one that does not drop from PET_SCENES: it comes out of
-     the raid's chest, about one clear in twenty. Speed is the skilling buff ("you swing and fish faster"), and a
-     shade above the Bonepup's because this one has to be raided for. */
+     the raid's chest, about one clear in twenty. A pet's `speed` is MOVEMENT (petFx -> speedRaw -> stepMsOf), and
+     NOT the fxOf lever of the same name that makes you swing and fish faster — the two never meet, which is why
+     one is a whole percent and the other a fraction. A shade above the Bonepup's 8 because this one is raided for. */
   coilling: { name: "Coilling", art: "pet_coilling", fx: { speed: 10 }, ex: "It was in the sarcophagus with him. It has decided you are family now." },
   housecat:    { name: "House Cat",    art: "pet_housecat",    fx: { speed: 3, slots: 1, hp: 5, tix: 5 }, ex: "Wears the visor. Owns the room." }
 };
