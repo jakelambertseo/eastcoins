@@ -283,6 +283,18 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
       <h3>The other way to the top of smithing</h3>
       <p><b>The Quartermaster&rsquo;s room carries starfall ore, eclipse ore and voidglass.</b> Those three are otherwise only found in the Vault, and voidglass is not dropped by any monster at all &mdash; so a thief can supply their own Starfall and Eclipse gear without ever going down there. That is the real reason people want into the last room.</p>
 
+      <h3>The Ditched set</h3>
+      <p>Four pieces of a thief&rsquo;s kit that somebody threw in the water rather than be caught holding, and they come back out on a <b>fishing line</b>. Nobody in the guild sells them and nothing in the guild drops them &mdash; if you want them you fish, or you buy them off somebody who did.</p>
+      <table class="tbl"><tr><th>Piece</th><th>Slot</th><th>Each gives</th></tr>
+        <tr><td>Ditched hood</td><td>Helm</td><td rowspan="4">+2.5% to pick, +3% speed</td></tr>
+        <tr><td>Ditched coat</td><td>Body</td></tr>
+        <tr><td>Ditched gloves</td><td>Gloves</td></tr>
+        <tr><td>Ditched boots</td><td>Boots</td></tr>
+      </table>
+      <p><b>A full set is +10% on every pick and +12% speed</b>, which takes the climb to 99 from about 90 hours to 76 &mdash; and to around 73 if you also have a pet that hurries you along. It is worn in ordinary armour slots, so you are giving up your combat gear to wear it. Inside the guild that costs you nothing, because nothing in there fights back; the moment you walk out, it costs you everything.</p>
+      <p><b>The 90% ceiling still holds.</b> Gear helps while you are climbing towards it, which is the part that drags, and does nothing once you are already there.</p>
+      <p>A piece turns up about <b>once every two hours</b> of steady fishing, from any water, so a set is an evening. Gear that helps you find rare things helps here too.</p>
+
       <h3>Who to talk to</h3>
       <p>Four guild members wander the rooms and are not marks &mdash; you cannot pick them, and they will not mind you trying. <b>Sticky Pete</b>, in the first room, explains how picking works. <b>Marla Nine-Fingers</b>, in the card room, explains what the materials are for. <b>The Quiet Man</b> and <b>Odile the Clerk</b> keep the two back rooms.</p>
 
