@@ -242,10 +242,10 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
       <h3>The four rooms</h3>
       <p>Each room is behind a door, and <b>the door and the marks are two different ladders</b>. The first door opens at Thieving 10 although the Grifters behind it cannot be picked until 25 &mdash; that is on purpose, so there is somewhere to walk to and look at while you are still learning.</p>
       <table class="tbl"><tr><th>Room</th><th>Door opens</th><th>Pick at</th><th>xp a pick</th><th>Tickets an hour</th></tr>
-        <tr><td>The Back Room &mdash; Apprentice Lifters</td><td>&mdash;</td><td>1</td><td>15</td><td>~2,300</td></tr>
-        <tr><td>The Card Room &mdash; Grifters</td><td>10</td><td>25</td><td>45</td><td>~6,700</td></tr>
-        <tr><td>The Store Room &mdash; The Fixers</td><td>50</td><td>50</td><td>110</td><td>~11,100</td></tr>
-        <tr><td>The Vault Room &mdash; The Quartermaster</td><td>75</td><td>75</td><td>200</td><td>~17,600</td></tr>
+        <tr><td>The Back Room &mdash; Apprentice Lifters</td><td>&mdash;</td><td>1</td><td>19</td><td>~2,300</td></tr>
+        <tr><td>The Card Room &mdash; Grifters</td><td>10</td><td>25</td><td>56</td><td>~6,700</td></tr>
+        <tr><td>The Store Room &mdash; The Fixers</td><td>50</td><td>50</td><td>138</td><td>~11,100</td></tr>
+        <tr><td>The Vault Room &mdash; The Quartermaster</td><td>75</td><td>75</td><td>250</td><td>~17,600</td></tr>
       </table>
 
       <h3>How a pick works</h3>
@@ -291,7 +291,7 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
         <tr><td>Ditched gloves</td><td>Gloves</td></tr>
         <tr><td>Ditched boots</td><td>Boots</td></tr>
       </table>
-      <p><b>A full set is +10% on every pick and +12% speed</b>, which takes the climb to 99 from about 90 hours to 76 &mdash; and to around 73 if you also have a pet that hurries you along. It is worn in ordinary armour slots, so you are giving up your combat gear to wear it. Inside the guild that costs you nothing, because nothing in there fights back; the moment you walk out, it costs you everything.</p>
+      <p><b>A full set is +10% on every pick and +12% speed</b>, which takes the climb to 99 from about 72 hours to 61 &mdash; and to around 58 if you also have a pet that hurries you along. It is worn in ordinary armour slots, so you are giving up your combat gear to wear it. Inside the guild that costs you nothing, because nothing in there fights back; the moment you walk out, it costs you everything.</p>
       <p><b>The 90% ceiling still holds.</b> Gear helps while you are climbing towards it, which is the part that drags, and does nothing once you are already there.</p>
       <p>A piece turns up about <b>once every two hours</b> of steady fishing, from any water, so a set is an evening. Gear that helps you find rare things helps here too.</p>
 
@@ -299,7 +299,7 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
       <p>Four guild members wander the rooms and are not marks &mdash; you cannot pick them, and they will not mind you trying. <b>Sticky Pete</b>, in the first room, explains how picking works. <b>Marla Nine-Fingers</b>, in the card room, explains what the materials are for. <b>The Quiet Man</b> and <b>Odile the Clerk</b> keep the two back rooms.</p>
 
       <h3>What it is worth</h3>
-      <p><b>1 to 99 is about 92 hours</b> if you always work the best room you can reach &mdash; slower than Woodcutting&rsquo;s 73 and a good deal quicker than Combat&rsquo;s 149. The top room earns about what a middling miner does. That is deliberate: a room where nothing fights back should not also be the best money in the game, and the guild&rsquo;s real payment is the materials.</p>`},{id:"agility",title:"Agility",icon:"🏃",cat:"Skills",body:`<p><b>The Run is an obstacle course</b>, up a rope ladder in the north of the Yard. You go round it: each obstacle pays, and finishing a full lap pays far more than the parts do.</p>
+      <p><b>1 to 99 is about 72 hours</b> if you always work the best room you can reach &mdash; about level with Woodcutting, and a good deal quicker than Combat&rsquo;s 149. A full Ditched set takes it to roughly 61. The top room earns about what a middling miner does. That is deliberate: a room where nothing fights back should not also be the best money in the game, and the guild&rsquo;s real payment is the materials.</p>`},{id:"agility",title:"Agility",icon:"🏃",cat:"Skills",body:`<p><b>The Run is an obstacle course</b>, up a rope ladder in the north of the Yard. You go round it: each obstacle pays, and finishing a full lap pays far more than the parts do.</p>
       <table class="tbl"><tr><th>What</th><th>Gives</th></tr>
         <tr><td>Each obstacle cleared</td><td>12 xp</td></tr>
         <tr><td>Clearing one perfectly</td><td>+10 xp on top</td></tr>
