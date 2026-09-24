@@ -159,8 +159,14 @@ export function createPyramidRules(G, H) {
         ["pharaoh", 17, 10], ["pharaoh", 25, 10], ["pharaoh", 14, 9], ["pharaoh", 28, 9],
         ["squeeze", 21, 4, { aggro: 4 }]],
       npcs: [], bots: [],
-      floorArt: "t_crypt", wallArt: "t_cryptwall",   // the Crypt's flagstones: a tomb is a tomb, and it saves a Wang set
-      art: ["swarm", "grifter", "canopic", "dustwraith", "pharaoh", "squeeze", "t_crypt", "t_cryptwall",
+      /* ITS OWN STONE (2026-09-24, the owner: "put in art for the pyramid floor and the pyramid walls too").
+         It borrowed the Crypt's cold slate flagstones on the reasoning that a tomb is a tomb — and then never
+         drew them at all, because every drawn-interior branch in the page was gated on `def.crypt`. Both halves
+         are fixed: the gate is `def.tomb` there now, and this is warm sandstone of its own —
+         t_tomb's ochre flagstones, and t_tombwall's block courses with hieroglyph bands, a jackal relief and a
+         lapis scarab in them (tools/eastscape-pyramid-tiles.mjs). */
+      floorArt: "t_tomb", wallArt: "t_tombwall",
+      art: ["swarm", "grifter", "canopic", "dustwraith", "pharaoh", "squeeze", "t_tomb", "t_tombwall",
         "o_cryptgate", "o_cryptlever", "o_sarcophagus", "o_crypttorch", "o_cryptpillar", "o_cryptaltar",
         "o_cryptcoffin", "o_gargoyle", "o_ghostbrazier", "o_cryptcandles", "o_cryptexit", "o_skullheap",
         "o_bonepile", "o_cryptrubble", "o_obelisk", "o_chest"],

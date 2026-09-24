@@ -1140,8 +1140,11 @@ let CRR = null; const cryptRules = () => (cryptRules.p ||= import("/v3/assets/js
 /* (2026-09-24) THE GREAT PYRAMID's rules, loaded the first time anybody is in one - the Crypt's pattern
    exactly, including handing AREA_ART its sheet at that moment so its six monsters cost nobody anything until
    a party goes in. */
-let PYR = null; const pyramidRules = () => (pyramidRules.p ||= import("/v3/assets/js/eastscape-pyramid-rules.js?v=3").then((m) => { PYR = m.createPyramidRules(G, G._MAP); Object.assign(G.SCENES, PYR.scenes); Object.assign(G.MOBS, PYR.mobs); AREA_ART.pyramid = PYR.scenes.pyramid.art; }));
-let PYRAMID = null; const pyramidLoad = () => (pyramidLoad.p ||= Promise.all([import("/v3/assets/js/eastscape-pyramid.js?v=3"), pyramidRules()]).then(([m]) => (PYRAMID = m.createPyramid({ G, R: PYR, SFX, send, esc, $, ico, artOf, me: () => me, you: () => you, Z: () => Z, host: () => document.querySelector(".game"), popup, winFx }))));
+let PYR = null; const pyramidRules = () => (pyramidRules.p ||= import("/v3/assets/js/eastscape-pyramid-rules.js?v=4").then((m) => { PYR = m.createPyramidRules(G, G._MAP); Object.assign(G.SCENES, PYR.scenes); Object.assign(G.MOBS, PYR.mobs); AREA_ART.pyramid = PYR.scenes.pyramid.art; }));
+let PYRAMID = null; const pyramidLoad = () => (pyramidLoad.p ||= Promise.all([import("/v3/assets/js/eastscape-pyramid.js?v=4"), pyramidRules()]).then(([m]) => (PYRAMID = m.createPyramid({ G, R: PYR, SFX, send, esc, $, ico, artOf, me: () => me, you: () => you, Z: () => Z, host: () => document.querySelector(".game"), popup, winFx,
+  /* WHO IS HELD, AND UNTIL WHEN. The page owns the consequences of a hold — no walk prediction, and the bleed
+     icon over their head — so the dungeon only has to report it. See HELD, further down. */
+  hold: (id, until) => { HELD = id ? { id, until } : null; } }))));
 let TWR = null; const towerRules = () => (towerRules.p ||= import("/v3/assets/js/eastscape-tower-rules.js?v=3").then((m) => { TWR = m.createTowerRules(G, G._MAP); Object.assign(G.SCENES, TWR.scenes); Object.assign(G.MOBS, TWR.mobs); AREA_ART.tower = TWR.scenes.tower.art; }));
 const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String(k).startsWith("pyramid") ? pyramidRules() : String(k).startsWith("tower") ? towerRules() : (moreScenes.p ||= import("/v3/assets/js/eastscape-closed.js?v=1").then((m) => { Object.assign(G.SCENES, m.createClosedScenes(G, G._MAP)); })));
 /* PARTIES AND THE CRYPT (v103; the server side is eastscape-worker/src/crypt.js, the numbers eastscape-crypt-rules.js, the windows eastscape-crypt.js,
@@ -1540,7 +1543,7 @@ const ART_VER = { o_bomkiosk: 7, o_plot: 2, kellz_south: 5, kellz_east: 5, t_cas
    because a crop added to CROPS should ask for its art without anybody remembering to type four more names —
    the content check then fails until that art exists, which is the right way round. */
 const CROP_ART = Object.keys(G.CROPS).flatMap((k) => [1, 2, 3, 4].map((n) => `crop_${k}_${n}`));
-const ART_FILES = ["t_dock", ...CROP_ART, "o_yardtree", "o_yardtree_stump", "o_tower", "t_doors", "fx_hit", "fx_crit", "fx_miss", "vince_south", "vince_east", "casino", "rony_south", "rony_east", "o_bomkiosk", "t_pit", "o_fightboard", "o_hsboard", "o_fameboard", "o_ringbell", "o_ringpost", "o_mirror", "o_rrtable", "o_barcart", "kellz_south", "kellz_east", "livia_south", "livia_east", "gaius_south", "gaius_east", "aurelia_south", "aurelia_east", "arbino_south", "arbino_east", "vince_south", "vince_east", "sterling_south", "sterling_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_brick", "o_fencepost", "o_crates", "o_lamppost", "o_sacks", "o_handcart", "t_track", "o_gateframe", "o_gatebars", "o_agilend", "o_trailer", "o_wreck", "o_tyres", "o_dumpster", "o_rock_slagstone", "o_rustpine", "o_bogwood", "junkdog", "possum", "scrapper", "gator", "junkking", "darla_south", "darla_east", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
+const ART_FILES = ["t_dock", ...CROP_ART, "o_yardtree", "o_yardtree_stump", "o_tower", "t_doors", "fx_hit", "fx_crit", "fx_miss", "fx_bleed", "vince_south", "vince_east", "casino", "rony_south", "rony_east", "o_bomkiosk", "t_pit", "o_fightboard", "o_hsboard", "o_fameboard", "o_ringbell", "o_ringpost", "o_mirror", "o_rrtable", "o_barcart", "kellz_south", "kellz_east", "livia_south", "livia_east", "gaius_south", "gaius_east", "aurelia_south", "aurelia_east", "arbino_south", "arbino_east", "vince_south", "vince_east", "sterling_south", "sterling_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_brick", "o_fencepost", "o_crates", "o_lamppost", "o_sacks", "o_handcart", "t_track", "o_gateframe", "o_gatebars", "o_agilend", "o_trailer", "o_wreck", "o_tyres", "o_dumpster", "o_rock_slagstone", "o_rustpine", "o_bogwood", "junkdog", "possum", "scrapper", "gator", "junkking", "darla_south", "darla_east", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "legend_" + d]),   // (hero_tiro_*, the old tunic, left the startup list 2026-09-20: nobody wears it now that everyone has a look)
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "o_spot1", "o_spot2", "o_spot3", "o_spot4", "o_spot5", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
@@ -1608,7 +1611,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 68;
+const PACKS_V = 69;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -2228,8 +2231,16 @@ function paintRoom(o, f) {
   const X0 = x0 * T, Y0 = y0 * T, X1 = (x1 + 1) * T, Y1 = (y1 + 1) * T;
   // the back wall: a band of plaster above the floor, then the floor itself
   const WH = def.wallH || 22;   // how tall the back wall is drawn (the Casino's is taller, for the sign over its door)
-  f(X0 - 4, Y0 - WH, X1 - X0 + 8, WH, def.crypt ? "#16131f" : def.floor === "marble" ? "#d8d0bc" : def.floor === "casino" ? (def.carpet ? "#4a1e28" : "#2a2058") : "#b8986a"); f(X0 - 4, Y0 - 4, X1 - X0 + 8, 4, def.floor === "casino" && !def.carpet ? "#4a3a8a" : "#6a5a40");
-  const CW = def.crypt && IMG[def.wallArt];
+  /* (2026-09-24, the owner: "go ahead and put in art for the pyramid floor and the pyramid walls too")
+     THE TOMB, MEANING EITHER OF THEM. Every drawn-interior branch below was gated on `def.crypt`, and the
+     pyramid's flag is `def.pyramid` — so a dungeon that declared floorArt and wallArt from the day it shipped
+     had neither of them read, and fell all the way through to the generic interior: #9a6a3a floorboards with a
+     plank line down them and a plaster band for a wall. That is the brown planked room in the screenshot, and
+     it is why the pyramid looked like it had no art rather than like it had the Crypt's. One name for the pair,
+     read five times below, so the next stone dungeon cannot land the same way. */
+  const TOMB = !!(def.crypt || def.pyramid);
+  f(X0 - 4, Y0 - WH, X1 - X0 + 8, WH, TOMB ? (def.pyramid ? "#2a1d10" : "#16131f") : def.floor === "marble" ? "#d8d0bc" : def.floor === "casino" ? (def.carpet ? "#4a1e28" : "#2a2058") : "#b8986a"); f(X0 - 4, Y0 - 4, X1 - X0 + 8, 4, def.floor === "casino" && !def.carpet ? "#4a3a8a" : "#6a5a40");
+  const CW = TOMB && IMG[def.wallArt];
   if (CW) { for (let i = 0, x = X0 - 4; x < X1 + 4; x += 32, i++) { const r = hashRand(i, 3, 41), k = r < 0.6 ? [0, 1, 3, 4][i % 4] : r < 0.75 ? 2 + 3 * (i % 2) : r < 0.88 ? [6, 7, 8, 10, 11][i % 5] : [12, 14][i % 2], w = Math.min(32, X1 + 4 - x); o.drawImage(CW.im, (k % 8) * 64, Math.floor(k / 8) * 64, w * 2, 64, x, Y0 - WH, w, WH); } f(X0 - 4, Y0 - 5, X1 - X0 + 8, 5, "rgba(0,0,0,.5)"); }
   else for (let x = X0; x < X1; x += 24) f(x, Y0 - WH + 2, 1, WH - 6, "rgba(0,0,0,.08)");
   const STARS = def.floor === "casino" && !def.carpet; if (STARS) starCarpet(o, x0, y0, x1, y1);
@@ -2266,7 +2277,7 @@ function paintRoom(o, f) {
     }
     if (def.floor === "casino") { f(X, Y, T, T, "#5a1626"); f(X + 7, Y + 7, 2, 2, "#c8963a"); f(X + 7, Y + 2, 2, 1, "#7a2a38"); f(X + 7, Y + 13, 2, 1, "#7a2a38"); f(X + 2, Y + 7, 1, 2, "#7a2a38"); f(X + 13, Y + 7, 1, 2, "#7a2a38"); if ((x + y) % 2) f(X, Y, 1, 1, "#c8963a"); continue; }
     /* (v103) THE CRYPT: cold flagstones with worn joints, and a wall tile INSIDE a room (the walls between its chambers) is dark stone with a lit top. */
-    if (def.crypt) {
+    if (TOMB) {
       const FT = IMG[def.floorArt];
       if (FT) {   /* (v104) PixelLab flagstones: 8 x 2 tiles of 32 px; columns 6 and 7 are the TOP of a wall. Which stone lies where is fixed by its position. */
         const wall = Z.g[y][x] === "v", r = hashRand(x, y, 9), r2 = hashRand(x, y, 5) < 0.5 ? 0 : 1, col = wall ? (r < 0.7 ? 6 : 7) : r < 0.86 ? 0 : r < 0.9 ? 5 : r < 0.935 ? 1 : r < 0.97 ? 2 : r < 0.988 ? 3 : 4;
@@ -2288,9 +2299,9 @@ function paintRoom(o, f) {
   f(X0 - 4, Y0 - WH, 4, Y1 - Y0 + WH + 4, "#3a2e22"); f(X1, Y0 - WH, 4, Y1 - Y0 + WH + 4, "#3a2e22");
   for (let x = x0; x <= x1; x++) if (Z.g[y1 + 1][x] !== "e") f(x * T, Y1, T, 5, "#3a2e22");
   f(X0 - 4, Y1, 4, 5, "#3a2e22"); f(X1, Y1, 4, 5, "#3a2e22");
-  { const FT = def.crypt && IMG[def.floorArt]; if (FT) { for (let y = Y0 - WH; y < Y1 + 5; y += T) for (const wx of [X0 - 4, X1]) o.drawImage(FT.im, 6 * 32, 0, 8, 32, wx, y, 4, Math.min(T, Y1 + 5 - y)); for (let x = x0; x <= x1; x++) if (Z.g[y1 + 1][x] !== "e") o.drawImage(FT.im, 7 * 32, 32, 32, 10, x * T, Y1, T, 5); } }
+  { const FT = TOMB && IMG[def.floorArt]; if (FT) { for (let y = Y0 - WH; y < Y1 + 5; y += T) for (const wx of [X0 - 4, X1]) o.drawImage(FT.im, 6 * 32, 0, 8, 32, wx, y, 4, Math.min(T, Y1 + 5 - y)); for (let x = x0; x <= x1; x++) if (Z.g[y1 + 1][x] !== "e") o.drawImage(FT.im, 7 * 32, 32, 32, 10, x * T, Y1, T, 5); } }
   /* (v104) a room's way out, on its bottom edge: a drawn threshold (t_doors: doormat, stone steps, carpet runner, marble steps), picked by the room's floor */
-  { const DT = IMG.t_doors, dk = def.crypt ? 1 : def.floor === "casino" ? 2 : def.floor === "marble" ? 3 : 0;
+  { const DT = IMG.t_doors, dk = TOMB ? 1 : def.floor === "casino" ? 2 : def.floor === "marble" ? 3 : 0;
     for (let x = x0; x <= x1; x++) if (Z.g[y1 + 1][x] === "e") { if (DT) { o.drawImage(DT.im, dk * 32, 0, 32, 32, x * T, Y1, T, T); if (Z.g[y1 + 1][x - 1] !== "e") f(x * T - 1, Y1, 2, T, "#1a140e"); if (Z.g[y1 + 1][x + 1] !== "e") f(x * T + T - 1, Y1, 2, T, "#1a140e"); } else { f(x * T, Y1, T, T, "#2a2016"); f(x * T + 2, Y1 + 2, T - 4, T - 6, "#8a4a2a"); } } }
   for (let y = y0; y <= y1; y++) for (const [x, wallX] of [[x0 - 1, X0 - 4], [x1 + 1, X1]]) if (Z.g[y]?.[x] === "e") {
     const CP = IMG[def.carpet || "t_casino"], X = x * T, Y = y * T;
@@ -2481,8 +2492,24 @@ function posOf(e, now) {
    page walks you straight away with the same pathfinding and step timing the server uses, and hands
    back to the server's word once you stop (or at once if the two ever disagree by more than 2 tiles). */
 const STEP = 240;
+/* ---------------------------------------------------------------- HELD, AND BLEEDING
+   (2026-09-24, the owner, testing the Squeeze: "when it said it grabbed me i could still moove arounnd" — twice
+   now, because the first fix was in the wrong half of the game.) The server refuses a held player's walk, and
+   that was never the problem: THE PAGE MOVES YOU ITSELF. `predGo` walks the sprite along a predicted path the
+   moment you click, so the refusal arrives after you have already set off and you get walked back — which is
+   indistinguishable from being able to move. A hold has to be refused HERE, in the client, or it is not a hold.
+
+   One piece of state does both jobs the owner asked for. `HELD` is who is held and until when, set by whatever
+   holds them (today only the Squeeze's coil, through env.hold), and it is read in two places: predFrom returns
+   null while it is you, which disables EVERY prediction path at once because `from` gates all four of them; and
+   the player loop draws fx_bleed over whoever's id it names, so the party can see who to go and save. Anything
+   that bleeds somebody in future should set this rather than inventing a second flag. */
+let HELD = null;
+const heldNow = () => (HELD && Date.now() < HELD.until ? HELD : (HELD = null));
+const heldIsMe = () => { const h = heldNow(); return !!h && !!you && h.id === you.id; };
 const PRED = { on: false, x: 0, y: 0, step: null, path: [], dir: "south", face: 1, t: 0 };
 function predFrom() {
+  if (heldIsMe()) { PRED.on = false; PRED.path = []; PRED.step = null; return null; }   // held: no prediction, so nothing to walk back
   if (PRED.on) return PRED.step ? { x: PRED.step.tx, y: PRED.step.ty } : { x: PRED.x, y: PRED.y };
   const P = myEnt(); if (!P) return null;
   // take over from the server mid-step, on the same clock
@@ -2841,6 +2868,10 @@ cv.addEventListener("pointerdown", (e) => {
     clickMark = { x: t.x, y: t.y, at: performance.now(), red: t.kind === "mob" }; return;
   }
   const tx = Math.floor(w.x / T), ty = Math.floor(w.y / T);
+  /* HELD: the click does not even leave the page. predFrom already returned null so nothing would be predicted,
+     but sending the walk anyway would earn one refusal line per click, and a player hammering the ground to get
+     loose would bury the one message that matters ("hit it — hard"). It is said once every two seconds instead. */
+  if (heldIsMe()) { if (performance.now() - (heldIsMe.said || 0) > 2000) { heldIsMe.said = performance.now(); say("It has you. You are not going anywhere until somebody breaks its grip.", "bad"); } return; }
   if (G.walkableIn(Z.g, tx, ty)) { send({ t: "walk", x: tx, y: ty }); if (from) predGo(G.pathTowards(Z.g, from, { x: tx, y: ty }, 0)); clickMark = { x: tx, y: ty, at: performance.now() }; }   /* (2026-09-22) pathTowards, matching the server: predicting the full path while the server walks you to a shut gate would rubber-band you back */
 });
 cv.addEventListener("pointermove", (e) => {
@@ -3395,6 +3426,13 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
     /* (v81) a name colour and a title bought in eastcoin.vip's store show here too. A VIP colour is EARNED, so it wins. */
     if (pl.id === you.id || names) { const tier = G.VIP[pl.id === you.id ? G.vipOf(me).i : pl.vip | 0], bought = STORE_NAME[pl.cos?.name]; label(tier?.at ? `◆ ${pl.name}` : pl.name, x, y + 4, tier?.at ? tier.col : bought || (pl.id === you.id ? "#fff" : pvp ? "#ff7a6a" : "#9fd0ff")); label(`level ${pl.lvl}`, x, y + 18, "#ffe45c", 12); if (pl.cos?.title) label(`« ${pl.cos.title} »`, x, y + 31, "#e8d8a8", 11); }
     if (pvp && pl.id !== you.id && pl.hp < pl.maxHp) { const bw = 30, by = sy(p.py * T - 13); ctx.fillStyle = "#c00"; ctx.fillRect(x - bw / 2, by, bw, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(x - bw / 2, by, bw * Math.max(0, pl.hp / pl.maxHp), 5); }
+    /* BLEEDING (2026-09-24, the owner: "when a user is bleeding it needs to show an icon above their head
+       (small)"). Over the head of whoever HELD names, so the three people who are meant to go and save them can
+       see which one it is from across the chamber - the banner says somebody is held, this says who. Small on
+       purpose (18px, half a sprite) and it bobs, because a still icon over a still sprite reads as scenery.
+       Whatever holds somebody sets HELD; nothing here knows or cares that it is a snake. */
+    { const h = heldNow(); if (h && h.id === pl.id) { const im = IMG.fx_bleed, bx = x, by = sy(p.py * T - 22) + (calm ? 0 : Math.sin(pnow / 220) * 1.5), s = 18 * S2;
+      if (im) ctx.drawImage(im.im, bx - s / 2, by - s, s, s); else label("🩸", bx, by, "#ff6b85", 16); } }
   }
   // confetti over whoever just hit a big one (v81): 26 squares thrown up and out, falling, for 1.8 s. Only if they're in this room.
   for (let i = BURSTS.length - 1; i >= 0; i--) { const b = BURSTS[i], age = (pnow - b.at) / 1000; if (age > 1.8) { BURSTS.splice(i, 1); continue; } const pl = Z.players.find((q) => q.id === b.id); if (!pl || calm) continue;

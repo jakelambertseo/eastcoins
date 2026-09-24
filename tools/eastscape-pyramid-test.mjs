@@ -177,6 +177,43 @@ for (let i = 0; i < runs; i++) {
 if (venom !== runs) fail(`only ${venom} of ${runs} chests held venom; it is supposed to be every one`);
 else ok(`every one of ${runs} chests held serpent venom, and ${(pets / runs * 100).toFixed(1)}% held the pet`);
 
+/* ---------------------------------------------------------------- THE DOOR'S "POSSIBLE DROPS" TELLS THE TRUTH
+   (2026-09-24, the owner: "at the bottom of the pyramid popup, put a section for Possible Drops and then list
+   the drops with their icons") The panel computes every odds figure from PYRAMID.loot rather than listing them
+   by hand, so the only way it can lie is if the arithmetic and rollLoot disagree. This runs both over the same
+   table: the same chestP() the page uses, against 60,000 actual chests.
+
+   IT HAS ALREADY EARNED ITS KEEP. The first draft printed "Tickets · 63%", because 26% of the ROLLS are ticket
+   rolls - while every chest holds the clear's payout unconditionally, so the true figure is 100% and the 63% is
+   the chance of a bonus on top. A hand-written list would have shipped that. */
+{
+  const WT = (r) => r.reduce((a, [, w]) => a + w, 0);
+  const rollP = (k) => { const r = P.loot.table.find(([x]) => x === k); return r ? r[1] / WT(P.loot.table) : 0; };
+  const subP = (k, rows, p) => { const r = rows.find(([x]) => x === p); return rollP(k) * (r ? r[1] / WT(rows) : 0); };
+  const chestP = (p) => P.loot.rolls.reduce((a, [c, w]) => a + (w / WT(P.loot.rolls)) * (1 - Math.pow(1 - p, c - 1)), 0);
+  const rows = [
+    { k: "pet", p: rollP("pet") }, { k: "horseshoe", p: rollP("horseshoe") },
+    ...P.loot.gear.map((g) => ({ k: g, p: rollP("gear") / P.loot.gear.length })),
+    ...P.loot.chip.map(([k]) => ({ k, p: subP("chip", P.loot.chip, k) })),
+    { k: "clover", p: rollP("clover") },
+    ...P.loot.meal.map(([k]) => ({ k, p: subP("meal", P.loot.meal, k) })),
+    ...P.loot.drink.map(([k]) => ({ k, p: subP("drink", P.loot.drink, k) })),
+    { k: "snakefang", p: rollP("fang") }, { k: "scarabshell", p: rollP("shell") },
+  ].map((r) => ({ ...r, c: chestP(r.p) }));
+  /* every key has to be a real item, or the panel draws a blank box with a raw key under it */
+  for (const r of rows) if (r.k !== "pet" && !G.ITEMS[r.k]) fail(`the drops panel would list "${r.k}", which is not an item`);
+  const N = 60000, seen = {};
+  for (let i = 0; i < N; i++) for (const k of new Set(R.rollLoot({ tier: 1, pay: T.pay, low: false, late: false }).items.map((x) => (x.k === "pet:coilling" ? "pet" : x.k)))) seen[k] = (seen[k] | 0) + 1;
+  let worst = 0, who = "";
+  for (const r of rows) { const gap = Math.abs((seen[r.k] || 0) / N - r.c); if (gap > worst) { worst = gap; who = r.k; } }
+  if (worst > 0.012) fail(`the drops panel would print ${(rows.find((r) => r.k === who).c * 100).toFixed(1)}% for ${who}, and ${N.toLocaleString()} chests measured ${((seen[who] || 0) / N * 100).toFixed(1)}%`);
+  else ok(`all ${rows.length} rows of "Possible Drops" match ${N.toLocaleString()} real chests (worst gap ${(worst * 100).toFixed(2)} points, ${who})`);
+  /* and the two the panel states rather than rates */
+  if ((seen.tickets || 0) !== N) fail("tickets are NOT in every chest; the panel says they are");
+  if ((seen.serpentvenom || 0) !== N) fail("venom is NOT in every chest; the panel says it always is");
+  ok("tickets and venom are in every one, which is what the panel claims for them");
+}
+
 /* ---------------------------------------------------------------- the three things live testing found
    None of these can be PROVED without a running server, so what is checked is that the guard is still there.
    Every one was a real bug in the first live run. */

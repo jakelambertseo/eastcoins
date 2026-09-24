@@ -55,8 +55,62 @@ export function createPyramid(env) {
 .py-it{padding:8px 4px 6px;border-radius:8px;background:rgba(0,0,0,.07);text-align:center;font-weight:800;font-size:12px;line-height:1.2}
 .py-it.rare{background:rgba(242,210,46,.22);box-shadow:inset 0 0 0 2px #c8963a}
 .py-it .ico,.py-it img{width:34px;height:34px;image-rendering:pixelated;display:block;margin:0 auto 4px}
-.py-it b{display:block;font-size:14px}`;
+.py-it b{display:block;font-size:14px}
+/* POSSIBLE DROPS. The grid is the loot window's, so a thing looks the same on the door as it does in the chest.
+   .py-it holds an emoji as bare text for the handful of items with no drawn icon, hence the line-height. */
+.py-drops{margin-top:12px;border-top:1px solid rgba(0,0,0,.14);padding-top:10px}
+.py-drops h4{margin:0 0 4px;font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:#6a5c4e}
+.py-drops p{margin:0;font-size:12px;line-height:1.45;color:#6a5c4e}
+.py-drops .py-it{font-size:11px;line-height:1.25;padding-top:7px}
+.py-drops .py-it b{font-size:12px}
+.py-drops .py-it em{display:block;font-style:normal;font-weight:700;color:#8a7a68;margin-top:2px;font-size:11px}
+.py-drops .py-it.rare em{color:#8a6a1a}`;
     document.head.append(st);
+  }
+
+  /* ---------------------------------------------------------------- POSSIBLE DROPS
+     (2026-09-24, the owner: "at the bottom of the pyramid popup, put a section for Possible Drops and then list
+     the drops with their icons") EVERY ROW IS COMPUTED FROM C.loot, never typed out. The chest's table is the
+     one in the rules file that rollLoot walks, so a list written by hand here would be a second copy of it that
+     goes stale the first time a weight changes — and the whole reason this dungeon exists is what is in its
+     chest, so that is the copy you would least want wrong.
+
+     THE NUMBER IS PER CHEST, NOT PER ROLL, because a chest holds three to seven of these and "1.6%" would read
+     as the answer to a question nobody asked. It is summed over the roll-count distribution rather than using
+     its mean, so it is exact rather than close. Sorted rarest first: the ladder IS the pitch. */
+  const WT = (rows) => rows.reduce((a, [, w]) => a + w, 0);
+  const rollP = (key) => { const r = C.loot.table.find(([k]) => k === key); return r ? r[1] / WT(C.loot.table) : 0; };
+  const subP = (key, rows, pick) => { const r = rows.find(([k]) => k === pick); return rollP(key) * (r ? r[1] / WT(rows) : 0); };
+  /* the chance a chest holds at least one of something worth p of a single roll */
+  const chestP = (p) => C.loot.rolls.reduce((a, [c, w]) => a + (w / WT(C.loot.rolls)) * (1 - Math.pow(1 - p, c - 1)), 0);
+
+  function dropsBlock() {
+    const rows = [
+      { k: "pet", p: rollP("pet") },
+      { k: "horseshoe", p: rollP("horseshoe") },
+      ...C.loot.gear.map((g) => ({ k: g, p: rollP("gear") / C.loot.gear.length })),
+      ...C.loot.chip.map(([k]) => ({ k, p: subP("chip", C.loot.chip, k) })),
+      { k: "clover", p: rollP("clover") },
+      ...C.loot.meal.map(([k]) => ({ k, p: subP("meal", C.loot.meal, k) })),
+      ...C.loot.drink.map(([k]) => ({ k, p: subP("drink", C.loot.drink, k) })),
+      { k: "snakefang", p: rollP("fang"), n: "1–2" },
+      { k: "scarabshell", p: rollP("shell"), n: "1–3" },
+      /* "Bonus tickets", NOT "Tickets". A simulation of rollLoot against this list caught it: every chest holds
+         the clear's payout unconditionally, so a row reading "Tickets · 63%" would be claiming the thing the
+         player is guaranteed arrives two chests in three. 63% is the chance of an EXTRA ticket roll on top. */
+      { k: "tickets", p: rollP("tix"), label: "Bonus tickets" },
+    ].map((r) => ({ ...r, c: chestP(r.p) })).sort((a, b) => a.c - b.c);
+    /* the venom leads, on its own terms: it is not a chance, it is the reason to come */
+    rows.unshift({ k: "serpentvenom", c: 1, n: `${C.loot.venom[0]}–${C.loot.venom[1]}`, always: true });
+    const nm = (r) => r.label || (r.k === "pet" ? "A Coilling" : G.ITEMS[r.k]?.name || r.k);
+    const pic = (r) => (r.k === "pet" ? (env.artOf ? env.artOf("pet_coilling") : "") : env.ico ? env.ico(r.k) : "");
+    const hot = (r) => r.always || r.k === "pet" || G.ITEMS[r.k]?.slot || r.k === "chip_gold" || r.k === "horseshoe";
+    const pct = (r) => (r.always ? "always" : r.c >= 0.1 ? `${Math.round(r.c * 100)}%` : `${(r.c * 100).toFixed(1)}%`);
+    return `<div class="py-drops"><h4>Possible Drops</h4>
+      <p>Everyone who clears it opens their own chest, and what is in yours is rolled for you alone. Every chest
+      holds the clear's tickets and <b>serpent venom</b>; the rest is ${C.loot.rolls[0][0]}&ndash;${C.loot.rolls[C.loot.rolls.length - 1][0]} more
+      rolls off this list, so the odds below are the chance <b>one chest</b> holds it.</p>
+      <div class="py-grid">${rows.map((r) => `<div class="py-it${hot(r) ? " rare" : ""}">${pic(r)}<b>${esc(nm(r))}</b><em>${r.n ? `${esc(r.n)} &middot; ` : ""}${pct(r)}</em></div>`).join("")}</div></div>`;
   }
 
   /* ---------------------------------------------------------------- the tomb door */
@@ -89,7 +143,8 @@ export function createPyramid(env) {
       <div class="jk-msg">${left ? `<b>${left} paid run${left === 1 ? "" : "s"} left today.</b>` : "<b>Today's paid runs are used:</b> a clear pays a quarter until tomorrow."}
         Clear each chamber and its door grinds open; the lever opens the burial chamber once everyone alive is in the third.</div>
       <div class="jk-msg" style="opacity:.85"><b>It pays less than the Crypt.</b> What it has instead is in the chest: <b>serpent venom</b>, which is the only way to brew a Coilbreaker draught, and now and then something alive.</div>
-      ${d.live === false ? `<div class="jk-msg"><b>Not open yet.</b> The tomb has never been run by four people, so only an admin can open the door.</div>` : ""}`;
+      ${d.live === false ? `<div class="jk-msg"><b>Not open yet.</b> The tomb has never been run by four people, so only an admin can open the door.</div>` : ""}
+      ${dropsBlock()}`;
     $("pyrBody").querySelector("[data-go]").addEventListener("click", () => { SFX.play("door"); winEl.hidden = true; send({ t: "pyramid", op: "enter" }); });
     winEl.hidden = false; SFX.play("ui_open");
   }
@@ -123,6 +178,11 @@ export function createPyramid(env) {
     const here = inRun();
     if (!coilEl) { if (!here) return; css(); coilEl = document.createElement("div"); coilEl.className = "py-coil"; coilEl.innerHTML = `<span></span><div class="hb"><i></i></div>`; host().append(coilEl); }
     const c = here && gates ? gates.coil : null;
+    /* TELL THE PAGE, every time this runs. It is the page that has to stop predicting a held player's walk and
+       draw the bleed over their head, and it cannot know about a coil. The `until` doubles as the safety catch:
+       if the message that frees somebody is ever dropped, the hold expires on its own rather than freezing them
+       for the rest of the run. */
+    if (env.hold) env.hold(c ? c.on : null, c ? c.until : 0);
     coilEl.hidden = !c; if (!c) return;
     const you = env.you(), mine = you && c.on === you.id;
     coilEl.classList.toggle("me", !!mine);
