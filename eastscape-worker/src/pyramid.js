@@ -155,7 +155,13 @@ export function installPyramid(World, { G, R, rint }) {
        stone doors, with nothing visible anywhere near them. It does nothing until the burial chamber is open,
        and it can only take hold of somebody standing in the chamber WITH it. */
     if (!run.gates[2]) return;
-    const near = players.filter((p) => !p.dead && R.roomOf(p.x, p.y) === R.roomOf(m.x, m.y));
+    /* (2026-09-24) AND WITHIN REACH OF IT. The burial chamber is two and a half times the room it was and the
+       serpent sits at the apex of it, with the pharaohs at the mouth - so "in the same chamber" is no longer the
+       same thing as "close enough to be grabbed". Without the distance the first coil would land on somebody
+       eight tiles away who has not seen the snake yet, which is the bug the room check was written to fix,
+       one chamber smaller. */
+    const near = players.filter((p) => !p.dead && R.roomOf(p.x, p.y) === R.roomOf(m.x, m.y)
+      && G.cheb(p, m) <= (P_.coil.reach ?? 99));
 
     /* BURROW: at each threshold, once. It does no damage - it resets where everybody is standing. */
     const frac = m.hp / Math.max(1, m.maxHp);
@@ -164,8 +170,19 @@ export function installPyramid(World, { G, R, rint }) {
       run.burrows++;
       run.downUntil = now + P_.burrow.downMs;
       if (run.coil) this.pyramidFreeCoil(S, "burrow");
-      const r = P_.rooms[3], nx = rint(r.x0 + 1, r.x1 - 1), ny = rint(r.y0 + 1, r.y1 - 1);
-      if (G.walkableIn(S.g, nx, ny)) { m.x = nx; m.y = ny; m.step = null; m.path = []; }
+      /* WHERE IT COMES UP. The burial chamber is a taper, not a rectangle, so a point drawn from rooms[3]'s
+         bounding box lands in solid stone about a quarter of the time - and the walkable check then meant the
+         serpent quietly did not move at all, which is the whole mechanic failing silently. R.spanAt gives the
+         row's real span, and it tries a few rows before giving up. It also keeps its distance from the mouth of
+         the chamber, so a burrow can never drop it on top of the party. */
+      const r = P_.rooms[3];
+      for (let t = 0; t < 24; t++) {
+        const ny = rint(r.y0, r.y1 - 2), s = R.spanAt(ny);
+        if (!s) continue;
+        const nx = rint(s[0] + 1, s[1] - 1);
+        if (!G.walkableIn(S.g, nx, ny) || this.occupied(S, nx, ny, m)) continue;
+        m.x = nx; m.y = ny; m.step = null; m.path = []; break;
+      }
       m.threat = [];
       for (const p of this.playersIn(S)) this.say(p, "The floor drops. It has gone under the sand — it will come up somewhere else.", "bad");
       this.pyramidTell(S);

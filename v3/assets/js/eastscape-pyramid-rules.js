@@ -47,20 +47,47 @@ export function createPyramidRules(G, H) {
 
        BURROW is the second half: at `at` fractions of its health it goes under the sand, untargetable for
        `downMs`, and comes up somewhere else in the chamber. It resets everybody's position rather than dealing
-       damage, which stops a party parking in one corner for six minutes. */
-    coil: { everyMs: 21000, warnMs: 3000, maxMs: 9000, hurt: 0.09, breakFrac: 0.05 },
+       damage, which stops a party parking in one corner for six minutes.
+
+       REACH is what makes the pharaohs the fight you have first (2026-09-24, the owner: "the snake should be
+       placed further to the back, so the players fight the risen pharohs first and then the snake"). The coil
+       only takes hold of somebody within `reach` of the serpent, so a party working through the pharaohs at the
+       chamber's mouth is not being grabbed by something at the apex six tiles away. Step up to it and it starts.
+       Its own aggro is turned down to match, on the placement, further down this file. */
+    coil: { everyMs: 21000, warnMs: 3000, maxMs: 9000, hurt: 0.09, breakFrac: 0.05, reach: 4 },
     burrow: { at: [0.70, 0.40], downMs: 5000 },
 
     /* ---------------------------------------------------------------- the chambers
        A PYRAMID CROSS-SECTION, and the point of it is that it is not the Crypt's four rooms in a row. You come in
        at the base and work UP through four chambers, each narrower than the last, to the burial chamber at the
        top. The gates are on the centre line rather than along one wall, so the way on is always straight ahead.
-       Same verbs as the Crypt: clear the chamber, its gate opens, move up. */
-    rooms: [{ y0: 19, y1: 22, x0: 2, x1: 41 }, { y0: 14, y1: 17, x0: 6, x1: 37 },
-      { y0: 9, y1: 12, x0: 11, x1: 32 }, { y0: 3, y1: 7, x0: 16, x1: 27 }],
-    walls: [18, 13, 8],                                // the solid rows between them
-    gates: [{ x: 21, y: 18 }, { x: 21, y: 13 }, { x: 21, y: 8 }],
-    lever: { x: 21, y: 10 },                           // opens the burial chamber, once everyone alive is in chamber 3
+       Same verbs as the Crypt: clear the chamber, its gate opens, move up.
+
+       THE BURIAL CHAMBER IS THE BIG ROOM NOW (2026-09-24, the owner, from a screenshot of it: "its very
+       claustrophobic with all the large mobs. it needs to be 2-3X larger because there will be up to 4 players in
+       there as well"). He is right, and the arithmetic says how right: it was 12 by 5, and once the torches, the
+       braziers, the altar, the candles, the gargoyles and the stairs were in it, FORTY-SEVEN tiles were standable.
+       Nine bodies were going in there, four of them `size: "l"` and one `"xl"` - the Squeeze's box is 24 by 60,
+       which is two tiles wide and nearly three tall of drawn sprite. So the room was full before anybody arrived.
+
+       The rows are the whole budget: `room(1, 3, 42, 22)` is twenty of them and three are the solid walls between
+       chambers, so every row the burial chamber gains, the three below it lose. It now takes EIGHT (y3 to y10) and
+       they take three each, which is the right way round: chambers 0 to 2 are forty, thirty-four and twenty-six
+       tiles WIDE and their monsters are spread along them, so depth is the dimension they were not using.
+
+       AND IT IS A TAPER, not a box. Widening the top chamber to a rectangle as wide as its base would have flattened
+       the silhouette the whole map exists to draw - the pyramid would have come out T-shaped. `TAPER` gives the
+       chamber a span per row, x11..x32 at the mouth stepping in to x18..x25 at the apex, so the room genuinely comes
+       to a point and is BIGGER at the same time: 132 tiles, 113 of them standable once the dressing is in.
+       2.4x, in the middle of what he asked for. `rooms[3]` stays the bounding rectangle, because roomOf's job is
+       "which chamber is this body in" and no body ever stands on a wall. */
+    rooms: [{ y0: 20, y1: 22, x0: 2, x1: 41 }, { y0: 16, y1: 18, x0: 5, x1: 38 },
+      { y0: 12, y1: 14, x0: 9, x1: 34 }, { y0: 3, y1: 10, x0: 11, x1: 32 }],
+    /* the burial chamber's floor, row by row: the apex is the short one */
+    taper: { 3: [18, 25], 4: [16, 27], 5: [15, 28], 6: [14, 29], 7: [13, 30], 8: [12, 31], 9: [11, 32], 10: [11, 32] },
+    walls: [19, 15, 11],                               // the solid rows between them
+    gates: [{ x: 21, y: 19 }, { x: 21, y: 15 }, { x: 21, y: 11 }],
+    lever: { x: 24, y: 13 },                           // opens the burial chamber, once everyone alive is in chamber 3
 
     /* ---------------------------------------------------------------- the first chambers are not the same twice
        (the owner: "randomize the difficulty of the first few rooms mobs"). A run's seed shifts the monsters in
@@ -74,7 +101,7 @@ export function createPyramidRules(G, H) {
        The Crypt's shape - a chest each, your own roll, nothing shared - with a table that is the reason to come.
        `venom` is FIRST and guaranteed, because a run that gave you no venom would be a run that gave you nothing
        you cannot get elsewhere. */
-    loot: { at: { x: 21, y: 4 }, rolls: [[3, 26], [4, 30], [5, 22], [6, 14], [7, 8]], lateRolls: 3, lowRolls: 4, bonus: [0.04, 0.1],
+    loot: { at: { x: 21, y: 6 }, rolls: [[3, 26], [4, 30], [5, 22], [6, 14], [7, 8]], lateRolls: 3, lowRolls: 4, bonus: [0.04, 0.1],
       venom: [1, 2],                                   // always, on top of the rolls
       table: [["tix", 26], ["shell", 16], ["fang", 14], ["drink", 12], ["meal", 10], ["clover", 9], ["chip", 6], ["gear", 4], ["pet", 1.6], ["horseshoe", 1.4]],
       drink: [["beer", 5], ["cocktail", 3], ["whiskey", 2], ["champagne", 1]],
@@ -101,6 +128,14 @@ export function createPyramidRules(G, H) {
 
   /* which chamber a point is in, 0-based; -1 for the walls between them */
   const roomOf = (x, y) => PYRAMID.rooms.findIndex((r) => y >= r.y0 && y <= r.y1 && x >= r.x0 && x <= r.x1);
+  /* THE ONE PLACE THE PYRAMID'S SHAPE IS DECIDED: which columns of row y are floor, or null for a wall row. The
+     build carves the map from it and the worker's burrow picks a landing spot from it, so a change to the taper
+     cannot move the walls without also moving where the serpent can surface. */
+  const spanAt = (y) => {
+    if (PYRAMID.taper[y]) return PYRAMID.taper[y];
+    const r = PYRAMID.rooms.find((q) => y >= q.y0 && y <= q.y1);
+    return r ? [r.x0, r.x1] : null;
+  };
 
   const scenes = {
     pyramid: {
@@ -110,11 +145,19 @@ export function createPyramidRules(G, H) {
       /* THE MONSTERS LIVE ON THE SCENE, in [type, x, y] like every other scene in the game - the run's private
          copy is built by the ordinary scene machinery and cryptEnter's mirror walks `run.mobs` to set health and
          swap in the tier. Keeping them in a table of my own would have spawned an EMPTY dungeon.
-         Four pharaohs stand round the serpent in the burial chamber; the chambers below are the other four. */
-      mobs: [["swarm", 6, 21], ["swarm", 12, 20], ["grifter", 30, 21], ["grifter", 37, 20], ["swarm", 19, 22],
-        ["grifter", 9, 16], ["canopic", 15, 15], ["canopic", 28, 15], ["dustwraith", 34, 16], ["swarm", 22, 17],
-        ["canopic", 14, 11], ["dustwraith", 19, 10], ["dustwraith", 24, 11], ["canopic", 29, 10],
-        ["pharaoh", 18, 6], ["pharaoh", 25, 6], ["pharaoh", 18, 3], ["pharaoh", 25, 3], ["squeeze", 21, 5]],
+         THE PHARAOHS ARE AT THE MOUTH AND THE SERPENT IS AT THE APEX (2026-09-24, the owner: "the snake should be
+         placed further to the back, so the players fight the risen pharohs first and then the snake"). Four
+         pharaohs hold y9 and y10, a stride past the gate; the Squeeze is six rows further up at the point of the
+         pyramid. Placing it back there is only half of it, because a monster chases anything inside its `aggro` -
+         at the serpent's own 9 it would have met the party AT the door and the pharaohs would have been an
+         afterthought. THE PLACEMENT TURNS ITS AGGRO DOWN TO 4, so it ignores you until you are most of the way up
+         the chamber or until somebody hits it, after which pyramidThreat sends it after whoever did. Coil has a
+         matching `reach`. Nothing about the fight itself changed - it is the same serpent, met second. */
+      mobs: [["swarm", 6, 21], ["swarm", 12, 20], ["grifter", 30, 21], ["grifter", 37, 20], ["swarm", 16, 22],
+        ["grifter", 9, 17], ["canopic", 15, 16], ["canopic", 28, 16], ["dustwraith", 34, 17], ["swarm", 24, 18],
+        ["canopic", 14, 13], ["dustwraith", 18, 12], ["dustwraith", 26, 14], ["canopic", 30, 13],
+        ["pharaoh", 17, 10], ["pharaoh", 25, 10], ["pharaoh", 14, 9], ["pharaoh", 28, 9],
+        ["squeeze", 21, 4, { aggro: 4 }]],
       npcs: [], bots: [],
       floorArt: "t_crypt", wallArt: "t_cryptwall",   // the Crypt's flagstones: a tomb is a tomb, and it saves a Wang set
       art: ["swarm", "grifter", "canopic", "dustwraith", "pharaoh", "squeeze", "t_crypt", "t_cryptwall",
@@ -123,12 +166,13 @@ export function createPyramidRules(G, H) {
         "o_bonepile", "o_cryptrubble", "o_obelisk", "o_chest"],
       build() {
         const g = room(1, 3, 42, 22, 21), objs = [];
-        /* IT NARROWS. Everything outside a chamber's own span is solid wall, which is what gives the inside of
-           the pyramid its shape; the three rows in `walls` match no chamber at all and so come out solid, and
-           the gates are the only way through them. */
+        /* IT NARROWS, ROW BY ROW. Everything outside a row's own span is solid wall, which is what gives the
+           inside of the pyramid its shape; the three rows in `walls` belong to no chamber and so come out solid,
+           and the gates are the only way through them. The burial chamber's span comes from `taper`, so the top
+           of the map steps in to a point rather than stopping at a flat ceiling. */
         for (let y = 3; y <= 22; y++) {
-          const r = PYRAMID.rooms.find((q) => y >= q.y0 && y <= q.y1);
-          for (let x = 1; x <= 42; x++) if (!r || x < r.x0 || x > r.x1) g[y][x] = "v";
+          const s = spanAt(y);
+          for (let x = 1; x <= 42; x++) if (!s || x < s[0] || x > s[1]) g[y][x] = "v";
         }
         PYRAMID.gates.forEach((q, i) => {
           g[q.y][q.x] = "#";
@@ -136,9 +180,10 @@ export function createPyramidRules(G, H) {
         });
         objs.push({ t: "cryptlever", x: PYRAMID.lever.x, y: PYRAMID.lever.y, name: "Lever: opens the burial chamber once everyone alive is in here" });
         block(g, PYRAMID.lever.x, PYRAMID.lever.y, 1, 1);
-        objs.push({ t: "booth", art: "o_chest", x: 18, y: 10, name: "A chest: your bank, to restock" }); block(g, 18, 10, 1, 1);
-        /* the way out, in the burial chamber's back wall, and only once the serpent is dead */
-        objs.push({ t: "cryptexit", x: 21, y: 3, w: 2, h: 1, name: "Stairs out into the sun: once the Squeeze is dead" }); block(g, 21, 3, 2, 1);
+        objs.push({ t: "booth", art: "o_chest", x: 18, y: 13, name: "A chest: your bank, to restock" }); block(g, 18, 13, 1, 1);
+        /* the way out, cut into the apex - and OFF the centre line, because the serpent is on it now. x21 from
+           the gate at y11 all the way to the Squeeze at y4 is the way in and nothing may stand in it. */
+        objs.push({ t: "cryptexit", x: 18, y: 3, w: 2, h: 1, name: "Stairs out into the sun: once the Squeeze is dead" }); block(g, 18, 3, 2, 1);
         /* THE HOARD, and it starts HIDDEN. `open: true` is what keeps a chest (or a raised gate) out of the
            world; the client sets it false when the run reads as cleared, which is how it appears the moment the
            serpent dies. Without this object there is nothing to click and the chest can never be opened -
@@ -149,20 +194,21 @@ export function createPyramidRules(G, H) {
         /* the dressing. Nothing stands on the centre line (the lane the gates are on), on a monster's spot, or
            on the chest, the lever or the chest-drop tile. */
         const put = (t, name, list, w = 1, h = 1) => { for (const [x, y] of list) { objs.push({ t, x, y, w, h, name }); block(g, x, y, w, h); } };
-        put("crypttorch", "A torch, still going", [[4, 19], [39, 19], [8, 14], [35, 14], [13, 9], [30, 9], [17, 3], [26, 3]]);
-        put("sarcophagus", "A sarcophagus. Occupied", [[3, 21], [40, 21], [7, 16], [36, 16]], 1, 2);
-        put("cryptpillar", "A pillar, cracked", [[10, 19], [33, 19], [12, 16], [31, 16], [15, 11], [28, 11]]);
-        put("obelisk", "A small obelisk", [[16, 19], [27, 19]]);
-        put("gargoyle", "A jackal, carved. It is facing the way in", [[20, 7], [22, 7]]);   /* y8 is a WALL row: these were being placed inside solid stone. They flank the door now. */
-        put("ghostbrazier", "Cold fire", [[17, 5], [26, 5], [17, 7], [26, 7]]);
-        /* THE ALTAR IS OFF THE CENTRE LINE, and it has to be: at 21,7 it sat squarely in the only doorway into the
-           burial chamber and walled the boss off from the party entirely. Column x21 from the gate at y8 up to the
-           serpent at y5 is the way in, and nothing may stand in it. */
-        put("cryptaltar", "The offering table. Swept clean", [[19, 6]]);
-        put("cryptcoffin", "An open coffin. Nothing in it", [[23, 10]]);
-        put("skullheap", "Skulls, stacked", [[6, 20], [35, 20]]);   /* (37,20) was under a Grave Grifter */
-        put("bonepile", "Bones", [[25, 20], [11, 15], [29, 16]]);
-        put("cryptrubble", "Rubble", [[14, 20], [32, 20], [20, 15]]);
+        put("crypttorch", "A torch, still going", [[4, 20], [39, 20], [7, 16], [36, 16], [11, 12], [32, 12], [13, 7], [30, 7], [16, 4], [27, 4]]);
+        put("sarcophagus", "A sarcophagus. Occupied", [[3, 21], [40, 21], [6, 17], [37, 17]], 1, 2);
+        put("cryptpillar", "A pillar, cracked", [[10, 20], [33, 20], [12, 16], [31, 16], [14, 12], [29, 12], [12, 9], [31, 9], [15, 6], [28, 6]]);
+        put("obelisk", "A small obelisk", [[16, 20], [27, 20]]);
+        /* THE JACKALS FLANK THE BURIAL DOOR at one remove. On (20,10) and (22,10) they would have pinched the only
+           way in down to the single tile (21,10), with four pharaohs waiting on the other side of it. */
+        put("gargoyle", "A jackal, carved. It is facing the way in", [[19, 10], [23, 10]]);
+        put("ghostbrazier", "Cold fire", [[16, 5], [27, 5], [12, 8], [31, 8]]);
+        /* THE ALTAR IS OFF THE CENTRE LINE, and it has to be: it once sat squarely in the only doorway into the
+           burial chamber and walled the boss off from the party entirely. */
+        put("cryptaltar", "The offering table. Swept clean", [[18, 5]]);
+        put("cryptcoffin", "An open coffin. Nothing in it", [[24, 12]]);
+        put("skullheap", "Skulls, stacked", [[8, 20], [35, 20]]);   /* (37,20) was under a Grave Grifter */
+        put("bonepile", "Bones", [[25, 21], [11, 17], [29, 17]]);
+        put("cryptrubble", "Rubble", [[14, 21], [32, 21], [20, 16]]);
         put("cryptcandles", "Candles, lit", [[19, 4], [24, 4]]);
         return { g, objs, blobs: [] };
       },
@@ -198,5 +244,5 @@ export function createPyramidRules(G, H) {
   }
   function pickCount(r) { const tot = PYRAMID.loot.rolls.reduce((a, [, w]) => a + w, 0); let n = r * tot; for (const [c, w] of PYRAMID.loot.rolls) { n -= w; if (n <= 0) return c; } return 4; }
 
-  return { PYRAMID, mobs, scenes, roomOf, rollLoot };
+  return { PYRAMID, mobs, scenes, roomOf, spanAt, rollLoot };
 }

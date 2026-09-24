@@ -42,12 +42,79 @@ for (const [room, t, x, y] of SPAWNS) {
 }
 ok(`all ${SPAWNS.length} monsters stand on clear floor in their own chamber`);
 
+/* ---------------------------------------------------------------- THE BURIAL CHAMBER IS BIG ENOUGH
+   (2026-09-24, the owner, from a screenshot: "its very claustrophobic with all the large mobs. it needs to be
+   2-3X larger because there will be up to 4 players in there as well") It was 12 by 5 with thirteen tiles of
+   dressing in it - 47 standable, for four players, four `size: "l"` pharaohs and an `xl` serpent. The number
+   below is the one to watch: if a later change to the taper or the dressing drops it under 110 the room has
+   quietly gone back to being too small, and nothing else here would notice. */
+{
+  const R3 = P.rooms[3];
+  let floor = 0, stand = 0;
+  for (let y = R3.y0; y <= R3.y1; y++) for (let x = R3.x0; x <= R3.x1; x++) {
+    if (!WALK.includes(g[y][x])) continue;
+    floor++; if (!at.has(`${x},${y}`)) stand++;
+  }
+  const WAS = 47;
+  if (stand < 110) fail(`the burial chamber has ${stand} standable tiles; it was ${WAS} when the owner called it claustrophobic, and 2x that is the floor`);
+  else ok(`the burial chamber: ${floor} tiles of floor, ${stand} standable — ${(stand / WAS).toFixed(1)}x what the owner was complaining about`);
+  /* and it has to still LOOK like a pyramid: every row at least as wide as the one above it, narrowing overall */
+  const w = [];
+  for (let y = R3.y0; y <= R3.y1; y++) { const s = R.spanAt(y); w.push(s ? s[1] - s[0] + 1 : 0); }
+  for (let i = 1; i < w.length; i++) if (w[i] < w[i - 1]) fail(`the burial chamber widens going up: row ${R3.y0 + i} is ${w[i]} wide under a row of ${w[i - 1]}`);
+  if (w[w.length - 1] <= w[0]) fail("the burial chamber does not taper at all - it is a box with a pointed map around it");
+  else ok(`it tapers ${w[w.length - 1]} wide at the mouth to ${w[0]} at the apex, never widening upward`);
+  /* the chambers below have to stay wider than it, or the silhouette is a T */
+  for (let i = 0; i < 3; i++) if (P.rooms[i].x1 - P.rooms[i].x0 < w[w.length - 1]) fail(`chamber ${i} is narrower than the burial chamber's mouth`);
+  ok("each chamber below is wider than the one above it");
+}
+
+/* ---------------------------------------------------------------- THE PHARAOHS COME FIRST
+   (the owner: "the snake should be placed further to the back, so the players fight the risen pharohs first and
+   then the snake") Back there is only half of it: a monster chases anything inside its aggro, so if the serpent's
+   were left at the type's 9 it would meet the party at the door and the pharaohs would be an afterthought. */
+{
+  const gate = P.gates[2];
+  const sqp = R.scenes.pyramid.mobs.find(([t]) => t === "squeeze");
+  const phs = R.scenes.pyramid.mobs.filter(([t]) => t === "pharaoh");
+  /* ROWS from the door, not Chebyshev: the chamber is twenty-two wide and eight deep, and "further to the back"
+     in a pyramid stacked bottom to top means further UP. A pharaoh in a far corner is beside you, not behind
+     the snake, and measuring it as a square distance says the opposite. */
+  const deep = (p) => Math.abs(p[2] - gate.y);
+  const shallow = Math.min(...phs.map(deep));
+  if (deep(sqp) <= Math.max(...phs.map(deep))) fail("the serpent is no further up the chamber than a pharaoh is");
+  else ok(`the serpent is ${deep(sqp)} rows up from the burial door; the pharaohs hold the ${shallow} and ${Math.max(...phs.map(deep))} rows in front of it`);
+  const ag = sqp[3]?.aggro;
+  if (!(ag > 0 && ag < deep(sqp))) fail(`the serpent's aggro is ${ag ?? "the type's " + R.mobs.squeeze.aggro} — it reaches the door, so it is the first thing fought, not the last`);
+  else ok(`its aggro is turned down to ${ag} on the placement, so it does not come to the door`);
+  if (!(P.coil.reach > 0 && P.coil.reach < deep(sqp))) fail("coil can reach the burial door - the party gets grabbed before it has seen the snake");
+  else ok(`coil reaches ${P.coil.reach}, so nothing is grabbed while the pharaohs are still up`);
+}
+
 /* the fixtures are where they should be */
 const inRoom = (p, n, what) => { if (R.roomOf(p.x, p.y) !== n) fail(`${what} is in chamber ${R.roomOf(p.x, p.y)}, not ${n}`); };
 inRoom(P.lever, 2, "the lever");
 inRoom(P.loot.at, 3, "the chest drop");
 if (R.roomOf(R.scenes.pyramid.entry.x, R.scenes.pyramid.entry.y) !== 0) fail("the entry is not in the first chamber");
-ok("the lever is in chamber 3, the hoard lands in the burial chamber, and you come in at the base");
+ok("the lever is in the chamber below the tomb, the hoard lands in the burial chamber, and you come in at the base");
+
+/* ---------------------------------------------------------------- the burrow has somewhere to surface
+   The chamber is a taper, so a landing spot drawn from rooms[3]'s bounding box is solid stone about a quarter of
+   the time - and the walkable check then meant the serpent quietly did not move, which is the mechanic failing
+   without a word. The worker draws from R.spanAt instead; this is that the spans it draws from are real floor. */
+{
+  const R3 = P.rooms[3];
+  let spots = 0;
+  for (let y = R3.y0; y <= R3.y1 - 2; y++) {
+    const s = R.spanAt(y); if (!s) { fail(`row ${y} of the burial chamber has no span`); continue; }
+    for (let x = s[0] + 1; x <= s[1] - 1; x++) if (WALK.includes(g[y][x]) && !at.has(`${x},${y}`)) spots++;
+  }
+  if (spots < 20) fail(`only ${spots} tiles for the serpent to come up on; a burrow that finds nowhere does nothing at all`);
+  else ok(`${spots} tiles in the back of the chamber for a burrow to surface on`);
+  const fsPyr = (await import("node:fs")).readFileSync("C:/Users/jake/code/eastcoins/eastscape-worker/src/pyramid.js", "utf8");
+  if (!fsPyr.includes("R.spanAt(ny)")) fail("the burrow is picking a spot out of the bounding box again - it will land in stone and silently not move");
+  else ok("the burrow picks its spot from the taper, not the bounding box");
+}
 
 /* REACHABILITY, gate by gate: with gates 0..k-1 open you can reach chamber k and no further */
 const reach = (openGates) => {
