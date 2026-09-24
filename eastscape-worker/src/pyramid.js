@@ -26,6 +26,12 @@ export function installPyramid(World, { G, R, rint }) {
   const P_ = R.PYRAMID, P = World.prototype;
   const dayOf = () => G.chicagoDay();
   const keyed = (k) => String(k).startsWith("pyramid:");
+  /* (2026-09-24, reported by the owner: "i cant get in or teleport") ANYWHERE CALLED PYRAMID, INCLUDING THE BARE
+     TEMPLATE. `pyramid` with no colon is the scene every private run is stamped from - nobody should ever be
+     standing in it, but an admin teleport puts you there, and once there you were STUCK: the stairs out returned
+     silently because there is no run to have cleared, and pyramidRejoin ignored you because your scene key had
+     no colon in it. Both of those now use this instead. */
+  const anyPyramid = (k) => String(k) === "pyramid" || keyed(k);
   /* the chamber a thing is standing in. BOTH coordinates: see the header. */
   const roomAt = (o) => R.roomOf(o.hx ?? o.x, o.hy ?? o.y);
 
@@ -206,6 +212,7 @@ export function installPyramid(World, { G, R, rint }) {
     m.dead = true; m.claim = null; m.respawnAt = Infinity; pl.act = null; this.emit(pl, "kill", { mob: m.t });
     if (S.run && S.run.coil && S.run.coil.id === pl.id) this.pyramidFreeCoil(S, "broke");
     const def = G.MOBS[m.t]; if (def.boss) return this.pyramidClear(S, now);
+    if (!S.run) return;   /* the bare template has no gates to open, and reading them would throw */
     /* the first two doors open on their own when their chamber is empty; the third is the lever's job */
     for (const i of [0, 1]) if (!S.run.gates[i] && !S.mobs.some((x) => !x.dead && roomAt(x) === i)) this.pyramidOpenGate(S, i);
   };
@@ -220,7 +227,9 @@ export function installPyramid(World, { G, R, rint }) {
   };
 
   P.pyramidExit = function (S, pl) {
-    if (!S.run) return;
+    /* NO RUN AT ALL means this is the bare template and somebody was put here by hand: let them walk out. It
+       used to `return` on its own, which is how you got stuck in a room with a working door. */
+    if (!S.run) { this.moveToScene(pl, P_.door.scene, null, P_.door); return this.say(pl, "There is nothing going on in here. You step back out into the sun.", "sys"); }
     if (!S.run.cleared) return this.say(pl, "The Squeeze is between you and those stairs.", "bad");
     this.moveToScene(pl, P_.door.scene, null, P_.door);
     this.say(pl, "You come out into the sun. It is very bright.", "good");
@@ -295,7 +304,7 @@ export function installPyramid(World, { G, R, rint }) {
 
   /** anything still owed to somebody who is no longer in a tomb is sent after them */
   P.pyramidLootSweep = function (pl) {
-    if (pl.C.pyramid?.loot && !keyed(pl.C.scene)) this.pyramidLootGive(pl, true);
+    if (pl.C.pyramid?.loot && !anyPyramid(pl.C.scene)) this.pyramidLootGive(pl, true);
   };
 
   /* ------------------------------------------------------------ housekeeping */
@@ -311,7 +320,9 @@ export function installPyramid(World, { G, R, rint }) {
 
   P.pyramidRejoin = function (pl) {
     const C = pl.C, key = String(C.scene || "");
-    if (!keyed(key)) return;
+    if (!anyPyramid(key)) return;
+    /* the bare template: not a run, and not somewhere to wake up. Out to the door. */
+    if (!keyed(key)) { C.scene = P_.door.scene; C.x = P_.door.x; C.y = P_.door.y; return; }
     const live = this.scenes.get(key);
     /* the run is gone, or it was never this player's: out to the door, with anything still owed sent after them */
     if (!live || !live.run || !live.run.members.includes(pl.id)) {
