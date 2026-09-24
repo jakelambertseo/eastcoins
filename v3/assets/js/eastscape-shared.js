@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 213;
+export const VERSION = 214;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -4572,7 +4572,17 @@ export function normChar(c) {
   }
 
   /* (v104) saved INSIDE a crypt run ("crypt:<run id>"): left alone here. The game server decides at login whether that run is still going (back where you stood) or not (the stairs in the Forum): cryptRejoin in eastscape-worker/src/crypt.js. */
-  const inRun = String(out.scene).startsWith("crypt:");
+  /* (2026-09-24, reported by jimmytomato: "I was on Floor 30 of the Tower ... now demoted back to Floor 21")
+     A TOWER RUN IS A RUN IN PROGRESS, exactly as a Crypt run is. Both live in a scene keyed to the player
+     (`tower:<id>`, `crypt:<id>`) which is built on demand and so is NOT in SCENES - and only `crypt:` was spelled
+     here, so the check below found no such scene and sent every tower climber back to the casino ON EVERY LOAD.
+     A deploy, a reconnect, any restart of the Durable Object.
+
+     The floor itself was never lost - c.tower still said {floor:30,best:29} - but the SCENE KEY was, and that is
+     what towerRejoin matches on to rebuild the room you were standing in. Without it a climber arrived at the
+     door instead and re-entered at checkpointAt(best+1): floor 21, nine floors gone, which is precisely what was
+     reported. A regex over both, so the next per-player scene is one word rather than another silent demotion. */
+  const inRun = /^(crypt|tower):/.test(String(out.scene));
   if (!inRun && !OPEN.has(String(out.scene).split(":")[0])) Object.assign(out, START);
   if (!inRun && !SCENES[out.scene]) Object.assign(out, isIsle(out.scene) ? ISLE_FERRY : START);   // back from an island: the ferry at River Bend
   const fi = f.isle, ci = c.isle && typeof c.isle === "object" ? c.isle : {};
