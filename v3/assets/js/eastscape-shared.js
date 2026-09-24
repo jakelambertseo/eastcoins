@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 212;
+export const VERSION = 213;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1397,25 +1397,110 @@ Object.assign(SCENES, {
     npcs: [], bots: []
   },
   thunderhead: {
-    name: "The Thunderhead", ground: "cloud", exits: { e: "cloud", w: "vault", n: "trailer" }, tint: "rgba(18,16,56,.42)",
+    /* (2026-09-24) REBUILT, AND IT IS NOT CLOUDREACH ANY MORE. It wore Cloudreach's ground with a darker tint
+       over it, a road straight across y13, a rectangular hole in the floor and THREE objects on the whole map -
+       two trees and a sign. The owner: "lets make it less like the clouds, and more fantasy based but slightly
+       cloudish ... make this one feel different from all the other maps."
+
+       What makes it different is a RUIN. This is the shattered precinct of something that stood above the storm:
+       a processional way in from Cloudreach, through a ring of rune stones the road runs straight down the middle
+       of, and out west to the Vault. Broken sky-arches line the way, storm crystals grow out of the floor, and
+       the sea shows through a tear in it to the south-west. It keeps the cloud floor - "slightly cloudish" - and
+       everything standing on it is masonry and crystal.
+
+       AND IT HAS ITS ROCK AT LAST. The Thunderhead was the ONE banded map in the game with no ore: every other
+       one has an ore, a tree and a fish, and mining on the walked chain stopped dead at onyx 50 in Cloudreach
+       because everything above it lives in the Vault (no band) or the Trailer Park (Combat 80). Starfall at 60
+       and voidglass at 70 fill the hole, in OPPOSITE CORNERS as the owner asked, each with an aggressive guard. */
+    name: "The Thunderhead", ground: "storm", exits: { e: "cloud", w: "vault", n: "trailer" }, tint: "rgba(26,14,62,.44)",
     build() {
       const g = grid(), objs = [], keep = [];
-      /* (v122) woodcutting's next step. Every map has had choppable trees all along; these are the tiered ones, so the skill pays better as you go out further instead of paying `logs` forever. */
-      for (const [tx, ty] of [[26, 6], [30, 21]]) { objs.push({ t: "skyash", x: tx, y: ty, log: "skyashlogs", name: "Storm-struck skyash", req: { skill: "woodcutting", lvl: 50 }, xp: 200 }); g[ty][tx] = "#"; }
-      for (let x = 12; x < COLS; x++) g[13][x] = ",";
-      for (let y = 13; y <= 16; y++) g[y][14] = ",";
-      for (let y = 18; y <= 23; y++) for (let x = 3; x <= 22; x++) g[y][x] = "~";   // the sea, seen through the floor of the storm
-      scatterSpots(objs, 3, 22, 18, 5, [1, 2, 4], { name: "The sea below", req: { skill: "fishing", lvl: 50 }, fish: "stormmarlin", fish2: "thundersquid", fish2lvl: 58, xp: 190, xp2: 230, glow: "#ffe27a", tease: "Far below, something with a sword for a nose cuts the water. Fishing 50." });
-      for (let x = 2; x <= 23; x++) keep.push([x, 17], [x, 16]);
-      objs.push({ t: "sign", x: 40, y: 11, name: "THE THUNDERHEAD: Combat 50 and up. The end of the road. Nothing here attacks first, not even THE HOUSE, in the north-west corner. The House always wins. Usually." }); g[11][40] = "#";
+      const put = (t, x, y, name, extra) => { objs.push({ t, x, y, name, ...(extra || {}) }); g[y][x] = "#"; keep.push([x, y]); };
+
+      const path = [];
+      const runX = (y, x0, x1) => { for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) path.push([x, y]); };
+      const runY = (x, y0, y1) => { for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) path.push([x, y]); };
+      /* the processional way: in from Cloudreach at the east, north, west through the rune ring at x28 */
+      runX(13, 34, COLS - 1); runY(34, 8, 13); runX(8, 28, 34); runY(28, 8, 16);
+      runX(16, 22, 28); runY(22, 0, 16);            // and the north spur, out to the Trailer Park
+      runX(12, 8, 22); runY(8, 12, 13); runX(13, 0, 8);   // west, out to the Vault
+      runY(9, 4, 12); runX(8, 6, 9);                // the north-west quarter, where the starfall is
+      runY(38, 13, 22); runX(20, 38, 41); runX(22, 35, 38);   // and the south-east, where the voidglass is
+      for (const [x, y] of path) { g[y][x] = ","; keep.push([x, y]); }
+
+      /* THE TEAR IN THE FLOOR, and the sea a long way under it. Ragged, and anything left with water on all four
+         sides is flooded - see the Lantern Mire for why a one-tile island can never be walked to. */
+      /* THE TEAR RUNS OFF THE BOTTOM OF THE MAP, and it is ragged only at its two ENDS. Ragging the south edge
+         as well is what left a shelf of floor between the water and the map's rim: six tiles a player could see
+         and never stand on, because `wild` paints this map's border as water AFTER build() returns and cuts them
+         off. Anything clever here has to happen after wild, and by then a tree may already be standing on the
+         tile - so the honest fix is to leave no strip in the first place. The north shore is the one that reads,
+         and the ends are where raggedness shows against the floor. */
+      for (let y = 18; y < ROWS; y++) for (let x = 4; x <= 20; x++) {
+        if ((x <= 5 || x >= 19) && hashRand(x, y, 63) < 0.45) continue;
+        g[y][x] = "~";
+      }
+      /* and a tile the ragged ends left with water on all four sides is sea too, for the reason the Lantern
+         Mire's is: markBanks turns it into a bank tile and wild's repair only ever re-plants "." ones, so it
+         would sit there for good as somewhere visible that cannot be walked to. */
+      for (let y = 18; y < ROWS; y++) for (let x = 3; x <= 21; x++)
+        if (g[y][x] !== "~" && [[1, 0], [-1, 0], [0, 1], [0, -1]].every(([dx, dy]) => g[y + dy]?.[x + dx] === "~")) g[y][x] = "~";
+      scatterSpots(objs, 7, 17, 18, 5, [1, 2, 4], { name: "The sea below", req: { skill: "fishing", lvl: 50 }, fish: "stormmarlin", fish2: "thundersquid", fish2lvl: 58, xp: 190, xp2: 230, glow: "#ffe27a", tease: "Far below, something with a sword for a nose cuts the water. Fishing 50." });
+      for (let x = 3; x <= 21; x++) keep.push([x, 17], [x, 16]);
+
+      /* THE ORE, in opposite corners and thirty tiles apart (2026-09-24, the owner: "they need to be spaced far
+         apart, near at least 1 aggressive enemy"). Starfall in the north-west under the House's nose, voidglass
+         in the far south-east among the drakes. The guards are per-PLACEMENT aggro, so the wolf and drake TYPES
+         are untouched and every other one of them on this map still waits to be hit first. */
+      put("rock", 9, 4, "Starfall rock", { ore: "starfall_ore", req: { skill: "mining", lvl: 60 }, xp: 150 });
+      put("rock", 7, 8, "Starfall rock", { ore: "starfall_ore", req: { skill: "mining", lvl: 60 }, xp: 150 });
+      put("rock", 40, 20, "Voidglass shards", { ore: "voidglass", req: { skill: "mining", lvl: 70 }, xp: 190 });
+      put("rock", 36, 22, "Voidglass shards", { ore: "voidglass", req: { skill: "mining", lvl: 70 }, xp: 190 });
+      put("skyash", 30, 6, "Storm-struck skyash", { log: "skyashlogs", req: { skill: "woodcutting", lvl: 50 }, xp: 200 });
+      put("skyash", 24, 19, "Storm-struck skyash", { log: "skyashlogs", req: { skill: "woodcutting", lvl: 50 }, xp: 200 });
+
+      /* THE RUNE RING. The road runs straight through the middle of it at x28, which is the whole idea: you do
+         not find this place, you walk down it. Six stones and a pair of broken arches for a gate. */
+      for (const [x, y] of [[26, 10], [30, 10], [25, 12], [31, 12], [26, 14], [30, 14]]) put("runestone", x, y, "Rune stone");
+      put("skyarch", 27, 9, "Broken arch");
+      put("skyarch", 29, 9, "Broken arch");
+
+      /* the rest of the precinct: arches along the way, crystals out of the floor, stones to steer by */
+      put("skyarch", 32, 11, "Broken arch");
+      put("skyarch", 36, 15, "Broken arch");
+      put("skyarch", 12, 11, "Broken arch");
+      put("skyarch", 23, 20, "Broken arch");
+      put("skyarch", 36, 18, "Broken arch");
+      put("runestone", 35, 10, "Rune stone");
+      put("runestone", 39, 6, "Rune stone");
+      put("runestone", 16, 6, "Rune stone");
+      put("runestone", 4, 6, "Rune stone");
+      put("runestone", 14, 16, "Rune stone");
+      put("runestone", 40, 17, "Rune stone");
+      put("runestone", 25, 22, "Rune stone");
+      put("stormcrystal", 7, 5, "Storm crystal");
+      put("stormcrystal", 11, 9, "Storm crystal");
+      put("stormcrystal", 20, 4, "Storm crystal");
+      put("stormcrystal", 33, 4, "Storm crystal");
+      put("stormcrystal", 41, 22, "Storm crystal");
+      put("stormcrystal", 34, 20, "Storm crystal");
+      put("stormcrystal", 18, 15, "Storm crystal");
+      put("stormcrystal", 30, 23, "Storm crystal");
+      put("stormcrystal", 2, 10, "Storm crystal");
+      put("stormcrystal", 21, 8, "Storm crystal");
+
+      put("sign", 40, 11, "THE THUNDERHEAD: Combat 50 and up. The end of the road. Starfall rock in the north-west at Mining 60, voidglass in the far south-east at 70 \u2014 and ONE thing in each of those corners comes at you on sight. Everything else here waits, not even THE HOUSE, in the north-west. The House always wins. Usually.");
+      put("sign", 26, 16, "THE RUNE RING. Nobody built the road to go around it.");
       for (let x = 12; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "water", s: "water", w: "water", e: "water" }, [...keepOf(this), ...keep], 10);
       return { g, objs, blobs: [] };
     },
+    /* TWO AGGRO PLACEMENTS, one standing over each ore, as the owner asked. Reach 3: walking the way in costs
+       nothing, swinging a pickaxe in the wrong corner does. */
     mobs: [["goose", 38, 5], ["goose", 40, 8], ["goose", 36, 9], ["goose", 39, 17], ["goose", 41, 19], ["goose", 35, 17],
-      ["golem", 30, 5], ["golem", 33, 8], ["golem", 28, 9], ["golem", 31, 10], ["golem", 27, 17], ["golem", 30, 19],
-      ["wolf", 18, 2], ["wolf", 21, 3], ["wolf", 24, 2], ["wolf", 26, 4], ["wolf", 22, 4],
-      ["drake", 33, 22], ["drake", 36, 23], ["drake", 39, 22], ["drake", 41, 23],
+      ["golem", 30, 5], ["golem", 33, 8], ["golem", 28, 3], ["golem", 31, 17], ["golem", 27, 18], ["golem", 30, 19],
+      ["wolf", 18, 2], ["wolf", 21, 3], ["wolf", 24, 2], ["wolf", 26, 4], ["wolf", 9, 6, { aggro: 3 }],
+      ["drake", 33, 22], ["drake", 38, 21, { aggro: 3 }], ["drake", 41, 23], ["drake", 35, 19],
       ["house", 5, 4]],
     npcs: [], bots: []
   },

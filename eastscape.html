@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=225">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=226">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1008,7 +1008,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=225";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=226";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=130").then((m) => { WK = m; }));
@@ -1552,6 +1552,11 @@ const ART_FILES = ["t_dock", ...CROP_ART, "o_yardtree", "o_yardtree_stump", "o_t
   "toadstool", "boneidle", "twister", "counter", "shark", "stagehand", "usher", "brainstorm", "seagoat", "golem", "wolf", "drake", "house",
   // scenery (PixelLab, overnight 2026-09-18)
   "o_anvil", "o_bar", "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_cloudbush", "o_cloudcolumn", "o_cointable", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree", "o_deadtree_stump", "o_fenceH", "o_fenceV", "o_cryptpillar",
+  /* (2026-09-24) THE FOUR ORE ROCKS THAT HAD NO PICTURE. objArt() resolves a rock to `o_rock_<ore>`, and
+     starfall, eclipse, voidglass and catalytic had none - so four ores, three of them the top of the mining
+     ladder, drew as the generic hand-drawn grey lump. With them, the Thunderhead's own ruin: rune stones, storm
+     crystals and broken sky-arches. All deferred to their areas below. */
+  "o_rock_starfall_ore", "o_rock_eclipse_ore", "o_rock_voidglass", "o_rock_catalytic", "o_runestone", "o_stormcrystal", "o_skyarch",
   /* (2026-09-24) the Crypt's dressing, now that the Lantern Mire wears it too: an arch, torches, an altar,
      candles, a coffin, rubble, gargoyles, braziers, sarcophagi, skulls and bones. They were never in this
      master list because the Crypt asks for them one at a time; on AREA_ART.mire below they cost the Mire one
@@ -1593,7 +1598,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 63;
+const PACKS_V = 64;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -1649,7 +1654,7 @@ const AREA_ART = {
      well as in ART_FILES so they load WITH the course and not at every login — see the workyard list above. */
   agility: ["t_track", "o_gateframe", "o_gatebars", "o_agilend"],
   /* (2026-09-22) the Trailer Park's five. Deferred like every area's, so nobody downloads a gator to play the casino. */
-  trailer: ["junkdog", "possum", "scrapper", "gator", "junkking", "o_trailer", "o_wreck", "o_tyres", "o_dumpster", "o_rock_slagstone", "o_rustpine", "o_bogwood", "darla_south", "darla_east"],
+  trailer: ["junkdog", "possum", "scrapper", "gator", "junkking", "o_trailer", "o_wreck", "o_tyres", "o_dumpster", "o_rock_slagstone", "o_rock_catalytic", "o_rustpine", "o_bogwood", "darla_south", "darla_east"],
   /* (2026-09-24) ONLY WHAT IS GLOAM-ONLY. Listing the new Holloway props here took o_bench, o_table and the rest OUT of core and broke them in the guild - the same trap as the yews. Shared props belong in core; an area list is for art nowhere else uses. */
   gloam: ["vance_south", "vance_east", "t_gwater", "t_gpath", "o_willow", "o_glowcap", "w_boulder", "toadstool", "highwayman", "goat", "boneidle", "gnasher"],
   /* (2026-09-24) the Mire is the Halloween venue, so it is dressed out of the Crypt's art. o_cageV is here as
@@ -1657,7 +1662,12 @@ const AREA_ART = {
      copy rather than moving it, and o_cryptpillar is deliberately NOT here because the Gloam leaves it in core. */
   mire: ["t_gwater", "t_gpath", "o_willow", "o_glowcap", "w_boulder", "twister", "moth", "counter", "taxwraith", "shark",
     "o_cryptgate", "o_crypttorch", "o_cryptaltar", "o_cryptcandles", "o_cryptcoffin", "o_cryptrubble", "o_gargoyle", "o_ghostbrazier", "o_sarcophagus", "o_skullheap", "o_bonepile", "o_cageV"],
-  thunderhead: ["t_csky", "t_cpath", "o_skyash", "o_cloudbush", "o_cloudcolumn", "goose", "golem", "wolf", "drake", "house"],
+  /* (2026-09-24) The rebuilt Thunderhead: its own ruin props and the two ores it finally has. o_cloudbush and
+     o_cloudcolumn are gone from here because the `storm` ground theme never draws them. o_rock_starfall_ore and
+     o_rock_voidglass are named in the Vault's list too - an area sheet is WHOLE, so each map carries its own
+     copy rather than one of them pulling the picture out from under the other. */
+  thunderhead: ["t_csky", "t_cpath", "o_skyash", "o_runestone", "o_stormcrystal", "o_skyarch",
+    "o_rock_starfall_ore", "o_rock_voidglass", "goose", "golem", "wolf", "drake", "house"],
   cloud: ["t_csky", "t_cpath", "o_skyash", "o_cloudbush", "o_cloudcolumn", "ram", "brainstorm", "seagoat", "revenant", "angel"],
   /* (2026-09-24, the owner: "the ancient yews in the boneyard dont use their art") o_yew EXISTS and was claimed
      ONLY by area-closed, a sheet that never loads - so naming it there took it out of core.png and put it
@@ -1693,7 +1703,9 @@ const AREA_ART = {
   /* (v124) ONLY THE VAULT'S OWN FOUR. The casino dressing it borrows — slots, rope posts, neon, the statue, the wheel,
      the carpet — is CORE art (CASINO_ART), and a picture claimed by an area sheet is packed there and stops loading
      anywhere else. Listing them here pulled them out of core and emptied the casino floor of half its furniture. */
-  vault: ["o_yew", "o_yew_stump", "warden", "pitboss", "hoard", "dealer"]   /* the Vault has two yews of its own */   // (CASINO_ART is core now: the casino is where everyone starts)
+  vault: ["o_yew", "o_yew_stump", "warden", "pitboss", "hoard", "dealer",
+    /* (2026-09-24) the three it mines, which drew as a generic grey lump until today */
+    "o_rock_starfall_ore", "o_rock_eclipse_ore", "o_rock_voidglass"]   /* the Vault has two yews of its own */   // (CASINO_ART is core now: the casino is where everyone starts)
 };
 const LAZY_ART = new Set(Object.values(AREA_ART).flat());
 const artReady = Promise.all(ART_FILES.filter((k) => !LAZY_ART.has(k)).map(loadArt));
@@ -1907,7 +1919,13 @@ const objBusy = (ob, now) => ob.stumpUntil > now || ob.emptyUntil > now || ob.ba
 // themed ground: its two Wang sheets, and what the edge bushes and boulders look like there
 const GROUNDS = {
   gloam: { water: "t_gwater", path: "t_gpath", bush: "o_glowcap", boulder: "w_boulder" },
-  cloud: { water: "t_csky", path: "t_cpath", bush: "o_cloudbush", boulder: "o_cloudcolumn" }
+  cloud: { water: "t_csky", path: "t_cpath", bush: "o_cloudbush", boulder: "o_cloudcolumn" },
+  /* (2026-09-24) THE THUNDERHEAD'S OWN THEME. It shares Cloudreach's two Wang sheets on purpose - the owner
+     wanted it "slightly cloudish", and regenerating a Wang set is the one art job here that has come back
+     unusable before (the Crypt's first one looked like a canal) - but its scattered bushes and boulders are
+     storm crystals and rune stones instead of cloud puffs and columns. Since wild() sprinkles those two types
+     across every map, swapping just these two keys changes most of what the eye actually sees. */
+  storm: { water: "t_csky", path: "t_cpath", bush: "o_stormcrystal", boulder: "o_runestone" }
 };
 const WANG = [[64, 32], [96, 32], [64, 64], [32, 64], [64, 0], [96, 64], [0, 32], [96, 96], [32, 32], [64, 96], [32, 0], [0, 64], [96, 0], [0, 0], [32, 96], [0, 96]];
 

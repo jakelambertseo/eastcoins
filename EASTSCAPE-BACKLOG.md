@@ -1529,6 +1529,36 @@ Options, cheapest first:
 - Mention it in the House Tour once Agility is worth having.
 
 
+## Mining's missing middle — **PART DONE 2026-09-24**
+
+The diagnosis, kept because the shape of it is the useful part. Every banded map has an ore, a tree
+and a fish EXCEPT the Thunderhead, which had a tree and a fish and no rock. And the maps follow a
+rule nobody wrote down: a map's ore requires `band_top + 1` (copper@1 in 1-9, emerald@20 in 10-19,
+diamond@30 in 20-29, dragonstone@40 in 30-39, onyx@50 in 40-49). You mine your map's rock on the way
+out of it.
+
+So mining on the WALKED chain stopped dead at onyx 50. Everything above it was in the Vault (no
+band, entered another way) or the Trailer Park (Combat 80) - and catalytic is Mining 65 behind
+Combat 80, so you cannot reach it when you qualify for it. `eastscape-skill-sim.mjs` showed the
+lived result: at **Mining 80 the best rock a player could reach was still onyx**. Half the skill
+with no new rock.
+
+**Done:** the Thunderhead has starfall@60 and voidglass@70, in opposite corners with an aggressive
+guard each, and the four ore rocks that had no picture (starfall, eclipse, voidglass, catalytic) now
+have one instead of drawing as a generic grey lump.
+
+**Still open:** 65 to 85 is thin on the walked chain - starfall@60 carries you to the Trailer Park,
+and the owner's own suggestion is the honest fix: **the Thunderhead's band is 50-99**, one band
+doing the work of five maps. A new map between it and the Trailer Park (band 60-79) carrying
+catalytic and voidglass would give that stretch a real rung.
+
+**And the three ores that smelt into nothing now have a plan** (the owner, 2026-09-24):
+- **slagstone (85) and stardust (50) become UNBUILT GEAR that has to be smithed**, at Smithing in
+  the 80s and 90s. Not bars for the existing ladder - their own top-tier pieces.
+- **catalytic (65) is for ALCHEMY** and other things, which is one of the three skills due before
+  launch. It is deliberately NOT getting a bar.
+So the gap in the smithing chain above eclipse is intentional and waiting on those two builds.
+
 ## Cloudreach has a woodcutting tree standing in the water — found 2026-09-24
 
 One of Cloudreach's TWO skyash trees cannot be chopped. In `cloud.build()` the trees go down
@@ -1573,3 +1603,30 @@ interior scenes (Forum, Bank, Fight Pit, Casino, the isles) have NO edge exits a
 a door or ferry, so the flood-fill needs a different seed; the Yard's chickens and cows are
 DELIBERATELY sealed into pens; and the Casino's rope lines share a tile with their posts on
 purpose. Spots must be left alone entirely — a rod reaches three tiles (`reachOf`).
+
+
+## The Thunderhead rebuild, and what it taught about water — 2026-09-24
+
+Rebuilt from Cloudreach-with-a-darker-tint into a ruin: a processional way in from the east, a ring
+of six rune stones the road runs straight through, broken sky-arches along it, storm crystals out of
+the floor, and the sea through a tear in the south-west. 43 props where there were 3. New art:
+`o_runestone`, `o_stormcrystal`, `o_skyarch`, and the four ore rocks. New ground theme `storm` in
+GROUNDS, sharing Cloudreach's two Wang sheets on purpose (a regenerated Wang set is the one art job
+that has come back unusable before) but swapping its scattered bush and boulder art for crystals and
+rune stones - two keys that change most of what the eye sees, since `wild` sprinkles those types
+across every map.
+
+**THE LESSON, and it cost three passes: `wild()` finishes the water AFTER `build()` returns.**
+A cut-off-floor check written inside build() is asking the question too early - this map's border is
+painted water by wild, and that is what severed a six-tile shelf south of the tear. Anything clever
+about connectivity would have to run after wild, and by then wild has already placed trees and run
+its own repair, so converting a tile to water can leave a tree standing in the sea.
+
+So the rule for a body of water at a map's edge: **do not leave a strip between the water and the
+rim.** Run it off the edge of the map and rag only the ENDS, which is where raggedness reads against
+the floor anyway. Then add the Mire's four-neighbour flood for tiles the ragged ends isolate. Those
+two together, both inside build(), need nothing after wild at all.
+
+Three classes of unwalkable tile have now been seen, in increasing awkwardness: a ONE-tile island
+(four-neighbour flood catches it), a TWO-tile shelf (it does not - two tiles hold each other up),
+and a strip severed by wild's own edge painting (nothing inside build() can see it coming).
