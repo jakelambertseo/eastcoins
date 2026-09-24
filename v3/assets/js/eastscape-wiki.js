@@ -24,7 +24,50 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
         <tr><td>Bogwood</td><td>Woodcutting 80, Eclipse axe</td></tr>
         <tr><td>Black water — mud cat and bowfin</td><td>Fishing 80, Eclipse rod</td></tr>
       </table>
-      <p>Cook the fish and they are the <b>best food in the game</b>. Until this zone there was nothing above Vaultwood to cut and nothing above the Vault to mine, so the top of the <a data-wiki="guides/tools">tool ladder</a> had nothing to work on.</p>`},{id:"tools",title:"Tools: the seven rungs",icon:"⛏️",cat:"Skills",body:`<p>A <b>pickaxe</b>, an <b>axe</b> and a <b>fishing rod</b> come in seven grades, the same seven as the armour: bronze, emerald, diamond, dragonstone, onyx, starfall, eclipse.</p>
+      <p>Cook the fish and they are the <b>best food in the game</b>. Until this zone there was nothing above Vaultwood to cut and nothing above the Vault to mine, so the top of the <a data-wiki="guides/tools">tool ladder</a> had nothing to work on.</p>`},{id:"alchemy",title:"Alchemy: sand into potions",icon:"🧪",cat:"Skills",body:`<p><b>Alchemy runs 1 to 100 and it starts with sand.</b> Dig it out of the pits in <a data-wiki="sands">The Golden Sands</a> at <b>Mining 20</b>, melt it to glass at the <b>cauldron</b> under the temple colonnade, then brew the glass with whatever the world drops.</p>
+      <p><b>One cauldron does both jobs.</b> It is the only one in the game, and it both blows the vials and brews the potions &mdash; so everything to do with Alchemy happens on one tile, and you never need a single level of Smithing to train it.</p>
+      <h4>The vial is the tier, and the timer</h4>
+      <table class="tbl"><tr><th>Vial</th><th>Alchemy</th><th>Sand</th><th>Holds</th></tr>
+        <tr><td><b>Small vial</b></td><td>1</td><td>1</td><td>10 minutes</td></tr>
+        <tr><td><b>Medium vial</b></td><td>34</td><td>2</td><td>15 minutes</td></tr>
+        <tr><td><b>Large flask</b></td><td>68</td><td>4</td><td>20 minutes</td></tr>
+      </table>
+      <p>So a potion's strength and how long it lasts are both written on the bottle. There is nothing else to learn about the ladder.</p>
+      <h4>The ingredients are things you already throw away</h4>
+      <p>This is the point of the skill. <b>Six of the seven farm crops</b> go in a potion and had no other use at all; so do <b>staticfur</b> off a Thunderwolf, a <b>marked card</b> off a Card Counter, a <b>receipt</b> off a Tax Wraith, a <b>shark tooth</b>, a <b>cobweb</b>, a <b>sporecap</b>, a <b>husk</b>, <b>bones</b> and <b>stormjelly</b>. Two are native to the Sands: a <b>scarab shell</b> and a <b>cobra fang</b>.</p>
+      <h4>Every potion, in order</h4>
+      <p>The ladder <b>alternates a skilling buff with a combat one</b> all the way up, so whichever sort of player you are there is never a dead stretch.</p>
+      <table class="tbl"><tr><th>Alch</th><th>Potion</th><th>Does</th><th>Needs</th></tr>
+        <tr><td>1</td><td><b>Swift draught</b></td><td>skilling: +4% speed</td><td>small vial, 2 sporecap</td></tr>
+        <tr><td>10</td><td><b>Hide tonic</b></td><td>combat: +5% tough</td><td>small vial, 2 hide</td></tr>
+        <tr><td>19</td><td><b>Keen-eye water</b></td><td>skilling: +6% rare</td><td>small vial, 2 wheat, sporecap</td></tr>
+        <tr><td>23</td><td><b>Salt salve</b></td><td>heals 14 at once</td><td>small vial, 2 lanternroot</td></tr>
+        <tr><td>28</td><td><b>Rattle brew</b></td><td>combat: +2% bite</td><td>small vial, 2 rattlebean</td></tr>
+        <tr><td>36</td><td><b>Quickhand philtre</b></td><td>skilling: +7% speed</td><td>medium vial, marked card, lanternroot</td></tr>
+        <tr><td>45</td><td><b>Gourd draught</b></td><td>combat: +9% tough</td><td>medium vial, 2 bonegourd, bones</td></tr>
+        <tr><td>50</td><td><b>Field salve</b></td><td>heals 26 at once</td><td>medium vial, 3 lanternroot, bonegourd</td></tr>
+        <tr><td>54</td><td><b>Ghost grease</b></td><td>skilling: +5% steal</td><td>medium vial, cobweb, husk</td></tr>
+        <tr><td>62</td><td><b>Tax-dodger's tincture</b></td><td>combat: +9% tickets</td><td>medium vial, receipt, stormcorn</td></tr>
+        <tr><td>70</td><td><b>Prospector's flask</b></td><td>skilling: +14% rare</td><td>large flask, gold tomato, marked card, scarab shell</td></tr>
+        <tr><td>78</td><td><b>Fang flask</b></td><td>combat: +4.5% bite</td><td>large flask, shark tooth, cobra fang, rattlebean</td></tr>
+        <tr><td>84</td><td><b>Royal salve</b></td><td>heals 44 at once</td><td>large flask, 4 lanternroot, scarab shell</td></tr>
+        <tr><td>90</td><td><b>Storm flask</b></td><td>skilling: +12% speed</td><td>large flask, staticfur, stormjelly, lanternroot</td></tr>
+        <tr><td>100</td><td><b>Pharaoh's draught</b></td><td>combat: +18% tough, +3% bite</td><td>large flask, 2 scarab shell, cobra fang, gold tomato</td></tr>
+      </table>
+      <p><b>A potion stacks with your gear.</b> Every number above sits well under the ceiling the game caps each effect at, so drinking one adds to what you are wearing instead of replacing it.</p>
+      <p><b>They only work outside.</b> Like the bar's food and drink, a buff counts down in places that have monsters in them, not on the casino floor.</p>`},{id:"sands",title:"The Golden Sands",icon:"🏜️",cat:"Going further",body:`<p><b>Combat 40 to 49, west out of <a data-wiki="road">the Boneyard</a></b> &mdash; and it is a <b>second route, not a rung</b>. At Combat 40 you may go north to Cloudreach or west to here, and each has its own ore, tree and fish. Neither is ahead of the other.</p>
+      <p>It is where <a data-wiki="alchemy">Alchemy</a> lives. The <b>sand pits</b> are the front of that whole chain, and the game's only <b>cauldron</b> stands under the temple colonnade in the middle of the map.</p>
+      <table class="tbl"><tr><th>What</th><th>Needs</th><th>Gives</th></tr>
+        <tr><td><b>Sand pits</b> (five of them)</td><td>Mining 20</td><td>sand &mdash; 45 xp</td></tr>
+        <tr><td><b>Stardust seams</b></td><td>Mining 50</td><td>stardust &mdash; 150 xp</td></tr>
+        <tr><td><b>Date palms</b></td><td>Woodcutting 45</td><td>palm logs &mdash; 190 xp</td></tr>
+        <tr><td><b>The oasis</b></td><td>Fishing 40 / 48</td><td>oasis perch, temple carp</td></tr>
+      </table>
+      <p><b>Sand is Mining 20 on purpose</b>, far below the map's own band: the barrier is meant to be <i>getting here</i>, not a second grind once you have. And <b>stardust had exactly one rock in the whole game</b> before this map &mdash; there are two more here.</p>
+      <h4>What lives there</h4>
+      <p><b>Sand Cobras</b> (41) in the dunes and <b>Gilt Scarabs</b> (45) round the pits &mdash; the cobra drops the <b>fang</b> and the scarab the <b>shell</b>, both of which go in the best potions. <b>Bandaged Debtors</b> (43) shuffle about the precinct and <b>Tomb Jackals</b> (47) hold the pyramid. Everything waits to be hit first except <b>one jackal by the pyramid door</b>, which comes at you on sight.</p>
+      <h4>The Great Pyramid</h4>
+      <p>It stands on the eastern skyline and <b>the tomb door is sealed</b>. The party fight behind it is still being built &mdash; when it opens it will work like <a data-wiki="crypt">the Crypt</a>: a private copy of the tomb for your group, an ante each, and something very old at the bottom of it.</p>`},{id:"tools",title:"Tools: the seven rungs",icon:"⛏️",cat:"Skills",body:`<p>A <b>pickaxe</b>, an <b>axe</b> and a <b>fishing rod</b> come in seven grades, the same seven as the armour: bronze, emerald, diamond, dragonstone, onyx, starfall, eclipse.</p>
       <p><b>The rock decides.</b> Whatever you are mining, cutting or fishing asks for a tool of its own grade or better &mdash; emerald ore wants an emerald pickaxe, and a bronze one will not touch it. The grade a thing wants is always the grade named on the thing itself, so if you can work it at all, the right tool is one you can hold.</p>
       <table class="tbl"><tr><th>Tool</th><th>Works up to</th><th>Speed</th></tr>
         <tr><td><b>Bronze</b></td><td>level 19</td><td>&mdash;</td></tr>
