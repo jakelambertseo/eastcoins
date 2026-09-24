@@ -1,0 +1,1027 @@
+/* ============================================================
+   GAMBA — the casino tables (the page side)
+
+   Every game window on the casino floor is drawn here, in the look of
+   the site's own casino (eastcoin.vip/?view=casino): a dark table, a
+   status line, the board, one gold button, and "what it pays" beside
+   it. It was a parchment pop-up with a few emoji before; the games are
+   the product, so they get the product's clothes.
+
+   The rules are not here. Every number comes from eastscape-shared.js
+   and every result from the server; this file only shows them. The
+   window is built ONCE when a table is opened and then updated in
+   place, so an animation is never torn down by the next message.
+
+   createCasino(env) -> { open, result, run, me, cashier, cashed, close }
+   ============================================================ */
+const CART = "/v3/assets/img/glad/flat/casino/", CV = 2;   /* (2: the coin's two faces were redrawn as a real gold coin, 2026-09-21; every picture in this folder shares the number) */
+const SUITS = ["♠", "♥", "♦", "♣"];
+const CSS = `
+/* PARCHMENT (2026-09-19, the owner: "restyle the other windows towards the parchment look"). These windows used to wear
+   eastcoin.vip's dark casino; they now wear the game's own paper: the wood-and-bronze frame and brown header come from the
+   page's .win rules (nothing here overrides them), and the palette below is ink on parchment. Almost every rule in this
+   sheet reads these variables, so the swap is the restyle. The PROPS (slot cabinet, jackpot plaque, scratch ticket,
+   prize wheel, revolver cylinder) stay dark objects lying on the page: they get the old light-on-dark palette back
+   locally, in the block at the end of this sheet. */
+#gameWin.cz{--ink:#f3e7cc;--panel:#ecdcb6;--panel-2:#e4d2a6;--panel-3:#dbc797;--line:rgba(70,45,20,.2);--line-2:rgba(70,45,20,.38);--text:#2a2016;--muted:#6a5a40;--muted-2:#8a7858;
+  --gold:#96650a;--gold-dim:rgba(168,116,10,.16);--green:#1c7a3c;--green-dim:rgba(28,122,60,.14);--red:#b8202a;--red-dim:rgba(184,32,42,.12);
+  --display:"Nunito","Segoe UI",system-ui,sans-serif;--body:"Nunito","Segoe UI",system-ui,sans-serif;
+  width:min(880px,calc(100% - 20px));color:var(--text);font-family:var(--body)}
+#gameWin.cz .win-head b{font-family:var(--display);font-weight:900;font-size:19px}
+#gameWin.cz .win-body{padding:12px}
+#gameWin.cz [hidden]{display:none!important}
+.cz-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(230px,1fr);gap:12px;align-items:start}
+@media (max-width:760px){.cz-grid{grid-template-columns:minmax(0,1fr)}}
+.cz-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 16px 16px;border:1px solid var(--line);border-radius:13px;background:radial-gradient(70% 80% at 50% 0%,rgba(142,18,49,.09),transparent 60%),var(--panel);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);overflow:hidden}
+.cz-phase{font-family:var(--display);font-weight:800;font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);min-height:1.3em;text-align:center}
+.cz-phase.open{color:var(--green)}.cz-phase.done{color:var(--gold)}.cz-phase.bad{color:var(--red)}
+.cz-board{display:grid;place-items:center;min-height:190px;width:100%}
+.cz-mult{font-family:var(--display);font-weight:800;font-size:17px;color:var(--gold);min-height:1.4em;text-align:center}
+.cz-mult small{color:var(--muted);font-weight:700;font-size:12.5px;margin-left:6px}
+.cz-bet{width:100%;max-width:440px;margin-top:6px;display:flex;flex-direction:column;gap:9px}
+.cz-stakerow{display:flex;gap:6px;flex-wrap:wrap}
+.cz-stake{flex:1 1 90px;height:42px;padding:0 12px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:800 17px var(--body);outline:none;min-width:0}
+.cz-stake:focus{border-color:rgba(232,191,53,.5)}.cz-stake:disabled{opacity:.55}
+.cz-chip{height:42px;padding:0 11px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel);font:800 13.5px var(--body);color:var(--text);cursor:pointer}
+.cz-chip:hover:not(:disabled){background:var(--panel-3)}.cz-chip:disabled{opacity:.45;cursor:default}
+.cz-lock{height:52px;border-radius:12px;border:1px solid rgba(232,191,53,.5);background:var(--gold);color:#1a1405;font:800 17px var(--display);cursor:pointer;transition:filter .12s ease,transform .06s ease}
+.cz-lock:hover:not(:disabled){filter:brightness(1.07)}.cz-lock:active:not(:disabled){transform:translateY(1px)}
+.cz-lock:disabled{background:var(--panel-2);color:var(--muted);border-color:var(--line-2);cursor:default}
+.cz-lock.alt{background:var(--panel-2);color:var(--text);border-color:var(--line-2)}
+.cz-note{margin:0;text-align:center;color:var(--muted-2);font-size:12.5px;min-height:1.2em}
+.cz-picks{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+.cz-pick{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:58px;border-radius:12px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:inherit;cursor:pointer}
+.cz-pick b{font:800 16px var(--display)}.cz-pick small{color:var(--gold);font-weight:800;font-size:12px}
+.cz-pick:hover:not(:disabled){border-color:rgba(232,191,53,.45)}.cz-pick.on{border-color:var(--gold);background:var(--gold-dim);box-shadow:0 0 0 1px rgba(232,191,53,.35) inset}
+.cz-pick:disabled{opacity:.45;cursor:default}
+.cz-pick.red.on{border-color:#e0364a;background:rgba(224,54,74,.16)}.cz-pick.black.on{border-color:#d8d2c4;background:rgba(255,255,255,.07)}
+.cz-pick.up:hover:not(:disabled){border-color:rgba(77,219,139,.6);background:var(--green-dim)}.cz-pick.down:hover:not(:disabled){border-color:rgba(255,107,133,.5);background:var(--red-dim)}
+.cz-side{display:flex;flex-direction:column;gap:10px}
+.cz-card{border:1px solid var(--line);border-radius:13px;background:var(--panel);padding:12px 14px}
+.cz-card h2{font:700 15px var(--display);letter-spacing:-.02em;margin:0 0 8px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.cz-card h2 small{color:var(--muted-2);font-size:11.5px;font-weight:600;text-align:right}
+.cz-rungs{display:flex;flex-direction:column;gap:2px;max-height:250px;overflow-y:auto;scrollbar-width:thin}
+.cz-rung{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 8px;border-radius:7px;color:var(--muted);font-size:13px}
+.cz-rung strong{font:800 14.5px var(--display);color:var(--text)}.cz-rung .cz-i{width:18px;height:18px;vertical-align:-4px}
+.cz-rung.at{background:var(--green-dim);color:var(--green)}.cz-rung.at strong{color:var(--green)}.cz-rung.next{background:var(--gold-dim)}.cz-rung.next strong{color:var(--gold)}
+.cz-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cz-stat{background:var(--panel-2);border-radius:9px;padding:7px 9px}.cz-stat span{display:block;color:var(--muted-2);font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.cz-stat strong{font:800 16px var(--display)}
+.cz-tix{width:18px;height:18px;image-rendering:pixelated;vertical-align:-3px;margin-right:3px}.cz-stat strong.up{color:var(--green)}.cz-stat strong.dn{color:var(--red)}
+.cz-recent{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}.cz-recent span{padding:2px 8px;border-radius:9px;background:var(--panel-2);color:var(--muted);font-size:11.5px;font-weight:800}.cz-recent span.w{background:var(--green-dim);color:var(--green)}
+.cz-needs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}.cz-need{background:var(--panel-2);border-radius:9px;padding:6px 9px;font-size:11.5px;font-weight:800;color:var(--muted)}.cz-need i{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:4px}.cz-need i>u{display:block;height:100%;background:#6ab7ff}
+.cz-need.food i>u{background:#ffb04a}.cz-need.low{color:var(--red);box-shadow:0 0 0 1px rgba(255,107,133,.5)}.cz-need.low i>u{background:var(--red)}
+.cz-luck{font-size:12.5px;line-height:1.45;color:var(--muted)}.cz-luck.on{color:var(--green);font-weight:800}
+.cz-jack{text-align:center;background:linear-gradient(#2a0a12,#140508);border-color:rgba(232,191,53,.45);box-shadow:inset 0 0 18px rgba(255,200,80,.12)}
+.cz-jack b{display:block;font:800 28px var(--display);color:var(--gold);text-shadow:0 0 12px rgba(255,210,90,.5)}.cz-jack small{color:var(--muted);font-size:11.5px}
+.cz-i{image-rendering:pixelated;width:32px;height:32px}
+.cz-pop{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.85);opacity:0;pointer-events:none;text-align:center;transition:transform .3s cubic-bezier(.3,1.6,.5,1),opacity .2s ease;z-index:5}
+.cz-pop.show{opacity:1;transform:translate(-50%,-50%) scale(1)}.cz-pop b{display:block;font:800 40px var(--display);letter-spacing:-.04em;color:var(--gold);text-shadow:0 0 30px rgba(232,191,53,.6),0 2px 0 rgba(0,0,0,.6)}
+.cz-pop span{display:inline-block;color:var(--text);font-weight:700;background:rgba(12,10,9,.85);padding:3px 10px;border-radius:8px;margin-top:2px;font-size:13px}
+/* coin */
+.cz-coinbox{perspective:700px;width:150px;height:150px}.cz-coin{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 1s cubic-bezier(.2,.7,.2,1)}
+.cz-coin.spin{animation:czflip .45s linear infinite;transition:none}.cz-coin img{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;backface-visibility:hidden;filter:drop-shadow(0 10px 18px rgba(0,0,0,.55))}
+.cz-coin img.t{transform:rotateY(180deg)}@keyframes czflip{to{transform:rotateY(360deg)}}
+/* dice */
+.cz-roll{font:800 72px var(--display);letter-spacing:-.04em;line-height:1;text-shadow:0 4px 0 rgba(0,0,0,.4)}.cz-roll.w{color:var(--green)}.cz-roll.l{color:var(--red)}
+.cz-track{position:relative;width:min(420px,100%);height:18px;border-radius:9px;background:rgba(255,107,133,.35);margin:18px 0 6px}.cz-zone{position:absolute;left:0;top:0;bottom:0;border-radius:9px 0 0 9px;background:var(--green)}
+.cz-marker{position:absolute;top:-9px;width:12px;height:36px;margin-left:-6px;border-radius:5px;background:#fff;box-shadow:0 3px 10px rgba(0,0,0,.6);transition:left .55s cubic-bezier(.2,.8,.2,1)}
+.cz-ticks{display:flex;justify-content:space-between;width:min(420px,100%);color:var(--muted-2);font-size:11px;font-weight:800}
+.cz-range{width:100%;accent-color:#e8bf35}
+/* slots */
+.cz-reels{display:flex;gap:10px;padding:12px;border-radius:16px;background:linear-gradient(#2a0a12,#140508);box-shadow:0 0 0 3px #c8963a,0 0 0 6px #3a2410,0 16px 40px rgba(0,0,0,.6)}
+.cz-reel{width:96px;height:96px;border-radius:10px;background:#fff8e8;overflow:hidden;position:relative;box-shadow:inset 0 10px 14px -8px rgba(0,0,0,.55),inset 0 -10px 14px -8px rgba(0,0,0,.55)}
+.cz-strip{display:flex;flex-direction:column}.cz-strip img{width:96px;height:96px;padding:14px;image-rendering:pixelated}
+.cz-reel.spin .cz-strip{animation:czreel .32s linear infinite;filter:blur(1.5px)}@keyframes czreel{to{transform:translateY(-576px)}}
+.cz-reel.stop .cz-strip{animation:czstop .28s cubic-bezier(.3,1.5,.5,1)}@keyframes czstop{from{transform:translateY(-60px)}}
+.cz-reel.hit{box-shadow:0 0 0 3px var(--gold),0 0 22px rgba(232,191,53,.6)}
+/* wheel */
+.cz-wheelbox{position:relative;width:230px;height:230px;margin-top:20px}.cz-wheel{position:absolute;inset:11.75%;border-radius:50%;filter:drop-shadow(0 10px 14px rgba(0,0,0,.45))}.cz-wheel::after{content:"";position:absolute;inset:-15.4%;background:url(/v3/assets/img/glad/flat/casino/wheel_frame.png?v=1) center/100% 100% no-repeat;image-rendering:pixelated}
+.cz-hub{display:none}
+.cz-pin{position:absolute;left:50%;top:-26px;width:44px;height:74px;margin-left:-22px;background:url(/v3/assets/img/glad/flat/casino/wheel_pin.png?v=1) center/100% 100% no-repeat;image-rendering:pixelated;filter:drop-shadow(0 3px 0 rgba(0,0,0,.35));z-index:2}
+/* cards */
+.cz-hl{display:flex;flex-direction:column;align-items:center;gap:10px}.cz-trail{display:flex;gap:5px;min-height:46px;flex-wrap:wrap;justify-content:center}
+.cz-cardx{display:grid;place-items:center;align-content:center;border-radius:12px;background:#f7f2e8;color:#1a1405;font:800 42px var(--display);box-shadow:0 8px 24px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.08);width:118px;height:162px;line-height:1}
+.cz-cardx i{font-style:normal;font-size:36px;display:block;margin-top:2px}.cz-cardx.red{color:#c8102e}.cz-cardx.sm{width:34px;height:46px;font-size:13px;border-radius:7px;box-shadow:0 3px 10px rgba(0,0,0,.4)}.cz-cardx.sm i{font-size:11px;margin-top:0}
+.cz-cardx.empty{background:repeating-linear-gradient(45deg,#7a1a2a 0 8px,#5a1020 8px 16px);box-shadow:0 8px 24px rgba(0,0,0,.5),inset 0 0 0 4px #c8963a;color:transparent}
+.cz-cardx.bust{box-shadow:0 0 0 3px rgba(255,107,133,.7),0 8px 24px rgba(0,0,0,.5)}.cz-cardx.cashed{box-shadow:0 0 0 3px rgba(77,219,139,.7),0 8px 24px rgba(0,0,0,.5)}
+.cz-cardx.flip{animation:czcard .42s ease-out}@keyframes czcard{from{transform:rotateY(90deg) translateX(30px);opacity:.2}}
+/* mines */
+.cz-mines{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;width:min(380px,100%)}
+.cz-tile{aspect-ratio:1;display:grid;place-items:center;border:1px solid var(--line-2);border-radius:11px;background:linear-gradient(160deg,var(--panel-3),var(--panel-2));cursor:pointer;padding:0;transition:transform .12s ease,border-color .14s ease,box-shadow .14s ease}
+.cz-tile:hover:not(:disabled){transform:translateY(-2px);border-color:rgba(232,191,53,.5);box-shadow:0 8px 22px rgba(0,0,0,.45)}.cz-tile:disabled{cursor:default}
+.cz-tile .cz-i{width:auto;height:auto;zoom:2}.cz-tile.safe{border-color:rgba(77,219,139,.45);background:var(--green-dim);animation:czpop .22s ease-out}.cz-tile.bomb{border-color:rgba(255,107,133,.35);background:var(--red-dim);opacity:.75}
+.cz-tile.bomb.hit{opacity:1;border-color:var(--red);box-shadow:0 0 0 2px rgba(255,107,133,.35),0 10px 30px rgba(255,107,133,.2);animation:czshake .32s ease-in-out}.cz-tile.dim{opacity:.4}
+@keyframes czpop{from{transform:scale(.7)}}@keyframes czshake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.cz-bombs{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:center}.cz-bombs span{color:var(--muted-2);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.cz-bombs button{height:34px;min-width:42px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);font:800 14px var(--body);cursor:pointer}.cz-bombs button.on{border-color:rgba(232,191,53,.45);background:var(--gold-dim);color:var(--gold)}
+/* plinko */
+.cz-pkwrap{--p:26px}.cz-pk{position:relative;width:calc(var(--p) * 13);padding:6px 0}.cz-pkrow{display:flex;justify-content:center;gap:calc(var(--p) - 7px);height:var(--p);align-items:center}
+.cz-peg{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.32);box-shadow:0 0 7px rgba(255,255,255,.1)}
+.cz-ball{position:absolute;left:50%;top:0;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--gold) 60%,#8a6c12);box-shadow:0 0 14px rgba(232,191,53,.6);transition:transform .11s linear;z-index:2;opacity:0}
+.cz-ball.go{opacity:1}.cz-ball.landed{transition:transform .16s cubic-bezier(.3,1.6,.5,1)}
+.cz-buckets{display:flex;justify-content:center;gap:3px;margin-top:2px}.cz-bucket{flex:0 0 calc(var(--p) - 3px);padding:8px 0;border-radius:8px;text-align:center;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);font-size:9.5px;font-weight:800;letter-spacing:-.03em;transition:transform .18s ease,background .18s ease}
+.cz-bucket.mid{color:var(--text)}.cz-bucket.big{color:var(--gold);border-color:rgba(232,191,53,.45);background:var(--gold-dim)}.cz-bucket.hit{transform:translateY(-3px);border-color:var(--green);background:var(--green-dim);color:var(--green)}
+/* scratch */
+.cz-ticket{width:min(330px,100%);border-radius:18px;background:linear-gradient(160deg,#2a2018,#171310);border:1px solid rgba(232,191,53,.35);box-shadow:0 20px 50px rgba(0,0,0,.5);padding:12px;display:flex;flex-direction:column;gap:8px}
+.cz-tktop{display:flex;justify-content:space-between;align-items:center}.cz-tktop b{font:800 14px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}.cz-tktop span{color:var(--muted-2);font-size:11.5px}
+.cz-tkgrid{position:relative;aspect-ratio:1;border-radius:12px;background:#0f0d0b;border:1px solid var(--line-2);overflow:hidden;touch-action:none;user-select:none}
+.cz-tkcells{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:6px;padding:8px}
+.cz-tkcell{display:grid;place-items:center;border-radius:10px;background:var(--panel-2);border:1px solid var(--line)}.cz-tkcell img{width:56%;image-rendering:pixelated}.cz-tkcell.win{background:rgba(232,191,53,.16);border-color:rgba(232,191,53,.6);box-shadow:0 0 18px rgba(232,191,53,.35)}
+.cz-foil{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;border-radius:12px;transition:opacity .35s ease}.cz-foil.gone{opacity:0;pointer-events:none}
+.cz-ticket.idle .cz-tkgrid::after{content:"Buy a card to scratch";position:absolute;inset:0;display:grid;place-items:center;color:var(--muted-2);font-size:14px;font-weight:700}
+/* the fight pit */
+.cz-card2{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:stretch;width:100%}.cz-vs{align-self:center;font:800 22px var(--display);color:var(--muted-2)}
+.cz-fighter{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;border-radius:13px;border:1px solid var(--line-2);background:var(--panel-2);text-align:center;cursor:pointer;color:var(--text);font:inherit;min-width:0}
+.cz-fighter:hover:not(:disabled){border-color:rgba(232,191,53,.5)}.cz-fighter:disabled{cursor:default}.cz-fighter.on{border-color:var(--gold);background:var(--gold-dim)}.cz-fighter.won{border-color:var(--green);background:var(--green-dim)}.cz-fighter.lost{opacity:.45}
+.cz-fighter img{height:72px;width:auto;max-width:100%;image-rendering:pixelated;object-fit:contain}.cz-fighter img.flip{transform:scaleX(-1)}
+.cz-fighter b{font:800 15px var(--display);line-height:1.15}.cz-fighter small{color:var(--muted);font-size:11.5px;line-height:1.25}.cz-fighter strong{font:800 22px var(--display);color:var(--gold)}.cz-fighter em{font-style:normal;color:var(--muted-2);font-size:11.5px}
+.cz-hpbar{width:100%;height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden}.cz-hpbar u{display:block;height:100%;background:var(--green);transition:width .25s ease}
+.cz-watch{display:flex;flex-wrap:wrap;gap:4px;font-size:12px}.cz-watch span{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 2px;border-radius:999px;background:var(--gold-dim);color:var(--text);font-weight:700}.cz-watch span.me{outline:1px solid var(--gold)}.cz-watch img,.cz-watch i{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:10px;background:rgba(0,0,0,.18);object-fit:cover}.cz-watch em{font-style:normal;color:var(--muted);padding:2px 0}.cz-betlist{display:flex;flex-direction:column;gap:2px;max-height:150px;overflow-y:auto;font-size:13px}.cz-betlist div{display:flex;justify-content:space-between;gap:8px;padding:4px 8px;border-radius:7px;color:var(--muted)}.cz-betlist div.me{background:var(--gold-dim);color:var(--text)}
+/* cashier */
+.cz-csrow{display:grid;grid-template-columns:30px 1fr auto auto;gap:10px;align-items:center;padding:7px 2px;border-top:1px solid var(--line);font-size:13.5px}.cz-csrow:first-child{border-top:0}.cz-csrow small{display:block;color:var(--muted-2);font-size:11.5px}
+.cz-csrow strong{font:800 15px var(--display);color:var(--gold)}.cz-csrow img.ico,.cz-csrow .ico{width:26px;height:26px;image-rendering:pixelated}
+/* (2026-09-24) THE REFORGED ROW at the gear counter. .fgn is position:absolute wherever it is drawn, so the icon
+   cell it sits in has to be the positioned ancestor or the +3 lands in the corner of the whole panel. The row is
+   tinted gold to say it is not an ordinary spare, and the Sell button turns red once armed: a reforged piece
+   takes two clicks, and the second one is deliberately the loud one. */
+.cz-qico{position:relative;display:inline-block}
+.cz-forged{background:linear-gradient(90deg,rgba(255,190,60,.10),transparent 60%)}
+.cz-forged b{color:#ffd77a}
+.cz-arm{background:#7a1d1d!important;border-color:#b6392f!important;color:#ffdede!important}
+.cz-dex h2 em{font-style:normal;color:var(--gold)}.cz-dexrow{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.cz-dexrow .cz-chip[aria-pressed=true]{background:var(--gold);color:#1a1405;border-color:var(--gold)}
+.cz-dexgo{width:100%;height:44px;border-radius:11px;border:1px solid rgba(232,191,53,.5);background:var(--gold);color:#1a1405;font:800 14.5px var(--display);cursor:pointer}.cz-dexgo:disabled{opacity:.45;cursor:not-allowed}
+.cz-dexgo.alt{background:linear-gradient(135deg,#ff5a7a,#c8202c);color:#fff;border-color:rgba(255,120,140,.6);margin-top:6px}.cz-dexmsg{margin:8px 0 0;font-size:12.5px;color:var(--muted);min-height:1.2em}.cz-dexmsg.bad{color:var(--red)}.cz-dexmsg.good{color:#4ddb8b}
+.cz-dexbar{height:7px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden;margin:6px 0 2px}.cz-dexbar>i{display:block;height:100%;background:linear-gradient(90deg,#ff5a7a,#e8bf35)}
+.cz-rtk{position:relative;margin:10px auto 0;width:min(100%,300px);aspect-ratio:2/1;border-radius:14px;background:radial-gradient(circle at 50% 40%,#5a0f1c,#22060b);border:2px solid #e8bf35;display:grid;place-items:center;overflow:hidden}
+.cz-rtk b{font:800 40px var(--display);color:#ffd84a;text-shadow:0 0 22px rgba(255,216,74,.5)}.cz-rtk small{display:block;text-align:center;font:700 12px var(--body);color:#f4c8cf;letter-spacing:.08em;text-transform:uppercase}
+.cz-rtk button{position:absolute;inset:0;border:0;cursor:pointer;font:800 20px var(--display);letter-spacing:.12em;color:#3a3a44;background:repeating-linear-gradient(135deg,#d8d8e4 0 12px,#b8b8c8 12px 24px);transition:opacity .45s ease,transform .45s ease}.cz-rtk button.off{opacity:0;transform:scale(1.15);pointer-events:none}
+.cz-pw{position:relative;width:min(330px,82%);aspect-ratio:1;margin:4px auto 0}.cz-pwdisc{position:absolute;inset:0;border-radius:50%;border:6px solid #e8bf35;box-shadow:0 0 0 3px #3a2410,0 0 40px rgba(232,191,53,.25);transition:transform 4.2s cubic-bezier(.12,.72,.12,1)}
+.cz-pwdisc span{position:absolute;left:50%;top:50%;width:0;height:0}.cz-pwdisc span b{position:absolute;left:-40px;width:80px;top:calc(-1 * var(--r));text-align:center;font:800 11.5px var(--body);color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000;line-height:1.05}
+.cz-pwpin{position:absolute;left:50%;top:-12px;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:22px solid #fff;filter:drop-shadow(0 2px 2px rgba(0,0,0,.6));z-index:2}
+.cz-pwhub{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff2b0,#e8bf35 60%,#8a6a10);box-shadow:0 0 0 3px #3a2410;z-index:1}
+.cz-shelves{max-height:min(600px,72vh);overflow-y:auto;padding-right:4px}.cz-tixtotal{display:flex;align-items:center;justify-content:center;gap:10px}.cz-tixtotal .ico,.cz-tixtotal img{width:46px;height:46px;image-rendering:pixelated}.cz-tixtotal b{font:inherit}
+.cz-cbag{margin-top:10px;max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:4px 10px;background:var(--panel)}\n.cz-qsell{margin-top:10px;border-top:2px solid rgba(0,0,0,.18);padding-top:8px}\n.cz-qhead{display:flex;flex-direction:column;gap:1px;margin:0 0 6px;font-weight:800;font-size:13px}\n.cz-qhead small{font-weight:700;font-size:11px;opacity:.7}\n.cz-qbtn{margin-left:auto;border:2px solid #000;border-radius:5px;padding:3px 9px;background:linear-gradient(#5a5048,#3a322c);color:#fff;font:inherit;font-weight:800;font-size:11.5px;cursor:pointer;white-space:nowrap}\n.cz-qbtn:hover{background:linear-gradient(#6a6058,#4a423c)}
+.cz-cashrow{display:flex;align-items:center;gap:6px;margin:6px 0}.cz-cashrow b{min-width:44px;text-align:center;font:800 20px var(--body);color:var(--gold)}.cz-cashrow button{min-width:34px;padding:5px 9px;border-radius:9px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:800 14px var(--body);cursor:pointer}
+.cz-gear{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}.cz-gear button{display:grid;justify-items:center;gap:2px;padding:6px 2px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);cursor:pointer}.cz-gear button:disabled{opacity:.4;pointer-events:none}.cz-gear>span{display:grid}.cz-gear>span>button{width:100%}
+.cz-gear button.own{box-shadow:inset 0 0 0 1px rgba(77,219,139,.6)}.cz-gear .ico,.cz-gear img{width:30px;height:30px;image-rendering:pixelated}.cz-gear small{font:800 11.5px var(--body);color:var(--gold)}.cz-chip:disabled{opacity:.4;cursor:not-allowed}
+.cz-rr{position:relative;width:min(100%,430px);aspect-ratio:1;margin:0 auto}.cz-rrseat{position:absolute;width:74px;margin:-37px 0 0 -37px;text-align:center;transition:opacity .4s,filter .4s}
+.cz-rrseat img,.cz-rrseat i{display:block;width:54px;height:54px;margin:0 auto;border-radius:50%;border:3px solid var(--line-2);background:#241d19;object-fit:cover;font:800 20px/48px var(--body);color:var(--muted);font-style:normal}
+.cz-rrseat b{display:block;font:800 11.5px var(--body);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}.cz-rrseat small{font:700 10.5px var(--body);color:var(--muted)}
+.cz-rrseat.me img,.cz-rrseat.me i{border-color:var(--gold)}.cz-rrseat.aim img,.cz-rrseat.aim i{border-color:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.18)}.cz-rrseat.out{opacity:.32;filter:grayscale(1)}.cz-rrseat.out img,.cz-rrseat.out i{border-color:var(--red)}
+.cz-rrseat.won img,.cz-rrseat.won i{border-color:var(--gold);box-shadow:0 0 0 5px rgba(232,191,53,.35)}.cz-rrseat.open i{border-style:dashed;cursor:pointer;color:var(--gold)}
+.cz-rrcyl{position:absolute;left:50%;top:50%;width:44%;aspect-ratio:1;transform:translate(-50%,-50%);container-type:inline-size}
+.cz-hammer{position:absolute;left:50%;top:-4cqw;z-index:3;width:0;height:0;margin-left:-4.5cqw;border:4.5cqw solid transparent;border-top:7cqw solid var(--gold);filter:drop-shadow(0 0 6px rgba(232,191,53,.6))}
+/* THE CYLINDER IS DRAWN (PixelLab, 2026-09-19, the owner: "redraw the cylinder imagery... its a popular game"): a steel disc with no holes in it
+   (rr_cyl), and a chamber (rr_hole) or a brass cartridge (rr_bullet) laid on it for each seat, because the number of chambers changes with
+   the table. Chambers sit at 25cqw (CYL_R), inside the disc's flat face. The gold pointer at the top is still CSS. */
+.cz-cyl{position:absolute;inset:0;border-radius:50%;background:url(/v3/assets/img/glad/flat/casino/rr_cyl.png?v=1) center/100% 100% no-repeat;image-rendering:pixelated;filter:drop-shadow(0 12px 18px rgba(0,0,0,.55));transition:transform .26s cubic-bezier(.3,.7,.3,1);will-change:transform}
+.cz-cyl.spin{transition:transform 1s cubic-bezier(.12,.8,.2,1)}
+.cz-ch{position:absolute;left:50%;top:50%;width:calc(var(--d,14) * 1cqw);height:calc(var(--d,14) * 1cqw);margin:calc(var(--d,14) * -.5cqw);border-radius:50%;background:url(/v3/assets/img/glad/flat/casino/rr_hole.png?v=1) center/100% 100% no-repeat;image-rendering:pixelated;transform:rotate(var(--a)) translateY(-25cqw);transition:filter .2s,box-shadow .2s}
+.cz-ch.under{box-shadow:0 0 0 3px rgba(232,191,53,.95),0 0 14px rgba(232,191,53,.6)}
+.cz-ch.spent{filter:grayscale(1) brightness(.55)}.cz-ch.spent.under{box-shadow:0 0 0 3px rgba(232,191,53,.5)}
+.cz-ch.live{background-image:url(/v3/assets/img/glad/flat/casino/rr_bullet.png?v=1);filter:none;box-shadow:0 0 0 3px var(--red),0 0 22px rgba(255,107,133,.95)}
+.cz-rrword{position:absolute;inset:0;z-index:2;display:grid;place-items:center;align-content:center;text-align:center;font-family:var(--display);font-weight:800;font-size:11cqw;white-space:nowrap;text-shadow:0 0 8px #000,0 0 18px #000,0 0 28px #000;pointer-events:none;color:var(--gold)}
+.cz-rrword small{display:block;font:700 6.5cqw var(--body);color:var(--text)}.cz-rrword.bang{color:var(--red);font-size:17cqw}.cz-rrword.click{color:var(--muted)}.cz-rrword.reload{color:var(--muted);font-size:8cqw}
+.cz-rr.bang{animation:czrrshake .45s}.cz-rr.bang .cz-cyl{filter:drop-shadow(0 0 26px rgba(255,80,100,.9))}
+@keyframes czrrshake{0%,100%{transform:translate(0,0)}20%{transform:translate(-6px,3px)}40%{transform:translate(5px,-4px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
+@media (prefers-reduced-motion:reduce){.cz-rr.bang{animation:none}.cz-cyl,.cz-cyl.spin{transition:none}}
+.cz-lock,.cz-dexgo{background:linear-gradient(#f0c848,#cf9a2e);border-color:#8a6210;color:#2a1c04;box-shadow:0 2px 0 #8a6210}.cz-lock:disabled,.cz-dexgo:disabled{background:var(--panel-3);border-color:var(--line-2);color:var(--muted-2);box-shadow:none}
+.cz-peg{background:rgba(70,45,20,.5);box-shadow:none}.cz-need i,.cz-hpbar,.cz-dexbar{background:rgba(70,45,20,.2)}.cz-pick:hover:not(:disabled){border-color:#8a6210}.cz-pick.on{border-color:#8a6210;background:var(--gold-dim)}.cz-marker{background:#2a2016}.cz-pick.black.on{border-color:#1a1410;background:rgba(0,0,0,.1)}.cz-rrseat.aim img,.cz-rrseat.aim i{border-color:#2a2016;box-shadow:0 0 0 4px rgba(42,32,22,.22)}
+.cz-pop b{text-shadow:0 2px 0 rgba(255,255,255,.5)}.cz-pop span{color:#f4ede5}.cz-rrseat img,.cz-rrseat i{background:var(--panel-3)}
+.cz-jack,.cz-ticket,.cz-reels,.cz-rrcyl,.cz-rtk,.cz-tkgrid,.cz-pw{--text:#f4ede5;--muted:#c8b898;--muted-2:#a89878;--gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);--green:#4ddb8b;--red:#ff6b85;--line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);color:var(--text)}
+/* PIXELLAB BUTTONS (2026-09-19, the owner: "i want them drawn custom from pixellab, and also the bet/spin button background").
+   One UI sheet, cut into four: czbtn (the gold action button), czbtn_off (the same, dull), czpill_on / czpill (a gold and a wooden
+   pill). Each is stretched sideways only: border-image with NO top or bottom slice, so the whole height of the art is the height
+   of the button and only the middle widens. The end caps are 16px (big) and 20px (pill) of the art, drawn at the width that keeps
+   their shape at the button's height. #gameWin.cz in front so these beat the plain rules above. */
+#gameWin.cz .cz-lock,#gameWin.cz .cz-dexgo{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-style:solid;border-color:transparent;border-width:0 15px;border-image:url(/v3/assets/img/glad/flat/ui/czbtn.png?v=1) 0 16 fill / 0 15px stretch;background:none;box-shadow:none;border-radius:0;color:#3a2604;text-shadow:0 1px 0 rgba(255,246,196,.75);image-rendering:pixelated}
+#gameWin.cz .cz-dexgo{border-width:0 12px;border-image-width:0 12px}
+#gameWin.cz .cz-lock:hover:not(:disabled),#gameWin.cz .cz-dexgo:hover:not(:disabled){filter:brightness(1.07)}#gameWin.cz .cz-lock:active:not(:disabled){transform:translateY(1px)}
+#gameWin.cz .cz-lock:disabled,#gameWin.cz .cz-dexgo:disabled{border-image-source:url(/v3/assets/img/glad/flat/ui/czbtn_off.png?v=1);background:none;color:#d9cdb6;text-shadow:0 1px 0 #1a0e08;cursor:default}
+#gameWin.cz .cz-realtabs button{border-style:solid;border-color:transparent;border-width:0 14px;border-image:url(/v3/assets/img/glad/flat/ui/czpill.png?v=1) 0 20 fill / 0 14px stretch;background:none;border-radius:0;box-shadow:none;min-height:30px;padding:0 2px;color:#f3e7cc;text-shadow:0 1px 0 #1a0e08;image-rendering:pixelated}
+#gameWin.cz .cz-realtabs button:hover{filter:brightness(1.12)}
+#gameWin.cz .cz-chip{height:42px;min-width:44px;padding:0 1px;border-style:solid;border-color:transparent;border-width:0 12px;border-image:url(/v3/assets/img/glad/flat/ui/czchip.png?v=1) 0 22 fill / 0 12px stretch;background:none;border-radius:0;box-shadow:none;color:#f3e7cc;text-shadow:0 1px 0 #1a0e08;image-rendering:pixelated}
+#gameWin.cz .cz-chip:hover:not(:disabled),#gameWin.cz .cz-chip[aria-pressed=true]{border-image-source:url(/v3/assets/img/glad/flat/ui/czchip_on.png?v=1);color:#3a2604;text-shadow:0 1px 0 rgba(255,246,196,.75)}
+#gameWin.cz .cz-chip:disabled{filter:grayscale(.7) brightness(.8);cursor:default}
+#gameWin.cz .cz-bombs button{height:36px;min-width:46px;padding:0 1px;border-style:solid;border-color:transparent;border-width:0 10px;border-image:url(/v3/assets/img/glad/flat/ui/czchip.png?v=1) 0 22 fill / 0 10px stretch;background:none;border-radius:0;color:#f3e7cc;text-shadow:0 1px 0 #1a0e08;image-rendering:pixelated}
+#gameWin.cz .cz-bombs button.on,#gameWin.cz .cz-bombs button:hover:not(:disabled){border-image-source:url(/v3/assets/img/glad/flat/ui/czchip_on.png?v=1);background:none;color:#3a2604;text-shadow:0 1px 0 rgba(255,246,196,.75)}
+#gameWin.cz .cz-bombs button:disabled{filter:grayscale(.7) brightness(.8)}
+#gameWin.cz .cz-realtabs button[aria-pressed=true]{border-image-source:url(/v3/assets/img/glad/flat/ui/czpill_on.png?v=1);background:none;color:#3a2604;text-shadow:0 1px 0 rgba(255,246,196,.75)}
+.cz-realtabs{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 10px}.cz-realtabs button{padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--muted);font:800 12.5px var(--body);cursor:pointer}.cz-realtabs button[aria-pressed=true]{background:linear-gradient(#f0c848,#cf9a2e);color:#2a1c04;border-color:#8a6210}.cz-cur{align-items:center}.cz-curl{font:700 12px var(--body);color:var(--muted)}.cz-cur button[aria-pressed=true]{background:#ff9aa8;border-color:#ff9aa8}.cz-cur button:first-of-type[aria-pressed=true]{background:linear-gradient(#f0c848,#cf9a2e);border-color:#8a6210}
+.cz-luck a{color:var(--gold)}
+.cz-total{font:800 54px var(--display);letter-spacing:-.04em;color:var(--gold);line-height:1;text-shadow:0 0 30px rgba(232,191,53,.35)}
+@media (prefers-reduced-motion:reduce){.cz-coin.spin,.cz-reel.spin .cz-strip{animation:none}}
+`;
+
+export function createCasino(env) {
+  const { G, SFX, send, esc, $ } = env;
+  const img = (k, cls = "") => `<img class="cz-i ${cls}" src="${CART}${k}.png?v=${CV}" alt="">`;
+  const sym = (k) => (k === "gem" ? "gem" : `reel_${k}`);
+  const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
+  /* REAL MODE (2026-09-20). On the casino's main floor six of these windows are eastcoin.vip's OWN games, for real ZCoins:
+     the window is the same, but every bet goes to the site's endpoints (REALAPI, below) instead of the game server, and
+     the answer is translated into the message shape the window already understands. The site decides everything: the
+     limits (20 a bet, ten plays an hour a game, 400 an hour out), the result, the fairness seed, the ledger. Nothing of
+     EastScape's (luck, dinners, drinks, gear, hunger, VIP, the High Roller Room) touches a real table. */
+  let REAL = false; const ZC = { bal: null, me: null, uid: null, last: null };
+  /* v57: a real table takes ZCOINS OR TICKETS. TIX: this bet is staked with tickets (G.DEX.rate of them a ZCoin). The game
+     server takes the tickets and the site writes a one-use voucher (type:"stake"); the bet then goes to the very same
+     endpoint with that voucher in place of a wallet debit. Same limits, same seed, same odds, and it pays REAL ZCoins. */
+  let MENU = false, keepMenu = null;
+  /* (v107) TICKETS IN, TICKETS OUT. On the floor's eight tables the "Tickets" button no longer stakes a voucher on the site (which paid
+     ZCoins): it opens the SAME table on the game server's own engine, which takes tickets and pays tickets, every play priced in the
+     96-104% band (G.EDGE_BAND). So for those eight, REAL means "ZCoins" and not-REAL means "tickets", and `floorTix()` is the second.
+     The Fight Pit and Roulette are the site's shared rounds and still take a ticket STAKE that pays ZCoins: `vt()` is that, and only that. */
+  const floorGame = () => !!REAL_KEY[GAME], floorTix = () => !REAL && floorGame(), pitTix = () => GAME === "fight" && REAL && TIX, vt = () => TIX && REAL && !floorGame() && GAME !== "fight";
+  /* (v109) THE FIGHT PIT FOR TICKETS. The fight in the room is the site's shared round; a TICKET bet on it is held by the game server and
+     paid in tickets at the site's own price for that fighter and that round's own edge draw (eastscape-worker/src/pit.js). PT is what the
+     game server says is riding in tickets on the round being bet on; `pitTix()` is "this window is staking tickets on the Pit". */
+  let PT = { no: -1, bets: [] };
+  const wantTix = () => { try { return localStorage.getItem("gs_real_cur") === "tix"; } catch (x) { return false; } }, setWant = (v) => { TIX = v; try { localStorage.setItem("gs_real_cur", v ? "tix" : "zc"); } catch (x) { /* private window */ } };
+  let TIX = false; try { TIX = localStorage.getItem("gs_real_cur") === "tix"; } catch (x) { /* private window */ }
+  let stakeWait = null;
+  const tixHave = () => G.tixIn(env.me() || { inv: [] }), tixCost = (zc) => zc * G.DEX.rate;
+  /* what THIS bet costs you, in what you are paying with (the owner, 2026-09-21: with Tickets picked the button still said "Spin · 5 ZC").
+     Only the STAKE changes its words: a win on a ticket bet still pays ZCoins, so prizes keep saying ZC. */
+  /* the game's own drawn ticket, not the emoji (the owner, 2026-09-21: the emoji comes out as a black smudge in some fonts). For innerHTML only. */
+  const TIX_IMG = `<img class="cz-tix" src="/v3/assets/img/glad/flat/items/tickets.png?v=1" alt="tickets">`, tixHtml = (n) => `${TIX_IMG}${Math.round(n).toLocaleString()}`;
+  const stakeTxt = (zc) => (floorTix() || pitTix() ? `${Number(zc).toLocaleString()} tickets` : vt() ? `${tixCost(zc).toLocaleString()} tickets` : money(zc));
+  function getStake(g, zc) {   // -> { ok, voucher } | { ok:false, message }
+    return new Promise((done) => { const t = setTimeout(() => { if (stakeWait?.done === done) { stakeWait = null; done({ ok: false, message: "The house didn't answer. If tickets were taken they are held, not lost: try again in a minute." }); } }, 25000); stakeWait = { done, t }; send({ t: "dex", op: "stake", zc, g }); });
+  }
+  function stake(e) { const w = stakeWait; if (!w) return; stakeWait = null; clearTimeout(w.t); w.done(e.voucher ? { ok: true, voucher: e.voucher } : { ok: false, code: "STAKE", message: e.error || "The house said no. Nothing was taken." }); }
+  /* (v104) the button that ends a run. It read "tickets out 20 ZC", which sounded like being paid in tickets; a real-ZCoin run now shows the site's own coin beside the amount. */
+  const cashOut = (n) => (REAL ? `Cash out <img src="/v3/assets/img/zcoin.webp" alt="" style="width:18px;height:18px;vertical-align:-4px;margin:0 3px 0 5px">${Number(n).toLocaleString()} ZC` : `Cash out ${money(n)}`);
+  const money = (n) => (REAL ? `${Number(n).toLocaleString()} ZC` : floorTix() ? `${Number(n).toLocaleString()} tickets` : G.fmtCash(n)),   /* (words, not the ticket emoji, at the ticket tables) */ cash = () => (REAL ? ZC.bal ?? 0 : G.cashIn(env.me())), calm = () => env.calm();
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  let styled = false, GAME = null, R = {}, bet = 100, betCash = 100, betZc = 5, busy = false, token = 0, jack = { pot: null, last: null };
+  const SESS = {}, RUNS = { hilo: null, mines: null }, PICK = { cointable: "heads", wheel: "red" };
+  let diceTarget = 50, mineCount = 3, wheelRot = 0, trail = [], scratch = null;
+  const sess = (g) => (SESS[g] ||= { bets: 0, net: 0, best: 0, recent: [] });
+
+  function style() {
+    if (styled) return; styled = true;
+    document.head.append(Object.assign(document.createElement("style"), { textContent: CSS }));
+    if (!document.querySelector('link[href*="/v3/assets/fonts/fonts.css"]')) document.head.append(Object.assign(document.createElement("link"), { rel: "stylesheet", href: "/v3/assets/fonts/fonts.css" }));
+  }
+  const phase = (text, cls = "") => { if (R.phase) { R.phase.className = `cz-phase ${cls}`; R.phase.textContent = text; } };
+  const note = (text) => { if (R.note) R.note.textContent = text; };
+  function pop(big, small) { { const m = /([\d.]+)×/.exec(String(small || "")), mult = big === "JACKPOT" ? 50 : m ? Number(m[1]) : 0; if (mult >= (G.CALLOUT?.min || 10)) env.bigWin?.({ game: $("gameTitle")?.textContent || "", mult, jackpot: big === "JACKPOT" }); }   /* the floor hears about a big one (decoration: see CALLOUT in the rules file) */
+    env.winFx?.(big, small);   /* EVERY win, small ones too, gets the level-up treatment (the owner, 2026-09-20: "make it feel impactful") */
+    if (!R.pop) return; R.pop.innerHTML = `<b>${big}</b>${small ? `<span>${small}</span>` : ""}`; R.pop.classList.add("show"); const t = token; setTimeout(() => { if (t === token) R.pop?.classList.remove("show"); }, 1500); }
+
+  /* ---------------------------------------------------------- the frame every table shares */
+  function frame(title, sub) {
+    style(); token++; busy = false; R = {};
+    const win = $("gameWin"); win.classList.add("cz"); win.style.width = "min(880px, calc(100% - 20px))"; /* (the element carries an inline width from its parchment days) */ $("gameTitle").textContent = title; $("gameSub").textContent = sub;
+    const body = $("gameBody"); body.replaceChildren();
+    const grid = el("div", "cz-grid"), stage = el("section", "cz-stage"), side = el("div", "cz-side");
+    R.phase = el("div", "cz-phase"); R.board = el("div", "cz-board"); R.mult = el("div", "cz-mult"); R.bet = el("div", "cz-bet"); R.pop = el("div", "cz-pop");
+    if (REAL_KEY[GAME] && MENU) { const tabs = el("div", "cz-realtabs", Object.entries(REAL_KEY).map(([g, k]) => `<button type="button" data-g="${g}" aria-pressed="${g === GAME}">${esc(UI[g].title)}</button>`).join("")); tabs.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { if (b.dataset.g !== GAME) api.open(b.dataset.g, { real: true, menu: true }); })); body.append(tabs); }
+    if (REAL_KEY[GAME]) {   /* the floor's eight: ZCoins pay ZCoins, tickets pay tickets, and the button swaps the whole table */
+      const cur = el("div", "cz-realtabs cz-cur"), z = el("button", "", "ZCoins"), t = el("button", "", `${TIX_IMG}Tickets`); z.type = t.type = "button"; z.setAttribute("aria-pressed", String(REAL)); t.setAttribute("aria-pressed", String(!REAL));
+      cur.append(el("span", "cz-curl", "Bet with"), z, t, el("span", "cz-curl", REAL ? "ZCoins in, ZCoins out" : "tickets in, tickets out"));
+      const swap = (tix) => { if (busy || RUNS[GAME] || tix === !REAL) return; SFX.play("ui_click"); setWant(tix); api.open(GAME, { real: true, menu: MENU }); };
+      z.addEventListener("click", () => swap(false)); t.addEventListener("click", () => swap(true)); body.append(cur);
+    } else if (REAL && GAME !== "russian") {
+      const cur = el("div", "cz-realtabs cz-cur"); R.curZ = el("button", "", ""); R.curT = el("button", "", ""); R.curZ.type = R.curT.type = "button"; R.curNote = el("span", "cz-curl", ""); cur.append(el("span", "cz-curl", "Bet with"), R.curZ, R.curT, R.curNote);
+      const pick = (v) => { if (busy) return; if (GAME === "fight") { if (v === TIX) return; setWant(v); bet = v ? betCash : betZc; SFX.play("ui_click"); if (FV) fight(FV, true); return; } TIX = v;   /* (a run already going keeps the stake it started with: this only decides the NEXT bet) */ try { localStorage.setItem("gs_real_cur", v ? "tix" : "zc"); } catch (x) { /* fine */ } SFX.play("ui_click"); refresh(); };
+      R.curZ.addEventListener("click", () => pick(false)); R.curT.addEventListener("click", () => pick(true)); body.append(cur); }
+    stage.append(R.phase, R.board, R.mult, R.bet, R.pop); grid.append(stage, side); body.append(grid); R.side = side; R.stage = stage;
+    win.hidden = false; return R;
+  }
+  function stakeRow() {   /* (zc: this row stakes ZCoins. The Pit on tickets is a REAL window staking tickets, so REAL alone no longer says) */
+    const zc = REAL && !pitTix();
+    const row = el("div", "cz-stakerow"), C = G.CASINO; R.stake = el("input", "cz-stake"); R.stake.type = "number"; R.stake.min = C.minBet; R.stake.max = C.maxBet; R.stake.value = bet; R.stake.setAttribute("aria-label", "Bet");
+    const room = () => env.room?.() || null, low = () => (zc ? REAL_LIM.min : G.minBetOf(room())), big = !zc && (room()?.limits?.mult || 1) > 1;
+    const top = () => (zc ? REAL_LIM.max : G.maxBetOf(env.me(), room()));   /* your own limit: the table's, plus a Bookie's amulet or champagne, doubled while a High Roller */
+    const setBet = (v) => { bet = Math.max(low(), Math.min(top(), Math.floor(v) || low())); if (zc) betZc = bet; else betCash = bet; R.stake.value = bet; R.stake.min = low(); R.stake.max = top(); refresh(); };
+    R.stake.addEventListener("input", () => { bet = Math.max(low(), Math.min(top(), Math.floor(+R.stake.value) || low())); if (zc) betZc = bet; else betCash = bet; refresh(); });
+    if (bet < low() || bet > top()) { bet = Math.max(low(), Math.min(top(), bet)); R.stake.value = bet; }
+    R.stake.addEventListener("blur", () => { R.stake.value = bet; });
+    row.append(R.stake); R.chips = [];
+    for (const [label, fn] of [...(zc ? [["1", () => 1], ["5", () => 5], ["10", () => 10], ["20", () => 20]] : big ? [["100", () => 100], ["500", () => 500], ["1K", () => 1000], ["5K", () => 5000]] : [["100", () => 100], ["1K", () => 1000], ["5K", () => 5000], ["20K", () => 20000]])]) {   /* (the owner, 2026-09-20: "remove the 1/2, 2x, max buttons from all casino games. it should only be 1, 5, 10, 20") */ const b = el("button", "cz-chip", label); b.type = "button"; b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); setBet(fn()); }); R.chips.push(b); row.append(b); }
+    return row;
+  }
+  const lockBtn = (cls = "") => { const b = el("button", `cz-lock ${cls}`); b.type = "button"; return b; };
+  function sideCards(paysTitle, paysNote) {
+    if (GAME === "slots") { R.jack = el("section", "cz-card cz-jack"); R.side.append(R.jack); }
+    const pays = el("section", "cz-card"); pays.innerHTML = `<h2>${paysTitle}<small>${paysNote || ""}</small></h2>`; R.pays = el("div", "cz-rungs"); pays.append(R.pays);
+    const you = el("section", "cz-card"); you.innerHTML = `<h2>This sitting<small>since you sat down</small></h2>`; R.stats = el("div", "cz-stats"); R.needs = el("div", "cz-needs"); R.recent = el("div", "cz-recent"); you.append(R.stats, R.needs, R.recent);
+    const luck = el("section", "cz-card"); R.luck = el("div", "cz-luck"); luck.append(R.luck);
+    R.side.append(pays, you, luck);
+  }
+  function lockStake(on) { if (R.stake) R.stake.disabled = on; for (const c of R.chips || []) c.disabled = on; }
+  function record(g, delta) { const s = sess(g); s.bets++; s.net += delta; s.best = Math.max(s.best, delta); s.recent = [delta, ...s.recent].slice(0, 12); }
+  function refresh() {            // everything that depends on your tickets, your luck or your session, without touching the board
+    if (!GAME || !R.stats) return; const s = sess(GAME), me = env.me();
+    if (REAL && R.curZ && GAME === "fight") { R.curZ.textContent = "ZCoins"; R.curT.innerHTML = `${TIX_IMG}Tickets`; R.curZ.setAttribute("aria-pressed", String(!TIX)); R.curT.setAttribute("aria-pressed", String(TIX)); if (R.curNote) R.curNote.textContent = TIX ? "tickets in, tickets out" : "ZCoins in, ZCoins out"; }
+    else if (REAL && R.curZ) { if (R.curNote) R.curNote.textContent = "wins pay ZCoins"; R.curZ.textContent = `ZCoins · ${bet}`; R.curT.innerHTML = `${TIX_IMG}Tickets · ${tixCost(bet).toLocaleString()}`; R.curZ.setAttribute("aria-pressed", String(!TIX)); R.curT.setAttribute("aria-pressed", String(TIX)); }
+    R.stats.innerHTML = `<div class="cz-stat"><span>${REAL ? "Your ZCoins" : "Your tickets"}</span><strong>${REAL ? money(cash()) : tixHtml(cash())}</strong></div>${REAL ? `<div class="cz-stat"><span>Your tickets</span><strong>${tixHtml(tixHave())}</strong></div>` : ""}<div class="cz-stat"><span>Net</span><strong class="${s.net > 0 ? "up" : s.net < 0 ? "dn" : ""}">${s.net > 0 ? "+" : s.net < 0 ? "−" : ""}${money(Math.abs(s.net))}</strong></div><div class="cz-stat"><span>Bets</span><strong>${s.bets}</strong></div><div class="cz-stat"><span>Best win</span><strong>${s.best ? `+${money(s.best)}` : "–"}</strong></div>`;
+    R.recent.innerHTML = s.recent.map((d) => `<span class="${d > 0 ? "w" : ""}">${d > 0 ? "+" : d < 0 ? "−" : ""}${Math.abs(d).toLocaleString()}</span>`).join("");
+    if (REAL) { R.needs.innerHTML = ""; R.luck.className = "cz-luck"; R.luck.innerHTML = realRules(); if (R.jack) R.jack.innerHTML = jack.pot == null ? "" : `<small>JACKPOT</small><b>${money(Math.floor(jack.pot))}</b><small>Hit 7-7-7 to win it${jack.last ? ` · last: ${esc(jack.last.name)}, ${money(jack.last.amt)}` : ""}</small>`; UI[GAME]?.refresh?.(); return; }
+    if (floorTix()) { R.needs.innerHTML = ""; R.luck.className = "cz-luck"; R.luck.innerHTML = `<b>Tickets in, tickets out.</b> Bets are ${G.minBetOf(env.room?.()).toLocaleString()} to ${G.maxBetOf(me, env.room?.()).toLocaleString()} tickets. Every play pays between 96% and 104% of the fair price, drawn fresh each time, the same as the ZCoin tables, so no game is the better bet. Trade tickets for real ZCoins at the Prize Counter: ${G.DEX.rate.toLocaleString()} a ZCoin.`;
+      if (R.jack && jack.pot != null) R.jack.innerHTML = `<small>TICKET JACKPOT</small><b>${tixHtml(Math.floor(jack.pot))}</b><small>Three sevens wins it · a ${G.CASINO.maxBet.toLocaleString()}-ticket spin wins it all${jack.last ? ` · last: ${esc(jack.last.name)} ${Number(jack.last.amt).toLocaleString()}` : ""}</small>`;
+      UI[GAME]?.refresh?.(); return; }
+    R.needs.innerHTML = [["thirst", "Thirst", ""], ["hunger", "Hunger", "food"]].map(([k, n, cls]) => { const v = Math.round(G.needOf(me, k)); return `<div class="cz-need ${cls}${v < G.NEEDS.floor ? " low" : ""}">${n} ${v}%<i><u style="width:${v}%"></u></i></div>`; }).join("");
+    const luck = me?.luck | 0; R.luck.className = `cz-luck${luck ? " on" : ""}`;
+    const others = G.buffsOf(me).filter((b) => b.id !== "luck").map((b) => `${b.name}${b.left != null ? ` × ${b.left}` : ""}`), lim = G.maxBetOf(me, env.room?.());
+    R.luck.textContent = (luck ? `🍀 Lucky: your next ${luck} bet${luck === 1 ? "" : "s"} pay ${G.LUCK.bonus * 100}% more when they win.` : "Want better odds? Lucky clovers come from fishing (there's a pond in the Yard, outside). Fighting makes you a High Roller and drops rare gear. Dex sells drinks and dinners.")
+      + (others.length ? ` Also on: ${others.join(" · ")}.` : "") + (lim !== G.CASINO.maxBet ? ` Your limit here is ${money(lim)}.` : "") + ((env.room?.()?.limits?.mult || 1) > 1 ? ` High Roller Room: bets from ${money(G.minBetOf(env.room()))}; luck and buffs cover the first ${money(G.FX_COVER)} of a bet.` : "");
+    if (R.jack && jack.pot != null) R.jack.innerHTML = `<small>JACKPOT</small><b>${money(Math.floor(jack.pot))}</b><small>Three sevens wins it · a ${money(G.CASINO.maxBet)} spin wins it all${jack.last ? ` · last: ${esc(jack.last.name)} ${money(jack.last.amt)}` : ""}</small>`;
+    UI[GAME]?.refresh?.();
+  }
+  const empty = () => { const why = G.tooEmpty(env.me()); if (why) { phase(why === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[why]); SFX.play("ui_error"); } return !!why; };
+  const broke = () => { if (pitTix()) { if (bet > tixHave()) { phase(`That's ${bet.toLocaleString()} tickets. You have ${tixHave().toLocaleString()}`, "bad"); note("Not enough tickets. Go hit something."); SFX.play("ui_error"); return true; } return false; }
+    if (vt()) { if (tixCost(bet) > tixHave()) { phase(`That's ${tixCost(bet).toLocaleString()} tickets. You have ${tixHave().toLocaleString()}`, "bad"); note("Not enough tickets. Go hit something."); SFX.play("ui_error"); return true; } return false; }
+    if (REAL) { if (ZC.bal != null && bet > ZC.bal) { phase(`You only have ${money(ZC.bal)}`, "bad"); note(REAL_NUDGE); SFX.play("ui_error"); return true; } return false; } if (empty()) return true; return brokeOnly(); };
+  const brokeOnly = () => { if (bet > cash() + (env.me()?.free | 0)) { phase(`You only have ${money(cash())}`, "bad"); note("Out of tickets? Head outside to the Yard: click a monster, or fish the pond. The Prize Counter (the big ruby) takes what you bring back for more."); SFX.play("ui_error"); return true; } return false; };
+  function place(pick) {          // one bet, one answer
+    if (busy || broke()) return; busy = true; const g = GAME, t = token; R.pop?.classList.remove("show");
+    if (REAL) return realPlace(g, pick, t);
+    UI[g].start?.(); send({ t: "bet", g, amt: bet, pick });
+    setTimeout(() => { if (busy && t === token && GAME === g && !UI[g].pending) { busy = false; UI[g].idle?.(); phase("No answer from the table. Try again.", "bad"); } }, 4500);
+  }
+  function settle(e, text, won) {
+    const own = e.bet - (e.free || 0), delta = e.payout - own; record(e.g, delta); busy = false;
+    phase(text, delta > 0 ? "done" : e.payout ? "open" : "bad");
+    if (e.jackpot) { pop(`JACKPOT`, `+${money(e.payout)}`); SFX.play("jackpot"); }
+    else if (delta > 0) { pop(`+${money(delta)}`, `${e.mult}×${e.lucky ? ` · +${e.lucky} from buffs` : ""}${e.free ? " · free play" : ""}`); SFX.play(e.payout > e.bet * 4 ? "win_big" : "win_small"); }
+    else SFX.play(e.payout === e.bet ? "chip" : "lose");
+    refresh();
+  }
+
+  /* ---------------------------------------------------------- the tables */
+  const UI = {
+    cointable: {
+      title: "Coin Flip", sub: "Pick a side. Pays 2×.",
+      build() {
+        R.board.innerHTML = `<div class="cz-coinbox"><div class="cz-coin" id="czCoin">${`<img class="h" src="${CART}coin_heads.png?v=${CV}" alt=""><img class="t" src="${CART}coin_tails.png?v=${CV}" alt="">`}</div></div>`;
+        const picks = el("div", "cz-picks"); R.picks = {};
+        for (const s of ["heads", "tails"]) { const b = el("button", "cz-pick", `<b>${s === "heads" ? "Heads" : "Tails"}</b><small>${REAL ? 2 : G.FLIP_PAYS}×</small>`); b.type = "button"; b.addEventListener("click", () => { PICK.cointable = s; SFX.play("ui_click"); refresh(); }); R.picks[s] = b; picks.append(b); }
+        R.lock = lockBtn(); R.lock.addEventListener("click", () => place(PICK.cointable)); R.note = el("p", "cz-note");
+        R.bet.append(picks, stakeRow(), R.lock, R.note); sideCards("What it pays"); phase("Pick a side", "open");
+        R.pays.innerHTML = `<div class="cz-rung"><span>You call it right</span><strong>${REAL ? "about 2" : G.FLIP_PAYS}×</strong></div><div class="cz-rung"><span>You don't</span><strong>0</strong></div><div class="cz-rung"><span>Chance</span><strong>50%</strong></div>`;
+      },
+      refresh() { for (const s of ["heads", "tails"]) R.picks[s].classList.toggle("on", PICK.cointable === s); R.lock.disabled = busy; R.lock.textContent = busy ? "In the air…" : `Flip ${PICK.cointable} · ${stakeTxt(bet)}`; },
+      start() { const c = $("czCoin"); if (!calm()) c.classList.add("spin"); phase("In the air…"); SFX.play("coin_flip"); refresh(); },
+      idle() { $("czCoin")?.classList.remove("spin"); refresh(); },
+      async result(e) { const c = $("czCoin"), t = token; await wait(calm() ? 0 : 500); if (t !== token) return; c.classList.remove("spin"); c.style.transform = `rotateY(${1440 + (e.side === "tails" ? 180 : 0)}deg)`; await wait(calm() ? 50 : 1000); if (t !== token) return; c.style.transition = "none"; c.style.transform = `rotateY(${e.side === "tails" ? 180 : 0}deg)`; c.offsetWidth; c.style.transition = ""; settle(e, `${e.side === "heads" ? "Heads" : "Tails"} · ${e.payout ? `you win ${money(e.payout)}` : "you lose"}`); }
+    },
+    dicetable: {
+      title: "Dice", sub: "Roll under your number.",
+      build() {
+        R.board.innerHTML = `<div style="width:100%;display:grid;justify-items:center"><div class="cz-roll" id="czRoll">–</div><div class="cz-track"><div class="cz-zone" id="czZone"></div><div class="cz-marker" id="czMark" style="left:50%"></div></div><div class="cz-ticks"><span>1</span><span>25</span><span>50</span><span>75</span><span>100</span></div></div>`;
+        R.range = el("input", "cz-range"); R.range.type = "range"; R.range.min = G.DICE.min; R.range.max = G.DICE.max; R.range.value = diceTarget; R.range.setAttribute("aria-label", "Roll under");
+        R.range.addEventListener("input", () => { diceTarget = +R.range.value; refresh(); });
+        R.lock = lockBtn(); R.lock.addEventListener("click", () => place(diceTarget)); R.note = el("p", "cz-note"); R.bet.append(R.range, stakeRow(), R.lock, R.note); sideCards("What it pays", "slide to choose"); phase("Set your number", "open");
+      },
+      refresh() { const dm = REAL ? realDiceMult : G.diceMult, m = dm(diceTarget); $("czZone").style.width = `${diceTarget - 1}%`; R.mult.innerHTML = `Roll under ${diceTarget}<small>wins ${diceTarget - 1}% of the time · pays ${m}×</small>`; R.lock.disabled = busy; R.lock.textContent = busy ? "Rolling…" : `Roll · ${stakeTxt(bet)} to win ${money(Math.floor(bet * m))}`;
+        R.pays.innerHTML = [10, 25, 50, 75, 90].map((t) => `<div class="cz-rung${t === diceTarget ? " at" : ""}"><span>Under ${t} · ${t - 1}%</span><strong>${REAL ? "about " : ""}${dm(t)}×</strong></div>`).join(""); },
+      start() { phase("Rolling…"); SFX.play("dice"); const r = $("czRoll"); r.className = "cz-roll"; this.iv = setInterval(() => { r.textContent = 1 + Math.floor(Math.random() * 100); $("czMark").style.left = `${Math.random() * 100}%`; }, 70); refresh(); },
+      idle() { clearInterval(this.iv); refresh(); },
+      async result(e) { const t = token; await wait(calm() ? 0 : 450); clearInterval(this.iv); if (t !== token) return; const r = $("czRoll"); r.textContent = e.roll; r.className = `cz-roll ${e.payout ? "w" : "l"}`; $("czMark").style.left = `${e.roll}%`; await wait(calm() ? 0 : 550); if (t !== token) return; settle(e, `Rolled ${e.roll} · needed under ${e.target} · ${e.payout ? `you win ${money(e.payout)}` : "you lose"}`); }
+    },
+    slots: {
+      title: "Slots", sub: "Match three. 7-7-7 wins the jackpot.",
+      build() {
+        const strip = () => G.REELS.map((r) => `<img src="${CART}reel_${r.k}.png?v=${CV}" alt="">`).join("");
+        R.board.innerHTML = `<div class="cz-reels">${[0, 1, 2].map((i) => `<div class="cz-reel" id="czReel${i}"><div class="cz-strip">${strip()}${strip()}</div></div>`).join("")}</div>`;
+        this.show(["cherry", "bell", "seven"]);
+        R.lock = lockBtn(); R.lock.addEventListener("click", () => place(null)); R.note = el("p", "cz-note"); R.bet.append(stakeRow(), R.lock, R.note); sideCards("What it pays", "three of a kind"); phase("Pull when ready", "open");
+        this.pays();
+      },
+      pays() {
+        if (!R.pays) return; const three = (k) => `${img(`reel_${k}`)}${img(`reel_${k}`)}${img(`reel_${k}`)}`, cfg = REAL ? REAL_CFG.slots : null;
+        if (REAL) { R.pays.innerHTML = cfg ? cfg.pays.map((x) => `<div class="cz-rung"><span>${x.three ? three(x.key) : `${img("reel_cherry")}${img("reel_cherry")} any two`}</span><strong>${x.jackpot ? "JACKPOT" : `${x.multiplier}×`}</strong></div>`).join("") : `<div class="cz-rung"><span>Asking the machine…</span><strong></strong></div>`; return; }
+        R.pays.innerHTML = G.REELS.slice().reverse().map((r) => `<div class="cz-rung"><span>${three(r.k)}</span><strong>${r.pay}×</strong></div>`).join("") + `<div class="cz-rung"><span>${img("reel_cherry")}${img("reel_cherry")} any two</span><strong>${G.SLOT_TWO_CHERRIES}×</strong></div>`;
+      },
+      show(keys, hit) { keys.forEach((k, i) => { const reel = $(`czReel${i}`), idx = G.REELS.findIndex((r) => r.k === k); reel.querySelector(".cz-strip").style.transform = `translateY(${-96 * idx}px)`; reel.classList.toggle("hit", !!hit); }); },
+      refresh() { R.lock.disabled = busy; R.lock.textContent = busy ? "Spinning…" : `Spin · ${stakeTxt(bet)}`; },
+      start() { phase("Spinning…"); this.loop = SFX.play("slots_spin"); for (let i = 0; i < 3; i++) { const r = $(`czReel${i}`); r.classList.remove("hit", "stop"); r.querySelector(".cz-strip").style.transform = ""; if (!calm()) r.classList.add("spin"); } refresh(); },
+      idle() { this.loop?.stop(); for (let i = 0; i < 3; i++) $(`czReel${i}`)?.classList.remove("spin"); refresh(); },
+      async result(e) {
+        const t = token; if (e.pot != null) jack.pot = e.pot; if (e.jackpot) jack.last = { name: env.you()?.name || "You", amt: e.jackpot };
+        for (let i = 0; i < 3; i++) { await wait(calm() ? 0 : i ? 380 : 650); if (t !== token) return; const r = $(`czReel${i}`), idx = G.REELS.findIndex((x) => x.k === e.reels[i]); r.classList.remove("spin"); r.querySelector(".cz-strip").style.transform = `translateY(${-96 * idx}px)`; r.classList.add("stop"); SFX.play("reel_stop"); }
+        this.loop?.stop(); await wait(calm() ? 0 : 250); if (t !== token) return; if (e.payout) for (let i = 0; i < 3; i++) $(`czReel${i}`).classList.add("hit");
+        settle(e, e.jackpot ? `JACKPOT · ${money(e.payout)}` : e.payout ? `${e.mult}× · you win ${money(e.payout)}` : "No luck");
+      }
+    },
+    wheel: {
+      title: "Wheel", sub: "Red, black, or gold for 60×.",
+      build() {
+        const W = G.WHEEL, w = (360 - W.gold) / W.slices, parts = [`#e8b83a 0 ${W.gold}deg`]; for (let i = 0; i < W.slices; i++) parts.push(`${i % 2 ? "#1a1a1a" : "#c8202c"} ${W.gold + i * w}deg ${W.gold + (i + 1) * w}deg`);
+        R.board.innerHTML = `<div class="cz-wheelbox"><div class="cz-wheel" id="czWheel" style="background:conic-gradient(${parts.join(",")});transform:rotate(${wheelRot}deg)"></div><div class="cz-hub"></div><div class="cz-pin"></div></div>`;
+        const picks = el("div", "cz-picks"); R.picks = {};
+        for (const s of ["red", "black", "gold"]) { const b = el("button", `cz-pick ${s}`, `<b>${s[0].toUpperCase()}${s.slice(1)}</b><small>${REAL ? REAL_WHEEL[s] : W.pays[s]}×</small>`); b.type = "button"; b.addEventListener("click", () => { PICK.wheel = s; SFX.play("ui_click"); refresh(); }); R.picks[s] = b; picks.append(b); }
+        R.lock = lockBtn(); R.lock.addEventListener("click", () => place(PICK.wheel)); R.note = el("p", "cz-note"); R.bet.append(picks, stakeRow(), R.lock, R.note); sideCards("What it pays"); phase("Pick a colour", "open");
+        R.pays.innerHTML = `<div class="cz-rung"><span>Red · 49.2%</span><strong>${W.pays.red}×</strong></div><div class="cz-rung"><span>Black · 49.2%</span><strong>${W.pays.black}×</strong></div><div class="cz-rung next"><span>Gold · 1 in 60</span><strong>${W.pays.gold}×</strong></div>`;
+      },
+      refresh() { for (const s of ["red", "black", "gold"]) R.picks[s].classList.toggle("on", PICK.wheel === s); R.lock.disabled = busy; R.lock.textContent = busy ? "Spinning…" : `Spin on ${PICK.wheel} · ${stakeTxt(bet)}`; },
+      start() { phase("Spinning…"); SFX.play("chip"); refresh(); }, idle() { refresh(); },
+      async result(e) { const w = $("czWheel"), t = token; wheelRot = Math.ceil(wheelRot / 360) * 360 + 360 * 4 + (360 - e.angle); w.style.transition = calm() ? "none" : "transform 2.8s cubic-bezier(.12,.72,.12,1)"; w.style.transform = `rotate(${wheelRot}deg)`; this.loop = SFX.play("roul_ball"); await wait(calm() ? 50 : 2900); this.loop?.stop(); if (t !== token) return; settle(e, `${e.color[0].toUpperCase()}${e.color.slice(1)} · ${e.payout ? `you win ${money(e.payout)}` : "you lose"}`); }
+    },
+    plinko: {
+      title: "Plinko", sub: "Drop the ball. The edges pay 25×.",
+      build() {
+        const P = REAL ? { rows: 12, pays: REAL_PLINKO } : G.PLINKO; let rows = ""; for (let r = 0; r < P.rows; r++) rows += `<div class="cz-pkrow">${"<i class='cz-peg'></i>".repeat(r + 1)}</div>`;
+        R.board.innerHTML = `<div class="cz-pkwrap"><div class="cz-pk" id="czPk"><div class="cz-ball" id="czBall"></div>${rows}</div><div class="cz-buckets">${P.pays.map((x, i) => `<div class="cz-bucket ${x >= 4 ? "big" : x >= 1 ? "mid" : ""}" data-b="${i}">${x}×</div>`).join("")}</div></div>`;
+        R.lock = lockBtn(); R.lock.addEventListener("click", () => place(null)); R.note = el("p", "cz-note"); R.bet.append(stakeRow(), R.lock, R.note); sideCards("What it pays", "how often"); phase("Drop when ready", "open");
+        const C = [1, 12, 66, 220, 495, 792, 924]; R.pays.innerHTML = [0, 1, 2, 3, 4, 5, 6].map((i) => `<div class="cz-rung" data-r="${i}"><span>${i === 6 ? "the middle" : i === 0 ? "either edge" : `${i + 1} in from the edge`} · ${((C[i] * (i === 6 ? 1 : 2)) / 40.96).toFixed(i < 2 ? 2 : 1)}%</span><strong>${P.pays[i]}×</strong></div>`).join("");
+      },
+      refresh() { R.lock.disabled = busy; R.lock.textContent = busy ? "Falling…" : `Drop · ${stakeTxt(bet)}`; },
+      start() { phase("Falling…"); document.querySelectorAll(".cz-bucket.hit").forEach((b) => b.classList.remove("hit")); R.pays.querySelectorAll(".at").forEach((r) => r.classList.remove("at")); refresh(); }, idle() { refresh(); },
+      async result(e) {
+        const ball = $("czBall"), t = token, p = 26; let rights = 0; ball.classList.remove("landed"); ball.style.transition = "none"; ball.style.transform = "translate(0px,0px)"; ball.classList.add("go"); ball.offsetWidth; ball.style.transition = "";
+        for (let r = 0; r < e.path.length; r++) { rights += e.path[r]; await wait(calm() ? 0 : 118); if (t !== token) return; ball.style.transform = `translate(${(rights - (r + 1) / 2) * p}px,${(r + 1) * p - 4}px)`; if (r % 2 === 0) SFX.play("chip", { vol: 0.25, rate: 1.2 + r * 0.04 }); }
+        await wait(calm() ? 0 : 130); if (t !== token) return; ball.classList.add("landed"); ball.style.transform = `translate(${(e.bucket - 6) * p}px,${e.path.length * p + 14}px)`;
+        document.querySelector(`.cz-bucket[data-b="${e.bucket}"]`)?.classList.add("hit"); R.pays.querySelector(`[data-r="${Math.min(e.bucket, 12 - e.bucket)}"]`)?.classList.add("at");
+        await wait(calm() ? 0 : 200); if (t !== token) return; settle(e, e.payout > e.bet ? `${e.mult}× · you win ${money(e.payout)}` : e.payout === e.bet ? "1× · your stake comes back" : `${e.mult}× · ${money(e.payout)} back`);
+      }
+    },
+    scratch: {
+      title: "Scratch-Off", sub: "Match three to win.",
+      build() {
+        R.board.innerHTML = `<div class="cz-ticket idle" id="czTicket"><div class="cz-tktop"><b>EastScape Scratch</b><span id="czTkNo">match three</span></div><div class="cz-tkgrid"><div class="cz-tkcells" id="czCells">${"<div class='cz-tkcell'></div>".repeat(9)}</div><canvas class="cz-foil gone" id="czFoil" width="300" height="300"></canvas></div></div>`;
+        R.lock = lockBtn(); R.lock.addEventListener("click", () => (scratch && !scratch.done ? this.reveal() : place(null))); R.note = el("p", "cz-note"); R.bet.append(stakeRow(), R.lock, R.note); sideCards("The prizes", "chance per card"); phase("Buy a card", "open");
+        R.pays.innerHTML = G.SCRATCH.map((s) => `<div class="cz-rung" data-k="${s.k}"><span>${img(sym(s.k))}${img(sym(s.k))}${img(sym(s.k))} · ${(s.w / 10).toFixed(1)}%</span><strong>${s.x}×</strong></div>`).join("");
+        const cv = $("czFoil"); let down = false, strokes = 0, last = null;
+        const rub = (ev) => { if (!scratch || scratch.done) return; const r = cv.getBoundingClientRect(), x = (ev.clientX - r.left) * 300 / r.width, y = (ev.clientY - r.top) * 300 / r.height, c = cv.getContext("2d"); c.globalCompositeOperation = "destination-out"; c.lineWidth = 46; c.lineCap = "round"; c.beginPath(); c.moveTo(last?.x ?? x, last?.y ?? y); c.lineTo(x, y); c.stroke(); c.beginPath(); c.arc(x, y, 23, 0, 7); c.fill(); last = { x, y }; if (++strokes % 6 === 0) { SFX.play("chip", { vol: 0.12, rate: 1.6 }); const d = c.getImageData(0, 0, 300, 300).data; let clear = 0; for (let i = 3; i < d.length; i += 4 * 97) if (d[i] < 40) clear++; if (clear / (d.length / (4 * 97)) > 0.55) this.reveal(); } };
+        cv.addEventListener("pointerdown", (ev) => { down = true; last = null; try { cv.setPointerCapture(ev.pointerId); } catch (x) {} rub(ev); }); cv.addEventListener("pointermove", (ev) => { if (down) rub(ev); }); cv.addEventListener("pointerup", () => { down = false; }); cv.addEventListener("pointercancel", () => { down = false; });
+        scratch = null;
+      },
+      refresh() { const open = scratch && !scratch.done; R.lock.disabled = busy && !open; R.lock.classList.toggle("alt", !!open); R.lock.textContent = open ? "Reveal all" : busy ? "Printing…" : `Buy a card · ${stakeTxt(bet)}`; lockStake(!!open); },
+      start() { phase("Printing your card…"); this.pending = true; refresh(); }, idle() { this.pending = false; refresh(); },
+      foil() { const cv = $("czFoil"), c = cv.getContext("2d"); c.globalCompositeOperation = "source-over"; const g = c.createLinearGradient(0, 0, 300, 300); g.addColorStop(0, "#d8d8e0"); g.addColorStop(0.5, "#9a9aa8"); g.addColorStop(1, "#c8c8d4"); c.fillStyle = g; c.fillRect(0, 0, 300, 300); c.fillStyle = "rgba(60,60,80,.35)"; c.font = "800 22px sans-serif"; c.textAlign = "center"; for (let y = 40; y < 300; y += 56) for (let x = 50; x < 320; x += 110) c.fillText("GAMBA", x + ((y / 56) % 2) * 40, y); c.fillStyle = "rgba(255,255,255,.5)"; c.font = "800 20px sans-serif"; c.fillText("SCRATCH HERE", 150, 160); cv.classList.remove("gone"); },
+      async result(e) { this.pending = false; busy = false; scratch = { e, done: false }; $("czTicket").classList.remove("idle"); $("czCells").innerHTML = e.grid.map((k) => `<div class="cz-tkcell" data-k="${k}"><img src="${CART}${sym(k)}.png?v=${CV}" alt=""></div>`).join(""); $("czTkNo").textContent = `card · ${money(e.bet)}`; this.foil(); phase("Scratch it", "open"); R.pays.querySelectorAll(".at").forEach((r) => r.classList.remove("at")); refresh(); if (calm()) this.reveal(); },
+      reveal() { if (!scratch || scratch.done) return; scratch.done = true; const e = scratch.e; $("czFoil").classList.add("gone"); if (e.prize) { document.querySelectorAll(`.cz-tkcell[data-k="${e.prize}"]`).forEach((c) => c.classList.add("win")); R.pays.querySelector(`[data-k="${e.prize}"]`)?.classList.add("at"); } settle(e, e.payout > e.bet ? `Three of a kind · ${e.mult}× · you win ${money(e.payout)}` : e.payout ? "Three gems · your stake comes back" : "No three of a kind"); }
+    },
+    hilo: {
+      title: "Higher or Lower", sub: "Guess right. Cash out any time.", run: true,
+      build() {
+        R.board.innerHTML = `<div class="cz-hl"><div class="cz-trail" id="czTrail"></div><div class="cz-cardx empty" id="czCard"><span>?</span></div></div>`;
+        const calls = el("div", "cz-picks"); R.calls = {};
+        for (const s of ["higher", "lower"]) { const b = el("button", `cz-pick ${s === "higher" ? "up" : "down"}`); b.type = "button"; b.addEventListener("click", () => runOp("hilo", "call", { call: s })); R.calls[s] = b; calls.append(b); }
+        R.callRow = calls; R.cash = lockBtn(); R.cash.addEventListener("click", () => runOp("hilo", "cash"));
+        R.lock = lockBtn(); R.lock.addEventListener("click", () => startRun("hilo")); R.note = el("p", "cz-note"); R.stakeRow = stakeRow();
+        R.bet.append(R.cash, calls, R.stakeRow, R.lock, R.note); sideCards("How it pays", "this card"); trail = [];
+      },
+      card(rank, suit, cls = "") { return `<div class="cz-cardx ${suit === 1 || suit === 2 ? "red" : ""} ${cls}">${G.HILO.names[rank]}<i>${SUITS[suit]}</i></div>`; },
+      refresh() {
+        const r = RUNS.hilo, big = $("czCard"); R.cash.hidden = R.callRow.hidden = !r; R.lock.hidden = R.stakeRow.hidden = !!r;
+        if (r) {
+          big.outerHTML = this.card(r.card, r.suit, this.fresh ? "flip" : "").replace('class="', 'id="czCard" class="'); this.fresh = false;
+          for (const s of ["higher", "lower"]) { const ways = r.odds ? Math.round((s === "higher" ? r.odds.pHigher : r.odds.pLower) * 13) : G.hiloWays(r.card, s), f = r.odds ? r.odds[s] || 0 : G.hiloFactor(r.card, s); R.calls[s].disabled = !ways; R.calls[s].innerHTML = `<b>${s === "higher" ? "▲ Higher" : "▼ Lower"}</b><small>${!ways ? "can't be" : f === 1 ? "can't lose · 1×" : `${(r.mult * f).toFixed(2)}× · ${Math.round(ways / 13 * 100)}%`}</small>`; }
+          R.cash.disabled = !r.cash; R.cash.innerHTML = r.cash ? cashOut(r.cash) : "Make a call first"; R.mult.innerHTML = `${r.mult.toFixed(2)}×<small>card ${r.cards} of ${G.HILO.maxCards}${r.lucky ? " · 🍀 lucky" : ""}</small>`;
+          R.pays.innerHTML = `<div class="cz-rung"><span>Higher than ${G.HILO.names[r.card]}</span><strong>${(r.odds ? r.odds.higher : G.hiloWays(r.card, "higher") && G.hiloFactor(r.card, "higher")) ? `${Number(r.odds ? r.odds.higher : G.hiloFactor(r.card, "higher")).toFixed(2)}×` : "–"}</strong></div><div class="cz-rung"><span>Lower than ${G.HILO.names[r.card]}</span><strong>${(r.odds ? r.odds.lower : G.hiloWays(r.card, "lower") && G.hiloFactor(r.card, "lower")) ? `${Number(r.odds ? r.odds.lower : G.hiloFactor(r.card, "lower")).toFixed(2)}×` : "–"}</strong></div><div class="cz-rung"><span>Same card</span><strong>push</strong></div><div class="cz-rung"><span>Tops out at</span><strong>${G.HILO.maxMult}×</strong></div>`;
+        } else { R.lock.disabled = false; R.lock.textContent = `Deal · ${stakeTxt(bet)}`; if (!this.shown) R.pays.innerHTML = `<div class="cz-rung"><span>From a 7</span><strong>2.00× either way</strong></div><div class="cz-rung"><span>From a 10, lower</span><strong>1.33×</strong></div><div class="cz-rung"><span>From a 10, higher</span><strong>4.00×</strong></div><div class="cz-rung"><span>Same card</span><strong>push</strong></div><div class="cz-rung"><span>Tops out at</span><strong>${G.HILO.maxMult}×</strong></div>`; }
+        $("czTrail").innerHTML = trail.map((c) => this.card(c.card, c.suit, "sm")).join("");
+      },
+      run(e, had) {
+        if (e.run && !had) { trail = []; this.fresh = true; phase("Higher or lower?", "open"); SFX.play("coin_flip"); R.mult.textContent = ""; }
+        else if (e.step && e.run) { trail.push({ card: e.step.from, suit: this.lastSuit ?? 0 }); this.fresh = true; phase(e.step.tie ? "Same card · push" : "Right · go again?", "open"); SFX.play(e.step.tie ? "chip" : "gain", { vol: 0.6 }); }
+        if (e.run) this.lastSuit = e.run.suit;
+        if (e.over) { const o = e.over; this.shown = true; if (o.from) trail.push({ card: o.from, suit: this.lastSuit ?? 0 }); $("czCard").outerHTML = this.card(o.card, o.suit, `flip ${o.how === "bust" ? "bust" : "cashed"}`).replace('class="', 'id="czCard" class="'); record("hilo", o.payout - o.stake);
+          if (o.how === "bust") { phase(`${G.HILO.names[o.card]} · not ${o.call} · you lose ${money(o.stake)}`, "bad"); SFX.play("lose"); R.mult.textContent = "Bust"; }
+          else if (o.how === "refund") { phase("Nothing moved · your stake comes back"); SFX.play("chip"); }
+          else { phase(`${o.auto ? "Top of the run · " : ""}Cashed out at ${o.mult}×`, "done"); pop(`+${money(o.payout - o.stake)}`, `${o.mult}×`); SFX.play(o.payout > o.stake * 4 ? "win_big" : "win_small"); R.mult.innerHTML = `${o.mult}×<small>paid ${money(o.payout)}</small>`; } }
+      }
+    },
+    mines: {
+      title: "Mines", sub: "Find gems. Dodge bombs. Cash out any time.", run: true,
+      build() {
+        const board = el("div", "cz-mines"); R.tiles = [];
+        for (let i = 0; i < G.MINES.tiles; i++) { const b = el("button", "cz-tile"); b.type = "button"; b.addEventListener("click", () => { if (RUNS.mines) runOp("mines", "pick", { i }); }); R.tiles.push(b); board.append(b); }
+        R.board.append(board);
+        R.bombRow = el("div", "cz-bombs", "<span>Bombs</span>"); R.bombBtns = [];
+        for (const n of [1, 3, 5, 10]) { const b = el("button", "", String(n)); b.type = "button"; b.addEventListener("click", () => { mineCount = n; SFX.play("ui_click"); refresh(); }); R.bombBtns.push([n, b]); R.bombRow.append(b); }
+        R.cash = lockBtn(); R.cash.addEventListener("click", () => runOp("mines", "cash"));
+        R.lock = lockBtn(); R.lock.addEventListener("click", () => startRun("mines")); R.note = el("p", "cz-note"); R.stakeRow = stakeRow();
+        R.bet.append(R.cash, R.bombRow, R.stakeRow, R.lock, R.note); sideCards("What it pays", "gems found"); this.last = null; phase("Pick your bombs, then start", "open");
+      },
+      refresh() {
+        const r = RUNS.mines, o = this.last, m = r ? r.mines : o ? o.mines : mineCount, found = r ? r.open.length : o ? o.open.length : 0, mm = REAL ? realMinesMult : G.minesMult, top = REAL ? realMinesTop(m) : G.minesTop(m), stake = r ? r.stake : bet;
+        R.cash.hidden = !r; R.lock.hidden = R.stakeRow.hidden = R.bombRow.hidden = !!r;
+        for (const [n, b] of R.bombBtns) b.classList.toggle("on", n === mineCount);
+        R.tiles.forEach((t, i) => { let cls = "cz-tile", inner = "", off = true;
+          if (r) { if (r.open.includes(i)) { cls += " safe"; inner = img("gem"); } else off = false; }
+          else if (o) { if (o.bombs.includes(i)) { cls += ` bomb${o.hit === i ? " hit" : ""}`; inner = img("bomb"); } else { cls += o.open.includes(i) ? " safe" : " dim"; inner = img("gem"); } }
+          if (t.className !== cls) { t.className = cls; t.innerHTML = inner; } t.disabled = off; });
+        if (r) { R.cash.disabled = !r.cash; R.cash.innerHTML = r.cash ? cashOut(r.cash) : "Find a gem first"; R.mult.innerHTML = found ? `${r.mult}×<small>next gem ${r.next}×${r.lucky ? " · 🍀 lucky" : ""}</small>` : `<small>${r.mines} bomb${r.mines === 1 ? "" : "s"} under there somewhere</small>`; }
+        else { R.lock.disabled = false; R.lock.textContent = `${o ? "Go again" : "Start"} · ${stakeTxt(bet)}`; }
+        let html = ""; for (let k = 1; k <= top; k++) html += `<div class="cz-rung${k === found && (r || o?.how === "cash") ? " at" : r && k === found + 1 ? " next" : ""}"><span>${k} gem${k === 1 ? "" : "s"}</span><strong>${mm(m, k)}× · ${money(Math.round(stake * mm(m, k)))}</strong></div>`;
+        R.pays.innerHTML = html; R.pays.querySelector(".at,.next")?.scrollIntoView({ block: "nearest" });
+      },
+      run(e, had) {
+        if (e.run && !had) { this.last = null; phase("Pick a tile", "open"); SFX.play("chip"); }
+        else if (e.step && e.run) { phase(`${e.run.open.length} found · keep going or cash out`, "open"); SFX.play("gain", { vol: 0.6, rate: 1 + e.run.open.length * 0.05 }); }
+        if (e.over) { const o = e.over; this.last = o; record("mines", o.payout - o.stake);
+          if (o.how === "bust") { phase(`Boom · you lose ${money(o.stake)}`, "bad"); SFX.play("hurt"); SFX.play("lose"); R.mult.textContent = "Bust"; }
+          else { phase(`${o.auto ? "Top of the ladder · " : ""}Cashed out at ${o.mult}×`, "done"); pop(`+${money(o.payout - o.stake)}`, `${o.mult}×`); SFX.play(o.payout > o.stake * 4 ? "win_big" : "win_small"); R.mult.innerHTML = `${o.mult}×<small>paid ${money(o.payout)}</small>`; } }
+      }
+    }
+  };
+  function startRun(g) { if (broke()) return; runOp(g, "start", { amt: bet, mines: mineCount }); }
+  function runOp(g, op, args = {}) { if (REAL) return realRun(g, op, args); send({ t: "run", g, op, ...args }); }
+
+  /* ---------------------------------------------------------- REAL MODE: eastcoin.vip's endpoints behind these windows
+     One function per kind of game. Each asks the site, then hands the window the SAME message the game server would have
+     sent it (gameResult / run), so the windows above don't know the difference. A refusal is shown as the site worded it. */
+  const REAL_KEY = { cointable: "flip", wheel: "wheel", hilo: "hilo", mines: "mines", plinko: "plinko", scratch: "scratch", dicetable: "dice", slots: "slots" };
+  /* the instant games: which endpoint takes the bet and what it calls its answer. Dice and slots are EastScape-only site games (v58). */
+  const REAL_INSTANT = { plinko: ["drop", "drop"], scratch: ["buy", "card"], dicetable: ["roll", "roll"], slots: ["spin", "spin"] };
+  const REAL_CFG = {};   /* what each game's state endpoint says about itself: the pay table is READ from the site, never copied here */
+  const realDiceMult = (t) => Math.round((100 / (t - 1)) * 100) / 100;   // our table -> the site's name for the game
+  const REAL_LIM = { min: 1, max: 20 }, REAL_WHEEL = { red: 2.03, black: 2.03, gold: 60 }, REAL_PLINKO = [25, 4, 2, 1.5, 1.1, 1.05, 0.3, 1.05, 1.1, 1.5, 2, 4, 25];
+  const REAL_SYM = { crown: "seven", diamond: "diamond", fire: "star", clover: "bell", target: "lemon", football: "cherry", coin: "gem" };   // the site's scratch symbols -> our pictures (same seven prizes, same prices)
+  const REAL_NUDGE = "Out of ZCoins? Bet tickets instead. Out of both? Go hit something.";
+  const realMinesMult = (m, k) => { let f = 1; for (let i = 0; i < k; i++) f *= (25 - i) / (25 - m - i); return Math.round(f * 100) / 100; };
+  const realMinesTop = (m) => { let last = 1; for (let k = 1; k <= 25 - m; k++) { if (realMinesMult(m, k) > 30) break; last = k; } return last; };
+  async function ask(path, body) {
+    try { const r = await fetch(path, body ? { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify(body) } : { credentials: "same-origin" }); const j = await r.json().catch(() => null); return j && typeof j === "object" ? j : { ok: false, message: "The table didn't answer. Try again." }; }
+    catch (e) { return { ok: false, message: "Couldn't reach the table. Check your connection and try again." }; }
+  }
+  function realRules() {
+    const k = REAL_KEY[GAME] || (GAME === "fight" ? "pit" : GAME), me = ZC.me, left = me ? Math.max(0, (me.playsCap ?? 10) - (me.played?.[k] | 0)) : null, L = ZC.last;
+    return (me ? `<b>${left} of ${me.playsCap ?? 10} plays left</b> this hour.` : "Log in on eastcoin.vip to play.") + (vt() ? ` ${G.DEX.rate.toLocaleString()} tickets = 1 ZCoin.` : "");   /* (2026-09-21) the "check this seed" link is gone from the game windows — the hash, /?view=verify and the API all still work, but nobody was clicking it. */
+  }
+  function realFail(g, r, t) {
+    busy = false; if (t !== token || GAME !== g) return; UI[g].idle?.(); phase(r.message || "That didn't go through. Nothing was charged.", "bad");
+    note(["RATE_LIMIT", "WIN_CAP", "INSUFFICIENT_FUNDS"].includes(r.code) ? REAL_NUDGE : ""); SFX.play("ui_error"); refresh();
+  }
+  const played = (g) => { if (env.G.tourOf(env.me())?.id === "play") send({ t: "tour", op: "played" });   /* (2026-09-22) keyed on the step's ID, not its index. This was `step === 1`, which was the play step until a Gear step was inserted above it — after which a ZCoin play reported nothing and the tour stuck on 3 of 8. Never count tour steps by number. */   /* (the House Tour's "play a game" step: the rules file says why the window reports it) */ const k = REAL_KEY[g] || g; if (ZC.me) { ZC.me.played ||= {}; ZC.me.played[k] = (ZC.me.played[k] | 0) + 1; } };
+  const hourNet = (d) => { if (ZC.me) ZC.me.hourNet = (ZC.me.hourNet | 0) + d; };
+  async function realInit(g, t) {
+    const k = REAL_KEY[g], state = ask(k === "flip" ? "/api/coin/state" : `/api/casino/${k}/state`), mine = ask("/api/casino/me");
+    if (ZC.bal == null) { const b = await ask("/api/picks/bootstrap"); const n = Number(b?.session?.wallet?.balance); if (Number.isFinite(n)) ZC.bal = n; if (b?.session && !b.session.authenticated) { if (t === token) { phase("Log in on eastcoin.vip to play for ZCoins", "bad"); } return; } }
+    const [st, m] = await Promise.all([state, mine]); if (m?.me) ZC.me = m.me; if (st?.me?.id) ZC.uid = String(st.me.id);
+    if (st?.config) REAL_CFG[g] = st.config; if (g === "slots" && st?.pot) { jack.pot = st.pot.amount; jack.last = st.pot.last ? { name: st.pot.last.login, amt: st.pot.last.amount } : null; if (t === token && GAME === g) UI.slots.pays?.(); }
+    if (t !== token || GAME !== g) return;
+    if (st?.config && st.config.canBet === false) { phase("ZCoin play isn't switched on right now", "bad"); }
+    if (st?.live && (g === "hilo" || g === "mines")) { const had = RUNS[g]; RUNS[g] = g === "hilo" ? hlView(st.live) : mnView(st.live); UI[g].run({ g, run: RUNS[g] }, had); lockStake(true); }
+    refresh();
+  }
+  /* one bet, one answer: Plinko and Scratch-Off settle at once; the coin and the wheel are a round the whole room shares */
+  async function realPlace(g, pick, t) {
+    const k = REAL_KEY[g], stake = bet; let voucher;
+    if (vt()) { phase(`Putting up ${tixCost(stake).toLocaleString()} tickets…`, "open"); const v = await getStake(g, stake); if (!v.ok) return realFail(g, v, t); voucher = v.voucher; }
+    if (REAL_INSTANT[g]) {
+      const [verb, noun] = REAL_INSTANT[g];
+      UI[g].start?.(); const r = await ask(`/api/casino/${k}/${verb}`, g === "dicetable" ? { stake, target: pick, voucher } : { stake, voucher }); if (!r.ok) return realFail(g, r, t);
+      const d = r[noun]; if (r.balance != null) ZC.bal = Number(r.balance); played(g); hourNet(d.payout - d.stake); ZC.last = { g, seed: d.seed, hash: d.hash, target: d.target };
+      if (g === "slots" && r.pot) { jack.pot = r.pot.amount; if (r.pot.last) jack.last = { name: r.pot.last.login, amt: r.pot.last.amount }; }
+      if (t !== token || GAME !== g) return;
+      const base = { g, bet: d.stake, payout: d.payout, mult: d.multiplier };
+      return UI[g].result(g === "plinko" ? { ...base, path: [...String(d.path)].map((c) => (c === "R" ? 1 : 0)), bucket: d.bucket }
+        : g === "scratch" ? { ...base, grid: d.grid.map((x) => REAL_SYM[x] || "gem"), prize: d.prize ? REAL_SYM[d.prize] || "gem" : null }
+        : g === "dicetable" ? { ...base, roll: d.roll, target: d.target }
+        : { ...base, reels: d.reels, jackpot: d.jackpot || 0, mult: d.payout ? Math.round((d.payout / d.stake) * 100) / 100 : 0 });
+    }
+    // a shared round: get in, wait for the flip or the spin, then play it back
+    const r = await ask(k === "flip" ? "/api/coin/bet" : `/api/casino/${k}/bet`, k === "flip" ? { side: pick, wager: stake, voucher } : { pick, wager: stake, voucher }); if (!r.ok) return realFail(g, r, t);
+    if (r.balance != null) ZC.bal = Number(r.balance); played(g); const round = r.round, live = () => t === token && GAME === g;
+    if (live()) { refresh(); SFX.play("chip"); }
+    for (let i = 0; i < 60; i++) {   // (it keeps asking even if the window is shut: on the site it is a poll that settles a finished round and pays it)
+      const st = await ask(k === "flip" ? "/api/coin/state" : `/api/casino/${k}/state`); if (st?.me?.id) ZC.uid = String(st.me.id);
+      const cur = st?.round?.no === round ? st.round : null, done = cur?.result ? { result: cur.result, seed: cur.seed, hash: cur.hash, bets: st.bets } : st?.last?.no === round && st.last.result ? st.last : st?.round?.no > round + 1 ? { gone: true } : null;
+      if (done) {
+        if (done.gone) { busy = false; if (live()) { UI[g].idle?.(); phase("That round is over. Your result is on your eastcoin.vip casino page.", "open"); } return; }
+        const mineBet = (done.bets || []).find((b) => String(b.user?.id) === ZC.uid), payout = Number(mineBet?.payout || 0); ZC.bal = (ZC.bal ?? 0) + payout; hourNet(payout - stake); ZC.last = { g, seed: done.seed, hash: done.hash };
+        if (!live()) { busy = false; return; }
+        UI[g].start?.(); const res = done.result;
+        return UI[g].result(g === "cointable" ? { g, bet: stake, payout, mult: Math.round(payout / stake * 100) / 100, side: String(res) }
+          : { g, bet: stake, payout, mult: Math.round(payout / stake * 100) / 100, color: res.color, angle: res.color === "gold" ? Math.max(0, res.angle - 354) : res.angle + G.WHEEL.gold });
+      }
+      if (live() && cur) { const left = Math.max(0, Math.ceil(((cur.flipsAt || cur.closesAt) - (st.now || Date.now())) / 1000)); phase(left ? `You're in on ${pick} · ${g === "cointable" ? "flips" : "spins"} in ${left}s` : g === "cointable" ? "In the air…" : "Spinning…", "open"); note(`${(st.bets || []).length} in this round.`); }
+      await wait(1500);
+    }
+    busy = false; if (live()) { UI[g].idle?.(); phase("That took too long to come back. Your bet stands: check your eastcoin.vip casino page.", "bad"); }
+  }
+  /* Higher or Lower and Mines: a run, played call by call against the site */
+  const hlView = (gm) => { const c = gm.cards[gm.cards.length - 1]; return { id: gm.id, stake: gm.stake, card: c.rank, suit: Math.max(0, SUITS.indexOf(c.suit)), mult: gm.multiplier, cards: gm.cards.length, rights: gm.rights, cash: gm.rights > 0 ? gm.potential : 0, odds: gm.odds }; };
+  const mnView = (gm) => ({ id: gm.id, stake: gm.stake, mines: gm.mines, open: gm.picks, mult: gm.multiplier, next: gm.next, top: realMinesTop(gm.mines), cash: gm.canCashOut ? gm.potential : 0 });
+  async function realRun(g, op, args) {
+    if (busy) return; const k = REAL_KEY[g], t = token, r0 = RUNS[g], had = r0; busy = true;
+    const done = (e) => { busy = false; if (t !== token || GAME !== g) return; RUNS[g] = e.run; UI[g].run(e, had); lockStake(!!e.run); refresh(); };
+    if (op === "start") {
+      let voucher; if (vt()) { const v = await getStake(g, args.amt); if (!v.ok) return realFail(g, v, t); voucher = v.voucher; }
+      const r = await ask(`/api/casino/${k}/start`, g === "mines" ? { stake: args.amt, mines: args.mines, voucher } : { stake: args.amt, voucher }); if (!r.ok) return realFail(g, r, t);
+      if (r.balance != null) ZC.bal = Number(r.balance); played(g); return done({ g, run: g === "hilo" ? hlView(r.game) : mnView(r.game) });
+    }
+    if (!r0?.id) { busy = false; return; }
+    const over = (gm, how, extra = {}) => { const pay = Number(gm.payout || 0); if (how !== "bust") ZC.bal = (ZC.bal ?? 0) + pay; hourNet(pay - gm.stake); ZC.last = { g, seed: gm.seed, hash: gm.hash, mines: gm.mines };
+      const last = g === "hilo" ? gm.cards[gm.cards.length - 1] : null;
+      return { g, run: null, over: { how, payout: pay, stake: gm.stake, mult: gm.multiplier, ...(g === "hilo" ? { card: last.rank, suit: Math.max(0, SUITS.indexOf(last.suit)) } : { bombs: gm.bombs || [], open: gm.picks, mines: gm.mines }), ...extra } }; };
+    if (op === "cash") { const r = await ask(`/api/casino/${k}/cashout`, { id: r0.id }); if (!r.ok) return realFail(g, r, t); if (r.balance != null) { const e = over(r.game, "cash"); ZC.bal = Number(r.balance); return done(e); } return done(over(r.game, "cash")); }
+    if (g === "hilo" && op === "call") {
+      const r = await ask("/api/casino/hilo/call", { id: r0.id, call: args.call }); if (!r.ok) return realFail(g, r, t);
+      const step = { from: r0.card, call: args.call, tie: r.outcome === "push" };
+      if (r.outcome === "bust") return done(over(r.game, "bust", step));
+      if (r.game.status !== "LIVE") { const e = over(r.game, "cash", { ...step, auto: true }); if (r.balance != null) ZC.bal = Number(r.balance); return done(e); }
+      return done({ g, run: hlView(r.game), step });
+    }
+    if (g === "mines" && op === "pick") {
+      const r = await ask("/api/casino/mines/pick", { id: r0.id, tile: args.i }); if (!r.ok) return realFail(g, r, t);
+      if (r.outcome === "bomb") return done(over(r.game, "bust", { hit: args.i }));
+      if (r.game.status !== "LIVE") { const e = over(r.game, "cash", { auto: true }); if (r.balance != null) ZC.bal = Number(r.balance); return done(e); }
+      return done({ g, run: mnView(r.game), step: { i: args.i } });
+    }
+    busy = false;
+  }
+
+  /* ---------------------------------------------------------- the Fight Pit's betting window
+     One fight for the whole room, so this is the roulette table's shape: who's fighting and what each pays, your money
+     on one of them, everybody else's money, a clock. It is rebuilt from each message (they are few) except the clock
+     and the health bars, which run off the page's own timer. */
+  let fightSide = 0, fightTimer = 0, FV = null;
+  const MART = "/v3/assets/img/glad/flat/";
+  function fight(v, opening) {
+    FV = v; if (GAME !== "fight" || opening) { const first = GAME !== "fight"; if (REAL !== !!v.real) REAL = !!v.real; GAME = "fight"; bet = REAL && !TIX ? betZc : betCash; if (first && v.real) send({ t: "pit", op: "state" }); frame("The Fight Pit", "Two go in. Pick one."); sideCards("Money down", "this fight"); R.note = el("p", "cz-note"); }
+    const tb = v.real && PT.no === v.round ? PT.bets : [], tmine = tb.filter((b) => b.id === env.you()?.id), myTix = tmine.reduce((a, b) => a + b.amt, 0);   /* tickets riding on THIS round, mine among them */
+    const names = v.f.map((f) => G.MOBS[f.t].name), mine = v.bets.filter((b) => b.me), myAmt = mine.reduce((a, b) => a + b.amt, 0), mySide = mine[0]?.side ?? tmine[0]?.side, betting = v.phase === "bet";
+    if (mySide != null) fightSide = mySide;
+    const pot = [0, 1].map((i) => v.bets.filter((b) => b.side === i).reduce((a, b) => a + b.amt, 0));
+    R.board.innerHTML = `<div class="cz-card2">${v.f.map((f, i) => `${i ? `<div class="cz-vs">VS</div>` : ""}<button type="button" class="cz-fighter${betting && fightSide === i ? " on" : ""}${v.phase === "result" ? (v.winner === i ? " won" : " lost") : ""}" data-side="${i}" ${betting && (mySide == null || mySide === i) ? "" : "disabled"}>
+      <img class="${i ? "flip" : ""}" src="${MART}${f.t}.png?v=3" alt=""><b>${esc(names[i])}</b><small>${esc(f.title)} · level ${G.MOBS[f.t].lvl}</small><strong>${v.pays[i]}×</strong><em>wins ${Math.round(v.p[i] * 100)}% of the time · ${money(pot[i])} on it</em>
+      <div class="cz-hpbar" data-hp="${i}" ${betting ? "hidden" : ""}><u style="width:100%"></u></div></button>`).join("")}</div>`;
+    R.board.querySelectorAll("[data-side]").forEach((b) => b.addEventListener("click", () => { fightSide = +b.dataset.side; SFX.play("ui_click"); fight(FV); }));
+    R.bet.replaceChildren();
+    if (betting) {
+      R.lock = lockBtn(); R.lock.addEventListener("click", async () => { if (broke()) return; SFX.play("chip");
+        if (!v.real) return send({ t: "fight", op: "bet", side: fightSide, amt: bet });
+        if (pitTix()) { if (myAmt) return note("You've a ZCoin bet on this fight already. One money a fight."); return send({ t: "pit", op: "bet", side: fightSide, amt: bet }); }   /* (tickets: the game server holds it, and may be added to) */
+        if (myAmt || myTix) return note("One side a fight, one bet a fight. You're on this one already.");
+        R.lock.disabled = true; const r = await roundBet("pit", fightSide ? "b" : "a", bet); if (r && !r.ok) { note(r.message); SFX.play("ui_error"); R.lock.disabled = false; } });
+      R.bet.append(stakeRow(), R.lock); if (myAmt && !v.real) { const back = lockBtn("alt"); back.textContent = `Take my ${money(myAmt)} back`; back.style.height = "40px"; back.addEventListener("click", () => send({ t: "fight", op: "clear" })); R.bet.append(back); }
+      R.lock.textContent = pitTix() && !myAmt ? `${myTix ? "Add to" : "Bet on"} ${names[fightSide]} · ${bet.toLocaleString()} tickets · ${v.pays[fightSide]}×` : v.real ? (myAmt || myTix ? `You're on ${names[mySide]}` : `Bet on ${names[fightSide]} · ${v.pays[fightSide]}×`) : `${myAmt ? "Add to" : "Bet on"} ${names[fightSide]} · ${v.pays[fightSide]}×`; if (v.real && (myAmt || (myTix && !pitTix()))) R.lock.disabled = true;
+    }
+    R.bet.append(R.note);
+    note(betting && myTix && !myAmt ? `You have ${myTix.toLocaleString()} tickets on ${names[mySide]}. If it wins you're paid about ${Math.round(myTix * v.pays[mySide]).toLocaleString()} tickets.` : !betting && v.phase === "fight" && myTix && !myAmt ? `${myTix.toLocaleString()} tickets riding on ${names[mySide]}.` : betting ? (myAmt ? `You have ${money(myAmt)} on ${names[mySide]}. If it wins you're paid ${money(Math.floor(myAmt * v.pays[mySide]))}.` : v.real ? "Pick a fighter. One bet a fight." : `Up to ${money(G.maxBetOf(env.me()))} a fight. One side only.`) : v.phase === "fight" ? (myAmt ? `${money(myAmt)} riding on ${names[mySide]}.` : "No money on this one. The next pair is out in a moment.") : "");
+    R.pays.innerHTML = `<div class="cz-betlist">${tb.map((b) => `<div class="${b.id === env.you()?.id ? "me" : ""}"><span>${esc(b.id === env.you()?.id ? "You" : b.name)} · ${esc(names[b.side])}</span><strong>${TIX_IMG}${Number(b.amt).toLocaleString()}</strong></div>`).join("")}${v.bets.length || tb.length ? v.bets.map((b) => `<div class="${b.me ? "me" : ""}"><span>${esc(b.me ? "You" : b.name)} · ${esc(names[b.side])}</span><strong>${money(b.amt)}</strong></div>`).join("") : `<div><span>Nobody yet. Be the first.</span></div>`}</div>${v.hist.length ? `<h2 style="margin:10px 0 6px">Lately<small>who won, at what price</small></h2><div class="cz-recent">${v.hist.map((h) => `<span class="${h.mult >= 2 ? "w" : ""}">${esc(G.MOBS[h.t].name)} ${h.mult}×</span>`).join("")}</div>` : ""}`;
+    if (v.phase === "result" && fightPaid !== v.round) { fightPaid = v.round;   /* (kept outside the view: a shared round sends a fresh view every second) */ const w = v.last?.wins?.find((x) => x.name === env.you()?.name); if (myLast.round === v.round && myLast.amt) { record("fight", (w ? w.payout : 0) - myLast.amt); if (w) { pop(`+${money(w.payout - myLast.amt)}`, `${names[v.winner]} wins`); SFX.play(w.payout > myLast.amt * 3 ? "win_big" : "win_small"); } else SFX.play("lose"); } }
+    if (myAmt) myLast = { round: v.round, amt: myAmt };
+    clearInterval(fightTimer); const tick = () => {
+      if (GAME !== "fight" || $("gameWin").hidden) return clearInterval(fightTimer);
+      const left = Math.max(0, Math.ceil((FV.until - performance.now()) / 1000));
+      phase(FV.phase === "bet" ? `Bets close in ${left}` : FV.phase === "fight" ? "They're at it" : `${names[FV.winner]} wins · next fight in ${left}`, FV.phase === "bet" ? "open" : FV.phase === "fight" ? "" : "done");
+      if (FV.phase === "fight" && FV.script) { const elapsed = env.now() - FV.startedAt, done = FV.script.filter((h) => h.at <= elapsed), hp = done.length ? done[done.length - 1].hp : [100, 100]; R.board.querySelectorAll("[data-hp]").forEach((n) => { const v2 = Math.max(0, hp[+n.dataset.hp]); n.firstElementChild.style.width = `${v2}%`; n.firstElementChild.style.background = v2 > 35 ? "var(--green)" : "var(--red)"; }); }
+      if (FV.phase === "result") R.board.querySelectorAll("[data-hp]").forEach((n) => { n.firstElementChild.style.width = +n.dataset.hp === FV.winner ? "30%" : "0%"; });
+    }; tick(); fightTimer = setInterval(tick, 200);
+    refresh();
+  }
+  let myLast = { round: 0, amt: 0 }, fightPaid = 0;
+
+  /* ---------------------------------------------------------- SHARED ROUNDS (v64): classic roulette ("roul") and the Fight Pit ("pit")
+     Both are eastcoin.vip shared-round games (functions/api/casino/_engine.js, hidden from the site's floor). This reads
+     /api/casino/<key>/state and turns it into the SAME view object the game server used to send, so the ring, the wheel
+     and both windows draw as they always did. The site decides everything; the blows in the pit are written here to fit
+     the winner, from the round number, so everybody in the room watches the same fight.
+     POLLING, per player, only while they are IN that room (or the tab is showing, unless they have a bet riding): once
+     when a round opens (the card), every RW_BETS ms while bets are open (who else is in), and from the close until the
+     result comes back. About ten requests a round. A bet is ONE a round (the engine's rule). */
+  const RW = { roul: { cycle: 60000, bet: 40000, show: 12000 }, pit: { cycle: 90000, bet: 40000, show: 36000 } }, RW_BETS = 6000, rw = {};
+  const rwNow = (w) => Date.now() + (w.off || 0), myName = () => env.you()?.name || env.me()?.name || "You";
+  const rwBets = (st, key) => (st?.bets || []).map((b) => { const me = String(b.user?.id) === ZC.uid, name = me ? myName() : b.user?.displayName || b.user?.login || "?"; return key === "pit" ? { name, side: b.pick === "b" ? 1 : 0, amt: b.wager, me, payout: b.payout || 0 } : { name, kind: /^n\d+$/.test(b.pick) ? "num" : b.pick, pick: /^n\d+$/.test(b.pick) ? +b.pick.slice(1) : null, amt: b.wager, me, payout: b.payout || 0 }; });
+  function rwScript(no, winner) {   // the game server's own way of writing a fight to fit its winner, on a generator seeded by the round so every page writes the same one
+    let a = (no * 2654435761) >>> 0; const rnd = () => { a = (a + 0x6d2b79f5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const loser = 1 - winner, n = 22 + Math.floor(rnd() * 6), hp = [100, 100], keep = 6 + Math.floor(rnd() * 50), script = [], ms = RW.pit.show - 2000; let lossLeft = 100, winLeft = 100 - keep;
+    for (let i = 0; i < n; i++) { const last = i === n - 1, early = i < n * 0.6, by = last ? winner : (rnd() < (early ? 0.45 : 0.6) ? winner : loser), on = 1 - by, miss = !last && rnd() < 0.25;
+      let dmg = miss ? 0 : on === loser ? (last ? lossLeft : Math.min(lossLeft - 1, Math.round(lossLeft / (n - i) * (0.5 + rnd() * 1.4)))) : Math.min(winLeft, Math.round(winLeft / Math.max(1, n - i - 1) * (0.5 + rnd() * 1.6)));
+      dmg = Math.max(0, dmg); if (on === loser) lossLeft -= dmg; else winLeft -= dmg; hp[on] -= dmg; script.push({ at: 900 + Math.round(i * (ms - 3200) / (n - 1)), by, dmg, hp: [...hp] }); }
+    return script;
+  }
+  function rwView(key) {
+    const w = rw[key], st = w?.st; if (!st) return null; const C = RW[key], now = rwNow(w), no = Math.floor(now / C.cycle), tIn = now - no * C.cycle;
+    const cur = st.round?.no === no ? st : null, res = cur?.round?.result || null, bets = cur ? rwBets(cur, key) : [];
+    // what the last finished round was: this one once it has a result, else the one before
+    const done = res ? { no, result: res, bets, card: cur.card } : st.last?.result ? { no: st.last.no, result: st.last.result, bets: rwBets({ bets: st.last.bets }, key), card: st.last.card } : null;
+    if (done && w.seen !== done.no) { w.seen = done.no; w.hist = [key === "pit" ? { t: done.result.t, mult: Math.round((done.card?.price?.[done.result.winner] || 2) * 100) / 100 } : done.result.n, ...(w.hist || [])].slice(0, 14);
+      const mine = done.bets.find((b) => b.me); if (mine && w.paid !== done.no) { w.paid = done.no; if (mine.payout) ZC.bal = (ZC.bal ?? 0) + mine.payout; hourNet((mine.payout || 0) - mine.amt); } }
+    const wins = (done?.bets || []).filter((b) => b.payout > 0).map((b) => ({ name: b.name, payout: b.payout, label: key === "pit" ? "" : G.rouletteLabel(b.kind, b.pick) }));
+    if (key === "roul") {
+      const last = done ? { n: done.result.n, col: done.result.color, wins } : null;
+      if (tIn < C.bet) return { type: "roul", real: true, round: no, phase: "bet", left: C.bet - tIn, hold: 0, hist: w.hist || [], last, result: null, bets };
+      if (tIn < C.bet + C.show) return { type: "roul", real: true, round: no, phase: "spin", left: C.bet + C.show - tIn, hist: (w.hist || []).slice(res ? 1 : 0), last: res ? (st.last?.result ? { n: st.last.result.n, col: st.last.result.color, wins: [] } : null) : last, result: res ? res.n : null, bets };
+      return { type: "roul", real: true, round: no + 1, phase: "bet", left: C.cycle - tIn + C.bet, hold: C.cycle - tIn, hist: w.hist || [], last, result: null, bets: [] };
+    }
+    const card = cur?.card || null; if (!card) return null;
+    const f = card.f.map((x) => ({ t: x.t, title: G.FIGHTS.titles[x.title] || "" })), pays = [Math.round(card.price.a * 100) / 100, Math.round(card.price.b * 100) / 100], base = { type: "fight", real: true, round: no, f, pays, p: card.p, hist: w.hist || [], last: { wins }, bets, luck: 0 };
+    if (tIn < C.bet || !res) return { ...base, phase: tIn < C.bet ? "bet" : "fight", left: tIn < C.bet ? C.bet - tIn : Math.max(0, C.bet + C.show - tIn), script: tIn < C.bet ? null : [], startedAt: env.now() - (tIn - C.bet), winner: null, hist: (w.hist || []).slice(res ? 1 : 0) };
+    const winner = res.winner === "b" ? 1 : 0;
+    if (tIn < C.bet + C.show) return { ...base, phase: "fight", left: C.bet + C.show - tIn, script: (w.script?.no === no ? w.script : (w.script = { no, s: rwScript(no, winner) })).s, startedAt: env.now() - (tIn - C.bet), winner: null, hist: (w.hist || []).slice(1) };
+    return { ...base, phase: "result", left: C.cycle - tIn, script: null, startedAt: 0, winner };
+  }
+  function rwEmit(key) { const v = rwView(key); if (v) (key === "pit" ? env.onFight : env.onRoul)?.(v); }
+  async function rwFetch(key) { const w = rw[key]; if (!w || w.busy) return; w.busy = true; const st = await ask(`/api/casino/${key}/state`); w.busy = false; if (!rw[key] || !st.ok) return; w.st = st; w.off = Number(st.now) - Date.now(); w.at = Date.now(); if (st.me?.id) ZC.uid = String(st.me.id); rwEmit(key); }
+  function rwTick(key) {
+    const w = rw[key]; if (!w) return; const C = RW[key], now = rwNow(w), no = Math.floor(now / C.cycle), tIn = now - no * C.cycle, st = w.st, mineIn = st?.round?.no === no && (st.bets || []).some((b) => String(b.user?.id) === ZC.uid);
+    const stale = !st || st.round?.no !== no, since = Date.now() - (w.at || 0);
+    const want = stale ? since > 1500 : tIn < C.bet ? since > RW_BETS : !st.round.result ? since > 1500 : false;   /* a new round · who else is in · waiting for the result (the poll is what settles and pays it) */
+    if (want && (!document.hidden || mineIn || !st)) rwFetch(key); else if (st) rwEmit(key);
+  }
+  function roundWatch(key, on) {
+    if (!RW[key]) return; if (!on) { if (rw[key]) { clearInterval(rw[key].timer); delete rw[key]; } if (key === "pit" && GAME === "fight" && REAL) { REAL = false; } return; }
+    if (rw[key]) return; rw[key] = { st: null, off: 0, at: 0, hist: [], timer: setInterval(() => rwTick(key), 1000) };
+    if (ZC.bal == null) ask("/api/picks/bootstrap").then((b) => { const n = Number(b?.session?.wallet?.balance); if (Number.isFinite(n)) ZC.bal = n; });
+    ask("/api/casino/me").then((m) => { if (m?.me) ZC.me = m.me; }); rwFetch(key);
+  }
+  /** One bet on this round: { ok } | { ok:false, message }. ZCoins, or tickets through a voucher, exactly like the other real tables. */
+  async function roundBet(key, pick, amt) {
+    const w = rw[key]; if (!w?.st) return { ok: false, message: "The table isn't ready yet. Give it a second." }; if (w.betting) return null;
+    const zc = Math.max(REAL_LIM.min, Math.min(REAL_LIM.max, Math.floor(amt) || 1)), C = RW[key], now = rwNow(w), tIn = now - Math.floor(now / C.cycle) * C.cycle;
+    if (tIn >= C.bet) return { ok: false, message: `Bets are closed. The next ${key === "pit" ? "fight" : "spin"} opens in ${Math.ceil((C.cycle - tIn) / 1000)}s.` };
+    if (TIX ? tixCost(zc) > tixHave() : ZC.bal != null && zc > ZC.bal) return { ok: false, message: TIX ? `That's ${tixCost(zc).toLocaleString()} tickets and you have ${tixHave().toLocaleString()}. Go outside: everything out there pays tickets.` : `You only have ${ZC.bal} ZCoins. Switch to tickets, or go and earn some.` };
+    w.betting = true; let voucher;
+    try {
+      if (TIX) { const v = await getStake(key, zc); if (!v.ok) return { ok: false, message: v.message }; voucher = v.voucher; }
+      const r = await ask(`/api/casino/${key}/bet`, { pick, wager: zc, voucher }); if (!r.ok) return { ok: false, message: r.message || "That didn't go through. Nothing was charged." };
+      if (r.balance != null) ZC.bal = Number(r.balance); played(key); await rwFetch(key); return { ok: true };
+    } finally { w.betting = false; }
+  }
+
+  /* ---------------------------------------------------------- RUSSIAN ROULETTE: eastcoin.vip's PvP table, in this window (v59)
+     The site runs all of it (/api/casino/pvp/state and /join, game "roulette"): the 30 s lobby, the fixed 20 ZC buy-in,
+     the elimination, the payout, the seed. It is the SAME table the website's page shows, so the two rooms share one
+     lobby. ZCoins only (the owner's call): no ticket stakes here, so the site's PvP code is untouched. This window asks
+     for the table's state every RR_POLL ms WHILE IT IS OPEN and the tab is showing, and not otherwise; the site's own
+     page asks at the same rate. A result is played back only if it settled in the last RR_STALE ms. */
+  const RR_POLL = 2000, RR_STALE = 45000; let rr = { st: null, seen: null, playing: false, timer: null, joining: false };
+  const rrOpen = () => GAME === "russian" && !$("gameWin").hidden;
+  /* THE CYLINDER is eastcoin.vip's own drawing (v3-pvp.js loadCylinder / turnTo; styles .rr-* in v3.css), so the two rooms
+     look alike: chambers on a ring inside a disc, a fixed hammer at the top, and turning the disc brings a chamber under it. */
+  const CYL_R = 25;   /* where the chambers sit on the drawn disc, in cqw of the cylinder box (its flat face ends at about 36) */
+  function rrLoad(cyl, chambers) {
+    cyl.replaceChildren(); cyl.style.setProperty("--d", String(Math.max(7, Math.min(17, Math.floor((2 * Math.PI * CYL_R) / (chambers * 1.45))))));
+    for (let c = 0; c < chambers; c++) { const ch = el("i", "cz-ch"); ch.style.setProperty("--a", `${(c * 360) / chambers}deg`); cyl.append(ch); }
+    cyl.dataset.chambers = String(chambers); cyl.classList.remove("spin"); cyl.style.transition = "none"; rrTurn(cyl, 0, false); void cyl.offsetWidth; cyl.style.transition = "";
+  }
+  function rrTurn(cyl, c, spin) {   // bring chamber c under the hammer, always turning the same way; a spin adds two full turns first
+    const chambers = Number(cyl.dataset.chambers || 6), cur = Number(cyl.dataset.angle || 0); let target = -((c * 360) / chambers);
+    while (target > cur - (spin ? 720 : 0)) target -= 360; if (!spin && target < cur - 360) target += 360;
+    cyl.classList.toggle("spin", !!spin && !calm()); cyl.style.transform = `rotate(${target}deg)`; cyl.dataset.angle = String(target);
+  }
+  function rrSeats(players, cls = () => "", extra = () => "", openSeat = false) {
+    const n = players.length + (openSeat ? 1 : 0), ring = el("div", "cz-rr");
+    const at = (i) => { const a = (i / Math.max(n, 1)) * Math.PI * 2 - Math.PI / 2; return `left:${50 + Math.cos(a) * 41}%;top:${50 + Math.sin(a) * 41}%`; };
+    ring.innerHTML = players.map((pl, i) => `<div class="cz-rrseat ${cls(pl, i)}" style="${at(i)}" data-seat="${i}">${pl.avatar ? `<img src="${esc(String(pl.avatar).replace("-300x300.", "-70x70."))}" alt="">` : `<i>${esc((pl.displayName || pl.login || "?")[0].toUpperCase())}</i>`}<b>${esc(pl.displayName || pl.login)}</b><small>${extra(pl, i)}</small></div>`).join("")
+      + (openSeat ? `<div class="cz-rrseat open" style="${at(players.length)}" id="czRrSit"><i>+</i><b>Sit here</b><small>${rr.st?.config?.stake ?? 20} ZC</small></div>` : "")
+      + `<div class="cz-rrcyl" id="czRrCyl"><i class="cz-hammer"></i><div class="cz-cyl" id="czCyl"></div><div class="cz-rrword" id="czRrWord"><div><span id="czRrBig"></span><small id="czRrSmall"></small></div></div></div>`;
+    rrLoad(ring.querySelector("#czCyl"), Math.max(6, players.length ? players.length * Math.max(1, Math.ceil(6 / players.length)) : 6));
+    return ring;
+  }
+  /* AT THE TABLE and WATCHING (v75, the owner: "yes add both, and merge the room's players into watching"). The site's own page
+     has both; the site already sends `room` (who has the table open, there or here) with every answer, so this costs no new
+     request. WATCHING is that list plus whoever is standing in the Roulette Room (env.roomPeople), less anyone seated, with
+     doubles folded by name. `mark(pl, i)` is what goes on the right of a seat: the odds in a lobby, out / the pot in a playback. */
+  function rrPeople(players, mark, max) {
+    if (!R.rrTable) return; const st = rr.st || {}, mine = st.me?.login, low = (x) => String(x || "").toLowerCase(), seated = new Set(players.flatMap((x) => [low(x.login), low(x.displayName)]));
+    const seen = new Set(), watch = [];
+    for (const w of [...(st.room || []).map((x) => ({ name: x.displayName || x.login, login: x.login, avatar: x.avatar, me: x.login === mine })), ...(env.roomPeople?.() || []).map((x) => ({ name: x.name, login: x.name, me: x.me }))]) {
+      const a = low(w.login), b = low(w.name); if (seated.has(a) || seated.has(b) || seen.has(a) || seen.has(b)) continue; seen.add(a); seen.add(b); watch.push(w); }
+    const face = (w) => (w.avatar ? `<img src="${esc(String(w.avatar).replace("-300x300.", "-70x70."))}" alt="">` : `<i>${esc(String(w.name || "?")[0].toUpperCase())}</i>`);
+    R.rrTable.innerHTML = `<h2>At the table<small>${players.length} of ${max || st.config?.maxPlayers || 6}</small></h2><div class="cz-betlist">${players.length ? players.map((pl, i) => `<div class="${pl.login === mine ? "me" : ""}"><span>${i + 1}. ${esc(pl.login === mine ? "You" : pl.displayName || pl.login)}</span><strong>${mark(pl, i)}</strong></div>`).join("") : `<div><span>Nobody yet. First to sit opens the table.</span></div>`}</div>`
+      + `<h2 style="margin-top:12px">Watching<small>${watch.length}</small></h2><div class="cz-watch">${watch.length ? watch.slice(0, 24).map((w) => `<span class="${w.me ? "me" : ""}">${face(w)}${esc(w.me ? "You" : w.name)}</span>`).join("") + (watch.length > 24 ? `<em>+${watch.length - 24} more</em>` : "") : `<em>Nobody's watching.</em>`}</div>`;
+  }
+  function rrDraw() {
+    if (!rrOpen() || rr.playing) return; const st = rr.st; if (!st) return;
+    const L = st.lobby, cfg = st.config || {}, mine = st.me?.login, left = L ? Math.max(0, Math.ceil((L.startsAt - (st.now + (performance.now() - rr.at))) / 1000)) : 0;
+    const can = cfg.canBet && !cfg.paused && !(L && (L.youIn || L.players.length >= cfg.maxPlayers));
+    const sig = `${L ? L.players.map((x) => x.login).join(",") : "-"}|${can}`;   /* seats are rebuilt only when who is sitting changes, so faces don't reload every tick */
+    if (rr.sig !== sig || !$("czRrCyl")) { rr.sig = sig; R.board.replaceChildren(rrSeats(L ? L.players : [], (pl) => (pl.login === mine ? "me" : ""), () => (L ? `1 in ${L.players.length}` : ""), can)); $("czRrSit")?.addEventListener("click", rrJoin); }
+    $("czRrBig").textContent = L ? `${L.pot} ZC` : "Empty"; $("czRrSmall").textContent = L ? (left ? `starts in ${left}s` : "loading…") : "first to sit opens the table";
+    phase(cfg.paused ? "Closed for now" : L ? (L.youIn ? `You're in · starts in ${left}s` : `Table's open · starts in ${left}s`) : "Nobody at the table", cfg.paused ? "bad" : "open");
+    R.lock.disabled = !can || rr.joining; R.lock.textContent = rr.joining ? "Sitting down…" : L?.youIn ? "You're seated" : !cfg.canBet ? "Log in on eastcoin.vip to play" : `Sit down · ${cfg.stake ?? 20} ZC`;
+    note(L ? (L.players.length < 2 ? "Waiting for one more. Alone at zero? You get your 20 back." : `Last one standing takes ${L.pot} ZC.`) : `${cfg.stake ?? 20} ZC a seat. Last one standing takes the pot.`);
+    rrPeople(L ? L.players : [], () => (L ? `1 in ${L.players.length}` : ""));
+    const last = st.last, res = last?.result, names = (last?.players || []).map((x) => x.displayName || x.login);
+    R.rrSide.innerHTML = `<h2>Your ZCoins<small>on eastcoin.vip</small></h2><div class="cz-stats"><div class="cz-stat"><span>Balance</span><strong>${ZC.bal == null ? "–" : money(ZC.bal)}</strong></div><div class="cz-stat"><span>Tables this hour</span><strong>${st.me ? `${st.me.joinsThisHour ?? 0} of ${cfg.maxPerHour ?? 10}` : "–"}</strong></div></div>`
+      + (last && last.status === "SETTLED" && res ? `<h2 style="margin-top:12px">Last table<small>${last.players.length} sat down</small></h2><div class="cz-betlist"><div class="me"><span>🏆 ${esc(names[res.winner] ?? "?")}</span><strong>+${last.pot} ZC</strong></div>${(res.order || []).map((sx, k) => `<div><span>${k + 1}. ${esc(names[sx] ?? "?")}</span><strong>out</strong></div>`).join("")}</div>` : last && last.status === "VOID" ? `<h2 style="margin-top:12px">Last table</h2><p class="cz-note" style="text-align:left">Nobody else sat down, so the buy-in went back.</p>` : "");
+  }
+  async function rrPlay(round) {   // the site has already decided and paid this: it is only shown
+    rr.playing = true; const t = token, pls = round.players, res = round.result, out = new Set(), mine = rr.st?.me?.login, stillHere = () => t === token && rrOpen(), nm = (i) => pls[i].displayName || pls[i].login;
+    R.board.replaceChildren(rrSeats(pls, (pl) => (pl.login === mine ? "me" : ""), () => "")); R.lock.disabled = true; R.lock.textContent = "Table's playing";
+    const ring = R.board.querySelector(".cz-rr"), cyl = $("czCyl"), word = $("czRrWord"), seats = [...ring.querySelectorAll(".cz-rrseat")], say = (txt, cls = "") => { word.className = `cz-rrword ${cls}`; word.innerHTML = `<div>${txt}</div>`; };
+    let remaining = pls.map((_, i) => i); const card = (w = -1) => rrPeople(pls, (_, i) => (i === w ? `+${round.pot} ZC` : out.has(i) ? "out" : "in"), pls.length); card();
+    for (let k = 0; k < res.stages.length; k++) {
+      const sg = res.stages[k]; rrLoad(cyl, sg.chambers); const chs = [...cyl.children];
+      say(k > 0 ? "Reload" : "", "reload"); phase(k > 0 ? `${remaining.length} left: reloading…` : "Spinning…", "open"); note(`${sg.chambers} chambers · 1 live`);
+      if (k > 0) await wait(calm() ? 60 : 700); if (!stillHere()) { rr.playing = false; return; }
+      rrTurn(cyl, 0, true); SFX.play("dice"); await wait(calm() ? 80 : 1000);
+      for (let c = 0; c < sg.chambers; c++) {
+        if (!stillHere()) { rr.playing = false; return; }
+        const who = c === sg.live && Number.isInteger(sg.shot) ? sg.shot : remaining[c % remaining.length];   /* the record is the authority: the live chamber goes to the seat the site says was shot */
+        seats.forEach((x) => x.classList.remove("aim")); seats[who]?.classList.add("aim"); chs.forEach((ch) => ch.classList.remove("under")); chs[c].classList.add("under"); rrTurn(cyl, c, false);
+        phase(`${nm(who)} pulls…`, "open"); note(`${sg.chambers - c} chamber${sg.chambers - c === 1 ? "" : "s"} left · 1 live`); say("");
+        await wait(calm() ? 60 : 700); if (!stillHere()) { rr.playing = false; return; }
+        if (c === sg.live) {
+          chs[c].className = "cz-ch live under"; ring.classList.remove("bang"); void ring.offsetWidth; ring.classList.add("bang"); say("BANG", "bang"); SFX.play("hit");
+          seats[who]?.classList.remove("aim"); seats[who]?.classList.add("out"); const sm = seats[who]?.querySelector("small"); if (sm) sm.textContent = "out"; phase(`${nm(who)} is out`, "bad"); note("");
+          remaining = remaining.filter((x) => x !== who); out.add(who); card(); await wait(calm() ? 120 : 1150); ring.classList.remove("bang"); break;
+        }
+        chs[c].className = "cz-ch spent under"; say("click", "click"); SFX.play("ui_click"); await wait(calm() ? 30 : 340);
+      }
+    }
+    if (!stillHere()) { rr.playing = false; return; }
+    const w = res.winner, won = pls[w]?.login === mine, wasIn = pls.some((x) => x.login === mine);
+    card(w); seats.forEach((x, i2) => { x.classList.remove("aim"); if (i2 === w) { x.classList.add("won"); const sm = x.querySelector("small"); if (sm) sm.textContent = `+${round.pot} ZC`; } });
+    say(`${round.pot} ZC<small>winner takes all</small>`); phase(`${nm(w)} takes ${round.pot} ZC`, "done"); note("");
+    if (won) { ZC.bal = (ZC.bal ?? 0) + round.pot; pop(`+${round.pot - (rr.st?.config?.stake ?? 20)} ZC`, "last one standing"); SFX.play("win_big"); } else if (wasIn) SFX.play("lose");
+    await wait(calm() ? 300 : 2600); rr.playing = false; rr.sig = null; if (stillHere()) rrDraw();
+  }
+  async function rrPoll(first) {
+    if (!rrOpen()) { clearInterval(rr.timer); rr.timer = null; return; } if (document.hidden && !first) return;
+    const st = await ask("/api/casino/pvp/state?game=roulette"); if (!rrOpen()) return; if (!st.ok) { if (first) phase(st.message || "Couldn't reach the table", "bad"); return; }
+    rr.st = st; rr.at = performance.now(); const last = st.last;
+    { const told = st.lobby ? `${st.lobby.id}:${st.lobby.players.length}` : ""; if (told && told !== rr.told) { rr.told = told; env.rrChanged?.(); } }   /* the room's seats and the floor's bell: the game server asks the site itself, this only says "look" */
+    if (last && last.id !== rr.seen) { const fresh = rr.seen !== null || (last.players || []).some((x) => x.login === st.me?.login); rr.seen = last.id;
+      if (last.status === "SETTLED" && last.result?.stages && fresh && last.settledAt && st.now - last.settledAt < RR_STALE && !rr.playing) return rrPlay(last);
+      if (last.status === "VOID" && (last.players || []).some((x) => x.login === st.me?.login) && st.now - (last.settledAt || 0) < RR_STALE) { ZC.bal = (ZC.bal ?? 0) + (st.config?.stake ?? 20); phase("Nobody else sat down: your 20 ZC is back", "open"); } }
+    rrDraw();
+  }
+  async function rrJoin() {
+    if (rr.joining || rr.playing) return; rr.joining = true; rrDraw(); SFX.play("chip");
+    const r = await ask("/api/casino/pvp/join", { game: "roulette" }); rr.joining = false; if (!rrOpen()) return;
+    if (!r.ok) { phase(r.message || "That didn't go through. Nothing was charged.", "bad"); SFX.play("ui_error"); return; }
+    if (r.balance != null) ZC.bal = Number(r.balance); if (rr.st && r.lobby) rr.st.lobby = r.lobby; rrDraw(); rrPoll();
+  }
+  async function russian() {
+    REAL = true; GAME = "russian"; frame("Russian Roulette", "20 ZC a seat. Last one standing takes the pot.");
+    R.lock = lockBtn(); R.lock.textContent = "Asking the table…"; R.lock.disabled = true; R.lock.addEventListener("click", rrJoin); R.note = el("p", "cz-note"); R.bet.append(R.lock, R.note);
+    const tbl = el("section", "cz-card"); R.rrTable = tbl; R.side.append(tbl); const side = el("section", "cz-card"); R.rrSide = side; R.side.append(side); const rules = el("section", "cz-card"); rules.innerHTML = `<h2>How it goes</h2><p class="cz-note" style="text-align:left">Sit down for 20 ZC. The cylinder goes round. Last one standing takes the pot.</p>`; R.side.append(rules);
+    rr = { st: null, seen: null, playing: false, timer: null, joining: false }; phase("Asking the table…", "open");
+    if (ZC.bal == null) ask("/api/picks/bootstrap").then((b) => { const n = Number(b?.session?.wallet?.balance); if (Number.isFinite(n)) { ZC.bal = n; rrDraw(); } });
+    await rrPoll(true); clearInterval(rr.timer); rr.timer = setInterval(() => { rrPoll(); if (!rr.playing && rr.st?.lobby) rrDraw(); }, RR_POLL);
+  }
+
+  /* ---------------------------------------------------------- the Cashier, in the same clothes */
+  let lastCashed = null;
+  /* THE HOUSE RUBY's exchange: tickets into real ZCoins. The window only asks; the game server takes the tickets and the SITE
+     decides (allowance, ticket roll, payment). Everything shown here came back from there. */
+  let dexSt = null, dexMsg = null, dexTicket = null, dexWait = false, gearTier = null;
+  const tix = () => G.tixIn(env.me() || { inv: [] }), tixTxt = (n) => `${env.ico("tickets")}<b>${Number(n).toLocaleString()}</b>`;
+  /* (v107) TICKETS FOR ZCOINS: the counter's own trade, 1,000 a ZCoin, under the same hourly allowance as everything else that turns
+     the game into ZCoins. The window only asks; the game server takes the tickets and the SITE pays (or says no, and they come back). */
+  let cashZc = 1;
+  function cashCard() {
+    const card = el("section", "cz-card cz-dex"), D = G.DEX, st = dexSt, left = st?.ok ? st.left : null, on = !!(st?.ok && st.enabled), have = tix(), most = Math.max(0, Math.min(Math.floor(have / D.rate), left ?? 0, D.capHour));
+    cashZc = Math.max(1, Math.min(most || 1, cashZc));
+    card.innerHTML = `<h2>Trade tickets for ZCoins<small>${D.rate.toLocaleString()} tickets = 1 ZCoin</small></h2>
+      <p class="cz-note" style="text-align:left">You have ${tixTxt(have)} tickets${on ? `: enough for <b>${Math.floor(have / D.rate)}</b> ZCoin${Math.floor(have / D.rate) === 1 ? "" : "s"}. ${left} of ${D.capHour} left this hour.` : "."}</p>
+      <div class="cz-cashrow"><button type="button" data-c="-1" aria-label="One fewer">−</button><b id="czCashN">${cashZc}</b><button type="button" data-c="1" aria-label="One more">+</button><button type="button" data-c="max">Max</button></div>
+      <button type="button" class="cz-dexgo" id="czCashGo"${on && most >= 1 && !dexWait ? "" : " disabled"}>${most >= 1 ? `Trade ${(cashZc * D.rate).toLocaleString()} tickets for ${cashZc} ZCoin${cashZc === 1 ? "" : "s"}` : have < D.rate ? `You need ${D.rate.toLocaleString()} tickets for 1 ZCoin` : "That's your ZCoins for this hour"}</button>`;
+    card.querySelectorAll("[data-c]").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); cashZc = b.dataset.c === "max" ? Math.max(1, most) : Math.max(1, Math.min(Math.max(1, most), cashZc + Number(b.dataset.c))); cashier(); }));
+    card.querySelector("#czCashGo")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "Counting your tickets…" }; send({ t: "dex", op: "cash", zc: cashZc }); cashier(); });
+    return card;
+  }
+  /** a pop-up over everything, the page's own (#pop): used for the one thing at the counter worth stopping the game for */
+  function bigNote(title, text, icon) {
+    const p = $("pop"); if (!p) return; $("popIco").innerHTML = icon || ""; $("popTitle").textContent = title; $("popText").textContent = text;
+    $("popBtns").innerHTML = `<button type="button" class="btn">Let's go</button>`; $("popBtns").querySelector("button").addEventListener("click", () => { p.hidden = true; }); p.hidden = false; $("popBtns").querySelector("button").focus();
+  }
+  function dexCard() {
+    const card = el("section", "cz-card cz-dex"), D = G.DEX, st = dexSt, left = st?.ok ? st.left : null, on = !!(st?.ok && st.enabled), me = env.me();
+    const zc = me.inv.filter((x) => x.k === "zcoin").reduce((a, x) => a + x.n, 0), can = Math.min(zc, left ?? 0);
+    card.innerHTML = `<h2>ZCoins you found<small>bank them here</small></h2>
+      ${st ? (on ? `<div class="cz-dexbar"><i style="width:${Math.round((left / D.capHour) * 100)}%"></i></div><p class="cz-note" style="text-align:left">${left} of ${D.capHour} left this hour (ticket bets share it)${st.dev ? " · PRETEND (dev server): no ZCoins move" : ""}</p>` : `<p class="cz-dexmsg bad">${esc(st.message || "The Ruby isn't paying out right now.")}</p>`) : `<p class="cz-note" style="text-align:left">Asking the Ruby…</p>`}
+      <button type="button" class="cz-dexgo" id="czDexBank"${on && can >= 1 && !dexWait ? "" : " disabled"}>${zc ? `Bank ${can || zc} ZCoin${(can || zc) === 1 ? "" : "s"} from your bag` : "No ZCoins in your bag (they drop, rarely)"}</button>
+      <p class="cz-dexmsg ${dexMsg?.cls || ""}">${esc(dexMsg?.text || "")}</p>`;
+    card.querySelector("#czDexBank")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "The Ruby hums…" }; dexTicket = null; send({ t: "dex", op: "bank" }); cashier(); });
+    return card;
+  }
+  function dex(e) {
+    dexWait = false; if (e.status) dexSt = e.status;
+    if (e.error) dexMsg = { text: e.error, cls: "bad" };
+    else if (e.done) {
+      if (e.done.op === "cash") { const n = e.done.zc; dexMsg = { text: `Traded ${Number(e.done.tix || n * G.DEX.rate).toLocaleString()} tickets for ${n} ZCoin${n === 1 ? "" : "s"}${e.done.balance != null ? `: you now have ${Number(e.done.balance).toLocaleString()} ZC on eastcoin.vip` : ""}.`, cls: "good" }; SFX.play("jackpot"); pop(`+${n} ZC`, "real ZCoins"); bigNote(`You got ${n} ZCoin${n === 1 ? "" : "s"}!`, "Now get out there and grind some more.", `<img src="/v3/assets/img/zcoin.webp" alt="" style="width:54px;height:54px">`); cashZc = 1; }
+      else { dexMsg = { text: `${e.done.zc} ZCoin${e.done.zc === 1 ? "" : "s"} banked${e.done.balance != null ? `: you now have ${Number(e.done.balance).toLocaleString()} ZC on eastcoin.vip` : ""}.${e.done.again ? " (That was the one the Ruby was still working on.)" : ""}`, cls: "good" }; SFX.play("coins"); pop(`+${e.done.zc} ZC`, "real ZCoins"); }
+    } else if (!dexMsg || dexMsg.text.endsWith("…")) dexMsg = e.held ? { text: "The Ruby is still working on your last one. Look again in a minute.", cls: "" } : null;
+    if (GAME === "cashier" && !$("gameWin").hidden) cashier();
+  }
+  /* THE DAILY PRIZE WHEEL: the server has already decided and paid the prize (e.i is its slice); this is the spin to it. */
+  let prizeSpin = null;   /* { until, snd }: a wheel that is still turning */
+  const prizeHush = () => { try { prizeSpin?.snd?.stop(); } catch (x) { /* already over */ } };
+  function prize(e) {
+    if (e.done && prizeSpin && performance.now() < prizeSpin.until && GAME === "prize" && !$("gameWin").hidden) return;   /* a second click while it turns: the first answer is the one being shown */
+    prizeHush(); prizeSpin = null;
+    GAME = "prize"; frame("Daily Prize Wheel", "One free spin a day · spin every day and the ticket slices grow"); const P = G.PRIZE, n = P.slices.length, step = 360 / n, streak = e.streak || 1;
+    const cols = ["#c8202c", "#1d1a18", "#2a7a4a", "#1d1a18", "#c8202c", "#1d1a18", "#2a5a9a", "#1d1a18", "#c8202c", "#1d1a18", "#e8bf35", "#6a2a9a"];
+    const disc = el("div", "cz-pwdisc"); disc.style.background = `conic-gradient(${P.slices.map((_, i) => `${cols[i % cols.length]} ${i * step}deg ${(i + 1) * step}deg`).join(",")})`;
+    disc.innerHTML = P.slices.map((p, i) => `<span style="transform:rotate(${(i + 0.5) * step}deg);--r:46%"><b style="top:-138px">${esc(p.cash ? G.prizeText(p, e.done ? streak + 1 : streak) : (G.ITEMS[p.k].short || G.ITEMS[p.k].name))}</b></span>`).join("");
+    const wrap = el("div", "cz-pw"); wrap.append(el("div", "cz-pwpin"), disc, el("div", "cz-pwhub")); R.board.append(wrap);
+    const card = el("section", "cz-card"); card.innerHTML = `<h2>Your streak<small>${streak} day${streak === 1 ? "" : "s"} in a row</small></h2><p class="cz-note" style="text-align:left">Every day in a row adds ${P.streakStep * 100}% to the ticket slices, up to +${P.streakStep * P.streakMax * 100}%. Miss a day and it starts again. The wheel resets at midnight, Central.</p>`; R.side.append(card);
+    const rest = (i) => { disc.style.transition = "none"; disc.style.transform = `rotate(${-(i + 0.5) * step}deg)`; };
+    if (e.done) { if (e.i != null) rest(e.i); phase(e.text ? `Today's spin: you won ${e.text}` : "You've had today's spin", e.text ? "done" : "open"); return note("It's in your bag already. Come back tomorrow: it's free every day."); }
+    const ms = env.calm() ? 300 : 4400; phase("Spinning…", "open"); const t = token;
+    prizeSpin = { until: performance.now() + ms + 200, snd: env.calm() ? null : SFX.play("roul_ball", { vol: 0.6 }) };
+    const to = 360 * 6 - (e.i + 0.5) * step + (Math.random() - 0.5) * step * 0.6;
+    requestAnimationFrame(() => requestAnimationFrame(() => { disc.style.transform = `rotate(${env.calm() ? to % 360 : to}deg)`; if (env.calm()) disc.style.transition = "none"; }));
+    setTimeout(() => { prizeHush(); if (t !== token || GAME !== "prize") return; phase(`You won ${e.text}!`, "done"); pop(e.text, streak > 1 ? `day ${streak} streak` : "free spin"); SFX.play("win_small"); note("It's in your bag. See you tomorrow."); }, ms);
+  }
+  /* THE PRIZE COUNTER (the House Ruby and both Cashier windows). Left: your tickets, and what your bag trades in for.
+     Right: what tickets buy. Everything is decided by the server; this only asks. */
+  function cashier(done) {
+    const keepScroll = GAME === "cashier" ? R.side?.scrollTop || 0 : 0;
+    if (done !== undefined) lastCashed = done; GAME = "cashier"; frame("The Prize Counter", G.vipOf(env.me()).off ? `Tickets in, prizes out · ${G.vipOf(env.me()).name} VIP: ${Math.round(G.vipOf(env.me()).off * 100)}% off everything` : "Tickets in, prizes out"); const me = env.me(), have = tix(), cp = (x) => G.counterPrice(me, x.price), vip = G.vipOf(me);
+    const keys = [...new Set(me.inv.filter((x) => G.isLoot(x.k)).map((x) => x.k))], rows = keys.map((k) => ({ k, n: me.inv.filter((x) => x.k === k).reduce((a, x) => a + x.n, 0), v: G.valueOf(k) }));
+    const total = rows.reduce((a, r) => a + r.n * r.v, 0);
+    phase(lastCashed ? `Traded in for ${Number(lastCashed.total).toLocaleString()} tickets` : "Your tickets", lastCashed ? "done" : "open");
+    R.board.innerHTML = `<div style="text-align:center"><div class="cz-total cz-tixtotal">${tixTxt(have)}</div><div class="cz-note" style="margin-top:6px">${rows.length ? `and ${Number(total).toLocaleString()} more for what's in your bag` : "Every kill and every catch outside pays tickets. Bring the drops and the fish here for more."}</div></div>`;
+    R.lock = lockBtn(); R.lock.textContent = rows.length ? `Trade in the lot · +${Number(total).toLocaleString()} tickets` : "Nothing to trade in"; R.lock.disabled = !rows.length; R.lock.addEventListener("click", () => send({ t: "cashout", op: "all" })); R.bet.append(R.lock);
+    if (rows.length) { const bag = el("div", "cz-cbag"); bag.innerHTML = rows.map((r) => `<div class="cz-csrow">${env.ico(r.k)}<span><b>${esc(G.ITEMS[r.k].name)}</b> × ${r.n.toLocaleString()}<small>${r.v} each</small></span><strong>${(r.n * r.v).toLocaleString()}</strong><button type="button" class="cz-chip" data-cs="${r.k}">Trade</button></div>`).join(""); R.bet.append(bag); bag.querySelectorAll("[data-cs]").forEach((b) => b.addEventListener("click", () => send({ t: "cashout", op: "one", k: b.dataset.cs }))); }
+    /* (2026-09-23) QUICK SELL, its own list and its own buttons. Rares are NOT in `rows` and never go through
+       "Trade in the lot": each one is a separate, deliberate click, so nobody loses a week's drop to the big
+       button. The price is poor on purpose and the copy says so rather than hiding it — the point is a floor
+       under a duplicate, not a fair price. Selling to another player should always be the better idea. */
+    const rare = [...new Set(me.inv.map((x) => x.k))].filter((k) => !G.isLoot(k) && G.quickSell(k) > 0)
+      .map((k) => ({ k, n: me.inv.filter((x) => x.k === k).reduce((a, x) => a + x.n, 0), v: G.quickSell(k) }));
+    if (rare.length) {
+      const box = el("div", "cz-cbag cz-qsell");
+      box.innerHTML = `<div class="cz-qhead">Quick sell<small>Bom lowballs you for a rare. Another player will pay more.</small></div>` +
+        rare.map((r) => `<div class="cz-csrow"><span class="cz-qico">${env.ico(r.k)}</span><span><b>${esc(G.ITEMS[r.k].name)}</b>${r.n > 1 ? ` \u00d7 ${r.n.toLocaleString()}` : ""}<small>${r.v.toLocaleString()} each</small></span><button type="button" class="cz-qbtn" data-qs="${r.k}">Sell${r.n > 1 ? " all" : ""} \u00b7 ${(r.n * r.v).toLocaleString()}</button></div>`).join("");
+      box.querySelectorAll("[data-qs]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "cashout", k: b.dataset.qs }); }));
+      R.board.append(box);
+    }
+
+    /* (2026-09-23, the owner) SELLING A SMITHED PIECE BACK, at a quarter of the counter's own shelf price. Until
+       now nothing bought gear at all: isLoot excludes anything with a `slot`, so a player who smithed a new suit
+       had no use for the old one. PLAIN COPIES ONLY, counted exactly as the server counts them - a reforged
+       piece is never swept up here, because it is worth far more than a quarter of a plain one and losing a +3
+       to a tidy-up click would be unforgivable. */
+    /* (2026-09-24) ONE ROW PER LEVEL, not per item: a +3 is worth more than a plain one and they are not the
+       same thing to sell. Grouping on key-and-level is what lets a spare plain cuirass and a +3 both sit in the
+       list at their own prices; the server is told the level and sells only that. A reforged row ARMS FIRST and
+       has to be clicked twice, because the reason these were unsellable at all was that losing a +3 to one
+       careless click would be unforgivable. */
+    const byLevel = new Map();
+    for (const st of me.inv) {
+      if (!(G.gearSell(st.k) > 0)) continue;
+      const f = G.fOf(st), id = st.k + "|" + f;
+      const r = byLevel.get(id) || { k: st.k, f, n: 0, v: G.gearSell(st.k, f) };
+      r.n += st.n; byLevel.set(id, r);
+    }
+    const sellGear = [...byLevel.values()].filter((r) => r.n > 0).sort((a, b) => b.v - a.v);
+    if (sellGear.length) {
+      const box = el("div", "cz-cbag cz-qsell");
+      box.innerHTML = `<div class="cz-qhead">Sell gear<small>A quarter of what Bom sells it for, plus a quarter of the bars in any reforge. Reforged pieces ask twice.</small></div>` +
+        sellGear.map((r) => `<div class="cz-csrow${r.f ? " cz-forged" : ""}"><span class="cz-qico">${env.ico(r.k)}${r.f ? `<em class="fgn">+${r.f}</em>` : ""}</span><span><b>${esc(G.forgeNameAt(r.k, r.f))}</b>${r.n > 1 ? ` × ${r.n.toLocaleString()}` : ""}<small>${r.v.toLocaleString()} each${r.f ? ` — ${(r.v - G.gearSell(r.k)).toLocaleString()} of that is the reforge` : ""}</small></span><button type="button" class="lk-btn" data-gs="${esc(r.k)}" data-gf="${r.f}">Sell</button></div>`).join("");
+      box.querySelectorAll("[data-gs]").forEach((b) => b.addEventListener("click", () => {
+        const f = Number(b.dataset.gf) | 0;
+        if (f > 0 && b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "Sure?"; b.classList.add("cz-arm"); SFX.play("ui_click"); return; }
+        SFX.play("ui_click"); send({ t: "cashout", k: b.dataset.gs, f });
+      }));
+      R.board.append(box);
+    }
+    // the shelves
+    R.side.classList.add("cz-shelves"); const P = G.prizesOf(), buy = (id) => { SFX.play("chip", { vol: 0.5 }); send({ t: "counter", op: "buy", id, n: 1 }); };
+    const bar = el("section", "cz-card"); bar.innerHTML = `<h2>Drinks, dinners and the way home</h2>` + P.filter((x) => x.group === "bar").map((x) => { const it = G.ITEMS[x.give[0]], f = (it.meal || it.drink)?.fx; return `<div class="cz-csrow">${env.ico(x.give[0])}<span><b>${esc(it.name)}</b><small>${esc(f ? `${(it.meal || it.drink).mins} min outside: ${G.fxText(f)}` : it.use === "tp" ? "click it anywhere: back to the casino" : G.toolUse(it))}</small></span><strong>${cp(x).toLocaleString()}</strong><button type="button" class="cz-chip" data-buy="${x.id}"${have >= cp(x) ? "" : " disabled"}>Get</button></div>`; }).join("");
+    const lvl = G.lvlOf(me, "melee"), tiers = G.TIERS.filter((t) => P.some((x) => x.group === `gear:${t.key}`)); gearTier = gearTier || ([...tiers].reverse().find((t) => t.gate <= lvl) || tiers[0]).key;
+    const gear = el("section", "cz-card"); gear.innerHTML = `<h2>Arms and armour<small>better gear, faster kills</small></h2><div class="cz-dexrow">${tiers.map((t) => `<button type="button" class="cz-chip" data-tier="${t.key}" aria-pressed="${t.key === gearTier}" title="Combat ${t.gate} to wear">${esc(t.name)}</button>`).join("")}</div>`
+      + `<p class="cz-note" style="text-align:left">Needs Combat ${G.tierOf(gearTier).gate}${lvl < G.tierOf(gearTier).gate ? ` (you're ${lvl})` : ""}. The plain set: the good stuff only drops.</p><div class="cz-gear">${P.filter((x) => x.group === `gear:${gearTier}`).map((x) => { const it = G.ITEMS[x.give[0]], own = me.inv.some((q) => q.k === x.give[0]) || Object.values(me.eq || {}).includes(x.give[0]); return `<span data-item="${x.give[0]}" title="${esc(`${it.name}${own ? " (you have one)" : ""}: ${it.tool ? G.toolSpec(it) : [it.acc && `+${it.acc} accuracy`, it.str && `+${it.str} strength`, it.def && `+${it.def} defence`].filter(Boolean).join(", ")}`)}"><button type="button" data-buy="${x.id}"${have >= cp(x) ? "" : " disabled"} class="${own ? "own" : ""}">${env.ico(x.give[0])}<small>${cp(x) >= 10000 ? `${Math.round(cp(x) / 100) / 10}K` : cp(x).toLocaleString()}</small></button></span>`; }).join("")}</div>`;
+    gear.querySelectorAll("[data-tier]").forEach((b) => b.addEventListener("click", () => { gearTier = b.dataset.tier; cashier(); }));
+    /* (2026-09-22) A BIGGER BAG. Its own small card rather than a row in the gear grid, because it is not a thing
+       you carry and it has no icon — and because the number that sells it is how full your bag is right now, which
+       belongs next to the price and nowhere else. Sold out, the card says so instead of disappearing: a shelf that
+       empties looks like a bug to whoever bought the last one. */
+    const bagCost = G.bagUpCost(me), bagCard = el("section", "cz-card");
+    bagCard.innerHTML = `<h2>A bigger bag<small>${me.inv.length} of ${G.bagMax(me)} slots used</small></h2>`
+      /* THE EMPTY <i> IS LOAD-BEARING. .cz-csrow is `grid-template-columns: 30px 1fr auto auto` and every other row
+         starts with an item icon; this one has no item, so without a first child the TEXT landed in the 30px icon
+         column and wrapped to one word a line. A placeholder keeps the columns lined up with the rows above it. */
+      + `<div class="cz-csrow"><i></i><span><b>${bagCost == null ? "Every pocket sewn on" : "One more pocket"}</b><small>${bagCost == null
+        ? `Your bag holds ${G.bagMax(me)}, which is as big as Bom will make it.`
+        : `Takes your bag to ${G.bagMax(me) + 1} slots. ${G.BAG_UPGRADES.length - (me.bagUp | 0)} left, and each costs more than the last.`}</small></span>`
+      + (bagCost == null ? "" : `<strong>${bagCost.toLocaleString()}</strong><button type="button" class="cz-chip" data-bagup="1"${have >= bagCost ? "" : " disabled"}>Get</button>`) + `</div>`;
+    bagCard.querySelector("[data-bagup]")?.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); send({ t: "counter", op: "bagup" }); });
+    R.side.append(cashCard(), dexCard(), gear, bar, bagCard);   /* (the owner, 2026-09-21: armour and arms above the drinks and dinners) */
+    R.side.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => buy(b.dataset.buy)));
+    R.side.scrollTop = keepScroll;
+  }
+
+  const api = {
+    open(g, info = {}) {
+      const ui = UI[g]; if (!ui) return false;
+      if (info.real && REAL_KEY[g] && wantTix()) { keepMenu = !!info.menu; send({ t: "tixgame", g }); return true; }   /* (the game server answers with the ticket table's own opening message, which comes back through here without `real`) */
+      if (info.pot != null || !info.real) { jack.pot = info.pot ?? null; jack.last = info.lastJack || null; }
+      MENU = info.menu != null ? !!info.menu : !!keepMenu; keepMenu = null;   /* the strip of every game shows only when the window came from the Games button / G, never at a table you walked to */
+      const real = !!info.real && !!REAL_KEY[g]; if (real !== REAL) { RUNS.hilo = RUNS.mines = null; } REAL = real; bet = REAL ? betZc : betCash;
+      GAME = g; frame(ui.title, ui.sub); phase(""); ui.build();
+      if (REAL) realInit(g, token); else if (ui.run) send({ t: "run", g, op: "state" });
+      refresh(); return true;
+    },
+    result(e) { if (e.g !== GAME || !UI[e.g]) return; UI[e.g].result(e); },
+    pit(e) {   /* (v109) ticket bets on the Pit: who has what on this round, a refusal, or the pay-out */
+      if (e.kind === "bets") { if (e.no >= PT.no) PT = { no: e.no, bets: e.bets || [] }; }
+      else if (e.kind === "no") { if (GAME === "fight") { note(e.text); SFX.play("ui_error"); } return; }
+      else if (e.kind === "paid") { if (GAME !== "fight" || $("gameWin").hidden) return; record("fight", e.payout - e.stake); if (e.void) note("That fight's result never came through. Your tickets are back."); else if (e.won) { pop(`+${(e.payout - e.stake).toLocaleString()} tickets`, `paid ${e.payout.toLocaleString()}`); SFX.play(e.payout > e.stake * 3 ? "win_big" : "win_small"); } else SFX.play("lose"); refresh(); return; }
+      if (GAME === "fight" && FV && !$("gameWin").hidden) fight(FV);
+    },
+    run(e) { const had = RUNS[e.g]; RUNS[e.g] = e.run; if (e.luck != null && env.me()) env.me().luck = e.luck; if (GAME !== e.g) return; UI[e.g].run(e, had); lockStake(!!e.run); refresh(); },
+    me() { if ($("gameWin").hidden) return; if (GAME === "cashier") cashier(); else refresh(); },
+    cashier() { lastCashed = null; dexSt = null; dexMsg = null; dexTicket = null; dexWait = false; send({ t: "dex", op: "status" }); cashier(); }, cashed(e) { cashier(e); }, dex, prize, fight,
+    closed() { token++; busy = false; GAME = null; prizeHush(); prizeSpin = null; },
+    blocked(k) { if (!GAME || GAME === "cashier") return; if (GAME === "fight") { phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); return note(G.NEED_TEXT[k]); } busy = false; UI[GAME]?.idle?.(); phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[k]); refresh(); },
+    stake, russian, roundWatch, roundBet, get tix() { return TIX; }, setTix(v) { TIX = !!v; try { localStorage.setItem("gs_real_cur", TIX ? "tix" : "zc"); } catch (x) { /* fine */ } refresh(); },
+    get game() { return GAME; }, get real() { return REAL || floorTix(); },   /* (the page asks this to know whether the Games button should close the window: a floor table counts in either money) */ realGames: () => Object.keys(REAL_KEY)
+  };
+  return api;
+}

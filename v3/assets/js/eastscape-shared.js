@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 211;
+export const VERSION = 212;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -694,6 +694,22 @@ export const bagMax = (c) => INV_MAX + (c ? petFx(c).slots + (achFx(c).slots | 0
    ============================================================================================================ */
 /** The reforge level on an inventory/bank entry (0 for an ordinary one). */
 export const fOf = (s) => Math.max(0, Math.min(FORGE.cap, (s?.f | 0) || 0));
+/** The highest reforge level anywhere on this character: worn, carried, banked - or in the pre-migration map. */
+/* (2026-09-24) THE ONE PLACE THAT ANSWERS "HAS THIS PERSON REFORGED ANYTHING". The level lives in three places
+   since it moved onto the item, and the achievements were still reading a fourth that nothing writes. The legacy
+   `c.forge` is included on purpose: somebody who reforged a piece long ago and has since traded it away should
+   not have to do it again to be credited. Losing the piece later cannot take the achievement back, because an
+   earned one is recorded in c.ach and `has` is only ever asked on the way in. */
+export const topForge = (c) => {
+  if (!c) return 0;
+  let top = 0;
+  const bump = (v) => { const n = Math.max(0, Math.min(FORGE.cap, v | 0)); if (n > top) top = n; };
+  for (const v of Object.values(c.eqf || {})) bump(v);
+  for (const s of c.inv || []) bump(fOf(s));
+  for (const s of c.bank || []) bump(fOf(s));
+  for (const v of Object.values(c.forge || {})) bump(v);
+  return top;
+};
 /** May these two entries share a stack? Only if neither is reforged. */
 export const sameStack = (a, b) => a.k === b.k && !fOf(a) && !fOf(b);
 
@@ -2844,7 +2860,14 @@ export const ACH = {
   a_burn:     { name: "Charcoal Burner",    blurb: "Burn a log at the furnace. This is Smithing.",    tier: "novice", on: ["craft"],  has: (c) => (aOf(c, "crafted").charcoal | 0) >= 1 },
   a_bar:      { name: "Smelter",            blurb: "Smelt your first bar.",                          tier: "novice", on: ["craft"],  has: (c) => aHasKey(c, "crafted", /_bar$/) },
   a_gear:     { name: "Blacksmith",         blurb: "Hammer a bar into something wearable.",           tier: "novice", on: ["craft"],  has: (c) => Object.keys(aOf(c, "crafted")).some((k) => ITEMS[k] && ITEMS[k].slot) },
-  a_forge:    { name: "Sharper",            blurb: "Reforge a piece of gear at the anvil.",           tier: "novice", on: ["forge"],  has: (c) => Object.values(c && c.forge || {}).some((v) => v > 0) },
+  /* (2026-09-24, reported by the owner: "the achievement for a user wasnt completed when they reforged
+     something") ALL THREE OF THESE READ A DEAD FIELD until today. The reforge level used to live on the
+     character as `c.forge[itemKey]`; it moved onto the ITEM (eqf for what is worn, `f` on the stack for what is
+     carried) and normChar migrates the old map ONCE and then leaves it frozen and unread. So every one of these
+     asked a question about a map that stopped being written: anybody who reforged before the migration kept
+     qualifying off the frozen copy, and everybody who has reforged since qualified for NONE of the three. They
+     go through topForge now, which reads what the character actually has. */
+  a_forge:    { name: "Sharper",            blurb: "Reforge a piece of gear at the anvil.",           tier: "novice", on: ["forge"],  has: (c) => topForge(c) >= 1 },
   a_crop:     { name: "Green Fingers",      blurb: "Harvest something you grew.",                     tier: "novice", on: ["gather"], has: (c) => aHasKey(c, "gathered", CROPK()) },
   a_quest:    { name: "Errand Boy",         blurb: "Finish a quest.",                                 tier: "novice", on: ["quest"],  has: (c) => questsDone(c) >= 1 },
   /* TICKETS, NOT ZCOINS, AND THAT IS NOT A CHOICE. A ticket bet is sent to this server (`t: "bet"`) and lands in
@@ -2875,7 +2898,7 @@ export const ACH = {
   s_tables:   { name: "Tourist",            blurb: "Play four different tables.",                    tier: "skilled", on: ["play"],   has: (c) => Object.keys(aOf(c, "played")).length >= 4 },
   s_gear:     { name: "Kitted Out",         blurb: "Wear a weapon, a body and a helm at once.",      tier: "skilled", on: ["equip"],  has: (c) => !!(c && c.eq && c.eq.weapon && c.eq.body && c.eq.helm) },
   s_smoke10:  { name: "Smokehouse",         blurb: "Smoke ten fish.",                                tier: "skilled", on: ["cook"],   has: (c) => aCount(c, "cooked", /^s(ghostcarp|cloudray|skyeel|stormmarlin|mudcat|thundersquid|bowfin)$/) >= 10 },
-  s_forge2:   { name: "Plus Two",           blurb: "Reforge something to +2.",                       tier: "skilled", on: ["forge"],  has: (c) => Object.values(c && c.forge || {}).some((v) => v >= 2) },
+  s_forge2:   { name: "Plus Two",           blurb: "Reforge something to +2.",                       tier: "skilled", on: ["forge"],  has: (c) => topForge(c) >= 2 },
   s_crops3:   { name: "Smallholding",       blurb: "Grow three different crops.",                    tier: "skilled", on: ["gather"], has: (c) => Object.keys(CROPS).filter((k) => (aOf(c, "gathered")[k] | 0) > 0).length >= 3 },
   s_zcoin:    { name: "Real Money",         blurb: "Find a real ZCoin in the world.",                tier: "skilled", on: ["loot"],   has: (c) => (aOf(c, "looted").zcoin | 0) >= 1 },
   s_sessions: { name: "Regular Face",       blurb: "Log in on twenty separate occasions.",           tier: "skilled", on: ["login"],  has: (c) => (c && c.stats && c.stats.sessions | 0) >= 20 },
@@ -2887,7 +2910,7 @@ export const ACH = {
   e_fish1k:   { name: "Trawlerman",         blurb: "Catch 1,000 fish.",                              tier: "expert", on: ["gather"], has: (c) => aCount(c, "gathered", FISHK) >= 1000 },
   e_lvl50:    { name: "Serious",            blurb: "Reach level 50 in any skill.",                   tier: "expert", on: ["xp"],     has: (c) => Object.keys(SKILLS).some((k) => lvlOf(c, k) >= 50) },
   e_lvl40all: { name: "No Weak Links",      blurb: "Reach level 40 in every skill.",                 tier: "expert", on: ["xp"],     has: aSkills(40) },
-  e_forge3:   { name: "Plus Three",         blurb: "Reforge something to +3, the top.",              tier: "expert", on: ["forge"],  has: (c) => Object.values(c && c.forge || {}).some((v) => v >= 3) },
+  e_forge3:   { name: "Plus Three",         blurb: "Reforge something to +3, the top.",              tier: "expert", on: ["forge"],  has: (c) => topForge(c) >= 3 },
   e_allfish:  { name: "The Whole Shoal",    blurb: "Catch one of every fish in the game.",           tier: "expert", on: ["gather"], has: (c) => ["sardine","perch","trout","catfish","lanternfish","mudskipper","bonefish","ghostcarp","skyeel","cloudray","stormmarlin","thundersquid","mudcat","bowfin"].every((k) => (aOf(c, "gathered")[k] | 0) > 0) },
   e_allcrop:  { name: "Full Rotation",      blurb: "Grow every crop there is.",                      tier: "expert", on: ["gather"], has: (c) => Object.keys(CROPS).every((k) => (aOf(c, "gathered")[k] | 0) > 0) },
   e_tables:   { name: "Floor Walker",       blurb: "Play every table on the floor.",                 tier: "expert", on: ["play"],   has: (c) => Object.keys(GAMES).every((k) => (aOf(c, "played")[k] | 0) > 0) },
@@ -3922,7 +3945,29 @@ export const quickSell = (k) => (QUICK[k] ? Math.max(1, Math.round(QUICK[k] * QU
    careless click can never cash in the suit you are carrying. You sell a piece by choosing it. */
 export const GEAR_SELL_RATE = 0.25;
 const COUNTER_PRICE = new Map(prizesOf().filter((p) => Array.isArray(p.give) && p.give[1] === 1).map((p) => [p.give[0], p.price]));
-export const gearSell = (k) => { const p = COUNTER_PRICE.get(k); return p && ITEMS[k]?.slot ? Math.max(1, Math.round(p * GEAR_SELL_RATE)) : 0; };
+/* WHAT A REFORGE ADDS TO THE BUYBACK (2026-09-24, the owner: "after you reforge a piece of gear does that make
+   it's Bom Trady value go up ... i think it should go up if it doesn't since you put extra resources into that
+   piece"). It did not: a reforged piece could not be sold here AT ALL, because gear is counted plainOnly so that
+   nobody ever loses a +3 for the price of a plain one. Now it sells for more, deliberately, one level at a time.
+
+   THE PRICE IS THE MATERIALS, at the same quarter the rest of this counter pays. Every step costs the same
+   forgeCost bars, so a +3 holds three lots of them, and the premium is a quarter of what those bars would have
+   fetched. That is what makes it SAFE: a quarter is less than the whole, so turning bars into a reforge and
+   selling the piece can never beat selling the bars, and reforging can never become a way to launder them. The
+   nominal bars are used, not the expected ones - a reforge can fail and can break the piece, and paying for
+   attempts that did not happen would hand a lucky player a profit.
+
+   It does not pay for the STATS, which is why the top tiers only move a few per cent: an onyx piece already
+   sells for thousands and three reforges of it are nine bars. Pricing the stats instead (say +20% a level, to
+   match FORGE.temper) reaches 450 tickets a bar against the 246 a bar sells for on its own, and that is the
+   laundering loop. The materials are the honest answer. */
+export const forgeSellStep = (k) => {
+  const cost = forgeCost(k);
+  if (!cost) return 0;
+  const [bar, n] = cost;
+  return Math.round(GEAR_SELL_RATE * n * (quickSell(bar) || valueOf(bar) || 0));
+};
+export const gearSell = (k, f = 0) => { const p = COUNTER_PRICE.get(k); return p && ITEMS[k]?.slot ? Math.max(1, Math.round(p * GEAR_SELL_RATE)) + fOf({ f }) * forgeSellStep(k) : 0; };
 export const canSell = (k) => isLoot(k) || quickSell(k) > 0 || gearSell(k) > 0;
 export const isLoot = (k) => k !== "tickets" && k !== "tickets" && k !== "zcoin" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck && !ITEMS[k]?.use && !ITEMS[k]?.drink && !ITEMS[k]?.raw;
 

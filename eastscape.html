@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=224">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=225">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1008,7 +1008,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=224";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=225";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=130").then((m) => { WK = m; }));
@@ -4296,7 +4296,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=46", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=47", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
@@ -4881,11 +4881,18 @@ function renderPanel() {
     const cells = me.inv.map((s, i) => {
       const it = ITEMS[s.k], cmp = it.slot ? G.compareText(me, s.k) : "";
       const what = it.luck ? `click to use: your next ${it.luck} kills or catches are lucky` : it.drink ? "click to drink" : it.use ? "click to use" : it.meal ? "click to eat: a buff for outside" : it.heal ? `click to eat (heals ${it.heal})` : it.slot ? (it.slot === "weapon" ? "click to wield" : "click to wear") : "click to examine";
-      const title = `${it.name}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}` + (cmp ? `\n${cmp}` : "") + `\n${what}, shift-click to drop, right-click for the wiki`;
-      return `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" data-item="${s.k}" title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}</div>`;
+      /* (2026-09-24, reported by the owner: "reforged gear in your inventory doesnt show +3") THE BADGE AND THE
+         FORGED NAME. This cell is built by hand here instead of going through slotHtml(), which has drawn data-f
+         and the +N all along - so the bag was the one place in the game that showed a reforged piece as though
+         it were plain, while the bank, the anvil and the equipment panel all marked it. Kept inline rather than
+         switched to slotHtml because this cell alone carries the compare line and the what-happens hint; the
+         three things it was missing are below. */
+      const f = G.fOf(s);
+      const title = `${G.forgeNameAt(s.k, f)}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}` + (cmp ? `\n${cmp}` : "") + `\n${what}, shift-click to drop, right-click for the wiki`;
+      return `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" data-item="${s.k}"${f ? ` data-f="${f}"` : ""} title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(f)}</div>`;
     });
     while (cells.length < G.bagMax(me)) cells.push('<div class="slot empty"></div>');
-    p.innerHTML = `<div class="ph">Inventory <span><button type="button" class="invsort" id="invSort" title="Sort: tickets, tools, gear, food, then the rest. Merges part-stacks.">Sort</button> <small>${me.inv.length}/${G.INV_MAX}</small></span></div><div class="inv">${cells.join("")}</div>${walletCard()}`;
+    p.innerHTML = `<div class="ph">Inventory <span><button type="button" class="invsort" id="invSort" title="Sort: tickets, tools, gear, food, then the rest. Merges part-stacks.">Sort</button> <small>${me.inv.length}/${G.bagMax(me)}</small></span></div><div class="inv">${cells.join("")}</div>${walletCard()}`;
     $("invSort").addEventListener("click", () => send({ t: "sort" }));
     p.querySelectorAll(".slot[data-i]").forEach((el) => el.addEventListener("click", (e) => {
       const i = +el.dataset.i, s = me.inv[i]; if (!s) return;
