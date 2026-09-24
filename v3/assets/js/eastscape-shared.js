@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 215;
+export const VERSION = 216;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -199,17 +199,17 @@ export const ITEMS = {
   pot_hide: { name: "Hide tonic", icon: "\u{1F9EA}", drink: { mins: 10, fx: { tough: 0.05 } }, ex: "Thick, brown, and it sets slightly. 10 minutes outside: you take less." },
   pot_keen: { name: "Keen-eye water", icon: "\u{1F9EA}", drink: { mins: 10, fx: { rare: 0.06 } }, ex: "Clears the head and sharpens the sight. 10 minutes outside: rare finds come looser." },
   pot_salve1: { name: "Salt salve", icon: "\u{1F9EA}", heal: 14, ex: "Drink it and the bleeding stops. Nobody has asked what is in it." },
-  pot_rattle: { name: "Rattle brew", icon: "\u{1F9EA}", drink: { mins: 10, fx: { bite: 0.02 } }, ex: "It knocks against the glass on its own. 10 minutes outside: you hit harder." },
+  pot_rattle: { name: "Rattle brew", icon: "\u{1F9EA}", drink: { mins: 10, fx: { bite: 0.02 } }, ex: "It knocks against the glass on its own. 10 minutes outside: fish bite more often." },
   pot_quick: { name: "Quickhand philtre", icon: "\u{1F9EA}", drink: { mins: 15, fx: { speed: 0.07 } }, ex: "Brewed over a marked card. 15 minutes outside: properly quick hands." },
   pot_gourd: { name: "Gourd draught", icon: "\u{1F9EA}", drink: { mins: 15, fx: { tough: 0.09 } }, ex: "Gourd milk and bonemeal. 15 minutes outside: hard to dent." },
   pot_salve2: { name: "Field salve", icon: "\u{1F9EA}", heal: 26, ex: "A proper dressing in a bottle. Twice the salt salve and none of the questions." },
   pot_ghost: { name: "Ghost grease", icon: "\u{1F9EA}", drink: { mins: 15, fx: { steal: 0.05 } }, ex: "Cobweb and husk, rendered down. 15 minutes outside: lighter fingers." },
   pot_purse: { name: "Tax-dodger's tincture", icon: "\u{1F9EA}", drink: { mins: 15, fx: { tix: 0.09 } }, ex: "Distilled from a receipt nobody filed. 15 minutes outside: more tickets." },
   pot_prospect: { name: "Prospector's flask", icon: "\u{1F9EA}", drink: { mins: 20, fx: { rare: 0.14 } }, ex: "Gold tomato, a marked card and a scarab's shell. 20 minutes outside: the good drops." },
-  pot_fang: { name: "Fang flask", icon: "\u{1F9EA}", drink: { mins: 20, fx: { bite: 0.045 } }, ex: "Two kinds of tooth in one bottle. 20 minutes outside: considerably harder." },
+  pot_fang: { name: "Fang flask", icon: "\u{1F9EA}", drink: { mins: 20, fx: { bite: 0.045 } }, ex: "Two kinds of tooth in one bottle. 20 minutes outside: fish bite a great deal more often." },
   pot_salve3: { name: "Royal salve", icon: "\u{1F9EA}", heal: 44, ex: "What they packed the kings with. It still works." },
   pot_storm: { name: "Storm flask", icon: "\u{1F9EA}", drink: { mins: 20, fx: { speed: 0.12 } }, ex: "It fizzes against the glass and will not sit still. 20 minutes outside: very quick indeed." },
-  pot_pharaoh: { name: "Pharaoh's draught", icon: "\u{1F9EA}", drink: { mins: 20, fx: { tough: 0.18, bite: 0.03 } }, ex: "The best thing anyone can make. 20 minutes outside: hard to hurt, and hitting like it." },
+  pot_pharaoh: { name: "Pharaoh's draught", icon: "\u{1F9EA}", drink: { mins: 20, fx: { tough: 0.18, bite: 0.03 } }, ex: "The best thing anyone can make. 20 minutes outside: hard to hurt, and the fish come to you." },
   lanternfish: { name: "Lanternfish", icon: "🐟", heal: 9, ex: "It has its own little light. It keeps it on even now." },
   clanternfish: { name: "Cooked lanternfish", icon: "🐟", heal: 16, ex: "The light goes out when it's cooked. That's how you know." },
   skyeel: { name: "Sky eel", icon: "🐍", heal: 14, ex: "Caught from a cloud, out of the open sky. It is very surprised about it too." },
@@ -1382,7 +1382,7 @@ Object.assign(SCENES, {
      Ancient Egypt, from the owner's concept art: a sandstone temple precinct with a colonnade of obelisks, a
      walled oasis of date palms, dug pits, and the pyramid on the eastern skyline. */
   sands: {
-    name: "The Golden Sands", exits: { e: "boneyard" }, tint: "rgba(214,164,74,.16)",
+    name: "The Golden Sands", ground: "desert", exits: { e: "boneyard" }, tint: "rgba(214,164,74,.10)",
     build() {
       const g = grid(), objs = [], keep = [];
       const put = (t, x, y, name, extra) => { objs.push({ t, x, y, name, ...(extra || {}) }); g[y][x] = "#"; keep.push([x, y]); };
@@ -1395,7 +1395,11 @@ Object.assign(SCENES, {
       runX(16, 12, 22); runY(12, 16, 20); runX(20, 6, 12);        // down to the pits in the south-west
       runY(22, 3, 9); runX(3, 14, 22);                            // and up to the oasis in the north-west
       runX(13, 26, 33); runY(26, 13, 18); runX(18, 26, 31);       // the pyramid approach, south-east
-      for (const [x, y] of path) { g[y][x] = ","; keep.push([x, y]); }
+      /* "p", NOT "," (2026-09-24, the owner: "make the pathways some type of stone tiles too"). A comma is a
+         DIRT track; "p" is the paving the Yard's courts and roads are drawn with, which the desert theme cuts
+         from sandstone rather than grey brick (GROUNDS.desert.pave). So the processional way is flagstone the
+         whole way in, and the court at the cauldron is that same stone opened out into a plaza. */
+      for (const [x, y] of path) { g[y][x] = "p"; keep.push([x, y]); }
 
       /* THE OASIS, north-west, walled off the way the concept art has it. Ragged at its ends only, and it runs
          to the map edge, because a strip of floor between water and the rim is floor nobody can reach - see the
@@ -1427,10 +1431,21 @@ Object.assign(SCENES, {
       scatterSpots(objs, 2, 8, 4, 4, [1, 2, 4], { name: "The oasis", req: { skill: "fishing", lvl: 40 }, fish: "oasisperch", fish2: "nilecarp", fish2lvl: 48, xp: 150, xp2: 180, glow: "#7fd8c8", tease: "Something fat turns over down there. Nothing has hunted this pool in a thousand years. Fishing 40." });
       for (let x = 0; x <= 12; x++) keep.push([x, 9], [x, 10]);
 
+      /* THE COURT (2026-09-24, the owner: "give some spacing around the cauldron (no mobs can be in this
+         area), and put it on the court tiles so it stands out"). Nine by five of paving, so the one cauldron in
+         the game stands on a floor rather than in a field. Laid HERE, after the path and BEFORE any prop,
+         because a prop writes "#" on its tile and paving over that would quietly make it walkable again. The
+         mobs are kept out by where they are homed - see the list below. */
+      for (let y = 10; y <= 14; y++) for (let x = 22; x <= 30; x++) { g[y][x] = "p"; keep.push([x, y]); }
+
       /* THE SAND PITS: five of them, spread across the south and west so digging is a walk rather than a corner.
          Mining 20 and 45 xp - poor xp for the level on purpose, because the value of sand is what it BECOMES. */
+      /* FOUR PICTURES, CHOSEN BY POSITION (2026-09-24, the owner: "feels too monotamous right now"). Five
+         identical pits in one corner read as wallpaper; hashRand fixes each one's look so it is the same for
+         everybody who walks past it. */
+      const PITS = ["o_sandpit", "o_sandpit2", "o_sandpit3", "o_sandpit4"];
       for (const [x, y] of [[8, 19], [5, 17], [11, 21], [16, 22], [7, 22]])
-        put("sandpit", x, y, "Sand pit", { ore: "sand", req: { skill: "mining", lvl: 20 }, xp: 45 });
+        put("sandpit", x, y, "Sand pit", { ore: "sand", req: { skill: "mining", lvl: 20 }, xp: 45, art: PITS[Math.floor(hashRand(x, y, 57) * PITS.length)] });
 
       /* the band's own ore and tree. Stardust at 50 is the 40-49 convention (a map's ore is band_top + 1) and it
          had exactly ONE rock in the whole game before this, in the Forum. Date palms are Woodcutting 45. */
@@ -1486,8 +1501,11 @@ Object.assign(SCENES, {
     /* Cobras in the dunes, scarabs round the pits, mummies in the precinct, jackals at the pyramid. ONE aggro
        placement, at the pyramid, so the tomb feels guarded without making the map a chore. */
     mobs: [["cobra", 7, 15], ["cobra", 10, 17], ["cobra", 4, 20], ["cobra", 13, 22], ["cobra", 17, 19], ["cobra", 9, 11],
-      ["scarab", 6, 21], ["scarab", 12, 18], ["scarab", 15, 21], ["scarab", 18, 17], ["scarab", 3, 16],
-      ["mummy", 20, 11], ["mummy", 24, 15], ["mummy", 28, 15], ["mummy", 31, 10], ["mummy", 22, 4], ["mummy", 26, 5],
+      ["scarab", 6, 21], ["scarab", 12, 18], ["scarab", 15, 21], ["scarab", 9, 19], ["scarab", 3, 16],
+      /* NOT ONE HOME INSIDE THE COURT, nor within wandering distance of it: a mob turns back once it strays
+         more than four tiles from home, so a spawn outside x18-34 / y6-18 can never reach the cauldron. Three
+         Bandaged Debtors were standing on it. */
+      ["mummy", 16, 3], ["mummy", 35, 3], ["mummy", 15, 13], ["mummy", 36, 13], ["mummy", 17, 22], ["mummy", 35, 23],
       ["jackal", 39, 15, { aggro: 3 }], ["jackal", 41, 5], ["jackal", 37, 18], ["jackal", 43, 8], ["jackal", 36, 22]],
     npcs: [], bots: []
   },
@@ -2587,9 +2605,14 @@ export const MOBS = {
   /* THE GOLDEN SANDS, 40-49 (2026-09-24). Stats sit inside the band's own envelope - Cloudreach's ram is 42
      and its angel 48 - and the two ingredient drops are the only new items any of them carry. Like every other
      map's monsters they also drop the PREVIOUS band's ore, which is dragonstone. */
-  cobra: { name: "Sand Cobra", size: "s", lvl: 41, hp: 31, att: 29, def: 24, max: 7, speed: 2000, aggro: null, box: [10, 20], drops: [["tickets", [57, 133]], ["snakefang", 1]] },
+  /* (2026-09-24, the owner: "scarabs and sand cobras need to buff by twice as much (stronger) because they
+     drop important alchemy ingredients") Double the hit points and about a third again on everything else, so
+     the two things carrying the fang and the shell are the hardest fights on this map by a clear margin - harder
+     than the jackals guarding the pyramid. Still well inside the game's curve: a level 62 Hail Drake has 124.
+     An ingredient nobody has to work for is not an ingredient, it is a pickup. */
+  cobra: { name: "Sand Cobra", size: "s", lvl: 48, hp: 62, att: 38, def: 33, max: 11, speed: 2000, aggro: null, box: [10, 20], drops: [["tickets", [57, 133]], ["snakefang", 1]] },
   mummy: { name: "Bandaged Debtor", size: "m", lvl: 43, hp: 35, att: 30, def: 27, max: 7, speed: 2800, aggro: null, box: [10, 26], drops: [["tickets", [66, 154]], ["dragonstone_ore", 1]] },
-  scarab: { name: "Gilt Scarab", size: "s", lvl: 45, hp: 37, att: 32, def: 29, max: 8, speed: 2200, aggro: null, box: [12, 22], drops: [["tickets", [72, 168]], ["scarabshell", 1]] },
+  scarab: { name: "Gilt Scarab", size: "s", lvl: 52, hp: 74, att: 42, def: 38, max: 12, speed: 2200, aggro: null, box: [12, 22], drops: [["tickets", [72, 168]], ["scarabshell", 1]] },
   jackal: { name: "Tomb Jackal", size: "m", lvl: 47, hp: 41, att: 34, def: 30, max: 8, speed: 2600, aggro: null, box: [10, 27], drops: [["tickets", [80, 187]], ["dragonstone_ore", 1]] },
   drake: { name: "Hail Drake", size: "l", lvl: 62, hp: 124, att: 46, def: 40, max: 11, speed: 2800, aggro: 5, box: [22, 36], drops: [] },
   house: { name: "The House", size: "xl", lvl: 70, hp: 170, att: 52, def: 46, max: 13, speed: 3000, aggro: 5, box: [26, 56], drops: [] },
@@ -2803,6 +2826,15 @@ for (const [id, r] of Object.entries({
   brew_storm: { in: [["large_vial", 1], ["staticfur", 1], ["stormjelly", 1], ["lanternroot", 1]], out: ["pot_storm", 1], lvl: 90, xp: 300 },
   brew_pharaoh: { in: [["large_vial", 1], ["scarabshell", 2], ["snakefang", 1], ["goldtomatoe", 1]], out: ["pot_pharaoh", 1], lvl: 100, xp: 360 },
 })) recipe(id, { skill: "alchemy", station: "cauldron", ms: 2200, ...r });
+/* THE STOP LEVEL, per recipe. A vial keeps a long tail on purpose - glass is the front of the whole chain, so
+   blowing it should stay a real cost well past the level that unlocks it - and a potion settles down over the
+   span of the two recipes above it. Nothing reaches zero: see spoilChance. */
+for (const [id, failStop] of Object.entries({
+  blow_small_vial: 30, blow_medium_vial: 64, blow_large_vial: 97,
+  brew_swift: 22, brew_hide: 30, brew_keen: 40, brew_salve1: 44, brew_rattle: 48,
+  brew_quick: 56, brew_gourd: 64, brew_salve2: 68, brew_ghost: 72, brew_purse: 80,
+  brew_prospect: 86, brew_fang: 92, brew_salve3: 96, brew_storm: 99, brew_pharaoh: 99,
+})) RECIPES[id].failStop = failStop;
 
 // cooking, unchanged in every number from when it lived in its own table
 for (const [raw, c] of Object.entries({
@@ -3778,6 +3810,25 @@ export const recipesAt = (station) => Object.values(RECIPES)
 export const canMake = (c, r) => lvlOf(c, r.skill) >= r.lvl && r.in.every(([k, n]) => countItems(c, [k]) >= n);
 
 // the chance to burn at a cooking level: about half when you first can, nothing by burnStop; a range is kinder than a fire
+/* GLASSWORK AND BREWING CAN GO WRONG (2026-09-24, the owner: "since alchemy vials will be so important, the
+   rate of crafting them and crafting sand into vials needs to not be 100%"). It was 100%: I shipped all eighteen
+   alchemy recipes with no failure at all.
+
+   THE CURVE IS COOKING'S, because the game already has exactly one shape for "a skill you grow out of failing at"
+   and inventing a second would be two answers to one question: half your attempts spoil at the level the recipe
+   unlocks, falling away as you climb past it. What is different is the FLOOR. Cooking's burn reaches zero and
+   food is never ruined again; glass is never that safe, so this bottoms out at SPOIL_FLOOR and stays there. A
+   master alchemist wastes about one in fifty, for ever, which is what the owner asked for.
+
+   AND A SPOILED BATCH LEAVES NOTHING. It rides the worker's `fail` path, not its burn path: the burn path hands
+   you a "Burnt food" item, which is the right object for a fish and a nonsense one for a potion. */
+export const SPOIL_FLOOR = 0.02;
+export const spoilChance = (r, lvl) => {
+  if (r == null) return 0;
+  if (r.failStop == null) return r.fail || 0;
+  if (lvl >= r.failStop) return SPOIL_FLOOR;
+  return Math.max(SPOIL_FLOOR, 0.5 * (r.failStop - lvl) / Math.max(1, r.failStop - r.lvl));
+};
 export const burnChance = (r, lvl, range) => lvl >= r.burnStop ? 0 : Math.max(0.03, 0.5 * (r.burnStop - lvl) / Math.max(1, r.burnStop - r.lvl)) * (range ? 0.8 : 1);
 export const EAT_MS = 1200;
 // repeating skills stop after this long with no input from the player: the resources never run dry, but you have to be there

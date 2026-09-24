@@ -2068,7 +2068,17 @@ export class World {
       /* (2026-09-22) A RECIPE MAY SIMPLY FAIL. `fail` is a flat chance the inputs are spent and nothing comes back,
          which is how burning charcoal loses the odd log. It rides the SAME `burnt` flag rather than introducing a
          second one, because a second flag beside an if/else is exactly what ate every cooked fish earlier today. */
-      if (!burnt && r.fail && Math.random() < r.fail) { burnt = true; this.say(pl, `The ${G.ITEMS[r.in[0][0]].name.toLowerCase()} crumbles to ash. Nothing usable.`, "bad"); }
+      /* (2026-09-24) `fail` IS NOW A CURVE WHERE A RECIPE ASKS FOR ONE. spoilChance returns the flat r.fail when
+         there is no failStop, so charcoal is untouched; alchemy sets failStop and gets cooking's own falling
+         curve with a floor under it, so glasswork is never completely safe. Same `burnt` flag, so a spoiled
+         batch leaves nothing behind rather than a "Burnt food" in the bag. */
+      const spoil = G.spoilChance(r, lv);
+      if (!burnt && spoil > 0 && Math.random() < spoil) {
+        burnt = true;
+        this.say(pl, st.verb === "brew"
+          ? (r.out[0].startsWith("pot_") ? "The mixture turns black and stops moving. Nothing usable." : "The glass cracks as it cools. Nothing usable.")
+          : `The ${G.ITEMS[r.in[0][0]].name.toLowerCase()} crumbles to ash. Nothing usable.`, "bad");
+      }
       if (!burnt) {
         this.give(pl, r.out[0], r.out[1]);
         this.gained(S, pl, r.out[0], r.out[1], r.skill === "cooking" ? "cook" : "craft");

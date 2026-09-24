@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=228">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=229">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1008,10 +1008,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=228";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=229";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=131").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=132").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=13";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -1559,7 +1559,7 @@ const ART_FILES = ["t_dock", ...CROP_ART, "o_yardtree", "o_yardtree_stump", "o_t
   "o_rock_starfall_ore", "o_rock_eclipse_ore", "o_rock_voidglass", "o_rock_catalytic", "o_runestone", "o_stormcrystal", "o_skyarch",
   /* (2026-09-24) THE GOLDEN SANDS and Alchemy: the pyramid, the colonnade, a date palm, a dug pit and the
      cauldron every potion in the game comes out of. Deferred to area-sands below. */
-  "o_pyramid", "o_obelisk", "o_datepalm", "o_sandpit", "o_cauldron",
+  "o_pyramid", "o_obelisk", "o_datepalm", "o_sandpit", "o_sandpit2", "o_sandpit3", "o_sandpit4", "o_cactus", "t_sand", "t_swater", "t_sandstone", "o_cauldron",
   "cobra", "scarab", "mummy", "jackal", "pharaoh",   /* its four monsters and the pyramid's boss. A MOB PICTURE IS IN ART_FILES TOO: the area list only defers, and a name that appears there without being in this master list is packed into no sheet at all. */
   /* (2026-09-24) the Crypt's dressing, now that the Lantern Mire wears it too: an arch, torches, an altar,
      candles, a coffin, rubble, gargoyles, braziers, sarcophagi, skulls and bones. They were never in this
@@ -1602,7 +1602,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 67;
+const PACKS_V = 68;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -1673,7 +1673,7 @@ const AREA_ART = {
   /* (2026-09-24) The Golden Sands. `pharaoh` is here although nothing spawns it yet: the pyramid's party
      dungeon is its own build, and having the picture ship with the map means the sheet does not change again
      when it lands. o_rock_stardust is NOT listed - the Forum draws it too, so it stays in core. */
-  sands: ["o_pyramid", "o_obelisk", "o_datepalm", "o_sandpit", "o_cauldron", "cobra", "scarab", "mummy", "jackal", "pharaoh",
+  sands: ["o_pyramid", "o_obelisk", "o_datepalm", "o_sandpit", "o_sandpit2", "o_sandpit3", "o_sandpit4", "o_cactus", "t_sand", "t_swater", "t_sandstone", "o_cauldron", "cobra", "scarab", "mummy", "jackal", "pharaoh",
     /* the Crypt dressing it borrows for the tomb furniture. Named here as well as on area-mire because an area
        sheet is WHOLE: each map carries its own copy rather than one pulling the picture from under the other. */
     "o_sarcophagus", "o_crypttorch", "o_cryptrubble", "o_gargoyle", "o_skullheap", "o_bonepile"],
@@ -1836,6 +1836,10 @@ const ITEM_ART = new Set([
      deliberately left on the emoji - they are the same bottle in fifteen colours, and one drawn vial per SIZE
      plus the name is more legible in a bag than ten near-identical pictures. */
   "sand", "small_vial", "medium_vial", "large_vial", "scarabshell", "snakefang",
+  /* and all fifteen potions (2026-09-24). The bottle SHAPE carries the tier - squat, round-bodied, broad and
+     corded - and the liquid carries the effect, so a bag of them reads without reading a single name. */
+  "pot_swift", "pot_hide", "pot_keen", "pot_salve1", "pot_rattle", "pot_quick", "pot_gourd", "pot_salve2",
+  "pot_ghost", "pot_purse", "pot_prospect", "pot_fang", "pot_salve3", "pot_storm", "pot_pharaoh",
   /* (2026-09-23) the Thieves' Guild's eleven. THIS SET IS AN ALLOWLIST: an icon file that is not named here is
      never looked for, and the item quietly keeps its emoji. */
   "thieves_permit", "brass_button", "pocket_watch", "stolen_signet", "blackmarket_ledger",
@@ -1941,7 +1945,13 @@ const GROUNDS = {
      unusable before (the Crypt's first one looked like a canal) - but its scattered bushes and boulders are
      storm crystals and rune stones instead of cloud puffs and columns. Since wild() sprinkles those two types
      across every map, swapping just these two keys changes most of what the eye actually sees. */
-  storm: { water: "t_csky", path: "t_cpath", bush: "o_stormcrystal", boulder: "o_runestone" }
+  storm: { water: "t_csky", path: "t_cpath", bush: "o_stormcrystal", boulder: "o_runestone" },
+  /* (2026-09-24) THE DESERT. t_sand and t_swater are t_dirt and t_water with the GRASS recoloured to sand
+     (tools/eastscape-sands-art.mjs) - the Wang geometry is untouched, so they tile exactly as well as the
+     originals did, which is why this was a recolour and not a new sheet. Having a theme at all is also what
+     stops the painter scattering grass tufts and flowers: it only does that for a scene with no GT, which is
+     why the Golden Sands shipped as a desert with a lawn. */
+  desert: { water: "t_swater", path: "t_sand", bush: "o_cactus", boulder: "w_boulder", pave: "t_sandstone" }
 };
 const WANG = [[64, 32], [96, 32], [64, 64], [32, 64], [64, 0], [96, 64], [0, 32], [96, 96], [32, 32], [64, 96], [32, 0], [0, 64], [96, 0], [0, 0], [32, 96], [0, 96]];
 
@@ -2002,8 +2012,11 @@ function paintBg() {
 
        The radii and nibbles come from hashRand on the tile, so the edge is uneven like a real kerb rather than a
        border-radius, and it is identical on every repaint. */
-    if (IMG.t_brick) {
-      const b = IMG.t_brick.im, s = b.width, sx = ((x + y * 2) % 2) * (s / 2), d = (T * (s - sx)) / s;
+    /* (2026-09-24) PAVING IS THEMED. This was hard-coded to t_brick, the grey market stone, so a desert road
+       came out grey granite. Falls back to t_brick, so any theme without its own paving is exactly as it was. */
+    const PAVE = (GT && IMG[GT.pave]) || IMG.t_brick;
+    if (PAVE) {
+      const b = PAVE.im, s = b.width, sx = ((x + y * 2) % 2) * (s / 2), d = (T * (s - sx)) / s;
       const pav = (a, c) => { const t = Z.g[c]?.[a]; return t === "p" || t === "P"; };
       const N = !pav(x, y - 1), S = !pav(x, y + 1), Wl = !pav(x - 1, y), E = !pav(x + 1, y);
       o.save();

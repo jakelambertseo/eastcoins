@@ -37,6 +37,30 @@ const PIECES = [
   ["large_vial", "2ce950ab-a381-4f35-ab8f-f93fc12ddc04", 32, "item"],
   ["scarabshell", "b66d7792-8533-473f-9dfe-d11605b5dd87", 32, "item"],
   ["snakefang", "d422c138-c9db-4e59-9b30-e39f2442a65c", 32, "item"],
+  /* (2026-09-24) ALL FIFTEEN POTIONS get their own icon after all. The bottle SHAPE carries the tier - squat for
+     a small vial, round-bodied for a medium, broad and corded for a large flask - and the liquid carries the
+     effect, so a bag full of them reads at a glance without reading a single name. */
+  ["pot_swift", "db8c10b1-cab5-4700-936c-d3e02552de6b", 32, "item"],
+  ["pot_hide", "04fcb724-115b-44ea-871f-b7034eab1cac", 32, "item"],
+  ["pot_keen", "a434e964-daab-44d1-a386-52c5612cdc2c", 32, "item"],
+  ["pot_salve1", "0d5ae47d-cd55-4959-9aae-22977ca3a69f", 32, "item"],
+  ["pot_rattle", "73596c52-317c-4d3c-861d-2685ed44729d", 32, "item"],
+  ["pot_quick", "285374b0-d98d-4860-bbb4-02e718713d03", 32, "item"],
+  ["pot_gourd", "8a92c916-d519-45d9-a48f-dca420882770", 32, "item"],
+  ["pot_salve2", "c7fda59b-6a1f-434f-abb1-44b9a1009138", 32, "item"],
+  ["pot_ghost", "6b19483a-2649-4f67-b08a-eec93d456958", 32, "item"],
+  ["pot_purse", "10a85ddf-8fd7-426e-bf5e-834c1424a40c", 32, "item"],
+  ["pot_prospect", "04d813be-0eb2-4922-9a6e-81a18929e088", 32, "item"],
+  ["pot_fang", "368476af-17fe-407a-b068-59367f6d5f29", 32, "item"],
+  ["pot_salve3", "529e48d0-c8c4-4d8e-ab39-7540392086cf", 32, "item"],
+  ["pot_storm", "0e70b25f-757c-4b8f-9153-a10548dfa6fd", 32, "item"],
+  ["pot_pharaoh", "085cc1bc-cebb-45a5-8032-97d752d309a0", 32, "item"],
+  /* (2026-09-24, the owner: "generate a few alternative arts of the sand pits, feels too monotamous right now")
+     Five identical pits in one corner read as wallpaper. Three more, chosen per PLACEMENT. */
+  ["o_sandpit2", "86fd94e5-9dde-4da8-be45-a2d01865020c", 46, "obj"],
+  ["o_sandpit3", "8432cd14-74a3-480a-aaae-8d22e656e65e", 46, "obj"],
+  ["o_sandpit4", "47733805-5809-45ae-9fa4-51f07e2f85f9", 46, "obj"],
+  ["o_cactus", "119bc3f8-cc3d-41ea-809c-957ed4f0e17a", 52, "obj"],   // the desert theme's scattered bush
 ];
 
 let got = 0, bytes = 0; const missing = [];
@@ -74,4 +98,51 @@ for (const [k, id, h, kind] of PIECES) {
   got++; bytes += size;
 }
 if (missing.length) console.log(`\n  NOT DOWNLOADED: ${missing.join(", ")}`);
+/* ------------------------------------------------------------ THE SAND FLOOR (2026-09-24)
+   The owner: "the golden sands ground tile needs to be more sandy, and not repeating". It was neither: the map
+   had no `ground` theme at all, so it drew the DEFAULT floor - t_dirt, a Wang sheet of brown path on GREEN
+   GRASS - with the painter's grass tufts and flowers on top. A desert of lawn.
+
+   THIS RECOLOURS THE SHEET RATHER THAN GENERATING ONE. A Wang sheet is sixteen tiles whose corners must agree
+   exactly, and it is the one art job here that has come back unusable (the Crypt's first looked like a canal).
+   Recolouring leaves the GEOMETRY untouched, so it is guaranteed to tile as well as the original - and t_dirt
+   has only eighteen colours, cleanly split into grass greens and path browns, so "turn the grass into sand and
+   leave the path" is an exact operation rather than a filter.
+
+   The path stays brown on purpose: a track worn through sand IS subtler than one through grass. */
+const SAND_DARK = [150, 118, 70], SAND_LIGHT = [243, 223, 170];
+const sandify = async (from, to) => {
+  const { data, info } = await sharp(OBJ + from).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 8) continue;
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    if (g > r && g > b) {
+      /* a grass pixel: keep its LUMINANCE and put it on a sand ramp, so every shade of grass becomes the
+         matching shade of sand and the sheet's own shading survives intact. */
+      const L = Math.min(1, (0.299 * r + 0.587 * g + 0.114 * b) / 190);
+      for (let k = 0; k < 3; k++) data[i + k] = Math.round(SAND_DARK[k] + (SAND_LIGHT[k] - SAND_DARK[k]) * L);
+    } else { data[i] = Math.min(255, r + 8); data[i + 2] = Math.max(0, b - 6); }
+  }
+  await sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } }).png({ palette: true, colours: 48 }).toFile(OBJ + to);
+  console.log(`  ${to.padEnd(14)} ${info.width}x${info.height}  ${(fs.statSync(OBJ + to).size / 1024).toFixed(1)} KB  recoloured from ${from}`);
+};
+await sandify("t_dirt.png", "t_sand.png");
+await sandify("t_water.png", "t_swater.png");   // its dry corners are grass too, so the oasis shore needs it as well
+
+/* AND THE PAVING (2026-09-24, the owner: "make the pathways some type of stone tiles too"). t_brick is the grey
+   market paving the Yard's courts and roads are drawn with; this is the same stone cut from sandstone instead.
+   Every pixel goes on one warm ramp by luminance - brick is nearly greyscale already, so there is no colour to
+   preserve, and the mortar lines and block edges that make it read as STONE all survive untouched. */
+const STONE_DARK = [132, 104, 70], STONE_LIGHT = [234, 208, 160];
+{
+  const { data, info } = await sharp(OBJ + "t_brick.png").ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 8) continue;
+    const L = Math.min(1, (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 210);
+    for (let k = 0; k < 3; k++) data[i + k] = Math.round(STONE_DARK[k] + (STONE_LIGHT[k] - STONE_DARK[k]) * L);
+  }
+  await sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } }).png({ palette: true, colours: 48 }).toFile(OBJ + "t_sandstone.png");
+  console.log(`  t_sandstone    ${info.width}x${info.height}  ${(fs.statSync(OBJ + "t_sandstone.png").size / 1024).toFixed(1)} KB  recoloured from t_brick.png`);
+}
+
 console.log(`\n${got} picture(s), ${(bytes / 1024).toFixed(1)} KB total`);
