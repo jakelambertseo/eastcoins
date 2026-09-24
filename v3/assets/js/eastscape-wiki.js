@@ -231,27 +231,63 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
       </table>
       <p><b>Plant the longest crop you can before you log off</b> and the short ones while you are around. A plot is doing nothing between ripening and your coming back, which is the only real skill in this skill.</p>
       <p><b>Your island decides how many plots you have</b> &mdash; 8 to start, 12 for 5,000 tickets, 20 for 20,000. It multiplies everything above, so it is the upgrade that matters.</p>
-      <p><b>It is background money, not a living.</b> A full set of plots kept going comes to a fraction of what fighting the same zone pays; the appeal is that it happens while you are doing something else.</p>`},{id:"thieving",title:"Thieving",icon:"🤏",cat:"Skills",body:`<p><b>The Thieves' Guild is south of the Yard</b>, behind a door that wants a permit. Inside are four rooms of guild members, and you pick their pockets. <b>Nothing in there fights back and nothing can be attacked</b> &mdash; it is the one skill in the game that needs no combat level at all.</p>
-      <p><b>Getting in costs a permit</b>, and there are two ways to hold one. The shop sells them for 50,000 tickets, and the Hoodie's hoard in the Crypt turns one up now and then. It is an ordinary item, so it can be bought and sold on the market &mdash; which usually means it goes for rather less than the shop charges. The door takes it off you once and never asks again.</p>
-      <table class="tbl"><tr><th>Room</th><th>Thieving</th><th>xp a pick</th><th>They carry</th></tr>
-        <tr><td>Apprentice Lifter</td><td>1</td><td>15</td><td>Brass buttons, whetgrit</td></tr>
-        <tr><td>Grifter</td><td>25</td><td>45</td><td>Pocket watches, quenching salts</td></tr>
-        <tr><td>The Fixer</td><td>50</td><td>110</td><td>Stolen signets, guild seal wax</td></tr>
-        <tr><td>The Quartermaster</td><td>75</td><td>200</td><td>Black-market ledgers, and starfall, eclipse and voidglass ore</td></tr>
+      <p><b>It is background money, not a living.</b> A full set of plots kept going comes to a fraction of what fighting the same zone pays; the appeal is that it happens while you are doing something else.</p>`},{id:"thieving",title:"Thieving",icon:"🤏",cat:"Skills",body:`<p><b>The Thieves&rsquo; Guild is south of the Yard</b>, behind a door that wants a permit. Inside are four rooms of guild members, and you pick their pockets. <b>Nothing in there fights back and nothing can be attacked</b> &mdash; it is the only skill in the game that needs no combat level at all, no weapon and no armour.</p>
+
+      <h3>Getting in</h3>
+      <p>You need a <b>Thieves&rsquo; permit</b>, and there are two ways to hold one:</p>
+      <ul><li>Buy one at the shop for <b>50,000 tickets</b>.</li>
+        <li>Find one in <b>the Hoodie&rsquo;s hoard</b> at the end of a Crypt run &mdash; about one chest in 105, 62 or 39 depending on the difficulty. Not past your three paid runs for the day.</li></ul>
+      <p>It is an ordinary item, so it can be <b>bought and sold on the market</b>, which usually means it changes hands for rather less than the shop charges. The door takes it off you the first time and never asks again &mdash; so a permit you have already used cannot be sold on.</p>
+
+      <h3>The four rooms</h3>
+      <p>Each room is behind a door, and <b>the door and the marks are two different ladders</b>. The first door opens at Thieving 10 although the Grifters behind it cannot be picked until 25 &mdash; that is on purpose, so there is somewhere to walk to and look at while you are still learning.</p>
+      <table class="tbl"><tr><th>Room</th><th>Door opens</th><th>Pick at</th><th>xp a pick</th><th>Tickets an hour</th></tr>
+        <tr><td>The Back Room &mdash; Apprentice Lifters</td><td>&mdash;</td><td>1</td><td>15</td><td>~2,300</td></tr>
+        <tr><td>The Card Room &mdash; Grifters</td><td>10</td><td>25</td><td>45</td><td>~6,700</td></tr>
+        <tr><td>The Store Room &mdash; The Fixers</td><td>50</td><td>50</td><td>110</td><td>~11,100</td></tr>
+        <tr><td>The Vault Room &mdash; The Quartermaster</td><td>75</td><td>75</td><td>200</td><td>~17,600</td></tr>
       </table>
-      <p><b>Your chance climbs with your level.</b> Against a mark of your own level you land about 55%, and every level above that adds 2% up to a ceiling of 90%. So the room you have just unlocked is the hard one and the room behind you is nearly free &mdash; which is the whole shape of the skill.</p>
-      <p><b>Get caught and it costs you.</b> You are shaken off for a few seconds and one stolen thing falls out of your bag. Only things taken in the guild can be lost that way: never tickets, never your gear, never your permit.</p>
-      <p><b>A mark closes up for a few seconds after you lift something</b>, so you work the room rather than one pocket. Three of each stand in every chamber.</p>
-      <p><b>What it is really for is the anvil.</b> The materials go into three things no shop sells, all made at the anvil:</p>
+
+      <h3>How a pick works</h3>
+      <p>Click a mark and you keep trying, one attempt every <b>2.4 seconds</b>, until you stop or you land one. Against a mark of <b>your own level you land 55%</b>, and <b>every level above that adds 2%</b>, up to a ceiling of <b>90%</b>. So a room you have just unlocked is the hard one and the room behind you is nearly free.</p>
+      <p><b>Get caught</b> and the mark has your wrist: you are held for <b>two to three and a half seconds</b> and <b>one stolen thing falls out of your bag</b>. Only things taken in the guild can be lost that way &mdash; never tickets, never your gear, never your permit.</p>
+      <p><b>After a successful lift that mark keeps a hand on their pocket for six seconds.</b> There are three of each in every room, so you work the room rather than one pocket.</p>
+
+      <h3>What they carry</h3>
+      <table class="tbl"><tr><th>Room</th><th>What</th><th>How often</th><th>Fence</th></tr>
+        <tr><td rowspan="2">Apprentice Lifter</td><td>Brass button</td><td>80%</td><td>6</td></tr>
+        <tr><td>Whetgrit</td><td>20%</td><td>keep it</td></tr>
+        <tr><td rowspan="3">Grifter</td><td>Pocket watch</td><td>75%</td><td>15</td></tr>
+        <tr><td>Quenching salts</td><td>20%</td><td>keep it</td></tr>
+        <tr><td>Whetgrit</td><td>5%</td><td>keep it</td></tr>
+        <tr><td rowspan="3">The Fixer</td><td>Stolen signet</td><td>72%</td><td>26</td></tr>
+        <tr><td>Guild seal wax</td><td>18%</td><td>keep it</td></tr>
+        <tr><td>Quenching salts</td><td>10%</td><td>keep it</td></tr>
+        <tr><td rowspan="5">The Quartermaster</td><td>Black-market ledger</td><td>70%</td><td>29</td></tr>
+        <tr><td>Starfall ore</td><td>12%</td><td>28, but smelt it</td></tr>
+        <tr><td>Eclipse ore</td><td>9%</td><td>45, but smelt it</td></tr>
+        <tr><td>Voidglass</td><td>6%</td><td>35, but smelt it</td></tr>
+        <tr><td>Guild seal wax</td><td>3%</td><td>keep it</td></tr>
+      </table>
+      <p><b>Buttons, watches, signets and ledgers are just money</b> &mdash; sell them at the Prize Counter. Everything else goes to an anvil, and that is the half worth having.</p>
+
+      <h3>What the materials make</h3>
+      <p>Three things, all at the <b>anvil</b>, none of them sold anywhere. Each is spent on <b>one reforge attempt</b> whatever that attempt does; tick them on at the anvil before you swing and the odds shown move with them.</p>
       <table class="tbl"><tr><th>What</th><th>Smithing</th><th>Made from</th><th>What it does</th></tr>
-        <tr><td><b>Temper</b></td><td>20</td><td>2 whetgrit, 1 bronze bar</td><td>+20% on the odds of one reforge</td></tr>
-        <tr><td><b>Flux</b></td><td>40</td><td>2 quenching salts, 1 whetgrit</td><td>A failed reforge cannot destroy the piece</td></tr>
-        <tr><td><b>Master&rsquo;s seal</b></td><td>60</td><td>1 guild seal wax, 1 flux</td><td>The only way to take a piece past +3, to +4</td></tr>
+        <tr><td><b>Temper</b></td><td>20</td><td>2 whetgrit, 1 bronze bar</td><td>Adds <b>20 points</b> to the odds of that reforge</td></tr>
+        <tr><td><b>Flux</b></td><td>40</td><td>2 quenching salts, 1 whetgrit</td><td>A failed reforge <b>cannot destroy the piece</b>; it only drops a level</td></tr>
+        <tr><td><b>Master&rsquo;s seal</b></td><td>60</td><td>1 guild seal wax, 1 flux</td><td>The only way to take a piece <b>past +3, to +4</b></td></tr>
       </table>
-      <p>All three are spent whatever the reforge does. Tick them on at the anvil before you swing and the odds shown move with them.</p>
-      <p><b>The Quartermaster&rsquo;s room is also the other way to the top of smithing.</b> Starfall, eclipse and voidglass ore are otherwise only in the Vault, and voidglass is not dropped by anything at all &mdash; so a thief can supply their own eclipse armour without ever going down there.</p>
-      <p><b>What it pays.</b> The fence buys what you lift: brass buttons 6, pocket watches 15, stolen signets 26, black-market ledgers 29. The rooms come to roughly <b>2,300, 6,700, 11,000 and 17,500 tickets an hour</b>. The best of them is about what a middling miner earns, which is deliberate &mdash; a room where nobody hits back should not also be the best money in the game, and the guild&rsquo;s real payment is the materials.</p>
-      <p><b>1 to 99 is about 92 hours</b> if you always work the best room you can reach &mdash; slower than Woodcutting&rsquo;s 73 and a good deal quicker than Combat&rsquo;s 149.</p>`},{id:"agility",title:"Agility",icon:"🏃",cat:"Skills",body:`<p><b>The Run is an obstacle course</b>, up a rope ladder in the north of the Yard. You go round it: each obstacle pays, and finishing a full lap pays far more than the parts do.</p>
+      <p>A seal eats a flux, so seals can never be commoner than flux. If you are reforging something you would hate to lose, the honest advice is <b>flux first and temper second</b>: a temper only improves your chances, a flux is what stops the piece cracking in half.</p>
+
+      <h3>The other way to the top of smithing</h3>
+      <p><b>The Quartermaster&rsquo;s room carries starfall ore, eclipse ore and voidglass.</b> Those three are otherwise only found in the Vault, and voidglass is not dropped by any monster at all &mdash; so a thief can supply their own Starfall and Eclipse gear without ever going down there. That is the real reason people want into the last room.</p>
+
+      <h3>Who to talk to</h3>
+      <p>Four guild members wander the rooms and are not marks &mdash; you cannot pick them, and they will not mind you trying. <b>Sticky Pete</b>, in the first room, explains how picking works. <b>Marla Nine-Fingers</b>, in the card room, explains what the materials are for. <b>The Quiet Man</b> and <b>Odile the Clerk</b> keep the two back rooms.</p>
+
+      <h3>What it is worth</h3>
+      <p><b>1 to 99 is about 92 hours</b> if you always work the best room you can reach &mdash; slower than Woodcutting&rsquo;s 73 and a good deal quicker than Combat&rsquo;s 149. The top room earns about what a middling miner does. That is deliberate: a room where nothing fights back should not also be the best money in the game, and the guild&rsquo;s real payment is the materials.</p>`},{id:"agility",title:"Agility",icon:"🏃",cat:"Skills",body:`<p><b>The Run is an obstacle course</b>, up a rope ladder in the north of the Yard. You go round it: each obstacle pays, and finishing a full lap pays far more than the parts do.</p>
       <table class="tbl"><tr><th>What</th><th>Gives</th></tr>
         <tr><td>Each obstacle cleared</td><td>12 xp</td></tr>
         <tr><td>Clearing one perfectly</td><td>+10 xp on top</td></tr>
