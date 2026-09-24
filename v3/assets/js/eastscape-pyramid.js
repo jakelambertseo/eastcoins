@@ -13,6 +13,13 @@ function createPyramid(env){const{G,R,SFX,send,esc,$}=env,C=R.PYRAMID,T=C.tiers[
 @media (prefers-reduced-motion:reduce){.py-coil.me{animation:none}}
 .py-tier{display:flex;gap:10px;align-items:center;padding:9px 11px;margin-bottom:6px;border-radius:7px;background:rgba(0,0,0,.07)}
 .py-tier>div{flex:1}.py-tier b{display:block}.py-tier small{color:#6a5c4e;display:block;margin-top:2px}
+/* the Go-in button styles itself: .lk-btn in the page stylesheet is only a margin-left helper and nothing
+   more, so without this the one button in the window would be a browser default among drawn pixel art.
+   (And no BACKTICKS in here: this comment lives inside the CSS template literal, and a backtick closes it -
+   node --check let it through and esbuild caught it, which is what the ship tool is for.) */
+.py-tier button{flex:0 0 auto;padding:6px 14px;border:1px solid #5a4a3a;border-radius:6px;background:#241c14;color:#f4ede5;font:inherit;font-weight:800;font-size:13px;cursor:pointer}
+.py-tier button:hover:not(:disabled){background:#33271a;border-color:#8a6a3a}
+.py-tier button:disabled{opacity:.45;cursor:not-allowed}
 .py-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:7px;margin-top:8px}
 .py-it{padding:8px 4px 6px;border-radius:8px;background:rgba(0,0,0,.07);text-align:center;font-weight:800;font-size:12px;line-height:1.2}
 .py-it.rare{background:rgba(242,210,46,.22);box-shadow:inset 0 0 0 2px #c8963a}
