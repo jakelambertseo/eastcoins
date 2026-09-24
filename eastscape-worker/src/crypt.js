@@ -173,12 +173,14 @@ export function installCrypt(World, { G, R, rint }) {
   };
   P.cryptPayOne = function (S, p) {   // exactly once each (run.paidTo), at the kill or, for somebody whose connection had dropped, when they are back
     const run = S.run, T = C_.tiers[run.tier]; if (!run.cleared || run.paidTo[p.id] || !run.members.includes(p.id)) return; run.paidTo[p.id] = true;
-    const share = (run.dmg[p.id] || 0) / run.cleared.total, runs = this.cryptRunsToday(p); let pay = T.pay; if (share < C_.fullShare) pay *= C_.lowShare; if (runs >= C_.runsPaid) pay *= C_.lateShare; pay = Math.round(pay);
+    const share = (run.dmg[p.id] || 0) / run.cleared.total, runs = this.cryptRunsToday(p);
+    /* (2026-09-24) THE ARITHMETIC AND THE WRITE MOVED TO World.dungeonOwe, so the Pyramid pays by the same rules
+       rather than by a second copy of them. What is left here is the Crypt's own flavour. */
+    const { pay, low, late } = this.dungeonOwe(p, { key: "crypt", tier: run.tier, pay: T.pay, share, cfg: C_, runs });
     /* (v109) THE CLEAR'S TICKETS GO IN THE CHEST, not into the bag at the kill. What this player is owed is written ON THEIR CHARACTER
        (C.crypt.loot) so it cannot be lost to a crash, a lag-out or walking past it: the chest opens it, and anything still owed to
        somebody who is no longer in a crypt is sent after them (cryptLootSweep). */
-    p.C.crypt = { day: dayOf(), n: runs + 1, loot: { tier: run.tier, pay, low: share < C_.fullShare, late: runs >= C_.runsPaid, at: Date.now() } }; p.C.stats.crypt = (p.C.stats.crypt | 0) + 1; this.touch(p);
-    this.say(p, `THE HOODIE IS DOWN. His hoard is in front of the throne: a chest each. Open yours.${share < C_.fullShare ? " (Yours is lighter: you did under a tenth of the damage.)" : ""}${runs >= C_.runsPaid ? " (And lighter again: that was past today's three paid runs.)" : ""}`, "loot");
+    this.say(p, `THE HOODIE IS DOWN. His hoard is in front of the throne: a chest each. Open yours.${low ? " (Yours is lighter: you did under a tenth of the damage.)" : ""}${late ? " (And lighter again: that was past today's three paid runs.)" : ""}`, "loot");
     p.out.push({ type: "cryptwon", pay: 0, chest: true, secs: run.cleared.secs, tier: run.tier }); p.out.push(this.cryptGates(S));
   };
   /** the chest. `sent`: it was never opened and is being delivered */

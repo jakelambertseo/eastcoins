@@ -309,6 +309,29 @@ export class World {
   }
   touch(pl) { pl.dirty = true; pl.needSave = true; pl.changedAt ??= Date.now(); }
 
+  /* THE RUN PAYOUT, SHARED BY EVERY PARTY DUNGEON (2026-09-24, the owner: "mirror it and then factor out the
+     payout yourself so its different"). The Crypt had this inline; the Pyramid needs the same rules, and this is
+     the one part of a dungeon that must never drift between the two.
+
+     Three rules live here and nowhere else. A player who did under `fullShare` of the boss gets `lowShare` of the
+     pay, because nobody is carried for nothing. A clear past the day's `runsPaid` gets `lateShare`. And the
+     result is written ON THE CHARACTER before anything is handed over, so a crash, a dropped connection or
+     simply walking past the chest cannot lose what somebody is owed - the chest reads it back later, and
+     whatever is still owed to somebody who has left gets sent after them.
+
+     It returns the figure rather than announcing it: what the Hoodie's death says and what the Pyramid's says are
+     flavour, and flavour belongs to the dungeon. */
+  dungeonOwe(pl, { key, tier, pay, share, cfg, runs }) {
+    const low = share < cfg.fullShare, late = runs >= cfg.runsPaid;
+    /* both multipliers, THEN one round - the order the Crypt has always used. Rounding between them would pay a
+       fraction of a ticket differently depending on which penalty applied first. */
+    const owed = Math.round(pay * (low ? cfg.lowShare : 1) * (late ? cfg.lateShare : 1));
+    pl.C[key] = { day: G.chicagoDay(), n: runs + 1, loot: { tier, pay: owed, low, late, at: Date.now() } };
+    (pl.C.stats ||= G.freshStats())[key] = (pl.C.stats[key] | 0) + 1;
+    this.touch(pl);
+    return { pay: owed, low, late };
+  }
+
   meOf(pl) { const C = pl.C; return { look: C.look || null, van: C.van,
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
