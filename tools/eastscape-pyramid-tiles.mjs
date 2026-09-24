@@ -35,23 +35,44 @@ import sharp from "sharp";
 import fs from "node:fs";
 const SRC = "lt-pyr2/", OUT = "v3/assets/img/glad/flat/";
 
-/* [source index per sheet cell], row 0 then row 1, columns 0..7 */
-const FLOOR = [1, 10, 2, 3, 5, 0, 6, 7,
-  9, 11, 12, 8, 5, 4, 14, 15];
+/* [source index per sheet cell], row 0 then row 1, columns 0..7. Columns 6 and 7 are not drawn from this set at
+   all: see WALLTOP. */
+const FLOOR = [1, 10, 2, 3, 5, 0, null, null,
+  9, 11, 12, 8, 5, 4, null, null];
 const WALL = [...Array(16).keys()];
+
+/* THE TOP OF A WALL IS CUT OUT OF THE WALL ITSELF. The generator drew the four wall-top tiles as the prompt
+   asked for them - "pale limestone cap, lit brightly from above" - and rendering the burial chamber with them
+   showed why that was the wrong thing to ask for: pale cream slabs over dark brown brick, at a standard
+   deviation of 58 against the floor's 6 to 21. Every step of the taper read as white shelving bolted to the
+   room rather than as the pyramid's own stone continuing upward. (The Crypt gets away with the same idea
+   because its floor is cold slate and its wall tops are cold slate.)
+
+   So they are 32px windows cut out of t_tombwall's plainest faces - the same blocks, the same palette, the same
+   pixel size, no resampling - darkened a little so a wall still reads as not-floor. The page adds its own dark
+   edge down each side of a wall tile on top of that. Column 6 is also the strip used for the side walls and
+   column 7's lower cell the strip along the front wall, so all four stay the same stone. */
+const WALLTOP = [[0, 8, 14], [13, 8, 20], [0, 8, 30], [13, 8, 4]];   // [wall face, crop x, crop y] for cells 6, 7, 14, 15
+const DARKEN = 0.86;
 
 const sheet = async (pre, cell, order, out) => {
   const comp = [];
   for (let i = 0; i < 16; i++) {
+    if (order[i] === null) continue;
     comp.push({ input: await sharp(`${SRC}${pre}_${order[i]}.png`).resize(cell, cell, { kernel: "nearest" }).png().toBuffer(), left: (i % 8) * cell, top: Math.floor(i / 8) * cell });
+  }
+  if (out === "t_tomb.png") {
+    for (const [slot, [face, cx, cy]] of [[6, WALLTOP[0]], [7, WALLTOP[1]], [14, WALLTOP[2]], [15, WALLTOP[3]]]) {
+      comp.push({ input: await sharp(`${SRC}v_${face}.png`).extract({ left: cx, top: cy, width: 32, height: 32 }).modulate({ brightness: DARKEN }).png().toBuffer(), left: (slot % 8) * 32, top: Math.floor(slot / 8) * 32 });
+    }
   }
   await sharp({ create: { width: cell * 8, height: cell * 2, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
     .composite(comp).png({ palette: true, colours: 64 }).toFile(OUT + out);
   console.log(`  ${out}  ${cell * 8}x${cell * 2}  ${(fs.statSync(OUT + out).size / 1024).toFixed(1)} KB`);
 };
 
-await sheet("f", 32, FLOOR, "t_tomb.png");
 await sheet("v", 64, WALL, "t_tombwall.png");
+await sheet("f", 32, FLOOR, "t_tomb.png");
 
 /* the bleeding badge. 48px as drawn, trimmed to its pixels - the page draws it at 18 and scales, so it wants to
    be a clean droplet with no margin rather than a specific size. */

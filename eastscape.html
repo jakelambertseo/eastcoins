@@ -1538,7 +1538,13 @@ function say(text, cls = "sys") {
 /* ------------------------------------------------------------ the art (PixelLab, style A) */
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
-const ART_VER = { o_bomkiosk: 7, o_plot: 2, kellz_south: 5, kellz_east: 5, t_casino: 4, rug_casino: 4, o_dicetable: 4, chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
+/* t_tomb 3 -> 4 (2026-09-24): the tomb floor shipped with the generator’s wall-top tiles in columns 6 and 7
+   — "pale limestone cap, lit brightly from above", which is what I asked for and the wrong thing to ask for:
+   rendering the burial chamber showed every step of its taper as white shelving bolted to a sandstone room.
+   They are cut out of the wall faces now. THE OLD FILE HAD ALREADY BEEN SERVED UNDER ?v=3, and flat files are
+   held for a day plus a week of stale-while-revalidate, so anyone who walked into the pyramid in the twenty
+   minutes between the two deploys would have kept the shelving. This is the only invalidation there is. */
+const ART_VER = { t_tomb: 4, o_bomkiosk: 7, o_plot: 2, kellz_south: 5, kellz_east: 5, t_casino: 4, rug_casino: 4, o_dicetable: 4, chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
 /* One entry per crop in the rules, four growth stages each. Declared here because ART_FILES spreads it, and
    because a crop added to CROPS should ask for its art without anybody remembering to type four more names —
    the content check then fails until that art exists, which is the right way round. */
