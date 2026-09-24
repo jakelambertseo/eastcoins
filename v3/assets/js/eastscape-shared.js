@@ -13,13 +13,25 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 186;
+export const VERSION = 211;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
 export function hashRand(x, y, s = 1) { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
 
 /* ------------------------------------------------------------ OSRS curve */
+/* THE LEVELS THE WHOLE WORLD HEARS ABOUT (2026-09-23, the owner: "when a user now reaches level 30, 40, 50, 60,
+   70, 80, 90, 99, 110 (eventually), and 120, then there needs to be an annoucement in chat for everyone to see so
+   they can congradulate them").
+
+   110 AND 120 ARE IN THE LIST ON PURPOSE even though the cap is 99 today (XP_AT stops there). They cost nothing
+   to carry, and the alternative is somebody raising the cap in a year and quietly getting no announcement for the
+   two levels this was written for. A milestone that is not reachable simply never fires.
+
+   Every skill counts, Hitpoints included: it levels off the back of combat rather than on its own, but reaching
+   Hitpoints 70 is still a thing somebody did. Expect two lines at once now and then, because a fighter crosses
+   Combat and Hitpoints close together. */
+export const MILESTONES = new Set([30, 40, 50, 60, 70, 80, 90, 99, 110, 120]);
 export const XP_AT = [0, 0];
 { let p = 0; for (let l = 1; l < 99; l++) { p += Math.floor(l + 300 * Math.pow(2, l / 7)); XP_AT[l + 1] = Math.floor(p / 4); } }
 export const levelOf = (xp) => { let l = 1; while (l < 99 && xp >= XP_AT[l + 1]) l++; return l; };
@@ -377,11 +389,22 @@ const WEAPONS = {
   maul:    { name: "maul",    short: "Maul",    icon: "🔨", speed: 3000, acc: 0.7, str: 1.4, needsStr: true, ex: "Slow, stupid and enormous. When it lands, it lands." }
 };
 
+/* (2026-09-24, the owner: "onyx and starfall boots both have +5 defense") EVERY RUNG HAS TO BEAT THE ONE BELOW.
+   `set` climbs 14 a tier and boots and gloves take a 0.06 share of it, so consecutive tiers differ by 0.84 - less
+   than one - and Math.round collided: onyx 4.56 and starfall 5.40 both became 5. Gloves had it too. Upgrading two
+   whole tiers of armour and getting nothing in two slots is the sort of thing a player notices and cannot explain.
+
+   Fixed where it is generated rather than by nudging a share, because the collision is arithmetic and will happen
+   again to any small-share slot the moment a tier is added: each slot now remembers the rung below and is forced
+   at least one point above it. The content check asserts the whole ladder is strictly increasing. */
+const lastDef = {};
 for (const t of TIERS) {
   for (const [slot, a] of Object.entries(ARMOUR)) {
+    const def = Math.max(Math.round(t.set * a.share), (lastDef[slot] || 0) + 1);
+    lastDef[slot] = def;
     ITEMS[`${t.key}_${slot}`] = {
       name: `${t.name} ${a.name}`, short: a.short, icon: a.icon, slot,
-      def: Math.round(t.set * a.share), tier: t.key,
+      def, tier: t.key,
       req: { skill: "melee", lvl: t.gate }, ex: t.ex
     };
   }
@@ -469,8 +492,22 @@ export const toolNeed = (lvl) => { let i = 0; for (const [n, g] of TOOL_GATES.en
    expire"). A rock used to give exactly ONE and then go empty for eight seconds AND clear your action, so mining
    was a click per ore with a wait after it - measured at 720 an hour in most zones against fishing's 1,246, and the
    reason mining sat three times behind everything else. A rock now holds a few, rolled fresh each time it refills,
-   so you stand and work it the way you work a tree or a fishing spot. The empty time is unchanged. */
-export const ORE_IN_ROCK = [1, 5];
+   so you stand and work it the way you work a tree or a fishing spot. The empty time is unchanged.
+
+   (2026-09-23, the owner, from tester feedback: "buff all ores across the world from 1-5 hits before vein is
+   destroyed to 2-12".) A rock averaged three ore and now averages seven, so the forced stop comes round less than
+   half as often. Note it counts ORE TAKEN, not swings: a failed swing costs time but not depth, which is why a
+   low-level miner already emptied a rock more slowly than a high-level one.
+
+   Most of what this buys is the interruption, not the ore. Running out clears your action, so you have to pick
+   another rock, and that now happens less than half as often. MEASURED with tools/eastscape-skill-sim.mjs at
+   +3.9% an hour at level 1, +6.4% at 20 and +6.8% at 40 — I first reasoned it out as ~14% by assuming every swing
+   lands, which is wrong: a failed swing costs time without costing depth, so it dilutes the saving. The sim could
+   not answer this at all until the same day, because its mining model hopped on every ore and never ran a rock
+   dry; it does now. Rocks already
+   standing in a loaded scene keep the number they were given until they next empty, so it arrives over a minute
+   or two rather than all at once. */
+export const ORE_IN_ROCK = [2, 12];
 export const TOOL_HELD = new Set(["mining", "woodcutting", "fishing"]);
 /* (2026-09-22) WHAT A TOOL IS FOR, in one sentence and in ONE PLACE. The Prize Counter had "you need one to fish"
    written into the row it draws, from when the rod was the only tool on the shelf; the day the bronze pickaxe and
@@ -492,15 +529,17 @@ export function bestTool(c, skill) {
   let best = null, bn = -1;
   /* Same tier, one reforged: pick the reforged one. Strict > used to keep whichever was seen first, so a +3 axe in
      the bag lost to the plain one on your back. Tiers still win outright - 3 levels is under a rung by design. */
-  const look = (k) => { const it = ITEMS[k]; if (it?.tool !== skill) return; const n = (it.tlvl || 1) + forgeLevel(c, k) * 0.001; if (n > bn) { bn = n; best = k; } };
-  look(c?.eq?.weapon);
-  if (!TOOL_HELD.has(skill)) for (const st of c?.inv || []) look(st.k);
+  /* (2026-09-23) IT RETURNS THE PIECE, not the key: two pickaxes of the same rung are now different objects if
+     one of them is reforged, so "which tool" has to answer with the level as well as the name. */
+  const look = (k, f) => { const it = ITEMS[k]; if (it?.tool !== skill) return; const n = (it.tlvl || 1) + f * 0.001; if (n > bn) { bn = n; best = { k, f }; } };
+  look(c?.eq?.weapon, fLevelOf(c, "weapon"));
+  if (!TOOL_HELD.has(skill)) for (const st of c?.inv || []) look(st.k, fOf(st));
   return best;
 }
 /** Can they work a node of this level? -> null, or { have, need, held } naming what they are short of.
     `held` says the trouble is WHERE the tool is, not which one: they own one, it is good enough, it is in the bag. */
 export function toolBlock(c, skill, lvl) {
-  const need = toolNeed(lvl), have = bestTool(c, skill);
+  const need = toolNeed(lvl), t = bestTool(c, skill), have = t?.k || null;
   if (!have) {
     const bagged = TOOL_HELD.has(skill) && (c?.inv || []).some((st) => ITEMS[st.k]?.tool === skill);
     return { have: null, need, held: bagged };
@@ -508,9 +547,9 @@ export function toolBlock(c, skill, lvl) {
   return need.gate <= 1 || (ITEMS[have].tlvl || 1) >= need.gate ? null : { have, need, held: false };
 }
 /** What reforging adds to a tool, as a fraction of speed: +2.5% a level, nothing on anything that is not a tool. */
-export const forgeSpeed = (c, key) => (isTool(key) ? forgeLevel(c, key) * FORGE.tspd : 0);
-/** How much faster the tool works. 1 with nothing, up to 1.48 at the top rung, plus any reforge on THAT tool. */
-export const toolSpeed = (c, skill) => { const k = bestTool(c, skill); return k ? (ITEMS[k].tspd || 1) + forgeSpeed(c, k) : 1; };
+export const forgeSpeedAt = (key, f) => (isTool(key) ? Math.max(0, Math.min(FORGE.cap, f | 0)) * FORGE.tspd : 0);
+/** How much faster the tool works. 1 with nothing, up to 1.48 at the top rung, plus any reforge on THAT PIECE. */
+export const toolSpeed = (c, skill) => { const t = bestTool(c, skill); return t ? (ITEMS[t.k].tspd || 1) + forgeSpeedAt(t.k, t.f) : 1; };
 
 /* A requirement is one {skill, lvl} or a list of them, so the maul can want
    both Attack and Strength. Both sides read it through here. */
@@ -553,14 +592,15 @@ export const SKILLS = {
   hp: { name: "Hitpoints", icon: "❤️" }, fishing: { name: "Fishing", icon: "🎣" }, cooking: { name: "Cooking", icon: "🍳" },
   farming: { name: "Harvesting", icon: "🌾" }, mining: { name: "Mining", icon: "⛏️" }, woodcutting: { name: "Woodcutting", icon: "🪓" },
   smithing: { name: "Smithing", icon: "🔨" },
-  agility: { name: "Agility", icon: "🤸" }
+  agility: { name: "Agility", icon: "🤸" },
+  thieving: { name: "Thieving", icon: "🤏" }
 };
 export const COMBAT_SKILLS = ["melee"];
 // how the skills panel groups them. Hitpoints sits with combat because that is
 // the only place it is earned, even though it is not something you choose.
 export const SKILL_GROUPS = [
   { name: "Combat", keys: ["melee", "hp"] },
-  { name: "Skilling", keys: ["fishing", "cooking", "farming", "woodcutting", "mining", "smithing", "agility"] }   /* (v121) woodcutting, mining and smithing are back on the panel: every map has choppable trees again (1-2 a level, the owner's ask) and the Vault put the last two ore seams in the world, so the three of them lead somewhere once more. */
+  { name: "Skilling", keys: ["fishing", "cooking", "farming", "woodcutting", "mining", "smithing", "agility"] }   /* "thieving" is pushed on below, when THIEF.live */   /* (v121) woodcutting, mining and smithing are back on the panel: every map has choppable trees again (1-2 a level, the owner's ask) and the Vault put the last two ore seams in the world, so the three of them lead somewhere once more. */
 ];
 
 /* ------------------------------------------------------------ stances
@@ -633,33 +673,99 @@ export const BAG_UPGRADES = [50000, 100000, 200000, 300000, 400000];
 /** What the next slot costs, or null when they have them all. */
 export const bagUpCost = (c) => BAG_UPGRADES[Math.min(BAG_UPGRADES.length, Math.max(0, (c?.bagUp | 0)))] ?? null;
 export const bagMax = (c) => INV_MAX + (c ? petFx(c).slots + (achFx(c).slots | 0) + Math.min(BAG_UPGRADES.length, c.bagUp | 0) : 0);   /* achFx: the two pockets the milestones give */
-export const roomFor = (inv, k, c = null) => {
+/* ============================================================================================================
+   THE REFORGE BELONGS TO THE ITEM (2026-09-23, the owner: "make the reforge travel with the item")
+
+   It used to live on the CHARACTER, as C.forge[itemKey] -> level. That was fine while gear could not really
+   change hands and it is why the wiki said "a reforged piece belongs to whoever reforged it", but it made three
+   things impossible: a reforged piece could not be sold (the buyer got a plain one and the seller kept the
+   level, so buying the same piece again found it still +3), you could never own two of a kind at different
+   levels, and a market listing could not honestly advertise what it was selling.
+
+   NOW: an inventory or bank entry may carry `f`, its reforge level, and equipment carries it in C.eqf[slot].
+   Two rules keep that from going wrong, and both are enforced here rather than at the thirty-odd call sites:
+
+     1. A FORGED ENTRY NEVER STACKS. It is always n:1 in a slot of its own, because +1 and +3 are not the same
+        object and 99 of them in one stack could not say which. That costs a bag slot per reforged piece, which
+        is the honest price of the feature.
+     2. takeInv SPENDS THE PLAIN ONES FIRST. Selling, eating, using or handing over five of something must never
+        reach for the reforged one while an ordinary one is sitting there. This is the rule that stops the
+        feature eating somebody's best item, and it is why every existing caller could be left alone.
+   ============================================================================================================ */
+/** The reforge level on an inventory/bank entry (0 for an ordinary one). */
+export const fOf = (s) => Math.max(0, Math.min(FORGE.cap, (s?.f | 0) || 0));
+/** May these two entries share a stack? Only if neither is reforged. */
+export const sameStack = (a, b) => a.k === b.k && !fOf(a) && !fOf(b);
+
+/* (2026-09-24) `c` HAS NO SAFE DEFAULT, so it no longer has one. It defaulted to null, and bagMax(null) returns
+   a bare INV_MAX - which means every caller that forgot the character quietly measured a 20-slot bag and refused
+   to fill the pockets a player had bought and earned. That is what happened to smelting, and it failed in the
+   worst direction: a hard refusal with a message blaming the player's bag.
+
+   Leaving it required is the whole fix. A caller that genuinely has no character (there are none today) can pass
+   null explicitly and say so, which is a decision on the page rather than an omission. */
+export const roomFor = (inv, k, c, f = 0) => {
   const cap = capOf(k), free = bagMax(c) - inv.length;
-  if (cap === Infinity) return inv.some((s) => s.k === k) || free > 0 ? Infinity : 0;
-  return inv.reduce((r, s) => r + (s.k === k ? Math.max(0, cap - s.n) : 0), 0) + free * cap;
+  if (f > 0) return free > 0 ? 1 : 0;   // a reforged piece needs a slot of its own; it can never join a stack
+  if (cap === Infinity) return inv.some((s) => s.k === k && !fOf(s)) || free > 0 ? Infinity : 0;
+  return inv.reduce((r, s) => r + (s.k === k && !fOf(s) ? Math.max(0, cap - s.n) : 0), 0) + free * cap;
 };
 // top up the stacks already there, then open new ones; returns what didn't fit
-export const addInv = (inv, k, n, c = null) => {
+/* (2026-09-24) `c` IS REQUIRED HERE TOO, for the reason roomFor's is. Both stop at bagMax(c), and bagMax(null)
+   is a bare INV_MAX - so every caller that left the character out packed the bag into 20 slots and handed back
+   the remainder as "did not fit", ignoring the pockets a player had bought and earned. Four callers had. */
+export const addInv = (inv, k, n, c, f = 0) => {
   const cap = capOf(k);
-  for (const s of inv) { if (n <= 0) break; if (s.k === k && s.n < cap) { const t = Math.min(n, cap - s.n); s.n += t; n -= t; } }
+  if (f > 0) {   // one slot each, never merged: see rule 1 above
+    while (n > 0 && inv.length < bagMax(c)) { inv.push({ k, n: 1, f }); n -= 1; }
+    return n;
+  }
+  for (const s of inv) { if (n <= 0) break; if (s.k === k && !fOf(s) && s.n < cap) { const t = Math.min(n, cap - s.n); s.n += t; n -= t; } }
   while (n > 0 && inv.length < bagMax(c)) { const t = Math.min(n, cap); inv.push({ k, n: t }); n -= t; }
   return n;
 };
 // take up to n of k, from the last stacks first; returns how many were taken
 // the bag's tidy order: tickets, tools, weapons and armour (by slot, best tier first), food, then everything else by name.
 // Partial stacks of the same thing are merged back into 99s, so a sort can free slots.
-export function sortInv(inv) {
+/* (2026-09-24) SORTING NEEDS TO KNOW HOW BIG THE BAG IS. This rebuilds the bag by re-adding every stack through
+   addInv, which stops at bagMax - so without the character it rebuilt into 20 slots and anything past that came
+   back as overflow. The sort handler compares the totals before and after and refuses a sort that loses
+   anything, so nothing was ever destroyed; Sort simply did nothing at all for anyone with more than 20 slots in
+   use, with no message to say why. */
+export function sortInv(inv, c) {
   const tierRank = (k) => { const t = ITEMS[k]?.tier, i = TIERS.findIndex((x) => x.key === t); return i < 0 ? 99 : -i; };
   const group = (k) => { const it = ITEMS[k] || {}; return k === "tickets" ? 0 : it.tool ? 1 : it.slot ? 2 + SLOTS.indexOf(it.slot) / 10 : it.heal ? 3 : 4; };
-  const totals = new Map(); for (const s of inv) totals.set(s.k, (totals.get(s.k) || 0) + s.n);
-  const keys = [...totals.keys()].sort((a, b) => group(a) - group(b) || tierRank(a) - tierRank(b) || (ITEMS[a]?.name || a).localeCompare(ITEMS[b]?.name || b));
-  const out = []; for (const k of keys) addInv(out, k, totals.get(k));
+  /* REFORGED PIECES ARE SET ASIDE AND PUT BACK WHOLE. This function rebuilds the bag by totalling each key and
+     re-adding it, which would happily melt a +3 and a plain one into a stack of two and lose the level. They go
+     back first, best last, right after the plain ones of the same kind. */
+  const forged = inv.filter((s) => fOf(s)).map((s) => ({ k: s.k, n: 1, f: fOf(s) }));
+  const totals = new Map(); for (const s of inv) if (!fOf(s)) totals.set(s.k, (totals.get(s.k) || 0) + s.n);
+  const keys = [...new Set([...totals.keys(), ...forged.map((s) => s.k)])].sort((a, b) => group(a) - group(b) || tierRank(a) - tierRank(b) || (ITEMS[a]?.name || a).localeCompare(ITEMS[b]?.name || b));
+  const out = [];
+  for (const k of keys) {
+    if (totals.get(k)) addInv(out, k, totals.get(k), c);
+    for (const s of forged.filter((x) => x.k === k).sort((a, b) => a.f - b.f)) out.push({ ...s });
+  }
   return out;
 }
+/* PLAIN ONES FIRST (rule 2). Two passes: everything unforged, and only then the reforged ones weakest-first.
+   A caller that means "take this exact piece" passes its index to takeAt instead. */
 export const takeInv = (inv, k, n) => {
   let got = 0;
-  for (let i = inv.length - 1; i >= 0 && got < n; i--) { const s = inv[i]; if (s.k !== k) continue; const t = Math.min(n - got, s.n); s.n -= t; got += t; if (!s.n) inv.splice(i, 1); }
+  for (const forged of [false, true]) {
+    const idx = inv.map((s, i) => [s, i]).filter(([s]) => s.k === k && !!fOf(s) === forged)
+      .sort((a, b) => fOf(a[0]) - fOf(b[0]) || b[1] - a[1]).map(([, i]) => i);
+    for (const i of idx) { if (got >= n) break; const s = inv[i]; const t = Math.min(n - got, s.n); s.n -= t; got += t; }
+  }
+  for (let i = inv.length - 1; i >= 0; i--) if (!inv[i].n) inv.splice(i, 1);
   return got;
+};
+/** Take ONE specific entry by index — what the anvil, equipping and a trade offer need. Returns { k, f } or null. */
+export const takeAt = (inv, i) => {
+  const s = inv[i | 0]; if (!s || s.n < 1) return null;
+  const out = { k: s.k, f: fOf(s) };
+  s.n -= 1; if (!s.n) inv.splice(i | 0, 1);
+  return out;
 };       // different items the bank holds (stacks are unlimited)
 export const EX_SLOTS = 8;         // Exchange offers a player can have open at once
 export const EX_TAX = 0.01;        // the Exchange keeps 1% of every sale (rounded down); direct trades are free
@@ -982,63 +1088,232 @@ Object.assign(SCENES, {
     name: "The Gloam", ground: "gloam", exits: { e: "workyard", w: "mire" }, tint: "rgba(8,30,48,.32)",
     build() {
       const g = grid(), objs = [], keep = [];
-      /* (v122) woodcutting's second step. Every map has had choppable trees all along; these are the tiered ones, so the skill pays better as you go out further instead of paying `logs` forever. */
-      /* (2026-09-22) one ore per tier, on the map whose level band matches it. `rock`, not `vein`, because the art is
-         o_rock_<ore> and that is what exists for every middle tier; o_vein_* is only drawn for copper. */
-      for (const [x, y] of [[5, 17], [8, 18]]) { objs.push({ t: "rock", x, y, ore: "emerald_ore", name: "Emerald rock", req: { skill: "mining", lvl: 20 }, xp: 40 }); g[y][x] = "#"; }
-      for (const [tx, ty] of [[6, 6], [30, 19]]) { objs.push({ t: "willow", x: tx, y: ty, log: "willowlogs", name: "Gloomwillow", req: { skill: "woodcutting", lvl: 15 }, xp: 120 }); g[ty][tx] = "#"; }
-      for (let x = 0; x < COLS; x++) g[13][x] = ",";
-      for (let y = 13; y <= 18; y++) g[y][19] = ",";
-      // the black pond, fished from its north bank: trout from Fishing 10, catfish from 15
-      for (let y = 20; y <= 23; y++) for (let x = 13; x <= 25; x++) g[y][x] = "~";
-      scatterSpots(objs, 13, 25, 20, 5, [1, 2, 3, 5], { name: "Black pond", req: { skill: "fishing", lvl: 10 }, fish: "trout", fish2: "catfish", fish2lvl: 15, xp: 50, xp2: 65, glow: "#7ad8ff", tease: "Something heavy turns over under the black water. Fishing 10, the sign says." });
-      for (let x = 12; x <= 26; x++) keep.push([x, 19], [x, 18]);
-      objs.push({ t: "fire", x: 21, y: 16, name: "Campfire" }); g[16][21] = "#";   // somewhere to stand
-      /* (2026-09-22) THE WAY DOWN. The Wilderness's only entrance was a hole on the farm, which is a CLOSED area, so
-         once the farm shut there was no way in at all. This is the same `hole` kind — same WILD_REQ check, same
-         are-you-sure — just a rope ladder instead, out on the Gloam where a level 10 can reach it. */
-      objs.push({ t: "wildladder", x: 7, y: 19, name: "Rope ladder: down into the Wilderness" }); g[19][7] = "#";
-      objs.push({ t: "sign", x: 3, y: 11, name: "West: the Lantern Mire. It opens at Combat 20, and Fishing 20 for the lake." }); g[11][3] = "#";
-      objs.push({ t: "sign", x: 16, y: 15, name: "THE GLOAM: Combat 10 to 19. Nothing out here attacks first: click a monster to fight it. Toadstools by the way in, highwaymen and goats further on, Bog Gnashers in the north clearing, and the idle dead in the south-west." }); g[15][16] = "#";
-      for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
+      const put = (t, x, y, name, extra) => { objs.push({ t, x, y, name, ...(extra || {}) }); g[y][x] = "#"; keep.push([x, y]); };
+
+      /* (2026-09-24) A SHAPE OF ITS OWN. The Gloam was the Yard's skeleton with a darker tint over it: a road
+         straight across y13, a rectangular pond, and its ore and trees in pairs side by side. BOTH maps ran
+         `g[13][x] = ","` for every x, which is why they read as the same field twice. The road winds now, the
+         pond has a ragged shore, and nothing is paired. */
+      const path = [];
+      const runX = (y, x0, x1) => { for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) path.push([x, y]); };
+      const runY = (x, y0, y1) => { for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) path.push([x, y]); };
+      runX(13, 36, COLS - 1); runY(36, 8, 13); runX(8, 28, 36); runY(28, 8, 16);
+      runX(16, 20, 28); runY(20, 11, 16); runX(11, 13, 20); runY(13, 11, 13); runX(13, 0, 13);
+      for (const [x, y] of path) { g[y][x] = ","; keep.push([x, y]); }
+
+      /* The black pond, off the middle and given a shore. Spots sit on the FIRST water row and are fished from
+         the bank above, which is why y18 and y19 are kept clear of scenery. */
+      for (let y = 20; y <= 23; y++) for (let x = 26; x <= 38; x++) {
+        if ((x <= 27 || x >= 37 || y === 23) && hashRand(x, y, 77) < 0.45) continue;
+        g[y][x] = "~";
+      }
+      scatterSpots(objs, 27, 37, 20, 5, [1, 2, 3, 5], { name: "Black pond", req: { skill: "fishing", lvl: 10 }, fish: "trout", fish2: "catfish", fish2lvl: 15, xp: 50, xp2: 65, glow: "#7ad8ff", tease: "Something moves down there and it is not a fish." });
+      for (let x = 25; x <= 39; x++) keep.push([x, 19], [x, 18]);
+
+      /* ORE AND TREES, SCATTERED. Two of each as before, the owner: "keep same trees and rocks, just place
+         sporadically around" - but nowhere near one another, so the corners are worth walking to. */
+      put("rock", 15, 4, "Emerald rock", { ore: "emerald_ore", req: { skill: "mining", lvl: 20 }, xp: 40 });
+      put("rock", 31, 8, "Emerald rock", { ore: "emerald_ore", req: { skill: "mining", lvl: 20 }, xp: 40 });
+      put("willow", 24, 3, "Gloomwillow", { log: "willowlogs", req: { skill: "woodcutting", lvl: 15 }, xp: 120 });
+      put("willow", 14, 22, "Gloomwillow", { log: "willowlogs", req: { skill: "woodcutting", lvl: 15 }, xp: 120 });
+
+      /* HOLLOWAY (2026-09-24, the owner: "the yard currently feels like a mini city with the court area, lets
+         thematically build an even smaller city on the far west side of the gloam"). A hamlet that lost, on the
+         road out to the Mire: four broken pillars where a hall stood, a dry fountain, fallen fences, and the
+         furniture still where people left it. Deliberately smaller than the Yard's court - twenty-one pieces
+         against its sixty-odd - and every one examinable, because reading a place is what makes it one. */
+      put("column", 4, 9, "Broken pillar", { art: "o_cryptpillar" });
+      put("column", 9, 9, "Broken pillar", { art: "o_cryptpillar" });
+      put("column", 4, 16, "Broken pillar", { art: "o_cryptpillar" });
+      put("column", 9, 16, "Broken pillar", { art: "o_cryptpillar" });
+      put("fountain", 6, 10, "Dry fountain");
+      put("barricade", 7, 7, "Fallen fence", { art: "o_fenceH" });
+      put("barricade", 11, 18, "Fallen fence", { art: "o_fenceH" });
+      put("table", 5, 7, "Somebody's table");
+      put("chair", 6, 7, "Somebody's chair");
+      put("bench", 7, 11, "Bench");
+      put("fire", 9, 11, "Campfire");
+      put("crate", 8, 17, "Crate");
+      put("barrel", 10, 15, "Barrel");
+      put("sack", 3, 12, "Sack");
+      put("lamp", 8, 12, "Lamp post, long out", { art: "o_lamppost" });
+      put("lamp", 4, 14, "Lamp post, long out", { art: "o_lamppost" });
+      put("gravestone", 3, 18, "Gravestone");
+      put("gravestone", 5, 19, "Gravestone");
+      put("gravestone", 2, 16, "Gravestone");
+      put("skeleton", 11, 8, "Somebody who stayed");
+
+      /* AND OUT WHERE THE MONSTERS ARE: dead wood, stones, and what the fog has been keeping. */
+      put("snag", 22, 9, "Dead tree");
+      put("snag", 33, 6, "Dead tree");
+      put("boulder", 25, 10, "Boulder");
+      put("boulder", 31, 14, "Boulder");
+      put("gravestone", 39, 8, "Gravestone");
+      put("skeleton", 24, 21, "Somebody who stayed");
+      put("bush", 19, 17, "Glowcap cluster", { art: "o_glowcap" });
+      put("bush", 35, 17, "Glowcap cluster", { art: "o_glowcap" });
+
+      /* the rope ladder down into the Wilderness, on Holloway's edge where a cellar would have been */
+      put("wildladder", 12, 21, "Rope ladder: down into the Wilderness");
+
+      /* (2026-09-24) THE THIEVES' GUILD MOVED HERE, far north-east corner, with Vance beside it. It stood in the
+         Yard beside the pond - the brightest, busiest, most municipal square in the game, and the worst possible
+         doorstep for a thieves' den. Out here it is a shed in the dark at the end of a bad road. */
+      put("roomdoor", 40, 4, "The Thieves' Guild: members only", { art: "o_roomdoor", enter: "guild", permit: true });
+      for (let y = 3; y <= 7; y++) for (let x = 36; x <= 42; x++) keep.push([x, y]);
+
+      put("sign", 3, 11, "West: the Lantern Mire. It opens at Combat 20, and Fishing 20 for the lake.");
+      put("sign", 34, 13, "THE GLOAM: Combat 10 to 19. Almost everything out here waits to be hit first \u2014 click a monster to fight it. ONE thing does not: a Bog Gnasher in the north clearing comes at you on sight. Give it room, or give it a sword.");
+      put("sign", 7, 13, "HOLLOWAY. Nobody has lived here for a long time. The road west carries on to the Mire.");
+
       wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 9);
       return { g, objs, blobs: [] };
     },
-    // toadstools by the way in (east), highwaymen north-west and by the pond, goats in the middle, the idle dead in the south-west.
-    // The gnashers attack on sight and are boxed in by their own reach, in the north clearing (tools/eastscape-aggro-check.mjs)
-    mobs: [["toadstool", 31, 7], ["toadstool", 35, 8], ["toadstool", 37, 4], ["toadstool", 30, 10], ["toadstool", 38, 21], ["toadstool", 36, 16],
-      ["highwayman", 8, 5], ["highwayman", 12, 8], ["highwayman", 5, 9], ["highwayman", 28, 17], ["highwayman", 30, 21], ["highwayman", 34, 18],
-      ["goat", 27, 5], ["goat", 29, 8], ["goat", 32, 17], ["goat", 34, 22],
-      ["boneidle", 4, 20], ["boneidle", 6, 21], ["boneidle", 5, 17], ["boneidle", 9, 19],
-      ["gnasher", 21, 3], ["gnasher", 21, 5], ["gnasher", 21, 4], ["gnasher", 20, 4]],
-    npcs: [], bots: []
+    /* Toadstools by the way in, highwaymen and goats through the middle, the idle dead around Holloway.
+       ONE AGGRO MOB (2026-09-24, the owner: "there should be just ONE aggro mob on the map, to introduce players
+       to the concept ever so slightly"). The gnasher TYPE stays passive - its `aggroWas` was switched off long
+       ago, and three more of them live in the Wilderness, which nobody asked to change - so the hostility rides
+       the PLACEMENT: a fourth element on one line. It stands off the road in the north clearing with a reach of
+       3, so passing at a distance costs nothing and blundering into it does. */
+    mobs: [["toadstool", 39, 15], ["toadstool", 35, 10], ["toadstool", 41, 18], ["toadstool", 30, 12], ["toadstool", 41, 11], ["toadstool", 27, 7],
+      ["highwayman", 8, 4], ["highwayman", 13, 6], ["highwayman", 5, 22], ["highwayman", 29, 17], ["highwayman", 21, 22], ["highwayman", 34, 16],
+      ["goat", 18, 6], ["goat", 29, 4], ["goat", 32, 10], ["goat", 16, 15],
+      ["boneidle", 2, 21], ["boneidle", 6, 21], ["boneidle", 2, 6], ["boneidle", 10, 22],
+      ["gnasher", 21, 4, { aggro: 3 }], ["gnasher", 25, 6], ["gnasher", 19, 2], ["gnasher", 27, 2]],
+    npcs: [
+      /* Vance came with the door. He is `still`, and his lines are unchanged: the price, the Crypt drop, and that
+         a permit can be bought off another thief for less. */
+      { name: "Vance the Fence", art: "vance", x: 38, y: 5, still: true, opens: "permit", reach: 3,
+        hair: "#3a2e1a", shirt: "#8a6a2a", pants: "#2e2a22",
+        lines: ["Guild's through there. You'll not get past the door without a permit.",
+          "Fifty thousand tickets and it's yours. I don't haggle and I don't do credit.",
+          "They turn up in the Crypt as well, now and then \u2014 in the Hoodie's hoard, if you're lucky. Rare, mind. I've sold plenty to people who got tired of waiting.",
+          "It's a proper item, so you can buy one off another thief if they'd rather have the tickets. Usually cheaper than my price, and I'll not pretend otherwise.",
+          "One permit, one door, once. After that it's yours for good and I never see you again."] },
+    ],
+    bots: []
   },
   /* THE LANTERN MIRE, 20-29 (v68). The Gloam's ground gone green, and a LAKE where the Gloam had a pond. */
   mire: {
     name: "The Lantern Mire", ground: "gloam", exits: { e: "gloam", n: "boneyard" }, tint: "rgba(14,52,22,.34)",
     build() {
       const g = grid(), objs = [], keep = [];
-      /* (v122) woodcutting's next step. Every map has had choppable trees all along; these are the tiered ones, so the skill pays better as you go out further instead of paying `logs` forever. */
-      /* (2026-09-22) one ore per tier, on the map whose level band matches it. `rock`, not `vein`, because the art is
-         o_rock_<ore> and that is what exists for every middle tier; o_vein_* is only drawn for copper. */
-      for (const [x, y] of [[6, 18], [10, 19]]) { objs.push({ t: "rock", x, y, ore: "diamond_ore", name: "Diamond rock", req: { skill: "mining", lvl: 30 }, xp: 62 }); g[y][x] = "#"; }
-      for (const [tx, ty] of [[8, 7], [33, 18]]) { objs.push({ t: "deadtree", x: tx, y: ty, log: "ashlogs", name: "Deadwood", req: { skill: "woodcutting", lvl: 20 }, xp: 140 }); g[ty][tx] = "#"; }
-      for (let x = 0; x < COLS; x++) g[13][x] = ",";
-      for (let y = 13; y <= 16; y++) g[y][24] = ",";
-      for (let y = 18; y <= 23; y++) for (let x = 14; x <= 33; x++) g[y][x] = "~";   // the lake: most of the south
-      scatterSpots(objs, 14, 33, 18, 5, [1, 2, 3, 5], { name: "Lantern lake", req: { skill: "fishing", lvl: 20 }, fish: "lanternfish", fish2: "mudskipper", fish2lvl: 25, xp: 80, xp2: 95, glow: "#a8ffb0", tease: "Little lights drift under the surface. They move away when you lean close. Fishing 20." });
-      for (let x = 13; x <= 34; x++) keep.push([x, 17], [x, 16]);
-      NORTH_ROAD(g, keep); objs.push({ t: "sign", x: 20, y: 11, name: "North: the Boneyard. It opens at Combat 30, and Fishing 30 for the flooded crypt." }); g[11][20] = "#";
-      objs.push({ t: "sign", x: 30, y: 15, name: "THE LANTERN MIRE: Combat 20 to 29. Nothing here attacks first. Paper Twisters and moths to the east, Card Counters in the north-west, Tax Wraiths in the north-east clearing, Loan Sharks in the far south-west." }); g[15][30] = "#";
+      const put = (t, x, y, name, extra) => { objs.push({ t, x, y, name, ...(extra || {}) }); g[y][x] = "#"; keep.push([x, y]); };
+
+      /* (2026-09-24) REBUILT, like the Gloam before it, and dressed for a haunting. It was the Yard's skeleton
+         again - `g[13][x] = ","` straight across, a rectangular lake, ore and trees in pairs - with two signs on
+         it and nothing else. The owner: "make this a spooky vibe ... needs to be very spooky, this is where the
+         future halloween event will mostly take place on too", so the flavour here is doing real work: the
+         October event needs somewhere that already looks the part in September. */
+      const path = [];
+      const runX = (y, x0, x1) => { for (let x = Math.min(x0, x1); x <= Math.max(x0, x1); x++) path.push([x, y]); };
+      const runY = (x, y0, y1) => { for (let y = Math.min(y0, y1); y <= Math.max(y0, y1); y++) path.push([x, y]); };
+      /* in from the Gloam at the east, north, back west, and down the middle to the north road at x22 */
+      runX(13, 37, COLS - 1); runY(37, 8, 13); runX(8, 29, 37); runY(29, 8, 15);
+      runX(15, 22, 29); runY(22, 13, 15); runX(13, 17, 22); runY(17, 13, 17);
+      /* and on west to the sharks' corner, which is the only way to the diamond */
+      runX(17, 9, 17); runY(9, 17, 21); runX(19, 5, 9); runY(5, 19, 22);
+      runY(39, 13, 17);   // the short spur south off the road, into Lanternwick
+      for (const [x, y] of path) { g[y][x] = ","; keep.push([x, y]); }
+
+      /* THE LAKE, given a shore. Rows 19 to 21 are left solid between x17 and x32 because scatterSpots staggers
+         a spot onto y0 OR y0+1, and a spot on dry land is a fishing hole nobody can fish. */
+      for (let y = 19; y <= 23; y++) for (let x = 15; x <= 34; x++) {
+        if ((x <= 16 || x >= 33 || y >= 22) && hashRand(x, y, 41) < 0.45) continue;
+        g[y][x] = "~";
+      }
+      /* A SKIPPED TILE IN THE MIDDLE OF THE WATER IS A ONE-TILE ISLAND, and one that nothing can fix later:
+         markBanks turns it into a bank tile ("b") because it touches water on every side, and wild repairs a
+         cut-off scene by re-planting "." tiles only, so it sits there for ever as somewhere a player can see and
+         never stand. Flooding anything with water on all four sides costs one pass and ends the whole class. */
+      for (let y = 19; y <= 23; y++) for (let x = 15; x <= 34; x++)
+        if (g[y][x] !== "~" && [[1, 0], [-1, 0], [0, 1], [0, -1]].every(([dx, dy]) => g[y + dy]?.[x + dx] === "~")) g[y][x] = "~";
+      scatterSpots(objs, 18, 31, 19, 5, [1, 2, 3, 5], { name: "Lantern lake", req: { skill: "fishing", lvl: 20 }, fish: "lanternfish", fish2: "mudskipper", fish2lvl: 25, xp: 80, xp2: 95, glow: "#a8ffb0", tease: "Little lights drift under the surface. They move away when you lean close. Fishing 20." });
+      for (let x = 14; x <= 35; x++) keep.push([x, 18], [x, 17]);
+
+      /* ORE AND TREES. Both diamond rocks stay in the south-west, because that corner is where the Loan Sharks
+         are and the owner wanted the aggressive one standing over the veins - but they are no longer side by
+         side, and the deadwood is split to opposite ends of the map. */
+      put("rock", 6, 18, "Diamond rock", { ore: "diamond_ore", req: { skill: "mining", lvl: 30 }, xp: 62 });
+      put("rock", 10, 21, "Diamond rock", { ore: "diamond_ore", req: { skill: "mining", lvl: 30 }, xp: 62 });
+      put("deadtree", 8, 7, "Deadwood", { log: "ashlogs", req: { skill: "woodcutting", lvl: 20 }, xp: 140 });
+      put("deadtree", 36, 9, "Deadwood", { log: "ashlogs", req: { skill: "woodcutting", lvl: 20 }, xp: 140 });
+
+      /* LANTERNWICK (2026-09-24, the owner: "add a random small city/court area near the entrance"). A chapel
+         court that the mire took: an arch with no doors, a nave of broken pillars, and the candles still lit.
+         It sits immediately south of the way in, so it is the first thing anyone sees arriving from the Gloam,
+         and it is deliberately a ROOM - the aisle is x39, straight from the arch down to the altar, with
+         everything ranged in pairs either side of it.
+
+         IT IS FIVE COLUMNS WIDE, NOT SEVEN, AND THAT IS THE WHOLE TRICK. Built across x36 to x42 it sealed
+         eleven tiles and two moths into pockets against the east treeline: `wild` repairs a scene by clearing
+         its OWN scattered trees, and it will not move a prop that was put here on purpose, so a court that
+         reaches the edge of the map has nothing left to give. x36 and x42 are kept clear as the walking room
+         either side, which is also what lets anyone get behind the pillars. */
+      put("crypttorch", 37, 17, "Guttering torch");
+      put("crypttorch", 41, 17, "Guttering torch");
+      put("cryptgate", 38, 17, "The chapel arch");
+      put("cryptgate", 40, 17, "The chapel arch");
+      put("gargoyle", 37, 19, "Gargoyle");
+      put("gargoyle", 41, 19, "Gargoyle");
+      put("ghostbrazier", 38, 20, "Cold brazier");
+      put("ghostbrazier", 40, 20, "Cold brazier");
+      put("cryptpillar", 37, 21, "Chapel pillar");
+      put("cryptpillar", 41, 21, "Chapel pillar");
+      put("cryptcandles", 38, 22, "Candles, still lit");
+      put("cryptcandles", 40, 22, "Candles, still lit");
+      put("cryptaltar", 39, 22, "The altar");
+      for (let y = 16; y <= 24; y++) for (let x = 36; x <= 42; x++) keep.push([x, y]);
+
+      /* AND THE MIRE ITSELF: graves where the ground is dry enough, the dead standing and lying, the chapel's
+         furniture dragged out and left, and the lamps the place is named after - every one of them out except
+         the one by the road. Spread wide on purpose, so the walk between monsters is never empty. */
+      put("lamp", 36, 13, "Lamp post, still burning", { art: "o_lamppost" });
+      put("lamp", 28, 14, "Lamp post, long out", { art: "o_lamppost" });
+      put("lamp", 21, 11, "Lamp post, long out", { art: "o_lamppost" });
+      put("cryptpillar", 21, 7, "Broken pillar");
+      put("cryptpillar", 23, 7, "Broken pillar");
+      put("gravestone", 14, 5, "Gravestone");
+      put("gravestone", 26, 11, "Gravestone");
+      put("gravestone", 12, 21, "Gravestone");
+      put("gravestone", 31, 6, "Gravestone");
+      put("gravestone", 33, 3, "Gravestone");
+      put("skeleton", 34, 6, "Somebody who stayed");
+      put("skeleton", 13, 20, "Somebody who stayed");
+      put("skeleton", 11, 22, "Somebody who stayed");
+      put("snag", 16, 10, "Dead tree");
+      put("snag", 19, 6, "Dead tree");
+      put("snag", 35, 21, "Dead tree");
+      put("snag", 9, 4, "Stump", { art: "o_deadtree_stump" });
+      put("bonepile", 13, 9, "Bone pile");
+      put("bonepile", 7, 3, "Bone pile");
+      put("skullheap", 34, 11, "Skull heap");
+      put("skullheap", 17, 3, "Skull heap");
+      put("sarcophagus", 35, 19, "Sarcophagus");
+      put("sarcophagus", 12, 6, "Sarcophagus");
+      put("cryptcoffin", 30, 6, "Coffin, open");
+      put("cryptrubble", 24, 11, "Rubble");
+      put("ghostbrazier", 12, 14, "Cold brazier");
+      put("cageV", 25, 5, "Empty cage");
+      put("gargoyle", 18, 15, "Gargoyle, toppled");
+
+      NORTH_ROAD(g, keep);
+      put("sign", 20, 11, "North: the Boneyard. It opens at Combat 30, and Fishing 30 for the flooded crypt.");
+      put("sign", 36, 14, "THE LANTERN MIRE: Combat 20 to 29. Almost everything out here waits to be hit first. ONE thing does not: the Loan Shark standing over the diamond in the far south-west comes at you on sight. Paper Twisters and moths to the east, Card Counters in the north-west, Tax Wraiths in the north-east clearing.");
+      put("sign", 38, 16, "LANTERNWICK. The mire came up through the floor and everyone left. The candles did not go out.");
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 9);
       return { g, objs, blobs: [] };
     },
+    /* ONE AGGRO MOB, as in the Gloam, and for the same reason: hostility rides the PLACEMENT, not the type, so
+       the other Loan Sharks and every one in the Wilderness are untouched. The owner: "one of the loan sharks
+       should be aggressive thats near the diamond ore veins" - so it stands at 7,20, between both veins and a
+       step off the only track that reaches them. Reach 3: walking the track costs nothing, mining does not. */
     mobs: [["twister", 36, 5], ["twister", 39, 8], ["twister", 33, 9], ["twister", 38, 3], ["twister", 41, 6], ["twister", 35, 10],
       ["moth", 37, 16], ["moth", 40, 18], ["moth", 38, 21], ["moth", 41, 22], ["moth", 36, 19], ["moth", 39, 15],
       ["counter", 8, 5], ["counter", 11, 8], ["counter", 6, 9], ["counter", 13, 4], ["counter", 9, 10],
       ["taxwraith", 29, 2], ["taxwraith", 30, 3], ["taxwraith", 28, 3], ["taxwraith", 29, 4],
-      ["shark", 3, 21], ["shark", 5, 22], ["shark", 4, 23]],
+      ["shark", 7, 20, { aggro: 3 }], ["shark", 3, 21], ["shark", 4, 23]],
     npcs: [], bots: []
   },
   cloud: {
@@ -1370,6 +1645,26 @@ Object.assign(SCENES, {
       /* (2026-09-22) the first bale moved off 36,7: that is now the north court's doorway, and a bale in it made a
          fence with no way through. The court is laid above, so anything decorative here must dodge it. */
       for (const [x, y] of [[30, 5], [29, 22], [17, 6], [7, 8]]) { objs.push({ t: "hay", x, y, name: "Hay bale" }); g[y][x] = "#"; }
+      /* (2026-09-23, the owner: "put some in the yard ... spread them out randomly and not all by each other
+         though, just 3 of them") WHEAT, AND WITH IT THE WHOLE OF FARMING. There was no wheat anywhere a player
+         could reach: the only patches in the game are in the closed farm scene (eastscape-closed.js), and the
+         wiki's Farming guide has been promising "wheat in the Yard" the whole time. That mattered more than one
+         missing pickup, because Farming could not be STARTED without it — the only open source of farming xp is
+         harvesting your own island plot, planting is gated on the crop's level (island.plant), wheat is the level
+         1 crop, and the next one up is tomatoe at level 5. You could hold a stack of tomatoes off the Yard's
+         rotten ones and still not be allowed to plant one.
+
+         THREE, DELIBERATELY FAR APART. Picked by flood-filling the finished map from the casino gate and taking
+         reachable grass with open ground on all four sides: north-west above the copper, beside the central path,
+         and out in the south-west meadow. Nothing is within one tile of another object or a spawn, and the
+         closest pair is 16 tiles apart, so they read as wild wheat rather than a crop field — a field is what the
+         island is for. They go in BEFORE wild() and into `keep`, or a bush grows through them.
+
+         THE PICTURE IS wheat.png, the one the closed farm already uses. A denser o_wheat was drawn for these and
+         the owner preferred the original ("it looks better than these you made, just replace the graphics but the
+         spacing etc in the yard is good"), so the override is gone and the sprite is core art again. The three
+         positions are unchanged, which is the part that was right. */
+      for (const [x, y] of [[8, 4], [28, 8], [7, 20]]) { objs.push({ t: "wheat", x, y, name: "Wheat" }); g[y][x] = "#"; keep.push([x, y]); }
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, [...keepOf(this), ...keep], 12);
       return { g, objs, blobs: [] };
@@ -1808,6 +2103,90 @@ Object.assign(SCENES, {
   /* a player's island: one layout per upgrade tier (isle, isle2, isle3), plus the Far Shore past isle3's bridge
      and the cottage inside. Keys are "<layout>:<owner id>". What's planted, shown and painted lives on the owner's
      character (c.isle); the server sends it with each snapshot. Plot and pedestal numbers carry over between tiers. */
+  /* THE THIEVES' GUILD (2026-09-23). One hall, four chambers, each gated on THIEVING alone — no level band, which
+     is what makes this a path for somebody who never wants to fight. The chamber walls are the ladder: you can see
+     the next room's marks through the doorway long before you can pick them. Room boundaries are GUILD_ROOMS and
+     roomOf() below answers which chamber an x sits in, the same trick the Crypt uses for its gates. */
+  guild: {
+    name: "The Thieves' Guild", interior: true, floor: "guild", wallH: 34, room: [2, 7, 41, 18],
+    exitTo: { scene: "gloam", x: 40, y: 5 }, entry: { x: 4, y: 17 }, tint: "rgba(30,18,44,.30)",
+    build() {
+      const g = room(2, 7, 41, 18, 3), objs = [];
+      /* (2026-09-23, from the owner testing it) THE CHAMBERS ARE SEALED AND THE ONLY WAY THROUGH IS A DOOR. They
+         were divided by walls with a gap at the bottom, which meant a level-1 thief could stroll into the
+         Quartermaster's room and just not be able to pick anybody - "I can easily pass between each room". The
+         wall is solid now and each gap holds a `guildgate` the server opens on your THIEVING level, so the rooms
+         are a ladder you climb rather than a corridor you walk. */
+      for (const [i, wx] of GUILD_WALLS.entries()) {
+        for (let y = 7; y <= 18; y++) g[y][wx] = "v";
+        g[17][wx] = "#";
+        const next = MARKS[GUILD_ORDER[i + 1]], need = THIEF.gates[i];
+        objs.push({ t: "guildgate", art: "o_walldoor", x: wx, y: 17, lvl: need, room: i + 1,
+          name: `Door to the ${next.name}s \u2014 Thieving ${need}` });
+      }
+      /* WHAT EACH ROOM LOOKS LIKE. All reused art, and each room gets its own furniture so you can tell at a
+         glance which one you are standing in - the other thing that came straight out of testing ("i cant see
+         the differences in each room"). A sign in each says whose room it is and what it takes to work it. */
+      const ROOMS = [
+        { sign: "THE BACK ROOM. Apprentice Lifters. Everyone starts here.",
+          props: [["crate", 2, 9], ["crate", 3, 8], ["sack", 6, 8], ["sack", 9, 15], ["bucket", 10, 9], ["cat", 5, 15],
+                  ["crate", 8, 16], ["barrel", 2, 15], ["sack", 3, 16], ["crate", 10, 15], ["bucket", 6, 16], ["barrel", 9, 8], ["bench", 4, 12]] },
+        { sign: "THE CARD ROOM. Grifters work here. Thieving 25.",
+          props: [["table", 16, 15], ["chair", 15, 15], ["chair", 17, 15], ["bench", 19, 8], ["barrel", 14, 8], ["bucket", 21, 16],
+                  ["sack", 20, 15], ["table", 19, 11], ["chair", 20, 11], ["chair", 18, 11], ["crate", 14, 16], ["barrel", 21, 8], ["bench", 16, 8]] },
+        { sign: "THE STORE ROOM. The Fixers. Thieving 50.",
+          props: [["barrel", 24, 8], ["barrel", 25, 15], ["chest", 27, 16], ["crate", 29, 8], ["column", 26, 11], ["sack", 31, 15],
+                  ["barrel", 31, 8], ["crate", 24, 16], ["chest", 30, 15], ["barrel", 26, 8], ["sack", 29, 16], ["column", 28, 8], ["bucket", 23, 12]] },
+        { sign: "THE VAULT ROOM. The Quartermaster. Thieving 75.",
+          props: [["chest", 34, 8], ["chest", 36, 16], ["fire", 39, 8], ["statue", 37, 11], ["plant", 34, 15], ["plant", 41, 15],
+                  ["chest", 40, 16], ["chest", 35, 16], ["barrel", 41, 8], ["chest", 33, 8], ["plant", 37, 16], ["column", 39, 12], ["bench", 34, 12]] },
+      ];
+      for (const [i, key] of GUILD_ORDER.entries()) {
+        const M = MARKS[key], x0 = i === 0 ? 3 : GUILD_WALLS[i - 1] + 2, R = ROOMS[i];
+        objs.push({ t: "sign", x: x0 + 1, y: 7, name: R.sign });
+        g[7][x0 + 1] = "#";
+        for (const [t, x, y] of R.props) { if (x < 2 || x > 41 || g[y][x] !== "i") continue; objs.push({ t, x, y, name: t[0].toUpperCase() + t.slice(1) }); g[y][x] = "#"; }
+        for (const [dx, dy] of [[1, 2], [4, 5], [6, 2]]) {
+          const x = x0 + dx, y = 8 + dy; if (x >= COLS - 2 || g[y][x] !== "i") continue;
+          objs.push({ t: "mark", mark: key, x, y, name: M.name, lvl: M.lvl, xp: M.xp, look: M.look, req: { skill: "thieving", lvl: M.lvl },
+            tease: i ? "You would be noticed. Get better at this first." : "" });
+          g[y][x] = "#";
+        }
+      }
+      return { g, objs, blobs: [] };
+    },
+    /* (2026-09-23, the owner: "add a random real moving mob in a few rooms to make it feel alive") THESE ARE THE
+       ONES THAT MOVE. A mark is an object and objects do not travel; an NPC is an entity with steps, which the
+       server already paths and the page already animates, so the life in the room comes from people who are NOT
+       marks. They carry a `level`, which is what sends an NPC wandering to random tiles rather than shuffling on
+       the spot, and the chamber walls keep each of them in their own room without anything having to say so. */
+    mobs: [],
+    npcs: [
+      { name: "Sticky Pete", art: "pete", level: 8, x: 6, y: 11, hair: "#4a3a22", shirt: "#5a5242", pants: "#332e26",
+        /* (2026-09-23, the owner: "sticky pete and marlas dialogue should explain clearly how thieving works, and
+           what the items are used for") PETE TEACHES THE MECHANIC, MARLA TEACHES THE POINT OF THE LOOT. Between
+           the two of them a player who reads nothing else knows how to pick, what it costs to miss, what to sell
+           and what to keep. They are in the first two rooms because that is where somebody who does not know yet
+           is standing. */
+        lines: ["Click whoever you fancy and keep clicking. You'll land more of them as your Thieving climbs — start on us, we're used to it.",
+          "Miss and they'll have your wrist. Costs you a few seconds and one thing you'd already lifted. Never your tickets, never your gear.",
+          "Lift something off a man and he'll keep a hand on his pocket a moment. Go and bother the next one, come back after.",
+          "Nobody in here hits back. Leave the sword at home, you won't be needing it.",
+          "Buttons, watches, signets — that lot's just money. The Prize Counter takes them."] },
+      { name: "Marla Nine-Fingers", art: "marla", level: 22, x: 17, y: 13, hair: "#22222a", shirt: "#4a3a6a", pants: "#2a2438",
+        lines: ["Nine is plenty. Now listen, because nobody else in here will tell you.",
+          "Half of what you lift is just money — sell it. The other half goes to an anvil, and that's the half worth having.",
+          "Whetgrit makes a Temper. Tick it on before you reforge and the odds go up twenty points.",
+          "Quenching salts make Flux. Flux means a reforge that fails can't destroy the piece — it only drops a level. Ask anyone who's lost a +2.",
+          "Guild seal wax makes a Master's seal, and a seal is the only thing in this world that takes a piece past +3.",
+          "The Quartermaster's room has ore you'd otherwise have to go down the Vault for. That's why everyone wants in."] },
+      { name: "The Quiet Man", art: "quietman", level: 44, x: 27, y: 13, hair: "#6a6a72", shirt: "#2a4a52", pants: "#1e2e34",
+        lines: ["...", "Mm.", "Don't touch the chests."] },
+      { name: "Odile the Clerk", art: "odile", level: 70, x: 38, y: 14, hair: "#d8c8a0", shirt: "#6a2a2a", pants: "#3a1e1e",
+        lines: ["Everything in this room is written down somewhere.", "The Quartermaster counts twice.", "You got in? Hm."] },
+    ],
+    bots: []
+  },
   isle: { name: "Island", island: true, exitTo: { scene: "workyard", x: 38, y: 15 }, entry: { x: 10, y: 10 }, build() { return isleBuild(1); }, mobs: [], npcs: ISLE_NPCS, bots: [] },
   isle2: { name: "Island", island: true, wikiHide: true, exitTo: { scene: "workyard", x: 38, y: 15 }, entry: { x: 10, y: 10 }, build() { return isleBuild(2); }, mobs: [], npcs: ISLE_NPCS, bots: [] },
   isle3: { name: "Island", island: true, wikiHide: true, exits: { e: "shore" }, exitTo: { scene: "workyard", x: 38, y: 15 }, entry: { x: 10, y: 10 }, build() { return isleBuild(3); }, mobs: [], npcs: ISLE_NPCS, bots: [] },
@@ -1998,6 +2377,10 @@ for (const m of Object.values(MOBS)) m.hp = Math.max(2, Math.round(m.hp / 2));
    Gone with this: bones, pits, feathers and tusks (nothing used the first two; the recipes that used the others changed),
    and the thirty-row tables that gave every piece of emerald and diamond gear a fraction of a percent each. Tier gear is
    smithed; what DROPS is the named stuff you can't make. (Until then a Tax Wraith had 31 rows.) */
+/* THE CHANCES IN THIS TABLE ARE NO LONGER READ (2026-09-23). Every named rare drops at RARE_RATE — see raresOf,
+   which is where that is applied. The numbers are left in place because they are the history of what each drop
+   used to be worth, and because stripping ninety-nine of them by hand is a worse idea than a comment; but tuning
+   one here does nothing, exactly like editing a price in MOBS instead of VALUE. Add a rare by naming it. */
 export const LOOT = {
   chicken:    { item: ["chicken", 1] },
   cow:        { item: ["beef", 1] },
@@ -2250,7 +2633,25 @@ export const SLOT_TWO_CHERRIES = 1.4;
    puts this play somewhere in the band. Hi-Lo and Mines take ONE draw for the whole run (hiloPays / minesMult take it as
    `edge`), so a long run is not shaved card by card. Slots give 2% of every spin to the jackpot, so their table part is
    priced at edge less that slice and the jackpot makes up the rest. The game server is the only thing that draws. */
-export const EDGE_BAND = [0.96, 1.04];
+/* THE TABLES TAKE A CUT (2026-09-23, the owner: "give the eastscape tables an edge when people bet with tickets").
+   This band is EastScape's alone and every table here is priced in TICKETS -- the games (run/runEnd), Hi-Lo's
+   per-run draw and the Fight Pit all take G.takeInv(..., "tickets", ...) and nothing else, so there is no ZCoin
+   play to protect and no need to branch on a currency. eastcoin.vip's own casino is untouched: it keeps its 96-104
+   promise in functions/api/casino/_engine.js, which has its own edgeFor(seed) and never reads this.
+
+   Why it moved: at [0.96, 1.04] the mean was 100.002% over 200,000 draws, so the room drained nothing at all. In
+   almost every game economy the casino is the main sink; here it was mathematically zero while TIX_HOUR.winCap let
+   a good hour pay 400,000 -- five times the best grinding rate. The band is now [0.93, 0.99]: mean 96%, a 4% house
+   edge, in line with a real roulette wheel.
+
+   The 0.99 top is deliberate and is the property worth keeping. No play is ever better than fair, so there is
+   nothing to shop for -- the reason a per-play draw exists at all is that a fixed per-GAME rate is an edge a player
+   can find and farm, and one already had. A band whose ceiling sits under 1 keeps that and adds the drain.
+
+   Note the counterweight: FX_CAP lets a fully buffed player take up to +5% on a win and 3% of losses back, which
+   can still carry them over 100%. That is earned, capped, and meant to feel like an edge -- but if the room ever
+   needs to drain harder, lower FX_CAP before widening this. */
+export const EDGE_BAND = [0.93, 0.99];
 export const edgeDraw = (r) => EDGE_BAND[0] + Math.max(0, Math.min(0.999999, r)) * (EDGE_BAND[1] - EDGE_BAND[0]);
 const WHEEL_P = (() => { const n = { red: 0, black: 0, gold: 0 }; for (let a = 0; a < 3600; a++) n[wheelColor(a / 10)]++; return { red: n.red / 3600, black: n.black / 3600, gold: n.gold / 3600 }; })();   // (the wheel stops on one of 3,600 tenths of a degree: counted, so it is exact)
 const PLINKO_RET = (() => { const n = PLINKO.rows; let c = 1, t = 0; for (let b = 0; b <= n; b++) { t += (c / 2 ** n) * PLINKO.pays[b]; c = (c * (n - b)) / (b + 1); } return t; })();
@@ -2271,7 +2672,10 @@ export const paidMult = (g, nominal, res, edge) => (nominal > 0 ? (nominal * (g 
 /* the slots jackpot: 2% of every spin goes into one pot everybody shares; three sevens wins it (a 500 tickets spin
    wins all of it, smaller spins a share in proportion, the rest stays in the pot). The regular pays above were
    trimmed to make room, so slots still return about 96.5% overall. The house seeds it again after a win. */
-export const JACKPOT = { slice: 0.02, seed: 20000, cap: 500000 };   /* (v107: grown with the bet limits, 40x; a full-size spin still wins the lot, see jackpotShare) */
+export const JACKPOT = { slice: 0.02, seed: 10000, cap: 250000 };   /* (v107: grown with the bet limits, 40x; a full-size spin still wins the lot, see jackpotShare) */
+/* (2026-09-23) Halved with TIX_RATE. The pot itself needs no help -- it is fed by a slice of real bets, so it fills
+   at whatever the money is worth -- but `seed` is the floor the HOUSE tops it back up to and `cap` is an absolute
+   ceiling, and left at 20,000/500,000 both would have been worth twice as many hours as the day before. */
 export const jackpotShare = (bet) => Math.min(1, bet / CASINO.maxBet);
 export function slotsPay(reels) {
   if (reels[0] === reels[1] && reels[1] === reels[2]) return REELS.find((x) => x.k === reels[0]).pay;
@@ -2373,8 +2777,8 @@ export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 10
    charcoal and do not know why. It also fills a hole that was already open - burnChance has a `range` multiplier
    worth 20%, and the only range in the game is in the CLOSED Cottage, so no player has ever had it. */
 export const COAL_STEADY_MIN = 0.10;
-export const OUT_CAP = { tix: 0.25, speed: 0.2, tough: 0.3, rare: 0.4, zdrop: 0.75, bite: 0.1, heal: 0.5 };
-const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal"];
+export const OUT_CAP = { tix: 0.25, speed: 0.2, tough: 0.3, rare: 0.4, zdrop: 0.75, bite: 0.1, heal: 0.5, steal: 0.15 };
+const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal", "steal"];
 
 /* ============================================================ ACHIEVEMENTS (2026-09-23, the owner)
 
@@ -2393,12 +2797,18 @@ const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal"];
    rather than showing them a panel of zeroes. `on` narrows which events are worth re-testing, so an ore gathered
    does not re-run sixty predicates.
    ============================================================ */
+/* `medal` is the drawn picture for the tier, in flat/ui/. It carries the tier's identity in the Achievements
+   window now, and `col` no longer paints any text there: these five are pastels chosen for the dark CANVAS, and
+   the window is cream parchment, where #9ad8a0 novice green on #f2e4c8 was barely a colour at all. They survive
+   as the row's left-hand band, which is the one place on that panel a pale colour does its job.
+   A picture is also the honest differentiator here: three of the five tiers are gold, so a colour ramp could
+   never have separated Expert, Master and Legend the way a medal, a cup and a crown do. */
 export const ACH_TIERS = {
-  novice:  { name: "Novice",  pts: 1,  tix: 60,    col: "#9ad8a0" },
-  skilled: { name: "Skilled", pts: 2,  tix: 250,   col: "#7fc8e8" },
-  expert:  { name: "Expert",  pts: 3,  tix: 1250,  col: "#c0a0ff" },
-  master:  { name: "Master",  pts: 5,  tix: 6000,  col: "#ffb03a" },
-  legend:  { name: "Legend",  pts: 10, tix: 25000, col: "#ff6ad5" }
+  novice:  { name: "Novice",  pts: 1,  tix: 60,    col: "#9ad8a0", medal: "ach_novice" },
+  skilled: { name: "Skilled", pts: 2,  tix: 250,   col: "#7fc8e8", medal: "ach_skilled" },
+  expert:  { name: "Expert",  pts: 3,  tix: 1250,  col: "#c0a0ff", medal: "ach_expert" },
+  master:  { name: "Master",  pts: 5,  tix: 6000,  col: "#ffb03a", medal: "ach_master" },
+  legend:  { name: "Legend",  pts: 10, tix: 25000, col: "#ff6ad5", medal: "ach_legend" }
 };
 /* Points -> a permanent effect. `slots` rides bagMax, the rest ride fxOf, so nothing new is plumbed and the
    existing caps still apply. Two bag slots are deliberate (the owner, 2026-09-23) even though Bom sells five for
@@ -2614,7 +3024,8 @@ export const bandOf = (scene) => BANDS[String(scene || "").split(":")[0]] || nul
 /** Why this character can't fight / fish in this scene yet, or null if they can. kind: "fight" | "fish". */
 export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) return null; const skill = kind === "fish" ? "fishing" : "melee", need = b[0], have = lvlOf(c, skill);
   return have >= need ? null : { need, have, skill, text: `needs ${kind === "fish" ? "Fishing" : "Combat"} ${need}` }; };
-export const OPEN = new Set(["casino", "roulette", "theatre", "fightpit", "vault", "wild", "deep", "agility",   /* (2026-09-22) The Run. Built with the Agility skill but never added here, so its door in the Yard answered with the bouncer's "Room's shut" — a scene is not enterable until it is in this set. */   /* (2026-09-22) the Wilderness reopened, down the rope ladder on the Gloam */ /* "highroller": closed for now (the owner, 2026-09-19) */ /* "forum", "bathhouse": closed in v108, what mattered there is in the Yard */ "workyard", "gloam", "mire", "boneyard", "cloud", "thunderhead", "trailer"]);   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
+export const OPEN = new Set(["casino", "roulette", "theatre", "fightpit", "vault", "wild", "deep", "agility",   /* (2026-09-22) The Run. Built with the Agility skill but never added here, so its door in the Yard answered with the bouncer's "Room's shut" — a scene is not enterable until it is in this set. */   /* (2026-09-22) the Wilderness reopened, down the rope ladder on the Gloam */ /* "highroller": closed for now (the owner, 2026-09-19) */ /* "forum", "bathhouse": closed in v108, what mattered there is in the Yard */ "workyard", "gloam", "mire", "boneyard", "cloud", "thunderhead", "trailer",
+  ]);   /* (2026-09-23) the Thieves' Guild. Deliberately NOT in BANDS: its rooms gate on Thieving through each mark's own `req`, and a combat band here would undo the whole point of a skill you cannot fight your way into. */   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
 export const OPEN_DAILY = new Set([
   /* (2026-09-22) the top band's twelve. A task only reaches anyone whose levels allow it (dailyFor filters on
      `req`), so opening them costs a low-level player nothing — they will never be drawn. */
@@ -2906,6 +3317,12 @@ for (const [log, yieldN] of Object.entries(BURN)) {
    +3, which is the first point where there is something to lose. A failure drops ONE level, never destroying the
    piece — regression already supplies the tension (sitting at +4 deciding whether to push) without anyone losing a
    grind in a single click. Expected attempts from +0 to +5 is about 13 per piece, ~89 for a full set. */
+/* (2026-09-23) `max` IS THE CAP YOU CAN REACH UNAIDED; `cap` IS THE HIGHEST A LEVEL MAY EVER BE. They were the
+   same number until the Thieves' Guild put a Master's seal in the game, which buys ONE attempt at +4. Every
+   CLAMP in this file now uses `cap` and every "you are finished" test still uses `max` — and the distinction is
+   load-bearing, because normChar re-clamps a character on EVERY load: leaving those clamps on `max` would have
+   quietly demoted a +4 back to +3 the next time its owner signed in, with no error anywhere. The forge test
+   insists on that specific journey. */
 export const FORGE = {
   /* THREE LEVELS, NOT FIVE (2026-09-22, second pass). Five could not be expressed: the bonus is a percentage of the
      piece's own stat, and most gear has stats small enough that four of the five levels rounded to zero - 44 of 70
@@ -2914,7 +3331,8 @@ export const FORGE = {
      six and took a full set from +16 defence to +30, over two tiers and a sixty-point swing in how often anything
      hits you. Fewer levels is the lever, because the floor is what inflates. At three, a full set lands on +19
      against a tier of +14 and every single level moves. */
-  max: 3,
+  max: 3, cap: 4,
+  temper: 0.20,   /* (2026-09-23) what a Temper adds to the odds of one attempt. 55% -> 75% at the top step, which is the step anybody bothers to spend one on. */
   /* A TOOL REFORGES ON ITS SKILL, NEVER ON COMBAT (2026-09-23, the owner: a reforged pickaxe was offering accuracy
      and strength, which is nonsense on a skilling tool). Tools are deliberately poor weapons - see the TIERS note -
      so buying combat with a reforge fought the design. They buy tool SPEED instead, which is what a tier rung buys
@@ -2923,11 +3341,11 @@ export const FORGE = {
      by. It is flat, not a share of the tool's own stat the way gear is, because a bronze tool's stat is zero. */
   tspd: 0.025,
   /* odds[level] is the chance of going level -> level+1. */
-  odds: [1, 0.80, 0.55],
+  odds: [1, 0.8, 0.55, 0.35],
   /* brk[level] is the chance a FAILURE destroys the piece outright instead of knocking it down a level. Only a
      failure can break something, so +1 is always safe and the risk arrives exactly when there is something to lose.
      About one piece in seven is lost on the way to +3. */
-  brk: [0, 0.08, 0.15],
+  brk: [0, 0.08, 0.15, 0.30],
   /* A LEVEL IS WORTH 5.5% OF THE PIECE'S OWN STAT, or +1, whichever is MORE, not a flat +1, and that number is measured rather than picked.
      A flat +1 is right for a weapon by luck — a sword gains +4 acc and +4 str per tier, so +5 lands near one tier —
      and badly wrong for armour, where a whole tier is only +14 defence spread across SIX pieces. Flat +1 there gave
@@ -2962,9 +3380,17 @@ export const isTool = (key) => !!ITEMS[key]?.tool;
 /* Rods qualify now. They have no acc/str at all, so the old combat-only test refused them outright - the one item
    in the game you could not reforge, for the same reason the other two reforged into the wrong thing. */
 export const canForge = (key) => { const it = ITEMS[key]; if (!it || !it.tier || !forgeSlot(key)) return false; return isTool(key) || !!(it.acc || it.str || it.def); };
-export const forgeLevel = (c, key) => Math.max(0, Math.min(FORGE.max, (c?.forge?.[key] | 0) || 0));
+/* (2026-09-23) A LEVEL BELONGS TO A PIECE, so these come in two shapes and it matters which you reach for:
+     fLevelOf(c, slot)   the level of what is WORN in that slot — what the stats are built from
+     forgeLevel(c, key)  the same thing looked up by item name, kept because everything that computes a stat
+                         already asks that way. It answers about the EQUIPPED piece and nothing else: a +3 in
+                         your bag must not buff the plain one on your back.
+   Anything DISPLAYING a piece (a bag slot, a market row, a trade offer) has the entry in its hand and should use
+   its `f` through the *At helpers below, never these. */
+export const fLevelOf = (c, slot) => Math.max(0, Math.min(FORGE.cap, (c?.eqf?.[slot] | 0) || 0));
+export const forgeLevel = (c, key) => { for (const sl in c?.eq || {}) if (c.eq[sl] === key) return fLevelOf(c, sl); return 0; };
 /** The chance the NEXT step succeeds, or 0 at the cap. */
-export const forgeOdds = (lvl) => (lvl >= FORGE.max ? 0 : FORGE.odds[lvl] ?? FORGE.odds[FORGE.odds.length - 1]);
+export const forgeOdds = (lvl, sealed = false) => (lvl >= (sealed ? FORGE.cap : FORGE.max) ? 0 : FORGE.odds[lvl] ?? FORGE.odds[FORGE.odds.length - 1]);
 /** What one attempt costs: [barKey, howMany], or null when the piece cannot be reforged. */
 /* WHAT A REFORGE IS WORTH, for anything that has to SHOW it. bonusOf already folds the level into combat, but every
    name, tooltip, stat chip and equipment slot reads ITEMS[key] directly and would otherwise print the base numbers -
@@ -2972,7 +3398,8 @@ export const forgeOdds = (lvl) => (lvl >= FORGE.max ? 0 : FORGE.odds[lvl] ?? FOR
    arithmetic lives, so a display can never drift from what the server actually rolls. */
 /* THE FLOOR IS THE POINT: at least +1 a level, so a level always moves a number however small the piece's stat is.
    A stat of zero stays zero - a helm does not quietly start granting strength. */
-export const forgeAdd = (c, key, f) => { if (isTool(key)) return 0; const v = ITEMS[key]?.[f] || 0, l = forgeLevel(c, key); return v && l ? Math.max(l, Math.round(v * FORGE.step * l)) : 0; };
+export const forgeAddAt = (key, lvl, f) => { if (isTool(key)) return 0; const v = ITEMS[key]?.[f] || 0, l = Math.max(0, Math.min(FORGE.cap, lvl | 0)); return v && l ? Math.max(l, Math.round(v * FORGE.step * l)) : 0; };
+export const forgeAdd = (c, key, f) => forgeAddAt(key, forgeLevel(c, key), f);
 /** The chance a FAILURE at this level destroys the piece rather than knocking it down one. */
 export const forgeBreak = (lvl) => FORGE.brk[lvl] ?? 0;
 /** The stat a piece ACTUALLY has for this character, reforge included. */
@@ -2981,15 +3408,46 @@ export const statOf = (c, key, f) => (ITEMS[key]?.[f] || 0) + forgeAdd(c, key, f
    used to work this out itself as round(v * step * (f+1)) and subtract forgeAdd - which silently dropped the FLOOR,
    so it reported "next level adds nothing to this piece" on 54% of rows when every level in fact adds at least +1.
    A player reading that would never reforge. Anything that wants to show a gain calls this; nobody recomputes it. */
-export const forgeNext = (c, key) => {
-  const l = forgeLevel(c, key);
-  if (l >= FORGE.max) return [];
-  const nx = { forge: { ...(c?.forge || {}), [key]: l + 1 } };
+/* (2026-09-23) THE LADDER HAS TWO TOPS and this has to be told which. Unaided you stop at FORGE.max; a Master's
+   seal from the Thieves' Guild buys one attempt at FORGE.cap. Clamping `l` to `max` while testing it against
+   `cap` — which is what the seal change first did here — makes the stop condition UNREACHABLE: a +4 piece was
+   clamped back to 3 and then offered the 3 -> 4 rung again, for ever. Clamp to the ceiling, compare to the top
+   that applies. */
+export const forgeNextAt = (key, lvl, sealed = false) => {
+  const l = Math.max(0, Math.min(FORGE.cap, lvl | 0));
+  if (l >= (sealed ? FORGE.cap : FORGE.max)) return [];
   if (isTool(key)) return [["tspd", FORGE.tspd]];
-  return ["acc", "str", "def"].map((f) => [f, forgeAdd(nx, key, f) - forgeAdd(c, key, f)]).filter(([, d]) => d > 0);
+  /* (2026-09-23) By LEVEL, not by a stand-in character. This used to build `{ forge: { [key]: l + 1 } }` and ask
+     forgeAdd about it, which stopped meaning anything the moment a level moved onto the item: forgeLevel reads
+     what is WORN now, and a made-up object has nothing worn. */
+  return ["acc", "str", "def"].map((f) => [f, forgeAddAt(key, l + 1, f) - forgeAddAt(key, l, f)]).filter(([, d]) => d > 0);
 };
+export const forgeNext = (c, key) => forgeNextAt(key, forgeLevel(c, key));
 /** "Diamond axe +3", or just "Diamond axe" at +0. */
-export const forgeName = (c, key) => `${ITEMS[key]?.name || key}${forgeLevel(c, key) ? ` +${forgeLevel(c, key)}` : ""}`;
+/* WHAT THE REFORGE ON THIS PIECE IS ALREADY GIVING YOU (2026-09-23, the owner: "on reforged gear, it needs to be
+   noticable what the reforge added"). forgeNext answers what the NEXT level buys, which is the anvil's question;
+   this answers what the levels already on it are worth, which is what a player looking at the piece wants to
+   know. Kept here beside them rather than in the tooltip, because "what does +3 do" is a rules question and a
+   second copy of it in a view is how the anvil and the tooltip end up disagreeing.
+
+   A TOOL AND A PIECE OF GEAR ANSWER DIFFERENTLY, which is the whole reason this is worth spelling out on the
+   card: reforging a pickaxe, axe or rod buys SPEED (forgeSpeed), and reforging armour or a weapon buys accuracy,
+   strength and defence (forgeAdd). A Diamond axe +3 shows +4 accuracy on its own line because an axe can be
+   swung at something, and none of that +4 came from the reforge. */
+export const FIELD_NAME = { acc: "accuracy", str: "strength", def: "defence", tspd: "tool speed" };
+export const forgeGainsAt = (key, lvl) => {
+  if (!(lvl > 0)) return [];
+  if (isTool(key)) { const v = forgeSpeedAt(key, lvl); return v ? [["tspd", v]] : []; }
+  return ["acc", "str", "def"].map((f) => [f, forgeAddAt(key, lvl, f)]).filter(([, v]) => v > 0);
+};
+export const forgeGains = (c, key) => forgeGainsAt(key, forgeLevel(c, key));
+/** The same, as a line a player reads: "+7.5% tool speed" or "+2 accuracy · +2 strength". */
+export const forgeGainTextAt = (key, lvl) => forgeGainsAt(key, lvl)
+  .map(([f, v]) => (f === "tspd" ? `+${Math.round(v * 1000) / 10}% ${FIELD_NAME.tspd}` : `+${v} ${FIELD_NAME[f]}`)).join(" \u00b7 ");
+export const forgeGainText = (c, key) => forgeGainTextAt(key, forgeLevel(c, key));
+/** A piece's name with its level on it. Takes the LEVEL, so a bag slot names what it is holding. */
+export const forgeNameAt = (key, lvl) => `${ITEMS[key]?.name || key}${lvl > 0 ? ` +${Math.min(FORGE.cap, lvl | 0)}` : ""}`;
+export const forgeName = (c, key) => forgeNameAt(key, forgeLevel(c, key));
 export const forgeCost = (key) => { const sl = forgeSlot(key), it = ITEMS[key]; return sl && it?.tier ? [`${it.tier}_bar`, FORGE.bars(sl)] : null; };
 
 // (the gambling gear and the dinners had recipes here until 2026-09-20: the gear drops now, and Dex sells the dinners)
@@ -3135,6 +3593,183 @@ export const BOUNTY = { chicken: 18, cow: 32, rotten: 39, olive: 38, hornworm: 5
   /* THE 50+ BAND pays MORE than the tool asks: its reference wage goes flat at level 40 (there was no skilling past onyx), so left alone a level-70
      kill would pay a level-42 minute. These are the tool's numbers times 1 + 1.2% a level past 42, so the last band is worth reaching. The goose moved with them. */
   golem: 388, wolf: 418, drake: 485, house: 642 };   // (v68: measured with tools/eastscape-balance.mjs, like the rest)   // (re-measured 2026-09-20 for half-length fights: a kill pays less, and there are twice as many)
+/* HALF THE TICKETS (2026-09-23, the owner: "lets also reduce tickets dropped by half", then "halve the Cashier,
+   leave prices"). ONE cut, applied to the three tables that every ticket in the world comes out of, at the point
+   where they are finished being derived from each other:
+
+     VALUE       what a thing is worth. The Cashier pays it, the labels over rocks and monsters quote it, and the
+                 wiki prints it, so this is fishing's whole income, mining's, woodcutting's and farming's.
+     SHOP.buys   what Brutus hands over. Kept equal to VALUE by the block above, so it has to move with it.
+     BOUNTY      what a kill comes to. The loop below rebuilds each monster's "tickets" drop from BOUNTY minus what
+                 its loot is worth, so halving both halves the ticket line exactly and leaves the 88/12 split alone.
+
+   WHY ALL THREE TOGETHER. Halving only the mob drop was tried first and it broke the game's balance: gathering
+   income is the Cashier, not a drop, so fishing did not move at all and went from 65% of fighting to 108% of it --
+   the best farm at every band, which inverts the road tuning above. Scaling the three as one keeps every ratio
+   the balance tools measured (fighting 1.15x mining, fish 67-90% of fight, the road's 4% a step, a made thing
+   worth double its inputs) and simply moves the decimal point.
+
+   PRICES DO NOT MOVE. SHOP.sells, BAG_UPGRADES, the island tiers and Ronde's vanity are all untouched, so every
+   sink is twice as deep in hours -- which is the point. The Eclipse set and five bag upgrades were about 25 hours
+   of top-band income and are now about 50.
+
+   AND THIS IS THE ZCOIN FIX. DEX converts at a FIXED 1,000 tickets to the coin, so halving what a ticket is
+   earned at halves EastScape's ZCoin minting too -- and minting, not drops, was 45 of the 50-an-hour allowance.
+
+   NOT INCLUDED, deliberately: the daily jobs, the prize wheel and achievement rewards. Those are one-off or
+   once-a-day rewards rather than the grind, they are small against it (the three jobs together are about 20
+   minutes of Boneyard fighting), and two of them were tuned up on purpose. Halve them here if the flow is still
+   too high; that is the next knob, with JACKPOT_KILL after it. */
+/* ============================================================ THIEVING: the Thieves' Guild
+
+   The tenth skill, and the first that cannot be fought. A MARK IS A NODE, NOT A MONSTER: the guild's members are
+   clicked like a rock, and the pick runs on the same `act` loop mining and fishing use, so nothing here touches
+   the combat code. That is also why it is a real alternative path — the rooms gate on THIEVING alone, with no
+   level band, so somebody who never wants to swing a sword has somewhere to go.
+
+   THE RULE THAT MATTERS, and the reason for `per`: success rises with your level over the mark's, exactly as
+   mining's does. Agility takes 557 hours to reach 99 because a lap pays a flat 222 xp and nothing about it
+   compounds — the skill sim measured its rate moving 12% across 98 levels — and that mistake is not being made
+   twice. Here both axes move: better rooms pay more per pick AND you land more of them as you climb.
+
+   AND THE ONE THE ECONOMY RESTS ON: a mark NEVER drops tickets. Thieving pays instantly with no input cost —
+   unlike smithing, which eats ore, or fishing, which eats a cast per fish — so a direct ticket drop would make
+   it the best faucet in the game and undo the halving TIX_RATE exists to do. Everything a mark carries is a
+   GOOD, so the Cashier price is the lever and TIX_RATE below already reaches it. Keep it that way. */
+export const THIEF = {
+  ms: 2400,            // one attempt
+  base: 0.55,          // chance against a mark of your own level
+  per: 0.02,           // ...plus this per level above it, mirroring mining's curve
+  cap: 0.90,           // and never better than this, also mirroring mining
+  stun: [2000, 3500],   /* (2026-09-23) was 3-5s. The skill sim charges this on every miss, and at 3-5s plus losing an item a catch was the single biggest cost in the skill - most of the difference between 96 hours to 99 and 90 was standing still. */  // caught: shaken off for this long. NOT a hospital bill — that is DEATH's job and is keyed to areas
+  permit: 50000,       // what the fence charges. ~18 hrs for a new player, ~1.4 hrs at Combat 40, measured on the skill sim
+  rooms: [1, 25, 50, 75],
+  /* (2026-09-23, the owner: "first thieving door needs to open at level 10") THE DOORS AND THE MARKS ARE NOT THE
+     SAME LADDER. A gate used to ask for exactly the Thieving level of the marks behind it, so you only ever saw
+     a room at the moment you could work it. Opening the first at 10 gives a new thief somewhere to walk to and
+     something to look at fifteen levels before they can pick it, which is a better thing to have in front of you
+     than a wall. One per wall, each at or below the marks it leads to. */
+  gates: [10, 50, 75],
+  /* (2026-09-23) THE SKILL SHIPS DARK. The rules and the server side are finished and tested; the PAGE cannot
+     draw a mark yet (no KIND_OF entry, no sprites), so a reachable guild would be a room of invisible people.
+     This flag hides the only three things a player can see - the door in the Yard, the permit on the shop's
+     shelf, and the scene being enterable at all - while everything else stays in place and under test. Flip it
+     to true in the same commit as the client. The Crypt chest's permit line rides this too. */
+  live: true
+};
+/** The chance this character lands a pick on a mark of level `lvl`. */
+/* (2026-09-24, the owner: the curve "is a little much, but we need to add gear to compensate for it instead of
+   nerfing it") GEAR ADDS TO THE CHANCE AND THE CEILING STILL HOLDS. A bonus only helps while you are climbing,
+   which is exactly the stretch that drags - you enter a room at 55% and leave it at the 90% cap. Modelled, chance
+   alone is worth about 8% off the total; the other half of the fix is that the pick now respects fx.speed like
+   every other skill in the game, which it never did. */
+export const pickChance = (c, lvl, steal = 0) => Math.min(THIEF.cap, THIEF.base + (lvlOf(c, "thieving") - (lvl | 0)) * THIEF.per + (steal || 0));
+
+ITEMS.thieves_permit = { name: "Thieves' permit", icon: "📜", ex: "A guild chit, signed by somebody who does not exist. The door wants to see it once and never again." };
+/* what marks carry: four fence goods, one per room, and the stolen materials below */
+ITEMS.brass_button = { name: "Brass button", icon: "🔘", ex: "Still warm. Somebody's coat is going to gape all the way home." };
+ITEMS.pocket_watch = { name: "Pocket watch", icon: "⌚", ex: "Running four minutes fast, which its last owner will notice before they notice it is gone." };
+ITEMS.stolen_signet = { name: "Stolen signet", icon: "💍", ex: "The crest has been filed half off. Whoever did it gave up halfway, which is the guild all over." };
+ITEMS.blackmarket_ledger = { name: "Black-market ledger", icon: "📕", ex: "Every page is a name and a number. The fence pays well for it and asks nothing." };
+/* the stolen MATERIALS: each one feeds the anvil, which is the point of them */
+ITEMS.whetgrit = { name: "Whetgrit", icon: "⚪", ex: "Grit swept from under a guild whetstone. Worth more than the blades it sharpened." };
+ITEMS.quench_salts = { name: "Quenching salts", icon: "🧂", ex: "They hiss instead of steaming. Nobody at the guild will say where they come from." };
+ITEMS.seal_wax = { name: "Guild seal wax", icon: "🕯️", ex: "Deep red, and it never quite sets. A master's mark presses into it and stays." };
+/* ...and the three things the anvil makes of them. All three are spent on ONE reforge attempt. */
+ITEMS.temper = { name: "Temper", icon: "🔥", ex: "Bank it into the fire before you swing. The metal is kinder for it." };
+ITEMS.flux = { name: "Flux", icon: "🫙", ex: "It holds a failing piece together long enough to fail gracefully. It will not make one succeed." };
+ITEMS.masters_seal = { name: "Master's seal", icon: "🏅", ex: "Permission, in wax, to take a thing one step past where it is meant to stop. Once." };
+
+/* WHAT A MARK CARRIES. One roll per successful pick, by weight. Room 4 also carries the Vault three —
+   starfall_ore, eclipse_ore and voidglass are otherwise the only materials in the game with a single source, and
+   voidglass has no monster drop at all, so the Quartermaster is a second route to the top of smithing rather
+   than the only one. Nothing in any of these tables is tickets; see the note above. */
+/* (2026-09-24, the owner, after a group actually played it) XP UP 25% ACROSS EVERY ROOM: 15/45/110/200 became
+   19/56/138/250. The first figures were simulated and nobody had picked a pocket when they were set; this is the
+   first number on the skill that came from people playing rather than from a model. */
+export const MARKS = {
+  lifter:  { name: "Apprentice Lifter", lvl: 1,  xp: 19,  room: 0, look: { hair: "#3a2a1a", shirt: "#6a6250", pants: "#3a3630" },
+    drop: [["brass_button", 0.80], ["whetgrit", 0.20]] },
+  grifter: { name: "Grifter", lvl: 25, xp: 56, room: 1, look: { hair: "#1a1a1a", shirt: "#4a3a6a", pants: "#2a2438" },
+    drop: [["pocket_watch", 0.75], ["quench_salts", 0.20], ["whetgrit", 0.05]] },
+  fixer:   { name: "The Fixer", lvl: 50, xp: 138, room: 2, look: { hair: "#6a6a72", shirt: "#2a4a52", pants: "#1e2e34" },
+    drop: [["stolen_signet", 0.72], ["seal_wax", 0.18], ["quench_salts", 0.10]] },
+  quarter: { name: "The Quartermaster", lvl: 75, xp: 250, room: 3, look: { hair: "#d8c8a0", shirt: "#6a2a2a", pants: "#3a1e1e" },
+    drop: [["blackmarket_ledger", 0.70], ["starfall_ore", 0.12], ["eclipse_ore", 0.09], ["voidglass", 0.06], ["seal_wax", 0.03]] }
+};
+/* THE DITCHED SET (2026-09-24). Four pieces of a thief's kit somebody threw in the water rather than be caught
+   holding it, FISHED BACK UP - so Fishing finally feeds something other than Cooking, and a thief has a reason to
+   care about a skill they would otherwise never touch. Worn in ordinary armour slots, so the trade is real:
+   nothing in the guild fights back, which is exactly why giving up your combat gear costs nothing while you are
+   in there and everything the moment you leave.
+
+   A full set is +10% on the pick and +12% speed, taking a 1-99 climb from about 90 hours to 76, and to 73 with a
+   speed pet as well - level with Woodcutting. UNGEARED IS UNCHANGED AT 90: this compensates, it does not nerf.
+   Both numbers sit inside OUT_CAP (steal 0.15, speed 0.2), so the set plus everything else cannot run away. */
+export const DITCHED = ["ditched_hood", "ditched_coat", "ditched_gloves", "ditched_boots"];
+ITEMS.ditched_hood = { name: "Ditched hood", icon: "\u{1F9E2}", slot: "helm", fx: { steal: 0.025, speed: 0.03 }, ex: "Wet through and smells of the river. Nobody asks you to take it off." };
+ITEMS.ditched_coat = { name: "Ditched coat", icon: "\u{1F9E5}", slot: "body", fx: { steal: 0.025, speed: 0.03 }, ex: "Somebody went in the water rather than be caught wearing this. It still fits." };
+ITEMS.ditched_gloves = { name: "Ditched gloves", icon: "\u{1F9E4}", slot: "gloves", fx: { steal: 0.025, speed: 0.03 }, ex: "Soft, thin, worn through at the fingertips. Not from work." };
+ITEMS.ditched_boots = { name: "Ditched boots", icon: "\u{1F45E}", slot: "boots", fx: { steal: 0.025, speed: 0.03 }, ex: "Soft soles. You can hear how quiet they are just holding them." };
+/** How often a catch turns one up: about one piece every two hours of steady fishing, so a set is an evening. */
+export const DITCHED_ODDS = 1 / 2500;
+
+/* Where the chamber walls stand, and which mark lives in which chamber. The guild's build() reads both. */
+export const GUILD_WALLS = [12, 22, 32];
+export const GUILD_ORDER = ["lifter", "grifter", "fixer", "quarter"];
+/** Which chamber (0..3) an x sits in. The doorway tiles belong to the room they lead INTO. */
+export const guildRoom = (x) => GUILD_WALLS.reduce((n, wx) => (x > wx ? n + 1 : n), 0);
+
+/** One item from a mark's table. The weights are a distribution, so they must sum to 1; the content check insists. */
+export const markDrop = (key, r = Math.random) => {
+  const t = MARKS[key]?.drop; if (!t) return null;
+  let x = r(); for (const [k, w] of t) if ((x -= w) < 0) return k;
+  return t[t.length - 1][0];
+};
+
+/* The fence buys what marks carry. These are PRE-halving: TIX_RATE below cuts them like everything else, which
+   is exactly why the drops are goods.
+
+   MEASURED WITH THE SKILL SIM, NOT WITH ARITHMETIC, and that is the note worth keeping. Priced by hand off
+   "picks an hour x drop value" these rooms looked like 3k/8k/13k/24k an hour. The sim - which charges the hop to
+   the next mark and the stun on every miss - said 1.5k/4.4k/7.2k/13.6k for the very same numbers. The figures
+   below are x1.5 of that first guess and measure about 2.3k / 6.7k / 11.1k / 17.6k, against mining's 17.7k at
+   level 40 and 23.6k at 60. A top-room thief earning roughly what a mid-level miner does is deliberate: the
+   guild's real payment is the MATERIALS, and a room where nothing fights back should not also be the best money
+   in the game. Re-measure with `node tools/eastscape-skill-sim.mjs` rather than re-deriving it. */
+/* The ledger is priced at what is LEFT once the Vault ore is counted. Room 4 also drops starfall, eclipse and
+   voidglass, and the Cashier already buys all three (28/45/35 after the cut) because the Vault's own economy set
+   those prices - so a quarter of the Quartermaster's pay is ore the player was supposed to SMELT. At 56 the room
+   came out at 30.6k tickets an hour, near enough to combat's 37k at level 40 to make the guild the farm. 38
+   lands it at ~24k, which leaves the ore worth stealing for what it makes rather than for what it fences. Do not
+   "fix" this by pricing the ore down: that number belongs to the Vault, not to this skill. */
+/* THE PERMIT IS SOLD HERE rather than by a new NPC behind a new screen: it is an ITEM, so the shop's existing buy
+   path, the bag, the bank and the market all carry it with nothing added. The Crypt chest drops one rarely too,
+   and because both routes are the SAME item the market prices itself and 50,000 becomes the ceiling nobody
+   actually pays. Spending it at the guild door is what admits you, permanently, so a used permit cannot be
+   resold. Pushed rather than written into SHOP above, because SHOP is declared before THIEF is. */
+if (THIEF.live) {
+  SHOP.sells.push(["thieves_permit", THIEF.permit]);
+  SKILL_GROUPS.find((g) => g.name === "Skilling")?.keys.push("thieving");   /* the skills panel draws from this; the skill stays in SKILLS either way so every save carries its xp and every name lookup resolves */
+  OPEN.add("guild");                 /* a scene is not enterable until it is in OPEN; the door answers "Room's shut" otherwise */
+  SCENES.guild.wikiHide = false;     /* the closed-areas sweep above already hid it, because it was not in OPEN when that ran */
+}
+Object.assign(SHOP.buys, { brass_button: 12, pocket_watch: 30, stolen_signet: 51, blackmarket_ledger: 57 });
+
+/* The three consumables. They are ANVIL recipes on purpose: the stolen line is meant to be crucial to smithing,
+   so it is smithing that turns it into anything, and a thief who never smiths still has someone to sell to. */
+recipe("make_temper", { skill: "smithing", station: "anvil", lvl: 20, ms: 2600, xp: 60, in: [["whetgrit", 2], ["bronze_bar", 1]], out: ["temper", 1] });
+recipe("make_flux", { skill: "smithing", station: "anvil", lvl: 40, ms: 2600, xp: 150, in: [["quench_salts", 2], ["whetgrit", 1]], out: ["flux", 1] });
+/* a seal EATS a flux, so it can never be commoner than one */
+recipe("make_seal", { skill: "smithing", station: "anvil", lvl: 60, ms: 2600, xp: 400, in: [["seal_wax", 1], ["flux", 1]], out: ["masters_seal", 1] });
+
+export const TIX_RATE = 0.5;
+{
+  const cut = (n) => (n > 0 ? Math.max(1, Math.round(n * TIX_RATE)) : n);   // nothing worth something becomes worth nothing
+  for (const k of Object.keys(VALUE)) VALUE[k] = cut(VALUE[k]);
+  for (const k of Object.keys(SHOP.buys)) SHOP.buys[k] = cut(SHOP.buys[k]);
+  for (const k of Object.keys(BOUNTY)) BOUNTY[k] = cut(BOUNTY[k]);
+}
 for (const [t, want] of Object.entries(BOUNTY)) {
   const m = MOBS[t]; m.drops = m.drops.filter(([k]) => k !== "tickets");
   const other = m.drops.reduce((a, [k, n, p]) => a + (VALUE[k] ?? 0) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0), gap = Math.round(want * 0.88 - other);
@@ -3144,6 +3779,9 @@ for (const [t, want] of Object.entries(BOUNTY)) {
    monster's bounty / the find's worth, so every monster gives the same fraction of its pay this way and a chicken
    farmer sees a red chip about once in 250 kills while the Understudy coughs one up every 14. */
 export const FINDS = [["chip_red", 0.04, 250], ["chip_black", 0.03, 1000], ["chip_gold", 0.03, 5000], ["chip_free", 0.008, 50], ["mysterybox", 0.008, 60], ["devils_dice", 0.004, 50], ["rewind_watch", 0.006, 250]];
+/* The third number is the find's worth, and findChance divides the monster's bounty by it. Both sides have to be
+   in the same money or halving BOUNTY would halve how often chips turn up as well, which was never asked for. */
+for (const f of FINDS) f[2] = Math.max(1, Math.round(f[2] * TIX_RATE));
 /* JACKPOT KILL (v92): fighting is a slot machine too. One kill in JACKPOT_KILL.odds was carrying the house's money: it pays
    JACKPOT_KILL.mult times that monster's bounty in tickets on top of its drops, with the casino's own win banner and a line to
    everyone in the area. It adds mult / odds (a tenth) to what fighting pays on average, and nothing else changes. */
@@ -3155,9 +3793,39 @@ export const findChance = (mob, [, share, worth]) => Math.min(0.25, share * (BOU
    the drop rate here can never out-run the cap. A kill's chance grows a little with the monster's level; a catch's with
    the water. One drop in twenty is a handful (`bigN`) instead of one. At these numbers an hour of fighting turns up
    about 2 to 5 ZCoins and an hour of fishing 1.5 to 5; tools/eastscape-grind-sim.mjs prints the measured figure. */
-export const ZDROP = { kill: (lvl) => 0.006 + lvl * 0.0002, fish: { sardine: 0.0025, perch: 0.0025, trout: 0.0025, catfish: 0.0027, lanternfish: 0.003, mudskipper: 0.003, bonefish: 0.0031, ghostcarp: 0.0032, skyeel: 0.0033, cloudray: 0.0034, stormmarlin: 0.0035, thundersquid: 0.0036 }, big: 0.05, bigN: 5 };
+/* HALVED (2026-09-23, the owner: "reduce the amount of raw zcoins that drop by half from all mobs and skills").
+   Every rate below is exactly half what it was. `big` and `bigN` are the SHAPE of a drop, not its rate, so they
+   stay: one drop in twenty is still a handful of five, it just happens half as often. An hour of fighting now
+   turns up about 1 to 2.5 ZCoins and an hour of fishing about 1 to 2.5.
+
+   Worth knowing where this sits: drops were never the big half of EastScape's ZCoin minting. A level-50 hour drops
+   ~4 ZCoins but converts ~45 more through DEX at 1,000 tickets to the coin, so the ticket faucet IS the ZCoin
+   faucet. This halves the small half honestly; TIX_DROP above halves the large one. */
+export const ZDROP = { kill: (lvl) => 0.003 + lvl * 0.0001, fish: { sardine: 0.00125, perch: 0.00125, trout: 0.00125, catfish: 0.00135, lanternfish: 0.0015, mudskipper: 0.0015, bonefish: 0.00155, ghostcarp: 0.0016, skyeel: 0.00165, cloudray: 0.0017, stormmarlin: 0.00175, thundersquid: 0.0018 }, big: 0.05, bigN: 5 };
 /** A monster's whole rare line: its own named pieces, then the casino finds, each with its chance a kill. ONE roll decides. */
-export const raresOf = (mob) => [...(BOUNTY[mob] ? [["zcoin", ZDROP.kill(MOBS[mob].lvl)]] : []), ...(MOBS[mob]?.rare || []), ...(BOUNTY[mob] ? FINDS.map((f) => [f[0], findChance(mob, f)]) : [])];
+/* ONE RATE FOR EVERY NAMED RARE (2026-09-23, the owner: "lets make a rule, that ALL rares now and going forward
+   have a flat drop rate % of 1%"). Every piece on a monster's own rare table is 1 in 100. It was a hand-set
+   number per line, from 0.4% to 25%, which nobody could hold in their head and which meant a new monster's drops
+   were guessed at against no reference.
+
+   IT IS A RULE, NOT A REWRITE, and that is the point of putting it HERE rather than editing the numbers in LOOT:
+   raresOf is the one thing that reads a monster's rare table, so every monster is 1 in 100 whatever number sits
+   beside the item in the table and however that monster reached MOBS — including ones added later, or merged in
+   at runtime the way the crypt's are. Adding a rare is now naming it, and nothing else.
+
+   WHAT IT DELIBERATELY DOES NOT COVER (the owner chose this scope against the alternatives):
+     - ZCoin drops keep ZDROP.kill, which climbs with the monster's level and was halved earlier today. Flat 1%
+       would have roughly tripled them on low monsters and undone that.
+     - The casino FINDS keep findChance, which scales with the monster's BOUNTY on purpose so every monster gives
+       the same fraction of its pay in chips. Flattened, a chicken — three seconds to kill — would turn up a
+       2,500-ticket gold chip once in 100 instead of once in 9,259, and level-1 farming would be the best earning
+       in the game by a distance. Measured: a chicken's rare line goes from 1.0 tickets a kill to 32.2 against a
+       bounty of 9.
+
+   The cost, accepted: a few signature drops get much rarer. The Junk King's line falls about 89% and the goat's
+   toga goes from one in four to one in a hundred. 78 lines get rarer, 9 more common, 12 were already there. */
+export const RARE_RATE = 0.01;
+export const raresOf = (mob) => [...(BOUNTY[mob] ? [["zcoin", ZDROP.kill(MOBS[mob].lvl)]] : []), ...(MOBS[mob]?.rare || []).map(([k]) => [k, RARE_RATE]), ...(BOUNTY[mob] ? FINDS.map((f) => [f[0], findChance(mob, f)]) : [])];
 export const rollRare = (mob, r, fx) => { for (const [k, p0] of raresOf(mob)) { const p = p0 * (1 + (k === "zcoin" ? fx?.zdrop || 0 : fx?.rare || 0)); if (r < p) return k; r -= p; } return null; };   /* fx: fxOf(character) */
 export const BOX = [["clover", 3], ["chip_red", 2], ["chip_free", 3], ["beer", 3], ["whiskey", 2], ["cocktail", 2], ["steakdinner", 2], ["tp_scroll", 3], ["devils_dice", 2], ["rewind_watch", 1], ["chip_black", 0.3]];   // what's in a mystery box, by weight
 export const valueOf = (k) => VALUE[k] ?? SHOP.buys[k] ?? 0;
@@ -3200,6 +3868,62 @@ SHOP.buys.charcoal = 8;
    caught me in one evening. A smoke sells for well above its cooked twin - it cost a charcoal and it carries a
    buff - but you are meant to eat them, not run a smokehouse. */
 for (const [raw, sm] of Object.entries(SMOKE)) if (ITEMS[`s${raw}`]) SHOP.buys[`s${raw}`] = sm.sell;
+/* QUICK SELL (2026-09-23, from tester feedback via the owner: "allow rares/currently unsellable items to Bom but
+   at a deeply discounted rate, so that it still makes the market enticing, but they can just quick sell if they
+   want it").
+
+   THE PROBLEM IT SOLVES. isLoot refuses anything worn, used, drunk or raw, so twenty of the game's rare drops had
+   NO buyer at all: a second Angel's Ring was worth exactly nothing unless another player happened to want one.
+   That is the right rule for the Cashier's bulk "sell everything" — nobody should be one click from selling the
+   ring they are wearing — but it left no floor under a duplicate.
+
+   THE PRICE IS DELIBERATELY POOR, and the scale comes from what the game already does: Brutus buys an Eclipse
+   gladius back for 539 and sells it for 92,400. A buyback here has never been a fair price, and this one is not
+   either. QUICK holds a reference worth and QUICK_RATE is what Bom actually pays of it — ONE dial, so "deeply
+   discounted" can be re-tuned in a single number without touching nineteen of them.
+
+   TWO RULES THAT MUST HOLD.
+   1. It is PER ITEM AND DELIBERATE. `cashOut` with op "all" still filters on isLoot alone, so no amount of
+      clicking Sell All can take your gear. If that ever changes, this feature becomes a way to lose a drop you
+      spent a week on.
+   2. `chip_free` IS NOT IN HERE, on purpose. Using a Green house chip already pays FREEPLAY (100), so listing it
+      at a quarter of anything would be a trap: a strictly worse button sitting next to the good one.
+
+   These are in TODAY's money, after TIX_RATE. `mask` was already priced at 30 and still unsellable, because it is
+   worn — it goes through this path now, which is what makes it sellable at all. */
+export const QUICK_RATE = 0.25;
+export const QUICK = {
+  /* the Junk King's own two, off the hardest thing in the game */
+  wrench: 900, kingcap: 700,
+  /* the casino set: the chase items, effects rather than stats, so no formula would have priced them */
+  angels_ring: 900, bookies_amulet: 700, sharps_gloves: 700, adjusters_visor: 700, gamblers_ring: 500, stake_loafers: 500,
+  /* mid-road combat rares */
+  grudge: 300, bogplate: 300, lantern: 250, wraithhood: 220, spiderboots: 200, menace: 180,
+  /* the early ones */
+  toga: 120, mask: 80,
+  /* things you use rather than wear */
+  rewind_watch: 250, mysterybox: 60, devils_dice: 50
+};
+/** What Bom hands over for something he would otherwise refuse, or 0 if he still refuses it. */
+export const quickSell = (k) => (QUICK[k] ? Math.max(1, Math.round(QUICK[k] * QUICK_RATE)) : 0);
+/** Anything the Cashier will take one of: ordinary loot, or a rare at the quick-sell price. NEVER used by "sell all". */
+/* (2026-09-23, the owner: "bom trady doesnt buy smithed gear... low rates for it, 25% of what he sells it for")
+   THE COUNTER BUYS ITS OWN LADDER BACK. Nothing could sell a smithed piece at all: isLoot excludes anything with
+   a `slot`, and gear is in neither the QUICK list nor anywhere else the Cashier looks, so a player who smithed a
+   suit had no way to turn the old one into anything. SHOP.buys does carry a gear price, but that is Brutus's
+   table and Brutus closed in v108 - there is no NPC left that opens it.
+
+   The price is read straight off prizesOf(), the same list the counter SELLS from, so the two can never drift
+   apart: a quarter of what it costs, and the content check's "never buy at or above the sell price" rule holds
+   by construction. It is computed here, below TIX_RATE, because the counter's own prices are not halved either -
+   a quarter of the shelf price means a quarter of the shelf price.
+
+   AND GEAR STAYS OUT OF isLoot, deliberately. isLoot is what "sell all" sweeps; leaving armour out of it means a
+   careless click can never cash in the suit you are carrying. You sell a piece by choosing it. */
+export const GEAR_SELL_RATE = 0.25;
+const COUNTER_PRICE = new Map(prizesOf().filter((p) => Array.isArray(p.give) && p.give[1] === 1).map((p) => [p.give[0], p.price]));
+export const gearSell = (k) => { const p = COUNTER_PRICE.get(k); return p && ITEMS[k]?.slot ? Math.max(1, Math.round(p * GEAR_SELL_RATE)) : 0; };
+export const canSell = (k) => isLoot(k) || quickSell(k) > 0 || gearSell(k) > 0;
 export const isLoot = (k) => k !== "tickets" && k !== "tickets" && k !== "zcoin" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck && !ITEMS[k]?.use && !ITEMS[k]?.drink && !ITEMS[k]?.raw;
 
 // dying outside the Cage: a quarter of the time one worn item falls where you died. The killer alone can take it
@@ -3252,6 +3976,22 @@ export const THEMES = {
   gloom: { name: "Gloom", icon: "🕸️", ex: "Grey grass, bare trees, a little fog. Not for sale.", price: null }
 };
 export const EXAMINE = {
+  /* (2026-09-24) THE LANTERN MIRE'S DRESSING. The Crypt drew all of this and never named any of it, because down
+     there the pictures are furniture in a fight. Out in the mire they are the whole point - the owner asked for
+     "flavor ... very spooky", and a prop you can click and read is the difference between a scene and a backdrop. */
+  cryptgate: "An arch with nothing left to hold up. The doors are in the water somewhere, still shut.",
+  crypttorch: "Still burning, in a bog, in the rain. Nobody will say who comes out to light them.",
+  cryptaltar: "Someone has left an offering on it. A betting slip, folded twice, face down.",
+  cryptcandles: "Fourteen candles, all lit, all exactly the same height. They were not lit at the same time.",
+  cryptcoffin: "Open, empty, and clean inside. Not a speck of mire in it anywhere.",
+  cryptrubble: "The roof, mostly. It came down all at once and on a Tuesday, the sign used to say.",
+  cryptpillar: "The carving is a hand holding dice. The hand has too many fingers.",
+  gargoyle: "Gutters run the other way. This one is facing in, at the aisle, at about head height.",
+  ghostbrazier: "Cold coals with a green light coming off them. Hold a hand over it and it gets colder.",
+  sarcophagus: "The lid does not sit right any more. Hard to say from which side it was moved.",
+  skullheap: "Stacked, not dropped. Sorted by size, biggest at the bottom. Somebody tidied.",
+  bonepile: "Picked clean and laid out in rows. The moths do the picking.",
+  cageV: "A cage up on its end with the door open. Whatever the Sharks kept in it is not in it.",
   /* (v118) the Picture House. The screen does not open anything yet: the site's Movies & TV is the next half of this. */
   cinescreen: "A screen the width of the room. Nothing on it yet — Rhonda says the reels are coming.",
   cineseat: "Red velvet, and it folds. The springs have opinions.",
@@ -3322,8 +4062,14 @@ export const HISCORES = [["combat", "Combat", "level", "lvl"], ["total", "Total 
      crypt clears, while this is a number carried on every character (stats.runBest) — and it is the only board
      where SMALL WINS, so the sort has to know. Milliseconds, so the page prints one decimal. */
   ["runBest", "The Run", "fastest lap", "lap"]];
+/* (2026-09-23) THE THIEVING BOARD, added here rather than in the THIEVING block above, because HISCORES is
+   declared BELOW that block and pushing to it from there is a temporal-dead-zone crash - one that only fires
+   when THIEF.live is true, so it sat invisible for as long as the skill shipped dark. Third time an ordering
+   like this has bitten in this feature (SHOP.sells and OPEN were the others): anything the switch turns on has
+   to be pushed from AFTER the thing it is pushing into. */
+if (THIEF.live) HISCORES.push(["thieving", "Thieving", "level", "lvl"]);
 export const questsDone = (c) => Object.values(c?.qs || {}).filter((q) => q?.state === "done").length + (c?.tour && c.tour.step >= TOUR.length ? 1 : 0) + ((c?.stats?.jobs | 0) || 0);
-export const VERB = { towerdoor: "Enter", towerup: "Climb", cryptdoor: "Go down", cryptlever: "Pull", cryptexit: "Climb", cryptloot: "Open", hsboard: "Read", jukebox: "Play", prizecase: "Browse", mirror: "Look in", rrtable: "Sit at", rrseat: "Sit at", rrboard: "Read", barcart: "Drink at", prizewheel: "Spin", fameboard: "Read", cart: "Ride", fight: "Bet on", coinstatue: "tickets in at", cooler: "Drink at", buffet: "Eat at", cashier: "tickets in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", wreck: "Strip", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { towerdoor: "Enter", towerup: "Climb", cryptdoor: "Go down", cryptlever: "Pull", cryptexit: "Climb", cryptloot: "Open", hsboard: "Read", jukebox: "Play", prizecase: "Browse", mirror: "Look in", rrtable: "Sit at", rrseat: "Sit at", rrboard: "Read", barcart: "Drink at", prizewheel: "Spin", fameboard: "Read", cart: "Ride", fight: "Bet on", coinstatue: "tickets in at", cooler: "Drink at", buffet: "Eat at", cashier: "tickets in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", mark: "Pickpocket", guildgate: "Open", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", wreck: "Strip", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
@@ -3570,7 +4316,7 @@ function migrate(out) {
 
 export function freshChar() {
   return {
-    v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10, hunger: 100, thirst: 100, wagered: 0, earned: 0, spin: null, roller: 0, free: 0, meal: null, drink: null, plays: [], bagUp: 0, tower: null, forge: {}, /* (2026-09-22) the last hour of ticket bets, for TIX_HOUR. On the CHARACTER and not the connection, or relogging would clear the hour. */ tour: { step: 0, fish: 0, chickens: 0 },   /* `logs` until 2026-09-22: the field the job step counts is fish, and a dead name here is what the page went on reading */
+    v: SAVE_V, scene: START.scene, x: START.x, y: START.y, hp: 10, hunger: 100, thirst: 100, wagered: 0, earned: 0, spin: null, roller: 0, free: 0, meal: null, drink: null, plays: [], bagUp: 0, tower: null, forge: {}, guild: 0, /* (2026-09-23) when the Thieves' Guild door was opened with a permit; 0 until it is. Declared here so normChar backfills every existing character with it rather than leaving the field undefined. */ /* (2026-09-22) the last hour of ticket bets, for TIX_HOUR. On the CHARACTER and not the connection, or relogging would clear the hour. */ tour: { step: 0, fish: 0, chickens: 0 },   /* `logs` until 2026-09-22: the field the job step counts is fish, and a dead name here is what the page went on reading */
     /* (2026-09-22, the owner: "dont equip users equipment when they start. it should be in their inventory so they can
        test out equipping stuff"). You begin UNARMED with your kit in the bag, so the tour's Gear step is a real thing
        to do rather than a description of something already done. Nothing needs a weapon to work — an empty weapon
@@ -3579,6 +4325,7 @@ export function freshChar() {
        to do that" — and a new character had neither, nor any way to know they were for sale. */
     inv: [{ k: "tickets", n: 25 }, { k: "rod", n: 1 }, { k: "pickaxe", n: 1 }, { k: "axe", n: 1 }, { k: "cap", n: 1 }, { k: "rudis", n: 1 }, { k: "tunic", n: 1 }, { k: "parma", n: 1 }, { k: "sandals", n: 1 }],
     eq: { helm: null, weapon: null, body: null, shield: null, legs: null, gloves: null, boots: null, ring: null },
+    eqf: {},   /* (2026-09-23) the reforge level of what is WORN, by slot. The bag keeps its levels on the entries themselves; only equipment needs somewhere to put one, because eq holds a bare key. */
     stance: DEFAULT_STANCE,
     /* (2026-09-22) EVERY SKILL, FROM SKILLS ITSELF. This was a hand-written list, and Agility was added to SKILLS
        without being added here — so freshChar had no agility xp, normChar (which backfills a character from
@@ -3607,11 +4354,6 @@ export function normChar(c) {
      cannot start anyone at the top. Both clamped to the tower's real height. */
   /* (2026-09-22) REFORGE levels, keyed by item. Only keys that are actually forgeable survive a load and each is
      clamped to FORGE.max, so a hand-edited save cannot invent a +99 sword or hang a level on a stack of tickets. */
-  out.forge = {};
-  if (c.forge && typeof c.forge === "object") for (const [k, v] of Object.entries(c.forge)) {
-    const n = Math.max(0, Math.min(FORGE.max, Math.trunc(Number(v)) || 0));
-    if (n > 0 && canForge(k)) out.forge[k] = n;
-  }
   out.tower = c.tower && typeof c.tower === "object"
     ? { floor: Math.max(1, Math.min(200, Math.trunc(Number(c.tower.floor)) || 1)), best: Math.max(0, Math.min(200, Math.trunc(Number(c.tower.best)) || 0)) }
     : null;
@@ -3626,16 +4368,79 @@ export function normChar(c) {
   // renames are followed BEFORE anything is filtered against ITEMS: the filter
   // below deletes keys it does not recognise, so an un-aliased rename would
   // quietly empty every bag and bank that had not logged in since.
-  const renamed = (st) => (st && st.k ? { k: aliasKey(st.k), n: st.n } : st);
-  out.bank = (Array.isArray(c.bank) ? c.bank : []).map(renamed).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, BANK_MAX).map((s) => ({ k: s.k, n: s.n }));
+  /* (2026-09-23) `f` RIDES THROUGH THE RE-PACK. This rebuilds the bag and bank from scratch on every load, and
+     mapping each entry to a bare { k, n } quietly threw away any reforge level on it — which made the whole
+     feature last exactly until the player's next login. A forged entry is passed to addInv with its level, so it
+     lands in a slot of its own instead of being merged into the plain stack beside it. */
+  const renamed = (st) => (st && st.k ? { k: aliasKey(st.k), n: st.n, ...(st.f ? { f: st.f } : {}) } : st);
+  out.bank = (Array.isArray(c.bank) ? c.bank : []).map(renamed).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, BANK_MAX).map((s) => ({ k: s.k, n: s.n, ...(s.f ? { f: s.f } : {}) }));
   // the bag is re-packed into stacks of 99; anything that no longer fits goes to the bank rather than vanishing
   out.inv = [];
   for (const s of (Array.isArray(c.inv) ? c.inv : f.inv).map(renamed).filter((s) => s && ITEMS[s.k] && s.n > 0)) {
-    const left = addInv(out.inv, s.k, s.n); if (!left) continue;
-    const b = out.bank.find((x) => x.k === s.k); if (b) b.n += left; else out.bank.push({ k: s.k, n: left });
+    /* (2026-09-24) `out`, NOT null. This ran on every single load and packed the bag into 20 slots, pushing
+       whatever was left into the bank - so the two pockets a player bought and earned could never hold anything
+       for longer than one refresh, and the bag looked as though it simply held 20. `out` already carries bagUp
+       and ach from the spread above, and bagMax clamps bagUp itself, so reading it here is safe. */
+    const left = addInv(out.inv, s.k, s.n, out, s.f || 0); if (!left) continue;
+    const b = !s.f && out.bank.find((x) => x.k === s.k && !x.f); if (b) b.n += left; else out.bank.push({ k: s.k, n: left, ...(s.f ? { f: s.f } : {}) });
   }
-  { const bt = out.bank.find((x) => x.k === "tickets"); if (bt) { out.bank.splice(out.bank.indexOf(bt), 1); addInv(out.inv, "tickets", bt.n); } }   /* tickets stay on you (2026-09-19): any that were banked come back to the bag (they never take a slot's cap) */
-  for (const s of SLOTS) { if (out.eq[s]) out.eq[s] = aliasKey(out.eq[s]); if (out.eq[s] && !ITEMS[out.eq[s]]) out.eq[s] = null; }
+  { const bt = out.bank.find((x) => x.k === "tickets"); if (bt) { out.bank.splice(out.bank.indexOf(bt), 1); addInv(out.inv, "tickets", bt.n, out); } }   /* tickets stay on you (2026-09-19): any that were banked come back to the bag (they never take a slot's cap) */
+  /* (2026-09-23) THE PET SLOT IS NOT AN ITEM SLOT and must sit this out. Every other slot holds an item KEY, so
+     this drops anything whose item no longer exists (and applies renames on the way). eq.pet holds an ID into
+     c.pets — "p1" — which is never a key in ITEMS, so it failed that test on EVERY load: a player equipped a pet,
+     refreshed, and found it unequipped, for ever. Reported by a tester as "pets reset on refresh".
+     It is already validated properly a few lines above, against the list it actually points into. */
+  for (const s of SLOTS) { if (s === "pet") continue; if (out.eq[s]) out.eq[s] = aliasKey(out.eq[s]); if (out.eq[s] && !ITEMS[out.eq[s]]) out.eq[s] = null; }
+  /* BOTH OF THESE RUN AFTER THE RE-PACK ABOVE, and that ordering is the whole reason they work: the re-pack
+     rebuilds inv and bank from the saved character, so anything stamped onto those lists before it is discarded.
+     Found the hard way — the migration ran, the bag came out plain, and the levels were gone. */
+  /* ---------------------------------------------------------------------------------------------------------
+     THE ONE-TIME MOVE OF EVERY EXISTING REFORGE ONTO A REAL ITEM (2026-09-23).
+
+     Levels used to live on the character as forge[itemKey]. They live on the piece now, so each saved level has
+     to find the piece it belongs to, ONCE, on the next load. It goes to the first of these that the player
+     actually holds:
+
+         what they are WEARING  ->  eqf[slot]        (the most likely thing they reforged, and the one whose
+                                                      stats would visibly change if we guessed wrong)
+         the first in the BAG   ->  that entry's f
+         the first in the BANK  ->  that entry's f
+
+     AND IF THEY HOLD NONE OF THAT ITEM, THE LEVEL IS DROPPED, deliberately. Under the old model a level stayed
+     with you forever: sell a +3 axe, buy another, find it still +3. That is exactly the thing this change
+     exists to stop, so carrying those orphans forward would import the bug we are removing. Anyone who sold a
+     reforged piece was already not going to get it back.
+
+     `mig` marks it done so a later load cannot run it twice and re-stamp a level onto a piece that has since
+     been traded away. c.forge is left in place, unread, rather than deleted: it is the only record of what
+     somebody had if this ever needs looking at. */
+  out.eqf = {};
+  if (c.eqf && typeof c.eqf === "object") for (const [sl, v] of Object.entries(c.eqf)) {
+    const n = Math.max(0, Math.min(FORGE.cap, Math.trunc(Number(v)) || 0));
+    if (n > 0 && out.eq[sl] && canForge(out.eq[sl])) out.eqf[sl] = n;
+  }
+  if (!c.forgeMig && c.forge && typeof c.forge === "object") {
+    for (const [k, v] of Object.entries(c.forge)) {
+      const n = Math.max(0, Math.min(FORGE.cap, Math.trunc(Number(v)) || 0));
+      if (!(n > 0) || !canForge(k)) continue;
+      const slot = Object.keys(out.eq).find((sl) => out.eq[sl] === k);
+      if (slot) { out.eqf[slot] = n; continue; }
+      const bag = (out.inv || []).find((x) => x.k === k && !x.f);
+      if (bag) { if (bag.n > 1) { bag.n -= 1; out.inv.push({ k, n: 1, f: n }); } else bag.f = n; continue; }
+      const bank = (out.bank || []).find((x) => x.k === k && !x.f);
+      if (bank) { if (bank.n > 1) { bank.n -= 1; out.bank.push({ k, n: 1, f: n }); } else bank.f = n; }
+      // held none of it: the level goes, which is the point of the change
+    }
+  }
+  out.forgeMig = 1;
+  out.forge = c.forge && typeof c.forge === "object" ? c.forge : {};   // kept, unread: the record of what was
+  /* A hand-edited save cannot invent a +99 axe, hang a level on a stack of logs, or keep a forged stack of 40:
+     a forged entry is always exactly one item. Same clamp on the bag and the bank. */
+  for (const list of [out.inv, out.bank]) if (Array.isArray(list)) for (const st of list) {
+    const n = Math.max(0, Math.min(FORGE.cap, Math.trunc(Number(st.f)) || 0));
+    if (n > 0 && canForge(st.k)) { st.f = n; st.n = 1; } else delete st.f;
+  }
+
   /* (v104) saved INSIDE a crypt run ("crypt:<run id>"): left alone here. The game server decides at login whether that run is still going (back where you stood) or not (the stairs in the Forum): cryptRejoin in eastscape-worker/src/crypt.js. */
   const inRun = String(out.scene).startsWith("crypt:");
   if (!inRun && !OPEN.has(String(out.scene).split(":")[0])) Object.assign(out, START);
@@ -3707,7 +4512,10 @@ export function exSummary(orders) {
 
 /* ------------------------------------------------------------ quest state, read from a character */
 export const qGet = (c, k) => c.qs[k] || { state: "new", n: 0 };
-export const countItems = (c, keys) => c.inv.filter((x) => keys.includes(x.k)).reduce((n, x) => n + x.n, 0);
+/* `plainOnly` counts the UNREFORGED ones only (2026-09-23). "Deposit all your diamond axes" must mean the plain
+   ones: takeInv spends those first and leaves the forged behind, so a count that included them would ask the bank
+   for more than the take will hand over. */
+export const countItems = (c, keys, opt = null) => c.inv.filter((x) => keys.includes(x.k) && !(opt?.plainOnly && fOf(x))).reduce((n, x) => n + x.n, 0);
 export const qHave = (c, k) => { const q = QUESTS[k]; return q.goal.type === "bring" ? countItems(c, q.goal.items) : qGet(c, k).n; };
 export const qOpen = (c, q) => (q.requires || []).every((r) => qGet(c, r).state === "done");
 // where a quest is now: new, locked, active, ready (can hand in), done

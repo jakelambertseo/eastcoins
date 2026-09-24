@@ -10,8 +10,8 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=199">
-<link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=12">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=224">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
      (eastscape-worker, a Cloudflare Durable Object), which also keeps your character: saving
@@ -48,7 +48,21 @@ button,input,select{font:inherit}
 .top a{color:var(--link-b);text-decoration:none}
 .top a:hover{text-decoration:underline}
 .top .spacer{flex:1}
-.top .online{color:#ffd23f}
+.an-aids{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.an-aid{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:5px 9px;color:inherit;font:inherit;cursor:pointer;text-align:left}
+.an-aid.on{border-color:#ffd23f;background:rgba(255,210,63,.14)}
+.an-aid b{font-size:13px}
+.an-aid small{opacity:.7;font-size:11px;display:block}
+@keyframes escShake{10%,90%{transform:translateX(-2px)}30%,70%{transform:translateX(3px)}50%{transform:translateX(-3px)}}
+#cv.shake{animation:escShake .4s}
+.top .online{color:#ffd23f;background:none;border:0;font:inherit;padding:2px 4px;border-radius:6px;cursor:pointer}
+.top .online:hover{background:rgba(255,210,63,.14)}
+.top .online:empty{display:none}
+#whoBody .wa-scene{margin:10px 0 4px;color:var(--ink-dim,#b9b2a6);font-weight:700}
+#whoBody .wa-people{display:flex;flex-wrap:wrap;gap:6px}
+#whoBody .wa-p{background:rgba(255,255,255,.06);border-radius:999px;padding:3px 10px;font-size:13px}
+#whoBody .wa-p b{font-weight:700}
+#whoBody .wa-p small{opacity:.65;margin-left:5px}
 .topcash{display:inline-flex;align-items:center;gap:5px;padding:2px 10px 2px 6px;border:1px solid #3a2e22;border-radius:12px;background:#1e1812;color:#ffe27a;font-weight:800;font-variant-numeric:tabular-nums}
 .topcash img{width:20px;height:20px;image-rendering:pixelated}
 .net{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#b8b0a0}
@@ -204,7 +218,11 @@ button,input,select{font:inherit}
 .chat-box[hidden]{display:none}
 .chat-head{display:flex;align-items:baseline;gap:8px;padding:6px 10px;border-bottom:1px solid #3a2e22;font-size:13px}
 .chat-head b{color:#fff}
-b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text-underline-offset:2px}b.who:hover{color:#f2d22e}
+b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-underline-offset:2px}b/* the hover was #f2d22e, gold on cream, so pointing at a name made it HARDER to read than the ones around it.
+   Dark amber with a solid underline says "this is a link, and you are on it" while staying legible. */
+.who:hover{color:#7a4a08;text-decoration:underline solid rgba(122,74,8,.75)}
+.hsr.me .who{text-decoration-color:rgba(42,32,22,.5)}
+.hsr.me .who:hover{color:#5a3406;text-decoration-color:rgba(90,52,6,.8)}
 .chat-log[hidden],.chat-form[hidden]{display:none}.chat-views{display:inline-flex;gap:3px}.chat-views button{padding:1px 8px;border:1px solid #3a2e22;border-radius:4px;background:#1e1812;color:#aca298;font:inherit;font-size:12px;font-weight:800;cursor:pointer}.chat-views button[aria-selected="true"]{background:#3a2e22;color:#f2d22e}
 #lootLog p.loot{color:#ffd23f}#lootLog p.xp{color:#9ad0ff}#lootLog p small{color:#8a8278;font-weight:700;margin-right:6px}
 .chat-head small{color:var(--muted);flex:1}
@@ -266,14 +284,45 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 .xpsr .lv{font-size:11px;white-space:nowrap;padding:2px 7px;border-radius:9px;background:rgba(58,38,22,.14);color:#3a2616}.xpsr .lv b{display:inline;font-size:12px}
 .xpsr i img{width:18px;height:18px}
 .lnk{background:none;border:0;color:inherit;font:inherit;text-decoration:underline;cursor:pointer;opacity:.8;padding:0}
-.hstabs{display:flex;flex-wrap:wrap;gap:3px;margin:0 0 8px}
-.hstabs button{font-size:12px;padding:2px 8px;background:rgba(0,0,0,.16);border:2px solid transparent;color:inherit;font-family:inherit;cursor:pointer}
-.hstabs button.on{border-color:rgba(255,228,92,.6);color:#ffe45c}
-.hsbody{max-height:54vh;overflow:auto}
+/* (2026-09-23, the owner: "theres too many tabs now on the highscores, and more to come as we add new content /
+   skills / features etc ... vertical in like 25% of the popup"). Seventeen boards wrapped onto three rows above
+   the table, which pushed the names down and grew every time a skill was added — the layout got worse with the
+   game, which is the wrong way round. A RAIL DOES NOT: a new board is one more row in a column that already
+   scrolls, and the table beside it never moves.
+
+   The window takes a real height for this. It was height:fit-content, so the two columns would each have sized
+   to their own content and a short board would leave the rail hanging in the air. Now the window is as tall as
+   it is allowed to be, the rail and the table are both full height, and each scrolls on its own.
+
+   Under 620px the rail would be about 140px of a phone screen, which is not a column, it is a gutter — so below
+   that it goes back to wrapping across the top, where a narrow screen has width to spare and height to save. */
+.hswrap{display:grid;grid-template-columns:minmax(132px,25%) 1fr;gap:10px;align-items:stretch;min-height:0;overflow:hidden}
+.hstabs{display:flex;flex-direction:column;gap:2px;margin:0;min-height:0;overflow:auto;padding-right:2px;border-right:2px solid rgba(0,0,0,.12)}
+.hstabs button{font-size:12px;padding:5px 9px;background:rgba(0,0,0,.16);border:2px solid transparent;border-radius:5px;color:inherit;font-family:inherit;font-weight:700;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 0 auto}
+.hstabs button:hover{background:rgba(0,0,0,.24)}
+/* The selected board is SOLID GOLD WITH DARK INK, the same treatment the Decorate button uses when it is on.
+   It was #ffe45c text on a 14% gold tint over cream parchment (the owner: "too bright/impossible to read") —
+   that pairing works on the dark canvas, which is where the colour came from, and nowhere on a light panel.
+   The rule is the one the achievements window landed on too: on parchment, a selected thing gets a filled
+   background and dark text, never light text. */
+.hstabs button.on{border-color:#8a6a1e;background:linear-gradient(#f2c94c,#c8963a);color:#2a2016}
+.hstabs button.on:hover{background:linear-gradient(#f7d566,#d4a244)}
+.hstabs button:focus-visible{outline:2px solid #f2d22e;outline-offset:1px}
+@media (max-width:620px){
+  .hswrap{grid-template-columns:1fr;gap:6px;overflow:auto}
+  .hstabs{flex-direction:row;flex-wrap:wrap;gap:3px;overflow:visible;border-right:0;padding-right:0}
+  .hstabs button{padding:2px 8px;text-align:center}
+}
+.hsbody{min-height:0;overflow:auto}
 .hsr{display:grid;grid-template-columns:34px 1fr auto auto;align-items:center;gap:9px;padding:4px 7px;font-size:13px}
 .hsr:nth-child(odd){background:rgba(0,0,0,.10)}
 .hsr .rk{opacity:.7;text-align:right}
-.hsr.me{color:#ffe45c;font-weight:700}
+/* (2026-09-23, the owner) YOUR ROW IS A BAND, NOT GOLD TEXT. #ffe45c on #f3e7cc parchment is the same
+   unreadable pairing as the selected tab and the achievement tiers were: all three colours were picked for
+   the dark CANVAS and then used on a light panel. A filled background with dark ink reads at a glance and
+   survives being screenshotted, and the bar down the left says "this one is you" without relying on colour
+   at all. THE RULE FOR THIS PANEL: on parchment, highlight with a background, never with light text. */
+.hsr.me{background:rgba(200,161,60,.38);color:#2a2016;font-weight:800;box-shadow:inset 3px 0 0 #a97c22}
 .hsr .xp{opacity:.6;font-size:11px}
 .hsr b{font-weight:600}
 .cols2 h4,.wiki h4{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6a5a40}
@@ -292,6 +341,12 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 .offer .otop b{font-size:14px;display:block}
 /* the Casino */
 .chat-log p.casinonote b{color:#ff8ab0}
+/* (2026-09-23) A MILESTONE LINE. Gold, indented behind a trophy, so it reads as something that HAPPENED
+   rather than something somebody typed — and still carries a clickable name, because the whole point of it
+   is that you can reply to the person. */
+#chatLog p.milestone{position:relative;padding-left:17px;color:#f2c94c}
+#chatLog p.milestone::before{content:"\1F3C6";position:absolute;left:0;top:0;font-size:11px}
+#chatLog p.milestone b{color:#ffd77a}
 .gm-bet{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-bottom:10px}
 .gm-bet input{width:90px;padding:5px 7px;border:1px solid #8a7a5a;border-radius:4px;background:#fffaf0;font:inherit}
 .gm-bet button{padding:3px 9px}
@@ -448,7 +503,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 @keyframes winspark{0%{transform:translate(-50%,-50%) rotate(0);opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) rotate(var(--r));opacity:0}}
 /* wiki */
 /* (v104) drawn plates behind Games / Wiki / Hiscores (PixelLab ui asset 9c9d3f82, cut into ui/nav_*.png): a 9-slice, so the gold corners never stretch */
-.top #gamesBtn{border-image-source:url(/v3/assets/img/glad/flat/ui/nav_games.png?v=1)}.top #hsBtn{border-image-source:url(/v3/assets/img/glad/flat/ui/nav_hs.png?v=1)}
+/* (2026-09-23) the nav_games/nav_hs border-image rules went with the ornate buttons they framed: .topl is border:0, so they painted nothing. The pictures are still in flat/ui/ if the frames ever come back. */
 .top .topl.glow{color:#ffd77a;animation:gamesglow 1.6s ease-in-out infinite}   /* (2026-09-23) follows the link, not the frame that is gone: this is what marks Games for somebody who has never opened it */
 @keyframes gamesglow{0%,100%{box-shadow:0 0 0 0 rgba(242,210,46,0)}50%{box-shadow:0 0 10px 2px rgba(242,210,46,.75)}}
 @media (prefers-reduced-motion:reduce){.top .topl.glow{animation:none;text-decoration:underline}}
@@ -474,7 +529,22 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 #achBody .amile span{padding:3px 8px;border-radius:6px;background:rgba(0,0,0,.06);font-size:11.5px;font-weight:700;opacity:.45}
 #achBody .amile span.on{opacity:1;background:rgba(200,161,60,.22)}
 #achBody h4{margin:12px 0 5px;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
-#achBody .arow{display:flex;gap:9px;align-items:flex-start;padding:6px 9px;border-radius:7px;background:rgba(0,0,0,.05);margin-bottom:4px;opacity:.5}
+#achBody .arow{display:flex;gap:9px;align-items:flex-start;padding:6px 9px;border-radius:7px;background:rgba(0,0,0,.05);margin-bottom:4px;opacity:.55;border-left:3px solid transparent}
+.tixi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;margin-right:2px}
+.tixi.big{width:18px;height:18px;vertical-align:-4px}
+.top .topi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;margin-right:5px}
+.win-head .topi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;margin-right:5px}
+#achBody .ahero{width:34px;height:34px;image-rendering:pixelated;margin-right:2px}
+#achBody .amedal{width:26px;height:26px;image-rendering:pixelated;flex:0 0 auto}
+#achBody .amedal.asmall{width:20px;height:20px}   /* the Recent tab lists rows, not tier headers, so the medal sits at row scale */
+/* the tier header: medal, name, what it pays. It replaced a bare coloured <h4>, which was both the green
+   text and the reason the counts had to be crammed into one line of middots. */
+#achBody .atier{display:flex;gap:9px;align-items:center;padding:7px 9px;margin:14px 0 5px;border-radius:7px;background:rgba(0,0,0,.06);border-left:3px solid transparent}
+#achBody .atier b{display:block;font-size:13.5px;line-height:1.25}
+#achBody .atier small{color:#6a5a40;font-weight:700;font-size:11.5px}
+#achBody .atier em{margin-left:auto;font-style:normal;font-weight:800;font-size:12px;white-space:nowrap;opacity:.75}
+#achBody .arow i.on{color:#3f7a3a}
+#achBody .arow i:not(.on){opacity:.4}
 #achBody .arow.got{opacity:1;background:rgba(200,161,60,.13)}
 #achBody .arow i{font-style:normal;font-size:17px;line-height:1.2;flex:0 0 auto}
 #achBody .arow b{display:block;font-size:13px}
@@ -783,9 +853,9 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
 </head>
 <body>
 <header class="top">
-  <span class="logo"><img src="/v3/assets/img/eastcoin-icon-96.png?v=1" alt="" width="22" height="22">EastScape</span><button type="button" class="topl" id="gamesBtn" title="The real ZCoin games, one click (G)">🎰 Games</button><button type="button" class="topl" id="achBtn" title="Achievements (Y)">🎖️ Achievements</button><button type="button" class="topl" id="hsBtn" title="Hiscores">🏆 Hiscores</button><button type="button" class="topl" id="wikiBtn" title="The EastScape wiki (H)">📖 Wiki</button>
+  <span class="logo"><img src="/v3/assets/img/eastcoin-icon-96.png?v=1" alt="" width="22" height="22">EastScape</span><button type="button" class="topl" id="gamesBtn" title="The real ZCoin games, one click (G)">🎰 Games</button><button type="button" class="topl" id="achBtn" title="Achievements (Y)"><img src="/v3/assets/img/glad/flat/ui/ach_badge.png?v=1" alt="" class="topi">Achievements</button><button type="button" class="topl" id="hsBtn" title="Hiscores">🏆 Hiscores</button><button type="button" class="topl" id="wikiBtn" title="The EastScape wiki (H)">📖 Wiki</button>
   <span class="spacer"></span>
-  <span class="online" id="online"></span><span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span><button type="button" class="me" id="topMe" title="Your profile"><img id="topAv" alt="" hidden><span id="topName">—</span></button>
+  <button type="button" class="online" id="online" title="Who is online, and where"></button><span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span><button type="button" class="me" id="topMe" title="Your profile"><img id="topAv" alt="" hidden><span id="topName">—</span></button>
 </header>
 <main class="wrap">
   <section class="game" aria-label="Game">
@@ -832,9 +902,9 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
       <div class="win-head"><b id="pickTitle">Choose</b><button type="button" class="win-x" data-close="pickWin" aria-label="Close">×</button></div>
       <div class="win-body"><p class="note" id="pickNote" style="margin:0 0 8px"></p><div class="grid8" id="pickGrid"></div></div>
     </section>
-    <section class="win" id="hsWin" aria-label="Hiscores" hidden>
+    <section class="win" id="hsWin" aria-label="Hiscores" hidden style="height:min(700px,calc(100% - 28px))">
       <div class="win-head"><b>🏆 Hiscores</b><small id="hsSub"></small><button type="button" class="win-x" data-close="hsWin" aria-label="Close">×</button></div>
-      <div class="win-body"><div class="hstabs" id="hsTabs"></div><div class="hsbody" id="hsBody"><p class="note">Loading…</p></div></div>
+      <div class="win-body hswrap"><div class="hstabs" id="hsTabs" role="tablist" aria-label="Hiscore boards"></div><div class="hsbody" id="hsBody"><p class="note">Loading…</p></div></div>
     </section>
     <section class="win" id="smithWin" aria-label="Anvil" hidden>
       <div class="win-head"><b>🔨 Anvil</b><small id="smithSub"></small><button type="button" class="win-x" data-close="smithWin" aria-label="Close">×</button></div>
@@ -847,6 +917,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
     <section class="win" id="dashWin" aria-label="Admin dashboard" hidden style="width:min(620px,calc(100% - 28px))">
       <div class="win-head"><b>📊 Dashboard</b><small>Read only. Who is here, and what the world is holding.</small><button type="button" class="win-x" data-close="dashWin" aria-label="Close">×</button></div>
       <div class="win-body"><div id="dashBody"></div></div>
+    </section>
+    <section class="win" id="whoWin" aria-label="Who is online" hidden style="width:min(520px,calc(100% - 28px))">
+      <div class="win-head"><b>👥 Who is online</b><small>Everyone in the world right now, and where they are.</small><button type="button" class="win-x" data-close="whoWin" aria-label="Close">×</button></div>
+      <div class="win-body"><div id="whoBody"></div></div>
     </section>
     <section class="win" id="screenWin" aria-label="The Picture House" hidden style="width:min(760px,calc(100% - 28px))">
       <div class="win-head"><b>🎬 The Picture House</b><small>Whatever is on, everybody in here watches it together.</small><button type="button" class="win-x" data-close="screenWin" aria-label="Close">×</button></div>
@@ -907,7 +981,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
       <div class="win-foot" id="tradeFoot"></div>
     </section>
     <section class="win" id="achWin" aria-label="Achievements" hidden style="width:min(560px,calc(100% - 28px));height:calc(100% - 60px)">
-      <div class="win-head"><b>🎖️ Achievements</b><small id="achSub"></small><button type="button" class="win-x" data-close="achWin" aria-label="Close">×</button></div>
+      <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/ach_badge.png?v=1" alt="" class="topi">Achievements</b><small id="achSub"></small><button type="button" class="win-x" data-close="achWin" aria-label="Close">×</button></div>
       <div class="win-body" id="achBody"></div>
     </section>
     <section class="win" id="wikiWin" aria-label="Wiki" hidden style="width:min(980px,calc(100% - 28px));height:calc(100% - 28px)">
@@ -934,11 +1008,11 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(255,255,255,.35);text
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=199";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=224";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=119").then((m) => { WK = m; }));
-import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=12";
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=130").then((m) => { WK = m; }));
+import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=13";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -1059,7 +1133,7 @@ const withWho = (e) => { const w = ROSTER.get(e.id); if (!w && you && Date.now()
 
 /* MAPS THAT AREN'T IN THE FIRST LOAD (2026-09-21): the closed areas (eastscape-closed.js) are not downloaded to log in. If the server ever puts
    you in a scene this page doesn't know (an admin teleport), the message waits while the extra maps are fetched, then runs. */
-let CRR = null; const cryptRules = () => (cryptRules.p ||= import("/v3/assets/js/eastscape-crypt-rules.js?v=77").then((m) => { CRR = m.createCryptRules(G, G._MAP); Object.assign(G.SCENES, CRR.scenes); Object.assign(G.MOBS, CRR.mobs); AREA_ART.crypt = CRR.scenes.crypt.art; }));
+let CRR = null; const cryptRules = () => (cryptRules.p ||= import("/v3/assets/js/eastscape-crypt-rules.js?v=80").then((m) => { CRR = m.createCryptRules(G, G._MAP); Object.assign(G.SCENES, CRR.scenes); Object.assign(G.MOBS, CRR.mobs); AREA_ART.crypt = CRR.scenes.crypt.art; }));
 /* (2026-09-22) THE TOWER's rules, lazily, exactly like the Crypt's: thirty generated monster rows and one room, which
    nobody who never opens the door should have to download. It also carries the art list for the room — which is the
    Crypt's own tiles, so entering the Tower warms the same pack. */
@@ -1074,8 +1148,8 @@ const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String
    the way the world paints it, and find somebody standing in this scene by name. */
 /* (v107) THE GEAR TOOLTIP: point at a piece of gear anywhere (bag, bank, what you're wearing, a shop, a trade, the Prize Counter) and see
    what it is and what swapping to it would change. eastscape-tip.js, fetched on the first such hover; the page only notices the hover. */
-let TIP = null; const tipLoad = () => (tipLoad.p ||= import("/v3/assets/js/eastscape-tip.js?v=1").then((m) => (TIP = m.createTip({ G, esc, ico, me: () => me }))));
-document.addEventListener("pointerover", (e) => { if (e.pointerType === "touch") return; const el = e.target.closest?.("[data-item], [data-k], [data-rm]"), k = el && (el.dataset.item || el.dataset.k || el.dataset.rm); if (k && ITEMS[k]?.slot) tipLoad().then((t) => t.show(el, k)).catch(() => {}); });
+let TIP = null; const tipLoad = () => (tipLoad.p ||= import("/v3/assets/js/eastscape-tip.js?v=3").then((m) => (TIP = m.createTip({ G, esc, ico, me: () => me }))));
+document.addEventListener("pointerover", (e) => { if (e.pointerType === "touch") return; const el = e.target.closest?.("[data-item], [data-k], [data-rm]"), k = el && (el.dataset.item || el.dataset.k || el.dataset.rm); if (k && ITEMS[k]?.slot) tipLoad().then((t) => t.show(el, k, Number(el.dataset.f) || 0)).catch(() => {}); });   /* (2026-09-23) data-f is the level of THIS piece: the card describes what you are pointing at, not whatever of that kind you happen to be wearing */
 let PROF = null;
 const profLoad = () => (profLoad.p ||= import("/v3/assets/js/eastscape-profile.js?v=6").then((m) => (PROF = m.createProfile({ G, SFX, send, esc, $, sico, ico, you: () => you,   /* (2026-09-23) ico: the Gear tab draws real item icons, and the PNG-or-emoji decision lives on the page */
   sprite: (look, d, name, van) => { const L = look && G.normLook(look), k = L ? lookSprite(L, d, van) : lookArt(G.lookFor({ name }), d); if (!k) return k === null ? null : ""; const im = IMG[k].im, c = document.createElement("canvas"); c.width = im.width; c.height = im.height; c.getContext("2d").drawImage(im, 0, 0); return c; },
@@ -1089,7 +1163,7 @@ const netToggle = () => { NET.on = !NET.on; NET.corr = 0; $("netPanel").hidden =
 document.addEventListener("keydown", (e) => { if ((e.key === "n" || e.key === "N") && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "") && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); netToggle(); } });
 document.getElementById("topMe").addEventListener("click", () => { if (you) openProfile({ id: you.id, name: you.name }); });   /* (your own name, top right, opens your own profile) */
 const openProfile = (who) => { profLoad().then(() => PROF.open(who)).catch(() => say("That didn't open. Try again in a moment.", "bad")); };
-let CRYPT = null; const cryptLoad = () => (cryptLoad.p ||= Promise.all([import("/v3/assets/js/eastscape-crypt.js?v=4"), cryptRules()]).then(([m]) => (CRYPT = m.createCrypt({ G, R: CRR, SFX, send, esc, $, ico, me: () => me, you: () => you, Z: () => Z, host: () => document.querySelector(".game"), popup, winFx }))));
+let CRYPT = null; const cryptLoad = () => (cryptLoad.p ||= Promise.all([import("/v3/assets/js/eastscape-crypt.js?v=5"), cryptRules()]).then(([m]) => (CRYPT = m.createCrypt({ G, R: CRR, SFX, send, esc, $, ico, me: () => me, you: () => you, Z: () => Z, host: () => document.querySelector(".game"), popup, winFx }))));
 const TILEFX = [];   // { x, y, r, from, until }: tiles lit red while the boss winds up
 function onMsg(m) {
   { const k = m.scene || (m.list || []).find((e) => e.type === "scene")?.key; if (k && !G.sceneDef(k) && !m._again) return moreScenes(k).then(() => onMsg({ ...m, _again: 1 })).catch(() => {}); }
@@ -1163,6 +1237,7 @@ function onMsg(m) {
         else if (mine?.mob && e.who === mine.mob) { SFX.play(e.n ? "hit" : "miss", e.crit ? { rate: 0.7, vol: 1 } : undefined); if (e.crit && mineHit) { shakeUntil = performance.now() + 160; SFX.play("coins", { vol: 0.35, rate: 1.4 }); } if (e.kill && mineHit) SFX.play("task_done", { vol: 0.4, rate: 1.3 }); }
       }
       if (e.type === "gain") { gains.push({ who: e.who, k: e.k, n: e.n, at: performance.now() }); if (e.who === you?.id) { if (mine?.act === "spot" && Z.objs.some((o) => o.t === "spot" && (o.fish === e.k || o.fish2 === e.k || (!o.fish && (e.k === "sardine" || e.k === "trout"))))) SFX.play("fish_catch");   /* (a catch is ONE splash, the same every time: see the note on steadiness in eastscape-sfx.js) */ else if (e.k === "geode") SFX.play("gem");   /* the one gathering find that is genuinely rare */
+        else if (Z.objs.some((o) => o.t === "mark") && Object.values(G.MARKS).some((m) => m.drop.some(([k]) => k === e.k))) SFX.play("steal");   /* (2026-09-23) lifted, not found. Keyed off standing among marks AND the item being something a mark carries, rather than off mine.act, which is cleared on the same tick the gain is sent. */
         else { const sl = ITEMS[e.k]?.slot; SFX.play(sl === "weapon" ? "gain_weapon" : sl && sl !== "pet" ? "gain_gear" : "gain"); } } }   /* (2026-09-23) finding GEAR is its own sound; ore, logs and fish stay the one quiet blip */
       if (e.type === "botbet") botBets.push({ id: e.id, n: e.n, at: performance.now() });   // (v88) a bot at a table just won or lost: floated over their head
       if (e.type === "bubble") { botBubbles.set(e.id, { text: e.text, at: performance.now() }); const b = Z.bots.find((x) => x.id === e.id); if (b) chatLine(b.name, e.text, "bot"); }
@@ -1238,7 +1313,15 @@ function onEvent(e) {
   if (e.type === "prize") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.prize(e); }
   if (e.type === "cashed") { SFX.play("coins"); return CZ.cashed(e); }
   if (e.type === "casinonote") { chatLine("Casino", e.text, "casinonote"); if (/JACKPOT/.test(e.text)) SFX.play("jackpot"); return; }
+  /* (2026-09-23, the owner) A LEVEL MILESTONE, to everyone online. It is a chat line rather than a banner on
+     purpose: the point is that the room can reply to it. Your own gets a sound; other people's do not, or a
+     busy evening turns into a slot machine. */
+  if (e.type === "milestone") { chatLine(e.name, e.text, "milestone"); if (e.name === you?.name) SFX.play("task_done"); return; }
   if (e.type === "daily") return renderDaily(e);
+  /* (2026-09-23) CAUGHT. The server has already stunned you and taken the item; this is the shake that tells you
+     so, because a failed pick otherwise reads as the game not having registered the click at all. */
+  if (e.type === "caught") { SFX.play("caught"); cv.classList.remove("shake"); void cv.offsetWidth; cv.classList.add("shake"); setTimeout(() => cv.classList.remove("shake"), 420); return; }
+  if (e.type === "whoall") return whoAllDraw(e.people || []);
   if (e.type === "roulopen") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "gameWin", "dailyWin"]) $(w).hidden = true; $("roulWin").hidden = false; renderRoul(); return; }
   if (e.type === "roul") { roulSet(e); return; }
   if (e.type === "fight") { const was = FIGHT; FIGHT = { ...e, until: performance.now() + e.left }; if (e.phase === "fight" && was?.phase !== "fight") SFX.play("task_done"); if (e.open || CZ.game === "fight") CZ.fight(FIGHT, e.open); return; }
@@ -1359,7 +1442,7 @@ function chatLine(name, text, cls, role) {
   const log = $("chatLog"); log.querySelector(".empty")?.remove();
   const p = document.createElement("p"); if (cls) p.className = cls;
   const b = document.createElement("b"); b.textContent = name;
-  if (cls === "mine" || !cls) { b.className = "who"; b.title = `${name}'s profile`; b.addEventListener("click", () => openProfile(name)); }   /* (v107) a real player's name opens their profile; the casino's and the market's notes, and the simulated players, are not people */
+  if (cls === "mine" || cls === "milestone" || !cls) { b.className = "who"; b.title = `${name}'s profile`; b.addEventListener("click", () => openProfile(name)); }   /* (2026-09-23) a milestone names a real player, so it opens their profile like any other name */   /* (v107) a real player's name opens their profile; the casino's and the market's notes, and the simulated players, are not people */
   /* AFTER the line above, which assigns className outright and would wipe the tier class. */
   if (role === "admin" || role === "mod") {
     b.classList.add(role === "admin" ? "is-admin" : "is-mod");
@@ -1447,7 +1530,11 @@ function say(text, cls = "sys") {
 const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
 // pictures replaced after they first shipped (the edge keeps each URL for a year): bump the one that changed
 const ART_VER = { o_bomkiosk: 7, o_plot: 2, kellz_south: 5, kellz_east: 5, t_casino: 4, rug_casino: 4, o_dicetable: 4, chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
-const ART_FILES = ["o_yardtree", "o_yardtree_stump", "o_tower", "t_doors", "fx_hit", "fx_crit", "fx_miss", "vince_south", "vince_east", "casino", "rony_south", "rony_east", "o_bomkiosk", "t_pit", "o_fightboard", "o_hsboard", "o_fameboard", "o_ringbell", "o_ringpost", "o_mirror", "o_rrtable", "o_barcart", "kellz_south", "kellz_east", "livia_south", "livia_east", "gaius_south", "gaius_east", "aurelia_south", "aurelia_east", "arbino_south", "arbino_east", "vince_south", "vince_east", "sterling_south", "sterling_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_brick", "o_fenceh", "o_fencev", "o_fencepost", "o_crates", "o_lamppost", "o_sacks", "o_handcart", "t_track", "o_gateframe", "o_gatebars", "o_agilend", "o_trailer", "o_wreck", "o_tyres", "o_dumpster", "o_rock_slagstone", "o_rustpine", "o_bogwood", "junkdog", "possum", "scrapper", "gator", "junkking", "darla_south", "darla_east", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
+/* One entry per crop in the rules, four growth stages each. Declared here because ART_FILES spreads it, and
+   because a crop added to CROPS should ask for its art without anybody remembering to type four more names —
+   the content check then fails until that art exists, which is the right way round. */
+const CROP_ART = Object.keys(G.CROPS).flatMap((k) => [1, 2, 3, 4].map((n) => `crop_${k}_${n}`));
+const ART_FILES = ["t_dock", ...CROP_ART, "o_yardtree", "o_yardtree_stump", "o_tower", "t_doors", "fx_hit", "fx_crit", "fx_miss", "vince_south", "vince_east", "casino", "rony_south", "rony_east", "o_bomkiosk", "t_pit", "o_fightboard", "o_hsboard", "o_fameboard", "o_ringbell", "o_ringpost", "o_mirror", "o_rrtable", "o_barcart", "kellz_south", "kellz_east", "livia_south", "livia_east", "gaius_south", "gaius_east", "aurelia_south", "aurelia_east", "arbino_south", "arbino_east", "vince_south", "vince_east", "sterling_south", "sterling_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_brick", "o_fencepost", "o_crates", "o_lamppost", "o_sacks", "o_handcart", "t_track", "o_gateframe", "o_gatebars", "o_agilend", "o_trailer", "o_wreck", "o_tyres", "o_dumpster", "o_rock_slagstone", "o_rustpine", "o_bogwood", "junkdog", "possum", "scrapper", "gator", "junkking", "darla_south", "darla_east", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "legend_" + d]),   // (hero_tiro_*, the old tunic, left the startup list 2026-09-20: nobody wears it now that everyone has a look)
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "o_spot1", "o_spot2", "o_spot3", "o_spot4", "o_spot5", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
@@ -1464,7 +1551,22 @@ const ART_FILES = ["o_yardtree", "o_yardtree_stump", "o_tower", "t_doors", "fx_h
   ...["chicken", "cow", "rotten", "olive", "hornworm", "boar"].flatMap((k) => [...[1, 2, 3, 4].map((i) => `${k}_w${i}`), `${k}_i2`]),
   "toadstool", "boneidle", "twister", "counter", "shark", "stagehand", "usher", "brainstorm", "seagoat", "golem", "wolf", "drake", "house",
   // scenery (PixelLab, overnight 2026-09-18)
-  "o_anvil", "o_bar", "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_cloudbush", "o_cloudcolumn", "o_cointable", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree_stump", "o_dicetable", "o_ferry", "o_fire", "o_fountain", "o_furnace", "o_glowcap", "o_goatstatue", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_oak_stump", "o_olive", "o_olive_bare", "o_palm", "o_cryptdoor", "o_pedestal", "o_pen", "o_plant", "o_plot", "o_press", "o_range", "o_rock_copper", "o_rock_diamond_ore", "o_rock_dragonstone_ore", "o_rock_emerald_ore", "o_rock_empty", "o_rock_marble", "o_rock_onyx_ore", "o_rock_stardust", "o_rock_tin", "o_roomdoor", "o_roulette", "o_roulsign", "o_fightsign", "o_picsign", "o_sack", "o_scarecrow", "o_shrine", "o_sign", "o_skyash", "o_slots", "o_sofa", "o_spot", "o_stall", "o_statue", "o_table", "o_toll", "o_tree_stump", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_walldoor", "o_willow", "o_yew", "o_yew_stump"];
+  "o_anvil", "o_bar", "o_barrel", "o_barricade", "o_bed", "o_bench", "o_bigtomato", "o_booth", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_chest", "o_cloudbush", "o_cloudcolumn", "o_cointable", "o_column", "o_crate", "o_cypress", "o_cypress_stump", "o_deadtree", "o_deadtree_stump", "o_fenceH", "o_fenceV", "o_cryptpillar",
+  /* (2026-09-24) the Crypt's dressing, now that the Lantern Mire wears it too: an arch, torches, an altar,
+     candles, a coffin, rubble, gargoyles, braziers, sarcophagi, skulls and bones. They were never in this
+     master list because the Crypt asks for them one at a time; on AREA_ART.mire below they cost the Mire one
+     request and everyone else nothing. */
+  "o_cryptgate", "o_crypttorch", "o_cryptaltar", "o_cryptcandles", "o_cryptcoffin", "o_cryptrubble", "o_gargoyle", "o_ghostbrazier", "o_sarcophagus", "o_skullheap", "o_bonepile",
+  /* (2026-09-24, the owner: "can we give art for the gravestones and skeletons on the ground? and dead trees
+     arent showing either") THESE THREE HAD NO PICTURE ANYWHERE and were drawn as fallback scribbles in four
+     scenes - the Gloam, the Boneyard, the Wilderness and the Deep Wild. They go in core because every one of
+     those areas needs them. `snag` is the broken stump; `o_deadtree` is the whole bare tree, and they are
+     deliberately different pictures. */
+  "o_gravestone", "o_skeleton", "o_snag", "o_dicetable", "o_ferry", "o_fire", "o_fountain", "o_furnace", "o_glowcap", "o_goatstatue", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_notice", "o_oak", "o_oak_stump", "o_olive", "o_olive_bare", "o_palm", "o_cryptdoor", "o_pedestal", "o_pen", "o_plant", "o_plot", "o_press", "o_range", "o_rock_copper", "o_rock_diamond_ore", "o_rock_dragonstone_ore", "o_rock_emerald_ore", "o_rock_empty", "o_rock_marble", "o_rock_onyx_ore", "o_rock_stardust", "o_rock_tin", "o_roomdoor", "o_roulette", "o_roulsign", "o_fightsign", "o_picsign", "o_sack", "o_scarecrow", "o_shrine", "o_sign", "o_skyash", "o_slots", "o_sofa", "o_spot", "o_stall", "o_statue", "o_table", "o_toll", "o_tree_stump", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_walldoor", "o_willow", "o_yew", "o_yew_stump",
+  /* (2026-09-23) the Thieves' Guild's four marks, one per room. Named here so the packer knows them, and claimed
+     by AREA_ART.guild below, so they cost a player nothing until they walk through the guild door. */
+  "o_mark_lifter", "o_mark_grifter", "o_mark_fixer", "o_mark_quarter", "t_guild",
+  ...["pete", "marla", "quietman", "odile", "vance"].flatMap((k) => [`${k}_south`, `${k}_east`])];
 const IMG = {};
 // NPCs whose art came later (PixelLab, overnight 2026-09-18): matched by name, so the shared rules don't change
 // NPC art came out at different sizes: draw everyone at one height (the hero is 48), a few on purpose
@@ -1491,7 +1593,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 47;
+const PACKS_V = 63;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -1512,16 +1614,34 @@ const loadOne = (k) => new Promise((res) => {
    loaded at startup. A new area's pictures go in its list here; tools/eastscape-budget.mjs measures both halves. */
 const WILD_ART = ["t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush", "w_boulder", "grimstone", "gravestone", "skeleton", "rope", "cagesign", "gnasher", "taxwraith", "chandelier", "revenant"];
 const CASINO_ART = ["rony_south", "rony_east", "o_bomkiosk", "o_mirror", "kellz_south", "kellz_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "t_casino", "rug_casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "o_slots", "o_cointable", "o_dicetable", "o_bar", "o_sofa", "o_walldoor", "o_roulsign", "o_fightsign", "o_picsign", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east"];
+/* ISLE_ART is a flat literal and CROP_ART is spread in beside it at each use, rather than folded in here,
+   because tools/eastscape-pack.mjs reads these lists out of this file by grabbing the text between brackets —
+   it can eval an array, not an expression. The packer derives the crop half from what is on disk. */
+const ISLE_ART = ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot", "o_pen", "t_dock", "o_chest"];   /* o_chest: the bank chest Yahsmeena sells. It is already area art for the Yard and the cottage, which means it is NOT in core, so an island that did not ask for it would draw the fallback. */
 const AREA_ART = {
-  wild: WILD_ART, deep: WILD_ART,
+  wild: [...WILD_ART, "o_cageH", "o_cageV"], deep: WILD_ART,   /* (2026-09-24) the Wilderness draws cages and o_cageH/V were claimed only by `closed`, a sheet nobody loads */
+  /* The Thieves' Guild: its four marks and the furniture its rooms are dressed with. Deferring is the whole job
+     of this table - ART_FILES above is the master list, and a name repeated here is what keeps it OUT of the
+     login download until somebody actually goes there. */
+  /* ONLY THE MARKS. This listed the guild's furniture too - crates, tables, signs, a fire - and naming a picture
+     here is what takes it OUT of core.png, so fifteen props that half the game uses were deferred out from under
+     every other scene. A name belongs in an area list only if that area is the ONLY place it appears. */
+  guild: ["o_mark_lifter", "o_mark_grifter", "o_mark_fixer", "o_mark_quarter",
+    /* ...and the guild's furniture that is NOT in core. These already sit in other areas' lists (o_sack, o_bucket
+       and o_cat only in area-closed, which never loads; the table and chairs only in the cottage), so naming them
+       here takes nothing out of core and makes the guild's own sheet self-sufficient. Do NOT add the props that
+       ARE in core - o_sign, o_fire, o_statue, o_plant, o_column, o_bench, o_walldoor - because a name in an area
+       list is what DEFERS it, and listing those pulled fifteen shared pictures out from under the whole game. */
+    "o_chest", "o_bucket", "o_cat",
+    "t_guild", ...["pete", "marla", "quietman", "odile"].flatMap((k) => [`${k}_south`, `${k}_east`])],
   // the one line out of the casino (2026-09-20): every scene has its rocks, trees, fish AND its monsters
-  workyard: ["o_yardtree", "o_yardtree_stump", "o_wildladder", "o_tower", "hornworm", "boar", "olive", "o_chest", "o_chariot", "charon_south", "charon_east", "livia_south", "livia_east", "o_stall", "o_cryptdoor",
+  workyard: ["o_yardtree", "o_yardtree_stump", "o_tower", "hornworm", "boar", "olive", "o_chest", "o_chariot", "charon_south", "charon_east", "livia_south", "livia_east", "o_stall", "o_cryptdoor",
     /* (2026-09-22) the market's railings and clutter. ART_FILES is the MASTER list of every picture; naming one
        here as well is what DEFERS it out of the login download (core.png is "ART_FILES less the per-area lists").
        They live in the Yard and nowhere else, and left out of this list they pushed the startup request budget
        from 154 to 162. t_brick stays core, because the islands are paved too. o_crate and o_barrel are the ones
        that already existed — the market reuses them rather than drawing its own. */
-    "o_fenceh", "o_fencev", "o_fencepost", "o_crates", "o_crate", "o_barrel", "o_lamppost", "o_sacks", "o_handcart",
+    "o_fencepost", "o_crates", "o_sacks", "o_handcart",
     /* (v114/v115) the walk cycles and idle breaths of the six that live here: loaded with the Yard, not at login */
     ...["chicken", "cow", "rotten", "olive", "hornworm", "boar"].flatMap((k) => [...[1, 2, 3, 4].map((i) => `${k}_w${i}`), `${k}_i2`])],   /* (v108: Charon, his cart and the Crypt's stairs came over from the Forum) */   // (monsters and a pond in every scene since 2026-09-20: the rocks', the trees' and the stations' pictures are no longer asked for out here)
   /* v68: the six bands. The Mire wears the Gloam's ground, the Thunderhead wears Cloudreach's; each list is that scene's monsters and nothing it doesn't draw */
@@ -1530,17 +1650,27 @@ const AREA_ART = {
   agility: ["t_track", "o_gateframe", "o_gatebars", "o_agilend"],
   /* (2026-09-22) the Trailer Park's five. Deferred like every area's, so nobody downloads a gator to play the casino. */
   trailer: ["junkdog", "possum", "scrapper", "gator", "junkking", "o_trailer", "o_wreck", "o_tyres", "o_dumpster", "o_rock_slagstone", "o_rustpine", "o_bogwood", "darla_south", "darla_east"],
-  gloam: ["t_gwater", "t_gpath", "o_willow", "o_glowcap", "w_boulder", "toadstool", "highwayman", "goat", "boneidle", "gnasher"],
-  mire: ["t_gwater", "t_gpath", "o_willow", "o_glowcap", "w_boulder", "twister", "moth", "counter", "taxwraith", "shark"],
+  /* (2026-09-24) ONLY WHAT IS GLOAM-ONLY. Listing the new Holloway props here took o_bench, o_table and the rest OUT of core and broke them in the guild - the same trap as the yews. Shared props belong in core; an area list is for art nowhere else uses. */
+  gloam: ["vance_south", "vance_east", "t_gwater", "t_gpath", "o_willow", "o_glowcap", "w_boulder", "toadstool", "highwayman", "goat", "boneidle", "gnasher"],
+  /* (2026-09-24) the Mire is the Halloween venue, so it is dressed out of the Crypt's art. o_cageV is here as
+     well as on the `wild` list on purpose: an area sheet is WHOLE, so naming it twice gives the Mire its own
+     copy rather than moving it, and o_cryptpillar is deliberately NOT here because the Gloam leaves it in core. */
+  mire: ["t_gwater", "t_gpath", "o_willow", "o_glowcap", "w_boulder", "twister", "moth", "counter", "taxwraith", "shark",
+    "o_cryptgate", "o_crypttorch", "o_cryptaltar", "o_cryptcandles", "o_cryptcoffin", "o_cryptrubble", "o_gargoyle", "o_ghostbrazier", "o_sarcophagus", "o_skullheap", "o_bonepile", "o_cageV"],
   thunderhead: ["t_csky", "t_cpath", "o_skyash", "o_cloudbush", "o_cloudcolumn", "goose", "golem", "wolf", "drake", "house"],
   cloud: ["t_csky", "t_cpath", "o_skyash", "o_cloudbush", "o_cloudcolumn", "ram", "brainstorm", "seagoat", "revenant", "angel"],
-  boneyard: [...WILD_ART, "ghoul", "stagehand", "understudy", "usher"],
+  /* (2026-09-24, the owner: "the ancient yews in the boneyard dont use their art") o_yew EXISTS and was claimed
+     ONLY by area-closed, a sheet that never loads - so naming it there took it out of core.png and put it
+     somewhere nobody downloads, and both of the Boneyard's Ancient yews fell back to the generic tree drawing.
+     Same for the dead trees, whose picture was never in ART_FILES at all. An area list must name every picture
+     that area needs, not merely the ones unique to it. */
+  boneyard: [...WILD_ART, "o_yew", "o_yew_stump", "ghoul", "stagehand", "understudy", "usher"],
   sky: ["ram", "angel", "goose"],
   // the Fight Pit: everyone who might be sent out to fight, and the corner clutter
-  fightpit: ["t_pit", "o_fightboard", "o_hsboard", "o_fameboard", "o_ringbell", "o_ringpost", "olive", "hornworm", "boar", "goat", "highwayman", "gnasher", "moth", "taxwraith", "ghoul", "chandelier", "understudy", "ram", "revenant", "angel", "goose", "o_crate", "o_barrel"],   // (FIGHTS.pool, less the three that are core; Vince is core since v111: he stands in the casino too)
+  fightpit: ["t_pit", "o_fightboard", "o_ringbell", "o_ringpost", "olive", "hornworm", "boar", "goat", "highwayman", "gnasher", "moth", "taxwraith", "ghoul", "chandelier", "understudy", "ram", "revenant", "angel", "goose"],   // (FIGHTS.pool, less the three that are core; Vince is core since v111: he stands in the casino too)
   // scenery that only the CLOSED areas use (the farm, the river, the hills, the islands). Nobody can walk there, so nobody
   // downloads it. WHEN AN AREA REOPENS, move what it uses out of this list and into a list under that area's own key.
-  closed: ["o_barrel", "o_bed", "o_bigtomato", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chair", "o_chariot", "o_crate", "o_cypress", "o_cypress_stump", "o_ferry", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plot", "o_press", "o_rock_marble", "o_sack", "o_scarecrow", "o_shrine", "o_table", "o_toll", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_yew", "o_yew_stump"],   // (no open area has these yet: kept out of the login's downloads)
+  closed: ["o_bed", "o_bigtomato", "o_bucket", "o_cageH", "o_cageV", "o_cat", "o_chariot", "o_cypress", "o_cypress_stump", "o_ferry", "o_hive", "o_islesign", "o_lighthouse", "o_milestone", "o_mule", "o_olive", "o_olive_bare", "o_palm", "o_pedestal", "o_plot", "o_press", "o_rock_marble", "o_scarecrow", "o_shrine", "o_toll", "o_vein_copper", "o_vine", "o_vine_bare", "o_vine_gold", "o_yew", "o_yew_stump"],   // (no open area has these yet: kept out of the login's downloads)
   farm: ["tom_south", "tom_east", "waldy_south", "waldy_east", ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].map((d) => "legend_" + d)],
   river: ["charon_south", "charon_east", "tullius_south", "tullius_east"], grove: ["olive", "boar", "goat"], tomato: ["nonna_south", "nonna_east", "hornworm"],
   appia: ["vibius_south", "vibius_east", "highwayman"], farmhouse: ["cassia_south", "cassia_east"],   // (closed for now: nothing here loads at login)
@@ -1549,14 +1679,21 @@ const AREA_ART = {
   bathhouse: ["aurelia_south", "aurelia_east"],
   forum: ["gaius_south", "gaius_east"],   /* (closed in v108. Livia, Charon, the cart and the Crypt's stairs are the Yard's now: a picture listed under TWO areas is packed with the first and never loads in the second, which is how Livia arrived in the Yard with no body) */
   highroller: ["sterling_south", "sterling_east"],
-  isle: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot", "o_pen"], isle2: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot", "o_pen"], shore: ["o_ferry", "o_islesign", "o_lighthouse", "o_palm", "o_pedestal", "o_plot", "o_pen"],
-  home: ["o_bed", "o_chest", "o_table", "o_chair"],
-  roulette: ["t_roulette", "o_rrtable", "o_barcart", "o_notice", "o_stool", "arbino_south", "arbino_east"],
+  /* THE ISLANDS (2026-09-23). Three things were wrong here and they all showed as "the island is drawn in code".
+     isle3 WAS MISSING ENTIRELY — isleKey maps tier 3 to it, and an area with no entry gets none of this list, so
+     anyone who had bought the 20,000 island lost the plots, palms, pedestals, pen, ferry and lighthouse all at
+     once and saw the code fallbacks instead. The crops were never listed anywhere, so the drawn growth stages
+     that already existed on disk could not load. And the dock had no picture at all.
+     CROP_ART is computed from CROPS rather than typed out: a new crop then asks for its own art, and the content
+     check fails until that art exists, which is the right way round. */
+  isle: [...ISLE_ART, ...CROP_ART], isle2: [...ISLE_ART, ...CROP_ART], isle3: [...ISLE_ART, ...CROP_ART], shore: [...ISLE_ART, ...CROP_ART],
+  home: ["o_bed", "o_chest"],
+  roulette: ["t_roulette", "o_rrtable", "o_barcart", "arbino_south", "arbino_east"],
   theatre: ["o_cinescreen", "o_cineseat", "o_popcorn", "o_projector", "andy_south", "andy_east"],
   /* (v124) ONLY THE VAULT'S OWN FOUR. The casino dressing it borrows — slots, rope posts, neon, the statue, the wheel,
      the carpet — is CORE art (CASINO_ART), and a picture claimed by an area sheet is packed there and stops loading
      anywhere else. Listing them here pulled them out of core and emptied the casino floor of half its furniture. */
-  vault: ["warden", "pitboss", "hoard", "dealer"]   // (CASINO_ART is core now: the casino is where everyone starts)
+  vault: ["o_yew", "o_yew_stump", "warden", "pitboss", "hoard", "dealer"]   /* the Vault has two yews of its own */   // (CASINO_ART is core now: the casino is where everyone starts)
 };
 const LAZY_ART = new Set(Object.values(AREA_ART).flat());
 const artReady = Promise.all(ART_FILES.filter((k) => !LAZY_ART.has(k)).map(loadArt));
@@ -1670,7 +1807,13 @@ function spr(k, x, y, flip = false, filter = "", sc = 1, rot = 0) {
   lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
 }
 // item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
-const ITEM_ART = new Set(["rattlebean", "lanternroot", "bonegourd", "stormcorn", "charcoal", "adjusters_visor", "angels_ring", "ashlogs", "axe", "beef", "beer", "bogplate", "bonefish", "bones", "bookies_amulet", "bronze_amulet", "bronze_bar", "bronze_body", "bronze_boots", "bronze_gladius", "bronze_gloves", "bronze_helm", "bronze_legs", "bronze_maul", "bronze_ring", "bronze_shield", "bronze_sword", "bronzecuirass", "bronzehelm", "bronzeshield", "bronzesword", "burnt", "cap", "catfish", "cbeef", "cchicken", "cgloomfin", "champagne", "chicken", "chickendinner", "chip_black", "chip_free", "chip_gold", "chip_red", "clanternfish", "cloudray", "clover", "cmooncarp", "cobweb", "cocktail", "coins", "copper", "cpork", "csardine", "cskyeel", "ctrout", "cperch", "ccatfish", "cmudskipper", "cbonefish", "cghostcarp", "ccloudray", "cstormmarlin", "cthundersquid", "devils_dice", "diamond_amulet", "diamond_bar", "diamond_body", "diamond_boots", "diamond_gladius", "diamond_gloves", "diamond_helm", "diamond_legs", "diamond_maul", "diamond_ore", "diamond_ring", "diamond_shield", "diamond_sword", "dragonstone_amulet", "dragonstone_bar", "dragonstone_body", "dragonstone_boots", "dragonstone_gladius", "dragonstone_gloves", "dragonstone_helm", "dragonstone_legs", "dragonstone_maul", "dragonstone_ore", "dragonstone_ring", "dragonstone_shield", "dragonstone_sword", "emerald_amulet", "emerald_bar", "emerald_body", "emerald_boots", "emerald_gladius", "emerald_gloves", "emerald_helm", "emerald_legs", "emerald_maul", "emerald_ore", "emerald_ring", "emerald_shield", "emerald_sword", "feather", "fishplatter", "flashlight", "gamblers_ring", "geode", "ghostcarp", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hailshard", "hide", "horseshoe", "husk", "lantern", "lanternfish", "logs", "manifesto", "marble", "markedcard", "mask", "menace", "monocle", "mooncarp", "mudskipper", "mysterybox", "olives", "onyx_amulet", "onyx_bar", "onyx_body", "onyx_boots", "onyx_gladius", "onyx_gloves", "onyx_helm", "onyx_legs", "onyx_maul", "onyx_ore", "onyx_ring", "onyx_shield", "onyx_sword", "parma", "perch", "pickaxe", "pit", "pork", "porkchops", "receipt", "rewind_watch", "rod", "rudis", "sandals", "sardine", "sharktooth", "sharps_gloves", "skyashlogs", "skyeel", "spiderboots", "sporecap", "stake_loafers", "stardust", "staticfur", "steakdinner", "stormjelly", "stormmarlin", "sunolive", "thundersquid", "tickets", "tin", "toga", "tomatoe", "tp_scroll", "trout", "tunic", "tusk", "wheat", "whiskey", "willowlogs", "wraithhood", "yewlogs", "zcoin", "starfall_helm", "starfall_body", "starfall_legs", "starfall_boots", "starfall_gloves", "starfall_shield", "starfall_sword", "starfall_maul", "starfall_gladius", "starfall_amulet", "starfall_ring", "starfall_ore", "starfall_bar", "eclipse_helm", "eclipse_body", "eclipse_legs", "eclipse_boots", "eclipse_gloves", "eclipse_shield", "eclipse_sword", "eclipse_maul", "eclipse_gladius", "eclipse_amulet", "eclipse_ring", "eclipse_ore", "eclipse_bar", "emerald_pickaxe", "emerald_axe", "emerald_rod", "diamond_pickaxe", "diamond_axe", "diamond_rod", "dragonstone_pickaxe", "dragonstone_axe", "dragonstone_rod", "onyx_pickaxe", "onyx_axe", "onyx_rod", "starfall_pickaxe", "starfall_axe", "starfall_rod", "eclipse_pickaxe", "eclipse_axe", "eclipse_rod", "agilmark", "catalytic", "slagstone", "pinelogs", "bogwoodlogs", "mudcat", "bowfin", "cmudcat", "cbowfin", "wrench", "kingcap"]), SKILL_ART = new Set(["attack", "cooking", "defence", "farming", "fishing", "hp", "melee", "mining", "smithing", "strength", "woodcutting"]), EQ_ART = new Set(["amulet", "body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
+const ITEM_ART = new Set([
+  /* (2026-09-23) the Thieves' Guild's eleven. THIS SET IS AN ALLOWLIST: an icon file that is not named here is
+     never looked for, and the item quietly keeps its emoji. */
+  "thieves_permit", "brass_button", "pocket_watch", "stolen_signet", "blackmarket_ledger",
+  "ditched_hood", "ditched_coat", "ditched_gloves", "ditched_boots",
+  "whetgrit", "quench_salts", "seal_wax", "temper", "flux", "masters_seal",
+  "rattlebean", "lanternroot", "bonegourd", "stormcorn", "charcoal", "adjusters_visor", "angels_ring", "ashlogs", "axe", "beef", "beer", "bogplate", "bonefish", "bones", "bookies_amulet", "bronze_amulet", "bronze_bar", "bronze_body", "bronze_boots", "bronze_gladius", "bronze_gloves", "bronze_helm", "bronze_legs", "bronze_maul", "bronze_ring", "bronze_shield", "bronze_sword", "bronzecuirass", "bronzehelm", "bronzeshield", "bronzesword", "burnt", "cap", "catfish", "cbeef", "cchicken", "cgloomfin", "champagne", "chicken", "chickendinner", "chip_black", "chip_free", "chip_gold", "chip_red", "clanternfish", "cloudray", "clover", "cmooncarp", "cobweb", "cocktail", "coins", "copper", "cpork", "csardine", "cskyeel", "ctrout", "sstormmarlin", "sghostcarp", "scloudray", "sskyeel", "smudcat", "sthundersquid", "sbowfin", "cperch", "ccatfish", "cmudskipper", "cbonefish", "cghostcarp", "ccloudray", "cstormmarlin", "cthundersquid", "devils_dice", "diamond_amulet", "diamond_bar", "diamond_body", "diamond_boots", "diamond_gladius", "diamond_gloves", "diamond_helm", "diamond_legs", "diamond_maul", "diamond_ore", "diamond_ring", "diamond_shield", "diamond_sword", "dragonstone_amulet", "dragonstone_bar", "dragonstone_body", "dragonstone_boots", "dragonstone_gladius", "dragonstone_gloves", "dragonstone_helm", "dragonstone_legs", "dragonstone_maul", "dragonstone_ore", "dragonstone_ring", "dragonstone_shield", "dragonstone_sword", "emerald_amulet", "emerald_bar", "emerald_body", "emerald_boots", "emerald_gladius", "emerald_gloves", "emerald_helm", "emerald_legs", "emerald_maul", "emerald_ore", "emerald_ring", "emerald_shield", "emerald_sword", "feather", "fishplatter", "flashlight", "gamblers_ring", "geode", "ghostcarp", "gloomfin", "goldtomatoe", "grimstone", "grudge", "hailshard", "hide", "horseshoe", "husk", "lantern", "lanternfish", "logs", "manifesto", "marble", "markedcard", "mask", "menace", "monocle", "mooncarp", "mudskipper", "mysterybox", "olives", "onyx_amulet", "onyx_bar", "onyx_body", "onyx_boots", "onyx_gladius", "onyx_gloves", "onyx_helm", "onyx_legs", "onyx_maul", "onyx_ore", "onyx_ring", "onyx_shield", "onyx_sword", "parma", "perch", "pickaxe", "pit", "pork", "porkchops", "receipt", "rewind_watch", "rod", "rudis", "sandals", "sardine", "sharktooth", "sharps_gloves", "skyashlogs", "skyeel", "spiderboots", "sporecap", "stake_loafers", "stardust", "staticfur", "steakdinner", "stormjelly", "stormmarlin", "sunolive", "thundersquid", "tickets", "tin", "toga", "tomatoe", "tp_scroll", "trout", "tunic", "tusk", "wheat", "whiskey", "willowlogs", "wraithhood", "yewlogs", "zcoin", "starfall_helm", "starfall_body", "starfall_legs", "starfall_boots", "starfall_gloves", "starfall_shield", "starfall_sword", "starfall_maul", "starfall_gladius", "starfall_amulet", "starfall_ring", "starfall_ore", "starfall_bar", "eclipse_helm", "eclipse_body", "eclipse_legs", "eclipse_boots", "eclipse_gloves", "eclipse_shield", "eclipse_sword", "eclipse_maul", "eclipse_gladius", "eclipse_amulet", "eclipse_ring", "eclipse_ore", "eclipse_bar", "emerald_pickaxe", "emerald_axe", "emerald_rod", "diamond_pickaxe", "diamond_axe", "diamond_rod", "dragonstone_pickaxe", "dragonstone_axe", "dragonstone_rod", "onyx_pickaxe", "onyx_axe", "onyx_rod", "starfall_pickaxe", "starfall_axe", "starfall_rod", "eclipse_pickaxe", "eclipse_axe", "eclipse_rod", "agilmark", "catalytic", "slagstone", "pinelogs", "bogwoodlogs", "mudcat", "bowfin", "cmudcat", "cbowfin", "wrench", "kingcap"]), SKILL_ART = new Set(["attack", "cooking", "defence", "farming", "fishing", "hp", "melee", "mining", "smithing", "strength", "woodcutting"]), EQ_ART = new Set(["amulet", "body", "boots", "gloves", "helm", "legs", "ring", "shield", "weapon"]);
 /* IART_V 8 -> 9 (2026-09-22): the Tower was redrawn and o_tower.png is served through this same version, so the
    door window went on handing out the OLD forty-storey tower from the edge (a day of max-age plus a week of
    stale-while-revalidate) while the Yard drew the new squat one. The in-world sprite comes from the packs and was
@@ -1683,7 +1826,26 @@ const ITEM_ART = new Set(["rattlebean", "lanternroot", "bonegourd", "stormcorn",
    THE RULE, THIRD TIME OF ASKING THIS SESSION: never fetch a real asset url until the HTML confirms the build is
    live. Probing with ?probe= is not a workaround for checking early, it is the ONLY way to look before then -
    a bare fetch of a not-yet-deployed asset does not fail, it CACHES THE PAGE under that name. */
-const IART = "/v3/assets/img/glad/flat/items/", IART_V = 12, ICO_IMG = {};
+/* IART_V 12 -> 13 (2026-09-23): the seven SMOKED FISH. Their icons went live with the page that first asked for
+   them and the files are correct at the origin — byte-identical, real PNGs, a cache HIT at the edge — and yet a
+   player reported the smoked marlin and squid drawing as broken images. That is a client holding a failed
+   response from before the file existed, and item icons are NOT in the immutable bucket: _headers gives
+   flat/items/* a DAY of max-age plus a WEEK of stale-while-revalidate, so a bad entry is served for eight days
+   and nothing can purge it. The version IS the purge. Bumping it costs everyone one re-download of ~246 icons at
+   1-3 KB each, about 400 KB once, which is the cheap half of this trade. */
+const IART = "/v3/assets/img/glad/flat/items/", IART_V = 13, ICO_IMG = {};
+/* UI ART — drawn furniture for windows, as opposed to items (IART) and world objects (ART). The folder already
+   held 46 pictures and already had a constant; this was declared a second time up here on 2026-09-23 before that
+   was noticed, and is the same UIA, hoisted, rather than a rival. Everything in here is served at ?v=1 and a
+   redrawn picture needs a new name or a bumped ?v= on its own, since there is no version for the folder. */
+const UIA = "/v3/assets/img/glad/flat/ui/";
+const uiArt = (k, cls) => `<img class="${cls || ""}" src="${UIA}${k}.png?v=1" alt="">`;
+/* (2026-09-23) ONE TICKET PICTURE. fmtCash writes a 🎟 emoji, which is right for chat and the server's own lines —
+   those are plain text, where an <img> would show as markup. In a WINDOW the rows are HTML and sit beside drawn
+   art, so the emoji was the one flat glyph in a column of pictures. This had been pasted inline five times with
+   five slightly different style attributes; it is a class now, and `tixN` is the icon with a number after it. */
+const TIX_ICO = `<img src="${IART}tickets.png?v=1" alt="" class="tixi">`;   /* ?v=1 deliberately: the picture has not changed, and that URL is already warm at the edge */
+const tixN = (n) => TIX_ICO + Math.round(n).toLocaleString();
 // (canvas icons are fetched the first time each is drawn; the <img> icons in windows load as they appear)
 const artOf = (k) => `<img class="ico" src="${IART}${k}.png?v=${IART_V}" alt="">`;
 const ART_ALIAS = { bronze_body: "bronzecuirass", bronze_helm: "bronzehelm", bronze_shield: "bronzeshield", bronze_sword: "bronzesword" };
@@ -1867,6 +2029,9 @@ function paintBg() {
     if (ob.t === "fenceV") { f(X + 6, Y, 4, T, "#5a3418"); f(X + 7, Y, 2, T, "#7a4a26"); f(X + 5, Y + 3, 6, 3, "#4a2a16"); }
     if (dark && (ob.t === "bush" || ob.t === "boulder") && bgSpr(`w_${ob.t}`, X + 8, Y + 16, ob)) continue;
     if (ob.t === "skeleton") { if (bgSpr("skeleton", X + 8, Y + 15, ob)) continue; f(X + 3, Y + 8, 10, 2, "#e8e4d8"); f(X + 2, Y + 6, 4, 4, "#e8e4d8"); f(X + 3, Y + 7, 1, 1, "#222"); for (let i = 0; i < 4; i++) f(X + 6 + i * 2, Y + 7, 1, 4, "#d8d4c8"); f(X + 12, Y + 2, 1, 10, "#8a6a3a"); }
+    /* (2026-09-23) THE DOCK IS DECKING NOW. t_dock is a seamless tile drawn once per square — the planks run edge
+       to edge so a pier of any length has no line across it. The fill below stays as the fallback. */
+    if (ob.t === "dock" && IMG.t_dock) { for (let dy = 0; dy < ob.h; dy++) for (let dx = 0; dx < ob.w; dx++) o.drawImage(IMG.t_dock.im, X + dx * T, Y + dy * T, T, T); continue; }
     if (ob.t === "dock") { const dw = ob.w * T; for (let y = 0; y < ob.h; y++) { f(X, Y + y * T, dw, T, "#8a5a32"); for (let i = 0; i < 4; i++) f(X, Y + y * T + i * 4, dw, 1, "#6b4423"); } f(X, Y, 1, ob.h * T, "#5a3418"); f(X + dw - 1, Y, 1, ob.h * T, "#5a3418"); }
     if (ob.t === "pen" && IMG.o_pen) continue;   /* (2026-09-21) the pen is a picture now (o_pen, PixelLab), drawn with the other objects; this is only the fallback */
     if (ob.t === "pen") { f(X, Y + 2, 48, 13, "#c8a860"); for (let i = 0; i < 12; i++) f(X + 2 + Math.floor(hashRand(i, 3, 91) * 44), Y + 4 + Math.floor(hashRand(i, 4, 92) * 9), 3, 1, "#a88a40");
@@ -2017,8 +2182,24 @@ function paintRoom(o, f) {
   /* THE FIGHT PIT'S DRAWN FLOOR (v81, PixelLab tileset t_pit: flagstones, a raised ring of packed sand, a plank kerb between).
      A Wang sheet like the carpets: a tile corner counts as sand when it lies inside the pit's oval, so the ring comes out round. */
   const PITF = def.pit && def.pitFloor && IMG[def.pitFloor] ? IMG[def.pitFloor] : null, pitIn = PITF ? ((vx, vy) => { const P = def.pit, cx = P.x + P.w / 2, cy = P.y + P.h / 2, rx = P.w / 2 - 0.35, ry = P.h / 2 - 0.35; return ((vx - cx) / rx) ** 2 + ((vy - cy) / ry) ** 2 <= 1 ? 1 : 0; }) : null;
+  /* (2026-09-23) INTERNAL WALLS. paintRoom floors the WHOLE room rectangle, so a "v" tile inside a room was
+     painted over with floorboards: it blocked you and you could not see why. The Thieves' Guild is the first
+     interior with dividing walls in it, and they were invisible - "the rooms need to have vertical walls in
+     between them so they feel like real rooms" is exactly that bug seen from the outside. Drawn before the
+     floor so the floor loop can skip them: a dark block, a lit cap where the top of the wall catches the room
+     light, and a shadow on the floor tile below, which is what reads as height. */
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    if (Z.g?.[y]?.[x] !== "v") continue;
+    const X = x * T, Y = y * T, top = Z.g?.[y - 1]?.[x] !== "v";
+    f(X, Y, T, T, "#151220");
+    f(X, Y, T, top ? 5 : 2, "#3a3348");                    // the cap, brighter where a wall starts
+    f(X, Y + (top ? 5 : 2), T, 1, "rgba(0,0,0,.45)");
+    if (hashRand(x, y, 17) < 0.35) f(X + ((x * 5 + y * 3) % 11) + 2, Y + 8, 3, 1, "#241f30");   // a little brickwork
+    if (Z.g?.[y + 1]?.[x] !== "v") f(X, Y + T, T, 3, "rgba(0,0,0,.35)");                        // shadow it casts on the floor
+  }
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     if (STARS) continue;
+    if (Z.g?.[y]?.[x] === "v") continue;   // drawn above
     if (PITF) { const bits = [pitIn(x, y), pitIn(x + 1, y), pitIn(x, y + 1), pitIn(x + 1, y + 1)], [sx0, sy0] = WANG[bits[0] * 8 + bits[1] * 4 + bits[2] * 2 + bits[3]]; o.drawImage(PITF.im, sx0, sy0, 32, 32, x * T, y * T, T, T); continue; }
     const X = x * T, Y = y * T;
     const CARPET = IMG[def.carpet || "t_casino"];
@@ -2042,6 +2223,9 @@ function paintRoom(o, f) {
        repeating feature, and here that is the point: three rows of lane make three lines, which is what a running
        track looks like. Alternate tiles are drawn half a tile across (the same trick the market's brick uses) so
        the grain does not march in lockstep down the corridor. */
+    /* (2026-09-23) THE GUILD'S FLOOR, drawn exactly as the track is: the tile is offset by half its width on
+       alternate tiles, which is what stops a 32px texture reading as wallpaper across a whole room. */
+    if (def.floor === "guild" && IMG.t_guild) { const b = IMG.t_guild.im, sw = b.width, ox = ((x + y * 2) % 2) * (sw / 2), d = (T * (sw - ox)) / sw; o.drawImage(b, ox, 0, sw - ox, sw, X, Y, d, T); if (ox) o.drawImage(b, 0, 0, ox, sw, X + d, Y, T - d, T); continue; }
     if (def.floor === "track" && IMG.t_track) { const b = IMG.t_track.im, sw = b.width, ox = ((x + y * 2) % 2) * (sw / 2), d = (T * (sw - ox)) / sw; o.drawImage(b, ox, 0, sw - ox, sw, X, Y, d, T); if (ox) o.drawImage(b, 0, 0, ox, sw, X + d, Y, T - d, T); continue; }
     if (def.floor === "marble") { f(X, Y, T, T, (x + y) % 2 ? "#e8e2d4" : "#cfc6b2"); if (hashRand(x, y, 9) < 0.2) f(X + 3, Y + 5, 6, 1, "rgba(120,110,90,.25)"); }
     else { f(X, Y, T, T, "#9a6a3a"); f(X, Y + (x % 2 ? 7 : 3), T, 1, "#7a4a26"); f(X + ((y * 5) % 16), Y, 1, T, "#86582e"); }
@@ -2479,6 +2663,11 @@ function talkTo(n) {
   if (n.shop === "vanity") return showTalk(n, pick(n.lines), [["Show me the rail.", () => { closeTalk(); openVan(); }], ["Change my hair and face.", () => { closeTalk(); openLook?.(); }], chat, bye]);
   if (n.opens === "decor") return showTalk(n, pick(n.lines), [...(G.ownerOf(Z.key) === you?.id ? [["Show me what you've got.", () => { closeTalk(); decoLoad().then((d) => d.shop()); }]] : []), chat, bye]);
   if (n.opens === "shop") return showTalk(n, pick(n.lines), [["Let's trade.", () => { closeTalk(); openShop("shop"); }], chat, bye]);
+  /* (2026-09-23) VANCE SELLS ONE THING. A confirm button rather than a click on the door, because 50,000 tickets
+     is far too much to spend on a misclick, and the button disappears once you are already a member. */
+  if (n.opens === "permit") return showTalk(n, pick(n.lines), [
+    ...(me?.guild ? [] : [[`Buy a permit — ${G.fmtTix(G.THIEF.permit)}`, () => { closeTalk(); send({ t: "permit" }); }]]),
+    chat, bye]);
   if (n.opens === "ferry") return showTalk(n, pick(n.lines), [
     ["Take me to my island.", () => { closeTalk(); send({ t: "isle", op: "go" }); }],
     ["Row me to someone else's island.", () => { closeTalk(); openWin("isleWin"); send({ t: "isle", op: "list" }); setTimeout(() => $("isleName").focus(), 50); }],
@@ -2536,7 +2725,7 @@ function aimCamera(P, now) {
   view.ox = Math.round(view.bx - cam.x * view.s); view.oy = Math.round(view.by - cam.y * view.s);
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { towerdoor: "tower", towerup: "towerup", cryptdoor: "crypt", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", hsboard: "hiscores", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", prizewheel: "prize", fameboard: "fame", cart: "ferry", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", wildladder: "hole", agilend: "agilend", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+const KIND_OF = { mark: "mark", guildgate: "guildgate", towerdoor: "tower", towerup: "towerup", cryptdoor: "crypt", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", hsboard: "hiscores", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", prizewheel: "prize", fameboard: "fame", cart: "ferry", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", wildladder: "hole", agilend: "agilend", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})${m.c && m.c !== you?.id ? " · someone's fighting it" : ""}` }; }
@@ -2901,6 +3090,11 @@ function frame() {
     if (ob.t === "plot") sprites.push({ y: ob.y * T + 12, draw: () => {
       const p = Z.isle?.plots?.[ob.i]; if (!p) return;
       const crop = G.CROPS[p.k], k = Math.min(1, (now - p.at) / crop.ms), X = ob.x * T, Y = ob.y * T;
+      /* (2026-09-23) FOUR DRAWN STAGES. crop_<crop>_1..4 were generated a week ago and never wired up, so every
+         plot on every island was three coloured rectangles. Stage 4 is RIPE and nothing else: the first three
+         split the growing time, so the last picture always means "this one is ready" rather than "nearly". */
+      const stage = k >= 1 ? 4 : 1 + Math.floor(k * 3);
+      if (spr(`crop_${p.k}_${stage}`, X + 8, Y + 15)) return;
       const col = crop.col || "#d8322a";   /* (2026-09-23) the colour lives on CROPS now: a new crop is one table, not two */
       if (k < 0.34) { for (const dx of [3, 7, 11]) px(X + dx, Y + 9, 2, 3, "#5aa040"); return; }
       for (const dx of [2, 7, 12]) { const h = Math.round(4 + k * 8); px(X + dx + 1, Y + 14 - h, 1, h, "#4a8a34"); px(X + dx, Y + 14 - h, 3, 3, k >= 1 ? col : "#6ab04a"); }
@@ -2977,10 +3171,29 @@ function frame() {
       const X = ob.x * T, Y = ob.y * T; px(X + 2, Y + 6, 28, 22, "#3a2616"); px(X + 5, Y + 9, 22, 16, "#0a0604");
     } });
     if (ob.t === "hay" && IMG.hay) sprites.push({ y: ob.y * T + 12, draw: () => spr("hay", ob.x * T + 8, ob.y * T + 14) });
+    /* (2026-09-23) A MARK IN THE THIEVES' GUILD. Drawn with drawPerson and the colours the rules give it, so the
+       guild looks like the rest of the world with NO new art - a sprite at o_mark_<kind> takes over the moment one
+       exists, exactly as every other object here works. Faded and hand-on-pocket for the few seconds after a
+       successful pick (objBusy reads the same emptyUntil the server sets), which is the only cue that tells you
+       to move along to the next one. */
+    if (ob.t === "mark") sprites.push({ y: ob.y * T + 15, draw: () => {
+      /* (2026-09-23) THEY SHIFT ABOUT ON THE SPOT. A mark is an OBJECT, and object positions are built on the
+         page and never synced - only their timers come down in `dyn` - so a mark genuinely cannot walk without
+         becoming an NPC. This is the cheap honest version: a couple of pixels of drift and a turn of the head,
+         off the clock and the mark's own position, so no two are in step and nothing is sent anywhere. It stops
+         entirely under reduced motion, and while they have a hand on their pocket. */
+      const busy = objBusy(ob, now), phase = pnow / 1400 + ob.x * 1.7 + ob.y;
+      const sway = busy || calm ? 0 : Math.round(Math.sin(phase) * 2);
+      const X = ob.x * T + 8 + sway, Y = ob.y * T + 15;
+      if (busy) lc.globalAlpha = 0.45;
+      const face = calm ? 1 : Math.cos(phase) >= 0 ? 1 : -1;
+      if (!spr("o_mark_" + ob.mark, X, Y, face < 0)) drawPerson(X, Y, face, ob.look || { hair: "#3a2a1a", shirt: "#6a6250", pants: "#3a3630" });
+      lc.globalAlpha = 1;
+    } });
     if (ob.t === "wheat") sprites.push({ y: ob.y * T + 15, draw: () => {
       const X = ob.x * T, Y = ob.y * T;
       if (ob.grownAt > now) { for (let i = 0; i < 4; i++) px(X + 2 + i * 3, Y + 11, 2, 3, "#9a7a3a"); return; }
-      if (spr("wheat", X + 8, Y + 15)) return;
+      if (spr(ob.art || "wheat", X + 8, Y + 15)) return;   /* (2026-09-23) `art` like the Yard's oak, so a patch CAN carry its own picture while the type stays "wheat" for the pick handler. Nothing sets it today — the Yard and the farm both draw wheat.png — but this line read spr("wheat") and silently ignored `art`, which is the trap the oak had already been through. */
       for (let i = 0; i < 3; i++) { const sx = X + 2 + i * 5; px(sx + 1, Y + 6, 1, 9, "#b89a28"); px(sx, Y - 1, 3, 8, "#f0d040"); }
     } });
     if (ob.t === "spot" && IMG.o_spot && !ob.special) { const sk = ob.look && IMG["o_spot" + ob.look] ? "o_spot" + ob.look : "o_spot";   /* (v105) five drawn kinds of spot; the old ring if the picture isn't here */
@@ -3294,11 +3507,10 @@ async function openHiscores() {
 function renderHs() {   /* (v96) the boards are G.HISCORES: the rules file says why these six */
   if (!hsData?.boards) return; if (!G.HISCORES.some(([k]) => k === hsTab)) hsTab = G.HISCORES[0][0];
   const [, , what, kind] = G.HISCORES.find(([k]) => k === hsTab), rows = hsData.boards[hsTab] || [], mine = rows.find((r) => you && r.name === you.name);
-  const tixImg = `<img src="/v3/assets/img/glad/flat/items/tickets.png?v=1" alt="" style="width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;margin-right:2px">`;
   $("hsSub").textContent = `${hsData.players} player${hsData.players === 1 ? "" : "s"} · ${mine ? `you're #${mine.rank}` : what}`;
-  $("hsTabs").innerHTML = G.HISCORES.map(([k, l]) => `<button type="button" data-hs="${k}" class="${k === hsTab ? "on" : ""}">${l}</button>`).join("");
+  $("hsTabs").innerHTML = G.HISCORES.map(([k, l]) => `<button type="button" role="tab" aria-selected="${k === hsTab}" data-hs="${k}" class="${k === hsTab ? "on" : ""}">${l}</button>`).join("");
   $("hsBody").innerHTML = rows.length
-    ? rows.map((r) => `<div class="hsr${you && r.name === you.name ? " me" : ""}"><span class="rk">${r.rank <= 3 ? ["🥇", "🥈", "🥉"][r.rank - 1] : r.rank}</span><b class="who" data-who="${esc(r.name)}" title="${esc(r.name)}'s profile">${esc(r.name)}</b><span>${kind === "tix" ? tixImg : ""}${kind === "time" ? `${Math.floor(r.v / 60)}:${String(r.v % 60).padStart(2, "0")}` : Number(r.v).toLocaleString()}</span><span class="xp">${esc(r.sub || "")}</span></div>`).join("")
+    ? rows.map((r) => `<div class="hsr${you && r.name === you.name ? " me" : ""}"><span class="rk">${r.rank <= 3 ? ["🥇", "🥈", "🥉"][r.rank - 1] : r.rank}</span><b class="who" data-who="${esc(r.name)}" title="${esc(r.name)}'s profile">${esc(r.name)}</b><span>${kind === "tix" ? TIX_ICO : ""}${kind === "time" ? `${Math.floor(r.v / 60)}:${String(r.v % 60).padStart(2, "0")}` : Number(r.v).toLocaleString()}</span><span class="xp">${esc(r.sub || "")}</span></div>`).join("")
     : `<p class="note">Nobody's on this board yet. Be first.</p>`;
   $("hsTabs").querySelectorAll("[data-hs]").forEach((b) => b.addEventListener("click", () => { hsTab = b.dataset.hs; SFX.play("ui_click"); renderHs(); }));
   $("hsBody").querySelectorAll("[data-who]").forEach((b) => b.addEventListener("click", () => openProfile(b.dataset.who.split(" + ")[0])));   /* (v107; a crypt row is "A + B", so the first of them) */
@@ -3313,14 +3525,17 @@ function renderHs() {   /* (v96) the boards are G.HISCORES: the rules file says 
 /* What a tool's speed is called, in the skill's own words: "+2.5% mining speed" reads as a pickaxe upgrade where
    "+2.5% tool speed" reads as a spreadsheet. */
 const SKILL_VERB = { mining: "mining", woodcutting: "chopping", fishing: "fishing" };
-function statChips(k) {
+/* (2026-09-23) TAKES THE LEVEL. A reforge belongs to the piece now, so these chips have to be told which piece
+   they are describing; forgeSpeed(c, key) and forgeAdd(c, key) answered about whatever of that kind you were
+   WEARING, which is the wrong piece for every row on the anvil's list but one. */
+function statChips(k, lvl = 0) {
   const it = ITEMS[k]; if (!it?.slot) return "";
   const wornKey = me?.eq?.[it.slot], rows = [["acc", "attack"], ["str", "strength"], ["def", "defence"]].filter(([f]) => it[f]);
   const chips = rows.map(([f, sk]) => {
-    const mine = G.statOf(me, k, f), theirs = wornKey ? G.statOf(me, wornKey, f) : 0, add = G.forgeAdd(me, k, f);
+    const add = G.forgeAddAt(k, lvl, f), mine = (ITEMS[k][f] || 0) + add, theirs = wornKey ? G.statOf(me, wornKey, f) : 0;
     return `<em class="${mine > theirs ? "up" : ""}" title="${f === "acc" ? "Accuracy" : f === "str" ? "Strength" : "Defence"}${add ? ` — ${ITEMS[k].name} is reforged, +${add} of this from the forge` : ""}">${sico(sk)}+${mine}${add ? `<b class="fgx">+${add}</b>` : ""}</em>`;
   });
-  if (it.tool) { const sp = (G.ITEMS[k].tspd || 1) + G.forgeSpeed(me, k), add = G.forgeSpeed(me, k);
+  if (it.tool) { const add = G.forgeSpeedAt(k, lvl), sp = (G.ITEMS[k].tspd || 1) + add;
     chips.unshift(`<em class="${add ? "up" : ""}" title="${SKILL_VERB[it.tool] || "Tool"} speed${add ? ` — reforged, ${(add * 100).toFixed(1)}% of this from the forge` : ""}">${sico(it.tool)}+${Math.round((sp - 1) * 100)}%${add ? `<b class="fgx">+${(add * 100).toFixed(1)}%</b>` : ""}</em>`); }
   if (it.speed) chips.push(`<em title="Attack speed">${it.speed <= 1800 ? "fast" : it.speed >= 3000 ? "slow" : "medium"}</em>`);
   return chips.length ? `<span class="rst">${chips.join("")}</span>` : "";
@@ -3339,6 +3554,7 @@ let smithAt = null;
 
    The chosen tab and tier are MODULE state, not DOM state: this panel is rebuilt on every `me` message (hunger and
    thirst tick on their own), so anything kept only in the markup is gone a second later. */
+const forgeUse = new Set();
 let smithTab = "make", smithTier = null;
 function openSmith(ob) {
   smithAt = ob;
@@ -3351,6 +3567,15 @@ function openSmith(ob) {
   if (!smithTier || !tiers.some((t) => t.key === smithTier)) smithTier = best?.key || null;
 
   // what you are carrying or wearing that can be pushed further
+  /* (2026-09-23) WHICH PIECE THIS ROW IS ABOUT. The server reforges the one you are WEARING, and otherwise the
+     best one in your bag (forgeDo). The list has to show that same piece's level, or the row would offer "+0 ->
+     +1" on a key whose bagged copy is a +2 and the anvil would take it to +3 instead. Mirrors the server's rule
+     deliberately; if that rule changes, this changes with it. */
+  const anvilLevel = (k) => {
+    const sl = Object.keys(me.eq || {}).find((x) => me.eq[x] === k);
+    if (sl) return G.fLevelOf(me, sl);
+    return (me.inv || []).filter((x) => x.k === k).reduce((n, x) => Math.max(n, G.fOf(x)), 0);
+  };
   const owned = [...new Set([...Object.values(me.eq || {}).filter(Boolean), ...(me.inv || []).map((x) => x.k)])].filter((k) => G.canForge(k));
   owned.sort((x, y) => G.TIERS.findIndex((t) => t.key === ITEMS[x].tier) - G.TIERS.findIndex((t) => t.key === ITEMS[y].tier) || ITEMS[x].name.localeCompare(ITEMS[y].name));
 
@@ -3380,22 +3605,31 @@ function openSmith(ob) {
     /* (2026-09-22, the owner) THE WARNING SITS ABOVE THE LIST, not in a tooltip. Each row carries its own break
        percentage, but a number beside a button is easy to read past when you are five reforges deep - the blunt
        sentence is what makes someone stop. Only shown when there is something to lose. */
+    /* (2026-09-23) WHAT THE THIEVES' GUILD SELLS INTO THE ANVIL. The strip only appears if you actually hold one of
+       the three, because until somebody has been to the guild it would be three greyed-out boxes on everybody's
+       screen. Ticking one redraws the list, so the odds, the break chance and the "next" line all move together -
+       the whole point of a temper is seeing 55% become 75% before you commit the bars. */
+    const AIDS = [["temper", "Temper", `+${Math.round(G.FORGE.temper * 100)}% chance`], ["flux", "Flux", "can't break"], ["masters_seal", "Master's seal", `past +${G.FORGE.max}`]];
+    const held = AIDS.filter(([k]) => G.countItems(me, [k]) > 0);
+    for (const k of [...forgeUse]) if (!held.some(([h]) => h === k)) forgeUse.delete(k);   // spent the last one: stop asking for it
+    const aids = held.length ? `<div class="an-aids">${held.map(([k, name, what]) => `<button type="button" class="an-aid${forgeUse.has(k) ? " on" : ""}" data-aid="${k}"><i>${ico(k)}</i><b>${esc(name)}</b><small>${esc(what)} · ${G.countItems(me, [k])} held</small></button>`).join("")}</div>` : "";
+    const sealed = forgeUse.has("masters_seal"), tempered = forgeUse.has("temper"), fluxed = forgeUse.has("flux");
     const warn = owned.length ? `<div class="an-warn">⚠ Your gear can break and it's gone. Be careful!</div>` : "";
-    body = warn + (owned.length ? owned.map((k) => {
-      const it = ITEMS[k], f = G.forgeLevel(me, k), cap = f >= G.FORGE.max;
+    body = warn + aids + (owned.length ? owned.map((k) => {
+      const it = ITEMS[k], f = anvilLevel(k), cap = f >= (sealed ? G.FORGE.cap : G.FORGE.max);
       const [bk, n] = G.forgeCost(k), have = G.countItems(me, [bk]);
       const tier = G.TIERS.find((t) => t.key === it.tier), needLvl = tier && lv < tier.gate;
-      const odds = Math.round(G.forgeOdds(f) * 100), short = have < n;
+      const odds = Math.round(Math.min(0.99, G.forgeOdds(f, sealed) + (tempered ? G.FORGE.temper : 0)) * 100), short = have < n;
       /* A MISS CAN NOW DESTROY IT, so the row says so before you click. The break chance sits beside the success
          chance because this is a gamble and showing only half of it would be a trick. */
-      const brk = Math.round(G.forgeBreak(f) * 100);
+      const brk = fluxed ? 0 : Math.round(G.forgeBreak(f) * 100);   /* flux is the only thing between a miss and losing the piece */
       const miss = f === 0 ? "" : brk ? ` · a miss drops it to +${f - 1}, or ${brk}% BREAKS it` : ` · a miss drops it to +${f - 1}`;
       const why = cap ? "Fully reforged" : needLvl ? `Needs Smithing ${tier.gate}`
         : `${have}/${n} ${ITEMS[bk].name.toLowerCase()}${miss}`;
       /* What the NEXT level actually buys, in real numbers, so "is this worth bars" is answerable without maths. */
-      const gain = cap ? "" : G.forgeNext(me, k).map(([fd, d]) => fd === "tspd" ? `+${(d * 100).toFixed(1)}% ${SKILL_VERB[it.tool] || "tool"} speed` : `+${d} ${fd}`).join(", ");
+      const gain = cap ? "" : G.forgeNextAt(k, f, sealed).map(([fd, d]) => fd === "tspd" ? `+${(d * 100).toFixed(1)}% ${SKILL_VERB[it.tool] || "tool"} speed` : `+${d} ${fd}`).join(", ");
       return `<button type="button" class="rcpr an-row" data-forge="${esc(k)}"${cap || needLvl || short ? " disabled" : ""}>
-        <i>${ico(k)}</i><span><b>${esc(it.name)}${f ? ` <em class="fg">+${f}</em>` : ""}</b>${statChips(k)}<small>${esc(why)}${gain ? ` · next: ${gain}` : ""}</small></span>
+        <i>${ico(k)}</i><span><b>${esc(it.name)}${f ? ` <em class="fg">+${f}</em>` : ""}</b>${statChips(k, f)}<small>${esc(why)}${gain ? ` · next: ${gain}` : ""}</small></span>
         <span class="an-odds${cap ? " max" : ""}">${cap ? "MAX" : `${odds}%`}${!cap && brk ? `<b class="an-brk">${brk}% break</b>` : ""}</span></button>`;
     }).join("") : `<p class="note">Nothing you are carrying can be reforged. Make or wear a piece of gear first.</p>`);
   }
@@ -3403,7 +3637,8 @@ function openSmith(ob) {
   $("smithList").innerHTML = tabs + body;
   $("smithList").querySelectorAll("[data-tab]").forEach((el) => el.addEventListener("click", () => { smithTab = el.dataset.tab; SFX.play("ui_click"); openSmith(ob); }));
   $("smithList").querySelectorAll("[data-tier]").forEach((el) => el.addEventListener("click", () => { if (el.classList.contains("locked")) return; smithTier = el.dataset.tier; SFX.play("ui_click"); openSmith(ob); }));
-  $("smithList").querySelectorAll("[data-forge]").forEach((el) => el.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "forge", k: el.dataset.forge }); }));
+  $("smithList").querySelectorAll("[data-aid]").forEach((el) => el.addEventListener("click", () => { const k = el.dataset.aid; forgeUse.has(k) ? forgeUse.delete(k) : forgeUse.add(k); SFX.play("ui_click"); openSmith(ob); }));
+  $("smithList").querySelectorAll("[data-forge]").forEach((el) => el.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "forge", k: el.dataset.forge, use: [...forgeUse] }); forgeUse.clear(); }));   /* cleared after the swing: they are spent, and leaving them ticked would quietly spend the next one too */
   $("smithList").querySelectorAll("[data-r]").forEach((el) => el.addEventListener("click", () => {
     $("smithWin").hidden = true;
     send({ t: "act", kind: "ob", ob: ob.id, pick: el.dataset.r });
@@ -3421,6 +3656,29 @@ function openWin(id) {
   if (id === "tradeWin") renderTrade();
   if (id === "wikiWin") wikiGo(wikiRoute || "home");
 }
+/* (2026-09-23) WHO IS ONLINE. The count in the top bar opens it. The poll is deliberately tied to the window
+   being open and stops itself the moment it is not: a roster is cheap to build but it is one message per viewer
+   per tick if it is left running, and poll rate is what costs this game money. The server rate-limits it to one
+   answer every 3s regardless, so the 6s here can never become a hot path. */
+let whoAllAt = 0;
+function whoAllOpen() {
+  $("whoWin").hidden = false;
+  if (!$("whoBody").innerHTML) $("whoBody").innerHTML = `<div class="jk-msg">Looking around…</div>`;
+  send({ t: "whoall" });
+  clearInterval(whoAllAt);
+  whoAllAt = setInterval(() => { if ($("whoWin").hidden) return clearInterval(whoAllAt); send({ t: "whoall" }); }, 6000);
+}
+function whoAllDraw(people) {
+  if ($("whoWin").hidden) return;
+  if (!people.length) { $("whoBody").innerHTML = `<div class="jk-msg">Nobody is online. That can't be right.</div>`; return; }
+  const by = new Map();
+  for (const p of people) { const k = p.scene || "?"; if (!by.has(k)) by.set(k, []); by.get(k).push(p); }
+  const where = [...by.entries()].sort((a, b) => b[1].length - a[1].length || String(a[0]).localeCompare(String(b[0])));
+  $("whoBody").innerHTML = `<div class="jk-msg"><b>${people.length}</b> ${people.length === 1 ? "person" : "people"} online, across ${where.length} ${where.length === 1 ? "place" : "places"}.</div>`
+    + where.map(([k, list]) => `<div class="wa-scene">${esc(G.SCENES[k]?.name || k)} <small>(${list.length})</small></div>
+      <div class="wa-people">${list.map((p) => `<span class="wa-p"><b>${esc(p.name)}</b>${p.admin ? " ⭐" : ""}<small>cb ${p.combat}</small></span>`).join("")}</div>`).join("");
+}
+$("online").addEventListener("click", whoAllOpen);
 document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_close"); $(b.dataset.close).hidden = true; if (b.dataset.close === "gameWin") CZ.closed(); if (b.dataset.close === "wikiWin" && location.hash.startsWith("#wiki")) history.replaceState(null, "", location.pathname + location.search); }));
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape" || e.target.closest?.("input, textarea, select") || !$("pop").hidden || DLG) return;
@@ -3430,10 +3688,18 @@ document.addEventListener("keydown", (e) => {
 setInterval(() => { if (PRED.on && PRED.step) for (const w of ["bankWin", "exWin"]) $(w).hidden = true; }, 300);
 // stack sizes the old-school way: in full to 9,999, then K (white) and M (green); the exact number is in the tooltip
 const qty = (n) => n >= 1e6 ? `<em class="m">${(n / 1e6).toFixed(n < 1e7 ? 1 : 0).replace(/\.0$/, "")}M</em>` : n >= 1e4 ? `<em class="k">${Math.floor(n / 1000)}K</em>` : `<em>${n.toLocaleString()}</em>`;
-/* Only ever for YOUR OWN items. A forge level lives on the character (c.forge[key]), not on the item, so drawing it
-   on a market listing or another player's offer would show the VIEWER's level on someone else's goods. */
-const fgTag = (k) => { const f = G.forgeLevel(me, k); return f ? `<em class="fgn">+${f}</em>` : ""; };
-const slotHtml = (s, i, attr = "data-i") => `<div class="slot" ${attr}="${i}" data-item="${s.k}" title="${esc(G.forgeName(me, s.k))}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}${G.valueOf(s.k) ? ` — worth ${G.fmtCash(G.valueOf(s.k) * s.n)}` : ""}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(s.k)}</div>`;
+/* (2026-09-23) A forge level lives on the PIECE now (an entry's `f`, or eqf[slot] for what is worn), so it can be
+   drawn on anybody's goods: a market listing carries the level it is actually selling. This used to say the
+   opposite, and that limitation is exactly what the change removed. */
+/* (2026-09-23) A SLOT SHOWS THE LEVEL OF THE PIECE IN IT. These used to ask forgeLevel(me, key), which now means
+   "the one you are WEARING of that kind" — so a plain spare in the bag would have worn its equipped twin's +3,
+   and the +2 beside it would have claimed the same. The entry knows its own level; ask it. `data-f` carries it
+   to the hover card, which is what puts the reforge band on the right piece. */
+/* (2026-09-23) A LEVEL, AND ONLY A LEVEL. The equipment grid called this with the item KEY by mistake, and
+   because "diamond_helm" is truthy every worn piece wore a gold "+diamond_helm" band whether it had ever
+   been near an anvil or not. Coercing here means the only thing that can get through is a real level. */
+const fgTag = (f) => { const n = Number(f) | 0; return n > 0 ? `<em class="fgn">+${n}</em>` : ""; };
+const slotHtml = (s, i, attr = "data-i") => { const f = G.fOf(s); return `<div class="slot" ${attr}="${i}" data-item="${s.k}"${f ? ` data-f="${f}"` : ""} title="${esc(G.forgeNameAt(s.k, f))}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}${G.valueOf(s.k) ? ` — worth ${G.fmtCash(G.valueOf(s.k) * s.n)}` : ""}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(f)}</div>`; };
 
 /* ------------------------------------------------------------ islands */
 function renderIsles(list) {
@@ -3518,11 +3784,35 @@ document.addEventListener("visibilitychange", () => radioSync());
    mode are v3/assets/js/eastscape-decor.js, fetched the first time you ask her or press Decorate). The page keeps only what every
    visitor needs: the pieces standing in this scene (sent by the server on the way in and on every change) laid over a fresh
    build of it, and a Decorate button on your own island. */
-let DECO = null, DR = null; const DECO_URL = "/v3/assets/js/eastscape-decor.js?v=2", DR_URL = "/v3/assets/js/eastscape-decor-rules.js?v=1";
+let DECO = null, DR = null; const DECO_URL = "/v3/assets/js/eastscape-decor.js?v=2", DR_URL = "/v3/assets/js/eastscape-decor-rules.js?v=3";
 const drLoad = () => (drLoad.p ||= import(DR_URL).then((m) => (DR = m.createDecorRules(G))));   /* the catalogue and the placing rules: fetched on the first furnished island, never at login */
 const decoLoad = () => (decoLoad.p ||= Promise.all([import(DECO_URL), drLoad()]).then(([m]) => (DECO = m.createDecor({ rules: DR, G, SFX, send, esc, $, me: () => me, you: () => you, key: () => Z.key, owner: () => Z.isle?.owner || G.ownerOf(Z.key), host: () => document.querySelector(".game"), say: (t, c) => say(t, c), onMode: (on) => $("decoBtn").setAttribute("aria-pressed", String(on)) }))));
 function decorSet(list) { const key = Z.key; if (!G.isIsle(key) || (!list?.length && !DR)) return; drLoad().then(() => { if (Z.key !== key) return; const b = DR.decorInto(key, G.buildScene(key), { decor: list || [] }); Z.g = b.g; Z.objs = b.objs; hoverThing = null; DECO?.refresh(); }).catch(() => {}); }
-function decoBtnSync() { const b = $("decoBtn"), show = G.isIsle(Z.key) && G.ownerOf(Z.key) === you?.id; if (b.hidden === show) { b.hidden = !show; if (!show) DECO?.toggle(false); } }
+/* (2026-09-23, the owner: "the decorate button is now covered by the green room music player") THE TWO SHARE A
+   CORNER. Both are position:absolute right:10px bottom:10px in the same host, and the Green Room is z-index 5
+   against this button's 4, so on your own island the button was simply underneath it.
+
+   It stacks ABOVE the Green Room rather than moving, because every other corner is taken: chat is bottom left,
+   what an NPC is saying is bottom centre, and the volume, buffs and minimap are along the top.
+
+   THE HEIGHT IS MEASURED, not assumed, because the Green Room has three shapes — a one-line "it's off" bar, the
+   full dock with a video in it, and the dock collapsed to a strip when minimised — and it changes between them
+   while you are standing there. The observers are what keep the button in the right place when it does: one for
+   the size changing, one for the element appearing or being hidden. Both are cheap and fire only on those. */
+function decoLift() {
+  const b = $("decoBtn"); if (!b) return;
+  const gr = document.querySelector(".sgdock:not([hidden]), .sgoff:not([hidden])");
+  const h = gr ? Math.round(gr.getBoundingClientRect().height) : 0;
+  b.style.bottom = h ? `${h + 18}px` : "";
+  if (gr && decoLift.ro) { decoLift.ro.disconnect(); decoLift.ro.observe(gr); }
+}
+function decoWatch() {
+  if (decoWatch.on) return; decoWatch.on = true;
+  const host = $("decoBtn")?.parentElement; if (!host) return;
+  decoLift.ro = new ResizeObserver(() => decoLift());
+  new MutationObserver(() => decoLift()).observe(host, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden", "class"] });
+}
+function decoBtnSync() { const b = $("decoBtn"), show = G.isIsle(Z.key) && G.ownerOf(Z.key) === you?.id; if (b.hidden === show) { b.hidden = !show; if (!show) DECO?.toggle(false); } if (show) { decoWatch(); decoLift(); } }
 $("decoBtn").addEventListener("click", () => decoLoad().then((d) => d.toggle()));
 /* THE GREEN ROOM (v116; the module is v3/assets/js/eastscape-green.js and its header holds the why, fetched the first time you
    stand on a floor with a jukebox on it). It replaced the game server's OWN song queue (v96): the jukebox is now a window onto
@@ -3717,7 +4007,7 @@ function renderJuke() {
   const r = RADIO_NOW, off = radioOff(), left = r?.hold ? r.hold - snow() : 0, mine = r && r.byId === you?.id, held = left > 0 && !mine && !you?.admin;   // (v89) a paid pick is its buyer's for RADIO.holdMs
   const tix = me ? G.tixIn(me) : 0, short = tix < G.RADIO.cost;
   $("jukeBody").innerHTML = `<div class="jk-now"><div><b>${r ? esc(r.name) : "Nothing playing"}</b><small>${r ? `paid for by ${esc(r.by || "someone")}${r.cc ? ` · ${esc(r.cc)}` : ""}${left > 0 ? ` · theirs for ${Math.max(1, Math.ceil(left / 60000))} more min` : ""}` : "Be the DJ."}</small></div>${r && !held ? `<button type="button" class="lk-btn" id="jukeStop">Turn it off</button>` : ""}</div>
-    <div class="jk-msg jk-price">${held ? `<b>${esc(r.by || "Someone")} paid for this one.</b> You can put yours on when their time is up.` : `<b><img src="/v3/assets/img/glad/flat/items/tickets.png?v=1" alt="" style="width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px"> ${G.RADIO.cost} tickets a pick.</b> Everyone in the casino and the Yard hears it, and it's yours for ${Math.round(G.RADIO.holdMs / 60000)} minutes.${short ? ` You have ${tix}.` : ""}`}</div>
+    <div class="jk-msg jk-price">${held ? `<b>${esc(r.by || "Someone")} paid for this one.</b> You can put yours on when their time is up.` : `<b>${TIX_ICO} ${G.RADIO.cost} tickets a pick.</b> Everyone in the casino and the Yard hears it, and it's yours for ${Math.round(G.RADIO.holdMs / 60000)} minutes.${short ? ` You have ${tix}.` : ""}`}</div>
     <div class="jk-vol"><span>Your volume</span><input type="range" id="jukeVol" min="0" max="100" value="${Math.round(radioVol() * 100)}" aria-label="Your jukebox volume"><button type="button" class="lk-btn" id="jukeMute" aria-pressed="${off}">${off ? "Muted" : "Mute"}</button></div>${SFX.muted() ? `<div class="jk-msg">All sound is muted. The 🔇 button in the top bar (or M) turns it back on.</div>` : ""}
     <form class="jk-find" id="jukeForm" autocomplete="off"><input id="jukeQ" maxlength="40" placeholder="Search stations…" aria-label="Search stations"><button type="submit" class="lk-btn">Find</button></form>
     <div class="jk-genres">${G.RADIO.genres.map(([n, t]) => `<button type="button" class="lk-btn" data-tag="${esc(t)}">${esc(n)}</button>`).join("")}</div>
@@ -3906,17 +4196,33 @@ function renderEx() {
   $("exWin").querySelectorAll("[data-ex]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ex === exTab)));
   const body = $("exBody"), book = (k) => EX.book[k] || {}, last = (k) => EX.last[k]?.price;
   const tradeable = Object.keys(ITEMS).filter((k) => k !== "coins").sort((a, b) => ITEMS[a].name.localeCompare(ITEMS[b].name));
-  const row = (icon, title, sub, right, extra = "", cls = "") => `<div class="mk-row ${cls}"><i>${icon}</i><span><b>${title}</b><small>${sub}</small></span>${right}${extra}</div>`;
+  /* (2026-09-23, the owner: the market should "show the stats on hover that we just did"). `k` is the item
+     this row is about. The page already has ONE pointerover listener for [data-item] that opens the gear
+     card, so a market row only has to say which item it is — no second tooltip, no second code path, and
+     the card it opens is the same one the bag shows, comparison against what you are wearing included. */
+  const row = (icon, title, sub, right, extra = "", cls = "", k = "", f = 0) => `<div class="mk-row ${cls}"${k ? ` data-item="${k}"${f ? ` data-f="${f}"` : ""}` : ""}><i>${icon}</i><span><b>${title}</b><small>${sub}</small></span>${right}${extra}</div>`;
 
   // ---------- posting an offer (either side)
   if (exPost) {
     const d = exPost, sell = d.side === "sell";
     const keys = sell ? tradeable.filter((k) => ownAll(k) > 0) : tradeable;
+    /* (2026-09-23) WHICH ONE ARE YOU SELLING. A reforge belongs to the piece now, so owning a plain Diamond axe
+       and a +3 means two different goods with two different prices, and the market has to be told which. The
+       chooser only appears when there IS a choice; with one kind in hand it stays out of the way. A forged piece
+       is always sold singly, because each one is its own object. */
+    const exLevels = (k) => {
+      const by = new Map();
+      for (const x of [...(me.inv || []), ...(me.bank || [])]) if (x.k === k) { const f = G.fOf(x); by.set(f, (by.get(f) || 0) + x.n); }
+      return [...by.entries()].sort((a, b) => a[0] - b[0]);
+    };
     if (d.k && !keys.includes(d.k)) d.k = "";
-    const b = book(d.k), have = d.k ? ownAll(d.k) : 0, total = d.qty * d.price, tax = G.exTax(total);
+    if (sell) { const ls = d.k ? exLevels(d.k) : []; if (!ls.some(([f]) => f === d.f)) d.f = ls[0]?.[0] || 0; } else d.f = 0;
+    const b = book(d.k), have = d.k ? (sell ? (exLevels(d.k).find(([f]) => f === d.f)?.[1] || 0) : ownAll(d.k)) : 0, total = d.qty * d.price, tax = G.exTax(total);
+    if (sell && d.f) d.qty = 1;
     body.innerHTML = `<div class="mk-form">
       <div class="mk-h">${sell ? "Post a sell offer" : "Post a buy offer"}</div>
       <label>Item<span id="mkPick"></span></label>
+      ${sell && d.k && exLevels(d.k).length > 1 ? `<label>Which one<select id="mkF">${exLevels(d.k).map(([f, n]) => `<option value="${f}"${f === d.f ? " selected" : ""}>${f ? `+${f}` : "Plain"} · ${n.toLocaleString()} you own</option>`).join("")}</select></label>` : ""}
       ${d.k ? `<div class="mk-note">Cheapest listed: <b>${b.sell != null ? G.fmtCash(b.sell) : "—"}</b> · best buy offer: <b>${b.buy != null ? G.fmtCash(b.buy) : "—"}</b> · last sold: <b>${last(d.k) ? G.fmtCash(last(d.k)) : "—"}</b>${MSRP[d.k] ? ` · Bom sells it for <b>${G.fmtCash(MSRP[d.k])}</b>` : ""}${sell ? `<br>You have ${have.toLocaleString()} (bag and bank).` : ""}</div>
       <label>How many<input id="mkQty" type="number" min="1" ${sell ? `max="${have}"` : ""} value="${d.qty}"></label>
       <label>Price each (tickets)<input id="mkPrice" type="number" min="1" value="${d.price}"></label>
@@ -3927,9 +4233,10 @@ function renderEx() {
       const bk = book(k); d.k = k;
       d.price = (sell ? bk.buy || bk.sell : bk.sell) || last(k) || 1; d.qty = sell ? ownAll(k) : 1; renderEx();
     }, { note: (k) => [sell ? `×${ownAll(k).toLocaleString()}` : "", MSRP[k] ? `Bom ${MSRP[k].toLocaleString()}` : ""].filter(Boolean).join(" · ") });
-    const upd = () => { d.qty = Math.max(1, +$("mkQty").value | 0); if (sell) d.qty = Math.min(d.qty, have); d.price = Math.max(1, +$("mkPrice").value | 0); };
+    $("mkF")?.addEventListener("change", () => { d.f = +$("mkF").value || 0; d.qty = d.f ? 1 : ownAll(d.k); renderEx(); });
+    const upd = () => { d.qty = Math.max(1, +$("mkQty").value | 0); if (sell) d.qty = Math.min(d.qty, have); if (sell && d.f) d.qty = 1; d.price = Math.max(1, +$("mkPrice").value | 0); };
     for (const id of ["mkQty", "mkPrice"]) $(id)?.addEventListener("change", () => { upd(); renderEx(); });
-    $("mkGo").addEventListener("click", () => { upd(); send({ t: "ex", op: "place", side: d.side, k: d.k, qty: d.qty, price: d.price }); exPost = null; renderEx(); });
+    $("mkGo").addEventListener("click", () => { upd(); send({ t: "ex", op: "place", side: d.side, k: d.k, qty: d.qty, price: d.price, f: d.f || 0 }); exPost = null; renderEx(); });
     $("mkBack").addEventListener("click", () => { exPost = null; renderEx(); });
     return;
   }
@@ -3941,14 +4248,14 @@ function renderEx() {
     const myBuys = EX.mine.filter((o) => o.side === "buy" && o.open);
     body.innerHTML = `<div class="mk-bar"><input class="search" id="mkQ" placeholder="Search listings…" value="${esc(exQ)}" aria-label="Search listings"><span id="mkK"></span><button class="btn" id="mkPostBuy">Post a buy offer</button></div>
       <div class="mk-h">For sale · newest first</div>
-      <div class="mk-list">${list.map((l) => row(ico(l.k), esc(ITEMS[l.k].name), `${l.left.toLocaleString()} for sale · ${l.mine ? "your listing" : esc(l.name)} · ${ago(l.at)}`,
+      <div class="mk-list">${list.map((l) => row(ico(l.k), esc(G.forgeNameAt(l.k, l.f || 0)), `${l.left.toLocaleString()} for sale · ${l.mine ? "your listing" : esc(l.name)} · ${ago(l.at)}`,
         `<span class="pr">${tixPrice(l.price)}<small>each</small></span>`,
         (l.mine ? `<span class="tag2 done">Yours</span>` : `<button class="btn" data-buy="${l.id}">${exBuyOpen === l.id ? "Close" : "Buy"}</button>`)
         + (exBuyOpen !== l.id ? "" : l.mine
           ? `<div class="mk-buy">This is your listing: other players see a Buy button here. <button class="btn plain" data-cancel="${EX.mine.find((o) => o.id === l.id) ? l.id : ""}">Take it down</button></div>`
           : `<div class="mk-buy">How many <input type="number" id="mkBuyQ" min="1" max="${l.left}" value="${l.left}"> <span id="mkBuyT">${G.fmtCash(l.left * l.price)}</span> <button class="btn" id="mkBuyGo" data-k="${l.k}" data-p="${l.price}">Buy now</button></div>`),
-        `${l.mine ? "mine" : ""} click" data-row="${l.id}`)).join("") || `<div class="mk-empty">${exK || q ? "Nothing listed that matches. Post a buy offer and sellers will come to you." : "Nothing is for sale yet. Be the first: post an offer."}</div>`}</div>
-      ${myBuys.length ? `<div class="mk-h">Your buy offers</div><div class="mk-list">${myBuys.map((o) => row(ico(o.k), esc(ITEMS[o.k].name), `${o.done.toLocaleString()} of ${o.qty.toLocaleString()} bought · ${ago(o.at)}`, `<span class="pr">${tixPrice(o.price)}<small>each</small></span>`, `<button class="btn plain" data-cancel="${o.id}">Take down</button>`)).join("")}</div>` : ""}`;
+        `${l.mine ? "mine" : ""} click" data-row="${l.id}`, l.k, l.f || 0)).join("") || `<div class="mk-empty">${exK || q ? "Nothing listed that matches. Post a buy offer and sellers will come to you." : "Nothing is for sale yet. Be the first: post an offer."}</div>`}</div>
+      ${myBuys.length ? `<div class="mk-h">Your buy offers</div><div class="mk-list">${myBuys.map((o) => row(ico(o.k), esc(G.forgeNameAt(o.k, o.f || 0)), `${o.done.toLocaleString()} of ${o.qty.toLocaleString()} bought · ${ago(o.at)}`, `<span class="pr">${tixPrice(o.price)}<small>each</small></span>`, `<button class="btn plain" data-cancel="${o.id}">Take down</button>`)).join("")}</div>` : ""}`;
     itemPicker($("mkK"), tradeable.filter((k) => EX.listings.some((l) => l.k === k)), exK, (k) => { exK = k; renderEx(); }, { allowAll: true });
     const qi = $("mkQ"); qi.addEventListener("input", () => { exQ = qi.value; const pos = qi.selectionStart; renderEx(); const n = $("mkQ"); n.focus(); n.setSelectionRange(pos, pos); });
     $("mkPostBuy").addEventListener("click", () => { exPost = { side: "buy", k: exK, qty: 1, price: book(exK).sell || last(exK) || 1 }; renderEx(); });
@@ -3971,7 +4278,7 @@ function renderEx() {
     const wanted = EX.wanted.filter((w) => !w.mine && ownAll(w.k) > 0);
     body.innerHTML = `<div class="mk-bar"><button class="btn" id="mkPostSell">Post a sell offer</button><small class="note" style="margin:0">From your bag or bank. You can have ${G.EX_SLOTS} offers up at once.</small></div>
       <div class="mk-h">Your sell offers</div>
-      <div class="mk-list">${mySells.map((o) => row(ico(o.k), esc(ITEMS[o.k].name),
+      <div class="mk-list">${mySells.map((o) => row(ico(o.k), esc(G.forgeNameAt(o.k, o.f || 0)),
         `${o.done.toLocaleString()} of ${o.qty.toLocaleString()} sold · ${o.open ? ago(o.at) : o.done >= o.qty ? "sold out" : "taken down"}`,
         `<span class="pr">${tixPrice(o.price)}<small>each</small></span>`,
         o.open ? `<button class="btn plain" data-cancel="${o.id}">Take down</button>` : `<span class="tag2 ${o.done >= o.qty ? "buy" : "done"}">${o.done >= o.qty ? "Sold" : "Closed"}</span>`)).join("") || `<div class="mk-empty">You haven't put anything up for sale.</div>`}</div>
@@ -3989,7 +4296,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=44", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=46", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
@@ -4042,7 +4349,7 @@ function renderRoul() {
   const last = R.last ? `<span class="rl-n ${R.last.col}">${R.last.n}</span>` : "—";
   $("roulSub").textContent = REALR ? "Pick one spot. A spin a minute." : `Round ${R.round} · up to ${G.fmtCash(G.maxBetOf(me))} a spin`;
   const banner = roulBanner && performance.now() < roulBanner.until ? `<div class="rl-banner ${roulBanner.cls}">${esc(roulBanner.text)}<small>${esc(roulBanner.sub)}</small></div>` : "";
-  $("roulBody").innerHTML = `${REALR ? `<div class="rl-chips rl-gold" style="margin-bottom:6px">Bet with <button type="button" class="pill" data-cur="zc" aria-pressed="${!TIXR}">ZCoins · ${roulChip}</button><button type="button" class="pill" data-cur="tix" aria-pressed="${!!TIXR}"><img src="/v3/assets/img/glad/flat/items/tickets.png?v=1" alt="" style="width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;margin-right:3px">Tickets · ${(roulChip * G.DEX.rate).toLocaleString()}</button><small style="margin-left:auto">wins pay ZCoins</small></div>` : luckLine()}<div class="rl-top">${banner}<div class="rl-wheelbox"><div class="rl-wheel" id="rlWheel" style="background:${roulWheelBg()};transform:rotate(${roulAngle}deg)"></div><div class="rl-hub"></div><div class="rl-ballring" id="rlBall" style="transform:rotate(${roulBallAngle}deg)"><i></i></div><div class="rl-pin"></div></div>
+  $("roulBody").innerHTML = `${REALR ? `<div class="rl-chips rl-gold" style="margin-bottom:6px">Bet with <button type="button" class="pill" data-cur="zc" aria-pressed="${!TIXR}">ZCoins · ${roulChip}</button><button type="button" class="pill" data-cur="tix" aria-pressed="${!!TIXR}">${TIX_ICO}Tickets · ${(roulChip * G.DEX.rate).toLocaleString()}</button><small style="margin-left:auto">wins pay ZCoins</small></div>` : luckLine()}<div class="rl-top">${banner}<div class="rl-wheelbox"><div class="rl-wheel" id="rlWheel" style="background:${roulWheelBg()};transform:rotate(${roulAngle}deg)"></div><div class="rl-hub"></div><div class="rl-ballring" id="rlBall" style="transform:rotate(${roulBallAngle}deg)"><i></i></div><div class="rl-pin"></div></div>
       <div class="rl-state"><b>${betting ? (R.hold > 0 ? `Next spin opens in ${Math.ceil((R.hold - (performance.now() - roulGot)) / 1000)}s` : `Place your bet · ${Math.ceil(left / 1000)}s`) : "No more bets · the ball is rolling"}</b>
         <small>${betting ? (R.last ? `Last: ${R.last.n} ${R.last.col}${R.last.wins.length ? ` · ${R.last.wins.map((w) => `${esc(w.name)} +${w.payout.toLocaleString()}`).join(", ")}` : " · no winners"}` : "Pick a spot.") : "Good luck."}</small>
         <div class="rl-timer"><i id="rlTime" style="width:${Math.min(100, Math.round((left / (betting ? (REALR ? 40000 : G.ROULETTE.betMs) : (REALR ? 12000 : G.ROULETTE.spinMs))) * 100))}%"></i></div>
@@ -4099,7 +4406,7 @@ function renderDaily(e) {
     const d = G.dailyDef(t.id); if (!d) return "";
     const what = d.what === "kill" ? `Defeat ${d.n} ${MOBS[d.k].name.toLowerCase()}${d.n > 1 ? "s" : ""}` : `Gather ${d.n} ${ITEMS[d.k].name.toLowerCase()}`;
     const icon = d.what === "kill" ? `<img src="${ART}${MOBS[d.k]?.art || d.k}.png?v=${ART_V}" alt="" class="dl-mob" onerror="this.replaceWith(document.createTextNode('⚔️'))">` : ico(d.k), done = t.got >= d.n, place = whereFor(d);   /* (v111) the monster's own picture, and where it lives */
-    return `<div class="dl-row${t.claimed ? " claimed" : ""}"><i>${icon}</i><span><b>${esc(what)}</b><small>${t.got.toLocaleString()} / ${d.n} · pays <img src="/v3/assets/img/glad/flat/items/tickets.png?v=1" alt="tickets" style="width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;margin-right:2px">${Number(d.cash).toLocaleString()}${place ? ` · <b class="dl-at">${esc(place)}</b>` : ""}</small><div class="dl-bar"><i style="width:${Math.round((t.got / d.n) * 100)}%"></i></div></span>
+    return `<div class="dl-row${t.claimed ? " claimed" : ""}"><i>${icon}</i><span><b>${esc(what)}</b><small>${t.got.toLocaleString()} / ${d.n} · pays ${TIX_ICO}${Number(d.cash).toLocaleString()}${place ? ` · <b class="dl-at">${esc(place)}</b>` : ""}</small><div class="dl-bar"><i style="width:${Math.round((t.got / d.n) * 100)}%"></i></div></span>
       ${t.claimed ? `<span class="tag2 done">Paid</span>` : done ? `<button class="btn" data-claim="${t.id}">Claim</button>` : `<span class="tag2 done">In progress</span>`}</div>`;
   }).join("") + `<p class="note">Tasks count what you gather and defeat today. New ones every morning, picked for your levels.</p>`;
   $("dailyBody").querySelectorAll("[data-claim]").forEach((b) => b.addEventListener("click", () => send({ t: "daily", op: "claim", id: b.dataset.claim })));
@@ -4129,7 +4436,7 @@ function renderTrade() {
       <div><h4>${esc(TR.themName)}'s offer</h4><div class="trade-box${TR.ok.them ? " ok" : ""}">${offerHtml(TR.them, false)}</div></div></div>
       <h4 style="margin-top:12px">Your bag · click to offer (shift-click offers the whole stack)</h4><div class="grid8" id="tradeBag">${me.inv.filter((s) => s.k !== "coins" && s.k !== "tickets").map((s) => slotHtml(s, s.k, "data-k")).join("")}</div>`;
     /* (v96) tickets trade too: a number box, never more than you hold (the server clamps it again) */
-    $("tradeFoot").innerHTML = `<label class="note" style="padding:0;display:flex;align-items:center;gap:6px"><img src="/v3/assets/img/glad/flat/items/tickets.png?v=1" alt="" style="width:18px;height:18px;image-rendering:pixelated">Tickets to give <input type="number" id="trCash" min="0" max="${G.cashIn(me)}" step="1" value="${TR.you.cash || 0}" style="width:96px" aria-label="Tickets to give"> <small>of ${G.cashIn(me).toLocaleString()}</small></label><span style="flex:1"></span>
+    $("tradeFoot").innerHTML = `<label class="note" style="padding:0;display:flex;align-items:center;gap:6px">${TIX_ICO.replace('class="tixi"', 'class="tixi big"')}Tickets to give <input type="number" id="trCash" min="0" max="${G.cashIn(me)}" step="1" value="${TR.you.cash || 0}" style="width:96px" aria-label="Tickets to give"> <small>of ${G.cashIn(me).toLocaleString()}</small></label><span style="flex:1"></span>
       <span class="note" style="padding:0">${TR.ok.them ? `${esc(TR.themName)} has accepted.` : TR.ok.you ? "Waiting for them…" : ""}</span><button class="btn" id="trOk"${TR.ok.you ? " disabled" : ""}>Accept</button><button class="btn danger" id="trNo">Decline</button>`;
     $("tradeBody").querySelectorAll("[data-k]").forEach((el) => el.addEventListener("click", (e) => send({ t: "trade", op: "add", k: el.dataset.k, n: e.shiftKey ? "all" : 1 })));
     $("tradeBody").querySelectorAll("[data-rm]").forEach((el) => el.addEventListener("click", () => send({ t: "trade", op: "remove", k: el.dataset.rm })));
@@ -4181,6 +4488,9 @@ const WIKI = (() => {
       if (o.t === "tree" || o.t === "oak" || o.t === "yew" || o.t === "cypress" || o.t === "deadtree") { addSrc(o.log || "logs", { ...where, skill: "woodcutting" }); a.res[o.name] = "woodcutting"; }
       if (o.t === "olive" || o.t === "vine") { addSrc(o.crop || "olives", { ...where, skill: "farming" }); a.res[o.name] = "farming"; }
       if (o.t === "wheat") { addSrc("wheat", { ...where, skill: "farming" }); a.res.Wheat = "farming"; }
+      /* (2026-09-23) a mark is a source like a rock is: this is what makes an item page say where whetgrit comes
+         from. It only runs when the guild is in the wiki at all, which THIEF.live decides via wikiHide above. */
+      if (o.t === "mark") { for (const [k] of (G.MARKS[o.mark]?.drop || [])) addSrc(k, { ...where, skill: "thieving" }); a.res[o.name] = "thieving"; }
       if (o.t === "spot") { if (o.fish) addSrc(o.fish, { ...where, skill: "fishing" }); else { addSrc("sardine", { ...where, skill: "fishing" }); addSrc("trout", { ...where, skill: "fishing", lvl: 10 }); } a.res[o.special ? o.name : "Fishing spot"] = "fishing"; }
       if (o.t === "house") a.buildings.push(o);
     }
@@ -4200,12 +4510,12 @@ const qn = (n) => (Array.isArray(n) ? `${n[0]}–${n[1]}` : n);
 const mico = (k, px = 26) => `<img class="mico" style="height:${px}px" src="${ART}${MOBS[k]?.art || k}.png?v=${ART_V}" alt="" onerror="this.replaceWith(document.createTextNode('👹'))">`;
 function wikiPages() {
   const pages = [{ route: "home", title: "Home", icon: "🏠", group: "" }, { route: "updates", title: "Updates", icon: "📰", group: "" }];
-  for (const g of WK.GUIDES) pages.push({ route: `guides/${g.id}`, title: g.title, icon: g.icon, group: "Guides", cat: g.cat || "More" });
+  for (const g of WK.GUIDES) { if (g.id === "thieving" && !G.THIEF.live) continue; pages.push({ route: `guides/${g.id}`, title: g.title, icon: g.icon, group: "Guides", cat: g.cat || "More" }); }   /* (2026-09-23) the Thieving guide rides THIEF.live with the rest of the skill; it is written and ready, it just must not be readable before the guild opens */
   /* (2026-09-22) PETS ARE THEIR OWN CATEGORY, not a line in Guides: five things with stats, a drop rate and a
      picture each is a category, and the guide alone made them look like a footnote. Built from G.PETS, so a sixth
      pet appears here without anyone remembering to add it. */
   for (const [k, pt] of Object.entries(G.PETS)) pages.push({ route: `pets/${k}`, title: pt.name, icon: `<img class="ico" src="${IART.replace("items/", "")}${pt.art}.png?v=${ART_V}" alt="">`, group: "Pets" });
-  for (const [k, s] of Object.entries(SKILLS)) pages.push({ route: `skills/${k}`, title: s.name, icon: sico(k), group: "Skills" });
+  for (const [k, s] of Object.entries(SKILLS)) { if (k === "thieving" && !G.THIEF.live) continue; pages.push({ route: `skills/${k}`, title: s.name, icon: sico(k), group: "Skills" }); }   /* (2026-09-23) a skill that ships dark has no wiki page yet, so it must not be offered one */
   for (const [k, q] of Object.entries(QUESTS)) pages.push({ route: `quests/${k}`, title: q.name, icon: q.icon, group: "Quests" });
   for (const [k, m] of Object.entries(MOBS).filter(([k]) => Object.values(WIKI.areas).some((a) => a.mobs[k]))) pages.push({ route: `monsters/${k}`, title: m.name, icon: mico(k), group: "Monsters" });
   for (const [k, d] of Object.entries(SCENES).filter(([, d]) => !d.wikiHide)) pages.push({ route: `areas/${k}`, title: d.name, icon: d.interior ? "🚪" : "🗺️", group: "Areas" });
@@ -4374,6 +4684,23 @@ $("wikiBtn").addEventListener("click", () => { if ($("wikiWin").hidden) openWin(
    there is nothing to fetch and nothing to keep in step. The panel repaints on the `ach` message, which is what
    the server sends when it awards one. */
 let achTab = "list";
+/* (2026-09-23, the owner: "theres weird green text, the ticket emojis need to be the ticket icons, and just
+   general cleanup"). Three things were wrong and they had one cause between them: this panel was built out of
+   text and glyphs while the rest of the game is built out of pictures.
+
+   THE GREEN. Tier names were painted in ACH_TIERS[].col — five pastels chosen for the dark CANVAS — on a cream
+   parchment window. #9ad8a0 on #f2e4c8 is the "weird green text", and the pale blue and pink were no better.
+   The tier is a MEDAL now (bronze, silver, gold, cup, crown), which reads instantly, works at any size and says
+   something a colour ramp could not: three of the five tiers are gold. `col` survives as the row's left-hand
+   band, which is the one place on this panel a pale colour does its job.
+
+   THE EMOJI. Every ticket figure went through fmtCash, which writes 🎟 — right for chat, wrong here, where the
+   number sits beside drawn art. tixN is the real picture with the number after it.
+
+   THE CLEANUP. Tier headings were a bare coloured <h4> with the counts run together in middots; they are a
+   header row now, with the medal, the name, and what the tier is worth on its own line. Rows say what they pay
+   with an icon, undone rows get a hollow mark rather than a full stop, and the header carries the same badge the
+   nav button does so the window and the button read as the same thing. */
 function renderAch() {
   if (!me) return;
   const have = new Set(me.ach || []), pts = G.achPts(me);
@@ -4381,28 +4708,48 @@ function renderAch() {
   const maxPts = all.reduce((a, [, x]) => a + G.ACH_TIERS[x.tier].pts, 0);
   const next = G.ACH_MILES.find(([at]) => pts < at);
   $("achSub").textContent = `${done} of ${all.length}`;
+  const medal = (t, cls) => uiArt(t.medal, cls || "amedal");
+  const mark = (got) => `<i class="${got ? "on" : ""}">${got ? "\u2713" : "\u25cb"}</i>`;
   const miles = G.ACH_MILES.map(([at, , what]) => `<span class="${pts >= at ? "on" : ""}" title="${esc(what)}">${at} pts</span>`).join("");
+
   const tiers = Object.entries(G.ACH_TIERS).map(([tk, t]) => {
     const rows = all.filter(([, a]) => a.tier === tk);
     const got = rows.filter(([id]) => have.has(id)).length;
-    return `<h4 style="color:${t.col}">${esc(t.name)} &middot; ${got}/${rows.length} &middot; ${t.pts} pt${t.pts === 1 ? "" : "s"} each</h4>` +
-      rows.map(([id, a]) => `<div class="arow${have.has(id) ? " got" : ""}"><i>${have.has(id) ? "\u2713" : "\u00b7"}</i><span><b>${esc(a.name)}</b><small>${esc(a.blurb)}</small></span><em>${G.fmtCash(t.tix)}</em></div>`).join("");
+    return `<div class="atier">${medal(t)}<span><b>${esc(t.name)}</b><small>${t.pts} point${t.pts === 1 ? "" : "s"} and ${tixN(t.tix)} each</small></span><em>${got}/${rows.length}</em></div>` +
+      rows.map(([id, a]) => `<div class="arow${have.has(id) ? " got" : ""}" style="border-left-color:${t.col}">${mark(have.has(id))}<span><b>${esc(a.name)}</b><small>${esc(a.blurb)}</small></span><em>${tixN(t.tix)}</em></div>`).join("");
   }).join("");
+
   /* (2026-09-23, the owner: "it needs to be very obvious what each point tier does"). The pips along the top say
      WHERE the rewards are; this tab says WHAT they are and what you have, which the pips cannot without a hover. */
   const rewards = `<h4>What the points buy</h4>
-    ${G.ACH_MILES.map(([at, fx, what]) => `<div class="arow${pts >= at ? " got" : ""}"><i>${pts >= at ? "\u2713" : "\u00b7"}</i><span><b>${at} points</b><small>${esc(what)}</small></span><em>${pts >= at ? "yours" : `${at - pts} to go`}</em></div>`).join("")}
+    ${G.ACH_MILES.map(([at, , what]) => `<div class="arow${pts >= at ? " got" : ""}">${mark(pts >= at)}<span><b>${at} points</b><small>${esc(what)}</small></span><em>${pts >= at ? "yours" : `${at - pts} to go`}</em></div>`).join("")}
     <h4>What each tier pays</h4>
     ${Object.entries(G.ACH_TIERS).map(([tk, t]) => { const rows = all.filter(([, a]) => a.tier === tk); const got2 = rows.filter(([id]) => have.has(id)).length;
-      return `<div class="arow got" style="opacity:1"><i style="color:${t.col}">\u25c6</i><span><b>${esc(t.name)}</b><small>${t.pts} point${t.pts === 1 ? "" : "s"} and ${G.fmtCash(t.tix)} each &middot; ${got2} of ${rows.length} done</small></span><em>${t.pts * rows.length} pts</em></div>`; }).join("")}
+      return `<div class="atier" style="border-left-color:${t.col}">${medal(t)}<span><b>${esc(t.name)}</b><small>${t.pts} point${t.pts === 1 ? "" : "s"} and ${tixN(t.tix)} each &middot; ${got2} of ${rows.length} done</small></span><em>${t.pts * rows.length} pts</em></div>`; }).join("")}
     <p class="note" style="margin-top:10px">Points are a score, not money &mdash; they are never spent, and the rewards above arrive on their own as you pass each mark. The tickets are paid the moment an achievement is earned.</p>`;
-  $("achBody").innerHTML = `<div class="ah"><b>${pts}</b><span class="apill">of ${maxPts} points</span><span class="apill">${done}/${all.length} done</span></div>
+
+  /* (2026-09-23, the owner) THE LAST TEN, NEWEST FIRST. No timestamp is kept anywhere and none is needed:
+     achAward PUSHES onto C.ach as things are earned, so the array IS the order they were unlocked in. One honest
+     caveat, stated on the tab rather than hidden: the backfill that awards achievements for things you had
+     already done before they existed lands as one batch, so those sit together in the order the list defines
+     rather than the order you really did them. */
+  const recent = (me.ach || []).filter((id) => G.ACH[id]).slice(-10).reverse();
+  const recentTab = recent.length
+    ? `<h4>Your last ${recent.length === 1 ? "achievement" : recent.length + ", newest first"}</h4>` +
+      recent.map((id, i) => { const a = G.ACH[id], t = G.ACH_TIERS[a.tier];
+        return `<div class="arow got" style="border-left-color:${t.col}">${medal(t, "amedal asmall")}<span><b>${esc(a.name)}</b><small>${esc(a.blurb)}</small></span><em>${i ? "" : "latest"}</em></div>`;
+      }).join("") +
+      `<p class="note" style="margin-top:10px">Anything you had already done before an achievement existed was awarded in one batch, so those sit together rather than in the order you really did them.</p>`
+    : `<p class="note">Nothing yet. They will turn up as you play &mdash; you do not have to go looking for them.</p>`;
+
+  $("achBody").innerHTML = `<div class="ah">${uiArt("ach_badge", "ahero")}<b>${pts}</b><span class="apill">of ${maxPts} points</span><span class="apill">${done}/${all.length} done</span></div>
     <div class="abar"><i style="width:${Math.round((pts / maxPts) * 100)}%"></i></div>
-    <p class="note" style="margin:0 0 6px">${next ? `Next reward at <b>${next[0]}</b> points: ${esc(next[2])}.` : "Every reward unlocked."}</p>
-    <div class="atabs">${[["list", "Achievements"], ["rewards", "Rewards"]].map(([k, l]) => `<button type="button" data-at="${k}" aria-pressed="${k === achTab}">${esc(l)}</button>`).join("")}</div>
-    ${achTab === "rewards" ? rewards : `<div class="amile">${miles}</div>${tiers}`}`;
+    <p class="note" style="margin:0 0 8px">${next ? `Next reward at <b>${next[0]}</b> points: ${esc(next[2])}.` : "Every reward unlocked."}</p>
+    <div class="atabs">${[["list", "Achievements"], ["recent", `Recent${recent.length ? ` · ${recent.length}` : ""}`], ["rewards", "Rewards"]].map(([k, l]) => `<button type="button" data-at="${k}" aria-pressed="${k === achTab}">${esc(l)}</button>`).join("")}</div>
+    ${achTab === "rewards" ? rewards : achTab === "recent" ? recentTab : `<div class="amile">${miles}</div>${tiers}`}`;
   $("achBody").querySelectorAll("[data-at]").forEach((b) => b.addEventListener("click", () => { achTab = b.dataset.at; SFX.play("ui_click"); renderAch(); }));
 }
+
 const openAch = () => { if ($("achWin").hidden) { openWin("achWin"); renderAch(); } else $("achWin").hidden = true; };
 $("achBtn").addEventListener("click", openAch);
 /* Y, because A is not free-looking enough to risk and this sits beside the other bar keys. */
@@ -4488,7 +4835,6 @@ function renderStats() {
 /* Under the bag: what a casino player looks at. tickets first and biggest; then what's in the bag that TURNS INTO cash
    (so a full bag reads as "go and see the Cashier"); the jackpot, because it's the dream; today's three paid jobs
    with their progress; and one line on what to do next. Everything here is already known to the page. */
-const UIA = "/v3/assets/img/glad/flat/ui/";
 // THE COLLECTION: every rare there is, lit once you've been given one. Bragging rights, and a reason to fight something new.
 function raresCard() {
   const all = [...new Set([...G.OPEN].flatMap((k) => SCENES[k]?.mobs || []).flatMap(([t]) => G.raresOf(t).map(([k]) => k)))];
@@ -4502,7 +4848,17 @@ function jobsCard() {
   return jobs ? `<div class="wallets"><div class="wallet"><div class="wl-h"><img src="${UIA}w_jobs.png?v=1" alt="">Today's paid jobs</div>${jobs}<div class="wl-next" style="border:0;padding-top:2px">Claim them at the task board by the casino's back wall. New ones every morning.</div></div></div>` : "";
 }
 function walletCard() {
-  const cash = G.cashIn(me), loot = me.inv.filter((s) => G.isLoot(s.k)).reduce((a, s) => a + s.n * G.valueOf(s.k), 0), full = me.inv.length >= G.bagMax(me);
+  /* (2026-09-24, the owner) WHAT THE COUNTER WOULD ACTUALLY PAY, not just the loot. This summed isLoot alone, so
+     it quietly ignored the quick-sellable rares (it always had) and then the smithed gear Bom started buying -
+     a bag holding a Starfall amulet read "+704 tickets" while the counter was offering eleven thousand for one
+     piece. The three prices are the server's own, in the server's order (cashOut's priceOf), and gear counts
+     PLAIN copies only because that is all a sale takes. */
+  const bagPrice = (k) => (G.isLoot(k) ? G.valueOf(k) : G.quickSell(k) || G.gearSell(k));
+  const cash = G.cashIn(me), full = me.inv.length >= G.bagMax(me);
+  const loot = [...new Set(me.inv.map((s) => s.k))].reduce((a, k) => {
+    const p = bagPrice(k); if (!p) return a;
+    return a + p * G.countItems({ inv: me.inv, bank: [] }, [k], G.ITEMS[k]?.slot ? { plainOnly: true } : undefined);
+  }, 0);
   return `<div class="wallets">
     <div class="wl-two"><div class="wallet wl-cash wl-tix" title="Tickets: the one currency here. Kills, catches and jobs pay them; the Prize Counter and every table take them.">${ico("tickets")}<span><small>Tickets</small><b>${G.tixIn(me).toLocaleString()}</b></span></div>
     <div class="wallet wl-cash wl-zc" title="Your real ZCoins on eastcoin.vip. The tables on the main floor take ZCoins or tickets, and pay ZCoins either way.">${ico("zcoin")}<span><small>ZCoins</small><b>${ZCBAL == null ? "–" : Number(ZCBAL).toLocaleString()}</b></span></div></div>
@@ -4551,7 +4907,7 @@ function renderPanel() {
        ordinary slot() would look it up in ITEMS, find nothing and draw an empty square over a pet you are wearing. */
     const petSlot = () => { const pet = G.activePet(me);
       return `<button type="button" class="eq${pet ? "" : " empty"}" data-slot="pet" title="${pet ? esc(G.petLabel(pet)) : "No pet"}">${pet ? `<img class="ico" src="${IART.replace("items/", "")}${G.PETS[pet.k].art}.png?v=${ART_V}" alt="">` : EMPTY.pet}</button>`; };
-    const slot = (area) => { if (area === "pet") return petSlot(); const k = me.eq[area], it = k && ITEMS[k]; return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}"${it ? ` data-item="${k}"` : ""} style="grid-area:${area}" title="${it ? `${esc(G.forgeName(me, k))} — click to take off` : `${area}: empty`}"${it ? "" : " disabled"}>${it ? ico(k) : EQ_ART.has(area) ? artOf(`eq_${area}`) : EMPTY[area]}<small>${it ? esc(it.short || it.name) : ""}</small>${it ? fgTag(k) : ""}</button>`; };
+    const slot = (area) => { if (area === "pet") return petSlot(); const k = me.eq[area], it = k && ITEMS[k], ef = G.fLevelOf(me, area); return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}"${it ? ` data-item="${k}"${ef ? ` data-f="${ef}"` : ""}` : ""} style="grid-area:${area}" title="${it ? `${esc(G.forgeNameAt(k, ef))} — click to take off` : `${area}: empty`}"${it ? "" : " disabled"}>${it ? ico(k) : EQ_ART.has(area) ? artOf(`eq_${area}`) : EMPTY[area]}<small>${it ? esc(it.short || it.name) : ""}</small>${fgTag(ef)}</button>`; };
     const b = G.bonusOf(me), tool = me.eq.weapon && ITEMS[me.eq.weapon].tool;
     const pets = G.petsOf(me);
     const petRows = pets.length ? pets.map((pt) => {
