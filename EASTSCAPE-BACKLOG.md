@@ -1676,3 +1676,34 @@ This does change the original intent, which was that logging off and coming back
 band ("being able to resume at 18 every evening would delete them"). That is a design call the owner
 may want to revisit: it is currently the kinder rule, and it is the only one that can tell a deploy
 apart from a bedtime, since the server cannot.
+
+## There is no damage buff in the game — found 2026-09-24
+
+The owner, testing Alchemy: "Fang flask combat: +4.5% bite - what is bite?"
+
+**`bite` is FISHING.** The game's own `fxText` says it out loud: *"fish bite N% more often"*. I had
+labelled two potions and three item descriptions as combat, which was simply wrong, and they are
+corrected. But the question exposed something bigger.
+
+**The buff levers are `tix`, `speed`, `tough`, `rare`, `zdrop`, `bite`, `heal` and `power`, and not
+one of them touches how hard you hit.** Damage is `maxHitOf(c) = 1 + floor(melee / 6) +
+floor(bonusOf(c).str / 2)` — your melee level and the `str` on your GEAR. Nothing a potion, a meal or
+a drink can set will move it.
+
+So the honest accounting of what a "combat buff" can currently be:
+- **`tough`** — take less damage. The only combat-exclusive lever there is.
+- **`speed`** — "you swing AND fish faster", so it is really both, and it is the closest thing to a
+  damage buff since it raises swings per minute.
+- **`tix`** — more tickets from kills. A reward, not a capability.
+
+That is why the Alchemy ladder cannot cleanly alternate skilling and combat the way the owner asked
+for: there is only one combat-exclusive lever to alternate WITH, and a ladder of nothing but `tough`
+potions would be dull.
+
+**The fix, if it is wanted, is a new lever.** A `hit` key in the fx block, added to `OUT_KEYS`,
+`OUT_CAP` and `fxText`, and multiplied into the player's damage roll where `maxHitOf` is used. It is
+a small change in the rules and one line in the worker's combat step, but it touches the damage
+formula, so it wants its own pass and its own test rather than being slipped in beside a map. With it
+the combat half of the potion ladder gets real teeth and gear with `hit` on it becomes possible too.
+
+Until then: Rattle brew and Fang flask are FISHING potions and say so.
