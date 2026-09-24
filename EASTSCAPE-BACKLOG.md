@@ -1630,3 +1630,49 @@ two together, both inside build(), need nothing after wild at all.
 Three classes of unwalkable tile have now been seen, in increasing awkwardness: a ONE-tile island
 (four-neighbour flood catches it), a TWO-tile shelf (it does not - two tiles hold each other up),
 and a strip severed by wild's own edge painting (nothing inside build() can see it coming).
+
+
+## A per-player scene must be exempt in normChar — fixed 2026-09-24, and worth remembering
+
+jimmytomato: "I was on Floor 30 of the Tower ... now demoted back to Floor 21". It was true, and the
+tower's own code was innocent.
+
+The Tower and the Crypt each put a player in a scene keyed to them — `tower:<id>`, `crypt:<id>` —
+built on demand, so **not in SCENES**. normChar throws out a scene it cannot find and sends the
+player to the casino, and the exemption for a run in progress was spelled `startsWith("crypt:")`.
+So every load threw a tower climber out of the tower: a deploy, a reconnect, any restart of the
+Durable Object. It is now a regex over both.
+
+**The floor was never lost.** `c.tower` still said `{floor:30,best:29}` the whole time. What was lost
+was the SCENE KEY, which is what `towerRejoin` matches on to decide whether to rebuild the room you
+were standing in. Without it a climber arrived at the door, and re-entry recomputed
+`checkpointAt(best + 1)` = 21.
+
+That is the shape to watch for: **the state was fine and one derived key was wrong.** Three bugs
+this week have had it — the reforge badge (level right, wrong field read), the bag counter (slots
+right, wrong constant printed), and this.
+
+### Still open: `home:<owner>`
+
+A player's house on their island is `home:${S.owner}`, and it is reset to the casino on load for
+exactly the same reason. It is left alone **deliberately**: nothing is lost, you simply wake up in
+the casino instead of your own front room. If it is ever worth fixing, it needs the same pair the
+Tower got — the exemption in normChar AND something to rebuild or place the player, because an
+exempt scene key with nothing to rebuild it is worse than a reset.
+
+`tools/eastscape-tower-test.mjs` now scans the worker for every per-player scene it moves a player
+INTO and insists each one either survives a load or is named in its TRANSIENT list with a reason.
+The next one cannot be forgotten the way this was.
+
+### And the checkpoint rule changed with it
+
+The Tower used to resume at `checkpointAt(best + 1)` for everybody, so any interruption cost up to
+nine floors. Now the resume floor is the floor you were ON — one `resumeAt()` that the door's window
+and the stairs both read, because when they each worked it out the window could promise 21 and the
+stairs deliver 30 — and **the checkpoint is the price of DYING and nothing else**. `towerDeath`
+writes that demotion into `c.tower` instead of leaving it implied.
+
+This does change the original intent, which was that logging off and coming back should cost the
+band ("being able to resume at 18 every evening would delete them"). That is a design call the owner
+may want to revisit: it is currently the kinder rule, and it is the only one that can tell a deploy
+apart from a bedtime, since the server cannot.
