@@ -1707,3 +1707,34 @@ formula, so it wants its own pass and its own test rather than being slipped in 
 the combat half of the potion ladder gets real teeth and gear with `hit` on it becomes possible too.
 
 Until then: Rattle brew and Fang flask are FISHING potions and say so.
+
+## Nine monsters still have no bounty — found 2026-09-24
+
+The owner: "lucky clover kills arent counting in the golden sands". They were not, and the cause was
+not luck. `killFinds()` opens with:
+
+    const C = pl.C, mob = d?.mob; if (!G.BOUNTY[mob]) return;
+
+So a monster missing from BOUNTY silently gives **no rare roll, no casino find, and no luck spent** —
+a clover burns nothing and the player has no way to tell it is doing nothing. And because BOUNTY is
+also what REBUILDS each monster's ticket drop (the loop at the bottom of the rules file strips the
+hand-written line and derives it from bounty minus the worth of the other drops), an absent entry
+means that monster's pay was hand-written and never measured.
+
+**The Golden Sands' four are fixed** with tools/eastscape-balance.mjs's own want$/kill. Worth noting
+what that found: the ranges I had invented were *overpaying badly* — the Bandaged Debtor was worth
+777 tickets a minute and the Tomb Jackal 862, against a band that sits near 600. They are 540 now.
+
+**Still open: nine more, and they are not new.** The Vault's `warden`, `pitboss`, `hoard` and
+`dealer`, and the Trailer Park's `junkdog`, `possum`, `scrapper`, `gator` and `junkking`. Every one
+of them is spawned on a map, none has a bounty, so none of them rolls a rare, drops a chip, or counts
+a clover kill. Two whole end-game zones.
+
+**It is left alone deliberately, because it is a balance decision and not a fix.** Giving them
+bounties would strip their existing hand-written ticket drops and rebuild them from measured values,
+which changes what those zones pay — possibly a lot, in either direction, exactly as it did for the
+Sands' four. The owner should decide whether the Vault and the Trailer Park get re-measured.
+
+`tools/eastscape-content-check.mjs` now fails on any monster spawned on a map with no bounty, with
+those nine named as known exceptions — so the NEXT map cannot repeat this, and the list is the
+to-do. Remove a name from it when its zone gets measured.

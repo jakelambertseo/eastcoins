@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 216;
+export const VERSION = 217;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -2610,10 +2610,12 @@ export const MOBS = {
      the two things carrying the fang and the shell are the hardest fights on this map by a clear margin - harder
      than the jackals guarding the pyramid. Still well inside the game's curve: a level 62 Hail Drake has 124.
      An ingredient nobody has to work for is not an ingredient, it is a pickup. */
-  cobra: { name: "Sand Cobra", size: "s", lvl: 48, hp: 62, att: 38, def: 33, max: 11, speed: 2000, aggro: null, box: [10, 20], drops: [["tickets", [57, 133]], ["snakefang", 1]] },
-  mummy: { name: "Bandaged Debtor", size: "m", lvl: 43, hp: 35, att: 30, def: 27, max: 7, speed: 2800, aggro: null, box: [10, 26], drops: [["tickets", [66, 154]], ["dragonstone_ore", 1]] },
-  scarab: { name: "Gilt Scarab", size: "s", lvl: 52, hp: 74, att: 42, def: 38, max: 12, speed: 2200, aggro: null, box: [12, 22], drops: [["tickets", [72, 168]], ["scarabshell", 1]] },
-  jackal: { name: "Tomb Jackal", size: "m", lvl: 47, hp: 41, att: 34, def: 30, max: 8, speed: 2600, aggro: null, box: [10, 27], drops: [["tickets", [80, 187]], ["dragonstone_ore", 1]] },
+  /* NO HAND-WRITTEN `tickets` ON THESE FOUR (2026-09-24). BOUNTY owns what a kill pays and the loop at the
+     bottom of this file rebuilds the line from it, so a number written here is either ignored or misleading. */
+  cobra: { name: "Sand Cobra", size: "s", lvl: 48, hp: 62, att: 38, def: 33, max: 11, speed: 2000, aggro: null, box: [10, 20], drops: [["snakefang", 1]] },
+  mummy: { name: "Bandaged Debtor", size: "m", lvl: 43, hp: 35, att: 30, def: 27, max: 7, speed: 2800, aggro: null, box: [10, 26], drops: [["dragonstone_ore", 1]] },
+  scarab: { name: "Gilt Scarab", size: "s", lvl: 52, hp: 74, att: 42, def: 38, max: 12, speed: 2200, aggro: null, box: [12, 22], drops: [["scarabshell", 1]] },
+  jackal: { name: "Tomb Jackal", size: "m", lvl: 47, hp: 41, att: 34, def: 30, max: 8, speed: 2600, aggro: null, box: [10, 27], drops: [["dragonstone_ore", 1]] },
   drake: { name: "Hail Drake", size: "l", lvl: 62, hp: 124, att: 46, def: 40, max: 11, speed: 2800, aggro: 5, box: [22, 36], drops: [] },
   house: { name: "The House", size: "xl", lvl: 70, hp: 170, att: 52, def: 46, max: 13, speed: 3000, aggro: 5, box: [26, 56], drops: [] },
   /* (v121) THE VAULT'S FOUR. The House at 70 was the end of the road while the skills run to 99, so there was a thirty-level
@@ -3961,7 +3963,22 @@ export const BOUNTY = { chicken: 18, cow: 32, rotten: 39, olive: 38, hornworm: 5
   toadstool: 37, boneidle: 79, twister: 73, counter: 91, shark: 143, stagehand: 196, usher: 223, brainstorm: 247, seagoat: 329,
   /* THE 50+ BAND pays MORE than the tool asks: its reference wage goes flat at level 40 (there was no skilling past onyx), so left alone a level-70
      kill would pay a level-42 minute. These are the tool's numbers times 1 + 1.2% a level past 42, so the last band is worth reaching. The goose moved with them. */
-  golem: 388, wolf: 418, drake: 485, house: 642 };   // (v68: measured with tools/eastscape-balance.mjs, like the rest)   // (re-measured 2026-09-20 for half-length fights: a kill pays less, and there are twice as many)
+  golem: 388, wolf: 418, drake: 485, house: 642,
+  /* THE GOLDEN SANDS (2026-09-24, reported by the owner: "lucky clover kills arent counting in the golden sands").
+     They were not, and not only luck: killFinds() opens with `if (!G.BOUNTY[mob]) return`, so a monster missing
+     from this table gets NO rare roll, NO casino find and NO luck spent - the clover just sat there. Four new
+     monsters shipped without an entry.
+
+     BOUNTY is also the SINGLE SOURCE OF TRUTH for what a kill pays: the loop further down strips each monster's
+     hand-written `tickets` drop and rebuilds it from its bounty minus the worth of everything else it drops. So
+     the ticket ranges I invented for these four were never measured and were also paying too much - the Bandaged
+     Debtor was worth 777 a minute and the Tomb Jackal 862, against a band that sits near 600.
+
+     These are tools/eastscape-balance.mjs's own want$/kill, doubled because the literals in this table are
+     pre-TIX_RATE and get halved below (measured: cobra 117, mummy 89, scarab 123, jackal 95). The two that carry
+     an alchemy ingredient pay less in tickets for it, which is the table working as intended - the shell and the
+     fang are part of the wage. */
+  cobra: 234, mummy: 178, scarab: 246, jackal: 190 };   // (v68: measured with tools/eastscape-balance.mjs, like the rest)   // (re-measured 2026-09-20 for half-length fights: a kill pays less, and there are twice as many)
 /* HALF THE TICKETS (2026-09-23, the owner: "lets also reduce tickets dropped by half", then "halve the Cashier,
    leave prices"). ONE cut, applied to the three tables that every ticket in the world comes out of, at the point
    where they are finished being derived from each other:

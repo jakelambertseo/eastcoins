@@ -98,7 +98,23 @@ head("monsters");
     if (!(m.hp > 0)) bad(`mob "${k}" has no hp`);
     if (!(m.lvl > 0)) warn(`mob "${k}" has no level`);
   }
-  console.log(`  checked ${Object.keys(G.MOBS).length} monsters`);
+  /* A MONSTER WITHOUT A BOUNTY IS HALF A MONSTER (2026-09-24, reported by the owner: "lucky clover kills arent
+     counting in the golden sands"). killFinds() opens with `if (!G.BOUNTY[mob]) return`, so a monster missing
+     from that table silently gives NO rare roll, NO casino find and NO luck spent - a clover burns nothing and
+     the player has no way to tell. BOUNTY is also what REBUILDS the monster's ticket drop, so an absent entry
+     means its pay was hand-written and never measured.
+
+     The nine below are a PRE-EXISTING gap in the Vault and the Trailer Park, not news: they are listed so this
+     rule fails on the NEXT map's monsters rather than on the ones already out there, because giving them
+     bounties would rewrite their ticket drops and that is a balance decision rather than a fix. See the backlog. */
+  const NO_BOUNTY_OK = new Set(["warden", "pitboss", "hoard", "dealer", "junkdog", "possum", "scrapper", "gator", "junkking"]);
+  const spawned = new Set();
+  for (const sc of Object.values(G.SCENES)) for (const m of sc.mobs || []) spawned.add(m[0]);
+  for (const t of [...spawned].sort()) {
+    if (G.BOUNTY[t] !== undefined || NO_BOUNTY_OK.has(t) || G.MOBS[t]?.boss) continue;
+    bad(`monster "${t}" (${G.MOBS[t]?.name || "?"}) is spawned on a map but has no BOUNTY entry — no rare drops, no casino finds, and a Lucky clover will not count its kills. Measure it with tools/eastscape-balance.mjs (want$/kill, doubled: the literals are pre-TIX_RATE).`);
+  }
+  console.log(`  checked ${Object.keys(G.MOBS).length} monsters, ${spawned.size} of them spawned on a map`);
   global.__dropped = obtainable;
 }
 
