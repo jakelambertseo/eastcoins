@@ -139,6 +139,12 @@ export function createPyramidRules(G, H) {
         objs.push({ t: "booth", art: "o_chest", x: 18, y: 10, name: "A chest: your bank, to restock" }); block(g, 18, 10, 1, 1);
         /* the way out, in the burial chamber's back wall, and only once the serpent is dead */
         objs.push({ t: "cryptexit", x: 21, y: 3, w: 2, h: 1, name: "Stairs out into the sun: once the Squeeze is dead" }); block(g, 21, 3, 2, 1);
+        /* THE HOARD, and it starts HIDDEN. `open: true` is what keeps a chest (or a raised gate) out of the
+           world; the client sets it false when the run reads as cleared, which is how it appears the moment the
+           serpent dies. Without this object there is nothing to click and the chest can never be opened -
+           the loot exists on the character either way, but the only way to get it would be to walk out and have
+           it posted after you. */
+        objs.push({ t: "cryptloot", x: PYRAMID.loot.at.x, y: PYRAMID.loot.at.y, open: true, name: "The Squeeze's hoard: one each, once it is dead" });
 
         /* the dressing. Nothing stands on the centre line (the lane the gates are on), on a monster's spot, or
            on the chest, the lever or the chest-drop tile. */

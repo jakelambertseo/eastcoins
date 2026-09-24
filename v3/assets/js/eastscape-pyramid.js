@@ -139,8 +139,12 @@ export function createPyramid(env) {
     $("pyrLootSub").textContent = `${T.name} · yours alone`;
     const name = (it) => (it.k === "pet" ? "A Coilling" : `${it.n > 1 ? it.n + " × " : ""}${G.ITEMS[it.k]?.name || it.k}`);
     const rare = (it) => it.k === "pet" || it.k === "serpentvenom" || G.ITEMS[it.k]?.slot || it.k === "chip_gold" || it.k === "horseshoe";
+    /* THE PET NEEDS artOf, NOT ico. ico() resolves an ITEM icon, and a pet's picture is object art
+       (pet_coilling) with no ITEMS entry behind it - so ico would have drawn an empty box for the rarest thing
+       in the chest. */
+    const pic = (it) => (it.k === "pet" ? (env.artOf ? env.artOf("pet_coilling") : "") : env.ico ? env.ico(it.k) : "");
     $("pyrLootBody").innerHTML = `<div class="jk-msg">${e.sent ? "<b>You left this behind.</b> It was sent after you." : "<b>One each.</b> Nobody else's chest had this in it."}${items.some((x) => x.bank) ? " Some of it didn't fit in your bag: that is in your bank." : ""}</div>
-      <div class="py-grid">${items.map((it) => `<div class="py-it${rare(it) ? " rare" : ""}">${env.ico ? env.ico(it.k === "pet" ? "pet_coilling" : it.k) : ""}<b>${esc(name(it))}</b></div>`).join("")}</div>`;
+      <div class="py-grid">${items.map((it) => `<div class="py-it${rare(it) ? " rare" : ""}">${pic(it)}<b>${esc(name(it))}</b></div>`).join("")}</div>`;
     lootEl.hidden = false;
     SFX.play(items.some((x) => x.k === "pet") ? "jackpot" : "win_big");
   }

@@ -36,12 +36,12 @@
     "hash": "301dfe32e77175e1"
   },
   "eastscape-pyramid-rules.js": {
-    "v": 1,
-    "hash": "16ac2f3ade83a08d"
+    "v": 2,
+    "hash": "4a7ea0d9fe0de0da"
   },
   "eastscape-pyramid.js": {
-    "v": 1,
-    "hash": "610d640c7665e653"
+    "v": 2,
+    "hash": "1119f99007c5a901"
   },
   "eastscape-screen.js": {
     "v": 3,
@@ -52,8 +52,8 @@
     "hash": "6670648d71ae0518"
   },
   "eastscape-shared.js": {
-    "v": 232,
-    "hash": "17936044d7a0f72c"
+    "v": 233,
+    "hash": "3054fae2fc0bf711"
   },
   "eastscape-tip.js": {
     "v": 3,

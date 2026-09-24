@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=232">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=233">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1008,7 +1008,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=232";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=233";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=132").then((m) => { WK = m; }));
@@ -1140,8 +1140,8 @@ let CRR = null; const cryptRules = () => (cryptRules.p ||= import("/v3/assets/js
 /* (2026-09-24) THE GREAT PYRAMID's rules, loaded the first time anybody is in one - the Crypt's pattern
    exactly, including handing AREA_ART its sheet at that moment so its six monsters cost nobody anything until
    a party goes in. */
-let PYR = null; const pyramidRules = () => (pyramidRules.p ||= import("/v3/assets/js/eastscape-pyramid-rules.js?v=1").then((m) => { PYR = m.createPyramidRules(G, G._MAP); Object.assign(G.SCENES, PYR.scenes); Object.assign(G.MOBS, PYR.mobs); AREA_ART.pyramid = PYR.scenes.pyramid.art; }));
-let PYRAMID = null; const pyramidLoad = () => (pyramidLoad.p ||= Promise.all([import("/v3/assets/js/eastscape-pyramid.js?v=1"), pyramidRules()]).then(([m]) => (PYRAMID = m.createPyramid({ G, R: PYR, SFX, send, esc, $, ico, me: () => me, you: () => you, Z: () => Z, host: () => document.querySelector(".game"), popup, winFx }))));
+let PYR = null; const pyramidRules = () => (pyramidRules.p ||= import("/v3/assets/js/eastscape-pyramid-rules.js?v=2").then((m) => { PYR = m.createPyramidRules(G, G._MAP); Object.assign(G.SCENES, PYR.scenes); Object.assign(G.MOBS, PYR.mobs); AREA_ART.pyramid = PYR.scenes.pyramid.art; }));
+let PYRAMID = null; const pyramidLoad = () => (pyramidLoad.p ||= Promise.all([import("/v3/assets/js/eastscape-pyramid.js?v=2"), pyramidRules()]).then(([m]) => (PYRAMID = m.createPyramid({ G, R: PYR, SFX, send, esc, $, ico, artOf, me: () => me, you: () => you, Z: () => Z, host: () => document.querySelector(".game"), popup, winFx }))));
 let TWR = null; const towerRules = () => (towerRules.p ||= import("/v3/assets/js/eastscape-tower-rules.js?v=3").then((m) => { TWR = m.createTowerRules(G, G._MAP); Object.assign(G.SCENES, TWR.scenes); Object.assign(G.MOBS, TWR.mobs); AREA_ART.tower = TWR.scenes.tower.art; }));
 const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String(k).startsWith("pyramid") ? pyramidRules() : String(k).startsWith("tower") ? towerRules() : (moreScenes.p ||= import("/v3/assets/js/eastscape-closed.js?v=1").then((m) => { Object.assign(G.SCENES, m.createClosedScenes(G, G._MAP)); })));
 /* PARTIES AND THE CRYPT (v103; the server side is eastscape-worker/src/crypt.js, the numbers eastscape-crypt-rules.js, the windows eastscape-crypt.js,
