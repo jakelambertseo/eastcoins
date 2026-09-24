@@ -228,6 +228,21 @@ else ok(`every one of ${runs} chests held serpent venom, and ${(pets / runs * 10
     fail("the walk handler no longer refuses a held player, so the coil is back to arguing with the client");
   else ok("a held player's click is refused where the walk is accepted, not undone a tick later");
 
+  /* 1b. and refusing `walk` was only HALF of it, which is why the owner reported it twice. Clicking a MONSTER
+        is an act, and an act paths you to its target in startAct with nothing to do with the walk handler — so
+        a held player clicked the serpent and walked to it. In a boss fight that is most of what anybody clicks. */
+  if (!IDX.includes("const held = S.run && S.def.pyramid && S.run.coil && S.run.coil.id === pl.id;"))
+    fail("startAct paths a held player to whatever they clicked again — clicking a monster walks you, whatever the walk handler says");
+  else ok("a held player's ACT does not path them either; they can only reach what is already beside them");
+
+  /* 1c. and the PAGE has to refuse it too, because the page moves you itself */
+  const HTML = fs.readFileSync("C:/Users/jake/code/eastcoins/eastscape.html", "utf8");
+  if (!HTML.includes("if (heldIsMe()) { PRED.on = false;"))
+    fail("predFrom predicts a held player's walk again — the sprite sets off and the server walks it back, which looks exactly like being able to move");
+  else if (!HTML.includes("HELD && h.id === pl.id") && !HTML.includes("h.id === pl.id"))
+    fail("nothing draws fx_bleed over the held player any more");
+  else ok("the page refuses to predict a held walk, and draws the bleed over whoever is held");
+
   /* 2. the serpent coiled people four chambers away, through three shut stone doors */
   if (!PYR.includes("if (!run.gates[2]) return;"))
     fail("the boss tick runs before the burial chamber is open - it will coil people in the entrance hall again");

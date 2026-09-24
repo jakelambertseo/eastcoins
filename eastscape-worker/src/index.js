@@ -865,8 +865,17 @@ export class World {
     }
     if (!act) return;
     act.started = 0;
-    const p = G.findPath(S.g, f, act, act.kind === "ground" ? 0 : act.reach || G.reachOf(act.kind) || 1);
+    /* (2026-09-24, the owner, a SECOND time: "when it said it grabbed me i could still moove arounnd")
+       AND THIS IS THE HOLE THE WALK GUARD LEFT. Refusing `walk` covers clicking the FLOOR. It does not cover
+       clicking a monster — which, in a boss fight, is most of what anybody clicks — because an act paths you to
+       its target right here, server-side, with nothing to do with the walk handler. So a held player clicked the
+       serpent and walked to it.
+       The act still lands: you can keep swinging at whatever is already beside you, which is the whole point of
+       being held next to something. Only the walking to it is refused. */
+    const held = S.run && S.def.pyramid && S.run.coil && S.run.coil.id === pl.id;
+    const p = held ? [] : G.findPath(S.g, f, act, act.kind === "ground" ? 0 : act.reach || G.reachOf(act.kind) || 1);
     if (p === null) { this.say(pl, "You can't reach that.", "bad"); pl.act = null; return; }
+    if (held && G.cheb(pl, act) > (act.reach || G.reachOf(act.kind) || 1)) { this.say(pl, "It has you. You can only reach what is already beside you.", "bad"); pl.act = null; return; }
     pl.act = act; pl.path = p; this.kick(S, pl, now);
   }
 
