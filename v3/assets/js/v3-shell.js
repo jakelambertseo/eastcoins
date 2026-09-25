@@ -307,7 +307,16 @@
      records a choice on this browser. ?spooky=1 / 0 do the same from a
      link; ?spooky=auto clears the choice and hands it back to the date. */
 
-  const SPOOKY_KEY = "ec_spooky";
+  /* (2026-09-25) THE KEY WAS RETIRED WHEN THE SEASON LAUNCHED, and that is the only reason it is not "ec_spooky".
+     A stored choice beats the date by design, and localStorage survives a hard refresh - so every tester who had
+     ever flipped the switch off while trying it out in September was carrying ec_spooky="0" and saw nothing when
+     the season went live. The owner hit it himself within a minute of launch.
+
+     Those old values were answers to a different question: "do I want this in September", asked before there was
+     a season. They are not answers to "do I want the Halloween theme", so the launch is allowed to reach past
+     them. Anything chosen from now on is stored under the new key and is respected for good.
+     DO NOT bump this again for an ordinary change - only a new season is worth overriding somebody's setting. */
+  const SPOOKY_KEY = "ec_spooky26";
 
   function spookyChoice() {
     try { return localStorage.getItem(SPOOKY_KEY) || "auto"; } catch { return "auto"; }
