@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 229;
+export const VERSION = 230;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1611,6 +1611,103 @@ Object.assign(SCENES, {
       ["dealer", 38, 13], ["dealer", 40, 16]],
     npcs: [], bots: []
   },
+  /* ============================================================ THE CARNIVAL (2026-09-24)
+     (the owner: "i want to build a map for level 60s since i realized theres a lull in going from thunderhead
+     50s to 80s in the trailer park. the theme of this one is The Carnival ... the aeshetic i want is a creepy
+     carnival like american horror story freak show ... i want some fat lady mobs, some triplee D inspired mobs,
+     and pinheads and strongmans with huge weights. in the northwest area, i want a boss thats this mask guy.
+     i also want to add a game area ... balloon pop, shooting targets, whack a mole", then: "mmake carnival
+     62-72, and then ill make another after this for 73-80".)
+
+     IT IS NOT OPEN. Deliberately, and by omission rather than by a flag: this scene is not in OPEN, the Yard has
+     no west exit to it, and this has no exits of its own — so nobody can walk in from anywhere. `/tp carnival`
+     still works, because the teleport only asks whether a key exists in SCENES. OPENING IT IS TWO LINES: add
+     `w: "carnival"` to the Yard's exits and `e: "workyard"` to this scene's, and the two maps join up.
+
+     THE GAME AREA IS A SAFE PLAZA. It is paved, it is east of the big top where you arrive, and NOTHING
+     aggressive can see it: the only monster here that comes for you is the boss, and he is in the far north-west
+     corner behind his own funhouse. A fairground where you get mauled queuing for the coconut shy is not a
+     fairground. ============================================================ */
+  carnival: {
+    name: "The Carnival", ground: "carnival", tint: "rgba(48,22,40,.22)", exits: {},
+    build() {
+      const g = grid(), objs = [], keep = [];
+      const put = (t, x, y, name, w = 1, h = 1, extra = {}) => { objs.push({ t, x, y, w, h, name, ...extra }); block(g, x, y, w, h); for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) keep.push([x + i, y + j]); };
+
+      /* THE MIDWAY: the sawdust avenue everything faces onto, and the spine of the map. */
+      for (let x = 0; x < COLS; x++) { g[13][x] = ","; keep.push([x, 12], [x, 13], [x, 14]); }
+      for (let y = 4; y <= 22; y++) { g[y][30] = ","; keep.push([30, y], [29, y], [31, y]); }   // the spur down to the games
+
+      /* THE GAME AREA (south-east, paved, and the first thing you reach coming in from the Yard) */
+      for (let y = 16; y <= 23; y++) for (let x = 32; x <= 42; x++) { g[y][x] = "p"; keep.push([x, y]); }
+      put("balloonpop", 33, 17, "Balloon Pop. A dart, a wall of balloons, and a man who has seen it all", 2, 2);
+      put("shootgallery", 36, 17, "The Shooting Gallery. Cork rifles. The ducks have been shot at for years", 2, 2);
+      put("whackamole", 39, 17, "Whack-a-Mole. The moles are not real. Probably", 2, 2);
+      put("ticketbooth", 33, 21, "The ticket booth. Shuttered. Nobody has ever seen it open", 1, 2);
+      objs.push({ t: "sign", x: 36, y: 21, name: "THE MIDWAY GAMES. Tickets in, tickets out, and no ZCoins anywhere near it. Play as often as you like." }); g[21][36] = "#"; keep.push([36, 21]);
+
+      /* THE BIG TOP, centre, and the thing you see from the entrance */
+      put("bigtop", 18, 15, "The Big Top. Something is still going on in there", 3, 3);
+
+      /* THE NORTH-WEST: the funhouse, and the boss stood in front of its mouth */
+      put("funhouse", 3, 3, "The Funhouse. The way in is the mouth", 3, 2);
+
+      /* dressing: the midway is lined with sideshow tents */
+      for (const [x, y] of [[9, 16], [24, 4], [36, 3], [13, 20], [8, 6]]) put("sidetent", x, y, "A sideshow tent, flaps down", 2, 2);
+      for (const [x, y] of [[16, 11], [27, 15], [11, 3], [21, 21], [34, 11], [6, 19]]) put("haybale", x, y, "A hay bale");
+
+      objs.push({ t: "sign", x: 28, y: 12, name: "THE CARNIVAL: Combat 62 to 72. The freaks keep to themselves. The thing in the north-west does not." }); g[12][28] = "#"; keep.push([28, 12]);
+
+      /* THE FAIRGROUND IS OPEN GROUND, AND KEEPING IT THAT WAY IS DELIBERATE. wild() dresses a map by filling
+         whatever is not in `keep` with treeline and scatter, which is right for a wood and quite wrong for a
+         field somebody pitched a big top in: the first build kept only the midway and the plaza, and wild took
+         the rest — 467 tiles walkable out of 1,144, with EIGHT monsters and the boss sealed in pockets nobody
+         could reach. Keeping the whole interior and letting it dress only the outer ring is what makes this
+         read as a fairground rather than a forest with stalls in it. The texture comes from the hay bales and
+         litter the ground theme scatters instead. */
+      for (let y = 3; y <= 23; y++) for (let x = 2; x <= 41; x++) keep.push([x, y]);
+
+      wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 62);
+
+      /* AND THEN THE CLUTTER GOES BACK IN BY HAND. Keeping the whole field made it walkable and made it BARE —
+         a fairground is trampled and strewn, not a lawn. These are laid after wild() so they are the only things
+         standing in the open, and each is put down, the map re-walked from the midway, and taken up again if
+         the reachable count fell by more than the tile it occupies. That check is the Boneyard's: three-deep
+         yards taught it, and an open field can be sealed just as easily at a pinch point. */
+      {
+        const walk = () => {
+          const seen = new Set(["30,13"]), q = [[30, 13]];
+          while (q.length) { const [x, y] = q.pop();
+            for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, k = `${nx},${ny}`;
+              if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS || seen.has(k) || !".,p".includes(g[ny][nx])) continue;
+              seen.add(k); q.push([nx, ny]); } }
+          return seen.size;
+        };
+        const taken = new Set(this.mobs.map(([, x, y]) => `${x},${y}`));
+        for (let y = 3; y <= 23; y++) for (let x = 2; x <= 41; x++) {
+          if (g[y][x] !== "." || taken.has(`${x},${y}`)) continue;
+          if (y >= 12 && y <= 14) continue;                      // the midway stays clear
+          if (x >= 29 && x <= 31) continue;                      // and so does the spur
+          const h = hashRand(x, y, 62);
+          if (h > 0.10) continue;
+          const before = walk();
+          g[y][x] = "#";
+          if (walk() !== before - 1) { g[y][x] = "."; continue; }
+          const t = h < 0.045 ? "haybale" : h < 0.08 ? "carnlitter" : "crate";
+          objs.push({ t, x, y, name: t === "haybale" ? "A hay bale" : t === "carnlitter" ? "Popcorn tubs and torn tickets" : "A carnival crate" });
+        }
+      }
+      return { g, objs, blobs: [] };
+    },
+    /* Pinheads and knife throwers along the midway, Fat Ladies in the south-west, Strongmen up the north side,
+       and the boss alone in the north-west. Only he is on AGGRO_ON. */
+    mobs: [["pinhead", 26, 9], ["pinhead", 22, 8], ["pinhead", 19, 10], ["pinhead", 24, 6], ["pinhead", 15, 8], ["pinhead", 28, 7],
+      ["tripled", 17, 6], ["tripled", 21, 4], ["tripled", 14, 9], ["tripled", 26, 3],
+      ["fatlady", 5, 17], ["fatlady", 10, 19], ["fatlady", 4, 21], ["fatlady", 8, 23], ["fatlady", 15, 23],
+      ["strongman", 31, 3], ["strongman", 34, 7], ["strongman", 38, 5], ["strongman", 40, 9], ["strongman", 20, 20],
+      ["grinner", 5, 7]],
+    npcs: [], bots: []
+  },
   thunderhead: {
     /* (2026-09-24) REBUILT, AND IT IS NOT CLOUDREACH ANY MORE. It wore Cloudreach's ground with a darker tint
        over it, a road straight across y13, a rectangular hole in the floor and THREE objects on the whole map -
@@ -2753,6 +2850,21 @@ export const MOBS = {
      thing in the Boneyard that comes for you (`aggro`), which is why he is behind a gate you choose to open.
      The declared hp is DOUBLE what he fights with: every mob in this table is halved at load. */
   critic: { name: "The Critic", size: "xl", lvl: 42, hp: 400, att: 34, def: 30, max: 11, speed: 2500, aggro: 6, box: [16, 46], drops: [] },
+  /* ---------------------------------------------------------------- THE CARNIVAL (2026-09-24), band 62-72.
+     Slotted into a real hole: the Thunderhead tops out at The House (lvl 70, 85 hp) and the Trailer Park starts
+     at the Junkyard Dog (lvl 80, 82 hp), so there was nothing to fight in between. The ladder here runs from a
+     Hail Drake (62, 62 hp, att 46) up to just under a Junkyard Dog, and the declared hp is DOUBLE what they
+     fight with, because every mob in this table is halved at load.
+     ONLY THE BOSS IS ON AGGRO_ON. The game area is a paved plaza and a fairground you get mauled in while
+     queueing is not a fairground. */
+  pinhead: { name: "Pinhead", size: "s", lvl: 62, hp: 116, att: 46, def: 38, max: 11, speed: 2000, box: [10, 22], drops: [] },
+  tripled: { name: "The Triple", size: "m", lvl: 65, hp: 126, att: 48, def: 41, max: 12, speed: 2300, box: [12, 28], drops: [] },
+  fatlady: { name: "The Fat Lady", size: "l", lvl: 68, hp: 164, att: 50, def: 47, max: 12, speed: 3200, box: [22, 30], drops: [] },
+  strongman: { name: "The Strongman", size: "l", lvl: 71, hp: 148, att: 54, def: 45, max: 14, speed: 2900, box: [18, 36], drops: [] },
+  /* THE HEADLINER. "a boss thats this mask guy" — a clown in a cracked porcelain grin, alone in the north-west
+     in front of his funhouse. 150 against a Fat Lady’s 82, which is a mini boss and not a raid: no party, no
+     ante, you walk up to him. */
+  grinner: { name: "The Grinning Man", size: "xl", lvl: 72, hp: 300, att: 58, def: 50, max: 17, speed: 2600, aggro: 6, box: [16, 44], drops: [] },
   usher: { name: "One-Eyed Usher", size: "m", lvl: 36, hp: 56, att: 26, def: 23, max: 6, speed: 2400, aggro: 4, box: [8, 26], drops: [] },
   brainstorm: { name: "Brainstorm", size: "s", lvl: 40, hp: 60, att: 29, def: 25, max: 7, speed: 2200, box: [7, 16], drops: [] },
   seagoat: { name: "Sea-Goat of the Upper Air", size: "l", lvl: 46, hp: 78, att: 33, def: 29, max: 8, speed: 2800, box: [20, 36], drops: [] },
@@ -2852,6 +2964,14 @@ export const LOOT = {
   gator:      { item: ["hide", [1, 2]], rare: [["bogplate", 0.04], ["spiderboots", 0.02], ["angels_ring", 0.01]] },
   junkking:   { item: ["catalytic", [2, 4]], rare: [["kingcap", 0.08], ["wrench", 0.05], ["angels_ring", 0.04], ["slagstone", 0.5]] },
   understudy: { item: ["diamond_ore", [1, 2]], rare: [["bonegourd", 0.0125], ["sharps_gloves", 0.025]] },
+  /* THE CARNIVAL (2026-09-24). Its four carry the band’s ore and the boss carries the map’s whole rare table
+     on one kill, the same shape the Boneyard’s Critic has. Nothing new is invented here: every key is a thing
+     that already exists, so the band gets a place to fight without also getting a balance surface. */
+  pinhead:   { item: ["catalytic", 1], rare: [["lantern", 0.01], ["spiderboots", 0.01]] },
+  tripled:   { item: ["catalytic", 1], rare: [["sharps_gloves", 0.01], ["markedcard", 0.01]] },
+  fatlady:   { item: ["starfall_ore", 1], rare: [["angels_ring", 0.01], ["adjusters_visor", 0.01]] },
+  strongman: { item: ["starfall_ore", [1, 2]], rare: [["stake_loafers", 0.01], ["devils_dice", 0.01]] },
+  grinner:   { item: ["starfall_ore", [2, 4]], rare: [["monocle", 0.01], ["angels_ring", 0.01], ["sharps_gloves", 0.01], ["adjusters_visor", 0.01], ["spiderboots", 0.01]] },
   /* HE PAYS IN THINGS. Bonegourds every time (the Boneyard’s alchemy crop, and the Coilbreaker wants one),
      and the map’s whole rare table on one kill instead of spread over five monsters. */
   critic: { item: ["bonegourd", [2, 4]], rare: [["monocle", 0.01], ["lantern", 0.01], ["angels_ring", 0.01], ["adjusters_visor", 0.01], ["spiderboots", 0.01]] },
@@ -2905,6 +3025,7 @@ export const LOOT = {
    camp a doorway. */
 export const AGGRO_ON = new Set([
   "chandelier", "usher", "critic",             // The Boneyard (30): yewlogs, dragonstone ore — and The Critic, who is behind his own gate
+  "grinner",                                   // The Carnival (62): the boss, and the ONLY thing there that comes for you
   "revenant", "angel",                         // Cloudreach (40): onyx ore, skyeel
   "wolf", "drake", "house",                    // The Thunderhead (50): thundersquid
   "junkdog", "possum", "gator", "junkking",    // The Trailer Park (80): bogwood, slagstone, bowfin
@@ -3531,11 +3652,11 @@ export const buffsOf = (c) => {
    so a fisher reaches deep water without ever swinging a sword). A monster that is already attacking you can always be
    fought back. Ore and trees will take the same gate when they return; oceans and lakes are just more water in a band.
    v68: all six are built. West from the casino: the Yard, the Gloam, the Lantern Mire, the Boneyard, Cloudreach, the Thunderhead. */
-export const BANDS = { workyard: [1, 9], gloam: [10, 19], mire: [20, 29], boneyard: [30, 39], cloud: [40, 49], sands: [40, 49], thunderhead: [50, 99], trailer: [80, 99] }   /* (2026-09-24) The Golden Sands shares Cloudreach's band ON PURPOSE: it is a SECOND ROUTE west out of the Boneyard at 40, not a rung above it. */;   /* (2026-09-22) the Trailer Park: Combat 80 to start a fight there, Fishing 80 for the black water — the same soft gate as everywhere, on the two skills separately */
+export const BANDS = { carnival: [62, 72], workyard: [1, 9], gloam: [10, 19], mire: [20, 29], boneyard: [30, 39], cloud: [40, 49], sands: [40, 49], thunderhead: [50, 99], trailer: [80, 99] }   /* (2026-09-24) The Golden Sands shares Cloudreach's band ON PURPOSE: it is a SECOND ROUTE west out of the Boneyard at 40, not a rung above it. */;   /* (2026-09-22) the Trailer Park: Combat 80 to start a fight there, Fishing 80 for the black water — the same soft gate as everywhere, on the two skills separately */
 /* THE HOSPITAL BILL (the owner, 2026-09-19: "lets do #1"): dying outside costs a share of the tickets you are CARRYING, capped by
    where you died, so the Yard stays forgiving. Nothing else is ever touched: gear, the bag, ZCoins, experience, the bank. The tickets go
    nowhere: a sink. (Tickets can't be banked, so there is always something for the bill to take from.) */
-export const DEATH = { workyard: { share: 0.05, cap: 250 }, gloam: { share: 0.1, cap: 1000 }, mire: { share: 0.1, cap: 2000 }, boneyard: { share: 0.1, cap: 3500 }, cloud: { share: 0.1, cap: 5000 }, sands: { share: 0.1, cap: 5000 }, thunderhead: { share: 0.1, cap: 6000 }, vault: { share: 0.1, cap: 8000 }, trailer: { share: 0.1, cap: 9000 } };
+export const DEATH = { carnival: { share: 0.1, cap: 7000 }, workyard: { share: 0.05, cap: 250 }, gloam: { share: 0.1, cap: 1000 }, mire: { share: 0.1, cap: 2000 }, boneyard: { share: 0.1, cap: 3500 }, cloud: { share: 0.1, cap: 5000 }, sands: { share: 0.1, cap: 5000 }, thunderhead: { share: 0.1, cap: 6000 }, vault: { share: 0.1, cap: 8000 }, trailer: { share: 0.1, cap: 9000 } };
 export const deathBill = (c, scene) => { const d = DEATH[String(scene || "").split(":")[0]]; return d ? Math.min(d.cap, Math.floor(tixIn(c) * d.share)) : 0; };
 export const bandOf = (scene) => BANDS[String(scene || "").split(":")[0]] || null;
 /** Why this character can't fight / fish in this scene yet, or null if they can. kind: "fight" | "fish". */
@@ -4150,7 +4271,10 @@ export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
    Understudies of health — so per second he is WORSE than farming the yard next door, and that is deliberate:
    the reason to open his gate is the rare table, not the tickets. Without an entry here killFinds returns early,
    so he would drop no rares, hand out no casino finds, and not count toward a Lucky clover. */
-export const BOUNTY = { critic: 600, chicken: 18, cow: 32, rotten: 39, olive: 38, hornworm: 51, boar: 53, highwayman: 40, goat: 45, gnasher: 80, moth: 74, taxwraith: 150, ghoul: 177, chandelier: 205, understudy: 250, ram: 266, angel: 352, revenant: 324, goose: 419,
+/* (2026-09-24) THE CARNIVAL, 62-72. Between a Hail Drake (243) and The House (321) for the four, and the boss
+   above both — he is a slow kill with a rare table, the same shape as the Boneyard’s Critic. Without an entry
+   here killFinds returns early: no rares, no casino finds, and a Lucky clover would not count the kill. */
+export const BOUNTY = { pinhead: 252, tripled: 271, fatlady: 296, strongman: 318, grinner: 720, critic: 600, chicken: 18, cow: 32, rotten: 39, olive: 38, hornworm: 51, boar: 53, highwayman: 40, goat: 45, gnasher: 80, moth: 74, taxwraith: 150, ghoul: 177, chandelier: 205, understudy: 250, ram: 266, angel: 352, revenant: 324, goose: 419,
   toadstool: 37, boneidle: 79, twister: 73, counter: 91, shark: 143, stagehand: 196, usher: 223, brainstorm: 247, seagoat: 329,
   /* THE 50+ BAND pays MORE than the tool asks: its reference wage goes flat at level 40 (there was no skilling past onyx), so left alone a level-70
      kill would pay a level-42 minute. These are the tool's numbers times 1 + 1.2% a level past 42, so the last band is worth reaching. The goose moved with them. */

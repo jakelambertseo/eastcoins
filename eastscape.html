@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=242">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=243">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1008,7 +1008,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=242";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=243";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=133").then((m) => { WK = m; }));
@@ -1553,7 +1553,7 @@ const ART_VER = { critic: 4, o_mausoleum: 4, t_tomb: 4, o_bomkiosk: 7, o_plot: 2
    because a crop added to CROPS should ask for its art without anybody remembering to type four more names —
    the content check then fails until that art exists, which is the right way round. */
 const CROP_ART = Object.keys(G.CROPS).flatMap((k) => [1, 2, 3, 4].map((n) => `crop_${k}_${n}`));
-const ART_FILES = ["t_dock", ...CROP_ART, "o_yardtree", "o_yardtree_stump", "o_tower", "t_doors", "fx_hit", "fx_crit", "fx_miss", "fx_bleed", "vince_south", "vince_east", "casino", "rony_south", "rony_east", "o_bomkiosk", "t_pit", "o_fightboard", "o_hsboard", "o_fameboard", "o_ringbell", "o_ringpost", "o_mirror", "o_rrtable", "o_barcart", "kellz_south", "kellz_east", "livia_south", "livia_east", "gaius_south", "gaius_east", "aurelia_south", "aurelia_east", "arbino_south", "arbino_east", "vince_south", "vince_east", "sterling_south", "sterling_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "critic", "o_railH", "o_railV", "o_railgate", "o_mausoleum", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "pet_coilling",   /* (2026-09-24) the Pyramid’s pet was in PETS and had a picture on disk and was in NEITHER of these two lists — its icon drew an empty box AND an equipped one would have walked around invisible. Every pet goes in both, drop or no drop. */ "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_brick", "o_fencepost", "o_crates", "o_lamppost", "o_sacks", "o_handcart", "t_track", "o_gateframe", "o_gatebars", "o_agilend", "o_trailer", "o_wreck", "o_tyres", "o_dumpster", "o_rock_slagstone", "o_rustpine", "o_bogwood", "junkdog", "possum", "scrapper", "gator", "junkking", "darla_south", "darla_east", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
+const ART_FILES = ["t_dock", ...CROP_ART, "o_yardtree", "o_yardtree_stump", "o_tower", "t_doors", "fx_hit", "fx_crit", "fx_miss", "fx_bleed", "vince_south", "vince_east", "casino", "rony_south", "rony_east", "o_bomkiosk", "t_pit", "o_fightboard", "o_hsboard", "o_fameboard", "o_ringbell", "o_ringpost", "o_mirror", "o_rrtable", "o_barcart", "kellz_south", "kellz_east", "livia_south", "livia_east", "gaius_south", "gaius_east", "aurelia_south", "aurelia_east", "arbino_south", "arbino_east", "vince_south", "vince_east", "sterling_south", "sterling_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "pinhead", "tripled", "fatlady", "strongman", "grinner", "o_bigtop", "o_funhouse", "o_balloonpop", "o_shootgallery", "o_whackamole", "o_ticketbooth", "o_sidetent", "o_haybale", "o_carnlitter", "t_sawdust", "t_dwater", "critic", "o_railH", "o_railV", "o_railgate", "o_mausoleum", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "pet_coilling",   /* (2026-09-24) the Pyramid’s pet was in PETS and had a picture on disk and was in NEITHER of these two lists — its icon drew an empty box AND an equipped one would have walked around invisible. Every pet goes in both, drop or no drop. */ "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_brick", "o_fencepost", "o_crates", "o_lamppost", "o_sacks", "o_handcart", "t_track", "o_gateframe", "o_gatebars", "o_agilend", "o_trailer", "o_wreck", "o_tyres", "o_dumpster", "o_rock_slagstone", "o_rustpine", "o_bogwood", "junkdog", "possum", "scrapper", "gator", "junkking", "darla_south", "darla_east", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "legend_" + d]),   // (hero_tiro_*, the old tunic, left the startup list 2026-09-20: nobody wears it now that everyone has a look)
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "o_spot1", "o_spot2", "o_spot3", "o_spot4", "o_spot5", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
@@ -1621,7 +1621,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 72;
+const PACKS_V = 75;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -1704,7 +1704,9 @@ const AREA_ART = {
      somewhere nobody downloads, and both of the Boneyard's Ancient yews fell back to the generic tree drawing.
      Same for the dead trees, whose picture was never in ART_FILES at all. An area list must name every picture
      that area needs, not merely the ones unique to it. */
-  boneyard: [...WILD_ART, "o_yew", "o_yew_stump", "ghoul", "stagehand", "understudy", "usher", "critic", "o_railH", "o_railV", "o_railgate", "o_mausoleum", "o_bonepile", "o_gravestone", "o_skeleton"],   /* (2026-09-24) the six railed yards, the mausoleum in the Royal Box, and The Critic */
+  /* (2026-09-24) THE CARNIVAL, band 62-72. Its whole cast and midway: nothing here is wanted anywhere else, so all of it waits until somebody walks in. */
+  carnival: [...WILD_ART, "pinhead", "tripled", "fatlady", "strongman", "grinner", "o_bigtop", "o_funhouse", "o_balloonpop", "o_shootgallery", "o_whackamole", "o_ticketbooth", "o_sidetent", "o_haybale", "o_carnlitter", "t_sawdust", "t_dwater"],
+  boneyard: [...WILD_ART, "o_yew", "o_yew_stump", "ghoul", "stagehand", "understudy", "usher", "critic", "o_railH", "o_railV", "o_railgate", "o_mausoleum", "o_bonepile"],   /* (2026-09-24) the six railed yards, the mausoleum in the Royal Box, and The Critic */
   sky: ["ram", "angel", "goose"],
   // the Fight Pit: everyone who might be sent out to fight, and the corner clutter
   fightpit: ["t_pit", "o_fightboard", "o_ringbell", "o_ringpost", "olive", "hornworm", "boar", "goat", "highwayman", "gnasher", "moth", "taxwraith", "ghoul", "chandelier", "understudy", "ram", "revenant", "angel", "goose"],   // (FIGHTS.pool, less the three that are core; Vince is core since v111: he stands in the casino too)
@@ -1982,6 +1984,12 @@ const GROUNDS = {
      stops the painter scattering grass tufts and flowers: it only does that for a scene with no GT, which is
      why the Golden Sands shipped as a desert with a lawn. */
   desert: { water: "t_swater", path: "t_sand", bush: "o_cactus", boulder: "w_boulder", pave: "t_sandstone" }
+  ,
+  /* (2026-09-24) THE CARNIVAL. t_sawdust and t_dwater are t_dirt and t_water with the GRASS recoloured to
+     trampled sawdust (tools/eastscape-carnival-art.mjs) — the Wang geometry is untouched, so they tile exactly
+     as well as the originals. Having a theme at all is also what stops the painter scattering grass tufts and
+     flowers over a fairground, which is what made the Golden Sands ship as a desert with a lawn. */
+  carnival: { water: "t_dwater", path: "t_sawdust", bush: "o_carnlitter", boulder: "o_haybale" }
 };
 const WANG = [[64, 32], [96, 32], [64, 64], [32, 64], [64, 0], [96, 64], [0, 32], [96, 96], [32, 32], [64, 96], [32, 0], [0, 64], [96, 0], [0, 0], [32, 96], [0, 96]];
 
