@@ -1865,3 +1865,31 @@ Still open:
 - **The Pyramid and the Carnival have no wiki pages.**
 - **`?v=248` on eastscape-shared.js is BURNT** (a bare probe cached
   VERSION=234 under it as immutable). Probe only as `?v=N&probe=random`.
+
+## 2026-09-25, later — the danger pass
+
+Done: OUTSIDE_BUFF split into OUTSIDE_HP 1.15 / OUTSIDE_DMG 1.75, HIT_FLOOR
+0.10 -> 0.18, JACKPOT_KILL 1-in-50 x5 -> 1-in-250 x12, the food ladder fixed
+buff-only, AFK_TOWER_MS 5 minutes, SWING_URGE 0.15.
+
+Needs a look:
+- **The Crypt and the Pyramid were NOT measured against HIT_FLOOR 0.18.**
+  Unlike OUTSIDE_HP/OUTSIDE_DMG, the floor lives inside hitChance, so both
+  dungeons just got roughly twice as damaging. They are party content with
+  their own tuning. Check before anyone runs one.
+- **`COOK` hides the plain cook for every smokeable fish.** It is derived from
+  RECIPES keyed by the RAW fish and smoke_* registers after cook_*, so the
+  seven smokeable fish have no plain entry. Its comment says it is kept for
+  the wiki, so the wiki is showing only the smoked recipe for those seven.
+- **A monster's `att` is still nearly dead weight.** At HIT_FLOOR 0.18 a
+  geared player is on the floor for most things; raising att only matters
+  within ~10 of their defence roll. If att is meant to mean something,
+  defenceRollOf (melee level + gear def)/2 is the thing to look at.
+- **No visual feedback for the swing urge.** Players feel the cadence but
+  cannot see the bank. Page work, not rules work.
+- **The Tower pays a fifth of the open world and no items** over a 9.4-hour
+  climb, and has no achievements.
+- **The turnstile charges once** — leaving the Carnival cage is free.
+- **The Pyramid and the Carnival have no wiki pages.**
+- **`?v=248` on eastscape-shared.js is BURNT.** Probe only as
+  `?v=N&probe=random`, never the bare real URL.
