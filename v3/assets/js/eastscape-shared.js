@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 232;
+export const VERSION = 233;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -164,6 +164,13 @@ export const ITEMS = {
   perch: { name: "Perch", icon: "🐟", heal: 4, ex: "Stripey, bony, and proud of neither. From the Yard's pond, once you've got the knack." },
   catfish: { name: "Catfish", icon: "🐟", heal: 7, ex: "Whiskers, mud, and an expression like it was expecting you. From the Gloam." },
   mudskipper: { name: "Mudskipper", icon: "🐟", heal: 11, ex: "It walked most of the way to your hook. From the lake in the Lantern Mire." },
+  /* (2026-09-24, the owner: "is there fishing/woodcutting/mining spots here? needs to be for 60s ... the fishing
+     spot should look like that little duck game at carnivals with yellow mini ducks in it, and its only one
+     fishing vein") THE 58-TO-80 HOLE. Fishing went Thunder squid at 58 and then NOTHING until the Trailer
+     Park's Mudcat at 80 — a twenty-two level gap on the one skill nobody had mentioned, and the other half of
+     the lull he spotted in combat. Two rungs off one duck pond close it. */
+  goldfish: { name: "Prize goldfish", icon: "🐠", heal: 16, ex: "Won, in a bag, at some point. It has outlived the carnival." },
+  koi: { name: "Fairground koi", icon: "🐠", heal: 17, ex: "Far too grand for a plastic tub. Nobody knows who put it in there." },
   bonefish: { name: "Bonefish", icon: "🐟", heal: 12, ex: "Mostly bones, as advertised. From the Boneyard's flooded crypt." },
   ghostcarp: { name: "Ghost carp", icon: "🐟", heal: 13, ex: "You can see your hand through it. It still tastes of carp. From the Boneyard." },
   cloudray: { name: "Cloud ray", icon: "🐟", heal: 16, ex: "It glides through open sky like it owns the place. From Cloudreach." },
@@ -229,6 +236,8 @@ export const ITEMS = {
   cperch: { name: "Cooked perch", icon: "🐟", heal: 7, ex: "The stripes are grill marks now." },
   ccatfish: { name: "Cooked catfish", icon: "🐟", heal: 12, ex: "The whiskers crisp up nicely. Don't think about it." },
   cmudskipper: { name: "Cooked mudskipper", icon: "🐟", heal: 18, ex: "It stopped walking. Tastes of pond, in a good way." },
+  cgoldfish: { name: "Goldfish on a stick", icon: "🐟", heal: 26, ex: "Somebody grilled the prize. It is better this way." },
+  ckoi: { name: "Koi on a tray", icon: "🐟", heal: 28, ex: "Served in a paper tray with a wedge of lemon, which is more ceremony than it got alive." },
   cbonefish: { name: "Cooked bonefish", icon: "🐟", heal: 20, ex: "Still mostly bones. Warm bones." },
   cghostcarp: { name: "Cooked ghost carp", icon: "🐟", heal: 22, ex: "You can see the plate through it." },
   ccloudray: { name: "Cooked cloud ray", icon: "🐟", heal: 26, ex: "Light as air. Fills you up anyway." },
@@ -1745,6 +1754,25 @@ Object.assign(SCENES, {
       for (const [x, y] of [[16, 17], [23, 17]]) put("banner", x, y, "A sideshow banner, faded through", 1, 2);
       for (const [x, y] of [[26, 17], [14, 22], [20, 3]]) put("haybale", x, y, "A hay bale");
 
+      /* ---------------------------------------------------------------- SOMETHING TO GATHER (2026-09-24)
+         (the owner: "is there fishing/woodcutting/mining spots here? needs to be for 60s") There was not, and
+         it mattered more than it looked: catalytic converters (Mining 65) and rustpine (Woodcutting 65) both
+         existed ONLY in the Trailer Park, which needs Combat 80 to fight in — two sixty-five tiers locked
+         behind an eighty gate. They have a home at their own level now.
+
+         THE DUCK POND IS ONE VEIN, as asked, and it is a TUB rather than a pond: a `spot` with its own art
+         standing on the sawdust, which works because nothing in the fishing code cares whether there is water
+         under it. Two rungs off the one spot — Prize goldfish at 62, Fairground koi at 68 — because Fishing
+         went 58 and then straight to 80, and two rungs is what every other spot in the game gives. */
+      objs.push({ t: "spot", art: "o_duckpond", x: 27, y: 20, w: 2, h: 1, name: "The duck pond", req: { skill: "fishing", lvl: 62 },
+        fish: "goldfish", fish2: "koi", fish2lvl: 68, xp: 240, xp2: 265, glow: "#ffd23f",
+        tease: "Yellow ducks going round and round, and something moving underneath them. Fishing 62." });
+      block(g, 27, 20, 2, 1); keep.push([27, 20], [28, 20]);
+      objs.push({ t: "wreck", x: 36, y: 6, ore: "catalytic", name: "A dead carnival truck, up on blocks", req: { skill: "mining", lvl: 65 }, xp: 175, special: true });
+      g[6][36] = "#"; keep.push([36, 6]);
+      objs.push({ t: "rustpine", x: 21, y: 22, log: "pinelogs", name: "A rustpine at the edge of the lot", req: { skill: "woodcutting", lvl: 65 }, xp: 190 });
+      g[22][21] = "#"; keep.push([21, 22]);
+
       objs.push({ t: "sign", x: 28, y: 12, name: "THE CARNIVAL: Combat 62 to 72. The freaks keep to themselves. The thing in the north-west does not." }); g[12][28] = "#"; keep.push([28, 12]);
 
       /* THE FAIRGROUND IS OPEN GROUND, AND KEEPING IT THAT WAY IS DELIBERATE. wild() dresses a map by filling
@@ -3072,10 +3100,10 @@ export const LOOT = {
   /* THE CARNIVAL (2026-09-24). Its four carry the band’s ore and the boss carries the map’s whole rare table
      on one kill, the same shape the Boneyard’s Critic has. Nothing new is invented here: every key is a thing
      that already exists, so the band gets a place to fight without also getting a balance surface. */
-  pinhead:   { item: ["catalytic", 1], also: [["carnivalticket", 1, 0.12]], rare: [["lantern", 0.01], ["spiderboots", 0.01]] },
-  tripled:   { item: ["catalytic", 1], also: [["carnivalticket", 1, 0.12]], rare: [["sharps_gloves", 0.01], ["markedcard", 0.01]] },
-  fatlady:   { item: ["starfall_ore", 1], also: [["carnivalticket", 1, 0.12]], rare: [["angels_ring", 0.01], ["adjusters_visor", 0.01]] },
-  strongman: { item: ["starfall_ore", [1, 2]], also: [["carnivalticket", 1, 0.12]], rare: [["stake_loafers", 0.01], ["devils_dice", 0.01]] },
+  pinhead:   { item: ["catalytic", 1], also: [["carnivalticket", 1, 0.01]], rare: [["lantern", 0.01], ["spiderboots", 0.01]] },
+  tripled:   { item: ["catalytic", 1], also: [["carnivalticket", 1, 0.01]], rare: [["sharps_gloves", 0.01], ["markedcard", 0.01]] },
+  fatlady:   { item: ["starfall_ore", 1], also: [["carnivalticket", 1, 0.01]], rare: [["angels_ring", 0.01], ["adjusters_visor", 0.01]] },
+  strongman: { item: ["starfall_ore", [1, 2]], also: [["carnivalticket", 1, 0.01]], rare: [["stake_loafers", 0.01], ["devils_dice", 0.01]] },
   grinner:   { item: ["starfall_ore", [2, 4]], rare: [["monocle", 0.01], ["angels_ring", 0.01], ["sharps_gloves", 0.01], ["adjusters_visor", 0.01], ["spiderboots", 0.01]] },
   /* HE PAYS IN THINGS. Bonegourds every time (the Boneyard’s alchemy crop, and the Coilbreaker wants one),
      and the map’s whole rare table on one kill instead of spread over five monsters. */
@@ -3239,6 +3267,7 @@ for (const [raw, c] of Object.entries({
   oasisperch: { to: "coasisperch", lvl: 42, xp: 155, burnStop: 72 }, nilecarp: { to: "cnilecarp", lvl: 48, xp: 180, burnStop: 78 },   /* (2026-09-24) the oasis, in The Golden Sands */
   mudcat: { to: "cmudcat", lvl: 60, xp: 230, burnStop: 88 }, bowfin: { to: "cbowfin", lvl: 70, xp: 270, burnStop: 94 },   // the Trailer Park's swamp: the best food in the game, and the only reason to take Cooking past 50
   perch: { to: "cperch", lvl: 5, xp: 40, burnStop: 25 }, catfish: { to: "ccatfish", lvl: 18, xp: 80, burnStop: 45 }, mudskipper: { to: "cmudskipper", lvl: 22, xp: 95, burnStop: 50 },
+  goldfish: { to: "cgoldfish", lvl: 62, xp: 235, burnStop: 90 }, koi: { to: "ckoi", lvl: 68, xp: 255, burnStop: 92 },   /* (2026-09-24) the Carnival duck pond, filling 58-80 */
   bonefish: { to: "cbonefish", lvl: 32, xp: 125, burnStop: 62 }, ghostcarp: { to: "cghostcarp", lvl: 36, xp: 140, burnStop: 66 }, cloudray: { to: "ccloudray", lvl: 45, xp: 170, burnStop: 75 },
   stormmarlin: { to: "cstormmarlin", lvl: 55, xp: 210, burnStop: 85 }, thundersquid: { to: "cthundersquid", lvl: 60, xp: 230, burnStop: 90 }   // (v104)
 })) recipe(`cook_${raw}`, { skill: "cooking", station: "fire", in: [[raw, 1]], out: [c.to, 1], lvl: c.lvl, xp: c.xp, burnStop: c.burnStop });
@@ -4331,7 +4360,8 @@ export const VALUE = {
   sand: 12, snakefang: 48, scarabshell: 56, palmlogs: 28, serpentvenom: 180,
   oasisperch: 40, nilecarp: 48, coasisperch: 48, cnilecarp: 56,
   skyashlogs: 28, dragonstone_ore: 30, skyeel: 40, onyx_ore: 40,                // Cloudreach
-  perch: 10, catfish: 18, mudskipper: 28, bonefish: 28, ghostcarp: 36, cloudray: 48, stormmarlin: 44, thundersquid: 52,   // v68: two fish a band (see the scenes' spots)
+  perch: 10, catfish: 18, mudskipper: 28, bonefish: 28, ghostcarp: 36, cloudray: 48, stormmarlin: 44, thundersquid: 52,
+  goldfish: 54, koi: 57,   /* (2026-09-24) between the Thunder squid (52, Fishing 58) and the Mudcat (58, Fishing 80) */   // v68: two fish a band (see the scenes' spots)
   sporecap: 12, markedcard: 22, sharktooth: 26, flashlight: 30, stormjelly: 34, staticfur: 42, hailshard: 46,            // v68: what the new monsters leave
   receipt: 15, cobweb: 25, agilmark: 25,
   catalytic: 140, slagstone: 110, pinelogs: 40, bogwoodlogs: 95, mudcat: 58, bowfin: 66,   // the Trailer Park: the best gathering in the game, because it is the furthest walk and the meanest neighbours
@@ -4607,7 +4637,7 @@ export const findChance = (mob, [, share, worth]) => Math.min(0.25, share * (BOU
    Worth knowing where this sits: drops were never the big half of EastScape's ZCoin minting. A level-50 hour drops
    ~4 ZCoins but converts ~45 more through DEX at 1,000 tickets to the coin, so the ticket faucet IS the ZCoin
    faucet. This halves the small half honestly; TIX_DROP above halves the large one. */
-export const ZDROP = { kill: (lvl) => 0.003 + lvl * 0.0001, fish: { sardine: 0.00125, perch: 0.00125, trout: 0.00125, catfish: 0.00135, lanternfish: 0.0015, mudskipper: 0.0015, bonefish: 0.00155, ghostcarp: 0.0016, skyeel: 0.00165, cloudray: 0.0017, stormmarlin: 0.00175, thundersquid: 0.0018 }, big: 0.05, bigN: 5 };
+export const ZDROP = { kill: (lvl) => 0.003 + lvl * 0.0001, fish: { sardine: 0.00125, perch: 0.00125, trout: 0.00125, catfish: 0.00135, lanternfish: 0.0015, mudskipper: 0.0015, bonefish: 0.00155, ghostcarp: 0.0016, goldfish: 0.00185, koi: 0.0019, skyeel: 0.00165, cloudray: 0.0017, stormmarlin: 0.00175, thundersquid: 0.0018 }, big: 0.05, bigN: 5 };
 /** A monster's whole rare line: its own named pieces, then the casino finds, each with its chance a kill. ONE roll decides. */
 /* ONE RATE FOR EVERY NAMED RARE (2026-09-23, the owner: "lets make a rule, that ALL rares now and going forward
    have a flat drop rate % of 1%"). Every piece on a monster's own rare table is 1 in 100. It was a hand-set

@@ -66,7 +66,16 @@ const PIECES = [
   ["o_banner2", "banner2", 84, "the second colourway, so a row of them does not repeat"],
   ["o_archway", "archway", 100, "3x2 over the way in. Shorter than the big top so it does not compete with it"],
   ["o_wagon", "wagon", 80, "3x2. Lower than a tent: it is furniture, not an attraction"],
+  /* the duck pond: the owner sent a photograph of one and asked for exactly that */
+  ["o_duckpond", "duckpond", 62, "2x1. A tub on the ground, so it sits low - a hay bale is 40 and a sidetent 104"],
 ];
+/* the two fish and their cooked forms, all ITEM icons in flat/items/ at 32x32 */
+for (const k of ["goldfish", "koi", "cgoldfish", "ckoi"]) {
+  const t = await sharp(SRC + k + ".png").trim({ threshold: 1 }).resize(32, 32, { fit: "contain", kernel: "nearest", background: { r: 0, g: 0, b: 0, alpha: 0 } }).png({ palette: true, colours: 48 }).toBuffer();
+  fs.writeFileSync(OUT + "items/" + k + ".png", t);
+  console.log("  items/" + (k + ".png").padEnd(16) + " 32x32  " + (t.length / 1024).toFixed(1) + " KB");
+}
+const _unused = [];
 
 /* THE TICKET IS AN ITEM, which is a different directory AND a different size — 32x32 in flat/items/. Getting
    that wrong draws an admission stub the size of a hay bale. */
