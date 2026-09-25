@@ -2204,6 +2204,13 @@ export class World {
       { const gate = pl.god ? null : G.bandBlock(C, S.key, "fish"); if (gate) { pl.act = null; return this.say(pl, `This water is for Fishing ${gate.need} and up. You're ${gate.have}.`, "bad"); } }   /* LEVEL BANDS */
       if (!a.started) { a.started = now; a.next = now + Math.round(G.FISHING.ms / G.toolSpeed(C, "fishing")); this.say(pl, "You cast out your line…"); return; }
       if (now < a.next) return;
+      /* (2026-09-24) fx IS STILL WANTED BELOW — bite, tix, zdrop and rare all read it. Wiring the Coilling's
+         swing bonus in here replaced `const fx = G.fxOf(C)` with G.swingFx(C) and took the declaration with it,
+         so every cast threw a ReferenceError four lines down: the rod sound played, the tick died before the
+         fish was handed over, and it looped. The owner: "fish arent going into my inventory ... the sound is
+         just replaying over and over". Exactly the same slip I had already caught one branch up in thieving,
+         and did not check for here. */
+      const fx = G.fxOf(C);
       a.next = now + Math.round(G.FISHING.ms / ((1 + G.swingFx(C)) * G.toolSpeed(C, "fishing")));
       const lvl = G.lvlOf(C, "fishing"), fish = G.fishAt(ob, lvl, Math.random()), trout = fish === ob.fish2;   /* v68: every spot names its fish, and a second one from fish2lvl (`trout` now just means "the second fish") */
       this.groupNote(S, pl, a);
