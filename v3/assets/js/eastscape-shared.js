@@ -4669,7 +4669,23 @@ export const ZDROP = { kill: (lvl) => 0.003 + lvl * 0.0001, fish: { sardine: 0.0
    The cost, accepted: a few signature drops get much rarer. The Junk King's line falls about 89% and the goat's
    toga goes from one in four to one in a hundred. 78 lines get rarer, 9 more common, 12 were already there. */
 export const RARE_RATE = 0.01;
-export const raresOf = (mob) => [...(BOUNTY[mob] ? [["zcoin", ZDROP.kill(MOBS[mob].lvl)]] : []), ...(MOBS[mob]?.rare || []).map(([k]) => [k, RARE_RATE]), ...(BOUNTY[mob] ? FINDS.map((f) => [f[0], findChance(mob, f)]) : [])];
+/* (2026-09-24) THE FINDS TOGETHER HAVE A CEILING, and not just one at a time. findChance clamps each find at
+   25%, which was plenty while the biggest bounty in the game was The House's 642 — but there are SEVEN finds,
+   so the clamp lets them total 175%, and rollRare walks the list subtracting as it goes: past 100% the tail
+   simply never drops. Raising The Grinning Man to 4,000 (he unlocks with a key that costs a hundred kills) took
+   his rare line to 130% and silently switched off the bottom of it.
+   Scaling the whole block down when it would exceed FIND_CAP keeps the rule the finds were written for — every
+   monster gives the same fraction of its pay this way — right up to the point where it stops being possible.
+   NOTHING IN THE GAME TODAY IS AFFECTED: the heaviest existing line is The House at 43%, well under the cap. */
+export const FIND_CAP = 0.5;
+export const raresOf = (mob) => {
+  const out = [...(BOUNTY[mob] ? [["zcoin", ZDROP.kill(MOBS[mob].lvl)]] : []), ...(MOBS[mob]?.rare || []).map(([k]) => [k, RARE_RATE])];
+  if (!BOUNTY[mob]) return out;
+  const finds = FINDS.map((f) => [f[0], findChance(mob, f)]);
+  const sum = finds.reduce((a, [, p]) => a + p, 0);
+  const scale = sum > FIND_CAP ? FIND_CAP / sum : 1;
+  return [...out, ...finds.map(([k, p]) => [k, p * scale])];
+};
 export const rollRare = (mob, r, fx) => { for (const [k, p0] of raresOf(mob)) { const p = p0 * (1 + (k === "zcoin" ? fx?.zdrop || 0 : fx?.rare || 0)); if (r < p) return k; r -= p; } return null; };   /* fx: fxOf(character) */
 export const BOX = [["clover", 3], ["chip_red", 2], ["chip_free", 3], ["beer", 3], ["whiskey", 2], ["cocktail", 2], ["steakdinner", 2], ["tp_scroll", 3], ["devils_dice", 2], ["rewind_watch", 1], ["chip_black", 0.3]];   // what's in a mystery box, by weight
 export const valueOf = (k) => VALUE[k] ?? SHOP.buys[k] ?? 0;
