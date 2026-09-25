@@ -58,9 +58,22 @@ if (!bad) ok(`the Yard's ${yard.length} types are exempt, and nothing else is`);
 
 /* ---------------------------------------------------------------- the buff is actually on */
 {
-  const B = G.OUTSIDE_BUFF;
-  if (!(B > 1)) fail(`OUTSIDE_BUFF is ${B}`);
-  else ok(`everything outside the Yard carries OUTSIDE_BUFF ${B} on health and on average damage`);
+  const hp = G.OUTSIDE_HP, dmg = G.OUTSIDE_DMG;
+  if (!(hp > 1)) fail(`OUTSIDE_HP is ${hp}`);
+  if (!(dmg > 1)) fail(`OUTSIDE_DMG is ${dmg}`);
+  /* DANGER IS THE PRODUCT, and this is the check worth having. Damage taken over a whole kill is
+     (fight length) x (damage per hit), and fight length is OUTSIDE_HP - so LOWERING health lowers danger even
+     while the damage number goes up. When these two were one constant at 1.33 the product was 1.769; the owner
+     asked for less time-to-kill AND more danger, so the product has to stay above that or the "more dangerous"
+     half quietly did the opposite. */
+  const WAS = 1.33 * 1.33;
+  const now = hp * dmg;
+  if (now < WAS) fail(`health ${hp} x damage ${dmg} = ${now.toFixed(2)}, under the ${WAS.toFixed(2)} it was when both were 1.33 — that is a difficulty CUT`);
+  else ok(`health ${hp} (time to kill) and damage ${dmg} (danger); the product is ${now.toFixed(2)} vs ${WAS.toFixed(2)} before, so a kill costs ${((now / WAS - 1) * 100).toFixed(0)}% more`);
+  /* and the floor that makes `att` meaningless is worth restating where somebody will trip over it */
+  if (G.hitChance(999, 0) === G.hitChance(998, 0)) { /* clamped high end, fine */ }
+  if (G.hitChance(0, 999) !== 0.1) fail(`the hitChance floor is ${G.hitChance(0, 999)}, not 0.1 — every danger number here was measured against 0.1`);
+  else ok("hitChance still floors at 10%, so a geared player takes about two landed hits a kill and MAX HIT is the only danger lever that moves");
 }
 
 /* ---------------------------------------------------------------- fishing */

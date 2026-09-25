@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 241;
+export const VERSION = 242;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -3146,11 +3146,30 @@ for (const m of Object.values(MOBS)) m.hp = Math.max(2, Math.round(m.hp / 2));
    1.33 would only be a 25-30% rise at the small numbers most monsters have. Solving for the average instead is
    what makes this the 33% that was asked for. */
 export const YARD_TYPES = ["chicken", "cow", "rotten", "olive", "hornworm", "boar"];
-export const OUTSIDE_BUFF = 1.33;
+
+/* TWO KNOBS, NOT ONE (2026-09-25, the owner: "lets go 1.15. lets also increase the mob danger even more").
+   These shipped as a single 1.33 and were split because they do different jobs and had to move in OPPOSITE
+   directions:
+
+     OUTSIDE_HP IS TIME TO KILL and nothing else. 1.33 made every fight a third longer, which is what the TTK
+     complaints were actually about, so it comes down to 1.15.
+     OUTSIDE_DMG IS DANGER. It goes UP, and it had to go up by more than it looks: cutting health also cuts
+     danger, because a shorter fight is fewer swings taken. At 1.15 health, 1.54 damage only MATCHES what today
+     felt like - anything less than that is a difficulty cut dressed up as one.
+
+   1.75 is spike danger, and that is deliberate. A level-appropriate player in full tier gear sits on hitChance's
+   10% FLOOR (a mob's `att` is irrelevant past about level 50 - see the note there), so only about two swings land
+   in a whole kill and average damage cannot be moved much from here. What CAN be moved is how much one of those
+   two hurts: The Last Dealer's max goes 24 -> 32 against a 92-health player, so a bad pair of rolls is most of
+   your life. Sustained danger needs the FLOOR raised, which is a separate decision because it lands on the Tower
+   too - the Tower is excluded from these two by where they run, but not from that. */
+export const OUTSIDE_HP = 1.15;
+export const OUTSIDE_DMG = 1.75;
+export const OUTSIDE_BUFF = OUTSIDE_HP;   // the old name: a few tools still read it for the health side
 for (const [t, m] of Object.entries(MOBS)) {
   if (YARD_TYPES.includes(t)) continue;
-  m.hp = Math.max(2, Math.round(m.hp * OUTSIDE_BUFF));
-  m.max = Math.max(2, Math.round((m.max + 1) * OUTSIDE_BUFF - 1));
+  m.hp = Math.max(2, Math.round(m.hp * OUTSIDE_HP));
+  m.max = Math.max(2, Math.round((m.max + 1) * OUTSIDE_DMG - 1));
 }
 
 /* WHAT A MONSTER DROPS (2026-09-20, the owner: "1-3 items, with the third being a rare one"). The same three lines for
