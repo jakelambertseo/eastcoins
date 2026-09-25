@@ -1814,3 +1814,29 @@ Five things built or found today that need his word, not more work from me.
 - **`?v=248` on `eastscape-shared.js` is burnt.** A bare probe of it cached
   the OLD file (VERSION=234) at the edge as `immutable`. Never reuse 248.
   Probe an asset only as `?v=N&probe=random`, never the bare real URL.
+
+## 2026-09-24, the Carnival is OPEN
+
+Done: opened (west out of the Yard), midway icons fixed, nine BOUNTY
+entries added, fifteen LOOT tables restored, Tower "Start at floor 1".
+
+Still open:
+- **The 73-80 map** — you said you'd do another after the Carnival.
+- **The Tower's top is a dead end.** 30 floors; a topped-out climber
+  re-enters on 30 forever and re-clearing pays only The House's ordinary
+  drops. `floors: 30` is a config number — the rules file says 60 or 100
+  costs nothing since one room is rebuilt.
+- **The chicken's feathers are deliberately NOT restored.** Its MOBS line
+  still declares `["feather", [5, 15]]`; LOOT leaves it off, because a
+  feather is worth 1 against a 9-ticket target and BOUNTY can only take
+  TICKETS back out of a table, never an item. If feathers should drop,
+  the quantity has to come down — 1 or 2, not 5 to 15.
+- **`drops:` on a mob with a LOOT entry is dead code.** Fifteen of them
+  had drifted. Worth a checker that fails when the two disagree, rather
+  than the ad-hoc script that found this.
+- **PvP auto-retaliate** (`index.js` ~2335) — still unguarded.
+- **The Pyramid has no wiki page**, and the Carnival now has none either.
+- **Three Strongmen contest the mining truck** at (36,6) in the Back Lot.
+- **`?v=248` and `?v=249` on eastscape-shared.js are spent.** 248 is
+  BURNT — a bare probe cached VERSION=234 under it as immutable. Probe
+  only as `?v=N&probe=random`, never the bare real URL.
