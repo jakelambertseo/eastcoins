@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 247;
+export const VERSION = 248;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -774,7 +774,21 @@ export const SWING_MS = 2400;
    a bot is a cost worth paying for a mechanic people enjoy. DO NOT RAISE IT FAR: past about 20% not clicking
    starts to read as a penalty rather than a choice, and the Tower stops being semi-AFK because a climber would
    be leaving a fifth of their damage on the table by walking away. */
-export const SWING_URGE = 0.15;
+/* STACKING (2026-09-25, the owner: "what if we allowed users to 'stack' attack speed if they do multiple active
+   clicks in a row?" then "lets make the cap 50%. not worried about bots"). Consecutive URGED swings climb this
+   ladder; one step per swing, and a swing that lands without a click knocks it back to the bottom. So the reward
+   is for holding a rhythm rather than for clicking, and the spam-proof property survives untouched: a second
+   click inside the same swing still only re-sets a flag that is already set.
+
+   At the top the shave is half, which is DOUBLE damage for someone playing actively - deliberately large, because
+   the complaint being answered is that combat "feels like an afk experience". The owner has accepted that a script
+   holds the top step permanently; that is what "not worried about bots" decided, and it is the only reason a
+   number this big is here. If it is ever revisited, this array is the whole knob.
+
+   SWING_URGE stays as the name of the FIRST step: the swing checker and the worker both read it. */
+export const SWING_STACK = [0.15, 0.25, 0.35, 0.5];
+export const SWING_URGE = SWING_STACK[0];
+export const swingShave = (step) => SWING_STACK[Math.min(step | 0, SWING_STACK.length - 1)];
 /* HOW FAST YOU SWING, CHOP, MINE, FISH AND PICK POCKETS — one number, and the ONLY one anything should divide by.
    (2026-09-24, the owner: the Coilling "needs to also add +2 inventory slots and +10% skilling speed/swing rate".)
 

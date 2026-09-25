@@ -39,7 +39,10 @@ ok(`the climb runs ${R.floorSpec(1).lvl} to ${R.floorSpec(T.floors).lvl} and nev
    obvious: SWING_URGE makes the fight ~15% shorter AND takes ~15% off the damage you soak, so a floor can drop a
    whole meal - and the gap is the fight divided by the meals plus one, so losing a meal LENGTHENS it. A climber
    who is playing well is the one most likely to be idled out. */
-for (const urge of [0, G.SWING_URGE]) {
+/* (2026-09-25) the second case is now the TOP of the stacking ladder, not its first step: holding the rhythm
+   doubles dps, which halves the fight AND the damage soaked, and it is the halving of the damage that
+   drops meals and stretches the gap. The best player is the one most at risk of being idled out. */
+for (const urge of [0, G.SWING_STACK[G.SWING_STACK.length - 1]]) {
 let total = 0, worst = 0, worstF = 0, idle = [], longest = 0;
 for (let f = 1; f <= T.floors; f++) {
   const s = R.floorSpec(f), key = tierAt(s.lvl).key;

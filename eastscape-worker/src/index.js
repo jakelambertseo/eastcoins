@@ -1822,11 +1822,14 @@ export class World {
          up, and alternating between two of them re-armed that forever. One grace per player per life. */
       if (!a.started) {
         a.started = now;
+        pl.urgeStep = 0;   /* a NEW fight starts at the bottom of the ladder; a re-click carries `started` over and never reaches here */
         pl.lastSwing = Math.max(pl.lastSwing, now - Math.max(0, swingMs - 600));
         if (m.graceFor !== pl.id) { m.lastSwing = now; m.graceFor = pl.id; }
       }
-      const urged = pl.urge ? Math.round(swingMs * G.SWING_URGE) : 0;
+      const urged = pl.urge ? Math.round(swingMs * G.swingShave(pl.urgeStep)) : 0;
       if (now - pl.lastSwing >= swingMs - urged) {
+        /* ONE STEP PER SWING, and a swing with no click behind it drops you to the bottom again. */
+        pl.urgeStep = pl.urge ? Math.min((pl.urgeStep | 0) + 1, G.SWING_STACK.length - 1) : 0;
         pl.urge = false;
         pl.lastSwing = now; pl.swingAt = now; pl.fightAt = now;
         if (!S.def.pvp && !S.def.shared) m.claim = { id: pl.id, until: now + CLAIM_MS };
@@ -2354,7 +2357,8 @@ export class World {
     if (cage !== G.inCage(S.def, T.x, T.y)) { this.say(pl, "The cage bars are in the way."); pl.act = null; return; }
     a.x = T.x; a.y = T.y; faceIt();
     if (!a.started) { a.started = now; pl.lastSwing = Math.max(pl.lastSwing, now - 1800); }   /* the same max() as the mob opener above, and for the same reason */
-    if (now - pl.lastSwing < 2400 - (pl.urge ? Math.round(2400 * G.SWING_URGE) : 0)) return;   /* active clicking works here too, and both sides have it */
+    if (now - pl.lastSwing < 2400 - (pl.urge ? Math.round(2400 * G.swingShave(pl.urgeStep)) : 0)) return;   /* active clicking works here too, and both sides have it */
+    pl.urgeStep = pl.urge ? Math.min((pl.urgeStep | 0) + 1, G.SWING_STACK.length - 1) : 0;
     pl.urge = false;
     pl.lastSwing = now; pl.swingAt = now; pl.combatAt = now; T.combatAt = now;
     const TC = T.C, hit = Math.random() < G.hitChance(G.attackRollOf(C), G.defenceRollOf(TC)), dmg = hit ? rint(1, G.maxHitOf(C)) : 0;

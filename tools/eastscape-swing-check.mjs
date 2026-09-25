@@ -31,7 +31,7 @@ for (const [what, re] of [
 const TICK = 50, swingMs = 3000, mobSpeed = 2600, SECS = 1200;
 const URGE = G.SWING_URGE;
 function run(clicks, targets = 1) {
-  const pl = { id: "me", lastSwing: 0, act: null, urge: false };
+  const pl = { id: "me", lastSwing: 0, act: null, urge: false, urgeStep: 0 };
   const mobs = [...Array(targets)].map((_, i) => ({ id: "m" + i, lastSwing: 0, graceFor: null }));
   let hits = 0, taken = 0;
   for (let now = 0; now < SECS * 1000; now += TICK) {
@@ -45,21 +45,33 @@ function run(clicks, targets = 1) {
     const m = mobs.find((x) => x.id === a.id);
     if (!a.started) {
       a.started = now;
+      pl.urgeStep = 0;
       pl.lastSwing = Math.max(pl.lastSwing, now - Math.max(0, swingMs - 600));
       if (m.graceFor !== pl.id) { m.lastSwing = now; m.graceFor = pl.id; }
     }
-    const urged = pl.urge ? Math.round(swingMs * URGE) : 0;
-    if (now - pl.lastSwing >= swingMs - urged) { pl.urge = false; pl.lastSwing = now; hits++; }
+    const urged = pl.urge ? Math.round(swingMs * G.swingShave(pl.urgeStep)) : 0;
+    if (now - pl.lastSwing >= swingMs - urged) {
+      pl.urgeStep = pl.urge ? Math.min((pl.urgeStep | 0) + 1, G.SWING_STACK.length - 1) : 0;
+      pl.urge = false; pl.lastSwing = now; hits++;
+    }
     for (const x of mobs) if (x.graceFor && now - x.lastSwing >= mobSpeed) { x.lastSwing = now; taken++; }
   }
   return { hits, taken };
 }
 const alone = run((t) => (t === 0 ? 0 : null));
-const perfect = run((t) => (t % Math.round(swingMs * (1 - URGE)) < TICK ? 0 : null));
+/* clicks at the pace of the FASTEST swing the ladder allows - a fixed interval keyed to the first step misses
+   beats as the swing speeds up, drops the step, and made this read as if stacking did nothing. */
+const perfect = run((t) => (t % Math.max(TICK, Math.round(swingMs * (1 - G.SWING_STACK[G.SWING_STACK.length - 1]))) < TICK ? 0 : null));
 const ceiling = perfect.hits;
-ok(`left alone ${alone.hits} swings; one click per swing ${ceiling} (+${((ceiling / alone.hits - 1) * 100).toFixed(0)}%, SWING_URGE ${URGE})`);
-if (ceiling <= alone.hits) fail("clicking is worth nothing \u2014 the mechanic is not wired up");
-if (ceiling / alone.hits > 1 + URGE + 0.03) fail(`clicking pays ${((ceiling / alone.hits - 1) * 100).toFixed(0)}%, more than SWING_URGE allows`);
+const TOP = G.SWING_STACK[G.SWING_STACK.length - 1];
+ok(`left alone ${alone.hits} swings; holding the rhythm ${ceiling} (+${((ceiling / alone.hits - 1) * 100).toFixed(0)}%; ladder ${G.SWING_STACK.map((x) => (x * 100).toFixed(0) + "%").join(" -> ")})`);
+if (ceiling <= alone.hits) fail("clicking is worth nothing - the mechanic is not wired up");
+/* THE CEILING IS THE TOP OF THE LADDER. 1/(1-top) is the most dps any cadence may buy; past it a step is being
+   climbed more than once a swing, which is how the original re-click turned into a 4.5x exploit. */
+const max = 1 / (1 - TOP);
+if (ceiling / alone.hits > max + 0.05) fail(`holding the rhythm pays ${(ceiling / alone.hits).toFixed(2)}x, past the ${max.toFixed(2)}x the top step allows`);
+/* and a rhythm must beat a SINGLE click, or the ladder is decoration */
+if (ceiling <= run((t) => (t === 0 ? 0 : null)).hits) fail("holding the rhythm is worth no more than one click - the ladder does nothing");
 
 for (const [name, fn, n] of [
   ["spamming every tick",            (t) => 0, 1],
