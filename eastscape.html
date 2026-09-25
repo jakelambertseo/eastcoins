@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=237">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=238">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1008,7 +1008,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=237";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=238";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=133").then((m) => { WK = m; }));
@@ -1140,7 +1140,7 @@ let CRR = null; const cryptRules = () => (cryptRules.p ||= import("/v3/assets/js
 /* (2026-09-24) THE GREAT PYRAMID's rules, loaded the first time anybody is in one - the Crypt's pattern
    exactly, including handing AREA_ART its sheet at that moment so its six monsters cost nobody anything until
    a party goes in. */
-let PYR = null; const pyramidRules = () => (pyramidRules.p ||= import("/v3/assets/js/eastscape-pyramid-rules.js?v=4").then((m) => { PYR = m.createPyramidRules(G, G._MAP); Object.assign(G.SCENES, PYR.scenes); Object.assign(G.MOBS, PYR.mobs); AREA_ART.pyramid = PYR.scenes.pyramid.art; }));
+let PYR = null; const pyramidRules = () => (pyramidRules.p ||= import("/v3/assets/js/eastscape-pyramid-rules.js?v=5").then((m) => { PYR = m.createPyramidRules(G, G._MAP); Object.assign(G.SCENES, PYR.scenes); Object.assign(G.MOBS, PYR.mobs); AREA_ART.pyramid = PYR.scenes.pyramid.art; }));
 let PYRAMID = null; const pyramidLoad = () => (pyramidLoad.p ||= Promise.all([import("/v3/assets/js/eastscape-pyramid.js?v=5"), pyramidRules()]).then(([m]) => (PYRAMID = m.createPyramid({ G, R: PYR, SFX, send, esc, $, ico, artOf, me: () => me, you: () => you, Z: () => Z, host: () => document.querySelector(".game"), popup, winFx, flatArt,
   /* WHO IS HELD, AND UNTIL WHEN. The page owns the consequences of a hold — no walk prediction, and the bleed
      icon over their head — so the dungeon only has to report it. See HELD, further down. */

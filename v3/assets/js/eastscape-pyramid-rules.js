@@ -24,11 +24,15 @@ export function createPyramidRules(G, H) {
   const PYRAMID = {
     /* the same party rules as the Crypt, and deliberately so: a party is a party, and World.dungeonOwe reads
        fullShare / lowShare / runsPaid / lateShare straight off this object. */
-    /* NOT OPEN YET (2026-09-24). Its lifecycle is a faithful mirror of the Crypt's but it has never been run
-       by four people, and the ante is real tickets - so until it has been, only an admin may open the door.
-       Everything else is finished and live: flip this to true to open it to everybody. The Red Light table
-       shipped the same way. */
-    live: false,
+    /* OPEN (2026-09-24, the owner: "turn it on for everyone then ill reset the server").
+       It went in admin-only because it had never been run by four people and the ante is real tickets; the
+       owner has decided to open it on a live room instead, which is his call to make. What that means in
+       practice, so nobody has to reconstruct it later: the SHAPE of the run is proven offline - the map, the
+       gates, the leashes, the chest's table against 60,000 rolls, and the payout through the same
+       World.dungeonOwe the Crypt uses. What is NOT proven by anything but four people in a room is the coil
+       breaking on 5% of the boss's health, the burrow relocating it, the lever, and the chest opening at the
+       end. If a first run goes wrong, set this back to false - it refuses at the door before a ticket moves. */
+    live: true,
     party: [2, 4], runsPaid: 3, lateShare: 0.25, fullShare: 0.10, lowShare: 0.5, maxRuns: 6,
     wipeMs: 15000, rejoinMs: 3 * 60 * 1000, threatMs: 10000, zdropMul: 12,
     door: { scene: "sands", x: 40, y: 7 },           // the pyramid on the Golden Sands' eastern skyline
