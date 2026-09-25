@@ -35,13 +35,18 @@ if (R.floorSpec(T.floors).lvl !== T.topLevel) fail(`the top expects ${R.floorSpe
 ok(`the climb runs ${R.floorSpec(1).lvl} to ${R.floorSpec(T.floors).lvl} and never steps backwards`);
 
 /* ---- the fight, and the eating that keeps you awake */
+/* MODELLED FOR AN ACTIVE CLICKER TOO (2026-09-25), and that is the WORSE case for the AFK cutoff, which is not
+   obvious: SWING_URGE makes the fight ~15% shorter AND takes ~15% off the damage you soak, so a floor can drop a
+   whole meal - and the gap is the fight divided by the meals plus one, so losing a meal LENGTHENS it. A climber
+   who is playing well is the one most likely to be idled out. */
+for (const urge of [0, G.SWING_URGE]) {
 let total = 0, worst = 0, worstF = 0, idle = [], longest = 0;
 for (let f = 1; f <= T.floors; f++) {
   const s = R.floorSpec(f), key = tierAt(s.lvl).key;
   const c = G.freshChar(); c.xp.melee = G.XP_AT[s.lvl]; c.xp.hp = G.XP_AT[s.lvl];
   for (const sl of SLOTS) if (G.ITEMS[`${key}_${sl}`]) c.eq[sl] = `${key}_${sl}`;
   c.eq.weapon = `${key}_sword`;
-  const secs = s.hp / s.dps; total += secs;
+  const secs = (s.hp / s.dps) * (1 - urge); total += secs;
   if (secs > worst) { worst = secs; worstF = f; }
   const dmg = (secs * 1000 / 2600) * G.hitChance(s.att, G.defenceRollOf(c)) * ((1 + s.max) / 2);
   const eats = Math.max(0, Math.ceil((dmg - G.maxHpOf(c)) / 34));   // a smoked thunder squid
@@ -49,10 +54,13 @@ for (let f = 1; f <= T.floors; f++) {
   if (gap > longest) longest = gap;
   if (gap > G.AFK_MS / 1000) idle.push(f);
 }
-console.log(`  whole climb ${(total / 3600).toFixed(1)}h of fighting; worst single fight ${(worst / 60).toFixed(1)}m on floor ${worstF}`);
+const who = urge ? "clicking well" : "left to swing";
+console.log(`  ${who.padEnd(14)} climb ${(total / 3600).toFixed(1)}h; worst fight ${(worst / 60).toFixed(1)}m on floor ${worstF}; longest gap ${longest.toFixed(0)}s`);
 if (worst > 15 * 60) fail(`floor ${worstF} is a ${(worst / 60).toFixed(0)}-minute fight; that is a sitting, not a floor`);
-if (idle.length) fail(`${idle.length} floor(s) leave a gap past the ${G.AFK_MS / 60000}-minute AFK cutoff with no reason to click: ${idle.slice(0, 8).join(", ")}`);
-else ok(`the longest stretch with no reason to click is ${longest.toFixed(0)}s, inside the ${G.AFK_MS / 60000}-minute cutoff — eating is what keeps a climber logged in`);
+if (idle.length) fail(`${who}: ${idle.length} floor(s) leave a gap past the ${G.AFK_MS / 60000}-minute AFK cutoff: ${idle.slice(0, 8).join(", ")}`);
+else if (longest > G.AFK_MS / 1000 - 20) fail(`${who}: the longest gap is ${longest.toFixed(0)}s against a ${G.AFK_MS / 1000}s cutoff — under 20s of margin is too close`);
+else ok(`${who}: longest stretch with no reason to click ${longest.toFixed(0)}s, ${(G.AFK_MS / 1000 - longest).toFixed(0)}s inside the cutoff`);
+}
 
 /* ---- what a death costs */
 {

@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 239;
+export const VERSION = 240;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -706,6 +706,27 @@ export function xpForDamage(c, dmg) {
 /* How long a swing takes. A weapon with no speed of its own swings at SWING_MS,
    which is what the game used for everything before weapons had speeds. */
 export const SWING_MS = 2400;
+
+/* ACTIVE CLICKING (2026-09-25, the owner: "users are now complaining about the reclick, theyre calling it active
+   clicking, is there a way that we can reimplemt it, or a version of it, that isnt overpowered?").
+
+   Clicking the thing you are ALREADY fighting banks one "urge", which shaves this fraction off your next swing.
+   It is a boolean, cleared the instant you swing, so it cannot compound - and it is the whole mechanic:
+
+     ONE CLICK PER SWING IS THE CEILING. Clicking five times faster pays exactly the same, because the second
+     click only re-sets a flag that is already set. That is what makes this a rhythm somebody can hold rather
+     than a race, and it is why it needs no anti-spam rule.
+     IT IS A FRACTION, NOT A NUMBER OF MILLISECONDS. A flat shave would be worth twice as much on a gladius as on
+     a maul; a share is worth the same to everyone, so it never quietly picks a weapon.
+     IT DOES NOT TOUCH THE MONSTER'S CLOCK. Half of what made the original a 4.5x exploit was that re-clicking
+     pushed the monster's swing away too, which bought immunity on top of the damage. That half is gone for good.
+
+   0.15 is about +17% (the owner picked it over 0.10). The ceiling here is set by what a SCRIPT may have rather
+   than by what feels good: a bot clicks perfectly, so whatever this pays, assume everyone gets all of it. 17% for
+   a bot is a cost worth paying for a mechanic people enjoy. DO NOT RAISE IT FAR: past about 20% not clicking
+   starts to read as a penalty rather than a choice, and the Tower stops being semi-AFK because a climber would
+   be leaving a fifth of their damage on the table by walking away. */
+export const SWING_URGE = 0.15;
 /* HOW FAST YOU SWING, CHOP, MINE, FISH AND PICK POCKETS — one number, and the ONLY one anything should divide by.
    (2026-09-24, the owner: the Coilling "needs to also add +2 inventory slots and +10% skilling speed/swing rate".)
 

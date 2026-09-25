@@ -884,7 +884,10 @@ export class World {
        away. Measured with a maul, re-clicking every 650ms: 45 hits in 30 seconds instead of 10, and it landed
        none at all. PvP had the identical shape. Carrying `started` across is what makes a re-click a no-op. */
     if (pl.act && (act.kind === "mob" || act.kind === "pvp") && pl.act.kind === act.kind
-        && String(pl.act.id) === String(act.id) && pl.act.started) act.started = pl.act.started;
+        && String(pl.act.id) === String(act.id) && pl.act.started) { act.started = pl.act.started; pl.urge = true; }
+    /* ...and THAT is active clicking: the re-click is still a no-op for the opener, but it banks one urge, which
+       shaves SWING_URGE off the next swing and is cleared the moment that swing lands. Clicking again before it
+       does only sets a flag that is already set, so there is nothing to gain by clicking faster. */
     pl.act = act; pl.path = p; this.kick(S, pl, now);
   }
 
@@ -1821,7 +1824,9 @@ export class World {
         pl.lastSwing = Math.max(pl.lastSwing, now - Math.max(0, swingMs - 600));
         if (m.graceFor !== pl.id) { m.lastSwing = now; m.graceFor = pl.id; }
       }
-      if (now - pl.lastSwing >= swingMs) {
+      const urged = pl.urge ? Math.round(swingMs * G.SWING_URGE) : 0;
+      if (now - pl.lastSwing >= swingMs - urged) {
+        pl.urge = false;
         pl.lastSwing = now; pl.swingAt = now; pl.fightAt = now;
         if (!S.def.pvp && !S.def.shared) m.claim = { id: pl.id, until: now + CLAIM_MS };
         const def = G.MOBS[m.t], hit = Math.random() < G.hitChance(G.attackRollOf(C), def.def), dmg = hit ? rint(1, G.maxHitOf(C)) : 0;
@@ -2348,7 +2353,8 @@ export class World {
     if (cage !== G.inCage(S.def, T.x, T.y)) { this.say(pl, "The cage bars are in the way."); pl.act = null; return; }
     a.x = T.x; a.y = T.y; faceIt();
     if (!a.started) { a.started = now; pl.lastSwing = Math.max(pl.lastSwing, now - 1800); }   /* the same max() as the mob opener above, and for the same reason */
-    if (now - pl.lastSwing < 2400) return;
+    if (now - pl.lastSwing < 2400 - (pl.urge ? Math.round(2400 * G.SWING_URGE) : 0)) return;   /* active clicking works here too, and both sides have it */
+    pl.urge = false;
     pl.lastSwing = now; pl.swingAt = now; pl.combatAt = now; T.combatAt = now;
     const TC = T.C, hit = Math.random() < G.hitChance(G.attackRollOf(C), G.defenceRollOf(TC)), dmg = hit ? rint(1, G.maxHitOf(C)) : 0;
     if (!T.god) { TC.hp -= dmg; this.touch(T); }
