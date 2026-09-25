@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 231;
+export const VERSION = 232;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1668,7 +1668,9 @@ Object.assign(SCENES, {
       put("balloonpop", 33, 17, "Balloon Pop. A dart, a wall of balloons, and a man who has seen it all", 2, 2);
       put("shootgallery", 36, 17, "The Shooting Gallery. Cork rifles. The ducks have been shot at for years", 2, 2);
       put("whackamole", 39, 17, "Whack-a-Mole. The moles are not real. Probably", 2, 2);
-      put("ticketbooth", 33, 21, "The ticket booth. Shuttered. Nobody has ever seen it open", 1, 2);
+      /* a row lower than it looks like it needs: the balloon stall is 100px on a two-tile footprint, so it
+         draws six tiles tall and reached down over the booth at y21. */
+      put("ticketbooth", 33, 22, "The ticket booth. Shuttered. Nobody has ever seen it open", 1, 2);
       objs.push({ t: "sign", x: 36, y: 21, name: "THE MIDWAY GAMES. Tickets in, tickets out, and no ZCoins anywhere near it. Play as often as you like." }); g[21][36] = "#"; keep.push([36, 21]);
 
       /* THE BIG TOP, centre, and the thing you see from the entrance */
@@ -1713,18 +1715,35 @@ Object.assign(SCENES, {
          The arch is pushed WITHOUT block(), the way the turnstile and the Pyramid's gates are: it is a thing you
          walk under, and an arch that blocks is a wall with a face painted on it. Everything else here is laid
          either side of the two road rows (y12 and y13) so nothing stands in the way. */
+      /* HOW FAR APART, AND WHY IT IS NOT THREE (2026-09-24, the owner: "the entrance area is a bit too busy,
+         break it up and spread some stuff out"). A TILE IS 16 PIXELS AND THE ART IS NOT. o_banner is 53px wide
+         on a footprint one tile across, so it draws three and a third tiles wide; the arch is 113px on a
+         three-tile footprint and draws seven. Six banners at three-tile spacing therefore OVERLAPPED — the
+         footprints never touched and the pictures never stopped touching, which is why the screenshot looks
+         like a fence of banners rather than an avenue with banners along it.
+         Four banners, six tiles apart, staggered above and below the road. Space the PICTURE, not the tile. */
       objs.push({ t: "archway", x: 40, y: 11, w: 3, h: 2, name: "A painted arch. Something with horns is grinning over the way in" });
-      for (const x of [36, 39, 42]) keep.push([x, 11], [x, 12]);
-      for (const x of [35, 38, 41]) { put("banner", x, 9, "A sideshow banner, faded through", 1, 2); put("banner2", x, 14, "A sideshow banner, faded through", 1, 2); }
+      for (const x of [39, 40, 41, 42]) keep.push([x, 11], [x, 12]);
+      /* TWO IN THE ALLEY, AND THE REST SPREAD DOWN THE MIDWAY. Four would not fit: the arch draws SEVEN tiles
+         wide on a three-tile footprint, so anything inside x37..x44 is standing in its picture, and a banner at
+         y15 has its lower half in the games plaza. So the corridor of banners the concept art shows is made by
+         putting them along the WHOLE road — the back lot, the alley, the big top's forecourt, Sideshow Row —
+         rather than six of them stacked at the gate. You pass one every so often, which is the effect. */
+      put("banner", 33, 9, "A sideshow banner, faded through", 1, 2);
+      put("banner2", 35, 14, "A sideshow banner, faded through", 1, 2);
+      put("banner", 25, 3, "A sideshow banner, faded through", 1, 2);
       /* THE BACK LOT, north-east: where the carnival lives when nobody is looking */
       for (const [x, y] of [[27, 2], [33, 2], [38, 3]]) put("wagon", x, y, "A carnival wagon, shutters closed", 3, 2);
-      for (const [x, y] of [[26, 8], [32, 8], [37, 7], [40, 6]]) put("crate", x, y, "A carnival crate");
+      for (const [x, y] of [[26, 8], [31, 7]]) put("crate", x, y, "A carnival crate");   /* two, not four: the other pair sat in the alley */
       /* SIDESHOW ROW, south-west */
-      for (const [x, y] of [[7, 15], [11, 15], [7, 22], [11, 22]]) put("sidetent", x, y, "A sideshow tent, flaps down", 2, 2);
-      for (const [x, y] of [[5, 17], [5, 20]]) put("banner2", x, y, "A sideshow banner, faded through", 1, 2);
+      /* SEVEN APART, not four. A sidetent is 110px on a two-tile footprint, so four tiles between them left
+         46 pixels of one tent drawn over the next — the same "space the picture, not the tile" the alley taught. */
+      for (const [x, y] of [[4, 15], [11, 15], [4, 22], [11, 22]]) put("sidetent", x, y, "A sideshow tent, flaps down", 2, 2);
+      /* six apart, not three: a banner draws five tiles TALL on a two-tile footprint, so the old pair stacked */
+      for (const [x, y] of [[8, 16], [8, 22]]) put("banner2", x, y, "A sideshow banner, faded through", 1, 2);
       /* and the big top's own forecourt */
       for (const [x, y] of [[16, 17], [23, 17]]) put("banner", x, y, "A sideshow banner, faded through", 1, 2);
-      for (const [x, y] of [[26, 17], [14, 22], [31, 12], [20, 3]]) put("haybale", x, y, "A hay bale");
+      for (const [x, y] of [[26, 17], [14, 22], [20, 3]]) put("haybale", x, y, "A hay bale");
 
       objs.push({ t: "sign", x: 28, y: 12, name: "THE CARNIVAL: Combat 62 to 72. The freaks keep to themselves. The thing in the north-west does not." }); g[12][28] = "#"; keep.push([28, 12]);
 
@@ -1762,8 +1781,13 @@ Object.assign(SCENES, {
           if (g[y][x] !== "." || taken.has(`${x},${y}`)) continue;
           if (y >= 12 && y <= 14) continue;                      // the midway stays clear
           if (x >= 29 && x <= 31) continue;                      // and so does the spur
+          /* (2026-09-24, the owner: "the entrance area is a bit too busy, break it up and spread some stuff
+             out") BANNER ALLEY IS LEFT EMPTY. It is the first thing anybody sees and it was carrying the
+             banners, the arch, two of the back lot crates AND a tenth of the map's random litter on top of
+             them. Somewhere has to be quiet or none of it reads. */
+          if (x >= 32 && y >= 8 && y <= 16) continue;
           const h = hashRand(x, y, 62);
-          if (h > 0.10) continue;
+          if (h > 0.125) continue;
           const before = walk();
           g[y][x] = "#";
           if (walk() !== before - 1) { g[y][x] = "."; continue; }

@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=244">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=245">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1008,7 +1008,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=244";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=245";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=133").then((m) => { WK = m; }));
@@ -5156,11 +5156,20 @@ function renderAdmin(p) {
   const opts = (o) => Object.entries(o).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("");
   const skills = Object.fromEntries(Object.entries(SKILLS).map(([k, s]) => [k, `${s.icon} ${s.name} (${lvl(k)})`]));
   /* (2026-09-23) SORTED BY NAME. It was insertion order over 243 items, so finding one meant knowing roughly when
-     it was added to the rules file — the four new crops sat at 19-22, between the starting kit and the ores. */
+     it was added to the rules file — the four new crops sat at 19-22, between the starting kit and the ores.
+     (2026-09-24, the owner: "can you organize the admins items list, theres a lot of items now and i need them
+     alphabetical soo its not a pain finding one") IT HAS SAID "SORTED BY NAME" FOR A DAY AND HAS NOT BEEN. The
+     sort ran on the LABEL, which begins with the item's emoji, so 287 items came out ordered by emoji codepoint:
+     a watch, a watch, an hourglass, a comet, a cog. Alphabetical in patches and useless overall, and exactly the
+     sort of thing a comment can hide. Sort the NAME and build the label after. */
   const items = Object.fromEntries(Object.entries(ITEMS)
-    .map(([k, it]) => [k, `${it.icon} ${it.name}`])
-    .sort((a, b) => a[1].localeCompare(b[1], undefined, { sensitivity: "base" })));
-  const scenes = Object.fromEntries(Object.entries(SCENES).map(([k, s]) => [k, s.name]));
+    .sort((a, b) => a[1].name.localeCompare(b[1].name, undefined, { sensitivity: "base" }))
+    .map(([k, it]) => [k, `${it.icon} ${it.name}`]));
+  /* the teleport list has the same problem for the same reason — it was in whatever order the rules file
+     declares scenes, which is roughly the order they were built. Forty-odd of them now. */
+  const scenes = Object.fromEntries(Object.entries(SCENES)
+    .sort((a, b) => String(a[1].name).localeCompare(String(b[1].name), undefined, { sensitivity: "base" }))
+    .map(([k, s]) => [k, s.name]));
   const quests = Object.fromEntries(Object.entries(QUESTS).map(([k, q]) => [k, `${q.name} (${G.qState(me, k)})`]));
   const isAdmin = you.role === "admin" || you.admin;
   p.innerHTML = `<div class="ph">${isAdmin ? "Admin" : "Moderator"} <small>${esc(you.login)}</small></div><div class="adm">

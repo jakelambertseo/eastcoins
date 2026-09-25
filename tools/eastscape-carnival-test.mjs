@@ -10,6 +10,9 @@
    The rest is what a map can be wrong about: a monster nobody can walk to, a game area you cannot reach, and an
    aggressive monster able to reach the plaza people are meant to queue on. */
 import * as G from "file:///C:/Users/jake/code/eastcoins/v3/assets/js/eastscape-shared.js";
+import fsSync from "node:fs";
+const ROOT = "C:/Users/jake/code/eastcoins";
+const join = (a2, b2) => a2 + "/" + b2;
 
 const KEY = "carnival", S = G.SCENES[KEY], b = S.build(), g = b.g;
 const COLS = g[0].length, ROWS = g.length, WALK = ".,isbep";
@@ -115,6 +118,45 @@ ok("every monster here is inside the band and pays a bounty");
   }
   for (const [t, x, y] of S.mobs) if (at.has(`${x},${y}`)) fail(`${G.MOBS[t].name} at ${x},${y} is standing on a ${at.get(`${x},${y}`)}`);
   ok(`${b.objs.length} objects, none stacked and none under a monster`);
+}
+
+/* ---------------------------------------------------------------- AND NO TWO PICTURES SIT ON TOP OF EACH OTHER
+   (2026-09-24, the owner on a screenshot of the entrance: "the entrance area is a bit too busy, break it up and
+   spread some stuff out")
+
+   THE FOOTPRINT IS NOT THE PICTURE, and that is the whole of this map's crowding problem. A tile is 16px and
+   almost nothing here is: a banner is 53px on a ONE-tile footprint, so it draws three and a third tiles wide;
+   the entrance arch is 113px on three tiles and draws seven; a sideshow tent is 110px on two. Six banners at
+   three-tile spacing therefore never touched as footprints and never stopped touching as pictures, and the
+   check above — which only knows about footprints — called it fine.
+
+   So this measures the drawn rectangles. Fences and cage runs are excluded because a wall is SUPPOSED to be
+   continuous, and so is the row of game stalls: a midway is stalls shoulder to shoulder. Everything else that
+   overlaps by more than a third of a tile is crowding. */
+{
+  const wide = {};
+  for (const o of b.objs) if (!(o.t in wide)) {
+    try { const buf = fsSync.readFileSync(join(ROOT, `v3/assets/img/glad/flat/o_${o.t}.png`));
+      /* PNG width and height live at bytes 16..24, so no image library is needed for this */
+      wide[o.t] = [buf.readUInt32BE(16), buf.readUInt32BE(20)];
+    } catch { wide[o.t] = null; }
+  }
+  const RUN = new Set(["cagebarH", "cagebarV", "railH", "railV"]);          // a wall is meant to be continuous
+  const STALL = new Set(["balloonpop", "shootgallery", "whackamole"]);     // a midway is stalls shoulder to shoulder
+  const box = (o) => { const [w, h] = wide[o.t];
+    const cx = (o.x + (o.w || 1) / 2) * 16, foot = (o.y + (o.h || 1)) * 16;
+    return { x0: cx - w / 2, x1: cx + w / 2, y0: foot - h, y1: foot }; };
+  const props = b.objs.filter((o) => wide[o.t] && wide[o.t][0] > 60 && !RUN.has(o.t));
+  let worst = 0, who = "";
+  for (let i = 0; i < props.length; i++) for (let j = i + 1; j < props.length; j++) {
+    if (STALL.has(props[i].t) && STALL.has(props[j].t)) continue;
+    const A = box(props[i]), B = box(props[j]);
+    const ox = Math.min(A.x1, B.x1) - Math.max(A.x0, B.x0), oy = Math.min(A.y1, B.y1) - Math.max(A.y0, B.y0);
+    const n = Math.min(ox, oy);
+    if (ox > 0 && oy > 0 && n > worst) { worst = n; who = `${props[i].t}@${props[i].x},${props[i].y} and ${props[j].t}@${props[j].x},${props[j].y}`; }
+  }
+  if (worst > 24) fail(`${who} overlap by ${Math.round(worst)}px — more than a tile and a half of one drawn over the other`);
+  else ok(`no two prop pictures overlap by more than ${Math.round(worst)}px (${props.length} props measured, walls and the stall row excepted)`);
 }
 
 /* ---------------------------------------------------------------- IT IS NOT A STRAIGHT LINE
