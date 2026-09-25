@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 256;
+export const VERSION = 257;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -3605,7 +3605,17 @@ const SMOKE = {
   stormmarlin:  { lvl: 60, coal: 2, heal: 31, sell: 140, fx: { tix: 0.10 },               blurb: "Everything pays a bit more." },
   mudcat:       { lvl: 65, coal: 2, heal: 32, sell: 180, fx: { rare: 0.15 },              blurb: "The good stuff turns up." },
   thundersquid: { lvl: 65, coal: 2, heal: 34, sell: 165, fx: { tough: 0.15 },             blurb: "Hits land softer." },
-  bowfin:       { lvl: 75, coal: 3, heal: 37, sell: 210, fx: { tough: 0.10, rare: 0.15 }, blurb: "The best thing out of that water." }
+  bowfin:       { lvl: 75, coal: 3, heal: 37, sell: 210, fx: { tough: 0.10, rare: 0.15 }, blurb: "The best thing out of that water." },
+  /* (2026-09-25, the owner: "make a reciple / art/ icons for smoking carnival fish as well") The duck pond's two.
+     A SMOKE SITS ABOUT FIVE LEVELS ABOVE ITS OWN COOK across this whole table (36/40, 45/50, 50/55, 55/60, 60/65,
+     70/75), so 62 and 68 give 67 and 73 - which also keeps the SMOKED ladder in order by smoke level, landing
+     them between thundersquid at 65 and bowfin at 75 rather than jumping the queue.
+     Their heals are their cooks plus two, which is the rule the whole table follows.
+     AND THEY TAKE THE LAST TWO UNUSED BUFF KEYS. zdrop and bite were the only ones no smoke had claimed, and both
+     suit a carnival prize fish: a goldfish you won turns coins up, and a koi makes the next one come easier -
+     which is a nice loop, since you eat a fish to fish better. */
+  goldfish:     { lvl: 67, coal: 2, heal: 35, sell: 170, fx: { zdrop: 0.12 },               blurb: "ZCoins turn up where they did not." },
+  koi:          { lvl: 73, coal: 3, heal: 36, sell: 195, fx: { bite: 0.10 },                blurb: "The next one comes easier." }
 };
 for (const [raw, sm] of Object.entries(SMOKE)) {
   if (!ITEMS[raw]) continue;
