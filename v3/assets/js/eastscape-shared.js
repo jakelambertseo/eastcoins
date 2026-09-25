@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 227;
+export const VERSION = 228;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1726,31 +1726,142 @@ Object.assign(SCENES, {
     name: "The Boneyard", dark: true, exits: { e: "mire", n: "cloud", w: "sands" }, tint: "rgba(60,20,70,.2)",
     build() {
       const g = grid(), objs = [], keep = [];
-      /* (v122) woodcutting's next step. Every map has had choppable trees all along; these are the tiered ones, so the skill pays better as you go out further instead of paying `logs` forever. */
-      /* (2026-09-22) one ore per tier, on the map whose level band matches it. `rock`, not `vein`, because the art is
-         o_rock_<ore> and that is what exists for every middle tier; o_vein_* is only drawn for copper. */
-      for (const [x, y] of [[5, 19], [9, 20]]) { objs.push({ t: "rock", x, y, ore: "dragonstone_ore", name: "Dragonstone rock", req: { skill: "mining", lvl: 40 }, xp: 86 }); g[y][x] = "#"; }
-      for (const [tx, ty] of [[7, 8], [34, 17]]) { objs.push({ t: "yew", x: tx, y: ty, log: "yewlogs", name: "Ancient yew", req: { skill: "woodcutting", lvl: 35 }, xp: 170 }); g[ty][tx] = "#"; }
-      for (let x = 0; x < COLS; x++) g[13][x] = ",";
-      for (let y = 13; y <= 17; y++) g[y][35] = ",";
-      // the flooded crypt, fished from its north side: bonefish from Fishing 30, ghost carp from 35
-      for (let y = 19; y <= 22; y++) for (let x = 31; x <= 40; x++) g[y][x] = "~";
-      scatterSpots(objs, 31, 40, 19, 5, [1, 2, 4], { name: "Flooded crypt", req: { skill: "fishing", lvl: 30 }, fish: "bonefish", fish2: "ghostcarp", fish2lvl: 35, xp: 110, xp2: 130, glow: "#d8c8ff", tease: "Pale shapes slide between the sunken headstones. Fishing 30." });
-      for (let x = 30; x <= 41; x++) keep.push([x, 18], [x, 17]);
-      for (const [x, y] of [[9, 5], [11, 6], [10, 8], [20, 18], [22, 19], [21, 21], [33, 5], [35, 6], [34, 8], [25, 5], [13, 20]]) { objs.push({ t: "gravestone", x, y, name: "Gravestone" }); g[y][x] = "#"; }
-      for (const [x, y] of [[7, 19], [27, 9], [38, 11]]) { objs.push({ t: "skeleton", x, y, name: "Somebody who stayed" }); g[y][x] = "#"; }
-      for (const [x, y] of [[4, 4], [18, 3], [40, 4], [24, 22]]) { objs.push({ t: "deadtree", x, y, name: "Dead tree" }); g[y][x] = "#"; }
-      NORTH_ROAD(g, keep); objs.push({ t: "sign", x: 20, y: 11, name: "North, and up: Cloudreach. It opens at Combat 40, and Fishing 40. Bring a head for heights." }); g[11][20] = "#";
-      objs.push({ t: "sign", x: 28, y: 15, name: "THE BONEYARD: Combat 30 to 39. Nothing here attacks first. Ghouls to the east, Stagehands to the west, Understudies in the middle, Chandelier Spiders in the north-east, One-Eyed Ushers in the far south-west." }); g[15][28] = "#";
-      for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
+
+      /* ---------------------------------------------------------------- SIX RAILED GRAVEYARDS
+         (2026-09-24, the owner: "i want there to be graveyards that are bllocked off by fences, that run long
+         along the pathways and have a small entrance into them, then the mobs are in there. add art as needed,
+         add a mini ghost boss as well with custom art")
+
+         THE ROADS ARE SAFE AND THE YARDS ARE NOT, and that is the whole shape of the map now. It used to be one
+         field with monsters sprinkled over it, so a skiller walking to the dragonstone picked up whatever was
+         nearest whether they wanted a fight or not. Now the paths are clear, every monster is behind iron
+         railings, and each yard has ONE gap in its fence — so a fight is something you step into on purpose.
+
+         `yard()` draws the perimeter and returns the interior. Three rules it keeps, each of which was a bug the
+         first time the map was walked: the gate tile is left OPEN and only wears the gate PICTURE (an object
+         does not block unless the grid says so, and a blocked gate is a yard nobody can enter); every fence tile
+         and every gate goes in `keep`, because wild() paints the edges AFTER build returns and would otherwise
+         rub a railing out; and the fence runs a whole tile outside the interior, so a monster homed against the
+         inside of the wall can still be reached from within rather than only through the bars. */
+      const RAIL = { n: "railH", s: "railH", w: "railV", e: "railV" };
+      const yard = (x0, y0, x1, y1, side, at, name) => {
+        const put = (x, y, t) => {
+          if (x < 0 || y < 0 || x >= COLS || y >= ROWS) return;
+          keep.push([x, y]);
+          if ((side === "n" && y === y0 && x === at) || (side === "s" && y === y1 && x === at)
+            || (side === "w" && x === x0 && y === at) || (side === "e" && x === x1 && y === at)) {
+            objs.push({ t: "railgate", x, y, name: `${name}: the way in` });   // NOT blocked: this is the gap
+            return;
+          }
+          objs.push({ t, x, y, name: `${name}: iron railings` }); g[y][x] = "#";
+        };
+        for (let x = x0; x <= x1; x++) { put(x, y0, RAIL.n); put(x, y1, RAIL.s); }
+        for (let y = y0 + 1; y < y1; y++) { put(x0, y, RAIL.w); put(x1, y, RAIL.e); }
+        for (let y = y0 + 1; y < y1; y++) for (let x = x0 + 1; x < x1; x++) keep.push([x, y]);
+        return { x0: x0 + 1, y0: y0 + 1, x1: x1 - 1, y1: y1 - 1 };
+      };
+
+      /* the four northern yards sit either side of the road to Cloudreach, with a lane at y6 between the pairs;
+         the two southern ones open onto the shoulder under the main road. Every gate faces a path. */
+      const A = yard(2, 1, 19, 5, "s", 10, "The Flyloft");        // Stagehands
+      const B = yard(25, 1, 42, 5, "s", 33, "The Gods");          // Chandelier Spiders
+      const C = yard(2, 7, 19, 11, "n", 10, "The Green Room");    // Understudies
+      const D = yard(25, 7, 42, 11, "n", 33, "The Pit");          // Ghouls
+      const E = yard(1, 17, 12, 24, "n", 6, "The Cheap Seats");   // One-Eyed Ushers
+      const F = yard(16, 17, 29, 24, "n", 22, "The Royal Box");   // the Critic
+
+      /* ---------------------------------------------------------------- the paths
+         Drawn AFTER the yards so a road always wins a tile: the main east-west road, the north road to
+         Cloudreach, the lane between the northern pairs, and the shoulder the two southern gates open onto. */
+      for (let x = 0; x < COLS; x++) { g[13][x] = ","; keep.push([x, 12], [x, 13], [x, 14], [x, 6], [x, 15], [x, 16]); }
+      for (let x = 0; x < COLS; x++) if (g[6][x] !== "#") g[6][x] = ",";
+      for (let y = 15; y <= 16; y++) for (let x = 0; x < COLS; x++) if (g[y][x] !== "#") g[y][x] = ".";
+      for (let y = 17; y <= 24; y++) for (const x of [13, 14, 15, 30, 31, 32]) { if (g[y][x] !== "#") g[y][x] = "."; keep.push([x, y]); }
+      NORTH_ROAD(g, keep);
+
+      /* ---------------------------------------------------------------- what you came here to gather, OUTSIDE the railings
+         (v122 trees, 2026-09-22 ore: one rung per map.) They are all on open ground on purpose — the point of
+         fencing the monsters in is that a skiller can work this map without taking a swing. */
+      /* (2026-09-24) x15 AND NOT x13: tools/eastscape-aggro-check.mjs measures a monster’s reach as DISTANCE,
+         not as somewhere it can walk to, and three One-Eyed Ushers inside the Cheap Seats were within three tiles
+         of the dragonstone. The railings mean they could never actually get there — but they would lock onto a
+         miner and mill at the fence, which is a monster doing something pointless in full view. Two tiles further
+         into the lane and the yard cannot see the rocks at all. */
+      /* THE WORKING CORNER (2026-09-24). All four of these started spread across the map and every place they
+         went was inside an aggressive monster’s reach, which tools/eastscape-aggro-check.mjs measures as where
+         it can STAND (home, wandered) plus its aggro. The southern shoulder is the whole width of two yards, so
+         a rock anywhere along it is three tiles from an Usher or the Critic at the railings: they could never
+         get out, but they would lock onto a miner and mill at the fence. East of x32 nothing can see them, so
+         the ore, the yews and the flooded crypt are one corner you work in peace. */
+      for (const [x, y] of [[33, 15], [36, 16]]) { objs.push({ t: "rock", x, y, ore: "dragonstone_ore", name: "Dragonstone rock", req: { skill: "mining", lvl: 40 }, xp: 86 }); g[y][x] = "#"; }
+      for (const [tx, ty] of [[39, 15], [42, 17]]) { objs.push({ t: "yew", x: tx, y: ty, log: "yewlogs", name: "Ancient yew", req: { skill: "woodcutting", lvl: 35 }, xp: 170 }); g[ty][tx] = "#"; }
+      // the flooded crypt, fished from its north bank: bonefish from Fishing 30, ghost carp from 35
+      for (let y = 19; y <= 24; y++) for (let x = 33; x <= 42; x++) g[y][x] = "~";
+      scatterSpots(objs, 33, 42, 19, 5, [1, 2, 4], { name: "Flooded crypt", req: { skill: "fishing", lvl: 30 }, fish: "bonefish", fish2: "ghostcarp", fish2lvl: 35, xp: 110, xp2: 130, glow: "#d8c8ff", tease: "Pale shapes slide between the sunken headstones. Fishing 30." });
+      for (let x = 32; x <= 43; x++) keep.push([x, 17], [x, 18]);
+
+      /* ---------------------------------------------------------------- the graves, which is what makes them graveyards
+         Scattered by hashRand rather than listed, so every yard is full without six hand-written tables. The
+         lane in front of a gate is left clear (nothing within two tiles of it), and so is every monster's spot —
+         a headstone under a Stagehand is a monster you cannot walk up to. */
+      const mobAt = new Set();
+      const graves = (r, gateX, gateY) => {
+        /* how much of this yard you can walk, coming in through its gate */
+        const walk = () => {
+          const seen = new Set(), q = [[gateX, gateY]];
+          seen.add(`${gateX},${gateY}`);
+          while (q.length) {
+            const [x, y] = q.pop();
+            for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+              const nx = x + dx, ny = y + dy, k = `${nx},${ny}`;
+              if (nx < r.x0 || nx > r.x1 || ny < r.y0 || ny > r.y1 || seen.has(k) || g[ny][nx] !== ".") continue;
+              seen.add(k); q.push([nx, ny]);
+            }
+          }
+          return seen.size;
+        };
+        /* A GRAVE THAT WOULD WALL SOMETHING OFF IS NOT PLACED. These yards are three tiles deep in places, so a
+           headstone in the wrong square seals a corner - and the first run of this map left two Chandelier
+           Spiders and an Understudy standing in pockets nobody could reach. Each stone is laid down, the yard is
+           re-walked, and it is taken up again if the reachable count fell by more than the one tile it occupies.
+           Forty-odd tiles a yard and a dozen stones, so the cost is nothing and the result cannot be wrong. */
+        for (let y = r.y0; y <= r.y1; y++) for (let x = r.x0; x <= r.x1; x++) {
+          if (Math.abs(x - gateX) <= 1 && Math.abs(y - gateY) <= 2) continue;   // leave the way in clear
+          if (mobAt.has(`${x},${y}`) || g[y][x] !== ".") continue;
+          const h = hashRand(x, y, 33);
+          if (h > 0.30) continue;
+          const before = walk();
+          g[y][x] = "#";
+          if (walk() !== before - 1) { g[y][x] = "."; continue; }   // it cut something off: put it back
+          const t = h < 0.21 ? "gravestone" : h < 0.27 ? "bonepile" : "skeleton";
+          objs.push({ t, x, y, name: t === "gravestone" ? "Gravestone" : t === "bonepile" ? "Bones, stacked" : "Somebody who stayed" });
+        }
+      };
+
+      /* ---------------------------------------------------------------- THE ROYAL BOX
+         The mini boss's yard, and the only one with a building in it. The mausoleum is two tiles so it reads as
+         a place rather than a prop, and it sits off the gate's line so the Critic is what you meet first. */
+      objs.push({ t: "mausoleum", x: 25, y: 18, w: 2, h: 2, name: "A mausoleum. The name has worn off the lintel" });
+      block(g, 25, 18, 2, 2); keep.push([25, 18], [26, 18], [25, 19], [26, 19]);
+
+      for (const [x, y] of [[4, 4], [40, 4], [21, 25], [0, 20]]) { if (g[y]?.[x] === ".") { objs.push({ t: "deadtree", x, y, name: "Dead tree" }); g[y][x] = "#"; } }
+      objs.push({ t: "sign", x: 20, y: 12, name: "North, and up: Cloudreach. It opens at Combat 40, and Fishing 40. Bring a head for heights." }); g[12][20] = "#";
+      objs.push({ t: "sign", x: 24, y: 14, name: "THE BONEYARD: Combat 30 to 39. Nothing here comes through a fence. The Flyloft and the Green Room are west of the road, the Gods and the Pit east of it; the Cheap Seats and the Royal Box are south. Each yard has one gate. Something in the Royal Box does not wait to be asked." }); g[14][24] = "#";
+
+      // keep every mob's own square clear before the graves go in
+      for (const [, mx, my] of this.mobs) mobAt.add(`${mx},${my}`);
+      graves(A, 10, 5); graves(B, 33, 5); graves(C, 10, 7); graves(D, 33, 7); graves(E, 6, 17); graves(F, 22, 17);
+
       wild(g, objs, this.exits, { n: "scrub", s: "scrub", w: "scrub", e: "scrub" }, [...keepOf(this), ...keep], 33);
       return { g, objs, blobs: [] };
     },
-    mobs: [["ghoul", 36, 7], ["ghoul", 39, 9], ["ghoul", 31, 9], ["ghoul", 37, 3], ["ghoul", 41, 7], ["ghoul", 30, 6],
-      ["stagehand", 8, 8], ["stagehand", 13, 9], ["stagehand", 6, 6], ["stagehand", 14, 5], ["stagehand", 16, 17], ["stagehand", 18, 20],
-      ["understudy", 24, 17], ["understudy", 26, 20], ["understudy", 27, 16], ["understudy", 27, 8],
-      ["chandelier", 29, 2], ["chandelier", 31, 3], ["chandelier", 30, 4],
-      ["usher", 4, 21], ["usher", 6, 22], ["usher", 8, 21], ["usher", 5, 23]],
+    /* every monster is inside a yard, which is the point. The Critic is alone in his. */
+    mobs: [["stagehand", 5, 3], ["stagehand", 9, 2], ["stagehand", 14, 4], ["stagehand", 17, 3], ["stagehand", 12, 2],
+      ["chandelier", 28, 3], ["chandelier", 33, 2], ["chandelier", 38, 4], ["chandelier", 40, 2],
+      ["understudy", 6, 9], ["understudy", 11, 10], ["understudy", 16, 8], ["understudy", 13, 9],
+      ["ghoul", 28, 9], ["ghoul", 32, 8], ["ghoul", 36, 10], ["ghoul", 40, 9], ["ghoul", 30, 10], ["ghoul", 38, 8],
+      ["usher", 4, 19], ["usher", 8, 21], ["usher", 5, 22], ["usher", 9, 19], ["usher", 3, 23], ["usher", 10, 23],
+      ["critic", 22, 21]],
     npcs: [], bots: []
   },
   // east of the Forum: the great road, a toll post, highwaymen, and a barricade where the road washed out
@@ -2635,6 +2746,13 @@ export const MOBS = {
   counter: { name: "Card Counter", size: "m", lvl: 24, hp: 38, att: 18, def: 15, max: 4, speed: 2400, box: [8, 26], drops: [] },
   shark: { name: "Loan Shark", size: "m", lvl: 26, hp: 42, att: 19, def: 16, max: 5, speed: 2400, aggro: 3, box: [12, 28], drops: [] },
   stagehand: { name: "The Stagehand", size: "m", lvl: 32, hp: 50, att: 23, def: 20, max: 5, speed: 2400, box: [8, 28], drops: [] },
+  /* (2026-09-24, the owner: "add a mini ghost boss as well with custom art") THE CRITIC, alone in the Royal Box.
+     A MINI boss and not a dungeon one: no party, no ante, no run — he stands in a yard and you walk in. The
+     numbers say mini rather than big: 200 hit points against the Understudy’s 31, so about seven of the
+     hardest thing on this map, and level 42 so he sits just over the band’s ceiling of 39. He is the only
+     thing in the Boneyard that comes for you (`aggro`), which is why he is behind a gate you choose to open.
+     The declared hp is DOUBLE what he fights with: every mob in this table is halved at load. */
+  critic: { name: "The Critic", size: "xl", lvl: 42, hp: 400, att: 34, def: 30, max: 11, speed: 2500, aggro: 6, box: [16, 46], drops: [] },
   usher: { name: "One-Eyed Usher", size: "m", lvl: 36, hp: 56, att: 26, def: 23, max: 6, speed: 2400, aggro: 4, box: [8, 26], drops: [] },
   brainstorm: { name: "Brainstorm", size: "s", lvl: 40, hp: 60, att: 29, def: 25, max: 7, speed: 2200, box: [7, 16], drops: [] },
   seagoat: { name: "Sea-Goat of the Upper Air", size: "l", lvl: 46, hp: 78, att: 33, def: 29, max: 8, speed: 2800, box: [20, 36], drops: [] },
@@ -2734,6 +2852,9 @@ export const LOOT = {
   gator:      { item: ["hide", [1, 2]], rare: [["bogplate", 0.04], ["spiderboots", 0.02], ["angels_ring", 0.01]] },
   junkking:   { item: ["catalytic", [2, 4]], rare: [["kingcap", 0.08], ["wrench", 0.05], ["angels_ring", 0.04], ["slagstone", 0.5]] },
   understudy: { item: ["diamond_ore", [1, 2]], rare: [["bonegourd", 0.0125], ["sharps_gloves", 0.025]] },
+  /* HE PAYS IN THINGS. Bonegourds every time (the Boneyard’s alchemy crop, and the Coilbreaker wants one),
+     and the map’s whole rare table on one kill instead of spread over five monsters. */
+  critic: { item: ["bonegourd", [2, 4]], rare: [["monocle", 0.01], ["lantern", 0.01], ["angels_ring", 0.01], ["adjusters_visor", 0.01], ["spiderboots", 0.01]] },
   chandelier: { item: ["cobweb", 1], rare: [["bonegourd", 0.0125], ["lantern", 0.03], ["angels_ring", 0.02], ["spiderboots", 0.01]] },
   ram: { item: ["dragonstone_ore", 1], rare: [["stormcorn", 0.0125], ["grudge", 0.02], ["stake_loafers", 0.015]] },
   // v68: the bands' new residents. One thing each; the buff gear is spread so every band past the Yard can drop some
@@ -2783,7 +2904,7 @@ export const LOOT = {
    leave — run tools/eastscape-aggro-check.mjs after touching this, which is what proves an aggressive thing cannot
    camp a doorway. */
 export const AGGRO_ON = new Set([
-  "chandelier", "usher",                       // The Boneyard (30): yewlogs, dragonstone ore
+  "chandelier", "usher", "critic",             // The Boneyard (30): yewlogs, dragonstone ore — and The Critic, who is behind his own gate
   "revenant", "angel",                         // Cloudreach (40): onyx ore, skyeel
   "wolf", "drake", "house",                    // The Thunderhead (50): thundersquid
   "junkdog", "possum", "gator", "junkking",    // The Trailer Park (80): bogwood, slagstone, bowfin
@@ -4025,7 +4146,11 @@ export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
    a minute than the one before it, from the Yard's chickens to The House, and the first monster of an area beats the last of the
    one before. Nothing was lowered. Measured a minute: Yard 189 to 230, Gloam 239 to 423, Mire 460 to 771, Boneyard 1,028 to
    1,202, Cloudreach 1,349 to 1,578, the Thunderhead 1,641 to 1,920. */
-export const BOUNTY = { chicken: 18, cow: 32, rotten: 39, olive: 38, hornworm: 51, boar: 53, highwayman: 40, goat: 45, gnasher: 80, moth: 74, taxwraith: 150, ghoul: 177, chandelier: 205, understudy: 250, ram: 266, angel: 352, revenant: 324, goose: 419,
+/* (2026-09-24) THE CRITIC pays 600, the biggest in the game bar The House. He is a slow kill — about seven
+   Understudies of health — so per second he is WORSE than farming the yard next door, and that is deliberate:
+   the reason to open his gate is the rare table, not the tickets. Without an entry here killFinds returns early,
+   so he would drop no rares, hand out no casino finds, and not count toward a Lucky clover. */
+export const BOUNTY = { critic: 600, chicken: 18, cow: 32, rotten: 39, olive: 38, hornworm: 51, boar: 53, highwayman: 40, goat: 45, gnasher: 80, moth: 74, taxwraith: 150, ghoul: 177, chandelier: 205, understudy: 250, ram: 266, angel: 352, revenant: 324, goose: 419,
   toadstool: 37, boneidle: 79, twister: 73, counter: 91, shark: 143, stagehand: 196, usher: 223, brainstorm: 247, seagoat: 329,
   /* THE 50+ BAND pays MORE than the tool asks: its reference wage goes flat at level 40 (there was no skilling past onyx), so left alone a level-70
      kill would pay a level-42 minute. These are the tool's numbers times 1 + 1.2% a level past 42, so the last band is worth reaching. The goose moved with them. */

@@ -9,8 +9,30 @@ for (const key of G.OPEN) {
   const spots = []; for (const o of b.objs) { if (o.edge || o.soft) continue; if (["rock", "tree", "oak", "willow", "skyash", "spot", "wheat", "furnace", "anvil", "range", "fire", "sign"].includes(o.t)) for (let dx = -1; dx <= (o.w || 1); dx++) for (let dy = -1; dy <= 1; dy++) spots.push({ x: o.x + dx, y: o.y + dy, what: `${o.t} at ${o.x},${o.y}` }); }
   for (let x = 0; x < G.COLS; x++) spots.push({ x, y: 13, what: "the main path" });
   for (const n of d.npcs) spots.push({ x: n.x, y: n.y, what: n.name });
+  /* WHERE IT CAN ACTUALLY STAND (2026-09-24). The wander box used to be plain arithmetic — home ±3 by ±2 — which
+     is right on an open field and wrong the moment a map has walls in it. The Boneyard's rebuild put every
+     monster inside iron railings, and this reported four of them as menacing a dragonstone rock they cannot walk
+     within seven tiles of. Flooding the box over walkable ground instead is strictly more accurate: on a map with
+     nothing in the way it gives the same square, and where there IS something in the way it gives the truth.
+     Nothing else in the game's output moved when this went in. */
+  const g = b.g, WALK = ".,isbep";
+  const wander = (hx, hy) => {
+    const seen = new Set([`${hx},${hy}`]), q = [[hx, hy]];
+    while (q.length) {
+      const [x, y] = q.pop();
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy, k = `${nx},${ny}`;
+        if (Math.abs(nx - hx) > 3 || Math.abs(ny - hy) > 2) continue;
+        if (nx < 0 || ny < 0 || ny >= g.length || nx >= g[0].length || seen.has(k)) continue;
+        if (!WALK.includes(g[ny][nx])) continue;
+        seen.add(k); q.push([nx, ny]);
+      }
+    }
+    return [...seen].map((k) => k.split(",").map(Number));
+  };
   for (const [t, hx, hy] of d.mobs) { const a = G.MOBS[t].aggro || G.MOBS[t].aggroWas;   /* aggroWas: what it reached before attack-on-sight was switched off (AGGRO_ON), so the corners stay safe for the day it comes back */ if (!a) continue; const hit = new Set();
-    for (const s of spots) { const dx = Math.max(0, Math.abs(s.x - hx) - 3), dy = Math.max(0, Math.abs(s.y - hy) - 2); if (Math.max(dx, dy) <= a) hit.add(s.what); }
+    const stand = wander(hx, hy);
+    for (const s of spots) if (stand.some(([sx, sy]) => Math.max(Math.abs(s.x - sx), Math.abs(s.y - sy)) <= a)) hit.add(s.what);
     if (hit.size) { bad++; console.log(`REACH  ${key}: ${t} at ${hx},${hy} (aggro ${a}) can reach ${[...hit].join("; ")}`); } }
 }
 console.log(bad ? `${bad} aggressive monsters can reach something they shouldn't.` : "ok: no aggressive monster can reach a resource, a station, a sign, an NPC or the path."); process.exit(bad ? 1 : 0);
