@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 253;
+export const VERSION = 254;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1677,66 +1677,88 @@ Object.assign(SCENES, {
      and up, and everything in it hits hard enough that the Wilderness's rules would be unkind — so like the Thunderhead it
      is safe from other players and dangerous from everything else. Starfall ore is mineable here at 60, eclipse at 70. */
   vault: {
-    /* (2026-09-25, the owner: "revamp the vault. the floor needs to be a dark casino carpet with designs, but
-       different from the casino one ... this is also casino themed, but it needs to be unique from the casino")
-       It borrowed Cloudreach's ground and the casino's own carpet, which is why it read as a corridor of the
-       floor upstairs. Its own ground now (GROUNDS.vault, walking on t_vault) and its own runner (rug_vault):
-       near-black with dull antique gold art-deco, against the casino's bright multicoloured stars. */
-    name: "The Vault", ground: "vault", carpet: "rug_vault", exits: { e: "thunderhead" }, tint: "rgba(10,6,2,.62)",
+    /* (2026-09-25, the owner: "needs to be zero outside art. it needs to feel like we're inside, just like the
+       casino, redo the carpet and make it a RED casino carpet. needs clearly designed walkways through slots,
+       card tables. etc ... it needs to feel special because its a large game area")
+
+       IT WAS AN OUTDOOR SCENE PRETENDING TO BE A ROOM, and the count is the proof: built on grid() and finished
+       with wild(), the old Vault carried 121 trees, 59 bushes and 26 boulders. However dark the tint got, the
+       House's own basement was dressed with hedgerow. It is a true INTERIOR now, the way the casino is: room()
+       lays a walled box, there is no wild() call at all, and `floor: "casino"` puts it on the casino's painter.
+
+       ITS CARPET IS READ AS A WANG SHEET, which is the thing to know before anybody replaces it. `carpet` is
+       sampled in 32px patches by index (WANG, on the page), so it is NOT a picture of a rug - t_vault is a
+       UNIFORM red tile precisely so every patch lands right. The old scene named rug_casino here and got away
+       with it only because it was not an interior, so that code path never ran at all.
+
+       THE AISLES ARE LAID FIRST AND THE FURNITURE GOES AROUND THEM, which is the opposite of how this was built
+       before. Three run east-west and four north-south; every slot bank, table, column and ore seam goes through
+       put(), which REFUSES a tile an aisle claimed. That is what makes the walkways real rather than hoped for:
+       the room cannot grow a dead end because somebody added one more table. */
+    name: "The Vault", interior: true, floor: "casino", carpet: "t_vault", wallH: 34, room: [1, 3, 42, 22],
+    exits: { e: "thunderhead" }, labels: { e: "THE THUNDERHEAD" }, entry: { x: 39, y: 13 }, tint: "rgba(10,6,2,.42)",
+    wall: [{ t: "banner", x: 4 }, { t: "lamp", x: 9 }, { t: "lamp", x: 16 }, { t: "lamp", x: 24 }, { t: "lamp", x: 31 }, { t: "banner", x: 38 }],
     build() {
-      const g = grid(), objs = [], keep = [];
-      for (let x = 2; x < COLS - 1; x++) g[13][x] = ",";               // the long floor through the middle
-      for (let y = 10; y <= 16; y++) for (let x = 6; x <= 38; x++) if (g[y][x] === ".") g[y][x] = ",";
-      objs.push({ t: "sign", x: 40, y: 12, name: "THE VAULT: Combat 70 and up. Mining 60 for starfall, 70 for eclipse. Whatever the House was keeping, it is still down here." }); g[12][40] = "#";
-      /* THE HOUSE'S OWN ROOM. Carpet down the middle, neon along both walls, and a rank of slot machines nobody has
-         emptied — the page already draws a chasing bulb on a slot and a glow on neon, so these flash without new code. */
-      objs.push({ t: "rug", img: "rug_vault", x: 8, y: 11, w: 28, h: 5, color: "#2a0a14", name: "The vault carpet, still red under the dust." });
-      for (const x of [9, 15, 21, 27, 33]) { objs.push({ t: "wall_neon", x, y: 3, name: "Neon, still lit" }); objs.push({ t: "wall_neon", x, y: 23, name: "Neon, still lit" }); }
-      for (const [x, y] of [[12, 4], [14, 4], [16, 4], [26, 22], [28, 22], [30, 22]]) { objs.push({ t: "slots", x, y, name: "A machine nobody emptied" }); g[y][x] = "#"; }
-      for (const [x, y] of [[7, 10], [7, 16], [37, 10], [37, 16]]) { objs.push({ t: "ropepost", x, y, name: "Rope post" }); g[y][x] = "#"; }
+      const g = room(1, 3, 42, 22, 21), objs = [];
+      for (let y = SPAN.e[0]; y <= SPAN.e[1]; y++) g[y][COLS - 1] = "e";   // the way back out to the Thunderhead
+      const aisle = new Set();
+      const lane = (x0, y0, x1, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (g[y] && g[y][x] === "i") aisle.add(x + "," + y); };
+      lane(2, 12, 41, 14);                                      // the long floor through the middle
+      lane(2, 6, 41, 7); lane(2, 19, 41, 20);                   // north and south aisles
+      for (const x of [6, 15, 27, 36]) lane(x, 4, x + 1, 21);   // four cross-aisles, so no bank is a dead end
+      const free = (x, y) => g[y] && g[y][x] === "i" && !aisle.has(x + "," + y);
+      const put = (o) => { if (!free(o.x, o.y)) return false; objs.push(o); g[o.y][o.x] = "#"; return true; };
+      /* the House's own room, and nothing in it grew outdoors */
+      /* (2026-09-25, the owner: "THe Vault also needs to be bank vault themed, money bags everywhere, a giant
+         bank vault") THE GIANT DOOR IS THE ROOM'S ONE BIG THING. o_bigvault is 112x128 on a ONE-TILE footprint,
+         so it draws seven tiles wide and eight tall - the footprint is not the picture, which is the rule the
+         Carnival's banners taught. It sits against the west wall with the aisles running past it, and nothing is
+         placed beside it because put() has already claimed those tiles for the cross-aisle at x=6. */
+      put({ t: "vaultdoor", art: "o_bigvault", x: 3, y: 9, name: "The door of the vault itself, standing open. Whatever was behind it is gone." });
+      put({ t: "vaultdoor", art: "o_vaultdoor", x: 41, y: 9, name: "A smaller strongroom door, still shut." });
+      /* money bags everywhere: put() refuses anything an aisle or another prop already owns, so this list is
+         deliberately longer than the room has room for and the survivors land where there is space. */
+      for (const c of [[2, 4], [5, 4], [14, 4], [22, 4], [24, 4], [35, 4], [41, 4],
+                       [2, 5], [9, 5], [21, 5], [31, 5], [39, 5],
+                       [2, 17], [5, 17], [18, 17], [23, 17], [35, 17], [41, 17],
+                       [2, 21], [5, 21], [21, 21], [25, 21], [34, 21], [41, 21],
+                       [8, 11], [38, 16], [11, 10], [29, 17]])
+        put({ t: "moneybag", art: "o_moneybag", x: c[0], y: c[1], name: "A money bag, still tied" });
+      objs.push({ t: "sign", x: 40, y: 11, name: "THE VAULT: Combat 70 and up. Mining 60 for starfall, 70 for eclipse, 80 for nova. Whatever the House was keeping, it is still down here." }); g[11][40] = "#";
+      for (const y of [4, 21]) for (const x of [8, 9, 10, 11, 17, 18, 19, 20, 29, 30, 31, 32]) put({ t: "slots", x, y, name: "A machine nobody emptied" });
+      for (const c of [[9, 9], [12, 9], [9, 17], [12, 17]]) put({ t: "cointable", x: c[0], y: c[1], name: "A table still dealt out" });
+      for (const c of [[30, 9], [33, 9], [30, 17], [33, 17]]) put({ t: "dicetable", x: c[0], y: c[1], name: "A dice table, the cup still on it" });
+      for (const c of [[21, 9], [24, 9], [21, 17], [24, 17]]) put({ t: "bench", x: c[0], y: c[1], name: "A bench, pushed back" });
       objs.push({ t: "coinstatue", art: "o_coinstatue", x: 21, y: 4, name: "The House's own statue. It is not smiling." }); g[4][21] = "#";
-      objs.push({ t: "prizewheel", x: 4, y: 13, name: "A prize wheel, seized solid." }); g[13][4] = "#";
-      /* the ore. Starfall along the near wall, eclipse at the far end, voidglass where the windows went. */
-      for (const [x, y] of [[10, 7], [13, 6], [16, 8], [11, 19], [15, 20]]) { objs.push({ t: "vein", x, y, ore: "starfall_ore", name: "Starfall seam", req: { skill: "mining", lvl: 60 }, xp: 150 }); g[y][x] = "#"; }
-      for (const [x, y] of [[30, 6], [34, 7], [32, 20], [36, 19]]) { objs.push({ t: "vein", x, y, ore: "eclipse_ore", name: "Eclipse seam", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[y][x] = "#"; }
-      /* (2026-09-25) NOVA ORE, the 80s tier's own. It goes in the Vault because the Vault is already the Combat
-         70-92 map and already the place you come for starfall and eclipse, so the ladder stays in one room
-         instead of sending a level 80 somewhere new for one rock. A Mining 80 node takes an ECLIPSE pickaxe (see
-         TOOL_GATE_OVER) so the tier can be entered by anyone standing here already. */
-      for (const [x, y] of [[12, 12], [16, 14], [33, 12]]) { objs.push({ t: "vein", x, y, ore: "nova_ore", name: "Nova seam", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[y][x] = "#"; }
-      for (const [x, y] of [[24, 4], [27, 22]]) { objs.push({ t: "rock", x, y, ore: "voidglass", name: "Shattered window", req: { skill: "mining", lvl: 70 }, xp: 190 }); g[y][x] = "#"; }
-      /* (v121) woodcutting's last two: whatever grew down here in the dark. */
-      /* `art` must be spelled out: a yew draws as o_yew off its TYPE, so without this the Vaultwood was a
-         perfectly ordinary tree in a room with no sun in it. Same rule the Yard's Old oak needed. */
-      for (const [x, y] of [[20, 8], [22, 18]]) { objs.push({ t: "yew", art: "o_vaultwood", x, y, log: "voidlogs", name: "Vaultwood", req: { skill: "woodcutting", lvl: 60 }, xp: 200 }); g[y][x] = "#"; }
-      /* (2026-09-25) A FLOODED FLOOR, so the Vault finally has all three gathering skills in it rather than two.
-         `look: 6` picks o_spot6, the inky pool with coins in it - the spot arts are numbered, not named. */
-      for (const [x, y] of [[25, 16], [27, 17]]) { objs.push({ t: "spot", x, y, look: 6, fish: "cloudray", fish2: "skyeel", fish2lvl: 70, name: "Flooded floor", req: { skill: "fishing", lvl: 60 }, xp: 200 }); g[y][x] = "~"; }
-      for (let x = 2; x <= 42; x++) keep.push([x, 12], [x, 13], [x, 14]);
-      wild(g, objs, this.exits, { n: "wall", s: "wall", w: "wall", e: "cloud" }, [...keepOf(this), ...keep], 10);
+      for (const x of [13, 22, 29]) { put({ t: "column", x, y: 10 }); put({ t: "column", x, y: 16 }); }
+      for (const c of [[5, 11], [5, 15], [38, 11], [38, 15]]) put({ t: "ropepost", x: c[0], y: c[1], name: "Rope post" });
+      for (const c of [[3, 5], [3, 20], [40, 5], [40, 20], [23, 21]]) put({ t: "bullion", art: "o_bullion", x: c[0], y: c[1], name: "Bullion nobody came back for" });
+      for (const c of [[7, 17], [34, 5]]) put({ t: "chest", x: c[0], y: c[1], name: "An emptied deposit box" });
+      /* what you came down here for: seams in the walls, the tree through the cracked floor, and the flood */
+      for (const c of [[4, 4], [4, 21], [8, 15], [12, 5], [13, 21]]) put({ t: "vein", x: c[0], y: c[1], ore: "starfall_ore", name: "Starfall seam", req: { skill: "mining", lvl: 60 }, xp: 150 });
+      for (const c of [[33, 4], [39, 4], [33, 21], [39, 21]]) put({ t: "vein", x: c[0], y: c[1], ore: "eclipse_ore", name: "Eclipse seam", req: { skill: "mining", lvl: 70 }, xp: 210 });
+      for (const c of [[19, 5], [25, 5], [22, 21]]) put({ t: "vein", x: c[0], y: c[1], ore: "nova_ore", name: "Nova seam", req: { skill: "mining", lvl: 80 }, xp: 240 });
+      for (const c of [[26, 4], [26, 21]]) put({ t: "rock", x: c[0], y: c[1], ore: "voidglass", name: "Shattered window", req: { skill: "mining", lvl: 70 }, xp: 190 });
+      /* `art` spelled out: a yew draws as o_yew off its TYPE, so without it the Vaultwood was an ordinary tree in
+         a room with no sun in it. Same rule the Yard's Old oak needed. */
+      for (const c of [[14, 17], [26, 5]]) put({ t: "yew", art: "o_vaultwood", x: c[0], y: c[1], log: "voidlogs", name: "Vaultwood, up through the floor", req: { skill: "woodcutting", lvl: 60 }, xp: 200 });
+      for (const c of [[10, 15], [11, 16]]) { if (!free(c[0], c[1])) continue; objs.push({ t: "spot", x: c[0], y: c[1], look: 6, fish: "cloudray", fish2: "skyeel", fish2lvl: 70, name: "Flooded floor", req: { skill: "fishing", lvl: 60 }, xp: 200 }); g[c[1]][c[0]] = "~"; }
       return { g, objs, blobs: [] };
     },
-    /* (2026-09-25, the owner: "near the ores/trees/fishing spots, there needs to be a few aggressive mobs that
-       respawn every 2-3 minutes") GUARDED NODES, which is a DELIBERATE REVERSAL of the rule the aggro checker has
-       enforced since the Boneyard: nothing aggressive may reach a rock, a tree or a fishing spot, because you
-       cannot gather while being mauled. That rule is right for every other map and wrong for this one - the whole
-       point of the Vault is that the House's own stock is still down here and something is standing over it.
-
-       So six placements carry `aggro` AND their own `respawn`, and the Vault is listed as CONTESTED in
-       tools/eastscape-aggro-check.mjs, by name, with this reason. The respawn is per-PLACEMENT: the same four
-       types stand around the room harmlessly on the ordinary timer, and only these six come back on the owner's
-       two-to-three minutes. A range rather than a number so a guard cannot be counted down to the second. */
-    mobs: [["warden", 9, 10], ["warden", 12, 16], ["warden", 17, 11], ["warden", 8, 17], ["warden", 14, 9],
-      ["pitboss", 20, 11], ["pitboss", 23, 15], ["pitboss", 19, 16], ["pitboss", 25, 10],
-      ["hoard", 29, 11], ["hoard", 33, 15], ["hoard", 31, 17], ["hoard", 35, 10],
-      ["dealer", 38, 13], ["dealer", 40, 16],
-      /* the guards: starfall north and south, eclipse north and south, the nova seams, and the wood and water */
-      ["warden", 12, 8, { aggro: 3, respawn: [120000, 180000] }],
-      ["warden", 13, 18, { aggro: 3, respawn: [120000, 180000] }],
-      ["hoard", 32, 8, { aggro: 3, respawn: [120000, 180000] }],
-      ["hoard", 34, 18, { aggro: 3, respawn: [120000, 180000] }],
-      ["pitboss", 18, 12, { aggro: 3, respawn: [120000, 180000] }],
-      ["dealer", 24, 17, { aggro: 3, respawn: [120000, 180000] }]],
+    /* (2026-09-25) EVERYONE STANDS ON AN AISLE, because the furniture pass owns every other tile - put() refuses
+       an aisle, so an aisle is exactly where a monster is guaranteed room. The six with `aggro` are the node
+       guards the owner asked for, each on the cross-aisle beside the seams it watches, with its own two-to-three
+       minute respawn; the rest of the room is on the ordinary timer and waits to be hit first. */
+    mobs: [["warden", 3, 13], ["warden", 8, 13], ["warden", 13, 13], ["warden", 18, 6], ["warden", 10, 20],
+      ["pitboss", 22, 13], ["pitboss", 26, 13], ["pitboss", 19, 20], ["pitboss", 23, 6],
+      ["hoard", 30, 13], ["hoard", 34, 13], ["hoard", 31, 20], ["hoard", 35, 6],
+      ["dealer", 39, 13], ["dealer", 40, 20],
+      ["warden", 6, 5, { aggro: 3, respawn: [120000, 180000] }],
+      ["warden", 6, 20, { aggro: 3, respawn: [120000, 180000] }],
+      ["hoard", 36, 5, { aggro: 3, respawn: [120000, 180000] }],
+      ["hoard", 36, 20, { aggro: 3, respawn: [120000, 180000] }],
+      ["pitboss", 27, 6, { aggro: 3, respawn: [120000, 180000] }],
+      ["dealer", 15, 17, { aggro: 3, respawn: [120000, 180000] }]],
     npcs: [], bots: []
   },
   /* ============================================================ THE CARNIVAL (2026-09-24)

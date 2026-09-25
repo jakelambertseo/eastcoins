@@ -2683,6 +2683,13 @@ export class World {
       combat: G.combatOf(C), total: G.totalOf(C), skills,
       kills: Object.values(st.kills || {}).reduce((n, v) => n + v, 0), quests: G.questsDone(C), crypt: st.crypt | 0, deaths: st.deaths | 0,
       earned: Math.round(Number(C.earned) || 0), mins: Math.round((st.playMs || 0) / 60000), since: st.firstSeen || Number(C.created) || 0,
+      /* (2026-09-25, the owner: "add a stat for 'Current Tickets' to users profile popups") THIS IS A BALANCE,
+         and the note below says this message deliberately carried none - a profile could be read but not cased.
+         The owner asked for it anyway, so it is here and the reason it was avoided is written down rather than
+         deleted: dying drops a SHARE of what you are carrying (G.DEATH), the Wilderness is PvP, and a public
+         ticket count tells anyone hunting there exactly who is worth killing. If that turns out to bite, this
+         one line is the whole of it. */
+      tix: G.cashIn(C),
       /* (2026-09-23, the owner) THREE MORE TABS' WORTH. All of it is already public in some form — a paper doll
          shows what you can see them wearing anyway, and the totals are their own counters. Nothing here exposes a
          balance, a bag or anything they could be robbed over. `top` trims the long maps to what a panel can show,

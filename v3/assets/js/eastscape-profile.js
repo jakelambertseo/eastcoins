@@ -136,6 +136,7 @@ export function createProfile(env) {
     const item = (k) => (env.ico ? env.ico(k) : "");
     const out = [];
     out.push(`<div class="pr-h">All together</div>` + rows([
+      ...(p.tix == null ? [] : [[item("tickets"), "Current tickets", num(p.tix)]]),
       ["", "Experience earned", num(t.xp)],
       ["", "Monsters killed", num(p.kills)],
       ["", "Taken off monsters", num(t.looted)],
