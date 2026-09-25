@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 226;
+export const VERSION = 227;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -3879,7 +3879,13 @@ export const burnChance = (r, lvl, range) => lvl >= r.burnStop ? 0 : Math.max(0.
 export const EAT_MS = 1200;
 // repeating skills stop after this long with no input from the player: the resources never run dry, but you have to be there
 export const AFK_MS = 3 * 60 * 1000;
-export const AFK_KINDS = { rock: "mining", vein: "mining", spot: "fishing", tree: "chopping", olive: "picking", wheat: "picking", cook: "cooking", smelt: "smelting", smith: "smithing" };
+/* (2026-09-24, the owner: "can you make sure users arent afking vs aggressive mobs? ... can we have an afk rule
+   of 3 minutes like skilling?") FIGHTING IS ON THE LIST NOW, and it is the half of the fix you can see. The
+   other half is in the worker: a mob that hits a player with no action HANDS THEM ONE — auto-retaliate — so the
+   loop needed no input at all. A mob walks up, hits you, you are given the fight, you win it, the act clears
+   when it dies, the next one walks up. Stopping the act after three minutes without also refusing that free
+   retaliate would have changed nothing: the very next swing would have started it again. */
+export const AFK_KINDS = { rock: "mining", vein: "mining", spot: "fishing", tree: "chopping", olive: "picking", wheat: "picking", cook: "cooking", smelt: "smelting", smith: "smithing", mob: "fighting" };
 
 // the Forge: Brutus sells tools and the Bronze set, and buys what you gather (for less than you'll get on the Exchange, usually)
 /* THE PRIZE COUNTER (2026-09-20, the owner: "an arcade style feedback loop... a central place where you can trade in

@@ -2531,7 +2531,15 @@ export class World {
           foe.combatAt = now;
           if (!S.def.pvp && !S.def.shared && this.mayFight(S, m, foe, now)) m.claim = { id: foe.id, until: now + CLAIM_MS };
           S.events.push({ type: "splat", who: `p:${foe.id}`, n: dmg, kind: dmg ? "hit" : "miss", t: now });
-          if (!foe.act && !foe.path.length && !foe.lingerUntil) foe.act = { kind: "mob", id: m.id, x: m.x, y: m.y, name: def.name, started: 0 };
+          /* AUTO-RETALIATE, AND NOT FOR SOMEBODY WHO IS NOT THERE (2026-09-24, the owner: "can you make sure
+             users arent afking vs aggressive mobs? if theyre high enough i think they can just stand there and
+             allow mobs to come to them and kill them without worrying about dying"). He was right and this line
+             is why: a mob that hits a player with no action gives them one, so a high-level player standing in
+             an aggressive area farmed kills forever with ZERO input — walk up, hit, get handed the fight, win
+             it, the act clears on the kill, the next one walks up. The three-minute cutoff in doAction stops a
+             fight already running; this stops a new one being started for somebody who has not touched the game
+             since. Together they mean an idle player simply gets hit, which is the point of a dangerous place. */
+          if (!foe.act && !foe.path.length && !foe.lingerUntil && now - foe.lastInput <= G.AFK_MS) foe.act = { kind: "mob", id: m.id, x: m.x, y: m.y, name: def.name, started: 0 };
           if (C.hp <= 0) this.die(foe, S, { mob: def.name });
         }
         continue;

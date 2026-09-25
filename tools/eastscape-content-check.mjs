@@ -379,5 +379,22 @@ scene objects
   if (raid.length) console.log("  ok  the hand-typed wiki page names them and says they do not drop from kills");
 }
 
+/* ---------------------------------------------------------------- YOU CANNOT FARM KILLS WHILE AFK
+   (2026-09-24, the owner: "can you make sure users arent afking vs aggressive mobs? ... can we have an afk rule
+   of 3 minutes like skilling?") It takes BOTH halves, and either one alone does nothing. Stopping the fight
+   after three minutes is useless while a mob that hits an actionless player hands them a fresh one — the very
+   next swing restarts the loop. Refusing the free retaliate is useless on its own too, because a fight already
+   running never stops. Both, or it is not closed. */
+{
+  head("afk");
+  const worker = readFileSync(join(ROOT, "eastscape-worker/src/index.js"), "utf8");
+  if (!G.AFK_KINDS.mob) bad("fighting is not in AFK_KINDS", "a fight already running never times out");
+  else console.log(`  ok  a fight stops after ${Math.round(G.AFK_MS / 60000)} idle minutes, like every skill`);
+  if (!/foe\.act = \{ kind: "mob"/.test(worker)) console.log("   warn  the auto-retaliate line has moved; check the AFK guard moved with it");
+  else if (!/!foe\.lingerUntil && now - foe\.lastInput <= G\.AFK_MS/.test(worker))
+    bad("a mob still hands an idle player a free retaliate", "so the three-minute cutoff restarts on the next swing");
+  else console.log("  ok  and no new fight is handed to somebody who has not touched the game since");
+}
+
 console.log(`\n${errors} error${errors === 1 ? "" : "s"}, ${warns} warning${warns === 1 ? "" : "s"}\n`);
 process.exit(errors ? 1 : 0);
