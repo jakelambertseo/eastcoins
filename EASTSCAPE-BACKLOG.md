@@ -1840,3 +1840,28 @@ Still open:
 - **`?v=248` and `?v=249` on eastscape-shared.js are spent.** 248 is
   BURNT — a bare probe cached VERSION=234 under it as immutable. Probe
   only as `?v=N&probe=random`, never the bare real URL.
+
+## 2026-09-25, the re-click fix and the Tower to 99
+
+Done: the re-click exploit (three holes), Tower at 99 floors / level 99 /
+checkpoints every 5, +33% difficulty outside the Yard, fishing -33%.
+
+Still open:
+- **The 73-80 map** — you said you'd do another after the Carnival. Note the
+  Tower now covers 30-99 on its own, so the gap is about open-world maps.
+- **Income fell and was not compensated.** The +33% pass made kills ~30%
+  longer, so fighting pays 18-23% less and fishing 33% less. Multiplying
+  BOUNTY by 1.33 restores it exactly if that was not intended.
+- **The AFK margin in the Tower is 27 seconds.** The longest stretch with no
+  reason to click is 153s against a 180s cutoff. Tripping it only stops the
+  fight ("Click to carry on"), but if a floor is ever made less damaging,
+  re-run tools/eastscape-tower-check.mjs.
+- **The Tower pays a fifth of the open world and no items.** At 9.4 hours a
+  full climb that is a lot of hours for xp alone. Worth deciding whether the
+  top floors should drop something.
+- **No Tower achievements** — nothing for reaching the top or any floor.
+- **The turnstile charges once.** Leaving the Carnival cage is free, so a
+  Carnival ticket is a one-time cover charge, not per visit.
+- **The Pyramid and the Carnival have no wiki pages.**
+- **`?v=248` on eastscape-shared.js is BURNT** (a bare probe cached
+  VERSION=234 under it as immutable). Probe only as `?v=N&probe=random`.
