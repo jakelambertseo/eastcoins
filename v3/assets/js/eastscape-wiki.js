@@ -74,7 +74,7 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
       <h4>What lives there</h4>
       <p><b>Sand Cobras</b> (41) in the dunes and <b>Gilt Scarabs</b> (45) round the pits &mdash; the cobra drops the <b>fang</b> and the scarab the <b>shell</b>, both of which go in the best potions. <b>Bandaged Debtors</b> (43) shuffle about the precinct and <b>Tomb Jackals</b> (47) hold the pyramid. Everything waits to be hit first except <b>one jackal by the pyramid door</b>, which comes at you on sight.</p>
       <h4>The Great Pyramid</h4>
-      <p>It stands on the eastern skyline and <b>the tomb door is sealed</b>. The party fight behind it is still being built &mdash; when it opens it will work like <a data-wiki="crypt">the Crypt</a>: a private copy of the tomb for your group, an ante each, and something very old at the bottom of it.</p>`},{id:"tools",title:"Tools: the seven rungs",icon:"⛏️",cat:"Skills",body:`<p>A <b>pickaxe</b>, an <b>axe</b> and a <b>fishing rod</b> come in seven grades, the same seven as the armour: bronze, emerald, diamond, dragonstone, onyx, starfall, eclipse.</p>
+      <p>It stands on the eastern skyline and <b>the tomb door is sealed</b>. The party fight behind it is still being built &mdash; when it opens it will work like <a data-wiki="crypt">the Crypt</a>: a private copy of the tomb for your group, an ante each, and something very old at the bottom of it.</p>`},{id:"tools",title:"Tools: the seven rungs",icon:"⛏️",cat:"Skills",body:`<p>A <b>pickaxe</b>, an <b>axe</b> and a <b>fishing rod</b> come in nine grades, the same nine as the armour: bronze, emerald, diamond, dragonstone, onyx, starfall, eclipse, nova, singularity.</p>
       <p><b>The rock decides.</b> Whatever you are mining, cutting or fishing asks for a tool of its own grade or better &mdash; emerald ore wants an emerald pickaxe, and a bronze one will not touch it. The grade a thing wants is always the grade named on the thing itself, so if you can work it at all, the right tool is one you can hold.</p>
       <table class="tbl"><tr><th>Tool</th><th>Works up to</th><th>Speed</th></tr>
         <tr><td><b>Bronze</b></td><td>level 19</td><td>&mdash;</td></tr>
@@ -151,7 +151,7 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
         <tr><td>Longsword</td><td>2.4s</td><td>the middle of the three</td></tr>
         <tr><td>Maul</td><td>3.0s</td><td>slow and heavy, big hits</td></tr>
       </table>
-      <h3>The seven grades</h3>
+      <h3>The nine grades</h3>
       <p>Weapons and armour gate on <b>Combat</b>, rings and amulets on <b>Hitpoints</b>. Bronze is the only tier Brutus sells; everything above it is <a data-wiki="guides/smoking">smithed</a> or dropped.</p>
       <table class="tbl"><tr><th>Grade</th><th>Needs</th><th>Full set defence</th><th>Weapon</th></tr>
         <tr><td>Bronze</td><td>10</td><td>20</td><td>+8 acc, +6 str</td></tr>
@@ -161,7 +161,11 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
         <tr><td>Onyx</td><td>50</td><td>76</td><td>+24 acc, +22 str</td></tr>
         <tr><td>Starfall</td><td>60</td><td>90</td><td>+28 acc, +26 str</td></tr>
         <tr><td>Eclipse</td><td>70</td><td>104</td><td>+32 acc, +30 str</td></tr>
+        <tr><td>Nova</td><td>80</td><td>118</td><td>+36 acc, +34 str</td></tr>
+        <tr><td>Singularity</td><td>90</td><td>132</td><td>+40 acc, +38 str</td></tr>
       </table>
+      <p><b>The top two name their weapons differently.</b> Nova and Singularity do not carry a gladius, a longsword and a maul: they are the <b>flare knife, halberd and starbreaker</b>, and the <b>event blade, voidglaive and collapser</b>. The three roles are unchanged &mdash; quick, balanced, slow and heavy &mdash; only the names.</p>
+      <p><b>And their weapons are a chase.</b> Every Nova or Singularity weapon wants a <b>core</b> as well as bars. A core drops from the hardest things in the game &mdash; the Junk King, the Yard Gator, the Last Dealer, the Hoodie and the Squeeze &mdash; at about one kill in two thousand, or it can be built at an anvil out of a heap of what those places drop. The armour and the tools need no core.</p>
       <p><b>Reforging is the other way up.</b> Bars spent at the anvil push a piece you already own three levels further, which is worth about a tier &mdash; a way to keep going when the next grade is out of reach, not a way past it. It can also destroy the piece. See the anvil.</p>
       <p><b>Eat before you need to.</b> Cooked fish is the whole healing system; there is no potion. See <a data-wiki="guides/cooking">Cooking</a>.</p>`},{id:"fishing",title:"Fishing",icon:"🎣",cat:"Skills",body:`<p><b>Click a fishing spot with a rod in your hand</b> &mdash; in the weapon slot, not the bag. You keep pulling fish out until you walk away or the three-minute idle cutoff stops you, which makes it the most comfortable thing in the game to do while you are half watching something else.</p>
       <p><b>Every spot holds two fish.</b> The second is better, needs a higher level, and turns up about a third of the time once you can catch it. Until then you get the first one only.</p>
@@ -215,8 +219,10 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
         <tr><td>Onyx</td><td>50</td><td>2 onyx ore + 1 <b>grimstone</b> + <b>3</b> charcoal</td><td>75</td></tr>
         <tr><td>Starfall</td><td>60</td><td>2 starfall ore + 1 <b>onyx bar</b> + <b>3</b> charcoal</td><td>90</td></tr>
         <tr><td>Eclipse</td><td>70</td><td>2 eclipse ore + 1 <b>voidglass</b> + <b>4</b> charcoal</td><td>105</td></tr>
+        <tr><td>Nova</td><td>80</td><td>2 nova ore + 1 <b>eclipse bar</b> + <b>5</b> charcoal</td><td>120</td></tr>
+        <tr><td>Singularity</td><td>90</td><td>2 singularity ore + 1 <b>nova bar</b> + <b>6</b> charcoal</td><td>135</td></tr>
       </table>
-      <p><b>The top three want more than ore.</b> Onyx needs grimstone, starfall needs a finished onyx bar, and eclipse needs voidglass &mdash; so the last stretch is a chain, not a grind, and the charcoal bill climbs with it.</p>
+      <p><b>The top of the ladder wants more than ore.</b> Onyx needs grimstone, eclipse needs voidglass, and starfall, nova and singularity each want a finished bar of the tier below &mdash; so a Singularity bar is a Nova bar is an Eclipse bar, all the way down &mdash; so the last stretch is a chain, not a grind, and the charcoal bill climbs with it.</p>
       <p><b>You do not choose what to make.</b> The furnace and the anvil always make the best thing you can, out of what is in your bag, which is why a furnace with logs AND ore in front of it burns, smelts, burns and smelts by itself.</p>
       <h3>What a piece costs</h3>
       <table class="tbl"><tr><th>Piece</th><th>Bars</th><th>xp at bronze</th></tr>
@@ -245,6 +251,8 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
         <tr><td>Eclipse</td><td>70</td><td>Eclipse</td><td>The Vault</td><td>90</td><td>Eclipse bar</td></tr>
         <tr><td>Grimstone</td><td>1</td><td>Bronze</td><td>The Wilderness</td><td>45</td><td>needed for onyx bars</td></tr>
         <tr><td>Voidglass</td><td>70</td><td>Eclipse</td><td>The Vault</td><td>35</td><td>needed for eclipse bars</td></tr>
+        <tr><td>Nova ore</td><td>80</td><td>Nova</td><td>The Vault</td><td>65</td><td>an eclipse pickaxe mines it</td></tr>
+        <tr><td>Singularity ore</td><td>90</td><td>Singularity</td><td>The Trailer Park</td><td>93</td><td>wants a nova pickaxe</td></tr>
         <tr><td>Catalytic converter</td><td>65</td><td>Starfall</td><td>The Trailer Park</td><td>70</td><td>&mdash;</td></tr>
         <tr><td>Slagstone</td><td>85</td><td>Eclipse</td><td>The Trailer Park</td><td>55</td><td>&mdash;</td></tr>
       </table>
