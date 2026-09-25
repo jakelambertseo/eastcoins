@@ -40,19 +40,29 @@ export function createTowerRules(G, H) {
                             // that the Yard and the Gloam have been seen, short enough not to be a launch wall.
                             // It also keeps ten levels between this and the Crypt at 40, so the solo AFK thing and
                             // the party loot thing are never the same evening's choice.
-    floors: 30,             // a config number, not content: one room is rebuilt, so 60 or 100 costs nothing later
-    topLevel: 60,           // floor 1 is tuned for `entry`, the top floor for this. Clearing it lands you in Starfall.
-    fightMs: 45000,         // how long one floor's monster should take. 30s feels active, 90s feels like a screensaver.
+    floors: 99,             // a config number, not content: one room is rebuilt, so 99 costs no more than 30 did
+                            // (2026-09-25, the owner: "i want to add flooors up until 99" - his testers at 50-70
+                            // had run out of tower. The whole climb is about 9 hours of fighting.)
+    topLevel: 99,           // floor 1 is tuned for `entry`, the top floor for this. Floor 99 expects a 99 in eclipse.
+    fightMs: 270000,        // how long one floor's monster should take (2026-09-25, the owner: "their level fights
+                            // take 4-5 minutes and they need to bring plenty of fish along the way"). This is what
+                            // makes the tower semi-AFK, and the 3-minute AFK cutoff is the thing that POLICES it
+                            // rather than the thing in its way: lastInput resets on any message and eating is a
+                            // message, so a climber who keeps eating keeps climbing and one who truly walks away
+                            // is stopped. No floor leaves a gap long enough to trip it unfairly - tools check it.
     targetHit: 0.85,        // the xp throttle. Lower it to slow the tower; do not reach for health.
-    creep: 0.01,            // and 1% longer each floor up. Without it a whole tier of floors is identical to the
+    creep: 0.003,           // and 0.3% longer each floor up. Without it a whole tier of floors is identical to the
                             // second - maxHit only moves every six levels and gear only every ten - so floors 1 to 9
                             // came out at the same 113 health and the climb had no shape. At the top this is a 58s
                             // fight rather than 45s. It is the ONE place health is used for feel rather than pacing,
                             // and it is safe precisely because health does not touch xp an hour.
 
-    checkEvery: 10,         // a checkpoint every tenth floor, so a climb survives going to bed
+    checkEvery: 5,          // a checkpoint every FIFTH floor (2026-09-25). At 45-second fights every tenth was a
+                            // slap; at four to five minutes it was an evening - a death on floor 90 cost about
+                            // three and a half hours of re-climbing. Halved when the fights got six times longer.
     bossEvery: 10,          // and a boss on the same floors
-    bossHp: 3,              // a boss is three fights in one
+    bossHp: 2,              // a boss is two fights in one (was 3: at 45s that made a 2-minute boss, at 4.5 minutes
+                            // it made a 25-MINUTE one, ten times over. Two keeps the worst at about eleven.)
     bossEnrage: 0.5,        // and hits harder under half health (the `enrage` hook, wired 2026-09-22)
 
     door: { scene: "workyard", x: 39, y: 12 },   // where you stand when you come back out: the Yard's north court
@@ -61,10 +71,21 @@ export function createTowerRules(G, H) {
        a monster that already exists somewhere in the game, reused at tower health — "buffed versions of our
        current mobs", which is also why the tower needed no new monster art. The bosses are existing bosses.
        The House at the top is not a joke about the theme, it IS the theme: it is the casino's own building. */
-    bands: [[1, "ghoul"], [3, "stagehand"], [5, "chandelier"], [7, "usher"],
-      [11, "brainstorm"], [13, "ram"], [15, "revenant"], [17, "seagoat"], [19, "angel"],
-      [21, "goose"], [23, "wolf"], [25, "drake"], [27, "warden"]],
-    bosses: { 10: "understudy", 20: "golem", 30: "house" },
+    /* (2026-09-25) RESPACED FOR 99 FLOORS. These used to cover thirty floors carrying levels 30-60; the same
+       thirteen entries spread over ninety-nine would have left a floor's monster twenty levels below the fight it
+       was in. Each band now starts near the floor whose levelOn() matches that monster's own level, so what you
+       are looking at stays roughly what you are fighting. The Carnival's freaks fill 62-71, which is exactly the
+       hole its map was built for. */
+    bands: [[1, "ghoul"], [4, "stagehand"], [7, "chandelier"], [11, "usher"],
+      [15, "brainstorm"], [18, "ram"], [21, "mummy"], [24, "revenant"], [26, "seagoat"], [28, "angel"],
+      [32, "scarab"], [37, "goose"], [41, "wolf"], [46, "drake"], [48, "pinhead"], [51, "tripled"],
+      [55, "fatlady"], [59, "strongman"], [63, "warden"], [72, "junkdog"], [78, "possum"], [89, "gator"]],
+    /* Ten bosses now, every tenth floor and the top. THE HOUSE STAYS AT THE TOP: it is not a joke about the
+       theme, it IS the theme, so it moved from floor 30 to floor 99 rather than being left mid-climb. A boss
+       lends only its name, art, size, box and speed - every stat is derived from the floor - so picking these is
+       a question of what you want to be looking at, not of what level the monster is outside. */
+    bosses: { 10: "understudy", 20: "critic", 30: "golem", 40: "grinner", 50: "pitboss",
+      60: "hoard", 70: "scrapper", 80: "dealer", 90: "junkking", 99: "house" },
 
     /* WHAT A FLOOR PAYS: a fifth of what the same monster pays outside, and NOTHING else (owner, 2026-09-22).
        Taken as a SHARE of the base monster's own ticket drop rather than as a flat number, so it scales with the
@@ -91,7 +112,10 @@ export function createTowerRules(G, H) {
   }
   /** The level a floor is tuned for: floor 1 at TOWER.entry, the last floor at TOWER.topLevel. */
   const levelOn = (floor) => Math.round(TOWER.entry + ((Math.max(1, Math.min(TOWER.floors, floor)) - 1) / Math.max(1, TOWER.floors - 1)) * (TOWER.topLevel - TOWER.entry));
-  const isBoss = (floor) => floor % TOWER.bossEvery === 0;
+  /* (2026-09-25) THE TOP IS ALWAYS A BOSS. With thirty floors that came free, because 30 is a multiple of
+     bossEvery; with ninety-nine it does not, and the last fight in the building would have been an ordinary
+     one. Said out loud here so the next change to `floors` cannot quietly undo it. */
+  const isBoss = (floor) => floor % TOWER.bossEvery === 0 || floor === TOWER.floors;
   const baseOn = (floor) => TOWER.bosses[floor] || TOWER.bands.reduce((b, [f, k]) => (floor >= f ? k : b), TOWER.bands[0][1]);
   const checkpointAt = (floor) => Math.max(1, Math.floor((floor - 1) / TOWER.checkEvery) * TOWER.checkEvery + 1);
 

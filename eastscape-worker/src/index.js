@@ -878,6 +878,13 @@ export class World {
     const p = held ? [] : G.findPath(S.g, f, act, act.kind === "ground" ? 0 : act.reach || G.reachOf(act.kind) || 1);
     if (p === null) { this.say(pl, "You can't reach that.", "bad"); pl.act = null; return; }
     if (held && G.cheb(pl, act) > (act.reach || G.reachOf(act.kind) || 1)) { this.say(pl, "It has you. You can only reach what is already beside you.", "bad"); pl.act = null; return; }
+    /* SAME TARGET, SAME ACTION (2026-09-25, the re-click exploit). startAct builds a fresh act on every click and
+       used to assign it unconditionally, so clicking the monster you were ALREADY fighting made `!a.started` true
+       again and re-ran the opener below: your swing timer reset to 600ms and the monster's was pushed a full cycle
+       away. Measured with a maul, re-clicking every 650ms: 45 hits in 30 seconds instead of 10, and it landed
+       none at all. PvP had the identical shape. Carrying `started` across is what makes a re-click a no-op. */
+    if (pl.act && (act.kind === "mob" || act.kind === "pvp") && pl.act.kind === act.kind
+        && String(pl.act.id) === String(act.id) && pl.act.started) act.started = pl.act.started;
     pl.act = act; pl.path = p; this.kick(S, pl, now);
   }
 
@@ -1802,7 +1809,18 @@ export class World {
       a.x = m.x; a.y = m.y; faceIt();
       // the weapon sets the pace now: a gladius swings every 1.8s, a maul every 3s
       const swingMs = G.swingMsOf(C);
-      if (!a.started) { a.started = now; pl.lastSwing = now - Math.max(0, swingMs - 600); m.lastSwing = now; }
+      /* THE OPENER, AND WHY IT IS A max() (2026-09-25). Engaging is meant to give you the first hit fast - 600ms
+         whatever you are holding - which is most of why combat feels responsive. Written as a plain assignment it
+         also pulled the timer FORWARD, so switching between two monsters swung at 600ms each time even after the
+         same-target re-click was closed. Taking the later of the two keeps the head start for someone who really
+         is starting a fight and gives nothing to someone already mid-swing.
+         `graceFor` is the third hole: the monster's clock is pushed away so it cannot hit you the instant you walk
+         up, and alternating between two of them re-armed that forever. One grace per player per life. */
+      if (!a.started) {
+        a.started = now;
+        pl.lastSwing = Math.max(pl.lastSwing, now - Math.max(0, swingMs - 600));
+        if (m.graceFor !== pl.id) { m.lastSwing = now; m.graceFor = pl.id; }
+      }
       if (now - pl.lastSwing >= swingMs) {
         pl.lastSwing = now; pl.swingAt = now; pl.fightAt = now;
         if (!S.def.pvp && !S.def.shared) m.claim = { id: pl.id, until: now + CLAIM_MS };
@@ -2329,7 +2347,7 @@ export class World {
     const cage = G.inCage(S.def, pl.x, pl.y);
     if (cage !== G.inCage(S.def, T.x, T.y)) { this.say(pl, "The cage bars are in the way."); pl.act = null; return; }
     a.x = T.x; a.y = T.y; faceIt();
-    if (!a.started) { a.started = now; pl.lastSwing = now - 1800; }
+    if (!a.started) { a.started = now; pl.lastSwing = Math.max(pl.lastSwing, now - 1800); }   /* the same max() as the mob opener above, and for the same reason */
     if (now - pl.lastSwing < 2400) return;
     pl.lastSwing = now; pl.swingAt = now; pl.combatAt = now; T.combatAt = now;
     const TC = T.C, hit = Math.random() < G.hitChance(G.attackRollOf(C), G.defenceRollOf(TC)), dmg = hit ? rint(1, G.maxHitOf(C)) : 0;
@@ -2501,7 +2519,7 @@ export class World {
           if (Math.max(Math.abs(dx), Math.abs(dy)) === r && G.walkableIn(S.g, x, y) && S.g[y][x] !== "e" && !this.occupied(S, x, y, m)) spot = { x, y };
         }
         if (!spot) { m.respawnAt = now + 1000; continue; }
-        Object.assign(m, { dead: false, hp: G.MOBS[m.t].hp, x: spot.x, y: spot.y, path: [], step: null, claim: null, target: null });
+        Object.assign(m, { dead: false, hp: G.MOBS[m.t].hp, x: spot.x, y: spot.y, path: [], step: null, claim: null, target: null, graceFor: null });   /* a new life, so the walk-up grace is owed again */
         continue;
       }
       const def = G.MOBS[m.t];
