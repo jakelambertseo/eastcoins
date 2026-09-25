@@ -218,6 +218,20 @@ ok("every monster here is inside the band and pays a bounty");
     const rate = (G.MOBS[carriers[0]].drops.find((d) => d[0] === "carnivalticket") || [])[2];
     ok(`${carriers.length} of the map's monsters drop a Carnival ticket at ${(rate * 100).toFixed(0)}% — about ${Math.round(1 / rate)} kills a ticket`);
     if (carriers.includes("grinner")) fail("the boss drops the key to his own cage");
+
+    /* AND HE HAS TO BE WORTH THE DOOR (2026-09-24, the owner: "the grinning man needs to give boosted tickets
+       since it takes the carnival tickets, and carnival tickets are a 1% drop chance now").
+       The ticket does not cost TICKETS — a hundred kills earns about fourteen thousand of them on the way — so
+       what the turnstile charges is TIME, and the only question that matters is whether spending a ticket beats
+       carrying on farming. He was paying two and a half normal kills for a door that takes twenty-five minutes
+       to find, which is a reason never to open it. The rule is simply that he must be worth appreciably more
+       than the things that drop his key, and the arithmetic is printed so the next person changing either
+       number can see what it does to the other. */
+    const freaks = carriers.map((t) => G.BOUNTY[t]);
+    const avg = freaks.reduce((a, n) => a + n, 0) / freaks.length;
+    const ratio = G.BOUNTY.grinner / avg;
+    if (ratio < 6) fail(`the boss pays ${G.BOUNTY.grinner}, only ${ratio.toFixed(1)} normal kills, for a cage that costs ${Math.round(1 / rate)} of them to open`);
+    else ok(`the boss pays ${G.BOUNTY.grinner} — ${ratio.toFixed(1)} normal kills, against ${Math.round(1 / rate)} to find the ticket that lets you in`);
   }
 }
 

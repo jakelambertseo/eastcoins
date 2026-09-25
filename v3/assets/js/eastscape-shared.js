@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 233;
+export const VERSION = 234;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -4409,7 +4409,15 @@ export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
 /* (2026-09-24) THE CARNIVAL, 62-72. Between a Hail Drake (243) and The House (321) for the four, and the boss
    above both — he is a slow kill with a rare table, the same shape as the Boneyard’s Critic. Without an entry
    here killFinds returns early: no rares, no casino finds, and a Lucky clover would not count the kill. */
-export const BOUNTY = { pinhead: 252, tripled: 271, fatlady: 296, strongman: 318, grinner: 720, critic: 600, chicken: 18, cow: 32, rotten: 39, olive: 38, hornworm: 51, boar: 53, highwayman: 40, goat: 45, gnasher: 80, moth: 74, taxwraith: 150, ghoul: 177, chandelier: 205, understudy: 250, ram: 266, angel: 352, revenant: 324, goose: 419,
+/* (2026-09-24, the owner: "the grinning man needs to give boosted tickets since it takes the carnival tickets,
+   and carnival tickets are a 1% drop chance now") HE WAS PAYING 360 FOR A DOOR THAT COSTS 100 KILLS.
+   The ticket does not cost tickets — you earn about 14,000 farming the hundred kills it takes to find one — so
+   what the turnstile really charges is TWENTY-FIVE MINUTES. Against that, two and a half normal kills was an
+   insult: there was no reason to spend a ticket rather than keep farming.
+   4,000 (2,000 after the halving) is fourteen normal kills, and over a forty-second fight that is about 3,000 a
+   minute against roughly 570 for farming the freaks outside. Five times better while you have a ticket, and
+   nothing at all when you do not, which is what a key is supposed to feel like. */
+export const BOUNTY = { pinhead: 252, tripled: 271, fatlady: 296, strongman: 318, grinner: 4000, critic: 600, chicken: 18, cow: 32, rotten: 39, olive: 38, hornworm: 51, boar: 53, highwayman: 40, goat: 45, gnasher: 80, moth: 74, taxwraith: 150, ghoul: 177, chandelier: 205, understudy: 250, ram: 266, angel: 352, revenant: 324, goose: 419,
   toadstool: 37, boneidle: 79, twister: 73, counter: 91, shark: 143, stagehand: 196, usher: 223, brainstorm: 247, seagoat: 329,
   /* THE 50+ BAND pays MORE than the tool asks: its reference wage goes flat at level 40 (there was no skilling past onyx), so left alone a level-70
      kill would pay a level-42 minute. These are the tool's numbers times 1 + 1.2% a level past 42, so the last band is worth reaching. The goose moved with them. */
