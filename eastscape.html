@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=263">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=264">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1028,10 +1028,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=263";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=264";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
-const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=133").then((m) => { WK = m; }));
+const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=134").then((m) => { WK = m; }));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=13";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -4812,8 +4812,11 @@ function wikiGo(route, setNav = true) {
            never how to make one. Both directions are worth printing: what this is made FROM, and what it goes
            INTO - the second is the only place an ore, a bar or a chase core says why you would keep it. */
         const st = { furnace: "a furnace", anvil: "an anvil", fire: "a range or campfire", cauldron: "a cauldron" };
-        const mk = Object.values(RECIPES).filter((r) => r.out[0] === id && r.skill !== "cooking");
-        const into = Object.values(RECIPES).filter((r) => r.in.some(([k]) => k === id) && r.skill !== "cooking");
+        /* G.RECIPES, not RECIPES. The page aliases ITEMS, MOBS and SKILLS as locals but NOT the recipe table, so a
+           bare name here threw a ReferenceError on EVERY item page - the section runs unconditionally, so the whole
+           wiki stopped opening items and it read as "the new gear is not clickable". */
+        const mk = Object.values(G.RECIPES).filter((r) => r.out[0] === id && r.skill !== "cooking");
+        const into = Object.values(G.RECIPES).filter((r) => r.in.some(([k]) => k === id) && r.skill !== "cooking");
         const line = (r) => `${r.in.map(([k, n]) => `${n > 1 ? n + " " : ""}${wl(`items/${k}`, `${ico(k)} ${esc(ITEMS[k]?.name || k)}`)}`).join(" + ")}`;
         let out = "";
         if (mk.length) out += `<h3>How to make it</h3>` + mk.map((r) => `<p>At ${st[r.station] || "a workbench"}, with <b>${SKILLS[r.skill].name} ${r.lvl}</b>: ${line(r)}${(r.out[1] || 1) > 1 ? ` makes <b>${r.out[1]}</b>` : ""}. ${r.xp ? `<b>${r.xp}</b> xp.` : ""}</p>`).join("");
