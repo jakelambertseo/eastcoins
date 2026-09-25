@@ -118,7 +118,15 @@ function station(skill, lvl) {
    the next mark after a lift (a mark closes up for 6s, so you rotate rather than stand still) and the stun when
    you are caught. Both are the honest soft spots in this row, same as RECLICK is in mining's. */
 function thieving(lvl) {
-  const key = G.GUILD_ORDER.filter((k) => G.MARKS[k].lvl <= lvl).sort((a, b) => G.MARKS[b].xp - G.MARKS[a].xp)[0];
+  /* (2026-09-25) EVERY MARK, AND CHOSEN BY xp PER SECOND. This read G.GUILD_ORDER, which is one headline mark a
+     ROOM - so the four in-between marks added today were invisible to it and every thieving figure it printed was
+     measured off the old ladder. It also picked the highest xp a thief could legally attempt, which is not the
+     same as the best one: a harder mark lands less often AND pays a stun on every miss, so past a point the
+     bigger number is the worse choice. Expected xp per second settles it honestly. */
+  const c0 = { xp: { thieving: G.XP_AT[lvl] } };
+  const stun0 = (G.THIEF.stun[0] + G.THIEF.stun[1]) / 2000, secs0 = G.THIEF.ms / 1000;
+  const rate = (m) => { const p = G.pickChance(c0, m.lvl); return (m.xp * p) / (secs0 + (1 - p) * stun0 + p * HOP); };
+  const key = Object.keys(G.MARKS).filter((k) => G.MARKS[k].lvl <= lvl).sort((a, b) => rate(G.MARKS[b]) - rate(G.MARKS[a]))[0];
   const room = key && G.MARKS[key];
   if (!room) return null;
   const c = { xp: { thieving: G.XP_AT[lvl] } }, p = G.pickChance(c, room.lvl), secs = G.THIEF.ms / 1000;

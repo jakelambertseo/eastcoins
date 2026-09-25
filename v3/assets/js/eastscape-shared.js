@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 251;
+export const VERSION = 252;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -2937,12 +2937,19 @@ Object.assign(SCENES, {
         objs.push({ t: "sign", x: x0 + 1, y: 7, name: R.sign });
         g[7][x0 + 1] = "#";
         for (const [t, x, y] of R.props) { if (x < 2 || x > 41 || g[y][x] !== "i") continue; objs.push({ t, x, y, name: t[0].toUpperCase() + t.slice(1) }); g[y][x] = "#"; }
-        for (const [dx, dy] of [[1, 2], [4, 5], [6, 2]]) {
-          const x = x0 + dx, y = 8 + dy; if (x >= COLS - 2 || g[y][x] !== "i") continue;
-          objs.push({ t: "mark", mark: key, x, y, name: M.name, lvl: M.lvl, xp: M.xp, look: M.look, req: { skill: "thieving", lvl: M.lvl },
+        /* (2026-09-25) A ROOM HOLDS ITS WHOLE BAND NOW, not one face three times. Every room has a headline mark
+           (GUILD_ORDER, which the doors' signs still read) and, since the four in-between marks were added, a
+           harder one standing next to it. Two of the three spots go to the easier mark and one to the harder, so
+           the room you are working always has the next rung in it - which is the actual cure for "work this room
+           to 50 to get to the next room". Sorted by level so the assignment cannot depend on MARKS' key order. */
+        const band = Object.entries(MARKS).filter(([, m]) => m.room === i).sort((c, d) => c[1].lvl - d[1].lvl);
+        [[1, 2], [4, 5], [6, 2]].forEach(([dx, dy], n) => {
+          const [mk, MM] = band[n === 2 && band[1] ? 1 : 0];
+          const x = x0 + dx, y = 8 + dy; if (x >= COLS - 2 || g[y][x] !== "i") return;
+          objs.push({ t: "mark", mark: mk, x, y, name: MM.name, lvl: MM.lvl, xp: MM.xp, look: MM.look, req: { skill: "thieving", lvl: MM.lvl },
             tease: i ? "You would be noticed. Get better at this first." : "" });
           g[y][x] = "#";
-        }
+        });
       }
       return { g, objs, blobs: [] };
     },
@@ -4672,7 +4679,7 @@ export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
    4,000 (2,000 after the halving) is fourteen normal kills, and over a forty-second fight that is about 3,000 a
    minute against roughly 570 for farming the freaks outside. Five times better while you have a ticket, and
    nothing at all when you do not, which is what a key is supposed to feel like. */
-export const BOUNTY = { pinhead: 252, tripled: 271, fatlady: 296, strongman: 318, grinner: 4000, critic: 600, chicken: 18, cow: 32, rotten: 39, olive: 38, hornworm: 51, boar: 53, highwayman: 40, goat: 45, gnasher: 80, moth: 74, taxwraith: 150, ghoul: 177, chandelier: 205, understudy: 250, ram: 266, angel: 352, revenant: 324, goose: 314,
+export const BOUNTY = { pinhead: 252, tripled: 271, fatlady: 296, strongman: 318, grinner: 4000, critic: 600, chicken: 18, cow: 32, rotten: 39, olive: 38, hornworm: 51, boar: 53, highwayman: 40, goat: 45, gnasher: 80, moth: 74, taxwraith: 150, ghoul: 177, chandelier: 205, understudy: 250, ram: 266, angel: 352, revenant: 324, goose: 356,
   toadstool: 37, boneidle: 79, twister: 73, counter: 91, shark: 143, stagehand: 196, usher: 223, brainstorm: 247, seagoat: 329,
   /* THE 50+ BAND pays MORE than the tool asks: its reference wage goes flat at level 40 (there was no skilling past onyx), so left alone a level-70
      kill would pay a level-42 minute. These are the tool's numbers times 1 + 1.2% a level past 42, so the last band is worth reaching. The goose moved with them. */
@@ -4682,7 +4689,7 @@ export const BOUNTY = { pinhead: 252, tripled: 271, fatlady: 296, strongman: 318
      the Thunderhead paying 650-850 a minute against a band near 480 - and a quarter off brings them to
      the top of that band rather than far past it. Tickets are rebuilt from bounty by the loop further
      down, so this IS the drop; there is nothing else to change. */
-  golem: 291, wolf: 314, drake: 364, house: 482,
+  golem: 330, wolf: 355, drake: 412, house: 546,
   /* THE GOLDEN SANDS (2026-09-24, reported by the owner: "lucky clover kills arent counting in the golden sands").
      They were not, and not only luck: killFinds() opens with `if (!G.BOUNTY[mob]) return`, so a monster missing
      from this table gets NO rare roll, NO casino find and NO luck spent - the clover just sat there. Four new
@@ -4776,6 +4783,18 @@ export const THIEF = {
      This flag hides the only three things a player can see - the door in the Yard, the permit on the shop's
      shelf, and the scene being enterable at all - while everything else stays in place and under test. Flip it
      to true in the same commit as the client. The Crypt chest's permit line rides this too. */
+  /* THE CLEAN RUN (2026-09-25, a player: thieving "feels like a slog"). Consecutive lifts count, and every
+     `streakEvery`-th one pays TWICE. Getting caught puts you back to nought.
+
+     It is here because more money and more marks fix the arithmetic of the skill and not the LOOP, which was
+     click, wait 2.4s, win or get punished - mining with a penalty bolted on and no shape to it. A run gives the
+     loop an arc: three clean and the next one matters, and the stun stops being only a cost and starts being the
+     thing you are protecting. It rides the same idea as the swing ladder and is safe for the same reason - you
+     cannot fake a success, so there is nothing to farm here that is not just playing well.
+
+     Five is chosen so a run is reachable at the 55% chance you enter a room on (about 5% of runs) and routine at
+     the 90% cap (about 59%), which is the curve the whole skill is already built around. */
+  streakEvery: 5,
   live: true
 };
 /** The chance this character lands a pick on a mark of level `lvl`. */
@@ -4816,7 +4835,28 @@ export const MARKS = {
   fixer:   { name: "The Fixer", lvl: 50, xp: 138, room: 2, look: { hair: "#6a6a72", shirt: "#2a4a52", pants: "#1e2e34" },
     drop: [["stolen_signet", 0.72], ["seal_wax", 0.18], ["quench_salts", 0.10]] },
   quarter: { name: "The Quartermaster", lvl: 75, xp: 250, room: 3, look: { hair: "#d8c8a0", shirt: "#6a2a2a", pants: "#3a1e1e" },
-    drop: [["blackmarket_ledger", 0.70], ["starfall_ore", 0.12], ["eclipse_ore", 0.09], ["voidglass", 0.06], ["seal_wax", 0.03]] }
+    drop: [["blackmarket_ledger", 0.70], ["starfall_ore", 0.12], ["eclipse_ore", 0.09], ["voidglass", 0.06], ["seal_wax", 0.03]] },
+
+  /* (2026-09-25, a player: "having to work this room to hit 50 in order to get to the next room feels like a
+     slog") FOUR MORE MARKS, and the reason is the twenty-five level gap rather than the numbers in it. With marks
+     only at 1, 25, 50 and 75, the sim's answer to "what is best at level 20" was still the Apprentice Lifter: a
+     level 25 mark is visible from level 10 and not worth picking until about 40, because at a 45% chance the stun
+     on a miss costs more than the better loot pays. So the middle of the skill was one room and one face for
+     twenty-odd levels.
+
+     NONE OF THE ORIGINAL FOUR MOVED. These sit between them - 15, 40, 62, 90 - so nothing anybody is working
+     today changes, no room gate changes, and there is always a next target within about a dozen levels. Each
+     shares a room with the mark below it and carries a taste of the NEXT room's good, which is what makes
+     graduating feel like a promotion rather than a wall coming down.
+     xp follows the curve the first four set (19/56/138/250), interpolated rather than invented. */
+  cutpurse:    { name: "Cutpurse", lvl: 15, xp: 36, room: 0, look: { hair: "#2a2018", shirt: "#7a6a4a", pants: "#332e26" },
+    drop: [["brass_button", 0.60], ["whetgrit", 0.30], ["pocket_watch", 0.10]] },
+  shill:       { name: "The Shill", lvl: 40, xp: 95, room: 1, look: { hair: "#4a3a2a", shirt: "#3a4a6a", pants: "#242a38" },
+    drop: [["pocket_watch", 0.60], ["quench_salts", 0.25], ["stolen_signet", 0.15]] },
+  housebreaker:{ name: "Housebreaker", lvl: 62, xp: 182, room: 2, look: { hair: "#52525a", shirt: "#2a5244", pants: "#1e3028" },
+    drop: [["stolen_signet", 0.60], ["seal_wax", 0.25], ["blackmarket_ledger", 0.15]] },
+  ringleader:  { name: "The Ringleader", lvl: 90, xp: 337, room: 3, look: { hair: "#e8e0c8", shirt: "#4a2a5a", pants: "#2a1830" },
+    drop: [["blackmarket_ledger", 0.62], ["starfall_ore", 0.13], ["eclipse_ore", 0.10], ["voidglass", 0.08], ["seal_wax", 0.07]] }
 };
 /* THE DITCHED SET (2026-09-24). Four pieces of a thief's kit somebody threw in the water rather than be caught
    holding it, FISHED BACK UP - so Fishing finally feeds something other than Cooking, and a thief has a reason to
@@ -4875,7 +4915,16 @@ if (THIEF.live) {
   OPEN.add("guild");                 /* a scene is not enterable until it is in OPEN; the door answers "Room's shut" otherwise */
   SCENES.guild.wikiHide = false;     /* the closed-areas sweep above already hid it, because it was not in OPEN when that ran */
 }
-Object.assign(SHOP.buys, { brass_button: 12, pocket_watch: 30, stolen_signet: 51, blackmarket_ledger: 57 });
+/* (2026-09-25, a player: "the thieving drops feel kinda lacklustre compared to other professions like tickets
+   gain per time spent esp if you have to pay the fee to get in") He was right, and the sim said so louder than he
+   did: thieving was the WORST-PAID skill in the game at every level above 1 - 4,460 tickets an hour at 20 against
+   fighting's 16,373 - and the only one that charges to get in.
+
+   Fishing is deliberately 67-90% of fighting because safe money is a little less money. Thieving is not safe: it
+   stuns you on a miss and it took 50,000 tickets off you at the door. So the fence now pays roughly double at the
+   top two rooms and half again at the bottom two, which is what puts the skill in fishing's band rather than
+   under it. Re-measure with tools/eastscape-skill-sim.mjs, not by eye. */
+Object.assign(SHOP.buys, { brass_button: 18, pocket_watch: 45, stolen_signet: 102, blackmarket_ledger: 114 });
 
 /* The three consumables. They are ANVIL recipes on purpose: the stolen line is meant to be crucial to smithing,
    so it is smithing that turns it into anything, and a thief who never smiths still has someone to sell to. */
@@ -4891,10 +4940,21 @@ export const TIX_RATE = 0.5;
   for (const k of Object.keys(SHOP.buys)) SHOP.buys[k] = cut(SHOP.buys[k]);
   for (const k of Object.keys(BOUNTY)) BOUNTY[k] = cut(BOUNTY[k]);
 }
+/* HOW WIDE A KILL'S TICKETS SWING (2026-09-25, the owner: "lets increase the bands instead so that theres a
+   CHANCE at a high ticket, but a chance average ones as well"). The default is 0.6x to 1.4x of what the kill is
+   worth; the Thunderhead swings 0.2x to 1.8x, so the same monster can pay a fifth or nearly double.
+
+   BOTH BANDS AVERAGE EXACTLY 1.0, WHICH IS THE WHOLE TRICK. `gap` is what the loop below has decided the kill
+   should pay, and the band only decides how that lands - widen it asymmetrically and BOUNTY quietly stops meaning
+   what it says, so every number measured off it (the balance tool, the skill sims, the band checks) drifts with
+   no warning. Keep any new spread symmetric around 1. */
+const TIX_SPREAD = { goose: [0.2, 1.8], golem: [0.2, 1.8], wolf: [0.2, 1.8], drake: [0.2, 1.8], house: [0.2, 1.8] };
+export const tixSpread = (t) => TIX_SPREAD[t] || [0.6, 1.4];
 for (const [t, want] of Object.entries(BOUNTY)) {
   const m = MOBS[t]; m.drops = m.drops.filter(([k]) => k !== "tickets");
   const other = m.drops.reduce((a, [k, n, p]) => a + (VALUE[k] ?? 0) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0), gap = Math.round(want * 0.88 - other);
-  if (gap >= 2) m.drops.unshift(["tickets", [Math.max(1, Math.round(gap * 0.6)), Math.round(gap * 1.4)]]);   // tickets first: line one of every table (it was tickets until 2026-09-20)
+  const [lo, hi] = tixSpread(t);
+  if (gap >= 2) m.drops.unshift(["tickets", [Math.max(1, Math.round(gap * lo)), Math.round(gap * hi)]]);   // tickets first: line one of every table   // tickets first: line one of every table (it was tickets until 2026-09-20)
 }
 /* FINDS: what any kill can turn up on top of the monster's own drops. [item, share]: the chance is share x the
    monster's bounty / the find's worth, so every monster gives the same fraction of its pay this way and a chicken

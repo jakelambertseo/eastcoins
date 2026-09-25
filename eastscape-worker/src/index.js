@@ -2070,8 +2070,16 @@ export class World {
         const k = G.markDrop(ob.mark);
         if (!this.give(pl, k)) { pl.act = null; return; }
         this.gained(S, pl, k);
+        /* THE CLEAN RUN: every fifth lift in a row pays a second time. A catch resets it below, so the streak is
+           the thing the stun now costs you - see THIEF.streakEvery for why the loop wanted this at all. */
+        pl.pickRun = (pl.pickRun | 0) + 1;
+        const every = G.THIEF.streakEvery, hot = pl.pickRun % every === 0;
+        let extra = null;
+        if (hot) { extra = G.markDrop(ob.mark); if (!this.give(pl, extra)) extra = null; else this.gained(S, pl, extra); }
         this.grant(pl, "thieving", gx(M.xp)); this.questCheck(pl);
-        this.say(pl, `You lift ${G.ITEMS[k].name.toLowerCase()} off ${M.name.toLowerCase()}.`, "good");
+        this.say(pl, hot
+          ? `${pl.pickRun} clean in a row. You lift ${G.ITEMS[k].name.toLowerCase()}${extra ? ` AND ${G.ITEMS[extra].name.toLowerCase()}` : ""} off ${M.name.toLowerCase()}.`
+          : `You lift ${G.ITEMS[k].name.toLowerCase()} off ${M.name.toLowerCase()}.${pl.pickRun % every === every - 1 ? " One more clean and the next one counts double." : ""}`, "good");
         ob.emptyUntil = now + 6000;   /* they close up for a moment, so a room is worked rather than one pocket */
         pl.act = null;
         return;
@@ -2079,6 +2087,7 @@ export class World {
       /* caught. Drop one of the things you came here for - never tickets, never gear, never a permit: it has to
          sting without being a way to lose something that did not come out of this room. */
       pl.stunUntil = now + rint(G.THIEF.stun[0], G.THIEF.stun[1]);
+      pl.pickRun = 0;   /* the run is what a catch really costs now */
       pl.act = null;
       const canLose = [...new Set(Object.values(G.MARKS).flatMap((x) => x.drop.map(([k]) => k)))].filter((k) => G.countItems({ inv: C.inv, bank: [] }, [k]) > 0);
       const lost = canLose.length ? canLose[Math.floor(Math.random() * canLose.length)] : null;
