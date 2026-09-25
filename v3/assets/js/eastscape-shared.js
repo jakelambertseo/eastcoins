@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 243;
+export const VERSION = 244;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -4550,11 +4550,17 @@ export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
    4,000 (2,000 after the halving) is fourteen normal kills, and over a forty-second fight that is about 3,000 a
    minute against roughly 570 for farming the freaks outside. Five times better while you have a ticket, and
    nothing at all when you do not, which is what a key is supposed to feel like. */
-export const BOUNTY = { pinhead: 252, tripled: 271, fatlady: 296, strongman: 318, grinner: 4000, critic: 600, chicken: 18, cow: 32, rotten: 39, olive: 38, hornworm: 51, boar: 53, highwayman: 40, goat: 45, gnasher: 80, moth: 74, taxwraith: 150, ghoul: 177, chandelier: 205, understudy: 250, ram: 266, angel: 352, revenant: 324, goose: 419,
+export const BOUNTY = { pinhead: 252, tripled: 271, fatlady: 296, strongman: 318, grinner: 4000, critic: 600, chicken: 18, cow: 32, rotten: 39, olive: 38, hornworm: 51, boar: 53, highwayman: 40, goat: 45, gnasher: 80, moth: 74, taxwraith: 150, ghoul: 177, chandelier: 205, understudy: 250, ram: 266, angel: 352, revenant: 324, goose: 314,
   toadstool: 37, boneidle: 79, twister: 73, counter: 91, shark: 143, stagehand: 196, usher: 223, brainstorm: 247, seagoat: 329,
   /* THE 50+ BAND pays MORE than the tool asks: its reference wage goes flat at level 40 (there was no skilling past onyx), so left alone a level-70
      kill would pay a level-42 minute. These are the tool's numbers times 1 + 1.2% a level past 42, so the last band is worth reaching. The goose moved with them. */
-  golem: 388, wolf: 418, drake: 485, house: 642,
+  /* (2026-09-25, the owner: "mobs in the thunderhead need a nerf to their drops, by about 25%") All five
+     of that map's monsters are exclusive to it, so this is cut on the BOUNTY literals and nothing else on
+     any other map moves. They were the richest ground in the game by a distance - the balance tool had
+     the Thunderhead paying 650-850 a minute against a band near 480 - and a quarter off brings them to
+     the top of that band rather than far past it. Tickets are rebuilt from bounty by the loop further
+     down, so this IS the drop; there is nothing else to change. */
+  golem: 291, wolf: 314, drake: 364, house: 482,
   /* THE GOLDEN SANDS (2026-09-24, reported by the owner: "lucky clover kills arent counting in the golden sands").
      They were not, and not only luck: killFinds() opens with `if (!G.BOUNTY[mob]) return`, so a monster missing
      from this table gets NO rare roll, NO casino find and NO luck spent - the clover just sat there. Four new
