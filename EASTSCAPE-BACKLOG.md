@@ -1764,3 +1764,53 @@ per-tick path a NEW mob type reaches that the older ones do not.
 is no reproduction. If it comes back, the thing to capture is what the player was doing in the tick
 before it appeared, and whether the letters are stable across runs (a fixed string being indexed) or
 different every time (a random one).
+
+---
+
+## 2026-09-24 — waiting on the owner
+
+Five things built or found today that need his word, not more work from me.
+
+| | What | Why it is waiting |
+|---|---|---|
+| **Open the Carnival** | Two lines: `w: "carnival"` on the Yard's exits, `e: "workyard"` on the Carnival's. | He said "dont open it until i tell you". `tools/eastscape-carnival-test.mjs` asserts it is still shut, so opening it deliberately means deleting that check too. |
+| **The 73–80 map** | He said "ill make another after this for 73-80". | The Carnival is the template: themed map, five-mob ladder, one mini boss on AGGRO_ON, a safe plaza if it needs one. |
+| **Fishing 58 → 80** | Thundersquid is 58 and Mudcat is 80. Nothing between. | The other half of the lull he spotted, on a skill nobody has mentioned. Mining and woodcutting already have rungs at 60/65/70. The Carnival's dunk tank is the obvious home. |
+| **PvP auto-retaliate** | `index.js` ~2335, the twin of the mob line the AFK fix guarded. An idle player in the Wilderness is still handed a fight. | Applying the same rule makes an AFK player a free kill — arguably right, and bigger than what was asked for. |
+| **The Pyramid's wiki page** | The only piece of that build never written. The pets guide names the Great Pyramid as plain text rather than a link because the page does not exist. | |
+
+### And the things only a live run can prove
+
+- **The Pyramid's burrow** — at 70% and 40% of the Squeeze's health. Still the one mechanic nobody has seen fire; the coil, the lever and the chest have all now worked in a real clear.
+- **The Carnival's stalls** — the board, the grading and the economy are tested offline, but nobody has pressed a mole.
+
+### Two traps worth remembering, both bit today
+
+- **An area list DEFERS a picture out of `core.png`.** Putting `o_gravestone` and `o_skeleton` in the Boneyard's list to dress its graveyards silently took them from the Gloam, the Mire, the Sands, the Wilderness and the Deep. `eastscape-artreach.mjs` is what catches it — and it only started covering the dungeons today, which is how the Pyramid shipped with an invisible hoard chest.
+- **`wild()` fills whatever is not in `keep`.** Right for a wood, wrong for a fairground: the Carnival's first build left 467 of 1,144 tiles walkable with eight monsters and the boss sealed in pockets. Keep the interior, let it dress the rim, put the clutter back by hand with a connectivity check.
+
+## 2026-09-24, after the Carnival deploy
+
+- **Open the Carnival** — still two lines, still waiting on your word:
+  `w: "carnival"` on the Yard's exits, `e: "workyard"` on the Carnival's.
+  `eastscape-carnival-test.mjs` asserts it is shut and will fail the moment
+  it opens, which is the reminder.
+- **The 73-80 map** — you said you'd do another after this one.
+- **The Tower's top is a dead end.** 30 floors, and a topped-out climber
+  re-enters on 30 forever. "Start at floor 1" is now on the door, but there
+  is no prestige, no floors above 30, and clearing the top again pays only
+  The House's ordinary drops. `floors: 30` is a config number — the comment
+  in `eastscape-tower-rules.js` says 60 or 100 costs nothing, since one room
+  is rebuilt. Worth deciding before launch.
+- **PvP auto-retaliate** (`index.js` ~2335) — the twin of the mob line the
+  AFK fix guarded; still unguarded.
+- **The Pyramid has no wiki page.** The pets guide names the Great Pyramid
+  as plain text rather than a link.
+- **Three Strongmen contest the mining truck** at (36,6) in the Back Lot.
+  Deliberate for now; one `{aggro:0}` override exempts them if it annoys.
+- **Gathering hit rate caps at 90% from about level 25** (rock/fish
+  `min(0.9, 0.4 + lvl*0.02)`). Open question whether the high tiers should
+  feel harder.
+- **`?v=248` on `eastscape-shared.js` is burnt.** A bare probe of it cached
+  the OLD file (VERSION=234) at the edge as `immutable`. Never reuse 248.
+  Probe an asset only as `?v=N&probe=random`, never the bare real URL.
