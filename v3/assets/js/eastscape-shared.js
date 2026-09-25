@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 252;
+export const VERSION = 253;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1677,7 +1677,12 @@ Object.assign(SCENES, {
      and up, and everything in it hits hard enough that the Wilderness's rules would be unkind — so like the Thunderhead it
      is safe from other players and dangerous from everything else. Starfall ore is mineable here at 60, eclipse at 70. */
   vault: {
-    name: "The Vault", ground: "cloud", carpet: "rug_casino", exits: { e: "thunderhead" }, tint: "rgba(10,6,2,.62)",
+    /* (2026-09-25, the owner: "revamp the vault. the floor needs to be a dark casino carpet with designs, but
+       different from the casino one ... this is also casino themed, but it needs to be unique from the casino")
+       It borrowed Cloudreach's ground and the casino's own carpet, which is why it read as a corridor of the
+       floor upstairs. Its own ground now (GROUNDS.vault, walking on t_vault) and its own runner (rug_vault):
+       near-black with dull antique gold art-deco, against the casino's bright multicoloured stars. */
+    name: "The Vault", ground: "vault", carpet: "rug_vault", exits: { e: "thunderhead" }, tint: "rgba(10,6,2,.62)",
     build() {
       const g = grid(), objs = [], keep = [];
       for (let x = 2; x < COLS - 1; x++) g[13][x] = ",";               // the long floor through the middle
@@ -1685,7 +1690,7 @@ Object.assign(SCENES, {
       objs.push({ t: "sign", x: 40, y: 12, name: "THE VAULT: Combat 70 and up. Mining 60 for starfall, 70 for eclipse. Whatever the House was keeping, it is still down here." }); g[12][40] = "#";
       /* THE HOUSE'S OWN ROOM. Carpet down the middle, neon along both walls, and a rank of slot machines nobody has
          emptied — the page already draws a chasing bulb on a slot and a glow on neon, so these flash without new code. */
-      objs.push({ t: "rug", img: "rug_casino", x: 8, y: 11, w: 28, h: 5, color: "#3a0f1c", name: "The vault carpet, still red under the dust." });
+      objs.push({ t: "rug", img: "rug_vault", x: 8, y: 11, w: 28, h: 5, color: "#2a0a14", name: "The vault carpet, still red under the dust." });
       for (const x of [9, 15, 21, 27, 33]) { objs.push({ t: "wall_neon", x, y: 3, name: "Neon, still lit" }); objs.push({ t: "wall_neon", x, y: 23, name: "Neon, still lit" }); }
       for (const [x, y] of [[12, 4], [14, 4], [16, 4], [26, 22], [28, 22], [30, 22]]) { objs.push({ t: "slots", x, y, name: "A machine nobody emptied" }); g[y][x] = "#"; }
       for (const [x, y] of [[7, 10], [7, 16], [37, 10], [37, 16]]) { objs.push({ t: "ropepost", x, y, name: "Rope post" }); g[y][x] = "#"; }
@@ -1701,15 +1706,37 @@ Object.assign(SCENES, {
       for (const [x, y] of [[12, 12], [16, 14], [33, 12]]) { objs.push({ t: "vein", x, y, ore: "nova_ore", name: "Nova seam", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[y][x] = "#"; }
       for (const [x, y] of [[24, 4], [27, 22]]) { objs.push({ t: "rock", x, y, ore: "voidglass", name: "Shattered window", req: { skill: "mining", lvl: 70 }, xp: 190 }); g[y][x] = "#"; }
       /* (v121) woodcutting's last two: whatever grew down here in the dark. */
-      for (const [x, y] of [[20, 8], [22, 18]]) { objs.push({ t: "yew", x, y, log: "voidlogs", name: "Vaultwood", req: { skill: "woodcutting", lvl: 60 }, xp: 200 }); g[y][x] = "#"; }
+      /* `art` must be spelled out: a yew draws as o_yew off its TYPE, so without this the Vaultwood was a
+         perfectly ordinary tree in a room with no sun in it. Same rule the Yard's Old oak needed. */
+      for (const [x, y] of [[20, 8], [22, 18]]) { objs.push({ t: "yew", art: "o_vaultwood", x, y, log: "voidlogs", name: "Vaultwood", req: { skill: "woodcutting", lvl: 60 }, xp: 200 }); g[y][x] = "#"; }
+      /* (2026-09-25) A FLOODED FLOOR, so the Vault finally has all three gathering skills in it rather than two.
+         `look: 6` picks o_spot6, the inky pool with coins in it - the spot arts are numbered, not named. */
+      for (const [x, y] of [[25, 16], [27, 17]]) { objs.push({ t: "spot", x, y, look: 6, fish: "cloudray", fish2: "skyeel", fish2lvl: 70, name: "Flooded floor", req: { skill: "fishing", lvl: 60 }, xp: 200 }); g[y][x] = "~"; }
       for (let x = 2; x <= 42; x++) keep.push([x, 12], [x, 13], [x, 14]);
       wild(g, objs, this.exits, { n: "wall", s: "wall", w: "wall", e: "cloud" }, [...keepOf(this), ...keep], 10);
       return { g, objs, blobs: [] };
     },
+    /* (2026-09-25, the owner: "near the ores/trees/fishing spots, there needs to be a few aggressive mobs that
+       respawn every 2-3 minutes") GUARDED NODES, which is a DELIBERATE REVERSAL of the rule the aggro checker has
+       enforced since the Boneyard: nothing aggressive may reach a rock, a tree or a fishing spot, because you
+       cannot gather while being mauled. That rule is right for every other map and wrong for this one - the whole
+       point of the Vault is that the House's own stock is still down here and something is standing over it.
+
+       So six placements carry `aggro` AND their own `respawn`, and the Vault is listed as CONTESTED in
+       tools/eastscape-aggro-check.mjs, by name, with this reason. The respawn is per-PLACEMENT: the same four
+       types stand around the room harmlessly on the ordinary timer, and only these six come back on the owner's
+       two-to-three minutes. A range rather than a number so a guard cannot be counted down to the second. */
     mobs: [["warden", 9, 10], ["warden", 12, 16], ["warden", 17, 11], ["warden", 8, 17], ["warden", 14, 9],
       ["pitboss", 20, 11], ["pitboss", 23, 15], ["pitboss", 19, 16], ["pitboss", 25, 10],
       ["hoard", 29, 11], ["hoard", 33, 15], ["hoard", 31, 17], ["hoard", 35, 10],
-      ["dealer", 38, 13], ["dealer", 40, 16]],
+      ["dealer", 38, 13], ["dealer", 40, 16],
+      /* the guards: starfall north and south, eclipse north and south, the nova seams, and the wood and water */
+      ["warden", 12, 8, { aggro: 3, respawn: [120000, 180000] }],
+      ["warden", 13, 18, { aggro: 3, respawn: [120000, 180000] }],
+      ["hoard", 32, 8, { aggro: 3, respawn: [120000, 180000] }],
+      ["hoard", 34, 18, { aggro: 3, respawn: [120000, 180000] }],
+      ["pitboss", 18, 12, { aggro: 3, respawn: [120000, 180000] }],
+      ["dealer", 24, 17, { aggro: 3, respawn: [120000, 180000] }]],
     npcs: [], bots: []
   },
   /* ============================================================ THE CARNIVAL (2026-09-24)

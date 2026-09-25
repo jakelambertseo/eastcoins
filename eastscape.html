@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=266">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=267">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1028,7 +1028,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=266";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=267";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1587,7 +1587,7 @@ const ART_VER = { critic: 4, o_mausoleum: 4, t_tomb: 4, o_bomkiosk: 7, o_plot: 2
 const CROP_ART = Object.keys(G.CROPS).flatMap((k) => [1, 2, 3, 4].map((n) => `crop_${k}_${n}`));
 const ART_FILES = ["t_dock", ...CROP_ART, "o_yardtree", "o_yardtree_stump", "o_tower", "t_doors", "fx_hit", "fx_crit", "fx_miss", "fx_bleed", "vince_south", "vince_east", "casino", "rony_south", "rony_east", "o_bomkiosk", "t_pit", "o_fightboard", "o_hsboard", "o_fameboard", "o_ringbell", "o_ringpost", "o_mirror", "o_rrtable", "o_barcart", "kellz_south", "kellz_east", "livia_south", "livia_east", "gaius_south", "gaius_east", "aurelia_south", "aurelia_east", "arbino_south", "arbino_east", "vince_south", "vince_east", "sterling_south", "sterling_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "barker_south", "barker_east", "o_duckpond", "o_banner", "o_banner2", "o_archway", "o_wagon", "o_cagebarH", "o_cagebarV", "o_turnstile", "o_bloodpool", "o_knives", "o_meathook", "pinhead", "tripled", "fatlady", "strongman", "grinner", "o_bigtop", "o_funhouse", "o_balloonpop", "o_shootgallery", "o_whackamole", "o_ticketbooth", "o_sidetent", "o_haybale", "o_carnlitter", "t_sawdust", "t_dwater", "critic", "o_railH", "o_railV", "o_railgate", "o_mausoleum", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "pet_coilling",   /* (2026-09-24) the Pyramid’s pet was in PETS and had a picture on disk and was in NEITHER of these two lists — its icon drew an empty box AND an equipped one would have walked around invisible. Every pet goes in both, drop or no drop. */ "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_brick", "o_fencepost", "o_crates", "o_lamppost", "o_sacks", "o_handcart", "t_track", "o_gateframe", "o_gatebars", "o_agilend", "o_trailer", "o_wreck", "o_tyres", "o_dumpster", "o_rock_slagstone", "o_rustpine", "o_bogwood", "junkdog", "possum", "scrapper", "gator", "junkking", "darla_south", "darla_east", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "legend_" + d]),   // (hero_tiro_*, the old tunic, left the startup list 2026-09-20: nobody wears it now that everyone has a look)
-  "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "o_spot1", "o_spot2", "o_spot3", "o_spot4", "o_spot5", "g_bush", "g_boulder", "g_grass", "g_flowers",
+  "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "o_spot1", "o_spot2", "o_spot3", "o_spot4", "o_spot5", "o_spot6", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
   ...["tom", "waldy", "tullius", "brutus", "charon", "livia", "gaius", "nonna", "vibius", "aurelia", "cassia"].flatMap((n) => [n + "_south", n + "_east"]),
   // the Wilderness (PixelLab, 2026-09-18)
@@ -1607,7 +1607,7 @@ const ART_FILES = ["t_dock", ...CROP_ART, "o_yardtree", "o_yardtree_stump", "o_t
      starfall, eclipse, voidglass and catalytic had none - so four ores, three of them the top of the mining
      ladder, drew as the generic hand-drawn grey lump. With them, the Thunderhead's own ruin: rune stones, storm
      crystals and broken sky-arches. All deferred to their areas below. */
-  "o_rock_starfall_ore", "o_rock_eclipse_ore", "o_rock_voidglass", "o_rock_catalytic", "o_rock_nova_ore", "o_rock_singularity_ore", "o_runestone", "o_stormcrystal", "o_skyarch",
+  "o_rock_starfall_ore", "o_rock_eclipse_ore", "o_rock_voidglass", "o_rock_catalytic", "o_rock_nova_ore", "o_rock_singularity_ore", "t_vault", "rug_vault", "o_vaultwood",   /* (2026-09-25) the Vault's revamp. ART_FILES IS THE MASTER LIST and an AREA_ART entry only DEFERS a picture out of core.png into that map's sheet - a picture named in an area list and NOT here is simply missing, which is what the content check caught. */ "o_runestone", "o_stormcrystal", "o_skyarch",
   /* (2026-09-24) THE GOLDEN SANDS and Alchemy: the pyramid, the colonnade, a date palm, a dug pit and the
      cauldron every potion in the game comes out of. Deferred to area-sands below. */
   "o_pyramid", "o_obelisk", "o_datepalm", "o_sandpit", "o_sandpit2", "o_sandpit3", "o_sandpit4", "o_cactus", "t_sand", "t_swater", "t_sandstone", "o_cauldron",
@@ -1653,7 +1653,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 82;
+const PACKS_V = 85;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -1769,7 +1769,9 @@ const AREA_ART = {
      anywhere else. Listing them here pulled them out of core and emptied the casino floor of half its furniture. */
   vault: ["o_yew", "o_yew_stump", "warden", "pitboss", "hoard", "dealer",
     /* (2026-09-24) the three it mines, which drew as a generic grey lump until today */
-    "o_rock_starfall_ore", "o_rock_eclipse_ore", "o_rock_voidglass", "o_rock_nova_ore"]   /* the Vault has two yews of its own */   // (CASINO_ART is core now: the casino is where everyone starts)
+    "o_rock_starfall_ore", "o_rock_eclipse_ore", "o_rock_voidglass", "o_rock_nova_ore",
+    /* (2026-09-25) the revamp: its own floor, its own runner, its own tree and its flooded floor */
+    "t_vault", "rug_vault", "o_vaultwood", "o_spot6"]   /* the Vault has two yews of its own */   // (CASINO_ART is core now: the casino is where everyone starts)
 };
 const LAZY_ART = new Set(Object.values(AREA_ART).flat());
 const artReady = Promise.all(ART_FILES.filter((k) => !LAZY_ART.has(k)).map(loadArt));
@@ -1861,7 +1863,7 @@ function lookSprite(look, d, van) {   // -> a sprite key; "" while its parts are
 const wantArt = (k) => { if (IMG[k]) return k; if (!artAsked.has(k)) { artAsked.add(k); loadArt(k); } return null; };
 /* painted sunlight: everything stands on its own shadow, its silhouette laid flat on the ground and leaning away
    from a sun behind the viewer's left shoulder. Purely a picture; nothing in the game knows about light. */
-const SHADOW = { skew: -0.85, flat: 0.28, alpha: 0.15 }, NO_SHADOW = new Set(["hole", "o_spot", "o_spot1", "o_spot2", "o_spot3", "o_spot4", "o_spot5", "o_plot", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_l_shoe"]);   // (things lying flat on the floor cast nothing)
+const SHADOW = { skew: -0.85, flat: 0.28, alpha: 0.15 }, NO_SHADOW = new Set(["hole", "o_spot", "o_spot1", "o_spot2", "o_spot3", "o_spot4", "o_spot5", "o_spot6", "o_plot", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_l_shoe"]);   // (things lying flat on the floor cast nothing)
 /* EVERY SCENE HAS ITS OWN LIGHT (the owner, 2026-09-20: "all shadows have the same effect, but what if some were 25%, 30%, 60%").
    `alpha` is how dark a shadow is, `flat` how long it lies, `skew` how far it leans. Bright high sun in Cloudreach throws short
    hard shadows; the Gloam's low dusk throws long faint ones; fog and storm nearly none; the Fight Pit's hanging lamps throw
@@ -2031,6 +2033,10 @@ const objBusy = (ob, now) => ob.stumpUntil > now || ob.emptyUntil > now || ob.ba
 const GROUNDS = {
   gloam: { water: "t_gwater", path: "t_gpath", bush: "o_glowcap", boulder: "w_boulder" },
   cloud: { water: "t_csky", path: "t_cpath", bush: "o_cloudbush", boulder: "o_cloudcolumn" },
+  /* (2026-09-25) THE VAULT WALKS ON ITS OWN CARPET. `path` is the tile every walkable "," gets, so pointing it
+     at t_vault is what makes the floor a dark casino carpet rather than Cloudreach's stone. Its scatter is the
+     room's own junk - crates and barrels nobody carried back up - instead of cloud puffs and columns. */
+  vault: { water: "t_dwater", path: "t_vault", bush: "o_crate", boulder: "o_barrel" },
   /* (2026-09-24) THE THUNDERHEAD'S OWN THEME. It shares Cloudreach's two Wang sheets on purpose - the owner
      wanted it "slightly cloudish", and regenerating a Wang set is the one art job here that has come back
      unusable before (the Crypt's first one looked like a canal) - but its scattered bushes and boulders are

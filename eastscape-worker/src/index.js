@@ -436,7 +436,7 @@ export class World {
        creature hostile used to be making every one of them hostile everywhere - the Gloam wanted a single Bog
        Gnasher that attacks on sight and there are three more in the Wilderness that nobody asked to change. A
        fourth element on a placement line now carries per-mob overrides; `aggro` is the only one read so far. */
-    S.mobs = def.mobs.map(([t, x, y, over], i) => ({ id: `${key}m${i}`, aggro: over?.aggro, t, x, y, hx: x, hy: y, hp: G.MOBS[t].hp, path: [], step: null, face: Math.random() < 0.5 ? 1 : -1, nextWander: 0, dead: false, respawnAt: 0, hurtAt: 0, swingAt: 0, lastSwing: 0 }));
+    S.mobs = def.mobs.map(([t, x, y, over], i) => ({ id: `${key}m${i}`, aggro: over?.aggro, respawn: over?.respawn,   /* (2026-09-25) a PLACEMENT may own its respawn as well as its reach: the Vault's node guards come back on two-to-three minutes while the same types stand around the room on the ordinary timer */ t, x, y, hx: x, hy: y, hp: G.MOBS[t].hp, path: [], step: null, face: Math.random() < 0.5 ? 1 : -1, nextWander: 0, dead: false, respawnAt: 0, hurtAt: 0, swingAt: 0, lastSwing: 0 }));
     S.npcs = def.npcs.map((n, i) => ({ ...n, id: `${key}n${i}`, hx: n.x, hy: n.y, path: [], step: null, face: -1, nextWander: 0, holdUntil: 0 }));
     S.bots = def.bots.map((bt, i) => {
       let x, y, tries = 0;
@@ -2287,7 +2287,12 @@ export class World {
     const def = G.MOBS[m.t];
     // the more people fighting here, the sooner it comes back (see G.respawnMs): same monsters on screen, less waiting
     const fighters = this.playersIn(S).filter((p) => now - (p.fightAt || 0) < 60000).length;
-    m.dead = true; m.claim = null; m.respawnAt = now + G.respawnMs(S.def, m.t, fighters); pl.act = null;
+    /* (2026-09-25) A PLACEMENT'S OWN TIMER WINS, and a two-element one is a RANGE rather than a number, so a
+       guard cannot be counted down to the second and camped on the tick. */
+    const own = m.respawn;
+    m.dead = true; m.claim = null;
+    m.respawnAt = now + (Array.isArray(own) ? rint(own[0], own[1]) : own || G.respawnMs(S.def, m.t, fighters));
+    pl.act = null;
     const got = [];
     for (const [k, n, chance] of def.drops) {
       if (chance != null && Math.random() >= chance) continue;
