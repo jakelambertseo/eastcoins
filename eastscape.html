@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=241">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=242">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1008,7 +1008,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=241";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=242";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=133").then((m) => { WK = m; }));
@@ -1544,7 +1544,11 @@ const ART = "/v3/assets/img/glad/flat/", ART_V = 3;
    They are cut out of the wall faces now. THE OLD FILE HAD ALREADY BEEN SERVED UNDER ?v=3, and flat files are
    held for a day plus a week of stale-while-revalidate, so anyone who walked into the pyramid in the twenty
    minutes between the two deploys would have kept the shelving. This is the only invalidation there is. */
-const ART_VER = { t_tomb: 4, o_bomkiosk: 7, o_plot: 2, kellz_south: 5, kellz_east: 5, t_casino: 4, rug_casino: 4, o_dicetable: 4, chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
+/* critic + o_mausoleum 3 -> 4 (2026-09-24): both were served under ?v=3 by the Boneyard deploy an hour
+   earlier, and both have been redrawn since — the Critic because he came out a flat blue silhouette with no
+   face, the mausoleum because it was smaller than he was. A flat file is held for a day plus a week of
+   stale-while-revalidate, so this is the only invalidation there is. */
+const ART_VER = { critic: 4, o_mausoleum: 4, t_tomb: 4, o_bomkiosk: 7, o_plot: 2, kellz_south: 5, kellz_east: 5, t_casino: 4, rug_casino: 4, o_dicetable: 4, chicken: 4, olive: 4, rotten: 4, chandelier: 4, revenant: 4, farmhouse: 5, bank: 5, store: 5, hut: 5, cottage: 5, tree: 4, t_dirt: 4, t_water: 5 };   // (all pictures moved to ART_V 3 together; bump one here when it alone changes)
 /* One entry per crop in the rules, four growth stages each. Declared here because ART_FILES spreads it, and
    because a crop added to CROPS should ask for its art without anybody remembering to type four more names —
    the content check then fails until that art exists, which is the right way round. */
@@ -1617,7 +1621,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 71;
+const PACKS_V = 72;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {

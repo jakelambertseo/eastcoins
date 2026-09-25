@@ -24,8 +24,18 @@ const PIECES = [
   ["o_railH", 30, "the market's fence is 22; iron railings stand a little taller"],
   ["o_railV", 46, "the same railings seen end on, so they run up the tile rather than across it"],
   ["o_railgate", 54, "gateposts read above the run they interrupt"],
-  ["o_mausoleum", 96, "a 2x2 building: between a hut and The House at 128"],
-  ["critic", 116, "size xl. The Understudy is 96 and the Pyramid's pharaohs 110; he is the biggest thing here"],
+  ["o_mausoleum", 112, "a 2x2 building. 96 first, which left it looking smaller than the monster beside it"],
+  /* (2026-09-24, the owner on the first build: "is the critics are supposed to look like this?" — it was a flat
+     blue blob.) TWO THINGS WERE WRONG AND ONLY ONE WAS THE SIZE. The prompt asked for "translucent",
+     "semi-transparent" and "spectral glow", which fights detailed pixel art: the model resolved it as a gradient
+     silhouette with no face, no cape and no notebook — nothing inside the outline at all. Asking for a SOLID,
+     OPAQUE figure and naming a colour AND a brightness for every part (black hat, bone-white skull, brass
+     monocle, indigo cape with a blood-red lining, cream notebook) got a sprite with something in it. The
+     ghostliness then comes from the TAIL — inpainted over the legs that attempt gave him, because img2img at any
+     strength that kept the detail also kept the legs — rather than from transparency. Worth remembering for the
+     next ghost: describe a solid thing and make it spectral with its silhouette, never with its opacity.
+     And 116 was taller than the mausoleum he stands next to. */
+  ["critic", 104, "size xl, just above the Understudy at 96 — a mini boss, not a building"],
 ];
 const FROM = { o_railH: "railH", o_railV: "railV", o_railgate: "railgate", o_mausoleum: "mausoleum", critic: "critic" };
 
