@@ -2248,7 +2248,10 @@ export class World {
     /* (2026-09-22) A PET. 1 in 1,000 in the Boneyard and beyond, rolled per kill and never more than one at a time.
        It goes straight into the pet list rather than the bag, because a pet is an instance with a name, not a stack. */
     if (G.PET_SCENES.has(String(S.key).split(":")[0]) && Math.random() < G.PET_DROP) {
-      const k = G.PET_KEYS[Math.floor(Math.random() * G.PET_KEYS.length)];
+      /* (2026-09-24) PET_DROP_KEYS, not PET_KEYS: a raid pet is not in the pool. This rolled over every pet
+         there is, so the Coilling — the best of them, meant to be the Great Pyramid's reward — was also falling
+         off ordinary kills out here at a sixth of every one-in-a-thousand. */
+      const k = G.PET_DROP_KEYS[Math.floor(Math.random() * G.PET_DROP_KEYS.length)];
       const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k, name: "" };
       pl.C.pets.push(pet);
       /* (2026-09-22) WEAR IT, if nothing else is worn. A drop only went into the pet LIST, so it followed nobody

@@ -361,6 +361,22 @@ scene objects
     if (miss.length) bad(`${pt.name} (${pt.art})`, miss.join(", ")); else n++;
   }
   if (n === Object.keys(G.PETS).length) console.log(`  ok  all ${n} pets have a picture, and both lists carry it`);
+
+  /* AND A RAID PET IS NOT IN THE POOL A KILL ROLLS (2026-09-24, the owner, reading the wiki: "it says coilling
+     drops in Where it drops ... but its only the great pyramid right"). It was not only the wiki: the roll
+     picked out of PET_KEYS, every pet there is, so the Great Pyramid's reward was also falling off ordinary
+     kills in the Boneyard and beyond. The flag, the pool and the page have to agree, and this is what says so. */
+  const raid = Object.entries(G.PETS).filter(([, p]) => p.raid).map(([k]) => k);
+  for (const k of raid) if (G.PET_DROP_KEYS.includes(k)) bad(`${G.PETS[k].name} is a raid pet`, "but a kill can still roll it — it is in PET_DROP_KEYS");
+  for (const [k, p] of Object.entries(G.PETS)) if (!p.raid && !G.PET_DROP_KEYS.includes(k)) bad(`${p.name} drops from nowhere`, "not a raid pet, and not in PET_DROP_KEYS either");
+  if (raid.length) console.log(`  ok  ${raid.length} raid pet${raid.length === 1 ? " is" : "s are"} out of the kill pool (${G.PET_DROP_KEYS.length} of ${G.PET_KEYS.length} can drop)`);
+  /* and the hand-typed wiki page has to say so, because that page imports nothing and cannot compute it */
+  const wiki = readFileSync(join(ROOT, "v3/assets/js/eastscape-wiki.js"), "utf8");
+  for (const k of raid) {
+    if (!wiki.includes(G.PETS[k].name)) bad(`the wiki's pets page never mentions ${G.PETS[k].name}`, "its table is typed by hand");
+    else if (!/does not drop from a kill/i.test(wiki)) bad("the wiki's pets page lists a raid pet", "without saying it does not drop from a kill");
+  }
+  if (raid.length) console.log("  ok  the hand-typed wiki page names them and says they do not drop from kills");
 }
 
 console.log(`\n${errors} error${errors === 1 ? "" : "s"}, ${warns} warning${warns === 1 ? "" : "s"}\n`);

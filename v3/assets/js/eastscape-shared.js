@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 223;
+export const VERSION = 224;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -928,10 +928,18 @@ export const PETS = {
      speedRaw -> stepMsOf, whole percent, ceiling 50). `swing` is the swing/chop/mine/fish/pick rate, and it
      reaches the world only through swingFx, which folds it into the fxOf lever of that name (fraction, ceiling
      0.2). Putting the second one in `speed` would have made the owner walk faster and mine at the same rate. */
-  coilling: { name: "Coilling", art: "pet_coilling", fx: { speed: 10, slots: 2, swing: 10 }, ex: "It was in the sarcophagus with him. It has decided you are family now." },
+  coilling: { name: "Coilling", art: "pet_coilling", raid: true, fx: { speed: 10, slots: 2, swing: 10 }, ex: "It was in the sarcophagus with him. It has decided you are family now." },
   housecat:    { name: "House Cat",    art: "pet_housecat",    fx: { speed: 3, slots: 1, hp: 5, tix: 5 }, ex: "Wears the visor. Owns the room." }
 };
 export const PET_KEYS = Object.keys(PETS);
+/* WHAT A KILL CAN ACTUALLY DROP, which is not the same list (2026-09-24, the owner, reading the wiki: "it says
+   coilling drops in Where it drops ... but its only the great pyramid right").
+   HE WAS RIGHT AND IT WAS NOT JUST THE WIKI. The roll picked out of PET_KEYS — every pet there is — so the
+   Coilling really was dropping from ordinary kills in the Boneyard and beyond, at a sixth of every one-in-a-
+   thousand. The best pet in the game, gated behind a four-person raid, was also being handed out for grinding
+   chickens in the Trailer Park. A `raid: true` pet is out of the pool and comes only from wherever its dungeon
+   puts it. Add the flag and this, the wiki page and the content check all follow. */
+export const PET_DROP_KEYS = PET_KEYS.filter((k) => !PETS[k].raid);
 /* (2026-09-22) "trailer" was missed when the Trailer Park was built: every zone from the Boneyard (level 30) up
    drops pets, and the newest and hardest of them — 80 to 98 — was the only one that did not. An oversight, not a
    decision. ANY monster in these scenes rolls PET_DROP, so a new zone needs adding here and nowhere else. */
