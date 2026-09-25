@@ -1918,3 +1918,18 @@ Next on this:
 - **The Crypt and Pyramid were never measured against HIT_FLOOR 0.18.**
 - **COOK hides the plain cook for the seven smokeable fish** (wiki reads it).
 - No wiki pages for the Pyramid, the Carnival, or the new tiers.
+
+## 2026-09-25, later — the art landed
+
+VERSION 246. All 36 pieces drawn and live: 17 icons a tier plus the two
+mineable-rock sprites. Tool prices flat at 20,000 / 25,000.
+
+Still open on the tiers:
+- **The Hoodie and The Squeeze are still not core droppers.** They live in
+  the crypt/pyramid rules files, so the LOOT edit in shared.js never reached
+  them. CORE_BOSSES names them and nothing reads it.
+- No wiki pages for Nova, Singularity, the Pyramid or the Carnival.
+- Balance on feedback, as agreed: the core craft piles, 0.05%, and whether
+  600,000 for a Nova cuirass is the right shape now the tools are cheap.
+- Eclipse is still under-priced against starfall in every slot (its recipe
+  eats raw ore where starfall's eats a bar). Nova inherits it.
