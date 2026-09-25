@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 254;
+export const VERSION = 255;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1706,6 +1706,14 @@ Object.assign(SCENES, {
       lane(2, 12, 41, 14);                                      // the long floor through the middle
       lane(2, 6, 41, 7); lane(2, 19, 41, 20);                   // north and south aisles
       for (const x of [6, 15, 27, 36]) lane(x, 4, x + 1, 21);   // four cross-aisles, so no bank is a dead end
+      /* (2026-09-25, the owner: "there is no real walkways/carpets in the vault. think of it having roads, but
+         they're purple carpets instead") THE AISLES ARE NOW VISIBLE. A rug with no `img` is painted as a colour
+         block with a gold trim and a fringe, which is exactly a carpet runner and needs no art at all - so each
+         aisle gets one laid over it. They are pushed straight to objs and never through put(): a rug is floor
+         decoration, it must NOT mark its tiles solid, or the roads would be walls. */
+      for (const r of [[2, 12, 40, 3], [2, 6, 40, 2], [2, 19, 40, 2],
+                       [6, 4, 2, 18], [15, 4, 2, 18], [27, 4, 2, 18], [36, 4, 2, 18]])
+        objs.push({ t: "rug", x: r[0], y: r[1], w: r[2], h: r[3], color: "#42207a", name: "A purple runner, worn down the middle" });
       const free = (x, y) => g[y] && g[y][x] === "i" && !aisle.has(x + "," + y);
       const put = (o) => { if (!free(o.x, o.y)) return false; objs.push(o); g[o.y][o.x] = "#"; return true; };
       /* the House's own room, and nothing in it grew outdoors */
@@ -1716,33 +1724,44 @@ Object.assign(SCENES, {
          placed beside it because put() has already claimed those tiles for the cross-aisle at x=6. */
       put({ t: "vaultdoor", art: "o_bigvault", x: 3, y: 9, name: "The door of the vault itself, standing open. Whatever was behind it is gone." });
       put({ t: "vaultdoor", art: "o_vaultdoor", x: 41, y: 9, name: "A smaller strongroom door, still shut." });
-      /* money bags everywhere: put() refuses anything an aisle or another prop already owns, so this list is
-         deliberately longer than the room has room for and the survivors land where there is space. */
-      for (const c of [[2, 4], [5, 4], [14, 4], [22, 4], [24, 4], [35, 4], [41, 4],
-                       [2, 5], [9, 5], [21, 5], [31, 5], [39, 5],
-                       [2, 17], [5, 17], [18, 17], [23, 17], [35, 17], [41, 17],
-                       [2, 21], [5, 21], [21, 21], [25, 21], [34, 21], [41, 21],
-                       [8, 11], [38, 16], [11, 10], [29, 17]])
-        put({ t: "moneybag", art: "o_moneybag", x: c[0], y: c[1], name: "A money bag, still tied" });
       objs.push({ t: "sign", x: 40, y: 11, name: "THE VAULT: Combat 70 and up. Mining 60 for starfall, 70 for eclipse, 80 for nova. Whatever the House was keeping, it is still down here." }); g[11][40] = "#";
+      /* ---- THE SECTIONS, in the order a room is furnished: the fixed rooms first, the stock last. ORDER IS THE
+         WHOLE DESIGN HERE. put() refuses a tile something already owns, so whatever runs first gets the good
+         ground - and the money bags run LAST on purpose, filling what is left rather than eating a seam. */
+      /* the slot hall, in banks of four along both long walls */
       for (const y of [4, 21]) for (const x of [8, 9, 10, 11, 17, 18, 19, 20, 29, 30, 31, 32]) put({ t: "slots", x, y, name: "A machine nobody emptied" });
+      /* the card floor: two blocks of tables, each reachable from three sides */
       for (const c of [[9, 9], [12, 9], [9, 17], [12, 17]]) put({ t: "cointable", x: c[0], y: c[1], name: "A table still dealt out" });
       for (const c of [[30, 9], [33, 9], [30, 17], [33, 17]]) put({ t: "dicetable", x: c[0], y: c[1], name: "A dice table, the cup still on it" });
       for (const c of [[21, 9], [24, 9], [21, 17], [24, 17]]) put({ t: "bench", x: c[0], y: c[1], name: "A bench, pushed back" });
       objs.push({ t: "coinstatue", art: "o_coinstatue", x: 21, y: 4, name: "The House's own statue. It is not smiling." }); g[4][21] = "#";
       for (const x of [13, 22, 29]) { put({ t: "column", x, y: 10 }); put({ t: "column", x, y: 16 }); }
       for (const c of [[5, 11], [5, 15], [38, 11], [38, 15]]) put({ t: "ropepost", x: c[0], y: c[1], name: "Rope post" });
-      for (const c of [[3, 5], [3, 20], [40, 5], [40, 20], [23, 21]]) put({ t: "bullion", art: "o_bullion", x: c[0], y: c[1], name: "Bullion nobody came back for" });
       for (const c of [[7, 17], [34, 5]]) put({ t: "chest", x: c[0], y: c[1], name: "An emptied deposit box" });
-      /* what you came down here for: seams in the walls, the tree through the cracked floor, and the flood */
-      for (const c of [[4, 4], [4, 21], [8, 15], [12, 5], [13, 21]]) put({ t: "vein", x: c[0], y: c[1], ore: "starfall_ore", name: "Starfall seam", req: { skill: "mining", lvl: 60 }, xp: 150 });
-      for (const c of [[33, 4], [39, 4], [33, 21], [39, 21]]) put({ t: "vein", x: c[0], y: c[1], ore: "eclipse_ore", name: "Eclipse seam", req: { skill: "mining", lvl: 70 }, xp: 210 });
-      for (const c of [[19, 5], [25, 5], [22, 21]]) put({ t: "vein", x: c[0], y: c[1], ore: "nova_ore", name: "Nova seam", req: { skill: "mining", lvl: 80 }, xp: 240 });
+      /* ---- WHAT YOU CAME DOWN HERE FOR, and it is bank furniture rather than countryside: the ore is in burst
+         SAFE-DEPOSIT BOXES (o_vein_<ore>, which is what objArt resolves a vein to - the Vault had none, which is
+         why they drew as grey slabs), the tree came up through the cracked floor, and the water is a flood. */
+      for (const c of [[4, 4], [4, 21], [8, 15], [12, 5], [13, 21]]) put({ t: "vein", x: c[0], y: c[1], ore: "starfall_ore", name: "A forced deposit box", req: { skill: "mining", lvl: 60 }, xp: 150 });
+      for (const c of [[33, 4], [39, 4], [33, 21], [39, 21]]) put({ t: "vein", x: c[0], y: c[1], ore: "eclipse_ore", name: "A forced deposit box", req: { skill: "mining", lvl: 70 }, xp: 210 });
+      for (const c of [[19, 5], [25, 5], [22, 21]]) put({ t: "vein", x: c[0], y: c[1], ore: "nova_ore", name: "A forced deposit box", req: { skill: "mining", lvl: 80 }, xp: 240 });
       for (const c of [[26, 4], [26, 21]]) put({ t: "rock", x: c[0], y: c[1], ore: "voidglass", name: "Shattered window", req: { skill: "mining", lvl: 70 }, xp: 190 });
       /* `art` spelled out: a yew draws as o_yew off its TYPE, so without it the Vaultwood was an ordinary tree in
          a room with no sun in it. Same rule the Yard's Old oak needed. */
       for (const c of [[14, 17], [26, 5]]) put({ t: "yew", art: "o_vaultwood", x: c[0], y: c[1], log: "voidlogs", name: "Vaultwood, up through the floor", req: { skill: "woodcutting", lvl: 60 }, xp: 200 });
       for (const c of [[10, 15], [11, 16]]) { if (!free(c[0], c[1])) continue; objs.push({ t: "spot", x: c[0], y: c[1], look: 6, fish: "cloudray", fish2: "skyeel", fish2lvl: 70, name: "Flooded floor", req: { skill: "fishing", lvl: 60 }, xp: 200 }); g[c[1]][c[0]] = "~"; }
+      /* the counting room: one tidy block of bullion in the north-east, not litter */
+      for (const c of [[38, 5], [39, 5], [40, 5], [38, 6], [39, 6], [40, 6]]) put({ t: "bullion", art: "o_bullion", x: c[0], y: c[1], name: "Bullion nobody came back for" });
+      /* (2026-09-25, the owner: "dont scatter ground items everywhere, it needs to be neat and organized in
+         sections, just like the casino is") THE BAGS ARE STACKED IN RUNS, NOT SPRINKLED, and they run LAST so
+         they fill the wall behind everything else rather than taking its ground. The first pass listed
+         twenty-eight hand-picked tiles and let put() drop whatever collided, which is exactly how a room ends up
+         looking strewn. A run of fewer than three is skipped, so a single bag never sits on its own in a gap. */
+      for (const y of [5, 20]) {
+        let run = [];
+        const flush = () => { if (run.length >= 3) for (const x of run) put({ t: "moneybag", art: "o_moneybag", x, y, name: "A money bag, still tied" }); run = []; };
+        for (let x = 8; x <= 35; x++) { if (free(x, y)) run.push(x); else flush(); }
+        flush();
+      }
       return { g, objs, blobs: [] };
     },
     /* (2026-09-25) EVERYONE STANDS ON AN AISLE, because the furniture pass owns every other tile - put() refuses
@@ -3290,6 +3309,34 @@ export const YARD_TYPES = ["chicken", "cow", "rotten", "olive", "hornworm", "boa
    two hurts: The Last Dealer's max goes 24 -> 32 against a 92-health player, so a bad pair of rolls is most of
    your life. Sustained danger needs the FLOOR raised, which is a separate decision because it lands on the Tower
    too - the Tower is excluded from these two by where they run, but not from that. */
+/* WHAT A MONSTER HAS TO HIT (2026-09-25, the owner: "many mobs are still hitting for 0s across the board, i think
+   due to accuracy ... i think players defense is out performing mobs attacks by alot, especially when you consider
+   the pets, buffs, foods, reforging, etc", then: "make mob att actually matter").
+
+   HE WAS RIGHT AND IT GOT WORSE WITH LEVEL. A monster's `att` was hand-written at roughly its level, while a
+   player's defence roll is (melee + gear def) / 2 and gear def climbs 14 a tier - so the gap ran -9 at level 20
+   and -28.5 at 98, every monster sat on hitChance's floor, and `att` was a decorative number. Raising the floor
+   (which this file did earlier today, 0.1 -> 0.18) treats the symptom: it lifts everything equally and STILL
+   leaves att meaningless, because everyone is on the floor either way.
+
+   So att is derived instead. expectedDefence(lvl) is the roll of a level-appropriate player in the best full set
+   their level allows - the same model the Tower uses to pick a floor's defence - and MOB_HIT is the share of
+   swings a monster of that level should land against them. att follows from the two by the same arithmetic
+   hitChance uses, so a monster's accuracy now tracks the gear it is meant to be fought in.
+
+   IT ONLY EVER RAISES. Math.max keeps anything already hand-tuned above the curve, so a monster written to be
+   unusually accurate stays unusually accurate. And it runs beside OUTSIDE_HP/OUTSIDE_DMG, which means the Tower
+   and the two dungeons - which merge their rows later - are untouched and keep their own tuning. */
+const SET_SLOTS = ["helm", "body", "legs", "shield", "boots", "gloves"];
+export const expectedDefence = (lvl) => {
+  let t = TIERS[0];
+  for (const x of TIERS) if (lvl >= (x.gate || 1)) t = x;
+  const gear = SET_SLOTS.reduce((n, sl) => n + (ITEMS[`${t.key}_${sl}`]?.def || 0), 0);
+  return (lvl + gear) / 2;
+};
+export const MOB_HIT = 0.35;   // the share of swings a monster of its own level should land on a geared player
+export const attFor = (lvl) => Math.max(1, Math.round(expectedDefence(lvl) + (MOB_HIT - 0.5) / 0.04));
+
 export const OUTSIDE_HP = 1.15;
 export const OUTSIDE_DMG = 1.75;
 export const OUTSIDE_BUFF = OUTSIDE_HP;   // the old name: a few tools still read it for the health side
@@ -3297,6 +3344,7 @@ for (const [t, m] of Object.entries(MOBS)) {
   if (YARD_TYPES.includes(t)) continue;
   m.hp = Math.max(2, Math.round(m.hp * OUTSIDE_HP));
   m.max = Math.max(2, Math.round((m.max + 1) * OUTSIDE_DMG - 1));
+  m.att = Math.max(m.att, attFor(m.lvl));   /* see attFor: raises only, so a hand-tuned brawler keeps its edge */
 }
 
 /* WHAT A MONSTER DROPS (2026-09-20, the owner: "1-3 items, with the third being a rare one"). The same three lines for

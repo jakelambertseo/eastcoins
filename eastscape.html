@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=268">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=269">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1028,7 +1028,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=268";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=269";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1607,7 +1607,7 @@ const ART_FILES = ["t_dock", ...CROP_ART, "o_yardtree", "o_yardtree_stump", "o_t
      starfall, eclipse, voidglass and catalytic had none - so four ores, three of them the top of the mining
      ladder, drew as the generic hand-drawn grey lump. With them, the Thunderhead's own ruin: rune stones, storm
      crystals and broken sky-arches. All deferred to their areas below. */
-  "o_rock_starfall_ore", "o_rock_eclipse_ore", "o_rock_voidglass", "o_rock_catalytic", "o_rock_nova_ore", "o_rock_singularity_ore", "t_vault", "rug_vault", "o_vaultwood", "o_bigvault", "o_vaultdoor", "o_moneybag", "o_bullion",   /* (2026-09-25) the Vault's revamp. ART_FILES IS THE MASTER LIST and an AREA_ART entry only DEFERS a picture out of core.png into that map's sheet - a picture named in an area list and NOT here is simply missing, which is what the content check caught. */ "o_runestone", "o_stormcrystal", "o_skyarch",
+  "o_rock_starfall_ore", "o_rock_eclipse_ore", "o_rock_voidglass", "o_rock_catalytic", "o_rock_nova_ore", "o_rock_singularity_ore", "o_vein_starfall_ore", "o_vein_eclipse_ore", "o_vein_nova_ore", "t_vault", "rug_vault", "o_vaultwood", "o_bigvault", "o_vaultdoor", "o_moneybag", "o_bullion",   /* (2026-09-25) the Vault's revamp. ART_FILES IS THE MASTER LIST and an AREA_ART entry only DEFERS a picture out of core.png into that map's sheet - a picture named in an area list and NOT here is simply missing, which is what the content check caught. */ "o_runestone", "o_stormcrystal", "o_skyarch",
   /* (2026-09-24) THE GOLDEN SANDS and Alchemy: the pyramid, the colonnade, a date palm, a dug pit and the
      cauldron every potion in the game comes out of. Deferred to area-sands below. */
   "o_pyramid", "o_obelisk", "o_datepalm", "o_sandpit", "o_sandpit2", "o_sandpit3", "o_sandpit4", "o_cactus", "t_sand", "t_swater", "t_sandstone", "o_cauldron",
@@ -1653,7 +1653,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 88;
+const PACKS_V = 90;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -1771,7 +1771,7 @@ const AREA_ART = {
     /* (2026-09-24) the three it mines, which drew as a generic grey lump until today */
     "o_rock_starfall_ore", "o_rock_eclipse_ore", "o_rock_voidglass", "o_rock_nova_ore",
     /* (2026-09-25) the revamp: its own floor, its own runner, its own tree and its flooded floor */
-    "t_vault", "rug_vault", "o_vaultwood", "o_spot6", "o_bigvault", "o_vaultdoor", "o_moneybag", "o_bullion", "o_chest"]   /* the Vault has two yews of its own */   // (CASINO_ART is core now: the casino is where everyone starts)
+    "t_vault", "rug_vault", "o_vaultwood", "o_spot6", "o_bigvault", "o_vaultdoor", "o_moneybag", "o_bullion", "o_chest", "o_vein_starfall_ore", "o_vein_eclipse_ore", "o_vein_nova_ore"]   /* the Vault has two yews of its own */   // (CASINO_ART is core now: the casino is where everyone starts)
 };
 const LAZY_ART = new Set(Object.values(AREA_ART).flat());
 const artReady = Promise.all(ART_FILES.filter((k) => !LAZY_ART.has(k)).map(loadArt));
