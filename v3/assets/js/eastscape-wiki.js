@@ -6,8 +6,13 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
         <tr><td><b>Coin Toad</b></td><td>+15% tickets from drops</td></tr>
         <tr><td><b>Lantern Moth</b></td><td>+15 hitpoints</td></tr>
         <tr><td><b>House Cat</b></td><td>+3% speed, +1 bag slot, +5 hitpoints, +5% tickets</td></tr>
+        <tr><td><b>Coilling</b></td><td>+10% movement speed, +2 bag slots, +10% skilling and swing speed</td></tr>
       </table>
-      <p><b>One at a time</b>, and the bonus stops the moment you stow it. Speed shares its ceiling with food and gear, so a quick pet on top of a quick meal will not run away with it.</p>
+      <!-- plain text, NOT a link: there is no Pyramid guide yet, and a wiki that links to its own missing pages
+           is worse than one that has not got round to them. Make this an anchor when that page exists. -->
+      <p><b>The Coilling does not drop from a kill.</b> It comes out of the chest in the Great Pyramid, about one clear in twenty, and it is the best of them &mdash; which is the point of raiding for it.</p>
+      <p><b>One at a time</b>, and the bonus stops the moment you stow it. Both speeds share their ceilings with food and gear, so a quick pet on top of a quick meal will not run away with it.</p>
+      <p><b>They are two different speeds.</b> <b>Movement</b> is how fast you walk. <b>Skilling and swing</b> is how fast you hit a monster, a rock or a tree, and how fast you fish and pick pockets. A pet can give either, and only the Coilling gives both.</p>
       <p>Name yours what you like &mdash; everyone sees it. You can also let one go, and that cannot be undone.</p>`},{id:"trailer",title:"The Trailer Park",icon:"🚚",cat:"Going further",body:`<p><b>North off the Thunderhead.</b> The road west ends at the Vault; this is the turning before it, and the two are the top of the game side by side rather than one after the other.</p>
       <p><b>Combat 80</b> to start a fight here, <b>Fishing 80</b> for the black water. Everything in it bites.</p>
       <table class="tbl"><tr><th>Who</th><th>Level</th></tr>
