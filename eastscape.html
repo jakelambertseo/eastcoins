@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=262">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=263">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1028,7 +1028,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=262";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=263";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=133").then((m) => { WK = m; }));
@@ -4671,6 +4671,23 @@ function levelUp(k, l) {
 
 /* ------------------------------------------------------------ the wiki: built from the game's own rules */
 let wikiRoute = null;
+/* (2026-09-25) THE DROP INDEX HAS TO BE LAZY, and WIKI is an eager IIFE. The Crypt, the Pyramid and the Tower
+   merge their MOBS rows on first visit, long after WIKI is built, so anything they drop was simply absent from
+   "Dropped by" - which is how the owner could ask for the dungeon bosses to be listed against the chase cores and
+   get a page that never mentioned them. This rebuilds whenever the monster table has grown since the last look,
+   so a lazily merged dungeon appears without anything having to remember to invalidate it. */
+let DROPS = null, DROPS_N = -1;
+function dropsOf(id) {
+  const n = Object.keys(MOBS).length;
+  if (!DROPS || n !== DROPS_N) {
+    DROPS = {}; DROPS_N = n;
+    for (const [t, m] of Object.entries(MOBS)) {
+      for (const [k, q, ch] of (m.drops || [])) (DROPS[k] ||= []).push({ mob: t, n: q, ch });
+      for (const [k, ch] of G.raresOf(t)) (DROPS[k] ||= []).push({ mob: t, n: 1, ch });
+    }
+  }
+  return DROPS[id] || [];
+}
 const WIKI = (() => {
   const areas = {}, sources = {}, npcs = {};
   const addSrc = (k, s) => { (sources[k] ||= []).push(s); };
@@ -4779,7 +4796,7 @@ function wikiGo(route, setNav = true) {
       ${g.body}` : "";
   }
   else if (kind === "items" && ITEMS[id]) {
-    const it = ITEMS[id], src = WIKI.sources[id] || [], dr = WIKI.drops[id] || [], qs = WIKI.inQuests[id] || [];
+    const it = ITEMS[id], src = WIKI.sources[id] || [], dr = dropsOf(id), qs = WIKI.inQuests[id] || [];
     const rewards = Object.entries(QUESTS).filter(([, q]) => (id === "coins" && q.reward.coins) || (q.reward.items || []).some(([k]) => k === id));
     html = `<h2><i>${ico(id)}</i>${esc(it.name)}</h2>${it.ex ? `<p class="lede">“${esc(it.ex)}”</p>` : ""}
       ${it.slot ? `<h3>Equipment</h3><table class="tbl"><tr><th>Slot</th><th>Accuracy</th><th>Strength</th><th>Defence</th><th>Lets you</th></tr><tr><td>${it.slot}</td><td>+${it.acc || 0}</td><td>+${it.str || 0}</td><td>+${it.def || 0}</td><td>${it.tool ? `train ${wl(`skills/${it.tool}`, SKILLS[it.tool].name)}` : "—"}</td></tr></table>` : ""}
@@ -4788,6 +4805,21 @@ function wikiGo(route, setNav = true) {
       ${it.heal ? (it.raw ? `<h3>Raw</h3><p>Not food until it is cooked, and the Prize Counter will not buy it raw. Cook it at a campfire or a range.</p>` : `<h3>Food</h3><p>Heals <b>${it.heal}</b> hitpoints. Click it in your bag to eat.</p>`) : ""}
       ${Object.entries(G.COOK).some(([, r]) => r.to === id) ? `<h3>Cooked from</h3><p>${Object.entries(G.COOK).filter(([, r]) => r.to === id).map(([raw, r]) => `${wl(`items/${raw}`, `${ico(raw)} ${esc(ITEMS[raw].name)}`)} at Cooking ${r.lvl} (${r.xp} xp; no more burning from level ${r.burnStop})`).join("")}</p>` : ""}
       ${G.COOK[id] ? `<h3>Cooking</h3><p>Cook it at a range or campfire (Cooking ${G.COOK[id].lvl}) to make ${wl(`items/${G.COOK[id].to}`, `${ico(G.COOK[id].to)} ${esc(ITEMS[G.COOK[id].to].name)}`)}.</p>` : ""}
+      ${(() => {
+        /* (2026-09-25, the owner: "on the individual items wiki pages, add the crafting recipe, the purchase price,
+           and the mobs they drop from") The drops and the Prize Counter price were already here; the RECIPE was
+           not, on any item, which for the smithing chain meant the wiki could tell you a Nova bar existed and
+           never how to make one. Both directions are worth printing: what this is made FROM, and what it goes
+           INTO - the second is the only place an ore, a bar or a chase core says why you would keep it. */
+        const st = { furnace: "a furnace", anvil: "an anvil", fire: "a range or campfire", cauldron: "a cauldron" };
+        const mk = Object.values(RECIPES).filter((r) => r.out[0] === id && r.skill !== "cooking");
+        const into = Object.values(RECIPES).filter((r) => r.in.some(([k]) => k === id) && r.skill !== "cooking");
+        const line = (r) => `${r.in.map(([k, n]) => `${n > 1 ? n + " " : ""}${wl(`items/${k}`, `${ico(k)} ${esc(ITEMS[k]?.name || k)}`)}`).join(" + ")}`;
+        let out = "";
+        if (mk.length) out += `<h3>How to make it</h3>` + mk.map((r) => `<p>At ${st[r.station] || "a workbench"}, with <b>${SKILLS[r.skill].name} ${r.lvl}</b>: ${line(r)}${(r.out[1] || 1) > 1 ? ` makes <b>${r.out[1]}</b>` : ""}. ${r.xp ? `<b>${r.xp}</b> xp.` : ""}</p>`).join("");
+        if (into.length) out += `<h3>Used to make</h3><p>${into.map((r) => wl(`items/${r.out[0]}`, `${ico(r.out[0])} ${esc(ITEMS[r.out[0]]?.name || r.out[0])}`)).join(", ")}</p>`;
+        return out;
+      })()}
       ${it.req ? `<p>Needs <b>${SKILLS[it.req.skill].name} ${it.req.lvl}</b> to use.</p>` : ""}
       ${(() => { const pz = G.prizesOf().find((x) => x.give && x.give[0] === id); return pz || G.isLoot(id) ? `<h3>The Prize Counter</h3><p>${pz ? `On the shelf for <b>${G.fmtTix(pz.price)}</b>. ` : ""}${G.isLoot(id) ? `Trades in for <b>${G.fmtTix(G.valueOf(id))}</b>.` : ""}</p>` : ""; })()}
       ${rewards.length ? `<h3>Quest rewards</h3><p>${rewards.map(([k, q]) => wl(`quests/${k}`, esc(q.name))).join(", ")}</p>` : ""}
