@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 244;
+export const VERSION = 245;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -157,6 +157,15 @@ export const ITEMS = {
   starfall_ore: { name: "Starfall ore", icon: "☄️", ex: "Still faintly warm from the fall. Hold it to your ear and there is a sound a long way off." },
   eclipse_ore: { name: "Eclipse ore", icon: "🌑", ex: "It does not shine, it un-shines. Set it down and the shadows lean toward it." },
   voidglass: { name: "Voidglass", icon: "🔮", ex: "The Vault's windows, after whatever happened down there. Sharp, cold and very hard to look at." },
+  /* (2026-09-25) the ores the 80s and 90s tiers smelt from. Nova is in the Vault and Singularity in the Trailer
+     Park, which puts each one in a map already built for the level that mines it. */
+  nova_ore: { name: "Nova ore", icon: "\u{1F4AB}", ex: "Still warm, and it was not warm when you picked it up. Mining 80." },
+  singularity_ore: { name: "Singularity ore", icon: "\u{1F573}️", ex: "A pebble that takes two hands. Don't put it down on anything you care about. Mining 90." },
+  /* (2026-09-25) THE CHASE. One core per tier rather than one drop per weapon: with three weapons a tier, three
+     separate drops would have tripled the hunt and made two rolls in three land on a weapon you did not want.
+     A core is the same for all three, so the drop is always the right drop and the CHOICE stays yours. */
+  nova_core: { name: "Nova core", icon: "\u{1F31F}", ex: "The bit that was still burning. Every Nova weapon is built around one." },
+  singularity_core: { name: "Singularity core", icon: "\u{26AB}", ex: "It is not heavy until you try to move it. Every Singularity weapon is built around one." },
   willowlogs: { name: "Gloomwillow logs", icon: "🪵", ex: "Damp, dark and faintly glowing at the ends. They burn blue." },
   skyashlogs: { name: "Skyash logs", icon: "🪵", ex: "Light enough to float. Please don't let go of them." },
   voidlogs: { name: "Vaultwood logs", icon: "🪵", ex: "Grew in the dark with no water and no light. Nobody wants to think about what it lived on." },
@@ -428,7 +437,27 @@ export const TIERS = [
      99. The ladder keeps its own arithmetic — gate +10, set +14, weapon +4/+4 — so nothing about the curve is a new rule,
      there is simply more of it. They drop in the two new areas and nowhere else. */
   { key: "starfall",    name: "Starfall",    gate: 60, set: 90,  wAcc: 28, wStr: 26, jewel: 10, mark: "☄️", ex: "Fell out of the Thunderhead one night and was still warm in the morning. Nobody saw it land." },
-  { key: "eclipse",     name: "Eclipse",     gate: 70, set: 104, wAcc: 32, wStr: 30, jewel: 12, mark: "🌑", ex: "Forged in the dark at the bottom of the Vault. It weighs nothing and it is very cold." }
+  { key: "eclipse",     name: "Eclipse",     gate: 70, set: 104, wAcc: 32, wStr: 30, jewel: 12, mark: "🌑", ex: "Forged in the dark at the bottom of the Vault. It weighs nothing and it is very cold." },
+  /* (2026-09-25) NOVA AND SINGULARITY, the 80s and the 90s. The owner's first player hit Combat 80 with Eclipse
+     as the last thing to wear, which is the same ceiling problem v121 solved above and solved the same way: the
+     ladder keeps its own arithmetic - gate +10, set +14, weapon +4/+4, jewel +2 - so there is no new rule here,
+     only more of it. EVERYTHING BELOW IS GENERATED FROM THESE TWO LINES: six armour slots, three weapon kinds,
+     amulet, ring and the three tools, with their stats, names and requirements, and TOOL_GATES derives from
+     TIERS so the tool rungs come with them. The content check asserts the whole ladder strictly increases.
+
+     THE CURVE IS DELIBERATELY STILL STRAIGHT because the owner has said a tier 120 is coming: at gates 100, 110
+     and 120 it continues set 146/160/174 and jewel 18/20/22 with nothing to re-tune. Do not bend it to make one
+     tier feel special - that is what the glow and the art are for.
+
+     They are also the first tiers whose WEAPON is a chase item rather than a craft; see NOVA_CHASE below. */
+  { key: "nova",        name: "Nova",        gate: 80, set: 118, wAcc: 36, wStr: 34, jewel: 14, mark: "\u{1F4AB}", arms: { gladius: { name: "flare knife", short: "Knife", icon: "\u{1F52A}", ex: "Short, and it leaves a line in the air behind it." },
+                    sword: { name: "halberd", short: "Halberd", icon: "\u{1FA93}", ex: "Reach, and enough weight at the end of it to matter." },
+                    maul: { name: "starbreaker", short: "Breaker", icon: "\u{1F528}", ex: "You do not swing this so much as decide where it is going to land." } },
+                        ex: "Poured while the star was still going off. It has not finished cooling and it is not going to." },
+  { key: "singularity", name: "Singularity", gate: 90, set: 132, wAcc: 40, wStr: 38, jewel: 16, mark: "\u{1F573}️", arms: { gladius: { name: "event blade", short: "Blade", icon: "\u{1F52A}", ex: "Thin enough that you lose sight of the edge. It is still there." },
+                    sword: { name: "voidglaive", short: "Glaive", icon: "\u{1F531}", ex: "Everything near the head of it drifts very slightly toward the head of it." },
+                    maul: { name: "collapser", short: "Collapser", icon: "\u{1F528}", ex: "It is heavier at the moment of impact than it was on the way down." } },
+                        ex: "It weighs more than a thing that size can weigh. Everything near it leans in a little." },
 ];
 export const tierOf = (key) => TIERS.find((t) => t.key === key) || null;
 
@@ -467,7 +496,15 @@ for (const t of TIERS) {
       req: { skill: "melee", lvl: t.gate }, ex: t.ex
     };
   }
-  for (const [kind, w] of Object.entries(WEAPONS)) {
+  /* (2026-09-25, the owner: "could we create different weapon variations that essentially do the same thing?
+     like a combat knife instead of dagger, haliburt instead of longsword ... but they still follow the concept of
+     maul = more damage but swings slower") A tier may rename its three weapons with `arms`. It is a RENAME and
+     nothing else: the key stays `<tier>_gladius|sword|maul`, so speed, the acc/str multipliers, needsStr, the
+     GEAR_PRICE lookup (which is keyed by kind) and every art and recipe reference keep working untouched.
+     WHICH MEANS THE KEY AND THE NAME DIVERGE at the top two tiers - a "Nova halberd" is `nova_sword`. That is
+     deliberate and is the cheap half of the trade; renaming the keys would touch nine other tables. */
+  for (const [kind, w0] of Object.entries(WEAPONS)) {
+    const w = { ...w0, ...(t.arms?.[kind] || {}) };
     ITEMS[`${t.key}_${kind}`] = {
       name: `${t.name} ${w.name}`, short: w.short, icon: w.icon, slot: "weapon",
       acc: Math.round(t.wAcc * w.acc), str: Math.round(t.wStr * w.str), speed: w.speed, tier: t.key,
@@ -515,7 +552,18 @@ export const TOOL_KINDS = {
 };
 /* The rungs, low to high. Bronze is 1 and not the gear tier's 10: a starting bag holds a bronze pickaxe and the
    Yard's copper is Mining 1, so anything higher would make the tutorial's own rock unmineable. */
-export const TOOL_GATES = TIERS.map((t, i) => (i ? t.gate : 1));
+/* (2026-09-25) A NEW RUNG MUST NOT RAISE THE BAR ON ROCKS THAT ALREADY EXISTED, and adding Nova at gate 80 did
+   exactly that: toolNeed(85) went from eclipse to nova, so the Trailer Park's four Slag banks - which people mine
+   today with an eclipse pickaxe - would have wanted a 250,000-ticket one instead. Nothing announced it.
+
+   It also fixes the circle. A tier's ore is now mined with the tier BELOW's pickaxe, so Nova ore (80) takes an
+   eclipse pickaxe and Singularity ore (90) takes a Nova one, which by then you can smith from ore you mined
+   yourself. Bom's price is a shortcut, not the only door into the tier.
+
+   THE RULE, for whoever adds tier 100: a new tool rung gates ABOVE the highest node that existed before it (85,
+   the Slag banks), not at its tier's own level. Read the nodes, do not guess - the check below does. */
+const TOOL_GATE_OVER = { nova: 86, singularity: 96 };
+export const TOOL_GATES = TIERS.map((t, i) => (i ? TOOL_GATE_OVER[t.key] || t.gate : 1));
 /* The rungs as their own list. A rung is NOT its gear tier: bronze gear gates at melee 10 while the bronze pickaxe
    gates at 1, and comparing a rung against TIERS[i].gate is what made the Yard's own copper unmineable in testing. */
 export const TOOL_RUNGS = TIERS.map((t, i) => ({ key: t.key, name: t.name, mark: t.mark, gate: TOOL_GATES[i] }));
@@ -1632,6 +1680,11 @@ Object.assign(SCENES, {
       /* the ore. Starfall along the near wall, eclipse at the far end, voidglass where the windows went. */
       for (const [x, y] of [[10, 7], [13, 6], [16, 8], [11, 19], [15, 20]]) { objs.push({ t: "vein", x, y, ore: "starfall_ore", name: "Starfall seam", req: { skill: "mining", lvl: 60 }, xp: 150 }); g[y][x] = "#"; }
       for (const [x, y] of [[30, 6], [34, 7], [32, 20], [36, 19]]) { objs.push({ t: "vein", x, y, ore: "eclipse_ore", name: "Eclipse seam", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[y][x] = "#"; }
+      /* (2026-09-25) NOVA ORE, the 80s tier's own. It goes in the Vault because the Vault is already the Combat
+         70-92 map and already the place you come for starfall and eclipse, so the ladder stays in one room
+         instead of sending a level 80 somewhere new for one rock. A Mining 80 node takes an ECLIPSE pickaxe (see
+         TOOL_GATE_OVER) so the tier can be entered by anyone standing here already. */
+      for (const [x, y] of [[12, 12], [16, 14], [33, 12]]) { objs.push({ t: "vein", x, y, ore: "nova_ore", name: "Nova seam", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[y][x] = "#"; }
       for (const [x, y] of [[24, 4], [27, 22]]) { objs.push({ t: "rock", x, y, ore: "voidglass", name: "Shattered window", req: { skill: "mining", lvl: 70 }, xp: 190 }); g[y][x] = "#"; }
       /* (v121) woodcutting's last two: whatever grew down here in the dark. */
       for (const [x, y] of [[20, 8], [22, 18]]) { objs.push({ t: "yew", x, y, log: "voidlogs", name: "Vaultwood", req: { skill: "woodcutting", lvl: 60 }, xp: 200 }); g[y][x] = "#"; }
@@ -2750,6 +2803,10 @@ Object.assign(SCENES, {
       for (const [x, y] of [[2, 11], [6, 10], [12, 11]]) put({ t: "bogwood", x, y, log: "bogwoodlogs", name: "Bogwood", req: { skill: "woodcutting", lvl: 80 }, xp: 290 });
       /* MINING, the bank behind the yard: slagstone at 85, the best ore in the game and an Eclipse pickaxe to get it. */
       for (const [x, y] of [[38, 4], [41, 6], [39, 8], [42, 10]]) put({ t: "rock", x, y, ore: "slagstone", name: "Slag bank", req: { skill: "mining", lvl: 85 }, xp: 210 });
+      /* (2026-09-25) SINGULARITY ORE. The Trailer Park is the 80-98 map, so the last ore in the game sits in the
+         last place you fight. It wants a NOVA pickaxe, which is the one thing in the chain you have to make (or
+         buy) rather than find - mine the Vault's Nova seams with an eclipse pickaxe first. */
+      for (const [x, y] of [[36, 2], [40, 2], [43, 4]]) put({ t: "rock", x, y, ore: "singularity_ore", name: "Singularity pocket", req: { skill: "mining", lvl: 90 }, xp: 300 });
       /* THE CARS ON BLOCKS. A `wreck` is a rock that looks like a truck: same handler, same pickaxe, its own picture
          and its own name. Mining 65, so a Starfall pickaxe opens the zone's bread and butter and Eclipse is for the
          slag bank. Scattered through the park rather than penned in, because stripping one is what you do while you
@@ -3201,8 +3258,8 @@ export const LOOT = {
   junkdog:    { item: ["bones", [1, 2]], rare: [["stake_loafers", 0.02], ["spiderboots", 0.01]] },
   possum:     { item: ["hide", 1], rare: [["gamblers_ring", 0.03], ["sharps_gloves", 0.015]] },
   scrapper:   { item: ["catalytic", 1], rare: [["menace", 0.03], ["sharps_gloves", 0.02], ["grudge", 0.01]] },
-  gator:      { item: ["hide", [1, 2]], rare: [["bogplate", 0.04], ["spiderboots", 0.02], ["angels_ring", 0.01]] },
-  junkking:   { item: ["catalytic", [2, 4]], rare: [["kingcap", 0.08], ["wrench", 0.05], ["angels_ring", 0.04], ["slagstone", 0.5]] },
+  gator:      { item: ["hide", [1, 2]], also: [["nova_core", 1, 0.0005], ["singularity_core", 1, 0.0005]], rare: [["bogplate", 0.04], ["spiderboots", 0.02], ["angels_ring", 0.01]] },
+  junkking:   { item: ["catalytic", [2, 4]], also: [["nova_core", 1, 0.0005], ["singularity_core", 1, 0.0005]], rare: [["kingcap", 0.08], ["wrench", 0.05], ["angels_ring", 0.04], ["slagstone", 0.5]] },
   understudy: { item: ["diamond_ore", [1, 2]], rare: [["bonegourd", 0.0125], ["sharps_gloves", 0.025]] },
   /* THE CARNIVAL (2026-09-24). Its four carry the band’s ore and the boss carries the map’s whole rare table
      on one kill, the same shape the Boneyard’s Critic has. Nothing new is invented here: every key is a thing
@@ -3240,7 +3297,7 @@ export const LOOT = {
   warden:     { item: ["starfall_ore", [1, 2]], rare: [["angels_ring", 0.03], ["bogplate", 0.02]] },
   pitboss:    { item: ["starfall_ore", [1, 2]], rare: [["bookies_amulet", 0.04], ["gamblers_ring", 0.03]] },
   hoard:      { item: ["eclipse_ore", 1], rare: [["gamblers_ring", 0.05], ["angels_ring", 0.03]] },
-  dealer:     { item: ["eclipse_ore", [1, 2]], also: [["voidglass", 1, 0.2]], rare: [["bookies_amulet", 0.06], ["spiderboots", 0.04], ["grudge", 0.03]] }
+  dealer:     { item: ["eclipse_ore", [1, 2]], also: [["voidglass", 1, 0.2], ["nova_core", 1, 0.0005], ["singularity_core", 1, 0.0005]], rare: [["bookies_amulet", 0.06], ["spiderboots", 0.04], ["grudge", 0.03]] }
 };
 /* WHO ATTACKS ON SIGHT. This was a single `false` (the owner, 2026-09-19: "i dont want any monster to attack on site
    for now, its just too aggressive for a relaxed chill game like this"), and on 2026-09-22 it became a LIST, for a
@@ -4122,7 +4179,11 @@ const SMELT = {
   /* (v121) the Vault's two. Each wants a trip as well as a pickaxe, the way onyx does, so the last tiers are never just
      a question of standing still and mining for long enough. */
   starfall:    [["starfall_ore", 2], ["onyx_bar", 1]],     // the Vault, Mining 60, on top of a bar of the tier below
-  eclipse:     [["eclipse_ore", 2], ["voidglass", 1]]      // the Vault's floor, Mining 70, plus the glass from its windows
+  eclipse:     [["eclipse_ore", 2], ["voidglass", 1]],     // the Vault's floor, Mining 70, plus the glass from its windows
+  /* (2026-09-25) and the 80s and 90s, on the same rule: ore plus the bar below it, so the top of the ladder is a
+     CHAIN and not a wall - a Singularity bar eats a Nova bar, which eats an Eclipse bar, which eats voidglass. */
+  nova:        [["nova_ore", 2], ["eclipse_bar", 1]],      // the Vault, Mining 80
+  singularity: [["singularity_ore", 2], ["nova_bar", 1]]   // the Trailer Park, Mining 90
 };
 // how many bars a piece takes — the big slots cost more, and a maul costs most
 /* (2026-09-22) the tool rungs smith like everything else, so a miner can make the next pickaxe out of what they mined. */
@@ -4157,18 +4218,45 @@ const BARS = { body: 5, legs: 3, shield: 3, helm: 2, boots: 1, gloves: 1, gladiu
 ITEMS.charcoal = { name: "Charcoal", icon: "⬛", ex: "Burnt logs, light and filthy. The furnace won't run without it. Better wood gives more of it." };
 
 /* How much a bar costs to fuel, by tier: bronze through eclipse. */
-const CHAR_FUEL = [1, 1, 2, 2, 3, 3, 4];
+/* (2026-09-25) TWO MORE RUNGS. Indexed by tier POSITION, so it must grow with TIERS or the new smelts are
+   handed `undefined` charcoal and quietly cost none. */
+const CHAR_FUEL = [1, 1, 2, 2, 3, 3, 4, 5, 6];
 /* What a log is worth in charcoal. Anything not named here gives 1. */
 const BURN = { logs: 1, willowlogs: 1, ashlogs: 2, skyashlogs: 2, pinelogs: 2, yewlogs: 3, voidlogs: 4, bogwoodlogs: 4 };
+
+/* (2026-09-25) THE CHASE, AND THE WAY ROUND IT. A core drops at CORE_DROP from the five hardest things in the
+   game, which at 1 in 2,000 is a lottery and not a plan — so the SAME core is craftable from a pile of what those
+   places already drop. That pairing is the whole design: a drop feels like skipping an evening, and a dry streak
+   is still progress. Do not make the core drop-only; a required 1-in-2,000 is how a chase item becomes a reason
+   to stop playing. (The owner also keeps the market as a third route: people sell these.) */
+const CORE_TIERS = { nova: "nova_core", singularity: "singularity_core" };
+/* ROUTE B, and it is the one most people will actually walk. Each core is also made at an anvil out of a heap of
+   what the 80s and 90s maps already drop - which is the second job these recipes do: hail shards, static pelts,
+   storm jelly, catalytic converters and slagstone were sell-only until now. */
+const CORE_CRAFT = {
+  nova_core:        { lvl: 80, in: [["hailshard", 15], ["staticfur", 10], ["stormjelly", 5], ["eclipse_bar", 2]] },
+  singularity_core: { lvl: 90, in: [["catalytic", 15], ["slagstone", 10], ["masters_seal", 1], ["nova_bar", 2]] }
+};
+/* 0.0005 IS ALSO WRITTEN AS A LITERAL in the three bosses' LOOT rows above, and cannot say so there: LOOT is
+   evaluated at module load and this line runs hundreds of lines later, so naming it throws "cannot access
+   before initialization" - which it did. eastscape-gear-check.mjs asserts the two agree. */
+export const CORE_DROP = 0.0005;
+export const CORE_BOSSES = ["junkking", "gator", "dealer", "hoodie3", "squeeze"];
 
 for (const [i, t] of TIERS.entries()) {
   const tierN = i + 1, bar = `${t.key}_bar`;
   ITEMS[bar] = { name: `${t.name} bar`, icon: "🧱", tier: t.key, ex: `Smelted ${t.name.toLowerCase()}, still warm. It wants to be something.` };
   recipe(`smelt_${t.key}`, { skill: "smithing", station: "furnace", in: [...SMELT[t.key], ["charcoal", CHAR_FUEL[i]]], out: [bar, 1], lvl: t.gate, xp: 15 * tierN, ms: 2400 });
+  /* (2026-09-25) THE TOP TWO TIERS' WEAPONS WANT A CORE as well as bars — the owner picked the weapon as the
+     chase item, so the armour is a reliable grind and the thing in your hand is the trophy. Armour and tools are
+     untouched, and so is every tier below. */
+  const core = CORE_TIERS[t.key];
+  if (core && CORE_CRAFT[core]) recipe(`craft_${core}`, { skill: "smithing", station: "anvil", in: CORE_CRAFT[core].in, out: [core, 1], lvl: CORE_CRAFT[core].lvl, xp: 600 * tierN, ms: 3200 });
   for (const [slot, n] of Object.entries(BARS)) {
     const key = `${t.key}_${slot}`;
     if (!ITEMS[key]) continue;
-    recipe(`smith_${key}`, { skill: "smithing", station: "anvil", in: [[bar, n]], out: [key, 1], lvl: t.gate, xp: n * 20 * tierN, ms: 2600 });
+    const wants = core && ITEMS[key].slot === "weapon" && !ITEMS[key].tool ? [[bar, n], [core, 1]] : [[bar, n]];
+    recipe(`smith_${key}`, { skill: "smithing", station: "anvil", in: wants, out: [key, 1], lvl: t.gate, xp: n * 20 * tierN, ms: 2600 });
   }
 }
 
@@ -4423,12 +4511,25 @@ export const prizesOf = () => [
    gives tickets somewhere to go that isn't a table). Bronze is what it always cost; each tier up costs several times the
    last, priced at roughly 20 minutes' fighting for emerald up to a couple of hours' for onyx. The good stuff still drops. */
 const GEAR_PRICE = { gladius: 220, sword: 250, maul: 280, helm: 200, shield: 300, body: 600, legs: 360, boots: 120, gloves: 120, ring: 180, amulet: 260 };
-const TIER_COST = { bronze: 1, emerald: 4, diamond: 12, dragonstone: 30, onyx: 75, starfall: 180, eclipse: 420 };
+/* (2026-09-25) NOVA AND SINGULARITY. The ladder has been multiplying by about 2.4 a tier since diamond, and
+   these keep that: a Nova cuirass is 600,000 tickets and a Singularity one 1,440,000. They are meant to be
+   the thing somebody saves for. */
+const TIER_COST = { bronze: 1, emerald: 4, diamond: 12, dragonstone: 30, onyx: 75, starfall: 180, eclipse: 420, nova: 1000, singularity: 2400 };
 const GEAR_FOR_SALE = TIERS.flatMap((t) => Object.entries(GEAR_PRICE).filter(([k]) => ITEMS[`${t.key}_${k}`]).map(([k, p]) => [`${t.key}_${k}`, p * TIER_COST[t.key]]));
 /* (2026-09-22) every tool rung is on the counter too — the owner: "add them as purchases for every level at Bom
    Trady as well". A tool is cheap against a suit of its own tier (an eclipse pickaxe is 8,400 to an eclipse
    cuirass's 252,000) because a tool is a KEY, not a prize: nobody should be shut out of a whole area saving up. */
-const TOOLS_FOR_SALE = TIERS.flatMap((t) => Object.keys(TOOL_KINDS).filter((k) => ITEMS[`${t.key}_${k}`]).map((k) => [`${t.key}_${k}`, 20 * TIER_COST[t.key]]));
+/* (2026-09-25, the owner: "the tools need to be expensive at Bom ... somewhere in the middle of the price of the
+   nova and singularity gear") So the top two rungs break the rule above: 250 puts them between a shield (300) and
+   a sword (250) of their own tier instead of at a twentieth of one.
+
+   BE AWARE OF WHAT THAT GATES. For every tier below this a tool is a KEY and nothing else, which is why it was
+   cheap. At 80 and 90 the tool is the ONLY DOOR INTO THE TIER: nova ore is a Mining 80 rock, toolNeed(80) asks
+   for the nova rung, and a nova pickaxe is smithed from nova bars - which need nova ore. The circle only opens at
+   Bom's counter, so this price is the real entry fee for the whole tier, not a convenience. If it turns out to be
+   a wall rather than a goal, this number is the one to move, not the gear. */
+const TOOL_COST = { nova: 250, singularity: 250 };
+const TOOLS_FOR_SALE = TIERS.flatMap((t) => Object.keys(TOOL_KINDS).filter((k) => ITEMS[`${t.key}_${k}`]).map((k) => [`${t.key}_${k}`, (TOOL_COST[t.key] || 20) * TIER_COST[t.key]]));
 /* Dex's bar (2026-09-20): drinks and the scroll home. Priced so a lager about pays for itself at the table limit and
    costs you at small stakes: a drink is for someone betting big, and otherwise a tickets sink. `round` buys everyone on
    the floor who isn't already drinking a lager's worth of bets. */
@@ -4496,7 +4597,10 @@ export const VALUE = {
   receipt: 15, cobweb: 25, agilmark: 25,
   catalytic: 140, slagstone: 110, pinelogs: 40, bogwoodlogs: 95, mudcat: 58, bowfin: 66,   // the Trailer Park: the best gathering in the game, because it is the furthest walk and the meanest neighbours
                                                       // the Boneyard's leavings
-  starfall_ore: 55, eclipse_ore: 90, voidglass: 70, voidlogs: 85,               // (v121) the Vault's
+  starfall_ore: 55, eclipse_ore: 90, voidglass: 70, voidlogs: 85, nova_ore: 130, singularity_ore: 185,
+  /* (2026-09-25) THESE TWO NUMBERS PRICE THE WHOLE TOP OF THE GAME. Every bar, piece and tool above them
+     is derived from RECIPES by the CRAFT_PAYS chain, so what Nova and Singularity cost, what they sell
+     for, and what Bom charges for their tools all come out of here. */               // (v121) the Vault's
   chip_red: 250, chip_black: 1000, chip_gold: 5000,                             // fighting's windfalls
   chicken: 8, feather: 1, bones: 3, beef: 12, hide: 14, tomatoe: 5, husk: 10, pork: 16, tusk: 18, pit: 2, mask: 60, monocle: 40, manifesto: 25
 };

@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=258">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=259">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -849,6 +849,26 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 
 .an-warn{margin:0 10px 8px;padding:8px 11px;border-radius:7px;font-size:13px;font-weight:800;color:#ffd7d2;
   background:rgba(150,32,32,.28);box-shadow:inset 0 0 0 2px #a33}
+
+/* ---- LEGENDARY GLOW (2026-09-25). Nova and Singularity only, everywhere an item icon is drawn: the bag, the
+   bank, the equipment doll, shops, trades, tooltips and the Prize Counter. `filter: drop-shadow` rather than
+   box-shadow or text-shadow, because the sprites are transparent PNGs and the emoji fallback is text - a box
+   shadow would light up a rectangle and a text shadow would sit behind the picture rather than around it. */
+.glow{display:inline-block;line-height:0;position:relative}
+.glow .ico{display:block}
+.glow-nova{filter:drop-shadow(0 0 2px #ffd88a) drop-shadow(0 0 5px #ff9a3c);animation:glowNova 2.2s ease-in-out infinite}
+.glow-sing{filter:drop-shadow(0 0 2px #c9a6ff) drop-shadow(0 0 6px #6d3cff);animation:glowSing 3s ease-in-out infinite}
+@keyframes glowNova{
+  0%,100%{filter:drop-shadow(0 0 2px #ffd88a) drop-shadow(0 0 4px #ff9a3c)}
+  50%    {filter:drop-shadow(0 0 3px #fff0c4) drop-shadow(0 0 9px #ff7a00)}
+}
+@keyframes glowSing{
+  0%,100%{filter:drop-shadow(0 0 2px #c9a6ff) drop-shadow(0 0 5px #6d3cff)}
+  50%    {filter:drop-shadow(0 0 4px #e8dcff) drop-shadow(0 0 11px #4b1fd6)}
+}
+@media (prefers-reduced-motion:reduce){
+  .glow-nova,.glow-sing{animation:none}
+}
 </style>
 </head>
 <body>
@@ -1008,7 +1028,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=258";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=259";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=133").then((m) => { WK = m; }));
@@ -1933,7 +1953,19 @@ function toolLine(skill, lvl) {
   return `<dt>Needs</dt><dd class="${short ? "low" : ""}">${ico(key)} ${esc(it.name)} ${where}${why}</dd>`;
 }
 const tixPrice = (n) => `${ico("tickets")}${Math.round(n).toLocaleString()}`;
-const ico = (k) => { const a = ART_ALIAS[k] || k; return ITEM_ART.has(a) ? artOf(a) : ITEMS[k]?.icon || ""; };
+/* (2026-09-25, the owner: "i want the art on them to have a glowing effect, animate if needed", and then "the
+   nova and singularity tools need to glow and animate as well") THE GLOW IS A CLASS, NOT ARTWORK. artOf emits a
+   real <img>, and `fit` is pinned to "tiro" so worn gear never reaches the world sprite - which means the whole
+   effect lives in the UI and can be one CSS rule per tier. That buys three things baking it into the pictures
+   would not: it covers all sixteen items of a tier including the TOOLS for free, it animates, and it turns
+   itself off under prefers-reduced-motion. It also still works while a piece has no art yet, because the class
+   goes on a wrapper around the emoji fallback too. */
+const GLOW_TIERS = { nova: "glow-nova", singularity: "glow-sing" };
+const ico = (k) => {
+  const a = ART_ALIAS[k] || k, glow = GLOW_TIERS[ITEMS[k]?.tier];
+  const inner = ITEM_ART.has(a) ? artOf(a) : ITEMS[k]?.icon || "";
+  return glow && inner ? `<span class="glow ${glow}">${inner}</span>` : inner;
+};
 // the stance buttons wear the skill each one trains; Controlled (all three) wears the old Melee icon
 const sico = (k) => (SKILL_ART.has(k) ? artOf(`skill_${k}`) : SKILLS[k]?.icon || "");
 // on the canvas: centred on x, y, size pixels square
