@@ -289,7 +289,7 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
       </table>
       <p><b>Plant the longest crop you can before you log off</b> and the short ones while you are around. A plot is doing nothing between ripening and your coming back, which is the only real skill in this skill.</p>
       <p><b>Your island decides how many plots you have</b> &mdash; 8 to start, 12 for 5,000 tickets, 20 for 20,000. It multiplies everything above, so it is the upgrade that matters.</p>
-      <p><b>It is background money, not a living.</b> A full set of plots kept going comes to a fraction of what fighting the same zone pays; the appeal is that it happens while you are doing something else.</p>`},{id:"thieving",title:"Thieving",icon:"🤏",cat:"Skills",body:`<p><b>The Thieves&rsquo; Guild is south of the Yard</b>, behind a door that wants a permit. Inside are four rooms of guild members, and you pick their pockets. <b>Nothing in there fights back and nothing can be attacked</b> &mdash; it is the only skill in the game that needs no combat level at all, no weapon and no armour.</p>
+      <p><b>It is background money, not a living.</b> A full set of plots kept going comes to a fraction of what fighting the same zone pays; the appeal is that it happens while you are doing something else.</p>`},{id:"thieving",title:"Thieving",icon:"🤏",cat:"Skills",body:`<p><b>The Thieves&rsquo; Guild is south of the Yard</b>, behind a door that wants a permit. Inside are four rooms of guild members, two marks to a room, and you pick their pockets. <b>Nothing in there fights back and nothing can be attacked</b> &mdash; it is the only skill in the game that needs no combat level at all, no weapon and no armour.</p>
 
       <h3>Getting in</h3>
       <p>You need a <b>Thieves&rsquo; permit</b>, and there are two ways to hold one:</p>
@@ -298,12 +298,17 @@ const GUIDES=[{id:"pets",title:"Pets",icon:"🐾",cat:"Going further",body:`<p>A
       <p>It is an ordinary item, so it can be <b>bought and sold on the market</b>, which usually means it changes hands for rather less than the shop charges. The door takes it off you the first time and never asks again &mdash; so a permit you have already used cannot be sold on.</p>
 
       <h3>The four rooms</h3>
+      <p><b>A clean run pays twice.</b> Lift five in a row without being caught and the fifth one comes out with two things instead of one. Getting caught puts you back to nothing &mdash; so the stun is not just lost time, it is the run it breaks.</p>
       <p>Each room is behind a door, and <b>the door and the marks are two different ladders</b>. The first door opens at Thieving 10 although the Grifters behind it cannot be picked until 25 &mdash; that is on purpose, so there is somewhere to walk to and look at while you are still learning.</p>
       <table class="tbl"><tr><th>Room</th><th>Door opens</th><th>Pick at</th><th>xp a pick</th><th>Tickets an hour</th></tr>
-        <tr><td>The Back Room &mdash; Apprentice Lifters</td><td>&mdash;</td><td>1</td><td>19</td><td>~2,300</td></tr>
-        <tr><td>The Card Room &mdash; Grifters</td><td>10</td><td>25</td><td>56</td><td>~6,700</td></tr>
-        <tr><td>The Store Room &mdash; The Fixers</td><td>50</td><td>50</td><td>138</td><td>~11,100</td></tr>
-        <tr><td>The Vault Room &mdash; The Quartermaster</td><td>75</td><td>75</td><td>250</td><td>~17,600</td></tr>
+        <tr><td>The Back Room &mdash; Apprentice Lifters</td><td>&mdash;</td><td>1</td><td>19</td><td>~3,400</td></tr>
+        <tr><td>The Back Room &mdash; Cutpurses</td><td>&mdash;</td><td>15</td><td>36</td><td>~4,500</td></tr>
+        <tr><td>The Card Room &mdash; Grifters</td><td>10</td><td>25</td><td>56</td><td>~9,000</td></tr>
+        <tr><td>The Card Room &mdash; The Shills</td><td>10</td><td>40</td><td>95</td><td>~14,800</td></tr>
+        <tr><td>The Store Room &mdash; The Fixers</td><td>50</td><td>50</td><td>138</td><td>~22,000</td></tr>
+        <tr><td>The Store Room &mdash; Housebreakers</td><td>50</td><td>62</td><td>182</td><td>~26,300</td></tr>
+        <tr><td>The Vault Room &mdash; The Quartermaster</td><td>75</td><td>75</td><td>250</td><td>~33,000</td></tr>
+        <tr><td>The Vault Room &mdash; The Ringleader</td><td>75</td><td>90</td><td>337</td><td>~36,300</td></tr>
       </table>
 
       <h3>How a pick works</h3>
