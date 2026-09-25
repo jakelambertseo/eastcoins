@@ -1153,14 +1153,14 @@ const withWho = (e) => { const w = ROSTER.get(e.id); if (!w && you && Date.now()
 
 /* MAPS THAT AREN'T IN THE FIRST LOAD (2026-09-21): the closed areas (eastscape-closed.js) are not downloaded to log in. If the server ever puts
    you in a scene this page doesn't know (an admin teleport), the message waits while the extra maps are fetched, then runs. */
-let CRR = null; const cryptRules = () => (cryptRules.p ||= import("/v3/assets/js/eastscape-crypt-rules.js?v=81").then((m) => { CRR = m.createCryptRules(G, G._MAP); Object.assign(G.SCENES, CRR.scenes); Object.assign(G.MOBS, CRR.mobs); AREA_ART.crypt = CRR.scenes.crypt.art; }));
+let CRR = null; const cryptRules = () => (cryptRules.p ||= import("/v3/assets/js/eastscape-crypt-rules.js?v=82").then((m) => { CRR = m.createCryptRules(G, G._MAP); Object.assign(G.SCENES, CRR.scenes); Object.assign(G.MOBS, CRR.mobs); AREA_ART.crypt = CRR.scenes.crypt.art; }));
 /* (2026-09-22) THE TOWER's rules, lazily, exactly like the Crypt's: thirty generated monster rows and one room, which
    nobody who never opens the door should have to download. It also carries the art list for the room — which is the
    Crypt's own tiles, so entering the Tower warms the same pack. */
 /* (2026-09-24) THE GREAT PYRAMID's rules, loaded the first time anybody is in one - the Crypt's pattern
    exactly, including handing AREA_ART its sheet at that moment so its six monsters cost nobody anything until
    a party goes in. */
-let PYR = null; const pyramidRules = () => (pyramidRules.p ||= import("/v3/assets/js/eastscape-pyramid-rules.js?v=6").then((m) => { PYR = m.createPyramidRules(G, G._MAP); Object.assign(G.SCENES, PYR.scenes); Object.assign(G.MOBS, PYR.mobs); AREA_ART.pyramid = PYR.scenes.pyramid.art; }));
+let PYR = null; const pyramidRules = () => (pyramidRules.p ||= import("/v3/assets/js/eastscape-pyramid-rules.js?v=7").then((m) => { PYR = m.createPyramidRules(G, G._MAP); Object.assign(G.SCENES, PYR.scenes); Object.assign(G.MOBS, PYR.mobs); AREA_ART.pyramid = PYR.scenes.pyramid.art; }));
 let PYRAMID = null; const pyramidLoad = () => (pyramidLoad.p ||= Promise.all([import("/v3/assets/js/eastscape-pyramid.js?v=5"), pyramidRules()]).then(([m]) => (PYRAMID = m.createPyramid({ G, R: PYR, SFX, send, esc, $, ico, artOf, me: () => me, you: () => you, Z: () => Z, host: () => document.querySelector(".game"), popup, winFx, flatArt,
   /* WHO IS HELD, AND UNTIL WHEN. The page owns the consequences of a hold — no walk prediction, and the bleed
      icon over their head — so the dungeon only has to report it. See HELD, further down. */
