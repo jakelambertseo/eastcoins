@@ -1893,3 +1893,28 @@ Needs a look:
 - **The Pyramid and the Carnival have no wiki pages.**
 - **`?v=248` on eastscape-shared.js is BURNT.** Probe only as
   `?v=N&probe=random`, never the bare real URL.
+
+## 2026-09-25, night — Nova and Singularity shipped (no art yet)
+
+Live at VERSION 245. Two tiers, 32 items, ores in the Vault and Trailer Park,
+the core chase item, the glow, new weapon names on the top two tiers only.
+
+Next on this:
+- **ART: 32 pieces plus `o_rock_nova_ore` and `o_rock_singularity_ore`.**
+  Everything falls back to emoji today (with the glow, which works on the
+  fallback). Owner asked for "legendary" looking. Style brief is
+  tools/eastscape-art-style.md — every prompt starts there.
+- **The Hoodie and The Squeeze are not droppers yet.** The owner asked for the
+  dungeon bosses to be in the core pool; they live in the crypt/pyramid rules
+  files rather than shared.js, so they were not covered by the LOOT edit.
+  CORE_BOSSES names them but nothing reads it yet.
+- **Balance after feedback, as agreed.** In particular: the Bom tool price
+  (250,000 / 600,000), the core craft piles, and whether 0.05% feels right.
+- **Eclipse is under-priced against starfall in every slot** (pickaxe 1078 vs
+  1260, body 2696 vs 3687). Starfall's recipe eats a BAR and eclipse's eats
+  only raw ore, so the craft chain marks starfall up more. Nova inherits it.
+  Not touched -- fixing it makes a live tier dearer to craft.
+- **`att` is still nearly dead weight** even at HIT_FLOOR 0.18.
+- **The Crypt and Pyramid were never measured against HIT_FLOOR 0.18.**
+- **COOK hides the plain cook for the seven smokeable fish** (wiki reads it).
+- No wiki pages for the Pyramid, the Carnival, or the new tiers.
