@@ -792,7 +792,7 @@ export class World {
       case "profile": return void this.profileOp(pl, m).catch(() => {});   /* (it reads storage, so it answers a moment later, through pl.out) */
       case "crypt": return m.op === "enter" ? this.cryptEnter(S, pl, m) : undefined;
       case "pyramid": return m.op === "enter" ? this.pyramidEnter(S, pl) : undefined;
-      case "tower": return m.op === "enter" ? this.towerEnter(S, pl) : undefined;
+      case "tower": return m.op === "enter" ? this.towerEnter(S, pl, m) : undefined;   /* m carries an optional lower floor: the door’s "start again at floor 1" */
       case "forge": return this.forgeDo(S, pl, m);
       case "emote": { if (!G.EMOTES[m.k] || now - (pl.emoteAt || 0) < 1500) return; pl.emoteAt = now; for (const p of this.playersIn(S)) p.out.push({ type: "emote", id: pl.id, k: String(m.k) }); return; }
       case "bigwin": {   /* decoration only: see CALLOUT in the rules file for why this is taken on the window's word, and how it is fenced */

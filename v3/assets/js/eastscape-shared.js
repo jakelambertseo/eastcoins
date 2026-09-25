@@ -1846,8 +1846,28 @@ Object.assign(SCENES, {
     mobs: [["pinhead", 26, 9], ["pinhead", 22, 8], ["pinhead", 19, 10], ["pinhead", 24, 6], ["pinhead", 15, 8], ["pinhead", 28, 7],
       ["tripled", 17, 6], ["tripled", 21, 4], ["tripled", 14, 9], ["tripled", 26, 3],
       ["fatlady", 3, 16], ["fatlady", 9, 19], ["fatlady", 13, 18], ["fatlady", 3, 23], ["fatlady", 15, 21],
-      ["strongman", 31, 3], ["strongman", 34, 7], ["strongman", 38, 5], ["strongman", 40, 9], ["strongman", 20, 20],
-      ["grinner", 5, 7]],
+      ["strongman", 31, 3], ["strongman", 34, 7], ["strongman", 38, 5], ["strongman", 40, 9], ["strongman", 20, 20]]
+      /* ---------------------------------------------------------------- HALF OF THEM COME FOR YOU (2026-09-24)
+         (the owner: "randomly in the carnival about 50% of the mobs need to be agressive")
+
+         PER PLACEMENT, NOT PER TYPE, which is the only way to do this: AGGRO_ON works on a monster's TYPE and
+         would make every Pinhead on the map aggressive. The spawn reads `over?.aggro` off the placement and the
+         tick prefers it to the type's (`m.aggro ?? def.aggro`), so a marked Pinhead charges and the one twenty
+         tiles away does not — which is what makes it feel random rather than rule-based when you walk in.
+
+         SEED 19 IS CHOSEN, NOT ARBITRARY. It is the first that lands EXACTLY ten of twenty with every kind
+         between 40 and 60 per cent — seed 62 gave 60% overall and not a single aggressive Triple, which reads
+         as a bug rather than a coin toss. And with this one the games plaza, The Barker, the duck pond and the
+         rustpine are all out of reach, so the only thing anybody has to fight for is the mining truck in the
+         back lot, where three Strongmen stand. That last one is deliberate and easy to undo.
+
+         THE 3 IS AGGRO_REACH AND CANNOT SAY SO. This array is evaluated when the module loads and AGGRO_REACH is
+         declared hundreds of lines further down, so naming it here throws "cannot access before
+         initialization" — which it did. The cap the AGGRO_ON loop applies to TYPES never touches a placement
+         override either, so the number has to be right here rather than clamped later:
+         tools/eastscape-carnival-test.mjs asserts the two still match. */
+      .map((m) => (hashRand(m[1], m[2], 19) < 0.5 ? [m[0], m[1], m[2], { aggro: 3 }] : m))
+      .concat([["grinner", 5, 7]]),   // the boss is on AGGRO_ON already and keeps his own reach
     /* (2026-09-24, the owner: "also add an NPC too the carnival area, same american horror story freak show
        theme") THE BARKER, stood at the mouth of the games plaza where the spur meets the midway — the one spot
        everybody walks past twice. He gives no quest, which is deliberate: an NPC must LIST what it gives and a

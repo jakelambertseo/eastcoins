@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=248">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=249">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1008,7 +1008,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=248";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=249";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=133").then((m) => { WK = m; }));
@@ -1625,7 +1625,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 78;
+const PACKS_V = 80;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -1709,7 +1709,7 @@ const AREA_ART = {
      Same for the dead trees, whose picture was never in ART_FILES at all. An area list must name every picture
      that area needs, not merely the ones unique to it. */
   /* (2026-09-24) THE CARNIVAL, band 62-72. Its whole cast and midway: nothing here is wanted anywhere else, so all of it waits until somebody walks in. */
-  carnival: [...WILD_ART, "pinhead", "tripled", "fatlady", "strongman", "grinner", "o_bigtop", "o_funhouse", "o_balloonpop", "o_shootgallery", "o_whackamole", "o_ticketbooth", "o_sidetent", "o_haybale", "o_carnlitter", "barker_south", "barker_east", "o_duckpond", "o_fenceH", "o_rustpine", "o_wreck", "o_banner", "o_banner2", "o_archway", "o_wagon", "o_cagebarH", "o_cagebarV", "o_turnstile", "o_bloodpool", "o_knives", "o_meathook", "t_sawdust", "t_dwater"],
+  carnival: [...WILD_ART, "pinhead", "tripled", "fatlady", "strongman", "grinner", "o_bigtop", "o_funhouse", "o_balloonpop", "o_shootgallery", "o_whackamole", "o_ticketbooth", "o_sidetent", "o_haybale", "o_carnlitter", "barker_south", "barker_east", "o_duckpond", "o_rustpine", "o_wreck", "o_banner", "o_banner2", "o_archway", "o_wagon", "o_cagebarH", "o_cagebarV", "o_turnstile", "o_bloodpool", "o_knives", "o_meathook", "t_sawdust", "t_dwater"],
   boneyard: [...WILD_ART, "o_yew", "o_yew_stump", "ghoul", "stagehand", "understudy", "usher", "critic", "o_railH", "o_railV", "o_railgate", "o_mausoleum", "o_bonepile"],   /* (2026-09-24) the six railed yards, the mausoleum in the Royal Box, and The Critic */
   sky: ["ram", "angel", "goose"],
   // the Fight Pit: everyone who might be sent out to fight, and the corner clutter
@@ -2670,9 +2670,17 @@ function towerDoorWin(e) {
   const body = !can
     ? `The door does not move. Something inside is counting.\n\nThe Tower wants **Combat ${e.entry}**. You are **${e.lvl}**.`
     : best
-      ? `You have cleared **floor ${best}** of ${e.floors}.\n\nYou go back in at floor **${e.resume}** — the checkpoint under your best, not your best. The floors between are the climb.`
+      ? (best >= e.floors
+          ? `You have cleared **all ${e.floors} floors**. There is nothing above the top.\n\nGo in and it puts you back on floor **${e.resume}** against The House again — or start the whole climb over from the bottom.`
+          : `You have cleared **floor ${best}** of ${e.floors}.\n\nYou go back in at floor **${e.resume}**, where you left off. Your best is kept whichever way you go in.`)
       : `Thirty floors. One room at a time, one thing in each of them, and the stairs do not open until it is down.\n\nThe things in here have far more health than anything outside, so the fights are long and slow. That is the point: it pays **experience**, and almost nothing else.`;
-  popup("The Tower", body, "\u{1F3E2}", can ? [["Go in", () => send({ t: "tower", op: "enter" })], ["Not yet", null]] : [["Right", null]], pic);
+  /* (2026-09-24, the owner: "add a button on the tower selector to start at floor 1") Only offered when it would
+     actually change where you land. The SERVER clamps a requested floor DOWNWARDS against where you would have
+     resumed, so this button can never be a way to skip a fight, whatever the page sends. */
+  const btns = can ? [["Go in", () => send({ t: "tower", op: "enter" })]] : [["Right", null]];
+  if (can && (e.resume | 0) > 1) btns.push(["Start at floor 1", () => send({ t: "tower", op: "enter", floor: 1 })]);
+  if (can) btns.push(["Not yet", null]);
+  popup("The Tower", body, "\u{1F3E2}", btns, pic);
 }
 
 /* The HUD is built once and then only written to, and it is removed on the way out rather than left hidden — the

@@ -4,10 +4,20 @@
 import * as G from "../v3/assets/js/eastscape-shared.js";
 import { createClosedScenes } from "../v3/assets/js/eastscape-closed.js"; Object.assign(G.SCENES, createClosedScenes(G, G._MAP));   // the closed areas' maps are their own file since 2026-09-21: these tools still look at every scene
 let bad = 0;
-for (const key of G.OPEN) {
+/* EVERY scene, not just the open ones: a map that is still shut is exactly the one nobody has walked,
+   and it is cheaper to fix a corner now than on the day it opens. */
+for (const key of Object.keys(G.SCENES)) {
   const d = G.SCENES[key]; if (!d?.mobs?.length) continue; const b = d.build();
-  const spots = []; for (const o of b.objs) { if (o.edge || o.soft) continue; if (["rock", "tree", "oak", "willow", "skyash", "spot", "wheat", "furnace", "anvil", "range", "fire", "sign"].includes(o.t)) for (let dx = -1; dx <= (o.w || 1); dx++) for (let dy = -1; dy <= 1; dy++) spots.push({ x: o.x + dx, y: o.y + dy, what: `${o.t} at ${o.x},${o.y}` }); }
-  for (let x = 0; x < G.COLS; x++) spots.push({ x, y: 13, what: "the main path" });
+  /* THE GAUNTLET EXEMPTION (2026-09-24). Two of these rules assume a map has a safe way through it: row 13 is
+     "the main path" on every map built before the Carnival, and a sign is somewhere you stop and read. The
+     Carnival is built the other way round on purpose — the owner asked for "about 50% of the mobs" to come for
+     you, and its walkway winds instead of running along row 13, so both rules report a design as a defect.
+     WHAT IS STILL ENFORCED HERE, and is what actually matters: nothing aggressive may reach a gathering spot,
+     a station, or an NPC. You cannot fish while being mauled. Do not widen this list to quiet a real hit. */
+  const GAUNTLET = new Set(["carnival"]);
+  const spots = []; for (const o of b.objs) { if (o.edge || o.soft) continue; if (["rock", "tree", "oak", "willow", "skyash", "spot", "wheat", "furnace", "anvil", "range", "fire", ...(GAUNTLET.has(key) ? [] : ["sign"])].includes(o.t)) for (let dx = -1; dx <= (o.w || 1); dx++) for (let dy = -1; dy <= 1; dy++) spots.push({ x: o.x + dx, y: o.y + dy, what: `${o.t} at ${o.x},${o.y}` }); }
+
+  if (!GAUNTLET.has(key)) for (let x = 0; x < G.COLS; x++) spots.push({ x, y: 13, what: "the main path" });
   for (const n of d.npcs) spots.push({ x: n.x, y: n.y, what: n.name });
   /* WHERE IT CAN ACTUALLY STAND (2026-09-24). The wander box used to be plain arithmetic — home ±3 by ±2 — which
      is right on an open field and wrong the moment a map has walls in it. The Boneyard's rebuild put every
@@ -30,7 +40,10 @@ for (const key of G.OPEN) {
     }
     return [...seen].map((k) => k.split(",").map(Number));
   };
-  for (const [t, hx, hy] of d.mobs) { const a = G.MOBS[t].aggro || G.MOBS[t].aggroWas;   /* aggroWas: what it reached before attack-on-sight was switched off (AGGRO_ON), so the corners stay safe for the day it comes back */ if (!a) continue; const hit = new Set();
+  /* (2026-09-24) THE PLACEMENT aggro FIRST. A scene may mark one spawn aggressive and leave the next one alone
+     — the Carnival does, half of it — and such a monster is not aggressive as a TYPE at all, so reading only
+     MOBS[t] walked straight past every one of them and reported the map clean. */
+  for (const [t, hx, hy, over] of d.mobs) { const a = over?.aggro || G.MOBS[t].aggro || G.MOBS[t].aggroWas;   /* aggroWas: what it reached before attack-on-sight was switched off (AGGRO_ON), so the corners stay safe for the day it comes back */ if (!a) continue; const hit = new Set();
     const stand = wander(hx, hy);
     for (const s of spots) if (stand.some(([sx, sy]) => Math.max(Math.abs(s.x - sx), Math.abs(s.y - sy)) <= a)) hit.add(s.what);
     if (hit.size) { bad++; console.log(`REACH  ${key}: ${t} at ${hx},${hy} (aggro ${a}) can reach ${[...hit].join("; ")}`); } }

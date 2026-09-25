@@ -25,9 +25,14 @@ export function installTower(World, { G, R, rint }) {
      `best + 1` is the ceiling, so a floor number that somehow ran ahead of what has actually been cleared can
      never let anyone skip a fight. */
   const resumeAt = (C) => {
-    const st = stateOf(C);
+    const st = stateOf(C), t = C.tower || {};
     const ceiling = Math.max(1, Math.min(T_.floors, st.best + 1));
-    return Math.min(Math.max(R.checkpointAt(ceiling), st.floor), ceiling);
+    /* (2026-09-24) THE SAVED FLOOR IS THE TRUTH. This used to be max(checkpointAt(ceiling), floor), which reads
+       as generous - you never redo an early floor - but it makes a floor you deliberately went back to impossible
+       to keep: someone who restarts at 1 and clears two floors would be yanked to 21 the next time they walked in.
+       A save with NO floor recorded still falls back to the checkpoint, which is what that max() was really for. */
+    const want = (t.floor | 0) > 0 ? st.floor : R.checkpointAt(ceiling);
+    return Math.min(Math.max(1, want), ceiling);
   };
 
   /** What the page needs to draw the HUD: which floor, whether it is clear, and what is standing in front of you. */
@@ -85,19 +90,25 @@ export function installTower(World, { G, R, rint }) {
       resume: resumeAt(pl.C), lvl: G.lvlOf(pl.C, "melee"), god: !!pl.god });
   };
 
-  P.towerEnter = function (S, pl) {
+  P.towerEnter = function (S, pl, m) {
     const bad = (t) => this.say(pl, t, "bad");
     if (String(S.key) !== T_.door.scene || G.cheb(pl, T_.door) > 6) return bad("The Tower's door is in the Yard, off the north court.");
     if (G.lvlOf(pl.C, "melee") < T_.entry && !pl.god) return bad(`The Tower wants Combat ${T_.entry}. You're ${G.lvlOf(pl.C, "melee")}.`);
     const st = stateOf(pl.C);
-    const floor = resumeAt(pl.C);
+    /* A REQUESTED floor may only ever be LOWER than where you would have resumed (the door's "start again at
+       floor 1"). Clamping DOWN rather than trusting the number is what makes this safe to accept from the page at
+       all: no message, crafted or otherwise, can use it to skip a fight. */
+    const at = resumeAt(pl.C), asked = m?.floor | 0;
+    const floor = asked > 0 ? Math.max(1, Math.min(asked, at)) : at;
     const key = keyOf(pl), S2 = this.scene(key);
     this.towerFloor(S2, floor);
     pl.C.tower = { floor, best: st.best };
     this.touch(pl);
     this.moveToScene(pl, key, null, G.SCENES.tower.entry);
     pl.dir = "north";
-    this.say(pl, floor === 1 ? "The door shuts behind you. Something is already in the room." : `You climb to floor ${floor} and the door shuts behind you.`, "sys");
+    this.say(pl, floor === 1
+      ? (st.best ? "You start again at the bottom. The door shuts behind you, and something is already in the room." : "The door shuts behind you. Something is already in the room.")
+      : `You climb to floor ${floor} and the door shuts behind you.`, "sys");
     this.towerTell(S2);
   };
 

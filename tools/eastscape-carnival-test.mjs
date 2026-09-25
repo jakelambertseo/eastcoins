@@ -72,8 +72,10 @@ for (const o of stalls) {
 ok("the plaza is reachable and you can stand at every stall");
 {
   let menaced = 0;
-  for (const [t, hx, hy] of S.mobs) {
-    const a = G.MOBS[t].aggro; if (!a) continue;
+  /* (2026-09-24) THE PLACEMENT aggro, not the type. Half the Carnival is aggressive per placement now, and the
+     types are not on AGGRO_ON at all — reading MOBS[t].aggro would find nothing and quietly pass forever. */
+  for (const [t, hx, hy, over] of S.mobs) {
+    const a = over?.aggro ?? G.MOBS[t].aggro; if (!a) continue;
     const stand = flood(hx, hy);   // walkable, then clipped to the wander box below
     for (const [x, y] of plaza) {
       const near = [...stand].some((k) => { const [sx, sy] = k.split(",").map(Number);
@@ -100,9 +102,22 @@ ok("every monster here is inside the band and pays a bounty");
     else ok(`The Grinning Man is at ${boss[1]},${boss[2]} — north-west, in front of his funhouse`);
     if (!G.MOBS.grinner.aggro) fail("the boss is not aggressive; a mob left off AGGRO_ON has its aggro deleted outright");
   }
-  const ag = [...new Set(S.mobs.map(([t]) => t))].filter((t) => G.MOBS[t].aggro);
-  if (ag.length !== 1 || ag[0] !== "grinner") fail(`aggressive here: ${ag.join(", ")} — only the boss should be`);
-  else ok("and he is the only thing here that comes for you");
+  /* HALF THE MAP COMES FOR YOU (2026-09-24, the owner: "randomly in the carnival about 50% of the mobs need to
+     be agressive"). Per PLACEMENT, so one Pinhead charges and the next does not — which is what makes it read
+     as random rather than as a rule about Pinheads. */
+  const marked = S.mobs.filter(([t, , , o]) => t !== "grinner" && o?.aggro);
+  const total = S.mobs.filter(([t]) => t !== "grinner").length;
+  const share = marked.length / total;
+  if (share < 0.4 || share > 0.6) fail(`${marked.length} of ${total} placements are aggressive (${Math.round(share * 100)}%); the owner asked for about half`);
+  else ok(`${marked.length} of ${total} placements come for you (${Math.round(share * 100)}%), and the boss on top`);
+  /* every KIND has some and none is nearly all, or it reads as a bug rather than a coin toss */
+  for (const t of [...new Set(S.mobs.map(([k]) => k))].filter((t) => t !== "grinner")) {
+    const all = S.mobs.filter(([k]) => k === t).length, on = S.mobs.filter(([k, , , o]) => k === t && o?.aggro).length;
+    if (on === 0 || on === all) fail(`every ${G.MOBS[t].name} is ${on ? "aggressive" : "passive"} — that is a rule about the type, not a scatter`);
+  }
+  /* and the reach matches the rest of the game: a placement override is NOT clamped by the AGGRO_ON loop */
+  for (const [t, hx, hy, o] of marked) if (o.aggro !== G.AGGRO_REACH) fail(`${G.MOBS[t].name}@${hx},${hy} has reach ${o.aggro}; AGGRO_REACH is ${G.AGGRO_REACH} and nothing clamps a placement`);
+  ok(`each at reach ${G.AGGRO_REACH}, the same as everything else in the game`);
 }
 
 /* ---------------------------------------------------------------- NOTHING STANDS ON ANYTHING ELSE
