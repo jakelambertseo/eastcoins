@@ -16,10 +16,12 @@ import fs from "node:fs";
 const src = fs.readFileSync("C:/Users/jake/code/eastcoins/eastscape-worker/src/carnival.js", "utf8");
 const GAMES = JSON.parse(JSON.stringify(eval("(" + src.match(/const GAMES = (\{[\s\S]*?\n  \});/)[1] + ")")));
 const hash = (s) => { let h = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h >>> 0; };
-const scheduleFor = (key, seed) => { const g = GAMES[key], lanes = g.cols * g.rows, out = [];
-  for (let i = 0; i < g.shots; i++) out.push({ i, at: i * g.gapMs, lane: hash(`${seed}:pop:${i}`) % lanes, ms: g.windowMs }); return out; };
+const scheduleFor = (key, seed) => { const g = GAMES[key], lanes = g.cols * g.rows, out = []; let at = 0;
+  for (let i = 0; i < g.shots; i++) { const f = 1 - (1 - g.ramp) * (i / Math.max(1, g.shots - 1));
+    out.push({ i, at: Math.round(at), lane: hash(`${seed}:pop:${i}`) % lanes, ms: Math.round(g.windowMs * f) }); at += g.gapMs * f; } return out; };
 const COOLDOWN = Number(src.match(/COOLDOWN_MS = (\d+)/)[1]) / 1000;
-const payFor = (key, hits) => { const g = GAMES[key]; return Math.round(g.top * Math.pow(Math.max(0, Math.min(1, hits / g.shots)), 1.5)); };
+const CURVE = Number(src.match(/PAY_CURVE = ([\d.]+)/)[1]);
+const payFor = (key, hits) => { const g = GAMES[key]; return Math.round(g.top * Math.pow(Math.max(0, Math.min(1, hits / g.shots)), CURVE)); };
 
 let bad = 0;
 const fail = (m) => { console.log("  !! " + m); bad++; };
@@ -36,7 +38,11 @@ for (const [key, g] of Object.entries(GAMES)) {
   for (let s = 0; s < 200; s++) for (const t of scheduleFor(key, `s${s}`)) seen.add(t.lane);
   if (seen.size !== lanes) fail(`${g.name}: only ${seen.size} of ${lanes} lanes ever come up`);
 
-  const len = (g.shots * g.gapMs + g.windowMs) / 1000;
+  const sc = scheduleFor(key, "x"), len = (sc[sc.length - 1].at + sc[sc.length - 1].ms) / 1000;
+  /* THE WINDOW MUST BE SHORTER THAN THE GAP or there is no reaction test at all: two targets up at once means
+     you can always get to both. That is exactly how all three shipped, and why the owner scored 100%. */
+  if (g.windowMs >= g.gapMs) fail(g.name + ": the window (" + g.windowMs + "ms) is not shorter than the gap (" + g.gapMs + "ms), so two targets are up at once");
+  if (!(g.ramp > 0 && g.ramp < 1)) fail(g.name + ": no ramp, so the last target is as slow as the first");
   /* THE CYCLE IS THE ROUND PLUS ITS COOLDOWN, and leaving the cooldown out is what made the first run of this
      test call all three stalls broken. A stall you can only start every twenty seconds pays what it pays over
      twenty-odd seconds, not over the eight the board runs for. */
@@ -48,7 +54,12 @@ for (const [key, g] of Object.entries(GAMES)) {
   if (even / g.shots < 0.45) fail(`${g.name}: break even at ${even}/${g.shots} is too easy; there is no reason to aim`);
   if (even / g.shots > 0.85) fail(`${g.name}: break even at ${even}/${g.shots} is out of reach`);
   /* against the map it stands on: a Fat Lady is 148 a kill and takes well under a minute at this band */
-  if (perMin > 600) fail(`${g.name}: ${perMin}/min at perfect play beats fighting the map — the stall would be the reason to come`);
+  /* (2026-09-24) RAISED FROM 600 ON PURPOSE. The owner asked for "more tickets if someone actually does well",
+     so a PERFECT round is now meant to beat farming the map for the same minute — about 570/min out there. What
+     bounds it is that perfect is genuinely hard now and the cooldown is two thirds of the cycle. */
+  if (perMin > 1000) fail(`${g.name}: ${perMin}/min at perfect play is past even the boss — the stall would be the only reason to come`);
+  const end = Math.round(g.windowMs * g.ramp);
+  console.log("        ends on a " + end + "ms window; break even needs " + Math.round(even / g.shots * 100) + "% of a board that no longer gives it away");
 }
 ok("every board is seed-stable, uses all its lanes, and pays a skill gradient that cannot beat the map outside");
 

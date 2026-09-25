@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 234;
+export const VERSION = 235;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1681,6 +1681,15 @@ Object.assign(SCENES, {
          draws six tiles tall and reached down over the booth at y21. */
       put("ticketbooth", 33, 22, "The ticket booth. Shuttered. Nobody has ever seen it open", 1, 2);
       objs.push({ t: "sign", x: 36, y: 21, name: "THE MIDWAY GAMES. Tickets in, tickets out, and no ZCoins anywhere near it. Play as often as you like." }); g[21][36] = "#"; keep.push([36, 21]);
+      /* (2026-09-24, the owner: "add a few fences and things on the ground in the carnival games are to make it
+         feel more lived in") A PLAZA WITH THREE STALLS AND NOTHING ELSE IS A SHOWROOM. Crowd barriers along the
+         front where a queue would stand, crates and hay stacked where the stallholders keep their stock, and
+         litter where people have been. The barrier is the market's plain fence rather than the graveyard's
+         railings or the menagerie's bars: this is the one place on the map nobody is being kept in or out of. */
+      for (const x of [33, 34, 36, 37, 39, 40]) { objs.push({ t: "fenceH", x, y: 20, name: "A crowd barrier" }); g[20][x] = "#"; keep.push([x, 20]); }
+      for (const [x, y] of [[42, 17], [42, 20], [32, 19]]) { objs.push({ t: "crate", x, y, name: "Stock for the stalls" }); g[y][x] = "#"; keep.push([x, y]); }
+      for (const [x, y] of [[41, 22], [35, 23]]) { objs.push({ t: "haybale", x, y, name: "A hay bale, sat on by somebody" }); g[y][x] = "#"; keep.push([x, y]); }
+      for (const [x, y] of [[38, 23], [34, 16], [40, 16]]) { objs.push({ t: "carnlitter", x, y, name: "Popcorn tubs and torn tickets" }); g[y][x] = "#"; keep.push([x, y]); }
 
       /* THE BIG TOP, centre, and the thing you see from the entrance */
       put("bigtop", 18, 15, "The Big Top. Something is still going on in there", 3, 3);
@@ -1839,7 +1848,20 @@ Object.assign(SCENES, {
       ["fatlady", 3, 16], ["fatlady", 9, 19], ["fatlady", 13, 18], ["fatlady", 3, 23], ["fatlady", 15, 21],
       ["strongman", 31, 3], ["strongman", 34, 7], ["strongman", 38, 5], ["strongman", 40, 9], ["strongman", 20, 20],
       ["grinner", 5, 7]],
-    npcs: [], bots: []
+    /* (2026-09-24, the owner: "also add an NPC too the carnival area, same american horror story freak show
+       theme") THE BARKER, stood at the mouth of the games plaza where the spur meets the midway — the one spot
+       everybody walks past twice. He gives no quest, which is deliberate: an NPC must LIST what it gives and a
+       quest nobody offers is an error the content check catches, so an NPC with nothing to give is the honest
+       way to put a voice on a map. He is what tells you the rules of the place out loud. */
+    npcs: [{ name: "The Barker", art: "barker", x: 31, y: 15, still: true,
+      hair: "#1a1420", shirt: "#8a2426", pants: "#2a2230",
+      lines: ["Step up. Tickets in, tickets out, and nothing on this side of the rope takes a ZCoin.",
+        "Everything on the midway is honest. That is the only thing on the midway that is.",
+        "Three stalls. They get faster the longer you stand there, and so does everything else here.",
+        "There is one act you cannot see without a ticket. The freaks carry them. Ask nicely, or don't.",
+        "Do not feed the thing in the north-west. It has been fed.",
+        "We were here before the town. We will be here after. We just move the tents about."] }],
+    bots: []
   },
   thunderhead: {
     /* (2026-09-24) REBUILT, AND IT IS NOT CLOUDREACH ANY MORE. It wore Cloudreach's ground with a darker tint

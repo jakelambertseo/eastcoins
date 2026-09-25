@@ -35,7 +35,7 @@ export function createCarnival(env) {
 .cv-board{display:grid;gap:8px;margin:10px 0;touch-action:manipulation}
 .cv-cell{position:relative;aspect-ratio:1;border-radius:10px;background:rgba(0,0,0,.10);box-shadow:inset 0 0 0 2px rgba(0,0,0,.14);cursor:pointer;overflow:hidden}
 .cv-cell:disabled{cursor:default}
-.cv-cell i{position:absolute;left:12%;top:12%;width:76%;height:76%;border-radius:50%;display:block;transform:scale(0);opacity:0;transition:transform .09s ease-out,opacity .09s ease-out}
+.cv-cell i{position:absolute;left:8%;top:8%;width:84%;height:84%;display:block;background-repeat:no-repeat;background-position:center;background-size:contain;image-rendering:pixelated;transform:scale(0);opacity:0;transition:transform .09s ease-out,opacity .09s ease-out}
 .cv-cell.up i{transform:scale(1);opacity:1}
 .cv-cell.hit{box-shadow:inset 0 0 0 3px #2f9e52}
 .cv-cell.miss{box-shadow:inset 0 0 0 3px #b4443a}
@@ -47,12 +47,19 @@ export function createCarnival(env) {
     document.head.append(st);
   }
 
-  /* what a target looks like, per stall — the one place the three differ on screen */
+  /* WHAT COMES UP, PER STALL (2026-09-24, the owner: "the icons INSIDE of the games should be very horror
+     themed, like knifes and pumpkins, and make them all different etc.") Sixteen drawn icons, split so no two
+     stalls share one: a balloon wall is balloons and pumpkins and doll heads, the rail is things that should not
+     be on a rail, and the holes are the worst of it. They load by URL rather than through the canvas art loader,
+     because they are CSS backgrounds in a window that only exists while a round is running.
+     CG_V IS THEIR ONLY CACHE INVALIDATION — bump it here when any cg_*.png changes. */
+  const CG = "/v3/assets/img/glad/flat/", CG_V = 1;
   const LOOK = {
-    balloonpop: ["radial-gradient(circle at 34% 30%,#ff8f8f,#c2342f)", "radial-gradient(circle at 34% 30%,#8fd6ff,#2f6fb2)", "radial-gradient(circle at 34% 30%,#ffe08f,#c2932f)"],
-    shootgallery: ["radial-gradient(circle at 34% 30%,#e8e2d4,#8a8378)"],
-    whackamole: ["radial-gradient(circle at 34% 30%,#b08256,#5f4126)"],
+    balloonpop: ["balloon", "pumpkin", "doll", "duck", "heart", "candle"],
+    shootgallery: ["knife", "bat", "rat", "tophat", "jar", "spider"],
+    whackamole: ["skull", "clown", "eye", "hook"],
   };
+  const faceFor = (game, i) => { const set = LOOK[game] || LOOK.whackamole; return `url("${CG}cg_${set[i % set.length]}.png?v=${CG_V}")`; };
 
   function shell() {
     css();
@@ -97,8 +104,12 @@ export function createCarnival(env) {
       <div class="cv-bar"><i></i></div>
       <div class="cv-score"><span>Hits <b id="cvHits">0</b></span><span>of <b>${d.shots}</b></span><span id="cvLeft"></span></div>`;
     const board = e.board.slice().sort((a, b) => a.at - b.at);
-    const len = d.shots * d.gapMs + d.windowMs;
-    const look = LOOK[d.game] || LOOK.whackamole;
+    /* THE LENGTH COMES OFF THE BOARD, not from shots x gap. The gap and the window both ramp down through a
+       round now, so the old arithmetic over-ran by a third — the bar would crawl and the round would sit there
+       after the last target had gone. The board is authoritative and already here. */
+    const lastT = board[board.length - 1];
+    const len = lastT ? lastT.at + lastT.ms + 200 : 1000;
+
     run = { t0: performance.now(), board, presses: [], hits: 0, len, done: false };
 
     const els = [...$("carnBody").querySelectorAll(".cv-cell")];
@@ -124,7 +135,9 @@ export function createCarnival(env) {
       for (const s of run.board) {
         const el = els[s.lane]; if (!el) continue;
         const up = t >= s.at && t <= s.at + s.ms && !s.got;
-        if (up && !s.shown) { s.shown = true; el.classList.add("up"); el.querySelector("i").style.background = look[s.lane % look.length]; }
+                /* the FACE is picked by which target this is, not which lane, so a round runs through the whole set
+           instead of the same picture always appearing in the same hole. */
+        if (up && !s.shown) { s.shown = true; el.classList.add("up"); el.querySelector("i").style.backgroundImage = faceFor(d.game, s.i); }
         if (!up && s.shown && !s.cleared) { s.cleared = true; el.classList.remove("up"); }
       }
       if (t >= run.len) {

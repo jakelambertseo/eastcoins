@@ -120,3 +120,44 @@ const sawdust = async (from, to) => {
 };
 await sawdust("t_dirt.png", "t_sawdust.png");
 await sawdust("t_water.png", "t_dwater.png");   // the dunk tank's water: its dry corners are grass too
+
+/* ---------------------------------------------------------------- THE MIDWAY GAMES' OWN ICONS (2026-09-24)
+   (the owner: "the icons INSIDE of the games should be very horror themed, like knifes and pumpkins, and make
+   them all different etc.")
+
+   Sixteen of them, generated as ONE tiles-pro call rather than sixteen prompts — which is the only reason they
+   look like a set. Each comes back centred on a flat dark maroon, so the maroon is keyed out here: a target is
+   drawn inside a round hole in the board and a square of background would read as a sticker on it.
+
+   They are NOT in ART_FILES and NOT in any area list. Those lists feed the canvas painter, and these are drawn
+   by the DOM as CSS backgrounds in a window that only exists while a round is running — so they load by URL,
+   like the ticket sprite in the game window, and carry their own ?v= in the client. */
+const CG = ["pumpkin", "skull", "knife", "eye", "spider", "bat", "clown", "candle",
+  "rat", "balloon", "doll", "tophat", "jar", "duck", "hook", "heart"];
+const MAROON = [64, 32, 40];
+for (let i = 0; i < CG.length; i++) {
+  const f = `lt-cg/t${i}.png`;
+  if (!fs.existsSync(f)) { console.log(`  !! cg_${CG[i]}: no ${f}`); continue; }
+  const { data, info } = await sharp(f).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  for (let p = 0; p < data.length; p += 4) {
+    const d = Math.abs(data[p] - MAROON[0]) + Math.abs(data[p + 1] - MAROON[1]) + Math.abs(data[p + 2] - MAROON[2]);
+    if (d < 46) data[p + 3] = 0;   /* the flat backdrop, and only that: 46 is tight enough to keep dark reds in the art */
+  }
+  await sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } })
+    .trim({ threshold: 1 }).resize(40, 40, { fit: "contain", kernel: "nearest", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png({ palette: true, colours: 48 }).toFile(`${OUT}cg_${CG[i]}.png`);
+}
+console.log(`  cg_*.png              40x40    ${CG.length} horror icons for the stalls, maroon keyed out`);
+
+/* ---------------------------------------------------------------- THE BARKER (2026-09-24)
+   (the owner: "also add an NPC too the carnival area, same american horror story freak show theme")
+   ONE CHARACTER, TWO FACINGS TAKEN FROM IT — create_character in v3 mode, and the south and east rotations
+   pulled out of the same eight. That is the style brief's hard-won rule: "an NPC's facings come from ONE
+   character, not two prompts", because two prompts give two different people in different clothes, which is
+   exactly what happened to Darla. Sized to 68, which is what Aurelia and every other drawn NPC is. */
+for (const d of ["south", "east"]) {
+  const f = `${SRC}barker_${d}.png`;
+  if (!fs.existsSync(f)) { console.log(`  !! barker_${d}: no ${f}`); continue; }
+  await sharp(f).png({ palette: true, colours: 64 }).toFile(`${OUT}barker_${d}.png`);
+  console.log(`  barker_${d}.png${d === "south" ? "  " : "   "}      68x68    ${(fs.statSync(`${OUT}barker_${d}.png`).size / 1024).toFixed(1)} KB`);
+}

@@ -32,26 +32,46 @@ export function installCarnival(World, { G, rint }) {
      replayed. FNV-1a, which is plenty for picking a lane. */
   const hash = (s) => { let h = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h >>> 0; };
 
-  /* cols x rows is the board; `shots` targets appear one every `gapMs` and each is up for `windowMs`. */
+  /* cols x rows is the board; `shots` targets appear one every `gapMs` and each is up for `windowMs`.
+     BOTH SHRINK THROUGH THE ROUND by `ramp`, and the window is SHORTER than the gap. (2026-09-24, the owner:
+     "the randomization oof the games needs to be harder, ive been getting 100% in almost all of them - the
+     tradeoff is more tickets if someone actually does well".)
+
+     WHY IT WAS FREE. The window used to be LONGER than the gap — 900ms up against one arriving every 640 — so
+     there were always one and a half targets on the board and you were never once rushed. Nothing about the
+     seed made it hard; a hundred per cent was the expected score, not a good one. A window under the gap means
+     exactly one thing is up at a time and you have that long, and the ramp means the last third of a round is
+     nearly twice the speed of the first: Whack-a-Mole ends on a 190ms window, which is a reaction test.
+     AND THE PAY IS STEEPER TO MATCH: accuracy to the power of 2.6 against 1.5, on a much higher top. A perfect
+     round is worth more than farming the map outside for the same minute now, which is the trade he asked for,
+     and it is bounded by needing to be perfect at a board that no longer allows it by default. */
   const GAMES = {
-    balloonpop: { name: "Balloon Pop", cols: 4, rows: 3, shots: 14, windowMs: 900, gapMs: 640, cost: 100, top: 230,
-      verb: "burst", thing: "balloon", blurb: "A wall of balloons and a fistful of darts. Hit them before the man behind the counter reaches the pump." },
-    shootgallery: { name: "The Shooting Gallery", cols: 5, rows: 1, shots: 16, windowMs: 720, gapMs: 520, cost: 100, top: 245,
-      verb: "hit", thing: "duck", blurb: "Cork rifles and tin ducks on a rail. The sights are bent and everybody knows it." },
-    whackamole: { name: "Whack-a-Mole", cols: 3, rows: 2, shots: 18, windowMs: 600, gapMs: 430, cost: 100, top: 265,
-      verb: "whack", thing: "mole", blurb: "Six holes, one mallet. The moles are not real. Probably." },
+    balloonpop: { name: "Balloon Pop", cols: 4, rows: 3, shots: 18, windowMs: 560, gapMs: 620, ramp: 0.55, cost: 100, top: 520,
+      verb: "burst", thing: "balloon", blurb: "A wall of balloons and a fistful of darts. They come faster the longer you stay." },
+    shootgallery: { name: "The Shooting Gallery", cols: 6, rows: 1, shots: 20, windowMs: 460, gapMs: 520, ramp: 0.55, cost: 100, top: 560,
+      verb: "hit", thing: "target", blurb: "Cork rifles and a rail of things that should not be on a rail. The sights are bent and everybody knows it." },
+    whackamole: { name: "Whack-a-Mole", cols: 3, rows: 2, shots: 24, windowMs: 380, gapMs: 430, ramp: 0.50, cost: 100, top: 540,   /* 600 first: the fastest board is also the SHORTEST, so an identical top paid the most per minute of the three */
+      verb: "whack", thing: "whatever comes up", blurb: "Six holes and one mallet. It is not moles any more. It has not been moles for a while." },
   };
+  const PAY_CURVE = 2.6;   // accuracy^this. 1.5 paid a careless round too well
   const COOLDOWN_MS = 20000;   // per stall, per player: a stall is a thing you stop at, not a thing you farm
   const MIN_PLAY = 0.8;        // a round handed in faster than 80% of its own length was not played
 
   /* the board, from the seed alone. The page gets this only when the round starts and cannot derive it. */
   const scheduleFor = (key, seed) => {
     const G0 = GAMES[key], lanes = G0.cols * G0.rows, out = [];
+    let at = 0;
     for (let i = 0; i < G0.shots; i++) {
-      out.push({ i, at: i * G0.gapMs, lane: hash(`${seed}:pop:${i}`) % lanes, ms: G0.windowMs });
+      /* f runs 1 down to `ramp` across the round, and scales the gap AND the window together, so the board
+         speeds up without ever letting two targets overlap. */
+      const f = 1 - (1 - G0.ramp) * (i / Math.max(1, G0.shots - 1));
+      out.push({ i, at: Math.round(at), lane: hash(`${seed}:pop:${i}`) % lanes, ms: Math.round(G0.windowMs * f) });
+      at += G0.gapMs * f;
     }
     return out;
   };
+  /* how long a round runs, which is no longer shots x gap now the gap ramps */
+  const lengthOf = (key) => { const sc = scheduleFor(key, "x"); const last = sc[sc.length - 1]; return last.at + last.ms; };
 
   /* WHAT A SCORE IS WORTH. Accuracy to the power of 1.5, so a perfect round pays `top` and a half-hit round
      pays about a third of it: you need roughly two thirds of the board to come out ahead of the stake. That
@@ -59,7 +79,7 @@ export function installCarnival(World, { G, rint }) {
      more, and one that paid out flat would be a slot machine. */
   const payFor = (key, hits) => {
     const G0 = GAMES[key], acc = Math.max(0, Math.min(1, hits / G0.shots));
-    return Math.round(G0.top * Math.pow(acc, 1.5));
+    return Math.round(G0.top * Math.pow(acc, PAY_CURVE));
   };
 
   const grade = (key, seed, presses) => {
@@ -105,7 +125,7 @@ export function installCarnival(World, { G, rint }) {
 
     if (m.op !== "score") return;
     if (!row.seed || !row.started) return bad("Pay first.");
-    const len = G0.shots * G0.gapMs + G0.windowMs;
+    const len = lengthOf(key);
     /* a round cannot be handed in faster than it takes to play: the schedule is fixed, so the wall clock here
        is a real check and not a guess. */
     if (now - row.started < len * MIN_PLAY) return bad("That was quicker than the board can run. Play it again.");
