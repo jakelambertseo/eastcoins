@@ -313,8 +313,15 @@
     try { return localStorage.getItem(SPOOKY_KEY) || "auto"; } catch { return "auto"; }
   }
 
+  /* (2026-09-25, the owner: "users are asking for it, lets activate the spooky theme on EastCoin.vip right now")
+     THE SEASON STARTS IN LATE SEPTEMBER NOW, not on the 1st of October. Written as month/day rather than as a
+     date this year, so it comes back on its own every September and nobody has to remember to switch it on.
+     A player's own choice still beats this either way - see spookyChoice. */
+  const SPOOKY_FROM = { month: 9, day: 25 };   // and it runs to the end of October
   function spookyByDate() {
-    return new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric" }) === "10";
+    const p = new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric", day: "numeric" }).split("/");
+    const m = Number(p[0]), d = Number(p[1]);
+    return m === 10 || (m === SPOOKY_FROM.month && d >= SPOOKY_FROM.day);
   }
 
   /* A stylesheet the page needs only sometimes, linked once. The October
@@ -339,6 +346,12 @@
       sw.setAttribute("aria-checked", String(on));
       const knob = sw.querySelector(".switch");
       if (knob) knob.dataset.on = on ? "1" : "0";
+      /* (2026-09-25, the owner: "in settings the switch back option is now to 'Default Theme' instead of spooky
+         theme") THE LABEL SAYS WHERE THE BUTTON TAKES YOU, not what is currently on. With the season running by
+         default, "Spooky theme" sat next to a switch already flipped and read as if it would turn it ON. */
+      const lab = sw.querySelector("span:not(.switch)");
+      if (lab) lab.innerHTML = on ? "\u{1F311}&nbsp; Default Theme" : "\u{1F383}&nbsp; Spooky theme";
+      sw.title = on ? "Back to the ordinary EastCoin colours." : "Pumpkin, purple, cobwebs and bats. On by itself from late September through October.";
     }
     if (!on || document.querySelector(".spooky-layer")) return;
 
