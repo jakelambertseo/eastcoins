@@ -72,8 +72,23 @@ if (!bad) ok(`the Yard's ${yard.length} types are exempt, and nothing else is`);
   else ok(`health ${hp} (time to kill) and damage ${dmg} (danger); the product is ${now.toFixed(2)} vs ${WAS.toFixed(2)} before, so a kill costs ${((now / WAS - 1) * 100).toFixed(0)}% more`);
   /* and the floor that makes `att` meaningless is worth restating where somebody will trip over it */
   if (G.hitChance(999, 0) === G.hitChance(998, 0)) { /* clamped high end, fine */ }
-  if (G.hitChance(0, 999) !== 0.1) fail(`the hitChance floor is ${G.hitChance(0, 999)}, not 0.1 — every danger number here was measured against 0.1`);
-  else ok("hitChance still floors at 10%, so a geared player takes about two landed hits a kill and MAX HIT is the only danger lever that moves");
+  /* (2026-09-25) THE FLOOR IS NOW A DANGER KNOB IN ITS OWN RIGHT, raised from 0.1 to 0.18. It is checked here
+     because every number in this file was measured against a particular floor, and because unlike the two
+     constants above it is NOT excluded from the Tower or the dungeons - it lives inside hitChance itself. */
+  if (G.hitChance(0, 9999) !== G.HIT_FLOOR) fail(`hitChance floors at ${G.hitChance(0, 9999)} but HIT_FLOOR says ${G.HIT_FLOOR}`);
+  else if (G.HIT_FLOOR < 0.15) fail(`HIT_FLOOR is ${G.HIT_FLOOR}; below about 0.15 a geared player is barely hit and a monster's \`att\` is dead weight`);
+  else ok(`hitChance floors at ${(G.HIT_FLOOR * 100).toFixed(0)}%, so a geared player is actually hit — and it reaches the Tower and the dungeons, which the two constants above do not`);
+}
+
+/* ---------------------------------------------------------------- the jackpot kill
+   The number that matters is mult/odds, the share of everybody's fighting income this quietly pays. Tuning either
+   half alone is how it ended up at a tenth of all tickets and four an hour, which is a wage, not a jackpot. */
+{
+  const j = G.JACKPOT_KILL, share = j.mult / j.odds;
+  const perHour = 200 / j.odds;   // about 200 kills an hour at open-world pace
+  if (share > 0.06) fail(`the jackpot pays ${(share * 100).toFixed(1)}% of all fighting income; past about 6% it is a wage`);
+  else if (perHour > 2) fail(`${perHour.toFixed(1)} jackpots an hour is too many for it to feel like one`);
+  else ok(`the jackpot is 1 in ${j.odds} paying ${j.mult}x — ${perHour.toFixed(1)} an hour and ${(share * 100).toFixed(1)}% of fighting income`);
 }
 
 /* ---------------------------------------------------------------- fishing */

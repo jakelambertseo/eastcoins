@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 242;
+export const VERSION = 243;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -4778,7 +4778,15 @@ for (const f of FINDS) f[2] = Math.max(1, Math.round(f[2] * TIX_RATE));
 /* JACKPOT KILL (v92): fighting is a slot machine too. One kill in JACKPOT_KILL.odds was carrying the house's money: it pays
    JACKPOT_KILL.mult times that monster's bounty in tickets on top of its drops, with the casino's own win banner and a line to
    everyone in the area. It adds mult / odds (a tenth) to what fighting pays on average, and nothing else changes. */
-export const JACKPOT_KILL = { odds: 50, mult: 5 };
+/* (2026-09-25, the owner: "users are hitting jackpot kills at an alarmingly high rate, it needs a nerf") It was
+   1 in 50 paying 5x. At the fifteen-odd seconds a kill takes that is FOUR AN HOUR, and a tenth of every ticket
+   anybody earned by fighting - a salary rather than a jackpot, and the reason it stopped reading as an event.
+
+   1 in 250 paying 12x is about one an hour and 4.8% of income, so the average roughly halves while the moment
+   itself gets more than twice as big. That is the trade worth making with anything called a jackpot: rarity is
+   what buys the feeling, and the multiplier is what pays for the rarity. The average is mult/odds - check that
+   number, not either one on its own, when tuning this. */
+export const JACKPOT_KILL = { odds: 250, mult: 12 };
 export const findChance = (mob, [, share, worth]) => Math.min(0.25, share * (BOUNTY[mob] || 0) / worth);
 /* REAL ZCOINS, RARELY (2026-09-20, the owner: "rare drops for raw zcoins from fishing and mob killing"). A `zcoin` is an
    item: it lands in your bag like anything else, and the Prize Counter banks it onto your eastcoin.vip balance through the
@@ -5536,7 +5544,25 @@ export const maxHitOf = (c) => 1 + Math.floor(lvlOf(c, "melee") / 6) + Math.floo
    into Strength is genuinely fragile. That difference IS the split. */
 export const attackRollOf = (c) => lvlOf(c, "melee") + 1 + bonusOf(c).acc;
 export const defenceRollOf = (c) => (lvlOf(c, "melee") + bonusOf(c).def) / 2;
-export const hitChance = (att, def) => Math.max(0.1, Math.min(0.95, 0.5 + (att - def) * 0.04));
+/* THE FLOOR IS THE DANGER KNOB (2026-09-25). It was 0.1, and that one number is why the open world felt safe:
+   defenceRollOf is (melee level + gear def) / 2, gear outruns a monster's `att`, and so EVERY level-appropriate
+   player in full tier gear sits exactly ON the floor from about level 50 up - goose, house and The Last Dealer
+   all landed 10% of their swings and no more. Two consequences followed that are worth saying out loud:
+
+     A MONSTER'S `att` IS DEAD WEIGHT past mid-game. Raising it changes nothing for anybody who is on the floor,
+     which is everybody the monster is meant for.
+     AND ONLY ABOUT TWO SWINGS LANDED IN A WHOLE KILL, so no amount of max hit could make a fight feel sustained
+     rather than spiky.
+
+   0.18 roughly doubles what a geared player takes (The Last Dealer 12 a kill to 22 against 92 health) without
+   touching time to kill at all, and it is what finally makes the Tower want the food it was designed around: the
+   worst floor goes from six meals to twelve. IT IS NOT EXCLUDED FROM ANYTHING - unlike OUTSIDE_HP/OUTSIDE_DMG,
+   which run at module load before the Tower and the dungeons merge their rows, this lives inside hitChance, so
+   the Tower, the Crypt and the Pyramid all feel it. The Tower was measured; the two dungeons were not.
+   It also cuts both ways: an UNDER-levelled player swinging at something far above them now lands 18% instead of
+   10%, which is a small buff to punching up. */
+export const HIT_FLOOR = 0.18;
+export const hitChance = (att, def) => Math.max(HIT_FLOOR, Math.min(0.95, 0.5 + (att - def) * 0.04));
 
 /* ------------------------------------------------------------ the Exchange
    an offer: { id, owner, name, side: "sell"|"buy", k, qty, done, price (each), at, open,
