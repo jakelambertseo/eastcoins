@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 255;
+export const VERSION = 256;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1696,7 +1696,7 @@ Object.assign(SCENES, {
        put(), which REFUSES a tile an aisle claimed. That is what makes the walkways real rather than hoped for:
        the room cannot grow a dead end because somebody added one more table. */
     name: "The Vault", interior: true, floor: "casino", carpet: "t_vault", wallH: 34, room: [1, 3, 42, 22],
-    exits: { e: "thunderhead" }, labels: { e: "THE THUNDERHEAD" }, entry: { x: 39, y: 13 }, tint: "rgba(10,6,2,.42)",
+    exits: { e: "thunderhead" }, entry: { x: 39, y: 13 }, tint: "rgba(10,6,2,.42)",   /* (2026-09-25) no `labels` - the owner did not want the arch lettered */
     wall: [{ t: "banner", x: 4 }, { t: "lamp", x: 9 }, { t: "lamp", x: 16 }, { t: "lamp", x: 24 }, { t: "lamp", x: 31 }, { t: "banner", x: 38 }],
     build() {
       const g = room(1, 3, 42, 22, 21), objs = [];
@@ -1734,7 +1734,11 @@ Object.assign(SCENES, {
       for (const c of [[9, 9], [12, 9], [9, 17], [12, 17]]) put({ t: "cointable", x: c[0], y: c[1], name: "A table still dealt out" });
       for (const c of [[30, 9], [33, 9], [30, 17], [33, 17]]) put({ t: "dicetable", x: c[0], y: c[1], name: "A dice table, the cup still on it" });
       for (const c of [[21, 9], [24, 9], [21, 17], [24, 17]]) put({ t: "bench", x: c[0], y: c[1], name: "A bench, pushed back" });
-      objs.push({ t: "coinstatue", art: "o_coinstatue", x: 21, y: 4, name: "The House's own statue. It is not smiling." }); g[4][21] = "#";
+      /* (2026-09-25, the owner: "remove the Ruby so that users cant quickly cash out there") IT WAS A CASHIER.
+         `coinstatue` maps to kind "cashier" in the page's click table, so the House's statue was a working
+         cash-out standing in the middle of the endgame map - you could bank a run without leaving. It keeps
+         its picture and becomes an ordinary `statue`, which is examinable and nothing else. */
+      objs.push({ t: "statue", art: "o_coinstatue", x: 21, y: 4, name: "The House's own statue. It is not smiling." }); g[4][21] = "#";
       for (const x of [13, 22, 29]) { put({ t: "column", x, y: 10 }); put({ t: "column", x, y: 16 }); }
       for (const c of [[5, 11], [5, 15], [38, 11], [38, 15]]) put({ t: "ropepost", x: c[0], y: c[1], name: "Rope post" });
       for (const c of [[7, 17], [34, 5]]) put({ t: "chest", x: c[0], y: c[1], name: "An emptied deposit box" });
@@ -1747,8 +1751,21 @@ Object.assign(SCENES, {
       for (const c of [[26, 4], [26, 21]]) put({ t: "rock", x: c[0], y: c[1], ore: "voidglass", name: "Shattered window", req: { skill: "mining", lvl: 70 }, xp: 190 });
       /* `art` spelled out: a yew draws as o_yew off its TYPE, so without it the Vaultwood was an ordinary tree in
          a room with no sun in it. Same rule the Yard's Old oak needed. */
-      for (const c of [[14, 17], [26, 5]]) put({ t: "yew", art: "o_vaultwood", x: c[0], y: c[1], log: "voidlogs", name: "Vaultwood, up through the floor", req: { skill: "woodcutting", lvl: 60 }, xp: 200 });
-      for (const c of [[10, 15], [11, 16]]) { if (!free(c[0], c[1])) continue; objs.push({ t: "spot", x: c[0], y: c[1], look: 6, fish: "cloudray", fish2: "skyeel", fish2lvl: 70, name: "Flooded floor", req: { skill: "fishing", lvl: 60 }, xp: 200 }); g[c[1]][c[0]] = "~"; }
+      /* (2026-09-25, the owner: "what is the level of the fishing spot/logs/ore spots? is it the right level?")
+         WOODCUTTING 60 WAS WRONG and had been since the Vault shipped. Vaultwood is the second-best log in the
+         game (value 43) and asked the same level as Ludus Farm's yewlogs (35), while the Carnival's pinelogs
+         (20) ask 65. On the ladder it belongs between pinelogs at 65 and the Trailer Park's bogwoodlogs (48) at
+         80, so it is 75. The MINING levels were already right - starfall 60, eclipse 70, nova 80 are exactly
+         their tier gates - and are untouched. */
+      for (const c of [[14, 17], [26, 5]]) put({ t: "yew", art: "o_vaultwood", x: c[0], y: c[1], log: "voidlogs", name: "Vaultwood, up through the floor", req: { skill: "woodcutting", lvl: 75 }, xp: 240 });
+      /* (2026-09-25, the owner: the hover "says 'Fish Fishing Spot'") A SPOT'S NAME IS OVERRIDDEN unless it is
+         `special`: the page prints "Fishing spot" for any plain one, so "Flooded floor" was being thrown away and
+         the verb put in front of it. `special` also skips the numbered o_spot<look> art, so the picture has to be
+         named outright - which is why this carries BOTH special and art.
+         AND fish2 WAS THE WORSE FISH. It read cloudray (24) with skyeel (20) as the level-70 bonus, so working
+         harder caught something cheaper. Thundersquid (26) is fished nowhere else and sits correctly between
+         cloudray and the Trailer Park's mudcat (29). */
+      for (const c of [[10, 15], [11, 16]]) { if (!free(c[0], c[1])) continue; objs.push({ t: "spot", x: c[0], y: c[1], special: true, art: "o_spot6", fish: "cloudray", fish2: "thundersquid", fish2lvl: 70, name: "Flooded floor", req: { skill: "fishing", lvl: 60 }, xp: 200 }); g[c[1]][c[0]] = "~"; }
       /* the counting room: one tidy block of bullion in the north-east, not litter */
       for (const c of [[38, 5], [39, 5], [40, 5], [38, 6], [39, 6], [40, 6]]) put({ t: "bullion", art: "o_bullion", x: c[0], y: c[1], name: "Bullion nobody came back for" });
       /* (2026-09-25, the owner: "dont scatter ground items everywhere, it needs to be neat and organized in
@@ -5348,7 +5365,12 @@ export const EXAMINE = {
   bench: ["A marble bench, for waiting. Nobody waits. Aurelia is very fast."],
   goatstatue: ["'THE FIRST DEPOSITOR.' A bronze goat, clutching a coin purse. It looks smug."],
   chest: ["The vault's overflow. Locked. Aurelia has the key and won't say where."],
-  rug: ["A good rug. Mind your sandals."],
+  /* (2026-09-25, the owner: "remove the unwalkable carpet that doesnt allow you to move in the vault, it says
+     'Mind your sandals'. also remove that mechanism from the casino as well") A RUG IS NOT A THING YOU CLICK.
+     Its kind came from having an EXAMINE line, and the page then answered a click on bare carpet with the
+     examine instead of walking you there - so any carpeted floor read as unwalkable. Removing the line is the
+     whole fix: with no kind, the click loop skips rugs entirely and the click falls through to movement.
+     The Vault's new purple runners and the casino's carpet were both affected. */
   chair: ["A three-legged stool. Bom has broken four of these."],
   sack: ["A sack of flour. Baking comes later."],
   cat: ["A cat wearing a tiny gladiator helmet. It judges you.", "The cat's helmet has a little crest. It has clearly won fights."],

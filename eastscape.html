@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=269">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=270">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1028,7 +1028,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=269";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=270";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -2918,10 +2918,12 @@ function thingAt(wx, wy) {
   for (const pl of Z.players) if (pl.id !== you?.id) { const p = posOf(pl, now); if (near(p.px * T + 8, p.py * T + 14, 6, 24)) return Z.def.pvp ? { kind: "pvp", id: pl.id, x: pl.x, y: pl.y, name: `${pl.name} (level ${pl.lvl})` } : { kind: "player", id: pl.id, x: pl.x, y: pl.y, name: pl.name }; }
   const tx = Math.floor(wx / T), ty = Math.floor(wy / T);
   for (const it of Z.ground) if (it.x === tx && it.y === ty) return { kind: "ground", id: it.id, x: it.x, y: it.y, name: ITEMS[it.k].name };
-  /* A RUG IS THE FLOOR: anything standing on it is what you clicked (v88 fix: the Yard's jukebox stands on a concrete slab that
-     comes first in the list and covers its tiles, so a click on the jukebox examined the concrete). A rug only answers when
-     nothing else under the pointer does. */
-  let floorHit = null;
+  /* (2026-09-25) A RUG IS THE FLOOR, AND THE FLOOR IS NOT A TARGET. This used to hold a rug back as a
+     last-resort answer (`floorHit`) so that anything standing on it won a click first - the v88 fix for the Yard's
+     jukebox on its concrete slab. But the fallback meant a click on bare carpet examined the rug instead of
+     walking, so a carpeted room read as unwalkable. Rugs no longer carry an EXAMINE line, so the loop below skips
+     them on `kind` alone and a click on carpet falls through to movement. The jukebox still wins its own click
+     because it is a real object with its own kind, which was always the part that mattered. */
   for (const ob of Z.objs) {
     const kind = KIND_OF[ob.t] || (G.EXAMINE[ob.t] ? ob.t : null); if (!kind) continue;
     let hit;
@@ -2929,10 +2931,8 @@ function thingAt(wx, wy) {
     else if (ob.t === "oak" || ob.t === "yew") hit = Math.abs(tx - ob.x) <= 1 && (ty === ob.y || ty === ob.y - 1) && (tx === ob.x || ty === ob.y - 1);
     else if (ob.t === "spot" || ob.t === "wheat") hit = tx === ob.x && ty === ob.y;
     else hit = tx >= ob.x && tx < ob.x + ob.w && ty >= ob.y - (ob.t === "vein" || ob.t === "well" ? 0 : 1) && ty < ob.y + ob.h;   // tall things can be clicked on their top half too
-    if (hit && ob.t === "rug") { floorHit ||= { kind, ob, x: ob.x, y: ob.y, name: ob.name }; continue; }
     if (hit) return { kind: ob.t === "house" && ob.enter ? "enter" : kind, ob, x: ob.x, y: ob.y, name: ob.t === "spot" && !ob.special ? "Fishing spot" : ob.name };
   }
-  if (floorHit) return floorHit;
   return null;
 }
 cv.addEventListener("pointerdown", (e) => {
