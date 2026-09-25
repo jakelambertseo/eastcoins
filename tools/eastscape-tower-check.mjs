@@ -49,17 +49,17 @@ for (let f = 1; f <= T.floors; f++) {
   const secs = (s.hp / s.dps) * (1 - urge); total += secs;
   if (secs > worst) { worst = secs; worstF = f; }
   const dmg = (secs * 1000 / 2600) * G.hitChance(s.att, G.defenceRollOf(c)) * ((1 + s.max) / 2);
-  const eats = Math.max(0, Math.ceil((dmg - G.maxHpOf(c)) / 34));   // a smoked thunder squid
+  const eats = Math.max(0, Math.ceil((dmg - G.maxHpOf(c)) / 37));   // (2026-09-25) a smoked bowfin, the best fish there is; better food means FEWER meals and so LONGER gaps
   const gap = eats ? secs / (eats + 1) : secs;                       // longest stretch with no reason to click
   if (gap > longest) longest = gap;
-  if (gap > G.AFK_MS / 1000) idle.push(f);
+  if (gap > G.AFK_TOWER_MS / 1000) idle.push(f);
 }
 const who = urge ? "clicking well" : "left to swing";
 console.log(`  ${who.padEnd(14)} climb ${(total / 3600).toFixed(1)}h; worst fight ${(worst / 60).toFixed(1)}m on floor ${worstF}; longest gap ${longest.toFixed(0)}s`);
 if (worst > 15 * 60) fail(`floor ${worstF} is a ${(worst / 60).toFixed(0)}-minute fight; that is a sitting, not a floor`);
-if (idle.length) fail(`${who}: ${idle.length} floor(s) leave a gap past the ${G.AFK_MS / 60000}-minute AFK cutoff: ${idle.slice(0, 8).join(", ")}`);
-else if (longest > G.AFK_MS / 1000 - 20) fail(`${who}: the longest gap is ${longest.toFixed(0)}s against a ${G.AFK_MS / 1000}s cutoff — under 20s of margin is too close`);
-else ok(`${who}: longest stretch with no reason to click ${longest.toFixed(0)}s, ${(G.AFK_MS / 1000 - longest).toFixed(0)}s inside the cutoff`);
+if (idle.length) fail(`${who}: ${idle.length} floor(s) leave a gap past the ${G.AFK_TOWER_MS / 60000}-minute AFK cutoff: ${idle.slice(0, 8).join(", ")}`);
+else if (longest > G.AFK_TOWER_MS / 1000 - 20) fail(`${who}: the longest gap is ${longest.toFixed(0)}s against a ${G.AFK_TOWER_MS / 1000}s cutoff — under 20s of margin is too close`);
+else ok(`${who}: longest stretch with no reason to click ${longest.toFixed(0)}s, ${(G.AFK_TOWER_MS / 1000 - longest).toFixed(0)}s inside the cutoff`);
 }
 
 /* ---- what a death costs */

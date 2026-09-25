@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 240;
+export const VERSION = 241;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -77,8 +77,8 @@ export const ITEMS = {
   bogwoodlogs: { name: "Bogwood logs", icon: "🪵", ex: "Pulled out of the swamp black and dense as coal. It sinks in water and burns for a week." },
   mudcat: { name: "Raw mud cat", icon: "🐟", ex: "A catfish the colour of the bottom. It has been down there a long time and it has opinions." },
   bowfin: { name: "Raw bowfin", icon: "🐟", ex: "All teeth and bad temper. Older than the swamp it lives in." },
-  cmudcat: { name: "Cooked mud cat", icon: "🐟", heal: 26, ex: "Better than it has any right to be." },
-  cbowfin: { name: "Cooked bowfin", icon: "🐟", heal: 30, ex: "You have to work round the bones. Worth it." },
+  cmudcat: { name: "Cooked mud cat", icon: "🐟", heal: 30, ex: "Better than it has any right to be." },
+  cbowfin: { name: "Cooked bowfin", icon: "🐟", heal: 35, ex: "You have to work round the bones. Worth it." },
   wrench: { name: "The King's wrench", short: "Wrench", icon: "🔧", slot: "weapon", acc: 34, str: 38, speed: 3000, req: { skill: "melee", lvl: 80 }, ex: "Four feet of rusted pipe wrench. It has loosened exactly one nut in its life and settled a great many arguments." },
   kingcap: { name: "The King's cap", short: "Cap", icon: "🧢", slot: "helm", def: 14, acc: 4, ex: "Sweat-stained, sun-bleached, and it still smells of him. Nobody will say a word about you wearing it." },
   /* (2026-09-22) The Run's pickup. `pickXp` is read by the ground handler, so anything droppable can pay a skill
@@ -110,8 +110,8 @@ export const ITEMS = {
   cbeef: { name: "Cooked beef", icon: "🥩", heal: 4, ex: "A good honest steak." },
   cpork: { name: "Roast boar", icon: "🍖", heal: 6, ex: "Crackling on the outside, grudge on the inside." },
   ctrout: { name: "Cooked trout", icon: "🐠", heal: 10, ex: "Flaky, buttery, and it no longer judges you." },
-  cgloomfin: { name: "Cooked gloomfin", icon: "🐟", heal: 15, ex: "Still slightly annoyed. Very filling." },
-  cmooncarp: { name: "Cooked moon carp", icon: "🐡", heal: 21, ex: "It glows faintly in your stomach. That's normal. Probably." },
+  cgloomfin: { name: "Cooked gloomfin", icon: "🐟", heal: 19, ex: "Still slightly annoyed. Very filling." },
+  cmooncarp: { name: "Cooked moon carp", icon: "🐡", heal: 23, ex: "It glows faintly in your stomach. That's normal. Probably." },
   burnt: { name: "Burnt food", icon: "⚫", ex: "Whatever it was, it's charcoal now." },
   // ---- 2026-09-20: THE THINGS THAT CHANGE HOW THE CASINO TREATS YOU (see FX, below the casino's numbers) ----
   // fighting's windfalls: house chips, worth a lump of tickets at the Ruby or a Cashier
@@ -209,8 +209,8 @@ export const ITEMS = {
   palmlogs: { name: "Palm logs", icon: "\u{1FAB5}", ex: "Fibrous and stringy rather than grained. Burns fast and sweet." },
   oasisperch: { name: "Oasis perch", icon: "\u{1F41F}", ex: "Fat, slow and entirely unbothered. Nothing else in the pool worries it.", raw: true },
   nilecarp: { name: "Temple carp", icon: "\u{1F41F}", ex: "Somebody has been feeding these for a very long time.", raw: true },
-  coasisperch: { name: "Cooked oasis perch", icon: "\u{1F41F}", heal: 16, ex: "Sweet white flesh. Worth the walk." },
-  cnilecarp: { name: "Cooked temple carp", icon: "\u{1F41F}", heal: 19, ex: "Rich, oily and faintly holy." },
+  coasisperch: { name: "Cooked oasis perch", icon: "\u{1F41F}", heal: 24, ex: "Sweet white flesh. Worth the walk." },
+  cnilecarp: { name: "Cooked temple carp", icon: "\u{1F41F}", heal: 27, ex: "Rich, oily and faintly holy." },
   pot_swift: { name: "Swift draught", icon: "\u{1F9EA}", drink: { mins: 10, fx: { speed: 0.04 } }, ex: "Mushroom and panic. 10 minutes outside: everything you do, a little faster." },
   pot_hide: { name: "Hide tonic", icon: "\u{1F9EA}", drink: { mins: 10, fx: { tough: 0.05 } }, ex: "Thick, brown, and it sets slightly. 10 minutes outside: you take less." },
   pot_keen: { name: "Keen-eye water", icon: "\u{1F9EA}", drink: { mins: 10, fx: { rare: 0.06 } }, ex: "Clears the head and sharpens the sight. 10 minutes outside: rare finds come looser." },
@@ -230,20 +230,20 @@ export const ITEMS = {
   pot_coilbreaker: { name: "Coilbreaker draught", icon: "\u{1F9EA}", drink: { mins: 25, fx: { tough: 0.24, speed: 0.08 } }, ex: "Venom, cut with glass dust and gourd milk. 25 minutes outside: very hard to hurt, and quick with it. The best thing in the game." },
   pot_pharaoh: { name: "Pharaoh's draught", icon: "\u{1F9EA}", drink: { mins: 20, fx: { tough: 0.18, bite: 0.03 } }, ex: "The best thing anyone can make. 20 minutes outside: hard to hurt, and the fish come to you." },
   lanternfish: { name: "Lanternfish", icon: "🐟", heal: 9, ex: "It has its own little light. It keeps it on even now." },
-  clanternfish: { name: "Cooked lanternfish", icon: "🐟", heal: 16, ex: "The light goes out when it's cooked. That's how you know." },
+  clanternfish: { name: "Cooked lanternfish", icon: "🐟", heal: 20, ex: "The light goes out when it's cooked. That's how you know." },
   skyeel: { name: "Sky eel", icon: "🐍", heal: 14, ex: "Caught from a cloud, out of the open sky. It is very surprised about it too." },
   /* (v104) every fish can be cooked now. A cooked fish sells for TWICE the raw one (CRAFT_PAYS, like anything made) and heals about two thirds more. */
   cperch: { name: "Cooked perch", icon: "🐟", heal: 7, ex: "The stripes are grill marks now." },
   ccatfish: { name: "Cooked catfish", icon: "🐟", heal: 12, ex: "The whiskers crisp up nicely. Don't think about it." },
   cmudskipper: { name: "Cooked mudskipper", icon: "🐟", heal: 18, ex: "It stopped walking. Tastes of pond, in a good way." },
-  cgoldfish: { name: "Goldfish on a stick", icon: "🐟", heal: 26, ex: "Somebody grilled the prize. It is better this way." },
-  ckoi: { name: "Koi on a tray", icon: "🐟", heal: 28, ex: "Served in a paper tray with a wedge of lemon, which is more ceremony than it got alive." },
-  cbonefish: { name: "Cooked bonefish", icon: "🐟", heal: 20, ex: "Still mostly bones. Warm bones." },
+  cgoldfish: { name: "Goldfish on a stick", icon: "🐟", heal: 33, ex: "Somebody grilled the prize. It is better this way." },
+  ckoi: { name: "Koi on a tray", icon: "🐟", heal: 34, ex: "Served in a paper tray with a wedge of lemon, which is more ceremony than it got alive." },
+  cbonefish: { name: "Cooked bonefish", icon: "🐟", heal: 21, ex: "Still mostly bones. Warm bones." },
   cghostcarp: { name: "Cooked ghost carp", icon: "🐟", heal: 22, ex: "You can see the plate through it." },
   ccloudray: { name: "Cooked cloud ray", icon: "🐟", heal: 26, ex: "Light as air. Fills you up anyway." },
   cstormmarlin: { name: "Cooked storm marlin", icon: "🐟", heal: 29, ex: "The nose still hums. Eat around it." },
   cthundersquid: { name: "Cooked thunder squid", icon: "🦑", heal: 32, ex: "Calamari with a kick. An actual kick." },
-  cskyeel: { name: "Cooked sky eel", icon: "🐍", heal: 24, ex: "Tastes like a thunderstorm smells." },
+  cskyeel: { name: "Cooked sky eel", icon: "🐍", heal: 28, ex: "Tastes like a thunderstorm smells." },
   // the Forge's Bronze set (Brutus sells it); req is what you need to wear it
   toga: { name: "Goat-sized toga", short: "Toga", icon: "🥻", slot: "body", def: 3, acc: 1, ex: "Smells of goat. Fits you perfectly, which is worrying." },
   parma: { name: "Parma", icon: "🛡️", slot: "shield", def: 3 },
@@ -3376,14 +3376,25 @@ for (const [raw, c] of Object.entries({
    IT SEQUENCES ITSELF, the same way the furnace does. recipesAt sorts level-DESCENDING and a smoke sits above its
    own cook, so a campfire smokes while you have charcoal and drops back to plain cooking when you run out. Nothing
    to toggle. A smoke is worth far more than the charcoal it eats, so spending it is always the right call. */
+/* (2026-09-25, relayed by the owner from dookiebetts800: "the non smoked versions of level 60 fish heal less
+   then non smoked level 50 food") He was right, and worse at the top than the example: Cooked bowfin at level 70
+   healed 30 against Cooked thunder squid at 60 on 32, so the best fish in the game was the WORSE meal unless you
+   smoked it. Eleven plain cooks sat below a lower-level fish.
+
+   Fixed BUFF-ONLY, because people have these banked and nerfing a food somebody stocked up on is a worse bug than
+   the one being fixed: each offender was raised one above the best fish below it. That is why the top only moves
+   30 -> 35; a curve fitted to the good points wanted 40, which is a different change from the one asked for.
+
+   A SMOKE IS ALWAYS ITS COOK PLUS TWO. That held for all seven before this and still does - keep it that way, or
+   the smoked ladder grows a second, separate bug. tools/eastscape-food-check.mjs fails if either inverts again. */
 const SMOKE = {
   ghostcarp:    { lvl: 40, coal: 1, heal: 24, sell: 110, fx: { rare: 0.08 },              blurb: "Drops come a little easier." },
   cloudray:     { lvl: 50, coal: 1, heal: 28, sell: 145, fx: { tough: 0.08 },             blurb: "You take less of a beating." },
-  skyeel:       { lvl: 55, coal: 1, heal: 26, sell: 125, fx: { speed: 0.08 },             blurb: "Lighter on your feet." },
+  skyeel:       { lvl: 55, coal: 1, heal: 30, sell: 125, fx: { speed: 0.08 },             blurb: "Lighter on your feet." },
   stormmarlin:  { lvl: 60, coal: 2, heal: 31, sell: 140, fx: { tix: 0.10 },               blurb: "Everything pays a bit more." },
-  mudcat:       { lvl: 65, coal: 2, heal: 28, sell: 180, fx: { rare: 0.15 },              blurb: "The good stuff turns up." },
+  mudcat:       { lvl: 65, coal: 2, heal: 32, sell: 180, fx: { rare: 0.15 },              blurb: "The good stuff turns up." },
   thundersquid: { lvl: 65, coal: 2, heal: 34, sell: 165, fx: { tough: 0.15 },             blurb: "Hits land softer." },
-  bowfin:       { lvl: 75, coal: 3, heal: 32, sell: 210, fx: { tough: 0.10, rare: 0.15 }, blurb: "The best thing out of that water." }
+  bowfin:       { lvl: 75, coal: 3, heal: 37, sell: 210, fx: { tough: 0.10, rare: 0.15 }, blurb: "The best thing out of that water." }
 };
 for (const [raw, sm] of Object.entries(SMOKE)) {
   if (!ITEMS[raw]) continue;
@@ -4343,6 +4354,18 @@ export const burnChance = (r, lvl, range) => lvl >= r.burnStop ? 0 : Math.max(0.
 export const EAT_MS = 1200;
 // repeating skills stop after this long with no input from the player: the resources never run dry, but you have to be there
 export const AFK_MS = 3 * 60 * 1000;
+/* THE TOWER GETS A LONGER LEASH (2026-09-25). The three-minute rule exists to stop somebody standing in an
+   aggressive area collecting kills with no input; a tower floor is the opposite case - a private room, one
+   monster, a fifth of the tickets and no item drops at all, so there is nothing there to farm passively. And its
+   fights are FOUR TO FIVE MINUTES by design, so the only thing keeping a climber "active" is eating, which means
+   the window has to be longer than the longest stretch a floor can go without needing a meal.
+
+   That stretch moves when anything about food or damage moves, and it already has twice: buffing the top fish from
+   34 to 37 took a meal off some floors, and a meal fewer LENGTHENS the gap (it is the fight divided by meals plus
+   one). At 162s against 180s it was inside the cutoff by less than the width of one swing. Five minutes is not a
+   number to tune - it is "comfortably past any floor", and tools/eastscape-tower-check.mjs is what keeps it true.
+   NOTE THAT FOOD IS WHAT POLICES THE TOWER, not this: a climber who genuinely walks away starves and dies. */
+export const AFK_TOWER_MS = 5 * 60 * 1000;
 /* (2026-09-24, the owner: "can you make sure users arent afking vs aggressive mobs? ... can we have an afk rule
    of 3 minutes like skilling?") FIGHTING IS ON THE LIST NOW, and it is the half of the fix you can see. The
    other half is in the worker: a mob that hits a player with no action HANDS THEM ONE — auto-retaliate — so the

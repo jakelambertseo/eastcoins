@@ -1800,9 +1800,10 @@ export class World {
   doAction(S, pl, now) {
     const a = pl.act, C = pl.C; if (!a || pl.path.length) return;
     // AFK: a repeating skill stops once nobody has touched the game for a while (see G.AFK_MS)
-    if (G.AFK_KINDS[a.kind] && now - pl.lastInput > G.AFK_MS) {
+    const afkMs = S.def.tower ? G.AFK_TOWER_MS : G.AFK_MS;   /* (2026-09-25) a tower floor is a 4-5 minute fight by design; see AFK_TOWER_MS */
+    if (G.AFK_KINDS[a.kind] && now - pl.lastInput > afkMs) {
       pl.act = null;
-      return this.say(pl, `You stop ${G.AFK_KINDS[a.kind]}: you've been idle for ${Math.round(G.AFK_MS / 60000)} minutes. Click to carry on.`);
+      return this.say(pl, `You stop ${G.AFK_KINDS[a.kind]}: you've been idle for ${Math.round(afkMs / 60000)} minutes. Click to carry on.`);
     }
     const faceIt = () => { pl.dir = G.DIRS[`${Math.sign(a.x - pl.x)},${Math.sign(a.y - pl.y)}`] || pl.dir; pl.face = a.x > pl.x ? 1 : a.x < pl.x ? -1 : pl.face; };
     if (a.kind === "mob") {
