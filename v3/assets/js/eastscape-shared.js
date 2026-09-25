@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 237;
+export const VERSION = 238;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -3107,6 +3107,31 @@ export const MOBS = {
    for the shorter fight (BOUNTY), so an hour's fighting is worth what it was. */
 for (const m of Object.values(MOBS)) m.hp = Math.max(2, Math.round(m.hp / 2));
 
+/* HARDER OUTSIDE THE YARD (2026-09-25, the owner: "for all mobs outside of the Yard, and only in scenes (not
+   towers, not dungeons). make them do 33% more damage and increase their HP by 33%").
+
+   WHERE THIS SITS IS THE WHOLE TRICK. It runs at module load, and the Crypt, the Pyramid and the Tower all merge
+   their own MOBS rows LATER, in the worker's index.js — so "not towers, not dungeons" costs nothing here: they
+   are not in this table yet. The Tower would have been safe regardless, because floorSpec derives a floor's
+   health from the climber's dps and only borrows the base monster's NAME, ART, SIZE, BOX and SPEED.
+
+   THE YARD IS EXCLUDED BY TYPE, not by scene, because health and max hit are read off MOBS[t] and a type is
+   shared by every scene it stands in. These six also appear in the Forum-era maps (farm, grove, tomato, river,
+   paddock, rough), and none of those is in OPEN — so today "not the Yard's types" and "not the Yard" are the
+   same set. If that area ever reopens its monsters come back at the old numbers, which is a decision to make
+   then rather than a bug now.
+
+   `max` is the damage ROLL, and a hit is rint(1, max) — so the average is (1 + max) / 2, not max. Scaling max by
+   1.33 would only be a 25-30% rise at the small numbers most monsters have. Solving for the average instead is
+   what makes this the 33% that was asked for. */
+export const YARD_TYPES = ["chicken", "cow", "rotten", "olive", "hornworm", "boar"];
+export const OUTSIDE_BUFF = 1.33;
+for (const [t, m] of Object.entries(MOBS)) {
+  if (YARD_TYPES.includes(t)) continue;
+  m.hp = Math.max(2, Math.round(m.hp * OUTSIDE_BUFF));
+  m.max = Math.max(2, Math.round((m.max + 1) * OUTSIDE_BUFF - 1));
+}
+
 /* WHAT A MONSTER DROPS (2026-09-20, the owner: "1-3 items, with the third being a rare one"). The same three lines for
    every monster, so nobody needs the wiki to know what a kill is:
      1. CASH, always: the bounty (BOUNTY, further down, fills this in so an average kill is worth what it should be)
@@ -4417,7 +4442,10 @@ for (const [k, v] of Object.entries(SHOP.buys)) if (!(k in VALUE) && !ITEMS[k]?.
    `ms`, and your chance of a bite grows with your Fishing level exactly as mining's did. It is tuned to pay between two thirds and nine tenths of
    what fighting does at the same level (tools/eastscape-grind-sim.mjs): safe money is a little less money. It's also the
    only place lucky clovers come from now, and a fish is food as it comes out of the water. */
-export const FISHING = { ms: 2600, chance: (lvl) => Math.min(0.9, 0.4 + lvl * 0.02), troutAt: 10, troutShare: 0.35, secondShare: 0.35 };
+/* (2026-09-25, the owner: "the fish bite rate needs to be reduced by 33%") The CAP is cut too, not just the
+   curve: the old one hit its ceiling at level 25 and stayed there for the next 74 levels, so trimming only
+   the 0.4 + lvl*0.02 part would have left everyone above 25 fishing at exactly the old rate. */
+export const FISHING = { ms: 2600, chance: (lvl) => Math.min(0.9, 0.4 + lvl * 0.02) * 0.67, troutAt: 10, troutShare: 0.35, secondShare: 0.35 };
 /** What a cast at this spot lands, for a fisher of this level: the spot's fish, or (secondShare of the time, once you are fish2lvl) its second one. r: a roll 0..1 */
 export const fishAt = (ob, lvl, r) => (ob?.fish2 && lvl >= (ob.fish2lvl || 0) && r < FISHING.secondShare ? ob.fish2 : ob?.fish || "sardine");
 export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
