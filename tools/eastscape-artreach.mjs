@@ -16,9 +16,21 @@
 */
 import * as G from "file:///C:/Users/jake/code/eastcoins/v3/assets/js/eastscape-shared.js";
 import { createClosedScenes } from "file:///C:/Users/jake/code/eastcoins/v3/assets/js/eastscape-closed.js";
+import { createCryptRules } from "file:///C:/Users/jake/code/eastcoins/v3/assets/js/eastscape-crypt-rules.js";
+import { createPyramidRules } from "file:///C:/Users/jake/code/eastcoins/v3/assets/js/eastscape-pyramid-rules.js";
 import fs from "node:fs";
 
 Object.assign(G.SCENES, createClosedScenes(G, G._MAP));
+/* (2026-09-24, the owner, on the Pyramid's first live clear: "chest didnt shoow at the end after defeat")
+   THE THREE DUNGEONS WERE OUTSIDE THIS CHECKER ENTIRELY. It walked G.OPEN, and a dungeon is not in OPEN — its
+   rules are a lazily-loaded module of their own and its AREA_ART entry is assigned at RUNTIME, so neither the
+   scene nor its art list was ever here. That is how the Great Pyramid shipped, and was opened to everyone, with
+   o_cryptloot missing from its list: the hoard chest was placed, and clicked, and drew nothing, because the
+   picture is not in core and the pyramid never asked for it. A party paid 1,250 each and found an empty room.
+   They are checked like any other scene now. Their art list is the `art` array on the scene itself rather than
+   an AREA_ART block, which is what `listOf` below sorts out. */
+const DUNGEONS = { ...createCryptRules(G, G._MAP).scenes, ...createPyramidRules(G, G._MAP).scenes };
+Object.assign(G.SCENES, DUNGEONS);
 
 const ROOT = "C:/Users/jake/code/eastcoins";
 const html = fs.readFileSync(`${ROOT}/eastscape.html`, "utf8");
@@ -42,12 +54,15 @@ let bad = 0, checked = 0;
 const noArt = {};   /* object kinds with no picture anywhere, and which scenes place them */
 const onDisk = (k) => fs.existsSync(`${ROOT}/v3/assets/img/glad/flat/${k}.png`);
 
-for (const key of G.OPEN) {
+/* a dungeon carries its own art list on the scene; everything else has an AREA_ART block */
+const listOf = (key) => (DUNGEONS[key] ? (DUNGEONS[key].art || []).map((k) => `"${k}"`).join(" ") : area[key] || "");
+
+for (const key of [...G.OPEN, ...Object.keys(DUNGEONS)]) {
   const sc = G.SCENES[key];
   if (!sc?.build) continue;
   let b;
   try { b = sc.build(); } catch { continue; }
-  const list = area[key] || "";
+  const list = listOf(key);
   const seen = new Set();
   for (const ob of b.objs || []) {
     const k = ob.art || `o_${ob.t}`;

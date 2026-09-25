@@ -80,7 +80,7 @@ export function createCryptRules(G, H) {
       exitTo: CRYPT.door, entry: { x: 3, y: 20 },
       floorArt: "t_crypt", wallArt: "t_cryptwall",   // (v104) drawn flagstones and wall faces (tools/eastscape-crypt-art.mjs)
       art: ["cryptguard", "cryptghost", "cryptgolem", "hoodie", "t_crypt", "t_cryptwall", "o_cryptgate", "o_cryptlever", "o_sarcophagus", "o_bonepile", "o_crypttorch",
-        "o_cryptpillar", "o_cryptaltar", "o_cryptcage", "o_cryptcoffin", "o_cryptthrone", "o_gargoyle", "o_ghostbrazier", "o_cryptcandles", "o_cryptexit", "o_skullheap", "o_cryptrubble", "o_cryptrack", "o_cryptloot"],
+        "o_cryptpillar", "o_cryptaltar", "o_cryptcage", "o_cryptcoffin", "o_cryptthrone", "o_gargoyle", "o_ghostbrazier", "o_cryptcandles", "o_cryptexit", "o_skullheap", "o_cryptrubble", "o_cryptrack", "o_cryptloot", "o_chest"],   /* (2026-09-24) o_chest is deferred out of core by the guild and yard lists, so the Crypt’s restock chest has been drawing as a generic shape since it shipped. Found by the same checker run that found the Pyramid’s hoard. */
       build() {
         const g = room(1, 4, 42, 21, 2), objs = [];
         for (const wx of [11, 22, 28]) for (let y = 4; y <= 21; y++) g[y][wx] = "v";                       // the three cross walls

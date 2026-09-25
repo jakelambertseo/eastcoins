@@ -173,7 +173,13 @@ export function createPyramidRules(G, H) {
       art: ["swarm", "grifter", "canopic", "dustwraith", "pharaoh", "squeeze", "t_tomb", "t_tombwall",
         "o_cryptgate", "o_cryptlever", "o_sarcophagus", "o_crypttorch", "o_cryptpillar", "o_cryptaltar",
         "o_cryptcoffin", "o_gargoyle", "o_ghostbrazier", "o_cryptcandles", "o_cryptexit", "o_skullheap",
-        "o_bonepile", "o_cryptrubble", "o_obelisk", "o_chest"],
+        "o_bonepile", "o_cryptrubble", "o_obelisk", "o_chest",
+        /* (2026-09-24, the owner on the first live clear: "chest didnt shoow at the end after defeat") THE HOARD
+           HAD NO PICTURE. o_cryptloot.png exists, but it is not in core and this list never asked for it — so the
+           chest was placed, and clickable, and drew nothing. A scene art list is not documentation: a prop missing
+           from it is a prop that is not there. tools/eastscape-artreach.mjs covers the dungeons now and would have
+           said so, which is the real fix. */
+        "o_cryptloot"],
       build() {
         const g = room(1, 3, 42, 22, 21), objs = [];
         /* IT NARROWS, ROW BY ROW. Everything outside a row's own span is solid wall, which is what gives the
