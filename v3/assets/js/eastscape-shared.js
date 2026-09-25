@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 236;
+export const VERSION = 237;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -3039,7 +3039,7 @@ export const MOBS = {
   /* THE HEADLINER. "a boss thats this mask guy" — a clown in a cracked porcelain grin, alone in the north-west
      in front of his funhouse. 150 against a Fat Lady’s 82, which is a mini boss and not a raid: no party, no
      ante, you walk up to him. */
-  grinner: { name: "The Grinning Man", size: "xl", lvl: 72, hp: 300, att: 58, def: 50, max: 17, speed: 2600, aggro: 6, box: [16, 44], drops: [] },
+  grinner: { name: "The Grinning Man", size: "xl", lvl: 72, hp: 300, att: 58, def: 50, max: 17, speed: 2600, aggro: 6, box: [16, 44], respawn: 300000, drops: [] },   /* (2026-09-25, the owner: "the grinning man in the carnival is getting exploited") FIVE MINUTES. The turnstile takes a Carnival ticket to go IN and nothing to come out, so the ticket is a cover charge paid ONCE - and inside the cage he was coming back on the ordinary 15s timer, DIVIDED by the number of people on him. At a 2,000 bounty that is about 8,000 tickets a minute for a party, against a band near 480. At five minutes he measures ~370, which is what a boss should pay. */
   usher: { name: "One-Eyed Usher", size: "m", lvl: 36, hp: 56, att: 26, def: 23, max: 6, speed: 2400, aggro: 4, box: [8, 26], drops: [] },
   brainstorm: { name: "Brainstorm", size: "s", lvl: 40, hp: 60, att: 29, def: 25, max: 7, speed: 2200, box: [7, 16], drops: [] },
   seagoat: { name: "Sea-Goat of the Upper Air", size: "l", lvl: 46, hp: 78, att: 33, def: 29, max: 8, speed: 2800, box: [20, 36], drops: [] },
@@ -4874,7 +4874,11 @@ export const PVP = { drop: 0.25, lootMs: 60000, groundMs: 180000, lingerMs: 1000
 // how long a monster stays dead. Outside the Wilderness it's 15s for one person, shared out between everyone who has
 // fought in the area in the last minute (15s, 7.5s, 5s, then a 4s floor), so a busy area refills without more monsters on it.
 export const RESPAWN = { base: 15000, floor: 4000 };
-export const respawnMs = (sc, t, fighters = 1) => (sc?.pvp ? 60000 + Math.round(Math.max(0, Math.min(1, (MOBS[t].lvl - 15) / 30)) * 120000)
+/* A MOB MAY OWN ITS TIMER, and when it does the party does NOT divide it (2026-09-25). That division is there so
+   a crowd on an ordinary monster is not left standing around, but on a boss it is backwards: the more people
+   farming it, the faster it comes back. Anything worth camping wants `respawn` on its MOBS line. */
+export const respawnMs = (sc, t, fighters = 1) => (MOBS[t]?.respawn ? MOBS[t].respawn
+  : sc?.pvp ? 60000 + Math.round(Math.max(0, Math.min(1, (MOBS[t].lvl - 15) / 30)) * 120000)
   : Math.max(RESPAWN.floor, Math.round(RESPAWN.base / Math.max(1, fighters))));
 export const fmtWait = (ms) => { const s = Math.round(ms / 1000), m = Math.floor(s / 60); return m ? `${m}m${s % 60 ? ` ${s % 60}s` : ""}` : `${s}s`; };
 export const inCage = (def, x, y) => !!def?.cage && x >= def.cage[0] && x <= def.cage[2] && y >= def.cage[1] && y <= def.cage[3];

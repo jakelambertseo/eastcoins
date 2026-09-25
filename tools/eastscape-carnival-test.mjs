@@ -111,6 +111,24 @@ ok("every monster here is inside the band and pays a bounty");
     else ok(`The Grinning Man is at ${boss[1]},${boss[2]} — north-west, in front of his funhouse`);
     if (!G.MOBS.grinner.aggro) fail("the boss is not aggressive; a mob left off AGGRO_ON has its aggro deleted outright");
   }
+  /* HE IS ALONE IN A CAGE, SO HIS RESPAWN IS HIS PAY RATE (2026-09-25, the owner: "the grinning man in the
+     carnival is getting exploited"). The turnstile takes a ticket to go IN and nothing to come out, so the cover
+     charge is paid once and after that the only thing between one 2,000-ticket kill and the next is the timer.
+     eastscape-balance.mjs cannot see this: it models walking 3s to the NEXT monster, which is right on a map with
+     twenty of them and meaningless for one boss behind bars. So it is checked here instead.
+     The party divisor is the other half of it - on an ordinary mob it stops a crowd standing around, on a boss it
+     means the more people farming it the faster it returns. A mob with its own `respawn` is not divided. */
+  {
+    const KILL_S = 28;   // measured by eastscape-balance.mjs for a character at the band's level
+    for (const f of [1, 2, 4]) {
+      const wait = G.respawnMs(S, "grinner", f) / 1000;
+      const perMin = Math.round(G.BOUNTY.grinner / (KILL_S + wait) * 60);
+      if (wait < 300) fail(`the boss is back in ${wait}s with ${f} on him; the owner asked for at least five minutes`);
+      else if (perMin > 480) fail(`the boss pays ${perMin}/min with ${f} on him, past the band`);
+      else if (f === 4) ok(`caged and camped, he pays ${perMin}/min at ${wait}s — the same with one on him or four`);
+    }
+  }
+
   /* HALF THE MAP COMES FOR YOU (2026-09-24, the owner: "randomly in the carnival about 50% of the mobs need to
      be agressive"). Per PLACEMENT, so one Pinhead charges and the next does not — which is what makes it read
      as random rather than as a rule about Pinheads. */
