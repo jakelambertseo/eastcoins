@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 245;
+export const VERSION = 246;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -4528,8 +4528,12 @@ const GEAR_FOR_SALE = TIERS.flatMap((t) => Object.entries(GEAR_PRICE).filter(([k
    for the nova rung, and a nova pickaxe is smithed from nova bars - which need nova ore. The circle only opens at
    Bom's counter, so this price is the real entry fee for the whole tier, not a convenience. If it turns out to be
    a wall rather than a goal, this number is the one to move, not the gear. */
-const TOOL_COST = { nova: 250, singularity: 250 };
-const TOOLS_FOR_SALE = TIERS.flatMap((t) => Object.keys(TOOL_KINDS).filter((k) => ITEMS[`${t.key}_${k}`]).map((k) => [`${t.key}_${k}`, (TOOL_COST[t.key] || 20) * TIER_COST[t.key]]));
+/* (2026-09-25, the owner: "lets make the tools just cost 20,000 for nova and 25,000 for singularity") FLAT
+   PRICES, not a multiple of the tier. The multiplier that prices everything else would have put these at
+   250,000 and 600,000, and a tool is the thing you need BEFORE you can earn at the tier it belongs to - so
+   these two are written as the number the owner wants rather than derived from the gear beside them. */
+const TOOL_PRICE = { nova: 20000, singularity: 25000 };
+const TOOLS_FOR_SALE = TIERS.flatMap((t) => Object.keys(TOOL_KINDS).filter((k) => ITEMS[`${t.key}_${k}`]).map((k) => [`${t.key}_${k}`, TOOL_PRICE[t.key] || 20 * TIER_COST[t.key]]));
 /* Dex's bar (2026-09-20): drinks and the scroll home. Priced so a lager about pays for itself at the table limit and
    costs you at small stakes: a drink is for someone betting big, and otherwise a tickets sink. `round` buys everyone on
    the floor who isn't already drinking a lager's worth of bets. */
