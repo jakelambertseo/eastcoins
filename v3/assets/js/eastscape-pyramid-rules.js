@@ -127,7 +127,9 @@ export function createPyramidRules(G, H) {
     /* THE BOSS ROOM'S MOBS ARE PHARAOHS (the owner's words). The picture came with the Golden Sands, drawn for
        this before the map shipped so its sheet would not change again when the dungeon landed. */
     pharaoh: { name: "Risen Pharaoh", art: "pharaoh", size: "l", lvl: 60, hp: 260, att: 70, def: 68, max: 26, speed: 3100, aggro: 8, box: [14, 34], drops: [["snakefang", 1]] },
-    squeeze: { name: "The Squeeze", art: "squeeze", size: "xl", lvl: 68, hp: 4200, att: 150, def: 112, max: 52, speed: 2500, aggro: 9, box: [24, 60], boss: true, drops: [] },
+    squeeze: { name: "The Squeeze", art: "squeeze", size: "xl", lvl: 68, hp: 4200, att: 150, def: 112, max: 52, speed: 2500, aggro: 9, box: [24, 60], boss: true, drops: [["nova_core", 1, 0.0005], ["singularity_core", 1, 0.0005]] },   /* (2026-09-25, the owner: "yes add to dungeon bosses") The chase cores. 0.0005 IS CORE_DROP and cannot say so:
+      this file is built before shared.js finishes, so the constant does not exist yet. The gear checker asserts
+      every core drop in the game is written at the same rate. */
   };
 
   /* which chamber a point is in, 0-based; -1 for the walls between them */

@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=260">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=261">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=13">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1028,7 +1028,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=260";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=261";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 const loadWiki = () => (loadWiki.p ||= import("/v3/assets/js/eastscape-wiki.js?v=133").then((m) => { WK = m; }));
@@ -1969,10 +1969,25 @@ const ico = (k) => {
 // the stance buttons wear the skill each one trains; Controlled (all three) wears the old Melee icon
 const sico = (k) => (SKILL_ART.has(k) ? artOf(`skill_${k}`) : SKILLS[k]?.icon || "");
 // on the canvas: centred on x, y, size pixels square
+/* (2026-09-25, the owner: "the glow effect needs to show when items are in users inventory ... and while the
+   user is carrying them") THE CSS CLASS COULD NEVER HAVE DONE THIS. artOf emits a DOM <img> and the glow rides on
+   it, but the bag, the bank and the weapon in someone's hand are all painted on the CANVAS through drawIco, which
+   no stylesheet can reach. So the same two tiers get a canvas glow here: shadowBlur/shadowColor drawn twice under
+   the sprite, pulsing on the same clock the CSS uses. Kept cheap on purpose - this runs for every square of a
+   full bag every frame - which is why it is two fills of an existing image and not a second sprite. */
+const GLOW_CANVAS = { nova: ["#ff9a3c", "#ffd88a"], singularity: ["#6d3cff", "#c9a6ff"] };
 function drawIco(k, x, y, size, skill) {
   const key = skill ? `skill_${k}` : ART_ALIAS[k] || k, have = skill ? SKILL_ART.has(k) : ITEM_ART.has(key);
+  const glow = !skill && GLOW_CANVAS[ITEMS[k]?.tier];
   let im = ICO_IMG[key]; if (!im && have) { im = new Image(); im.src = `${IART}${key}.png?v=${IART_V}`; ICO_IMG[key] = im; }
-  if (im && im.complete && im.naturalWidth) { const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(im, Math.round(x - size / 2), Math.round(y - size / 2), size, size); ctx.imageSmoothingEnabled = sm; return; }
+  if (im && im.complete && im.naturalWidth) { const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false;
+    if (glow) { const t = (Date.now() % 2200) / 2200, pulse = 0.55 + 0.45 * Math.sin(t * Math.PI * 2);
+      ctx.save(); ctx.shadowColor = glow[0]; ctx.shadowBlur = size * (0.35 + 0.3 * pulse);
+      ctx.drawImage(im, Math.round(x - size / 2), Math.round(y - size / 2), size, size);
+      ctx.shadowColor = glow[1]; ctx.shadowBlur = size * (0.15 + 0.15 * pulse);
+      ctx.drawImage(im, Math.round(x - size / 2), Math.round(y - size / 2), size, size);
+      ctx.restore(); }
+ctx.drawImage(im, Math.round(x - size / 2), Math.round(y - size / 2), size, size); ctx.imageSmoothingEnabled = sm; return; }
   ctx.font = `${Math.round(size * 0.8)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(skill ? SKILLS[k].icon : ITEMS[k].icon, x, y);
 }
 // scenery art: o_<type>, rocks and veins by their ore, the golden vine its own; null when there's no picture
@@ -3087,7 +3102,14 @@ function casinoLife(sprites, pnow, calm) {
 function heldIcon(icon, x, y, dir, S2) {
   if (dir === "north") return;
   const west = (dir || "south").includes("west");
-  ctx.save(); ctx.translate(x + (west ? -9 : 9) * S2, y - 10 * S2); if (!west) ctx.scale(-1, 1);
+  /* (2026-09-25, the owner: "the weapons are all facing towards the player when being held, they need to face the
+     other way as if the user was actually handling them") A WEAPON MIRRORS THE OPPOSITE WAY TO A TOOL, because
+     the two sets of icons are drawn on opposite diagonals: the pickaxe's head points up-LEFT, so the old
+     `if (!west)` is right for it and puts the head away from the body; a blade points up and slightly RIGHT, so
+     the same rule laid it back across the chest. Flipping only the weapons leaves every tool exactly as it was. */
+  const it = ITEMS[icon];
+  const blade = it && it.slot === "weapon" && !it.tool;
+  ctx.save(); ctx.translate(x + (west ? -9 : 9) * S2, y - 10 * S2); if (blade ? west : !west) ctx.scale(-1, 1);
   if (ITEMS[icon]) drawIco(icon, 0, 0, Math.round(10 * S2)); else { ctx.font = `${Math.round(8 * S2)}px sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(icon, 0, 0); }
   ctx.restore();
 }

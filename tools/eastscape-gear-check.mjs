@@ -16,8 +16,14 @@
    for anyone who is unlucky. */
 import * as G from "../v3/assets/js/eastscape-shared.js";
 import { createClosedScenes } from "../v3/assets/js/eastscape-closed.js";
+import { createCryptRules } from "../v3/assets/js/eastscape-crypt-rules.js";
+import { createPyramidRules } from "../v3/assets/js/eastscape-pyramid-rules.js";
 import fs from "node:fs";
 Object.assign(G.SCENES, createClosedScenes(G, G._MAP));
+/* (2026-09-25) THE DUNGEON BOSSES ARE IN THEIR OWN FILES, which is exactly why they were missed when the cores
+   were first wired: the LOOT edit in shared.js could not reach them and nothing failed. Merged here so the drop
+   checks below see all five of CORE_BOSSES. */
+Object.assign(G.MOBS, createCryptRules(G, G._MAP).mobs, createPyramidRules(G, G._MAP).mobs);
 let bad = 0;
 const fail = (m) => { console.log("  !! " + m); bad++; };
 const ok = (m) => console.log("  " + m);
@@ -66,7 +72,10 @@ if (!bad) ok(`${G.TIERS.length} tiers, and every slot and weapon beats the rung 
 
 /* ---------------------------------------------------------------- the chase, and the way round it */
 {
-  const lit = fs.readFileSync("v3/assets/js/eastscape-shared.js", "utf8");
+  /* every file that names a core drop, because they cannot share the constant: each is evaluated before
+     shared.js finishes, so all three write 0.0005 by hand and all three must agree with CORE_DROP. */
+  const lit = ["v3/assets/js/eastscape-shared.js", "v3/assets/js/eastscape-crypt-rules.js", "v3/assets/js/eastscape-pyramid-rules.js"]
+    .map((f) => fs.readFileSync(f, "utf8")).join(String.fromCharCode(10));
   /* the drop rate is written as a bare number in LOOT because CORE_DROP does not exist yet at that point */
   const rows = [...lit.matchAll(/\["(?:nova|singularity)_core", 1, ([\d.]+)\]/g)].map((m) => Number(m[1]));
   if (!rows.length) fail("no monster drops a core");
@@ -79,6 +88,8 @@ if (!bad) ok(`${G.TIERS.length} tiers, and every slot and weapon beats the rung 
     if (!byCraft) fail(`${core} has no craft — at 1 in ${Math.round(1 / G.CORE_DROP)} that makes the ${t} weapons a lottery with no losing ticket`);
     const droppers = Object.entries(G.MOBS).filter(([, m]) => (m.drops || []).some(([k]) => k === core)).map(([k]) => k);
     if (!droppers.length) fail(`nothing drops ${core}`);
+    /* the owner named five; a boss that quietly stops dropping is invisible at 1 in 2,000 */
+    for (const b of G.CORE_BOSSES) if (!droppers.includes(b)) fail(`${b} is in CORE_BOSSES but does not drop ${core}`);
     /* every weapon of the tier wants one; no armour or tool does */
     for (const kind of ["gladius", "sword", "maul"]) {
       const r = Object.values(G.RECIPES).find((x) => x.out[0] === `${t}_${kind}`);

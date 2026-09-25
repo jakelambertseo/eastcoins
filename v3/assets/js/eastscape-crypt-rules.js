@@ -135,5 +135,11 @@ export function createCryptRules(G, H) {
     }
     return { rolls: n, items: out };
   }
+  /* (2026-09-25, the owner: "yes add to dungeon bosses") THE CHASE CORES, on the TOP Hoodie only. mk() builds the
+     boss into three rungs from one base, and the Black Crypt's (lvl 65) is the one worth a Nova or Singularity
+     core - hanging it on the base would have put a 1-in-2,000 shot at endgame gear on a level 25 fight.
+     Added here rather than in mk() so the generator keeps doing one job.
+     0.0005 IS CORE_DROP and cannot say so: this file is evaluated before shared.js finishes. */
+  if (mobs.hoodie3) mobs.hoodie3.drops = [...(mobs.hoodie3.drops || []), ["nova_core", 1, 0.0005], ["singularity_core", 1, 0.0005]];
   return { CRYPT, mobs, scenes, roomOf, rollLoot };
 }
