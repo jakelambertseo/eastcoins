@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 235;
+export const VERSION = 236;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1642,7 +1642,7 @@ Object.assign(SCENES, {
      corner behind his own funhouse. A fairground where you get mauled queuing for the coconut shy is not a
      fairground. ============================================================ */
   carnival: {
-    name: "The Carnival", ground: "carnival", tint: "rgba(48,22,40,.22)", exits: {},
+    name: "The Carnival", ground: "carnival", tint: "rgba(48,22,40,.22)", exits: { e: "workyard" },
     build() {
       const g = grid(), objs = [], keep = [];
       const put = (t, x, y, name, w = 1, h = 1, extra = {}) => { objs.push({ t, x, y, w, h, name, ...extra }); block(g, x, y, w, h); for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) keep.push([x + i, y + j]); };
@@ -2182,7 +2182,7 @@ Object.assign(SCENES, {
      (home +/-3 by +/-2 of wandering, plus their aggro) can't touch a rock, a pool or the path.
      The old combat line (paddock, rough, boneyard) is still defined below and closed, like the farm. */
   workyard: {
-    name: "The Yard", exits: { e: "casino", n: "gloam" },
+    name: "The Yard", exits: { e: "casino", n: "gloam", w: "carnival" },   /* (2026-09-24) the Carnival opened. It went west because that was the one side of the Yard with no door on it. */
     build() {
       const g = grid(), objs = [], keep = [];
       /* (2026-09-22) the way into the Agility course. A doorway, not a walk-through edge, so the Yard keeps its shape. */
@@ -3121,16 +3121,16 @@ for (const m of Object.values(MOBS)) m.hp = Math.max(2, Math.round(m.hp / 2));
    used to be worth, and because stripping ninety-nine of them by hand is a worse idea than a comment; but tuning
    one here does nothing, exactly like editing a price in MOBS instead of VALUE. Add a rare by naming it. */
 export const LOOT = {
-  chicken:    { item: ["chicken", 1] },
-  cow:        { item: ["beef", 1] },
-  rotten:     { item: ["tomatoe", [1, 3]] },
-  hornworm:   { item: ["husk", 1], rare: [["gamblers_ring", 0.006]] },
-  boar:       { item: ["pork", 1], rare: [["gamblers_ring", 0.01]] },
-  highwayman: { item: ["hide", 1], rare: [["rattlebean", 0.0125], ["mask", 0.1], ["bookies_amulet", 0.008], ["sharps_gloves", 0.006]] },
-  gnasher: { item: ["emerald_ore", 1], rare: [["rattlebean", 0.0125], ["bogplate", 0.03], ["bookies_amulet", 0.01]] },
+  chicken:    { item: ["chicken", 1], also: [["bones", 1]] }   /* NOT the feathers its MOBS line still declares (2026-09-24). A feather is worth 1 and a chicken is meant to pay 9, so five to fifteen of them is the whole wage twice over - and BOUNTY can only ever take TICKETS back out of a table, never an item, so there is no lever to correct it with. Measured 126 a minute against a band of 56. */,
+  cow:        { item: ["beef", 1], also: [["hide", 1], ["bones", 1]] },
+  rotten:     { item: ["tomatoe", [1, 3]], also: [["husk", 1, 0.05]] },
+  hornworm:   { item: ["husk", 1], also: [["tomatoe", 1, 0.5]], rare: [["gamblers_ring", 0.006]] },
+  boar:       { item: ["pork", 1], also: [["tusk", 1], ["bones", 1]], rare: [["gamblers_ring", 0.01]] },
+  highwayman: { item: ["hide", 1], also: [["bones", 1]], rare: [["rattlebean", 0.0125], ["mask", 0.1], ["bookies_amulet", 0.008], ["sharps_gloves", 0.006]] },
+  gnasher: { item: ["emerald_ore", 1], also: [["bones", 1]], rare: [["rattlebean", 0.0125], ["bogplate", 0.03], ["bookies_amulet", 0.01]] },
   moth: { item: ["emerald_ore", 1], rare: [["lanternroot", 0.0125], ["adjusters_visor", 0.01], ["angels_ring", 0.006]] },
   taxwraith: { item: ["receipt", 1], rare: [["lanternroot", 0.0125], ["wraithhood", 0.03], ["menace", 0.02], ["adjusters_visor", 0.01], ["angels_ring", 0.01], ["spiderboots", 0.004]] },
-  ghoul: { item: ["diamond_ore", 1], rare: [["bonegourd", 0.0125], ["sharps_gloves", 0.012], ["stake_loafers", 0.008]] },
+  ghoul: { item: ["diamond_ore", 1], also: [["bones", 1]], rare: [["bonegourd", 0.0125], ["sharps_gloves", 0.012], ["stake_loafers", 0.008]] },
   /* the Trailer Park. The King is the only thing that drops his two, and at 8% and 5% he is meant to be killed
      many times over — he is a reason to come back, not a box you open once. */
   junkdog:    { item: ["bones", [1, 2]], rare: [["stake_loafers", 0.02], ["spiderboots", 0.01]] },
@@ -3150,8 +3150,8 @@ export const LOOT = {
   /* HE PAYS IN THINGS. Bonegourds every time (the Boneyard’s alchemy crop, and the Coilbreaker wants one),
      and the map’s whole rare table on one kill instead of spread over five monsters. */
   critic: { item: ["bonegourd", [2, 4]], rare: [["monocle", 0.01], ["lantern", 0.01], ["angels_ring", 0.01], ["adjusters_visor", 0.01], ["spiderboots", 0.01]] },
-  chandelier: { item: ["cobweb", 1], rare: [["bonegourd", 0.0125], ["lantern", 0.03], ["angels_ring", 0.02], ["spiderboots", 0.01]] },
-  ram: { item: ["dragonstone_ore", 1], rare: [["stormcorn", 0.0125], ["grudge", 0.02], ["stake_loafers", 0.015]] },
+  chandelier: { item: ["cobweb", 1], also: [["bones", 1]], rare: [["bonegourd", 0.0125], ["lantern", 0.03], ["angels_ring", 0.02], ["spiderboots", 0.01]] },
+  ram: { item: ["dragonstone_ore", 1], also: [["bones", 1]], rare: [["stormcorn", 0.0125], ["grudge", 0.02], ["stake_loafers", 0.015]] },
   // v68: the bands' new residents. One thing each; the buff gear is spread so every band past the Yard can drop some
   toadstool: { item: ["sporecap", 1], rare: [["rattlebean", 0.0125], ["bookies_amulet", 0.006]] },
   boneidle: { item: ["bones", [2, 4]], rare: [["rattlebean", 0.0125], ["mask", 0.05], ["sharps_gloves", 0.008]] },
@@ -3167,15 +3167,15 @@ export const LOOT = {
   drake: { item: ["hailshard", 1], rare: [["stormcorn", 0.0125], ["stake_loafers", 0.03], ["spiderboots", 0.015]] },
   house: { item: ["onyx_ore", [1, 3]], rare: [["stormcorn", 0.0125], ["angels_ring", 0.04], ["bookies_amulet", 0.04], ["spiderboots", 0.02]] },
   // once the closed roads' residents: placed again in v68 (olive in the Yard, goat in the Gloam, revenant and angel in Cloudreach)
-  olive:      { item: ["olives", [2, 5]], rare: [["monocle", 0.1]] },
-  goat: { item: ["manifesto", 1], rare: [["rattlebean", 0.0125], ["toga", 0.25]] },
-  revenant: { item: ["dragonstone_ore", 1], rare: [["stormcorn", 0.0125], ["grudge", 0.04], ["menace", 0.03]] },
+  olive:      { item: ["olives", [2, 5]], also: [["pit", 1]], rare: [["monocle", 0.1]] },
+  goat: { item: ["manifesto", 1], also: [["bones", 1]], rare: [["rattlebean", 0.0125], ["toga", 0.25]] },
+  revenant: { item: ["dragonstone_ore", 1], also: [["bones", 2]], rare: [["stormcorn", 0.0125], ["grudge", 0.04], ["menace", 0.03]] },
   angel: { item: ["dragonstone_ore", 1], rare: [["stormcorn", 0.0125]] },
-  goose: { item: ["onyx_ore", 1], rare: [["stormcorn", 0.0125], ["stake_loafers", 0.02], ["spiderboots", 0.01]] },
+  goose: { item: ["onyx_ore", 1], also: [["bones", 2], ["feather", [10, 30]]], rare: [["stormcorn", 0.0125], ["stake_loafers", 0.02], ["spiderboots", 0.01]] },
   warden:     { item: ["starfall_ore", [1, 2]], rare: [["angels_ring", 0.03], ["bogplate", 0.02]] },
   pitboss:    { item: ["starfall_ore", [1, 2]], rare: [["bookies_amulet", 0.04], ["gamblers_ring", 0.03]] },
   hoard:      { item: ["eclipse_ore", 1], rare: [["gamblers_ring", 0.05], ["angels_ring", 0.03]] },
-  dealer:     { item: ["eclipse_ore", [1, 2]], rare: [["bookies_amulet", 0.06], ["spiderboots", 0.04], ["grudge", 0.03]] }
+  dealer:     { item: ["eclipse_ore", [1, 2]], also: [["voidglass", 1, 0.2]], rare: [["bookies_amulet", 0.06], ["spiderboots", 0.04], ["grudge", 0.03]] }
 };
 /* WHO ATTACKS ON SIGHT. This was a single `false` (the owner, 2026-09-19: "i dont want any monster to attack on site
    for now, its just too aggressive for a relaxed chill game like this"), and on 2026-09-22 it became a LIST, for a
@@ -3838,7 +3838,7 @@ export const bandOf = (scene) => BANDS[String(scene || "").split(":")[0]] || nul
 /** Why this character can't fight / fish in this scene yet, or null if they can. kind: "fight" | "fish". */
 export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) return null; const skill = kind === "fish" ? "fishing" : "melee", need = b[0], have = lvlOf(c, skill);
   return have >= need ? null : { need, have, skill, text: `needs ${kind === "fish" ? "Fishing" : "Combat"} ${need}` }; };
-export const OPEN = new Set(["casino", "roulette", "theatre", "fightpit", "vault", "wild", "deep", "agility",   /* (2026-09-22) The Run. Built with the Agility skill but never added here, so its door in the Yard answered with the bouncer's "Room's shut" — a scene is not enterable until it is in this set. */   /* (2026-09-22) the Wilderness reopened, down the rope ladder on the Gloam */ /* "highroller": closed for now (the owner, 2026-09-19) */ /* "forum", "bathhouse": closed in v108, what mattered there is in the Yard */ "workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "trailer",
+export const OPEN = new Set(["carnival",   /* (2026-09-24) OPEN AT LAST. Built 2026-09-24 and held shut at the owner’s word until he said "launch the publish the carnival so its openn to peoople now". */ "casino", "roulette", "theatre", "fightpit", "vault", "wild", "deep", "agility",   /* (2026-09-22) The Run. Built with the Agility skill but never added here, so its door in the Yard answered with the bouncer's "Room's shut" — a scene is not enterable until it is in this set. */   /* (2026-09-22) the Wilderness reopened, down the rope ladder on the Gloam */ /* "highroller": closed for now (the owner, 2026-09-19) */ /* "forum", "bathhouse": closed in v108, what mattered there is in the Yard */ "workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "trailer",
   ]);   /* (2026-09-23) the Thieves' Guild. Deliberately NOT in BANDS: its rooms gate on Thieving through each mark's own `req`, and a combat band here would undo the whole point of a skill you cannot fight your way into. */   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
 export const OPEN_DAILY = new Set([
   /* (2026-09-22) the top band's twelve. A task only reaches anyone whose levels allow it (dailyFor filters on
@@ -4478,7 +4478,23 @@ export const BOUNTY = { pinhead: 252, tripled: 271, fatlady: 296, strongman: 318
      pre-TIX_RATE and get halved below (measured: cobra 117, mummy 89, scarab 123, jackal 95). The two that carry
      an alchemy ingredient pay less in tickets for it, which is the table working as intended - the shell and the
      fang are part of the wage. */
-  cobra: 234, mummy: 178, scarab: 246, jackal: 190 };   // (v68: measured with tools/eastscape-balance.mjs, like the rest)   // (re-measured 2026-09-20 for half-length fights: a kill pays less, and there are twice as many)
+  cobra: 234, mummy: 178, scarab: 246, jackal: 190,
+  /* THE VAULT AND THE TOP OF THE TRAILER PARK (2026-09-24, found chasing "where is voidglass"). The SAME bug as
+     the Golden Sands above, and nine monsters deep this time: every one of these shipped without a BOUNTY entry,
+     so the loop below never rebuilt their tickets - and because each also has a LOOT entry, which REPLACES the
+     hand-written `drops` wholesale, the ticket ranges their authors wrote were thrown away too. Nothing put them
+     back. The Junkyard Dog was paying 10 tickets a MINUTE against a band that sits near 480; the Last Dealer, the
+     hardest thing in the game at 92, paid 185.
+
+     They also got no rare roll, no casino find and no luck spent, for the reason the Sands comment gives: a
+     monster missing from this table is invisible to killFinds().
+
+     Same method as the Sands, so these are not invented: tools/eastscape-balance.mjs's own want$/kill, doubled
+     because the literals here are pre-TIX_RATE and are halved below.
+     (measured: warden 163, pitboss 172, hoard 184, dealer 202, junkdog 170, possum 175, scrapper 190, gator 206,
+     junkking 408. The ones carrying ore pay less in tickets for it - the ore is part of the wage.) */
+  warden: 326, pitboss: 344, hoard: 368, dealer: 404,
+  junkdog: 340, possum: 350, scrapper: 380, gator: 412, junkking: 816 };   // (v68: measured with tools/eastscape-balance.mjs, like the rest)   // (re-measured 2026-09-20 for half-length fights: a kill pays less, and there are twice as many)
 /* HALF THE TICKETS (2026-09-23, the owner: "lets also reduce tickets dropped by half", then "halve the Cashier,
    leave prices"). ONE cut, applied to the three tables that every ticket in the world comes out of, at the point
    where they are finished being derived from each other:

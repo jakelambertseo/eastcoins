@@ -119,7 +119,7 @@ export function installCarnival(World, { G, rint }) {
       G.takeInv(c.inv, "tickets", G0.cost);
       row.at = now; row.seed = `${now.toString(36)}${rint(1e5, 9e5)}`; row.started = now; row.runs++;
       this.touch(pl);
-      pl.out.push({ type: "carnivalround", game: key, board: scheduleFor(key, row.seed).map((s) => ({ at: s.at, lane: s.lane, ms: s.ms })), tix: G.tixIn(c) });
+      pl.out.push({ type: "carnivalround", game: key, board: scheduleFor(key, row.seed).map((s) => ({ i: s.i, at: s.at, lane: s.lane, ms: s.ms })), tix: G.tixIn(c) });   /* (2026-09-24) `i` MUST be here. This map is a hand-picked subset, exactly like meOf, and dropping the index left the page asking for cg_undefined.png for every target: the board ran, the hits counted, and not one icon drew. The client keys the picture on WHICH TARGET this is rather than which lane, so a round runs through the whole set instead of the same face always appearing in the same hole. */
       return;
     }
 

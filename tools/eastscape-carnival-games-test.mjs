@@ -74,5 +74,40 @@ ok("every board is seed-stable, uses all its lanes, and pays a skill gradient th
   if (!/this\.tixTo\(pl, pay\)/.test(src)) fail("nothing pays the winnings");
 }
 
+/* THE BOARD THE PAGE IS SENT MUST CARRY WHAT THE PAGE READS (2026-09-24).
+   The round message rebuilds each target by hand - `.map((s) => ({ ... }))` - which is a hand-picked subset in
+   exactly the way meOf is, and a field left out of it does not exist as far as the client is concerned. Dropping
+   `i` shipped a midway where every board ran, every hit counted, and not one icon drew, because the page asked
+   for cg_undefined.png each time. A 404 on an icon is INVISIBLE: the cell still pops and still scores, so there
+   is nothing to see and nothing in the log. Checked from both ends rather than trusting either. */
+{
+  const m = src.match(/board: scheduleFor\([^)]*\)\.map\(\(s\) => \(\{([^}]*)\}\)\)/);
+  if (!m) fail("cannot find the board the round message sends - fix this test, not the game");
+  else {
+    const sent = new Set([...m[1].matchAll(/(\w+)\s*:/g)].map((x) => x[1]));
+    for (const need of ["i", "at", "lane", "ms"])
+      if (!sent.has(need)) fail(`the round message does not send "${need}", which the page reads off every target`);
+    if (["i", "at", "lane", "ms"].every((n) => sent.has(n))) ok(`the board carries ${[...sent].join(", ")} - everything the page reads`);
+  }
+}
+
+/* AND EVERY ICON IT NAMES MUST BE ON DISK, for the same reason. */
+{
+  const cl = fs.readFileSync("C:/Users/jake/code/eastcoins/v3/assets/js/eastscape-carnival.js", "utf8");
+  const look = cl.match(/const LOOK = \{([\s\S]*?)\n  \};/);
+  if (!look) fail("cannot find LOOK in the client");
+  else {
+    const per = [...look[1].matchAll(/(\w+): \[([^\]]*)\]/g)].map((x) => [x[1], [...x[2].matchAll(/"([a-z]+)"/g)].map((y) => y[1])]);
+    const names = per.flatMap((x) => x[1]);
+    const missing = names.filter((n) => !fs.existsSync(`C:/Users/jake/code/eastcoins/v3/assets/img/glad/flat/cg_${n}.png`));
+    if (missing.length) fail(`no picture for: ${[...new Set(missing)].map((n) => "cg_" + n + ".png").join(", ")}`);
+    else ok(`all ${names.length} icons exist across ${per.length} stalls`);
+    for (let a = 0; a < per.length; a++) for (let b = a + 1; b < per.length; b++) {
+      const shared = per[a][1].filter((n) => per[b][1].includes(n));
+      if (shared.length) fail(`${per[a][0]} and ${per[b][0]} both use ${shared.join(", ")} - the owner asked for them all different`);
+    }
+  }
+}
+
 console.log(bad ? `\n${bad} problem(s)` : "\nthe midway games add up");
 process.exitCode = bad ? 1 : 0;

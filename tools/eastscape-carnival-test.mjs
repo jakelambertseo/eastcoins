@@ -20,14 +20,23 @@ let bad = 0;
 const fail = (m) => { console.log("  !! " + m); bad++; };
 const ok = (m) => console.log("  " + m);
 
-/* ---------------------------------------------------------------- SHUT */
-if (G.OPEN.has(KEY)) fail("the Carnival is in OPEN — the owner asked for it to stay shut until he says");
-if (Object.keys(S.exits || {}).length) fail(`the Carnival has exits (${Object.keys(S.exits).join(", ")}) — it should have none until it is opened`);
+/* ---------------------------------------------------------------- OPEN (2026-09-24)
+   This check used to assert the opposite. The Carnival was built on 2026-09-24 and held shut at the owner's word
+   ("dont open it until i tell you, just let me teleport in there") until he said to launch it. What the check is
+   FOR has not changed: a map is reachable or it is not, and either way it should be on purpose. It now pins the
+   way in, because a door that quietly disappears is the same class of accident as one that quietly appears. */
+if (!G.OPEN.has(KEY)) fail("the Carnival is not in OPEN — a scene is not enterable until it is, and the door answers \"Room's shut\"");
 {
+  const out = Object.entries(S.exits || {});
+  if (!out.length) fail("the Carnival has no exits — you could walk in and not get out");
+  else if (!out.some(([, to]) => to === "workyard")) fail(`the Carnival leads to ${out.map(([, t]) => t).join(", ")} but not back to the Yard`);
   const into = Object.entries(G.SCENES).filter(([k, d]) => k !== KEY && Object.values(d.exits || {}).includes(KEY));
-  if (into.length) fail(`${into.map(([k]) => G.SCENES[k].name).join(", ")} leads into the Carnival — it should not be reachable on foot yet`);
+  if (!into.length) fail("nothing leads INTO the Carnival — it is open but unreachable on foot");
+  else {
+    const back = into.map(([k, d]) => `${d.name} (${Object.entries(d.exits).find(([, t]) => t === KEY)[0]})`).join(", ");
+    if (!bad) ok(`OPEN, and reached from ${back}; it leads back to ${out.map(([d2, t]) => `${t} (${d2})`).join(", ")}`);
+  }
 }
-if (!bad) ok("SHUT: not in OPEN, no exits of its own, and nothing leads into it. /tp carnival still works");
 
 /* ---------------------------------------------------------------- the band it was built for */
 const band = G.BANDS[KEY];
