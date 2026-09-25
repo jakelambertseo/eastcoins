@@ -28,8 +28,13 @@ export const GUIDES = [
         <tr><td><b>Coin Toad</b></td><td>+15% tickets from drops</td></tr>
         <tr><td><b>Lantern Moth</b></td><td>+15 hitpoints</td></tr>
         <tr><td><b>House Cat</b></td><td>+3% speed, +1 bag slot, +5 hitpoints, +5% tickets</td></tr>
+        <tr><td><b>Coilling</b></td><td>+10% movement speed, +2 bag slots, +10% skilling and swing speed</td></tr>
       </table>
-      <p><b>One at a time</b>, and the bonus stops the moment you stow it. Speed shares its ceiling with food and gear, so a quick pet on top of a quick meal will not run away with it.</p>
+      <!-- plain text, NOT a link: there is no Pyramid guide yet, and a wiki that links to its own missing pages
+           is worse than one that has not got round to them. Make this an anchor when that page exists. -->
+      <p><b>The Coilling does not drop from a kill.</b> It comes out of the chest in the Great Pyramid, about one clear in twenty, and it is the best of them &mdash; which is the point of raiding for it.</p>
+      <p><b>One at a time</b>, and the bonus stops the moment you stow it. Both speeds share their ceilings with food and gear, so a quick pet on top of a quick meal will not run away with it.</p>
+      <p><b>They are two different speeds.</b> <b>Movement</b> is how fast you walk. <b>Skilling and swing</b> is how fast you hit a monster, a rock or a tree, and how fast you fish and pick pockets. A pet can give either, and only the Coilling gives both.</p>
       <p>Name yours what you like &mdash; everyone sees it. You can also let one go, and that cannot be undone.</p>` },
   /* (2026-09-22) TYPED, like the pets page above and for the same reason: this file imports nothing. The rungs live
      in TOOL_GATES and the rule that turns a node's level into a rung is toolNeed(), both in eastscape-shared.js. */

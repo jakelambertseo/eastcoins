@@ -1958,7 +1958,12 @@ export class World {
     if (a.kind === "rock" || a.kind === "vein") {
       const vein = a.kind === "vein";
       if (!this.hasTool(pl, "mining", ob.req?.lvl)) { pl.act = null; return; }
-      const tspd = G.toolSpeed(C, "mining");   // (2026-09-22) what the rung buys: 8% a tier off every swing
+      /* (2026-09-24) MINING NEVER APPLIED THE SPEED LEVER. The comment on the thieving branch says "every other
+         skill divides its action by (1 + fx.speed)" and that was simply not true here or on a tree: a speed
+         potion, the Card sharp's gloves and a Bonepup all did nothing for a miner, while a fisherman got the
+         lot. It was found asking why the Coilling's +10% skilling rate would not reach a pickaxe. Same lever,
+         same 20% ceiling, applied the way fishing already applies it — alongside the tool's own multiplier. */
+      const tspd = G.toolSpeed(C, "mining") * (1 + G.swingFx(C));   // (2026-09-22) what the rung buys: 8% a tier off every swing
       if (ob.emptyUntil > now) { this.say(pl, "There's no ore left in this rock. It'll be back soon."); pl.act = null; return; }
       if (!a.started) { a.started = now; a.next = now + Math.round((vein ? 5000 : 1800) / tspd); pl.swingAt = now; this.say(pl, vein ? "You settle in at the vein. It's slow, but it never runs dry." : "You swing your pickaxe at the rock."); return; }
       if (now - pl.swingAt > 1100) pl.swingAt = now;
@@ -2022,7 +2027,7 @@ export class World {
       /* (2026-09-24) SPEED APPLIES HERE TOO. Every other skill divides its action by (1 + fx.speed) and this
          one never did, so Bonepup, the Card sharp's gloves and a smoked sky eel did nothing at all for a thief.
          Half of what makes the Ditched set worth wearing is simply that this line now exists. */
-      const fxT = G.fxOf(C), pickMs = Math.round(G.THIEF.ms / (1 + fxT.speed));
+      const fxT = G.fxOf(C), pickMs = Math.round(G.THIEF.ms / (1 + G.swingFx(C)));   /* fxT is still wanted below for .steal */
       if (!a.started) { a.started = now; a.next = now + pickMs; this.say(pl, `You fall into step behind ${M.name.toLowerCase()}.`); return; }
       if (now < a.next) return;
       a.next = now + pickMs;
@@ -2155,7 +2160,7 @@ export class World {
     if (a.kind === "tree") {
       if (ob.stumpUntil > now) { this.say(pl, "That tree's been cut down. It'll grow back."); pl.act = null; return; }
       if (!this.hasTool(pl, "woodcutting", ob.req?.lvl)) { pl.act = null; return; }
-      const chop = Math.round(2000 / G.toolSpeed(C, "woodcutting"));
+      const chop = Math.round(2000 / (G.toolSpeed(C, "woodcutting") * (1 + G.swingFx(C))));   /* (2026-09-24) the speed lever reaches a tree now; see the mining branch for why it did not */
       if (!a.started) { a.started = now; a.next = now + chop; pl.swingAt = now; this.say(pl, "You swing your axe at the tree."); return; }
       if (now - pl.swingAt > 1000) pl.swingAt = now;
       if (now < a.next) return;
@@ -2199,7 +2204,7 @@ export class World {
       { const gate = pl.god ? null : G.bandBlock(C, S.key, "fish"); if (gate) { pl.act = null; return this.say(pl, `This water is for Fishing ${gate.need} and up. You're ${gate.have}.`, "bad"); } }   /* LEVEL BANDS */
       if (!a.started) { a.started = now; a.next = now + Math.round(G.FISHING.ms / G.toolSpeed(C, "fishing")); this.say(pl, "You cast out your line…"); return; }
       if (now < a.next) return;
-      const fx = G.fxOf(C); a.next = now + Math.round(G.FISHING.ms / ((1 + fx.speed) * G.toolSpeed(C, "fishing")));
+      a.next = now + Math.round(G.FISHING.ms / ((1 + G.swingFx(C)) * G.toolSpeed(C, "fishing")));
       const lvl = G.lvlOf(C, "fishing"), fish = G.fishAt(ob, lvl, Math.random()), trout = fish === ob.fish2;   /* v68: every spot names its fish, and a second one from fish2lvl (`trout` now just means "the second fish") */
       this.groupNote(S, pl, a);
       if (Math.random() < Math.min(0.97, G.FISHING.chance(lvl) + bonus + fx.bite)) {

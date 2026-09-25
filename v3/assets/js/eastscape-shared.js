@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 222;
+export const VERSION = 223;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -693,7 +693,17 @@ export function xpForDamage(c, dmg) {
 /* How long a swing takes. A weapon with no speed of its own swings at SWING_MS,
    which is what the game used for everything before weapons had speeds. */
 export const SWING_MS = 2400;
-export const swingMsOf = (c) => Math.round((ITEMS[c?.eq?.weapon]?.speed || SWING_MS) / (1 + fxOf(c).speed));   /* (fxOf: the outside buffs, further down; a function, so the order in this file does not matter) */
+/* HOW FAST YOU SWING, CHOP, MINE, FISH AND PICK POCKETS — one number, and the ONLY one anything should divide by.
+   (2026-09-24, the owner: the Coilling "needs to also add +2 inventory slots and +10% skilling speed/swing rate".)
+
+   A pet could not do that before, because `speed` already means something else on a pet: PETS[k].fx.speed is
+   MOVEMENT, and it goes petFx -> speedRaw -> stepMsOf and nowhere near here. So the Coilling carries a separate
+   `swing`, and this is where the two worlds meet — the gear/meal/drink lever out of fxOf, plus the pet's, capped
+   ONCE at OUT_CAP.speed so a pet cannot lift anybody past the same 20% ceiling everything else lives under.
+   (Which does mean a player already at the cap gains nothing from it, exactly as a second speed potion would.)
+   Percent on a pet, fraction in fxOf, hence the /100 — the two scales are a trap and this is the only crossing. */
+export const swingFx = (c) => Math.min(OUT_CAP.speed, fxOf(c).speed + petFx(c).swing / 100);
+export const swingMsOf = (c) => Math.round((ITEMS[c?.eq?.weapon]?.speed || SWING_MS) / (1 + swingFx(c)));   /* (fxOf and OUT_CAP are further down; these are functions, so the order in this file does not matter) */
 export const TOOL_OF = { mining: "pickaxe", woodcutting: "axe", fishing: "rod" };
 export const INV_MAX = 20;   // (was 30 until 2026-09-20: a casino game wants a small bag that fills, so you walk back past the tables to the Cashier.
                              //  normChar re-packs an old 30-slot bag on load and sends what no longer fits to the bank, so nothing is lost.)
@@ -910,10 +920,15 @@ export const PETS = {
   cointoad:    { name: "Coin Toad",    art: "pet_cointoad",    fx: { tix: 15 },   ex: "Sits on what it finds. Warm to the touch." },
   lanternmoth: { name: "Lantern Moth", art: "pet_lanternmoth", fx: { hp: 15 },    ex: "It keeps the dark an arm's length off." },
   /* (2026-09-24) THE GREAT PYRAMID'S PET, and the only one that does not drop from PET_SCENES: it comes out of
-     the raid's chest, about one clear in twenty. A pet's `speed` is MOVEMENT (petFx -> speedRaw -> stepMsOf), and
-     NOT the fxOf lever of the same name that makes you swing and fish faster — the two never meet, which is why
-     one is a whole percent and the other a fraction. A shade above the Bonepup's 8 because this one is raided for. */
-  coilling: { name: "Coilling", art: "pet_coilling", fx: { speed: 10 }, ex: "It was in the sarcophagus with him. It has decided you are family now." },
+     the raid's chest, about one clear in twenty. It is THE BEST PET IN THE GAME and meant to be — it is the only
+     one behind a raid, at 1 in 20 clears, where the others are found by walking around. It does three of the four
+     jobs the other five split between them, and the Coin Toad keeps tickets to itself.
+
+     TWO OF ITS THREE NUMBERS ARE CALLED SPEED AND THEY ARE NOT THE SAME THING. `speed` is MOVEMENT (petFx ->
+     speedRaw -> stepMsOf, whole percent, ceiling 50). `swing` is the swing/chop/mine/fish/pick rate, and it
+     reaches the world only through swingFx, which folds it into the fxOf lever of that name (fraction, ceiling
+     0.2). Putting the second one in `speed` would have made the owner walk faster and mine at the same rate. */
+  coilling: { name: "Coilling", art: "pet_coilling", fx: { speed: 10, slots: 2, swing: 10 }, ex: "It was in the sarcophagus with him. It has decided you are family now." },
   housecat:    { name: "House Cat",    art: "pet_housecat",    fx: { speed: 3, slots: 1, hp: 5, tix: 5 }, ex: "Wears the visor. Owns the room." }
 };
 export const PET_KEYS = Object.keys(PETS);
@@ -933,7 +948,9 @@ export const petLabel = (p) => (p ? (p.name || PETS[p.k].name) : "");
 /** Every bonus the worn pet gives, or zeroes. One place, so nothing has to remember the shape. */
 export function petFx(c) {
   const p = activePet(c), fx = p ? PETS[p.k].fx : null;
-  return { speed: fx?.speed || 0, slots: fx?.slots || 0, hp: fx?.hp || 0, tix: fx?.tix || 0 };
+  /* `speed` is MOVEMENT and `swing` is the swing/chop/mine/fish/pick rate. Two different things, deliberately
+     two different names: see swingFx, which is the one place a pet's swing meets the fxOf lever. */
+  return { speed: fx?.speed || 0, slots: fx?.slots || 0, hp: fx?.hp || 0, tix: fx?.tix || 0, swing: fx?.swing || 0 };
 }
 export const STEP_MS = 200 /* (v95, the owner: "make users default walk speed about 20% faster": it was 240. Players only: monsters, NPCs and the fake players keep the server's own 240.) */, SPEED_FULL = 20, SPEED_CAP = 50;
 /* (2026-09-22) AGILITY IS PAID HERE. agilBonus was written the day the skill was built and never called from
