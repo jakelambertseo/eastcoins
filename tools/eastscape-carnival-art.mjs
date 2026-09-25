@@ -40,7 +40,42 @@ const PIECES = [
   ["o_sidetent", "sidetent", 104, "2x2. Dressing: the midway is lined with them"],
   ["o_haybale", "haybale", 40, "what wild() scatters instead of boulders — a rock is 48"],
   ["o_carnlitter", "carnlitter", 30, "what wild() scatters instead of bushes"],
+  /* ---------------------------------------------------------------- the second round (2026-09-24, testing it)
+     (the owner: "the grinning man needs to be in a horroresque locked in area, and the other mobs in the area
+     need a chance too drop a carnival ticket ... the ashetic needs more horror esque elements, bloody things,
+     knives on the ground")
+     THE CAGE IS A MENAGERIE CAGE and not the Boneyard's railings, which exist and would have been free: a
+     graveyard fence says "keep out" and a circus cage says "the thing inside is an exhibit". He is billed, not
+     buried. The vertical run was drawn twice for the reason the Boneyard's was — a fence running away from the
+     camera is not a rotation of one running across it — and a second time after that because it came back
+     DARK while the horizontal one is red, and two halves of one cage have to be the same cage. */
+  ["o_cagebarH", "cagebarH", 34, "a cage wall stands taller than a graveyard railing's 30"],
+  ["o_cagebarV", "cagebarV", 50, "the same bars end on"],
+  ["o_turnstile", "turnstile", 58, "the only way in, and the posts read above the run they interrupt"],
+  ["o_bloodpool", "bloodpool", 22, "a ground decal: flat, and under everything else"],
+  ["o_knives", "knives", 28, "thrown and left. Shorter than a hay bale so it reads as litter, not a prop"],
+  ["o_meathook", "meathook", 44, "hung, so it stands above the ground clutter"],
+  /* ---------------------------------------------------------------- the third round (2026-09-24)
+     (the owner: "more concept art for the circus. the circus is also very linear as far as walk ways, etc. can
+     we randomize it so it feels like theres unique sections?")
+     THE BANNERS ARE WHAT MAKE A SECTION READ AS ONE. The concept art is a corridor of painted sideshow banners
+     on poles with the entrance arch at its head, and that is the single most recognisable thing about a freak
+     show — more than the tents. Two of them, different colourways, so a row does not march; the arch marks the
+     way in; the wagons are the back lot, where a carnival lives when nobody is looking. */
+  ["o_banner", "banner", 84, "1x2, and it stands over head height beside the road"],
+  ["o_banner2", "banner2", 84, "the second colourway, so a row of them does not repeat"],
+  ["o_archway", "archway", 100, "3x2 over the way in. Shorter than the big top so it does not compete with it"],
+  ["o_wagon", "wagon", 80, "3x2. Lower than a tent: it is furniture, not an attraction"],
 ];
+
+/* THE TICKET IS AN ITEM, which is a different directory AND a different size — 32x32 in flat/items/. Getting
+   that wrong draws an admission stub the size of a hay bale. */
+{
+  const t = await sharp(`${SRC}carnivalticket.png`).trim({ threshold: 1 }).resize(32, 32, { fit: "contain", kernel: "nearest", background: { r: 0, g: 0, b: 0, alpha: 0 } }).png({ palette: true, colours: 48 }).toBuffer();
+  fs.mkdirSync(`${OUT}items/`, { recursive: true });
+  fs.writeFileSync(`${OUT}items/carnivalticket.png`, t);
+  console.log(`  items/carnivalticket.png  32x32  ${(t.length / 1024).toFixed(1)} KB   — the key to the cage`);
+}
 
 for (const [key, from, h, why] of PIECES) {
   const src = `${SRC}${from}.png`;

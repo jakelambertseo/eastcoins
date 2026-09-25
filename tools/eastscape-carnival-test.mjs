@@ -102,5 +102,92 @@ ok("every monster here is inside the band and pays a bounty");
   else ok("and he is the only thing here that comes for you");
 }
 
+/* ---------------------------------------------------------------- NOTHING STANDS ON ANYTHING ELSE
+   The Carnival's build uses a put() that blocks and keeps but does NOT check what is already there, and the
+   first pass at Banner Alley put a banner squarely inside the entrance arch because of it. Two pictures on one
+   tile draw over each other and only one of them can be clicked. */
+{
+  const at = new Map();
+  for (const o of b.objs) for (let j = 0; j < (o.h || 1); j++) for (let i = 0; i < (o.w || 1); i++) {
+    const k = `${o.x + i},${o.y + j}`;
+    if (at.has(k)) fail(`two objects on ${k}: ${at.get(k)} and ${o.t}`);
+    at.set(k, o.t);
+  }
+  for (const [t, x, y] of S.mobs) if (at.has(`${x},${y}`)) fail(`${G.MOBS[t].name} at ${x},${y} is standing on a ${at.get(`${x},${y}`)}`);
+  ok(`${b.objs.length} objects, none stacked and none under a monster`);
+}
+
+/* ---------------------------------------------------------------- IT IS NOT A STRAIGHT LINE
+   (the owner: "the circus is also very linear as far as walk ways, etc. can we randomize it so it feels like
+   theres unique sections?") The old midway was one row from edge to edge. A road that doglegs is what stops you
+   seeing the whole map from the gate, so what is measured is how many rows and columns the path actually
+   occupies: a straight road across y13 scores 1. */
+{
+  const rows = new Set(), cols = new Set();
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (g[y][x] === ",") { rows.add(y); cols.add(x); }
+  if (rows.size < 8) fail(`the midway only occupies ${rows.size} rows — that is still a straight road`);
+  else ok(`the midway winds through ${rows.size} rows and ${cols.size} columns, so no two sections share a sightline`);
+}
+
+/* ---------------------------------------------------------------- THE MENAGERIE
+   (2026-09-24, the owner testing it: "the grinning man needs to be in a horroresque locked in area, and the
+   other mobs in the area need a chance too drop a carnival ticket")
+
+   A CAGE THAT LEAKS IS NOT A CAGE. One walkable tile in the wrong place and the ticket becomes decoration, and
+   it is the kind of gap that appears from a change three lines away — a piece of clutter not placed, a bar
+   rubbed out by wild(). So this floods the map from the midway with the turnstile treated as SOLID, and
+   insists nothing inside can be reached that way. */
+{
+  const ts = b.objs.find((o) => o.t === "turnstile");
+  if (!ts) fail("there is no turnstile");
+  else {
+    const c = ts.cage;
+    if (!c) fail("the turnstile does not carry its cage, so the worker cannot tell inside from outside");
+    const seen = new Set(["30,13"]), q = [[30, 13]];
+    while (q.length) { const [x, y] = q.pop();
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, k = `${nx},${ny}`;
+        if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS || seen.has(k)) continue;
+        if (nx === ts.x && ny === ts.y) continue;                        // not a doorway you can simply walk through
+        if (!WALK.includes(g[ny][nx])) continue; seen.add(k); q.push([nx, ny]); } }
+    const inside = [];
+    for (let y = c.y0 + 1; y < c.y1; y++) for (let x = c.x0 + 1; x < c.x1; x++) if (WALK.includes(g[y][x])) inside.push([x, y]);
+    const leak = inside.filter(([x, y]) => seen.has(`${x},${y}`));
+    if (leak.length) fail(`${leak.length} tiles inside the cage can be reached without the turnstile (e.g. ${leak[0]})`);
+    else ok(`the cage is sealed: ${inside.length} standable tiles inside, and the turnstile is the only way to any of them`);
+    const boss = S.mobs.find(([t]) => t === "grinner");
+    if (!inside.some(([x, y]) => x === boss[1] && y === boss[2])) fail("The Grinning Man is not inside his own cage");
+    else ok("The Grinning Man is inside it, and nothing else is");
+    /* and it turns both ways onto ground you can actually stand on */
+    const out = { x: ts.x + 1, y: ts.y }, into = { x: ts.x - 1, y: ts.y };
+    if (!seen.has(`${out.x},${out.y}`)) fail(`the turnstile's outside tile ${out.x},${out.y} cannot be reached`);
+    if (!WALK.includes(g[into.y][into.x])) fail(`the turnstile's inside tile ${into.x},${into.y} is blocked`);
+    ok(`it steps between ${out.x},${out.y} outside and ${into.x},${into.y} inside`);
+    if (WALK.includes(g[ts.y][ts.x])) ok("and its own tile is walkable, so it is a turnstile and not a wall");
+    else fail("the turnstile tile is blocked — nobody could ever click it from inside");
+  }
+}
+
+/* THE KEY EXISTS AND SOMETHING DROPS IT. A locked cage whose key drops from nothing is a locked cage. */
+{
+  if (!G.ITEMS.carnivalticket) fail("there is no Carnival ticket item");
+  const carriers = [...new Set(S.mobs.map(([t]) => t))].filter((t) => (G.MOBS[t].drops || []).some((d) => d[0] === "carnivalticket"));
+  if (!carriers.length) fail("nothing on this map drops a Carnival ticket, so the cage can never be opened");
+  else {
+    const rate = (G.MOBS[carriers[0]].drops.find((d) => d[0] === "carnivalticket") || [])[2];
+    ok(`${carriers.length} of the map's monsters drop a Carnival ticket at ${(rate * 100).toFixed(0)}% — about ${Math.round(1 / rate)} kills a ticket`);
+    if (carriers.includes("grinner")) fail("the boss drops the key to his own cage");
+  }
+}
+
+/* THE HORROR IS EVERYWHERE, not only where the boss stands (the owner: "the ashetic needs more horror esque
+   elements, bloody things, knives on the ground") */
+{
+  const gore = b.objs.filter((o) => ["bloodpool", "knives", "meathook"].includes(o.t));
+  const outside = gore.filter((o) => o.x > 13);
+  if (gore.length < 20) fail(`only ${gore.length} bloody things on the whole map`);
+  else if (!outside.length) fail("all the gore is inside the cage; the midway is still a cheerful fairground");
+  else ok(`${gore.length} stains, knives and hooks, ${outside.length} of them out on the midway`);
+}
+
 console.log(bad ? `\n${bad} problem(s)` : "\nthe Carnival holds together");
 process.exitCode = bad ? 1 : 0;

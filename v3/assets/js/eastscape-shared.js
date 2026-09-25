@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 230;
+export const VERSION = 231;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -142,6 +142,10 @@ export const ITEMS = {
   whiskey: { name: "Top-shelf whiskey", short: "Whiskey", icon: "🥃", drink: { mins: 10, fx: { speed: 0.15, tough: -0.1 } }, ex: "Liquid confidence. Click to drink." },
   cocktail: { name: "The Safety Net", short: "Safety Net", icon: "🍸", drink: { mins: 10, fx: { tough: 0.2 } }, ex: "Pink, strong, and it takes the edge off. Click to drink." },
   champagne: { name: "Champagne", icon: "🍾", drink: { mins: 10, fx: { zdrop: 0.5 } }, ex: "Pop it before a long session outside. Click to drink." },
+  /* (2026-09-24, the owner: "the other mobs in the area need a chance too drop a carnival ticket") THE KEY TO
+     THE CAGE. Not currency and not a prize: one ticket turns the turnstile once and is gone, which is what
+     makes the Grinning Man something you work up to rather than something you walk past. */
+  carnivalticket: { name: "Carnival ticket", icon: "🎟️", ex: "ADMIT ONE. Torn off a roll a long time ago. The turnstile in the north-west still takes them." },
   clover: { name: "Lucky clover", icon: "🍀", luck: 15, ex: "Turns up while you fish. Click it: your next 15 kills or catches are LUCKY (a real ZCoin is 25% more likely to drop)." },
   horseshoe: { name: "Lucky horseshoe", icon: "🧲", luck: 25, ex: "Rare, and only found while fishing. Click it: your next 25 kills or catches are LUCKY." },
   // the Gloam and Cloudreach (2026-09-18): where the tier ores actually live
@@ -1634,9 +1638,30 @@ Object.assign(SCENES, {
       const g = grid(), objs = [], keep = [];
       const put = (t, x, y, name, w = 1, h = 1, extra = {}) => { objs.push({ t, x, y, w, h, name, ...extra }); block(g, x, y, w, h); for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) keep.push([x + i, y + j]); };
 
-      /* THE MIDWAY: the sawdust avenue everything faces onto, and the spine of the map. */
-      for (let x = 0; x < COLS; x++) { g[13][x] = ","; keep.push([x, 12], [x, 13], [x, 14]); }
-      for (let y = 4; y <= 22; y++) { g[y][30] = ","; keep.push([30, y], [29, y], [31, y]); }   // the spur down to the games
+      /* ---------------------------------------------------------------- THE MIDWAY WINDS (2026-09-24)
+         (the owner, testing it: "the circus is also very linear as far as walk ways, etc. can we randomize it
+         so it feels like theres unique sections?")
+
+         IT WAS A RULER BEFORE: one dirt road straight across y13 from edge to edge and one straight spur down
+         x30, which is how every other map in the game is laid out and is exactly wrong for a fairground. A
+         carnival is pitched, not planned — you come round a corner and there is another row of stalls.
+
+         So the midway is WAYPOINTS. `lane()` draws two tiles wide between them, horizontal leg then vertical,
+         and the list doglegs six times between the east gate and the far south-west. What that buys is not
+         prettiness: it means you cannot see the whole map from the entrance, and each turn opens onto one
+         section and hides the next. The branches hang off it — the plaza, the big top, the turnstile — so every
+         section is somewhere you turn OFF the road to reach rather than something you pass. */
+      const lane = (x0, y0, x1, y1) => {
+        const step = (a, b) => (a < b ? 1 : -1);
+        for (let x = x0; x !== x1 + step(x0, x1); x += step(x0, x1)) for (const y of [y0, y0 + 1]) if (g[y]?.[x] !== undefined) { g[y][x] = ","; keep.push([x, y]); }
+        for (let y = y0; y !== y1 + step(y0, y1); y += step(y0, y1)) for (const x of [x1, x1 + 1]) if (g[y]?.[x] !== undefined) { g[y][x] = ","; keep.push([x, y]); }
+      };
+      const WAY = [[43, 12], [35, 12], [35, 5], [26, 5], [26, 14], [17, 14], [17, 20], [4, 20]];
+      for (let i = 0; i + 1 < WAY.length; i++) lane(WAY[i][0], WAY[i][1], WAY[i + 1][0], WAY[i + 1][1]);
+      lane(35, 13, 35, 17);       // down into the games plaza
+      lane(24, 14, 21, 18);       // across to the big top's door
+      lane(17, 13, 14, 8);        // up to the turnstile
+      lane(30, 6, 30, 3);         // into the back lot
 
       /* THE GAME AREA (south-east, paved, and the first thing you reach coming in from the Yard) */
       for (let y = 16; y <= 23; y++) for (let x = 32; x <= 42; x++) { g[y][x] = "p"; keep.push([x, y]); }
@@ -1649,12 +1674,57 @@ Object.assign(SCENES, {
       /* THE BIG TOP, centre, and the thing you see from the entrance */
       put("bigtop", 18, 15, "The Big Top. Something is still going on in there", 3, 3);
 
-      /* THE NORTH-WEST: the funhouse, and the boss stood in front of its mouth */
-      put("funhouse", 3, 3, "The Funhouse. The way in is the mouth", 3, 2);
+      /* ---------------------------------------------------------------- THE MENAGERIE (2026-09-24)
+         (the owner, testing it: "the grinning man needs to be in a horroresque locked in area, and the other
+         mobs in the area need a chance too drop a carnival ticket")
 
-      /* dressing: the midway is lined with sideshow tents */
-      for (const [x, y] of [[9, 16], [24, 4], [36, 3], [13, 20], [8, 6]]) put("sidetent", x, y, "A sideshow tent, flaps down", 2, 2);
-      for (const [x, y] of [[16, 11], [27, 15], [11, 3], [21, 21], [34, 11], [6, 19]]) put("haybale", x, y, "A hay bale");
+         HE IS AN EXHIBIT, NOT A PRISONER, and the cage is what says so — menagerie bars rather than the
+         Boneyard's graveyard railings, which exist and would have been free. A fence says keep out; a circus
+         cage says the thing inside is billed.
+
+         THE ONLY WAY IN IS THE TURNSTILE, and it eats a Carnival ticket. That closes the loop the owner asked
+         for in one sentence: the four freaks outside drop tickets at 12%, so the boss is something you work up
+         to rather than something you walk past on the way to the big top. The turnstile tile is left WALKABLE
+         and wears only the picture — a blocked gate is a cage nobody can enter — and the worker refuses to step
+         anybody through it without a ticket. */
+      const CAGE = { x0: 1, y0: 2, x1: 12, y1: 11, gate: { x: 12, y: 7 } };
+      for (let x = CAGE.x0; x <= CAGE.x1; x++) for (const y of [CAGE.y0, CAGE.y1]) { objs.push({ t: "cagebarH", x, y, name: "Menagerie bars" }); g[y][x] = "#"; keep.push([x, y]); }
+      for (let y = CAGE.y0 + 1; y < CAGE.y1; y++) for (const x of [CAGE.x0, CAGE.x1]) {
+        if (x === CAGE.gate.x && y === CAGE.gate.y) { objs.push({ t: "turnstile", x, y, cage: { x0: CAGE.x0, y0: CAGE.y0, x1: CAGE.x1, y1: CAGE.y1 }, name: "The turnstile. ADMIT ONE — a Carnival ticket turns it" }); keep.push([x, y]); continue; }
+        objs.push({ t: "cagebarV", x, y, name: "Menagerie bars" }); g[y][x] = "#"; keep.push([x, y]);
+      }
+      objs.push({ t: "sign", x: 14, y: 7, name: "THE MAIN ATTRACTION. Admission by ticket only. The freaks on the midway carry them." }); g[7][14] = "#"; keep.push([14, 7]);
+
+      /* THE FUNHOUSE is inside the cage with him, and its mouth is what he came out of */
+      put("funhouse", 3, 3, "The Funhouse. The way in is the mouth", 3, 2);
+      /* what is on the floor in there (the owner: "bloody things, knives on the ground") */
+      for (const [x, y] of [[7, 4], [9, 9], [4, 10], [10, 5]]) { objs.push({ t: "bloodpool", x, y, name: "A stain. Old, and dragged" }); g[y][x] = "#"; keep.push([x, y]); }
+      for (const [x, y] of [[8, 3], [3, 9], [11, 4]]) { objs.push({ t: "knives", x, y, name: "Throwing knives, left where they landed" }); g[y][x] = "#"; keep.push([x, y]); }
+      for (const [x, y] of [[6, 3], [10, 8]]) { objs.push({ t: "meathook", x, y, name: "A hook on a chain. Empty" }); g[y][x] = "#"; keep.push([x, y]); }
+
+      /* ---------------------------------------------------------------- SIX SECTIONS, EACH WITH ITS OWN LOOK
+         (the owner: "can we randomize it so it feels like theres unique sections?")
+         What makes a section a section is that it has a thing in it nowhere else has. BANNER ALLEY is the
+         corridor of painted banners you come in through; the BACK LOT is where the carnival actually lives,
+         wagons and crates and no attractions at all; SIDESHOW ROW is tents; the BIG TOP, the GAMES PLAZA and
+         the MENAGERIE are one landmark each. Banners mark the mouth of each one, which is what tells you from
+         the road that you have arrived somewhere. */
+      /* BANNER ALLEY: the way in, flanked both sides, with the arch standing OVER the road.
+         The arch is pushed WITHOUT block(), the way the turnstile and the Pyramid's gates are: it is a thing you
+         walk under, and an arch that blocks is a wall with a face painted on it. Everything else here is laid
+         either side of the two road rows (y12 and y13) so nothing stands in the way. */
+      objs.push({ t: "archway", x: 40, y: 11, w: 3, h: 2, name: "A painted arch. Something with horns is grinning over the way in" });
+      for (const x of [36, 39, 42]) keep.push([x, 11], [x, 12]);
+      for (const x of [35, 38, 41]) { put("banner", x, 9, "A sideshow banner, faded through", 1, 2); put("banner2", x, 14, "A sideshow banner, faded through", 1, 2); }
+      /* THE BACK LOT, north-east: where the carnival lives when nobody is looking */
+      for (const [x, y] of [[27, 2], [33, 2], [38, 3]]) put("wagon", x, y, "A carnival wagon, shutters closed", 3, 2);
+      for (const [x, y] of [[26, 8], [32, 8], [37, 7], [40, 6]]) put("crate", x, y, "A carnival crate");
+      /* SIDESHOW ROW, south-west */
+      for (const [x, y] of [[7, 15], [11, 15], [7, 22], [11, 22]]) put("sidetent", x, y, "A sideshow tent, flaps down", 2, 2);
+      for (const [x, y] of [[5, 17], [5, 20]]) put("banner2", x, y, "A sideshow banner, faded through", 1, 2);
+      /* and the big top's own forecourt */
+      for (const [x, y] of [[16, 17], [23, 17]]) put("banner", x, y, "A sideshow banner, faded through", 1, 2);
+      for (const [x, y] of [[26, 17], [14, 22], [31, 12], [20, 3]]) put("haybale", x, y, "A hay bale");
 
       objs.push({ t: "sign", x: 28, y: 12, name: "THE CARNIVAL: Combat 62 to 72. The freaks keep to themselves. The thing in the north-west does not." }); g[12][28] = "#"; keep.push([28, 12]);
 
@@ -1683,7 +1753,11 @@ Object.assign(SCENES, {
               seen.add(k); q.push([nx, ny]); } }
           return seen.size;
         };
+        /* WHAT IS ALREADY THERE, and not just what is BLOCKED. The arch is pushed without block() because you
+           walk under it, so its tiles stay "." and the scatter cheerfully dropped a heap of popcorn tubs inside
+           the entrance arch. Every object footprint goes in here, blocking or not. */
         const taken = new Set(this.mobs.map(([, x, y]) => `${x},${y}`));
+        for (const o of objs) for (let j = 0; j < (o.h || 1); j++) for (let i = 0; i < (o.w || 1); i++) taken.add(`${o.x + i},${o.y + j}`);
         for (let y = 3; y <= 23; y++) for (let x = 2; x <= 41; x++) {
           if (g[y][x] !== "." || taken.has(`${x},${y}`)) continue;
           if (y >= 12 && y <= 14) continue;                      // the midway stays clear
@@ -1693,8 +1767,15 @@ Object.assign(SCENES, {
           const before = walk();
           g[y][x] = "#";
           if (walk() !== before - 1) { g[y][x] = "."; continue; }
-          const t = h < 0.045 ? "haybale" : h < 0.08 ? "carnlitter" : "crate";
-          objs.push({ t, x, y, name: t === "haybale" ? "A hay bale" : t === "carnlitter" ? "Popcorn tubs and torn tickets" : "A carnival crate" });
+          /* (2026-09-24, the owner: "the ashetic needs more horror esque elements, bloody things, knives on the
+             ground") THE WHOLE MAP, not just the cage. A carnival that is only creepy where the boss stands is
+             a carnival with a haunted-house attraction in it; the stains and the knives want to be under your
+             feet on the way to the coconut shy as well. Held to about a third of the scatter, because the
+             other two thirds being ordinary fairground litter is what makes them land. */
+          const t = h < 0.030 ? "haybale" : h < 0.055 ? "carnlitter" : h < 0.070 ? "crate"
+            : h < 0.088 ? "bloodpool" : h < 0.097 ? "knives" : "meathook";
+          objs.push({ t, x, y, name: { haybale: "A hay bale", carnlitter: "Popcorn tubs and torn tickets", crate: "A carnival crate",
+            bloodpool: "A stain. Old, and dragged", knives: "Throwing knives, left where they landed", meathook: "A hook on a chain. Empty" }[t] });
         }
       }
       return { g, objs, blobs: [] };
@@ -1703,7 +1784,7 @@ Object.assign(SCENES, {
        and the boss alone in the north-west. Only he is on AGGRO_ON. */
     mobs: [["pinhead", 26, 9], ["pinhead", 22, 8], ["pinhead", 19, 10], ["pinhead", 24, 6], ["pinhead", 15, 8], ["pinhead", 28, 7],
       ["tripled", 17, 6], ["tripled", 21, 4], ["tripled", 14, 9], ["tripled", 26, 3],
-      ["fatlady", 5, 17], ["fatlady", 10, 19], ["fatlady", 4, 21], ["fatlady", 8, 23], ["fatlady", 15, 23],
+      ["fatlady", 3, 16], ["fatlady", 9, 19], ["fatlady", 13, 18], ["fatlady", 3, 23], ["fatlady", 15, 21],
       ["strongman", 31, 3], ["strongman", 34, 7], ["strongman", 38, 5], ["strongman", 40, 9], ["strongman", 20, 20],
       ["grinner", 5, 7]],
     npcs: [], bots: []
@@ -2967,10 +3048,10 @@ export const LOOT = {
   /* THE CARNIVAL (2026-09-24). Its four carry the band’s ore and the boss carries the map’s whole rare table
      on one kill, the same shape the Boneyard’s Critic has. Nothing new is invented here: every key is a thing
      that already exists, so the band gets a place to fight without also getting a balance surface. */
-  pinhead:   { item: ["catalytic", 1], rare: [["lantern", 0.01], ["spiderboots", 0.01]] },
-  tripled:   { item: ["catalytic", 1], rare: [["sharps_gloves", 0.01], ["markedcard", 0.01]] },
-  fatlady:   { item: ["starfall_ore", 1], rare: [["angels_ring", 0.01], ["adjusters_visor", 0.01]] },
-  strongman: { item: ["starfall_ore", [1, 2]], rare: [["stake_loafers", 0.01], ["devils_dice", 0.01]] },
+  pinhead:   { item: ["catalytic", 1], also: [["carnivalticket", 1, 0.12]], rare: [["lantern", 0.01], ["spiderboots", 0.01]] },
+  tripled:   { item: ["catalytic", 1], also: [["carnivalticket", 1, 0.12]], rare: [["sharps_gloves", 0.01], ["markedcard", 0.01]] },
+  fatlady:   { item: ["starfall_ore", 1], also: [["carnivalticket", 1, 0.12]], rare: [["angels_ring", 0.01], ["adjusters_visor", 0.01]] },
+  strongman: { item: ["starfall_ore", [1, 2]], also: [["carnivalticket", 1, 0.12]], rare: [["stake_loafers", 0.01], ["devils_dice", 0.01]] },
   grinner:   { item: ["starfall_ore", [2, 4]], rare: [["monocle", 0.01], ["angels_ring", 0.01], ["sharps_gloves", 0.01], ["adjusters_visor", 0.01], ["spiderboots", 0.01]] },
   /* HE PAYS IN THINGS. Bonegourds every time (the Boneyard’s alchemy crop, and the Coilbreaker wants one),
      and the map’s whole rare table on one kill instead of spread over five monsters. */
@@ -3047,7 +3128,7 @@ for (const [k, m] of Object.entries(MOBS)) {
   m.aggroWas = had;
   if (AGGRO_ON.has(k)) m.aggro = Math.min(had, AGGRO_REACH); else delete m.aggro;
 }
-for (const [t, L] of Object.entries(LOOT)) if (MOBS[t]) { MOBS[t].drops = [L.item]; MOBS[t].rare = L.rare || []; }
+for (const [t, L] of Object.entries(LOOT)) if (MOBS[t]) { MOBS[t].drops = [L.item, ...(L.also || [])]; MOBS[t].rare = L.rare || []; }   /* (2026-09-24) `also`: extra drops, each [key, n, chance] like any other. LOOT used to REPLACE drops with a single item, so a mob in this table could carry exactly one named thing - which is why the Golden Sands wrote its drops by hand and lost its rare table doing it. */
 
 /* ------------------------------------------------------------ words */
 // what it takes to climb down into the Wilderness (PvP). Change it here.

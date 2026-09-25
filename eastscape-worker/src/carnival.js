@@ -124,3 +124,44 @@ export function installCarnival(World, { G, rint }) {
     if (m.op === "start" || m.op === "score") return this.carnivalPlay(pl, m);
   };
 }
+
+/* ============================================================
+   THE TURNSTILE — the only way into the Grinning Man's cage.
+   (2026-09-24, the owner: "the grinning man needs to be in a horroresque locked in area, and the other mobs in
+   the area need a chance too drop a carnival ticket")
+
+   IT MOVES YOU, IT DOES NOT OPEN. A world map is SHARED, so a gate that swings open swings open for everybody
+   and stays that way until somebody thinks to shut it — one ticket would admit the whole server. A turnstile
+   steps ONE person through and eats their ticket, which is per-player without any per-player state at all, and
+   is also simply what a turnstile is.
+
+   AND IT TURNS BOTH WAYS, free on the way out. Charging to leave would make a mistake cost two tickets and
+   would strand anybody who walked in without reading, which is a trap rather than a gate.
+   ============================================================ */
+export function installTurnstile(World, { G }) {
+  const P = World.prototype;
+  const KEY = "carnivalticket";
+
+  /* there is no countIn in the shared rules — tixIn is a one-off for tickets and every other caller just takes
+     what it wants. An item can sit in more than one stack, so this adds them up rather than finding the first. */
+  const held = (inv, k) => (inv || []).reduce((a, sl) => a + (sl.k === k ? sl.n : 0), 0);
+
+  P.carnivalTurnstile = function (S, pl, ob) {
+    /* the cage is read off the object itself, so moving it on the map moves this with it */
+    const cage = ob.cage || { x0: 1, y0: 2, x1: 12, y1: 11 };
+    const within = (x, y) => x > cage.x0 && x < cage.x1 && y > cage.y0 && y < cage.y1;
+    const out = within(pl.x, pl.y);
+    /* which side of the bars you end up on: the tile just inside, or just outside */
+    const to = out ? { x: ob.x + 1, y: ob.y } : { x: ob.x - 1, y: ob.y };
+    if (!G.walkableIn(S.g, to.x, to.y)) return this.say(pl, "Something is in the way.", "bad");
+
+    if (out) {
+      pl.x = to.x; pl.y = to.y; pl.path = []; pl.step = null; this.touch(pl);
+      return this.say(pl, "The turnstile clacks round behind you. Out into the sawdust.", "sys");
+    }
+    if (!held(pl.C.inv, KEY)) return this.say(pl, "ADMIT ONE. The turnstile will not budge without a Carnival ticket — the freaks on the midway carry them.", "bad");
+    G.takeInv(pl.C.inv, KEY, 1);
+    pl.x = to.x; pl.y = to.y; pl.path = []; pl.step = null; this.touch(pl);
+    this.say(pl, "Your ticket goes into the slot and the turnstile lets you through. It clacks shut behind you.", "good");
+  };
+}
