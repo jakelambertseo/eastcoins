@@ -2159,7 +2159,8 @@ const tixPrice = (n) => `${ico("tickets")}${Math.round(n).toLocaleString()}`;
    itself off under prefers-reduced-motion. It also still works while a piece has no art yet, because the class
    goes on a wrapper around the emoji fallback too. */
 const GLOW_TIERS = { nova: "glow-nova", singularity: "glow-sing", hallowed: "glow-hallow" };
-const NIGHT_FORCE = new URLSearchParams(location.search).get("night") === "1";   /* (2026-09-27) ?night=1 previews Nightfall's look at any hour; the drops are the server's and do not double */
+const NIGHT_FORCE = new URLSearchParams(location.search).get("night") === "1";
+if (new URLSearchParams(location.search).get("hw") === "1" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) G.HW.live = true;   /* (2026-09-27) ?hw=1 on a LOCAL page previews the Long Night against a dev worker that has it on; production ignores it */   /* (2026-09-27) ?night=1 previews Nightfall's look at any hour; the drops are the server's and do not double */
 const ico = (k) => {
   const a = ART_ALIAS[k] || k, glow = GLOW_TIERS[ITEMS[k]?.tier];
   const inner = ITEM_ART.has(a) ? artOf(a) : ITEMS[k]?.icon || "";

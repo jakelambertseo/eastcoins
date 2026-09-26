@@ -197,7 +197,8 @@ export class World {
          starts. So every deploy began with an empty Crypt board (the owner: "i dont see me and kellzifer first dungeon run on the
          crypt hiscore anymore"), and the first clear after a restart would have WRITTEN that empty list over the saved one. */
       this.cryptTop = (await ctx.storage.get("cryptTop")) || {};
-      this.hw = (await ctx.storage.get("hw")) || { kingAt: 0, kingDue: false, kingUp: null, night: false };   /* (2026-09-27) the Long Night's clocks: the King's hour, and whether Nightfall has been called */
+      this.hw = (await ctx.storage.get("hw")) || { kingAt: 0, kingDue: false, kingUp: null, night: false };
+      if (env.DEV === "1" && env.HW_LIVE !== "0") G.HW.live = true;   /* (2026-09-27) a dev server runs the Long Night whatever the switch says, so it can be previewed before it opens (--var HW_LIVE:0 to see it dormant) */   /* (2026-09-27) the Long Night's clocks: the King's hour, and whether Nightfall has been called */
       this.radio = (await ctx.storage.get("radio")) || null;
       { const sg = (await ctx.storage.get("songs")) || null; this.song = sg?.song || null; this.songQ = Array.isArray(sg?.q) ? sg.q : []; }
       if (!(this.jack.pot >= G.JACKPOT.seed)) { this.jack.pot = G.JACKPOT.seed; this.jackDirty = true; }   // (the v107 seed top-up was in restore() too)
