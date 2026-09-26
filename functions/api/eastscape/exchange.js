@@ -50,7 +50,7 @@ import { moveBalance, beginOperation, finishOperation, walletWritesEnabled, newI
 import { ensureBans, isBanned } from "../picks/_bans.js";
 import { ensureStakes } from "./_stake.js";
 
-export const CAP_HOUR = 50, MAX_STAKE = 20, DAY_BREAKER = 2000;   // MAX_STAKE: the casino's own 20 ZC a bet
+export const CAP_HOUR = 50, CAP_DAY = 100, MAX_STAKE = 20, DAY_BREAKER = 2000;   /* (2026-09-27, the owner: "make the max withdrawal of zcoins be 100 per 24 hours") CAP_DAY is what may LEAVE the game to a wallet - tickets traded and found ZCoins banked - in any rolling 24 hours. CAP_HOUR stays the ticket-stake allowance. */   // MAX_STAKE: the casino's own 20 ZC a bet
 const noStore = { "Cache-Control": "no-store" };
 const say = (body, status = 200) => Response.json(body, { status, headers: noStore });
 
@@ -62,19 +62,23 @@ function keyOk(request, env) {
   return diff === 0;
 }
 
-/** ZCoins of this player's hourly allowance already spoken for: credits paid (or possibly paid), and ticket stakes written, by face. */
+/** ZCoins of this player's hourly STAKE allowance already spoken for: ticket stakes written in the last hour. */
 async function usedThisHour(db, userId) {
+  const staked = await db.prepare(`SELECT COALESCE(SUM(zc), 0) AS n FROM gamba_stakes WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`).bind(userId).first();
+  return Number(staked?.n || 0);
+}
+/** ZCoins that LEFT the game to this player's wallet in the last 24 hours: credits paid (or possibly paid), by face. */
+async function usedToday(db, userId) {
   const paid = await db
     .prepare(
       `SELECT COALESCE(SUM(amount), 0) AS n FROM wallet_operations
         WHERE user_id = ? AND idempotency_key >= 'GAMBA:DEX:' AND idempotency_key < 'GAMBA:DEX;'
           AND status IN ('CONFIRMED', 'PENDING', 'NEEDS_RECONCILIATION')
-          AND created_at >= datetime('now', '-1 hour')`
+          AND created_at >= datetime('now', '-1 day')`
     )
     .bind(userId)
     .first();
-  const staked = await db.prepare(`SELECT COALESCE(SUM(zc), 0) AS n FROM gamba_stakes WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`).bind(userId).first();
-  return Number(paid?.n || 0) + Number(staked?.n || 0);
+  return Number(paid?.n || 0);
 }
 
 /** Credit `zc` under `key`, once. Returns { ok, balance } | { ok:false, definite }. */
@@ -110,46 +114,47 @@ export async function onRequestPost(context) {
   if (!user) return say({ ok: false, code: "NO_USER", definite: true, message: "The Ruby doesn't know you. Log in to eastcoin.vip once and come back." }, 404);
 
   await ensureStakes(db);
-  const used = await usedThisHour(db, userId), left = Math.max(0, CAP_HOUR - used);
+  const used = await usedThisHour(db, userId), left = Math.max(0, CAP_HOUR - used), leftOut = Math.max(0, CAP_DAY - await usedToday(db, userId));
   if (body.op === "status") {
     // vouchers written and never bet: the game hands one of these back rather than taking tickets again
     const open = await db.prepare(`SELECT id, zc FROM gamba_stakes WHERE user_id = ? AND status = 'OPEN' ORDER BY created_at LIMIT 20`).bind(userId).all();
-    return say({ ok: true, left, capHour: CAP_HOUR, maxStake: MAX_STAKE, open: (open.results || []).map((r) => ({ id: r.id, zc: Number(r.zc) })), enabled: walletWritesEnabled(env) });
+    return say({ ok: true, left, leftOut, capHour: CAP_HOUR, capDay: CAP_DAY, maxStake: MAX_STAKE, open: (open.results || []).map((r) => ({ id: r.id, zc: Number(r.zc) })), enabled: walletWritesEnabled(env) });
   }
   if (body.op !== "pay" && body.op !== "stake") return say({ ok: false, code: "BAD_OP", definite: true }, 400);
 
   const id = String(body.id || ""), isStake = body.op === "stake", zc = Math.floor(Number(body.zc));
-  if (!/^[a-z0-9_-]{8,64}$/i.test(id) || !(zc >= 1 && zc <= (isStake ? MAX_STAKE : CAP_HOUR))) return say({ ok: false, code: "BAD_REQUEST", definite: true, left }, 400);
+  if (!/^[a-z0-9_-]{8,64}$/i.test(id) || !(zc >= 1 && zc <= (isStake ? MAX_STAKE : CAP_DAY))) return say({ ok: false, code: "BAD_REQUEST", definite: true, left, leftOut }, 400);
 
   // asked before? then say what happened the first time: nothing new is written, nothing new is paid
   if (isStake) {
     const row = await db.prepare(`SELECT zc, status FROM gamba_stakes WHERE id = ? AND user_id = ?`).bind(id, userId).first();
-    if (row) return say({ ok: true, duplicate: true, voucher: id, zc: Number(row.zc), used: row.status === "USED", left });
+    if (row) return say({ ok: true, duplicate: true, voucher: id, zc: Number(row.zc), used: row.status === "USED", left, leftOut });
   } else {
     const prior = await db.prepare(`SELECT status, amount, balance_after FROM wallet_operations WHERE idempotency_key = ?`).bind(`GAMBA:DEX:${id}`).first();
     if (prior) {
-      if (prior.status === "CONFIRMED") return say({ ok: true, duplicate: true, zc: Number(prior.amount), balance: prior.balance_after, left });
-      if (prior.status === "FAILED") return say({ ok: false, code: "FAILED_BEFORE", definite: true, left });
-      return say({ ok: false, code: "UNSETTLED", definite: false, left });
+      if (prior.status === "CONFIRMED") return say({ ok: true, duplicate: true, zc: Number(prior.amount), balance: prior.balance_after, left, leftOut });
+      if (prior.status === "FAILED") return say({ ok: false, code: "FAILED_BEFORE", definite: true, left, leftOut });
+      return say({ ok: false, code: "UNSETTLED", definite: false, left, leftOut });
     }
   }
 
-  if (!walletWritesEnabled(env)) return say({ ok: false, code: "WALLET_NOT_CONFIGURED", definite: true, left, message: "ZCoin transfers aren't switched on right now." }, 503);
+  if (!walletWritesEnabled(env)) return say({ ok: false, code: "WALLET_NOT_CONFIGURED", definite: true, left, leftOut, message: "ZCoin transfers aren't switched on right now." }, 503);
   await ensureBans(db);
-  if (await isBanned(db, userId)) return say({ ok: false, code: "BANNED", definite: true, left }, 403);
-  if (zc > left) return say({ ok: false, code: "CAP", definite: true, left, message: left ? `EastScape has ${left} ZCoin${left === 1 ? "" : "s"} of play left for you this hour.` : "That's your EastScape ZCoins for this hour. It refills as the hour rolls on." }, 429);
+  if (await isBanned(db, userId)) return say({ ok: false, code: "BANNED", definite: true, left, leftOut }, 403);
+  if (isStake && zc > left) return say({ ok: false, code: "CAP", definite: true, left, leftOut, message: left ? `EastScape has ${left} ZCoin${left === 1 ? "" : "s"} of ticket bets left for you this hour.` : "That's your ticket bets for this hour. It refills as the hour rolls on." }, 429);
+  if (!isStake && zc > leftOut) return say({ ok: false, code: "CAP", definite: true, left, leftOut, message: leftOut ? `You can take ${leftOut} more ZCoin${leftOut === 1 ? "" : "s"} out of EastScape today.` : `That's your ${CAP_DAY} ZCoins out of EastScape for today. The allowance rolls over 24 hours.` }, 429);
   const day = await db.prepare(`SELECT COALESCE(SUM(amount), 0) AS n FROM wallet_operations WHERE idempotency_key >= 'GAMBA:' AND idempotency_key < 'GAMBA;' AND status = 'CONFIRMED' AND created_at >= datetime('now', '-1 day')`).first();
   const dayStakes = await db.prepare(`SELECT COALESCE(SUM(zc), 0) AS n FROM gamba_stakes WHERE created_at >= datetime('now', '-1 day')`).first();
-  if (Number(day?.n || 0) + Number(dayStakes?.n || 0) + zc > DAY_BREAKER) return say({ ok: false, code: "BREAKER", definite: true, left, message: "EastScape is out of ZCoins for today. A mod has been told." }, 429);
+  if (Number(day?.n || 0) + Number(dayStakes?.n || 0) + zc > DAY_BREAKER) return say({ ok: false, code: "BREAKER", definite: true, left, leftOut, message: "EastScape is out of ZCoins for today. A mod has been told." }, 429);
 
   if (isStake) {
     // the id is the primary key, so a second ask finds this row instead of writing another
     const put = await db.prepare(`INSERT OR IGNORE INTO gamba_stakes (id, user_id, zc) VALUES (?, ?, ?)`).bind(id, userId, zc).run();
-    if (!put.meta?.changes) return say({ ok: false, code: "UNSETTLED", definite: false, left });
-    return say({ ok: true, voucher: id, zc, left: left - zc });
+    if (!put.meta?.changes) return say({ ok: false, code: "UNSETTLED", definite: false, left, leftOut });
+    return say({ ok: true, voucher: id, zc, left: left - zc, leftOut });
   }
 
   const paid = await credit(env, db, user, `GAMBA:DEX:${id}`, zc);
-  if (!paid.ok) return say({ ok: false, code: paid.code, definite: paid.definite, left }, paid.definite ? 409 : 502);
-  return say({ ok: true, zc, balance: paid.balance, left: left - zc });
+  if (!paid.ok) return say({ ok: false, code: paid.code, definite: paid.definite, left, leftOut }, paid.definite ? 409 : 502);
+  return say({ ok: true, zc, balance: paid.balance, left, leftOut: leftOut - zc });
 }
