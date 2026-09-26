@@ -5617,7 +5617,7 @@ export const quickSell = (k) => (QUICK[k] ? Math.max(1, Math.round(QUICK[k] * QU
 
    AND GEAR STAYS OUT OF isLoot, deliberately. isLoot is what "sell all" sweeps; leaving armour out of it means a
    careless click can never cash in the suit you are carrying. You sell a piece by choosing it. */
-export const GEAR_SELL_RATE = 0.25;
+export const GEAR_SELL_RATE = 0.125;   /* (2026-09-27, the owner: "users are making too much tickets, cut all of them in half") an eighth of the shelf price, was a quarter; the reforge step below rides the same rate */
 const COUNTER_PRICE = new Map(prizesOf().filter((p) => Array.isArray(p.give) && p.give[1] === 1).map((p) => [p.give[0], p.price]));
 /* WHAT A REFORGE ADDS TO THE BUYBACK (2026-09-24, the owner: "after you reforge a piece of gear does that make
    it's Bom Trady value go up ... i think it should go up if it doesn't since you put extra resources into that

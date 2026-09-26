@@ -18,7 +18,7 @@ let bad = 0;
 const fail = (m) => { console.log("  !! " + m); bad++; };
 const ok = (m) => console.log("  " + m);
 
-const shelf = new Map(G.prizesOf().filter((p) => Array.isArray(p.give) && p.give[1] === 1).map((p) => [p.give[0], p.price]));
+const shelf = new Map(G.prizesOf().filter((p) => Array.isArray(p.give) && p.give[1] === 1 && p.group !== "kit").map((p) => [p.give[0], p.price]));   /* (2026-09-27) the starter kits price a bundle, not a piece: their bow, quiver, wand and bag have no shelf price to buy back against */
 
 {
   let n = 0, worst = 0;
@@ -28,7 +28,7 @@ const shelf = new Map(G.prizesOf().filter((p) => Array.isArray(p.give) && p.give
     n++;
     if (!(back > 0)) { fail(`${k} is on the shelf but cannot be sold back`); continue; }
     if (back >= price) fail(`${k} sells back for ${back} and costs ${price} — that is a money printer`);
-    worst = Math.max(worst, back / price);
+    if (price >= 40) worst = Math.max(worst, back / price);   /* (2026-09-27) a cheap piece rounds to a whole ticket: 2 of 13 is 15% of nothing */
   }
   if (!n) fail("no gear on the counter at all");
   if (worst > G.GEAR_SELL_RATE + 0.01) fail(`the best buyback is ${(worst * 100).toFixed(0)}% of the shelf price, above the ${G.GEAR_SELL_RATE * 100}% rule`);

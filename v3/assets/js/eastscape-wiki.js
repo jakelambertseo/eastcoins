@@ -871,6 +871,15 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-27", title: "The Store, the world map, and Bom pays less for gear",
+    items: [
+      "THE STORE, in the top nav: tickets only. A 2X Potion for the whole room (100,000), clovers and homeward scrolls, and name cosmetics that everyone sees over your head and in chat: colours, effects, badges and frames. Nothing there changes a fight or a roll.",
+      "A WORLD MAP replaces the how-to-play tab: every open map as its real shape, roads between them, the combat band coloured against your level, quest arrows, who is where, and a fog over maps you have not set foot on. Click the minimap or the tab to open it.",
+      "BOM PAYS AN EIGHTH of the shelf price for smithed gear, down from a quarter (and a reforged piece's bonus halves with it): a Nova cuirass buys back for 75,000. Too many tickets were coming off the anvil.",
+      "THE SKILLS TAB is a grid of tiles; click one for its wiki page. Quest givers now say which step comes first when it is with somebody else.",
+    ]
+  },
+  {
     date: "2026-09-27", title: "The Wilderness, rebuilt",
     items: [
       "THE WILDERNESS AND THE DEEP WILD are new maps: rock walls, winding roads, a plateau, cave mouths, waterfalls, lava in the Deep. The skilling nodes moved into far pockets held by stronger monsters, and the far corners now carry yew, dragonstone, onyx, starfall, skyash, mooncarp and stormmarlin.",
