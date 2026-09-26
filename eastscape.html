@@ -549,6 +549,23 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 #achBody .arow i:not(.on){opacity:.4}
 #achBody .arow.got{opacity:1;background:rgba(200,161,60,.13)}
 #achBody .arow i{font-style:normal;font-size:17px;line-height:1.2;flex:0 0 auto}
+.map-legend{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px 4px}.map-legend .qf{flex:0 0 auto;padding:4px 10px}.map-key{font-size:11px;color:#5a4a30;margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}.map-key .map-q{font-size:12px;text-shadow:none}
+.map-wrap{position:relative;overflow:auto;flex:1;min-height:0;background:#e6dcc4;margin:0 10px 10px;border:2px solid #b8a67e;border-radius:6px}.map-wrap-sm{height:250px;margin:0 8px;border-radius:6px}
+.map-sheet{position:relative}.map-sheet canvas{display:block;image-rendering:pixelated}
+#mapPins,#mapPinsSm{position:absolute;inset:0}
+.map-pin{position:absolute;cursor:pointer}.map-pin.fog{cursor:default}
+.map-plate{position:absolute;left:50%;top:100%;transform:translateX(-50%);margin-top:4px;background:#efe5cf;border:1px solid #b8a67e;border-radius:5px;padding:2px 7px 3px;white-space:nowrap;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.25);font-size:12px;color:#2e2416;line-height:1.25}
+.map-plate b{display:block;font-size:12.5px}.map-wrap-sm .map-plate{font-size:10px;padding:1px 5px 2px}.map-wrap-sm .map-plate b{font-size:10.5px}
+.map-band{display:inline-block;font-style:normal;font-size:10px;font-weight:800;padding:0 5px;border-radius:3px;background:#d0c4a8;color:#5a4a30;margin:1px 0}.map-band.ok{background:#9fd07a;color:#1a3a0a}.map-band.near{background:#ffd23f;color:#3a2a00}.map-band.far{background:#e8a3a3;color:#5a1a1a}
+.map-sks{display:block;margin-top:1px}.map-sk .ico{width:14px;height:14px;vertical-align:middle}.map-wrap-sm .map-sk .ico{width:11px;height:11px}
+.map-doors{margin-top:2px}.map-door{display:block;font-size:10.5px;color:#7a3c12;text-decoration:underline;cursor:pointer}
+.map-top{position:absolute;right:2px;top:2px;display:flex;gap:3px}.map-q{font-size:14px;line-height:1;color:#e53935;text-shadow:0 0 2px #000,0 0 2px #000}.map-q.hand{color:#ffd23f}.map-q.stage{color:#6fb5ff}
+.map-who{background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:800;border-radius:8px;padding:1px 5px;line-height:1.3}
+.map-me{position:absolute;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;background:#ffd23f;box-shadow:0 0 0 2px #3a2e22;animation:mapme 1.2s ease-in-out infinite}@keyframes mapme{50%{transform:scale(1.5)}}
+.map-king{position:absolute;left:2px;top:2px;font-size:14px;text-shadow:0 0 3px #000}
+.map-pin.here .map-plate{border-color:#b8901a;background:#ffe9a8}
+.map-card{position:absolute;z-index:3;width:270px;background:#efe5cf;border:2px solid #b8a67e;border-radius:6px;padding:8px 10px;font-size:12px;color:#2e2416;box-shadow:0 3px 8px rgba(0,0,0,.35);pointer-events:none}.map-card b{display:block;font-size:14px}.map-card>small{display:block;color:#6a5a40}.map-card div{margin-top:4px}.map-card div small{color:#6a5a40;font-size:11px}.map-card em{font-style:normal;font-weight:800;color:#5a4a30;text-transform:uppercase;font-size:10px;letter-spacing:.03em;margin-right:4px}
+.map-next{padding:4px 10px 0;font-size:12px}
 #questBody .arow{display:flex;gap:9px;align-items:flex-start;padding:7px 9px;border-radius:7px;background:rgba(0,0,0,.05);margin-bottom:4px;border-left:3px solid transparent;cursor:pointer}
 #questBody .arow.done{opacity:.6}#questBody .arow.locked{opacity:.5}#questBody .arow.ready{background:rgba(255,210,63,.18);border-left-color:#d9a300}#questBody .arow.active{border-left-color:#6faa4a}#questBody .arow.open{background:rgba(200,161,60,.13);margin-bottom:0;border-radius:7px 7px 0 0}
 #questBody .arow>span{flex:1;min-width:0}#questBody .arow b{display:block;font-size:14px}#questBody .arow small{display:block;font-size:12px;color:#6a5a40}#questBody .arow .qico{width:24px;height:24px;image-rendering:pixelated;flex:0 0 auto;margin-top:1px}
@@ -1152,6 +1169,11 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/ach_badge.png?v=1" alt="" class="topi">Achievements</b><small id="achSub"></small><button type="button" class="win-x" data-close="achWin" aria-label="Close">×</button></div>
       <div class="win-body" id="achBody"></div>
     </section>
+    <section class="win" id="mapWin" aria-label="World map" hidden style="width:min(1000px,calc(100% - 28px));height:calc(100% - 40px)">
+      <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/map.png?v=1" alt="" class="topi">World map</b><small id="mapSub"></small><button type="button" class="win-x" data-close="mapWin" aria-label="Close">×</button></div>
+      <div class="map-legend" id="mapLegend"></div>
+      <div class="map-wrap" id="mapWrap"><div class="map-sheet" id="mapSheet"><canvas id="mapCanvas"></canvas><div id="mapPins"></div></div><div class="map-card" id="mapCard" hidden></div></div>
+    </section>
     <section class="win" id="questWin" aria-label="Quests" hidden style="width:min(640px,calc(100% - 28px));height:calc(100% - 60px)">
       <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/quests.png?v=1" alt="" class="topi">Quests</b><small id="questSub"></small><button type="button" class="win-x" data-close="questWin" aria-label="Close">×</button></div>
       <div class="win-body" id="questBody"></div>
@@ -1173,7 +1195,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <button type="button" data-tab="skills" aria-pressed="false" title="Skills"><img src="/v3/assets/img/glad/flat/ui/skills.png?v=1" alt="Skills"></button>
       <button type="button" data-tab="quests" aria-pressed="false" title="Quests"><img src="/v3/assets/img/glad/flat/ui/quests.png?v=1" alt="Quests"></button>
       <button type="button" data-tab="settings" aria-pressed="false" title="Settings"><img src="/v3/assets/img/glad/flat/ui/settings.png?v=1" alt="Settings"></button>
-      <button type="button" data-tab="help" aria-pressed="false" title="How to play"><img src="/v3/assets/img/glad/flat/ui/help.png?v=1" alt="How to play"></button>
+      <button type="button" data-tab="help" aria-pressed="false" title="World map"><img src="/v3/assets/img/glad/flat/ui/map.png?v=1" alt="World map"></button>
       <button type="button" data-tab="admin" aria-pressed="false" title="Admin" hidden><img src="/v3/assets/img/glad/flat/ui/admin.png?v=1" alt="Admin"></button>
     </nav>
     <div class="panel" id="panel"></div>
@@ -1460,7 +1482,8 @@ function onMsg(m) {
   }
   if (m.type === "me") { const prevCharm = me?.charm; me = m.me;
     if (me.charm && (me.charm.left | 0) > 0 && (!prevCharm || prevCharm.k !== me.charm.k || me.charm.left > (prevCharm.left | 0) + 5000)) { spellFx(`p:${you?.id}`, "shield"); SFX.play("spell_buff"); }   /* (2026-09-26) a page buff read */
-    DECO?.refresh(); renderQuick(); if (!me.look && !lookOffered) { lookOffered = true; setTimeout(() => { if (!me.look) welcomeOnce(true); }, 1500); } renderTour(); renderPanel(); if (!$("questWin").hidden) renderQuests(); if (!$("hwWin").hidden) renderMarket(); CZ.me(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); craftRefresh(); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("vanWin").hidden) renderVan(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
+    DECO?.refresh(); renderQuick(); if (!me.look && !lookOffered) { lookOffered = true; setTimeout(() => { if (!me.look) welcomeOnce(true); }, 1500); } renderTour(); renderPanel(); if (!$("questWin").hidden) renderQuests(); if (!$("hwWin").hidden) renderMarket(); if (!$("mapWin").hidden) renderMap(); CZ.me(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); craftRefresh(); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("vanWin").hidden) renderVan(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
+  if (m.type === "map") { WORLD.counts = m.counts || {}; if (!$("mapWin").hidden) renderMap(); return; }   /* (2026-09-27) who is where, for the world map */
   if (m.type === "exch") { EX = m; if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input:not(#mkQ)"))) renderEx(); return; }
   if (m.type === "trade") { if (m.closed) { TR = null; $("tradeWin").hidden = true; } else { TR = m; openWin("tradeWin"); } return; }
   if (m.type === "pong") return;
@@ -1583,7 +1606,7 @@ function loadScene(key) {
   Z.def = G.sceneDef(key); Z.isle = null; Z.ground = [];
   Z.def.npcs.filter((n) => !n.event || G.hwOn()).forEach((n, i) => { Z.defs[`${key}n${i}`] = n.art || !NPC_ART[n.name] ? n : { ...n, art: NPC_ART[n.name] }; });
   Z.npcs = []; botBubbles.clear(); PRED.on = false; PRED.path = []; PRED.step = null;
-  for (const id of ["bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin"]) $(id).hidden = true;
+  for (const id of ["bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin", "mapWin"]) $(id).hidden = true;
   Z.exits = exitsOf(); decoBtnSync();
   loadAreaArt(key);
   Z.bg = paintBg();
@@ -4391,7 +4414,7 @@ $("online").addEventListener("click", whoAllOpen);
 document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_close"); $(b.dataset.close).hidden = true; if (b.dataset.close === "gameWin") CZ.closed(); if (b.dataset.close === "wikiWin" && location.hash.startsWith("#wiki")) history.replaceState(null, "", location.pathname + location.search); }));
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape" || e.target.closest?.("input, textarea, select") || !$("pop").hidden || DLG) return;
-  for (const w of ["wikiWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
+  for (const w of ["wikiWin", "mapWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
 });
 // windows that need you standing somewhere close themselves when you walk off
 setInterval(() => { if (PRED.on && PRED.step) for (const w of ["bankWin", "exWin"]) $(w).hidden = true; }, 300);
@@ -5670,6 +5693,117 @@ function renderAch() {
    opens on click into the whole thing: who gives it and WHERE they stand, the steps with the ones done ticked and the
    one you are on marked, where each step's person is, what it needs first, and the reward. Read from the same state the
    tab reads, so the two can never disagree; a change to a quest (the socket's "quest" message) repaints it if it is open. */
+/* ============================================================ THE WORLD MAP (2026-09-27)
+   Nothing on it is drawn or registered by hand. The LAYOUT is a walk from the Yard over each map's `exits` (north puts a map one
+   cell up, and so on; a clash is nudged sideways), so a scene added tomorrow with an exits line is on the sheet on the next load.
+   Interiors have `exitTo` instead and become door pins on the map they open from. The Wilderness hangs off the Gloam's rope
+   ladder, the one link that is an object rather than an exit. Each THUMBNAIL is the map's own grid from buildScene, painted in a
+   palette per ground theme, so the Mire's lake and the Yard's pond are the real shapes. The wild maps live in the closed file and
+   are loaded the way the wiki loads them. Pins (name, band against your combat level, node skills, quest arrows, who is here,
+   you) are HTML over the canvas, so hover and click need no hit-testing. `me.seen` is the fog: a map you have never entered is
+   an outline with a question mark. */
+const WORLD_PAL = { def: { g: "#5b9440", p: "#c9a86c", w: "#3d7bb5", k: "#3a3226", s: "#dfc98b" },
+  gloam: { g: "#4a7a45", p: "#8f8a63", w: "#2c5f6c", k: "#2c2a22", s: "#b8ae82" }, carnival: { g: "#5f9a3f", p: "#a88a5a", w: "#3d7bb5", k: "#3a2a2a", s: "#d8c79a" },
+  desert: { g: "#d9c17f", p: "#b8985a", w: "#4d9ac4", k: "#5a4a30", s: "#e8d9a4" }, cloud: { g: "#a9c8e4", p: "#e6eef6", w: "#6fa8dc", k: "#5a6a80", s: "#d0dcea" },
+  storm: { g: "#4d5972", p: "#8b8f9d", w: "#2f4c73", k: "#242a38", s: "#7d8393" }, wild: { g: "#3f6a3a", p: "#7a6a4e", w: "#2b5a62", k: "#2a2a22", s: "#8e8060" },
+  deep: { g: "#2b4a3a", p: "#5c5a4e", w: "#153a3c", k: "#1c1c18", s: "#5d5545" } };
+const WORLD = { cells: null, thumbs: new Map(), counts: {}, asked: 0, show: (() => { try { return JSON.parse(localStorage.getItem("es_map_show") || "null") || { nodes: true, quests: true, players: true }; } catch (e) { return { nodes: true, quests: true, players: true }; } })(), TW: 132, TH: 78, PX: 176, PY: 128 };
+const WILD_GATES = { wildladder: "wild" };   /* an object that is a way into another map: the Gloam's rope ladder */
+function worldLayout() {
+  const cells = new Map(), doors = {}, links = [], taken = new Set(), at = (x, y) => `${x},${y}`;
+  const outdoor = (k) => G.OPEN.has(k) && SCENES[k] && !SCENES[k].interior && !SCENES[k].island && !SCENES[k].home;
+  const place = (k, x, y) => { let [px, py] = [x, y]; for (let n = 0; taken.has(at(px, py)) && n < 8; n++) { px = x + (n % 2 ? 1 : -1) * Math.ceil((n + 1) / 2); } cells.set(k, { x: px, y: py }); taken.add(at(px, py)); };
+  const D = { n: [0, -1], s: [0, 1], e: [1, 0], w: [-1, 0] };
+  place("workyard", 0, 0); const q = ["workyard"];
+  while (q.length) {
+    const k = q.shift(), c = cells.get(k), d = SCENES[k];
+    for (const [dir, to] of Object.entries(d.exits || {})) { if (!outdoor(to)) continue; links.push([k, to, "road"]); if (cells.has(to)) continue; place(to, c.x + D[dir][0], c.y + D[dir][1]); q.push(to); }
+    let b; try { b = G.buildScene(k); } catch (e) { b = null; }
+    for (const o of b?.objs || []) { const to = WILD_GATES[o.t]; if (!to || !outdoor(to)) continue; links.push([k, to, "ladder"]); if (cells.has(to)) continue; for (const [dx, dy] of [[0, 1], [-1, 0], [1, 0], [0, -1]]) if (!taken.has(at(c.x + dx, c.y + dy))) { place(to, c.x + dx, c.y + dy); break; } if (!cells.has(to)) place(to, c.x, c.y + 1); q.push(to); }
+  }
+  for (const [k, d] of Object.entries(SCENES)) if (G.OPEN.has(k) && d.interior) { const parent = d.exitTo?.scene || Object.values(d.exits || {}).find((to) => cells.has(to)); if (parent && cells.has(parent)) (doors[parent] ||= []).push(k); }   /* an interior opens from the map its exitTo (or its one exit, the Vault's way) names */
+  const xs = [...cells.values()].map((c) => c.x), ys = [...cells.values()].map((c) => c.y), minX = Math.min(...xs), minY = Math.min(...ys);
+  for (const c of cells.values()) { c.x -= minX; c.y -= minY; }
+  return { cells, doors, links, cols: Math.max(...xs) - minX + 1, rows: Math.max(...ys) - minY + 1 };
+}
+function worldThumb(k) {
+  if (WORLD.thumbs.has(k)) return WORLD.thumbs.get(k);
+  let b; try { b = G.buildScene(k); } catch (e) { return null; }
+  const pal = WORLD_PAL[SCENES[k].ground] || (SCENES[k].pvp || SCENES[k].dark ? WORLD_PAL.wild : WORLD_PAL.def), c = document.createElement("canvas"); c.width = WORLD.TW; c.height = WORLD.TH; const o = c.getContext("2d"), s = WORLD.TW / COLS;
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { const t = b.g[y][x]; o.fillStyle = t === "~" ? pal.w : t === "," ? pal.p : t === "s" ? pal.s : t === "#" ? pal.k : pal.g; o.fillRect(Math.floor(x * s), Math.floor(y * s), Math.ceil(s), Math.ceil(s)); }
+  for (const ob of b.objs) { const col = ob.ore ? "#e8b84a" : ob.log || /tree|oak|yew|willow|palm|skyash|pine|bogwood/.test(ob.t) ? "#2f6a2a" : ob.fish || ob.t === "spot" ? "#7fd0ff" : null; if (col) { o.fillStyle = col; o.fillRect(Math.floor(ob.x * s), Math.floor(ob.y * s), Math.ceil(s), Math.ceil(s)); } }
+  WORLD.thumbs.set(k, c); return c;
+}
+function drawWorld(sfx, opts = {}) {
+  const cv = $("mapCanvas" + sfx), pins = $("mapPins" + sfx), sheet = $("mapSheet" + sfx); if (!cv || !pins || !me) return;
+  const L = WORLD.cells = worldLayout(), here = opts.here || String(Z.key || me.scene || "workyard").split(":")[0];
+  const sc = opts.compact ? 0.62 : 1, PX = WORLD.PX * sc, PY = WORLD.PY * sc, TW = WORLD.TW * sc, TH = WORLD.TH * sc, pad = 14;
+  let keys = [...L.cells.keys()]; if (opts.compact) { const c = L.cells.get(here) || L.cells.get("workyard"); keys = keys.filter((k) => Math.abs(L.cells.get(k).x - c.x) <= 1 && Math.abs(L.cells.get(k).y - c.y) <= 1); }
+  const xs = keys.map((k) => L.cells.get(k).x), ys = keys.map((k) => L.cells.get(k).y), minX = Math.min(...xs), minY = Math.min(...ys);
+  const px = (k) => pad + (L.cells.get(k).x - minX) * PX, py = (k) => pad + (L.cells.get(k).y - minY) * PY;
+  const Wc = pad * 2 + (Math.max(...xs) - minX + 1) * PX - (PX - TW), Hc = pad * 2 + (Math.max(...ys) - minY + 1) * PY - (PY - TH) + 30 * sc;
+  cv.width = Wc; cv.height = Hc; sheet.style.width = `${Wc}px`; sheet.style.height = `${Hc}px`;
+  const o = cv.getContext("2d"); o.imageSmoothingEnabled = false; o.fillStyle = "#e6dcc4"; o.fillRect(0, 0, Wc, Hc);
+  const seen = new Set([...(me.seen || []), here]), fog = Array.isArray(me.seen) && me.seen.length > 0, known = (k) => !fog || seen.has(k);
+  /* roads first, so the thumbnails sit on them */
+  for (const [a, b, kind] of L.links) { if (!keys.includes(a) || !keys.includes(b)) continue; o.strokeStyle = kind === "ladder" ? "#8a5a2a" : "#c9a86c"; o.lineWidth = 6 * sc; o.setLineDash(kind === "ladder" ? [6, 5] : []); o.beginPath(); o.moveTo(px(a) + TW / 2, py(a) + TH / 2); o.lineTo(px(b) + TW / 2, py(b) + TH / 2); o.stroke(); o.setLineDash([]); }
+  for (const k of keys) { const x = px(k), y = py(k), th = known(k) ? worldThumb(k) : null;
+    o.fillStyle = "#3a2e22"; o.fillRect(x - 2, y - 2, TW + 4, TH + 4);
+    if (th) o.drawImage(th, x, y, TW, TH); else { o.fillStyle = "#d9ccb0"; o.fillRect(x, y, TW, TH); o.fillStyle = "#8a7a5a"; o.font = `800 ${Math.round(28 * sc)}px Nunito, sans-serif`; o.textAlign = "center"; o.fillText("?", x + TW / 2, y + TH / 2 + 10 * sc); }
+    if (k === here) { o.strokeStyle = "#ffd23f"; o.lineWidth = 3; o.strokeRect(x - 2, y - 2, TW + 4, TH + 4); }
+  }
+  if (G.nightfallOn()) { o.fillStyle = "rgba(10,5,30,.35)"; o.fillRect(0, 0, Wc, Hc); }
+  /* the pins: HTML over the canvas */
+  const combat = G.combatOf(me), sh = WORLD.show;
+  pins.innerHTML = keys.map((k) => { const d = SCENES[k], x = px(k), y = py(k), band = G.bandOf(k), a = WIKI.areas[k], kn = known(k);
+    const bandCls = !band ? "" : combat >= band[0] ? " ok" : combat >= band[0] - 8 ? " near" : " far";
+    const skills = kn && sh.nodes && a ? [...new Set(Object.values(a.res))].map((sk) => `<span class="map-sk" title="${esc(SKILLS[sk]?.name || sk)}">${sico(sk)}</span>`).join("") : "";
+    const qs = kn && sh.quests ? (d.npcs || []).filter((n) => !n.event || G.hwOn()).map((n) => G.npcRole(me, n)).filter(Boolean) : [];
+    const qmark = qs.length ? `<span class="map-q ${qs.some((r) => r.role === "hand") ? "hand" : qs.some((r) => r.role === "stage") ? "stage" : "new"}" title="${qs.length} quest${qs.length > 1 ? "s" : ""} here">▼</span>` : "";
+    const who = sh.players && WORLD.counts[k] ? `<span class="map-who" title="${WORLD.counts[k]} here">${WORLD.counts[k]}</span>` : "";
+    const meHere = k === here ? `<span class="map-me" style="left:${(me.x / COLS) * 100}%;top:${(me.y / ROWS) * 100}%" title="You"></span>` : "";
+    const king = G.hwOn() && k === G.HW.king.scene ? `<span class="map-king" title="The Pumpkin King rises here, on the hour">\u{1F383}</span>` : "";
+    const doors = kn && !opts.compact ? (L.doors[k] || []).map((dk) => `<a class="map-door" data-wiki="areas/${dk}">▸ ${esc(SCENES[dk].name)}</a>`).join("") : "";
+    return `<div class="map-pin${k === here ? " here" : ""}${kn ? "" : " fog"}" data-k="${k}" style="left:${x}px;top:${y}px;width:${TW}px;height:${TH}px">${meHere}${king}<div class="map-top">${qmark}${who}</div>
+      <div class="map-plate"><b>${esc(kn ? d.name : "?")}</b>${band && kn ? `<em class="map-band${bandCls}">${band[0]}${band[1] < 99 ? `–${band[1]}` : "+"}</em>` : ""}${skills ? `<span class="map-sks">${skills}</span>` : ""}${doors ? `<div class="map-doors">${doors}</div>` : ""}</div></div>`;
+  }).join("");
+  pins.querySelectorAll(".map-pin").forEach((el) => {
+    el.addEventListener("click", (e) => { if (e.target.closest("a")) return; if (opts.compact) return openMap(); if (known(el.dataset.k)) { $("mapWin").hidden = true; wikiRoute = `areas/${el.dataset.k}`; openWin("wikiWin"); } });
+    if (!opts.compact) { el.addEventListener("mouseenter", () => mapCard(el.dataset.k, el)); el.addEventListener("mouseleave", () => { $("mapCard").hidden = true; }); }
+  });
+  pins.querySelectorAll("a[data-wiki]").forEach((a) => a.addEventListener("click", (e) => { e.stopPropagation(); $("mapWin").hidden = true; wikiRoute = a.dataset.wiki; openWin("wikiWin"); }));
+  if (opts.compact) { const wrap = $("mapWrapSm"), c = L.cells.get(here); if (wrap && c) { wrap.scrollLeft = Math.max(0, px(here) - (wrap.clientWidth - TW) / 2); wrap.scrollTop = Math.max(0, py(here) - (wrap.clientHeight - TH) / 2); } }
+}
+function mapCard(k, el) {
+  const card = $("mapCard"), d = SCENES[k], a = WIKI.areas[k], band = G.bandOf(k); if (!card || !d) return;
+  const seen = new Set([...(me.seen || [])]); if (Array.isArray(me.seen) && me.seen.length && !seen.has(k) && k !== String(Z.key).split(":")[0]) { card.innerHTML = `<b>?</b><small>You have not been here yet.</small>`; }
+  else {
+    const mobs = a ? Object.entries(a.mobs).map(([t, n]) => `${esc(MOBS[t]?.name || t)} <small>${MOBS[t]?.lvl || ""}${n > 1 ? ` ×${n}` : ""}</small>`).join(", ") : "";
+    const res = a ? Object.entries(a.res).map(([n, sk]) => esc(n)).join(", ") : "";
+    const qs = Object.entries(QUESTS).filter(([qk, q]) => (!q.event || G.hwOn()) && WIKI.npcs[q.giver]?.scene === k).map(([qk, q]) => `${esc(q.name)} <small>${G.QUEST_TIERS[q.tier] || ""} · ${{ new: "not started", active: "in progress", ready: "ready", done: "done", locked: "locked" }[G.qState(me, qk)]}</small>`).join(", ");
+    card.innerHTML = `<b>${esc(d.name)}</b>${band ? `<small>Combat ${band[0]}${band[1] < 99 ? ` to ${band[1]}` : " and up"}</small>` : ""}${WORLD.counts[k] ? `<small>${WORLD.counts[k]} here now</small>` : ""}
+      ${mobs ? `<div><em>Monsters</em> ${mobs}</div>` : "<div><em>Monsters</em> none: it is safe here</div>"}${res ? `<div><em>Gather</em> ${res}</div>` : ""}${d.npcs?.length ? `<div><em>People</em> ${d.npcs.filter((n) => !n.event || G.hwOn()).map((n) => esc(n.name)).join(", ")}</div>` : ""}${qs ? `<div><em>Quests</em> ${qs}</div>` : ""}<small>Click for the wiki page.</small>`;
+  }
+  const wrap = $("mapWrap"), r = el.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+  card.hidden = false; card.style.left = `${Math.min(w.width - 280, Math.max(0, r.left - w.left + wrap.scrollLeft))}px`; card.style.top = `${r.bottom - w.top + wrap.scrollTop + 4}px`;
+}
+function openMap() {
+  for (const w of ["wikiWin", "questWin", "hwWin"]) $(w).hidden = true;
+  $("mapWin").hidden = false; SFX.play("ui_open");
+  const p = wikiMapsReady(); if (p) p.then(() => { if (!$("mapWin").hidden) renderMap(); });
+  renderMap(); if (Date.now() - WORLD.asked > 5000) { WORLD.asked = Date.now(); send({ t: "map" }); }
+}
+function renderMap() {
+  if ($("mapWin").hidden || !me) return;
+  const here = String(Z.key || me.scene || "workyard").split(":")[0];
+  $("mapSub").textContent = `You are in ${SCENES[here]?.name || "?"}${G.nightfallOn() ? " · Nightfall" : ""}`;
+  $("mapLegend").innerHTML = [["nodes", "Gathering"], ["quests", "Quests"], ["players", "Who is where"]].map(([k, l]) => `<button type="button" class="qf${WORLD.show[k] ? " on" : ""}" data-show="${k}">${l}</button>`).join("") + `<span class="map-key"><i class="map-band ok">band</i> you can fight here <i class="map-band near">band</i> nearly <i class="map-band far">band</i> not yet · <b class="map-q new">▼</b> quest <b class="map-q hand">▼</b> hand in · ? never visited</span>`;
+  $("mapLegend").querySelectorAll("[data-show]").forEach((b) => b.addEventListener("click", () => { WORLD.show[b.dataset.show] = !WORLD.show[b.dataset.show]; try { localStorage.setItem("es_map_show", JSON.stringify(WORLD.show)); } catch (e) {} renderMap(); }));
+  drawWorld("", { here });
+  const wrap = $("mapWrap"), c = WORLD.cells?.cells.get(here); if (wrap && c && !WORLD.centred) { WORLD.centred = true; wrap.scrollLeft = Math.max(0, c.x * WORLD.PX - wrap.clientWidth / 2 + WORLD.TW / 2); wrap.scrollTop = Math.max(0, c.y * WORLD.PY - wrap.clientHeight / 2 + WORLD.TH / 2); }
+}
+setInterval(() => { if (!$("mapWin").hidden && document.visibilityState === "visible") { WORLD.asked = Date.now(); send({ t: "map" }); } }, 10000);
+$("mini").addEventListener("click", openMap);
 let QW = { st: "all", tier: null, open: null };
 function renderQuests() {
   if (!me) return;
@@ -5975,15 +6109,17 @@ function renderPanel() {
     $("set-vol").addEventListener("change", () => SFX.play("coins"));
   }
   if (tab === "help") {
-    p.innerHTML = `<div class="ph">How to play</div><div class="note">
-      <p><b>Walk:</b> click the ground, or WASD / arrow keys.</p>
-      <p><b>Fight:</b> click a monster. Its level shows when you hover it.</p>
-      <p><b>Talk:</b> click a person. A red arrow means they have work for you; gold means you can hand it in.</p>
-      <p><b>Tools:</b> your pickaxe, axe and fishing rod start in your bag. Click one to wield it: you have to be holding the right one to mine, chop or fish.</p>
-      <p><b>Gather:</b> wheat and olive trees by hand, rocks with a pickaxe (the big vein keeps going on its own), trees with an axe, bubbling water with a rod. Working the same thing as other players gives you +1% each.</p>
-      <p><b>Travel:</b> walk onto the blue tiles at the edge to reach the next area.</p>
-      <p><b>Chat:</b> use the Twitch chat beside the game.</p>
-      <p><b>Saving:</b> automatic. Close the tab whenever you like; you'll be right where you left off.</p></div>`;
+    /* (2026-09-27, the owner: "no one uses this how to play tab") THE WORLD MAP TAKES THE SLOT. The old text is the wiki's Start
+       here page. Here: your map and its neighbours, you are here, the active quest's next step, and the door to the full sheet. */
+    const here = String(Z.key || me?.scene || "workyard").split(":")[0];
+    const act = Object.keys(QUESTS).find((k) => G.qState(me, k) === "ready") || Object.keys(QUESTS).find((k) => G.qState(me, k) === "active");
+    const next = act ? (G.qState(me, act) === "ready" ? `Hand in ${esc(QUESTS[act].name)} to ${esc(G.qHandTo(act))}` : `${esc(QUESTS[act].name)}: ${esc(G.stageText(act, G.qStage(me, act)))}`) : "";
+    p.innerHTML = `<div class="ph">World map <small>${esc(SCENES[here]?.name || "")}</small></div>
+      <div class="map-wrap map-wrap-sm" id="mapWrapSm"><div class="map-sheet" id="mapSheetSm"><canvas id="mapCanvasSm"></canvas><div id="mapPinsSm"></div></div></div>
+      ${next ? `<p class="note map-next">\u25B8 ${next}</p>` : ""}
+      <div style="padding:6px 8px 10px"><button type="button" class="lk-btn" id="mapOpen" style="width:100%">Open the world map</button></div>`;
+    drawWorld("Sm", { compact: true, here });
+    $("mapOpen").addEventListener("click", openMap);
   }
   if (tab === "admin" && isStaff()) renderAdmin(p);
 }

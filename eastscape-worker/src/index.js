@@ -269,7 +269,7 @@ export class World {
     this.pls.set(user.id, pl);
     this.ctx.storage.put(`who:${String(user.login).toLowerCase()}`, { id: user.id, name: pl.name }).catch(() => {});
     const S = this.scene(C.scene);
-    this.placeSafely(S, pl);
+    this.placeSafely(S, pl); this.markSeen(pl, C.scene);
     ws.addEventListener("message", (e) => { try { this.onMessage(pl, JSON.parse(e.data)); } catch (err) { /* ignore bad frames */ } });
     ws.addEventListener("close", () => this.leave(pl));
     ws.addEventListener("error", () => this.leave(pl));
@@ -346,7 +346,7 @@ export class World {
     return { pay: owed, low, late };
   }
 
-  meOf(pl) { const C = pl.C; return { hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null,   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
+  meOf(pl) { const C = pl.C; return { seen: C.seen || [],   /* (2026-09-27) the world map's fog */ hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null,   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
@@ -488,8 +488,16 @@ export class World {
     if (S.key === G.START.scene && G.walkableIn(S.g, G.START.x, G.START.y)) best = G.START;
     pl.x = best.x; pl.y = best.y; this.touch(pl);
   }
+  /* (2026-09-27) THE MAPS YOU HAVE SET FOOT ON, for the world map's fog: a base scene key once, capped, never an island */
+  markSeen(pl, key) {
+    const b = String(key).split(":")[0]; if (!G.SCENES[b] || G.isIsle(key)) return;
+    const C = pl.C; if (!Array.isArray(C.seen)) C.seen = [];
+    if (C.seen.includes(b)) return;
+    C.seen.push(b); if (C.seen.length > 80) C.seen.shift(); this.touch(pl);
+  }
   moveToScene(pl, key, side, at) {
     const S = this.scene(key);
+    this.markSeen(pl, key);
     /* (2026-09-22) the tour's "go and see your own island" step. Keyed on the OWNER, not just on being on an island,
        so walking onto somebody else's does not tick it off — the point of the step is that you have one. */
     /* `island`, not `home` — `home` is The Cottage, the building INSIDE the island, so the step only completed if you
@@ -784,6 +792,11 @@ export class World {
         return this.say(pl, `Vance folds the chit into your hand. "Door's behind me. Don't come back."`, "loot");
       }
       case "who": { if (now - (pl.whoAsk || 0) < 3000) return; pl.whoAsk = now; return this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S), npcs: this.npcsOf(S) }); }
+      case "map": {   /* (2026-09-27) the world map: how many people stand on each map, nothing else about them */
+        if (now - (pl.mapAsk || 0) < 5000) return; pl.mapAsk = now;
+        const counts = {}; for (const p of this.pls.values()) { const b = String(p.C.scene || "").split(":")[0]; if (G.SCENES[b] && !G.isIsle(p.C.scene)) counts[b] = (counts[b] || 0) + 1; }
+        return this.send(pl, { type: "map", counts });
+      }
       /* (2026-09-23, the owner: "allow users to click the {X} online in the top right and it opens a popup of
          whose online and where theyre at"). This is the admin dashboard's own gathering WITH THE PRIVATE COLUMN
          TAKEN OUT: those rows carry each person's ticket count and are sorted by it, which is nobody else's
