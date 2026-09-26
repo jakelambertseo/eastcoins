@@ -1886,8 +1886,8 @@ export class World {
   }
   // `wrangler dev` has no key and must never reach the real site: a pretend Ruby with the same answers, so the window can be worked on
   dexDev(body) {
-    const D = (this.devDex ||= { used: 0, seen: new Map() }), left = Math.max(0, G.DEX.capHour - D.used), leftOut = Math.max(0, G.DEX.capDay - D.used);
-    if (body.op === "status") return { ok: true, left, leftOut, capHour: G.DEX.capHour, capDay: G.DEX.capDay, maxStake: G.DEX.maxStake, open: [], enabled: true, dev: true };
+    const D = (this.devDex ||= { used: 0, seen: new Map() }), left = Math.max(0, G.DEX.capHour - D.used);
+    if (body.op === "status") return { ok: true, left, capHour: G.DEX.capHour, maxStake: G.DEX.maxStake, open: [], enabled: true, dev: true };
     if (D.seen.has(body.id)) return { ...D.seen.get(body.id), duplicate: true };
     const cost = body.zc | 0; if (cost > left) return { ok: false, code: "CAP", definite: true, left, message: "That's your EastScape ZCoins for this hour (pretend)." };
     D.used += cost; const ans = body.op === "stake" ? { ok: true, voucher: body.id, zc: cost, left: left - cost } : { ok: true, zc: cost, balance: 1000 + cost, left: left - cost };
@@ -1930,7 +1930,7 @@ export class World {
       if (op !== "bank" && !stake && !cashing) return fail("The Ruby didn't understand that. Nothing was taken.");   /* (2026-09-23) an op nothing sends today, but a silent return here is the same trap as the cooldown was: the page would wait for ever */
       if ((await this.ctx.storage.list({ prefix: `dex:${pl.id}:`, limit: 1 })).size) return fail("The house is still working on your last one. Give it a minute and try again.");
       const have = G.countItems({ inv: C.inv, bank: [] }, ["zcoin"]), want = Math.floor(Number(m.zc));
-      if (cashing && !(want >= 1 && want <= G.DEX.capDay)) return fail(`Trade in 1 to ${G.DEX.capDay} ZCoins' worth at a time.`);
+      if (cashing && !(want >= 1 && want <= G.DEX.capHour)) return fail(`Trade in 1 to ${G.DEX.capHour} ZCoins' worth at a time.`);
       if (cashing && G.tixIn(C) < want * G.DEX.rate) return fail(`${want} ZCoin${want === 1 ? "" : "s"} is ${G.fmtTix(want * G.DEX.rate)} (${G.DEX.rate.toLocaleString()} a ZCoin). You have ${G.fmtTix(G.tixIn(C))}.`);
       if (!stake && !cashing && !have) return fail("You've no ZCoins in your bag to bank. They turn up, rarely, on a kill or a catch.");
       if (stake && !(want >= 1 && want <= G.DEX.maxStake)) return fail(`A ticket bet is 1 to ${G.DEX.maxStake} ZCoins' worth.`);
@@ -1939,10 +1939,8 @@ export class World {
       const st = await this.dexAsk({ op: "status", userId: pl.id });
       if (!st.ok || !st.enabled) return fail(st.message || "ZCoins aren't moving right now. Nothing was taken.", st);
       if (stake) { const spare = (st.open || []).find((v) => v.zc === want); if (spare) return pl.out.push({ type: "stake", g: m.g, voucher: spare.id, zc: want, spare: true, status: st }); }   // paid for earlier and never bet: it's still yours
-      /* (2026-09-27) two allowances: a ticket STAKE draws on the hour's (st.left); anything that LEAVES to a wallet - a trade, a banked find - on the day's (st.leftOut, 100 in 24 hours) */
-      const leftOut = st.leftOut ?? st.left;
-      const zc = stake || cashing ? want : Math.min(have, leftOut, G.DEX.capDay);
-      if (zc < 1 || (stake ? zc > st.left : zc > leftOut)) return fail(stake ? (st.left ? `You've ${st.left} ZCoin${st.left === 1 ? "" : "s"}' worth of ticket bets left this hour. ZCoin bets still work.` : "That's your ticket bets for this hour. It refills as the hour rolls on. ZCoin bets still work.") : (st.left ? `There's room for ${st.left} more ZCoin${st.left === 1 ? "" : "s"} this hour.` : "That's your ZCoins for this hour. It refills as the hour rolls on; what you found will keep."), st);
+      const zc = stake || cashing ? want : Math.min(have, st.left, G.DEX.capHour);
+      if (zc < 1 || zc > st.left) return fail(stake ? (st.left ? `You've ${st.left} ZCoin${st.left === 1 ? "" : "s"}' worth of ticket bets left this hour. ZCoin bets still work.` : "That's your ticket bets for this hour. It refills as the hour rolls on. ZCoin bets still work.") : (st.left ? `There's room for ${st.left} more ZCoin${st.left === 1 ? "" : "s"} this hour.` : "That's your ZCoins for this hour. It refills as the hour rolls on; what you found will keep."), st);
       const back = stake || cashing ? { k: "tickets", n: zc * G.DEX.rate } : { k: "zcoin", n: zc };
       if (pl.left) return;   // they have gone; nobody is waiting for an answer
       if (G.countItems({ inv: C.inv, bank: [] }, [back.k]) < back.n) return fail("That moved while the Ruby was looking. Nothing was taken — try again.");
@@ -1963,12 +1961,12 @@ export class World {
   async dexSettle(pl, key, rec, again) {
     if (rec.op !== "pay" && rec.op !== "stake") { await this.ctx.storage.delete(key); return this.dexRefund(pl, rec); }   // a Ruby scratch ticket left over from before v57: the site no longer rolls them, so it is simply given back
     const stake = rec.op === "stake", ans = await this.dexAsk({ op: rec.op, userId: pl.id, id: rec.id, zc: rec.zc });
-    const status = (left, leftOut) => ({ ok: true, left, leftOut: leftOut ?? left, capHour: G.DEX.capHour, capDay: G.DEX.capDay, maxStake: G.DEX.maxStake, enabled: true });
+    const status = (left) => ({ ok: true, left, capHour: G.DEX.capHour, maxStake: G.DEX.maxStake, enabled: true });
     if (ans.ok) {
       await this.ctx.storage.delete(key);
-      if (stake) { if (!pl.left && !ans.used) pl.out.push({ type: "stake", g: rec.g, voucher: ans.voucher || rec.id, zc: rec.zc, status: status(ans.left, ans.leftOut), again }); return; }   // (left, or a retry: the voucher stays OPEN on the site and is handed back the next time they bet that amount)
+      if (stake) { if (!pl.left && !ans.used) pl.out.push({ type: "stake", g: rec.g, voucher: ans.voucher || rec.id, zc: rec.zc, status: status(ans.left), again }); return; }   // (left, or a retry: the voucher stays OPEN on the site and is handed back the next time they bet that amount)
       const got = ans.zc | 0;
-      if (!pl.left) pl.out.push({ type: "dex", done: { op: rec.cash ? "cash" : "bank", zc: got, tix: rec.cash ? rec.back.n : undefined, balance: ans.balance, again }, status: status(ans.left, ans.leftOut) });
+      if (!pl.left) pl.out.push({ type: "dex", done: { op: rec.cash ? "cash" : "bank", zc: got, tix: rec.cash ? rec.back.n : undefined, balance: ans.balance, again }, status: status(ans.left) });
       if (rec.cash) { const p = this.pls.get(pl.id); if (p?.C.stats) { p.C.stats.cashedZc = (p.C.stats.cashedZc | 0) + got; this.touch(p); } }
       if (got >= 10) for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: rec.cash ? `💎 ${rec.name} traded tickets for ${got} ZCoins at the Prize Counter.` : `💎 ${rec.name} banked ${got} ZCoins at the Prize Counter.` });
       return;

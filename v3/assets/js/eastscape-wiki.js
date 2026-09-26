@@ -878,7 +878,6 @@ export const UPDATES = [
       "BOM PAYS AN EIGHTH of the shelf price for smithed gear, down from a quarter (and a reforged piece's bonus halves with it): a Nova cuirass buys back for 75,000. Too many tickets were coming off the anvil.",
       "THE SKILLS TAB is a grid of tiles; click one for its wiki page. Quest givers now say which step comes first when it is with somebody else.",
       "THE HISCORES, SORTED. The rail is grouped into Combat, Skills, Records and Dungeons & runs, in the skills panel's order. Alchemy has a board at last. THE TOWER ranks the highest floor anyone has cleared, THE PYRAMID has a fastest-clear board, and every dungeon board filters to 2-man, 3-man and 4-man clears, each kept as its own top twenty, so a pair's record is never pushed off by a party of four.",
-      "ZCOINS OUT OF THE GAME ARE 100 IN ANY 24 HOURS, per person: tickets traded at the counter and found ZCoins banked count together. Ticket bets keep their own allowance of 50 ZCoins' worth an hour.",
     ]
   },
   {

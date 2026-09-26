@@ -161,10 +161,6 @@ const CSS = `
 .cz-pwhub{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff2b0,#e8bf35 60%,#8a6a10);box-shadow:0 0 0 3px #3a2410;z-index:1}
 .cz-shelves{max-height:min(600px,72vh);overflow-y:auto;padding-right:4px}.cz-tixtotal{display:flex;align-items:center;justify-content:center;gap:10px}.cz-tixtotal .ico,.cz-tixtotal img{width:46px;height:46px;image-rendering:pixelated}.cz-tixtotal b{font:inherit}
 .cz-cbag{margin-top:10px;max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:4px 10px;background:var(--panel)}\n.cz-qsell{margin-top:10px;border-top:2px solid rgba(0,0,0,.18);padding-top:8px}\n.cz-qhead{display:flex;flex-direction:column;gap:1px;margin:0 0 6px;font-weight:800;font-size:13px}\n.cz-qhead small{font-weight:700;font-size:11px;opacity:.7}\n.cz-qbtn{margin-left:auto;border:2px solid #000;border-radius:5px;padding:3px 9px;background:linear-gradient(#5a5048,#3a322c);color:#fff;font:inherit;font-weight:800;font-size:11.5px;cursor:pointer;white-space:nowrap}\n.cz-qbtn:hover{background:linear-gradient(#6a6058,#4a423c)}
-/* (2026-09-25, the owner: "when trying to sell reforged gear at Bom the text is too light/unreadable"). The sell boxes sit on the parchment window, where --muted-2 (#8a7858) and the reforged rows' pale gold (#ffd77a) nearly vanish. Ink for the words, a dark amber for a reforged name, a stronger wash behind it. Scoped to .cz-qsell, the counter's sell boxes, so nothing else moves. */
-.cz-qsell .cz-qhead{color:#2a2016}.cz-qsell .cz-qhead small{opacity:1;color:#4a3c26}
-.cz-qsell .cz-csrow{color:#2a2016}.cz-qsell .cz-csrow b{color:#2a2016}.cz-qsell .cz-csrow small{color:#4a3c26;font-weight:700}
-.cz-qsell .cz-forged{background:linear-gradient(90deg,rgba(200,140,30,.22),transparent 75%)}.cz-qsell .cz-forged b{color:#7a4200}.cz-qsell .fgn{color:#7a4200}
 .cz-cashrow{display:flex;align-items:center;gap:6px;margin:6px 0}.cz-cashrow b{min-width:44px;text-align:center;font:800 20px var(--body);color:var(--gold)}.cz-cashrow button{min-width:34px;padding:5px 9px;border-radius:9px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:800 14px var(--body);cursor:pointer}
 .cz-gear{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}.cz-gear button{display:grid;justify-items:center;gap:2px;padding:6px 2px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);cursor:pointer}.cz-gear button:disabled{opacity:.4;pointer-events:none}.cz-gear>span{display:grid}.cz-gear>span>button{width:100%}
 .cz-gear button.own{box-shadow:inset 0 0 0 1px rgba(77,219,139,.6)}.cz-gear .ico,.cz-gear img{width:30px;height:30px;image-rendering:pixelated}.cz-gear small{font:800 11.5px var(--body);color:var(--gold)}.cz-chip:disabled{opacity:.4;cursor:not-allowed}
@@ -867,12 +863,12 @@ export function createCasino(env) {
      the game into ZCoins. The window only asks; the game server takes the tickets and the SITE pays (or says no, and they come back). */
   let cashZc = 1;
   function cashCard() {
-    const card = el("section", "cz-card cz-dex"), D = G.DEX, st = dexSt, left = st?.ok ? (st.leftOut ?? st.left) : null, on = !!(st?.ok && st.enabled), have = tix(), most = Math.max(0, Math.min(Math.floor(have / D.rate), left ?? 0, D.capDay));   /* (2026-09-27) a trade draws on the DAY's allowance: 100 ZCoins out in 24 hours */
+    const card = el("section", "cz-card cz-dex"), D = G.DEX, st = dexSt, left = st?.ok ? st.left : null, on = !!(st?.ok && st.enabled), have = tix(), most = Math.max(0, Math.min(Math.floor(have / D.rate), left ?? 0, D.capHour));
     cashZc = Math.max(1, Math.min(most || 1, cashZc));
     card.innerHTML = `<h2>Trade tickets for ZCoins<small>${D.rate.toLocaleString()} tickets = 1 ZCoin</small></h2>
-      <p class="cz-note" style="text-align:left">You have ${tixTxt(have)} tickets${on ? `: enough for <b>${Math.floor(have / D.rate)}</b> ZCoin${Math.floor(have / D.rate) === 1 ? "" : "s"}. ${left} of ${D.capDay} left today.` : "."}</p>
+      <p class="cz-note" style="text-align:left">You have ${tixTxt(have)} tickets${on ? `: enough for <b>${Math.floor(have / D.rate)}</b> ZCoin${Math.floor(have / D.rate) === 1 ? "" : "s"}. ${left} of ${D.capHour} left this hour.` : "."}</p>
       <div class="cz-cashrow"><button type="button" data-c="-1" aria-label="One fewer">−</button><b id="czCashN">${cashZc}</b><button type="button" data-c="1" aria-label="One more">+</button><button type="button" data-c="max">Max</button></div>
-      <button type="button" class="cz-dexgo" id="czCashGo"${on && most >= 1 && !dexWait ? "" : " disabled"}>${most >= 1 ? `Trade ${(cashZc * D.rate).toLocaleString()} tickets for ${cashZc} ZCoin${cashZc === 1 ? "" : "s"}` : have < D.rate ? `You need ${D.rate.toLocaleString()} tickets for 1 ZCoin` : "That's your ZCoins out for today"}</button>`;
+      <button type="button" class="cz-dexgo" id="czCashGo"${on && most >= 1 && !dexWait ? "" : " disabled"}>${most >= 1 ? `Trade ${(cashZc * D.rate).toLocaleString()} tickets for ${cashZc} ZCoin${cashZc === 1 ? "" : "s"}` : have < D.rate ? `You need ${D.rate.toLocaleString()} tickets for 1 ZCoin` : "That's your ZCoins for this hour"}</button>`;
     card.querySelectorAll("[data-c]").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); cashZc = b.dataset.c === "max" ? Math.max(1, most) : Math.max(1, Math.min(Math.max(1, most), cashZc + Number(b.dataset.c))); cashier(); }));
     card.querySelector("#czCashGo")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "Counting your tickets…" }; send({ t: "dex", op: "cash", zc: cashZc }); cashier(); });
     return card;
@@ -883,10 +879,10 @@ export function createCasino(env) {
     $("popBtns").innerHTML = `<button type="button" class="btn">Let's go</button>`; $("popBtns").querySelector("button").addEventListener("click", () => { p.hidden = true; }); p.hidden = false; $("popBtns").querySelector("button").focus();
   }
   function dexCard() {
-    const card = el("section", "cz-card cz-dex"), D = G.DEX, st = dexSt, left = st?.ok ? (st.leftOut ?? st.left) : null, on = !!(st?.ok && st.enabled), me = env.me();   /* (2026-09-27) banking a find leaves the game too: the day's allowance */
+    const card = el("section", "cz-card cz-dex"), D = G.DEX, st = dexSt, left = st?.ok ? st.left : null, on = !!(st?.ok && st.enabled), me = env.me();
     const zc = me.inv.filter((x) => x.k === "zcoin").reduce((a, x) => a + x.n, 0), can = Math.min(zc, left ?? 0);
     card.innerHTML = `<h2>ZCoins you found<small>bank them here</small></h2>
-      ${st ? (on ? `<div class="cz-dexbar"><i style="width:${Math.round((left / D.capDay) * 100)}%"></i></div><p class="cz-note" style="text-align:left">${left} of ${D.capDay} left today (trades share it)${st.dev ? " · PRETEND (dev server): no ZCoins move" : ""}</p>` : `<p class="cz-dexmsg bad">${esc(st.message || "The Ruby isn't paying out right now.")}</p>`) : `<p class="cz-note" style="text-align:left">Asking the Ruby…</p>`}
+      ${st ? (on ? `<div class="cz-dexbar"><i style="width:${Math.round((left / D.capHour) * 100)}%"></i></div><p class="cz-note" style="text-align:left">${left} of ${D.capHour} left this hour (ticket bets share it)${st.dev ? " · PRETEND (dev server): no ZCoins move" : ""}</p>` : `<p class="cz-dexmsg bad">${esc(st.message || "The Ruby isn't paying out right now.")}</p>`) : `<p class="cz-note" style="text-align:left">Asking the Ruby…</p>`}
       <button type="button" class="cz-dexgo" id="czDexBank"${on && can >= 1 && !dexWait ? "" : " disabled"}>${zc ? `Bank ${can || zc} ZCoin${(can || zc) === 1 ? "" : "s"} from your bag` : "No ZCoins in your bag (they drop, rarely)"}</button>
       <p class="cz-dexmsg ${dexMsg?.cls || ""}">${esc(dexMsg?.text || "")}</p>`;
     card.querySelector("#czDexBank")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "The Ruby hums…" }; dexTicket = null; send({ t: "dex", op: "bank" }); cashier(); });
@@ -996,13 +992,7 @@ export function createCasino(env) {
         : `Takes your bag to ${G.bagMax(me) + 1} slots. ${G.BAG_UPGRADES.length - (me.bagUp | 0)} left, and each costs more than the last.`}</small></span>`
       + (bagCost == null ? "" : `<strong>${bagCost.toLocaleString()}</strong><button type="button" class="cz-chip" data-bagup="1"${have >= bagCost ? "" : " disabled"}>Get</button>`) + `</div>`;
     bagCard.querySelector("[data-bagup]")?.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); send({ t: "counter", op: "bagup" }); });
-    /* (2026-09-26) STARTER KITS: a bow and a wand, what holds their ammo, and a bundle of it, so Archery and Magic can
-       start at level 1 without fletching or printing first. One Get buys one row; a bundle row buys the whole bundle. */
-    const kits = P.filter((x) => x.group === "kit"), kitCard = el("section", "cz-card");
-    if (kits.length) kitCard.innerHTML = `<h2>Starter kits<small>shoot or cast from level 1</small></h2>` + kits.map((x) => { const [k, n] = x.give, it = G.ITEMS[k];
-      const note = it.launcher ? `${it.launcher.style === "magic" ? "Magic" : "Archery"} 1, reaches ${it.launcher.range} tiles` : it.pouch ? `holds ${Number(it.pouch.cap).toLocaleString()}` : `a bundle of ${n}`;
-      return `<div class="cz-csrow">${env.ico(k)}<span><b>${esc(it.name)}${n > 1 ? ` × ${n}` : ""}</b><small>${esc(note)}</small></span><strong>${cp(x).toLocaleString()}</strong><button type="button" class="cz-chip" data-buy="${x.id}"${have >= cp(x) ? "" : " disabled"}>Get</button></div>`; }).join("");
-    R.side.append(cashCard(), dexCard(), gear, ...(kits.length ? [kitCard] : []), bar, bagCard);   /* (the owner, 2026-09-21: armour and arms above the drinks and dinners) */
+    R.side.append(cashCard(), dexCard(), gear, bar, bagCard);   /* (the owner, 2026-09-21: armour and arms above the drinks and dinners) */
     R.side.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => buy(b.dataset.buy)));
     R.side.scrollTop = keepScroll;
   }

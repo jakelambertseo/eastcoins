@@ -3897,7 +3897,7 @@ export const NEED_TEXT = { thirst: "You're too thirsty to gamble. There's a wate
    and it pays REAL ZCoins. capHour is the backstop: the most ZCoins' worth of tickets one player may stake in an hour
    (banking dropped ZCoins counts against it too). maxStake is the casino's own 20 a bet. The Ruby's scratch tickets and
    its tickets exchange are gone: betting tickets is the conversion. */
-export const DEX = { rate: 1000, capHour: 50, capDay: 100, maxStake: 20 };   /* (2026-09-27) capDay: ZCoins that may leave the game to a wallet in a rolling 24 hours (trades and banked finds); capHour is the ticket-stake allowance */
+export const DEX = { rate: 1000, capHour: 50, maxStake: 20 };
 export const FX_CAP = { gear: { win: 0.015, back: 0.015, angel: 0.0075 }, all: { win: 0.05, back: 0.03, angel: 0.01 } };
 export const ROLLER = { kill: 0, bets: 10, max: 100, mult: 1 };   /* HIGH ROLLER is retired (the owner, 2026-09-19): nothing grants it and it doubles nothing */
 export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 1000 }, REWIND = { ms: 60000, max: 500 };
