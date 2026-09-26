@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=298">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=299">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1175,7 +1175,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=298";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=299";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -3183,7 +3183,7 @@ cv.addEventListener("pointerdown", (e) => {
     /* (2026-09-25) THE OTHER STATIONS GET A PICKER TOO. Clicking still starts work at once - with whatever you
        last chose here, or the best thing you can make, exactly as before - and the panel opens beside it so you
        can change your mind. Opening it does not cost a click: the act goes out in the same breath. */
-    else if (CRAFT_STATIONS[t.ob?.t]) { send({ t: "act", kind: "ob", ob: t.ob.id }); openCraft(t.ob); }   /* (2026-09-27, players: the fletching table and the furnace "will automatically start crafting whatever was last selected") NO STATION IS TOLD YOUR LAST CHOICE ON A CLICK. craftPick is the window's highlighted row, nothing more: a picker station (anvil, fletcher) waits for a choice, an auto station (fire, furnace, cauldron) does what one click always did, the best thing you can make. The remembered recipe starts only when you click it in the window. */
+    else if (CRAFT_STATIONS[t.ob?.t]) { send({ t: "act", kind: "ob", ob: t.ob.id }); openCraft(t.ob); }   /* (2026-09-27, players: the fletching table and the furnace "will automatically start crafting whatever was last selected") NO STATION STARTS ON A CLICK. craftPick is the window's highlighted row, nothing more; every station (fire, furnace, cauldron, anvil, fletcher, the altars) waits for a row to be clicked, and STATIONS[*].auto is false for all of them. */
     else send({ t: "act", kind: "ob", ob: t.ob.id });   /* (a real table opens when you ARRIVE: the server answers {type:"real"}) */
     // walk there now, the way the server will
     if (from) {

@@ -3561,17 +3561,20 @@ export const WILD_REQ = { skill: "melee", lvl: 10 };   // the Wilderness asks yo
    Adding a skill that makes things is now rows in this table plus a station in
    STATIONS. It is not new code.
    ------------------------------------------------------------ */
+/* (2026-09-27, the owner: "they all need to replicate what the anvil and fletching table do where waiting for a choice") NO STATION
+   STARTS ON ITS OWN. `auto` used to mean "one click makes the best thing you can"; every station is now `false`, so a click walks
+   you to it and opens the window, and nothing is made until you choose a row. A batch still runs the chosen recipe until it cannot. */
 export const STATIONS = {
-  fire:    { skill: "cooking",  verb: "cook",  name: "campfire", auto: true,  kind: "cook" },
-  range:   { skill: "cooking",  verb: "cook",  name: "range",    auto: true,  kind: "cook", kind2: "range" },
-  furnace: { skill: "smithing", verb: "smelt", name: "furnace",  auto: true,  kind: "smelt" },
+  fire:    { skill: "cooking",  verb: "cook",  name: "campfire", auto: false,  kind: "cook" },
+  range:   { skill: "cooking",  verb: "cook",  name: "range",    auto: false,  kind: "cook", kind2: "range" },
+  furnace: { skill: "smithing", verb: "smelt", name: "furnace",  auto: false,  kind: "smelt" },
   anvil:   { skill: "smithing", verb: "smith", name: "anvil",    auto: false, kind: "smith" },
   /* (2026-09-24) THE CAULDRON DOES BOTH JOBS, and that is deliberate. It melts sand into glass AND brews the
      potions, because the level check one screen down reads `st.skill` - the STATION's skill, not the recipe's.
      Vials at the furnace would therefore have been gated on Smithing, and a launch skill you cannot train
      without levelling a second one is not a launch skill. A cross-skill requirement is a fine idea, but it has
      to be CHOSEN, not inherited from which bench a recipe happens to sit on. */
-  cauldron: { skill: "alchemy",  verb: "brew",  name: "cauldron", auto: true,  kind: "brew" }
+  cauldron: { skill: "alchemy",  verb: "brew",  name: "cauldron", auto: false,  kind: "brew" }
 };
 
 export const RECIPES = {};

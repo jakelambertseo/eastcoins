@@ -2443,6 +2443,9 @@ export class World {
          THE POINT OF A PICK IS THAT IT DOES NOT DRIFT: if the chosen thing runs out, the loop stops and says so
          rather than falling through to the next best, because falling through is the bug being fixed - it is how
          a bag of sardines became a cooked bowfin. */
+      /* (2026-09-27) A CLICK WITH NO CHOICE IS A WAIT, not a failure: the window is open on the page and nothing is made until a row
+         is chosen. Saying "you have nothing to cook" here, with a bag full of fish, was the old auto path's message showing through. */
+      if (!a.pick && !st.auto) { pl.act = null; return; }
       const wanted = a.pick ? all.find((r) => r.id === a.pick) : null;
       const r = wanted ? (G.canMake(C, wanted) ? wanted : null) : (st.auto ? all.find((x) => G.canMake(C, x)) : null);
       if (!r) {
