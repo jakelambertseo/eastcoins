@@ -57,39 +57,87 @@ export const GUIDES = [
       <p>Name yours what you like &mdash; everyone sees it. You can also let one go, and that cannot be undone.</p>` },
   /* (2026-09-22) TYPED, like the pets page above and for the same reason: this file imports nothing. The rungs live
      in TOOL_GATES and the rule that turns a node's level into a rung is toolNeed(), both in eastscape-shared.js. */
+  /* (2026-09-27, the owner: "we need a wiki page for this event which explains everything clearly - but only launch it when
+     the event starts") The page's guide list skips this entry until hwOn() is true, so it appears with the season and goes with
+     it. Every number is read from the rules, so the page cannot drift from the game. */
   { id: "longnight", title: "The Long Night", icon: "\u{1F383}", cat: "Going further",
     body: (G, H) => {
-      const on = G.hwOn(), row = ([k, n, corn]) => `<tr><td>${H.ico(k)} ${n > 1 ? `${n} ` : ""}${H.wl(`items/${k}`, H.esc(G.ITEMS[k]?.name || k))}</td><td>${corn} candy corn</td></tr>`;
-      const fits = Object.values(G.VANITY_SETS).filter((v) => v.corn).map((v) => H.esc(v.name)).join(" and ");
-      return `<div class="wnote" style="border-color:#c8641e;background:rgba(200,100,30,.12)"><b>\u{1F383} Everything here is seasonal and it goes on November 2nd.</b> ${on ? `${G.hwDaysLeft()} day${G.hwDaysLeft() === 1 ? "" : "s"} left. ` : ""}The tent, the King, the ghost lanterns and every unspent candy corn leave that morning. The fits, the Hallowed set, the Black Cat and the two name cosmetics can only be BOUGHT during the Long Night, and are yours for good once you have them. Spend the corn.</div>
-      <p><b>EastScape's Halloween, ${G.HW.from.slice(5).replace("-", "/")} to ${G.HW.until.slice(5).replace("-", "/")}.</b> ${on ? "It is on now." : "It is not on right now."} Everything in it is behind one date, and on the morning after it switches itself off: the tent leaves, the King stops rising, and every candy corn you did not spend turns back into sugar. What you BOUGHT stays: the fits, the Hallowed set, the Black Cat.</p>
-      <h3>Candy corn</h3>
-      <p>The season's only coin. Any kill drops it ${Math.round(G.HW.corn.kill * 100)}% of the time and any catch, cut or dig ${Math.round(G.HW.corn.gather * 100)}%, ${G.HW.corn.n[0]}&ndash;${G.HW.corn.n[1]} at a go. It spends at <b>the Night Market</b>, Hexa's tent in the Yard, and at Ronde's rail. Tickets are not touched: nothing here pays or costs a ticket that did not before.</p>
-      <h3>Nightfall</h3>
-      <p>Every evening from <b>${G.HW.night[0] - 12} to ${G.HW.night[1] - 12} PM Central</b> the world goes dark and every candy corn drop is doubled. The jack-o'-lanterns light the paths; that is what they are for.</p>
-      <h3>The Night Market</h3>
-      <table class="tbl"><tr><th>Sells</th><th>For</th></tr>${G.HW.market.map(row).join("")}<tr><td>\u{1F408}‍⬛ The Black Cat (a pet)</td><td>${G.HW.pet[1].toLocaleString()} candy corn</td></tr>${Object.values(G.STORE).filter((it) => it.tab === "night" && it.corn).map((it) => `<tr><td>${H.esc(it.name)} (a name cosmetic)</td><td>${it.corn.toLocaleString()} candy corn</td></tr>`).join("")}</table>
-      <p><b>Priced against a month.</b> An ordinary evening makes 150 to 250 corn and a hard one about 500; the three quests pay 510 once. A pie is a few kills, a fit is a fortnight, the Hallowed set is the month if you grind for it (the King drops the pieces too), and the Black Cat is every corn a serious player will see before November. The name cosmetics are worn from the Store's Name tab afterwards, like any other.</p>
-      <p>And two fits, the <b>${fits}</b>, priced in corn (${Object.values(G.VANITY).filter((v) => v.corn).map((v) => `${H.esc(v.name)} ${v.corn.toLocaleString()}`).join(", ")}). Buy them at the tent or from Ronde; Ronde does the colours, like any other fit.</p>
-      <h3>The board</h3>
-      <p>Every candy corn you earn is counted, and the Hiscores carry a <b>Candy corn</b> board for the month.</p>
-      <h3>The pumpkin</h3>
-      <p>The seed plants on your island at <b>Harvesting ${G.CROPS.seed_pumpkin.lvl}</b> and is ripe in ${Math.round(G.CROPS.seed_pumpkin.ms / 60000)} minutes, ${G.CROPS.seed_pumpkin.yield[0]}&ndash;${G.CROPS.seed_pumpkin.yield[1]} pumpkins a plot, the seed back every time and a second one in ten. A pumpkin bakes into a <b>pumpkin pie</b> on any fire at Cooking ${G.RECIPES.cook_pumpkin.lvl}: heals ${G.ITEMS.pumpkinpie.heal} and, for ${G.ITEMS.pumpkinpie.meal.mins} minutes outside, rare drops come ${Math.round(G.ITEMS.pumpkinpie.meal.fx.rare * 100)}% easier and kills pay ${Math.round(G.ITEMS.pumpkinpie.meal.fx.tix * 100)}% more. Not xp: nothing in EastScape buys xp.</p>
-      <p>A pumpkin, two ectoplasm and a medium vial brew a <b>Witch's brew</b> at the cauldron (Alchemy ${G.RECIPES.brew_witch.lvl}): drink it and your next death costs no hospital bill. <b>Ectoplasm</b> falls off ${Math.round(100 / G.HW.ecto)}th of everything you kill during the event.</p>
-      <h3>The Ghost Hunt</h3>
-      <p>${G.HW.lanterns} ghost lanterns stand somewhere on the open maps each day, in new places every morning. Click one for ${G.HW.lanternCorn} candy corn, once each a day. Finding all ten is the day's ${G.HW.lanterns * G.HW.lanternCorn}.</p>
-      <h3>Trick or treat</h3>
-      <p>Once a day, say it to any person in the game. Most of the time it is a treat: a handful of corn, two pumpkin seeds, or a warm pie. ${Math.round(G.HW.trick.trickAt * 100)}% of the time it is a trick, and a trick can cost five corn, drop a spider in your bag, or put you in the Boneyard.</p>
-      <h3>The Pumpkin King</h3>
-      <p>He rises <b>once an hour in the Lantern Mire</b> (chat says when), stands ${Math.round(G.HW.king.stays / 60000)} minutes and leaves. Level ${G.MOBS.pumpkinking.lvl}, ${G.MOBS.pumpkinking.hp} hitpoints, hits ${G.MOBS.pumpkinking.max}, attacks first, weak to fire and sun. He drops candy corn and ectoplasm every time, one of the <b>Hallowed</b> set (helm, cuirass, greaves: Dragonstone-grade, and every kill in a piece pays a little more) about one time in five, and the <b>Black Cat</b> pet one King in forty.</p>
-      <h3>The pieces</h3>
-      <p><b>Nine wearable pieces exist only during the Long Night</b>, every one tagged <b>Halloween 2026 Event</b>, every one yours to keep, and every one reforged with candy corn rather than bars. Their numbers sit at their level's tier; what you chase is the effect.</p>
-      <table class="tbl"><tr><th>Piece</th><th>Needs</th><th>Does</th><th>From</th></tr>
-        ${[["gallows_bow", "one chop in 10,000"], ["coffin_ring", "one swing at a rock in 10,000"], ["drowned_boots", "one cast in 10,000"], ["lantern_quiver", "the King (2%), or Hexa for 9,000"], ["skull_wand", "the King (2%), or Hexa for 9,000"], ["bag_shroud", "the King (2%), or Hexa for 9,000"], ["reaper_scythe", "the King (1%), or 1 in 3,000 off anything level 80+"], ["king_crown", "the King (1%), or 1 in 3,000 off anything level 80+"], ["ferry_coin", "the King (1%), or 1 in 3,000 off anything level 80+"]].map(([k, from]) => { const it = G.ITEMS[k]; return `<tr><td>${H.ico(k)} ${H.wl(`items/${k}`, H.esc(it.name))}${it.legend ? " <b>(legendary)</b>" : ""}</td><td>${H.esc(G.SKILLS[it.req.skill].name)} ${it.req.lvl}</td><td>${H.esc(G.fxText(it.fx))}</td><td>${from}</td></tr>`; }).join("")}
+      const on = G.hwOn(), left = G.hwDaysLeft(), corn = (n) => `${Number(n).toLocaleString()} candy corn`;
+      const nm = (k) => H.wl(`items/${k}`, H.esc(G.ITEMS[k]?.name || k)), pct = (x) => `${Math.round(x * 100)}%`;
+      const K = G.MOBS.pumpkinking, night = `${G.HW.night[0] - 12} to ${G.HW.night[1] - 12} PM Central`;
+      const shelf = G.HW.market.map(([k, n, c]) => `<tr><td>${H.ico(k)} ${n > 1 ? `${n} ` : ""}${nm(k)}${G.ITEMS[k].slot ? ' <em class="qtag">Halloween 2026 Event</em>' : ""}</td><td>${corn(c)}</td><td>${G.ITEMS[k].slot ? "keep it" : "used up"}</td></tr>`).join("");
+      const cos = Object.values(G.STORE).filter((it) => it.tab === "night" && it.corn).map((it) => `<tr><td>${H.esc(it.name)} (a name cosmetic)</td><td>${corn(it.corn)}</td><td>keep it, worn from the Store's Name tab</td></tr>`).join("");
+      const fits = Object.values(G.VANITY_SETS).filter((v) => v.corn).map((v) => { const pieces = Object.values(G.VANITY).filter((p) => p.set === Object.keys(G.VANITY_SETS).find((k) => G.VANITY_SETS[k] === v)); return `<tr><td>The ${H.esc(v.name)} fit, ${pieces.length} pieces</td><td>${corn(pieces[0]?.corn || 0)} a piece</td><td>keep it, coloured at Ronde's</td></tr>`; }).join("");
+      const pieces = [["gallows_bow", "one chop in 10,000"], ["coffin_ring", "one swing at a rock in 10,000"], ["drowned_boots", "one cast in 10,000"], ["lantern_quiver", "the King (2%), or Hexa"], ["skull_wand", "the King (2%), or Hexa"], ["bag_shroud", "the King (2%), or Hexa"], ["reaper_scythe", "the King (1%), or 1 in 3,000 off any level 80+ monster"], ["king_crown", "the King (1%), or 1 in 3,000 off any level 80+ monster"], ["ferry_coin", "the King (1%), or 1 in 3,000 off any level 80+ monster"]]
+        .map(([k, from]) => { const it = G.ITEMS[k]; return `<tr><td>${H.ico(k)} ${nm(k)}${it.legend ? " <b>legendary</b>" : ""}</td><td>${H.esc(G.SKILLS[it.req.skill].name)} ${it.req.lvl}</td><td>${H.esc(G.fxText(it.fx))}</td><td>${from}</td></tr>`; }).join("");
+      const quests = [["hw_lights", "Lights Out", "Mudge the Lamplighter, the Lantern Mire", "easy"], ["hw_vigil", "The Sister's Vigil", "Sister Morrow, the Boneyard", "medium"], ["hw_king", "The Pumpkin King", "Hexa, the Yard", "hard"]]
+        .map(([k, t, who, tier]) => `<tr><td>${H.wl(`quests/${k}`, t)}</td><td>${who}</td><td>${tier}</td><td>${H.esc(G.QUESTS[k].reward.text)}</td></tr>`).join("");
+      return `<div class="wnote" style="border-color:#c8641e;background:rgba(200,100,30,.12)"><b>\u{1F383} ${on ? `The Long Night is on: ${left} day${left === 1 ? "" : "s"} left.` : "The Long Night is not on."}</b> It ends on the morning of <b>November 2nd</b>. Everything seasonal goes then: the tent, the King, the lanterns and every candy corn you have not spent. Everything you have <b>bought or found</b> stays yours for good.</div>
+      <p class="lede">EastScape's Halloween, ${G.HW.from.slice(5).replace("-", "/")} to ${G.HW.until.slice(5).replace("-", "/")}. A month with its own coin, its own boss, its own shop, nine pieces of gear that exist nowhere else, and a hiscore board. Nothing in it touches tickets: what you earn and spend here is candy corn, and only candy corn.</p>
+
+      <h3>1. What is on</h3>
+      <ul>
+        <li><b>Candy corn</b> drops from everything you kill and gather. It is the only thing the Night Market takes.</li>
+        <li><b>Hexa the Candy Witch</b> keeps the Night Market, a tent in the Yard west of the north road.</li>
+        <li><b>The Pumpkin King</b> rises once an hour in the Lantern Mire.</li>
+        <li><b>Nightfall</b>, ${night} every evening: the world goes dark and every candy corn drop doubles.</li>
+        <li><b>The Ghost Hunt</b>: ${G.HW.lanterns} ghost lanterns a day, hidden on the open maps, ${G.HW.lanternCorn} corn each.</li>
+        <li><b>Trick or treat</b>, once a day, said to anyone.</li>
+        <li><b>Three quests</b>, one per difficulty, ending in the King himself.</li>
+        <li><b>Nine event pieces</b> of gear, three of them one-in-ten-thousand skilling drops and three of them level-90 legendaries.</li>
+        <li>A <b>Candy corn</b> board on the Hiscores for the month.</li>
+      </ul>
+
+      <h3>2. How candy corn is earned</h3>
+      <table class="tbl"><tr><th>Source</th><th>Pays</th><th>How often</th></tr>
+        <tr><td>Any kill</td><td>${G.HW.corn.n[0]}&ndash;${G.HW.corn.n[1]}</td><td>${pct(G.HW.corn.kill)} of kills</td></tr>
+        <tr><td>Any catch, cut or dig</td><td>${G.HW.corn.n[0]}&ndash;${G.HW.corn.n[1]}</td><td>${pct(G.HW.corn.gather)} of gathers</td></tr>
+        <tr><td>A ghost lantern</td><td>${G.HW.lanternCorn}</td><td>${G.HW.lanterns} a day, each once, new places every morning</td></tr>
+        <tr><td>Trick or treat (a treat)</td><td>${G.HW.trick.corn[0]}&ndash;${G.HW.trick.corn[1]}, or seeds, or a pie</td><td>once a day; ${pct(G.HW.trick.trickAt)} of the time it is a trick instead</td></tr>
+        <tr><td>The Pumpkin King</td><td>${K.drops.find(([k]) => k === "candycorn")[1][0]}&ndash;${K.drops.find(([k]) => k === "candycorn")[1][1]}</td><td>every kill, once an hour</td></tr>
+        <tr><td>The three quests</td><td>${["hw_lights", "hw_vigil", "hw_king"].map((k) => G.QUESTS[k].reward.items.find(([i]) => i === "candycorn")[1]).join(" + ")}</td><td>once</td></tr>
+        <tr><td><b>Nightfall</b></td><td colspan="2">every drop above is <b>doubled</b> from ${night}</td></tr>
       </table>
-      <p>The three skilling drops never sit on a shelf. The Pumpkin King drops every piece; the three legendaries also fall, one in three thousand, from any monster of level 80 or more killed during the event.</p>
-      <h3>Three quests</h3>
-      <p>${H.wl("quests/hw_lights", "Lights Out")} (Mudge, easy) &rarr; ${H.wl("quests/hw_vigil", "The Sister's Vigil")} (Sister Morrow, medium) &rarr; ${H.wl("quests/hw_king", "The Pumpkin King")} (Hexa, hard). The last pays the Hallowed helm outright.</p>`;
+      <p>An ordinary evening comes to about 150&ndash;250 corn; a hard one about 500. It expires: on November 2nd whatever is in your bag or bank turns to sugar, so spend it.</p>
+
+      <h3>3. What candy corn buys</h3>
+      <p>All of it at <b>the Night Market</b>, Hexa's tent in the Yard. The fits can also be bought from Ronde. Nothing here is ever sold for tickets, and Bom buys none of it back.</p>
+      <table class="tbl"><tr><th>Item</th><th>Price</th><th>After the event</th></tr>${shelf}
+        <tr><td>\u{1F408}‍⬛ The Black Cat (a pet)</td><td>${corn(G.HW.pet[1])}</td><td>keep it</td></tr>${cos}${fits}
+        <tr><td>Reforging any Hallowed or event piece, per level</td><td>${corn(G.forgeCost("hallowed_helm")[1])} (a legendary ${corn(G.forgeCost("reaper_scythe")[1])})</td><td>the level stays; the corn does not</td></tr>
+      </table>
+      <p><b>Priced against a month.</b> A pie is a few kills. A fit is about a fortnight of play. The Hallowed set is the month if you grind for it, and the Pumpkin King drops every piece of it too, so the shelf is the slow certain road and the Mire the fast lucky one. The Black Cat is every corn a serious player will see before November; the King drops it one time in forty.</p>
+
+      <h3>4. The Pumpkin King</h3>
+      <p>Once an hour he climbs out of the clearing in the <b>Lantern Mire</b>; chat says when. He stands ${Math.round(G.HW.king.stays / 60000)} minutes and sinks back. Level ${K.lvl}, ${K.hp} hitpoints, hits up to ${K.max}, attacks on sight, <b>weak to fire and sun</b>, and he hits half again as hard once he is under ${pct(K.enrage.at)}. A party of three at Combat 50 takes him in about a minute; alone at 60, about three.</p>
+      <p>Every kill drops candy corn and ectoplasm. He also drops the Hallowed helm, cuirass and greaves, the Lantern Quiver, Skull Wand and Shroud Satchel, all three legendaries, and one King in forty has the Black Cat at his heel.</p>
+
+      <h3>5. The nine pieces</h3>
+      <p>Every one carries the <b>Halloween 2026 Event</b> tag, glows orange in your bag, is yours to keep, and reforges with candy corn instead of bars. Their numbers sit at their level's tier; the effect is the reason to want one.</p>
+      <table class="tbl"><tr><th>Piece</th><th>Needs</th><th>Does</th><th>From</th></tr>${pieces}</table>
+      <p>The bow, the ring and the boots never sit on a shelf: one chop, one swing, one cast in ten thousand, during the event only. The three legendaries fall from the King one time in a hundred, and one in three thousand from anything of level 80 or more killed while the event is on.</p>
+
+      <h3>6. The Ghost Hunt, Nightfall, trick or treat</h3>
+      <p><b>Lanterns.</b> ${G.HW.lanterns} ghost lanterns stand somewhere on the nine open maps each day, about one a map, moved every morning. Click one for ${G.HW.lanternCorn} corn (${G.HW.lanternCorn * 2} at Nightfall), once each a day. All ten is ${G.HW.lanterns * G.HW.lanternCorn} corn.</p>
+      <p><b>Nightfall.</b> ${night}, every evening. The maps go dark, the jack-o'-lanterns light the paths, and every candy corn drop is doubled until the hour is out. The wallet chip counts down to it.</p>
+      <p><b>Trick or treat.</b> Once a day, say it to any person in the game. ${pct(1 - G.HW.trick.trickAt)} of the time it is a treat: a handful of corn, two pumpkin seeds, or a warm pie. The rest is a trick, and a trick can cost you five corn, drop a spider in your bag, or put you in the Boneyard.</p>
+
+      <h3>7. Pumpkins, pie and the brew</h3>
+      <p>Pumpkin seeds plant on your island at <b>Harvesting ${G.CROPS.seed_pumpkin.lvl}</b>, ripe in ${Math.round(G.CROPS.seed_pumpkin.ms / 60000)} minutes, ${G.CROPS.seed_pumpkin.yield[0]}&ndash;${G.CROPS.seed_pumpkin.yield[1]} pumpkins a plot, the seed back every time and a second one in ten. A pumpkin bakes into a ${nm("pumpkinpie")} on any fire at Cooking ${G.RECIPES.cook_pumpkin.lvl}: heals ${G.ITEMS.pumpkinpie.heal} and, for ${G.ITEMS.pumpkinpie.meal.mins} minutes outside, rare drops come ${pct(G.ITEMS.pumpkinpie.meal.fx.rare)} easier and kills pay ${pct(G.ITEMS.pumpkinpie.meal.fx.tix)} more. Not xp: nothing in EastScape buys xp.</p>
+      <p>${nm("ectoplasm")} falls off one kill in ${Math.round(1 / G.HW.ecto)} during the event. Two of it, a pumpkin and a medium vial brew a ${nm("pot_witch")} at the cauldron (Alchemy ${G.RECIPES.brew_witch.lvl}): drink it and your next death costs no hospital bill.</p>
+
+      <h3>8. The quests</h3>
+      <table class="tbl"><tr><th>Quest</th><th>Who</th><th>Tier</th><th>Pays</th></tr>${quests}</table>
+      <p>They are a chain, in that order. The last one hands you the Hallowed helm outright.</p>
+
+      <h3>9. What leaves and what stays</h3>
+      <table class="tbl"><tr><th>Goes on November 2nd</th><th>Stays for good</th></tr>
+        <tr><td>Hexa and the Night Market</td><td>Every piece of gear you found or bought</td></tr>
+        <tr><td>The Pumpkin King, the lanterns, Nightfall, trick or treat</td><td>The Black Cat, the fits, the Pumpkin name and the Ember frame</td></tr>
+        <tr><td>Every unspent candy corn</td><td>Pumpkins, pies and brews already in your bag</td></tr>
+        <tr><td>The Candy corn board</td><td>Your quest rewards and your place on the other boards</td></tr>
+      </table>
+      <p>The Night Market says how many days are left at the top of its window, so does your candy corn chip, and the last week turns both red. Spend the corn.</p>`;
     } },
   { id: "trailer", title: "The Trailer Park", icon: "🚚", cat: "Going further",
     body: `<p><b>North off the Thunderhead.</b> The road west ends at the Vault; this is the turning before it, and the two are the top of the game side by side rather than one after the other.</p>
