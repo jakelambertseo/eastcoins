@@ -1985,7 +1985,13 @@ export class World {
   }
   questVisit(pl, key) {
     const C = pl.C;
-    for (const k in G.QUESTS) { const o = C.qs[k]; if (!o || o.state !== "active") continue; const s = G.qStage(C, k); if (s.type === "visit" && s.scene === key) this.advanceQuest(pl, k); }
+    /* (2026-09-27, the owner: "go to your island step in charon's ledger quest doesnt register") A SCENE KEY IS NOT A SCENE NAME.
+       Your island is "isle:<your id>" (or isle2/isle3 by tier), and the stage said "isle", so the two never matched. The base
+       name is compared; an island counts only when it is YOUR island - the quest says "your island", and Charon rows you to
+       other people's too. */
+    const base = String(key).split(":")[0], isle = G.isIsle(key), mine = !isle || G.ownerOf(key) === pl.id;
+    const hit = (want) => (want === "isle" ? /^isle\d?$/.test(base) && mine : base === want);
+    for (const k in G.QUESTS) { const o = C.qs[k]; if (!o || o.state !== "active") continue; const s = G.qStage(C, k); if (s.type === "visit" && hit(s.scene)) this.advanceQuest(pl, k); }
   }
   finishQuest(pl, k) {
     const C = pl.C, q = G.QUESTS[k], last = q.stages[q.stages.length - 1];
