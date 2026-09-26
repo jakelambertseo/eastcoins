@@ -23,14 +23,17 @@ import { createClosedScenes } from "../../v3/assets/js/eastscape-closed.js";
 Object.assign(G.SCENES, createClosedScenes(G, G._MAP));   // (2026-09-21) the closed areas' maps live in their own file so the page's first load doesn't carry them; the server knows every scene
 import { createCryptRules } from "../../v3/assets/js/eastscape-crypt-rules.js";
 import { createPyramidRules } from "../../v3/assets/js/eastscape-pyramid-rules.js";
+import { createCountRules } from "../../v3/assets/js/eastscape-count-rules.js";
 import { createTowerRules } from "../../v3/assets/js/eastscape-tower-rules.js";
 import { installCrypt } from "./crypt.js";
 import { installPyramid } from "./pyramid.js";
+import { installCount } from "./count.js";
 import { installCarnival, installTurnstile } from "./carnival.js";
 import { installPit } from "./pit.js";
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
 const CR = createCryptRules(G, G._MAP); Object.assign(G.SCENES, CR.scenes); Object.assign(G.MOBS, CR.mobs);
 /* (2026-09-24) THE GREAT PYRAMID, the second party dungeon: same shape, its own map, monsters and boss. */
+const NR = createCountRules(G, G._MAP); Object.assign(G.SCENES, NR.scenes); Object.assign(G.MOBS, NR.mobs);   /* (2026-09-25) THE COUNT ROOM, the quota dungeon: its rules are their own file, its server side is ./count.js */
 const PR = createPyramidRules(G, G._MAP); Object.assign(G.SCENES, PR.scenes); Object.assign(G.MOBS, PR.mobs);   // (v103) THE CRYPT, the party dungeon: its rules are their own file, its server side is ./crypt.js
 /* (2026-09-22) THE TOWER. Merged the same way and for the same reason as the Crypt: AFTER shared.js has run its
    pass that halves every monster's health, so the tower's generated rows keep the health the rules file computed.
@@ -90,6 +93,7 @@ export default {
     if (url.pathname === "/health") {
       return Response.json({
         ok: true, version: G.VERSION, at: new Date().toISOString(),
+        hw: { on: G.hwOn(), day: G.chicagoDay(), night: G.nightfallOn(), hour: G.hourCT() },
         counts: { vanitySets: Object.keys(G.VANITY_SETS).length, vanity: Object.keys(G.VANITY).length, scenes: Object.keys(G.SCENES).length, mobs: Object.keys(G.MOBS).length, items: Object.keys(G.ITEMS).length, quests: Object.keys(G.QUESTS).length, dailies: G.DAILY.length },
         has: { trailer: !!G.SCENES.trailer, junkking: !!G.MOBS.junkking, tixLimiter: typeof G.tixBlock === "function", gladiator: !!G.VANITY.gladiator_head }
       }, { headers: { "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" } });
@@ -193,6 +197,7 @@ export class World {
          starts. So every deploy began with an empty Crypt board (the owner: "i dont see me and kellzifer first dungeon run on the
          crypt hiscore anymore"), and the first clear after a restart would have WRITTEN that empty list over the saved one. */
       this.cryptTop = (await ctx.storage.get("cryptTop")) || {};
+      this.hw = (await ctx.storage.get("hw")) || { kingAt: 0, kingDue: false, kingUp: null, night: false };   /* (2026-09-27) the Long Night's clocks: the King's hour, and whether Nightfall has been called */
       this.radio = (await ctx.storage.get("radio")) || null;
       { const sg = (await ctx.storage.get("songs")) || null; this.song = sg?.song || null; this.songQ = Array.isArray(sg?.q) ? sg.q : []; }
       if (!(this.jack.pot >= G.JACKPOT.seed)) { this.jack.pot = G.JACKPOT.seed; this.jackDirty = true; }   // (the v107 seed top-up was in restore() too)
@@ -257,7 +262,7 @@ export class World {
     const sayHello = away > 10 * 60 * 1000;   // ten minutes: a deploy, a refresh or a dropped phone all stay quiet
     if (C.stats) { C.stats.sessions++; C.stats.firstSeen ||= Number(C.created) || Date.now(); C.stats.lastSeen = Date.now(); }
     if (sayHello) setTimeout(() => { for (const q of this.pls.values()) if (q.id !== user.id) q.out.push({ type: "casinonote", text: `\u{1F44B} ${pl.name} just logged on.` }); }, 400);
-    this.cryptRejoin(pl);   /* (v104) saved inside a crypt run: back into it if it is still going, else to the stairs */
+    this.cryptRejoin(pl); this.countRejoin(pl);   /* (2026-09-25) and the Count Room, same rule: a saved spot inside a run is only good if that run is still there */   /* (v104) saved inside a crypt run: back into it if it is still going, else to the stairs */
     this.pyramidRejoin(pl);
     this.towerRejoin(pl);   /* (2026-09-22) saved inside the Tower: rebuild that floor, or the room comes back empty and unwinnable */
     this.pls.set(user.id, pl);
@@ -273,7 +278,8 @@ export class World {
     if (HEARD.has(String(S.key).split(":")[0])) { this.songTick(Date.now()); if (this.song || this.songQ?.length) this.send(pl, { type: "ev", list: [this.songMsg()] }); }
     if (this.radio && HEARD.has(String(S.key).split(":")[0])) this.send(pl, { type: "ev", list: [{ type: "radio", radio: this.radio }] });   /* (v86) the jukebox is already playing when you log in on the floor */
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
-    this.cryptHello(pl, S);
+    this.cryptHello(pl, S); if (S.def.count) this.countHello(pl, S);
+    if (this.doubleOn()) pl.out.push({ type: "double", on: this.doubleView() });   /* (2026-09-25) walk in mid-event and the timer is already there */
     this.pyramidHello(pl, S);
     this.achSweep(pl);   /* (2026-09-23) everything they already qualify for, paid once and quietly */
     S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
@@ -339,11 +345,11 @@ export class World {
     return { pay: owed, low, late };
   }
 
-  meOf(pl) { const C = pl.C; return { look: C.look || null, van: C.van,
+  meOf(pl) { const C = pl.C; return { hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null,   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
-    pets: C.pets, isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
+    pets: C.pets, isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
 
   /* ------------------------------------------------------------ reforging (2026-09-22)
      Spend bars to push a piece you own further. The odds and what a level is worth live in G.FORGE; this only
@@ -356,8 +362,9 @@ export class World {
   forgeDo(S, pl, m) {
     const C = pl.C, key = String(m.k || ""), bad = (t) => this.say(pl, t, "bad");
     if (!G.canForge(key)) return bad("That can't be reforged.");
-    const anvil = S.objs.find((o) => o.t === "anvil" && G.cheb(pl, o) <= 2);
-    if (!anvil && !pl.god) return bad("You need to be at an anvil.");
+    const fletched = !!G.ITEMS[key].forgeWith;   /* (2026-09-25) bows and quivers: the fletching table works as well as the anvil */
+    const anvil = S.objs.find((o) => (o.t === "anvil" || (fletched && o.t === "fletcher")) && G.cheb(pl, o) <= 2);
+    if (!anvil && !pl.god) return bad(fletched ? "You need to be at the fletching table or an anvil." : "You need to be at an anvil.");
     /* (2026-09-23) WHICH ONE. A level belongs to a piece now, so "reforge my diamond axe" has to name one when
        you own three at different levels. The rule is the one a player would guess: the one you are WEARING, and
        otherwise the best one in your bag — so taking a +2 from the bag to +3 keeps working on that same piece,
@@ -368,6 +375,7 @@ export class World {
     if (!wornSlot && bagI < 0) return bad(`You don't have ${G.ITEMS[key].name.toLowerCase()}.`);
     const it = G.ITEMS[key], tier = G.TIERS.find((t) => t.key === it.tier);
     if (tier && G.lvlOf(C, "smithing") < tier.gate && !pl.god) return bad(`Reforging ${it.name.toLowerCase()} takes Smithing ${tier.gate}. You're ${G.lvlOf(C, "smithing")}.`);
+    if (it.forgeReq && G.lvlOf(C, it.forgeReq.skill) < it.forgeReq.lvl && !pl.god) return bad(`Reforging ${it.name.toLowerCase()} takes ${G.SKILLS[it.forgeReq.skill].name} ${it.forgeReq.lvl}. You're ${G.lvlOf(C, it.forgeReq.skill)}.`);
     const lvl = wornSlot ? G.fLevelOf(C, wornSlot) : G.fOf(C.inv[bagI]);
     /* (2026-09-23) THE THREE THINGS THE THIEVES' GUILD SELLS INTO THIS. All are spent on the attempt whatever it
        does - that is their whole cost - and all are checked BEFORE the bars are taken, so a refusal never charges.
@@ -436,8 +444,8 @@ export class World {
        creature hostile used to be making every one of them hostile everywhere - the Gloam wanted a single Bog
        Gnasher that attacks on sight and there are three more in the Wilderness that nobody asked to change. A
        fourth element on a placement line now carries per-mob overrides; `aggro` is the only one read so far. */
-    S.mobs = def.mobs.map(([t, x, y, over], i) => ({ id: `${key}m${i}`, aggro: over?.aggro, respawn: over?.respawn,   /* (2026-09-25) a PLACEMENT may own its respawn as well as its reach: the Vault's node guards come back on two-to-three minutes while the same types stand around the room on the ordinary timer */ t, x, y, hx: x, hy: y, hp: G.MOBS[t].hp, path: [], step: null, face: Math.random() < 0.5 ? 1 : -1, nextWander: 0, dead: false, respawnAt: 0, hurtAt: 0, swingAt: 0, lastSwing: 0 }));
-    S.npcs = def.npcs.map((n, i) => ({ ...n, id: `${key}n${i}`, hx: n.x, hy: n.y, path: [], step: null, face: -1, nextWander: 0, holdUntil: 0 }));
+    S.mobs = def.mobs.map(([t, x, y, over], i) => ({ id: `${key}m${i}`, aggro: over?.aggro, respawn: over?.respawn, perch: over?.perch || undefined,   /* (2026-09-25) perched: never wanders, may sit on water */   /* (2026-09-25) a PLACEMENT may own its respawn as well as its reach: the Vault's node guards come back on two-to-three minutes while the same types stand around the room on the ordinary timer */ t, x, y, hx: x, hy: y, hp: G.MOBS[t].hp, path: [], step: null, face: Math.random() < 0.5 ? 1 : -1, nextWander: 0, dead: false, respawnAt: 0, hurtAt: 0, swingAt: 0, lastSwing: 0 }));
+    S.npcs = def.npcs.filter((n) => !n.event || G.hwOn()).map((n, i) => ({ ...n, id: `${key}n${i}`, hx: n.x, hy: n.y, path: [], step: null, face: -1, nextWander: 0, holdUntil: 0 }));
     S.bots = def.bots.map((bt, i) => {
       let x, y, tries = 0;
       do { x = rint(3, G.COLS - 4); y = rint(3, G.ROWS - 4); } while ((!G.walkableIn(S.g, x, y) || S.mobs.some((m) => m.x === x && m.y === y) || S.npcs.some((n) => n.x === x && n.y === y)) && ++tries < 300);
@@ -491,6 +499,7 @@ export class World {
     if (S.def?.gates) { pl.runAt = Date.now(); pl.runPast = 0; pl.runPerfect = 0; this.scatterMarks(S, pl); }   // a new run: the clock, the gates paid for, the perfects, and fresh marks
     if (pl.trade) this.tradeEnd(pl.trade, "Trade cancelled: someone left the area.");
     pl.C.scene = key; pl.path = []; pl.step = null; pl.act = null;
+    this.questVisit(pl, key);   /* (2026-09-27) a quest's "go to" stage */
     if (at) { pl.x = at.x; pl.y = at.y; }
     else if (side) {
       const mid = (G.SPAN[side][0] + G.SPAN[side][1]) / 2;
@@ -740,6 +749,7 @@ export class World {
         return;
       }
       case "quest": return this.questOp(S, pl, m);
+      case "hw": return this.hwOp(S, pl, m);   /* (2026-09-27) the Long Night: trick or treat, the Night Market, the corn-priced fits */
       case "talked": { const n = S.npcs.find((x) => x.id === m.npc); if (n) n.holdUntil = 0; return; }
       case "stance": return;   // stances were removed (2026-09-19)
       case "settings": {
@@ -791,6 +801,13 @@ export class World {
       case "tixgame": { const g = String(m.g); if (!G.GAMES[g] || !S.def.real?.[g]) return; return pl.out.push({ type: "game", g, tix: true, pot: Math.floor(this.jack.pot), lastJack: this.jack.wins?.[0] || null }); }   /* (v107) the window's Tickets toggle: open this table for TICKETS (the same message a ticket table has always opened with) */
       case "profile": return void this.profileOp(pl, m).catch(() => {});   /* (it reads storage, so it answers a moment later, through pl.out) */
       case "crypt": return m.op === "enter" ? this.cryptEnter(S, pl, m) : undefined;
+      case "count": return m.op === "enter" ? this.countEnter(S, pl) : undefined;
+      /* (2026-09-25) QUICK SLOTS. Four item keys on the character, so the bar follows you to another device. Only the key is
+         stored: using one goes through the ordinary eat / use / equip messages the bag already sends, so a quick slot can
+         never do anything a click on the same item in the bag could not. */
+      case "quick": { const i = m.i | 0; if (i < 0 || i > 3) return; const k = m.k == null ? null : String(m.k);
+        if (k && !G.ITEMS[k]) return; (pl.C.quick ||= [null, null, null, null])[i] = k; return this.touch(pl); }
+      case "quiver": return this.quiverOp(pl, m);   /* (2026-09-25) load / unload the offhand pouch */   /* (2026-09-25) the Count Room. One tier, so there is nothing to pick and nothing to read off the message. */
       case "pyramid": return m.op === "enter" ? this.pyramidEnter(S, pl) : undefined;
       case "tower": return m.op === "enter" ? this.towerEnter(S, pl, m) : undefined;   /* m carries an optional lower floor: the door’s "start again at floor 1" */
       case "forge": return this.forgeDo(S, pl, m);
@@ -808,6 +825,7 @@ export class World {
           const k = String(m.k || ""), it = G.VANITY[k];
           if (!it) return this.say(pl, "Ronde doesn't stock that.", "bad");
           if (v.own.includes(k)) return this.say(pl, "You own that already.", "bad");
+          if (it.corn) return this.hwFit(pl, k);   /* (2026-09-27) the Long Night's fits are priced in candy corn, at Ronde's or at the tent */
           const price = it.price, have = G.tixIn(C);
           if (have < price) return this.say(pl, `${it.name} is ${G.fmtTix(price)}. You have ${G.fmtTix(have)}.`, "bad");
           G.takeInv(C.inv, "tickets", price);
@@ -853,17 +871,28 @@ export class World {
       if (!this.mayFight(S, mob, pl, now)) return this.say(pl, `${this.claimOf(S, mob, now).name} is already fighting that.`, "bad");
       { const gate = mob.target === pl.id || pl.god ? null : G.bandBlock(C, S.key, "fight");   /* LEVEL BANDS: a soft gate. Something already attacking you can always be fought back */
         if (gate) return this.say(pl, `${S.def.name} is for Combat ${gate.need} and up. You're ${gate.have}. ${gate.need <= 10 ? "The Yard will get you there." : "Work the scene before this one a while longer."}`, "bad"); }
-      act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: G.MOBS[mob.t].name };
+      act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: G.MOBS[mob.t].name, reach: G.reachOfHeld(C) };   /* (2026-09-25) SHOOT FROM WHERE YOU STAND: the walk below stops at the bow's reach, not next to the thing (the owner: "it runs up to them, which feels very much like melee") */
     }
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
-      const kind = { mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      let kind = { ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      /* MAGIC AND WIZARDRY, THE SERVER (2026-09-26): every altar is a print station, a picker station like the anvil */
+      if (!kind && G.STATIONS[ob.t]?.kind === "print") kind = "print";
       if (!kind) return;
       const at = kind === "door" && ob.door ? ob.door : G.nearestCell(ob, f);
       act = { kind, ob, x: at.x, y: at.y, name: ob.name };
-      // the anvil is told which recipe; the page sends its id with the click
-      if (kind === "smith" && m.pick && G.RECIPES[String(m.pick)]) act.pick = String(m.pick);
+      /* WHICH RECIPE (2026-09-25, the owner: "if there are multiple fish or alchemy ingredients in a users
+         inventory, then it just selects the last one and they cant be accurate"). The anvil has always been told
+         what to make. The fire, the range, the furnace and the cauldron were not: they take the HARDEST thing you
+         can make (recipesAt is sorted hardest first), so a bag holding sardines and a bowfin only ever cooks the
+         bowfin, and sand at a cauldron only ever becomes the large vial. Nothing was broken - there was simply no
+         way to say. The same `pick` now works everywhere, and it is checked against the recipes of THIS station
+         so a pick cannot smelt a bar at a campfire. */
+      if (["smith", "cook", "smelt", "brew", "fletch", "print"].includes(kind) && m.pick) {
+        const id = String(m.pick);
+        if (G.recipesAt(ob.t).some((r) => r.id === id)) act.pick = id;
+      }
     }
     if (!act) return;
     act.started = 0;
@@ -876,7 +905,7 @@ export class World {
        being held next to something. Only the walking to it is refused. */
     const held = S.run && S.def.pyramid && S.run.coil && S.run.coil.id === pl.id;
     const p = held ? [] : G.findPath(S.g, f, act, act.kind === "ground" ? 0 : act.reach || G.reachOf(act.kind) || 1);
-    if (p === null) { this.say(pl, "You can't reach that.", "bad"); pl.act = null; return; }
+    if (p === null) { this.say(pl, act.kind === "mob" && !G.launcherOf(C) ? "You can't get to that from here. It wants a bow." : "You can't reach that.", "bad"); pl.act = null; return; }
     if (held && G.cheb(pl, act) > (act.reach || G.reachOf(act.kind) || 1)) { this.say(pl, "It has you. You can only reach what is already beside you.", "bad"); pl.act = null; return; }
     /* SAME TARGET, SAME ACTION (2026-09-25, the re-click exploit). startAct builds a fresh act on every click and
        used to assign it unconditionally, so clicking the monster you were ALREADY fighting made `!a.started` true
@@ -1141,7 +1170,7 @@ export class World {
     /* (2026-09-22) "lap" is the one board where SMALL WINS, so it sorts the other way; a 0 (never finished a run)
        is already dropped by the filter rather than ranked first. Everything else is unchanged. */
     const board = (key, kind) => [...rows].filter((r) => kind === "lvl" || valOf(r, key) > 0).sort((a, b) => (kind === "lap" ? valOf(a, key) - valOf(b, key) : valOf(b, key) - valOf(a, key)) || b.xp - a.xp).slice(0, 100)
-      .map((r, i) => ({ rank: i + 1, name: r.name, v: valOf(r, key), sub: kind === "lvl" ? `${Math.round(Number(key === "total" ? r.xp : r.skillXp?.[boardSkill(key)]) || 0).toLocaleString()} xp` : key === "kills" ? `Combat ${r.skills.melee}` : key === "quests" ? [r.tourDone ? "the tour" : "", r.jobs ? `${r.jobs} job${r.jobs === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ") : "" }));
+      .map((r, i) => ({ rank: i + 1, name: r.name, v: valOf(r, key), sub: kind === "lvl" ? `${Math.round(Number(key === "total" ? r.xp : r.skillXp?.[boardSkill(key)]) || 0).toLocaleString()} xp` : key === "kills" ? `Combat ${r.combat ?? r.skills.melee}` : key === "quests" ? [r.tourDone ? "the tour" : "", r.jobs ? `${r.jobs} job${r.jobs === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ") : "" }));
     const boards = {}; for (const [key, , , kind] of G.HISCORES) boards[key] = kind === "time" ? (this.cryptTop?.[key.slice(5)] || []).slice(0, 20).map((r, i) => ({ rank: i + 1, name: r.names.join(" + "), v: r.secs, sub: new Date(r.at).toISOString().slice(0, 10) })) : board(key, kind);
     this.hs = { ok: true, at: new Date(now).toISOString(), players: rows.length, boards };
     this.hsAt = now;
@@ -1202,7 +1231,8 @@ export class World {
     if (!(this.jack.pot >= G.JACKPOT.seed)) { this.jack.pot = G.JACKPOT.seed; this.jackDirty = true; }   /* (v107: the seed grew with the ticket tables' limits; a pot saved under the old one starts from the new) */
     { const sg = (await this.ctx.storage.get("songs")) || null; this.song = sg?.song || null; this.songQ = Array.isArray(sg?.q) ? sg.q : []; }   /* (v96) the song queue outlives a restart too */
     this.cryptTop = (await this.ctx.storage.get("cryptTop")) || {};   /* (v103) the crypt's fastest clears */
-    this.radio = (await this.ctx.storage.get("radio")) || null;   /* (v86) the jukebox's station outlives a restart */
+    this.radio = (await this.ctx.storage.get("radio")) || null;
+    this.dbl = (await this.ctx.storage.get("dbl")) || null;   /* (2026-09-25) a 2X event outlives a restart: it is the server's clock, not a player's */   /* (v86) the jukebox's station outlives a restart */
     this.fame = (await this.ctx.storage.get("fame")) || this.fame || null;
     return Response.json({ ok: true, restored: written, from: body.takenAt || null });
   }
@@ -1263,6 +1293,22 @@ export class World {
     else this.say(pl, `Your ${G.ITEMS[gate.have].name.toLowerCase()} won't touch this. You need a ${gate.need.name.toLowerCase()} ${noun} or better.`, "bad");
     return false;
   }
+  /* (2026-09-27, a player: "odd I can't wear my quiver — just says 'empty what you are wearing first, your bag has no room'")
+     THE POCKET IS EMPTIED WHATEVER IS WORN. C.quiver is one pocket that outlives the piece holding it, and the swap and the
+     take-off both emptied it through quiverOp's unload, which first insists on a WORN pouch. A load left in the pocket while a
+     shield or nothing was worn - possible from before the 2026-09-25 take-off fix, and from a bag lost any other way - could
+     therefore never be handed back, and every quiver was refused for ever with a message about bag room that was not true.
+     This hands the load to the bag directly, whatever the offhand holds, and says exactly what did not fit if anything. */
+  pocketOut(pl) {
+    const C = pl.C, q = C.quiver; if (!q) return true;
+    if (!G.ITEMS[q.k] || !(q.n > 0)) { C.quiver = null; this.touch(pl); return true; }
+    const n = Math.min(q.n, G.roomFor(C.inv, q.k, C));
+    if (n > 0) { G.addInv(C.inv, q.k, n, C); q.n -= n; this.touch(pl); }
+    const name = G.ITEMS[q.k].name.toLowerCase();
+    if (q.n <= 0) { C.quiver = null; this.touch(pl); this.say(pl, `You take ${n} ${name}${n === 1 ? "" : "s"} out and put them in your bag.`); return true; }
+    this.say(pl, `${q.n} ${name}${q.n === 1 ? " is" : "s are"} still loaded and your bag has no room for ${q.n === 1 ? "it" : "them"}. Free a slot and try again.`, "bad");
+    return false;
+  }
   equip(pl, i) {
     const C = pl.C, st = C.inv[i]; if (!st) return; const it = G.ITEMS[st.k]; if (!it?.slot) return;
     const miss = G.missingReq(C, it);
@@ -1271,11 +1317,19 @@ export class World {
        level in eqf[slot]; taking it off puts that level back on the entry that goes into the bag. Swapping a worn
        +2 for a bagged +3 has to move BOTH, which is why the old one is handed back with its own level. */
     const old = C.eq[it.slot], oldF = G.fLevelOf(C, it.slot);
+    /* (2026-09-27, the owner: "if you switch between the magic bag and quiver, it used the spell in the quiver and the arrows in the
+       magic bag") A SWAP HANDS THE LOAD BACK FIRST. C.quiver is one pocket whatever is worn, so swapping a quiver straight for a bag
+       carried the arrows into the bag. Anything loaded that the new piece cannot hold goes back to the bag now, and if the bag has no
+       room the swap is refused rather than the load silently changing kind. */
+    if (it.slot === "shield" && C.quiver && (!it.pouch || it.pouch.ammo !== G.ammoKind(C.quiver.k))) { if (!this.pocketOut(pl)) return; }
     const takeF = G.fOf(st);
     if (st.n > 1) st.n--; else C.inv.splice(i, 1);
     if (old) this.give(pl, old, 1, oldF);
     C.eq[it.slot] = st.k;
     C.eqf ||= {}; if (takeF) C.eqf[it.slot] = takeF; else delete C.eqf[it.slot];
+    /* (2026-09-25) A QUIVER PUT ON LOADS ITSELF from the biggest stack of arrows in the bag. Clicking the arrows was the
+       only way in, and a tester with a bag full of them was looking at "Empty". */
+    if (it.pouch && !C.quiver) { let bi = -1; C.inv.forEach((s, j) => { if (G.ammoKind(s.k) === it.pouch.ammo && (bi < 0 || s.n > C.inv[bi].n)) bi = j; }); if (bi >= 0) this.quiverOp(pl, { op: "load", i: bi }); }
     this.say(pl, `You ${it.slot === "weapon" ? "wield" : "put on"} the ${it.name.toLowerCase()}.`);
     this.touch(pl);
     this.emit(pl, "equip", {});
@@ -1338,11 +1392,219 @@ export class World {
     }
   }
   /* drinks, scrolls, boxes, dice, watches and free-play chips: everything in the bag that's clicked and isn't food or luck */
+  /* ------------------------------------------------------------ the 2X event (2026-09-25)
+     One clock for the whole world. doubleOn() is the single question every paying path asks, so there is exactly
+     one place to get the answer wrong. */
+  /* THE HOUSE'S OWN CHAT VOICE. A line in everybody's chat, from nobody in particular. `scene: null` matters:
+     the client pops a speech bubble over the speaker when the scene matches, and there is no speaker here. */
+  houseSay(text) { const t = Date.now(); for (const p of this.pls.values()) p.out.push({ type: "chat", id: "house", name: "CASINO", role: "admin", text: String(text), scene: null, t }); }
+  doubleOn() { return !!(this.dbl && Date.now() < this.dbl.until); }
+  doubleView() { return this.dbl && Date.now() < this.dbl.until ? { until: this.dbl.until, by: this.dbl.by, mult: G.DOUBLE.mult } : null; }
+  doubleStart(by, ms) {
+    this.dbl = { until: Date.now() + ms, by: String(by || "somebody"), told: false };
+    this.ctx.storage.put("dbl", this.dbl).catch(() => {});
+    const mins = Math.round(ms / 60000), view = this.doubleView();
+    for (const p of this.pls.values()) {
+      p.out.push({ type: "double", on: view });
+      p.out.push({ type: "casinonote", text: `✨ ${this.dbl.by} popped a 2X POTION! Double tickets and double crafting xp for EVERYONE for ${mins} minutes.` });
+      this.say(p, `✨ 2X EVENT: ${this.dbl.by} cracked a 2X Potion. Everything you earn is doubled for the next ${mins} minutes - tickets and crafting xp, everywhere, for everyone on the server.`, "loot");
+    }
+    this.houseSay(`✨ 2X EVENT — ${this.dbl.by} popped a 2X Potion. Double tickets and crafting xp for ${mins} minutes.`);
+  }
+  /* ------------------------------------------------------------ THE LONG NIGHT (2026-09-27)
+     Two clocks the server owns, persisted like the 2X event's: the Pumpkin King's hour and Nightfall. THE KING IS NOT A PLACEMENT.
+     An empty scene is torn down after two minutes and rebuilt from the rules when somebody walks in, so a monster with an hour's
+     respawn would simply vanish; instead the hour is a world clock, "due" is remembered, and the King is pushed into the Mire the
+     moment it is due AND somebody is standing there to see him (or within the same hour, whenever the first person arrives). He
+     stands HW.king.stays and then leaves, and the next hour starts from when he fell. */
+  hwSave() { this.ctx.storage.put("hw", this.hw).catch(() => {}); }
+  hwTick(now) {
+    if (!G.hwOn()) return;
+    const H = this.hw;
+    if (!H.kingAt) { H.kingAt = now + 5 * 60000; this.hwSave(); }   /* a fresh event: the first King five minutes after the first boot */
+    if (!H.kingDue && !H.kingUp && now >= H.kingAt) {
+      H.kingDue = true; this.hwSave();
+      this.houseSay("🎃 THE PUMPKIN KING RISES in the Lantern Mire. He stands twenty minutes. Bring fire, and bring friends.");
+      for (const p of this.pls.values()) { p.out.push({ type: "casinonote", text: "🎃 The Pumpkin King rises in the Lantern Mire." }); p.out.push({ type: "hw", king: true }); }
+    }
+    if (H.kingDue) { const S = this.scenes.get(G.HW.king.scene); if (S && this.playersIn(S).length) this.hwSpawnKing(S, now); }
+    if (H.kingUp) {
+      const S = this.scenes.get(G.HW.king.scene), m = S?.mobs.find((x) => x.id === H.kingUp.id);
+      if (!S || !m || m.dead) { if (S && m && !H.kingUp.slain) { S.mobs = S.mobs.filter((x) => x.id !== m.id); S.whoSig = null; } H.kingUp = null; H.kingAt = now + G.HW.king.every; this.hwSave(); }
+      else if (now >= H.kingUp.until) { S.mobs = S.mobs.filter((x) => x.id !== m.id); S.whoSig = null; H.kingUp = null; H.kingAt = now + G.HW.king.every; this.hwSave(); this.houseSay("🎃 The Pumpkin King sinks back into the Mire. Next hour."); }
+    }
+    const night = G.nightfallOn(now);
+    if (night !== !!H.night) { H.night = night; this.hwSave(); this.houseSay(night ? "🌙 NIGHTFALL. For the next hour every candy corn drop is doubled. Mind the lanterns." : "The night lifts. Candy corn is back to its usual rate."); for (const p of this.pls.values()) p.out.push({ type: "hw", night }); }
+  }
+  hwSpawnKing(S, now) {
+    const H = this.hw, d = G.MOBS.pumpkinking, [x, y] = G.HW.king.at, id = `${S.key}king${now.toString(36)}`;
+    S.mobs.push({ id, t: "pumpkinking", x, y, hx: x, hy: y, hp: d.hp, maxHp: d.hp, path: [], step: null, face: 1, nextWander: 0, dead: false, respawnAt: Infinity, hurtAt: 0, swingAt: 0, lastSwing: now, aggro: d.aggro });
+    S.whoSig = null; H.kingDue = false; H.kingUp = { id, until: now + G.HW.king.stays, slain: false }; this.hwSave();
+    for (const p of this.playersIn(S)) this.say(p, "The ground in the clearing splits and the Pumpkin King climbs out of it.", "bad");
+  }
+  hwKingDown(pl, now) {
+    const H = this.hw; if (H.kingUp) H.kingUp.slain = true;
+    H.kingUp = null; H.kingAt = now + G.HW.king.every; this.hwSave();
+    this.houseSay(`🎃 ${pl.name} put the Pumpkin King down. He'll be back on the hour.`);
+    for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: `🎃 ${pl.name} killed the Pumpkin King!` });
+  }
+  hwDay(C) { const day = G.chicagoDay(); if (!C.hw || C.hw.day !== day) C.hw = { day, trick: false, lanterns: [] }; return C.hw; }
+  hwLantern(S, pl, ob) {
+    const C = pl.C; if (!G.hwOn()) return;
+    const h = this.hwDay(C), lid = ob.lid || `${S.key}:${ob.x},${ob.y}`;
+    if (h.lanterns.includes(lid)) return this.say(pl, "This one's already given you what it had today.", "bad");
+    if (h.lanterns.length >= G.HW.lanterns) return this.say(pl, "You've found every lantern there is today. Ten. The rest are just lanterns.", "bad");
+    const n = G.HW.lanternCorn * (G.nightfallOn() ? 2 : 1);
+    if (!this.give(pl, "candycorn", n)) return;
+    h.lanterns.push(lid); this.touch(pl);
+    this.say(pl, `The lantern gutters out in your hand and leaves ${n} candy corn behind. ${h.lanterns.length} of ${G.HW.lanterns} today.`, "loot");
+    this.emit(pl, "gather", { k: "candycorn", n });
+  }
+  hwFit(pl, k) {
+    const C = pl.C, v = C.van, it = G.VANITY[k]; if (!it?.corn) return;
+    if (v.own.includes(k)) return this.say(pl, "You own that already.", "bad");
+    const have = G.countItems(C, ["candycorn"]);
+    if (have < it.corn) return this.say(pl, `${it.name} is ${it.corn} candy corn. You have ${have}.`, "bad");
+    G.takeInv(C.inv, "candycorn", it.corn); v.own.push(k); v.on[it.slot] = k; this.touch(pl);
+    return this.say(pl, `${it.name} — ${it.corn} candy corn. Wearing it now. Ronde does the colours.`, "loot");
+  }
+  hwOp(S, pl, m) {
+    const C = pl.C, op = String(m.op || ""); if (!G.hwOn()) return this.say(pl, "The Long Night is over.", "bad");
+    if (op === "fit") return this.hwFit(pl, String(m.k || ""));
+    if (op === "trick") {
+      const n = S.npcs.find((x) => x.id === m.npc); if (!n || G.cheb(pl, n) > (n.reach || 3)) return this.say(pl, "Say it to somebody's face.", "bad");
+      const h = this.hwDay(C); if (h.trick) return this.say(pl, "Once a day. Tomorrow.", "bad");
+      h.trick = true; this.touch(pl);
+      const T = G.HW.trick, r = Math.random();
+      if (r < T.trickAt) {   /* a trick */
+        const which = Math.random();
+        if (which < 0.4 && G.countItems(C, ["candycorn"]) >= 5) { G.takeInv(C.inv, "candycorn", 5); this.touch(pl); return this.say(pl, `"Trick." ${n.name} takes five candy corn off you and looks very pleased about it.`, "bad"); }
+        if (which < 0.7 && !S.def.interior) { const S2 = this.scene("boneyard"); pl.act = null; pl.path = []; this.moveToScene(pl, "boneyard", null, { x: 22, y: 12 }); return this.say(pl, `"Trick." Everything goes black for a second and you're standing in the Boneyard. ${n.name} is nowhere.`, "bad"); }
+        if (this.give(pl, "cobweb", 1)) return this.say(pl, `"Trick." ${n.name} drops a spider down your collar. It leaves an enormous cobweb in your bag and no explanation.`, "bad");
+        return this.say(pl, `"Trick." ${n.name} laughs and gives you nothing at all.`, "bad");
+      }
+      const p = Math.random();
+      if (p < T.pie && this.give(pl, "pumpkinpie", 1)) return this.say(pl, `"Treat." ${n.name} hands you a pumpkin pie, still warm.`, "loot");
+      if (p < T.pie + T.seed && this.give(pl, "seed_pumpkin", 2)) return this.say(pl, `"Treat." ${n.name} gives you two pumpkin seeds. "Plant them tonight."`, "loot");
+      const c = rint(T.corn[0], T.corn[1]) * (G.nightfallOn() ? 2 : 1); if (this.give(pl, "candycorn", c)) return this.say(pl, `"Treat." ${n.name} pours ${c} candy corn into your hands.`, "loot");
+      return;
+    }
+    if (op === "buy") {
+      const n = S.npcs.find((x) => x.opens === "market"); if (!n || G.cheb(pl, n) > (n.reach || 3)) return this.say(pl, "You need to be at the Night Market, with Hexa.", "bad");
+      const row = G.HW.market[m.i | 0]; if (!row) return;
+      const [k, qty, corn] = row, times = Math.max(1, Math.min(10, m.n | 0 || 1)), cost = corn * times, have = G.countItems(C, ["candycorn"]);
+      if (have < cost) return this.say(pl, `${qty > 1 ? `${qty} ` : ""}${G.ITEMS[k].name} is ${corn} candy corn${times > 1 ? ` each, ${cost} for ${times}` : ""}. You have ${have}.`, "bad");
+      G.takeInv(C.inv, "candycorn", cost);
+      if (!this.give(pl, k, qty * times)) { this.give(pl, "candycorn", cost); return; }
+      this.touch(pl);
+      return this.say(pl, `${qty * times} ${G.ITEMS[k].name.toLowerCase()} for ${cost} candy corn.`, "loot");
+    }
+  }
+  doubleTick() {
+    if (!this.dbl || this.dbl.told) return;
+    if (Date.now() < this.dbl.until) return;
+    this.dbl.told = true;
+    this.ctx.storage.put("dbl", this.dbl).catch(() => {});
+    for (const p of this.pls.values()) { p.out.push({ type: "double", on: null }); this.say(p, "The 2X event is over. Back to normal rates."); }
+    this.houseSay("The 2X event has ended. Back to normal rates.");
+  }
+
+  /* ------------------------------------------------------------ ranged: ammo and the pouch (2026-09-25)
+     Written as launcher + ammo + pouch rather than bow + arrow + quiver on purpose: a staff, a rune and a rune
+     pouch are the same three rows with different pictures, and none of this changes to add them. */
+  /** one round gone, from the offhand pouch first and the bag second. Nothing happens for a melee weapon. */
+  /** (2026-09-26) what an element does after a spell lands: Fire may burn, Frost slows, Storm arcs, Sun heals the caster */
+  elementAfter(S, pl, m, el, dmg, now) {
+    const M = G.MAGIC;
+    if (el === "fire" && Math.random() < M.burn.chance) m.dot = { at: now + M.burn.ms, dmg: Math.max(1, Math.round(dmg * M.burn.share)), by: pl.id };
+    else if (el === "frost") m.slowUntil = now + M.slow.ms;
+    else if (el === "sun") { pl.C.hp = Math.min(G.maxHpOf(pl.C), pl.C.hp + Math.max(1, Math.round(dmg * M.sunHeal))); this.touch(pl); }
+    else if (el === "storm") {
+      const o = S.mobs.find((x) => x !== m && !x.dead && G.cheb(x, m) <= 1 && this.mayFight(S, x, pl, now)); if (!o) return;
+      const d2 = Math.max(1, Math.round(dmg * M.arc.share * G.elementMul(o.t, "storm")));
+      o.hp -= d2; o.hurtAt = now; S.events.push({ type: "splat", who: o.id, n: d2, kind: "hit", t: now, arc: true }); this.award(pl, d2);
+      if (o.hp <= 0) { const keep = pl.act; this.killMob(S, pl, o, now); if (m.hp > 0) pl.act = keep; }
+    }
+  }
+  spendAmmo(pl) {
+    const C = pl.C, a = G.ammoOf(C); if (!a) return;
+    const w = G.ammoWords(G.ammoKind(a.k));
+    if (a.from === "pouch") { C.quiver.n--; if (C.quiver.n <= 0) { C.quiver = null; this.say(pl, `Your ${w.pouch} is empty.`, "bad"); } }
+    else { G.takeInv(C.inv, a.k, 1); if (G.countItems(C, [a.k]) === 0 && !G.ammoOf(C)) this.say(pl, `That was your last ${w.one}.`, "bad"); }
+    this.touch(pl);
+  }
+  /** load a stack from the bag into the pouch, or empty the pouch back into the bag */
+  quiverOp(pl, m) {
+    const C = pl.C, P = G.pouchOf(C);
+    if (!P) return this.say(pl, "You need a quiver or a Magic Bag in your offhand first.", "bad");
+    const w = G.ammoWords(P.pouch.ammo);
+    if (m.op === "unload") {
+      if (!C.quiver) return this.say(pl, `The ${w.pouch} is empty.`);
+      const q = C.quiver; const room = G.roomFor(C.inv, q.k, C); const n = Math.min(q.n, room);
+      if (n <= 0) return this.say(pl, "No room in your bag.", "bad");
+      G.addInv(C.inv, q.k, n, C); q.n -= n; if (!q.n) C.quiver = null; this.touch(pl);
+      return this.say(pl, `You take ${n} ${G.ITEMS[q.k].name.toLowerCase()}s out of the ${w.pouch}.`);
+    }
+    const st = C.inv[m.i | 0], it = st && G.ITEMS[st.k];
+    if (G.ammoKind(st?.k) !== P.pouch.ammo) return this.say(pl, `Only ${w.many} go in your ${w.pouch}.`, "bad");   /* (2026-09-26) a pouch holds its own kind */
+    if (C.quiver && C.quiver.k !== st.k) return this.say(pl, `Your ${w.pouch} already holds ${G.ITEMS[C.quiver.k].name.toLowerCase()}s. Empty it first.`, "bad");
+    const cap = G.pouchCapOf(C), have = C.quiver ? C.quiver.n : 0, n = Math.min(st.n, cap - have);
+    if (n <= 0) return this.say(pl, `Your ${w.pouch} is full.`, "bad");
+    G.takeInv(C.inv, st.k, n); C.quiver = { k: st.k, n: have + n }; this.touch(pl);
+    this.say(pl, `You load ${n} ${it.name.toLowerCase()}s. ${C.quiver.n} of ${cap} in your ${w.pouch}.`, "good");
+  }
+
   useSpecial(pl, i, st, it) {
     const C = pl.C, now = Date.now(), take = () => { st.n--; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1); this.touch(pl); };
     if (it.drink) {
       const k = st.k; take(); C.drink = { k, left: it.drink.mins * 60000 };
       return this.say(pl, `You drink the ${it.name.toLowerCase()}. For ${it.drink.mins} minutes outside: ${G.fxText(it.drink.fx)}.`, "good");
+    }
+    /* THE 2X POTION (2026-09-25). The only thing in the game one player uses ON EVERYBODY, so three rules:
+       ONE AT A TIME, and a second is REFUSED rather than swallowed - the potion stays in the bag. Stacking two
+       would double nothing extra and quietly destroy something very rare, which is the sort of thing a player
+       never forgives.
+       IT IS A WORLD CLOCK, not a character buff: this.dbl lives on the World and is written to storage, so a
+       restart in the middle of an event does not eat it.
+       AND EVERYBODY IS TOLD, in the room and in chat, because an event nobody notices is a wasted drop. */
+    if (it.use === "double") {
+      const now2 = Date.now();
+      if (this.dbl && now2 < this.dbl.until) {
+        const left = Math.ceil((this.dbl.until - now2) / 60000);
+        return this.say(pl, `A 2X event is already running - ${left} minute${left === 1 ? "" : "s"} left. Keep it for after.`, "bad");
+      }
+      take();
+      this.doubleStart(pl.name, G.DOUBLE.ms);
+      return;
+    }
+    /* (2026-09-26) UTILITY PAGES. A buff replaces whatever buff was running; its tier is the reader's Wizardry, NOW. Travel is
+       refused in the Wilderness, inside a run, and within 10 s of being hit - a page is not an escape button. */
+    const noTravel = () => { const S0 = this.scenes.get(C.scene); return S0?.def?.pvp ? "Not in the Wilderness." : /^(crypt|tower|pyramid|count):/.test(String(C.scene)) ? "Not in the middle of a run." : now - (pl.hurtAt || 0) < 10000 ? "Not while something's hitting you. Get clear first." : null; };
+    if (it.use === "charm") {
+      const k = it.charm, def = G.CHARMS[k]; if (!def) return;
+      if (G.lvlOf(C, "wizardry") < 1) return;
+      const was = C.charm && (C.charm.left | 0) > 0 ? G.CHARMS[C.charm.k]?.name : null, tier = G.charmTier(C);
+      take(); C.charm = { k, left: def.mins * 60000, tier };
+      return this.say(pl, `You read the ${def.name} scroll (tier ${"I".repeat(tier)}): ${def.what(def.vals[tier - 1])}, for ${def.mins} minutes outside.${was && was !== def.name ? ` It replaces your ${was}.` : ""}`, "good");
+    }
+    if (it.use === "ward") {   /* (2026-09-27) the Witch's brew: the next death is free */
+      if (C.ward) return this.say(pl, "You're already warded. Drink the next one after you've died.", "bad");
+      take(); C.ward = true; this.touch(pl);
+      return this.say(pl, "It tastes of pumpkin and pennies. Your next death will cost you nothing.", "good");
+    }
+    if (it.use === "homeward") {
+      const why = noTravel(); if (why) return this.say(pl, why, "bad");
+      take(); pl.act = null; pl.path = [];
+      const key = G.isleKey(C.isle, pl.id), S2 = this.scene(key); S2.ownerName = pl.name;
+      this.moveToScene(pl, key, null, G.SCENES.isle.entry); pl.dir = "north";
+      return this.say(pl, "The page folds itself into a paper bird, and you're standing on your island.", "good");
+    }
+    if (it.use === "waystone") {
+      const Wy = G.WAYSTONES[st.k]; if (!Wy) return;
+      const why = noTravel(); if (why) return this.say(pl, why, "bad");
+      if (String(C.scene).split(":")[0] === Wy.scene) return this.say(pl, `You're already in ${Wy.name}.`);
+      take(); pl.act = null; pl.path = []; this.moveToScene(pl, Wy.scene, Wy.side, null);
+      return this.say(pl, `The page crackles, and you're at the edge of ${Wy.name}.`, "good");
     }
     if (it.use === "tp") {
       const S = this.scenes.get(C.scene);
@@ -1430,7 +1692,10 @@ export class World {
   /* every ticket EARNED (kills, trade-ins, daily jobs) counts toward VIP; buying and betting never do */
   earned(pl, n) { if (!(n > 0)) return; const C = pl.C, was = G.vipOf(C).i; C.earned = (Number(C.earned) || 0) + n; const now = G.vipOf(C);
     if (now.i > was) { this.say(pl, `You've made ${now.name} VIP: ${Math.round(now.off * 100)}% off everything at the Prize Counter, and everyone can see it by your name.`, "loot"); for (const q of this.pls.values()) if (q !== pl) q.out.push({ type: "casinonote", text: `👑 ${pl.name} made ${now.name} VIP.` }); } }
-  tixTo(pl, n) { this.earned(pl, n); if (n > 0 && !this.give(pl, "tickets", n) && !this.bankAdd(pl, "tickets", n)) this.say(pl, "Your bag and bank are both full: those tickets are lost. Make some room!", "bad"); }
+  /* (2026-09-25) EVERY TICKET IN THE GAME COMES THROUGH HERE, which is why the 2X event is applied at this one
+     line rather than at the dozen places that pay. A doubled ticket is still a ticket: the caps, the books and
+     the day counters all see the doubled number, which is what the owner asked for. */
+  tixTo(pl, n) { if (n > 0 && this.doubleOn()) n = Math.round(n * G.DOUBLE.mult); this.earned(pl, n); if (n > 0 && !this.give(pl, "tickets", n) && !this.bankAdd(pl, "tickets", n)) this.say(pl, "Your bag and bank are both full: those tickets are lost. Make some room!", "bad"); }
   /* THE PRIZE COUNTER: tickets in, prizes out (G.prizesOf). Chips are tickets, 1 for 1; everything else is an item. */
   counterOp(S, pl, m) {
     if (!this.atCounter(S, pl)) return this.say(pl, "You need to be at the Prize Counter: Bom Trady, in the middle of the casino floor.", "bad");
@@ -1456,7 +1721,7 @@ export class World {
     G.takeInv(C.inv, "tickets", cost);
     this.give(pl, p.give[0], p.give[1] * n);
     this.touch(pl);
-    this.say(pl, `${n > 1 ? `${n} × ` : ""}${it.name} for ${G.fmtTix(cost)}.`, "good");
+    this.say(pl, `${p.give[1] * n > 1 ? `${(p.give[1] * n).toLocaleString()} × ` : ""}${it.name} for ${G.fmtTix(cost)}.`, "good");
   }
   cashOut(S, pl, m) {
     const C = pl.C; if (!this.atCounter(S, pl)) return this.say(pl, "You need to be at the Prize Counter: Bom Trady, in the middle of the casino floor.", "bad");
@@ -1618,6 +1883,9 @@ export class World {
   }
   unequip(pl, slot) {
     const C = pl.C, k = C.eq[slot]; if (!k) return;
+    /* (2026-09-25) a LOADED quiver hands its arrows back first; if the bag cannot take them all it stays on. Otherwise the
+       arrows would ride along in C.quiver with nothing to hold them, and reappear on the next quiver worn. */
+    if (C.quiver && G.ITEMS[k]?.pouch) { if (!this.pocketOut(pl)) return; }
     const f = G.fLevelOf(C, slot);
     if (!this.give(pl, k, 1, f)) return;
     C.eq[slot] = null; if (C.eqf) delete C.eqf[slot];
@@ -1625,32 +1893,62 @@ export class World {
   }
 
   /* ------------------------------------------------------------ quests */
+  /* (2026-09-27) STAGED. The rules (G.npcRole, G.qStage) say what this person has to do with the quest; the ops are accept (a
+     giver's new quest), stage (a talk or a bring at the current stage's person) and hand (the finished quest, at the hand-in). */
   questOp(S, pl, m) {
     const C = pl.C, n = S.npcs.find((x) => x.id === m.npc), k = String(m.k || "");
-    if (!n || !G.QUESTS[k] || G.cheb(pl, n) > 2 || G.npcQuest(C, n) !== k) return;
+    if (!n || !G.QUESTS[k] || G.cheb(pl, n) > 2) return;
+    const R = G.npcRole(C, n); if (!R || R.k !== k) return;
     const q = G.QUESTS[k], st = G.qState(C, k);
-    if (m.op === "accept" && st === "new") { C.qs[k] = { state: "active", n: 0 }; this.say(pl, `Quest started: ${q.name}. ${q.brief}`, "good"); this.touch(pl); this.questCheck(pl); }
-    if (m.op === "hand" && st === "ready") this.finishQuest(pl, k);
+    if (m.op === "accept" && R.role === "offer" && st === "new") { C.qs[k] = { state: "active", stage: 0, n: 0 }; this.say(pl, `Quest started: ${q.name}. ${q.brief}`, "good"); this.stageGive(pl, k); this.touch(pl); this.questCheck(pl); }
+    if (m.op === "hand" && R.role === "hand" && st === "ready") this.finishQuest(pl, k);
+    if (m.op === "stage" && R.role === "stage" && st === "active") {
+      const s = R.stage;
+      if (s.type === "bring") { if (G.countItems(C, s.items) < s.n) return; this.takeAny(C, s.items, s.n); }
+      this.advanceQuest(pl, k);
+    }
+  }
+  takeAny(C, items, n) { let left = n; for (const key of items) { left -= G.takeInv(C.inv, key, left); if (!left) break; } }
+  /* what a stage hands you on arrival (a letter to carry, a sample to test) */
+  stageGive(pl, k) { const s = G.qStage(pl.C, k); for (const [it, n] of s.give || []) this.give(pl, it, n); }
+  advanceQuest(pl, k) {
+    const C = pl.C, q = G.QUESTS[k], o = C.qs[k]; if (!o || o.state !== "active") return;
+    o.stage = (o.stage | 0) + 1; o.n = 0; o.told = false;
+    if (o.stage >= q.stages.length) { o.state = "ready"; this.say(pl, `${q.name}: that's everything. Go back to ${G.qHandTo(k)}.`, "good"); }
+    else { this.say(pl, `${q.name}: ${G.stageText(k, q.stages[o.stage])}.`, "good"); this.stageGive(pl, k); }
+    this.touch(pl); this.questCheck(pl);
+    /* a visit stage reached while already standing there completes at once */
+    if (o.state === "active" && q.stages[o.stage].type === "visit" && q.stages[o.stage].scene === C.scene) this.advanceQuest(pl, k);
   }
   questCheck(pl) {
     const C = pl.C;
     for (const k in G.QUESTS) {
-      const q = G.QUESTS[k], o = C.qs[k];
-      if (o && o.state === "active" && q.goal.type === "bring" && !o.told && G.qHave(C, k) >= q.goal.n) { o.told = true; this.say(pl, `${q.name}: you have all ${q.goal.n} ${q.goal.what}. Take them to ${q.giver}.`, "good"); this.touch(pl); }
+      const q = G.QUESTS[k], o = C.qs[k]; if (!o || o.state !== "active") continue;
+      const s = G.qStage(C, k);
+      if (s.type === "bring" && !o.told && G.countItems(C, s.items) >= s.n) { o.told = true; this.say(pl, `${q.name}: you have all ${s.n} ${s.what}. Take them to ${G.qBringTo(k, s)}.`, "good"); this.touch(pl); }
+      /* (2026-09-27, players: "some of the quests ... dont recognize if you already have the things they're asking for") A GATHER
+         STAGE COUNTS WHAT IS IN THE BAG. It counted only what was gained after the stage began, so ten wheat already carried
+         had to be cut again. What you hold now is what the quest asked for; this runs at accept and after every advance. */
+      if (s.type === "gather" && G.countItems(C, s.items) >= s.n) { o.n = Math.max(o.n | 0, s.n); this.advanceQuest(pl, k); return; }
     }
   }
-  // a subscriber of emit(): quests whose goal is "kill N of X" count here
+  // a subscriber of emit(): kill stages count kills, gather stages count what is gained
   questEvent(pl, type, d) {
-    const C = pl.C, what = d.mob;
-    if (what == null) return;
+    const C = pl.C;
     for (const k in G.QUESTS) {
-      const q = G.QUESTS[k], o = C.qs[k];
-      if (o && o.state === "active" && q.goal.type === type && q.goal.mob === what) { o.n++; this.touch(pl); if (o.n === q.goal.n) this.say(pl, `${q.name}: that's ${q.goal.n}. Go back to ${q.giver}.`, "good"); }
+      const q = G.QUESTS[k], o = C.qs[k]; if (!o || o.state !== "active") continue;
+      const s = G.qStage(C, k);
+      if (s.type === "kill" && type === "kill" && s.mob === d.mob && (!s.style || s.style === d.style)) { o.n++; this.touch(pl); if (o.n >= s.n) this.advanceQuest(pl, k); }
+      else if (s.type === "gather" && ["gather", "craft", "cook"].includes(type) && s.items.includes(d.k) && (!s.how || s.how === type)) { o.n += d.n || 1; this.touch(pl); if (o.n >= s.n) this.advanceQuest(pl, k); }
     }
+  }
+  questVisit(pl, key) {
+    const C = pl.C;
+    for (const k in G.QUESTS) { const o = C.qs[k]; if (!o || o.state !== "active") continue; const s = G.qStage(C, k); if (s.type === "visit" && s.scene === key) this.advanceQuest(pl, k); }
   }
   finishQuest(pl, k) {
-    const C = pl.C, q = G.QUESTS[k];
-    if (q.goal.type === "bring") { let left = q.goal.n; for (const key of q.goal.items) { left -= G.takeInv(C.inv, key, left); if (!left) break; } }
+    const C = pl.C, q = G.QUESTS[k], last = q.stages[q.stages.length - 1];
+    if (G.qGet(C, k).state !== "ready" && last.type === "bring") { if (G.countItems(C, last.items) < last.n) return; this.takeAny(C, last.items, last.n); }
     C.qs[k] = { ...(C.qs[k] || {}), state: "done" };
     if (q.reward.coins) this.give(pl, "tickets", q.reward.coins);
     for (const [sk, xp] of Object.entries(q.reward.xp || {})) this.grant(pl, sk, xp);
@@ -1679,9 +1977,10 @@ export class World {
       const gates = S.def?.gates; if (!gates) continue;
       for (const gt of gates) { const open = G.gateOpenAt(now, gt) ? "i" : "#"; for (const [gx, gy] of G.gateTiles(gt)) S.g[gy][gx] = open; }
     }
-    if (this.tickN % 20 === 0) { this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.pitTick(now).catch(() => {}); }
+    if (this.tickN % 20 === 0) { this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.hwTick(now); this.pitTick(now).catch(() => {}); }
     if (this.tickN % 20 === 0) for (const pl of this.pls.values()) {   /* once a second */
-      const C = pl.C, dt = Math.min(5000, now - (pl.fxAt || now)); pl.fxAt = now; if (!(C.meal || C.drink) || !(G.SCENES[String(C.scene).split(":")[0]]?.mobs?.length)) continue;
+      const C = pl.C, dt = Math.min(5000, now - (pl.fxAt || now)); pl.fxAt = now; if (!(C.meal || C.drink || C.charm) || !(G.SCENES[String(C.scene).split(":")[0]]?.mobs?.length)) continue;
+      if (C.charm) { C.charm.left = (C.charm.left | 0) - dt; if (C.charm.left <= 0) { this.say(pl, `Your ${G.CHARMS[C.charm.k]?.name || "page"} has worn off.`); C.charm = null; } this.touch(pl); }   /* (2026-09-26) the page buff */
       for (const k of ["meal", "drink"]) if (C[k]) { C[k].left = (C[k].left | 0) - dt; if (C[k].left <= 0) { this.say(pl, `Your ${G.ITEMS[C[k].k]?.name.toLowerCase() || k} has worn off.`); C[k] = null; } this.touch(pl); }
     }
     if (this.jackDirty && this.tickN % 100 === 0) { this.jackDirty = false; this.ctx.storage.put("jackpot", this.jack).catch(() => { this.jackDirty = true; }); }
@@ -1787,6 +2086,7 @@ export class World {
   gained(S, pl, k, n = 1, how = "gather") {
     S.events.push({ type: "gain", who: pl.id, k, n, t: Date.now() });
     this.emit(pl, how, { k, n });
+    if (how === "gather" && G.hwOn() && Math.random() < G.HW.corn.gather) { const c = rint(G.HW.corn.n[0], G.HW.corn.n[1]) * (G.nightfallOn() ? 2 : 1); if (this.give(pl, "candycorn", c)) this.say(pl, `…and ${c} candy corn, stuck to it.`, "loot"); }   /* (2026-09-27) the Long Night */
     if (S.def.geode && Math.random() < S.def.geode && this.give(pl, "geode")) { S.events.push({ type: "gain", who: pl.id, k: "geode", n: 1, t: Date.now() }); this.emit(pl, "gather", { k: "geode", n: 1 }); this.say(pl, "Something glints in the dirt: a glimmering geode!", "loot"); }
   }
   groupNote(S, pl, a, what = "your chance and xp") {
@@ -1800,7 +2100,7 @@ export class World {
   doAction(S, pl, now) {
     const a = pl.act, C = pl.C; if (!a || pl.path.length) return;
     // AFK: a repeating skill stops once nobody has touched the game for a while (see G.AFK_MS)
-    const afkMs = S.def.tower ? G.AFK_TOWER_MS : G.AFK_MS;   /* (2026-09-25) a tower floor is a 4-5 minute fight by design; see AFK_TOWER_MS */
+    const afkMs = (a.kind === "spot" || a.kind === "tree") && G.charmOf(C, "stillness") ? G.AFK_MS + G.charmOf(C, "stillness") * 60000 : S.def.tower ? G.AFK_TOWER_MS : a.kind === "mob" && G.launcherOf(C) && C.quiver?.n > 0 ? G.ARCHERY.afkMs : G.AFK_MS;   /* (2026-09-25) an archer with a loaded quiver gets the long timer: AFK-friendly is the point of the quiver */   /* (2026-09-25) a tower floor is a 4-5 minute fight by design; see AFK_TOWER_MS */
     if (G.AFK_KINDS[a.kind] && now - pl.lastInput > afkMs) {
       pl.act = null;
       return this.say(pl, `You stop ${G.AFK_KINDS[a.kind]}: you've been idle for ${Math.round(afkMs / 60000)} minutes. Click to carry on.`);
@@ -1809,7 +2109,13 @@ export class World {
     if (a.kind === "mob") {
       const m = S.mobs.find((x) => x.id === a.id); if (!m || m.dead) { pl.act = null; return; }
       if (!this.mayFight(S, m, pl, now)) { pl.act = null; return this.say(pl, `${this.claimOf(S, m, now).name} is already fighting that.`, "bad"); }
-      if (G.cheb(pl, m) !== 1) { const p = G.findPath(S.g, pl, m, 1); if (p && p.length) pl.path = p; else if (!p) pl.act = null; return; }
+      /* (2026-09-25) A BOW WITH NOTHING TO FIRE IS NOT A WEAPON. Checked before the walk, so you are told at the
+         click rather than after crossing the room. */
+      if (G.launcherOf(C) && !G.ammoOf(C)) { const w = G.ammoWords(G.launcherOf(C).launcher.ammo); pl.act = null; return this.say(pl, `You have no ${w.many}. Load your ${w.pouch} or carry some in your bag.`, "bad"); }
+      { const am = G.launcherOf(C) && G.ammoOf(C), need = am && G.missingReq(C, G.ITEMS[am.k]); if (need) { pl.act = null; return this.say(pl, `You need Archery ${need.lvl} to fire ${G.ITEMS[am.k].name.toLowerCase()}s.`, "bad"); } }
+      /* (2026-09-25) RANGE. A launcher fights from its own reach; everything else from next door. The path target
+         is the same reach, so an archer stops at four tiles rather than walking up to the thing. */
+      { const reach = G.reachOfHeld(C); if (G.cheb(pl, m) > reach || (reach === 1 && G.cheb(pl, m) !== 1)) { const p = G.findPath(S.g, pl, m, reach); if (p && p.length) pl.path = p; else if (!p) pl.act = null; return; } }
       a.x = m.x; a.y = m.y; faceIt();
       // the weapon sets the pace now: a gladius swings every 1.8s, a maul every 3s
       const swingMs = G.swingMsOf(C);
@@ -1833,13 +2139,20 @@ export class World {
         pl.urge = false;
         pl.lastSwing = now; pl.swingAt = now; pl.fightAt = now;
         if (!S.def.pvp && !S.def.shared) m.claim = { id: pl.id, until: now + CLAIM_MS };
-        const def = G.MOBS[m.t], hit = Math.random() < G.hitChance(G.attackRollOf(C), def.def), dmg = hit ? rint(1, G.maxHitOf(C)) : 0;
+        /* (2026-09-26) THE ELEMENT. The loaded page's element meets the monster's weakness or resistance, Void pierces part of its
+           defence, and after the hit Fire may burn, Frost slows, Storm arcs to a neighbour and Sun heals you (below). */
+        const el = G.launcherOf(C) ? G.ammoElOf(C) : null;
+        const def = G.MOBS[m.t], hit = Math.random() < G.hitChance(G.attackRollOf(C), def.def * (el === "void" ? 1 - G.MAGIC.pierce : 1)); let dmg = hit ? rint(1, G.maxHitOf(C) + G.ammoStrOf(C)) : 0;
+        if (dmg && el) dmg = Math.max(1, Math.round(dmg * G.elementMul(m.t, el)));
+        if (dmg && G.launcherOf(C) && (def.size === "l" || def.size === "xl")) dmg = Math.round(dmg * (1 + G.ARCHERY.bigBonus));   /* (2026-09-25) a big target is hard to miss */
+        const shotK = G.launcherOf(C) ? G.ammoOf(C)?.k : null;   /* (2026-09-25) which arrow: the page flies its own icon */
+        this.spendAmmo(pl);   /* (2026-09-25) one arrow a shot, hit or miss; nothing happens for a sword */
         /* (v81) `crit` and `kill` are for the page's effects ONLY: a crit is a roll at the very top of what you can hit, and it does
            exactly the damage it rolled. Nothing about the fight changes. (v110, the owner: "it feels like users are criting too much".
            It was `>= ceil(max x 0.85)`, which with whole numbers is a fifth of every landed hit, and FIFTY PERCENT for a new player
            whose max hit is 2: every hit that was not a 1 flashed CRIT. Now it is the top TENTH, and never under 4 damage, so it is
            about one landed hit in nine and nobody sees one until their max hit reaches 5, around Combat 10.) */
-        m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, crit: (dmg >= 4 && dmg > G.maxHitOf(C) * 0.9) || undefined, kill: m.hp <= 0 || undefined });
+        m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, ranged: G.launcherOf(C) ? true : undefined, ak: shotK || undefined,   /* (2026-09-25) the page flies an arrow from `by` to `who` before it shows the number; marked HERE so the page needs nothing about equipment, and a staff marks it the same way */ crit: (dmg >= 4 && dmg > G.maxHitOf(C) * 0.9) || undefined, kill: m.hp <= 0 || undefined });
         this.award(pl, dmg); if (S.def.crypt) this.cryptHit(S, pl, m, dmg); else if (S.def.pyramid) this.pyramidHit(S, pl, m, dmg);
         /* (2026-09-22) ENRAGE. `m.enraged` was read by the mob's swing and set by NOTHING — the crypt declared an
            enrage and never wired it up, so the flag had been dead since the day it was written. It flips once, on
@@ -1849,6 +2162,7 @@ export class World {
           m.enraged = true;
           for (const p of this.playersIn(S)) p.out.push({ type: "casinonote", text: en.say });
         }
+        if (dmg && el) this.elementAfter(S, pl, m, el, dmg, now);
         if (m.hp <= 0) this.killMob(S, pl, m, now);
       }
       return;
@@ -1907,6 +2221,7 @@ export class World {
     if (a.kind === "fight" && S.def.realRound) { pl.act = null; return pl.out.push({ type: "roundopen", key: S.def.realRound }); }
     if (a.kind === "fight") { pl.act = null; return pl.out.push({ ...this.fightView(S, pl, now), open: true }); }
     if (a.kind === "prize") { pl.act = null; return this.prizeSpin(pl); }
+    if (a.kind === "ghostlantern") { pl.act = null; return this.hwLantern(S, pl, a.ob); }
     /* (2026-09-24) the Carnival’s three stalls. One kind for all of them: carnivalOpen reads which it is off
        the object, because they are one game with three boards. */
     if (a.kind === "carnival") { pl.act = null; return this.carnivalOpen(S, pl, a.ob); }
@@ -1929,6 +2244,13 @@ export class World {
     if (a.kind === "game" && !G.GAMES[a.ob.t]) { pl.act = null; return; }
     if (a.kind === "game") { pl.act = null; return pl.out.push({ type: "game", g: a.ob.t, pot: Math.floor(this.jack.pot), lastJack: this.jack.wins?.[0] || null }); }
     if (a.kind === "crypt") { pl.act = null; return this.cryptDoor(S, pl); }
+    /* (2026-09-25) THE COUNT ROOM. countdoor is the way in, off the casino floor; the other three only exist
+       inside a run. Each is a kind in this file's own map AND in the page's KIND_OF — this one decides whether
+       a click does anything, that one only labels it. */
+    if (a.kind === "countdoor") { pl.act = null; return this.countDoor(S, pl); }
+    if (a.kind === "countsearch") { pl.act = null; return S.def.count ? this.countSearch(S, pl, a.ob) : undefined; }
+    if (a.kind === "countbox") { pl.act = null; return S.def.count ? this.countBox(S, pl, a.ob) : undefined; }
+    if (a.kind === "countexit") { pl.act = null; return S.def.count ? this.countExit(S, pl, a.ob) : undefined; }   /* the object matters: the back stairs are a countexit with bolt:true and always open */
     if (a.kind === "pyramid") { pl.act = null; return this.pyramidDoor(S, pl); }
     /* (2026-09-24) THE PYRAMID BORROWS THE CRYPT'S FIXTURE ART, so these three kinds arrive from both
        dungeons and each has to go to the right one. Branching on the scene is what keeps the tomb's lever from
@@ -2005,12 +2327,21 @@ export class World {
       this.groupNote(S, pl, a);
       if (vein) {
         a.next = now + Math.round(6000 / tspd);
-        if (Math.random() < 0.55 + bonus) { if (!this.give(pl, ob.ore)) { pl.act = null; return; } this.gained(S, pl, ob.ore); this.grant(pl, "mining", gx(9)); this.questCheck(pl); }
+        if (Math.random() < (0.55 + bonus) * G.gatherMul(S.def)) { if (!this.give(pl, ob.ore)) { pl.act = null; return; } this.gained(S, pl, ob.ore); this.grant(pl, "mining", gx(9)); this.questCheck(pl);
+        /* (2026-09-25) A STONE, sometimes. GEM_DROP is keyed by ore, so the rock you are mining decides which gem,
+           and the same rock decides which arrows that gem tips. keepRare, because a gem that vanished into a full
+           bag would be the rarest thing this skill loses. */
+        for (const [gk, gp] of (G.GEM_DROP[ob.ore] || [])) if (Math.random() < gp * (1 + G.charmOf(C, "stonesense") / 100)) { const where = this.keepRare(pl, gk, 1); if (where) { this.emit(pl, "loot", { k: gk, n: 1 }); this.say(pl, `Something glints in the ore: a ${G.ITEMS[gk].name.toLowerCase()}!${where === "bank" ? " Your bag was full, so it went to your bank." : ""}`, "loot"); } }
+        }
       } else {
         a.next = now + Math.round(1800 / tspd);
-        if (Math.random() < Math.min(0.9, 0.4 + G.lvlOf(C, "mining") * 0.02) + bonus) {
+        if (Math.random() < (Math.min(0.9, 0.4 + G.lvlOf(C, "mining") * 0.02) + bonus) * G.gatherMul(S.def)) {   /* half out in the Wilderness: see WILD_GATHER */
           if (!this.give(pl, ob.ore)) { pl.act = null; return; }
           this.gained(S, pl, ob.ore);
+        /* (2026-09-25) A STONE, sometimes. GEM_DROP is keyed by ore, so the rock you are mining decides which gem,
+           and the same rock decides which arrows that gem tips. keepRare, because a gem that vanished into a full
+           bag would be the rarest thing this skill loses. */
+        for (const [gk, gp] of (G.GEM_DROP[ob.ore] || [])) if (Math.random() < gp * (1 + G.charmOf(C, "stonesense") / 100)) { const where = this.keepRare(pl, gk, 1); if (where) { this.emit(pl, "loot", { k: gk, n: 1 }); this.say(pl, `Something glints in the ore: a ${G.ITEMS[gk].name.toLowerCase()}!${where === "bank" ? " Your bag was full, so it went to your bank." : ""}`, "loot"); } }
           this.grant(pl, "mining", gx(ob.xp || (ob.ore === "tin" ? 18 : 17))); this.say(pl, `You mine some ${G.ITEMS[ob.ore].name.toLowerCase()}.`, "good");
           /* (2026-09-22) IT ONLY GOES EMPTY WHEN THE ROCK IS ACTUALLY OUT. This used to set emptyUntil and clear
              pl.act on EVERY success, so one ore cost a click and an eight-second wait. Same shape as the olive
@@ -2102,17 +2433,22 @@ export class World {
        on with the best thing you can make (cooking, smelting); the anvil is
        not, because "which of the forty things" is a question only you can
        answer, so it waits for a.pick. */
-    if (a.kind === "cook" || a.kind === "smelt" || a.kind === "smith" || a.kind === "brew") {
+    if (a.kind === "cook" || a.kind === "smelt" || a.kind === "smith" || a.kind === "brew" || a.kind === "fletch" || a.kind === "print") {
+      const nx = G.STATIONS[ob.t]?.nexus ? G.NEXUS : null;   /* (2026-09-26) the Nexus: twice the output, half as much xp again */
       const st = G.STATIONS[ob.t];
       if (!st) { pl.act = null; return; }
       const lv = G.lvlOf(C, st.skill), all = G.recipesAt(ob.t);
-      // the anvil is told what to make; everything else takes the best it can
+      /* Told what to make? Make THAT and nothing else. Otherwise take the best you can, which is what every
+         station except the anvil has always done and is still what one click gets you.
+         THE POINT OF A PICK IS THAT IT DOES NOT DRIFT: if the chosen thing runs out, the loop stops and says so
+         rather than falling through to the next best, because falling through is the bug being fixed - it is how
+         a bag of sardines became a cooked bowfin. */
       const wanted = a.pick ? all.find((r) => r.id === a.pick) : null;
-      const r = st.auto ? all.find((x) => G.canMake(C, x)) : (wanted && G.canMake(C, wanted) ? wanted : null);
+      const r = wanted ? (G.canMake(C, wanted) ? wanted : null) : (st.auto ? all.find((x) => G.canMake(C, x)) : null);
       if (!r) {
-        if (!st.auto && wanted) this.say(pl, G.lvlOf(C, wanted.skill) < wanted.lvl
+        if (wanted) this.say(pl, G.lvlOf(C, wanted.skill) < wanted.lvl
           ? `You need a ${G.SKILLS[wanted.skill].name} level of ${wanted.lvl} to ${st.verb} that.`
-          : `You don't have what that takes: ${wanted.in.map(([k, n]) => `${n} × ${G.ITEMS[k].name.toLowerCase()}`).join(", ")}.`, "bad");
+          : `You need ${wanted.in.filter(([k, n]) => G.countItems(C, [k]) < n).map(([k, n]) => `${n} × ${G.ITEMS[k].name.toLowerCase()} (you have ${G.countItems(C, [k])})`).join(" and ")}.`, "bad");
         else {
           // nothing doable: say whether it is a level or a missing ingredient
           const tooHard = all.find((x) => x.in.every(([k, n]) => G.countItems(C, [k]) >= n) && lv < x.lvl);
@@ -2136,7 +2472,7 @@ export class World {
       }
       const outName = G.ITEMS[r.out[0]].name.toLowerCase();
       if (!a.started && r.burnStop != null && G.burnChance(r, lv, ob.t === "range") >= G.COAL_STEADY_MIN && G.countItems(C, ["charcoal"]) > 0) this.say(pl, "You bank the fire with charcoal. Nothing will burn while it lasts.", "good");   /* said once at the start, so the fuel is never spent silently */
-      if (!a.started) { a.started = now; a.next = now + r.ms; pl.swingAt = now; this.say(pl, `You start ${st.verb === "cook" ? "cooking" : st.verb === "smelt" ? "smelting" : st.verb === "brew" ? "brewing" : "hammering out"} the ${st.verb === "cook" ? G.ITEMS[r.in[0][0]].name.toLowerCase().replace(/^raw /, "") : outName}.`); return; }
+      if (!a.started) { a.started = now; a.next = now + r.ms; pl.swingAt = now; this.say(pl, `You start ${st.verb === "cook" ? "cooking" : st.verb === "smelt" ? "smelting" : st.verb === "brew" ? "brewing" : st.verb === "print" ? "printing" : "hammering out"} the ${st.verb === "cook" ? G.ITEMS[r.in[0][0]].name.toLowerCase().replace(/^raw /, "") : outName}.`); return; }
       if (now - pl.swingAt > 900) pl.swingAt = now;
       if (now < a.next) return;
       a.next = now + r.ms;
@@ -2146,7 +2482,7 @@ export class World {
          NULL, and bagMax(null) is a flat INV_MAX - so this line sized every station in the game at 20 slots and
          silently ignored the pockets bought with tickets and earned from achievements. The `burnt` check beside
          it always passed C, which is exactly why it read as correct at a glance. */
-      if (G.roomFor(C.inv, r.out[0], C) < r.out[1] || (r.burnStop != null && G.roomFor(C.inv, "burnt", C) < 1)) { this.say(pl, "Your inventory is full.", "bad"); pl.act = null; return; }
+      if (G.roomFor(C.inv, r.out[0], C) < r.out[1] * (nx ? nx.mult : 1) || (r.burnStop != null && G.roomFor(C.inv, "burnt", C) < 1)) { this.say(pl, "Your inventory is full.", "bad"); pl.act = null; return; }
       for (const [k, n] of r.in) G.takeInv(C.inv, k, n);
       /* (2026-09-22) CHARCOAL STEADIES THE FIRE: spend one instead of taking the burn roll. Only when the risk is
          worth it (G.COAL_STEADY_MIN) - at a 3% burn a charcoal costs more than the fish it saves, and silently
@@ -2159,7 +2495,7 @@ export class World {
          fine until players reported losing fish. Keep the outcome in a variable and decide separately. */
       let burnt = false;
       if (r.burnStop != null) {
-        const risk = G.burnChance(r, lv, ob.t === "range");
+        const risk = G.burnChance(r, lv, ob.t === "range") * (1 - G.charmOf(C, "steadyhands") / 100);   /* (2026-09-26) Steady Hands */
         if (risk >= G.COAL_STEADY_MIN && G.countItems(C, ["charcoal"]) > 0) G.takeInv(C.inv, "charcoal", 1);
         else if (Math.random() < risk) { burnt = true; this.give(pl, "burnt"); this.emit(pl, "burn", {}); this.say(pl, "You burn it.", "bad"); }
       }
@@ -2178,8 +2514,9 @@ export class World {
           : `The ${G.ITEMS[r.in[0][0]].name.toLowerCase()} crumbles to ash. Nothing usable.`, "bad");
       }
       if (!burnt) {
-        this.give(pl, r.out[0], r.out[1]);
-        this.gained(S, pl, r.out[0], r.out[1], r.skill === "cooking" ? "cook" : "craft");
+        const outN = r.out[1] * (nx ? nx.mult : 1);
+        this.give(pl, r.out[0], outN);
+        this.gained(S, pl, r.out[0], outN, r.skill === "cooking" ? "cook" : "craft");
         /* (2026-09-23, the owner: "lets make sure we have the group bonus (+1% etc) to the campfire when users are
            cooking"). Standing at a fire with other people now pays what standing at a rock with them does: +1% xp
            each. It was only ever wired into the GATHERING branch, so a busy campfire was worth exactly as much as
@@ -2191,13 +2528,16 @@ export class World {
            asking for on its own. */
         const group = this.workersOn(S, ob, pl) * 0.01;
         this.groupNote(S, pl, a, "your xp");
-        this.grant(pl, r.skill, Math.round(r.xp * (1 + group)));
-        if (r.skill !== "cooking") this.say(pl, `You make ${r.out[1] > 1 ? `${r.out[1]} × ` : "a "}${outName}.`, "good");
+        /* (2026-09-25) "2X tickets and crafting experience". CRAFTING is this loop - the fire, the range, the
+           furnace, the anvil and the cauldron - and nothing else. Doubling inside grant() would have caught
+           combat, gathering and quest rewards too, which is not what was asked and would be a far bigger lever. */
+        this.grant(pl, r.skill, Math.round(r.xp * (1 + group) * (this.doubleOn() ? G.DOUBLE.mult : 1) * (nx ? nx.xp : 1)));
+        if (r.skill !== "cooking") this.say(pl, `You ${st.verb === "print" ? "print" : "make"} ${outN > 1 ? `${outN} × ` : "a "}${outName}.${nx ? " The Nexus doubles it." : ""}`, "good");
       }
       this.touch(pl);
       this.questCheck(pl);
-      const again = st.auto ? all.some((x) => G.canMake(C, x)) : G.canMake(C, r);
-      if (!again) { this.say(pl, `That's everything you can ${st.verb} for now.`); pl.act = null; }
+      const again = a.pick ? G.canMake(C, r) : (st.auto ? all.some((x) => G.canMake(C, x)) : G.canMake(C, r));
+      if (!again) { this.say(pl, a.pick ? `That's the last ${outName.toLowerCase()} you can ${st.verb}.` : `That's everything you can ${st.verb} for now.`); pl.act = null; }
       return;
     }
     if (a.kind === "tree") {
@@ -2210,7 +2550,7 @@ export class World {
       a.next = now + chop;
       const oak = ob.t === "oak";
       this.groupNote(S, pl, a);
-      if (Math.random() < Math.min(0.9, (oak ? 0.5 : 0.35) + G.lvlOf(C, "woodcutting") * 0.02) + bonus) {
+      if (Math.random() < (Math.min(0.9, (oak ? 0.5 : 0.35) + G.lvlOf(C, "woodcutting") * 0.02) + bonus) * G.gatherMul(S.def)) {   /* half out in the Wilderness: see WILD_GATHER */
         const log = ob.log || "logs";
         if (!this.give(pl, log)) { pl.act = null; return; }
         this.gained(S, pl, log);
@@ -2257,7 +2597,7 @@ export class World {
       a.next = now + Math.round(G.FISHING.ms / ((1 + G.swingFx(C)) * G.toolSpeed(C, "fishing")));
       const lvl = G.lvlOf(C, "fishing"), fish = G.fishAt(ob, lvl, Math.random()), trout = fish === ob.fish2;   /* v68: every spot names its fish, and a second one from fish2lvl (`trout` now just means "the second fish") */
       this.groupNote(S, pl, a);
-      if (Math.random() < Math.min(0.97, G.FISHING.chance(lvl) + bonus + fx.bite)) {
+      if (Math.random() < Math.min(0.97, G.FISHING.chance(lvl) + bonus + fx.bite) * G.gatherMul(S.def)) {   /* half out in the Wilderness: see WILD_GATHER */
         if (!this.give(pl, fish)) { pl.act = null; return; }
         this.gained(S, pl, fish);
         if (fx.tix > 0 && Math.random() < fx.tix && this.give(pl, fish)) this.say(pl, "Two on one line!", "good");   /* the ticket buffs, for a fisher: that chance of a second fish */
@@ -2282,6 +2622,7 @@ export class World {
        Sending the type lets the page pitch it by size. This is also the fragile-trigger fix the backlog asks for:
        reword that chat line now and the sound is unaffected. */
     pl.out.push({ type: "mobdie", t: m.t });
+    if (S.def.count) return this.countKill(S, pl, m, now);
     if (S.def.crypt) return this.cryptKill(S, pl, m, now);
     if (S.def.pyramid) return this.pyramidKill(S, pl, m, now);
     const def = G.MOBS[m.t];
@@ -2293,11 +2634,28 @@ export class World {
     m.dead = true; m.claim = null;
     m.respawnAt = now + (Array.isArray(own) ? rint(own[0], own[1]) : own || G.respawnMs(S.def, m.t, fighters));
     pl.act = null;
+    /* (2026-09-25) STAND AND SHOOT. An archer with a loaded quiver draws on the next monster OF THE SAME KIND inside
+       the bow's reach - same kind, so a chicken run never turns into a fight with the guard beside it. lastInput is
+       not touched: the AFK timer still ends it. */
+    if (G.ARCHERY.retarget && G.launcherOf(pl.C) && pl.C.quiver?.n > 0) {
+      const reach = G.reachOfHeld(pl.C);
+      const next = S.mobs.filter((x) => !x.dead && x.t === m.t && x.id !== m.id && G.cheb(pl, x) <= reach && this.mayFight(S, x, pl, now)).sort((a, b) => G.cheb(pl, a) - G.cheb(pl, b))[0];
+      if (next) pl.act = { kind: "mob", id: next.id, x: next.x, y: next.y, name: def.name, reach, started: now };
+    }
     const got = [];
     for (const [k, n, chance] of def.drops) {
       if (chance != null && Math.random() >= chance) continue;
       let qty = Array.isArray(n) ? rint(n[0], n[1]) : n;
-      if (k === "tickets") { qty = Math.round(qty * (1 + G.fxOf(pl.C).tix + G.petFx(pl.C).tix / 100)); this.earned(pl, qty); }   /* fxOf is a fraction; petFx.tix is a percent */   /* the ticket buffs (G.fxOf), and the VIP count */
+      /* (2026-09-25) THE 2X EVENT REACHES A KILL'S TICKETS HERE, and only here. I first put the doubling in
+         tixTo and said it was "the one place every ticket in the game passes through" — it is not. A monster's
+         tickets are not PAID, they are DROPPED: they are the first line of its drop table (see the BOUNTY loop
+         in the rules), handed over by the ordinary item path, so tixTo never sees them and the event missed the
+         single biggest source of tickets in the game. The owner asked whether it applied to ticket drops, which
+         is how it was found.
+         Doubling the QUANTITY at the drop covers all fifty-odd monsters without touching a single drop table,
+         and it happens AFTER the ticket buffs so a Coin Toad and a 2X multiply rather than one swallowing the
+         other. tools/eastscape-content-check.mjs now fails if either of the two paths loses its doubling. */
+      if (k === "tickets") { qty = Math.round(qty * (1 + G.fxOf(pl.C).tix + G.petFx(pl.C).tix / 100)); if (this.doubleOn()) qty = Math.round(qty * G.DOUBLE.mult); this.earned(pl, qty); }   /* fxOf is a fraction; petFx.tix is a percent */   /* the ticket buffs (G.fxOf), and the VIP count */
       if (this.give(pl, k, qty)) { got.push([k, qty]); this.emit(pl, "loot", { k, n: qty }); }
     }
     /* (2026-09-22) A PET. 1 in 1,000 in the Boneyard and beyond, rolled per kill and never more than one at a time.
@@ -2326,14 +2684,29 @@ export class World {
          already includes its winner, so this is the house style, not a new one.) */
       for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `🐾 ${pl.name} found a pet: ${G.PETS[k].name}, off a ${def.name.toLowerCase()}!` });   /* the monster is worth saying: a 1-in-1000 drop is a story, and "off a Yard Gator" is most of it */
     }
+    /* (2026-09-27) THE LONG NIGHT rides every kill: candy corn at a flat rate (doubled at Nightfall), ectoplasm now and then, and a
+       monster that carries its own pet (the King's Black Cat) rolls it here, outside the 1-in-1,000 pool above. */
+    if (G.hwOn()) {
+      const dbl = G.nightfallOn() ? 2 : 1;
+      if (Math.random() < G.HW.corn.kill) { const n = rint(G.HW.corn.n[0], G.HW.corn.n[1]) * dbl; if (this.give(pl, "candycorn", n)) got.push(["candycorn", n]); }
+      if (Math.random() < G.HW.ecto && this.give(pl, "ectoplasm", 1)) { got.push(["ectoplasm", 1]); this.emit(pl, "loot", { k: "ectoplasm", n: 1 }); }
+      if (def.pet && G.PETS[def.pet[0]] && Math.random() < def.pet[1] && !pl.C.pets.some((p) => p.k === def.pet[0])) {
+        const k = def.pet[0], pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k, name: "" };
+        pl.C.pets.push(pet); if (!pl.C.eq.pet) pl.C.eq.pet = pet.id; this.touch(pl);
+        this.say(pl, `${G.PETS[k].name} steps out of the ${def.name.toLowerCase()}'s shadow and sits at your heel. A pet: name it in your Equipment tab.`, "loot");
+        for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `🐈‍⬛ ${pl.name} found a pet: ${G.PETS[k].name}, off ${def.name}!` });
+      }
+      if (m.t === "pumpkinking") { m.respawnAt = Infinity; S.mobs = S.mobs.filter((x) => x !== m); S.whoSig = null; this.hwKingDown(pl, now); }   /* the corpse goes: the ordinary respawn loop must never bring him back, the hour does */
+    }
     this.say(pl, `You defeat the ${def.name.toLowerCase()}.${got.length ? ` It drops ${got.map(([k, n]) => `${n > 1 ? n + " " : ""}${G.ITEMS[k].name.toLowerCase()}`).join(", ")}.` : ""}`, "loot");
-    this.emit(pl, "kill", { mob: m.t });
+    this.emit(pl, "kill", { mob: m.t, style: G.styleOf(pl.C) });   /* (2026-09-27) the style, for a quest that asks for a bow or a wand */
     /* (2026-09-22) THE TOWER's floor. Last, so everything a normal kill does has already happened — a tower monster
        is an ordinary monster in every other respect, which is what keeps it out of the combat code entirely. */
     if (S.def.tower) this.towerCleared(S, pl, m);
   }
   // killer: the player who landed the last hit, or { mob: name }
   die(pl, S, killer) {
+    if (S?.def.count) return this.countDeath(pl, S);
     if (S?.def.crypt) return this.cryptDeath(pl, S);
     if (S?.def.pyramid) return this.pyramidDeath(pl, S);
     if (S?.def.tower) return this.towerDeath(pl, S);   /* (2026-09-22) out of the Tower, back to the Yard: the climb is lost, the checkpoint is not */
@@ -2347,6 +2720,11 @@ export class World {
     }
     this.emit(pl, "death", { pvp: !!S?.def.pvp });
     if (pk) this.emit(pk, "pvpkill", { victim: pl.id });
+    /* (2026-09-25, the owner: PvP kills in the Wildy "need to be announced in chat globally"). EVERYBODY hears
+       it, wherever they are - that is the point of a Wilderness kill, and a line in chat is the only thing that
+       makes the risk out there visible to people who never go. Only a real player kill in a pvp scene: a death
+       to a monster, a fall, or a duel in the Cage is not somebody being robbed. */
+    if (pk && S?.def?.pvp && !G.inCage(S.def, pl.x, pl.y)) this.houseSay(`⚔️ ${pl.name} was just slain by ${pk.name} in ${S.def.name}.`);
     let lost = null;
     if (S?.def.pvp) {
       const worn = G.SLOTS.filter((s) => C.eq[s]);
@@ -2356,7 +2734,8 @@ export class World {
       this.say(pl, `${pk ? `${pk.name} killed you` : `A ${killer?.mob?.toLowerCase() || "monster"} killed you`} in the Wilderness.${nm ? ` You dropped your ${nm}.` : " You kept everything this time."}`, "bad");
       for (const p of this.pls.values()) if (p !== pl && p !== pk && G.sceneDef(p.C.scene)?.pvp) this.say(p, `☠️ ${pl.name} was killed by ${pk ? pk.name : `a ${killer?.mob?.toLowerCase() || "monster"}`}.`);
     }
-    { const bill = pl.god || S?.def.pvp ? 0 : G.deathBill(C, S?.key); if (bill > 0) { G.takeInv(C.inv, "tickets", bill); this.touch(pl); this.say(pl, `THE HOSPITAL BILL: ${G.fmtTix(bill)}. They patched you up and went through your pockets.`, "bad"); } }   /* v68: the only thing a death costs */
+    if (C.ward && !S?.def.pvp) { C.ward = false; this.touch(pl); this.say(pl, "The Witch's brew takes the fall for you: no hospital bill this time.", "good"); }   /* (2026-09-27) the ward is spent by the death it saves you from */
+    else { const bill = pl.god || S?.def.pvp ? 0 : G.deathBill(C, S?.key); if (bill > 0) { G.takeInv(C.inv, "tickets", bill); this.touch(pl); this.say(pl, `THE HOSPITAL BILL: ${G.fmtTix(bill)}. They patched you up and went through your pockets.`, "bad"); } }   /* v68: the only thing a death costs */
     this.say(pl, "Oh dear, you are dead! You wake up on the casino floor. Nobody looks surprised.", "bad");
     C.hp = G.maxHpOf(C);
     this.moveToScene(pl, G.START.scene, null, { x: G.START.x, y: G.START.y });
@@ -2366,7 +2745,8 @@ export class World {
   pvpSwing(S, pl, a, now, faceIt) {
     const T = this.pls.get(a.id), C = pl.C;
     if (!T || T.C.scene !== S.key || !S.def.pvp) { pl.act = null; return; }
-    if (G.cheb(pl, T) !== 1) { const p = G.findPath(S.g, pl, T, 1); if (p && p.length) pl.path = p; else if (!p) pl.act = null; return; }
+    if (G.launcherOf(C) && !G.ammoOf(C)) { pl.act = null; return this.say(pl, `You have no ${G.ammoWords(G.launcherOf(C).launcher.ammo).many}.`, "bad"); }
+    { const reach = G.reachOfHeld(C); if (G.cheb(pl, T) > reach || (reach === 1 && G.cheb(pl, T) !== 1)) { const p = G.findPath(S.g, pl, T, reach); if (p && p.length) pl.path = p; else if (!p) pl.act = null; return; } }
     const cage = G.inCage(S.def, pl.x, pl.y);
     if (cage !== G.inCage(S.def, T.x, T.y)) { this.say(pl, "The cage bars are in the way."); pl.act = null; return; }
     a.x = T.x; a.y = T.y; faceIt();
@@ -2375,10 +2755,14 @@ export class World {
     pl.urgeStep = pl.urge ? Math.min((pl.urgeStep | 0) + 1, G.SWING_STACK.length - 1) : 0;
     pl.urge = false;
     pl.lastSwing = now; pl.swingAt = now; pl.combatAt = now; T.combatAt = now;
-    const TC = T.C, hit = Math.random() < G.hitChance(G.attackRollOf(C), G.defenceRollOf(TC)), dmg = hit ? rint(1, G.maxHitOf(C)) : 0;
+    const pel = G.launcherOf(C) ? G.ammoElOf(C) : null;   /* (2026-09-26) in PvP only Void's pierce and Sun's heal apply: no burns, slows or arcs between players */
+    const TC = T.C, hit = Math.random() < G.hitChance(G.attackRollOf(C), G.defenceRollOf(TC) * (pel === "void" ? 1 - G.MAGIC.pierce : 1)), dmg = hit ? rint(1, G.maxHitOf(C) + G.ammoStrOf(C)) : 0;
+    if (dmg && pel === "sun") C.hp = Math.min(G.maxHpOf(C), C.hp + Math.max(1, Math.round(dmg * G.MAGIC.sunHeal)));
+    const shotK = G.launcherOf(C) ? G.ammoOf(C)?.k : null;
+    this.spendAmmo(pl);
     if (!T.god) { TC.hp -= dmg; this.touch(T); }
     if (dmg) T.hurtAt = now;
-    S.events.push({ type: "splat", who: `p:${T.id}`, n: dmg, kind: dmg ? "hit" : "miss", t: now });
+    S.events.push({ type: "splat", who: `p:${T.id}`, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, ranged: G.launcherOf(C) ? true : undefined, ak: shotK || undefined });
     // real fights train you; the Cage doesn't
     if (!cage) this.award(pl, dmg);
     // hit back, if they weren't doing anything
@@ -2451,8 +2835,9 @@ export class World {
       if (G.lvlOf(C, "farming") < crop.lvl) return this.say(pl, `You need a Harvesting level of ${crop.lvl} to grow ${G.ITEMS[k].name.toLowerCase()}.`, "bad");
       const st = C.inv.find((x) => x.k === k); if (!st) return;
       st.n--; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1);
-      I.plots[i] = { k, at: Date.now() }; this.touch(pl);
-      return this.say(pl, `You plant some ${G.ITEMS[k].name.toLowerCase()}. It'll be ready in ${Math.round(crop.ms / 60000)} minutes, whether you're here or not.`, "good");
+      const rain = G.charmOf(C, "rainmaker"), ms = Math.round(crop.ms * (1 - rain / 100));   /* (2026-09-26) Rainmaker: this plot grows faster, and remembers it */
+      I.plots[i] = { k, at: Date.now(), ...(rain ? { ms } : {}) }; this.touch(pl);
+      return this.say(pl, `You plant some ${G.ITEMS[k].name.toLowerCase()}. It'll be ready in ${Math.round(ms / 60000)} minutes, whether you're here or not.${rain ? " The rain is on it." : ""}`, "good");
     }
     if (m.op === "show") {
       const i = m.i | 0, st = C.inv[m.s | 0];
@@ -2515,14 +2900,15 @@ export class World {
     }
     const p = I.plots[ob.i];
     if (!p) return mine ? pl.out.push({ type: "plant", i: ob.i }) : this.say(pl, "An empty plot.");
-    const crop = G.CROPS[p.k], left = p.at + crop.ms - now, nm = G.ITEMS[p.k].name.toLowerCase();
+    const crop = G.CROPS[p.k], yk = G.cropYield(p.k), left = p.at + (p.ms || crop.ms) - now, nm = G.ITEMS[yk].name.toLowerCase();   /* (2026-09-26) a seed grows its bloom */
     if (!mine) return this.say(pl, `${whose} ${nm} ${left > 0 ? "is growing" : "looks ready to pick"}.`);
     if (left > 0) return this.say(pl, `Your ${nm} will be ready in ${left > 90000 ? `about ${Math.round(left / 60000)} minutes` : `${Math.ceil(left / 1000)} seconds`}.`);
     const n = rint(crop.yield[0], crop.yield[1]);
-    if (!this.give(pl, p.k, n)) return;
+    if (!this.give(pl, yk, n)) return;
+    const back = !!crop.yields && Math.random() < G.SEED_RETURN && !!this.give(pl, p.k, 1);   /* (2026-09-27) a seed crop gives a seed back one time in four (G.SEED_RETURN) */
     I.plots[ob.i] = null; this.touch(pl);
-    this.gained(S, pl, p.k, n); this.grant(pl, "farming", crop.xp);
-    this.say(pl, `You harvest ${n} ${nm}.`, "good");
+    this.gained(S, pl, yk, n); this.grant(pl, "farming", crop.xp);
+    this.say(pl, `You harvest ${n} ${nm}${back ? ", and a seed comes up with them" : ""}.`, "good");
   }
 
   // First hit claims a monster (outside the Wilderness, where anything goes): the claim is renewed by every swing and
@@ -2535,6 +2921,9 @@ export class World {
   mobsTick(S, now) {
     const players = this.playersIn(S);
     for (const m of S.mobs) {
+      /* (2026-09-26) FIRE'S BURN lands here, on its own clock, credited to whoever lit it - if they are still in the scene */
+      if (m.dot && !m.dead && now >= m.dot.at) { const d = m.dot, by = this.pls.get(d.by); m.dot = null;
+        if (by && by.C.scene === S.key) { m.hp -= d.dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: d.dmg, kind: "hit", t: now, burn: true }); this.award(by, d.dmg); if (m.hp <= 0) { const keep = by.act; this.killMob(S, by, m, now); if (keep && keep.id !== m.id) by.act = keep; } } }
       if (m.dead) {
         if (S.def.crypt || S.def.pyramid || now < m.respawnAt) continue;   /* (nothing comes back in a crypt or pyramid run) */   /* (2026-09-24) the pyramid relied on pyramidKill setting respawnAt to Infinity; saying it here too means a monster killed some other way cannot quietly come back and re-lock a cleared chamber */
         // back at home, or the nearest free tile to it: never on top of someone
@@ -2573,7 +2962,7 @@ export class World {
       }
       if (foe) {
         m.face = foe.x > m.x ? 1 : -1;
-        if (now - m.lastSwing >= G.MOBS[m.t].speed) {
+        if (now - m.lastSwing >= G.MOBS[m.t].speed * (m.slowUntil > now ? G.MAGIC.slow.mult : 1)) {   /* (2026-09-26) Frost slows the swing */
           m.lastSwing = now; m.swingAt = now;
           const C = foe.C, hit = Math.random() < G.hitChance(G.MOBS[m.t].att, G.defenceRollOf(C)), dmg = hit ? Math.max(1, Math.round(rint(1, G.MOBS[m.t].max) * (m.enraged ? (G.MOBS[m.t].enrage?.mul ?? CR.CRYPT.enrageMul) : 1) * (1 - G.fxOf(C).tough))) : 0;   /* (tough: the visor, the Safety Net; whiskey makes it worse) */
           if (!foe.god) { C.hp -= dmg; this.touch(foe); }
@@ -2594,7 +2983,7 @@ export class World {
         }
         continue;
       }
-      if (!this.stepEntity(S, m, now, false) && now > m.nextWander) {
+      if (!this.stepEntity(S, m, now, false) && now > m.nextWander && !m.perch) {
         m.nextWander = now + 2000 + Math.random() * 4000;
         const [dx, dy] = pick(G.D8), x = m.x + dx, y = m.y + dy;
         if (Math.abs(x - m.hx) <= 3 && Math.abs(y - m.hy) <= 2 && G.canStepIn(S.g, m.x, m.y, dx, dy) && S.g[y][x] !== "e" && !this.occupied(S, x, y, m)) m.path = [{ x, y }];
@@ -2778,6 +3167,11 @@ export class World {
       if (G.fOf(st)) { const f = G.fOf(st); if (!this.bankAdd(pl, st.k, 1, f)) return; G.takeAt(C.inv, m.i | 0); }
       else { const k = st.k, q = qty(m.n, G.countItems(C, [k], { plainOnly: true })); if (!this.bankAdd(pl, k, q)) return; G.takeInv(C.inv, k, q); } }
     else if (m.op === "depinv") { for (const st of [...C.inv]) { if (st.k === "tickets") continue; if (!this.bankAdd(pl, st.k, st.n)) break; C.inv.splice(C.inv.indexOf(st), 1); } }
+    /* (2026-09-25) STACK ALL: every plain stack in the bag whose item the bank already holds goes in, all of it. A reforged
+       piece is never swept (it is banked as itself, one at a time, by index), and neither are tickets. */
+    else if (m.op === "stackall") { const have = new Set(C.bank.filter((b) => !G.fOf(b)).map((b) => b.k));
+      for (const k of [...new Set(C.inv.filter((s) => !G.fOf(s) && s.k !== "tickets" && have.has(s.k)).map((s) => s.k))]) {
+        const q = G.countItems(C, [k], { plainOnly: true }); if (q && this.bankAdd(pl, k, q)) G.takeInv(C.inv, k, q); } }
     else if (m.op === "depeq") { for (const sl of G.SLOTS) { const k = C.eq[sl]; if (k && this.bankAdd(pl, k, 1)) C.eq[sl] = null; } }
     else if (m.op === "wd") { const st = C.bank[m.i | 0]; if (!st) return;
       if (G.fOf(st)) { if (!this.give(pl, st.k, 1, G.fOf(st))) return; C.bank.splice(m.i | 0, 1); this.touch(pl); return pl.out.push({ type: "bank" }); }
@@ -3389,18 +3783,18 @@ export class World {
   /* ------------------------------------------------------------ daily tasks (the board in the Casino) */
   dailyState(pl) {
     const C = pl.C, day = G.chicagoDay();
-    if (!C.daily || C.daily.day !== day) { C.daily = { day, tasks: G.dailyFor(C, pl.id, day).map((id) => ({ id, got: 0, claimed: false })) }; this.touch(pl); }
+    if (!C.daily || C.daily.day !== day) { C.daily = { day, tasks: G.dailyFor(C, pl.id, day).map((id) => ({ id, got: 0, claimed: false, n: G.dailyDef(id)?.n })) }; this.touch(pl); }
     /* (v111) the board got longer: somebody who already has today's list is topped up to the new length rather than waiting for
        tomorrow, keeping what they have done. dailyFor is a pure function of who and which day, so the extra ones are the ones
        they would have had. */
     else if (C.daily.tasks.length < G.DAILY_COUNT) { const have = new Set(C.daily.tasks.map((t) => t.id));
-      for (const id of G.dailyFor(C, pl.id, day)) if (!have.has(id) && C.daily.tasks.length < G.DAILY_COUNT) { C.daily.tasks.push({ id, got: 0, claimed: false }); have.add(id); }
+      for (const id of G.dailyFor(C, pl.id, day)) if (!have.has(id) && C.daily.tasks.length < G.DAILY_COUNT) { C.daily.tasks.push({ id, got: 0, claimed: false, n: G.dailyDef(id)?.n }); have.add(id); }
       this.touch(pl); }
     // a job that can no longer be done (its rocks or trees left the world mid-day) is swapped for one that can; a claimed one is left alone
     if (C.daily.tasks.some((t) => !t.claimed && !G.OPEN_DAILY.has(t.id))) {
       const have = new Set(C.daily.tasks.filter((t) => t.claimed || G.OPEN_DAILY.has(t.id)).map((t) => t.id));
       const spare = G.DAILY.filter((d) => G.OPEN_DAILY.has(d.id) && !have.has(d.id) && (!d.req || G.lvlOf(C, d.req.skill) >= d.req.lvl)).map((d) => d.id);
-      C.daily.tasks = C.daily.tasks.map((t) => (t.claimed || G.OPEN_DAILY.has(t.id) ? t : spare.length ? { id: spare.shift(), got: 0, claimed: false } : null)).filter(Boolean); this.touch(pl);
+      C.daily.tasks = C.daily.tasks.map((t) => (t.claimed || G.OPEN_DAILY.has(t.id) ? t : spare.length ? (() => { const id = spare.shift(); return { id, got: 0, claimed: false, n: G.dailyDef(id)?.n }; })() : null)).filter(Boolean); this.touch(pl);
     }
     return C.daily;
   }
@@ -3471,17 +3865,17 @@ export class World {
     if (what !== "gather" && what !== "kill" && what !== "make") return;
     const D = this.dailyState(pl);
     for (const t of D.tasks) {
-      const def = G.dailyDef(t.id); if (!def || t.claimed || t.got >= def.n) continue;
+      const def = G.dailyDef(t.id), need = G.dailyNeed(t); if (!def || t.claimed || t.got >= need) continue;
       if (def.what !== what || (what === "kill" ? d.mob : d.k) !== def.k) continue;
-      t.got = Math.min(def.n, t.got + (d.n || 1)); this.touch(pl);
-      if (t.got >= def.n) this.say(pl, `Daily task done! Claim your ${G.fmtCash(def.cash)} at the task board in the Casino.`, "good");
+      t.got = Math.min(need, t.got + (d.n || 1)); this.touch(pl);
+      if (t.got >= need) this.say(pl, `Daily task done! Claim your ${G.fmtCash(def.cash)} at the task board in the Casino.`, "good");
     }
   }
   dailyOp(S, pl, m) {
     if (m.op === "open") return this.dailySend(pl);
     if (m.op !== "claim" || !this.near(S, pl, "notice", 2)) return;
     const D = this.dailyState(pl), t = D.tasks.find((x) => x.id === m.id), def = t && G.dailyDef(t.id);
-    if (!def || t.claimed || t.got < def.n) return;
+    if (!def || t.claimed || t.got < G.dailyNeed(t)) return;
     t.claimed = true; pl.C.stats.jobs = (pl.C.stats.jobs | 0) + 1;   /* (v98) a lifetime tally, for the Quests completed board */ this.tixTo(pl, def.cash); this.touch(pl);
     this.say(pl, `You're paid ${G.fmtTix(def.cash)} for the day's work. The Prize Counter's in the middle of the floor.`, "good");
     this.dailySend(pl);
@@ -3597,6 +3991,15 @@ export class World {
         if (!skill) return; C.xp[skill] = f[skill]; C.hp = Math.min(C.hp, G.maxHpOf(C)); this.touch(pl); return note(`${G.SKILLS[skill].name} xp cleared.`);
       }
       case "item": { const k = String(m.k), n = Math.max(1, Math.min(1000000, m.n | 0)); if (!G.ITEMS[k]) return; const got = this.giveUpTo(pl, k, n); if (got) note(`Gave ${got.toLocaleString()} × ${G.ITEMS[k].name}.`); return; }
+      /* (2026-09-25, the owner: "allow me to spawn it in admin menu") Two ways, because they are different
+         jobs: `item pot_double` puts one in your bag to test the drinking, and this STARTS one outright without
+         spending anything. `mins` is optional so a test can run for two minutes instead of thirty. */
+      case "double": {
+        const mins = Math.max(0, Math.min(180, m.mins == null ? Math.round(G.DOUBLE.ms / 60000) : m.mins | 0));
+        if (!mins) { if (this.dbl) { this.dbl.until = 0; this.doubleTick(); } return note("2X event stopped."); }
+        this.doubleStart(m.by ? String(m.by).slice(0, 24) : pl.name, mins * 60000);
+        return note(`2X event started for ${mins} minutes.`);
+      }
       case "clearinv": C.inv = []; this.touch(pl); return note("Inventory cleared.");
       case "respin": C.spin = null; this.touch(pl); return note("Your Daily Prize Wheel spin is free again (your streak starts over).");
       /* (2026-09-23) FOR TESTING ACHIEVEMENTS. `ach clear` forgets them all so the next qualifying event fires
@@ -3614,7 +4017,8 @@ export class World {
       case "heal": C.hp = G.maxHpOf(C); this.touch(pl); return note("Healed.");
       case "god": pl.god = !pl.god; this.touch(pl); return note(pl.god ? "God mode on: nothing can hurt you." : "God mode off.");
       case "tp": { const key = String(m.scene); if (!G.SCENES[key] && key !== pl.C.scene) return;   /* (or somewhere else in the private copy you are already standing in: an island, a crypt run) */ this.moveToScene(pl, key, null, Number.isInteger(m.x) && Number.isInteger(m.y) ? { x: m.x, y: m.y } : null); return note(`Teleported to ${G.SCENES[key].name}.`); }
-      case "quest": { const k = String(m.k), state = String(m.state); if (!G.QUESTS[k] || !["new", "active", "done"].includes(state)) return; if (state === "new") delete C.qs[k]; else C.qs[k] = { state, n: 0 }; this.touch(pl); return note(`${G.QUESTS[k].name} set to ${state}.`); }
+      case "hwking": { this.hw.kingAt = Date.now() - 1; this.hw.kingDue = false; this.hw.kingUp = null; this.hwSave(); return note("The Pumpkin King is due now: he rises the moment somebody is in the Mire."); }   /* (2026-09-27) dev/admin: call the King */
+      case "quest": { const k = String(m.k), state = String(m.state); if (!G.QUESTS[k] || !["new", "active", "done"].includes(state)) return; if (state === "new") delete C.qs[k]; else C.qs[k] = { state, stage: 0, n: 0 }; this.touch(pl); return note(`${G.QUESTS[k].name} set to ${state}.`); }
       case "resetquests": C.qs = {}; this.touch(pl); return note("All quests reset.");
       case "resetscene": { this.scenes.delete(S.key); const S2 = this.scene(S.key); this.placeSafely(S2, pl); return note(`${S.def.name} reset: monsters, trees, rocks and bots are back.`); }
       case "reset": { const settings = C.settings; pl.C = G.freshChar(); pl.C.settings = settings; pl.x = pl.C.x; pl.y = pl.C.y; this.moveToScene(pl, pl.C.scene, null, { x: pl.x, y: pl.y }); this.touch(pl); return note("Character reset to a brand-new one."); }
@@ -3706,6 +4110,7 @@ export class World {
 }
 installCrypt(World, { G, R: CR, rint });
 installPyramid(World, { G, R: PR, rint });
+installCount(World, { G, R: NR, rint });
 installCarnival(World, { G, rint });
 installTurnstile(World, { G });
 installPit(World, { G });

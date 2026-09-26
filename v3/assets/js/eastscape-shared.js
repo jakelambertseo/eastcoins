@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 282;
+export const VERSION = 283;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1519,7 +1519,7 @@ Object.assign(SCENES, {
       ["counter", 8, 5], ["counter", 11, 8], ["counter", 6, 9], ["counter", 13, 4], ["counter", 9, 10],
       ["taxwraith", 29, 2], ["taxwraith", 30, 3], ["taxwraith", 28, 3], ["taxwraith", 29, 4],
       ["shark", 7, 20, { aggro: 3 }], ["shark", 3, 21], ["shark", 4, 23]],
-    npcs: [{ name: "Mudge the Lamplighter", art: "mudge", x: 38, y: 12, still: true, quests: ["lamps", "vials", "lanterns"], hair: "#8a8a8a", shirt: "#c8a020", pants: "#3a3a3a", lines: ["Eleven lamps. I light them, the twisters knock them down, I light them. It's a living.", "The water's deeper than it looks and the fish are shallower than they look.", "Vance says he owes me. Vance owes everybody. That's how he keeps friends."] }], bots: []
+    npcs: [{ name: "Mudge the Lamplighter", art: "mudge", x: 38, y: 12, still: true, quests: ["lamps", "vials", "lanterns", "hw_lights"], hair: "#8a8a8a", shirt: "#c8a020", pants: "#3a3a3a", lines: ["Eleven lamps. I light them, the twisters knock them down, I light them. It's a living.", "The water's deeper than it looks and the fish are shallower than they look.", "Vance says he owes me. Vance owes everybody. That's how he keeps friends."] }], bots: []
   },
   /* THE GOLDEN SANDS, 40-49 (2026-09-24). West out of the Boneyard, and a SECOND ROUTE rather than a rung: at
      Combat 40 you may go north to Cloudreach or west to here, and each has its own ore, tree and fish.
@@ -2324,7 +2324,7 @@ Object.assign(SCENES, {
       ["ghoul", 28, 9], ["ghoul", 32, 8], ["ghoul", 36, 10], ["ghoul", 40, 9], ["ghoul", 30, 10], ["ghoul", 38, 8],
       ["usher", 4, 19], ["usher", 8, 21], ["usher", 5, 22], ["usher", 9, 19], ["usher", 3, 23], ["usher", 10, 23],
       ["critic", 22, 21]],
-    npcs: [{ name: "Sister Morrow", art: "morrow", x: 25, y: 15, still: true, quests: ["morrowbones", "yewbow", "spidersilk", "dragonstone"], hair: "#1a1a1a", shirt: "#1a1a1a", pants: "#1a1a1a", lines: ["They get up. I put them down. Most days that's the whole sermon.", "The Critic in the Royal Box has never once been dead. I've checked.", "Mind the rails. They're not to keep you out."] }], bots: []
+    npcs: [{ name: "Sister Morrow", art: "morrow", x: 25, y: 15, still: true, quests: ["morrowbones", "yewbow", "spidersilk", "dragonstone", "hw_vigil"], hair: "#1a1a1a", shirt: "#1a1a1a", pants: "#1a1a1a", lines: ["They get up. I put them down. Most days that's the whole sermon.", "The Critic in the Royal Box has never once been dead. I've checked.", "Mind the rails. They're not to keep you out."] }], bots: []
   },
   // east of the Forum: the great road, a toll post, highwaymen, and a barricade where the road washed out
 });
@@ -3153,6 +3153,7 @@ export const isleKey = (isle, id) => `${["isle", "isle", "isle2", "isle3"][isle?
 // the same scene, built the same way everywhere; every object gets its index as its id
 export function buildScene(key) {
   const sc = sceneDef(key), b = sc.build.call(sc);
+  hwObjs(String(key).split(":")[0], b);   /* (2026-09-27) the Long Night's jack-o'-lanterns and ghost lanterns, while the event is on */
   markBanks(b.g);
   b.objs.forEach((o, i) => { o.id = i; o.w ??= 1; o.h ??= 1; });
   return b;
@@ -4055,10 +4056,10 @@ export const ACH = {
   m_lvl75:    { name: "Expert Hands",       blurb: "Reach level 75 in any skill.",                   tier: "master", on: ["xp"],     has: (c) => Object.keys(SKILLS).some((k) => lvlOf(c, k) >= 75) },
   m_lvl60all: { name: "Across The Board",   blurb: "Reach level 60 in every skill.",                 tier: "master", on: ["xp"],     has: aSkills(60) },
   m_gather5k: { name: "Hoarder",            blurb: "Gather 5,000 things.",                           tier: "master", on: ["gather"], has: (c) => asum(aOf(c, "gathered")) >= 5000 },
-  m_pets:     { name: "The Whole Kennel",   blurb: "Own all five pets.",                             tier: "master", on: ["kill"],   has: (c) => new Set((c && c.pets || []).map((x) => x.k)).size >= Object.keys(PETS).length },
+  m_pets:     { name: "The Whole Kennel",   blurb: "Own all five pets.",                             tier: "master", on: ["kill"],   has: (c) => Object.keys(PETS).filter((k) => !PETS[k].event).every((k) => (c && c.pets || []).some((x) => x.k === k)) },   /* (2026-09-27) event pets do not count: a Black Cat from one October must not lock this for everyone after */
   m_total500: { name: "Five Hundred",       blurb: "Reach a total level of 500.",                    tier: "master", on: ["xp"],     has: (c) => totalOf(c) >= 500 },
   m_zcoin10:  { name: "Prospector",         blurb: "Find ten real ZCoins.",                          tier: "master", on: ["loot"],   has: (c) => (aOf(c, "looted").zcoin | 0) >= 10 },
-  m_allmobs:  { name: "Exterminator",       blurb: "Kill at least one of every monster.",            tier: "master", on: ["kill"],   has: (c) => Object.keys(MOBS).every((k) => (aOf(c, "kills")[k] | 0) > 0) },
+  m_allmobs:  { name: "Exterminator",       blurb: "Kill at least one of every monster.",            tier: "master", on: ["kill"],   has: (c) => Object.keys(MOBS).filter((k) => !MOBS[k].event).every((k) => (aOf(c, "kills")[k] | 0) > 0) },   /* (2026-09-27) event monsters do not count, for the same reason */
 
   /* ---- LEGEND ---- */
   l_lvl50all: { name: "Nothing Left Out",   blurb: "Reach level 50 in every single skill.",          tier: "legend", on: ["xp"],     has: aSkills(50) },
@@ -6652,9 +6653,13 @@ export function normChar(c) {
      lands in a slot of its own instead of being merged into the plain stack beside it. */
   const renamed = (st) => (st && st.k ? { k: aliasKey(st.k), n: st.n, ...(st.f ? { f: st.f } : {}) } : st);
   out.bank = (Array.isArray(c.bank) ? c.bank : []).map(renamed).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, BANK_MAX).map((s) => ({ k: s.k, n: s.n, ...(s.f ? { f: s.f } : {}) }));
+  /* (2026-09-27) CANDY CORN EXPIRES: the day after the Long Night, every load sweeps it from the bag and the bank. The wiki and the
+     item say so from the first day, so nobody is surprised; the fits, the set and the cat it bought stay. */
+  const expired = !hwOn() && chicagoDay() > HW.until;
+  if (expired) out.bank = out.bank.filter((s) => s.k !== "candycorn");
   // the bag is re-packed into stacks of 99; anything that no longer fits goes to the bank rather than vanishing
   out.inv = [];
-  for (const s of (Array.isArray(c.inv) ? c.inv : f.inv).map(renamed).filter((s) => s && ITEMS[s.k] && s.n > 0)) {
+  for (const s of (Array.isArray(c.inv) ? c.inv : f.inv).map(renamed).filter((s) => s && ITEMS[s.k] && s.n > 0 && !(expired && s.k === "candycorn"))) {
     /* (2026-09-24) `out`, NOT null. This ran on every single load and packed the bag into 20 slots, pushing
        whatever was left into the bank - so the two pockets a player bought and earned could never hold anything
        for longer than one refresh, and the bag looked as though it simply held 20. `out` already carries bagUp
@@ -6859,8 +6864,8 @@ export const qStageAt = (k, i) => { const st = QUESTS[k].stages; return st[Math.
 export const qStage = (c, k) => qStageAt(k, qGet(c, k).stage);
 export const qHandTo = (k) => QUESTS[k].handTo || QUESTS[k].giver;
 export const qNeed = (c, k) => { const s = qStage(c, k); return s.n || 1; };
-export const qHave = (c, k) => { const o = qGet(c, k), s = qStageAt(k, o.stage); return s.type === "bring" ? countItems(c, s.items) : s.type === "kill" || s.type === "gather" ? o.n | 0 : 0; };
-export const qOpen = (c, q) => (q.requires || []).every((r) => qGet(c, r).state === "done");
+export const qHave = (c, k) => { const o = qGet(c, k), s = qStageAt(k, o.stage); return s.type === "bring" ? countItems(c, s.items) : s.type === "gather" ? Math.max(o.n | 0, countItems(c, s.items)) : s.type === "kill" ? o.n | 0 : 0; };   /* (2026-09-27) a gather stage reads the bag too: what you already carry counts */
+export const qOpen = (c, q) => (q.requires || []).every((r) => qGet(c, r).state === "done") && (!q.event || hwOn());   /* (2026-09-27) a seasonal quest opens with its season */
 /* a bring stage's counterparty, and whether the quest's LAST stage is a bring to the hand-in person: that is the one case where
    "ready" is read off the bag rather than recorded, which is how every quest written before stages worked */
 export const qBringTo = (k, s) => s.to || QUESTS[k].giver;
@@ -6897,5 +6902,123 @@ export function nextHint(c, n) {
   const next = Object.keys(QUESTS).find((q) => !(n.quests || []).includes(q) && ["new", "active", "ready"].includes(qState(c, q)));
   return next ? (QUESTS[next].hint || `${QUESTS[next].giver} at ${QUESTS[next].where} could use a hand.`) : "That's all the work there is for now. Check back soon.";
 }
+
+/* ============================================================ THE LONG NIGHT (2026-09-27) — the Halloween event
+   The owner's brief: unique seasonal items, vanity, a seasonal drop set, a boss, rare drops from skilling and mobs, quests. Built
+   as ONE block behind ONE date window so that on Nov 2 it switches itself off and nothing has to be deleted by hand.
+
+   The four rules that keep it honest:
+   - CANDY CORN is the only new currency, it is ONLY spent at the Night Market and Ronde's rail, and it EXPIRES: normChar deletes it
+     the day after the event. Tickets are not touched, so nothing here inflates the real economy.
+   - Nothing seasonal beats what exists. The Hallowed set is Dragonstone-grade with a candy-corn perk; the pie is a heal and a meal
+     buff, NOT an xp buff (the rules file already says why, at "NO XP BUFF, DELIBERATELY").
+   - The boss is a WORLD clock (the server's, persisted), never a placement: a scene that stands empty two minutes is torn down, so a
+     mob with an hour's respawn would simply vanish. He rises once an hour in the Lantern Mire, the map that was drawn to hold him.
+   - Every seasonal picture, monster and pet is flagged `event: true`, and the two "collect everything" achievements skip those, so
+     the event can never make Exterminator or The Whole Kennel unearnable for somebody who joins in November. */
+export const HW = {
+  live: false,                                        /* THE SWITCH. false: everything below is dormant and invisible, whatever the date. true: the dates rule. */
+  from: "2026-09-25", until: "2026-11-01",            /* Chicago days, inclusive: the site's own spooky season starts the 25th */
+  night: [20, 21],                                    /* Nightfall: 8 to 9 PM Central, candy corn doubles */
+  corn: { kill: 0.30, gather: 0.10, n: [1, 3] },      /* the flat drop: any kill 30%, any gather 10%, 1-3 corn */
+  ecto: 0.06,                                         /* ectoplasm: 6% of any kill during the event */
+  lanterns: 10, lanternCorn: 4,                       /* the Ghost Hunt: ten lanterns a day across the open maps, 4 corn each, once a day each */
+  king: { every: 3600000, stays: 1200000, scene: "mire", at: [22, 14] },   /* the Pumpkin King: hourly, stands 20 minutes, the Mire's clearing */
+  trick: { corn: [6, 14], pie: 0.15, seed: 0.20, trickAt: 0.35 },          /* Trick or treat, once a day per person */
+  market: [["seed_pumpkin", 3, 12], ["medium_vial", 2, 8], ["ectoplasm", 1, 10], ["pumpkinpie", 1, 30]]   /* [item, n, corn] */
+};
+export const hwOn = (t = Date.now()) => { if (!HW.live) return false; const d = chicagoDay(t); return d >= HW.from && d <= HW.until; };
+export const hourCT = (t = Date.now()) => (+new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", hour12: false }).format(t)) % 24;
+export const nightfallOn = (t = Date.now()) => hwOn(t) && hourCT(t) >= HW.night[0] && hourCT(t) < HW.night[1];
+/** ms until the next Nightfall starts (or 0 while it is on) */
+export const nightfallIn = (t = Date.now()) => { if (nightfallOn(t)) return 0; const h = hourCT(t), m = new Date(t); const minsIn = m.getUTCMinutes() * 60000 + m.getUTCSeconds() * 1000; const hoursTo = (HW.night[0] - h + 24) % 24 || 24; return hoursTo * 3600000 - minsIn; };
+
+ITEMS.candycorn = { name: "Candy corn", icon: "\u{1F36C}", nocap: true, event: true, ex: "The Long Night's coin. Every kill and every catch drops a little; the Night Market and Ronde's rail take it. On November 2nd it turns back into sugar, so spend it." };
+ITEMS.pumpkin = { name: "Pumpkin", icon: "\u{1F383}", event: true, ex: "Grows in a night on your island, from a seed the Night Market sells. Bake it on a fire." };
+ITEMS.seed_pumpkin = { name: "Pumpkin seed", icon: "\u{1F331}", event: true, ex: "Plant it on your island. Harvesting 20. A quarter of harvests give the seed back." };
+ITEMS.pumpkinpie = { name: "Pumpkin pie", icon: "\u{1F967}", heal: 20, event: true, meal: { mins: 30, fx: { rare: 0.15, tix: 0.10 } }, ex: "Heals 20 and, for half an hour outside, rare drops come a little easier and every kill pays a little more. Not xp: nothing in EastScape buys xp." };
+ITEMS.ectoplasm = { name: "Ectoplasm", icon: "\u{1F47B}", event: true, ex: "What is left of something that did not want to leave. One kill in sixteen drops it during the Long Night; the cauldron wants it." };
+ITEMS.pot_witch = { name: "Witch's brew", icon: "\u{1F9EA}", use: "ward", event: true, ex: "Drink it and your next death costs nothing: no hospital bill. Used up by the death, however long that takes." };
+ITEMS.hallowed_helm = { name: "Hallowed helm", short: "Helm", icon: "\u{1F383}", slot: "helm", def: 13, acc: 3, tier: "hallowed", event: true, fx: { tix: 0.04 }, req: { skill: "melee", lvl: 40 }, ex: "The Pumpkin King's, or a copy. Lit from inside. Dragonstone-grade, and every kill in it pays a little more." };
+ITEMS.hallowed_body = { name: "Hallowed cuirass", short: "Cuirass", icon: "\u{1F9BA}", slot: "body", def: 23, tier: "hallowed", event: true, fx: { tix: 0.04 }, req: { skill: "melee", lvl: 40 }, ex: "Black iron with a pumpkin burning on the chest. Dragonstone-grade." };
+ITEMS.hallowed_legs = { name: "Hallowed greaves", short: "Greaves", icon: "\u{1F456}", slot: "legs", def: 19, tier: "hallowed", event: true, fx: { tix: 0.04 }, req: { skill: "melee", lvl: 40 }, ex: "The seams glow. Dragonstone-grade." };
+Object.assign(VALUE, { candycorn: 0, pumpkin: 20, seed_pumpkin: 6, pumpkinpie: 60, ectoplasm: 30, pot_witch: 220, hallowed_helm: 900, hallowed_body: 1400, hallowed_legs: 1100 });
+
+/* the crop: a seed crop like the elemental ones (the seed is planted, the pumpkin comes off it), quick so a plot planted at Nightfall is pie by morning */
+CROPS.seed_pumpkin = { lvl: 20, ms: 90 * 60000, yield: [2, 4], xp: 260, col: "#ff8a30", yields: "pumpkin", art: "pumpkin", event: true };
+recipe("cook_pumpkin", { skill: "cooking", station: "fire", lvl: 25, xp: 95, ms: 2600, in: [["pumpkin", 1]], out: ["pumpkinpie", 1], burnStop: 62 });
+recipe("brew_witch", { skill: "alchemy", station: "cauldron", lvl: 30, xp: 140, ms: 2200, in: [["medium_vial", 1], ["ectoplasm", 2], ["pumpkin", 1]], out: ["pot_witch", 1] });
+
+/* THE PUMPKIN KING. Numbers are FINAL (the load-time passes above have already run): a party of three at 50 takes him in about a
+   minute, one player at 60 in three. He hits like the Critic and stands still until struck, then chases. */
+MOBS.pumpkinking = { name: "The Pumpkin King", size: "xl", lvl: 52, hp: 520, att: 46, def: 40, max: 14, speed: 1900, aggro: 4, box: [26, 60], oy: -8, event: true, boss: true,
+  drops: [["tickets", [420, 720]], ["candycorn", [25, 45]], ["ectoplasm", [2, 4]], ["hallowed_helm", 1, 0.08], ["hallowed_body", 1, 0.06], ["hallowed_legs", 1, 0.06]],
+  rare: [], pet: ["blackcat", 0.025],   /* the Black Cat: one King in forty */
+  enrage: { at: 0.3, mul: 1.5, say: "The Pumpkin King's grin splits wider. The lantern in his head flares." } };
+BOUNTY.pumpkinking = 560; BOSSES.add("pumpkinking"); AGGRO_ON.add?.("pumpkinking");
+MOBS.pumpkinking.weak = ["fire", "sun"];   /* set on the mob directly: the WEAK table was folded into MOBS at load, above */
+PETS.blackcat = { name: "Black Cat", art: "pet_blackcat", raid: true, event: true, fx: { speed: 4, tix: 5 }, ex: "It crossed your path on purpose. Walks a little quicker and, somehow, the tickets come a little better around it." };
+
+/* the two fits, priced in candy corn: bought at the Night Market or at Ronde's, worn and coloured at Ronde's like any other */
+VANITY_SETS.skeleton = { name: "Skeleton", blurb: "Every bone on the outside, where people can see the work.", corn: true, event: true };
+VANITY_SETS.ghost = { name: "Ghost", blurb: "A sheet with eye holes. Timeless.", corn: true, event: true };
+for (const [set, pieces, corn] of [["skeleton", { head: ["Skull", true], body: ["Ribcage", false], legs: ["Leg bones", false], feet: ["Bony feet", false] }, 90], ["ghost", { head: ["Sheet hood", true], body: ["Sheet", false] }, 110]])
+  for (const [slot, [name, hidesHair]] of Object.entries(pieces)) VANITY[`${set}_${slot}`] = { set, slot, name, hidesHair, price: 0, corn, event: true };
+
+/* the three quests: a chain, one per tier, given by the Mire's lamplighter, the Boneyard's Sister and the Night Market's witch */
+Object.assign(QUESTS, {
+  hw_lights: {
+    name: "Lights Out", giver: "Mudge the Lamplighter", where: "The Lantern Mire", icon: "\u{1F383}", tier: "easy", event: true,
+    brief: "Mudge's lanterns have gone green. Bring him five ectoplasm so he can find out why.",
+    stages: [{ type: "bring", items: ["ectoplasm"], n: 5, what: "ectoplasm" }],
+    talk: { offer: ["Green. Every lantern on the walk, green, and I did not light them green.", "Whatever is doing it leaves this slime behind. Bring me five of it. Anything you kill out here might drop some, this month."], accept: "Five ectoplasm.", decline: "Then walk in the dark.",
+      accepted: "Kill things. Look at what falls off them. You'll know it when it's cold.", progress: "Five ectoplasm. You've {have}.", ready: "Cold. Yes. That's it. Give it here.", hand: "Five, as asked.", done: "It's not oil and it's not gas and I've got no idea what to do with it. Here. Spend this at the witch's tent before she leaves." },
+    reward: { coins: 300, xp: { melee: 400 }, items: [["candycorn", 60]], text: "300 tickets, 400 Melee xp, 60 candy corn" }
+  },
+  hw_vigil: {
+    name: "The Sister's Vigil", giver: "Sister Morrow", where: "The Boneyard", icon: "\u{1F56F}️", tier: "medium", requires: ["hw_lights"], event: true,
+    brief: "Sister Morrow is keeping a vigil through the Long Night. Bring her ten bones, then a pumpkin pie, then carry her word to Grimm.",
+    stages: [{ type: "bring", items: ["bones"], n: 10, what: "bones", say: ["Ten. Thank you. Lay them by the gate.", "Now: I've not eaten since the lanterns changed. Bake me a pumpkin pie. The witch in the Yard sells the seed."], reply: "A pie. Right." },
+      { type: "bring", items: ["pumpkinpie"], n: 1, what: "pumpkin pie", say: ["Warm. You're a good sort.", "One more thing. Tell Grimm the Hermit that the King is walking again. He'll know what it means. I don't want to."], reply: "I'll tell him." },
+      { type: "talk", npc: "Grimm the Hermit", say: ["The King. Walking. Of course he is, it's the season.", "Tell the Sister I said to keep her lamps lit and her door shut. And tell her he can be killed, if enough of you go."], reply: "I'll tell her." }],
+    talk: { offer: ["I sit up through the Long Night. Somebody has to.", "Ten bones for the gate, a pie for me, and a message for the hermit. Three small things."], accept: "Three small things.", decline: "Then I'll sit alone.",
+      accepted: "Bones first. The Boneyard is full of them, and the things that drop them.", progress: "Bones, then pie, then Grimm. Where are you?", ready: "And what did the hermit say?", hand: "Keep your lamps lit. He can be killed.", done: "Killed. Good. Then go and kill him. Here: I've no use for candy, and the witch takes it." },
+    reward: { coins: 1500, xp: { cooking: 1200, melee: 800 }, items: [["candycorn", 150], ["seed_pumpkin", 3]], text: "1,500 tickets, 1,200 Cooking xp, 800 Melee xp, 150 candy corn, 3 pumpkin seeds" }
+  },
+  hw_king: {
+    name: "The Pumpkin King", giver: "Hexa the Candy Witch", where: "The Yard", icon: "\u{1F451}", tier: "hard", requires: ["hw_vigil"], event: true,
+    brief: "Kill the Pumpkin King. He rises once an hour in the Lantern Mire, and he does not go quietly.",
+    stages: [{ type: "kill", mob: "pumpkinking", n: 1, what: "Pumpkin King" }],
+    talk: { offer: ["He rises on the hour, in the Mire, and everybody runs. I'd like somebody not to.", "Kill him once. Bring me the story. I'll pay for the story."], accept: "I'll kill him.", decline: "Then run with the rest.",
+      accepted: "On the hour. Bring friends: he hits like a falling tree and he doesn't like fire.", progress: "Still walking, is he? On the hour, in the Mire.", ready: "You're standing there, so he isn't. Tell me.", hand: "He went down.", done: "Then the Long Night has a hero, which it's never had. This was his, or as near as makes no difference. Wear it." },
+    reward: { coins: 6000, xp: { melee: 5000, hp: 2000 }, items: [["hallowed_helm", 1], ["candycorn", 300]], text: "6,000 tickets, 5,000 Melee xp, 2,000 Hitpoints xp, the Hallowed helm, 300 candy corn" }
+  }
+});
+/* the witch stands by her tent in the Yard for the month. She is in the list all year with `event: true`, and the scene builder on
+   BOTH sides leaves event people out while the event is off. NOT `if (hwOn())` here: Cloudflare freezes the clock while a module
+   loads, so at start-up the server's Date.now() is not today and the test would always say no. Decide at build time, never at load. */
+SCENES.workyard.npcs.push({ name: "Hexa the Candy Witch", event: true, art: "hexa", x: 24, y: 11, still: true, quests: ["hw_king"], opens: "market", reach: 3, hair: "#3a2a4a", shirt: "#2a1a3a", pants: "#4a2a5a",
+  lines: ["Candy corn. Bring me candy corn. It falls off everything this month, if you're the kind of person things fall off for.", "The King rises on the hour in the Mire. I sell to the ones who come back.", "Seeds, vials, slime, pie. And two fits, if you've the corn: a skeleton and a sheet. Ronde does the colours."] });
+
+/* THE DRESSING AND THE HUNT, on every open outdoor map: jack-o'-lanterns by the paths, and the day's ghost lanterns. Both are
+   ordinary objects added in buildScene, so the page and the server place them identically from the same seed. The lanterns move
+   every Chicago day: a scene built today and still standing at midnight keeps yesterday's until it is rebuilt, which is fine. */
+const HW_OUTDOORS = ["workyard", "gloam", "mire", "boneyard", "sands", "cloud", "thunderhead", "carnival", "trailer"];
+export function hwObjs(key, b) {
+  if (!hwOn() || !HW_OUTDOORS.includes(key)) return;
+  const g = b.g, objs = b.objs, day = chicagoDay(), seed = [...(day + key)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  const rnd = (i) => { let x = (seed ^ (i * 0x9e3779b9)) >>> 0; x ^= x << 13; x ^= x >>> 17; x ^= x << 5; return ((x >>> 0) % 10000) / 10000; };
+  const free = (x, y) => x > 1 && y > 1 && x < COLS - 2 && y < ROWS - 2 && g[y][x] === "." && !objs.some((o) => cheb(o, { x, y }) <= 1);
+  /* the tent and its keeper's pumpkins, in the Yard only */
+  if (key === "workyard") { objs.push({ t: "nightmarket", x: 22, y: 9, w: 3, h: 2, name: "The Night Market", event: true }); for (let yy = 9; yy <= 10; yy++) for (let xx = 22; xx <= 24; xx++) g[yy][xx] = "#"; for (const [x, y] of [[21, 11], [25, 11]]) if (g[y][x] === ".") { objs.push({ t: "jack", x, y, name: "A jack-o'-lantern", event: true, soft: true }); } }
+  /* jack-o'-lanterns: six a map, on grass beside paths */
+  let placed = 0;
+  for (let i = 0; i < 400 && placed < 6; i++) { const x = 2 + Math.floor(rnd(i) * (COLS - 4)), y = 2 + Math.floor(rnd(i + 1000) * (ROWS - 4)); if (!free(x, y)) continue; if (![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => g[y + dy]?.[x + dx] === ",")) continue; objs.push({ t: "jack", x, y, name: "A jack-o'-lantern", event: true, soft: true }); placed++; }
+  /* the ghost lanterns: HW.lanterns across the nine maps, so about one a map, and never twice in the same place two days running */
+  const slot = HW_OUTDOORS.indexOf(key), per = Math.ceil(HW.lanterns / HW_OUTDOORS.length), n = Math.min(per, Math.max(0, HW.lanterns - slot * per));
+  placed = 0;
+  for (let i = 0; i < 600 && placed < n; i++) { const x = 2 + Math.floor(rnd(i + 5000) * (COLS - 4)), y = 2 + Math.floor(rnd(i + 7000) * (ROWS - 4)); if (!free(x, y)) continue; objs.push({ t: "ghostlantern", x, y, name: "A ghost lantern", event: true, lid: `${key}:${day}:${x},${y}` }); g[y][x] = "#"; placed++; }
+}
+
 /* (2026-09-21) the map-building helpers, for the files that hold maps outside this one (eastscape-closed.js, and the dungeon's). */
 export const _MAP = { block, grid, keepOf, room, wild };

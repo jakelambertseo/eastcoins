@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=296">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=298">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -909,6 +909,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .an-chip.on{color:#1a120a;background:#e0b968;box-shadow:none}
 .an-chip.locked{opacity:.45;cursor:default}
 .an-bars{display:flex;align-items:center;gap:6px;margin:0 10px 8px;font-size:12px;font-weight:700;color:#cbbfae}
+.wl-corn{gap:6px;margin-top:6px}.wl-corn em{margin-left:auto;font-style:normal;font-size:11px;font-weight:700;color:#e0b060;text-align:right}
+.hw-foot{margin:10px 10px 6px;padding:8px 10px;background:rgba(0,0,0,.14);border-radius:6px;font-size:13px;line-height:1.5;color:#e8dcc0}.hw-foot b{color:#ffd77a}#hwWin .hw-foot{background:#efe5cf;color:#3a2e1c;box-shadow:inset 0 0 0 2px #b8a67e}#hwWin .hw-foot b{color:#7a3c12}
+.hw-row.own{opacity:.6}.hw-fit{width:34px;height:34px;overflow:hidden;display:inline-block}.hw-fit .van-face{transform:scale(.5);transform-origin:top left}
+.glow.glow-hallow{filter:drop-shadow(0 0 3px rgba(255,140,30,.9))}
 .an-craft{display:grid;gap:6px;margin:0 10px 10px}.an-craft .an-row small{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center}.an-craft .an-row small .ico{width:16px;height:16px;vertical-align:-3px}
 .an-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin:0 10px 10px}
 .an-tile{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:0;border-radius:7px;padding:8px 4px 6px;font:inherit;color:#f0e6d8;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 2px #3a2e22;text-align:center}
@@ -1106,6 +1110,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="win-head"><b>📋 Daily tasks</b><small id="dailySub">Fresh every morning</small><button type="button" class="win-x" data-close="dailyWin" aria-label="Close">×</button></div>
       <div class="win-body" id="dailyBody"></div>
     </section>
+    <section class="win" id="hwWin" aria-label="The Night Market" hidden style="width:min(520px,calc(100% - 28px))">
+      <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/g_longnight.png?v=1" alt="" class="topi">The Night Market</b><small id="hwSub"></small><button type="button" class="win-x" data-close="hwWin" aria-label="Close">×</button></div>
+      <div class="win-body" id="hwBody"></div>
+    </section>
     <section class="win" id="shopWin" aria-label="The Forge" hidden>
       <div class="win-head"><b id="shopTitle">⚒️ The Forge</b><small id="shopWho">Brutus the Smith</small><button type="button" class="win-x" data-close="shopWin" aria-label="Close">×</button></div>
       <div class="win-body cols2">
@@ -1167,7 +1175,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=296";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=298";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1176,7 +1184,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=158").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=160").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -1447,7 +1455,7 @@ function onMsg(m) {
   }
   if (m.type === "me") { const prevCharm = me?.charm; me = m.me;
     if (me.charm && (me.charm.left | 0) > 0 && (!prevCharm || prevCharm.k !== me.charm.k || me.charm.left > (prevCharm.left | 0) + 5000)) { spellFx(`p:${you?.id}`, "shield"); SFX.play("spell_buff"); }   /* (2026-09-26) a page buff read */
-    DECO?.refresh(); renderQuick(); if (!me.look && !lookOffered) { lookOffered = true; setTimeout(() => { if (!me.look) welcomeOnce(true); }, 1500); } renderTour(); renderPanel(); if (!$("questWin").hidden) renderQuests(); CZ.me(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); craftRefresh(); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("vanWin").hidden) renderVan(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
+    DECO?.refresh(); renderQuick(); if (!me.look && !lookOffered) { lookOffered = true; setTimeout(() => { if (!me.look) welcomeOnce(true); }, 1500); } renderTour(); renderPanel(); if (!$("questWin").hidden) renderQuests(); if (!$("hwWin").hidden) renderMarket(); CZ.me(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); craftRefresh(); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("vanWin").hidden) renderVan(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
   if (m.type === "exch") { EX = m; if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input:not(#mkQ)"))) renderEx(); return; }
   if (m.type === "trade") { if (m.closed) { TR = null; $("tradeWin").hidden = true; } else { TR = m; openWin("tradeWin"); } return; }
   if (m.type === "pong") return;
@@ -1546,6 +1554,7 @@ function onEvent(e) {
   if (e.type === "ach") { SFX.play("task_done"); if (!$("achWin").hidden) renderAch(); return; }
   if (e.type === "fell") return void SFX.play("tree_fall");
   if (e.type === "double") { dblSet(e.on); if (e.on) SFX.play("jackpot"); return; }
+  if (e.type === "hw") { if (e.king) SFX.play("mob_die"); if (e.night != null) SFX.play(e.night ? "ui_open" : "ui_click"); renderPanel(); return; }   /* (2026-09-27) the Long Night's clocks turned; the painter reads the clock itself */
   if (e.type === "tradereq") { SFX.play("chat"); tradeReqLine(e.from, e.name); return; }
   if (e.type === "levelup") return levelUp(e.k, e.lvl);
   if (e.type === "chat") { if (e.id !== you?.id) SFX.play("chat", { vol: 0.6 }); if (e.scene === Z.key) botBubbles.set(e.id, { text: e.text, at: performance.now() }); chatLine(e.name, e.text, e.id === you?.id ? "mine" : "", e.role); return; }
@@ -1567,7 +1576,7 @@ function loadScene(key) {
   const b = G.buildScene(key);
   Object.assign(Z, { key, g: b.g, objs: b.objs, fadeAt: performance.now(), defs: {} });
   Z.def = G.sceneDef(key); Z.isle = null; Z.ground = [];
-  Z.def.npcs.forEach((n, i) => { Z.defs[`${key}n${i}`] = n.art || !NPC_ART[n.name] ? n : { ...n, art: NPC_ART[n.name] }; });
+  Z.def.npcs.filter((n) => !n.event || G.hwOn()).forEach((n, i) => { Z.defs[`${key}n${i}`] = n.art || !NPC_ART[n.name] ? n : { ...n, art: NPC_ART[n.name] }; });
   Z.npcs = []; botBubbles.clear(); PRED.on = false; PRED.path = []; PRED.step = null;
   for (const id of ["bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin"]) $(id).hidden = true;
   Z.exits = exitsOf(); decoBtnSync();
@@ -1756,7 +1765,7 @@ const ART_VER = { critic: 4, o_mausoleum: 4, t_tomb: 4, o_bomkiosk: 7, o_plot: 2
    because a crop added to CROPS should ask for its art without anybody remembering to type four more names —
    the content check then fails until that art exists, which is the right way round. */
 const CROP_ART = [...new Set(Object.keys(G.CROPS).map((k) => G.cropArt(k)))].flatMap((k) => [1, 2, 3, 4].map((n) => `crop_${k}_${n}`));   /* (2026-09-26) a seed crop draws its bloom's pictures */
-const ART_FILES = ["t_wildg", "t_wildb", "t_wildw", "x_plateau", "x_column", "x_cave", "x_pillar", "x_rock1", "x_rock2", "x_rock3", "x_rock4", "x_rock5", "x_rock6", "x_rocks", "x_boulder1", "x_boulder2", "x_boulder3", "x_dead1", "x_dead2", "x_dead3", "x_dead4", "x_dead5", "x_pine1", "x_pine2", "x_pine3", "x_shrub1", "x_shrub2", "x_stump", "x_tuft1", "x_tuft2", "x_tuft3",
+const ART_FILES = ["pumpkinking", "pet_blackcat", "o_ghostlantern", "o_jack", "o_nightmarket", "hexa_south", "hexa_east",   /* (2026-09-27) the Long Night; the lantern and the jack stay in core, they stand on every map */ "t_wildg", "t_wildb", "t_wildw", "x_plateau", "x_column", "x_cave", "x_pillar", "x_rock1", "x_rock2", "x_rock3", "x_rock4", "x_rock5", "x_rock6", "x_rocks", "x_boulder1", "x_boulder2", "x_boulder3", "x_dead1", "x_dead2", "x_dead3", "x_dead4", "x_dead5", "x_pine1", "x_pine2", "x_pine3", "x_shrub1", "x_shrub2", "x_stump", "x_tuft1", "x_tuft2", "x_tuft3",
   "t_deepg", "t_deepb", "t_deepw", "d_plateau", "d_column", "d_cave", "d_pillar", "d_rock1", "d_rock2", "d_rock3", "d_rock4", "d_rock5", "d_rock6", "d_rock7", "d_rock8", "d_slab", "d_boulder1", "d_boulder2", "d_boulder3", "d_dead1", "d_dead2", "d_dead3", "d_root1", "d_root2", "d_root3", "d_log1", "d_log2", "d_stump1", "d_stump2", "d_burnt", "d_coal1", "d_coal2", "d_tuft", "weaver", "marrowhound", "grimlich", "o_gallowsoak", "mudge_south", "mudge_east", "morrow_south", "morrow_east", "zephyr_south", "zephyr_east", "rashid_south", "rashid_east", "volta_south", "volta_east", "auditor_south", "auditor_east", "grimm_south", "grimm_east", "a_wfall_w", "a_wfall_d", "a_surface", "a_shine", "a_lava", "a_lavab", "a_steam",   /* (2026-09-26) the Wilderness (x_) and the Deep Wild (d_): tools/eastscape-wild-art.mjs, from Szadi art's RPG Fantasy Worlds sets; every one is claimed by AREA_ART.wild or .deep below, so none of it is in core */
   "o_altar_arcane", "o_altar_fire", "o_altar_frost", "o_altar_storm", "o_altar_void", "o_altar_sun", "o_altar_nexus",   /* (2026-09-26) the seven altars: each is deferred to its own area in AREA_ART */ "o_fletcher",   /* (2026-09-25) the fletching table in the Yard */ "t_dock", ...CROP_ART, "o_yardtree", "o_yardtree_stump", "o_tower", "t_doors", "fx_hit", "fx_crit", "fx_miss", "fx_bleed", "vince_south", "vince_east", "casino", "rony_south", "rony_east", "o_bomkiosk", "t_pit", "o_fightboard", "o_hsboard", "o_fameboard", "o_ringbell", "o_ringpost", "o_mirror", "o_rrtable", "o_barcart", "kellz_south", "kellz_east", "livia_south", "livia_east", "gaius_south", "gaius_east", "aurelia_south", "aurelia_east", "arbino_south", "arbino_east", "vince_south", "vince_east", "sterling_south", "sterling_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "barker_south", "barker_east", "o_duckpond", "o_banner", "o_banner2", "o_archway", "o_wagon", "o_cagebarH", "o_cagebarV", "o_turnstile", "o_bloodpool", "o_knives", "o_meathook", "pinhead", "tripled", "fatlady", "strongman", "grinner", "o_bigtop", "o_funhouse", "o_balloonpop", "o_shootgallery", "o_whackamole", "o_ticketbooth", "o_sidetent", "o_haybale", "o_carnlitter", "t_sawdust", "t_dwater", "critic", "o_railH", "o_railV", "o_railgate", "o_mausoleum", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "pet_coilling",   /* (2026-09-24) the Pyramid’s pet was in PETS and had a picture on disk and was in NEITHER of these two lists — its icon drew an empty box AND an equipped one would have walked around invisible. Every pet goes in both, drop or no drop. */ "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_brick", "o_fencepost", "o_crates", "o_lamppost", "o_sacks", "o_handcart", "t_track", "o_gateframe", "o_gatebars", "o_agilend", "o_trailer", "o_wreck", "o_tyres", "o_dumpster", "o_rock_slagstone", "o_rustpine", "o_bogwood", "junkdog", "possum", "scrapper", "gator", "junkking", "darla_south", "darla_east", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "legend_" + d]),   // (hero_tiro_*, the old tunic, left the startup list 2026-09-20: nobody wears it now that everyone has a look)
@@ -1826,7 +1835,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 100;
+const PACKS_V = 101;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -1846,7 +1855,7 @@ const loadOne = (k) => new Promise((res) => {
 /* art that only one area needs waits until you go there (or next door to it). Everything else is the core set,
    loaded at startup. A new area's pictures go in its list here; tools/eastscape-budget.mjs measures both halves. */
 const WILD_ART = ["t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush", "w_boulder", "grimstone", "gravestone", "skeleton", "o_gravestone", "o_skeleton", "rope", "cagesign", "gnasher", "taxwraith", "chandelier", "revenant"];
-const CASINO_ART = ["rony_south", "rony_east", "o_bomkiosk", "o_mirror", "kellz_south", "kellz_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "t_casino", "rug_casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "o_slots", "o_cointable", "o_dicetable", "o_bar", "o_sofa", "o_walldoor", "o_roulsign", "o_fightsign", "o_picsign", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "pet_coilling", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east"];
+const CASINO_ART = ["pet_blackcat", "rony_south", "rony_east", "o_bomkiosk", "o_mirror", "kellz_south", "kellz_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "t_casino", "rug_casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "o_slots", "o_cointable", "o_dicetable", "o_bar", "o_sofa", "o_walldoor", "o_roulsign", "o_fightsign", "o_picsign", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "pet_coilling", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east"];
 /* ISLE_ART is a flat literal and CROP_ART is spread in beside it at each use, rather than folded in here,
    because tools/eastscape-pack.mjs reads these lists out of this file by grabbing the text between brackets —
    it can eval an array, not an expression. The packer derives the crop half from what is on disk. */
@@ -1874,7 +1883,7 @@ const AREA_ART = {
     "o_chest", "o_bucket", "o_cat",
     "t_guild", ...["pete", "marla", "quietman", "odile"].flatMap((k) => [`${k}_south`, `${k}_east`])],
   // the one line out of the casino (2026-09-20): every scene has its rocks, trees, fish AND its monsters
-  workyard: ["o_altar_arcane", "o_yardtree", "o_yardtree_stump", "o_tower", "hornworm", "boar", "olive", "o_chest", "o_chariot", "charon_south", "charon_east", "livia_south", "livia_east", "o_stall", "o_cryptdoor",
+  workyard: ["o_nightmarket", "hexa_south", "hexa_east", "o_altar_arcane", "o_yardtree", "o_yardtree_stump", "o_tower", "hornworm", "boar", "olive", "o_chest", "o_chariot", "charon_south", "charon_east", "livia_south", "livia_east", "o_stall", "o_cryptdoor",
     /* (2026-09-22) the market's railings and clutter. ART_FILES is the MASTER list of every picture; naming one
        here as well is what DEFERS it out of the login download (core.png is "ART_FILES less the per-area lists").
        They live in the Yard and nowhere else, and left out of this list they pushed the startup request budget
@@ -1894,7 +1903,7 @@ const AREA_ART = {
   /* (2026-09-24) the Mire is the Halloween venue, so it is dressed out of the Crypt's art. o_cageV is here as
      well as on the `wild` list on purpose: an area sheet is WHOLE, so naming it twice gives the Mire its own
      copy rather than moving it, and o_cryptpillar is deliberately NOT here because the Gloam leaves it in core. */
-  mire: ["mudge_south", "mudge_east", "o_gravestone", "o_skeleton", "t_gwater", "t_gpath", "o_willow", "o_glowcap", "w_boulder", "twister", "moth", "counter", "taxwraith", "shark",
+  mire: ["pumpkinking", "mudge_south", "mudge_east", "o_gravestone", "o_skeleton", "t_gwater", "t_gpath", "o_willow", "o_glowcap", "w_boulder", "twister", "moth", "counter", "taxwraith", "shark",
     "o_cryptgate", "o_crypttorch", "o_cryptaltar", "o_cryptcandles", "o_cryptcoffin", "o_cryptrubble", "o_gargoyle", "o_ghostbrazier", "o_sarcophagus", "o_skullheap", "o_bonepile", "o_cageV"],
   /* (2026-09-24) The rebuilt Thunderhead: its own ruin props and the two ores it finally has. o_cloudbush and
      o_cloudcolumn are gone from here because the `storm` ground theme never draws them. o_rock_starfall_ore and
@@ -2064,7 +2073,7 @@ function spr(k, x, y, flip = false, filter = "", sc = 1, rot = 0) {
   lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
 }
 // item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
-const ITEM_ART = new Set(["caravan_parcel", "audit_ledger",   /* (2026-09-27) the two quest props */ "wildsilk", "marrow", "marrow_arrowhead", "marrow_arrow", "grimcore", "voidfin", "cvoidfin", "svoidfin", "grimscale", "cgrimscale", "sgrimscale", "gallowslogs", "glassgourd", "emberwheat", "starfruit",
+const ITEM_ART = new Set(["candycorn", "pumpkin", "seed_pumpkin", "pumpkinpie", "ectoplasm", "pot_witch", "hallowed_helm", "hallowed_body", "hallowed_legs",   /* (2026-09-27) the Long Night */ "caravan_parcel", "audit_ledger",   /* (2026-09-27) the two quest props */ "wildsilk", "marrow", "marrow_arrowhead", "marrow_arrow", "grimcore", "voidfin", "cvoidfin", "svoidfin", "grimscale", "cgrimscale", "sgrimscale", "gallowslogs", "glassgourd", "emberwheat", "starfruit",
   /* (2026-09-24) ALCHEMY's own icons. ITEM_ART is an allowlist: an item NOT in it falls back to its emoji, which
      is why every fish and log in the game is a glyph and only the new concepts get drawn. The ten potions are
      deliberately left on the emoji - they are the same bottle in fifteen colours, and one drawn vial per SIZE
@@ -2100,7 +2109,7 @@ const ITEM_ART = new Set(["caravan_parcel", "audit_ledger",   /* (2026-09-27) th
    flat/items/* a DAY of max-age plus a WEEK of stale-while-revalidate, so a bad entry is served for eight days
    and nothing can purge it. The version IS the purge. Bumping it costs everyone one re-download of ~246 icons at
    1-3 KB each, about 400 KB once, which is the cheap half of this trade. */
-const IART = "/v3/assets/img/glad/flat/items/", IART_V = 24, ICO_IMG = {};
+const IART = "/v3/assets/img/glad/flat/items/", IART_V = 25, ICO_IMG = {};
 /* UI ART — drawn furniture for windows, as opposed to items (IART) and world objects (ART). The folder already
    held 46 pictures and already had a constant; this was declared a second time up here on 2026-09-23 before that
    was noticed, and is the same UIA, hoisted, rather than a rival. Everything in here is served at ?v=1 and a
@@ -2149,7 +2158,8 @@ const tixPrice = (n) => `${ico("tickets")}${Math.round(n).toLocaleString()}`;
    would not: it covers all sixteen items of a tier including the TOOLS for free, it animates, and it turns
    itself off under prefers-reduced-motion. It also still works while a piece has no art yet, because the class
    goes on a wrapper around the emoji fallback too. */
-const GLOW_TIERS = { nova: "glow-nova", singularity: "glow-sing" };
+const GLOW_TIERS = { nova: "glow-nova", singularity: "glow-sing", hallowed: "glow-hallow" };
+const NIGHT_FORCE = new URLSearchParams(location.search).get("night") === "1";   /* (2026-09-27) ?night=1 previews Nightfall's look at any hour; the drops are the server's and do not double */
 const ico = (k) => {
   const a = ART_ALIAS[k] || k, glow = GLOW_TIERS[ITEMS[k]?.tier];
   const inner = ITEM_ART.has(a) ? artOf(a) : ITEMS[k]?.icon || "";
@@ -3020,6 +3030,8 @@ function talkTo(n) {
      market and going to the island, i cant start the quests") Every NPC with a menu of their own returned before the quest code
      was reached, so a quest given by a broker or a ferryman could be seen (the marker) and never started. The quest is now the
      FIRST line of any such menu, worded by where it stands: a new one, a hand-in, or the stage that sent you here. */
+  /* (2026-09-27) TRICK OR TREAT: during the Long Night every person in the game can be asked, once a Chicago day. */
+  const tot = G.hwOn() && !(me?.hw?.day === G.chicagoDay() && me.hw.trick) ? [["\u{1F383} Trick or treat!", () => { closeTalk(); send({ t: "hw", op: "trick", npc: n.id }); }]] : [];
   const qline = R ? [R.role === "offer" ? `About the job you have… (${QUESTS[k].name})` : R.role === "hand" ? `I've done it: ${QUESTS[k].name}.` : `About ${QUESTS[k].name}…`, () => questTalk(n, R)] : null, qopt = qline ? [qline] : [];
   if (n.name === "Dex the Dealer") {
     const st = G.tourOf(me)?.id, opts = [];
@@ -3029,21 +3041,22 @@ function talkTo(n) {
     opts.push(["What's behind the bar?", () => { closeTalk(); openShop("bar"); }]);
     opts.push([`A round for the room (${G.fmtCash(G.BAR.round.price)})`, () => { closeTalk(); send({ t: "shop", shop: "bar", op: "round" }); }]);
     opts.push(["What should I do next?", () => showTalk(n, whatNext(), [["Something else…", () => talkTo(n)], bye])]);
-    return showTalk(n, st ? "You're on the House Tour. Eyes top-left: it tells you the next thing." : pick(n.lines), [...qopt, ...opts, chat, bye]);
+    return showTalk(n, st ? "You're on the House Tour. Eyes top-left: it tells you the next thing." : pick(n.lines), [...qopt, ...tot, ...opts, chat, bye]);
   }
   /* Ronde does the lot: the chair changes who you are, the rail changes what you wear. Both are his, so nobody has
      to learn that looks live at a mirror and clothes live somewhere else. */
-  if (n.shop === "vanity") return showTalk(n, pick(n.lines), [...qopt, ["Show me the rail.", () => { closeTalk(); openVan(); }], ["Change my hair and face.", () => { closeTalk(); openLook?.(); }], chat, bye]);
-  if (n.opens === "decor") return showTalk(n, pick(n.lines), [...qopt, ...(G.ownerOf(Z.key) === you?.id ? [["Show me what you've got.", () => { closeTalk(); decoLoad().then((d) => d.shop()); }]] : []), chat, bye]);
-  if (n.opens === "shop") return showTalk(n, pick(n.lines), [...qopt, ["Let's trade.", () => { closeTalk(); openShop("shop"); }], chat, bye]);
+  if (n.shop === "vanity") return showTalk(n, pick(n.lines), [...qopt, ...tot, ["Show me the rail.", () => { closeTalk(); openVan(); }], ["Change my hair and face.", () => { closeTalk(); openLook?.(); }], chat, bye]);
+  if (n.opens === "decor") return showTalk(n, pick(n.lines), [...qopt, ...tot, ...(G.ownerOf(Z.key) === you?.id ? [["Show me what you've got.", () => { closeTalk(); decoLoad().then((d) => d.shop()); }]] : []), chat, bye]);
+  if (n.opens === "shop") return showTalk(n, pick(n.lines), [...qopt, ...tot, ["Let's trade.", () => { closeTalk(); openShop("shop"); }], chat, bye]);
   /* (2026-09-23) VANCE SELLS ONE THING. A confirm button rather than a click on the door, because 50,000 tickets
      is far too much to spend on a misclick, and the button disappears once you are already a member. */
+  if (n.opens === "market") return showTalk(n, pick(n.lines), [...qopt, ...tot, ["Show me the market.", () => { closeTalk(); openMarket(); }], chat, bye]);   /* (2026-09-27) Hexa's tent */
   if (n.opens === "permit") return showTalk(n, pick(n.lines), [
-    ...qopt,
+    ...qopt, ...tot,
     ...(me?.guild ? [] : [[`Buy a permit — ${G.fmtTix(G.THIEF.permit)}`, () => { closeTalk(); send({ t: "permit" }); }]]),
     chat, bye]);
   if (n.opens === "ferry") return showTalk(n, pick(n.lines), [
-    ...qopt,
+    ...qopt, ...tot,
     ["Take me to my island.", () => { closeTalk(); send({ t: "isle", op: "go" }); }],
     ["Row me to someone else's island.", () => { closeTalk(); openWin("isleWin"); send({ t: "isle", op: "list" }); setTimeout(() => $("isleName").focus(), 50); }],
     ...(G.ISLE_TIERS[(me.isle?.tier || 1) + 1] ? [[`Upgrade my island (${G.fmtCash(G.ISLE_TIERS[(me.isle?.tier || 1) + 1].price)})…`, () => { const nx = G.ISLE_TIERS[(me.isle?.tier || 1) + 1]; showTalk(n, [`${nx.name}. ${nx.ex}`, `That's ${G.fmtCash(nx.price)}. Everything you've planted and put on show stays where it is.`], [[`Deal: ${G.fmtCash(nx.price)}`, () => { send({ t: "isle", op: "upgrade" }); closeTalk(); }], ["Maybe later.", closeTalk]]); }]] : []),
@@ -3054,11 +3067,11 @@ function talkTo(n) {
   if (n.opens) {
     const kind = n.opens === "bank" ? "booth" : "stall", ob = Z.objs.filter((o) => o.t === kind).sort((a, b) => G.cheb(a, myEnt() || a) - G.cheb(b, myEnt() || b))[0];
     const go = () => { closeTalk(); if (ob) send({ t: "act", kind: "ob", ob: ob.id }); };
-    return showTalk(n, pick(n.lines), [...qopt, [n.opens === "bank" ? "I'd like to use my bank." : "Show me the Exchange.", go], chat, bye]);
+    return showTalk(n, pick(n.lines), [...qopt, ...tot, [n.opens === "bank" ? "I'd like to use my bank." : "Show me the Exchange.", go], chat, bye]);
   }
   if (!k) {
-    if (n.quests?.length) return showTalk(n, [n.outOfWork || "That's all the work I've got for you.", G.nextHint(me, n)], [["Thanks.", closeTalk], chat]);
-    return showTalk(n, pick(n.lines), [chat, bye]);
+    if (n.quests?.length) return showTalk(n, [n.outOfWork || "That's all the work I've got for you.", G.nextHint(me, n)], [...tot, ["Thanks.", closeTalk], chat]);
+    return showTalk(n, pick(n.lines), [...tot, chat, bye]);
   }
   return questTalk(n, R);
 }
@@ -3114,7 +3127,7 @@ function aimCamera(P, now) {
   view.ox = Math.round(view.bx - cam.x * view.s); view.oy = Math.round(view.by - cam.y * view.s);
 }
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - view.ox) / view.s, y: (e.clientY - r.top - view.oy) / view.s }; };
-const KIND_OF = { ...Object.fromEntries(Object.entries(G.STATIONS).filter(([, s]) => s.kind === "print").map(([k]) => [k, "print"])),   /* (2026-09-26) altars */
+const KIND_OF = { ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ ...Object.fromEntries(Object.entries(G.STATIONS).filter(([, s]) => s.kind === "print").map(([k]) => [k, "print"])),   /* (2026-09-26) altars */
   /* (2026-09-24) Alchemy. The WORKER decides whether a click does anything (its own map, in index.js); this
      only labels it, so a new clickable object has to be added in BOTH or the cursor lies. */
   fletcher: "fletch", countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. A kind is what a click routes to; the PICTURE is an `art` override on the object, which is why three new interactions needed no new art. */ cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile", mark: "mark", guildgate: "guildgate", towerdoor: "tower", towerup: "towerup", cryptdoor: "crypt", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", hsboard: "hiscores", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", prizewheel: "prize", fameboard: "fame", cart: "ferry", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", wildladder: "hole", agilend: "agilend", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
@@ -3170,7 +3183,7 @@ cv.addEventListener("pointerdown", (e) => {
     /* (2026-09-25) THE OTHER STATIONS GET A PICKER TOO. Clicking still starts work at once - with whatever you
        last chose here, or the best thing you can make, exactly as before - and the panel opens beside it so you
        can change your mind. Opening it does not cost a click: the act goes out in the same breath. */
-    else if (CRAFT_STATIONS[t.ob?.t]) { send({ t: "act", kind: "ob", ob: t.ob.id, pick: craftPick[t.ob.t] || undefined }); openCraft(t.ob); }
+    else if (CRAFT_STATIONS[t.ob?.t]) { send({ t: "act", kind: "ob", ob: t.ob.id }); openCraft(t.ob); }   /* (2026-09-27, players: the fletching table and the furnace "will automatically start crafting whatever was last selected") NO STATION IS TOLD YOUR LAST CHOICE ON A CLICK. craftPick is the window's highlighted row, nothing more: a picker station (anvil, fletcher) waits for a choice, an auto station (fire, furnace, cauldron) does what one click always did, the best thing you can make. The remembered recipe starts only when you click it in the window. */
     else send({ t: "act", kind: "ob", ob: t.ob.id });   /* (a real table opens when you ARRIVE: the server answers {type:"real"}) */
     // walk there now, the way the server will
     if (from) {
@@ -3446,6 +3459,17 @@ function frame() {
     // (exits are no longer painted blue: see the signposts and the arrows below)
   }
   if (Z.def.tint || Z.isle?.theme === "gloom") { lc.fillStyle = Z.def.tint || "rgba(40,30,60,.25)"; lc.fillRect(0, 0, W, H); }
+  /* (2026-09-27) THE LONG NIGHT, outdoors: a faint purple over the month, near-dark at Nightfall, and warm light pooled under every
+     jack-o'-lantern and ghost lantern so the paths read in the dark. The vignette itself is on the screen canvas, below. */
+  if (G.hwOn() && !Z.def.interior && !Z.isle) {
+    const night = NIGHT_FORCE || G.nightfallOn();
+    lc.fillStyle = night ? "rgba(6,3,24,.46)" : "rgba(50,16,80,.10)"; lc.fillRect(0, 0, W, H);
+    for (const o of Z.objs) if (o.t === "jack" || o.t === "ghostlantern") {
+      const cx = o.x * T + T / 2, cy = o.y * T + T / 2, r = o.t === "jack" ? T * 1.7 : T * 1.4, c = o.t === "jack" ? "255,150,40" : "120,255,220";
+      const gr = lc.createRadialGradient(cx, cy, 1, cx, cy, r); gr.addColorStop(0, `rgba(${c},${night ? 0.38 : 0.16})`); gr.addColorStop(1, `rgba(${c},0)`);
+      lc.fillStyle = gr; lc.fillRect(cx - r, cy - r, r * 2, r * 2);
+    }
+  }
   const sprites = [], pvp = !!Z.def.pvp, theme = Z.isle?.theme;
   if (Z.def.floor === "casino") casinoLife(sprites, pnow, calm);
   /* (2026-09-22) THE GATES ARE DRAWN HERE, and nowhere else. They were never drawn at all: a shut gate is "#",
@@ -3792,6 +3816,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   ctx.imageSmoothingEnabled = false;
   const shk = !calm && pnow < shakeUntil ? (shakeUntil - pnow) / 40 : 0;   /* a crit, or a heavy hit on you: a few pixels for a fifth of a second */
   ctx.drawImage(low, view.ox + (shk ? Math.sin(pnow / 13) * shk : 0), view.oy + (shk ? Math.cos(pnow / 11) * shk : 0), W * view.s, H * view.s);
+  if ((NIGHT_FORCE || G.nightfallOn()) && !Z.def?.interior && !Z.isle) { const cw = ctx.canvas.width, ch = ctx.canvas.height, g2 = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * 0.32, cw / 2, ch / 2, Math.max(cw, ch) * 0.72); g2.addColorStop(0, "rgba(0,0,0,0)"); g2.addColorStop(1, "rgba(0,0,0,.55)"); ctx.fillStyle = g2; ctx.fillRect(0, 0, cw, ch); }   /* (2026-09-27) Nightfall's vignette, on the screen so it follows the camera */
   const S2 = view.s, sx = (tx) => view.ox + tx * S2, sy = (ty) => view.oy + ty * S2;
   for (let i = TILEFX.length - 1; i >= 0; i--) { const f = TILEFX[i]; if (pnow > f.until) { TILEFX.splice(i, 1); continue; } const k = (pnow - f.from) / (f.until - f.from); ctx.fillStyle = `rgba(230,40,40,${(0.18 + 0.32 * k + (calm ? 0 : 0.08 * Math.sin(pnow / 60))).toFixed(3)})`; ctx.fillRect(sx((f.x - f.r) * T), sy((f.y - f.r) * T), (f.r * 2 + 1) * T * S2, (f.r * 2 + 1) * T * S2); }
   { const gh = hoverTile && DECO?.on ? DECO.ghost(hoverTile.x, hoverTile.y) : null; if (gh) { ctx.fillStyle = gh.ok ? "rgba(90,220,110,.35)" : "rgba(230,70,60,.35)"; ctx.strokeStyle = gh.ok ? "#5adc6e" : "#e6463c"; ctx.lineWidth = 2; const gx = sx(gh.x * T), gy = sy(gh.y * T), gw = gh.w * T * S2, g2 = gh.h * T * S2; ctx.fillRect(gx, gy, gw, g2); ctx.strokeRect(gx + 1, gy + 1, gw - 2, g2 - 2); } }
@@ -4625,8 +4650,8 @@ function vanFace(van, d = "south") {
 }
 function renderVan() {
   const body = $("vanBody"); if (!body || $("vanWin").hidden) return;
-  const v = me?.van || { on: {}, col: {}, own: [] }, tix = G.tixIn(me || { inv: [] });
-  const items = Object.entries(G.VANITY).filter(([, it]) => it.slot === vanSlot);
+  const v = me?.van || { on: {}, col: {}, own: [] }, tix = G.tixIn(me || { inv: [] }), corn = G.countItems(me || { inv: [] }, ["candycorn"]);
+  const items = Object.entries(G.VANITY).filter(([, it]) => it.slot === vanSlot && (!it.event || G.hwOn() || v.own?.includes(it.k)));   /* (2026-09-27) a seasonal fit is on the rail while its season runs, and forever for whoever bought it */
   const shown = vanTry && G.VANITY[vanTry]?.slot === vanSlot ? vanTry : null;
   body.innerHTML = `
     <div class="van-top">
@@ -4639,14 +4664,14 @@ function renderVan() {
     <div class="van-list">
       <button type="button" class="van-row${!v.on?.[vanSlot] ? " on" : ""}" data-vwear=""><span>Nothing</span><small>Take it off</small></button>
       ${items.map(([k, it]) => {
-        const own = v.own?.includes(k), worn = v.on?.[it.slot] === k, afford = tix >= it.price, trying = shown === k;
+        const own = v.own?.includes(k), worn = v.on?.[it.slot] === k, afford = it.corn ? corn >= it.corn : tix >= it.price, trying = shown === k, label = it.corn ? `${it.corn} candy corn` : Number(it.price).toLocaleString();
         /* EVERY ROW CARRIES ITS OWN ACTION (2026-09-21, the owner: "theres no way to buy anything at ronde barber,
            only preview it"). The first cut made a SECOND click on the same row the purchase, which is a mechanic
            nobody can see: the row showed a price, not a button, so trying something on looked like the end of the
            road. Preview and buy are now two different controls, and the price is the button. */
         const act = own
           ? (worn ? `<span class="van-act van-worn">Worn</span>` : `<button type="button" class="van-act lk-btn" data-vwearit="${k}">Wear</button>`)
-          : `<button type="button" class="van-act lk-btn van-buy" data-vbuy="${k}"${afford ? "" : " disabled"}>${afford ? `Buy · ${Number(it.price).toLocaleString()}` : `${Number(it.price).toLocaleString()} needed`}</button>`;
+          : `<button type="button" class="van-act lk-btn van-buy" data-vbuy="${k}"${afford ? "" : " disabled"}>${afford ? `Buy · ${label}` : `${label} needed`}</button>`;
         return `<div class="van-row${worn ? " on" : ""}${trying ? " trying" : ""}">
           <button type="button" class="van-pick" data-vk="${k}"><span>${esc(it.name)}</span><small>${esc(G.VANITY_SETS[it.set].name)}${it.hidesHair ? " · covers your hair" : ""}${trying ? " · trying it on" : ""}</small></button>
           ${act}</div>`;
@@ -4751,6 +4776,25 @@ addEventListener("keydown", (e) => { if ((e.key === "g" || e.key === "G") && !e.
 
 /* ------------------------------------------------------------ the Forge: Brutus's shop */
 let shopN = 1, shopKind = "shop";   // "shop": Brutus at the Forge; "bar": Dex, who sells and never buys
+/* (2026-09-27) THE NIGHT MARKET: Hexa's board. Priced in candy corn, nothing else; the two fits are bought here or at Ronde's and
+   coloured at Ronde's. The foot of it is the day's state — Nightfall, the lantern count, whether you have said trick or treat. */
+function openMarket() { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin", "gameWin", "lookWin", "jukeWin", "vanWin"]) $(w).hidden = true; $("hwWin").hidden = false; SFX.play("ui_open"); renderMarket(); }
+function renderMarket() {
+  if ($("hwWin").hidden || !me) return;
+  const corn = G.countItems(me, ["candycorn"]), v = me.van || { own: [] }, h = me.hw?.day === G.chicagoDay() ? me.hw : null;
+  $("hwSub").textContent = `${corn.toLocaleString()} candy corn`;
+  const rows = G.HW.market.map(([k, n, price], i) => `<button type="button" class="rcpr hw-row" data-hwbuy="${i}"${corn < price ? " disabled" : ""}><i>${ico(k)}</i><span><b>${n > 1 ? `${n} ` : ""}${esc(ITEMS[k].name)}</b><small>${esc(ITEMS[k].ex || "")}</small></span><span class="an-odds">${price} ${ico("candycorn")}</span></button>`).join("");
+  const fits = Object.entries(G.VANITY).filter(([, it]) => it.corn).map(([k, it]) => { const own = v.own?.includes(k); return `<button type="button" class="rcpr hw-row${own ? " own" : ""}" data-hwfit="${k}"${own || corn < it.corn ? " disabled" : ""}><i class="hw-fit">${vanFace(vanPreviewOf(k))}</i><span><b>${esc(it.name)}</b><small>${esc(G.VANITY_SETS[it.set].name)} fit${it.hidesHair ? " · covers your hair" : ""}</small></span><span class="an-odds">${own ? "Owned" : `${it.corn} ${ico("candycorn")}`}</span></button>`; }).join("");
+  const mins = Math.round(G.nightfallIn() / 60000), night = G.nightfallOn();
+  $("hwBody").innerHTML = `<div class="ph">Hexa sells <small>candy corn only</small></div><div class="an-craft">${rows}</div>
+    <div class="ph">Two fits <small>wear and colour them at Ronde's</small></div><div class="an-craft">${fits}</div>
+    <div class="hw-foot"><div>${night ? "\u{1F319} <b>Nightfall is on</b>: every candy corn drop is doubled until the hour is out." : `\u{1F319} Nightfall in <b>${Math.floor(mins / 60)}h ${mins % 60}m</b> (${G.HW.night[0] - 12} PM Central): corn drops double for an hour.`}</div>
+      <div>\u{1F3EE} Ghost lanterns found today: <b>${h?.lanterns?.length || 0} / ${G.HW.lanterns}</b>. They move every morning.</div>
+      <div>\u{1F383} Trick or treat: <b>${h?.trick ? "done for today" : "not yet today"}</b>. Say it to anyone.</div>
+      ${me.ward ? `<div>\u{1F9EA} <b>Warded</b>: your next death is free.</div>` : ""}</div>`;
+  $("hwBody").querySelectorAll("[data-hwbuy]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "hw", op: "buy", i: +b.dataset.hwbuy, n: 1 }); }));
+  $("hwBody").querySelectorAll("[data-hwfit]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "hw", op: "fit", k: b.dataset.hwfit }); }));
+}
 function openShop(kind) { shopKind = kind; $("shopTitle").textContent = kind === "bar" ? "🍸 The Bar" : "⚒️ The Forge"; $("shopWho").textContent = kind === "bar" ? "Dex the Dealer" : "Brutus the Smith"; openWin("shopWin"); }
 $("shopQty").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { shopN = b.dataset.n === "all" ? "all" : +b.dataset.n; $("shopQty").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }));
 function renderShop() {
@@ -5333,13 +5377,13 @@ const uico = (k) => `<img class="ico wico" src="${UIA}${k}.png?v=1" alt="" loadi
 const nico = (name) => { const a = WIKI.npcs[name]?.art || NPC_ART[name]; return a ? `<img class="ico nico" src="${ART}${a}_south.png?v=${ART_V}" alt="" loading="lazy" decoding="async">` : "🧑"; };
 function wikiPages() {
   const pages = [{ route: "home", title: "Home", icon: uico("g_home"), group: "" }, { route: "updates", title: "Updates", icon: uico("g_updates"), group: "" }];
-  for (const g of WK.GUIDES) { if (g.id === "thieving" && !G.THIEF.live) continue; pages.push({ route: `guides/${g.id}`, title: g.title, icon: uico(`g_${g.id}`), group: "Guides", cat: g.cat || "More" }); }   /* (2026-09-23) the Thieving guide rides THIEF.live with the rest of the skill; it is written and ready, it just must not be readable before the guild opens */
+  for (const g of WK.GUIDES) { if (g.id === "thieving" && !G.THIEF.live) continue; if (g.id === "longnight" && !G.hwOn()) continue;   /* (2026-09-27) the Long Night's guide appears with the season */ pages.push({ route: `guides/${g.id}`, title: g.title, icon: uico(`g_${g.id}`), group: "Guides", cat: g.cat || "More" }); }   /* (2026-09-23) the Thieving guide rides THIEF.live with the rest of the skill; it is written and ready, it just must not be readable before the guild opens */
   /* (2026-09-22) PETS ARE THEIR OWN CATEGORY, not a line in Guides: five things with stats, a drop rate and a
      picture each is a category, and the guide alone made them look like a footnote. Built from G.PETS, so a sixth
      pet appears here without anyone remembering to add it. */
   for (const [k, pt] of Object.entries(G.PETS)) pages.push({ route: `pets/${k}`, title: pt.name, icon: `<img class="ico" src="${IART.replace("items/", "")}${pt.art}.png?v=${ART_V}" alt="">`, group: "Pets" });
   for (const [k, s] of Object.entries(SKILLS)) { if (k === "thieving" && !G.THIEF.live) continue; pages.push({ route: `skills/${k}`, title: s.name, icon: sico(k), group: "Skills" }); }   /* (2026-09-23) a skill that ships dark has no wiki page yet, so it must not be offered one */
-  for (const [k, q] of Object.entries(QUESTS)) pages.push({ route: `quests/${k}`, title: q.name, icon: uico(`q_${q.tier || "easy"}`), group: "Quests" });
+  for (const [k, q] of Object.entries(QUESTS)) if (!q.event || G.hwOn()) pages.push({ route: `quests/${k}`, title: q.name, icon: uico(`q_${q.tier || "easy"}`), group: "Quests" });
   for (const [k, m] of Object.entries(MOBS).filter(([k]) => Object.values(WIKI.areas).some((a) => a.mobs[k]))) pages.push({ route: `monsters/${k}`, title: m.name, icon: mico(k), group: "Monsters" });
   for (const [k, d] of Object.entries(SCENES).filter(([, d]) => !d.wikiHide)) pages.push({ route: `areas/${k}`, title: d.name, icon: uico(`a_${k}`), group: "Areas" });
   for (const n of Object.keys(WIKI.npcs)) pages.push({ route: `npcs/${n}`, title: n, icon: nico(n), group: "People" });
@@ -5610,7 +5654,7 @@ function renderAch() {
 let QW = { st: "all", tier: null, open: null };
 function renderQuests() {
   if (!me) return;
-  const keys = Object.keys(QUESTS).filter((k) => G.OPEN.has(WIKI.npcs[QUESTS[k].giver]?.scene) || ["active", "ready", "done"].includes(G.qState(me, k)));
+  const keys = Object.keys(QUESTS).filter((k) => (!QUESTS[k].event || G.hwOn() || G.qState(me, k) === "done") && (G.OPEN.has(WIKI.npcs[QUESTS[k].giver]?.scene) || ["active", "ready", "done"].includes(G.qState(me, k))));
   const stOf = (k) => G.qState(me, k), order = { ready: 0, active: 1, new: 2, locked: 3, done: 4 };
   const done = keys.filter((k) => stOf(k) === "done").length;
   $("questSub").textContent = `${done} of ${keys.length} done`;
@@ -5768,6 +5812,7 @@ function walletCard() {
   return `<div class="wallets">
     <div class="wl-two"><div class="wallet wl-cash wl-tix" title="Tickets: the one currency here. Kills, catches and jobs pay them; the Prize Counter and every table take them.">${ico("tickets")}<span><small>Tickets</small><b>${G.tixIn(me).toLocaleString()}</b></span></div>
     <div class="wallet wl-cash wl-zc" title="Your real ZCoins on eastcoin.vip. The tables on the main floor take ZCoins or tickets, and pay ZCoins either way.">${ico("zcoin")}<span><small>ZCoins</small><b>${ZCBAL == null ? "–" : Number(ZCBAL).toLocaleString()}</b></span></div></div>
+    ${G.hwOn() ? `<div class="wallet wl-cash wl-corn" title="Candy corn: the Long Night's coin. Kills and catches drop it; the Night Market and Ronde's rail take it. Gone on November 2nd.">${ico("candycorn")}<span><small>Candy corn</small><b>${G.countItems(me, ["candycorn"]).toLocaleString()}</b></span><em>${G.nightfallOn() ? "\u{1F319} Nightfall: corn \u00d72" : (() => { const m = Math.round(G.nightfallIn() / 60000); return `Nightfall in ${Math.floor(m / 60)}h ${m % 60}m`; })()}</em></div>` : ""}
     <div class="wallet">
       <div class="wl-row${loot ? " go" : ""}" title="What the Prize Counter would pay for the loot in your bag"><img src="${UIA}w_sack.png?v=1" alt=""><span>${loot ? (full ? "Bag's full" : "In your bag") : "Nothing to trade in"}<small>${loot ? "take it to the Prize Counter" : "outside: fight or fish"}</small></span><b>${loot ? `+${loot.toLocaleString()} tickets` : ""}</b></div>
       ${me.jack ? `<div class="wl-row" title="The slots jackpot: three sevens wins it"><img src="${UIA}w_jackpot.png?v=1" alt=""><span>Slots jackpot<small>three sevens takes it</small></span><b style="color:#ffd84a">${G.fmtCash(me.jack)}</b></div>` : ""}
@@ -5882,7 +5927,7 @@ function renderPanel() {
     }).join("")}`;
   }
   if (tab === "quests") {
-    const order = { ready: 0, active: 1, new: 2, done: 3, locked: 4 }, keys = Object.keys(QUESTS).filter((k) => G.OPEN.has(WIKI.npcs[QUESTS[k].giver]?.scene) || ["active", "ready", "done"].includes(G.qState(me, k))).sort((a, b) => order[G.qState(me, a)] - order[G.qState(me, b)]);   /* quests whose giver lives down a closed road wait until it reopens */
+    const order = { ready: 0, active: 1, new: 2, done: 3, locked: 4 }, keys = Object.keys(QUESTS).filter((k) => (!QUESTS[k].event || G.hwOn() || G.qState(me, k) === "done") && (G.OPEN.has(WIKI.npcs[QUESTS[k].giver]?.scene) || ["active", "ready", "done"].includes(G.qState(me, k)))).sort((a, b) => order[G.qState(me, a)] - order[G.qState(me, b)]);   /* quests whose giver lives down a closed road wait until it reopens */
     const done = keys.filter((k) => G.qState(me, k) === "done").length;
     /* (2026-09-27, the owner) the list sits straight under today's paid jobs, and Easy / Medium / Hard buttons cut it: a
        filter is one tier or none, remembered in this browser, and the count in the heading follows the cut */

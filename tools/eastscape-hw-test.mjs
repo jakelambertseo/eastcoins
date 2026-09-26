@@ -1,0 +1,89 @@
+/* DOES THE LONG NIGHT WORK? —  node tools/eastscape-hw-test.mjs
+   (2026-09-27) The real World class with storage stubbed and the clock inside the event window: the King is called, spawned
+   and killed (drops, the hour reset, the Black Cat roll forced), a ghost lantern pays once a day, trick or treat is once a day,
+   the Night Market charges corn and refuses without it, a fit is bought with corn and worn, the Witch's brew waives one death,
+   a gather drops corn at its rate, and Nightfall doubles it. Not a test of the drawing. */
+import * as G from "../v3/assets/js/eastscape-shared.js";
+import { World } from "../eastscape-worker/src/index.js";
+
+let bad = 0;
+const fail = (m) => { console.log("  !! " + m); bad++; };
+const ok = (m) => console.log("  " + m);
+const is = (got, want, what) => { if (got === want) ok(`${what}: ${JSON.stringify(got)}`); else fail(`${what}: got ${JSON.stringify(got)}, wanted ${JSON.stringify(want)}`); };
+G.HW.live = true;   /* the harness runs the event whatever the switch says */
+if (!G.hwOn()) { console.log("  (the event is not on today: the clock says " + G.chicagoDay() + "; nothing to test)"); process.exit(0); }
+
+const store = new Map();
+const ctx = { blockConcurrencyWhile: (fn) => { const p = fn(); if (p && p.then) p.catch(() => {}); return p; },
+  storage: { get: async (k) => store.get(k), put: async (k, v) => { store.set(k, v); }, delete: async () => {}, list: async () => new Map() } };
+const W = new World(ctx, { SITE: "https://example.invalid", DEV: "0" });
+W.save = async () => {}; W.saveAll = async () => {}; W.pitTick = async () => {};
+W.hw = { kingAt: 0, kingDue: false, kingUp: null, night: false };
+const said = []; W.houseSay = (t) => said.push(String(t));
+const mk = (id, scene, x, y) => { const C = G.freshChar(); C.scene = scene; C.x = x; C.y = y; for (const sk of ["attack", "strength", "defence", "hp"]) C.xp[sk] = G.XP_AT[70];
+  const A = { id, login: id, name: id, admin: false, role: "user", ws: { send() {} }, C, x, y, path: [], step: null, face: 1, dir: "south", act: null, lastSwing: 0, swingAt: 0, hurtAt: 0, regen: Date.now(), dirty: true, needSave: false, out: [], god: false, msgs: 0, msgWindow: 0, joinedAt: Date.now(), lastInput: Date.now(), fightAt: Date.now() };
+  W.pls.set(id, A); return A; };
+const corn = (A) => G.countItems(A.C, ["candycorn"]);
+const now = Date.now();
+
+/* ---------------------------------------------------------------- the King */
+const A = mk("p1", "mire", 22, 16);
+const M = W.scene("mire");
+W.hwTick(now); is(W.hw.kingAt > now, true, "a fresh event books the first King ahead");
+W.hw.kingAt = now - 1; W.hwTick(now);
+is(W.hw.kingDue, false, "with somebody in the Mire he is placed at once, not left due");
+const king = M.mobs.find((m) => m.t === "pumpkinking"); is(!!king, true, "the King stands in the Mire");
+is(king && king.hp, G.MOBS.pumpkinking.hp, "at full hitpoints"); is(!!W.hw.kingUp, true, "and the clock knows he is up");
+is(said.some((t) => /RISES/.test(t)), true, "chat was told");
+/* kill him: the pet roll forced so the Black Cat path runs */
+const rnd = Math.random; Math.random = () => 0.0001;
+king.hp = 0; W.killMob(M, A, king, now);
+Math.random = rnd;
+is(corn(A) >= G.MOBS.pumpkinking.drops[1][1][0], true, "he dropped candy corn"); is(G.countItems(A.C, ["ectoplasm"]) >= 2, true, "and ectoplasm");
+is(A.C.pets.some((p) => p.k === "blackcat"), true, "the Black Cat came out of his shadow (roll forced)");
+is(W.hw.kingUp, null, "the clock cleared him"); is(W.hw.kingAt > now + G.HW.king.every - 5000, true, "and booked the next hour");
+is(said.some((t) => /put the Pumpkin King down/.test(t)), true, "chat was told who did it");
+/* a second cat never comes */
+W.hw.kingAt = now - 1; W.hw.kingDue = false; W.hwTick(now); const k2 = M.mobs.find((m) => m.t === "pumpkinking" && !m.dead);
+Math.random = () => 0.0001; k2.hp = 0; W.killMob(M, A, k2, now); Math.random = rnd;
+is(A.C.pets.filter((p) => p.k === "blackcat").length, 1, "the same person never gets a second cat");
+/* he leaves on his own when nobody kills him */
+W.hw.kingAt = now - 1; W.hw.kingDue = false; W.hwTick(now); const k3 = M.mobs.find((m) => m.t === "pumpkinking" && !m.dead);
+W.hwTick(now + G.HW.king.stays + 1000); is(M.mobs.includes(k3), false, "unkilled, he sinks back after his twenty minutes");
+
+/* ---------------------------------------------------------------- lanterns, trick or treat */
+const L = M.objs.find((o) => o.t === "ghostlantern"); is(!!L, true, "the Mire has a ghost lantern today");
+const c0 = corn(A); W.hwLantern(M, A, L); is(corn(A) - c0, G.HW.lanternCorn, "a lantern pays its corn");
+W.hwLantern(M, A, L); is(corn(A) - c0, G.HW.lanternCorn, "and not twice in a day");
+const mudge = M.npcs.find((n) => /Mudge/.test(n.name)); A.x = mudge.x + 1; A.y = mudge.y;
+const c1 = corn(A), t1 = G.countItems(A.C, ["tickets"]);
+Math.random = () => 0.99; W.hwOp(M, A, { op: "trick", npc: mudge.id }); Math.random = rnd;   /* 0.99 > trickAt: a treat, and past pie and seeds: corn */
+is(corn(A) > c1, true, "trick or treat paid corn on a treat roll");
+const c2 = corn(A); W.hwOp(M, A, { op: "trick", npc: mudge.id }); is(corn(A), c2, "and refuses a second ask the same day");
+is(G.countItems(A.C, ["tickets"]), t1, "tickets were never touched");
+
+/* ---------------------------------------------------------------- the market and a fit */
+const B = mk("p2", "workyard", 24, 12);
+const Y = W.scene("workyard"); is(Y.npcs.some((n) => n.opens === "market"), true, "Hexa stands in the Yard while the event is on");
+W.hwOp(Y, B, { op: "buy", i: 0, n: 1 }); is(G.countItems(B.C, ["seed_pumpkin"]), 0, "the market refuses with no corn");
+G.addInv(B.C.inv, "candycorn", 300, B.C);
+W.hwOp(Y, B, { op: "buy", i: 0, n: 1 }); is(G.countItems(B.C, ["seed_pumpkin"]), G.HW.market[0][1], "and sells with it"); is(corn(B), 300 - G.HW.market[0][2], "for the listed corn");
+W.hwOp(Y, B, { op: "fit", k: "skeleton_head" }); is(B.C.van.on.head, "skeleton_head", "a fit is bought with corn and worn"); is(corn(B), 300 - G.HW.market[0][2] - G.VANITY.skeleton_head.corn, "for its price");
+W.hwOp(Y, B, { op: "fit", k: "skeleton_head" }); is(corn(B), 300 - G.HW.market[0][2] - G.VANITY.skeleton_head.corn, "and never twice");
+
+/* ---------------------------------------------------------------- the brew */
+G.addInv(B.C.inv, "pot_witch", 1, B.C); const i = B.C.inv.findIndex((s) => s.k === "pot_witch");
+W.useSpecial(B, i, B.C.inv[i], G.ITEMS.pot_witch); is(!!B.C.ward, true, "the brew wards");
+G.addInv(B.C.inv, "tickets", 5000, B.C); B.C.scene = "mire"; B.x = 10; B.y = 10; const tb = G.countItems(B.C, ["tickets"]);
+W.die(B, M, { mob: "a test" }); is(G.countItems(B.C, ["tickets"]) >= tb, true, "a warded death costs no bill (an achievement may pay on top)"); is(!!B.C.ward, false, "and the ward is spent");
+
+/* ---------------------------------------------------------------- corn on a gather, doubled at Nightfall */
+const D = mk("p3", "gloam", 10, 10); const Gm = W.scene("gloam");
+Math.random = () => 0.01; W.gained(Gm, D, "logs", 1, "gather"); Math.random = rnd;
+is(corn(D) >= G.HW.corn.n[0] && corn(D) <= G.HW.corn.n[1], true, "a gather drops corn at the rate");
+const nightT = (() => { const t = new Date(); for (let h = 0; h < 48; h++) { const tt = t.getTime() + h * 3600000; if (G.nightfallOn(tt)) return tt; } return null; })();
+is(!!nightT, true, "there is a Nightfall in the next two days");
+if (nightT) { const wasNow = Date.now; Date.now = () => nightT; W.hwTick(nightT); is(W.hw.night, true, "the tick calls Nightfall"); is(said.some((t) => /NIGHTFALL/.test(t)), true, "in chat"); Math.random = () => 0.01; const c3 = corn(D); W.gained(Gm, D, "logs", 1, "gather"); Math.random = rnd; is((corn(D) - c3) % 2, 0, "and corn comes doubled"); Date.now = wasNow; }
+
+console.log(bad ? `\n${bad} problem(s)` : "\nthe Long Night runs: the King rises and falls, the lanterns, the market, the fits, the brew, the corn");
+process.exitCode = bad ? 1 : 0;
