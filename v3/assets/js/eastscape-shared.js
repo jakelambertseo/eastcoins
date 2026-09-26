@@ -5851,10 +5851,12 @@ for (const [k, n] of Object.entries(SEED_NAMES)) ITEMS[k] = { name: n, icon: "\u
 for (const [k, n] of Object.entries(BLOOM_NAMES)) ITEMS[k] = { name: n, icon: "\u{1F33A}", ex: "Grown on your island from seeds. Three of them and a vial brew two bottles of ink at the cauldron." };
 /* the four new island crops: planted as SEEDS, harvested as the bloom (`yields`), drawn from crop_<art>_1..4 */
 Object.assign(CROPS, {
-  seed_sun:   { lvl: 15, ms: 60 * 60000,  yield: [3, 5], xp: 120, col: "#ffd84a", yields: "sunpetal",   art: "sunpetal" },
-  seed_ember: { lvl: 25, ms: 90 * 60000,  yield: [3, 5], xp: 220, col: "#ff6a2a", yields: "emberbloom", art: "emberbloom" },
-  seed_frost: { lvl: 35, ms: 120 * 60000, yield: [3, 5], xp: 380, col: "#9ad8ff", yields: "frostcap",   art: "frostcap" },
-  seed_void:  { lvl: 45, ms: 180 * 60000, yield: [3, 5], xp: 600, col: "#b070ff", yields: "voidlily",   art: "voidlily" },
+  /* (2026-09-27, the owner: "gate the new magic print seeds behind higher farming") 40 / 45 / 50 / 55, up from 15 / 25 / 35 / 45.
+     The xp per harvest moved with the level so a level-40 crop is not worth a fifth of the level-50 tomato beside it. */
+  seed_sun:   { lvl: 40, ms: 60 * 60000,  yield: [3, 5], xp: 380, col: "#ffd84a", yields: "sunpetal",   art: "sunpetal" },
+  seed_ember: { lvl: 45, ms: 90 * 60000,  yield: [3, 5], xp: 460, col: "#ff6a2a", yields: "emberbloom", art: "emberbloom" },
+  seed_frost: { lvl: 50, ms: 120 * 60000, yield: [3, 5], xp: 600, col: "#9ad8ff", yields: "frostcap",   art: "frostcap" },
+  seed_void:  { lvl: 55, ms: 180 * 60000, yield: [3, 5], xp: 760, col: "#b070ff", yields: "voidlily",   art: "voidlily" },
 });
 /** what a planted crop gives, and the pictures it grows through */
 export const cropYield = (k) => CROPS[k]?.yields || k;
