@@ -1522,6 +1522,13 @@ export class World {
   hwTick(now) {
     if (!G.hwOn()) return;
     const H = this.hw;
+    /* (2026-09-27) THE OPENING LINE, once for the whole event: a minute after the first boot with the event on, so the room has
+       reconnected from the launch restart and actually hears it. Kept in the saved state, so a later restart does not repeat it. */
+    if (!H.opened && now - this.startedAt > 60000) {
+      H.opened = true; this.hwSave();
+      this.houseSay(`\u{1F383} THE LONG NIGHT HAS BEGUN. Candy corn falls off everything you kill and gather. Hexa's Night Market is open in the Yard, the Pumpkin King rises every hour in the Lantern Mire, and it all ends on November 2nd. The wiki has the full guide.`);
+      for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: "\u{1F383} The Long Night has begun. Hexa's Night Market is open in the Yard." });
+    }
     if (!H.kingAt) { H.kingAt = now + 5 * 60000; this.hwSave(); }   /* a fresh event: the first King five minutes after the first boot */
     if (!H.kingDue && !H.kingUp && now >= H.kingAt) {
       H.kingDue = true; this.hwSave();

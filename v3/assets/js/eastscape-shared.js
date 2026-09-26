@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 293;
+export const VERSION = 294;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -6978,7 +6978,7 @@ export function nextHint(c, n) {
    - Every seasonal picture, monster and pet is flagged `event: true`, and the two "collect everything" achievements skip those, so
      the event can never make Exterminator or The Whole Kennel unearnable for somebody who joins in November. */
 export const HW = {
-  live: false,                                        /* THE SWITCH. false: everything below is dormant and invisible, whatever the date. true: the dates rule. */
+  live: true,                                         /* (2026-09-27: ON, launched with an announced restart) THE SWITCH. false: everything below is dormant and invisible, whatever the date. true: the dates rule. */
   from: "2026-09-25", until: "2026-11-01",            /* Chicago days, inclusive: the site's own spooky season starts the 25th */
   night: [20, 21],                                    /* Nightfall: 8 to 9 PM Central, candy corn doubles */
   corn: { kill: 0.30, gather: 0.10, n: [1, 3] },      /* the flat drop: any kill 30%, any gather 10%, 1-3 corn */
