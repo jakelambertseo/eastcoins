@@ -135,7 +135,7 @@ is(G.countItems(A.C, ["tickets"]), t1, "tickets were never touched");
   W.hwSpawnKing(Mk, Date.now()); const K = Mk.mobs.find((m) => m.t === "pumpkinking");
   K.claim = { id: a1.id, until: Date.now() + 60000 };
   is(W.mayFight(Mk, K, a2, Date.now()), true, "a second player may hit the King while the first is on him");
-  K.by = { o1: 300, o2: 200, o3: 5 };
+  const hp = G.MOBS.pumpkinking.hp; K.by = { o1: Math.round(hp * 0.6), o2: Math.round(hp * 0.3), o3: Math.round(hp * 0.01) };   /* shares of his health, so the test follows him when he is retuned */
   a1.C.qs.hw_king = { state: "active", stage: 0, n: 0 }; a2.C.qs.hw_king = { state: "active", stage: 0, n: 0 };
   const c2 = corn(a2), c3 = corn(a3); K.hp = 0; W.killMob(Mk, a1, K, Date.now());
   is(corn(a2) > c2, true, "a helper who did real damage gets his own drops");
