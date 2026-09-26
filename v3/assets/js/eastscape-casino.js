@@ -148,6 +148,10 @@ const CART="/v3/assets/img/glad/flat/casino/",CV=2;const SUITS=["♠","♥","♦
 .cz-qhead small{font-weight:700;font-size:11px;opacity:.7}
 .cz-qbtn{margin-left:auto;border:2px solid #000;border-radius:5px;padding:3px 9px;background:linear-gradient(#5a5048,#3a322c);color:#fff;font:inherit;font-weight:800;font-size:11.5px;cursor:pointer;white-space:nowrap}
 .cz-qbtn:hover{background:linear-gradient(#6a6058,#4a423c)}
+/* (2026-09-25, the owner: "when trying to sell reforged gear at Bom the text is too light/unreadable"). The sell boxes sit on the parchment window, where --muted-2 (#8a7858) and the reforged rows' pale gold (#ffd77a) nearly vanish. Ink for the words, a dark amber for a reforged name, a stronger wash behind it. Scoped to .cz-qsell, the counter's sell boxes, so nothing else moves. */
+.cz-qsell .cz-qhead{color:#2a2016}.cz-qsell .cz-qhead small{opacity:1;color:#4a3c26}
+.cz-qsell .cz-csrow{color:#2a2016}.cz-qsell .cz-csrow b{color:#2a2016}.cz-qsell .cz-csrow small{color:#4a3c26;font-weight:700}
+.cz-qsell .cz-forged{background:linear-gradient(90deg,rgba(200,140,30,.22),transparent 75%)}.cz-qsell .cz-forged b{color:#7a4200}.cz-qsell .fgn{color:#7a4200}
 .cz-cashrow{display:flex;align-items:center;gap:6px;margin:6px 0}.cz-cashrow b{min-width:44px;text-align:center;font:800 20px var(--body);color:var(--gold)}.cz-cashrow button{min-width:34px;padding:5px 9px;border-radius:9px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);font:800 14px var(--body);cursor:pointer}
 .cz-gear{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}.cz-gear button{display:grid;justify-items:center;gap:2px;padding:6px 2px;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text);cursor:pointer}.cz-gear button:disabled{opacity:.4;pointer-events:none}.cz-gear>span{display:grid}.cz-gear>span>button{width:100%}
 .cz-gear button.own{box-shadow:inset 0 0 0 1px rgba(77,219,139,.6)}.cz-gear .ico,.cz-gear img{width:30px;height:30px;image-rendering:pixelated}.cz-gear small{font:800 11.5px var(--body);color:var(--gold)}.cz-chip:disabled{opacity:.4;cursor:not-allowed}
