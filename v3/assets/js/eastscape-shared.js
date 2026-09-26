@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 297;
+export const VERSION = 298;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7065,9 +7065,9 @@ CROPS.seed_pumpkin = { lvl: 20, ms: 90 * 60000, yield: [2, 4], xp: 260, col: "#f
 recipe("cook_pumpkin", { skill: "cooking", station: "fire", lvl: 25, xp: 95, ms: 2600, in: [["pumpkin", 1]], out: ["pumpkinpie", 1], burnStop: 62 });
 recipe("brew_witch", { skill: "alchemy", station: "cauldron", lvl: 30, xp: 140, ms: 2200, in: [["medium_vial", 1], ["ectoplasm", 2], ["pumpkin", 1]], out: ["pot_witch", 1] });
 
-/* THE PUMPKIN KING. Numbers are FINAL (the load-time passes above have already run): a party of three at 50 takes him in about a
-   minute, one player at 60 in three. He hits like the Critic and stands still until struck, then chases. */
-MOBS.pumpkinking = { name: "The Pumpkin King", size: "xl", lvl: 52, hp: 520, att: 46, def: 40, max: 14, speed: 1900, aggro: 4, box: [26, 60], oy: -8, event: true, boss: true,
+/* THE PUMPKIN KING. Numbers are FINAL (the load-time passes above have already run): a party of three at 50 takes him in about four
+   minutes, one player at 60 in twelve (four times the launch health, 2026-09-27). He hits like the Critic and stands still until struck, then chases. */
+MOBS.pumpkinking = { name: "The Pumpkin King", size: "xl", lvl: 52, hp: 2080,   /* (2026-09-27, the owner: "make him 4 times tankier" - so one strong player cannot drop him before anyone else gets their 5% in. 520 -> 2080: a party of three at 50 takes about four minutes, one player at 60 about twelve, inside his twenty) */ att: 46, def: 40, max: 14, speed: 1900, aggro: 4, box: [26, 60], oy: -8, event: true, boss: true,
   drops: [["tickets", [420, 720]], ["candycorn", [25, 45]], ["ectoplasm", [2, 4]], ["hallowed_helm", 1, 0.08], ["hallowed_body", 1, 0.06], ["hallowed_legs", 1, 0.06],
     ["lantern_quiver", 1, 0.02], ["skull_wand", 1, 0.02], ["bag_shroud", 1, 0.02], ["reaper_scythe", 1, 0.01], ["king_crown", 1, 0.01], ["ferry_coin", 1, 0.01]],   /* (2026-09-27) the pieces, see EVENT_TAG */
   rare: [], pet: ["blackcat", 0.025],   /* the Black Cat: one King in forty */
