@@ -450,12 +450,13 @@ export const GUIDES = [
         <tr><td>Emerald</td><td>20</td><td>2 emerald ore + 1 charcoal</td><td>30</td></tr>
         <tr><td>Diamond</td><td>30</td><td>2 diamond ore + <b>2</b> charcoal</td><td>45</td></tr>
         <tr><td>Dragonstone</td><td>40</td><td>2 dragonstone ore + <b>2</b> charcoal</td><td>60</td></tr>
-        <tr><td>Onyx</td><td>50</td><td>2 onyx ore + 1 <b>grimstone</b> + <b>3</b> charcoal</td><td>75</td></tr>
-        <tr><td>Starfall</td><td>60</td><td>2 starfall ore + 1 <b>onyx bar</b> + <b>3</b> charcoal</td><td>90</td></tr>
-        <tr><td>Eclipse</td><td>70</td><td>2 eclipse ore + 1 <b>voidglass</b> + <b>4</b> charcoal</td><td>105</td></tr>
-        <tr><td>Nova</td><td>80</td><td>2 nova ore + 1 <b>eclipse bar</b> + <b>5</b> charcoal</td><td>120</td></tr>
-        <tr><td>Singularity</td><td>90</td><td>2 singularity ore + 1 <b>nova bar</b> + <b>6</b> charcoal</td><td>135</td></tr>
+        <tr><td>Onyx</td><td>50</td><td>4 onyx ore + 2 <b>grimstone</b> + <b>6</b> charcoal</td><td>75</td></tr>
+        <tr><td>Starfall</td><td>60</td><td>4 starfall ore + 1 <b>onyx bar</b> + <b>6</b> charcoal</td><td>90</td></tr>
+        <tr><td>Eclipse</td><td>70</td><td>4 eclipse ore + 2 <b>voidglass</b> + <b>8</b> charcoal</td><td>105</td></tr>
+        <tr><td>Nova</td><td>80</td><td>4 nova ore + 1 <b>eclipse bar</b> + <b>10</b> charcoal</td><td>120</td></tr>
+        <tr><td>Singularity</td><td>90</td><td>4 singularity ore + 1 <b>nova bar</b> + <b>12</b> charcoal</td><td>135</td></tr>
       </table>
+      <p><b>From onyx up a bar costs twice what it used to</b> (2026-09-27): twice the ore, twice the extra and twice the charcoal. The bar of the tier below is still one, because it has already doubled.</p>
       <p><b>The top of the ladder wants more than ore.</b> Onyx needs grimstone, eclipse needs voidglass, and starfall, nova and singularity each want a finished bar of the tier below &mdash; so a Singularity bar is a Nova bar is an Eclipse bar, all the way down &mdash; so the last stretch is a chain, not a grind, and the charcoal bill climbs with it.</p>
       <p><b>You do not choose what to make.</b> The furnace and the anvil always make the best thing you can, out of what is in your bag, which is why a furnace with logs AND ore in front of it burns, smelts, burns and smelts by itself.</p>
       <h3>What a piece costs</h3>
@@ -877,6 +878,7 @@ export const UPDATES = [
       "THE STORE, in the top nav: tickets only. A 2X Potion for the whole room (100,000), clovers and homeward scrolls, and name cosmetics that everyone sees over your head and in chat: colours, effects, badges and frames. Nothing there changes a fight or a roll.",
       "A WORLD MAP replaces the how-to-play tab: every open map as its real shape, roads between them, the combat band coloured against your level, quest arrows, who is where, and a fog over maps you have not set foot on. Click the minimap or the tab to open it.",
       "BOM PAYS AN EIGHTH of the shelf price for smithed gear, down from a quarter (and a reforged piece's bonus halves with it), AND NEVER MORE THAN 2,500 FOR ONE PIECE, reforged or not. Bronze through dragonstone are under that and unchanged by it; onyx and everything above it buys back for 2,500. Smithing high gear to sell it was printing tickets the ore never earned: five nova bars sell for about 4,900, and the cuirass they made sold for 75,000.",
+      "BARS FROM ONYX UP COST TWICE AS MUCH TO SMELT: twice the ore, twice the grimstone or voidglass and twice the charcoal. A starfall, nova or singularity bar still takes ONE bar of the tier below, which has already doubled, so every top bar costs exactly twice what it did. They sell for the same, so smelting to sell pays about half what it did.",
       "THE SKILLS TAB is a grid of tiles; click one for its wiki page. Quest givers now say which step comes first when it is with somebody else.",
       "THE HISCORES, SORTED. The rail is grouped into Combat, Skills, Records and Dungeons & runs, in the skills panel's order. Alchemy has a board at last. THE TOWER ranks the highest floor anyone has cleared, THE PYRAMID has a fastest-clear board, and every dungeon board filters to 2-man, 3-man and 4-man clears, each kept as its own top twenty, so a pair's record is never pushed off by a party of four.",
     ]

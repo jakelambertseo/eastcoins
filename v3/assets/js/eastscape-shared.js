@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 286;
+export const VERSION = 287;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -4440,6 +4440,7 @@ ITEMS.charcoal = { name: "Charcoal", icon: "⬛", ex: "Burnt logs, light and fil
 /* (2026-09-25) TWO MORE RUNGS. Indexed by tier POSITION, so it must grow with TIERS or the new smelts are
    handed `undefined` charcoal and quietly cost none. */
 const CHAR_FUEL = [1, 1, 2, 2, 3, 3, 4, 5, 6];
+const SMELT_DOUBLE = new Set(["onyx", "starfall", "eclipse", "nova", "singularity"]);   /* (2026-09-27) see the smelt recipe below */
 /* What a log is worth in charcoal. Anything not named here gives 1. */
 /* HOW MUCH CHARCOAL A LOG IS WORTH (2026-09-25, the owner: "higher level trees should give more charcoal
    proportionately"). It did not, and in two places it ran BACKWARDS: rustpine at Woodcutting 65 burned into two
@@ -4489,7 +4490,14 @@ export const CORE_BOSSES = ["junkking", "gator", "dealer", "hoodie3", "squeeze"]
 for (const [i, t] of TIERS.entries()) {
   const tierN = i + 1, bar = `${t.key}_bar`;
   ITEMS[bar] = { name: `${t.name} bar`, icon: "🧱", tier: t.key, ex: `Smelted ${t.name.toLowerCase()}, still warm. It wants to be something.` };
-  recipe(`smelt_${t.key}`, { skill: "smithing", station: "furnace", in: [...SMELT[t.key], ["charcoal", CHAR_FUEL[i]]], out: [bar, 1], lvl: t.gate, xp: 15 * tierN, ms: 2400 });
+  /* (2026-09-27, the owner: "smithing bars are printing too many tickets now too. double the craft cost of all bars starting at
+     onyx and up"). SMELT_DOUBLE doubles the ore, the extra (grimstone, voidglass) and the charcoal of every smelt from onyx up,
+     and leaves the BAR OF THE TIER BELOW at one. That is what makes it an exact doubling rather than a compounding one: the bar
+     below has already doubled, so one of it IS twice the raw cost it was. Doubling it as well would make a singularity bar
+     eight times the eclipse ore it was, not two. Bars sell for what they did; the xp per smelt is unchanged, so the xp per ore
+     from onyx up is halved along with the tickets. */
+  const dbl = SMELT_DOUBLE.has(t.key) ? 2 : 1, isBar = (k) => /_bar$/.test(k);
+  recipe(`smelt_${t.key}`, { skill: "smithing", station: "furnace", in: [...SMELT[t.key].map(([k, n]) => [k, isBar(k) ? n : n * dbl]), ["charcoal", CHAR_FUEL[i] * dbl]], out: [bar, 1], lvl: t.gate, xp: 15 * tierN, ms: 2400, priceDiv: dbl });   /* priceDiv: see the RAW loop - the bar SELLS for what it did */
   /* (2026-09-25) THE TOP TWO TIERS' WEAPONS WANT A CORE as well as bars — the owner picked the weapon as the
      chase item, so the armour is a reliable grind and the thing in your hand is the trophy. Armour and tools are
      untouched, and so is every tier below. */
@@ -4892,7 +4900,13 @@ export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
   const RAW = Object.fromEntries(Object.entries(VALUE).map(([k, v]) => [k, { v, steps: 0 }]));
   for (let pass = 0; pass < 4; pass++) for (const r of Object.values(RECIPES)) {
     if (!r.in.every(([k]) => RAW[k])) continue;
-    const raw = r.in.reduce((a, [k, n]) => a + RAW[k].v * n, 0) / (r.out[1] || 1), steps = 1 + Math.max(...r.in.map(([k]) => RAW[k].steps));
+    /* (2026-09-27) priceDiv: a recipe whose COST was raised without raising what it is WORTH. Every crafted thing is priced
+       at CRAFT_PAYS x its raw inputs, so doubling the onyx-and-up smelts would have doubled what those bars sell for too, and a
+       smelt would have printed exactly as many tickets per ore as before - the owner's complaint, untouched. Dividing here keeps
+       the bar's raw value (and so its price, and the price of every piece made from it) where it was. */
+    /* ONLY THE DOUBLED INPUTS are divided back: the bar of the tier below was not doubled and is already priced where it was,
+       and dividing it again would halve it a second time (a nova bar would have sold for 750, not 988). */
+    const raw = r.in.reduce((a, [k, n]) => a + RAW[k].v * n / (r.priceDiv && !/_bar$/.test(k) ? r.priceDiv : 1), 0) / (r.out[1] || 1), steps = 1 + Math.max(...r.in.map(([k]) => RAW[k].steps));
     RAW[r.out[0]] = { v: raw, steps }; VALUE[r.out[0]] = Math.round(CRAFT_PAYS * raw * CRAFT_STEP ** (steps - 1));
   }
 }
