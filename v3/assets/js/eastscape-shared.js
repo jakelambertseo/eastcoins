@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 287;
+export const VERSION = 288;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -6967,8 +6967,20 @@ export const HW = {
   lanterns: 10, lanternCorn: 4,                       /* the Ghost Hunt: ten lanterns a day across the open maps, 4 corn each, once a day each */
   king: { every: 3600000, stays: 1200000, scene: "mire", at: [22, 14] },   /* the Pumpkin King: hourly, stands 20 minutes, the Mire's clearing */
   trick: { corn: [6, 14], pie: 0.15, seed: 0.20, trickAt: 0.35 },          /* Trick or treat, once a day per person */
-  market: [["seed_pumpkin", 3, 12], ["medium_vial", 2, 8], ["ectoplasm", 1, 10], ["pumpkinpie", 1, 30]]   /* [item, n, corn] */
+  /* (2026-09-27, the owner: "since the event will be a month long, the cost of items needs to be very high (candy corns), they're
+     very cheap right now"). PRICED AGAINST A MONTH. An ordinary evening's play makes 150-250 corn (0.6 a kill, the ten lanterns'
+     40, a treat, an hour of Nightfall at double), a hard one 500; the three quests pay 510 once. So the consumables are a few
+     kills each, a fit is a fortnight, the Hallowed set is the month for anyone grinding it - or the King's drops - and the Black
+     Cat is the chase: 12,000 is every corn a serious player sees before November. The King still drops the gear and the cat, so
+     the shelf is the slow certain road and the Mire the fast lucky one. */
+  market: [["seed_pumpkin", 3, 40], ["medium_vial", 2, 25], ["ectoplasm", 1, 30], ["pumpkinpie", 1, 90], ["pot_witch", 1, 200],
+    ["hallowed_helm", 1, 4000], ["hallowed_body", 1, 6000], ["hallowed_legs", 1, 5000]],   /* [item, n, corn] */
+  pet: ["blackcat", 12000],                            /* the Black Cat off the shelf, once; the King still drops it one in forty */
+  gone: "2026-11-02"                                   /* the morning it all goes: the copy says this date everywhere, so it is one string */
 };
+/** days of the Long Night left, counting today: 1 on the last day, 0 after */
+export const hwDaysLeft = (t = Date.now()) => { if (!hwOn(t)) return 0; const d = chicagoDay(t); return Math.max(0, Math.round((Date.parse(HW.until + "T12:00:00Z") - Date.parse(d + "T12:00:00Z")) / 86400000) + 1); };
+if (HW.live) HISCORES.push(["corn", "Candy corn", "earned this Long Night", "n"]);   /* (2026-09-27) the season's board; c.stats.corn, counted by the server's hwGive */
 export const hwOn = (t = Date.now()) => { if (!HW.live) return false; const d = chicagoDay(t); return d >= HW.from && d <= HW.until; };
 export const hourCT = (t = Date.now()) => (+new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", hour12: false }).format(t)) % 24;
 export const nightfallOn = (t = Date.now()) => hwOn(t) && hourCT(t) >= HW.night[0] && hourCT(t) < HW.night[1];
@@ -7004,7 +7016,7 @@ PETS.blackcat = { name: "Black Cat", art: "pet_blackcat", raid: true, event: tru
 /* the two fits, priced in candy corn: bought at the Night Market or at Ronde's, worn and coloured at Ronde's like any other */
 VANITY_SETS.skeleton = { name: "Skeleton", blurb: "Every bone on the outside, where people can see the work.", corn: true, event: true };
 VANITY_SETS.ghost = { name: "Ghost", blurb: "A sheet with eye holes. Timeless.", corn: true, event: true };
-for (const [set, pieces, corn] of [["skeleton", { head: ["Skull", true], body: ["Ribcage", false], legs: ["Leg bones", false], feet: ["Bony feet", false] }, 90], ["ghost", { head: ["Sheet hood", true], body: ["Sheet", false] }, 110]])
+for (const [set, pieces, corn] of [["skeleton", { head: ["Skull", true], body: ["Ribcage", false], legs: ["Leg bones", false], feet: ["Bony feet", false] }, 2400], ["ghost", { head: ["Sheet hood", true], body: ["Sheet", false] }, 3000]])   /* (2026-09-27) was 90 and 110: a fortnight's corn each now, see HW.market */
   for (const [slot, [name, hidesHair]] of Object.entries(pieces)) VANITY[`${set}_${slot}`] = { set, slot, name, hidesHair, price: 0, corn, event: true };
 
 /* the three quests: a chain, one per tier, given by the Mire's lamplighter, the Boneyard's Sister and the Night Market's witch */
@@ -7039,8 +7051,8 @@ Object.assign(QUESTS, {
 /* the witch stands by her tent in the Yard for the month. She is in the list all year with `event: true`, and the scene builder on
    BOTH sides leaves event people out while the event is off. NOT `if (hwOn())` here: Cloudflare freezes the clock while a module
    loads, so at start-up the server's Date.now() is not today and the test would always say no. Decide at build time, never at load. */
-SCENES.workyard.npcs.push({ name: "Hexa the Candy Witch", event: true, art: "hexa", x: 24, y: 11, still: true, quests: ["hw_king"], opens: "market", reach: 3, hair: "#3a2a4a", shirt: "#2a1a3a", pants: "#4a2a5a",
-  lines: ["Candy corn. Bring me candy corn. It falls off everything this month, if you're the kind of person things fall off for.", "The King rises on the hour in the Mire. I sell to the ones who come back.", "Seeds, vials, slime, pie. And two fits, if you've the corn: a skeleton and a sheet. Ronde does the colours."] });
+SCENES.workyard.npcs.push({ name: "Hexa the Candy Witch", event: true, art: "hexa", x: 18, y: 11, still: true,   /* (2026-09-27) was 24,11 with the tent on the north road; the owner: "right in the road in the yard". West of the road now, on the grass between the bush and the Gloam sign */ quests: ["hw_king"], opens: "market", reach: 3, hair: "#3a2a4a", shirt: "#2a1a3a", pants: "#4a2a5a",
+  lines: ["Candy corn. Bring me candy corn. It falls off everything this month, if you're the kind of person things fall off for.", "The King rises on the hour in the Mire. I sell to the ones who come back.", "Seeds, vials, slime, pie. And two fits, if you've the corn: a skeleton and a sheet. Ronde does the colours.", "I pack the tent on the second of November and the corn goes to sugar in your bag the same morning. Whatever you've bought, you keep. Whatever you haven't, you won't."] });
 
 /* THE DRESSING AND THE HUNT, on every open outdoor map: jack-o'-lanterns by the paths, and the day's ghost lanterns. Both are
    ordinary objects added in buildScene, so the page and the server place them identically from the same seed. The lanterns move
@@ -7052,7 +7064,7 @@ export function hwObjs(key, b) {
   const rnd = (i) => { let x = (seed ^ (i * 0x9e3779b9)) >>> 0; x ^= x << 13; x ^= x >>> 17; x ^= x << 5; return ((x >>> 0) % 10000) / 10000; };
   const free = (x, y) => x > 1 && y > 1 && x < COLS - 2 && y < ROWS - 2 && g[y][x] === "." && !objs.some((o) => cheb(o, { x, y }) <= 1);
   /* the tent and its keeper's pumpkins, in the Yard only */
-  if (key === "workyard") { objs.push({ t: "nightmarket", x: 22, y: 9, w: 3, h: 2, name: "The Night Market", event: true }); for (let yy = 9; yy <= 10; yy++) for (let xx = 22; xx <= 24; xx++) g[yy][xx] = "#"; for (const [x, y] of [[21, 11], [25, 11]]) if (g[y][x] === ".") { objs.push({ t: "jack", x, y, name: "A jack-o'-lantern", event: true, soft: true }); } }
+  if (key === "workyard") { objs.push({ t: "nightmarket", x: 16, y: 9, w: 3, h: 2, name: "The Night Market", event: true }); for (let yy = 9; yy <= 10; yy++) for (let xx = 16; xx <= 18; xx++) g[yy][xx] = "#"; for (const [x, y] of [[15, 11], [19, 11]]) if (g[y][x] === ".") { objs.push({ t: "jack", x, y, name: "A jack-o'-lantern", event: true, soft: true }); } }
   /* jack-o'-lanterns: six a map, on grass beside paths */
   let placed = 0;
   for (let i = 0; i < 400 && placed < 6; i++) { const x = 2 + Math.floor(rnd(i) * (COLS - 4)), y = 2 + Math.floor(rnd(i + 1000) * (ROWS - 4)); if (!free(x, y)) continue; if (![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => g[y + dy]?.[x + dx] === ",")) continue; objs.push({ t: "jack", x, y, name: "A jack-o'-lantern", event: true, soft: true }); placed++; }
@@ -7086,6 +7098,13 @@ for (const [k, col] of Object.entries(NAME_COLS)) st(`col_${k}`, { tab: "name", 
 for (const [k, name] of Object.entries(NAME_FX)) st(`fx_${k}`, { tab: "name", kind: "fx", slot: "fx", val: k, name: `${name} effect`, price: 40000, ex: { shine: "A light passes along your name.", pulse: "Your name breathes.", rainbow: "Every colour, in turn.", glitch: "Your name cannot quite hold still.", flicker: "A candle in a draught." }[k] });
 for (const k of NAME_ICONS) st(`icon_${k}`, { tab: "name", kind: "icon", slot: "icon", val: k, name: `${k[0].toUpperCase()}${k.slice(1)} badge`, price: 12000, ex: "A small badge before your name." });
 for (const [k, col] of Object.entries(NAME_FRAMES)) st(`frame_${k}`, { tab: "name", kind: "frame", slot: "frame", val: k, col, name: `${k[0].toUpperCase()}${k.slice(1)} frame`, price: 30000, ex: "A thin frame around your name over your head." });
+/* (2026-09-27) THE LONG NIGHT'S TWO, bought at the Night Market with candy corn and never for tickets: tab "night" keeps them off the
+   Store's own tabs, `corn` is the price, and once owned they show in the Name tab like anything else, for good - the urgency is that
+   they can only be BOUGHT this month. The colour and the frame are entries in NAME_COLS / NAME_FRAMES added AFTER the loops above,
+   so no ticket-priced twin is generated for them. */
+NAME_COLS.pumpkin = "#ff7a1a"; NAME_FRAMES.ember = "#ff4a12";
+st("col_pumpkin", { tab: "night", kind: "col", slot: "col", val: "pumpkin", col: NAME_COLS.pumpkin, name: "Pumpkin name", price: 0, corn: 1500, event: true, ex: "Your name in jack-o'-lantern orange, over your head and in chat. Only sold during the Long Night; yours for good." });
+st("frame_ember", { tab: "night", kind: "frame", slot: "frame", val: "ember", col: NAME_FRAMES.ember, name: "Ember frame", price: 0, corn: 2000, event: true, ex: "A thin frame the colour of a lantern's coal around your name. Only sold during the Long Night; yours for good." });
 export const STORE_SLOTS = ["col", "fx", "icon", "frame"];
 /** what a character's name wears: { col, fx, icon, frame } of item ids, or null when nothing is set */
 export const nameFxOf = (c) => { const n = c?.store?.name; if (!n) return null; const out = {}; let any = false; for (const s of STORE_SLOTS) { const it = n[s] && STORE[n[s]]; if (it && (c.store.own || []).includes(it.id)) { out[s] = it.val; any = true; } } return any ? out : null; };

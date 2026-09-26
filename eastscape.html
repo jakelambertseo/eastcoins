@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=309">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=310">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -957,6 +957,12 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .an-bars{display:flex;align-items:center;gap:6px;margin:0 10px 8px;font-size:12px;font-weight:700;color:#cbbfae}
 .wl-corn{gap:6px;margin-top:6px}.wl-corn em{margin-left:auto;font-style:normal;font-size:11px;font-weight:700;color:#e0b060;text-align:right}
 .hw-foot{margin:10px 10px 6px;padding:8px 10px;background:rgba(0,0,0,.14);border-radius:6px;font-size:13px;line-height:1.5;color:#e8dcc0}.hw-foot b{color:#ffd77a}#hwWin .hw-foot{background:#efe5cf;color:#3a2e1c;box-shadow:inset 0 0 0 2px #b8a67e}#hwWin .hw-foot b{color:#7a3c12}
+.hw-gone{margin:0 0 8px;padding:8px 10px;border-radius:6px;background:#3a1a10;color:#f3dcc0;font-size:13px;line-height:1.45;border:2px solid #7a3a10}.hw-gone b{color:#ffb05a}
+.hw-gone.soon{background:#5a1010;border-color:#c02020;animation:hwsoon 1.6s ease-in-out infinite}.hw-gone.soon b{color:#ffd0a0}
+@keyframes hwsoon{0%,100%{box-shadow:0 0 0 0 rgba(255,80,40,0)}50%{box-shadow:0 0 0 4px rgba(255,80,40,.35)}}
+@media (prefers-reduced-motion:reduce){.hw-gone.soon{animation:none}}
+.hw-tag{display:inline-block;font-style:normal;font-size:10px;font-weight:800;padding:1px 5px;border-radius:3px;background:#c8641e;color:#fff4e0;margin-left:4px;vertical-align:1px}
+.wl-corn .hw-last{color:#ff7a5a;font-weight:800}
 .hw-row.own{opacity:.6}.hw-fit{width:34px;height:34px;overflow:hidden;display:inline-block}.hw-fit .van-face{transform:scale(.5);transform-origin:top left}
 .glow.glow-hallow{filter:drop-shadow(0 0 3px rgba(255,140,30,.9))}
 .an-craft{display:grid;gap:6px;margin:0 10px 10px}.an-craft .an-row small{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center}.an-craft .an-row small .ico{width:16px;height:16px;vertical-align:-3px}
@@ -1230,7 +1236,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=309";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=310";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1239,7 +1245,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=164").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=165").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -1893,7 +1899,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 102;
+const PACKS_V = 103;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -2167,7 +2173,7 @@ const ITEM_ART = new Set(["candycorn", "pumpkin", "seed_pumpkin", "pumpkinpie", 
    flat/items/* a DAY of max-age plus a WEEK of stale-while-revalidate, so a bad entry is served for eight days
    and nothing can purge it. The version IS the purge. Bumping it costs everyone one re-download of ~246 icons at
    1-3 KB each, about 400 KB once, which is the cheap half of this trade. */
-const IART = "/v3/assets/img/glad/flat/items/", IART_V = 25, ICO_IMG = {};
+const IART = "/v3/assets/img/glad/flat/items/", IART_V = 26, ICO_IMG = {};
 /* UI ART — drawn furniture for windows, as opposed to items (IART) and world objects (ART). The folder already
    held 46 pictures and already had a constant; this was declared a second time up here on 2026-09-23 before that
    was noticed, and is the same UIA, hoisted, rather than a rival. Everything in here is served at ?v=1 and a
@@ -4872,7 +4878,7 @@ function renderStore() {
   if ($("storeWin").hidden || !me) return;
   const tix = G.tixIn(me), st = me.store || { own: [], name: {} }, own = new Set(st.own || []), worn = st.name || {}, nfx = G.nameFxOf(me);
   $("storeSub").textContent = `${G.fmtTix(tix)}`;
-  const rows = Object.values(G.STORE).filter((it) => it.tab === storeTab);
+  const rows = Object.values(G.STORE).filter((it) => it.tab === storeTab || (storeTab === "name" && it.tab === "night" && own.has(it.id)));   /* (2026-09-27) a Long Night cosmetic you own lives here after the tent has gone */
   const pv = `<div class="st-preview"><span class="st-pvname${nfx?.fx ? ` nfx-${nfx.fx}` : ""}${nfx?.frame ? " nfx-framed" : ""}" style="${nfx?.col ? `color:${G.NAME_COLS[nfx.col]};` : ""}${nfx?.frame ? `outline-color:${G.NAME_FRAMES[nfx.frame]};` : ""}">${nfx?.icon ? `<img class="nfx-badge" src="${ART}nb_${nfx.icon}.png?v=${ART_V}" alt="">` : ""}${esc(you?.name || "You")}</span><small>How your name looks to everyone</small></div>`;
   const card = (it) => {
     const owned = own.has(it.id), isWorn = it.slot && worn[it.slot] === it.id, afford = tix >= it.price;
@@ -4893,18 +4899,32 @@ $("storeBtn").addEventListener("click", () => { if ($("storeWin").hidden) openSt
 function openMarket() { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin", "gameWin", "lookWin", "jukeWin", "vanWin"]) $(w).hidden = true; $("hwWin").hidden = false; SFX.play("ui_open"); renderMarket(); }
 function renderMarket() {
   if ($("hwWin").hidden || !me) return;
-  const corn = G.countItems(me, ["candycorn"]), v = me.van || { own: [] }, h = me.hw?.day === G.chicagoDay() ? me.hw : null;
+  const corn = G.countItems(me, ["candycorn"]), v = me.van || { own: [] }, h = me.hw?.day === G.chicagoDay() ? me.hw : null, left = G.hwDaysLeft();
   $("hwSub").textContent = `${corn.toLocaleString()} candy corn`;
-  const rows = G.HW.market.map(([k, n, price], i) => `<button type="button" class="rcpr hw-row" data-hwbuy="${i}"${corn < price ? " disabled" : ""}><i>${ico(k)}</i><span><b>${n > 1 ? `${n} ` : ""}${esc(ITEMS[k].name)}</b><small>${esc(ITEMS[k].ex || "")}</small></span><span class="an-odds">${price} ${ico("candycorn")}</span></button>`).join("");
-  const fits = Object.entries(G.VANITY).filter(([, it]) => it.corn).map(([k, it]) => { const own = v.own?.includes(k); return `<button type="button" class="rcpr hw-row${own ? " own" : ""}" data-hwfit="${k}"${own || corn < it.corn ? " disabled" : ""}><i class="hw-fit">${vanFace(vanPreviewOf(k))}</i><span><b>${esc(it.name)}</b><small>${esc(G.VANITY_SETS[it.set].name)} fit${it.hidesHair ? " · covers your hair" : ""}</small></span><span class="an-odds">${own ? "Owned" : `${it.corn} ${ico("candycorn")}`}</span></button>`; }).join("");
+  /* (2026-09-27, the owner: "it needs to be very clear that seasonal items will be going away to create a sense of urgency") the
+     strip at the top says the date and the days, every row that is a KEEPSAKE wears a Leaves tag, and the last week turns it red */
+  const gone = `<div class="hw-gone${left <= 7 ? " soon" : ""}">\u{1F383} <b>The tent packs up on November 2nd${left <= 7 ? ` — ${left} day${left === 1 ? "" : "s"} left` : ` — ${left} days left`}.</b> Every candy corn you have not spent turns to sugar that morning. What you have bought, you keep.</div>`;
+  const tag = `<em class="qtag hw-tag">Leaves Nov 2</em>`;
+  const row = ([k, n, price], i) => `<button type="button" class="rcpr hw-row" data-hwbuy="${i}"${corn < price ? " disabled" : ""}><i>${ico(k)}</i><span><b>${n > 1 ? `${n} ` : ""}${esc(ITEMS[k].name)}${ITEMS[k].slot ? ` ${tag}` : ""}</b><small>${esc(ITEMS[k].ex || "")}</small></span><span class="an-odds">${price.toLocaleString()} ${ico("candycorn")}</span></button>`;
+  const rows = G.HW.market.map((r, i) => [r, i]).filter(([r]) => !ITEMS[r[0]].slot).map(([r, i]) => row(r, i)).join("");
+  const gear = G.HW.market.map((r, i) => [r, i]).filter(([r]) => ITEMS[r[0]].slot).map(([r, i]) => row(r, i)).join("");
+  const [petK, petCorn] = G.HW.pet, havePet = (me.pets || []).some((p) => p.k === petK);
+  const pet = `<button type="button" class="rcpr hw-row${havePet ? " own" : ""}" data-hwpet="1"${havePet || corn < petCorn ? " disabled" : ""}><i><img src="${ART}${G.PETS[petK].art}.png?v=${IART_V}" alt="" style="width:34px;height:34px;object-fit:contain"></i><span><b>${esc(G.PETS[petK].name)} ${tag}</b><small>${esc(G.PETS[petK].ex || "")}${havePet ? " (yours)" : ""}</small></span><span class="an-odds">${petCorn.toLocaleString()} ${ico("candycorn")}</span></button>`;
+  const cos = Object.values(G.STORE).filter((it) => it.tab === "night" && it.corn).map((it) => { const own = (me.store?.own || []).includes(it.id); const sw = it.kind === "col" ? `<i class="st-sw" style="background:${it.col}"></i>` : `<i class="st-sw st-fr" style="border-color:${it.col}"></i>`; return `<button type="button" class="rcpr hw-row${own ? " own" : ""}" data-hwcos="${it.id}"${own || corn < it.corn ? " disabled" : ""}><i>${sw}</i><span><b>${esc(it.name)} ${tag}</b><small>${esc(it.ex)}${own ? " (yours)" : ""}</small></span><span class="an-odds">${it.corn.toLocaleString()} ${ico("candycorn")}</span></button>`; }).join("");
+  const fits = Object.entries(G.VANITY).filter(([, it]) => it.corn).map(([k, it]) => { const own = v.own?.includes(k); return `<button type="button" class="rcpr hw-row${own ? " own" : ""}" data-hwfit="${k}"${own || corn < it.corn ? " disabled" : ""}><i class="hw-fit">${vanFace(vanPreviewOf(k))}</i><span><b>${esc(it.name)} ${tag}</b><small>${esc(G.VANITY_SETS[it.set]?.name || "")} · ${own ? "yours" : "wear and colour it at Ronde's"}</small></span><span class="an-odds">${it.corn.toLocaleString()} ${ico("candycorn")}</span></button>`; }).join("");
   const mins = Math.round(G.nightfallIn() / 60000), night = G.nightfallOn();
-  $("hwBody").innerHTML = `<div class="ph">Hexa sells <small>candy corn only</small></div><div class="an-craft">${rows}</div>
+  $("hwBody").innerHTML = `${gone}<div class="ph">Hexa sells <small>candy corn only</small></div><div class="an-craft">${rows}</div>
+    <div class="ph">The Hallowed set <small>the King drops it too</small></div><div class="an-craft">${gear}</div>
+    <div class="ph">The Black Cat <small>one King in forty has it; Hexa sells it once</small></div><div class="an-craft">${pet}</div>
+    <div class="ph">Your name <small>only sold this month, kept for good</small></div><div class="an-craft">${cos}</div>
     <div class="ph">Two fits <small>wear and colour them at Ronde's</small></div><div class="an-craft">${fits}</div>
     <div class="hw-foot"><div>${night ? "\u{1F319} <b>Nightfall is on</b>: every candy corn drop is doubled until the hour is out." : `\u{1F319} Nightfall in <b>${Math.floor(mins / 60)}h ${mins % 60}m</b> (${G.HW.night[0] - 12} PM Central): corn drops double for an hour.`}</div>
       <div>\u{1F3EE} Ghost lanterns found today: <b>${h?.lanterns?.length || 0} / ${G.HW.lanterns}</b>. They move every morning.</div>
       <div>\u{1F383} Trick or treat: <b>${h?.trick ? "done for today" : "not yet today"}</b>. Say it to anyone.</div>
       ${me.ward ? `<div>\u{1F9EA} <b>Warded</b>: your next death is free.</div>` : ""}</div>`;
   $("hwBody").querySelectorAll("[data-hwbuy]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "hw", op: "buy", i: +b.dataset.hwbuy, n: 1 }); }));
+  $("hwBody").querySelectorAll("[data-hwpet]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "hw", op: "pet" }); }));
+  $("hwBody").querySelectorAll("[data-hwcos]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "hw", op: "cos", id: b.dataset.hwcos }); }));
   $("hwBody").querySelectorAll("[data-hwfit]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "hw", op: "fit", k: b.dataset.hwfit }); }));
 }
 function openShop(kind) { shopKind = kind; $("shopTitle").textContent = kind === "bar" ? "🍸 The Bar" : "⚒️ The Forge"; $("shopWho").textContent = kind === "bar" ? "Dex the Dealer" : "Brutus the Smith"; openWin("shopWin"); }
@@ -6048,7 +6068,7 @@ function walletCard() {
   return `<div class="wallets">
     <div class="wl-two"><div class="wallet wl-cash wl-tix" title="Tickets: the one currency here. Kills, catches and jobs pay them; the Prize Counter and every table take them.">${ico("tickets")}<span><small>Tickets</small><b>${G.tixIn(me).toLocaleString()}</b></span></div>
     <div class="wallet wl-cash wl-zc" title="Your real ZCoins on eastcoin.vip. The tables on the main floor take ZCoins or tickets, and pay ZCoins either way.">${ico("zcoin")}<span><small>ZCoins</small><b>${ZCBAL == null ? "–" : Number(ZCBAL).toLocaleString()}</b></span></div></div>
-    ${G.hwOn() ? `<div class="wallet wl-cash wl-corn" title="Candy corn: the Long Night's coin. Kills and catches drop it; the Night Market and Ronde's rail take it. Gone on November 2nd.">${ico("candycorn")}<span><small>Candy corn</small><b>${G.countItems(me, ["candycorn"]).toLocaleString()}</b></span><em>${G.nightfallOn() ? "\u{1F319} Nightfall: corn \u00d72" : (() => { const m = Math.round(G.nightfallIn() / 60000); return `Nightfall in ${Math.floor(m / 60)}h ${m % 60}m`; })()}</em></div>` : ""}
+    ${G.hwOn() ? `<div class="wallet wl-cash wl-corn" title="Candy corn: the Long Night's coin. Kills and catches drop it; the Night Market and Ronde's rail take it. Gone on November 2nd.">${ico("candycorn")}<span><small>Candy corn</small><b>${G.countItems(me, ["candycorn"]).toLocaleString()}</b></span><em>${G.nightfallOn() ? "\u{1F319} Nightfall: corn \u00d72" : (() => { const m = Math.round(G.nightfallIn() / 60000); return `Nightfall in ${Math.floor(m / 60)}h ${m % 60}m`; })()}<br>${G.hwDaysLeft() <= 7 ? `<span class="hw-last">${G.hwDaysLeft()} day${G.hwDaysLeft() === 1 ? "" : "s"} left</span>` : `${G.hwDaysLeft()} days left`}</em></div>` : ""}
     <div class="wallet">
       <div class="wl-row${loot ? " go" : ""}" title="What the Prize Counter would pay for the loot in your bag"><img src="${UIA}w_sack.png?v=1" alt=""><span>${loot ? (full ? "Bag's full" : "In your bag") : "Nothing to trade in"}<small>${loot ? "take it to the Prize Counter" : "outside: fight or fish"}</small></span><b>${loot ? `+${loot.toLocaleString()} tickets` : ""}</b></div>
       ${me.jack ? `<div class="wl-row" title="The slots jackpot: three sevens wins it"><img src="${UIA}w_jackpot.png?v=1" alt=""><span>Slots jackpot<small>three sevens takes it</small></span><b style="color:#ffd84a">${G.fmtCash(me.jack)}</b></div>` : ""}

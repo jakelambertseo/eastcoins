@@ -5,6 +5,7 @@
    a gather drops corn at its rate, and Nightfall doubles it. Not a test of the drawing. */
 import * as G from "../v3/assets/js/eastscape-shared.js";
 import { World } from "../eastscape-worker/src/index.js";
+import fs from "node:fs";
 
 let bad = 0;
 const fail = (m) => { console.log("  !! " + m); bad++; };
@@ -62,14 +63,40 @@ is(corn(A) > c1, true, "trick or treat paid corn on a treat roll");
 const c2 = corn(A); W.hwOp(M, A, { op: "trick", npc: mudge.id }); is(corn(A), c2, "and refuses a second ask the same day");
 is(G.countItems(A.C, ["tickets"]), t1, "tickets were never touched");
 
+/* ---------------------------------------------------------------- (2026-09-27) the month's prices, the cat, the name cosmetics, the board, the days */
+{
+  const B = mk("p9", "workyard", 19, 12); const Y0 = W.scene("workyard"); const hexa = Y0.npcs.find((n) => n.opens === "market");
+  is(!!hexa && hexa.x < 22, true, "Hexa stands west of the Yard's north road");
+  is(Y0.objs.some((o) => o.t === "nightmarket" && o.x + o.w <= 22), true, "and the tent is off it too");
+  is(G.HW.market.every(([, , c]) => c >= 25), true, "nothing on the shelf is cheap any more");
+  is(Object.values(G.VANITY).filter((v) => v.corn).every((v) => v.corn >= 2000), true, "a fit is a fortnight's corn");
+  const helm = G.HW.market.findIndex(([k]) => k === "hallowed_helm");
+  W.hwOp(Y0, B, { op: "buy", i: helm, n: 1 }); is(G.countItems(B.C, ["hallowed_helm"]), 0, "the Hallowed helm is refused without the corn");
+  G.addInv(B.C.inv, "candycorn", 20000, B.C);
+  W.hwOp(Y0, B, { op: "buy", i: helm, n: 1 }); is(G.countItems(B.C, ["hallowed_helm"]), 1, "and sold with it"); is(corn(B), 20000 - G.HW.market[helm][2], "at its price");
+  W.hwOp(Y0, B, { op: "pet" }); is(B.C.pets.some((p) => p.k === "blackcat"), true, "the Black Cat comes off the shelf"); is(B.C.eq.pet, B.C.pets[0].id, "and is worn");
+  const c9 = corn(B); W.hwOp(Y0, B, { op: "pet" }); is(corn(B), c9, "a second cat is refused");
+  W.hwOp(Y0, B, { op: "cos", id: "col_pumpkin" }); is(B.C.store?.own?.includes("col_pumpkin"), true, "the Pumpkin name is bought with corn"); is(B.C.store?.name?.col, "col_pumpkin", "and worn");
+  is(G.nameFxOf(B.C)?.col, "pumpkin", "the roster would carry it"); is(!!G.NAME_COLS.pumpkin, true, "and the page has its colour");
+  const t9 = G.tixIn(B.C), o9 = B.C.store.own.length; W.storeOp(Y0, B, { op: "buy", id: "frame_ember" }); is(G.tixIn(B.C) === t9 && B.C.store.own.length === o9 && !B.C.store.own.includes("frame_ember"), true, "the Store refuses a corn item for tickets");
+  const c10 = corn(B); W.hwOp(Y0, B, { op: "cos", id: "col_pumpkin" }); is(corn(B), c10, "and not twice");
+  is(B.C.stats.corn | 0, 0, "bought corn is not earned corn");
+  const c11 = corn(B); const L2 = W.scene("mire").objs.find((o) => o.t === "ghostlantern"); if (L2) { W.hwLantern(W.scene("mire"), B, L2); }
+  if (L2) is(B.C.stats.corn, corn(B) - c11, "a lantern's corn is counted for the board");
+  is(/HISCORES\.push\(\["corn"/.test(fs.readFileSync(new URL("../v3/assets/js/eastscape-shared.js", import.meta.url), "utf8")), true, "the Candy corn board is pushed when HW.live is true (decided at load, so it is checked in the source)");
+  is(G.hwDaysLeft() >= 1 && G.hwDaysLeft() <= 40, true, `days left reads ${G.hwDaysLeft()}`);
+  is(G.hwDaysLeft(Date.parse(G.HW.until + "T18:00:00Z")), 1, "the last day reads 1");
+  is(G.hwDaysLeft(Date.parse(G.HW.gone + "T18:00:00Z")), 0, "and the morning after reads 0");
+}
+
 /* ---------------------------------------------------------------- the market and a fit */
-const B = mk("p2", "workyard", 24, 12);
+const B = mk("p2", "workyard", 19, 12);   /* (2026-09-27) Hexa moved west of the road */
 const Y = W.scene("workyard"); is(Y.npcs.some((n) => n.opens === "market"), true, "Hexa stands in the Yard while the event is on");
 W.hwOp(Y, B, { op: "buy", i: 0, n: 1 }); is(G.countItems(B.C, ["seed_pumpkin"]), 0, "the market refuses with no corn");
-G.addInv(B.C.inv, "candycorn", 300, B.C);
-W.hwOp(Y, B, { op: "buy", i: 0, n: 1 }); is(G.countItems(B.C, ["seed_pumpkin"]), G.HW.market[0][1], "and sells with it"); is(corn(B), 300 - G.HW.market[0][2], "for the listed corn");
-W.hwOp(Y, B, { op: "fit", k: "skeleton_head" }); is(B.C.van.on.head, "skeleton_head", "a fit is bought with corn and worn"); is(corn(B), 300 - G.HW.market[0][2] - G.VANITY.skeleton_head.corn, "for its price");
-W.hwOp(Y, B, { op: "fit", k: "skeleton_head" }); is(corn(B), 300 - G.HW.market[0][2] - G.VANITY.skeleton_head.corn, "and never twice");
+G.addInv(B.C.inv, "candycorn", 5000, B.C);   /* (2026-09-27) was 300: a fit is 2,400 now */
+W.hwOp(Y, B, { op: "buy", i: 0, n: 1 }); is(G.countItems(B.C, ["seed_pumpkin"]), G.HW.market[0][1], "and sells with it"); is(corn(B), 5000 - G.HW.market[0][2], "for the listed corn");
+W.hwOp(Y, B, { op: "fit", k: "skeleton_head" }); is(B.C.van.on.head, "skeleton_head", "a fit is bought with corn and worn"); is(corn(B), 5000 - G.HW.market[0][2] - G.VANITY.skeleton_head.corn, "for its price");
+W.hwOp(Y, B, { op: "fit", k: "skeleton_head" }); is(corn(B), 5000 - G.HW.market[0][2] - G.VANITY.skeleton_head.corn, "and never twice");
 
 /* ---------------------------------------------------------------- the brew */
 G.addInv(B.C.inv, "pot_witch", 1, B.C); const i = B.C.inv.findIndex((s) => s.k === "pot_witch");

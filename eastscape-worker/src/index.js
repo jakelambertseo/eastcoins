@@ -1212,6 +1212,7 @@ export class World {
           quests: G.questsDone(C), jobs: C.stats?.jobs | 0, tourDone: !!(C.tour && C.tour.step >= G.TOUR.length), earned: Math.round(Number(C.earned) || 0), wagered: Math.round(Number(C.wagered) || 0), zcoins: (C.found && typeof C.found === "object" ? C.found.zcoin : 0) | 0,
           runBest: C.stats?.runBest || 0,   // (2026-09-22) The Run's board; 0 means never finished a lap, and board() drops those
           tower: C.tower?.best | 0,   // (2026-09-27) the highest floor cleared, for the Tower board; 0 (never climbed) is dropped the same way
+          corn: C.stats?.corn | 0,   // (2026-09-27) candy corn earned this Long Night, for the season's board
           playMs: C.stats?.playMs || 0
         });
       }
@@ -1499,6 +1500,7 @@ export class World {
       C.store.name[slot] = id; this.touch(pl); return;
     }
     if (op !== "buy" || !it) return;
+    if (it.corn) return this.say(pl, `Hexa sells that, at the Night Market, for candy corn.`, "bad");   /* (2026-09-27) a Long Night cosmetic has no ticket price */
     const have = G.tixIn(C);
     if (it.kind === "double" && this.dbl && Date.now() < this.dbl.until) { const left = Math.ceil((this.dbl.until - Date.now()) / 60000); return this.say(pl, `A 2X event is already running - ${left} minute${left === 1 ? "" : "s"} left. It's yours to buy when it ends.`, "bad"); }
     if (it.kind !== "double" && it.kind !== "give" && C.store.own.includes(id)) return this.say(pl, "You own that already.", "bad");
@@ -1533,7 +1535,7 @@ export class World {
       else if (now >= H.kingUp.until) { S.mobs = S.mobs.filter((x) => x.id !== m.id); S.whoSig = null; H.kingUp = null; H.kingAt = now + G.HW.king.every; this.hwSave(); this.houseSay("🎃 The Pumpkin King sinks back into the Mire. Next hour."); }
     }
     const night = G.nightfallOn(now);
-    if (night !== !!H.night) { H.night = night; this.hwSave(); this.houseSay(night ? "🌙 NIGHTFALL. For the next hour every candy corn drop is doubled. Mind the lanterns." : "The night lifts. Candy corn is back to its usual rate."); for (const p of this.pls.values()) p.out.push({ type: "hw", night }); }
+    if (night !== !!H.night) { H.night = night; this.hwSave(); this.houseSay(night ? `🌙 NIGHTFALL. For the next hour every candy corn drop is doubled. Mind the lanterns.${G.hwDaysLeft(now) <= 7 ? ` ${G.hwDaysLeft(now)} night${G.hwDaysLeft(now) === 1 ? "" : "s"} of the Long Night left: spend your corn.` : ""}` : "The night lifts. Candy corn is back to its usual rate."); for (const p of this.pls.values()) p.out.push({ type: "hw", night }); }
   }
   hwSpawnKing(S, now) {
     const H = this.hw, d = G.MOBS.pumpkinking, [x, y] = G.HW.king.at, id = `${S.key}king${now.toString(36)}`;
@@ -1548,13 +1550,15 @@ export class World {
     for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: `🎃 ${pl.name} killed the Pumpkin King!` });
   }
   hwDay(C) { const day = G.chicagoDay(); if (!C.hw || C.hw.day !== day) C.hw = { day, trick: false, lanterns: [] }; return C.hw; }
+  /** (2026-09-27) every candy corn the world hands out comes through here, so c.stats.corn is the season's board */
+  hwGive(pl, n) { if (!this.give(pl, "candycorn", n)) return false; (pl.C.stats ||= G.freshStats()).corn = (pl.C.stats.corn | 0) + n; return true; }
   hwLantern(S, pl, ob) {
     const C = pl.C; if (!G.hwOn()) return;
     const h = this.hwDay(C), lid = ob.lid || `${S.key}:${ob.x},${ob.y}`;
     if (h.lanterns.includes(lid)) return this.say(pl, "This one's already given you what it had today.", "bad");
     if (h.lanterns.length >= G.HW.lanterns) return this.say(pl, "You've found every lantern there is today. Ten. The rest are just lanterns.", "bad");
     const n = G.HW.lanternCorn * (G.nightfallOn() ? 2 : 1);
-    if (!this.give(pl, "candycorn", n)) return;
+    if (!this.hwGive(pl, n)) return;
     h.lanterns.push(lid); this.touch(pl);
     this.say(pl, `The lantern gutters out in your hand and leaves ${n} candy corn behind. ${h.lanterns.length} of ${G.HW.lanterns} today.`, "loot");
     this.emit(pl, "gather", { k: "candycorn", n });
@@ -1585,8 +1589,29 @@ export class World {
       const p = Math.random();
       if (p < T.pie && this.give(pl, "pumpkinpie", 1)) return this.say(pl, `"Treat." ${n.name} hands you a pumpkin pie, still warm.`, "loot");
       if (p < T.pie + T.seed && this.give(pl, "seed_pumpkin", 2)) return this.say(pl, `"Treat." ${n.name} gives you two pumpkin seeds. "Plant them tonight."`, "loot");
-      const c = rint(T.corn[0], T.corn[1]) * (G.nightfallOn() ? 2 : 1); if (this.give(pl, "candycorn", c)) return this.say(pl, `"Treat." ${n.name} pours ${c} candy corn into your hands.`, "loot");
+      const c = rint(T.corn[0], T.corn[1]) * (G.nightfallOn() ? 2 : 1); if (this.hwGive(pl, c)) return this.say(pl, `"Treat." ${n.name} pours ${c} candy corn into your hands.`, "loot");
       return;
+    }
+    if (op === "pet") {   /* (2026-09-27) the Black Cat off the shelf */
+      const n = S.npcs.find((x) => x.opens === "market"); if (!n || G.cheb(pl, n) > (n.reach || 3)) return this.say(pl, "You need to be at the Night Market, with Hexa.", "bad");
+      const [k, corn] = G.HW.pet, have = G.countItems(C, ["candycorn"]);
+      if (C.pets.some((p) => p.k === k)) return this.say(pl, `You already have a ${G.PETS[k].name}. One is plenty.`, "bad");
+      if (have < corn) return this.say(pl, `The ${G.PETS[k].name} is ${corn.toLocaleString()} candy corn. You have ${have.toLocaleString()}.`, "bad");
+      G.takeInv(C.inv, "candycorn", corn);
+      const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k, name: "" };
+      C.pets.push(pet); if (!C.eq.pet) C.eq.pet = pet.id; this.touch(pl);
+      this.say(pl, `${G.PETS[k].name} - ${corn.toLocaleString()} candy corn. It looks at you like it was always going to come. Name it in your Equipment tab.`, "loot");
+      for (const q of this.pls.values()) if (q !== pl) q.out.push({ type: "casinonote", text: `\u{1F408}‍⬛ ${pl.name} bought the Black Cat off Hexa's shelf.` });
+      return;
+    }
+    if (op === "cos") {   /* (2026-09-27) the Night Market's name cosmetics: corn, and then the Store owns them like any other */
+      const n = S.npcs.find((x) => x.opens === "market"); if (!n || G.cheb(pl, n) > (n.reach || 3)) return this.say(pl, "You need to be at the Night Market, with Hexa.", "bad");
+      const it = G.STORE[String(m.id || "")]; if (!it || !it.corn || !it.event) return;
+      C.store ||= { own: [], name: {} }; C.store.own ||= []; C.store.name ||= {};
+      if (C.store.own.includes(it.id)) return this.say(pl, "You own that already.", "bad");
+      const have = G.countItems(C, ["candycorn"]); if (have < it.corn) return this.say(pl, `${it.name} is ${it.corn.toLocaleString()} candy corn. You have ${have.toLocaleString()}.`, "bad");
+      G.takeInv(C.inv, "candycorn", it.corn); C.store.own.push(it.id); C.store.name[it.slot] = it.id; this.touch(pl);
+      return this.say(pl, `${it.name} - ${it.corn.toLocaleString()} candy corn. Wearing it now, and it's yours after the Long Night too.`, "loot");
     }
     if (op === "buy") {
       const n = S.npcs.find((x) => x.opens === "market"); if (!n || G.cheb(pl, n) > (n.reach || 3)) return this.say(pl, "You need to be at the Night Market, with Hexa.", "bad");
@@ -2192,7 +2217,7 @@ export class World {
   gained(S, pl, k, n = 1, how = "gather") {
     S.events.push({ type: "gain", who: pl.id, k, n, t: Date.now() });
     this.emit(pl, how, { k, n });
-    if (how === "gather" && G.hwOn() && Math.random() < G.HW.corn.gather) { const c = rint(G.HW.corn.n[0], G.HW.corn.n[1]) * (G.nightfallOn() ? 2 : 1); if (this.give(pl, "candycorn", c)) this.say(pl, `…and ${c} candy corn, stuck to it.`, "loot"); }   /* (2026-09-27) the Long Night */
+    if (how === "gather" && G.hwOn() && Math.random() < G.HW.corn.gather) { const c = rint(G.HW.corn.n[0], G.HW.corn.n[1]) * (G.nightfallOn() ? 2 : 1); if (this.hwGive(pl, c)) this.say(pl, `…and ${c} candy corn, stuck to it.`, "loot"); }   /* (2026-09-27) the Long Night */
     if (S.def.geode && Math.random() < S.def.geode && this.give(pl, "geode")) { S.events.push({ type: "gain", who: pl.id, k: "geode", n: 1, t: Date.now() }); this.emit(pl, "gather", { k: "geode", n: 1 }); this.say(pl, "Something glints in the dirt: a glimmering geode!", "loot"); }
   }
   groupNote(S, pl, a, what = "your chance and xp") {
@@ -2797,7 +2822,7 @@ export class World {
        monster that carries its own pet (the King's Black Cat) rolls it here, outside the 1-in-1,000 pool above. */
     if (G.hwOn()) {
       const dbl = G.nightfallOn() ? 2 : 1;
-      if (Math.random() < G.HW.corn.kill) { const n = rint(G.HW.corn.n[0], G.HW.corn.n[1]) * dbl; if (this.give(pl, "candycorn", n)) got.push(["candycorn", n]); }
+      if (Math.random() < G.HW.corn.kill) { const n = rint(G.HW.corn.n[0], G.HW.corn.n[1]) * dbl; if (this.hwGive(pl, n)) got.push(["candycorn", n]); }
       if (Math.random() < G.HW.ecto && this.give(pl, "ectoplasm", 1)) { got.push(["ectoplasm", 1]); this.emit(pl, "loot", { k: "ectoplasm", n: 1 }); }
       if (def.pet && G.PETS[def.pet[0]] && Math.random() < def.pet[1] && !pl.C.pets.some((p) => p.k === def.pet[0])) {
         const k = def.pet[0], pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k, name: "" };
