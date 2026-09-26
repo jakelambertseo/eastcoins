@@ -15,6 +15,24 @@
 // guides: { id, title, icon, body } — body is simple HTML (paragraphs, lists, <b>). Link a page with <a data-wiki="items/logs">.
 /* PLAIN WORDS (the owner, 2026-09-19: "gamer dads, hanging out with a beer in hand... reading is at the bottom of their list").
    Every guide is a few short lines. Guides for things that are closed (the Forge, cooking, the Wilderness, tools) are gone. */
+/* (2026-09-26) EVERY CROP, from G.CROPS. The Harvesting guide, the island guide and the skill page each carried their own
+   hand-written copy of this table, and none of them grew the four Wizardry seeds when those were added. Now all three
+   draw this one. Only "seeded by" for the old crops is written by hand: those drop from loot tables the wiki does not
+   read. A seed crop's areas are worked out from the monsters that drop it. */
+const SEEDED_BY = { wheat: "grows wild in the Yard", tomatoe: "rotten tomatoes, in the Yard", rattlebean: "the Gloam", lanternroot: "the Lantern Mire",
+  bonegourd: "the Boneyard", stormcorn: "Cloudreach &amp; the Thunderhead", goldtomatoe: "&mdash;", glassgourd: "the Carnival", emberwheat: "the Vault", starfruit: "the Trailer Park" };
+const growTime = (ms) => { const m = Math.round(ms / 60000), h = Math.floor(m / 60); return m < 60 ? `${m} min` : `${h} hr${m % 60 ? ` ${m % 60} min` : ""}`; };
+export function cropTable(G, H) {
+  const nm = (k) => H.esc(G.ITEMS[k]?.name || k);
+  const areasOf = (k) => Object.values(G.SCENES).filter((d) => (d.mobs || []).some(([t]) => (G.MOBS[t]?.drops || []).some((x) => x[0] === k))).map((d) => H.esc(d.name || "")).filter(Boolean);
+  const rows = Object.entries(G.CROPS).sort((a, b) => a[1].lvl - b[1].lvl).map(([k, c]) => {
+    const out = G.cropYield(k), v = G.valueOf(out), where = SEEDED_BY[k] || (areasOf(k).join(", ") || "&mdash;");
+    return `<tr><td>${H.ico(k)} ${nm(k)}${out !== k ? ` &rarr; ${H.ico(out)} ${nm(out)}` : ""}</td><td>${c.lvl}</td><td>${growTime(c.ms)}</td><td>${c.yield[0]}&ndash;${c.yield[1]}</td><td>${c.xp.toLocaleString()}</td><td>${v > 0 ? v.toLocaleString() : "&mdash;"}</td><td>${where}</td></tr>`;
+  });
+  return `<table class="tbl"><tr><th>Crop</th><th>Harvesting</th><th>Grows in</th><th>Pays back</th><th>xp</th><th>Sells</th><th>Seeded by</th></tr>${rows.join("")}</table>`;
+}
+const SEEDS_NOTE = (G) => `<p><b>Most crops are their own seed</b>: planting spends one of the thing you are growing, so the first of each kind has to be found. They drop from the monsters of the zone that grows them, at about <b>one kill in eighty</b>. <b>The four Wizardry flowers are the exception.</b> They grow from ${["seed_sun", "seed_ember", "seed_frost", "seed_void"].map((k) => G.ITEMS[k]?.name).filter(Boolean).join(", ").replace(/, ([^,]*)$/, " and $1")}, which drop from monsters all over the map at about <b>one kill in a hundred and twenty-five</b>, and you harvest the flower that ink is brewed from. What you can grow is decided by where you can survive.</p>`;
+
 export const GUIDES = [
   /* (2026-09-22) This file is the hand-written half and imports nothing, so these numbers are TYPED, not read from
      PETS and PET_DROP. Keep them in step: the rate lives in PET_DROP and the roster in PETS, both in the rules file.
@@ -55,9 +73,9 @@ export const GUIDES = [
         <tr><td>Bogwood</td><td>Woodcutting 80, Eclipse axe</td></tr>
         <tr><td>Black water — mud cat and bowfin</td><td>Fishing 80, Eclipse rod</td></tr>
       </table>
-      <p>Cook the fish and they are the <b>best food in the game</b>. Until this zone there was nothing above Vaultwood to cut and nothing above the Vault to mine, so the top of the <a data-wiki="guides/tools">tool ladder</a> had nothing to work on.</p>` },
+      <p>Cook the fish and they are the best food this side of the <a data-wiki="areas/deep">Deep Wild</a>, whose Black Pool holds the two that beat them. Until this zone there was nothing above Vaultwood to cut and nothing above the Vault to mine, so the top of the <a data-wiki="guides/tools">tool ladder</a> had nothing to work on; the Deep's Gallows oak (Woodcutting 90) is the one tree past it.</p>` },
   { id: "alchemy", title: "Alchemy: sand into potions", icon: "\u{1F9EA}", cat: "Skills",
-    body: `<p><b>Alchemy runs 1 to 100 and it starts with sand.</b> Dig it out of the pits in <a data-wiki="sands">The Golden Sands</a> at <b>Mining 20</b>, melt it to glass at the <b>cauldron</b> under the temple colonnade, then brew the glass with whatever the world drops.</p>
+    body: `<p><b>Alchemy runs 1 to 100 and it starts with sand.</b> Dig it out of the pits in <a data-wiki="guides/sands">The Golden Sands</a> at <b>Mining 20</b>, melt it to glass at the <b>cauldron</b> under the temple colonnade, then brew the glass with whatever the world drops.</p>
       <p><b>One cauldron does both jobs.</b> It is the only one in the game, and it both blows the vials and brews the potions &mdash; so everything to do with Alchemy happens on one tile, and you never need a single level of Smithing to train it.</p>
       <h4>It can go wrong</h4>
       <p><b>Nothing here is a certainty.</b> A recipe spoils about <b>half</b> the time at the level that unlocks it and settles down as you climb past it &mdash; but it never reaches nothing. Glasswork bottoms out around <b>one batch in fifty</b>, for ever. A spoiled batch leaves nothing behind.</p>
@@ -92,8 +110,8 @@ export const GUIDES = [
       <p><b>A potion stacks with your gear.</b> Every number above sits well under the ceiling the game caps each effect at, so drinking one adds to what you are wearing instead of replacing it.</p>
       <p><b>They only work outside.</b> Like the bar's food and drink, a buff counts down in places that have monsters in them, not on the casino floor.</p>` },
   { id: "sands", title: "The Golden Sands", icon: "\u{1F3DC}\uFE0F", cat: "Going further",
-    body: `<p><b>Combat 40 to 49, west out of <a data-wiki="road">the Boneyard</a></b> &mdash; and it is a <b>second route, not a rung</b>. At Combat 40 you may go north to Cloudreach or west to here, and each has its own ore, tree and fish. Neither is ahead of the other.</p>
-      <p>It is where <a data-wiki="alchemy">Alchemy</a> lives. The <b>sand pits</b> are the front of that whole chain, and the game's only <b>cauldron</b> stands under the temple colonnade in the middle of the map.</p>
+    body: `<p><b>Combat 40 to 49, west out of <a data-wiki="guides/road">the Boneyard</a></b> &mdash; and it is a <b>second route, not a rung</b>. At Combat 40 you may go north to Cloudreach or west to here, and each has its own ore, tree and fish. Neither is ahead of the other.</p>
+      <p>It is where <a data-wiki="guides/alchemy">Alchemy</a> lives. The <b>sand pits</b> are the front of that whole chain, and the game's only <b>cauldron</b> stands under the temple colonnade in the middle of the map.</p>
       <table class="tbl"><tr><th>What</th><th>Needs</th><th>Gives</th></tr>
         <tr><td><b>Sand pits</b> (five of them)</td><td>Mining 20</td><td>sand &mdash; 45 xp</td></tr>
         <tr><td><b>Stardust seams</b></td><td>Mining 50</td><td>stardust &mdash; 150 xp</td></tr>
@@ -104,22 +122,27 @@ export const GUIDES = [
       <h4>What lives there</h4>
       <p><b>Sand Cobras</b> (41) in the dunes and <b>Gilt Scarabs</b> (45) round the pits &mdash; the cobra drops the <b>fang</b> and the scarab the <b>shell</b>, both of which go in the best potions. <b>Bandaged Debtors</b> (43) shuffle about the precinct and <b>Tomb Jackals</b> (47) hold the pyramid. Everything waits to be hit first except <b>one jackal by the pyramid door</b>, which comes at you on sight.</p>
       <h4>The Great Pyramid</h4>
-      <p>It stands on the eastern skyline and <b>the tomb door is sealed</b>. The party fight behind it is still being built &mdash; when it opens it will work like <a data-wiki="crypt">the Crypt</a>: a private copy of the tomb for your group, an ante each, and something very old at the bottom of it.</p>` },
-  { id: "tools", title: "Tools: the seven rungs", icon: "⛏️", cat: "Skills",
-    body: `<p>A <b>pickaxe</b>, an <b>axe</b> and a <b>fishing rod</b> come in nine grades, the same nine as the armour: bronze, emerald, diamond, dragonstone, onyx, starfall, eclipse, nova, singularity.</p>
+      <p>It stands on the eastern skyline and <b>the tomb door is sealed</b>. The party fight behind it is still being built &mdash; when it opens it will work like <a data-wiki="guides/crypt">the Crypt</a>: a private copy of the tomb for your group, an ante each, and something very old at the bottom of it.</p>` },
+  /* (2026-09-25) GENERATED, like the smoking guide and for the same reason. This was titled "the seven rungs"
+     with a table that stopped at Eclipse and called it "anything", two tiers after Nova and Singularity shipped;
+     the prose above it had been half-corrected to "nine grades", so the page disagreed with itself. The rungs,
+     their gates, their speeds and their prices all exist in the rules, so none of it is typed here any more. */
+  { id: "tools", title: "Tools: the grade ladder", icon: "⛏️", cat: "Skills",
+    body: (G, H) => {
+      const rungs = G.TOOL_RUNGS.map((r, i) => ({ ...r, upTo: G.TOOL_RUNGS[i + 1] ? G.TOOL_RUNGS[i + 1].gate - 1 : null,
+        spd: G.ITEMS[`${r.key}_pickaxe`]?.tspd, price: (G.SHOP.sells.find(([k]) => k === `${r.key}_pickaxe`) || [])[1] }));
+      const names = rungs.map((r) => r.name.toLowerCase());
+      const cheap = rungs.filter((r) => r.price && r.price < 10000).length;
+      return `<p>A <b>pickaxe</b>, an <b>axe</b> and a <b>fishing rod</b> come in ${names.length} grades, the same ${names.length} as the armour: ${names.join(", ")}.</p>
       <p><b>The rock decides.</b> Whatever you are mining, cutting or fishing asks for a tool of its own grade or better &mdash; emerald ore wants an emerald pickaxe, and a bronze one will not touch it. The grade a thing wants is always the grade named on the thing itself, so if you can work it at all, the right tool is one you can hold.</p>
-      <table class="tbl"><tr><th>Tool</th><th>Works up to</th><th>Speed</th></tr>
-        <tr><td><b>Bronze</b></td><td>level 19</td><td>&mdash;</td></tr>
-        <tr><td><b>Emerald</b></td><td>level 29</td><td>+8%</td></tr>
-        <tr><td><b>Diamond</b></td><td>level 39</td><td>+16%</td></tr>
-        <tr><td><b>Dragonstone</b></td><td>level 49</td><td>+24%</td></tr>
-        <tr><td><b>Onyx</b></td><td>level 59</td><td>+32%</td></tr>
-        <tr><td><b>Starfall</b></td><td>level 69</td><td>+40%</td></tr>
-        <tr><td><b>Eclipse</b></td><td>anything</td><td>+48%</td></tr>
+      <table class="tbl"><tr><th>Tool</th><th>Works up to</th><th>Speed</th><th>At the counter</th></tr>
+        ${rungs.map((r) => `<tr><td>${H.ico(`${r.key}_pickaxe`)} <b>${H.esc(r.name)}</b></td><td>${r.upTo ? `level ${r.upTo}` : "anything"}</td><td>${r.spd ? `+${Math.round((r.spd - 1) * 100)}%` : "&mdash;"}</td><td>${r.price ? r.price.toLocaleString() : "&mdash;"}</td></tr>`).join("")}
       </table>
       <p>A better tool is also <b>quicker at everything below it</b>, so it is never wasted on easy work.</p>
-      <p><b>Two ways to get one.</b> Buy it at the <a data-wiki="npcs/Bom Trady">Prize Counter</a> &mdash; tools are cheap for their grade on purpose &mdash; or <b>smith it</b>: two bars for a pickaxe or an axe, one for a rod, at the anvil.</p>
-      <p><b>You have to be holding it.</b> Pickaxe, axe or rod, it goes in the weapon slot — one in your bag will not do. That is the whole cost of the ladder: while you are working you are not carrying a sword.</p>` },
+      <p><b>Two ways to get one.</b> Buy it at the <a data-wiki="npcs/Bom Trady">Prize Counter</a> &mdash; the first ${cheap} are cheap for their grade on purpose, and the top two are not &mdash; or <b>smith it</b>: two bars for a pickaxe or an axe, one for a rod, at the anvil.</p>
+      <p><b>The top rungs gate above their own ore.</b> A ${H.esc(rungs.at(-2).name)} rock is worked with the tool below it, so a new grade never quietly raises the bar on rocks you were already mining, and you are never asked for a pickaxe you can only make from ore that pickaxe is needed for.</p>
+      <p><b>You have to be holding it.</b> Pickaxe, axe or rod, it goes in the weapon slot &mdash; one in your bag will not do. That is the whole cost of the ladder: while you are working you are not carrying a sword.</p>`;
+    } },
   { id: "start", title: "Start here", icon: "\u{1F9ED}", cat: "Starting out",
     body: `<p><b>This is a casino with a world attached.</b> The tables are the point; everything outside exists to pay for them.</p>
       <h3>The first five minutes</h3>
@@ -134,6 +157,35 @@ export const GUIDES = [
       <p><b>Nothing is locked.</b> You can walk anywhere at level one, and die there.</p>
       <p><b>Dying does not cost you your gear</b>, only some of the tickets in your pocket. Bank them before a long trip.</p>
       <p><b>Press H</b> to open this wiki at any time.</p>` },
+  /* (2026-09-25, the owner: "can you add a section in the wiki for keybinds"). Every key the page listens for, read out of its
+     keydown handlers. Staff-only keys are left out. When a key is added or moved, this table is the other place it goes. */
+  { id: "keys", title: "Keybinds", icon: "\u2328\uFE0F", cat: "Starting out",
+    body: `<p><b>Every key, in one place.</b> None of them fire while you are typing in a box (chat, a search, a name), or while Ctrl, Alt or Cmd is held, so they never get in the way of the browser's own shortcuts.</p>
+      <h3>Moving and fighting</h3><table class="tbl"><tr><th>Key</th><th>Does</th></tr>
+      <tr><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or the arrow keys</td><td>Walk. Holding a key keeps walking. A click on the ground or on anything walks you there and does it.</td></tr>
+      <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></td><td>Use your quick slots, the four squares beside the Chat button: a potion, food, a buff, arrows, or a piece of gear (press again to take it off). <b>Press and hold</b> a slot, or right-click it, to change what is in it.</td></tr>
+      <tr><td><kbd>E</kbd></td><td>Eat the best <b>cooked</b> food in your bag, whatever heals most. It never touches potions, drinks, buff meals or smoked fish, and does nothing at full health.</td></tr>
+      </table>
+      <h3>Windows</h3><table class="tbl"><tr><th>Key</th><th>Does</th></tr>
+      <tr><td><kbd>T</kbd></td><td>Open or close the chat.</td></tr>
+      <tr><td><kbd>Enter</kbd></td><td>Open the chat with the cursor in the box; Enter again sends.</td></tr>
+      <tr><td><kbd>G</kbd></td><td>The games: every table in the casino, in one list.</td></tr>
+      <tr><td><kbd>Y</kbd></td><td>Achievements.</td></tr>
+      <tr><td><kbd>H</kbd> or <kbd>?</kbd></td><td>This wiki.</td></tr>
+      <tr><td><kbd>M</kbd></td><td>Mute or unmute every sound, the jukebox included.</td></tr>
+      <tr><td><kbd>N</kbd></td><td>The connection panel: your ping, for when something feels laggy.</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Close whatever is open: a window, a conversation, the item info box, or the chat box.</td></tr>
+      </table>
+      <h3>Talking to people</h3><table class="tbl"><tr><th>Key</th><th>Does</th></tr>
+      <tr><td><kbd>1</kbd> to <kbd>9</kbd></td><td>Pick that answer. While somebody is talking to you the number keys answer them and <b>do not</b> use your quick slots.</td></tr>
+      <tr><td><kbd>Space</kbd></td><td>Carry on, when there is only one answer.</td></tr>
+      </table>
+      <h3>With the mouse</h3><table class="tbl"><tr><th>Do this</th><th>To</th></tr>
+      <tr><td>Shift-click in your bag</td><td>Drop it (it asks first, unless you turned that off in Settings).</td></tr>
+      <tr><td>Right-click any item</td><td>Open its page in this wiki.</td></tr>
+      <tr><td>Shift-click in the bank</td><td>Take out a full stack, or put in every one you carry.</td></tr>
+      <tr><td>Shift-click in a trade</td><td>Offer the whole stack.</td></tr>
+      </table>` },
   { id: "casino", title: "The casino", icon: "\u{1F3B0}", cat: "Starting out",
     body: `<p><b>Eight tables, and every one of them plays for tickets or for real ZCoins.</b> Same game, same odds, same server roll &mdash; the only difference is what you put in. The window has a toggle.</p>
       <table class="tbl"><tr><th>Table</th><th>How it goes</th></tr>
@@ -157,21 +209,78 @@ export const GUIDES = [
       <p><b>Tickets stay on you.</b> They cannot be banked, dropped or given away in a trade &mdash; they only leave by being spent. What a death costs you is a share of the tickets in your pocket, which is the argument for spending them before a long trip out.</p>
       <p><b>Real ZCoins are a different thing entirely.</b> Find one and the counter puts it straight onto your balance on the site. There is no exchange rate in either direction: you cannot buy ZCoins with tickets and you cannot turn ZCoins into tickets. That wall is deliberate &mdash; without it, fishing would print real currency.</p>
       <p>Other players are usually the better price for anything rare. See <a data-wiki="guides/trading">Trading and the Market</a>.</p>` },
-  { id: "road", title: "The road out", icon: "\u{1F5FA}\uFE0F", cat: "Starting out",
-    body: `<p><b>The world is a chain.</b> Each area is about ten levels past the last, and the way on is an edge of the map &mdash; walk off it and you are in the next one. Nothing is locked; you can walk anywhere at level one and die there.</p>
+  /* (2026-09-25) THE TABLE IS GENERATED, the colour is not. This listed neither the Golden Sands nor the Carnival
+     and had the Boneyard ending eight levels early - an area can be built, placed and mined for a fortnight
+     without anything making the map of the world mention it. The rows and the level bands now come from where the
+     monsters actually stand; NOTE is the editorial half, and an area with no note still gets its row rather than
+     quietly not existing. ORDER is the reading order, which is not a thing the rules know: two areas can sit at
+     the same levels and be a choice rather than a sequence. */
+  { id: "road", title: "The road out", icon: "\u{1F5FA}️", cat: "Starting out",
+    body: (G, H) => {
+      const ORDER = ["workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "carnival", "vault", "trailer", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
+      const NOTE = {
+        workyard: "the casino, the bank, the campfire, the furnace and anvil, sardines",
+        gloam: "emerald and diamond ore, gloomwillow, trout and catfish",
+        mire: "lanternfish, mudskipper, the first real gear drops",
+        boneyard: "bonefish, ghost carp, the Crypt &mdash; and <b>pets start dropping here</b>",
+        cloud: "dragonstone and onyx ore, skyash, sky eel and cloud ray",
+        sands: "sand for <a data-wiki=\"guides/alchemy\">Alchemy</a>, the cauldron, the Great Pyramid",
+        thunderhead: "storm marlin, thunder squid, the way to the last two",
+        carnival: "the games, the duck pond, goldfish and koi",
+        vault: "end-game fighting, and the only <b>nova</b> and <b>singularity</b> ore in the game",
+        trailer: "the best gathering in the game, and the meanest neighbours",
+        wild: "the road past the Yard's east gate: nodes far apart, most things attack first, and the first of three monsters found nowhere else",
+        deep: "the far end of the Wilderness: the Black Pool (Fishing 92 and 97), the Gallows oak (Woodcutting 90), the Grim Liches, the Nexus",
+      };
+      const rows = ORDER.filter((k) => G.SCENES[k]).map((k) => {
+        const ls = [...new Set((G.SCENES[k].mobs || []).map(([t]) => G.MOBS[t]?.lvl))].filter(Boolean).sort((a, b) => a - b);
+        return { k, name: G.SCENES[k].name, band: ls.length ? `${ls[0]}&ndash;${ls.at(-1)}` : "&mdash;", note: NOTE[k] || "" };
+      });
+      return `<p><b>The world is a chain.</b> Each area is about ten levels past the last, and the way on is an edge of the map &mdash; walk off it and you are in the next one. Nothing is locked; you can walk anywhere at level one and die there.</p>
       <table class="tbl"><tr><th>Area</th><th>Monsters</th><th>What it has</th></tr>
-        <tr><td>The Yard</td><td>1&ndash;8</td><td>the casino, the bank, the campfire, the furnace and anvil, sardines</td></tr>
-        <tr><td>The Gloam</td><td>10&ndash;18</td><td>emerald and diamond ore, gloomwillow, trout and catfish</td></tr>
-        <tr><td>The Lantern Mire</td><td>20&ndash;28</td><td>lanternfish, mudskipper, the first real gear drops</td></tr>
-        <tr><td>The Boneyard</td><td>30&ndash;38</td><td>bonefish, ghost carp, the Crypt &mdash; and <b>pets start dropping here</b></td></tr>
-        <tr><td>Cloudreach</td><td>40&ndash;48</td><td>dragonstone and onyx ore, skyash, sky eel and cloud ray</td></tr>
-        <tr><td>The Thunderhead</td><td>52&ndash;70</td><td>storm marlin, thunder squid, the way to the last two</td></tr>
-        <tr><td>The Vault</td><td>74&ndash;92</td><td>end-game fighting</td></tr>
-        <tr><td>The Trailer Park</td><td>80&ndash;98</td><td>the best gathering in the game, and the meanest neighbours</td></tr>
+        ${rows.map((r) => `<tr><td>${H.wl(`areas/${r.k}`, H.esc(r.name))}</td><td>${r.band}</td><td>${r.note}</td></tr>`).join("")}
       </table>
+      <p><b>Cloudreach and the Golden Sands are a fork, not a rung.</b> At Combat 40 either will have you; they hold different ore, different trees and different fish, and neither is ahead of the other.</p>
       <p><b>Go one area past comfortable, not three.</b> Monsters hit harder than their level suggests once you are out of your depth, and dying costs a bigger share of your tickets the deeper you are &mdash; see <a data-wiki="guides/dying">Dying</a>.</p>
       <p><b>Bank first.</b> A death takes a percentage of what you are <i>carrying</i>, so an empty pocket makes a long trip out nearly free.</p>
-      <p><b>The Wilderness is off this chain</b> and other players can attack you in it.</p>` },
+      <p><b>The Wilderness is off this chain</b> and other players can attack you in it.</p>`;
+    } },
+  /* (2026-09-25) THE TOWER HAD NO PAGE AT ALL, through the climb going from 30 floors to 99, and it is the one
+     thing in the game somebody sits in for hours. Everything with a number in it is read from the tower rules,
+     because those are exactly the numbers that moved. */
+  { id: "tower", title: "The Tower", icon: "\u{1F5FC}", cat: "Going further",
+    body: (G, H) => {
+      const T = H.TWR && H.TWR.TOWER;
+      if (!T) return `<p>The Tower stands in the Yard's north court. Climb it a floor at a time.</p>`;
+      const mins = (T.fightMs / 60000).toFixed(1).replace(/\.0$/, ""), bosses = Object.keys(T.bosses).map(Number).sort((a, b) => a - b);
+      return `<p><b>One door, ${T.floors} floors, one monster on each.</b> It stands in the Yard's north court beside the furnace. You need <b>Combat ${T.entry}</b> to go in, and floor 1 fights like a level ${H.TWR.levelOn(1)} monster; the top floor fights like a level <b>${T.topLevel}</b> one.</p>
+      <p><b>Every fight is about the same length &mdash; ${mins} minutes &mdash; whoever you are.</b> The floor is built around the damage you actually do, so a better set does not make the climb shorter, it makes it survivable. What the Tower sells is a long, quiet fight you can half-watch; what it asks for is <b>food</b>.</p>
+      <h3>Bring more fish than you think</h3>
+      <p>At ${mins} minutes a floor you are being hit for the whole of it. Fill the bag. A floor you cannot finish is a floor you walk out of, and walking out is free &mdash; the climb is not.</p>
+      <h3>Checkpoints every ${T.checkEvery}</h3>
+      <p><b>You do not start again at the bottom.</b> The climb remembers the last checkpoint you passed, and they sit every ${T.checkEvery} floors, so the most a bad floor costs you is ${T.checkEvery - 1} of them. When you come back you may start from that checkpoint &mdash; or from <b>floor 1</b>, if you would rather have the run.</p>
+      <h3>Bosses</h3>
+      <p>Every ${T.bossEvery}th floor is somebody in particular, and the ${T.floors}th is <b>The House</b>. A boss carries <b>${T.bossHp}&times;</b> the health of an ordinary floor and gets meaner below half, so treat ${bosses.slice(0, 3).join(", ")} &hellip; ${bosses.at(-1)} as the floors to arrive at full.</p>
+      <p><b>It pays in tickets and it pays well</b>, but it is a wage, not a jackpot: the deeper floors pay more because they take as long and hurt more, not because anything up there drops. Bring food, not bag space.</p>`;
+    } },
+  /* (2026-09-25) THE CARNIVAL, 62-72, likewise unwritten. The three stalls' numbers live in the WORKER, which
+     this file cannot import, so they are typed - and tools/eastscape-wiki-check.mjs reads carnival.js and fails
+     if they drift, which is the same guarantee by a different route. */
+  { id: "carnival", title: "The Carnival", icon: "\u{1F3AA}", cat: "Going further",
+    body: (G, H) => {
+      const band = [...new Set((G.SCENES.carnival?.mobs || []).map(([t]) => G.MOBS[t]?.lvl))].filter(Boolean).sort((a, b) => a - b);
+      const gr = G.MOBS.grinner, tix = G.BOUNTY?.grinner;
+      return `<p><b>Combat ${band[0]} to ${band.at(-1)}, east off the Thunderhead.</b> Four freaks on the midway, a duck pond, and a cage in the north-west with something in it.</p>
+      <h3>The three stalls</h3>
+      <p>Balloon Pop, the Shooting Gallery and Whack-a-Mole. <b>100 tickets a go</b>, a perfect round pays about <b>five times that</b>, and there is a short wait between rounds. They pay on how many you hit and they get faster as you go, so the last few shots are the ones worth having.</p>
+      <p>They are a <b>game, not a wage</b>: a good round beats the fee, and no amount of practice beats fighting the midway for the same minutes. Play them because they are there.</p>
+      <h3>The duck pond</h3>
+      <p>The only water on the map, and the only place to catch ${H.ico("goldfish")} <b>goldfish</b> and ${H.ico("koi")} <b>koi</b>. Both ${H.wl("guides/smoking", "smoke")}, and the koi's smoke is the best <b>bite rate</b> buff in the game &mdash; a fishing buff you have to fish for.</p>
+      <h3>The cage</h3>
+      <p><b>The Grinning Man</b> is behind a turnstile, and the turnstile takes a ${H.ico("carnivalticket")} <b>Carnival ticket</b>. They drop from the four outside at about <b>one kill in a hundred</b>, so the real price of the door is roughly half an hour of farming the midway.</p>
+      <p>Which is why he pays what he pays: <b>${tix ? tix.toLocaleString() : "thousands"} tickets</b>, against a few hundred for anything else on the map. He is slow, he hits like the band above him, and he is only back every <b>five minutes</b> &mdash; so a party splits one of him rather than farming him.</p>
+      <p><b>The ticket is a cover charge, paid once.</b> Going out costs nothing, and going back in costs another ticket.</p>`;
+    } },
   { id: "crypt", title: "The Crypt (parties)", icon: "\u{1F5DD}\uFE0F", cat: "Going further",
     body: `<p><b>The only thing in the game you cannot do alone.</b> The stairs are in the Boneyard. Two to four of you go in, the door shuts, and what is inside is yours &mdash; nobody else can wander through it.</p>
       <h3>Getting a party</h3>
@@ -184,10 +293,10 @@ export const GUIDES = [
       <p><b>Nothing drops on the floor in there.</b> The run pays at the end, which is why clearing it matters and killing things in it does not, on its own.</p>
       <p><b>Fastest clears are recorded.</b> That is the actual reason to go back.</p>` },
   { id: "fighting", title: "Fighting", icon: "⚔️", cat: "Skills",
-    body: `<p><b>Click a monster.</b> You walk to it and keep swinging until one of you stops. Whoever hits it first owns it &mdash; nobody else can take your kill, except in the Wilderness where nothing is owned.</p>
+    body: (G, H) => `<p><b>Click a monster.</b> You walk to it and keep swinging until one of you stops. Whoever hits it first owns it &mdash; nobody else can take your kill, except in the Wilderness where nothing is owned.</p>
       <h3>One skill, not four</h3>
       <p><b>Combat is a single skill and there are no stances to pick.</b> Every point of damage you deal trains it, and it does all three jobs at once: you land more of your swings, you hit harder, and you get hit less. Better weapons and armour ask for it.</p>
-      <p><b>Hitpoints trains alongside it, always.</b> Damage pays Combat xp and a third as much again into Hitpoints, so your health climbs whatever you are fighting.</p>
+      <p><b>Hitpoints trains alongside it, always.</b> Damage pays Melee xp (Archery, with a bow) and a third as much again into Hitpoints, so your health climbs whatever you are fighting.</p>
       <h3>Three weapons, one speed each</h3>
       <p>Every tier has the same three, and they are within a whisker of each other on damage over time. It is a feel choice, not a power one.</p>
       <table class="tbl"><tr><th>Weapon</th><th>Swings every</th><th>Leans</th></tr>
@@ -196,7 +305,7 @@ export const GUIDES = [
         <tr><td>Maul</td><td>3.0s</td><td>slow and heavy, big hits</td></tr>
       </table>
       <h3>The nine grades</h3>
-      <p>Weapons and armour gate on <b>Combat</b>, rings and amulets on <b>Hitpoints</b>. Bronze is the only tier Brutus sells; everything above it is <a data-wiki="guides/smoking">smithed</a> or dropped.</p>
+      <p>Weapons and armour gate on <b>Combat</b>, rings and amulets on <b>Hitpoints</b>. Bronze is the only tier Brutus sells; everything above it is <a data-wiki="guides/smithing">smithed</a> or dropped.</p>
       <table class="tbl"><tr><th>Grade</th><th>Needs</th><th>Full set defence</th><th>Weapon</th></tr>
         <tr><td>Bronze</td><td>10</td><td>20</td><td>+8 acc, +6 str</td></tr>
         <tr><td>Emerald</td><td>20</td><td>34</td><td>+12 acc, +10 str</td></tr>
@@ -211,44 +320,93 @@ export const GUIDES = [
       <p><b>The top two name their weapons differently.</b> Nova and Singularity do not carry a gladius, a longsword and a maul: they are the <b>flare knife, halberd and starbreaker</b>, and the <b>event blade, voidglaive and collapser</b>. The three roles are unchanged &mdash; quick, balanced, slow and heavy &mdash; only the names.</p>
       <p><b>And their weapons are a chase.</b> Every Nova or Singularity weapon wants a <b>core</b> as well as bars. A core drops from the hardest things in the game &mdash; the Junk King, the Yard Gator, the Last Dealer, the Hoodie and the Squeeze &mdash; at about one kill in two thousand, or it can be built at an anvil out of a heap of what those places drop. The armour and the tools need no core.</p>
       <p><b>Reforging is the other way up.</b> Bars spent at the anvil push a piece you already own three levels further, which is worth about a tier &mdash; a way to keep going when the next grade is out of reach, not a way past it. It can also destroy the piece. See the anvil.</p>
-      <p><b>Eat before you need to.</b> Cooked fish is the whole healing system; there is no potion. See <a data-wiki="guides/cooking">Cooking</a>.</p>` },
+      <h3>Clicking again makes you swing faster</h3>
+      <p><b>Click the monster you are already fighting and your next swing comes sooner.</b> Keep doing it and it comes sooner still, in four steps:</p>
+      ${(() => {
+        const s = G.SWING_STACK, gl = G.ITEMS.bronze_gladius?.speed || 1800, ml = G.ITEMS.bronze_maul?.speed || 3000;
+        const row = (n, cut) => `<tr><td>${n}${n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th"} swing in a row</td><td>${Math.round(cut * 100)}% sooner</td><td>${(gl * (1 - cut) / 1000).toFixed(2)}s</td><td>${(ml * (1 - cut) / 1000).toFixed(2)}s</td></tr>`;
+        return `<table class="tbl"><tr><th>Clicked before the swing?</th><th>Off the wait</th><th>Gladius</th><th>Maul</th></tr>
+          <tr><td>No &mdash; left alone</td><td>&mdash;</td><td>${(gl / 1000).toFixed(2)}s</td><td>${(ml / 1000).toFixed(2)}s</td></tr>
+          ${s.map((cut, n) => row(n + 1, cut)).join("")}
+          ${s.length ? `<tr><td>and onwards</td><td>${Math.round(s[s.length - 1] * 100)}% &mdash; the ceiling</td><td>${(gl * (1 - s[s.length - 1]) / 1000).toFixed(2)}s</td><td>${(ml * (1 - s[s.length - 1]) / 1000).toFixed(2)}s</td></tr>` : ""}
+        </table>`;
+      })()}
+      <h4>How it actually works, so you are not guessing</h4>
+      <p><b>It counts SWINGS, not clicks.</b> The game asks one question each time your weapon comes round: did you click since the last swing? Yes and you move one rung up the ladder; no and you drop straight back to the bottom. <b>Clicking five times between two swings is worth exactly the same as clicking once</b> &mdash; there is nothing to be gained from hammering it, and that is deliberate.</p>
+      <p><b>So the whole technique is one click per swing.</b> Watch your character, click the monster again each time it lands a blow, and by the fourth you are at the ceiling and staying there.</p>
+      <p><b>Miss one and you start again at the bottom.</b> Not one rung down &mdash; all the way. A stretch of clicking is worth far more than the same number of clicks scattered about, which is why this rewards paying attention rather than clicking a lot.</p>
+      <p><b>Starting a NEW fight resets you.</b> Walking to the next monster costs you the ladder, so a big slow thing you stand and work is where this pays best; the ladder is also why finishing something already hurt beats wandering off to a fresh one.</p>
+      <p><b>It stacks with everything else</b> &mdash; a faster weapon, a tool or pet speed bonus, a whiskey &mdash; because it takes a percentage off whatever your wait already is. The quick weapons gain the least in absolute seconds and the heavy ones the most.</p>
+      <p><b>You never have to use it.</b> Leave it alone and your swing is the plain number in the table above; the game is balanced around that, and this is for when you want to lean in. It works on other players in the Wilderness too, and so does theirs.</p>
+      <h3>The jackpot kill</h3>
+      <p>A kill pays tickets, and about <b>one in every two hundred and fifty</b> pays <b>twelve times</b> what it should. It is not tied to what you killed, where you are or how long you have played &mdash; it is a lump of luck on an ordinary monster.</p>
+      <h3>What a kill pays</h3>
+      <p><b>Tickets come off a monster as a RANGE, not a fixed number.</b> Every kill is worth a certain amount and what actually drops is a slice of it, so two of the same monster rarely pay the same.</p>
+      ${(() => {
+        const wide = Object.keys(G.MOBS).filter((k) => G.BOUNTY[k] && G.tixSpread(k)[1] > G.tixSpread("__none__")[1]);
+        const def = G.tixSpread("__none__");
+        if (!wide.length) return `<p>Every monster uses the same band: <b>${def[0]}x to ${def[1]}x</b> of what it is worth.</p>`;
+        const s = G.tixSpread(wide[0]);
+        const eg = wide.map((k) => ({ k, b: G.BOUNTY[k] })).sort((x, y) => y.b - x.b)[0];
+        return `<p><b>Most monsters swing ${def[0]}x to ${def[1]}x</b> &mdash; a fairly tight wobble around what they are worth.</p>
+        <p><b>The Thunderhead's swing ${s[0]}x to ${s[1]}x instead</b>: ${wide.map((k) => H.esc(G.MOBS[k].name)).sort().join(", ")}. The average is exactly the same; any single kill can pay a fifth or nearly double. ${H.esc(G.MOBS[eg.k].name)} is worth ${eg.b}, so out there it pays <b>${Math.round(eg.b * s[0])}</b> to <b>${Math.round(eg.b * s[1])}</b> where anywhere else it would be ${Math.round(eg.b * def[0])} to ${Math.round(eg.b * def[1])}.</p>
+        <p><b>Why.</b> The Thunderhead was the richest ground in the game by a distance and its drops were cut. A flat cut only makes a place worse; widening the band gives back the <i>excitement</i> without giving back the <i>average</i>. The same money over a night, a great deal more swing in it.</p>`;
+      })()}
+      <p><b>Ticket buffs multiply the drop</b>, so a Coin Toad or a tincture is worth the same percentage wherever you fight. And about <b>one kill in ${G.JACKPOT_KILL.odds}</b> pays <b>${G.JACKPOT_KILL.mult} times</b> what it should, which is not tied to what you killed or where you are.</p>
+      <p><b>During a <a data-wiki="items/pot_double">2X event</a> every ticket doubles</b>, dropped or paid, for everyone on the server.</p>
+      <p><b>Eat before you need to.</b> Cooked fish is the bulk of the healing in the game &mdash; and a salve out of the <a data-wiki="guides/alchemy">cauldron</a> heals more than any of it. See <a data-wiki="guides/cooking">Cooking</a>.</p>` },
+  /* (2026-09-25) GENERATED. Five waters were missing from it - the oasis, the Deep Wild's pool, the Moonlit
+     Eddy, the Vault's flooded floor and the Carnival's duck pond - and it still said seven fish smoke. A spot
+     is two fish, a level for each and a rod, all of which are written on the spot itself, so there is no reason
+     for any of it to be typed here. The "Rod" column is derived and the guide used to have it wrong in places:
+     it is toolNeed of the spot's own level, not the spot's grade. */
   { id: "fishing", title: "Fishing", icon: "\u{1F3A3}", cat: "Skills",
-    body: `<p><b>Click a fishing spot with a rod in your hand</b> &mdash; in the weapon slot, not the bag. You keep pulling fish out until you walk away or the three-minute idle cutoff stops you, which makes it the most comfortable thing in the game to do while you are half watching something else.</p>
-      <p><b>Every spot holds two fish.</b> The second is better, needs a higher level, and turns up about a third of the time once you can catch it. Until then you get the first one only.</p>
+    body: (G, H) => {
+      const spots = new Map();
+      for (const [key, d] of Object.entries(G.SCENES)) {
+        if (d.wikiHide) continue;
+        let b; try { b = G.buildScene(key); } catch { continue; }
+        for (const o of b.objs) {
+          if (o.t !== "spot") continue;
+          const lvl = o.req?.lvl || 1, sig = `${d.name}|${o.name}|${o.fish || "sardine"}`;
+          if (!spots.has(sig)) spots.set(sig, { where: d.name, name: o.name, lvl, xp: o.xp,
+            fish: o.fish || "sardine", fish2: o.fish2 || (o.fish ? null : "perch"), f2lvl: o.fish2lvl ?? (o.fish ? null : 5), xp2: o.xp2 });
+        }
+      }
+      const rows = [...spots.values()].sort((a, b) => a.lvl - b.lvl);
+      const smokes = Object.keys(G.ITEMS).filter((k) => k.startsWith("s") && G.ITEMS[k].meal && G.ITEMS[k.slice(1)]).length;
+      const fish = (k, lvl, xp) => k ? `${H.ico(k)} ${H.wl(`items/${k}`, H.esc(G.ITEMS[k]?.name || k))} &mdash; ${lvl}${xp ? `, ${xp} xp` : ""}` : "&mdash;";
+      return `<p>Click a fishing spot with a <b>rod in your hand</b> &mdash; in the weapon slot, not the bag. You keep pulling fish out until you walk away or the three-minute idle cutoff stops you, which makes it the most comfortable thing in the game to do while you are half watching something else.</p>
+      <p><b>Most spots hold two fish.</b> The second is better, needs a higher level, and turns up about a third of the time once you can catch it. Until then you get the first one only. A few waters hold one fish and nothing else.</p>
       <p><b>The water gates your rod as well as your level</b>, the same way a rock gates a pickaxe.</p>
-      <table class="tbl"><tr><th>Spot</th><th>Where</th><th>Rod</th><th>First fish</th><th>Second fish</th></tr>
-        <tr><td>Fishing spot</td><td>The Yard</td><td>Bronze</td><td>Sardine &mdash; 1, 20 xp</td><td>Perch &mdash; 5, 30 xp</td></tr>
-        <tr><td>Black pond</td><td>The Gloam</td><td>Bronze</td><td>Trout &mdash; 10, 50 xp</td><td>Catfish &mdash; 15, 65 xp</td></tr>
-        <tr><td>Lantern lake</td><td>The Lantern Mire</td><td>Emerald</td><td>Lanternfish &mdash; 20, 80 xp</td><td>Mudskipper &mdash; 25, 95 xp</td></tr>
-        <tr><td>Flooded crypt</td><td>The Boneyard</td><td>Diamond</td><td>Bonefish &mdash; 30, 110 xp</td><td>Ghost carp &mdash; 35, 130 xp</td></tr>
-        <tr><td>Hole in the cloud</td><td>Cloudreach</td><td>Dragonstone</td><td>Sky eel &mdash; 40, 140 xp</td><td>Cloud ray &mdash; 45, 165 xp</td></tr>
-        <tr><td>The sea below</td><td>The Thunderhead</td><td>Onyx</td><td>Storm marlin &mdash; 50, 190 xp</td><td>Thunder squid &mdash; 58, 230 xp</td></tr>
-        <tr><td>Black water</td><td>The Trailer Park</td><td>Eclipse</td><td>Mud cat &mdash; 80, 300 xp</td><td>Bowfin &mdash; 88, 380 xp</td></tr>
+      <table class="tbl"><tr><th>Water</th><th>Where</th><th>Rod</th><th>First fish</th><th>Second fish</th></tr>
+        ${rows.map((r) => `<tr><td>${H.esc(r.name)}</td><td>${H.esc(r.where)}</td><td>${H.esc(G.toolNeed(r.lvl).name)}</td><td>${fish(r.fish, r.lvl, r.xp)}</td><td>${fish(r.fish2, r.f2lvl, r.xp2)}</td></tr>`).join("")}
       </table>
       <p><b>A better rod is faster, not luckier.</b> Each grade up takes 8% off the time between casts. See <a data-wiki="guides/tools">Tools</a>.</p>
-      <p><b>Raw fish is not food and Bom will not buy it.</b> That is the point rather than an inconvenience: cooking roughly doubles what a fish is worth and is the only thing that makes it heal. See <a data-wiki="guides/cooking">Cooking</a>, and <a data-wiki="guides/smoking">Smoked fish</a> for the seven that smoke into a 20-minute buff.</p>
-      <p><b>Fishing is also the best place to find a real ZCoin</b> &mdash; roughly one cast in three hundred, creeping up with the better fish. See <a data-wiki="guides/zcoins">Finding ZCoins</a>.</p>` },
+      <p><b>A bite is not guaranteed.</b> It starts at about ${Math.round(G.FISHING.chance(1) * 100)}% a cast and climbs with your level to ${Math.round(G.FISHING.chance(99) * 100)}%, so a rod is never quite a conveyor belt.</p>
+      <p><b>Raw fish is not food and Bom will not buy it.</b> That is the point rather than an inconvenience: cooking roughly doubles what a fish is worth and is the only thing that makes it heal. See <a data-wiki="guides/cooking">Cooking</a>, and <a data-wiki="guides/smoking">Smoked fish</a> for the ${["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"][smokes] || smokes} that smoke into a 20-minute buff.</p>
+      <p><b>Fishing is also the best place to find a real ZCoin</b> &mdash; roughly one cast in three hundred, creeping up with the better fish. See <a data-wiki="guides/zcoins">Finding ZCoins</a>.</p>`;
+    } },
+  /* (2026-09-25) GENERATED, and it was the worst of them: nine dishes missing, six heal values wrong (sky eel
+     said 24 against a real 28, mud cat 26 against 30) and every sell price exactly DOUBLE what Bom pays - the
+     same stale doubling the woodcutting table had, from whenever prices were halved. A table of twenty-three
+     rows and five columns cannot be kept by hand against a game that gets a new fish most weeks. */
   { id: "cooking", title: "Cooking", icon: "\u{1F373}", cat: "Skills",
-    body: `<p>There is a <b>campfire</b> just inside the Yard, by the way in from the casino, and a range in some interiors. Click it with raw fish in your bag.</p>
+    body: (G, H) => {
+      const rows = Object.entries(G.RECIPES).filter(([id]) => id.startsWith("cook_"))
+        .map(([, r]) => ({ to: r.out[0], lvl: r.lvl, stop: r.burnStop, heal: G.ITEMS[r.out[0]]?.heal, sell: G.SHOP.buys[r.out[0]], smoked: !!G.ITEMS[`s${r.in[0][0]}`] }))
+        .sort((a, b) => a.lvl - b.lvl || (a.heal || 0) - (b.heal || 0));
+      const smokes = rows.filter((r) => r.smoked).length;
+      const WORD = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+      return `<p>There is a <b>campfire</b> just inside the Yard, by the way in from the casino, and a <b>range</b> in some interiors. Click it with raw food in your bag.</p>
       <p><b>Cooking roughly doubles a fish.</b> Raw fish cannot be eaten and Bom will not buy it, so every fish is worth a stop at the fire on the way home. The fire always cooks the best thing in your bag that you are able to cook, so there is nothing to choose.</p>
-      <p><b>You will burn some at first, and then you will stop.</b> Each fish has a level at which it never burns again &mdash; that is the second number below, and it is the one worth levelling towards.</p>
-      <table class="tbl"><tr><th>Fish</th><th>Cook at</th><th>Stops burning</th><th>Heals</th><th>Sells</th></tr>
-        <tr><td>Sardine</td><td>1</td><td>20</td><td>6</td><td>8</td></tr>
-        <tr><td>Perch</td><td>5</td><td>25</td><td>7</td><td>10</td></tr>
-        <tr><td>Trout</td><td>15</td><td>40</td><td>10</td><td>14</td></tr>
-        <tr><td>Catfish</td><td>18</td><td>45</td><td>12</td><td>18</td></tr>
-        <tr><td>Mudskipper</td><td>22</td><td>50</td><td>18</td><td>28</td></tr>
-        <tr><td>Lanternfish</td><td>30</td><td>60</td><td>16</td><td>20</td></tr>
-        <tr><td>Bonefish</td><td>32</td><td>62</td><td>20</td><td>28</td></tr>
-        <tr><td>Ghost carp</td><td>36</td><td>66</td><td>22</td><td>36</td></tr>
-        <tr><td>Cloud ray</td><td>45</td><td>75</td><td>26</td><td>48</td></tr>
-        <tr><td>Sky eel</td><td>50</td><td>80</td><td>24</td><td>40</td></tr>
-        <tr><td>Storm marlin</td><td>55</td><td>85</td><td>29</td><td>44</td></tr>
-        <tr><td>Thunder squid</td><td>60</td><td>90</td><td>32</td><td>52</td></tr>
-        <tr><td>Mud cat</td><td>60</td><td>88</td><td>26</td><td>116</td></tr>
-        <tr><td>Bowfin</td><td>70</td><td>94</td><td>30</td><td>132</td></tr>
+      <p><b>You will burn some at first, and then you will stop.</b> Each dish has a level at which it never burns again &mdash; that is the second column, and it is the one worth levelling towards.</p>
+      <table class="tbl"><tr><th>Dish</th><th>Cook at</th><th>Stops burning</th><th>Heals</th><th>Bom pays</th></tr>
+        ${rows.map((r) => `<tr><td>${H.ico(r.to)} ${H.wl(`items/${r.to}`, H.esc(G.ITEMS[r.to]?.name || r.to))}${r.smoked ? " <small>(smokes)</small>" : ""}</td><td>${r.lvl}</td><td>${r.stop ?? "&mdash;"}</td><td>${r.heal ?? "&mdash;"}</td><td>${r.sell ?? "&mdash;"}</td></tr>`).join("")}
       </table>
-      <p><b>Seven of these can be smoked instead</b>, which heals more, sells for far more and gives a 20-minute buff. It needs charcoal, and the fire does it automatically when you are carrying some. See <a data-wiki="guides/smoking">Smoked fish</a>.</p>` },
+      <p><b>${H.esc((WORD[smokes] || smokes).replace(/^./, (c) => c.toUpperCase()))} of these can be smoked instead</b>, which heals more, sells for far more and gives a 20-minute buff. It needs charcoal, and the fire does it automatically when you are carrying some. See <a data-wiki="guides/smoking">Smoked fish</a>.</p>
+      <p><b>Meat sits under fish on purpose.</b> A chicken is not a worse sardine; it is something you can cook at level 1 without a rod.</p>`;
+    } },
   { id: "smithing", title: "Smithing", icon: "\u{1F528}", cat: "Skills",
     body: `<p><b>The most common question about this skill is how to start it at all</b>, because at Smithing 1 you cannot make a single bar or a single piece of gear. Everything asks for level 10.</p>
       <p><b>You start by burning logs.</b> That is the whole answer. Take logs to the <b>furnace</b> in the Yard's north court and it turns them into <b>charcoal</b> &mdash; a Smithing level 1 job, and the only one there is. Charcoal is then the fuel every smelt needs, so the logs you burn getting to level 10 are not wasted: you need them anyway.</p>
@@ -257,6 +415,7 @@ export const GUIDES = [
         <tr><td>Deadwood, Skyash, Rustpine logs</td><td>2 charcoal</td><td>10</td></tr>
         <tr><td>Ancient yew logs</td><td>3 charcoal</td><td>15</td></tr>
         <tr><td>Vaultwood, Bogwood logs</td><td>4 charcoal</td><td>20</td></tr>
+        <tr><td>Gallows logs</td><td>8 charcoal</td><td>40</td></tr>
       </table>
       <p><b>Level 10 is 1,154 xp</b>, so it is about 230 ordinary logs &mdash; or far fewer if you are already cutting something better. Burning has a small chance to fail and eat the log; that is normal and it does not stop.</p>
       <h3>Then the chain</h3>
@@ -290,68 +449,87 @@ export const GUIDES = [
       <p><b>It can destroy the piece.</b> +1 always works. +2 is 80%, and a miss there has an 8% chance of breaking it; +3 is 55%, with a 15% chance. About one piece in seven is lost on the way to +3, and the bars go whether it works or not.</p>
       <p>Tools reforge too, and they buy <b>speed</b> rather than combat &mdash; +2.5% a level at mining, chopping or fishing.</p>` },
 
-  { id: "mining", title: "Mining", icon: "\u26CF\uFE0F", cat: "Skills",
-    body: `<p><b>Click a rock with a pickaxe in your hand</b> &mdash; in the weapon slot, not the bag. Every rock holds <b>2 to 12 ore</b> and you keep working it until it is empty, so one rock is several swings rather than one.</p>
-      <p><b>Two things gate a rock: your level AND your pickaxe.</b> They are not the same number. Emerald ore needs Mining 20 <i>and</i> an emerald pickaxe &mdash; having the level with a bronze pickaxe gets you nothing, which is the single most common reason a rock will not budge.</p>
-      <table class="tbl"><tr><th>Ore</th><th>Mining</th><th>Pickaxe</th><th>Where</th><th>Sells</th><th>Smelts into</th></tr>
-        <tr><td>Copper</td><td>1</td><td>Bronze</td><td>The Yard</td><td>10</td><td rowspan="2">Bronze bar (with tin)</td></tr>
-        <tr><td>Tin</td><td>1</td><td>Bronze</td><td>The Yard</td><td>10</td></tr>
-        <tr><td>Emerald</td><td>20</td><td>Emerald</td><td>The Gloam</td><td>15</td><td>Emerald bar</td></tr>
-        <tr><td>Diamond</td><td>30</td><td>Diamond</td><td>The Lantern Mire</td><td>22</td><td>Diamond bar</td></tr>
-        <tr><td>Dragonstone</td><td>40</td><td>Dragonstone</td><td>The Boneyard</td><td>30</td><td>Dragonstone bar</td></tr>
-        <tr><td>Onyx</td><td>50</td><td>Onyx</td><td>Cloudreach</td><td>40</td><td>Onyx bar</td></tr>
-        <tr><td>Starfall</td><td>60</td><td>Starfall</td><td>The Vault</td><td>55</td><td>Starfall bar</td></tr>
-        <tr><td>Eclipse</td><td>70</td><td>Eclipse</td><td>The Vault</td><td>90</td><td>Eclipse bar</td></tr>
-        <tr><td>Grimstone</td><td>1</td><td>Bronze</td><td>The Wilderness</td><td>45</td><td>needed for onyx bars</td></tr>
-        <tr><td>Voidglass</td><td>70</td><td>Eclipse</td><td>The Vault</td><td>35</td><td>needed for eclipse bars</td></tr>
-        <tr><td>Nova ore</td><td>80</td><td>Nova</td><td>The Vault</td><td>65</td><td>an eclipse pickaxe mines it</td></tr>
-        <tr><td>Singularity ore</td><td>90</td><td>Singularity</td><td>The Trailer Park</td><td>93</td><td>wants a nova pickaxe</td></tr>
-        <tr><td>Catalytic converter</td><td>65</td><td>Starfall</td><td>The Trailer Park</td><td>70</td><td>&mdash;</td></tr>
-        <tr><td>Slagstone</td><td>85</td><td>Eclipse</td><td>The Trailer Park</td><td>55</td><td>&mdash;</td></tr>
+  /* (2026-09-25) GENERATED. Its table had four facts wrong at once and two rows that were not there at all:
+     grimstone was listed as Mining 1 with a bronze pickaxe in the Wilderness (it is 20, emerald, the Deep Wild),
+     nova and singularity ore each named their OWN pickaxe in the tool column while the note beside them said the
+     opposite and the note was the right one, emerald's price had moved, and stardust and marble were missing.
+     None of that is anybody being careless — it is eighteen rows of five columns, hand-kept, against a world
+     that is edited every day. So now the rows come from the rocks themselves. */
+  { id: "mining", title: "Mining", icon: "⛏️", cat: "Skills",
+    body: (G, H) => {
+      const at = {};
+      for (const [key, d] of Object.entries(G.SCENES)) {
+        if (d.wikiHide) continue;
+        let b; try { b = G.buildScene(key); } catch { continue; }
+        for (const o of b.objs) {
+          if (o.req?.skill !== "mining" || !o.ore) continue;
+          const r = (at[o.ore] ||= { lvl: o.req.lvl, where: new Set(), vein: false });
+          r.lvl = Math.min(r.lvl, o.req.lvl); r.where.add(d.name); r.vein ||= o.t === "vein";
+        }
+      }
+      const useOf = (ore) => {
+        const rs = Object.values(G.RECIPES).filter((x) => x.in.some(([k]) => k === ore));
+        if (!rs.length) return "&mdash;";
+        const main = rs.find((x) => x.in[0][0] === ore);
+        if (main && G.ITEMS[main.out[0]]) return H.wl(`items/${main.out[0]}`, H.esc(G.ITEMS[main.out[0]].name)) + (rs.length > 1 ? " and up" : "");
+        const other = G.ITEMS[rs[0].out[0]];
+        return other ? `needed for ${H.wl(`items/${rs[0].out[0]}`, H.esc(other.name.toLowerCase()) + "s")}` : "&mdash;";
+      };
+      const rows = Object.entries(at).map(([ore, r]) => ({ ore, ...r, tool: G.toolNeed(r.lvl), pays: G.SHOP.buys[ore], into: useOf(ore) })).sort((a, b) => a.lvl - b.lvl);
+      return `<p>Click a rock with a <b>pickaxe in your hand</b> &mdash; in the weapon slot, not the bag. Every rock holds 2 to 12 ore and you keep working it until it is empty, so one rock is several swings rather than one.</p>
+      <p><b>Two things gate a rock: your level AND your pickaxe</b>, and they are not the same number. Emerald ore needs Mining 20 and an emerald pickaxe &mdash; having the level with a bronze pickaxe gets you nothing, which is the single most common reason a rock will not budge. <b>The pickaxe a rock wants is not always its own grade</b>: the top rungs gate above their ore on purpose, so nova ore is worked with an eclipse pickaxe. See <a data-wiki="guides/tools">Tools</a>.</p>
+      <table class="tbl"><tr><th>Ore</th><th>Mining</th><th>Pickaxe</th><th>Where</th><th>Bom pays</th><th>What it makes</th></tr>
+        ${rows.map((r) => `<tr><td>${H.ico(r.ore)} ${H.wl(`items/${r.ore}`, H.esc(G.ITEMS[r.ore]?.name || r.ore))}${r.vein ? " <small>(vein)</small>" : ""}</td><td>${r.lvl}</td><td>${H.esc(r.tool.name)}</td><td>${[...r.where].join(", ")}</td><td>${r.pays ?? "&mdash;"}</td><td>${r.into}</td></tr>`).join("")}
       </table>
       <p><b>Copper and tin are a pair.</b> A bronze bar wants one of each, so mine them together or you will be back.</p>
       <p><b>A vein never runs dry.</b> It is slower per ore than a rock &mdash; about six seconds a swing against under two &mdash; but it does not empty and it does not stop you, so it is what you stand at while you are half watching something else. The three-minute idle cutoff still applies.</p>
-      <p><b>Grimstone and voidglass are not ore you smelt</b>, they are ingredients: the top two bars will not go without them, which is what makes the last stretch of <a data-wiki="guides/smithing">Smithing</a> a chain rather than a grind.</p>
-      <p><b>Selling raw ore is the worst thing you can do with it.</b> A bar is worth more than its ore, and gear is worth vastly more than bars &mdash; a full eclipse set is about 2,125 tickets of ore and 819,000 over Bom's counter.</p>` },
+      <p><b>Some of these are not ore, they are ingredients.</b> The top bars will not go without them, which is what makes the last stretch of <a data-wiki="guides/smithing">Smithing</a> a chain rather than a grind.</p>
+      <p><b>Selling raw ore is the worst thing you can do with it.</b> A bar is worth more than its ore, and gear is worth vastly more than bars.</p>`;
+    } },
 
+  /* (2026-09-25) GENERATED, and it needed it as badly as mining did. Every price in it was double what Bom
+     actually pays - so badly that the prose UNDER the table quoted the right number for yew and contradicted
+     the row above it - vaultwood was listed fifteen levels and a whole axe rung low, palm logs were not there
+     at all, and four trees had grown a second home nobody had added. */
   { id: "woodcutting", title: "Woodcutting", icon: "\u{1FA93}", cat: "Skills",
-    body: `<p><b>Click a tree with an axe in your hand.</b> A tree is good for about 25 logs before it falls, an oak for about 50, and a felled one is back in fifteen seconds.</p>
+    body: (G, H) => {
+      const at = {};
+      for (const [key, d] of Object.entries(G.SCENES)) {
+        if (d.wikiHide) continue;
+        let b; try { b = G.buildScene(key); } catch { continue; }
+        for (const o of b.objs) {
+          if (o.req?.skill !== "woodcutting") continue;
+          const y = o.log || "logs", r = (at[y] ||= { lvl: o.req.lvl, where: new Set() });
+          r.lvl = Math.min(r.lvl, o.req.lvl); r.where.add(d.name);
+        }
+      }
+      const burnOf = (log) => { const r = Object.values(G.RECIPES).find((x) => x.in.length === 1 && x.in[0][0] === log && x.out[0] === "charcoal"); return r ? r.out[1] : 0; };
+      const rows = Object.entries(at).map(([log, r]) => ({ log, ...r, tool: G.toolNeed(r.lvl), pays: G.SHOP.buys[log], char: burnOf(log) })).sort((a, b) => a.lvl - b.lvl);
+      const noBurn = rows.filter((r) => !r.char);
+      return `<p>Click a tree with an <b>axe in your hand</b>. A tree is good for about 25 logs before it falls, an oak for about 50, and a felled one is back in fifteen seconds.</p>
       <p><b>Most trees are scenery.</b> The ones you can actually cut have their own art &mdash; in the Yard they are the two gnarled Old oaks, and every zone past it names its tree. If clicking does nothing, it is not a tree.</p>
-      <p><b>Level and axe are separate gates</b>, same as mining: Deadwood wants Woodcutting 20 <i>and</i> an emerald axe.</p>
-      <table class="tbl"><tr><th>Tree</th><th>Woodcutting</th><th>Axe</th><th>Where</th><th>Sells</th><th>Burns into</th></tr>
-        <tr><td>Tree, Old oak</td><td>1</td><td>Bronze</td><td>The Yard</td><td>10</td><td>1 charcoal</td></tr>
-        <tr><td>Gloomwillow</td><td>15</td><td>Bronze</td><td>The Gloam</td><td>15</td><td>1 charcoal</td></tr>
-        <tr><td>Deadwood</td><td>20</td><td>Emerald</td><td>The Lantern Mire</td><td>28</td><td>2 charcoal</td></tr>
-        <tr><td>Ancient yew</td><td>35</td><td>Diamond</td><td>The Boneyard</td><td>70</td><td>3 charcoal</td></tr>
-        <tr><td>Skyash</td><td>45</td><td>Dragonstone</td><td>Cloudreach</td><td>28</td><td>2 charcoal</td></tr>
-        <tr><td>Vaultwood</td><td>60</td><td>Starfall</td><td>The Vault</td><td>85</td><td>4 charcoal</td></tr>
-        <tr><td>Rustpine</td><td>65</td><td>Starfall</td><td>The Trailer Park</td><td>40</td><td>2 charcoal</td></tr>
-        <tr><td>Bogwood</td><td>80</td><td>Eclipse</td><td>The Trailer Park</td><td>95</td><td>4 charcoal</td></tr>
+      <p><b>Level and axe are separate gates</b>, the same as <a data-wiki="guides/mining">mining</a>.</p>
+      <table class="tbl"><tr><th>Logs</th><th>Woodcutting</th><th>Axe</th><th>Where</th><th>Bom pays</th><th>Burns into</th></tr>
+        ${rows.map((r) => `<tr><td>${H.ico(r.log)} ${H.wl(`items/${r.log}`, H.esc(G.ITEMS[r.log]?.name || r.log))}</td><td>${r.lvl}</td><td>${H.esc(r.tool.name)}</td><td>${[...r.where].join(", ")}</td><td>${r.pays ?? "&mdash;"}</td><td>${r.char ? `${r.char} charcoal` : "<b>nothing</b>"}</td></tr>`).join("")}
       </table>
-      <p><b>Logs are fuel, not just stock.</b> Every smelt in the game needs charcoal and charcoal is burnt logs, so woodcutting feeds <a data-wiki="guides/smithing">Smithing</a> exactly the way mining does. One vaultwood log is worth four ordinary ones at the furnace.</p>
-      <p><b>Ancient yew is the sweet spot for a long time.</b> Three charcoal a log and 35 tickets if you sell it instead &mdash; better on both counts than the two trees above it, which is worth knowing before you walk to Cloudreach for skyash.</p>
-      <p><b>Burning is the only Smithing you can do at level 1</b>, so a woodcutter already has a Smithing career started whether they meant to or not.</p>` },
+      <p><b>Logs are fuel, not just stock.</b> Every smelt in the game needs charcoal and charcoal is burnt logs, so woodcutting feeds <a data-wiki="guides/smithing">Smithing</a> exactly the way mining does.</p>
+      <p><b>A log further out is not always worth more.</b> Charcoal per log and what Bom pays for it move separately &mdash; read both columns before walking somewhere for a tree.</p>
+      ${noBurn.length ? `<p><b>${noBurn.map((r) => H.esc(G.ITEMS[r.log]?.name || r.log)).join(" and ")} will not burn.</b> There is no furnace recipe for ${noBurn.length > 1 ? "them" : "it"} yet, so for now ${noBurn.length > 1 ? "they are" : "it is"} something to sell rather than fuel.</p>` : ""}
+      <p><b>Burning is the only Smithing you can do at level 1</b>, so a woodcutter already has a Smithing career started whether they meant to or not.</p>`;
+    } },
 
   { id: "harvesting", title: "Harvesting", icon: "\u{1F33E}", cat: "Skills",
-    body: `<p><b>Two halves.</b> Picking things that grow in the world, and growing your own on <a data-wiki="guides/islands">your island</a>.</p>
+    body: (G, H) => `<p><b>Two halves.</b> Picking things that grow in the world, and growing your own on <a data-wiki="guides/islands">your island</a>.</p>
       <p><b>In the world</b>: <b>three patches of wheat grow wild in the Yard</b> &mdash; one in the north-west above the copper, one beside the path through the middle, and one out in the south-west meadow. Click them and they grow back on their own. <b>It is the only gathering skill that needs nothing in your hand</b> &mdash; no tool, no grade, no gate but your level.</p>
       <p><b>On your island</b> a plot grows in real time whether you are logged in or not, and pays back several of what you planted. That is where the levels are.</p>
-      <p><b>There are no seeds &mdash; the crop IS the seed.</b> Planting spends one of the thing you are growing, so the first of each new kind has to be found: they drop from the monsters of the zone that grows them, at about <b>one kill in eighty</b>. What you can grow is decided by where you can survive.</p>
-      <table class="tbl"><tr><th>Crop</th><th>Harvesting</th><th>Grows in</th><th>Pays back</th><th>xp</th><th>Sells</th><th>Seeded by</th></tr>
-        <tr><td>Wheat</td><td>1</td><td>10 min</td><td>3&ndash;5</td><td>30</td><td>2</td><td>grows wild in the Yard</td></tr>
-        <tr><td>Tomatoe</td><td>5</td><td>20 min</td><td>3&ndash;6</td><td>70</td><td>3</td><td>rotten tomatoes, in the Yard</td></tr>
-        <tr><td>Rattlebean</td><td>10</td><td>20 min</td><td>3&ndash;5</td><td>60</td><td>5</td><td>the Gloam</td></tr>
-        <tr><td>Lanternroot</td><td>20</td><td>40 min</td><td>3&ndash;6</td><td>150</td><td>18</td><td>the Lantern Mire</td></tr>
-        <tr><td>Bonegourd</td><td>30</td><td>1 hr</td><td>3&ndash;6</td><td>400</td><td>45</td><td>the Boneyard</td></tr>
-        <tr><td>Stormcorn</td><td>40</td><td>2 hr</td><td>4&ndash;7</td><td>700</td><td>125</td><td>Cloudreach &amp; the Thunderhead</td></tr>
-        <tr><td>Golden tomatoe</td><td>50</td><td>4 hr</td><td>1&ndash;3</td><td>600</td><td>30</td><td>&mdash;</td></tr>
-      </table>
+      ${SEEDS_NOTE(G)}
+      ${cropTable(G, H)}
       <p><b>Plant the longest crop you can before you log off</b> and the short ones while you are around. A plot is doing nothing between ripening and your coming back, which is the only real skill in this skill.</p>
       <p><b>Your island decides how many plots you have</b> &mdash; 8 to start, 12 for 5,000 tickets, 20 for 20,000. It multiplies everything above, so it is the upgrade that matters.</p>
       <p><b>It is background money, not a living.</b> A full set of plots kept going comes to a fraction of what fighting the same zone pays; the appeal is that it happens while you are doing something else.</p>` },
 
   { id: "thieving", title: "Thieving", icon: "\u{1F90F}", cat: "Skills",
-    body: `<p><b>The Thieves&rsquo; Guild is south of the Yard</b>, behind a door that wants a permit. Inside are four rooms of guild members, two marks to a room, and you pick their pockets. <b>Nothing in there fights back and nothing can be attacked</b> &mdash; it is the only skill in the game that needs no combat level at all, no weapon and no armour.</p>
+    body: (G, H) => `<p><b>The Thieves&rsquo; Guild is south of the Yard</b>, behind a door that wants a permit. Inside are four rooms of guild members, two marks to a room, and you pick their pockets. <b>Nothing in there fights back and nothing can be attacked</b> &mdash; it is the only skill in the game that needs no combat level at all, no weapon and no armour.</p>
 
       <h3>Getting in</h3>
       <p>You need a <b>Thieves&rsquo; permit</b>, and there are two ways to hold one:</p>
@@ -379,21 +557,15 @@ export const GUIDES = [
       <p><b>After a successful lift that mark keeps a hand on their pocket for six seconds.</b> There are three of each in every room, so you work the room rather than one pocket.</p>
 
       <h3>What they carry</h3>
-      <table class="tbl"><tr><th>Room</th><th>What</th><th>How often</th><th>Fence</th></tr>
-        <tr><td rowspan="2">Apprentice Lifter</td><td>Brass button</td><td>80%</td><td>6</td></tr>
-        <tr><td>Whetgrit</td><td>20%</td><td>keep it</td></tr>
-        <tr><td rowspan="3">Grifter</td><td>Pocket watch</td><td>75%</td><td>15</td></tr>
-        <tr><td>Quenching salts</td><td>20%</td><td>keep it</td></tr>
-        <tr><td>Whetgrit</td><td>5%</td><td>keep it</td></tr>
-        <tr><td rowspan="3">The Fixer</td><td>Stolen signet</td><td>72%</td><td>26</td></tr>
-        <tr><td>Guild seal wax</td><td>18%</td><td>keep it</td></tr>
-        <tr><td>Quenching salts</td><td>10%</td><td>keep it</td></tr>
-        <tr><td rowspan="5">The Quartermaster</td><td>Black-market ledger</td><td>70%</td><td>29</td></tr>
-        <tr><td>Starfall ore</td><td>12%</td><td>28, but smelt it</td></tr>
-        <tr><td>Eclipse ore</td><td>9%</td><td>45, but smelt it</td></tr>
-        <tr><td>Voidglass</td><td>6%</td><td>35, but smelt it</td></tr>
-        <tr><td>Guild seal wax</td><td>3%</td><td>keep it</td></tr>
-      </table>
+      ${(() => {
+        /* (2026-09-25) GENERATED. The four rooms became EIGHT marks when thieving was buffed and this table was
+           left at four; its fence prices were the pre-TIX_RATE ones as well, so every number in it was double.
+           A mark's pockets are written in MARKS and its prices in SHOP.buys, so neither needs typing twice. */
+        const marks = Object.values(G.MARKS).sort((x, y) => x.lvl - y.lvl);
+        return `<table class="tbl"><tr><th>Mark</th><th>Thieving</th><th>What</th><th>How often</th><th>Fence</th></tr>
+          ${marks.map((m) => (m.drop || []).map(([k, ch], i) => `<tr>${i ? "" : `<td rowspan="${m.drop.length}">${H.esc(m.name)}</td><td rowspan="${m.drop.length}">${m.lvl}</td>`}<td>${H.ico(k)} ${H.wl(`items/${k}`, H.esc(G.ITEMS[k]?.name || k))}</td><td>${Math.round(ch * 100)}%</td><td>${G.SHOP.buys[k] ? (G.ITEMS[k]?.name.match(/ore|glass/i) ? `${G.SHOP.buys[k]}, but smelt it` : G.SHOP.buys[k]) : "keep it"}</td></tr>`).join("")).join("")}
+        </table>`;
+      })()}
       <p><b>Buttons, watches, signets and ledgers are just money</b> &mdash; sell them at the Prize Counter. Everything else goes to an anvil, and that is the half worth having.</p>
 
       <h3>What the materials make</h3>
@@ -404,6 +576,10 @@ export const GUIDES = [
         <tr><td><b>Master&rsquo;s seal</b></td><td>60</td><td>1 guild seal wax, 1 flux</td><td>The only way to take a piece <b>past +3, to +4</b></td></tr>
       </table>
       <p>A seal eats a flux, so seals can never be commoner than flux. If you are reforging something you would hate to lose, the honest advice is <b>flux first and temper second</b>: a temper only improves your chances, a flux is what stops the piece cracking in half.</p>
+
+      <h3>Things go wrong at the anvil</h3>
+      <p><b>Nothing you smelt or hammer is a certainty.</b> One attempt in ten fails &mdash; a bar, a piece of gear, a temper, all of it &mdash; at every level, and a failure takes the materials with it. The panel at the furnace and the anvil prints the chance on every row, so you are never guessing.</p>
+      <p><b>Nova and Singularity are the exception</b> and never fail. Their weapons already cost a core that drops about one kill in two thousand; asking you to gamble that as well would be cruel rather than tense.</p>
 
       <h3>The other way to the top of smithing</h3>
       <p><b>The Quartermaster&rsquo;s room carries starfall ore, eclipse ore and voidglass.</b> Those three are otherwise only found in the Vault, and voidglass is not dropped by any monster at all &mdash; so a thief can supply their own Starfall and Eclipse gear without ever going down there. That is the real reason people want into the last room.</p>
@@ -426,6 +602,100 @@ export const GUIDES = [
       <h3>What it is worth</h3>
       <p><b>1 to 99 is about 72 hours</b> if you always work the best room you can reach &mdash; about level with Woodcutting, and a good deal quicker than Combat&rsquo;s 149. A full Ditched set takes it to roughly 61. The top room earns about what a middling miner does. That is deliberate: a room where nothing fights back should not also be the best money in the game, and the guild&rsquo;s real payment is the materials.</p>` },
 
+  /* (2026-09-25) FLETCHING. Generated from the rules like the mining and cooking tables: the ladder, the woods,
+     the gems and every number on this page are read out of G, so a retune cannot leave the wiki behind. */
+  /* (2026-09-25) ARCHERY, the combat skill. Static, because none of it is a table. */
+  /* (2026-09-26) MAGIC and WIZARDRY. Generated from the rules like every other skill table: elements, pages, wands, bags, altars,
+     buffs, Waystones and crops are all read out of G, so a retune cannot leave the wiki behind. */
+  { id: "magic", title: "Magic", icon: "\u{1FA84}", cat: "Skills",
+    body: (G, H) => {
+      const nm = (k) => H.esc(G.ITEMS[k]?.name || k), E = G.ELEMENTS, els = G.ELEMENT_KEYS;
+      const pages = Object.keys(G.ITEMS).filter((k) => G.ITEMS[k].ammo?.kind === "page").sort((a, b) => G.ITEMS[a].req.lvl - G.ITEMS[b].req.lvl);
+      const wands = Object.keys(G.ITEMS).filter((k) => G.ITEMS[k].wand).sort((a, b) => G.ITEMS[a].req.lvl - G.ITEMS[b].req.lvl);
+      const bags = Object.keys(G.ITEMS).filter((k) => G.ITEMS[k].pouch?.ammo === "page").sort((a, b) => G.ITEMS[a].req.lvl - G.ITEMS[b].req.lvl);
+      const byEl = (el, f) => Object.keys(G.MOBS).filter((t) => G.MOBS[t][f] === el).map((t) => H.wl(`monsters/${t}`, H.esc(G.MOBS[t].name)));
+      return `<p><b>The third way to fight.</b> Hold a wand and every roll reads your <b>Magic</b> level &mdash; accuracy, max hit and defence &mdash; and every point of damage pays Magic xp, one for one, the way Melee and Archery do. Your combat level takes your best style in full and a little of the others.</p>
+      <h3>Getting started</h3>
+      <p>Brutus sells a <b>rough wand</b>, a <b>Scrap Satchel</b> and <b>Arcane bolts</b>, all Magic 1. Wand in the weapon hand, bag in the offhand, click the pages in your bag to load it. A wand casts from ${G.ITEMS.logs_wand.launcher.range} tiles and spends one page a cast.</p>
+      <h3>The five elements</h3>
+      <p>A page carries an element. A monster <b>weak</b> to it takes ${Math.round((G.MAGIC.weakMul - 1) * 100)}% more; one that <b>resists</b> it takes ${Math.round((1 - G.MAGIC.resistMul) * 100)}% less. Hover a monster to see which. Each element also does something of its own:</p>
+      <table class="tbl"><tr><th>Element</th><th>Does</th><th>Weak to it</th></tr>
+        <tr><td>${H.el("fire")} Fire</td><td>Half the time it burns: ${Math.round(G.MAGIC.burn.share * 100)}% of the hit again a moment later</td><td>${byEl("fire", "weak").join(", ")}</td></tr>
+        <tr><td>${H.el("frost")} Frost</td><td>Slows the monster's swing for ${G.MAGIC.slow.ms / 1000} seconds</td><td>${byEl("frost", "weak").join(", ")}</td></tr>
+        <tr><td>${H.el("storm")} Storm</td><td>Arcs to one monster beside the target for half the damage</td><td>${byEl("storm", "weak").join(", ")}</td></tr>
+        <tr><td>${H.el("void")} Void</td><td>Ignores ${Math.round(G.MAGIC.pierce * 100)}% of the target's defence</td><td>${byEl("void", "weak").join(", ")}</td></tr>
+        <tr><td>${H.el("sun")} Sun</td><td>Heals you for ${Math.round(G.MAGIC.sunHeal * 100)}% of the damage</td><td>${byEl("sun", "weak").join(", ")}</td></tr>
+      </table>
+      <p>Arcane pages are practice pages: no element, so nothing is weak to them and nothing resists them.</p>
+      <h3>Spell pages</h3>
+      <table class="tbl"><tr><th>Magic</th><th>Page</th><th>Adds</th></tr>${pages.map((k) => `<tr><td>${G.ITEMS[k].req.lvl}</td><td>${H.ico(k)} ${H.wl(`items/${k}`, nm(k))}</td><td>+${G.ITEMS[k].ammo.str}</td></tr>`).join("")}</table>
+      <h3>Wands</h3>
+      <table class="tbl"><tr><th>Magic</th><th>Wand</th></tr>${wands.map((k) => `<tr><td>${G.ITEMS[k].req.lvl}</td><td>${H.ico(k)} ${H.wl(`items/${k}`, nm(k))}</td></tr>`).join("")}</table>
+      <h3>Magic Bags</h3>
+      <p>Only five, so the steps are big. Each holds one kind of page in the offhand, and each can be reforged for more room.</p>
+      <table class="tbl"><tr><th>Magic</th><th>Bag</th><th>Holds</th></tr>${bags.map((k) => `<tr><td>${G.ITEMS[k].req.lvl}</td><td>${H.ico(k)} ${H.wl(`items/${k}`, nm(k))}</td><td>${G.ITEMS[k].pouch.cap.toLocaleString()}</td></tr>`).join("")}</table>
+      <p>Everything a wand casts is printed with <a data-wiki="guides/wizardry">Wizardry</a>.</p>`;
+    } },
+  { id: "wizardry", title: "Wizardry", icon: "\u{1F4DC}", cat: "Skills",
+    body: (G, H) => {
+      const nm = (k) => H.esc(G.ITEMS[k]?.name || k), E = G.ELEMENTS;
+      const sites = Object.entries(G.ALTAR_SITES).map(([sc, A]) => `<tr><td>${H.esc(G.STATIONS[A.t].name[0].toUpperCase() + G.STATIONS[A.t].name.slice(1))}</td><td>${H.esc(G.SCENES[sc]?.name || sc)}</td></tr>`).join("");
+      const seeds = Object.entries(G.CROPS).filter(([, c]) => c.yields);
+      const tier = (C_) => C_.vals.map((v) => C_.what(v)).join(" / ");
+      return `<p><b>Wizardry ties the others together.</b> Seeds from monsters grow on your island (Harvesting), the flowers are brewed into ink at the cauldron (Alchemy), paper is pressed from logs (eight sheets a willow log, fourteen from a Gallows log at Wizardry 90), and pages and scrolls are <b>printed at altars</b> around the world. Every print can fail, like any craft.</p>
+      <h3>The altars</h3>
+      <p>Each altar prints its own element's pages and scrolls, so printing means travelling:</p>
+      <table class="tbl"><tr><th>Altar</th><th>Where</th></tr>${sites}<tr><td><b>The Nexus</b></td><td>The Deep Wild</td></tr></table>
+      <p><b>The Nexus</b> is the best altar in the game, in the most dangerous place: it prints what every altar prints, <b>${G.NEXUS.mult}× the pages</b>, for <b>${Math.round((G.NEXUS.xp - 1) * 100)}% more Wizardry xp</b>. Anyone can find you there.</p>
+      <h3>Seeds and ink</h3>
+      <table class="tbl"><tr><th>Harvesting</th><th>Plant</th><th>Grows</th><th>Brews</th></tr>${seeds.map(([k, c]) => `<tr><td>${c.lvl}</td><td>${H.ico(k)} ${nm(k)}</td><td>${H.ico(c.yields)} ${nm(c.yields)}</td><td>${H.ico(`ink_${Object.keys(E).find((e) => E[e].bloom === c.yields)}`)} ${nm(`ink_${Object.keys(E).find((e) => E[e].bloom === c.yields)}`)}</td></tr>`).join("")}</table>
+      <p>Seeds drop from the monsters of each element's home, and they are rare: about one kill in a hundred and twenty-five (the Grim Lich in the Deep Wild, ten times that). A harvested seed crop gives a seed back one time in four. Storm ink is brewed from the Stormcorn that already grows on your island; Arcane ink from sulky sporecaps.</p>
+      <h3>Utility pages</h3>
+      <p>Buffs, one at a time: reading a new one replaces the old. The clock runs only outside. <b>Your Wizardry sets the tier</b> when you read it: I below ${G.MAGIC.tierAt[0]}, II from ${G.MAGIC.tierAt[0]}, III from ${G.MAGIC.tierAt[1]}.</p>
+      <table class="tbl"><tr><th>Wizardry</th><th>Page</th><th>Altar</th><th>Tier I / II / III</th><th>Lasts</th></tr>${Object.entries(G.CHARMS).sort((a, b) => a[1].lvl - b[1].lvl).map(([k, C_]) => `<tr><td>${C_.lvl}</td><td>${H.ico(`scroll_${k}`)} ${H.esc(C_.name)}</td><td>${H.el(C_.el)} ${E[C_.el].name}</td><td>${H.esc(tier(C_))}</td><td>${C_.mins} min</td></tr>`).join("")}</table>
+      <p><b>Homeward</b> (Sun altar, Wizardry 10) puts you on your own island.</p>
+      <h3>Waystones</h3>
+      <p>Four, spaced across the world, at a fork or the far end of a branch, so you still walk to everything between. Printed at the Storm altar. Not in the Wilderness, not inside a run, not within 10 seconds of being hit.</p>
+      <table class="tbl"><tr><th>Wizardry</th><th>Waystone</th></tr>${Object.entries(G.WAYSTONES).map(([k, Wy]) => `<tr><td>${Wy.lvl}</td><td>${H.ico(k)} ${H.esc(Wy.name)}</td></tr>`).join("")}</table>
+      <p>Wands and Magic Bags are made at the Arcane altar in the Yard, from logs, ink and the gems that turn up in ore.</p>`;
+    } },
+  { id: "archery", title: "Archery", icon: "\u{1F3F9}", cat: "Skills",
+    body: (G) => `<p><b>A second way to fight.</b> Hold a bow and every roll in the fight reads your Archery level instead of Combat &mdash; accuracy, max hit and defence &mdash; and every point of damage pays Archery the xp Combat would have had (with Hitpoints alongside, as always). Your combat level takes the higher of the two.</p>
+      <h3>Getting started</h3>
+      <p>Brutus sells a <b>rough shortbow</b>, a <b>rough quiver</b> and <b>bone arrows</b>, all Archery 1. Bow in the weapon hand, quiver in the offhand (it takes the shield's place), click the arrows in your bag to load it. Arrows stack to 1,000 in the bag.</p>
+      <h3>How a bow fights</h3>
+      <ul><li><b>You shoot from where you stand.</b> A shortbow reaches ${G.ITEMS.logs_shortbow.launcher.range} tiles, a longbow ${G.ITEMS.logs_longbow.launcher.range}; click something inside that and you never move. Click something further and you walk only to the edge of your reach.</li>
+      <li><b>One arrow a shot, hit or miss.</b> The quiver empties first, then the bag. With nothing to fire the bow refuses at the click.</li>
+      <li><b>The arrow is the damage.</b> Every arrow adds half its strength to what lands, from +${Math.round(G.ITEMS.bone_arrow.ammo.str * G.AMMO_SHARE)} for bone to +${Math.round(G.ITEMS.singularity_arrow.ammo.str * G.AMMO_SHARE)} for singularity; the bow is speed and reach. Each arrow has its own Archery level to draw.</li>
+      <li><b>Big targets are hard to miss.</b> Arrows do a fifth more to large monsters and bosses.</li>
+      <li><b>Stand and shoot.</b> With a loaded quiver, when your target dies you draw on the next one of the same kind inside your reach without a click, and the fight's idle timer runs eight minutes instead of three. A sword still needs you at the keyboard.</li>
+      <li><b>Some things only an arrow reaches.</b> Thunder Geese sit over the tear in the Thunderhead's floor, on water nobody can walk to. A sword is told so; a bow just shoots.</li>
+      <li><b>In the wild, first blood goes to the bow.</b> An archer gets free shots while a sword closes four to six tiles &mdash; and shoots back from range once it arrives, at Archery's defence.</li></ul>
+      <p>Everything a bow fires is made at the <a data-wiki="guides/fletching">fletching table</a>.</p>` },
+  { id: "fletching", title: "Fletching and archery", icon: "\u{1F3F9}", cat: "Skills",
+    body: (G, H) => {
+      const rs = Object.values(G.RECIPES).filter((r) => r.skill === "fletching").sort((a, b) => a.lvl - b.lvl);
+      const nm = (k) => H.esc(G.ITEMS[k]?.name || k);
+      const bows = rs.filter((r) => G.ITEMS[r.out[0]]?.launcher), arrows = rs.filter((r) => G.ITEMS[r.out[0]]?.ammo), quivers = rs.filter((r) => G.ITEMS[r.out[0]]?.pouch);
+      const row = (r) => `<tr><td>${r.lvl}</td><td>${H.ico(r.out[0])} ${H.wl(`items/${r.out[0]}`, nm(r.out[0]))}${r.out[1] > 1 ? ` <small>x${r.out[1]}</small>` : ""}</td><td>${r.in.map(([k, n]) => `${n} \u00d7 ${nm(k).toLowerCase()}`).join(" + ")}</td></tr>`;
+      return `<p><b>The fletching table stands in the Yard, between the fence and the furnace.</b> Everything here is made at it, except arrowheads, which are <a data-wiki="guides/smithing">smithing</a> at the anvil two tiles away.</p>
+      <p><b>An arrow is three things from three places.</b> A <b>shaft</b> from any log (a better tree just gives more per log), a <b>head</b> hammered from a bar, and a <b>feather</b> off something with plumage &mdash; one to three, about a third of the time, from a Chicken, Highwayman, Understudy, Angel, Thunder Goose or Fat Lady, so there is a bird for every level. A better tree gives more shafts per log, up to fifty from the Deep Wild's Gallows logs at Fletching 92. Fletching cannot make one on its own, and that is the point.</p>
+      <h3>The bow is speed and reach; the arrow is damage</h3>
+      <p>Every wood makes a <b>shortbow</b> (quick, reaches ${G.ITEMS.logs_shortbow.launcher.range} tiles) and a <b>longbow</b> (slow, reaches ${G.ITEMS.logs_longbow.launcher.range} and hits harder). The arrow you load adds half its strength to every hit, from +${Math.round(G.ITEMS.bone_arrow.ammo.str * G.AMMO_SHARE)} for bone to +${Math.round(G.ITEMS.singularity_arrow.ammo.str * G.AMMO_SHARE)} for singularity. So the real choice is a good bow with cheap arrows, or a cheap bow and a quiver of the good ones.</p>
+      <p><b>A bow with nothing to fire is not a weapon.</b> One arrow is spent per shot, hit or miss.</p>
+      <h3>Quivers</h3>
+      <p>A quiver wears the <b>offhand</b> &mdash; so a bow is a two-handed choice against a shield &mdash; and holds one kind of arrow in bulk, from ${G.FLETCH.quiverCap[0]} for rough up to ${G.FLETCH.quiverCap.at(-1)} for bogwood. Click arrows in your bag to load it; a shot draws from the quiver first, then the bag.</p>
+      <h3>Gems</h3>
+      <p>Four stones turn up in ore, about one rock in seventy, and each tips the arrows of the metals it comes out of:</p>
+      <table class="tbl"><tr><th>Gem</th><th>From</th><th>Tips</th><th>Adds</th></tr>
+        ${G.GEMS.map((g) => `<tr><td>${H.ico(g.key)} ${nm(g.key)}</td><td>${g.ores.map((o) => nm(o)).join(", ")}</td><td>${g.tips.map((t) => nm(t)).join(", ")}</td><td>+${g.str}</td></tr>`).join("")}
+      </table>
+      <h3>The ladder</h3>
+      <table class="tbl"><tr><th>Fletching</th><th>Makes</th><th>From</th></tr>${rs.map(row).join("")}</table>
+      <p><b>Arrowheads</b> are hammered at the anvil at each metal's own Smithing gate, fifteen to a bar.</p>
+      <p><b>Fletching makes it, <a data-wiki="guides/archery">Archery</a> draws it.</b> Every bow, quiver and arrow carries an Archery level to use, which sits at the Fletching level to make it &mdash; except the rough shortbow, the rough quiver and bone arrows, which are Archery 1 and on Brutus's shelf.</p>
+      <p><b>The Long Count</b> at 99 wants a singularity core &mdash; the same one-in-two-thousand drop the top melee weapons want &mdash; so the two ladders end on the same chase.</p>`;
+    } },
   { id: "agility", title: "Agility", icon: "\u{1F3C3}", cat: "Skills",
     body: `<p><b>The Run is an obstacle course</b>, up a rope ladder in the north of the Yard. You go round it: each obstacle pays, and finishing a full lap pays far more than the parts do.</p>
       <table class="tbl"><tr><th>What</th><th>Gives</th></tr>
@@ -439,20 +709,34 @@ export const GUIDES = [
       <p><b>A lap is worth more with company</b>, so it is one of the few things in the game that rewards a crowd rather than tolerating one.</p>
       <p><b>Your best lap is recorded</b>, which is the other reason to keep going round.</p>` },
 
+  /* (2026-09-25) THIS ONE GENERATES ITSELF. Its table quoted seven fish, three wrong heal numbers and a "up to
+     34" ceiling, all of which had drifted as the food ladder was fixed and the Carnival's two were smoked. A body
+     may be a function of the rules (see the render in eastscape.html), so the numbers now come from SMOKE,
+     RECIPES and ITEMS and cannot go stale again. Anything hand-written stays hand-written. */
   { id: "smoking", title: "Smoked fish", icon: "\u{1F41F}", cat: "Skills",
-    body: `<p><b>Smoking is cooking with charcoal.</b> Seven fish can be smoked instead of plainly cooked. A smoked fish heals more, sells for far more, and &mdash; the reason to bother &mdash; gives you a <b>20-minute buff</b> when you eat it.</p>
-      <p>Do it at <b>any fire or range</b>, with the fish and the charcoal in your bag. You do not switch anything on: the fire always makes the best thing it can, so it smokes while you have charcoal and drops back to plain cooking when you run out. Charcoal is <b>burnt logs</b>, made at the furnace.</p>
-      <table class="tbl"><tr><th>Smoked</th><th>Catch at</th><th>Where</th><th>Smoke at</th><th>Coal</th><th>Heals</th><th>For 20 minutes</th></tr>
-        <tr><td><b>Ghost carp</b></td><td>Fishing 35</td><td>Flooded crypt, the Boneyard</td><td>Cooking 40</td><td>1</td><td>24</td><td>+8% rare drops</td></tr>
-        <tr><td><b>Sky eel</b></td><td>Fishing 40</td><td>Hole in the cloud, Cloudreach</td><td>Cooking 55</td><td>1</td><td>26</td><td>+8% speed</td></tr>
-        <tr><td><b>Cloud ray</b></td><td>Fishing 45</td><td>Hole in the cloud, Cloudreach</td><td>Cooking 50</td><td>1</td><td>28</td><td>+8% toughness</td></tr>
-        <tr><td><b>Storm marlin</b></td><td>Fishing 50</td><td>The sea below, the Thunderhead</td><td>Cooking 60</td><td>2</td><td>31</td><td>+10% tickets</td></tr>
-        <tr><td><b>Thunder squid</b></td><td>Fishing 58</td><td>The sea below, the Thunderhead</td><td>Cooking 65</td><td>2</td><td>34</td><td>+15% toughness</td></tr>
-        <tr><td><b>Mudcat</b></td><td>Fishing 80</td><td>Black water, the Trailer Park</td><td>Cooking 65</td><td>2</td><td>28</td><td>+15% rare drops</td></tr>
-        <tr><td><b>Bowfin</b></td><td>Fishing 88</td><td>Black water, the Trailer Park</td><td>Cooking 75</td><td>3</td><td>32</td><td>+10% tough and +15% rare</td></tr>
+    body: (G, H) => {
+      const rows = Object.entries(G.ITEMS)
+        .filter(([k, it]) => k.startsWith("s") && it.meal && G.ITEMS[k.slice(1)])
+        .map(([k]) => {
+          const raw = k.slice(1), sm = Object.values(G.RECIPES).find((r) => r.out[0] === k);
+          const cook = Object.values(G.RECIPES).find((r) => r.out[0] === `c${raw}` && r.skill === "cooking");
+          const coal = (sm?.in.find(([i]) => i === "charcoal") || [, 1])[1];
+          const fx = G.ITEMS[k].meal.fx, says = Object.entries(fx)
+            .map(([f, v]) => `+${Math.round(v * 100)}% ${({ rare: "rare drops", tough: "toughness", speed: "speed", tix: "tickets", zdrop: "ZCoin drops", bite: "bite rate" })[f] || f}`)
+            .join(" and ");
+          return { k, raw, lvl: sm?.lvl ?? 0, cookLvl: cook?.lvl, coal, heal: G.ITEMS[k].heal, says };
+        })
+        .sort((a, b) => a.lvl - b.lvl);
+      const best = Math.max(...rows.map((r) => r.heal));
+      return `<p><b>Smoking is cooking with charcoal.</b> ${rows.length} fish can be smoked instead of plainly cooked. A smoked fish heals more, sells for far more, and &mdash; the reason to bother &mdash; gives a twenty-minute buff.</p>
+      <p>Do it at <b>any fire or range</b>, with the fish and the charcoal in your bag. You do not switch anything on: the fire always makes the best thing it can, so it smokes while you have charcoal and drops back to plain cooking when you run out.</p>
+      <table class="tbl"><tr><th>Smoked</th><th>Smoke at</th><th>Coal</th><th>Heals</th><th>For 20 minutes</th></tr>
+        ${rows.map((r) => `<tr><td>${H.ico(r.k)} ${H.wl(`items/${r.k}`, H.esc(G.ITEMS[r.k].name))}</td><td>Cooking ${r.lvl}</td><td>${r.coal}</td><td>${r.heal}</td><td>${H.esc(r.says)}</td></tr>`).join("")}
       </table>
-      <p><b>Cooking is usually what holds you back, not fishing.</b> A sky eel comes out of the water at Fishing 40 and will not smoke until Cooking 55. Only the last two are the other way round, which is what makes the Trailer Park the end of the chain.</p>
-      <p><b>Nothing here buffs experience</b>, and that is deliberate &mdash; a stacked xp buff would be a multiplier on the one thing the Tower exists to pay.</p>` },
+      <p><b>A smoke can spoil.</b> One in ten fails, at every level, and the fish and the charcoal go with it. Cooking the same fish plainly is unaffected. The fire tells you the odds before you start.</p>
+      <p><b>Cooking is usually what holds you back, not fishing.</b> A fish comes out of the water long before you can smoke it &mdash; a smoke sits about five levels above its own plain cook.</p>
+      <p><b>Nothing here buffs experience</b>, and that is deliberate &mdash; a stacked xp buff would be a multiplier on the one thing the Tower exists to pay. The best smoke heals <b>${best}</b>.</p>`;
+    } },
   { id: "buffs", title: "Food, drinks and luck", icon: "\u{1F37A}", cat: "Going further",
     body: `<p><b>Eating heals you. Some food also buffs you for twenty minutes, and a drink for ten.</b> You can have one meal and one drink running at once, so the good combination is a dinner plus a drink, not two dinners.</p>
       <h3>Dinners &mdash; 20 minutes</h3>
@@ -462,7 +746,7 @@ export const GUIDES = [
         <tr><td>High roller's chops</td><td>10</td><td>+25% rare drops</td></tr>
         <tr><td>Fisherman's platter</td><td>14</td><td>+10% bite rate and +10% tickets</td></tr>
       </table>
-      <p>The seven <a data-wiki="guides/smoking">smoked fish</a> are dinners too, and they heal far more &mdash; up to 34. That page has their buffs.</p>
+      <p>The eleven <a data-wiki="guides/smoking">smoked fish</a> are dinners too, and they heal far more &mdash; up to 48. That page has their buffs.</p>
       <h3>Drinks &mdash; 10 minutes</h3>
       <table class="tbl"><tr><th>Drink</th><th>Gives</th></tr>
         <tr><td>House lager</td><td>+5% tickets</td></tr>
@@ -520,7 +804,7 @@ export const GUIDES = [
       <p><b>Click to move one thing; the 1 / 5 / 10 / All selector at the foot decides how many.</b> Or <b>shift-click to move a whole stack</b> in either direction, which is the same gesture the trade window uses.</p>
       <p><b>Sort it</b> by Recent, A&ndash;Z, Value or Amount &mdash; the chips sit under the search box, and your choice is remembered. The header shows what the whole bank is worth, and hovering any stack tells you what that stack is worth.</p>
       <p><b>Deposit bag</b> and <b>Deposit worn</b> empty you out in one click. Neither will take your tickets: those stay on you always, and cannot be banked, dropped or given away.</p>
-      <p><b>Your bag is the thing worth upgrading.</b> Bom sews on extra pockets &mdash; five of them, each dearer than the last, from 50,000 up to 400,000 tickets, taking you to 25 slots. The button is in the bank as well as at his counter, because "I need more room" is a thought you have with the bank open.</p>
+      <p><b>Your bag is the thing worth upgrading.</b> Bom sews on extra pockets &mdash; five of them, each dearer than the last, from 50,000 up to 400,000 tickets, taking you from 25 slots to 30. The button is in the bank as well as at his counter, because "I need more room" is a thought you have with the bank open.</p>
       <p><b>The Market delivers here.</b> Anything you buy, and anything your sell offers earn, lands in your bank whether you are online or not. See <a data-wiki="guides/trading">Trading</a>.</p>` },
   { id: "trading", title: "Trading and the Market", icon: "\u{1F91D}", cat: "Money",
     body: `<h3>Face to face</h3>
@@ -534,7 +818,7 @@ export const GUIDES = [
       <p><b>It sells out of your bag and your bank together</b>, so you do not have to fetch things before listing them.</p>
       <p><b>Gear cannot be sold to other players yet.</b> A reforged piece belongs to whoever reforged it &mdash; a known limitation and a real project to fix, not an oversight.</p>` },
   { id: "islands", title: "Your island", icon: "\u{1F3DD}️", cat: "Going further",
-    body: `<p><b>Charon keeps a cart in the Yard</b>, a few steps out of the casino's front door, and everyone gets an island. It is yours, it keeps growing things while you are logged off, and you decide whether anybody else can visit.</p>
+    body: (G, H) => `<p><b>Charon keeps a cart in the Yard</b>, a few steps out of the casino's front door, and everyone gets an island. It is yours, it keeps growing things while you are logged off, and you decide whether anybody else can visit.</p>
       <p><b>Three sizes.</b> You start with the first and buy the others from Charon's cart. The Far Shore is a second island joined to yours by a bridge off the east side, so it is one walk, not a second trip.</p>
       <table class="tbl"><tr><th>Island</th><th>Costs</th><th>Plots</th><th>Pedestals</th></tr>
         <tr><td>Island</td><td>&mdash;</td><td>8</td><td>6</td></tr>
@@ -546,16 +830,8 @@ export const GUIDES = [
       <p><b>The one piece that does something is the bank chest</b> (10,000). It opens the same bank as the chest in the Yard, so you can empty a full bag into it between harvests instead of sailing back. Everything else she sells is for show, which is the point of it.</p>
       <h3>Growing things</h3>
       <p><b>Plant a crop and it grows in real time, whether you are online or not.</b> Click an empty plot, pick what to put in it, come back when it is ready. A ripe plot pays several of what you planted, so one crop feeds the next.</p>
-      <p><b>There are no seeds &mdash; the crop IS the seed.</b> Planting spends one of the thing you are growing. The first of each new kind has to be found: they drop from the monsters of the zone that grows them, at roughly <b>one kill in eighty</b>. So what you can grow is decided by where you can survive, not by a level gate.</p>
-      <table class="tbl"><tr><th>Crop</th><th>Harvesting</th><th>Grows in</th><th>Yield</th><th>xp</th><th>Sells</th><th>Seeded by</th></tr>
-        <tr><td>Wheat</td><td>1</td><td>10 min</td><td>3&ndash;5</td><td>30</td><td>2</td><td>grows wild in the Yard</td></tr>
-        <tr><td>Tomatoe</td><td>5</td><td>20 min</td><td>3&ndash;6</td><td>70</td><td>3</td><td>rotten tomatoes, in the Yard</td></tr>
-        <tr><td>Rattlebean</td><td>10</td><td>20 min</td><td>3&ndash;5</td><td>60</td><td>5</td><td>the Gloam</td></tr>
-        <tr><td>Lanternroot</td><td>20</td><td>40 min</td><td>3&ndash;6</td><td>150</td><td>18</td><td>the Lantern Mire</td></tr>
-        <tr><td>Bonegourd</td><td>30</td><td>1 hr</td><td>3&ndash;6</td><td>400</td><td>45</td><td>the Boneyard</td></tr>
-        <tr><td>Stormcorn</td><td>40</td><td>2 hr</td><td>4&ndash;7</td><td>700</td><td>125</td><td>Cloudreach &amp; the Thunderhead</td></tr>
-        <tr><td>Golden tomatoe</td><td>50</td><td>4 hr</td><td>1&ndash;3</td><td>600</td><td>30</td><td>&mdash;</td></tr>
-      </table>
+      ${SEEDS_NOTE(G)}
+      ${cropTable(G, H)}
       <p><b>Farming is background money, not a living.</b> A full set of plots kept going comes to roughly a sixth of what fighting the same zone pays &mdash; it is something that happens while you do something else, which is the whole point of it running while you are logged off.</p>
       <h3>The rest of the island</h3>
       <p><b>Pedestals</b> put an item on display for visitors. <b>Themes</b> repaint the place &mdash; Meadow is free, Dunes is 2,500, and Gloom is not for sale. The <b>pet pen</b> is built but not open yet.</p>
@@ -569,6 +845,64 @@ export const GUIDES = [
 ];
 
 export const UPDATES = [
+  {
+    date: "2026-09-27", title: "The Wilderness, rebuilt",
+    items: [
+      "THE WILDERNESS AND THE DEEP WILD are new maps: rock walls, winding roads, a plateau, cave mouths, waterfalls, lava in the Deep. The skilling nodes moved into far pockets held by stronger monsters, and the far corners now carry yew, dragonstone, onyx, starfall, skyash, mooncarp and stormmarlin.",
+      "THREE MONSTERS LIVE ONLY THERE: the Wild Weaver (wild silk, four silkstrings a coil), the Marrow Hound (marrow, for the wild-only marrow arrow) and the Grim Lich in the Deep (grimcore, which brews Void ink with grimstone, and seeds ten times as often as anything else).",
+      "A THIRD OF THE WILD ATTACKS FIRST, most of it around the nodes, and everything there takes 45 seconds to 2 minutes to come back.",
+      "UTILITY PAGES print from Wizardry 50 to 99 now; Waystones are printed on a grimstone. Seeds are rare, but a harvested seed crop gives a seed back one time in four.",
+      "NOTHING BUT TICKETS ALWAYS DROPS: every monster's own drop is a 25-45% chance now, and an arrow or a page adds half its strength to a hit rather than all of it.",
+      "FORTY QUESTS, in stages: go and see someone, hear them out, fetch or make or defeat a thing, carry it somewhere. Easy ones in the Yard, the Gloam and the Mire; medium in the Boneyard, Cloudreach and the Sands; hard from the Thunderhead out to the Deep Wild. Seven new people give them: Mudge in the Mire, Sister Morrow in the Boneyard, Zephyr in Cloudreach, Rashid in the Sands, Volta in the Thunderhead, the Auditor in the Vault, and Grimm the Hermit by the rope down to the Wilderness. A blue marker over someone's head means a quest has sent you to them.",
+      "YOUR BAG HOLDS 25 now, before any pockets Bom sews on.",
+      "THE TOP OF THREE LADDERS: voidfin and grimscale in the Deep Wild's Black Pool (Fishing 92 and 97, Cooking to 90, smoking to 95), the glass gourd, ember wheat and starfruit on your island (Harvesting 62, 78 and 92, seeded by the Carnival, the Vault and the Trailer Park), and a Gallows oak in the Deep (Woodcutting 90, fifty shafts a log).",
+    ],
+  },
+  {
+    date: "2026-09-25", title: "Fletching and archery",
+    items: [
+      "ARCHERY FIX: a bow fights with the bow's and the quiver's own accuracy and strength (plus the arrow's), not your melee armour's. Heavy melee gear was making a first bow hit like a high-level one, which raced people through the early arrow tiers. Your armour still counts in full for defence.",
+      "DAILY JOBS: every kill job now asks for ten times the kills, for the same tickets. Jobs already on your board today keep the count they were given.",
+      "A KEYBINDS page in the wiki (Starting out): every key in one place. Number keys in a conversation now only answer it; they no longer use your quick slots as well.",
+      "MAGIC AND WIZARDRY. A third way to fight: hold a wand, load a Magic Bag with spell pages, and every hit pays Magic xp. Five elements (Fire, Frost, Storm, Void, Sun), and every monster may be weak to one and resist another: hover it to see. Wizardry prints the pages at altars around the world, from paper and ink brewed out of flowers you grow on your island. The Nexus, deep in the Wilderness, prints anything, twice. Utility pages give buffs (Haste, Focus, Ward, Rainmaker and more) and four Waystones carry you across the world. The Magic 1 kit is on Brutus's shelf.",
+      "E EATS your best cooked food: whatever heals most. It never touches potions, drinks, buff meals or smoked fish, and does nothing at full health.",
+      "QUICK SLOTS: four slots beside the chat button, on keys 1 to 4. Click an empty one to put a potion, food, a buff, arrows or a piece of gear in it; click or press its number to use it; right-click to empty it. They follow you to any device. The emote buttons that used to sit there are gone.",
+      "STACK ALL in the bank puts every stack in your bag that the bank already holds straight in, in one click. Bows twang less: a shot is now one of four recorded swishes.",
+      "THE TOWER MOVED up behind the north court's railing, into the trees, and the fletching table took its old spot, so the court has room to breathe. Bows and quivers can be reforged now, in their own wood, at the fletching table or the anvil (Fletching, not Smithing): a bow gains accuracy and strength, a quiver a tenth more room a level. Crafting lists say when a recipe makes more than one: \"Feather ×15\".",
+      "BOWS SOUND AND LOOK LIKE BOWS. A shot twangs, the arrow you loaded flies across (a diamond arrow looks like one), and it lands with a thud and a puff of splinters and feathers; a crit lands heavier and gold.",
+      "COMBAT IS NOW MELEE. The skill you train with a weapon is called Melee, and your combat level is Melee, Archery and Hitpoints together: your stronger style counts in full, the other adds on top. Nobody's combat level went down.",
+      "ARCHERY IS A COMBAT SKILL of its own. Hold a bow and every hit pays Archery instead of Combat, damage for damage, and every roll in the fight reads it. It is on the skills panel, the hiscores and profiles. Fletching makes the kit; Archery draws it, and the rough shortbow, the rough quiver and bone arrows are Archery 1 on Brutus's shelf.",
+      "A BOW SHOOTS FROM WHERE YOU STAND. Click something inside its reach and you never move; further away and you walk only to the edge of it. Big monsters take a fifth more from an arrow. With a loaded quiver you draw on the next one of the same kind when your target dies, and the idle timer runs eight minutes.",
+      "Three Thunder Geese sit over the tear in the Thunderhead's floor. Only an arrow reaches them.",
+      "Arrows stack to 1,000. Feathers are 1-3 a kill now, and the cauldron brews fifteen from a small vial, three feathers and a sulky sporecap at Alchemy 5.",
+      "A NEW SKILL. Cut logs into shafts and bows at the fletching table in the Yard, fletch arrows from a shaft, a smithed arrowhead and a feather, and go and shoot something. A bow in your hand sets how fast you draw and how far you reach; the arrow you load sets how hard it lands. Every wood makes a shortbow and a longbow, every metal makes an arrow, and the ladder runs 1 to 99.",
+      "QUIVERS wear the offhand and hold one kind of arrow in bulk \u2014 click arrows in your bag to load one. A shot draws from the quiver first.",
+      "GEMS come out of ore now: rubies, sapphires, topaz and opals, about one rock in seventy, and each tips the arrows of the metals it was mined with for extra damage.",
+      "FEATHERS are back on chickens. They are worth nothing at the counter now \u2014 they are a component, not loot \u2014 which is what let them back onto the bird without touching its wage.",
+      "Logs have a second use. Every tree in the game now makes bows and shafts as well as charcoal, and a better tree gives more shafts per log.",
+    ],
+  },
+  {
+    date: "2026-09-25", title: "Pick what you are making, and nothing is a sure thing",
+    items: [
+      "THE CAMPFIRE, THE RANGE, THE FURNACE AND THE CAULDRON NOW ASK WHAT YOU WANT TO MAKE, the way the anvil always has. They used to take the hardest thing they could, so a bag with sardines and one bowfin in it only ever cooked the bowfin, and sand at a cauldron was always the large flask. One click still starts straight away on your last choice there; the panel beside it is only there if you want to change your mind.",
+      "NOTHING YOU SMELT, HAMMER OR SMOKE IS A CERTAINTY ANY MORE — one attempt in ten fails, at every level, and it takes the materials with it. A scan found 114 recipes that could never fail at all: 95 pieces of gear, seven bars, nine smoked fish and the three anvil consumables. All of them now can.",
+      "The panel prints the chance on every row, so you always know what you are risking before you start.",
+      "NOVA AND SINGULARITY NEVER FAIL, deliberately. Their weapons already want a core that drops about one kill in two thousand, and gambling that as well would be cruel rather than tense.",
+      "COOKING IS UNCHANGED, and so is plainly cooking a fish you could have smoked. Each fish still has a level at which it never burns again.",
+      "COOKING IS UNCHANGED. Each fish still has a level at which it never burns again — that promise stays.",
+    ],
+  },
+  {
+    date: "2026-09-25", title: "A wiki pass: the tables now write themselves",
+    items: [
+      "THE MINING, WOODCUTTING, FISHING, COOKING, SMOKING, TOOLS, THIEVING AND “road out” TABLES ARE NOW BUILT FROM THE GAME'S OWN RULES. Between them they had thirty-odd wrong numbers: every sell price in three of them was double what Bom pays, six cooked fish healed a different amount on the page than in your hand, vaultwood was listed fifteen levels and a whole axe grade low, and grimstone was in the wrong zone with the wrong pickaxe.",
+      "AND A GREAT DEAL WAS SIMPLY MISSING: the Golden Sands and the Carnival were not on the map of the world, five waters were not in the fishing table, nine dishes were not in the cooking one, and four of the eight thieving marks had no entry at all. Sand, willow, palm, skyash, rustpine, bogwood and the carnival wreck now say where they come from on their own item pages, which none of them did.",
+      "THE TOWER AND THE CARNIVAL HAVE GUIDES, which they never have. The Tower's is written for the 99-floor climb: what a floor costs you, how much food to bring, and where the checkpoints are.",
+      "FIGHTING NOW EXPLAINS CLICKING AGAIN TO SWING FASTER, and the jackpot kill. Neither was written down anywhere.",
+      "Four guide links went nowhere when clicked, and one was labelled with the name of a different page. A checker now fails on all of that, so the next new fish cannot quietly leave the wiki behind.",
+    ],
+  },
   {
     date: "2026-09-23", title: "Rocks hold a lot more ore",
     items: [
@@ -1397,13 +1731,17 @@ export const UPDATES = [
    tables, and the hand-written guide linked beside them carries the explanation. */
 export const SKILL_GUIDE = {
   cooking: "Cook raw fish and meat at a range, hearth or campfire. Each food needs a level to cook and stops burning at a higher one. Cooked food heals when you eat it.",
-  melee: "Fight monsters with a weapon in hand. Every point of damage you deal gives Combat xp, and a little Hitpoints xp with it. One skill does all three jobs \u2014 you land more swings, you hit harder and you get hit less \u2014 and it is what better weapons and armour ask for.",
+  melee: "Fight monsters with a weapon in hand. Every point of damage you deal gives Melee xp, and a little Hitpoints xp with it. (With a bow in hand it is <b>Archery</b> xp instead.) Your combat level is Melee, Archery and Hitpoints together. One skill does all three jobs \u2014 you land more swings, you hit harder and you get hit less \u2014 and it is what better weapons and armour ask for.",
   hp: "Goes up alongside Combat as you deal damage. Your Hitpoints level is your maximum health.",
   fishing: "Hold a fishing rod and click the water. Every spot holds two fish: the second is better, needs a higher level, and turns up about a third of the time once you can catch it.",
-  farming: "Pick wheat, olives and vines out in the world \u2014 the only gathering skill that needs nothing in your hand \u2014 or grow your own on your island, where a plot keeps growing while you are logged off.",
+  farming: "Pick wild wheat in the Yard \u2014 the only gathering skill that needs nothing in your hand \u2014 or grow your own on your island, where a plot keeps growing while you are logged off: food crops, and from Harvesting 15 the four flowers Wizardry brews its inks from.",
   mining: "Hold a pickaxe and click a rock. Every rock holds two to twelve ore and you work it until it is empty; a vein is slower per ore but never runs dry, which makes it the one to stand at.",
   woodcutting: "Hold an axe and click a tree. A tree is good for about 25 logs before it falls and an oak for about 50; a felled one is back in fifteen seconds. Logs burn into the charcoal every smelt needs.",
   smithing: "Burn logs into charcoal at the furnace \u2014 the only thing you can do at level 1 \u2014 then smelt ore and charcoal into bars, and hammer bars into gear at the anvil. The anvil also reforges what you already own.",
   thieving: "Pick pockets in the Thieves' Guild, south of the Yard. Nobody there fights back. Each room further in holds better marks, and what they carry either sells or goes to the anvil.",
+  archery: "Fight with a bow. Every hit pays Archery the xp Combat would have had, a bow shoots from where you stand, and a loaded quiver keeps you shooting. Fletching makes the kit; Archery draws it.",
+  magic: "Fight with a wand. A wand casts from five tiles; the spell page you load sets the damage and the element, and monsters weak to that element take far more.",
+  wizardry: "Print spell pages and utility scrolls at the element altars around the world, from paper and ink. The Nexus, deep in the Wilderness, prints anything, twice.",
+  fletching: "Cut logs into shafts and bows, fletch arrows from a shaft, a smithed head and a feather, and load them into a quiver. A bow in your hand is speed and reach; the arrow in it is the damage.",
   agility: "Run the obstacle course north of the Yard. Each obstacle pays, a finished lap pays far more, and what it buys you is movement speed everywhere else."
 };

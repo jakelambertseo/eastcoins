@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 257;
+export const VERSION = 282;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -79,6 +79,13 @@ export const ITEMS = {
   bowfin: { name: "Raw bowfin", icon: "🐟", ex: "All teeth and bad temper. Older than the swamp it lives in." },
   cmudcat: { name: "Cooked mud cat", icon: "🐟", heal: 30, ex: "Better than it has any right to be." },
   cbowfin: { name: "Cooked bowfin", icon: "🐟", heal: 35, ex: "You have to work round the bones. Worth it." },
+  /* (2026-09-27, the owner: "fishing, cooking for example i know are topped out around 70-80") THE LAST TWO FISH. Both in the Deep
+     Wild's Black Pool, under the waterfall, which puts Fishing 92 and 97 behind the Liches and the wolves. Cooking reaches 90 on the
+     Grimscale, smoking 95. */
+  voidfin: { name: "Raw voidfin", icon: "🐟", ex: "Long, black, and it glows where the light should be. The Black Pool's own." },
+  cvoidfin: { name: "Cooked voidfin", icon: "🐟", heal: 40, ex: "Tastes of nothing, then of everything. Heals like it means it." },
+  grimscale: { name: "Raw grimscale", icon: "🐟", ex: "Armoured like the rock it hides under. The biggest thing in the Deep that isn't a Lich." },
+  cgrimscale: { name: "Cooked grimscale", icon: "🐟", heal: 46, ex: "Crack the plates, eat what is under them. The best meal in the game." },
   wrench: { name: "The King's wrench", short: "Wrench", icon: "🔧", slot: "weapon", acc: 34, str: 38, speed: 3000, req: { skill: "melee", lvl: 80 }, ex: "Four feet of rusted pipe wrench. It has loosened exactly one nut in its life and settled a great many arguments." },
   kingcap: { name: "The King's cap", short: "Cap", icon: "🧢", slot: "helm", def: 14, acc: 4, ex: "Sweat-stained, sun-bleached, and it still smells of him. Nobody will say a word about you wearing it." },
   /* (2026-09-22) The Run's pickup. `pickXp` is read by the ground handler, so anything droppable can pay a skill
@@ -145,6 +152,14 @@ export const ITEMS = {
   /* (2026-09-24, the owner: "the other mobs in the area need a chance too drop a carnival ticket") THE KEY TO
      THE CAGE. Not currency and not a prize: one ticket turns the turnstile once and is gone, which is what
      makes the Grinning Man something you work up to rather than something you walk past. */
+  /* THE 2X POTION (2026-09-25, the owner: "a very rare drop from all mobs in the game ... when someone drinks
+     it, it gives 2X tickets and crafting experience for 30 minutes to ALL users on the server").
+     IT IS THE ONLY THING IN THE GAME ONE PLAYER USES ON EVERYBODY. That is the whole appeal and also the whole
+     risk: the value of drinking it goes up with how many people are online, so it wants to be popped when the
+     room is busy, and the chat line exists to make that a moment rather than a private buff nobody sees.
+     `use: "double"` rather than `drink`, because a drink is a personal ten-minute buff held on the character
+     and this is a SERVER clock held on the world. */
+  pot_double: { name: "2X Potion", icon: "✨", use: "double", ex: "Something the house did not mean to bottle. Drink it and, for thirty minutes, EVERY player on the server earns double tickets and double crafting xp. One at a time." },
   carnivalticket: { name: "Carnival ticket", icon: "🎟️", ex: "ADMIT ONE. Torn off a roll a long time ago. The turnstile in the north-west still takes them." },
   clover: { name: "Lucky clover", icon: "🍀", luck: 15, ex: "Turns up while you fish. Click it: your next 15 kills or catches are LUCKY (a real ZCoin is 25% more likely to drop)." },
   horseshoe: { name: "Lucky horseshoe", icon: "🧲", luck: 25, ex: "Rare, and only found while fishing. Click it: your next 25 kills or catches are LUCKY." },
@@ -670,7 +685,7 @@ export function compareOf(c, k) {
   if (!it?.slot) return null;
   const now = { ...c, eq: { ...c.eq } };
   const then = { ...c, eq: { ...c.eq, [it.slot]: k } };
-  const a = bonusOf(now), b = bonusOf(then);
+  const a = styleBonusOf(now), b = styleBonusOf(then);   /* (2026-09-25) what the piece does for the style you would be fighting in */
   return {
     slot: it.slot, replacing: c.eq?.[it.slot] || null,
     acc: b.acc - a.acc, str: b.str - a.str, def: b.def - a.def,
@@ -687,7 +702,7 @@ export function compareText(c, k) {
   const bits = [];
   for (const [q, label] of [["acc", "acc"], ["str", "str"], ["def", "def"]]) if (d[q]) bits.push(`${sign(d[q])} ${label}`);
   if (d.maxHit[0] !== d.maxHit[1]) bits.push(`max hit ${d.maxHit[0]}\u2192${d.maxHit[1]}`);
-  if (d.swingMs && d.swingMs[0] !== d.swingMs[1]) bits.push(`swing ${(d.swingMs[0] / 1000).toFixed(1)}s\u2192${(d.swingMs[1] / 1000).toFixed(1)}s`);
+  if (d.swingMs && d.swingMs[0] !== d.swingMs[1]) bits.push(`${ITEMS[k]?.launcher ? "attack speed" : "swing"} ${(d.swingMs[0] / 1000).toFixed(1)}s\u2192${(d.swingMs[1] / 1000).toFixed(1)}s`);
   if (d.missing) return `Needs ${SKILLS[d.missing.skill].name} ${d.missing.lvl}`;
   if (!bits.length) return d.replacing === k ? "Already worn" : "No change";
   return bits.join(", ");
@@ -695,7 +710,7 @@ export function compareText(c, k) {
 export const SKILLS = {
   // ONE combat skill (2026-09-19): it is your accuracy, your max hit and your defence. The key stays "melee" (what it
   // was before the three-way split) so the hiscores' separate "combat level" board keeps its own name.
-  melee: { name: "Combat", icon: "⚔️" },
+  melee: { name: "Melee", icon: "⚔️" },   /* (2026-09-25) was "Combat": Archery arrived and "Combat" became the level all three make together */
   hp: { name: "Hitpoints", icon: "❤️" }, fishing: { name: "Fishing", icon: "🎣" }, cooking: { name: "Cooking", icon: "🍳" },
   farming: { name: "Harvesting", icon: "🌾" }, mining: { name: "Mining", icon: "⛏️" }, woodcutting: { name: "Woodcutting", icon: "🪓" },
   smithing: { name: "Smithing", icon: "🔨" },
@@ -746,7 +761,7 @@ export const stanceOf = () => DEFAULT_STANCE;   // stances were removed (2026-09
 /** What one hit is worth, as [skill, xp] pairs. Always totals COMBAT_XP + HP_XP per damage. */
 export function xpForDamage(c, dmg) {
   const out = [];
-  for (const [skill, share] of Object.entries(STANCES[stanceOf(c)].share)) out.push([skill, COMBAT_XP * share * dmg]);
+  for (const [skill, share] of Object.entries(STANCES[stanceOf(c)].share)) out.push([skill === "melee" ? styleOf(c) : skill, COMBAT_XP * share * dmg]);   /* (2026-09-25) a bow pays Archery */
   out.push(["hp", HP_XP * dmg]);
   return out;
 }
@@ -801,12 +816,12 @@ export const swingShave = (step) => SWING_STACK[Math.min(step | 0, SWING_STACK.l
 export const swingFx = (c) => Math.min(OUT_CAP.speed, fxOf(c).speed + petFx(c).swing / 100);
 export const swingMsOf = (c) => Math.round((ITEMS[c?.eq?.weapon]?.speed || SWING_MS) / (1 + swingFx(c)));   /* (fxOf and OUT_CAP are further down; these are functions, so the order in this file does not matter) */
 export const TOOL_OF = { mining: "pickaxe", woodcutting: "axe", fishing: "rod" };
-export const INV_MAX = 20;   // (was 30 until 2026-09-20: a casino game wants a small bag that fills, so you walk back past the tables to the Cashier.
+export const INV_MAX = 25;   // (2026-09-27, the owner: "with all the new items, lets give all users default of 25 inventory slots") 20 from 2026-09-20 to 2026-09-27; (was 30 until 2026-09-20: a casino game wants a small bag that fills, so you walk back past the tables to the Cashier.
                              //  normChar re-packs an old 30-slot bag on load and sends what no longer fits to the bank, so nothing is lost.)
 export const BANK_MAX = 200;
 // a bag slot holds up to 99 of a thing; tickets (and anything marked nocap) piles up without limit. The bank has no cap.
 export const STACK_MAX = 99;
-export const capOf = (k) => (ITEMS[k]?.nocap ? Infinity : STACK_MAX);
+export const capOf = (k) => (ITEMS[k]?.nocap ? Infinity : ITEMS[k]?.cap || STACK_MAX);   /* (2026-09-25) `cap`: arrows stack to 1,000 (the owner) */
 // how many more of k the bag can take
 /* (2026-09-22) `c` is the OWNER, and it is optional on purpose: a pet can give bag room, and the only way to know
    about it from an inv array is to be handed the character too. Left out, you get the plain INV_MAX — which can
@@ -1061,7 +1076,7 @@ export const STEP_MS = 200 /* (v95, the owner: "make users default walk speed ab
    anywhere, so every level of it did precisely nothing — which is most of why The Run felt like a treadmill. It
    goes in with the meals and the boots rather than beside them, so it lands inside SPEED_FULL/SPEED_CAP's
    diminishing returns and cannot stack past a ceiling that was designed before the skill existed. */
-export function speedRaw(c, extra = 0) { let raw = extra + petFx(c).speed + agilBonus(c); for (const k of Object.values(c.eq || {})) if (k && ITEMS[k]?.spd) raw += ITEMS[k].spd; return raw; }   /* eq.pet is an id, not an item key, so the loop below skips it and petFx adds it instead */
+export function speedRaw(c, extra = 0) { let raw = extra + petFx(c).speed + agilBonus(c) + charmOf(c, "haste"); for (const k of Object.values(c.eq || {})) if (k && ITEMS[k]?.spd) raw += ITEMS[k].spd; return raw; }   /* eq.pet is an id, not an item key, so the loop below skips it and petFx adds it instead */
 export function speedBonus(c, extra = 0) { const raw = speedRaw(c, extra); return Math.max(0, Math.min(SPEED_CAP, Math.min(SPEED_FULL, raw) + Math.max(0, raw - SPEED_FULL) * 0.5)); }
 export const stepMsOf = (c, extra = 0) => Math.round(STEP_MS / (1 + speedBonus(c, extra) / 100));
 /* (2026-09-22) THE NUMBER, FOR READING. Every speed source used to be a whole number, so the stat panel could print
@@ -1369,10 +1384,11 @@ Object.assign(SCENES, {
       ["goat", 18, 6], ["goat", 29, 4], ["goat", 32, 10], ["goat", 16, 15],
       ["boneidle", 2, 21], ["boneidle", 6, 21], ["boneidle", 2, 6], ["boneidle", 10, 22],
       ["gnasher", 21, 4, { aggro: 3 }], ["gnasher", 25, 6], ["gnasher", 19, 2], ["gnasher", 27, 2]],
-    npcs: [
+    npcs: [{ name: "Grimm the Hermit", art: "grimm", x: 14, y: 20, still: true, quests: ["firstbow", "firstpage", "weaver", "marrow", "nexus"], hair: "#c8c8c0", shirt: "#6a4a2a", pants: "#4a3a2a", lines: ["Down that rope is the Wilderness. Anybody down there can hit you. Some of them will.", "Bow, or wand. Either way you're not standing next to it when it dies.", "I came up for salt in '09 and never went back down. Ask me why and I'll say salt."] },
+      
       /* Vance came with the door. He is `still`, and his lines are unchanged: the price, the Crypt drop, and that
          a permit can be bought off another thief for less. */
-      { name: "Vance the Fence", art: "vance", x: 38, y: 5, still: true, opens: "permit", reach: 3,
+      { name: "Vance the Fence", art: "vance", x: 38, y: 5, still: true, quests: ["boneidle"], opens: "permit", reach: 3,
         hair: "#3a2e1a", shirt: "#8a6a2a", pants: "#2e2a22",
         lines: ["Guild's through there. You'll not get past the door without a permit.",
           "Fifty thousand tickets and it's yours. I don't haggle and I don't do credit.",
@@ -1503,7 +1519,7 @@ Object.assign(SCENES, {
       ["counter", 8, 5], ["counter", 11, 8], ["counter", 6, 9], ["counter", 13, 4], ["counter", 9, 10],
       ["taxwraith", 29, 2], ["taxwraith", 30, 3], ["taxwraith", 28, 3], ["taxwraith", 29, 4],
       ["shark", 7, 20, { aggro: 3 }], ["shark", 3, 21], ["shark", 4, 23]],
-    npcs: [], bots: []
+    npcs: [{ name: "Mudge the Lamplighter", art: "mudge", x: 38, y: 12, still: true, quests: ["lamps", "vials", "lanterns"], hair: "#8a8a8a", shirt: "#c8a020", pants: "#3a3a3a", lines: ["Eleven lamps. I light them, the twisters knock them down, I light them. It's a living.", "The water's deeper than it looks and the fish are shallower than they look.", "Vance says he owes me. Vance owes everybody. That's how he keeps friends."] }], bots: []
   },
   /* THE GOLDEN SANDS, 40-49 (2026-09-24). West out of the Boneyard, and a SECOND ROUTE rather than a rung: at
      Combat 40 you may go north to Cloudreach or west to here, and each has its own ore, tree and fish.
@@ -1641,7 +1657,7 @@ Object.assign(SCENES, {
          Bandaged Debtors were standing on it. */
       ["mummy", 16, 3], ["mummy", 35, 3], ["mummy", 15, 13], ["mummy", 36, 13], ["mummy", 17, 22], ["mummy", 35, 23],
       ["jackal", 39, 15, { aggro: 3 }], ["jackal", 41, 5], ["jackal", 37, 18], ["jackal", 43, 8], ["jackal", 36, 22]],
-    npcs: [], bots: []
+    npcs: [{ name: "Rashid the Caravaneer", art: "rashid", x: 21, y: 14, still: true, quests: ["stardust", "caravan", "cobra", "perchdinner"], hair: "#1a1a1a", shirt: "#c8a870", pants: "#8a6a3a", lines: ["Twelve camels, eleven drivers, one road, and the road has cobras. Business is good.", "Stardust sells in the east for its weight in tickets. I've never been east. The camels have.", "Sit in the shade. No, that's a scarab. The other shade."] }], bots: []
   },
   cloud: {
     name: "Cloudreach", ground: "cloud", exits: { e: "boneyard", w: "thunderhead" },
@@ -1670,7 +1686,7 @@ Object.assign(SCENES, {
       ["seagoat", 15, 17], ["seagoat", 18, 20], ["seagoat", 16, 9],
       ["revenant", 8, 2], ["revenant", 10, 3], ["revenant", 7, 4], ["revenant", 11, 2],
       ["angel", 8, 22], ["angel", 11, 22], ["angel", 6, 21], ["angel", 9, 23]],
-    npcs: [], bots: []
+    npcs: [{ name: "Zephyr", art: "zephyr", x: 24, y: 14, still: true, quests: ["skyeel", "frostink", "ramhorns", "homeward"], hair: "#e8e8f0", shirt: "#5aa0e0", pants: "#f0f0f8", lines: ["Wind's from the west. It's always from the west. I write it down anyway.", "Don't stand near the edge. Don't stand near the rams. Don't stand near me when I'm eating.", "The altar prints Frost. Nobody's used it. I check every morning."] }], bots: []
   },
   /* THE THUNDERHEAD, 50 and up (v68). The end of the road: Cloudreach's ground under a storm, and open SEA to the south-west. */
   /* (v121) THE VAULT. The last map, west out of the Thunderhead: the casino's own vault, or what is left of it. Combat 70
@@ -1795,7 +1811,7 @@ Object.assign(SCENES, {
       ["hoard", 36, 20, { aggro: 3, respawn: [120000, 180000] }],
       ["pitboss", 27, 6, { aggro: 3, respawn: [120000, 180000] }],
       ["dealer", 15, 17, { aggro: 3, respawn: [120000, 180000] }]],
-    npcs: [], bots: []
+    npcs: [{ name: "The Auditor", art: "auditor", x: 6, y: 8, still: true, quests: ["audit", "voidwood", "hoard"], hair: "#6a6a6a", shirt: "#3a3a44", pants: "#2a2a34", lines: ["Every ticket that comes down here is written down. Every one that leaves is not. That's my job, in one sentence.", "There are trees growing through the floor. I have written that down too. Nobody has replied.", "The Dealer has never answered a letter. I have sent nine."] }], bots: []
   },
   /* ============================================================ THE CARNIVAL (2026-09-24)
      (the owner: "i want to build a map for level 60s since i realized theres a lull in going from thunderhead
@@ -2046,7 +2062,7 @@ Object.assign(SCENES, {
        everybody walks past twice. He gives no quest, which is deliberate: an NPC must LIST what it gives and a
        quest nobody offers is an error the content check catches, so an NPC with nothing to give is the honest
        way to put a voice on a map. He is what tells you the rules of the place out loud. */
-    npcs: [{ name: "The Barker", art: "barker", x: 31, y: 15, still: true,
+    npcs: [{ name: "The Barker", art: "barker", x: 31, y: 15, still: true, quests: ["kingslayer"],
       hair: "#1a1420", shirt: "#8a2426", pants: "#2a2230",
       lines: ["Step up. Tickets in, tickets out, and nothing on this side of the rope takes a ZCoin.",
         "Everything on the midway is honest. That is the only thing on the midway that is.",
@@ -2157,12 +2173,13 @@ Object.assign(SCENES, {
     },
     /* TWO AGGRO PLACEMENTS, one standing over each ore, as the owner asked. Reach 3: walking the way in costs
        nothing, swinging a pickaxe in the wrong corner does. */
-    mobs: [["goose", 38, 5], ["goose", 40, 8], ["goose", 36, 9], ["goose", 39, 17], ["goose", 41, 19], ["goose", 35, 17],
+    mobs: [["goose", 12, 20, { perch: true }], ["goose", 16, 21, { perch: true }], ["goose", 8, 22, { perch: true }],   /* (2026-09-25) OVER THE TEAR. `perch`: it never wanders, it sits on water nobody can walk to, and so ONLY AN ARROW REACHES IT. The first of the "some things only a bow can fight" spots; more once archery has been played. */
+      ["goose", 38, 5], ["goose", 40, 8], ["goose", 36, 9], ["goose", 39, 17], ["goose", 41, 19], ["goose", 35, 17],
       ["golem", 30, 5], ["golem", 33, 8], ["golem", 28, 3], ["golem", 31, 17], ["golem", 27, 18], ["golem", 30, 19],
       ["wolf", 18, 2], ["wolf", 21, 3], ["wolf", 24, 2], ["wolf", 26, 4], ["wolf", 9, 6, { aggro: 3 }],
       ["drake", 33, 22], ["drake", 38, 21, { aggro: 3 }], ["drake", 41, 23], ["drake", 35, 19],
       ["house", 5, 4]],
-    npcs: [], bots: []
+    npcs: [{ name: "Volta", art: "volta", x: 25, y: 9, still: true, quests: ["stormrod", "goosechase", "stormink", "drakehunt"], hair: "#3a3a3a", shirt: "#6a6a72", pants: "#4a4a52", lines: ["Struck four times. The first three were accidents.", "The geese sit on the rod. THE ROD. I built it for lightning and it gets geese.", "If your hair stands up, walk away from me. Slowly."] }], bots: []
   },
   /* THE THIRD FIGHT MAP, past the Rough. It wears the Wilderness's clothes (dark: true) but nobody can attack you here
      but the residents. Gnashers and moths by the gate, ghouls and Tax Wraiths in the middle, a Chandelier Spider and
@@ -2307,7 +2324,7 @@ Object.assign(SCENES, {
       ["ghoul", 28, 9], ["ghoul", 32, 8], ["ghoul", 36, 10], ["ghoul", 40, 9], ["ghoul", 30, 10], ["ghoul", 38, 8],
       ["usher", 4, 19], ["usher", 8, 21], ["usher", 5, 22], ["usher", 9, 19], ["usher", 3, 23], ["usher", 10, 23],
       ["critic", 22, 21]],
-    npcs: [], bots: []
+    npcs: [{ name: "Sister Morrow", art: "morrow", x: 25, y: 15, still: true, quests: ["morrowbones", "yewbow", "spidersilk", "dragonstone"], hair: "#1a1a1a", shirt: "#1a1a1a", pants: "#1a1a1a", lines: ["They get up. I put them down. Most days that's the whole sermon.", "The Critic in the Royal Box has never once been dead. I've checked.", "Mind the rails. They're not to keep you out."] }], bots: []
   },
   // east of the Forum: the great road, a toll post, highwaymen, and a barricade where the road washed out
 });
@@ -2415,12 +2432,24 @@ Object.assign(SCENES, {
          and both cooking's range bonus were unreachable for want of these two lines, which is why smithing read as
          unbuilt when the data said otherwise. They go at the WEST end: the Tower's sprite covers the east side of
          this court from y5 down to y9, and anything put over there is drawn behind a building. */
+      /* (2026-09-25) THE FLETCHING TABLE, beside the furnace and the anvil so the three crafts share a court:
+         a bar hammered into heads at the anvil is fletched onto shafts two tiles away. */
+      /* (2026-09-25, later) MOVED to where the Tower's door was, 40,9, when the Tower went up behind the railing (below). */
+      objs.push({ t: "fletcher", x: 40, y: 9, name: "Fletching table: shafts, bows, quivers and arrows" });
+      block(g, 40, 9, 1, 1); keep.push([40, 9]);
       objs.push({ t: "furnace", x: 35, y: 6, name: "Furnace: smelt ore into bars, and burn logs to charcoal" });
       block(g, 35, 6, 1, 1); keep.push([35, 6]);
       objs.push({ t: "anvil", x: 37, y: 6, name: "Anvil: hammer bars into gear, and reforge what you have" });
       block(g, 37, 6, 1, 1); keep.push([37, 6]);
-      objs.push({ t: "towerdoor", art: "o_tower", x: 40, y: 9, w: 2, h: 1, name: "The Tower: thirty floors, one room at a time" });   /* `art` because the picture is o_tower and the type is towerdoor: without it the page looks for "o_towerdoor", finds nothing and draws NO TOWER */
-      block(g, 40, 9, 2, 1);
+      /* (2026-09-25, the owner: "lets move the tower up behind the fences in the court, as if its nestled in the woods. that
+         will give us more space in the court"). Its door sits on row 4, just north of the court's top railing, and the
+         sprite rises into the treeline behind it; the railing crosses in FRONT of its foot, which is what puts it
+         behind the fence. The two rail tiles in front of the door are left out (see railing below) so you still walk
+         in from the court. The trees behind are left where wild() puts them: anything north of row 4 is drawn behind
+         the building, so they frame it rather than poke through it. Only the door row and the gap are kept clear. */
+      objs.push({ t: "towerdoor", art: "o_tower", x: 40, y: 4, w: 2, h: 1, name: "The Tower: thirty floors, one room at a time" });   /* `art` because the picture is o_tower and the type is towerdoor: without it the page looks for "o_towerdoor", finds nothing and draws NO TOWER */
+      block(g, 40, 4, 2, 1);
+      for (let y = 4; y <= 5; y++) for (let x = 39; x <= 42; x++) keep.push([x, y]);   /* only the door row and the gap in front of it: the trees behind stay, and draw BEHIND the building, which is the "nestled in the woods" look */
       for (let y = 8; y <= 12; y++) for (let x = 36; x <= 41; x++) keep.push([x, y]);
       /* ------------------------------------------------ THE MARKET (2026-09-22)
 
@@ -2510,7 +2539,7 @@ Object.assign(SCENES, {
       dress("handcart", 34, 8, "A handcart, parked."); dress("crate", 41, 8, "A crate. Somebody sat on it.");
       dress("barrel", 33, 12, "A barrel by the stairs."); dress("sacks", 40, 12, "Sacks, dumped and forgotten.");
       railing(upTo(27, 42).map((x) => [x, 19]), "h");
-      railing(upTo(34, 42).map((x) => [x, 5]), "h");        // the north court's top rail, moved up from y7 with the court
+      railing(upTo(34, 42).filter((x) => x !== 40 && x !== 41).map((x) => [x, 5]), "h");        // the north court's top rail, moved up from y7 with the court; (2026-09-25) open at 40-41, the Tower's gate
       railing(upTo(14, 18).map((y) => [27, y]), "v");
       railing(upTo(6, 12).map((y) => [32, y]), "v");        // and its west rail runs the full new height
       NORTH_ROAD(g, keep); objs.push({ t: "sign", x: 20, y: 11, name: "North: the Gloam. It opens at Combat 10 for its monsters, and Fishing 10 for its pond. Bigger tickets, better fish." }); g[11][20] = "#";
@@ -2549,8 +2578,8 @@ Object.assign(SCENES, {
       ["hornworm", 12, 5], ["hornworm", 15, 8], ["hornworm", 10, 9], ["hornworm", 11, 17],
       ["boar", 5, 5], ["boar", 8, 17], ["boar", 4, 19], ["boar", 11, 21], ["boar", 6, 22]],
     npcs: [   // (v108: Livia and Charon came over from the Forum, which is closed. Brutus sold gear here for a few hours on 2026-09-20; it is behind the Prize Counter now)
-      { name: "Livia the Broker", art: "livia", x: 31, y: 16, still: true, opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Buying? Selling? Use the stall. I take 1%.", "It keeps selling while you sleep."] },
-      { name: "Charon the Ferryman", art: "charon", x: 39, y: 16, still: true, opens: "ferry", hair: "#e8e8e8", shirt: "#3a3a5a", pants: "#2a2a3a", lines: ["Islands. Everyone gets one. Nobody knows who's paying for them.", "The river's closed, so now it's a cart. Don't ask how a cart gets to an island. I don't.", "Plant something before you go back in there and lose your shirt. It grows while you're away.", "Wheat, ten minutes. Tomatoes, twenty. Both sell. Both cook."] }],
+      { name: "Livia the Broker", art: "livia", x: 31, y: 16, still: true, quests: ["copperbell", "wheatrun", "emeraldedge"], opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Buying? Selling? Use the stall. I take 1%.", "It keeps selling while you sleep."] },
+      { name: "Charon the Ferryman", art: "charon", x: 39, y: 16, still: true, quests: ["sardines", "ferry"], opens: "ferry", hair: "#e8e8e8", shirt: "#3a3a5a", pants: "#2a2a3a", lines: ["Islands. Everyone gets one. Nobody knows who's paying for them.", "The river's closed, so now it's a cart. Don't ask how a cart gets to an island. I don't.", "Plant something before you go back in there and lose your shirt. It grows while you're away.", "Wheat, ten minutes. Tomatoes, twenty. Both sell. Both cook."] }],
     bots: []
   },
   // EAST of the casino, the first stop on the combat line: things a beginner can win a fight with
@@ -2731,6 +2760,13 @@ Object.assign(SCENES, {
       litter("l_slips", 16, 20, "Losing slips");
       litter("l_shoe", 13, 14, "One shoe. Just the one.");
       for (const o of objs) if (REAL_TABLES[o.t]) o.name = `${REAL_TABLES[o.t].name}: ZCoins or tickets`;
+
+      /* (2026-09-25) THE WAY INTO THE COUNT ROOM. The service door the house's money goes through, on the west
+         wall of the floor. It wears o_walldoor, which this room ALREADY draws: an `art` name in a scene's own list is
+         what defers that picture out of core.png for the whole game, and this door is not worth doing that for.
+         It is a party dungeon like the Crypt and the label says so, because somebody clicking it alone should
+         learn that from the door rather than from a refusal. */
+      objs.push({ t: "countdoor", art: "o_walldoor", x: 12, y: 18, name: "The count room door: bring a party" }); g[18][12] = "#";
       return { g, objs, blobs: [] };
     },
     // the regulars at the machines are simulated players: they walk up to a game, play a while, and move on
@@ -2739,15 +2775,15 @@ Object.assign(SCENES, {
       { name: "DookieBetts", art: "dookie", x: 28, y: 18, still: true, reach: 2, hair: "#1a1a1a", shirt: "#c8102e", pants: "#1a1a1a", lines: ["One more. Then one more after that.", "Scared money don't make money.", "You walking away? On THIS streak? Nah."] },
       // the regulars (2026-09-19): nobody here is a good influence
       /* Kellz (the owner, 2026-09-20, in Kellz's own words: a flight suit with a leather flight jacket, light-skinned, long hair "like Jesus"). He wandered the main aisle until v91, when the owner moved him "over to the smoking area": he hangs about between the club chairs now. */
-      { name: "Kellz", art: "kellz", x: 36, y: 7,   /* (v94: the owner put him on this tile, at the edge of the smoking section by the sign) */ hair: "#3a2416", shirt: "#6a4a2a", pants: "#5a6a3a", /* (the owner, 2026-09-20: an ULTRA Bills superfan. Loves Josh Allen, and Buffalo's wings are the best there are.) */
+      { name: "Kellz", art: "kellz", x: 36, y: 7, quests: ["hidesale"],   /* (v94: the owner put him on this tile, at the edge of the smoking section by the sign) */ hair: "#3a2416", shirt: "#6a4a2a", pants: "#5a6a3a", /* (the owner, 2026-09-20: an ULTRA Bills superfan. Loves Josh Allen, and Buffalo's wings are the best there are.) */
         lines: ["GO BILLS. That's it. That's the whole conversation.", "Josh Allen could hurdle this entire casino.", "Seventeen's my lucky number. It should be yours.", "Best wings on earth are in Buffalo. It's not close. Don't start.", "Blue cheese. Never ranch. I will fight you.", "I've gone through a folding table for this team. Twice.", "I'd fly Josh to the Super Bowl myself. Free.", "I only smoke when the Bills are playing. Or not playing."] },
       /* Rony Tomo (the owner, 2026-09-20: "an npc that hangs out by the wheel that looks like tony romo getting drunk... always talking about how
          its the cowboys year", with "WE DEM BOYZ" and "Dez caught it"). A parody like Bom Trady: navy 9, colours and a number, no logo or star. */
-      { name: "Rony Tomo", art: "rony", x: 7, y: 17, hair: "#4a3020", shirt: "#1a2a5a", pants: "#c8c8d0", lines: ["THIS is the Cowboys' year. I can feel it.", "WE DEM BOYZ!", "Dez caught it.", "It's our year. *hic* It's been our year since '96.", "How 'bout them Cowboys? ...No, really, how about them?", "One more beer, then a Super Bowl."] },
-      { name: "Parlay Pete", art: "pete", x: 40, y: 8, hair: "#3a2a1a", shirt: "#6a6a72", pants: "#3a3a44", lines: ["Five-leg parlay. Can't lose.", "It lost."] },
+      { name: "Rony Tomo", art: "rony", x: 7, y: 17, quests: ["tomatoes"], hair: "#4a3020", shirt: "#1a2a5a", pants: "#c8c8d0", lines: ["THIS is the Cowboys' year. I can feel it.", "WE DEM BOYZ!", "Dez caught it.", "It's our year. *hic* It's been our year since '96.", "How 'bout them Cowboys? ...No, really, how about them?", "One more beer, then a Super Bowl."] },
+      { name: "Parlay Pete", art: "pete", x: 40, y: 8, quests: ["houseodds"], hair: "#3a2a1a", shirt: "#6a6a72", pants: "#3a3a44", lines: ["Five-leg parlay. Can't lose.", "It lost."] },
       { name: "Nana Jackpot", art: "nana", x: 2, y: 8, still: true, hair: "#e8e8e8", shirt: "#e8a0b8", pants: "#8a6a8a", lines: ["Three sevens, dear. That's the dream.", "I've had this machine since Tuesday."] },
       { name: "Rent Money Randy", art: "randy", x: 18, y: 21, hair: "#5a4a3a", shirt: "#8a5a32", pants: "#8a5a32", lines: ["It's fine. Rent's not due till the first.", "Double or nothing fixes everything."] },
-      { name: "Vince the Bouncer", art: "vince", x: 21, y: 21, still: true, reach: 2, hair: "#1a1a1a", shirt: "#141418", pants: "#141418", lines: ["Can't go out this door yet. Coming soon.", "Use the arch, west side. That's where everything is.", "Shoes. I always look at the shoes."] },
+      { name: "Vince the Bouncer", art: "vince", x: 21, y: 21, still: true, quests: ["runclock"], reach: 2, hair: "#1a1a1a", shirt: "#141418", pants: "#141418", lines: ["Can't go out this door yet. Coming soon.", "Use the arch, west side. That's where everything is.", "Shoes. I always look at the shoes."] },
       { name: "Whale Wendell", art: "wendell", x: 28, y: 8, hair: "#1a1a1a", shirt: "#f4f4f4", pants: "#f4f4f4", lines: ["Twenty a bet. It's the principle.", "Tickets, ZCoins. I've got both. Mostly neither."] },
       /* (2026-09-21) Ronde Barber: hair, face and the vanity rail, all for tickets. `shop: "vanity"` is what the page
          opens his window on — he is the only NPC with it, and the mirror by the front door still does looks too. */
@@ -2945,7 +2981,7 @@ Object.assign(SCENES, {
       ["scrapper", 25, 16], ["scrapper", 16, 22], ["scrapper", 29, 8],
       ["gator", 5, 10], ["gator", 11, 10], ["gator", 8, 16],   /* on the shore, not in the water: a mob on a "~" tile cannot move or be reached */
       ["junkking", 38, 19]],
-    npcs: [{ name: "Darla", art: "darla", x: 19, y: 11, still: true, quests: ["scrapline", "theking"],   /* an NPC must LIST what it gives: a quest nobody offers is an error the content check catches, not a quest you find by walking about */ hair: "#8a5a2a", shirt: "#b04a3a", pants: "#3a3a48",
+    npcs: [{ name: "Darla", art: "darla", x: 19, y: 11, still: true, quests: ["scrapline", "theking", "darlaeel"],   /* an NPC must LIST what it gives: a quest nobody offers is an error the content check catches, not a quest you find by walking about */ hair: "#8a5a2a", shirt: "#b04a3a", pants: "#3a3a48",
       lines: ["Forty years I've lived here. It was worse.", "Don't look at the King. Don't talk to the King. Take his converters and go.",
         "That dog is not mine. That dog is nobody's.", "There's good money in what people leave behind. There's better money in what they bolt on."] }],
     bots: []
@@ -3065,7 +3101,7 @@ Object.assign(SCENES, {
           "The Quartermaster's room has ore you'd otherwise have to go down the Vault for. That's why everyone wants in."] },
       { name: "The Quiet Man", art: "quietman", level: 44, x: 27, y: 13, hair: "#6a6a72", shirt: "#2a4a52", pants: "#1e2e34",
         lines: ["...", "Mm.", "Don't touch the chests."] },
-      { name: "Odile the Clerk", art: "odile", level: 70, x: 38, y: 14, hair: "#d8c8a0", shirt: "#6a2a2a", pants: "#3a1e1e",
+      { name: "Odile the Clerk", art: "odile", level: 70, x: 38, y: 14, quests: ["stickyfingers"], hair: "#d8c8a0", shirt: "#6a2a2a", pants: "#3a1e1e",
         lines: ["Everything in this room is written down somewhere.", "The Quartermaster counts twice.", "You got in? Hm."] },
     ],
     bots: []
@@ -3176,7 +3212,7 @@ export function nearestCell(ob, from) {
 export const MOB_SIZES = { s: "Small", m: "Medium", l: "Large", xl: "Boss" };
 export const MOBS = {
   cow: { name: "Cow", size: "m", lvl: 2, hp: 8, att: 1, def: 1, max: 1, speed: 3000, oy: 11, box: [14, 21], drops: [["beef", 1], ["hide", 1], ["bones", 1]] },
-  chicken: { name: "Chicken", size: "s", lvl: 1, hp: 3, att: 1, def: 1, max: 1, speed: 2400, oy: 11, box: [6, 16], drops: [["chicken", 1], ["feather", [5, 15]], ["bones", 1]] },
+  chicken: { name: "Chicken", size: "s", lvl: 1, hp: 3, att: 1, def: 1, max: 1, speed: 2400, oy: 11, box: [6, 16], drops: [["chicken", 1], ["feather", [5, 15]], ["bones", 1]] },   /* this drops line is DEAD: LOOT.chicken replaces it (3-6 feathers) */
   olive: { name: "Angry Olive", size: "s", lvl: 6, hp: 12, att: 5, def: 4, max: 2, speed: 2600, box: [6, 16], drops: [["olives", [2, 5]], ["pit", 1], ["monocle", 1, 0.1]] },
   boar: { name: "Wild boar", size: "m", lvl: 8, hp: 16, att: 6, def: 6, max: 2, speed: 2800, box: [15, 23], drops: [["pork", 1], ["tusk", 1], ["bones", 1]] },
   rotten: { name: "Rotten Tomatoe", size: "s", lvl: 4, hp: 10, att: 3, def: 2, max: 1, speed: 2600, box: [6, 15], drops: [["tomatoe", [1, 3]], ["husk", 1, 0.05]] },
@@ -3193,7 +3229,7 @@ export const MOBS = {
   // Cloudreach
   ram: { name: "Cumulus Ram", size: "m", lvl: 42, hp: 66, att: 29, def: 26, max: 7, speed: 2600, box: [14, 25], drops: [["bones", 1], ["tickets", [30, 90]], ["dragonstone_ore", 1, 0.15]] },
   angel: { name: "Angel of Minor Inconvenience", size: "m", lvl: 48, hp: 84, att: 34, def: 30, max: 8, speed: 2400, aggro: 4, box: [8, 25], drops: [["tickets", [60, 160]], ["dragonstone_ore", 1, 0.25]] },
-  goose: { name: "Thunder Goose", size: "l", lvl: 55, hp: 110, att: 40, def: 36, max: 10, speed: 2800, box: [21, 35], drops: [["bones", 2], ["feather", [10, 30]], ["tickets", [100, 250]], ["onyx_ore", 1, 0.3]] },
+  goose: { name: "Thunder Goose", size: "l", lvl: 55, hp: 110, att: 40, def: 36, max: 10, speed: 2800, box: [21, 35], drops: [["bones", 2], ["feather", [10, 30]], ["tickets", [100, 250]], ["onyx_ore", 1, 0.3]] },   /* DEAD: LOOT.goose replaces it (3-6 feathers) */
   /* v68 (2026-09-19): THE BANDS' NEW RESIDENTS. Stats follow the old curve by level (hp about 1.6 x level before the
      halving below, att .73, def .63, max level/6); what a kill PAYS is measured, not guessed (BOUNTY, tools/eastscape-balance.mjs). */
   toadstool: { name: "Sulking Toadstool", size: "s", lvl: 10, hp: 18, att: 7, def: 6, max: 2, speed: 2600, box: [6, 15], drops: [] },
@@ -3229,6 +3265,14 @@ export const MOBS = {
   seagoat: { name: "Sea-Goat of the Upper Air", size: "l", lvl: 46, hp: 78, att: 33, def: 29, max: 8, speed: 2800, box: [20, 36], drops: [] },
   golem: { name: "Storm Golem", size: "l", lvl: 52, hp: 100, att: 38, def: 35, max: 9, speed: 3000, box: [20, 40], drops: [] },
   wolf: { name: "Thunderwolf", size: "m", lvl: 58, hp: 104, att: 43, def: 36, max: 10, speed: 2200, aggro: 4, box: [10, 28], drops: [] },
+  /* (2026-09-27) THE WILDERNESS'S OWN THREE (the owner: "add a few wilderness only monsters with custom art with unique drops"). They live
+     nowhere else, so what they carry is found nowhere else: the Weaver's wild silk is the second source of silkstring (every bow from
+     72 needs it, and the Boneyard's two spiders were the only one), the Hound's marrow knaps into the wild-only arrow between
+     dragonstone and onyx, and the Lich's grimcore brews Void ink with the grimstone the wild is full of, and he is the one monster that
+     drops seeds ten times as often as anything else. Aggressive by type; the placement sets the radius. */
+  weaver: { name: "Wild Weaver", size: "l", lvl: 40, hp: 44, att: 38, def: 24, max: 6, speed: 2600, aggro: 4, box: [18, 30], drops: [] },
+  marrowhound: { name: "Marrow Hound", size: "m", lvl: 50, hp: 58, att: 47, def: 31, max: 6, speed: 2200, aggro: 5, box: [10, 26], drops: [] },
+  grimlich: { name: "Grim Lich", size: "l", lvl: 66, hp: 84, att: 61, def: 45, max: 6, speed: 3000, aggro: 4, box: [16, 34], drops: [] },
   /* THE GOLDEN SANDS, 40-49 (2026-09-24). Stats sit inside the band's own envelope - Cloudreach's ram is 42
      and its angel 48 - and the two ingredient drops are the only new items any of them carry. Like every other
      map's monsters they also drop the PREVIOUS band's ore, which is dragonstone. */
@@ -3378,31 +3422,35 @@ for (const [t, m] of Object.entries(MOBS)) {
    used to be worth, and because stripping ninety-nine of them by hand is a worse idea than a comment; but tuning
    one here does nothing, exactly like editing a price in MOBS instead of VALUE. Add a rare by naming it. */
 export const LOOT = {
-  chicken:    { item: ["chicken", 1], also: [["bones", 1]] }   /* NOT the feathers its MOBS line still declares (2026-09-24). A feather is worth 1 and a chicken is meant to pay 9, so five to fifteen of them is the whole wage twice over - and BOUNTY can only ever take TICKETS back out of a table, never an item, so there is no lever to correct it with. Measured 126 a minute against a band of 56. */,
+  /* FEATHERS (2026-09-25, the owner: "3-6 feathers every kill, not 25+"): six things carry them, spaced up the ladder so an
+     archer at any level has a bird nearby - the Chicken (1), the Highwayman's hat plume (12), the Understudy's costume (38),
+     the Angel's wings (48), the Thunder Goose (55) and the Fat Lady's hat (68). Always dropped, and only 1-3 (the owner, later the same day: "so theyre rare") - the bulk
+     source is the cauldron's feather brew in the FLETCH block. A feather is worth 0, so none of these touch a wage. */
+  chicken:    { item: ["chicken", 1], also: [["bones", 1], ["feather", [1, 3]]] }   /* (2026-09-25) BACK ON, at two to four, because a feather is now worth 0 - the objection recorded to the right was about its VALUE, and that is gone */   /* NOT the feathers its MOBS line still declares (2026-09-24). A feather is worth 1 and a chicken is meant to pay 9, so five to fifteen of them is the whole wage twice over - and BOUNTY can only ever take TICKETS back out of a table, never an item, so there is no lever to correct it with. Measured 126 a minute against a band of 56. */,
   cow:        { item: ["beef", 1], also: [["hide", 1], ["bones", 1]] },
   rotten:     { item: ["tomatoe", [1, 3]], also: [["husk", 1, 0.05]] },
   hornworm:   { item: ["husk", 1], also: [["tomatoe", 1, 0.5]], rare: [["gamblers_ring", 0.006]] },
   boar:       { item: ["pork", 1], also: [["tusk", 1], ["bones", 1]], rare: [["gamblers_ring", 0.01]] },
-  highwayman: { item: ["hide", 1], also: [["bones", 1]], rare: [["rattlebean", 0.0125], ["mask", 0.1], ["bookies_amulet", 0.008], ["sharps_gloves", 0.006]] },
+  highwayman: { item: ["hide", 1], also: [["bones", 1], ["feather", [1, 3]]], rare: [["rattlebean", 0.0125], ["mask", 0.1], ["bookies_amulet", 0.008], ["sharps_gloves", 0.006]] },
   gnasher: { item: ["emerald_ore", 1], also: [["bones", 1]], rare: [["rattlebean", 0.0125], ["bogplate", 0.03], ["bookies_amulet", 0.01]] },
   moth: { item: ["emerald_ore", 1], rare: [["lanternroot", 0.0125], ["adjusters_visor", 0.01], ["angels_ring", 0.006]] },
   taxwraith: { item: ["receipt", 1], rare: [["lanternroot", 0.0125], ["wraithhood", 0.03], ["menace", 0.02], ["adjusters_visor", 0.01], ["angels_ring", 0.01], ["spiderboots", 0.004]] },
   ghoul: { item: ["diamond_ore", 1], also: [["bones", 1]], rare: [["bonegourd", 0.0125], ["sharps_gloves", 0.012], ["stake_loafers", 0.008]] },
   /* the Trailer Park. The King is the only thing that drops his two, and at 8% and 5% he is meant to be killed
      many times over — he is a reason to come back, not a box you open once. */
-  junkdog:    { item: ["bones", [1, 2]], rare: [["stake_loafers", 0.02], ["spiderboots", 0.01]] },
-  possum:     { item: ["hide", 1], rare: [["gamblers_ring", 0.03], ["sharps_gloves", 0.015]] },
-  scrapper:   { item: ["catalytic", 1], rare: [["menace", 0.03], ["sharps_gloves", 0.02], ["grudge", 0.01]] },
-  gator:      { item: ["hide", [1, 2]], also: [["nova_core", 1, 0.0005], ["singularity_core", 1, 0.0005]], rare: [["bogplate", 0.04], ["spiderboots", 0.02], ["angels_ring", 0.01]] },
+  junkdog:    { item: ["bones", [1, 2]], rare: [["starfruit", 0.0125], ["stake_loafers", 0.02], ["spiderboots", 0.01]] },
+  possum:     { item: ["hide", 1], rare: [["starfruit", 0.0125], ["gamblers_ring", 0.03], ["sharps_gloves", 0.015]] },
+  scrapper:   { item: ["catalytic", 1], rare: [["starfruit", 0.0125], ["menace", 0.03], ["sharps_gloves", 0.02], ["grudge", 0.01]] },
+  gator:      { item: ["hide", [1, 2]], also: [["nova_core", 1, 0.0005], ["singularity_core", 1, 0.0005]], rare: [["starfruit", 0.0125], ["bogplate", 0.04], ["spiderboots", 0.02], ["angels_ring", 0.01]] },
   junkking:   { item: ["catalytic", [2, 4]], also: [["nova_core", 1, 0.0005], ["singularity_core", 1, 0.0005]], rare: [["kingcap", 0.08], ["wrench", 0.05], ["angels_ring", 0.04], ["slagstone", 0.5]] },
-  understudy: { item: ["diamond_ore", [1, 2]], rare: [["bonegourd", 0.0125], ["sharps_gloves", 0.025]] },
+  understudy: { item: ["diamond_ore", [1, 2]], also: [["feather", [1, 3]]], rare: [["bonegourd", 0.0125], ["sharps_gloves", 0.025]] },
   /* THE CARNIVAL (2026-09-24). Its four carry the band’s ore and the boss carries the map’s whole rare table
      on one kill, the same shape the Boneyard’s Critic has. Nothing new is invented here: every key is a thing
      that already exists, so the band gets a place to fight without also getting a balance surface. */
-  pinhead:   { item: ["catalytic", 1], also: [["carnivalticket", 1, 0.01]], rare: [["lantern", 0.01], ["spiderboots", 0.01]] },
-  tripled:   { item: ["catalytic", 1], also: [["carnivalticket", 1, 0.01]], rare: [["sharps_gloves", 0.01], ["markedcard", 0.01]] },
-  fatlady:   { item: ["starfall_ore", 1], also: [["carnivalticket", 1, 0.01]], rare: [["angels_ring", 0.01], ["adjusters_visor", 0.01]] },
-  strongman: { item: ["starfall_ore", [1, 2]], also: [["carnivalticket", 1, 0.01]], rare: [["stake_loafers", 0.01], ["devils_dice", 0.01]] },
+  pinhead:   { item: ["catalytic", 1], also: [["carnivalticket", 1, 0.01]], rare: [["glassgourd", 0.0125], ["lantern", 0.01], ["spiderboots", 0.01]] },
+  tripled:   { item: ["catalytic", 1], also: [["carnivalticket", 1, 0.01]], rare: [["glassgourd", 0.0125], ["sharps_gloves", 0.01], ["markedcard", 0.01]] },
+  fatlady:   { item: ["starfall_ore", 1], also: [["carnivalticket", 1, 0.01], ["feather", [1, 3]]], rare: [["glassgourd", 0.0125], ["angels_ring", 0.01], ["adjusters_visor", 0.01]] },
+  strongman: { item: ["starfall_ore", [1, 2]], also: [["carnivalticket", 1, 0.01]], rare: [["glassgourd", 0.0125], ["stake_loafers", 0.01], ["devils_dice", 0.01]] },
   grinner:   { item: ["starfall_ore", [2, 4]], rare: [["monocle", 0.01], ["angels_ring", 0.01], ["sharps_gloves", 0.01], ["adjusters_visor", 0.01], ["spiderboots", 0.01]] },
   /* HE PAYS IN THINGS. Bonegourds every time (the Boneyard’s alchemy crop, and the Coilbreaker wants one),
      and the map’s whole rare table on one kill instead of spread over five monsters. */
@@ -3421,17 +3469,20 @@ export const LOOT = {
   seagoat: { item: ["dragonstone_ore", [1, 2]], rare: [["stormcorn", 0.0125], ["stake_loafers", 0.02], ["grudge", 0.02]] },
   golem: { item: ["onyx_ore", 1], rare: [["stormcorn", 0.0125], ["bogplate", 0.03], ["gamblers_ring", 0.02]] },
   wolf: { item: ["staticfur", 1], rare: [["stormcorn", 0.0125], ["sharps_gloves", 0.03], ["angels_ring", 0.015]] },
+  weaver:      { item: ["cobweb", [1, 2]], also: [["wildsilk", 1, 0.3]], rare: [["spiderboots", 0.02], ["sharps_gloves", 0.02]] },
+  marrowhound: { item: ["bones", [2, 3]], also: [["marrow", 1, 0.3]], rare: [["stake_loafers", 0.02], ["angels_ring", 0.01]] },
+  grimlich:    { item: ["grimstone", [1, 2]], also: [["grimcore", 1, 0.04], ["seed_sun", 1, 0.025], ["seed_ember", 1, 0.025], ["seed_frost", 1, 0.025], ["seed_void", 1, 0.025]], rare: [["wraithhood", 0.02], ["bookies_amulet", 0.02], ["angels_ring", 0.01]] },
   drake: { item: ["hailshard", 1], rare: [["stormcorn", 0.0125], ["stake_loafers", 0.03], ["spiderboots", 0.015]] },
   house: { item: ["onyx_ore", [1, 3]], rare: [["stormcorn", 0.0125], ["angels_ring", 0.04], ["bookies_amulet", 0.04], ["spiderboots", 0.02]] },
   // once the closed roads' residents: placed again in v68 (olive in the Yard, goat in the Gloam, revenant and angel in Cloudreach)
   olive:      { item: ["olives", [2, 5]], also: [["pit", 1]], rare: [["monocle", 0.1]] },
   goat: { item: ["manifesto", 1], also: [["bones", 1]], rare: [["rattlebean", 0.0125], ["toga", 0.25]] },
   revenant: { item: ["dragonstone_ore", 1], also: [["bones", 2]], rare: [["stormcorn", 0.0125], ["grudge", 0.04], ["menace", 0.03]] },
-  angel: { item: ["dragonstone_ore", 1], rare: [["stormcorn", 0.0125]] },
-  goose: { item: ["onyx_ore", 1], also: [["bones", 2], ["feather", [10, 30]]], rare: [["stormcorn", 0.0125], ["stake_loafers", 0.02], ["spiderboots", 0.01]] },
-  warden:     { item: ["starfall_ore", [1, 2]], rare: [["angels_ring", 0.03], ["bogplate", 0.02]] },
-  pitboss:    { item: ["starfall_ore", [1, 2]], rare: [["bookies_amulet", 0.04], ["gamblers_ring", 0.03]] },
-  hoard:      { item: ["eclipse_ore", 1], rare: [["gamblers_ring", 0.05], ["angels_ring", 0.03]] },
+  angel: { item: ["dragonstone_ore", 1], also: [["feather", [1, 3]]], rare: [["stormcorn", 0.0125]] },
+  goose: { item: ["onyx_ore", 1], also: [["bones", 2], ["feather", [1, 3]]], rare: [["stormcorn", 0.0125], ["stake_loafers", 0.02], ["spiderboots", 0.01]] },
+  warden:     { item: ["starfall_ore", [1, 2]], rare: [["emberwheat", 0.0125], ["angels_ring", 0.03], ["bogplate", 0.02]] },
+  pitboss:    { item: ["starfall_ore", [1, 2]], rare: [["emberwheat", 0.0125], ["bookies_amulet", 0.04], ["gamblers_ring", 0.03]] },
+  hoard:      { item: ["eclipse_ore", 1], rare: [["emberwheat", 0.0125], ["gamblers_ring", 0.05], ["angels_ring", 0.03]] },
   dealer:     { item: ["eclipse_ore", [1, 2]], also: [["voidglass", 1, 0.2], ["nova_core", 1, 0.0005], ["singularity_core", 1, 0.0005]], rare: [["bookies_amulet", 0.06], ["spiderboots", 0.04], ["grudge", 0.03]] }
 };
 /* WHO ATTACKS ON SIGHT. This was a single `false` (the owner, 2026-09-19: "i dont want any monster to attack on site
@@ -3480,6 +3531,15 @@ for (const [k, m] of Object.entries(MOBS)) {
   if (AGGRO_ON.has(k)) m.aggro = Math.min(had, AGGRO_REACH); else delete m.aggro;
 }
 for (const [t, L] of Object.entries(LOOT)) if (MOBS[t]) { MOBS[t].drops = [L.item, ...(L.also || [])]; MOBS[t].rare = L.rare || []; }   /* (2026-09-24) `also`: extra drops, each [key, n, chance] like any other. LOOT used to REPLACE drops with a single item, so a mob in this table could carry exactly one named thing - which is why the Golden Sands wrote its drops by hand and lost its rare table doing it. */
+/* (2026-09-26, the owner: "NO items except for tickets should ALWAYS drop... between 25% and 45%, with varying rates so it feels
+   somewhat RNG") EVERY SURE DROP BECOMES A CHANCE. A drop written without a chance - a monster's one thing, and every `also`
+   with no third number - now lands 25-45% of kills, the exact rate fixed per monster and item by a hash so it is stable and
+   still uneven across the map. Tickets are the bounty, paid separately, and are untouched. Excused: the BOSSES below (each
+   area's headline monster) and the dungeons, whose monsters live in their own rules files and never pass through here. A
+   drop that already carried a chance (feathers on the Fat Lady's ticket, a core at one in two thousand) keeps it. */
+export const BOSSES = new Set(["critic", "grinner", "house", "junkking", "pitboss", "dealer"]);
+const sureRate = (t, k) => { const v = Math.sin(t.length * 7.31 + [...t + k].reduce((a, ch) => a + ch.charCodeAt(0) * 3.7, 0)) * 43758.5453; return Math.round((0.25 + (v - Math.floor(v)) * 0.2) * 100) / 100; };
+for (const [t, m] of Object.entries(MOBS)) if (!BOSSES.has(t) && Array.isArray(m.drops)) m.drops = m.drops.map((d) => (d.length >= 3 || d[0] === "tickets" ? d : [d[0], d[1], sureRate(t, d[0])]));
 
 /* ------------------------------------------------------------ words */
 // what it takes to climb down into the Wilderness (PvP). Change it here.
@@ -3564,7 +3624,7 @@ for (const [raw, c] of Object.entries({
   mooncarp: { to: "cmooncarp", lvl: 40, xp: 150, burnStop: 70 },
   lanternfish: { to: "clanternfish", lvl: 30, xp: 120, burnStop: 60 }, skyeel: { to: "cskyeel", lvl: 50, xp: 190, burnStop: 80 },
   oasisperch: { to: "coasisperch", lvl: 42, xp: 155, burnStop: 72 }, nilecarp: { to: "cnilecarp", lvl: 48, xp: 180, burnStop: 78 },   /* (2026-09-24) the oasis, in The Golden Sands */
-  mudcat: { to: "cmudcat", lvl: 60, xp: 230, burnStop: 88 }, bowfin: { to: "cbowfin", lvl: 70, xp: 270, burnStop: 94 },   // the Trailer Park's swamp: the best food in the game, and the only reason to take Cooking past 50
+  mudcat: { to: "cmudcat", lvl: 60, xp: 230, burnStop: 88 }, bowfin: { to: "cbowfin", lvl: 70, xp: 270, burnStop: 94 }, voidfin: { to: "cvoidfin", lvl: 82, xp: 340, burnStop: 99 }, grimscale: { to: "cgrimscale", lvl: 90, xp: 420, burnStop: 99 },   /* (2026-09-27) the Deep's two: Cooking to 90 */   // the Trailer Park's swamp: the best food in the game, and the only reason to take Cooking past 50
   perch: { to: "cperch", lvl: 5, xp: 40, burnStop: 25 }, catfish: { to: "ccatfish", lvl: 18, xp: 80, burnStop: 45 }, mudskipper: { to: "cmudskipper", lvl: 22, xp: 95, burnStop: 50 },
   goldfish: { to: "cgoldfish", lvl: 62, xp: 235, burnStop: 90 }, koi: { to: "ckoi", lvl: 68, xp: 255, burnStop: 92 },   /* (2026-09-24) the Carnival duck pond, filling 58-80 */
   bonefish: { to: "cbonefish", lvl: 32, xp: 125, burnStop: 62 }, ghostcarp: { to: "cghostcarp", lvl: 36, xp: 140, burnStop: 66 }, cloudray: { to: "ccloudray", lvl: 45, xp: 170, burnStop: 75 },
@@ -3606,6 +3666,8 @@ const SMOKE = {
   mudcat:       { lvl: 65, coal: 2, heal: 32, sell: 180, fx: { rare: 0.15 },              blurb: "The good stuff turns up." },
   thundersquid: { lvl: 65, coal: 2, heal: 34, sell: 165, fx: { tough: 0.15 },             blurb: "Hits land softer." },
   bowfin:       { lvl: 75, coal: 3, heal: 37, sell: 210, fx: { tough: 0.10, rare: 0.15 }, blurb: "The best thing out of that water." },
+  voidfin:      { lvl: 86, coal: 3, heal: 42, sell: 260, fx: { tough: 0.12, rare: 0.18 }, blurb: "The dark keeps you." },   /* (2026-09-27) smoking to 95 */
+  grimscale:    { lvl: 95, coal: 4, heal: 48, sell: 320, fx: { tough: 0.15, rare: 0.20, tix: 0.05 }, blurb: "Nothing in the game feeds you better." },
   /* (2026-09-25, the owner: "make a reciple / art/ icons for smoking carnival fish as well") The duck pond's two.
      A SMOKE SITS ABOUT FIVE LEVELS ABOVE ITS OWN COOK across this whole table (36/40, 45/50, 50/55, 55/60, 60/65,
      70/75), so 62 and 68 give 67 and 73 - which also keeps the SMOKED ladder in order by smoke level, landing
@@ -4038,7 +4100,8 @@ export function fxOf(c) {
   for (const f of worn) for (const k of OUT_KEYS) out[k] += (f[k] || 0) * power;
   for (const st of [c?.meal, c?.drink]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k], f = it && (it.meal || it.drink)?.fx; if (f) for (const k of OUT_KEYS) out[k] += f[k] || 0; }
   if ((c?.luck | 0) > 0) out.zdrop += LUCK.zdrop;
-  { const a = achFx(c); for (const k of OUT_KEYS) out[k] += a[k] || 0; }   /* (2026-09-23) achievement milestones, before the caps below so they cannot escape them */
+  { const a = achFx(c); for (const k of OUT_KEYS) out[k] += a[k] || 0; }
+  out.rare += charmOf(c, "keeneye") / 100;   /* (2026-09-26) Keen Eye, before the caps below */   /* (2026-09-23) achievement milestones, before the caps below so they cannot escape them */
   for (const k of OUT_KEYS) out[k] = Math.max(k === "tough" ? -0.5 : 0, Math.min(OUT_CAP[k], out[k]));
   return out;
 }
@@ -4094,6 +4157,7 @@ export const buffsOf = (c) => {
   if ((c?.luck | 0) > 0) one("luck", "Lucky", "clover", `A real ZCoin is ${LUCK.zdrop * 100}% more likely to drop. One is used up per kill or catch. Only fishing finds clovers.`, c.luck | 0);
   for (const st of [c?.meal, c?.drink]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k]; if (it) one(it.meal ? "meal" : "drink", it.short || it.name, st.k, `${it.name}: ${fxText((it.meal || it.drink).fx)}. The clock only runs while you're outside.`, Math.max(1, Math.ceil((st.left | 0) / 60000)), "minute"); }
   for (const k0 of SLOTS) { const k = c?.eq?.[k0], it = k && ITEMS[k]; if (it?.fx) one(`worn:${k}`, it.short || it.name, k, `${it.name} (worn): ${fxText(it.fx)}.`); }
+  if (c?.charm && (c.charm.left | 0) > 0 && CHARMS[c.charm.k]) { const C_ = CHARMS[c.charm.k], t = c.charm.tier || 1; one("charm", `${C_.name} ${"I".repeat(t)}`, `scroll_${c.charm.k}`, `${C_.name} (tier ${"I".repeat(t)}): ${C_.what(C_.vals[t - 1])}. The clock only runs while you're outside.`, Math.ceil(c.charm.left / 60000), "minute"); }   /* (2026-09-26) the page buff */
   return out;
 };
 
@@ -4298,6 +4362,12 @@ export function dailyFor(c, id, day) {
   return ranked.map((t, i) => [hashRand(i, seed, 97), t]).sort((a, b) => a[0] - b[0]).slice(0, DAILY_COUNT).map(([, t]) => t.id);
 }
 export const dailyDef = (id) => DAILY.find((t) => t.id === id);
+/* (2026-09-26, the owner) TEN TIMES THE KILLS, SAME TICKETS. The table above keeps the numbers it was written with; this is the
+   tuning, in one place. `was` keeps the old count only for jobs rolled before the change (see dailyNeed). */
+export const DAILY_KILL_MULT = 10;
+for (const d of DAILY) if (d.what === "kill") { d.was = d.n; d.n *= DAILY_KILL_MULT; }
+/** how many a rolled job wants: its own count, stored when it was rolled; a job rolled before counts were stored keeps the old one */
+export const dailyNeed = (task) => { const d = dailyDef(task?.id); return d ? (task.n ?? d.was ?? d.n) : 0; };
 
 // the old name, kept so the wiki and anything else reading it still work
 export const COOK = Object.fromEntries(Object.values(RECIPES)
@@ -4367,7 +4437,31 @@ ITEMS.charcoal = { name: "Charcoal", icon: "⬛", ex: "Burnt logs, light and fil
    handed `undefined` charcoal and quietly cost none. */
 const CHAR_FUEL = [1, 1, 2, 2, 3, 3, 4, 5, 6];
 /* What a log is worth in charcoal. Anything not named here gives 1. */
-const BURN = { logs: 1, willowlogs: 1, ashlogs: 2, skyashlogs: 2, pinelogs: 2, yewlogs: 3, voidlogs: 4, bogwoodlogs: 4 };
+/* HOW MUCH CHARCOAL A LOG IS WORTH (2026-09-25, the owner: "higher level trees should give more charcoal
+   proportionately"). It did not, and in two places it ran BACKWARDS: rustpine at Woodcutting 65 burned into two
+   where the ancient yew at 35 burned into three, and skyash at 45 was also worth less than the yew. The same
+   shape as the cooked-fish ladder a player reported - each number is written on its own line, hundreds of lines
+   from its neighbours, so nothing in the game ever puts them side by side.
+
+   The ladder now runs with the tree's WOODCUTTING level, roughly one charcoal per twelve levels, and
+   tools/eastscape-food-check.mjs fails if it ever inverts again.
+
+   PALM LOGS HAD NO BURN RECIPE AT ALL - the only log in the game that could not become charcoal, which is why
+   the woodcutting guide had to carry a line apologising for it. They burn now.
+
+   The number beside each is the Woodcutting level of the tree it comes off, for the next person reading it. */
+const BURN = {
+  logs: 1,          //  1
+  willowlogs: 2,    // 15
+  ashlogs: 2,       // 20  (deadwood)
+  yewlogs: 3,       // 35
+  palmlogs: 4,      // 45
+  skyashlogs: 4,    // 45
+  pinelogs: 5,      // 65  (rustpine; was 2, below the yew's three)
+  voidlogs: 6,      // 75  (vaultwood)
+  bogwoodlogs: 7,   // 80
+  gallowslogs: 8,   // 90  (2026-09-27: the Deep Wild's one tree; the top of the charcoal ladder with it)
+};
 
 /* (2026-09-25) THE CHASE, AND THE WAY ROUND IT. A core drops at CORE_DROP from the five hardest things in the
    game, which at 1 in 2,000 is a lottery and not a plan — so the SAME core is craftable from a pile of what those
@@ -4463,6 +4557,7 @@ export const FORGE = {
      a rung: a +3 bronze axe must never beat a plain iron one, or reforging would invert the ladder bestTool() sorts
      by. It is flat, not a share of the tool's own stat the way gear is, because a bronze tool's stat is zero. */
   tspd: 0.025,
+  pcap: 0.10,   /* (2026-09-25) what a level adds to a QUIVER: a tenth more room. A quiver has no combat stat to grow, and room is the one thing it is for. */
   /* odds[level] is the chance of going level -> level+1. */
   odds: [1, 0.8, 0.55, 0.35],
   /* brk[level] is the chance a FAILURE destroys the piece outright instead of knocking it down a level. Only a
@@ -4502,7 +4597,8 @@ export const forgeSlot = (key) => { const k = String(key || ""), i = k.indexOf("
 export const isTool = (key) => !!ITEMS[key]?.tool;
 /* Rods qualify now. They have no acc/str at all, so the old combat-only test refused them outright - the one item
    in the game you could not reforge, for the same reason the other two reforged into the wrong thing. */
-export const canForge = (key) => { const it = ITEMS[key]; if (!it || !it.tier || !forgeSlot(key)) return false; return isTool(key) || !!(it.acc || it.str || it.def); };
+export const canForge = (key) => { const it = ITEMS[key]; if (it?.forgeWith) return !!(it.acc || it.str || it.def || it.pouch);   /* (2026-09-25) a fletched piece: its own wood, see FLETCH */
+  if (!it || !it.tier || !forgeSlot(key)) return false; return isTool(key) || !!(it.acc || it.str || it.def); };
 /* (2026-09-23) A LEVEL BELONGS TO A PIECE, so these come in two shapes and it matters which you reach for:
      fLevelOf(c, slot)   the level of what is WORN in that slot — what the stats are built from
      forgeLevel(c, key)  the same thing looked up by item name, kept because everything that computes a stat
@@ -4540,6 +4636,7 @@ export const forgeNextAt = (key, lvl, sealed = false) => {
   const l = Math.max(0, Math.min(FORGE.cap, lvl | 0));
   if (l >= (sealed ? FORGE.cap : FORGE.max)) return [];
   if (isTool(key)) return [["tspd", FORGE.tspd]];
+  if (ITEMS[key]?.pouch) return [["cap", FORGE.pcap]];   /* (2026-09-25) a quiver's level is room */
   /* (2026-09-23) By LEVEL, not by a stand-in character. This used to build `{ forge: { [key]: l + 1 } }` and ask
      forgeAdd about it, which stopped meaning anything the moment a level moved onto the item: forgeLevel reads
      what is WORN now, and a made-up object has nothing worn. */
@@ -4557,27 +4654,28 @@ export const forgeNext = (c, key) => forgeNextAt(key, forgeLevel(c, key));
    card: reforging a pickaxe, axe or rod buys SPEED (forgeSpeed), and reforging armour or a weapon buys accuracy,
    strength and defence (forgeAdd). A Diamond axe +3 shows +4 accuracy on its own line because an axe can be
    swung at something, and none of that +4 came from the reforge. */
-export const FIELD_NAME = { acc: "accuracy", str: "strength", def: "defence", tspd: "tool speed" };
+export const FIELD_NAME = { acc: "accuracy", str: "strength", def: "defence", tspd: "tool speed", cap: "capacity" };
 export const forgeGainsAt = (key, lvl) => {
   if (!(lvl > 0)) return [];
   if (isTool(key)) { const v = forgeSpeedAt(key, lvl); return v ? [["tspd", v]] : []; }
+  if (ITEMS[key]?.pouch) return [["cap", Math.min(FORGE.cap, lvl) * FORGE.pcap]];
   return ["acc", "str", "def"].map((f) => [f, forgeAddAt(key, lvl, f)]).filter(([, v]) => v > 0);
 };
 export const forgeGains = (c, key) => forgeGainsAt(key, forgeLevel(c, key));
 /** The same, as a line a player reads: "+7.5% tool speed" or "+2 accuracy · +2 strength". */
 export const forgeGainTextAt = (key, lvl) => forgeGainsAt(key, lvl)
-  .map(([f, v]) => (f === "tspd" ? `+${Math.round(v * 1000) / 10}% ${FIELD_NAME.tspd}` : `+${v} ${FIELD_NAME[f]}`)).join(" \u00b7 ");
+  .map(([f, v]) => (f === "tspd" || f === "cap" ? `+${Math.round(v * 1000) / 10}% ${FIELD_NAME[f]}` : `+${v} ${FIELD_NAME[f]}`)).join(" \u00b7 ");
 export const forgeGainText = (c, key) => forgeGainTextAt(key, forgeLevel(c, key));
 /** A piece's name with its level on it. Takes the LEVEL, so a bag slot names what it is holding. */
 export const forgeNameAt = (key, lvl) => `${ITEMS[key]?.name || key}${lvl > 0 ? ` +${Math.min(FORGE.cap, lvl | 0)}` : ""}`;
 export const forgeName = (c, key) => forgeNameAt(key, forgeLevel(c, key));
-export const forgeCost = (key) => { const sl = forgeSlot(key), it = ITEMS[key]; return sl && it?.tier ? [`${it.tier}_bar`, FORGE.bars(sl)] : null; };
+export const forgeCost = (key) => { const sl = forgeSlot(key), it = ITEMS[key]; if (it?.forgeWith) return it.forgeWith; return sl && it?.tier ? [`${it.tier}_bar`, FORGE.bars(sl)] : null; };
 
 // (the gambling gear and the dinners had recipes here until 2026-09-20: the gear drops now, and Dex sells the dinners)
 
 /** Every recipe a station can run, hardest first so "the best thing you can make" is recipesAt()[0]. */
 export const recipesAt = (station) => Object.values(RECIPES)
-  .filter((r) => r.station === station || (station === "range" && r.station === "fire"))
+  .filter((r) => r.station === station || (station === "range" && r.station === "fire") || (station === "altar_nexus" && String(r.station).startsWith("altar_")))   /* (2026-09-26) the Nexus: every altar's recipes */
   .sort((a, b) => b.lvl - a.lvl);
 /** Do they have everything the recipe needs? */
 export const canMake = (c, r) => lvlOf(c, r.skill) >= r.lvl && r.in.every(([k, n]) => countItems(c, [k]) >= n);
@@ -4638,7 +4736,12 @@ export const AFK_KINDS = { rock: "mining", vein: "mining", spot: "fishing", tree
    NOT here on purpose: lucky clovers (fishing's alone) and the fighting finds (free-play chips, boxes, dice, watches).
    An entry is { id, group, price, give: [item, n] | cash: n }. */
 export const PRIZE_CHIPS = [];   /* no chips to buy since v57: the tables take tickets */
+/* (2026-09-26) THE STARTER KITS: [item, how many, price for the lot]. Filled by the Archery and Magic switches
+   below, drawn on Bom's counter as their own card. Both kits were first pushed into SHOP.sells, which nothing a
+   player can reach reads (see the note in prizesOf), so neither could be bought until this list existed. */
+export const KITS = [];
 export const prizesOf = () => [
+  ...KITS.map(([k, n, p]) => ({ id: `kit:${k}`, group: "kit", price: p, give: [k, n] })),
   ...PRIZE_CHIPS.map((n) => ({ id: `chips${n}`, group: "chips", price: n, cash: n, name: `${fmtCash(n)} in chips` })),
   ...BAR.sells.map(([k, p]) => ({ id: k, group: "bar", price: p, give: [k, 1] })),
   /* (2026-09-22) The counter sold the rod and nothing else, so anyone who dropped or sold a pickaxe was locked out of
@@ -4684,7 +4787,7 @@ const TOOLS_FOR_SALE = TIERS.flatMap((t) => Object.keys(TOOL_KINDS).filter((k) =
    the floor who isn't already drinking a lager's worth of bets. */
 /* (v93, the owner: "make all drinks/dinners cost 10x. theyre too cheap right now") Every drink and every dinner is ten times what it was,
    and so is the round for the room, which would otherwise have cost less than one lager. The scroll home is not a drink: still 50. */
-export const BAR = { sells: [["beer", 400], ["cocktail", 900], ["whiskey", 1000], ["champagne", 2000], ["chickendinner", 800], ["steakdinner", 1500], ["porkchops", 1500], ["fishplatter", 3000], ["tp_scroll", 50]], round: { price: 3000, k: "beer", bets: 10 } };
+export const BAR = { sells: [["beer", 400], ["cocktail", 900], ["whiskey", 1000], ["champagne", 2000], ["chickendinner", 800], ["steakdinner", 1500], ["porkchops", 1500], ["fishplatter", 3000], ["tp_scroll", 300]   /* (2026-09-25, the owner: "increase the price of casino teleports to 300 tickets"). BAR prices are NOT touched by the TIX_RATE halving at the end of this file, so 300 here is 300 in the game - unlike SHOP.buys, where the number written is halved before anybody sees it. */], round: { price: 3000, k: "beer", bets: 10 } };
 export const SHOP = {
   // Brutus stocks tools and BRONZE ONLY. Everything above bronze is found, not
   // bought — otherwise the fastest route to the best gear in the game is to
@@ -4692,7 +4795,7 @@ export const SHOP = {
   // enjoy discovering.
   sells: [["rod", 20], ["pickaxe", 20], ["axe", 20], ...TOOLS_FOR_SALE, ...GEAR_FOR_SALE],
   buys: { emerald_ore: 30, diamond_ore: 50, dragonstone_ore: 80, onyx_ore: 120, willowlogs: 40, skyashlogs: 65, clanternfish: 18, cskyeel: 32,
-    copper: 6, tin: 6, grimstone: 45, marble: 35, stardust: 120, logs: 4, yewlogs: 70, ashlogs: 28, hide: 8, bones: 2, feather: 1, tusk: 10, husk: 4, pit: 1,
+    copper: 6, tin: 6, grimstone: 45, marble: 35, stardust: 120, logs: 4, yewlogs: 70, ashlogs: 28, hide: 8, bones: 2, /* feather: not bought (2026-09-25) - a component worth 0; the counter refuses it rather than paying nothing */ tusk: 10, husk: 4, pit: 1,
     receipt: 3, cobweb: 5, geode: 400, olives: 1, sunolive: 30, wheat: 1, tomatoe: 2, goldtomatoe: 60, mask: 40, monocle: 25, manifesto: 15,
     csardine: 3, cchicken: 3, cbeef: 4, cpork: 7, ctrout: 9, cgloomfin: 14, cmooncarp: 25,
     pickaxe: 8, axe: 8, rod: 6 }
@@ -4742,7 +4845,7 @@ export const VALUE = {
   skyashlogs: 28, dragonstone_ore: 30, skyeel: 40, onyx_ore: 40,                // Cloudreach
   perch: 10, catfish: 18, mudskipper: 28, bonefish: 28, ghostcarp: 36, cloudray: 48, stormmarlin: 44, thundersquid: 52,
   goldfish: 54, koi: 57,   /* (2026-09-24) between the Thunder squid (52, Fishing 58) and the Mudcat (58, Fishing 80) */   // v68: two fish a band (see the scenes' spots)
-  sporecap: 12, markedcard: 22, sharktooth: 26, flashlight: 30, stormjelly: 34, staticfur: 42, hailshard: 46,            // v68: what the new monsters leave
+  sporecap: 12, markedcard: 22, sharktooth: 26, flashlight: 30, stormjelly: 34, staticfur: 42, hailshard: 46, wildsilk: 60, marrow: 50, marrow_arrowhead: 6, marrow_arrow: 12, grimcore: 120, voidfin: 80, grimscale: 104, gallowslogs: 124, glassgourd: 360, emberwheat: 520, starfruit: 800,   /* (2026-09-27) the wilderness's own */            // v68: what the new monsters leave
   receipt: 15, cobweb: 25, agilmark: 25,
   catalytic: 140, slagstone: 110, pinelogs: 40, bogwoodlogs: 95, mudcat: 58, bowfin: 66,   // the Trailer Park: the best gathering in the game, because it is the furthest walk and the meanest neighbours
                                                       // the Boneyard's leavings
@@ -4751,7 +4854,7 @@ export const VALUE = {
      is derived from RECIPES by the CRAFT_PAYS chain, so what Nova and Singularity cost, what they sell
      for, and what Bom charges for their tools all come out of here. */               // (v121) the Vault's
   chip_red: 250, chip_black: 1000, chip_gold: 5000,                             // fighting's windfalls
-  chicken: 8, feather: 1, bones: 3, beef: 12, hide: 14, tomatoe: 5, husk: 10, pork: 16, tusk: 18, pit: 2, mask: 60, monocle: 40, manifesto: 25
+  chicken: 8, feather: 0 /* (2026-09-25) a component, not loot: at zero it no longer counts against the chicken's wage, which is what let it back onto the bird - see FLETCH */, bones: 3, beef: 12, hide: 14, tomatoe: 5, husk: 10, pork: 16, tusk: 18, pit: 2, mask: 60, monocle: 40, manifesto: 25
 };
 for (const [k, v] of Object.entries(SHOP.buys)) if (!(k in VALUE) && !ITEMS[k]?.slot) VALUE[k] = v;      // the closed areas keep Brutus's old prices until they reopen
 /* FISHING is the one quiet job: you can't die, it never runs dry, and you can do it with a drink in your hand. A cast every
@@ -4761,6 +4864,22 @@ for (const [k, v] of Object.entries(SHOP.buys)) if (!(k in VALUE) && !ITEMS[k]?.
 /* (2026-09-25, the owner: "the fish bite rate needs to be reduced by 33%") The CAP is cut too, not just the
    curve: the old one hit its ceiling at level 25 and stayed there for the next 74 levels, so trimming only
    the 0.4 + lvl*0.02 part would have left everyone above 25 fishing at exactly the old rate. */
+/* GATHERING IS HALF AS GOOD OUT THERE (2026-09-25, the owner: "the success rate of ores/fishing/logs needs to
+   be cut in half in the wilderness and deep wilderness so that users stick around longer and its more
+   enticing"). Every swing, cast and chop in a pvp scene succeeds half as often, so the same haul takes twice as
+   long and the person taking it is exposed for twice as long — which is the point: the Wilderness is only
+   interesting if there is somebody in it to find.
+
+   `pvp` IS THE TEST, not a list of scene names. It is true for exactly the Wilderness and the Deep Wild and for
+   nothing else, and it is the same flag that decides whether you can be attacked at all — so a future zone
+   where players can fight each other gets this automatically, which is the correct default. A list of names
+   would have to be remembered.
+
+   WORTH KNOWING IF THIS IS EVER REVISITED: it is a straight nerf to the one thing the Wilderness is good for.
+   Grimstone is out there and onyx bars need it, so people must go regardless, and that is what makes the trade
+   work at all — if a future wild resource is optional, halving its rate may simply mean nobody bothers. */
+export const WILD_GATHER = 0.5;
+export const gatherMul = (def) => (def && def.pvp ? WILD_GATHER : 1);
 export const FISHING = { ms: 2600, chance: (lvl) => Math.min(0.9, 0.4 + lvl * 0.02) * 0.67, troutAt: 10, troutShare: 0.35, secondShare: 0.35 };
 /** What a cast at this spot lands, for a fisher of this level: the spot's fish, or (secondShare of the time, once you are fish2lvl) its second one. r: a roll 0..1 */
 export const fishAt = (ob, lvl, r) => (ob?.fish2 && lvl >= (ob.fish2lvl || 0) && r < FISHING.secondShare ? ob.fish2 : ob?.fish || "sardine");
@@ -4775,7 +4894,7 @@ export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
 }
 { // Brutus pays what the Cashier pays. Neither may pay what Brutus SELLS a thing for, or buying and selling it back is a money printer.
   const sold = Object.fromEntries(SHOP.sells);
-  for (const [k, v] of Object.entries(VALUE)) { if (sold[k]) VALUE[k] = Math.min(v, Math.floor(sold[k] * 0.7)); SHOP.buys[k] = VALUE[k]; }
+  for (const [k, v] of Object.entries(VALUE)) { if (sold[k]) VALUE[k] = Math.min(v, Math.floor(sold[k] * 0.7)); if (VALUE[k] > 0) SHOP.buys[k] = VALUE[k]; else delete SHOP.buys[k]; }   /* (2026-09-25) a thing worth 0 (feathers) is not bought at all, rather than bought for nothing */
 }
 /* BOUNTY: what an average kill comes to, everything counted. From tools/eastscape-balance.mjs (2026-09-20): a fighter of
    the monster's own level, in the gear that level wears, should make 1.15x what a miner of that level makes in the same
@@ -4803,7 +4922,7 @@ export const CRAFT_PAYS = 2, CRAFT_STEP = 1.25;
    4,000 (2,000 after the halving) is fourteen normal kills, and over a forty-second fight that is about 3,000 a
    minute against roughly 570 for farming the freaks outside. Five times better while you have a ticket, and
    nothing at all when you do not, which is what a key is supposed to feel like. */
-export const BOUNTY = { pinhead: 252, tripled: 271, fatlady: 296, strongman: 318, grinner: 4000, critic: 600, chicken: 18, cow: 32, rotten: 39, olive: 38, hornworm: 51, boar: 53, highwayman: 40, goat: 45, gnasher: 80, moth: 74, taxwraith: 150, ghoul: 177, chandelier: 205, understudy: 250, ram: 266, angel: 352, revenant: 324, goose: 356,
+export const BOUNTY = { weaver: 250, marrowhound: 310, grimlich: 440, pinhead: 252, tripled: 271, fatlady: 296, strongman: 318, grinner: 4000, critic: 600, chicken: 18, cow: 32, rotten: 39, olive: 38, hornworm: 51, boar: 53, highwayman: 40, goat: 45, gnasher: 80, moth: 74, taxwraith: 150, ghoul: 177, chandelier: 205, understudy: 250, ram: 266, angel: 352, revenant: 324, goose: 356,
   toadstool: 37, boneidle: 79, twister: 73, counter: 91, shark: 143, stagehand: 196, usher: 223, brainstorm: 247, seagoat: 329,
   /* THE 50+ BAND pays MORE than the tool asks: its reference wage goes flat at level 40 (there was no skilling past onyx), so left alone a level-70
      kill would pay a level-42 minute. These are the tool's numbers times 1 + 1.2% a level past 42, so the last band is worth reaching. The goose moved with them. */
@@ -4921,6 +5040,12 @@ export const THIEF = {
   streakEvery: 5,
   live: true
 };
+/* (2026-09-27, the owner: "the drops from mobs across the board is too much") THE BAND. Every bounty above was priced so that a minute
+   of fighting pays 1.15x a minute of mining at the same level; this brings the non-boss monsters to 1.0x - fighting pays what
+   skilling pays, and the finds on top are what make it the better job. The bosses keep their numbers: each is a key or a slow kill
+   priced on its own. tools/eastscape-balance.mjs measures the result; its FIGHT_OVER_SKILL moved with this. */
+export const BOUNTY_BAND = 0.87;
+for (const t of Object.keys(BOUNTY)) if (!BOSSES.has(t)) BOUNTY[t] = Math.round(BOUNTY[t] * BOUNTY_BAND);
 /** The chance this character lands a pick on a mark of level `lvl`. */
 /* (2026-09-24, the owner: the curve "is a little much, but we need to add gear to compensate for it instead of
    nerfing it") GEAR ADDS TO THE CHANCE AND THE CEILING STILL HOLDS. A bonus only helps while you are climbing,
@@ -5057,6 +5182,234 @@ recipe("make_flux", { skill: "smithing", station: "anvil", lvl: 40, ms: 2600, xp
 /* a seal EATS a flux, so it can never be commoner than one */
 recipe("make_seal", { skill: "smithing", station: "anvil", lvl: 60, ms: 2600, xp: 400, in: [["seal_wax", 1], ["flux", 1]], out: ["masters_seal", 1] });
 
+/* ============================================================ FLETCHING (2026-09-25)
+   The owner: "lets get started building the art ... then lets build out the items, put them as drops, add the
+   skill to all the right pages ... then i can test it live and see how it feels." This block is the skill's
+   rules. Its server side is the `fletch` kind in index.js and the ranged path in the mob swing; its pictures
+   came from tools/eastscape-fletch-art.mjs.
+
+   WHY IT IS BUILT ON TOP OF OTHER SKILLS RATHER THAN BESIDE THEM. Fletching cannot make a single arrow on its own,
+   and that is the point of adding it. An arrow is three things from three places:
+       a SHAFT      cut from logs            -> woodcutting, which until now had exactly one use (charcoal)
+       a HEAD       hammered from a bar      -> smithing, at the anvil, not here
+       a FEATHER    off a bird               -> fighting: chickens at the bottom, the Thunder Goose in bulk
+   So every arrow is a woodcutter's afternoon and a smith's bar and somebody's chicken. Structural, not decorative:
+   none of the three can be substituted for another.
+
+   THE TWO-KNOB LADDER, which is what makes ranged feel different from melee. In melee one item is your speed AND
+   your damage. Here the BOW sets how fast you draw and how far you reach, and the ARROW sets how hard it lands —
+   so a fletcher chooses between an expensive bow with cheap arrows and a cheap bow with a quiver of the good
+   ones, and arrows are the game's first real consumable tier: a permanent sink for logs, bars and feathers.
+
+   THE QUIVER (the owner: "they should match the tiers / names of the bow, be in the offhand, and you load your
+   arrows into them so you can hold a large stack and go around shooting"). It wears the SHIELD slot, so a bow is
+   a two-handed choice against a shield, which is the right trade. Loaded arrows live on the character as
+   C.quiver = { k, n } — not in the bag — and a shot draws from there first. Capacity climbs with the wood.
+
+   GEMS (the owner: "some mining ores need to have a small chance to drop gems ... so users can make jewelry
+   tipped arrows for extra damage"). Four, NOT named diamond or emerald because those are already metal tiers
+   and "diamond arrow" would mean two things. Each gem tips the arrows of the metals it comes out of, so the
+   ore you are already mining is the ore that drops the stone you tip its arrows with.
+
+   THE TEMPLATE FOR MAGIC (the owner: "think about how you can templatize this for a future skill: mage/magic
+   and wizardry"). Everything ranged here is written as a LAUNCHER and its AMMO rather than as a bow and an
+   arrow: launcherOf(c) is whatever is in the weapon slot with `launcher`, ammoOf(c) is whatever it fires from
+   the offhand pouch or the bag, and the swing reads range and damage off those two. A staff is a launcher with
+   `launcher: { range, ammo: "rune" }`, a rune is ammo, a rune pouch is the quiver with a different picture.
+   None of the combat code below will need to change to add it — only the item rows.
+   ============================================================ */
+export const FLETCH = { live: true, perLog: 15, perBar: 15, station: "fletcher", quiverSlot: "shield",
+  /* how many shafts a log gives, by wood: the reason to cut a better tree for fletching. The arrow is the same
+     either way, you just get more of them per trip. */
+  shaftsPerLog: [15, 18, 21, 25, 28, 30, 34, 38, 45],
+  /* how many arrows a quiver of each wood holds */
+  quiverCap: [100, 150, 200, 300, 400, 500, 650, 800, 1000],
+};
+SKILLS.fletching = { name: "Fletching", icon: "🪶" };
+/* ARCHERY (2026-09-25, the owner: "we need an Archery combat skill, not just fletching ... Damage for XP is calculated in
+   the same way as melee, damage = XP ... Fletching is just for the making"). It is a second COMBAT skill: with a launcher
+   in hand every roll that read Combat reads Archery instead (styleOf, below in the combat maths), a hit pays Archery
+   the xp Combat would have had, and the combat level takes the higher of the two. Fletching gates what you can MAKE;
+   Archery gates what you can DRAW. The rough shortbow, the rough quiver and bone arrows are all Archery 1 and Brutus
+   sells them, so a new player can pick up a bow before they have cut a log. */
+SKILLS.archery = { name: "Archery", icon: "🏹" };
+export const ARCHERY = {
+  bigBonus: 0.2,            // arrows do a fifth more to size l / xl monsters: a boss is hard to miss
+  afkMs: 8 * 60 * 1000,     // the fight AFK timer for an archer with a LOADED quiver (melee stays at AFK_MS)
+  retarget: true,           // "stand and shoot": when the target dies, draw on the next of the same kind inside reach
+  useLvl: { short: [1, 20, 30, 45, 54, 60, 72, 84, 92], long: [5, 25, 35, 50, 57, 64, 76, 88, 96], quiver: [1, 18, 28, 43, 52, 58, 70, 82, 90] },   // Archery to draw, by wood: the fletching gate, except rough is 1 / 5 / 1
+};
+/* the bulk source of feathers (the owner: "add in alchemy recipes for making bulk feathers. take a vial and mix it with
+   feathers + one other thing (something magic) and it creates 15 feathers every time"). Net twelve a vial. */
+recipe("brew_feathers", { skill: "alchemy", station: "cauldron", ms: 2200, lvl: 5, xp: 14, in: [["small_vial", 1], ["feather", 3], ["sporecap", 1]], out: ["feather", 15] });
+recipe("brew_ink_grim", { skill: "alchemy", station: "cauldron", ms: 2200, lvl: 60, xp: 130, in: [["medium_vial", 1], ["grimcore", 1], ["grimstone", 2]], out: ["ink_void", 2] });   /* (2026-09-27) Void ink without a seed: a Grim Lich's core and the wild's grimstone */
+STATIONS.fletcher = { skill: "fletching", verb: "fletch", name: "fletching table", auto: false, kind: "fletch" };
+
+/* the woods. `wc` is the Woodcutting level of the tree the log comes off; the fletching levels sit a little above
+   it, because you should be cutting a wood comfortably before you are shaping it. */
+const WOODS = [
+  { log: "logs",        name: "Rough",     wc: 1,  shaft: 1,  short: 5,  long: 10, quiver: 3 },
+  { log: "willowlogs",  name: "Willow",    wc: 15, shaft: 15, short: 20, long: 25, quiver: 18 },
+  { log: "ashlogs",     name: "Deadwood",  wc: 20, shaft: 25, short: 30, long: 35, quiver: 28 },
+  { log: "yewlogs",     name: "Yew",       wc: 35, shaft: 40, short: 45, long: 50, quiver: 43 },
+  { log: "palmlogs",    name: "Palm",      wc: 45, shaft: 50, short: 54, long: 57, quiver: 52 },
+  { log: "skyashlogs",  name: "Skyash",    wc: 45, shaft: 55, short: 60, long: 64, quiver: 58 },
+  { log: "pinelogs",    name: "Rustpine",  wc: 65, shaft: 68, short: 72, long: 76, quiver: 70 },
+  { log: "voidlogs",    name: "Vaultwood", wc: 75, shaft: 80, short: 84, long: 88, quiver: 82 },
+  { log: "bogwoodlogs", name: "Bogwood",   wc: 80, shaft: 86, short: 92, long: 96, quiver: 90 },
+];
+/* one arrow tier a bar tier. `head` is the SMITHING level to hammer heads (the tier's own gate); `arrow` is the
+   FLETCHING level to finish them, and it sits AT the head's gate so a fletcher is never offered an arrow whose
+   head they cannot yet be handed. The bone arrow, below all of this, needs no metal at all. `str` is what the
+   arrow adds to a hit, and it sits UNDER the melee ladder's +6..+38 on purpose: a bow's damage is bow plus
+   arrow, and if the arrow alone matched a sword the bow would be decoration. */
+const ARROW_METALS = TIERS.map((t, i) => ({ key: t.key, name: t.name, bar: `${t.key}_bar`, head: t.gate,
+  arrow: [10, 20, 30, 40, 50, 60, 70, 80, 90][i], str: [3, 6, 9, 12, 16, 20, 25, 30, 36][i] }));
+
+/* the four gems: which ores drop them, which arrows they tip, and what the tipping adds. The band a gem tips
+   is the band of metals it comes out of, so the ore you mine is the ore whose arrows you tip. Rarer than a
+   named rare (1%) but not a chase: about one rock in seventy. */
+export const GEMS = [
+  { key: "ruby",     name: "Ruby",     lvl: 15, ores: ["copper", "tin", "emerald_ore"],                    tips: ["bronze_arrow", "emerald_arrow"],                    str: 8,  drop: 0.014 },
+  { key: "sapphire", name: "Sapphire", lvl: 35, ores: ["diamond_ore", "dragonstone_ore"],                 tips: ["diamond_arrow", "dragonstone_arrow"],               str: 14, drop: 0.014 },
+  { key: "topaz",    name: "Topaz",    lvl: 55, ores: ["onyx_ore", "starfall_ore"],                        tips: ["onyx_arrow", "starfall_arrow"],                     str: 22, drop: 0.014 },
+  { key: "opal",     name: "Opal",     lvl: 75, ores: ["eclipse_ore", "nova_ore", "singularity_ore"],      tips: ["eclipse_arrow", "nova_arrow", "singularity_arrow"], str: 32, drop: 0.014 },
+];
+/** ore -> [[gem, chance]]: what a successful swing at that ore may also turn up (index.js rolls it) */
+export const GEM_DROP = {};
+for (const g of GEMS) for (const ore of g.ores) (GEM_DROP[ore] ||= []).push([g.key, g.drop]);
+
+/* ---------------- the items */
+ITEMS.shaft = { name: "Arrow shaft", icon: "🪶", ex: "A stick, straightened. Any wood makes the same shaft — a better tree just makes more of them." };
+ITEMS.bowstring = { name: "Bowstring", icon: "〰️", ex: "Twisted cowhide. Every bow needs one." };
+ITEMS.silkstring = { name: "Silk bowstring", icon: "🕸️", ex: "Spun from a cobweb the size of a door. Quieter, and it does not stretch." };
+ITEMS.bone_arrowhead = { name: "Bone arrowhead", icon: "🦴", ex: "Knapped from a bone. It will do until you know a smith." };
+ITEMS.bone_arrow = { name: "Bone arrow", icon: "🎯", cap: 1000, req: { skill: "archery", lvl: 1 }, ammo: { str: 1 }, ex: "Barely an arrow. It is what everybody starts with." };
+/* (2026-09-27) THE WILD'S OWN: what the three wilderness monsters carry and what it makes. See the MOBS note on them. */
+ITEMS.wildsilk = { name: "Wild silk", icon: "\u{1F578}\uFE0F", ex: "A Wild Weaver's spinning, strong as wire. One coil is four silkstrings at the fletching table." };
+ITEMS.marrow = { name: "Marrow", icon: "\u{1F9B4}", ex: "The glowing marrow of a Marrow Hound. Knaps into fifteen arrowheads that bite." };
+ITEMS.marrow_arrowhead = { name: "Marrow arrowhead", icon: "\u{1F53A}", ex: "Bone-white and barbed, with a light in it. Fletch it to a shaft." };
+ITEMS.marrow_arrow = { name: "Marrow arrow", icon: "\u{1F3AF}", cap: 1000, req: { skill: "archery", lvl: 45 }, ammo: { str: 14 }, ex: "The Wilderness's own arrow, between dragonstone and onyx. Only a Marrow Hound makes the heads." };
+ITEMS.grimcore = { name: "Grimcore", icon: "\u{1F52E}", ex: "A knot of the Deep Wild's own dark, cut from a Grim Lich. With two grimstone it brews Void ink." };
+for (const g of GEMS) ITEMS[g.key] = { name: g.name, icon: "💎", ex: `A cut ${g.name.toLowerCase()}. It tips an arrow, and a jeweller would pay for it.` };
+for (const w of WOODS) {
+  const i = WOODS.indexOf(w);
+  /* A BOW IS A WEAPON, so it wears the weapon slot and carries a speed the same way a gladius does. `launcher`
+     is what marks it ranged and holds the reach and what it fires; `bow: true` is just a name for the page. */
+  ITEMS[`${w.log}_shortbow`] = { name: `${w.name} shortbow`, icon: "🏹", slot: "weapon", speed: 1800, acc: 6 + i * 4, launcher: { range: 4, ammo: "arrow" }, bow: true,
+    req: { skill: "archery", lvl: ARCHERY.useLvl.short[i] }, ex: "Quick to draw and short in the reach. Feed it cheap arrows." };
+  ITEMS[`${w.log}_longbow`] = { name: `${w.name} longbow`, icon: "🏹", slot: "weapon", speed: 2800, acc: 4 + i * 4, str: 2 + i * 2, launcher: { range: 6, ammo: "arrow" }, bow: true,
+    req: { skill: "archery", lvl: ARCHERY.useLvl.long[i] }, ex: "Slow, heavy and it reaches two tiles further. Worth good arrows." };
+  ITEMS[`${w.log}_quiver`] = { name: `${w.name} quiver`, icon: "🎒", slot: "shield", pouch: { ammo: "arrow", cap: FLETCH.quiverCap[i] },
+    req: { skill: "archery", lvl: ARCHERY.useLvl.quiver[i] }, ex: `Holds ${FLETCH.quiverCap[i]} arrows of one kind in the offhand. Load it from your bag and a shot draws from here first.` };
+}
+/* (2026-09-25, the owner: "are bows/quivers reforgable? they should be"). In the wood they are made of, not bars: twice
+   the logs the piece took to make, at the Fletching level it took to make it. Reforged at the fletching table (or the
+   anvil, which already has the panel). A bow grows accuracy and strength like any weapon; a quiver grows room. */
+for (const w of WOODS) for (const [kind, lvl] of [["shortbow", w.short], ["longbow", w.long], ["quiver", w.quiver]]) {
+  const it = ITEMS[`${w.log}_${kind}`]; if (!it) continue;
+  it.forgeWith = [w.log, kind === "longbow" ? 6 : kind === "shortbow" ? 4 : 2]; it.forgeReq = { skill: "fletching", lvl };
+}
+for (const m of ARROW_METALS) {
+  ITEMS[`${m.key}_arrowhead`] = { name: `${m.name} arrowhead`, icon: "📍", ex: `Hammered from a ${m.name.toLowerCase()} bar, fifteen at a time. Fletch them onto shafts.` };
+  ITEMS[`${m.key}_arrow`] = { name: `${m.name} arrow`, icon: "🎯", cap: 1000, ammo: { str: m.str }, req: { skill: "archery", lvl: m.arrow }, ex: `Spends one per shot. Adds ${m.str} to what lands.` };
+}
+for (const g of GEMS) ITEMS[`${g.key}_arrow`] = { name: `${g.name}-tipped arrow`, icon: "🎯", cap: 1000, ammo: { str: g.str }, req: { skill: "archery", lvl: Math.min(...ARROW_METALS.filter((m) => g.tips.includes(`${m.key}_arrow`)).map((m) => m.arrow), 99) }, ex: `A ${g.name.toLowerCase()} on the point. Adds ${g.str} to what lands, and it is the same arrow whichever metal it started as.` };
+/* THE CAPSTONE AT 99: the best wood, the best string, and a singularity core - the same 1-in-2,000 drop the top
+   melee weapons want, so the two ladders end on the same chase item rather than each inventing one. */
+ITEMS.longcount = { name: "The Long Count", icon: "🏹", forgeWith: ["bogwoodlogs", 10], forgeReq: { skill: "fletching", lvl: 99 }, slot: "weapon", speed: 2600, acc: 44, str: 26, launcher: { range: 7, ammo: "arrow" }, bow: true,
+  req: { skill: "archery", lvl: 99 }, ex: "Bogwood, silk and something that fell out of the sky. It reaches further than anything else in the game." };
+
+/* ---------------- the recipes. `station: "fletcher"` throughout; the one exception is the synergy: HEADS are
+   SMITHING at the anvil, so fletching is not a skill you level in a corner on your own. */
+const fl = (id, r) => recipe(id, { ms: 1800, station: "fletcher", skill: "fletching", ...r });
+fl("fletch_bone_arrowhead", { lvl: 1, xp: 4, in: [["bones", 1]], out: ["bone_arrowhead", 5] });
+fl("fletch_bone_arrow", { lvl: 1, xp: 6, in: [["shaft", 5], ["bone_arrowhead", 5], ["feather", 5]], out: ["bone_arrow", 5] });
+fl("fletch_bowstring", { lvl: 1, xp: 10, in: [["hide", 1]], out: ["bowstring", 1] });
+fl("fletch_silkstring", { lvl: 55, xp: 90, in: [["cobweb", 1]], out: ["silkstring", 3] });
+fl("fletch_silkstring_wild", { lvl: 55, xp: 120, in: [["wildsilk", 1]], out: ["silkstring", 4] });   /* (2026-09-27) the Wild Weaver's coil */
+fl("fletch_marrow_arrowhead", { lvl: 45, xp: 40, in: [["marrow", 1]], out: ["marrow_arrowhead", 15] });
+fl("fletch_marrow_arrow", { lvl: 48, xp: 90, in: [["shaft", 15], ["marrow_arrowhead", 15], ["feather", 15]], out: ["marrow_arrow", 15] });
+fl("fletch_shaft_gallowslogs", { lvl: 92, xp: 84, in: [["gallowslogs", 1]], out: ["shaft", 50] });   /* (2026-09-27) fifty shafts a log: the Deep's wood */
+for (const w of WOODS) {
+  const i = WOODS.indexOf(w), str = i >= 6 ? "silkstring" : "bowstring";   /* the top three woods want the silk string: the one thing gating them on something you cannot chop */
+  fl(`fletch_shaft_${w.log}`, { lvl: w.shaft, xp: 6 + i * 9, in: [[w.log, 1]], out: ["shaft", FLETCH.shaftsPerLog[i]] });
+  fl(`fletch_${w.log}_shortbow`, { lvl: w.short, xp: 20 + i * 28, in: [[w.log, 2], [str, 1]], out: [`${w.log}_shortbow`, 1] });
+  fl(`fletch_${w.log}_longbow`, { lvl: w.long, xp: 30 + i * 38, in: [[w.log, 3], [str, 1]], out: [`${w.log}_longbow`, 1] });
+  fl(`fletch_${w.log}_quiver`, { lvl: w.quiver, xp: 16 + i * 24, in: [[w.log, 1], ["hide", 2]], out: [`${w.log}_quiver`, 1] });
+}
+for (const m of ARROW_METALS) {
+  recipe(`smith_${m.key}_arrowhead`, { skill: "smithing", station: "anvil", lvl: m.head, ms: 2200, xp: 12 + ARROW_METALS.indexOf(m) * 18, in: [[m.bar, 1]], out: [`${m.key}_arrowhead`, FLETCH.perBar] });
+  fl(`fletch_${m.key}_arrow`, { lvl: m.arrow, xp: 10 + ARROW_METALS.indexOf(m) * 22, in: [["shaft", FLETCH.perLog], [`${m.key}_arrowhead`, FLETCH.perBar], ["feather", FLETCH.perLog]], out: [`${m.key}_arrow`, FLETCH.perLog] });
+}
+/* tipping: fifteen arrows of the LOWEST metal in the gem's band plus one stone. The lowest, so the stone is what
+   you are paying for rather than the metal, and so the arrows you tip are the ones you had spare. */
+for (const g of GEMS) fl(`fletch_${g.key}_arrow`, { lvl: g.lvl, xp: 40 + GEMS.indexOf(g) * 60, in: [[g.tips[0], FLETCH.perLog], [g.key, 1]], out: [`${g.key}_arrow`, FLETCH.perLog] });
+fl("fletch_longcount", { lvl: 99, xp: 6000, ms: 4000, in: [["bogwoodlogs", 5], ["silkstring", 2], ["singularity_core", 1]], out: ["longcount", 1] });
+
+/* ---------------- ranged, as launcher + ammo (see the note at the top on why it is not "bow + arrow") */
+/** the launcher in the weapon slot, or null */
+export const launcherOf = (c) => { const k = c?.eq?.weapon; const it = k && ITEMS[k]; return it?.launcher ? it : null; };
+/** what a launcher would fire right now: { from: "pouch"|"bag", k, n } or null. The offhand pouch first, then the
+    biggest matching stack in the bag. */
+export const ammoOf = (c) => {
+  const L = launcherOf(c); if (!L) return null;
+  const kind = L.launcher.ammo || "arrow";   /* (2026-09-26) only ammo of the launcher's own kind: a wand never fires your arrows */
+  const q = c.quiver; if (q && q.n > 0 && ammoKind(q.k) === kind) return { from: "pouch", k: q.k, n: q.n };
+  let best = null;
+  for (const st of c.inv || []) if (ammoKind(st.k) === kind && (!best || st.n > best.n)) best = st;
+  return best ? { from: "bag", k: best.k, n: best.n } : null;
+};
+/** how far the held launcher reaches, or 1 for anything else */
+export const reachOfHeld = (c) => { const L = launcherOf(c); return L ? L.launcher.range + (charmOf(c, "tailwind") ? 1 : 0) : 1; };   /* (2026-09-26) Tailwind: one tile further */
+/** what kind of ammunition an item is: "arrow" (every arrow, which predates the field), "page", or null */
+export const ammoKind = (k) => (ITEMS[k]?.ammo ? ITEMS[k].ammo.kind || "arrow" : null);
+/** the words for a kind of ammunition and the thing that holds it, so no message says "arrows" to a wizard */
+export const AMMO_WORDS = { arrow: { one: "arrow", many: "arrows", pouch: "quiver" }, page: { one: "spell page", many: "spell pages", pouch: "Magic Bag" } };
+export const ammoWords = (kind) => AMMO_WORDS[kind] || AMMO_WORDS.arrow;
+/** the element of the loaded page, or null */
+export const ammoElOf = (c) => { const a = ammoOf(c); return a ? ITEMS[a.k].ammo.el || null : null; };
+/** what the loaded ammo adds to a hit */
+/* (2026-09-26, the overnight balance pass) AMMUNITION COUNTS HALF. What an arrow or a page adds to the max hit is its strength times
+   AMMO_SHARE. At full strength a bow or a wand out-hit a sword of the same level by 1.6x from Archery 45 and by 2x at 90 - a
+   singularity arrow alone added more than a singularity sword's whole strength - and since every point of damage is xp, the
+   ranged styles levelled twice as fast too. At half, a bow lands about even with a sword (a little ahead on its faster draw) and
+   a wand about a tenth ahead of it, which is what burning a page a cast should buy. tools/eastscape-balance.mjs has the table. */
+export const AMMO_SHARE = 0.5;
+export const ammoStrOf = (c) => { const a = ammoOf(c); return a ? Math.round(ITEMS[a.k].ammo.str * AMMO_SHARE) : 0; };
+/** the pouch in the offhand, or null */
+export const pouchOf = (c) => { const k = c?.eq?.shield; const it = k && ITEMS[k]; return it?.pouch ? it : null; };
+/** how many the worn pouch holds, its reforge level included (+FORGE.pcap a level) */
+export const pouchCapOf = (c) => { const P = pouchOf(c); return P ? Math.round(P.pouch.cap * (1 + FORGE.pcap * fLevelOf(c, "shield"))) : 0; };
+
+/* WHAT YOU HAMMER OUT CAN GO WRONG, AND WHAT YOU SMOKE CAN BURN (2026-09-25, the owner, after a scan for
+   recipes that could never fail: "armor smithing should be 90% and smoked fish 90%").
+
+   NINETY PER CENT, FLAT, at every level, for those two and nothing else. Not a curve: alchemy's falls from 50%
+   because its input is one grain of sand, and the same shape on a cuirass would cost five bars half the time
+   you tried at a new tier. A flat tenth is a tax on certainty rather than a wall in front of every rung.
+
+   IT IS EVERY RECIPE THE SCAN FOUND AT 100%: 95 pieces of gear, 7 bars, 9 smoked fish and the three anvil
+   consumables. It went out as anvil-and-smoke-only for one deploy; the owner widened it back to the whole set.
+   A bar failing IS felt twice - once for the ore and again for the thing it was going to become - which is the
+   argument for exempting it and is worth knowing if that ever comes up again.
+
+   WHAT IS NOT TOUCHED:
+   NOVA AND SINGULARITY stay certain. Their weapons eat a core that is one kill in two thousand, and a tenth
+   chance of losing it on the anvil is not tension, it is a reason to stop playing.
+   AND COOKING keeps its true 0% at burnStop: "this fish never burns again" is a reward people level towards and
+   the wiki promises it. The SMOKE of the same fish is a separate recipe and that is the one that can fail. */
+export const SMITH_FAIL = 0.10;
+{
+  const safe = (id, r) => /^(nova|singularity)_/.test(r.out[0]) || /(nova|singularity)/.test(id);
+  for (const [id, r] of Object.entries(RECIPES)) {
+    if (r.fail || r.failStop != null || r.burnStop != null) continue;   // alchemy has its curve, cooking its burn, charcoal its own 3%
+    if (!/^(smith_|smelt_|smoke_|make_)/.test(id)) continue;             // everything the scan found at 100%: gear, bars, smoked fish and the three anvil consumables
+    if (safe(id, r)) continue;
+    r.fail = SMITH_FAIL;
+  }
+}
+
 export const TIX_RATE = 0.5;
 {
   const cut = (n) => (n > 0 ? Math.max(1, Math.round(n * TIX_RATE)) : n);   // nothing worth something becomes worth nothing
@@ -5138,6 +5491,14 @@ export const ZDROP = { kill: (lvl) => 0.003 + lvl * 0.0001, fish: { sardine: 0.0
    The cost, accepted: a few signature drops get much rarer. The Junk King's line falls about 89% and the goat's
    toga goes from one in four to one in a hundred. 78 lines get rarer, 9 more common, 12 were already there. */
 export const RARE_RATE = 0.01;
+/* HOW OFTEN A 2X POTION TURNS UP, and why this number. It is FLAT across every monster in the game rather than
+   scaled by bounty the way FINDS are: a chicken should be able to drop it, because "it can come from anywhere"
+   is most of what makes people talk about it. At roughly 240 kills an hour each, five people playing is about
+   1,200 kills an hour, so one in six thousand is a pop every four or five hours of a busy room - often enough
+   to be a thing that happens, rare enough that nobody plans around it. The event runs 30 minutes, so the server
+   spends something like a tenth of its busy time doubled. Raise the rate and you are raising the ticket supply
+   for everybody at once, which is the one knob here that is really an economy knob. */
+export const DOUBLE = { drop: 1 / 6000, ms: 30 * 60 * 1000, mult: 2 };
 /* (2026-09-24) THE FINDS TOGETHER HAVE A CEILING, and not just one at a time. findChance clamps each find at
    25%, which was plenty while the biggest bounty in the game was The House's 642 — but there are SEVEN finds,
    so the clamp lets them total 175%, and rollRare walks the list subtracting as it goes: past 100% the tail
@@ -5148,7 +5509,10 @@ export const RARE_RATE = 0.01;
    NOTHING IN THE GAME TODAY IS AFFECTED: the heaviest existing line is The House at 43%, well under the cap. */
 export const FIND_CAP = 0.5;
 export const raresOf = (mob) => {
-  const out = [...(BOUNTY[mob] ? [["zcoin", ZDROP.kill(MOBS[mob].lvl)]] : []), ...(MOBS[mob]?.rare || []).map(([k]) => [k, RARE_RATE])];
+  /* the 2X potion sits at the FRONT of the table and at a flat rate: it is not a casino "find" (those scale with
+     the monster's bounty, so only the Thunderhead would ever drop one) and not a monster's own rare (those are
+     one per monster at RARE_RATE). Every monster with a bounty, same chance, chicken included. */
+  const out = [...(BOUNTY[mob] ? [["pot_double", DOUBLE.drop], ["zcoin", ZDROP.kill(MOBS[mob].lvl)]] : []), ...(MOBS[mob]?.rare || []).map(([k]) => [k, RARE_RATE])];
   if (!BOUNTY[mob]) return out;
   const finds = FINDS.map((f) => [f[0], findChance(mob, f)]);
   const sum = finds.reduce((a, [, p]) => a + p, 0);
@@ -5322,8 +5686,17 @@ export const CROPS = {
   lanternroot: { lvl: 20, ms: 40 * 60000, yield: [3, 6], xp: 150, col: "#ffb03a" },
   bonegourd: { lvl: 30, ms: 1 * 3600000, yield: [3, 6], xp: 400, col: "#e8e0c8" },
   stormcorn: { lvl: 40, ms: 2 * 3600000, yield: [4, 7], xp: 700, col: "#9ad8ff" },
-  goldtomatoe: { lvl: 50, ms: 4 * 3600000, yield: [1, 3], xp: 600, col: "#ffd84a" }
+  goldtomatoe: { lvl: 50, ms: 4 * 3600000, yield: [1, 3], xp: 600, col: "#ffd84a" },
+  /* (2026-09-27) THE LAST THREE CROPS. Harvesting stopped at 50; these run it to 92, each seeded by the zone of that level like every
+     crop before them: the glass gourd by the Carnival's freaks, the ember wheat by the Vault's wardens, the starfruit by the Trailer
+     Park's dogs. Long growers with big yields, so a plot planted before bed is worth the bed. */
+  glassgourd: { lvl: 62, ms: 5 * 3600000, yield: [3, 5], xp: 1100, col: "#a8e0ff" },
+  emberwheat: { lvl: 78, ms: 6 * 3600000, yield: [3, 5], xp: 1900, col: "#ff8a30" },
+  starfruit: { lvl: 92, ms: 8 * 3600000, yield: [2, 4], xp: 3200, col: "#ffe060" }
 };
+ITEMS.glassgourd = { name: "Glass gourd", icon: "\u{1F52E}", ex: "Grows clear enough to read through. The Carnival's freaks carry the seed, which is the gourd." };
+ITEMS.emberwheat = { name: "Ember wheat", icon: "\u{1F33E}", ex: "The heads glow. Do not store it near anything that burns. The Vault's wardens carry it, for reasons." };
+ITEMS.starfruit = { name: "Starfruit", icon: "\u2B50", ex: "Five points and a light of its own. Fell into the Trailer Park with everything else." };
 // a theme repaints your island; price null means you can't buy it (events, quests)
 export const THEMES = {
   meadow: { name: "Meadow", icon: "🌿", ex: "Green grass, round trees, a nice breeze.", price: 0 },
@@ -5422,6 +5795,211 @@ export const HISCORES = [["combat", "Combat", "level", "lvl"], ["total", "Total 
      crypt clears, while this is a number carried on every character (stats.runBest) — and it is the only board
      where SMALL WINS, so the sort has to know. Milliseconds, so the page prints one decimal. */
   ["runBest", "The Run", "fastest lap", "lap"]];
+/* ---------------- what is on, and where. The same shape THIEF.live uses. */
+if (FLETCH.live) {
+  SKILL_GROUPS.find((g) => g.name === "Combat")?.keys.splice(1, 0, "archery");   /* Combat, Archery, Hitpoints */
+  SKILL_GROUPS.find((g) => g.name === "Skilling")?.keys.push("fletching");
+  HISCORES.splice(1, 0, ["archery", "Archery", "level", "lvl"]);   /* beside Combat, not at the end of the list */
+  HISCORES.push(["fletching", "Fletching", "level", "lvl"]);
+  SHOP.sells.push(["logs_shortbow", 40], ["logs_quiver", 30], ["bone_arrow", 2]);   /* the Archery 1 kit, so nobody has to fletch before they can shoot */
+  KITS.push(["logs_shortbow", 1, 40], ["logs_quiver", 1, 30], ["bone_arrow", 100, 200]);   /* ...and the counter that actually sells it */
+}
+
+/* ============================================================ MAGIC and WIZARDRY (2026-09-26)
+   The owner's design (memory note eastscape-magic-design): Magic is a COMBAT skill like Archery - a WAND in the weapon hand, SPELL
+   PAGES as its ammunition, a MAGIC BAG in the offhand holding them the way a quiver holds arrows - and it rides the launcher /
+   ammo / pouch template archery built, so nothing in the fight knows the word "wand". Wizardry is the CRAFTING skill that ties the
+   rest together: seeds from monsters are grown on your island (Harvesting), brewed into ink (Alchemy), paper is pressed from logs
+   (at the fletching table), and pages are PRINTED at element ALTARS around the world - the best of them, the Nexus, deep in the
+   Wilderness. Five elements (Fire, Frost, Storm, Void, Sun) plus Arcane for practice; every monster may be weak to one and resist
+   another. Utility pages are BUFFS and TRAVEL, never shortcuts: one at a time, outside only, tiered by the reader's Wizardry. */
+export const MAGIC = {
+  live: true,
+  weakMul: 1.35, resistMul: 0.6,                      // a monster's own weakness and resistance
+  burn: { chance: 0.5, share: 0.4, ms: 1200 },       // FIRE: half the time, 40% of the hit again 1.2 s later
+  slow: { ms: 4000, mult: 1.5 },                     // FROST: the monster's next swings take 1.5x as long, for 4 s
+  arc: { share: 0.5 },                               // STORM: half the hit jumps to one other monster beside the target
+  pierce: 0.3,                                       // VOID: ignores 30% of the target's defence
+  sunHeal: 0.15,                                     // SUN: you heal 15% of the damage you deal
+  bagLvl: [1, 30, 50, 70, 90], bagCap: [100, 250, 500, 1000, 2500],
+  tierAt: [70, 90],                                  // utility page tiers: I below Wizardry 70, II from 70, III from 90 (2026-09-26, the owner: the pages start at Wizardry 50 and run to 99, so the tiers moved up with them)
+};
+/* the elements. `base` is the Magic level of its first page and the Wizardry level to print it; Blast is +20, Surge +40 */
+export const ELEMENTS = {
+  arcane: { name: "Arcane", icon: "✨", col: "#e070d0", base: 1 },
+  sun:    { name: "Sun", icon: "☀️", col: "#ffd84a", base: 10, seed: "seed_sun", bloom: "sunpetal" },
+  fire:   { name: "Fire", icon: "\u{1F525}", col: "#ff6a2a", base: 20, seed: "seed_ember", bloom: "emberbloom" },
+  frost:  { name: "Frost", icon: "❄️", col: "#9ad8ff", base: 30, seed: "seed_frost", bloom: "frostcap" },
+  void:   { name: "Void", icon: "\u{1F300}", col: "#b070ff", base: 40, seed: "seed_void", bloom: "voidlily" },
+  storm:  { name: "Storm", icon: "⚡", col: "#ffe24a", base: 50, bloom: "stormcorn" },   /* Storm grows the Stormcorn that already exists */
+};
+export const ELEMENT_KEYS = ["sun", "fire", "frost", "void", "storm"];
+SKILLS.magic = { name: "Magic", icon: "\u{1FA84}" };
+SKILLS.wizardry = { name: "Wizardry", icon: "\u{1F4DC}" };
+
+/* ---------------- materials */
+ITEMS.gallowslogs = { name: "Gallows logs", icon: "\u{1FAB5}", ex: "Near-black, close-grained, and the only wood in the game past bogwood. One tree, in the Deep Wild." };   /* (2026-09-27) Woodcutting to 90 */
+ITEMS.spellpaper = { name: "Spell paper", icon: "\u{1F4C4}", ex: "Pressed from logs at the Arcane altar in the Yard. Every spell page and scroll is printed on it." };
+for (const [el, E] of Object.entries(ELEMENTS)) ITEMS[`ink_${el}`] = { name: `${E.name} ink`, icon: "\u{1F58B}️", ex: `Brewed at the cauldron. ${el === "arcane" ? "The practice ink: Arcane pages and every wand and bag." : `Prints ${E.name} pages and scrolls at the ${E.name} altar, or at the Nexus.`}` };
+const SEED_NAMES = { seed_sun: "Sun seeds", seed_ember: "Ember seeds", seed_frost: "Frost seeds", seed_void: "Void seeds" };
+const BLOOM_NAMES = { sunpetal: "Sunpetal", emberbloom: "Emberbloom", frostcap: "Frostcap", voidlily: "Voidlily" };
+for (const [k, n] of Object.entries(SEED_NAMES)) ITEMS[k] = { name: n, icon: "\u{1F331}", ex: "Plant them on your island. They grow the flower that element's ink is brewed from." };
+for (const [k, n] of Object.entries(BLOOM_NAMES)) ITEMS[k] = { name: n, icon: "\u{1F33A}", ex: "Grown on your island from seeds. Three of them and a vial brew two bottles of ink at the cauldron." };
+/* the four new island crops: planted as SEEDS, harvested as the bloom (`yields`), drawn from crop_<art>_1..4 */
+Object.assign(CROPS, {
+  seed_sun:   { lvl: 15, ms: 60 * 60000,  yield: [3, 5], xp: 120, col: "#ffd84a", yields: "sunpetal",   art: "sunpetal" },
+  seed_ember: { lvl: 25, ms: 90 * 60000,  yield: [3, 5], xp: 220, col: "#ff6a2a", yields: "emberbloom", art: "emberbloom" },
+  seed_frost: { lvl: 35, ms: 120 * 60000, yield: [3, 5], xp: 380, col: "#9ad8ff", yields: "frostcap",   art: "frostcap" },
+  seed_void:  { lvl: 45, ms: 180 * 60000, yield: [3, 5], xp: 600, col: "#b070ff", yields: "voidlily",   art: "voidlily" },
+});
+/** what a planted crop gives, and the pictures it grows through */
+export const cropYield = (k) => CROPS[k]?.yields || k;
+/* (2026-09-27, the owner: "have the chance of seed return at 25%") a harvested seed crop gives one seed back this often, so a plot found once can be kept going */
+export const SEED_RETURN = 0.25;
+export const cropArt = (k) => CROPS[k]?.art || k;
+
+/* ---------------- combat pages: the ammunition. Arcane is the practice page; each element has Bolt, Blast and Surge */
+const pageStr = (lvl) => Math.max(2, Math.round(lvl * 0.36));
+const PAGE_TIERS = [["bolt", "bolt", 0], ["blast", "blast", 20], ["surge", "surge", 40]];
+ITEMS.page_arcane = { name: "Arcane bolt", icon: "✨", cap: 1000, ammo: { kind: "page", str: 2, el: "arcane" }, req: { skill: "magic", lvl: 1 }, ex: "A practice page. No element: nothing is weak to it and nothing resists it." };
+for (const el of ELEMENT_KEYS) for (const [t, word, plus] of PAGE_TIERS) {
+  const E = ELEMENTS[el], lvl = E.base + plus;
+  ITEMS[`page_${el}_${t}`] = { name: `${E.name} ${word}`, icon: E.icon, cap: 1000, ammo: { kind: "page", str: pageStr(lvl), el }, req: { skill: "magic", lvl },
+    ex: `Spends one per cast. Adds ${pageStr(lvl)} to what lands, and it is ${E.name}: monsters weak to ${E.name} take far more, and some resist it.` };
+}
+
+/* ---------------- wands: one per wood, like the bows, plus a capstone */
+for (const w of WOODS) {
+  const i = WOODS.indexOf(w), lvl = ARCHERY.useLvl.short[i];
+  ITEMS[`${w.log}_wand`] = { name: `${w.name} wand`, icon: "\u{1FA84}", slot: "weapon", speed: 2200, acc: 6 + i * 4, str: 1 + i * 2,
+    launcher: { range: 5, ammo: "page", style: "magic" }, wand: true, req: { skill: "magic", lvl },
+    forgeWith: [w.log, 4], forgeReq: { skill: "wizardry", lvl }, ex: "Casts from five tiles. The page you load sets the damage and the element." };
+}
+ITEMS.lastword = { name: "The Last Word", icon: "\u{1FA84}", slot: "weapon", speed: 2000, acc: 52, str: 26, launcher: { range: 6, ammo: "page", style: "magic" }, wand: true,
+  req: { skill: "magic", lvl: 99 }, forgeWith: ["bogwoodlogs", 10], forgeReq: { skill: "wizardry", lvl: 99 },
+  ex: "Every element in one crystal. It reaches further than any other wand in the game." };
+
+/* ---------------- Magic Bags: only five, so progression is staggered; reforgeable, in spell paper */
+const BAGS = [["bag_scrap", "Scrap Satchel"], ["bag_hedge", "Hedge Pouch"], ["bag_conjurer", "Conjurer's Satchel"], ["bag_starweave", "Starweave Bag"], ["bag_bottomless", "The Bottomless Bag"]];
+BAGS.forEach(([k, name], i) => {
+  ITEMS[k] = { name, icon: "\u{1F45C}", slot: "shield", pouch: { ammo: "page", cap: MAGIC.bagCap[i] }, req: { skill: "magic", lvl: MAGIC.bagLvl[i] },
+    forgeWith: ["spellpaper", 10 + i * 10], forgeReq: { skill: "wizardry", lvl: MAGIC.bagLvl[i] },
+    ex: `Holds ${MAGIC.bagCap[i].toLocaleString()} spell pages of one kind in the offhand. Load it from your bag; a cast draws from here first.` };
+});
+
+/* ---------------- utility pages: buffs and travel. One buff at a time, outside only, tiered by YOUR Wizardry when you read it */
+export const CHARMS = {
+  haste:       { name: "Haste",        el: "storm", lvl: 50, mins: 20,  vals: [8, 12, 16],  what: (v) => `+${v}% movement speed` },
+  focus:       { name: "Focus",        el: "fire",  lvl: 66, mins: 15,  vals: [5, 8, 12],   what: (v) => `+${v}% accuracy and damage, in any style` },
+  ward:        { name: "Ward",         el: "frost", lvl: 72, mins: 15,  vals: [5, 8, 12],   what: (v) => `+${v}% defence` },
+  rainmaker:   { name: "Rainmaker",    el: "sun",   lvl: 60, mins: 120, vals: [25, 35, 50], what: (v) => `crops you plant grow ${v}% faster` },
+  steadyhands: { name: "Steady Hands", el: "fire",  lvl: 55, mins: 15,  vals: [30, 40, 50], what: (v) => `${v}% less chance to burn food` },
+  stonesense:  { name: "Stone Sense",  el: "void",  lvl: 84, mins: 20,  vals: [25, 40, 50], what: (v) => `gems turn up ${v}% more often in ore` },
+  keeneye:     { name: "Keen Eye",     el: "void",  lvl: 99, mins: 15,  vals: [5, 8, 10],   what: (v) => `+${v}% chance of a rare drop` },
+  tailwind:    { name: "Tailwind",     el: "storm", lvl: 91, mins: 15,  vals: [1, 1, 1],    what: () => "your bow and wand reach one tile further" },
+  stillness:   { name: "Stillness",    el: "frost", lvl: 78, mins: 30,  vals: [3, 4, 5],    what: (v) => `fishing and woodcutting keep going ${v} minutes longer before the idle stop` },
+};
+for (const [k, C_] of Object.entries(CHARMS)) ITEMS[`scroll_${k}`] = { name: `${C_.name} scroll`, icon: "\u{1F4DC}", use: "charm", charm: k,
+  ex: `Read it for ${C_.mins} minutes of: ${C_.what(C_.vals[0])} (tier I), up to ${C_.what(C_.vals[2])} (tier III). Your Wizardry sets the tier. One page buff at a time; the clock runs only outside.` };
+ITEMS.scroll_homeward = { name: "Homeward scroll", icon: "\u{1F4DC}", use: "homeward", ex: "Read it and you are standing on your own island. Not in the Wilderness, and not while something is hitting you." };
+/* four Waystones, spaced across the world: each at a fork or the far end of a branch, so you still walk to everything between */
+export const WAYSTONES = {
+  waystone_boneyard:    { scene: "boneyard",    side: "e", lvl: 52, name: "The Boneyard" },
+  waystone_sands:       { scene: "sands",       side: "e", lvl: 63, name: "The Golden Sands" },
+  waystone_thunderhead: { scene: "thunderhead", side: "e", lvl: 75, name: "The Thunderhead" },
+  waystone_trailer:     { scene: "trailer",     side: "s", lvl: 87, name: "The Trailer Park" },
+};
+for (const [k, Wy] of Object.entries(WAYSTONES)) ITEMS[k] = { name: `Waystone: ${Wy.name}`, icon: "\u{1F4DC}", use: "waystone", ex: `Read it to arrive at the edge of ${Wy.name}. Not in the Wilderness, not inside a run, and not within 10 seconds of being hit.` };
+/** the tier a reader gets from a utility page: their Wizardry, at the moment they read it */
+export const charmTier = (c) => { const l = lvlOf(c, "wizardry"); return l >= MAGIC.tierAt[1] ? 3 : l >= MAGIC.tierAt[0] ? 2 : 1; };
+/** the value of a running page buff, or 0 */
+export const charmOf = (c, k) => (c?.charm && c.charm.k === k && (c.charm.left | 0) > 0 ? CHARMS[k].vals[(c.charm.tier || 1) - 1] : 0);
+
+/* ---------------- stations: seven altars, paper at the fletching table, ink at the cauldron */
+for (const el of ["arcane", ...ELEMENT_KEYS]) STATIONS[`altar_${el}`] = { skill: "wizardry", verb: "print", name: `${ELEMENTS[el].name} altar`, auto: false, kind: "print" };
+STATIONS.altar_nexus = { skill: "wizardry", verb: "print", name: "the Nexus", auto: false, kind: "print", nexus: true };
+/** the Nexus prints anything any altar prints, twice over, for half as much xp again */
+export const NEXUS = { mult: 2, xp: 1.5 };
+const pr = (id, r) => recipe(id, { ms: 2400, skill: "wizardry", ...r });
+/* paper is pressed at the ARCANE altar: a Wizardry recipe belongs at a Wizardry station (the content check holds every station to its own skill) */
+pr("press_paper", { station: "altar_arcane", lvl: 1, xp: 4, ms: 1800, in: [["logs", 1]], out: ["spellpaper", 5] });
+pr("press_paper_willow", { station: "altar_arcane", lvl: 20, xp: 7, ms: 1800, in: [["willowlogs", 1]], out: ["spellpaper", 8] });
+pr("press_paper_gallows", { station: "altar_arcane", lvl: 90, xp: 14, ms: 1800, in: [["gallowslogs", 1]], out: ["spellpaper", 14] });   /* (2026-09-27) the Deep's wood */
+const INK = { arcane: [1, "small_vial", "sporecap", 2], sun: [10, "small_vial", "sunpetal", 3], fire: [20, "small_vial", "emberbloom", 3], frost: [30, "small_vial", "frostcap", 3], void: [40, "medium_vial", "voidlily", 3], storm: [50, "medium_vial", "stormcorn", 3] };
+for (const [el, [lvl, vial, herb, n]] of Object.entries(INK)) recipe(`brew_ink_${el}`, { skill: "alchemy", station: "cauldron", ms: 2200, lvl, xp: 12 + lvl * 2, in: [[vial, 1], [herb, n]], out: [`ink_${el}`, 2] });
+/* combat pages, ten to a print */
+pr("print_page_arcane", { station: "altar_arcane", lvl: 1, xp: 10, in: [["spellpaper", 10], ["ink_arcane", 1]], out: ["page_arcane", 10] });
+for (const el of ELEMENT_KEYS) PAGE_TIERS.forEach(([t, , plus], j) => { const lvl = ELEMENTS[el].base + plus;
+  pr(`print_page_${el}_${t}`, { station: `altar_${el}`, lvl, xp: Math.round((10 + lvl) * (1 + j * 0.5)), in: [["spellpaper", 10], [`ink_${el}`, 1 + j]], out: [`page_${el}_${t}`, 10] }); });
+/* utility pages, one to a print (two at the Nexus) */
+for (const [k, C_] of Object.entries(CHARMS)) pr(`print_scroll_${k}`, { station: `altar_${C_.el}`, lvl: C_.lvl, xp: 30 + C_.lvl * 2, in: [["spellpaper", 2], [`ink_${C_.el}`, 2]], out: [`scroll_${k}`, 1] });
+pr("print_scroll_homeward", { station: "altar_sun", lvl: 50, xp: 40, in: [["spellpaper", 2], ["ink_sun", 1]], out: ["scroll_homeward", 1] });
+for (const [k, Wy] of Object.entries(WAYSTONES)) pr(`print_${k}`, { station: "altar_storm", lvl: Wy.lvl, xp: 30 + Wy.lvl * 2, in: [["spellpaper", 1], ["ink_storm", 1], ["grimstone", 1]], out: [k, 1] });   /* (2026-09-27) a stone that remembers a place: grimstone, from the Wilderness, is what a Waystone is printed on */
+/* wands and bags are made at the Arcane altar */
+const WAND_INK = ["arcane", "arcane", "sun", "sun", "fire", "fire", "frost", "void", "void"], WAND_GEM = [null, null, "ruby", "ruby", "sapphire", "sapphire", "topaz", "opal", "opal"];
+WOODS.forEach((w, i) => pr(`make_${w.log}_wand`, { station: "altar_arcane", lvl: ARCHERY.useLvl.short[i], xp: 30 + i * 45,
+  in: [[w.log, 3], [`ink_${WAND_INK[i]}`, 2], ...(WAND_GEM[i] ? [[WAND_GEM[i], 1]] : [])], out: [`${w.log}_wand`, 1] }));
+pr("craft_lastword", { station: "altar_arcane", lvl: 99, xp: 6000, ms: 4000, in: [["bogwoodlogs", 5], ["singularity_core", 1], ["ink_storm", 5], ["ink_void", 5]], out: ["lastword", 1] });
+const BAG_IN = [[["hide", 3], ["spellpaper", 5]], [["hide", 6], ["ink_sun", 3], ["ruby", 1]], [["hide", 10], ["ink_frost", 3], ["sapphire", 1]], [["hide", 15], ["ink_void", 4], ["topaz", 2]], [["hide", 20], ["ink_storm", 6], ["opal", 3]]];
+BAGS.forEach(([k], i) => pr(`make_${k}`, { station: "altar_arcane", lvl: MAGIC.bagLvl[i], xp: 40 + i * 300, in: BAG_IN[i], out: [k, 1] }));
+/* NOTHING IS A CERTAINTY (the owner's standing rule): every Wizardry recipe fails a flat tenth like smithed gear, and every ink has the
+   cauldron's falling curve like every other brew. The one exemption is The Last Word, which eats a singularity core: the same reason nova
+   and singularity gear are exempt at the anvil (craft_, not make_, so the craft check's make_ rule does not ask for it). */
+for (const r of Object.values(RECIPES)) if (r.skill === "wizardry" && r.id !== "craft_lastword") r.fail = SMITH_FAIL;
+for (const el of Object.keys(INK)) RECIPES[`brew_ink_${el}`].failStop = Math.min(99, INK[el][0] + 30);
+
+/* ---------------- the altars in the world: added to each area's layout after it is built, on tiles found open all round
+   (lt-magic/altarspots.mjs). The Nexus is in the Deep Wild, which lives in eastscape-closed.js and is added there. */
+export const ALTAR_SITES = {
+  workyard:    { t: "altar_arcane", x: 41, y: 6,  name: "Arcane altar: practice pages, wands and Magic Bags" },
+  carnival:    { t: "altar_fire",   x: 22, y: 12, name: "Fire altar: Fire pages, Focus and Steady Hands" },
+  cloud:       { t: "altar_frost",  x: 22, y: 12, name: "Frost altar: Frost pages, Ward and Stillness" },
+  thunderhead: { t: "altar_storm",  x: 23, y: 10, name: "Storm altar: Storm pages, Haste, Tailwind and the Waystones" },
+  vault:       { t: "altar_void",   x: 3,  y: 17, name: "Void altar: Void pages, Stone Sense and Keen Eye" },
+  sands:       { t: "altar_sun",    x: 20, y: 12, name: "Sun altar: Sun pages, Rainmaker and Homeward" },
+};
+for (const [sc, A] of Object.entries(ALTAR_SITES)) {
+  const def = SCENES[sc]; if (!def) continue; const build = def.build;
+  def.build = function () { const r = build.call(this); r.objs.push({ t: A.t, art: `o_${A.t}`, x: A.x, y: A.y, name: A.name }); r.g[A.y][A.x] = r.g[A.y][A.x] === "p" ? "P" : "#"; return r; };
+}
+
+/* ---------------- what monsters are weak to, and what they resist */
+const WEAK = {
+  weaver: ["fire", "void"], marrowhound: ["sun", "frost"], grimlich: ["sun", "void"],
+  toadstool: ["fire"], gnasher: ["fire"], boneidle: ["sun", "frost"],
+  twister: ["fire"], moth: ["fire"], counter: ["void"], taxwraith: ["sun", "void"], shark: ["storm"],
+  ghoul: ["sun", "frost"], stagehand: ["fire"], chandelier: ["fire"], usher: ["sun"], understudy: ["void"], critic: ["sun", "fire"],
+  cobra: ["frost", "fire"], scarab: ["frost", "fire"], mummy: ["fire", "frost"], jackal: ["frost"],
+  ram: ["void", "storm"], brainstorm: ["void", "storm"], seagoat: ["void"], revenant: ["sun", "frost"], angel: ["void", "sun"],
+  goose: ["frost", "storm"], golem: ["void", "storm"], wolf: ["frost", "storm"], drake: ["fire", "frost"], house: ["void", "storm"],
+  pinhead: ["fire", "void"], tripled: ["fire"], fatlady: ["fire"], strongman: ["void", "fire"], grinner: ["sun", "void"],
+  warden: ["storm", "fire"], pitboss: ["storm", "fire"], hoard: ["storm", "frost"], dealer: ["storm", "sun"],
+  junkdog: ["storm", "frost"], possum: ["fire"], scrapper: ["storm", "frost"], gator: ["frost"], junkking: ["storm", "fire"],
+};
+for (const [t, [weak, resist]] of Object.entries(WEAK)) if (MOBS[t]) { MOBS[t].weak = weak; if (resist) MOBS[t].resist = resist; }
+/** the multiplier an element meets on a monster type */
+export const elementMul = (t, el) => (!el || el === "arcane" ? 1 : MOBS[t]?.weak === el ? MAGIC.weakMul : MOBS[t]?.resist === el ? MAGIC.resistMul : 1);
+
+/* ---------------- seeds drop from the monsters of each element's home, a little over one kill in twenty */
+const SEED_FROM = {
+  seed_sun: ["boneidle", "ghoul", "usher", "revenant", "mummy", "critic", "taxwraith"],
+  seed_ember: ["stagehand", "chandelier", "pinhead", "tripled", "fatlady", "strongman", "possum", "drake"],
+  seed_frost: ["ram", "seagoat", "brainstorm", "goose", "wolf", "cobra", "jackal", "gator"],
+  seed_void: ["angel", "golem", "house", "grinner", "warden", "hoard", "dealer", "understudy"],
+};
+for (const [seed, list] of Object.entries(SEED_FROM)) for (const t of list) if (MOBS[t]) (MOBS[t].drops ||= []).push([seed, [1, 2], 0.008]);   /* (2026-09-26, the owner: "all seeds need to be very rare") one kill in 125, from a little over one in twenty */
+VALUE.spellpaper = 0; for (const k of [...Object.keys(SEED_NAMES), ...Object.keys(BLOOM_NAMES)]) VALUE[k] ??= 0;
+
+/* ---------------- on the boards and in the panels */
+if (MAGIC.live) {
+  SKILL_GROUPS.find((g) => g.name === "Combat")?.keys.splice(2, 0, "magic");   /* Combat, Archery, Magic, Hitpoints */
+  SKILL_GROUPS.find((g) => g.name === "Skilling")?.keys.push("wizardry");
+  HISCORES.splice(2, 0, ["magic", "Magic", "level", "lvl"]);
+  HISCORES.push(["wizardry", "Wizardry", "level", "lvl"]);
+  SHOP.sells.push(["logs_wand", 40], ["bag_scrap", 30], ["page_arcane", 2]);   /* the Magic 1 kit, like the Archery 1 kit */
+  KITS.push(["logs_wand", 1, 40], ["bag_scrap", 1, 30], ["page_arcane", 100, 200]);
+}
+
 /* (2026-09-23) THE THIEVING BOARD, added here rather than in the THIEVING block above, because HISCORES is
    declared BELOW that block and pushing to it from there is a temporal-dead-zone crash - one that only fires
    when THIEF.live is true, so it sat invisible for as long as the skill shipped dark. Third time an ordering
@@ -5429,7 +6007,7 @@ export const HISCORES = [["combat", "Combat", "level", "lvl"], ["total", "Total 
    to be pushed from AFTER the thing it is pushing into. */
 if (THIEF.live) HISCORES.push(["thieving", "Thieving", "level", "lvl"]);
 export const questsDone = (c) => Object.values(c?.qs || {}).filter((q) => q?.state === "done").length + (c?.tour && c.tour.step >= TOUR.length ? 1 : 0) + ((c?.stats?.jobs | 0) || 0);
-export const VERB = { towerdoor: "Enter", towerup: "Climb", cryptdoor: "Go down", cryptlever: "Pull", cryptexit: "Climb", cryptloot: "Open", hsboard: "Read", jukebox: "Play", prizecase: "Browse", mirror: "Look in", rrtable: "Sit at", rrseat: "Sit at", rrboard: "Read", barcart: "Drink at", prizewheel: "Spin", fameboard: "Read", cart: "Ride", fight: "Bet on", coinstatue: "tickets in at", cooler: "Drink at", buffet: "Eat at", cashier: "tickets in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", mark: "Pickpocket", guildgate: "Open", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", wreck: "Strip", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { fletcher: "Fletch-at",   /* (2026-09-25) written INTO the literal rather than assigned after: VERB is declared later in the file than FLETCH goes live, and a const cannot be reached before its line */ countdoor: "Break into", countsearch: "Search", countbox: "Unlock", countexit: "Leave by", towerdoor: "Enter", towerup: "Climb", cryptdoor: "Go down", cryptlever: "Pull", cryptexit: "Climb", cryptloot: "Open", hsboard: "Read", jukebox: "Play", prizecase: "Browse", mirror: "Look in", rrtable: "Sit at", rrseat: "Sit at", rrboard: "Read", barcart: "Drink at", prizewheel: "Spin", fameboard: "Read", cart: "Ride", fight: "Bet on", coinstatue: "tickets in at", cooler: "Drink at", buffet: "Eat at", cashier: "tickets in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", mark: "Pickpocket", guildgate: "Open", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", wreck: "Strip", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
@@ -5462,7 +6040,7 @@ export const QUESTS = {
       ready: "Field's quiet. You're a natural.", hand: "What do I get?",
       done: "tickets, and my respect. Mostly the tickets."
     },
-    reward: { coins: 60, xp: { melee: 200 }, text: "60 tickets and 200 Combat xp" }
+    reward: { coins: 60, xp: { melee: 200 }, text: "60 tickets and 200 Melee xp" }
   },
   /* ---- THE TRAILER PARK (2026-09-22). The zone's only quests, and the only ones in the game past the Yard. A pair
      on purpose: the first teaches what the place is FOR (the trucks, and that they need a pickaxe in your hands),
@@ -5494,7 +6072,7 @@ export const QUESTS = {
       ready: "You did it. You actually did it.", hand: "It's done.",
       done: "Forty years. Well. Take his wrench if he dropped it, you've earned the weight of it."
     },
-    reward: { coins: 25000, xp: { melee: 12000, hp: 4000 }, text: "25,000 tickets, 12,000 Combat xp, 4,000 Hitpoints xp" }
+    reward: { coins: 25000, xp: { melee: 12000, hp: 4000 }, text: "25,000 tickets, 12,000 Melee xp, 4,000 Hitpoints xp" }
   },
   catch: {
     name: "Catch of the Day", giver: "Old Tullius", where: "River Bend", icon: "🐟",
@@ -5512,6 +6090,346 @@ export const QUESTS = {
     reward: { coins: 40, xp: { fishing: 150 }, text: "40 tickets, 150 Fishing xp" }
   }
 };
+
+/* ------------------------------------------------------------ THE FORTY (2026-09-27)
+   The owner: "intertwine quests with all skills. varying degrees of quest hardness, with appropriate rewards. easy, medium, hard.
+   I don't want bland quests like 'go get X thing'. they should be go to NPC, it has some dialogue about the quest, go talk to X
+   NPC, get this thing, bring it over here, etc. I want 40 of them thought out all the way to end game."
+   Forty staged quests, fourteen easy (the Yard, the Gloam and the Mire, levels 1-25), fourteen medium (the Boneyard, Cloudreach
+   and the Sands, 25-55) and twelve hard (the Thunderhead, the Vault, the Carnival, the Trailer Park and the Wilderness, 55-99),
+   every skill in the game pulled in somewhere. Seven people were hired to give them: Mudge in the Mire, Sister Morrow in the
+   Boneyard, Zephyr in Cloudreach, Rashid in the Sands, Volta in the Thunderhead, the Auditor in the Vault and Grimm the Hermit,
+   who sits by the rope down to the Wilderness. Rewards: tickets in the hundreds for easy, low thousands for medium, five figures for
+   hard, and xp in the skills the quest actually used. Every giver's chain is gated in order, so a new player is never handed the
+   Deep Wild. The stage types are documented above QUEST_TIERS. */
+Object.assign(QUESTS, {
+  /* ================= EASY ================= */
+  sardines: {
+    name: "The Ferryman's Supper", giver: "Charon the Ferryman", where: "The Yard", icon: "🐟", tier: "easy",
+    brief: "Charon wants five cooked sardines. Fish them from the Yard's pond and cook them on a fire.",
+    stages: [{ type: "gather", items: ["sardine"], n: 5, what: "sardines", how: "gather" }, { type: "gather", items: ["csardine"], n: 5, what: "cooked sardines", how: "cook" }, { type: "bring", items: ["csardine"], n: 5, what: "cooked sardines" }],
+    talk: { offer: ["A ferryman eats standing up, and lately he eats nothing.", "Five sardines out of the pond, cooked on a fire. Hold a rod at the water, then hold the fish at the flames."], accept: "Five sardines, cooked.", decline: "Row your own supper.",
+      accepted: "The pond is west of the counter. The fire is by the smithy. Neither of them moves.", progress: "Five cooked sardines. You have {have}. I have all evening.", ready: "That smells like a river I used to know.", hand: "Supper.", done: "Sit. No, you're right, there's nowhere to sit. Take this instead." },
+    reward: { coins: 150, xp: { fishing: 250, cooking: 250 }, text: "150 tickets, 250 Fishing xp, 250 Cooking xp" }
+  },
+  ferry: {
+    name: "Charon's Ledger", giver: "Charon the Ferryman", where: "The Yard", icon: "⛵", tier: "easy", requires: ["sardines"],
+    brief: "Charon has never seen the islands he rows to. Go to yours, talk to Yahsmeena, and bring back three wheat as proof.",
+    stages: [{ type: "visit", scene: "isle", what: "your island" }, { type: "talk", npc: "Yahsmeena", say: ["Charon sent you? He won't set foot on the sand, you know. Says the ground moves.", "Tell him the plots are fine and the bank chest is still ten thousand."], reply: "I'll tell him.", after: "And take him some wheat. He forgets to eat." }, { type: "bring", items: ["wheat"], n: 3, what: "wheat" }],
+    talk: { offer: ["I have rowed to your island four hundred times and I have never got out of the boat.", "Go and look at it for me. Talk to the woman who sells the furniture. Bring me three wheat, so I know it's real."], accept: "I'll have a look.", decline: "Row yourself.",
+      accepted: "Click the boat. It knows the way.", progress: "Did you see it? Three wheat and a word from Yahsmeena. You have {have} wheat.", ready: "So it's there. Good. I'd started to wonder.", hand: "Here's your wheat.", done: "I'll plant it. Somewhere. Take this." },
+    reward: { coins: 200, xp: { farming: 300 }, text: "200 tickets, 300 Harvesting xp" }
+  },
+  copperbell: {
+    name: "A Bell for the Broker", giver: "Livia the Broker", where: "The Yard", icon: "🔔", tier: "easy",
+    brief: "Livia wants a bell for the exchange. Two bronze bars will do: copper and tin from the Yard, into the furnace.",
+    stages: [{ type: "talk", npc: "Charon the Ferryman", say: ["The furnace? East of the pond, the brick one with the chimney. It takes copper and tin and gives you bronze.", "Livia wants a bell. Livia wants a lot of things."], reply: "Thanks." }, { type: "gather", items: ["bronze_bar"], n: 2, what: "bronze bars", how: "craft" }, { type: "bring", items: ["bronze_bar"], n: 2, what: "bronze bars" }],
+    talk: { offer: ["Every exchange in the world has a bell, and mine has me shouting.", "Two bronze bars, and I'll have one cast. Charon knows where the furnace is; ask him, he likes being asked."], accept: "Two bars.", decline: "Keep shouting.",
+      accepted: "Copper and tin are the two rocks by the path. Hold a pickaxe.", progress: "Two bronze bars for the bell. You have {have}.", ready: "Bronze. Real bronze. Give it here.", hand: "Two bars.", done: "I'll have it cast by the weekend. Take this, and keep your ears open." },
+    reward: { coins: 200, xp: { smithing: 300, mining: 150 }, text: "200 tickets, 300 Smithing xp, 150 Mining xp" }
+  },
+  wheatrun: {
+    name: "The Standing Order", giver: "Livia the Broker", where: "The Yard", icon: "🌾", tier: "easy", requires: ["copperbell"],
+    brief: "Livia's kitchen order: ten wheat, picked from the wild patches in the Yard.",
+    stages: [{ type: "gather", items: ["wheat"], n: 10, what: "wheat", how: "gather" }, { type: "bring", items: ["wheat"], n: 10, what: "wheat" }],
+    talk: { offer: ["There's a standing order for wheat from the kitchen, and the man who used to fill it stands no more.", "Ten wheat. It grows wild in three patches out here; pick it, it grows back."], accept: "Ten wheat.", decline: "Find another picker.",
+      accepted: "North-west above the copper, by the middle path, and out in the south-west meadow. Nothing in your hand needed.", progress: "Ten wheat. You have {have}. The kitchen is patient; I am not.", ready: "That's the order. Hand it over.", hand: "Ten.", done: "The kitchen thanks you. I thank you. That's a lot of thanks for one bundle." },
+    reward: { coins: 150, xp: { farming: 300 }, text: "150 tickets, 300 Harvesting xp" }
+  },
+  emeraldedge: {
+    name: "An Emerald Edge", giver: "Livia the Broker", where: "The Yard", icon: "🗡️", tier: "easy", requires: ["wheatrun"],
+    brief: "Livia has a buyer for an emerald gladius. Mine the ore in the Gloam, smelt it, forge the blade, bring it back.",
+    stages: [{ type: "gather", items: ["emerald_ore"], n: 3, what: "emerald ore", how: "gather" }, { type: "gather", items: ["emerald_bar"], n: 1, what: "emerald bar", how: "craft" }, { type: "bring", items: ["emerald_gladius"], n: 1, what: "emerald gladius" }],
+    talk: { offer: ["I have a buyer for an emerald gladius and no smith with the nerve.", "The ore is in the Gloam, west of here. Smelt it, forge it, bring me the blade. I'll pay what the buyer pays, less nothing."], accept: "One gladius.", decline: "Your buyer can wait.",
+      accepted: "Green rocks, two of them, in the Gloam. Then the furnace, then the anvil. Mind the highwaymen.", progress: "The gladius. Ore, then bar, then blade. You have {have} of what I need right now.", ready: "Oh, that's a blade. Give it here before I cut myself.", hand: "One gladius.", done: "Sold before you've turned round. Here's your cut." },
+    reward: { coins: 500, xp: { smithing: 800, mining: 300 }, text: "500 tickets, 800 Smithing xp, 300 Mining xp" }
+  },
+  firstbow: {
+    name: "Grimm's Bow", giver: "Grimm the Hermit", where: "The Gloam", icon: "🏹", tier: "easy",
+    brief: "Grimm will teach the bow. Make a bowstring and fifteen bone arrows at the fletching table, then take five gnashers from a distance.",
+    stages: [{ type: "gather", items: ["bowstring"], n: 1, what: "bowstring", how: "craft" }, { type: "gather", items: ["bone_arrow"], n: 15, what: "bone arrows", how: "craft" }, { type: "kill", mob: "gnasher", n: 5, what: "gnashers", style: "archery" }],
+    talk: { offer: ["You walk up to everything and hit it. That works until it doesn't.", "Make a bowstring from a hide, fletch fifteen bone arrows, and put five gnashers down without getting close. The table is in the Yard's court."], accept: "Teach me.", decline: "I like hitting things.",
+      accepted: "Bones, shafts, feathers. Chickens have the feathers. Then hold the bow and click something you'd rather not touch.", progress: "Bowstring, fifteen arrows, five gnashers with the bow. Where are you up to? {have}.", ready: "Five, from where you stood. Now you're dangerous.", hand: "It's done.", done: "Take this longbow. It reaches further than mine ever did." },
+    reward: { coins: 400, xp: { fletching: 500, archery: 500 }, items: [["logs_longbow", 1]], text: "400 tickets, 500 Fletching xp, 500 Archery xp, a longbow" }
+  },
+  firstpage: {
+    name: "The First Page", giver: "Grimm the Hermit", where: "The Gloam", icon: "📄", tier: "easy", requires: ["firstbow"],
+    brief: "Grimm's other trick. Press ten spell paper, print ten Arcane pages at the altar in the Yard, and burn five toadstools with a wand.",
+    stages: [{ type: "gather", items: ["spellpaper"], n: 10, what: "spell paper", how: "craft" }, { type: "gather", items: ["page_arcane"], n: 10, what: "Arcane pages", how: "craft" }, { type: "kill", mob: "toadstool", n: 5, what: "toadstools", style: "magic" }],
+    talk: { offer: ["The bow is one way of not being touched. The other is older.", "Logs into paper at the Arcane altar in the Yard, paper and ink into pages, pages into a bag, and a wand in your hand. Then five toadstools, out here, without a sword."], accept: "Show me the other way.", decline: "One trick is enough.",
+      accepted: "Bom sells the wand and the bag if you can't make them. Arcane ink is sporecaps in a vial.", progress: "Paper, pages, five toadstools by wand. You're at {have}.", ready: "Five, and not a hair on you singed. Good.", hand: "Done.", done: "Then here's a hundred pages, and my respect, which is worth less." },
+    reward: { coins: 400, xp: { wizardry: 500, magic: 500 }, items: [["page_arcane", 100]], text: "400 tickets, 500 Wizardry xp, 500 Magic xp, 100 Arcane pages" }
+  },
+  lamps: {
+    name: "Lamps Out", giver: "Mudge the Lamplighter", where: "The Lantern Mire", icon: "🏮", tier: "easy",
+    brief: "Mudge's lamps are out. Vance in the Gloam sells the wicks; the oil is six sporecaps from the toadstools.",
+    stages: [{ type: "talk", npc: "Vance the Fence", say: ["Mudge sent you? Wicks are on the house, I owe him for a night I don't discuss.", "The oil he wants is sporecap: the toadstools out here shed it. Six, he says. Six."], reply: "Six sporecaps." }, { type: "bring", items: ["sporecap"], n: 6, what: "sporecaps", say: ["Six. Feel them: they burn slow. That's the whole trick of a mire lamp."], short: ["Six sporecaps, from the Gloam's toadstools. Vance has the wicks."], reply: "Here's the oil." }],
+    talk: { offer: ["Eleven lamps on this mire, and nine of them out. You can't see the water till you're in it.", "Vance, back in the Gloam, has my wicks. The oil is sporecap, six of them, off the toadstools. Bring me the oil and I'll do the climbing."], accept: "Wicks and oil.", decline: "Mind the water, then.",
+      accepted: "Vance first, he'll want to be asked. Then the toadstools. Then me.", progress: "Six sporecaps. You've {have}. The dark doesn't wait, but I do.", ready: "Oil. Lovely. Stand back, this bit's mine.", hand: "Six sporecaps.", done: "There. Eleven of eleven. Take this for your trouble, and mind the ninth lamp, it flickers." },
+    reward: { coins: 300, xp: { alchemy: 400 }, items: [["small_vial", 3]], text: "300 tickets, 400 Alchemy xp, 3 small vials" }
+  },
+  vials: {
+    name: "Glass and Sand", giver: "Mudge the Lamplighter", where: "The Lantern Mire", icon: "🧪", tier: "easy", requires: ["lamps"],
+    brief: "Mudge wants a Swift draught. Blow three vials from sand, brew the draught at the cauldron, bring it.",
+    stages: [{ type: "gather", items: ["small_vial"], n: 3, what: "small vials", how: "craft" }, { type: "gather", items: ["pot_swift"], n: 1, what: "Swift draught", how: "craft" }, { type: "bring", items: ["pot_swift"], n: 1, what: "Swift draught" }],
+    talk: { offer: ["My knees. Don't ask. There's a draught that makes a man quick for ten minutes and I'd like ten minutes.", "Three vials from sand at the cauldron, and the draught is sporecaps in one of them. Bring me the draught; keep the other two vials."], accept: "One Swift draught.", decline: "Rest your knees.",
+      accepted: "The cauldron is in the Yard's court. Sand is by the pond.", progress: "A Swift draught. Vials first. You're at {have}.", ready: "Give it here before I change my mind about my knees.", hand: "One draught.", done: "Oh. OH. Right, I'm off to do the lamps at a run. Take this." },
+    reward: { coins: 250, xp: { alchemy: 400 }, text: "250 tickets, 400 Alchemy xp" }
+  },
+  lanterns: {
+    name: "Lights on the Mire", giver: "Mudge the Lamplighter", where: "The Lantern Mire", icon: "🌪️", tier: "easy", requires: ["vials"],
+    brief: "The twisters keep knocking the lamps down. Put six of them down and bring Mudge four of the tax receipts they carry.",
+    stages: [{ type: "kill", mob: "twister", n: 6, what: "twisters" }, { type: "bring", items: ["receipt"], n: 4, what: "tax receipts" }],
+    talk: { offer: ["It's the twisters. They come through and the lamps go over like skittles.", "Six of them, and bring me four of the receipts they carry. I want to know who they're paying."], accept: "Six twisters.", decline: "Buy heavier lamps.",
+      accepted: "They're all over the west of the mire. Hold your sword. Or don't; you've got a bow now.", progress: "Six twisters, four receipts. You've {have}.", ready: "Receipts. Let me see. Well. Well well.", hand: "Four receipts.", done: "They're paying the Counters. Interesting. Not your problem. Take this." },
+    reward: { coins: 500, xp: { melee: 600, hp: 200 }, text: "500 tickets, 600 Melee xp, 200 Hitpoints xp" }
+  },
+  tomatoes: {
+    name: "Rotten Business", giver: "Rony Tomo", where: "The Casino", icon: "🍅", tier: "easy",
+    brief: "Rony's tomatoes are rotten and walking about. Put eight down and bring him five good tomatoes off them.",
+    stages: [{ type: "kill", mob: "rotten", n: 8, what: "rotten tomatoes" }, { type: "bring", items: ["tomatoe"], n: 5, what: "tomatoes" }],
+    talk: { offer: ["My name's on the tomatoes out there and half of them have gone bad. Bad and MOBILE.", "Eight of the rotten ones, and bring me five decent tomatoes off them. The good ones are still in there somewhere."], accept: "Eight rotten, five good.", decline: "Not my tomatoes.",
+      accepted: "They're in the Yard, all over. You'll smell them first.", progress: "Eight rotten, five good tomatoes. You're at {have}.", ready: "Those'll do for sauce. Give them here.", hand: "Five tomatoes.", done: "This is the Cowboys' year AND the tomatoes' year. Take this." },
+    reward: { coins: 200, xp: { melee: 250, farming: 150 }, text: "200 tickets, 250 Melee xp, 150 Harvesting xp" }
+  },
+  hidesale: {
+    name: "Leather for Kellz", giver: "Kellz", where: "The Casino", icon: "🧤", tier: "easy",
+    brief: "Kellz wants six hides for a jacket. Cows and boars carry them.",
+    stages: [{ type: "gather", items: ["hide"], n: 6, what: "hides" }, { type: "bring", items: ["hide"], n: 6, what: "hides" }],
+    talk: { offer: ["I'm having a jacket made. Leather. Six hides, the man says, and I don't own a sword.", "Cows and boars in the Yard. Six hides, and I'll cover the cleaning."], accept: "Six hides.", decline: "Wear something else.",
+      accepted: "Cows are easy. Boars are less easy. Both are outside.", progress: "Six hides. You've got {have}.", ready: "That's a jacket. Give them here.", hand: "Six hides.", done: "Take this quiver, the tailor threw it in and I don't shoot." },
+    reward: { coins: 200, xp: { fletching: 200 }, items: [["logs_quiver", 1]], text: "200 tickets, 200 Fletching xp, a rough quiver" }
+  },
+  runclock: {
+    name: "Beat the Clock", giver: "Vince the Bouncer", where: "The Casino", icon: "⏱️", tier: "easy",
+    brief: "Vince says nobody's fast any more. Go and run The Run, the agility course down the rope ladder in the Gloam.",
+    stages: [{ type: "visit", scene: "agility", what: "The Run" }],
+    talk: { offer: ["Nobody's quick any more. They walk up to a gate and wait for it like it's a bus.", "There's a course under the Gloam. Down the ladder by the north path. Go and run it, once, and come and tell me you did."], accept: "I'll run it.", decline: "I'll walk, thanks.",
+      accepted: "The gates open on a clock. Watch them once, then go.", progress: "Have you run it? The ladder's by the Gloam's north door.", ready: "You ran it. Your knees say so.", hand: "I ran it.", done: "Good. Now do it again without me telling you to." },
+    reward: { coins: 200, xp: { agility: 300 }, text: "200 tickets, 300 Agility xp" }
+  },
+  stickyfingers: {
+    name: "The Membership Fee", giver: "Odile the Clerk", where: "The Thieves' Guild", icon: "🎟️", tier: "easy",
+    brief: "The guild wants its fee paid to Sticky Pete, in tickets, before anyone teaches you anything.",
+    stages: [{ type: "bring", items: ["tickets"], n: 250, what: "tickets", to: "Sticky Pete", say: ["Two hundred and fifty. Count it. Counted. You're in, provisionally."], short: ["Two hundred and fifty tickets, and not a ticket less. Odile keeps the book."], reply: "Here's the fee." }],
+    talk: { offer: ["Membership is two hundred and fifty tickets, paid to Pete, who is not to be trusted with it, which is the first lesson.", "Come back to me after and I'll enter you in the book."], accept: "I'll pay Pete.", decline: "I'll think about it.",
+      accepted: "Pete is in the first room. Watch your pockets while you pay him.", progress: "Has Pete got his fee? Bring him two hundred and fifty tickets.", ready: "Pete's told me. You're in the book.", hand: "I paid.", done: "The lifters are through there. Try not to be caught in your first hour." },
+    reward: { coins: 100, xp: { thieving: 400 }, text: "100 tickets back, 400 Thieving xp" }
+  },
+  /* ================= MEDIUM ================= */
+  morrowbones: {
+    name: "Grave Duty", giver: "Sister Morrow", where: "The Boneyard", icon: "⚰️", tier: "medium",
+    brief: "Sister Morrow wants ten ghouls put back in the ground and ten bones to build the next row of graves.",
+    stages: [{ type: "kill", mob: "ghoul", n: 10, what: "ghouls" }, { type: "bring", items: ["bones"], n: 10, what: "bones" }],
+    talk: { offer: ["They get up. I put them down. It's been a long few years.", "Ten ghouls, and bring me ten bones. I'm building the east row and the supplier's dead. Literally."], accept: "Ten ghouls, ten bones.", decline: "Rest in peace, Sister.",
+      accepted: "They're in the yards, behind the rails. Mind the Understudy, he's dramatic.", progress: "Ten ghouls, then ten bones. You're at {have}.", ready: "Bones. Good bones. Give them here.", hand: "Ten bones.", done: "The east row's half done. Take this and go and get some sun, you look like one of them." },
+    reward: { coins: 1200, xp: { melee: 1200, hp: 600 }, text: "1,200 tickets, 1,200 Melee xp, 600 Hitpoints xp" }
+  },
+  yewbow: {
+    name: "Yew for the Sister", giver: "Sister Morrow", where: "The Boneyard", icon: "🌳", tier: "medium", requires: ["morrowbones"],
+    brief: "Morrow wants a yew longbow. Cut three yew logs from the Ancient yews here, fletch the bow, bring it back.",
+    stages: [{ type: "gather", items: ["yewlogs"], n: 3, what: "yew logs", how: "gather" }, { type: "gather", items: ["yewlogs_longbow"], n: 1, what: "yew longbow", how: "craft" }, { type: "bring", items: ["yewlogs_longbow"], n: 1, what: "yew longbow" }],
+    talk: { offer: ["Some of them get up faster than I can walk. I'd like to reach them from here.", "Three logs off the Ancient yews by the pool, fletched into a longbow. I'll learn."], accept: "One yew longbow.", decline: "Keep the shovel.",
+      accepted: "The yews are south-east, by the water. Woodcutting 35 and a good axe.", progress: "Yew logs, then the bow. You're at {have}.", ready: "That's a bow. I've seen paintings. Give it here.", hand: "One longbow.", done: "Now they'll get up and get sat back down at range. Take this." },
+    reward: { coins: 1500, xp: { fletching: 1500, woodcutting: 800 }, text: "1,500 tickets, 1,500 Fletching xp, 800 Woodcutting xp" }
+  },
+  spidersilk: {
+    name: "Silk from the Dark", giver: "Sister Morrow", where: "The Boneyard", icon: "🕸️", tier: "medium", requires: ["yewbow"], handTo: "Grimm the Hermit",
+    brief: "Grimm wants cobweb from the Chandelier Spiders. Morrow will point you at them; take two cobwebs to Grimm in the Gloam.",
+    stages: [{ type: "kill", mob: "chandelier", n: 5, what: "Chandelier Spiders" }, { type: "bring", items: ["cobweb"], n: 2, what: "enormous cobwebs", to: "Grimm the Hermit", say: ["Cobweb. Real cobweb. This becomes silkstring, and silkstring strings a bow that would snap a hide string like a hair."], short: ["Two of the big cobwebs. The spiders in the Boneyard's theatre carry them."], reply: "Two cobwebs." }],
+    talk: { offer: ["The hermit by the Gloam's rope, Grimm, wrote to ask for cobweb. Cobweb. From the spiders in the Royal Box.", "Five of them, take two cobwebs, and carry them to him yourself. I don't post spiders."], accept: "Five spiders, two webs, to Grimm.", decline: "Let him write again.",
+      accepted: "The Royal Box is the far yard. They drop from the ceiling. Look up.", progress: "Five spiders, two cobwebs, and Grimm's rope is in the Gloam. You're at {have}.", ready: "Off to Grimm with it.", hand: "Done.", done: "Then here's what a hermit pays, which is more than you'd think." },
+    reward: { coins: 1400, xp: { archery: 1200, fletching: 600 }, text: "1,400 tickets, 1,200 Archery xp, 600 Fletching xp" }
+  },
+  dragonstone: {
+    name: "The Sister's Marker", giver: "Sister Morrow", where: "The Boneyard", icon: "💎", tier: "medium", requires: ["spidersilk"],
+    brief: "Morrow wants a dragonstone bar for a marker that won't weather. Mine two ore here, smelt one bar, bring it.",
+    stages: [{ type: "gather", items: ["dragonstone_ore"], n: 2, what: "dragonstone ore", how: "gather" }, { type: "gather", items: ["dragonstone_bar"], n: 1, what: "dragonstone bar", how: "craft" }, { type: "bring", items: ["dragonstone_bar"], n: 1, what: "dragonstone bar" }],
+    talk: { offer: ["Every marker I put up, the rain takes the name off in a year. Dragonstone doesn't weather.", "Two ore from the rocks by the yews, smelted to a bar. One bar, one name, forever."], accept: "One dragonstone bar.", decline: "Names fade, Sister.",
+      accepted: "Mining 40. The rocks are south-east, by the pool.", progress: "Two ore, then a bar. You're at {have}.", ready: "That'll outlast us both. Give it here.", hand: "One bar.", done: "Whose name goes on it? Mine, one day. Take this." },
+    reward: { coins: 1800, xp: { smithing: 2000, mining: 800 }, text: "1,800 tickets, 2,000 Smithing xp, 800 Mining xp" }
+  },
+  boneidle: {
+    name: "Idle Hands", giver: "Vance the Fence", where: "The Gloam", icon: "🦴", tier: "medium", requires: ["lamps"], handTo: "Sister Morrow",
+    brief: "Vance is sick of the Bone-Idle. Put ten down and carry twelve bones to Sister Morrow in the Boneyard; she pays for bones.",
+    stages: [{ type: "kill", mob: "boneidle", n: 10, what: "Bone-Idle" }, { type: "bring", items: ["bones"], n: 12, what: "bones", to: "Sister Morrow", say: ["Twelve. Vance sent them? Then Vance has a conscience after all. I'll pay you, not him."], short: ["Twelve bones. The Bone-Idle in the Gloam are made of little else."], reply: "Twelve bones." }],
+    talk: { offer: ["The Bone-Idle. Lie about all day, then get up when you've got your arms full.", "Ten of them, and take twelve bones to the Sister in the Boneyard. She pays for bones. I don't."], accept: "Ten, then the Sister.", decline: "Idle yourself.",
+      accepted: "They're on the north side, in the bushes. The Sister is through the Mire and up.", progress: "Ten Bone-Idle, twelve bones, the Sister. You're at {have}.", ready: "Go and see the Sister.", hand: "Done.", done: "Bones for the row, and this for you." },
+    reward: { coins: 1500, xp: { melee: 1500, hp: 500 }, text: "1,500 tickets, 1,500 Melee xp, 500 Hitpoints xp" }
+  },
+  skyeel: {
+    name: "Eels for Zephyr", giver: "Zephyr", where: "Cloudreach", icon: "🍢", tier: "medium",
+    brief: "Zephyr wants four cooked skyeels. Fish them from the pool in Cloudreach and cook them.",
+    stages: [{ type: "gather", items: ["skyeel"], n: 4, what: "skyeels", how: "gather" }, { type: "gather", items: ["cskyeel"], n: 4, what: "cooked skyeels", how: "cook" }, { type: "bring", items: ["cskyeel"], n: 4, what: "cooked skyeels" }],
+    talk: { offer: ["Eight hours a day watching wind. You'd think I'd get hungry. I get RAVENOUS.", "Four skyeels from the pool below, cooked. Fishing 40, and a fire. The eels bite at nothing, so bring patience."], accept: "Four cooked skyeels.", decline: "Watch the wind on an empty stomach.",
+      accepted: "The pool is south-east. Cook them anywhere with a fire.", progress: "Four cooked skyeels. You've {have}.", ready: "EELS. Give me those.", hand: "Four eels.", done: "Mmf. Take this. Mmf." },
+    reward: { coins: 1600, xp: { fishing: 1500, cooking: 1500 }, text: "1,600 tickets, 1,500 Fishing xp, 1,500 Cooking xp" }
+  },
+  frostink: {
+    name: "Frost on the Page", giver: "Zephyr", where: "Cloudreach", icon: "❄️", tier: "medium", requires: ["skyeel"],
+    brief: "Zephyr wants ten Frost bolt pages. Grow three frostcaps from seed on your island, brew the ink, print at the Frost altar here.",
+    stages: [{ type: "gather", items: ["frostcap"], n: 3, what: "frostcaps", how: "gather" }, { type: "gather", items: ["ink_frost"], n: 2, what: "Frost ink", how: "craft" }, { type: "bring", items: ["page_frost_bolt"], n: 10, what: "Frost bolt pages" }],
+    talk: { offer: ["The altar behind me prints Frost, and I've never seen it used. I'd like to.", "Frost seeds drop from the rams and the goats. Grow three frostcaps on your island, brew the ink at a cauldron, print me ten Frost bolts here."], accept: "Ten Frost bolts.", decline: "Ink's not my thing.",
+      accepted: "The seeds are rare: one ram in a hundred and more. A harvested plot gives a seed back sometimes, so keep one going.", progress: "Frostcaps, ink, ten pages. You're at {have}.", ready: "Frost, on paper. It's colder than it looks. Give them here.", hand: "Ten pages.", done: "I'll fire one at the next goose. Take this." },
+    reward: { coins: 2500, xp: { wizardry: 2500, farming: 1000, alchemy: 800 }, text: "2,500 tickets, 2,500 Wizardry xp, 1,000 Harvesting xp, 800 Alchemy xp" }
+  },
+  ramhorns: {
+    name: "Rams on the Ridge", giver: "Zephyr", where: "Cloudreach", icon: "🐏", tier: "medium", requires: ["frostink"],
+    brief: "The rams and sea-goats are eating Zephyr's instruments. Eight rams and four sea-goats.",
+    stages: [{ type: "kill", mob: "ram", n: 8, what: "Cumulus Rams" }, { type: "kill", mob: "seagoat", n: 4, what: "Sea-Goats" }],
+    talk: { offer: ["That's the third anemometer this month. Eaten. The rams eat the cups and the goats eat what's left.", "Eight rams and four sea-goats, and I'll be able to tell you which way the wind blows again."], accept: "Eight rams, four goats.", decline: "Buy a weathervane.",
+      accepted: "Rams on the ridge north, goats along the south edge. They don't run.", progress: "Eight rams, four sea-goats. You're at {have}.", ready: "The wind's north-north-west. I know that because I can hear it again.", hand: "Done.", done: "Here. And if you see a goat with a brass cup in its mouth, that one's mine." },
+    reward: { coins: 2000, xp: { melee: 2500, hp: 800 }, text: "2,000 tickets, 2,500 Melee xp, 800 Hitpoints xp" }
+  },
+  homeward: {
+    name: "The Way Home", giver: "Zephyr", where: "Cloudreach", icon: "📜", tier: "medium", requires: ["ramhorns"], handTo: "Charon the Ferryman",
+    brief: "Charon wants to see a Homeward scroll work. Print one at the Sun altar in the Sands and take it to him in the Yard.",
+    stages: [{ type: "gather", items: ["scroll_homeward"], n: 1, what: "Homeward scroll", how: "craft" }, { type: "bring", items: ["scroll_homeward"], n: 1, what: "Homeward scroll", to: "Charon the Ferryman", say: ["A page that does my job. Let me look at it. Hm. It doesn't take luggage, does it. I'm safe for now."], short: ["Zephyr said you'd bring me a scroll that goes home by itself. I'll believe it when I hold it."], reply: "Here's the scroll." }],
+    talk: { offer: ["Charon, the ferryman, has been asking me about the Homeward pages. He thinks they'll put him out of work.", "Print one at the Sun altar in the Sands, Wizardry 50, and take it to him in the Yard. Let him see it. He'll feel better. Or worse."], accept: "One scroll, to Charon.", decline: "Let him worry.",
+      accepted: "Sun ink is sunpetals. The altar is in the Sands, past the Boneyard's west gate.", progress: "One Homeward scroll, to Charon in the Yard. You're at {have}.", ready: "Off to Charon.", hand: "Done.", done: "He rows in the same water that page skips. Take this, from both of us." },
+    reward: { coins: 3000, xp: { wizardry: 3000 }, text: "3,000 tickets, 3,000 Wizardry xp" }
+  },
+  stardust: {
+    name: "Rashid's Sample", giver: "Rashid the Caravaneer", where: "The Golden Sands", icon: "✨", tier: "medium",
+    brief: "Rashid wants two stardust from the sands' bright rocks to show his buyers.",
+    stages: [{ type: "gather", items: ["stardust"], n: 2, what: "stardust", how: "gather" }, { type: "bring", items: ["stardust"], n: 2, what: "stardust" }],
+    talk: { offer: ["My buyers in the east want to see the stardust before they pay for a cart of it. Sensible people.", "Two stardust from the bright rocks here. Mining 50. I'll pay a sample price, which is a good price."], accept: "Two stardust.", decline: "Show them a picture.",
+      accepted: "One rock north by the market, one south in the dunes. They shine; you'll find them.", progress: "Two stardust. You have {have}.", ready: "Look at that. They'll buy the whole desert. Give it here.", hand: "Two stardust.", done: "A sample price, as promised. Come back, there's a caravan to run." },
+    reward: { coins: 2000, xp: { mining: 2000 }, text: "2,000 tickets, 2,000 Mining xp" }
+  },
+  caravan: {
+    name: "The Caravan Road", giver: "Rashid the Caravaneer", where: "The Golden Sands", icon: "📦", tier: "medium", requires: ["stardust"],
+    brief: "Carry Rashid's parcel to Sister Morrow in the Boneyard and come back with her answer.",
+    stages: [{ type: "bring", items: ["caravan_parcel"], n: 1, what: "caravan parcel", to: "Sister Morrow", give: [["caravan_parcel", 1]], say: ["From Rashid? Let me see. Ah. Candles. He remembered. Tell him the answer is yes, and to send the cart by the Mire, not the Sands road: the road's got cobras."], short: ["You've something for me? Rashid's parcel. Hand it over when you find it."], reply: "I'll tell him." }],
+    talk: { offer: ["A parcel for the Sister in the Boneyard, and I can't leave the stall. It isn't heavy. It IS urgent.", "Take it to her, hear what she says, and come back. That's the caravan road, in small."], accept: "I'll carry it.", decline: "Hire a camel.",
+      accepted: "East through the gate, and she's among the graves. Don't open it.", progress: "The parcel, to Sister Morrow, and her answer back to me. Have you found her?", ready: "Well? What did she say?", hand: "Yes, and send the cart by the Mire.", done: "By the Mire. She's right, the road's got cobras. Take this: a runner's pay." },
+    reward: { coins: 2200, xp: { agility: 1500 }, text: "2,200 tickets, 1,500 Agility xp" }
+  },
+  cobra: {
+    name: "Fangs", giver: "Rashid the Caravaneer", where: "The Golden Sands", icon: "🐍", tier: "medium", requires: ["caravan"],
+    brief: "Clear eight cobras off the caravan road and bring Rashid one snake fang; the Yard's cauldron turns it into a potion.",
+    stages: [{ type: "kill", mob: "cobra", n: 8, what: "Sand Cobras" }, { type: "bring", items: ["snakefang"], n: 1, what: "snake fang" }],
+    talk: { offer: ["The Sister said cobras. The Sister was right. Eight of them between me and the gate this morning.", "Eight cobras, and bring me one fang. There's a potion made from it and I'd like to see what a cobra fears."], accept: "Eight cobras, one fang.", decline: "Go round.",
+      accepted: "They're in the west of the sands and they're quick. Quicker than you. Hit first.", progress: "Eight cobras, one fang. You're at {have}.", ready: "A fang. Long as my finger. Give it here.", hand: "One fang.", done: "The road's open. Here, and drink something, you're pale." },
+    reward: { coins: 2500, xp: { alchemy: 2000, melee: 1000 }, text: "2,500 tickets, 2,000 Alchemy xp, 1,000 Melee xp" }
+  },
+  perchdinner: {
+    name: "Oasis Supper", giver: "Rashid the Caravaneer", where: "The Golden Sands", icon: "🍽️", tier: "medium", requires: ["cobra"],
+    brief: "Rashid is feeding the caravan tonight: five oasis perch from the pool, cooked.",
+    stages: [{ type: "gather", items: ["oasisperch"], n: 5, what: "oasis perch", how: "gather" }, { type: "gather", items: ["coasisperch"], n: 5, what: "cooked oasis perch", how: "cook" }, { type: "bring", items: ["coasisperch"], n: 5, what: "cooked oasis perch" }],
+    talk: { offer: ["Twelve drivers arrive tonight and I've one loaf.", "Five oasis perch from the pool in the north-west, cooked. Fishing 40. The camels eat the bones."], accept: "Five cooked perch.", decline: "Feed them the loaf.",
+      accepted: "The pool's past the market, north-west. A fire is a fire.", progress: "Five cooked oasis perch. You've {have}.", ready: "Perch! The drivers will sing. Badly. Give them here.", hand: "Five perch.", done: "Sit with us tonight if you like. Or take this and don't." },
+    reward: { coins: 2000, xp: { cooking: 2000, fishing: 1500 }, text: "2,000 tickets, 2,000 Cooking xp, 1,500 Fishing xp" }
+  },
+  houseodds: {
+    name: "Marked Cards", giver: "Parlay Pete", where: "The Casino", icon: "🃏", tier: "medium",
+    brief: "Pete thinks the Counters in the Mire are marking the house's cards. Eight of them, and bring him three marked cards.",
+    stages: [{ type: "kill", mob: "counter", n: 8, what: "Counters" }, { type: "bring", items: ["markedcard"], n: 3, what: "marked cards" }],
+    talk: { offer: ["My parlay lost by one leg. ONE LEG. Somebody's marking the cards, and I know who: the Counters, out in the Mire.", "Eight of them, and bring me three of the marked cards so I can show Dex."], accept: "Eight Counters, three cards.", decline: "Pick better legs.",
+      accepted: "They're in the Mire's east, counting. They count you too.", progress: "Eight Counters, three marked cards. You're at {have}.", ready: "Look at these. Look at the corner. LOOK.", hand: "Three cards.", done: "I'll show Dex. He'll say it's nothing. It's not nothing. Take this." },
+    reward: { coins: 2000, xp: { thieving: 1500, melee: 800 }, text: "2,000 tickets, 1,500 Thieving xp, 800 Melee xp" }
+  },
+  /* ================= HARD ================= */
+  stormrod: {
+    name: "The Rod", giver: "Volta", where: "The Thunderhead", icon: "⚡", tier: "hard",
+    brief: "Volta's lightning rod needs an onyx bar. Three onyx ore from Cloudreach, smelted, brought here.",
+    stages: [{ type: "gather", items: ["onyx_ore"], n: 3, what: "onyx ore", how: "gather" }, { type: "gather", items: ["onyx_bar"], n: 1, what: "onyx bar", how: "craft" }, { type: "bring", items: ["onyx_bar"], n: 1, what: "onyx bar" }],
+    talk: { offer: ["Copper melts. Bronze melts. I've been struck four times and I'm still looking for a metal that just TAKES it.", "Onyx. Three ore from the rocks in Cloudreach, smelted to a bar. Bring it here and I'll build a rod that outlives us."], accept: "One onyx bar.", decline: "Try wood.",
+      accepted: "Onyx rocks are in Cloudreach's south-west. Mining 50, and the furnace is back in the Yard.", progress: "Three ore, one bar. You're at {have}.", ready: "Black all the way through. That'll take it. Give it here.", hand: "One bar.", done: "Stand back. No, further. There. Take this, and my thanks, in that order." },
+    reward: { coins: 6000, xp: { smithing: 6000, mining: 2500 }, text: "6,000 tickets, 6,000 Smithing xp, 2,500 Mining xp" }
+  },
+  goosechase: {
+    name: "Wild Goose", giver: "Volta", where: "The Thunderhead", icon: "🪶", tier: "hard", requires: ["stormrod"],
+    brief: "The Thunder Geese sit on Volta's rod. Ten of them with a bow, and fifteen feathers for the fletching.",
+    stages: [{ type: "kill", mob: "goose", n: 10, what: "Thunder Geese", style: "archery" }, { type: "bring", items: ["feather"], n: 15, what: "feathers" }],
+    talk: { offer: ["They SIT on it. On the rod. A goose, full of lightning, sitting on the one thing built to take lightning.", "Ten of them, with a bow, because if you walk up to one you'll learn what I learned. And fifteen feathers: I fletch."], accept: "Ten geese, by bow.", decline: "Let them sit.",
+      accepted: "They're on the island and the north shore. Stand back and loose.", progress: "Ten geese by bow, fifteen feathers. You're at {have}.", ready: "Feathers. Good ones, storm-charged. Give them here.", hand: "Fifteen feathers.", done: "The rod's clear. Until tomorrow. Take this." },
+    reward: { coins: 6000, xp: { archery: 6000, fletching: 2000 }, text: "6,000 tickets, 6,000 Archery xp, 2,000 Fletching xp" }
+  },
+  stormink: {
+    name: "Storm in a Bottle", giver: "Volta", where: "The Thunderhead", icon: "🌩️", tier: "hard", requires: ["goosechase"],
+    brief: "Volta wants Storm bolt pages: six stormcorn grown, two Storm inks brewed, ten pages printed at the altar here.",
+    stages: [{ type: "gather", items: ["stormcorn"], n: 6, what: "stormcorn", how: "gather" }, { type: "gather", items: ["ink_storm"], n: 2, what: "Storm ink", how: "craft" }, { type: "gather", items: ["page_storm_bolt"], n: 10, what: "Storm bolt pages", how: "craft" }, { type: "bring", items: ["page_storm_bolt"], n: 10, what: "Storm bolt pages" }],
+    talk: { offer: ["I can catch lightning. I can't MAKE it. The altar behind me can, on paper, and I want to see it.", "Stormcorn grows on your island from what the rams drop. Six of it, brewed to two Storm inks, printed to ten Storm bolts, here."], accept: "Ten Storm bolts.", decline: "Wait for weather.",
+      accepted: "Wizardry 50 to print Storm. The cauldron for the ink is in the Yard; the altar's right here.", progress: "Stormcorn, ink, pages. You're at {have}.", ready: "Lightning. In my HAND. Give them here before I drop one.", hand: "Ten pages.", done: "I fired one. The goose is fine. The rod isn't. Take this." },
+    reward: { coins: 8000, xp: { wizardry: 8000, farming: 3000, alchemy: 2000 }, text: "8,000 tickets, 8,000 Wizardry xp, 3,000 Harvesting xp, 2,000 Alchemy xp" }
+  },
+  drakehunt: {
+    name: "Hail Drakes", giver: "Volta", where: "The Thunderhead", icon: "🐉", tier: "hard", requires: ["stormink"],
+    brief: "Six Hail Drakes, with a wand. They shrug off steel; they don't shrug off fire.",
+    stages: [{ type: "kill", mob: "drake", n: 6, what: "Hail Drakes", style: "magic" }],
+    talk: { offer: ["The drakes. Every storm brings two more, and steel just skids off the ice.", "Six of them, with a wand. Fire, if you have it. They HATE fire."], accept: "Six drakes, by wand.", decline: "They're your drakes.",
+      accepted: "They're on the ridges, north and east. Keep your distance and keep your pages coming.", progress: "Six drakes with a wand. You're at {have}.", ready: "Six. I counted the bangs.", hand: "Done.", done: "Then the sky's a little clearer and you're a little richer. Here." },
+    reward: { coins: 9000, xp: { magic: 9000, hp: 2000 }, text: "9,000 tickets, 9,000 Magic xp, 2,000 Hitpoints xp" }
+  },
+  audit: {
+    name: "The Audit", giver: "The Auditor", where: "The Vault", icon: "📋", tier: "hard",
+    brief: "The Auditor has a question for Dex the Dealer. Carry the ledger to the casino, hear Dex out, bring it back signed.",
+    stages: [{ type: "talk", npc: "Dex the Dealer", say: ["The Auditor. Of course. Give me that.", "There. Signed. Tell him the house is exactly as honest as it's always been, and he can put that in his book."], reply: "I'll tell him.", give: [["audit_ledger", 1]] }, { type: "bring", items: ["audit_ledger"], n: 1, what: "signed ledger" }],
+    talk: { offer: ["I audit the Vault. The Vault is fed by the casino. The casino is run by a man who has never once answered a letter.", "Take this ledger to Dex the Dealer. Have him sign it. Bring it back. Watch his face when he does."], accept: "I'll take the ledger.", decline: "Send another letter.",
+      accepted: "He's at the tables, top of the floor. Don't let him keep the pen.", progress: "The ledger, to Dex, signed, back to me. Have you seen him?", ready: "Signed. And his face?", hand: "Exactly as honest as it's always been.", done: "That's what I was afraid of. Take this; it's cleaner than what I audit." },
+    reward: { coins: 7000, xp: { thieving: 4000 }, text: "7,000 tickets, 4,000 Thieving xp" }
+  },
+  voidwood: {
+    name: "Vaultwood", giver: "The Auditor", where: "The Vault", icon: "🪵", tier: "hard", requires: ["audit"],
+    brief: "Three voidlogs from the Vaultwood growing through the floor, fletched into a shortbow for the Auditor's desk.",
+    stages: [{ type: "gather", items: ["voidlogs"], n: 3, what: "voidlogs", how: "gather" }, { type: "gather", items: ["voidlogs_shortbow"], n: 1, what: "voidlogs shortbow", how: "craft" }, { type: "bring", items: ["voidlogs_shortbow"], n: 1, what: "voidlogs shortbow" }],
+    talk: { offer: ["There are trees growing through the floor of this vault. Nobody has explained that to me, and nobody will.", "Three logs off them, Woodcutting 75, fletched into a shortbow. I'd like something on my desk that can't be audited."], accept: "One voidlogs shortbow.", decline: "Ask about the trees.",
+      accepted: "The Vaultwood is at the east and west ends. A silkstring for the bow: the Boneyard's spiders, or the Weaver in the wild.", progress: "Three voidlogs, one shortbow. You're at {have}.", ready: "It's warm. Why is it warm. Give it here.", hand: "One shortbow.", done: "On the desk it goes. Take this; it came off the books today." },
+    reward: { coins: 12000, xp: { woodcutting: 8000, fletching: 8000 }, text: "12,000 tickets, 8,000 Woodcutting xp, 8,000 Fletching xp" }
+  },
+  hoard: {
+    name: "Count the Hoard", giver: "The Auditor", where: "The Vault", icon: "🪙", tier: "hard", requires: ["voidwood"],
+    brief: "The Coin Hoards don't add up. Six of them, three Wardens, and two eclipse ore for the Auditor's scales.",
+    stages: [{ type: "kill", mob: "hoard", n: 6, what: "Coin Hoards" }, { type: "kill", mob: "warden", n: 3, what: "Vault Wardens" }, { type: "bring", items: ["eclipse_ore"], n: 2, what: "eclipse ore" }],
+    talk: { offer: ["The Hoards are short. Every one of them. Somebody is walking about with the difference and the Wardens won't say who.", "Six Hoards, three Wardens, and bring me two eclipse ore so I can weigh what's left against what should be."], accept: "Six, three, and the ore.", decline: "Round it down.",
+      accepted: "The Hoards are in the middle rows. The Wardens come when the Hoards go down. Bring food.", progress: "Six Hoards, three Wardens, two eclipse ore. You're at {have}.", ready: "Eclipse. Heavy. Good. Give it here.", hand: "Two ore.", done: "It balances. It BALANCES. Take this before it stops." },
+    reward: { coins: 12000, xp: { melee: 10000, hp: 4000 }, text: "12,000 tickets, 10,000 Melee xp, 4,000 Hitpoints xp" }
+  },
+  weaver: {
+    name: "The Weaver's Coil", giver: "Grimm the Hermit", where: "The Gloam", icon: "🕷️", tier: "hard", requires: ["firstpage"],
+    brief: "Down the rope: three Wild Weavers in the Wilderness, and two coils of wild silk for Grimm.",
+    stages: [{ type: "visit", scene: "wild", what: "the Wilderness" }, { type: "kill", mob: "weaver", n: 3, what: "Wild Weavers" }, { type: "bring", items: ["wildsilk"], n: 2, what: "wild silk" }],
+    talk: { offer: ["Down that rope there's a spider the size of a cart, and it spins silk you could hang a bell on.", "Three Wild Weavers, and bring me two coils. Anyone down there can attack you, so go when you're ready and not before."], accept: "Three Weavers, two coils.", decline: "I'll stay up here.",
+      accepted: "The rope's beside me. The Weavers keep to the far pockets: the grove and the pool.", progress: "Three Weavers, two wild silk. You're at {have}.", ready: "Wild silk. Four strings a coil. Give them here.", hand: "Two coils.", done: "Keep the third for yourself, if it dropped one. Take this." },
+    reward: { coins: 10000, xp: { archery: 8000, fletching: 4000 }, text: "10,000 tickets, 8,000 Archery xp, 4,000 Fletching xp" }
+  },
+  marrow: {
+    name: "Marrow and Bone", giver: "Grimm the Hermit", where: "The Gloam", icon: "🦴", tier: "hard", requires: ["weaver"],
+    brief: "Four Marrow Hounds in the Wilderness, then fifteen marrow arrows fletched from what they leave, for Grimm.",
+    stages: [{ type: "kill", mob: "marrowhound", n: 4, what: "Marrow Hounds" }, { type: "gather", items: ["marrow_arrow"], n: 15, what: "marrow arrows", how: "craft" }, { type: "bring", items: ["marrow_arrow"], n: 15, what: "marrow arrows" }],
+    talk: { offer: ["The hounds down there are bone and spite and something that glows. The glow makes an arrowhead.", "Four Marrow Hounds. Knap their marrow into heads, fletch fifteen arrows, and bring them to me. I'd like to see one fly."], accept: "Four hounds, fifteen arrows.", decline: "Let them glow.",
+      accepted: "They hold the grimstone pocket, south-east. Fletching 48 for the arrow.", progress: "Four hounds, fifteen marrow arrows. You're at {have}.", ready: "Look at that light. Give them here.", hand: "Fifteen arrows.", done: "I loosed one at a tree. The tree's still thinking about it. Take this." },
+    reward: { coins: 12000, xp: { fletching: 10000, archery: 5000 }, text: "12,000 tickets, 10,000 Fletching xp, 5,000 Archery xp" }
+  },
+  nexus: {
+    name: "The Nexus", giver: "Grimm the Hermit", where: "The Gloam", icon: "🔮", tier: "hard", requires: ["marrow"],
+    brief: "The Deep Wild. Find the Nexus, put four Grim Liches down with a wand, and bring Grimm a grimcore.",
+    stages: [{ type: "visit", scene: "deep", what: "the Deep Wild" }, { type: "kill", mob: "grimlich", n: 4, what: "Grim Liches", style: "magic" }, { type: "bring", items: ["grimcore"], n: 1, what: "grimcore" }],
+    talk: { offer: ["Past the Wilderness there's a deeper one, and in its far corner an altar that prints every page twice.", "The Liches guard the way. Four of them, with a wand, because a Lich laughs at steel. Bring me one grimcore. I have a use for it."], accept: "The Deep, four Liches, a grimcore.", decline: "Not yet.",
+      accepted: "Through the Wilderness's north corridor. The Liches walk the north road and the pool. Sun burns them.", progress: "The Deep, four Liches by wand, one grimcore. You're at {have}.", ready: "Grimcore. Cold. Give it here.", hand: "One grimcore.", done: "Two grimstone and a vial, and this is Void ink. Now you know what I know. Take this." },
+    reward: { coins: 15000, xp: { magic: 12000, wizardry: 6000 }, text: "15,000 tickets, 12,000 Magic xp, 6,000 Wizardry xp" }
+  },
+  darlaeel: {
+    name: "Mudcat Supper", giver: "Darla", where: "The Trailer Park", icon: "🐈", tier: "hard", requires: ["theking"],
+    brief: "Darla wants five cooked mudcat from the park's own water. Fishing 80.",
+    stages: [{ type: "gather", items: ["mudcat"], n: 5, what: "mudcat", how: "gather" }, { type: "gather", items: ["cmudcat"], n: 5, what: "cooked mudcat", how: "cook" }, { type: "bring", items: ["cmudcat"], n: 5, what: "cooked mudcat" }],
+    talk: { offer: ["Forty years I've eaten out of tins. The King's gone. I'd like a fish.", "Five mudcat from the water here, cooked. They fight the line, so bring a good rod."], accept: "Five cooked mudcat.", decline: "Open a tin.",
+      accepted: "The water's along the south. Fishing 80. The fire's by my porch.", progress: "Five cooked mudcat. You've {have}.", ready: "Fish. Real fish. Give it here.", hand: "Five mudcat.", done: "Sit on the porch a minute. Nobody's sat there since 1986. Take this." },
+    reward: { coins: 10000, xp: { cooking: 8000, fishing: 6000 }, text: "10,000 tickets, 8,000 Cooking xp, 6,000 Fishing xp" }
+  },
+  kingslayer: {
+    name: "The Grinning Debt", giver: "The Barker", where: "The Carnival", icon: "🎭", tier: "hard",
+    brief: "The Barker owes the Grinning Man. Settle it: one Grinning Man, and two starfall ore for the Barker's new sign.",
+    stages: [{ type: "kill", mob: "grinner", n: 1, what: "the Grinning Man" }, { type: "bring", items: ["starfall_ore"], n: 2, what: "starfall ore" }],
+    talk: { offer: ["Step right up and hear a confession: I owe him. The one behind the turnstile. I owe him and he knows it.", "Settle it for me. One Grinning Man, and bring me two starfall ore from the freaks; the sign over the gate is coming down with him."], accept: "One Grinning Man.", decline: "Pay your own debts.",
+      accepted: "You'll need a carnival ticket for the turnstile. The freaks carry them, one in a hundred.", progress: "The Grinning Man, and two starfall ore. You're at {have}.", ready: "He's... down? He's DOWN. Give me the ore, the sign, the sign!", hand: "Two ore.", done: "STEP RIGHT UP AND SEE THE ONE WHO DID IT. Here. All of it. Take it." },
+    reward: { coins: 20000, xp: { melee: 15000, hp: 5000 }, text: "20,000 tickets, 15,000 Melee xp, 5,000 Hitpoints xp" }
+  },
+});
+/* the two things a quest hands you to carry */
+ITEMS.caravan_parcel = { name: "Caravan parcel", icon: "\u{1F4E6}", ex: "Rashid's, for Sister Morrow. Sealed, and it smells faintly of candles." };
+ITEMS.audit_ledger = { name: "The Auditor's ledger", icon: "\u{1F4D2}", ex: "Every ticket the Vault has ever taken, and one line waiting for Dex's name." };
 
 /* ------------------------------------------------------------ a character */
 export const DEFAULT_SETTINGS = { xpDrops: true, gainPops: true, skillRing: true, names: true, hoverTile: false /* (v93, the owner: "turn off the tile outline setting by default") */, groupNotes: true, debug: false, reducedMotion: false, confirmDrop: true };
@@ -5838,7 +6756,16 @@ export const maxHpOf = (c) => lvlOf(c, "hp") + petFx(c).hp;
 // split neutral: a character whose attack, strength and defence all equal their
 // old melee level comes out at exactly the combat level they had before.
 export const meleeOf = (c) => lvlOf(c, "melee");
-export const combatOf = (c) => Math.floor((meleeOf(c) * 1.3 + lvlOf(c, "hp")) / 2.3) + 2;
+/* (2026-09-25) THE STYLE IS WHAT IS IN YOUR HAND. A launcher makes every roll read Archery - accuracy, max hit AND the
+   defence roll (an archer holding a bow defends with Archery, or a pure archer at Combat 1 would be hit by everything).
+   Nothing else in the combat maths knows the word "bow": it asks styleOf. A staff for a future Magic skill answers here. */
+export const styleOf = (c) => { const L = launcherOf(c); return L ? L.launcher.style || "archery" : "melee"; };   /* (2026-09-26) the launcher names its style: a bow Archery, a wand Magic */
+export const styleLvlOf = (c) => lvlOf(c, styleOf(c));
+/* THE COMBAT LEVEL IS ALL THREE (2026-09-25, the owner: "the culmination of melee, archery, and health"). The stronger style
+   counts in full, exactly as Combat always did, and the weaker one adds 0.3 a level above 1 on top. So nobody who has
+   never drawn a bow moves by a single level - every gate, band and Tower door reads this number - while every level of
+   the second style still shows. A 99 / 99 / 99 character is 113. */
+export const combatOf = (c) => { const [a, b, d] = ["melee", "archery", "magic"].map((k) => lvlOf(c, k)).sort((x, y) => y - x); return Math.floor((a * 1.3 + (b - 1) * 0.3 + (d - 1) * 0.3 + lvlOf(c, "hp")) / 2.3) + 2; };   /* (2026-09-26) Magic joins: the best style in full, each other 0.3 a level above 1 */
 export const totalOf = (c) => Object.keys(SKILLS).reduce((n, k) => n + lvlOf(c, k), 0);
 /* (2026-09-22) REFORGING rides here, which is the only place it has to touch combat: every roll in the game reads
    its gear through bonusOf, so adding the level here means the max hit, the attack roll and the defence roll all
@@ -5849,7 +6776,18 @@ export const totalOf = (c) => Object.keys(SKILLS).reduce((n, k) => n + lvlOf(c, 
    anvil showed +18, and a +3 emerald axe was identical in a fight to a plain one. Three copies of one formula is
    what caused both bugs; there is now one. */
 export const bonusOf = (c) => { const b = { acc: 0, str: 0, def: 0 }; for (const k of Object.values(c.eq)) if (k && ITEMS[k]) for (const q in b) b[q] += statOf(c, k, q); return b; };
-export const maxHitOf = (c) => 1 + Math.floor(lvlOf(c, "melee") / 6) + Math.floor(bonusOf(c).str / 2);
+/* THE STYLE'S OWN GEAR (2026-09-25, the owner: "with 100ish bone arrows im at level 22, so you outlevel early game feathers and skip
+   tiers"). A bow used to read accuracy and strength off EVERYTHING worn, so a geared melee player picked up a rough shortbow and hit
+   for fourteen a shot at Archery 1 - every point of which was Archery xp. With a launcher in hand, accuracy and strength come from the
+   launcher and the pouch (the quiver) only; the arrow adds its own strength on top in the fight, as before. DEFENCE still reads
+   everything worn: armour stops a sword whatever you are holding. A melee character is unchanged - this is bonusOf for them. */
+export const styleBonusOf = (c) => {
+  if (!launcherOf(c)) return bonusOf(c);
+  const b = { acc: 0, str: 0, def: bonusOf(c).def };
+  for (const sl of ["weapon", "shield"]) { const k = c.eq?.[sl]; if (k && ITEMS[k]) { b.acc += statOf(c, k, "acc"); b.str += statOf(c, k, "str"); } }
+  return b;
+};
+export const maxHitOf = (c) => Math.floor((1 + Math.floor(styleLvlOf(c) / 6) + Math.floor(styleBonusOf(c).str / 2)) * (1 + charmOf(c, "focus") / 100));   /* (2026-09-26) Focus */
 
 /* The two rolls, in one place so the server and the page can never disagree.
 
@@ -5859,8 +6797,8 @@ export const maxHitOf = (c) => 1 + Math.floor(lvlOf(c, "melee") / 6) + Math.floo
    hits. Halved, a Defensive character ends up exactly as hard to hit as a
    melee-50 character was before the split, while somebody who poured everything
    into Strength is genuinely fragile. That difference IS the split. */
-export const attackRollOf = (c) => lvlOf(c, "melee") + 1 + bonusOf(c).acc;
-export const defenceRollOf = (c) => (lvlOf(c, "melee") + bonusOf(c).def) / 2;
+export const attackRollOf = (c) => (styleLvlOf(c) + 1 + styleBonusOf(c).acc) * (1 + charmOf(c, "focus") / 100);   /* (2026-09-26) Focus */
+export const defenceRollOf = (c) => ((styleLvlOf(c) + bonusOf(c).def) / 2) * (1 + charmOf(c, "ward") / 100);   /* (2026-09-26) Ward */
 /* THE FLOOR IS THE DANGER KNOB (2026-09-25). It was 0.1, and that one number is why the open world felt safe:
    defenceRollOf is (melee level + gear def) / 2, gear outruns a monster's `att`, and so EVERY level-appropriate
    player in full tier gear sits exactly ON the floor from about level 50 up - goose, house and The Last Dealer
@@ -5904,17 +6842,56 @@ export const qGet = (c, k) => c.qs[k] || { state: "new", n: 0 };
    ones: takeInv spends those first and leaves the forged behind, so a count that included them would ask the bank
    for more than the take will hand over. */
 export const countItems = (c, keys, opt = null) => c.inv.filter((x) => keys.includes(x.k) && !(opt?.plainOnly && fOf(x))).reduce((n, x) => n + x.n, 0);
-export const qHave = (c, k) => { const q = QUESTS[k]; return q.goal.type === "bring" ? countItems(c, q.goal.items) : qGet(c, k).n; };
+/* (2026-09-27) QUESTS HAVE STAGES (the owner: "I don't want bland quests like 'go get X thing'. They should be go to NPC, it has
+   some dialogue about the quest, go talk to X NPC, get this thing, bring it over here, etc."). A quest is `stages`, done in
+   order; the player's record is C.qs[k] = { state, stage, n }. Stage types:
+     talk    { npc, say, reply, after }                   find that person; what they say when you arrive; the button; what they say after
+     bring   { items, n, what, to?, say, short, reply, after }   hand n of the items to `to` (the giver when unset); `short` is what they say when you have not got them
+     kill    { mob, n, what, style? }                     defeat n of them after the stage is reached (style: "melee" | "archery" | "magic" to insist on one)
+     gather  { items, n, what, how? }                     come by n of them from the stage on (how: "gather" for skilling, "craft", "cook"; any when unset)
+     visit   { scene, what }                              set foot in that area
+   A stage may `give: [[item, n]]` when it is reached (a letter to carry). When the last stage is done the quest is READY and is
+   handed in to `handTo` (the giver when unset), where the reward is paid. The five quests written before this had one goal each;
+   they become one-stage quests below and play exactly as they did. `tier` is easy | medium | hard, for the log and the wiki. */
+export const QUEST_TIERS = { easy: "Easy", medium: "Medium", hard: "Hard" };
+for (const q of Object.values(QUESTS)) if (!q.stages) { q.stages = [{ ...q.goal }]; q.tier ||= "easy"; }
+export const qStageAt = (k, i) => { const st = QUESTS[k].stages; return st[Math.max(0, Math.min(i | 0, st.length - 1))]; };
+export const qStage = (c, k) => qStageAt(k, qGet(c, k).stage);
+export const qHandTo = (k) => QUESTS[k].handTo || QUESTS[k].giver;
+export const qNeed = (c, k) => { const s = qStage(c, k); return s.n || 1; };
+export const qHave = (c, k) => { const o = qGet(c, k), s = qStageAt(k, o.stage); return s.type === "bring" ? countItems(c, s.items) : s.type === "kill" || s.type === "gather" ? o.n | 0 : 0; };
 export const qOpen = (c, q) => (q.requires || []).every((r) => qGet(c, r).state === "done");
+/* a bring stage's counterparty, and whether the quest's LAST stage is a bring to the hand-in person: that is the one case where
+   "ready" is read off the bag rather than recorded, which is how every quest written before stages worked */
+export const qBringTo = (k, s) => s.to || QUESTS[k].giver;
+const lastBringToHand = (k) => { const st = QUESTS[k].stages, s = st[st.length - 1]; return s.type === "bring" && qBringTo(k, s) === qHandTo(k); };
 // where a quest is now: new, locked, active, ready (can hand in), done
 export function qState(c, k) {
-  const q = QUESTS[k], st = qGet(c, k).state;
+  const q = QUESTS[k], o = qGet(c, k), st = o.state;
   if (st === "done") return "done";
-  if (st === "active") return qHave(c, k) >= q.goal.n ? "ready" : "active";
+  if (st === "ready") return "ready";
+  if (st === "active") return (o.stage | 0) === q.stages.length - 1 && lastBringToHand(k) && qHave(c, k) >= qNeed(c, k) ? "ready" : "active";
   return qOpen(c, q) ? "new" : "locked";
 }
-// the quest an NPC is dealing with right now: the first of theirs that isn't done or locked
-export const npcQuest = (c, n) => (n.quests || []).find((k) => ["new", "active", "ready"].includes(qState(c, k)));
+/** what an NPC has to do with a player's quests right now: { k, role, stage } — role is offer (a new quest of theirs), hand (a
+    finished one to hand in), stage (this person is the current stage's talk or bring counterparty) or progress (the giver, mid-quest) */
+export const npcRole = (c, n) => {
+  /* the stage you were sent here for comes before anything this person has to offer: you came for the parcel, not the pitch */
+  for (const k of Object.keys(QUESTS)) {
+    const st = qState(c, k); if (st !== "active" && st !== "ready") continue;
+    if (st === "ready") { if (qHandTo(k) === n.name) return { k, role: "hand", stage: qStage(c, k) }; continue; }
+    const s = qStage(c, k);
+    if (s.type === "talk" && s.npc === n.name) return { k, role: "stage", stage: s };
+    if (s.type === "bring" && qBringTo(k, s) === n.name) return { k, role: "stage", stage: s };
+  }
+  for (const k of n.quests || []) { const st = qState(c, k); if (st === "new") return { k, role: "offer" }; }
+  for (const k of n.quests || []) if (qState(c, k) === "active") return { k, role: "progress", stage: qStage(c, k) };
+  return null;
+};
+// the quest an NPC is dealing with right now (the marker over their head, the old callers)
+export const npcQuest = (c, n) => npcRole(c, n)?.k || null;
+/** one line for a stage, for the log and the wiki */
+export const stageText = (k, s) => s.type === "talk" ? `Talk to ${s.npc}` : s.type === "bring" ? `Bring ${s.n} ${s.what} to ${qBringTo(k, s)}` : s.type === "kill" ? `Defeat ${s.n} ${s.what}${s.style ? ` with ${s.style === "magic" ? "a wand" : s.style === "archery" ? "a bow" : "a melee weapon"}` : ""}` : s.type === "gather" ? `${s.how === "craft" ? "Make" : s.how === "cook" ? "Cook" : "Get"} ${s.n} ${s.what}` : s.type === "visit" ? `Go to ${s.what}` : "";
 // what an NPC with no work left says to send you on
 export function nextHint(c, n) {
   const next = Object.keys(QUESTS).find((q) => !(n.quests || []).includes(q) && ["new", "active", "ready"].includes(qState(c, q)));

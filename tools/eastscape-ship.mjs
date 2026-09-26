@@ -19,11 +19,11 @@
    writes nothing.
 
    AFTER THIS: a probe that greps the live file must look for the shipped spelling — `VERSION=76`, not `VERSION = 76`. */
-import fs from "fs"; import path from "path"; import zlib from "zlib"; import { createRequire } from "module"; import { pathToFileURL } from "url";
+import fs from "fs"; import path from "path"; import zlib from "zlib"; import { createRequire } from "module"; import { pathToFileURL } from "url"; import { spawnSync } from "child_process";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1")), "..");
 const esbuild = createRequire(path.join(ROOT, "package.json"))("esbuild");   // (a dev dependency of this repo: package.json at the root, never deployed)
-export const FILES = ["eastscape.html", "v3/assets/js/eastscape-shared.js", "v3/assets/js/eastscape-casino.js", "v3/assets/js/eastscape-wiki.js", "v3/assets/js/eastscape-sfx.js", "v3/assets/js/eastscape-green.js", "v3/assets/js/eastscape-picks.js", "v3/assets/js/eastscape-screen.js", "v3/assets/js/eastscape-decor.js", "v3/assets/js/eastscape-decor-rules.js", "v3/assets/js/eastscape-closed.js", "v3/assets/js/eastscape-crypt.js", "v3/assets/js/eastscape-pyramid.js", "v3/assets/js/eastscape-carnival.js", "v3/assets/js/eastscape-crypt-rules.js", "v3/assets/js/eastscape-pyramid-rules.js", "v3/assets/js/eastscape-tower-rules.js", "v3/assets/js/eastscape-profile.js", "v3/assets/js/eastscape-tip.js"];
+export const FILES = ["eastscape.html", "v3/assets/js/eastscape-shared.js", "v3/assets/js/eastscape-casino.js", "v3/assets/js/eastscape-wiki.js", "v3/assets/js/eastscape-sfx.js", "v3/assets/js/eastscape-green.js", "v3/assets/js/eastscape-picks.js", "v3/assets/js/eastscape-screen.js", "v3/assets/js/eastscape-decor.js", "v3/assets/js/eastscape-decor-rules.js", "v3/assets/js/eastscape-closed.js", "v3/assets/js/eastscape-crypt.js", "v3/assets/js/eastscape-pyramid.js", "v3/assets/js/eastscape-carnival.js", "v3/assets/js/eastscape-crypt-rules.js", "v3/assets/js/eastscape-pyramid-rules.js", "v3/assets/js/eastscape-tower-rules.js", "v3/assets/js/eastscape-count-rules.js", "v3/assets/js/eastscape-count.js", "v3/assets/js/eastscape-profile.js", "v3/assets/js/eastscape-tip.js"];
 const JS = { loader: "js", format: "esm", minifyWhitespace: true, legalComments: "none", target: "es2022", charset: "utf8" };
 
 /** The shipped text of one source file. */
@@ -48,6 +48,15 @@ async function check(rel, text) {
     finally { fs.rmSync(tmp, { force: true }); }
   }
   if (rel === "eastscape.html") for (const need of ["eastscape-shared.js?v=", "eastscape-casino.js?v=", "eastscape-wiki.js?v=", "eastscape-sfx.js"]) if (!text.includes(need)) throw new Error(`the shipped page no longer names ${need}`);
+  /* (2026-09-27) AND DOES IT BOOT: the shipped page is run under happy-dom by tools/eastscape-boot-check.mjs. Parsing is not
+     starting - one line that threw at boot left every player at "Connecting…" and passed every check above. */
+  if (rel === "eastscape.html") {
+    const tmp = path.join(ROOT, "tools", `.ship-boot-${process.pid}.html`); fs.writeFileSync(tmp, text);
+    try { const r = spawnSync(process.execPath, [path.join(ROOT, "tools", "eastscape-boot-check.mjs"), tmp], { encoding: "utf8", timeout: 60000 });
+      const said = (r.stdout || "").split(String.fromCharCode(10)).filter((l) => /boots|!!|^ {5}/.test(l)).join(String.fromCharCode(10)); console.log(said || (r.stderr || "").slice(-600));
+      if (r.status !== 0) throw new Error("the shipped page does not boot (see above)"); }
+    finally { fs.rmSync(tmp, { force: true }); }
+  }
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1"))) {
