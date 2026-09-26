@@ -877,6 +877,7 @@ export const UPDATES = [
       "A WORLD MAP replaces the how-to-play tab: every open map as its real shape, roads between them, the combat band coloured against your level, quest arrows, who is where, and a fog over maps you have not set foot on. Click the minimap or the tab to open it.",
       "BOM PAYS AN EIGHTH of the shelf price for smithed gear, down from a quarter (and a reforged piece's bonus halves with it): a Nova cuirass buys back for 75,000. Too many tickets were coming off the anvil.",
       "THE SKILLS TAB is a grid of tiles; click one for its wiki page. Quest givers now say which step comes first when it is with somebody else.",
+      "ZCOINS OUT OF THE GAME ARE 100 IN ANY 24 HOURS, per person: tickets traded at the counter and found ZCoins banked count together. Ticket bets keep their own allowance of 50 ZCoins' worth an hour.",
     ]
   },
   {
