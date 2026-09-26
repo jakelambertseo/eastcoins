@@ -20,7 +20,7 @@
    draw this one. Only "seeded by" for the old crops is written by hand: those drop from loot tables the wiki does not
    read. A seed crop's areas are worked out from the monsters that drop it. */
 const SEEDED_BY = { wheat: "grows wild in the Yard", tomatoe: "rotten tomatoes, in the Yard", rattlebean: "the Gloam", lanternroot: "the Lantern Mire",
-  bonegourd: "the Boneyard", stormcorn: "Cloudreach &amp; the Thunderhead", goldtomatoe: "&mdash;", glassgourd: "the Carnival", emberwheat: "the Vault", starfruit: "the Trailer Park" };
+  bonegourd: "the Boneyard", stormcorn: "Cloudreach &amp; the Thunderhead", goldtomatoe: "a Rotten Tomato in the Yard (1 in 500), or any island harvest (1 in 1,000)", glassgourd: "the Carnival", emberwheat: "the Vault", starfruit: "the Trailer Park" };
 const growTime = (ms) => { const m = Math.round(ms / 60000), h = Math.floor(m / 60); return m < 60 ? `${m} min` : `${h} hr${m % 60 ? ` ${m % 60} min` : ""}`; };
 export function cropTable(G, H) {
   const nm = (k) => H.esc(G.ITEMS[k]?.name || k);
@@ -82,6 +82,12 @@ export const GUIDES = [
       <p>Once a day, say it to any person in the game. Most of the time it is a treat: a handful of corn, two pumpkin seeds, or a warm pie. ${Math.round(G.HW.trick.trickAt * 100)}% of the time it is a trick, and a trick can cost five corn, drop a spider in your bag, or put you in the Boneyard.</p>
       <h3>The Pumpkin King</h3>
       <p>He rises <b>once an hour in the Lantern Mire</b> (chat says when), stands ${Math.round(G.HW.king.stays / 60000)} minutes and leaves. Level ${G.MOBS.pumpkinking.lvl}, ${G.MOBS.pumpkinking.hp} hitpoints, hits ${G.MOBS.pumpkinking.max}, attacks first, weak to fire and sun. He drops candy corn and ectoplasm every time, one of the <b>Hallowed</b> set (helm, cuirass, greaves: Dragonstone-grade, and every kill in a piece pays a little more) about one time in five, and the <b>Black Cat</b> pet one King in forty.</p>
+      <h3>The pieces</h3>
+      <p><b>Nine wearable pieces exist only during the Long Night</b>, every one tagged <b>Halloween 2026 Event</b>, every one yours to keep, and every one reforged with candy corn rather than bars. Their numbers sit at their level's tier; what you chase is the effect.</p>
+      <table class="tbl"><tr><th>Piece</th><th>Needs</th><th>Does</th><th>From</th></tr>
+        ${[["gallows_bow", "one chop in 10,000"], ["coffin_ring", "one swing at a rock in 10,000"], ["drowned_boots", "one cast in 10,000"], ["lantern_quiver", "the King (2%), or Hexa for 9,000"], ["skull_wand", "the King (2%), or Hexa for 9,000"], ["bag_shroud", "the King (2%), or Hexa for 9,000"], ["reaper_scythe", "the King (1%), or 1 in 3,000 off anything level 80+"], ["king_crown", "the King (1%), or 1 in 3,000 off anything level 80+"], ["ferry_coin", "the King (1%), or 1 in 3,000 off anything level 80+"]].map(([k, from]) => { const it = G.ITEMS[k]; return `<tr><td>${H.ico(k)} ${H.wl(`items/${k}`, H.esc(it.name))}${it.legend ? " <b>(legendary)</b>" : ""}</td><td>${H.esc(G.SKILLS[it.req.skill].name)} ${it.req.lvl}</td><td>${H.esc(G.fxText(it.fx))}</td><td>${from}</td></tr>`; }).join("")}
+      </table>
+      <p>The three skilling drops never sit on a shelf. The Pumpkin King drops every piece; the three legendaries also fall, one in three thousand, from any monster of level 80 or more killed during the event.</p>
       <h3>Three quests</h3>
       <p>${H.wl("quests/hw_lights", "Lights Out")} (Mudge, easy) &rarr; ${H.wl("quests/hw_vigil", "The Sister's Vigil")} (Sister Morrow, medium) &rarr; ${H.wl("quests/hw_king", "The Pumpkin King")} (Hexa, hard). The last pays the Hallowed helm outright.</p>`;
     } },

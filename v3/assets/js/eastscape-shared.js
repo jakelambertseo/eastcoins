@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 288;
+export const VERSION = 289;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -3920,8 +3920,8 @@ export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 10
    charcoal and do not know why. It also fills a hole that was already open - burnChance has a `range` multiplier
    worth 20%, and the only range in the game is in the CLOSED Cottage, so no player has ever had it. */
 export const COAL_STEADY_MIN = 0.10;
-export const OUT_CAP = { tix: 0.25, speed: 0.2, tough: 0.3, rare: 0.4, zdrop: 0.75, bite: 0.1, heal: 0.5, steal: 0.15 };
-const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal", "steal"];
+export const OUT_CAP = { tix: 0.25, speed: 0.2, tough: 0.3, rare: 0.4, zdrop: 0.75, bite: 0.1, heal: 0.5, steal: 0.15, ammo: 0.5, leech: 0.25, double: 0.3, execute: 0.3, calm: 1, nobill: 1 };
+const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal", "steal", "ammo", "leech", "double", "execute", "calm", "nobill"];   /* (2026-09-27) the last six are the Long Night's pieces' effects; see fxText */
 
 /* ============================================================ ACHIEVEMENTS (2026-09-23, the owner)
 
@@ -4147,7 +4147,11 @@ export const backWith = (lost, e, roll) => (lost > 0 && e ? Math.round((roll < (
 const pct = (n) => `${Math.round(n * 1000) / 10}%`;
 export const fxText = (f) => [f.tix && `${pct(f.tix)} more tickets from kills, and that chance of a second fish on a catch`, f.speed && `you swing and fish ${pct(f.speed)} faster`,
   f.tough > 0 && `you take ${pct(f.tough)} less damage`, f.tough < 0 && `you take ${pct(-f.tough)} MORE damage`, f.rare && `rare drops come up ${pct(f.rare)} more often`, f.zdrop && `a real ZCoin is ${pct(f.zdrop)} more likely to drop`,
-  f.bite && `fish bite ${pct(f.bite)} more often`, f.heal && `fish heal ${pct(f.heal)} more`, f.power && `your other worn buff gear is ${pct(f.power)} stronger`].filter(Boolean).join("; ");
+  f.bite && `fish bite ${pct(f.bite)} more often`, f.heal && `fish heal ${pct(f.heal)} more`,
+  /* (2026-09-27) the Long Night's pieces */
+  f.ammo && `${pct(f.ammo)} of your shots and casts spend no arrow or page`, f.leech && `${pct(f.leech)} of the damage you deal comes back as health`, f.double && `${pct(f.double)} of what you mine, cut or catch comes up double`,
+  f.execute && `a monster under ${pct(f.execute)} health dies to your next hit (never a boss)`, f.calm && `nothing outside attacks you first`, f.nobill && `the hospital never bills you`,
+  f.power && `your other worn buff gear is ${pct(f.power)} stronger`].filter(Boolean).join("; ");
 for (const it of Object.values(ITEMS)) {   // say what it does, once, from the numbers
   if (it.fx) it.ex = `Worn: ${fxText(it.fx)}. ${it.ex || ""}`.trim();
   if (it.meal) it.ex = `${it.ex || ""} Eat it: for ${it.meal.mins} minutes outside, ${fxText(it.meal.fx)}.`.trim();
@@ -5899,6 +5903,11 @@ Object.assign(CROPS, {
 export const cropYield = (k) => CROPS[k]?.yields || k;
 /* (2026-09-27, the owner: "have the chance of seed return at 25%") a harvested seed crop gives one seed back this often, so a plot found once can be kept going */
 export const SEED_RETURN = 0.25;
+/* (2026-09-27, the owner: "put golden tomatoe in the game somewhere as a rare drop") The Golden tomatoe was a Harvesting-50 crop
+   that grows 1-3 from one - so it multiplies itself - with NO way to get the first one. Two now: the Yard's Rotten Tomato drops
+   it one kill in five hundred (on its drop table, below MOBS), and any island harvest of anything else turns one up one time in
+   a thousand (the server's harvest). Not the event's: it stays after November. */
+export const GOLD_TOMATO_HARVEST = 0.001;
 export const cropArt = (k) => CROPS[k]?.art || k;
 
 /* ---------------- combat pages: the ammunition. Arcane is the practice page; each element has Bolt, Blast and Surge */
@@ -6974,8 +6983,10 @@ export const HW = {
      Cat is the chase: 12,000 is every corn a serious player sees before November. The King still drops the gear and the cat, so
      the shelf is the slow certain road and the Mire the fast lucky one. */
   market: [["seed_pumpkin", 3, 40], ["medium_vial", 2, 25], ["ectoplasm", 1, 30], ["pumpkinpie", 1, 90], ["pot_witch", 1, 200],
-    ["hallowed_helm", 1, 4000], ["hallowed_body", 1, 6000], ["hallowed_legs", 1, 5000]],   /* [item, n, corn] */
+    ["hallowed_helm", 1, 4000], ["hallowed_body", 1, 6000], ["hallowed_legs", 1, 5000], ["lantern_quiver", 1, 9000], ["skull_wand", 1, 9000], ["bag_shroud", 1, 9000]],   /* [item, n, corn] */
   pet: ["blackcat", 12000],                            /* the Black Cat off the shelf, once; the King still drops it one in forty */
+  skillDrops: { woodcutting: "gallows_bow", mining: "coffin_ring", fishing: "drowned_boots" }, skillDropChance: 0.0001,   /* (2026-09-27) one in ten thousand chops, swings, casts; rolled in the server's gained() */
+  legend: { lvl: 80, chance: 1 / 3000, items: ["reaper_scythe", "king_crown", "ferry_coin"] },                          /* the three legendaries off any monster of that level or more, one of the three at random */
   gone: "2026-11-02"                                   /* the morning it all goes: the copy says this date everywhere, so it is one string */
 };
 /** days of the Long Night left, counting today: 1 on the last day, 0 after */
@@ -6993,10 +7004,34 @@ ITEMS.seed_pumpkin = { name: "Pumpkin seed", icon: "\u{1F331}", event: true, ex:
 ITEMS.pumpkinpie = { name: "Pumpkin pie", icon: "\u{1F967}", heal: 20, event: true, meal: { mins: 30, fx: { rare: 0.15, tix: 0.10 } }, ex: "Heals 20 and, for half an hour outside, rare drops come a little easier and every kill pays a little more. Not xp: nothing in EastScape buys xp." };
 ITEMS.ectoplasm = { name: "Ectoplasm", icon: "\u{1F47B}", event: true, ex: "What is left of something that did not want to leave. One kill in sixteen drops it during the Long Night; the cauldron wants it." };
 ITEMS.pot_witch = { name: "Witch's brew", icon: "\u{1F9EA}", use: "ward", event: true, ex: "Drink it and your next death costs nothing: no hospital bill. Used up by the death, however long that takes." };
-ITEMS.hallowed_helm = { name: "Hallowed helm", short: "Helm", icon: "\u{1F383}", slot: "helm", def: 13, acc: 3, tier: "hallowed", event: true, fx: { tix: 0.04 }, req: { skill: "melee", lvl: 40 }, ex: "The Pumpkin King's, or a copy. Lit from inside. Dragonstone-grade, and every kill in it pays a little more." };
-ITEMS.hallowed_body = { name: "Hallowed cuirass", short: "Cuirass", icon: "\u{1F9BA}", slot: "body", def: 23, tier: "hallowed", event: true, fx: { tix: 0.04 }, req: { skill: "melee", lvl: 40 }, ex: "Black iron with a pumpkin burning on the chest. Dragonstone-grade." };
-ITEMS.hallowed_legs = { name: "Hallowed greaves", short: "Greaves", icon: "\u{1F456}", slot: "legs", def: 19, tier: "hallowed", event: true, fx: { tix: 0.04 }, req: { skill: "melee", lvl: 40 }, ex: "The seams glow. Dragonstone-grade." };
-Object.assign(VALUE, { candycorn: 0, pumpkin: 20, seed_pumpkin: 6, pumpkinpie: 60, ectoplasm: 30, pot_witch: 220, hallowed_helm: 900, hallowed_body: 1400, hallowed_legs: 1100 });
+ITEMS.hallowed_helm = { name: "Hallowed helm", short: "Helm", icon: "\u{1F383}", slot: "helm", def: 13, acc: 3, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { tix: 0.04 }, req: { skill: "melee", lvl: 40 }, ex: "The Pumpkin King's, or a copy. Lit from inside. Dragonstone-grade, and every kill in it pays a little more." };
+ITEMS.hallowed_body = { name: "Hallowed cuirass", short: "Cuirass", icon: "\u{1F9BA}", slot: "body", def: 23, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { tix: 0.04 }, req: { skill: "melee", lvl: 40 }, ex: "Black iron with a pumpkin burning on the chest. Dragonstone-grade." };
+ITEMS.hallowed_legs = { name: "Hallowed greaves", short: "Greaves", icon: "\u{1F456}", slot: "legs", def: 19, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { tix: 0.04 }, req: { skill: "melee", lvl: 40 }, ex: "The seams glow. Dragonstone-grade." };
+/* (2026-09-27, the owner: "there needs to be a unique halloween themed quiver, bow, magic bag, wand, boots and jewelry. give these
+   some type of unique effect that makes them enticing to chase for the grind. let 3 of them be rare (0.01%) drops from
+   fishing/wc/mining (1 each skill) ... all are level 50 in their skill"; then "2-3 level 90 legendary chase items ... unique
+   effects"; then "the event items that are wearable need to show a special Event tag").
+   THE PIECES. Stats sit at the tier their level already has (yew/onyx at 50, nova at 90 - "nothing seasonal beats what exists"),
+   and the EFFECT is the reason to want one: every effect here is a key fxOf() sums and the server reads at exactly one line
+   (spendAmmo, the hit, gained, the aggro pick, die). Every one is tier "hallowed", which is what the page's icon glow and the
+   Event tag key on, and every one reforges with CANDY CORN (there is no hallowed bar), so a reforge is a corn sink and stops
+   with the event. SOURCES: the bow, the ring and the boots fall ONLY from a chop, a swing and a cast, one in ten thousand, during
+   the event (HW.skillDrops, rolled in the server's gained()); the quiver, the wand and the satchel are the King's (2% each) and
+   on Hexa's shelf at 9,000 corn; the three legendaries are the King's at 1% each and one in three thousand off any monster of
+   level 80 or more killed during the event (HW.legend). Nothing here is sold for tickets or bought back by Bom. */
+export const EVENT_TAG = "Halloween 2026 Event";
+ITEMS.gallows_bow = { name: "Gallows Bow", short: "Bow", icon: "\u{1F3F9}", slot: "weapon", acc: 17, str: 9, launcher: { range: 6, ammo: "arrow" }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { tix: 0.06, rare: 0.10 }, req: { skill: "archery", lvl: 50 }, ex: "Cut from the gallows tree. One chop in ten thousand brings it down, during the Long Night only. Kills pay 6% more and rare drops come 10% easier." };
+ITEMS.lantern_quiver = { name: "Lantern Quiver", short: "Quiver", icon: "\u{1F383}", slot: "shield", pouch: { ammo: "arrow", cap: 400 }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { ammo: 0.25 }, req: { skill: "archery", lvl: 50 }, ex: "A carved pumpkin with a strap. One arrow in four flies back into it: a quarter of your shots spend nothing. The King drops it; Hexa sells it." };
+ITEMS.skull_wand = { name: "Skull Wand", short: "Wand", icon: "\u{1F480}", slot: "weapon", acc: 20, str: 8, launcher: { range: 5, ammo: "page", style: "magic" }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { leech: 0.10 }, req: { skill: "magic", lvl: 50 }, ex: "Somebody's, once. A tenth of every spell's damage comes back to you as health. The King drops it; Hexa sells it." };
+ITEMS.bag_shroud = { name: "Shroud Satchel", short: "Satchel", icon: "\u{1F45D}", slot: "shield", pouch: { ammo: "page", cap: 500 }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { ammo: 0.25 }, req: { skill: "magic", lvl: 50 }, ex: "Sewn from a burial shroud. A quarter of your casts spend no page. The King drops it; Hexa sells it." };
+ITEMS.drowned_boots = { name: "Drowned Boots", short: "Boots", icon: "\u{1F462}", slot: "boots", def: 6, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { speed: 0.08, tix: 0.03 }, req: { skill: "melee", lvl: 50 }, ex: "They came up on a line. One cast in ten thousand, during the Long Night only. You move, swing and fish 8% faster, and kills pay 3% more." };
+ITEMS.coffin_ring = { name: "Coffin Ring", short: "Ring", icon: "\u{1F48D}", slot: "ring", acc: 8, str: 8, def: 8, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { double: 0.10 }, req: { skill: "hp", lvl: 50 }, ex: "Coffin iron, with a coffin on it. One swing in ten thousand at any rock turns it up, during the Long Night only. One dig, cut or catch in ten comes up double." };
+/* the three legendaries: level 90, nova-grade numbers, one effect each that nothing else in the game has */
+ITEMS.reaper_scythe = { name: "The Reaper's Scythe", short: "Scythe", icon: "\u{1F5E1}️", slot: "weapon", acc: 36, str: 36, tier: "hallowed", forgeWith: ["candycorn", 900], event: true, legend: true, fx: { execute: 0.20, tix: 0.08 }, req: { skill: "melee", lvl: 90 }, ex: "Any monster under a fifth of its health dies to the next swing, outright. Never a boss. Kills pay 8% more. The King, one in a hundred; anything of level 80 or more, one in three thousand, during the Long Night." };
+ITEMS.king_crown = { name: "The Pumpkin King's Crown", short: "Crown", icon: "\u{1F451}", slot: "helm", def: 18, acc: 4, tier: "hallowed", forgeWith: ["candycorn", 900], event: true, legend: true, fx: { calm: 1, tough: 0.10 }, req: { skill: "melee", lvl: 90 }, ex: "Wear it and nothing outside attacks you first: every monster waits for your swing. You take 10% less damage. The King, one in a hundred; anything of level 80 or more, one in three thousand, during the Long Night." };
+ITEMS.ferry_coin = { name: "The Ferryman's Coin", short: "Coin", icon: "\u{1FA99}", slot: "amulet", acc: 15, str: 15, def: 15, tier: "hallowed", forgeWith: ["candycorn", 900], event: true, legend: true, fx: { nobill: 1, zdrop: 0.15 }, req: { skill: "hp", lvl: 90 }, ex: "Charon's own fare. The hospital never bills you again, and a real ZCoin is 15% more likely to drop. The King, one in a hundred; anything of level 80 or more, one in three thousand, during the Long Night." };
+Object.assign(VALUE, { candycorn: 0, pumpkin: 20, seed_pumpkin: 6, pumpkinpie: 60, ectoplasm: 30, pot_witch: 220, hallowed_helm: 900, hallowed_body: 1400, hallowed_legs: 1100,
+  gallows_bow: 1600, lantern_quiver: 1200, skull_wand: 1600, bag_shroud: 1200, drowned_boots: 1400, coffin_ring: 1500, reaper_scythe: 9000, king_crown: 8000, ferry_coin: 8500 });
 
 /* the crop: a seed crop like the elemental ones (the seed is planted, the pumpkin comes off it), quick so a plot planted at Nightfall is pie by morning */
 CROPS.seed_pumpkin = { lvl: 20, ms: 90 * 60000, yield: [2, 4], xp: 260, col: "#ff8a30", yields: "pumpkin", art: "pumpkin", event: true };
@@ -7006,11 +7041,13 @@ recipe("brew_witch", { skill: "alchemy", station: "cauldron", lvl: 30, xp: 140, 
 /* THE PUMPKIN KING. Numbers are FINAL (the load-time passes above have already run): a party of three at 50 takes him in about a
    minute, one player at 60 in three. He hits like the Critic and stands still until struck, then chases. */
 MOBS.pumpkinking = { name: "The Pumpkin King", size: "xl", lvl: 52, hp: 520, att: 46, def: 40, max: 14, speed: 1900, aggro: 4, box: [26, 60], oy: -8, event: true, boss: true,
-  drops: [["tickets", [420, 720]], ["candycorn", [25, 45]], ["ectoplasm", [2, 4]], ["hallowed_helm", 1, 0.08], ["hallowed_body", 1, 0.06], ["hallowed_legs", 1, 0.06]],
+  drops: [["tickets", [420, 720]], ["candycorn", [25, 45]], ["ectoplasm", [2, 4]], ["hallowed_helm", 1, 0.08], ["hallowed_body", 1, 0.06], ["hallowed_legs", 1, 0.06],
+    ["lantern_quiver", 1, 0.02], ["skull_wand", 1, 0.02], ["bag_shroud", 1, 0.02], ["reaper_scythe", 1, 0.01], ["king_crown", 1, 0.01], ["ferry_coin", 1, 0.01]],   /* (2026-09-27) the pieces, see EVENT_TAG */
   rare: [], pet: ["blackcat", 0.025],   /* the Black Cat: one King in forty */
   enrage: { at: 0.3, mul: 1.5, say: "The Pumpkin King's grin splits wider. The lantern in his head flares." } };
 BOUNTY.pumpkinking = 560; BOSSES.add("pumpkinking"); AGGRO_ON.add?.("pumpkinking");
-MOBS.pumpkinking.weak = ["fire", "sun"];   /* set on the mob directly: the WEAK table was folded into MOBS at load, above */
+MOBS.pumpkinking.weak = ["fire", "sun"];
+MOBS.rotten.drops.push(["goldtomatoe", 1, 0.002]);   /* (2026-09-27) the first Golden tomatoe: see GOLD_TOMATO_HARVEST */   /* set on the mob directly: the WEAK table was folded into MOBS at load, above */
 PETS.blackcat = { name: "Black Cat", art: "pet_blackcat", raid: true, event: true, fx: { speed: 4, tix: 5 }, ex: "It crossed your path on purpose. Walks a little quicker and, somehow, the tickets come a little better around it." };
 
 /* the two fits, priced in candy corn: bought at the Night Market or at Ronde's, worn and coloured at Ronde's like any other */

@@ -1652,6 +1652,7 @@ export class World {
   }
   spendAmmo(pl) {
     const C = pl.C, a = G.ammoOf(C); if (!a) return;
+    if (Math.random() < G.fxOf(C).ammo) return;   /* (2026-09-27) the Lantern Quiver / Shroud Satchel: this shot or cast spends nothing */
     const w = G.ammoWords(G.ammoKind(a.k));
     if (a.from === "pouch") { C.quiver.n--; if (C.quiver.n <= 0) { C.quiver = null; this.say(pl, `Your ${w.pouch} is empty.`, "bad"); } }
     else { G.takeInv(C.inv, a.k, 1); if (G.countItems(C, [a.k]) === 0 && !G.ammoOf(C)) this.say(pl, `That was your last ${w.one}.`, "bad"); }
@@ -2214,9 +2215,18 @@ export class World {
     return S.bots.filter((b) => b.working?.ob === ob).length + this.playersIn(S).filter((p) => p !== except && p.act?.ob === ob && p.act.started).length;
   }
   // a gather landed: the item pops up over the gatherer for everyone in the area
-  gained(S, pl, k, n = 1, how = "gather") {
+  gained(S, pl, k, n = 1, how = "gather", skill = null) {   /* (2026-09-27) `skill`: which gathering skill this came off (mining / woodcutting / fishing), for the Coffin Ring and the Long Night's skilling drops */
     S.events.push({ type: "gain", who: pl.id, k, n, t: Date.now() });
     this.emit(pl, how, { k, n });
+    if (how === "gather" && skill) {
+      const fxG = G.fxOf(pl.C);
+      if (fxG.double > 0 && Math.random() < fxG.double && this.give(pl, k, n)) { S.events.push({ type: "gain", who: pl.id, k, n, t: Date.now() }); this.emit(pl, how, { k, n }); this.say(pl, "…and again. The Coffin Ring is warm.", "loot"); }
+      const drop = G.hwOn() ? G.HW.skillDrops[skill] : null;
+      if (drop && Math.random() < G.HW.skillDropChance) {
+        const where = this.keepRare(pl, drop, 1);
+        if (where) { this.say(pl, `${G.ITEMS[drop].name}. ${where === "bank" ? "No room in your bag: it went to your bank." : "It is yours."}`, "loot"); this.houseSay(`\u{1F383} ${pl.name} ${skill === "fishing" ? "reeled in" : skill === "mining" ? "dug up" : "cut down"} ${G.ITEMS[drop].name}. One in ten thousand.`); for (const q of this.pls.values()) if (q !== pl) q.out.push({ type: "casinonote", text: `\u{1F383} ${pl.name} found ${G.ITEMS[drop].name}!` }); }
+      }
+    }
     if (how === "gather" && G.hwOn() && Math.random() < G.HW.corn.gather) { const c = rint(G.HW.corn.n[0], G.HW.corn.n[1]) * (G.nightfallOn() ? 2 : 1); if (this.hwGive(pl, c)) this.say(pl, `…and ${c} candy corn, stuck to it.`, "loot"); }   /* (2026-09-27) the Long Night */
     if (S.def.geode && Math.random() < S.def.geode && this.give(pl, "geode")) { S.events.push({ type: "gain", who: pl.id, k: "geode", n: 1, t: Date.now() }); this.emit(pl, "gather", { k: "geode", n: 1 }); this.say(pl, "Something glints in the dirt: a glimmering geode!", "loot"); }
   }
@@ -2285,6 +2295,9 @@ export class World {
            about one landed hit in nine and nobody sees one until their max hit reaches 5, around Combat 10.) */
         m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, ranged: G.launcherOf(C) ? true : undefined, ak: shotK || undefined,   /* (2026-09-25) the page flies an arrow from `by` to `who` before it shows the number; marked HERE so the page needs nothing about equipment, and a staff marks it the same way */ crit: (dmg >= 4 && dmg > G.maxHitOf(C) * 0.9) || undefined, kill: m.hp <= 0 || undefined });
         this.award(pl, dmg); if (S.def.crypt) this.cryptHit(S, pl, m, dmg); else if (S.def.pyramid) this.pyramidHit(S, pl, m, dmg);
+        { const fxH = G.fxOf(C);   /* (2026-09-27) the Long Night's pieces: the Skull Wand drinks, the Reaper's Scythe finishes */
+          if (dmg > 0 && fxH.leech > 0 && C.hp < G.maxHpOf(C)) { C.hp = Math.min(G.maxHpOf(C), C.hp + Math.max(1, Math.round(dmg * fxH.leech))); this.touch(pl); }
+          if (dmg > 0 && m.hp > 0 && fxH.execute > 0 && !G.MOBS[m.t].boss && m.hp <= m.maxHp * fxH.execute) { const rest = m.hp; m.hp = 0; S.events.push({ type: "splat", who: m.id, n: rest, kind: "hit", t: now, by: pl.id }); } }
         /* (2026-09-22) ENRAGE. `m.enraged` was read by the mob's swing and set by NOTHING — the crypt declared an
            enrage and never wired it up, so the flag had been dead since the day it was written. It flips once, on
            the hit that takes a mob under its threshold, and everyone in the scene is told. */
@@ -2458,7 +2471,7 @@ export class World {
       this.groupNote(S, pl, a);
       if (vein) {
         a.next = now + Math.round(6000 / tspd);
-        if (Math.random() < (0.55 + bonus) * G.gatherMul(S.def)) { if (!this.give(pl, ob.ore)) { pl.act = null; return; } this.gained(S, pl, ob.ore); this.grant(pl, "mining", gx(9)); this.questCheck(pl);
+        if (Math.random() < (0.55 + bonus) * G.gatherMul(S.def)) { if (!this.give(pl, ob.ore)) { pl.act = null; return; } this.gained(S, pl, ob.ore, 1, "gather", "mining"); this.grant(pl, "mining", gx(9)); this.questCheck(pl);
         /* (2026-09-25) A STONE, sometimes. GEM_DROP is keyed by ore, so the rock you are mining decides which gem,
            and the same rock decides which arrows that gem tips. keepRare, because a gem that vanished into a full
            bag would be the rarest thing this skill loses. */
@@ -2468,7 +2481,7 @@ export class World {
         a.next = now + Math.round(1800 / tspd);
         if (Math.random() < (Math.min(0.9, 0.4 + G.lvlOf(C, "mining") * 0.02) + bonus) * G.gatherMul(S.def)) {   /* half out in the Wilderness: see WILD_GATHER */
           if (!this.give(pl, ob.ore)) { pl.act = null; return; }
-          this.gained(S, pl, ob.ore);
+          this.gained(S, pl, ob.ore, 1, "gather", "mining");
         /* (2026-09-25) A STONE, sometimes. GEM_DROP is keyed by ore, so the rock you are mining decides which gem,
            and the same rock decides which arrows that gem tips. keepRare, because a gem that vanished into a full
            bag would be the rarest thing this skill loses. */
@@ -2687,7 +2700,7 @@ export class World {
       if (Math.random() < (Math.min(0.9, (oak ? 0.5 : 0.35) + G.lvlOf(C, "woodcutting") * 0.02) + bonus) * G.gatherMul(S.def)) {   /* half out in the Wilderness: see WILD_GATHER */
         const log = ob.log || "logs";
         if (!this.give(pl, log)) { pl.act = null; return; }
-        this.gained(S, pl, log);
+        this.gained(S, pl, log, 1, "gather", "woodcutting");
         this.grant(pl, "woodcutting", gx(ob.xp || 25)); this.say(pl, oak ? "You get some logs from the oak." : `You get some ${G.ITEMS[log].name.toLowerCase()}.`, "good"); this.questCheck(pl);
         /* (2026-09-22, the owner: "the woodcutting trees need to stay up longer before they become out, like a lot
            longer") It was 1-in-5 for an ordinary tree, so one fell after about five logs - ELEVEN SECONDS of
@@ -2733,7 +2746,7 @@ export class World {
       this.groupNote(S, pl, a);
       if (Math.random() < Math.min(0.97, G.FISHING.chance(lvl) + bonus + fx.bite) * G.gatherMul(S.def)) {   /* half out in the Wilderness: see WILD_GATHER */
         if (!this.give(pl, fish)) { pl.act = null; return; }
-        this.gained(S, pl, fish);
+        this.gained(S, pl, fish, 1, "gather", "fishing");
         if (fx.tix > 0 && Math.random() < fx.tix && this.give(pl, fish)) this.say(pl, "Two on one line!", "good");   /* the ticket buffs, for a fisher: that chance of a second fish */
         if (Math.random() < (G.ZDROP.fish[fish] || 0) * (1 + fx.zdrop)) this.zcoinDrop(pl, "the end of a fishing line");
         /* (2026-09-24) THE DITCHED SET COMES OUT OF THE WATER, and this is the first rare a fishing spot has ever
@@ -2824,6 +2837,10 @@ export class World {
       const dbl = G.nightfallOn() ? 2 : 1;
       if (Math.random() < G.HW.corn.kill) { const n = rint(G.HW.corn.n[0], G.HW.corn.n[1]) * dbl; if (this.hwGive(pl, n)) got.push(["candycorn", n]); }
       if (Math.random() < G.HW.ecto && this.give(pl, "ectoplasm", 1)) { got.push(["ectoplasm", 1]); this.emit(pl, "loot", { k: "ectoplasm", n: 1 }); }
+      if (def.lvl >= G.HW.legend.lvl && Math.random() < G.HW.legend.chance) {   /* (2026-09-27) a legendary off anything of level 80 or more */
+        const k = G.HW.legend.items[Math.floor(Math.random() * G.HW.legend.items.length)], where = this.keepRare(pl, k, 1);
+        if (where) { got.push([k, 1]); this.say(pl, `${G.ITEMS[k].name}. ${where === "bank" ? "No room in your bag: it went to your bank." : "It is yours."}`, "loot"); this.houseSay(`\u{1F383} ${pl.name} took ${G.ITEMS[k].name} off ${def.name}. A Long Night legendary.`); for (const q of this.pls.values()) if (q !== pl) q.out.push({ type: "casinonote", text: `\u{1F383} ${pl.name} found ${G.ITEMS[k].name}!` }); }
+      }
       if (def.pet && G.PETS[def.pet[0]] && Math.random() < def.pet[1] && !pl.C.pets.some((p) => p.k === def.pet[0])) {
         const k = def.pet[0], pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k, name: "" };
         pl.C.pets.push(pet); if (!pl.C.eq.pet) pl.C.eq.pet = pet.id; this.touch(pl);
@@ -2869,6 +2886,7 @@ export class World {
       for (const p of this.pls.values()) if (p !== pl && p !== pk && G.sceneDef(p.C.scene)?.pvp) this.say(p, `☠️ ${pl.name} was killed by ${pk ? pk.name : `a ${killer?.mob?.toLowerCase() || "monster"}`}.`);
     }
     if (C.ward && !S?.def.pvp) { C.ward = false; this.touch(pl); this.say(pl, "The Witch's brew takes the fall for you: no hospital bill this time.", "good"); }   /* (2026-09-27) the ward is spent by the death it saves you from */
+    else if (G.fxOf(C).nobill > 0 && !S?.def.pvp) this.say(pl, "The Ferryman's Coin pays the hospital. No bill.", "good");   /* (2026-09-27) the Long Night's amulet */
     else { const bill = pl.god || S?.def.pvp ? 0 : G.deathBill(C, S?.key); if (bill > 0) { G.takeInv(C.inv, "tickets", bill); this.touch(pl); this.say(pl, `THE HOSPITAL BILL: ${G.fmtTix(bill)}. They patched you up and went through your pockets.`, "bad"); } }   /* v68: the only thing a death costs */
     this.say(pl, "Oh dear, you are dead! You wake up on the casino floor. Nobody looks surprised.", "bad");
     C.hp = G.maxHpOf(C);
@@ -3040,6 +3058,7 @@ export class World {
     const n = rint(crop.yield[0], crop.yield[1]);
     if (!this.give(pl, yk, n)) return;
     const back = !!crop.yields && Math.random() < G.SEED_RETURN && !!this.give(pl, p.k, 1);   /* (2026-09-27) a seed crop gives a seed back one time in four (G.SEED_RETURN) */
+    if (p.k !== "goldtomatoe" && Math.random() < G.GOLD_TOMATO_HARVEST && this.keepRare(pl, "goldtomatoe", 1)) { this.say(pl, "One of them is heavy, and warm, and gold. A Golden tomatoe: plant it.", "loot"); for (const q of this.pls.values()) if (q !== pl) q.out.push({ type: "casinonote", text: `\u{1F345} ${pl.name} pulled a Golden tomatoe out of a plot.` }); }   /* (2026-09-27) see G.GOLD_TOMATO_HARVEST */
     I.plots[ob.i] = null; this.touch(pl);
     this.gained(S, pl, yk, n); this.grant(pl, "farming", crop.xp);
     this.say(pl, `You harvest ${n} ${nm}${back ? ", and a seed comes up with them" : ""}.`, "good");
@@ -3084,7 +3103,7 @@ export class World {
            with a door on the centre line - so a Scarab Swarm homed one tile from the gate could see straight
            through it the moment it opened and follow you down. Comparing chambers instead of distance is what
            makes a cleared room stay cleared. */
-        const ok = (p) => p.C.scene === S.key && !G.inCage(S.def, p.x, p.y) && G.cheb(p, { x: m.hx, y: m.hy }) <= aggro + 5
+        const ok = (p) => p.C.scene === S.key && !(G.fxOf(p.C).calm > 0) && !G.inCage(S.def, p.x, p.y)   /* (2026-09-27) the Pumpkin King's Crown: nothing attacks its wearer first */ && G.cheb(p, { x: m.hx, y: m.hy }) <= aggro + 5
           && (!S.def.pyramid || PR.roomOf(p.x, p.y) === PR.roomOf(m.hx, m.hy));
         const owner = this.claimOf(S, m, now);
         let tgt = owner || (m.target ? players.find((p) => p.id === m.target) : null);

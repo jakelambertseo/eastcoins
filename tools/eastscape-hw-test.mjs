@@ -89,6 +89,38 @@ is(G.countItems(A.C, ["tickets"]), t1, "tickets were never touched");
   is(G.hwDaysLeft(Date.parse(G.HW.gone + "T18:00:00Z")), 0, "and the morning after reads 0");
 }
 
+/* ---------------------------------------------------------------- (2026-09-27) the pieces: nine wearables, their effects, their sources; the Golden tomatoe */
+{
+  const nine = ["gallows_bow", "lantern_quiver", "skull_wand", "bag_shroud", "drowned_boots", "coffin_ring", "reaper_scythe", "king_crown", "ferry_coin"];
+  is(nine.every((k) => G.ITEMS[k]?.slot && G.ITEMS[k].event && G.ITEMS[k].tier === "hallowed"), true, "nine wearable event pieces, all hallowed-tier (the glow and the tag)");
+  is(nine.slice(0, 6).every((k) => G.ITEMS[k].req.lvl === 50) && nine.slice(6).every((k) => G.ITEMS[k].req.lvl === 90), true, "six at level 50, three at level 90");
+  is(nine.every((k) => G.forgeCost(k)?.[0] === "candycorn"), true, "every piece reforges with candy corn");
+  is(nine.every((k) => G.gearSell(k) === 0), true, "Bom buys none of them");
+  is(["reaper_scythe", "king_crown", "ferry_coin"].every((k) => G.HW.legend.items.includes(k)) && G.HW.legend.lvl === 80, true, "the legendaries fall off level 80+ monsters");
+  is(G.MOBS.pumpkinking.drops.filter(([k]) => nine.includes(k)).length, 6, "the King drops the quiver, the wand, the satchel and the three legendaries");
+  is(G.HW.market.filter(([k]) => nine.includes(k)).map(([, , c]) => c).every((c) => c === 9000) && G.HW.market.filter(([k]) => nine.includes(k)).length === 3, true, "and Hexa sells those three at 9,000");
+  is(G.HW.market.some(([k]) => ["gallows_bow", "coffin_ring", "drowned_boots"].includes(k)), false, "the skilling drops are not on the shelf");
+  is(/spend no arrow/.test(G.fxText(G.ITEMS.lantern_quiver.fx)) && /comes back as health/.test(G.fxText(G.ITEMS.skull_wand.fx)) && /comes up double/.test(G.fxText(G.ITEMS.coffin_ring.fx)) && /dies to your next hit/.test(G.fxText(G.ITEMS.reaper_scythe.fx)) && /attacks you first/.test(G.fxText(G.ITEMS.king_crown.fx)) && /never bills/.test(G.fxText(G.ITEMS.ferry_coin.fx)), true, "every effect has words for the buffs bar");
+  /* the ammo save */
+  const Q = mk("p20", "gloam", 10, 10); Q.C.eq.shield = "lantern_quiver"; Q.C.eq.weapon = "yewlogs_longbow"; Q.C.quiver = { k: "bone_arrow", n: 10 };
+  Math.random = () => 0.01; W.spendAmmo(Q); is(Q.C.quiver.n, 10, "a quarter of shots spend no arrow"); Math.random = () => 0.99; W.spendAmmo(Q); is(Q.C.quiver.n, 9, "the rest do"); Math.random = rnd;
+  /* the ring: double, and the skilling drops */
+  const R = mk("p21", "gloam", 10, 10); R.C.eq.ring = "coffin_ring"; const Gs = W.scene("gloam");
+  G.addInv(R.C.inv, "copper", 1, R.C); Math.random = () => 0.05; W.gained(Gs, R, "copper", 1, "gather", "mining"); Math.random = rnd; is(G.countItems(R.C, ["copper"]), 2, "one swing in ten comes up double with the Coffin Ring");
+  const T = mk("p22", "gloam", 10, 10);
+  Math.random = () => 0.00005; W.gained(Gs, T, "logs", 1, "gather", "woodcutting"); W.gained(Gs, T, "copper", 1, "gather", "mining"); W.gained(Gs, T, "sardine", 1, "gather", "fishing"); Math.random = rnd;
+  is(G.countItems(T.C, ["gallows_bow"]) === 1 && G.countItems(T.C, ["coffin_ring"]) === 1 && G.countItems(T.C, ["drowned_boots"]) === 1, true, "one in ten thousand: a chop, a swing and a cast each hand over their piece");
+  const T2 = mk("p23", "gloam", 10, 10); Math.random = () => 0.5; W.gained(Gs, T2, "logs", 1, "gather", "woodcutting"); Math.random = rnd; is(G.countItems(T2.C, ["gallows_bow"]), 0, "and not otherwise");
+  is(G.HW.skillDropChance, 0.0001, "the rate is 0.01%");
+  /* the coin: no bill */
+  const F = mk("p24", "gloam", 10, 10); F.C.eq.amulet = "ferry_coin"; G.addInv(F.C.inv, "tickets", 5000, F.C); const tf = G.countItems(F.C, ["tickets"]);
+  W.die(F, Gs, { mob: "a test" }); is(G.countItems(F.C, ["tickets"]) >= tf, true, "the Ferryman's Coin: no hospital bill");
+  /* the Golden tomatoe */
+  is(G.MOBS.rotten.drops.some(([k, , p]) => k === "goldtomatoe" && p === 0.002), true, "a Rotten Tomato drops the Golden tomatoe one in 500");
+  is(G.GOLD_TOMATO_HARVEST, 0.001, "and any harvest one in 1,000");
+  is(!!G.CROPS.goldtomatoe && G.CROPS.goldtomatoe.lvl === 50, true, "it plants at Harvesting 50 and grows more of itself");
+}
+
 /* ---------------------------------------------------------------- the market and a fit */
 const B = mk("p2", "workyard", 19, 12);   /* (2026-09-27) Hexa moved west of the road */
 const Y = W.scene("workyard"); is(Y.npcs.some((n) => n.opens === "market"), true, "Hexa stands in the Yard while the event is on");
