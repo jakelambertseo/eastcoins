@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=316">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=317">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1011,7 +1011,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 @media (prefers-reduced-motion:reduce){#hwWin.hw-skin,#hwWin.hw-skin .win-head b,.hw-lamp,.hw-bat,.hw-fog{animation:none}}
 @media (max-width:620px){.hw-web{width:48px;height:48px}.hw-lamp{right:56px}}
 .wl-corn .hw-last{color:#ff7a5a;font-weight:800}
-.hw-row.own{opacity:.6}.hw-fit{width:34px;height:34px;overflow:hidden;display:inline-block}.hw-fit .van-face{transform:scale(.5);transform-origin:top left}
+.hw-row.own{opacity:.6}.hw-fit{width:34px;height:34px;overflow:hidden;display:inline-block}.hw-fit .van-fig{width:34px;height:34px;image-rendering:pixelated}   /* (2026-09-27) the preview is an <img class="van-fig"> at 68px; this rule named ".van-face", matched nothing, and the box showed the empty top-left quarter of the picture */
 .glow.glow-hallow{filter:drop-shadow(0 0 3px rgba(255,140,30,.9))}
 .an-craft{display:grid;gap:6px;margin:0 10px 10px}.an-craft .an-row small{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center}.an-craft .an-row small .ico{width:16px;height:16px;vertical-align:-3px}
 .an-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin:0 10px 10px}
@@ -1285,7 +1285,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=316";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=317";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -4786,7 +4786,7 @@ function vanFace(van, d = "south") {
   const im = k && IMG[k] ? IMG[k].im : null;
   /* "" means a part map is still on its way. Come back in a moment rather than showing an empty frame for good —
      the parts are ~200 bytes each, so this is one tick, not a spinner's worth of waiting. */
-  if (k === "" && !vanWait) vanWait = setTimeout(() => { vanWait = 0; renderVan(); }, 250);
+  if (k === "" && !vanWait) vanWait = setTimeout(() => { vanWait = 0; renderVan(); renderMarket(); }, 250);   /* (2026-09-27) the Night Market draws fits too: it waits for the parts the same way */
   if (!im) return `<div class="van-fig"></div>`;
   const c = document.createElement("canvas"); c.width = im.width; c.height = im.height;
   c.getContext("2d").drawImage(im, 0, 0);
@@ -6246,7 +6246,10 @@ function renderPanel() {
       // a group's own total, because "how far along is my combat" is the
       // question the divider is there to answer
       const keys = grp.keys.filter((k) => SKILLS[k]);
-      const sub = keys.reduce((n, k) => n + lvl(k), 0);
+      /* (2026-09-27) the Combat group shows the COMBAT LEVEL, the same number as the stats panel and the hiscores; it used to show
+         the four levels added together (201 beside a combat level of 80), which read as a third, different "combat". The other
+         groups keep their total, and say so. */
+      const sub = grp.name === "Combat" ? `level ${G.combatOf(me)}` : `total ${keys.reduce((n, k) => n + lvl(k), 0)}`;
       /* (2026-09-27, the owner: "use 2 columns, the skills images, the level, the progress bar, and clicking each skill button opens
          the skills wiki page ... this helps with the addition of new skills, it makes it very long vertically") TILES, NOT ROWS. The
          same figures - level, xp, to go, the bar, Agility's best lap - but the name, the xp and the lap live on the hover, so a

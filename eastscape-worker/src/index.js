@@ -1235,12 +1235,13 @@ export class World {
     /* (2026-09-22) RESOLVED, not listed. This named its two skill boards by hand, so adding one silently fell through to
        `r[key]` — undefined for a skill — and the board came out empty. Any key that IS a skill now reads that skill's level;
        "combat" is the one board whose name differs from its skill (melee); "total" is not a skill at all. */
-    const boardSkill = (key) => (key === "combat" ? "melee" : G.SKILLS[key] ? key : null);
-    const valOf = (r, key) => { if (key === "total") return r.total || 0; const sk = boardSkill(key); return sk ? (r.skills?.[sk] || 0) : (r[key] || 0); };
+    const boardSkill = (key) => (G.SKILLS[key] ? key : null);   /* (2026-09-27) "combat" is no longer Melee under another name: it is the combat level, below */
+    const COMBAT_KEYS = ["melee", "archery", "magic", "hp"].filter((k) => G.SKILLS[k]);
+    const valOf = (r, key) => { if (key === "total") return r.total || 0; if (key === "combat") return r.combat || 0; const sk = boardSkill(key); return sk ? (r.skills?.[sk] || 0) : (r[key] || 0); };
     /* (2026-09-22) "lap" is the one board where SMALL WINS, so it sorts the other way; a 0 (never finished a run)
        is already dropped by the filter rather than ranked first. Everything else is unchanged. */
     const board = (key, kind) => [...rows].filter((r) => kind === "lvl" || valOf(r, key) > 0).sort((a, b) => (kind === "lap" ? valOf(a, key) - valOf(b, key) : valOf(b, key) - valOf(a, key)) || b.xp - a.xp).slice(0, 100)
-      .map((r, i) => ({ rank: i + 1, name: r.name, v: valOf(r, key), sub: kind === "lvl" ? `${Math.round(Number(key === "total" ? r.xp : r.skillXp?.[boardSkill(key)]) || 0).toLocaleString()} xp` : key === "kills" ? `Combat ${r.combat ?? r.skills.melee}` : key === "quests" ? [r.tourDone ? "the tour" : "", r.jobs ? `${r.jobs} job${r.jobs === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ") : key === "tower" ? `Combat ${r.combat ?? r.skills.melee}` : "" }));
+      .map((r, i) => ({ rank: i + 1, name: r.name, v: valOf(r, key), sub: kind === "lvl" ? `${Math.round(Number(key === "total" ? r.xp : key === "combat" ? COMBAT_KEYS.reduce((n, k) => n + (Number(r.skillXp?.[k]) || 0), 0) : r.skillXp?.[boardSkill(key)]) || 0).toLocaleString()} xp` : key === "kills" ? `Combat ${r.combat ?? r.skills.melee}` : key === "quests" ? [r.tourDone ? "the tour" : "", r.jobs ? `${r.jobs} job${r.jobs === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ") : key === "tower" ? `Combat ${r.combat ?? r.skills.melee}` : "" }));
     /* (2026-09-27) a clear-time board carries EVERY kept clear with the party's size on the row (`n`), fastest first, rather than
        the top twenty: the page filters to 2-, 3- or 4-man and ranks what is left, and cryptBest keeps twenty of each size. "pyr1"
        reads the Pyramid's list, kept under "p1" beside the Crypt's tiers. */
@@ -1550,11 +1551,12 @@ export class World {
     S.whoSig = null; H.kingDue = false; H.kingUp = { id, until: now + G.HW.king.stays, slain: false }; this.hwSave();
     for (const p of this.playersIn(S)) this.say(p, "The ground in the clearing splits and the Pumpkin King climbs out of it.", "bad");
   }
-  hwKingDown(pl, now) {
+  hwKingDown(pl, now, helpers = []) {
     const H = this.hw; if (H.kingUp) H.kingUp.slain = true;
     H.kingUp = null; H.kingAt = now + G.HW.king.every; this.hwSave();
-    this.houseSay(`🎃 ${pl.name} put the Pumpkin King down. He'll be back on the hour.`);
-    for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: `🎃 ${pl.name} killed the Pumpkin King!` });
+    const who = helpers.length ? `${pl.name} and ${helpers.length} other${helpers.length === 1 ? "" : "s"}` : pl.name;   /* (2026-09-27) an open boss is a crowd's kill */
+    this.houseSay(`🎃 ${who} put the Pumpkin King down. He'll be back on the hour.`);
+    for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: `🎃 ${who} killed the Pumpkin King!` });
   }
   hwDay(C) { const day = G.chicagoDay(); if (!C.hw || C.hw.day !== day) C.hw = { day, trick: false, lanterns: [] }; return C.hw; }
   /** (2026-09-27) every candy corn the world hands out comes through here, so c.stats.corn is the season's board */
@@ -2286,7 +2288,7 @@ export class World {
         pl.urgeStep = pl.urge ? Math.min((pl.urgeStep | 0) + 1, G.SWING_STACK.length - 1) : 0;
         pl.urge = false;
         pl.lastSwing = now; pl.swingAt = now; pl.fightAt = now;
-        if (!S.def.pvp && !S.def.shared) m.claim = { id: pl.id, until: now + CLAIM_MS };
+        if (!S.def.pvp && !S.def.shared && !G.MOBS[m.t]?.open) m.claim = { id: pl.id, until: now + CLAIM_MS };
         /* (2026-09-26) THE ELEMENT. The loaded page's element meets the monster's weakness or resistance, Void pierces part of its
            defence, and after the hit Fire may burn, Frost slows, Storm arcs to a neighbour and Sun heals you (below). */
         const el = G.launcherOf(C) ? G.ammoElOf(C) : null;
@@ -2302,6 +2304,7 @@ export class World {
            about one landed hit in nine and nobody sees one until their max hit reaches 5, around Combat 10.) */
         m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, ranged: G.launcherOf(C) ? true : undefined, ak: shotK || undefined,   /* (2026-09-25) the page flies an arrow from `by` to `who` before it shows the number; marked HERE so the page needs nothing about equipment, and a staff marks it the same way */ crit: (dmg >= 4 && dmg > G.maxHitOf(C) * 0.9) || undefined, kill: m.hp <= 0 || undefined });
         this.award(pl, dmg); if (S.def.crypt) this.cryptHit(S, pl, m, dmg); else if (S.def.pyramid) this.pyramidHit(S, pl, m, dmg);
+        if (dmg > 0 && G.MOBS[m.t]?.open) (m.by ||= {})[pl.id] = (m.by[pl.id] || 0) + dmg;   /* (2026-09-27) an open boss remembers who hurt him, for the shared kill */
         { const fxH = G.fxOf(C);   /* (2026-09-27) the Long Night's pieces: the Skull Wand drinks, the Reaper's Scythe finishes */
           if (dmg > 0 && fxH.leech > 0 && C.hp < G.maxHpOf(C)) { C.hp = Math.min(G.maxHpOf(C), C.hp + Math.max(1, Math.round(dmg * fxH.leech))); this.touch(pl); }
           if (dmg > 0 && m.hp > 0 && fxH.execute > 0 && !G.MOBS[m.t].boss && m.hp <= m.maxHp * fxH.execute) { const rest = m.hp; m.hp = 0; S.events.push({ type: "splat", who: m.id, n: rest, kind: "hit", t: now, by: pl.id }); } }
@@ -2796,6 +2799,26 @@ export class World {
       const next = S.mobs.filter((x) => !x.dead && x.t === m.t && x.id !== m.id && G.cheb(pl, x) <= reach && this.mayFight(S, x, pl, now)).sort((a, b) => G.cheb(pl, a) - G.cheb(pl, b))[0];
       if (next) pl.act = { kind: "mob", id: next.id, x: next.x, y: next.y, name: def.name, reach, started: now };
     }
+    const got = this.killLoot(S, pl, m, def, now);
+    /* (2026-09-27) AN OPEN BOSS PAYS EVERYONE WHO FOUGHT HIM: each of them who is still here and took at least OPEN_SHARE of his
+       health gets their own roll of the same table, their own kill for quests and finds, and their own line. The killer is
+       counted once, above. */
+    const shared = def.open ? this.playersIn(S).filter((q) => q !== pl && (m.by?.[q.id] || 0) >= (m.maxHp || def.hp) * G.OPEN_SHARE) : [];
+    for (const q of shared) {
+      const g2 = this.killLoot(S, q, m, def, now); q.out.push({ type: "mobdie", t: m.t });
+      this.say(q, `The ${def.name.toLowerCase()} goes down, and you were in it.${g2.length ? ` You get ${g2.map(([k, n]) => `${n > 1 ? n + " " : ""}${G.ITEMS[k].name.toLowerCase()}`).join(", ")}.` : ""}`, "loot");
+      this.emit(q, "kill", { mob: m.t, style: G.styleOf(q.C) });
+    }
+    if (G.hwOn() && m.t === "pumpkinking") { m.respawnAt = Infinity; S.mobs = S.mobs.filter((x) => x !== m); S.whoSig = null; this.hwKingDown(pl, now, shared); }   /* the corpse goes: the ordinary respawn loop must never bring him back, the hour does */
+    this.say(pl, `You defeat the ${def.name.toLowerCase()}.${got.length ? ` It drops ${got.map(([k, n]) => `${n > 1 ? n + " " : ""}${G.ITEMS[k].name.toLowerCase()}`).join(", ")}.` : ""}`, "loot");
+    this.emit(pl, "kill", { mob: m.t, style: G.styleOf(pl.C) });   /* (2026-09-27) the style, for a quest that asks for a bow or a wand */
+    /* (2026-09-22) THE TOWER's floor. Last, so everything a normal kill does has already happened — a tower monster
+       is an ordinary monster in every other respect, which is what keeps it out of the combat code entirely. */
+    if (S.def.tower) this.towerCleared(S, pl, m);
+  }
+  /** (2026-09-27) one player's share of a kill: the drop table, a pet, and the Long Night's rolls. Split out of killMob so an open boss
+      can pay everyone who fought him the same way it pays the killer. Returns what they got, for the line. */
+  killLoot(S, pl, m, def, now) {
     const got = [];
     for (const [k, n, chance] of def.drops) {
       if (chance != null && Math.random() >= chance) continue;
@@ -2854,13 +2877,8 @@ export class World {
         this.say(pl, `${G.PETS[k].name} steps out of the ${def.name.toLowerCase()}'s shadow and sits at your heel. A pet: name it in your Equipment tab.`, "loot");
         for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `🐈‍⬛ ${pl.name} found a pet: ${G.PETS[k].name}, off ${def.name}!` });
       }
-      if (m.t === "pumpkinking") { m.respawnAt = Infinity; S.mobs = S.mobs.filter((x) => x !== m); S.whoSig = null; this.hwKingDown(pl, now); }   /* the corpse goes: the ordinary respawn loop must never bring him back, the hour does */
     }
-    this.say(pl, `You defeat the ${def.name.toLowerCase()}.${got.length ? ` It drops ${got.map(([k, n]) => `${n > 1 ? n + " " : ""}${G.ITEMS[k].name.toLowerCase()}`).join(", ")}.` : ""}`, "loot");
-    this.emit(pl, "kill", { mob: m.t, style: G.styleOf(pl.C) });   /* (2026-09-27) the style, for a quest that asks for a bow or a wand */
-    /* (2026-09-22) THE TOWER's floor. Last, so everything a normal kill does has already happened — a tower monster
-       is an ordinary monster in every other respect, which is what keeps it out of the combat code entirely. */
-    if (S.def.tower) this.towerCleared(S, pl, m);
+    return got;
   }
   // killer: the player who landed the last hit, or { mob: name }
   die(pl, S, killer) {
@@ -3078,13 +3096,13 @@ export class World {
     const c = m.claim; if (!c || S.def.pvp || now > c.until) return null;
     const p = this.pls.get(c.id); return p && p.C.scene === S.key && !p.dead ? p : null;
   }
-  mayFight(S, m, pl, now) { if (S.def.shared) return true; const c = this.claimOf(S, m, now); return !c || c === pl; }   /* (shared: the crypt, where a party hits the same monster) */
+  mayFight(S, m, pl, now) { if (S.def.shared || G.MOBS[m.t]?.open) return true;   /* (2026-09-27) an open boss (the Pumpkin King) belongs to nobody */ const c = this.claimOf(S, m, now); return !c || c === pl; }   /* (shared: the crypt, where a party hits the same monster) */
   mobsTick(S, now) {
     const players = this.playersIn(S);
     for (const m of S.mobs) {
       /* (2026-09-26) FIRE'S BURN lands here, on its own clock, credited to whoever lit it - if they are still in the scene */
       if (m.dot && !m.dead && now >= m.dot.at) { const d = m.dot, by = this.pls.get(d.by); m.dot = null;
-        if (by && by.C.scene === S.key) { m.hp -= d.dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: d.dmg, kind: "hit", t: now, burn: true }); this.award(by, d.dmg); if (m.hp <= 0) { const keep = by.act; this.killMob(S, by, m, now); if (keep && keep.id !== m.id) by.act = keep; } } }
+        if (by && by.C.scene === S.key) { m.hp -= d.dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: d.dmg, kind: "hit", t: now, burn: true }); this.award(by, d.dmg); if (G.MOBS[m.t]?.open) (m.by ||= {})[by.id] = (m.by[by.id] || 0) + d.dmg; if (m.hp <= 0) { const keep = by.act; this.killMob(S, by, m, now); if (keep && keep.id !== m.id) by.act = keep; } } }
       if (m.dead) {
         if (S.def.crypt || S.def.pyramid || now < m.respawnAt) continue;   /* (nothing comes back in a crypt or pyramid run) */   /* (2026-09-24) the pyramid relied on pyramidKill setting respawnAt to Infinity; saying it here too means a monster killed some other way cannot quietly come back and re-lock a cleared chamber */
         // back at home, or the nearest free tile to it: never on top of someone
@@ -3129,7 +3147,7 @@ export class World {
           if (!foe.god) { C.hp -= dmg; this.touch(foe); }
           if (dmg) foe.hurtAt = now;
           foe.combatAt = now;
-          if (!S.def.pvp && !S.def.shared && this.mayFight(S, m, foe, now)) m.claim = { id: foe.id, until: now + CLAIM_MS };
+          if (!S.def.pvp && !S.def.shared && !G.MOBS[m.t]?.open && this.mayFight(S, m, foe, now)) m.claim = { id: foe.id, until: now + CLAIM_MS };
           S.events.push({ type: "splat", who: `p:${foe.id}`, n: dmg, kind: dmg ? "hit" : "miss", t: now });
           /* AUTO-RETALIATE, AND NOT FOR SOMEBODY WHO IS NOT THERE (2026-09-24, the owner: "can you make sure
              users arent afking vs aggressive mobs? if theyre high enough i think they can just stand there and

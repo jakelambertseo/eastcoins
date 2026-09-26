@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 294;
+export const VERSION = 296;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -5819,7 +5819,7 @@ export const EXAMINE = {
    ever had, most of them closed. These are the boards of the game as it is: the two things you can level, and the four numbers
    a casino brags about. [key, tab, what the number is, how the page writes it]. The game server builds them (hiscores()), the
    page draws them, and the board on the casino's back wall (hsboard, by the Winners' Wall) opens the same window. */
-export const HISCORES = [["combat", "Combat", "level", "lvl"], ["total", "Total level", "every skill added up", "lvl"], ["hp", "Hitpoints", "level", "lvl"], ["fishing", "Fishing", "level", "lvl"], ["cooking", "Cooking", "level", "lvl"], ["farming", "Harvesting", "level", "lvl"], ["mining", "Mining", "level", "lvl"], ["woodcutting", "Woodcutting", "level", "lvl"], ["smithing", "Smithing", "level", "lvl"], ["agility", "Agility", "level", "lvl"], ["alchemy", "Alchemy", "level", "lvl"],   /* (2026-09-27) Alchemy had been on the skills panel since the 24th and on no board: a skill added by hand to SKILLS has to be added by hand here too */
+export const HISCORES = [["combat", "Combat", "combat level", "lvl"], ["melee", "Melee", "level", "lvl"],   /* (2026-09-27, the owner: "at the top of the UX it says combat 80, the skills UI combat total says 221 and the leaderboard says 76, these need to be consistently labeled/calculated") the Combat board is the COMBAT LEVEL (combatOf, what the stats panel, profiles and every gate read); it ranked Melee under that name, which is why it said 76. Melee has its own board now. */ ["total", "Total level", "every skill added up", "lvl"], ["hp", "Hitpoints", "level", "lvl"], ["fishing", "Fishing", "level", "lvl"], ["cooking", "Cooking", "level", "lvl"], ["farming", "Harvesting", "level", "lvl"], ["mining", "Mining", "level", "lvl"], ["woodcutting", "Woodcutting", "level", "lvl"], ["smithing", "Smithing", "level", "lvl"], ["agility", "Agility", "level", "lvl"], ["alchemy", "Alchemy", "level", "lvl"],   /* (2026-09-27) Alchemy had been on the skills panel since the 24th and on no board: a skill added by hand to SKILLS has to be added by hand here too */
   /* (2026-09-22, owner: "add the other skills too, users love showing these off") Every skill has a board now, not just the two
      that happened to be wired by hand. "total" is not a skill and resolves to totalOf() instead - it is the one people actually
      brag about, and it was already being computed for every row and thrown away. */
@@ -5842,7 +5842,7 @@ export const HISCORES = [["combat", "Combat", "level", "lvl"], ["total", "Total 
    menu. A board's group comes from what it IS (its kind and key), not from a fifth column somebody has to remember to fill in,
    and the Skills group follows the skills panel's own order so the two agree. The page draws hsRail(); the test counts it. */
 export const HISCORE_GROUPS = ["Combat", "Skills", "Records", "Dungeons & runs"];
-export const hsGroupOf = (key, kind) => (["combat", "archery", "magic", "hp"].includes(key) ? "Combat" : kind === "lvl" || key === "total" ? "Skills" : kind === "time" || kind === "floor" || kind === "lap" ? "Dungeons & runs" : "Records");
+export const hsGroupOf = (key, kind) => (["combat", "melee", "archery", "magic", "hp"].includes(key) ? "Combat" : kind === "lvl" || key === "total" ? "Skills" : kind === "time" || kind === "floor" || kind === "lap" ? "Dungeons & runs" : "Records");
 export const hsRail = () => {
   const order = ["total", ...SKILL_GROUPS.flatMap((g) => g.keys)], at = (k) => { const i = order.indexOf(k === "combat" ? "melee" : k); return i < 0 ? 99 : i; };
   return HISCORE_GROUPS.map((name) => ({ name, boards: HISCORES.filter(([k, , , kind]) => hsGroupOf(k, kind) === name).sort((a, b) => (name === "Skills" ? at(a[0]) - at(b[0]) : 0)) })).filter((g) => g.boards.length);
@@ -7074,6 +7074,12 @@ MOBS.pumpkinking = { name: "The Pumpkin King", size: "xl", lvl: 52, hp: 520, att
   enrage: { at: 0.3, mul: 1.5, say: "The Pumpkin King's grin splits wider. The lantern in his head flares." } };
 BOUNTY.pumpkinking = 560; BOSSES.add("pumpkinking"); AGGRO_ON.add?.("pumpkinking");
 MOBS.pumpkinking.weak = ["fire", "sun"];
+/* (2026-09-27, the owner: "only one person can attack the pumpkin king") AN OPEN BOSS. `open` switches the claim off for this one
+   monster - the first hit no longer locks him to one player - and the server credits EVERYONE who took at least OPEN_SHARE of his
+   health with the kill: their own drop roll, their own corn, their own quest credit. So a crowd in the Mire is the design, not a
+   race, and nobody can tag him once and walk off with a share. */
+MOBS.pumpkinking.open = true;
+export const OPEN_SHARE = 0.05;
 MOBS.rotten.drops.push(["goldtomatoe", 1, 0.002]);   /* (2026-09-27) the first Golden tomatoe: see GOLD_TOMATO_HARVEST */   /* set on the mob directly: the WEAK table was folded into MOBS at load, above */
 PETS.blackcat = { name: "Black Cat", art: "pet_blackcat", raid: true, event: true, fx: { speed: 4, tix: 5 }, ex: "It crossed your path on purpose. Walks a little quicker and, somehow, the tickets come a little better around it." };
 

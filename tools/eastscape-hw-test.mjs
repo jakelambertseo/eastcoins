@@ -128,6 +128,22 @@ is(G.countItems(A.C, ["tickets"]), t1, "tickets were never touched");
   is(!!G.CROPS.goldtomatoe && G.CROPS.goldtomatoe.lvl === 50, true, "it plants at Harvesting 50 and grows more of itself");
 }
 
+/* ---------------------------------------------------------------- (2026-09-27) the King is an open boss: anyone can hit him, everyone who hurt him is paid */
+{
+  const Mk = W.scene("mire"); W.hw = { kingAt: 0, kingDue: false, kingUp: null, night: false, opened: true };
+  const a1 = mk("o1", "mire", 22, 15), a2 = mk("o2", "mire", 23, 15), a3 = mk("o3", "mire", 21, 15);
+  W.hwSpawnKing(Mk, Date.now()); const K = Mk.mobs.find((m) => m.t === "pumpkinking");
+  K.claim = { id: a1.id, until: Date.now() + 60000 };
+  is(W.mayFight(Mk, K, a2, Date.now()), true, "a second player may hit the King while the first is on him");
+  K.by = { o1: 300, o2: 200, o3: 5 };
+  a1.C.qs.hw_king = { state: "active", stage: 0, n: 0 }; a2.C.qs.hw_king = { state: "active", stage: 0, n: 0 };
+  const c2 = corn(a2), c3 = corn(a3); K.hp = 0; W.killMob(Mk, a1, K, Date.now());
+  is(corn(a2) > c2, true, "a helper who did real damage gets his own drops");
+  is(corn(a3), c3, "a player who only tagged him (under 5%) gets nothing");
+  is(["ready", "done"].includes(a2.C.qs.hw_king?.state), true, "and the helper's King quest is credited");
+  is(Mk.mobs.some((m) => m.t === "pumpkinking"), false, "and he is gone until the hour");
+}
+
 /* ---------------------------------------------------------------- the market and a fit */
 const B = mk("p2", "workyard", 19, 12);   /* (2026-09-27) Hexa moved west of the road */
 const Y = W.scene("workyard"); is(Y.npcs.some((n) => n.opens === "market"), true, "Hexa stands in the Yard while the event is on");
