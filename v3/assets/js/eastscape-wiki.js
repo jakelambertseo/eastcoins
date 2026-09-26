@@ -20,7 +20,7 @@
    draw this one. Only "seeded by" for the old crops is written by hand: those drop from loot tables the wiki does not
    read. A seed crop's areas are worked out from the monsters that drop it. */
 const SEEDED_BY = { wheat: "grows wild in the Yard", tomatoe: "rotten tomatoes, in the Yard", rattlebean: "the Gloam", lanternroot: "the Lantern Mire",
-  bonegourd: "the Boneyard", stormcorn: "Cloudreach &amp; the Thunderhead", goldtomatoe: "a Rotten Tomato in the Yard (1 in 500), or any island harvest (1 in 1,000)", glassgourd: "the Carnival", emberwheat: "the Vault", starfruit: "the Trailer Park" };
+  bonegourd: "the Boneyard", stormcorn: "Cloudreach &amp; the Thunderhead", goldtomatoe: "It's a secret",   /* (2026-09-27) the owner: the Golden tomatoe's source stays a secret on the harvesting guide */ glassgourd: "the Carnival", emberwheat: "the Vault", starfruit: "the Trailer Park" };
 const growTime = (ms) => { const m = Math.round(ms / 60000), h = Math.floor(m / 60); return m < 60 ? `${m} min` : `${h} hr${m % 60 ? ` ${m % 60} min` : ""}`; };
 export function cropTable(G, H) {
   const nm = (k) => H.esc(G.ITEMS[k]?.name || k);
