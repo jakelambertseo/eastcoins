@@ -1868,7 +1868,7 @@ export class World {
     const wantF = G.fOf({ f: m.f });
     if (m.op !== "all" && wantF > 0) {
       const gk = String(m.k);
-      if (!G.gearSell(gk)) return this.say(pl, "The counter only takes gear it stocks itself.", "bad");
+      if (!G.gearSell(gk) && !G.ITEMS[gk]?.event) return this.say(pl, "The counter only takes gear it stocks itself.", "bad");   /* (2026-09-27) or an event piece, at one ticket */
       let got = 0;
       for (let i = C.inv.length - 1; i >= 0; i--) { const st = C.inv[i]; if (st.k !== gk || G.fOf(st) !== wantF) continue; got += st.n; C.inv.splice(i, 1); }
       if (!got) return this.say(pl, `That is not in your bag: ${G.forgeNameAt(gk, wantF)}.`, "bad");

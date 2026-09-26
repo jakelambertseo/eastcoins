@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 290;
+export const VERSION = 291;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -5620,7 +5620,12 @@ export const QUICK = {
   rewind_watch: 250, mysterybox: 60, devils_dice: 50
 };
 /** What Bom hands over for something he would otherwise refuse, or 0 if he still refuses it. */
-export const quickSell = (k) => (QUICK[k] ? Math.max(1, Math.round(QUICK[k] * QUICK_RATE)) : 0);
+/* (2026-09-27, the owner: "all halloween event items should sell for 1 ticket to Bom") EVERY event item, gear and consumables
+   alike, is a quick-sell at one ticket: Bom will take it, one at a time, and it is worth nothing to him. Candy corn is not an
+   item in this sense - it is the season's coin, and selling it would turn the event's currency into tickets. isLoot leaves event
+   items out too, so "trade in the lot" can never sweep a pie or a legendary for a ticket. */
+export const EVENT_SELL = 1;
+export const quickSell = (k) => (ITEMS[k]?.event && k !== "candycorn" ? EVENT_SELL : QUICK[k] ? Math.max(1, Math.round(QUICK[k] * QUICK_RATE)) : 0);
 /** Anything the Cashier will take one of: ordinary loot, or a rare at the quick-sell price. NEVER used by "sell all". */
 /* (2026-09-23, the owner: "bom trady doesnt buy smithed gear... low rates for it, 25% of what he sells it for")
    THE COUNTER BUYS ITS OWN LADDER BACK. Nothing could sell a smithed piece at all: isLoot excludes anything with
@@ -5672,7 +5677,7 @@ export const GEAR_SELL_MAX = 2500;
 export const gearSellRaw = (k, f = 0) => { const p = COUNTER_PRICE.get(k); return p && ITEMS[k]?.slot ? Math.max(1, Math.round(p * GEAR_SELL_RATE)) + fOf({ f }) * forgeSellStep(k) : 0; };
 export const gearSell = (k, f = 0) => Math.min(GEAR_SELL_MAX, gearSellRaw(k, f));
 export const canSell = (k) => isLoot(k) || quickSell(k) > 0 || gearSell(k) > 0;
-export const isLoot = (k) => k !== "tickets" && k !== "tickets" && k !== "zcoin" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck && !ITEMS[k]?.use && !ITEMS[k]?.drink && !ITEMS[k]?.raw;
+export const isLoot = (k) => !ITEMS[k]?.event && k !== "tickets" && k !== "tickets" && k !== "zcoin" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck && !ITEMS[k]?.use && !ITEMS[k]?.drink && !ITEMS[k]?.raw;
 
 // dying outside the Cage: a quarter of the time one worn item falls where you died. The killer alone can take it
 // for lootMs, then anyone, until it's gone. Leaving mid-fight leaves your character standing there for lingerMs.
@@ -7028,7 +7033,7 @@ export const EVENT_TAG = "Halloween 2026 Event";
 ITEMS.gallows_bow = { name: "Gallows Bow", short: "Bow", icon: "\u{1F3F9}", slot: "weapon", acc: 17, str: 9, launcher: { range: 6, ammo: "arrow" }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { tix: 0.06, rare: 0.10 }, req: { skill: "archery", lvl: 50 }, ex: "Cut from the gallows tree. One chop in ten thousand brings it down, during the Long Night only. Kills pay 6% more and rare drops come 10% easier." };
 ITEMS.lantern_quiver = { name: "Lantern Quiver", short: "Quiver", icon: "\u{1F383}", slot: "shield", pouch: { ammo: "arrow", cap: 400 }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { ammo: 0.25 }, req: { skill: "archery", lvl: 50 }, ex: "A carved pumpkin with a strap. One arrow in four flies back into it: a quarter of your shots spend nothing. The King drops it; Hexa sells it." };
 ITEMS.skull_wand = { name: "Skull Wand", short: "Wand", icon: "\u{1F480}", slot: "weapon", acc: 20, str: 8, launcher: { range: 5, ammo: "page", style: "magic" }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { leech: 0.10 }, req: { skill: "magic", lvl: 50 }, ex: "Somebody's, once. A tenth of every spell's damage comes back to you as health. The King drops it; Hexa sells it." };
-ITEMS.bag_shroud = { name: "Shroud Satchel", short: "Satchel", icon: "\u{1F45D}", slot: "shield", pouch: { ammo: "page", cap: 500 }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { ammo: 0.25 }, req: { skill: "magic", lvl: 50 }, ex: "Sewn from a burial shroud. A quarter of your casts spend no page. The King drops it; Hexa sells it." };
+ITEMS.bag_shroud = { name: "Shroud Satchel", short: "Satchel", icon: "\u{1F45D}", slot: "shield", pouch: { ammo: "page", cap: 1000 },   /* (2026-09-27, the owner: "a noticeable increase in spells held") twice a level-50 bag: the Starweave's 1,000, twenty levels early */ tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { ammo: 0.25 }, req: { skill: "magic", lvl: 50 }, ex: "Sewn from a burial shroud, and deeper than it looks: it holds 1,000 pages, twice any other bag at its level. A quarter of your casts spend no page. The King drops it; Hexa sells it." };
 ITEMS.drowned_boots = { name: "Drowned Boots", short: "Boots", icon: "\u{1F462}", slot: "boots", def: 6, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { speed: 0.08, tix: 0.03 }, req: { skill: "melee", lvl: 50 }, ex: "They came up on a line. One cast in ten thousand, during the Long Night only. You move, swing and fish 8% faster, and kills pay 3% more." };
 ITEMS.coffin_ring = { name: "Coffin Ring", short: "Ring", icon: "\u{1F48D}", slot: "ring", acc: 8, str: 8, def: 8, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { double: 0.10 }, req: { skill: "hp", lvl: 50 }, ex: "Coffin iron, with a coffin on it. One swing in ten thousand at any rock turns it up, during the Long Night only. One dig, cut or catch in ten comes up double." };
 /* the three legendaries: level 90, nova-grade numbers, one effect each that nothing else in the game has */

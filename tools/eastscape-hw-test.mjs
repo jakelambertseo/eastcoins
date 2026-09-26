@@ -115,6 +115,13 @@ is(G.countItems(A.C, ["tickets"]), t1, "tickets were never touched");
   /* the coin: no bill */
   const F = mk("p24", "gloam", 10, 10); F.C.eq.amulet = "ferry_coin"; G.addInv(F.C.inv, "tickets", 5000, F.C); const tf = G.countItems(F.C, ["tickets"]);
   W.die(F, Gs, { mob: "a test" }); is(G.countItems(F.C, ["tickets"]) >= tf, true, "the Ferryman's Coin: no hospital bill");
+  /* (2026-09-27) Bom pays one ticket for any event item, never sweeps one, and the satchel holds twice a level-50 bag */
+  is(Object.keys(G.ITEMS).filter((k) => G.ITEMS[k].event && k !== "candycorn").every((k) => G.quickSell(k) === 1 && !G.isLoot(k)), true, "every event item sells to Bom for 1 ticket and is never swept by trade-in-the-lot");
+  is(G.quickSell("candycorn"), 0, "candy corn itself is not sold for tickets");
+  is(G.ITEMS.bag_shroud.pouch.cap, 1000, "the Shroud Satchel holds 1,000 pages");
+  { const S2 = mk("p25", "casino", 20, 12); const Cz = W.scene("casino"); W.atCounter = () => true; G.addInv(S2.C.inv, "reaper_scythe", 1, S2.C); G.addInv(S2.C.inv, "pumpkinpie", 3, S2.C); const t0 = G.tixIn(S2.C);
+    W.cashOut(Cz, S2, { op: "all" }); is(G.countItems(S2.C, ["reaper_scythe"]) + G.countItems(S2.C, ["pumpkinpie"]), 4, "trade-in-the-lot leaves event items alone");
+    W.cashOut(Cz, S2, { op: "one", k: "reaper_scythe" }); is(G.tixIn(S2.C) - t0, 1, "the Reaper's Scythe sells to Bom for exactly 1 ticket"); }
   /* the Golden tomatoe */
   is(G.MOBS.rotten.drops.some(([k, , p]) => k === "goldtomatoe" && p === 0.002), true, "a Rotten Tomato drops the Golden tomatoe one in 500");
   is(G.GOLD_TOMATO_HARVEST, 0.001, "and any harvest one in 1,000");
