@@ -44,7 +44,7 @@ const ask = async (body, key = env.ESCAPE_KEY) => { const r = await M.onRequestP
 const ops = (like) => raw.prepare(`SELECT idempotency_key k, amount, status FROM wallet_operations WHERE idempotency_key LIKE ? ORDER BY rowid`).all(like);
 const count = (sql, ...a) => raw.prepare(sql).get(...a).n;
 
-check("the game's copy of the numbers is the site's", G.DEX.capHour === M.CAP_HOUR && G.DEX.maxStake === M.MAX_STAKE, `${JSON.stringify(G.DEX)} vs ${M.CAP_HOUR}/${M.MAX_STAKE}`);
+check("the game's copy of the numbers is the site's", G.DEX.capHour === M.CAP_HOUR && G.DEX.capDay === M.CAP_DAY && G.DEX.maxStake === M.MAX_STAKE, `${JSON.stringify(G.DEX)} vs ${M.CAP_HOUR}/${M.CAP_DAY}/${M.MAX_STAKE}`);
 check("the rate is 1,000 tickets a ZCoin", G.DEX.rate === 1000);
 
 let r = await ask({ op: "status", userId: "u1" }, "wrong-key"); check("wrong key: 403, definite", r.status === 403 && r.body.definite === true);
@@ -54,12 +54,12 @@ r = await ask({ op: "status", userId: "u1" }); check("status: a full allowance, 
 r = await ask({ op: "ticket", userId: "u1", id: "tick0001" }); check("the old Ruby ticket op is gone", r.body.code === "BAD_OP" && r.body.definite === true);
 
 // ---- banking dropped ZCoins
-r = await ask({ op: "pay", userId: "u1", id: "exch0001", zc: 10 }); check("bank 10: credited once", r.body.ok && balances.alice === 110 && r.body.left === M.CAP_HOUR - 10);
+r = await ask({ op: "pay", userId: "u1", id: "exch0001", zc: 10 }); check("bank 10: credited once, off the DAY's allowance (2026-09-27: 100 out in 24 hours; stakes keep the hour's)", r.body.ok && balances.alice === 110 && r.body.leftOut === M.CAP_DAY - 10 && r.body.left === M.CAP_HOUR);
 r = await ask({ op: "pay", userId: "u1", id: "exch0001", zc: 10 }); check("the same id again: pays nothing new", r.body.ok && r.body.duplicate && balances.alice === 110 && ops("GAMBA:DEX:%").length === 1);
 
 // ---- writing ticket stakes
-r = await ask({ op: "stake", userId: "u1", id: "stake0001", zc: 5 }); check("a 5 ZC ticket stake: written, no ZCoin moves", r.body.ok && r.body.voucher === "stake0001" && balances.alice === 110 && r.body.left === M.CAP_HOUR - 15);
-r = await ask({ op: "stake", userId: "u1", id: "stake0001", zc: 5 }); check("the same id again: one row, allowance unchanged", r.body.ok && r.body.duplicate && count(`SELECT COUNT(*) n FROM gamba_stakes`) === 1 && r.body.left === M.CAP_HOUR - 15);
+r = await ask({ op: "stake", userId: "u1", id: "stake0001", zc: 5 }); check("a 5 ZC ticket stake: written, no ZCoin moves, off the HOUR's allowance", r.body.ok && r.body.voucher === "stake0001" && balances.alice === 110 && r.body.left === M.CAP_HOUR - 5 && r.body.leftOut === M.CAP_DAY - 10);
+r = await ask({ op: "stake", userId: "u1", id: "stake0001", zc: 5 }); check("the same id again: one row, allowance unchanged", r.body.ok && r.body.duplicate && count(`SELECT COUNT(*) n FROM gamba_stakes`) === 1 && r.body.left === M.CAP_HOUR - 5);
 for (const bad of [{ zc: 0 }, { zc: -5 }, { zc: M.MAX_STAKE + 1 }, { zc: "x" }, { id: "short" }, { id: "has spaces in it" }]) { r = await ask({ op: "stake", userId: "u1", id: "stake0bad", zc: 5, ...bad }); check(`bad stake ${JSON.stringify(bad)}: definite no`, !r.body.ok && r.body.definite === true && count(`SELECT COUNT(*) n FROM gamba_stakes`) === 1); }
 r = await ask({ op: "status", userId: "u1" }); check("status lists the open stake", r.body.open.length === 1 && r.body.open[0].id === "stake0001" && r.body.open[0].zc === 5);
 
@@ -111,7 +111,7 @@ else check("the Wheel takes a ticket stake into the shared round", r.body.ok && 
 
 // ---- the allowance is the backstop
 r = await ask({ op: "status", userId: "u1" }); const left = r.body.left;
-check("the allowance counted every stake by face, and the banking", left === M.CAP_HOUR - 10 - 5 * 6, `left ${left}`);
+check("the hour's allowance counted every stake by face; the banking sits on the day's", left === M.CAP_HOUR - 5 * 6, `left ${left}`);
 let n = 0; for (let i = 0; i < 10; i++) { const a = await ask({ op: "stake", userId: "u1", id: `fill${String(i).padStart(6, "0")}`, zc: 5 }); if (a.body.ok) n++; else { check("over the allowance: CAP, definite, nothing written", a.body.code === "CAP" && a.body.definite === true); break; } }
 check("exactly the allowance was handed out", n === Math.floor(left / 5), `${n} more stakes of 5 from ${left}`);
 raw.exec(`UPDATE gamba_stakes SET created_at = datetime('now', '-2 hour') WHERE user_id = 'u1'`); raw.exec(`UPDATE wallet_operations SET created_at = datetime('now', '-2 hour')`);

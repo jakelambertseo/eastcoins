@@ -939,6 +939,7 @@ export const UPDATES = [
       "BARS FROM ONYX UP COST TWICE AS MUCH TO SMELT: twice the ore, twice the grimstone or voidglass and twice the charcoal. A starfall, nova or singularity bar still takes ONE bar of the tier below, which has already doubled, so every top bar costs exactly twice what it did. They sell for the same, so smelting to sell pays about half what it did.",
       "THE SKILLS TAB is a grid of tiles; click one for its wiki page. Quest givers now say which step comes first when it is with somebody else.",
       "THE HISCORES, SORTED. The rail is grouped into Combat, Skills, Records and Dungeons & runs, in the skills panel's order. Alchemy has a board at last. THE TOWER ranks the highest floor anyone has cleared, THE PYRAMID has a fastest-clear board, and every dungeon board filters to 2-man, 3-man and 4-man clears, each kept as its own top twenty, so a pair's record is never pushed off by a party of four.",
+      "ZCOINS OUT OF THE GAME ARE 100 IN ANY 24 HOURS, per person: tickets traded at the counter and found ZCoins banked count together. Ticket bets keep their own allowance of 50 ZCoins' worth an hour.",
     ]
   },
   {

@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=317">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=318">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -968,6 +968,11 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .slot .evtag{position:absolute;left:1px;top:0;font-size:10px;line-height:1;font-style:normal;pointer-events:none;filter:drop-shadow(0 0 2px #000)}
 .wev{margin:6px 0 4px;padding:6px 10px;border-radius:6px;background:rgba(74,26,90,.16);border:1px solid #4a1a5a;font-size:13px}
 .wevl{margin:4px 0 8px;padding-left:18px;font-size:13px;line-height:1.5}
+/* (2026-09-27, the owner: "add a prominent link to the event wiki on the opening page of the wiki") the event's own card, first thing under the title while hwOn() */
+.whw{display:flex;align-items:center;gap:12px;margin:8px 0 12px;padding:10px 14px;border-radius:10px;background:linear-gradient(90deg,#2a1238,#4a1a5a);border:2px solid #ff7a1a;color:#f2e6ff;text-decoration:none;cursor:pointer;box-shadow:0 0 14px rgba(255,122,26,.35)}
+.whw:hover{box-shadow:0 0 20px rgba(255,140,40,.6)}
+.whw-i{font-size:30px;line-height:1}
+.whw b{display:block;color:#ffb45a;font-size:16px}.whw small{display:block;color:#d8c2ee;font-size:12.5px;line-height:1.35}
 /* ============================================================ THE NIGHT MARKET'S OWN SKIN (2026-09-27, the owner: "add some unique
    spooky/halloween art/css to the night market popup ... completely separate from the normal popups")
    Every rule is scoped to #hwWin.hw-skin, so nothing else moves. The wood-and-parchment frame is switched off (border-image:none)
@@ -1285,7 +1290,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=317";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=318";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1294,7 +1299,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=172").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=173").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -5301,7 +5306,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=49", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=50", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
@@ -5626,7 +5631,7 @@ function wikiGo(route, setNav = true) {
     return inC.length ? `<h4 class="gcat">${esc(c)}</h4>${cards(inC)}` : "";
   }).join("");
   let html = "";
-  if (kind === "home") html = `<h2><i><img class="ico wico" src="${UIA}nav_wiki.png?v=1" alt=""></i>EastScape Wiki</h2><p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>
+  if (kind === "home") html = `<h2><i><img class="ico wico" src="${UIA}nav_wiki.png?v=1" alt=""></i>EastScape Wiki</h2>${G.hwOn() ? `<a class="whw" data-wiki="guides/longnight"><span class="whw-i">\u{1F383}</span><span><b>The Long Night is on</b><small>${G.hwDaysLeft()} day${G.hwDaysLeft() === 1 ? "" : "s"} left &middot; candy corn, the Night Market, the Pumpkin King and nine event pieces. Read the event guide &rarr;</small></span></a>` : ""}` + `<p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>
     <h3>Guides</h3>${byCat(wikiPages().filter((p) => p.group === "Guides"))}<h3>Browse</h3>${cards(["Skills", "Quests", "Monsters", "Areas", "People", "Items"].map((g) => ({ route: `list/${g}`, title: g, icon: { Skills: "📶", Quests: "📜", Monsters: "👹", Areas: "🗺️", People: "🧑", Items: "🎒" }[g] })))}
     <h3>Latest update</h3>${wikiUpdate(WK.UPDATES[0])}`;
   else if (kind === "updates") html = `<h2><i>📰</i>Updates</h2><p class="lede">Every change to the game, newest first.</p>${WK.UPDATES.map(wikiUpdate).join("")}`;
