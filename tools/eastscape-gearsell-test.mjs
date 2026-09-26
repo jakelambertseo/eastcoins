@@ -102,29 +102,50 @@ const shelf = new Map(G.prizesOf().filter((p) => Array.isArray(p.give) && p.give
 
 /* ---------------------------------------------------------------- the reforge is worth something (2026-09-24) */
 {
-  const gear = Object.keys(G.ITEMS).filter((k) => G.gearSell(k) > 0 && G.forgeCost(k));
+  /* (2026-09-27) measured on the UNCAPPED price: the ceiling below flattens onyx and up, and whether a reforge is a laundry is a
+     question about the premium itself, not about where the ceiling happens to cut it */
+  const gear = Object.keys(G.ITEMS).filter((k) => G.gearSellRaw(k) > 0 && G.forgeCost(k));
   if (gear.length < 50) fail(`only ${gear.length} pieces have both a buyback and a reforge cost`);
   let rose = 0, unsafe = 0, flat = 0;
   for (const k of gear) {
-    const plain = G.gearSell(k), step = G.forgeSellStep(k);
+    const plain = G.gearSellRaw(k), step = G.forgeSellStep(k);
     const [bar, bars] = G.forgeCost(k), barCash = (G.quickSell(bar) || G.valueOf(bar) || 0) * bars;
     if (!(step > 0)) { flat++; continue; }
     /* THE RULE THAT KEEPS IT HONEST: a level must pay back LESS than the bars it ate would have fetched sold
        straight. Otherwise reforging is a better way to turn bars into tickets than selling bars, and the anvil
        becomes a laundry. This is why the premium is a share of the materials and not a share of the stats. */
     if (step >= barCash) unsafe++;
-    for (let f = 1; f <= G.FORGE.cap; f++) if (!(G.gearSell(k, f) > G.gearSell(k, f - 1))) fail(`${k} at +${f} is not worth more than +${f - 1}`);
-    if (G.gearSell(k, 3) > plain) rose++;
+    for (let f = 1; f <= G.FORGE.cap; f++) if (!(G.gearSellRaw(k, f) > G.gearSellRaw(k, f - 1))) fail(`${k} at +${f} is not worth more than +${f - 1}`);
+    if (G.gearSellRaw(k, 3) > plain) rose++;
   }
   if (flat) fail(`${flat} piece(s) gain nothing from a reforge, so the owner's report would still be true for them`);
   if (unsafe) fail(`${unsafe} piece(s) pay back at least what their bars would fetch sold on their own — that is a bar laundry`);
   ok(`every one of ${rose} pieces is worth more reforged, and none pays back as much as its bars would fetch`);
 
   /* it must still be the LEVEL that is priced, not the key */
-  const k = gear.find((x) => G.forgeSellStep(x) > 0);
+  const k = gear.find((x) => G.forgeSellStep(x) > 0 && G.gearSellRaw(x, G.FORGE.cap) < G.GEAR_SELL_MAX);   /* one the ceiling does not reach, or +0 and +3 are both 2,500 */
   if (G.gearSell(k, 0) === G.gearSell(k, 3)) fail("the level is being ignored");
   if (G.gearSell(k, 99) !== G.gearSell(k, G.FORGE.cap)) fail("a level past the cap is not clamped, so a bad number could be paid for");
   ok(`a ${G.ITEMS[k].name.toLowerCase()} goes ${G.gearSell(k, 0).toLocaleString()} -> ${G.gearSell(k, 3).toLocaleString()} at +3, and anything past +${G.FORGE.cap} is clamped`);
+}
+
+/* ---------------------------------------------------------------- THE CEILING (2026-09-27, the owner: "after diamond put a limit on bom
+   buying gear back for 2500 max"). Nothing pays over it at any reforge level; bronze through dragonstone are exactly what they were;
+   and the most smithing can add to one piece, over what its bars sell for, is now bounded by the ceiling. */
+{
+  const all = Object.keys(G.ITEMS).filter((k) => G.gearSellRaw(k) > 0);
+  const over = all.filter((k) => G.gearSell(k, G.FORGE.cap) > G.GEAR_SELL_MAX);
+  if (over.length) fail(`${over.length} piece(s) pay over ${G.GEAR_SELL_MAX}: ${over.slice(0, 4).join(", ")}`);
+  const low = all.filter((k) => ["bronze", "emerald", "diamond", "dragonstone"].includes(G.ITEMS[k].tier));
+  const moved = low.filter((k) => G.gearSell(k) !== G.gearSellRaw(k));
+  if (low.length < 20) fail(`only ${low.length} bronze-to-dragonstone pieces found; the tier names may have changed`);
+  if (moved.length) fail(`the ceiling reaches below onyx: ${moved.join(", ")}`);
+  const high = all.filter((k) => ["onyx", "starfall", "eclipse", "nova", "singularity"].includes(G.ITEMS[k].tier) && G.gearSellRaw(k) >= G.GEAR_SELL_MAX);
+  if (!high.every((k) => G.gearSell(k) === G.GEAR_SELL_MAX)) fail("a high piece over the ceiling does not pay exactly the ceiling");
+  const [nb, nn] = G.forgeCost("nova_body") || ["nova_bar", 5];
+  const bars = (G.quickSell(nb) || G.valueOf(nb)) * nn;
+  if (!(G.gearSell("nova_body", G.FORGE.cap) < bars)) fail(`a nova cuirass still sells for more (${G.gearSell("nova_body", 3)}) than its ${nn} bars (${bars})`);
+  ok(`${G.GEAR_SELL_MAX.toLocaleString()} is the most any piece pays; ${low.length} bronze-to-dragonstone pieces untouched; ${high.length} onyx-and-up pieces pay the ceiling; a nova cuirass (${G.gearSell("nova_body").toLocaleString()}) is worth less than its bars (${bars.toLocaleString()})`);
 }
 
 /* ---------------------------------------------------------------- the reforge achievements (2026-09-24) */

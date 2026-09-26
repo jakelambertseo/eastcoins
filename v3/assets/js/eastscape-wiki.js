@@ -469,6 +469,7 @@ export const GUIDES = [
       <p>Each grade wants Smithing equal to its <a data-wiki="guides/fighting">gear tier</a> &mdash; emerald at 20, diamond at 30, and so on up to eclipse at 70.</p>
       <h3>Why bother, when Bom sells gear</h3>
       <p><b>Because he is not cheap.</b> A full eclipse set over his counter is around 819,000 tickets; the ore to smith one is about 2,125. Diamond is 62 times dearer bought, onyx 138, eclipse 386. Once you have a furnace and an anvil there is no sensible reason to buy gear again.</p>
+      <p><b>Smith to wear it, not to sell it.</b> Bom buys smithed gear back for an eighth of his shelf price and never more than <b>2,500</b> a piece, reforged or not. Everything from onyx up hits that ceiling, and from nova up the bars are worth more sold on their own than the finished piece.</p>
       <h3>Reforging</h3>
       <p><b>Bars also push gear you already own further.</b> At the anvil, three levels, each worth 5.5% of that piece's own stats or +1, whichever is more &mdash; about a tier in total. A reforge costs the same bars the piece cost to make.</p>
       <p><b>It can destroy the piece.</b> +1 always works. +2 is 80%, and a miss there has an 8% chance of breaking it; +3 is 55%, with a 15% chance. About one piece in seven is lost on the way to +3, and the bars go whether it works or not.</p>
@@ -875,7 +876,7 @@ export const UPDATES = [
     items: [
       "THE STORE, in the top nav: tickets only. A 2X Potion for the whole room (100,000), clovers and homeward scrolls, and name cosmetics that everyone sees over your head and in chat: colours, effects, badges and frames. Nothing there changes a fight or a roll.",
       "A WORLD MAP replaces the how-to-play tab: every open map as its real shape, roads between them, the combat band coloured against your level, quest arrows, who is where, and a fog over maps you have not set foot on. Click the minimap or the tab to open it.",
-      "BOM PAYS AN EIGHTH of the shelf price for smithed gear, down from a quarter (and a reforged piece's bonus halves with it): a Nova cuirass buys back for 75,000. Too many tickets were coming off the anvil.",
+      "BOM PAYS AN EIGHTH of the shelf price for smithed gear, down from a quarter (and a reforged piece's bonus halves with it), AND NEVER MORE THAN 2,500 FOR ONE PIECE, reforged or not. Bronze through dragonstone are under that and unchanged by it; onyx and everything above it buys back for 2,500. Smithing high gear to sell it was printing tickets the ore never earned: five nova bars sell for about 4,900, and the cuirass they made sold for 75,000.",
       "THE SKILLS TAB is a grid of tiles; click one for its wiki page. Quest givers now say which step comes first when it is with somebody else.",
       "THE HISCORES, SORTED. The rail is grouped into Combat, Skills, Records and Dungeons & runs, in the skills panel's order. Alchemy has a board at last. THE TOWER ranks the highest floor anyone has cleared, THE PYRAMID has a fastest-clear board, and every dungeon board filters to 2-man, 3-man and 4-man clears, each kept as its own top twenty, so a pair's record is never pushed off by a party of four.",
     ]

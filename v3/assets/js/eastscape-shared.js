@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 285;
+export const VERSION = 286;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -5641,7 +5641,18 @@ export const forgeSellStep = (k) => {
   const [bar, n] = cost;
   return Math.round(GEAR_SELL_RATE * n * (quickSell(bar) || valueOf(bar) || 0));
 };
-export const gearSell = (k, f = 0) => { const p = COUNTER_PRICE.get(k); return p && ITEMS[k]?.slot ? Math.max(1, Math.round(p * GEAR_SELL_RATE)) + fOf({ f }) * forgeSellStep(k) : 0; };
+/* (2026-09-27, the owner: "after diamond put a limit on bom buying gear back for 2500 max. users can just craft a ton of cuirass
+   for example right and break the inflation"). THE ANVIL WAS A TICKET PRINTER FROM ONYX UP. A fraction of the shelf price scales
+   with the SHELF, and the shelf climbs about 2.4x a tier while the bars a piece eats climb far slower: five nova bars sell for
+   4,940 and a nova cuirass bought back for 75,000, so smithing added 70,060 tickets to the world that the ore never earned.
+   Halving the rate that morning halved that and left the shape alone. A CEILING fixes the shape: every piece is worth at most
+   GEAR_SELL_MAX, reforge included, so the most smithing can ever add to a piece is what that sum is over its bars.
+   Dragonstone (2,250 for a cuirass) is the last tier wholly under it, which is what "after diamond" meant in practice; from
+   onyx up every piece pays the ceiling, and from nova up that is LESS than the bars would fetch sold on their own, so nobody
+   smiths high gear to sell it. gearSellRaw is the uncapped figure, kept for the test that proves reforging is not a laundry. */
+export const GEAR_SELL_MAX = 2500;
+export const gearSellRaw = (k, f = 0) => { const p = COUNTER_PRICE.get(k); return p && ITEMS[k]?.slot ? Math.max(1, Math.round(p * GEAR_SELL_RATE)) + fOf({ f }) * forgeSellStep(k) : 0; };
+export const gearSell = (k, f = 0) => Math.min(GEAR_SELL_MAX, gearSellRaw(k, f));
 export const canSell = (k) => isLoot(k) || quickSell(k) > 0 || gearSell(k) > 0;
 export const isLoot = (k) => k !== "tickets" && k !== "tickets" && k !== "zcoin" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck && !ITEMS[k]?.use && !ITEMS[k]?.drink && !ITEMS[k]?.raw;
 
