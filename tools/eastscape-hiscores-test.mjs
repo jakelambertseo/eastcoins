@@ -47,9 +47,9 @@ for (const [k, label] of G.HISCORES) {
   for (const id of Object.keys(els)) delete els[id];
   let html = "";
   try {
-    const fn = new Function("hsData", "hsTab", "G", "you", "esc", "TIX_ICO", "SFX", "$", "openProfile",
+    const fn = new Function("hsData", "hsTab", "hsSize", "G", "you", "esc", "TIX_ICO", "SFX", "$", "openProfile",
       `${src}; renderHs(); return { body: $("hsBody").innerHTML, sub: $("hsSub").textContent, tabs: $("hsTabs").innerHTML };`);
-    const out = fn(hsData, k, G, you, esc, TIX_ICO, SFX, $, openProfile);
+    const out = fn(hsData, k, 0, G, you, esc, TIX_ICO, SFX, $, openProfile);
     html = out.body;
     const checks = [
       ["rows rendered", (html.match(/class="hsr/g) || []).length === 5],
@@ -57,6 +57,8 @@ for (const [k, label] of G.HISCORES) {
       ["medals on the top three", html.includes("\u{1F947}") && html.includes("\u{1F949}")],
       ["every board listed in the rail", (out.tabs.match(/data-hs=/g) || []).length === G.HISCORES.length],
       ["one tab selected", (out.tabs.match(/aria-selected="true"/g) || []).length === 1],
+      ["the rail has its four headings", (out.tabs.match(/class="hsg"/g) || []).length === G.HISCORE_GROUPS.length],   /* (2026-09-27) */
+      ["party-size chips only on a clear-time board", out.body.includes('data-sz="2"') === (G.HISCORES.find(([x]) => x === k)[3] === "time")],
     ];
     const failed = checks.filter(([, ok]) => !ok).map(([w]) => w);
     if (failed.length) { console.log(`  ${label.padEnd(18)} FAIL: ${failed.join(", ")}`); bad++; }
@@ -70,12 +72,26 @@ for (const [k, label] of G.HISCORES) {
 // the empty board must say so rather than throwing
 try {
   for (const id of Object.keys(els)) delete els[id];
-  const fn = new Function("hsData", "hsTab", "G", "you", "esc", "TIX_ICO", "SFX", "$", "openProfile",
+  const fn = new Function("hsData", "hsTab", "hsSize", "G", "you", "esc", "TIX_ICO", "SFX", "$", "openProfile",
     `${src}; renderHs(); return $("hsBody").innerHTML;`);
-  const html = fn({ players: 0, boards: {} }, G.HISCORES[0][0], G, you, esc, TIX_ICO, SFX, $, openProfile);
+  const html = fn({ players: 0, boards: {} }, G.HISCORES[0][0], 0, G, you, esc, TIX_ICO, SFX, $, openProfile);
   if (!/Nobody/.test(html)) { console.log("  !! an empty board does not say it is empty"); bad++; }
   else console.log("\n  an empty board says so");
 } catch (e) { console.log("  !! an empty board THREW " + e.message); bad++; }
+
+/* (2026-09-27) the party-size filter: three clears of mixed sizes, filtered to 3-man, ranks the one three first and alone */
+try {
+  for (const id of Object.keys(els)) delete els[id];
+  const fn = new Function("hsData", "hsTab", "hsSize", "G", "you", "esc", "TIX_ICO", "SFX", "$", "openProfile",
+    `${src}; renderHs(); return $("hsBody").innerHTML;`);
+  const clears = [{ rank: 1, name: "A + B", n: 2, v: 500, sub: "2026-09-27" }, { rank: 2, name: "C + D + bootypaper", n: 3, v: 610, sub: "2026-09-27" }, { rank: 3, name: "E + F + G + H", n: 4, v: 700, sub: "2026-09-27" }];
+  const three = fn({ players: 9, boards: { crypt1: clears } }, "crypt1", 3, G, you, esc, TIX_ICO, SFX, $, openProfile);
+  const four = fn({ players: 9, boards: { crypt1: clears } }, "crypt1", 4, G, you, esc, TIX_ICO, SFX, $, openProfile);
+  const none = fn({ players: 9, boards: { crypt1: clears } }, "crypt1", 2, G, you, esc, TIX_ICO, SFX, $, openProfile);
+  const ok = (three.match(/class="hsr/g) || []).length === 1 && three.includes("\u{1F947}") && three.includes('class="hsr me"') && !three.includes("A + B")
+    && (four.match(/class="hsr/g) || []).length === 1 && four.includes("E + F + G + H") && (none.match(/class="hsr/g) || []).length === 1 && none.includes("A + B") && /2-man/.test(fn({ players: 9, boards: { crypt1: clears } }, "crypt1", 0, G, you, esc, TIX_ICO, SFX, $, openProfile));
+  if (!ok) { console.log("  !! the party-size filter ranks the wrong clears"); bad++; } else console.log("  the party-size filter ranks each size on its own");
+} catch (e) { console.log("  !! the party-size filter THREW " + e.message); bad++; }
 
 console.log(bad ? `\n${bad} problem(s)` : `\nall ${G.HISCORES.length} boards render`);
 process.exitCode = bad ? 1 : 0;

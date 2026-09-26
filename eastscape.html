@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=306">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=307">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -314,8 +314,16 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   .hswrap{grid-template-columns:1fr;gap:6px;overflow:auto}
   .hstabs{flex-direction:row;flex-wrap:wrap;gap:3px;overflow:visible;border-right:0;padding-right:0}
   .hstabs button{padding:2px 8px;text-align:center}
+  .hstabs .hsg{flex-basis:100%;padding:4px 2px 0}
 }
 .hsbody{min-height:0;overflow:auto}
+/* (2026-09-27) the rail's group headings, and the party-size chips over a clear-time board */
+.hstabs .hsg{display:block;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;opacity:.58;padding:8px 6px 3px;flex:0 0 auto}
+.hstabs .hsg:first-child{padding-top:2px}
+.hssz{display:flex;flex-wrap:wrap;gap:4px;padding:0 4px 8px}
+.hssz button{font-size:12px;padding:3px 10px;background:rgba(0,0,0,.16);border:2px solid transparent;border-radius:12px;color:inherit;font-family:inherit;font-weight:700;cursor:pointer}
+.hssz button:hover{background:rgba(0,0,0,.24)}
+.hssz button.on{border-color:#8a6a1e;background:linear-gradient(#f2c94c,#c8963a);color:#2a2016}
 .hsr{display:grid;grid-template-columns:34px 1fr auto auto;align-items:center;gap:9px;padding:4px 7px;font-size:13px}
 .hsr:nth-child(odd){background:rgba(0,0,0,.10)}
 .hsr .rk{opacity:.7;text-align:right}
@@ -1222,7 +1230,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=306";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=307";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1231,7 +1239,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=161").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=162").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -4099,7 +4107,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
 /* Hiscores. Fetched from the game server rather than the socket, so opening it
    costs the world nothing it was not already doing — the board is cached for a
    minute on that side, however many people look. */
-let hsData = null, hsTab = "combat", hsAt = 0;
+let hsData = null, hsTab = "combat", hsAt = 0, hsSize = 0;   /* (2026-09-27) hsSize: 0 is every clear, 2/3/4 is that party size, on the clear-time boards only */
 async function openHiscores() {
   openWin("hsWin");
   if (hsData && Date.now() - hsAt < 60000) return renderHs();
@@ -4111,15 +4119,23 @@ async function openHiscores() {
   } catch (e) { $("hsBody").innerHTML = '<p class="note">The hiscores are unreachable right now.</p>'; return; }
   renderHs();
 }
-function renderHs() {   /* (v96) the boards are G.HISCORES: the rules file says why these six */
+function renderHs() {   /* (v96) the boards are G.HISCORES; (2026-09-27) the rail is grouped (G.hsRail), a clear-time board filters by party size, and the Tower board prints floors */
   if (!hsData?.boards) return; if (!G.HISCORES.some(([k]) => k === hsTab)) hsTab = G.HISCORES[0][0];
-  const [, , what, kind] = G.HISCORES.find(([k]) => k === hsTab), rows = hsData.boards[hsTab] || [], mine = rows.find((r) => you && r.name === you.name);
+  const [, , what, kind] = G.HISCORES.find(([k]) => k === hsTab), all = hsData.boards[hsTab] || [];
+  /* a clear-time board arrives as EVERY kept clear, fastest first, each row carrying the party's size: filtering here and
+     ranking what is left is what makes a 3-man #1 mean the fastest three, not "the fastest run that happened to be three" */
+  const rows = kind === "time" ? (hsSize ? all.filter((r) => (r.n || 0) === hsSize) : all).slice(0, 20).map((r, i) => ({ ...r, rank: i + 1 })) : all;
+  const isMe = (r) => !!you && (kind === "time" ? String(r.name).split(" + ").includes(you.name) : r.name === you.name), mine = rows.find(isMe);
   $("hsSub").textContent = `${hsData.players} player${hsData.players === 1 ? "" : "s"} · ${mine ? `you're #${mine.rank}` : what}`;
-  $("hsTabs").innerHTML = G.HISCORES.map(([k, l]) => `<button type="button" role="tab" aria-selected="${k === hsTab}" data-hs="${k}" class="${k === hsTab ? "on" : ""}">${l}</button>`).join("");
-  $("hsBody").innerHTML = rows.length
-    ? rows.map((r) => `<div class="hsr${you && r.name === you.name ? " me" : ""}"><span class="rk">${r.rank <= 3 ? ["🥇", "🥈", "🥉"][r.rank - 1] : r.rank}</span><b class="who" data-who="${esc(r.name)}" title="${esc(r.name)}'s profile">${esc(r.name)}</b><span>${kind === "tix" ? TIX_ICO : ""}${kind === "time" ? `${Math.floor(r.v / 60)}:${String(r.v % 60).padStart(2, "0")}` : Number(r.v).toLocaleString()}</span><span class="xp">${esc(r.sub || "")}</span></div>`).join("")
-    : `<p class="note">Nobody's on this board yet. Be first.</p>`;
+  $("hsTabs").innerHTML = G.hsRail().map((g) => `<small class="hsg">${g.name}</small>` + g.boards.map(([k, l]) => `<button type="button" role="tab" aria-selected="${k === hsTab}" data-hs="${k}" class="${k === hsTab ? "on" : ""}">${l}</button>`).join("")).join("");
+  const val = (r) => kind === "time" ? `${Math.floor(r.v / 60)}:${String(r.v % 60).padStart(2, "0")}` : kind === "floor" ? `Floor ${Number(r.v).toLocaleString()}` : `${kind === "tix" ? TIX_ICO : ""}${Number(r.v).toLocaleString()}`;
+  const sub = (r) => kind === "time" && !hsSize && r.n ? `${r.n}-man · ${r.sub || ""}` : (r.sub || "");
+  const sizes = kind === "time" ? `<div class="hssz" role="tablist" aria-label="Party size">${[0, 2, 3, 4].map((n) => `<button type="button" role="tab" aria-selected="${n === hsSize}" data-sz="${n}" class="${n === hsSize ? "on" : ""}">${n ? `${n}-man` : "All"}</button>`).join("")}</div>` : "";
+  $("hsBody").innerHTML = sizes + (rows.length
+    ? rows.map((r) => `<div class="hsr${isMe(r) ? " me" : ""}"><span class="rk">${r.rank <= 3 ? ["🥇", "🥈", "🥉"][r.rank - 1] : r.rank}</span><b class="who" data-who="${esc(r.name)}" title="${esc(r.name)}'s profile">${esc(r.name)}</b><span>${val(r)}</span><span class="xp">${esc(sub(r))}</span></div>`).join("")
+    : `<p class="note">${kind === "time" && hsSize ? `No ${hsSize}-man clear here yet. Be first.` : "Nobody's on this board yet. Be first."}</p>`);
   $("hsTabs").querySelectorAll("[data-hs]").forEach((b) => b.addEventListener("click", () => { hsTab = b.dataset.hs; SFX.play("ui_click"); renderHs(); }));
+  $("hsBody").querySelectorAll("[data-sz]").forEach((b) => b.addEventListener("click", () => { hsSize = Number(b.dataset.sz) || 0; SFX.play("ui_click"); renderHs(); }));
   $("hsBody").querySelectorAll("[data-who]").forEach((b) => b.addEventListener("click", () => openProfile(b.dataset.who.split(" + ")[0])));   /* (v107; a crypt row is "A + B", so the first of them) */
 }
 

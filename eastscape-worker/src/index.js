@@ -203,6 +203,7 @@ export class World {
       { const sg = (await ctx.storage.get("songs")) || null; this.song = sg?.song || null; this.songQ = Array.isArray(sg?.q) ? sg.q : []; }
       if (!(this.jack.pot >= G.JACKPOT.seed)) { this.jack.pot = G.JACKPOT.seed; this.jackDirty = true; }   // (the v107 seed top-up was in restore() too)
       await this.pitLoad();   // (v109) ticket bets on a fight that hasn't been settled yet
+      await this.runsLoad();   // (2026-09-27) the dungeon runs that were on when the world went down: see RUNS SURVIVE A RESTART
     });
   }
 
@@ -311,7 +312,7 @@ export class World {
   stop() { if (this.timer) { clearInterval(this.timer); this.timer = null; } }
 
   send(pl, msg) { const s = typeof msg === "string" ? msg : JSON.stringify(msg); this.sentOut++; this.bytesOut += s.length; try { pl.ws.send(s); } catch (e) { /* closing */ } }
-  say(pl, text, cls = "sys", tag) { pl.out.push({ type: "say", text, cls, tag }); }
+  say(pl, text, cls = "sys", tag) { if (!pl) return; pl.out.push({ type: "say", text, cls, tag }); }   /* (2026-09-27) a line for somebody who is not connected is dropped, not thrown: partyBack tells the OTHER members "X is back", and after a restart the other members are not here yet - it threw inside the first member's hello and their reconnect died with it */
 
   async persist(pl) {
     if (!pl.needSave) return;
@@ -1036,6 +1037,57 @@ export class World {
     this.touch(pl);
   }
 
+  /* ------------------------------------------------------------ RUNS SURVIVE A RESTART (2026-09-27)
+
+     The owner, with four people in the Count Room when a deploy landed: "make it so that when we push these that people
+     dont get kicked out of the room if the server refreshes/updates". A deploy tears the Durable Object down; characters
+     are written within SAVE_MS so THEY survive, but a run - the private crypt:/pyramid:/count: copy with its monsters,
+     its gates, its quota and who paid - lived only in memory. Everyone in one came back to the door with their ante
+     refunded and the clear, if they had one, gone. (The Tower never had this problem: a climb is on the character and
+     towerRejoin rebuilds the floor.)
+
+     So the runs are written to storage: every two seconds while any is on, and once more on a planned restart. The
+     snapshot is the run's state, its monsters (plain objects; the only trap is respawnAt: Infinity, which JSON turns to
+     null and which would bring dead monsters BACK in the Count Room - restored to Infinity below), what is on the ground,
+     and the parties, with every member marked away from the moment of the restart so the ordinary held-place clock runs.
+     The "gone" sets go too, or a run that ended while somebody was disconnected would refund them after a restart.
+
+     Loading is the same shape as the other boot reads. A snapshot older than ten minutes is left alone: nobody is coming
+     back to that, and a stale run holding a copy of a room is a leak. Nothing in a restored run moves until somebody is
+     standing in it - mobsTick and countSpawn only run for scenes with players - so a run waits, it does not run on empty.
+     A snapshot two seconds stale means the monsters are up to two seconds behind where they were; the run is otherwise
+     exactly as it was, ante paid, quota counted, gates open.
+     ------------------------------------------------------------ */
+  runsSnapshot() {
+    const runs = [];
+    for (const [key, S] of this.scenes) if (S.run && /^(crypt|pyramid|count):/.test(key)) runs.push({ key, tier: S.tier ?? null, run: S.run, mobs: S.mobs, ground: S.ground || [] });
+    const parties = [...(this.parties?.values() || [])].map((pt) => ({ id: pt.id, leader: pt.leader, members: [...pt.members], names: Object.fromEntries(pt.members.map((id) => [id, this.pls.get(id)?.name || pt.away?.[id]?.name || "…"])) }));
+    return { runs, parties, cryptGone: [...(this.cryptGone || [])].slice(-100), countGone: [...(this.countGone || [])].slice(-100) };
+  }
+  runsSave(force) {
+    const body = this.runsSnapshot(), sig = JSON.stringify(body);
+    if (!force && sig === this.runsSig) return Promise.resolve();
+    this.runsSig = sig;
+    return this.ctx.storage.put("runs", { at: Date.now(), ...body }).catch(() => {});
+  }
+  async runsLoad() {
+    const snap = await this.ctx.storage.get("runs"); if (!snap) return;
+    const now = Date.now(); if (now - (snap.at || 0) > 10 * 60 * 1000) return;
+    this.parties ||= new Map();
+    for (const pt of snap.parties || []) if (Array.isArray(pt.members) && pt.members.length) this.parties.set(pt.id, { id: pt.id, leader: pt.leader, members: [...pt.members], away: Object.fromEntries(pt.members.map((id) => [id, { at: now, name: pt.names?.[id] || "…" }])) });
+    for (const rec of snap.runs || []) {
+      if (!rec?.key || !rec.run) continue;
+      let S; try { S = this.scene(rec.key); } catch (e) { continue; }
+      S.tier = rec.tier ?? undefined; S.run = rec.run; S.mobs = Array.isArray(rec.mobs) ? rec.mobs : S.mobs; S.ground = Array.isArray(rec.ground) ? rec.ground : []; S.whoSig = null;
+      for (const m of S.mobs) if (m.respawnAt == null) m.respawnAt = Infinity;
+      if (S.run.emptyAt) S.run.emptyAt = now; S.emptyAt = now;   // the held-place clocks start again from the restart, not from before it
+      const gates = S.def.crypt ? CR.CRYPT.gates : S.def.pyramid ? PR.PYRAMID.gates : null;   // a gate that was open is open: the grid is rebuilt shut by scene()
+      if (gates && Array.isArray(S.run.gates)) S.run.gates.forEach((open, i) => { const q = gates[i]; if (open && q) S.g[q.y][q.x] = "i"; });
+    }
+    this.cryptGone = new Set(snap.cryptGone || []); this.countGone = new Set(snap.countGone || []);
+    this.runsSig = JSON.stringify(this.runsSnapshot());
+  }
+
   /* ------------------------------------------------------------ planned restarts
 
      A worker deploy tears the Durable Object down and every socket with it.
@@ -1097,6 +1149,7 @@ export class World {
     }
     try { await this.ctx.storage.put("exchange", this.ex); } catch (e) { /* same */ }
     try { await this.ctx.storage.put("jackpot", this.jack); this.jackDirty = false; } catch (e) { /* same */ }
+    try { await this.runsSave(true); } catch (e) { /* same */ }   /* (2026-09-27) the runs, written last so they are as fresh as the characters */
     return { saved: n };
   }
 
@@ -1158,6 +1211,7 @@ export class World {
           kills: Object.values(C.stats?.kills || {}).reduce((n, v) => n + v, 0),
           quests: G.questsDone(C), jobs: C.stats?.jobs | 0, tourDone: !!(C.tour && C.tour.step >= G.TOUR.length), earned: Math.round(Number(C.earned) || 0), wagered: Math.round(Number(C.wagered) || 0), zcoins: (C.found && typeof C.found === "object" ? C.found.zcoin : 0) | 0,
           runBest: C.stats?.runBest || 0,   // (2026-09-22) The Run's board; 0 means never finished a lap, and board() drops those
+          tower: C.tower?.best | 0,   // (2026-09-27) the highest floor cleared, for the Tower board; 0 (never climbed) is dropped the same way
           playMs: C.stats?.playMs || 0
         });
       }
@@ -1185,8 +1239,12 @@ export class World {
     /* (2026-09-22) "lap" is the one board where SMALL WINS, so it sorts the other way; a 0 (never finished a run)
        is already dropped by the filter rather than ranked first. Everything else is unchanged. */
     const board = (key, kind) => [...rows].filter((r) => kind === "lvl" || valOf(r, key) > 0).sort((a, b) => (kind === "lap" ? valOf(a, key) - valOf(b, key) : valOf(b, key) - valOf(a, key)) || b.xp - a.xp).slice(0, 100)
-      .map((r, i) => ({ rank: i + 1, name: r.name, v: valOf(r, key), sub: kind === "lvl" ? `${Math.round(Number(key === "total" ? r.xp : r.skillXp?.[boardSkill(key)]) || 0).toLocaleString()} xp` : key === "kills" ? `Combat ${r.combat ?? r.skills.melee}` : key === "quests" ? [r.tourDone ? "the tour" : "", r.jobs ? `${r.jobs} job${r.jobs === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ") : "" }));
-    const boards = {}; for (const [key, , , kind] of G.HISCORES) boards[key] = kind === "time" ? (this.cryptTop?.[key.slice(5)] || []).slice(0, 20).map((r, i) => ({ rank: i + 1, name: r.names.join(" + "), v: r.secs, sub: new Date(r.at).toISOString().slice(0, 10) })) : board(key, kind);
+      .map((r, i) => ({ rank: i + 1, name: r.name, v: valOf(r, key), sub: kind === "lvl" ? `${Math.round(Number(key === "total" ? r.xp : r.skillXp?.[boardSkill(key)]) || 0).toLocaleString()} xp` : key === "kills" ? `Combat ${r.combat ?? r.skills.melee}` : key === "quests" ? [r.tourDone ? "the tour" : "", r.jobs ? `${r.jobs} job${r.jobs === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ") : key === "tower" ? `Combat ${r.combat ?? r.skills.melee}` : "" }));
+    /* (2026-09-27) a clear-time board carries EVERY kept clear with the party's size on the row (`n`), fastest first, rather than
+       the top twenty: the page filters to 2-, 3- or 4-man and ranks what is left, and cryptBest keeps twenty of each size. "pyr1"
+       reads the Pyramid's list, kept under "p1" beside the Crypt's tiers. */
+    const timeRows = (key) => { const tier = key.startsWith("crypt") ? key.slice(5) : key === "pyr1" ? "p1" : key; return (this.cryptTop?.[tier] || []).slice().sort((a, b) => a.secs - b.secs).map((r, i) => ({ rank: i + 1, name: r.names.join(" + "), n: r.names.length, v: r.secs, sub: new Date(r.at).toISOString().slice(0, 10) })); };
+    const boards = {}; for (const [key, , , kind] of G.HISCORES) boards[key] = kind === "time" ? timeRows(key) : board(key, kind);
     this.hs = { ok: true, at: new Date(now).toISOString(), players: rows.length, boards };
     this.hsAt = now;
     return this.hs;
@@ -2027,6 +2085,7 @@ export class World {
       for (const gt of gates) { const open = G.gateOpenAt(now, gt) ? "i" : "#"; for (const [gx, gy] of G.gateTiles(gt)) S.g[gy][gx] = open; }
     }
     if (this.tickN % 20 === 0) { this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.hwTick(now); this.pitTick(now).catch(() => {}); }
+    if (this.tickN % 40 === 0) this.runsSave();   /* (2026-09-27) the dungeon runs, so a deploy does not end them */
     if (this.tickN % 20 === 0) for (const pl of this.pls.values()) {   /* once a second */
       const C = pl.C, dt = Math.min(5000, now - (pl.fxAt || now)); pl.fxAt = now; if (!(C.meal || C.drink || C.charm) || !(G.SCENES[String(C.scene).split(":")[0]]?.mobs?.length)) continue;
       if (C.charm) { C.charm.left = (C.charm.left | 0) - dt; if (C.charm.left <= 0) { this.say(pl, `Your ${G.CHARMS[C.charm.k]?.name || "page"} has worn off.`); C.charm = null; } this.touch(pl); }   /* (2026-09-26) the page buff */
@@ -2039,7 +2098,7 @@ export class World {
     for (const [key, S] of this.scenes) {
       if (key === "roulette" && !S.def.realRound && S.objs.some((o) => o.t === "roulette")) this.rouletteTick(S, now);   /* (v73: no wheel in the room, no rounds) */   /* (a realRound room's game is the site's: no rounds are run here) */
       if (key === "fightpit" && !S.def.realRound) this.fightTick(S, now);
-      if (!live.has(key)) { S.idleSince ||= now; if (now - S.idleSince > SCENE_IDLE_MS && !(S.def.pvp && S.mobs.some((m) => m.dead && now < m.respawnAt)) && !S.roulette?.bets.length && !S.fight?.bets.length) this.scenes.delete(key); continue; }
+      if (!live.has(key)) { S.idleSince ||= now; if (!S.run && now - S.idleSince > SCENE_IDLE_MS && !(S.def.pvp && S.mobs.some((m) => m.dead && now < m.respawnAt)) && !S.roulette?.bets.length && !S.fight?.bets.length) this.scenes.delete(key); continue; }   /* (2026-09-27) `!S.run`: a dungeon run keeps its own clock (cryptTick / pyramidTick / countTick) and its held time is LONGER than this sweep */
       S.idleSince = 0;
       for (const pl of this.playersIn(S)) this.playerTick(S, pl, now);
       for (const o of S.objs) if (o.t === "wheat" && S.g[o.y][o.x] === "f" && !(o.grownAt > now)) {

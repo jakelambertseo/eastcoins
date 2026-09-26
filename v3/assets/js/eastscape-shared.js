@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 284;
+export const VERSION = 285;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -5785,7 +5785,7 @@ export const EXAMINE = {
    ever had, most of them closed. These are the boards of the game as it is: the two things you can level, and the four numbers
    a casino brags about. [key, tab, what the number is, how the page writes it]. The game server builds them (hiscores()), the
    page draws them, and the board on the casino's back wall (hsboard, by the Winners' Wall) opens the same window. */
-export const HISCORES = [["combat", "Combat", "level", "lvl"], ["total", "Total level", "every skill added up", "lvl"], ["hp", "Hitpoints", "level", "lvl"], ["fishing", "Fishing", "level", "lvl"], ["cooking", "Cooking", "level", "lvl"], ["farming", "Harvesting", "level", "lvl"], ["mining", "Mining", "level", "lvl"], ["woodcutting", "Woodcutting", "level", "lvl"], ["smithing", "Smithing", "level", "lvl"], ["agility", "Agility", "level", "lvl"],
+export const HISCORES = [["combat", "Combat", "level", "lvl"], ["total", "Total level", "every skill added up", "lvl"], ["hp", "Hitpoints", "level", "lvl"], ["fishing", "Fishing", "level", "lvl"], ["cooking", "Cooking", "level", "lvl"], ["farming", "Harvesting", "level", "lvl"], ["mining", "Mining", "level", "lvl"], ["woodcutting", "Woodcutting", "level", "lvl"], ["smithing", "Smithing", "level", "lvl"], ["agility", "Agility", "level", "lvl"], ["alchemy", "Alchemy", "level", "lvl"],   /* (2026-09-27) Alchemy had been on the skills panel since the 24th and on no board: a skill added by hand to SKILLS has to be added by hand here too */
   /* (2026-09-22, owner: "add the other skills too, users love showing these off") Every skill has a board now, not just the two
      that happened to be wired by hand. "total" is not a skill and resolves to totalOf() instead - it is the one people actually
      brag about, and it was already being computed for every row and thrown away. */
@@ -5798,7 +5798,21 @@ export const HISCORES = [["combat", "Combat", "level", "lvl"], ["total", "Total 
   /* (2026-09-22) The Run. "lap" is its own kind and not "time": a time board is filled from the server's list of
      crypt clears, while this is a number carried on every character (stats.runBest) — and it is the only board
      where SMALL WINS, so the sort has to know. Milliseconds, so the page prints one decimal. */
-  ["runBest", "The Run", "fastest lap", "lap"]];
+  ["runBest", "The Run", "fastest lap", "lap"],
+  /* (2026-09-27, the owner: "for the dungeon runs there are tabs that sort between 2 man, 3 man, and 4 man ... highest floor
+     achieved needs to be a new category as well"). The Pyramid's clears were timed and announced but never kept; they go in the
+     same list the Crypt's do, under "p1". "floor" is a number carried on the character (c.tower.best) like The Run's lap. */
+  ["pyr1", "The Pyramid", "fastest clear", "time"],
+  ["tower", "The Tower", "highest floor", "floor"]];
+/* (2026-09-27) THE RAIL IS GROUPED. Twenty-two boards in one column read as a list of everything; four headings read as a
+   menu. A board's group comes from what it IS (its kind and key), not from a fifth column somebody has to remember to fill in,
+   and the Skills group follows the skills panel's own order so the two agree. The page draws hsRail(); the test counts it. */
+export const HISCORE_GROUPS = ["Combat", "Skills", "Records", "Dungeons & runs"];
+export const hsGroupOf = (key, kind) => (["combat", "archery", "magic", "hp"].includes(key) ? "Combat" : kind === "lvl" || key === "total" ? "Skills" : kind === "time" || kind === "floor" || kind === "lap" ? "Dungeons & runs" : "Records");
+export const hsRail = () => {
+  const order = ["total", ...SKILL_GROUPS.flatMap((g) => g.keys)], at = (k) => { const i = order.indexOf(k === "combat" ? "melee" : k); return i < 0 ? 99 : i; };
+  return HISCORE_GROUPS.map((name) => ({ name, boards: HISCORES.filter(([k, , , kind]) => hsGroupOf(k, kind) === name).sort((a, b) => (name === "Skills" ? at(a[0]) - at(b[0]) : 0)) })).filter((g) => g.boards.length);
+};
 /* ---------------- what is on, and where. The same shape THIEF.live uses. */
 if (FLETCH.live) {
   SKILL_GROUPS.find((g) => g.name === "Combat")?.keys.splice(1, 0, "archery");   /* Combat, Archery, Hitpoints */

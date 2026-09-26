@@ -285,6 +285,7 @@ export function installPyramid(World, { G, R, rint }) {
     run.cleared = { secs, total };
     for (const p of here) this.pyramidPayOne(S, p);
     for (const p of here) this.emit(p, "pyramid", { tier: run.tier });
+    this.cryptBest("p1", secs, names);   /* (2026-09-27) kept beside the Crypt's clears, under "p1", for the hiscores' Pyramid board; it was timed and announced and then forgotten */
     for (const p of this.pls.values()) if (!here.includes(p)) p.out.push({ type: "casinonote", text: `🐍 ${names.join(", ")} put THE SQUEEZE down in ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}.` });
     for (const p of here) this.say(p, "It stops moving. The hoard is at the head of the chamber: a chest each.", "good");
     this.pyramidTell(S);
