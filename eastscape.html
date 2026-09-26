@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=303">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=304">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -549,7 +549,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 #achBody .arow i:not(.on){opacity:.4}
 #achBody .arow.got{opacity:1;background:rgba(200,161,60,.13)}
 #achBody .arow i{font-style:normal;font-size:17px;line-height:1.2;flex:0 0 auto}
-.topl-store{position:relative}.topl-store .hot{position:absolute;top:-6px;right:-8px;font-style:normal;font-size:8.5px;font-weight:900;letter-spacing:.06em;line-height:1;padding:2px 4px;border-radius:3px;background:#e53935;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.5);animation:hotpulse 1.6s ease-in-out infinite}@keyframes hotpulse{50%{transform:scale(1.12)}}@media (prefers-reduced-motion:reduce){.topl-store .hot{animation:none}}
+.topl-store .hot{display:inline-block;margin-left:7px;vertical-align:3px;font-style:normal;font-size:8.5px;font-weight:900;letter-spacing:.06em;line-height:1;padding:2px 4px;border-radius:3px;background:#e53935;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.5);animation:hotpulse 1.6s ease-in-out infinite}@keyframes hotpulse{50%{transform:scale(1.12)}}@media (prefers-reduced-motion:reduce){.topl-store .hot{animation:none}}
 .st-tabs{padding:8px 10px 4px}.st-note{padding:4px 12px 6px;font-size:12px}
 .st-preview{margin:6px 10px 2px;padding:14px 12px;background:#1d1a16;border-radius:6px;text-align:center}.st-preview small{display:block;color:#a99e8c;font-size:11px;margin-top:6px}
 .st-pvname{font-weight:800;font-size:20px;color:#fff;text-shadow:0 0 3px #000,0 1px 2px #000;display:inline-block;padding:2px 8px}
@@ -1222,7 +1222,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=303";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=304";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge

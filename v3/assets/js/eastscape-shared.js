@@ -7030,7 +7030,7 @@ export function hwObjs(key, b) {
    `C.store.own` (permanent) or an effect applied on the spot (the boosts). Name cosmetics live in `C.store.name` and ride the
    roster, the chat line and the profile, so everyone sees them. Prices are pinned here and never read from a client.
    (2026-09-27, the owner: "need it to be high at the start then we can lower for event, etc" - launch prices are double the first
-   draft; the 2X is 75,000 by his number.) */
+   draft; the 2X is 100,000 by his number.) */
 export const STORE_TABS = { boost: "Boosts", name: "Name" };
 export const NAME_COLS = { red: "#e0453a", blue: "#4a8ee8", green: "#4fbf5a", gold: "#ffd24a", purple: "#b06ae8", orange: "#ff8a3a", pink: "#ff7ac8", ice: "#a8dcff", bone: "#efe6d0", blood: "#b3121a" };
 export const NAME_FX = { shine: "Shine", pulse: "Pulse", rainbow: "Rainbow", glitch: "Glitch", flicker: "Flicker" };
@@ -7039,7 +7039,7 @@ export const NAME_FRAMES = { bone: "#efe6d0", gold: "#ffd24a", neon: "#ff4fd8", 
 export const STORE = {};
 const st = (id, row) => { STORE[id] = { id, ...row }; };
 /* boosts: consumables; the 2X is the room's, one at a time */
-st("double", { tab: "boost", kind: "double", name: "2X Potion", price: 75000, icon: "pot_double", ex: "Thirty minutes of double tickets and double crafting xp for EVERYONE on the server, popped in your name. One at a time: while one runs, this waits." });
+st("double", { tab: "boost", kind: "double", name: "2X Potion", price: 100000, icon: "pot_double", ex: "Thirty minutes of double tickets and double crafting xp for EVERYONE on the server, popped in your name. One at a time: while one runs, this waits." });
 st("clovers", { tab: "boost", kind: "give", give: ["clover", 5], name: "Lucky Clovers ×5", price: 8000, icon: "clover", ex: "Five clovers. Each makes your next fifteen kills or catches lucky." });
 st("homeward", { tab: "boost", kind: "give", give: ["scroll_homeward", 3], name: "Homeward Scrolls ×3", price: 5000, icon: "scroll_homeward", ex: "Three pages home. Wizardry prints them cheaper; this is for people in a hurry." });
 /* name colours: the ten, three of them dear */
