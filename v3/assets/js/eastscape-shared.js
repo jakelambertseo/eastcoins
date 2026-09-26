@@ -3459,7 +3459,7 @@ export const LOOT = {
   chandelier: { item: ["cobweb", 1], also: [["bones", 1]], rare: [["bonegourd", 0.0125], ["lantern", 0.03], ["angels_ring", 0.02], ["spiderboots", 0.01]] },
   ram: { item: ["dragonstone_ore", 1], also: [["bones", 1]], rare: [["stormcorn", 0.0125], ["grudge", 0.02], ["stake_loafers", 0.015]] },
   // v68: the bands' new residents. One thing each; the buff gear is spread so every band past the Yard can drop some
-  toadstool: { item: ["sporecap", 1], rare: [["rattlebean", 0.0125], ["bookies_amulet", 0.006]] },
+  toadstool: { item: ["sporecap", [1, 4], 0.30], rare: [["rattlebean", 0.0125], ["bookies_amulet", 0.006]] },   /* (2026-09-27, the owner) 30% of toadstools, one to four at a time: the hash gave 37% of one */
   boneidle: { item: ["bones", [2, 4]], rare: [["rattlebean", 0.0125], ["mask", 0.05], ["sharps_gloves", 0.008]] },
   twister: { item: ["receipt", 1], rare: [["lanternroot", 0.0125], ["adjusters_visor", 0.008]] },
   counter: { item: ["markedcard", 1], rare: [["lanternroot", 0.0125], ["sharps_gloves", 0.015], ["monocle", 0.03]] },

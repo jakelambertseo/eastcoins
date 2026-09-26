@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=299">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=300">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -665,6 +665,11 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .skr b{display:block;font-size:15px}
 .skr small{display:block;font-size:12px;color:#6a5a40}
 .skr .lv{font-size:20px;font-weight:800;color:#2a6a1a}
+.skg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:3px 8px 5px}
+.skt{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 3px 4px;min-width:0;background:#e6dcc4;border:1px solid #bfb193;border-radius:6px;cursor:pointer;font:inherit;color:inherit;transition:background .12s,border-color .12s,transform .12s}
+.skt i{font-style:normal;font-size:22px;line-height:1;height:26px;display:flex;align-items:center}.skt i .ico{width:26px;height:26px}
+.skt b{font-size:17px;font-weight:800;color:#2a6a1a;line-height:1.1}.skt small{font-size:9.5px;color:#6a5a40;letter-spacing:.01em;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.skt .xpb{width:100%;margin:2px 0 1px;height:5px}
+.skt:hover,.skt:focus-visible{background:#ffe08a;border-color:#b8901a;transform:translateY(-1px)}.skt:hover b,.skt:focus-visible b{color:#7a3c12}.skt:hover small{color:#4a3a20}
 .xpb{height:6px;background:#bfb193;margin-top:3px}
 .xpb i{display:block;height:100%;background:#3f9a2e}
 .qgive{font-style:italic;opacity:.75;font-size:.92em}
@@ -1175,7 +1180,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=299";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=300";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -3093,7 +3098,11 @@ function questTalk(n, R) {
     const ok = G.qHave(me, k) >= (s.n || 1);
     return showTalk(n, ok ? (s.say || q.talk.ready) : (s.short || q.talk.progress), ok ? [[s.reply || "Here you are.", go], ["Not yet.", closeTalk]] : [["I'll be back.", closeTalk], chat], have);
   }
-  return showTalk(n, R.stage?.progress || q.talk.progress, [["I'm on it.", closeTalk], chat], have);
+  /* (2026-09-27, a player: Mudge "wont accept their sporecaps ... you can see them in their inventory") THE GIVER SAYS WHAT COMES
+     FIRST. Lamps Out sends you to Vance before the sporecaps count, and Mudge's own progress line ("Six sporecaps. You've 6.") read
+     as if he would take them. When the step you are on is with somebody else, or somewhere else, that step is said first. */
+  const cur = R.stage, elsewhere = cur && ((cur.type === "talk" && cur.npc !== n.name) || (cur.type === "bring" && G.qBringTo(k, cur) !== n.name) || cur.type === "visit");
+  return showTalk(n, [...(elsewhere ? [`First: ${G.stageText(k, cur).toLowerCase().replace(/^./, (c) => c.toUpperCase())}. Then come back to me.`] : []), R.stage?.progress || q.talk.progress], [["I'm on it.", closeTalk], chat], have);
 }
 document.addEventListener("keydown", (e) => {
   if (!DLG || $("dlg").hidden || e.target.closest?.("input, textarea, select")) return;
@@ -5917,15 +5926,18 @@ function renderPanel() {
       // question the divider is there to answer
       const keys = grp.keys.filter((k) => SKILLS[k]);
       const sub = keys.reduce((n, k) => n + lvl(k), 0);
-      return `<div class="skh"><span>${grp.name}</span><small>${sub}</small></div><div class="sk">${keys.map((k) => {
+      /* (2026-09-27, the owner: "use 2 columns, the skills images, the level, the progress bar, and clicking each skill button opens
+         the skills wiki page ... this helps with the addition of new skills, it makes it very long vertically") TILES, NOT ROWS. The
+         same figures - level, xp, to go, the bar, Agility's best lap - but the name, the xp and the lap live on the hover, so a
+         tile is an icon, a level and a bar and eighteen skills fit without scrolling. A tile is a button into the wiki. */
+      return `<div class="skh"><span>${grp.name}</span><small>${sub}</small></div><div class="skg">${keys.map((k) => {
         const sk = SKILLS[k], L = lvl(k), lo = XP_AT[L], hi = XP_AT[Math.min(99, L + 1)], pc = L >= 99 ? 100 : Math.floor((me.xp[k] - lo) / (hi - lo) * 100);
-        /* (2026-09-22) Agility carries its best lap. The time was recorded on every finish and shown nowhere but a
-           single chat line at the moment it happened, so there was nothing to beat — half of why The Run felt like
-           a treadmill. It rides the row the skill already has rather than needing a screen of its own. */
         const extra = k === "agility" && me.stats?.runBest ? ` · best run ${(me.stats.runBest / 1000).toFixed(1)}s` : "";
-        return `<div class="skr"><i>${sico(k)}</i><span><b>${sk.name}</b><small>${Math.floor(me.xp[k]).toLocaleString()} xp · ${L >= 99 ? "max" : `${Math.ceil(hi - me.xp[k]).toLocaleString()} to go`}${extra}</small><div class="xpb"><i style="width:${pc}%"></i></div></span><span class="lv">${L}</span></div>`;
+        const tip = `${sk.name} · level ${L} · ${Math.floor(me.xp[k]).toLocaleString()} xp · ${L >= 99 ? "max" : `${Math.ceil(hi - me.xp[k]).toLocaleString()} to go`}${extra} · click for the wiki`;
+        return `<button type="button" class="skt" data-skwiki="${k}" title="${esc(tip)}" aria-label="${esc(tip)}"><i>${sico(k)}</i><b>${L}</b><div class="xpb"><i style="width:${pc}%"></i></div><small>${esc(sk.name)}</small></button>`;
       }).join("")}</div>`;
     }).join("")}`;
+    p.querySelectorAll("[data-skwiki]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); wikiRoute = `skills/${b.dataset.skwiki}`; openWin("wikiWin"); }));
   }
   if (tab === "quests") {
     const order = { ready: 0, active: 1, new: 2, done: 3, locked: 4 }, keys = Object.keys(QUESTS).filter((k) => (!QUESTS[k].event || G.hwOn() || G.qState(me, k) === "done") && (G.OPEN.has(WIKI.npcs[QUESTS[k].giver]?.scene) || ["active", "ready", "done"].includes(G.qState(me, k)))).sort((a, b) => order[G.qState(me, a)] - order[G.qState(me, b)]);   /* quests whose giver lives down a closed road wait until it reopens */
