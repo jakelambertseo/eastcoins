@@ -2672,7 +2672,12 @@ export class World {
       }
       if (!burnt) {
         const outN = r.out[1] * (nx ? nx.mult : 1);
-        this.give(pl, r.out[0], outN);
+        /* (2026-09-27, a player: "it's using my charcoal and koi and I'm getting the xp but the smoked product doesn't deposit")
+           THE PRODUCT IS CHECKED BEFORE THE XP IS PAID. give() refuses when the bag cannot take it and its answer was being thrown
+           away, so a refusal here would have spent the inputs, paid the xp and handed over nothing. The room check above makes that
+           unreachable today (a simulated 297 smokes put 269 in the bag, the flat 10% fail and nothing else), but if it is ever
+           reached the inputs go back and the station stops, rather than eating a stack a fish at a time. */
+        if (!this.give(pl, r.out[0], outN)) { for (const [k, n] of r.in) this.give(pl, k, n); this.touch(pl); pl.act = null; return; }
         this.gained(S, pl, r.out[0], outN, r.skill === "cooking" ? "cook" : "craft");
         /* (2026-09-23, the owner: "lets make sure we have the group bonus (+1% etc) to the campfire when users are
            cooking"). Standing at a fire with other people now pays what standing at a rock with them does: +1% xp
