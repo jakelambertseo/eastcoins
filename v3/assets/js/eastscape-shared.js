@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 283;
+export const VERSION = 284;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7022,6 +7022,34 @@ export function hwObjs(key, b) {
   placed = 0;
   for (let i = 0; i < 600 && placed < n; i++) { const x = 2 + Math.floor(rnd(i + 5000) * (COLS - 4)), y = 2 + Math.floor(rnd(i + 7000) * (ROWS - 4)); if (!free(x, y)) continue; objs.push({ t: "ghostlantern", x, y, name: "A ghost lantern", event: true, lid: `${key}:${day}:${x},${y}` }); g[y][x] = "#"; placed++; }
 }
+
+
+/* ============================================================ THE STORE (2026-09-27) — tickets only
+   The owner: "users could buy a 2X potion, chat name effects/colors/icons, some unique store skins". A TICKET SINK that sells looks
+   and moments and never a number in a fight or a skill roll. One table, one server op, one window; a purchase is a row in
+   `C.store.own` (permanent) or an effect applied on the spot (the boosts). Name cosmetics live in `C.store.name` and ride the
+   roster, the chat line and the profile, so everyone sees them. Prices are pinned here and never read from a client. */
+export const STORE_TABS = { boost: "Boosts", name: "Name" };
+export const NAME_COLS = { red: "#e0453a", blue: "#4a8ee8", green: "#4fbf5a", gold: "#ffd24a", purple: "#b06ae8", orange: "#ff8a3a", pink: "#ff7ac8", ice: "#a8dcff", bone: "#efe6d0", blood: "#b3121a" };
+export const NAME_FX = { shine: "Shine", pulse: "Pulse", rainbow: "Rainbow", glitch: "Glitch", flicker: "Flicker" };
+export const NAME_ICONS = ["skull", "crown", "fish", "dice", "seven", "cat", "ghost", "star", "bolt", "heart", "pickaxe", "chip"];
+export const NAME_FRAMES = { bone: "#efe6d0", gold: "#ffd24a", neon: "#ff4fd8", chain: "#b9b9b9", ivy: "#57c46a" };
+export const STORE = {};
+const st = (id, row) => { STORE[id] = { id, ...row }; };
+/* boosts: consumables; the 2X is the room's, one at a time */
+st("double", { tab: "boost", kind: "double", name: "2X Potion", price: 30000, icon: "pot_double", ex: "Thirty minutes of double tickets and double crafting xp for EVERYONE on the server, popped in your name. One at a time: while one runs, this waits." });
+st("clovers", { tab: "boost", kind: "give", give: ["clover", 5], name: "Lucky Clovers ×5", price: 4000, icon: "clover", ex: "Five clovers. Each makes your next fifteen kills or catches lucky." });
+st("homeward", { tab: "boost", kind: "give", give: ["scroll_homeward", 3], name: "Homeward Scrolls ×3", price: 2500, icon: "scroll_homeward", ex: "Three pages home. Wizardry prints them cheaper; this is for people in a hurry." });
+/* name colours: the ten, three of them dear */
+for (const [k, col] of Object.entries(NAME_COLS)) st(`col_${k}`, { tab: "name", kind: "col", slot: "col", val: k, col, name: `${k[0].toUpperCase()}${k.slice(1)} name`, price: k === "gold" ? 60000 : k === "bone" || k === "blood" ? 25000 : 8000, ex: k === "gold" ? "The one everybody notices." : "Your name in this colour, over your head and in chat." });
+for (const [k, name] of Object.entries(NAME_FX)) st(`fx_${k}`, { tab: "name", kind: "fx", slot: "fx", val: k, name: `${name} effect`, price: 20000, ex: { shine: "A light passes along your name.", pulse: "Your name breathes.", rainbow: "Every colour, in turn.", glitch: "Your name cannot quite hold still.", flicker: "A candle in a draught." }[k] });
+for (const k of NAME_ICONS) st(`icon_${k}`, { tab: "name", kind: "icon", slot: "icon", val: k, name: `${k[0].toUpperCase()}${k.slice(1)} badge`, price: 6000, ex: "A small badge before your name." });
+for (const [k, col] of Object.entries(NAME_FRAMES)) st(`frame_${k}`, { tab: "name", kind: "frame", slot: "frame", val: k, col, name: `${k[0].toUpperCase()}${k.slice(1)} frame`, price: 15000, ex: "A thin frame around your name over your head." });
+export const STORE_SLOTS = ["col", "fx", "icon", "frame"];
+/** what a character's name wears: { col, fx, icon, frame } of item ids, or null when nothing is set */
+export const nameFxOf = (c) => { const n = c?.store?.name; if (!n) return null; const out = {}; let any = false; for (const s of STORE_SLOTS) { const it = n[s] && STORE[n[s]]; if (it && (c.store.own || []).includes(it.id)) { out[s] = it.val; any = true; } } return any ? out : null; };
+export const nameFxSig = (f) => (f ? STORE_SLOTS.map((s) => f[s] || "").join(".") : "");
+export const ownsStore = (c, id) => !!(c?.store?.own || []).includes(id);
 
 /* (2026-09-21) the map-building helpers, for the files that hold maps outside this one (eastscape-closed.js, and the dungeon's). */
 export const _MAP = { block, grid, keepOf, room, wild };

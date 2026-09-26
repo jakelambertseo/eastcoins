@@ -346,7 +346,7 @@ export class World {
     return { pay: owed, low, late };
   }
 
-  meOf(pl) { const C = pl.C; return { seen: C.seen || [],   /* (2026-09-27) the world map's fog */ hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null,   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
+  meOf(pl) { const C = pl.C; return { store: C.store || null,   /* (2026-09-27) what the Store has sold you and what your name wears */ seen: C.seen || [],   /* (2026-09-27) the world map's fog */ hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null,   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
@@ -754,7 +754,7 @@ export class World {
           return;
         }
         pl.lastChat = now;
-        for (const p of this.pls.values()) p.out.push({ type: "chat", id: pl.id, name: pl.name, role: pl.role !== "user" ? pl.role : undefined, text, scene: pl.C.scene, t: now });
+        for (const p of this.pls.values()) p.out.push({ type: "chat", id: pl.id, name: pl.name, nfx: G.nameFxOf(pl.C) || undefined, role: pl.role !== "user" ? pl.role : undefined, text, scene: pl.C.scene, t: now });
         return;
       }
       case "quest": return this.questOp(S, pl, m);
@@ -792,6 +792,7 @@ export class World {
         return this.say(pl, `Vance folds the chit into your hand. "Door's behind me. Don't come back."`, "loot");
       }
       case "who": { if (now - (pl.whoAsk || 0) < 3000) return; pl.whoAsk = now; return this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S), npcs: this.npcsOf(S) }); }
+      case "store": return this.storeOp(S, pl, m);   /* (2026-09-27) the Store: tickets for boosts and name cosmetics */
       case "map": {   /* (2026-09-27) the world map: how many people stand on each map, nothing else about them */
         if (now - (pl.mapAsk || 0) < 5000) return; pl.mapAsk = now;
         const counts = {}; for (const p of this.pls.values()) { const b = String(p.C.scene || "").split(":")[0]; if (G.SCENES[b] && !G.isIsle(p.C.scene)) counts[b] = (counts[b] || 0) + 1; }
@@ -1424,6 +1425,32 @@ export class World {
       this.say(p, `✨ 2X EVENT: ${this.dbl.by} cracked a 2X Potion. Everything you earn is doubled for the next ${mins} minutes - tickets and crafting xp, everywhere, for everyone on the server.`, "loot");
     }
     this.houseSay(`✨ 2X EVENT — ${this.dbl.by} popped a 2X Potion. Double tickets and crafting xp for ${mins} minutes.`);
+  }
+  /* ------------------------------------------------------------ THE STORE (2026-09-27)
+     Tickets only, prices from the rules, never from the message. A cosmetic is owned once and worn at once; a boost is given or
+     started. The 2X potion here is the same room-wide event the dropped potion starts, in the buyer's name, and it refuses (charging
+     nothing) while one runs. `set` wears or removes an owned cosmetic in a slot. Every write goes through touch(), and the roster
+     signature carries the name's look, so the change reaches everyone on the next tick. */
+  storeOp(S, pl, m) {
+    const C = pl.C, op = String(m.op || ""), id = String(m.id || ""), it = G.STORE[id];
+    C.store ||= { own: [], name: {} }; C.store.own ||= []; C.store.name ||= {};
+    if (op === "set") {
+      const slot = String(m.slot || ""); if (!G.STORE_SLOTS.includes(slot)) return;
+      if (!m.id) { C.store.name[slot] = null; this.touch(pl); return; }
+      if (!it || it.slot !== slot || !C.store.own.includes(id)) return this.say(pl, "You don't own that.", "bad");
+      C.store.name[slot] = id; this.touch(pl); return;
+    }
+    if (op !== "buy" || !it) return;
+    const have = G.tixIn(C);
+    if (it.kind === "double" && this.dbl && Date.now() < this.dbl.until) { const left = Math.ceil((this.dbl.until - Date.now()) / 60000); return this.say(pl, `A 2X event is already running - ${left} minute${left === 1 ? "" : "s"} left. It's yours to buy when it ends.`, "bad"); }
+    if (it.kind !== "double" && it.kind !== "give" && C.store.own.includes(id)) return this.say(pl, "You own that already.", "bad");
+    if (have < it.price) return this.say(pl, `${it.name} is ${G.fmtTix(it.price)}. You have ${G.fmtTix(have)}.`, "bad");
+    if (it.kind === "give") { if (!G.roomFor(C.inv, it.give[0], C)) return this.say(pl, "Your bag is full.", "bad"); }
+    G.takeInv(C.inv, "tickets", it.price);
+    if (it.kind === "double") { this.touch(pl); this.doubleStart(pl.name, G.DOUBLE.ms); this.say(pl, `${it.name} - ${G.fmtTix(it.price)}. The room is yours for half an hour.`, "loot"); return; }
+    if (it.kind === "give") { if (!this.give(pl, it.give[0], it.give[1])) { G.addInv(C.inv, "tickets", it.price, C); this.touch(pl); return; } this.touch(pl); return this.say(pl, `${it.name} - ${G.fmtTix(it.price)}.`, "loot"); }
+    C.store.own.push(id); C.store.name[it.slot] = id; this.touch(pl);
+    return this.say(pl, `${it.name} - ${G.fmtTix(it.price)}. Wearing it now.`, "loot");
   }
   /* ------------------------------------------------------------ THE LONG NIGHT (2026-09-27)
      Two clocks the server owns, persisted like the 2X event's: the Pumpkin King's hour and Nightfall. THE KING IS NOT A PLACEMENT.
@@ -3062,7 +3089,7 @@ export class World {
   npcsOf(S) { return (S.npcs || []).map((n) => ({ id: n.id, name: n.name, art: n.art, tag: n.tag, look: n.look, reach: n.reach, opens: n.opens, shop: n.shop })); }
   whoOf(S) {
     const out = [];
-    for (const p of this.playersIn(S)) out.push({ id: p.id, name: p.name, role: p.role !== "user" ? p.role : undefined, vip: G.vipOf(p.C).i || undefined, lvl: G.totalOf(p.C), weapon: p.C.eq.weapon, body: p.C.eq.body, maxHp: G.maxHpOf(p.C), look: p.C.look || undefined, van: G.wearsVanity(p.C.van) ? { on: p.C.van.on, col: p.C.van.col } : undefined, pet: G.activePet(p.C)?.k || undefined, cos: p.cos || undefined });
+    for (const p of this.playersIn(S)) out.push({ id: p.id, name: p.name, nfx: G.nameFxOf(p.C) || undefined, role: p.role !== "user" ? p.role : undefined, vip: G.vipOf(p.C).i || undefined, lvl: G.totalOf(p.C), weapon: p.C.eq.weapon, body: p.C.eq.body, maxHp: G.maxHpOf(p.C), look: p.C.look || undefined, van: G.wearsVanity(p.C.van) ? { on: p.C.van.on, col: p.C.van.col } : undefined, pet: G.activePet(p.C)?.k || undefined, cos: p.cos || undefined });
     for (const b of S.bots) out.push({ id: b.id, name: b.name, level: b.level, art: b.art, hue: b.hue });
     return out;
   }
@@ -3085,7 +3112,7 @@ export class World {
     }
     if (p) this.accrue(p);
     const st = C.stats || {}, skills = {}; for (const k of Object.keys(G.SKILLS)) skills[k] = { lvl: G.lvlOf(C, k), xp: Math.round(Number(C.xp[k]) || 0) };
-    pl.out.push({ type: "profile", name, online: !!p, look: C.look || null, van: G.wearsVanity(C.van) ? { on: C.van.on, col: C.van.col } : null, cos: p?.cos || null, vip: G.vipOf(C).i || 0,
+    pl.out.push({ type: "profile", name, online: !!p, nfx: G.nameFxOf(C) || null, look: C.look || null, van: G.wearsVanity(C.van) ? { on: C.van.on, col: C.van.col } : null, cos: p?.cos || null, vip: G.vipOf(C).i || 0,
       combat: G.combatOf(C), total: G.totalOf(C), skills,
       kills: Object.values(st.kills || {}).reduce((n, v) => n + v, 0), quests: G.questsDone(C), crypt: st.crypt | 0, deaths: st.deaths | 0,
       earned: Math.round(Number(C.earned) || 0), mins: Math.round((st.playMs || 0) / 60000), since: st.firstSeen || Number(C.created) || 0,
@@ -3113,7 +3140,7 @@ export class World {
         looted: Object.values(st.looted || {}).reduce((n, v) => n + v, 0), burnt: st.burnt | 0, pvpKills: st.pvpKills | 0, pvpDeaths: st.pvpDeaths | 0, sessions: st.sessions | 0 } });
   }
   // cheap enough to build every broadcast; it only ever SENDS when it differs
-  whoSigOf(who) { let sig = ""; for (const w of who) sig += `${w.id}|${w.name}|${w.vip || 0}|${w.lvl ?? w.level}|${w.weapon || ""}|${w.body || ""}|${w.maxHp || ""}|${w.art || ""}|${w.hue || ""}|${w.look ? w.look.join(".") : ""}|${G.vanityKey(w.van)}|${w.pet || ""}|${w.cos ? `${w.cos.name}/${w.cos.title}` : ""};`; return sig; }
+  whoSigOf(who) { let sig = ""; for (const w of who) sig += `${w.id}|${w.name}|${w.vip || 0}|${w.lvl ?? w.level}|${w.weapon || ""}|${w.body || ""}|${w.maxHp || ""}|${w.art || ""}|${w.hue || ""}|${w.look ? w.look.join(".") : ""}|${G.vanityKey(w.van)}|${w.pet || ""}|${w.cos ? `${w.cos.name}/${w.cos.title}` : ""}|${G.nameFxSig(w.nfx)};`; return sig; }
 
   snapOf(S, now, withEvents = true) {
     const st = (e) => (e.step ? [e.step.fx, e.step.fy, e.step.tx, e.step.ty, e.step.t0, e.step.ms] : 0);

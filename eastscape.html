@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=302">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=303">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -549,6 +549,21 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 #achBody .arow i:not(.on){opacity:.4}
 #achBody .arow.got{opacity:1;background:rgba(200,161,60,.13)}
 #achBody .arow i{font-style:normal;font-size:17px;line-height:1.2;flex:0 0 auto}
+.st-tabs{padding:8px 10px 4px}.st-note{padding:4px 12px 6px;font-size:12px}
+.st-preview{margin:6px 10px 2px;padding:14px 12px;background:#1d1a16;border-radius:6px;text-align:center}.st-preview small{display:block;color:#a99e8c;font-size:11px;margin-top:6px}
+.st-pvname{font-weight:800;font-size:20px;color:#fff;text-shadow:0 0 3px #000,0 1px 2px #000;display:inline-block;padding:2px 8px}
+.st-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px 10px 8px}@media (max-width:560px){.st-grid{grid-template-columns:1fr}}
+.st-card{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;padding:6px 8px;background:#efe5cf;box-shadow:inset 0 0 0 2px #b8a67e;border-radius:6px;color:#2e2416}.st-card.worn{box-shadow:inset 0 0 0 2px #b8901a;background:#ffe9a8}.st-card b{display:block;font-size:13px}.st-card small{display:block;font-size:11px;color:#6a5a40;line-height:1.25}
+.st-sw{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25);font-style:normal}.st-sw.st-fr{background:transparent;border:3px solid;border-radius:6px;box-shadow:none}.st-sw.st-ic{background:#1d1a16;border-radius:6px}.st-sw.st-ic img{width:16px;height:16px;image-rendering:pixelated}.st-sw.st-fx{background:#1d1a16;border-radius:6px;color:#fff;font-size:13px;font-weight:800}.st-sw.st-it{background:transparent;box-shadow:none}.st-sw.st-it .ico{width:28px;height:28px}
+.st-act{white-space:nowrap;font-size:12px;padding:5px 9px}
+.nfx-badge{width:14px;height:14px;image-rendering:pixelated;vertical-align:-2px;margin-right:3px}
+.nfx-framed{outline:1.5px solid;outline-offset:1px;border-radius:3px}
+.nfx-shine{background:linear-gradient(90deg,currentColor 0%,currentColor 40%,#fff 50%,currentColor 60%,currentColor 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:inherit;-webkit-text-fill-color:transparent;animation:nfxshine 2.4s linear infinite}@keyframes nfxshine{from{background-position:200% 0}to{background-position:-200% 0}}
+.nfx-pulse{animation:nfxpulse 1.6s ease-in-out infinite;display:inline-block}@keyframes nfxpulse{50%{transform:scale(1.08)}}
+.nfx-rainbow{animation:nfxrainbow 4s linear infinite}@keyframes nfxrainbow{0%{color:#ff5a5a}17%{color:#ffb03a}33%{color:#ffe84a}50%{color:#5adc6e}67%{color:#4aa8ff}83%{color:#b06ae8}100%{color:#ff5a5a}}
+.nfx-glitch{animation:nfxglitch 1.4s steps(1) infinite;display:inline-block}@keyframes nfxglitch{0%,88%,100%{transform:none}90%{transform:translateX(2px)}94%{transform:translateX(-2px)}}
+.nfx-flicker{animation:nfxflicker .7s steps(1) infinite}@keyframes nfxflicker{0%,92%,100%{opacity:1}94%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.nfx-shine,.nfx-pulse,.nfx-rainbow,.nfx-glitch,.nfx-flicker{animation:none;-webkit-text-fill-color:initial;background:none}}
 .map-legend{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 10px 4px}.map-legend .qf{flex:0 0 auto;padding:4px 10px}.map-key{font-size:11px;color:#5a4a30;margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}.map-key .map-q{font-size:12px;text-shadow:none}
 .map-wrap{position:relative;overflow:auto;flex:1;min-height:0;background:#e6dcc4;margin:0 10px 10px;border:2px solid #b8a67e;border-radius:6px}.map-wrap-sm{height:250px;margin:0 8px;border-radius:6px}
 .map-sheet{position:relative}.map-sheet canvas{display:block;image-rendering:pixelated}
@@ -1027,7 +1042,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 </head>
 <body>
 <header class="top">
-  <span class="logo"><img src="/v3/assets/img/eastcoin-icon-96.png?v=1" alt="" width="22" height="22">EastScape</span><button type="button" class="topl" id="gamesBtn" title="The real ZCoin games, one click (G)">🎰 Games</button><button type="button" class="topl" id="achBtn" title="Achievements (Y)"><img src="/v3/assets/img/glad/flat/ui/ach_badge.png?v=1" alt="" class="topi">Achievements</button><button type="button" class="topl" id="questBtn" title="Quests (Q)"><img src="/v3/assets/img/glad/flat/ui/quests.png?v=1" alt="" class="topi">Quests</button><button type="button" class="topl" id="hsBtn" title="Hiscores">🏆 Hiscores</button><button type="button" class="topl" id="wikiBtn" title="The EastScape wiki (H)">📖 Wiki</button>
+  <span class="logo"><img src="/v3/assets/img/eastcoin-icon-96.png?v=1" alt="" width="22" height="22">EastScape</span><button type="button" class="topl" id="gamesBtn" title="The real ZCoin games, one click (G)">🎰 Games</button><button type="button" class="topl" id="achBtn" title="Achievements (Y)"><img src="/v3/assets/img/glad/flat/ui/ach_badge.png?v=1" alt="" class="topi">Achievements</button><button type="button" class="topl" id="questBtn" title="Quests (Q)"><img src="/v3/assets/img/glad/flat/ui/quests.png?v=1" alt="" class="topi">Quests</button><button type="button" class="topl" id="storeBtn" title="The Store (tickets)"><img src="/v3/assets/img/glad/flat/ui/store.png?v=1" alt="" class="topi">Store</button><button type="button" class="topl" id="hsBtn" title="Hiscores">🏆 Hiscores</button><button type="button" class="topl" id="wikiBtn" title="The EastScape wiki (H)">📖 Wiki</button>
   <span class="spacer"></span>
   <button type="button" class="online" id="online" title="Who is online, and where"></button><span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span><button type="button" class="me" id="topMe" title="Your profile"><img id="topAv" alt="" hidden><span id="topName">—</span></button>
 </header>
@@ -1169,6 +1184,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/ach_badge.png?v=1" alt="" class="topi">Achievements</b><small id="achSub"></small><button type="button" class="win-x" data-close="achWin" aria-label="Close">×</button></div>
       <div class="win-body" id="achBody"></div>
     </section>
+    <section class="win" id="storeWin" aria-label="The Store" hidden style="width:min(720px,calc(100% - 28px));height:calc(100% - 60px)">
+      <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/store.png?v=1" alt="" class="topi">The Store</b><small id="storeSub"></small><button type="button" class="win-x" data-close="storeWin" aria-label="Close">×</button></div>
+      <div class="win-body" id="storeBody"></div>
+    </section>
     <section class="win" id="mapWin" aria-label="World map" hidden style="width:min(1000px,calc(100% - 28px));height:calc(100% - 40px)">
       <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/map.png?v=1" alt="" class="topi">World map</b><small id="mapSub"></small><button type="button" class="win-x" data-close="mapWin" aria-label="Close">×</button></div>
       <div class="map-legend" id="mapLegend"></div>
@@ -1202,7 +1221,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=302";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=303";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1482,7 +1501,7 @@ function onMsg(m) {
   }
   if (m.type === "me") { const prevCharm = me?.charm; me = m.me;
     if (me.charm && (me.charm.left | 0) > 0 && (!prevCharm || prevCharm.k !== me.charm.k || me.charm.left > (prevCharm.left | 0) + 5000)) { spellFx(`p:${you?.id}`, "shield"); SFX.play("spell_buff"); }   /* (2026-09-26) a page buff read */
-    DECO?.refresh(); renderQuick(); if (!me.look && !lookOffered) { lookOffered = true; setTimeout(() => { if (!me.look) welcomeOnce(true); }, 1500); } renderTour(); renderPanel(); if (!$("questWin").hidden) renderQuests(); if (!$("hwWin").hidden) renderMarket(); if (!$("mapWin").hidden) renderMap(); CZ.me(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); craftRefresh(); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("vanWin").hidden) renderVan(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
+    DECO?.refresh(); renderQuick(); if (!me.look && !lookOffered) { lookOffered = true; setTimeout(() => { if (!me.look) welcomeOnce(true); }, 1500); } renderTour(); renderPanel(); if (!$("questWin").hidden) renderQuests(); if (!$("hwWin").hidden) renderMarket(); if (!$("mapWin").hidden) renderMap(); if (!$("storeWin").hidden) renderStore(); CZ.me(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); craftRefresh(); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("vanWin").hidden) renderVan(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
   if (m.type === "map") { WORLD.counts = m.counts || {}; if (!$("mapWin").hidden) renderMap(); return; }   /* (2026-09-27) who is where, for the world map */
   if (m.type === "exch") { EX = m; if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input:not(#mkQ)"))) renderEx(); return; }
   if (m.type === "trade") { if (m.closed) { TR = null; $("tradeWin").hidden = true; } else { TR = m; openWin("tradeWin"); } return; }
@@ -1585,7 +1604,7 @@ function onEvent(e) {
   if (e.type === "hw") { if (e.king) SFX.play("mob_die"); if (e.night != null) SFX.play(e.night ? "ui_open" : "ui_click"); renderPanel(); return; }   /* (2026-09-27) the Long Night's clocks turned; the painter reads the clock itself */
   if (e.type === "tradereq") { SFX.play("chat"); tradeReqLine(e.from, e.name); return; }
   if (e.type === "levelup") return levelUp(e.k, e.lvl);
-  if (e.type === "chat") { if (e.id !== you?.id) SFX.play("chat", { vol: 0.6 }); if (e.scene === Z.key) botBubbles.set(e.id, { text: e.text, at: performance.now() }); chatLine(e.name, e.text, e.id === you?.id ? "mine" : "", e.role); return; }
+  if (e.type === "chat") { if (e.id !== you?.id) SFX.play("chat", { vol: 0.6 }); if (e.scene === Z.key) botBubbles.set(e.id, { text: e.text, at: performance.now() }); chatLine(e.name, e.text, e.id === you?.id ? "mine" : "", e.role, e.id === you?.id ? G.nameFxOf(me) : e.nfx); return; }
 }
 /** Admin or mod — the two that get the panel and the dashboard. A plain player is neither. */
 const isStaff = () => you?.role === "admin" || you?.role === "mod" || !!you?.admin;
@@ -1687,7 +1706,7 @@ function emoFill(span, text) {
 /* (v130) THREE TIERS, SHOWN. A star and a colour beside the name, so it is obvious in a busy room who is staff — and so a
    mod asking somebody to pack it in is visibly a mod. The role rides on the chat line itself rather than being looked up,
    because the roster only covers the room you are standing in and chat is game-wide. */
-function chatLine(name, text, cls, role) {
+function chatLine(name, text, cls, role, nfx) {
   const log = $("chatLog"); log.querySelector(".empty")?.remove();
   const p = document.createElement("p"); if (cls) p.className = cls;
   const b = document.createElement("b"); b.textContent = name;
@@ -1699,6 +1718,8 @@ function chatLine(name, text, cls, role) {
     st.title = role === "admin" ? "Admin" : "Moderator";
     b.prepend(st, " ");
   }
+  /* (2026-09-27) the Store's name cosmetics in chat: colour, effect class, a badge before the name. AFTER the className assignments above, which would wipe the classes. */
+  if (nfx) { if (nfx.col && G.NAME_COLS[nfx.col]) b.style.color = G.NAME_COLS[nfx.col]; if (nfx.fx) b.classList.add(`nfx-${nfx.fx}`); if (nfx.frame) { b.classList.add("nfx-framed"); b.style.outlineColor = G.NAME_FRAMES[nfx.frame] || "#fff"; } if (nfx.icon) { const im = document.createElement("img"); im.className = "nfx-badge"; im.src = `${ART}nb_${nfx.icon}.png?v=${ART_V}`; im.alt = ""; b.prepend(im); } }
   // the simulated players say so
   if (cls === "bot") { const tag = document.createElement("span"); tag.className = "bot-tag"; tag.textContent = "Bot"; b.append(" ", tag); }
   const body = document.createElement("span"); if (cls === "mine" || !cls) { body.dataset.t = text; emoLoad(); emoFill(body, text); } else body.textContent = text;   /* (players' lines only: the casino's own notes are not chat) */
@@ -1793,7 +1814,7 @@ const ART_VER = { critic: 4, o_mausoleum: 4, t_tomb: 4, o_bomkiosk: 7, o_plot: 2
    because a crop added to CROPS should ask for its art without anybody remembering to type four more names —
    the content check then fails until that art exists, which is the right way round. */
 const CROP_ART = [...new Set(Object.keys(G.CROPS).map((k) => G.cropArt(k)))].flatMap((k) => [1, 2, 3, 4].map((n) => `crop_${k}_${n}`));   /* (2026-09-26) a seed crop draws its bloom's pictures */
-const ART_FILES = ["pumpkinking", "pet_blackcat", "o_ghostlantern", "o_jack", "o_nightmarket", "hexa_south", "hexa_east",   /* (2026-09-27) the Long Night; the lantern and the jack stay in core, they stand on every map */ "t_wildg", "t_wildb", "t_wildw", "x_plateau", "x_column", "x_cave", "x_pillar", "x_rock1", "x_rock2", "x_rock3", "x_rock4", "x_rock5", "x_rock6", "x_rocks", "x_boulder1", "x_boulder2", "x_boulder3", "x_dead1", "x_dead2", "x_dead3", "x_dead4", "x_dead5", "x_pine1", "x_pine2", "x_pine3", "x_shrub1", "x_shrub2", "x_stump", "x_tuft1", "x_tuft2", "x_tuft3",
+const ART_FILES = ["nb_skull", "nb_crown", "nb_fish", "nb_dice", "nb_seven", "nb_cat", "nb_ghost", "nb_star", "nb_bolt", "nb_heart", "nb_pickaxe", "nb_chip",   /* (2026-09-27) the Store's name badges (G.NAME_ICONS), 16px, drawn before a name over heads; written out because the packer reads this list without the rules */ "pumpkinking", "pet_blackcat", "o_ghostlantern", "o_jack", "o_nightmarket", "hexa_south", "hexa_east",   /* (2026-09-27) the Long Night; the lantern and the jack stay in core, they stand on every map */ "t_wildg", "t_wildb", "t_wildw", "x_plateau", "x_column", "x_cave", "x_pillar", "x_rock1", "x_rock2", "x_rock3", "x_rock4", "x_rock5", "x_rock6", "x_rocks", "x_boulder1", "x_boulder2", "x_boulder3", "x_dead1", "x_dead2", "x_dead3", "x_dead4", "x_dead5", "x_pine1", "x_pine2", "x_pine3", "x_shrub1", "x_shrub2", "x_stump", "x_tuft1", "x_tuft2", "x_tuft3",
   "t_deepg", "t_deepb", "t_deepw", "d_plateau", "d_column", "d_cave", "d_pillar", "d_rock1", "d_rock2", "d_rock3", "d_rock4", "d_rock5", "d_rock6", "d_rock7", "d_rock8", "d_slab", "d_boulder1", "d_boulder2", "d_boulder3", "d_dead1", "d_dead2", "d_dead3", "d_root1", "d_root2", "d_root3", "d_log1", "d_log2", "d_stump1", "d_stump2", "d_burnt", "d_coal1", "d_coal2", "d_tuft", "weaver", "marrowhound", "grimlich", "o_gallowsoak", "mudge_south", "mudge_east", "morrow_south", "morrow_east", "zephyr_south", "zephyr_east", "rashid_south", "rashid_east", "volta_south", "volta_east", "auditor_south", "auditor_east", "grimm_south", "grimm_east", "a_wfall_w", "a_wfall_d", "a_surface", "a_shine", "a_lava", "a_lavab", "a_steam",   /* (2026-09-26) the Wilderness (x_) and the Deep Wild (d_): tools/eastscape-wild-art.mjs, from Szadi art's RPG Fantasy Worlds sets; every one is claimed by AREA_ART.wild or .deep below, so none of it is in core */
   "o_altar_arcane", "o_altar_fire", "o_altar_frost", "o_altar_storm", "o_altar_void", "o_altar_sun", "o_altar_nexus",   /* (2026-09-26) the seven altars: each is deferred to its own area in AREA_ART */ "o_fletcher",   /* (2026-09-25) the fletching table in the Yard */ "t_dock", ...CROP_ART, "o_yardtree", "o_yardtree_stump", "o_tower", "t_doors", "fx_hit", "fx_crit", "fx_miss", "fx_bleed", "vince_south", "vince_east", "casino", "rony_south", "rony_east", "o_bomkiosk", "t_pit", "o_fightboard", "o_hsboard", "o_fameboard", "o_ringbell", "o_ringpost", "o_mirror", "o_rrtable", "o_barcart", "kellz_south", "kellz_east", "livia_south", "livia_east", "gaius_south", "gaius_east", "aurelia_south", "aurelia_east", "arbino_south", "arbino_east", "vince_south", "vince_east", "sterling_south", "sterling_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "barker_south", "barker_east", "o_duckpond", "o_banner", "o_banner2", "o_archway", "o_wagon", "o_cagebarH", "o_cagebarV", "o_turnstile", "o_bloodpool", "o_knives", "o_meathook", "pinhead", "tripled", "fatlady", "strongman", "grinner", "o_bigtop", "o_funhouse", "o_balloonpop", "o_shootgallery", "o_whackamole", "o_ticketbooth", "o_sidetent", "o_haybale", "o_carnlitter", "t_sawdust", "t_dwater", "critic", "o_railH", "o_railV", "o_railgate", "o_mausoleum", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "pet_coilling",   /* (2026-09-24) the Pyramid’s pet was in PETS and had a picture on disk and was in NEITHER of these two lists — its icon drew an empty box AND an equipped one would have walked around invisible. Every pet goes in both, drop or no drop. */ "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_brick", "o_fencepost", "o_crates", "o_lamppost", "o_sacks", "o_handcart", "t_track", "o_gateframe", "o_gatebars", "o_agilend", "o_trailer", "o_wreck", "o_tyres", "o_dumpster", "o_rock_slagstone", "o_rustpine", "o_bogwood", "junkdog", "possum", "scrapper", "gator", "junkking", "darla_south", "darla_east", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "legend_" + d]),   // (hero_tiro_*, the old tunic, left the startup list 2026-09-20: nobody wears it now that everyone has a look)
@@ -1863,7 +1884,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 101;
+const PACKS_V = 102;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -3364,6 +3385,22 @@ function tixLabel(n, x, y, color, size = 13, pre = "") {
   const text = `${pre}${Number(n).toLocaleString()}`; ctx.font = `700 ${size}px "Nunito", system-ui, sans-serif`;
   const w = ctx.measureText(text).width, ic = size + 3; label(text, x + ic / 2 + 1, y, color, size); drawIco("tickets", x - w / 2 - 1, y + size / 2 + 1, ic);
 }
+/* (2026-09-27) THE STORE'S NAME COSMETICS over a head: a colour, a badge before the name, a frame around it, an effect in time.
+   The plain label() below is untouched; this wraps it, and does nothing extra when the person wears nothing. */
+function nameLabel(text, x, y, color, nfx, t) {
+  if (!nfx) return label(text, x, y, color);
+  const col = nfx.col ? G.NAME_COLS[nfx.col] || color : color;
+  let c = col, dx = 0, size = 13, alpha = 1;
+  if (nfx.fx === "rainbow") c = `hsl(${(t / 12) % 360} 90% 65%)`;
+  else if (nfx.fx === "shine") { const k = (t / 900) % 1; c = k < 0.15 ? "#fff" : col; }
+  else if (nfx.fx === "pulse") size = 13 + Math.sin(t / 260) * 1.5;
+  else if (nfx.fx === "glitch") { if ((t % 1400) < 90) dx = ((t / 30) | 0) % 2 ? 3 : -3; }
+  else if (nfx.fx === "flicker") alpha = (t % 700) < 60 ? 0.35 : 1;
+  ctx.font = `700 ${size}px "Nunito", system-ui, sans-serif`; const w = ctx.measureText(text).width;
+  if (nfx.frame) { ctx.strokeStyle = G.NAME_FRAMES[nfx.frame] || "#fff"; ctx.lineWidth = 1.5; ctx.setLineDash(nfx.frame === "chain" ? [3, 2] : []); ctx.strokeRect(x - w / 2 - 6 + dx, y - 2, w + 12, size + 5); ctx.setLineDash([]); }
+  ctx.globalAlpha = alpha; label(text, x + dx, y, c, size); ctx.globalAlpha = 1;
+  if (nfx.icon && IMG[`nb_${nfx.icon}`]) ctx.drawImage(IMG[`nb_${nfx.icon}`].im, x - w / 2 - 20 + dx, y - 1, 16, 16);
+}
 function label(text, x, y, color, size = 13) {
   ctx.font = `700 ${size}px "Nunito", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "top";
   ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,.85)"; ctx.strokeText(text, x, y); ctx.fillStyle = color; ctx.fillText(text, x, y);
@@ -3870,7 +3907,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   for (const pl of Z.players) {
     const p = pos(pl), x = sx(p.px * T + 8), y = sy(p.py * T + 15);
     /* (v81) a name colour and a title bought in eastcoin.vip's store show here too. A VIP colour is EARNED, so it wins. */
-    if (pl.id === you.id || names) { const tier = G.VIP[pl.id === you.id ? G.vipOf(me).i : pl.vip | 0], bought = STORE_NAME[pl.cos?.name]; label(tier?.at ? `◆ ${pl.name}` : pl.name, x, y + 4, tier?.at ? tier.col : bought || (pl.id === you.id ? "#fff" : pvp ? "#ff7a6a" : "#9fd0ff")); label(`level ${pl.lvl}`, x, y + 18, "#ffe45c", 12); if (pl.cos?.title) label(`« ${pl.cos.title} »`, x, y + 31, "#e8d8a8", 11); }
+    if (pl.id === you.id || names) { const tier = G.VIP[pl.id === you.id ? G.vipOf(me).i : pl.vip | 0], bought = STORE_NAME[pl.cos?.name], nfx = pl.id === you.id ? G.nameFxOf(me) : pl.nfx; nameLabel(tier?.at ? `◆ ${pl.name}` : pl.name, x, y + 4, tier?.at ? tier.col : bought || (pl.id === you.id ? "#fff" : pvp ? "#ff7a6a" : "#9fd0ff"), nfx, pnow); label(`level ${pl.lvl}`, x, y + 18, "#ffe45c", 12); if (pl.cos?.title) label(`« ${pl.cos.title} »`, x, y + 31, "#e8d8a8", 11); }
     if (pvp && pl.id !== you.id && pl.hp < pl.maxHp) { const bw = 30, by = sy(p.py * T - 13); ctx.fillStyle = "#c00"; ctx.fillRect(x - bw / 2, by, bw, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(x - bw / 2, by, bw * Math.max(0, pl.hp / pl.maxHp), 5); }
     /* BLEEDING (2026-09-24, the owner: "when a user is bleeding it needs to show an icon above their head
        (small)"). Over the head of whoever HELD names, so the three people who are meant to go and save them can
@@ -4414,7 +4451,7 @@ $("online").addEventListener("click", whoAllOpen);
 document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_close"); $(b.dataset.close).hidden = true; if (b.dataset.close === "gameWin") CZ.closed(); if (b.dataset.close === "wikiWin" && location.hash.startsWith("#wiki")) history.replaceState(null, "", location.pathname + location.search); }));
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape" || e.target.closest?.("input, textarea, select") || !$("pop").hidden || DLG) return;
-  for (const w of ["wikiWin", "mapWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
+  for (const w of ["wikiWin", "mapWin", "storeWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
 });
 // windows that need you standing somewhere close themselves when you walk off
 setInterval(() => { if (PRED.on && PRED.step) for (const w of ["bankWin", "exWin"]) $(w).hidden = true; }, 300);
@@ -4809,6 +4846,31 @@ addEventListener("keydown", (e) => { if ((e.key === "g" || e.key === "G") && !e.
 
 /* ------------------------------------------------------------ the Forge: Brutus's shop */
 let shopN = 1, shopKind = "shop";   // "shop": Brutus at the Forge; "bar": Dex, who sells and never buys
+/* (2026-09-27) THE STORE. Two tabs to start - Boosts, Name - each row a card with the price as the button; owned cosmetics show
+   Wear / Worn / Take off instead. A live preview of your own name at the top redraws with every change so a colour, a badge and a
+   frame can be tried in combination before the tickets go. Everything the window knows comes from G.STORE and me.store. */
+let storeTab = "boost";
+function openStore() { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin", "gameWin", "lookWin", "jukeWin", "vanWin", "hwWin", "mapWin", "questWin"]) $(w).hidden = true; $("storeWin").hidden = false; SFX.play("ui_open"); renderStore(); }
+function renderStore() {
+  if ($("storeWin").hidden || !me) return;
+  const tix = G.tixIn(me), st = me.store || { own: [], name: {} }, own = new Set(st.own || []), worn = st.name || {}, nfx = G.nameFxOf(me);
+  $("storeSub").textContent = `${G.fmtTix(tix)}`;
+  const rows = Object.values(G.STORE).filter((it) => it.tab === storeTab);
+  const pv = `<div class="st-preview"><span class="st-pvname${nfx?.fx ? ` nfx-${nfx.fx}` : ""}${nfx?.frame ? " nfx-framed" : ""}" style="${nfx?.col ? `color:${G.NAME_COLS[nfx.col]};` : ""}${nfx?.frame ? `outline-color:${G.NAME_FRAMES[nfx.frame]};` : ""}">${nfx?.icon ? `<img class="nfx-badge" src="${ART}nb_${nfx.icon}.png?v=${ART_V}" alt="">` : ""}${esc(you?.name || "You")}</span><small>How your name looks to everyone</small></div>`;
+  const card = (it) => {
+    const owned = own.has(it.id), isWorn = it.slot && worn[it.slot] === it.id, afford = tix >= it.price;
+    const swatch = it.kind === "col" ? `<i class="st-sw" style="background:${it.col}"></i>` : it.kind === "frame" ? `<i class="st-sw st-fr" style="border-color:${it.col}"></i>` : it.kind === "icon" ? `<i class="st-sw st-ic"><img src="${ART}nb_${it.val}.png?v=${ART_V}" alt=""></i>` : it.kind === "fx" ? `<i class="st-sw st-fx"><b class="nfx-${it.val}">Aa</b></i>` : `<i class="st-sw st-it">${ico(it.icon)}</i>`;
+    const act = it.slot ? (owned ? (isWorn ? `<button type="button" class="lk-btn st-act" data-stset="${it.slot}" data-stid="">Take off</button>` : `<button type="button" class="lk-btn st-act" data-stset="${it.slot}" data-stid="${it.id}">Wear</button>`) : `<button type="button" class="lk-btn st-act st-buy" data-stbuy="${it.id}"${afford ? "" : " disabled"}>${afford ? `Buy · ${it.price.toLocaleString()}` : `${it.price.toLocaleString()} needed`}</button>`)
+      : `<button type="button" class="lk-btn st-act st-buy" data-stbuy="${it.id}"${afford ? "" : " disabled"}>${afford ? `Buy · ${it.price.toLocaleString()}` : `${it.price.toLocaleString()} needed`}</button>`;
+    return `<div class="st-card${isWorn ? " worn" : ""}${owned ? " owned" : ""}">${swatch}<span><b>${esc(it.name)}${isWorn ? ` <em class="qtag">Worn</em>` : owned ? ` <em class="qtag">Owned</em>` : ""}</b><small>${esc(it.ex)}</small></span>${act}</div>`;
+  };
+  const groups = storeTab === "name" ? [["Colour", "col"], ["Effect", "fx"], ["Badge", "icon"], ["Frame", "frame"]].map(([t, k]) => `<div class="ph">${t} <small>one worn at a time</small></div><div class="st-grid">${rows.filter((it) => it.kind === k).map(card).join("")}</div>`).join("") : `<div class="st-grid">${rows.map(card).join("")}</div>`;
+  $("storeBody").innerHTML = `<div class="qfilt st-tabs">${Object.entries(G.STORE_TABS).map(([k, l]) => `<button type="button" class="qf${storeTab === k ? " on" : ""}" data-sttab="${k}">${l}</button>`).join("")}</div>${storeTab === "name" ? pv : `<p class="note st-note">Tickets only. Nothing here changes a fight or a roll; the 2X is the room's, for half an hour, in your name.</p>`}${groups}`;
+  $("storeBody").querySelectorAll("[data-sttab]").forEach((b) => b.addEventListener("click", () => { storeTab = b.dataset.sttab; SFX.play("ui_click"); renderStore(); }));
+  $("storeBody").querySelectorAll("[data-stbuy]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "store", op: "buy", id: b.dataset.stbuy }); }));
+  $("storeBody").querySelectorAll("[data-stset]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "store", op: "set", slot: b.dataset.stset, id: b.dataset.stid || null }); }));
+}
+$("storeBtn").addEventListener("click", () => { if ($("storeWin").hidden) openStore(); else $("storeWin").hidden = true; });
 /* (2026-09-27) THE NIGHT MARKET: Hexa's board. Priced in candy corn, nothing else; the two fits are bought here or at Ronde's and
    coloured at Ronde's. The foot of it is the day's state — Nightfall, the lantern count, whether you have said trick or treat. */
 function openMarket() { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin", "gameWin", "lookWin", "jukeWin", "vanWin"]) $(w).hidden = true; $("hwWin").hidden = false; SFX.play("ui_open"); renderMarket(); }
