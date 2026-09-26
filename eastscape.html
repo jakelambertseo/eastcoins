@@ -5329,7 +5329,14 @@ function dropsOf(id) {
   }
   return DROPS[id] || [];
 }
-const WIKI = (() => {
+/* (2026-09-27, the owner: "i can tell fishing is missing the newly added ones") THE WIKI READS THE WHOLE WORLD. The Wilderness and
+   the Deep Wild live in eastscape-closed.js, which the page fetches only when it is sent there - so every guide generated from
+   the maps (fishing, mining, woodcutting, the areas, the monsters) stopped at the Trailer Park and the Black Pool's two fish, the
+   Gallows oak and the wild-only monsters were on no page. The first time the wiki opens it loads that file, hides the maps that
+   are not OPEN (the farm and the river are closed, not secret), and rebuilds its index. */
+let wikiMapsAsked = false;
+const wikiMapsReady = () => { if (wikiMapsAsked) return null; wikiMapsAsked = true; return moreScenes("wild").then(() => { for (const [k, d] of Object.entries(G.SCENES)) if (!G.OPEN.has(k) && !d.wikiHide) d.wikiHide = true; WIKI = buildWiki(); }).catch(() => {}); };
+const buildWiki = () => {
   const areas = {}, sources = {}, npcs = {};
   const addSrc = (k, s) => { (sources[k] ||= []).push(s); };
   for (const key of Object.keys(SCENES).filter((k) => !SCENES[k].wikiHide)) {
@@ -5373,7 +5380,8 @@ const WIKI = (() => {
   const questGives = {};
   for (const [qk, q] of Object.entries(QUESTS)) (q.stages || []).forEach((st, i) => { for (const [k] of st.give || []) { const prev = q.stages[i - 1], by = i === 0 ? q.giver : prev?.type === "talk" ? prev.npc : prev?.type === "bring" ? G.qBringTo(qk, prev) : null; (questGives[k] ||= []).push({ quest: qk, by }); } });   /* (2026-09-27) every bring or gather stage, not one goal: the old line threw on a staged quest and took the whole page down at boot */
   return { areas, sources, npcs, drops, inQuests, questGives };
-})();
+};
+let WIKI = buildWiki();
 const wl = (route, text) => `<a data-wiki="${esc(route)}">${text}</a>`;
 const areaLink = (k) => wl(`areas/${k}`, esc(SCENES[k].name));
 const qn = (n) => (Array.isArray(n) ? `${n[0]}–${n[1]}` : n);
@@ -5411,6 +5419,7 @@ function wikiNav(active) {
 }
 function wikiGo(route, setNav = true) {
   if (WK.stub) loadWiki().then(() => { if (!$("wikiWin").hidden) wikiGo(route, setNav); }).catch(() => {});
+  { const p = wikiMapsReady(); if (p) p.then(() => { if (!$("wikiWin").hidden) wikiGo(wikiRoute, true); }); }   /* the wild maps, once: the page redraws itself when they land */
   wikiRoute = route;
   if (setNav) wikiNav(route);
   if (!location.hash.startsWith(`#wiki/${route}`)) history.replaceState(null, "", `#wiki/${route}`);
