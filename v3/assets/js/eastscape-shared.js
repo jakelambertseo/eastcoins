@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 292;
+export const VERSION = 293;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7005,6 +7005,11 @@ if (HW.live) HISCORES.push(["corn", "Candy corn", "earned this Long Night", "n"]
 export const hwOn = (t = Date.now()) => { if (!HW.live) return false; const d = chicagoDay(t); return d >= HW.from && d <= HW.until; };
 export const hourCT = (t = Date.now()) => (+new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", hour12: false }).format(t)) % 24;
 export const nightfallOn = (t = Date.now()) => hwOn(t) && hourCT(t) >= HW.night[0] && hourCT(t) < HW.night[1];
+/* (2026-09-27, the owner: "can we make it permanently nightfall themed in the yard? but not double candy corn drops? do it from the
+   second the event launches") A LOOK, NOT A RULE. These maps are drawn dark for the whole event; nightfallOn() - the hour that
+   doubles corn - is untouched, and the server never reads this. */
+export const HW_DARK = new Set(["workyard"]);
+export const hwDarkAt = (key, t = Date.now()) => nightfallOn(t) || (hwOn(t) && HW_DARK.has(String(key || "").split(":")[0]));
 /** ms until the next Nightfall starts (or 0 while it is on) */
 export const nightfallIn = (t = Date.now()) => { if (nightfallOn(t)) return 0; const h = hourCT(t), m = new Date(t); const minsIn = m.getUTCMinutes() * 60000 + m.getUTCSeconds() * 1000; const hoursTo = (HW.night[0] - h + 24) % 24 || 24; return hoursTo * 3600000 - minsIn; };
 

@@ -119,7 +119,7 @@ export const GUIDES = [
 
       <h3>6. The Ghost Hunt, Nightfall, trick or treat</h3>
       <p><b>Lanterns.</b> ${G.HW.lanterns} ghost lanterns stand somewhere on the nine open maps each day, about one a map, moved every morning. Click one for ${G.HW.lanternCorn} corn (${G.HW.lanternCorn * 2} at Nightfall), once each a day. All ten is ${G.HW.lanterns * G.HW.lanternCorn} corn.</p>
-      <p><b>Nightfall.</b> ${night}, every evening. The maps go dark, the jack-o'-lanterns light the paths, and every candy corn drop is doubled until the hour is out. The wallet chip counts down to it.</p>
+      <p><b>Nightfall.</b> ${night}, every evening. The maps go dark (the Yard stays dark all month, for the look; its corn doubles only in the hour like everywhere else), the jack-o'-lanterns light the paths, and every candy corn drop is doubled until the hour is out. The wallet chip counts down to it.</p>
       <p><b>Trick or treat.</b> Once a day, say it to any person in the game. ${pct(1 - G.HW.trick.trickAt)} of the time it is a treat: a handful of corn, two pumpkin seeds, or a warm pie. The rest is a trick, and a trick can cost you five corn, drop a spider in your bag, or put you in the Boneyard.</p>
 
       <h3>7. Pumpkins, pie and the brew</h3>

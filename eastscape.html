@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=314">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=315">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1285,7 +1285,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=314";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=315";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1294,7 +1294,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=171").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=172").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -3597,7 +3597,7 @@ function frame() {
   /* (2026-09-27) THE LONG NIGHT, outdoors: a faint purple over the month, near-dark at Nightfall, and warm light pooled under every
      jack-o'-lantern and ghost lantern so the paths read in the dark. The vignette itself is on the screen canvas, below. */
   if (G.hwOn() && !Z.def.interior && !Z.isle) {
-    const night = NIGHT_FORCE || G.nightfallOn();
+    const night = NIGHT_FORCE || G.hwDarkAt(Z.key);   /* (2026-09-27) the Yard is dark all event; everywhere else only at Nightfall */
     lc.fillStyle = night ? "rgba(6,3,24,.46)" : "rgba(50,16,80,.10)"; lc.fillRect(0, 0, W, H);
     for (const o of Z.objs) if (o.t === "jack" || o.t === "ghostlantern") {
       const cx = o.x * T + T / 2, cy = o.y * T + T / 2, r = o.t === "jack" ? T * 1.7 : T * 1.4, c = o.t === "jack" ? "255,150,40" : "120,255,220";
@@ -3951,7 +3951,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   ctx.imageSmoothingEnabled = false;
   const shk = !calm && pnow < shakeUntil ? (shakeUntil - pnow) / 40 : 0;   /* a crit, or a heavy hit on you: a few pixels for a fifth of a second */
   ctx.drawImage(low, view.ox + (shk ? Math.sin(pnow / 13) * shk : 0), view.oy + (shk ? Math.cos(pnow / 11) * shk : 0), W * view.s, H * view.s);
-  if ((NIGHT_FORCE || G.nightfallOn()) && !Z.def?.interior && !Z.isle) { const cw = ctx.canvas.width, ch = ctx.canvas.height, g2 = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * 0.32, cw / 2, ch / 2, Math.max(cw, ch) * 0.72); g2.addColorStop(0, "rgba(0,0,0,0)"); g2.addColorStop(1, "rgba(0,0,0,.55)"); ctx.fillStyle = g2; ctx.fillRect(0, 0, cw, ch); }   /* (2026-09-27) Nightfall's vignette, on the screen so it follows the camera */
+  if ((NIGHT_FORCE || G.hwDarkAt(Z.key)) && !Z.def?.interior && !Z.isle) { const cw = ctx.canvas.width, ch = ctx.canvas.height, g2 = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * 0.32, cw / 2, ch / 2, Math.max(cw, ch) * 0.72); g2.addColorStop(0, "rgba(0,0,0,0)"); g2.addColorStop(1, "rgba(0,0,0,.55)"); ctx.fillStyle = g2; ctx.fillRect(0, 0, cw, ch); }   /* (2026-09-27) Nightfall's vignette, on the screen so it follows the camera */
   const S2 = view.s, sx = (tx) => view.ox + tx * S2, sy = (ty) => view.oy + ty * S2;
   for (let i = TILEFX.length - 1; i >= 0; i--) { const f = TILEFX[i]; if (pnow > f.until) { TILEFX.splice(i, 1); continue; } const k = (pnow - f.from) / (f.until - f.from); ctx.fillStyle = `rgba(230,40,40,${(0.18 + 0.32 * k + (calm ? 0 : 0.08 * Math.sin(pnow / 60))).toFixed(3)})`; ctx.fillRect(sx((f.x - f.r) * T), sy((f.y - f.r) * T), (f.r * 2 + 1) * T * S2, (f.r * 2 + 1) * T * S2); }
   { const gh = hoverTile && DECO?.on ? DECO.ghost(hoverTile.x, hoverTile.y) : null; if (gh) { ctx.fillStyle = gh.ok ? "rgba(90,220,110,.35)" : "rgba(230,70,60,.35)"; ctx.strokeStyle = gh.ok ? "#5adc6e" : "#e6463c"; ctx.lineWidth = 2; const gx = sx(gh.x * T), gy = sy(gh.y * T), gw = gh.w * T * S2, g2 = gh.h * T * S2; ctx.fillRect(gx, gy, gw, g2); ctx.strokeRect(gx + 1, gy + 1, gw - 2, g2 - 2); } }
