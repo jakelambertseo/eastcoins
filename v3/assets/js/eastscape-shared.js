@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 289;
+export const VERSION = 290;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -5901,8 +5901,13 @@ Object.assign(CROPS, {
 });
 /** what a planted crop gives, and the pictures it grows through */
 export const cropYield = (k) => CROPS[k]?.yields || k;
-/* (2026-09-27, the owner: "have the chance of seed return at 25%") a harvested seed crop gives one seed back this often, so a plot found once can be kept going */
-export const SEED_RETURN = 0.25;
+/* (2026-09-27, the owner: "have the chance of seed return at 25%"; then, the same evening: "we need to make sure users are self
+   sufficient, but dont get too many seeds" - "go with the second one") A harvested seed crop ALWAYS gives its seed back, and a
+   second one SEED_EXTRA of the time. At a quarter a seed averaged 1.33 plantings and was gone: a farm shrank three quarters of
+   a seed a harvest and only kills refilled it. Now a plot found once runs forever, and the farm creeps up by about one seed in
+   ten harvests - self-sufficient, with a slow surplus rather than a fast one. Seeds still come from kills at their old rate. */
+export const SEED_RETURN = 1;
+export const SEED_EXTRA = 0.10;
 /* (2026-09-27, the owner: "put golden tomatoe in the game somewhere as a rare drop") The Golden tomatoe was a Harvesting-50 crop
    that grows 1-3 from one - so it multiplies itself - with NO way to get the first one. Two now: the Yard's Rotten Tomato drops
    it one kill in five hundred (on its drop table, below MOBS), and any island harvest of anything else turns one up one time in
@@ -6322,7 +6327,7 @@ Object.assign(QUESTS, {
     brief: "Zephyr wants ten Frost bolt pages. Grow three frostcaps from seed on your island, brew the ink, print at the Frost altar here.",
     stages: [{ type: "gather", items: ["frostcap"], n: 3, what: "frostcaps", how: "gather" }, { type: "gather", items: ["ink_frost"], n: 2, what: "Frost ink", how: "craft" }, { type: "bring", items: ["page_frost_bolt"], n: 10, what: "Frost bolt pages" }],
     talk: { offer: ["The altar behind me prints Frost, and I've never seen it used. I'd like to.", "Frost seeds drop from the rams and the goats. Grow three frostcaps on your island, brew the ink at a cauldron, print me ten Frost bolts here."], accept: "Ten Frost bolts.", decline: "Ink's not my thing.",
-      accepted: "The seeds are rare: one ram in a hundred and more. A harvested plot gives a seed back sometimes, so keep one going.", progress: "Frostcaps, ink, ten pages. You're at {have}.", ready: "Frost, on paper. It's colder than it looks. Give them here.", hand: "Ten pages.", done: "I'll fire one at the next goose. Take this." },
+      accepted: "The seeds are rare: one ram in a hundred and more. A harvested plot always gives its seed back, so keep one going.", progress: "Frostcaps, ink, ten pages. You're at {have}.", ready: "Frost, on paper. It's colder than it looks. Give them here.", hand: "Ten pages.", done: "I'll fire one at the next goose. Take this." },
     reward: { coins: 2500, xp: { wizardry: 2500, farming: 1000, alchemy: 800 }, text: "2,500 tickets, 2,500 Wizardry xp, 1,000 Harvesting xp, 800 Alchemy xp" }
   },
   ramhorns: {
@@ -7000,7 +7005,7 @@ export const nightfallIn = (t = Date.now()) => { if (nightfallOn(t)) return 0; c
 
 ITEMS.candycorn = { name: "Candy corn", icon: "\u{1F36C}", nocap: true, event: true, ex: "The Long Night's coin. Every kill and every catch drops a little; the Night Market and Ronde's rail take it. On November 2nd it turns back into sugar, so spend it." };
 ITEMS.pumpkin = { name: "Pumpkin", icon: "\u{1F383}", event: true, ex: "Grows in a night on your island, from a seed the Night Market sells. Bake it on a fire." };
-ITEMS.seed_pumpkin = { name: "Pumpkin seed", icon: "\u{1F331}", event: true, ex: "Plant it on your island. Harvesting 20. A quarter of harvests give the seed back." };
+ITEMS.seed_pumpkin = { name: "Pumpkin seed", icon: "\u{1F331}", event: true, ex: "Plant it on your island. Harvesting 20. The seed always comes back, and one harvest in ten gives two." };
 ITEMS.pumpkinpie = { name: "Pumpkin pie", icon: "\u{1F967}", heal: 20, event: true, meal: { mins: 30, fx: { rare: 0.15, tix: 0.10 } }, ex: "Heals 20 and, for half an hour outside, rare drops come a little easier and every kill pays a little more. Not xp: nothing in EastScape buys xp." };
 ITEMS.ectoplasm = { name: "Ectoplasm", icon: "\u{1F47B}", event: true, ex: "What is left of something that did not want to leave. One kill in sixteen drops it during the Long Night; the cauldron wants it." };
 ITEMS.pot_witch = { name: "Witch's brew", icon: "\u{1F9EA}", use: "ward", event: true, ex: "Drink it and your next death costs nothing: no hospital bill. Used up by the death, however long that takes." };
