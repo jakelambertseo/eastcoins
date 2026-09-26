@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 291;
+export const VERSION = 292;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7030,6 +7030,18 @@ ITEMS.hallowed_legs = { name: "Hallowed greaves", short: "Greaves", icon: "\u{1F
    on Hexa's shelf at 9,000 corn; the three legendaries are the King's at 1% each and one in three thousand off any monster of
    level 80 or more killed during the event (HW.legend). Nothing here is sold for tickets or bought back by Bom. */
 export const EVENT_TAG = "Halloween 2026 Event";
+/** (2026-09-27) where an event piece comes from, in words, read off the King's drop table, Hexa's shelf and the two drop rules -
+    so the wiki item page and the guide can never disagree with the game */
+export const eventSourcesOf = (k) => {
+  const out = [], K = MOBS.pumpkinking, pct = (p) => `${Math.round(p * 1000) / 10}%`;
+  const sk = Object.entries(HW.skillDrops || {}).find(([, v]) => v === k);
+  if (sk) out.push(`one ${sk[0] === "fishing" ? "cast" : sk[0] === "mining" ? "swing at a rock" : "chop"} in ${Math.round(1 / HW.skillDropChance).toLocaleString()}, during the Long Night only`);
+  const d = K?.drops.find(([x]) => x === k); if (d) out.push(`the Pumpkin King, ${pct(d[2] ?? 1)} of kills`);
+  if ((HW.legend?.items || []).includes(k)) out.push(`one in ${Math.round(1 / HW.legend.chance).toLocaleString()} off any monster of level ${HW.legend.lvl} or more, during the Long Night`);
+  const m = HW.market.find(([x]) => x === k); if (m) out.push(`Hexa's Night Market, ${m[2].toLocaleString()} candy corn`);
+  const q = Object.entries(QUESTS).find(([qk, q]) => qk.startsWith("hw_") && (q.reward.items || []).some(([x]) => x === k)); if (q) out.push(`the reward for ${q[1].name}`);
+  return out;
+};
 ITEMS.gallows_bow = { name: "Gallows Bow", short: "Bow", icon: "\u{1F3F9}", slot: "weapon", acc: 17, str: 9, launcher: { range: 6, ammo: "arrow" }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { tix: 0.06, rare: 0.10 }, req: { skill: "archery", lvl: 50 }, ex: "Cut from the gallows tree. One chop in ten thousand brings it down, during the Long Night only. Kills pay 6% more and rare drops come 10% easier." };
 ITEMS.lantern_quiver = { name: "Lantern Quiver", short: "Quiver", icon: "\u{1F383}", slot: "shield", pouch: { ammo: "arrow", cap: 400 }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { ammo: 0.25 }, req: { skill: "archery", lvl: 50 }, ex: "A carved pumpkin with a strap. One arrow in four flies back into it: a quarter of your shots spend nothing. The King drops it; Hexa sells it." };
 ITEMS.skull_wand = { name: "Skull Wand", short: "Wand", icon: "\u{1F480}", slot: "weapon", acc: 20, str: 8, launcher: { range: 5, ammo: "page", style: "magic" }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { leech: 0.10 }, req: { skill: "magic", lvl: 50 }, ex: "Somebody's, once. A tenth of every spell's damage comes back to you as health. The King drops it; Hexa sells it." };

@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=313">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=314">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -967,6 +967,49 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .rst .evchip{background:#4a1a5a!important;color:#ffd6ff!important}
 .slot .evtag{position:absolute;left:1px;top:0;font-size:10px;line-height:1;font-style:normal;pointer-events:none;filter:drop-shadow(0 0 2px #000)}
 .wev{margin:6px 0 4px;padding:6px 10px;border-radius:6px;background:rgba(74,26,90,.16);border:1px solid #4a1a5a;font-size:13px}
+.wevl{margin:4px 0 8px;padding-left:18px;font-size:13px;line-height:1.5}
+/* ============================================================ THE NIGHT MARKET'S OWN SKIN (2026-09-27, the owner: "add some unique
+   spooky/halloween art/css to the night market popup ... completely separate from the normal popups")
+   Every rule is scoped to #hwWin.hw-skin, so nothing else moves. The wood-and-parchment frame is switched off (border-image:none)
+   and replaced: a night-purple body under a pumpkin-orange rim that breathes, cobwebs in both top corners, a witch's lantern
+   swinging under the title, two bats, and a fog along the bottom. The art is three PixelLab pieces in flat/ui (hw_web, hw_bat,
+   hw_lamp); everything else is CSS. Every animation stops under prefers-reduced-motion. */
+#hwWin.hw-skin{border:3px solid #ff7a1a;border-image:none;border-radius:12px;background:radial-gradient(ellipse at 50% -10%,#3a1650 0%,#1c0b28 55%,#0f0616 100%);color:#efe0ff;box-shadow:0 0 0 3px #12071a,0 0 26px rgba(255,122,26,.45),0 0 60px rgba(120,40,180,.35),0 16px 44px rgba(0,0,0,.75);animation:hwrim 4s ease-in-out infinite;image-rendering:auto}
+@keyframes hwrim{0%,100%{box-shadow:0 0 0 3px #12071a,0 0 22px rgba(255,122,26,.38),0 0 56px rgba(120,40,180,.3),0 16px 44px rgba(0,0,0,.75)}50%{box-shadow:0 0 0 3px #12071a,0 0 34px rgba(255,140,40,.6),0 0 70px rgba(140,50,200,.42),0 16px 44px rgba(0,0,0,.75)}}
+#hwWin.hw-skin .win-head{position:relative;z-index:3;margin:0;border-radius:9px 9px 0 0;background:linear-gradient(#34124a,#1e0b2c);border-bottom:2px solid #ff7a1a;color:#ffb45a;padding:10px 14px}
+#hwWin.hw-skin .win-head b{color:#ffb45a;letter-spacing:.03em;text-shadow:0 0 6px rgba(255,140,40,.8),0 0 14px rgba(255,90,20,.45);animation:hwflick 3.2s steps(1) infinite}
+@keyframes hwflick{0%,100%{opacity:1}46%{opacity:1}47%{opacity:.72}48%{opacity:1}73%{opacity:.85}74%{opacity:1}}
+#hwWin.hw-skin .win-head small{color:#d8b8f0}
+#hwWin.hw-skin .win-head .win-x{background:#ff7a1a;border-color:#12071a;color:#1c0b28}
+#hwWin.hw-skin .win-head .win-x:hover{background:#ff9a3a}
+#hwWin.hw-skin .win-body{position:relative;z-index:1;padding:46px 14px 34px;scrollbar-color:#ff7a1a #1c0b28}   /* the top 46px is the rafters: the lantern and the webs hang there, over nothing you need to read */
+#hwWin.hw-skin .ph{color:#ffb45a;border-bottom:2px solid rgba(255,122,26,.35);text-shadow:0 0 6px rgba(255,120,30,.35)}
+#hwWin.hw-skin .ph small{color:#b99ad6}
+#hwWin.hw-skin .rcpr{background:linear-gradient(90deg,rgba(58,22,80,.92),rgba(34,12,48,.92));border:2px solid #4a2468;border-radius:6px;color:#f2e6ff;margin:3px 0}
+#hwWin.hw-skin .rcpr small{color:#c6aee0;opacity:1}
+#hwWin.hw-skin .rcpr:hover:not(:disabled){border-color:#ff8a2a;box-shadow:0 0 10px rgba(255,122,26,.45)}
+#hwWin.hw-skin .rcpr:disabled{opacity:.55}
+#hwWin.hw-skin .rcpr.own{opacity:.5}
+#hwWin.hw-skin .an-odds{color:#ffb45a;font-weight:800}
+#hwWin.hw-skin .hw-gone{background:rgba(20,6,26,.8);border-color:#ff7a1a}
+#hwWin.hw-skin .hw-foot{background:rgba(58,22,80,.7);color:#e6d4f8;box-shadow:inset 0 0 0 2px #4a2468}
+#hwWin.hw-skin .hw-foot b{color:#ffb45a}
+#hwWin.hw-skin .hw-tag{background:#ff7a1a;color:#1c0b28}
+#hwWin.hw-skin .ev-tag{background:#6a2a8a;color:#ffe0ff}
+.hw-deco{position:absolute;display:block;pointer-events:none;z-index:0;image-rendering:pixelated;background-repeat:no-repeat;background-size:contain}
+.hw-web{top:42px;width:64px;height:64px;background-image:url(/v3/assets/img/glad/flat/ui/hw_web.png?v=1);opacity:.75}
+.hw-web.l{left:0}.hw-web.r{right:0;transform:scaleX(-1)}
+.hw-lamp{top:40px;left:50%;margin-left:-16px;z-index:2;width:32px;height:48px;background-image:url(/v3/assets/img/glad/flat/ui/hw_lamp.png?v=1);transform-origin:50% 0;animation:hwswing 3.6s ease-in-out infinite;filter:drop-shadow(0 0 6px rgba(160,255,120,.45))}
+@keyframes hwswing{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+.hw-bat{width:26px;height:26px;background-image:url(/v3/assets/img/glad/flat/ui/hw_bat.png?v=1);z-index:4}
+.hw-bat.b1{top:8px;left:46%;animation:hwbat1 5.5s ease-in-out infinite}
+.hw-bat.b2{top:16px;left:64%;width:18px;height:18px;opacity:.8;animation:hwbat2 7s ease-in-out infinite}
+@keyframes hwbat1{0%,100%{transform:translate(0,0)}25%{transform:translate(-14px,-4px)}50%{transform:translate(6px,3px)}75%{transform:translate(12px,-3px)}}
+@keyframes hwbat2{0%,100%{transform:translate(0,0) scaleX(-1)}33%{transform:translate(10px,4px) scaleX(-1)}66%{transform:translate(-8px,-2px) scaleX(-1)}}
+.hw-fog{left:0;right:0;bottom:0;height:46px;z-index:2;background:radial-gradient(ellipse 40% 100% at 20% 100%,rgba(190,160,230,.22),transparent 70%),radial-gradient(ellipse 45% 100% at 70% 100%,rgba(170,140,220,.2),transparent 70%),linear-gradient(transparent,rgba(15,6,22,.85));background-size:200% 100%,200% 100%,100% 100%;animation:hwfog 18s linear infinite}
+@keyframes hwfog{from{background-position:0 0,100% 0,0 0}to{background-position:-200% 0,-100% 0,0 0}}
+@media (prefers-reduced-motion:reduce){#hwWin.hw-skin,#hwWin.hw-skin .win-head b,.hw-lamp,.hw-bat,.hw-fog{animation:none}}
+@media (max-width:620px){.hw-web{width:48px;height:48px}.hw-lamp{right:56px}}
 .wl-corn .hw-last{color:#ff7a5a;font-weight:800}
 .hw-row.own{opacity:.6}.hw-fit{width:34px;height:34px;overflow:hidden;display:inline-block}.hw-fit .van-face{transform:scale(.5);transform-origin:top left}
 .glow.glow-hallow{filter:drop-shadow(0 0 3px rgba(255,140,30,.9))}
@@ -1167,7 +1210,8 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="win-head"><b>📋 Daily tasks</b><small id="dailySub">Fresh every morning</small><button type="button" class="win-x" data-close="dailyWin" aria-label="Close">×</button></div>
       <div class="win-body" id="dailyBody"></div>
     </section>
-    <section class="win" id="hwWin" aria-label="The Night Market" hidden style="width:min(520px,calc(100% - 28px))">
+    <section class="win hw-skin" id="hwWin" aria-label="The Night Market" hidden style="width:min(520px,calc(100% - 28px))">
+      <i class="hw-deco hw-web l" aria-hidden="true"></i><i class="hw-deco hw-web r" aria-hidden="true"></i><i class="hw-deco hw-lamp" aria-hidden="true"></i><i class="hw-deco hw-bat b1" aria-hidden="true"></i><i class="hw-deco hw-bat b2" aria-hidden="true"></i><i class="hw-deco hw-fog" aria-hidden="true"></i>
       <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/g_longnight.png?v=1" alt="" class="topi">The Night Market</b><small id="hwSub"></small><button type="button" class="win-x" data-close="hwWin" aria-label="Close">×</button></div>
       <div class="win-body" id="hwBody"></div>
     </section>
@@ -1241,7 +1285,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=313";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=314";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1250,7 +1294,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=170").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=171").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -5602,7 +5646,22 @@ function wikiGo(route, setNav = true) {
   else if (kind === "items" && ITEMS[id]) {
     const it = ITEMS[id], src = WIKI.sources[id] || [], dr = dropsOf(id), qs = WIKI.inQuests[id] || [], qg = WIKI.questGives[id] || [];
     const rewards = Object.entries(QUESTS).filter(([, q]) => (id === "coins" && q.reward.coins) || (q.reward.items || []).some(([k]) => k === id));
-    html = `<h2><i>${ico(id)}</i>${esc(it.name)}</h2>${it.event && it.slot ? `<p class="wev">\u{1F383} <b>${G.EVENT_TAG}</b> &mdash; only found during the Long Night${it.legend ? ", and a legendary" : ""}. Yours to keep once you have it.</p>` : ""}${it.ex ? `<p class="lede">“${esc(it.ex)}”</p>` : ""}
+    /* (2026-09-27, the owner: "for the event items, add their special buffs/improvements to their wiki page") the effect in
+       words (fxText, the same sentence the buffs bar uses), the bag's extra room, the level, the reforge, every source, and the
+       three things an event piece is worth: trade it, list it, or one ticket from Bom */
+    const evBlock = it.event && it.slot ? (() => {
+      const src = G.eventSourcesOf(id), fc = G.forgeCost(id);
+      const rows = [it.fx ? `<li><b>Worn:</b> ${esc(G.fxText(it.fx))}.</li>` : "",
+        it.pouch ? `<li><b>Holds ${it.pouch.cap.toLocaleString()} ${it.pouch.ammo === "page" ? "pages" : "arrows"}</b>${id === "bag_shroud" ? ", twice any other bag at its level" : ""}.</li>` : "",
+        it.launcher ? `<li>Fires from <b>${it.launcher.range} tiles</b>${it.launcher.style === "magic" ? " as a spell" : ""}.</li>` : "",
+        it.req ? `<li>Needs <b>${esc(SKILLS[it.req.skill].name)} ${it.req.lvl}</b> to wear.</li>` : "",
+        fc ? `<li>Reforges with <b>${fc[1].toLocaleString()} candy corn</b> a level, not bars.</li>` : "",
+        `<li>Trade it to another player or list it on Livia's Exchange. Bom will give you <b>1 ticket</b> for it.</li>`].filter(Boolean).join("");
+      return `<p class="wev">\u{1F383} <b>${G.EVENT_TAG}</b> &mdash; only found during the Long Night${it.legend ? ", and a <b>legendary</b>" : ""}. Yours to keep once you have it.</p>
+        <h3>What it does</h3><ul class="wevl">${rows}</ul>
+        ${src.length ? `<h3>Where it comes from</h3><ul class="wevl">${src.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}`;
+    })() : "";
+    html = `<h2><i>${ico(id)}</i>${esc(it.name)}</h2>${evBlock}${it.ex ? `<p class="lede">“${esc(it.ex)}”</p>` : ""}
       ${it.slot ? `<h3>Equipment</h3><table class="tbl"><tr><th>Slot</th><th>Accuracy</th><th>Strength</th><th>Defence</th><th>Lets you</th></tr><tr><td>${it.slot}</td><td>+${it.acc || 0}</td><td>+${it.str || 0}</td><td>+${it.def || 0}</td><td>${it.tool ? `train ${wl(`skills/${it.tool}`, SKILLS[it.tool].name)}` : "—"}</td></tr></table>` : ""}
       ${src.length ? `<h3>Gathered from</h3><table class="tbl"><tr><th>What</th><th>Where</th><th>Skill</th><th>Level</th></tr>${src.map((s) => `<tr><td>${esc(s.obj)}</td><td>${areaLink(s.scene)}</td><td>${wl(`skills/${s.skill}`, SKILLS[s.skill].name)}</td><td>${s.lvl}</td></tr>`).join("")}</table>` : ""}
       ${dr.length ? `<h3>Dropped by</h3><table class="tbl"><tr><th>Monster</th><th>How many</th><th>Chance</th></tr>${dr.map((d) => `<tr><td>${wl(`monsters/${d.mob}`, esc(MOBS[d.mob].name))}</td><td>${qn(d.n)}</td><td>${d.ch == null ? "Always" : pct(d.ch)}</td></tr>`).join("")}</table>` : ""}

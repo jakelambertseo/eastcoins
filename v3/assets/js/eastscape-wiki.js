@@ -84,7 +84,7 @@ export const GUIDES = [
         <li><b>The Ghost Hunt</b>: ${G.HW.lanterns} ghost lanterns a day, hidden on the open maps, ${G.HW.lanternCorn} corn each.</li>
         <li><b>Trick or treat</b>, once a day, said to anyone.</li>
         <li><b>Three quests</b>, one per difficulty, ending in the King himself.</li>
-        <li><b>Nine event pieces</b> of gear, three of them one-in-ten-thousand skilling drops and three of them level-90 legendaries.</li>
+        <li><b>Nine event pieces</b> of gear, all of them very rare drops.</li>
         <li>A <b>Candy corn</b> board on the Hiscores for the month.</li>
       </ul>
 
