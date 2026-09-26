@@ -667,6 +667,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .skr .lv{font-size:20px;font-weight:800;color:#2a6a1a}
 .xpb{height:6px;background:#bfb193;margin-top:3px}
 .xpb i{display:block;height:100%;background:#3f9a2e}
+.qgive{font-style:italic;opacity:.75;font-size:.92em}
 .qs{display:grid;gap:6px;padding:8px}.qtier{font-size:10px;font-weight:600;opacity:.75;margin-left:4px;font-style:normal}.qsteps{margin:0;padding-left:18px}.qsteps li{margin:2px 0}
 .q{padding:8px 10px;background:#e6dcc4;border:1px solid #bfb193}
 .q b{display:block;font-size:15px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.q b .qico{width:20px;height:20px;image-rendering:pixelated;flex:none}
@@ -908,6 +909,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .an-chip.on{color:#1a120a;background:#e0b968;box-shadow:none}
 .an-chip.locked{opacity:.45;cursor:default}
 .an-bars{display:flex;align-items:center;gap:6px;margin:0 10px 8px;font-size:12px;font-weight:700;color:#cbbfae}
+.an-craft{display:grid;gap:6px;margin:0 10px 10px}.an-craft .an-row small{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center}.an-craft .an-row small .ico{width:16px;height:16px;vertical-align:-3px}
 .an-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin:0 10px 10px}
 .an-tile{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:0;border-radius:7px;padding:8px 4px 6px;font:inherit;color:#f0e6d8;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 2px #3a2e22;text-align:center}
 .an-tile b{font-size:11px;font-weight:800;line-height:1.1}
@@ -4209,12 +4211,28 @@ function openSmith(ob) {
   const owned = [...new Set([...Object.values(me.eq || {}).filter(Boolean), ...(me.inv || []).map((x) => x.k)])].filter((k) => G.canForge(k));
   owned.sort((x, y) => G.TIERS.findIndex((t) => t.key === ITEMS[x].tier) - G.TIERS.findIndex((t) => t.key === ITEMS[y].tier) || ITEMS[x].name.localeCompare(ITEMS[y].name));
 
+  /* (2026-09-27, the owner: "for some new craftable items like temper, it uses the anvil for the recipe, but i dont think the anvil
+     crafting screen is set up to handle it") THE THIRD TAB. The Smith tab is the gear grid, by tier, so anything the anvil makes that is
+     not worn - the three Thieves' Guild consumables, every arrowhead, the two cores - was a recipe with no button. Craftables is every
+     anvil recipe whose product has no slot, as rows: level, every input with have/need, and the same act the Smith tiles send. */
+  const crafts = all.filter((r) => !ITEMS[r.out[0]]?.slot).sort((x, y) => x.lvl - y.lvl || ITEMS[x.out[0]].name.localeCompare(ITEMS[y.out[0]].name));
+  const craftable = crafts.filter((r) => lv >= r.lvl && r.in.every(([k, n]) => G.countItems(me, [k]) >= n)).length;
   const tabs = `<div class="an-tabs">
     <button type="button" class="an-tab${smithTab === "make" ? " on" : ""}" data-tab="make">Smith</button>
-    <button type="button" class="an-tab${smithTab === "forge" ? " on" : ""}" data-tab="forge">Reforge${owned.length ? ` · ${owned.length}` : ""}</button></div>`;
+    <button type="button" class="an-tab${smithTab === "forge" ? " on" : ""}" data-tab="forge">Reforge${owned.length ? ` · ${owned.length}` : ""}</button>
+    <button type="button" class="an-tab${smithTab === "craft" ? " on" : ""}" data-tab="craft">Craftables${craftable ? ` · ${craftable}` : ""}</button></div>`;
 
   let body = "";
-  if (smithTab === "make") {
+  if (smithTab === "craft") {
+    body = `<div class="an-craft">${crafts.map((r) => {
+      const out = ITEMS[r.out[0]], needLvl = lv < r.lvl;
+      const ins = r.in.map(([k, n]) => { const have = G.countItems(me, [k]); return `<span class="${have < n ? "an-cost-short" : ""}">${ico(k)} ${have}/${n} ${esc(ITEMS[k]?.name.toLowerCase() || k)}</span>`; });
+      const short = !needLvl && r.in.some(([k, n]) => G.countItems(me, [k]) < n);
+      return `<button type="button" class="rcpr an-row${needLvl ? " lock" : ""}" data-r="${r.id}"${needLvl || short ? " disabled" : ""}>
+        <i>${ico(r.out[0])}</i><span><b>${esc(out.name)}${r.out[1] > 1 ? ` ×${r.out[1]}` : ""}</b><small>${needLvl ? `Needs Smithing ${r.lvl}` : ins.join(" · ")} · ${r.xp} xp</small></span>
+        <span class="an-odds${needLvl ? " max" : ""}">${needLvl ? `Lv ${r.lvl}` : short ? "short" : "make"}</span></button>`;
+    }).join("") || `<p class="note">Nothing here yet.</p>`}</div>`;
+  } else if (smithTab === "make") {
     const chips = tiers.map((t) => {
       const locked = lv < t.gate;
       return `<button type="button" class="an-chip${t.key === smithTier ? " on" : ""}${locked ? " locked" : ""}" data-tier="${t.key}" title="${locked ? `Needs Smithing ${t.gate}` : esc(t.name)}">${esc(t.name)}${locked ? " \u{1F512}" : ""}</button>`;
@@ -5293,8 +5311,14 @@ const WIKI = (() => {
   const drops = {};
   for (const [t, m] of Object.entries(MOBS)) { for (const [k, n, ch] of m.drops) (drops[k] ||= []).push({ mob: t, n, ch }); for (const [k, ch] of G.raresOf(t)) (drops[k] ||= []).push({ mob: t, n: 1, ch }); }
   const inQuests = {};
-  for (const [qk, q] of Object.entries(QUESTS)) for (const st of q.stages || []) for (const k of st.items || []) if (!(inQuests[k] || []).includes(qk)) (inQuests[k] ||= []).push(qk);   /* (2026-09-27) every bring or gather stage, not one goal: the old line threw on a staged quest and took the whole page down at boot */
-  return { areas, sources, npcs, drops, inQuests };
+  for (const [qk, q] of Object.entries(QUESTS)) for (const st of q.stages || []) for (const k of st.items || []) if (!(inQuests[k] || []).includes(qk)) (inQuests[k] ||= []).push(qk);
+  /* (2026-09-27, the owner: "the wiki doesnt say where the auditors log drops. or does it even drop anywhere?") It does not: a
+     quest can HAND you a thing when a stage begins (the Auditor's ledger, Rashid's parcel), and until now the item's page said
+     nothing about where it came from. questGives[item] = who puts it in your bag and during which quest: the giver at the first
+     stage, the person the stage before sent you to otherwise. */
+  const questGives = {};
+  for (const [qk, q] of Object.entries(QUESTS)) (q.stages || []).forEach((st, i) => { for (const [k] of st.give || []) { const prev = q.stages[i - 1], by = i === 0 ? q.giver : prev?.type === "talk" ? prev.npc : prev?.type === "bring" ? G.qBringTo(qk, prev) : null; (questGives[k] ||= []).push({ quest: qk, by }); } });   /* (2026-09-27) every bring or gather stage, not one goal: the old line threw on a staged quest and took the whole page down at boot */
+  return { areas, sources, npcs, drops, inQuests, questGives };
 })();
 const wl = (route, text) => `<a data-wiki="${esc(route)}">${text}</a>`;
 const areaLink = (k) => wl(`areas/${k}`, esc(SCENES[k].name));
@@ -5384,7 +5408,7 @@ function wikiGo(route, setNav = true) {
       ${typeof g.body === "function" ? g.body(G, { ico, wl, esc, TWR, el: (k) => uico(`el_${k}`) }) : g.body}` : "";   /* (2026-09-25) A GUIDE BODY MAY BE A FUNCTION. The hand-written half of the wiki is where numbers go stale - the smoking table alone had three wrong heals and said "seven" after there were nine - so a guide whose figures come from the rules can generate itself instead. Plain strings still work and most guides stay that way; only the ones that quote live numbers need this. */
   }
   else if (kind === "items" && ITEMS[id]) {
-    const it = ITEMS[id], src = WIKI.sources[id] || [], dr = dropsOf(id), qs = WIKI.inQuests[id] || [];
+    const it = ITEMS[id], src = WIKI.sources[id] || [], dr = dropsOf(id), qs = WIKI.inQuests[id] || [], qg = WIKI.questGives[id] || [];
     const rewards = Object.entries(QUESTS).filter(([, q]) => (id === "coins" && q.reward.coins) || (q.reward.items || []).some(([k]) => k === id));
     html = `<h2><i>${ico(id)}</i>${esc(it.name)}</h2>${it.ex ? `<p class="lede">“${esc(it.ex)}”</p>` : ""}
       ${it.slot ? `<h3>Equipment</h3><table class="tbl"><tr><th>Slot</th><th>Accuracy</th><th>Strength</th><th>Defence</th><th>Lets you</th></tr><tr><td>${it.slot}</td><td>+${it.acc || 0}</td><td>+${it.str || 0}</td><td>+${it.def || 0}</td><td>${it.tool ? `train ${wl(`skills/${it.tool}`, SKILLS[it.tool].name)}` : "—"}</td></tr></table>` : ""}
@@ -5414,6 +5438,7 @@ function wikiGo(route, setNav = true) {
       ${it.req ? `<p>Needs <b>${SKILLS[it.req.skill].name} ${it.req.lvl}</b> to use.</p>` : ""}
       ${(() => { const pz = G.prizesOf().find((x) => x.give && x.give[0] === id); return pz || G.isLoot(id) ? `<h3>The Prize Counter</h3><p>${pz ? `On the shelf for <b>${G.fmtTix(pz.price)}</b>. ` : ""}${G.isLoot(id) ? `Trades in for <b>${G.fmtTix(G.valueOf(id))}</b>.` : ""}</p>` : ""; })()}
       ${rewards.length ? `<h3>Quest rewards</h3><p>${rewards.map(([k, q]) => wl(`quests/${k}`, esc(q.name))).join(", ")}</p>` : ""}
+      ${qg.length ? `<h3>Handed to you</h3><p>${qg.map(({ quest, by }) => `${by ? `By ${wl(`npcs/${by}`, esc(by))}${WIKI.npcs[by] ? ` in ${areaLink(WIKI.npcs[by].scene)}` : ""}` : "Given"} during ${wl(`quests/${quest}`, esc(QUESTS[quest].name))}. It drops from nothing and nobody sells it.`).join("<br>")}</p>` : ""}
       ${qs.length ? `<h3>Wanted for</h3><p>${qs.map((k) => wl(`quests/${k}`, esc(QUESTS[k].name))).join(", ")}</p>` : ""}
       ${EX.last[id] ? `<h3>On the market</h3><p>Last sold for ${G.fmtCash(EX.last[id].price)}.</p>` : ""}`;
   }
@@ -5467,7 +5492,7 @@ function wikiGo(route, setNav = true) {
       <table class="tbl"><tr><th>Given by</th><td>${wl(`npcs/${q.giver}`, esc(q.giver))}${n ? ` in ${areaLink(n.scene)}` : ""}</td></tr>
       <tr><th>Needs</th><td>${(q.requires || []).map((r) => wl(`quests/${r}`, esc(QUESTS[r].name))).join(", ") || "Nothing"}</td></tr>
       <tr><th>Difficulty</th><td>${G.QUEST_TIERS[q.tier] || "Easy"}</td></tr>
-      <tr><th>Steps</th><td><ol class="qsteps">${q.stages.map((s) => `<li>${s.type === "bring" ? `Bring ${s.n} ${s.items.map((k) => wl(`items/${k}`, esc(ITEMS[k]?.name.toLowerCase() || k))).join(" or ")} to ${wl(`npcs/${G.qBringTo(id, s)}`, esc(G.qBringTo(id, s)))}` : s.type === "kill" ? `Defeat ${s.n} ${wl(`monsters/${s.mob}`, esc(MOBS[s.mob]?.name.toLowerCase() || s.mob))}${s.n > 1 ? "s" : ""}${s.style ? ` with ${s.style === "magic" ? "a wand" : s.style === "archery" ? "a bow" : "a melee weapon"}` : ""}` : s.type === "talk" ? `Talk to ${wl(`npcs/${s.npc}`, esc(s.npc))}` : s.type === "visit" ? `Go to ${areaLink(s.scene)}` : esc(G.stageText(id, s))}</li>`).join("")}</ol></td></tr>
+      <tr><th>Steps</th><td><ol class="qsteps">${q.stages.map((s) => `<li>${(s.give || []).length ? `<i class="qgive">You are handed ${s.give.map(([k, n]) => `${n > 1 ? `${n} ` : ""}${wl(`items/${k}`, esc(ITEMS[k]?.name.toLowerCase() || k))}`).join(", ")}.</i> ` : ""}${s.type === "bring" ? `Bring ${s.n} ${s.items.map((k) => wl(`items/${k}`, esc(ITEMS[k]?.name.toLowerCase() || k))).join(" or ")} to ${wl(`npcs/${G.qBringTo(id, s)}`, esc(G.qBringTo(id, s)))}` : s.type === "kill" ? `Defeat ${s.n} ${wl(`monsters/${s.mob}`, esc(MOBS[s.mob]?.name.toLowerCase() || s.mob))}${s.n > 1 ? "s" : ""}${s.style ? ` with ${s.style === "magic" ? "a wand" : s.style === "archery" ? "a bow" : "a melee weapon"}` : ""}` : s.type === "talk" ? `Talk to ${wl(`npcs/${s.npc}`, esc(s.npc))}` : s.type === "visit" ? `Go to ${areaLink(s.scene)}` : esc(G.stageText(id, s))}</li>`).join("")}</ol></td></tr>
       <tr><th>Reward</th><td>${esc(q.reward.text)}</td></tr>${st ? `<tr><th>You</th><td>${{ new: "Not started", active: "In progress", ready: "Ready to hand in", done: "Done ✓", locked: "Locked" }[st]}</td></tr>` : ""}</table>`;
   }
   else if (kind === "areas" && SCENES[id]) {
@@ -5603,7 +5628,7 @@ function renderQuests() {
     const open = QW.open === k;
     const steps = q.stages.map((s, i) => {
       const done = st === "done" || (st === "ready") || i < si, now = st === "active" && i === si, who = s.type === "talk" ? s.npc : s.type === "bring" ? G.qBringTo(k, s) : null;
-      return `<li class="${done ? "done" : now ? "now" : ""}"><i>${done ? "\u2713" : now ? "\u25B8" : "\u25CB"}</i><span>${esc(G.stageText(k, s))}${who && whereIs(who) ? ` <small class="qw-where">(${esc(whereIs(who))})</small>` : ""}${now && ["bring", "kill", "gather"].includes(s.type) ? ` <b>${have}/${need}</b>` : ""}</span></li>`;
+      return `<li class="${done ? "done" : now ? "now" : ""}"><i>${done ? "\u2713" : now ? "\u25B8" : "\u25CB"}</i><span>${(s.give || []).length ? `<em class="qgive">handed ${s.give.map(([gk, gn]) => `${gn > 1 ? `${gn} ` : ""}${esc(ITEMS[gk]?.name.toLowerCase() || gk)}`).join(", ")} →</em> ` : ""}${esc(G.stageText(k, s))}${who && whereIs(who) ? ` <small class="qw-where">(${esc(whereIs(who))})</small>` : ""}${now && ["bring", "kill", "gather"].includes(s.type) ? ` <b>${have}/${need}</b>` : ""}</span></li>`;
     }).join("");
     const detail = open ? `<div class="qw-d">
       <p>${esc(q.brief)}</p>
