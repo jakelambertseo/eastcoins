@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=301">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=302">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1202,7 +1202,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=301";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=302";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -5710,6 +5710,10 @@ const WORLD_PAL = { def: { g: "#5b9440", p: "#c9a86c", w: "#3d7bb5", k: "#3a3226
 const WORLD = { cells: null, thumbs: new Map(), counts: {}, asked: 0, show: (() => { try { return JSON.parse(localStorage.getItem("es_map_show") || "null") || { nodes: true, quests: true, players: true }; } catch (e) { return { nodes: true, quests: true, players: true }; } })(), TW: 132, TH: 78, PX: 176, PY: 128 };
 const WILD_GATES = { wildladder: "wild" };   /* an object that is a way into another map: the Gloam's rope ladder */
 function worldLayout() {
+  /* cached: the walk builds every map's scene to find its ladders, which is far too much to do on every panel repaint (the map tab
+     repaints with every `me` message, several a second in a fight). Rebuilt only when the set of open maps changes, which is when
+     the closed file lands. */
+  const sig = Object.keys(SCENES).filter((k) => G.OPEN.has(k)).join(","); if (WORLD.layout && WORLD.layoutSig === sig) return WORLD.layout;
   const cells = new Map(), doors = {}, links = [], taken = new Set(), at = (x, y) => `${x},${y}`;
   const outdoor = (k) => G.OPEN.has(k) && SCENES[k] && !SCENES[k].interior && !SCENES[k].island && !SCENES[k].home;
   const place = (k, x, y) => { let [px, py] = [x, y]; for (let n = 0; taken.has(at(px, py)) && n < 8; n++) { px = x + (n % 2 ? 1 : -1) * Math.ceil((n + 1) / 2); } cells.set(k, { x: px, y: py }); taken.add(at(px, py)); };
@@ -5724,7 +5728,7 @@ function worldLayout() {
   for (const [k, d] of Object.entries(SCENES)) if (G.OPEN.has(k) && d.interior) { const parent = d.exitTo?.scene || Object.values(d.exits || {}).find((to) => cells.has(to)); if (parent && cells.has(parent)) (doors[parent] ||= []).push(k); }   /* an interior opens from the map its exitTo (or its one exit, the Vault's way) names */
   const xs = [...cells.values()].map((c) => c.x), ys = [...cells.values()].map((c) => c.y), minX = Math.min(...xs), minY = Math.min(...ys);
   for (const c of cells.values()) { c.x -= minX; c.y -= minY; }
-  return { cells, doors, links, cols: Math.max(...xs) - minX + 1, rows: Math.max(...ys) - minY + 1 };
+  WORLD.layoutSig = sig; return WORLD.layout = { cells, doors, links, cols: Math.max(...xs) - minX + 1, rows: Math.max(...ys) - minY + 1 };
 }
 function worldThumb(k) {
   if (WORLD.thumbs.has(k)) return WORLD.thumbs.get(k);
@@ -5980,6 +5984,13 @@ function renderPanel() {
   const p = $("panel");
   if (tab === "inv") {
     const hint = hintSlot && hintSlot.until > performance.now() ? hintSlot.k : null;
+    /* (2026-09-27, the owner: "the icons in my inventory seem to blink on every movement") DRAW THE BAG ONLY WHEN THE BAG CHANGED.
+       Every `me` message repainted this tab from scratch - a regen tick, a hunger tick, a quest counter - and each repaint
+       replaced every slot's <img>, which is the blink. The signature is everything the tab draws from; a minute stamp keeps the
+       countdowns honest. */
+    let sig = ""; try { sig = JSON.stringify([me.inv, me.eq, me.quick, hint, G.bagMax(me), ZCBAL, me.jack, me.hw, me.ward, me.tour?.id, me.daily, Math.floor(Date.now() / 60000), G.hwOn()]); } catch (e) { sig = ""; }
+    if (sig && p.dataset.tab === "inv" && p.dataset.invSig === sig) return;
+    p.dataset.tab = "inv"; p.dataset.invSig = sig;
     // an equippable piece says what it would change: with five tiers of gear,
     // "is this better than what I have on" is the only question being asked here
     const cells = me.inv.map((s, i) => {
@@ -6054,6 +6065,7 @@ function renderPanel() {
       if (nm !== null) send({ t: "pet", op: "name", id: pt.id, name: nm });
     }));
   }
+  if (tab !== "inv") p.dataset.tab = tab;
   if (tab === "skills") {
     /* (2026-09-23) the stance buttons are gone: they were removed from the game on 2026-09-19 and had been sitting here ever since, four of them, promising xp splits that do not exist and doing nothing at all when clicked. */
     p.innerHTML = `      ${(() => {
