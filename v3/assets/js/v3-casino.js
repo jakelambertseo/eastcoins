@@ -32,7 +32,11 @@
        with a ribbon and no link, no live line and no plays counter —
        there is nothing to poll and nowhere to click, so it must not
        pretend otherwise by looking like the seven that do. */
-    eastscape: { title: "EastScape", icon: "🗺️", sub: "EastCoin Casino MMO", soon: "Coming Soon!", line: "Fight, mine, fish and craft for ZCoins.", blurb: "Every game on this floor, in a world you walk around. Fight, mine, fish and craft for ZCoins, and play the same tables at the same odds." },
+    /* (2026-09-27, the owner: "the game is in a good shape for a few more users ... add a special highlight/splash/spooky effect to
+       the EastScape card, make the ribbon say now open, and link it to eastcoin.vip/eastscape") OPEN. `href` makes the card a plain
+       link to the game's own page (it is not a route in this shell), and `open` is its ribbon; like `soon` it has no live line and
+       no plays counter, because nothing on this floor polls it. `spooky` dresses it for the Long Night. */
+    eastscape: { title: "EastScape", icon: "🗺️", sub: "EastCoin Casino MMO", open: "Now Open", href: "/eastscape", spooky: true, line: "Now open: fight, mine, fish and craft for ZCoins.", blurb: "Every game on this floor, in a world you walk around. Fight, mine, fish and craft for ZCoins, and play the same tables at the same odds." },
     flip: { title: "Coin Flip", icon: "🪙", blurb: "Heads or tails, about 2×. One coin for the whole room, every 30 seconds.", route: "flip" },
     wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black about 2.03×, the gold sliver about 60×. One spin a minute.", route: "wheel" },
     race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2× to 14×. They're off every minute.", route: "race", hidden: true },
@@ -176,8 +180,9 @@
     refs.tiles = K.el("div", "cas-cards");
     for (const [key, g] of Object.entries(GAMES)) {
       if (g.hidden) continue;
-      const tile = K.el(g.soon ? "div" : "a", `cas-card cas-${key}${g.soon ? " soon" : ""}`);
-      if (!g.soon) {
+      const tile = K.el(g.soon ? "div" : "a", `cas-card cas-${key}${g.soon ? " soon" : ""}${g.href ? " open" : ""}${g.spooky ? " spooky" : ""}`);
+      if (g.href) tile.href = g.href;   /* (2026-09-27) a page of its own, not a route: an ordinary link */
+      else if (!g.soon) {
         tile.href = `/?view=${g.route}`;
         tile.addEventListener("click", (event) => {
           if (event.metaKey || event.ctrlKey || event.shiftKey) return;
@@ -202,12 +207,13 @@
       const name = K.el("div", "cas-card-name");
       name.append(K.el("b", null, g.title), K.el("small", null, g.sub || "EastCoin original"));
       art.append(pic, icon, name);
-      if (g.soon) art.append(K.el("span", "cas-card-ribbon", g.soon));
+      if (g.soon || g.open) art.append(K.el("span", `cas-card-ribbon${g.open ? " open" : ""}`, g.soon || g.open));
+      if (g.spooky) for (const c of ["es-fog", "es-bat b1", "es-bat b2", "es-glow"]) art.append(K.el("span", `es-fx ${c}`));   /* (2026-09-27) the Long Night's dressing: see .cas-card.spooky in v3.css */
 
       /* A card with nothing behind it gets its pitch on the second line
          and stops there: no live line, no plays counter, and no entry in
          refs, so the half-second repaint never looks for it. */
-      if (g.soon) {
+      if (g.soon || g.href) {
         tile.title = g.blurb;
         tile.append(art, K.el("div", "cas-card-live", g.line));
         refs.tiles.append(tile);
