@@ -275,6 +275,9 @@ export class World {
     ws.addEventListener("close", () => this.leave(pl));
     ws.addEventListener("error", () => this.leave(pl));
     this.dailyState(pl);   // today's jobs exist from the moment you arrive: the side panel shows them
+    /* (2026-09-27) A LOAD WITH NOTHING TO HOLD IT: the pocket outlived its quiver somehow (an old save, a lost piece). It can no longer
+       fire (G.ammoOf wants the pouch), so it is handed back to the bag here rather than left invisible. */
+    if (C.quiver && !(G.pouchOf(C) && G.pouchOf(C).pouch.ammo === G.ammoKind(C.quiver.k))) this.pocketOut(pl);
     this.send(pl, { type: "hello", version: G.VERSION, t: Date.now(), you: { id: pl.id, login: pl.login, name: pl.name, admin: pl.admin, role: pl.role }, me: this.meOf(pl) });
     this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S), npcs: this.npcsOf(S) });
     if (HEARD.has(String(S.key).split(":")[0])) { this.songTick(Date.now()); if (this.song || this.songQ?.length) this.send(pl, { type: "ev", list: [this.songMsg()] }); }
@@ -1221,7 +1224,7 @@ export class World {
         after = key;
         const C = G.normChar(raw);
         const skills = {};
-        for (const k of Object.keys(G.SKILLS)) skills[k] = G.lvlOf(C, k);
+        for (const k of Object.keys(G.SKILLS)) if (!G.SKILLS[k].held) skills[k] = G.lvlOf(C, k);   /* (2026-09-27) a held skill (HOLD) stays off profiles */
         rows.push({
           id: key.slice(5),
           name: raw?.name || null,
@@ -1420,6 +1423,15 @@ export class World {
        room the swap is refused rather than the load silently changing kind. */
     if (it.slot === "shield" && C.quiver && (!it.pouch || it.pouch.ammo !== G.ammoKind(C.quiver.k))) { if (!this.pocketOut(pl)) return; }
     const takeF = G.fOf(st);
+    /* (2026-09-27) A SMALLER POUCH OF THE SAME KIND. The load stayed as it was, so a 1,000 carried into a 100 quiver and it held ten
+       times its size. What it cannot hold goes back to the bag first; with no room, the swap is refused rather than overfilled. */
+    if (it.pouch && C.quiver && it.pouch.ammo === G.ammoKind(C.quiver.k)) {
+      const cap = Math.round(it.pouch.cap * (1 + G.FORGE.pcap * (takeF | 0))), extra = Math.floor(C.quiver.n) - cap;
+      if (extra > 0) {
+        if (G.roomFor(C.inv, C.quiver.k, C) < extra) return this.say(pl, `The ${it.name.toLowerCase()} holds ${cap}, and ${extra} ${G.ITEMS[C.quiver.k].name.toLowerCase()}s would not fit back in your bag. Make room first.`, "bad");
+        G.addInv(C.inv, C.quiver.k, extra, C); C.quiver.n = cap;
+      }
+    }
     if (st.n > 1) st.n--; else C.inv.splice(i, 1);
     if (old) this.give(pl, old, 1, oldF);
     C.eq[it.slot] = st.k;
@@ -1873,7 +1885,7 @@ export class World {
   /* ------------------------------------------------------------ ranged: ammo and the pouch (2026-09-25)
      Written as launcher + ammo + pouch rather than bow + arrow + quiver on purpose: a staff, a rune and a rune
      pouch are the same three rows with different pictures, and none of this changes to add them. */
-  /** one round gone, from the offhand pouch first and the bag second. Nothing happens for a melee weapon. */
+  /** one round gone, from the offhand pouch (the only place a launcher fires from, see G.ammoOf). Nothing happens for a melee weapon. */
   /** (2026-09-26) what an element does after a spell lands: Fire may burn, Frost slows, Storm arcs, Sun heals the caster */
   elementAfter(S, pl, m, el, dmg, now) {
     const M = G.MAGIC;
@@ -1891,13 +1903,13 @@ export class World {
     const C = pl.C, a = G.ammoOf(C); if (!a) return;
     if (Math.random() < G.fxOf(C).ammo) return;   /* (2026-09-27) the Lantern Quiver / Shroud Satchel: this shot or cast spends nothing */
     const w = G.ammoWords(G.ammoKind(a.k));
-    if (a.from === "pouch") { C.quiver.n--; if (C.quiver.n <= 0) { C.quiver = null; this.say(pl, `Your ${w.pouch} is empty.`, "bad"); } }
-    else { G.takeInv(C.inv, a.k, 1); if (G.countItems(C, [a.k]) === 0 && !G.ammoOf(C)) this.say(pl, `That was your last ${w.one}.`, "bad"); }
+    C.quiver.n = Math.floor(C.quiver.n) - 1; if (C.quiver.n <= 0) { C.quiver = null; this.say(pl, `Your ${w.pouch} is empty. Load it with ${w.many} from your bag.`, "bad"); }
     this.touch(pl);
   }
   /** load a stack from the bag into the pouch, or empty the pouch back into the bag */
   quiverOp(pl, m) {
     const C = pl.C, P = G.pouchOf(C);
+    if (!P && m.op === "unload" && C.quiver) return this.pocketOut(pl);   /* (2026-09-27) a load left behind with no pouch worn still comes back */
     if (!P) return this.say(pl, "You need a quiver or a Magic Bag in your offhand first.", "bad");
     const w = G.ammoWords(P.pouch.ammo);
     if (m.op === "unload") {
@@ -1909,7 +1921,9 @@ export class World {
     }
     const st = C.inv[m.i | 0], it = st && G.ITEMS[st.k];
     if (G.ammoKind(st?.k) !== P.pouch.ammo) return this.say(pl, `Only ${w.many} go in your ${w.pouch}.`, "bad");   /* (2026-09-26) a pouch holds its own kind */
-    if (C.quiver && C.quiver.k !== st.k) return this.say(pl, `Your ${w.pouch} already holds ${G.ITEMS[C.quiver.k].name.toLowerCase()}s. Empty it first.`, "bad");
+    /* (2026-09-27) SWITCHING ARROWS OR PAGES is one click: the old load goes back to the bag first (pocketOut), and only if all of
+       it fits; then the new stack goes in. The stack is found again by its key, because handing the old load back can move it. */
+    if (C.quiver && C.quiver.k !== st.k) { const k = st.k; if (!this.pocketOut(pl)) return; const j = C.inv.findIndex((x) => x.k === k); if (j < 0) return; return this.quiverOp(pl, { op: "load", i: j }); }
     const cap = G.pouchCapOf(C), have = C.quiver ? C.quiver.n : 0, n = Math.min(st.n, cap - have);
     if (n <= 0) return this.say(pl, `Your ${w.pouch} is full.`, "bad");
     G.takeInv(C.inv, st.k, n); C.quiver = { k: st.k, n: have + n }; this.touch(pl);
@@ -2484,7 +2498,7 @@ export class World {
   doAction(S, pl, now) {
     const a = pl.act, C = pl.C; if (!a || pl.path.length) return;
     // AFK: a repeating skill stops once nobody has touched the game for a while (see G.AFK_MS)
-    const afkMs = (a.kind === "spot" || a.kind === "tree") && G.charmOf(C, "stillness") ? G.AFK_MS + G.charmOf(C, "stillness") * 60000 : S.def.tower ? G.AFK_TOWER_MS : a.kind === "mob" && G.launcherOf(C) && C.quiver?.n > 0 ? G.ARCHERY.afkMs : G.AFK_MS;   /* (2026-09-25) an archer with a loaded quiver gets the long timer: AFK-friendly is the point of the quiver */   /* (2026-09-25) a tower floor is a 4-5 minute fight by design; see AFK_TOWER_MS */
+    const afkMs = (a.kind === "spot" || a.kind === "tree") && G.charmOf(C, "stillness") ? G.AFK_MS + G.charmOf(C, "stillness") * 60000 : S.def.tower ? G.AFK_TOWER_MS : a.kind === "mob" && G.ammoOf(C) ? G.ARCHERY.afkMs : G.AFK_MS;   /* (2026-09-25) an archer with a loaded quiver gets the long timer: AFK-friendly is the point of the quiver */   /* (2026-09-25) a tower floor is a 4-5 minute fight by design; see AFK_TOWER_MS */
     if (G.AFK_KINDS[a.kind] && now - pl.lastInput > afkMs) {
       pl.act = null;
       return this.say(pl, `You stop ${G.AFK_KINDS[a.kind]}: you've been idle for ${Math.round(afkMs / 60000)} minutes. Click to carry on.`);
@@ -2495,7 +2509,7 @@ export class World {
       if (!this.mayFight(S, m, pl, now)) { pl.act = null; return this.say(pl, `${this.claimOf(S, m, now).name} is already fighting that.`, "bad"); }
       /* (2026-09-25) A BOW WITH NOTHING TO FIRE IS NOT A WEAPON. Checked before the walk, so you are told at the
          click rather than after crossing the room. */
-      if (G.launcherOf(C) && !G.ammoOf(C)) { const w = G.ammoWords(G.launcherOf(C).launcher.ammo); pl.act = null; return this.say(pl, `You have no ${w.many}. Load your ${w.pouch} or carry some in your bag.`, "bad"); }
+      { const why = G.noAmmoWhy(C); if (why) { pl.act = null; return this.say(pl, why, "bad"); } }   /* (2026-09-27) only a loaded pouch of the launcher's kind fires (G.ammoOf) */
       { const am = G.launcherOf(C) && G.ammoOf(C), need = am && G.missingReq(C, G.ITEMS[am.k]); if (need) { pl.act = null; return this.say(pl, `You need Archery ${need.lvl} to fire ${G.ITEMS[am.k].name.toLowerCase()}s.`, "bad"); } }
       /* (2026-09-25) RANGE. A launcher fights from its own reach; everything else from next door. The path target
          is the same reach, so an archer stops at four tiles rather than walking up to the thing. */
@@ -3043,7 +3057,7 @@ export class World {
     /* (2026-09-25) STAND AND SHOOT. An archer with a loaded quiver draws on the next monster OF THE SAME KIND inside
        the bow's reach - same kind, so a chicken run never turns into a fight with the guard beside it. lastInput is
        not touched: the AFK timer still ends it. */
-    if (G.ARCHERY.retarget && G.launcherOf(pl.C) && pl.C.quiver?.n > 0) {
+    if (G.ARCHERY.retarget && G.ammoOf(pl.C)) {
       const reach = G.reachOfHeld(pl.C);
       const next = S.mobs.filter((x) => !x.dead && x.t === m.t && x.id !== m.id && G.cheb(pl, x) <= reach && this.mayFight(S, x, pl, now)).sort((a, b) => G.cheb(pl, a) - G.cheb(pl, b))[0];
       if (next) pl.act = { kind: "mob", id: next.id, x: next.x, y: next.y, name: def.name, reach, started: now };
@@ -3176,7 +3190,7 @@ export class World {
   pvpSwing(S, pl, a, now, faceIt) {
     const T = this.pls.get(a.id), C = pl.C;
     if (!T || T.C.scene !== S.key || !S.def.pvp) { pl.act = null; return; }
-    if (G.launcherOf(C) && !G.ammoOf(C)) { pl.act = null; return this.say(pl, `You have no ${G.ammoWords(G.launcherOf(C).launcher.ammo).many}.`, "bad"); }
+    { const why = G.noAmmoWhy(C); if (why) { pl.act = null; return this.say(pl, why, "bad"); } }
     { const reach = G.reachOfHeld(C); if (G.cheb(pl, T) > reach || (reach === 1 && G.cheb(pl, T) !== 1)) { const p = G.findPath(S.g, pl, T, reach); if (p && p.length) pl.path = p; else if (!p) pl.act = null; return; } }
     const cage = G.inCage(S.def, pl.x, pl.y);
     if (cage !== G.inCage(S.def, T.x, T.y)) { this.say(pl, "The cage bars are in the way."); pl.act = null; return; }
@@ -3506,7 +3520,7 @@ export class World {
       name = w.name; C = G.normChar(await this.ctx.storage.get(`char:${w.id}`));
     }
     if (p) this.accrue(p);
-    const st = C.stats || {}, skills = {}; for (const k of Object.keys(G.SKILLS)) skills[k] = { lvl: G.lvlOf(C, k), xp: Math.round(Number(C.xp[k]) || 0) };
+    const st = C.stats || {}, skills = {}; for (const k of Object.keys(G.SKILLS)) if (!G.SKILLS[k].held) skills[k] = { lvl: G.lvlOf(C, k), xp: Math.round(Number(C.xp[k]) || 0) };
     pl.out.push({ type: "profile", name, online: !!p, nfx: G.nameFxOf(C) || null, look: C.look || null, van: G.wearsVanity(C.van) ? { on: C.van.on, col: C.van.col } : null, cos: p?.cos || null, vip: G.vipOf(C).i || 0,
       combat: G.combatOf(C), total: G.totalOf(C), skills,
       kills: Object.values(st.kills || {}).reduce((n, v) => n + v, 0), quests: G.questsDone(C), crypt: st.crypt | 0, deaths: st.deaths | 0,

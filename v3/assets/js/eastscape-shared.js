@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 314;
+export const VERSION = 315;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -3973,7 +3973,7 @@ const aOf = (c, map) => (c && c.stats && c.stats[map]) || {};
 const aHasKey = (c, map, re) => Object.keys(aOf(c, map)).some((k) => re.test(k));
 const aCount = (c, map, re) => Object.entries(aOf(c, map)).reduce((a, [k, v]) => a + (re.test(k) ? v : 0), 0);
 const aLvl = (c, sk) => lvlOf(c, sk);
-const aSkills = (n) => (c) => Object.keys(SKILLS).every((k) => lvlOf(c, k) >= n);
+const aSkills = (n) => (c) => Object.keys(SKILLS).every((k) => SKILLS[k].held || lvlOf(c, k) >= n);   /* (2026-09-27) a held skill cannot block "every skill" */
 const ORE = /^(copper|tin|grimstone|voidglass|slagstone|catalytic|[a-z]+_ore)$/;
 const LOG = /logs?$/;
 const FISHK = new RegExp(`^(${["sardine","perch","trout","catfish","lanternfish","mudskipper","bonefish","ghostcarp","skyeel","cloudray","stormmarlin","thundersquid","mudcat","bowfin"].join("|")})$`);
@@ -5334,7 +5334,7 @@ for (const w of WOODS) {
   ITEMS[`${w.log}_longbow`] = { name: `${w.name} longbow`, icon: "🏹", slot: "weapon", speed: 2800, acc: 4 + i * 4, str: 2 + i * 2, launcher: { range: 6, ammo: "arrow" }, bow: true,
     req: { skill: "archery", lvl: ARCHERY.useLvl.long[i] }, ex: "Slow, heavy and it reaches two tiles further. Worth good arrows." };
   ITEMS[`${w.log}_quiver`] = { name: `${w.name} quiver`, icon: "🎒", slot: "shield", pouch: { ammo: "arrow", cap: FLETCH.quiverCap[i] },
-    req: { skill: "archery", lvl: ARCHERY.useLvl.quiver[i] }, ex: `Holds ${FLETCH.quiverCap[i]} arrows of one kind in the offhand. Load it from your bag and a shot draws from here first.` };
+    req: { skill: "archery", lvl: ARCHERY.useLvl.quiver[i] }, ex: `Holds ${FLETCH.quiverCap[i]} arrows of one kind in the offhand. Load it from your bag: a bow shoots only what is in its quiver.` };
 }
 /* (2026-09-25, the owner: "are bows/quivers reforgable? they should be"). In the wood they are made of, not bars: twice
    the logs the piece took to make, at the Fletching level it took to make it. Reforged at the fletching table (or the
@@ -5383,15 +5383,26 @@ fl("fletch_longcount", { lvl: 99, xp: 6000, ms: 4000, in: [["bogwoodlogs", 5], [
 /* ---------------- ranged, as launcher + ammo (see the note at the top on why it is not "bow + arrow") */
 /** the launcher in the weapon slot, or null */
 export const launcherOf = (c) => { const k = c?.eq?.weapon; const it = k && ITEMS[k]; return it?.launcher ? it : null; };
-/** what a launcher would fire right now: { from: "pouch"|"bag", k, n } or null. The offhand pouch first, then the
-    biggest matching stack in the bag. */
+/** what a launcher would fire right now: { from: "pouch", k, n } or null.
+    (2026-09-27, the owner: "users magic pouches and quivers being empty but keeping firing ... users are abusing it") ONLY FROM THE
+    WORN POUCH. Until today an empty quiver or Magic Bag fell through to the biggest stack in the bag, and so did having no pouch at
+    all: a bow or a wand never ran dry while the bag held a thousand, the pouch's size meant nothing, and the Magic Bags, whose whole
+    ladder is that size, were pointless. Now the offhand must be a pouch of the launcher's own kind, the pocket must hold that kind,
+    and there must be something in it. Every check that asks "can I fire" goes through here, page and server alike, so the numbers
+    on the Equipment tab and the swing that follows cannot disagree. */
 export const ammoOf = (c) => {
   const L = launcherOf(c); if (!L) return null;
-  const kind = L.launcher.ammo || "arrow";   /* (2026-09-26) only ammo of the launcher's own kind: a wand never fires your arrows */
-  const q = c.quiver; if (q && q.n > 0 && ammoKind(q.k) === kind) return { from: "pouch", k: q.k, n: q.n };
-  let best = null;
-  for (const st of c.inv || []) if (ammoKind(st.k) === kind && (!best || st.n > best.n)) best = st;
-  return best ? { from: "bag", k: best.k, n: best.n } : null;
+  const kind = L.launcher.ammo || "arrow", P = pouchOf(c), q = c?.quiver;
+  if (!P || P.pouch.ammo !== kind || !q || !(Number.isFinite(q.n) && Math.floor(q.n) >= 1) || ammoKind(q.k) !== kind || !ITEMS[q.k]) return null;   /* whole rounds only: 0.5 of an arrow is none */
+  return { from: "pouch", k: q.k, n: q.n };
+};
+/** why a launcher cannot fire, in plain words, or null when it can */
+export const noAmmoWhy = (c) => {
+  const L = launcherOf(c); if (!L || ammoOf(c)) return null;
+  const kind = L.launcher.ammo || "arrow", w = ammoWords(kind), P = pouchOf(c), verb = kind === "page" ? "cast" : "shoot";
+  if (!P) return `You need a ${w.pouch} in your offhand to ${verb}. Load it with ${w.many} from your bag.`;
+  if (P.pouch.ammo !== kind) return `A ${P.name.toLowerCase()} holds ${ammoWords(P.pouch.ammo).many}. Wear a ${w.pouch} to ${verb} with the ${L.name.toLowerCase()}.`;
+  return `Your ${w.pouch} is empty. Load it with ${w.many} from your bag (click them, or the Load button in your Equipment tab).`;
 };
 /** how far the held launcher reaches, or 1 for anything else */
 export const reachOfHeld = (c) => { const L = launcherOf(c); return L ? L.launcher.range + (charmOf(c, "tailwind") ? 1 : 0) + Math.min(2, petFx(c).reach) : 1; };   /* (2026-09-27) the Pocket Owl */   /* (2026-09-26) Tailwind: one tile further */
@@ -5960,7 +5971,7 @@ const BAGS = [["bag_scrap", "Scrap Satchel"], ["bag_hedge", "Hedge Pouch"], ["ba
 BAGS.forEach(([k, name], i) => {
   ITEMS[k] = { name, icon: "\u{1F45C}", slot: "shield", pouch: { ammo: "page", cap: MAGIC.bagCap[i] }, req: { skill: "magic", lvl: MAGIC.bagLvl[i] },
     forgeWith: ["spellpaper", 10 + i * 10], forgeReq: { skill: "wizardry", lvl: MAGIC.bagLvl[i] },
-    ex: `Holds ${MAGIC.bagCap[i].toLocaleString()} spell pages of one kind in the offhand. Load it from your bag; a cast draws from here first.` };
+    ex: `Holds ${MAGIC.bagCap[i].toLocaleString()} spell pages of one kind in the offhand. Load it from your bag: a wand casts only what is in its Magic Bag.` };
 });
 
 /* ---------------- utility pages: buffs and travel. One buff at a time, outside only, tiered by YOUR Wizardry when you read it */
@@ -7001,7 +7012,9 @@ export const styleLvlOf = (c) => lvlOf(c, styleOf(c));
    never drawn a bow moves by a single level - every gate, band and Tower door reads this number - while every level of
    the second style still shows. A 99 / 99 / 99 character is 113. */
 export const combatOf = (c) => { const [a, b, d] = ["melee", "archery", "magic"].map((k) => lvlOf(c, k)).sort((x, y) => y - x); return Math.floor((a * 1.3 + (b - 1) * 0.3 + (d - 1) * 0.3 + lvlOf(c, "hp")) / 2.3) + 2; };   /* (2026-09-26) Magic joins: the best style in full, each other 0.3 a level above 1 */
-export const totalOf = (c) => Object.keys(SKILLS).reduce((n, k) => n + lvlOf(c, k), 0);
+/** (2026-09-27) the skills that count: a held one (HOLD, e.g. Jewelcrafting before it opens) is off profiles, the total and the "every skill" achievements */
+export const liveSkills = () => Object.keys(SKILLS).filter((k) => !SKILLS[k].held);
+export const totalOf = (c) => liveSkills().reduce((n, k) => n + lvlOf(c, k), 0);
 /* (2026-09-22) REFORGING rides here, which is the only place it has to touch combat: every roll in the game reads
    its gear through bonusOf, so adding the level here means the max hit, the attack roll and the defence roll all
    pick it up with no other change. A level adds +1 to each stat the piece ALREADY has — never to a stat of zero,

@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=335">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=336">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1317,7 +1317,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=335";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=336";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1326,7 +1326,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=188").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=189").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -5180,7 +5180,7 @@ function useBagItem(i) {
   if (ITEMS[s.k].raw) return say(`Raw ${ITEMS[s.k].name.toLowerCase()} isn't food. Cook it at a campfire or a range.`, "bad");
   if (ITEMS[s.k].heal) return send({ t: "eat", i });
   if (ITEMS[s.k].luck || ITEMS[s.k].use || ITEMS[s.k].drink) return send({ t: "use", i });
-  if (ITEMS[s.k].ammo) { const w = G.ammoWords(G.ammoKind(s.k)), P = G.pouchOf(me); return P && P.pouch.ammo === G.ammoKind(s.k) ? send({ t: "quiver", op: "load", i }) : say(`${ITEMS[s.k].name}. ${w.many === "arrows" ? "A bow" : "A wand"} fires them straight from your bag; wear a ${w.pouch} to carry a big stack.`); }
+  if (ITEMS[s.k].ammo) { const w = G.ammoWords(G.ammoKind(s.k)), P = G.pouchOf(me); return P && P.pouch.ammo === G.ammoKind(s.k) ? send({ t: "quiver", op: "load", i }) : say(`${ITEMS[s.k].name}. ${w.many === "arrows" ? "A bow" : "A wand"} only fires what is loaded in a ${w.pouch}: wear one in your offhand, then click these to load it.`); }
   if (ITEMS[s.k].slot) return send({ t: "equip", i });
   say(`${ITEMS[s.k].name}${s.n > 1 ? ` (×${s.n.toLocaleString()})` : ""}.${ITEMS[s.k].ex ? " " + ITEMS[s.k].ex : ""}`);
 }
@@ -6321,8 +6321,8 @@ function renderPanel() {
       const P = G.pouchOf(me); if (!P) return "";
       const w = G.ammoWords(P.pouch.ammo), q = me.quiver, cap = G.pouchCapOf(me), bagAmmo = me.inv.map((s, i) => [s, i]).filter(([s]) => G.ammoKind(s.k) === P.pouch.ammo).sort((a, b) => b[0].n - a[0].n);   /* (2026-09-26) quivers and Magic Bags alike */
       const main = q
-        ? `<b>${ico(q.k)}<span>${q.n.toLocaleString()} × ${esc(ITEMS[q.k]?.name || q.k)}</span></b><small>${q.n.toLocaleString()} of ${cap.toLocaleString()} · ${P.pouch.ammo === "page" ? "a cast" : "a shot"} draws from here first</small>`
-        : `<b><span>Empty</span></b><small>${bagAmmo.length ? `${bagAmmo[0][0].n.toLocaleString()} × ${esc(ITEMS[bagAmmo[0][0].k].name.toLowerCase())} in your bag · holds ${cap.toLocaleString()}` : `holds ${cap.toLocaleString()} · no ${w.many} in your bag`}</small>`;
+        ? `<b>${ico(q.k)}<span>${q.n.toLocaleString()} × ${esc(ITEMS[q.k]?.name || q.k)}</span></b><small>${q.n.toLocaleString()} of ${cap.toLocaleString()} · ${P.pouch.ammo === "page" ? "every cast" : "every shot"} comes from here</small>`
+        : `<b><span>Empty</span></b><small>${bagAmmo.length ? `${bagAmmo[0][0].n.toLocaleString()} × ${esc(ITEMS[bagAmmo[0][0].k].name.toLowerCase())} in your bag · holds ${cap.toLocaleString()}` : `holds ${cap.toLocaleString()} · no ${w.many} in your bag`} · nothing fires until it is loaded</small>`;
       const btn = q ? `<button type="button" class="lk-btn plain" data-qunload="1">Unload</button>`
         : bagAmmo.length ? `<button type="button" class="lk-btn" data-qload="${bagAmmo[0][1]}">Load ${w.many}</button>` : "";
       return `<div class="ph phsep">${P.pouch.ammo === "page" ? "Magic Bag" : "Quiver"}</div><div class="qvrow${q ? " on" : ""}"><div class="qv-main">${main}</div>${btn}</div>`;
