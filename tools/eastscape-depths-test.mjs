@@ -3,6 +3,7 @@
    the guards do what the owner asked (a tenth from a guarded style, only Void through the Iron Ogre), a wisp over the drop cannot
    be reached with a sword but can with a bow, shoots back from range and comes back on its perch when it dies, the Deepwarden is
    an open boss, and Old Pickett's quests, the fish and the veins are all real. */
+import "./eastscape-open-all.mjs";   /* the Depths and Jewelcrafting ship held (HOLD); these tests open them */
 import * as G from "../v3/assets/js/eastscape-shared.js";
 import { World } from "../eastscape-worker/src/index.js";
 let bad = 0;

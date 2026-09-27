@@ -37,26 +37,36 @@ export const GUIDES = [
   /* (2026-09-22) This file is the hand-written half and imports nothing, so these numbers are TYPED, not read from
      PETS and PET_DROP. Keep them in step: the rate lives in PET_DROP and the roster in PETS, both in the rules file.
      The monster pages work the other way and compute their line, so those cannot drift. */
+  /* (2026-09-27, the owner: "add all pet and fungiculture recipes/guides to the wiki ... speak plainly") BUILT FROM THE RULES now, not
+     typed: breeding and eggs took the roster from seven pets to thirty, and a typed table had already fallen behind. Every pet, its
+     rank, what it does and where it comes from; a pet held shut (PETS[k].held) and the Long Night's cat out of season are left out. */
   { id: "pets", title: "Pets", icon: "\u{1F43E}", cat: "Going further",
-    body: `<p>A pet follows you about and gives a bonus while it is worn. One drops from a kill at <b>0.1%</b> &mdash; about <b>one in a thousand</b> &mdash; anywhere past the Lantern Mire: the Boneyard, Cloudreach, the Thunderhead, the Vault and the Wilderness.</p>
-      <p>Which one you get is random. Wear, stow and name them in the <b>Equipment</b> tab &mdash; there is a paw square on the paperdoll beside your gear.</p>
-      <table class="tbl"><tr><th>Pet</th><th>Gives</th></tr>
-        <tr><td><b>Bonepup</b></td><td>+8% movement speed</td></tr>
-        <tr><td><b>Pack Rat</b></td><td>+4 bag slots</td></tr>
-        <tr><td><b>Coin Toad</b></td><td>+15% tickets from drops</td></tr>
-        <tr><td><b>Lantern Moth</b></td><td>+15 hitpoints</td></tr>
-        <tr><td><b>House Cat</b></td><td>+3% speed, +1 bag slot, +5 hitpoints, +5% tickets</td></tr>
-        <tr><td><b>Coilling</b></td><td>+10% movement speed, +2 bag slots, +10% skilling and swing speed</td></tr>
-        <tr><td><b>Pot Boy</b></td><td>+2 bag slots, +4% tickets</td></tr>
-      </table>
-      <!-- plain text, NOT a link: there is no Pyramid guide yet, and a wiki that links to its own missing pages
-           is worse than one that has not got round to them. Make this an anchor when that page exists. -->
-      <p><b>The Black Cat does not drop from a kill</b> the way the others do: it follows the Pumpkin King during the Long Night (October), one King in forty. It walks a little quicker and, somehow, the tickets come a little better around it.</p>
-      <p><b>The Coilling does not drop from a kill.</b> It comes out of the chest in the Great Pyramid, about one clear in twenty, and it is the best of them &mdash; which is the point of raiding for it.</p>
-      <p><b>The Pot Boy does not drop from a kill</b> either, except one: the Deepwarden, in the Depths of the Mountain, about one kill in sixty.</p>
-      <p><b>One at a time</b>, and the bonus stops the moment you stow it. Both speeds share their ceilings with food and gear, so a quick pet on top of a quick meal will not run away with it.</p>
-      <p><b>They are two different speeds.</b> <b>Movement</b> is how fast you walk. <b>Skilling and swing</b> is how fast you hit a monster, a rock or a tree, and how fast you fish and pick pockets. A pet can give either, and only the Coilling gives both.</p>
-      <p>Name yours what you like &mdash; everyone sees it. You can also let one go, and that cannot be undone.</p>` },
+    body: (G, H) => {
+      const R = G.RANKS, rk = (r) => `<b style="color:${R[r].col}">${R[r].mark ? `${R[r].mark} ` : ""}${R[r].name}</b>`;
+      const eggOf = Object.fromEntries(Object.entries(G.EGGS).map(([k, e]) => [e.pet, k]));
+      const places = (list) => list.map((s) => G.SCENES[s]?.name || (s === "wild" ? "The Wilderness" : s === "deep" ? "The Deep Wild" : s)).join(", ");
+      const from = (k, p) => {
+        if (G.PET_DROP_KEYS.includes(k)) return `Any monster, about 1 kill in ${Math.round(1 / G.PET_DROP).toLocaleString()}, in: ${places([...G.PET_SCENES])}`;
+        if (p.legend) return `Breed two Greater ${H.esc(G.PETS[p.base]?.name || p.base)} in your pet pen`;
+        if (eggOf[k]) return `Hatch a ${H.esc(G.ITEMS[eggOf[k]]?.name || eggOf[k])} in a hatchery. Eggs drop from monsters in: ${places(G.EGGS[eggOf[k]].from)}`;
+        if (k === "coilling") return "The chest at the end of the Great Pyramid, about 1 clear in 20";
+        if (k === "blackcat") return "The Pumpkin King, during the Long Night only, about 1 King in 40";
+        if (k === "potboy") return "The Deepwarden, in the Depths of the Mountain, about 1 kill in 60";
+        return "&mdash;";
+      };
+      const rows = Object.entries(G.PETS).filter(([k, p]) => !p.held && (k !== "blackcat" || G.hwOn()))
+        .sort(([, a], [, b]) => (a.legend ? 1 : 0) - (b.legend ? 1 : 0))
+        .map(([k, p]) => `<tr><td><b>${H.esc(p.name)}</b></td><td>${rk(p.legend ? "legend" : "ordinary")}</td><td>${H.esc(G.petFxText(p.fx))}</td><td>${from(k, p)}</td></tr>`).join("");
+      return `<p><b>A pet follows you around and gives you a bonus while you wear it.</b> You wear one at a time, in the paw square in your <b>Equipment</b> tab. Take it off and the bonus stops.</p>
+      <h3>Ranks</h3>
+      <p>Every pet is ${rk("ordinary")}, ${rk("greater")} or ${rk("legend")}. The ones you find are Ordinary. Breed two Ordinary pets in a pet pen to get a Greater one: it has the two stats you pick from its parents, 25% stronger, and glows blue. Breed two Greater pets of the same kind to get that pet's Legendary: a different pet with its own powers, glowing orange. The <b>Breeding</b> guide has the details.</p>
+      <h3>Every pet</h3>
+      <table class="tbl"><tr><th>Pet</th><th>Rank</th><th>Gives</th><th>How to get it</th></tr>${rows}</table>
+      <h3>Good to know</h3>
+      <p><b>Walk speed and work speed are different.</b> Walk speed is how fast you move. Work speed is how fast you hit a monster, a rock or a tree, and how fast you fish and pick pockets.</p>
+      <p><b>Speed has a limit.</b> Pets, food and gear all share the same cap, so stacking a fast pet on a fast meal won't go past it.</p>
+      <p><b>Name yours whatever you like.</b> Everyone sees the name. You can also let a pet go, and that can't be undone.</p>`;
+    } },
   /* (2026-09-22) TYPED, like the pets page above and for the same reason: this file imports nothing. The rungs live
      in TOOL_GATES and the rule that turns a node's level into a rung is toolNeed(), both in eastscape-shared.js. */
   /* (2026-09-27, the owner: "we need a wiki page for this event which explains everything clearly - but only launch it when
@@ -751,6 +761,8 @@ export const GUIDES = [
     body: (G, H) => {
       const nm = (k) => H.wl(`items/${k}`, H.esc(G.ITEMS[k]?.name || k)), mins = (ms) => (ms >= 5400000 ? `${Math.round(ms / 360000) / 10} h` : `${Math.round(ms / 60000)} min`);
       const where = Object.fromEntries(Object.keys(G.FUNGI).map((sk) => [G.FUNGI[sk].yields, Object.entries(G.FUNG_WILD).filter(([, l]) => l.includes(G.FUNGI[sk].yields)).map(([m]) => G.SCENES[m]?.name || (m === "wild" ? "The Wilderness" : m === "deep" ? "The Deep Wild" : m))]));
+      const shrooms = new Set(Object.values(G.FUNGI).map((F) => F.yields));
+      const made = Object.values(G.RECIPES).filter((r) => r.station !== "compost" && r.in.some(([x]) => shrooms.has(x))).sort((a, b) => a.skill.localeCompare(b.skill) || a.lvl - b.lvl);
       const uses = (k) => Object.values(G.RECIPES).filter((r) => r.in.some(([x]) => x === k) && r.station !== "compost").map((r) => nm(r.out[0])).filter((v, i, a) => a.indexOf(v) === i).join(", ") || "&mdash;";
       return `<p><b>Mushrooms, grown in a cellar under your island and picked wild on every map.</b> Yahsmeena sells a <b>Cellar ladder</b>; put it down with Decorate and click it to climb down. Only you can.</p>
       <h3>The cellar</h3>
@@ -764,7 +776,10 @@ export const GUIDES = [
       <p>Every outdoor map has <b>three clusters</b>, always in the same places. Each gives you one pick a day: ${G.FUNG.wildN[0]} to ${G.FUNG.wildN[1]} shrooms, some xp, and about ${Math.round(G.FUNG.wildSpawn * 100)}% of the time its spawn. A cluster you have picked today is drawn faint. The Gloam's toadstools drop sporecap spawn now and then too.</p>
       <p><b>The black truffle grows nowhere wild.</b> Wear a Truffle Pig while you pick: about ${Math.round(G.FUNG.truffle.pick * 100)}% of picks turn one up, and some turn up its spawn.</p>
       <h3>The shrooms</h3>
-      <table class="tbl"><tr><th>Level</th><th>Shroom</th><th>Grows</th><th>Compost</th><th>xp</th><th>Wild in</th><th>Goes into</th></tr>${Object.entries(G.FUNGI).map(([sk, F]) => `<tr><td>${F.lvl}</td><td>${H.ico(F.yields)} ${nm(F.yields)}</td><td>${mins(F.ms)}</td><td>${F.compost}</td><td>${F.xp.toLocaleString()}</td><td>${where[F.yields].length ? H.esc(where[F.yields].join(", ")) : "A Truffle Pig finds it"}</td><td>${uses(F.yields)}</td></tr>`).join("")}</table>`;
+      <table class="tbl"><tr><th>Level</th><th>Shroom</th><th>Grows</th><th>Compost</th><th>xp</th><th>Wild in</th><th>Goes into</th></tr>${Object.entries(G.FUNGI).map(([sk, F]) => `<tr><td>${F.lvl}</td><td>${H.ico(F.yields)} ${nm(F.yields)}</td><td>${mins(F.ms)}</td><td>${F.compost}</td><td>${F.xp.toLocaleString()}</td><td>${where[F.yields].length ? H.esc(where[F.yields].join(", ")) : "A Truffle Pig finds it"}</td><td>${uses(F.yields)}</td></tr>`).join("")}</table>
+      <h3>What shrooms make</h3>
+      <p>Every recipe that uses a shroom. Potions and inks are brewed at a <b>cauldron</b> (Alchemy). Meals and pet food are cooked at a <b>campfire</b> (Cooking).</p>
+      <table class="tbl"><tr><th>Level</th><th>Makes</th><th>From</th><th>Where</th></tr>${made.map((r) => `<tr><td>${r.lvl} ${H.esc(G.SKILLS[r.skill]?.name || r.skill)}</td><td>${H.ico(r.out[0])} ${r.out[1] > 1 ? `${r.out[1]} ` : ""}${nm(r.out[0])}</td><td>${r.in.map(([k, n]) => `${n} ${nm(k)}`).join(", ")}</td><td>${r.station === "cauldron" ? "Cauldron" : r.station === "fire" ? "Campfire" : H.esc(G.STATIONS[r.station]?.name || r.station)}</td></tr>`).join("")}</table>`;
     } },
   /* (2026-09-27) Breeding, built from the rules so its numbers cannot drift (rebuilt the same day: the pen breeds, the hatchery hatches, three pet foods) */
   { id: "breeding", title: "Breeding", icon: "\u{1F95A}", cat: "Skills",

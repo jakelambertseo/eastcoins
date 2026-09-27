@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 312;
+export const VERSION = 313;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -2090,7 +2090,7 @@ Object.assign(SCENES, {
        one has an ore, a tree and a fish, and mining on the walked chain stopped dead at onyx 50 in Cloudreach
        because everything above it lives in the Vault (no band) or the Trailer Park (Combat 80). Starfall at 60
        and voidglass at 70 fill the hole, in OPPOSITE CORNERS as the owner asked, each with an aggressive guard. */
-    name: "The Thunderhead", ground: "storm", exits: { e: "cloud", w: "vault", n: "depths" },   /* (2026-09-27) north is the Depths of the Mountain now, and the Trailer Park is beyond it */ tint: "rgba(26,14,62,.44)",
+    name: "The Thunderhead", ground: "storm", exits: { e: "cloud", w: "vault", n: "trailer" },   /* (2026-09-27) north becomes the Depths of the Mountain when HOLD.depths is lifted (the Depths block) */ tint: "rgba(26,14,62,.44)",
     build() {
       const g = grid(), objs = [], keep = [];
       const put = (t, x, y, name, extra) => { objs.push({ t, x, y, name, ...(extra || {}) }); g[y][x] = "#"; keep.push([x, y]); };
@@ -2920,7 +2920,7 @@ Object.assign(SCENES, {
      swamp holds the two fish that cook into the best food. Every one of them asks for a top-rung tool — which is
      what the tool ladder was FOR, and until now nothing above Starfall had anything to work on. */
   trailer: {
-    name: "The Trailer Park", exits: { s: "depths" },   /* (2026-09-27) the Depths of the Mountain sits between it and the Thunderhead */ tint: "rgba(30,20,10,.18)",
+    name: "The Trailer Park", exits: { s: "thunderhead" },   /* (2026-09-27) south becomes the Depths when HOLD.depths is lifted */ tint: "rgba(30,20,10,.18)",
     build() {
       const g = grid(), objs = [], keep = [];
       const put = (o, w = 1, h = 1) => { objs.push(o); if (w > 1 || h > 1) block(g, o.x, o.y, w, h); else g[o.y][o.x] = "#"; keep.push([o.x, o.y]); };
@@ -4192,6 +4192,12 @@ export const bandOf = (scene) => BANDS[String(scene || "").split(":")[0]] || nul
 /** Why this character can't fight / fish in this scene yet, or null if they can. kind: "fight" | "fish". */
 export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) return null; const skill = kind === "fish" ? "fishing" : "melee", need = b[0], have = lvlOf(c, skill);
   return have >= need ? null : { need, have, skill, text: `needs ${kind === "fish" ? "Fishing" : "Combat"} ${need}` }; };
+/* (2026-09-27, the owner: "push it with depths and jewelcrafting held shut") WHAT SHIPS BUILT BUT SHUT. Flip one to false to open it:
+   the Depths goes into OPEN and takes its place between the Thunderhead and the Trailer Park; Jewelcrafting's bench stands in the
+   Yard and the skill joins the panel, the hiscores and the wiki. Held, everything stays in the rules (a save that somehow carries
+   the items or the xp still loads) but nobody can reach it and the wiki does not list it. The tests open both with
+   globalThis.__ES_OPEN_ALL before they import this file. */
+export const HOLD = { depths: !globalThis.__ES_OPEN_ALL, jewel: !globalThis.__ES_OPEN_ALL };
 export const OPEN = new Set(["carnival",   /* (2026-09-24) OPEN AT LAST. Built 2026-09-24 and held shut at the owner’s word until he said "launch the publish the carnival so its openn to peoople now". */ "casino", "roulette", "theatre", "fightpit", "vault", "wild", "deep", "agility",   /* (2026-09-22) The Run. Built with the Agility skill but never added here, so its door in the Yard answered with the bouncer's "Room's shut" — a scene is not enterable until it is in this set. */   /* (2026-09-22) the Wilderness reopened, down the rope ladder on the Gloam */ /* "highroller": closed for now (the owner, 2026-09-19) */ /* "forum", "bathhouse": closed in v108, what mattered there is in the Yard */ "workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "trailer",
   ]);   /* (2026-09-23) the Thieves' Guild. Deliberately NOT in BANDS: its rooms gate on Thieving through each mark's own `req`, and a combat band here would undo the whole point of a skill you cannot fight your way into. */   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
 export const OPEN_DAILY = new Set([
@@ -5188,7 +5194,7 @@ if (THIEF.live) {
   SHOP.sells.push(["thieves_permit", THIEF.permit]);
   SKILL_GROUPS.find((g) => g.name === "Skilling")?.keys.push("thieving");   /* the skills panel draws from this; the skill stays in SKILLS either way so every save carries its xp and every name lookup resolves */
   OPEN.add("guild");
-  OPEN.add("depths");   /* (2026-09-27) the Depths of the Mountain (its map is in eastscape-closed.js, like the wild ones) */                 /* a scene is not enterable until it is in OPEN; the door answers "Room's shut" otherwise */
+                 /* a scene is not enterable until it is in OPEN; the door answers "Room's shut" otherwise */
   SCENES.guild.wikiHide = false;     /* the closed-areas sweep above already hid it, because it was not in OPEN when that ran */
 }
 /* (2026-09-25, a player: "the thieving drops feel kinda lacklustre compared to other professions like tickets
@@ -7483,6 +7489,7 @@ recipe("cook_starfeast", { skill: "cooking", station: "fire", in: [["starcap", 1
 /* the Toadstool's sporecap becomes a spawn too, now and then: a first bed can be planted without ever finding a cluster */
 MOBS.toadstool?.drops.push(["spawn_sporecap", 1, 0.08]);   /* MOBS[].drops, not LOOT: LOOT was folded into drops long before this line */
 
+const _preDepths = new Set(Object.keys(ITEMS));
 /* ============================================================ THE DEPTHS OF THE MOUNTAIN (2026-09-27, the massive update, 3 of 8)
    The Scrap Line of EASTSCAPE-MAPS.md, re-themed by the owner on Rafael Matos's "Depths of the Mountain" pack: platforms of
    mossy rock over a black abyss between the Thunderhead and the Trailer Park, combat 73-84, closing the 72-80 hole. The map is
@@ -7523,7 +7530,7 @@ recipe("cook_abysseel", { skill: "cooking", station: "fire", in: [["abysseel", 1
 /* smoked, on the SMOKE rule: its cook plus two, about five levels above the cook */
 for (const [raw, lvl, coal, heal, sell, fx, blurb] of [["blindfish", 77, 3, 37, 145, { rare: 0.12, bite: 0.05 }, "The good things come to you in the dark."], ["abysseel", 83, 3, 39, 160, { tough: 0.12, speed: 0.05 }, "Hard to hurt, and quick with it."]]) {
   const key = `s${raw}`; ITEMS[key] = { name: `Smoked ${ITEMS[raw].name.replace(/^Raw /, "").toLowerCase()}`, icon: "\u{1F41F}", heal, meal: { mins: 20, fx }, ex: `Smoked slow over charcoal. Eat it for twenty minutes of it: ${blurb}` };
-  VALUE[key] = sell; recipe(`smoke_${raw}`, { skill: "cooking", station: "fire", in: [[raw, 1], ["charcoal", coal]], out: [key, 1], lvl, xp: Math.round(lvl * 4), ms: 2400 });
+  VALUE[key] = sell; recipe(`smoke_${raw}`, { skill: "cooking", station: "fire", in: [[raw, 1], ["charcoal", coal]], out: [key, 1], lvl, xp: Math.round(lvl * 4), ms: 2400, fail: SMITH_FAIL });   /* smoked fish fails a tenth of the time, like every smoke recipe (SMITH_FAIL) */
 }
 ZDROP.fish.blindfish = 0.0017; ZDROP.fish.abysseel = 0.0018;
 PETS.potboy = { name: "Pot Boy", art: "pet_potboy", raid: true, fx: { slots: 2, tix: 4 }, ex: "It was pretending to be a pot. It is still pretending to be a pot. It follows you anyway. The Deepwarden's, one kill in sixty." };
@@ -7558,12 +7565,16 @@ BOSSES.add("deepwarden");
 Object.assign(MOBS.dgoblin, { weak: "frost" }); Object.assign(MOBS.potboy, { weak: "storm" }); Object.assign(MOBS.dwisp, { weak: "sun", resist: "void" });
 Object.assign(MOBS.dogre, { weak: "storm", resist: "frost" }); Object.assign(MOBS.diron, { weak: "void" }); Object.assign(MOBS.deepwarden, { weak: "sun", resist: "fire" });
 for (const t of ["potboy", "dgoblin", "dwisp", "dogre", "diron", "deepwarden"]) EXAMINE[t] = [MOBS[t].ex + (guardText(t) ? ` ${guardText(t)}` : "")];
-PET_SCENES.add("depths");
 /* (2026-09-27, the owner: "the gem tiles you added need to have a chance at dropping the ruby/topaz/etc ores we added to mining ores, just
    very slowly") an abyss crystal vein turns up any of the four gems, together about a third as often as a gem ore turns up its own */
 GEM_DROP.abyss_crystal = [["ruby", 0.0015], ["sapphire", 0.0015], ["topaz", 0.0012], ["opal", 0.0008]];
-EGGS.egg_geode.from.push("depths"); EGGS.egg_gilded.from.push("depths");
-FUNG_WILD.depths = ["glowcap", "lionsmane", "glowcap"];
+/* HELD OR OPEN (see HOLD). Open, the map joins the road and the pets, eggs and wild mushrooms say so; held, only the admin
+   teleport reaches it, and its quests, pet and items stay out of the wiki (the journal already hides a quest whose giver's area is shut). */
+if (!HOLD.depths) {
+  OPEN.add("depths"); SCENES.thunderhead.exits.n = "depths"; SCENES.trailer.exits.s = "depths";
+  PET_SCENES.add("depths"); EGGS.egg_geode.from.push("depths"); EGGS.egg_gilded.from.push("depths");
+  FUNG_WILD.depths = ["glowcap", "lionsmane", "glowcap"];
+}
 
 /* ---- Old Pickett's three */
 Object.assign(QUESTS, {
@@ -7606,14 +7617,15 @@ for (const [k, tier] of [["deepcrystal", "medium"], ["deepgoblins", "hard"], ["d
    - SETTING a cut gem into a ring or amulet Smithing made, one metal per gem: the piece keeps its metal's numbers and gains the gem's
      power. A ring carries the power once, an amulet twice. The top set takes three cut abyss crystals and a singularity piece.
    Nothing here buys xp, and every power is one of the keys worn gear already uses (tough, bite, speed, rare, tix). */
-SKILLS.jewelcrafting = { name: "Jewelcrafting", icon: "\u{1F48D}" };
-SKILL_GROUPS.find((g) => g.name === "Skilling")?.keys.push("jewelcrafting");
-HISCORES.push(["jewelcrafting", "Jewelcrafting", "level", "lvl"]);
+const _preJewel = new Set(Object.keys(ITEMS));
+SKILLS.jewelcrafting = { held: HOLD.jewel, name: "Jewelcrafting", icon: "\u{1F48D}" };
+/* held: no skills-panel row, no hiscore board, no wiki page, no bench (see HOLD) */
+if (!HOLD.jewel) { SKILL_GROUPS.find((g) => g.name === "Skilling")?.keys.push("jewelcrafting"); HISCORES.push(["jewelcrafting", "Jewelcrafting", "level", "lvl"]); }
 STATIONS.jbench = { skill: "jewelcrafting", verb: "cut", name: "jeweller's bench", auto: false, kind: "jewel" };
 Object.assign(VERB, { jbench: "Work-at" });
 EXAMINE.jbench = ["A loupe, a wheel, a tray of grit and a very steady lamp. Everything in the Yard that glitters ends up here eventually."];
 /* the bench stands in the Yard between the anvil and the arcane altar */
-{ const build = SCENES.workyard.build; SCENES.workyard.build = function () { const b = build.call(this); if (b.g[6][39] === "p" || b.g[6][39] === ".") { b.objs.push({ t: "jbench", x: 39, y: 6, name: "Jeweller's bench" }); b.g[6][39] = "#"; } return b; }; }
+if (!HOLD.jewel) { const build = SCENES.workyard.build; SCENES.workyard.build = function () { const b = build.call(this); if (b.g[6][39] === "p" || b.g[6][39] === ".") { b.objs.push({ t: "jbench", x: 39, y: 6, name: "Jeweller's bench" }); b.g[6][39] = "#"; } return b; }; }
 
 const jrec = (id, lvl, xp, ins, out, n = 1) => recipe(`jc_${id}`, { skill: "jewelcrafting", station: "jbench", lvl, xp, ms: 2400, in: ins, out: [out, n] });
 /* ---- polishing */
@@ -7664,6 +7676,10 @@ for (const [gem, clvl, cxp, cval, metal, slvl, sxp, fx, need] of JEWELS) {
     jrec(`set${gem}${slot}`, slvl + (slot === "amulet" ? 2 : 0), sxp + (slot === "amulet" ? Math.round(sxp * 0.3) : 0), [[base, 1], [cut, need]], k);
   }
 }
+
+/* (2026-09-27) what HOLD keeps out of the wiki: every item the two blocks made, the Depths' pet and Old Pickett's quests */
+if (HOLD.depths) { for (const k of Object.keys(ITEMS)) if (!_preDepths.has(k) && _preJewel.has(k)) ITEMS[k].held = true; PETS.potboy.held = true; for (const q of ["deepcrystal", "deepgoblins", "deepkeeper"]) if (QUESTS[q]) QUESTS[q].held = true; }
+if (HOLD.jewel) for (const k of Object.keys(ITEMS)) if (!_preJewel.has(k)) ITEMS[k].held = true;
 
 /* (2026-09-21) the map-building helpers, for the files that hold maps outside this one (eastscape-closed.js, and the dungeon's). */
 export const _MAP = { block, grid, keepOf, room, wild };

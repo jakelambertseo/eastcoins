@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=333">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=334">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1317,7 +1317,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=333";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=334";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1326,7 +1326,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=185").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=186").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -5680,17 +5680,17 @@ const uico = (k) => `<img class="ico wico" src="${UIA}${k}.png?v=1" alt="" loadi
 const nico = (name) => { const a = WIKI.npcs[name]?.art || NPC_ART[name]; return a ? `<img class="ico nico" src="${ART}${a}_south.png?v=${ART_V}" alt="" loading="lazy" decoding="async">` : "🧑"; };
 function wikiPages() {
   const pages = [{ route: "home", title: "Home", icon: uico("g_home"), group: "" }, { route: "updates", title: "Updates", icon: uico("g_updates"), group: "" }];
-  for (const g of WK.GUIDES) { if (g.id === "thieving" && !G.THIEF.live) continue; if (g.id === "longnight" && !G.hwOn()) continue;   /* (2026-09-27) the Long Night's guide appears with the season */ pages.push({ route: `guides/${g.id}`, title: g.title, icon: uico(`g_${g.id}`), group: "Guides", cat: g.cat || "More" }); }   /* (2026-09-23) the Thieving guide rides THIEF.live with the rest of the skill; it is written and ready, it just must not be readable before the guild opens */
+  for (const g of WK.GUIDES) { if (g.id === "thieving" && !G.THIEF.live) continue; if (g.id === "longnight" && !G.hwOn()) continue; if (g.id === "jewelcrafting" && G.HOLD.jewel) continue;   /* (2026-09-27) the Long Night's guide appears with the season */ pages.push({ route: `guides/${g.id}`, title: g.title, icon: uico(`g_${g.id}`), group: "Guides", cat: g.cat || "More" }); }   /* (2026-09-23) the Thieving guide rides THIEF.live with the rest of the skill; it is written and ready, it just must not be readable before the guild opens */
   /* (2026-09-22) PETS ARE THEIR OWN CATEGORY, not a line in Guides: five things with stats, a drop rate and a
      picture each is a category, and the guide alone made them look like a footnote. Built from G.PETS, so a sixth
      pet appears here without anyone remembering to add it. */
-  for (const [k, pt] of Object.entries(G.PETS)) pages.push({ route: `pets/${k}`, title: pt.name, icon: `<img class="ico" src="${IART.replace("items/", "")}${pt.art}.png?v=${ART_V}" alt="">`, group: "Pets" });
-  for (const [k, s] of Object.entries(SKILLS)) { if (k === "thieving" && !G.THIEF.live) continue; pages.push({ route: `skills/${k}`, title: s.name, icon: sico(k), group: "Skills" }); }   /* (2026-09-23) a skill that ships dark has no wiki page yet, so it must not be offered one */
-  for (const [k, q] of Object.entries(QUESTS)) if (!q.event || G.hwOn()) pages.push({ route: `quests/${k}`, title: q.name, icon: uico(`q_${q.tier || "easy"}`), group: "Quests" });
+  for (const [k, pt] of Object.entries(G.PETS)) if (!pt.held) pages.push({ route: `pets/${k}`, title: pt.name, icon: `<img class="ico" src="${IART.replace("items/", "")}${pt.art}.png?v=${ART_V}" alt="">`, group: "Pets" });
+  for (const [k, s] of Object.entries(SKILLS)) { if ((k === "thieving" && !G.THIEF.live) || s.held) continue; pages.push({ route: `skills/${k}`, title: s.name, icon: sico(k), group: "Skills" }); }   /* (2026-09-23) a skill that ships dark has no wiki page yet, so it must not be offered one */
+  for (const [k, q] of Object.entries(QUESTS)) if ((!q.event || G.hwOn()) && !q.held) pages.push({ route: `quests/${k}`, title: q.name, icon: uico(`q_${q.tier || "easy"}`), group: "Quests" });
   for (const [k, m] of Object.entries(MOBS).filter(([k]) => Object.values(WIKI.areas).some((a) => a.mobs[k]))) pages.push({ route: `monsters/${k}`, title: m.name, icon: mico(k), group: "Monsters" });
   for (const [k, d] of Object.entries(SCENES).filter(([, d]) => !d.wikiHide)) pages.push({ route: `areas/${k}`, title: d.name, icon: uico(`a_${k}`), group: "Areas" });
   for (const n of Object.keys(WIKI.npcs)) pages.push({ route: `npcs/${n}`, title: n, icon: nico(n), group: "People" });
-  for (const [k, it] of Object.entries(ITEMS)) pages.push({ route: `items/${k}`, title: it.name, icon: ico(k), group: "Items" });
+  for (const [k, it] of Object.entries(ITEMS)) if (!it.held) pages.push({ route: `items/${k}`, title: it.name, icon: ico(k), group: "Items" });
   return pages;
 }
 /* the nav's seven groups wear the side panel's own tab pictures where one fits, a monster and a person otherwise */

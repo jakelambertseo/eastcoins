@@ -2,6 +2,7 @@
    (2026-09-27) The real World with storage stubbed: the bench stands in the Yard, beads come from the Yard's own copper and tin at level 1,
    a ruby cuts and sets into an emerald ring through the station loop, the ring keeps its metal's numbers and gains the gem's power, the
    power reaches worn gear, and every recipe's parts are real. */
+import "./eastscape-open-all.mjs";   /* the Depths and Jewelcrafting ship held (HOLD); these tests open them */
 import * as G from "../v3/assets/js/eastscape-shared.js";
 import { World } from "../eastscape-worker/src/index.js";
 let bad = 0;

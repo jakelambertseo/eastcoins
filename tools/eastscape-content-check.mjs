@@ -16,7 +16,7 @@
    ============================================================ */
 import { readFileSync, existsSync } from "node:fs";
 import { lists as packLists } from "./eastscape-pack.mjs";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join } from "node:path";
 import * as G from "../v3/assets/js/eastscape-shared.js";
 import { createClosedScenes } from "../v3/assets/js/eastscape-closed.js"; Object.assign(G.SCENES, createClosedScenes(G, G._MAP));   // the closed areas' maps are their own file since 2026-09-21: these tools still look at every scene
@@ -395,13 +395,16 @@ scene objects
   /* (2026-09-27) A BRED PET COMES FROM THE PEN: a hatchling from an egg that exists, a Legendary from a kind that has one */
   for (const [k, p] of Object.entries(G.PETS)) if (p.bred && !(p.egg ? G.EGGS?.[p.egg]?.pet === k : p.legend && G.LEGEND_OF?.[p.base] === k)) bad(`${p.name} is a bred pet with no way in`, "no egg hatches it and no pairing makes it");
   if (raid.length) console.log(`  ok  ${raid.length} raid pet${raid.length === 1 ? " is" : "s are"} out of the kill pool (${G.PET_DROP_KEYS.length} of ${G.PET_KEYS.length} can drop)`);
-  /* and the hand-typed wiki page has to say so, because that page imports nothing and cannot compute it */
-  const wiki = readFileSync(join(ROOT, "v3/assets/js/eastscape-wiki.js"), "utf8");
-  for (const k of raid) {
-    if (!wiki.includes(G.PETS[k].name)) bad(`the wiki's pets page never mentions ${G.PETS[k].name}`, "its table is typed by hand");
-    else if (!/does not drop from a kill/i.test(wiki)) bad("the wiki's pets page lists a raid pet", "without saying it does not drop from a kill");
+  /* (2026-09-27) the wiki's pets page is BUILT from the rules now, so render it and read the rows: every raid pet is listed, and its
+     "how to get it" is not the kill pool's line */
+  const { GUIDES } = await import(pathToFileURL(join(ROOT, "v3/assets/js/eastscape-wiki.js")).href);
+  const pg = GUIDES.find((g) => g.id === "pets"), petsHtml = typeof pg?.body === "function" ? pg.body(G, { esc: (x) => String(x), ico: () => "", wl: (r, t) => t }) : String(pg?.body || "");
+  for (const k of raid.filter((k) => !G.PETS[k].held)) {   /* a pet held shut (HOLD) is kept off the page on purpose */
+    const row = petsHtml.split("<tr>").find((r) => r.includes(`<b>${G.PETS[k].name}</b>`));
+    if (!row) bad(`the wiki's pets page never lists ${G.PETS[k].name}`, "a raid pet has to be on it");
+    else if (/Any monster/.test(row)) bad(`the wiki's pets page says ${G.PETS[k].name} drops from any monster`, "it is a raid pet");
   }
-  if (raid.length) console.log("  ok  the hand-typed wiki page names them and says they do not drop from kills");
+  if (raid.length) console.log("  ok  the wiki's pets page lists them, and not as kill drops");
 }
 
 /* ---------------------------------------------------------------- YOU CANNOT FARM KILLS WHILE AFK
