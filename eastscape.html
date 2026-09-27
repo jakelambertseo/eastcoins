@@ -1757,9 +1757,12 @@ function loadScene(key) {
   Z.def.npcs.filter((n) => !n.event || G.hwOn()).forEach((n, i) => { Z.defs[`${key}n${i}`] = n.art || !NPC_ART[n.name] ? n : { ...n, art: NPC_ART[n.name] }; });
   Z.npcs = []; botBubbles.clear(); PRED.on = false; PRED.path = []; PRED.step = null;
   for (const id of ["bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin", "mapWin"]) $(id).hidden = true;
+  /* (2026-09-27) THE GROUND FIRST. Anything below that throws used to abort this function before the repaint, and the frame then drew
+     the new map's things on the OLD map's floor: the owner stood in the Thunderhead on the Vault's carpet, because the Thunderhead's
+     new south door named the Foundry, which is in eastscape-closed.js and not loaded yet, and exitsOf read `.name` off nothing. */
+  Z.bg = paintBg();
   Z.exits = exitsOf(); decoBtnSync();
   loadAreaArt(key);
-  Z.bg = paintBg();
   setTimeout(() => { if (Z.key !== key) return; for (const k of Object.values(Z.def.exits || {})) loadAreaArt(k); for (const ob of Z.objs) if (ob.enter) loadAreaArt(ob.enter); if (Z.def.exitTo) loadAreaArt(Z.def.exitTo.scene); }, 3000);
   if (DLG) closeTalk();
   renderStats();
@@ -1772,7 +1775,11 @@ function exitsOf() {
     (by[side] ||= { side, tiles: [] }).tiles.push({ x, y });
   }
   return Object.values(by).map((ex) => {
-    const to = Z.def.exits?.[ex.side], dest = to ? G.sceneDef(to).name : Z.def.home ? "your island" : Z.def.exitTo ? G.sceneDef(Z.def.exitTo.scene).name : "";
+    const to = Z.def.exits?.[ex.side], dest = to ? G.sceneDef(to)?.name || "" : Z.def.home ? "your island" : Z.def.exitTo ? G.sceneDef(Z.def.exitTo.scene)?.name || "" : "";
+    /* (2026-09-27) a door into a map that is not in the first load (the Boardwalk, the Foundry, the Orchard Wall: eastscape-closed.js) has
+       no name here yet: fetch that file, and name the door when it lands */
+    const want = to && !G.sceneDef(to) ? to : Z.def.exitTo && !G.sceneDef(Z.def.exitTo.scene) ? Z.def.exitTo.scene : null;
+    if (want) { const def = Z.def; moreScenes(want).then(() => { if (Z.def === def) Z.exits = exitsOf(); }).catch(() => {}); }
     const xs = ex.tiles.map((t) => t.x), ys = ex.tiles.map((t) => t.y), x0 = Math.min(...xs), y0 = Math.min(...ys);
     const edge = !Z.def.interior && (ex.side !== "s" || ys[0] === ROWS - 1);
     const sign = !edge ? null : ex.side === "n" ? { x: x0 - 1, y: 1 } : ex.side === "s" ? { x: x0 - 1, y: ROWS - 2 } : ex.side === "w" ? { x: 1, y: y0 - 1 } : { x: COLS - 2, y: y0 - 1 };
