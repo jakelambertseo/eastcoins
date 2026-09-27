@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 302;
+export const VERSION = 303;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -6087,18 +6087,34 @@ if (THIEF.live) HISCORES.push(["thieving", "Thieving", "level", "lvl"]);
    SAME original kind make that kind's LEGENDARY, which is its own PETS entry with its own art. Pets in the pen are off the
    character (they cannot be worn, traded or bred twice) and come back when it is collected.
 
-   THE PEN is the island's existing "Pet pen" object, now a station: its recipes (station "pen") are the pet foods and the
-   feather nest, trained on Breeding, which is also how the skill gets from 1 to the Greater pairing's level. */
+   (2026-09-27, the owner, testing it: "the pet pen UI in general is drastically way too confusing ... The complexity here should
+   ONLY be in aquiring the pet drops and waiting for breeding to be done and the food required.") SIMPLIFIED, ALL OF IT:
+   - THE PEN BREEDS AND NOTHING ELSE: two pets in, one better pet out. It is no longer a station.
+   - EGGS HATCH IN A HATCHERY, a separate piece Yahsmeena sells (DECOR.hatchery). Put the egg in, wait. No gem, no nest, no level.
+   - THREE PET FOODS, one per RANK, cooked at a campfire from things already in the world (drops and shrooms): Ordinary pet food
+     (Cooking 20), Greater (50), Legendary (80). A pet is raised on the food of the rank it is BECOMING: an egg hatches on
+     Ordinary food, a Greater pet is bred on Greater food, a Legendary on Legendary food. Every one of the fourteen per-pet foods,
+     the feather nest and the opal are gone.
+   The ranks are drawn differently everywhere a pet is shown (grey / blue with one star / gold with a crown), so what a pairing
+   makes is obvious before it starts. */
 export const BREED = {
-  greater: { lvl: 30, ms: 12 * 3600000, food: 6, xpStart: 400, xpEnd: 4000 },   /* food: portions of EACH parent's food */
-  legend: { lvl: 70, ms: 72 * 3600000, food: 48, gem: "opal", xpStart: 3000, xpEnd: 40000 },
+  greater: { lvl: 1, ms: 12 * 3600000, food: 6, xpStart: 400, xpEnd: 4000 },    /* any two ordinary pets, from Breeding 1: pairing is how the skill is trained */
+  legend: { lvl: 50, ms: 72 * 3600000, food: 12, xpStart: 3000, xpEnd: 40000 },  /* two Greater pets of the same kind */
+  hatch: { food: 3 },                                                             /* an egg eats three Ordinary pet food, taken when it goes in */
   eggDrop: 1 / 3000,                                                              /* one kill in three thousand, anywhere: "rare but not that rare" */
-  nest: "feather_nest", reach: 3
+  reach: 3
 };
+/** the three ranks, with how they are drawn and what they eat */
+export const RANKS = {
+  ordinary: { name: "Ordinary", food: "petfood_ordinary", col: "#9a9a9a", mark: "" },
+  greater: { name: "Greater", food: "petfood_greater", col: "#3f7fe0", mark: "★" },
+  legend: { name: "Legendary", food: "petfood_legend", col: "#e0a820", mark: "♛" }
+};
+/** a pet instance's rank */
+export const rankOf = (p) => (PETS[p?.k]?.legend ? "legend" : p?.tier ? "greater" : "ordinary");
 SKILLS.breeding = { name: "Breeding", icon: "\u{1F95A}" };
 SKILL_GROUPS.find((g) => g.name === "Skilling")?.keys.push("breeding");
 HISCORES.push(["breeding", "Breeding", "level", "lvl"]);
-STATIONS.pen = { skill: "breeding", verb: "prepare", name: "pet pen", auto: false, kind: "breed" };
 
 /* the eight hatchlings: each helps ONE skill, which is how Breeding reaches the rest of the game. `bred` keeps every new pet
    out of the 1-in-1,000 kill pool and out of The Whole Kennel, whose "own them all" was written for the drop pets. */
@@ -6123,57 +6139,40 @@ export const LEGEND_OF = Object.fromEntries(Object.entries(PETS).filter(([, p]) 
 
 /* THE EGGS. Weighted by where the kill is, so each has a home; one kill in EGG_DROP anywhere rolls one. */
 export const EGGS = {
-  egg_speckled: { pet: "pocketowl",   lvl: 10, gem: "ruby",     ms: 12 * 3600000,  xp: 1500,  from: ["workyard", "gloam"] },
-  egg_mossy:    { pet: "mossback",    lvl: 15, gem: "ruby",     ms: 18 * 3600000,  xp: 2200,  from: ["gloam", "mire"] },
-  egg_truffle:  { pet: "trufflepig",  lvl: 25, gem: "sapphire", ms: 24 * 3600000,  xp: 4000,  from: ["mire", "boneyard"] },
-  egg_sparking: { pet: "stormling",   lvl: 35, gem: "sapphire", ms: 24 * 3600000,  xp: 6000,  from: ["boneyard", "cloud"] },
-  egg_cindered: { pet: "salamander",  lvl: 45, gem: "topaz",    ms: 48 * 3600000,  xp: 9000,  from: ["cloud", "sands", "thunderhead"] },
-  egg_velvet:   { pet: "ferret",      lvl: 55, gem: "topaz",    ms: 48 * 3600000,  xp: 13000, from: ["thunderhead", "carnival", "wild"] },
-  egg_geode:    { pet: "crystalcrab", lvl: 65, gem: "opal",     ms: 72 * 3600000,  xp: 20000, from: ["carnival", "vault", "wild", "deep"] },
-  egg_gilded:   { pet: "mimic",       lvl: 80, gem: "opal",     ms: 120 * 3600000, xp: 32000, from: ["vault", "trailer", "deep"] }
+  egg_speckled: { pet: "pocketowl",   ms: 12 * 3600000,  xp: 1500,  from: ["workyard", "gloam"] },
+  egg_mossy:    { pet: "mossback",    ms: 18 * 3600000,  xp: 2200,  from: ["gloam", "mire"] },
+  egg_truffle:  { pet: "trufflepig",  ms: 24 * 3600000,  xp: 4000,  from: ["mire", "boneyard"] },
+  egg_sparking: { pet: "stormling",   ms: 24 * 3600000,  xp: 6000,  from: ["boneyard", "cloud"] },
+  egg_cindered: { pet: "salamander",  ms: 48 * 3600000,  xp: 9000,  from: ["cloud", "sands", "thunderhead"] },
+  egg_velvet:   { pet: "ferret",      ms: 48 * 3600000,  xp: 13000, from: ["thunderhead", "carnival", "wild"] },
+  egg_geode:    { pet: "crystalcrab", ms: 72 * 3600000,  xp: 20000, from: ["carnival", "vault", "wild", "deep"] },
+  egg_gilded:   { pet: "mimic",       ms: 120 * 3600000, xp: 32000, from: ["vault", "trailer", "deep"] }
 };
 const EGG_NAMES = { egg_speckled: "Speckled egg", egg_mossy: "Mossy egg", egg_truffle: "Truffle-scented egg", egg_sparking: "Sparking egg", egg_cindered: "Cindered egg", egg_velvet: "Velvet egg", egg_geode: "Geode egg", egg_gilded: "Gilded egg" };
-for (const [k, e] of Object.entries(EGGS)) ITEMS[k] = { name: EGG_NAMES[k], icon: "\u{1F95A}", ex: `Hatches a ${PETS[e.pet].name} in your island's pen: Breeding ${e.lvl}, a feather nest and a ${e.gem}, and ${Math.round(e.ms / 3600000)} hours. Tradable.` };
+for (const [k, e] of Object.entries(EGGS)) ITEMS[k] = { name: EGG_NAMES[k], icon: "\u{1F95A}", ex: `Put it in a hatchery on your island with ${BREED.hatch.food} Ordinary pet food: a ${PETS[e.pet].name} in ${Math.round(e.ms / 3600000)} hours. Tradable.` };
 /** which egg a kill in this scene rolls: one whose home it is, else any */
 export const eggFor = (sceneKey, r = Math.random()) => { const base = String(sceneKey || "").split(":")[0]; const here = Object.keys(EGGS).filter((k) => EGGS[k].from.includes(base)); const pool = here.length ? here : Object.keys(EGGS); return pool[Math.floor(r * pool.length) % pool.length]; };
 
-/* THE FOOD. Everyday foods need an EARLY-game drop; Legendary foods a MID-game drop and a late or Deep Wild one (the owner:
-   "some pet food should be from early and mid game mob drops so those dont get skipped and forgotten about"). */
-export const FOOD_OF = { bonepup: "pup_kibble", packrat: "scrounge_bag", cointoad: "glitter_grubs", lanternmoth: "moth_oil", housecat: "fish_supper", coilling: "scarab_mash" };
-export const DEFAULT_FOOD = "hearty_chow";   /* what a hatchling eats */
-export const LEGEND_FOOD = { bonepup: "grim_broth", packrat: "hoard_cheese", cointoad: "gilded_grubs", lanternmoth: "moon_nectar", housecat: "grimscale_supper", coilling: "void_mash" };
-export const foodFor = (kind) => FOOD_OF[kind] || DEFAULT_FOOD;
+/* THE FOOD: three kinds, cooked at a campfire, each from more than one pair of ingredients so whatever you happen to be carrying
+   from that stretch of the game will do. Ordinary is early drops and early shrooms, Greater mid-game, Legendary late and wild. */
 Object.assign(ITEMS, {
-  pup_kibble:       { name: "Pup kibble",        icon: "\u{1F9B4}", ex: "Beef and bones, baked hard. Bonepups breed on it." },
-  scrounge_bag:     { name: "Scrounge bag",      icon: "\u{1F45C}", ex: "Olive pits and old receipts. Pack Rats think it is a feast." },
-  glitter_grubs:    { name: "Glitter grubs",     icon: "\u{1FAB1}", ex: "Hornworm husks rolled in ground ruby. Coin Toads cannot resist them." },
-  moth_oil:         { name: "Moth lamp oil",     icon: "\u{1FAD9}", ex: "Lanternroot pressed into a flashlight's reservoir. Lantern Moths drink the light." },
-  fish_supper:      { name: "Fish supper",       icon: "\u{1F41F}", ex: "Chicken and trout, for a cat with standards." },
-  scarab_mash:      { name: "Scarab mash",       icon: "\u{1F963}", ex: "Pork, tusk and scarab shell. A Coilling's idea of a meal." },
-  hearty_chow:      { name: "Hearty chow",       icon: "\u{1F958}", ex: "Tomato, beef and bone stew. What every hatchling breeds on." },
-  feather_nest:     { name: "Feather nest",      icon: "\u{1FAB9}", ex: "Ten feathers and two hides, kept warm with charcoal. Every egg hatches in one." },
-  grim_broth:       { name: "Grim marrow broth", icon: "\u{1F372}", ex: "Marrow Hound marrow and a Grim Lich's grimcore. It glows. A Legendary Bonepup is raised on it." },
-  hoard_cheese:     { name: "Hoard cheese",      icon: "\u{1F9C0}", ex: "Aged on marked cards in a catalytic converter. Legendary Pack Rat food." },
-  gilded_grubs:     { name: "Gilded grubs",      icon: "\u{2728}",  ex: "Shark teeth and opal dust. Legendary Coin Toad food." },
-  moon_nectar:      { name: "Moon nectar",       icon: "\u{1F319}", ex: "Cobwebs, moon carp and voidglass. Legendary Lantern Moth food." },
-  grimscale_supper: { name: "Grimscale supper",  icon: "\u{1F37D}️", ex: "Grimscale from the Deep Wild, on a Thunderwolf pelt. Legendary House Cat food." },
-  void_mash:        { name: "Void mash",         icon: "\u{1F311}", ex: "Cobra fangs ground into voidglass. Legendary Coilling food." }
+  petfood_ordinary: { name: "Ordinary pet food", icon: "\u{1F9B4}", ex: "A sack of plain kibble. Hatchlings are raised on it: a hatchery takes three with every egg." },
+  petfood_greater: { name: "Greater pet food", icon: "\u{1F96B}", ex: "A tin of the good stuff. Two ordinary pets in the pen eat six of these to make a Greater one." },
+  petfood_legend: { name: "Legendary pet food", icon: "\u{1F451}", ex: "A golden bowl, heaped. Two Greater pets of one kind eat twelve of these to make its Legendary." }
 });
-const bfood = (id, lvl, xp, ins, out, n) => recipe(`breed_${id}`, { skill: "breeding", station: "pen", lvl, xp, ms: 2400, in: ins, out: [out, n] });
-bfood("kibble", 1, 14, [["beef", 2], ["bones", 2]], "pup_kibble", 3);
-bfood("nest", 3, 30, [["feather", 10], ["hide", 2], ["charcoal", 2]], "feather_nest", 1);
-bfood("scrounge", 6, 20, [["pit", 3], ["receipt", 2]], "scrounge_bag", 3);
-bfood("chow", 8, 22, [["tomatoe", 3], ["beef", 1], ["bones", 1]], "hearty_chow", 3);
-bfood("grubs", 12, 40, [["husk", 3], ["ruby", 1]], "glitter_grubs", 4);
-bfood("supper", 16, 34, [["chicken", 1], ["ctrout", 1]], "fish_supper", 2);
-bfood("mash", 22, 52, [["pork", 2], ["tusk", 1], ["scarabshell", 1]], "scarab_mash", 3);
-bfood("mothoil", 26, 58, [["flashlight", 1], ["lanternroot", 2]], "moth_oil", 3);
-bfood("hoard", 62, 160, [["markedcard", 2], ["catalytic", 1]], "hoard_cheese", 4);
-bfood("nectar", 66, 180, [["cobweb", 3], ["mooncarp", 1], ["voidglass", 1]], "moon_nectar", 4);
-bfood("voidmash", 70, 190, [["snakefang", 2], ["voidglass", 1]], "void_mash", 4);
-bfood("gilded", 74, 220, [["sharktooth", 2], ["opal", 1]], "gilded_grubs", 6);
-bfood("grimbroth", 78, 240, [["marrow", 2], ["grimcore", 1]], "grim_broth", 4);
-bfood("grimsupper", 84, 260, [["staticfur", 1], ["grimscale", 1]], "grimscale_supper", 3);
+Object.assign(VALUE, { petfood_ordinary: 20, petfood_greater: 70, petfood_legend: 180 });
+const pfood = (id, rank, lvl, xp, ins, n) => recipe(`petfood_${id}`, { skill: "cooking", station: "fire", lvl, xp, ms: 2400, in: ins, out: [RANKS[rank].food, n] });
+pfood("beef", "ordinary", 20, 30, [["beef", 1], ["buttoncap", 2]], 3);
+pfood("chicken", "ordinary", 20, 30, [["chicken", 1], ["sporecap", 2]], 3);
+pfood("pork", "ordinary", 20, 30, [["pork", 1], ["oyster", 1]], 3);
+pfood("tusk", "greater", 50, 90, [["tusk", 1], ["bluemould", 2]], 3);
+pfood("scarab", "greater", 50, 90, [["scarabshell", 1], ["inkcap", 2]], 3);
+pfood("fur", "greater", 50, 90, [["staticfur", 1], ["glowcap", 1]], 3);
+pfood("web", "greater", 50, 90, [["cobweb", 2], ["puffball", 2]], 3);
+pfood("marrow", "legend", 80, 200, [["marrow", 1], ["lionsmane", 1]], 2);
+pfood("grimscale", "legend", 80, 200, [["grimscale", 1], ["voidmorel", 1]], 2);
+pfood("catalytic", "legend", 80, 200, [["catalytic", 1], ["starcap", 1]], 2);
+pfood("fang", "legend", 80, 200, [["snakefang", 1], ["truffle", 1]], 2);
 
 /** a Greater child's effects: its own kind's a quarter better (bag slots +1), and the other parent's strongest at a quarter */
 export function greaterFx(kind, otherKind) {
@@ -6192,18 +6191,17 @@ export function pairOf(a, b) {
   if (a.tier && b.tier) {
     if (a.k !== b.k) return { no: "Two Greater pets must be the same kind to make a Legendary." };
     if (!LEGEND_OF[a.k]) return { no: `There is no Legendary ${A.name}. Yet.` };
-    return { kind: "legend", lvl: BREED.legend.lvl, ms: BREED.legend.ms, child: LEGEND_OF[a.k], food: [[LEGEND_FOOD[a.k], BREED.legend.food], [BREED.legend.gem, 1]] };
+    return { kind: "legend", lvl: BREED.legend.lvl, ms: BREED.legend.ms, child: LEGEND_OF[a.k], food: [[RANKS.legend.food, BREED.legend.food]] };
   }
   if (a.tier || b.tier) return { no: "Pair two ordinary pets for a Greater one, or two Greater ones of the same kind for a Legendary." };
-  const need = {}; for (const p of [a, b]) { const f = foodFor(p.k); need[f] = (need[f] || 0) + BREED.greater.food; }
-  return { kind: "greater", lvl: BREED.greater.lvl, ms: BREED.greater.ms, kinds: [a.k, b.k], food: Object.entries(need) };
+  return { kind: "greater", lvl: BREED.greater.lvl, ms: BREED.greater.ms, kinds: [...new Set([a.k, b.k])], food: [[RANKS.greater.food, BREED.greater.food]] };
 }
 /** a pet's effects in words, for the pets panel and the pen */
 export const petFxText = (fx) => Object.entries(fx || {}).map(([k, v]) => ({ slots: `+${v} bag slots`, hp: `+${v} hitpoints`, tix: `+${v}% tickets`, speed: `+${v}% walk speed`, swing: `+${v}% work speed`, reach: `+${v} bow range`, tough: `${v}% less damage`, grow: `+${v}% harvests`, bite: `+${v}% bites`, noburn: `${v}% fewer burns`, freesmelt: `${v}% free smelts`, steal: `+${v}% pickpocket`, gem: `+${v}% gems`, gift: "a daily present" }[k] || `${k} ${v}`)).join(" · ");
 export const PET_GIFTS = [["tickets", [400, 1500], 70], ["clover", [1, 2], 15], ["pumpkinpie", [1, 1], 0], ["tp_scroll", [1, 2], 15]];
 
 export const questsDone = (c) => Object.values(c?.qs || {}).filter((q) => q?.state === "done").length + (c?.tour && c.tour.step >= TOUR.length ? 1 : 0) + ((c?.stats?.jobs | 0) || 0);
-export const VERB = { pen: "Open",   /* (2026-09-27) Breeding */ fletcher: "Fletch-at",   /* (2026-09-25) written INTO the literal rather than assigned after: VERB is declared later in the file than FLETCH goes live, and a const cannot be reached before its line */ countdoor: "Break into", countsearch: "Search", countbox: "Unlock", countexit: "Leave by", towerdoor: "Enter", towerup: "Climb", cryptdoor: "Go down", cryptlever: "Pull", cryptexit: "Climb", cryptloot: "Open", hsboard: "Read", jukebox: "Play", prizecase: "Browse", mirror: "Look in", rrtable: "Sit at", rrseat: "Sit at", rrboard: "Read", barcart: "Drink at", prizewheel: "Spin", fameboard: "Read", cart: "Ride", fight: "Bet on", coinstatue: "tickets in at", cooler: "Drink at", buffet: "Eat at", cashier: "tickets in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", mark: "Pickpocket", guildgate: "Open", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", wreck: "Strip", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
+export const VERB = { pen: "Open", hatchery: "Open",   /* (2026-09-27) Breeding */ fletcher: "Fletch-at",   /* (2026-09-25) written INTO the literal rather than assigned after: VERB is declared later in the file than FLETCH goes live, and a const cannot be reached before its line */ countdoor: "Break into", countsearch: "Search", countbox: "Unlock", countexit: "Leave by", towerdoor: "Enter", towerup: "Climb", cryptdoor: "Go down", cryptlever: "Pull", cryptexit: "Climb", cryptloot: "Open", hsboard: "Read", jukebox: "Play", prizecase: "Browse", mirror: "Look in", rrtable: "Sit at", rrseat: "Sit at", rrboard: "Read", barcart: "Drink at", prizewheel: "Spin", fameboard: "Read", cart: "Ride", fight: "Bet on", coinstatue: "tickets in at", cooler: "Drink at", buffet: "Eat at", cashier: "tickets in at", howto: "Read", game: "Play", board: "Read", roulette: "Play", roomdoor: "Enter", walldoor: "Enter", cook: "Cook-at", smelt: "Smelt-at", smith: "Smith-at", pvp: "Attack", ground: "Take", rope: "Climb-up", ferry: "Board", boatback: "Sail-home", plot: "Tend", pedestal: "Use", islesign: "Read", bank: "Bank at", exchange: "Trade at", player: "Trade with", enter: "Enter", hole: "Climb-down", mob: "Attack", npc: "Talk-to", mark: "Pickpocket", guildgate: "Open", wheat: "Pick", spot: "Fish", door: "Open", well: "Search", rock: "Mine", vein: "Mine", wreck: "Strip", tree: "Chop down", olive: "Pick", shrine: "Pray-at", notice: "Read", sign: "Read" };
 
 /* ------------------------------------------------------------ quests are data
    goal.type "bring": have goal.n of goal.items in your bag when you talk to the giver (they're taken)
@@ -7452,10 +7450,6 @@ fbrew("brew_star", 90, 220, [["large_vial", 1], ["starcap", 1], ["lionsmane", 1]
 recipe("cook_soup", { skill: "cooking", station: "fire", in: [["buttoncap", 2], ["wheat", 1]], out: ["mushroom_soup", 1], lvl: 5, xp: 20, ms: 2000 });
 recipe("cook_truffle", { skill: "cooking", station: "fire", in: [["truffle", 1], ["beef", 1]], out: ["truffle_dinner", 1], lvl: 65, xp: 260, ms: 2400 });
 recipe("cook_starfeast", { skill: "cooking", station: "fire", in: [["starcap", 1], ["starfruit", 1]], out: ["starcap_feast", 1], lvl: 90, xp: 400, ms: 2400 });
-bfood("scrounge_mould", 28, 40, [["bluemould", 2], ["pit", 1]], "scrounge_bag", 4);
-bfood("mothoil_glow", 50, 90, [["glowcap", 2], ["flashlight", 1]], "moth_oil", 4);
-bfood("hoard_truffle", 65, 170, [["truffle", 1], ["markedcard", 1]], "hoard_cheese", 4);
-bfood("voidmash_morel", 80, 200, [["voidmorel", 1], ["snakefang", 1]], "void_mash", 4);
 /* the Toadstool's sporecap becomes a spawn too, now and then: a first bed can be planted without ever finding a cluster */
 MOBS.toadstool?.drops.push(["spawn_sporecap", 1, 0.08]);   /* MOBS[].drops, not LOOT: LOOT was folded into drops long before this line */
 

@@ -749,30 +749,26 @@ export const GUIDES = [
       <h3>The shrooms</h3>
       <table class="tbl"><tr><th>Level</th><th>Shroom</th><th>Grows</th><th>Compost</th><th>xp</th><th>Wild in</th><th>Goes into</th></tr>${Object.entries(G.FUNGI).map(([sk, F]) => `<tr><td>${F.lvl}</td><td>${H.ico(F.yields)} ${nm(F.yields)}</td><td>${mins(F.ms)}</td><td>${F.compost}</td><td>${F.xp.toLocaleString()}</td><td>${where[F.yields].length ? H.esc(where[F.yields].join(", ")) : "A Truffle Pig finds it"}</td><td>${uses(F.yields)}</td></tr>`).join("")}</table>`;
     } },
-  /* (2026-09-27) Breeding, built from the rules so its numbers cannot drift */
+  /* (2026-09-27) Breeding, built from the rules so its numbers cannot drift (rebuilt the same day: the pen breeds, the hatchery hatches, three pet foods) */
   { id: "breeding", title: "Breeding", icon: "\u{1F95A}", cat: "Skills",
     body: (G, H) => {
-      const nm = (k) => H.wl(`items/${k}`, H.esc(G.ITEMS[k]?.name || k)), pet = (k) => `${H.esc(G.PETS[k].name)}`, hrs = (ms) => `${Math.round(ms / 3600000)} hours`;
-      const foods = Object.values(G.RECIPES).filter((r) => r.station === "pen").sort((a, b) => a.lvl - b.lvl);
-      const legend = Object.entries(G.LEGEND_OF);
-      return `<p><b>Two of your pets go in your island's pen and come out as a better one.</b> The pen is the one by your plots; click it. Nothing is lost: both parents come back when it is done.</p>
-      <h3>How a pairing works</h3>
-      <ol><li>Make the food at the pen (the <b>Make pet food</b> button, or click the pen and choose). This is how Breeding is trained from level 1.</li>
-      <li>Click the pen, pick a <b>pair</b> of your pets, and it shows what they will make and everything it needs, with what you have beside it.</li>
-      <li>Press <b>Start</b>. <b>All the food goes in at once</b>, then the clock runs by itself, logged in or not. Come back and press <b>Collect</b>.</li></ol>
-      <table class="tbl"><tr><th>Pairing</th><th>Breeding</th><th>Time</th><th>Food</th></tr>
-        <tr><td>Two ordinary pets &rarr; a <b>Greater</b> pet</td><td>${G.BREED.greater.lvl}</td><td>${hrs(G.BREED.greater.ms)}</td><td>${G.BREED.greater.food} of each parent's food</td></tr>
-        <tr><td>Two Greater pets <b>of the same kind</b> &rarr; its <b>Legendary</b></td><td>${G.BREED.legend.lvl}</td><td>${hrs(G.BREED.legend.ms)}</td><td>${G.BREED.legend.food} of its Legendary food and an ${nm("opal")}</td></tr></table>
-      <p><b>A Greater pet</b> is one of its two parents' kinds, with that kind's effects a quarter better (one more bag slot for a Pack Rat) and a little of the other parent's strongest effect. <b>A Legendary</b> is its own pet, with its own look.</p>
-      <h3>The Legendaries</h3>
-      <table class="tbl"><tr><th>From two Greater&hellip;</th><th>Legendary</th><th>Does</th><th>Its food</th></tr>${legend.map(([base, k]) => `<tr><td>${pet(base)}</td><td><b>${pet(k)}</b></td><td>${H.esc(G.petFxText(G.PETS[k].fx))}</td><td>${nm(G.LEGEND_FOOD[base])}</td></tr>`).join("")}</table>
-      <h3>Eggs</h3>
-      <p>About one kill in ${Math.round(1 / G.BREED.eggDrop).toLocaleString()} drops an egg, and each map has its own. An egg hatches in the pen's nest: it needs its Breeding level, a ${nm(G.BREED.nest)} and a gem. Eggs trade and list on the Exchange like anything else.</p>
-      <table class="tbl"><tr><th>Egg</th><th>Breeding</th><th>Gem</th><th>Hatches</th><th>Into</th><th>Does</th><th>Found</th></tr>${Object.entries(G.EGGS).map(([k, e]) => `<tr><td>${H.ico(k)} ${nm(k)}</td><td>${e.lvl}</td><td>${nm(e.gem)}</td><td>${hrs(e.ms)}</td><td>${pet(e.pet)}</td><td>${H.esc(G.petFxText(G.PETS[e.pet].fx))}</td><td>${e.from.map((s) => H.esc(G.SCENES[s]?.name || s)).join(", ")}</td></tr>`).join("")}</table>
-      <h3>The food</h3>
-      <p>Every everyday food needs something off an early monster, and every Legendary food something off a mid-game one and something from the Deep Wild or the late maps, so the whole ladder stays worth fighting.</p>
-      <table class="tbl"><tr><th>Level</th><th>Makes</th><th>From</th></tr>${foods.map((r) => `<tr><td>${r.lvl}</td><td>${H.ico(r.out[0])} ${r.out[1] > 1 ? `${r.out[1]} ` : ""}${nm(r.out[0])}</td><td>${r.in.map(([k, n]) => `${n} ${nm(k)}`).join(", ")}</td></tr>`).join("")}</table>
-      <p>What each kind eats: ${Object.entries(G.FOOD_OF).map(([k, f]) => `${pet(k)} ${nm(f)}`).join(", ")}; every hatchling ${nm(G.DEFAULT_FOOD)}.</p>`;
+      const nm = (k) => H.wl(`items/${k}`, H.esc(G.ITEMS[k]?.name || k)), pet = (k) => `${H.esc(G.PETS[k].name)}`, hrs = (ms) => `${Math.round(ms / 3600000)} hours`, R = G.RANKS;
+      const rk = (r) => `<b style="color:${R[r].col}">${R[r].mark ? `${R[r].mark} ` : ""}${R[r].name}</b>`;
+      const foods = Object.values(G.RECIPES).filter((r) => /^petfood_/.test(r.id)).sort((a, b) => a.lvl - b.lvl || a.id.localeCompare(b.id));
+      return `<p><b>Pets come in three ranks:</b> ${rk("ordinary")}, ${rk("greater")} and ${rk("legend")}. Breed two in your island's <b>pet pen</b> to make a better one; hatch eggs in a <b>hatchery</b>.</p>
+      <h3>The pet pen</h3>
+      <p>Click the pen, put a pair in, and it shows what you get. Press <b>Breed</b>: the food goes in at once and the clock runs by itself, logged in or not. Both parents come back when you collect.</p>
+      <table class="tbl"><tr><th>Put in</th><th>Get</th><th>Food</th><th>Time</th><th>Breeding</th></tr>
+        <tr><td>${rk("ordinary")} + ${rk("ordinary")}</td><td>${rk("greater")}: one of the two kinds, its effect a quarter stronger, plus a little of the other's</td><td>${G.BREED.greater.food} ${nm(R.greater.food)}</td><td>${hrs(G.BREED.greater.ms)}</td><td>${G.BREED.greater.lvl}</td></tr>
+        <tr><td>${rk("greater")} + ${rk("greater")} of the same kind</td><td>${rk("legend")}: its own pet, with its own look</td><td>${G.BREED.legend.food} ${nm(R.legend.food)}</td><td>${hrs(G.BREED.legend.ms)}</td><td>${G.BREED.legend.lvl}</td></tr></table>
+      <table class="tbl"><tr><th>Two Greater&hellip;</th><th>make</th><th>Does</th></tr>${Object.entries(G.LEGEND_OF).map(([base, k]) => `<tr><td>${pet(base)}</td><td>${rk("legend")} ${pet(k)}</td><td>${H.esc(G.petFxText(G.PETS[k].fx))}</td></tr>`).join("")}</table>
+      <h3>The hatchery</h3>
+      <p>Yahsmeena sells a <b>Hatchery</b>. Put it down on your island, click it, and put an egg in with ${G.BREED.hatch.food} ${nm(R.ordinary.food)}. That is all: it hatches when the clock runs out.</p>
+      <p>About one kill in ${Math.round(1 / G.BREED.eggDrop).toLocaleString()} drops an egg, and each map has its own. Eggs trade and list on the Exchange.</p>
+      <table class="tbl"><tr><th>Egg</th><th>Hatches in</th><th>Into</th><th>Does</th><th>Found</th></tr>${Object.entries(G.EGGS).map(([k, e]) => `<tr><td>${H.ico(k)} ${nm(k)}</td><td>${hrs(e.ms)}</td><td>${pet(e.pet)}</td><td>${H.esc(G.petFxText(G.PETS[e.pet].fx))}</td><td>${e.from.map((s) => H.esc(G.SCENES[s]?.name || s)).join(", ")}</td></tr>`).join("")}</table>
+      <h3>Pet food</h3>
+      <p>Three kinds, cooked at any campfire, each from more than one pair of ingredients so whatever you are carrying from that part of the game will do.</p>
+      <table class="tbl"><tr><th>Cooking</th><th>Makes</th><th>From</th></tr>${foods.map((r) => `<tr><td>${r.lvl}</td><td>${H.ico(r.out[0])} ${r.out[1]} ${nm(r.out[0])}</td><td>${r.in.map(([k, n]) => `${n} ${nm(k)}`).join(", ")}</td></tr>`).join("")}</table>`;
     } },
   { id: "wizardry", title: "Wizardry", icon: "\u{1F4DC}", cat: "Skills",
     body: (G, H) => {

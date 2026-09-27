@@ -347,7 +347,7 @@ export class World {
     return { pay: owed, low, late };
   }
 
-  meOf(pl) { const C = pl.C; return { fung: C.fung || null,   /* (2026-09-27) which clusters you've picked today */ pen: C.pen || null,   /* (2026-09-27) Breeding */ store: C.store || null,   /* (2026-09-27) what the Store has sold you and what your name wears */ seen: C.seen || [],   /* (2026-09-27) the world map's fog */ hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null,   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
+  meOf(pl) { const C = pl.C; return { hatch: C.hatch || null,   /* (2026-09-27) the egg in the hatchery */ fung: C.fung || null,   /* (2026-09-27) which clusters you've picked today */ pen: C.pen || null,   /* (2026-09-27) Breeding */ store: C.store || null,   /* (2026-09-27) what the Store has sold you and what your name wears */ seen: C.seen || [],   /* (2026-09-27) the world map's fog */ hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null,   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
@@ -764,6 +764,7 @@ export class World {
       case "quest": return this.questOp(S, pl, m);
       case "hw": return this.hwOp(S, pl, m);
       case "pen": return this.penOp(S, pl, m);
+      case "hatch": return this.hatchOp(S, pl, m);   /* (2026-09-27) Breeding: eggs */
       case "fung": return this.fungOp(S, pl, m);   /* (2026-09-27) Fungiculture: planting a bed */   /* (2026-09-27) Breeding */   /* (2026-09-27) the Long Night: trick or treat, the Night Market, the corn-priced fits */
       case "talked": { const n = S.npcs.find((x) => x.id === m.npc); if (n) n.holdUntil = 0; return; }
       case "stance": return;   // stances were removed (2026-09-19)
@@ -897,7 +898,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
-      let kind = { shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      let kind = { hatchery: "hatchery",   /* (2026-09-27) Breeding's hatchery */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       /* MAGIC AND WIZARDRY, THE SERVER (2026-09-26): every altar is a print station, a picker station like the anvil */
       if (!kind && G.STATIONS[ob.t]?.kind === "print") kind = "print";
       if (!kind) return;
@@ -910,7 +911,6 @@ export class World {
          bowfin, and sand at a cauldron only ever becomes the large vial. Nothing was broken - there was simply no
          way to say. The same `pick` now works everywhere, and it is checked against the recipes of THIS station
          so a pick cannot smelt a bar at a campfire. */
-      if (kind === "pen" && m.pick) { kind = "breed"; act.kind = "breed"; }   /* (2026-09-27) a recipe picked at the pen: pet food */
       if (["smith", "cook", "smelt", "brew", "fletch", "print", "breed", "rot"].includes(kind) && m.pick) {
         const id = String(m.pick);
         if (G.recipesAt(ob.t).some((r) => r.id === id)) act.pick = id;
@@ -1562,7 +1562,7 @@ export class World {
     return this.say(pl, `You work the spawn into the compost. ${G.ITEMS[F.yields].name} in ${ms >= 5400000 ? `${Math.round(ms / 3600000 * 10) / 10} hours` : `${Math.round(ms / 60000)} minutes`}, whether you're here or not.`, "good");
   }
   /* ------------------------------------------------------------ BREEDING (2026-09-27): the island's pen
-     One pairing or one egg at a time, per island. The food (and the gem, and the nest) is taken ALL AT ONCE at the start - the
+     One pairing at a time, per island (eggs are the hatchery's, below). The food is taken ALL AT ONCE at the start - the
      owner: "every hour feels like micromanaging" - and the clock then runs untouched, offline included, because it is only a
      start time and a length on the character. Pets in the pen are off `pets` so they cannot be worn, traded or bred twice;
      they go back on at collect, or at release. The child is decided when the pairing STARTS, so collecting cannot be
@@ -1580,7 +1580,7 @@ export class World {
     const lv = G.lvlOf(C, "breeding"), P = C.pen;
     if (op === "view") return this.penView(S, pl);
     const needAll = (list) => { const short = list.filter(([k, n]) => G.countItems(C, [k]) < n); return short.length ? `You need ${short.map(([k, n]) => `${n} ${G.ITEMS[k].name.toLowerCase()} (you have ${G.countItems(C, [k])})`).join(", ")}.` : null; };
-    if ((op === "pair" || op === "egg") && P) return bad("The pen is busy. Collect it, or let it go, first.");
+    if (op === "pair" && P) return bad("The pen is busy. Collect it, or let it go, first.");
     if (op === "pair") {
       const a = G.petById(C, String(m.a || "")), b = G.petById(C, String(m.b || "")), pr = G.pairOf(a, b);
       if (pr.no) return bad(pr.no);
@@ -1595,16 +1595,6 @@ export class World {
       C.pen = { kind: pr.kind, a, b, child, at: now, ms: this.penMs(pr.ms) };
       this.grant(pl, "breeding", G.BREED[pr.kind].xpStart); this.touch(pl);
       this.say(pl, `${G.petLabel(a)} and ${G.petLabel(b)} settle into the pen with the food. Come back in ${Math.round(pr.ms / 3600000)} hours.`, "good");
-      return this.penView(S, pl);
-    }
-    if (op === "egg") {
-      const k = String(m.k || ""), E = G.EGGS[k]; if (!E) return;
-      if (lv < E.lvl) return bad(`That egg needs Breeding ${E.lvl}. You're ${lv}.`);
-      const need = [[k, 1], [G.BREED.nest, 1], [E.gem, 1]], short = needAll(need); if (short) return bad(short);
-      for (const [x, n] of need) G.takeInv(C.inv, x, n);
-      C.pen = { kind: "egg", egg: k, child: { k: E.pet }, at: now, ms: this.penMs(E.ms) };
-      this.grant(pl, "breeding", Math.round(E.xp * 0.1)); this.touch(pl);
-      this.say(pl, `The ${G.ITEMS[k].name.toLowerCase()} sits in its nest on the ${E.gem}. ${Math.round(E.ms / 3600000)} hours.`, "good");
       return this.penView(S, pl);
     }
     if (op === "collect") {
@@ -1625,6 +1615,41 @@ export class World {
       const back = [P.a, P.b].filter(Boolean); C.pets.push(...back); C.pen = null; this.touch(pl);
       this.say(pl, back.length ? "You open the pen. Both pets come back to you; the food is gone." : "You take the nest apart. The egg is lost.", "bad");
       return this.penView(S, pl);
+    }
+  }
+
+  /* THE HATCHERY (2026-09-27, the owner: "you simply place it down and then place an egg in it and let it hatch"). A decor piece
+     from Yahsmeena, one per island. One egg at a time: the egg and BREED.hatch.food Ordinary pet food go in, the clock runs, the
+     pet comes out. No level, no gem, no nest. C.hatch is the one slot. */
+  hatchOf(S) { return S?.objs?.find((o) => o.t === "hatchery") || null; }
+  hatchView(S, pl) { const H = pl.C.hatch; pl.out.push({ type: "hatch", hatch: H ? { egg: H.egg, child: H.child, at: H.at, ms: H.ms } : null, now: Date.now() }); }
+  hatchOp(S, pl, m) {
+    const C = pl.C, op = String(m.op || ""), now = Date.now(), bad = (t) => this.say(pl, t, "bad"), hb = this.hatchOf(S), H = C.hatch;
+    if (!hb) return;
+    if (S.owner !== pl.id) return bad("That's somebody else's hatchery.");
+    if (G.cheb(pl, hb) > G.BREED.reach + 1) return bad("Walk over to the hatchery first.");
+    if (op === "view") return this.hatchView(S, pl);
+    if (op === "egg") {
+      if (H) return bad("There's already an egg in it.");
+      const k = String(m.k || ""), E = G.EGGS[k]; if (!E) return;
+      const food = G.RANKS.ordinary.food, n = G.BREED.hatch.food;
+      if (G.countItems(C, [k]) < 1) return;
+      if (G.countItems(C, [food]) < n) return bad(`An egg needs ${n} Ordinary pet food to hatch on, and you have ${G.countItems(C, [food])}. Cook it at a campfire (Cooking 20).`);
+      G.takeInv(C.inv, k, 1); G.takeInv(C.inv, food, n);
+      C.hatch = { egg: k, child: { k: E.pet }, at: now, ms: this.penMs(E.ms) };
+      this.grant(pl, "breeding", Math.round(E.xp * 0.1)); this.touch(pl);
+      this.say(pl, `The ${G.ITEMS[k].name.toLowerCase()} settles into the straw under the lamp. ${Math.round(E.ms / 3600000)} hours.`, "good");
+      return this.hatchView(S, pl);
+    }
+    if (op === "collect") {
+      if (!H) return;
+      if (now < H.at + H.ms) { const left = H.at + H.ms - now, h = Math.floor(left / 3600000), mi = Math.ceil((left % 3600000) / 60000); return bad(`Not yet: ${h ? `${h} h ` : ""}${mi} min to go.`); }
+      if (G.petsOf(C).length + 1 > 50) return bad("You have too many pets to take another. Let one go first.");
+      const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k: H.child.k, name: "" };
+      C.pets.push(pet); C.hatch = null; this.grant(pl, "breeding", G.EGGS[H.egg]?.xp || 0); this.touch(pl);
+      this.say(pl, `The egg hatches: a ${G.PETS[pet.k].name}! It's in your Equipment tab.`, "loot");
+      for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `\u{1F95A} ${pl.name} hatched a ${G.PETS[pet.k].name}!` });
+      return this.hatchView(S, pl);
     }
   }
   /** once a minute-ish: the Mimic's present, once a Chicago day, to whoever is wearing one */
@@ -2599,6 +2624,7 @@ export class World {
     if (a.kind === "towerup") { pl.act = null; return this.towerUp(S, pl); }        /* the stairs: refuses until the floor is clear */
     if (a.kind === "cryptloot") { pl.act = null; return S.def.pyramid ? this.pyramidLootOpen(S, pl) : this.cryptLootOpen(S, pl); }
     if (a.kind === "pen") { pl.act = null; return this.penView(S, pl); }
+    if (a.kind === "hatchery") { pl.act = null; return this.hatchView(S, pl); }   /* (2026-09-27) the hatchery's window */
     if (a.kind === "shroom") { pl.act = null; return this.fungPick(S, pl, a.ob); }   /* (2026-09-27) Fungiculture */
     if (a.kind === "fbed") { pl.act = null; return this.fungBed(S, pl, a.ob, now); }
     if (a.kind === "cellar") { pl.act = null; return this.fungDown(S, pl); }   /* (2026-09-27) Breeding: the page opens the pen window */
@@ -3260,7 +3286,9 @@ export class World {
     if (op === "take") {
       const x = m.x | 0, y = m.y | 0, at = DR.decorAt(S.key);
       let i = -1; I.decor.forEach((d, n) => { const Q = DR.DECOR[d.k]; if (Q && d.at === at && x >= d.x && x < d.x + Q.w && y >= d.y && y < d.y + Q.h && (i < 0 || !Q.flat)) i = n; });   // what stands on a tile before what lies on it
-      if (i < 0) return; I.decor.splice(i, 1); this.touch(pl); this.decorTell(pl.id); return;
+      if (i < 0) return;
+      if (I.decor[i].k === "hatchery" && C.hatch) return this.say(pl, "There's an egg in the hatchery. Let it hatch first.", "bad");   /* (2026-09-27) */
+      I.decor.splice(i, 1); this.touch(pl); this.decorTell(pl.id); return;
     }
   }
   isleUse(S, pl, a, now) {
