@@ -147,7 +147,12 @@ button,input,select{font:inherit}
   .side::before{content:"";display:block;width:44px;height:5px;margin:4px auto 2px;border-radius:3px;background:#c8963a;opacity:.85}
   .side.open{transform:none}
 }
-.chat-tab.sidebtn{display:none}
+/* (2026-09-27) desktop only: this used to be a bare rule AFTER the phone block above, so at the same specificity it won everywhere and the
+   phone lost its Menu button too (the owner: "theres no menu button now"). Scoped to the widths the phone block does not cover. */
+@media (min-width:821px){.chat-tab.sidebtn{display:none}}
+/* (2026-09-27) and on a phone the Green Room's floating player sat 10px off the bottom of the game, on top of that same strip: it covered
+   the Menu button. It rides above the bar there (`body` beats the rule eastscape-green.js injects later), and a little narrower. */
+@media (max-width:820px){body .sgdock,body .sgoff{bottom:74px}body .sgdock{width:min(240px,58vw)}}
 @media (prefers-reduced-motion:reduce){.side{transition:none}}
 @media (max-width:520px){.top:not(.open) #topMe{display:none}}
 @media (max-height:520px) and (min-width:821px){
