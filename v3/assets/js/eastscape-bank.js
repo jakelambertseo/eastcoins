@@ -60,7 +60,6 @@ export function createBankUi(E) {
         <div class="bk-actions"><button type="button" class="btn plain" id="bkDepInv" title="Everything in your bag goes in (tickets stay with you)">Deposit bag</button><button type="button" class="btn plain" id="bkDepEq" title="Everything you are wearing goes in">Deposit worn</button><button type="button" class="btn plain" id="bkStack" title="Every stack your bank already holds goes in, all of it">Stack all</button></div>
         <div class="bk-move"><span>Move</span><div class="qty" id="bkQty">${[["1", "1"], ["5", "5"], ["10", "10"], ["x", "X"], ["all", "All"]].map(([k, n]) => `<button type="button" data-n="${k}">${n}</button>`).join("")}</div><input type="number" id="bkX" min="1" step="1" value="${x}" aria-label="Your own amount" title="Your own amount: pick X, then click an item"></div>
         <p class="bk-hint">Click moves that many. <b>Shift-click</b>: a full stack out, the whole lot in. <b>Right-click</b> an item for more.</p>
-        <div id="bkUp"></div>
       </aside></div>`;
     $("bkSearch").addEventListener("input", () => { q = $("bkSearch").value.trim().toLowerCase(); render(); });
     $("bkSort").addEventListener("click", (e) => { const b = e.target.closest("[data-s]"); if (!b) return; sort = b.dataset.s; lsSet("es_bank_sort", sort); SFX.play("ui_click"); render(); });
@@ -153,9 +152,8 @@ export function createBankUi(E) {
     const bagHtml = me.inv.map((s, i) => slotHtml(s, i).replace('class="slot"', `class="slot${q && !ITEMS[s.k].name.toLowerCase().includes(q) ? " dim" : ""}${s.k === "tickets" ? " stay" : ""}"`)).join("") || `<p class="bk-empty">Your bag is empty.</p>`;
     if (bagHtml !== last.bag) { $("bkBag").innerHTML = bagHtml; last.bag = bagHtml; }
     $("bkBagN").textContent = `${me.inv.length} / ${G.bagMax(me)}`;
-    const upCost = G.bagUpCost(me), up = upCost == null ? `<p class="bk-hint">Your bag is as big as Bom will make it.</p>`
-      : `<div class="bk-up"><span>Bom will sew on another pocket for <b>${G.fmtTix(upCost)}</b> (${G.BAG_UPGRADES.length - (me.bagUp | 0)} left).</span><button type="button" class="btn" id="bkUpGo"${G.tixIn(me) >= upCost ? "" : " disabled"}>Buy a slot · ${G.bagMax(me) + 1}</button></div>`;
-    if (up !== last.up) { $("bkUp").innerHTML = up; last.up = up; $("bkUpGo")?.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); send({ t: "counter", op: "bagup" }); }); }
+    /* (2026-09-27, the owner: "remove this part so there's more space ... allow this specific bag / slot upgrade to only be purchased at Bom")
+       the bag upgrade is Bom's alone now: it is the same purchase, from the Prize Counter */
   }
   return { render, catOf };
 }
