@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=345">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=346">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1354,7 +1354,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=345";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=346";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -2031,7 +2031,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 118;
+const PACKS_V = 119;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -2081,7 +2081,10 @@ const AREA_ART = {
        ARE in core - o_sign, o_fire, o_statue, o_plant, o_column, o_bench, o_walldoor - because a name in an area
        list is what DEFERS it, and listing those pulled fifteen shared pictures out from under the whole game. */
     "o_chest", "o_bucket", "o_cat",
-    "t_guild", ...["pete", "marla", "quietman", "odile"].flatMap((k) => [`${k}_south`, `${k}_east`])],
+    /* (2026-09-27, the owner: "parlay pete is rendered by html instead of his art") NOT "pete": Sticky Pete here wears Parlay Pete's picture,
+       and Parlay Pete stands in the Casino, where everyone starts. Naming it here took it out of the login download, so a new character in
+       the Casino drew him as the plain fallback figure. tools/eastscape-art-reach.mjs is the check. */
+    "t_guild", ...["marla", "quietman", "odile"].flatMap((k) => [`${k}_south`, `${k}_east`])],
   // the one line out of the casino (2026-09-20): every scene has its rocks, trees, fish AND its monsters
   workyard: ["o_jbench", "o_nightmarket", "hexa_south", "hexa_east", "o_altar_arcane", "o_yardtree", "o_yardtree_stump", "o_tower", "hornworm", "boar", "olive", "o_chest", "o_chariot", "charon_south", "charon_east", "livia_south", "livia_east", "o_stall", "o_cryptdoor",
     /* (2026-09-22) the market's railings and clutter. ART_FILES is the MASTER list of every picture; naming one
