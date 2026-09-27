@@ -1,0 +1,26 @@
+{
+ "out": "bw_light",
+ "rects": [
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 12,
+   "w": 2,
+   "h": 2,
+   "dx": 0,
+   "dy": 0,
+   "dw": 44,
+   "dh": 26
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 0,
+   "w": 25,
+   "h": 25,
+   "dx": 9,
+   "dy": 0,
+   "landOnly": 1
+  }
+ ]
+}

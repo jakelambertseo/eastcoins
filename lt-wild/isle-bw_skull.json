@@ -1,0 +1,26 @@
+{
+ "out": "bw_skull",
+ "rects": [
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 12,
+   "w": 2,
+   "h": 2,
+   "dx": 0,
+   "dy": 0,
+   "dw": 44,
+   "dh": 26
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-17.png",
+   "sx": 0,
+   "sy": 0,
+   "w": 24,
+   "h": 16,
+   "dx": 10,
+   "dy": 5,
+   "landOnly": 1
+  }
+ ]
+}

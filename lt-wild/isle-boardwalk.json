@@ -1,0 +1,69 @@
+{
+ "out": "boardwalk",
+ "rects": [
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 12,
+   "w": 2,
+   "h": 2,
+   "dx": 0,
+   "dy": 0,
+   "dw": 44,
+   "dh": 26
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-10.png",
+   "sx": 0,
+   "sy": 0,
+   "w": 27,
+   "h": 26,
+   "dx": 0,
+   "dy": 0,
+   "landOnly": 1
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-10.png",
+   "sx": 26,
+   "sy": 4,
+   "w": 1,
+   "h": 9,
+   "dx": 27,
+   "dy": 4,
+   "dw": 17
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-10.png",
+   "sx": 26,
+   "sy": 4,
+   "w": 1,
+   "h": 4,
+   "dx": 27,
+   "dy": 0,
+   "dw": 17,
+   "dh": 4
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 12,
+   "w": 2,
+   "h": 2,
+   "dx": 1,
+   "dy": 21,
+   "dw": 1,
+   "dh": 3
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 12,
+   "w": 2,
+   "h": 2,
+   "dx": 12,
+   "dy": 22,
+   "dw": 1,
+   "dh": 3
+  }
+ ]
+}

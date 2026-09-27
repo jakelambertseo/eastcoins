@@ -1,0 +1,70 @@
+{
+ "out": "bw_wreck",
+ "rects": [
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 12,
+   "w": 2,
+   "h": 2,
+   "dx": 0,
+   "dy": 0,
+   "dw": 44,
+   "dh": 26
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-13.png",
+   "sx": 0,
+   "sy": 0,
+   "w": 23,
+   "h": 21,
+   "dx": 10,
+   "dy": 2,
+   "landOnly": 1
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 12,
+   "w": 2,
+   "h": 2,
+   "dx": 10,
+   "dy": 2,
+   "dw": 6,
+   "dh": 3
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 12,
+   "w": 2,
+   "h": 2,
+   "dx": 10,
+   "dy": 5,
+   "dw": 2,
+   "dh": 2
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 12,
+   "w": 2,
+   "h": 2,
+   "dx": 12,
+   "dy": 5,
+   "dw": 1,
+   "dh": 1
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 12,
+   "w": 2,
+   "h": 2,
+   "dx": 19,
+   "dy": 2,
+   "dw": 5,
+   "dh": 1
+  }
+ ]
+}

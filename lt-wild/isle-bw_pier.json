@@ -1,0 +1,110 @@
+{
+ "out": "bw_pier",
+ "rects": [
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 12,
+   "w": 2,
+   "h": 2,
+   "dx": 0,
+   "dy": 0,
+   "dw": 44,
+   "dh": 26
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-20.png",
+   "sx": 0,
+   "sy": 0,
+   "w": 25,
+   "h": 22,
+   "dx": 0,
+   "dy": 0,
+   "landOnly": 1
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-20.png",
+   "sx": 24,
+   "sy": 0,
+   "w": 1,
+   "h": 1,
+   "dx": 25,
+   "dy": 0,
+   "dw": 19,
+   "dh": 2
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-20.png",
+   "sx": 24,
+   "sy": 2,
+   "w": 1,
+   "h": 1,
+   "dx": 25,
+   "dy": 2,
+   "dw": 19
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-20.png",
+   "sx": 20,
+   "sy": 6,
+   "w": 1,
+   "h": 1,
+   "dx": 25,
+   "dy": 3,
+   "dw": 19,
+   "dh": 6
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-20.png",
+   "sx": 20,
+   "sy": 6,
+   "w": 1,
+   "h": 1,
+   "dx": 21,
+   "dy": 9,
+   "dw": 23
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-20.png",
+   "sx": 12,
+   "sy": 10,
+   "w": 1,
+   "h": 1,
+   "dx": 21,
+   "dy": 10,
+   "dw": 23
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-20.png",
+   "sx": 12,
+   "sy": 11,
+   "w": 1,
+   "h": 1,
+   "dx": 21,
+   "dy": 11,
+   "dw": 23
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-20.png",
+   "sx": 20,
+   "sy": 6,
+   "w": 1,
+   "h": 1,
+   "dx": 22,
+   "dy": 8,
+   "dw": 3,
+   "dh": 1
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 12,
+   "w": 2,
+   "h": 2,
+   "dx": 6,
+   "dy": 19,
+   "dw": 6,
+   "dh": 2
+  }
+ ]
+}

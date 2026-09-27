@@ -7608,9 +7608,9 @@ Object.assign(QUESTS, {
   bwmackerel: {
     name: "Mackerel Sky", giver: "Salty Meg", where: "The Boardwalk", icon: "\u{1F41F}",
     goal: { type: "bring", items: ["mackerel"], n: 10, what: "raw mackerel" },
-    brief: "Salty Meg wants ten raw mackerel off the inlet by the beach.",
-    talk: { offer: ["The gulls have had every mackerel off my counter this week.", "Ten off the inlet, past the beach pier. Fishing 60. Raw: I do the cooking here."], accept: "Ten mackerel.", decline: "Then buy your chips elsewhere.",
-      accepted: "The inlet, west, past the pier. Rod in hand.", progress: "Ten mackerel. You've {have}.", ready: "Look at the shine on those.", hand: "Ten.",
+    brief: "Salty Meg wants ten raw mackerel, off the Market's piers or Cabin Coast's.",
+    talk: { offer: ["The gulls have had every mackerel off my counter this week.", "Ten off the piers, past the ship. Fishing 60. Raw: I do the cooking here."], accept: "Ten mackerel.", decline: "Then buy your chips elsewhere.",
+      accepted: "Off the piers, past the ship. Rod in hand.", progress: "Ten mackerel. You've {have}.", ready: "Look at the shine on those.", hand: "Ten.",
       done: "That's a counter full. Here, and mind the deckhands on your way back." },
     reward: { coins: 4000, xp: { fishing: 4000 }, text: "4,000 tickets, 4,000 Fishing xp" }
   },
@@ -7626,15 +7626,21 @@ Object.assign(QUESTS, {
   bwcaptain: {
     name: "Captain Claw", giver: "Salty Meg", where: "The Boardwalk", icon: "\u{1F980}", requires: ["bwdeckhands"],
     goal: { type: "kill", mob: "captainclaw", n: 1, what: "Captain Claw" },
-    brief: "Captain Claw sits on the beach at the bottom of the strand. Salty Meg would like him gone.",
-    talk: { offer: ["Down the strand, where the sand runs out. He doesn't come up; he sends them.", "That claw takes a man's arm off. Nobody does him alone. Bring people; everyone who hurts him shares him."], accept: "Together, then.", decline: "Not today.",
-      accepted: "Down the beach, all the way. Arrows won't get through the claw.", progress: "He's still down there.", ready: "I heard that from here. He's down?", hand: "He's down.",
+    brief: "Captain Claw holds Skull Isle, the last island the rowboats reach. Salty Meg would like him gone.",
+    talk: { offer: ["Skull Isle, the last island out. Row island to island from the end of the long pier. He doesn't come in; he sends them.", "That claw takes a man's arm off. Nobody does him alone. Bring people; everyone who hurts him shares him."], accept: "Together, then.", decline: "Not today.",
+      accepted: "Every island has a rowboat to the next. The last one is his. Arrows won't get through the claw.", progress: "He's still down there.", ready: "I heard that from here. He's down?", hand: "He's down.",
       done: "Thirty years he's taxed this pier. Here: it's the fish money, and it's yours." },
     reward: { coins: 20000, xp: { melee: 10000, hp: 4000 }, text: "20,000 tickets, 10,000 Melee xp, 4,000 Hitpoints xp" }
   }
 });
 for (const [k, tier] of [["bwmackerel", "medium"], ["bwdeckhands", "hard"], ["bwcaptain", "hard"]]) { QUESTS[k].stages = [{ ...QUESTS[k].goal }]; QUESTS[k].tier = tier; }
-if (!HOLD.boardwalk) { OPEN.add("boardwalk"); SCENES.carnival.exits.w = "boardwalk"; PET_SCENES.add("boardwalk"); EGGS.egg_cindered.from.push("boardwalk"); EGGS.egg_velvet.from.push("boardwalk"); }
+/* (2026-09-27) the Boardwalk's five islands after the Market: a rowboat chain (eastscape-closed.js), levels rising along it */
+export const BW_ISLES = ["bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull"];
+Object.assign(BANDS, { bw_cabin: [66, 72], bw_light: [70, 76], bw_wreck: [72, 80], bw_pier: [72, 80], bw_skull: [74, 82] });
+for (const k of BW_ISLES) DEATH[k] = { share: 0.1, cap: 4000 };
+Object.assign(VERB, { rowboat: "Row" });
+EXAMINE.rowboat = ["A rowboat, bailed out and tied up. It goes to the next island, or back to the last."];
+if (!HOLD.boardwalk) { OPEN.add("boardwalk"); SCENES.carnival.exits.w = "boardwalk"; PET_SCENES.add("boardwalk"); for (const k of BW_ISLES) { OPEN.add(k); PET_SCENES.add(k); } EGGS.egg_cindered.from.push("boardwalk"); EGGS.egg_velvet.from.push("boardwalk"); }
 const _preFoundry = new Set(Object.keys(ITEMS));
 /* ============================================================ THE FOUNDRY (2026-09-27, the massive update, 6 of 8)
    EASTSCAPE-MAPS.md's map C, built on Rafael Matos's "ERW - Volcano": the works under the Thunderhead, where the mountain's ore is

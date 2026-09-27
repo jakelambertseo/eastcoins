@@ -318,7 +318,7 @@ export const GUIDES = [
      the same levels and be a choice rather than a sequence. */
   { id: "road", title: "The road out", icon: "\u{1F5FA}️", cat: "Starting out",
     body: (G, H) => {
-      const ORDER = ["workyard", "gloam", "mire", "boneyard", "orchard", "cloud", "sands", "thunderhead", "carnival", "boardwalk", "foundry", "vault", "depths", "trailer", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
+      const ORDER = ["workyard", "gloam", "mire", "boneyard", "orchard", "cloud", "sands", "thunderhead", "carnival", "boardwalk", "bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull", "foundry", "vault", "depths", "trailer", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
       const NOTE = {
         workyard: "the casino, the bank, the campfire, the furnace and anvil, sardines",
         gloam: "emerald and diamond ore, gloomwillow, trout and catfish",
@@ -331,6 +331,11 @@ export const GUIDES = [
         vault: "end-game fighting, and the only <b>nova</b> and <b>singularity</b> ore in the game",
         boardwalk: "a drowned seaside market west of the Carnival: mackerel, bluefin and swordfish off the piers, the Chip Shop, gulls and Kraken Arms that only a bow or a wand reaches, and Captain Claw at the bottom of the strand",   /* (2026-09-27) */
         orchard: "the country south of the Boneyard: a market wagon under the big trees, pines (Woodcutting 52) and walnuts (66), Pomona's stove, wasps over the pond, and across the brook's stone bridge an orc camp behind a fence, its wood below it, and the Gardener at the bottom of it",   /* (2026-09-27) */
+        bw_cabin: "the Boardwalk's second island: a cabin, palms, starfall rocks and mackerel",   /* (2026-09-27) */
+        bw_light: "a lighthouse on its own island: starfall and eclipse rocks, bluefin, Clawhands on the sand",
+        bw_wreck: "a ship broken in two on a sandbar: eclipse rocks, swordfish, and Kraken Arms in the shallows",
+        bw_pier: "the pirates' house and a boathouse out on the pier: nova rocks, bluefin and swordfish",
+        bw_skull: "the last island: the skull in the rock, nova rocks, and Captain Claw",
         foundry: "the works under the Thunderhead, south of it: a lava river, a ring with two demon statues at its gate, the blast furnace (every furnace recipe, half as much xp again), Eclipse, Nova and Singularity veins out in the open, Slag Golems, Furnace Imps, Cinder Elementals and Old Bessemer rising out of the ring",   /* (2026-09-27) */
         depths: "ledges over a bottomless drop: monsters that shrug off a whole fighting style, abyss crystal, eclipse and nova ore, and the Deepwarden",   /* (2026-09-27) */
         trailer: "the best gathering in the game, and the meanest neighbours",

@@ -355,58 +355,307 @@ export function createClosedScenes(G, H) {
      (bw_bg1 / bw_bg2, composed by lt-wild/compose-rects.mjs from its market-and-pier mockups), so it draws no banks, no tufts and no
      tiles of its own. The beach and its palms on the left, the pier off it to the market's bank, the stalls on the stone plaza, the pier
      network out over the water with the boats, and the grass at the east edge back to the Carnival. Fishing 60-84, combat 66-80. */
+  /* (2026-09-27) THE BOARDWALK, REBUILT AS ISLANDS (the owner: "it will be multiples of scenes that are mostly smaller land areas
+     surrounded by water ... all of these need entries and exits"): the Market: the ship, the stalls and the piers, where the rowboats start. Composed from the Sea pack's mockup (lt-wild/isle-boardwalk.json);
+     where you can walk is lt-wild/isle-blocks.json. The rowboats carry you along the chain; the pack's own animations move the sea,
+     the palms and the boats. A boat is drawn with its near end against the land it is tied to (ox/oy), so it lies out over the water. */
   boardwalk: {
-    name: "The Boardwalk", exits: { e: "carnival" }, bgArt: ["boardwalk_bg1", "boardwalk_bg2"], noBanks: true, miniWater: "#2a7fc0", tint: "rgba(10,40,70,.16)",
+    name: "The Boardwalk", exits: { e: "carnival" }, arrive: { e: { x: 41, y: 6 } }, bgArt: ["boardwalk_bg1", "boardwalk_bg2"], noBanks: true, ground: "sea", miniWater: "#2a7fc0", tint: "rgba(10,40,70,.10)", boatIsle: true,
     rows: [
-          "............~~~...............~~~~~~~~~~~...",
-          "...~....~...~~~.~~~~~.......~~~~~~~~~~~~~~~e",
-          "...~....~...~~~.~~~~~.......~~~~~~..~~~~~~~e",
-          "............~~~............................e",
-          "........~....~~.......~~~...................",
-          ".~......~....~~.......~~~~~~~..~~~~.~~~~~...",
-          ".~...........~~.......~~~~~~~..~~~~.~~~~~~~.",
-          ".............~~.........~~~~~..~~~~~~~~~~~~.",
-          "........................~~~~~..~~~~~~~~~~~~.",
-          "............................................",
-          "............................................",
-          "....~~~~~~~~~~~.............................",
-          "....~~~~~~~~~~~~~~~~~~~~~~~~~~....~~~~~~~~~~",
-          "....~~~~~~~~~~~~~~~~~~~~~~~~~~....~~~~~~~~~~",
-          "....~~~~~~~~~~~~~~~~~~~~~~~~~~....~~~~~~~~~~",
-          "....~~~~~~~~~~~~~~~~...~~~~~~~....~~~~~~~~~~",
-          "....~~~~~~~~~~~~~~~~..............~~~~~~~~~~",
-          "....~~~~~~~~~~~~~~~~..............~~~~~~~~~~",
-          "....~~~~~~~~~~~~~~~~...~~~~~~~....~~~~~~~~~~",
-          ".....~~~~~~~~~~~~~~~...~~~~~~~....~~~~~~~~~~",
-          ".....~~~~~~~~~~~~~~~...~~~~~~~~~~~~~~~~~~~~~",
-          ".....~~~~~~~~~~~~..........~~~~~~~~~~~~~~~~~",
-          ".....~~~~~~~~~~~~..........~~~~~~~~~~~~~~~~~",
-          ".....~~~~~~~~~~~~~~~...~~~~~~~~~~~~~~~~~~~~~",
-          ".....~~~~~~~~~~~~~~~...~~~~~~~~~~~~~~~~~~~~~",
-          ".....~~~~~~~~~~~~~~~...~~~~~~~~~~~~~~~~~~~~~"
+          "...##...........####..####..................",
+          ".####.........######..#####.................",
+          "..............#######.#####.................",
+          "..............##............................",
+          ".......##..................................e",
+          ".......##.####..####.####..................e",
+          ".......#############.#####.................e",
+          ".......###################.................e",
+          ".......###################.................e",
+          "###############.............................",
+          "###############.............................",
+          "###############.............................",
+          "###############.............................",
+          "###############....~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "###############....~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "###############....~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~...~~~~~~~....~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~..............~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~..............~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~..............~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~...~~~~~~~....~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~..........~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~..........~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~........~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
     ],
     build() {
       const { g, objs } = fromRows(this.rows, G);
-      /* the fishing: the inlet off the beach (mackerel, bluefin), the pier ends (bluefin, swordfish), the deep water past the boats */
-      objs.push({ t: "spot", x: 13, y: 6, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 210, xp2: 260, glow: "#6ad8ff", tease: "Mackerel turn under the pier, flashing." });
-      objs.push({ t: "spot", x: 13, y: 4, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 210, xp2: 260, glow: "#6ad8ff" });
-      objs.push({ t: "spot", x: 34, y: 18, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 260, xp2: 320, glow: "#6ad8ff", tease: "Something long rolls over out there and goes back down." });
-      objs.push({ t: "spot", x: 19, y: 16, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 260, xp2: 320, glow: "#6ad8ff" });
-      objs.push({ t: "spot", x: 23, y: 25, name: "The Deep Water", req: { skill: "fishing", lvl: 84 }, fish: "swordfish", fish2: "bluefin", fish2lvl: 72, xp: 320, xp2: 260, glow: "#4ab0ff", tease: "The water is black out here. The swordfish like it." });
-      objs.push({ t: "spot", x: 16, y: 22, name: "The Deep Water", req: { skill: "fishing", lvl: 84 }, fish: "swordfish", fish2: "bluefin", fish2lvl: 72, xp: 320, xp2: 260, glow: "#4ab0ff" });
-      /* the Chip Shop: a range by the fish stalls, Cooking's top rung outside the Deep Wild */
-      objs.push({ t: "range", x: 30, y: 10, name: "The Chip Shop" }); g[10][30] = "#";
+      objs.push({ t: "spot", x: 8, y: 24, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 210, xp2: 260, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 12, y: 22, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 210, xp2: 260, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 19, y: 16, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 210, xp2: 260, glow: "#6ad8ff" });
+      objs.push({ t: "yew", art: "bw_palm1", anim: "bw_palm1a", frames: 10, cols: 10, fw: 107, fh: 169, fps: 7, h: 1, ox: -31.5, oy: -57.0, phase: 0, x: 33, y: 3, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[3][33] = "#";
+      objs.push({ t: "yew", art: "bw_palm2", anim: "bw_palm2a", frames: 10, cols: 10, fw: 70, fh: 127, fps: 7, h: 1, ox: -16.0, oy: -37.0, phase: 9, x: 39, y: 2, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[2][39] = "#";
+      objs.push({ t: "yew", art: "bw_palm3", anim: "bw_palm3a", frames: 10, cols: 10, fw: 77, fh: 143, fps: 7, h: 1, ox: -7.5, oy: -44.5, phase: 5, x: 36, y: 11, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[11][36] = "#";
+      objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: 0, oy: -10.75, phase: 11, x: 19, y: 20, name: "Rowboat to Cabin Coast", row: { to: "bw_cabin", x: 25, y: 10 } });
+      objs.push({ t: "range", x: 26, y: 4, name: "The Chip Shop" }); g[4][26] = "#";
       return { g, objs, blobs: [] };
     },
-    /* gulls hang over the water by the piers (66, a bow or a wand); deckhands on the plaza (69); Clawhands on the beach (74); Kraken Arms in
-       the water beside the lower piers (78, reach two); Captain Claw at the bottom of the strand (80, open to everyone who hurts him) */
-    mobs: [["gull", 18, 14, { perch: true, respawn: [90000, 150000] }], ["gull", 27, 14, { perch: true, respawn: [90000, 150000] }], ["gull", 36, 15, { perch: true, respawn: [90000, 150000] }], ["gull", 13, 12, { perch: true, respawn: [90000, 150000] }],
-      ["deckhand", 26, 10, { respawn: [90000, 150000] }], ["deckhand", 33, 9, { respawn: [90000, 150000] }], ["deckhand", 38, 10, { respawn: [90000, 150000] }], ["deckhand", 29, 4, { respawn: [90000, 150000] }], ["deckhand", 41, 4, { respawn: [90000, 150000] }], ["deckhand", 21, 8, { respawn: [90000, 150000] }],
-      ["clawhand", 3, 4, { respawn: [110000, 180000] }], ["clawhand", 9, 6, { respawn: [110000, 180000] }], ["clawhand", 2, 13, { respawn: [110000, 180000] }], ["clawhand", 6, 3, { respawn: [110000, 180000] }], ["clawhand", 2, 17, { respawn: [110000, 180000] }],
-      ["krakenarm", 16, 23, { perch: true, respawn: [130000, 200000] }], ["krakenarm", 24, 24, { perch: true, respawn: [130000, 200000] }], ["krakenarm", 28, 21, { perch: true, respawn: [130000, 200000] }], ["krakenarm", 19, 19, { perch: true, respawn: [130000, 200000] }],
-      ["captainclaw", 2, 23, { aggro: 3, respawn: [2400000, 3000000] }]],
-    npcs: [{ name: "Salty Meg", art: "saltymeg", x: 17, y: 9, still: true, quests: ["bwmackerel", "bwdeckhands", "bwcaptain"], hair: "#6a3a1e", shirt: "#3a5a8a", pants: "#3a3a3a",
-      lines: ["Fish, chips, and a knife in the counter most mornings. Welcome to the Boardwalk.", "The gulls hang over the water where you can't reach them. Bring a bow.", "Don't fish past the boats unless you're sure. The arms come up.", "The captain keeps to the bottom of the strand. He sends the deckhands so he needn't get sand on the coat."] }],
+    mobs: [["gull", 24, 14, { perch: true, respawn: [90000, 150000] }], ["gull", 32, 15, { perch: true, respawn: [90000, 150000] }], ["gull", 38, 14, { perch: true, respawn: [90000, 150000] }], ["gull", 10, 16, { perch: true, respawn: [90000, 150000] }], ["deckhand", 30, 4, { respawn: [90000, 150000] }], ["deckhand", 36, 8, { respawn: [90000, 150000] }], ["deckhand", 12, 2, { respawn: [90000, 150000] }], ["deckhand", 22, 10, { respawn: [90000, 150000] }], ["deckhand", 40, 3, { respawn: [90000, 150000] }]],
+    npcs: [{ name: "Salty Meg", art: "saltymeg", x: 27, y: 6, still: true, quests: ["bwmackerel", "bwdeckhands", "bwcaptain"], hair: "#6a3a1e", shirt: "#3a5a8a", pants: "#3a3a3a",
+      lines: ["Fish, chips, and a knife in the counter most mornings. Welcome to the Boardwalk.", "The rowboat off the end of the long pier goes to Cabin Coast, and every island's boat goes on to the next: the Lighthouse, the wreck, the pirates' pier, and Skull Isle last.", "The gulls hang over the water where you can't reach them. Bring a bow.", "The captain keeps to Skull Isle. He sends the deckhands so he needn't get sand on the coat."] }],
+    bots: []
+  },
+  /* (2026-09-27) THE BOARDWALK, REBUILT AS ISLANDS (the owner: "it will be multiples of scenes that are mostly smaller land areas
+     surrounded by water ... all of these need entries and exits"): a cabin on the coast, its wagon and its palms. Composed from the Sea pack's mockup (lt-wild/isle-bw_cabin.json);
+     where you can walk is lt-wild/isle-blocks.json. The rowboats carry you along the chain; the pack's own animations move the sea,
+     the palms and the boats. A boat is drawn with its near end against the land it is tied to (ox/oy), so it lies out over the water. */
+  bw_cabin: {
+    name: "Cabin Coast", bgArt: ["bw_cabin_bg1", "bw_cabin_bg2"], noBanks: true, ground: "sea", miniWater: "#2a7fc0", tint: "rgba(10,40,70,.10)", boatIsle: true,
+    rows: [
+          "###############...###.......................",
+          "################..###.......................",
+          "################............................",
+          "################...#........................",
+          "################.#.#........................",
+          "...####...#####....#...~....................",
+          "##.##.................~~....~...............",
+          "##............#####~~~~~....~~~~~~~~~~~~~~~~",
+          "##..####...#######.~~~~~....~~~~~~~~~~~~~~~~",
+          "#########..........~~~~~....~~~~~~~~~~~~~~~~",
+          "....####..........~~~~~~....~~~~~~~~~~~~~~~~",
+          "###.####......###.~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          ".........#....###.~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          ".........#.........~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "...#................~~~~~~~~~~~~~~~~~~~~~~~~",
+          "...#..#..............~~~~~~~~~~~~~~~~~~~~~~~",
+          "......#..............~~~~~~~~~~~~~~~~~~~~~~~",
+          "....................~~~~~~~~~~~~~~~~~~~~~~~~",
+          "...............~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          ".....~~.......~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~..~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      objs.push({ t: "spot", x: 19, y: 13, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 210, xp2: 260, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 14, y: 19, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 210, xp2: 260, glow: "#6ad8ff" });
+      objs.push({ t: "yew", art: "bw_palm1", anim: "bw_palm1a", frames: 10, cols: 10, fw: 107, fh: 169, fps: 7, h: 1, ox: -31.5, oy: -57.0, phase: 9, x: 11, y: 14, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[14][11] = "#";
+      objs.push({ t: "yew", art: "bw_palm2", anim: "bw_palm2a", frames: 10, cols: 10, fw: 70, fh: 127, fps: 7, h: 1, ox: -16.0, oy: -37.0, phase: 7, x: 8, y: 17, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[17][8] = "#";
+      objs.push({ t: "yew", art: "bw_palm3", anim: "bw_palm3a", frames: 10, cols: 10, fw: 77, fh: 143, fps: 7, h: 1, ox: -7.5, oy: -44.5, phase: 9, x: 13, y: 16, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[16][13] = "#";
+      objs.push({ t: "rock", ore: "starfall_ore", art: "bw_rock_starfall", x: 24, y: 2, name: "Starfall rock", req: { skill: "mining", lvl: 60 }, xp: 150 }); g[2][24] = "#";
+      objs.push({ t: "rock", ore: "starfall_ore", art: "bw_rock_starfall", x: 30, y: 3, name: "Starfall rock", req: { skill: "mining", lvl: 60 }, xp: 150 }); g[3][30] = "#";
+      objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -30.75, oy: 0, phase: 8, x: 25, y: 11, name: "Rowboat to the Market", row: { to: "boardwalk", x: 18, y: 19 } });
+      objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: 0, oy: -10.75, phase: 9, x: 21, y: 16, name: "Rowboat to the Lighthouse", row: { to: "bw_light", x: 13, y: 15 } });
+      
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["deckhand", 10, 15, { respawn: [90000, 150000] }], ["deckhand", 22, 3, { respawn: [90000, 150000] }], ["deckhand", 35, 3, { respawn: [90000, 150000] }], ["deckhand", 5, 12, { respawn: [90000, 150000] }], ["gull", 22, 15, { perch: true, respawn: [90000, 150000] }], ["gull", 30, 9, { perch: true, respawn: [90000, 150000] }], ["gull", 12, 20, { perch: true, respawn: [90000, 150000] }]],
+    npcs: [],
+    bots: []
+  },
+  /* (2026-09-27) THE BOARDWALK, REBUILT AS ISLANDS (the owner: "it will be multiples of scenes that are mostly smaller land areas
+     surrounded by water ... all of these need entries and exits"): a lighthouse and its keeper's cottage. Composed from the Sea pack's mockup (lt-wild/isle-bw_light.json);
+     where you can walk is lt-wild/isle-blocks.json. The rowboats carry you along the chain; the pack's own animations move the sea,
+     the palms and the boats. A boat is drawn with its near end against the land it is tied to (ox/oy), so it lies out over the water. */
+  bw_light: {
+    name: "The Lighthouse", bgArt: ["bw_light_bg1", "bw_light_bg2"], noBanks: true, ground: "sea", miniWater: "#2a7fc0", tint: "rgba(10,40,70,.10)", boatIsle: true,
+    rows: [
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~######~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~######~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~######~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~######~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~######~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~##~~~######~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~.##########...~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~..##########....~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~..############...~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~...##########...~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~....##########..~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~....##########..~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~...###########..~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~.................~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~................~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~.###..........~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~...........~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      objs.push({ t: "spot", x: 18, y: 19, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 260, xp2: 320, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 30, y: 11, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 260, xp2: 320, glow: "#6ad8ff" });
+      objs.push({ t: "rock", ore: "starfall_ore", art: "bw_rock_starfall", x: 15, y: 10, name: "Starfall rock", req: { skill: "mining", lvl: 60 }, xp: 150 }); g[10][15] = "#";
+      objs.push({ t: "rock", ore: "eclipse_ore", art: "bw_rock_eclipse", x: 26, y: 17, name: "Eclipse rock", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[17][26] = "#";
+      objs.push({ t: "yew", art: "bw_palm2", anim: "bw_palm2a", frames: 10, cols: 10, fw: 70, fh: 127, fps: 7, h: 1, ox: -16.0, oy: -37.0, phase: 4, x: 14, y: 12, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[12][14] = "#";
+      objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -61.5, oy: -10.75, phase: 13, x: 12, y: 15, name: "Rowboat to Cabin Coast", row: { to: "bw_cabin", x: 20, y: 16 } });
+      objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: 0, oy: -10.75, phase: 4, x: 30, y: 16, name: "Rowboat to Shipwreck Isle", row: { to: "bw_wreck", x: 12, y: 11 } });
+      
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["clawhand", 20, 16, { respawn: [110000, 180000] }], ["clawhand", 15, 13, { respawn: [110000, 180000] }], ["clawhand", 27, 12, { respawn: [110000, 180000] }], ["gull", 11, 13, { perch: true, respawn: [90000, 150000] }], ["gull", 32, 9, { perch: true, respawn: [90000, 150000] }]],
+    npcs: [],
+    bots: []
+  },
+  /* (2026-09-27) THE BOARDWALK, REBUILT AS ISLANDS (the owner: "it will be multiples of scenes that are mostly smaller land areas
+     surrounded by water ... all of these need entries and exits"): a ship broken in two on a sandbar. Composed from the Sea pack's mockup (lt-wild/isle-bw_wreck.json);
+     where you can walk is lt-wild/isle-blocks.json. The rowboats carry you along the chain; the pack's own animations move the sea,
+     the palms and the boats. A boat is drawn with its near end against the land it is tied to (ox/oy), so it lies out over the water. */
+  bw_wreck: {
+    name: "Shipwreck Isle", bgArt: ["bw_wreck_bg1", "bw_wreck_bg2"], noBanks: true, ground: "sea", miniWater: "#2a7fc0", tint: "rgba(10,40,70,.10)", boatIsle: true,
+    rows: [
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~#~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~#~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~########~###~~#~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~########.######~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~########.######.~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~########.######..~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~.########.######.~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~..########.######.~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~....#####..######.~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~...............~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~...............~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~.........##...~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~..........##.~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~..........##.~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~..........~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~.......~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      objs.push({ t: "spot", x: 18, y: 17, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 260, xp2: 320, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 31, y: 14, name: "The Deep Water", req: { skill: "fishing", lvl: 84 }, fish: "swordfish", fish2: "bluefin", fish2lvl: 72, xp: 320, xp2: 260, glow: "#4ab0ff" });
+      objs.push({ t: "rock", ore: "eclipse_ore", art: "bw_rock_eclipse", x: 19, y: 14, name: "Eclipse rock", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[14][19] = "#";
+      objs.push({ t: "rock", ore: "eclipse_ore", art: "bw_rock_eclipse", x: 24, y: 16, name: "Eclipse rock", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[16][24] = "#";
+      objs.push({ t: "yew", art: "bw_palm1", anim: "bw_palm1a", frames: 10, cols: 10, fw: 107, fh: 169, fps: 7, h: 1, ox: -31.5, oy: -57.0, phase: 7, x: 21, y: 17, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[17][21] = "#";
+      objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -61.5, oy: -10.75, phase: 8, x: 11, y: 11, name: "Rowboat to the Lighthouse", row: { to: "bw_light", x: 29, y: 16 } });
+      objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: 0, oy: -10.75, phase: 0, x: 30, y: 12, name: "Rowboat to Pirate's Pier", row: { to: "bw_pier", x: 8, y: 18 } });
+      
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["clawhand", 22, 13, { respawn: [110000, 180000] }], ["clawhand", 17, 15, { respawn: [110000, 180000] }], ["krakenarm", 14, 13, { perch: true, respawn: [130000, 200000] }], ["krakenarm", 31, 10, { perch: true, respawn: [130000, 200000] }], ["krakenarm", 24, 19, { perch: true, respawn: [130000, 200000] }]],
+    npcs: [],
+    bots: []
+  },
+  /* (2026-09-27) THE BOARDWALK, REBUILT AS ISLANDS (the owner: "it will be multiples of scenes that are mostly smaller land areas
+     surrounded by water ... all of these need entries and exits"): the pirates' own house, and a boathouse out on the pier. Composed from the Sea pack's mockup (lt-wild/isle-bw_pier.json);
+     where you can walk is lt-wild/isle-blocks.json. The rowboats carry you along the chain; the pack's own animations move the sea,
+     the palms and the boats. A boat is drawn with its near end against the land it is tied to (ox/oy), so it lies out over the water. */
+  bw_pier: {
+    name: "Pirate's Pier", bgArt: ["bw_pier_bg1", "bw_pier_bg2"], noBanks: true, ground: "sea", miniWater: "#2a7fc0", tint: "rgba(10,40,70,.10)", boatIsle: true,
+    rows: [
+          "#.....####...............###################",
+          ".......###########......####################",
+          "....##.###########..#.......................",
+          "...###.###########..#.#.....................",
+          "...#...###########....#.....................",
+          ".......###########..........................",
+          "..##...###########..........................",
+          "............................................",
+          "............................................",
+          "...............######.......................",
+          "~.....~~~~~~~~~######~~~~~~~~~~~~~~~~~~~~~~~",
+          "~...~~~~~~~~~~~######~~~~~~~~~~~~~~~~~~~~~~~",
+          "~...~~~~~~~~~..######.~~~~~~~~~~~~~~~~~~~~~~",
+          "~...~~~~~~~~~..######.~~~~~~~~~~~~~~~~~~~~~~",
+          "...............######.~~~~~~~~~~~~~~~~~~~~~~",
+          "...............######.~~~~~~~~~~~~~~~~~~~~~~",
+          "...............######.~~~~~~~~~~~~~~~~~~~~~~",
+          "~...~~....~~~......##.~~~~~~~~~~~~~~~~~~~~~~",
+          "~...~~~...~~~......##.~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~.........~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      objs.push({ t: "spot", x: 4, y: 12, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 260, xp2: 320, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 12, y: 19, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 260, xp2: 320, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 22, y: 19, name: "The Deep Water", req: { skill: "fishing", lvl: 84 }, fish: "swordfish", fish2: "bluefin", fish2lvl: 72, xp: 320, xp2: 260, glow: "#4ab0ff" });
+      objs.push({ t: "rock", ore: "nova_ore", art: "bw_rock_nova", x: 30, y: 5, name: "Nova rock", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[5][30] = "#";
+      objs.push({ t: "rock", ore: "nova_ore", art: "bw_rock_nova", x: 38, y: 7, name: "Nova rock", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[7][38] = "#";
+      objs.push({ t: "yew", art: "bw_palm1", anim: "bw_palm1a", frames: 10, cols: 10, fw: 107, fh: 169, fps: 7, h: 1, ox: -31.5, oy: -57.0, phase: 8, x: 27, y: 3, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[3][27] = "#";
+      objs.push({ t: "yew", art: "bw_palm2", anim: "bw_palm2a", frames: 10, cols: 10, fw: 70, fh: 127, fps: 7, h: 1, ox: -16.0, oy: -37.0, phase: 7, x: 35, y: 4, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[4][35] = "#";
+      objs.push({ t: "yew", art: "bw_palm3", anim: "bw_palm3a", frames: 10, cols: 10, fw: 77, fh: 143, fps: 7, h: 1, ox: -7.5, oy: -44.5, phase: 6, x: 41, y: 3, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[3][41] = "#";
+      objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -30.75, oy: 0, phase: 13, x: 8, y: 19, name: "Rowboat to Shipwreck Isle", row: { to: "bw_wreck", x: 29, y: 12 } });
+      objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: 0, oy: -10.75, phase: 9, x: 22, y: 15, name: "Rowboat to Skull Isle", row: { to: "bw_skull", x: 11, y: 12 } });
+      
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["deckhand", 12, 8, { respawn: [90000, 150000] }], ["deckhand", 30, 3, { respawn: [90000, 150000] }], ["deckhand", 38, 5, { respawn: [90000, 150000] }], ["deckhand", 18, 8, { respawn: [90000, 150000] }], ["krakenarm", 22, 12, { perch: true, respawn: [130000, 200000] }], ["krakenarm", 5, 11, { perch: true, respawn: [130000, 200000] }], ["krakenarm", 30, 10, { perch: true, respawn: [130000, 200000] }]],
+    npcs: [],
+    bots: []
+  },
+  /* (2026-09-27) THE BOARDWALK, REBUILT AS ISLANDS (the owner: "it will be multiples of scenes that are mostly smaller land areas
+     surrounded by water ... all of these need entries and exits"): the skull in the rock, and Captain Claw in front of it. Composed from the Sea pack's mockup (lt-wild/isle-bw_skull.json);
+     where you can walk is lt-wild/isle-blocks.json. The rowboats carry you along the chain; the pack's own animations move the sea,
+     the palms and the boats. A boat is drawn with its near end against the land it is tied to (ox/oy), so it lies out over the water. */
+  bw_skull: {
+    name: "Skull Isle", bgArt: ["bw_skull_bg1", "bw_skull_bg2"], noBanks: true, ground: "sea", miniWater: "#2a7fc0", tint: "rgba(10,40,70,.10)", boatIsle: true,
+    rows: [
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~.......~..~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~..............~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~.....#######......~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~..################..~~~~~~~~~~~~",
+          "~~~~~~~~~~~..#################..~~~~~~~~~~~~",
+          "~~~~~~~~~~~..#################...~~~~~~~~~~~",
+          "~~~~~~~~~~~..###...####.#######.~~~~~~~~~~~~",
+          "~~~~~~~~~~~..###........#######.~~~~~~~~~~~~",
+          "~~~~~~~~~~~~.###..........#####.~~~~~~~~~~~~",
+          "~~~~~~~~~~~~....................~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~....~~~~~~~~.......~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~..~~~~~~~~~~.....~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~..~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+          "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      objs.push({ t: "spot", x: 18, y: 16, name: "The Deep Water", req: { skill: "fishing", lvl: 84 }, fish: "swordfish", fish2: "bluefin", fish2lvl: 72, xp: 320, xp2: 260, glow: "#4ab0ff" });
+      objs.push({ t: "rock", ore: "nova_ore", art: "bw_rock_nova", x: 16, y: 7, name: "Nova rock", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[7][16] = "#";
+      objs.push({ t: "rock", ore: "nova_ore", art: "bw_rock_nova", x: 31, y: 15, name: "Nova rock", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[15][31] = "#";
+      objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -61.5, oy: -10.75, phase: 8, x: 10, y: 12, name: "Rowboat to Pirate's Pier", row: { to: "bw_pier", x: 21, y: 15 } });
+      
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["captainclaw", 21, 14, { aggro: 3, respawn: [2400000, 3000000] }], ["clawhand", 15, 16, { respawn: [110000, 180000] }], ["clawhand", 31, 11, { respawn: [110000, 180000] }], ["clawhand", 20, 6, { respawn: [110000, 180000] }]],
+    npcs: [],
     bots: []
   },
   orchard: {

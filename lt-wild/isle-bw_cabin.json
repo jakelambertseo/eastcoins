@@ -1,0 +1,47 @@
+{
+ "out": "bw_cabin",
+ "rects": [
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 12,
+   "w": 2,
+   "h": 2,
+   "dx": 0,
+   "dy": 0,
+   "dw": 44,
+   "dh": 26
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-9.png",
+   "sx": 0,
+   "sy": 0,
+   "w": 31,
+   "h": 25,
+   "dx": 0,
+   "dy": 0,
+   "landOnly": 1
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-9.png",
+   "sx": 30,
+   "sy": 0,
+   "w": 1,
+   "h": 7,
+   "dx": 31,
+   "dy": 0,
+   "dw": 13
+  },
+  {
+   "src": "lt-wild/cut/mk/sea-12.png",
+   "sx": 0,
+   "sy": 12,
+   "w": 2,
+   "h": 2,
+   "dx": 23,
+   "dy": 11,
+   "dw": 5,
+   "dh": 2
+  }
+ ]
+}
