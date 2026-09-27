@@ -31,6 +31,9 @@ const DECOR = {
      turns into a booth; max 1 because a second one does nothing a first does not. Priced between the fountain
      and the hot tub: the most useful thing in the shop and a first real goal, not a trinket. */
   bankchest: { name: "Bank chest", w: 1, h: 1, in: "isle", price: 10000, max: 1, art: "o_chest", bank: true },
+  /* (2026-09-27) FUNGICULTURE's way in: a hatch and a ladder down to the owner's cellar (SCENES.cellar). Like the bank chest it DOES
+     something, and passes the same test: it opens a room with beds in it, it does not earn on its own. max 1: one cellar. */
+  cellarladder: { name: "Cellar ladder", w: 1, h: 1, in: "isle", price: 15000, max: 1, art: "d_cellarladder", cellar: true },
   bench:     { name: "Wooden bench", w: 2, h: 1, in: "isle", price: 1500 },
   picnic:    { name: "Picnic table", w: 2, h: 1, in: "isle", price: 2500 },
   flowers_r: { name: "Flower bed (red)", w: 1, h: 1, in: "isle", price: 800, art: "d_flowers_r" },
@@ -69,7 +72,7 @@ const DECOR = {
 const decorArt = (k) => DECOR[k]?.art || `d_${k}`;
 /** Which kind of scene this is for decorating: "isle" (an island or its far shore), "home" (the cottage), or null. "at" is what a placed piece records. */
 const decorPlace = (key) => { const b = String(key).split(":")[0]; return b === "home" ? "home" : /^isle\d?$/.test(b) || b === "shore" ? "isle" : null; };
-const decorAt = (key) => { const b = String(key).split(":")[0]; return b === "home" ? "home" : b === "shore" ? "shore" : "isle"; };
+const decorAt = (key) => { const b = String(key).split(":")[0]; return b === "home" ? "home" : b === "shore" ? "shore" : /^isle\d?$/.test(b) ? "isle" : b; };   /* (2026-09-27) anything else (the cellar) is its own place, so no island piece is laid in it */
 const decorCount = (isle, place) => (isle?.decor || []).filter((d) => DECOR[d.k] && DECOR[d.k].in === place).reduce((n, d) => n + (DECOR[d.k].flat ? 0.25 : 1), 0);
 const decorCap = (isle, place) => (place === "home" ? DECOR_CAP.home : DECOR_CAP.isle[isle?.tier || 1]);
 const decorSpare = (isle, k) => ((isle?.owned?.[k] | 0) - (isle?.decor || []).filter((d) => d.k === k).length);
@@ -83,7 +86,7 @@ function decorInto(key, built, isle) {
        action was dropped without a word. That was invisible while nothing here could be clicked; the bank chest
        is the first piece meant to DO something, and it did nothing. Anything interactive added to this shop
        later needs the id to keep meaning the index. */
-    built.objs.push({ t: P.bank ? "booth" : "decor", decor: true, k: d.k, art: decorArt(d.k), x: d.x, y: d.y, w: P.w, h: P.h, name: P.name, id: built.objs.length, ...(P.flat ? { flat: true, soft: true } : {}) });
+    built.objs.push({ t: P.bank ? "booth" : P.cellar ? "cellar" : "decor", decor: true, k: d.k, art: decorArt(d.k), x: d.x, y: d.y, w: P.w, h: P.h, name: P.name, id: built.objs.length, ...(P.flat ? { flat: true, soft: true } : {}) });
     if (!P.flat) for (let y = d.y; y < d.y + P.h; y++) for (let x = d.x; x < d.x + P.w; x++) if (built.g[y]?.[x] !== undefined) built.g[y][x] = "#"; }
   return built;
 }

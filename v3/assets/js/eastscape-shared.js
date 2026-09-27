@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 301;
+export const VERSION = 302;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -3148,13 +3148,14 @@ Object.assign(SCENES, {
 
 // scene keys: most are a SCENES key; a player's island is "isle:<owner id>", every island built from SCENES.isle
 export const sceneDef = (key) => SCENES[String(key).split(":")[0]];
-export const isIsle = (key) => /^(isle\d?|shore|home):/.test(String(key));
+export const isIsle = (key) => /^(isle\d?|shore|home|cellar):/.test(String(key));   /* (2026-09-27) the cellar is the owner's, like the cottage */
 export const ownerOf = (key) => (isIsle(key) ? String(key).slice(String(key).indexOf(":") + 1) : null);
 // which island layout an owner's island uses, by upgrade tier
 export const isleKey = (isle, id) => `${["isle", "isle", "isle2", "isle3"][isle?.tier || 1]}:${id}`;
 // the same scene, built the same way everywhere; every object gets its index as its id
 export function buildScene(key) {
   const sc = sceneDef(key), b = sc.build.call(sc);
+  fungObjs(String(key).split(":")[0], b);   /* (2026-09-27) Fungiculture's wild clusters: before the event's objects, so they never depend on it */
   hwObjs(String(key).split(":")[0], b);   /* (2026-09-27) the Long Night's jack-o'-lanterns and ghost lanterns, while the event is on */
   markBanks(b.g);
   b.objs.forEach((o, i) => { o.id = i; o.w ??= 1; o.h ??= 1; });
@@ -6809,7 +6810,7 @@ export function freshChar() {
     qs: {}, bank: [], settings: { ...DEFAULT_SETTINGS }, created: Date.now(), stats: freshStats(),
     van: { on: { head: null, body: null, legs: null, feet: null }, col: { head: 0, body: 0, legs: 0, feet: 0 }, own: [] },
     pets: [],   /* (2026-09-22) instances, not stacks: [{ id, k, name }]. eq.pet holds an ID into this. */
-    isle: { plots: Array(ISLE.plots).fill(null), shelf: Array(ISLE.shelf).fill(null), theme: "meadow", themes: ["meadow"], open: true, tier: 1, owned: {}, decor: [] }
+    isle: { plots: Array(ISLE.plots).fill(null), beds: Array(10).fill(null), shelf: Array(ISLE.shelf).fill(null), theme: "meadow", themes: ["meadow"], open: true, tier: 1, owned: {}, decor: [] }
   };
 }
 // fill in anything a stored character is missing, and drop what isn't real any more
@@ -6934,7 +6935,9 @@ export function normChar(c) {
   if (!inRun && !SCENES[out.scene]) Object.assign(out, isIsle(out.scene) ? ISLE_FERRY : START);   // back from an island: the ferry at River Bend
   const fi = f.isle, ci = c.isle && typeof c.isle === "object" ? c.isle : {};
   out.isle = {
-    plots: Array.from({ length: ISLE.plots }, (_, i) => { const p = ci.plots?.[i]; return p && CROPS[p.k] && Number.isFinite(p.at) ? { k: p.k, at: p.at } : null; }),
+    plots: Array.from({ length: ISLE.plots }, (_, i) => { const p = ci.plots?.[i]; return p && CROPS[p.k] && Number.isFinite(p.at) ? { k: p.k, at: p.at, ...(Number.isFinite(p.ms) ? { ms: p.ms } : {}) } : null; }),   /* (2026-09-27) p.ms kept: a Rainmaker plot lost its shorter clock at every save */
+    /* (2026-09-27) Fungiculture: the cellar's beds, the same shape as a plot */
+    beds: Array.from({ length: FUNG.bedMax }, (_, i) => { const p = ci.beds?.[i]; return p && FUNGI[p.k] && Number.isFinite(p.at) ? { k: p.k, at: p.at, ...(Number.isFinite(p.ms) ? { ms: p.ms } : {}) } : null; }),
     shelf: Array.from({ length: ISLE.shelf }, (_, i) => { const k = ci.shelf?.[i] ? aliasKey(ci.shelf[i]) : null; return ITEMS[k] ? k : null; }),
     themes: [...new Set(["meadow", ...(Array.isArray(ci.themes) ? ci.themes : [])])].filter((t) => THEMES[t]),
     theme: fi.theme, open: ci.open !== false, tier: [1, 2, 3].includes(ci.tier) ? ci.tier : 1,
@@ -7313,6 +7316,148 @@ export const STORE_SLOTS = ["col", "fx", "icon", "frame"];
 export const nameFxOf = (c) => { const n = c?.store?.name; if (!n) return null; const out = {}; let any = false; for (const s of STORE_SLOTS) { const it = n[s] && STORE[n[s]]; if (it && (c.store.own || []).includes(it.id)) { out[s] = it.val; any = true; } } return any ? out : null; };
 export const nameFxSig = (f) => (f ? STORE_SLOTS.map((s) => f[s] || "").join(".") : "");
 export const ownsStore = (c, id) => !!(c?.store?.own || []).includes(id);
+
+/* ============================================================ FUNGICULTURE (2026-09-27, the massive update, 2 of 8)
+   The owner: a ladder bought at Yahsmeena, placed on your island, down to a cellar with fungus beds that work like plots but are
+   their own thing; shrooms also from clusters scattered around the world; and it has to end the sporecap being the ONE early
+   input to Wizardry and Fletching. Three sources, one ladder of thirteen shrooms:
+   - THE CELLAR (`cellar:<owner>`, built like the Cottage): bedsOf(tier) beds, planted with SPAWN (the "seed") and fed with
+     COMPOST, one to three a planting by level. A bed gives its spawn back like a seed crop (SEED_BACK, SEED_EXTRA), so a cellar
+     found once keeps itself going. The compost bin is in the cellar and is where the skill is trained from level 1.
+   - WILD CLUSTERS: three on every outdoor map, AT FIXED SPOTS (seeded by the map, never the date: a cluster that moved at
+     midnight would put the page and the server on different maps for whoever was standing there). Each one gives every player
+     one pick a Chicago day: its shroom, Fungiculture xp, and FUNG.wildSpawn of the time its spawn.
+   - THE TRUFFLE, which grows nowhere wild: a Truffle Pig worn while picking or harvesting finds it (FUNG.truffle).
+   Everything a shroom goes into is an existing system (a drink, a meal, a pet food, an ink) with its existing buff keys: no new
+   plumbing, and nothing here buys xp. */
+export const FUNG = { beds: [0, 6, 8, 10], bedMax: 10, wildN: [1, 3], wildSpawn: 0.35, wildXp: 0.4, truffle: { pick: 0.2, spawn: 0.08, bed: 0.05 }, ladder: "cellarladder" };
+SKILLS.fungiculture = { name: "Fungiculture", icon: "\u{1F344}" };
+SKILL_GROUPS.find((g) => g.name === "Skilling")?.keys.push("fungiculture");
+HISCORES.push(["fungiculture", "Fungiculture", "level", "lvl"]);
+STATIONS.compost = { skill: "fungiculture", verb: "mix", name: "compost bin", auto: false, kind: "rot" };
+Object.assign(VERB, { compost: "Mix-at", fbed: "Tend", shroom: "Pick", cellar: "Climb-down" });
+/* the ladder: [shroom, level, grow minutes, yield, xp a harvest, compost a planting, sells for, name, what it says] */
+const FUNG_ROWS = [
+  ["sporecap",    1,   8, [3, 5],   24, 1, 6,   null, null],
+  ["buttoncap",   5,  15, [3, 5],   50, 1, 8,   "Button cap", "Plump, white and polite. The only mushroom in EastScape that has never looked at you funny."],
+  ["oyster",     12,  25, [3, 5],   95, 1, 14,  "Oyster shelf", "Fans of grey flesh off a bit of bark. Boiled down it is the glue that holds a feather to a shaft."],
+  ["puffball",   20,  40, [3, 5],  160, 1, 22,  "Puffball", "Squeeze it and it breathes out a little brown cloud. The cloud makes people sleepy, which thieves have noticed."],
+  ["bluemould",  28,  60, [3, 5],  270, 1, 32,  "Blue mould", "Velvet-soft and faintly blue. Pack Rats would sell their own mothers for it, and have."],
+  ["inkcap",     35,  80, [3, 6],  400, 1, 44,  "Inkcap", "It melts into black ink from the rim up. One of these writes more than a pocket of sporecaps."],
+  ["bleedtooth", 42, 100, [3, 5],  540, 2, 56,  "Bleeding tooth", "Beads of red on a white cap. It isn't blood. Probably. Brewed, it makes you harder to hurt."],
+  ["glowcap",    50, 120, [3, 5],  720, 2, 72,  "Glowcap", "Lights its own corner of the cellar. Lantern Moths find it from across a map."],
+  ["ghostpipe",  58, 150, [2, 4],  920, 2, 90,  "Ghost pipe", "Waxy, white, no green in it anywhere. It grows on the dead and it makes the living lucky."],
+  ["truffle",    65, 180, [2, 4], 1180, 2, 130, "Black truffle", "Found by pigs, grown by the patient, eaten by the rich. Nothing wild gives one up without a Truffle Pig."],
+  ["lionsmane",  72, 240, [2, 4], 1550, 3, 155, "Lion's mane", "A shaggy white ball of icicles. Chewed, the world slows down and your hands don't."],
+  ["voidmorel",  80, 300, [2, 4], 2100, 3, 195, "Void morel", "The pits in its cap are full of a light that isn't there. Ink brewed from it writes in the dark."],
+  ["starcap",    90, 360, [2, 3], 2900, 3, 260, "Starcap", "Five points and a shine of its own. It fell with the rest of the Trailer Park and took root in the wreckage."]
+];
+export const FUNGI = {};
+for (const [k, lvl, mins, yld, xp, compost, sell, name, ex] of FUNG_ROWS) {
+  if (name) ITEMS[k] = { name, icon: "\u{1F344}", ex };
+  const sk = `spawn_${k}`;
+  ITEMS[sk] = { name: `${ITEMS[k].name} spawn`, icon: "\u{1F9EB}", ex: `Plant it in a fungus bed in your cellar (Fungiculture ${lvl}) with ${compost} compost. It grows ${ITEMS[k].name.toLowerCase()}, and gives spawn back.` };
+  FUNGI[sk] = { lvl, ms: mins * 60000, yield: yld, xp, compost, yields: k, art: k };
+  VALUE[k] = sell; VALUE[sk] = 0;
+}
+ITEMS.compost = { name: "Compost", icon: "\u{1F7EB}", ex: "Rot, bone and ash, turned in the cellar's bin. Every fungus bed wants some when it is planted." };
+VALUE.compost = 2;
+/** what a fungus bed gives */
+export const fungYield = (k) => FUNGI[k]?.yields || k;
+/** the beds an island's cellar has open, by the island's tier */
+export const bedsOf = (isle) => FUNG.beds[Math.min(3, Math.max(1, isle?.tier || 1))];
+/** is a Truffle Pig out (the only thing that finds a truffle in the wild) */
+export const truffleNose = (C) => activePet(C)?.k === "trufflepig";
+/** the wild clusters of each outdoor map, three a map. The Carnival has no shroom of its own and lends the Wilderness's, so
+    Ghost pipe is never PvP-only. The truffle is nowhere: see FUNG.truffle. */
+export const FUNG_WILD = {
+  workyard: ["sporecap", "buttoncap", "buttoncap"], gloam: ["oyster", "oyster", "sporecap"], mire: ["puffball", "puffball", "puffball"],
+  boneyard: ["bluemould", "bluemould", "bluemould"], cloud: ["inkcap", "inkcap", "inkcap"], sands: ["bleedtooth", "bleedtooth", "bleedtooth"],
+  thunderhead: ["glowcap", "glowcap", "glowcap"], carnival: ["ghostpipe", "glowcap", "ghostpipe"], wild: ["ghostpipe", "ghostpipe", "ghostpipe"],
+  vault: ["lionsmane", "lionsmane", "lionsmane"], deep: ["voidmorel", "voidmorel", "voidmorel"], trailer: ["starcap", "starcap", "starcap"]
+};
+/** THE CLUSTERS ARE ORDINARY OBJECTS, added in buildScene BEFORE the Long Night's, so the page and the server place them the
+    same way from the same seed, and nothing about them depends on the date or on an event being on. A cluster wants open ground
+    on all eight sides (so it can never wall a path off) and keeps clear of every monster's and person's home tile. */
+export function fungObjs(key, b) {
+  const list = FUNG_WILD[key]; if (!list) return;
+  const def = sceneDef(key), g = b.g, objs = b.objs, homes = [...(def?.mobs || []).map(([, x, y]) => ({ x, y })), ...(def?.npcs || [])];
+  const seed = [...`fung:${key}`].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 11);
+  const rnd = (i) => { let x = (seed ^ (i * 0x9e3779b9)) >>> 0; x ^= x << 13; x ^= x >>> 17; x ^= x << 5; return ((x >>> 0) % 10000) / 10000; };
+  const open = (x, y) => g[y]?.[x] === "." || g[y]?.[x] === "i";
+  const free = (x, y) => x > 2 && y > 2 && x < COLS - 3 && y < ROWS - 3 && open(x, y) && D8.every(([dx, dy]) => open(x + dx, y + dy))
+    && !objs.some((o) => cheb(o, { x, y }) <= 1) && !homes.some((h) => cheb(h, { x, y }) <= 1);
+  let placed = 0;
+  const put = (x, y) => { const k = list[placed]; objs.push({ t: "shroom", k, x, y, art: `fung_${k}_4`, name: `Wild ${ITEMS[k].name.toLowerCase()}`, lid: `${key}:${x},${y}` }); g[y][x] = "#"; placed++; };
+  for (let i = 0; i < 900 && placed < list.length; i++) { const x = 3 + Math.floor(rnd(i) * (COLS - 6)), y = 3 + Math.floor(rnd(i + 3000) * (ROWS - 6)); if (free(x, y)) put(x, y); }
+  /* THE CROWDED MAPS (the Wilderness and the Deep Wild are rock and trees with paths between, and have almost no tile with open
+     ground all round). A second, looser pass takes any bare tile that is nobody's home, and PROVES it walls nothing off: every
+     tile that could be walked to from the map's way in still can, bar the one the cluster stands on. */
+  if (placed < list.length) {
+    const start = (() => { for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (g[y][x] === "e") return { x, y }; return null; })();
+    const reach = () => { if (!start) return 0; const seen = new Set([start.y * COLS + start.x]), q = [start]; while (q.length) { const c = q.pop(); for (const [dx, dy] of D8) { const nx = c.x + dx, ny = c.y + dy, k = ny * COLS + nx; if (!seen.has(k) && canStepIn(g, c.x, c.y, dx, dy)) { seen.add(k); q.push({ x: nx, y: ny }); } } } return seen.size; };
+    let base = reach();
+    for (let i = 0; i < 1500 && placed < list.length && start; i++) {
+      const x = 3 + Math.floor(rnd(i + 9000) * (COLS - 6)), y = 3 + Math.floor(rnd(i + 12000) * (ROWS - 6));
+      if (!open(x, y) || homes.some((h) => cheb(h, { x, y }) <= 1) || objs.some((o) => o.t === "shroom" && cheb(o, { x, y }) <= 3)) continue;
+      const was = g[y][x]; g[y][x] = "#";
+      if (reach() === base - 1) { g[y][x] = was; put(x, y); base--; } else g[y][x] = was;
+    }
+  }
+}
+/* THE CELLAR. A private room under the owner's island: the stone steps on the bottom edge go back up to the ladder. Beds past the
+   island's tier are there but boarded (the server refuses them, the page draws them shut), so it is the same room at every tier.
+   Its floor and walls are the Crypt's for now: the owner picks the cellar's own tiles, as he did the Wilderness's. */
+SCENES.cellar = {
+  name: "The Cellar", interior: true, cellar: true, floorArt: "t_crypt", wallArt: "t_cryptwall", room: [5, 3, 16, 10], exitTo: { scene: "isle", x: 10, y: 4 }, entry: { x: 10, y: 10 },
+  build() {
+    const g = room(5, 3, 16, 10, 10), objs = [];
+    [[6, 5], [8, 5], [10, 5], [12, 5], [14, 5], [6, 8], [8, 8], [10, 8], [12, 8], [14, 8]].forEach(([x, y], i) => { objs.push({ t: "fbed", i, x, y, name: "Fungus bed" }); g[y][x] = "#"; });
+    objs.push({ t: "compost", x: 15, y: 3, name: "Compost bin" }); g[3][15] = "#";
+    for (const [x, y] of [[5, 3], [16, 3], [5, 10], [16, 10]]) { objs.push({ t: "barrel", x, y, name: "Barrel" }); g[y][x] = "#"; }
+    return { g, objs, blobs: [] };
+  },
+  mobs: [], npcs: [], bots: []
+};
+EXAMINE.fbed = ["A box of black earth that smells like a forest floor after rain. Plant spawn in it."];
+EXAMINE.compost = ["It's warm. It is not supposed to be warm, and yet."];
+/* compost, at the cellar's bin: how Fungiculture is trained from level 1, and why the Yard's tomatoes, the olive trees' pits and
+   the furnace's charcoal stay worth having */
+const rot = (id, lvl, xp, ins, n) => recipe(`rot_${id}`, { skill: "fungiculture", station: "compost", lvl, xp, ms: 2200, in: ins, out: ["compost", n] });
+rot("tomatoe", 1, 9, [["tomatoe", 3], ["bones", 1]], 2);
+rot("husk", 8, 16, [["husk", 2], ["bones", 1], ["charcoal", 1]], 4);
+rot("pit", 18, 24, [["pit", 3], ["bones", 2], ["charcoal", 1]], 5);
+rot("gourd", 45, 60, [["bonegourd", 1], ["bones", 3], ["charcoal", 2]], 8);
+/* WHERE THE SHROOMS GO: into things that already exist, each made by the skill that already makes them */
+const fdrink = (k, name, mins, fx, ex) => { ITEMS[k] = { name, icon: "\u{1F9EA}", drink: { mins, fx }, ex }; };
+fdrink("pot_sleep", "Puffball sleep-dust", 15, { steal: 0.06 }, "A twist of paper full of brown puff. 15 minutes outside: marks get drowsy and pockets come easier.");
+fdrink("pot_bleed", "Bleeding-tooth draught", 20, { tough: 0.12 }, "Thick and red and it stings. 20 minutes outside: you take a good deal less.");
+fdrink("pot_pipe", "Ghost-pipe tincture", 20, { rare: 0.16 }, "Clear as water and cold as a grave. 20 minutes outside: the good drops come looser.");
+fdrink("pot_mane", "Lion's-mane focus", 25, { speed: 0.10, bite: 0.03 }, "Everything slows down except you. 25 minutes outside: quick hands, and the fish come to you.");
+fdrink("pot_star", "Starcap elixir", 30, { tough: 0.22, speed: 0.10, rare: 0.08 }, "It glows in the bottle and in you. 30 minutes outside: hard to hurt, quick, and lucky with it.");
+ITEMS.mushroom_soup = { name: "Mushroom soup", icon: "\u{1F963}", heal: 9, ex: "Button caps and a crust. Heals 9." };
+ITEMS.truffle_dinner = { name: "Truffle dinner", icon: "\u{1F37D}️", heal: 34, meal: { mins: 20, fx: { rare: 0.2, tix: 0.05 } }, ex: "Shaved truffle on a steak. Heals 34 and, for twenty minutes outside, the good stuff turns up and it pays a little more." };
+ITEMS.starcap_feast = { name: "Starcap feast", icon: "\u{1F31F}", heal: 50, meal: { mins: 20, fx: { tough: 0.15, rare: 0.2, tix: 0.08 } }, ex: "Starcap and starfruit, and nobody talks while they eat it. Heals 50: the best meal in EastScape." };
+Object.assign(VALUE, { pot_sleep: 70, pot_bleed: 150, pot_pipe: 200, pot_mane: 260, pot_star: 420, mushroom_soup: 18, truffle_dinner: 240, starcap_feast: 420 });
+const fbrew = (id, lvl, xp, ins, out, n = 1) => recipe(id, { skill: "alchemy", station: "cauldron", ms: 2200, lvl, xp, in: ins, out: [out, n] });
+fbrew("brew_ink_button", 3, 18, [["small_vial", 1], ["buttoncap", 2]], "ink_arcane", 2);   /* the sporecap is no longer the only way into Wizardry */
+fbrew("brew_ink_inkcap", 35, 60, [["small_vial", 1], ["inkcap", 1]], "ink_arcane", 5);
+fbrew("brew_ink_morel", 80, 160, [["medium_vial", 1], ["voidmorel", 1]], "ink_void", 3);
+fbrew("brew_feathers_oyster", 12, 20, [["small_vial", 1], ["feather", 3], ["oyster", 1]], "feather", 20);   /* ...or into Fletching */
+fbrew("brew_sleep", 20, 44, [["small_vial", 1], ["puffball", 2]], "pot_sleep");
+fbrew("brew_bleed", 42, 80, [["medium_vial", 1], ["bleedtooth", 2], ["bones", 1]], "pot_bleed");
+fbrew("brew_pipe", 58, 110, [["medium_vial", 1], ["ghostpipe", 2]], "pot_pipe");
+fbrew("brew_mane", 72, 140, [["large_vial", 1], ["lionsmane", 2]], "pot_mane");
+fbrew("brew_star", 90, 220, [["large_vial", 1], ["starcap", 1], ["lionsmane", 1]], "pot_star");
+recipe("cook_soup", { skill: "cooking", station: "fire", in: [["buttoncap", 2], ["wheat", 1]], out: ["mushroom_soup", 1], lvl: 5, xp: 20, ms: 2000 });
+recipe("cook_truffle", { skill: "cooking", station: "fire", in: [["truffle", 1], ["beef", 1]], out: ["truffle_dinner", 1], lvl: 65, xp: 260, ms: 2400 });
+recipe("cook_starfeast", { skill: "cooking", station: "fire", in: [["starcap", 1], ["starfruit", 1]], out: ["starcap_feast", 1], lvl: 90, xp: 400, ms: 2400 });
+bfood("scrounge_mould", 28, 40, [["bluemould", 2], ["pit", 1]], "scrounge_bag", 4);
+bfood("mothoil_glow", 50, 90, [["glowcap", 2], ["flashlight", 1]], "moth_oil", 4);
+bfood("hoard_truffle", 65, 170, [["truffle", 1], ["markedcard", 1]], "hoard_cheese", 4);
+bfood("voidmash_morel", 80, 200, [["voidmorel", 1], ["snakefang", 1]], "void_mash", 4);
+/* the Toadstool's sporecap becomes a spawn too, now and then: a first bed can be planted without ever finding a cluster */
+MOBS.toadstool?.drops.push(["spawn_sporecap", 1, 0.08]);   /* MOBS[].drops, not LOOT: LOOT was folded into drops long before this line */
 
 /* (2026-09-21) the map-building helpers, for the files that hold maps outside this one (eastscape-closed.js, and the dungeon's). */
 export const _MAP = { block, grid, keepOf, room, wild };

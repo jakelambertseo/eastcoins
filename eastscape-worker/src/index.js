@@ -347,7 +347,7 @@ export class World {
     return { pay: owed, low, late };
   }
 
-  meOf(pl) { const C = pl.C; return { pen: C.pen || null,   /* (2026-09-27) Breeding */ store: C.store || null,   /* (2026-09-27) what the Store has sold you and what your name wears */ seen: C.seen || [],   /* (2026-09-27) the world map's fog */ hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null,   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
+  meOf(pl) { const C = pl.C; return { fung: C.fung || null,   /* (2026-09-27) which clusters you've picked today */ pen: C.pen || null,   /* (2026-09-27) Breeding */ store: C.store || null,   /* (2026-09-27) what the Store has sold you and what your name wears */ seen: C.seen || [],   /* (2026-09-27) the world map's fog */ hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null,   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
@@ -763,7 +763,8 @@ export class World {
       }
       case "quest": return this.questOp(S, pl, m);
       case "hw": return this.hwOp(S, pl, m);
-      case "pen": return this.penOp(S, pl, m);   /* (2026-09-27) Breeding */   /* (2026-09-27) the Long Night: trick or treat, the Night Market, the corn-priced fits */
+      case "pen": return this.penOp(S, pl, m);
+      case "fung": return this.fungOp(S, pl, m);   /* (2026-09-27) Fungiculture: planting a bed */   /* (2026-09-27) Breeding */   /* (2026-09-27) the Long Night: trick or treat, the Night Market, the corn-priced fits */
       case "talked": { const n = S.npcs.find((x) => x.id === m.npc); if (n) n.holdUntil = 0; return; }
       case "stance": return;   // stances were removed (2026-09-19)
       case "settings": {
@@ -896,7 +897,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
-      let kind = { pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      let kind = { shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       /* MAGIC AND WIZARDRY, THE SERVER (2026-09-26): every altar is a print station, a picker station like the anvil */
       if (!kind && G.STATIONS[ob.t]?.kind === "print") kind = "print";
       if (!kind) return;
@@ -910,7 +911,7 @@ export class World {
          way to say. The same `pick` now works everywhere, and it is checked against the recipes of THIS station
          so a pick cannot smelt a bar at a campfire. */
       if (kind === "pen" && m.pick) { kind = "breed"; act.kind = "breed"; }   /* (2026-09-27) a recipe picked at the pen: pet food */
-      if (["smith", "cook", "smelt", "brew", "fletch", "print", "breed"].includes(kind) && m.pick) {
+      if (["smith", "cook", "smelt", "brew", "fletch", "print", "breed", "rot"].includes(kind) && m.pick) {
         const id = String(m.pick);
         if (G.recipesAt(ob.t).some((r) => r.id === id)) act.pick = id;
       }
@@ -1498,6 +1499,68 @@ export class World {
     this.houseSay(`✨ 2X EVENT — ${this.dbl.by} popped a 2X Potion. Double tickets and crafting xp for ${mins} minutes.`);
   }
 
+
+  /* ------------------------------------------------------------ FUNGICULTURE (2026-09-27): the cellar, its beds, the wild clusters
+     The beds are plots in all but name (G.FUNGI instead of G.CROPS, compost to plant, isle.beds instead of isle.plots), and a
+     wild cluster is a ghost lantern that never goes away: once a Chicago day per player per cluster, remembered in C.fung. */
+  fungDay(C) { const day = G.chicagoDay(); if (!C.fung || C.fung.day !== day) C.fung = { day, got: [] }; return C.fung; }
+  /** where the cellar's steps come out on the island: beside the owner's ladder, or the island's arrival spot */
+  cellarUp(S) {
+    const I = this.isleOf(S), d = (I?.decor || []).find((x) => x.k === G.FUNG.ladder && x.at === "isle");
+    return { scene: G.isleKey(I, S.owner), x: d ? d.x : G.SCENES.isle.entry.x, y: d ? d.y + 1 : G.SCENES.isle.entry.y };
+  }
+  fungDown(S, pl) {
+    if (!S.owner) return;
+    if (S.owner !== pl.id) return this.say(pl, "It's padlocked. Somebody keeps their mushrooms to themselves.", "bad");
+    this.moveToScene(pl, `cellar:${S.owner}`, null, G.SCENES.cellar.entry); pl.dir = "north";
+    return this.say(pl, "You climb down into the cellar. It smells like a forest floor after rain.");
+  }
+  fungPick(S, pl, ob) {
+    const C = pl.C, k = ob.k, sk = `spawn_${k}`, F = G.FUNGI[sk]; if (!F) return;
+    const lv = G.lvlOf(C, "fungiculture");
+    if (lv < F.lvl) return this.say(pl, `You need a Fungiculture level of ${F.lvl} to pick ${G.ITEMS[k].name.toLowerCase()}.`, "bad");
+    const h = this.fungDay(C), lid = ob.lid || `${S.key}:${ob.x},${ob.y}`;
+    if (h.got.includes(lid)) return this.say(pl, "You've had what this one had today. It'll fruit again tomorrow.", "bad");
+    const n = rint(G.FUNG.wildN[0], G.FUNG.wildN[1]);
+    if (!this.give(pl, k, n)) return;
+    h.got.push(lid); if (h.got.length > 60) h.got.splice(0, h.got.length - 60); this.touch(pl);
+    this.gained(S, pl, k, n); this.grant(pl, "fungiculture", Math.max(10, Math.round(F.xp * G.FUNG.wildXp)));
+    const spawn = Math.random() < G.FUNG.wildSpawn && this.giveUpTo(pl, sk, 1);
+    const nose = G.truffleNose(C), truf = nose && Math.random() < G.FUNG.truffle.pick && this.giveUpTo(pl, "truffle", 1), trufSp = nose && Math.random() < G.FUNG.truffle.spawn && this.giveUpTo(pl, "spawn_truffle", 1);
+    this.say(pl, `You pick ${n} ${G.ITEMS[k].name.toLowerCase()}${spawn ? ", and scrape up some spawn with it" : ""}.${truf ? " Your pig roots out a black truffle beside it!" : ""}${trufSp ? " The pig turns up truffle spawn, too." : ""}`, truf || trufSp ? "loot" : "good");
+    this.emit(pl, "gather", { k, n });
+  }
+  /** a click on a bed: plant (the page asks what), wait, or harvest */
+  fungBed(S, pl, ob, now) {
+    const I = this.isleOf(S); if (!I || !S.def?.cellar) return;
+    I.beds ||= Array(G.FUNG.bedMax).fill(null);
+    if (S.owner !== pl.id) return this.say(pl, "Somebody else's mushrooms.");
+    if (ob.i >= G.bedsOf(I)) return this.say(pl, "This bed is boarded over. A bigger island opens it: Charon does the upgrades.", "bad");
+    const p = I.beds[ob.i];
+    if (!p) return pl.out.push({ type: "fplant", i: ob.i });
+    const F = G.FUNGI[p.k], yk = G.fungYield(p.k), left = p.at + (p.ms || F.ms) - now, nm = G.ITEMS[yk].name.toLowerCase();
+    if (left > 0) return this.say(pl, `Your ${nm} will be ready in ${left > 90000 ? `about ${Math.round(left / 60000)} minutes` : `${Math.ceil(left / 1000)} seconds`}.`);
+    const n = Math.max(1, Math.round(rint(F.yield[0], F.yield[1]) * (1 + G.petFx(pl.C).grow / 100)));   /* the Truffle Pig's heavier harvests reach the cellar too */
+    if (!this.give(pl, yk, n)) return;
+    const want = G.SEED_BACK + (Math.random() < G.SEED_EXTRA ? 1 : 0), back = this.giveUpTo(pl, p.k, want);
+    const trufSp = G.truffleNose(pl.C) && p.k !== "spawn_truffle" && Math.random() < G.FUNG.truffle.bed && this.giveUpTo(pl, "spawn_truffle", 1);
+    I.beds[ob.i] = null; this.touch(pl);
+    this.gained(S, pl, yk, n); this.grant(pl, "fungiculture", F.xp);
+    this.say(pl, `You harvest ${n} ${nm}${back ? `, and ${back === 1 ? "a handful" : back === 2 ? "two handfuls" : `${back} handfuls`} of spawn with them` : ""}.${trufSp ? " Your pig has been rooting in the next bed: truffle spawn!" : ""}`, trufSp ? "loot" : "good");
+  }
+  fungOp(S, pl, m) {
+    if (m.op !== "plant" || !S.def?.cellar || S.owner !== pl.id) return;
+    const C = pl.C, I = C.isle, i = m.i | 0, k = String(m.k || ""), F = G.FUNGI[k];
+    I.beds ||= Array(G.FUNG.bedMax).fill(null);
+    if (!F || i < 0 || i >= G.bedsOf(I) || I.beds[i] || !S.objs.some((o) => o.t === "fbed" && o.i === i && G.cheb(pl, o) <= 1)) return;
+    if (G.lvlOf(C, "fungiculture") < F.lvl) return this.say(pl, `You need a Fungiculture level of ${F.lvl} to grow ${G.ITEMS[F.yields].name.toLowerCase()}.`, "bad");
+    if (G.countItems(C, [k]) < 1) return;
+    if (G.countItems(C, ["compost"]) < F.compost) return this.say(pl, `That bed wants ${F.compost} compost first, and you have ${G.countItems(C, ["compost"])}. The bin in the corner makes it.`, "bad");
+    G.takeInv(C.inv, k, 1); G.takeInv(C.inv, "compost", F.compost);
+    const rain = G.charmOf(C, "rainmaker"), dev = this.env?.DEV === "1", ms = Math.round(F.ms * (1 - rain / 100) / (dev ? 60 : 1));   /* Rainmaker waters a cellar too; on a DEV server a bed grows sixty times faster, so it can be watched */
+    I.beds[i] = { k, at: Date.now(), ...(rain || dev ? { ms } : {}) }; this.touch(pl);
+    return this.say(pl, `You work the spawn into the compost. ${G.ITEMS[F.yields].name} in ${ms >= 5400000 ? `${Math.round(ms / 3600000 * 10) / 10} hours` : `${Math.round(ms / 60000)} minutes`}, whether you're here or not.`, "good");
+  }
   /* ------------------------------------------------------------ BREEDING (2026-09-27): the island's pen
      One pairing or one egg at a time, per island. The food (and the gem, and the nest) is taken ALL AT ONCE at the start - the
      owner: "every hour feels like micromanaging" - and the clock then runs untouched, offline included, because it is only a
@@ -2326,7 +2389,7 @@ export class World {
     // stepping onto the blue takes you through
     const edge = !moving && S.g[pl.y][pl.x] === "e", side = pl.x === G.COLS - 1 ? "e" : pl.x === 0 ? "w" : pl.y === 0 ? "n" : "s";
     if (edge && S.def.exitTo && !S.def.exits?.[side]) {
-      const o = S.def.home ? { scene: G.isleKey(this.isleOf(S), S.owner), x: 10, y: 4 } : S.def.exitTo; this.moveToScene(pl, o.scene, null, o); pl.dir = "south";
+      const o = S.def.cellar ? this.cellarUp(S) : S.def.home ? { scene: G.isleKey(this.isleOf(S), S.owner), x: 10, y: 4 } : S.def.exitTo;   /* (2026-09-27) the cellar's steps come up by the ladder */ this.moveToScene(pl, o.scene, null, o); pl.dir = "south";
       this.say(pl, `You step back out into ${G.sceneDef(o.scene).name.replace(/^The /, "the ")}.`); return;
     }
     if (!moving && S.g[pl.y][pl.x] === "e") {
@@ -2535,7 +2598,10 @@ export class World {
     if (a.kind === "tower") { pl.act = null; return this.towerDoor(S, pl); }        /* the door in the Yard: opens the page's window */
     if (a.kind === "towerup") { pl.act = null; return this.towerUp(S, pl); }        /* the stairs: refuses until the floor is clear */
     if (a.kind === "cryptloot") { pl.act = null; return S.def.pyramid ? this.pyramidLootOpen(S, pl) : this.cryptLootOpen(S, pl); }
-    if (a.kind === "pen") { pl.act = null; return this.penView(S, pl); }   /* (2026-09-27) Breeding: the page opens the pen window */
+    if (a.kind === "pen") { pl.act = null; return this.penView(S, pl); }
+    if (a.kind === "shroom") { pl.act = null; return this.fungPick(S, pl, a.ob); }   /* (2026-09-27) Fungiculture */
+    if (a.kind === "fbed") { pl.act = null; return this.fungBed(S, pl, a.ob, now); }
+    if (a.kind === "cellar") { pl.act = null; return this.fungDown(S, pl); }   /* (2026-09-27) Breeding: the page opens the pen window */
     if (a.kind === "hiscores") { pl.act = null; return pl.out.push({ type: "hiscores" }); }   /* (v96) the board on the wall opens the page's own Hiscores window */
     if (a.kind === "howto") { pl.act = null; return pl.out.push({ type: "popup", title: "How EastScape works", text: G.HOWTO, icon: "🎰" }); }
     if (a.kind === "board") { pl.act = null; this.tourStep(pl, "play"); this.tourStep(pl, "board"); return this.dailySend(pl); }   /* (v96: the board also clears "play a game", so a player with no ZCoins is sent to work, not left stuck) */
@@ -2709,7 +2775,7 @@ export class World {
        on with the best thing you can make (cooking, smelting); the anvil is
        not, because "which of the forty things" is a question only you can
        answer, so it waits for a.pick. */
-    if (a.kind === "cook" || a.kind === "smelt" || a.kind === "smith" || a.kind === "brew" || a.kind === "fletch" || a.kind === "print" || a.kind === "breed") {
+    if (a.kind === "cook" || a.kind === "smelt" || a.kind === "smith" || a.kind === "brew" || a.kind === "fletch" || a.kind === "print" || a.kind === "breed" || a.kind === "rot") {
       const nx = G.STATIONS[ob.t]?.nexus ? G.NEXUS : null;   /* (2026-09-26) the Nexus: twice the output, half as much xp again */
       const st = G.STATIONS[ob.t];
       if (!st) { pl.act = null; return; }
@@ -2751,7 +2817,7 @@ export class World {
       }
       const outName = G.ITEMS[r.out[0]].name.toLowerCase();
       if (!a.started && r.burnStop != null && G.burnChance(r, lv, ob.t === "range") >= G.COAL_STEADY_MIN && G.countItems(C, ["charcoal"]) > 0) this.say(pl, "You bank the fire with charcoal. Nothing will burn while it lasts.", "good");   /* said once at the start, so the fuel is never spent silently */
-      if (!a.started) { a.started = now; a.next = now + r.ms; pl.swingAt = now; this.say(pl, `You start ${st.verb === "cook" ? "cooking" : st.verb === "smelt" ? "smelting" : st.verb === "brew" ? "brewing" : st.verb === "print" ? "printing" : "hammering out"} the ${st.verb === "cook" ? G.ITEMS[r.in[0][0]].name.toLowerCase().replace(/^raw /, "") : outName}.`); return; }
+      if (!a.started) { a.started = now; a.next = now + r.ms; pl.swingAt = now; this.say(pl, `You start ${st.verb === "cook" ? "cooking" : st.verb === "smelt" ? "smelting" : st.verb === "brew" ? "brewing" : st.verb === "print" ? "printing" : st.verb === "mix" ? "mixing" : st.verb === "prepare" ? "preparing" : "hammering out"} the ${st.verb === "cook" ? G.ITEMS[r.in[0][0]].name.toLowerCase().replace(/^raw /, "") : outName}.`); return; }
       if (now - pl.swingAt > 900) pl.swingAt = now;
       if (now < a.next) return;
       a.next = now + r.ms;
@@ -3427,7 +3493,7 @@ export class World {
       npcs: S.npcs.map((n) => trim({ id: n.id, x: n.x, y: n.y, s: st(n), face: n.face, held: n.holdUntil > now })),
       bots: S.bots.map((b) => trim({ id: b.id, x: b.x, y: b.y, s: st(b), dir: b.dir, face: b.face, work: b.working ? b.working.ob.id : null, workT: b.working ? b.working.ob.t : null })),
       ground: S.ground.map((x) => ({ id: x.id, k: x.k, n: x.n, x: x.x, y: x.y, owner: x.owner, until: x.until })),
-      isle: S.owner ? (() => { const I = this.isleOf(S); return I && { owner: S.owner, name: S.ownerName || this.pls.get(S.owner)?.name || "Someone", plots: I.plots, shelf: I.shelf, theme: I.theme, open: I.open }; })() : null,
+      isle: S.owner ? (() => { const I = this.isleOf(S); return I && { owner: S.owner, name: S.ownerName || this.pls.get(S.owner)?.name || "Someone", plots: I.plots, beds: I.beds || null, bedsOpen: G.bedsOf(I), shelf: I.shelf, theme: I.theme, open: I.open }; })() : null,
       dyn: S.objs.filter((o) => o.stumpUntil > now || o.emptyUntil > now || o.bareUntil > now || o.grownAt > now).map((o) => [o.id, o.stumpUntil || 0, o.emptyUntil || 0, o.bareUntil || 0, o.grownAt || 0]),
       ev: withEvents ? S.events : []
     };
