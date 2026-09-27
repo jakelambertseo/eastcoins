@@ -1606,8 +1606,10 @@ export class World {
     if (op === "collect") {
       if (!P) return;
       if (now < P.at + P.ms) { const left = P.at + P.ms - now, h = Math.floor(left / 3600000), mi = Math.ceil((left % 3600000) / 60000); return bad(`Not yet: ${h ? `${h} h ` : ""}${mi} min to go.`); }
-      const back = [P.a, P.b].filter(Boolean);
-      if (G.petsOf(C).length + back.length + 1 > 50) return bad("You have too many pets to take another. Let one go first.");
+      /* (2026-09-27, the owner: "if someone succesfully breeds a greater or legendary baby it shouldnt come back right?") the two parents
+         BECOME the baby: nothing comes back at collect. Stopping early (release) still hands them back. */
+      const back = [];
+      if (G.petsOf(C).length + 1 > 50) return bad("You have too many pets to take another. Let one go first.");
       const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k: P.child.k, name: "", ...(P.child.tier ? { tier: 1 } : {}), ...(P.child.fx ? { fx: P.child.fx } : {}) };   /* a Legendary keeps its picked stats too */
       C.pets.push(...back, pet);
       const xp = P.kind === "egg" ? G.EGGS[P.egg].xp : G.BREED[P.kind].xpEnd;
@@ -3465,7 +3467,7 @@ export class World {
   npcsOf(S) { return (S.npcs || []).map((n) => ({ id: n.id, name: n.name, art: n.art, tag: n.tag, look: n.look, reach: n.reach, opens: n.opens, shop: n.shop })); }
   whoOf(S) {
     const out = [];
-    for (const p of this.playersIn(S)) out.push({ id: p.id, name: p.name, nfx: G.nameFxOf(p.C) || undefined, role: p.role !== "user" ? p.role : undefined, vip: G.vipOf(p.C).i || undefined, lvl: G.totalOf(p.C), weapon: p.C.eq.weapon, body: p.C.eq.body, maxHp: G.maxHpOf(p.C), look: p.C.look || undefined, van: G.wearsVanity(p.C.van) ? { on: p.C.van.on, col: p.C.van.col } : undefined, pet: G.activePet(p.C)?.k || undefined, cos: p.cos || undefined });
+    for (const p of this.playersIn(S)) out.push({ id: p.id, name: p.name, nfx: G.nameFxOf(p.C) || undefined, role: p.role !== "user" ? p.role : undefined, vip: G.vipOf(p.C).i || undefined, lvl: G.totalOf(p.C), weapon: p.C.eq.weapon, body: p.C.eq.body, maxHp: G.maxHpOf(p.C), look: p.C.look || undefined, van: G.wearsVanity(p.C.van) ? { on: p.C.van.on, col: p.C.van.col } : undefined, pet: G.activePet(p.C)?.k || undefined, pgr: G.activePet(p.C)?.tier ? 1 : undefined,   /* (2026-09-27) a Greater pet glows */ cos: p.cos || undefined });
     for (const b of S.bots) out.push({ id: b.id, name: b.name, level: b.level, art: b.art, hue: b.hue });
     return out;
   }
@@ -3532,7 +3534,7 @@ export class World {
       npcs: S.npcs.map((n) => trim({ id: n.id, x: n.x, y: n.y, s: st(n), face: n.face, held: n.holdUntil > now })),
       bots: S.bots.map((b) => trim({ id: b.id, x: b.x, y: b.y, s: st(b), dir: b.dir, face: b.face, work: b.working ? b.working.ob.id : null, workT: b.working ? b.working.ob.t : null })),
       ground: S.ground.map((x) => ({ id: x.id, k: x.k, n: x.n, x: x.x, y: x.y, owner: x.owner, until: x.until })),
-      isle: S.owner ? (() => { const I = this.isleOf(S); return I && { owner: S.owner, name: S.ownerName || this.pls.get(S.owner)?.name || "Someone", plots: I.plots, beds: I.beds || null, bedsOpen: G.bedsOf(I), shelf: I.shelf, theme: I.theme, open: I.open }; })() : null,
+      isle: S.owner ? (() => { const I = this.isleOf(S); return I && { owner: S.owner, name: S.ownerName || this.pls.get(S.owner)?.name || "Someone", plots: I.plots, beds: I.beds || null, bedsOpen: G.bedsOf(I), shelf: I.shelf, theme: I.theme, open: I.open, pen: (() => { const P = this.pls.get(S.owner)?.C.pen; return P?.a && P?.b ? { a: P.a.k, b: P.b.k, ag: P.a.tier ? 1 : 0, bg: P.b.tier ? 1 : 0 } : null; })() }   /* (2026-09-27) the two parents, so everyone on the island sees them in the pen */; })() : null,
       dyn: S.objs.filter((o) => o.stumpUntil > now || o.emptyUntil > now || o.bareUntil > now || o.grownAt > now).map((o) => [o.id, o.stumpUntil || 0, o.emptyUntil || 0, o.bareUntil || 0, o.grownAt || 0]),
       ev: withEvents ? S.events : []
     };

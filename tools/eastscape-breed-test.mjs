@@ -42,8 +42,9 @@ is(C.pets.length, 0, "both parents are in the pen"); is(C.eq.pet, null, "the wor
 W.penOp(S, pl, { op: "pair", a: "x", b: "y" }); is(/busy/.test(said() || ""), true, "a busy pen says so");
 W.penOp(S, pl, { op: "collect" }); is(/Not yet/.test(said() || ""), true, "collect refuses before the clock");
 C.pen.at -= G.BREED.greater.ms; W.penOp(S, pl, { op: "collect" });
-is(C.pen, null, "collect empties the pen"); is(C.pets.length, 3, "both parents come back, with the child");
-const kid = C.pets.find((p) => p.tier); is(G.rankOf(kid), "greater", `the child is Greater (${kid?.k})`);
+is(C.pen, null, "collect empties the pen"); is(C.pets.length, 1, "the parents became the child: one pet where there were two");
+const kid = C.pets.find((p) => p.tier);
+{ const keep = C.pets; C.pets = [{ id: "r1", k: "bonepup", name: "" }, { id: "r2", k: "packrat", name: "" }]; G.addInv(C.inv, "petfood_greater", 6, C); W.penOp(S, pl, { op: "pair", a: "r1", b: "r2" }); W.penOp(S, pl, { op: "release" }); is(C.pets.length, 2, "stopping early gives both parents back"); is(C.pen, null, "and empties the pen"); C.pets = keep; } is(G.rankOf(kid), "greater", `the child is Greater (${kid?.k})`);
 is(kid.k, "packrat", "it wears the look that was chosen"); is(JSON.stringify(kid.fx), JSON.stringify({ speed: 10, slots: 5 }), "and carries the two picked stats, a quarter stronger (speed 8 -> 10, slots 4 -> 5)");
 C.eq.pet = kid.id; const pf = G.petFx(C); is(pf.speed === 10 && pf.slots === 5, true, `both reach the game (${G.petFxText(kid.fx)})`);
 is(JSON.stringify(G.mixFx("greater", ["tix", 10], ["hp", 8])), JSON.stringify({ tix: 13, hp: 10 }), "any two stats mix");
