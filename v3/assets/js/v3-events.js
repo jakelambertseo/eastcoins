@@ -777,13 +777,13 @@
       if (list.length > limit || limit > page) group.append(moreRow(key, list.length, limit, page));
     }
 
-    // Under the last group on an NFL Sunday: why the page is short.
-    if (local.nflSunday && !local.search) {
+    // Under the last group on Monday Night Football: why the page is short.
+    // (2026-09-27, the owner: the Sunday line is gone; the filter bar's
+    // "NFL Sunday · football only" already says it.)
+    if (local.nflSunday && !local.search && nflDayIsMonday()) {
       const line = document.createElement("p");
       line.className = "sundaynote";
-      line.append(nflDayIsMonday()
-        ? "🏈 It's Monday Night Football, football only on here today. No bets open except for football."
-        : "🏈 It's NFL Sunday, football only on here today. Sybau. Baseball and other shit will be back tomorrow");
+      line.append("🏈 It's Monday Night Football, football only on here today. No bets open except for football.");
       root.append(line);
     }
 
@@ -795,6 +795,14 @@
      NFL RedZone is a single-title listing from the provider (no teams,
      one poster). On the Sundays it appears it is the one thing most of
      the room came for, so it takes a whole row at the top. */
+
+  // (2026-09-27, the owner: "make those accurate ... we're in week 3") The
+  // NFL week, Tuesday to Monday in Chicago, from the 2026 season's first
+  // Tuesday (Sep 8; Week 1's Sunday is Sep 13). Null outside the 18-week
+  // regular season, when RedZone does not air and the week means nothing.
+  // Next season: change NFL_WEEK1 and nothing else.
+  const NFL_WEEK1 = Date.UTC(2026, 8, 8, 5);
+  const nflWeek = (t = Date.now()) => { const w = Math.floor((t - NFL_WEEK1) / (7 * 86400000)) + 1; return w >= 1 && w <= 18 ? w : null; };
 
   const isRedZone = (m) => /\bnfl\b.*red\s*zone|red\s*zone.*\bnfl\b/i.test(String(m?.title || "")) || /^ppv-nfl-red-zone/.test(String(m?.id || ""));
 
@@ -827,7 +835,7 @@
 
     const h = document.createElement("h2");
     h.className = "rz-h";
-    h.textContent = "Football season is here.";
+    h.textContent = "RedZone is live.";
 
     const p = document.createElement("p");
     p.className = "rz-p";
@@ -881,7 +889,8 @@
       hero.classList.toggle("live", live);
       // Before kickoff the headline and the button both say so; once it's
       // on they drop the hedge.
-      h.textContent = live ? "Football season is here." : "Football season is almost here.";
+      const wk = nflWeek(start || Date.now());
+      h.textContent = wk ? `Week ${wk} RedZone ${live ? "is live." : "starts soon."}` : live ? "RedZone is live." : "RedZone starts soon.";
       cta.textContent = live || !start ? "Watch RedZone →" : `Watch RedZone at ${clockOf(start)}`;
       if (live) when.textContent = "LIVE";
       else if (!start) when.textContent = "";
