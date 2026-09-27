@@ -5151,7 +5151,7 @@ function renderPen() {
   const pets = G.petsOf(me);
   const list = pets.length ? pets.map((p) => { const r = G.rankOf(p), n = penSel.indexOf(p.id); return `<button type="button" class="pn-row${n >= 0 ? " on" : ""}" data-pp="${p.id}" title="${esc(G.petFxText(G.petStats(p)))}">${petPic(p.k, r).replace('class="pp', 'class="pp sm')}<span><b>${esc(G.PETS[p.k].name)}</b>${rankTag(r)}</span>${n >= 0 ? `<span class="pn-num">${n + 1}</span>` : ""}</button>`; }).join("") : `<p class="pn-note">No pets yet. They drop from monsters, and eggs hatch in a hatchery.</p>`;
   $("penBody").innerHTML = `<div class="pn-layout"><div class="pn-left"><h4>Your pets <span class="pn-time">${penSel.length}/2</span></h4><div class="pn-list">${list}</div>
-      <p class="pn-note">Food, at a campfire: ${rankTag("ordinary")} 20 &middot; ${rankTag("greater")} 50 &middot; ${rankTag("legend")} 80 Cooking.</p></div>
+</div>
     <div class="pn-right"><div class="pn-card"><div class="pn-eq">${card(a, "Pick a pet")}<i>+</i>${card(b, "Pick a pet")}<i>=</i>${out}</div></div>${picks}${plan}</div></div>`;
   $("penBody").querySelectorAll("[data-pp]").forEach((el) => el.addEventListener("click", () => { const id = el.dataset.pp; SFX.play("ui_click"); penSel = penSel.includes(id) ? penSel.filter((x) => x !== id) : [...penSel, id].slice(-2); penPick = {}; renderPen(); }));
   $("penBody").querySelectorAll("[data-pk]").forEach((el) => el.addEventListener("click", () => { if (el.classList.contains("off")) return say("The other parent is already giving that stat. Pick a different one.", "bad"); const [side, k] = el.dataset.pk.split(":"); SFX.play("ui_click"); penPick[side] = k; renderPen(); }));
