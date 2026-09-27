@@ -48,8 +48,7 @@ export function createBankUi(E) {
     root.innerHTML = `<div class="bk">
       <nav class="bk-side"><div class="bk-pages" id="bkPages" aria-label="Bank pages"></div><p class="bk-pnote">Drag an item onto a page to file it there. Deposits go to the page you are on.</p></nav>
       <section class="bk-main">
-        <div class="bk-tabs" id="bkTabs" aria-label="Kinds"></div>
-        <div class="bk-top"><input class="search bk-search" id="bkSearch" placeholder="Search bank and bag…" aria-label="Search bank and bag" autocomplete="off">
+        <div class="bk-top"><input class="search bk-search" id="bkSearch" placeholder="Search bank and bag…" aria-label="Search bank and bag" autocomplete="off"><select class="bk-kind" id="bkTabs" aria-label="Show only one kind of item"></select>
           <div class="qty bk-sort" id="bkSort" role="group" aria-label="Sort">${[["recent", "Recent"], ["az", "A–Z"], ["value", "Value"], ["amount", "Amount"]].map(([k, n]) => `<button type="button" data-s="${k}">${n}</button>`).join("")}</div></div>
         <div class="bk-meter" id="bkMeter"></div>
         <div class="bk-grid" id="bkGrid"></div>
@@ -65,7 +64,7 @@ export function createBankUi(E) {
     $("bkSort").addEventListener("click", (e) => { const b = e.target.closest("[data-s]"); if (!b) return; sort = b.dataset.s; lsSet("es_bank_sort", sort); SFX.play("ui_click"); render(); });
     $("bkQty").addEventListener("click", (e) => { const b = e.target.closest("[data-n]"); if (!b) return; mode = b.dataset.n; lsSet("es_bank_n", mode); if (mode === "x") $("bkX").focus(); paintQty(); });
     $("bkX").addEventListener("input", () => { x = Math.max(1, Math.floor(+$("bkX").value) || 1); lsSet("es_bank_x", String(x)); if (mode !== "x") { mode = "x"; lsSet("es_bank_n", mode); paintQty(); } });
-    $("bkTabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (!b) return; tab = b.dataset.tab; lsSet("es_bank_tab", tab); SFX.play("ui_click"); render(); });
+    $("bkTabs").addEventListener("change", () => { tab = $("bkTabs").value; lsSet("es_bank_tab", tab); SFX.play("ui_click"); render(); });   /* (2026-09-27, the owner) the kinds are a dropdown, not a row of chips */
     $("bkPages").addEventListener("click", (e) => { const b = e.target.closest("[data-page]"); if (!b) return; page = b.dataset.page; lsSet("es_bank_page", page); SFX.play("ui_click"); render(); });
     /* drag a tile onto a page: a bank row is refiled, a bag stack is deposited there. HTML5 drag is mouse-only; touch has the hold menu. */
     const dragAt = { bank: -1, bag: -1 };
@@ -133,7 +132,7 @@ export function createBankUi(E) {
     const inPage = page === "all" ? rows : onPage[curPage()] || [];
     const counts = { all: inPage.length }; for (const [s] of inPage) { const c = catOf(s.k); counts[c] = (counts[c] || 0) + 1; }
     if (tab !== "all" && !counts[tab]) tab = "all";
-    const tabsHtml = TABS.filter(([k]) => k === "all" || counts[k]).map(([k, n, i, t]) => `<button type="button" data-tab="${k}" aria-pressed="${String(k === tab)}" title="${t || n}"><i>${i}</i><span>${n}</span><em>${counts[k] || 0}</em></button>`).join("");
+    const tabsHtml = TABS.filter(([k]) => k === "all" || counts[k]).map(([k, n, i]) => `<option value="${k}"${k === tab ? " selected" : ""}>${i} ${k === "all" ? "Everything" : n} (${counts[k] || 0})</option>`).join("");
     if (tabsHtml !== last.tabs) { $("bkTabs").innerHTML = tabsHtml; last.tabs = tabsHtml; }
     $("bkSort").querySelectorAll("[data-s]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.s === sort)));
     const worth = bank.reduce((a, s) => a + G.valueOf(s.k) * s.n, 0), pct = Math.min(100, Math.round(bank.length / G.BANK_MAX * 100));
@@ -174,7 +173,8 @@ const CSS = `
 .bk-tabs button i{font-style:normal;font-size:13px}.bk-tabs button em{font-style:normal;font-size:10.5px;padding:0 5px;border-radius:999px;background:rgba(0,0,0,.1)}
 .bk-ph{grid-column:1/-1;margin:6px 2px 0;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.6}
 .bk-grid .slot.dragging{opacity:.4}.bk-menu-s{height:1px;margin:3px 6px;background:rgba(0,0,0,.12)}
-.bk-top{display:flex;gap:8px;align-items:center;margin-bottom:6px}.bk-search{flex:1;margin:0}.bk-sort button{padding:4px 9px;font-size:12px}
+.bk-top{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap}.bk-search{flex:1 1 140px;margin:0}.bk-sort button{padding:4px 9px;font-size:12px}
+.bk-kind{flex:0 1 auto;max-width:100%;padding:5px 8px;border:1px solid #8a7a5a;border-radius:4px;background:#fffaf0;color:#2a2016;font:800 12.5px Nunito,sans-serif;cursor:pointer}
 .bk-meter{display:flex;align-items:center;gap:10px;margin:0 0 8px;font-size:12px;color:#5a4a30}.bk-meter b{color:#2a2016}
 .bk-bar{flex:1;height:8px;border-radius:999px;background:rgba(0,0,0,.12);overflow:hidden}.bk-bar i{display:block;height:100%;background:#4aa84a;border-radius:999px}.bk-bar i.warn{background:#d8963a}.bk-bar i.full{background:#c8283a}
 .bk-worth{white-space:nowrap}
