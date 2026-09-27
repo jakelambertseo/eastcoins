@@ -401,7 +401,7 @@ export const GUIDES = [
     body: (G, H) => `<p><b>Click a monster.</b> You walk to it and keep swinging until one of you stops. Whoever hits it first owns it &mdash; nobody else can take your kill, except in the Wilderness where nothing is owned.</p>
       <h3>One skill, not four</h3>
       <p><b>Combat is a single skill and there are no stances to pick.</b> Every point of damage you deal trains it, and it does all three jobs at once: you land more of your swings, you hit harder, and you get hit less. Better weapons and armour ask for it.</p>
-      <p><b>Hitpoints trains alongside it, always.</b> Damage pays Melee xp (Archery, with a bow) and a third as much again into Hitpoints, so your health climbs whatever you are fighting.</p>
+      <p><b>Hitpoints trains alongside it, always.</b> Damage pays Melee xp (Archery with a bow, Magic with a wand) and a third as much again into Hitpoints, so your health climbs whatever you are fighting. <b>At range it climbs slower:</b> with a bow or a wand, Hitpoints gets a third of what it gets with a melee weapon, because you are not the one standing in the way of the hits.</p>
       <h3>Three weapons, one speed each</h3>
       <p>Every tier has the same three, and they are within a whisker of each other on damage over time. It is a feel choice, not a power one.</p>
       <table class="tbl"><tr><th>Weapon</th><th>Swings every</th><th>Leans</th></tr>
@@ -836,7 +836,7 @@ export const GUIDES = [
       <p>Wands and Magic Bags are made at the Arcane altar in the Yard, from logs, ink and the gems that turn up in ore.</p>`;
     } },
   { id: "archery", title: "Archery", icon: "\u{1F3F9}", cat: "Skills",
-    body: (G) => `<p><b>A second way to fight.</b> Hold a bow and every roll in the fight reads your Archery level instead of Combat &mdash; accuracy, max hit and defence &mdash; and every point of damage pays Archery the xp Combat would have had (with Hitpoints alongside, as always). Your combat level takes the higher of the two.</p>
+    body: (G) => `<p><b>A second way to fight.</b> Hold a bow and every roll in the fight reads your Archery level instead of Combat &mdash; accuracy, max hit and defence &mdash; and every point of damage pays Archery the xp Combat would have had. Hitpoints trains alongside it at <b>a third of melee's rate</b>: you are not the one getting hit. Your combat level takes the higher of the two.</p>
       <h3>Getting started</h3>
       <p>Brutus sells a <b>rough shortbow</b>, a <b>rough quiver</b> and <b>bone arrows</b>, all Archery 1. Bow in the weapon hand, quiver in the offhand (it takes the shield's place), click the arrows in your bag to load it. Arrows stack to 1,000 in the bag.</p>
       <h3>How a bow fights</h3>
@@ -1021,6 +1021,12 @@ export const GUIDES = [
 ];
 
 export const UPDATES = [
+  {
+    date: "2026-09-27", title: "Ranged fighting trains Hitpoints slower",
+    items: [
+      "HITPOINTS AT RANGE: with a bow or a wand, the Hitpoints xp from each hit is a third of what a melee weapon gives. Archery and Magic xp are unchanged, and melee is unchanged. Your Hitpoints level is your maximum health, so a ranger still grows sturdier, just more slowly."
+    ]
+  },
   {
     date: "2026-09-27", title: "Breeding, Fungiculture, and pets change hands",
     items: [
@@ -1963,7 +1969,7 @@ export const SKILL_GUIDE = {
   fungiculture: "Grow mushrooms in the cellar under your island, and pick the wild clusters on every map once a day. Compost from the bin in the cellar trains it from level 1 and feeds the beds.",
   cooking: "Cook raw fish and meat at a range, hearth or campfire. Each food needs a level to cook and stops burning at a higher one. Cooked food heals when you eat it.",
   melee: "Fight monsters with a weapon in hand. Every point of damage you deal gives Melee xp, and a little Hitpoints xp with it. (With a bow in hand it is <b>Archery</b> xp instead.) Your combat level is Melee, Archery and Hitpoints together. One skill does all three jobs \u2014 you land more swings, you hit harder and you get hit less \u2014 and it is what better weapons and armour ask for.",
-  hp: "Goes up alongside Combat as you deal damage. Your Hitpoints level is your maximum health.",
+  hp: "Goes up alongside the fighting skills as you deal damage: fully with a melee weapon, a third as fast with a bow or a wand. Your Hitpoints level is your maximum health.",
   fishing: "Hold a fishing rod and click the water. Every spot holds two fish: the second is better, needs a higher level, and turns up about a third of the time once you can catch it.",
   farming: "Pick wild wheat in the Yard \u2014 the only gathering skill that needs nothing in your hand \u2014 or grow your own on your island, where a plot keeps growing while you are logged off: food crops, and from Harvesting 15 the four flowers Wizardry brews its inks from.",
   mining: "Hold a pickaxe and click a rock. Every rock holds two to twelve ore and you work it until it is empty; a vein is slower per ore but never runs dry, which makes it the one to stand at.",

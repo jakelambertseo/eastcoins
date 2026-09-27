@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 325;
+export const VERSION = 326;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -743,7 +743,12 @@ export const SKILL_GROUPS = [
    simply carries. Only the display rounds.
    ------------------------------------------------------------ */
 export const COMBAT_XP = 4;        // per point of damage, split by the stance
-export const HP_XP = 4 / 3;        // per point of damage, in every stance
+export const HP_XP = 4 / 3;        // per point of damage, with a melee weapon
+/* (2026-09-27, the owner: "one way we can balance magic and archery is to make it so they dont give an XP to hitpoints, since technically
+   at range youre not getting hit") A BOW OR A WAND TRAINS HITPOINTS AT A THIRD OF THE RATE. Not none: Hitpoints IS your maximum health, so
+   none at all would leave someone who only ever shoots at 10 health forever, one hit from dead at level 80. The owner chose a reduced share
+   from the three options put to them. Melee is unchanged. */
+export const RANGED_HP_SHARE = 1 / 3;
 export const DEFAULT_STANCE = "controlled";
 /* STANCES WERE REMOVED ON 2026-09-19 and this is what is left of them: ONE entry, kept only because
    xpForDamage() reads a share table and DEFAULT_STANCE indexes into this.
@@ -758,11 +763,11 @@ export const STANCES = {
   controlled: { name: "Combat", icon: "\u2694\uFE0F", share: { melee: 1 }, blurb: "Every hit trains Combat, and Hitpoints alongside it." }
 };
 export const stanceOf = () => DEFAULT_STANCE;   // stances were removed (2026-09-19): every hit trains all three evenly
-/** What one hit is worth, as [skill, xp] pairs. Always totals COMBAT_XP + HP_XP per damage. */
+/** What one hit is worth, as [skill, xp] pairs: COMBAT_XP per damage into the style's skill, and HP_XP into Hitpoints (a third of that with a bow or a wand). */
 export function xpForDamage(c, dmg) {
   const out = [];
   for (const [skill, share] of Object.entries(STANCES[stanceOf(c)].share)) out.push([skill === "melee" ? styleOf(c) : skill, COMBAT_XP * share * dmg]);   /* (2026-09-25) a bow pays Archery */
-  out.push(["hp", HP_XP * dmg]);
+  out.push(["hp", HP_XP * dmg * (styleOf(c) === "melee" ? 1 : RANGED_HP_SHARE)]);
   return out;
 }
 
