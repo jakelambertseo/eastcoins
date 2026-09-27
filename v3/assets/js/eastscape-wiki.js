@@ -47,11 +47,13 @@ export const GUIDES = [
         <tr><td><b>Lantern Moth</b></td><td>+15 hitpoints</td></tr>
         <tr><td><b>House Cat</b></td><td>+3% speed, +1 bag slot, +5 hitpoints, +5% tickets</td></tr>
         <tr><td><b>Coilling</b></td><td>+10% movement speed, +2 bag slots, +10% skilling and swing speed</td></tr>
+        <tr><td><b>Pot Boy</b></td><td>+2 bag slots, +4% tickets</td></tr>
       </table>
       <!-- plain text, NOT a link: there is no Pyramid guide yet, and a wiki that links to its own missing pages
            is worse than one that has not got round to them. Make this an anchor when that page exists. -->
       <p><b>The Black Cat does not drop from a kill</b> the way the others do: it follows the Pumpkin King during the Long Night (October), one King in forty. It walks a little quicker and, somehow, the tickets come a little better around it.</p>
       <p><b>The Coilling does not drop from a kill.</b> It comes out of the chest in the Great Pyramid, about one clear in twenty, and it is the best of them &mdash; which is the point of raiding for it.</p>
+      <p><b>The Pot Boy does not drop from a kill</b> either, except one: the Deepwarden, in the Depths of the Mountain, about one kill in sixty.</p>
       <p><b>One at a time</b>, and the bonus stops the moment you stow it. Both speeds share their ceilings with food and gear, so a quick pet on top of a quick meal will not run away with it.</p>
       <p><b>They are two different speeds.</b> <b>Movement</b> is how fast you walk. <b>Skilling and swing</b> is how fast you hit a monster, a rock or a tree, and how fast you fish and pick pockets. A pet can give either, and only the Coilling gives both.</p>
       <p>Name yours what you like &mdash; everyone sees it. You can also let one go, and that cannot be undone.</p>` },
@@ -300,7 +302,7 @@ export const GUIDES = [
      the same levels and be a choice rather than a sequence. */
   { id: "road", title: "The road out", icon: "\u{1F5FA}️", cat: "Starting out",
     body: (G, H) => {
-      const ORDER = ["workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "carnival", "vault", "trailer", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
+      const ORDER = ["workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "carnival", "vault", "depths", "trailer", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
       const NOTE = {
         workyard: "the casino, the bank, the campfire, the furnace and anvil, sardines",
         gloam: "emerald and diamond ore, gloomwillow, trout and catfish",
@@ -311,6 +313,7 @@ export const GUIDES = [
         thunderhead: "storm marlin, thunder squid, the way to the last two",
         carnival: "the games, the duck pond, goldfish and koi",
         vault: "end-game fighting, and the only <b>nova</b> and <b>singularity</b> ore in the game",
+        depths: "ledges over a bottomless drop: monsters that shrug off a whole fighting style, abyss crystal, eclipse and nova ore, and the Deepwarden",   /* (2026-09-27) */
         trailer: "the best gathering in the game, and the meanest neighbours",
         wild: "the road past the Yard's east gate: nodes far apart, most things attack first, and the first of three monsters found nowhere else",
         deep: "the far end of the Wilderness: the Black Pool (Fishing 92 and 97), the Gallows oak (Woodcutting 90), the Grim Liches, the Nexus",
@@ -487,7 +490,7 @@ export const GUIDES = [
       <table class="tbl"><tr><th>Dish</th><th>Cook at</th><th>Stops burning</th><th>Heals</th><th>Bom pays</th></tr>
         ${rows.map((r) => `<tr><td>${H.ico(r.to)} ${H.wl(`items/${r.to}`, H.esc(G.ITEMS[r.to]?.name || r.to))}${r.smoked ? " <small>(smokes)</small>" : ""}</td><td>${r.lvl}</td><td>${r.stop ?? "&mdash;"}</td><td>${r.heal ?? "&mdash;"}</td><td>${r.sell ?? "&mdash;"}</td></tr>`).join("")}
       </table>
-      <p><b>${H.esc((WORD[smokes] || smokes).replace(/^./, (c) => c.toUpperCase()))} of these can be smoked instead</b>, which heals more, sells for far more and gives a 20-minute buff. It needs charcoal, and the fire does it automatically when you are carrying some. See <a data-wiki="guides/smoking">Smoked fish</a>.</p>
+      <p><b>${H.esc(String(WORD[smokes] || smokes).replace(/^./, (c) => c.toUpperCase()))} of these can be smoked instead</b>, which heals more, sells for far more and gives a 20-minute buff. It needs charcoal, and the fire does it automatically when you are carrying some. See <a data-wiki="guides/smoking">Smoked fish</a>.</p>
       <p><b>Meat sits under fish on purpose.</b> A chicken is not a worse sardine; it is something you can cook at level 1 without a rod.</p>`;
     } },
   { id: "smithing", title: "Smithing", icon: "\u{1F528}", cat: "Skills",
@@ -880,7 +883,7 @@ export const GUIDES = [
         <tr><td>High roller's chops</td><td>10</td><td>+25% rare drops</td></tr>
         <tr><td>Fisherman's platter</td><td>14</td><td>+10% bite rate and +10% tickets</td></tr>
       </table>
-      <p>The eleven <a data-wiki="guides/smoking">smoked fish</a> are dinners too, and they heal far more &mdash; up to 48. That page has their buffs.</p>
+      <p>The <a data-wiki="guides/smoking">smoked fish</a> are dinners too, and they heal far more &mdash; up to 48. That page has their buffs.</p>
       <h3>Drinks &mdash; 10 minutes</h3>
       <table class="tbl"><tr><th>Drink</th><th>Gives</th></tr>
         <tr><td>House lager</td><td>+5% tickets</td></tr>

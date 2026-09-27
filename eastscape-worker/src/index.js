@@ -2474,7 +2474,7 @@ export class World {
       { const am = G.launcherOf(C) && G.ammoOf(C), need = am && G.missingReq(C, G.ITEMS[am.k]); if (need) { pl.act = null; return this.say(pl, `You need Archery ${need.lvl} to fire ${G.ITEMS[am.k].name.toLowerCase()}s.`, "bad"); } }
       /* (2026-09-25) RANGE. A launcher fights from its own reach; everything else from next door. The path target
          is the same reach, so an archer stops at four tiles rather than walking up to the thing. */
-      { const reach = G.reachOfHeld(C); if (G.cheb(pl, m) > reach || (reach === 1 && G.cheb(pl, m) !== 1)) { const p = G.findPath(S.g, pl, m, reach); if (p && p.length) pl.path = p; else if (!p) pl.act = null; return; } }
+      { const reach = G.reachOfHeld(C); if (G.cheb(pl, m) > reach || (reach === 1 && G.cheb(pl, m) !== 1)) { const p = G.findPath(S.g, pl, m, reach); if (p && p.length) pl.path = p; else if (!p) { pl.act = null; if (G.MOBS[m.t]?.sky || m.perch) this.say(pl, "It's out over the drop. Nothing short of an arrow will reach it.", "bad"); } return; } }   /* (2026-09-27) the Depths' wisps */
       a.x = m.x; a.y = m.y; faceIt();
       // the weapon sets the pace now: a gladius swings every 1.8s, a maul every 3s
       const swingMs = G.swingMsOf(C);
@@ -2503,6 +2503,9 @@ export class World {
         const el = G.launcherOf(C) ? G.ammoElOf(C) : null;
         const def = G.MOBS[m.t], hit = Math.random() < G.hitChance(G.attackRollOf(C), def.def * (el === "void" ? 1 - G.MAGIC.pierce : 1)); let dmg = hit ? rint(1, G.maxHitOf(C) + G.ammoStrOf(C)) : 0;
         if (dmg && el) dmg = Math.max(1, Math.round(dmg * G.elementMul(m.t, el)));
+        /* (2026-09-27) THE GUARD (the Depths of the Mountain): some monsters take a tenth, or nothing, from a style, and one only
+           feels one element. Said once per monster per fight, with the numbers, so a player knows to switch rather than wonder. */
+        { const gm = G.guardMul(m.t, G.styleOf(C), el); if (gm !== 1) { if (dmg) dmg = gm <= 0 ? 0 : Math.max(1, Math.round(dmg * gm)); if (m.guardTold !== pl.id) { m.guardTold = pl.id; this.say(pl, `${def.name}: ${G.guardText(m.t)}`, "bad"); } } }
         if (dmg && G.launcherOf(C) && (def.size === "l" || def.size === "xl")) dmg = Math.round(dmg * (1 + G.ARCHERY.bigBonus));   /* (2026-09-25) a big target is hard to miss */
         const shotK = G.launcherOf(C) ? G.ammoOf(C)?.k : null;   /* (2026-09-25) which arrow: the page flies its own icon */
         this.spendAmmo(pl);   /* (2026-09-25) one arrow a shot, hit or miss; nothing happens for a sword */
@@ -3336,7 +3339,7 @@ export class World {
       if (m.dead) {
         if (S.def.crypt || S.def.pyramid || now < m.respawnAt) continue;   /* (nothing comes back in a crypt or pyramid run) */   /* (2026-09-24) the pyramid relied on pyramidKill setting respawnAt to Infinity; saying it here too means a monster killed some other way cannot quietly come back and re-lock a cleared chamber */
         // back at home, or the nearest free tile to it: never on top of someone
-        let spot = null;
+        let spot = m.perch && !this.occupied(S, m.hx, m.hy, m) ? { x: m.hx, y: m.hy } : null;   /* (2026-09-27) a perched one comes back on its perch */
         for (let r = 0; r <= 2 && !spot; r++) for (let dy = -r; dy <= r && !spot; dy++) for (let dx = -r; dx <= r && !spot; dx++) {
           const x = m.hx + dx, y = m.hy + dy;
           if (Math.max(Math.abs(dx), Math.abs(dy)) === r && G.walkableIn(S.g, x, y) && S.g[y][x] !== "e" && !this.occupied(S, x, y, m)) spot = { x, y };
@@ -3346,7 +3349,8 @@ export class World {
         continue;
       }
       const def = G.MOBS[m.t];
-      let foe = players.find((p) => p.act?.kind === "mob" && p.act.id === m.id && G.cheb(p, m) === 1 && !p.step);
+      const R = G.MOBS[m.t]?.range || 1, inRange = (p) => { const d = G.cheb(p, m); return d >= 1 && d <= R; };   /* (2026-09-27) a ranged monster */
+      let foe = players.find((p) => p.act?.kind === "mob" && p.act.id === m.id && inRange(p) && !p.step);
       if (def.boss && S.def.crypt) { this.cryptBossTick(S, m, now, players); const tt = this.cryptThreat(S, m, players, now); if (tt) { m.target = tt.id; foe = G.cheb(tt, m) === 1 && !tt.step ? tt : null; } }
       /* (2026-09-24) the Squeeze's own turn: coil and burrow, and it goes for whoever has hurt it most, the
          same as the Hoodie does. While it is under the sand pyramidBossTick suppresses its swing itself. */
@@ -3365,7 +3369,8 @@ export class World {
         let tgt = owner || (m.target ? players.find((p) => p.id === m.target) : null);
         if (!tgt || !ok(tgt)) { tgt = players.filter((p) => ok(p) && G.cheb(p, m) <= aggro).sort((a, b) => G.cheb(a, m) - G.cheb(b, m))[0] || null; m.target = tgt ? tgt.id : null; }
         if (tgt) {
-          if (G.cheb(tgt, m) === 1 && !tgt.step) foe = tgt;
+          if (inRange(tgt) && !tgt.step) foe = tgt;
+          else if (m.perch) continue;   /* (2026-09-27) it does not leave its perch to chase */
           else { if (!m.step && now > (m.nextChase || 0)) { m.nextChase = now + 500; m.path = G.findPath(S.g, m, tgt, 1) || []; } this.stepEntity(S, m, now, false); continue; }
         } else if (G.cheb(m, { x: m.hx, y: m.hy }) > 4 && !m.step && !m.path.length) m.path = G.findPath(S.g, m, { x: m.hx, y: m.hy }, 0)?.slice(0, 6) || [];
       }

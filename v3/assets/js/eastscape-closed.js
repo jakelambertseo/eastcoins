@@ -8,6 +8,46 @@
 
    It is HANDED the shared rules and the map-building helpers, createClosedScenes(G, G._MAP); it never imports the big file.
    ============================================================ */
+
+/* (2026-09-26) THE HAND-DRAWN MAPS (the Wilderness and the Deep Wild). fromRows() reads 26 rows of 44 characters into a
+   grid; `walls` is the set of rock cells not yet covered by a piece. piece() places a named picture with its footprint on
+   rock; deco() a picture with a footprint on open ground (blocking it); rockWall() fills whatever rock is left from a set
+   of [picture, w, h], biggest first where it fits, picked by a hash of the spot so the same map always builds the same
+   walls on the server and on every page. A piece may hang over the map's right or bottom edge (the picture is clipped),
+   never its top or left, so no object ever has a negative tile. */
+const hr = (x, y, s) => { const v = Math.sin(x * 12.9898 + y * 78.233 + s * 37.719) * 43758.5453; return v - Math.floor(v); };
+function fromRows(rows, G) {
+  if (rows.length !== G.ROWS || rows.some((r) => r.length !== G.COLS)) throw new Error("a map is 26 rows of 44");
+  const g = rows.map((r) => r.split("")), walls = new Set();
+  for (let y = 0; y < G.ROWS; y++) for (let x = 0; x < G.COLS; x++) if (g[y][x] === "#") walls.add(`${x},${y}`);
+  return { g, objs: [], walls };
+}
+function piece(g, objs, walls, art, x, y, w, h, name) {
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const k = `${x + i},${y + j}`; if (!walls.has(k)) throw new Error(`${art} at ${x},${y} is not on rock at ${k}`); walls.delete(k); }
+  objs.push({ t: "cliff", art, x, y, w, h, edge: true, name });
+}
+function deco(g, objs, art, x, y, w, h, name) {
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { if (g[y + j][x + i] !== "." && g[y + j][x + i] !== ",") throw new Error(`${art} at ${x},${y} is not on open ground`); g[y + j][x + i] = "#"; }
+  objs.push({ t: "cliff", art, x, y, w, h, edge: true, name });
+}
+/* an animated piece on rock (a waterfall, a lava pool): the footprint stays blocked, its cells leave the wall set */
+function animPiece(g, objs, walls, spec) {
+  for (let j = 0; j < spec.h; j++) for (let i = 0; i < spec.w; i++) { const k = `${spec.x + i},${spec.y + j}`; if (!walls.has(k)) throw new Error(`${spec.anim} at ${spec.x},${spec.y} is not on rock at ${k}`); walls.delete(k); }
+  objs.push({ edge: true, ...spec });
+}
+function rockWall(g, objs, walls, pieces, seed) {
+  const COLS = g[0].length, ROWS = g.length, free = (x, y) => x >= COLS || y >= ROWS || walls.has(`${x},${y}`);
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+    if (!walls.has(`${x},${y}`)) continue;
+    const fits = pieces.filter(([, w, h]) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (!free(x + i, y + j)) return false; return true; });
+    const r = hr(x, y, seed), [art, w, h] = fits[Math.min(fits.length - 1, Math.floor(r * r * fits.length))];
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) walls.delete(`${x + i},${y + j}`);
+    objs.push({ t: "cliff", art, x, y, w, h, edge: true, name: w * h >= 6 ? "Cliff" : "Rock" });
+  }
+}
+const WILD_ROCKS = [["x_rock1", 3, 3], ["x_rock2", 3, 2], ["x_rock3", 3, 2], ["x_pillar", 3, 5], ["x_rock4", 2, 2], ["x_rock5", 2, 1], ["x_rock6", 2, 1], ["x_rocks", 3, 1], ["x_boulder1", 2, 1], ["x_boulder2", 1, 1], ["x_boulder3", 1, 1]];
+const DEEP_ROCKS = [["d_rock5", 4, 4], ["d_rock6", 3, 4], ["d_pillar", 3, 5], ["d_rock1", 3, 3], ["d_rock4", 3, 3], ["d_rock8", 3, 2], ["d_slab", 3, 2], ["d_rock7", 2, 3], ["d_rock2", 2, 2], ["d_rock3", 2, 2], ["d_boulder1", 1, 1], ["d_boulder2", 1, 1], ["d_boulder3", 1, 1]];
+
 export function createClosedScenes(G, H) {
   const { block, grid, keepOf, room, wild } = H, { COLS, ROWS } = G;
   return {
@@ -213,51 +253,240 @@ export function createClosedScenes(G, H) {
     mobs: [], bots: [],
     npcs: [{ name: "Cassia", x: 12, y: 9, still: true, hair: "#8a3a1a", shirt: "#e8e0c8", pants: "#6a5a4a", lines: ["Mind the range, it's hot. Cooking lessons start soon.", "Bom eats like three gladiators.", "If you catch fish, I can teach you to cook them. Soon."] }]
   },
+  /* (2026-09-26) THE WILDERNESS AND THE DEEP WILD, REBUILT (the owner: "attractive yet dangerous... spread out ores/logs/
+     altars and any skilling nodes far apart... inhabited with more enemies, and dangerous ones at the very best places...
+     the roads need to be not straight lines... some strategy to pathing instead of just clicking the furthest tile away...
+     way too open"). Both are DRAWN below, one character a tile, rather than scattered by wild(): a wall is where the
+     strategy is, so the walls are placed on purpose. The art is Szadi art's RPG Fantasy Worlds SET1 (the Wilderness) and
+     SET3 (the Deep Wild), cut by tools/eastscape-wild-art.mjs; the ground themes are GROUNDS.wild / .deep in the page.
+       .  ground    ,  a trodden path (decoration: the walker does not care)    ~  water    s  the Cage's floor    #  rock
+     A few named pieces (a plateau, a column, a cave mouth) are placed by hand with their footprints; every other # is
+     filled by rockWall() from the area's rock set, biggest piece that fits, chosen by a hash of the spot, so a wall reads
+     as stacked rock rather than one tile repeated. A rock is `edge: true` (scenery: nothing to click) and carries its
+     footprint as w/h, which is what the page anchors the picture by. tools/eastscape-wild-check.mjs walks both maps:
+     every open tile reachable from the exits, every monster and node on open ground, every piece on rock. */
   wild: {
-    name: "The Wilderness", pvp: true, exits: { n: "deep" }, entry: { x: 3, y: 10 }, tint: "rgba(60,20,70,.26)",
+    name: "The Wilderness", pvp: true, exits: { n: "deep" }, entry: { x: 3, y: 10 }, tint: "rgba(60,20,70,.2)", ground: "wild",
     cage: [6, 3, 12, 6], cageOut: { x: 9, y: 9 },
+    rows: [
+      "############################################",
+      "####################.,...###################",
+      "###............#####.,...########.........##",
+      "###...sssssss..#####.,...########.........##",
+      "###...sssssss..#####.,...########.........##",
+      "###...sssssss..#####.,...######,,,,.......##",
+      "###...sssssss..##,,,,,......###...........##",
+      "###............##,....,,,,,,,,..############",
+      "###...,,,........,...........,..############",
+      "#................,.######....,..############",
+      "#..,,,,,,,,..,,,,,.######....,..############",
+      "#.........,,,,.....######....,..############",
+      "#..................######....,..############",
+      "#####...........,.#######....,..############",
+      "###############.,.#######....,....##########",
+      "###############.,.#######....,,,,.##########",
+      "###############.,.#######...###.,..#########",
+      "#####....###....,..........###..,..........#",
+      "#####....###....###.......######...........#",
+      "#####...~~~~~...###.......######...........#",
+      "#####...~~~~~...###.......######...........#",
+      "#####...~~~~~..####.......######...........#",
+      "#####..........####.......######...........#",
+      "#####..........####.......######...........#",
+      "############################################",
+      "############################################"
+    ],
     build() {
-      const g = grid(), objs = [], keep = [];
-      for (let x = 3; x <= 17; x++) g[10][x] = ",";
-      for (let y = 0; y < 10; y++) g[y][17] = ",";
-      for (let y = 8; y < 10; y++) g[y][9] = ",";
+      const { g, objs, walls } = fromRows(this.rows, G);
+      for (let x = 21; x <= 23; x++) g[0][x] = "e";
+      /* the landmarks: the plateau the whole middle bends round, a rock column in the south, a cave mouth in the north wall */
+      piece(g, objs, walls, "x_plateau", 19, 9, 6, 8, "Plateau"); piece(g, objs, walls, "x_column", 26, 18, 5, 6, "Rock column"); piece(g, objs, walls, "x_cave", 26, 1, 5, 4, "Cave mouth");
+      /* the waterfall: three wide off the north wall of the pool pocket, its splash a tile into the water (pad: 1) */
+      animPiece(g, objs, walls, { t: "waterfall", anim: "a_wfall_w", frames: 8, cols: 4, fw: 160, fh: 128, fps: 9, pad: 1, x: 9, y: 17, w: 3, h: 2, name: "Waterfall" });
       objs.push({ t: "rope", x: 2, y: 10, name: "Rope" }); g[10][2] = "#";
       // the Cage: iron bars round a ring, one gap at the bottom
       for (let x = 5; x <= 13; x++) { objs.push({ t: "cageH", x, y: 2 }); g[2][x] = "#"; if (x !== 9) { objs.push({ t: "cageH", x, y: 7 }); g[7][x] = "#"; } }
       for (let y = 3; y <= 6; y++) for (const x of [5, 13]) { objs.push({ t: "cageV", x, y }); g[y][x] = "#"; }
-      for (let y = 3; y <= 6; y++) for (let x = 6; x <= 12; x++) { g[y][x] = "s"; keep.push([x, y]); }
       objs.push({ t: "cagesign", x: 8, y: 8, name: "The Cage" }); g[8][8] = "#";
-      for (const [x, y] of [[15, 3], [20, 7]]) { objs.push({ t: "gravestone", x, y, name: "Gravestone" }); g[y][x] = "#"; }
-      objs.push({ t: "skeleton", x: 12, y: 11, name: "Skeleton" }); g[11][12] = "#";
-      for (const [x, y] of [[15, 8], [20, 2], [3, 5]]) { objs.push({ t: "snag", x, y, name: "Dead tree" }); g[y][x] = "#"; }
-      for (let x = 3; x <= 17; x++) keep.push([x, 10], [x, 9]);
-      wild(g, objs, this.exits, { n: "rocky", s: "rocky", w: "rocky", e: "rocky" }, [...keepOf(this), ...keep], 7);
+      /* what is worth the walk, each in its own pocket: the grove (north-east), the grimstone (south-east), the pool (south-west) */
+      /* (2026-09-26, later) THE POCKETS PAY FOR THE WALK. Every node here was level-20 material while the pockets are held by
+         level 45-58 monsters, so the far corners now carry what the Boneyard and Cloudreach carry: an Ancient yew in the grove,
+         dragonstone in the south-east, mooncarp under the gloomfin. One grimstone and one deadwood stay for the level-20s. */
+      for (const [x, y] of [[35, 3], [39, 2]]) { objs.push({ t: "deadtree", x, y, name: "Deadwood tree", log: "ashlogs", req: { skill: "woodcutting", lvl: 20 }, xp: 70, tease: "Grey, hard as bone. Your axe just bounces." }); g[y][x] = "#"; }
+      objs.push({ t: "yew", x: 37, y: 5, log: "yewlogs", name: "Ancient yew", req: { skill: "woodcutting", lvl: 35 }, xp: 170 }); g[5][37] = "#";
+      objs.push({ t: "rock", ore: "grimstone", x: 36, y: 19, name: "Grimstone rock", req: { skill: "mining", lvl: 20 }, xp: 60, tease: "Cold purple stone. Your pickaxe skids right off." }); g[19][36] = "#";
+      for (const [x, y] of [[40, 20], [38, 22]]) { objs.push({ t: "rock", ore: "dragonstone_ore", x, y, name: "Dragonstone rock", req: { skill: "mining", lvl: 40 }, xp: 95 }); g[y][x] = "#"; }
+      for (const x of [9, 11]) objs.push({ t: "spot", x, y: 20, name: "Dead pool", req: { skill: "fishing", lvl: 20 }, fish: "gloomfin", fish2: "mooncarp", fish2lvl: 40, xp: 80, xp2: 150, glow: "#b080ff", tease: "The water is black and very still. Something down there is even stiller." });
+      /* rocks in the open, so no road is a straight line; then the dead trees, the bones and the tufts */
+      for (const [art, x, y, w, h] of [["x_rock2", 6, 11, 3, 2], ["x_rock4", 11, 9, 2, 2], ["x_boulder2", 14, 12, 1, 1], ["x_boulder3", 1, 12, 1, 1], ["x_boulder3", 16, 8, 1, 1], ["x_rock5", 24, 8, 2, 1], ["x_rock5", 26, 12, 2, 1], ["x_boulder2", 30, 10, 1, 1],
+        ["x_rock4", 21, 20, 2, 2], ["x_boulder1", 23, 18, 2, 1], ["x_rocks", 33, 22, 3, 1], ["x_rock5", 38, 20, 2, 1], ["x_boulder1", 41, 19, 2, 1], ["x_boulder3", 20, 6, 1, 1], ["x_boulder2", 5, 20, 1, 1]]) deco(g, objs, art, x, y, w, h, "Rock");
+      for (const [art, x, y] of [["x_dead1", 3, 3], ["x_dead2", 41, 3], ["x_pine1", 33, 6], ["x_pine2", 15, 8], ["x_dead3", 24, 17], ["x_pine3", 19, 18], ["x_dead4", 41, 17], ["x_dead5", 35, 23], ["x_dead2", 5, 23], ["x_shrub2", 5, 18], ["x_shrub1", 25, 11], ["x_shrub2", 30, 9], ["x_stump", 13, 13], ["x_dead4", 27, 6], ["x_pine3", 10, 8]]) deco(g, objs, art, x, y, 1, 1, "Dead tree");
+      for (const [x, y] of [[24, 7], [17, 6], [23, 22], [34, 18]]) { objs.push({ t: "gravestone", x, y, name: "Gravestone" }); g[y][x] = "#"; }
+      for (const [x, y] of [[26, 8], [20, 18]]) { objs.push({ t: "skeleton", x, y, name: "Skeleton" }); g[y][x] = "#"; }
+      for (const [art, x, y] of [["x_tuft1", 7, 9], ["x_tuft2", 23, 19], ["x_tuft3", 36, 21], ["x_tuft1", 3, 11], ["x_tuft2", 29, 13], ["x_tuft3", 21, 4], ["x_tuft1", 39, 4], ["x_tuft2", 14, 19]]) objs.push({ t: "tuft", art, x, y, w: 1, h: 1, edge: true, flat: true, name: "Grass" });
+      rockWall(g, objs, walls, WILD_ROCKS, 7);
+      G.markBanks(g);
       return { g, objs, blobs: [] };
     },
-    mobs: [["gnasher", 16, 6], ["gnasher", 20, 10], ["gnasher", 4, 3]],
+    /* the entry pocket is gnashers; ghouls and wraiths hold the halls; the pockets are held by what they are worth */
+    /* (2026-09-27, the owner: "33% of wilderness mobs need to be aggressive, especially those near nodes... slower respawn times (varying
+       between 45 seconds - 2 minutes)") Every placement carries its own respawn range, and about a third carry an aggro radius: the
+       ones holding the yew, the dragonstone, the pool and the exit. 9 of 25 here. */
+    mobs: [["gnasher", 5, 10, { respawn: [45000, 75000] }], ["gnasher", 13, 11, { respawn: [50000, 90000] }], ["gnasher", 10, 12, { respawn: [60000, 100000] }],
+      ["ghoul", 19, 7, { respawn: [45000, 80000] }], ["ghoul", 25, 7, { respawn: [70000, 120000] }], ["ghoul", 21, 19, { respawn: [55000, 95000] }], ["ghoul", 24, 22, { respawn: [45000, 90000] }], ["ghoul", 6, 19, { aggro: 3, respawn: [60000, 110000] }], ["ghoul", 14, 22, { respawn: [50000, 100000] }],
+      ["taxwraith", 28, 10, { respawn: [45000, 85000] }], ["taxwraith", 30, 12, { respawn: [65000, 120000] }], ["taxwraith", 34, 5, { aggro: 3, respawn: [55000, 100000] }], ["taxwraith", 16, 15, { respawn: [45000, 75000] }],
+      ["usher", 22, 3, { aggro: 3, respawn: [60000, 120000] }], ["usher", 38, 4, { respawn: [50000, 90000] }], ["usher", 36, 2, { respawn: [70000, 110000] }],
+      ["revenant", 40, 6, { aggro: 4, respawn: [75000, 120000] }], ["revenant", 37, 21, { aggro: 4, respawn: [60000, 105000] }], ["revenant", 41, 22, { respawn: [80000, 120000] }], ["revenant", 20, 21, { respawn: [50000, 95000] }],
+      ["wolf", 39, 18, { aggro: 5, respawn: [90000, 120000] }],
+      ["weaver", 41, 5, { aggro: 4, respawn: [80000, 120000] }], ["weaver", 14, 20, { aggro: 4, respawn: [70000, 115000] }],
+      ["marrowhound", 34, 19, { aggro: 5, respawn: [75000, 120000] }], ["marrowhound", 40, 22, { respawn: [60000, 100000] }]],
+
     npcs: [], bots: []
   },
-  deep: {
-    name: "The Deep Wild", pvp: true, exits: { s: "wild" }, tint: "rgba(50,10,45,.38)", xpMul: 1.5, luck: 0.1, geode: 0.01,
+  /* (2026-09-27) THE DEPTHS OF THE MOUNTAIN, the massive update's first new map (EASTSCAPE-MAPS.md's Scrap Line, re-themed by the
+     owner on Rafael Matos's "Depths of the Mountain" pack; tools/eastscape-depths-art.mjs cuts it). Between the Thunderhead (south)
+     and the Trailer Park (north), combat 73-84. Ledges of mossy rock over a black drop: `~` here is THE ABYSS, drawn by the `depths`
+     ground as void with a cliff face under every ledge, never water. `p` is the stone walkways across it.
+     `noBanks`: water gets a one-tile unwalkable bank round it everywhere else, which here would have eaten every ledge's edge and
+     cut the walkways off. The drop is its own edge. lt-wild/depths-map.py draws these rows and proves every tile reachable. */
+  depths: {
+    name: "The Depths of the Mountain", exits: { s: "thunderhead", n: "trailer" }, ground: "depths", noBanks: true, tint: "rgba(0,10,8,.12)",
+    rows: [
+      "~~~~~~~~~~~~~~~~~~~~~eee~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~...~~.......~~.~~~~~~.......~~",
+      "~~~~~~~~~~~~~..................~~~.........~",
+      "~~~~~~~~~~~~...................ppp.........~",
+      "~~~~~~~~~~~~...................ppp.........~",
+      "~~~~~~~~~~~~...................~~~.........~",
+      "~~~~~~~~~~~~~.................~~~~.........~",
+      "~~~..~~....~~~~~~~~~~pp~~~~~~~~~~~~~......~~",
+      "~~..........~~~~~~~~~pp~~~~~~~~~~~~~~~~~~~~~",
+      "~...........~~~~~~~~~pp~~~~~~~~~~........~~~",
+      "~...........~~~~~~.........~~~~~..........~~",
+      "~...........~~~~~...........pppp...........~",
+      "~...........ppppp...........pppp...........~",
+      "~...........ppppp...........~~~~...........~",
+      "~...........~~~~~...........~~~~...........~",
+      "~...........~~~~~~~........~~~~~...........~",
+      "~~..........~~~~~~~~~pp~~~~~~~~~..........~~",
+      "~~~.......~~~~~~~~~~~pp~~~~~~~~~~....~~..~~~",
+      "~~~~~~~~~~~~~~~~~~~~~pp~~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~..............~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~................~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~..................~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~..................~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~..................~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~..............~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~~~eee~~~~~~~~~~~~~~~~~~~~"
+    ],
     build() {
-      const g = grid(), objs = [], keep = [];
-      for (let y = 7; y < ROWS; y++) g[y][17] = ",";
-      for (let x = 4; x <= 17; x++) g[7][x] = ",";
-      // the Black Pool, fished from two tiles back
-      for (let y = 2; y <= 4; y++) for (let x = 2; x <= 6; x++) g[y][x] = "~";
-      for (const x of [3, 5]) objs.push({ t: "spot", x, y: 4, name: "Black pool", req: { skill: "fishing", lvl: 20 }, fish: "gloomfin", xp: 80, glow: "#b080ff", tease: "The water is black and very still. Something down there is even stiller." });
-      for (let y = 5; y <= 6; y++) for (let x = 2; x <= 7; x++) keep.push([x, y]);
-      for (const [x, y] of [[10, 3], [12, 2], [13, 4]]) { objs.push({ t: "rock", ore: "grimstone", x, y, name: "Grimstone rock", req: { skill: "mining", lvl: 20 }, xp: 60, tease: "Cold purple stone. Your pickaxe skids right off." }); g[y][x] = "#"; }
-      for (const [x, y] of [[8, 10], [10, 11], [13, 10]]) { objs.push({ t: "deadtree", x, y, name: "Deadwood tree", log: "ashlogs", req: { skill: "woodcutting", lvl: 20 }, xp: 70, tease: "Grey, hard as bone. Your axe just bounces." }); g[y][x] = "#"; }
-      for (const [x, y] of [[20, 3], [7, 12], [19, 11]]) { objs.push({ t: "gravestone", x, y, name: "Gravestone" }); g[y][x] = "#"; }
-      objs.push({ t: "skeleton", x: 15, y: 9, name: "Skeleton" }); g[9][15] = "#";
-      for (const [x, y] of [[9, 5], [16, 2]]) { objs.push({ t: "snag", x, y, name: "Dead tree" }); g[y][x] = "#"; }
-      for (let x = 4; x <= 17; x++) keep.push([x, 7], [x, 8], [x, 6]);
-      for (let y = 7; y < ROWS; y++) keep.push([16, y], [18, y]);
-      wild(g, objs, this.exits, { n: "rocky", s: "rocky", w: "rocky", e: "rocky" }, [...keepOf(this), ...keep], 8);
+      const { g, objs, walls } = fromRows(this.rows, G);
+      /* what rises out of the dark: pillars and rocks standing on the abyss. Scenery only; the abyss is not walkable anyway. */
+      for (const [art, x, y, w, h] of [["dp_pillar1", 33, 19, 4, 5], ["dp_pillar3", 3, 20, 3, 4], ["dp_pillar2", 13, 14, 3, 4], ["dp_rock1", 8, 22, 2, 1], ["dp_rock4", 39, 21, 2, 2], ["dp_rock2", 1, 3, 2, 2], ["dp_rock3", 7, 4, 2, 1], ["dp_rock1", 32, 7, 2, 1], ["dp_pillar4", 40, 19, 2, 2]])
+        objs.push({ t: "cliff", art, x, y, w, h, edge: true, name: w * h >= 6 ? "Rock pillar" : "Rock" });
+      /* the veins: abyss crystal on the east ledge, eclipse and nova on the iron ledge behind the Iron Ogres */
+      for (const [x, y] of [[35, 11], [38, 10], [40, 13], [36, 15], [39, 16]]) { objs.push({ t: "rock", ore: "abyss_crystal", x, y, name: "Abyss crystal vein", req: { skill: "mining", lvl: 75 }, xp: 230, tease: "Pink light through the rock. Your pickaxe skids off it." }); g[y][x] = "#"; }
+      for (const [x, y] of [[14, 3], [16, 5], [28, 4]]) { objs.push({ t: "rock", ore: "eclipse_ore", x, y, name: "Eclipse rock", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[y][x] = "#"; }
+      objs.push({ t: "rock", ore: "nova_ore", x: 29, y: 2, name: "Nova rock", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[2][29] = "#";
+      /* The Drop: fishing off the goblins' ledge, into the dark */
+      for (const x of [4, 6, 8]) objs.push({ t: "spot", x, y: 18, name: "The Drop", req: { skill: "fishing", lvl: 70 }, fish: "blindfish", fish2: "abysseel", fish2lvl: 76, xp: 270, xp2: 300, glow: "#ff5ad0", tease: "A line goes down and down and never finds a bottom. Not yet." });
+      /* the dressing: statues at the way down, candles, the monument on the iron ledge, the throne, a sword someone left */
+      for (const [art, x, y, w, h, name] of [["dp_statue1", 19, 24, 1, 1, "Statue"], ["dp_statue3", 25, 24, 1, 1, "Statue"], ["dp_candle", 15, 20, 1, 1, "Candelabrum"], ["dp_candle", 28, 20, 1, 1, "Candelabrum"], ["dp_candle", 13, 4, 1, 1, "Candelabrum"],
+        ["dp_monument", 18, 3, 1, 1, "Golden monument"], ["dp_throne", 38, 1, 2, 2, "The Deepwarden's throne"], ["dp_sword", 41, 6, 1, 1, "Sword in the rock"], ["dp_statue2", 2, 9, 1, 1, "Statue"], ["dp_candle", 34, 9, 1, 1, "Candelabrum"]])
+        deco(g, objs, art, x, y, w, h, name);
+      for (const [art, x, y] of [["dp_gold1", 36, 3], ["dp_gold2", 40, 3], ["dp_gold1", 37, 6], ["dp_crys_g", 3, 12], ["dp_crys_t", 10, 8], ["dp_crys_r", 41, 12], ["dp_crys_b", 33, 14], ["dp_crys_t", 14, 22], ["dp_crys_r", 29, 22], ["dp_crys_b", 20, 11], ["dp_crys_g", 26, 14], ["dp_crys_r", 24, 5], ["dp_crys_b", 13, 2]])
+        objs.push({ t: "tuft", art, x, y, w: 1, h: 1, edge: true, flat: true, name: art.startsWith("dp_gold") ? "Gold" : "Crystals" });
       return { g, objs, blobs: [] };
     },
-    mobs: [["taxwraith", 15, 4], ["taxwraith", 19, 6], ["chandelier", 5, 10], ["chandelier", 20, 9], ["revenant", 11, 9]],
+    /* the landing is Pot Boys (73); the west ledge goblins (75); wisps hang over the drop between the ledges (76, bow only); the
+       east ledge Crystal Ogres (78, no arrows); the iron ledge Iron Ogres (80, Void only); the Deepwarden on his throne (84) */
+    mobs: [["potboy", 14, 20, { respawn: [60000, 110000] }], ["potboy", 15, 23, { respawn: [60000, 110000] }], ["potboy", 28, 21, { respawn: [60000, 110000] }], ["potboy", 27, 23, { respawn: [60000, 110000] }],   /* kept five tiles off the way in, so arriving is not an ambush */
+      ["dgoblin", 3, 9, { respawn: [60000, 100000] }], ["dgoblin", 6, 10, { respawn: [60000, 100000] }], ["dgoblin", 9, 9, { respawn: [60000, 100000] }], ["dgoblin", 4, 13, { respawn: [60000, 100000] }], ["dgoblin", 8, 14, { respawn: [60000, 100000] }], ["dgoblin", 10, 16, { respawn: [60000, 100000] }],
+      ["dwisp", 19, 8, { perch: true, respawn: [70000, 120000] }], ["dwisp", 25, 8, { perch: true, respawn: [70000, 120000] }], ["dwisp", 19, 17, { perch: true, respawn: [70000, 120000] }], ["dwisp", 25, 17, { perch: true, respawn: [70000, 120000] }], ["dwisp", 14, 9, { perch: true, respawn: [70000, 120000] }], ["dwisp", 30, 15, { perch: true, respawn: [70000, 120000] }],
+      ["dogre", 34, 11, { respawn: [80000, 120000] }], ["dogre", 37, 13, { respawn: [80000, 120000] }], ["dogre", 41, 11, { respawn: [80000, 120000] }], ["dogre", 35, 16, { respawn: [80000, 120000] }], ["dogre", 41, 15, { respawn: [80000, 120000] }],
+      ["diron", 15, 3, { respawn: [90000, 120000] }], ["diron", 19, 5, { respawn: [90000, 120000] }], ["diron", 25, 2, { respawn: [90000, 120000] }], ["diron", 29, 5, { respawn: [90000, 120000] }],
+      ["deepwarden", 38, 4, { respawn: [2400000, 3000000] }]],
+    npcs: [{ name: "Old Pickett", art: "pickett", x: 17, y: 21, still: true, quests: ["deepcrystal", "deepgoblins", "deepkeeper"], hair: "#c8c8c0", shirt: "#3a5a3a", pants: "#4a3a2a",
+      lines: ["Forty years I've mined this mountain. Never seen it glow like it does now.", "Mind the edges. Nobody's ever found the bottom, and a few have looked very hard.", "Wisps won't come to you. Bring a bow, or don't bother.", "The iron ones only feel the Void. Swords just ring off them."] }],
+    bots: []
+  },
+  deep: {
+    name: "The Deep Wild", pvp: true, exits: { s: "wild" }, tint: "rgba(50,10,45,.3)", ground: "deep", xpMul: 1.5, luck: 0.1, geode: 0.01,
+    rows: [
+      "############################################",
+      "#.........##..................##############",
+      "#.........##,,,,,,,,,,,,,,,,,,##############",
+      "#.........##...................,....##,....#",
+      "#.............##################....##,....#",
+      "#........,,,..##################...~~~~....#",
+      "#........,###......#############...~~~~....#",
+      "########.,,##......#############........,..#",
+      "########.,.##......#####################,.##",
+      "########.,.##......#####################,.##",
+      "########.,.##......################...,.,..#",
+      "########.,.##......################...,....#",
+      "########.,....................#####...,....#",
+      "########,,,,,,,,,,,,,,,,,,,,,,,,,,,...,....#",
+      "########..............................,....#",
+      "###############...............#####...,....#",
+      "#####################.,.###########...,....#",
+      "#####################.,.###########...,....#",
+      "##.......############.,.####################",
+      "##.......############.,.####################",
+      "##.......############.,.########..........##",
+      "##....................,...................##",
+      "##.......,,,,,,,,,,,,,,,,,,,,,,,,,........##",
+      "##.......########.....,.....####..........##",
+      "###################...,...##################",
+      "############################################"
+    ],
+    build() {
+      const { g, objs, walls } = fromRows(this.rows, G);
+      for (let x = 21; x <= 23; x++) g[25][x] = "e";
+      piece(g, objs, walls, "d_plateau", 19, 4, 6, 8, "Plateau"); piece(g, objs, walls, "d_cave", 26, 4, 3, 4, "Cave mouth"); piece(g, objs, walls, "d_column", 30, 15, 5, 5, "Rock column"); piece(g, objs, walls, "d_cave", 3, 13, 3, 4, "Cave mouth");
+      /* THE NEXUS: the best altar in the game, in the most dangerous place: the far north-west pocket, two ways in, drakes and
+         golems on the door. It prints what every altar prints, twice over, for half as much Wizardry xp again (G.NEXUS). */
+      objs.push({ t: "altar_nexus", art: "o_altar_nexus", x: 4, y: 2, w: 2, h: 2, name: "The Nexus: prints every page, twice over" }); block(g, 4, 2, 2, 2);
+      // the Black Pool, fished from two tiles back (north-east); the grimstone (south-west); the deadwood (east)
+      animPiece(g, objs, walls, { t: "waterfall", anim: "a_wfall_d", frames: 8, cols: 4, fw: 128, fh: 128, fps: 9, pad: 1, x: 36, y: 3, w: 2, h: 2, name: "Waterfall" });
+      /* LAVA (Set3's animated sheets): two pools sunk into the rock, each tile on its own frame, a bubbling tile or two on top; steam
+         rises off open ground beside them and by the cave in the middle. Lava is rock as far as walking goes: nothing stands in it. */
+      for (const [x, y, w, h] of [[35, 18, 5, 2], [2, 7, 3, 2]]) animPiece(g, objs, walls, { t: "lava", anim: "a_lava", frames: 16, cols: 4, fps: 5, tile: true, flat: true, x, y, w, h, name: "Lava" });
+      for (const [x, y] of [[36, 18], [39, 19], [3, 8]]) objs.push({ t: "lava", anim: "a_lavab", frames: 16, cols: 4, fps: 7, tile: true, flat: true, edge: true, x, y, w: 1, h: 1, name: "Lava" });
+      for (const [x, y, k] of [[35, 17, 0], [39, 20, 7], [3, 6, 13], [27, 12, 19]]) objs.push({ t: "steam", anim: "a_steam", frames: 30, cols: 8, fw: 64, fh: 64, fps: 10, ox: -8, oy: -20, alpha: 0.75, phase: k, flat: true, edge: true, x, y, w: 1, h: 1, name: "Steam" });
+      /* (2026-09-26, later) the Deep's pockets are held by level 52-62 monsters and pay like it: onyx and a starfall rock in the
+         south-west, two skyash in the east, stormmarlin under the gloomfin. One grimstone and one deadwood stay. */
+      /* (2026-09-27) the Black Pool is the top of the fishing ladder: voidfin at 92, grimscale at 97. The Wilderness pool keeps the gloomfin. */
+      for (const x of [35, 38]) objs.push({ t: "spot", x, y: 6, name: "Black pool", req: { skill: "fishing", lvl: 92 }, fish: "voidfin", fish2: "grimscale", fish2lvl: 97, xp: 400, xp2: 480, glow: "#b080ff", tease: "The water is black and very still. Something down there is even stiller. Fishing 92." });
+      objs.push({ t: "yew", art: "o_gallowsoak", x: 7, y: 21, w: 1, h: 1, log: "gallowslogs", name: "Gallows oak", req: { skill: "woodcutting", lvl: 90 }, xp: 300 }); g[21][7] = "#";   /* (2026-09-27) the top of the woodcutting ladder */
+      objs.push({ t: "rock", ore: "grimstone", x: 3, y: 19, name: "Grimstone rock", req: { skill: "mining", lvl: 20 }, xp: 60, tease: "Cold purple stone. Your pickaxe skids right off." }); g[19][3] = "#";
+      objs.push({ t: "rock", ore: "onyx_ore", x: 6, y: 20, name: "Onyx rock", req: { skill: "mining", lvl: 50 }, xp: 115 }); g[20][6] = "#";
+      objs.push({ t: "rock", ore: "starfall_ore", x: 4, y: 22, name: "Starfall rock", req: { skill: "mining", lvl: 60 }, xp: 150 }); g[22][4] = "#";
+      objs.push({ t: "deadtree", x: 37, y: 11, name: "Deadwood tree", log: "ashlogs", req: { skill: "woodcutting", lvl: 20 }, xp: 70, tease: "Grey, hard as bone. Your axe just bounces." }); g[11][37] = "#";
+      for (const [x, y] of [[40, 13], [36, 16]]) { objs.push({ t: "skyash", x, y, log: "skyashlogs", name: "Skyash", req: { skill: "woodcutting", lvl: 50 }, xp: 200 }); g[y][x] = "#"; }
+      for (const [art, x, y, w, h] of [["d_rock2", 16, 1, 2, 2], ["d_boulder1", 27, 2, 1, 1], ["d_rock2", 12, 12, 2, 2], ["d_rock3", 18, 13, 2, 2], ["d_slab", 24, 14, 3, 2], ["d_boulder2", 20, 12, 1, 1], ["d_boulder1", 31, 13, 1, 1], ["d_rock7", 41, 14, 2, 3],
+        ["d_boulder3", 2, 23, 1, 1], ["d_boulder2", 23, 17, 1, 1], ["d_coal1", 6, 5, 2, 1], ["d_coal1", 41, 3, 2, 1], ["d_coal2", 19, 23, 2, 1], ["d_boulder3", 11, 21, 1, 1], ["d_rock3", 25, 21, 2, 2]]) deco(g, objs, art, x, y, w, h, "Rock");
+      for (const [art, x, y, w, h] of [["d_log1", 14, 9, 3, 1], ["d_log2", 38, 15, 3, 1], ["d_root1", 32, 23, 2, 1]]) deco(g, objs, art, x, y, w, h, "Fallen tree");
+      for (const [art, x, y] of [["d_dead1", 9, 6], ["d_burnt", 2, 4], ["d_dead3", 23, 3], ["d_stump1", 13, 3], ["d_dead2", 17, 7], ["d_stump2", 21, 22], ["d_root3", 24, 23], ["d_dead1", 7, 18], ["d_root2", 41, 10], ["d_dead3", 33, 7], ["d_burnt", 40, 21], ["d_dead2", 15, 12], ["d_root2", 35, 21], ["d_burnt", 21, 15]]) deco(g, objs, art, x, y, 1, 1, "Dead tree");
+      for (const [x, y] of [[34, 21], [39, 22], [37, 20], [28, 15]]) { objs.push({ t: "gravestone", x, y, name: "Gravestone" }); g[y][x] = "#"; }
+      for (const [x, y] of [[36, 22], [17, 22]]) { objs.push({ t: "skeleton", x, y, name: "Skeleton" }); g[y][x] = "#"; }
+      for (const [x, y] of [[8, 2], [26, 12], [33, 3], [4, 18], [22, 20], [39, 12]]) objs.push({ t: "tuft", art: "d_tuft", x, y, w: 1, h: 1, edge: true, flat: true, name: "Grass" });
+      rockWall(g, objs, walls, DEEP_ROCKS, 8);
+      G.markBanks(g);
+      return { g, objs, blobs: [] };
+    },
+    /* the Nexus door is drakes and golems; the pool is wolves; everything between is a revenant or a wraith */
+    /* the Deep: 11 of 32 aggressive - the Nexus door, the pool, the ores, the skyash, and the two Liches */
+    mobs: [["drake", 3, 5, { aggro: 5, respawn: [90000, 120000] }], ["drake", 7, 2, { aggro: 5, respawn: [90000, 120000] }], ["golem", 8, 4, { aggro: 4, respawn: [75000, 120000] }], ["golem", 2, 1, { respawn: [70000, 110000] }],
+      ["revenant", 9, 9, { respawn: [55000, 95000] }], ["taxwraith", 14, 8, { respawn: [45000, 80000] }], ["chandelier", 14, 2, { respawn: [50000, 90000] }], ["chandelier", 25, 1, { respawn: [60000, 100000] }], ["wolf", 20, 2, { respawn: [65000, 110000] }],
+      ["wolf", 33, 4, { aggro: 4, respawn: [70000, 120000] }], ["wolf", 41, 5, { respawn: [60000, 105000] }], ["wolf", 39, 3, { aggro: 4, respawn: [80000, 120000] }],
+      ["goose", 38, 12, { aggro: 4, respawn: [70000, 115000] }], ["goose", 39, 17, { respawn: [55000, 100000] }], ["golem", 36, 14, { aggro: 4, respawn: [75000, 120000] }], ["jackal", 40, 9, { respawn: [45000, 75000] }],
+      ["revenant", 17, 13, { respawn: [50000, 90000] }], ["revenant", 27, 13, { respawn: [60000, 100000] }], ["taxwraith", 23, 12, { respawn: [45000, 80000] }],
+      ["chandelier", 19, 22, { respawn: [50000, 95000] }], ["chandelier", 26, 23, { respawn: [55000, 100000] }], ["golem", 5, 19, { aggro: 4, respawn: [80000, 120000] }], ["golem", 7, 23, { respawn: [70000, 115000] }], ["revenant", 3, 21, { respawn: [60000, 100000] }],
+      ["revenant", 35, 22, { respawn: [55000, 95000] }], ["revenant", 38, 23, { respawn: [65000, 110000] }], ["wolf", 33, 20, { respawn: [70000, 120000] }], ["taxwraith", 22, 18, { respawn: [45000, 85000] }],
+      ["grimlich", 13, 4, { aggro: 4, respawn: [90000, 120000] }], ["grimlich", 40, 7, { aggro: 4, respawn: [90000, 120000] }],
+      ["marrowhound", 2, 20, { aggro: 5, respawn: [75000, 120000] }], ["marrowhound", 8, 22, { respawn: [65000, 110000] }]],
+
     npcs: [], bots: []
   },
   };

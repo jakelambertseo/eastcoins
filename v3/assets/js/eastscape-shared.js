@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 303;
+export const VERSION = 306;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -2090,7 +2090,7 @@ Object.assign(SCENES, {
        one has an ore, a tree and a fish, and mining on the walked chain stopped dead at onyx 50 in Cloudreach
        because everything above it lives in the Vault (no band) or the Trailer Park (Combat 80). Starfall at 60
        and voidglass at 70 fill the hole, in OPPOSITE CORNERS as the owner asked, each with an aggressive guard. */
-    name: "The Thunderhead", ground: "storm", exits: { e: "cloud", w: "vault", n: "trailer" }, tint: "rgba(26,14,62,.44)",
+    name: "The Thunderhead", ground: "storm", exits: { e: "cloud", w: "vault", n: "depths" },   /* (2026-09-27) north is the Depths of the Mountain now, and the Trailer Park is beyond it */ tint: "rgba(26,14,62,.44)",
     build() {
       const g = grid(), objs = [], keep = [];
       const put = (t, x, y, name, extra) => { objs.push({ t, x, y, name, ...(extra || {}) }); g[y][x] = "#"; keep.push([x, y]); };
@@ -2920,7 +2920,7 @@ Object.assign(SCENES, {
      swamp holds the two fish that cook into the best food. Every one of them asks for a top-rung tool — which is
      what the tool ladder was FOR, and until now nothing above Starfall had anything to work on. */
   trailer: {
-    name: "The Trailer Park", exits: { s: "thunderhead" }, tint: "rgba(30,20,10,.18)",
+    name: "The Trailer Park", exits: { s: "depths" },   /* (2026-09-27) the Depths of the Mountain sits between it and the Thunderhead */ tint: "rgba(30,20,10,.18)",
     build() {
       const g = grid(), objs = [], keep = [];
       const put = (o, w = 1, h = 1) => { objs.push(o); if (w > 1 || h > 1) block(g, o.x, o.y, w, h); else g[o.y][o.x] = "#"; keep.push([o.x, o.y]); };
@@ -3157,7 +3157,7 @@ export function buildScene(key) {
   const sc = sceneDef(key), b = sc.build.call(sc);
   fungObjs(String(key).split(":")[0], b);   /* (2026-09-27) Fungiculture's wild clusters: before the event's objects, so they never depend on it */
   hwObjs(String(key).split(":")[0], b);   /* (2026-09-27) the Long Night's jack-o'-lanterns and ghost lanterns, while the event is on */
-  markBanks(b.g);
+  if (!sc.noBanks) markBanks(b.g);   /* (2026-09-27) the Depths' abyss is its own edge: see its map */
   b.objs.forEach((o, i) => { o.id = i; o.w ??= 1; o.h ??= 1; });
   return b;
 }
@@ -5187,7 +5187,8 @@ export const markDrop = (key, r = Math.random) => {
 if (THIEF.live) {
   SHOP.sells.push(["thieves_permit", THIEF.permit]);
   SKILL_GROUPS.find((g) => g.name === "Skilling")?.keys.push("thieving");   /* the skills panel draws from this; the skill stays in SKILLS either way so every save carries its xp and every name lookup resolves */
-  OPEN.add("guild");                 /* a scene is not enterable until it is in OPEN; the door answers "Room's shut" otherwise */
+  OPEN.add("guild");
+  OPEN.add("depths");   /* (2026-09-27) the Depths of the Mountain (its map is in eastscape-closed.js, like the wild ones) */                 /* a scene is not enterable until it is in OPEN; the door answers "Room's shut" otherwise */
   SCENES.guild.wikiHide = false;     /* the closed-areas sweep above already hid it, because it was not in OPEN when that ran */
 }
 /* (2026-09-25, a player: "the thieving drops feel kinda lacklustre compared to other professions like tickets
@@ -6047,7 +6048,7 @@ const WEAK = {
 };
 for (const [t, [weak, resist]] of Object.entries(WEAK)) if (MOBS[t]) { MOBS[t].weak = weak; if (resist) MOBS[t].resist = resist; }
 /** the multiplier an element meets on a monster type */
-export const elementMul = (t, el) => (!el || el === "arcane" ? 1 : MOBS[t]?.weak === el ? MAGIC.weakMul : MOBS[t]?.resist === el ? MAGIC.resistMul : 1);
+export const elementMul = (t, el) => (!el || el === "arcane" ? 1 : [].concat(MOBS[t]?.weak).includes(el) ? MAGIC.weakMul : [].concat(MOBS[t]?.resist).includes(el) ? MAGIC.resistMul : 1);   /* (2026-09-27) a list works too: the Pumpkin King's ["fire", "sun"] never matched a plain === */
 
 /* ---------------- seeds drop from the monsters of each element's home, a little over one kill in twenty */
 const SEED_FROM = {
@@ -7384,7 +7385,8 @@ export function fungObjs(key, b) {
   const rnd = (i) => { let x = (seed ^ (i * 0x9e3779b9)) >>> 0; x ^= x << 13; x ^= x >>> 17; x ^= x << 5; return ((x >>> 0) % 10000) / 10000; };
   const open = (x, y) => g[y]?.[x] === "." || g[y]?.[x] === "i";
   const free = (x, y) => x > 2 && y > 2 && x < COLS - 3 && y < ROWS - 3 && open(x, y) && D8.every(([dx, dy]) => open(x + dx, y + dy))
-    && !objs.some((o) => cheb(o, { x, y }) <= 1) && !homes.some((h) => cheb(h, { x, y }) <= 1);
+    && !objs.some((o) => cheb(o, { x, y }) <= 1) && !homes.some((h) => cheb(h, { x, y }) <= 1)
+    && ![-2, -1, 0, 1, 2].some((dy) => [-2, -1, 0, 1, 2].some((dx) => "pe".includes(g[y + dy]?.[x + dx] || "")));   /* clear of walkways and ways out */
   let placed = 0;
   const put = (x, y) => { const k = list[placed]; objs.push({ t: "shroom", k, x, y, art: `fung_${k}_4`, name: `Wild ${ITEMS[k].name.toLowerCase()}`, lid: `${key}:${x},${y}` }); g[y][x] = "#"; placed++; };
   for (let i = 0; i < 900 && placed < list.length; i++) { const x = 3 + Math.floor(rnd(i) * (COLS - 6)), y = 3 + Math.floor(rnd(i + 3000) * (ROWS - 6)); if (free(x, y)) put(x, y); }
@@ -7452,6 +7454,117 @@ recipe("cook_truffle", { skill: "cooking", station: "fire", in: [["truffle", 1],
 recipe("cook_starfeast", { skill: "cooking", station: "fire", in: [["starcap", 1], ["starfruit", 1]], out: ["starcap_feast", 1], lvl: 90, xp: 400, ms: 2400 });
 /* the Toadstool's sporecap becomes a spawn too, now and then: a first bed can be planted without ever finding a cluster */
 MOBS.toadstool?.drops.push(["spawn_sporecap", 1, 0.08]);   /* MOBS[].drops, not LOOT: LOOT was folded into drops long before this line */
+
+/* ============================================================ THE DEPTHS OF THE MOUNTAIN (2026-09-27, the massive update, 3 of 8)
+   The Scrap Line of EASTSCAPE-MAPS.md, re-themed by the owner on Rafael Matos's "Depths of the Mountain" pack: platforms of
+   mossy rock over a black abyss between the Thunderhead and the Trailer Park, combat 73-84, closing the 72-80 hole. The map is
+   in eastscape-closed.js (`depths`); everything a player can own or fight is here.
+
+   THE POWER CREEP (the owner: "users need to feel the power creep from these mobs, some need to only be accessible via archery,
+   some need to have massive protection against certain fighting types and elements (ie: takes 90% less damage from melee, only
+   vulnerable to void). they need to hit hard and be accurate and tanky"). Two new monster fields, read by the server's hit:
+   - `guard`: { melee, archery, magic } multipliers on what lands. 0.1 is "90% less".
+   - `onlyEl`: magic of any OTHER element lands at a tenth. With `guard` on melee and archery too, only that element hurts it.
+   and one for their side of the fight:
+   - `range`: a monster that attacks from up to this many tiles, so a wisp over the abyss can shoot back at the archer.
+   Everything here hits 40-60% harder than the Vault at the same level, with 1.7-3x the hitpoints. */
+MAGIC.guardMul = 0.1;
+/** what lands on a monster type from this style (and element, for magic): 1 is everything */
+export const guardMul = (t, style, el) => { const m = MOBS[t]; let k = m?.guard?.[style] ?? 1; if (style === "magic" && m?.onlyEl && el !== m.onlyEl) k *= MAGIC.guardMul; return k; };
+/** the same in words, for examine, the fight message and the wiki */
+export const guardText = (t) => {
+  const m = MOBS[t]; if (!m?.guard && !m?.onlyEl) return "";
+  const S = { melee: "Melee", archery: "Archery", magic: "Magic" }, out = [];
+  for (const [s, k] of Object.entries(m.guard || {})) if (k < 1) out.push(k <= 0 ? `nothing from ${S[s]}` : `${Math.round((1 - k) * 100)}% less from ${S[s]}`);
+  if (m.onlyEl) out.push(`only ${ELEMENTS[m.onlyEl]?.name || m.onlyEl} magic gets through`);
+  return `Takes ${out.join("; ")}.`;
+};
+
+/* ---- the things it gives */
+Object.assign(ITEMS, {
+  abyss_crystal: { name: "Abyss crystal", icon: "\u{1F48E}", ex: "Grown in the dark with nothing to shine for. Mined in the Depths of the Mountain; the jewellers will want it." },
+  blindfish: { name: "Raw blindfish", icon: "\u{1F41F}", raw: true, ex: "No eyes, and it has never once missed them. Fished off the edge of the abyss." },
+  abysseel: { name: "Raw abyss eel", icon: "\u{1F40D}", raw: true, ex: "It hunts by the light on its own head. Fished off the edge of the abyss, by the brave." },
+  cblindfish: { name: "Cooked blindfish", icon: "\u{1F41F}", heal: 35, ex: "White, sweet and faintly glowing." },
+  cabysseel: { name: "Cooked abyss eel", icon: "\u{1F41F}", heal: 37, ex: "Rich, dark meat. The light goes out when it's done." },
+  deep_sigil: { name: "Deepwarden's sigil", short: "D. sigil", icon: "\u{1F4FF}", slot: "amulet", fx: { tix: 0.07, tough: 0.04 }, req: { skill: "hp", lvl: 75 }, ex: "The Deepwarden's own. Iron, a pink crystal, and the weight of the mountain. More tickets, and you take a little less." }
+});
+Object.assign(VALUE, { abyss_crystal: 90, blindfish: 36, cblindfish: 72, abysseel: 40, cabysseel: 80, deep_sigil: 2400 });
+recipe("cook_blindfish", { skill: "cooking", station: "fire", in: [["blindfish", 1]], out: ["cblindfish", 1], lvl: 72, xp: 280, burnStop: 95 });
+recipe("cook_abysseel", { skill: "cooking", station: "fire", in: [["abysseel", 1]], out: ["cabysseel", 1], lvl: 78, xp: 310, burnStop: 97 });
+/* smoked, on the SMOKE rule: its cook plus two, about five levels above the cook */
+for (const [raw, lvl, coal, heal, sell, fx, blurb] of [["blindfish", 77, 3, 37, 145, { rare: 0.12, bite: 0.05 }, "The good things come to you in the dark."], ["abysseel", 83, 3, 39, 160, { tough: 0.12, speed: 0.05 }, "Hard to hurt, and quick with it."]]) {
+  const key = `s${raw}`; ITEMS[key] = { name: `Smoked ${ITEMS[raw].name.replace(/^Raw /, "").toLowerCase()}`, icon: "\u{1F41F}", heal, meal: { mins: 20, fx }, ex: `Smoked slow over charcoal. Eat it for twenty minutes of it: ${blurb}` };
+  VALUE[key] = sell; recipe(`smoke_${raw}`, { skill: "cooking", station: "fire", in: [[raw, 1], ["charcoal", coal]], out: [key, 1], lvl, xp: Math.round(lvl * 4), ms: 2400 });
+}
+ZDROP.fish.blindfish = 0.0017; ZDROP.fish.abysseel = 0.0018;
+PETS.potboy = { name: "Pot Boy", art: "pet_potboy", raid: true, fx: { slots: 2, tix: 4 }, ex: "It was pretending to be a pot. It is still pretending to be a pot. It follows you anyway. The Deepwarden's, one kill in sixty." };
+
+/* ---- the monsters. Tickets are worked out the way the BOUNTY loop does it (that loop ran long before this line) */
+const dmob = (t, def, want, drops, rare = []) => {
+  MOBS[t] = { ...def, drops, rare }; BOUNTY[t] = want;
+  const other = drops.reduce((a, [k, n, p]) => a + (VALUE[k] ?? 0) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0), gap = Math.round(want * 0.88 - other);
+  if (gap >= 2 && !def.boss) MOBS[t].drops.unshift(["tickets", [Math.max(1, Math.round(gap * 0.6)), Math.round(gap * 1.4)]]);
+};
+/* the pay is tools/eastscape-balance.mjs's want$/kill for each: they are twice as long to kill as the Vault's, so they pay twice as much a kill, or nobody would come. The boss pays each person who shares him. */
+dmob("potboy", { name: "Pot Boy", size: "m", lvl: 73, hp: 270, att: 64, def: 60, max: 18, speed: 2500, box: [22, 26], aggro: 2, guard: { magic: 0.25 },
+  ex: "It was a pot until you walked past. Spells rattle round inside it and come out the spout." }, 412,
+  [["ruby", 1, 0.06], ["sapphire", 1, 0.05], ["topaz", 1, 0.04]], [["gamblers_ring", 0.02], ["bookies_amulet", 0.02]]);
+dmob("dgoblin", { name: "Goblin Cutter", size: "m", lvl: 75, hp: 250, att: 76, def: 56, max: 20, speed: 1900, box: [20, 26], aggro: 4,
+  ex: "Quick, mean, and it never misses twice. It never misses once, either." }, 386,
+  [["eclipse_ore", 1, 0.15]], [["sharps_gloves", 0.03], ["spiderboots", 0.02]]);
+dmob("dwisp", { name: "Abyss Wisp", size: "m", lvl: 76, hp: 230, att: 70, def: 52, max: 16, speed: 2600, box: [28, 30], aggro: 3, range: 3,   /* range 3: it covers the walkways it hangs beside, not the middle of every ledge */ sky: true, guard: { melee: 0, magic: 0.1 },
+  ex: "It hangs over the drop where no sword can reach and spells pass straight through its crystal. Bring a bow." }, 357,
+  [["abyss_crystal", 1, 0.4]], [["angels_ring", 0.02]]);
+dmob("dogre", { name: "Crystal Ogre", size: "l", lvl: 78, hp: 430, att: 72, def: 66, max: 23, speed: 3000, box: [34, 40], aggro: 4, guard: { archery: 0.1 },
+  ex: "Arrows shatter on the crystal grown through its hide. Get close, or cast." }, 618,
+  [["abyss_crystal", [1, 2], 0.5], ["eclipse_ore", 1, 0.2]], [["angels_ring", 0.03], ["gamblers_ring", 0.03]]);
+dmob("diron", { name: "Iron Ogre", size: "l", lvl: 80, hp: 470, att: 76, def: 70, max: 25, speed: 3100, box: [34, 36], aggro: 5, guard: { melee: 0.1, archery: 0.1 }, onlyEl: "void",
+  ex: "Plated in iron from the brow down. Swords ring off it, arrows bounce, and only Void magic gets through." }, 631,
+  [["nova_ore", 1, 0.12], ["eclipse_ore", [1, 2], 0.3]], [["bogplate", 0.03], ["grudge", 0.02]]);
+dmob("deepwarden", { name: "The Deepwarden", size: "xl", lvl: 84, hp: 5200, att: 96, def: 76, max: 34, speed: 2900, box: [44, 96], aggro: 5, boss: true, open: true,
+  enrage: { at: 0.35, mul: 1.4, say: "The Deepwarden plants the greatsword and roars. The whole mountain answers." }, pet: ["potboy", 1 / 60],
+  ex: "The mountain's keeper. He hits like a falling ceiling and he does not tire. Bring friends." }, 1200,
+  [["tickets", [500, 900]], ["nova_ore", [2, 4]], ["abyss_crystal", [3, 6]], ["opal", 1, 0.2], ["deep_sigil", 1, 0.03]], [["bookies_amulet", 0.05], ["angels_ring", 0.05]]);
+BOSSES.add("deepwarden");
+Object.assign(MOBS.dgoblin, { weak: "frost" }); Object.assign(MOBS.potboy, { weak: "storm" }); Object.assign(MOBS.dwisp, { weak: "sun", resist: "void" });
+Object.assign(MOBS.dogre, { weak: "storm", resist: "frost" }); Object.assign(MOBS.diron, { weak: "void" }); Object.assign(MOBS.deepwarden, { weak: "sun", resist: "fire" });
+for (const t of ["potboy", "dgoblin", "dwisp", "dogre", "diron", "deepwarden"]) EXAMINE[t] = [MOBS[t].ex + (guardText(t) ? ` ${guardText(t)}` : "")];
+PET_SCENES.add("depths");
+EGGS.egg_geode.from.push("depths"); EGGS.egg_gilded.from.push("depths");
+FUNG_WILD.depths = ["glowcap", "lionsmane", "glowcap"];
+
+/* ---- Old Pickett's three */
+Object.assign(QUESTS, {
+  deepcrystal: {
+    name: "Pink in the Dark", giver: "Old Pickett", where: "The Depths of the Mountain", icon: "\u{1F48E}",
+    goal: { type: "bring", items: ["abyss_crystal"], n: 10, what: "abyss crystals" },
+    brief: "Old Pickett wants ten abyss crystals from the veins on the east ledge.",
+    talk: { offer: ["Forty years I've mined this mountain and I've never seen it glow like this.", "Ten of those pink crystals off the east ledge. Mining 75. Mind the ogres; the crystal ones don't care for arrows."], accept: "Ten crystals.", decline: "Mind the drop, then.",
+      accepted: "East ledge, over the walkway. Pickaxe first, questions later.", progress: "Ten crystals. You've {have}.", ready: "Look at that. Like holding a sunset.", hand: "Ten of them.",
+      done: "Something's growing down here, and it isn't me. Take this for your trouble." },
+    reward: { coins: 6000, xp: { mining: 6000 }, text: "6,000 tickets, 6,000 Mining xp" }
+  },
+  deepgoblins: {
+    name: "Cutters", giver: "Old Pickett", where: "The Depths of the Mountain", icon: "\u{1F5E1}️", requires: ["deepcrystal"],
+    goal: { type: "kill", mob: "dgoblin", n: 10, what: "goblin cutters" },
+    brief: "The goblins on the west ledge have been cutting Old Pickett's ropes. Ten of them.",
+    talk: { offer: ["Someone's been cutting my ropes. Someone small, green and fast.", "Ten of the cutters off the west ledge. They hit quick and they don't miss. Take food."], accept: "Ten cutters.", decline: "Keep your ropes tight.",
+      accepted: "West ledge. You'll hear them before you see them.", progress: "That's {have} of ten.", ready: "Quiet over there. Good.", hand: "Ten.",
+      done: "Ropes stay tied now. You're welcome down here any time." },
+    reward: { coins: 9000, xp: { melee: 9000, hp: 3000 }, text: "9,000 tickets, 9,000 Melee xp, 3,000 Hitpoints xp" }
+  },
+  deepkeeper: {
+    name: "The Keeper of the Mountain", giver: "Old Pickett", where: "The Depths of the Mountain", icon: "\u{1F451}", requires: ["deepgoblins"],
+    goal: { type: "kill", mob: "deepwarden", n: 1, what: "the Deepwarden" },
+    brief: "The Deepwarden sits on his throne on the north-east ledge. Old Pickett would like to dig there.",
+    talk: { offer: ["The best seam in the mountain runs under his throne.", "He's twice the size of anything down here and he hits like the roof coming in. Nobody does him alone. Bring people."], accept: "Together, then.", decline: "Not today.",
+      accepted: "North-east ledge. Everyone who hurts him shares the kill.", progress: "He's still on his throne.", ready: "The throne's empty. I heard it from here.", hand: "He's down.",
+      done: "Forty years I've waited to dig that seam. Here: you've earned more than tickets, but tickets is what I've got." },
+    reward: { coins: 30000, xp: { melee: 14000, hp: 5000 }, text: "30,000 tickets, 14,000 Melee xp, 5,000 Hitpoints xp" }
+  }
+});
+for (const [k, tier] of [["deepcrystal", "medium"], ["deepgoblins", "hard"], ["deepkeeper", "hard"]]) { QUESTS[k].stages = [{ ...QUESTS[k].goal }]; QUESTS[k].tier = tier; }   /* the goal-to-stages pass ran long before this line */
 
 /* (2026-09-21) the map-building helpers, for the files that hold maps outside this one (eastscape-closed.js, and the dungeon's). */
 export const _MAP = { block, grid, keepOf, room, wild };
