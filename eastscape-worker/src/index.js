@@ -2066,7 +2066,11 @@ export class World {
      giver's new quest), stage (a talk or a bring at the current stage's person) and hand (the finished quest, at the hand-in). */
   questOp(S, pl, m) {
     const C = pl.C, n = S.npcs.find((x) => x.id === m.npc), k = String(m.k || "");
-    if (!n || !G.QUESTS[k] || G.cheb(pl, n) > 2) return;
+    /* (2026-09-27, a player: "witch talks about quest, but it says not started in my list") THE SAME DISTANCE THE TALK USES. An NPC
+       with a `reach` (Hexa behind her tent, Vance behind his crates) is spoken to from three tiles, but accepting, handing in or
+       answering a stage was held to two - so her conversation offered the Pumpkin King quest and the Accept was dropped without a
+       word, and the quest stayed "not started". */
+    if (!n || !G.QUESTS[k] || G.cheb(pl, n) > Math.max(2, n.reach || 0)) return;
     const R = G.npcRole(C, n); if (!R || R.k !== k) return;
     const q = G.QUESTS[k], st = G.qState(C, k);
     if (m.op === "accept" && R.role === "offer" && st === "new") { C.qs[k] = { state: "active", stage: 0, n: 0 }; this.say(pl, `Quest started: ${q.name}. ${q.brief}`, "good"); this.stageGive(pl, k); this.touch(pl); this.questCheck(pl); }

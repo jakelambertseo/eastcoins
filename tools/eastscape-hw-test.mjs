@@ -144,6 +144,16 @@ is(G.countItems(A.C, ["tickets"]), t1, "tickets were never touched");
   is(Mk.mobs.some((m) => m.t === "pumpkinking"), false, "and he is gone until the hour");
 }
 
+/* ---------------------------------------------------------------- (2026-09-27) the King quest can be accepted from where Hexa is spoken to */
+{
+  const Y2 = W.scene("workyard"), hexa = Y2.npcs.find((n) => n.opens === "market");
+  const Q = mk("q1", "workyard", hexa.x + 3, hexa.y); Q.C.qs.hw_lights = { state: "done", stage: 1, n: 0 }; Q.C.qs.hw_vigil = { state: "done", stage: 3, n: 0 };
+  W.questOp(Y2, Q, { op: "accept", k: "hw_king", npc: hexa.id }); is(Q.C.qs.hw_king?.state, "active", "the King quest is accepted from three tiles, where Hexa's talk opens");
+  const M3 = W.scene("mire"); W.hw = { kingAt: 0, kingDue: false, kingUp: null, night: false, opened: true }; Q.C.scene = "mire"; W.hwSpawnKing(M3, Date.now());
+  const K3 = M3.mobs.find((m) => m.t === "pumpkinking"); K3.hp = 0; W.killMob(M3, Q, K3, Date.now()); is(Q.C.qs.hw_king?.state, "ready", "killing him makes it ready to hand in");
+  Q.C.scene = "workyard"; Q.x = hexa.x + 3; Q.y = hexa.y; W.questOp(Y2, Q, { op: "hand", k: "hw_king", npc: hexa.id }); is(Q.C.qs.hw_king?.state, "done", "and it hands in to Hexa from the same spot");
+}
+
 /* ---------------------------------------------------------------- the market and a fit */
 const B = mk("p2", "workyard", 19, 12);   /* (2026-09-27) Hexa moved west of the road */
 const Y = W.scene("workyard"); is(Y.npcs.some((n) => n.opens === "market"), true, "Hexa stands in the Yard while the event is on");
