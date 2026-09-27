@@ -2348,7 +2348,10 @@ export class World {
       const q = G.QUESTS[k], o = C.qs[k]; if (!o || o.state !== "active") continue;
       const s = G.qStage(C, k);
       if (s.type === "kill" && type === "kill" && s.mob === d.mob && (!s.style || s.style === d.style)) { o.n++; this.touch(pl); if (o.n >= s.n) this.advanceQuest(pl, k); }
-      else if (s.type === "gather" && ["gather", "craft", "cook"].includes(type) && s.items.includes(d.k) && (!s.how || s.how === type)) { o.n += d.n || 1; this.touch(pl); if (o.n >= s.n) this.advanceQuest(pl, k); }
+      /* (2026-09-27, a player: "the Kellz NPC wont accept his hides") A MONSTER DROP COUNTS TOO, where the stage does not say how. Hides
+         come off cows and boars as LOOT, and this listened for gather/craft/cook only, so "Leather for Kellz" never moved off its first
+         stage with six hides in the bag. A stage with `how` (mine it, smelt it) still asks for exactly that. */
+      else if (s.type === "gather" && ["gather", "craft", "cook", "loot"].includes(type) && s.items.includes(d.k) && (!s.how || s.how === type)) { o.n += d.n || 1; this.touch(pl); if (o.n >= s.n) this.advanceQuest(pl, k); }
     }
   }
   questVisit(pl, key) {
@@ -2617,6 +2620,9 @@ export class World {
     if (a.kind === "npc") {
       const n = S.npcs.find((x) => x.id === a.id); pl.act = null; if (!n) return;
       faceIt(); n.face = pl.x > n.x ? 1 : -1; n.holdUntil = now + 60000; n.path = [];
+      /* (2026-09-27) look in the bag before the conversation opens: a gather stage that is already covered by what you carry moves on
+         here, so the NPC answers the stage you are really at (the sheet goes out before this event in the same tick) */
+      this.questCheck(pl);
       pl.out.push({ type: "talk", npc: n.id }); return;
     }
     pl.act = null;   // most things are one go; the gathering ones below put it back
