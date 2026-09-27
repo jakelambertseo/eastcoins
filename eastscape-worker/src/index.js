@@ -740,7 +740,7 @@ export class World {
       case "equip": { const r = this.equip(pl, m.i | 0); this.tourStep(pl, "gear");   /* (2026-09-22) the tour's "put something on" step */
         return r; }
       case "eat": return this.eat(pl, m.i | 0, now);
-      case "sort": { const out = G.sortInv(C.inv, C); if (G.countItems({ inv: out }, Object.keys(G.ITEMS)) !== G.countItems(C, Object.keys(G.ITEMS))) return; C.inv = out; this.touch(pl); return; }
+      case "sort": { const out = G.sortInv(C.inv, C); if (G.countItems({ inv: out }, Object.keys(G.ITEMS)) !== G.countItems(C, Object.keys(G.ITEMS))) return; C.inv = out; G.settleSlots(C); this.touch(pl); return; }
       case "shop": return this.shopOp(S, pl, m);
       case "cashout": { const r = this.cashOut(S, pl, m); this.tourStep(pl, "trade");   /* (2026-09-22) Bom Trady's step */
         return r; }
@@ -840,10 +840,12 @@ export class World {
       /* (2026-09-25) QUICK SLOTS. Four item keys on the character, so the bar follows you to another device. Only the key is
          stored: using one goes through the ordinary eat / use / equip messages the bag already sends, so a quick slot can
          never do anything a click on the same item in the bag could not. */
-      /* (2026-09-27) arranging the bag: two slots swap; a target past the end (an empty slot on the page) puts the item last */
+      /* (2026-09-27) ARRANGING THE BAG, by slot: `from` is a stack (its index in the list), `to` is a SLOT (a position in the laid-out bag).
+         An empty slot takes the stack; an occupied one swaps the two. The list itself never moves, only the slots on the stacks. */
       case "inv": {
-        if (m.op !== "move") return; const a = m.from | 0, b = m.to | 0; if (a < 0 || a >= C.inv.length || b < 0 || a === b) return;
-        if (b >= C.inv.length) { const [st] = C.inv.splice(a, 1); C.inv.push(st); } else { const t = C.inv[a]; C.inv[a] = C.inv[b]; C.inv[b] = t; }
+        if (m.op !== "move") return; G.settleSlots(C); const lay = G.invLayout(C), a = m.from | 0, to = m.to | 0; if (a < 0 || a >= C.inv.length || to < 0 || to >= lay.length) return;
+        const cur = lay.indexOf(a), j = lay[to]; if (j === a) return;
+        C.inv[a].p = to; if (j >= 0) C.inv[j].p = cur;
         this.touch(pl); return;
       }
       /* (2026-09-27) favourites: a star on the item, first when sorted, and kept out of Deposit bag / Stack all / Sell all */
@@ -3646,6 +3648,8 @@ export class World {
     else if (m.op === "depeq") { for (const sl of G.SLOTS) { const k = C.eq[sl]; if (k && this.bankAdd(pl, k, 1, G.fLevelOf(C, sl), page)) { C.eq[sl] = null; if (C.eqf) delete C.eqf[sl]; } } }
     /* (2026-09-27) REFILE: a row moves to another page, by its true index; nothing else about it changes */
     else if (m.op === "page") { const st = C.bank[m.i | 0]; if (!st) return; if (page) st.p = page; else delete st.p; }
+    /* (2026-09-27) REORDER: a row dropped on another takes its place (the two swap) and its page, so a drop across pages is a refile too */
+    else if (m.op === "swap") { const i = m.i | 0, j = m.j | 0; if (i === j || !C.bank[i] || !C.bank[j]) return; const pj = C.bank[j].p | 0; const t = C.bank[i]; C.bank[i] = C.bank[j]; C.bank[j] = t; if (pj) t.p = pj; else delete t.p; }
     else if (m.op === "wd") { const st = C.bank[m.i | 0]; if (!st) return;
       if (G.fOf(st)) { if (!this.give(pl, st.k, 1, G.fOf(st))) return; C.bank.splice(m.i | 0, 1); this.touch(pl); return pl.out.push({ type: "bank" }); }
       const q = this.giveUpTo(pl, st.k, qty(m.n, st.n)); if (!q) return; st.n -= q; if (!st.n) C.bank.splice(C.bank.indexOf(st), 1); }
@@ -4468,7 +4472,7 @@ export class World {
     const petsAfter = (p, give, get) => G.petsOf(p.C).length - (give.pets || []).length + (get.pets || []).length;
     if (petsAfter(A, T.off[A.id], T.off[B.id]) > G.PET_TRADE.own || petsAfter(B, T.off[B.id], T.off[A.id]) > G.PET_TRADE.own) return this.tradeEnd(T, `Trade cancelled: nobody can keep more than ${G.PET_TRADE.own} pets.`);
     const after = (p, give, get) => {
-      const inv = p.C.inv.map((s) => ({ k: s.k, n: s.n }));
+      const inv = p.C.inv.map((s) => ({ ...s }));   /* (2026-09-27) a whole copy: {k, n} alone dropped a reforge level and, now, a slot from every stack in the bag after any trade */
       for (const [k, n] of Object.entries(give.items)) G.takeInv(inv, k, n);
       if (give.cash) G.takeInv(inv, "tickets", give.cash);
       let over = 0;

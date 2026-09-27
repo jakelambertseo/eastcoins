@@ -19,6 +19,7 @@ export function createBankUi(E) {
   const st = document.createElement("style"); st.textContent = CSS; document.head.append(st);
   const ls = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch (e) { return d; } }, lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
   let tab = ls("es_bank_tab", "all"), sort = ls("es_bank_sort", "recent"), mode = ls("es_bank_n", "1"), x = Math.max(1, +ls("es_bank_x", "50") || 50), q = "";
+  if (!["1", "99", "x"].includes(mode)) mode = "1";   /* (2026-09-27, the owner) the amounts are 1, 99 or a number of your own; All lives on shift-click and in the menu */
   /* (2026-09-27) PAGES, as in OSRS: BANK_PAGES of them, "all" shows every page in order with a heading each. A deposit lands on the page you
      are looking at (or the first, from "all"); a stack the bank already holds grows where it already is. An item moves page by being dragged
      onto a page tab, or from its hold / right-click menu. The page is on the row itself (bank[i].p), so it follows the character. */
@@ -45,7 +46,7 @@ export function createBankUi(E) {
     if (INS.has(k) || /_ore$|_bar$|logs$|^charcoal|^cut_|^polished_|_bead$|^ink_/.test(k)) return "materials";
     return "misc"; };
   const SORTS = { recent: null, az: (a, b) => ITEMS[a[0].k].name.localeCompare(ITEMS[b[0].k].name), value: (a, b) => G.valueOf(b[0].k) * b[0].n - G.valueOf(a[0].k) * a[0].n, amount: (a, b) => b[0].n - a[0].n };
-  const amount = () => (mode === "all" ? "all" : mode === "x" ? x : +mode);
+  const amount = () => (mode === "x" ? x : +mode);
 
   function build() {
     const root = $("bankRoot"); if (!root) return; built = true; root.classList.remove("view-loading");
@@ -62,13 +63,14 @@ export function createBankUi(E) {
         <div class="bk-bagh"><img class="bk-bagi" src="/v3/assets/img/glad/flat/ui/bag.png?v=1" alt=""><b>Your bag</b><small id="bkBagN"></small></div>
         <div class="bk-grid sm" id="bkBag"></div>
         <div class="bk-actions"><button type="button" class="btn plain" id="bkDepInv" title="Everything in your bag goes in (tickets stay with you)">Deposit bag</button><button type="button" class="btn plain" id="bkDepEq" title="Everything you are wearing goes in">Deposit worn</button><button type="button" class="btn plain" id="bkStack" title="Every stack your bank already holds goes in, all of it">Stack all</button></div>
-        <div class="bk-move"><span>Move</span><div class="qty" id="bkQty">${[["1", "1"], ["5", "5"], ["10", "10"], ["x", "X"], ["all", "All"]].map(([k, n]) => `<button type="button" data-n="${k}">${n}</button>`).join("")}</div><input type="number" id="bkX" min="1" step="1" value="${x}" aria-label="Your own amount" title="Your own amount: pick X, then click an item"></div>
-        <p class="bk-hint">Click moves that many. <b>Shift-click</b>: a full stack out, the whole lot in. <b>Right-click</b> an item for more.</p>
+        <div class="bk-move"><span>Move</span><div class="qty" id="bkQty">${[["1", "1"], ["99", "99"]].map(([k, n]) => `<button type="button" data-n="${k}">${n}</button>`).join("")}</div><input type="number" id="bkX" min="1" step="1" value="${x}" aria-label="A number of your own" title="A number of your own: type it, then click an item"></div>
+        <p class="bk-hint">Click moves that many. <b>Shift-click</b> moves the lot. <b>Right-click</b> (or hold) an item for more, and to drag it to a page.</p>
       </aside></div>`;
     $("bkSearch").addEventListener("input", () => { q = $("bkSearch").value.trim().toLowerCase(); render(); });
     $("bkSort").addEventListener("click", (e) => { const b = e.target.closest("[data-s]"); if (!b) return; sort = b.dataset.s; lsSet("es_bank_sort", sort); SFX.play("ui_click"); render(); });
     $("bkQty").addEventListener("click", (e) => { const b = e.target.closest("[data-n]"); if (!b) return; mode = b.dataset.n; lsSet("es_bank_n", mode); if (mode === "x") $("bkX").focus(); paintQty(); });
     $("bkX").addEventListener("input", () => { x = Math.max(1, Math.floor(+$("bkX").value) || 1); lsSet("es_bank_x", String(x)); if (mode !== "x") { mode = "x"; lsSet("es_bank_n", mode); paintQty(); } });
+    $("bkX").addEventListener("focus", () => { if (mode !== "x") { mode = "x"; lsSet("es_bank_n", mode); paintQty(); } });
     $("bkTabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (!b) return; tab = b.dataset.tab; lsSet("es_bank_tab", tab); SFX.play("ui_click"); render(); });
     $("bkPages").addEventListener("click", (e) => { const b = e.target.closest("[data-page]"); if (!b) return; page = b.dataset.page; lsSet("es_bank_page", page); SFX.play("ui_click"); render(); });
     /* drag a tile onto a page: a bank row is refiled, a bag stack is deposited there. HTML5 drag is mouse-only; touch has the hold menu. */
@@ -81,9 +83,19 @@ export function createBankUi(E) {
     $("bkPages").addEventListener("dragleave", (e) => { e.target.closest?.("[data-page]")?.classList.remove("over"); });
     $("bkPages").addEventListener("drop", (e) => { const b = e.target.closest("[data-page]"); if (!b || b.dataset.page === "all") return; e.preventDefault(); const p = +b.dataset.page; b.classList.remove("over");
       if (dragAt.bank >= 0) send({ t: "bank", op: "page", i: dragAt.bank, p }); else if (dragAt.bag >= 0) dep(dragAt.bag, amount(), p); dragAt.bank = dragAt.bag = -1; SFX.play("ui_click"); });
-    /* (2026-09-27) the bag here arranges too: drop a bag tile on another and they swap, as in the inventory panel */
-    $("bkBag").addEventListener("dragover", (e) => { if (dragAt.bag < 0) return; const el = e.target.closest("[data-i]"); if (!el) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
-    $("bkBag").addEventListener("drop", (e) => { if (dragAt.bag < 0) return; const el = e.target.closest("[data-i]"); if (!el) return; e.preventDefault(); const to = +el.dataset.i; if (to !== dragAt.bag) send({ t: "inv", op: "move", from: dragAt.bag, to }); dragAt.bag = -1; });
+    /* (2026-09-27) THE OSRS DRAGS. In the bag: a tile onto any slot (empty: it goes there; occupied: the two swap). A BANK tile dropped
+       anywhere on the bag withdraws the chosen amount; a BAG tile dropped on the bank grid deposits it (to the page you are on); a bank
+       tile dropped on another bank tile takes its place (and its page). */
+    $("bkBag").addEventListener("dragover", (e) => { if (dragAt.bag < 0 && dragAt.bank < 0) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
+    $("bkBag").addEventListener("drop", (e) => { e.preventDefault();
+      if (dragAt.bag >= 0) { const el = e.target.closest("[data-to]"); if (el && +el.dataset.to !== dragAt.bag) send({ t: "inv", op: "move", from: dragAt.bag, to: +el.dataset.to }); }
+      else if (dragAt.bank >= 0) { const s = E.me?.bank?.[dragAt.bank]; if (s) wd(dragAt.bank, e.shiftKey ? G.capOf(s.k) : amount()); }
+      dragAt.bag = dragAt.bank = -1; SFX.play("ui_click"); });
+    $("bkGrid").addEventListener("dragover", (e) => { if (dragAt.bag < 0 && dragAt.bank < 0) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
+    $("bkGrid").addEventListener("drop", (e) => { e.preventDefault();
+      if (dragAt.bag >= 0) dep(dragAt.bag, e.shiftKey ? "all" : amount());
+      else if (dragAt.bank >= 0) { const el = e.target.closest("[data-b]"); if (el && +el.dataset.b !== dragAt.bank) send({ t: "bank", op: "swap", i: dragAt.bank, j: +el.dataset.b }); }
+      dragAt.bag = dragAt.bank = -1; SFX.play("ui_click"); });
     $("bkGrid").addEventListener("click", (e) => { const el = e.target.closest("[data-b]"); if (!el) return; const s = E.me?.bank?.[+el.dataset.b]; if (!s) return; wd(+el.dataset.b, e.shiftKey ? G.capOf(s.k) : amount()); });
     $("bkBag").addEventListener("click", (e) => { const el = e.target.closest("[data-i]"); if (!el) return; dep(+el.dataset.i, e.shiftKey ? "all" : amount()); });
     for (const [id, ev] of [["bkGrid", "b"], ["bkBag", "i"]]) {
@@ -156,7 +168,7 @@ export function createBankUi(E) {
     gridHtml = shown.length ? gridHtml
       : `<p class="bk-empty">${!bank.length ? "Your bank is empty. Click things in your bag to put them in, or <b>Deposit bag</b> for the lot." : q ? `Nothing in the bank matches “${esc(q)}”.` : "Nothing on this tab."}</p>`;
     if (gridHtml !== last.grid) { $("bkGrid").innerHTML = gridHtml; last.grid = gridHtml; }
-    const bagHtml = me.inv.map((s, i) => slotHtml(s, i).replace('class="slot"', `class="slot${q && !ITEMS[s.k].name.toLowerCase().includes(q) ? " dim" : ""}${s.k === "tickets" ? " stay" : ""}"`)).join("") || `<p class="bk-empty">Your bag is empty.</p>`;
+    const bagHtml = G.invLayout(me).map((idx, pos) => { if (idx < 0) return `<div class="slot empty" data-to="${pos}"></div>`; const s = me.inv[idx]; return slotHtml(s, idx).replace('class="slot"', `class="slot${q && !ITEMS[s.k].name.toLowerCase().includes(q) ? " dim" : ""}${s.k === "tickets" ? " stay" : ""}" draggable="true" data-to="${pos}"`); }).join("");
     if (bagHtml !== last.bag) { $("bkBag").innerHTML = bagHtml; last.bag = bagHtml; }
     $("bkBagN").textContent = `${me.inv.length} / ${G.bagMax(me)}`;
     /* (2026-09-27, the owner: "remove this part so there's more space ... allow this specific bag / slot upgrade to only be purchased at Bom")
@@ -165,8 +177,11 @@ export function createBankUi(E) {
   return { render, catOf };
 }
 const CSS = `
-.win.wide{width:min(1040px,calc(100% - 28px))}
-.bk{display:grid;grid-template-columns:132px minmax(0,1fr) 240px;gap:12px;min-height:0}
+/* (2026-09-27, the owner: "make the bank feel less wide and covering up the game") narrower, taller: fewer tiles across, the grid scrolls,
+   and under 1100px the bag sits below the grid so the window is narrower still and the game shows either side */
+.win.wide{width:min(820px,calc(100% - 28px))}
+.bk{display:grid;grid-template-columns:110px minmax(0,1fr) 206px;gap:10px;min-height:0}
+@media (max-width:1100px){.win.wide{width:min(600px,calc(100% - 28px))}.bk{grid-template-columns:100px minmax(0,1fr)}.bk-bag{grid-column:1/-1}.bk-bag .bk-grid.sm{max-height:min(22vh,200px)}}
 .bk-side{display:flex;flex-direction:column;gap:6px;min-width:0}
 .bk-pages{display:flex;flex-direction:column;gap:3px}
 .bk-pages button{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:6px;padding:6px 7px;border:2px dashed transparent;border-radius:8px;background:none;font:800 13px Nunito,sans-serif;color:#3a2c1c;text-align:left;cursor:pointer}
@@ -181,12 +196,12 @@ const CSS = `
 .bk-tabs button:hover{background:rgba(0,0,0,.1)}.bk-tabs button[aria-pressed=true]{background:#fffaf0;border-color:#c8963a;box-shadow:0 1px 3px rgba(60,40,10,.18)}
 .bk-tabs button em{position:absolute;right:-4px;top:-6px;font-style:normal;font-size:10px;font-weight:800;line-height:1;padding:2px 5px;border-radius:999px;background:#5a3220;color:#f3e7cc;box-shadow:0 0 0 1.5px #fffaf0}
 .bk-ph{grid-column:1/-1;margin:6px 2px 0;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.6}
-.bk-grid .slot.dragging{opacity:.4}.bk-menu-s{height:1px;margin:3px 6px;background:rgba(0,0,0,.12)}
+.bk-grid .slot.dragging{opacity:.4}.bk-grid .slot.empty{opacity:.55}.bk-menu-s{height:1px;margin:3px 6px;background:rgba(0,0,0,.12)}
 .bk-top{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap}.bk-search{flex:1 1 140px;margin:0}.bk-sort button{padding:4px 9px;font-size:12px}
 .bk-meter{display:flex;align-items:center;gap:10px;margin:0 0 8px;font-size:12px;color:#5a4a30}.bk-meter b{color:#2a2016}
 .bk-bar{flex:1;height:8px;border-radius:999px;background:rgba(0,0,0,.12);overflow:hidden}.bk-bar i{display:block;height:100%;background:#4aa84a;border-radius:999px}.bk-bar i.warn{background:#d8963a}.bk-bar i.full{background:#c8283a}
 .bk-worth{white-space:nowrap}
-.bk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:4px;align-content:start;max-height:min(58vh,520px);overflow:auto;padding:2px}
+.bk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(50px,1fr));gap:4px;align-content:start;max-height:min(62vh,600px);overflow:auto;padding:2px}
 .bk-grid .slot{font-size:24px}.bk-grid.sm{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));max-height:min(34vh,300px)}.bk-grid.sm .slot{font-size:20px}
 .bk-grid .slot.dim{opacity:.32}.bk-grid .slot.stay{cursor:not-allowed}
 .bk-empty{grid-column:1/-1;margin:8px 4px;font-size:13px;opacity:.75}

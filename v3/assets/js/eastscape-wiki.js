@@ -1029,6 +1029,7 @@ export const UPDATES = [
       "THE BANK, REBUILT: five PAGES to file things on (drag an item onto a page, or hold / right-click it and pick one), tabs by kind (gear, ranged, tools, food, materials, seeds, breeding, potions), one search over bank and bag, your own amount beside 1 / 5 / 10 / All, and a meter of slots used and what it is all worth. Your bag is the leather panel on the right.",
       "A BOW OR WAND FIRES ONLY WHAT IS LOADED in its quiver or Magic Bag. Arrows and pages in your bag no longer fire on their own: load them. Clicking a different kind swaps it in.",
       "NO PET YET? Cooking pet food trains Breeding a little until you have a pet or an egg.",
+      "YOUR BAG HAS SLOTS, like OSRS: drag an item to any slot (an empty one takes it, an occupied one swaps), a used-up stack leaves a gap, a new item takes the first gap, Sort packs it. In the bank, drag a bank item onto your bag to withdraw, a bag item onto the bank to deposit, or onto another bank item to reorder.",
       "FAVOURITES: right-click (or hold, on a phone) an item in your bag and star it. Favourites wear a star, come first when you Sort, and Deposit bag, Stack all and Sell all leave them with you.",
       "ON A PHONE: the map is closer (a tile is thumb-sized), the top bar is one line with a More button, the stats are one row so your bag is in reach, and the tab bar sticks while you scroll. Sideways, the panel is narrower so the game has room.",
     ],

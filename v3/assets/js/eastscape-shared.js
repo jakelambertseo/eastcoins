@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 316;
+export const VERSION = 317;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -844,6 +844,19 @@ export const capOf = (k) => (ITEMS[k]?.nocap ? Infinity : ITEMS[k]?.cap || STACK
 export const BAG_UPGRADES = [50000, 100000, 200000, 300000, 400000];
 /** What the next slot costs, or null when they have them all. */
 export const bagUpCost = (c) => BAG_UPGRADES[Math.min(BAG_UPGRADES.length, Math.max(0, (c?.bagUp | 0)))] ?? null;
+/* (2026-09-27) WHERE EACH STACK SITS. The bag is still a dense list (every place that walks it is untouched), but a stack may carry
+   `p`, the slot it was put in: one array of bagMax(c) entries, each the index of the stack in it or -1. Stacks with a valid, unclaimed
+   slot take it; the rest fill the empty slots in order, which is where a new item lands (the first gap, as in OSRS). */
+export const invLayout = (c) => {
+  const n = bagMax(c), inv = Array.isArray(c?.inv) ? c.inv : [], slots = new Array(n).fill(-1), rest = [];
+  inv.forEach((s, i) => { const p = s && Number.isInteger(s.p) && s.p >= 0 && s.p < n && slots[s.p] < 0 ? s.p : -1; if (p >= 0) slots[p] = i; else rest.push(i); });
+  let j = 0; for (const i of rest) { while (j < n && slots[j] >= 0) j++; if (j >= n) break; slots[j++] = i; }
+  return slots;
+};
+/** every stack takes the slot it is drawn in right now, so that from here on a used-up stack leaves a gap and nothing shifts */
+export const settleSlots = (c) => { const lay = invLayout(c); lay.forEach((i, pos) => { if (i >= 0 && c.inv[i].p !== pos) c.inv[i].p = pos; }); return c; };
+/** the first empty slot of a bag being filled (the `inv` given, laid out for the character `c`), or -1 when it is full */
+const firstFree = (inv, c) => { const v = Object.create(c || {}); v.inv = inv; return invLayout(v).indexOf(-1); };
 export const bagMax = (c) => INV_MAX + (c ? petFx(c).slots + (achFx(c).slots | 0) + Math.min(BAG_UPGRADES.length, c.bagUp | 0) : 0);   /* achFx: the two pockets the milestones give */
 /* ============================================================================================================
    THE REFORGE BELONGS TO THE ITEM (2026-09-23, the owner: "make the reforge travel with the item")
@@ -905,11 +918,12 @@ export const roomFor = (inv, k, c, f = 0) => {
 export const addInv = (inv, k, n, c, f = 0) => {
   const cap = capOf(k);
   if (f > 0) {   // one slot each, never merged: see rule 1 above
-    while (n > 0 && inv.length < bagMax(c)) { inv.push({ k, n: 1, f }); n -= 1; }
+    while (n > 0 && inv.length < bagMax(c)) { const p = firstFree(inv, c); inv.push({ k, n: 1, f, ...(p >= 0 ? { p } : {}) }); n -= 1; }
     return n;
   }
   for (const s of inv) { if (n <= 0) break; if (s.k === k && !fOf(s) && s.n < cap) { const t = Math.min(n, cap - s.n); s.n += t; n -= t; } }
-  while (n > 0 && inv.length < bagMax(c)) { const t = Math.min(n, cap); inv.push({ k, n: t }); n -= t; }
+  /* (2026-09-27) a new stack takes the first empty SLOT (OSRS), not just the end of the list: see invLayout */
+  while (n > 0 && inv.length < bagMax(c)) { const t = Math.min(n, cap), p = firstFree(inv, c); inv.push({ k, n: t, ...(p >= 0 ? { p } : {}) }); n -= t; }
   return n;
 };
 // take up to n of k, from the last stacks first; returns how many were taken
@@ -929,7 +943,7 @@ export function sortInv(inv, c) {
   const forged = inv.filter((s) => fOf(s)).map((s) => ({ k: s.k, n: 1, f: fOf(s) }));
   const totals = new Map(); for (const s of inv) if (!fOf(s)) totals.set(s.k, (totals.get(s.k) || 0) + s.n);
   const fav = new Set(Array.isArray(c?.fav) ? c.fav : []);   /* (2026-09-27) favourites first, then the old order */
-  const keys = [...new Set([...totals.keys(), ...forged.map((s) => s.k)])].sort((a, b) => (fav.has(a) ? 0 : 1) - (fav.has(b) ? 0 : 1) || group(a) - group(b) || tierRank(a) - tierRank(b) || (ITEMS[a]?.name || a).localeCompare(ITEMS[b]?.name || b));
+  const keys = [...new Set([...totals.keys(), ...forged.map((s) => s.k)])].sort((a, b) => (a === "tickets" ? 0 : 1) - (b === "tickets" ? 0 : 1) || (fav.has(a) ? 0 : 1) - (fav.has(b) ? 0 : 1) || group(a) - group(b) || tierRank(a) - tierRank(b) || (ITEMS[a]?.name || a).localeCompare(ITEMS[b]?.name || b));
   const out = [];
   for (const k of keys) {
     if (totals.get(k)) addInv(out, k, totals.get(k), c);
@@ -6902,7 +6916,7 @@ export function normChar(c) {
      mapping each entry to a bare { k, n } quietly threw away any reforge level on it — which made the whole
      feature last exactly until the player's next login. A forged entry is passed to addInv with its level, so it
      lands in a slot of its own instead of being merged into the plain stack beside it. */
-  const renamed = (st) => (st && st.k ? { k: aliasKey(st.k), n: st.n, ...(st.f ? { f: st.f } : {}), ...(st.p > 0 ? { p: st.p } : {}) } : st);   /* (2026-09-27) the bank page rides along */
+  const renamed = (st) => (st && st.k ? { k: aliasKey(st.k), n: st.n, ...(st.f ? { f: st.f } : {}), ...(Number.isInteger(st.p) && st.p >= 0 ? { p: st.p } : {}) } : st);   /* (2026-09-27) the bank page, or the bag slot, rides along */
   out.bank = (Array.isArray(c.bank) ? c.bank : []).map(renamed).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, BANK_MAX).map((s) => ({ k: s.k, n: s.n, ...(s.f ? { f: s.f } : {}), ...(s.p > 0 ? { p: Math.min(BANK_PAGES - 1, s.p | 0) } : {}) }));   /* (2026-09-27) the page comes through a save */
   /* (2026-09-27) CANDY CORN EXPIRES: the day after the Long Night, every load sweeps it from the bag and the bank. The wiki and the
      item say so from the first day, so nobody is surprised; the fits, the set and the cat it bought stay. */
@@ -6921,7 +6935,13 @@ export function normChar(c) {
     const left = addInv(out.inv, s.k, s.n, out, s.f || 0); if (!left) continue;
     const b = !s.f && out.bank.find((x) => x.k === s.k && !x.f); if (b) b.n += left; else out.bank.push({ k: s.k, n: left, ...(s.f ? { f: s.f } : {}) });
   }
-  { const bt = out.bank.find((x) => x.k === "tickets"); if (bt) { out.bank.splice(out.bank.indexOf(bt), 1); addInv(out.inv, "tickets", bt.n, out); } }   /* tickets stay on you (2026-09-19): any that were banked come back to the bag (they never take a slot's cap) */
+  /* (2026-09-27, the owner: "literally replicate OSRS/RS3 inventory") THE SLOTS COME BACK. The re-pack above merges stacks through addInv,
+     which knows nothing of positions, so each source stack's slot is queued by its item and handed to the rebuilt stacks of that item in
+     order. A stack with no slot, or one the bag no longer has, falls into the first free slot when the bag is laid out (invLayout). */
+  { const want = new Map(); for (const s of (Array.isArray(c.inv) ? c.inv : []).map(renamed)) if (s && Number.isInteger(s.p) && s.p >= 0 && s.p < INV_MAX + BAG_UPGRADES.length + 16) { const key = `${s.k}|${s.f || 0}`; (want.get(key) || want.set(key, []).get(key)).push(s.p); }
+    for (const s of out.inv) { const q = want.get(`${s.k}|${s.f || 0}`); if (q?.length) s.p = q.shift(); } }
+  { const bt = out.bank.find((x) => x.k === "tickets"); if (bt) { out.bank.splice(out.bank.indexOf(bt), 1); addInv(out.inv, "tickets", bt.n, out); } }
+  settleSlots(out);   /* (2026-09-27) every stack knows its slot from here on */   /* tickets stay on you (2026-09-19): any that were banked come back to the bag (they never take a slot's cap) */
   /* (2026-09-23) THE PET SLOT IS NOT AN ITEM SLOT and must sit this out. Every other slot holds an item KEY, so
      this drops anything whose item no longer exists (and applies renames on the way). eq.pet holds an ID into
      c.pets — "p1" — which is never a key in ITEMS, so it failed that test on EVERY load: a player equipped a pet,
