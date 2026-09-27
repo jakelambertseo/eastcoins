@@ -3,6 +3,7 @@
    walkable), every open tile is reachable from that door, every monster stands on grass (the perched wasps on water, within their reach
    of the bank), the trees and hives are real objects on blocked tiles and can be reached, the stove is a range, Pomona's quests are
    wired, every drop is an item, the walnut burns, and the pay sits in the band. */
+import "./eastscape-open-all.mjs";   /* the map ships held (HOLD); this test opens it */
 import * as G from "../v3/assets/js/eastscape-shared.js";
 import { World } from "../eastscape-worker/src/index.js";
 let bad = 0;

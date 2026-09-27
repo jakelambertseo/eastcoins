@@ -2,6 +2,7 @@
    (2026-09-27) The real World with storage stubbed: the map opens off the Carnival's west fence and every open tile is reachable from
    that door, the gulls and the Kraken Arms hang over water a sword cannot reach, the fishing spots, the Chip Shop and Salty Meg are
    real, her quests are wired, every monster's drops and every fish's cook are real items and recipes, and the pay sits in the band. */
+import "./eastscape-open-all.mjs";   /* the map ships held (HOLD); this test opens it */
 import * as G from "../v3/assets/js/eastscape-shared.js";
 import { World } from "../eastscape-worker/src/index.js";
 let bad = 0;

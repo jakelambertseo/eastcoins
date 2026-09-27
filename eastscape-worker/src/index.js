@@ -175,6 +175,9 @@ export default {
   }
 };
 
+/* (2026-09-27) where someone saved inside a held map comes back to: the door on the map next door (the Carnival's west edge, the
+   Thunderhead's south, the Boneyard's corridor) */
+const HELD_MAPS = { boardwalk: { scene: "carnival", x: 1, y: 13 }, foundry: { scene: "thunderhead", x: 22, y: 21 }, orchard: { scene: "boneyard", x: 14, y: 20 } };
 export class World {
   constructor(ctx, env) {
     this.ctx = ctx; this.env = env;
@@ -269,6 +272,10 @@ export class World {
     this.towerRejoin(pl);   /* (2026-09-22) saved inside the Tower: rebuild that floor, or the room comes back empty and unwinnable */
     this.pls.set(user.id, pl);
     this.ctx.storage.put(`who:${String(user.login).toLowerCase()}`, { id: user.id, name: pl.name }).catch(() => {});
+    /* (2026-09-27) A HELD MAP IS SHUT FOR EVERYONE, including anyone who logged off inside it: they come back at its door on the map next
+       door. G.HOLD / G.OPEN decide; this only says where each one's door is. */
+    const heldAt = HELD_MAPS[String(C.scene)];
+    if (heldAt && !G.OPEN.has(String(C.scene))) { C.scene = heldAt.scene; C.x = pl.x = heldAt.x; C.y = pl.y = heldAt.y; pl.needSave = true; }
     const S = this.scene(C.scene);
     this.placeSafely(S, pl); this.markSeen(pl, C.scene);
     ws.addEventListener("message", (e) => { try { this.onMessage(pl, JSON.parse(e.data)); } catch (err) { /* ignore bad frames */ } });

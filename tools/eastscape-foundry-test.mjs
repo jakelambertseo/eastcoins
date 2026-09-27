@@ -3,6 +3,7 @@
    walkable), every open tile is reachable from that door, every monster stands on floor (Old Bessemer on lava, within his own reach of
    it), the veins and the blast furnace are real objects on blocked tiles, the blast furnace serves every furnace recipe with one bar
    and half as much xp again, Basalt's quests are wired, every drop is an item, and the pay sits in the band. */
+import "./eastscape-open-all.mjs";   /* the map ships held (HOLD); this test opens it */
 import * as G from "../v3/assets/js/eastscape-shared.js";
 import { World } from "../eastscape-worker/src/index.js";
 let bad = 0;

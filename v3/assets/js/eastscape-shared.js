@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 319;
+export const VERSION = 320;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -4219,7 +4219,7 @@ export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) 
    Yard and the skill joins the panel, the hiscores and the wiki. Held, everything stays in the rules (a save that somehow carries
    the items or the xp still loads) but nobody can reach it and the wiki does not list it. The tests open both with
    globalThis.__ES_OPEN_ALL before they import this file. */
-export const HOLD = { depths: !globalThis.__ES_OPEN_ALL, jewel: !globalThis.__ES_OPEN_ALL };
+export const HOLD = { depths: !globalThis.__ES_OPEN_ALL, jewel: !globalThis.__ES_OPEN_ALL, boardwalk: !globalThis.__ES_OPEN_ALL, foundry: !globalThis.__ES_OPEN_ALL, orchard: !globalThis.__ES_OPEN_ALL };   /* (2026-09-27) the Boardwalk, the Foundry and the Orchard Wall: launched the same morning and held shut again at the owner's word ("close them for now and dont allow access until i reiterate them"). Held: no door to them, not in the wiki, and anyone saved inside is walked back out on login (the worker's HELD_MAPS) */
 export const OPEN = new Set(["carnival",   /* (2026-09-24) OPEN AT LAST. Built 2026-09-24 and held shut at the owner’s word until he said "launch the publish the carnival so its openn to peoople now". */ "casino", "roulette", "theatre", "fightpit", "vault", "wild", "deep", "agility",   /* (2026-09-22) The Run. Built with the Agility skill but never added here, so its door in the Yard answered with the bouncer's "Room's shut" — a scene is not enterable until it is in this set. */   /* (2026-09-22) the Wilderness reopened, down the rope ladder on the Gloam */ /* "highroller": closed for now (the owner, 2026-09-19) */ /* "forum", "bathhouse": closed in v108, what mattered there is in the Yard */ "workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "trailer",
   ]);   /* (2026-09-23) the Thieves' Guild. Deliberately NOT in BANDS: its rooms gate on Thieving through each mark's own `req`, and a combat band here would undo the whole point of a skill you cannot fight your way into. */   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
 export const OPEN_DAILY = new Set([
@@ -7541,6 +7541,7 @@ recipe("cook_starfeast", { skill: "cooking", station: "fire", in: [["starcap", 1
 MOBS.toadstool?.drops.push(["spawn_sporecap", 1, 0.08]);   /* MOBS[].drops, not LOOT: LOOT was folded into drops long before this line */
 
 
+const _preBoardwalk = new Set(Object.keys(ITEMS));
 /* ============================================================ THE BOARDWALK (2026-09-27, the massive update, 5 of 8)
    EASTSCAPE-MAPS.md's map B, built on Rafael Matos's "ERW - Sea Adventures": a drowned seaside market west of the Carnival - a beach with
    palms, a pier off it to the market's bank, the stalls on a stone plaza, and a pier network out over the water with boats tied up.
@@ -7624,7 +7625,8 @@ Object.assign(QUESTS, {
   }
 });
 for (const [k, tier] of [["bwmackerel", "medium"], ["bwdeckhands", "hard"], ["bwcaptain", "hard"]]) { QUESTS[k].stages = [{ ...QUESTS[k].goal }]; QUESTS[k].tier = tier; }
-OPEN.add("boardwalk"); SCENES.carnival.exits.w = "boardwalk"; PET_SCENES.add("boardwalk"); EGGS.egg_cindered.from.push("boardwalk"); EGGS.egg_velvet.from.push("boardwalk");
+if (!HOLD.boardwalk) { OPEN.add("boardwalk"); SCENES.carnival.exits.w = "boardwalk"; PET_SCENES.add("boardwalk"); EGGS.egg_cindered.from.push("boardwalk"); EGGS.egg_velvet.from.push("boardwalk"); }
+const _preFoundry = new Set(Object.keys(ITEMS));
 /* ============================================================ THE FOUNDRY (2026-09-27, the massive update, 6 of 8)
    EASTSCAPE-MAPS.md's map C, built on Rafael Matos's "ERW - Volcano": the works under the Thunderhead, where the mountain's ore is
    smelted. A lava river down the west side, a ring of lava round an arena with two demon statues at its gate, the blast furnace on the
@@ -7697,7 +7699,8 @@ Object.assign(QUESTS, {
   }
 });
 for (const [k, tier] of [["fdslag", "medium"], ["fdimps", "hard"], ["fdbessemer", "hard"]]) { QUESTS[k].stages = [{ ...QUESTS[k].goal }]; QUESTS[k].tier = tier; }
-OPEN.add("foundry"); SCENES.thunderhead.exits.s = "foundry"; PET_SCENES.add("foundry"); EGGS.egg_cindered.from.push("foundry");
+if (!HOLD.foundry) { OPEN.add("foundry"); SCENES.thunderhead.exits.s = "foundry"; PET_SCENES.add("foundry"); EGGS.egg_cindered.from.push("foundry"); }
+const _preOrchard = new Set(Object.keys(ITEMS));
 /* ============================================================ THE ORCHARD WALL (2026-09-27, the massive update, 7 of 8)
    EASTSCAPE-MAPS.md's map A, built on Rafael Matos's "ERW - Grass Land 2.0": the country south of the Boneyard - a market wagon under
    the big trees, a brook with a stone bridge over it, a pond, and across the water an orc camp behind a fence, its wood below it.
@@ -7768,7 +7771,19 @@ Object.assign(QUESTS, {
   }
 });
 for (const [k, tier] of [["orwasps", "medium"], ["orbands", "hard"], ["orgardener", "hard"]]) { QUESTS[k].stages = [{ ...QUESTS[k].goal }]; QUESTS[k].tier = tier; }
-OPEN.add("orchard"); SCENES.boneyard.exits.s = "orchard"; PET_SCENES.add("orchard"); EGGS.egg_sparking.from.push("orchard");
+if (!HOLD.orchard) { OPEN.add("orchard"); SCENES.boneyard.exits.s = "orchard"; PET_SCENES.add("orchard"); EGGS.egg_sparking.from.push("orchard"); }
+/* (2026-09-27) HELD MAPS' THINGS: every item, quest and monster a held map added is marked held, so the wiki leaves it out (a save
+   that somehow carries one still loads). The blocks run Boardwalk, Foundry, Orchard, then the Depths, so each is the items between
+   its own marker and the next one. */
+for (const [held, from, to, quests, mobs] of [
+  [HOLD.boardwalk, _preBoardwalk, _preFoundry, ["bwmackerel", "bwdeckhands", "bwcaptain"], ["gull", "deckhand", "clawhand", "krakenarm", "captainclaw"]],
+  [HOLD.foundry, _preFoundry, _preOrchard, ["fdslag", "fdimps", "fdbessemer"], ["slaggolem", "furnaceimp", "cinderelemental", "bessemer"]],
+  [HOLD.orchard, _preOrchard, null, ["orwasps", "orbands", "orgardener"], ["wasp", "orchardorc", "orchardkeeper", "hedgething", "gardener"]]]) {
+  if (!held) continue;
+  for (const k of Object.keys(ITEMS)) if (!from.has(k) && (!to || to.has(k))) ITEMS[k].held = true;
+  for (const q of quests) if (QUESTS[q]) QUESTS[q].held = true;
+  for (const t of mobs) if (MOBS[t]) MOBS[t].held = true;
+}
 const _preDepths = new Set(Object.keys(ITEMS));
 /* ============================================================ THE DEPTHS OF THE MOUNTAIN (2026-09-27, the massive update, 3 of 8)
    The Scrap Line of EASTSCAPE-MAPS.md, re-themed by the owner on Rafael Matos's "Depths of the Mountain" pack: platforms of
