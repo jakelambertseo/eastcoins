@@ -1911,7 +1911,30 @@ export const UPDATES = [
 // how each skill is trained, in words (the resources and their levels are added from the rules)
 /* The one-line summary at the top of a skills/<id> page. Keep these SHORT — the page under them carries the
    tables, and the hand-written guide linked beside them carries the explanation. */
+/* (2026-09-27, the owner: "breeding and fungiculture ... do a wiki pass for them") HOW A SKILL WITH NO GATHERING SPOTS TRAINS. The skill
+   page's own tables come from what can be gathered and what can be made, and Breeding has neither, so its page said nothing at all.
+   These are drawn from the rules, like the guides, so the xp cannot drift. */
+export const SKILL_EXTRA = {
+  breeding: (G, H) => {
+    const B = G.BREED, n = (x) => Number(x).toLocaleString(), hrs = (ms) => `${Math.round(ms / 3600000)} hours`;
+    const eggs = Object.entries(G.EGGS).map(([k, e]) => `<tr><td>${H.ico(k)} ${H.wl(`items/${k}`, H.esc(G.ITEMS[k]?.name || k))}</td><td>${hrs(e.ms)}</td><td>${n(Math.round(e.xp * 0.1))}</td><td>${n(e.xp)}</td></tr>`).join("");
+    return `<h3>How it trains</h3>
+      <table class="tbl"><tr><th>You do</th><th>Breeding</th><th>Takes</th><th>xp when you start</th><th>xp when you collect</th></tr>
+      <tr><td>Breed two Ordinary pets into a Greater one</td><td>${B.greater.lvl}</td><td>${hrs(B.greater.ms)}</td><td>${n(B.greater.xpStart)}</td><td>${n(B.greater.xpEnd)}</td></tr>
+      <tr><td>Breed two Greater pets into a Legendary one</td><td>${B.legend.lvl}</td><td>${hrs(B.legend.ms)}</td><td>${n(B.legend.xpStart)}</td><td>${n(B.legend.xpEnd)}</td></tr></table>
+      <h3>Hatching eggs</h3><p>An egg goes in a hatchery with ${B.hatch.food} Ordinary pet food. You get a little xp when it goes in and the rest when it hatches.</p>
+      <table class="tbl"><tr><th>Egg</th><th>Takes</th><th>xp when it goes in</th><th>xp when it hatches</th></tr>${eggs}</table>`;
+  },
+  fungiculture: (G, H) => {
+    const n = (x) => Number(x).toLocaleString(), mins = (ms) => (ms >= 5400000 ? `${Math.round(ms / 360000) / 10} hours` : `${Math.round(ms / 60000)} minutes`);
+    const rows = Object.values(G.FUNGI).map((F) => `<tr><td>${F.lvl}</td><td>${H.ico(F.yields)} ${H.wl(`items/${F.yields}`, H.esc(G.ITEMS[F.yields]?.name || F.yields))}</td><td>${mins(F.ms)}</td><td>${n(F.xp)}</td><td>${n(Math.max(10, Math.round(F.xp * G.FUNG.wildXp)))}</td></tr>`).join("");
+    return `<h3>How it trains</h3><p>Three ways: making <b>compost</b> at the bin (the table below), harvesting a <b>fungus bed</b> in your cellar, and picking a <b>wild cluster</b> (one pick each a day).</p>
+      <table class="tbl"><tr><th>Level</th><th>Shroom</th><th>Bed grows in</th><th>xp a harvest</th><th>xp a wild pick</th></tr>${rows}</table>`;
+  },
+};
 export const SKILL_GUIDE = {
+  breeding: "Breed two pets in the pet pen on your island to make a better one, and hatch eggs in a hatchery. Starting a pair gives some xp and collecting the baby gives far more. Every pairing and every hatch trains it.",
+  fungiculture: "Grow mushrooms in the cellar under your island, and pick the wild clusters on every map once a day. Compost from the bin in the cellar trains it from level 1 and feeds the beds.",
   cooking: "Cook raw fish and meat at a range, hearth or campfire. Each food needs a level to cook and stops burning at a higher one. Cooked food heals when you eat it.",
   melee: "Fight monsters with a weapon in hand. Every point of damage you deal gives Melee xp, and a little Hitpoints xp with it. (With a bow in hand it is <b>Archery</b> xp instead.) Your combat level is Melee, Archery and Hitpoints together. One skill does all three jobs \u2014 you land more swings, you hit harder and you get hit less \u2014 and it is what better weapons and armour ask for.",
   hp: "Goes up alongside Combat as you deal damage. Your Hitpoints level is your maximum health.",

@@ -176,8 +176,8 @@ button,input,select{font:inherit}
 .volbar input{width:84px;accent-color:#f2c94c;cursor:pointer}.volbar input:disabled{opacity:.4}
 .buffbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:60%;padding:4px 6px 4px 10px;border-radius:16px;background:rgba(12,10,9,.72);box-shadow:0 0 0 1px rgba(255,255,255,.12);font-size:12.5px;font-weight:800;color:#f4ede5}
 .buffbar>small{letter-spacing:.12em;text-transform:uppercase;font-size:10.5px;color:#aca298}
-.buff{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 5px;border-radius:12px;background:rgba(16,50,24,.92);color:#d8ffd0;box-shadow:0 0 0 2px #4aa84a;cursor:help}
-.buff img{width:18px;height:18px;image-rendering:pixelated}.buff.worn{background:rgba(60,44,16,.92);color:#ffe9b0;box-shadow:0 0 0 2px #c8963a}.buff.b-roller{background:rgba(20,20,24,.95);color:#ffd84a;box-shadow:0 0 0 2px #ffd84a}.buff.b-drink{background:rgba(70,40,10,.92);color:#ffd9a0;box-shadow:0 0 0 2px #d8963a}.buff.b-meal{background:rgba(60,20,16,.92);color:#ffd0c0;box-shadow:0 0 0 2px #d86a4a}.buff.b-free{background:rgba(10,50,40,.92);color:#c0ffe6;box-shadow:0 0 0 2px #3ac89a}.buff.none{background:rgba(255,255,255,.06);box-shadow:0 0 0 1px rgba(255,255,255,.14);color:#aca298;padding-left:10px;font-weight:700}
+.buff{position:relative;display:inline-flex;align-items:center;justify-content:center;padding:4px;border-radius:10px;background:rgba(16,50,24,.92);color:#d8ffd0;box-shadow:0 0 0 2px #4aa84a;cursor:help}
+.buff img{width:20px;height:20px;image-rendering:pixelated}.buff .bn{position:absolute;right:-5px;bottom:-5px;min-width:15px;padding:0 3px;border-radius:8px;background:#0c0a09;box-shadow:0 0 0 1.5px currentColor;font-size:10px;line-height:15px;text-align:center}.buff.worn{background:rgba(60,44,16,.92);color:#ffe9b0;box-shadow:0 0 0 2px #c8963a}.buff.b-roller{background:rgba(20,20,24,.95);color:#ffd84a;box-shadow:0 0 0 2px #ffd84a}.buff.b-drink{background:rgba(70,40,10,.92);color:#ffd9a0;box-shadow:0 0 0 2px #d8963a}.buff.b-meal{background:rgba(60,20,16,.92);color:#ffd0c0;box-shadow:0 0 0 2px #d86a4a}.buff.b-free{background:rgba(10,50,40,.92);color:#c0ffe6;box-shadow:0 0 0 2px #3ac89a}.buff.none{background:rgba(255,255,255,.06);box-shadow:0 0 0 1px rgba(255,255,255,.14);color:#aca298;padding:3px 10px;font-weight:700}
 /* the wallet, under the bag: money first, then what turns into money, then what improves your odds */
 .rarelog{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.rarelog span{position:relative;display:grid;place-items:center;aspect-ratio:1;border-radius:6px;background:rgba(255,255,255,.05);filter:grayscale(1) brightness(.45);cursor:help}.rarelog span.has{filter:none;background:rgba(232,191,53,.16);box-shadow:0 0 0 1px rgba(232,191,53,.5)}
 .rarelog .ico{width:22px;height:22px}.rarelog em{position:absolute;right:2px;bottom:0;font:800 9.5px Nunito,sans-serif;color:#ffd84a;font-style:normal;text-shadow:0 1px 1px #000}
@@ -1326,7 +1326,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=186").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=187").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -3176,7 +3176,7 @@ const luckLine = () => ((me?.luck | 0) > 0
 function renderTour() {
   // the buffs bar: everything that's improving your odds right now (one kind today, built for several)
   const buffs = G.buffsOf(me);
-  $("buffBar").innerHTML = `<small>Buffs</small>` + (buffs.length ? buffs.map((b) => `<span class="buff${b.left == null ? " worn" : ""} b-${b.id.split(":")[0]}" title="${esc(`${b.ex}${b.left != null ? ` ${b.left} ${b.unit}${b.left === 1 ? "" : "s"} left.` : ""}`)}"><img src="${IART}${b.icon}.png?v=${IART_V}" alt="">${esc(b.name)}${b.left != null ? ` × ${b.left}` : ""}</span>`).join("")
+  $("buffBar").innerHTML = `<small>Buffs</small>` + (buffs.length ? buffs.map((b) => `<span class="buff${b.left == null ? " worn" : ""} b-${b.id.split(":")[0]}" title="${esc(`${/^[^:.]{1,40}(:| \()/.test(b.ex) ? "" : `${b.name}: `}${b.ex}${b.left != null ? ` ${b.left} ${b.left === 1 ? b.unit : b.unit === "kill or catch" ? "kills or catches" : `${b.unit}s`} left.` : ""}`)}" aria-label="${esc(b.name)}"><img src="${IART}${b.icon}.png?v=${IART_V}" alt="">${b.left != null ? `<b class="bn">${b.left > 99 ? "99+" : b.left}</b>` : ""}</span>`   /* (2026-09-27, the owner: "it should only show the icon of the image and the color of the buff, not the name") the name is in the tooltip; a count stays as a corner number */).join("")
     : `<span class="buff none" title="Skilling finds lucky clovers. Fighting makes you a High Roller. Crafting makes rings, amulets and dinners. Dex sells drinks.">none yet</span>`);
   const box = $("tourBox"), t = me?.tour, st = G.tourOf(me);
   if (t && tourSeen != null && t.step > tourSeen) SFX.play("task_done");
@@ -5676,7 +5676,11 @@ const mico = (k, px = 26) => `<img class="mico" style="height:${px}px" src="${AR
    areas, the quests, the people and the six elements. Guides and areas have a picture each in flat/ui (g_<id>, a_<key>), a quest
    wears its tier's scroll (q_easy / q_medium / q_hard, the same three the Quests tab and window use), an element its el_<k>, and
    a person is their own south-facing sprite, which the page already has for drawing them. */
-const uico = (k) => `<img class="ico wico" src="${UIA}${k}.png?v=1" alt="" loading="lazy" decoding="async">`;
+/* (2026-09-27) A PER-PICTURE VERSION, because ?v=1 is poisoned for any picture the wiki asked for before its file existed: the Breeding
+   and Fungiculture guides went live without their g_ icons, the Guides list requested g_breeding.png?v=1 and the edge now holds the
+   site's HTML under that URL for a year. A picture added after its page shipped starts at 2 here. */
+const UI_V = { g_breeding: 2, g_fungiculture: 2 };
+const uico = (k) => `<img class="ico wico" src="${UIA}${k}.png?v=${UI_V[k] || 1}" alt="" loading="lazy" decoding="async">`;
 const nico = (name) => { const a = WIKI.npcs[name]?.art || NPC_ART[name]; return a ? `<img class="ico nico" src="${ART}${a}_south.png?v=${ART_V}" alt="" loading="lazy" decoding="async">` : "🧑"; };
 function wikiPages() {
   const pages = [{ route: "home", title: "Home", icon: uico("g_home"), group: "" }, { route: "updates", title: "Updates", icon: uico("g_updates"), group: "" }];
@@ -5786,12 +5790,16 @@ function wikiGo(route, setNav = true) {
            not, on any item, which for the smithing chain meant the wiki could tell you a Nova bar existed and
            never how to make one. Both directions are worth printing: what this is made FROM, and what it goes
            INTO - the second is the only place an ore, a bar or a chase core says why you would keep it. */
-        const st = { furnace: "a furnace", anvil: "an anvil", fire: "a range or campfire", cauldron: "a cauldron" };
+        const st = { furnace: "a furnace", anvil: "an anvil", fire: "a range or campfire", cauldron: "a cauldron", compost: "the compost bin in your cellar" };
         /* G.RECIPES, not RECIPES. The page aliases ITEMS, MOBS and SKILLS as locals but NOT the recipe table, so a
            bare name here threw a ReferenceError on EVERY item page - the section runs unconditionally, so the whole
            wiki stopped opening items and it read as "the new gear is not clickable". */
-        const mk = Object.values(G.RECIPES).filter((r) => r.out[0] === id && r.skill !== "cooking");
-        const into = Object.values(G.RECIPES).filter((r) => r.in.some(([k]) => k === id) && r.skill !== "cooking");
+        /* (2026-09-27, the owner: "ordinary pet food, greater pet food and legendary pet food pages on the wiki need recipes") every
+           Cooking recipe was skipped here, to keep plain raw-to-cooked food from printing twice beside its "Cooked from" line. That
+           also hid pet food, the mushroom meals, smoked fish and every cooked fish outside G.COOK. Only the true duplicates are skipped now. */
+        const dupCook = (r) => r.skill === "cooking" && r.in.length === 1 && G.COOK[r.in[0][0]]?.to === r.out[0];
+        const mk = Object.values(G.RECIPES).filter((r) => r.out[0] === id && !dupCook(r));
+        const into = Object.values(G.RECIPES).filter((r) => r.in.some(([k]) => k === id) && !dupCook(r)).filter((r, i, a) => a.findIndex((x) => x.out[0] === r.out[0]) === i);
         const line = (r) => `${r.in.map(([k, n]) => `${n > 1 ? n + " " : ""}${wl(`items/${k}`, `${ico(k)} ${esc(ITEMS[k]?.name || k)}`)}`).join(" + ")}`;
         let out = "";
         if (mk.length) out += `<h3>How to make it</h3>` + mk.map((r) => `<p>At ${st[r.station] || "a workbench"}, with <b>${SKILLS[r.skill].name} ${r.lvl}</b>: ${line(r)}${(r.out[1] || 1) > 1 ? ` makes <b>${r.out[1]}</b>` : ""}. ${r.xp ? `<b>${r.xp}</b> xp.` : ""}</p>`).join("");
@@ -5844,6 +5852,7 @@ function wikiGo(route, setNav = true) {
     html = `<h2><i>${sico(id)}</i>${esc(s.name)}</h2><p class="lede">${esc(WK.SKILL_GUIDE[id] || "")}</p>
       ${guide ? `<p class="wguide">${wl(`guides/${gid}`, `Read the ${esc(guide.title)} guide`)} &mdash; how to actually get going with it, and what to watch out for.</p>` : ""}
       ${rows.length ? `<h3>What you can train on</h3><table class="tbl"><tr><th>Level</th><th>What</th><th>Gives</th><th>Where</th></tr>${rows.map((r) => `<tr><td>${r.lvl}</td><td>${esc(r.obj)}</td><td>${wl(`items/${r.k}`, `${ico(r.k)} ${esc(ITEMS[r.k].name)}`)}</td><td>${areaLink(r.scene)}</td></tr>`).join("")}</table>` : ""}
+      ${WK.SKILL_EXTRA?.[id] ? WK.SKILL_EXTRA[id](G, { ico, wl, esc }) : ""}
       ${id === "farming" && WK.cropTable ? `<h3>What you can grow</h3><p>On ${wl("guides/islands", "your island")}, in real time, logged in or not.</p>${WK.cropTable(G, { ico, wl, esc })}` : ""}
       ${made.length ? `<h3>What you can make</h3><table class="tbl"><tr><th>Level</th><th>Makes</th><th>From</th><th>xp</th></tr>${made.slice(0, 60).map((r) => `<tr><td>${r.lvl}</td><td>${wl(`items/${r.out[0]}`, `${ico(r.out[0])} ${esc(ITEMS[r.out[0]]?.name || r.out[0])}`)}${r.out[1] > 1 ? ` &times;${r.out[1]}` : ""}</td><td>${r.in.map(([k, n]) => `${n}&times; ${wl(`items/${k}`, esc(ITEMS[k]?.name || k))}`).join(" + ")}</td><td>${r.xp}</td></tr>`).join("")}</table>${made.length > 60 ? `<p class="note">The first 60 of ${made.length}.</p>` : ""}` : ""}
       ${Object.values(ITEMS).some((it) => it.tool === id) ? `<h3>Tool</h3><p>${Object.entries(ITEMS).filter(([, it]) => it.tool === id).map(([k, it]) => wl(`items/${k}`, `${ico(k)} ${esc(it.name)}`)).join(", ")}: hold it in your weapon hand.</p>` : ""}
