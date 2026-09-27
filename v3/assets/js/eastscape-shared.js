@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 311;
+export const VERSION = 312;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7596,6 +7596,74 @@ Object.assign(QUESTS, {
   }
 });
 for (const [k, tier] of [["deepcrystal", "medium"], ["deepgoblins", "hard"], ["deepkeeper", "hard"]]) { QUESTS[k].stages = [{ ...QUESTS[k].goal }]; QUESTS[k].tier = tier; }   /* the goal-to-stages pass ran long before this line */
+
+/* ============================================================ JEWELCRAFTING (2026-09-27, the massive update, 4 of 8)
+   The owner chose it from three (EASTSCAPE-DRAFTS.md section 9). What it is here: the JEWELLER'S BENCH in the Yard, beside the anvil,
+   where three things are made, each one out of another skill's work.
+   - POLISHING (the volume that trains it): sand into glass beads, beads into a necklace, and each mid and late ore into a polished
+     stone that sells for a little more than the ore does. So Mining feeds it from the first swing to the Depths' abyss crystal.
+   - CUTTING the four gems Mining turns up (ruby, sapphire, topaz, opal). A cut gem is worth far more than the stone.
+   - SETTING a cut gem into a ring or amulet Smithing made, one metal per gem: the piece keeps its metal's numbers and gains the gem's
+     power. A ring carries the power once, an amulet twice. The top set takes three cut abyss crystals and a singularity piece.
+   Nothing here buys xp, and every power is one of the keys worn gear already uses (tough, bite, speed, rare, tix). */
+SKILLS.jewelcrafting = { name: "Jewelcrafting", icon: "\u{1F48D}" };
+SKILL_GROUPS.find((g) => g.name === "Skilling")?.keys.push("jewelcrafting");
+HISCORES.push(["jewelcrafting", "Jewelcrafting", "level", "lvl"]);
+STATIONS.jbench = { skill: "jewelcrafting", verb: "cut", name: "jeweller's bench", auto: false, kind: "jewel" };
+Object.assign(VERB, { jbench: "Work-at" });
+EXAMINE.jbench = ["A loupe, a wheel, a tray of grit and a very steady lamp. Everything in the Yard that glitters ends up here eventually."];
+/* the bench stands in the Yard between the anvil and the arcane altar */
+{ const build = SCENES.workyard.build; SCENES.workyard.build = function () { const b = build.call(this); if (b.g[6][39] === "p" || b.g[6][39] === ".") { b.objs.push({ t: "jbench", x: 39, y: 6, name: "Jeweller's bench" }); b.g[6][39] = "#"; } return b; }; }
+
+const jrec = (id, lvl, xp, ins, out, n = 1) => recipe(`jc_${id}`, { skill: "jewelcrafting", station: "jbench", lvl, xp, ms: 2400, in: ins, out: [out, n] });
+/* ---- polishing */
+Object.assign(ITEMS, {
+  bronze_bead: { name: "Bronze bead", icon: "\u{1F7E4}", ex: "A pinch of the Yard's copper and tin, rolled into a bead. Six of them and a string make a necklace." },
+  bronze_necklace: { name: "Bronze bead necklace", short: "Beads", icon: "\u{1F4FF}", slot: "amulet", acc: 1, str: 1, def: 1, ex: "Bronze beads on a bowstring. The first thing every jeweller ever made." },
+  glass_bead: { name: "Glass bead", icon: "\u{1F535}", ex: "Sand, melted into a drop and rolled smooth. Six of them and a string make a better necklace." },
+  bead_necklace: { name: "Glass bead necklace", short: "Glass beads", icon: "\u{1F4FF}", slot: "amulet", acc: 2, str: 2, def: 2, ex: "Glass beads on a bowstring. Catches the light; catches the eye." },
+  polished_diamond: { name: "Polished diamond", icon: "\u{1F48E}", ex: "Diamond ore, ground and buffed until it catches the light. Worth more than the rock it came in." },
+  polished_dragonstone: { name: "Polished dragonstone", icon: "\u{1F48E}", ex: "Dragonstone, taken down to the red. Worth more than the rock it came in." },
+  polished_onyx: { name: "Polished onyx", icon: "\u{1F48E}", ex: "Onyx, polished black as a closed eye. Worth more than the rock it came in." },
+  starfall_glass: { name: "Starfall glass", icon: "\u{1F48E}", ex: "Starfall ore ground to a clear glass with a light somewhere inside it." },
+  eclipse_pearl: { name: "Eclipse pearl", icon: "\u{1F48E}", ex: "The heart of an eclipse ore, rolled into a dark pearl with a bright ring round it." },
+  cut_abyss: { name: "Cut abyss crystal", icon: "\u{1F48E}", ex: "The Depths' pink crystal, cut true. Three of them set a singularity piece." }
+});
+jrec("bbead", 1, 8, [["copper", 1], ["tin", 1]], "bronze_bead", 3);   /* from the Yard's first rocks, so the skill starts where Mining does */
+jrec("bnecklace", 4, 35, [["bronze_bead", 6], ["bowstring", 1]], "bronze_necklace");
+jrec("bead", 12, 16, [["sand", 1]], "glass_bead", 2);
+jrec("necklace", 16, 60, [["glass_bead", 6], ["bowstring", 1]], "bead_necklace");
+jrec("pdiamond", 15, 22, [["diamond_ore", 1]], "polished_diamond");
+jrec("pdragon", 30, 36, [["dragonstone_ore", 1]], "polished_dragonstone");
+jrec("ponyx", 45, 55, [["onyx_ore", 1]], "polished_onyx");
+jrec("pstarfall", 60, 80, [["starfall_ore", 1]], "starfall_glass");
+jrec("peclipse", 70, 110, [["eclipse_ore", 1]], "eclipse_pearl");
+jrec("pabyss", 78, 150, [["abyss_crystal", 1]], "cut_abyss");
+Object.assign(VALUE, { bronze_bead: 2, bronze_necklace: 18, glass_bead: 4, bead_necklace: 30, polished_diamond: 16, polished_dragonstone: 22, polished_onyx: 30, starfall_glass: 42, eclipse_pearl: 66, cut_abyss: 140 });
+/* ---- cutting, and setting: [gem, cut level, cut xp, cut worth, metal, set level, set xp, the power (ring; an amulet doubles it), how many cut stones] */
+export const JEWELS = [
+  ["ruby", 10, 60, 120, "emerald", 20, 150, { tough: 0.03 }, 1],
+  ["sapphire", 25, 110, 220, "dragonstone", 40, 260, { bite: 0.04 }, 1],
+  ["topaz", 45, 180, 360, "starfall", 60, 420, { speed: 0.04 }, 1],
+  ["opal", 65, 280, 560, "nova", 75, 650, { rare: 0.06 }, 1],
+  ["abyss", 0, 0, 0, "singularity", 90, 900, { tix: 0.05, tough: 0.03 }, 3]
+];
+const GEM_WORD = { ruby: "Ruby", sapphire: "Sapphire", topaz: "Topaz", opal: "Opal", abyss: "Abyss" };
+for (const [gem, clvl, cxp, cval, metal, slvl, sxp, fx, need] of JEWELS) {
+  const cut = gem === "abyss" ? "cut_abyss" : `cut_${gem}`;
+  if (gem !== "abyss") {
+    ITEMS[cut] = { name: `Cut ${gem}`, icon: "\u{1F48E}", ex: `A ${gem}, cut and faceted. Set it into a${metal === "emerald" ? "n" : ""} ${metal} ring or amulet at the jeweller's bench.` };
+    VALUE[cut] = cval; jrec(`cut${gem}`, clvl, cxp, [[gem, 1]], cut);
+  }
+  for (const slot of ["ring", "amulet"]) {
+    const base = `${metal}_${slot}`, B = ITEMS[base]; if (!B) continue;
+    const k = `${base}_${gem}`, pow = Object.fromEntries(Object.entries(fx).map(([f, v]) => [f, slot === "amulet" ? Math.round(v * 200) / 100 : v]));
+    ITEMS[k] = { ...B, name: `${GEM_WORD[gem]}-set ${B.name.toLowerCase()}`, short: `${GEM_WORD[gem]} ${slot}`, fx: { ...(B.fx || {}), ...pow }, gemset: gem, gembase: base,
+      ex: `${B.name}, set with ${gem === "abyss" ? "three abyss crystals" : `a cut ${gem}`}. Everything the ${slot} had, and ${Object.entries(pow).map(([f, v]) => `${Math.round(v * 100)}% ${({ tough: "less damage taken", bite: "more bites", speed: "faster at everything", rare: "better drops", tix: "more tickets" })[f]}`).join(" and ")}.` };
+    VALUE[k] = Math.min(2500, (VALUE[base] || 0) + Math.round((gem === "abyss" ? 140 * need : cval) * 1.5));
+    jrec(`set${gem}${slot}`, slvl + (slot === "amulet" ? 2 : 0), sxp + (slot === "amulet" ? Math.round(sxp * 0.3) : 0), [[base, 1], [cut, need]], k);
+  }
+}
 
 /* (2026-09-21) the map-building helpers, for the files that hold maps outside this one (eastscape-closed.js, and the dungeon's). */
 export const _MAP = { block, grid, keepOf, room, wild };

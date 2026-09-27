@@ -732,6 +732,20 @@ export const GUIDES = [
       <table class="tbl"><tr><th>Magic</th><th>Bag</th><th>Holds</th></tr>${bags.map((k) => `<tr><td>${G.ITEMS[k].req.lvl}</td><td>${H.ico(k)} ${H.wl(`items/${k}`, nm(k))}</td><td>${G.ITEMS[k].pouch.cap.toLocaleString()}</td></tr>`).join("")}</table>
       <p>Everything a wand casts is printed with <a data-wiki="guides/wizardry">Wizardry</a>.</p>`;
     } },
+  /* (2026-09-27) Jewelcrafting, built from the rules so its numbers cannot drift */
+  { id: "jewelcrafting", title: "Jewelcrafting", icon: "\u{1F48D}", cat: "Skills",
+    body: (G, H) => {
+      const nm = (k) => H.wl(`items/${k}`, H.esc(G.ITEMS[k]?.name || k)), rows = Object.values(G.RECIPES).filter((r) => r.station === "jbench").sort((a, b) => a.lvl - b.lvl);
+      const row = (r) => `<tr><td>${r.lvl}</td><td>${H.ico(r.out[0])} ${r.out[1] > 1 ? `${r.out[1]} ` : ""}${nm(r.out[0])}</td><td>${r.in.map(([k, n]) => `${n} ${nm(k)}`).join(", ")}</td><td>${r.xp}</td></tr>`;
+      const WORD = { tough: "less damage taken", bite: "more bites", speed: "faster at everything", rare: "better drops", tix: "more tickets" };
+      return `<p><b>The jeweller's bench stands in the Yard, beside the anvil.</b> It does three things, and each is made out of another skill's work.</p>
+      <h3>Polishing</h3><p>This is what trains it. Beads from the Yard's copper and tin, then glass from sand, then every ore from diamond up into a polished stone that Bom pays a little more for than the ore.</p>
+      <table class="tbl"><tr><th>Level</th><th>Makes</th><th>From</th><th>xp</th></tr>${rows.filter((r) => !/^jc_(cut|set)/.test(r.id)).map(row).join("")}</table>
+      <h3>Cutting</h3><p>The four gems Mining turns up (and the Depths' crystal veins, now and then) cut into stones worth far more.</p>
+      <table class="tbl"><tr><th>Level</th><th>Makes</th><th>From</th><th>xp</th></tr>${rows.filter((r) => /^jc_cut/.test(r.id)).map(row).join("")}</table>
+      <h3>Setting</h3><p>A cut gem goes into a ring or amulet Smithing made. It keeps every number its metal had and gains the gem's power; an amulet carries it twice.</p>
+      <table class="tbl"><tr><th>Level</th><th>Makes</th><th>From</th><th>Adds</th></tr>${rows.filter((r) => /^jc_set/.test(r.id)).map((r) => { const it = G.ITEMS[r.out[0]], B = G.ITEMS[it.gembase]; const add = Object.entries(it.fx || {}).filter(([k, v]) => (B.fx || {})[k] !== v).map(([k, v]) => `${Math.round(v * 100)}% ${WORD[k] || k}`).join(", "); return `<tr><td>${r.lvl}</td><td>${H.ico(r.out[0])} ${nm(r.out[0])}</td><td>${r.in.map(([k, n]) => `${n} ${nm(k)}`).join(", ")}</td><td>${add}</td></tr>`; }).join("")}</table>`;
+    } },
   /* (2026-09-27) Fungiculture, built from the rules so its numbers cannot drift */
   { id: "fungiculture", title: "Fungiculture", icon: "\u{1F344}", cat: "Skills",
     body: (G, H) => {

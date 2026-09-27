@@ -50,7 +50,7 @@ line("game windows (lazy: on the first table click, or 6 s after arriving)", kb(
    rules file, and five skills that had no page at all got one, which is what the wiki is FOR. It is lazy: nothing
    downloads it until somebody presses H. If it ever pushes past this, the answer is not more budget but splitting
    it per guide, so opening Fishing does not also fetch the casino. */
-line("wiki words (lazy)", kb(await gz("v3/assets/js/eastscape-wiki.js")), 74, "KB");   /* (2026-09-25) 60 -> 70: Archery and Fletching took it to 60.2. (2026-09-27) 70 -> 74: the Long Night guide rewritten as the full explainer took it to 70.5. It loads on first wiki open, never at login. */
+line("wiki words (lazy)", kb(await gz("v3/assets/js/eastscape-wiki.js")), 78, "KB");   /* (2026-09-27, later) 74 -> 78: the massive update's three skill guides (Breeding, Fungiculture, Jewelcrafting), read only when the wiki is opened. (2026-09-25) 60 -> 70: Archery and Fletching took it to 60.2. (2026-09-27) 70 -> 74: the Long Night guide rewritten as the full explainer took it to 70.5. It loads on first wiki open, never at login. */
 
 const lazy = new Set(Object.values(AREA_ART).flat());
 const startup = [...new Set(ART_FILES)].filter((k) => !lazy.has(k));
