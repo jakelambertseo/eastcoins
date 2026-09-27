@@ -10,6 +10,10 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
+<script>/* (2026-09-27) LOCAL ONLY: ?open=1 on localhost opens every held thing (the Depths, the Boardwalk, the Foundry, the Orchard Wall,
+   Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
+   local start command sets (wrangler dev --define). On any other host this does nothing. */
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
 <link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=349">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
