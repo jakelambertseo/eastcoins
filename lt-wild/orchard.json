@@ -1,0 +1,7 @@
+{ "out": "orchard", "fill": [78, 140, 60],
+  "rects": [
+    { "src": "lt-wild/cut/mk/grass-19.png", "sx": 0, "sy": 0, "w": 28, "h": 26, "dx": 0, "dy": 0 },
+    { "src": "lt-wild/cut/mk/grass-23.png", "sx": 0, "sy": 0, "w": 16, "h": 26, "dx": 28, "dy": 0 },
+    { "src": "lt-wild/cut/mk/grass-19.png", "sx": 10, "sy": 21, "w": 2, "h": 5, "dx": 28, "dy": 10 },
+    { "src": "lt-wild/cut/mk/grass-17.png", "sx": 9, "sy": 4, "w": 5, "h": 4, "dx": 23, "dy": 11 }
+  ] }

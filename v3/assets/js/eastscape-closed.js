@@ -409,6 +409,108 @@ export function createClosedScenes(G, H) {
       lines: ["Fish, chips, and a knife in the counter most mornings. Welcome to the Boardwalk.", "The gulls hang over the water where you can't reach them. Bring a bow.", "Don't fish past the boats unless you're sure. The arms come up.", "The captain keeps to the bottom of the strand. He sends the deckhands so he needn't get sand on the coat."] }],
     bots: []
   },
+  orchard: {
+    name: "The Orchard Wall", exits: { n: "boneyard" }, arrive: { n: { x: 12, y: 1 } }, bgArt: ["orchard_bg1", "orchard_bg2"], noBanks: true, miniWater: "#3f8fd8", tint: "rgba(20,60,20,.10)",   /* (the door is on the grass between the canopies, not under SPAN) */
+    rows: [
+          "##########.eee###########~~~################",
+          "##########....###########~~~################",
+          "##########....###########~~~################",
+          "##########....###########~~~##.............#",
+          "......###....############~~~######.######..#",
+          "......###..#.############~~~######.#########",
+          "......###..#.############~~~######.#########",
+          "......###....############~~~######.#########",
+          ".............############~~~######.#########",
+          ".............############~~~##...........###",
+          ".............############~~~..######..######",
+          "####.....################~~~..######..######",
+          "####.....##############.......######..######",
+          "####................###.......######..######",
+          "~####....................~~~.......#..#.....",
+          "~####~~~~~~~~..~~~~~~~~~~~~~................",
+          "~####~~~~~~~~..~~~~~~~~~~~~~########........",
+          "~~~~~~~~~~~~~..~~~~~~~~~~~~~########..#####.",
+          "~~~~~~~~~~~~~..~~~~~~~~~~~~~########..#####.",
+          "~~~~~~~~~~~~~...~~#~~~~~~~~~#########..##...",
+          "######............#.~~~~~~~~######.....##...",
+          "########............~~~~~~~~#####......#####",
+          "......##............~~~~~~~~#####......#####",
+          "....................~~~~~~~~###..........###",
+          "..........####......~~~~~~~~###...###....###",
+          "..........####......~~~~~~~~###...###....###"
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      /* the trees: pines on the village side (Woodcutting 52), walnuts on the camp's (66) */
+      for (const [x, y] of [[3, 6], [2, 9], [9, 8], [14, 14], [5, 23], [9, 22], [16, 22]]) { objs.push({ t: "yew", art: "or_pine", log: "pinelogs", x, y, name: "Orchard pine", req: { skill: "woodcutting", lvl: 52 }, xp: 190 }); g[y][x] = "#"; }
+      for (const [x, y] of [[33, 15], [38, 21], [42, 16], [30, 14], [14, 21]]) { objs.push({ t: "yew", art: "or_walnut", log: "walnutlogs", x, y, name: "Old walnut", req: { skill: "woodcutting", lvl: 66 }, xp: 230 }); g[y][x] = "#"; }
+      /* the hives by the wagon, and Pomona's stove: a range on the barrels' side of the stall */
+      for (const [x, y] of [[10, 9], [12, 10]]) { objs.push({ t: "hive", x, y, name: "Beehive" }); g[y][x] = "#"; }
+      objs.push({ t: "range", x: 12, y: 11, name: "Pomona's stove" });
+      return { g, objs, blobs: [] };
+    },
+    /* Wasps over the pond and the brook and round the hives (58, a bow or a wand); Orchard Orcs inside the camp (62); Keepers at the gate
+       and along the fence (66); Hedge Things in the wood below (70); the Gardener at the bottom of the wood (72, open to everyone) */
+    mobs: [["wasp", 6, 15, { perch: true, respawn: [80000, 130000] }], ["wasp", 9, 16, { perch: true, respawn: [80000, 130000] }], ["wasp", 22, 15, { perch: true, respawn: [80000, 130000] }], ["wasp", 21, 20, { perch: true, respawn: [80000, 130000] }], ["wasp", 17, 16, { perch: true, respawn: [80000, 130000] }], ["wasp", 4, 9, { respawn: [80000, 130000] }], ["wasp", 17, 22, { respawn: [80000, 130000] }],
+      ["orchardorc", 34, 5, { respawn: [90000, 150000] }], ["orchardorc", 41, 3, { respawn: [90000, 150000] }], ["orchardorc", 31, 3, { respawn: [90000, 150000] }], ["orchardorc", 36, 9, { respawn: [90000, 150000] }], ["orchardorc", 40, 9, { respawn: [90000, 150000] }],
+      ["orchardkeeper", 37, 17, { respawn: [100000, 160000] }], ["orchardkeeper", 31, 15, { respawn: [100000, 160000] }], ["orchardkeeper", 40, 15, { respawn: [100000, 160000] }], ["orchardkeeper", 29, 12, { respawn: [100000, 160000] }],
+      ["hedgething", 33, 23, { respawn: [120000, 180000] }], ["hedgething", 36, 21, { respawn: [120000, 180000] }], ["hedgething", 32, 24, { respawn: [120000, 180000] }],
+      ["gardener", 38, 23, { aggro: 3, respawn: [2400000, 3000000] }]],
+    npcs: [{ name: "Pomona", art: "pomona", x: 11, y: 9, still: true, quests: ["orwasps", "orbands", "orgardener"], hair: "#8a4a1e", shirt: "#3a6a9a", pants: "#5a4a3a",
+      lines: ["Apples, walnuts, honey, and a stove if you've something to cook. Welcome to the Wall.", "The pines are anyone's. The walnuts are across the brook, and so are the orcs.", "The bridge is the only way over. They know that too.", "Mind the wasps over the pond. They'll have the eye out of you for an apple."] }],
+    bots: []
+  },
+  foundry: {
+    name: "The Foundry", exits: { n: "thunderhead" }, bgArt: ["foundry_bg1", "foundry_bg2"], noBanks: true, miniWater: "#e0601c", tint: "rgba(70,20,0,.14)",
+    rows: [
+          "~~~~.................eee................~~~~",
+          "~~~~..~~~....................~~~........~~~~",
+          "~~~~..~~~........~~~....~~~..~~~........~~~~",
+          "~~~~..~~~~~......~~~....~~~..~~~........~~~~",
+          "~~~~~....~~....~~~~~....~~~~~~~....~~~~.~~~~",
+          "~~~~~..........~~~~~....~~~~~~~~~~.~~~~.~~~~",
+          "~~~~~..........~~~~~....~~~~~~~~~~.~~~~.~~~~",
+          "~~~~~..........~~~~~....~~~~~~~~~~.~~~~.~~~~",
+          "~~~..~~~~~~~~.~~~...........~~~~~~...~~~~~~~",
+          "~~~..~~~~~~~~.~~~...........~~~~~~...~~~~~~~",
+          "~~~.~~~~.~~~~.~~~...........~~~~~~.....~~~~~",
+          "~~~.~~~~.~~~~.~~~...........~~~~~~.~~~~.....",
+          "~~~.~~~~.~~~~.~~~...........~~~~~~.~~~~.....",
+          "~~~.~~~~.~~~~.~~~...........~~~....~~~~.....",
+          "~~~.~~~~.~~~~.~~~...........~~~....~~~~.....",
+          "~~~.~~~~.~~~~.~~~~.........~~~~.............",
+          "~~~...........~~~~~~~~~~~~~~~~~.............",
+          "~~~...........~~~~~~~~~~~~~~~~~.............",
+          "~~~...........~~~~~~~~~~~~~~~~~.....~~~~~~~~",
+          "~~~.......~~.......~~....................~~~",
+          "~~~.~~~~~...~~~~~.....~~~...~~~~..~~~~~.....",
+          "~~~.~~~~~...~~~~~.....~~~...~~~~..~~~~~.....",
+          "~~~.~~~~~...~~~~~.....~~~...~~~~..~~~~~..~~~",
+          "~~~.........................~~~~~~.......~~~",
+          "~~~~~~~~~~~~~~..........~~~~~~~~~~..~~~~.~~~",
+          "~~~~~~~~~~~~~~..........~~~~~~~~~~..~~~~.~~~"
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      /* the veins: the Depths' three ores out in the open. Eclipse by the top-left walls and the bottom-left, Nova on the east side
+         and the floor, Singularity in the ring's middle and by the pillars */
+      for (const [x, y] of [[7, 6], [12, 6], [5, 17], [11, 17]]) { objs.push({ t: "rock", ore: "eclipse_ore", art: "fd_vein_eclipse", x, y, name: "Eclipse vein", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[y][x] = "#"; }
+      for (const [x, y] of [[33, 15], [41, 13], [19, 23]]) { objs.push({ t: "rock", ore: "nova_ore", art: "fd_vein_nova", x, y, name: "Nova vein", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[y][x] = "#"; }
+      for (const [x, y] of [[22, 11], [36, 9]]) { objs.push({ t: "rock", ore: "singularity_ore", art: "fd_vein_singularity", x, y, name: "Singularity vein", req: { skill: "mining", lvl: 90 }, xp: 300 }); g[y][x] = "#"; }
+      /* the blast furnace on the workfloor */
+      objs.push({ t: "blast", x: 26, y: 21, name: "The blast furnace" }); g[21][26] = "#";
+      return { g, objs, blobs: [] };
+    },
+    /* Slag Golems on the floor, the top-left and in the ring (76); Furnace Imps on the east side and the floor (78); Cinder Elementals
+       in the ring, the bottom-left and the east (84); Old Bessemer up out of the lava at the bottom of the ring (88, open, reaches two) */
+    mobs: [["slaggolem", 10, 21, { respawn: [90000, 150000] }], ["slaggolem", 18, 21, { respawn: [90000, 150000] }], ["slaggolem", 8, 5, { respawn: [90000, 150000] }], ["slaggolem", 19, 10, { respawn: [90000, 150000] }], ["slaggolem", 13, 17, { respawn: [90000, 150000] }],
+      ["furnaceimp", 34, 2, { respawn: [90000, 150000] }], ["furnaceimp", 38, 2, { respawn: [90000, 150000] }], ["furnaceimp", 34, 15, { respawn: [90000, 150000] }], ["furnaceimp", 41, 15, { respawn: [90000, 150000] }], ["furnaceimp", 34, 9, { respawn: [90000, 150000] }], ["furnaceimp", 33, 21, { respawn: [90000, 150000] }],
+      ["cinderelemental", 25, 12, { respawn: [120000, 180000] }], ["cinderelemental", 6, 17, { respawn: [120000, 180000] }], ["cinderelemental", 41, 12, { respawn: [120000, 180000] }], ["cinderelemental", 22, 23, { respawn: [120000, 180000] }],
+      ["bessemer", 22, 17, { perch: true, aggro: 3, respawn: [2400000, 3000000] }]],
+    npcs: [{ name: "Basalt", art: "basalt", x: 27, y: 2, still: true, quests: ["fdslag", "fdimps", "fdbessemer"], hair: "#444", shirt: "#553", pants: "#332",
+      lines: ["Foreman. Mind the vents, mind the ring, and don't stand on anything orange.", "The blast furnace is on the floor, along the bottom. Every bar the little furnaces make, and more xp for it.", "The imps take from the floor. The golems ARE the floor. The elementals just don't like you.", "Old Bessemer comes up at the bottom of the ring. He was foreman before me. He still thinks he is."] }],
+    bots: []
+  },
   depths: {
     name: "The Depths of the Mountain", exits: { s: "thunderhead", e: "trailer" }, bgArt: ["dp_bg1", "dp_bg2"], noBanks: true,
     rows: [

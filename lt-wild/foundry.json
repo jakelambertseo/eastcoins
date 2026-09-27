@@ -1,0 +1,9 @@
+{ "out": "foundry", "fill": [40, 30, 34],
+  "rects": [
+    { "src": "lt-wild/cut/mk/volcano-12.png", "sx": 0, "sy": 0, "w": 8, "h": 19, "dx": 0, "dy": 0 },
+    { "src": "lt-wild/cut/mk/volcano-10.png", "sx": 0, "sy": 0, "w": 28, "h": 19, "dx": 8, "dy": 0 },
+    { "src": "lt-wild/cut/mk/volcano-12.png", "sx": 20, "sy": 0, "w": 8, "h": 19, "dx": 36, "dy": 0 },
+    { "src": "lt-wild/cut/mk/volcano-12.png", "sx": 0, "sy": 12, "w": 8, "h": 7, "dx": 0, "dy": 19 },
+    { "src": "lt-wild/cut/mk/volcano-11.png", "sx": 0, "sy": 12, "w": 28, "h": 7, "dx": 8, "dy": 19 },
+    { "src": "lt-wild/cut/mk/volcano-12.png", "sx": 20, "sy": 12, "w": 8, "h": 7, "dx": 36, "dy": 19 }
+  ] }

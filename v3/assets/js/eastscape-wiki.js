@@ -318,7 +318,7 @@ export const GUIDES = [
      the same levels and be a choice rather than a sequence. */
   { id: "road", title: "The road out", icon: "\u{1F5FA}️", cat: "Starting out",
     body: (G, H) => {
-      const ORDER = ["workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "carnival", "boardwalk", "vault", "depths", "trailer", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
+      const ORDER = ["workyard", "gloam", "mire", "boneyard", "orchard", "cloud", "sands", "thunderhead", "carnival", "boardwalk", "foundry", "vault", "depths", "trailer", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
       const NOTE = {
         workyard: "the casino, the bank, the campfire, the furnace and anvil, sardines",
         gloam: "emerald and diamond ore, gloomwillow, trout and catfish",
@@ -330,6 +330,8 @@ export const GUIDES = [
         carnival: "the games, the duck pond, goldfish and koi",
         vault: "end-game fighting, and the only <b>nova</b> and <b>singularity</b> ore in the game",
         boardwalk: "a drowned seaside market west of the Carnival: mackerel, bluefin and swordfish off the piers, the Chip Shop, gulls and Kraken Arms that only a bow or a wand reaches, and Captain Claw at the bottom of the strand",   /* (2026-09-27) */
+        orchard: "the country south of the Boneyard: a market wagon under the big trees, pines (Woodcutting 52) and walnuts (66), Pomona's stove, wasps over the pond, and across the brook's stone bridge an orc camp behind a fence, its wood below it, and the Gardener at the bottom of it",   /* (2026-09-27) */
+        foundry: "the works under the Thunderhead, south of it: a lava river, a ring with two demon statues at its gate, the blast furnace (every furnace recipe, half as much xp again), Eclipse, Nova and Singularity veins out in the open, Slag Golems, Furnace Imps, Cinder Elementals and Old Bessemer rising out of the ring",   /* (2026-09-27) */
         depths: "ledges over a bottomless drop: monsters that shrug off a whole fighting style, abyss crystal, eclipse and nova ore, and the Deepwarden",   /* (2026-09-27) */
         trailer: "the best gathering in the game, and the meanest neighbours",
         wild: "the road past the Yard's east gate: nodes far apart, most things attack first, and the first of three monsters found nowhere else",
@@ -1019,6 +1021,15 @@ export const GUIDES = [
 ];
 
 export const UPDATES = [
+  {
+    date: "2026-09-27", title: "Three new maps: the Orchard Wall, the Boardwalk and the Foundry",
+    items: [
+      "THE ORCHARD WALL, south of the Boneyard (the door is at the bottom of the corridor between the two yards): a market wagon under the big trees, pines to cut at Woodcutting 52 and walnuts at 66, Pomona's stove, and beehives. Wasps hang over the pond (58, a bow or a wand). Over the stone bridge is an orc camp: Orchard Orcs (62), Orchard Keepers (66), Hedge Things in the wood below (70) and the Gardener at the bottom of it (72, an open boss: everyone who hurts him shares the kill). Pomona has three quests.",
+      "THE BOARDWALK, west of the Carnival: a drowned seaside market. Mackerel, bluefin and swordfish off the piers (Fishing 60, 72, 84), cooked or smoked at the Chip Shop. Gulls over the water (66, a bow or a wand), deckhands on the plaza (69), Clawhands on the beach (74, arrows skate off the claw), Kraken Arms beside the lower piers (78, reach two) and Captain Claw at the bottom of the strand (80, open). Salty Meg has three quests.",
+      "THE FOUNDRY, south of the Thunderhead: the works under the mountain. Eclipse, Nova and Singularity veins out in the open (Mining 70, 80, 90), and the BLAST FURNACE on the workfloor: every furnace recipe, half as much xp again. Slag Golems (76, arrows chip them), Furnace Imps (78), Cinder Elementals (84, a sword goes through them) and Old Bessemer, a skull on a post that comes up out of the lava ring (88, open, reaches two). Everything there minds frost. Basalt the foreman has three quests.",
+      "Each map has three wild mushroom clusters, and eggs can turn up on all three."
+    ]
+  },
   {
     date: "2026-09-27", title: "Breeding, Fungiculture, and pets change hands",
     items: [

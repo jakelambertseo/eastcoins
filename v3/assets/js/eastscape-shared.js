@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 317;
+export const VERSION = 318;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -2206,7 +2206,7 @@ Object.assign(SCENES, {
      but the residents. Gnashers and moths by the gate, ghouls and Tax Wraiths in the middle, a Chandelier Spider and
      the Understudy at the far end. Several of them come for you on sight. */
   boneyard: {
-    name: "The Boneyard", dark: true, exits: { e: "mire", n: "cloud", w: "sands" }, tint: "rgba(60,20,70,.2)",
+    name: "The Boneyard", dark: true, exits: { e: "mire", n: "cloud", w: "sands" }, tint: "rgba(60,20,70,.2)", arrive: { s: { x: 14, y: 24 } },   /* (2026-09-27) from the Orchard Wall you come up the corridor between the yards, not into the Critic's pen */
     build() {
       const g = grid(), objs = [], keep = [];
 
@@ -2260,6 +2260,9 @@ Object.assign(SCENES, {
       for (let x = 0; x < COLS; x++) if (g[6][x] !== "#") g[6][x] = ",";
       for (let y = 15; y <= 16; y++) for (let x = 0; x < COLS; x++) if (g[y][x] !== "#") g[y][x] = ".";
       for (let y = 17; y <= 24; y++) for (const x of [13, 14, 15, 30, 31, 32]) { if (g[y][x] !== "#") g[y][x] = "."; keep.push([x, y]); }
+      /* (2026-09-27) THE SOUTH DOOR, to the Orchard Wall: the door is where every door is (SPAN, under the Royal Box), so the bottom row is
+         opened from the corridor across to it, and `arrive` above brings anyone coming up from the Orchard out in the corridor */
+      if (this.exits.s) for (let x = 13; x <= 23; x++) { if (g[25][x] === "#") g[25][x] = "."; keep.push([x, 25]); }
       NORTH_ROAD(g, keep);
 
       /* ---------------------------------------------------------------- what you came here to gather, OUTSIDE the railings
@@ -4720,7 +4723,7 @@ export const forgeCost = (key) => { const sl = forgeSlot(key), it = ITEMS[key]; 
 
 /** Every recipe a station can run, hardest first so "the best thing you can make" is recipesAt()[0]. */
 export const recipesAt = (station) => Object.values(RECIPES)
-  .filter((r) => r.station === station || (station === "range" && r.station === "fire") || (station === "altar_nexus" && String(r.station).startsWith("altar_")))   /* (2026-09-26) the Nexus: every altar's recipes */
+  .filter((r) => r.station === station || (station === "range" && r.station === "fire") || (station === "altar_nexus" && String(r.station).startsWith("altar_")) || (station === "blast" && r.station === "furnace"))   /* (2026-09-26) the Nexus: every altar's recipes; (2026-09-27) the Foundry's blast furnace: every furnace recipe */
   .sort((a, b) => b.lvl - a.lvl);
 /** Do they have everything the recipe needs? */
 export const canMake = (c, r) => lvlOf(c, r.skill) >= r.lvl && r.in.every(([k, n]) => countItems(c, [k]) >= n);
@@ -7622,6 +7625,150 @@ Object.assign(QUESTS, {
 });
 for (const [k, tier] of [["bwmackerel", "medium"], ["bwdeckhands", "hard"], ["bwcaptain", "hard"]]) { QUESTS[k].stages = [{ ...QUESTS[k].goal }]; QUESTS[k].tier = tier; }
 OPEN.add("boardwalk"); SCENES.carnival.exits.w = "boardwalk"; PET_SCENES.add("boardwalk"); EGGS.egg_cindered.from.push("boardwalk"); EGGS.egg_velvet.from.push("boardwalk");
+/* ============================================================ THE FOUNDRY (2026-09-27, the massive update, 6 of 8)
+   EASTSCAPE-MAPS.md's map C, built on Rafael Matos's "ERW - Volcano": the works under the Thunderhead, where the mountain's ore is
+   smelted. A lava river down the west side, a ring of lava round an arena with two demon statues at its gate, the blast furnace on the
+   workfloor along the bottom. Mining 70-90 (the Depths' veins, out in the open), Smithing's best furnace, combat 76-88. The map is in
+   eastscape-closed.js (`foundry`). The monsters are the pack's own: its rocky dude (the Slag Golem), its imp (the Furnace Imp), its
+   elemental (the Cinder Elemental) and its crusher, a skull on a post that rises out of the lava (Old Bessemer). Basalt, the foreman,
+   is the golem at rest, greyed. */
+Object.assign(ITEMS, {
+  slag: { name: "Slag", icon: "🪨", ex: "What a Slag Golem is made of, and what is left when it is not. Basalt buys it by the sack." },
+  emberglass: { name: "Emberglass", icon: "🔶", ex: "Glass a Cinder Elemental leaves where it stood. Still warm a week later." },
+  tally: { name: "Foreman's tally", icon: "🏷️", ex: "A stamped tin tag off a Furnace Imp. Basalt counts them." }
+});
+Object.assign(VALUE, { slag: 30, emberglass: 120, tally: 70 });
+/* THE BLAST FURNACE: every furnace recipe, half as much xp again, the same bars. It is a `nexus` station like the Nexus altar so the
+   craft loop finds it, but its `boost` keeps the output at ONE: doubling bars would halve the ore behind every top-tier piece of gear. */
+STATIONS.blast = { skill: "smithing", verb: "smelt", name: "the blast furnace", auto: false, kind: "smelt", nexus: true, boost: { mult: 1, xp: 1.5 } };
+Object.assign(VERB, { blast: "Smelt-at" });
+EXAMINE.blast = ["The mountain's own furnace: a bellows the size of a house, run off the lava. Every bar the small furnaces make, for half as much xp again."];
+/* the monsters, with the Boardwalk's shape (dmob is declared below this block) */
+const fmob = (t, def, want, drops, rare = []) => {
+  MOBS[t] = { ...def, drops, rare }; BOUNTY[t] = want;
+  const other = drops.reduce((a, [k, n, p]) => a + (VALUE[k] ?? 0) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0), gap = Math.round(want * 0.88 - other);
+  if (gap >= 2 && !def.boss) MOBS[t].drops.unshift(["tickets", [Math.max(1, Math.round(gap * 0.6)), Math.round(gap * 1.4)]]);
+};
+fmob("slaggolem", { name: "Slag Golem", size: "m", lvl: 76, hp: 300, att: 74, def: 66, max: 18, speed: 2500, box: [32, 18], aggro: 2, guard: { archery: 0.4 }, weak: "frost", resist: "fire",
+  ex: "Slag that got up. Arrows chip it; a blade or a spell breaks it. Frost cracks it right open." }, 400,
+  [["slag", [1, 3]], ["eclipse_ore", 1, 0.15], ["sapphire", 1, 0.04]], [["sharps_gloves", 0.02]]);
+fmob("furnaceimp", { name: "Furnace Imp", size: "m", lvl: 78, hp: 280, att: 82, def: 56, max: 21, speed: 2000, box: [34, 24], aggro: 3, weak: "frost", resist: "fire",
+  ex: "It stokes the furnace and steals from the floor. Quick, and it bites. Frost puts it out." }, 430,
+  [["tally", 1, 0.3], ["charcoal", [2, 5]], ["nova_ore", 1, 0.08]], [["spiderboots", 0.02]]);
+fmob("cinderelemental", { name: "Cinder Elemental", size: "l", lvl: 84, hp: 380, att: 88, def: 64, max: 24, speed: 2600, box: [38, 28], aggro: 3, guard: { melee: 0.35 }, weak: "frost", resist: "fire",
+  ex: "A fire with a shape and a grudge. A sword goes through it; arrows and frost are what it minds." }, 500,
+  [["emberglass", 1, 0.25], ["nova_ore", 1, 0.12], ["singularity_ore", 1, 0.02], ["opal", 1, 0.03]], [["angels_ring", 0.02]]);
+fmob("bessemer", { name: "Old Bessemer", size: "xl", lvl: 88, hp: 5000, att: 100, def: 76, max: 32, speed: 2600, box: [20, 46], aggro: 3, range: 2, boss: true, open: true, guard: { archery: 0.35 }, weak: "frost",
+  ex: "The foundry's first foreman, or what the lava left of him: a skull on a post that comes up out of the ring. Reaches two tiles. Anyone who hurts him shares the kill." }, 1200,
+  [["tickets", [500, 1000]], ["nova_ore", [2, 4]], ["singularity_ore", [1, 2]], ["emberglass", [2, 4]], ["singularity_core", 1, 0.03]], [["bookies_amulet", 0.05], ["gamblers_ring", 0.05], ["egg_cindered", 0.05]]);
+BOSSES.add("bessemer");
+for (const t of ["slaggolem", "furnaceimp", "cinderelemental", "bessemer"]) EXAMINE[t] = [MOBS[t].ex];
+FUNG_WILD.foundry = ["bleedtooth", "inkcap", "bleedtooth"];
+BANDS.foundry = [76, 86];
+DEATH.foundry = { share: 0.1, cap: 5000 };
+/* ---- Basalt's three */
+Object.assign(QUESTS, {
+  fdslag: {
+    name: "Slag Run", giver: "Basalt", where: "The Foundry", icon: "🪨",
+    goal: { type: "bring", items: ["slag"], n: 12, what: "slag" },
+    brief: "Basalt wants twelve slag off the golems, for the furnace.",
+    talk: { offer: ["The furnace eats slag and the golems are made of it. That's the whole economy down here.", "Twelve slag. Break the golems on the floor; they drop it. A sword or a wand: arrows chip off."], accept: "Twelve slag.", decline: "Then stand clear of the floor.",
+      accepted: "The workfloor, along the bottom. Mind the vents.", progress: "Twelve slag. You've {have}.", ready: "That's a sack. Good.", hand: "Twelve.",
+      done: "Into the furnace it goes. Here, and the blast furnace is yours to use." },
+    reward: { coins: 5000, xp: { smithing: 5000 }, text: "5,000 tickets, 5,000 Smithing xp" }
+  },
+  fdimps: {
+    name: "Tally Up", giver: "Basalt", where: "The Foundry", icon: "🏷️", requires: ["fdslag"],
+    goal: { type: "kill", mob: "furnaceimp", n: 12, what: "furnace imps" },
+    brief: "The imps steal off the floor faster than it is smelted. Basalt would like twelve fewer of them.",
+    talk: { offer: ["Every imp on this floor wears a tally I stamped, and not one of them has done a shift.", "Twelve of them, off the east side and the floor. They bite. Bring food."], accept: "Twelve imps.", decline: "Then they'll have your bag too.",
+      accepted: "East, past the pillars, and the floor. You'll hear them.", progress: "That's {have} of twelve.", ready: "Quieter already.", hand: "Twelve.",
+      done: "Twelve tallies I don't have to count. Now the one in the ring." },
+    reward: { coins: 8000, xp: { melee: 8000, hp: 3000 }, text: "8,000 tickets, 8,000 Melee xp, 3,000 Hitpoints xp" }
+  },
+  fdbessemer: {
+    name: "Old Bessemer", giver: "Basalt", where: "The Foundry", icon: "💀", requires: ["fdimps"],
+    goal: { type: "kill", mob: "bessemer", n: 1, what: "Old Bessemer" },
+    brief: "Old Bessemer comes up out of the lava at the bottom of the ring. Basalt would like him put down.",
+    talk: { offer: ["He ran this floor before me. The lava took him and gave back the skull, and the skull kept giving orders.", "Bottom of the ring, between the statues and down. He reaches two tiles and arrows won't get through the bone. Bring people; everyone who hurts him shares him."], accept: "Together, then.", decline: "Not today.",
+      accepted: "Through the statues, down the ring. Frost, if you have it.", progress: "He's still up.", ready: "The floor went quiet. He's down?", hand: "He's down.",
+      done: "Forty years of him. Here: the floor's takings, and they're yours." },
+    reward: { coins: 25000, xp: { melee: 12000, hp: 5000 }, text: "25,000 tickets, 12,000 Melee xp, 5,000 Hitpoints xp" }
+  }
+});
+for (const [k, tier] of [["fdslag", "medium"], ["fdimps", "hard"], ["fdbessemer", "hard"]]) { QUESTS[k].stages = [{ ...QUESTS[k].goal }]; QUESTS[k].tier = tier; }
+OPEN.add("foundry"); SCENES.thunderhead.exits.s = "foundry"; PET_SCENES.add("foundry"); EGGS.egg_cindered.from.push("foundry");
+/* ============================================================ THE ORCHARD WALL (2026-09-27, the massive update, 7 of 8)
+   EASTSCAPE-MAPS.md's map A, built on Rafael Matos's "ERW - Grass Land 2.0": the country south of the Boneyard - a market wagon under
+   the big trees, a brook with a stone bridge over it, a pond, and across the water an orc camp behind a fence, its wood below it.
+   Woodcutting 52-66 (pines and walnuts), Pomona's stove, combat 58-72. The map is in eastscape-closed.js (`orchard`). The monsters
+   are the pack's own: its mosquito at four times its size (the Wasp), its orc mage (the Orchard Orc, and the Gardener at half again
+   the size in the second colour), its orc warrior (the Orchard Keeper, and the Hedge Thing gone green). Pomona is the pack's vendor. */
+Object.assign(ITEMS, {
+  walnutlogs: { name: "Walnut logs", icon: "🪵", ex: "Dark, close-grained and heavy. The orcs fence with it." },
+  honeycomb: { name: "Honeycomb", icon: "🍯", heal: 12, ex: "Off a wasp, or out of a hive if you are quick. Eat it for a little." },
+  orcband: { name: "Orc arm-band", icon: "⭕", ex: "Beaten copper, a tusk mark on it. Pomona pays for them by the handful." }
+});
+Object.assign(VALUE, { walnutlogs: 70, honeycomb: 20, orcband: 50 });
+recipe("burn_walnutlogs", { skill: "smithing", station: "furnace", in: [["walnutlogs", 1]], out: ["charcoal", 6], lvl: 1, xp: 30, ms: 1800, fail: 0.03 });
+/* the monsters, with the Boardwalk's shape (dmob is declared below this block) */
+const omob = (t, def, want, drops, rare = []) => {
+  MOBS[t] = { ...def, drops, rare }; BOUNTY[t] = want;
+  const other = drops.reduce((a, [k, n, p]) => a + (VALUE[k] ?? 0) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0), gap = Math.round(want * 0.88 - other);
+  if (gap >= 2 && !def.boss) MOBS[t].drops.unshift(["tickets", [Math.max(1, Math.round(gap * 0.6)), Math.round(gap * 1.4)]]);
+};
+omob("wasp", { name: "Wasp", size: "s", lvl: 58, hp: 150, att: 52, def: 36, max: 10, speed: 1800, box: [16, 10], aggro: 3, range: 2, sky: true, guard: { melee: 0.3 }, weak: "frost",
+  ex: "The size of a hand and angrier than that. Hangs over the water and the hives; a blade mostly fans it. Frost drops it." }, 240,
+  [["honeycomb", [1, 2]]], [["egg_sparking", 0.01]]);
+omob("orchardorc", { name: "Orchard Orc", size: "m", lvl: 62, hp: 200, att: 60, def: 44, max: 14, speed: 2100, box: [28, 26], aggro: 3, weak: "sun", resist: "void",
+  ex: "A camp orc with a staff and opinions about your walnuts. Sun magic goes through it; void it shrugs off." }, 300,
+  [["orcband", 1, 0.3], ["walnutlogs", 1, 0.2], ["sapphire", 1, 0.03]], [["sharps_gloves", 0.02]]);
+omob("orchardkeeper", { name: "Orchard Keeper", size: "l", lvl: 66, hp: 240, att: 66, def: 54, max: 16, speed: 2300, box: [34, 28], aggro: 3, guard: { archery: 0.3 },
+  ex: "The camp's warrior, and the trees are his. The shield turns arrows; get in close, or cast." }, 340,
+  [["pinelogs", [1, 2]], ["walnutlogs", 1, 0.15], ["orcband", 1, 0.2], ["ruby", 1, 0.03]], [["spiderboots", 0.02]]);
+omob("hedgething", { name: "Hedge Thing", size: "l", lvl: 70, hp: 280, att: 72, def: 56, max: 18, speed: 2400, box: [36, 30], aggro: 3, guard: { melee: 0.3 }, weak: "fire",
+  ex: "An orc that stood in the hedge too long, or a hedge that learned to hold a spear. A blade goes into the leaves; fire is what it minds." }, 380,
+  [["walnutlogs", [1, 2]], ["honeycomb", 1, 0.3], ["opal", 1, 0.03]], [["angels_ring", 0.02]]);
+omob("gardener", { name: "The Gardener", size: "xl", lvl: 72, hp: 3500, att: 84, def: 62, max: 24, speed: 2500, box: [40, 36], aggro: 3, boss: true, open: true, weak: "sun",
+  ex: "The camp's shaman. He grew the hedge things, he grows the wasps, and he would like the orchard back. Anyone who hurts him shares the kill." }, 900,
+  [["tickets", [300, 600]], ["walnutlogs", [3, 6]], ["honeycomb", [2, 4]], ["orcband", [2, 4]], ["ruby", 1, 0.2]], [["bookies_amulet", 0.05], ["angels_ring", 0.03], ["egg_sparking", 0.05]]);
+BOSSES.add("gardener");
+for (const t of ["wasp", "orchardorc", "orchardkeeper", "hedgething", "gardener"]) EXAMINE[t] = [MOBS[t].ex];
+FUNG_WILD.orchard = ["buttoncap", "puffball", "buttoncap"];
+BANDS.orchard = [58, 70];
+DEATH.orchard = { share: 0.1, cap: 4500 };
+/* ---- Pomona's three */
+Object.assign(QUESTS, {
+  orwasps: {
+    name: "Wasps in the Fruit", giver: "Pomona", where: "The Orchard Wall", icon: "🐝",
+    goal: { type: "kill", mob: "wasp", n: 10, what: "wasps" },
+    brief: "The wasps are in the fruit and over the pond. Pomona would like ten fewer.",
+    talk: { offer: ["Every apple on the wagon has a wasp in it. Every one.", "Ten of them, over the pond and round the hives. They hang in the air; a bow, or a wand. Frost if you have it."], accept: "Ten wasps.", decline: "Then don't eat the apples.",
+      accepted: "The pond, west, and the hives by the wagon.", progress: "That's {have} of ten.", ready: "I can hear myself think.", hand: "Ten.",
+      done: "Here. And take a comb; they've made plenty." },
+    reward: { coins: 3000, xp: { archery: 3000 }, text: "3,000 tickets, 3,000 Archery xp" }
+  },
+  orbands: {
+    name: "Bands Off", giver: "Pomona", where: "The Orchard Wall", icon: "⭕", requires: ["orwasps"],
+    goal: { type: "bring", items: ["orcband"], n: 6, what: "orc arm-bands" },
+    brief: "The camp across the brook takes her walnuts. Pomona wants six of their arm-bands as proof of fewer orcs.",
+    talk: { offer: ["They come over the bridge at night and go back with my walnuts. Every night.", "Six arm-bands. The orcs and the keepers wear them; they come off when the orc does."], accept: "Six bands.", decline: "Then buy your walnuts somewhere they don't get stolen.",
+      accepted: "Over the bridge, through the gate with the tusks. Mind the keepers' shields.", progress: "Six bands. You've {have}.", ready: "That's a handful.", hand: "Six.",
+      done: "Fewer of them, then. Here, and thank you. Now the one who sends them." },
+    reward: { coins: 6000, xp: { melee: 5000, hp: 2000 }, text: "6,000 tickets, 5,000 Melee xp, 2,000 Hitpoints xp" }
+  },
+  orgardener: {
+    name: "The Gardener", giver: "Pomona", where: "The Orchard Wall", icon: "🌿", requires: ["orbands"],
+    goal: { type: "kill", mob: "gardener", n: 1, what: "the Gardener" },
+    brief: "The camp's shaman, the Gardener, keeps to the wood below the camp. Pomona would like him gone.",
+    talk: { offer: ["Their shaman. He grows the things in the hedge and he grows the wasps, and he wants the orchard.", "Below the camp, in the wood past the totems. Bring people; everyone who hurts him shares him. Sun magic, if you have it."], accept: "Together, then.", decline: "Not today.",
+      accepted: "Through the gate and down. Past the totems.", progress: "He's still down there.", ready: "The wood's gone quiet. He's down?", hand: "He's down.",
+      done: "Then the orchard's mine again. Here: it's the season's takings, and they're yours." },
+    reward: { coins: 15000, xp: { melee: 8000, hp: 3500 }, text: "15,000 tickets, 8,000 Melee xp, 3,500 Hitpoints xp" }
+  }
+});
+for (const [k, tier] of [["orwasps", "medium"], ["orbands", "hard"], ["orgardener", "hard"]]) { QUESTS[k].stages = [{ ...QUESTS[k].goal }]; QUESTS[k].tier = tier; }
+OPEN.add("orchard"); SCENES.boneyard.exits.s = "orchard"; PET_SCENES.add("orchard"); EGGS.egg_sparking.from.push("orchard");
 const _preDepths = new Set(Object.keys(ITEMS));
 /* ============================================================ THE DEPTHS OF THE MOUNTAIN (2026-09-27, the massive update, 3 of 8)
    The Scrap Line of EASTSCAPE-MAPS.md, re-themed by the owner on Rafael Matos's "Depths of the Mountain" pack: platforms of
