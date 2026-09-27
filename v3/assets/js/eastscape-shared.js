@@ -7537,6 +7537,91 @@ recipe("cook_starfeast", { skill: "cooking", station: "fire", in: [["starcap", 1
 /* the Toadstool's sporecap becomes a spawn too, now and then: a first bed can be planted without ever finding a cluster */
 MOBS.toadstool?.drops.push(["spawn_sporecap", 1, 0.08]);   /* MOBS[].drops, not LOOT: LOOT was folded into drops long before this line */
 
+
+/* ============================================================ THE BOARDWALK (2026-09-27, the massive update, 5 of 8)
+   EASTSCAPE-MAPS.md's map B, built on Rafael Matos's "ERW - Sea Adventures": a drowned seaside market west of the Carnival - a beach with
+   palms, a pier off it to the market's bank, the stalls on a stone plaza, and a pier network out over the water with boats tied up.
+   Fishing 60-84 (the hole between the Mire's 60s and the Deep Wild), Cooking to 88, and combat 66-80. The map is in eastscape-closed.js
+   (`boardwalk`); everything a player can own or fight is here. The monsters are the pack's own: its pirate with a crab's claw for a
+   hand (the Clawhand, and Captain Claw at half again the size), its deckhand, the tentacle that comes up beside the pirate (the Kraken
+   Arm, which never leaves its patch of water), and Grass Land's bird for the Gull. Salty Meg is the pack's dock-side NPC. */
+Object.assign(ITEMS, {
+  mackerel: { name: "Raw mackerel", icon: "\u{1F41F}", raw: true, ex: "Blue-backed and quick. Off the inlet by the beach." },
+  cmackerel: { name: "Cooked mackerel", icon: "\u{1F41F}", heal: 27, ex: "Oily, salty, gone in three bites." },
+  bluefin: { name: "Raw bluefin", icon: "\u{1F41F}", raw: true, ex: "Off the end of the long pier. It fought." },
+  cbluefin: { name: "Cooked bluefin", icon: "\u{1F41F}", heal: 33, ex: "Dark red in the middle, the way the deckhands like it." },
+  swordfish: { name: "Raw swordfish", icon: "\u{1F41F}", raw: true, ex: "From the deep water past the boats. Mind the nose." },
+  cswordfish: { name: "Cooked swordfish", icon: "\u{1F41F}", heal: 40, ex: "A steak of it, seared at the Chip Shop." },
+  clawpin: { name: "Claw pin", icon: "\u{1F980}", ex: "A pin off a Clawhand's coat. The captain hands them out and takes them back." }
+});
+Object.assign(VALUE, { mackerel: 24, cmackerel: 48, bluefin: 32, cbluefin: 64, swordfish: 44, cswordfish: 88, clawpin: 60 });
+recipe("cook_mackerel", { skill: "cooking", station: "fire", in: [["mackerel", 1]], out: ["cmackerel", 1], lvl: 62, xp: 240, burnStop: 86 });
+recipe("cook_bluefin", { skill: "cooking", station: "fire", in: [["bluefin", 1]], out: ["cbluefin", 1], lvl: 74, xp: 290, burnStop: 96 });
+recipe("cook_swordfish", { skill: "cooking", station: "fire", in: [["swordfish", 1]], out: ["cswordfish", 1], lvl: 86, xp: 360, burnStop: 99 });
+/* smoked, like the Depths' fish: a meal with a buff, charcoal each, a tenth chance to fail like every smoke */
+for (const [raw, lvl, coal, heal, sell, fx, blurb] of [["mackerel", 66, 2, 29, 110, { speed: 0.05, bite: 0.04 }, "Quick hands, quick bites."], ["bluefin", 78, 3, 35, 150, { tix: 0.06, rare: 0.06 }, "The good catches follow it."], ["swordfish", 88, 3, 42, 190, { tough: 0.12, bite: 0.06 }, "Hard to hurt, and the fish come up to see."]]) {
+  const key = `s${raw}`; ITEMS[key] = { name: `Smoked ${raw}`, icon: "\u{1F41F}", heal, meal: { mins: 20, fx }, ex: `Smoked slow over charcoal. Eat it for twenty minutes of it: ${blurb}` };
+  VALUE[key] = sell; recipe(`smoke_${raw}`, { skill: "cooking", station: "fire", in: [[raw, 1], ["charcoal", coal]], out: [key, 1], lvl, xp: Math.round(lvl * 4), ms: 2400, fail: SMITH_FAIL });
+}
+ZDROP.fish.mackerel = 0.0012; ZDROP.fish.bluefin = 0.0015; ZDROP.fish.swordfish = 0.0018;
+/* the monsters, with the Depths' shape (dmob is declared below this block, so the same helper is written out here) */
+const bmob = (t, def, want, drops, rare = []) => {
+  MOBS[t] = { ...def, drops, rare }; BOUNTY[t] = want;
+  const other = drops.reduce((a, [k, n, p]) => a + (VALUE[k] ?? 0) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0), gap = Math.round(want * 0.88 - other);
+  if (gap >= 2 && !def.boss) MOBS[t].drops.unshift(["tickets", [Math.max(1, Math.round(gap * 0.6)), Math.round(gap * 1.4)]]);
+};
+bmob("gull", { name: "Gull", size: "s", lvl: 66, hp: 190, att: 58, def: 42, max: 12, speed: 2000, box: [18, 16], aggro: 3, range: 3, sky: true, guard: { melee: 0 },
+  ex: "It wants your chips. It will settle for your eye. Hangs over the water where a sword cannot follow: a bow, or a wand." }, 300,
+  [["feather", [4, 9]], ["mackerel", 1, 0.2]], [["lantern", 0.02]]);
+bmob("deckhand", { name: "Deckhand", size: "m", lvl: 69, hp: 220, att: 66, def: 50, max: 15, speed: 2100, box: [20, 26], aggro: 3,
+  ex: "Paid in bluefin and rum, and she has had both. Quick with the knife between the stalls." }, 330,
+  [["bluefin", 1, 0.15], ["cmackerel", 1, 0.12]], [["sharps_gloves", 0.02]]);
+bmob("clawhand", { name: "Clawhand", size: "l", lvl: 74, hp: 270, att: 72, def: 58, max: 18, speed: 2400, box: [30, 26], aggro: 3, guard: { archery: 0.35 },
+  ex: "A pirate with a crab's claw where a hand should be. Arrows skate off the shell; it opens for a blade or a spell." }, 390,
+  [["clawpin", 1, 0.3], ["swordfish", 1, 0.1], ["sapphire", 1, 0.04]], [["spiderboots", 0.02]]);
+bmob("krakenarm", { name: "Kraken Arm", size: "m", lvl: 78, hp: 320, att: 78, def: 60, max: 20, speed: 2600, box: [14, 30], aggro: 2, range: 2, sky: true, guard: { melee: 0.1 }, weak: "storm", resist: "frost",
+  ex: "Only the arm. Nobody has seen the rest, and nobody is fishing there to find out. Reaches two tiles from its water; mostly beyond a sword." }, 430,
+  [["swordfish", 1, 0.2], ["bluefin", 1, 0.2], ["opal", 1, 0.03]], [["angels_ring", 0.02]]);
+bmob("captainclaw", { name: "Captain Claw", size: "xl", lvl: 80, hp: 4000, att: 92, def: 70, max: 28, speed: 2600, box: [44, 38], aggro: 3, boss: true, open: true, guard: { archery: 0.35 }, weak: "storm",
+  ex: "The claw is bigger than his other arm and he is prouder of it. Anyone who hurts him shares the kill." }, 1000,
+  [["tickets", [400, 800]], ["swordfish", [2, 4]], ["clawpin", [3, 6]], ["opal", 1, 0.2], ["singularity_core", 1, 0.02]], [["bookies_amulet", 0.05], ["gamblers_ring", 0.05], ["egg_velvet", 0.05]]);
+BOSSES.add("captainclaw");
+for (const t of ["gull", "deckhand", "clawhand", "krakenarm", "captainclaw"]) EXAMINE[t] = [MOBS[t].ex];   /* each line already says what the guard does */
+FUNG_WILD.boardwalk = ["oyster", "bluemould", "oyster"];
+BANDS.boardwalk = [66, 78];
+DEATH.boardwalk = { share: 0.1, cap: 4000 };
+/* ---- Salty Meg's three */
+Object.assign(QUESTS, {
+  bwmackerel: {
+    name: "Mackerel Sky", giver: "Salty Meg", where: "The Boardwalk", icon: "\u{1F41F}",
+    goal: { type: "bring", items: ["mackerel"], n: 10, what: "raw mackerel" },
+    brief: "Salty Meg wants ten raw mackerel off the inlet by the beach.",
+    talk: { offer: ["The gulls have had every mackerel off my counter this week.", "Ten off the inlet, past the beach pier. Fishing 60. Raw: I do the cooking here."], accept: "Ten mackerel.", decline: "Then buy your chips elsewhere.",
+      accepted: "The inlet, west, past the pier. Rod in hand.", progress: "Ten mackerel. You've {have}.", ready: "Look at the shine on those.", hand: "Ten.",
+      done: "That's a counter full. Here, and mind the deckhands on your way back." },
+    reward: { coins: 4000, xp: { fishing: 4000 }, text: "4,000 tickets, 4,000 Fishing xp" }
+  },
+  bwdeckhands: {
+    name: "Knives on the Plaza", giver: "Salty Meg", where: "The Boardwalk", icon: "\u{1F5E1}️", requires: ["bwmackerel"],
+    goal: { type: "kill", mob: "deckhand", n: 10, what: "deckhands" },
+    brief: "The captain's deckhands help themselves off the stalls. Salty Meg would like ten fewer of them.",
+    talk: { offer: ["They take a bluefin and leave a knife in the counter. Every day.", "Ten of the deckhands, off the plaza. They're quick. Bring food."], accept: "Ten deckhands.", decline: "Then pay for your fish like they don't.",
+      accepted: "The plaza, between the stalls. You'll hear them laughing.", progress: "That's {have} of ten.", ready: "Quiet up there. Good.", hand: "Ten.",
+      done: "The counter's mine again. Now about the one who sends them." },
+    reward: { coins: 7000, xp: { melee: 7000, hp: 2500 }, text: "7,000 tickets, 7,000 Melee xp, 2,500 Hitpoints xp" }
+  },
+  bwcaptain: {
+    name: "Captain Claw", giver: "Salty Meg", where: "The Boardwalk", icon: "\u{1F980}", requires: ["bwdeckhands"],
+    goal: { type: "kill", mob: "captainclaw", n: 1, what: "Captain Claw" },
+    brief: "Captain Claw sits on the beach at the bottom of the strand. Salty Meg would like him gone.",
+    talk: { offer: ["Down the strand, where the sand runs out. He doesn't come up; he sends them.", "That claw takes a man's arm off. Nobody does him alone. Bring people; everyone who hurts him shares him."], accept: "Together, then.", decline: "Not today.",
+      accepted: "Down the beach, all the way. Arrows won't get through the claw.", progress: "He's still down there.", ready: "I heard that from here. He's down?", hand: "He's down.",
+      done: "Thirty years he's taxed this pier. Here: it's the fish money, and it's yours." },
+    reward: { coins: 20000, xp: { melee: 10000, hp: 4000 }, text: "20,000 tickets, 10,000 Melee xp, 4,000 Hitpoints xp" }
+  }
+});
+for (const [k, tier] of [["bwmackerel", "medium"], ["bwdeckhands", "hard"], ["bwcaptain", "hard"]]) { QUESTS[k].stages = [{ ...QUESTS[k].goal }]; QUESTS[k].tier = tier; }
+OPEN.add("boardwalk"); SCENES.carnival.exits.w = "boardwalk"; PET_SCENES.add("boardwalk"); EGGS.egg_cindered.from.push("boardwalk"); EGGS.egg_velvet.from.push("boardwalk");
 const _preDepths = new Set(Object.keys(ITEMS));
 /* ============================================================ THE DEPTHS OF THE MOUNTAIN (2026-09-27, the massive update, 3 of 8)
    The Scrap Line of EASTSCAPE-MAPS.md, re-themed by the owner on Rafael Matos's "Depths of the Mountain" pack: platforms of

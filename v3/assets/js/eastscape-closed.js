@@ -350,6 +350,65 @@ export function createClosedScenes(G, H) {
      pack's mockups): the throne room the boss rises in at the far end, the gold-statue bridge, the owner's reference plaza and wings,
      the landing and the sand bridge east. `rows` is only where you can walk on it (lt-wild/depths-walk2.py, drawn over the picture);
      the pictures do all the showing. The way on to the Trailer Park is the sand bridge, off the EAST edge. */
+  /* ---------------------------------------------------------------- THE BOARDWALK (2026-09-27, the massive update, 5 of 8)
+     A drowned seaside market west of the Carnival, on Rafael Matos's "ERW - Sea Adventures": the ground is the pack's own picture
+     (bw_bg1 / bw_bg2, composed by lt-wild/compose-rects.mjs from its market-and-pier mockups), so it draws no banks, no tufts and no
+     tiles of its own. The beach and its palms on the left, the pier off it to the market's bank, the stalls on the stone plaza, the pier
+     network out over the water with the boats, and the grass at the east edge back to the Carnival. Fishing 60-84, combat 66-80. */
+  boardwalk: {
+    name: "The Boardwalk", exits: { e: "carnival" }, bgArt: ["boardwalk_bg1", "boardwalk_bg2"], noBanks: true, miniWater: "#2a7fc0", tint: "rgba(10,40,70,.16)",
+    rows: [
+          "............~~~...............~~~~~~~~~~~...",
+          "...~....~...~~~.~~~~~.......~~~~~~~~~~~~~~~e",
+          "...~....~...~~~.~~~~~.......~~~~~~..~~~~~~~e",
+          "............~~~............................e",
+          "........~....~~.......~~~...................",
+          ".~......~....~~.......~~~~~~~..~~~~.~~~~~...",
+          ".~...........~~.......~~~~~~~..~~~~.~~~~~~~.",
+          ".............~~.........~~~~~..~~~~~~~~~~~~.",
+          "........................~~~~~..~~~~~~~~~~~~.",
+          "............................................",
+          "............................................",
+          "....~~~~~~~~~~~.............................",
+          "....~~~~~~~~~~~~~~~~~~~~~~~~~~....~~~~~~~~~~",
+          "....~~~~~~~~~~~~~~~~~~~~~~~~~~....~~~~~~~~~~",
+          "....~~~~~~~~~~~~~~~~~~~~~~~~~~....~~~~~~~~~~",
+          "....~~~~~~~~~~~~~~~~...~~~~~~~....~~~~~~~~~~",
+          "....~~~~~~~~~~~~~~~~..............~~~~~~~~~~",
+          "....~~~~~~~~~~~~~~~~..............~~~~~~~~~~",
+          "....~~~~~~~~~~~~~~~~...~~~~~~~....~~~~~~~~~~",
+          ".....~~~~~~~~~~~~~~~...~~~~~~~....~~~~~~~~~~",
+          ".....~~~~~~~~~~~~~~~...~~~~~~~~~~~~~~~~~~~~~",
+          ".....~~~~~~~~~~~~..........~~~~~~~~~~~~~~~~~",
+          ".....~~~~~~~~~~~~..........~~~~~~~~~~~~~~~~~",
+          ".....~~~~~~~~~~~~~~~...~~~~~~~~~~~~~~~~~~~~~",
+          ".....~~~~~~~~~~~~~~~...~~~~~~~~~~~~~~~~~~~~~",
+          ".....~~~~~~~~~~~~~~~...~~~~~~~~~~~~~~~~~~~~~"
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      /* the fishing: the inlet off the beach (mackerel, bluefin), the pier ends (bluefin, swordfish), the deep water past the boats */
+      objs.push({ t: "spot", x: 13, y: 6, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 210, xp2: 260, glow: "#6ad8ff", tease: "Mackerel turn under the pier, flashing." });
+      objs.push({ t: "spot", x: 13, y: 4, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 210, xp2: 260, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 34, y: 18, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 260, xp2: 320, glow: "#6ad8ff", tease: "Something long rolls over out there and goes back down." });
+      objs.push({ t: "spot", x: 19, y: 16, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 260, xp2: 320, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 23, y: 25, name: "The Deep Water", req: { skill: "fishing", lvl: 84 }, fish: "swordfish", fish2: "bluefin", fish2lvl: 72, xp: 320, xp2: 260, glow: "#4ab0ff", tease: "The water is black out here. The swordfish like it." });
+      objs.push({ t: "spot", x: 16, y: 22, name: "The Deep Water", req: { skill: "fishing", lvl: 84 }, fish: "swordfish", fish2: "bluefin", fish2lvl: 72, xp: 320, xp2: 260, glow: "#4ab0ff" });
+      /* the Chip Shop: a range by the fish stalls, Cooking's top rung outside the Deep Wild */
+      objs.push({ t: "range", x: 30, y: 10, name: "The Chip Shop" }); g[10][30] = "#";
+      return { g, objs, blobs: [] };
+    },
+    /* gulls hang over the water by the piers (66, a bow or a wand); deckhands on the plaza (69); Clawhands on the beach (74); Kraken Arms in
+       the water beside the lower piers (78, reach two); Captain Claw at the bottom of the strand (80, open to everyone who hurts him) */
+    mobs: [["gull", 18, 14, { perch: true, respawn: [90000, 150000] }], ["gull", 27, 14, { perch: true, respawn: [90000, 150000] }], ["gull", 36, 15, { perch: true, respawn: [90000, 150000] }], ["gull", 13, 12, { perch: true, respawn: [90000, 150000] }],
+      ["deckhand", 26, 10, { respawn: [90000, 150000] }], ["deckhand", 33, 9, { respawn: [90000, 150000] }], ["deckhand", 38, 10, { respawn: [90000, 150000] }], ["deckhand", 29, 4, { respawn: [90000, 150000] }], ["deckhand", 41, 4, { respawn: [90000, 150000] }], ["deckhand", 21, 8, { respawn: [90000, 150000] }],
+      ["clawhand", 3, 4, { respawn: [110000, 180000] }], ["clawhand", 9, 6, { respawn: [110000, 180000] }], ["clawhand", 2, 13, { respawn: [110000, 180000] }], ["clawhand", 6, 3, { respawn: [110000, 180000] }], ["clawhand", 2, 17, { respawn: [110000, 180000] }],
+      ["krakenarm", 16, 23, { perch: true, respawn: [130000, 200000] }], ["krakenarm", 24, 24, { perch: true, respawn: [130000, 200000] }], ["krakenarm", 28, 21, { perch: true, respawn: [130000, 200000] }], ["krakenarm", 19, 19, { perch: true, respawn: [130000, 200000] }],
+      ["captainclaw", 2, 23, { aggro: 3, respawn: [2400000, 3000000] }]],
+    npcs: [{ name: "Salty Meg", art: "saltymeg", x: 17, y: 9, still: true, quests: ["bwmackerel", "bwdeckhands", "bwcaptain"], hair: "#6a3a1e", shirt: "#3a5a8a", pants: "#3a3a3a",
+      lines: ["Fish, chips, and a knife in the counter most mornings. Welcome to the Boardwalk.", "The gulls hang over the water where you can't reach them. Bring a bow.", "Don't fish past the boats unless you're sure. The arms come up.", "The captain keeps to the bottom of the strand. He sends the deckhands so he needn't get sand on the coat."] }],
+    bots: []
+  },
   depths: {
     name: "The Depths of the Mountain", exits: { s: "thunderhead", e: "trailer" }, bgArt: ["dp_bg1", "dp_bg2"], noBanks: true,
     rows: [

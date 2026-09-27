@@ -55,7 +55,7 @@ export function plan() {
   /* (2026-09-27) A WHOLE-MAP PICTURE STAYS LOOSE (the Depths' dp_bg1 / dp_bg2: the pack's own mockups, as 256-colour PNGs). A sheet is
      re-saved at full colour, which doubled them, and they are wider than a sheet likes anyway; the page fetches a loose picture on
      its own and repaints when it lands. */
-  const LOOSE = (k) => /^dp_bg\d$/.test(k);
+  const LOOSE = (k) => /_bg\d$/.test(k);   /* every composed map picture stays loose: dp_bg1, boardwalk_bg1, ... (a sheet would re-encode it at full colour) */
   const shared = new Set(taken); for (const [area, list] of Object.entries(AREA_ART)) { const ks = [...new Set(list)].filter((k) => has(k) && !shared.has(k) && !LOOSE(k)); if (ks.length) packs.push([`area-${area}`, ks]); }
   return packs;
 }

@@ -318,7 +318,7 @@ export const GUIDES = [
      the same levels and be a choice rather than a sequence. */
   { id: "road", title: "The road out", icon: "\u{1F5FA}️", cat: "Starting out",
     body: (G, H) => {
-      const ORDER = ["workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "carnival", "vault", "depths", "trailer", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
+      const ORDER = ["workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "carnival", "boardwalk", "vault", "depths", "trailer", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
       const NOTE = {
         workyard: "the casino, the bank, the campfire, the furnace and anvil, sardines",
         gloam: "emerald and diamond ore, gloomwillow, trout and catfish",
@@ -329,6 +329,7 @@ export const GUIDES = [
         thunderhead: "storm marlin, thunder squid, the way to the last two",
         carnival: "the games, the duck pond, goldfish and koi",
         vault: "end-game fighting, and the only <b>nova</b> and <b>singularity</b> ore in the game",
+        boardwalk: "a drowned seaside market west of the Carnival: mackerel, bluefin and swordfish off the piers, the Chip Shop, gulls and Kraken Arms that only a bow or a wand reaches, and Captain Claw at the bottom of the strand",   /* (2026-09-27) */
         depths: "ledges over a bottomless drop: monsters that shrug off a whole fighting style, abyss crystal, eclipse and nova ore, and the Deepwarden",   /* (2026-09-27) */
         trailer: "the best gathering in the game, and the meanest neighbours",
         wild: "the road past the Yard's east gate: nodes far apart, most things attack first, and the first of three monsters found nowhere else",
