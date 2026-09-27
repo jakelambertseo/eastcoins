@@ -77,7 +77,11 @@ const pk = await packRun({ check: true });
 if (!pk.fresh) { bad++; console.log("  OVER  the sprite sheets are STALE: run  node tools/eastscape-pack.mjs"); }
 else console.log(`  ok    sprite sheets fresh: ${pk.packs} sheets, ${pk.pictures} pictures; the login sheet is ${kb(pk.core)} KB, packs.json ${kb(pk.manifestBytes)} KB raw`);
 
-for (const [area, list] of Object.entries(AREA_ART)) line(`area art: ${area}`, kb([...new Set(list)].reduce((a, k) => a + size(k), 0)), BUDGET.areaArtKB, "KB");
+/* (2026-09-27) THE DEPTHS IS ONE PICTURE. Its ground is the pack's own mockup, two 256-colour halves (79 KB) fetched loose, in place of the
+   Wang sheets every other map loads; with its monsters' walk, attack and rise frames on the area sheet it comes to about 136 KB on
+   the wire. Allowed on purpose, for this map only: a new map that wants more should cut its art, not raise this. */
+const AREA_BUDGET = { depths: 160 };
+for (const [area, list] of Object.entries(AREA_ART)) line(`area art: ${area}`, kb([...new Set(list)].reduce((a, k) => a + size(k), 0)), AREA_BUDGET[area] || BUDGET.areaArtKB, "KB");
 
 // a picture named in an area list that the page never asks for is a typo, not a saving
 const known = new Set(ART_FILES), stray = [...lazy].filter((k) => !known.has(k));

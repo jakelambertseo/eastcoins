@@ -14,12 +14,12 @@ const W = new World(ctx, { SITE: "https://example.invalid", DEV: "0" }); W.save 
 const S = W.scene("depths");
 
 /* 1. the map */
-is(G.SCENES.thunderhead.exits.n, "depths", "north of the Thunderhead is the Depths"); is(G.SCENES.trailer.exits.s, "depths", "south of the Trailer Park is the Depths");
+is(G.SCENES.thunderhead.exits.n, "depths", "north of the Thunderhead is the Depths"); is(G.SCENES.trailer.exits.s, "depths", "south of the Trailer Park is the Depths"); is(G.SCENES.depths.exits.e, "trailer", "and the Depths' east edge leads there");
 is(G.OPEN.has("depths"), true, "it is open");
 const walk = (x, y) => G.walkableIn(S.g, x, y);
 const reach = (sx, sy) => { const seen = new Set([sy * G.COLS + sx]), q = [[sx, sy]]; while (q.length) { const [x, y] = q.pop(); for (const [dx, dy] of G.D8) { const nx = x + dx, ny = y + dy, k = ny * G.COLS + nx; if (!seen.has(k) && G.canStepIn(S.g, x, y, dx, dy)) { seen.add(k); q.push([nx, ny]); } } } return seen; };
 let open = 0; for (let y = 0; y < G.ROWS; y++) for (let x = 0; x < G.COLS; x++) if (walk(x, y)) open++;
-is(reach(22, 25).size, open, `every open tile is reachable from the south exit (${open})`); is(reach(22, 0).size, open, "and from the north exit");
+is(reach(21, 25).size, open, `every open tile is reachable from the south exit (${open})`); is(reach(43, 23).size, open, "and from the east exit, the sand bridge to the Trailer Park");
 is(S.g.flat().includes("b"), false, "no unwalkable bank round the drop");
 for (const m of S.mobs) if (!m.perch && !walk(m.hx, m.hy)) fail(`${m.t} at ${m.hx},${m.hy} stands on nothing`);
 for (const m of S.mobs.filter((x) => x.perch)) { if (S.g[m.hy][m.hx] !== "~") fail(`wisp at ${m.hx},${m.hy} is not over the drop`); let near = 9; for (let y = 0; y < G.ROWS; y++) for (let x = 0; x < G.COLS; x++) if (walk(x, y)) near = Math.min(near, G.cheb({ x, y }, { x: m.hx, y: m.hy })); if (near < 2) fail(`a sword could reach the wisp at ${m.hx},${m.hy}`); }
@@ -54,12 +54,12 @@ is(/only Void magic gets through/.test(pl.out.filter((o) => o.type === "say").ma
 
 /* 4. the wisp: out of a sword's reach, in a bow's, shoots back, and respawns on its perch */
 const wisp = S.mobs.find((m) => m.perch);
-let sp = null; for (let y = 0; y < G.ROWS && !sp; y++) for (let x = 0; x < G.COLS && !sp; x++) if (walk(x, y) && G.cheb({ x, y }, wisp) === 2) sp = { x, y };
+let sp = null; for (const d of [2, 3]) for (let y = 0; y < G.ROWS && !sp; y++) for (let x = 0; x < G.COLS && !sp; x++) if (walk(x, y) && G.cheb({ x, y }, wisp) === d) sp = { x, y };   /* the nearest standing spot, inside its range */
 pl.x = sp.x; pl.y = sp.y; pl.path = []; C.eq.weapon = null; pl.out = []; pl.act = { kind: "mob", id: wisp.id, x: wisp.x, y: wisp.y, started: 0 }; W.doAction(S, pl, Date.now() + 99999);
 is(pl.act, null, "a sword cannot reach a wisp"); is(/arrow/.test(said() || ""), true, "and says to use a bow");
 C.hp = G.maxHpOf(C); wisp.lastSwing = 0; pl.act = { kind: "mob", id: wisp.id, x: wisp.x, y: wisp.y, started: 0 }; pl.step = null;
 Math.random = () => 0.0; W.mobsTick(S, Date.now() + 100000); Math.random = R0;
-is(C.hp < G.maxHpOf(C), true, `the wisp shoots the player two tiles off (hp ${C.hp} of ${G.maxHpOf(C)})`);
+is(C.hp < G.maxHpOf(C), true, `the wisp shoots the player from ${G.cheb(sp, wisp)} tiles off (hp ${C.hp} of ${G.maxHpOf(C)})`);
 wisp.dead = true; wisp.respawnAt = 0; wisp.x = 0; wisp.y = 0; W.mobsTick(S, Date.now() + 200000);
 is(!wisp.dead && wisp.x === wisp.hx && wisp.y === wisp.hy, true, "a dead wisp comes back on its own perch");
 
@@ -67,6 +67,8 @@ is(!wisp.dead && wisp.x === wisp.hx && wisp.y === wisp.hy, true, "a dead wisp co
 is(!!(G.MOBS.deepwarden.open && G.MOBS.deepwarden.boss && G.BOSSES.has("deepwarden")), true, "the Deepwarden is an open boss");
 is(G.MOBS.deepwarden.hp, 5200, "with the Pumpkin King's hitpoints"); is(G.MOBS.deepwarden.max > G.MOBS.pumpkinking.max * 2, true, "and hits over twice as hard");
 is(G.MOBS.deepwarden.pet[0], "potboy", "and carries the Pot Boy");
+is(S.mobs.find((m) => m.t === "deepwarden").hy <= 4, true, "and sits at the far end, in front of his throne");
+is(G.GEM_DROP.abyss_crystal?.length, 4, "an abyss crystal vein can turn up all four gems");
 
 console.log(bad ? `\n${bad} problem(s)` : "\nthe Depths work: the map, the guards, the wisps, the boss, the quests");
 process.exitCode = bad ? 1 : 0;

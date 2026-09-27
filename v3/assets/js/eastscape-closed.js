@@ -344,79 +344,68 @@ export function createClosedScenes(G, H) {
     npcs: [], bots: []
   },
   /* (2026-09-27) THE DEPTHS OF THE MOUNTAIN, the massive update's first new map (EASTSCAPE-MAPS.md's Scrap Line, re-themed by the
-     owner on Rafael Matos's "Depths of the Mountain" pack; tools/eastscape-depths-art.mjs cuts it). Between the Thunderhead (south)
-     and the Trailer Park (north), combat 73-84. REBUILT THE SAME DAY as the pack's own temple (the owner: "the layout/map needs to
-     feel more open. it feels very claustrophobic. just mimic whats in the tile previews"): brick platforms over a black drop, a
-     cross-shaped plaza in the middle, a wing either side, the shrine at the top and a wide landing at the bottom.
-     `~` here is THE ABYSS, drawn by the `depths` ground as void with brick walls hung under every ledge, never water. `noBanks`:
-     water gets a one-tile unwalkable bank everywhere else, which here would eat every edge. lt-wild/depths-map2.py draws the rows. */
+     owner on Rafael Matos's "Depths of the Mountain" pack). Between the Thunderhead (south) and the Trailer Park (east), combat 73-84.
+     THE THIRD BUILD, the owner: "design it like the reference image i gave you" and "theres no boss like in the screenshot at the end
+     of the map, add him". The ground is THE PACK'S OWN PICTURE (`bgArt`, the two halves lt-wild/depths-compose.mjs cuts from the
+     pack's mockups): the throne room the boss rises in at the far end, the gold-statue bridge, the owner's reference plaza and wings,
+     the landing and the sand bridge east. `rows` is only where you can walk on it (lt-wild/depths-walk2.py, drawn over the picture);
+     the pictures do all the showing. The way on to the Trailer Park is the sand bridge, off the EAST edge. */
   depths: {
-    name: "The Depths of the Mountain", exits: { s: "thunderhead", n: "trailer" }, ground: "depths", noBanks: true, tint: "rgba(0,8,10,.10)",
+    name: "The Depths of the Mountain", exits: { s: "thunderhead", e: "trailer" }, bgArt: ["dp_bg1", "dp_bg2"], noBanks: true,
     rows: [
-      "~~~~~~~~~~~~~~~~~~~~~eee~~~~~~~~~~~~~~~~~~~~",
-      "~~~~~~~~~~~~~~.................~~~~~~~~~~~~~",
-      "~~~~~~~~~~~~~...................~~~~~~~~~~~~",
-      "~~~~~~~~~~~~~...................~~~~~~~~~~~~",
-      "~~~~~~~~~~~~~...................~~~~~~~~~~~~",
-      "~~~~~~~~~~~~~...................~~~~~~~~~~~~",
-      "~~~~~~~~~~~~~...................~~~~~~~~~~~~",
-      "~~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~",
-      "~~.........~~~~~~~~~.....~~~~~~~~~........~~",
-      "~..........~~~~~~...........~~~~~~.........~",
-      "~..........~~~~~~...........~~~~~~.........~",
-      "~..........~~~.................~~~.........~",
-      "~..........................................~",
-      "~..........................................~",
-      "~..........................................~",
-      "~..........~~~.................~~~.........~",
-      "~..........~~~~~~...........~~~~~~.........~",
-      "~~.........~~~~~~...........~~~~~~........~~",
-      "~~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~",
-      "~~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~",
-      "~~~~~~~~............................~~~~~~~~",
-      "~~~~~~~~............................~~~~~~~~",
-      "~~~~~~~~............................~~~~~~~~",
-      "~~~~~~~~............................~~~~~~~~",
-      "~~~~~~~~~..........................~~~~~~~~~",
-      "~~~~~~~~~~~~~~~~~~~~~eee~~~~~~~~~~~~~~~~~~~~"
+      "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.~~~.~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~................~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~..................~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~..................~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~..................~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~................~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~...~~~~~~~.....~~~~~~~...~~~~~~~~~~",
+      "~~~~~~......~~~~~.........~~~~~......~~~~~~~",
+      "~~~~~.......~~~~~.........~~~~~.......~~~~~~",
+      "~~~~~~...............................~~~~~~~",
+      "~~~~~~...............................~~~~~~~",
+      "~~~~~.................................~~~~~~",
+      "~~~~~~...............................~~~~~~~",
+      "~~~~~~......~~~~~.........~~~~~......~~~~~~~",
+      "~~~~~~~~~~~~~~~~~.........~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~.........~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~~...~~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~~...~~~~~~~.............e",
+      "~~~~~~~~~~~~~~.............................e",
+      "~~~~~~~~~~~~~~.............................e",
+      "~~~~~~~~~~~~~~~~~~~~eee~~~~~~~~~~~~~~~~~~~~~"
     ],
     build() {
       const { g, objs } = fromRows(this.rows, G);
-      /* out in the dark: the giant statues the pack stands far from its platforms */
-      for (const [art, x, y, w, h] of [["dp_far1", 3, 2, 2, 4], ["dp_far2", 39, 2, 2, 4], ["dp_far3", 2, 20, 3, 4], ["dp_far4", 39, 20, 3, 4]])
-        objs.push({ t: "cliff", art, x, y, w, h, edge: true, name: "A statue in the dark" });
-      /* the veins: abyss crystal on the east wing; eclipse and nova in the shrine, behind the Iron Ogres */
-      for (const [x, y] of [[36, 10], [40, 10], [38, 13], [36, 16], [41, 15]]) { objs.push({ t: "rock", ore: "abyss_crystal", x, y, name: "Abyss crystal vein", req: { skill: "mining", lvl: 75 }, xp: 230, tease: "Pink light through the rock. Your pickaxe skids off it." }); g[y][x] = "#"; }
-      for (const [x, y] of [[14, 2], [16, 6], [19, 3]]) { objs.push({ t: "rock", ore: "eclipse_ore", x, y, name: "Eclipse rock", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[y][x] = "#"; }
-      objs.push({ t: "rock", ore: "nova_ore", x: 13, y: 5, name: "Nova rock", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[5][13] = "#";
-      /* The Drop: fishing off the west wing, into the dark */
-      for (const y of [10, 12, 14]) objs.push({ t: "spot", x: 0, y, name: "The Drop", req: { skill: "fishing", lvl: 70 }, fish: "blindfish", fish2: "abysseel", fish2lvl: 76, xp: 270, xp2: 300, glow: "#ff5ad0", tease: "A line goes down and down and never finds a bottom. Not yet." });
-      /* the dressing that stands: the monument before the way up, the throne, gold statues on the wings */
-      for (const [art, x, y, w, h, name] of [["dp_bigmonument", 21, 2, 3, 3, "The golden monument"], ["dp_throne", 29, 1, 2, 2, "The Deepwarden's throne"], ["dp_gold3", 2, 12, 1, 1, "A golden statue"], ["dp_gold3", 41, 12, 1, 1, "A golden statue"],
-        ["dp_gold4", 14, 12, 1, 1, "A golden statue"], ["dp_gold4", 30, 12, 1, 1, "A golden statue"], ["dp_sword", 31, 5, 1, 1, "Sword in the stone"]])
-        deco(g, objs, art, x, y, w, h, name);
-      /* the pack's animations: fire in the candelabra by the steps and in the pots on the landing, and the power orb in the plaza's eye */
-      for (const [anim, x, y] of [["a_dpcandle", 20, 7], ["a_dpcandle", 24, 7], ["a_dpcandle", 20, 19], ["a_dpcandle", 24, 19], ["a_dpfirepot", 9, 20], ["a_dpfirepot", 34, 20], ["a_dpcandle", 17, 9], ["a_dpcandle", 27, 9]]) {
-        objs.push({ t: "torch", anim, frames: 8, cols: 4, fw: 32, fh: 96, fps: 10, x, y: y - 2, w: 1, h: 3, edge: true, name: anim === "a_dpfirepot" ? "A fire pot" : "A candelabrum", phase: (x * 3 + y) % 8 }); g[y][x] = "#";
-      }
-      objs.push({ t: "orb", anim: "a_dppower", frames: 8, cols: 4, fw: 96, fh: 96, fps: 9, x: 21, y: 11, w: 3, h: 3, edge: true, name: "The eye of the mountain" }); g[13][22] = "#";
-      /* what lies on the floor: the carpet cross, gold, pots, crystals */
-      for (const [art, x, y, w, h] of [["dp_carpet", 22, 9, 1, 4], ["dp_carpet", 22, 14, 1, 4], ["dp_carpeth", 17, 13, 4, 1], ["dp_carpeth", 24, 13, 4, 1],
-        ["dp_gold1", 27, 2, 1, 1], ["dp_gold2", 30, 4, 1, 1], ["dp_gold1", 28, 6, 1, 1], ["dp_pot1", 2, 9, 1, 1], ["dp_pot2", 3, 9, 1, 1], ["dp_pot3", 9, 16, 1, 1], ["dp_pot4", 41, 9, 1, 1], ["dp_pot1", 40, 16, 1, 1],
-        ["dp_pot3", 15, 20, 1, 1], ["dp_pot2", 29, 22, 1, 1], ["dp_crys_r", 37, 12, 1, 1], ["dp_crys_b", 39, 9, 1, 1], ["dp_crys_t", 35, 14, 1, 1], ["dp_crys_g", 42, 13, 1, 1]])
-        objs.push({ t: "tuft", art, x, y, w, h, edge: true, flat: true, name: art.startsWith("dp_gold") ? "Gold" : art.startsWith("dp_pot") ? "Pots" : art.startsWith("dp_carpet") ? "Carpet" : "Crystals" });
+      /* the veins: abyss crystal on the east wing; eclipse and nova in the throne room, behind the Iron Ogres */
+      for (const [x, y] of [[32, 12], [36, 12], [33, 16], [35, 16], [34, 18]]) { objs.push({ t: "rock", ore: "abyss_crystal", x, y, name: "Abyss crystal vein", req: { skill: "mining", lvl: 75 }, xp: 230, tease: "Pink light through the rock. Your pickaxe skids off it." }); g[y][x] = "#"; }
+      for (const [x, y] of [[14, 3], [29, 4], [15, 6]]) { objs.push({ t: "rock", ore: "eclipse_ore", art: "dp_vein_eclipse", x, y, name: "Eclipse crystal", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[y][x] = "#"; }
+      objs.push({ t: "rock", ore: "nova_ore", art: "dp_vein_nova", x: 28, y: 2, name: "Nova crystal", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[2][28] = "#";
+      /* The Drop: fishing off the ends of both wings, into the dark */
+      for (const [x, y] of [[4, 13], [4, 16], [38, 13], [38, 16]]) objs.push({ t: "spot", x, y, name: "The Drop", req: { skill: "fishing", lvl: 70 }, fish: "blindfish", fish2: "abysseel", fish2lvl: 76, xp: 270, xp2: 300, glow: "#ff5ad0", tease: "A line goes down and down and never finds a bottom. Not yet." });
+      /* the throne room's gate, lowered across its doorway, and a few crystals by the veins */
+      objs.push({ t: "tuft", art: "dp_gatebar", x: 19, y: 6, w: 5, h: 1, edge: true, flat: true, name: "The gate, lowered" });
+      for (const [art, x, y] of [["dp_crys_r", 35, 14], ["dp_crys_b", 31, 16], ["dp_crys_t", 37, 17]]) objs.push({ t: "tuft", art, x, y, w: 1, h: 1, edge: true, flat: true, name: "Crystals" });
       return { g, objs, blobs: [] };
     },
-    /* the landing is Pot Boys (73); the west wing goblins (75); wisps hang over the drop (76, bow only); the east wing Crystal Ogres
-       (78, no arrows); the shrine Iron Ogres (80, Void only) and the Deepwarden on his throne (84). The plaza is left open. */
-    mobs: [["potboy", 10, 23, { respawn: [60000, 110000] }], ["potboy", 12, 21, { respawn: [60000, 110000] }], ["potboy", 33, 23, { respawn: [60000, 110000] }], ["potboy", 31, 21, { respawn: [60000, 110000] }],
-      ["dgoblin", 3, 10, { respawn: [60000, 100000] }], ["dgoblin", 6, 11, { respawn: [60000, 100000] }], ["dgoblin", 9, 9, { respawn: [60000, 100000] }], ["dgoblin", 4, 15, { respawn: [60000, 100000] }], ["dgoblin", 8, 16, { respawn: [60000, 100000] }], ["dgoblin", 7, 13, { respawn: [60000, 100000] }],
-      ["dwisp", 13, 9, { perch: true, respawn: [70000, 120000] }], ["dwisp", 31, 9, { perch: true, respawn: [70000, 120000] }], ["dwisp", 13, 17, { perch: true, respawn: [70000, 120000] }], ["dwisp", 31, 17, { perch: true, respawn: [70000, 120000] }], ["dwisp", 9, 5, { perch: true, respawn: [70000, 120000] }], ["dwisp", 35, 5, { perch: true, respawn: [70000, 120000] }],
-      ["dogre", 35, 9, { respawn: [80000, 120000] }], ["dogre", 39, 12, { respawn: [80000, 120000] }], ["dogre", 42, 11, { respawn: [80000, 120000] }], ["dogre", 35, 15, { respawn: [80000, 120000] }], ["dogre", 39, 16, { respawn: [80000, 120000] }],
-      ["diron", 15, 3, { respawn: [90000, 120000] }], ["diron", 17, 4, { respawn: [90000, 120000] }], ["diron", 18, 1, { respawn: [90000, 120000] }],
-      ["deepwarden", 28, 4, { aggro: 3, respawn: [2400000, 3000000] }]],
-    npcs: [{ name: "Old Pickett", art: "pickett", x: 15, y: 22, still: true, quests: ["deepcrystal", "deepgoblins", "deepkeeper"], hair: "#c8c8c0", shirt: "#3a5a3a", pants: "#4a3a2a",
-      lines: ["Forty years I've mined this mountain. Never seen it glow like it does now.", "Mind the edges. Nobody's ever found the bottom, and a few have looked very hard.", "Wisps won't come to you. Bring a bow, or don't bother.", "The iron ones only feel the Void. Swords just ring off them."] }],
+    /* the landing and the sand bridge: Pot Boys (73); the west wing goblins (75); wisps hang over the drop (76, bow only); the east wing
+       Crystal Ogres (78, no arrows); the throne room Iron Ogres (80, Void only) and the Deepwarden in front of his throne (84).
+       (2026-09-27, the owner: "respawn timers need to be longer since the mobs are stronger, it gives users more time to get better
+       ores/fish/trees etc, but balance it around mob grinders too") roughly twice what they were, longest for the hardest; a grinder
+       working one wing still has a monster up most of the time, because each wing holds five or six. */
+    mobs: [["potboy", 15, 23, { respawn: [100000, 160000] }], ["potboy", 17, 24, { respawn: [100000, 160000] }], ["potboy", 33, 23, { respawn: [100000, 160000] }], ["potboy", 37, 24, { respawn: [100000, 160000] }],
+      ["dgoblin", 7, 13, { respawn: [100000, 160000] }], ["dgoblin", 10, 12, { respawn: [100000, 160000] }], ["dgoblin", 9, 15, { respawn: [100000, 160000] }], ["dgoblin", 6, 17, { respawn: [100000, 160000] }], ["dgoblin", 11, 17, { respawn: [100000, 160000] }], ["dgoblin", 8, 16, { respawn: [100000, 160000] }],
+      ["dwisp", 14, 9, { perch: true, respawn: [120000, 180000] }], ["dwisp", 28, 9, { perch: true, respawn: [120000, 180000] }], ["dwisp", 13, 20, { perch: true, respawn: [120000, 180000] }], ["dwisp", 29, 20, { perch: true, respawn: [120000, 180000] }],
+      ["dogre", 34, 13, { respawn: [120000, 200000] }], ["dogre", 32, 15, { respawn: [120000, 200000] }], ["dogre", 35, 17, { respawn: [120000, 200000] }], ["dogre", 31, 18, { respawn: [120000, 200000] }], ["dogre", 36, 14, { respawn: [120000, 200000] }],
+      ["diron", 16, 4, { respawn: [150000, 240000] }], ["diron", 26, 4, { respawn: [150000, 240000] }], ["diron", 27, 2, { respawn: [150000, 240000] }],
+      ["deepwarden", 21, 3, { aggro: 3, respawn: [2400000, 3000000] }]],
+    npcs: [{ name: "Old Pickett", art: "pickett", x: 24, y: 24, still: true, quests: ["deepcrystal", "deepgoblins", "deepkeeper"], hair: "#c8c8c0", shirt: "#3a5a3a", pants: "#4a3a2a",
+      lines: ["Forty years I cut with the others. Then I put the blade down and picked up a pick. Better company.", "Mind the edges. Nobody's ever found the bottom, and a few of my cousins have looked very hard.", "Wisps won't come to you. Bring a bow, or don't bother.", "The iron ones only feel the Void. Swords just ring off them."] }],   /* (2026-09-27) the pack's own goblin, old and retired */
     bots: []
   },
   deep: {

@@ -27,54 +27,22 @@ const png = (buf, w, h) => sharp(buf, { raw: { width: w, height: h, channels: 4 
 const put = async (name, im) => { const b = await im.toBuffer(); fs.writeFileSync(path.join(OUT, `${name}.png`), b); const m = await sharp(b).metadata(); console.log(`  ${name.padEnd(24)} ${String(m.width).padStart(3)}x${m.height}`); return m; };
 if (!fs.existsSync(PK)) { console.log(`no pack at ${PK}: unzip "Epic RPG World - The dephs of the Mountain" into lt-wild/erw/depths`); process.exit(1); }
 
-/* ---- THE TEMPLE FLOOR (2026-09-27, the owner, with the pack's own mockup: "the layout/map needs to feel more open ... just mimic
-   whats in the tile previews"). Tileset 3's brown brick: a 192x96 fill, of which 128x96 and then its first 32 rows again make the
-   4x4 cell sheet the painter tiles by (x&3, y&3). */
-const fl = await raw(T("Tileset 3.png"), 32, 640, 128, 96), fl2 = await raw(T("Tileset 3.png"), 32, 640, 128, 32);
-const floor = Buffer.concat([fl.d, fl2.d]);
-for (let i = 3; i < floor.length; i += 4) floor[i] = 255;
-await put("t_dpb", png(floor, 128, 128));
-await put("t_dpg", png(floor, 128, 128));   /* no dirt paths down here: every Wang cell of the path sheet is floor */
-/* ---- the drop: SQUARE edges (the temple is built, not grown), black past the edge, and the pack's studded bronze trim along the
-   floor's side of every edge: a dark line, a bronze band, a stud every eight pixels */
-{
-  const out = Buffer.alloc(128 * 128 * 4);
-  const wet = (m, x, y) => (x < 16 ? (y < 16 ? m & 8 : m & 2) : (y < 16 ? m & 4 : m & 1)) !== 0;
-  for (let i = 0; i < 16; i++) {
-    const [sx, sy] = WANG[i], m = 15 - i;
-    for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) {
-      const k = ((sy + y) * 128 + sx + x) * 4, fk = (((sy + y) % 128) * 128 + ((sx + x) % 128)) * 4;
-      if (m === 15 || wet(m, x, y)) { out[k] = 6; out[k + 1] = 9; out[k + 2] = 10; out[k + 3] = 255; continue; }
-      floor.copy(out, k, fk, fk + 4);
-      let d = 9; for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < 32 && ny < 32 && wet(m, nx, ny)) d = Math.min(d, Math.max(Math.abs(dx), Math.abs(dy))); }
-      if (d <= 4) { const c = d === 1 ? [34, 22, 12] : d === 4 ? [60, 42, 24] : [122, 86, 46]; const stud = d === 2 && ((sx + x + sy + y) % 8 === 0); out[k] = stud ? 214 : c[0]; out[k + 1] = stud ? 170 : c[1]; out[k + 2] = stud ? 96 : c[2]; }
-    }
-  }
-  await put("t_dpw", png(out, 128, 128));
-}
-/* ---- the walls under the ledges: six plain 32-wide columns of the dark brick, then eight dressed ones (banners, torches, a gold
-   sign) from the banner strip. The painter mostly hangs plain wall and now and then a dressed one. */
-{
-  const plain = await sharp(T("Tileset 3.png")).extract({ left: 0, top: 296, width: 192, height: 88 }).png().toBuffer();
-  const dressed = await sharp(T("Tileset 3.png")).extract({ left: 0, top: 520, width: 256, height: 88 }).png().toBuffer();
-  await put("t_dpface", sharp({ create: { width: 448, height: 88, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).composite([{ input: plain, left: 0, top: 0 }, { input: dressed, left: 192, top: 0 }]).png({ compressionLevel: 9 }));
-}
+/* ---- THE GROUND IS THE PACK'S OWN PICTURE now (2026-09-27, the third build, the owner: "design it like the reference image"):
+   lt-wild/depths-compose.mjs stacks bands of the pack's mockup-10 (the throne room) and mockup-11 (his reference) into the 44x26 map and
+   writes dp_bg1 / dp_bg2, the left and right halves. Run it after this. */
 
 /* ---- props, trimmed */
 const trimmed = (f) => sharp(f).ensureAlpha().trim({ threshold: 1 }).png({ compressionLevel: 9 });
 const PROPS = {
-  dp_sword: "sword stuck in the ground.png", dp_gold1: "piles of gold_1.png", dp_gold2: "piles of gold_4.png", dp_throne: "boss-throne1.png",
-  dp_crys_r: "Crystals3-improved refraction_1.png", dp_crys_g: "Crystals4-improved refraction_1.png", dp_crys_t: "Crystals5-improved refraction_1.png", dp_crys_b: "Crystals1-improved refraction_1.png",
-  /* the temple (2026-09-27): the far statues standing in the dark, the gold ones, the busts on stands, the big monument, pots */
-  dp_far1: "statues-far from platforms-bg_4.png", dp_far2: "statues-far from platforms-bg_5.png", dp_far3: "statues-far from platforms-bg_9.png", dp_far4: "statues-far from platforms-bg_0.png",
-  dp_gold3: "golden statues_4.png", dp_gold4: "golden statues_6.png", dp_bigmonument: "golden monument_0.png",
-  dp_pot1: "pots1_0.png", dp_pot2: "pots2_3.png", dp_pot3: "pots3_2.png", dp_pot4: "pots5_1.png", dp_carpet: "boss-carpet.png"
+  dp_crys_r: "Crystals3-improved refraction_1.png", dp_crys_g: "Crystals4-improved refraction_1.png", dp_crys_t: "Crystals5-improved refraction_1.png", dp_crys_b: "Crystals1-improved refraction_1.png"
 };
 for (const [k, f] of Object.entries(PROPS)) { if (!fs.existsSync(P(f))) { console.log(`  !! ${k}: no ${f}`); continue; } await put(k, trimmed(P(f))); }
-/* the carpet's cross-piece: the same runner, turned */
-await put("dp_carpeth", sharp(P("boss-carpet.png")).ensureAlpha().trim({ threshold: 1 }).rotate(90).png({ compressionLevel: 9 }));
+/* the throne room's gate, lowered (the last frame of the pack's "boss gate going down"): a bar across the doorway */
+await put("dp_gatebar", sharp(path.join(PK, "Props/Animated props/individual files", "boss gate-going down-frame16.png")).ensureAlpha().trim({ threshold: 1 }).png({ compressionLevel: 9 }));
 /* the crystal vein: the pack's big pink cluster (Crystals6 are 64x64 clusters, not single shards) */
 await put("o_rock_abyss_crystal", trimmed(P("Crystals6_0.png")));
+/* the eclipse and nova veins wear the pack's own clusters too (purple and teal), not the rest of the game's grey boulders */
+await put("dp_vein_eclipse", trimmed(P("Crystals1_0.png"))); await put("dp_vein_nova", trimmed(P("Crystals5_0.png")));
 
 /* ---- the monsters: [name, sheet dir, idle file, idle frames, walk file, walk frames, scale] */
 /* (2026-09-27, the owner: "the boss and gifs from the pack") and their ATTACKS: four frames of each one's swing (_a1.._a4), which
@@ -84,7 +52,7 @@ const MOBS = [
   ["diron", "Enemy 1/variation1", "enemy 1 var1-idle.png", 8, "enemy 1 var1-walk.png", 8, 1, "enemy 1 var1-atk1.png", 16],
   ["dgoblin", "Enemy 2", "enemy 2-idle.png", 6, "enemy 2-walk.png", 6, 1, "enemy 2-atk1.png", 6],
   ["potboy", "Pot Creature", "Pot Creature-idle.png", 6, "Pot Creature-walk.png", 8, 1, "Pot Creature-atk1.png", 23],
-  ["deepwarden", "Boss", "boss anims-idle.png", 8, "boss anims-walk.png", 10, 2, "boss anims-atk1.png", 16, "boss anims-resurrect.png", 68]
+  ["deepwarden", "Boss", "boss anims-idle.png", 8, "boss anims-walk.png", 10, 1, "boss anims-atk1.png", 16, "boss anims-resurrect.png", 68]   /* 1x: the size he is in the pack's own throne room */
 ];
 const frames = async (f, n) => { const m = await sharp(f).metadata(), fw = Math.floor(m.width / n), out = []; for (let i = 0; i < n; i++) out.push(await raw(f, i * fw, 0, fw, m.height)); return out; };
 const bbox = (fr) => { let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1; for (const { d, W, H } of fr) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 8) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); } return { x0, y0, w: x1 - x0 + 1, h: y1 - y0 + 1 }; };
@@ -100,13 +68,11 @@ for (const [name, dir, idle, ni, walk, nw, sc, atk, na, rise, nr] of MOBS) {
   for (let i = 0; i < 4; i++) await put(`${name}_a${i + 1}`, cut(pickA[i]));
   for (let i = 0; i < pickR.length; i++) await put(`${name}_r${i + 1}`, cut(pickR[i]));
 }
-/* the animated props: fire in the candelabra and the pots, and the power orbs. Each a sheet of frames in four columns. */
-const AF = (f) => path.join(PK, "Props/Animated props/individual files", f);
-for (const [name, base, n, fw, fh] of [["a_dpcandle", "Fire-candelabrum", 8, 32, 96], ["a_dpfirepot", "Fire-pot", 8, 32, 96], ["a_dppower", "power balls-4", 8, 96, 96]]) {
-  const cols = 4, rows = Math.ceil(n / cols), comps = [];
-  for (let i = 0; i < n; i++) comps.push({ input: AF(`${base}-frame${i + 1}.png`), left: (i % cols) * fw, top: Math.floor(i / cols) * fh });
-  await put(name, sharp({ create: { width: cols * fw, height: rows * fh, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).composite(comps).png({ compressionLevel: 9 }));
-}
+/* OLD PICKETT, out of the pack itself (2026-09-27, the owner: the PixelLab miner "looks way too AI, shiny, and not the design of this
+   area"): the pack's small goblin, put down his blade long ago, greyed with age. One side-on picture for both of his facings. */
+{ const I = await frames(CH("Enemy 2/enemy 2-idle.png"), 6), bx = bbox([I[0]]);
+  const old = await sharp(I[0].d, { raw: { width: I[0].W, height: I[0].H, channels: 4 } }).extract({ left: bx.x0, top: bx.y0, width: bx.w, height: bx.h }).modulate({ saturation: 0.55, brightness: 0.92 }).png().toBuffer();
+  for (const d of ["south", "east"]) await put(`pickett_${d}`, sharp(old).png({ compressionLevel: 9 })); }
 /* the pet: the Pot Boy, small */
 { const I = await frames(CH("Pot Creature/Pot Creature-idle.png"), 6), bx = bbox([I[0]]);
   await put("pet_potboy", sharp(I[0].d, { raw: { width: I[0].W, height: I[0].H, channels: 4 } }).extract({ left: bx.x0, top: bx.y0, width: bx.w, height: bx.h }).resize(Math.round(bx.w * 0.75), Math.round(bx.h * 0.75), { kernel: "nearest" }).png()); }

@@ -52,7 +52,11 @@ export function plan() {
   /* an area's sheet is WHOLE: everything on its list that isn't already in core or a person's sheet, even if another area has
      it too. Walking into the Mire must cost one request, not "the Mire's sheet plus the closed Wilderness's because a moth
      lives in both". The few duplicated monsters cost a few KB of disk and nothing to a player who never visits both. */
-  const shared = new Set(taken); for (const [area, list] of Object.entries(AREA_ART)) { const ks = [...new Set(list)].filter((k) => has(k) && !shared.has(k)); if (ks.length) packs.push([`area-${area}`, ks]); }
+  /* (2026-09-27) A WHOLE-MAP PICTURE STAYS LOOSE (the Depths' dp_bg1 / dp_bg2: the pack's own mockups, as 256-colour PNGs). A sheet is
+     re-saved at full colour, which doubled them, and they are wider than a sheet likes anyway; the page fetches a loose picture on
+     its own and repaints when it lands. */
+  const LOOSE = (k) => /^dp_bg\d$/.test(k);
+  const shared = new Set(taken); for (const [area, list] of Object.entries(AREA_ART)) { const ks = [...new Set(list)].filter((k) => has(k) && !shared.has(k) && !LOOSE(k)); if (ks.length) packs.push([`area-${area}`, ks]); }
   return packs;
 }
 async function build(sharp, keys) {

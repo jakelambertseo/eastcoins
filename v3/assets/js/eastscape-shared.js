@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 309;
+export const VERSION = 311;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7559,6 +7559,9 @@ Object.assign(MOBS.dgoblin, { weak: "frost" }); Object.assign(MOBS.potboy, { wea
 Object.assign(MOBS.dogre, { weak: "storm", resist: "frost" }); Object.assign(MOBS.diron, { weak: "void" }); Object.assign(MOBS.deepwarden, { weak: "sun", resist: "fire" });
 for (const t of ["potboy", "dgoblin", "dwisp", "dogre", "diron", "deepwarden"]) EXAMINE[t] = [MOBS[t].ex + (guardText(t) ? ` ${guardText(t)}` : "")];
 PET_SCENES.add("depths");
+/* (2026-09-27, the owner: "the gem tiles you added need to have a chance at dropping the ruby/topaz/etc ores we added to mining ores, just
+   very slowly") an abyss crystal vein turns up any of the four gems, together about a third as often as a gem ore turns up its own */
+GEM_DROP.abyss_crystal = [["ruby", 0.0015], ["sapphire", 0.0015], ["topaz", 0.0012], ["opal", 0.0008]];
 EGGS.egg_geode.from.push("depths"); EGGS.egg_gilded.from.push("depths");
 FUNG_WILD.depths = ["glowcap", "lionsmane", "glowcap"];
 
@@ -7568,8 +7571,8 @@ Object.assign(QUESTS, {
     name: "Pink in the Dark", giver: "Old Pickett", where: "The Depths of the Mountain", icon: "\u{1F48E}",
     goal: { type: "bring", items: ["abyss_crystal"], n: 10, what: "abyss crystals" },
     brief: "Old Pickett wants ten abyss crystals from the veins on the east wing.",
-    talk: { offer: ["Forty years I've mined this mountain and I've never seen it glow like this.", "Ten of those pink crystals off the east wing. Mining 75. Mind the ogres; the crystal ones don't care for arrows."], accept: "Ten crystals.", decline: "Mind the drop, then.",
-      accepted: "East wing, across the plaza. Pickaxe first, questions later.", progress: "Ten crystals. You've {have}.", ready: "Look at that. Like holding a sunset.", hand: "Ten of them.",
+    talk: { offer: ["Forty years a goblin down here and I've never seen the mountain glow like this.", "Ten of those pink crystals off the east wing. Mining 75. Mind the ogres; the crystal ones don't care for arrows."], accept: "Ten crystals.", decline: "Mind the drop, then.",
+      accepted: "East wing, across the carpet. Pickaxe first, questions later.", progress: "Ten crystals. You've {have}.", ready: "Look at that. Like holding a sunset.", hand: "Ten of them.",
       done: "Something's growing down here, and it isn't me. Take this for your trouble." },
     reward: { coins: 6000, xp: { mining: 6000 }, text: "6,000 tickets, 6,000 Mining xp" }
   },
@@ -7577,7 +7580,7 @@ Object.assign(QUESTS, {
     name: "Cutters", giver: "Old Pickett", where: "The Depths of the Mountain", icon: "\u{1F5E1}️", requires: ["deepcrystal"],
     goal: { type: "kill", mob: "dgoblin", n: 10, what: "goblin cutters" },
     brief: "The goblins on the west wing have been cutting Old Pickett's ropes. Ten of them.",
-    talk: { offer: ["Someone's been cutting my ropes. Someone small, green and fast.", "Ten of the cutters off the west wing. They hit quick and they don't miss. Take food."], accept: "Ten cutters.", decline: "Keep your ropes tight.",
+    talk: { offer: ["Someone's been cutting my ropes. My cousins. Small, green, fast, and I taught them the knots.", "Ten of the cutters off the west wing. They hit quick and they don't miss. Take food."], accept: "Ten cutters.", decline: "Keep your ropes tight.",
       accepted: "West wing. You'll hear them before you see them.", progress: "That's {have} of ten.", ready: "Quiet over there. Good.", hand: "Ten.",
       done: "Ropes stay tied now. You're welcome down here any time." },
     reward: { coins: 9000, xp: { melee: 9000, hp: 3000 }, text: "9,000 tickets, 9,000 Melee xp, 3,000 Hitpoints xp" }
@@ -7585,9 +7588,9 @@ Object.assign(QUESTS, {
   deepkeeper: {
     name: "The Keeper of the Mountain", giver: "Old Pickett", where: "The Depths of the Mountain", icon: "\u{1F451}", requires: ["deepgoblins"],
     goal: { type: "kill", mob: "deepwarden", n: 1, what: "the Deepwarden" },
-    brief: "The Deepwarden sits on his throne in the shrine at the top. Old Pickett would like to dig there.",
+    brief: "The Deepwarden sits on his throne at the far end, past the gold statues. Old Pickett would like to dig there.",
     talk: { offer: ["The best seam in the mountain runs under his throne.", "He's twice the size of anything down here and he hits like the roof coming in. Nobody does him alone. Bring people."], accept: "Together, then.", decline: "Not today.",
-      accepted: "Up the steps, past the monument. Everyone who hurts him shares the kill.", progress: "He's still on his throne.", ready: "The throne's empty. I heard it from here.", hand: "He's down.",
+      accepted: "Up past the gold statues, through the gate. Everyone who hurts him shares the kill.", progress: "He's still on his throne.", ready: "The throne's empty. I heard it from here.", hand: "He's down.",
       done: "Forty years I've waited to dig that seam. Here: you've earned more than tickets, but tickets is what I've got." },
     reward: { coins: 30000, xp: { melee: 14000, hp: 5000 }, text: "30,000 tickets, 14,000 Melee xp, 5,000 Hitpoints xp" }
   }
