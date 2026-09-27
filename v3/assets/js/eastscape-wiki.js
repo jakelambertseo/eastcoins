@@ -848,6 +848,29 @@ export const GUIDES = [
       <li><b>Some things only an arrow reaches.</b> Thunder Geese sit over the tear in the Thunderhead's floor, on water nobody can walk to. A sword is told so; a bow just shoots.</li>
       <li><b>In the wild, first blood goes to the bow.</b> An archer gets free shots while a sword closes four to six tiles &mdash; and shoots back from range once it arrives, at Archery's defence.</li></ul>
       <p>Everything a bow fires is made at the <a data-wiki="guides/fletching">fletching table</a>.</p>` },
+  /* (2026-09-27, the owner: "add an all up jewels page that show them all on one page, aswell, and where they drop") EVERY GEM ON ONE
+     PAGE: what it is worth, every rock it comes out of and where, the chance, any monster that drops it, and what it is for. Built from
+     the same index the gem's own page reads (H.WIKI.gemFrom, H.dropsOf), so the two can never disagree and nothing from a shut map shows. */
+  { id: "gems", title: "Gems", icon: "\u{1F48E}", cat: "Skills",
+    body: (G, H) => {
+      if (!H.WIKI) return "<p>Open this page from the game to see where every gem comes from.</p>";
+      const nm = (k) => H.wl(`items/${k}`, `${H.ico(k)} ${H.esc(H.ITEMS[k]?.name || k)}`);
+      const shut = (r) => H.ITEMS[r.out[0]]?.held || H.SKILLS[r.skill]?.held;
+      const boost = Object.values(G.PETS).filter((p) => p.fx?.gem && !p.held).map((p) => `a <b>${H.esc(p.name)}</b> (+${p.fx.gem}%)`);
+      const pct = (p) => `1 in ${Math.round(1 / p)}`;
+      const gem = (g) => {
+        const rocks = H.WIKI.gemFrom?.[g.key] || [], mobs = H.dropsOf(g.key);
+        const uses = Object.values(G.RECIPES).filter((r) => r.in.some(([k]) => k === g.key) && !shut(r)).filter((r, i, a) => a.findIndex((x) => x.out[0] === r.out[0]) === i);
+        return `<h3>${H.ico(g.key)} ${H.wl(`items/${g.key}`, H.esc(g.name))}</h3>
+          <table class="tbl"><tr><th>Rock</th><th>Where</th><th>Mining</th><th>Chance</th></tr>${rocks.length ? rocks.map((s) => `<tr><td>${H.esc(s.obj)} (${nm(s.ore)})</td><td>${H.areaLink(s.scene)}</td><td>${s.lvl}</td><td>${pct(s.p)} ores</td></tr>`).join("") : `<tr><td colspan="4">No rock you can reach turns one up yet.</td></tr>`}</table>
+          ${mobs.length ? `<p><b>Also dropped by</b> ${mobs.map((d) => `${H.wl(`monsters/${d.mob}`, H.esc(H.MOBS[d.mob].name))} (${d.ch == null ? "always" : pct(d.ch)})`).join(", ")}.</p>` : ""}
+          <p><b>Tips</b> ${g.tips.map(nm).join(" and ")} for <b>+${g.str}</b> arrow strength (Fletching ${g.lvl}).${uses.length ? ` <b>Used in</b> ${uses.map((r) => nm(r.out[0])).join(", ")}.` : ""}</p>`;
+      };
+      return `<p><b>Four gems, all from Mining.</b> Every ore you get has a small chance to come with a gem as well: <b>${pct(G.GEMS[0].drop)}</b>, the same for every gem and at any level. Which gem depends on the ore: the cheap ores give rubies, the top ores give opals.</p>
+        <table class="tbl"><tr><th>Gem</th><th>Mined out of</th><th>Chance</th></tr>${G.GEMS.map((g) => `<tr><td>${nm(g.key)}</td><td>${g.ores.map(nm).join(", ")}</td><td>${pct(g.drop)} ores</td></tr>`).join("")}</table>
+        <p><b>More gems:</b> the <b>${H.esc(G.CHARMS.stonesense.name)}</b> page (Wizardry ${G.CHARMS.stonesense.lvl}) makes them turn up ${G.CHARMS.stonesense.vals.join("/")}% more often by tier${boost.length ? `, and so does ${boost.join(" or ")} following you` : ""}. A rock gives the same chance on every ore, so a vein that never runs dry is the best place to stand.</p>
+        ${G.GEMS.map(gem).join("")}`;
+    } },
   { id: "fletching", title: "Fletching and archery", icon: "\u{1F3F9}", cat: "Skills",
     body: (G, H) => {
       const rs = Object.values(G.RECIPES).filter((r) => r.skill === "fletching").sort((a, b) => a.lvl - b.lvl);
@@ -862,8 +885,8 @@ export const GUIDES = [
       <h3>Quivers</h3>
       <p>A quiver wears the <b>offhand</b> &mdash; so a bow is a two-handed choice against a shield &mdash; and holds one kind of arrow in bulk, from ${G.FLETCH.quiverCap[0]} for rough up to ${G.FLETCH.quiverCap.at(-1)} for bogwood. Click arrows in your bag to load it. A bow shoots only what is in the quiver, so when it runs out, load more. Clicking a different kind of arrow swaps them.</p>
       <h3>Gems</h3>
-      <p>Four stones turn up in ore, about one rock in seventy, and each tips the arrows of the metals it comes out of:</p>
-      <table class="tbl"><tr><th>Gem</th><th>From</th><th>Tips</th><th>Adds</th></tr>
+      <p>Four stones turn up in ore, one ore in ${Math.round(1 / G.GEMS[0].drop)} of the kinds below, and each tips the arrows of the metals it comes out of. The <a data-wiki="guides/gems">Gems</a> page lists every rock and where it is.</p>
+      <table class="tbl"><tr><th>Gem</th><th>Mined out of</th><th>Tips</th><th>Adds</th></tr>
         ${G.GEMS.map((g) => `<tr><td>${H.ico(g.key)} ${nm(g.key)}</td><td>${g.ores.map((o) => nm(o)).join(", ")}</td><td>${g.tips.map((t) => nm(t)).join(", ")}</td><td>+${g.str}</td></tr>`).join("")}
       </table>
       <h3>The ladder</h3>
@@ -1021,6 +1044,13 @@ export const GUIDES = [
 ];
 
 export const UPDATES = [
+  {
+    date: "2026-09-27", title: "Where gems come from, on the wiki",
+    items: [
+      "GEMS, on one page: the new Gems guide lists all four, every rock that turns each one up, where it is, the Mining level, the chance (1 in 71 ores) and what each gem is for. Every Ruby, Sapphire, Topaz and Opal page says the same, and each ore's page says which gem it can come with.",
+      "The wiki no longer points at monsters or recipes you cannot reach yet."
+    ]
+  },
   {
     date: "2026-09-27", title: "Ranged fighting trains Hitpoints slower",
     items: [
@@ -1972,7 +2002,7 @@ export const SKILL_GUIDE = {
   hp: "Goes up alongside the fighting skills as you deal damage: fully with a melee weapon, a third as fast with a bow or a wand. Your Hitpoints level is your maximum health.",
   fishing: "Hold a fishing rod and click the water. Every spot holds two fish: the second is better, needs a higher level, and turns up about a third of the time once you can catch it.",
   farming: "Pick wild wheat in the Yard \u2014 the only gathering skill that needs nothing in your hand \u2014 or grow your own on your island, where a plot keeps growing while you are logged off: food crops, and from Harvesting 15 the four flowers Wizardry brews its inks from.",
-  mining: "Hold a pickaxe and click a rock. Every rock holds two to twelve ore and you work it until it is empty; a vein is slower per ore but never runs dry, which makes it the one to stand at.",
+  mining: "Hold a pickaxe and click a rock. Every rock holds two to twelve ore and you work it until it is empty; a vein is slower per ore but never runs dry, which makes it the one to stand at. Now and then an ore comes with a gem: rubies from copper, tin and emerald, sapphires from diamond and dragonstone, topaz from onyx and starfall, opals from eclipse, nova and singularity. Each gem's page says where those rocks are.",
   woodcutting: "Hold an axe and click a tree. A tree is good for about 25 logs before it falls and an oak for about 50; a felled one is back in fifteen seconds. Logs burn into the charcoal every smelt needs.",
   smithing: "Burn logs into charcoal at the furnace \u2014 the only thing you can do at level 1 \u2014 then smelt ore and charcoal into bars, and hammer bars into gear at the anvil. The anvil also reforges what you already own.",
   thieving: "Pick pockets in the Thieves' Guild, south of the Yard. Nobody there fights back. Each room further in holds better marks, and what they carry either sells or goes to the anvil.",

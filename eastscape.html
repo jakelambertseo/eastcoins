@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=347">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=348">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1354,7 +1354,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=347";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=348";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1363,7 +1363,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=195").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=197").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -5608,11 +5608,16 @@ let wikiRoute = null;
    get a page that never mentioned them. This rebuilds whenever the monster table has grown since the last look,
    so a lazily merged dungeon appears without anything having to remember to invalidate it. */
 let DROPS = null, DROPS_N = -1;
+/* (2026-09-27) a monster that lives ONLY in maps the wiki hides (the Depths, the Boardwalk, the Foundry, the Orchard Wall while they
+   are held) is not a place anyone can get anything from, so "Dropped by" leaves it out: the Ruby page was pointing at three. A monster
+   placed in no map at all (a dungeon's, the Pumpkin King's) is kept. */
+const shutMob = (t) => { if (MOBS[t]?.held) return true; const at = Object.entries(SCENES).filter(([, d]) => (d.mobs || []).some(([x]) => x === t)); return at.length > 0 && at.every(([k, d]) => d.wikiHide || (!G.OPEN.has(k) && !d.interior && !d.island && !d.home)); };
 function dropsOf(id) {
-  const n = Object.keys(MOBS).length;
+  const n = Object.keys(MOBS).length + Object.keys(SCENES).length;
   if (!DROPS || n !== DROPS_N) {
     DROPS = {}; DROPS_N = n;
     for (const [t, m] of Object.entries(MOBS)) {
+      if (shutMob(t)) continue;
       for (const [k, q, ch] of (m.drops || [])) (DROPS[k] ||= []).push({ mob: t, n: q, ch });
       for (const [k, ch] of G.raresOf(t)) (DROPS[k] ||= []).push({ mob: t, n: 1, ch });
     }
@@ -5659,6 +5664,11 @@ const buildWiki = () => {
   }
   // one line per place a thing comes from (the same tree type appears many times in an area)
   for (const k in sources) { const seen = new Set(); sources[k] = sources[k].filter((s) => { const id = `${s.scene}|${s.obj}|${s.lvl}`; if (seen.has(id)) return false; seen.add(id); return true; }); }
+  /* (2026-09-27, the owner: "does the wiki say where jewels drop?") It did not: a gem's page listed only monsters, and every one of them
+     lived in a map that is shut. Gems come out of ORE (G.GEM_DROP: ore -> [[gem, chance]], rolled on every ore a swing gets), so
+     gemFrom[gem] is every rock of those ores the wiki can see, with the chance. */
+  const gemFrom = {};
+  for (const [ore, list] of Object.entries(G.GEM_DROP)) for (const [gem, p] of list) for (const s of sources[ore] || []) if (s.skill === "mining") (gemFrom[gem] ||= []).push({ ...s, ore, p });   /* rocks only: a Thieves' Guild mark that hands out eclipse ore turns up no gem */
   const drops = {};
   for (const [t, m] of Object.entries(MOBS)) { for (const [k, n, ch] of m.drops) (drops[k] ||= []).push({ mob: t, n, ch }); for (const [k, ch] of G.raresOf(t)) (drops[k] ||= []).push({ mob: t, n: 1, ch }); }
   const inQuests = {};
@@ -5669,7 +5679,7 @@ const buildWiki = () => {
      stage, the person the stage before sent you to otherwise. */
   const questGives = {};
   for (const [qk, q] of Object.entries(QUESTS)) (q.stages || []).forEach((st, i) => { for (const [k] of st.give || []) { const prev = q.stages[i - 1], by = i === 0 ? q.giver : prev?.type === "talk" ? prev.npc : prev?.type === "bring" ? G.qBringTo(qk, prev) : null; (questGives[k] ||= []).push({ quest: qk, by }); } });   /* (2026-09-27) every bring or gather stage, not one goal: the old line threw on a staged quest and took the whole page down at boot */
-  return { areas, sources, npcs, drops, inQuests, questGives };
+  return { areas, sources, npcs, drops, inQuests, questGives, gemFrom };
 };
 let WIKI = buildWiki();
 const wl = (route, text) => `<a data-wiki="${esc(route)}">${text}</a>`;
@@ -5762,7 +5772,7 @@ function wikiGo(route, setNav = true) {
     const sk = g ? (SKILL_OF[g.id] || (SKILLS[g.id] ? g.id : null)) : null;
     html = g ? `<h2><i>${uico(`g_${g.id}`)}</i>${esc(g.title)}</h2>
       ${sk ? `<p class="wguide">${wl(`skills/${sk}`, `The ${esc(SKILLS[sk].name)} skill page`)} &mdash; every level, every item and the xp, in tables.</p>` : ""}
-      ${typeof g.body === "function" ? g.body(G, { ico, wl, esc, TWR, el: (k) => uico(`el_${k}`) }) : g.body}` : "";   /* (2026-09-25) A GUIDE BODY MAY BE A FUNCTION. The hand-written half of the wiki is where numbers go stale - the smoking table alone had three wrong heals and said "seven" after there were nine - so a guide whose figures come from the rules can generate itself instead. Plain strings still work and most guides stay that way; only the ones that quote live numbers need this. */
+      ${typeof g.body === "function" ? g.body(G, { ico, wl, esc, TWR, el: (k) => uico(`el_${k}`), WIKI, dropsOf, areaLink, MOBS, ITEMS, SKILLS }) : g.body}` : "";   /* (2026-09-25) A GUIDE BODY MAY BE A FUNCTION. The hand-written half of the wiki is where numbers go stale - the smoking table alone had three wrong heals and said "seven" after there were nine - so a guide whose figures come from the rules can generate itself instead. Plain strings still work and most guides stay that way; only the ones that quote live numbers need this. */
   }
   else if (kind === "items" && ITEMS[id]) {
     const it = ITEMS[id], src = WIKI.sources[id] || [], dr = dropsOf(id), qs = WIKI.inQuests[id] || [], qg = WIKI.questGives[id] || [];
@@ -5785,6 +5795,9 @@ function wikiGo(route, setNav = true) {
     html = `<h2><i>${ico(id)}</i>${esc(it.name)}</h2>${evBlock}${it.ex ? `<p class="lede">“${esc(it.ex)}”</p>` : ""}
       ${it.slot ? `<h3>Equipment</h3><table class="tbl"><tr><th>Slot</th><th>Accuracy</th><th>Strength</th><th>Defence</th><th>Lets you</th></tr><tr><td>${it.slot}</td><td>+${it.acc || 0}</td><td>+${it.str || 0}</td><td>+${it.def || 0}</td><td>${it.tool ? `train ${wl(`skills/${it.tool}`, SKILLS[it.tool].name)}` : "—"}</td></tr></table>` : ""}
       ${src.length ? `<h3>Gathered from</h3><table class="tbl"><tr><th>What</th><th>Where</th><th>Skill</th><th>Level</th></tr>${src.map((s) => `<tr><td>${esc(s.obj)}</td><td>${areaLink(s.scene)}</td><td>${wl(`skills/${s.skill}`, SKILLS[s.skill].name)}</td><td>${s.lvl}</td></tr>`).join("")}</table>` : ""}
+      ${(WIKI.gemFrom?.[id] || []).length ? (() => { const gf = WIKI.gemFrom[id], boost = Object.values(G.PETS).filter((p) => p.fx?.gem && !p.held).map((p) => `a ${esc(p.name)} (+${p.fx.gem}%)`);
+        return `<h3>Found while mining</h3><p>Every ore you mine from these rocks has a chance to turn one up as well, whatever your level.</p><table class="tbl"><tr><th>Rock</th><th>Where</th><th>Mining</th><th>Chance</th></tr>${gf.map((s) => `<tr><td>${esc(s.obj)} (${wl(`items/${s.ore}`, esc(ITEMS[s.ore]?.name || s.ore))})</td><td>${areaLink(s.scene)}</td><td>${s.lvl}</td><td>1 in ${Math.round(1 / s.p)} ores</td></tr>`).join("")}</table><p>The <b>${esc(G.CHARMS.stonesense.name)}</b> page (Wizardry ${G.CHARMS.stonesense.lvl}) makes gems turn up ${G.CHARMS.stonesense.vals.join("/")}% more often${boost.length ? `, and so does ${boost.join(" or ")} following you` : ""}.</p>`; })() : ""}
+      ${(G.GEM_DROP[id] || []).length ? `<h3>Sometimes turns up</h3><p>Every ${esc(it.name.toLowerCase())} you mine may come with ${G.GEM_DROP[id].map(([g, p]) => `${wl(`items/${g}`, `${ico(g)} ${esc(ITEMS[g].name.toLowerCase())}`)} (1 in ${Math.round(1 / p)})`).join(" or ")}.</p>` : ""}
       ${dr.length ? `<h3>Dropped by</h3><table class="tbl"><tr><th>Monster</th><th>How many</th><th>Chance</th></tr>${dr.map((d) => `<tr><td>${wl(`monsters/${d.mob}`, esc(MOBS[d.mob].name))}</td><td>${qn(d.n)}</td><td>${d.ch == null ? "Always" : pct(d.ch)}</td></tr>`).join("")}</table>` : ""}
       ${it.heal ? (it.raw ? `<h3>Raw</h3><p>Not food until it is cooked, and the Prize Counter will not buy it raw. Cook it at a campfire or a range.</p>` : `<h3>Food</h3><p>Heals <b>${it.heal}</b> hitpoints. Click it in your bag to eat.</p>`) : ""}
       ${Object.entries(G.COOK).some(([, r]) => r.to === id) ? `<h3>Cooked from</h3><p>${Object.entries(G.COOK).filter(([, r]) => r.to === id).map(([raw, r]) => `${wl(`items/${raw}`, `${ico(raw)} ${esc(ITEMS[raw].name)}`)} at Cooking ${r.lvl} (${r.xp} xp; no more burning from level ${r.burnStop})`).join("")}</p>` : ""}
@@ -5803,8 +5816,9 @@ function wikiGo(route, setNav = true) {
            Cooking recipe was skipped here, to keep plain raw-to-cooked food from printing twice beside its "Cooked from" line. That
            also hid pet food, the mushroom meals, smoked fish and every cooked fish outside G.COOK. Only the true duplicates are skipped now. */
         const dupCook = (r) => r.skill === "cooking" && r.in.length === 1 && G.COOK[r.in[0][0]]?.to === r.out[0];
-        const mk = Object.values(G.RECIPES).filter((r) => r.out[0] === id && !dupCook(r));
-        const into = Object.values(G.RECIPES).filter((r) => r.in.some(([k]) => k === id) && !dupCook(r)).filter((r, i, a) => a.findIndex((x) => x.out[0] === r.out[0]) === i);
+        const shut = (r) => ITEMS[r.out[0]]?.held || SKILLS[r.skill]?.held;   /* (2026-09-27) a held skill's recipes (Jewelcrafting's cut gems) and held items are not listed */
+        const mk = Object.values(G.RECIPES).filter((r) => r.out[0] === id && !dupCook(r) && !shut(r));
+        const into = Object.values(G.RECIPES).filter((r) => r.in.some(([k]) => k === id) && !dupCook(r) && !shut(r)).filter((r, i, a) => a.findIndex((x) => x.out[0] === r.out[0]) === i);
         const line = (r) => `${r.in.map(([k, n]) => `${n > 1 ? n + " " : ""}${wl(`items/${k}`, `${ico(k)} ${esc(ITEMS[k]?.name || k)}`)}`).join(" + ")}`;
         let out = "";
         if (mk.length) out += `<h3>How to make it</h3>` + mk.map((r) => `<p>At ${st[r.station] || "a workbench"}, with <b>${SKILLS[r.skill].name} ${r.lvl}</b>: ${line(r)}${(r.out[1] || 1) > 1 ? ` makes <b>${r.out[1]}</b>` : ""}. ${r.xp ? `<b>${r.xp}</b> xp.` : ""}</p>`).join("");

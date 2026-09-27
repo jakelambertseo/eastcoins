@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 326;
+export const VERSION = 327;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7994,7 +7994,7 @@ export const PET_TRADE = { bom: { ordinary: 1000, greater: 5000, legend: 25000 }
 export const petBomPrice = (p) => PET_TRADE.bom[rankOf(p)] || 0;
 
 /* (2026-09-27) what HOLD keeps out of the wiki: every item the two blocks made, the Depths' pet and Old Pickett's quests */
-if (HOLD.depths) { for (const k of Object.keys(ITEMS)) if (!_preDepths.has(k) && _preJewel.has(k)) ITEMS[k].held = true; PETS.potboy.held = true; for (const q of ["deepcrystal", "deepgoblins", "deepkeeper"]) if (QUESTS[q]) QUESTS[q].held = true; }
+if (HOLD.depths) { for (const k of Object.keys(ITEMS)) if (!_preDepths.has(k) && _preJewel.has(k)) ITEMS[k].held = true; PETS.potboy.held = true; for (const t of ["potboy", "dgoblin", "dwisp", "dogre", "diron", "deepwarden"]) if (MOBS[t]) MOBS[t].held = true;   /* (2026-09-27) its monsters too, so the wiki's "Dropped by" never points into it */ for (const q of ["deepcrystal", "deepgoblins", "deepkeeper"]) if (QUESTS[q]) QUESTS[q].held = true; }
 if (HOLD.jewel) for (const k of Object.keys(ITEMS)) if (!_preJewel.has(k)) ITEMS[k].held = true;
 
 /* (2026-09-21) the map-building helpers, for the files that hold maps outside this one (eastscape-closed.js, and the dungeon's). */
