@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 307;
+export const VERSION = 308;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -6134,7 +6134,17 @@ Object.assign(PETS, {
   goldentoad: { name: "Golden Toad",             art: "pet_goldentoad", bred: true, legend: true, base: "cointoad",    fx: { tix: 25 },                          ex: "Solid gold and deeply smug about it. Legendary." },
   moonmoth:   { name: "Moon Moth",               art: "pet_moonmoth",   bred: true, legend: true, base: "lanternmoth", fx: { hp: 30, tough: 5 },                 ex: "It carries the moon around on its wings. Legendary." },
   housewins:  { name: "The House Always Wins",   art: "pet_housewins",  bred: true, legend: true, base: "housecat",    fx: { speed: 5, slots: 2, hp: 10, tix: 10 }, ex: "Deals, collects, and never loses. Legendary." },
-  coilwyrm:   { name: "Coil Wyrm",               art: "pet_coilwyrm",   bred: true, legend: true, base: "coilling",    fx: { speed: 14, slots: 3, swing: 15 },   ex: "The Coilling grew wings and an attitude. Legendary." }
+  coilwyrm:   { name: "Coil Wyrm",               art: "pet_coilwyrm",   bred: true, legend: true, base: "coilling",    fx: { speed: 14, slots: 3, swing: 15 },   ex: "The Coilling grew wings and an attitude. Legendary." },
+  /* (2026-09-27, the owner: "Hatched eggs need to be breedable as well as this is the natural next step") a Legendary for each of the
+     eight hatchlings, so an egg starts a pet that can climb all the way: hatch it, breed two into Greaters, two Greaters into this. */
+  oracleowl:    { name: "Oracle Owl",         art: "pet_oracleowl",    bred: true, legend: true, base: "pocketowl",   fx: { reach: 2, swing: 8 },            ex: "It saw that coming. Your bow reaches two tiles further, and you work faster. Legendary." },
+  shellback:    { name: "Ancient Shellback",  art: "pet_shellback",    bred: true, legend: true, base: "mossback",    fx: { tough: 18, hp: 20 },             ex: "A tree grows on its back and it has never once hurried. Legendary." },
+  trufflebaron: { name: "The Truffle Baron",  art: "pet_trufflebaron", bred: true, legend: true, base: "trufflepig",  fx: { grow: 45, tix: 5 },              ex: "Monocle, top hat, and a nose worth a fortune. Legendary." },
+  tempest:      { name: "Tempest",            art: "pet_tempest",      bred: true, legend: true, base: "stormling",   fx: { bite: 20, speed: 8 },            ex: "The Stormling grew up angry. Fish bite, and you move with the wind. Legendary." },
+  magmadrake:   { name: "Magma Drake",        art: "pet_magmadrake",   bred: true, legend: true, base: "salamander",  fx: { noburn: 80, freesmelt: 20 },     ex: "Nothing burns near it that it doesn't want burned. Legendary." },
+  banditking:   { name: "The Bandit King",    art: "pet_banditking",   bred: true, legend: true, base: "ferret",      fx: { steal: 20, tix: 8 },             ex: "Mask, cape, and somebody else's coin purse. Legendary." },
+  diamondcrab:  { name: "Diamond Crab",       art: "pet_diamondcrab",  bred: true, legend: true, base: "crystalcrab", fx: { gem: 100, slots: 2 },            ex: "Its shell is one flawless stone. Gems come twice as often. Legendary." },
+  grandmimic:   { name: "Grand Mimic",        art: "pet_grandmimic",   bred: true, legend: true, base: "mimic",       fx: { slots: 6, gift: 1, tix: 5 },     ex: "A crown, a grin, and room for everything. Legendary." }
 });
 export const LEGEND_OF = Object.fromEntries(Object.entries(PETS).filter(([, p]) => p.legend).map(([k, p]) => [p.base, k]));
 
@@ -6205,14 +6215,14 @@ export function greaterFx(kind, otherKind) {
 export function pairOf(a, b) {
   if (!a || !b || a.id === b.id) return { no: "Pick two different pets." };
   const A = PETS[a.k], B = PETS[b.k]; if (!A || !B) return { no: "Pick two pets." };
-  if (A.event || B.event) return { no: "Event pets do not breed." };
-  if (A.legend || B.legend) return { no: "A Legendary is as far as a pet goes." };
+  if (A.event || B.event) return { no: "Event pets cannot breed." };
+  if (A.legend || B.legend) return { no: "Legendary pets cannot breed: a Legendary is as far as a pet goes." };
   if (a.tier && b.tier) {
-    if (a.k !== b.k) return { no: "Two Greater pets must be the same kind to make a Legendary." };
+    if (a.k !== b.k) return { no: `You cannot breed a Greater ${A.name} with a Greater ${B.name}. A Legendary needs two Greater pets of the same kind.` };
     if (!LEGEND_OF[a.k]) return { no: `There is no Legendary ${A.name}. Yet.` };
     return { kind: "legend", lvl: BREED.legend.lvl, ms: BREED.legend.ms, child: LEGEND_OF[a.k], food: [[RANKS.legend.food, BREED.legend.food]], stats: [petStats(a), petStats(b)] };
   }
-  if (a.tier || b.tier) return { no: "Pair two ordinary pets for a Greater one, or two Greater ones of the same kind for a Legendary." };
+  if (a.tier || b.tier) return { no: "You cannot breed an Ordinary pet with a Greater pet. Two Ordinary pets make a Greater; two Greater pets of the same kind make a Legendary." };
   return { kind: "greater", lvl: BREED.greater.lvl, ms: BREED.greater.ms, kinds: [...new Set([a.k, b.k])], food: [[RANKS.greater.food, BREED.greater.food]], stats: [petStats(a), petStats(b)] };
 }
 /** a pet's effects in words, for the pets panel and the pen */
@@ -6854,7 +6864,7 @@ export function normChar(c) {
      The slot is checked against the list it points into, so selling or banking one cannot leave a ghost applying its
      bonuses — activePet returns null and petFx reads zeroes. */
   out.pets = (Array.isArray(c.pets) ? c.pets : []).filter((x) => x && PETS[x.k] && x.id)
-    .slice(0, 50).map((x) => ({ id: String(x.id).slice(0, 24), k: x.k, name: cleanPetName(x.name), ...(x.tier || (x.fx && PETS[x.k]?.legend) ? { ...(x.tier ? { tier: 1 } : {}), fx: Object.fromEntries(Object.entries(x.fx && typeof x.fx === "object" ? x.fx : {}).filter(([k, v]) => /^(speed|slots|hp|tix|swing|reach|tough|grow|bite|noburn|freesmelt|steal|gem|gift)$/.test(k) && Number.isFinite(+v)).map(([k, v]) => [k, Math.max(0, Math.min(k === "slots" ? 14 : k === "reach" ? 3 : 80, Math.round(+v)))])) } : {}) }));   /* (2026-09-27) a Greater pet keeps its tier and its own effects, clamped; a Legendary its picked ones */
+    .slice(0, 50).map((x) => ({ id: String(x.id).slice(0, 24), k: x.k, name: cleanPetName(x.name), ...(x.tier || (x.fx && PETS[x.k]?.legend) ? { ...(x.tier ? { tier: 1 } : {}), fx: Object.fromEntries(Object.entries(x.fx && typeof x.fx === "object" ? x.fx : {}).filter(([k, v]) => /^(speed|slots|hp|tix|swing|reach|tough|grow|bite|noburn|freesmelt|steal|gem|gift)$/.test(k) && Number.isFinite(+v)).map(([k, v]) => [k, Math.max(0, Math.min(k === "slots" ? 14 : k === "reach" ? 3 : 100, Math.round(+v)))])) } : {}) }));   /* (2026-09-27) a Greater pet keeps its tier and its own effects, clamped; a Legendary its picked ones */
   if (out.eq.pet && !out.pets.some((x) => x.id === out.eq.pet)) out.eq.pet = null;   /* (2026-09-21) what Ronde sold them, cleaned: an item that no longer exists simply stops being worn */
   // renames are followed BEFORE anything is filtered against ITEMS: the filter
   // below deletes keys it does not recognise, so an un-aliased rename would

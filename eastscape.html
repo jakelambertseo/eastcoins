@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=328">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=329">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -968,40 +968,50 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .slot .evtag{position:absolute;left:1px;top:0;font-size:10px;line-height:1;font-style:normal;pointer-events:none;filter:drop-shadow(0 0 2px #000)}
 .wev{margin:6px 0 4px;padding:6px 10px;border-radius:6px;background:rgba(74,26,90,.16);border:1px solid #4a1a5a;font-size:13px}
 .wevl{margin:4px 0 8px;padding-left:18px;font-size:13px;line-height:1.5}
-/* (2026-09-27) the pet pen and the hatchery: [pet] + [pet] = [pet], and the three ranks in their own colours */
-.rk{display:inline-block;padding:1px 7px;border-radius:9px;font-size:11px;font-weight:800;letter-spacing:.02em;color:#fff;background:#8a8a8a;vertical-align:middle}
-.rk-greater .rk,.rk.rk-greater{background:#2f6fd0}.rk.rk-legend,.rk-legend .rk{background:linear-gradient(#f2c94c,#c8901a);color:#3a2400;box-shadow:0 0 6px rgba(240,190,40,.7)}.rk.rk-ordinary{background:#8a8a8a}
-.pp{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:8px;background:rgba(0,0,0,.12);border:2px solid #9a9a9a}.pp img{width:32px;height:32px;image-rendering:pixelated}
-.pp.rk-greater{border-color:#3f7fe0;background:rgba(63,127,224,.14)}.pp.rk-legend{border-color:#e0a820;background:rgba(240,190,40,.18);box-shadow:0 0 8px rgba(240,190,40,.6)}
-.pn-rules{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:12px;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,.08);margin-bottom:8px}.pn-rules i{font-style:normal;font-weight:800}
-.pn-eq{display:flex;align-items:stretch;justify-content:center;gap:8px;margin:6px 0}.pn-eq>i{align-self:center;font-style:normal;font-size:26px;font-weight:900;opacity:.7}
-.pn-slot{flex:1;min-width:0;max-width:150px;min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px;border:2px dashed rgba(0,0,0,.3);border-radius:10px;font-size:12px;opacity:.75;text-align:center}
-.pn-slot.full{border-style:solid;opacity:1;background:rgba(0,0,0,.06)}.pn-slot b{font-size:12.5px}.pn-slot small{font-size:11px;opacity:.8}
-.pn-slot.out{font-size:30px;font-weight:900}.pn-slot.out.full{font-size:inherit}.pn-slot.out.no{color:#a02818}
-.pn-slot.rk-greater{border-color:#3f7fe0}.pn-slot.rk-legend{border-color:#e0a820;background:rgba(240,190,40,.12);box-shadow:0 0 10px rgba(240,190,40,.45)}
-.pn-eq.small .pn-slot{min-height:70px}
-.pn-slot>img,.pn-slot>.ico{width:36px;height:36px;image-rendering:pixelated}
-.pn-pets{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin:6px 0 8px}
-.pn-pet{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px;border:2px solid transparent;border-radius:8px;background:rgba(0,0,0,.08);color:inherit;font:inherit;cursor:pointer}.pn-pet b{font-size:12px}
-.pn-pet.on{border-color:#8a6a1e;background:linear-gradient(#f7dc84,#d8a84a)}
-.pn-plan,.pn-egg{padding:8px;border-radius:8px;background:rgba(0,0,0,.06);margin:6px 0;text-align:center}
-.pn-reqs{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:6px 0 8px}
-.pn-need{display:inline-grid;grid-template-columns:auto auto;grid-template-rows:auto auto;column-gap:6px;align-items:center;font-style:normal;padding:4px 10px;border-radius:8px;background:rgba(40,120,40,.14);text-align:left}
-.pn-need img,.pn-need .ico{grid-row:span 2;width:24px;height:24px}.pn-need b{font-size:12.5px}.pn-need small{font-size:11px;opacity:.8}
-.pn-need.no{background:rgba(180,40,30,.16)}.pn-need.no small{color:#a02818;opacity:1;font-weight:700}
-.pn-note{font-size:12.5px;opacity:.85;margin:4px 0}.pn-note.no{color:#a02818;opacity:1;font-weight:700}
-.pn-clock{text-align:center;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;margin:6px 0}.pn-clock.done{color:#2a8a2a}
-.pn-acts{display:flex;gap:6px;justify-content:center}
-.lk-btn.big{font-size:16px;padding:8px 26px}
-.pn-step{display:flex;align-items:center;gap:8px;margin:10px 0 4px;font-size:13px;font-weight:700;opacity:.6}.pn-step.on{opacity:1}
-.pn-step>b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#5a4a30;color:#fff;font-size:12px;flex:none}.pn-step.on>b{background:#2f6fd0}
-.pn-stats{display:flex;flex-direction:column;gap:2px;margin-top:2px}.pn-stat{font-size:10.5px;opacity:.85;line-height:1.25}
-.pn-picks{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pn-picks>div{display:flex;flex-direction:column;gap:4px;padding:6px;border-radius:8px;background:rgba(0,0,0,.06)}.pn-picks small{font-size:11px;opacity:.8;font-weight:700}
-.pn-chip{padding:6px 8px;border:2px solid rgba(0,0,0,.25);border-radius:8px;background:#fffaf0;color:#2a2016;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;text-align:left}
-.pn-chip.on{border-color:#2f6fd0;background:#dbe8ff;box-shadow:0 0 0 2px rgba(47,111,208,.25)}.pn-chip.on::before{content:"\2714  ";color:#2f6fd0}.pn-chip.off{opacity:.4;cursor:not-allowed}
-.pn-looks{display:flex;gap:8px;justify-content:center}.pn-look{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 10px;border:2px solid transparent;border-radius:8px;background:rgba(0,0,0,.06);color:inherit;font:inherit;cursor:pointer}.pn-look.on{border-color:#2f6fd0;background:#dbe8ff}
-.pn-warn{margin:6px 0;padding:6px 10px;border-radius:8px;background:rgba(180,40,30,.14);color:#8a1a10;font-weight:700;font-size:12.5px}
-.pn-pet small{font-size:10.5px;opacity:.8;text-align:center}
+/* (2026-09-27, rebuilt twice the same day on the owner's word: "keep trying to make it user friendly", "try to modernize the UI")
+   the pet pen and the hatchery. Cards on the parchment: rounded, lifted, the pet big in a ring of its rank's colour. */
+.rk{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:#8a8a8a;vertical-align:middle;line-height:1.35}
+.rk.rk-greater{background:linear-gradient(#4a8ef0,#2a62c0)}.rk.rk-legend{background:linear-gradient(#f7d25a,#d0921a);color:#3a2400;box-shadow:0 0 8px rgba(240,190,40,.65)}.rk.rk-ordinary{background:linear-gradient(#a8a8a8,#7c7c7c)}
+.pp{position:relative;display:inline-grid;place-items:center;width:56px;height:56px;border-radius:14px;background:radial-gradient(circle at 50% 40%,#fff,#ece3cf);box-shadow:0 0 0 3px #a8a8a8,0 3px 8px rgba(0,0,0,.18)}
+.pp img{width:40px;height:40px;image-rendering:pixelated}
+.pp.rk-greater{box-shadow:0 0 0 3px #3f7fe0,0 3px 10px rgba(63,127,224,.35)}.pp.rk-legend{background:radial-gradient(circle at 50% 40%,#fff8dc,#f3dc9a);box-shadow:0 0 0 3px #e0a820,0 0 16px rgba(240,190,40,.7)}
+.pn-card{background:#fffaf0;border-radius:14px;box-shadow:0 2px 10px rgba(60,40,10,.14);padding:12px;margin:10px 0}
+.pn-card h4{margin:0 0 8px;display:flex;align-items:center;gap:8px;font-size:13.5px}
+.pn-card h4 b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#2f6fd0;color:#fff;font-size:12px}
+.pn-card.dim{opacity:.55}.pn-card.dim h4 b{background:#8a7a5a}
+.pn-eq{display:flex;align-items:stretch;justify-content:center;gap:10px}
+.pn-eq>i{align-self:center;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#efe6d0;font-style:normal;font-size:18px;font-weight:900;color:#5a4a30;flex:none}
+.pn-slot{flex:1;min-width:0;max-width:170px;min-height:128px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 6px;border:2px dashed #cbbd9c;border-radius:14px;font-size:12px;color:#8a7a5a;text-align:center;background:#fbf6ea}
+.pn-slot.full{border:0;color:inherit;background:#fff;box-shadow:inset 0 0 0 1px #e6dcc4}.pn-slot b{font-size:13px}
+.pn-slot.out{font-size:28px;font-weight:900}.pn-slot.out.full{font-size:inherit;background:linear-gradient(#fff,#f3f7ff);box-shadow:inset 0 0 0 2px #3f7fe0}
+.pn-slot.out.full.rk-legend{background:linear-gradient(#fffaf0,#fff0c8);box-shadow:inset 0 0 0 2px #e0a820,0 0 14px rgba(240,190,40,.45)}.pn-slot.out.no{color:#a02818;border-color:#e0a0a0}
+.pn-stats{display:flex;flex-wrap:wrap;justify-content:center;gap:3px}.pn-stat{font-size:10.5px;padding:1px 6px;border-radius:999px;background:#efe6d0;color:#4a3a20;font-weight:700}
+.pn-picks{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pn-picks>div{display:flex;flex-direction:column;gap:6px}.pn-picks small{font-size:11px;color:#6a5a3a;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.pn-chip{position:relative;padding:8px 10px 8px 30px;border:2px solid #e0d4b8;border-radius:10px;background:#fff;color:#2a2016;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;text-align:left;transition:border-color .12s,background .12s}
+.pn-chip::before{content:"";position:absolute;left:9px;top:50%;width:14px;height:14px;margin-top:-7px;border-radius:50%;border:2px solid #b8aa88;background:#fff}
+.pn-chip:hover{border-color:#9ab8e8}.pn-chip.on{border-color:#2f6fd0;background:#eaf2ff}.pn-chip.on::before{border-color:#2f6fd0;background:radial-gradient(#2f6fd0 45%,#fff 50%)}.pn-chip.off{opacity:.38;cursor:not-allowed}
+.pn-looks{display:flex;gap:10px;justify-content:center}.pn-look{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 12px;border:2px solid #e0d4b8;border-radius:12px;background:#fff;color:inherit;font:inherit;font-size:12px;cursor:pointer}.pn-look.on{border-color:#2f6fd0;background:#eaf2ff}
+.pn-go{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between}
+.pn-reqs{display:flex;flex-wrap:wrap;gap:6px}
+.pn-need{display:inline-grid;grid-template-columns:auto auto;grid-template-rows:auto auto;column-gap:6px;align-items:center;font-style:normal;padding:5px 10px;border-radius:10px;background:#e9f5e6;box-shadow:inset 0 0 0 1px #b8dcb0;text-align:left}
+.pn-need img,.pn-need .ico{grid-row:span 2;width:26px;height:26px}.pn-need b{font-size:12.5px}.pn-need small{font-size:11px;opacity:.8}
+.pn-need.no{background:#fbe9e6;box-shadow:inset 0 0 0 1px #e8b0a8}.pn-need.no small{color:#a02818;opacity:1;font-weight:800}
+.pn-warn{margin:8px 0 0;padding:7px 10px;border-radius:10px;background:#fbe9e6;color:#8a1a10;font-weight:700;font-size:12.5px}
+.pn-note{font-size:12px;color:#6a5a3a;margin:6px 0}
+.pn-time{font-size:12px;color:#6a5a3a;font-weight:700}
+.pn-pets{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.pn-pet{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border:2px solid transparent;border-radius:12px;background:#fff;box-shadow:0 1px 4px rgba(60,40,10,.12);color:inherit;font:inherit;cursor:pointer;transition:transform .1s}
+.pn-pet:hover{transform:translateY(-2px)}.pn-pet b{font-size:12px}.pn-pet small{font-size:10.5px;color:#6a5a3a;text-align:center;line-height:1.3}
+.pn-pet.on{border-color:#2f6fd0;background:#eaf2ff}.pn-pet .pn-num{position:absolute;top:6px;right:6px;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#2f6fd0;color:#fff;font-size:11px;font-weight:900}
+.pn-bar{height:12px;border-radius:999px;background:#e6dcc4;overflow:hidden;margin:10px 0 4px}.pn-bar i{display:block;height:100%;background:linear-gradient(90deg,#4a8ef0,#6ad0a0);border-radius:999px;transition:width 1s linear}
+.pn-clock{text-align:center;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;margin:4px 0}.pn-clock.done{color:#2a8a2a}
+.pn-acts{display:flex;gap:8px;justify-content:center}
+.pn-egg{display:flex;align-items:center;gap:12px;padding:10px;border-radius:14px;background:#fff;box-shadow:0 1px 5px rgba(60,40,10,.13);margin:8px 0}
+.pn-egg .pp{flex:none}.pn-egg .pn-arrow{font-size:20px;color:#8a7a5a;font-weight:900}.pn-egg .pn-who{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.pn-egg .pn-who b{font-size:13px}.pn-egg .pn-who small{font-size:11px;color:#6a5a3a}
+.lk-btn.big{font-size:15px;padding:9px 28px;border-radius:10px}
+.petrow{display:grid;grid-template-columns:auto 1fr 1fr;column-gap:8px;row-gap:3px;align-items:center;padding:8px;margin:6px 0;border-radius:12px;background:rgba(255,250,240,.7);box-shadow:0 1px 4px rgba(60,40,10,.12)}.petrow.on{background:#eaf2ff;box-shadow:inset 0 0 0 2px #2f6fd0}
+.petrow .pp{grid-column:1;grid-row:1 / 3;width:44px;height:44px;border-radius:10px}.petrow .pp img{width:32px;height:32px}.petrow>b{grid-column:2 / 4;grid-row:1;font-size:13px;line-height:1.3}.petrow>small{grid-column:2 / 4;grid-row:2;font-size:11px;opacity:.85;line-height:1.3}
+.petrow>button[data-pw]{grid-column:2;grid-row:3}.petrow>button[data-pn]{grid-column:3;grid-row:3}.petrow>button{margin-top:4px}
 /* (2026-09-27, the owner: "the messages above chat need to popup when users dont have enough food, etc") a refusal said while a window
    is open also pops up over it, so it is never hidden behind the window that caused it */
 #popMsg{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:9000;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
@@ -1338,7 +1348,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=328";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=329";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1940,7 +1950,7 @@ const ART_VER = { critic: 4, o_mausoleum: 4, t_tomb: 4, o_bomkiosk: 7, o_plot: 2
 const CROP_ART = [...new Set(Object.keys(G.CROPS).map((k) => G.cropArt(k)))].flatMap((k) => [1, 2, 3, 4].map((n) => `crop_${k}_${n}`));   /* (2026-09-26) a seed crop draws its bloom's pictures */
 const ART_FILES = ["t_dpb", "t_dpg", "t_dpw", "t_dpface", "t_dppave", "dp_pillar1", "dp_pillar2", "dp_pillar3", "dp_pillar4", "dp_rock1", "dp_rock2", "dp_rock3", "dp_rock4", "dp_statue1", "dp_statue2", "dp_statue3", "dp_candle", "dp_sword", "dp_gold1", "dp_gold2", "dp_throne", "dp_monument", "dp_crys_r", "dp_crys_g", "dp_crys_t", "dp_crys_b", "o_rock_abyss_crystal", "o_rock_eclipse_ore", "o_rock_nova_ore", "potboy", "potboy_i2", "potboy_w1", "potboy_w2", "potboy_w3", "potboy_w4", "dgoblin", "dgoblin_i2", "dgoblin_w1", "dgoblin_w2", "dgoblin_w3", "dgoblin_w4", "dogre", "dogre_i2", "dogre_w1", "dogre_w2", "dogre_w3", "dogre_w4", "diron", "diron_i2", "diron_w1", "diron_w2", "diron_w3", "diron_w4", "deepwarden", "deepwarden_i2", "deepwarden_w1", "deepwarden_w2", "deepwarden_w3", "deepwarden_w4", "dwisp", "pickett_south", "pickett_east", "pet_potboy",   /* (2026-09-27) the Depths of the Mountain: its area sheet (pet_potboy rides core, like every pet) */ "fung_sporecap_4", "fung_buttoncap_4", "fung_oyster_4", "fung_puffball_4", "fung_bluemould_4", "fung_inkcap_4", "fung_bleedtooth_4", "fung_glowcap_4", "fung_ghostpipe_4", "fung_truffle_4", "fung_lionsmane_4", "fung_voidmorel_4", "fung_starcap_4", "t_crypt", "t_cryptwall", "o_fbed", "o_compost", "fung_spawn_1", "fung_spawn_2", "fung_sporecap_3", "fung_buttoncap_3", "fung_oyster_3", "fung_puffball_3", "fung_bluemould_3", "fung_inkcap_3", "fung_bleedtooth_3", "fung_glowcap_3", "fung_ghostpipe_3", "fung_truffle_3", "fung_lionsmane_3", "fung_voidmorel_3", "fung_starcap_3",   /* (2026-09-27) Fungiculture: the clusters ride core; the cellar's own (the rest of these) ride its area sheet. */   /* (2026-09-27) Fungiculture's wild clusters, on twelve maps, so they ride the startup sheet (13 small pictures) */ "nb_skull", "nb_crown", "nb_fish", "nb_dice", "nb_seven", "nb_cat", "nb_ghost", "nb_star", "nb_bolt", "nb_heart", "nb_pickaxe", "nb_chip",   /* (2026-09-27) the Store's name badges (G.NAME_ICONS), 16px, drawn before a name over heads; written out because the packer reads this list without the rules */ "pumpkinking", "pet_blackcat", "o_ghostlantern", "o_jack", "o_nightmarket", "hexa_south", "hexa_east",   /* (2026-09-27) the Long Night; the lantern and the jack stay in core, they stand on every map */ "t_wildg", "t_wildb", "t_wildw", "x_plateau", "x_column", "x_cave", "x_pillar", "x_rock1", "x_rock2", "x_rock3", "x_rock4", "x_rock5", "x_rock6", "x_rocks", "x_boulder1", "x_boulder2", "x_boulder3", "x_dead1", "x_dead2", "x_dead3", "x_dead4", "x_dead5", "x_pine1", "x_pine2", "x_pine3", "x_shrub1", "x_shrub2", "x_stump", "x_tuft1", "x_tuft2", "x_tuft3",
   "t_deepg", "t_deepb", "t_deepw", "d_plateau", "d_column", "d_cave", "d_pillar", "d_rock1", "d_rock2", "d_rock3", "d_rock4", "d_rock5", "d_rock6", "d_rock7", "d_rock8", "d_slab", "d_boulder1", "d_boulder2", "d_boulder3", "d_dead1", "d_dead2", "d_dead3", "d_root1", "d_root2", "d_root3", "d_log1", "d_log2", "d_stump1", "d_stump2", "d_burnt", "d_coal1", "d_coal2", "d_tuft", "weaver", "marrowhound", "grimlich", "o_gallowsoak", "mudge_south", "mudge_east", "morrow_south", "morrow_east", "zephyr_south", "zephyr_east", "rashid_south", "rashid_east", "volta_south", "volta_east", "auditor_south", "auditor_east", "grimm_south", "grimm_east", "a_wfall_w", "a_wfall_d", "a_surface", "a_shine", "a_lava", "a_lavab", "a_steam",   /* (2026-09-26) the Wilderness (x_) and the Deep Wild (d_): tools/eastscape-wild-art.mjs, from Szadi art's RPG Fantasy Worlds sets; every one is claimed by AREA_ART.wild or .deep below, so none of it is in core */
-  "pet_pocketowl", "pet_mossback", "pet_trufflepig", "pet_stormling", "pet_salamander", "pet_ferret", "pet_crystalcrab", "pet_mimic", "pet_cerberpup", "pet_hoarder", "pet_goldentoad", "pet_moonmoth", "pet_housewins", "pet_coilwyrm",   /* (2026-09-27) Breeding's pets */ "o_altar_arcane", "o_altar_fire", "o_altar_frost", "o_altar_storm", "o_altar_void", "o_altar_sun", "o_altar_nexus",   /* (2026-09-26) the seven altars: each is deferred to its own area in AREA_ART */ "o_fletcher",   /* (2026-09-25) the fletching table in the Yard */ "t_dock", ...CROP_ART, "o_yardtree", "o_yardtree_stump", "o_tower", "t_doors", "fx_hit", "fx_crit", "fx_miss", "fx_bleed", "vince_south", "vince_east", "casino", "rony_south", "rony_east", "o_bomkiosk", "t_pit", "o_fightboard", "o_hsboard", "o_fameboard", "o_ringbell", "o_ringpost", "o_mirror", "o_rrtable", "o_barcart", "kellz_south", "kellz_east", "livia_south", "livia_east", "gaius_south", "gaius_east", "aurelia_south", "aurelia_east", "arbino_south", "arbino_east", "vince_south", "vince_east", "sterling_south", "sterling_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "barker_south", "barker_east", "o_duckpond", "o_banner", "o_banner2", "o_archway", "o_wagon", "o_cagebarH", "o_cagebarV", "o_turnstile", "o_bloodpool", "o_knives", "o_meathook", "pinhead", "tripled", "fatlady", "strongman", "grinner", "o_bigtop", "o_funhouse", "o_balloonpop", "o_shootgallery", "o_whackamole", "o_ticketbooth", "o_sidetent", "o_haybale", "o_carnlitter", "t_sawdust", "t_dwater", "critic", "o_railH", "o_railV", "o_railgate", "o_mausoleum", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "pet_coilling",   /* (2026-09-24) the Pyramid’s pet was in PETS and had a picture on disk and was in NEITHER of these two lists — its icon drew an empty box AND an equipped one would have walked around invisible. Every pet goes in both, drop or no drop. */ "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_brick", "o_fencepost", "o_crates", "o_lamppost", "o_sacks", "o_handcart", "t_track", "o_gateframe", "o_gatebars", "o_agilend", "o_trailer", "o_wreck", "o_tyres", "o_dumpster", "o_rock_slagstone", "o_rustpine", "o_bogwood", "junkdog", "possum", "scrapper", "gator", "junkking", "darla_south", "darla_east", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
+  "pet_pocketowl", "pet_mossback", "pet_trufflepig", "pet_stormling", "pet_salamander", "pet_ferret", "pet_crystalcrab", "pet_mimic", "pet_oracleowl", "pet_shellback", "pet_trufflebaron", "pet_tempest", "pet_magmadrake", "pet_banditking", "pet_diamondcrab", "pet_grandmimic", "pet_cerberpup", "pet_hoarder", "pet_goldentoad", "pet_moonmoth", "pet_housewins", "pet_coilwyrm",   /* (2026-09-27) Breeding's pets */ "o_altar_arcane", "o_altar_fire", "o_altar_frost", "o_altar_storm", "o_altar_void", "o_altar_sun", "o_altar_nexus",   /* (2026-09-26) the seven altars: each is deferred to its own area in AREA_ART */ "o_fletcher",   /* (2026-09-25) the fletching table in the Yard */ "t_dock", ...CROP_ART, "o_yardtree", "o_yardtree_stump", "o_tower", "t_doors", "fx_hit", "fx_crit", "fx_miss", "fx_bleed", "vince_south", "vince_east", "casino", "rony_south", "rony_east", "o_bomkiosk", "t_pit", "o_fightboard", "o_hsboard", "o_fameboard", "o_ringbell", "o_ringpost", "o_mirror", "o_rrtable", "o_barcart", "kellz_south", "kellz_east", "livia_south", "livia_east", "gaius_south", "gaius_east", "aurelia_south", "aurelia_east", "arbino_south", "arbino_east", "vince_south", "vince_east", "sterling_south", "sterling_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "barker_south", "barker_east", "o_duckpond", "o_banner", "o_banner2", "o_archway", "o_wagon", "o_cagebarH", "o_cagebarV", "o_turnstile", "o_bloodpool", "o_knives", "o_meathook", "pinhead", "tripled", "fatlady", "strongman", "grinner", "o_bigtop", "o_funhouse", "o_balloonpop", "o_shootgallery", "o_whackamole", "o_ticketbooth", "o_sidetent", "o_haybale", "o_carnlitter", "t_sawdust", "t_dwater", "critic", "o_railH", "o_railV", "o_railgate", "o_mausoleum", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "pet_coilling",   /* (2026-09-24) the Pyramid’s pet was in PETS and had a picture on disk and was in NEITHER of these two lists — its icon drew an empty box AND an equipped one would have walked around invisible. Every pet goes in both, drop or no drop. */ "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east", "t_casino", "t_roulette", "rug_casino", "rouge_south", "rouge_east", "dex_south", "dex_east", "dookie_south", "dookie_east", "t_dirt", "t_brick", "o_fencepost", "o_crates", "o_lamppost", "o_sacks", "o_handcart", "t_track", "o_gateframe", "o_gatebars", "o_agilend", "o_trailer", "o_wreck", "o_tyres", "o_dumpster", "o_rock_slagstone", "o_rustpine", "o_bogwood", "junkdog", "possum", "scrapper", "gator", "junkking", "darla_south", "darla_east", "t_water", "t_gwater", "t_gpath", "t_csky", "t_cpath", "farmhouse", "hut", "well", "tree", "hay", "wheat", "cow", "chicken", "hole",
   ...["south", "south-east", "east", "north-east", "north", "north-west", "west", "south-west"].flatMap((d) => ["hero_" + d, "legend_" + d]),   // (hero_tiro_*, the old tunic, left the startup list 2026-09-20: nobody wears it now that everyone has a look)
   "bank", "store", "cottage", "signpost", "tree2", "tree3", "tree4", "o_spot", "o_spot1", "o_spot2", "o_spot3", "o_spot4", "o_spot5", "o_spot6", "g_bush", "g_boulder", "g_grass", "g_flowers",
   ...["banner", "lamp", "vault", "herbs", "shelf", "window"].map((w) => "wall_" + w),
@@ -2008,7 +2018,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 108;
+const PACKS_V = 109;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -2028,7 +2038,7 @@ const loadOne = (k) => new Promise((res) => {
 /* art that only one area needs waits until you go there (or next door to it). Everything else is the core set,
    loaded at startup. A new area's pictures go in its list here; tools/eastscape-budget.mjs measures both halves. */
 const WILD_ART = ["t_wdirt", "t_wwater", "deadtree", "w_tree", "snag", "w_bush", "w_boulder", "grimstone", "gravestone", "skeleton", "o_gravestone", "o_skeleton", "rope", "cagesign", "gnasher", "taxwraith", "chandelier", "revenant"];
-const CASINO_ART = ["pet_potboy", "pet_pocketowl", "pet_mossback", "pet_trufflepig", "pet_stormling", "pet_salamander", "pet_ferret", "pet_crystalcrab", "pet_mimic", "pet_cerberpup", "pet_hoarder", "pet_goldentoad", "pet_moonmoth", "pet_housewins", "pet_coilwyrm", "pet_blackcat", "rony_south", "rony_east", "o_bomkiosk", "o_mirror", "kellz_south", "kellz_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "t_casino", "rug_casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "o_slots", "o_cointable", "o_dicetable", "o_bar", "o_sofa", "o_walldoor", "o_roulsign", "o_fightsign", "o_picsign", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "pet_coilling", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east"];
+const CASINO_ART = ["pet_potboy", "pet_pocketowl", "pet_mossback", "pet_trufflepig", "pet_stormling", "pet_salamander", "pet_ferret", "pet_crystalcrab", "pet_mimic", "pet_oracleowl", "pet_shellback", "pet_trufflebaron", "pet_tempest", "pet_magmadrake", "pet_banditking", "pet_diamondcrab", "pet_grandmimic", "pet_cerberpup", "pet_hoarder", "pet_goldentoad", "pet_moonmoth", "pet_housewins", "pet_coilwyrm", "pet_blackcat", "rony_south", "rony_east", "o_bomkiosk", "o_mirror", "kellz_south", "kellz_east", "o_buffet", "o_l_chips", "o_l_cards", "o_l_spill", "o_l_slips", "o_wetfloor", "o_mopbucket", "o_coatrack", "o_suitcase", "o_l_shoe", "o_soda", "o_snacks", "o_stool", "o_armchair", "o_ashtray", "o_smokesign", "o_trashcan", "o_cooler", "o_planter", "o_cashier", "o_hilo", "o_mines", "o_plinko", "o_scratch", "t_casino", "rug_casino", "dex_south", "dex_east", "dookie_south", "dookie_east", "o_slots", "o_cointable", "o_dicetable", "o_bar", "o_sofa", "o_walldoor", "o_roulsign", "o_fightsign", "o_picsign", "o_pokertable", "o_blackjack", "o_coinstatue", "o_ropepost", "o_cocktail", "o_jukebox", "o_oddsboard", "o_wildladder", "pet_bonepup", "pet_packrat", "pet_cointoad", "pet_lanternmoth", "pet_housecat", "pet_coilling", "o_prizewheel", "o_piano", "o_atm", "wall_neon", "wall_painting1", "wall_painting2", "pete_south", "pete_east", "nana_south", "nana_east", "randy_south", "randy_east", "wendell_south", "wendell_east", "ronde_south", "ronde_east"];
 /* ISLE_ART is a flat literal and CROP_ART is spread in beside it at each use, rather than folded in here,
    because tools/eastscape-pack.mjs reads these lists out of this file by grabbing the text between brackets —
    it can eval an array, not an expression. The packer derives the crop half from what is on disk. */
@@ -5041,11 +5051,11 @@ $("storeBtn").addEventListener("click", () => { if ($("storeWin").hidden) openSt
    two pets, and what those result in", with RPG MO's nest as the model. So the pen is ONE picture: [pet] + [pet] = [what you get],
    with the food under it and one button. Eggs are the hatchery's (its own window). The three ranks are drawn in their own colours
    everywhere (G.RANKS): grey Ordinary, blue Greater with a star, gold Legendary with a crown. */
-let PEN = null, penSel = [], penPick = {}, penTimer = 0, HATCH = null;
+let PEN = null, penSel = [], penPick = {}, penSaid = "", penTimer = 0, HATCH = null;
 const rankTag = (r) => `<span class="rk rk-${r}">${G.RANKS[r].mark ? `${G.RANKS[r].mark} ` : ""}${G.RANKS[r].name}</span>`;
 const petPic = (k, r = "ordinary") => `<span class="pp rk-${r}"><img src="${ART}${G.PETS[k].art}.png?v=${ART_VER[G.PETS[k].art] || ART_V}" alt=""></span>`;
 function clockLeft(at, ms) { const left = Math.max(0, at + ms - Date.now()), h = Math.floor(left / 3600000), m = Math.floor((left % 3600000) / 60000), sec = Math.floor((left % 60000) / 1000); return left ? `${h ? `${h} h ` : ""}${m} min${h ? "" : ` ${sec} s`}` : ""; }
-function tickClock(win, at, ms, btn) { clearInterval(penTimer); penTimer = setInterval(() => { if ($(win).hidden) { clearInterval(penTimer); return; } const el = $(win).querySelector(".pn-clock"); if (!el) return; const l = clockLeft(at, ms); el.textContent = l ? `${l} to go` : "Ready!"; el.classList.toggle("done", !l); const b = $(btn); if (b) b.disabled = !!l; }, 1000); }
+function tickClock(win, at, ms, btn) { clearInterval(penTimer); penTimer = setInterval(() => { if ($(win).hidden) { clearInterval(penTimer); return; } const el = $(win).querySelector(".pn-clock"); if (!el) return; const l = clockLeft(at, ms); el.textContent = l ? `${l} to go` : "Ready!"; const bar = $(win).querySelector(".pn-bar i"); if (bar) bar.style.width = `${Math.min(100, Math.round(((Date.now() - at) / ms) * 100))}%`; el.classList.toggle("done", !l); const b = $(btn); if (b) b.disabled = !!l; }, 1000); }
 function openPen(e) { PEN = e; penSel = penSel.filter((id) => G.petById(me, id)); openWin("penWin"); renderPen(); }
 function penNow() { return PEN?.pen ?? null; }
 function need(k, n) { const h = G.countItems(me, [k]); return `<em class="pn-need${h >= n ? "" : " no"}">${ico(k)}<b>${n} ${esc(ITEMS[k].name)}</b><small>you have ${h.toLocaleString()}</small></em>`; }
@@ -5053,73 +5063,75 @@ function renderPen() {
   if ($("penWin").hidden || !me) return;
   const lv = lvl("breeding"), P = penNow();
   $("penSub").innerHTML = `${sico("breeding")} Breeding ${lv}`;
-  const rules = `<div class="pn-rules">${rankTag("ordinary")} + ${rankTag("ordinary")} <i>=</i> ${rankTag("greater")} &nbsp;&middot;&nbsp; ${rankTag("greater")} + ${rankTag("greater")} <small>(same kind)</small> <i>=</i> ${rankTag("legend")}</div>`;
   const statList = (fx) => `<div class="pn-stats">${Object.entries(fx || {}).map(([k, v]) => `<span class="pn-stat">${esc(G.petFxText({ [k]: v }))}</span>`).join("")}</div>`;
-  const card = (p, empty) => p ? `<div class="pn-slot full rk-${G.rankOf(p)}">${petPic(p.k, G.rankOf(p))}<b>${esc(G.PETS[p.k].name)}</b>${rankTag(G.rankOf(p))}${statList(G.petStats(p))}</div>` : `<div class="pn-slot">${empty}</div>`;
+  const card = (p, empty) => p ? `<div class="pn-slot full">${petPic(p.k, G.rankOf(p))}<b>${esc(G.PETS[p.k].name)}</b>${rankTag(G.rankOf(p))}${statList(G.petStats(p))}</div>` : `<div class="pn-slot">${empty}</div>`;
   if (P) {
-    const r = P.kind === "legend" ? "legend" : "greater", kid = P.child || {}, left = clockLeft(P.at, P.ms);
-    $("penBody").innerHTML = `${rules}<div class="pn-eq">${card(P.a)}<i>+</i>${card(P.b)}<i>=</i><div class="pn-slot full out rk-${r}">${petPic(kid.k, r)}<b>${esc(G.PETS[kid.k].name)}</b>${rankTag(r)}${statList(kid.fx || G.PETS[kid.k].fx)}</div></div>
-      <div class="pn-clock${left ? "" : " done"}">${left ? `${left} to go` : "Ready!"}</div>
-      <div class="pn-acts"><button type="button" class="lk-btn" id="penCollect"${left ? " disabled" : ""}>Collect</button><button type="button" class="lk-btn plain" id="penRelease">Stop and take them back</button></div>
-      <p class="pn-note">The clock runs whether you are here or not. Stopping gives both pets back; the food is gone.</p>`;
+    const r = P.kind === "legend" ? "legend" : "greater", kid = P.child || {}, left = clockLeft(P.at, P.ms), pct = Math.min(100, Math.round(((Date.now() - P.at) / P.ms) * 100));
+    $("penBody").innerHTML = `<div class="pn-card"><div class="pn-eq">${card(P.a)}<i>+</i>${card(P.b)}<i>=</i><div class="pn-slot full out${r === "legend" ? " rk-legend" : ""}">${petPic(kid.k, r)}<b>${esc(G.PETS[kid.k].name)}</b>${rankTag(r)}${statList(kid.fx || G.PETS[kid.k].fx)}</div></div>
+      <div class="pn-bar"><i style="width:${pct}%"></i></div><div class="pn-clock${left ? "" : " done"}">${left ? `${left} to go` : "Ready to collect!"}</div>
+      <div class="pn-acts"><button type="button" class="lk-btn big" id="penCollect"${left ? " disabled" : ""}>Collect</button><button type="button" class="lk-btn plain" id="penRelease">Stop</button></div>
+      <p class="pn-note" style="text-align:center">Runs whether you're here or not. Stopping gives both pets back, but the food is gone.</p></div>`;
     $("penCollect").onclick = () => { SFX.play("ui_click"); send({ t: "pen", op: "collect" }); };
     $("penRelease").onclick = () => { if (confirm("Take both pets back and lose the food?")) send({ t: "pen", op: "release" }); };
     return tickClock("penWin", P.at, P.ms, "penCollect");
   }
   const a = G.petById(me, penSel[0]), b = G.petById(me, penSel[1]), pr = a && b ? G.pairOf(a, b) : null;
-  /* the picks: one stat from each parent, defaulting to each one's strongest; a Greater also takes the look of one of them */
+  /* a pair that cannot breed says so the way everything else does: above chat, and over this window (the owner: "it should pop up
+     a message above chat instead"). Once per pair, not on every redraw. */
+  const pairKey = a && b ? `${a.id}+${b.id}` : "";
+  if (pr?.no && penSaid !== pairKey) { penSaid = pairKey; say(pr.no, "bad"); }
   if (pr && !pr.no) {
     const SA = G.petStats(a), SB = G.petStats(b);
     if (!(penPick.sa in SA)) penPick.sa = G.bestStat(a, penPick.sb)[0];
     if (!(penPick.sb in SB) || penPick.sb === penPick.sa) penPick.sb = G.bestStat(b, penPick.sa)[0];
     if (!pr.kinds?.includes(penPick.look)) penPick.look = a.k;
   }
-  const step = (n, text, on) => `<div class="pn-step${on ? " on" : ""}"><b>${n}</b>${text}</div>`;
-  let out = `<div class="pn-slot out">?</div>`, plan = "", picks = "";
-  if (pr?.no) { out = `<div class="pn-slot out no">&times;</div>`; plan = `<p class="pn-warn">${esc(pr.no)}</p>`; }
+  let out = `<div class="pn-slot out">?</div>`, picks = "", plan = "";
+  if (pr?.no) out = `<div class="pn-slot out no">&times;<small style="font-size:11px;font-weight:700">Can't breed</small></div>`;
   else if (pr) {
     const r = pr.kind === "legend" ? "legend" : "greater", kidK = pr.kind === "legend" ? pr.child : penPick.look;
     const pA = [penPick.sa, G.petStats(a)[penPick.sa]], pB = [penPick.sb, G.petStats(b)[penPick.sb]];
     const fx = pr.kind === "legend" ? G.legendFx(pr.child, pA, pB) : G.mixFx("greater", pA, pB);
-    out = `<div class="pn-slot full out rk-${r}">${petPic(kidK, r)}<b>${esc(G.PETS[kidK].name)}</b>${rankTag(r)}${statList(fx)}</div>`;
-    const chips = (p, side, other) => Object.entries(G.petStats(p)).map(([k, v]) => { const on = penPick[side] === k, same = other === k; return `<button type="button" class="pn-chip${on ? " on" : ""}${same ? " off" : ""}" data-pk="${side}:${k}"${same ? ` title="The other parent is giving this one"` : ""}>${esc(G.petFxText({ [k]: v }))}</button>`; }).join("");
-    picks = `${step(2, pr.kind === "legend" ? "Pick one stat from each parent. The Legendary keeps its own powers and adds these two." : "Pick one stat from each parent. The baby gets both, a quarter stronger.", true)}
-      <div class="pn-picks"><div><small>From ${esc(G.PETS[a.k].name)}</small>${chips(a, "sa", penPick.sb)}</div><div><small>From ${esc(G.PETS[b.k].name)}</small>${chips(b, "sb", penPick.sa)}</div></div>
-      ${pr.kind === "greater" && pr.kinds.length > 1 ? `${step(3, "Choose which one it looks like.", true)}<div class="pn-looks">${pr.kinds.map((k) => `<button type="button" class="pn-look${penPick.look === k ? " on" : ""}" data-look="${k}">${petPic(k, "greater")}<b>${esc(G.PETS[k].name)}</b></button>`).join("")}</div>` : ""}`;
+    out = `<div class="pn-slot full out${r === "legend" ? " rk-legend" : ""}">${petPic(kidK, r)}<b>${esc(G.PETS[kidK].name)}</b>${rankTag(r)}${statList(fx)}</div>`;
+    const chips = (p, side, other) => Object.entries(G.petStats(p)).map(([k, v]) => { const on = penPick[side] === k, same = other === k; return `<button type="button" class="pn-chip${on ? " on" : ""}${same ? " off" : ""}" data-pk="${side}:${k}"${same ? ` title="The other parent is already giving this one"` : ""}>${esc(G.petFxText({ [k]: v }))}</button>`; }).join("");
+    picks = `<div class="pn-card"><h4><b>2</b>${pr.kind === "legend" ? "Pick a stat from each parent. The Legendary keeps its own and adds both." : "Pick a stat from each parent. The baby gets both, a quarter stronger."}</h4>
+      <div class="pn-picks"><div><small>${esc(G.PETS[a.k].name)}</small>${chips(a, "sa", penPick.sb)}</div><div><small>${esc(G.PETS[b.k].name)}</small>${chips(b, "sb", penPick.sa)}</div></div></div>
+      ${pr.kind === "greater" && pr.kinds.length > 1 ? `<div class="pn-card"><h4><b>3</b>Which one should it look like?</h4><div class="pn-looks">${pr.kinds.map((k) => `<button type="button" class="pn-look${penPick.look === k ? " on" : ""}" data-look="${k}">${petPic(k, "greater")}<b>${esc(G.PETS[k].name)}</b></button>`).join("")}</div></div>` : ""}`;
     const shortFood = pr.food.filter(([k, n]) => G.countItems(me, [k]) < n), lowLvl = lv < pr.lvl, ok = !shortFood.length && !lowLvl;
-    const why = lowLvl ? `You need Breeding ${pr.lvl} for a Legendary. You are ${lv}.` : shortFood.length ? shortFood.map(([k, n]) => `You need ${n} ${esc(ITEMS[k].name)} and have ${G.countItems(me, [k])}. Cook it at a campfire: ${esc(k === G.RANKS.greater.food ? "Cooking 50" : k === G.RANKS.legend.food ? "Cooking 80" : "Cooking 20")}.`).join(" ") : "";
-    plan = `<div class="pn-plan">${step(pr.kind === "greater" && pr.kinds.length > 1 ? 4 : 3, `Breed. ${pr.ms / 3600000} hours; both parents come back.`, ok)}
-      <div class="pn-reqs">${pr.food.map(([k, n]) => need(k, n)).join("")}${pr.lvl > 1 ? `<em class="pn-need${lowLvl ? " no" : ""}">${sico("breeding")}<b>Breeding ${pr.lvl}</b><small>you are ${lv}</small></em>` : ""}</div>
-      ${why ? `<p class="pn-warn">${why}</p>` : ""}<button type="button" class="lk-btn big" id="penGo"${ok ? "" : " disabled"}>Breed</button></div>`;
+    const why = lowLvl ? `You need Breeding ${pr.lvl} for a Legendary. You're ${lv}.` : shortFood.map(([k, n]) => `You need ${n} ${esc(ITEMS[k].name)} and have ${G.countItems(me, [k])}. Cook it at a campfire (${k === G.RANKS.greater.food ? "Cooking 50" : k === G.RANKS.legend.food ? "Cooking 80" : "Cooking 20"}).`).join(" ");
+    plan = `<div class="pn-card"><h4><b>${pr.kind === "greater" && pr.kinds.length > 1 ? 4 : 3}</b>Breed <span class="pn-time">&middot; ${pr.ms / 3600000} hours, both parents come back</span></h4>
+      <div class="pn-go"><div class="pn-reqs">${pr.food.map(([k, n]) => need(k, n)).join("")}${pr.lvl > 1 ? `<em class="pn-need${lowLvl ? " no" : ""}">${sico("breeding")}<b>Breeding ${pr.lvl}</b><small>you're ${lv}</small></em>` : ""}</div>
+      <button type="button" class="lk-btn big" id="penGo"${ok ? "" : " disabled"}>Breed</button></div>${why ? `<p class="pn-warn">${why}</p>` : ""}</div>`;
   }
   const pets = G.petsOf(me);
-  const list = pets.length ? pets.map((p) => { const r = G.rankOf(p), on = penSel.includes(p.id); return `<button type="button" class="pn-pet rk-${r}${on ? " on" : ""}" data-pp="${p.id}">${petPic(p.k, r)}<b>${esc(G.PETS[p.k].name)}</b>${rankTag(r)}<small>${esc(G.petFxText(G.petStats(p)))}</small></button>`; }).join("") : `<p class="pn-note">No pets yet. They drop from monsters, and eggs hatch in a hatchery.</p>`;
-  $("penBody").innerHTML = `${rules}${step(1, penSel.length < 2 ? `Choose two pets from yours below (${penSel.length} of 2).` : "Your two pets. Click one below to swap it out.", penSel.length < 2)}
-    <div class="pn-eq">${card(a, "Pet 1")}<i>+</i>${card(b, "Pet 2")}<i>=</i>${out}</div>${picks}${plan}
-    <div class="ph phsep">Your pets <small>click to put one in, click again to take it out</small></div><div class="pn-pets">${list}</div>
-    <p class="pn-note">Pet food is cooked at a campfire: ${rankTag("ordinary")} Cooking 20, ${rankTag("greater")} Cooking 50, ${rankTag("legend")} Cooking 80.</p>`;
+  const list = pets.length ? pets.map((p) => { const r = G.rankOf(p), n = penSel.indexOf(p.id); return `<button type="button" class="pn-pet${n >= 0 ? " on" : ""}" data-pp="${p.id}">${n >= 0 ? `<span class="pn-num">${n + 1}</span>` : ""}${petPic(p.k, r)}<b>${esc(G.PETS[p.k].name)}</b>${rankTag(r)}<small>${esc(G.petFxText(G.petStats(p)))}</small></button>`; }).join("") : `<p class="pn-note">No pets yet. They drop from monsters, and eggs hatch in a hatchery.</p>`;
+  $("penBody").innerHTML = `<div class="pn-card"><h4><b>1</b>${penSel.length < 2 ? `Choose two pets <span class="pn-time">&middot; ${penSel.length} of 2</span>` : "Your pair"}</h4>
+      <div class="pn-eq">${card(a, "Pet 1")}<i>+</i>${card(b, "Pet 2")}<i>=</i>${out}</div></div>${picks}${plan}
+    <div class="pn-card"><h4>Your pets <span class="pn-time">&middot; click to add or remove</span></h4><div class="pn-pets">${list}</div>
+    <p class="pn-note">Pet food is cooked at a campfire: ${rankTag("ordinary")} Cooking 20 &middot; ${rankTag("greater")} Cooking 50 &middot; ${rankTag("legend")} Cooking 80.</p></div>`;
   $("penBody").querySelectorAll("[data-pp]").forEach((el) => el.addEventListener("click", () => { const id = el.dataset.pp; SFX.play("ui_click"); penSel = penSel.includes(id) ? penSel.filter((x) => x !== id) : [...penSel, id].slice(-2); penPick = {}; renderPen(); }));
-  $("penBody").querySelectorAll("[data-pk]").forEach((el) => el.addEventListener("click", () => { if (el.classList.contains("off")) return; const [side, k] = el.dataset.pk.split(":"); SFX.play("ui_click"); penPick[side] = k; renderPen(); }));
+  $("penBody").querySelectorAll("[data-pk]").forEach((el) => el.addEventListener("click", () => { if (el.classList.contains("off")) return say("The other parent is already giving that stat. Pick a different one.", "bad"); const [side, k] = el.dataset.pk.split(":"); SFX.play("ui_click"); penPick[side] = k; renderPen(); }));
   $("penBody").querySelectorAll("[data-look]").forEach((el) => el.addEventListener("click", () => { SFX.play("ui_click"); penPick.look = el.dataset.look; renderPen(); }));
-  if ($("penGo")) $("penGo").onclick = () => { SFX.play("ui_click"); send({ t: "pen", op: "pair", a: penSel[0], b: penSel[1], sa: penPick.sa, sb: penPick.sb, look: penPick.look }); penSel = []; penPick = {}; };
+  if ($("penGo")) $("penGo").onclick = () => { SFX.play("ui_click"); send({ t: "pen", op: "pair", a: penSel[0], b: penSel[1], sa: penPick.sa, sb: penPick.sb, look: penPick.look }); penSel = []; penPick = {}; penSaid = ""; };
 }
 function openHatch(e) { HATCH = e; openWin("hatchWin"); renderHatch(); }
 function renderHatch() {
   if ($("hatchWin").hidden || !me) return;
   const H = HATCH?.hatch ?? null;
+  const eggPic = (k) => `<span class="pp">${ico(k)}</span>`;
   if (H) {
-    const left = clockLeft(H.at, H.ms);
-    $("hatchBody").innerHTML = `<div class="pn-eq">${`<div class="pn-slot full">${ico(H.egg)}<b>${esc(ITEMS[H.egg].name)}</b></div>`}<i>&rarr;</i><div class="pn-slot full out rk-ordinary">${petPic(H.child.k)}<b>${esc(G.PETS[H.child.k].name)}</b>${rankTag("ordinary")}</div></div>
-      <div class="pn-clock${left ? "" : " done"}">${left ? `${left} to go` : "Ready!"}</div>
-      <div class="pn-acts"><button type="button" class="lk-btn" id="hatchCollect"${left ? " disabled" : ""}>Collect</button></div><p class="pn-note">The clock runs whether you are here or not.</p>`;
+    const left = clockLeft(H.at, H.ms), pct = Math.min(100, Math.round(((Date.now() - H.at) / H.ms) * 100));
+    $("hatchBody").innerHTML = `<div class="pn-card"><div class="pn-eq"><div class="pn-slot full">${eggPic(H.egg)}<b>${esc(ITEMS[H.egg].name)}</b></div><i>&rarr;</i><div class="pn-slot full out">${petPic(H.child.k)}<b>${esc(G.PETS[H.child.k].name)}</b>${rankTag("ordinary")}<div class="pn-stats"><span class="pn-stat">${esc(G.petFxText(G.PETS[H.child.k].fx))}</span></div></div></div>
+      <div class="pn-bar"><i style="width:${pct}%"></i></div><div class="pn-clock${left ? "" : " done"}">${left ? `${left} to go` : "Ready to hatch!"}</div>
+      <div class="pn-acts"><button type="button" class="lk-btn big" id="hatchCollect"${left ? " disabled" : ""}>Collect</button></div><p class="pn-note" style="text-align:center">Runs whether you're here or not.</p></div>`;
     $("hatchCollect").onclick = () => { SFX.play("ui_click"); send({ t: "hatch", op: "collect" }); };
     return tickClock("hatchWin", H.at, H.ms, "hatchCollect");
   }
-  const food = G.RANKS.ordinary.food, n = G.BREED.hatch.food, eggs = Object.keys(G.EGGS).filter((k) => G.countItems(me, [k]) > 0);
-  $("hatchBody").innerHTML = `<p class="pn-note">Put an egg in and wait. Every egg hatches on ${n} ${rankTag("ordinary")} pet food, cooked at a campfire (Cooking 20).</p><div class="pn-reqs">${need(food, n)}</div>
-    ${eggs.length ? eggs.map((k) => { const E = G.EGGS[k]; return `<div class="pn-egg"><div class="pn-eq small"><div class="pn-slot full">${ico(k)}<b>${esc(ITEMS[k].name)}</b></div><i>&rarr;</i><div class="pn-slot full out rk-ordinary">${petPic(E.pet)}<b>${esc(G.PETS[E.pet].name)}</b><small>${esc(G.petFxText(G.PETS[E.pet].fx))}</small></div></div>
-      <button type="button" class="lk-btn" data-hegg="${k}"${G.countItems(me, [food]) >= n ? "" : " disabled"}>Hatch (${Math.round(E.ms / 3600000)} hours)</button></div>`; }).join("") : `<p class="pn-note">No eggs. About one kill in ${Math.round(1 / G.BREED.eggDrop).toLocaleString()} drops one, and each map has its own.</p>`}`;
-  $("hatchBody").querySelectorAll("[data-hegg]").forEach((el) => el.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "hatch", op: "egg", k: el.dataset.hegg }); }));
+  const food = G.RANKS.ordinary.food, n = G.BREED.hatch.food, have = G.countItems(me, [food]), eggs = Object.keys(G.EGGS).filter((k) => G.countItems(me, [k]) > 0);
+  $("hatchBody").innerHTML = `<div class="pn-card"><h4>Put an egg in and wait</h4><div class="pn-go"><p class="pn-note" style="margin:0">Every egg hatches on ${n} ${rankTag("ordinary")} pet food, cooked at a campfire (Cooking 20). Hatched pets can be bred.</p><div class="pn-reqs">${need(food, n)}</div></div></div>
+    ${eggs.length ? eggs.map((k) => { const E = G.EGGS[k]; return `<div class="pn-egg">${eggPic(k)}<span class="pn-arrow">&rarr;</span>${petPic(E.pet)}<div class="pn-who"><b>${esc(G.PETS[E.pet].name)}</b>${rankTag("ordinary")}<small>${esc(G.petFxText(G.PETS[E.pet].fx))} &middot; ${Math.round(E.ms / 3600000)} hours</small></div>
+      <button type="button" class="lk-btn" data-hegg="${k}">Hatch</button></div>`; }).join("") : `<div class="pn-card"><p class="pn-note" style="margin:0">No eggs yet. About one kill in ${Math.round(1 / G.BREED.eggDrop).toLocaleString()} drops one, and each map has its own.</p></div>`}`;
+  $("hatchBody").querySelectorAll("[data-hegg]").forEach((el) => el.addEventListener("click", () => { SFX.play("ui_click"); if (have < n) return say(`An egg needs ${n} Ordinary pet food to hatch on. You have ${have}: cook it at a campfire (Cooking 20).`, "bad"); send({ t: "hatch", op: "egg", k: el.dataset.hegg }); }));
 }
 function openMarket() { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin", "gameWin", "lookWin", "jukeWin", "vanWin"]) $(w).hidden = true; $("hwWin").hidden = false; SFX.play("ui_open"); renderMarket(); }
 function renderMarket() {
@@ -6382,7 +6394,7 @@ function renderPanel() {
     const petRows = pets.length ? pets.map((pt) => {
       const on = me.eq.pet === pt.id, f = pt.fx || G.PETS[pt.k].fx;
       const says = G.petFxText(f) + (G.PETS[pt.k].legend ? " · Legendary" : pt.tier ? " · Greater" : "");   /* (2026-09-27) Breeding: every effect in words, and the tier */
-      return `<div class="petrow${on ? " on" : ""}"><b>${esc(G.petLabel(pt))}</b><small>${esc(G.PETS[pt.k].name)} · ${says}</small>
+      return `<div class="petrow${on ? " on" : ""}">${petPic(pt.k, G.rankOf(pt))}<b>${esc(G.petLabel(pt))} ${rankTag(G.rankOf(pt))}</b><small>${esc(G.PETS[pt.k].name)} · ${esc(G.petFxText(f))}</small>
         <button type="button" class="lk-btn" data-pw="${pt.id}">${on ? "Stow" : "Wear"}</button>
         <button type="button" class="lk-btn plain" data-pn="${pt.id}">Name</button></div>`;
     }).join("") : `<div class="jk-msg">No pets yet. They turn up past the Lantern Mire, about one kill in a thousand.</div>`;

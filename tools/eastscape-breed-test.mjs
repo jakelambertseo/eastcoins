@@ -76,6 +76,12 @@ const decN = C.isle.decor.length; W.decorOp(S, pl, { op: "take", x: hb.x, y: hb.
 C.hatch.at -= G.EGGS.egg_gilded.ms; W.hatchOp(S, pl, { op: "collect" }); is(C.pets.some((p) => p.k === "mimic"), true, "a Mimic hatches"); is(C.hatch, null, "and the hatchery is empty");
 const vis = { ...pl, id: "u2", C: G.freshChar(), out: [] }; W.hatchOp(S, vis, { op: "view" }); is(vis.out.some((o) => o.type === "say" && /somebody else/.test(o.text)), true, "nobody else can use your hatchery");
 
+/* 4b. a hatched pet climbs the whole ladder */
+is(G.pairOf({ id: "h1", k: "mimic" }, { id: "h2", k: "pocketowl" }).kind, "greater", "two hatched pets breed into a Greater");
+is(Object.values(G.EGGS).every((e) => G.LEGEND_OF[e.pet]), true, "every hatchling has a Legendary");
+is(G.pairOf({ id: "h1", k: "mimic", tier: 1 }, { id: "h2", k: "mimic", tier: 1 }).child, "grandmimic", "two Greater Mimics make a Grand Mimic");
+is(/Ordinary pet with a Greater/.test(G.pairOf({ id: "h1", k: "mimic" }, { id: "h2", k: "mimic", tier: 1 }).no || ""), true, "an Ordinary with a Greater says so in words");
+
 /* 5. the pets' effects reach the game */
 C.pets.push({ id: "ow", k: "pocketowl", name: "" }); C.eq.pet = "ow"; C.eq.weapon = "yewlogs_longbow"; is(G.reachOfHeld(C), G.ITEMS.yewlogs_longbow.launcher.range + 1, "the Pocket Owl adds a tile to a bow");
 C.pets.push({ id: "mo", k: "mossback", name: "" }); C.eq.pet = "mo"; is(G.fxOf(C).tough >= 0.1, true, "the Mossback makes you take less damage");
