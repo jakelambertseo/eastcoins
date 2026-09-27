@@ -1586,12 +1586,18 @@ export class World {
       if (pr.no) return bad(pr.no);
       if (lv < pr.lvl) return bad(`That takes Breeding ${pr.lvl}. You're ${lv}.`);
       const short = needAll(pr.food); if (short) return bad(short);
+      /* (2026-09-27) THE PICKS: one stat from each parent (m.sa, m.sb) and, for a Greater, whose look (m.look). An old page that
+         sends none gets each parent's strongest, and a random look, which is what breeding did before. */
+      const SA = G.petStats(a), SB = G.petStats(b), sa = String(m.sa || ""), sb = String(m.sb || "");
+      const pA = sa && sa in SA ? [sa, SA[sa]] : G.bestStat(a, sb), pB = sb && sb in SB ? [sb, SB[sb]] : G.bestStat(b, pA[0]);
+      if (pA[0] && pA[0] === pB[0]) return bad("Pick two different stats, one from each parent.");
+      /* checked everything: now take the food and the pets */
       for (const [k, n] of pr.food) G.takeInv(C.inv, k, n);
       C.pets = C.pets.filter((p) => p.id !== a.id && p.id !== b.id);
       if (C.eq.pet === a.id || C.eq.pet === b.id) C.eq.pet = null;
       let child;
-      if (pr.kind === "legend") child = { k: pr.child };
-      else { const kind = pr.kinds[Math.random() < 0.5 ? 0 : 1], other = kind === a.k ? b.k : a.k; child = { k: kind, tier: 1, fx: G.greaterFx(kind, other) }; }
+      if (pr.kind === "legend") child = { k: pr.child, fx: G.legendFx(pr.child, pA, pB) };
+      else { const kind = pr.kinds.includes(String(m.look)) ? String(m.look) : pr.kinds[Math.random() < 0.5 ? 0 : 1]; child = { k: kind, tier: 1, fx: G.mixFx("greater", pA, pB) }; }
       C.pen = { kind: pr.kind, a, b, child, at: now, ms: this.penMs(pr.ms) };
       this.grant(pl, "breeding", G.BREED[pr.kind].xpStart); this.touch(pl);
       this.say(pl, `${G.petLabel(a)} and ${G.petLabel(b)} settle into the pen with the food. Come back in ${Math.round(pr.ms / 3600000)} hours.`, "good");
@@ -1602,7 +1608,7 @@ export class World {
       if (now < P.at + P.ms) { const left = P.at + P.ms - now, h = Math.floor(left / 3600000), mi = Math.ceil((left % 3600000) / 60000); return bad(`Not yet: ${h ? `${h} h ` : ""}${mi} min to go.`); }
       const back = [P.a, P.b].filter(Boolean);
       if (G.petsOf(C).length + back.length + 1 > 50) return bad("You have too many pets to take another. Let one go first.");
-      const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k: P.child.k, name: "", ...(P.child.tier ? { tier: 1, fx: P.child.fx } : {}) };
+      const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k: P.child.k, name: "", ...(P.child.tier ? { tier: 1 } : {}), ...(P.child.fx ? { fx: P.child.fx } : {}) };   /* a Legendary keeps its picked stats too */
       C.pets.push(...back, pet);
       const xp = P.kind === "egg" ? G.EGGS[P.egg].xp : G.BREED[P.kind].xpEnd;
       C.pen = null; this.grant(pl, "breeding", xp); this.touch(pl);

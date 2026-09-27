@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=327">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=328">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -993,6 +993,21 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .pn-clock{text-align:center;font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;margin:6px 0}.pn-clock.done{color:#2a8a2a}
 .pn-acts{display:flex;gap:6px;justify-content:center}
 .lk-btn.big{font-size:16px;padding:8px 26px}
+.pn-step{display:flex;align-items:center;gap:8px;margin:10px 0 4px;font-size:13px;font-weight:700;opacity:.6}.pn-step.on{opacity:1}
+.pn-step>b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#5a4a30;color:#fff;font-size:12px;flex:none}.pn-step.on>b{background:#2f6fd0}
+.pn-stats{display:flex;flex-direction:column;gap:2px;margin-top:2px}.pn-stat{font-size:10.5px;opacity:.85;line-height:1.25}
+.pn-picks{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pn-picks>div{display:flex;flex-direction:column;gap:4px;padding:6px;border-radius:8px;background:rgba(0,0,0,.06)}.pn-picks small{font-size:11px;opacity:.8;font-weight:700}
+.pn-chip{padding:6px 8px;border:2px solid rgba(0,0,0,.25);border-radius:8px;background:#fffaf0;color:#2a2016;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;text-align:left}
+.pn-chip.on{border-color:#2f6fd0;background:#dbe8ff;box-shadow:0 0 0 2px rgba(47,111,208,.25)}.pn-chip.on::before{content:"\2714  ";color:#2f6fd0}.pn-chip.off{opacity:.4;cursor:not-allowed}
+.pn-looks{display:flex;gap:8px;justify-content:center}.pn-look{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 10px;border:2px solid transparent;border-radius:8px;background:rgba(0,0,0,.06);color:inherit;font:inherit;cursor:pointer}.pn-look.on{border-color:#2f6fd0;background:#dbe8ff}
+.pn-warn{margin:6px 0;padding:6px 10px;border-radius:8px;background:rgba(180,40,30,.14);color:#8a1a10;font-weight:700;font-size:12.5px}
+.pn-pet small{font-size:10.5px;opacity:.8;text-align:center}
+/* (2026-09-27, the owner: "the messages above chat need to popup when users dont have enough food, etc") a refusal said while a window
+   is open also pops up over it, so it is never hidden behind the window that caused it */
+#popMsg{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:9000;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+#popMsg p{margin:0;padding:8px 16px;border-radius:10px;background:#7a1a12;color:#fff;font-weight:700;font-size:14px;box-shadow:0 4px 16px rgba(0,0,0,.45);max-width:min(560px,90vw);text-align:center;animation:popIn .18s ease-out}
+#popMsg p.good{background:#1f6a2a}
+@keyframes popIn{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
 /* (2026-09-27, the owner: "add a prominent link to the event wiki on the opening page of the wiki") the event's own card, first thing under the title while hwOn() */
 .whw{display:flex;align-items:center;gap:12px;margin:8px 0 12px;padding:10px 14px;border-radius:10px;background:linear-gradient(90deg,#2a1238,#4a1a5a);border:2px solid #ff7a1a;color:#f2e6ff;text-decoration:none;cursor:pointer;box-shadow:0 0 14px rgba(255,122,26,.35)}
 .whw:hover{box-shadow:0 0 20px rgba(255,140,40,.6)}
@@ -1323,7 +1338,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=327";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=328";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1332,7 +1347,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=182").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=183").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -1898,6 +1913,10 @@ function say(text, cls = "sys") {
   if (cls === "loot") lootLine(text);
   const p = document.createElement("p"); p.className = cls; p.textContent = text;
   const log = $("log"); log.append(p); while (log.children.length > 5) log.firstChild.remove();
+  if ((cls === "bad" || cls === "good") && document.querySelector(".win:not([hidden])")) {   /* (2026-09-27) never hidden behind the window that caused it */
+    let box = $("popMsg"); if (!box) { box = document.createElement("div"); box.id = "popMsg"; document.body.append(box); }
+    const q = document.createElement("p"); q.className = cls; q.textContent = text; box.append(q); while (box.children.length > 3) box.firstChild.remove(); setTimeout(() => q.remove(), 4000);
+  }
   setTimeout(() => p.remove(), 9000);
 }
 
@@ -5022,7 +5041,7 @@ $("storeBtn").addEventListener("click", () => { if ($("storeWin").hidden) openSt
    two pets, and what those result in", with RPG MO's nest as the model. So the pen is ONE picture: [pet] + [pet] = [what you get],
    with the food under it and one button. Eggs are the hatchery's (its own window). The three ranks are drawn in their own colours
    everywhere (G.RANKS): grey Ordinary, blue Greater with a star, gold Legendary with a crown. */
-let PEN = null, penSel = [], penTimer = 0, HATCH = null;
+let PEN = null, penSel = [], penPick = {}, penTimer = 0, HATCH = null;
 const rankTag = (r) => `<span class="rk rk-${r}">${G.RANKS[r].mark ? `${G.RANKS[r].mark} ` : ""}${G.RANKS[r].name}</span>`;
 const petPic = (k, r = "ordinary") => `<span class="pp rk-${r}"><img src="${ART}${G.PETS[k].art}.png?v=${ART_VER[G.PETS[k].art] || ART_V}" alt=""></span>`;
 function clockLeft(at, ms) { const left = Math.max(0, at + ms - Date.now()), h = Math.floor(left / 3600000), m = Math.floor((left % 3600000) / 60000), sec = Math.floor((left % 60000) / 1000); return left ? `${h ? `${h} h ` : ""}${m} min${h ? "" : ` ${sec} s`}` : ""; }
@@ -5035,10 +5054,11 @@ function renderPen() {
   const lv = lvl("breeding"), P = penNow();
   $("penSub").innerHTML = `${sico("breeding")} Breeding ${lv}`;
   const rules = `<div class="pn-rules">${rankTag("ordinary")} + ${rankTag("ordinary")} <i>=</i> ${rankTag("greater")} &nbsp;&middot;&nbsp; ${rankTag("greater")} + ${rankTag("greater")} <small>(same kind)</small> <i>=</i> ${rankTag("legend")}</div>`;
-  const card = (p, empty) => p ? `<div class="pn-slot full rk-${G.rankOf(p)}">${petPic(p.k, G.rankOf(p))}<b>${esc(G.PETS[p.k].name)}</b>${rankTag(G.rankOf(p))}</div>` : `<div class="pn-slot">${empty}</div>`;
+  const statList = (fx) => `<div class="pn-stats">${Object.entries(fx || {}).map(([k, v]) => `<span class="pn-stat">${esc(G.petFxText({ [k]: v }))}</span>`).join("")}</div>`;
+  const card = (p, empty) => p ? `<div class="pn-slot full rk-${G.rankOf(p)}">${petPic(p.k, G.rankOf(p))}<b>${esc(G.PETS[p.k].name)}</b>${rankTag(G.rankOf(p))}${statList(G.petStats(p))}</div>` : `<div class="pn-slot">${empty}</div>`;
   if (P) {
     const r = P.kind === "legend" ? "legend" : "greater", kid = P.child || {}, left = clockLeft(P.at, P.ms);
-    $("penBody").innerHTML = `${rules}<div class="pn-eq">${card(P.a)}<i>+</i>${card(P.b)}<i>=</i><div class="pn-slot full out rk-${r}">${petPic(kid.k, r)}<b>${esc(G.PETS[kid.k].name)}</b>${rankTag(r)}</div></div>
+    $("penBody").innerHTML = `${rules}<div class="pn-eq">${card(P.a)}<i>+</i>${card(P.b)}<i>=</i><div class="pn-slot full out rk-${r}">${petPic(kid.k, r)}<b>${esc(G.PETS[kid.k].name)}</b>${rankTag(r)}${statList(kid.fx || G.PETS[kid.k].fx)}</div></div>
       <div class="pn-clock${left ? "" : " done"}">${left ? `${left} to go` : "Ready!"}</div>
       <div class="pn-acts"><button type="button" class="lk-btn" id="penCollect"${left ? " disabled" : ""}>Collect</button><button type="button" class="lk-btn plain" id="penRelease">Stop and take them back</button></div>
       <p class="pn-note">The clock runs whether you are here or not. Stopping gives both pets back; the food is gone.</p>`;
@@ -5047,24 +5067,41 @@ function renderPen() {
     return tickClock("penWin", P.at, P.ms, "penCollect");
   }
   const a = G.petById(me, penSel[0]), b = G.petById(me, penSel[1]), pr = a && b ? G.pairOf(a, b) : null;
-  let out = `<div class="pn-slot out">?</div>`, plan = `<p class="pn-note">Pick two pets from yours below.</p>`;
-  if (pr?.no) { out = `<div class="pn-slot out no">&times;</div>`; plan = `<p class="pn-note no">${esc(pr.no)}</p>`; }
+  /* the picks: one stat from each parent, defaulting to each one's strongest; a Greater also takes the look of one of them */
+  if (pr && !pr.no) {
+    const SA = G.petStats(a), SB = G.petStats(b);
+    if (!(penPick.sa in SA)) penPick.sa = G.bestStat(a, penPick.sb)[0];
+    if (!(penPick.sb in SB) || penPick.sb === penPick.sa) penPick.sb = G.bestStat(b, penPick.sa)[0];
+    if (!pr.kinds?.includes(penPick.look)) penPick.look = a.k;
+  }
+  const step = (n, text, on) => `<div class="pn-step${on ? " on" : ""}"><b>${n}</b>${text}</div>`;
+  let out = `<div class="pn-slot out">?</div>`, plan = "", picks = "";
+  if (pr?.no) { out = `<div class="pn-slot out no">&times;</div>`; plan = `<p class="pn-warn">${esc(pr.no)}</p>`; }
   else if (pr) {
-    const r = pr.kind === "legend" ? "legend" : "greater", kids = pr.kind === "legend" ? [pr.child] : pr.kinds;
-    out = `<div class="pn-slot full out rk-${r}">${kids.map((k) => petPic(k, r)).join("")}<b>${kids.map((k) => esc(G.PETS[k].name)).join(" or ")}</b>${rankTag(r)}</div>`;
-    const ok = lv >= pr.lvl && pr.food.every(([k, n]) => G.countItems(me, [k]) >= n);
-    const fx = pr.kind === "legend" ? G.petFxText(G.PETS[pr.child].fx) : "its own effect a quarter stronger, and a little of the other's";
-    plan = `<div class="pn-plan"><p class="pn-note">${pr.kind === "legend" ? "Its Legendary" : kids.length > 1 ? "One of the two, as a Greater pet" : "A Greater one"}: ${esc(fx)}. ${pr.ms / 3600000} hours. Both parents come back.</p>
-      <div class="pn-reqs">${pr.food.map(([k, n]) => need(k, n)).join("")}${pr.lvl > 1 ? `<em class="pn-need${lv >= pr.lvl ? "" : " no"}">${sico("breeding")}<b>Breeding ${pr.lvl}</b><small>you are ${lv}</small></em>` : ""}</div>
-      <button type="button" class="lk-btn big" id="penGo"${ok ? "" : " disabled"}>Breed</button></div>`;
+    const r = pr.kind === "legend" ? "legend" : "greater", kidK = pr.kind === "legend" ? pr.child : penPick.look;
+    const pA = [penPick.sa, G.petStats(a)[penPick.sa]], pB = [penPick.sb, G.petStats(b)[penPick.sb]];
+    const fx = pr.kind === "legend" ? G.legendFx(pr.child, pA, pB) : G.mixFx("greater", pA, pB);
+    out = `<div class="pn-slot full out rk-${r}">${petPic(kidK, r)}<b>${esc(G.PETS[kidK].name)}</b>${rankTag(r)}${statList(fx)}</div>`;
+    const chips = (p, side, other) => Object.entries(G.petStats(p)).map(([k, v]) => { const on = penPick[side] === k, same = other === k; return `<button type="button" class="pn-chip${on ? " on" : ""}${same ? " off" : ""}" data-pk="${side}:${k}"${same ? ` title="The other parent is giving this one"` : ""}>${esc(G.petFxText({ [k]: v }))}</button>`; }).join("");
+    picks = `${step(2, pr.kind === "legend" ? "Pick one stat from each parent. The Legendary keeps its own powers and adds these two." : "Pick one stat from each parent. The baby gets both, a quarter stronger.", true)}
+      <div class="pn-picks"><div><small>From ${esc(G.PETS[a.k].name)}</small>${chips(a, "sa", penPick.sb)}</div><div><small>From ${esc(G.PETS[b.k].name)}</small>${chips(b, "sb", penPick.sa)}</div></div>
+      ${pr.kind === "greater" && pr.kinds.length > 1 ? `${step(3, "Choose which one it looks like.", true)}<div class="pn-looks">${pr.kinds.map((k) => `<button type="button" class="pn-look${penPick.look === k ? " on" : ""}" data-look="${k}">${petPic(k, "greater")}<b>${esc(G.PETS[k].name)}</b></button>`).join("")}</div>` : ""}`;
+    const shortFood = pr.food.filter(([k, n]) => G.countItems(me, [k]) < n), lowLvl = lv < pr.lvl, ok = !shortFood.length && !lowLvl;
+    const why = lowLvl ? `You need Breeding ${pr.lvl} for a Legendary. You are ${lv}.` : shortFood.length ? shortFood.map(([k, n]) => `You need ${n} ${esc(ITEMS[k].name)} and have ${G.countItems(me, [k])}. Cook it at a campfire: ${esc(k === G.RANKS.greater.food ? "Cooking 50" : k === G.RANKS.legend.food ? "Cooking 80" : "Cooking 20")}.`).join(" ") : "";
+    plan = `<div class="pn-plan">${step(pr.kind === "greater" && pr.kinds.length > 1 ? 4 : 3, `Breed. ${pr.ms / 3600000} hours; both parents come back.`, ok)}
+      <div class="pn-reqs">${pr.food.map(([k, n]) => need(k, n)).join("")}${pr.lvl > 1 ? `<em class="pn-need${lowLvl ? " no" : ""}">${sico("breeding")}<b>Breeding ${pr.lvl}</b><small>you are ${lv}</small></em>` : ""}</div>
+      ${why ? `<p class="pn-warn">${why}</p>` : ""}<button type="button" class="lk-btn big" id="penGo"${ok ? "" : " disabled"}>Breed</button></div>`;
   }
   const pets = G.petsOf(me);
-  const list = pets.length ? pets.map((p) => { const r = G.rankOf(p), on = penSel.includes(p.id); return `<button type="button" class="pn-pet rk-${r}${on ? " on" : ""}" data-pp="${p.id}">${petPic(p.k, r)}<b>${esc(G.PETS[p.k].name)}</b>${rankTag(r)}</button>`; }).join("") : `<p class="pn-note">No pets yet. They drop from monsters, and eggs hatch in a hatchery.</p>`;
-  $("penBody").innerHTML = `${rules}<div class="pn-eq">${card(a, "Pet 1")}<i>+</i>${card(b, "Pet 2")}<i>=</i>${out}</div>${plan}
+  const list = pets.length ? pets.map((p) => { const r = G.rankOf(p), on = penSel.includes(p.id); return `<button type="button" class="pn-pet rk-${r}${on ? " on" : ""}" data-pp="${p.id}">${petPic(p.k, r)}<b>${esc(G.PETS[p.k].name)}</b>${rankTag(r)}<small>${esc(G.petFxText(G.petStats(p)))}</small></button>`; }).join("") : `<p class="pn-note">No pets yet. They drop from monsters, and eggs hatch in a hatchery.</p>`;
+  $("penBody").innerHTML = `${rules}${step(1, penSel.length < 2 ? `Choose two pets from yours below (${penSel.length} of 2).` : "Your two pets. Click one below to swap it out.", penSel.length < 2)}
+    <div class="pn-eq">${card(a, "Pet 1")}<i>+</i>${card(b, "Pet 2")}<i>=</i>${out}</div>${picks}${plan}
     <div class="ph phsep">Your pets <small>click to put one in, click again to take it out</small></div><div class="pn-pets">${list}</div>
     <p class="pn-note">Pet food is cooked at a campfire: ${rankTag("ordinary")} Cooking 20, ${rankTag("greater")} Cooking 50, ${rankTag("legend")} Cooking 80.</p>`;
-  $("penBody").querySelectorAll("[data-pp]").forEach((el) => el.addEventListener("click", () => { const id = el.dataset.pp; SFX.play("ui_click"); penSel = penSel.includes(id) ? penSel.filter((x) => x !== id) : [...penSel, id].slice(-2); renderPen(); }));
-  if ($("penGo")) $("penGo").onclick = () => { SFX.play("ui_click"); send({ t: "pen", op: "pair", a: penSel[0], b: penSel[1] }); penSel = []; };
+  $("penBody").querySelectorAll("[data-pp]").forEach((el) => el.addEventListener("click", () => { const id = el.dataset.pp; SFX.play("ui_click"); penSel = penSel.includes(id) ? penSel.filter((x) => x !== id) : [...penSel, id].slice(-2); penPick = {}; renderPen(); }));
+  $("penBody").querySelectorAll("[data-pk]").forEach((el) => el.addEventListener("click", () => { if (el.classList.contains("off")) return; const [side, k] = el.dataset.pk.split(":"); SFX.play("ui_click"); penPick[side] = k; renderPen(); }));
+  $("penBody").querySelectorAll("[data-look]").forEach((el) => el.addEventListener("click", () => { SFX.play("ui_click"); penPick.look = el.dataset.look; renderPen(); }));
+  if ($("penGo")) $("penGo").onclick = () => { SFX.play("ui_click"); send({ t: "pen", op: "pair", a: penSel[0], b: penSel[1], sa: penPick.sa, sb: penPick.sb, look: penPick.look }); penSel = []; penPick = {}; };
 }
 function openHatch(e) { HATCH = e; openWin("hatchWin"); renderHatch(); }
 function renderHatch() {
@@ -6470,7 +6507,7 @@ function renderAdmin(p) {
     .map(([k, it]) => [k, `${it.icon} ${it.name}`]));
   /* the teleport list has the same problem for the same reason — it was in whatever order the rules file
      declares scenes, which is roughly the order they were built. Forty-odd of them now. */
-  const scenes = Object.fromEntries(Object.entries(SCENES)
+  const scenes = Object.fromEntries(Object.entries({ ...SCENES, ...Object.fromEntries([["depths", "The Depths of the Mountain"], ["wild", "The Wilderness"], ["deep", "The Deep Wild"]].filter(([k]) => !SCENES[k]).map(([k, name]) => [k, { name }])) })   /* (2026-09-27) the closed file's maps, before the page has fetched it */
     .sort((a, b) => String(a[1].name).localeCompare(String(b[1].name), undefined, { sensitivity: "base" }))
     .map(([k, s]) => [k, s.name]));
   const quests = Object.fromEntries(Object.entries(QUESTS).map(([k, q]) => [k, `${q.name} (${G.qState(me, k)})`]));

@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 306;
+export const VERSION = 307;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -6175,7 +6175,25 @@ pfood("grimscale", "legend", 80, 200, [["grimscale", 1], ["voidmorel", 1]], 2);
 pfood("catalytic", "legend", 80, 200, [["catalytic", 1], ["starcap", 1]], 2);
 pfood("fang", "legend", 80, 200, [["snakefang", 1], ["truffle", 1]], 2);
 
-/** a Greater child's effects: its own kind's a quarter better (bag slots +1), and the other parent's strongest at a quarter */
+/* (2026-09-27, the owner: "we need some mechanism where pets stats can mix and match, almost like a selector thats 'take this 1 stat
+   from a pet, take this other stat from a pet' ... think pokemon") PICK ONE STAT FROM EACH PARENT. The child carries exactly the two
+   stats chosen, one from each parent, and (for a Greater) the look of whichever parent you choose.
+   - A GREATER child gets both picks a quarter stronger (+1 for bag slots, a present stays a present, bow range stays as it is).
+   - A LEGENDARY keeps its own powers and adds the two picks at the parents' values; where a pick is a power it already has, the
+     bigger of the two stands. So two Greater pets bred for the right stats make a better Legendary: the Pokemon part.
+   The two picks must be different stats: the same one twice would only be the bigger of them, which is not a choice. */
+/** a pet instance's stats: its own (a Greater or bred one) or its kind's */
+export const petStats = (p) => p?.fx || PETS[p?.k]?.fx || {};
+const boost = (k, v) => (k === "slots" ? v + 1 : k === "gift" ? 1 : k === "reach" ? v : Math.ceil(v * 1.25));
+/** the child's stats from the two picks ([key, value] from each parent) */
+export function mixFx(kind, pickA, pickB) {
+  const out = {}; for (const [k, v] of [pickA, pickB]) if (k) out[k] = Math.max(out[k] || 0, boost(k, v)); return out;
+}
+/** a Legendary's stats with the two picks added */
+export const legendFx = (child, pickA, pickB) => { const out = { ...(PETS[child]?.fx || {}) }; for (const [k, v] of [pickA, pickB]) if (k) out[k] = Math.max(out[k] || 0, v); return out; };
+/** the default pick from a parent: its strongest stat that the other pick is not */
+export const bestStat = (p, not) => Object.entries(petStats(p)).filter(([k]) => k !== not && k !== "gift").sort((x, y) => y[1] - x[1])[0] || Object.entries(petStats(p))[0] || [null, 0];
+/** (before 2026-09-27's picks) a Greater child's effects: its own kind's a quarter better, and the other parent's strongest at a quarter. Kept for old callers. */
 export function greaterFx(kind, otherKind) {
   const own = PETS[kind]?.fx || {}, other = PETS[otherKind]?.fx || {}, out = {};
   for (const [k, v] of Object.entries(own)) out[k] = k === "slots" ? v + 1 : k === "gift" ? 1 : Math.ceil(v * 1.25);
@@ -6192,10 +6210,10 @@ export function pairOf(a, b) {
   if (a.tier && b.tier) {
     if (a.k !== b.k) return { no: "Two Greater pets must be the same kind to make a Legendary." };
     if (!LEGEND_OF[a.k]) return { no: `There is no Legendary ${A.name}. Yet.` };
-    return { kind: "legend", lvl: BREED.legend.lvl, ms: BREED.legend.ms, child: LEGEND_OF[a.k], food: [[RANKS.legend.food, BREED.legend.food]] };
+    return { kind: "legend", lvl: BREED.legend.lvl, ms: BREED.legend.ms, child: LEGEND_OF[a.k], food: [[RANKS.legend.food, BREED.legend.food]], stats: [petStats(a), petStats(b)] };
   }
   if (a.tier || b.tier) return { no: "Pair two ordinary pets for a Greater one, or two Greater ones of the same kind for a Legendary." };
-  return { kind: "greater", lvl: BREED.greater.lvl, ms: BREED.greater.ms, kinds: [...new Set([a.k, b.k])], food: [[RANKS.greater.food, BREED.greater.food]] };
+  return { kind: "greater", lvl: BREED.greater.lvl, ms: BREED.greater.ms, kinds: [...new Set([a.k, b.k])], food: [[RANKS.greater.food, BREED.greater.food]], stats: [petStats(a), petStats(b)] };
 }
 /** a pet's effects in words, for the pets panel and the pen */
 export const petFxText = (fx) => Object.entries(fx || {}).map(([k, v]) => ({ slots: `+${v} bag slots`, hp: `+${v} hitpoints`, tix: `+${v}% tickets`, speed: `+${v}% walk speed`, swing: `+${v}% work speed`, reach: `+${v} bow range`, tough: `${v}% less damage`, grow: `+${v}% harvests`, bite: `+${v}% bites`, noburn: `${v}% fewer burns`, freesmelt: `${v}% free smelts`, steal: `+${v}% pickpocket`, gem: `+${v}% gems`, gift: "a daily present" }[k] || `${k} ${v}`)).join(" · ");
@@ -6836,7 +6854,7 @@ export function normChar(c) {
      The slot is checked against the list it points into, so selling or banking one cannot leave a ghost applying its
      bonuses — activePet returns null and petFx reads zeroes. */
   out.pets = (Array.isArray(c.pets) ? c.pets : []).filter((x) => x && PETS[x.k] && x.id)
-    .slice(0, 50).map((x) => ({ id: String(x.id).slice(0, 24), k: x.k, name: cleanPetName(x.name), ...(x.tier ? { tier: 1, fx: Object.fromEntries(Object.entries(x.fx && typeof x.fx === "object" ? x.fx : {}).filter(([k, v]) => /^(speed|slots|hp|tix|swing|reach|tough|grow|bite|noburn|freesmelt|steal|gem|gift)$/.test(k) && Number.isFinite(+v)).map(([k, v]) => [k, Math.max(0, Math.min(k === "slots" ? 12 : k === "reach" ? 2 : 60, Math.round(+v)))])) } : {}) }));   /* (2026-09-27) a Greater pet keeps its tier and its own effects, clamped */
+    .slice(0, 50).map((x) => ({ id: String(x.id).slice(0, 24), k: x.k, name: cleanPetName(x.name), ...(x.tier || (x.fx && PETS[x.k]?.legend) ? { ...(x.tier ? { tier: 1 } : {}), fx: Object.fromEntries(Object.entries(x.fx && typeof x.fx === "object" ? x.fx : {}).filter(([k, v]) => /^(speed|slots|hp|tix|swing|reach|tough|grow|bite|noburn|freesmelt|steal|gem|gift)$/.test(k) && Number.isFinite(+v)).map(([k, v]) => [k, Math.max(0, Math.min(k === "slots" ? 14 : k === "reach" ? 3 : 80, Math.round(+v)))])) } : {}) }));   /* (2026-09-27) a Greater pet keeps its tier and its own effects, clamped; a Legendary its picked ones */
   if (out.eq.pet && !out.pets.some((x) => x.id === out.eq.pet)) out.eq.pet = null;   /* (2026-09-21) what Ronde sold them, cleaned: an item that no longer exists simply stops being worn */
   // renames are followed BEFORE anything is filtered against ITEMS: the filter
   // below deletes keys it does not recognise, so an un-aliased rename would
