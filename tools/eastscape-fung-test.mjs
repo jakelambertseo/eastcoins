@@ -28,8 +28,15 @@ let placed = false;
 for (let y = 3; y < G.ROWS - 3 && !placed; y++) for (let x = 3; x < G.COLS - 3 && !placed; x++) { const n = C.isle.decor.length; W.decorOp(isle, pl, { op: "place", k: "cellarladder", x, y }); placed = C.isle.decor.length > n; }
 is(placed, true, "the cellar ladder can be put down on the island");
 const ladder = isle.objs.find((o) => o.t === "cellar"); is(!!ladder, true, "and it stands there as a ladder (t: cellar)");
-const vis = { ...pl, id: "u2", C: G.freshChar(), out: [] }; W.pls.set("u2", vis); vis.x = ladder.x; vis.y = ladder.y + 1; vis.C.scene = isle.key; vis.act = { kind: "cellar", ob: ladder, x: ladder.x, y: ladder.y }; W.doAction(isle, vis, Date.now());
-is(vis.C.scene, isle.key, "a visitor cannot go down somebody else's cellar"); W.pls.delete("u2");
+/* (2026-09-27) a visitor follows the island's door: shut, they stay up; open, they climb down and can look but not pick */
+const vis = { ...pl, id: "u2", C: G.freshChar(), out: [] }; W.pls.set("u2", vis);
+const visDown = () => { vis.x = ladder.x; vis.y = ladder.y + 1; vis.C.scene = isle.key; vis.act = { kind: "cellar", ob: ladder, x: ladder.x, y: ladder.y }; W.doAction(isle, vis, Date.now()); };
+C.isle.open = false; visDown(); is(vis.C.scene, isle.key, "a visitor stays up when the island is closed to visitors");
+C.isle.open = true; visDown(); is(vis.C.scene, "cellar:u1", "and climbs down when it is open");
+{ const cS = W.scene("cellar:u1"), b0 = cS.objs.find((o) => o.t === "fbed"); C.isle.beds ||= []; const had = C.isle.beds[b0.i]; C.isle.beds[b0.i] = { k: "spawn_sporecap", at: 0, ms: 1 };
+  vis.out = []; vis.x = b0.x; vis.y = b0.y + 1; vis.act = { kind: "fbed", ob: b0, x: b0.x, y: b0.y }; W.doAction(cS, vis, Date.now());
+  is(/Somebody else's/.test(vis.out.filter((o) => o.type === "say").map((o) => o.text).pop() || "") && !!C.isle.beds[b0.i], true, "but cannot pick the owner's ripe bed"); C.isle.beds[b0.i] = had ?? null; }
+W.pls.delete("u2");
 arrive(isle, ladder, "cellar");
 is(C.scene, "cellar:u1", "the owner climbs down to their cellar");
 const cel = W.scene("cellar:u1"), beds = cel.objs.filter((o) => o.t === "fbed"), bin = cel.objs.find((o) => o.t === "compost");

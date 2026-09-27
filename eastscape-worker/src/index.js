@@ -1519,11 +1519,18 @@ export class World {
     const I = this.isleOf(S), d = (I?.decor || []).find((x) => x.k === G.FUNG.ladder && x.at === "isle");
     return { scene: G.isleKey(I, S.owner), x: d ? d.x : G.SCENES.isle.entry.x, y: d ? d.y + 1 : G.SCENES.isle.entry.y };
   }
+  /* (2026-09-27, the owner: "let other people visit others dungeons. when i try to visit it says its padlocked") A VISITOR MAY CLIMB DOWN.
+     The cellar is part of the island, so it follows the island's own door: open to visitors, open down here too. Looking is all a visitor
+     does - the beds already answer "Somebody else's mushrooms" to anyone but the owner, and planting checks the owner. An owner who is
+     away is read from the copy Charon brought up for the island (S.isleCopy), handed down so the cellar shows their beds as left. */
   fungDown(S, pl) {
     if (!S.owner) return;
-    if (S.owner !== pl.id) return this.say(pl, "It's padlocked. Somebody keeps their mushrooms to themselves.", "bad");
+    const mine = S.owner === pl.id, I = this.isleOf(S);
+    if (!mine && !I?.open) return this.say(pl, "The hatch is shut: this island is closed to visitors.", "bad");
+    const S2 = this.scene(`cellar:${S.owner}`);
+    if (!mine) { S2.ownerName = S.ownerName; if (S.isleCopy && !this.pls.get(S.owner)) S2.isleCopy = S.isleCopy; }
     this.moveToScene(pl, `cellar:${S.owner}`, null, G.SCENES.cellar.entry); pl.dir = "north";
-    return this.say(pl, "You climb down into the cellar. It smells like a forest floor after rain.");
+    return this.say(pl, mine ? "You climb down into the cellar. It smells like a forest floor after rain." : `You climb down into ${S.ownerName || "their"}'s cellar. The beds are theirs: look, don't pick.`);
   }
   fungPick(S, pl, ob) {
     const C = pl.C, k = ob.k, sk = `spawn_${k}`, F = G.FUNGI[sk]; if (!F) return;
