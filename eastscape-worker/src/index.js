@@ -1163,13 +1163,19 @@ export class World {
 
      Tick time is the number that matters: the world steps every TICK_MS, so a
      p95 anywhere near that budget means everybody is playing a slow game. */
+  /** (2026-09-27) the King's state for /stats, so it can be checked from outside: up (with time and health), due, or next */
+  hwKingState(now = Date.now()) {
+    if (!G.hwOn(now)) return null; const H = this.hw || {};
+    if (H.kingUp) { const m = this.scenes.get(G.HW.king.scene)?.mobs.find((x) => x.id === H.kingUp.id); return { up: true, leftS: Math.max(0, Math.round((H.kingUp.until - now) / 1000)), hp: m && !m.dead ? m.hp : H.kingUp.hp ?? null, inMire: !!m }; }
+    return H.kingDue ? { due: true } : { nextS: H.kingAt ? Math.max(0, Math.round((H.kingAt - now) / 1000)) : null };
+  }
   statsOf() {
     const ms = [...this.tickMs].sort((a, b) => a - b);
     const at = (p) => (ms.length ? ms[Math.min(ms.length - 1, Math.floor(ms.length * p))] : 0);
     const upS = Math.max(1, Math.round((Date.now() - this.startedAt) / 1000));
     const scenes = {};
     for (const [key, S] of this.scenes) { const n = this.playersIn(S).length; if (n) scenes[key] = n; }
-    return {
+    return { king: this.hwKingState(),   /* (2026-09-27) */
       online: this.pls.size, peak: this.peak, scenes: this.scenes.size, busiest: scenes,
       tick: { budgetMs: TICK_MS, samples: ms.length, p50: at(0.5), p95: at(0.95), p99: at(0.99), max: ms.at(-1) || 0 },
       rate: { inPerS: +(this.msgsIn / upS).toFixed(1), outPerS: +(this.sentOut / upS).toFixed(1), outBytesPerS: Math.round(this.bytesOut / upS) },
@@ -1542,8 +1548,19 @@ export class World {
     if (H.kingDue) { const S = this.scenes.get(G.HW.king.scene); if (S && this.playersIn(S).length) this.hwSpawnKing(S, now); }
     if (H.kingUp) {
       const S = this.scenes.get(G.HW.king.scene), m = S?.mobs.find((x) => x.id === H.kingUp.id);
-      if (!S || !m || m.dead) { if (S && m && !H.kingUp.slain) { S.mobs = S.mobs.filter((x) => x.id !== m.id); S.whoSig = null; } H.kingUp = null; H.kingAt = now + G.HW.king.every; this.hwSave(); }
-      else if (now >= H.kingUp.until) { S.mobs = S.mobs.filter((x) => x.id !== m.id); S.whoSig = null; H.kingUp = null; H.kingAt = now + G.HW.king.every; this.hwSave(); this.houseSay("🎃 The Pumpkin King sinks back into the Mire. Next hour."); }
+      /* (2026-09-27, the owner: "no one is fighting the pumpkin right now, can you verify if its spawned") HE OUTLIVES AN EMPTY MIRE
+         AND A RESTART. A map nobody stands in is torn down after two minutes, and a restart rebuilds every map empty; both took the
+         King with them, and this read his absence as "gone" and cancelled him until the next hour - so the last person to walk
+         out of the Mire quietly ended the fight for everybody. Now a missing King who is still inside his twenty minutes is put
+         back, at the health he was left on, the moment somebody is in the Mire. Only the clock running out, or a kill, ends him. */
+      if (m && !m.dead && now < H.kingUp.until) { if (H.kingUp.hp !== m.hp) { H.kingUp.hp = m.hp; if (this.tickN % 100 === 0) this.hwSave(); } }
+      else if (now >= H.kingUp.until) { if (S && m) { S.mobs = S.mobs.filter((x) => x.id !== m.id); S.whoSig = null; } H.kingUp = null; H.kingAt = now + G.HW.king.every; this.hwSave(); this.houseSay("🎃 The Pumpkin King sinks back into the Mire. Next hour."); }
+      else if (!m && S && this.playersIn(S).length) {
+        const d = G.MOBS.pumpkinking, [x, y] = G.HW.king.at, hp = Math.max(1, Math.min(d.hp, H.kingUp.hp || d.hp));
+        S.mobs.push({ id: H.kingUp.id, t: "pumpkinking", x, y, hx: x, hy: y, hp, maxHp: d.hp, path: [], step: null, face: 1, nextWander: 0, dead: false, respawnAt: Infinity, hurtAt: 0, swingAt: 0, lastSwing: now, aggro: d.aggro });
+        S.whoSig = null;
+        for (const p of this.playersIn(S)) this.say(p, "The Pumpkin King is still here. He was only waiting.", "bad");
+      }
     }
     const night = G.nightfallOn(now);
     if (night !== !!H.night) { H.night = night; this.hwSave(); this.houseSay(night ? `🌙 NIGHTFALL. For the next hour every candy corn drop is doubled. Mind the lanterns.${G.hwDaysLeft(now) <= 7 ? ` ${G.hwDaysLeft(now)} night${G.hwDaysLeft(now) === 1 ? "" : "s"} of the Long Night left: spend your corn.` : ""}` : "The night lifts. Candy corn is back to its usual rate."); for (const p of this.pls.values()) p.out.push({ type: "hw", night }); }
@@ -1551,7 +1568,7 @@ export class World {
   hwSpawnKing(S, now) {
     const H = this.hw, d = G.MOBS.pumpkinking, [x, y] = G.HW.king.at, id = `${S.key}king${now.toString(36)}`;
     S.mobs.push({ id, t: "pumpkinking", x, y, hx: x, hy: y, hp: d.hp, maxHp: d.hp, path: [], step: null, face: 1, nextWander: 0, dead: false, respawnAt: Infinity, hurtAt: 0, swingAt: 0, lastSwing: now, aggro: d.aggro });
-    S.whoSig = null; H.kingDue = false; H.kingUp = { id, until: now + G.HW.king.stays, slain: false }; this.hwSave();
+    S.whoSig = null; H.kingDue = false; H.kingUp = { id, until: now + G.HW.king.stays, slain: false, hp: d.hp }; this.hwSave();
     for (const p of this.playersIn(S)) this.say(p, "The ground in the clearing splits and the Pumpkin King climbs out of it.", "bad");
   }
   hwKingDown(pl, now, helpers = []) {
@@ -2149,7 +2166,7 @@ export class World {
     for (const [key, S] of this.scenes) {
       if (key === "roulette" && !S.def.realRound && S.objs.some((o) => o.t === "roulette")) this.rouletteTick(S, now);   /* (v73: no wheel in the room, no rounds) */   /* (a realRound room's game is the site's: no rounds are run here) */
       if (key === "fightpit" && !S.def.realRound) this.fightTick(S, now);
-      if (!live.has(key)) { S.idleSince ||= now; if (!S.run && now - S.idleSince > SCENE_IDLE_MS && !(S.def.pvp && S.mobs.some((m) => m.dead && now < m.respawnAt)) && !S.roulette?.bets.length && !S.fight?.bets.length) this.scenes.delete(key); continue; }   /* (2026-09-27) `!S.run`: a dungeon run keeps its own clock (cryptTick / pyramidTick / countTick) and its held time is LONGER than this sweep */
+      if (!live.has(key)) { S.idleSince ||= now; if (!S.run && !(key === G.HW.king.scene && this.hw?.kingUp) && now - S.idleSince > SCENE_IDLE_MS && !(S.def.pvp && S.mobs.some((m) => m.dead && now < m.respawnAt)) && !S.roulette?.bets.length && !S.fight?.bets.length) this.scenes.delete(key); continue; }   /* (2026-09-27) `!S.run`: a dungeon run keeps its own clock (cryptTick / pyramidTick / countTick) and its held time is LONGER than this sweep */
       S.idleSince = 0;
       for (const pl of this.playersIn(S)) this.playerTick(S, pl, now);
       for (const o of S.objs) if (o.t === "wheat" && S.g[o.y][o.x] === "f" && !(o.grownAt > now)) {
