@@ -65,7 +65,13 @@ export const GUIDES = [
       <h3>Good to know</h3>
       <p><b>Walk speed and work speed are different.</b> Walk speed is how fast you move. Work speed is how fast you hit a monster, a rock or a tree, and how fast you fish and pick pockets.</p>
       <p><b>Speed has a limit.</b> Pets, food and gear all share the same cap, so stacking a fast pet on a fast meal won't go past it.</p>
-      <p><b>Name yours whatever you like.</b> Everyone sees the name. You can also let a pet go, and that can't be undone.</p>`;
+      <p><b>Name yours whatever you like.</b> Everyone sees the name. You can also let a pet go, and that can't be undone.</p>
+      <h3>Trading and selling pets</h3>
+      <p>A pet keeps its rank, its stats and its name when it changes hands. There are three ways:</p>
+      <ul><li><b>The trade window.</b> Your pets are listed under your bag. Click one to offer it; click it again to take it back. Up to ${G.PET_TRADE.tradeMax} a trade.</li>
+      <li><b>Livia's Exchange, the Pets tab.</b> Pick a pet and a price. It leaves your pets while it is up. Anyone can buy it outright, and the money goes to your bank, less 1%. You can have ${G.PET_TRADE.exSlots} up at once, and take one down any time.</li>
+      <li><b>Bom, at the Prize Counter.</b> He buys any pet: ${Object.entries(G.PET_TRADE.bom).map(([r, n]) => `${G.RANKS[r].name} ${n.toLocaleString()}`).join(", ")} tickets. Use the Sell to Bom button in your Equipment tab while you stand at his counter. Another player will usually pay more.</li></ul>
+      <p>One person can keep up to ${G.PET_TRADE.own} at once.</p>`;
     } },
   /* (2026-09-22) TYPED, like the pets page above and for the same reason: this file imports nothing. The rungs live
      in TOOL_GATES and the rule that turns a node's level into a rung is toolNeed(), both in eastscape-shared.js. */
@@ -1011,6 +1017,16 @@ export const GUIDES = [
 ];
 
 export const UPDATES = [
+  {
+    date: "2026-09-27", title: "Breeding, Fungiculture, and pets change hands",
+    items: [
+      "BREEDING: put two pets in the pet pen on your island. Two Ordinary pets make a Greater one with the two stats you pick from its parents, 25% stronger, glowing blue. Two Greater pets of the same kind make that pet's Legendary, glowing orange. The parents become the baby. Eggs drop from monsters and hatch in a hatchery, which Yahsmeena sells.",
+      "PET FOOD: Ordinary, Greater and Legendary, cooked at a campfire from monster drops and mushrooms (Cooking 20, 50 and 80). Every recipe is on the food's wiki page and in the Breeding guide.",
+      "FUNGICULTURE: buy a Cellar ladder from Yahsmeena, climb down, make compost at the bin and grow mushrooms in the beds. Every outdoor map also has three wild clusters you can pick once a day. The Fungiculture guide lists every shroom and every recipe it goes into.",
+      "PETS CAN BE TRADED AND SOLD. Offer them in the trade window next to items and tickets. List one on Livia's Exchange under the new Pets tab: anyone can buy it outright and the money goes to your bank, less 1%. Or sell one to Bom at the Prize Counter (Ordinary 1,000, Greater 5,000, Legendary 25,000 tickets). A traded pet keeps its rank, its stats and its name.",
+      "THE BUFFS BAR shows each buff as its icon and colour only. Hover one for its name, what it does and the time left.",
+    ],
+  },
   {
     date: "2026-09-27", title: "The Store, the world map, and Bom pays less for gear",
     items: [

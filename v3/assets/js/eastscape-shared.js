@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 313;
+export const VERSION = 314;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7676,6 +7676,18 @@ for (const [gem, clvl, cxp, cval, metal, slvl, sxp, fx, need] of JEWELS) {
     jrec(`set${gem}${slot}`, slvl + (slot === "amulet" ? 2 : 0), sxp + (slot === "amulet" ? Math.round(sxp * 0.3) : 0), [[base, 1], [cut, need]], k);
   }
 }
+
+/* (2026-09-27, the owner: "we need to make pets tradable between users or sellable ... so users can maximize breeding") PETS CHANGE HANDS.
+   Three ways, and each moves the pet object whole, so a Greater pet keeps its two picked stats and a name stays a name:
+   - the TRADE WINDOW, next to the items and tickets (up to tradeMax a side);
+   - LIVIA'S EXCHANGE: a pet is listed on its own at a price, leaves your list while it is up, and anyone can buy it outright. The
+     money goes to your bank like any sale, less the same 1% (exTax). Pets are not items and never stack, so they are not in the order
+     book; they are their own short list (exSlots each);
+   - BOM, at the Prize Counter, buys any pet by its rank. That is a floor, not a market: a Greater pet costs two pets, six Greater food
+     and twelve hours, so these are low on purpose, and the Exchange is where a good one is worth more.
+   `own` is the most pets one character can hold, the same 50 the pen's collect has always checked. */
+export const PET_TRADE = { bom: { ordinary: 1000, greater: 5000, legend: 25000 }, exSlots: 4, tradeMax: 6, own: 50 };
+export const petBomPrice = (p) => PET_TRADE.bom[rankOf(p)] || 0;
 
 /* (2026-09-27) what HOLD keeps out of the wiki: every item the two blocks made, the Depths' pet and Old Pickett's quests */
 if (HOLD.depths) { for (const k of Object.keys(ITEMS)) if (!_preDepths.has(k) && _preJewel.has(k)) ITEMS[k].held = true; PETS.potboy.held = true; for (const q of ["deepcrystal", "deepgoblins", "deepkeeper"]) if (QUESTS[q]) QUESTS[q].held = true; }

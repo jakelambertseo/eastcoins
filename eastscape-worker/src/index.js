@@ -717,6 +717,16 @@ export class World {
           pet.name = G.cleanPetName(m.name); this.touch(pl);
           return this.say(pl, `Named ${G.petLabel(pet)}.`, "good");
         }
+        /* (2026-09-27) BOM BUYS PETS, by rank (G.petBomPrice), at the Prize Counter like everything else he buys. Paid with cashTo,
+           not tixTo: it is a sale, so the 2X event does not double it and it does not count as tickets earned. */
+        if (op === "sell") {
+          const pet = G.petById(C, id); if (!pet) return;
+          if (!this.atCounter(S, pl)) return this.say(pl, "Bom buys pets at the Prize Counter, in the middle of the casino floor.", "bad");
+          const n = G.petBomPrice(pet); if (!n) return;
+          C.pets = C.pets.filter((x) => x.id !== id); if (C.eq.pet === id) C.eq.pet = null;
+          this.cashTo(pl, n); this.touch(pl);
+          return this.say(pl, `Bom takes ${G.petLabel(pet)} for ${G.fmtCash(n)}.`, "good");
+        }
         if (op === "free") {
           const pet = G.petById(C, id); if (!pet) return;
           C.pets = C.pets.filter((x) => x.id !== id); if (C.eq.pet === id) C.eq.pet = null; this.touch(pl);
@@ -3626,7 +3636,8 @@ export class World {
     const listings = open.filter((o) => o.side === "sell").sort((x, y) => y.at - x.at).slice(0, 80).map(view);
     const wanted = open.filter((o) => o.side === "buy").sort((x, y) => y.at - x.at).slice(0, 80).map(view);
     const mine = this.exMine(pl).sort((x, y) => y.at - x.at).map((o) => ({ id: o.id, side: o.side, k: o.k, f: o.f | 0, qty: o.qty, done: o.done, price: o.price, open: o.open, at: o.at, closedAt: o.closedAt || 0 }));
-    this.send(pl, { type: "exch", listings, wanted, mine, book: G.exSummary(this.ex.orders), last: this.ex.last });
+    const pets = (this.ex.pets || []).slice().sort((x, y) => y.at - x.at).map((l) => ({ id: l.id, pet: l.pet, price: l.price, name: l.name, at: l.at, mine: l.owner === pl.id }));   /* (2026-09-27) pet listings */
+    this.send(pl, { type: "exch", listings, wanted, mine, pets, book: G.exSummary(this.ex.orders), last: this.ex.last });
   }
   exNote(ownerId, text) {
     const p = this.pls.get(ownerId);
@@ -3644,6 +3655,8 @@ export class World {
     // closed offers stay on the owner's list for three days (so "recent" means something), then go
     const now = Date.now();
     this.ex.orders = this.ex.orders.filter((o) => o.open || o.box.items || o.box.cash || (o.qty > 0 && now - (o.closedAt || now) < 3 * 86400000));
+    const owed = this.ex.petOwed?.[pl.id];   /* (2026-09-27) a pet that sold while its owner was away */
+    if (owed && this.bankAdd(pl, "tickets", owed)) { delete this.ex.petOwed[pl.id]; moved = true; }
     const news = this.ex.news?.[pl.id];
     if (news?.length) { pl.out.push({ type: "exnote", text: `While you were away: ${news.join(" · ")}. It's in your bank.` }); delete this.ex.news[pl.id]; moved = true; }
     if (moved) this.touch(pl);
@@ -3698,6 +3711,7 @@ export class World {
       if (m.op === "buynow") return this.say(pl, o.done ? `You buy ${o.done.toLocaleString()} × ${G.ITEMS[k].name}. It's in your bank.` : "Somebody got there first: nothing left at that price.", o.done ? "good" : "bad");
       return this.say(pl, `Offer up: ${side === "sell" ? "selling" : "buying"} ${qty.toLocaleString()} × ${G.ITEMS[k].name} at ${G.fmtCash(price)} each.`, "good");
     }
+    if (m.op === "petlist" || m.op === "petbuy" || m.op === "petcancel") return this.exPetOp(pl, m, payCash, cashAll);
     const o = this.ex.orders.find((x) => x.id === (m.id | 0) && x.owner === pl.id); if (!o) return;
     if (m.op === "cancel" && o.open) {
       o.open = false; o.closedAt = now;
@@ -3716,6 +3730,41 @@ export class World {
       this.say(pl, `Offer taken down. ${[where, banked ? `${banked} in your BANK (a bank booth in town, or the chest in the Yard)` : ""].filter(Boolean).join(", and ") || "Nothing was left on it"}.${stuck ? " Your bank is full, so the rest is being HELD by the Exchange: make room and open the Exchange again." : ""}`, stuck ? "bad" : "good");
       this.touch(pl); this.exCommit(pl); this.exSend(pl);
     }
+  }
+  /* (2026-09-27) PETS ON THE EXCHANGE: one pet a listing, a fixed price, bought outright (see PET_TRADE in the rules). A listed pet is
+     held by the Exchange, not by its owner, so it cannot be worn, bred or traded twice while it is up. */
+  exPetOp(pl, m, payCash, cashAll) {
+    const C = pl.C, now = Date.now(), T = G.PET_TRADE, L = (this.ex.pets ||= []);
+    const done = (...pls) => { for (const p of pls) { this.touch(p); this.exSend(p); } this.exCommit(...pls); };
+    if (m.op === "petlist") {
+      const pet = G.petById(C, String(m.id || "")), price = Math.floor(Number(m.price));
+      if (!pet) return this.say(pl, "You don't have that pet.", "bad");
+      if (!(price >= 1 && price <= 1e9)) return this.say(pl, "Pick a price of at least 1 ticket.", "bad");
+      if (L.filter((l) => l.owner === pl.id).length >= T.exSlots) return this.say(pl, `You can have ${T.exSlots} pets up at once. Take one down first.`, "bad");
+      C.pets = C.pets.filter((x) => x.id !== pet.id); if (C.eq.pet === pet.id) C.eq.pet = null;
+      L.push({ id: this.ex.next++, owner: pl.id, name: pl.name, pet, price, at: now });
+      done(pl);
+      return this.say(pl, `${G.petLabel(pet)} is up for ${G.fmtCash(price)}.`, "good");
+    }
+    const l = L.find((x) => x.id === (m.lid | 0));
+    if (!l) { this.exSend(pl); return this.say(pl, "That pet isn't for sale any more.", "bad"); }
+    if (G.petsOf(C).length >= T.own) return this.say(pl, `You have ${T.own} pets, the most anyone can keep. Sell or let one go first.`, "bad");
+    if (m.op === "petcancel") {
+      if (l.owner !== pl.id) return;
+      this.ex.pets = L.filter((x) => x !== l); C.pets.push(this.petFresh(C, l.pet));
+      done(pl);
+      return this.say(pl, `${G.petLabel(l.pet)} is back with you.`, "good");
+    }
+    if (l.owner === pl.id) return this.say(pl, "That's your own pet. Take it down instead.", "bad");
+    if (cashAll() < l.price) return this.say(pl, `That needs ${G.fmtCash(l.price)}. You have ${G.fmtCash(cashAll())} (bag and bank).`, "bad");
+    payCash(l.price);
+    this.ex.pets = L.filter((x) => x !== l); C.pets.push(this.petFresh(C, l.pet));
+    const tax = G.exTax(l.price), net = l.price - tax; this.ex.tax += tax;
+    const seller = this.pls.get(l.owner), what = `sold ${G.petLabel(l.pet)} for ${G.fmtCash(net)}`;
+    if (seller && this.bankAdd(seller, "tickets", net)) seller.out.push({ type: "exnote", text: `You ${what}. It's in your bank.` });
+    else { (this.ex.petOwed ||= {})[l.owner] = ((this.ex.petOwed || {})[l.owner] || 0) + net; this.exNote(l.owner, what); }
+    done(pl, ...(seller ? [seller] : []));
+    return this.say(pl, `You buy ${G.petLabel(l.pet)} for ${G.fmtCash(l.price)}. It's in your Equipment tab.`, "good");
   }
   // fill a new offer against the other side: best price first, then whoever was there first, at the waiting offer's price
   exMatch(o) {
@@ -4325,7 +4374,7 @@ export class World {
       // they asked us first: that's a yes
       if (o.tradeReq?.to === pl.id && now - o.tradeReq.at < 30000) {
         o.tradeReq = null; pl.tradeReq = null;
-        const T = { id: `t${now}${Math.random().toString(36).slice(2, 6)}`, a: o.id, b: pl.id, stage: "offer", ok: {}, off: { [o.id]: { items: {}, cash: 0 }, [pl.id]: { items: {}, cash: 0 } } };
+        const T = { id: `t${now}${Math.random().toString(36).slice(2, 6)}`, a: o.id, b: pl.id, stage: "offer", ok: {}, off: { [o.id]: { items: {}, cash: 0, pets: [] }, [pl.id]: { items: {}, cash: 0, pets: [] } } };
         this.trades.set(T.id, T); o.trade = T; pl.trade = T; this.tradeSync(T); return;
       }
       pl.tradeReq = { to: o.id, at: now };
@@ -4352,6 +4401,17 @@ export class World {
       if (m.op === "cash") mine.cash = Math.max(0, Math.min(G.cashIn(C), Math.floor(Number(m.n)) || 0));
       T.ok = {}; return this.tradeSync(T);   // any change means both have to accept again
     }
+    /* (2026-09-27) PETS IN THE TRADE WINDOW. The offer holds a copy for the other side to read (kind, rank, stats, name); the real
+       pet is looked up by id at the final confirm, so a pet worn, bred or sold in the meantime cancels the trade instead of duplicating. */
+    if (T.stage === "offer" && (m.op === "addpet" || m.op === "rmpet")) {
+      const id = String(m.id || ""); mine.pets ||= [];
+      if (m.op === "addpet") {
+        const pet = G.petById(C, id); if (!pet || mine.pets.some((p) => p.id === id)) return;
+        if (mine.pets.length >= G.PET_TRADE.tradeMax) return this.say(pl, `You can offer ${G.PET_TRADE.tradeMax} pets in one trade.`, "bad");
+        mine.pets.push({ ...pet });
+      } else mine.pets = mine.pets.filter((p) => p.id !== id);
+      T.ok = {}; return this.tradeSync(T);
+    }
     if (m.op === "accept") {
       T.ok[pl.id] = true;
       if (!(T.ok[T.a] && T.ok[T.b])) return this.tradeSync(T);
@@ -4362,8 +4422,10 @@ export class World {
   tradeFinish(T) {
     const A = this.pls.get(T.a), B = this.pls.get(T.b); if (!A || !B) return this.tradeEnd(T, "Trade cancelled.");
     // everything offered must still be there, and both bags must have room for what's coming
-    const still = (p) => Object.entries(T.off[p.id].items).every(([k, n]) => G.countItems(p.C, [k]) >= n) && G.cashIn(p.C) >= T.off[p.id].cash;
+    const still = (p) => Object.entries(T.off[p.id].items).every(([k, n]) => G.countItems(p.C, [k]) >= n) && G.cashIn(p.C) >= T.off[p.id].cash && (T.off[p.id].pets || []).every((x) => G.petById(p.C, x.id));
     if (!still(A) || !still(B)) return this.tradeEnd(T, "Trade cancelled: something offered wasn't there any more.");
+    const petsAfter = (p, give, get) => G.petsOf(p.C).length - (give.pets || []).length + (get.pets || []).length;
+    if (petsAfter(A, T.off[A.id], T.off[B.id]) > G.PET_TRADE.own || petsAfter(B, T.off[B.id], T.off[A.id]) > G.PET_TRADE.own) return this.tradeEnd(T, `Trade cancelled: nobody can keep more than ${G.PET_TRADE.own} pets.`);
     const after = (p, give, get) => {
       const inv = p.C.inv.map((s) => ({ k: s.k, n: s.n }));
       for (const [k, n] of Object.entries(give.items)) G.takeInv(inv, k, n);
@@ -4377,10 +4439,23 @@ export class World {
     if (!newA || !newB) return this.tradeEnd(T, "Trade cancelled: not enough room in someone's bag.");
     const apply = (p, inv) => { p.C.inv = inv; this.touch(p); };
     apply(A, newA); apply(B, newB);
+    this.petsMove(A, B, T.off[A.id].pets); this.petsMove(B, A, T.off[B.id].pets);
     this.exCommit(A, B);
     this.tradeEnd(T, null);
     this.say(A, `Trade with ${B.name} complete.`, "good"); this.say(B, `Trade with ${A.name} complete.`, "good");
   }
+
+  /** (2026-09-27) hand these pets (by id) from one character to another, whole: worn ones come off first, and an id the receiver
+      somehow already has gets a fresh one, because every pet in a list must be told apart. */
+  petsMove(from, to, list) {
+    for (const x of list || []) {
+      const pet = G.petById(from.C, x.id); if (!pet) continue;
+      from.C.pets = from.C.pets.filter((q) => q.id !== pet.id); if (from.C.eq.pet === pet.id) from.C.eq.pet = null;
+      (to.C.pets ||= []).push(this.petFresh(to.C, pet));
+    }
+    if (list?.length) { this.touch(from); this.touch(to); }
+  }
+  petFresh(C, pet) { return G.petById(C, pet.id) ? { ...pet, id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}` } : pet; }
 
   /** One online player by name, case-insensitively. */
   byName(name) {

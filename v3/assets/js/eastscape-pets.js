@@ -87,7 +87,44 @@ export function createPetUi(E) {
         <button type="button" class="lk-btn" data-hegg="${k}">Hatch</button></div>`; }).join("") : `<div class="pn-card"><p class="pn-note" style="margin:0">No eggs yet. About one kill in ${Math.round(1 / G.BREED.eggDrop).toLocaleString()} drops one, and each map has its own.</p></div>`}`;
     $("hatchBody").querySelectorAll("[data-hegg]").forEach((el) => el.addEventListener("click", () => { SFX.play("ui_click"); if (have < n) return say(`An egg needs ${n} Ordinary pet food to hatch on. You have ${have}: cook it at a campfire (Cooking 20).`, "bad"); send({ t: "hatch", op: "egg", k: el.dataset.hegg }); }));
   }
-  return { openPen, openHatch, renderPen, renderHatch };
+  /* ---------------------------------------------------------- (2026-09-27) PETS CHANGE HANDS: the trade window's pets, and the
+     Exchange's Pets tab. Both live here, fetched the first time either opens, because the first load has no room left. */
+  const card = (p, attr, tag = "button") => `<${tag} type="button" class="tp-pet"${attr ? ` ${attr}` : ""}>${petPic(p.k, G.rankOf(p))}<span><b>${esc(G.petLabel(p))} ${rankTag(G.rankOf(p))}</b><small>${esc(G.PETS[p.k].name)} · ${esc(G.petFxText(p.fx || G.PETS[p.k].fx))}</small></span></${tag}>`;
+  const none = (t) => `<p class="tp-none">${t}</p>`;
+  const tix = (n) => `${ico("tickets")} ${Math.round(n).toLocaleString()}`;
+  function tradePets(el, TR) {
+    if (!el || !TR || !E.me) return;
+    const mine = TR.you.pets || [], theirs = TR.them.pets || [], offered = new Set(mine.map((p) => p.id)), free = G.petsOf(E.me).filter((p) => !offered.has(p.id));
+    el.innerHTML = `<div class="tp-cols"><div><h5>Your pets in this trade</h5>${mine.map((p) => card(p, `data-tprm="${esc(p.id)}" title="Click to take it back"`)).join("") || none("None")}</div>
+      <div><h5>${esc(TR.themName)}'s pets</h5>${theirs.map((p) => card(p, "", "div")).join("") || none("None")}</div></div>
+      ${free.length ? `<h5>Your pets · click one to offer it</h5><div class="tp-list">${free.map((p) => card(p, `data-tpadd="${esc(p.id)}"`)).join("")}</div>` : ""}`;
+    el.querySelectorAll("[data-tpadd]").forEach((b) => b.addEventListener("click", () => send({ t: "trade", op: "addpet", id: b.dataset.tpadd })));
+    el.querySelectorAll("[data-tprm]").forEach((b) => b.addEventListener("click", () => send({ t: "trade", op: "rmpet", id: b.dataset.tprm })));
+  }
+  let exSel = null;
+  function exPets(el, EX) {
+    if (!el || !E.me) return;
+    const T = G.PET_TRADE, L = EX.pets || [], mineL = L.filter((l) => l.mine), others = L.filter((l) => !l.mine), pets = G.petsOf(E.me);
+    if (exSel && !pets.some((p) => p.id === exSel)) exSel = null;
+    const row = (l) => `<div class="ep-row">${card(l.pet, "", "div")}<span class="ep-pr">${tix(l.price)}<small>${l.mine ? "yours" : `from ${esc(l.name)}`}</small></span>${l.mine ? `<button type="button" class="btn plain" data-epc="${l.id}">Take down</button>` : `<button type="button" class="btn" data-epb="${l.id}">Buy</button>`}</div>`;
+    const sel = pets.find((p) => p.id === exSel);
+    el.innerHTML = `<div class="mk-h">Pets for sale</div>${others.map(row).join("") || none("No pets for sale right now.")}
+      <div class="mk-h">Your pets for sale · ${mineL.length} of ${T.exSlots}</div>${mineL.map(row).join("") || none("None.")}
+      <div class="mk-h">Sell one of yours</div>
+      ${pets.length ? `<div class="tp-list">${pets.map((p) => card(p, `data-eps="${esc(p.id)}"${p.id === exSel ? ' aria-pressed="true"' : ""}`)).join("")}</div>
+        <div class="ep-post"><label>Price ${ico("tickets")} <input type="number" id="epPrice" min="1" step="1" placeholder="${sel ? G.petBomPrice(sel) : ""}" aria-label="Price in tickets"></label>
+        <button type="button" class="btn" id="epList"${sel ? "" : " disabled"}>${sel ? `List ${esc(G.petLabel(sel))}` : "Pick a pet first"}</button></div>` : none("You have no pets to sell.")}
+      <p class="tp-note">A listed pet leaves your pets until it sells or you take it down. Buying takes tickets from your bag, then your bank. The seller gets the price less 1%, in their bank. Bom at the Prize Counter also buys any pet: ${Object.entries(T.bom).map(([r, n]) => `${G.RANKS[r].name} ${n.toLocaleString()}`).join(", ")} tickets.</p>`;
+    el.querySelectorAll("[data-eps]").forEach((b) => b.addEventListener("click", () => { exSel = b.dataset.eps; exPets(el, EX); }));
+    el.querySelector("#epList")?.addEventListener("click", () => {
+      const price = Math.floor(Number(el.querySelector("#epPrice").value)), p = pets.find((x) => x.id === exSel); if (!p) return;
+      if (!(price >= 1)) return say("Type a price of at least 1 ticket.", "bad");
+      if (confirm(`List ${G.petLabel(p)} for ${price.toLocaleString()} tickets? It leaves your pets until it sells or you take it down.`)) { exSel = null; send({ t: "ex", op: "petlist", id: p.id, price }); }
+    });
+    el.querySelectorAll("[data-epb]").forEach((b) => b.addEventListener("click", () => { const l = L.find((x) => x.id === +b.dataset.epb); if (l && confirm(`Buy ${G.petLabel(l.pet)} for ${l.price.toLocaleString()} tickets?`)) send({ t: "ex", op: "petbuy", lid: l.id }); }));
+    el.querySelectorAll("[data-epc]").forEach((b) => b.addEventListener("click", () => send({ t: "ex", op: "petcancel", lid: +b.dataset.epc })));
+  }
+  return { openPen, openHatch, renderPen, renderHatch, tradePets, exPets };
 }
 const CSS = `.pn-card{background:#fffaf0;border-radius:14px;box-shadow:0 2px 10px rgba(60,40,10,.14);padding:12px;margin:10px 0}
 .pn-card h4{margin:0 0 8px;display:flex;align-items:center;gap:8px;font-size:13.5px}
@@ -130,4 +167,17 @@ const CSS = `.pn-card{background:#fffaf0;border-radius:14px;box-shadow:0 2px 10p
 .pn-row.on{border-color:#2f6fd0;background:#eaf2ff}.pn-row .pn-num{position:static;margin-left:auto;flex:none;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#2f6fd0;color:#fff;font-size:11px;font-weight:900}
 .pn-head{display:flex;align-items:center;gap:6px}.pn-head .pp.sm{width:26px;height:26px;border-radius:7px;box-shadow:0 0 0 2px #a8a8a8}.pn-head .pp.sm img{width:20px;height:20px}
 .pn-right .pn-card:first-child{margin-top:0}.pn-right .pn-slot{min-height:108px}
-@media (max-width:520px){.pn-layout{grid-template-columns:1fr}.pn-left{position:static}.pn-list{flex-direction:row;overflow-x:auto;max-height:none}.pn-row{flex:none}}`;
+@media (max-width:520px){.pn-layout{grid-template-columns:1fr}.pn-left{position:static}.pn-list{flex-direction:row;overflow-x:auto;max-height:none}.pn-row{flex:none}}
+.tp-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tp-cols>div{min-width:0}
+h5{margin:10px 0 5px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#6a5a40}
+.tp-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+.tp-pet{display:flex;align-items:center;gap:8px;width:100%;margin:0 0 6px;padding:6px 8px;border:0;border-radius:10px;background:#fffaf0;box-shadow:0 1px 4px rgba(60,40,10,.14);text-align:left;font:inherit;color:inherit}
+button.tp-pet{cursor:pointer}button.tp-pet:hover{box-shadow:0 0 0 2px #c8963a}button.tp-pet[aria-pressed=true]{box-shadow:0 0 0 3px #3f7fe0}
+.tp-pet .pp{flex:none;width:40px;height:40px;border-radius:9px}.tp-pet .pp img{width:30px;height:30px}
+.tp-pet>span{display:flex;flex-direction:column;min-width:0}.tp-pet b{font-size:13px;line-height:1.3}.tp-pet small{font-size:11.5px;opacity:.8}
+.tp-none,.tp-note{margin:4px 0;font-size:12px;opacity:.75}
+.ep-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:6px}.ep-row .tp-pet{margin:0}
+.ep-pr{display:flex;flex-direction:column;align-items:flex-end;font-weight:800;white-space:nowrap}.ep-pr small{font-weight:600;font-size:11px;opacity:.7}
+.ep-post{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0}.ep-post input{width:110px}
+@media (max-width:520px){.tp-cols{grid-template-columns:1fr}.ep-row{grid-template-columns:1fr auto}.ep-row>button{grid-column:1 / 3}}`;
+
