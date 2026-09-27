@@ -54,8 +54,8 @@ W.hwTick(now + G.HW.king.stays + 1000); is(M.mobs.includes(k3), false, "unkilled
 
 /* ---------------------------------------------------------------- lanterns, trick or treat */
 const L = M.objs.find((o) => o.t === "ghostlantern"); is(!!L, true, "the Mire has a ghost lantern today");
-const c0 = corn(A); W.hwLantern(M, A, L); is(corn(A) - c0, G.HW.lanternCorn, "a lantern pays its corn");
-W.hwLantern(M, A, L); is(corn(A) - c0, G.HW.lanternCorn, "and not twice in a day");
+const c0 = corn(A); W.hwLantern(M, A, L); is(corn(A) - c0, G.HW.lanternCorn * (G.nightfallOn() ? 2 : 1), "a lantern pays its corn (doubled at Nightfall)");
+W.hwLantern(M, A, L); is(corn(A) - c0, G.HW.lanternCorn * (G.nightfallOn() ? 2 : 1), "and not twice in a day");
 const mudge = M.npcs.find((n) => /Mudge/.test(n.name)); A.x = mudge.x + 1; A.y = mudge.y;
 const c1 = corn(A), t1 = G.countItems(A.C, ["tickets"]);
 Math.random = () => 0.99; W.hwOp(M, A, { op: "trick", npc: mudge.id }); Math.random = rnd;   /* 0.99 > trickAt: a treat, and past pie and seeds: corn */

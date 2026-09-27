@@ -729,6 +729,31 @@ export const GUIDES = [
       <table class="tbl"><tr><th>Magic</th><th>Bag</th><th>Holds</th></tr>${bags.map((k) => `<tr><td>${G.ITEMS[k].req.lvl}</td><td>${H.ico(k)} ${H.wl(`items/${k}`, nm(k))}</td><td>${G.ITEMS[k].pouch.cap.toLocaleString()}</td></tr>`).join("")}</table>
       <p>Everything a wand casts is printed with <a data-wiki="guides/wizardry">Wizardry</a>.</p>`;
     } },
+  /* (2026-09-27) Breeding, built from the rules so its numbers cannot drift */
+  { id: "breeding", title: "Breeding", icon: "\u{1F95A}", cat: "Skills",
+    body: (G, H) => {
+      const nm = (k) => H.wl(`items/${k}`, H.esc(G.ITEMS[k]?.name || k)), pet = (k) => `${H.esc(G.PETS[k].name)}`, hrs = (ms) => `${Math.round(ms / 3600000)} hours`;
+      const foods = Object.values(G.RECIPES).filter((r) => r.station === "pen").sort((a, b) => a.lvl - b.lvl);
+      const legend = Object.entries(G.LEGEND_OF);
+      return `<p><b>Two of your pets go in your island's pen and come out as a better one.</b> The pen is the one by your plots; click it. Nothing is lost: both parents come back when it is done.</p>
+      <h3>How a pairing works</h3>
+      <ol><li>Make the food at the pen (the <b>Make pet food</b> button, or click the pen and choose). This is how Breeding is trained from level 1.</li>
+      <li>Click the pen, pick a <b>pair</b> of your pets, and it shows what they will make and everything it needs, with what you have beside it.</li>
+      <li>Press <b>Start</b>. <b>All the food goes in at once</b>, then the clock runs by itself, logged in or not. Come back and press <b>Collect</b>.</li></ol>
+      <table class="tbl"><tr><th>Pairing</th><th>Breeding</th><th>Time</th><th>Food</th></tr>
+        <tr><td>Two ordinary pets &rarr; a <b>Greater</b> pet</td><td>${G.BREED.greater.lvl}</td><td>${hrs(G.BREED.greater.ms)}</td><td>${G.BREED.greater.food} of each parent's food</td></tr>
+        <tr><td>Two Greater pets <b>of the same kind</b> &rarr; its <b>Legendary</b></td><td>${G.BREED.legend.lvl}</td><td>${hrs(G.BREED.legend.ms)}</td><td>${G.BREED.legend.food} of its Legendary food and an ${nm("opal")}</td></tr></table>
+      <p><b>A Greater pet</b> is one of its two parents' kinds, with that kind's effects a quarter better (one more bag slot for a Pack Rat) and a little of the other parent's strongest effect. <b>A Legendary</b> is its own pet, with its own look.</p>
+      <h3>The Legendaries</h3>
+      <table class="tbl"><tr><th>From two Greater&hellip;</th><th>Legendary</th><th>Does</th><th>Its food</th></tr>${legend.map(([base, k]) => `<tr><td>${pet(base)}</td><td><b>${pet(k)}</b></td><td>${H.esc(G.petFxText(G.PETS[k].fx))}</td><td>${nm(G.LEGEND_FOOD[base])}</td></tr>`).join("")}</table>
+      <h3>Eggs</h3>
+      <p>About one kill in ${Math.round(1 / G.BREED.eggDrop).toLocaleString()} drops an egg, and each map has its own. An egg hatches in the pen's nest: it needs its Breeding level, a ${nm(G.BREED.nest)} and a gem. Eggs trade and list on the Exchange like anything else.</p>
+      <table class="tbl"><tr><th>Egg</th><th>Breeding</th><th>Gem</th><th>Hatches</th><th>Into</th><th>Does</th><th>Found</th></tr>${Object.entries(G.EGGS).map(([k, e]) => `<tr><td>${H.ico(k)} ${nm(k)}</td><td>${e.lvl}</td><td>${nm(e.gem)}</td><td>${hrs(e.ms)}</td><td>${pet(e.pet)}</td><td>${H.esc(G.petFxText(G.PETS[e.pet].fx))}</td><td>${e.from.map((s) => H.esc(G.SCENES[s]?.name || s)).join(", ")}</td></tr>`).join("")}</table>
+      <h3>The food</h3>
+      <p>Every everyday food needs something off an early monster, and every Legendary food something off a mid-game one and something from the Deep Wild or the late maps, so the whole ladder stays worth fighting.</p>
+      <table class="tbl"><tr><th>Level</th><th>Makes</th><th>From</th></tr>${foods.map((r) => `<tr><td>${r.lvl}</td><td>${H.ico(r.out[0])} ${r.out[1] > 1 ? `${r.out[1]} ` : ""}${nm(r.out[0])}</td><td>${r.in.map(([k, n]) => `${n} ${nm(k)}`).join(", ")}</td></tr>`).join("")}</table>
+      <p>What each kind eats: ${Object.entries(G.FOOD_OF).map(([k, f]) => `${pet(k)} ${nm(f)}`).join(", ")}; every hatchling ${nm(G.DEFAULT_FOOD)}.</p>`;
+    } },
   { id: "wizardry", title: "Wizardry", icon: "\u{1F4DC}", cat: "Skills",
     body: (G, H) => {
       const nm = (k) => H.esc(G.ITEMS[k]?.name || k), E = G.ELEMENTS;

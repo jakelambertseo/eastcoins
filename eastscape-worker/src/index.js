@@ -347,7 +347,7 @@ export class World {
     return { pay: owed, low, late };
   }
 
-  meOf(pl) { const C = pl.C; return { store: C.store || null,   /* (2026-09-27) what the Store has sold you and what your name wears */ seen: C.seen || [],   /* (2026-09-27) the world map's fog */ hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null,   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
+  meOf(pl) { const C = pl.C; return { pen: C.pen || null,   /* (2026-09-27) Breeding */ store: C.store || null,   /* (2026-09-27) what the Store has sold you and what your name wears */ seen: C.seen || [],   /* (2026-09-27) the world map's fog */ hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null,   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
@@ -762,7 +762,8 @@ export class World {
         return;
       }
       case "quest": return this.questOp(S, pl, m);
-      case "hw": return this.hwOp(S, pl, m);   /* (2026-09-27) the Long Night: trick or treat, the Night Market, the corn-priced fits */
+      case "hw": return this.hwOp(S, pl, m);
+      case "pen": return this.penOp(S, pl, m);   /* (2026-09-27) Breeding */   /* (2026-09-27) the Long Night: trick or treat, the Night Market, the corn-priced fits */
       case "talked": { const n = S.npcs.find((x) => x.id === m.npc); if (n) n.holdUntil = 0; return; }
       case "stance": return;   // stances were removed (2026-09-19)
       case "settings": {
@@ -895,7 +896,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
-      let kind = { ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      let kind = { pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       /* MAGIC AND WIZARDRY, THE SERVER (2026-09-26): every altar is a print station, a picker station like the anvil */
       if (!kind && G.STATIONS[ob.t]?.kind === "print") kind = "print";
       if (!kind) return;
@@ -908,7 +909,8 @@ export class World {
          bowfin, and sand at a cauldron only ever becomes the large vial. Nothing was broken - there was simply no
          way to say. The same `pick` now works everywhere, and it is checked against the recipes of THIS station
          so a pick cannot smelt a bar at a campfire. */
-      if (["smith", "cook", "smelt", "brew", "fletch", "print"].includes(kind) && m.pick) {
+      if (kind === "pen" && m.pick) { kind = "breed"; act.kind = "breed"; }   /* (2026-09-27) a recipe picked at the pen: pet food */
+      if (["smith", "cook", "smelt", "brew", "fletch", "print", "breed"].includes(kind) && m.pick) {
         const id = String(m.pick);
         if (G.recipesAt(ob.t).some((r) => r.id === id)) act.pick = id;
       }
@@ -1494,6 +1496,86 @@ export class World {
       this.say(p, `✨ 2X EVENT: ${this.dbl.by} cracked a 2X Potion. Everything you earn is doubled for the next ${mins} minutes - tickets and crafting xp, everywhere, for everyone on the server.`, "loot");
     }
     this.houseSay(`✨ 2X EVENT — ${this.dbl.by} popped a 2X Potion. Double tickets and crafting xp for ${mins} minutes.`);
+  }
+
+  /* ------------------------------------------------------------ BREEDING (2026-09-27): the island's pen
+     One pairing or one egg at a time, per island. The food (and the gem, and the nest) is taken ALL AT ONCE at the start - the
+     owner: "every hour feels like micromanaging" - and the clock then runs untouched, offline included, because it is only a
+     start time and a length on the character. Pets in the pen are off `pets` so they cannot be worn, traded or bred twice;
+     they go back on at collect, or at release. The child is decided when the pairing STARTS, so collecting cannot be
+     re-rolled by anyone who reads the code. */
+  penOf(S) { return S?.objs?.find((o) => o.t === "pen") || null; }
+  /** (2026-09-27) the LOCAL dev server breeds 720 times faster (72 hours in 6 minutes) so a pairing can be tested end to end; production never */
+  penMs(ms) { return this.env?.DEV === "1" ? Math.max(20000, Math.round(ms / 720)) : ms; }
+  penView(S, pl) { const P = pl.C.pen; pl.out.push({ type: "pen", pen: P ? { kind: P.kind, a: P.a || null, b: P.b || null, egg: P.egg || null, child: P.child, at: P.at, ms: P.ms } : null, now: Date.now() }); }
+  penOp(S, pl, m) {
+    const C = pl.C, op = String(m.op || ""), now = Date.now(), bad = (t) => this.say(pl, t, "bad");
+    const pen = this.penOf(S);
+    if (!pen || !S.def?.island) return;
+    if (S.owner !== pl.id) return bad("That's somebody else's pen.");
+    if (G.cheb(pl, pen) > G.BREED.reach + 1) return bad("Walk over to the pen first.");
+    const lv = G.lvlOf(C, "breeding"), P = C.pen;
+    if (op === "view") return this.penView(S, pl);
+    const needAll = (list) => { const short = list.filter(([k, n]) => G.countItems(C, [k]) < n); return short.length ? `You need ${short.map(([k, n]) => `${n} ${G.ITEMS[k].name.toLowerCase()} (you have ${G.countItems(C, [k])})`).join(", ")}.` : null; };
+    if ((op === "pair" || op === "egg") && P) return bad("The pen is busy. Collect it, or let it go, first.");
+    if (op === "pair") {
+      const a = G.petById(C, String(m.a || "")), b = G.petById(C, String(m.b || "")), pr = G.pairOf(a, b);
+      if (pr.no) return bad(pr.no);
+      if (lv < pr.lvl) return bad(`That takes Breeding ${pr.lvl}. You're ${lv}.`);
+      const short = needAll(pr.food); if (short) return bad(short);
+      for (const [k, n] of pr.food) G.takeInv(C.inv, k, n);
+      C.pets = C.pets.filter((p) => p.id !== a.id && p.id !== b.id);
+      if (C.eq.pet === a.id || C.eq.pet === b.id) C.eq.pet = null;
+      let child;
+      if (pr.kind === "legend") child = { k: pr.child };
+      else { const kind = pr.kinds[Math.random() < 0.5 ? 0 : 1], other = kind === a.k ? b.k : a.k; child = { k: kind, tier: 1, fx: G.greaterFx(kind, other) }; }
+      C.pen = { kind: pr.kind, a, b, child, at: now, ms: this.penMs(pr.ms) };
+      this.grant(pl, "breeding", G.BREED[pr.kind].xpStart); this.touch(pl);
+      this.say(pl, `${G.petLabel(a)} and ${G.petLabel(b)} settle into the pen with the food. Come back in ${Math.round(pr.ms / 3600000)} hours.`, "good");
+      return this.penView(S, pl);
+    }
+    if (op === "egg") {
+      const k = String(m.k || ""), E = G.EGGS[k]; if (!E) return;
+      if (lv < E.lvl) return bad(`That egg needs Breeding ${E.lvl}. You're ${lv}.`);
+      const need = [[k, 1], [G.BREED.nest, 1], [E.gem, 1]], short = needAll(need); if (short) return bad(short);
+      for (const [x, n] of need) G.takeInv(C.inv, x, n);
+      C.pen = { kind: "egg", egg: k, child: { k: E.pet }, at: now, ms: this.penMs(E.ms) };
+      this.grant(pl, "breeding", Math.round(E.xp * 0.1)); this.touch(pl);
+      this.say(pl, `The ${G.ITEMS[k].name.toLowerCase()} sits in its nest on the ${E.gem}. ${Math.round(E.ms / 3600000)} hours.`, "good");
+      return this.penView(S, pl);
+    }
+    if (op === "collect") {
+      if (!P) return;
+      if (now < P.at + P.ms) { const left = P.at + P.ms - now, h = Math.floor(left / 3600000), mi = Math.ceil((left % 3600000) / 60000); return bad(`Not yet: ${h ? `${h} h ` : ""}${mi} min to go.`); }
+      const back = [P.a, P.b].filter(Boolean);
+      if (G.petsOf(C).length + back.length + 1 > 50) return bad("You have too many pets to take another. Let one go first.");
+      const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k: P.child.k, name: "", ...(P.child.tier ? { tier: 1, fx: P.child.fx } : {}) };
+      C.pets.push(...back, pet);
+      const xp = P.kind === "egg" ? G.EGGS[P.egg].xp : G.BREED[P.kind].xpEnd;
+      C.pen = null; this.grant(pl, "breeding", xp); this.touch(pl);
+      this.say(pl, `${P.kind === "egg" ? "The egg hatches" : "A new pet"}: ${G.petLabel(pet)}${pet.fx ? ` (${G.petFxText(pet.fx)})` : ""}. It's in your Equipment tab.`, "loot");
+      if (P.kind !== "greater") for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `${P.kind === "legend" ? "\u{1F451}" : "\u{1F95A}"} ${pl.name} ${P.kind === "legend" ? "bred a Legendary" : "hatched"}: ${G.PETS[pet.k].name}!` });
+      return this.penView(S, pl);
+    }
+    if (op === "release") {
+      if (!P) return;
+      const back = [P.a, P.b].filter(Boolean); C.pets.push(...back); C.pen = null; this.touch(pl);
+      this.say(pl, back.length ? "You open the pen. Both pets come back to you; the food is gone." : "You take the nest apart. The egg is lost.", "bad");
+      return this.penView(S, pl);
+    }
+  }
+  /** once a minute-ish: the Mimic's present, once a Chicago day, to whoever is wearing one */
+  petDaily() {
+    const day = G.chicagoDay();
+    for (const p of this.pls.values()) {
+      if (!(G.petFx(p.C).gift > 0) || p.C.giftDay === day) continue;
+      const pool = G.PET_GIFTS.filter(([, , w]) => w > 0), tot = pool.reduce((a, [, , w]) => a + w, 0); let r = Math.random() * tot, pick = pool[0];
+      for (const g of pool) { if ((r -= g[2]) < 0) { pick = g; break; } }
+      const [k, [lo, hi]] = pick, n = rint(lo, hi);
+      if (!this.give(p, k, n)) continue;
+      p.C.giftDay = day; this.touch(p);
+      this.say(p, `${G.petLabel(G.activePet(p.C))} coughs something up: ${n > 1 ? `${n.toLocaleString()} ` : "a "}${G.ITEMS[k].name.toLowerCase()}.`, "loot");
+    }
   }
   /* ------------------------------------------------------------ THE STORE (2026-09-27)
      Tickets only, prices from the rules, never from the message. A cosmetic is owned once and worn at once; a boost is given or
@@ -2156,7 +2238,7 @@ export class World {
       const gates = S.def?.gates; if (!gates) continue;
       for (const gt of gates) { const open = G.gateOpenAt(now, gt) ? "i" : "#"; for (const [gx, gy] of G.gateTiles(gt)) S.g[gy][gx] = open; }
     }
-    if (this.tickN % 20 === 0) { this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.hwTick(now); this.pitTick(now).catch(() => {}); }
+    if (this.tickN % 20 === 0) { this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.hwTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
     if (this.tickN % 40 === 0) this.runsSave();   /* (2026-09-27) the dungeon runs, so a deploy does not end them */
     if (this.tickN % 20 === 0) for (const pl of this.pls.values()) {   /* once a second */
       const C = pl.C, dt = Math.min(5000, now - (pl.fxAt || now)); pl.fxAt = now; if (!(C.meal || C.drink || C.charm) || !(G.SCENES[String(C.scene).split(":")[0]]?.mobs?.length)) continue;
@@ -2453,6 +2535,7 @@ export class World {
     if (a.kind === "tower") { pl.act = null; return this.towerDoor(S, pl); }        /* the door in the Yard: opens the page's window */
     if (a.kind === "towerup") { pl.act = null; return this.towerUp(S, pl); }        /* the stairs: refuses until the floor is clear */
     if (a.kind === "cryptloot") { pl.act = null; return S.def.pyramid ? this.pyramidLootOpen(S, pl) : this.cryptLootOpen(S, pl); }
+    if (a.kind === "pen") { pl.act = null; return this.penView(S, pl); }   /* (2026-09-27) Breeding: the page opens the pen window */
     if (a.kind === "hiscores") { pl.act = null; return pl.out.push({ type: "hiscores" }); }   /* (v96) the board on the wall opens the page's own Hiscores window */
     if (a.kind === "howto") { pl.act = null; return pl.out.push({ type: "popup", title: "How EastScape works", text: G.HOWTO, icon: "🎰" }); }
     if (a.kind === "board") { pl.act = null; this.tourStep(pl, "play"); this.tourStep(pl, "board"); return this.dailySend(pl); }   /* (v96: the board also clears "play a game", so a player with no ZCoins is sent to work, not left stuck) */
@@ -2524,7 +2607,7 @@ export class World {
         /* (2026-09-25) A STONE, sometimes. GEM_DROP is keyed by ore, so the rock you are mining decides which gem,
            and the same rock decides which arrows that gem tips. keepRare, because a gem that vanished into a full
            bag would be the rarest thing this skill loses. */
-        for (const [gk, gp] of (G.GEM_DROP[ob.ore] || [])) if (Math.random() < gp * (1 + G.charmOf(C, "stonesense") / 100)) { const where = this.keepRare(pl, gk, 1); if (where) { this.emit(pl, "loot", { k: gk, n: 1 }); this.say(pl, `Something glints in the ore: a ${G.ITEMS[gk].name.toLowerCase()}!${where === "bank" ? " Your bag was full, so it went to your bank." : ""}`, "loot"); } }
+        for (const [gk, gp] of (G.GEM_DROP[ob.ore] || [])) if (Math.random() < gp * (1 + G.charmOf(C, "stonesense") / 100 + G.petFx(C).gem / 100)) { const where = this.keepRare(pl, gk, 1); if (where) { this.emit(pl, "loot", { k: gk, n: 1 }); this.say(pl, `Something glints in the ore: a ${G.ITEMS[gk].name.toLowerCase()}!${where === "bank" ? " Your bag was full, so it went to your bank." : ""}`, "loot"); } }
         }
       } else {
         a.next = now + Math.round(1800 / tspd);
@@ -2534,7 +2617,7 @@ export class World {
         /* (2026-09-25) A STONE, sometimes. GEM_DROP is keyed by ore, so the rock you are mining decides which gem,
            and the same rock decides which arrows that gem tips. keepRare, because a gem that vanished into a full
            bag would be the rarest thing this skill loses. */
-        for (const [gk, gp] of (G.GEM_DROP[ob.ore] || [])) if (Math.random() < gp * (1 + G.charmOf(C, "stonesense") / 100)) { const where = this.keepRare(pl, gk, 1); if (where) { this.emit(pl, "loot", { k: gk, n: 1 }); this.say(pl, `Something glints in the ore: a ${G.ITEMS[gk].name.toLowerCase()}!${where === "bank" ? " Your bag was full, so it went to your bank." : ""}`, "loot"); } }
+        for (const [gk, gp] of (G.GEM_DROP[ob.ore] || [])) if (Math.random() < gp * (1 + G.charmOf(C, "stonesense") / 100 + G.petFx(C).gem / 100)) { const where = this.keepRare(pl, gk, 1); if (where) { this.emit(pl, "loot", { k: gk, n: 1 }); this.say(pl, `Something glints in the ore: a ${G.ITEMS[gk].name.toLowerCase()}!${where === "bank" ? " Your bag was full, so it went to your bank." : ""}`, "loot"); } }
           this.grant(pl, "mining", gx(ob.xp || (ob.ore === "tin" ? 18 : 17))); this.say(pl, `You mine some ${G.ITEMS[ob.ore].name.toLowerCase()}.`, "good");
           /* (2026-09-22) IT ONLY GOES EMPTY WHEN THE ROCK IS ACTUALLY OUT. This used to set emptyUntil and clear
              pl.act on EVERY success, so one ore cost a click and an eight-second wait. Same shape as the olive
@@ -2626,7 +2709,7 @@ export class World {
        on with the best thing you can make (cooking, smelting); the anvil is
        not, because "which of the forty things" is a question only you can
        answer, so it waits for a.pick. */
-    if (a.kind === "cook" || a.kind === "smelt" || a.kind === "smith" || a.kind === "brew" || a.kind === "fletch" || a.kind === "print") {
+    if (a.kind === "cook" || a.kind === "smelt" || a.kind === "smith" || a.kind === "brew" || a.kind === "fletch" || a.kind === "print" || a.kind === "breed") {
       const nx = G.STATIONS[ob.t]?.nexus ? G.NEXUS : null;   /* (2026-09-26) the Nexus: twice the output, half as much xp again */
       const st = G.STATIONS[ob.t];
       if (!st) { pl.act = null; return; }
@@ -2679,7 +2762,9 @@ export class World {
          silently ignored the pockets bought with tickets and earned from achievements. The `burnt` check beside
          it always passed C, which is exactly why it read as correct at a glance. */
       if (G.roomFor(C.inv, r.out[0], C) < r.out[1] * (nx ? nx.mult : 1) || (r.burnStop != null && G.roomFor(C.inv, "burnt", C) < 1)) { this.say(pl, "Your inventory is full.", "bad"); pl.act = null; return; }
-      for (const [k, n] of r.in) G.takeInv(C.inv, k, n);
+      const freeSmelt = st.kind === "smelt" && Math.random() < G.petFx(C).freesmelt / 100;   /* (2026-09-27) the Cinder Salamander: now and then a smelt costs nothing */
+      if (freeSmelt) this.say(pl, "The salamander breathes on the ore. That one cost you nothing.", "good");
+      else for (const [k, n] of r.in) G.takeInv(C.inv, k, n);
       /* (2026-09-22) CHARCOAL STEADIES THE FIRE: spend one instead of taking the burn roll. Only when the risk is
          worth it (G.COAL_STEADY_MIN) - at a 3% burn a charcoal costs more than the fish it saves, and silently
          burning fuel to avoid nothing is the kind of waste a player only notices as "where did my charcoal go".
@@ -2691,7 +2776,7 @@ export class World {
          fine until players reported losing fish. Keep the outcome in a variable and decide separately. */
       let burnt = false;
       if (r.burnStop != null) {
-        const risk = G.burnChance(r, lv, ob.t === "range") * (1 - G.charmOf(C, "steadyhands") / 100);   /* (2026-09-26) Steady Hands */
+        const risk = G.burnChance(r, lv, ob.t === "range") * (1 - G.charmOf(C, "steadyhands") / 100) * (1 - G.petFx(C).noburn / 100);   /* (2026-09-27) the Cinder Salamander */   /* (2026-09-26) Steady Hands */
         if (risk >= G.COAL_STEADY_MIN && G.countItems(C, ["charcoal"]) > 0) G.takeInv(C.inv, "charcoal", 1);
         else if (Math.random() < risk) { burnt = true; this.give(pl, "burnt"); this.emit(pl, "burn", {}); this.say(pl, "You burn it.", "bad"); }
       }
@@ -2904,6 +2989,11 @@ export class World {
          A pet is one kill in a thousand; it should still be there to scroll back to. (The jackpot-kill line
          already includes its winner, so this is the house style, not a new one.) */
       for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `🐾 ${pl.name} found a pet: ${G.PETS[k].name}, off a ${def.name.toLowerCase()}!` });   /* the monster is worth saying: a 1-in-1000 drop is a story, and "off a Yard Gator" is most of it */
+    }
+    /* (2026-09-27) BREEDING: an egg, one kill in G.BREED.eggDrop, from the eggs whose home this map is */
+    if (Math.random() < G.BREED.eggDrop) {
+      const ek = G.eggFor(S.key), where = this.keepRare(pl, ek, 1);
+      if (where) { got.push([ek, 1]); this.emit(pl, "loot", { k: ek, n: 1 }); for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `\u{1F95A} ${pl.name} found a ${G.ITEMS[ek].name.toLowerCase()}!` }); }
     }
     /* (2026-09-27) THE LONG NIGHT rides every kill: candy corn at a flat rate (doubled at Nightfall), ectoplasm now and then, and a
        monster that carries its own pet (the King's Black Cat) rolls it here, outside the 1-in-1,000 pool above. */
@@ -3124,7 +3214,7 @@ export class World {
     const crop = G.CROPS[p.k], yk = G.cropYield(p.k), left = p.at + (p.ms || crop.ms) - now, nm = G.ITEMS[yk].name.toLowerCase();   /* (2026-09-26) a seed grows its bloom */
     if (!mine) return this.say(pl, `${whose} ${nm} ${left > 0 ? "is growing" : "looks ready to pick"}.`);
     if (left > 0) return this.say(pl, `Your ${nm} will be ready in ${left > 90000 ? `about ${Math.round(left / 60000)} minutes` : `${Math.ceil(left / 1000)} seconds`}.`);
-    const n = rint(crop.yield[0], crop.yield[1]);
+    const n = Math.max(1, Math.round(rint(crop.yield[0], crop.yield[1]) * (1 + G.petFx(pl.C).grow / 100)));   /* (2026-09-27) the Truffle Pig */
     if (!this.give(pl, yk, n)) return;
     /* (2026-09-27) a seed crop gives its seed back (G.SEED_RETURN, now always) and a second one G.SEED_EXTRA of the time: see the rules */
     /* (2026-09-27) G.SEED_BACK every time (two), one more G.SEED_EXTRA of the time (three) */
@@ -4209,6 +4299,11 @@ export class World {
     const skill = G.SKILLS[m.skill] ? m.skill : null;
     switch (m.cmd) {
       case "xp": { const n = Math.trunc(Number(m.n) || 0); if (!skill || !n) return; this.grant(pl, skill, n); return note(`${n > 0 ? "+" : ""}${n.toLocaleString()} ${G.SKILLS[skill].name} xp.`); }
+      case "givepet": {   /* (2026-09-27) admin: a pet of any kind, optionally Greater, to test Breeding */
+        const k = String(m.k || ""); if (!G.PETS[k]) return note(`No pet called ${k}.`);
+        const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k, name: "", ...(m.tier ? { tier: 1, fx: G.greaterFx(k, k) } : {}) };
+        C.pets.push(pet); this.touch(pl); return note(`Gave ${G.petLabel(pet)}.`);
+      }
       case "setlvl": { const l = Math.max(1, Math.min(99, m.lvl | 0)); if (!skill) return; C.xp[skill] = G.XP_AT[l]; if (skill === "hp") C.hp = G.maxHpOf(C); C.hp = Math.min(C.hp, G.maxHpOf(C)); this.touch(pl); return note(`${G.SKILLS[skill].name} set to ${l}.`); }
       case "clearxp": {
         const f = G.freshChar().xp;

@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import * as G from "../v3/assets/js/eastscape-shared.js";
 import { createClosedScenes } from "../v3/assets/js/eastscape-closed.js"; Object.assign(G.SCENES, createClosedScenes(G, G._MAP));   // the closed areas' maps are their own file since 2026-09-21: these tools still look at every scene
+import fs from "node:fs";   /* (2026-09-25) the Wilderness gathering check reads index.js, which no other check here needed */
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const html = readFileSync(join(ROOT, "eastscape.html"), "utf8");
@@ -179,7 +180,8 @@ head("recipes");
     if (!G.ITEMS[r.out?.[0]]) bad(`recipe "${id}" makes "${r.out?.[0]}"`, "no such item");
     if (!(r.lvl >= 1)) bad(`recipe "${id}" has no level`);
     if (!(r.xp > 0)) bad(`recipe "${id}" gives no xp`);
-    if ((r.in || []).some(([k]) => k === r.out?.[0])) bad(`recipe "${id}" makes what it consumes`, "an infinite loop");
+    /* (2026-09-25) a recipe may make what it consumes when the loop COSTS something: the cauldron's feather brew turns three feathers, a vial and a sporecap into fifteen. What it must not be is free. */
+    if ((r.in || []).some(([k]) => k === r.out?.[0]) && !(r.in || []).some(([k]) => k !== r.out?.[0])) bad(`recipe "${id}" makes what it consumes`, "an infinite loop");
   }
   // a station nothing can be made at is a thing players will click forever
   for (const st of stations) if (!G.recipesAt(st).length) bad(`the ${st} has no recipes`);
@@ -211,9 +213,20 @@ head("quests");
     if (!npcQuests.has(k)) bad(`quest "${k}" ("${q.name}") is offered by nobody`, "no NPC lists it");
     if (q.giver && !npcNames.has(q.giver)) bad(`quest "${k}" names giver "${q.giver}"`, `no NPC by that name (have: ${[...npcNames].join(", ")})`);
     const goal = q.goal || {};
-    if (goal.type === "bring") for (const it of goal.items || []) { if (!G.ITEMS[it]) bad(`quest "${k}" asks for "${it}"`, "no such item"); }
-    if (goal.type === "kill" && !G.MOBS[goal.mob]) bad(`quest "${k}" asks you to kill "${goal.mob}"`, "no such monster");
-    if (!(goal.n >= 1)) bad(`quest "${k}" has no goal count`);
+    if (!Array.isArray(q.stages) || !q.stages.length) bad(`quest "${k}" has no stages`);
+    if (q.tier && !G.QUEST_TIERS[q.tier]) bad(`quest "${k}" has tier "${q.tier}"`, "easy, medium or hard");
+    if (q.handTo && !npcNames.has(q.handTo)) bad(`quest "${k}" hands in to "${q.handTo}"`, "no NPC by that name");
+    for (const [i, s] of (q.stages || []).entries()) {
+      const at = `quest "${k}" stage ${i + 1} (${s.type})`;
+      if (!["talk", "bring", "kill", "gather", "visit"].includes(s.type)) bad(at, "unknown stage type");
+      if (s.type === "talk" && !npcNames.has(s.npc)) bad(`${at} talks to "${s.npc}"`, "no NPC by that name");
+      if (s.type === "bring") { for (const it of s.items || []) if (!G.ITEMS[it]) bad(`${at} asks for "${it}"`, "no such item"); if (s.to && !npcNames.has(s.to)) bad(`${at} brings to "${s.to}"`, "no NPC by that name"); }
+      if (s.type === "gather") for (const it of s.items || []) if (!G.ITEMS[it]) bad(`${at} gathers "${it}"`, "no such item");
+      if (s.type === "kill" && !G.MOBS[s.mob]) bad(`${at} kills "${s.mob}"`, "no such monster");
+      if (s.type === "visit" && !G.SCENES[s.scene]) bad(`${at} visits "${s.scene}"`, "no such area");
+      if (["bring", "kill", "gather"].includes(s.type) && !(s.n >= 1)) bad(at, "no count");
+      for (const [it] of s.give || []) if (!G.ITEMS[it]) bad(`${at} gives "${it}"`, "no such item");
+    }
     for (const [it] of q.reward?.items || []) if (!G.ITEMS[it]) bad(`quest "${k}" rewards "${it}"`, "no such item");
     for (const sk of Object.keys(q.reward?.xp || {})) if (!G.SKILLS[sk]) bad(`quest "${k}" rewards "${sk}" xp`, "no such skill");
     if (!q.reward?.coins && !q.reward?.xp && !q.reward?.items) warn(`quest "${k}" rewards nothing`);
@@ -257,7 +270,7 @@ head("dead inventory");
   const sold = new Set(G.SHOP.sells.map(([k]) => k));
   const cooked = new Set(Object.values(G.COOK).map((r) => r.to));
   const crops = new Set(Object.keys(G.CROPS));
-  const quested = new Set(Object.values(G.QUESTS).flatMap((q) => (q.reward?.items || []).map(([k]) => k)));
+  const quested = new Set(Object.values(G.QUESTS).flatMap((q) => [...(q.reward?.items || []).map(([k]) => k), ...(q.stages || []).flatMap((st) => (st.give || []).map(([k]) => k))]));   /* (2026-09-27) a stage may hand you a thing to carry */
   const made = new Set(Object.values(G.RECIPES).map((r) => r.out[0]));
   const start = new Set([...G.freshChar().inv.map((s) => s.k), ...Object.values(G.freshChar().eq).filter(Boolean)]);
   const gatherable = new Set(["logs", "yewlogs", "ashlogs", "copper", "tin", "grimstone", "marble", "stardust", "olives", "sunolive", "wheat", "tomatoe", "goldtomatoe", "sardine", "trout", "mooncarp", "gloomfin", "geode", "burnt", "coins",
@@ -291,9 +304,19 @@ head("dead inventory");
    the two deliberate exceptions named rather than assumed: ZCoins climb with level, casino finds with bounty. */
 {
   const find = new Set(G.FINDS.map((f) => f[0]));
+  {
+    const rates = new Set(Object.keys(G.MOBS).flatMap((t) => G.raresOf(t).filter(([k]) => k === "pot_double").map(([, p]) => p)));
+    if (rates.size > 1) bad("the 2X potion drops at " + [...rates].join(" / "), "it is meant to be the same flat chance on every monster in the game");
+    const r = [...rates][0];
+    if (r != null && Math.abs(r - G.DOUBLE.drop) > 1e-12) bad("the 2X potion drops at " + r, "DOUBLE.drop says " + G.DOUBLE.drop);
+    if (r != null && r > 0.001) bad("the 2X potion drops at " + (r * 100).toFixed(3) + "%", "it doubles the ticket supply for EVERYBODY, so past about 1 in 1,000 it stops being an event");
+  }
   let n = 0;
   for (const t of Object.keys(G.MOBS)) for (const [k, p] of G.raresOf(t)) {
-    if (k === "zcoin" || find.has(k)) continue;
+    /* (2026-09-25) pot_double joins zcoin as a GLOBAL flat drop rather than a monster's named rare: it is the
+       same chance on a chicken and on the Junk King, which is most of what makes "it can come from anywhere"
+       true. Exempted here for the same reason zcoin is - the rule below is about a monster's OWN rare table. */
+    if (k === "zcoin" || k === "pot_double" || find.has(k)) continue;
     n++;
     if (Math.abs(p - G.RARE_RATE) > 1e-9) bad(`${G.MOBS[t].name} drops ${k} at ${(p * 100).toFixed(2)}%`, `every named rare is RARE_RATE (${G.RARE_RATE * 100}%)`);
   }
@@ -368,7 +391,9 @@ scene objects
      kills in the Boneyard and beyond. The flag, the pool and the page have to agree, and this is what says so. */
   const raid = Object.entries(G.PETS).filter(([, p]) => p.raid).map(([k]) => k);
   for (const k of raid) if (G.PET_DROP_KEYS.includes(k)) bad(`${G.PETS[k].name} is a raid pet`, "but a kill can still roll it — it is in PET_DROP_KEYS");
-  for (const [k, p] of Object.entries(G.PETS)) if (!p.raid && !G.PET_DROP_KEYS.includes(k)) bad(`${p.name} drops from nowhere`, "not a raid pet, and not in PET_DROP_KEYS either");
+  for (const [k, p] of Object.entries(G.PETS)) if (!p.raid && !p.bred && !G.PET_DROP_KEYS.includes(k)) bad(`${p.name} drops from nowhere`, "not a raid pet, and not in PET_DROP_KEYS either");
+  /* (2026-09-27) A BRED PET COMES FROM THE PEN: a hatchling from an egg that exists, a Legendary from a kind that has one */
+  for (const [k, p] of Object.entries(G.PETS)) if (p.bred && !(p.egg ? G.EGGS?.[p.egg]?.pet === k : p.legend && G.LEGEND_OF?.[p.base] === k)) bad(`${p.name} is a bred pet with no way in`, "no egg hatches it and no pairing makes it");
   if (raid.length) console.log(`  ok  ${raid.length} raid pet${raid.length === 1 ? " is" : "s are"} out of the kill pool (${G.PET_DROP_KEYS.length} of ${G.PET_KEYS.length} can drop)`);
   /* and the hand-typed wiki page has to say so, because that page imports nothing and cannot compute it */
   const wiki = readFileSync(join(ROOT, "v3/assets/js/eastscape-wiki.js"), "utf8");
@@ -394,6 +419,43 @@ scene objects
   else if (!/!foe\.lingerUntil && now - foe\.lastInput <= G\.AFK_MS/.test(worker))
     bad("a mob still hands an idle player a free retaliate", "so the three-minute cutoff restarts on the next swing");
   else console.log("  ok  and no new fight is handed to somebody who has not touched the game since");
+}
+
+/* GATHERING IS HALVED IN THE WILDERNESS, and there are FOUR separate rolls that have to know it — a vein, a
+   rock, a tree and a cast, each written out in its own branch of index.js hundreds of lines apart. That is
+   exactly the shape that leaves one behind: the Vault shipped with five ore nodes nobody could stand next to
+   for the same reason. This counts the rolls and counts the multipliers, so a fifth gathering skill cannot be
+   added without somebody noticing this rule exists. */
+head("wilderness gathering");
+{
+  const idx = fs.readFileSync("eastscape-worker/src/index.js", "utf8");
+  const applied = idx.split("G.gatherMul(").length - 1;
+  if (applied < 4) bad(`only ${applied} gathering roll(s) apply G.gatherMul`, "a vein, a rock, a tree and a cast all need it");
+
+  const pvp = Object.entries(G.SCENES).filter(([, d]) => d.pvp).map(([k]) => k);
+  if (!pvp.length) bad("no scene is pvp", "gatherMul keys off it, so the rule would apply nowhere");
+  else console.log(`  checked ${applied} gathering rolls, halved x${G.WILD_GATHER} in ${pvp.join(", ")}`);
+
+  if (!(G.WILD_GATHER > 0 && G.WILD_GATHER <= 1)) bad(`WILD_GATHER is ${G.WILD_GATHER}`, "it multiplies a chance, so it belongs in (0, 1]");
+}
+
+/* THE 2X EVENT HAS TO REACH BOTH TICKET PATHS, and there are exactly two, which is the whole problem. Tickets
+   are PAID through tixTo (a dungeon clear, a jackpot, a chip you cash) and they are DROPPED as the first line
+   of every monster's table, handed over by the ordinary item path. I shipped the doubling in tixTo alone and
+   described it as "the one place every ticket passes through", which was simply wrong, and the event missed the
+   biggest ticket source in the game until the owner asked whether it applied to drops.
+   Neither path can prove the other exists, so this counts both. */
+head("the 2X event");
+{
+  const idx = fs.readFileSync("eastscape-worker/src/index.js", "utf8");
+  const paidLine = idx.split(String.fromCharCode(10)).find((l) => l.includes("tixTo(pl, n) {")) || "";
+  const dropLine = idx.split(String.fromCharCode(10)).find((l) => l.includes('k === "tickets"') && l.includes("qty = Math.round")) || "";
+  const inPaid = paidLine.includes("doubleOn()"), inDropped = dropLine.includes("doubleOn()");
+  if (!inPaid) bad("tixTo does not apply the 2X event", "everything PAID in tickets would miss it");
+  if (!inDropped) bad("a kill's dropped tickets do not apply the 2X event", "the biggest ticket source in the game would miss it");
+  const xp = idx.includes("this.doubleOn() ? G.DOUBLE.mult : 1");
+  if (!xp) bad("crafting xp does not apply the 2X event", "the station loop is what the owner meant by crafting");
+  if (inPaid && inDropped && xp) console.log(`  checked both ticket paths and crafting xp at x${G.DOUBLE.mult} for ${Math.round(G.DOUBLE.ms / 60000)} minutes`);
 }
 
 console.log(`\n${errors} error${errors === 1 ? "" : "s"}, ${warns} warning${warns === 1 ? "" : "s"}\n`);
