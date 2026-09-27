@@ -755,6 +755,9 @@ export class World {
           return;
         }
         pl.lastChat = now;
+        /* (2026-09-27, the owner: "add a chat command for users to time the pumpkin king. something like /pumpkin and it shows time
+           remaining") THE FIRST CHAT COMMAND. It answers the asker alone and is never broadcast, so nobody else's chat fills with it. */
+        if (/^[\/!](pumpkin|king)\b/i.test(text)) return this.say(pl, this.hwKingLine(now), "good");
         for (const p of this.pls.values()) p.out.push({ type: "chat", id: pl.id, name: pl.name, nfx: G.nameFxOf(pl.C) || undefined, role: pl.role !== "user" ? pl.role : undefined, text, scene: pl.C.scene, t: now });
         return;
       }
@@ -1557,6 +1560,19 @@ export class World {
     const who = helpers.length ? `${pl.name} and ${helpers.length} other${helpers.length === 1 ? "" : "s"}` : pl.name;   /* (2026-09-27) an open boss is a crowd's kill */
     this.houseSay(`🎃 ${who} put the Pumpkin King down. He'll be back on the hour.`);
     for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: `🎃 ${who} killed the Pumpkin King!` });
+  }
+  /** (2026-09-27) /pumpkin: where the King is in his hour, in one line */
+  hwKingLine(now = Date.now()) {
+    if (!G.hwOn(now)) return "The Pumpkin King only walks during the Long Night.";
+    const H = this.hw || {}, mm = (ms) => { const t = Math.max(0, Math.round(ms / 1000)), m = Math.floor(t / 60), sec = t % 60; return m ? `${m} min ${String(sec).padStart(2, "0")} s` : `${sec} s`; };
+    if (H.kingUp) {
+      const S = this.scenes.get(G.HW.king.scene), m = S?.mobs.find((x) => x.id === H.kingUp.id);
+      const hp = m && !m.dead ? ` He has ${Math.max(0, m.hp).toLocaleString()} of ${m.maxHp.toLocaleString()} health left.` : "";
+      return `\u{1F383} The Pumpkin King is UP in the Lantern Mire, for another ${mm(H.kingUp.until - now)}.${hp}`;
+    }
+    if (H.kingDue) return "\u{1F383} The Pumpkin King is due NOW: he climbs out the moment somebody walks into the Lantern Mire.";
+    if (H.kingAt) return `\u{1F383} The Pumpkin King rises in the Lantern Mire in ${mm(H.kingAt - now)}.`;
+    return "\u{1F383} The Pumpkin King rises in the Lantern Mire within the hour.";
   }
   hwDay(C) { const day = G.chicagoDay(); if (!C.hw || C.hw.day !== day) C.hw = { day, trick: false, lanterns: [] }; return C.hw; }
   /** (2026-09-27) every candy corn the world hands out comes through here, so c.stats.corn is the season's board */
