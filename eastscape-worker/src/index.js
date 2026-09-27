@@ -1660,15 +1660,17 @@ export class World {
     if (op === "collect") {
       if (!P) return;
       if (now < P.at + P.ms) { const left = P.at + P.ms - now, h = Math.floor(left / 3600000), mi = Math.ceil((left % 3600000) / 60000); return bad(`Not yet: ${h ? `${h} h ` : ""}${mi} min to go.`); }
-      /* (2026-09-27, the owner: "if someone succesfully breeds a greater or legendary baby it shouldnt come back right?") the two parents
-         BECOME the baby: nothing comes back at collect. Stopping early (release) still hands them back. */
-      const back = [];
-      if (G.petsOf(C).length + 1 > 50) return bad("You have too many pets to take another. Let one go first.");
+      /* (2026-09-27) BOTH PARENTS COME BACK with the baby. They used to become it (the owner: "if someone succesfully breeds a greater or
+         legendary baby it shouldnt come back right?"), and then, the same day: "we do need to return parents back after a pet is bred so
+         users can level up their breeding skill" - a pairing that used both pets up made every Breeding level cost two pets, which is a
+         skill nobody can train. The food and the clock are the cost now. Stopping early (release) hands them back, as it always did. */
+      const back = [P.a, P.b].filter(Boolean);
+      if (G.petsOf(C).length + back.length + 1 > 50) return bad("You have too many pets to take the baby and both parents back. Let some go first.");
       const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k: P.child.k, name: "", ...(P.child.tier ? { tier: 1 } : {}), ...(P.child.fx ? { fx: P.child.fx } : {}) };   /* a Legendary keeps its picked stats too */
       C.pets.push(...back, pet);
       const xp = P.kind === "egg" ? G.EGGS[P.egg].xp : G.BREED[P.kind].xpEnd;
       C.pen = null; this.grant(pl, "breeding", xp); this.touch(pl);
-      this.say(pl, `${P.kind === "egg" ? "The egg hatches" : "A new pet"}: ${G.petLabel(pet)}${pet.fx ? ` (${G.petFxText(pet.fx)})` : ""}. It's in your Equipment tab.`, "loot");
+      this.say(pl, `${P.kind === "egg" ? "The egg hatches" : "A new pet"}: ${G.petLabel(pet)}${pet.fx ? ` (${G.petFxText(pet.fx)})` : ""}. It's in your Equipment tab${back.length ? ", and both parents come back to you" : ""}.`, "loot");
       if (P.kind !== "greater") for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `${P.kind === "legend" ? "\u{1F451}" : "\u{1F95A}"} ${pl.name} ${P.kind === "legend" ? "bred a Legendary" : "hatched"}: ${G.PETS[pet.k].name}!` });
       return this.penView(S, pl);
     }

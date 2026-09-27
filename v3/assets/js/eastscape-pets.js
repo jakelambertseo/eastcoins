@@ -23,7 +23,7 @@ export function createPetUi(E) {
       $("penBody").innerHTML = `<div class="pn-card"><div class="pn-eq">${card(P.a)}<i>+</i>${card(P.b)}<i>=</i><div class="pn-slot full out${r === "legend" ? " rk-legend" : ""}">${petPic(kid.k, r)}<b>${esc(G.PETS[kid.k].name)}</b>${rankTag(r)}${statList(kid.fx || G.PETS[kid.k].fx)}</div></div>
         <div class="pn-bar"><i style="width:${pct}%"></i></div><div class="pn-clock${left ? "" : " done"}">${left ? `${left} to go` : "Ready to collect!"}</div>
         <div class="pn-acts"><button type="button" class="lk-btn big" id="penCollect"${left ? " disabled" : ""}>Collect</button><button type="button" class="lk-btn plain" id="penRelease">Stop</button></div>
-        <p class="pn-note" style="text-align:center">Runs whether you're here or not. The parents become the baby; stopping early gives them back, but the food is gone.</p></div>`;
+        <p class="pn-note" style="text-align:center">Runs whether you're here or not. Collect it and you get the baby and both parents back; stopping early gives the parents back, but the food is gone.</p></div>`;
       $("penCollect").onclick = () => { SFX.play("ui_click"); send({ t: "pen", op: "collect" }); };
       $("penRelease").onclick = () => { if (confirm("Take both pets back and lose the food?")) send({ t: "pen", op: "release" }); };
       return tickClock("penWin", P.at, P.ms, "penCollect");
@@ -52,7 +52,7 @@ export function createPetUi(E) {
         ${pr.kind === "greater" && pr.kinds.length > 1 ? `<div class="pn-card"><h4><b>3</b>Which one should it look like?</h4><div class="pn-looks">${pr.kinds.map((k) => `<button type="button" class="pn-look${penPick.look === k ? " on" : ""}" data-look="${k}">${petPic(k, "greater")}<b>${esc(G.PETS[k].name)}</b></button>`).join("")}</div></div>` : ""}`;
       const shortFood = pr.food.filter(([k, n]) => G.countItems(E.me, [k]) < n), lowLvl = lv < pr.lvl, ok = !shortFood.length && !lowLvl;
       const why = lowLvl ? `You need Breeding ${pr.lvl} for a Legendary. You're ${lv}.` : shortFood.map(([k, n]) => `You need ${n} ${esc(ITEMS[k].name)} and have ${G.countItems(E.me, [k])}. Cook it at a campfire (${k === G.RANKS.greater.food ? "Cooking 50" : k === G.RANKS.legend.food ? "Cooking 80" : "Cooking 20"}).`).join(" ");
-      plan = `<div class="pn-card"><h4><b>${pr.kind === "greater" && pr.kinds.length > 1 ? 4 : 3}</b>Breed <span class="pn-time">&middot; ${pr.ms / 3600000} hours &middot; both parents are used up</span></h4>
+      plan = `<div class="pn-card"><h4><b>${pr.kind === "greater" && pr.kinds.length > 1 ? 4 : 3}</b>Breed <span class="pn-time">&middot; ${pr.ms / 3600000} hours &middot; both parents come back</span></h4>
         <div class="pn-go"><div class="pn-reqs">${pr.food.map(([k, n]) => need(k, n)).join("")}${pr.lvl > 1 ? `<em class="pn-need${lowLvl ? " no" : ""}">${sico("breeding")}<b>Breeding ${pr.lvl}</b><small>you're ${lv}</small></em>` : ""}</div>
         <button type="button" class="lk-btn big" id="penGo"${ok ? "" : " disabled"}>Breed</button></div>${why ? `<p class="pn-warn">${why}</p>` : ""}</div>`;
     }

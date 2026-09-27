@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=342">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=343">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1354,7 +1354,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=342";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=343";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1363,7 +1363,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=193").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=194").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -1520,7 +1520,7 @@ const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String
 let TIP = null; const tipLoad = () => (tipLoad.p ||= import("/v3/assets/js/eastscape-tip.js?v=3").then((m) => (TIP = m.createTip({ G, esc, ico, me: () => me }))));
 document.addEventListener("pointerover", (e) => { if (e.pointerType === "touch") return; const el = e.target.closest?.("[data-item], [data-k], [data-rm]"), k = el && (el.dataset.item || el.dataset.k || el.dataset.rm); if (k && ITEMS[k]?.slot) tipLoad().then((t) => t.show(el, k, Number(el.dataset.f) || 0)).catch(() => {}); });   /* (2026-09-23) data-f is the level of THIS piece: the card describes what you are pointing at, not whatever of that kind you happen to be wearing */
 let PROF = null;
-const profLoad = () => (profLoad.p ||= import("/v3/assets/js/eastscape-profile.js?v=7").then((m) => (PROF = m.createProfile({ G, SFX, send, esc, $, sico, ico, you: () => you,   /* (2026-09-23) ico: the Gear tab draws real item icons, and the PNG-or-emoji decision lives on the page */
+const profLoad = () => (profLoad.p ||= import("/v3/assets/js/eastscape-profile.js?v=8").then((m) => (PROF = m.createProfile({ G, SFX, send, esc, $, sico, ico, you: () => you,   /* (2026-09-23) ico: the Gear tab draws real item icons, and the PNG-or-emoji decision lives on the page */
   sprite: (look, d, name, van) => { const L = look && G.normLook(look), k = L ? lookSprite(L, d, van) : lookArt(G.lookFor({ name }), d); if (!k) return k === null ? null : ""; const im = IMG[k].im, c = document.createElement("canvas"); c.width = im.width; c.height = im.height; c.getContext("2d").drawImage(im, 0, 0); return c; },
   nearby: (name) => Z.players.find((p) => p.name === name && p.id !== you?.id)?.id || null }))));
 /* (2026-09-22) The net panel's switch. Zeroing the correction count on open matters: what you want to know is how
@@ -5112,7 +5112,7 @@ const rankTag = (r) => `<span class="rk rk-${r}">${G.RANKS[r].mark ? `${G.RANKS[
 const petPic = (k, r = "ordinary") => `<span class="pp rk-${r}"><img src="${ART}${G.PETS[k].art}.png?v=${ART_VER[G.PETS[k].art] || ART_V}" alt=""></span>`;
 /* (2026-09-27) THE PEN AND THE HATCHERY LIVE IN THEIR OWN FILE (eastscape-pets.js), fetched the first time one is opened: with three new
    skills the first load had reached its budget, and nobody needs these windows to log in. */
-let PETUI = null; const PETUI_URL = "/v3/assets/js/eastscape-pets.js?v=2";
+let PETUI = null; const PETUI_URL = "/v3/assets/js/eastscape-pets.js?v=3";
 function petUi() { return PETUI ? Promise.resolve(PETUI) : import(PETUI_URL).then((m) => (PETUI = m.createPetUi({ G, $, esc, ico, sico, lvl, send, SFX, openWin, say, rankTag, petPic, ITEMS, get me() { return me; } }))); }
 function openPen(e) { petUi().then((u) => u.openPen(e)); }
 function openHatch(e) { petUi().then((u) => u.openHatch(e)); }
