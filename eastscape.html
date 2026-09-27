@@ -869,9 +869,6 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .dlg-opts button{border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch;border-radius:0;background:none;padding:2px 6px}
 .dlg-opts button:hover,.dlg-opts button:focus-visible{background:none;filter:brightness(1.08)}
 .dlg-face{border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch;background:none}
-.bank-sort{margin:0 0 6px;font-size:12px}
-.bank-sort button{padding:3px 8px;font-size:12px}
-.bank-hint{opacity:.7}
 .qty,.qty button{border-color:#6b4423}
 .qty button[aria-pressed="true"],.ex-tabs button[aria-pressed="true"]{background:#8a4a24;color:#fff3d8}
 .chat-form button{border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;border-radius:0;background:none;padding:0 10px}
@@ -1255,14 +1252,9 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       </div>
       <div class="win-foot"><span>How many</span><div class="qty" id="shopQty"><button data-n="1" aria-pressed="true">1</button><button data-n="5">5</button><button data-n="10">10</button><button data-n="all">All</button></div><span style="flex:1"></span><small id="shopNote"></small></div>
     </section>
-    <section class="win" id="bankWin" aria-label="Bank" hidden>
+    <section class="win wide" id="bankWin" aria-label="Bank" hidden>
       <div class="win-head"><b>🏛️ The Bank</b><small id="bankCount"></small><button type="button" class="win-x" data-close="bankWin" aria-label="Close">×</button></div>
-      <div class="win-body cols2">
-        <div><h4>In the bank</h4><input class="search" id="bankSearch" placeholder="Search the bank…" aria-label="Search the bank"><div class="qty bank-sort" id="bankSort" role="group" aria-label="Sort the bank"><button data-s="recent" aria-pressed="true">Recent</button><button data-s="az">A–Z</button><button data-s="value">Value</button><button data-s="amount">Amount</button></div><div class="grid8" id="bankGrid"></div></div>
-        <div><h4>Your bag <small id="bagCount" style="opacity:.7;font-weight:400"></small></h4><div class="grid8" id="bankBag"></div><div id="bagUpRow"></div></div>
-      </div>
-      <div class="win-foot"><span>Move</span><div class="qty" id="bankQty"><button data-n="1" aria-pressed="true">1</button><button data-n="5">5</button><button data-n="10">10</button><button data-n="all">All</button></div>
-        <small class="bank-hint">shift-click: out a full stack, in the whole lot</small><span style="flex:1"></span><button type="button" class="btn plain" id="stackAll" title="Put every stack in your bag that your bank already holds into the bank">Stack all</button><button type="button" class="btn plain" id="depInv">Deposit bag</button><button type="button" class="btn plain" id="depEq">Deposit worn</button></div>
+      <div class="win-body"><div id="bankRoot" class="view-loading" aria-live="polite"></div></div>
     </section>
     <section class="win" id="exWin" aria-label="The Exchange" hidden>
       <div class="win-head"><b>⚖️ Market</b><small>Everything lands in your bank · 1% of each sale to the house</small><button type="button" class="win-x" data-close="exWin" aria-label="Close">×</button></div>
@@ -5105,70 +5097,13 @@ function renderShop() {
   $("shopBag").querySelectorAll("[data-i]").forEach((el) => el.addEventListener("click", () => !bar && send({ t: "shop", op: "sell", i: +el.dataset.i, n: shopN })));
 }
 
-/* ------------------------------------------------------------ the bank */
-let bankN = 1;
-/* (2026-09-23, the owner: "with a small inventory, it needs a better UX"). SORTING IS DISPLAY ONLY and needs no
-   server change: renderBank already pairs every row with its TRUE bank index (`bank.map((s, i) => [s, i])`) and the
-   click handler sends that index, so reordering what is drawn cannot move what is moved. Keep that pairing if this
-   is ever rewritten — sorting a list whose handler used the drawn position would withdraw the wrong item. */
-let bankSort = (() => { try { return localStorage.getItem("es_bank_sort") || "recent"; } catch (e) { return "recent"; } })();
-const BANK_SORTS = {
-  recent: null,   /* insertion order: what the bank has always shown */
-  az: (a, b) => ITEMS[a[0].k].name.localeCompare(ITEMS[b[0].k].name),
-  value: (a, b) => G.valueOf(b[0].k) * b[0].n - G.valueOf(a[0].k) * a[0].n,
-  amount: (a, b) => b[0].n - a[0].n
-};
-$("bankSort").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
-  bankSort = b.dataset.s; try { localStorage.setItem("es_bank_sort", bankSort); } catch (e) {}
-  SFX.play("ui_click"); renderBank();
-}));
-$("bankQty").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { bankN = b.dataset.n === "all" ? "all" : +b.dataset.n; $("bankQty").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }));
-$("bankSearch").addEventListener("input", () => renderBank());
-$("depInv").addEventListener("click", () => send({ t: "bank", op: "depinv" }));
-$("stackAll").addEventListener("click", () => { SFX.play("ui_click"); send({ t: "bank", op: "stackall" }); });
-$("depEq").addEventListener("click", () => send({ t: "bank", op: "depeq" }));
-function renderBank() {
-  if (!me) return;
-  const q = $("bankSearch").value.trim().toLowerCase(), bank = me.bank || [];
-  /* What the whole bank is worth, at what Bom pays. It is the one number that makes a 200-slot bank legible at a
-     glance, and it costs a reduce over rows that are already in hand. */
-  const worth = bank.reduce((a, s) => a + G.valueOf(s.k) * s.n, 0);
-  $("bankCount").textContent = `${bank.length}/${G.BANK_MAX} items${worth ? ` · worth ${G.fmtCash(worth)}` : ""}`;
-  $("bankSort").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.s === bankSort)));
-  const shown = bank.map((s, i) => [s, i]).filter(([s]) => !q || ITEMS[s.k].name.toLowerCase().includes(q));
-  const cmp = BANK_SORTS[bankSort]; if (cmp) shown.sort(cmp);
-  /* (2026-09-25, the owner: "its taking noticably longer to load the imagery icons when i open/close my bank"). This runs on
-     EVERY "me" update while the bank is open, several a second, and it used to throw away every icon and build them
-     again each time - a hundred new <img>s for a bank that had not changed. Now each grid is rebuilt only when its HTML
-     would differ, and the clicks are delegated (below the function) so nothing has to be re-wired after a rebuild. */
-  const gridHtml = shown.length ? shown.map(([s, i]) => slotHtml(s, i, "data-b")).join("") : `<p class="note">${bank.length ? "Nothing matches." : "Your bank is empty. Click things in your bag to put them in."}</p>`;
-  if (gridHtml !== bankHtml.grid) { $("bankGrid").innerHTML = gridHtml; bankHtml.grid = gridHtml; }
-  const bagHtml = me.inv.map((s, i) => slotHtml(s, i)).join("") || `<p class="note">Your bag is empty.</p>`;
-  if (bagHtml !== bankHtml.bag) { $("bankBag").innerHTML = bagHtml; bankHtml.bag = bagHtml; }
-  /* (2026-09-22) THE BAG UPGRADE LIVES HERE TOO. It was put on Bom's counter first, reasoning that a full bag is
-     what sends you to him — but that is the moment you go to SELL. The moment you think "I need more room" you
-     open the bank, which is where the owner went looking for it and did not find it. Player instinct beats the
-     argument. It is the same purchase from both places, one handler, so neither can drift.
-
-     `bagCount` is filled here rather than in the header, because the bank's own count is already up there and two
-     x-of-y numbers side by side read as one confusing fraction. */
-  $("bagCount").textContent = `${me.inv.length}/${G.bagMax(me)}`;
-  const upCost = G.bagUpCost(me);
-  $("bagUpRow").innerHTML = upCost == null
-    ? `<p class="note">Your bag is as big as Bom will make it.</p>`
-    : `<p class="note">Bom will sew on another pocket for <b>${G.fmtTix(upCost)}</b> — ${G.BAG_UPGRADES.length - (me.bagUp | 0)} left, each dearer than the last.<br><button type="button" class="btn" id="bagUpGo"${G.tixIn(me) >= upCost ? "" : " disabled"}>Buy a slot · takes you to ${G.bagMax(me) + 1}</button></p>`;
-  $("bagUpGo")?.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); send({ t: "counter", op: "bagup" }); });
-  /* SHIFT-CLICK TAKES THE WHOLE STACK, the same gesture the trade window already uses and labels ("shift-click
-     offers the whole stack"), so this is one idiom in two places rather than a second thing to learn. The 1/5/10/All
-     selector still decides a plain click, which is what stops shift being the only way to move a lot. */
-  /* (2026-09-25, the owner: "when a user shift clicks from their bank to their inventory, it should put a stack (99) in their
-     inventory instead of taking out all"). One STACK, which is the item's own cap: 99, or 1,000 for arrows. Depositing
-     keeps shift = all, since emptying the bag into the bank is the point of that gesture. */
-}
-const bankHtml = { grid: null, bag: null };   /* what each grid last drew: see renderBank */
-$("bankGrid").addEventListener("click", (e) => { const el = e.target.closest("[data-b]"); if (!el) return; const st = me.bank?.[+el.dataset.b]; send({ t: "bank", op: "wd", i: +el.dataset.b, n: e.shiftKey ? (st ? G.capOf(st.k) : 99) : bankN }); });
-$("bankBag").addEventListener("click", (e) => { const el = e.target.closest("[data-i]"); if (!el) return; send({ t: "bank", op: "dep", i: +el.dataset.i, n: e.shiftKey ? "all" : bankN }); });
-
+/* ------------------------------------------------------------ the bank
+   (2026-09-27) REBUILT AND MOVED OUT: v3/assets/js/eastscape-bank.js, fetched the first time the bank opens. Tabs by kind, one
+   search over bank and bag, an amount of your own, a right-click menu, a slots meter. The page only opens it and tells it when
+   `me` changed; every rule of the old window (true bank index on every tile, rebuild only on change, tickets stay) lives there. */
+let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=1";
+function bankUi() { return BANKUI ? Promise.resolve(BANKUI) : import(BANKUI_URL).then((m) => (BANKUI = m.createBankUi({ G, $, esc, ico, qty, fgTag, slotHtml, send, SFX, say, ITEMS, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); }, get me() { return me; } }))); }
+function renderBank() { if ($("bankWin").hidden || !me) return; $("bankCount").textContent = `${(me.bank || []).length}/${G.BANK_MAX}`; bankUi().then((u) => u.render()); }
 
 /* ------------------------------------------------------------ QUICK SLOTS (2026-09-25)
    Four slots beside the chat button, keys 1-4. A slot holds an item KEY, stored on the character (the "quick" message), so it
