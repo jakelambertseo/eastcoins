@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 322;
+export const VERSION = 323;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -6138,8 +6138,8 @@ if (THIEF.live) HISCORES.push(["thieving", "Thieving", "level", "lvl"]);
    The ranks are drawn differently everywhere a pet is shown (grey / blue with one star / gold with a crown), so what a pairing
    makes is obvious before it starts. */
 export const BREED = {
-  greater: { lvl: 1, ms: 12 * 3600000, food: 6, xpStart: 400, xpEnd: 4000 },    /* any two ordinary pets, from Breeding 1: pairing is how the skill is trained */
-  legend: { lvl: 50, ms: 72 * 3600000, food: 12, xpStart: 3000, xpEnd: 40000 },  /* two Greater pets of the same kind */
+  greater: { lvl: 1, ms: 12 * 3600000, food: 18, xpStart: 400, xpEnd: 4000 },   /* any two ordinary pets, from Breeding 1: pairing is how the skill is trained. (2026-09-27) food 6 -> 18, three times, the owner's word, once the parents came back */
+  legend: { lvl: 50, ms: 72 * 3600000, food: 36, xpStart: 3000, xpEnd: 40000 },  /* two Greater pets of the same kind. (2026-09-27) food 12 -> 36, with the Greater */
   hatch: { food: 3 },                                                             /* an egg eats three Ordinary pet food, taken when it goes in */
   eggDrop: 1 / 3000,                                                              /* one kill in three thousand, anywhere: "rare but not that rare" */
   reach: 3,
@@ -7978,8 +7978,8 @@ for (const [gem, clvl, cxp, cval, metal, slvl, sxp, fx, need] of JEWELS) {
    - LIVIA'S EXCHANGE: a pet is listed on its own at a price, leaves your list while it is up, and anyone can buy it outright. The
      money goes to your bank like any sale, less the same 1% (exTax). Pets are not items and never stack, so they are not in the order
      book; they are their own short list (exSlots each);
-   - BOM, at the Prize Counter, buys any pet by its rank. That is a floor, not a market: a Greater pet costs two pets, six Greater food
-     and twelve hours, so these are low on purpose, and the Exchange is where a good one is worth more.
+   - BOM, at the Prize Counter, buys any pet by its rank. That is a floor, not a market: a Greater pet costs eighteen Greater food and twelve
+     hours (the parents come back since 2026-09-27), so these are low on purpose, and the Exchange is where a good one is worth more.
    `own` is the most pets one character can hold, the same 50 the pen's collect has always checked. */
 export const PET_TRADE = { bom: { ordinary: 1000, greater: 5000, legend: 25000 }, exSlots: 4, tradeMax: 6, own: 50 };
 export const petBomPrice = (p) => PET_TRADE.bom[rankOf(p)] || 0;
