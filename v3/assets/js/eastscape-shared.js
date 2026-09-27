@@ -5740,6 +5740,11 @@ export const PVP = { drop: 0.25, lootMs: 60000, groundMs: 180000, lingerMs: 1000
 // how long a monster stays dead. Outside the Wilderness it's 15s for one person, shared out between everyone who has
 // fought in the area in the last minute (15s, 7.5s, 5s, then a 4s floor), so a busy area refills without more monsters on it.
 export const RESPAWN = { base: 15000, floor: 4000 };
+/* (2026-09-27, the owner: "the respawn timers of mobs in all of these need to be scaled towards their levels, so in the yard its very fast,
+   here it needs to be X amount slower (probably a few minutes at minimum)") A PLACEMENT'S TIMER FROM ITS LEVEL: three minutes at the least,
+   3.2 seconds a level above that, and up to half as long again at random so a spot cannot be timed to the second. Level 66 is about 3.5-5
+   minutes, level 78 about 4-6. Used by the Boardwalk's islands; the Yard and everything without a timer of its own keeps RESPAWN. */
+export const levelRespawn = (t) => { const lo = Math.max(180000, (MOBS[t]?.lvl || 1) * 3200); return [lo, Math.round(lo * 1.5)]; };
 /* A MOB MAY OWN ITS TIMER, and when it does the party does NOT divide it (2026-09-25). That division is there so
    a crowd on an ordinary monster is not left standing around, but on a boss it is backwards: the more people
    farming it, the faster it comes back. Anything worth camping wants `respawn` on its MOBS line. */
@@ -7598,6 +7603,15 @@ bmob("krakenarm", { name: "Kraken Arm", size: "m", lvl: 78, hp: 320, att: 78, de
 bmob("captainclaw", { name: "Captain Claw", size: "xl", lvl: 80, hp: 4000, att: 92, def: 70, max: 28, speed: 2600, box: [44, 38], aggro: 3, boss: true, open: true, guard: { archery: 0.35 }, weak: "storm",
   ex: "The claw is bigger than his other arm and he is prouder of it. Anyone who hurts him shares the kill." }, 1000,
   [["tickets", [400, 800]], ["swordfish", [2, 4]], ["clawpin", [3, 6]], ["opal", 1, 0.2], ["singularity_core", 1, 0.02]], [["bookies_amulet", 0.05], ["gamblers_ring", 0.05], ["egg_velvet", 0.05]]);
+/* (2026-09-27, the owner: "captain claw needs to have a chance at unique gear drops (gloves). make a new one just for him with art") */
+ITEMS.clawgrip = { name: "Captain Claw's grip", short: "Gloves", icon: "\u{1F980}", slot: "gloves", def: 8, acc: 4, str: 4, req: { skill: "melee", lvl: 75 }, fx: { speed: 0.03, tough: 0.03 },
+  ex: "The captain's own gauntlets, shell and all. Nova gloves' defence, a little more bite, a little quicker, a little harder to hurt. Only Captain Claw drops them." };
+VALUE.clawgrip = 6000;
+MOBS.captainclaw.rare.push(["clawgrip", 0.04]);   /* one kill in twenty-five */
+/* THE CAPTAIN'S CHEST: what everyone who put him down finds when they open it, once per kill each */
+export const CLAW_CHEST = { tickets: [350, 800], items: [["opal", [1, 2], 0.6], ["sapphire", 1, 0.4], ["clawpin", [2, 4]], ["cswordfish", [2, 3]], ["clawgrip", 1, 0.02]] };
+Object.assign(VERB, { clawchest: "Open" });
+EXAMINE.clawchest = ["Half out of the sand, iron-banded. Something heavy has been sitting on it for a long time."];
 BOSSES.add("captainclaw");
 for (const t of ["gull", "deckhand", "clawhand", "krakenarm", "captainclaw"]) EXAMINE[t] = [MOBS[t].ex];   /* each line already says what the guard does */
 FUNG_WILD.boardwalk = ["oyster", "bluemould", "oyster"];

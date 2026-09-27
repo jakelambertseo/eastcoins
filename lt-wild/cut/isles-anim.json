@@ -26,5 +26,33 @@
   "fh": 75,
   "ax": 77,
   "ay": 36
+ },
+ "bw_flag": {
+  "frames": 8,
+  "fw": 70,
+  "fh": 76,
+  "ax": 0,
+  "ay": 75
+ },
+ "bw_banner": {
+  "frames": 12,
+  "fw": 85,
+  "fh": 107,
+  "ax": 64,
+  "ay": 103
+ },
+ "bw_banner2": {
+  "frames": 12,
+  "fw": 85,
+  "fh": 107,
+  "ax": 64,
+  "ay": 103
+ },
+ "bw_chesta": {
+  "frames": 10,
+  "fw": 54,
+  "fh": 77,
+  "ax": 28,
+  "ay": 67
  }
 }

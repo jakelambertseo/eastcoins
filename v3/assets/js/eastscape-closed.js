@@ -399,9 +399,22 @@ export function createClosedScenes(G, H) {
       objs.push({ t: "yew", art: "bw_palm3", anim: "bw_palm3a", frames: 10, cols: 10, fw: 77, fh: 143, fps: 7, h: 1, ox: -7.5, oy: -44.5, phase: 5, x: 36, y: 11, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[11][36] = "#";
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: 0, oy: -10.75, phase: 11, x: 19, y: 20, name: "Rowboat to Cabin Coast", row: { to: "bw_cabin", x: 25, y: 10 } });
       objs.push({ t: "range", x: 26, y: 4, name: "The Chip Shop" }); g[4][26] = "#";
+      /* (2026-09-27) the clutter, the flags and the banners: the Sea pack's own props. A flat one lies on the ground and can be walked over. */
+      objs.push({ t: "cliff", edge: true, art: "bw_d_fishcrate", x: 26, y: 9, name: "fishcrate" }); g[9][26] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_barrel", x: 27, y: 2, name: "barrel" }); g[2][27] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_fishbarrel", x: 29, y: 9, name: "fishbarrel" }); g[9][29] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_basket", x: 31, y: 9, name: "basket" }); g[9][31] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_crate", x: 15, y: 20, name: "crate" }); g[20][15] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_bigcrate", x: 2, y: 22, name: "bigcrate" }); g[22][2] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_rope", x: 16, y: 14, name: "rope", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_fish", x: 6, y: 18, name: "fish", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_coconut", x: 34, y: 5, name: "coconut", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_shells1", x: 40, y: 11, name: "shells1", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_none", anim: "bw_banner", frames: 12, cols: 12, fw: 85, fh: 107, fps: 8, h: 1, ox: -24.0, oy: -35.5, phase: 4, x: 33, y: 7, name: "banner" }); g[7][33] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_none", anim: "bw_flag", frames: 8, cols: 8, fw: 70, fh: 76, fps: 8, h: 1, ox: 6.5, oy: -21.5, phase: 1, x: 3, y: 10, name: "flag" }); g[10][3] = "#";
       return { g, objs, blobs: [] };
     },
-    mobs: [["gull", 24, 14, { perch: true, respawn: [90000, 150000] }], ["gull", 32, 15, { perch: true, respawn: [90000, 150000] }], ["gull", 38, 14, { perch: true, respawn: [90000, 150000] }], ["gull", 10, 16, { perch: true, respawn: [90000, 150000] }], ["deckhand", 30, 4, { respawn: [90000, 150000] }], ["deckhand", 36, 8, { respawn: [90000, 150000] }], ["deckhand", 12, 2, { respawn: [90000, 150000] }], ["deckhand", 22, 10, { respawn: [90000, 150000] }], ["deckhand", 40, 3, { respawn: [90000, 150000] }]],
+    mobs: [["gull", 24, 14, { perch: true, respawn: G.levelRespawn("gull") }], ["gull", 32, 15, { perch: true, respawn: G.levelRespawn("gull") }], ["gull", 38, 14, { perch: true, respawn: G.levelRespawn("gull") }], ["gull", 10, 16, { perch: true, respawn: G.levelRespawn("gull") }], ["deckhand", 30, 4, { respawn: G.levelRespawn("deckhand") }], ["deckhand", 36, 8, { respawn: G.levelRespawn("deckhand") }], ["deckhand", 12, 2, { respawn: G.levelRespawn("deckhand") }], ["deckhand", 22, 10, { respawn: G.levelRespawn("deckhand") }], ["deckhand", 40, 3, { respawn: G.levelRespawn("deckhand") }]],
     npcs: [{ name: "Salty Meg", art: "saltymeg", x: 27, y: 6, still: true, quests: ["bwmackerel", "bwdeckhands", "bwcaptain"], hair: "#6a3a1e", shirt: "#3a5a8a", pants: "#3a3a3a",
       lines: ["Fish, chips, and a knife in the counter most mornings. Welcome to the Boardwalk.", "The rowboat off the end of the long pier goes to Cabin Coast, and every island's boat goes on to the next: the Lighthouse, the wreck, the pirates' pier, and Skull Isle last.", "The gulls hang over the water where you can't reach them. Bring a bow.", "The captain keeps to Skull Isle. He sends the deckhands so he needn't get sand on the coat."] }],
     bots: []
@@ -452,9 +465,19 @@ export function createClosedScenes(G, H) {
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -30.75, oy: 0, phase: 8, x: 25, y: 11, name: "Rowboat to the Market", row: { to: "boardwalk", x: 18, y: 19 } });
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: 0, oy: -10.75, phase: 9, x: 21, y: 16, name: "Rowboat to the Lighthouse", row: { to: "bw_light", x: 13, y: 15 } });
       
+      /* (2026-09-27) the clutter, the flags and the banners: the Sea pack's own props. A flat one lies on the ground and can be walked over. */
+      objs.push({ t: "cliff", edge: true, art: "bw_d_barrel", x: 16, y: 2, name: "barrel" }); g[2][16] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_sandcrate", x: 17, y: 13, name: "sandcrate" }); g[13][17] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_sandbarrel", x: 12, y: 18, name: "sandbarrel" }); g[18][12] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_basket", x: 21, y: 4, name: "basket" }); g[4][21] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_shells1", x: 10, y: 18, name: "shells1", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_rope", x: 18, y: 16, name: "rope", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_coconut", x: 7, y: 13, name: "coconut", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_stranded", x: 8, y: 19, name: "stranded", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_none", anim: "bw_banner", frames: 12, cols: 12, fw: 85, fh: 107, fps: 8, h: 1, ox: -24.0, oy: -35.5, phase: 1, x: 24, y: 1, name: "banner" }); g[1][24] = "#";
       return { g, objs, blobs: [] };
     },
-    mobs: [["deckhand", 10, 15, { respawn: [90000, 150000] }], ["deckhand", 22, 3, { respawn: [90000, 150000] }], ["deckhand", 35, 3, { respawn: [90000, 150000] }], ["deckhand", 5, 12, { respawn: [90000, 150000] }], ["gull", 22, 15, { perch: true, respawn: [90000, 150000] }], ["gull", 30, 9, { perch: true, respawn: [90000, 150000] }], ["gull", 12, 20, { perch: true, respawn: [90000, 150000] }]],
+    mobs: [["deckhand", 10, 15, { respawn: G.levelRespawn("deckhand") }], ["deckhand", 22, 3, { respawn: G.levelRespawn("deckhand") }], ["deckhand", 35, 3, { respawn: G.levelRespawn("deckhand") }], ["deckhand", 5, 12, { respawn: G.levelRespawn("deckhand") }], ["gull", 22, 15, { perch: true, respawn: G.levelRespawn("gull") }], ["gull", 30, 9, { perch: true, respawn: G.levelRespawn("gull") }], ["gull", 12, 20, { perch: true, respawn: G.levelRespawn("gull") }]],
     npcs: [],
     bots: []
   },
@@ -502,9 +525,17 @@ export function createClosedScenes(G, H) {
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -61.5, oy: -10.75, phase: 13, x: 12, y: 15, name: "Rowboat to Cabin Coast", row: { to: "bw_cabin", x: 20, y: 16 } });
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: 0, oy: -10.75, phase: 4, x: 30, y: 16, name: "Rowboat to Shipwreck Isle", row: { to: "bw_wreck", x: 12, y: 11 } });
       
+      /* (2026-09-27) the clutter, the flags and the banners: the Sea pack's own props. A flat one lies on the ground and can be walked over. */
+      objs.push({ t: "cliff", edge: true, art: "bw_d_barrel", x: 17, y: 15, name: "barrel" }); g[15][17] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_fishbarrel", x: 21, y: 15, name: "fishbarrel" }); g[15][21] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_crate", x: 25, y: 16, name: "crate" }); g[16][25] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_shells2", x: 14, y: 17, name: "shells2", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_rope", x: 22, y: 18, name: "rope", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_bones", x: 19, y: 18, name: "bones", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_none", anim: "bw_flag", frames: 8, cols: 8, fw: 70, fh: 76, fps: 8, h: 1, ox: 6.5, oy: -21.5, phase: 2, x: 28, y: 14, name: "flag" }); g[14][28] = "#";
       return { g, objs, blobs: [] };
     },
-    mobs: [["clawhand", 20, 16, { respawn: [110000, 180000] }], ["clawhand", 15, 13, { respawn: [110000, 180000] }], ["clawhand", 27, 12, { respawn: [110000, 180000] }], ["gull", 11, 13, { perch: true, respawn: [90000, 150000] }], ["gull", 32, 9, { perch: true, respawn: [90000, 150000] }]],
+    mobs: [["clawhand", 20, 16, { respawn: G.levelRespawn("clawhand") }], ["clawhand", 15, 13, { respawn: G.levelRespawn("clawhand") }], ["clawhand", 27, 12, { respawn: G.levelRespawn("clawhand") }], ["gull", 11, 13, { perch: true, respawn: G.levelRespawn("gull") }], ["gull", 32, 9, { perch: true, respawn: G.levelRespawn("gull") }]],
     npcs: [],
     bots: []
   },
@@ -552,9 +583,18 @@ export function createClosedScenes(G, H) {
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -61.5, oy: -10.75, phase: 8, x: 11, y: 11, name: "Rowboat to the Lighthouse", row: { to: "bw_light", x: 29, y: 16 } });
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: 0, oy: -10.75, phase: 0, x: 30, y: 12, name: "Rowboat to Pirate's Pier", row: { to: "bw_pier", x: 8, y: 18 } });
       
+      /* (2026-09-27) the clutter, the flags and the banners: the Sea pack's own props. A flat one lies on the ground and can be walked over. */
+      objs.push({ t: "cliff", edge: true, art: "bw_d_sandcrate", x: 26, y: 13, name: "sandcrate" }); g[13][26] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_sandbarrel", x: 15, y: 16, name: "sandbarrel" }); g[16][15] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_chest", x: 21, y: 15, name: "chest" }); g[15][21] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_skeleton", x: 20, y: 12, name: "skeleton", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_bones", x: 25, y: 17, name: "bones", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_shells1", x: 28, y: 12, name: "shells1", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_rope", x: 17, y: 13, name: "rope", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_none", anim: "bw_flag", frames: 8, cols: 8, fw: 70, fh: 76, fps: 8, h: 1, ox: 6.5, oy: -21.5, phase: 4, x: 26, y: 18, name: "flag" }); g[18][26] = "#";
       return { g, objs, blobs: [] };
     },
-    mobs: [["clawhand", 22, 13, { respawn: [110000, 180000] }], ["clawhand", 17, 15, { respawn: [110000, 180000] }], ["krakenarm", 14, 13, { perch: true, respawn: [130000, 200000] }], ["krakenarm", 31, 10, { perch: true, respawn: [130000, 200000] }], ["krakenarm", 24, 19, { perch: true, respawn: [130000, 200000] }]],
+    mobs: [["clawhand", 22, 13, { respawn: G.levelRespawn("clawhand") }], ["clawhand", 17, 15, { respawn: G.levelRespawn("clawhand") }], ["krakenarm", 14, 13, { perch: true, respawn: G.levelRespawn("krakenarm") }], ["krakenarm", 31, 10, { perch: true, respawn: G.levelRespawn("krakenarm") }], ["krakenarm", 24, 19, { perch: true, respawn: G.levelRespawn("krakenarm") }]],
     npcs: [],
     bots: []
   },
@@ -605,9 +645,21 @@ export function createClosedScenes(G, H) {
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -30.75, oy: 0, phase: 13, x: 8, y: 19, name: "Rowboat to Shipwreck Isle", row: { to: "bw_wreck", x: 29, y: 12 } });
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: 0, oy: -10.75, phase: 9, x: 22, y: 15, name: "Rowboat to Skull Isle", row: { to: "bw_skull", x: 11, y: 12 } });
       
+      /* (2026-09-27) the clutter, the flags and the banners: the Sea pack's own props. A flat one lies on the ground and can be walked over. */
+      objs.push({ t: "cliff", edge: true, art: "bw_d_barrel2", x: 18, y: 5, name: "barrel2" }); g[5][18] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_skelbarrel", x: 5, y: 8, name: "skelbarrel" }); g[8][5] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_fishcrate", x: 14, y: 17, name: "fishcrate" }); g[17][14] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_bigcrate", x: 33, y: 6, name: "bigcrate" }); g[6][33] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_barrel", x: 40, y: 7, name: "barrel" }); g[7][40] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_rope", x: 8, y: 15, name: "rope", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_fish", x: 2, y: 14, name: "fish", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_coconut", x: 29, y: 8, name: "coconut", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_shells2", x: 36, y: 9, name: "shells2", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_none", anim: "bw_banner2", frames: 12, cols: 12, fw: 85, fh: 107, fps: 8, h: 1, ox: -24.0, oy: -35.5, phase: 4, x: 21, y: 7, name: "banner" }); g[7][21] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_none", anim: "bw_flag", frames: 8, cols: 8, fw: 70, fh: 76, fps: 8, h: 1, ox: 6.5, oy: -21.5, phase: 5, x: 4, y: 9, name: "flag" }); g[9][4] = "#";
       return { g, objs, blobs: [] };
     },
-    mobs: [["deckhand", 12, 8, { respawn: [90000, 150000] }], ["deckhand", 30, 3, { respawn: [90000, 150000] }], ["deckhand", 38, 5, { respawn: [90000, 150000] }], ["deckhand", 18, 8, { respawn: [90000, 150000] }], ["krakenarm", 22, 12, { perch: true, respawn: [130000, 200000] }], ["krakenarm", 5, 11, { perch: true, respawn: [130000, 200000] }], ["krakenarm", 30, 10, { perch: true, respawn: [130000, 200000] }]],
+    mobs: [["deckhand", 12, 8, { respawn: G.levelRespawn("deckhand") }], ["deckhand", 30, 3, { respawn: G.levelRespawn("deckhand") }], ["deckhand", 38, 5, { respawn: G.levelRespawn("deckhand") }], ["deckhand", 18, 8, { respawn: G.levelRespawn("deckhand") }], ["krakenarm", 22, 12, { perch: true, respawn: G.levelRespawn("krakenarm") }], ["krakenarm", 5, 11, { perch: true, respawn: G.levelRespawn("krakenarm") }], ["krakenarm", 30, 10, { perch: true, respawn: G.levelRespawn("krakenarm") }]],
     npcs: [],
     bots: []
   },
@@ -652,9 +704,23 @@ export function createClosedScenes(G, H) {
       objs.push({ t: "rock", ore: "nova_ore", art: "bw_rock_nova", x: 31, y: 15, name: "Nova rock", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[15][31] = "#";
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -61.5, oy: -10.75, phase: 8, x: 10, y: 12, name: "Rowboat to Pirate's Pier", row: { to: "bw_pier", x: 21, y: 15 } });
       
+      /* (2026-09-27) the clutter, the flags and the banners: the Sea pack's own props. A flat one lies on the ground and can be walked over. */
+      objs.push({ t: "cliff", edge: true, art: "bw_d_barricade", x: 17, y: 16, name: "barricade" }); g[16][17] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_skelbarrel", x: 29, y: 16, name: "skelbarrel" }); g[16][29] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_d_skeleton", x: 18, y: 14, name: "skeleton", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_bones", x: 24, y: 15, name: "bones", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_bones", x: 14, y: 16, name: "bones", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_shells2", x: 31, y: 9, name: "shells2", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_d_coconut", x: 26, y: 7, name: "coconut", flat: true });
+      objs.push({ t: "cliff", edge: true, art: "bw_none", anim: "bw_flag", frames: 8, cols: 8, fw: 70, fh: 76, fps: 8, h: 1, ox: 6.5, oy: -21.5, phase: 6, x: 16, y: 14, name: "flag" }); g[14][16] = "#";
+      objs.push({ t: "cliff", edge: true, art: "bw_none", anim: "bw_flag", frames: 8, cols: 8, fw: 70, fh: 76, fps: 8, h: 1, ox: 6.5, oy: -21.5, phase: 1, x: 14, y: 7, name: "flag" }); g[7][14] = "#";
+      /* (2026-09-27, the owner: "if i were to beat captain claw does the treasure chest gif appear? it should") THE CAPTAIN'S CHEST: the pack's
+         buried chest, where the mockup has it half out of the sand. Hidden while he lives; the page raises it when he falls and plays it open
+         for each person who fought him, who can loot it once (the server's `clawchest`). */
+      objs.push({ t: "clawchest", art: "bw_none", anim: "bw_chesta", frames: 10, fw: 54, fh: 77, h: 1, ox: -6.0, oy: -17.5, x: 20, y: 13, name: "Captain Claw's chest" });
       return { g, objs, blobs: [] };
     },
-    mobs: [["captainclaw", 21, 14, { aggro: 3, respawn: [2400000, 3000000] }], ["clawhand", 15, 16, { respawn: [110000, 180000] }], ["clawhand", 31, 11, { respawn: [110000, 180000] }], ["clawhand", 20, 6, { respawn: [110000, 180000] }]],
+    mobs: [["captainclaw", 21, 14, { aggro: 3, respawn: [2700000, 2700000] }], ["clawhand", 15, 16, { respawn: G.levelRespawn("clawhand") }], ["clawhand", 31, 11, { respawn: G.levelRespawn("clawhand") }], ["clawhand", 20, 6, { respawn: G.levelRespawn("clawhand") }]],
     npcs: [],
     bots: []
   },

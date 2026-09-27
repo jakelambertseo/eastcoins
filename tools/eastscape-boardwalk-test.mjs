@@ -53,5 +53,19 @@ is(new Set(CHAIN.flatMap((k) => W.scene(k).objs.filter((o) => o.t === "rock").ma
   const row = (to) => { const S = W.scene(pl.C.scene), b = S.objs.find((o) => o.t === "rowboat" && o.row.to === to); if (!b) return false; const at = G.D8.map(([dx, dy]) => ({ x: b.x + dx, y: b.y + dy })).find((c) => G.walkableIn(S.g, c.x, c.y)); pl.x = at.x; pl.y = at.y; pl.act = { kind: "rowboat", ob: b, x: b.x, y: b.y, started: 0 };   /* walk up to the boat first, as a player does */ W.doAction(S, pl, Date.now()); return pl.C.scene === to; };
   const out = CHAIN.slice(1).every((k) => row(k)); is(out && pl.C.scene, "bw_skull", "a player rows from the Market out to Skull Isle");
   const home = CHAIN.slice(0, -1).reverse().every((k) => row(k)); is(home && pl.C.scene, "boardwalk", "and all the way back"); }
+/* (2026-09-27) Captain Claw: 45 minutes to come back, his gloves, and the chest that opens once for each person who put him down */
+{ const S = W.scene("bw_skull"), claw = S.mobs.find((m) => m.t === "captainclaw"), mk = (id) => { const C = G.freshChar(); C.scene = "bw_skull"; const p = { id, name: id, C, x: claw.x + 1, y: claw.y, out: [], path: [], god: false }; W.pls.set(id, p); return p; };
+  const a = mk("killer"), b = mk("helper"), c = mk("bystander"), hp = claw.maxHp || G.MOBS.captainclaw.hp;
+  claw.by = { killer: hp, helper: hp * 0.2 };
+  const t0 = Date.now(); W.killMob(S, a, claw, t0);
+  is(Math.round((claw.respawnAt - t0) / 60000), 45, "Captain Claw comes back in 45 minutes");
+  is(!!S.treasure && S.treasure.who.has("killer") && S.treasure.who.has("helper") && !S.treasure.who.has("bystander"), true, "the chest is for the killer and the helper, not the one who watched");
+  const chest = S.objs.find((o) => o.t === "clawchest"), tix = (p) => G.countItems({ inv: [...p.C.inv, ...(p.C.bank || [])], bank: [] }, ["tickets"]);
+  const open = (p) => { const before = tix(p); p.x = chest.x + 1; p.y = chest.y; p.act = { kind: "clawchest", ob: chest, x: chest.x, y: chest.y, started: 0 }; W.doAction(S, p, Date.now()); return tix(p) - before; };
+  const got = open(a); console.log("   (" + a.out.filter((e) => e.type === "say").slice(-1).map((e) => e.text)[0] + ")"); is(got >= G.CLAW_CHEST.tickets[0], true, `the killer opens it: ${got} tickets, and ${a.C.inv.filter((x) => x.k !== "tickets").map((x) => `${x.n} ${x.k}`).join(", ")}`);
+  is(open(a), 0, "and cannot open it twice"); is(open(b) >= G.CLAW_CHEST.tickets[0], true, "the helper opens their own"); is(open(c), 0, "the bystander gets nothing");
+  is(G.MOBS.captainclaw.rare.some(([k]) => k === "clawgrip") && G.ITEMS.clawgrip.slot === "gloves", true, "Captain Claw's grip: gloves, and only he drops them"); }
+/* respawns scaled to level on every island: three minutes at the least */
+{ const low = []; for (const k of CHAIN) for (const m of W.scene(k).mobs) if (m.t !== "captainclaw" && (!Array.isArray(m.respawn) || m.respawn[0] < 180000)) low.push(`${k}:${m.t}`); is(low, [], "every island monster takes at least three minutes to come back"); }
 console.log(bad ? `\n${bad} problem(s)` : "\nthe Boardwalk works: six islands, the rowboats between them, the Market, and Captain Claw at the end");
 process.exitCode = bad ? 1 : 0;

@@ -335,7 +335,7 @@ export const GUIDES = [
         bw_light: "a lighthouse on its own island: starfall and eclipse rocks, bluefin, Clawhands on the sand",
         bw_wreck: "a ship broken in two on a sandbar: eclipse rocks, swordfish, and Kraken Arms in the shallows",
         bw_pier: "the pirates' house and a boathouse out on the pier: nova rocks, bluefin and swordfish",
-        bw_skull: "the last island: the skull in the rock, nova rocks, and Captain Claw",
+        bw_skull: "the last island: the skull in the rock, nova rocks, Captain Claw, and the chest he sits on, which opens for everyone who put him down",
         foundry: "the works under the Thunderhead, south of it: a lava river, a ring with two demon statues at its gate, the blast furnace (every furnace recipe, half as much xp again), Eclipse, Nova and Singularity veins out in the open, Slag Golems, Furnace Imps, Cinder Elementals and Old Bessemer rising out of the ring",   /* (2026-09-27) */
         depths: "ledges over a bottomless drop: monsters that shrug off a whole fighting style, abyss crystal, eclipse and nova ore, and the Deepwarden",   /* (2026-09-27) */
         trailer: "the best gathering in the game, and the meanest neighbours",

@@ -36,6 +36,20 @@ const boatMid = (d, cw, ch) => { let x0 = 1e9, x1 = -1, y0 = 1e9, y1 = -1; for (
 for (const i of [1, 2, 3]) await strip(`bw_palm${i}a`, `animated Palm Tree-${i}.png`, 10, 10, 156, 215, trunkFoot);
 await strip("bw_boata", "boat-idle-sideways.png", 14, 4, 288, 256, boatMid);
 await put("bw_water", sharp(path.join(TS, "Animated water tiles (full tile).png")));
+/* (2026-09-27, the owner: "lets add a few items on the ground in each one, and the animated pirate flags and banners, it feels very
+   empty") the clutter: crates, barrels, baskets and a chest that stand in the way, and bones, shells, rope, coconuts and a fish that lie
+   flat and can be walked over. Then the pack's animated pirate flag on its pole, its two banner posts, and the buried chest opening onto
+   gold, which is what Captain Claw leaves behind. */
+const DECOR = { barrel: "barrels_0.png", barrel2: "barrels_5.png", fishbarrel: "barrel - fish_0.png", skelbarrel: "barrel with skeleton.png", sandbarrel: "barrels on sand_3.png",
+  crate: "crates_0.png", bigcrate: "cratess-1.png", fishcrate: "crates - fish_0.png", sandcrate: "crates on sand_6.png", basket: "baskets-1.png", fishbasket: "basket with fishes-1.png",
+  barricade: "barricade.png", chest: "chest_0.png", bones: "bones_4.png", skeleton: "bones_15.png", shells1: "shells and pearls_4.png", shells2: "shells and pearls_7.png",
+  rope: "rope on floor_2.png", coconut: "coconut_3.png", fish: "fish_15.png", stranded: "stranded boat-sand.png" };
+for (const [k, f] of Object.entries(DECOR)) await put(`bw_d_${k}`, trim(f));
+const footOf = (d, cw, ch) => { for (let y = ch - 1; y >= 0; y--) { const xs = []; for (let x = 0; x < cw; x++) if (d[(y * cw + x) * 4 + 3] > 180) xs.push(x); if (xs.length >= 3) return [Math.round((xs[0] + xs.at(-1)) / 2), y]; } return [cw / 2, ch]; };
+await strip("bw_flag", "flag-pirate2.png", 8, 8, 160, 186, (d, cw, ch) => { for (let y = ch - 1; y >= 0; y--) for (let x = 0; x < cw; x++) if (d[(y * cw + x) * 4 + 3] > 180) return [x, y]; return [0, ch]; });
+await strip("bw_banner", "banner-anim.png", 12, 12, 96, 128, footOf);
+await strip("bw_banner2", "banner-2-anim.png", 12, 12, 96, 128, footOf);
+await strip("bw_chesta", "buried chest-opening-gold.png", 10, 10, 128, 128, footOf);
 fs.writeFileSync(path.join(ROOT, "lt-wild/cut/isles-anim.json"), JSON.stringify(anchors, null, 1));
 console.log(JSON.stringify(anchors));
 console.log("islands' art cut");
