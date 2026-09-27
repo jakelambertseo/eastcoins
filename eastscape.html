@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=320">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=321">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1290,7 +1290,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=320";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=321";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1299,7 +1299,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=177").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=178").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";

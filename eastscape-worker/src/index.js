@@ -3123,11 +3123,13 @@ export class World {
     const n = rint(crop.yield[0], crop.yield[1]);
     if (!this.give(pl, yk, n)) return;
     /* (2026-09-27) a seed crop gives its seed back (G.SEED_RETURN, now always) and a second one G.SEED_EXTRA of the time: see the rules */
-    const back = crop.yields ? (Math.random() < G.SEED_RETURN && this.give(pl, p.k, 1) ? 1 : 0) + (Math.random() < G.SEED_EXTRA && this.give(pl, p.k, 1) ? 1 : 0) : 0;
+    /* (2026-09-27) G.SEED_BACK every time (two), one more G.SEED_EXTRA of the time (three) */
+    const want = crop.yields ? (Math.random() < G.SEED_RETURN ? G.SEED_BACK : 0) + (Math.random() < G.SEED_EXTRA ? 1 : 0) : 0;
+    const back = want ? this.giveUpTo(pl, p.k, want) : 0;
     if (p.k !== "goldtomatoe" && Math.random() < G.GOLD_TOMATO_HARVEST && this.keepRare(pl, "goldtomatoe", 1)) { this.say(pl, "One of them is heavy, and warm, and gold. A Golden tomatoe: plant it.", "loot"); for (const q of this.pls.values()) if (q !== pl) q.out.push({ type: "casinonote", text: `\u{1F345} ${pl.name} pulled a Golden tomatoe out of a plot.` }); }   /* (2026-09-27) see G.GOLD_TOMATO_HARVEST */
     I.plots[ob.i] = null; this.touch(pl);
     this.gained(S, pl, yk, n); this.grant(pl, "farming", crop.xp);
-    this.say(pl, `You harvest ${n} ${nm}${back === 2 ? ", and two seeds come up with them" : back ? ", and the seed comes up with them" : ""}.`, "good");
+    this.say(pl, `You harvest ${n} ${nm}${back > 1 ? `, and ${back === 2 ? "two" : back === 3 ? "three" : back} seeds come up with them` : back ? ", and a seed comes up with them" : ""}.`, "good");
   }
 
   // First hit claims a monster (outside the Wilderness, where anything goes): the claim is renewed by every swing and
