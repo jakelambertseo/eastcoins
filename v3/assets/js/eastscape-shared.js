@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 332;
+export const VERSION = 333;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7899,7 +7899,7 @@ for (const t of ["potboy", "dgoblin", "dwisp", "dogre", "diron", "deepwarden"]) 
    same way and only upward. Health and max hit are NOT put through OUTSIDE_HP/OUTSIDE_DMG: those four maps' numbers were written as
    the final ones (three times a Yard monster's health on purpose). */
 for (const t of ["gull", "deckhand", "clawhand", "krakenarm", "captainclaw", "slaggolem", "furnaceimp", "cinderelemental", "bessemer",
-  "wasp", "orchardorc", "orchardkeeper", "hedgething", "gardener", "potboy", "dgoblin", "dwisp", "dogre", "diron", "deepwarden"]) MOBS[t].att = Math.max(MOBS[t].att, attFor(MOBS[t].lvl));
+  "wasp", "orchardorc", "orchardkeeper", "hedgething", "gardener", "potboy", "dgoblin", "dwisp", "dogre", "diron", "deepwarden", "pumpkinking"]) MOBS[t].att = Math.max(MOBS[t].att, attFor(MOBS[t].lvl));
 /* (2026-09-27, the owner: "the gem tiles you added need to have a chance at dropping the ruby/topaz/etc ores we added to mining ores, just
    very slowly") an abyss crystal vein turns up any of the four gems, together about a third as often as a gem ore turns up its own */
 GEM_DROP.abyss_crystal = [["ruby", 0.0015], ["sapphire", 0.0015], ["topaz", 0.0012], ["opal", 0.0008]];
