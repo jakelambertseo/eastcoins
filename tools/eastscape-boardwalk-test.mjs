@@ -64,7 +64,7 @@ is(new Set(CHAIN.flatMap((k) => W.scene(k).objs.filter((o) => o.t === "rock").ma
   const open = (p) => { const before = tix(p); p.x = chest.x + 1; p.y = chest.y; p.act = { kind: "clawchest", ob: chest, x: chest.x, y: chest.y, started: 0 }; W.doAction(S, p, Date.now()); return tix(p) - before; };
   const got = open(a); console.log("   (" + a.out.filter((e) => e.type === "say").slice(-1).map((e) => e.text)[0] + ")"); is(got >= G.CLAW_CHEST.tickets[0], true, `the killer opens it: ${got} tickets, and ${a.C.inv.filter((x) => x.k !== "tickets").map((x) => `${x.n} ${x.k}`).join(", ")}`);
   is(open(a), 0, "and cannot open it twice"); is(open(b) >= G.CLAW_CHEST.tickets[0], true, "the helper opens their own"); is(open(c), 0, "the bystander gets nothing");
-  is(G.MOBS.captainclaw.rare.some(([k]) => k === "clawgrip") && G.ITEMS.clawgrip.slot === "gloves", true, "Captain Claw's grip: gloves, and only he drops them"); }
+  is(G.MOBS.captainclaw.drops.some(([k, , p]) => k === "clawgrip" && p === 0.04) && G.ITEMS.clawgrip.slot === "gloves" && !Object.entries(G.MOBS).some(([t, m]) => t !== "captainclaw" && [...m.drops, ...(m.rare || [])].some(([k]) => k === "clawgrip")), true, "Captain Claw's grip: gloves, one kill in 25 from his drop table, and only he drops them"); }
 /* respawns scaled to level on every island: three minutes at the least */
 { const low = []; for (const k of CHAIN) for (const m of W.scene(k).mobs) if (m.t !== "captainclaw" && (!Array.isArray(m.respawn) || m.respawn[0] < 180000)) low.push(`${k}:${m.t}`); is(low, [], "every island monster takes at least three minutes to come back"); }
 console.log(bad ? `\n${bad} problem(s)` : "\nthe Boardwalk works: six islands, the rowboats between them, the Market, and Captain Claw at the end");

@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 329;
+export const VERSION = 330;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -4217,14 +4217,17 @@ export const DEATH = { carnival: { share: 0.1, cap: 7000 }, workyard: { share: 0
 export const deathBill = (c, scene) => { const d = DEATH[String(scene || "").split(":")[0]]; return d ? Math.min(d.cap, Math.floor(tixIn(c) * d.share)) : 0; };
 export const bandOf = (scene) => BANDS[String(scene || "").split(":")[0]] || null;
 /** Why this character can't fight / fish in this scene yet, or null if they can. kind: "fight" | "fish". */
-export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) return null; const skill = kind === "fish" ? "fishing" : "melee", need = b[0], have = lvlOf(c, skill);
+/* (2026-09-27) WHERE A MAP'S FISHING STARTS BELOW ITS FIGHTING. The band's first number gates both, which on the Boardwalk asked for Fishing 66
+   at a mackerel spot that is Fishing 60. A scene listed here gates fishing at its own number: the level of its easiest spot. */
+export const FISH_BAND = { boardwalk: 60, bw_cabin: 60, bw_light: 72, bw_wreck: 72, bw_pier: 72, bw_skull: 84 };
+export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) return null; const skill = kind === "fish" ? "fishing" : "melee", need = kind === "fish" ? FISH_BAND[String(scene || "").split(":")[0]] ?? b[0] : b[0], have = lvlOf(c, skill);
   return have >= need ? null : { need, have, skill, text: `needs ${kind === "fish" ? "Fishing" : "Combat"} ${need}` }; };
 /* (2026-09-27, the owner: "push it with depths and jewelcrafting held shut") WHAT SHIPS BUILT BUT SHUT. Flip one to false to open it:
    the Depths goes into OPEN and takes its place between the Thunderhead and the Trailer Park; Jewelcrafting's bench stands in the
    Yard and the skill joins the panel, the hiscores and the wiki. Held, everything stays in the rules (a save that somehow carries
    the items or the xp still loads) but nobody can reach it and the wiki does not list it. The tests open both with
    globalThis.__ES_OPEN_ALL before they import this file. */
-export const HOLD = { depths: !globalThis.__ES_OPEN_ALL, jewel: !globalThis.__ES_OPEN_ALL, boardwalk: !globalThis.__ES_OPEN_ALL, foundry: !globalThis.__ES_OPEN_ALL, orchard: !globalThis.__ES_OPEN_ALL };   /* (2026-09-27) the Boardwalk, the Foundry and the Orchard Wall: launched the same morning and held shut again at the owner's word ("close them for now and dont allow access until i reiterate them"). Held: no door to them, not in the wiki, and anyone saved inside is walked back out on login (the worker's HELD_MAPS) */
+export const HOLD = { depths: !globalThis.__ES_OPEN_ALL, jewel: !globalThis.__ES_OPEN_ALL, boardwalk: false,   /* (2026-09-27) OPEN: the owner, "the boardwalk is ready to launch" */ foundry: !globalThis.__ES_OPEN_ALL, orchard: !globalThis.__ES_OPEN_ALL };   /* (2026-09-27) the Boardwalk, the Foundry and the Orchard Wall: launched the same morning and held shut again at the owner's word ("close them for now and dont allow access until i reiterate them"). Held: no door to them, not in the wiki, and anyone saved inside is walked back out on login (the worker's HELD_MAPS) */
 export const OPEN = new Set(["carnival",   /* (2026-09-24) OPEN AT LAST. Built 2026-09-24 and held shut at the owner’s word until he said "launch the publish the carnival so its openn to peoople now". */ "casino", "roulette", "theatre", "fightpit", "vault", "wild", "deep", "agility",   /* (2026-09-22) The Run. Built with the Agility skill but never added here, so its door in the Yard answered with the bouncer's "Room's shut" — a scene is not enterable until it is in this set. */   /* (2026-09-22) the Wilderness reopened, down the rope ladder on the Gloam */ /* "highroller": closed for now (the owner, 2026-09-19) */ /* "forum", "bathhouse": closed in v108, what mattered there is in the Yard */ "workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "trailer",
   ]);   /* (2026-09-23) the Thieves' Guild. Deliberately NOT in BANDS: its rooms gate on Thieving through each mark's own `req`, and a combat band here would undo the whole point of a skill you cannot fight your way into. */   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
 export const OPEN_DAILY = new Set([
@@ -7565,11 +7568,11 @@ const _preBoardwalk = new Set(Object.keys(ITEMS));
    Arm, which never leaves its patch of water), and Grass Land's bird for the Gull. Salty Meg is the pack's dock-side NPC. */
 Object.assign(ITEMS, {
   mackerel: { name: "Raw mackerel", icon: "\u{1F41F}", raw: true, ex: "Blue-backed and quick. Off the inlet by the beach." },
-  cmackerel: { name: "Cooked mackerel", icon: "\u{1F41F}", heal: 27, ex: "Oily, salty, gone in three bites." },
+  cmackerel: { name: "Cooked mackerel", icon: "\u{1F41F}", heal: 31, ex: "Oily, salty, gone in three bites." },   /* (2026-09-27) 27 -> 31, beside the goldfish (62, 33) */
   bluefin: { name: "Raw bluefin", icon: "\u{1F41F}", raw: true, ex: "Off the end of the long pier. It fought." },
-  cbluefin: { name: "Cooked bluefin", icon: "\u{1F41F}", heal: 33, ex: "Dark red in the middle, the way the deckhands like it." },
+  cbluefin: { name: "Cooked bluefin", icon: "\u{1F41F}", heal: 36, ex: "Dark red in the middle, the way the deckhands like it." },   /* 33 -> 36, past the koi (68, 34) and the blindfish (70, 35) */
   swordfish: { name: "Raw swordfish", icon: "\u{1F41F}", raw: true, ex: "From the deep water past the boats. Mind the nose." },
-  cswordfish: { name: "Cooked swordfish", icon: "\u{1F41F}", heal: 40, ex: "A steak of it, seared at the Chip Shop." },
+  cswordfish: { name: "Cooked swordfish", icon: "\u{1F41F}", heal: 41, ex: "A steak of it, seared at the Chip Shop." },
   clawpin: { name: "Claw pin", icon: "\u{1F980}", ex: "A pin off a Clawhand's coat. The captain hands them out and takes them back." }
 });
 Object.assign(VALUE, { mackerel: 24, cmackerel: 48, bluefin: 32, cbluefin: 64, swordfish: 44, cswordfish: 88, clawpin: 60 });
@@ -7577,7 +7580,7 @@ recipe("cook_mackerel", { skill: "cooking", station: "fire", in: [["mackerel", 1
 recipe("cook_bluefin", { skill: "cooking", station: "fire", in: [["bluefin", 1]], out: ["cbluefin", 1], lvl: 74, xp: 290, burnStop: 96 });
 recipe("cook_swordfish", { skill: "cooking", station: "fire", in: [["swordfish", 1]], out: ["cswordfish", 1], lvl: 86, xp: 360, burnStop: 99 });
 /* smoked, like the Depths' fish: a meal with a buff, charcoal each, a tenth chance to fail like every smoke */
-for (const [raw, lvl, coal, heal, sell, fx, blurb] of [["mackerel", 66, 2, 29, 110, { speed: 0.05, bite: 0.04 }, "Quick hands, quick bites."], ["bluefin", 78, 3, 35, 150, { tix: 0.06, rare: 0.06 }, "The good catches follow it."], ["swordfish", 88, 3, 42, 190, { tough: 0.12, bite: 0.06 }, "Hard to hurt, and the fish come up to see."]]) {
+for (const [raw, lvl, coal, heal, sell, fx, blurb] of [["mackerel", 66, 2, 33, 110, { speed: 0.05, bite: 0.04 }, "Quick hands, quick bites."], ["bluefin", 78, 3, 38, 150, { tix: 0.06, rare: 0.06 }, "The good catches follow it."], ["swordfish", 88, 3, 43, 190, { tough: 0.12, bite: 0.06 }, "Hard to hurt, and the fish come up to see."]]) {
   const key = `s${raw}`; ITEMS[key] = { name: `Smoked ${raw}`, icon: "\u{1F41F}", heal, meal: { mins: 20, fx }, ex: `Smoked slow over charcoal. Eat it for twenty minutes of it: ${blurb}` };
   VALUE[key] = sell; recipe(`smoke_${raw}`, { skill: "cooking", station: "fire", in: [[raw, 1], ["charcoal", coal]], out: [key, 1], lvl, xp: Math.round(lvl * 4), ms: 2400, fail: SMITH_FAIL });
 }
@@ -7607,7 +7610,7 @@ bmob("captainclaw", { name: "Captain Claw", size: "xl", lvl: 80, hp: 4000, att: 
 ITEMS.clawgrip = { name: "Captain Claw's grip", short: "Gloves", icon: "\u{1F980}", slot: "gloves", def: 8, acc: 4, str: 4, req: { skill: "melee", lvl: 75 }, fx: { speed: 0.03, tough: 0.03 },
   ex: "The captain's own gauntlets, shell and all. Nova gloves' defence, a little more bite, a little quicker, a little harder to hurt. Only Captain Claw drops them." };
 VALUE.clawgrip = 6000;
-MOBS.captainclaw.rare.push(["clawgrip", 0.04]);   /* one kill in twenty-five */
+MOBS.captainclaw.drops.push(["clawgrip", 1, 0.04]);   /* one kill in twenty-five. In DROPS, not RARE: a monster's own rares all roll at the flat RARE_RATE (raresOf) whatever chance is written beside them, which would have made this one in a hundred */
 /* THE CAPTAIN'S CHEST: what everyone who put him down finds when they open it, once per kill each */
 export const CLAW_CHEST = { tickets: [350, 800], items: [["opal", [1, 2], 0.6], ["sapphire", 1, 0.4], ["clawpin", [2, 4]], ["cswordfish", [2, 3]], ["clawgrip", 1, 0.02]] };
 Object.assign(VERB, { clawchest: "Open" });

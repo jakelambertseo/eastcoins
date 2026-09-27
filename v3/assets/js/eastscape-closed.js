@@ -391,12 +391,12 @@ export function createClosedScenes(G, H) {
     ],
     build() {
       const { g, objs } = fromRows(this.rows, G);
-      objs.push({ t: "spot", x: 8, y: 24, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 210, xp2: 260, glow: "#6ad8ff" });
-      objs.push({ t: "spot", x: 12, y: 22, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 210, xp2: 260, glow: "#6ad8ff" });
-      objs.push({ t: "spot", x: 19, y: 16, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 210, xp2: 260, glow: "#6ad8ff" });
-      objs.push({ t: "yew", art: "bw_palm1", anim: "bw_palm1a", frames: 10, cols: 10, fw: 107, fh: 169, fps: 7, h: 1, ox: -31.5, oy: -57.0, phase: 0, x: 33, y: 3, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[3][33] = "#";
-      objs.push({ t: "yew", art: "bw_palm2", anim: "bw_palm2a", frames: 10, cols: 10, fw: 70, fh: 127, fps: 7, h: 1, ox: -16.0, oy: -37.0, phase: 9, x: 39, y: 2, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[2][39] = "#";
-      objs.push({ t: "yew", art: "bw_palm3", anim: "bw_palm3a", frames: 10, cols: 10, fw: 77, fh: 143, fps: 7, h: 1, ox: -7.5, oy: -44.5, phase: 5, x: 36, y: 11, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[11][36] = "#";
+      objs.push({ t: "spot", x: 8, y: 24, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 230, xp2: 290, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 12, y: 22, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 230, xp2: 290, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 19, y: 16, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 230, xp2: 290, glow: "#6ad8ff" });
+      objs.push({ t: "yew", art: "bw_palm1", anim: "bw_palm1a", frames: 10, cols: 10, fw: 107, fh: 169, fps: 7, h: 1, ox: -31.5, oy: -57.0, phase: 0, x: 33, y: 3, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 60 }, xp: 240 }); g[3][33] = "#";
+      objs.push({ t: "yew", art: "bw_palm2", anim: "bw_palm2a", frames: 10, cols: 10, fw: 70, fh: 127, fps: 7, h: 1, ox: -16.0, oy: -37.0, phase: 9, x: 39, y: 2, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 60 }, xp: 240 }); g[2][39] = "#";
+      objs.push({ t: "yew", art: "bw_palm3", anim: "bw_palm3a", frames: 10, cols: 10, fw: 77, fh: 143, fps: 7, h: 1, ox: -7.5, oy: -44.5, phase: 5, x: 36, y: 11, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 60 }, xp: 240 }); g[11][36] = "#";
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: 0, oy: -10.75, phase: 11, x: 19, y: 20, name: "Rowboat to Cabin Coast", row: { to: "bw_cabin", x: 25, y: 10 } });
       objs.push({ t: "range", x: 26, y: 4, name: "The Chip Shop" }); g[4][26] = "#";
       /* (2026-09-27) the clutter, the flags and the banners: the Sea pack's own props. A flat one lies on the ground and can be walked over. */
@@ -455,11 +455,11 @@ export function createClosedScenes(G, H) {
     ],
     build() {
       const { g, objs } = fromRows(this.rows, G);
-      objs.push({ t: "spot", x: 19, y: 13, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 210, xp2: 260, glow: "#6ad8ff" });
-      objs.push({ t: "spot", x: 14, y: 19, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 210, xp2: 260, glow: "#6ad8ff" });
-      objs.push({ t: "yew", art: "bw_palm1", anim: "bw_palm1a", frames: 10, cols: 10, fw: 107, fh: 169, fps: 7, h: 1, ox: -31.5, oy: -57.0, phase: 9, x: 11, y: 14, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[14][11] = "#";
-      objs.push({ t: "yew", art: "bw_palm2", anim: "bw_palm2a", frames: 10, cols: 10, fw: 70, fh: 127, fps: 7, h: 1, ox: -16.0, oy: -37.0, phase: 7, x: 8, y: 17, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[17][8] = "#";
-      objs.push({ t: "yew", art: "bw_palm3", anim: "bw_palm3a", frames: 10, cols: 10, fw: 77, fh: 143, fps: 7, h: 1, ox: -7.5, oy: -44.5, phase: 9, x: 13, y: 16, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[16][13] = "#";
+      objs.push({ t: "spot", x: 19, y: 13, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 230, xp2: 290, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 14, y: 19, name: "The Inlet", req: { skill: "fishing", lvl: 60 }, fish: "mackerel", fish2: "bluefin", fish2lvl: 72, xp: 230, xp2: 290, glow: "#6ad8ff" });
+      objs.push({ t: "yew", art: "bw_palm1", anim: "bw_palm1a", frames: 10, cols: 10, fw: 107, fh: 169, fps: 7, h: 1, ox: -31.5, oy: -57.0, phase: 9, x: 11, y: 14, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 60 }, xp: 240 }); g[14][11] = "#";
+      objs.push({ t: "yew", art: "bw_palm2", anim: "bw_palm2a", frames: 10, cols: 10, fw: 70, fh: 127, fps: 7, h: 1, ox: -16.0, oy: -37.0, phase: 7, x: 8, y: 17, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 60 }, xp: 240 }); g[17][8] = "#";
+      objs.push({ t: "yew", art: "bw_palm3", anim: "bw_palm3a", frames: 10, cols: 10, fw: 77, fh: 143, fps: 7, h: 1, ox: -7.5, oy: -44.5, phase: 9, x: 13, y: 16, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 60 }, xp: 240 }); g[16][13] = "#";
       objs.push({ t: "rock", ore: "starfall_ore", art: "bw_rock_starfall", x: 24, y: 2, name: "Starfall rock", req: { skill: "mining", lvl: 60 }, xp: 150 }); g[2][24] = "#";
       objs.push({ t: "rock", ore: "starfall_ore", art: "bw_rock_starfall", x: 30, y: 3, name: "Starfall rock", req: { skill: "mining", lvl: 60 }, xp: 150 }); g[3][30] = "#";
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -30.75, oy: 0, phase: 8, x: 25, y: 11, name: "Rowboat to the Market", row: { to: "boardwalk", x: 18, y: 19 } });
@@ -517,11 +517,11 @@ export function createClosedScenes(G, H) {
     ],
     build() {
       const { g, objs } = fromRows(this.rows, G);
-      objs.push({ t: "spot", x: 18, y: 19, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 260, xp2: 320, glow: "#6ad8ff" });
-      objs.push({ t: "spot", x: 30, y: 11, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 260, xp2: 320, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 18, y: 19, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 290, xp2: 340, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 30, y: 11, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 290, xp2: 340, glow: "#6ad8ff" });
       objs.push({ t: "rock", ore: "starfall_ore", art: "bw_rock_starfall", x: 15, y: 10, name: "Starfall rock", req: { skill: "mining", lvl: 60 }, xp: 150 }); g[10][15] = "#";
       objs.push({ t: "rock", ore: "eclipse_ore", art: "bw_rock_eclipse", x: 26, y: 17, name: "Eclipse rock", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[17][26] = "#";
-      objs.push({ t: "yew", art: "bw_palm2", anim: "bw_palm2a", frames: 10, cols: 10, fw: 70, fh: 127, fps: 7, h: 1, ox: -16.0, oy: -37.0, phase: 4, x: 14, y: 12, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[12][14] = "#";
+      objs.push({ t: "yew", art: "bw_palm2", anim: "bw_palm2a", frames: 10, cols: 10, fw: 70, fh: 127, fps: 7, h: 1, ox: -16.0, oy: -37.0, phase: 4, x: 14, y: 12, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 60 }, xp: 240 }); g[12][14] = "#";
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -61.5, oy: -10.75, phase: 13, x: 12, y: 15, name: "Rowboat to Cabin Coast", row: { to: "bw_cabin", x: 20, y: 16 } });
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: 0, oy: -10.75, phase: 4, x: 30, y: 16, name: "Rowboat to Shipwreck Isle", row: { to: "bw_wreck", x: 12, y: 11 } });
       
@@ -575,11 +575,11 @@ export function createClosedScenes(G, H) {
     ],
     build() {
       const { g, objs } = fromRows(this.rows, G);
-      objs.push({ t: "spot", x: 18, y: 17, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 260, xp2: 320, glow: "#6ad8ff" });
-      objs.push({ t: "spot", x: 31, y: 14, name: "The Deep Water", req: { skill: "fishing", lvl: 84 }, fish: "swordfish", fish2: "bluefin", fish2lvl: 72, xp: 320, xp2: 260, glow: "#4ab0ff" });
+      objs.push({ t: "spot", x: 18, y: 17, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 290, xp2: 340, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 31, y: 14, name: "The Deep Water", req: { skill: "fishing", lvl: 84 }, fish: "swordfish", fish2: "bluefin", fish2lvl: 72, xp: 340, xp2: 290, glow: "#4ab0ff" });
       objs.push({ t: "rock", ore: "eclipse_ore", art: "bw_rock_eclipse", x: 19, y: 14, name: "Eclipse rock", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[14][19] = "#";
       objs.push({ t: "rock", ore: "eclipse_ore", art: "bw_rock_eclipse", x: 24, y: 16, name: "Eclipse rock", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[16][24] = "#";
-      objs.push({ t: "yew", art: "bw_palm1", anim: "bw_palm1a", frames: 10, cols: 10, fw: 107, fh: 169, fps: 7, h: 1, ox: -31.5, oy: -57.0, phase: 7, x: 21, y: 17, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[17][21] = "#";
+      objs.push({ t: "yew", art: "bw_palm1", anim: "bw_palm1a", frames: 10, cols: 10, fw: 107, fh: 169, fps: 7, h: 1, ox: -31.5, oy: -57.0, phase: 7, x: 21, y: 17, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 60 }, xp: 240 }); g[17][21] = "#";
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -61.5, oy: -10.75, phase: 8, x: 11, y: 11, name: "Rowboat to the Lighthouse", row: { to: "bw_light", x: 29, y: 16 } });
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: 0, oy: -10.75, phase: 0, x: 30, y: 12, name: "Rowboat to Pirate's Pier", row: { to: "bw_pier", x: 8, y: 18 } });
       
@@ -634,14 +634,14 @@ export function createClosedScenes(G, H) {
     ],
     build() {
       const { g, objs } = fromRows(this.rows, G);
-      objs.push({ t: "spot", x: 4, y: 12, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 260, xp2: 320, glow: "#6ad8ff" });
-      objs.push({ t: "spot", x: 12, y: 19, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 260, xp2: 320, glow: "#6ad8ff" });
-      objs.push({ t: "spot", x: 22, y: 19, name: "The Deep Water", req: { skill: "fishing", lvl: 84 }, fish: "swordfish", fish2: "bluefin", fish2lvl: 72, xp: 320, xp2: 260, glow: "#4ab0ff" });
+      objs.push({ t: "spot", x: 4, y: 12, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 290, xp2: 340, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 12, y: 19, name: "Pier End", req: { skill: "fishing", lvl: 72 }, fish: "bluefin", fish2: "swordfish", fish2lvl: 84, xp: 290, xp2: 340, glow: "#6ad8ff" });
+      objs.push({ t: "spot", x: 22, y: 19, name: "The Deep Water", req: { skill: "fishing", lvl: 84 }, fish: "swordfish", fish2: "bluefin", fish2lvl: 72, xp: 340, xp2: 290, glow: "#4ab0ff" });
       objs.push({ t: "rock", ore: "nova_ore", art: "bw_rock_nova", x: 30, y: 5, name: "Nova rock", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[5][30] = "#";
       objs.push({ t: "rock", ore: "nova_ore", art: "bw_rock_nova", x: 38, y: 7, name: "Nova rock", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[7][38] = "#";
-      objs.push({ t: "yew", art: "bw_palm1", anim: "bw_palm1a", frames: 10, cols: 10, fw: 107, fh: 169, fps: 7, h: 1, ox: -31.5, oy: -57.0, phase: 8, x: 27, y: 3, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[3][27] = "#";
-      objs.push({ t: "yew", art: "bw_palm2", anim: "bw_palm2a", frames: 10, cols: 10, fw: 70, fh: 127, fps: 7, h: 1, ox: -16.0, oy: -37.0, phase: 7, x: 35, y: 4, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[4][35] = "#";
-      objs.push({ t: "yew", art: "bw_palm3", anim: "bw_palm3a", frames: 10, cols: 10, fw: 77, fh: 143, fps: 7, h: 1, ox: -7.5, oy: -44.5, phase: 6, x: 41, y: 3, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 45 }, xp: 190 }); g[3][41] = "#";
+      objs.push({ t: "yew", art: "bw_palm1", anim: "bw_palm1a", frames: 10, cols: 10, fw: 107, fh: 169, fps: 7, h: 1, ox: -31.5, oy: -57.0, phase: 8, x: 27, y: 3, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 60 }, xp: 240 }); g[3][27] = "#";
+      objs.push({ t: "yew", art: "bw_palm2", anim: "bw_palm2a", frames: 10, cols: 10, fw: 70, fh: 127, fps: 7, h: 1, ox: -16.0, oy: -37.0, phase: 7, x: 35, y: 4, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 60 }, xp: 240 }); g[4][35] = "#";
+      objs.push({ t: "yew", art: "bw_palm3", anim: "bw_palm3a", frames: 10, cols: 10, fw: 77, fh: 143, fps: 7, h: 1, ox: -7.5, oy: -44.5, phase: 6, x: 41, y: 3, log: "palmlogs", name: "Island palm", req: { skill: "woodcutting", lvl: 60 }, xp: 240 }); g[3][41] = "#";
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -30.75, oy: 0, phase: 13, x: 8, y: 19, name: "Rowboat to Shipwreck Isle", row: { to: "bw_wreck", x: 29, y: 12 } });
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: 0, oy: -10.75, phase: 9, x: 22, y: 15, name: "Rowboat to Skull Isle", row: { to: "bw_skull", x: 11, y: 12 } });
       
@@ -699,7 +699,7 @@ export function createClosedScenes(G, H) {
     ],
     build() {
       const { g, objs } = fromRows(this.rows, G);
-      objs.push({ t: "spot", x: 18, y: 16, name: "The Deep Water", req: { skill: "fishing", lvl: 84 }, fish: "swordfish", fish2: "bluefin", fish2lvl: 72, xp: 320, xp2: 260, glow: "#4ab0ff" });
+      objs.push({ t: "spot", x: 18, y: 16, name: "The Deep Water", req: { skill: "fishing", lvl: 84 }, fish: "swordfish", fish2: "bluefin", fish2lvl: 72, xp: 340, xp2: 290, glow: "#4ab0ff" });
       objs.push({ t: "rock", ore: "nova_ore", art: "bw_rock_nova", x: 16, y: 7, name: "Nova rock", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[7][16] = "#";
       objs.push({ t: "rock", ore: "nova_ore", art: "bw_rock_nova", x: 31, y: 15, name: "Nova rock", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[15][31] = "#";
       objs.push({ t: "rowboat", art: "bw_rowboat", anim: "bw_boata", frames: 14, cols: 14, fw: 155, fh: 75, fps: 6, h: 1, ox: -61.5, oy: -10.75, phase: 8, x: 10, y: 12, name: "Rowboat to Pirate's Pier", row: { to: "bw_pier", x: 21, y: 15 } });
@@ -766,10 +766,10 @@ export function createClosedScenes(G, H) {
     },
     /* Wasps over the pond and the brook and round the hives (58, a bow or a wand); Orchard Orcs inside the camp (62); Keepers at the gate
        and along the fence (66); Hedge Things in the wood below (70); the Gardener at the bottom of the wood (72, open to everyone) */
-    mobs: [["wasp", 6, 15, { perch: true, respawn: [80000, 130000] }], ["wasp", 9, 16, { perch: true, respawn: [80000, 130000] }], ["wasp", 22, 15, { perch: true, respawn: [80000, 130000] }], ["wasp", 21, 20, { perch: true, respawn: [80000, 130000] }], ["wasp", 17, 16, { perch: true, respawn: [80000, 130000] }], ["wasp", 4, 9, { respawn: [80000, 130000] }], ["wasp", 17, 22, { respawn: [80000, 130000] }],
-      ["orchardorc", 34, 5, { respawn: [90000, 150000] }], ["orchardorc", 41, 3, { respawn: [90000, 150000] }], ["orchardorc", 31, 3, { respawn: [90000, 150000] }], ["orchardorc", 36, 9, { respawn: [90000, 150000] }], ["orchardorc", 40, 9, { respawn: [90000, 150000] }],
-      ["orchardkeeper", 37, 17, { respawn: [100000, 160000] }], ["orchardkeeper", 31, 15, { respawn: [100000, 160000] }], ["orchardkeeper", 40, 15, { respawn: [100000, 160000] }], ["orchardkeeper", 29, 12, { respawn: [100000, 160000] }],
-      ["hedgething", 33, 23, { respawn: [120000, 180000] }], ["hedgething", 36, 21, { respawn: [120000, 180000] }], ["hedgething", 32, 24, { respawn: [120000, 180000] }],
+    mobs: [["wasp", 6, 15, { perch: true, respawn: G.levelRespawn("wasp") }], ["wasp", 9, 16, { perch: true, respawn: G.levelRespawn("wasp") }], ["wasp", 22, 15, { perch: true, respawn: G.levelRespawn("wasp") }], ["wasp", 21, 20, { perch: true, respawn: G.levelRespawn("wasp") }], ["wasp", 17, 16, { perch: true, respawn: G.levelRespawn("wasp") }], ["wasp", 4, 9, { respawn: G.levelRespawn("wasp") }], ["wasp", 17, 22, { respawn: G.levelRespawn("wasp") }],
+      ["orchardorc", 34, 5, { respawn: G.levelRespawn("orchardorc") }], ["orchardorc", 41, 3, { respawn: G.levelRespawn("orchardorc") }], ["orchardorc", 31, 3, { respawn: G.levelRespawn("orchardorc") }], ["orchardorc", 36, 9, { respawn: G.levelRespawn("orchardorc") }], ["orchardorc", 40, 9, { respawn: G.levelRespawn("orchardorc") }],
+      ["orchardkeeper", 37, 17, { respawn: G.levelRespawn("orchardkeeper") }], ["orchardkeeper", 31, 15, { respawn: G.levelRespawn("orchardkeeper") }], ["orchardkeeper", 40, 15, { respawn: G.levelRespawn("orchardkeeper") }], ["orchardkeeper", 29, 12, { respawn: G.levelRespawn("orchardkeeper") }],
+      ["hedgething", 33, 23, { respawn: G.levelRespawn("hedgething") }], ["hedgething", 36, 21, { respawn: G.levelRespawn("hedgething") }], ["hedgething", 32, 24, { respawn: G.levelRespawn("hedgething") }],
       ["gardener", 38, 23, { aggro: 3, respawn: [2400000, 3000000] }]],
     npcs: [{ name: "Pomona", art: "pomona", x: 11, y: 9, still: true, quests: ["orwasps", "orbands", "orgardener"], hair: "#8a4a1e", shirt: "#3a6a9a", pants: "#5a4a3a",
       lines: ["Apples, walnuts, honey, and a stove if you've something to cook. Welcome to the Wall.", "The pines are anyone's. The walnuts are across the brook, and so are the orcs.", "The bridge is the only way over. They know that too.", "Mind the wasps over the pond. They'll have the eye out of you for an apple."] }],
@@ -818,9 +818,9 @@ export function createClosedScenes(G, H) {
     },
     /* Slag Golems on the floor, the top-left and in the ring (76); Furnace Imps on the east side and the floor (78); Cinder Elementals
        in the ring, the bottom-left and the east (84); Old Bessemer up out of the lava at the bottom of the ring (88, open, reaches two) */
-    mobs: [["slaggolem", 10, 21, { respawn: [90000, 150000] }], ["slaggolem", 18, 21, { respawn: [90000, 150000] }], ["slaggolem", 8, 5, { respawn: [90000, 150000] }], ["slaggolem", 19, 10, { respawn: [90000, 150000] }], ["slaggolem", 13, 17, { respawn: [90000, 150000] }],
-      ["furnaceimp", 34, 2, { respawn: [90000, 150000] }], ["furnaceimp", 38, 2, { respawn: [90000, 150000] }], ["furnaceimp", 34, 15, { respawn: [90000, 150000] }], ["furnaceimp", 41, 15, { respawn: [90000, 150000] }], ["furnaceimp", 34, 9, { respawn: [90000, 150000] }], ["furnaceimp", 33, 21, { respawn: [90000, 150000] }],
-      ["cinderelemental", 25, 12, { respawn: [120000, 180000] }], ["cinderelemental", 6, 17, { respawn: [120000, 180000] }], ["cinderelemental", 41, 12, { respawn: [120000, 180000] }], ["cinderelemental", 22, 23, { respawn: [120000, 180000] }],
+    mobs: [["slaggolem", 10, 21, { respawn: G.levelRespawn("slaggolem") }], ["slaggolem", 18, 21, { respawn: G.levelRespawn("slaggolem") }], ["slaggolem", 8, 5, { respawn: G.levelRespawn("slaggolem") }], ["slaggolem", 19, 10, { respawn: G.levelRespawn("slaggolem") }], ["slaggolem", 13, 17, { respawn: G.levelRespawn("slaggolem") }],
+      ["furnaceimp", 34, 2, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 38, 2, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 34, 15, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 41, 15, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 34, 9, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 33, 21, { respawn: G.levelRespawn("furnaceimp") }],
+      ["cinderelemental", 25, 12, { respawn: G.levelRespawn("cinderelemental") }], ["cinderelemental", 6, 17, { respawn: G.levelRespawn("cinderelemental") }], ["cinderelemental", 41, 12, { respawn: G.levelRespawn("cinderelemental") }], ["cinderelemental", 22, 23, { respawn: G.levelRespawn("cinderelemental") }],
       ["bessemer", 22, 17, { perch: true, aggro: 3, respawn: [2400000, 3000000] }]],
     npcs: [{ name: "Basalt", art: "basalt", x: 27, y: 2, still: true, quests: ["fdslag", "fdimps", "fdbessemer"], hair: "#444", shirt: "#553", pants: "#332",
       lines: ["Foreman. Mind the vents, mind the ring, and don't stand on anything orange.", "The blast furnace is on the floor, along the bottom. Every bar the little furnaces make, and more xp for it.", "The imps take from the floor. The golems ARE the floor. The elementals just don't like you.", "Old Bessemer comes up at the bottom of the ring. He was foreman before me. He still thinks he is."] }],

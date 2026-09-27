@@ -1050,6 +1050,18 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-27", title: "The Boardwalk: six islands west of the Carnival",
+    items: [
+      "THE BOARDWALK is open, out the Carnival's west fence. It is six islands: the Market, Cabin Coast, the Lighthouse, Shipwreck Isle, Pirate's Pier and Skull Isle. Each island's rowboat takes you to the next (and back). The monsters get tougher the further out you row: gulls and deckhands (66-69), Clawhands (74), Kraken Arms (78).",
+      "FISHING 60 TO 84: mackerel (60), bluefin (72) and swordfish (84), cooked at the Market's Chip Shop or smoked for a twenty-minute buff. Fishing on the Market and Cabin Coast starts at Fishing 60.",
+      "ORE AND WOOD ON THE WAY: starfall, eclipse and nova rocks (Mining 60, 70, 80), and island palms (Woodcutting 60) on most islands. Rubies and friends turn up in the ore like anywhere else; the Gems guide lists every rock.",
+      "CAPTAIN CLAW holds Skull Isle, the last island. Everyone who hurts him shares the kill, and when he falls his treasure chest rises out of the sand: each of you opens it once for tickets, opals, sapphires, claw pins and cooked swordfish. He is back 45 minutes later.",
+      "CAPTAIN CLAW'S GRIP: new gloves only he drops (1 in 25, and a small chance in the chest). Defence 8, accuracy and strength +4, a little quicker, a little harder to hurt. Melee 75.",
+      "Salty Meg at the Market has three quests: mackerel, the deckhands, and the captain.",
+      "Monsters out in the Boardwalk, the Foundry and the Orchard Wall take a few minutes to come back (longer the higher their level), not seconds like the Yard."
+    ]
+  },
+  {
     date: "2026-09-27", title: "Where gems come from, on the wiki",
     items: [
       "GEMS, on one page: the new Gems guide lists all four, every rock that turns each one up, where it is, the Mining level, the chance (1 in 71 ores) and what each gem is for. Every Ruby, Sapphire, Topaz and Opal page says the same, and each ore's page says which gem it can come with.",
