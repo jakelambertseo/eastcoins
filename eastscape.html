@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=336">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=337">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -120,6 +120,32 @@ button,input,select{font:inherit}
 .mini{flex:none;z-index:4;width:132px;height:78px;border-radius:5px;image-rendering:pixelated;
   background:rgba(10,8,12,.82);box-shadow:0 0 0 2px #c8963a,0 4px 14px rgba(0,0,0,.5);pointer-events:none}
 .mini[hidden]{display:none}
+/* ============================================================ ON A PHONE, SECOND PASS (2026-09-27)
+   Played at 390x844 and 844x390. Four things cost the most: the top bar was three lines (the name alone on the third); the stats card was
+   240px tall, so the inventory began 815px down and needed a scroll every time; the tour box sat on the volume slider and the empty buffs
+   pill wrapped; and sideways, the desktop layout gave the game 492px beside a 352px column. Everything below is phone-only. */
+.topmore{display:none;font-size:19px;line-height:1;padding:0 2px}
+@media (max-width:820px){
+  .topmore{display:inline-block}
+  .top:not(.open) #achBtn,.top:not(.open) #questBtn,.top:not(.open) #storeBtn,.top:not(.open) #hsBtn{display:none}
+  .top.open{row-gap:8px;padding-bottom:7px}
+  .volbar input{display:none}
+  .buffbar>small{display:none}.buffbar:has(.buff.none){display:none}
+  .tourbox{max-width:56%;font-size:12px;padding:5px 8px 6px;line-height:1.3}
+  .side .stats{grid-template-columns:repeat(6,minmax(0,1fr));gap:2px 3px;padding:6px 2px;margin:6px 8px 0;border-width:8px}
+  .side .stat{flex-direction:column;gap:1px;font-size:12.5px;text-align:center;min-width:0;overflow:hidden}
+  .side .stat>*{margin:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .side .tabs{position:sticky;top:0;z-index:6;background:#141010}
+}
+@media (max-width:520px){.top:not(.open) #topMe{display:none}}
+@media (max-height:520px) and (min-width:821px){
+  .wrap{grid-template-columns:290px minmax(0,1fr)}
+  .side .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 4px;padding:5px 4px;margin:6px 8px 0;border-width:8px}
+  .side .stat{font-size:12.5px;gap:5px}
+  .volbar input{display:none}.buffbar>small{display:none}.buffbar:has(.buff.none){display:none}
+  .tourbox{max-width:50%;font-size:12px;padding:5px 8px 6px}
+  .side .tabs{padding:5px 8px}.side .tabs button{height:34px;font-size:15px}
+}
 @media (max-width:760px){.mini{width:96px;height:57px}}
 /* (v130) staff in chat: gold for an admin, teal for a mod, and a star in front of the name. Deliberately not red — red is
    the colour of a loss everywhere else in this game. */
@@ -668,6 +694,11 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .ico{width:1.3em;height:1.3em;image-rendering:pixelated;vertical-align:-.3em;object-fit:contain}
 .slot .ico,.eq .ico{width:84%;height:84%;vertical-align:0}.slot .ico{margin-top:18%}.eq .ico{width:62%;height:62%}
 .slot{position:relative;aspect-ratio:1;border:1px solid #bfb193;background:#e6dcc4;display:grid;place-items:center;font-size:26px;cursor:pointer;user-select:none}
+.slot .fav{position:absolute;top:-3px;left:0;font-style:normal;font-size:12px;line-height:1;color:#ffd45a;text-shadow:0 0 2px #000,0 1px 0 #000}
+.bagmenu{position:fixed;z-index:1000;min-width:180px;padding:4px;border-radius:10px;background:#fffaf0;color:#2a2016;box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 0 1px #c8b48a}
+.bagmenu-h{display:flex;align-items:center;gap:6px;padding:6px 8px 4px;font-size:12.5px;border-bottom:1px solid rgba(0,0,0,.1);margin-bottom:3px}.bagmenu-h .ico{width:20px;height:20px}
+.bagmenu button{display:block;width:100%;padding:7px 10px;border:0;border-radius:6px;background:none;text-align:left;font:800 13px Nunito,sans-serif;color:#2a2016;cursor:pointer}.bagmenu button:hover{background:rgba(200,150,58,.22)}
+@media (max-width:820px){.bagmenu button{padding:10px 12px;font-size:14px}}
 .slot:hover{background:#efe6d0}
 .slot.empty{cursor:default;background:#e2d8bf}
 .slot.hint{outline:3px solid #ffb400;outline-offset:-3px;animation:hint .6s ease-in-out infinite alternate}
@@ -1126,7 +1157,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 </head>
 <body>
 <header class="top">
-  <span class="logo"><img src="/v3/assets/img/eastcoin-icon-96.png?v=1" alt="" width="22" height="22">EastScape</span><button type="button" class="topl" id="gamesBtn" title="The real ZCoin games, one click (G)">🎰 Games</button><button type="button" class="topl" id="achBtn" title="Achievements (Y)"><img src="/v3/assets/img/glad/flat/ui/ach_badge.png?v=1" alt="" class="topi">Achievements</button><button type="button" class="topl" id="questBtn" title="Quests (Q)"><img src="/v3/assets/img/glad/flat/ui/quests.png?v=1" alt="" class="topi">Quests</button><button type="button" class="topl topl-store" id="storeBtn" title="The Store (tickets)"><img src="/v3/assets/img/glad/flat/ui/store.png?v=1" alt="" class="topi">Store<em class="hot">HOT</em></button><button type="button" class="topl" id="hsBtn" title="Hiscores">🏆 Hiscores</button><button type="button" class="topl" id="wikiBtn" title="The EastScape wiki (H)">📖 Wiki</button>
+  <span class="logo"><img src="/v3/assets/img/eastcoin-icon-96.png?v=1" alt="" width="22" height="22">EastScape</span><button type="button" class="topl" id="gamesBtn" title="The real ZCoin games, one click (G)">🎰 Games</button><button type="button" class="topl" id="achBtn" title="Achievements (Y)"><img src="/v3/assets/img/glad/flat/ui/ach_badge.png?v=1" alt="" class="topi">Achievements</button><button type="button" class="topl" id="questBtn" title="Quests (Q)"><img src="/v3/assets/img/glad/flat/ui/quests.png?v=1" alt="" class="topi">Quests</button><button type="button" class="topl topl-store" id="storeBtn" title="The Store (tickets)"><img src="/v3/assets/img/glad/flat/ui/store.png?v=1" alt="" class="topi">Store<em class="hot">HOT</em></button><button type="button" class="topl" id="hsBtn" title="Hiscores">🏆 Hiscores</button><button type="button" class="topl" id="wikiBtn" title="The EastScape wiki (H)">📖 Wiki</button><button type="button" class="topl topmore" id="moreBtn" aria-expanded="false" title="More">☰</button>
   <span class="spacer"></span>
   <button type="button" class="online" id="online" title="Who is online, and where"></button><span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span><button type="button" class="me" id="topMe" title="Your profile"><img id="topAv" alt="" hidden><span id="topName">—</span></button>
 </header>
@@ -1309,7 +1340,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=336";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=337";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1318,7 +1349,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=189").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=190").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -3285,19 +3316,29 @@ $("dlgX").addEventListener("click", closeTalk);
 /* Tiles are drawn ZOOM times the size they'd be if the whole map fitted the screen, so the screen shows a window onto
    the map (11 x 6.5 tiles) that follows you and stops at the map's edges (a room's walls, indoors). view.bx/by/bw/bh
    is the game's rectangle on the page; view.s/ox/oy turn world pixels into page pixels, camera included. */
-const ZOOM = 2, cam = { x: 0, y: 0 };   // maps are 44 x 26 tiles; the screen shows a 22 x 13 window of them, so things look the size they always did
+/* (2026-09-27, the owner: "do a complete analysis of the mobile ... experience") CLOSER ON A PHONE. At ZOOM 2 a 390px-wide phone draws a
+   tile 17.7 CSS pixels across, which is smaller than a fingertip: a chicken, a rock or a door could not be tapped on purpose. Under 600px
+   the camera sits at 3, a 14.7 x 8.7 tile window, 26.5px a tile. Everything downstream already works from ZOOM (fit, aimCamera), and
+   fit() runs every frame, so turning a phone sideways changes it on the next frame. */
+let ZOOM = 2; const cam = { x: 0, y: 0 };
+const phoneZoom = () => { ZOOM = innerWidth < 600 ? 3 : 2; }; phoneZoom(); addEventListener("resize", phoneZoom);   // maps are 44 x 26 tiles; the screen shows a 22 x 13 window of them, so things look the size they always did
 let mouse = null, view = { s: 3, ox: 0, oy: 0, bx: 0, by: 0, bw: 0, bh: 0 }, hoverTile = null, hoverThing = null, clickMark = null;
 function fit() {
   const d = Math.min(2, devicePixelRatio || 1), w = cv.clientWidth, h = cv.clientHeight;
   if (cv.width !== Math.round(w * d) || cv.height !== Math.round(h * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); }
   ctx.setTransform(d, 0, 0, d, 0, 0);
-  const s0 = Math.min(w / W, h / H), bx = Math.round((w - W * s0) / 2), by = Math.round((h - H * s0) / 2), s = s0 * ZOOM;
-  view = { s, bx, by, bw: W * s0, bh: H * s0, ox: Math.round(bx - cam.x * s), oy: Math.round(by - cam.y * s) };
+  const s0 = Math.min(w / W, h / H), s = s0 * ZOOM;
+  /* (2026-09-27, the phone pass) THE WINDOW IS THE WHOLE CANVAS. The box used to be the map's own 44:26 shape scaled to fit, and the zoom
+     magnified inside it - so a portrait phone drew the game in a 390x230 band and left the other half of the canvas black. Zoomed in, the
+     camera shows a window anyway, so the window is now the canvas itself, clamped in either axis to the map's size (which is where the
+     old black bars come from, and the only place they still appear). The zoomed-out preview (ZOOM 1) keeps the map's shape. */
+  const bw = ZOOM > 1 ? Math.min(w, W * s) : W * s0, bh = ZOOM > 1 ? Math.min(h, H * s) : H * s0, bx = Math.round((w - bw) / 2), by = Math.round((h - bh) / 2);
+  view = { s, bx, by, bw, bh, ox: Math.round(bx - cam.x * s), oy: Math.round(by - cam.y * s) };
   return { w, h };
 }
 function aimCamera(P, now) {
   if (ZOOM === 1) { cam.x = 0; cam.y = 0; view.ox = view.bx; view.oy = view.by; return; }
-  const ww = W / ZOOM, wh = H / ZOOM, r = Z.def?.interior && Z.def.room;
+  const ww = view.bw / view.s, wh = view.bh / view.s, r = Z.def?.interior && Z.def.room;   /* the window in world pixels: what the canvas shows at this zoom */
   const [x0, y0, x1, y1] = r ? [(r[0] - 1) * T, r[1] * T - (Z.def.wallH || 22) - 6, (r[2] + 2) * T, (r[3] + 2) * T + 4 + Math.ceil(100 / view.s)] : [0, 0, W, H];   /* (v104: the last 100 screen pixels are the Chat button and the emotes, and a room's way out is on its bottom edge: the owner couldn't click the crypt's. The camera may now scroll that far past the room.) */
   const p = P ? ownPos(P, now) : { px: COLS / 2, py: ROWS / 2 };
   const at = (c, lo, hi, win) => (hi - lo <= win ? (lo + hi - win) / 2 : Math.max(lo, Math.min(hi - win, c - win / 2)));
@@ -4632,7 +4673,7 @@ const qty = (n) => n >= 1e6 ? `<em class="m">${(n / 1e6).toFixed(n < 1e7 ? 1 : 0
    because "diamond_helm" is truthy every worn piece wore a gold "+diamond_helm" band whether it had ever
    been near an anvil or not. Coercing here means the only thing that can get through is a real level. */
 const fgTag = (f) => { const n = Number(f) | 0; return n > 0 ? `<em class="fgn">+${n}</em>` : ""; };
-const slotHtml = (s, i, attr = "data-i") => { const f = G.fOf(s); return `<div class="slot" ${attr}="${i}" data-item="${s.k}"${f ? ` data-f="${f}"` : ""} title="${esc(G.forgeNameAt(s.k, f))}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}${G.valueOf(s.k) ? ` — worth ${G.fmtCash(G.valueOf(s.k) * s.n)}` : ""}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(f)}</div>`; };
+const slotHtml = (s, i, attr = "data-i") => { const f = G.fOf(s); return `<div class="slot" ${attr}="${i}" data-item="${s.k}"${f ? ` data-f="${f}"` : ""} title="${esc(G.forgeNameAt(s.k, f))}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}${G.valueOf(s.k) ? ` — worth ${G.fmtCash(G.valueOf(s.k) * s.n)}` : ""}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(f)}${me?.fav?.includes(s.k) ? `<em class="fav" title="Favourite">\u2605</em>` : ""}</div>`; };
 
 /* ------------------------------------------------------------ islands */
 function renderIsles(list) {
@@ -5101,7 +5142,7 @@ function renderShop() {
    (2026-09-27) REBUILT AND MOVED OUT: v3/assets/js/eastscape-bank.js, fetched the first time the bank opens. Tabs by kind, one
    search over bank and bag, an amount of your own, a right-click menu, a slots meter. The page only opens it and tells it when
    `me` changed; every rule of the old window (true bank index on every tile, rebuild only on change, tickets stay) lives there. */
-let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=1";
+let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=2";
 function bankUi() { return BANKUI ? Promise.resolve(BANKUI) : import(BANKUI_URL).then((m) => (BANKUI = m.createBankUi({ G, $, esc, ico, qty, fgTag, slotHtml, send, SFX, say, ITEMS, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); }, get me() { return me; } }))); }
 function renderBank() { if ($("bankWin").hidden || !me) return; $("bankCount").textContent = `${(me.bank || []).length}/${G.BANK_MAX}`; bankUi().then((u) => u.render()); }
 
@@ -5832,12 +5873,37 @@ function wikiGo(route, setNav = true) {
 function wikiUpdate(u) { return `<div class="up"><small>${u.date}</small><h3 style="margin:2px 0 4px">${esc(u.title)}</h3><ul>${u.items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></div>`; }
 $("wikiWin").addEventListener("click", (e) => { const a = e.target.closest("[data-wiki]"); if (a) { e.preventDefault(); wikiGo(a.dataset.wiki); } });
 // right-click any item (bag, gear, bank, shop, trade) to open its wiki page
+/* (2026-09-27) THE BAG'S OWN MENU: right-click, or hold on a touch screen, an item in your inventory for Favourite, Use and its wiki page.
+   Everywhere else a right-click on an item still opens the wiki. */
+let bagMenuEl = null;
+const closeBagMenu = () => { if (bagMenuEl) { bagMenuEl.remove(); bagMenuEl = null; } };
+function bagMenu(x, y, i) {
+  closeBagMenu(); const s = me?.inv?.[i]; if (!s || !ITEMS[s.k]) return; const it = ITEMS[s.k], fav = me.fav?.includes(s.k);
+  const use = it.raw ? "" : it.heal ? "Eat" : it.drink ? "Drink" : it.slot ? "Wear" : it.ammo ? "Load" : it.use || it.luck ? "Use" : "";
+  bagMenuEl = document.createElement("div"); bagMenuEl.className = "bagmenu"; bagMenuEl.setAttribute("role", "menu");
+  bagMenuEl.innerHTML = `<div class="bagmenu-h">${ico(s.k)}<b>${esc(G.forgeNameAt(s.k, G.fOf(s)))}</b></div>${s.k === "tickets" ? "" : `<button type="button" data-fav="1">${fav ? "\u2606 Unfavourite" : "\u2605 Favourite"}</button>`}${use ? `<button type="button" data-use="1">${use}</button>` : ""}<button type="button" data-wiki="1">Wiki page</button>`;
+  document.body.append(bagMenuEl);
+  const W = bagMenuEl.offsetWidth, H = bagMenuEl.offsetHeight; bagMenuEl.style.left = `${Math.max(4, Math.min(x, innerWidth - W - 8))}px`; bagMenuEl.style.top = `${Math.max(4, Math.min(y, innerHeight - H - 8))}px`;
+  bagMenuEl.addEventListener("click", (ev) => { const b = ev.target.closest("button"); if (!b) return; ev.stopPropagation(); closeBagMenu();
+    if (b.dataset.fav) send({ t: "fav", k: s.k }); else if (b.dataset.use) useBagItem(i); else { wikiRoute = `items/${s.k}`; openWin("wikiWin"); } });
+}
+document.addEventListener("click", closeBagMenu, true); document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeBagMenu(); });
+{ let hold = 0, held = false, sx = 0, sy = 0;   /* a hold on a touch screen is the right-click */
+  document.addEventListener("pointerdown", (e) => { if (e.pointerType !== "touch") return; const el = e.target.closest?.(".inv [data-i]"); if (!el) return; sx = e.clientX; sy = e.clientY; held = false; clearTimeout(hold); hold = setTimeout(() => { held = true; bagMenu(sx, sy, +el.dataset.i); }, 450); });
+  document.addEventListener("pointermove", (e) => { if (hold && Math.hypot(e.clientX - sx, e.clientY - sy) > 8) clearTimeout(hold); });
+  document.addEventListener("pointerup", () => clearTimeout(hold)); document.addEventListener("pointercancel", () => clearTimeout(hold));
+  document.addEventListener("click", (e) => { if (held && e.target.closest?.(".inv [data-i]")) { held = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true); }
 document.addEventListener("contextmenu", (e) => {
+  const bag = e.target.closest?.(".inv [data-i]"); if (bag) { e.preventDefault(); return bagMenu(e.clientX, e.clientY, +bag.dataset.i); }
   const el = e.target.closest?.("[data-item], [data-k], [data-rm]"); if (!el || e.target.closest("canvas")) return;
   const k = el.dataset.item || el.dataset.k || el.dataset.rm; if (!ITEMS[k]) return;
   e.preventDefault(); wikiRoute = `items/${k}`; openWin("wikiWin");
 });
 $("wikiBtn").addEventListener("click", () => { if ($("wikiWin").hidden) openWin("wikiWin"); else $("wikiWin").hidden = true; });
+/* (2026-09-27) the phone's More button: the bar shows Games and Wiki; Achievements, Quests, Store, Hiscores (and, on the smallest phones,
+   your name) unfold under it. Any of them closes it again, so the bar is one line whenever you are not choosing. */
+$("moreBtn").addEventListener("click", () => { const t = document.querySelector(".top"), on = t.classList.toggle("open"); $("moreBtn").setAttribute("aria-expanded", String(on)); });
+document.querySelector(".top").addEventListener("click", (e) => { const t = e.currentTarget; if (t.classList.contains("open") && e.target.closest(".topl, .me") && !e.target.closest("#moreBtn")) { t.classList.remove("open"); $("moreBtn").setAttribute("aria-expanded", "false"); } });
 
 /* ------------------------------------------------------------ ACHIEVEMENTS (2026-09-23, the owner)
    Drawn entirely from what the character already carries — G.ACH is the list and me.ach is what they have — so
@@ -6211,7 +6277,7 @@ function renderPanel() {
        Every `me` message repainted this tab from scratch - a regen tick, a hunger tick, a quest counter - and each repaint
        replaced every slot's <img>, which is the blink. The signature is everything the tab draws from; a minute stamp keeps the
        countdowns honest. */
-    let sig = ""; try { sig = JSON.stringify([me.inv, me.eq, me.quick, hint, G.bagMax(me), ZCBAL, me.jack, me.hw, me.ward, me.tour?.id, me.daily, Math.floor(Date.now() / 60000), G.hwOn()]); } catch (e) { sig = ""; }
+    let sig = ""; try { sig = JSON.stringify([me.inv, me.eq, me.quick, me.fav, hint, G.bagMax(me), ZCBAL, me.jack, me.hw, me.ward, me.tour?.id, me.daily, Math.floor(Date.now() / 60000), G.hwOn()]); } catch (e) { sig = ""; }
     if (sig && p.dataset.tab === "inv" && p.dataset.invSig === sig) return;
     p.dataset.tab = "inv"; p.dataset.invSig = sig;
     // an equippable piece says what it would change: with five tiers of gear,
@@ -6228,7 +6294,7 @@ function renderPanel() {
       const f = G.fOf(s);
       const ev = it.event && it.slot;   /* (2026-09-27) "Halloween 2026 Event", in the tooltip and as a corner mark */
       const title = `${G.forgeNameAt(s.k, f)}${ev ? ` · ${G.EVENT_TAG}` : ""}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}` + (cmp ? `\n${cmp}` : "") + `\n${what}, shift-click to drop, right-click for the wiki`;
-      return `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" data-item="${s.k}"${f ? ` data-f="${f}"` : ""} title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(f)}${ev ? '<em class="evtag" aria-hidden="true">\u{1F383}</em>' : ""}</div>`;
+      return `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" data-item="${s.k}"${f ? ` data-f="${f}"` : ""} title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(f)}${me.fav?.includes(s.k) ? '<em class="fav" title="Favourite">★</em>' : ""}${ev ? '<em class="evtag" aria-hidden="true">\u{1F383}</em>' : ""}</div>`;
     });
     while (cells.length < G.bagMax(me)) cells.push('<div class="slot empty"></div>');
     p.innerHTML = `<div class="ph">Inventory <span><button type="button" class="invsort" id="invSort" title="Sort: tickets, tools, gear, food, then the rest. Merges part-stacks.">Sort</button> <small>${me.inv.length}/${G.bagMax(me)}</small></span></div><div class="inv">${cells.join("")}</div>${walletCard()}`;

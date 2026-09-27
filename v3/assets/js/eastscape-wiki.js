@@ -806,6 +806,7 @@ export const GUIDES = [
       <table class="tbl"><tr><th>Egg</th><th>Hatches in</th><th>Into</th><th>Does</th><th>Found</th></tr>${Object.entries(G.EGGS).map(([k, e]) => `<tr><td>${H.ico(k)} ${nm(k)}</td><td>${hrs(e.ms)}</td><td>${pet(e.pet)}</td><td>${H.esc(G.petFxText(G.PETS[e.pet].fx))}</td><td>${e.from.map((s) => H.esc(G.SCENES[s]?.name || s)).join(", ")}</td></tr>`).join("")}</table>
       <h3>Pet food</h3>
       <p>Three kinds, cooked at any campfire, each from more than one pair of ingredients so whatever you are carrying from that part of the game will do.</p>
+      <p><b>No pet yet? Cook pet food.</b> While you own no pet, hold no egg and have nothing in the pen or hatchery, every batch you cook trains Breeding a little: ${G.BREED.foodXp.petfood_ordinary} xp for Ordinary, ${G.BREED.foodXp.petfood_greater} for Greater, ${G.BREED.foodXp.petfood_legend} for Legendary. Once you have a pet or an egg, the xp comes from the pen and the hatchery instead.</p>
       <table class="tbl"><tr><th>Cooking</th><th>Makes</th><th>From</th></tr>${foods.map((r) => `<tr><td>${r.lvl}</td><td>${H.ico(r.out[0])} ${r.out[1]} ${nm(r.out[0])}</td><td>${r.in.map(([k, n]) => `${n} ${nm(k)}`).join(", ")}</td></tr>`).join("")}</table>`;
     } },
   { id: "wizardry", title: "Wizardry", icon: "\u{1F4DC}", cat: "Skills",
@@ -1025,6 +1026,11 @@ export const UPDATES = [
       "FUNGICULTURE: buy a Cellar ladder from Yahsmeena, climb down, make compost at the bin and grow mushrooms in the beds. Every outdoor map also has three wild clusters you can pick once a day. The Fungiculture guide lists every shroom and every recipe it goes into.",
       "PETS CAN BE TRADED AND SOLD. Offer them in the trade window next to items and tickets. List one on Livia's Exchange under the new Pets tab: anyone can buy it outright and the money goes to your bank, less 1%. Or sell one to Bom at the Prize Counter (Ordinary 1,000, Greater 5,000, Legendary 25,000 tickets). A traded pet keeps its rank, its stats and its name.",
       "THE BUFFS BAR shows each buff as its icon and colour only. Hover one for its name, what it does and the time left.",
+      "THE BANK, REBUILT: five PAGES to file things on (drag an item onto a page, or hold / right-click it and pick one), tabs by kind (gear, ranged, tools, food, materials, seeds, breeding, potions), one search over bank and bag, your own amount beside 1 / 5 / 10 / All, and a meter of slots used and what it is all worth. Your bag is the leather panel on the right.",
+      "A BOW OR WAND FIRES ONLY WHAT IS LOADED in its quiver or Magic Bag. Arrows and pages in your bag no longer fire on their own: load them. Clicking a different kind swaps it in.",
+      "NO PET YET? Cooking pet food trains Breeding a little until you have a pet or an egg.",
+      "FAVOURITES: right-click (or hold, on a phone) an item in your bag and star it. Favourites wear a star, come first when you Sort, and Deposit bag, Stack all and Sell all leave them with you.",
+      "ON A PHONE: the map is closer (a tile is thumb-sized), the top bar is one line with a More button, the stats are one row so your bag is in reach, and the tab bar sticks while you scroll. Sideways, the panel is narrower so the game has room.",
     ],
   },
   {

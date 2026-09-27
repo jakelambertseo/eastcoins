@@ -354,7 +354,7 @@ export class World {
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
-    pets: C.pets, isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
+    pets: C.pets, isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
 
   /* ------------------------------------------------------------ reforging (2026-09-22)
      Spend bars to push a piece you own further. The odds and what a level is worth live in G.FORGE; this only
@@ -840,6 +840,15 @@ export class World {
       /* (2026-09-25) QUICK SLOTS. Four item keys on the character, so the bar follows you to another device. Only the key is
          stored: using one goes through the ordinary eat / use / equip messages the bag already sends, so a quick slot can
          never do anything a click on the same item in the bag could not. */
+      /* (2026-09-27) favourites: a star on the item, first when sorted, and kept out of Deposit bag / Stack all / Sell all */
+      case "fav": {
+        const k = String(m.k || ""); if (!G.ITEMS[k] || k === "tickets") return;
+        C.fav = Array.isArray(C.fav) ? C.fav : []; const on = m.on == null ? !C.fav.includes(k) : !!m.on && !C.fav.includes(k);
+        if (on) { if (C.fav.length >= G.FAV_MAX) return this.say(pl, `That's ${G.FAV_MAX} favourites, the most. Unstar one first.`, "bad"); C.fav.push(k); }
+        else C.fav = C.fav.filter((x) => x !== k);
+        this.touch(pl);
+        return this.say(pl, on ? `${G.ITEMS[k].name}: a favourite. Sort puts it first, and Deposit bag, Stack all and Sell all leave it with you.` : `${G.ITEMS[k].name} is no longer a favourite.`, "good");
+      }
       case "quick": { const i = m.i | 0; if (i < 0 || i > 3) return; const k = m.k == null ? null : String(m.k);
         if (k && !G.ITEMS[k]) return; (pl.C.quick ||= [null, null, null, null])[i] = k; return this.touch(pl); }
       case "quiver": return this.quiverOp(pl, m);   /* (2026-09-25) load / unload the offhand pouch */   /* (2026-09-25) the Count Room. One tier, so there is nothing to pick and nothing to read off the message. */
@@ -2104,7 +2113,7 @@ export class World {
     /* (2026-09-23) "all" STILL FILTERS ON isLoot ALONE. Quick-sellable rares are deliberately not swept: one
        click of Sell All must never be able to take the ring you are wearing or the drop you spent a week on.
        A single named item may be a rare, and then it pays G.quickSell rather than the full value. */
-    const keys = m.op === "all" ? [...new Set(C.inv.map((s) => s.k))].filter(G.isLoot) : [String(m.k)].filter((k) => G.canSell(k) && C.inv.some((s) => s.k === k));
+    const keys = m.op === "all" ? [...new Set(C.inv.map((s) => s.k))].filter((k) => G.isLoot(k) && !G.isFav(C, k)) : [String(m.k)].filter((k) => G.canSell(k) && C.inv.some((s) => s.k === k));
     /* (2026-09-23) THREE PRICES, in the order they apply. Loot is worth what the Cashier pays for it; the rares
        in the QUICK list have their own; and a smithed piece sells back at a quarter of the counter's own shelf
        price (gearSell). Gear is last because it is the only one keyed on having a `slot`, and it is deliberately
@@ -2952,6 +2961,8 @@ export class World {
            furnace, the anvil and the cauldron - and nothing else. Doubling inside grant() would have caught
            combat, gathering and quest rewards too, which is not what was asked and would be a far bigger lever. */
         this.grant(pl, r.skill, Math.round(r.xp * (1 + group) * (this.doubleOn() ? G.DOUBLE.mult : 1) * (nx ? nx.xp : 1)));
+        /* (2026-09-27) the way into Breeding: a batch of pet food trains it a little while you have no pet and no egg (G.BREED.foodXp, foodXpWhile) */
+        if (G.BREED.foodXp?.[r.out[0]] && G.foodXpWhile(pl.C)) this.grant(pl, "breeding", G.BREED.foodXp[r.out[0]]);
         if (r.skill !== "cooking") this.say(pl, `You ${st.verb === "print" ? "print" : "make"} ${outN > 1 ? `${outN} × ` : "a "}${outName}.${nx ? " The Nexus doubles it." : ""}`, "good");
       }
       this.touch(pl);
@@ -3600,16 +3611,17 @@ export class World {
   /* (2026-09-23) A REFORGED PIECE BANKS ON ITS OWN LINE, same rule as the bag: +2 and +3 are different objects
      and a single {k, n} could not say which of the four in the pile was which. It therefore costs one of the
      bank's BANK_MAX lines, and a bank full of reforged gear fills up faster than one full of logs. */
-  bankAdd(pl, k, n, f = 0) {
-    const C = pl.C, s = !f && C.bank.find((x) => x.k === k && !G.fOf(x));
+  /* (2026-09-27) `p` is the bank page a NEW row is filed on; a plain stack the bank already holds grows where it is, whatever page that is (as in OSRS) */
+  bankAdd(pl, k, n, f = 0, p = 0) {
+    const C = pl.C, s = !f && C.bank.find((x) => x.k === k && !G.fOf(x)); p = Math.max(0, Math.min(G.BANK_PAGES - 1, p | 0));
     if (s) { s.n += n; return true; }
     if (C.bank.length >= G.BANK_MAX) { this.say(pl, `Your bank is full (${G.BANK_MAX} different items).`, "bad"); return false; }
-    if (f) { for (let i = 0; i < n; i++) { if (C.bank.length >= G.BANK_MAX) return i > 0; C.bank.push({ k, n: 1, f }); } return true; }
-    C.bank.push({ k, n }); return true;
+    if (f) { for (let i = 0; i < n; i++) { if (C.bank.length >= G.BANK_MAX) return i > 0; C.bank.push({ k, n: 1, f, ...(p ? { p } : {}) }); } return true; }
+    C.bank.push({ k, n, ...(p ? { p } : {}) }); return true;
   }
   bankOp(S, pl, m) {
     if (!this.near(S, pl, "booth")) return this.say(pl, "You need to be at a bank booth.", "bad");
-    const C = pl.C, qty = (want, have) => Math.max(1, Math.min(have, want === "all" ? have : Math.floor(Number(want)) || 1));
+    const C = pl.C, qty = (want, have) => Math.max(1, Math.min(have, want === "all" ? have : Math.floor(Number(want)) || 1)), page = Math.max(0, Math.min(G.BANK_PAGES - 1, m.p | 0));   /* (2026-09-27) the page the window is showing: new rows go there */
     /* TICKETS STAY ON YOU (the owner, 2026-09-19: "cant drop or get rid of their tickets... or bank them or anything like that").
        They are the one currency and they turn into ZCoins at the tables, so they only ever leave your bag by being SPENT:
        no drop (see "drop"), no bank, no gift in a trade. normChar moves any that were banked before this back to the bag. */
@@ -3617,15 +3629,17 @@ export class World {
     if (m.op === "dep") { const st = C.inv[m.i | 0]; if (!st) return;
       /* A reforged piece is banked as ITSELF: by index, one item, keeping its level. "Deposit all" of a plain
          stack still sweeps every plain one, and takeInv leaves the forged ones alone by design. */
-      if (G.fOf(st)) { const f = G.fOf(st); if (!this.bankAdd(pl, st.k, 1, f)) return; G.takeAt(C.inv, m.i | 0); }
-      else { const k = st.k, q = qty(m.n, G.countItems(C, [k], { plainOnly: true })); if (!this.bankAdd(pl, k, q)) return; G.takeInv(C.inv, k, q); } }
-    else if (m.op === "depinv") { for (const st of [...C.inv]) { if (st.k === "tickets") continue; if (!this.bankAdd(pl, st.k, st.n)) break; C.inv.splice(C.inv.indexOf(st), 1); } }
+      if (G.fOf(st)) { const f = G.fOf(st); if (!this.bankAdd(pl, st.k, 1, f, page)) return; G.takeAt(C.inv, m.i | 0); }
+      else { const k = st.k, q = qty(m.n, G.countItems(C, [k], { plainOnly: true })); if (!this.bankAdd(pl, k, q, 0, page)) return; G.takeInv(C.inv, k, q); } }
+    else if (m.op === "depinv") { for (const st of [...C.inv]) { if (st.k === "tickets" || G.isFav(C, st.k)) continue; if (!this.bankAdd(pl, st.k, st.n, G.fOf(st), page)) break; C.inv.splice(C.inv.indexOf(st), 1); } }
     /* (2026-09-25) STACK ALL: every plain stack in the bag whose item the bank already holds goes in, all of it. A reforged
        piece is never swept (it is banked as itself, one at a time, by index), and neither are tickets. */
     else if (m.op === "stackall") { const have = new Set(C.bank.filter((b) => !G.fOf(b)).map((b) => b.k));
-      for (const k of [...new Set(C.inv.filter((s) => !G.fOf(s) && s.k !== "tickets" && have.has(s.k)).map((s) => s.k))]) {
-        const q = G.countItems(C, [k], { plainOnly: true }); if (q && this.bankAdd(pl, k, q)) G.takeInv(C.inv, k, q); } }
-    else if (m.op === "depeq") { for (const sl of G.SLOTS) { const k = C.eq[sl]; if (k && this.bankAdd(pl, k, 1)) C.eq[sl] = null; } }
+      for (const k of [...new Set(C.inv.filter((s) => !G.fOf(s) && s.k !== "tickets" && have.has(s.k) && !G.isFav(C, s.k)).map((s) => s.k))]) {
+        const q = G.countItems(C, [k], { plainOnly: true }); if (q && this.bankAdd(pl, k, q, 0, page)) G.takeInv(C.inv, k, q); } }
+    else if (m.op === "depeq") { for (const sl of G.SLOTS) { const k = C.eq[sl]; if (k && this.bankAdd(pl, k, 1, G.fLevelOf(C, sl), page)) { C.eq[sl] = null; if (C.eqf) delete C.eqf[sl]; } } }
+    /* (2026-09-27) REFILE: a row moves to another page, by its true index; nothing else about it changes */
+    else if (m.op === "page") { const st = C.bank[m.i | 0]; if (!st) return; if (page) st.p = page; else delete st.p; }
     else if (m.op === "wd") { const st = C.bank[m.i | 0]; if (!st) return;
       if (G.fOf(st)) { if (!this.give(pl, st.k, 1, G.fOf(st))) return; C.bank.splice(m.i | 0, 1); this.touch(pl); return pl.out.push({ type: "bank" }); }
       const q = this.giveUpTo(pl, st.k, qty(m.n, st.n)); if (!q) return; st.n -= q; if (!st.n) C.bank.splice(C.bank.indexOf(st), 1); }

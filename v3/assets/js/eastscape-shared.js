@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 315;
+export const VERSION = 316;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -819,6 +819,10 @@ export const TOOL_OF = { mining: "pickaxe", woodcutting: "axe", fishing: "rod" }
 export const INV_MAX = 25;   // (2026-09-27, the owner: "with all the new items, lets give all users default of 25 inventory slots") 20 from 2026-09-20 to 2026-09-27; (was 30 until 2026-09-20: a casino game wants a small bag that fills, so you walk back past the tables to the Cashier.
                              //  normChar re-packs an old 30-slot bag on load and sends what no longer fits to the bank, so nothing is lost.)
 export const BANK_MAX = 200;
+/* (2026-09-27, the owner: "add bank pages ... give them 5 bank pages to start. replicate osrs") a bank row may carry p, 0..BANK_PAGES-1, the page it is filed on; 0 is the first page and is not stored */
+export const BANK_PAGES = 5;
+export const FAV_MAX = 40;
+export const isFav = (c, k) => Array.isArray(c?.fav) && c.fav.includes(k);
 // a bag slot holds up to 99 of a thing; tickets (and anything marked nocap) piles up without limit. The bank has no cap.
 export const STACK_MAX = 99;
 export const capOf = (k) => (ITEMS[k]?.nocap ? Infinity : ITEMS[k]?.cap || STACK_MAX);   /* (2026-09-25) `cap`: arrows stack to 1,000 (the owner) */
@@ -924,7 +928,8 @@ export function sortInv(inv, c) {
      back first, best last, right after the plain ones of the same kind. */
   const forged = inv.filter((s) => fOf(s)).map((s) => ({ k: s.k, n: 1, f: fOf(s) }));
   const totals = new Map(); for (const s of inv) if (!fOf(s)) totals.set(s.k, (totals.get(s.k) || 0) + s.n);
-  const keys = [...new Set([...totals.keys(), ...forged.map((s) => s.k)])].sort((a, b) => group(a) - group(b) || tierRank(a) - tierRank(b) || (ITEMS[a]?.name || a).localeCompare(ITEMS[b]?.name || b));
+  const fav = new Set(Array.isArray(c?.fav) ? c.fav : []);   /* (2026-09-27) favourites first, then the old order */
+  const keys = [...new Set([...totals.keys(), ...forged.map((s) => s.k)])].sort((a, b) => (fav.has(a) ? 0 : 1) - (fav.has(b) ? 0 : 1) || group(a) - group(b) || tierRank(a) - tierRank(b) || (ITEMS[a]?.name || a).localeCompare(ITEMS[b]?.name || b));
   const out = [];
   for (const k of keys) {
     if (totals.get(k)) addInv(out, k, totals.get(k), c);
@@ -6120,8 +6125,15 @@ export const BREED = {
   legend: { lvl: 50, ms: 72 * 3600000, food: 12, xpStart: 3000, xpEnd: 40000 },  /* two Greater pets of the same kind */
   hatch: { food: 3 },                                                             /* an egg eats three Ordinary pet food, taken when it goes in */
   eggDrop: 1 / 3000,                                                              /* one kill in three thousand, anywhere: "rare but not that rare" */
-  reach: 3
+  reach: 3,
+  /* (2026-09-27, the owner: "add cooking pet food giving a little breeding XP if a user doesnt have a pet or egg") THE WAY IN. Every other
+     source of Breeding xp needs a pet or an egg first, so a player who had found neither could not touch the skill. Cooking a batch of pet
+     food trains it a little - ONLY while you own no pet, hold no egg, and have nothing in the pen or the hatchery (foodXpWhile). The moment
+     you have one, the xp comes from the pen and the hatchery, and the trickle stops. */
+  foodXp: { petfood_ordinary: 15, petfood_greater: 40, petfood_legend: 100 }
 };
+/** whether cooking pet food still trains Breeding for this character: no pet, no egg, nothing in the pen or the hatchery */
+export const foodXpWhile = (c) => !petsOf(c).length && !c?.pen && !c?.hatch && !(c?.inv || []).some((s) => EGGS[s.k]) && !(c?.bank || []).some((s) => EGGS[s.k]);
 /** the three ranks, with how they are drawn and what they eat */
 export const RANKS = {
   ordinary: { name: "Ordinary", food: "petfood_ordinary", col: "#9a9a9a", mark: "" },
@@ -6890,12 +6902,15 @@ export function normChar(c) {
      mapping each entry to a bare { k, n } quietly threw away any reforge level on it — which made the whole
      feature last exactly until the player's next login. A forged entry is passed to addInv with its level, so it
      lands in a slot of its own instead of being merged into the plain stack beside it. */
-  const renamed = (st) => (st && st.k ? { k: aliasKey(st.k), n: st.n, ...(st.f ? { f: st.f } : {}) } : st);
-  out.bank = (Array.isArray(c.bank) ? c.bank : []).map(renamed).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, BANK_MAX).map((s) => ({ k: s.k, n: s.n, ...(s.f ? { f: s.f } : {}) }));
+  const renamed = (st) => (st && st.k ? { k: aliasKey(st.k), n: st.n, ...(st.f ? { f: st.f } : {}), ...(st.p > 0 ? { p: st.p } : {}) } : st);   /* (2026-09-27) the bank page rides along */
+  out.bank = (Array.isArray(c.bank) ? c.bank : []).map(renamed).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, BANK_MAX).map((s) => ({ k: s.k, n: s.n, ...(s.f ? { f: s.f } : {}), ...(s.p > 0 ? { p: Math.min(BANK_PAGES - 1, s.p | 0) } : {}) }));   /* (2026-09-27) the page comes through a save */
   /* (2026-09-27) CANDY CORN EXPIRES: the day after the Long Night, every load sweeps it from the bag and the bank. The wiki and the
      item say so from the first day, so nobody is surprised; the fits, the set and the cat it bought stay. */
   const expired = !hwOn() && chicagoDay() > HW.until;
   if (expired) out.bank = out.bank.filter((s) => s.k !== "candycorn");
+  /* (2026-09-27, the owner: "add the ability for users to favorite items in their inventory") FAVOURITES are item keys on the character:
+     starred on every tile, first when the bag is sorted, and left alone by Deposit bag, Stack all and Sell all. FAV_MAX of them. */
+  out.fav = Array.isArray(c.fav) ? [...new Set(c.fav.filter((k) => typeof k === "string" && ITEMS[k]))].slice(0, FAV_MAX) : [];
   // the bag is re-packed into stacks of 99; anything that no longer fits goes to the bank rather than vanishing
   out.inv = [];
   for (const s of (Array.isArray(c.inv) ? c.inv : f.inv).map(renamed).filter((s) => s && ITEMS[s.k] && s.n > 0 && !(expired && s.k === "candycorn"))) {
