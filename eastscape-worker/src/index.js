@@ -840,6 +840,12 @@ export class World {
       /* (2026-09-25) QUICK SLOTS. Four item keys on the character, so the bar follows you to another device. Only the key is
          stored: using one goes through the ordinary eat / use / equip messages the bag already sends, so a quick slot can
          never do anything a click on the same item in the bag could not. */
+      /* (2026-09-27) arranging the bag: two slots swap; a target past the end (an empty slot on the page) puts the item last */
+      case "inv": {
+        if (m.op !== "move") return; const a = m.from | 0, b = m.to | 0; if (a < 0 || a >= C.inv.length || b < 0 || a === b) return;
+        if (b >= C.inv.length) { const [st] = C.inv.splice(a, 1); C.inv.push(st); } else { const t = C.inv[a]; C.inv[a] = C.inv[b]; C.inv[b] = t; }
+        this.touch(pl); return;
+      }
       /* (2026-09-27) favourites: a star on the item, first when sorted, and kept out of Deposit bag / Stack all / Sell all */
       case "fav": {
         const k = String(m.k || ""); if (!G.ITEMS[k] || k === "tickets") return;

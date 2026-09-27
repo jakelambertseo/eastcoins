@@ -136,7 +136,19 @@ button,input,select{font:inherit}
   .side .stat{flex-direction:column;gap:1px;font-size:12.5px;text-align:center;min-width:0;overflow:hidden}
   .side .stat>*{margin:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .side .tabs{position:sticky;top:0;z-index:6;background:#141010}
+  /* (2026-09-27, the owner: "the entire game scene should be the mobile view, unless they want to interact with menu and chat") THE GAME IS
+     THE SCREEN. The stats, the tabs and the panels are a sheet that slides up from the bottom behind the Menu button beside Chat, and a tap
+     on the map puts it away. Nothing about the panels themselves changes: the same tabs, in the same order, scrolling inside the sheet. */
+  .sidebtn{display:inline-flex}
+  html,body{overflow:hidden}
+  .wrap{height:calc(100vh - 32px);height:calc(100dvh - 32px);grid-template-rows:minmax(0,1fr);overflow:hidden}
+  .wrap > .game{min-height:0;height:auto;order:0}
+  .side{position:fixed;left:0;right:0;bottom:0;top:auto;max-height:min(82vh,760px);max-height:min(82dvh,760px);order:0;z-index:40;transform:translateY(104%);transition:transform .22s ease;background:#141010;border-top:3px solid #c8963a;border-radius:16px 16px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.55);overflow:auto;overscroll-behavior:contain;padding-top:4px}
+  .side::before{content:"";display:block;width:44px;height:5px;margin:4px auto 2px;border-radius:3px;background:#c8963a;opacity:.85}
+  .side.open{transform:none}
 }
+.sidebtn{display:none}
+@media (prefers-reduced-motion:reduce){.side{transition:none}}
 @media (max-width:520px){.top:not(.open) #topMe{display:none}}
 @media (max-height:520px) and (min-width:821px){
   .wrap{grid-template-columns:290px minmax(0,1fr)}
@@ -695,6 +707,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .slot .ico,.eq .ico{width:84%;height:84%;vertical-align:0}.slot .ico{margin-top:18%}.eq .ico{width:62%;height:62%}
 .slot{position:relative;aspect-ratio:1;border:1px solid #bfb193;background:#e6dcc4;display:grid;place-items:center;font-size:26px;cursor:pointer;user-select:none}
 .slot .fav{position:absolute;top:-3px;left:0;font-style:normal;font-size:12px;line-height:1;color:#ffd45a;text-shadow:0 0 2px #000,0 1px 0 #000}
+.inv .slot.dragging{opacity:.4}.inv .slot.over{outline:3px dashed #c8963a;outline-offset:-4px}.inv .slot.lifted{outline:3px solid #ffd45a;outline-offset:-4px;transform:scale(1.06)}.inv.moving .slot:not(.lifted){cursor:copy;box-shadow:inset 0 0 0 2px rgba(200,150,58,.45)}
 .bagmenu{position:fixed;z-index:1000;min-width:180px;padding:4px;border-radius:10px;background:#fffaf0;color:#2a2016;box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 0 1px #c8b48a}
 .bagmenu-h{display:flex;align-items:center;gap:6px;padding:6px 8px 4px;font-size:12.5px;border-bottom:1px solid rgba(0,0,0,.1);margin-bottom:3px}.bagmenu-h .ico{width:20px;height:20px}
 .bagmenu button{display:block;width:100%;padding:7px 10px;border:0;border-radius:6px;background:none;text-align:left;font:800 13px Nunito,sans-serif;color:#2a2016;cursor:pointer}.bagmenu button:hover{background:rgba(200,150,58,.22)}
@@ -1189,6 +1202,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       </div>
       <div class="chat-row">
         <button type="button" class="chat-tab" id="chatTab" aria-expanded="false" aria-controls="chatBox">💬 Chat <span class="chat-unread" id="chatUnread" hidden>0</span></button>
+        <button type="button" class="chat-tab sidebtn" id="sideBtn" aria-expanded="false" title="Your bag, gear, skills, quests and settings">🎒 Menu</button>
         <div class="quickbar" id="quickBar" role="toolbar" aria-label="Quick slots, keys 1 to 4"></div>
       </div>
       <div class="qpick" id="qPick" hidden></div>
@@ -5142,7 +5156,7 @@ function renderShop() {
    (2026-09-27) REBUILT AND MOVED OUT: v3/assets/js/eastscape-bank.js, fetched the first time the bank opens. Tabs by kind, one
    search over bank and bag, an amount of your own, a right-click menu, a slots meter. The page only opens it and tells it when
    `me` changed; every rule of the old window (true bank index on every tile, rebuild only on change, tickets stay) lives there. */
-let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=4";
+let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=5";
 function bankUi() { return BANKUI ? Promise.resolve(BANKUI) : import(BANKUI_URL).then((m) => (BANKUI = m.createBankUi({ G, $, esc, ico, qty, fgTag, slotHtml, send, SFX, say, ITEMS, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); }, get me() { return me; } }))); }
 function renderBank() { if ($("bankWin").hidden || !me) return; $("bankCount").textContent = `${(me.bank || []).length}/${G.BANK_MAX}`; bankUi().then((u) => u.render()); }
 
@@ -5881,12 +5895,25 @@ function bagMenu(x, y, i) {
   closeBagMenu(); const s = me?.inv?.[i]; if (!s || !ITEMS[s.k]) return; const it = ITEMS[s.k], fav = me.fav?.includes(s.k);
   const use = it.raw ? "" : it.heal ? "Eat" : it.drink ? "Drink" : it.slot ? "Wear" : it.ammo ? "Load" : it.use || it.luck ? "Use" : "";
   bagMenuEl = document.createElement("div"); bagMenuEl.className = "bagmenu"; bagMenuEl.setAttribute("role", "menu");
-  bagMenuEl.innerHTML = `<div class="bagmenu-h">${ico(s.k)}<b>${esc(G.forgeNameAt(s.k, G.fOf(s)))}</b></div>${s.k === "tickets" ? "" : `<button type="button" data-fav="1">${fav ? "\u2606 Unfavourite" : "\u2605 Favourite"}</button>`}${use ? `<button type="button" data-use="1">${use}</button>` : ""}<button type="button" data-wiki="1">Wiki page</button>`;
+  bagMenuEl.innerHTML = `<div class="bagmenu-h">${ico(s.k)}<b>${esc(G.forgeNameAt(s.k, G.fOf(s)))}</b></div>${s.k === "tickets" ? "" : `<button type="button" data-fav="1">${fav ? "\u2606 Unfavourite" : "\u2605 Favourite"}</button>`}${use ? `<button type="button" data-use="1">${use}</button>` : ""}<button type="button" data-move="1">Move to another slot\u2026</button><button type="button" data-wiki="1">Wiki page</button>`;
   document.body.append(bagMenuEl);
   const W = bagMenuEl.offsetWidth, H = bagMenuEl.offsetHeight; bagMenuEl.style.left = `${Math.max(4, Math.min(x, innerWidth - W - 8))}px`; bagMenuEl.style.top = `${Math.max(4, Math.min(y, innerHeight - H - 8))}px`;
   bagMenuEl.addEventListener("click", (ev) => { const b = ev.target.closest("button"); if (!b) return; ev.stopPropagation(); closeBagMenu();
-    if (b.dataset.fav) send({ t: "fav", k: s.k }); else if (b.dataset.use) useBagItem(i); else { wikiRoute = `items/${s.k}`; openWin("wikiWin"); } });
+    if (b.dataset.fav) send({ t: "fav", k: s.k }); else if (b.dataset.use) useBagItem(i); else if (b.dataset.move) startInvMove(i); else { wikiRoute = `items/${s.k}`; openWin("wikiWin"); } });
 }
+/* (2026-09-27, the owner: "allow users to move around items in their own inventory ... drag an item in my first slot to my last slot")
+   ARRANGING THE BAG. With a mouse, drag a tile onto another: the two swap; onto an empty slot: it goes to the end. On a phone a drag would
+   fight the page's scrolling, so the hold menu has "Move to another slot": the tile lifts, and the next tap on any slot is where it goes.
+   The server does the move (the "inv" message), so the order is saved with the character and survives a reload. */
+let invDrag = -1, invMoveFrom = -1;
+const invMove = (from, to) => { if (from < 0 || to < 0 || from === to) return; send({ t: "inv", op: "move", from, to }); SFX.play("ui_click"); };
+function startInvMove(i) { invMoveFrom = i; document.querySelector(".inv")?.classList.add("moving"); document.querySelector(`.inv [data-i="${i}"]`)?.classList.add("lifted"); say("Tap the slot to move it to. Tap anywhere else to leave it.", "sys"); }
+function endInvMove() { invMoveFrom = -1; document.querySelector(".inv")?.classList.remove("moving"); document.querySelectorAll(".inv .lifted, .inv .over").forEach((el) => el.classList.remove("lifted", "over")); }
+document.addEventListener("dragstart", (e) => { const el = e.target.closest?.(".inv [data-i]"); if (!el) return; invDrag = +el.dataset.i; e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", el.dataset.i); el.classList.add("dragging"); });
+document.addEventListener("dragover", (e) => { if (invDrag < 0) return; const el = e.target.closest?.(".inv [data-to]"); if (!el) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (!el.classList.contains("over")) { document.querySelectorAll(".inv .over").forEach((x) => x.classList.remove("over")); el.classList.add("over"); } });
+document.addEventListener("drop", (e) => { if (invDrag < 0) return; const el = e.target.closest?.(".inv [data-to]"); if (!el) return; e.preventDefault(); invMove(invDrag, +el.dataset.to); invDrag = -1; document.querySelectorAll(".inv .over, .inv .dragging").forEach((x) => x.classList.remove("over", "dragging")); });
+document.addEventListener("dragend", () => { invDrag = -1; document.querySelectorAll(".inv .over, .inv .dragging").forEach((x) => x.classList.remove("over", "dragging")); });
+document.addEventListener("click", (e) => { if (invMoveFrom < 0) return; const el = e.target.closest?.(".inv [data-to]"); if (el) { e.stopImmediatePropagation(); e.preventDefault(); invMove(invMoveFrom, +el.dataset.to); } endInvMove(); }, true);
 document.addEventListener("click", closeBagMenu, true); document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeBagMenu(); });
 { let hold = 0, held = false, sx = 0, sy = 0;   /* a hold on a touch screen is the right-click */
   document.addEventListener("pointerdown", (e) => { if (e.pointerType !== "touch") return; const el = e.target.closest?.(".inv [data-i]"); if (!el) return; sx = e.clientX; sy = e.clientY; held = false; clearTimeout(hold); hold = setTimeout(() => { held = true; bagMenu(sx, sy, +el.dataset.i); }, 450); });
@@ -5903,6 +5930,10 @@ $("wikiBtn").addEventListener("click", () => { if ($("wikiWin").hidden) openWin(
 /* (2026-09-27) the phone's More button: the bar shows Games and Wiki; Achievements, Quests, Store, Hiscores (and, on the smallest phones,
    your name) unfold under it. Any of them closes it again, so the bar is one line whenever you are not choosing. */
 $("moreBtn").addEventListener("click", () => { const t = document.querySelector(".top"), on = t.classList.toggle("open"); $("moreBtn").setAttribute("aria-expanded", String(on)); });
+/* (2026-09-27) the phone's Menu button: the side panel is a sheet; the button toggles it, a tap on the map closes it */
+{ const sideEl = document.querySelector(".side"), setSide = (on) => { sideEl.classList.toggle("open", on); $("sideBtn").setAttribute("aria-expanded", String(on)); };
+  $("sideBtn").addEventListener("click", () => { const on = !sideEl.classList.contains("open"); setSide(on); SFX.play(on ? "ui_open" : "ui_close"); });
+  cv.addEventListener("pointerdown", () => { if (innerWidth <= 820 && sideEl.classList.contains("open")) setSide(false); }, { passive: true }); }
 document.querySelector(".top").addEventListener("click", (e) => { const t = e.currentTarget; if (t.classList.contains("open") && e.target.closest(".topl, .me") && !e.target.closest("#moreBtn")) { t.classList.remove("open"); $("moreBtn").setAttribute("aria-expanded", "false"); } });
 
 /* ------------------------------------------------------------ ACHIEVEMENTS (2026-09-23, the owner)
@@ -6293,10 +6324,10 @@ function renderPanel() {
          three things it was missing are below. */
       const f = G.fOf(s);
       const ev = it.event && it.slot;   /* (2026-09-27) "Halloween 2026 Event", in the tooltip and as a corner mark */
-      const title = `${G.forgeNameAt(s.k, f)}${ev ? ` · ${G.EVENT_TAG}` : ""}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}` + (cmp ? `\n${cmp}` : "") + `\n${what}, shift-click to drop, right-click for the wiki`;
-      return `<div class="slot${s.k === hint ? " hint" : ""}" data-i="${i}" data-item="${s.k}"${f ? ` data-f="${f}"` : ""} title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(f)}${me.fav?.includes(s.k) ? '<em class="fav" title="Favourite">★</em>' : ""}${ev ? '<em class="evtag" aria-hidden="true">\u{1F383}</em>' : ""}</div>`;
+      const title = `${G.forgeNameAt(s.k, f)}${ev ? ` · ${G.EVENT_TAG}` : ""}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}` + (cmp ? `\n${cmp}` : "") + `\n${what}, shift-click to drop, drag to another slot, right-click for more`;
+      return `<div class="slot${s.k === hint ? " hint" : ""}" draggable="true" data-i="${i}" data-to="${i}" data-item="${s.k}"${f ? ` data-f="${f}"` : ""} title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(f)}${me.fav?.includes(s.k) ? '<em class="fav" title="Favourite">★</em>' : ""}${ev ? '<em class="evtag" aria-hidden="true">\u{1F383}</em>' : ""}</div>`;
     });
-    while (cells.length < G.bagMax(me)) cells.push('<div class="slot empty"></div>');
+    while (cells.length < G.bagMax(me)) cells.push(`<div class="slot empty" data-to="${cells.length}"></div>`);   /* (2026-09-27) an empty slot is a drop target: the item goes to the end of the bag */
     p.innerHTML = `<div class="ph">Inventory <span><button type="button" class="invsort" id="invSort" title="Sort: tickets, tools, gear, food, then the rest. Merges part-stacks.">Sort</button> <small>${me.inv.length}/${G.bagMax(me)}</small></span></div><div class="inv">${cells.join("")}</div>${walletCard()}`;
     $("invSort").addEventListener("click", () => send({ t: "sort" }));
     p.querySelectorAll(".slot[data-i]").forEach((el) => el.addEventListener("click", (e) => {

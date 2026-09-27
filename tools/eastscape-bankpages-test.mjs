@@ -28,5 +28,10 @@ W.onMessage(pl, { t: "bank", op: "page", i: C.bank.indexOf(row("logs")), p: 0 })
 W.onMessage(pl, { t: "bank", op: "depinv", p: 1 }); is(row("trout")?.p, 1, "deposit bag files every new row on the page you are on");
 const back = G.normChar(JSON.parse(JSON.stringify(C))); is([back.bank.find((s) => s.k === "copper").p, back.bank.find((s) => s.k === "trout").p, back.bank.find((s) => s.k === "logs").p], [2, 1, undefined], "the pages survive a save");
 is(G.BANK_PAGES, 5, "five pages");
+/* (2026-09-27) arranging the bag: swap, to the end, and nothing on a bad index */
+C.inv = [{ k: "copper", n: 5 }, { k: "logs", n: 2 }, { k: "trout", n: 1 }];
+W.onMessage(pl, { t: "inv", op: "move", from: 0, to: 2 }); is(C.inv.map((s) => s.k), ["trout", "logs", "copper"], "dropping on an occupied slot swaps the two");
+W.onMessage(pl, { t: "inv", op: "move", from: 0, to: 20 }); is(C.inv.map((s) => s.k), ["logs", "copper", "trout"], "dropping on an empty slot puts it last");
+W.onMessage(pl, { t: "inv", op: "move", from: 7, to: 0 }); is(C.inv.map((s) => s.k), ["logs", "copper", "trout"], "a bad source index does nothing");
 console.log(bad ? `\n${bad} problem(s)` : "\nbank pages hold: filed, grown in place, refiled, clamped, saved");
 process.exitCode = bad ? 1 : 0;

@@ -28,8 +28,12 @@ export function createBankUi(E) {
 
   /* ---- the tabs: a rule over the item's own fields, in the order they are shown */
   const INS = new Set(); for (const r of Object.values(G.RECIPES || {})) for (const [k] of r.in || []) INS.add(k);
-  const TABS = [["all", "All", "\u{1F3DB}️"], ["gear", "Gear", "\u{1F6E1}️"], ["ranged", "Ranged", "\u{1F3F9}", "Bows, wands, quivers, Magic Bags, arrows and pages"], ["tools", "Tools", "⛏️"], ["food", "Food", "\u{1F357}", "Food and drink, raw and cooked"],
-    ["materials", "Materials", "\u{1FAA8}", "Ore, bars, logs, hides and everything else a recipe takes"], ["seeds", "Seeds", "\u{1F331}", "Seeds, crops and mushroom spawn"], ["pets", "Breeding", "\u{1F95A}", "Eggs and pet food"], ["potions", "Potions", "\u{1F9EA}", "Potions, scrolls and charms"], ["misc", "Misc", "\u{1F4E6}"]];
+  /* (2026-09-27, the owner: "keep the icons for categories only in the bank ... use custom art") each kind wears one of the game's own
+     UI pictures (v3/assets/img/glad/flat/ui), the same set the wiki's guides and the side tabs use, so nothing new is drawn */
+  const UI = "/v3/assets/img/glad/flat/ui/";
+  const TABS = [["all", "All", "g_bank"], ["gear", "Gear", "equip", "Armour, weapons, rings and amulets"], ["ranged", "Ranged", "g_archery", "Bows, wands, quivers, Magic Bags, arrows and pages"], ["tools", "Tools", "g_tools", "Pickaxes, axes and rods"], ["food", "Food", "g_cooking", "Food and drink, raw and cooked"],
+    ["materials", "Materials", "g_mining", "Ore, bars, logs, hides and everything else a recipe takes"], ["seeds", "Seeds", "g_harvesting", "Seeds, crops and mushroom spawn"], ["pets", "Breeding", "g_breeding", "Eggs and pet food"], ["potions", "Potions", "g_alchemy", "Potions, scrolls and charms"], ["misc", "Misc", "w_sack", "Everything else"]];
+  const tabIco = (k) => `<img src="${UI}${k}.png?v=1" alt="" width="22" height="22" loading="lazy" decoding="async">`;
   const catOf = (k) => { const it = ITEMS[k]; if (!it) return "misc";
     if (it.ammo || it.pouch || it.launcher) return "ranged";
     if (it.tool) return "tools";
@@ -48,7 +52,8 @@ export function createBankUi(E) {
     root.innerHTML = `<div class="bk">
       <nav class="bk-side"><div class="bk-pages" id="bkPages" aria-label="Bank pages"></div><p class="bk-pnote">Drag an item onto a page to file it there. Deposits go to the page you are on.</p></nav>
       <section class="bk-main">
-        <div class="bk-top"><input class="search bk-search" id="bkSearch" placeholder="Search bank and bag…" aria-label="Search bank and bag" autocomplete="off"><select class="bk-kind" id="bkTabs" aria-label="Show only one kind of item"></select>
+        <div class="bk-tabs" id="bkTabs" role="tablist" aria-label="Kinds"></div>
+        <div class="bk-top"><input class="search bk-search" id="bkSearch" placeholder="Search bank and bag…" aria-label="Search bank and bag" autocomplete="off">
           <div class="qty bk-sort" id="bkSort" role="group" aria-label="Sort">${[["recent", "Recent"], ["az", "A–Z"], ["value", "Value"], ["amount", "Amount"]].map(([k, n]) => `<button type="button" data-s="${k}">${n}</button>`).join("")}</div></div>
         <div class="bk-meter" id="bkMeter"></div>
         <div class="bk-grid" id="bkGrid"></div>
@@ -64,7 +69,7 @@ export function createBankUi(E) {
     $("bkSort").addEventListener("click", (e) => { const b = e.target.closest("[data-s]"); if (!b) return; sort = b.dataset.s; lsSet("es_bank_sort", sort); SFX.play("ui_click"); render(); });
     $("bkQty").addEventListener("click", (e) => { const b = e.target.closest("[data-n]"); if (!b) return; mode = b.dataset.n; lsSet("es_bank_n", mode); if (mode === "x") $("bkX").focus(); paintQty(); });
     $("bkX").addEventListener("input", () => { x = Math.max(1, Math.floor(+$("bkX").value) || 1); lsSet("es_bank_x", String(x)); if (mode !== "x") { mode = "x"; lsSet("es_bank_n", mode); paintQty(); } });
-    $("bkTabs").addEventListener("change", () => { tab = $("bkTabs").value; lsSet("es_bank_tab", tab); SFX.play("ui_click"); render(); });   /* (2026-09-27, the owner) the kinds are a dropdown, not a row of chips */
+    $("bkTabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (!b) return; tab = b.dataset.tab; lsSet("es_bank_tab", tab); SFX.play("ui_click"); render(); });
     $("bkPages").addEventListener("click", (e) => { const b = e.target.closest("[data-page]"); if (!b) return; page = b.dataset.page; lsSet("es_bank_page", page); SFX.play("ui_click"); render(); });
     /* drag a tile onto a page: a bank row is refiled, a bag stack is deposited there. HTML5 drag is mouse-only; touch has the hold menu. */
     const dragAt = { bank: -1, bag: -1 };
@@ -76,6 +81,9 @@ export function createBankUi(E) {
     $("bkPages").addEventListener("dragleave", (e) => { e.target.closest?.("[data-page]")?.classList.remove("over"); });
     $("bkPages").addEventListener("drop", (e) => { const b = e.target.closest("[data-page]"); if (!b || b.dataset.page === "all") return; e.preventDefault(); const p = +b.dataset.page; b.classList.remove("over");
       if (dragAt.bank >= 0) send({ t: "bank", op: "page", i: dragAt.bank, p }); else if (dragAt.bag >= 0) dep(dragAt.bag, amount(), p); dragAt.bank = dragAt.bag = -1; SFX.play("ui_click"); });
+    /* (2026-09-27) the bag here arranges too: drop a bag tile on another and they swap, as in the inventory panel */
+    $("bkBag").addEventListener("dragover", (e) => { if (dragAt.bag < 0) return; const el = e.target.closest("[data-i]"); if (!el) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
+    $("bkBag").addEventListener("drop", (e) => { if (dragAt.bag < 0) return; const el = e.target.closest("[data-i]"); if (!el) return; e.preventDefault(); const to = +el.dataset.i; if (to !== dragAt.bag) send({ t: "inv", op: "move", from: dragAt.bag, to }); dragAt.bag = -1; });
     $("bkGrid").addEventListener("click", (e) => { const el = e.target.closest("[data-b]"); if (!el) return; const s = E.me?.bank?.[+el.dataset.b]; if (!s) return; wd(+el.dataset.b, e.shiftKey ? G.capOf(s.k) : amount()); });
     $("bkBag").addEventListener("click", (e) => { const el = e.target.closest("[data-i]"); if (!el) return; dep(+el.dataset.i, e.shiftKey ? "all" : amount()); });
     for (const [id, ev] of [["bkGrid", "b"], ["bkBag", "i"]]) {
@@ -132,7 +140,7 @@ export function createBankUi(E) {
     const inPage = page === "all" ? rows : onPage[curPage()] || [];
     const counts = { all: inPage.length }; for (const [s] of inPage) { const c = catOf(s.k); counts[c] = (counts[c] || 0) + 1; }
     if (tab !== "all" && !counts[tab]) tab = "all";
-    const tabsHtml = TABS.filter(([k]) => k === "all" || counts[k]).map(([k, n, i]) => `<option value="${k}"${k === tab ? " selected" : ""}>${i} ${k === "all" ? "Everything" : n} (${counts[k] || 0})</option>`).join("");
+    const tabsHtml = TABS.filter(([k]) => k === "all" || counts[k]).map(([k, n, i, t]) => `<button type="button" role="tab" data-tab="${k}" aria-pressed="${String(k === tab)}" aria-label="${n}" title="${t || n}">${tabIco(i)}<em>${counts[k] || 0}</em></button>`).join("");
     if (tabsHtml !== last.tabs) { $("bkTabs").innerHTML = tabsHtml; last.tabs = tabsHtml; }
     $("bkSort").querySelectorAll("[data-s]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.s === sort)));
     const worth = bank.reduce((a, s) => a + G.valueOf(s.k) * s.n, 0), pct = Math.min(100, Math.round(bank.length / G.BANK_MAX * 100));
@@ -167,14 +175,14 @@ const CSS = `
 .bk-pages button i{font-style:normal;font-size:15px;text-align:center;display:grid;place-items:center}.bk-pages button i .ico{width:22px;height:22px}.bk-pages button i b{width:22px;height:22px;border-radius:6px;background:rgba(0,0,0,.1);display:grid;place-items:center;font-size:12px}
 .bk-pages button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bk-pages button em{font-style:normal;font-size:11px;padding:1px 6px;border-radius:999px;background:rgba(0,0,0,.1)}
 .bk-pnote{margin:2px 0 0;font-size:11px;line-height:1.35;opacity:.65}
-.bk-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
-.bk-tabs button{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border:1px solid rgba(0,0,0,.14);border-radius:999px;background:rgba(0,0,0,.04);font:800 12px Nunito,sans-serif;color:#3a2c1c;cursor:pointer}
-.bk-tabs button:hover{background:rgba(0,0,0,.08)}.bk-tabs button[aria-pressed=true]{background:#fffaf0;border-color:#c8963a;box-shadow:0 1px 3px rgba(60,40,10,.18)}
-.bk-tabs button i{font-style:normal;font-size:13px}.bk-tabs button em{font-style:normal;font-size:10.5px;padding:0 5px;border-radius:999px;background:rgba(0,0,0,.1)}
+.bk-tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.bk-tabs button{position:relative;display:inline-grid;place-items:center;width:44px;height:40px;padding:0;border:2px solid rgba(0,0,0,.14);border-radius:10px;background:rgba(0,0,0,.05);cursor:pointer}
+.bk-tabs button img{image-rendering:pixelated;display:block}
+.bk-tabs button:hover{background:rgba(0,0,0,.1)}.bk-tabs button[aria-pressed=true]{background:#fffaf0;border-color:#c8963a;box-shadow:0 1px 3px rgba(60,40,10,.18)}
+.bk-tabs button em{position:absolute;right:-4px;top:-6px;font-style:normal;font-size:10px;font-weight:800;line-height:1;padding:2px 5px;border-radius:999px;background:#5a3220;color:#f3e7cc;box-shadow:0 0 0 1.5px #fffaf0}
 .bk-ph{grid-column:1/-1;margin:6px 2px 0;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.6}
 .bk-grid .slot.dragging{opacity:.4}.bk-menu-s{height:1px;margin:3px 6px;background:rgba(0,0,0,.12)}
 .bk-top{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap}.bk-search{flex:1 1 140px;margin:0}.bk-sort button{padding:4px 9px;font-size:12px}
-.bk-kind{flex:0 1 auto;max-width:100%;padding:5px 8px;border:1px solid #8a7a5a;border-radius:4px;background:#fffaf0;color:#2a2016;font:800 12.5px Nunito,sans-serif;cursor:pointer}
 .bk-meter{display:flex;align-items:center;gap:10px;margin:0 0 8px;font-size:12px;color:#5a4a30}.bk-meter b{color:#2a2016}
 .bk-bar{flex:1;height:8px;border-radius:999px;background:rgba(0,0,0,.12);overflow:hidden}.bk-bar i{display:block;height:100%;background:#4aa84a;border-radius:999px}.bk-bar i.warn{background:#d8963a}.bk-bar i.full{background:#c8283a}
 .bk-worth{white-space:nowrap}
@@ -196,4 +204,4 @@ const CSS = `
 .bk-menu{position:fixed;z-index:1000;min-width:190px;padding:4px;border-radius:10px;background:#fffaf0;color:#2a2016;box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 0 1px #c8b48a}
 .bk-menu-h{display:flex;align-items:center;gap:6px;padding:6px 8px 4px;font-size:12.5px;border-bottom:1px solid rgba(0,0,0,.1);margin-bottom:3px}.bk-menu-h small{opacity:.7}.bk-menu-h .ico{width:20px;height:20px}
 .bk-menu button{display:block;width:100%;padding:6px 10px;border:0;border-radius:6px;background:none;text-align:left;font:800 13px Nunito,sans-serif;color:#2a2016;cursor:pointer}.bk-menu button:hover{background:rgba(200,150,58,.22)}
-@media (max-width:820px){.bk-menu button{padding:10px 12px;font-size:14px}.bk{grid-template-columns:minmax(0,1fr)}.bk-pages{flex-direction:row;overflow-x:auto;padding-bottom:4px}.bk-pages button{flex:none;grid-template-columns:auto auto}.bk-pages button span{display:none}.bk-pnote{display:none}.bk-tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:3px}.bk-tabs button{flex:none}.bk-tabs button span{display:none}.bk-grid{max-height:40vh}.bk-grid.sm{max-height:26vh}}`;
+@media (max-width:820px){.bk-menu button{padding:10px 12px;font-size:14px}.bk{grid-template-columns:minmax(0,1fr)}.bk-pages{flex-direction:row;overflow-x:auto;padding-bottom:4px}.bk-pages button{flex:none;grid-template-columns:auto auto}.bk-pages button span{display:none}.bk-pnote{display:none}.bk-tabs{flex-wrap:nowrap;overflow-x:auto;padding:6px 2px 4px}.bk-tabs button{flex:none}.bk-grid{max-height:40vh}.bk-grid.sm{max-height:26vh}}`;
