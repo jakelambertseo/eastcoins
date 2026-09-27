@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 323;
+export const VERSION = 324;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -5594,7 +5594,11 @@ export const madeFrom = (k) => { const r = Object.values(RECIPES).filter((x) => 
 export const nodeValue = (ob) => (ob.t === "rock" || ob.t === "vein" ? valueOf(ob.ore) : ob.t === "spot" ? valueOf(ob.fish || "sardine") : ob.t === "wheat" ? valueOf("wheat")
   : ob.t === "olive" || ob.t === "vine" ? valueOf(ob.crop || "olives") : ["tree", "oak", "yew", "cypress", "deadtree", "willow", "skyash"].includes(ob.t) ? valueOf(ob.log || "logs") : 0);
 /** What a monster's drops come to on an average kill. */
-export const mobValue = (t) => Math.round((MOBS[t]?.drops || []).reduce((a, [k, n, p]) => a + (k === "tickets" || k === "tickets" ? 1 : valueOf(k)) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0)
+/* (2026-09-27, the owner: "pumpkin king gives about half the tickets that are listed under his name. i think it says ~1200 but he gives like
+   500-700") WEARABLE GEAR IS NOT PAY, in the ordinary drops as well as the rare ones (raresOf below already left it out). The King keeps
+   his Halloween set in `drops`, so a 1% scythe, crown and coin were being counted at full sell value into the "~" under his name: ~1,259
+   for a monster whose ticket roll is 420-720. It reads ~700 now: his tickets, his ectoplasm and the rest of his loot, what a fighter actually gets. */
+export const mobValue = (t) => Math.round((MOBS[t]?.drops || []).reduce((a, [k, n, p]) => a + (k === "tickets" ? 1 : ITEMS[k]?.slot ? 0 : valueOf(k)) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0)
   + raresOf(t).reduce((a, [k, p]) => a + (ITEMS[k]?.slot ? 0 : valueOf(k)) * p, 0));
 /** What the Cashier will take off you in one go: loot and things you made, never tools, charms or anything you could wear. */
 /* (2026-09-22) RAW FISH IS NOT FOOD AND NOT LOOT (the owner: "uncooked fish should not be eatable and should not be
