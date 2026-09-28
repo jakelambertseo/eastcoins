@@ -1718,8 +1718,12 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
    quick item") THE BUG BUTTON stands apart from the hotbar: a gap, a round button two-thirds the size of a quick slot, dark glass like the HUD
    rather than the slots' wood, and sitting low beside the row. In the page, not the lazy module, because it is on screen before the module is. */
 .chat-tab.bugbtn{align-self:flex-end;width:32px;height:32px;margin-left:12px;padding:0;border:0;border-image:none;border-radius:50%;background:var(--hud-bg);box-shadow:var(--hud-ring);justify-content:center}
-.chat-tab.bugbtn:hover{border-image:none;background:rgba(60,34,22,.92)}
+.chat-tab.bugbtn:hover{border-image:none;background:rgba(60,34,22,.92)}.chat-tab.bugbtn{position:relative}
 .chat-tab.bugbtn img{width:18px;height:18px;image-rendering:pixelated}
+.chat-tab.bugbtn[data-badge]::after,#meBug[data-badge]::after{content:attr(data-badge);position:absolute;top:-6px;right:-6px;min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:#e53935;color:#fff;font:900 10.5px/17px Lora,serif;text-align:center;box-shadow:0 0 0 2px #141010}
+.chat-tab.bugbtn[data-badge]{animation:bugnews 1.6s ease-in-out infinite}@keyframes bugnews{50%{box-shadow:var(--hud-ring),0 0 12px 3px rgba(255,216,74,.55)}}
+@media (prefers-reduced-motion:reduce){.chat-tab.bugbtn[data-badge]{animation:none}}
+#meBug{position:relative}#meBug[data-badge]::after{position:static;margin-left:auto}
 @media (max-width:520px){.chat-tab.bugbtn{width:30px;height:30px;margin-left:8px}}
 </style>
 </head>
@@ -1941,7 +1945,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=206").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=207").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -2282,6 +2286,9 @@ function onEvent(e) {
   if (e.type === "pit") { CZ.pit(e); return; }   /* (v109) ticket bets on the Fight Pit */
   if (e.type === "pen") { openPen(e); return; }
   if (e.type === "reports") { repUi().then((u) => u.got(e)); return; }   /* (2026-09-28) the bug button */
+  if (e.type === "repnote") {   /* (2026-09-28) news on your reports: a count on the bug button (and on its line in your menu) until you open it */
+    for (const b of [$("bugBtn"), $("meBug")]) { if (e.n > 0) b.dataset.badge = String(e.n); else b.removeAttribute("data-badge"); }
+    if (e.n > 0) SFX.play("task_done"); return; }
   if (e.type === "hatch") { openHatch(e); return; }
   if (e.type === "eggtrade") { SFX.play("coins"); setTimeout(() => PETUI?.renderTrader(), 250); return; }   /* (2026-09-28) Nestor: redraw the counts once the new bag has landed */
   /* (2026-09-27) THE COLLECTION LOG: a podium was clicked (its owner's log), or a slot just filled (a chime; the words come as a message) */

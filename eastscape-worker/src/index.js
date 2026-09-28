@@ -298,6 +298,7 @@ export class World {
     this.cryptHello(pl, S); if (S.def.count) this.countHello(pl, S);
     if (this.doubleOn()) pl.out.push({ type: "double", on: this.doubleView() });   /* (2026-09-25) walk in mid-event and the timer is already there */
     this.pyramidHello(pl, S);
+    this.repCatchUp(pl).catch(() => {});   /* (2026-09-28) news on their bug reports and ideas from while they were away */
     this.achSweep(pl);   /* (2026-09-23) everything they already qualify for, paid once and quietly */
     S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
     if (!stored) this.say(pl, "Welcome to EastScape. Play the tables. Broke? Go outside: hit something, or fish. Bom Trady, in the middle of the floor, turns what you find into tickets.");
@@ -1683,6 +1684,20 @@ export class World {
     this.reps = new Map([...m.values()].filter((r) => r && r.id).map((r) => [r.id, r]));
     return this.reps;
   }
+  /* (2026-09-28, the owner: "do users get notifications/updates when their bug is in progress/fixed etc? they should") EVERY CHANGE REACHES
+     THE REPORTER, now or when they are next in. `told` is the status they have been told about in chat, `seen` the status they have seen by
+     opening the window. repTell says it (one line each, with the note), repBadge puts the count on the bug button, and repCatchUp does both
+     on login for everything that changed while they were away. Only "new" is never announced, since that is where a report starts. */
+  async repTell(pl, list) {
+    const due = list.filter((r) => r.status !== "new" && r.told !== r.status); if (!due.length) return;
+    /* the feed line fades in nine seconds, easy to miss at login, so each also goes into THEIR chat (nobody else's, and not the kept log) */
+    for (const r of due.slice(0, 3)) { const line = `Update on your ${r.kind === "bug" ? "bug report" : "idea"} "${r.text.slice(0, 50)}${r.text.length > 50 ? "…" : ""}": ${G.REP.label[r.status]}${r.note ? `. ${r.note}` : "."}`;
+      this.say(pl, line, r.status === "declined" ? "sys" : "good"); pl.out.push({ type: "chat", id: "house", name: "BUG BOARD", role: "admin", text: line, scene: null, t: Date.now() }); }
+    if (due.length > 3) this.say(pl, `And ${due.length - 3} more of your reports have news: open the bug button to see.`, "good");
+    for (const r of due) { r.told = r.status; await this.ctx.storage.put(`rep:${r.id}`, r).catch(() => {}); }
+  }
+  repBadge(pl) { const n = [...this.reps.values()].filter((r) => r.by === pl.id && r.status !== "new" && r.seen !== r.status).length; pl.out.push({ type: "repnote", n }); }
+  async repCatchUp(pl) { await this.repLoad(); if (!this.pls.has(pl.id)) return; await this.repTell(pl, [...this.reps.values()].filter((r) => r.by === pl.id)); this.repBadge(pl); }
   repView(pl) {
     const R = [...this.reps.values()].sort((a, b) => b.at - a.at), admin = pl.role === "admin" || !!pl.admin;
     const pub = (r) => ({ id: r.id, kind: r.kind, status: r.status, title: r.title || r.text.slice(0, G.REP.titleMax), note: r.note || "", at: r.at, upd: r.upd || r.at });
@@ -1695,7 +1710,12 @@ export class World {
   async reportOp(S, pl, m) {
     const op = String(m.op || ""), now = Date.now(), admin = pl.role === "admin" || !!pl.admin, bad = (t) => this.say(pl, t, "bad");
     await this.repLoad();
-    if (op === "list") return this.repView(pl);
+    if (op === "list") {   /* opening the window is looking: every status they can see now counts as seen, and the button's badge goes */
+      const mine = [...this.reps.values()].filter((r) => r.by === pl.id && r.seen !== r.status);
+      for (const r of mine) { r.seen = r.status; this.ctx.storage.put(`rep:${r.id}`, r).catch(() => {}); }
+      if (mine.length) pl.out.push({ type: "repnote", n: 0 });
+      return this.repView(pl);
+    }
     if (op === "send") {
       const kind = m.kind === "idea" ? "idea" : "bug", text = String(m.text || "").replace(/\s+/g, " ").trim().slice(0, G.REP.max);
       if (text.length < G.REP.min) return bad(`Say a little more: at least ${G.REP.min} characters, so it can be found and fixed.`);
@@ -1721,7 +1741,7 @@ export class World {
       await this.ctx.storage.put(`rep:${r.id}`, r).catch(() => {});
       /* the reporter hears about it, if they are here, when it lands somewhere they would want to know */
       const who = this.pls.get(r.by);
-      if (who && who !== pl && was !== r.status && G.REP.public.includes(r.status)) this.say(who, `Your ${r.kind === "bug" ? "bug report" : "idea"} ("${r.text.slice(0, 40)}${r.text.length > 40 ? "…" : ""}") is now: ${G.REP.label[r.status]}.`, "good");
+      if (who && was !== r.status) { await this.repTell(who, [r]); this.repBadge(who); }   /* offline: repCatchUp tells them when they are next in */
       return this.repView(pl);
     }
     if (op === "del") { this.reps.delete(r.id); await this.ctx.storage.delete(`rep:${r.id}`).catch(() => {}); return this.repView(pl); }
