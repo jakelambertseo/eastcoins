@@ -5270,7 +5270,7 @@ function renderShop() {
    (2026-09-27) REBUILT AND MOVED OUT: v3/assets/js/eastscape-bank.js, fetched the first time the bank opens. Tabs by kind, one
    search over bank and bag, an amount of your own, a right-click menu, a slots meter. The page only opens it and tells it when
    `me` changed; every rule of the old window (true bank index on every tile, rebuild only on change, tickets stay) lives there. */
-let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=6";
+let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=7";
 function bankUi() { return BANKUI ? Promise.resolve(BANKUI) : import(BANKUI_URL).then((m) => (BANKUI = m.createBankUi({ G, $, esc, ico, qty, fgTag, slotHtml, send, SFX, say, ITEMS, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); }, get me() { return me; } }))); }
 function renderBank() { if ($("bankWin").hidden || !me) return; $("bankCount").textContent = `${(me.bank || []).length}/${G.BANK_MAX}`; bankUi().then((u) => u.render()); }
 
@@ -6041,7 +6041,17 @@ $("moreBtn").addEventListener("click", () => { const t = document.querySelector(
 /* (2026-09-27) the phone's Menu button: the side panel is a sheet; the button toggles it, a tap on the map closes it */
 { const sideEl = document.querySelector(".side"), setSide = (on) => { sideEl.classList.toggle("open", on); $("sideBtn").setAttribute("aria-expanded", String(on)); };
   $("sideBtn").addEventListener("click", () => { const on = !sideEl.classList.contains("open"); setSide(on); SFX.play(on ? "ui_open" : "ui_close"); });
-  cv.addEventListener("pointerdown", () => { if (innerWidth <= 820 && sideEl.classList.contains("open")) setSide(false); }, { passive: true }); }
+  cv.addEventListener("pointerdown", () => { if (innerWidth <= 820 && sideEl.classList.contains("open")) setSide(false); }, { passive: true });
+  /* (2026-09-28, the owner: "on the mobile UI, instead of click to close the menu, it needs to be able to be swiped down") SWIPE IT DOWN. A drag
+     that starts while the sheet (and whatever list the finger is on) is scrolled to the top follows the finger; let go past 70px, or with a
+     quick flick, and it closes; short of that it springs back. A drag that starts mid-list is the list scrolling, as before. Tapping the map
+     still closes it too. */
+  { let y0 = 0, t0 = 0, dy = 0, drag = false;
+    const atTop = (el) => { for (let n = el; n && n !== sideEl.parentElement; n = n.parentElement) if (n.scrollTop > 0) return false; return true; };
+    sideEl.addEventListener("touchstart", (e) => { if (innerWidth > 820 || !sideEl.classList.contains("open") || e.touches.length !== 1) return; drag = atTop(e.target); y0 = e.touches[0].clientY; t0 = performance.now(); dy = 0; }, { passive: true });
+    sideEl.addEventListener("touchmove", (e) => { if (!drag) return; dy = e.touches[0].clientY - y0; if (dy <= 0) { sideEl.style.transform = ""; return; } sideEl.style.transition = "none"; sideEl.style.transform = `translateY(${dy}px)`; }, { passive: true });
+    const end = () => { if (!drag) return; drag = false; sideEl.style.transition = ""; sideEl.style.transform = ""; const fast = dy > 30 && dy / Math.max(1, performance.now() - t0) > 0.6; if (dy > 70 || fast) { setSide(false); SFX.play("ui_close"); } dy = 0; };
+    sideEl.addEventListener("touchend", end); sideEl.addEventListener("touchcancel", end); } }
 document.querySelector(".top").addEventListener("click", (e) => { const t = e.currentTarget; if (t.classList.contains("open") && e.target.closest(".topl, .me") && !e.target.closest("#moreBtn")) { t.classList.remove("open"); $("moreBtn").setAttribute("aria-expanded", "false"); } });
 
 /* ------------------------------------------------------------ ACHIEVEMENTS (2026-09-23, the owner)
