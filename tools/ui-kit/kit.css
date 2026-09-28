@@ -1,0 +1,93 @@
+/* ============================================================ THE EASTSCAPE UI KIT (2026-09-28, draft for approval)
+   The owner: "the inventory UI, the crafting station popups, all popups and windows in general ... feel very generic and inconsistant ...
+   i want everything to feel very consistant". Measured before this: 408 colours, 10 cream backgrounds, 33 button looks, 15 corner radii and
+   26 font sizes, because every window was styled on its own day. This file is the whole vocabulary a window may use:
+
+     surfaces   FRAME (the wooden win.png) · PAPER (one cream, the inventory scroll's grain) · CARD (one darker cream, one line)
+     buttons    PRIMARY (wooden btn.png) · SECONDARY (cream plain.png) · DANGER (red, the close x) · SEGMENTED (one strip for every
+                set of choices: sort, filters, sub-pages)
+     tabs       folder tabs over the body (the bank's pages)
+     rows       one row for anything you can act on, with three states: ready, off (a reason it is off), chosen
+     chips      small rounded counts and levels; slots are the game's slot.png, the same square as the bag
+     type       11 / 12.5 / 14 / 16 / 19, Nunito, and nothing else
+     corners    0 on anything drawn in pixels, 6 on cards and chips (99 only for round badges)
+
+   Dark glass is for things floating over the map (the HUD, chat), never inside paper.
+   Nothing here is page-specific: every class is .k-*, so it can sit beside the old styles while windows move across one at a time. */
+:root{
+  --k-ink:#2a2016; --k-ink2:#6a5a40; --k-ink3:#9a8866;
+  --k-paper:#efe2c4; --k-paper-hi:#fff6dc; --k-card:#e6d4ad; --k-card-line:#c2a574; --k-line:rgba(90,58,24,.2);
+  --k-head:#5a3220; --k-head-ink:#f6e9cc; --k-head-sub:#e0c890;
+  --k-gold:#c8963a; --k-gold-ink:#7a4e0e; --k-gold-hi:#ffd84a;
+  --k-good:#2f7a3a; --k-bad:#b8302a; --k-rare:#6a3aa8;
+  --k-r:6px;
+  --k-f-label:800 11px/1.2 Nunito,system-ui,sans-serif;
+  --k-f-small:700 12.5px/1.3 Nunito,system-ui,sans-serif;
+  --k-f-body:600 14px/1.4 Nunito,system-ui,sans-serif;
+  --k-f-row:800 16px/1.2 Nunito,system-ui,sans-serif;
+  --k-f-title:800 19px/1.15 Nunito,system-ui,sans-serif;
+}
+/* ---------- FRAME + HEAD + PAPER + FOOT ---------- */
+.k-win{display:flex;flex-direction:column;min-height:0;color:var(--k-ink);font:var(--k-f-body);border:15px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/win.png?v=1) 12 fill / 15px stretch;image-rendering:pixelated;filter:drop-shadow(0 12px 22px rgba(0,0,0,.5))}
+.k-head{display:flex;align-items:center;gap:10px;margin:-3px -3px 0;padding:8px 10px 8px 12px;background:var(--k-head);color:var(--k-head-ink);border-bottom:3px solid #3a1e12;border-radius:2px}
+.k-head>img{width:26px;height:26px;image-rendering:pixelated;flex:none}
+.k-head b{font:var(--k-f-title);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.k-head .k-sub{display:inline-flex;align-items:center;gap:5px;font:var(--k-f-small);color:var(--k-head-sub);white-space:nowrap}
+.k-head .k-sub img{width:18px;height:18px;image-rendering:pixelated}
+.k-x{flex:none;width:28px;height:28px;padding:0;display:grid;place-items:center;font:800 20px/1 Nunito,sans-serif;color:#fff;background:#b8382c;border:2px solid #2a140c;border-radius:5px;box-shadow:inset 0 2px 0 rgba(255,255,255,.28);cursor:pointer}
+.k-x:hover{background:#d8483a}.k-x:active{transform:translateY(1px)}
+.k-paper{background-color:var(--k-paper);background-image:radial-gradient(rgba(150,110,60,.07) 1px,transparent 1.5px),radial-gradient(rgba(150,110,60,.05) 1px,transparent 1.5px);background-size:7px 9px,11px 13px;background-position:0 0,4px 6px}
+.k-body{padding:10px 12px;overflow:auto;min-height:0;display:grid;gap:6px;align-content:start}
+.k-foot{display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:8px 12px;border-top:2px solid var(--k-line);background:rgba(90,58,24,.07)}
+.k-foot .k-note{margin-right:auto}
+.k-note{font:var(--k-f-small);color:var(--k-ink2)}
+.k-label{font:var(--k-f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2)}
+/* ---------- BUTTONS ---------- */
+.k-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 14px;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;background:none;color:#ffe27a;font:800 14px/1 Nunito,sans-serif;text-shadow:0 1px 0 #000;image-rendering:pixelated;cursor:pointer;white-space:nowrap}
+.k-btn:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_on.png?v=1)}
+.k-btn:active{transform:translateY(1px)}
+.k-btn.sec{border-width:6px;border-image:url(/v3/assets/img/glad/flat/ui/plain.png?v=1) 10 fill / 6px stretch;color:var(--k-ink);text-shadow:none}
+.k-btn.sec:hover{filter:brightness(1.06)}
+.k-btn.danger{border:2px solid #2a140c;border-image:none;border-radius:var(--k-r);background:linear-gradient(#cf4638,#a52e22);color:#fff;box-shadow:inset 0 2px 0 rgba(255,255,255,.25);min-height:36px}
+.k-btn.danger:hover{background:linear-gradient(#e0574a,#b8382c)}
+.k-btn:disabled{opacity:.45;cursor:default;transform:none;filter:grayscale(.5)}
+.k-btn.sm{min-height:30px;padding:0 10px;font-size:12.5px}
+.k-btn img{width:18px;height:18px;image-rendering:pixelated}
+.k-seg{display:inline-flex;padding:2px;gap:2px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.k-seg button{border:0;border-radius:4px;padding:5px 11px;background:none;color:var(--k-ink2);font:800 12.5px/1 Nunito,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.k-seg button:hover{background:rgba(255,255,255,.4);color:var(--k-ink)}
+.k-seg button[aria-pressed="true"]{background:var(--k-head);color:var(--k-head-ink);box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.k-seg button img{width:16px;height:16px;image-rendering:pixelated}
+.k-seg button small{font:800 10.5px/1 Nunito,sans-serif;padding:1px 5px;border-radius:99px;background:rgba(0,0,0,.1)}
+.k-seg button[aria-pressed="true"] small{background:rgba(255,255,255,.2)}
+/* ---------- TABS (folder tabs over the body) ---------- */
+.k-tabs{display:flex;gap:3px;padding:8px 12px 0;border-bottom:2px solid var(--k-gold);background:rgba(90,58,24,.08)}
+.k-tabs button{position:relative;margin-bottom:-2px;padding:7px 14px 6px;border:2px solid var(--k-card-line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--k-card);color:var(--k-ink2);font:800 13px/1 Nunito,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.k-tabs button:hover{background:#efdfbc;color:var(--k-ink)}
+.k-tabs button[aria-selected="true"]{z-index:1;background:var(--k-paper);color:var(--k-ink);border-color:var(--k-gold);padding-bottom:8px}
+.k-tabs button img{width:18px;height:18px;image-rendering:pixelated}
+/* ---------- CHIPS, BADGES, SLOTS ---------- */
+.k-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;background:rgba(90,58,24,.12);color:var(--k-ink2);font:800 11.5px/1.3 Nunito,sans-serif;white-space:nowrap}
+.k-chip img{width:15px;height:15px;image-rendering:pixelated}
+.k-chip.good{background:#d6ecd0;color:var(--k-good)}.k-chip.bad{background:#f5d3cc;color:var(--k-bad)}.k-chip.gold{background:#fbe6a8;color:var(--k-gold-ink)}.k-chip.rare{background:#e4d6f5;color:var(--k-rare)}
+.k-chip.lock::before{content:"";width:11px;height:12px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 12'%3E%3Cpath d='M3 5V3.5a2.5 2.5 0 015 0V5h1v7H2V5zm1.5 0h2V3.5a1 1 0 00-2 0z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 12'%3E%3Cpath d='M3 5V3.5a2.5 2.5 0 015 0V5h1v7H2V5zm1.5 0h2V3.5a1 1 0 00-2 0z'/%3E%3C/svg%3E") center/contain no-repeat}
+.k-badge{min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;border-radius:99px;background:#e53935;color:#fff;font:900 10.5px/17px Nunito,sans-serif;text-align:center}
+.k-slot{position:relative;display:grid;place-items:center;width:40px;height:40px;flex:none;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch;image-rendering:pixelated;box-sizing:border-box}
+.k-slot img{width:26px;height:26px;image-rendering:pixelated}
+.k-slot.sm{width:32px;height:32px;border-width:4px}.k-slot.sm img{width:20px;height:20px}
+.k-slot u{position:absolute;right:-5px;bottom:-6px;text-decoration:none;font:900 10.5px/1 Nunito,sans-serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}
+.k-slot.miss::after{content:"";position:absolute;inset:-4px;border-radius:3px;box-shadow:inset 0 0 0 2px var(--k-bad);background:rgba(184,48,42,.16)}
+/* ---------- ROWS: one shape for everything you can act on ---------- */
+.k-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;padding:7px 10px 7px 7px;border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45);color:var(--k-ink);text-align:left;font:inherit;cursor:pointer;transition:background .12s,box-shadow .12s,transform .12s}
+.k-row:hover:not(:disabled){background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold),0 2px 6px rgba(60,40,10,.15);transform:translateY(-1px)}
+.k-row b{display:block;font:var(--k-f-row)}
+.k-row small{display:block;margin-top:2px;font:var(--k-f-small);color:var(--k-ink2)}
+.k-row small.bad{color:var(--k-bad)}.k-row small.good{color:var(--k-good)}
+.k-row .k-end{display:flex;align-items:center;gap:6px}
+.k-row.off{cursor:default;background:rgba(230,212,173,.55);box-shadow:inset 0 0 0 1.5px rgba(194,165,116,.55)}
+.k-row.off b{color:var(--k-ink2)}
+.k-row.off>.k-slot img{filter:grayscale(.6);opacity:.7}
+.k-row.lock{opacity:.62}
+.k-row.on{background:var(--k-paper-hi);box-shadow:inset 0 0 0 2.5px var(--k-gold),0 0 0 3px rgba(200,150,58,.18)}
+.k-row.on::after{content:none}
+.k-sect{display:flex;align-items:center;gap:8px;margin:6px 2px 0}.k-sect::after{content:"";flex:1;height:2px;background:var(--k-line)}

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>EastScape UI kit</title>
+<!-- (2026-09-28) STEP 1 of the window pass: the kit on one page, for the owner to approve before any real window changes.
+     Local only (tools/ is never shipped). Open at http://localhost:4321/tools/ui-kit/ -->
+<style>
+@font-face{font-family:"Nunito";font-style:normal;font-weight:400 800;font-display:swap;src:url(/v3/assets/fonts/nunito-v32-latin.woff2) format("woff2")}
+:root{color-scheme:dark}
+html,body{margin:0;background:#0c0908;color:#e8e0cc;font-family:"Nunito",system-ui,sans-serif}
+body{background:radial-gradient(1200px 600px at 20% -10%,#2a1a10,transparent),radial-gradient(900px 500px at 100% 30%,#1a1410,transparent),#0c0908}
+main{max-width:1180px;margin:0 auto;padding:28px 16px 60px}
+h1{margin:0 0 4px;font-size:28px;color:#ffe7b0}
+h1+p{margin:0 0 26px;color:#b8a888;max-width:760px;line-height:1.5}
+h2{margin:40px 0 6px;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#e0b060}
+h2+p{margin:0 0 14px;color:#a89878;font-size:14px;max-width:780px;line-height:1.45}
+.sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:18px;align-items:start}
+.sheet .k-win{min-width:0}
+.demo{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.demo+.k-label,.k-body>.k-label{margin-top:6px}
+.sw{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sw div{height:64px;border-radius:6px;display:flex;align-items:flex-end;padding:6px 8px;font:800 11px Nunito,sans-serif;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.18)}
+.ty{display:grid;gap:4px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.pair>div>span{display:block;margin:0 0 8px;font:800 12px Nunito,sans-serif;letter-spacing:.12em;text-transform:uppercase}
+.pair>div:first-child>span{color:#c89080}.pair>div:last-child>span{color:#8fd08f}
+.before{width:100%;max-width:440px;display:block;border-radius:4px}
+.why{margin:12px 0 0;padding:0 0 0 18px;color:#b8a888;font-size:13.5px;line-height:1.5}
+.why li{margin:3px 0}.why b{color:#ffe7b0}
+@media (max-width:860px){.pair{grid-template-columns:1fr}}
+</style>
+<link rel="stylesheet" href="kit.css?v=2">
+</head>
+<body>
+<main>
+<h1>EastScape UI kit <small style="font-size:14px;color:#a89878;font-weight:700">draft 1 · for approval</small></h1>
+<p>Every window in the game, drawn from these pieces and nothing else. The surfaces, buttons and slots are the game's own pixel art (win.png, btn.png, plain.png, slot.png); what changes is that every window uses the <b>same</b> ones. Below the kit are two real windows as they are today and as they would be.</p>
+
+<h2>The kit</h2>
+<p>Three surfaces, four buttons, one row, one set of tabs, and chips for the small stuff. Five text sizes, two corner sizes. Dark glass is for things over the map only.</p>
+<div class="sheet">
+  <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/g_start.png?v=1" alt=""><b>Surfaces &amp; type</b></div>
+    <div class="k-body k-paper">
+      <span class="k-label">Surfaces</span>
+      <div class="sw"><div style="background:#5a3220;color:#f6e9cc">Head</div><div class="k-paper" style="color:#2a2016">Paper</div><div style="background:#e6d4ad;color:#2a2016;box-shadow:inset 0 0 0 1.5px #c2a574">Card</div></div>
+      <span class="k-label">Colours that mean something</span>
+      <div class="demo"><span class="k-chip gold">gold · money, chosen</span><span class="k-chip good">green · you can</span><span class="k-chip bad">red · you can't, and why</span><span class="k-chip rare">violet · rare</span></div>
+      <span class="k-label">Type</span>
+      <div class="ty"><span style="font:var(--k-f-title)">Title 19 · The Range</span><span style="font:var(--k-f-row)">Row 16 · Cooked sardine</span><span style="font:var(--k-f-body)">Body 14 · Down there, anyone can attack you.</span><span style="font:var(--k-f-small);color:var(--k-ink2)">Small 12.5 · Needs 1 raw sardine</span><span class="k-label">Label 11 · section heading</span></div>
+    </div></section>
+
+  <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/g_tools.png?v=1" alt=""><b>Buttons</b><span class="k-sub">four, everywhere</span></div>
+    <div class="k-body k-paper">
+      <span class="k-label">Primary · the one thing this window is for</span>
+      <div class="demo"><button class="k-btn">Trade</button><button class="k-btn"><img src="/v3/assets/img/glad/flat/items/csardine.png?v=30" alt="">Cook all</button><button class="k-btn sm">Load</button><button class="k-btn" disabled>Trade</button></div>
+      <span class="k-label">Secondary · everything else</span>
+      <div class="demo"><button class="k-btn sec">Deposit bag</button><button class="k-btn sec">Stack all</button><button class="k-btn sec sm">Sort</button></div>
+      <span class="k-label">Danger · can't be undone</span>
+      <div class="demo"><button class="k-btn danger">Drop it</button><button class="k-btn danger sm">Sell to Bom</button><button class="k-x" aria-label="Close">×</button></div>
+      <span class="k-label">Segmented · any set of choices</span>
+      <div class="demo"><div class="k-seg" role="group"><button aria-pressed="true">Recent</button><button aria-pressed="false">A–Z</button><button aria-pressed="false">Value</button><button aria-pressed="false">Amount</button></div></div>
+      <div class="demo"><div class="k-seg" role="group"><button aria-pressed="false"><img src="/v3/assets/img/glad/flat/ui/q_easy.png?v=1" alt="">Easy<small>17</small></button><button aria-pressed="true"><img src="/v3/assets/img/glad/flat/ui/q_medium.png?v=1" alt="">Medium<small>15</small></button><button aria-pressed="false"><img src="/v3/assets/img/glad/flat/ui/q_hard.png?v=1" alt="">Hard<small>13</small></button></div></div>
+    </div></section>
+
+  <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/g_smithing.png?v=1" alt=""><b>Tabs, chips &amp; slots</b></div>
+    <div class="k-tabs" role="tablist"><button role="tab" aria-selected="true"><img src="/v3/assets/img/glad/flat/items/skill_smithing.png?v=30" alt="">Smith</button><button role="tab" aria-selected="false">Reforge <span class="k-badge">3</span></button><button role="tab" aria-selected="false">Craftables</button></div>
+    <div class="k-body k-paper">
+      <span class="k-label">Chips · counts, levels, states</span>
+      <div class="demo"><span class="k-chip"><img src="/v3/assets/img/glad/flat/items/skill_cooking.png?v=30" alt="">5</span><span class="k-chip lock">Cooking 10</span><span class="k-chip gold">Making this</span><span class="k-chip good">Ready</span><span class="k-chip bad">Short 2</span><span class="k-chip">21 / 26</span><span class="k-badge">4</span></div>
+      <span class="k-label">Slots · the bag's own square, everywhere an item is shown</span>
+      <div class="demo"><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/sardine.png?v=30" alt=""></span><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/buttoncap.png?v=30" alt=""><u>×2</u></span><span class="k-slot miss"><img src="/v3/assets/img/glad/flat/items/chicken.png?v=30" alt=""></span><span class="k-slot sm"><img src="/v3/assets/img/glad/flat/items/wheat.png?v=30" alt=""></span><span class="k-slot sm miss"><img src="/v3/assets/img/glad/flat/items/pork.png?v=30" alt=""></span></div>
+      <span class="k-note">A red ring on a slot is the reason a row is off. The row doesn't also need to say it in red.</span>
+    </div></section>
+
+  <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/quests.png?v=1" alt=""><b>Rows</b><span class="k-sub">one shape, three states</span></div>
+    <div class="k-body k-paper">
+      <button class="k-row"><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/csardine.png?v=30" alt=""></span><span><b>Cooked sardine</b><small class="good">3 raw sardines → 3 cooked</small></span><span class="k-end"><span class="k-slot sm"><img src="/v3/assets/img/glad/flat/items/sardine.png?v=30" alt=""><u>3</u></span><span class="k-chip"><img src="/v3/assets/img/glad/flat/items/skill_cooking.png?v=30" alt="">1</span></span></button>
+      <button class="k-row on"><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/cchicken.png?v=30" alt=""></span><span><b>Cooked chicken</b><small>Chosen: the range makes this</small></span><span class="k-end"><span class="k-chip gold">Making this</span></span></button>
+      <button class="k-row off lock" disabled><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/cbeef.png?v=30" alt=""></span><span><b>Cooked beef</b><small>Unlocks at Cooking 5</small></span><span class="k-end"><span class="k-slot sm"><img src="/v3/assets/img/glad/flat/items/beef.png?v=30" alt=""></span><span class="k-chip lock">5</span></span></button>
+      <span class="k-note">Ready: bright, lifts on hover. Chosen: gold ring. Off: the small line says why in plain words, and a row your level has not reached fades further. Header icons come from the guide set, drawn to read on the dark bar.</span>
+    </div></section>
+</div>
+
+<h2>A crafting station: the Range</h2>
+<p>Same character, same moment (Cooking 1, no raw food). Left is the live window today, captured from the dev server.</p>
+<div class="pair">
+  <div><span>Today</span><img class="before" src="before-range.png?v=1" alt="The Range window as it is today" width="440"></div>
+  <div><span>With the kit</span>
+    <section class="k-win" style="max-width:440px;max-height:560px">
+      <div class="k-head"><img src="/v3/assets/img/glad/flat/ui/g_cooking.png?v=1" alt=""><b>The Range</b><span class="k-sub">Cooking 1</span><button class="k-x" aria-label="Close">×</button></div>
+      <div class="k-body k-paper">
+        <button class="k-row on"><span class="k-slot"><img src="/v3/assets/img/glad/flat/ui/g_buffs.png?v=1" alt=""></span><span><b>Best thing I can make</b><small>Nothing yet: you have no raw food. Follows your bag.</small></span><span class="k-end"><span class="k-chip gold">Making this</span></span></button>
+        <div class="k-sect"><span class="k-label">Cooking 1</span></div>
+        <button class="k-row off" disabled><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/csardine.png?v=30" alt=""></span><span><b>Cooked sardine</b><small>Needs 1 raw sardine</small></span><span class="k-end"><span class="k-slot sm miss"><img src="/v3/assets/img/glad/flat/items/sardine.png?v=30" alt=""></span></span></button>
+        <button class="k-row off" disabled><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/cchicken.png?v=30" alt=""></span><span><b>Cooked chicken</b><small>Needs 1 raw chicken</small></span><span class="k-end"><span class="k-slot sm miss"><img src="/v3/assets/img/glad/flat/items/chicken.png?v=30" alt=""></span></span></button>
+        <div class="k-sect"><span class="k-chip lock">Unlocks at Cooking 5</span></div>
+        <button class="k-row off lock" disabled><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/cbeef.png?v=30" alt=""></span><span><b>Cooked beef</b><small>1 raw beef</small></span><span class="k-end"><span class="k-slot sm"><img src="/v3/assets/img/glad/flat/items/beef.png?v=30" alt=""></span></span></button>
+        <button class="k-row off lock" disabled><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/cperch.png?v=30" alt=""></span><span><b>Cooked perch</b><small>1 raw perch</small></span><span class="k-end"><span class="k-slot sm"><img src="/v3/assets/img/glad/flat/items/perch.png?v=30" alt=""></span></span></button>
+        <button class="k-row off lock" disabled><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/mushroom_soup.png?v=30" alt=""></span><span><b>Mushroom soup</b><small>2 buttoncaps + 1 wheat</small></span><span class="k-end"><span class="k-slot sm"><img src="/v3/assets/img/glad/flat/items/buttoncap.png?v=30" alt=""><u>×2</u></span><span class="k-slot sm"><img src="/v3/assets/img/glad/flat/items/wheat.png?v=30" alt=""></span></span></button>
+        <div class="k-sect"><span class="k-chip lock">Unlocks at Cooking 10</span></div>
+        <button class="k-row off lock" disabled><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/cpork.png?v=30" alt=""></span><span><b>Roast boar</b><small>1 raw boar</small></span><span class="k-end"><span class="k-slot sm"><img src="/v3/assets/img/glad/flat/items/pork.png?v=30" alt=""></span></span></button>
+      </div>
+      <div class="k-foot"><span class="k-note">Pick one and the range makes it. "Best thing" follows your bag.</span></div>
+    </section>
+  </div>
+</div>
+<ul class="why">
+  <li><b>Grouped by level</b> with a lock divider, instead of "Needs Cooking 5" repeated on every row in the same gold-brown as everything else.</li>
+  <li><b>The reason is on the ingredient:</b> a red ring on the raw sardine says what's missing, and the line under the name says it in words ("Needs 1 raw sardine" rather than "You don't have the ingredients").</li>
+  <li><b>Every item sits in the bag's own slot</b>, so an ingredient here looks exactly like it does in your inventory.</li>
+  <li><b>A pixel icon in the header</b> instead of the emoji, and the level shown once in the header rather than a pill on every row.</li>
+</ul>
+
+<h2>A popup</h2>
+<p>Popups become small windows with the same header, so a warning looks like it belongs to the same game as the bank.</p>
+<div class="pair">
+  <div><span>Today</span><img class="before" src="before-pop.png?v=1" alt="A popup as it is today" style="max-width:380px" width="380"></div>
+  <div><span>With the kit</span>
+    <section class="k-win" style="max-width:380px">
+      <div class="k-head"><img src="/v3/assets/img/glad/flat/ui/p_kills.png?v=1" alt=""><b>The Wilderness</b></div>
+      <div class="k-body k-paper" style="padding:14px 16px"><p style="margin:0">Down there, anyone can attack you. Die outside the Cage and there is a 1 in 4 chance you drop one of your items.</p></div>
+      <div class="k-foot"><button class="k-btn sec">Stay here</button><button class="k-btn">Go down</button></div>
+    </section>
+  </div>
+</div>
+<ul class="why">
+  <li><b>The same header as every window</b> (icon, title) instead of a centred red title with an emoji over it.</li>
+  <li><b>Actions sit in a footer, on the right, primary last</b>, the same place as in every window. Today's version also has a bug: the fade behind the button leaves a pale band across the bottom of the card.</li>
+  <li>The second button is only here to show a two-choice popup. This particular warning keeps its single "Okay".</li>
+</ul>
+</main>
+</body>
+</html>
