@@ -45,7 +45,7 @@ const line = (label, val, max, unit) => { const over = val > max; if (over) bad+
 console.log("EastScape size budget");
 const code = (await gz("eastscape.html")) + (await gz("v3/assets/js/eastscape-shared.js")) + (await gz("v3/assets/js/eastscape-sfx.js"));
 line("code, gzipped", kb(code), BUDGET.codeGzKB, "KB");   // (the wiki's words load on first open since 2026-09-20, so they are not startup code)
-line("game windows (lazy: on the first table click, or 6 s after arriving)", kb(await gz("v3/assets/js/eastscape-casino.js")), 40, "KB");
+line("game windows (lazy: on the first table click, or 6 s after arriving)", kb(await gz("v3/assets/js/eastscape-casino.js")), 45, "KB");   /* (2026-09-28, the owner) 45 when Bom's counter grew its effects; split Bom out if it keeps growing */
 /* (2026-09-23) 40 -> 60. Every guide was rewritten from a paragraph into a real page with tables read out of the
    rules file, and five skills that had no page at all got one, which is what the wiki is FOR. It is lazy: nothing
    downloads it until somebody presses H. If it ever pushes past this, the answer is not more budget but splitting

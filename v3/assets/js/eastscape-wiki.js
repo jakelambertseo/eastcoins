@@ -1067,6 +1067,8 @@ export const UPDATES = [
       "CASHING OUT: the Prize Counter now says how many of your 100 ZCoins a day are free right now and when the next lot comes back. It's a rolling 24 hours: each ZCoin comes back a day after it left.",
       "BREEDING: two Greater pets that only have the same one stat can breed now (they could never pick two different stats).",
       "Big numbers fit the wallet strip (313K, 3.1M), and its candy corn counts your bank too. Planting a crop pays a little Harvesting xp. Devil's dice turn up half as often.",
+      "BOM'S PRIZE COUNTER, REBUILT: tabs for Sell, Buy, Buy back and ZCoins, Bom himself at the top (with plenty to say), and a lot more cha-ching: your tickets fly into your pile and count up as you sell, fly out onto what you buy, and a big trade-in gets the win banner.",
+      "BUY BACK: sold something by mistake? Bom keeps the last 8 things you sold him for an hour, and sells each one back for exactly what he paid you. Reforged gear comes back at its level.",
     ],
   },
   {
