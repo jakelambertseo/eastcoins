@@ -148,7 +148,7 @@ export function createBankUi(E) {
     const bank = me.bank || [], rows = bank.map((s, i) => [s, i]);
     /* the pages: each tab wears the first item filed on it, the way an OSRS tab does, and its count */
     const onPage = Array.from({ length: NP }, () => []); for (const r of rows) onPage[pageOf(r[0])].push(r);
-    const pagesHtml = [`<button type="button" data-page="all" aria-pressed="${String(page === "all")}" title="All pages: ${rows.length} item${rows.length === 1 ? "" : "s"}"><i>\u{1F3DB}\uFE0F</i><span>All</span><em>${rows.length}</em></button>`,
+    const pagesHtml = [`<button type="button" data-page="all" aria-pressed="${String(page === "all")}" title="All pages: ${rows.length} item${rows.length === 1 ? "" : "s"}"><i>${tabIco("g_bank")}</i><span>All</span><em>${rows.length}</em></button>`,
       ...onPage.map((list, p) => `<button type="button" data-page="${p}" aria-pressed="${String(page === String(p))}" title="Page ${p + 1}: ${list.length} item${list.length === 1 ? "" : "s"}. Drop an item here to file it; deposits go to the page you are on."><i>${list.length ? ico(list[0][0].k) : `<b>${p + 1}</b>`}</i>${list.length ? `<small>${p + 1}</small>` : ""}<span>Page ${p + 1}</span><em>${list.length}</em></button>`)].join("");
     if (pagesHtml !== last.pages) { $("bkPages").innerHTML = pagesHtml; last.pages = pagesHtml; }
     const inPage = page === "all" ? rows : onPage[curPage()] || [];
@@ -197,6 +197,7 @@ const CSS = `
 .bk-pages button[aria-pressed=true]{z-index:1;height:48px;background:var(--k-paper-hi);border-style:solid;border-color:#c8963a;border-bottom-color:var(--k-paper-hi);box-shadow:none}
 .bk-pages button.over{background:#dff3d8;border-color:#4aa84a;border-bottom-color:transparent}
 .bk-pages button i{font-style:normal;font-size:20px;line-height:1;display:grid;place-items:center}.bk-pages button i .ico{width:28px;height:28px}
+.bk-pages button i img{width:28px;height:28px;image-rendering:pixelated}
 .bk-pages button i b{width:26px;height:26px;border-radius:7px;background:rgba(0,0,0,.08);display:grid;place-items:center;font-size:13px;color:#6a5a40}
 .bk-pages button small{position:absolute;left:4px;bottom:2px;font-size:10px;font-weight:900;color:#6a5a40;line-height:1}
 .bk-pages button>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

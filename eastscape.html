@@ -1638,8 +1638,9 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .hs-p:hover{background:var(--k-paper-hi)}
 .hs-p.p1{--mc:#d4a017;padding-top:18px;background:linear-gradient(#fff4cf,var(--k-card))}.hs-p.p2{--mc:#a8b2bd}.hs-p.p3{--mc:#b87333}
 .hs-p.me{outline:3px solid rgba(200,150,58,.45);outline-offset:1px}
-.hs-medal{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:800 15px/1 var(--k-disp);color:#fff;background:var(--mc);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2),0 0 0 2px rgba(255,255,255,.6)}
-.hs-p.p1 .hs-medal{width:38px;height:38px;font-size:18px}
+/* (2026-09-28, the owner: "use custom icons for first, second, third place") the achievement tiers' own medals: gold, silver, bronze */
+.hs-medal{display:grid;place-items:center}.hs-medal img{width:40px;height:40px;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(0,0,0,.2))}
+.hs-p.p1 .hs-medal img{width:52px;height:52px}
 .hs-p b{font:800 15px/1.2 var(--k-disp);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hs-pv{font:800 18px/1.1 Lora,serif}.hs-p small{font:600 11px Lora,serif;color:var(--k-ink2)}
 .hs-list{display:grid;gap:2px}
@@ -4960,7 +4961,7 @@ function renderHs() {   /* (v96) the boards are G.HISCORES; (2026-09-27) the rai
   const top = rows[0]?.v || 1, bar = (r) => Math.max(3, Math.round((kind === "time" ? top / Math.max(1, r.v) : r.v / Math.max(1, top)) * 100));
   const sizes = kind === "time" ? `<div class="hssz" role="tablist" aria-label="Party size">${[0, 2, 3, 4].map((n) => `<button type="button" role="tab" aria-selected="${n === hsSize}" data-sz="${n}" class="${n === hsSize ? "on" : ""}">${n ? `${n}-man` : "All"}</button>`).join("")}</div>` : "";
   const nameOf = (r) => esc(r.name);
-  const podium = rows.length ? `<div class="hs-pod">${[1, 0, 2].map((i) => rows[i]).filter(Boolean).map((r) => `<button type="button" class="hs-p p${r.rank}${isMe(r) ? " me" : ""}" data-who="${esc(r.name)}" data-name="${esc(String(r.name).toLowerCase())}" title="${esc(r.name)}'s profile"><span class="hs-medal">${r.rank}</span><b>${nameOf(r)}</b><span class="hs-pv">${val(r)}</span><small>${esc(sub(r))}</small></button>`).join("")}</div>` : "";
+  const podium = rows.length ? `<div class="hs-pod">${[1, 0, 2].map((i) => rows[i]).filter(Boolean).map((r) => `<button type="button" class="hs-p p${r.rank}${isMe(r) ? " me" : ""}" data-who="${esc(r.name)}" data-name="${esc(String(r.name).toLowerCase())}" title="${esc(r.name)}'s profile"><span class="hs-medal"><img src="${UIA}${["ach_expert", "ach_skilled", "ach_novice"][r.rank - 1]}.png?v=1" alt="${["First", "Second", "Third"][r.rank - 1]}"></span><b>${nameOf(r)}</b><span class="hs-pv">${val(r)}</span><small>${esc(sub(r))}</small></button>`).join("")}</div>` : "";
   const list = rows.slice(3).map((r) => `<div class="hsr${isMe(r) ? " me" : ""}" data-name="${esc(String(r.name).toLowerCase())}"><span class="rk">${r.rank}</span><b class="who" data-who="${esc(r.name)}" title="${esc(r.name)}'s profile">${nameOf(r)}</b><span class="hs-v">${val(r)}</span><span class="xp">${esc(sub(r))}</span><i class="hs-bar"><u style="width:${bar(r)}%"></u></i></div>`).join("");
   $("hsBody").innerHTML = `<div class="hs-head"><span class="hs-bi">${hsIco(hsTab)}</span><div><h3>${esc(label)}</h3><small>${esc(what)} · top ${rows.length.toLocaleString()}</small></div>
       <div class="hs-me${mine ? "" : " out"}">${mine ? `<small>You</small><b>#${mine.rank}</b><span>${val(mine)}</span>${mine.rank > 3 ? `<button type="button" class="k-chip" id="hsJump">Show me</button>` : ""}` : `<small>You</small><b>—</b><span>not in the top ${rows.length || 100}</span>`}</div></div>
@@ -5794,7 +5795,7 @@ function renderShop() {
    (2026-09-27) REBUILT AND MOVED OUT: v3/assets/js/eastscape-bank.js, fetched the first time the bank opens. Tabs by kind, one
    search over bank and bag, an amount of your own, a right-click menu, a slots meter. The page only opens it and tells it when
    `me` changed; every rule of the old window (true bank index on every tile, rebuild only on change, tickets stay) lives there. */
-let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=11";
+let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=12";
 function bankUi() { return BANKUI ? Promise.resolve(BANKUI) : import(BANKUI_URL).then((m) => (BANKUI = m.createBankUi({ G, $, esc, ico, qty, fgTag, slotHtml, send, SFX, say, ITEMS, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); }, get me() { return me; } }))); }
 function renderBank() { if ($("bankWin").hidden || !me) return; $("bankCount").textContent = `${(me.bank || []).length}/${G.BANK_MAX}`; bankUi().then((u) => u.render()); }
 
