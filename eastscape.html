@@ -14,7 +14,7 @@
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=358">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=359">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1371,7 +1371,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=358";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=359";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1524,7 +1524,7 @@ let TWR = null; const towerRules = () => (towerRules.p ||= import("/v3/assets/js
 /* (2026-09-24) THE MIDWAY GAMES. Loaded the first time somebody walks up to a stall, never at login — the
    whole module is three screens nobody outside the Carnival will ever open. */
 let CARN = null; const carnLoad = () => (carnLoad.p ||= import("/v3/assets/js/eastscape-carnival.js?v=2").then((m) => (CARN = m.createCarnival({ G, SFX, send, esc, $ }))));
-const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String(k).startsWith("count") ? countRules() : String(k).startsWith("pyramid") ? pyramidRules() : String(k).startsWith("tower") ? towerRules() : (moreScenes.p ||= import("/v3/assets/js/eastscape-closed.js?v=21").then((m) => { Object.assign(G.SCENES, m.createClosedScenes(G, G._MAP)); })));
+const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String(k).startsWith("count") ? countRules() : String(k).startsWith("pyramid") ? pyramidRules() : String(k).startsWith("tower") ? towerRules() : (moreScenes.p ||= import("/v3/assets/js/eastscape-closed.js?v=22").then((m) => { Object.assign(G.SCENES, m.createClosedScenes(G, G._MAP)); })));
 /* PARTIES AND THE CRYPT (v103; the server side is eastscape-worker/src/crypt.js, the numbers eastscape-crypt-rules.js, the windows eastscape-crypt.js,
    fetched on the first invitation, click on the stairway or step into a crypt). The page keeps only: the click menu's "Invite to
    party", the red tiles of a slam (TILEFX), and handing the crypt's messages to the module. */
@@ -5863,7 +5863,7 @@ function wikiGo(route, setNav = true) {
   else if (kind === "monsters" && MOBS[id]) {
     const m = MOBS[id], where = Object.values(WIKI.areas).filter((a) => a.mobs[id]);
     html = `<h2><i>${mico(id, 40)}</i>${esc(m.name)}</h2><p class="lede">Level ${m.lvl} · ${G.MOB_SIZES[m.size] || "Medium"}${m.aggro ? " · attacks on sight" : ""}.</p>
-      <table class="tbl"><tr><th>Hitpoints</th><th>Attack</th><th>Defence</th><th>Max hit</th><th>Attacks every</th></tr><tr><td>${m.hp}</td><td>${m.att}</td><td>${m.def}</td><td>${m.max}</td><td>${(m.speed / 1000).toFixed(1)}s</td></tr></table>${m.weak || m.resist ? `<p>${m.weak ? `<b>Weak to</b> ${G.ELEMENTS[m.weak].icon} ${G.ELEMENTS[m.weak].name}` : ""}${m.weak && m.resist ? " · " : ""}${m.resist ? `<b>Resists</b> ${G.ELEMENTS[m.resist].icon} ${G.ELEMENTS[m.resist].name}` : ""} &mdash; see <a data-wiki=\"guides/magic\">Magic</a>.</p>` : ""}
+      <table class="tbl"><tr><th>Hitpoints</th><th>Attack</th><th>Defence</th><th>Max hit</th><th>Attacks every</th></tr><tr><td>${m.hp}</td><td>${m.att}</td><td>${m.def}</td><td>${m.max}</td><td>${(m.speed / 1000).toFixed(1)}s</td></tr></table><p><b>Resists:</b> ${esc(G.resistText(id))}</p>${G.elementWords(m.weak) || G.elementWords(m.resist) ? `<p>${G.elementWords(m.weak) ? `<b>Weak to</b> ${G.elementWords(m.weak)}` : ""}${G.elementWords(m.weak) && G.elementWords(m.resist) ? " · " : ""}${G.elementWords(m.resist) ? `<b>Resists element</b> ${G.elementWords(m.resist)}` : ""} &mdash; see <a data-wiki=\"guides/magic\">Magic</a>.</p>` : ""}
       <h3>Found in</h3><p>${where.map((a) => `${areaLink(a.key)} (${a.mobs[id]})`).join(", ") || "Nowhere yet."}</p>
       <h3>Drops</h3><table class="tbl"><tr><th>Item</th><th>How many</th><th>Chance</th></tr>${m.drops.map(([k, n, ch]) => `<tr><td>${wl(`items/${k}`, `${ico(k)} ${esc(ITEMS[k].name)}`)}</td><td>${qn(n)}</td><td>${ch == null ? "Always" : pct(ch)}</td></tr>`).join("")}</table>
       ${where.some((a) => G.PET_SCENES.has(a.key)) ? `<h3>Pets</h3><p>A <b>${(G.PET_DROP * 100).toFixed(1)}%</b> chance a kill — about one in ${Math.round(1 / G.PET_DROP).toLocaleString()} — of a random ${wl("pets", "pet")}. Only where this one is found past the Lantern Mire.</p>` : ""}
@@ -6247,8 +6247,8 @@ function showInfo(t, cx, cy) {
     const m = Z.mobs.find((x) => x.id === t.id), d = MOBS[m?.t]; if (!d) return;
     wiki = `monsters/${m.t}`;
     html = `<h5>👹 ${esc(d.name)}</h5><div class="sub">Level ${d.lvl} monster</div>
-      <dl><dt>Hitpoints</dt><dd>${m.hp}/${d.hp}</dd><dt>Max hit</dt><dd>${d.max}</dd><dt>Attack / defence</dt><dd>${d.att} / ${d.def}</dd>${d.weak ? `<dt>Weak to</dt><dd>${G.ELEMENTS[d.weak].icon} ${G.ELEMENTS[d.weak].name}</dd>` : ""}${d.resist ? `<dt>Resists</dt><dd>${G.ELEMENTS[d.resist].icon} ${G.ELEMENTS[d.resist].name}</dd>` : ""}<dt>Attacks every</dt><dd>${(d.speed / 1000).toFixed(1)}s</dd><dt>Respawns after</dt><dd>${G.fmtWait(G.respawnMs(Z.def, m.t))}${Z.def.pvp ? "" : ", sooner when busy"}</dd></dl>
-      <b>Drops</b><ul>${d.drops.map(([k, n, ch]) => `<li>${ico(k)} ${esc(ITEMS[k].name)}${Array.isArray(n) ? ` ×${n[0]}–${n[1]}` : n > 1 ? ` ×${n}` : ""} · ${ch == null ? "always" : pct(ch)}</li>`).join("")}${(d.rare || []).map(([k, ch]) => `<li>${ico(k)} ${esc(ITEMS[k].name)} · rare, ${pct(ch)}</li>`).join("")}<li>…or a casino find: chips, free play, a mystery box</li></ul>`;
+      <dl><dt>Hitpoints</dt><dd>${m.hp}/${d.hp}</dd><dt>Max hit</dt><dd>${d.max}</dd><dt>Attack / defence</dt><dd>${d.att} / ${d.def}</dd><dt>Resists</dt><dd>${esc(G.resistText(m.t))}</dd>${G.elementWords(d.weak) ? `<dt>Weak to</dt><dd>${G.elementWords(d.weak)}</dd>` : ""}${G.elementWords(d.resist) ? `<dt>Resists element</dt><dd>${G.elementWords(d.resist)}</dd>` : ""}<dt>Attacks every</dt><dd>${(d.speed / 1000).toFixed(1)}s</dd><dt>Respawns after</dt><dd>${G.fmtWait(G.respawnMs(Z.def, m.t))}${Z.def.pvp ? "" : ", sooner when busy"}</dd></dl>
+      <b>Drops</b><ul>${d.drops.map(([k, n, ch]) => `<li>${ico(k)} ${esc(ITEMS[k].name)}${Array.isArray(n) ? ` ×${n[0]}–${n[1]}` : n > 1 ? ` ×${n}` : ""} · ${ch == null ? "always" : pct(ch)}</li>`).join("")}${(d.rare || []).map(([k]) => `<li>${ico(k)} ${esc(ITEMS[k].name)} · rare, ${pct(G.RARE_RATE)}</li>`).join("")}<li>…or a casino find: chips, free play, a mystery box</li></ul>`;
   } else if (t.ob) {
     const rows = resourceInfo(t.ob), ex = G.EXAMINE[KIND_OF[t.ob.t]] || null;
     if (!rows.length && !ex) return;

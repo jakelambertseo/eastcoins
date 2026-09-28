@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 334;
+export const VERSION = 335;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7841,6 +7841,20 @@ export const guardText = (t) => {
   if (m.onlyEl) out.push(`only ${ELEMENTS[m.onlyEl]?.name || m.onlyEl} magic gets through`);
   return `Takes ${out.join("; ")}.`;
 };
+/* (2026-09-27, the owner: "all mobs should plainly show 'Resists: Magic X%, Melee X%', in their right click card and on the wiki") EVERY
+   monster's three styles as a percentage it shrugs off, 0% included, so "does my bow work on this?" never needs the examine text. An
+   `onlyEl` monster shrugs off magic of every OTHER element on top of its guard (MAGIC.guardMul), so that one reads "Magic 90% (Void 0%)". */
+export const resistsOf = (t) => {
+  const m = MOBS[t], pc = (k) => Math.max(0, Math.min(100, Math.round((1 - k) * 100)));
+  return ["melee", "archery", "magic"].map((s) => {
+    const k = m?.guard?.[s] ?? 1;
+    if (s === "magic" && m?.onlyEl) return { style: s, pct: pc(k * MAGIC.guardMul), el: m.onlyEl, elPct: pc(k) };
+    return { style: s, pct: pc(k) };
+  });
+};
+export const resistText = (t) => resistsOf(t).map((r) => `${{ melee: "Melee", archery: "Archery", magic: "Magic" }[r.style]} ${r.pct}%${r.el ? ` (${ELEMENTS[r.el]?.name || r.el} ${r.elPct}%)` : ""}`).join(" · ");
+/** a monster's weak / resist element(s) as words: either may be one element or a list (the Pumpkin King's ["fire", "sun"]) */
+export const elementWords = (x) => [].concat(x || []).filter((e) => ELEMENTS[e]).map((e) => `${ELEMENTS[e].icon} ${ELEMENTS[e].name}`).join(", ");
 
 /* ---- the things it gives */
 Object.assign(ITEMS, {
@@ -7871,7 +7885,7 @@ const dmob = (t, def, want, drops, rare = []) => {
 /* the pay is tools/eastscape-balance.mjs's want$/kill for each: they are twice as long to kill as the Vault's, so they pay twice as much a kill, or nobody would come. The boss pays each person who shares him. */
 dmob("potboy", { name: "Pot Boy", size: "m", lvl: 73, hp: 270, att: 64, def: 60, max: 18, speed: 2500, box: [22, 26], aggro: 2, guard: { magic: 0.25 },
   ex: "It was a pot until you walked past. Spells rattle round inside it and come out the spout." }, 412,
-  [["ruby", 1, 0.06], ["sapphire", 1, 0.05], ["topaz", 1, 0.04]], [["gamblers_ring", 0.02], ["bookies_amulet", 0.02]]);
+  [["ruby", 1, 0.015], ["sapphire", 1, 0.012], ["topaz", 1, 0.01]], [["gamblers_ring", 0.02], ["bookies_amulet", 0.02]]);   /* (2026-09-27, the owner: "the drop rate of jewels needs to be significantly lower ... the 'jewelry' map, but not that much") 15% of kills turned up a gem; now about 3.7%, still the most of any monster */
 dmob("dgoblin", { name: "Goblin Cutter", size: "m", lvl: 75, hp: 250, att: 76, def: 56, max: 20, speed: 1900, box: [20, 26], aggro: 4,
   ex: "Quick, mean, and it never misses twice. It never misses once, either." }, 386,
   [["eclipse_ore", 1, 0.15]], [["sharps_gloves", 0.03], ["spiderboots", 0.02]]);
@@ -7887,7 +7901,7 @@ dmob("diron", { name: "Iron Ogre", size: "l", lvl: 80, hp: 470, att: 76, def: 70
 dmob("deepwarden", { name: "The Deepwarden", size: "xl", lvl: 84, hp: 5200, att: 96, def: 76, max: 34, speed: 2900, box: [44, 96], aggro: 5, boss: true, open: true,
   enrage: { at: 0.35, mul: 1.4, say: "The Deepwarden plants the greatsword and roars. The whole mountain answers." }, pet: ["potboy", 1 / 60],
   ex: "The mountain's keeper. He hits like a falling ceiling and he does not tire. Bring friends." }, 1200,
-  [["tickets", [500, 900]], ["nova_ore", [2, 4]], ["abyss_crystal", [3, 6]], ["opal", 1, 0.2], ["deep_sigil", 1, 0.03]], [["bookies_amulet", 0.05], ["angels_ring", 0.05]]);
+  [["tickets", [500, 900]], ["nova_ore", [2, 4]], ["abyss_crystal", [3, 6]], ["opal", 1, 0.08], ["deep_sigil", 1, 0.03]]   /* opal 20% -> 8% (see the Pot Boy) */, [["bookies_amulet", 0.05], ["angels_ring", 0.05]]);
 BOSSES.add("deepwarden");
 Object.assign(MOBS.dgoblin, { weak: "frost" }); Object.assign(MOBS.potboy, { weak: "storm" }); Object.assign(MOBS.dwisp, { weak: "sun", resist: "void" });
 Object.assign(MOBS.dogre, { weak: "storm", resist: "frost" }); Object.assign(MOBS.diron, { weak: "void" }); Object.assign(MOBS.deepwarden, { weak: "sun", resist: "fire" });

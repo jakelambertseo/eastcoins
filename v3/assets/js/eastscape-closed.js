@@ -874,11 +874,14 @@ export function createClosedScenes(G, H) {
        (2026-09-27, the owner: "respawn timers need to be longer since the mobs are stronger, it gives users more time to get better
        ores/fish/trees etc, but balance it around mob grinders too") roughly twice what they were, longest for the hardest; a grinder
        working one wing still has a monster up most of the time, because each wing holds five or six. */
-    mobs: [["potboy", 15, 23, { respawn: [100000, 160000] }], ["potboy", 17, 24, { respawn: [100000, 160000] }], ["potboy", 33, 23, { respawn: [100000, 160000] }], ["potboy", 37, 24, { respawn: [100000, 160000] }],
-      ["dgoblin", 7, 13, { respawn: [100000, 160000] }], ["dgoblin", 10, 12, { respawn: [100000, 160000] }], ["dgoblin", 9, 15, { respawn: [100000, 160000] }], ["dgoblin", 6, 17, { respawn: [100000, 160000] }], ["dgoblin", 11, 17, { respawn: [100000, 160000] }], ["dgoblin", 8, 16, { respawn: [100000, 160000] }],
-      ["dwisp", 14, 9, { perch: true, respawn: [120000, 180000] }], ["dwisp", 28, 9, { perch: true, respawn: [120000, 180000] }], ["dwisp", 13, 20, { perch: true, respawn: [120000, 180000] }], ["dwisp", 29, 20, { perch: true, respawn: [120000, 180000] }],
-      ["dogre", 34, 13, { respawn: [120000, 200000] }], ["dogre", 32, 15, { respawn: [120000, 200000] }], ["dogre", 35, 17, { respawn: [120000, 200000] }], ["dogre", 31, 18, { respawn: [120000, 200000] }], ["dogre", 36, 14, { respawn: [120000, 200000] }],
-      ["diron", 16, 4, { respawn: [150000, 240000] }], ["diron", 26, 4, { respawn: [150000, 240000] }], ["diron", 27, 2, { respawn: [150000, 240000] }],
+    /* (2026-09-27, the owner: "there needs to be 2-3 crystal ogres, 2-3 goblin cutters, the mob density is a little too high currently. and
+       just like the newly created boardwalk, mob respawn needs to be tied to monster HP/level") three of each where there were six Cutters
+       and five Ogres, and every monster on G.levelRespawn (three minutes at least, longer the higher its level); the Deepwarden unchanged. */
+    mobs: [["potboy", 15, 23, { respawn: G.levelRespawn("potboy") }], ["potboy", 17, 24, { respawn: G.levelRespawn("potboy") }], ["potboy", 33, 23, { respawn: G.levelRespawn("potboy") }], ["potboy", 37, 24, { respawn: G.levelRespawn("potboy") }],
+      ["dgoblin", 7, 13, { respawn: G.levelRespawn("dgoblin") }], ["dgoblin", 9, 15, { respawn: G.levelRespawn("dgoblin") }], ["dgoblin", 11, 17, { respawn: G.levelRespawn("dgoblin") }],
+      ["dwisp", 14, 9, { perch: true, respawn: G.levelRespawn("dwisp") }], ["dwisp", 28, 9, { perch: true, respawn: G.levelRespawn("dwisp") }], ["dwisp", 13, 20, { perch: true, respawn: G.levelRespawn("dwisp") }], ["dwisp", 29, 20, { perch: true, respawn: G.levelRespawn("dwisp") }],
+      ["dogre", 34, 13, { respawn: G.levelRespawn("dogre") }], ["dogre", 32, 15, { respawn: G.levelRespawn("dogre") }], ["dogre", 35, 17, { respawn: G.levelRespawn("dogre") }],
+      ["diron", 16, 4, { respawn: G.levelRespawn("diron") }], ["diron", 26, 4, { respawn: G.levelRespawn("diron") }], ["diron", 27, 2, { respawn: G.levelRespawn("diron") }],
       ["deepwarden", 21, 3, { aggro: 3, respawn: [2400000, 3000000] }]],
     npcs: [{ name: "Old Pickett", art: "pickett", x: 24, y: 24, still: true, quests: ["deepcrystal", "deepgoblins", "deepkeeper"], hair: "#c8c8c0", shirt: "#3a5a3a", pants: "#4a3a2a",
       lines: ["Forty years I cut with the others. Then I put the blade down and picked up a pick. Better company.", "Mind the edges. Nobody's ever found the bottom, and a few of my cousins have looked very hard.", "Wisps won't come to you. Bring a bow, or don't bother.", "The iron ones only feel the Void. Swords just ring off them."] }],   /* (2026-09-27) the pack's own goblin, old and retired */
