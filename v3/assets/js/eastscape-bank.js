@@ -194,7 +194,7 @@ const CSS = `
 .bk-pages{display:flex;flex-direction:row;gap:4px;min-width:0;overflow-x:auto;padding:8px 6px 0 0;scrollbar-width:none}
 .bk-pages button{position:relative;flex:none;display:grid;place-items:center;width:50px;height:44px;margin-bottom:-2px;padding:0;border:2px solid #b89a6a;border-bottom-color:transparent;border-radius:9px 9px 0 0;background:#e3d3ae;color:#3a2c1c;cursor:pointer;font:800 12px Lora,sans-serif;box-shadow:none}
 .bk-pages button:hover{background:#efe2c2}
-.bk-pages button[aria-pressed=true]{z-index:1;height:48px;background:#fffaf0;border-style:solid;border-color:#c8963a;border-bottom-color:#fffaf0;box-shadow:none}
+.bk-pages button[aria-pressed=true]{z-index:1;height:48px;background:var(--k-paper-hi);border-style:solid;border-color:#c8963a;border-bottom-color:var(--k-paper-hi);box-shadow:none}
 .bk-pages button.over{background:#dff3d8;border-color:#4aa84a;border-bottom-color:transparent}
 .bk-pages button i{font-style:normal;font-size:20px;line-height:1;display:grid;place-items:center}.bk-pages button i .ico{width:28px;height:28px}
 .bk-pages button i b{width:26px;height:26px;border-radius:7px;background:rgba(0,0,0,.08);display:grid;place-items:center;font-size:13px;color:#6a5a40}
@@ -202,7 +202,7 @@ const CSS = `
 .bk-pages button>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .bk-pages button em{position:absolute;right:2px;top:2px;font-style:normal;font-size:9.5px;font-weight:800;line-height:1;padding:1px 4px;border-radius:999px;background:#5a3220;color:#f3e7cc}
 .bk-pnote{flex:1;margin:0 0 8px;font-size:11px;line-height:1.3;opacity:.6;text-align:right;min-width:90px}
-.bk-box{flex:1;min-height:0;display:flex;flex-direction:column;padding:8px;border:2px solid #c8963a;border-radius:0 9px 9px 9px;background:#fffaf0}
+.bk-box{flex:1;min-height:0;display:flex;flex-direction:column;padding:8px;border:2px solid #c8963a;border-radius:0 9px 9px 9px;background:var(--k-paper-hi)}
 .bk-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
 .bk-tabs button{position:relative;display:inline-grid;place-items:center;width:38px;height:32px;padding:0;border:1.5px solid rgba(0,0,0,.14);border-radius:99px;background:rgba(0,0,0,.04);cursor:pointer}.bk-tabs button img{max-width:22px;max-height:22px}
 .bk-tabs button img{image-rendering:pixelated;display:block}
@@ -218,15 +218,15 @@ const CSS = `
 .bk-grid .slot{font-size:24px}.bk-grid.sm{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));max-height:min(34vh,300px)}.bk-bag .bk-grid.sm{grid-template-columns:repeat(4,minmax(0,1fr));max-height:min(48vh,440px)}   /* (2026-09-28, the owner: "the users backpack needs to be 4 items wide") four across: the column grew 206 -> 272px, which takes one column off the bank beside it */.bk-grid.sm .slot{font-size:20px}
 .bk-grid .slot.dim{opacity:.32}.bk-grid .slot.stay{cursor:not-allowed}
 .bk-empty{grid-column:1/-1;margin:8px 4px;font-size:13px;opacity:.75}
-.bk-bag{position:relative;display:flex;flex-direction:column;gap:8px;min-width:0;padding:12px 10px 10px;border-radius:14px;color:#f6e9cf;background:radial-gradient(ellipse at 28% 18%,#8a5f38,#5a3a1f 62%,#462c17);box-shadow:inset 0 0 0 3px #2a1608,inset 0 0 0 5px #c69a5c,0 6px 14px rgba(0,0,0,.28)}
-.bk-bag::before{content:"";position:absolute;inset:9px;border:2px dashed rgba(246,222,170,.55);border-radius:9px;pointer-events:none}
+/* (2026-09-28) UI KIT, batch 3: the bag beside the bank is a kit card (it was a dark leather panel inside a paper window) */
+.bk-bag{position:relative;display:flex;flex-direction:column;gap:8px;min-width:0;padding:10px;border-radius:8px;color:var(--k-ink);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45)}
 .bk-bag>*{position:relative}
-.bk-bagh{display:flex;align-items:center;gap:8px}.bk-bagh b{font-size:15px;letter-spacing:.02em}.bk-bagh small{color:#ecd9b0}.bk-bagi{width:26px;height:26px;image-rendering:pixelated;filter:drop-shadow(0 1px 0 rgba(0,0,0,.5))}
-.bk-bag .bk-hint{color:#ecd9b0;opacity:.95}.bk-bag .bk-empty{color:#ecd9b0}.bk-move{color:#f6e9cf}
-.bk-bag .bk-up{background:rgba(0,0,0,.28);color:#f6e9cf}.bk-bag .bk-grid.sm{background:rgba(0,0,0,.18);border-radius:8px;padding:4px}
+.bk-bagh{display:flex;align-items:center;gap:8px}.bk-bagh b{font:800 16px/1.1 var(--k-disp)}.bk-bagh small{color:var(--k-ink2);font-weight:700}.bk-bagi{width:26px;height:26px;image-rendering:pixelated}
+.bk-bag .bk-hint{color:var(--k-ink2);opacity:1}.bk-bag .bk-empty{color:var(--k-ink2)}.bk-move{color:var(--k-ink2)}
+.bk-bag .bk-up{background:rgba(90,58,24,.12);color:var(--k-ink)}.bk-bag .bk-grid.sm{background:rgba(90,58,24,.08);border-radius:6px;padding:4px}
 .bk-actions{display:flex;flex-wrap:wrap;gap:5px}.bk-actions .btn{min-width:0;flex:1 1 auto;padding:2px 8px;font-size:12px}
 .bk-move{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800}.bk-move .qty button{padding:3px 8px;font-size:12px}
-#bkX{width:64px;padding:3px 6px;border:1px solid #8a7a5a;border-radius:4px;background:#fffaf0;font:800 12px Lora,sans-serif}#bkX.on{border-color:#c8963a;box-shadow:0 0 0 2px rgba(200,150,58,.35)}
+#bkX{width:64px;padding:4px 7px;font-size:12.5px}#bkX.on{border-color:#c8963a;box-shadow:0 0 0 2px rgba(200,150,58,.35)}
 .bk-hint{margin:0;font-size:11.5px;opacity:.75;line-height:1.4}
 .bk-up{display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:8px;background:rgba(0,0,0,.05);font-size:12px}.bk-up .btn{align-self:flex-start;min-width:0;font-size:12px}
 .bk-menu{position:fixed;z-index:1000;min-width:190px;padding:4px;border-radius:10px;background:#fffaf0;color:#2a2016;box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 0 1px #c8b48a}

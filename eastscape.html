@@ -1400,6 +1400,126 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .an-craft{display:grid;gap:6px}
 .k-row small .ico{width:16px;height:16px;vertical-align:-3px}
 .fgx{font-style:normal;font-weight:800;color:var(--k-good);margin-left:3px}
+
+/* ============================================================ batch 3, and the shared layer under every older window (2026-09-28)
+   The owner: "fix that and move to batch 3" (the Bank, the Exchange, the shops, trading), then "the achievments, quest, and hi scores popups
+   need consistant styling as well". About thirty windows are still built from the page's older parts: .win-head, .win-body, .win-foot,
+   .btn, .qty, .search, <h4>, .ex-tabs. Rather than restyle each window's copy, the parts themselves now wear the kit, so every one of
+   those windows reads the same today, and the per-window batches only deal with what is particular to them. */
+.win-head b .topi{width:22px;height:22px;vertical-align:-5px;margin-right:8px}
+.win-body{background-color:var(--k-paper);background-image:radial-gradient(rgba(150,110,60,.07) 1px,transparent 1.5px),radial-gradient(rgba(150,110,60,.05) 1px,transparent 1.5px);background-size:7px 9px,11px 13px;background-position:0 0,4px 6px;color:var(--k-ink)}
+.win-foot{border-top:2px solid var(--k-line);background:rgba(90,58,24,.07)}
+#hwWin.hw-skin .win-body{background:none;color:inherit}   /* the Night Market keeps its own purple night; it is an event skin, deliberately not the kit */
+.win-body h4,.cols2 h4{margin:0 0 6px;font:var(--k-f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2)}
+.win-body h4 small{text-transform:none;letter-spacing:0;font-weight:600}
+/* buttons: .btn is the kit's primary, .btn.plain its secondary, .btn.danger its danger */
+.btn{color:#ffe27a;font:800 14px/1.2 Lora,system-ui,serif;text-shadow:0 1px 0 #000}
+.btn.plain{color:var(--k-ink);text-shadow:none}
+.btn.danger{filter:none;border:2px solid #2a140c;border-image:none;border-radius:var(--k-r);background:linear-gradient(#cf4638,#a52e22);color:#fff;padding:6px 14px;box-shadow:inset 0 2px 0 rgba(255,255,255,.25)}
+.btn.danger:hover,.btn.danger:focus-visible{border-image:none;background:linear-gradient(#e0574a,#b8382c)}
+.btn:disabled{opacity:.45;cursor:default;filter:grayscale(.5)}
+/* .qty is the kit's segmented strip */
+.qty{display:inline-flex;padding:2px;gap:2px;border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);overflow:visible}
+.qty button{border:0;border-radius:4px;background:none;padding:4px 10px;color:var(--k-ink2);font:800 12.5px/1 Lora,system-ui,serif}
+.qty button:hover{background:rgba(255,255,255,.4);color:var(--k-ink)}
+.qty button[aria-pressed="true"]{background:var(--k-head);color:var(--k-head-ink)}
+/* fields */
+.search,.win input[type=number],.win input[type=text],.win input:not([type]),.win select{padding:6px 9px;border:1.5px solid var(--k-card-line);border-radius:var(--k-r);background:var(--k-paper-hi);color:var(--k-ink);font:600 14px/1.2 Lora,system-ui,serif}
+.search:focus,.win input:focus,.win select:focus{outline:0;border-color:var(--k-gold);box-shadow:0 0 0 3px rgba(200,150,58,.25)}
+/* .ex-tabs are the kit's folder tabs */
+.ex-tabs{gap:3px;margin:-10px -12px 10px;padding:8px 12px 0;border-bottom:2px solid var(--k-gold);background:rgba(90,58,24,.08)}
+.ex-tabs button{flex:0 0 auto;margin-bottom:-2px;padding:7px 16px 6px;border:2px solid var(--k-card-line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--k-card);color:var(--k-ink2);font:800 13px/1 Lora,system-ui,serif}
+.ex-tabs button:hover{background:#efdfbc;color:var(--k-ink)}
+.ex-tabs button[aria-pressed="true"]{z-index:1;background:var(--k-paper);color:var(--k-ink);border-color:var(--k-gold);padding-bottom:8px}
+/* the Exchange's listings are kit rows */
+.mk-row{padding:6px 10px 6px 6px;border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45);grid-template-columns:40px 1fr auto auto;gap:10px}
+.mk-row>i{width:40px;height:40px;box-sizing:border-box;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch;image-rendering:pixelated;align-items:center}
+.mk-row>i .ico{width:26px;height:26px}
+.mk-row b{font:800 15px/1.2 var(--k-disp)}.mk-row small{color:var(--k-ink2)}
+.mk-row.mine{background:var(--k-paper-hi);box-shadow:inset 0 0 0 1.5px var(--k-gold)}
+.mk-row.click:hover{background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold)}
+.mk-note{border-radius:var(--k-r);color:var(--k-ink2);background:rgba(90,58,24,.07)}
+.mk-empty{border:1.5px dashed var(--k-card-line);border-radius:var(--k-r);color:var(--k-ink2)}
+.mk-form label{color:var(--k-ink2)}
+/* trading: the two offers are kit cards; the one that has accepted wears the green ring */
+.trade-box{border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.trade-box.ok{box-shadow:inset 0 0 0 2.5px var(--k-good),0 0 0 3px rgba(47,122,58,.15)}
+.trade-box .cash{color:var(--k-gold-ink)}
+#tradeWin .win-body>h4{margin-top:12px}
+
+/* ---------- batch 3, two touches: a footer's label is a small label, and the bank's page box is the kit's paper, not white ---------- */
+.win-foot>span:not(.note){font:var(--k-f-small);color:var(--k-ink2)}
+.win>.win-body{flex:1 1 auto}   /* a window with a set height (the Store, Achievements, the quest log) is paper to its foot, not paper then the frame's own fill */
+/* ============================================================ batch 4: the quest log, Achievements, the Hiscores and the Store (2026-09-28)
+   The owner: "the achievments, quest, and hi scores popups need consistant styling as well". Each had its own idea of "selected": a bright
+   yellow block (the quest filters, the Store's tabs, the Hiscores' list) or an underline (Achievements). The kit has one: the dark head
+   colour with cream text, on a segmented strip. Rows are cards, names are Cinzel, tags are chips. */
+/* the filters (the Quests tab, the quest log, the Store's tabs) are one segmented strip each */
+.qfilt{gap:2px;margin:0 8px 2px;padding:2px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.qfilt .qf{border:0;border-radius:4px;background:none;color:var(--k-ink2);font:800 12.5px/1 Lora,system-ui,serif;padding:6px 6px}
+.qfilt .qf:hover{background:rgba(255,255,255,.4);color:var(--k-ink)}
+.qfilt .qf.on{background:var(--k-head);color:var(--k-head-ink);border:0}
+.qfilt .qf small{padding:1px 5px;border-radius:99px;background:rgba(0,0,0,.1);opacity:1;font-weight:800}
+.qfilt .qf.on small{background:rgba(255,255,255,.2)}
+.qw-f{display:grid;gap:6px}
+.qw-f .qfilt{margin:0}
+.st-tabs.qfilt{margin:10px 12px 4px;padding:2px}
+/* a quest is a card; its name is Cinzel; its state a chip */
+.q{border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45)}
+.q>b{font:800 15px/1.2 var(--k-disp)}
+.q .qtier{font:700 11px Lora,serif;opacity:1;color:var(--k-ink2)}
+.q small{color:var(--k-ink2);font-size:12.5px}
+.q .qtag{padding:2px 8px;border-radius:99px;background:rgba(90,58,24,.12);color:var(--k-ink2);font:800 11px/1.3 Lora,serif}
+.q.ready .qtag{background:#fbe6a8;color:var(--k-gold-ink)}
+.q.active .qtag{background:#d6ecd0;color:var(--k-good)}
+.q.ready{box-shadow:inset 0 0 0 2px var(--k-gold)}
+.q.done b{color:var(--k-good)}
+.q.trk{box-shadow:inset 0 0 0 2px var(--k-gold),inset 4px 0 0 var(--k-gold)}
+/* Achievements */
+#achBody .ah b{font:800 24px/1 var(--k-disp)}
+#achBody .apill{padding:2px 8px;background:rgba(90,58,24,.12);color:var(--k-ink2);font:800 11.5px/1.3 Lora,serif}
+#achBody .abar{background:rgba(90,58,24,.14)}#achBody .abar i{background:linear-gradient(90deg,#c8963a,#ffd84a)}
+#achBody .atabs{gap:2px;padding:2px;border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+#achBody .atabs button{border:0;border-radius:4px;color:var(--k-ink2);font:800 12.5px/1 Lora,serif;padding:7px 4px}
+#achBody .atabs button:hover{background:rgba(255,255,255,.4)}
+#achBody .atabs button[aria-pressed="true"]{background:var(--k-head);color:var(--k-head-ink);border-bottom-color:transparent}
+#achBody .amile span{padding:2px 8px;border-radius:99px;background:rgba(90,58,24,.1);font:800 11.5px/1.3 Lora,serif;color:var(--k-ink2)}
+#achBody .amile span.on{background:#fbe6a8;color:var(--k-gold-ink)}
+#achBody .atier{margin:14px 0 6px;padding:7px 10px;border-radius:var(--k-r);background:var(--k-head);color:var(--k-head-ink);border:0}
+#achBody .atier b{font:800 15px/1.2 var(--k-disp);color:var(--k-head-ink)}
+#achBody .atier small{color:var(--k-head-sub)}
+#achBody .atier em{color:var(--k-head-ink);opacity:.9}
+#achBody .arow{border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);opacity:.62}
+#achBody .arow b{font:800 14px/1.25 var(--k-disp)}
+#achBody .arow small{color:var(--k-ink2)}
+#achBody .arow.got{opacity:1;background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold)}
+#achBody .arow i.on{color:var(--k-good)}
+/* the Hiscores: the list on the left is a vertical segmented strip, the rows are the kit's table */
+.hstabs{border-right:2px solid var(--k-line)}
+.hstabs button{border:0;border-radius:4px;background:none;color:var(--k-ink2);font:800 12.5px/1 Lora,serif;padding:7px 10px}
+.hstabs button:hover{background:rgba(90,58,24,.1);color:var(--k-ink)}
+.hstabs button.on,.hstabs button.on:hover{background:var(--k-head);color:var(--k-head-ink);border:0}
+.hstabs .hsg{font:var(--k-f-label);letter-spacing:.08em;opacity:1;color:var(--k-ink2)}
+.hssz button{border:0;background:rgba(90,58,24,.1);color:var(--k-ink2);font:800 12px/1 Lora,serif;padding:5px 10px;border-radius:99px}
+.hssz button.on{background:var(--k-head);color:var(--k-head-ink);border:0}
+.hsr{border-radius:4px}
+.hsr:nth-child(odd){background:rgba(90,58,24,.08)}
+.hsr.me{background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold),inset 4px 0 0 var(--k-gold)}
+.hsr .xp{color:var(--k-ink2);opacity:1}
+/* the Store */
+.st-card{border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45)}
+.st-card b{font-family:var(--k-disp)}
+.st-note{color:var(--k-ink2)}
+
+/* batch 4, two more: the quest log's rows (.arow.qw) are cards with Cinzel names like the Quests tab's; and today's jobs and the rares on
+   the Quests tab are paper cards (the money strip under the bag keeps its dark case: it is the one money display, the HUD's colours) */
+.arow.qw{border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45)}
+.arow.qw b{font:800 15px/1.2 var(--k-disp)}.arow.qw b .qtier{font:700 11px Lora,serif}
+.arow.qw.ready{box-shadow:inset 0 0 0 2px var(--k-gold)}
+.wallet.wl-paper{background:var(--k-card);color:var(--k-ink);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45)}
+.wl-paper .wl-h{color:var(--k-ink2)}.wl-paper .wl-job b{color:var(--k-gold-ink)}.wl-paper .wl-job.done b{color:var(--k-good)}
+.wl-paper .wl-job i{background:rgba(90,58,24,.14)}.wl-paper .wl-next{color:var(--k-ink2);border-top-color:var(--k-line)}
+.wl-paper .rarelog em{color:var(--k-gold-ink);text-shadow:none}
 </style>
 </head>
 <body>
@@ -1541,7 +1661,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="win-body" id="hwBody"></div>
     </section>
     <section class="win" id="shopWin" aria-label="The Forge" hidden>
-      <div class="win-head"><b id="shopTitle">⚒️ The Forge</b><small id="shopWho">Brutus the Smith</small><button type="button" class="win-x" data-close="shopWin" aria-label="Close">×</button></div>
+      <div class="win-head"><b id="shopTitle"><img src="/v3/assets/img/glad/flat/ui/g_smithing.png?v=1" alt="" class="topi">The Forge</b><small id="shopWho">Brutus the Smith</small><button type="button" class="win-x" data-close="shopWin" aria-label="Close">×</button></div>
       <div class="win-body cols2">
         <div><h4>For sale</h4><div class="grid8" id="shopSell"></div></div>
         <div><h4>Your bag <small style="text-transform:none;letter-spacing:0;font-weight:600">(click to sell)</small></h4><div class="grid8" id="shopBag"></div></div>
@@ -1549,18 +1669,18 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="win-foot"><span>How many</span><div class="qty" id="shopQty"><button data-n="1" aria-pressed="true">1</button><button data-n="5">5</button><button data-n="10">10</button><button data-n="all">All</button></div><span style="flex:1"></span><small id="shopNote"></small></div>
     </section>
     <section class="win wide" id="bankWin" aria-label="Bank" hidden>
-      <div class="win-head"><b>🏛️ The Bank</b><small id="bankCount"></small><button type="button" class="win-x" data-close="bankWin" aria-label="Close">×</button></div>
+      <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/g_bank.png?v=1" alt="" class="topi">The Bank</b><small id="bankCount"></small><button type="button" class="win-x" data-close="bankWin" aria-label="Close">×</button></div>
       <div class="win-body"><div id="bankRoot" class="view-loading" aria-live="polite"></div></div>
     </section>
     <section class="win" id="exWin" aria-label="The Exchange" hidden>
-      <div class="win-head"><b>⚖️ Market</b><small>Everything lands in your bank · 1% of each sale to the house</small><button type="button" class="win-x" data-close="exWin" aria-label="Close">×</button></div>
+      <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/g_trading.png?v=1" alt="" class="topi">Market</b><small>Everything lands in your bank · 1% of each sale to the house</small><button type="button" class="win-x" data-close="exWin" aria-label="Close">×</button></div>
       <div class="win-body">
         <div class="ex-tabs" role="tablist"><button data-ex="buy" aria-pressed="true">Buy</button><button data-ex="sell" aria-pressed="false">Sell</button><button data-ex="pets" aria-pressed="false">Pets</button></div>
         <div id="exBody"></div>
       </div>
     </section>
     <section class="win" id="tradeWin" aria-label="Trade" hidden>
-      <div class="win-head"><b id="tradeTitle">🤝 Trade</b><button type="button" class="win-x" id="tradeX" aria-label="Decline">×</button></div>
+      <div class="win-head"><b id="tradeTitle"><img src="/v3/assets/img/glad/flat/ui/g_trading.png?v=1" alt="" class="topi">Trade</b><button type="button" class="win-x" id="tradeX" aria-label="Decline">×</button></div>
       <div class="win-body" id="tradeBody"></div>
       <div class="win-foot" id="tradeFoot"></div>
     </section>
@@ -5507,7 +5627,7 @@ function renderMarket() {
   $("hwBody").querySelectorAll("[data-hwcos]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "hw", op: "cos", id: b.dataset.hwcos }); }));
   $("hwBody").querySelectorAll("[data-hwfit]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "hw", op: "fit", k: b.dataset.hwfit }); }));
 }
-function openShop(kind) { shopKind = kind; $("shopTitle").textContent = kind === "bar" ? "🍸 The Bar" : "⚒️ The Forge"; $("shopWho").textContent = kind === "bar" ? "Dex the Dealer" : "Brutus the Smith"; openWin("shopWin"); }
+function openShop(kind) { shopKind = kind; $("shopTitle").innerHTML = `<img src="${UIA}${kind === "bar" ? "g_buffs" : "g_smithing"}.png?v=1" alt="" class="topi">${kind === "bar" ? "The Bar" : "The Forge"}`; $("shopWho").textContent = kind === "bar" ? "Dex the Dealer" : "Brutus the Smith"; openWin("shopWin"); }
 $("shopQty").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { shopN = b.dataset.n === "all" ? "all" : +b.dataset.n; $("shopQty").querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }));
 function renderShop() {
   if (!me) return;
@@ -5526,7 +5646,7 @@ function renderShop() {
    (2026-09-27) REBUILT AND MOVED OUT: v3/assets/js/eastscape-bank.js, fetched the first time the bank opens. Tabs by kind, one
    search over bank and bag, an amount of your own, a right-click menu, a slots meter. The page only opens it and tells it when
    `me` changed; every rule of the old window (true bank index on every tile, rebuild only on change, tickets stay) lives there. */
-let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=9";
+let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=11";
 function bankUi() { return BANKUI ? Promise.resolve(BANKUI) : import(BANKUI_URL).then((m) => (BANKUI = m.createBankUi({ G, $, esc, ico, qty, fgTag, slotHtml, send, SFX, say, ITEMS, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); }, get me() { return me; } }))); }
 function renderBank() { if ($("bankWin").hidden || !me) return; $("bankCount").textContent = `${(me.bank || []).length}/${G.BANK_MAX}`; bankUi().then((u) => u.render()); }
 
@@ -5907,7 +6027,7 @@ function offerHtml(off, clickable) {
 }
 function renderTrade() {
   if (!TR || !me) return;
-  $("tradeTitle").textContent = `🤝 Trading with ${TR.themName}`;
+  $("tradeTitle").innerHTML = `<img src="${UIA}g_trading.png?v=1" alt="" class="topi">Trading with ${esc(TR.themName)}`;
   const listOf = (off) => [...Object.entries(off.items).map(([k, n]) => `${n.toLocaleString()} × ${ITEMS[k].name}`), ...(off.pets || []).map((p) => `${G.petLabel(p)}${p.name ? ` (${G.RANKS[G.rankOf(p)].name} ${G.PETS[p.k].name})` : G.rankOf(p) === "legend" ? " (Legendary)" : ""}: ${G.petFxText(p.fx || G.PETS[p.k].fx)}`), off.cash ? G.fmtCash(off.cash) : null].filter(Boolean).join(", ") || "nothing";
   if (TR.stage === "offer") {
     $("tradeBody").innerHTML = `<div class="trade-cols"><div><h4>Your offer</h4><div class="trade-box${TR.ok.you ? " ok" : ""}">${offerHtml(TR.you, true)}</div></div>
@@ -6660,14 +6780,14 @@ function renderStats() {
 function raresCard() {
   const all = [...new Set([...G.OPEN].flatMap((k) => SCENES[k]?.mobs || []).flatMap(([t]) => G.raresOf(t).map(([k]) => k)))];
   const got = all.filter((k) => (me.found?.[k] | 0) > 0).length;
-  return `<div class="wallets"><div class="wallet"><div class="wl-h"><img src="${UIA}w_sack.png?v=1" alt="">Rares found<span style="margin-left:auto;color:#ffd84a">${got} / ${all.length}</span></div><div class="rarelog">${all.map((k) => { const n = me.found?.[k] | 0, from = Object.keys(MOBS).filter((t) => (MOBS[t].rare || []).some(([r]) => r === k)).map((t) => MOBS[t].name); return `<span class="${n ? "has" : ""}" data-item="${k}" title="${esc(n ? `${ITEMS[k].name}: found ${n}` : `Not found yet: ${from.length ? `a rare drop from ${from.join(", ")}` : "any monster can drop it"}`)}">${ico(k)}${n > 1 ? `<em>${n}</em>` : ""}</span>`; }).join("")}</div></div></div>`;
+  return `<div class="wallets"><div class="wallet wl-paper"><div class="wl-h"><img src="${UIA}w_sack.png?v=1" alt="">Rares found<span style="margin-left:auto;color:#ffd84a">${got} / ${all.length}</span></div><div class="rarelog">${all.map((k) => { const n = me.found?.[k] | 0, from = Object.keys(MOBS).filter((t) => (MOBS[t].rare || []).some(([r]) => r === k)).map((t) => MOBS[t].name); return `<span class="${n ? "has" : ""}" data-item="${k}" title="${esc(n ? `${ITEMS[k].name}: found ${n}` : `Not found yet: ${from.length ? `a rare drop from ${from.join(", ")}` : "any monster can drop it"}`)}">${ico(k)}${n > 1 ? `<em>${n}</em>` : ""}</span>`; }).join("")}</div></div></div>`;
 }
 // today's three paid jobs: they live on the Quests tab (the wallet is for money)
 let qFilter = null; try { qFilter = localStorage.getItem("es_qfilter") || null; } catch (e) {}   /* the Quests tab's tier cut, this browser's */
 function jobsCard() {
   const jobs = (me.daily || []).map((t) => { const d = G.dailyDef(t.id); if (!d) return ""; const need = G.dailyNeed(t), done = t.got >= need, what = d.what === "kill" ? `${need} ${MOBS[d.k].name.toLowerCase()}${need > 1 ? "s" : ""}` : `${d.what === "make" ? "Make " : ""}${need} ${ITEMS[d.k].name.toLowerCase()}`;
     return `<div class="wl-job${t.claimed ? " paid" : done ? " done" : ""}" title="${t.claimed ? "Paid" : done ? "Done: claim it at the task board in the casino" : d.what === "kill" ? "Fight: outside, in the Yard and beyond" : "Fish: there's a pond in every scene outside"}">${d.what === "kill" ? `<img class="ico" src="${UIA}combat.png?v=1" alt="">` : ico(d.k)}<span>${esc(what)}<i><u style="width:${Math.round(Math.min(1, t.got / d.n) * 100)}%"></u></i></span><b>${t.claimed ? "paid" : done ? "claim!" : `${d.cash} tickets`}</b></div>`; }).join("");
-  return jobs ? `<div class="wallets"><div class="wallet"><div class="wl-h"><img src="${UIA}w_jobs.png?v=1" alt="">Today's paid jobs</div>${jobs}<div class="wl-next" style="border:0;padding-top:2px">Claim them at the task board by the casino's back wall. New ones every morning.</div></div></div>` : "";
+  return jobs ? `<div class="wallets"><div class="wallet wl-paper"><div class="wl-h"><img src="${UIA}w_jobs.png?v=1" alt="">Today's paid jobs</div>${jobs}<div class="wl-next" style="border:0;padding-top:2px">Claim them at the task board by the casino's back wall. New ones every morning.</div></div></div>` : "";
 }
 /* (2026-09-28, the owner: "we need to make sure it doesnt overflow when users have large amounts of tickets/zcoins, corn etc") THE STRIP
    SHORTENS BIG NUMBERS. Every figure is in full up to 99,999; past that 123.4K, then 1.23M / 12.3M / 123M, then 1.2B; the hover always says
@@ -7076,7 +7196,7 @@ function dblSet(on) {
   dblRender();
   if (DBL && !dblTimer) dblTimer = setInterval(dblRender, 1000);
 }
-window.__es = { openCraft, openSmith, CZ, renderTour, renderPanel, popup, showInfo, talkTo, set zc(n) { ZCBAL = n; renderPanel(); }, wlNum, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
+window.__es = { openCraft, openSmith, openShop, CZ, renderTour, renderPanel, popup, showInfo, talkTo, set zc(n) { ZCBAL = n; renderPanel(); }, wlNum, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
 
 setInterval(() => {
   if (ws && ws.readyState === 1 && you) {
