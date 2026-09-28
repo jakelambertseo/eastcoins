@@ -1612,8 +1612,8 @@ export class World {
     if (!this.give(pl, k, n)) return;
     h.got.push(lid); if (h.got.length > 60) h.got.splice(0, h.got.length - 60); this.touch(pl);
     this.gained(S, pl, k, n); this.grant(pl, "fungiculture", Math.max(10, Math.round(F.xp * G.FUNG.wildXp)));
-    const spawn = Math.random() < G.FUNG.wildSpawn && this.giveUpTo(pl, sk, 1);
-    const nose = G.truffleNose(C), truf = nose && Math.random() < G.FUNG.truffle.pick && this.giveUpTo(pl, "truffle", 1), trufSp = nose && Math.random() < G.FUNG.truffle.spawn && this.giveUpTo(pl, "spawn_truffle", 1);
+    const nose = G.truffleNose(C), spawn = Math.random() < G.FUNG.wildSpawn && this.giveUpTo(pl, sk, nose ? G.FUNG.snoutSpawn : 1);   /* (2026-09-27) a truffle pet triples it */
+    const truf = nose && Math.random() < G.FUNG.truffle.pick * nose && this.giveUpTo(pl, "truffle", 1), trufSp = nose && Math.random() < G.FUNG.truffle.spawn * nose && this.giveUpTo(pl, "spawn_truffle", 1);   /* the Baron's nose is TRUFFLE_BARON times the pig's */
     this.say(pl, `You pick ${n} ${G.ITEMS[k].name.toLowerCase()}${spawn ? ", and scrape up some spawn with it" : ""}.${truf ? " Your pig roots out a black truffle beside it!" : ""}${trufSp ? " The pig turns up truffle spawn, too." : ""}`, truf || trufSp ? "loot" : "good");
     this.emit(pl, "gather", { k, n });
   }
@@ -1629,8 +1629,8 @@ export class World {
     if (left > 0) return this.say(pl, `Your ${nm} will be ready in ${left > 90000 ? `about ${Math.round(left / 60000)} minutes` : `${Math.ceil(left / 1000)} seconds`}.`);
     const n = Math.max(1, Math.round(rint(F.yield[0], F.yield[1]) * (1 + G.petFx(pl.C).grow / 100)));   /* the Truffle Pig's heavier harvests reach the cellar too */
     if (!this.give(pl, yk, n)) return;
-    const want = G.SEED_BACK + (Math.random() < G.SEED_EXTRA ? 1 : 0), back = this.giveUpTo(pl, p.k, want);
-    const trufSp = G.truffleNose(pl.C) && p.k !== "spawn_truffle" && Math.random() < G.FUNG.truffle.bed && this.giveUpTo(pl, "spawn_truffle", 1);
+    const nose = G.truffleNose(pl.C), want = (G.SEED_BACK + (Math.random() < G.SEED_EXTRA ? 1 : 0)) * (nose ? G.FUNG.snoutSpawn : 1), back = this.giveUpTo(pl, p.k, want);   /* (2026-09-27) a truffle pet triples the spawn back */
+    const trufSp = nose && p.k !== "spawn_truffle" && Math.random() < G.FUNG.truffle.bed * nose && this.giveUpTo(pl, "spawn_truffle", 1);
     I.beds[ob.i] = null; this.touch(pl);
     this.gained(S, pl, yk, n); this.grant(pl, "fungiculture", F.xp);
     this.say(pl, `You harvest ${n} ${nm}${back ? `, and ${back === 1 ? "a handful" : back === 2 ? "two handfuls" : `${back} handfuls`} of spawn with them` : ""}.${trufSp ? " Your pig has been rooting in the next bed: truffle spawn!" : ""}`, trufSp ? "loot" : "good");

@@ -14,7 +14,7 @@
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=365">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=366">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1384,7 +1384,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=365";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=366";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1393,7 +1393,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=203").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=204").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -5942,13 +5942,19 @@ function wikiGo(route, setNav = true) {
     const where = Object.entries(SCENES).filter(([k, d]) => G.PET_SCENES.has(k) && !d.wikiHide);
     html = `<h2><i>${flatArt(pt.art)}</i>${esc(pt.name)}</h2>
       <p class="lede">${esc(pt.ex)}</p>
-      <h3>While it is worn</h3><table class="tbl"><tr><th>Bonus</th></tr>${Object.entries(pt.fx).map(([f, v]) => `<tr><td>${says[f](v)}</td></tr>`).join("")}</table>
+      <h3>While it is worn</h3><table class="tbl"><tr><th>Bonus</th></tr>${Object.entries(pt.fx).map(([f, v]) => `<tr><td>${says[f] ? says[f](v) : esc(G.petFxText({ [f]: v }))}</td></tr>`).join("")}${(() => { const nose = G.truffleNose({ pets: [{ id: "x", k: id }], eq: { pet: "x" } }); return nose ? `<tr><td>Finds black truffles in about ${Math.round(G.FUNG.truffle.pick * nose * 100)}% of wild mushroom picks</td></tr><tr><td>The mushroom spawn you gather, wild or in your cellar, comes up ${G.FUNG.snoutSpawn} times over</td></tr>` : ""; })()}</table>   <!-- (2026-09-27, the owner: "i cant click on the wiki for both of them") says[] knew five effects; a pet with any other (grow, reach, tough, bite, gem...) threw and the page never opened. G.petFxText says the rest. -->
       <!-- (2026-09-24, the owner, reading this page: "it says coilling drops in Where it drops ... but its only
            the great pyramid right") He was right, and one paragraph was being printed for every pet whether it
            dropped from a kill or not. A raid pet says where it really comes from. -->
-      <h3>Where it comes from</h3><p>${pt.raid
+      <h3>Where it comes from</h3><p>${(() => {
+        /* (2026-09-27) a pet's REAL source: a boss's own pet, an egg, a Legendary bred up from its base, the Pyramid's chest, or the drop pool */
+        const boss = Object.entries(MOBS).find(([, m]) => m.pet?.[0] === id && !m.held), egg = Object.entries(G.EGGS).find(([, e]) => e.pet === id), base = pt.legend && pt.base && G.PETS[pt.base];
+        if (boss) return `${wl(`monsters/${boss[0]}`, esc(MOBS[boss[0]].name))} drops it, about <b>one kill in ${Math.round(1 / boss[1].pet[1]).toLocaleString()}</b>, and only once: you can't get a second one from him.`;
+        if (egg) return `It hatches from a ${wl(`items/${egg[0]}`, `${ico(egg[0])} ${esc(ITEMS[egg[0]].name)}`)} in your island's hatchery (${Math.round(egg[1].ms / 3600000)} hours). The egg drops from monsters in ${egg[1].from.map((k) => areaLink(k)).join(", ")}, about one kill in ${Math.round(1 / G.BREED.eggDrop).toLocaleString()}. Two of them bred in your pen make a Greater one.`;
+        if (base) return `It is the Legendary of the ${wl(`pets/${pt.base}`, esc(base.name))}: breed two Greater ${esc(base.name)}s in your island's pen (Breeding ${G.BREED.legend.lvl}, ${Math.round(G.BREED.legend.ms / 3600000)} hours, ${G.BREED.legend.food} legendary pet food).`;
+        return null; })() || (pt.raid
         ? `The chest at the top of <b>the Great Pyramid</b>, and nowhere else &mdash; about <b>one clear in twenty</b>. It is not in the pool that drops from kills.`
-        : `${(G.PET_DROP * 100).toFixed(1)}% a kill — about one in ${Math.round(1 / G.PET_DROP).toLocaleString()} — in ${where.map(([k]) => areaLink(k)).join(", ")}. Which pet you get is random.`}</p>
+        : `${(G.PET_DROP * 100).toFixed(1)}% a kill — about one in ${Math.round(1 / G.PET_DROP).toLocaleString()} — in ${where.map(([k]) => areaLink(k)).join(", ")}. Which pet you get is random.`)}</p>
       <p>Wear, stow and name it in the <b>Equipment</b> tab. One at a time; the bonus stops the moment you stow it.</p>`;
   }
   else if (kind === "skills" && SKILLS[id]) {
