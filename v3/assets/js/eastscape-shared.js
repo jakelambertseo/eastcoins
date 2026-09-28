@@ -6158,7 +6158,7 @@ export const BREED = {
   greater: { lvl: 1, ms: 12 * 3600000, food: 18, xpStart: 400, xpEnd: 4000 },   /* any two ordinary pets, from Breeding 1: pairing is how the skill is trained. (2026-09-27) food 6 -> 18, three times, the owner's word, once the parents came back */
   legend: { lvl: 50, ms: 72 * 3600000, food: 36, xpStart: 3000, xpEnd: 40000 },  /* two Greater pets of the same kind. (2026-09-27) food 12 -> 36, with the Greater */
   hatch: { food: 3 },                                                             /* an egg eats three Ordinary pet food, taken when it goes in */
-  eggDrop: 1 / 3000,                                                              /* one kill in three thousand, anywhere: "rare but not that rare" */
+  eggDrop: 1 / 500,   /* one kill in five hundred, anywhere (2026-09-28, the owner: "buff all egg drops to be 1/500"; was one in three thousand) */
   reach: 3,
   /* (2026-09-27, the owner: "add cooking pet food giving a little breeding XP if a user doesnt have a pet or egg") THE WAY IN. Every other
      source of Breeding xp needs a pet or an egg first, so a player who had found neither could not touch the skill. Cooking a batch of pet
