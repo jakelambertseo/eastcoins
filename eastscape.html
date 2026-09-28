@@ -10,6 +10,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
 <link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/v3/assets/fonts/cinzel-latin.woff2" as="font" type="font/woff2" crossorigin>
 <script>/* (2026-09-27) LOCAL ONLY: ?open=1 on localhost opens every held thing (the Depths, the Boardwalk, the Foundry, the Orchard Wall,
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
@@ -26,6 +27,9 @@ if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(
    one, 400-800 used), OFL-licensed, held for a year like the site's other fonts. The head also asks for the rules and sounds
    modules early (modulepreload: they used to wait for the page's script to be read) and opens the line to the game server. */
 @font-face{font-family:"Nunito";font-style:normal;font-weight:400 800;font-display:swap;src:url(/v3/assets/fonts/nunito-v32-latin.woff2) format("woff2")}
+/* (2026-09-28, the owner: "lets do cinzel, titles and names") the display face: window titles, popup titles, who is talking, what an item or a
+   monster is called. Everything you read in a sentence, every number and all of chat stays Nunito. 25 KB, variable 400-900, OFL. */
+@font-face{font-family:"Cinzel";font-style:normal;font-weight:400 900;font-display:swap;src:url(/v3/assets/fonts/cinzel-latin.woff2) format("woff2")}
 
 :root{--ink:#e8e0cc;--muted:#9a917e;--gold:#f2c94c;--panel:#f3e7cc;--panel-ink:#2a2016;--frame:#1a1410;--bar:#0b0908;--link-a:#7ee07e;--link-b:#e0e0e0;--good:#7ee07e;--bad:#ff7a6a}
 *{box-sizing:border-box}
@@ -1321,6 +1325,138 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .chat-form input{border:1px solid #6a4a2a;border-radius:6px;background:rgba(0,0,0,.45)}
 .chat-form button{border:6px solid transparent;border-radius:0;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 6px stretch;background:none;padding:0 10px;color:#ffe27a;image-rendering:pixelated;text-shadow:0 1px 0 #000}
 .chat-form button:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_on.png?v=1)}
+
+/* ============================================================ THE EASTSCAPE UI KIT (2026-09-28)
+   The owner: "the inventory UI, the crafting station popups, all popups and windows in general ... feel very generic and inconsistant ...
+   i want everything to feel very consistant", then, looking at tools/ui-kit/: "looks great", and "lets do cinzel, titles and names etc".
+   The whole vocabulary a window may use, drawn at tools/ui-kit/index.html: FRAME (win.png) · HEAD (the dark bar) · PAPER (one cream with the
+   scroll's grain) · CARD (one darker cream) · four buttons (primary btn.png, secondary plain.png, danger, the segmented strip) · folder tabs ·
+   chips · slots (slot.png) · one row with ready / off / chosen. Five text sizes, two corners, Cinzel for titles and names only. Every class
+   is .k-*, so the old styles can stay beside it while windows move across in batches: popups, conversations and info cards first. */
+:root{
+  --k-ink:#2a2016; --k-ink2:#6a5a40; --k-ink3:#9a8866;
+  --k-paper:#efe2c4; --k-paper-hi:#fff6dc; --k-card:#e6d4ad; --k-card-line:#c2a574; --k-line:rgba(90,58,24,.2);
+  --k-head:#5a3220; --k-head-ink:#f6e9cc; --k-head-sub:#e0c890;
+  --k-gold:#c8963a; --k-gold-ink:#7a4e0e; --k-gold-hi:#ffd84a;
+  --k-good:#2f7a3a; --k-bad:#b8302a; --k-rare:#6a3aa8;
+  --k-r:6px;
+  --k-f-label:800 11px/1.2 Nunito,system-ui,sans-serif;
+  --k-f-small:700 12.5px/1.3 Nunito,system-ui,sans-serif;
+  --k-f-body:600 14px/1.4 Nunito,system-ui,sans-serif;
+  --k-f-row:800 16px/1.2 Nunito,system-ui,sans-serif;
+  --k-f-title:800 19px/1.15 Nunito,system-ui,sans-serif;
+  --k-disp:"Cinzel",Georgia,"Times New Roman",serif;
+}
+/* ---------- FRAME + HEAD + PAPER + FOOT ---------- */
+.k-win{display:flex;flex-direction:column;min-height:0;color:var(--k-ink);font:var(--k-f-body);border:15px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/win.png?v=1) 12 fill / 15px stretch;image-rendering:pixelated;filter:drop-shadow(0 12px 22px rgba(0,0,0,.5))}
+.k-head{display:flex;align-items:center;gap:10px;margin:-3px -3px 0;padding:8px 10px 8px 12px;background:var(--k-head);color:var(--k-head-ink);border-bottom:3px solid #3a1e12;border-radius:2px}
+.k-head>img{width:26px;height:26px;image-rendering:pixelated;flex:none}
+.k-head b{font:800 18px/1.15 var(--k-disp);letter-spacing:.01em;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.k-head .k-sub{display:inline-flex;align-items:center;gap:5px;font:var(--k-f-small);color:var(--k-head-sub);white-space:nowrap}
+.k-head .k-sub img{width:18px;height:18px;image-rendering:pixelated}
+.k-x{flex:none;width:28px;height:28px;padding:0;display:grid;place-items:center;font:800 20px/1 Nunito,sans-serif;color:#fff;background:#b8382c;border:2px solid #2a140c;border-radius:5px;box-shadow:inset 0 2px 0 rgba(255,255,255,.28);cursor:pointer}
+.k-x:hover{background:#d8483a}.k-x:active{transform:translateY(1px)}
+.k-paper{background-color:var(--k-paper);background-image:radial-gradient(rgba(150,110,60,.07) 1px,transparent 1.5px),radial-gradient(rgba(150,110,60,.05) 1px,transparent 1.5px);background-size:7px 9px,11px 13px;background-position:0 0,4px 6px}
+.k-body{padding:10px 12px;overflow:auto;min-height:0;display:grid;gap:6px;align-content:start}
+.k-foot{display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:8px 12px;border-top:2px solid var(--k-line);background:rgba(90,58,24,.07)}
+.k-foot .k-note{margin-right:auto}
+.k-note{font:var(--k-f-small);color:var(--k-ink2)}
+.k-label{font:var(--k-f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2)}
+/* ---------- BUTTONS ---------- */
+.k-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 14px;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;background:none;color:#ffe27a;font:800 14px/1 Nunito,sans-serif;text-shadow:0 1px 0 #000;image-rendering:pixelated;cursor:pointer;white-space:nowrap}
+.k-btn:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_on.png?v=1)}
+.k-btn:active{transform:translateY(1px)}
+.k-btn.sec{border-width:6px;border-image:url(/v3/assets/img/glad/flat/ui/plain.png?v=1) 10 fill / 6px stretch;color:var(--k-ink);text-shadow:none}
+.k-btn.sec:hover{filter:brightness(1.06)}
+.k-btn.danger{border:2px solid #2a140c;border-image:none;border-radius:var(--k-r);background:linear-gradient(#cf4638,#a52e22);color:#fff;box-shadow:inset 0 2px 0 rgba(255,255,255,.25);min-height:36px}
+.k-btn.danger:hover{background:linear-gradient(#e0574a,#b8382c)}
+.k-btn:disabled{opacity:.45;cursor:default;transform:none;filter:grayscale(.5)}
+.k-btn.sm{min-height:30px;padding:0 10px;font-size:12.5px}
+.k-btn img{width:18px;height:18px;image-rendering:pixelated}
+.k-seg{display:inline-flex;padding:2px;gap:2px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.k-seg button{border:0;border-radius:4px;padding:5px 11px;background:none;color:var(--k-ink2);font:800 12.5px/1 Nunito,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.k-seg button:hover{background:rgba(255,255,255,.4);color:var(--k-ink)}
+.k-seg button[aria-pressed="true"]{background:var(--k-head);color:var(--k-head-ink);box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.k-seg button img{width:16px;height:16px;image-rendering:pixelated}
+.k-seg button small{font:800 10.5px/1 Nunito,sans-serif;padding:1px 5px;border-radius:99px;background:rgba(0,0,0,.1)}
+.k-seg button[aria-pressed="true"] small{background:rgba(255,255,255,.2)}
+/* ---------- TABS (folder tabs over the body) ---------- */
+.k-tabs{display:flex;gap:3px;padding:8px 12px 0;border-bottom:2px solid var(--k-gold);background:rgba(90,58,24,.08)}
+.k-tabs button{position:relative;margin-bottom:-2px;padding:7px 14px 6px;border:2px solid var(--k-card-line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--k-card);color:var(--k-ink2);font:800 13px/1 Nunito,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.k-tabs button:hover{background:#efdfbc;color:var(--k-ink)}
+.k-tabs button[aria-selected="true"]{z-index:1;background:var(--k-paper);color:var(--k-ink);border-color:var(--k-gold);padding-bottom:8px}
+.k-tabs button img{width:18px;height:18px;image-rendering:pixelated}
+/* ---------- CHIPS, BADGES, SLOTS ---------- */
+.k-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;background:rgba(90,58,24,.12);color:var(--k-ink2);font:800 11.5px/1.3 Nunito,sans-serif;white-space:nowrap}
+.k-chip img{width:15px;height:15px;image-rendering:pixelated}
+.k-chip.good{background:#d6ecd0;color:var(--k-good)}.k-chip.bad{background:#f5d3cc;color:var(--k-bad)}.k-chip.gold{background:#fbe6a8;color:var(--k-gold-ink)}.k-chip.rare{background:#e4d6f5;color:var(--k-rare)}
+.k-chip.lock::before{content:"";width:11px;height:12px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 12'%3E%3Cpath d='M3 5V3.5a2.5 2.5 0 015 0V5h1v7H2V5zm1.5 0h2V3.5a1 1 0 00-2 0z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 12'%3E%3Cpath d='M3 5V3.5a2.5 2.5 0 015 0V5h1v7H2V5zm1.5 0h2V3.5a1 1 0 00-2 0z'/%3E%3C/svg%3E") center/contain no-repeat}
+.k-badge{min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;border-radius:99px;background:#e53935;color:#fff;font:900 10.5px/17px Nunito,sans-serif;text-align:center}
+.k-slot{position:relative;display:grid;place-items:center;width:40px;height:40px;flex:none;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch;image-rendering:pixelated;box-sizing:border-box}
+.k-slot img{width:26px;height:26px;image-rendering:pixelated}
+.k-slot.sm{width:32px;height:32px;border-width:4px}.k-slot.sm img{width:20px;height:20px}
+.k-slot u{position:absolute;right:-5px;bottom:-6px;text-decoration:none;font:900 10.5px/1 Nunito,sans-serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}
+.k-slot.miss::after{content:"";position:absolute;inset:-4px;border-radius:3px;box-shadow:inset 0 0 0 2px var(--k-bad);background:rgba(184,48,42,.16)}
+/* ---------- ROWS: one shape for everything you can act on ---------- */
+.k-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;padding:7px 10px 7px 7px;border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45);color:var(--k-ink);text-align:left;font:inherit;cursor:pointer;transition:background .12s,box-shadow .12s,transform .12s}
+.k-row:hover:not(:disabled){background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold),0 2px 6px rgba(60,40,10,.15);transform:translateY(-1px)}
+.k-row b{display:block;font:800 15.5px/1.2 var(--k-disp)}
+.k-row small{display:block;margin-top:2px;font:var(--k-f-small);color:var(--k-ink2)}
+.k-row small.bad{color:var(--k-bad)}.k-row small.good{color:var(--k-good)}
+.k-row .k-end{display:flex;align-items:center;gap:6px}
+.k-row.off{cursor:default;background:rgba(230,212,173,.55);box-shadow:inset 0 0 0 1.5px rgba(194,165,116,.55)}
+.k-row.off b{color:var(--k-ink2)}
+.k-row.off>.k-slot img{filter:grayscale(.6);opacity:.7}
+.k-row.lock{opacity:.62}
+.k-row.on{background:var(--k-paper-hi);box-shadow:inset 0 0 0 2.5px var(--k-gold),0 0 0 3px rgba(200,150,58,.18)}
+.k-row.on::after{content:none}
+.k-sect{display:flex;align-items:center;gap:8px;margin:6px 2px 0}.k-sect::after{content:"";flex:1;height:2px;background:var(--k-line)}
+
+/* ---------- batch 1a: the popup (see THE POPUP IS A SMALL WINDOW) ----------
+   Replaces .pop-card's centred card: its sticky button strip faded to the wrong colour and left a pale band across the bottom. */
+.pop-card.k-win{width:min(400px,calc(100% - 32px));max-height:100%;padding:0;text-align:left;display:flex;flex-direction:column;overflow:hidden;color:var(--k-ink)}
+.pop-card .k-head b{display:block;margin:0;font-size:18px;color:var(--k-head-ink)}
+.pop-card .pop-ico{display:grid;place-items:center;width:26px;height:26px;flex:none;font-size:0;line-height:1}
+.pop-card .pop-ico img,.pop-card .pop-ico .ico{width:26px;height:26px;image-rendering:pixelated;margin:0}
+.pop-card .pop-emo{font-size:21px}
+.pop-card .pop-body{overflow-y:auto;overscroll-behavior:contain;padding:14px 16px}
+.pop-card .pop-body b{display:inline;margin:0;font-size:inherit;color:inherit;font-weight:800}
+.pop-card .pop-body p,#popText{margin:0;font:var(--k-f-body);font-size:14.5px;line-height:1.45}
+#popText[hidden]{display:none}
+.pop-card .pop-body:has(#popText[hidden]){display:none}
+.pop-card .pop-btns.k-foot{position:static;margin:0;padding:8px 12px;background:rgba(90,58,24,.07);flex-direction:row-reverse;justify-content:flex-start;flex-wrap:wrap}
+.pop-card .pop-btns.many{display:grid;grid-template-columns:1fr 1fr;flex-direction:initial}
+.pop-card .pop-btns.many .k-btn{width:100%}
+@media (max-width:420px){.pop-card .pop-btns.many{grid-template-columns:1fr}}
+
+/* ---------- batch 1b: the conversation (a window like the rest: who is talking in the header, the face in a bag slot, answers as rows) ---------- */
+.dlg.k-win{display:flex;flex-direction:column;gap:0;padding:0;background:none;border-radius:0;color:var(--k-ink);width:min(640px,calc(100% - 24px))}
+.dlg .k-head{padding:6px 8px 6px 12px}
+.dlg .k-head b{font-size:17px;color:var(--k-head-ink)}
+.dlg .dlg-x{position:static;width:26px;height:26px;font-size:18px;color:#fff}
+.dlg-main{display:grid;grid-template-columns:84px 1fr;gap:12px;padding:10px 12px 12px}
+.dlg-body p{margin:0 0 8px;font:var(--k-f-body);font-size:15px;line-height:1.4}
+.dlg-opts{gap:4px}
+.dlg-opts button{display:flex;align-items:center;gap:8px;border:0;border-image:none;border-radius:var(--k-r);padding:6px 10px 6px 6px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45);font:700 14px/1.25 Nunito,sans-serif;color:var(--k-ink);transition:background .12s,box-shadow .12s}
+.dlg-opts button:hover,.dlg-opts button:focus-visible{background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold);filter:none;outline:none}
+.dlg-opts kbd{flex:none;display:grid;place-items:center;width:20px;height:20px;border-radius:5px;background:var(--k-head);color:var(--k-head-ink);font:800 11px/1 Nunito,sans-serif}
+.game:has(.dlg:not([hidden])) .feed{bottom:230px}
+/* ---------- batch 1c: the info card ---------- */
+.info.k-win{width:272px;padding:0;border-width:11px;border-image-width:11px;border-radius:0;background:none;color:var(--k-ink);font:var(--k-f-small);line-height:1.35;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5));box-shadow:none}
+.info .k-head{margin:-2px -2px 0;padding:5px 8px;gap:7px}
+.info .k-head>img,.info .k-head>.ico,.info .k-head .glow{width:22px;height:22px}
+.info .k-head b{font-size:15px}
+.info-b{padding:8px 10px 6px;background-color:var(--k-paper);background-image:radial-gradient(rgba(150,110,60,.07) 1px,transparent 1.5px);background-size:7px 9px}
+.info .sub{color:var(--k-ink2);font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.info dl{gap:3px 10px}.info dt{color:var(--k-ink2);font-weight:700}.info dd{font-weight:800;color:var(--k-ink)}
+.info .low{color:var(--k-bad)}.info .ok{color:var(--k-good)}
+.info-b>b{display:block;margin:6px 0 2px;font:var(--k-f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2)}
+.info ul{margin:2px 0 4px;padding:0;list-style:none;display:grid;gap:2px}.info li{display:flex;align-items:center;gap:5px}.info li .ico{width:18px;height:18px}
+.info .ex{color:var(--k-ink2)}
+.info-f{display:flex;justify-content:flex-end;padding:6px 8px;border-top:2px solid var(--k-line);background:rgba(90,58,24,.07)}
+/* ---------- every existing window title, the banners and the level-up take Cinzel now; their windows follow in later batches ---------- */
+.win-head b{font-family:var(--k-disp);font-weight:800;letter-spacing:.01em}
+.qdone b,.lvlup b{font-family:var(--k-disp);font-weight:800}
 </style>
 </head>
 <body>
@@ -1350,10 +1486,9 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
     <div class="buffbar" id="buffBar" aria-label="Your buffs"></div>
       <canvas id="mini" class="mini" width="132" height="78" aria-label="Map of this area. Click for the world map." title="Click for the world map"></canvas></div>
     <div class="feed" id="log" aria-live="polite"></div>
-    <div class="dlg" id="dlg" role="dialog" aria-label="Conversation" hidden>
-      <div class="dlg-face" id="dlgFace"></div>
-      <div class="dlg-body"><b id="dlgName"></b><p id="dlgText"></p><div class="dlg-opts" id="dlgOpts"></div></div>
-      <button type="button" class="dlg-x" id="dlgX" aria-label="Close">×</button>
+    <div class="dlg k-win" id="dlg" role="dialog" aria-label="Conversation" hidden>
+      <div class="k-head"><b id="dlgName"></b><button type="button" class="k-x dlg-x" id="dlgX" aria-label="Close">×</button></div>
+      <div class="dlg-main k-paper"><div class="dlg-face" id="dlgFace"></div><div class="dlg-body"><p id="dlgText"></p><div class="dlg-opts" id="dlgOpts"></div></div></div>
     </div>
     <div class="qdone" id="qdone" hidden></div>
     <div class="chat" id="chat">
@@ -1371,10 +1506,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="qpick" id="qPick" hidden></div>
     </div>
     <div class="pop" id="pop" role="alertdialog" aria-modal="true" aria-labelledby="popTitle" hidden>
-      <div class="pop-card"><div class="pop-ico" id="popIco"></div><b id="popTitle"></b><p id="popText"></p><div class="pop-btns" id="popBtns"></div></div>
+      <div class="pop-card k-win"><div class="k-head"><span class="pop-ico" id="popIco"></span><b id="popTitle"></b></div><div class="k-body k-paper pop-body"><p id="popText"></p></div><div class="k-foot pop-btns" id="popBtns"></div></div>
     </div>
     <div class="lvlup" id="lvlup" hidden></div>
-    <div class="info" id="info" role="dialog" aria-label="Details" hidden></div>
+    <div class="info k-win" id="info" role="dialog" aria-label="Details" hidden></div>
     <section class="win" id="isleWin" aria-label="Visit an island" hidden>
       <div class="win-head"><b>⛵ Visit an island</b><small>Charon rows you there</small><button type="button" class="win-x" data-close="isleWin" aria-label="Close">×</button></div>
       <div class="win-body">
@@ -2541,7 +2676,7 @@ function toolLine(skill, lvl) {
   const base = G.TOOL_OF[skill]; if (!base) return "";
   const rung = G.toolNeed(lvl), key = rung.key === "bronze" ? base : `${rung.key}_${base}`, it = ITEMS[key];
   if (!it) return "";
-  const short = G.toolBlock(me(), skill, lvl);
+  const short = G.toolBlock(me, skill, lvl);   /* (2026-09-28) was me(): `me` is the character, not a function, so every resource that needs a tool threw here and its info card never opened */
   const where = G.TOOL_HELD.has(skill) ? "equipped" : "in hand or in your bag";
   const why = !short ? "" : short.held ? " — yours is in your bag" : short.have ? " — yours isn't good enough" : " — you haven't got one";
   return `<dt>Needs</dt><dd class="${short ? "low" : ""}">${ico(key)} ${esc(it.name)} ${where}${why}</dd>`;
@@ -3331,10 +3466,25 @@ const popMarkup = (t) => esc(String(t ?? "")).replace(/\*\*(.+?)\*\*/g, "<b>$1</
    understands **bold**: markup written into `text` comes out as visible tags, which is exactly what happened the
    first time the Tower's door was written with an <img> and <b> in it. Text stays escaped; a picture gets a slot.
    The url is encodeURI'd - every caller builds it from constants, and this keeps it that way. */
+/* (2026-09-28) THE POPUP IS A SMALL WINDOW (see THE EASTSCAPE UI KIT): the same header as every window (a pixel icon and a Cinzel title), the
+   words on paper, and the buttons in a footer on the right with the first one (the one the caller means) last, where every window puts its
+   main action. More than three choices (a player's menu, the island's themes) are a menu, not one action and its alternatives: they stack
+   two across, all secondary. `icon` may be an emoji (what the
+   server sends), "item:<key>" for an item's own picture, or a ui/ picture's name; POP_ICON turns the emoji the game uses into pixel art. */
+const POP_ICON = { "🎰": "g_casino", "🏆": "ach_badge", "☠️": "p_kills", "🏢": "g_tower", "🏝️": "g_islands", "🔫": "ach_badge", "🙂": "g_home", "🗝️": "g_keys", "⚠️": "g_tools" };
+function popIcon(icon) {
+  const k = String(icon || "");
+  if (k.startsWith("item:")) return ITEMS[k.slice(5)] ? ico(k.slice(5)) : "";
+  const ui = POP_ICON[k] || (/^[a-z][a-z0-9_]*$/.test(k) ? k : null);
+  return ui ? `<img src="${UIA}${ui}.png?v=1" alt="">` : k ? `<span class="pop-emo">${esc(k)}</span>` : `<img src="${UIA}g_start.png?v=1" alt="">`;
+}
 function popup(title, text, icon, buttons, pic) {
-  $("popIco").textContent = icon || ""; $("popTitle").textContent = title;
+  $("popIco").innerHTML = popIcon(icon); $("popTitle").textContent = title;
   $("popText").innerHTML = (pic ? `<img class="pop-pic" src="${encodeURI(String(pic))}" alt="">` : "") + popMarkup(text);
-  $("popBtns").innerHTML = buttons.map(([l], i) => `<button type="button" class="btn${i ? " plain" : ""}" data-i="${i}">${esc(l)}</button>`).join("");
+  $("popText").hidden = !text && !pic;
+  const many = buttons.length > 3;
+  $("popBtns").classList.toggle("many", many);
+  $("popBtns").innerHTML = buttons.map(([l], i) => `<button type="button" class="k-btn${i || many ? " sec" : ""}${many ? " sm" : ""}" data-i="${i}">${esc(l)}</button>`).join("");
   $("popBtns").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { $("pop").hidden = true; const f = buttons[+b.dataset.i][1]; if (f) f(); }));
   $("pop").hidden = false; $("popBtns").querySelector("button")?.focus();
 }
@@ -3408,7 +3558,7 @@ function showTalk(n, text, options, have) {
     $("dlgFace").innerHTML = face ? `<img src="${face.im.src || face.im.toDataURL?.() || ""}" alt="" style="left:${Math.round(37 - face.cx * 3)}px;top:${Math.round(6 - face.top * 3)}px">` : "🙂";
     $("dlgName").textContent = n.name;
     $("dlgText").textContent = pages[i].replace("{have}", have ?? "");
-    $("dlgOpts").innerHTML = opts.map(([label], j) => `<button type="button" data-j="${j}"><span>${j + 1}.</span> ${esc(label)}</button>`).join("");
+    $("dlgOpts").innerHTML = opts.map(([label], j) => `<button type="button" data-j="${j}"><kbd>${j + 1}</kbd>${esc(label)}</button>`).join("");
     $("dlgOpts").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => DLG.opts[+b.dataset.j][1]()));
     $("dlg").hidden = false;
   };
@@ -6501,12 +6651,16 @@ function resourceInfo(ob) {
   if (ob.t === "spot") { if (ob.fish) rows.push({ skill: "fishing", lvl: lv, gives: ob.fish, xp: ob.xp, note: "Fish from the bank, two tiles away." }); else { rows.push({ skill: "fishing", lvl: 1, gives: "sardine", xp: 20 }); rows.push({ skill: "fishing", lvl: 10, gives: "trout", xp: 50, note: "Fish from the bank, two tiles away." }); } }
   return rows;
 }
+/* (2026-09-28) THE INFO CARD wears the kit: a slim header with a pixel icon and the name in Cinzel, the facts on paper, and the wiki link as a
+   secondary button in a foot. The three kinds keep their own facts; only the frame and the icon changed. */
+const infoHead = (icon, name) => `<div class="k-head">${icon}<b>${esc(name)}</b></div><div class="info-b">`;
+const G_SKILL = new Set(["agility", "alchemy", "archery", "breeding", "cooking", "fishing", "fletching", "fungiculture", "harvesting", "magic", "mining", "smithing", "thieving", "woodcutting", "wizardry"]);
 function showInfo(t, cx, cy) {
   const box = $("info"); let html = "", wiki = null;
   if (t.kind === "mob") {
     const m = Z.mobs.find((x) => x.id === t.id), d = MOBS[m?.t]; if (!d) return;
     wiki = `monsters/${m.t}`;
-    html = `<h5>👹 ${esc(d.name)}</h5><div class="sub">Level ${d.lvl} monster</div>
+    html = `${infoHead(`<img src="${UIA}combat.png?v=1" alt="">`, d.name)}<div class="sub">Level ${d.lvl} monster</div>
       <dl><dt>Hitpoints</dt><dd>${m.hp}/${d.hp}</dd><dt>Max hit</dt><dd>${d.max}</dd><dt>Attack / defence</dt><dd>${d.att} / ${d.def}</dd><dt>Resists</dt><dd>${esc(G.resistText(m.t))}</dd>${G.elementWords(d.weak) ? `<dt>Weak to</dt><dd>${G.elementWords(d.weak)}</dd>` : ""}${G.elementWords(d.resist) ? `<dt>Resists element</dt><dd>${G.elementWords(d.resist)}</dd>` : ""}<dt>Attacks every</dt><dd>${(d.speed / 1000).toFixed(1)}s</dd><dt>Respawns after</dt><dd>${G.fmtWait(G.respawnMs(Z.def, m.t))}${Z.def.pvp ? "" : ", sooner when busy"}</dd></dl>
       <b>Drops</b><ul>${d.drops.map(([k, n, ch]) => `<li>${ico(k)} ${esc(ITEMS[k].name)}${Array.isArray(n) ? ` ×${n[0]}–${n[1]}` : n > 1 ? ` ×${n}` : ""} · ${ch == null ? "always" : pct(ch)}</li>`).join("")}${(d.rare || []).map(([k]) => `<li>${ico(k)} ${esc(ITEMS[k].name)} · rare, ${pct(G.RARE_RATE)}</li>`).join("")}<li>…or a casino find: chips, free play, a mystery box</li></ul>`;
   } else if (t.ob) {
@@ -6514,16 +6668,16 @@ function showInfo(t, cx, cy) {
     if (!rows.length && !ex) return;
     const r0 = rows[0];
     if (r0) wiki = `skills/${r0.skill}`;
-    html = `<h5>${r0 ? ITEMS[r0.gives].icon : "🔍"} ${esc(t.ob.t === "spot" && !t.ob.special ? "Fishing spot" : t.ob.name)}</h5>
+    html = `${infoHead(r0 && G_SKILL.has(r0.skill) ? `<img src="${UIA}g_${r0.skill}.png?v=1" alt="">` : r0 ? ico(r0.gives) : `<img src="${UIA}g_start.png?v=1" alt="">`, t.ob.t === "spot" && !t.ob.special ? "Fishing spot" : t.ob.name)}
       ${rows.map((r) => { const have = lvl(r.skill), ok = have >= r.lvl; return `<div class="sub">${sico(r.skill)} ${SKILLS[r.skill].name} <span class="${ok ? "ok" : "low"}">level ${r.lvl}</span>${ok ? "" : ` · you're ${have}`}</div>
         <dl><dt>Gives</dt><dd>${ico(r.gives)} ${esc(ITEMS[r.gives].name)}</dd><dt>XP each</dt><dd>${r.xp}</dd>${toolLine(r.skill, r.lvl)}</dl>${r.note ? `<div class="sub" style="font-weight:600">${esc(r.note)}</div>` : ""}`; }).join("")}
       ${t.ob.tease ? `<div class="ex">${esc(t.ob.tease)}</div>` : ex ? `<div class="ex">${esc(ex[0])}</div>` : ""}`;
     if (r0) wiki = `items/${r0.gives}`;
   } else if (t.kind === "npc") {
     const n = Z.npcs.find((x) => x.id === t.id); if (!n) return; wiki = `npcs/${n.name}`;
-    html = `<h5>🧑 ${esc(n.name)}</h5><div class="sub">${n.opens ? `Runs the ${n.opens === "bank" ? "bank" : "Exchange"}` : (n.quests?.length ? "Has quests" : "Local")}</div>`;
+    html = `${infoHead(`<img src="${UIA}${n.quests?.length ? "quests" : "g_home"}.png?v=1" alt="">`, n.name)}<div class="sub">${n.opens ? `Runs the ${n.opens === "bank" ? "bank" : "Exchange"}` : (n.quests?.length ? "Has quests" : "Local")}</div>`;
   } else return;
-  box.innerHTML = html + (wiki ? `<span class="more" data-more="${esc(wiki)}">More in the wiki →</span>` : "");
+  box.innerHTML = html + "</div>" + (wiki ? `<div class="info-f"><button type="button" class="k-btn sec sm" data-more="${esc(wiki)}">More in the wiki</button></div>` : "");
   const game = cv.getBoundingClientRect(); box.hidden = false;
   const x = Math.min(cx + 12, game.width - box.offsetWidth - 8), y = Math.min(cy + 12, game.height - box.offsetHeight - 8);
   box.style.left = `${Math.max(8, x)}px`; box.style.top = `${Math.max(8, y)}px`;
@@ -6658,7 +6812,7 @@ function renderPanel() {
       const i = +el.dataset.i, s = me.inv[i]; if (!s) return;
       if (e.shiftKey) {
         if (s.k === "coins") return say("You'd rather not drop your tickets.");
-        if (set("confirmDrop")) return popup("Drop it?", `Drop ${s.n > 1 ? `${s.n.toLocaleString()} × ` : "the "}${ITEMS[s.k].name.toLowerCase()}? It's gone for good.`, ITEMS[s.k].icon, [["Drop it", () => send({ t: "drop", i })], ["Keep it", null]]);
+        if (set("confirmDrop")) return popup("Drop it?", `Drop ${s.n > 1 ? `${s.n.toLocaleString()} × ` : "the "}${ITEMS[s.k].name.toLowerCase()}? It's gone for good.`, `item:${s.k}`, [["Drop it", () => send({ t: "drop", i })], ["Keep it", null]]);
         return send({ t: "drop", i });
       }
       useBagItem(i);   /* (2026-09-25) the same function the quick slots call: see QUICK SLOTS */
@@ -6970,7 +7124,7 @@ function dblSet(on) {
   dblRender();
   if (DBL && !dblTimer) dblTimer = setInterval(dblRender, 1000);
 }
-window.__es = { openCraft, CZ, renderTour, renderPanel, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
+window.__es = { openCraft, CZ, renderTour, renderPanel, popup, showInfo, talkTo, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
 
 setInterval(() => {
   if (ws && ws.readyState === 1 && you) {
