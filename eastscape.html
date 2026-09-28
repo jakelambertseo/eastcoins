@@ -703,6 +703,16 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 /* PixelLab UI: the stats sit in a wood-and-bronze frame, the tabs are wooden buttons that glow gold when picked */
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;padding:10px 12px;margin:8px 8px 0;border:10px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/frame.png?v=1) 12 fill / 10px stretch;image-rendering:pixelated}
 .stat{display:flex;align-items:center;gap:10px;font-size:16px}
+/* (2026-09-28) the slim bar: see renderStats. `.side .stats.slim` outranks the phone and short-screen grid rules for the old box */
+.side .stats.slim{display:flex;align-items:center;gap:8px;padding:5px 8px;margin:8px 8px 0;border-width:8px}
+.hpb{flex:1;display:flex;align-items:center;gap:6px;min-width:0}.hpb img{width:20px;height:20px;image-rendering:pixelated;flex:none}
+.hpb-bar{position:relative;flex:1;height:18px;border-radius:5px;background:#2a1414;box-shadow:inset 0 0 0 2px #120a0a;overflow:hidden}
+.hpb-bar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(#e2473f,#a3201a);transition:width .25s ease}
+.hpb.mid .hpb-bar i{background:linear-gradient(#f0a53a,#b86d12)}.hpb.low .hpb-bar i{background:linear-gradient(#ff3b30,#8e0e08);animation:hpbLow 1s ease-in-out infinite}
+.hpb-bar b{position:relative;display:block;text-align:center;font:800 12.5px/18px Nunito,sans-serif;color:#fff;text-shadow:1px 1px 0 #000;font-variant-numeric:tabular-nums}
+.hpb-area{flex:none;max-width:44%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 12.5px Nunito,sans-serif;color:#f2e2c0;text-shadow:1px 1px 0 #000}
+@keyframes hpbLow{50%{filter:brightness(1.45)}}
+@media (prefers-reduced-motion:reduce){.hpb-bar i{transition:none}.hpb.low .hpb-bar i{animation:none}}
 .stat i{font-style:normal;font-size:22px;width:28px;height:28px;display:grid;place-items:center}
 .stat i img,.tabs button img{width:26px;height:26px;image-rendering:pixelated;display:block}
 .stat b{text-shadow:1px 1px 0 #000}
@@ -1374,7 +1384,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
     <div class="cover soft" id="veil" hidden><div class="card" id="veilText"><span class="spin"></span>Connecting…</div></div>
   </section>
   <aside class="side" aria-label="Character">
-    <div class="stats" id="stats"></div>
+    <div class="stats slim" id="stats"></div>
     <nav class="tabs" role="tablist">
       <button type="button" data-tab="inv" aria-pressed="true" title="Inventory"><img src="/v3/assets/img/glad/flat/ui/bag.png?v=1" alt="Inventory"></button>
       <button type="button" data-tab="equip" aria-pressed="false" title="Equipment"><img src="/v3/assets/img/glad/flat/ui/equip.png?v=1" alt="Equipment"></button>
@@ -6371,13 +6381,16 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("info").
 /* ------------------------------------------------------------ the character panel */
 let tab = "inv";
 const syncTabs = () => document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.tab === tab)));
+/* (2026-09-28, the owner: "how important do you think it is for users that show the stats ... seems like it takes up a lot of space", then
+   "build the slim health bar") THE SLIM BAR. The six-cell box said health, combat level, total level, tickets, bag and area, and four of
+   those are said again right beside it (the level over your head, the Skills tab, the Tickets box, the bag's own count). What is left is
+   the one number you watch in a fight: a health bar, and the area on the same line, about a third of the height. It goes amber at half and
+   red, pulsing, under a quarter. */
 function renderStats() {
   if (!me) return;
-  $("stats").innerHTML = [
-    ["hp", `${Math.max(0, me.hp)}/${maxHp()}${me.god ? " ⭐" : ""}`, "Hitpoints"], ["combat", G.combatOf(me), "Combat level"],
-    ["total", total(), "Total level"], ["items/tickets", G.cashIn(me).toLocaleString(), "tickets"],   /* (the owner, 2026-09-21: it wore ui/cash.png, a stack of coins, from when the currency was Cash. The ticket is the item's own picture, the one in the top bar.) */
-    ["bag", `${me.inv.length}/${G.bagMax(me)}`, "Inventory"], ["area", Z.key ? (Z.def.island ? "Island" : Z.def.home ? "Cottage" : Z.def.name.replace(/^The /, "").split(" ")[0]) : "", "Area"]
-  ].map(([i, v, t]) => `<div class="stat" title="${t}"><i><img src="/v3/assets/img/glad/flat/${i.includes("/") ? i : `ui/${i}`}.png?v=1" alt=""></i><b>${v}</b></div>`).join("");
+  const hp = Math.max(0, me.hp), max = Math.max(1, maxHp()), k = Math.min(1, hp / max);
+  const area = Z.key ? (Z.def.island ? "Island" : Z.def.home ? "Cottage" : Z.def.name.replace(/^The /, "")) : "";
+  $("stats").innerHTML = `<div class="hpb${k < 0.25 ? " low" : k < 0.5 ? " mid" : ""}" title="Hitpoints"><img src="/v3/assets/img/glad/flat/ui/hp.png?v=1" alt=""><span class="hpb-bar"><i style="width:${Math.round(k * 100)}%"></i><b>${hp} / ${max}${me.god ? " ⭐" : ""}</b></span></div><span class="hpb-area" title="Area">${esc(area)}</span>`;
 }
 /* Under the bag: what a casino player looks at. tickets first and biggest; then what's in the bag that TURNS INTO cash
    (so a full bag reads as "go and see the Cashier"); the jackpot, because it's the dream; today's three paid jobs
