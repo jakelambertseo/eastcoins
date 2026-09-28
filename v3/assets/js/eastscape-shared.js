@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 346;   /* (2026-09-28) the modernised UI and the UI kit: a bump so every open tab reloads onto the new page */
+export const VERSION = 347;   /* (2026-09-28) the modernised UI and the UI kit: a bump so every open tab reloads onto the new page */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -3437,6 +3437,7 @@ for (const [t, m] of Object.entries(MOBS)) {
   m.hp = Math.max(2, Math.round(m.hp * OUTSIDE_HP));
   m.max = Math.max(2, Math.round((m.max + 1) * OUTSIDE_DMG - 1));
   m.att = Math.max(m.att, attFor(m.lvl));   /* see attFor: raises only, so a hand-tuned brawler keeps its edge */
+  m.outside = true;   /* (2026-09-28) an open-world monster: A MONSTER'S AIM, near the end of this file, re-aims it with the rest */
 }
 
 /* WHAT A MONSTER DROPS (2026-09-20, the owner: "1-3 items, with the third being a rare one"). The same three lines for
@@ -8000,7 +8001,44 @@ for (const t of ["potboy", "dgoblin", "dwisp", "dogre", "diron", "deepwarden"]) 
    same way and only upward. Health and max hit are NOT put through OUTSIDE_HP/OUTSIDE_DMG: those four maps' numbers were written as
    the final ones (three times a Yard monster's health on purpose). */
 for (const t of ["gull", "deckhand", "clawhand", "krakenarm", "captainclaw", "slaggolem", "furnaceimp", "cinderelemental", "bessemer",
-  "wasp", "orchardorc", "orchardkeeper", "hedgething", "gardener", "potboy", "dgoblin", "dwisp", "dogre", "diron", "deepwarden", "pumpkinking"]) MOBS[t].att = Math.max(MOBS[t].att, attFor(MOBS[t].lvl));
+  "wasp", "orchardorc", "orchardkeeper", "hedgething", "gardener", "potboy", "dgoblin", "dwisp", "dogre", "diron", "deepwarden", "pumpkinking"]) { MOBS[t].att = Math.max(MOBS[t].att, attFor(MOBS[t].lvl)); MOBS[t].outside = true; }
+/* ============================================================ A MONSTER'S AIM (2026-09-28)
+   The owner: "I still see most users getting hit for 0s across the board, even at the new higher level areas. what can we do to balance?",
+   then, of the danger that more hits bring: "About 1.5x", and of the Boardwalk and the Depths: "No, keep them harsh".
+
+   WHY THE 0s CAME BACK. attFor aims a monster at expectedDefence: the six armour pieces of the tier its level allows, and nothing else.
+   A real player also wears the tier's amulet and ring, and reforges. Measured (tools/eastscape-hitcheck.mjs): against a player of the
+   monster's own level in the tier's full kit, 54 of the 64 open-world monsters sat on HIT_FLOOR (18% of swings); against the same kit at
+   +5, all 64. And the linear rule makes that a cliff, not a slope: 0.04 of hit chance per point of defence means twenty points (about
+   what +5 everywhere adds by mid-game) take a monster from 50% to the floor, so accuracy only ever mattered for the unequipped.
+
+   WHAT REPLACES IT, for open-world monsters only (the Yard's starters, the Tower and the dungeons keep hitChance and their own tuning):
+     mobHitChance = 0.5 * (aim / defence) ^ MOB_K, between HIT_FLOOR and 0.95
+   A RATIO, so a point of defence is worth less the more of it you have: defence keeps helping all the way up and never switches the
+   monster off. aim is set so a player of the monster's level in its tier's full kit is hit MOB_AIM of the time. Measured with it: 42%
+   in full kit, about 30% at +3, about 27% at +5, about 30% ten levels over the area and about 20% twenty over; the floor again only
+   for somebody far above where they are standing.
+
+   AND THE MAX HIT COMES DOWN TO MATCH. A monster landing twice as often at the same max would double what a fight costs, so each one's max
+   is rescaled so the damage it does over a fight is MOB_DANGER times what it did before this change, against that same player: more
+   numbers and fewer 0s, and about 1.5 times the food, not 2.5. It is the same rule for every open-world monster, the Boardwalk and the
+   Depths included (their long fights keep them the harshest places, by the owner's choice). A hit still does at least 1, so a 0 is a miss. */
+export const MOB_K = 3, MOB_AIM = 0.42, MOB_DANGER = 1.5;
+const KIT_SLOTS = ["helm", "body", "legs", "shield", "boots", "gloves", "amulet", "ring"];
+export const kitDefence = (lvl) => {
+  let t = TIERS[0];
+  for (const x of TIERS) if (lvl >= (x.gate || 1)) t = x;
+  const best = {};
+  for (const [k, it] of Object.entries(ITEMS)) if (it.tier === t.key && KIT_SLOTS.includes(it.slot) && (it.def || 0) > (best[it.slot] || 0) && !it.held) best[it.slot] = it.def;
+  return (lvl + Object.values(best).reduce((a, b) => a + b, 0)) / 2;
+};
+export const mobHitChance = (aim, def) => Math.max(HIT_FLOOR, Math.min(0.95, 0.5 * Math.pow(aim / Math.max(1, def), MOB_K)));
+for (const m of Object.values(MOBS)) {
+  if (!m.outside) continue;
+  const d = kitDefence(Math.min(99, m.lvl)), was = hitChance(m.att, d), aim = Math.round(d * Math.pow(MOB_AIM / 0.5, 1 / MOB_K)), now = mobHitChance(aim, d);
+  m.max = Math.max(2, Math.round((m.max + 1) * MOB_DANGER * (was / now) - 1));
+  m.att = aim;
+}
 /* (2026-09-27, the owner: "the gem tiles you added need to have a chance at dropping the ruby/topaz/etc ores we added to mining ores, just
    very slowly") an abyss crystal vein turns up any of the four gems, together about a third as often as a gem ore turns up its own */
 GEM_DROP.abyss_crystal = [["ruby", 0.0015], ["sapphire", 0.0015], ["topaz", 0.0012], ["opal", 0.0008]];

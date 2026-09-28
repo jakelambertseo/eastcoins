@@ -3560,7 +3560,7 @@ export class World {
         m.face = foe.x > m.x ? 1 : -1;
         if (now - m.lastSwing >= G.MOBS[m.t].speed * (m.slowUntil > now ? G.MAGIC.slow.mult : 1)) {   /* (2026-09-26) Frost slows the swing */
           m.lastSwing = now; m.swingAt = now;
-          const C = foe.C, hit = Math.random() < G.hitChance(G.MOBS[m.t].att, G.defenceRollOf(C)), dmg = hit ? Math.max(1, Math.round(rint(1, G.MOBS[m.t].max) * (m.enraged ? (G.MOBS[m.t].enrage?.mul ?? CR.CRYPT.enrageMul) : 1) * (1 - G.fxOf(C).tough))) : 0;   /* (tough: the visor, the Safety Net; whiskey makes it worse) */
+          const C = foe.C, hit = Math.random() < (G.MOBS[m.t].outside ? G.mobHitChance : G.hitChance)(G.MOBS[m.t].att, G.defenceRollOf(C)),   /* (2026-09-28) an open-world monster aims by ratio: A MONSTER'S AIM in the rules file */ dmg = hit ? Math.max(1, Math.round(rint(1, G.MOBS[m.t].max) * (m.enraged ? (G.MOBS[m.t].enrage?.mul ?? CR.CRYPT.enrageMul) : 1) * (1 - G.fxOf(C).tough))) : 0;   /* (tough: the visor, the Safety Net; whiskey makes it worse) */
           if (!foe.god) { C.hp -= dmg; this.touch(foe); }
           if (dmg) foe.hurtAt = now;
           foe.combatAt = now;

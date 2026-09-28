@@ -17,15 +17,17 @@ import * as G from "file:///C:/Users/jake/code/eastcoins/v3/assets/js/eastscape-
 import fs from "node:fs";
 
 const page = fs.readFileSync("C:/Users/jake/code/eastcoins/eastscape.html", "utf8");
-const from = page.indexOf("function renderHs() {");
+/* (2026-09-28) from HS_ICON, not renderHs: the leaderboard rebuild put its board icons (HS_ICON, hsIco) and the search (hsQ) just above it */
+const from = page.indexOf("const HS_ICON");
 const to = page.indexOf("\n}", page.indexOf('querySelectorAll("[data-who]")', from)) + 2;
 if (from < 0 || to < 2) throw new Error("renderHs not found in the page");
-const src = page.slice(from, to);
+const src = `const SKILLS = G.SKILLS, ITEMS = G.ITEMS, UIA = "/ui/", sico = () => "<i></i>", ico = () => "<i></i>";
+` + page.slice(from, to);
 
 const els = {};
 const $ = (id) => (els[id] ||= { id, _html: "", textContent: "",
   set innerHTML(v) { this._html = String(v); }, get innerHTML() { return this._html; },
-  querySelectorAll: () => [] });
+  querySelectorAll: () => [], addEventListener() {} });
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const TIX_ICO = '<img src="/v3/assets/img/glad/flat/items/tickets.png?v=1" alt="" class="tixi">';
 const SFX = { play() {} };
@@ -42,6 +44,9 @@ const rowsFor = () => [
 ];
 const hsData = { players: 20, boards: Object.fromEntries(G.HISCORES.map(([k]) => [k, rowsFor()])) };
 
+/* (2026-09-28) the leaderboard rebuild: the top three stand on a podium (.hs-p, the achievement medals ach_expert/skilled/novice) and the
+   rest are .hsr rows, so an entry is either */
+const entries = (h) => (h.match(/class="hs-p |class="hsr/g) || []).length;
 let bad = 0;
 for (const [k, label] of G.HISCORES) {
   for (const id of Object.keys(els)) delete els[id];
@@ -52,9 +57,9 @@ for (const [k, label] of G.HISCORES) {
     const out = fn(hsData, k, 0, G, you, esc, TIX_ICO, SFX, $, openProfile);
     html = out.body;
     const checks = [
-      ["rows rendered", (html.match(/class="hsr/g) || []).length === 5],
+      ["rows rendered", entries(html) === 5],
       ["your row marked", html.includes('class="hsr me"')],
-      ["medals on the top three", html.includes("\u{1F947}") && html.includes("\u{1F949}")],
+      ["medals on the top three", html.includes("ach_expert") && html.includes("ach_skilled") && html.includes("ach_novice")],
       ["every board listed in the rail", (out.tabs.match(/data-hs=/g) || []).length === G.HISCORES.length],
       ["one tab selected", (out.tabs.match(/aria-selected="true"/g) || []).length === 1],
       ["the rail has its four headings", (out.tabs.match(/class="hsg"/g) || []).length === G.HISCORE_GROUPS.length],   /* (2026-09-27) */
@@ -88,8 +93,8 @@ try {
   const three = fn({ players: 9, boards: { crypt1: clears } }, "crypt1", 3, G, you, esc, TIX_ICO, SFX, $, openProfile);
   const four = fn({ players: 9, boards: { crypt1: clears } }, "crypt1", 4, G, you, esc, TIX_ICO, SFX, $, openProfile);
   const none = fn({ players: 9, boards: { crypt1: clears } }, "crypt1", 2, G, you, esc, TIX_ICO, SFX, $, openProfile);
-  const ok = (three.match(/class="hsr/g) || []).length === 1 && three.includes("\u{1F947}") && three.includes('class="hsr me"') && !three.includes("A + B")
-    && (four.match(/class="hsr/g) || []).length === 1 && four.includes("E + F + G + H") && (none.match(/class="hsr/g) || []).length === 1 && none.includes("A + B") && /2-man/.test(fn({ players: 9, boards: { crypt1: clears } }, "crypt1", 0, G, you, esc, TIX_ICO, SFX, $, openProfile));
+  const ok = entries(three) === 1 && three.includes("ach_expert") && three.includes('class="hs-p p1 me"') && !three.includes("A + B")
+    && entries(four) === 1 && four.includes("E + F + G + H") && entries(none) === 1 && none.includes("A + B") && /2-man/.test(fn({ players: 9, boards: { crypt1: clears } }, "crypt1", 0, G, you, esc, TIX_ICO, SFX, $, openProfile));
   if (!ok) { console.log("  !! the party-size filter ranks the wrong clears"); bad++; } else console.log("  the party-size filter ranks each size on its own");
 } catch (e) { console.log("  !! the party-size filter THREW " + e.message); bad++; }
 

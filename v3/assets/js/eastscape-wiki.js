@@ -1056,6 +1056,15 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-28", title: "A new look, and monsters that land their hits",
+    items: [
+      "MONSTERS LAND THEIR HITS: out in the world, a monster now aims at the gear its level asks for, all of it, amulet and ring included. Fight something at your level in your tier's kit and it lands about 4 swings in 10 (it was nearer 2). More defence still helps all the way up, reforges included, but it never switches a monster off. Its hits are a little smaller to match, so a fight costs about half again what it did: pack food. The Yard's starters, the Tower and the dungeons are unchanged.",
+      "A NEW LOOK FOR EVERY WINDOW: one style across the game, with titles in a new face and a new text face for everything you read. The Market is a Grand Exchange (your eight offers always in view, browse by item, sell from what you own), the quest log is a journal (what you're on, what's near, the step you're on), and the Hiscores have a podium and your own rank pinned at the top.",
+      "THE SCREEN: a slim health bar, a slimmer top bar with your menu under your name and settings behind the gear, one wallet strip under the bag, a quest tracker on screen, a paper-doll equipment tab, and I / U / K / J for the bag, gear, skills and quests.",
+      "FIXED: right-clicking a tree, rock or fishing spot that needs a tool shows its card again.",
+    ],
+  },
+  {
     date: "2026-09-27", title: "The Depths of the Mountain, and chat that remembers",
     items: [
       "THE DEPTHS OF THE MOUNTAIN is open: north of the Thunderhead and south of the Trailer Park. Ledges of mossy rock over a drop nobody has found the bottom of, combat 73 to 84. Old Pickett at the landing has three quests.",
