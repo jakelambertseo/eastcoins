@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 338;
+export const VERSION = 339;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7692,8 +7692,11 @@ fmob("furnaceimp", { name: "Furnace Imp", size: "m", lvl: 78, hp: 280, att: 82, 
 fmob("cinderelemental", { name: "Cinder Elemental", size: "l", lvl: 84, hp: 380, att: 88, def: 64, max: 24, speed: 2600, box: [38, 28], aggro: 3, guard: { melee: 0.35 }, weak: "frost", resist: "fire",
   ex: "A fire with a shape and a grudge. A sword goes through it; arrows and frost are what it minds." }, 500,
   [["emberglass", 1, 0.25], ["nova_ore", 1, 0.12], ["singularity_ore", 1, 0.02], ["opal", 1, 0.01]]   /* opal 3% -> 1% */, [["angels_ring", 0.02]]);
-fmob("bessemer", { name: "Old Bessemer", size: "xl", lvl: 88, hp: 5000, att: 100, def: 76, max: 32, speed: 2600, box: [20, 46], aggro: 3, range: 2, boss: true, open: true, guard: { archery: 0.35 }, weak: "frost",
-  ex: "The foundry's first foreman, or what the lava left of him: a skull on a post that comes up out of the ring. Reaches two tiles. Anyone who hurts him shares the kill." }, 1200,
+/* (2026-09-27, the owner: "the big boss at the end (animated)", then "He becomes Old Bessemer") OLD BESSEMER IS THE GIANT now: the pack's giant boss, up
+   to his chest in the wall of bodies at the end of the Hall, his hands on the floor. He does not move (perch) and he reaches three tiles; `box` is
+   half his width and his height, so a click anywhere on him counts. The skull on a post he used to be is the Floating Isle's crusher trap. */
+fmob("bessemer", { name: "Old Bessemer", size: "xl", lvl: 88, hp: 5000, att: 100, def: 76, max: 32, speed: 2600, box: [110, 230], aggro: 4, range: 3, boss: true, open: true, guard: { archery: 0.35 }, weak: "frost",
+  ex: "The foundry's first foreman, grown into the wall of bodies at the end of the Hall: horns, a mouth full of fire, and hands the size of a cart. He never gets up; he doesn't need to. Reaches three tiles. Anyone who hurts him shares the kill." }, 1200,
   [["tickets", [500, 1000]], ["nova_ore", [2, 4]], ["singularity_ore", [1, 2]], ["emberglass", [2, 4]], ["singularity_core", 1, 0.03]], [["bookies_amulet", 0.05], ["gamblers_ring", 0.05], ["egg_cindered", 0.05]]);
 MOBS.bessemer.drops.push(["bessemergloves", 1, 0.01]);   /* the chase: see ITEMS.bessemergloves */
 BOSSES.add("bessemer");
@@ -7742,15 +7745,55 @@ Object.assign(QUESTS, {
   fdbessemer: {
     name: "Old Bessemer", giver: "Basalt", where: "The Foundry", icon: "💀", requires: ["fdimps"],
     goal: { type: "kill", mob: "bessemer", n: 1, what: "Old Bessemer" },
-    brief: "Old Bessemer comes up out of the lava at the bottom of the ring. Basalt would like him put down.",
-    talk: { offer: ["He ran this floor before me. The lava took him and gave back the skull, and the skull kept giving orders.", "Bottom of the ring, between the statues and down. He reaches two tiles and arrows won't get through the bone. Bring people; everyone who hurts him shares him."], accept: "Together, then.", decline: "Not today.",
-      accepted: "Through the statues, down the ring. Frost, if you have it.", progress: "He's still up.", ready: "The floor went quiet. He's down?", hand: "He's down.",
+    brief: "Old Bessemer is in the Giant's Hall, through the Lava Maze, over the Chained Rock and past the burning door. Basalt would like him put down.",
+    talk: { offer: ["He ran this floor before me. The lava took him and gave him back bigger, and he kept giving orders.", "South through the maze, across the chains, through the burning door. He reaches three tiles and arrows skate off him. Bring people; everyone who hurts him shares him."], accept: "Together, then.", decline: "Not today.",
+      accepted: "South, the maze, the chains, the door. Frost, if you have it.", progress: "He's still up.", ready: "The floor went quiet. He's down?", hand: "He's down.",
       done: "Forty years of him. Here: the floor's takings, and they're yours." },
     reward: { coins: 25000, xp: { melee: 12000, hp: 5000 }, text: "25,000 tickets, 12,000 Melee xp, 5,000 Hitpoints xp" }
   }
 });
 for (const [k, tier] of [["fdslag", "medium"], ["fdimps", "hard"], ["fdbessemer", "hard"]]) { QUESTS[k].stages = [{ ...QUESTS[k].goal }]; QUESTS[k].tier = tier; }
-if (!HOLD.foundry) { OPEN.add("foundry"); SCENES.thunderhead.exits.s = "foundry"; PET_SCENES.add("foundry"); EGGS.egg_cindered.from.push("foundry"); }
+/* (2026-09-27) THE FOUNDRY'S SEVEN AREAS (eastscape-closed.js): the Works is `foundry`, the key the Thunderhead, Basalt's quests and the saves
+   already use; the other six hang off it. Levels rise toward the Hall. */
+export const FD_AREAS = ["fd_grove", "fd_maze", "fd_isle", "fd_chain", "fd_gate", "fd_hall"];
+Object.assign(BANDS, { fd_grove: [76, 84], fd_maze: [76, 84], fd_isle: [80, 88], fd_chain: [82, 88], fd_gate: [82, 88], fd_hall: [84, 90] });
+for (const k of FD_AREAS) DEATH[k] = { share: 0.1, cap: 5000 };
+Object.assign(VERB, { vortex: "Enter", burndoor: "Enter" });
+EXAMINE.vortex = ["A ring of violet light, turning. Step in and it puts you somewhere else in the Foundry."];
+EXAMINE.burndoor = ["A door of fire in the castle wall. Whatever is behind it is very big and knows you are coming."];
+/* THE TRAPS (the owner: "the traps placed once each around the map", then "Warn, then hit hard"). Each runs on the WALL CLOCK, so the server and
+   every page agree on its phase without a word sent: `period` a cycle, a WARNING first (its tiles show the pack's danger mark and the trap winds
+   up), then the STRIKE, then it winds DOWN, then it rests. Anyone standing on one of its tiles while it strikes takes TRAP_HIT of their health
+   (less by their own toughness), once a strike. It is dodgeable by design: the warning is the whole point, and nothing here is an instant kill
+   from full health. `cells` are the tiles it covers, from the trap's own tile; the volcano's balls land on three tiles picked afresh each cycle
+   from its `targets`, the same pick on the server and every page. `phase` staggers traps so they do not all fire together. */
+export const TRAP_HIT = 0.2;
+const ring = (r0, r1, sx = 1, sy = 1) => { const o = []; for (let dy = -r1; dy <= r1; dy++) for (let dx = -r1; dx <= r1; dx++) { const d = Math.max(Math.abs(dx) / sx, Math.abs(dy) / sy); if (d >= r0 && d <= r1) o.push([dx, dy]); } return o; };
+export const TRAPS = {
+  spikes: { name: "Bone spikes", period: 6500, warn: 1300, strike: 800, end: 900, cells: [[-1, -1], [0, -1], [1, -1], [-1, 0], [0, 0], [1, 0]], say: "Bone spikes burst out of the ground under you!" },
+  burn: { name: "Burning ground", period: 9000, warn: 1500, strike: 2600, end: 900, cells: ring(0, 2, 1, 0.5).filter(([dx, dy]) => Math.abs(dy) <= 1), say: "The ground under you catches fire!" },
+  spit: { name: "The spitfire", period: 8000, warn: 1600, strike: 1800, end: 900, cells: [1, 2, 3, 4, 5, 6].flatMap((k) => [[k, Math.round(k * 0.45)], [-k, Math.round(k * 0.45)], [k, -Math.round(k * 0.45)], [-k, -Math.round(k * 0.45)]]), say: "The spitfire's jet catches you!" },
+  crush: { name: "The crusher", period: 9000, warn: 1500, strike: 1100, end: 1400, cells: ring(1, 2, 1, 1).filter(([dx, dy]) => Math.abs(dx) + Math.abs(dy) <= 3), say: "The crusher comes down on you!" },
+  geyser: { name: "The geyser", period: 7000, warn: 900, strike: 2100, end: 1100, cells: ring(0, 1), say: "The geyser goes up under you!" },
+  volc: { name: "The tiny volcano", period: 6000, warn: 1500, strike: 600, end: 300, balls: 3, say: "A lava ball lands on you!" }
+};
+/** where a trap is in its cycle right now: { phase: "warn" | "strike" | "end" | "idle", t: ms into that phase, cycle } */
+export function trapPhase(ob, now) {
+  const T = TRAPS[ob.trap]; if (!T) return { phase: "idle", t: 0, cycle: 0 };
+  const at = now + (ob.phase ?? (ob.x * 977 + ob.y * 131)), cycle = Math.floor(at / T.period); let t = at - cycle * T.period;
+  if (t < T.warn) return { phase: "warn", t, cycle }; t -= T.warn;
+  if (t < T.strike) return { phase: "strike", t, cycle }; t -= T.strike;
+  if (t < T.end) return { phase: "end", t, cycle }; return { phase: "idle", t: t - T.end, cycle };
+}
+/** the tiles a trap covers this cycle (the volcano's three change every cycle; everything else is fixed) */
+export function trapCells(ob, cycle) {
+  const T = TRAPS[ob.trap]; if (!T) return [];
+  if (T.balls) { const pool = ob.targets || []; if (!pool.length) return []; const out = [], used = new Set(); let h = (cycle * 2654435761 + ob.x * 97 + ob.y) >>> 0;
+    for (let i = 0; i < T.balls * 4 && out.length < Math.min(T.balls, pool.length); i++) { h = (h ^ (h << 13)) >>> 0; h = (h ^ (h >>> 17)) >>> 0; h = (h ^ (h << 5)) >>> 0; const k = h % pool.length; if (!used.has(k)) { used.add(k); out.push(pool[k]); } }
+    return out; }
+  return T.cells.map(([dx, dy]) => [ob.x + dx, ob.y + dy]);
+}
+if (!HOLD.foundry) { OPEN.add("foundry"); SCENES.thunderhead.exits.s = "foundry"; PET_SCENES.add("foundry"); for (const k of FD_AREAS) { OPEN.add(k); PET_SCENES.add(k); } EGGS.egg_cindered.from.push("foundry"); }
 const _preOrchard = new Set(Object.keys(ITEMS));
 /* ============================================================ THE ORCHARD WALL (2026-09-27, the massive update, 7 of 8)
    EASTSCAPE-MAPS.md's map A, built on Rafael Matos's "ERW - Grass Land 2.0": the country south of the Boneyard - a market wagon under

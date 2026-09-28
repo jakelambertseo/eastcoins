@@ -1,0 +1,19 @@
+{
+ "out": "fd_maze",
+ "fill": [
+  40,
+  30,
+  34
+ ],
+ "rects": [
+  {
+   "src": "lt-wild/cut/volc/maze.png",
+   "sx": 0,
+   "sy": 0,
+   "w": 44,
+   "h": 26,
+   "dx": 0,
+   "dy": 0
+  }
+ ]
+}

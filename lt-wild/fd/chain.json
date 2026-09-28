@@ -1,0 +1,48 @@
+{
+ "out": "fd_chain",
+ "fill": [
+  40,
+  30,
+  34
+ ],
+ "rects": [
+  {
+   "src": "lt-wild/cut/mk/volcano-0.png",
+   "sx": 2,
+   "sy": 14,
+   "w": 2,
+   "h": 2,
+   "dx": 0,
+   "dy": 0,
+   "dw": 44,
+   "dh": 26
+  },
+  {
+   "src": "lt-wild/cut/volc/chain-top-mirror.png",
+   "sx": 0,
+   "sy": 0,
+   "w": 7,
+   "h": 9,
+   "dx": 9,
+   "dy": 0
+  },
+  {
+   "src": "lt-wild/cut/volc/chain-top-mirror.png",
+   "sx": 15,
+   "sy": 0,
+   "w": 10,
+   "h": 9,
+   "dx": 24,
+   "dy": 0
+  },
+  {
+   "src": "lt-wild/cut/mk/volcano-4.png",
+   "sx": 0,
+   "sy": 0,
+   "w": 25,
+   "h": 17,
+   "dx": 9,
+   "dy": 9
+  }
+ ]
+}

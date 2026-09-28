@@ -1,0 +1,63 @@
+{
+ "out": "fd_gate",
+ "fill": [
+  40,
+  30,
+  34
+ ],
+ "rects": [
+  {
+   "src": "lt-wild/cut/mk/volcano-0.png",
+   "sx": 2,
+   "sy": 14,
+   "w": 2,
+   "h": 2,
+   "dx": 0,
+   "dy": 0,
+   "dw": 44,
+   "dh": 26
+  },
+  {
+   "src": "lt-wild/cut/mk/volcano-0.png",
+   "sx": 0,
+   "sy": 0,
+   "w": 4,
+   "h": 9,
+   "dx": 0,
+   "dy": 0,
+   "dw": 8,
+   "dh": 9
+  },
+  {
+   "src": "lt-wild/cut/mk/volcano-0.png",
+   "sx": 24,
+   "sy": 0,
+   "w": 4,
+   "h": 9,
+   "dx": 36,
+   "dy": 0,
+   "dw": 8,
+   "dh": 9
+  },
+  {
+   "src": "lt-wild/cut/mk/volcano-0.png",
+   "sx": 0,
+   "sy": 0,
+   "w": 28,
+   "h": 17,
+   "dx": 8,
+   "dy": 0
+  },
+  {
+   "src": "lt-wild/cut/mk/volcano-0.png",
+   "sx": 10,
+   "sy": 14,
+   "w": 7,
+   "h": 3,
+   "dx": 18,
+   "dy": 17,
+   "dw": 7,
+   "dh": 9
+  }
+ ]
+}

@@ -775,58 +775,301 @@ export function createClosedScenes(G, H) {
       lines: ["Apples, walnuts, honey, and a stove if you've something to cook. Welcome to the Wall.", "The pines are anyone's. The walnuts are across the brook, and so are the orcs.", "The bridge is the only way over. They know that too.", "Mind the wasps over the pond. They'll have the eye out of you for an apple."] }],
     bots: []
   },
+  /* (2026-09-27) THE FOUNDRY, REBUILT (the owner: "i want the foundry to GUARANTEED use these parts of the tileset as the level design. the big
+     boss at the end (animated), the traps placed once each around the map, this needs to be a massive map as it is very late game, it needs to
+     feel more open"; then "7 areas, walked", "Warn, then hit hard", "He becomes Old Bessemer"). SEVEN AREAS, each a picture cut from the Volcano
+     pack's own level design: five from its two Tiled maps (tools/eastscape-tmx-render.mjs), two from its mockups (lt-wild/fd/*.json), where you
+     can walk read off the picture by lt-wild/fd-walk.mjs. The road: the Thunderhead -> THE WORKS -> THE LAVA MAZE -> THE CHAINED ROCK -> THE BOSS
+     GATE -> (the burning door) -> THE GIANT'S HALL. Off it: THE BLOOD GROVE, west of the Works, and THE FLOATING ISLE, through the maze's portal.
+     One of each of the pack's six traps: bone spikes (the Works), burning ground (the Grove), the spitfire (the Maze), the crusher (the Isle), a
+     geyser (the Chained Rock) and the tiny volcano's lava balls (the Gate). Mining as before: four eclipse, three nova, two singularity. */
   foundry: {
-    name: "The Foundry", exits: { n: "thunderhead" }, bgArt: ["foundry_bg1", "foundry_bg2"], noBanks: true, miniWater: "#e0601c", tint: "rgba(70,20,0,.14)",
+    name: "The Works", exits: { n: "thunderhead", w: "fd_grove", s: "fd_maze" }, arrive: { n: { x: 22, y: 1 }, w: { x: 1, y: 6 }, s: { x: 22, y: 24 } },
+    bgArt: ["foundry_bg1", "foundry_bg2"], noBanks: true, ground: "lava", miniWater: "#e0601c", tint: "rgba(70,20,0,.10)",
     rows: [
-          "~~~~.................eee................~~~~",
-          "~~~~..~~~....................~~~........~~~~",
-          "~~~~..~~~........~~~....~~~..~~~........~~~~",
-          "~~~~..~~~~~......~~~....~~~..~~~........~~~~",
-          "~~~~~....~~....~~~~~....~~~~~~~....~~~~.~~~~",
-          "~~~~~..........~~~~~....~~~~~~~~~~.~~~~.~~~~",
-          "~~~~~..........~~~~~....~~~~~~~~~~.~~~~.~~~~",
-          "~~~~~..........~~~~~....~~~~~~~~~~.~~~~.~~~~",
-          "~~~..~~~~~~~~.~~~...........~~~~~~...~~~~~~~",
-          "~~~..~~~~~~~~.~~~...........~~~~~~...~~~~~~~",
-          "~~~.~~~~.~~~~.~~~...........~~~~~~.....~~~~~",
-          "~~~.~~~~.~~~~.~~~...........~~~~~~.~~~~.....",
-          "~~~.~~~~.~~~~.~~~...........~~~~~~.~~~~.....",
-          "~~~.~~~~.~~~~.~~~...........~~~....~~~~.....",
-          "~~~.~~~~.~~~~.~~~...........~~~....~~~~.....",
-          "~~~.~~~~.~~~~.~~~~.........~~~~.............",
-          "~~~...........~~~~~~~~~~~~~~~~~.............",
-          "~~~...........~~~~~~~~~~~~~~~~~.............",
-          "~~~...........~~~~~~~~~~~~~~~~~.....~~~~~~~~",
-          "~~~.......~~.......~~....................~~~",
-          "~~~.~~~~~...~~~~~.....~~~...~~~~..~~~~~.....",
-          "~~~.~~~~~...~~~~~.....~~~...~~~~..~~~~~.....",
-          "~~~.~~~~~...~~~~~.....~~~...~~~~..~~~~~..~~~",
-          "~~~.........................~~~~~~.......~~~",
-          "~~~~~~~~~~~~~~..........~~~~~~~~~~..~~~~.~~~",
-          "~~~~~~~~~~~~~~..........~~~~~~~~~~..~~~~.~~~"
+      ".....................eee....................",
+      "............................................",
+      ".................................####.......",
+      "..............#######.....############......",
+      "..........###########.....########..........",
+      "e.........####............#.................",
+      "e.........##........#######..........##.....",
+      "e.................#############......##.....",
+      "............................................",
+      "..........##......~~~~~~~~~~~~.#......##....",
+      "...........#......~~~######~~~~.......######",
+      "....##.##..........~~######~~~~........#####",
+      "....#########......~~######~~~~.............",
+      "#.#.##..#####......~~######~~~~......#######",
+      "#.####............~~~######~~~~.............",
+      "#####..............~~~~~~~~~~~~.......~~~~~~",
+      "###..............#.~~~~~~~~~~~~...........~~",
+      "...................~~~~~...................~",
+      "............#..##.~~~~......................",
+      ".............##...~~~.......................",
+      "............~...~~~~........................",
+      "............~~~....~............~~~.......~~",
+      "............~~~....~.........~~~~~~~..~~~~~~",
+      "..............~~..~~........~~.~..~~~~~~~~~#",
+      "............................~........~~~~~~#",
+      "#######..............eee..............~~~~~~"
     ],
     build() {
       const { g, objs } = fromRows(this.rows, G);
-      /* the veins: the Depths' three ores out in the open. Eclipse by the top-left walls and the bottom-left, Nova on the east side
-         and the floor, Singularity in the ring's middle and by the pillars */
-      for (const [x, y] of [[7, 6], [12, 6], [5, 17], [11, 17]]) { objs.push({ t: "rock", ore: "eclipse_ore", art: "fd_vein_eclipse", x, y, name: "Eclipse vein", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[y][x] = "#"; }
-      for (const [x, y] of [[33, 15], [41, 13], [19, 23]]) { objs.push({ t: "rock", ore: "nova_ore", art: "fd_vein_nova", x, y, name: "Nova vein", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[y][x] = "#"; }
-      for (const [x, y] of [[22, 11], [36, 9]]) { objs.push({ t: "rock", ore: "singularity_ore", art: "fd_vein_singularity", x, y, name: "Singularity vein", req: { skill: "mining", lvl: 90 }, xp: 300 }); g[y][x] = "#"; }
-      /* the blast furnace on the workfloor */
-      objs.push({ t: "blast", x: 26, y: 21, name: "The blast furnace" }); g[21][26] = "#";
+      for (const [x, y] of [[3, 9], [8, 17]]) { objs.push({ t: "rock", ore: "eclipse_ore", art: "fd_vein_eclipse", x, y, name: "Eclipse vein", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[y][x] = "#"; }
+      objs.push({ t: "blast", x: 6, y: 20, name: "The blast furnace" }); g[20][6] = "#";
+      objs.push({ t: "trap", trap: "spikes", art: "fd_t_spikes", frames: 18, cols: 18, fw: 98, fh: 71, ax: 49, ay: 63, seq: {"idle": [0], "warn": [1, 2, 3], "strike": [4, 5, 6, 7, 8, 9], "end": [10, 11, 12, 13, 14, 15, 16, 17]}, x: 33, y: 18 });
       return { g, objs, blobs: [] };
     },
-    /* Slag Golems on the floor, the top-left and in the ring (76); Furnace Imps on the east side and the floor (78); Cinder Elementals
-       in the ring, the bottom-left and the east (84); Old Bessemer up out of the lava at the bottom of the ring (88, open, reaches two) */
-    /* (2026-09-27, the owner: "3 of each") three golems (the floor, the top-left, the ring), three imps (the top-right, the east side, the
-       east ledge) and three elementals (the ring, the bottom-left, the east), and Old Bessemer */
-    mobs: [["slaggolem", 10, 21, { respawn: G.levelRespawn("slaggolem") }], ["slaggolem", 8, 5, { respawn: G.levelRespawn("slaggolem") }], ["slaggolem", 19, 10, { respawn: G.levelRespawn("slaggolem") }],
-      ["furnaceimp", 34, 2, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 34, 9, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 41, 15, { respawn: G.levelRespawn("furnaceimp") }],
-      ["cinderelemental", 25, 12, { respawn: G.levelRespawn("cinderelemental") }], ["cinderelemental", 6, 17, { respawn: G.levelRespawn("cinderelemental") }], ["cinderelemental", 41, 12, { respawn: G.levelRespawn("cinderelemental") }],
-      ["bessemer", 22, 17, { perch: true, aggro: 3, respawn: [2400000, 3000000] }]],
-    npcs: [{ name: "Basalt", art: "basalt", x: 27, y: 2, still: true, quests: ["fdslag", "fdimps", "fdbessemer"], buys: { tally: 150 },   /* (2026-09-27) he pays for the imps' tallies */ hair: "#444", shirt: "#553", pants: "#332",
-      lines: ["Foreman. Mind the vents, mind the ring, and don't stand on anything orange.", "The blast furnace is on the floor, along the bottom. Every bar the little furnaces make, and more xp for it.", "The imps take from the floor. The golems ARE the floor. The elementals just don't like you.", "Every imp wears one of my tallies. Bring them back and I pay a hundred and fifty a tag.", "Slag in a double batch at the blast furnace makes a third bar. Four for eclipse, six for nova.", "Old Bessemer comes up at the bottom of the ring. He was foreman before me. He still thinks he is."] }],
+    mobs: [["slaggolem", 8, 1, { respawn: G.levelRespawn("slaggolem") }], ["slaggolem", 38, 20, { respawn: G.levelRespawn("slaggolem") }]],
+    npcs: [{ name: "Basalt", art: "basalt", x: 24, y: 2, still: true, quests: ["fdslag", "fdimps", "fdbessemer"], buys: { tally: 150 },   /* (2026-09-27) he pays for the imps' tallies */ hair: "#444", shirt: "#553", pants: "#332",
+      lines: ["Foreman. Mind the vents, mind the lava, and don't stand on anything that's glowing.", "The blast furnace is down on the left. Every bar the little furnaces make, and more xp for it.", "The imps take from the floor. The golems ARE the floor. The elementals just don't like you.", "Every imp wears one of my tallies. Bring them back and I pay a hundred and fifty a tag.", "Slag in a double batch at the blast furnace makes a third bar. Four for eclipse, six for nova.", "Old Bessemer's in the Hall, past the maze, the chained rock and the burning door. He was the first foreman. He got big.", "The spikes over there go off on their own. Watch the ground: it tells you first."] }],
     bots: []
+  },
+  fd_grove: {
+    name: "The Blood Grove", exits: { e: "foundry" }, arrive: { e: { x: 42, y: 6 } },
+    bgArt: ["fd_grove_bg1", "fd_grove_bg2"], noBanks: true, ground: "lava", miniWater: "#e0601c", tint: "rgba(80,10,10,.10)",
+    rows: [
+      "............................................",
+      "............................................",
+      "...#######.#.########.......................",
+      "#####################.......................",
+      "#######.............##......................",
+      "....................###....................e",
+      "~~~~~~................#....................e",
+      "~~~~~~....#....#####...#...............#...e",
+      "~~~~...#.....##.......##..............####..",
+      "~~~~...#....#...~~~...................###...",
+      "~~~~..........~.~~~....##.............###...",
+      "~~~~........~~~~~~~....##...................",
+      "~~~~........~~~~~...........................",
+      "~~~~.........~~~...............########.####",
+      "~~~~...................#####..#########.####",
+      "..............##.......########......#..##..",
+      "..............##...........####.............",
+      "..............##............#...............",
+      "...............#...........##.....#........#",
+      "...........................#................",
+      "............................................",
+      "###.....##.............#....................",
+      "#######.....................................",
+      "~~~.....~.#.................................",
+      "~~~~##~~~~##.................########.......",
+      "~~~~##~~~~~##............###################"
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      for (const [x, y] of [[26, 8], [36, 20]]) { objs.push({ t: "rock", ore: "eclipse_ore", art: "fd_vein_eclipse", x, y, name: "Eclipse vein", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[y][x] = "#"; }
+      for (const [x, y] of [[30, 20], [18, 21], [40, 17], [6, 10]]) objs.push({ t: "tuft", art: "fd_tumor", anim: "fd_tumor", frames: 14, cols: 10, fw: 198, fh: 113, fps: 9, x: x, y: y, w: 1, h: 1, ox: -41.5, oy: -20.2, edge: true, flat: true, name: "A pulsing pool", phase: x * 3 + y });
+      objs.push({ t: "trap", trap: "burn", art: "fd_t_burn", frames: 24, cols: 22, fw: 90, fh: 64, ax: 45, ay: 32, seq: {"idle": [0], "warn": [1, 2, 3, 4, 5, 6, 7, 8], "strike": [9, 10, 11, 12, 13, 14, 15, 16], "end": [17, 18, 19, 20, 21, 22, 23]}, x: 8, y: 17 });
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["slaggolem", 10, 20, { respawn: G.levelRespawn("slaggolem") }], ["slaggolem", 33, 4, { respawn: G.levelRespawn("slaggolem") }], ["furnaceimp", 24, 12, { respawn: G.levelRespawn("furnaceimp") }]],
+    npcs: [], bots: []
+  },
+  fd_maze: {
+    name: "The Lava Maze", exits: { n: "foundry", s: "fd_chain" }, arrive: { n: { x: 22, y: 1 }, s: { x: 24, y: 24 } },
+    bgArt: ["fd_maze_bg1", "fd_maze_bg2"], noBanks: true, ground: "lava", miniWater: "#e0601c", tint: "rgba(70,20,0,.10)",
+    rows: [
+      "###################..eee.........~~~########",
+      "##################................~~########",
+      ".################.................~~########",
+      "....#############................~~~~#######",
+      ".....###########........###......~~~########",
+      ".......######.....................~~########",
+      "........####......................~~########",
+      ".........................########.~~#######~",
+      "~....#..~~~~.#####...############~~~~###~~~~",
+      "~~..#..~~~~~~#####...#####~~~~~~~~~~~~~~~~~~",
+      "......~~~~~~~~~~##...###~~~~~~~~~~~~~~~~~~~~",
+      ".....~~~~~~~~~~~.....#..~~~..~~~~~~~~~~~~~~~",
+      ".....~~~~~~~~~..........~~~..~~~~~~~~~~~~~~~",
+      "...#.~~~~~~~~~...............~~~.~~~~~~~~~~~",
+      "..#..~~~~~~~~~~~..............~~.~~~~~~~~~~~",
+      "#...~~~~~~~~~~~...~~...#..#...~~.~~~~~~~~~~~",
+      "...~~~~...........~~...~~........~~~~~~~~~~~",
+      "~~~~~~~..........~~~...~~~~~~....~~~~~~~~~~~",
+      "~...~~~~~..~~~~..~~~~~~~~##~~~~..~~~~~~~~~~~",
+      ".....~~~~..~~~~~.~~~~....##..~~..~~~~~~~~~~~",
+      ".....~~~~..~~~~~~~.......###..~..~~~~~~~~~~~",
+      ".....~~~~..~~~~~~........###.....~~~~~~~~~..",
+      ".....~~~~..~~~~~.........###................",
+      ".....~~~~................###................",
+      ".........................###...#............",
+      ".......................eee................#."
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      for (const [x, y] of [[3, 20], [38, 23]]) { objs.push({ t: "rock", ore: "nova_ore", art: "fd_vein_nova", x, y, name: "Nova vein", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[y][x] = "#"; }
+      objs.push({ t: "vortex", anim: "fd_vortex", frames: 16, cols: 15, fw: 136, fh: 128, fps: 12, ox: -26.0, oy: -28.0, x: 25, y: 2, name: "The portal", row: { to: "fd_isle", x: 16, y: 15 } }); g[2][25] = "#";
+      objs.push({ t: "trap", trap: "spit", art: "fd_t_spit", frames: 29, cols: 6, fw: 341, fh: 171, ax: 170, ay: 85, seq: {"idle": [0], "warn": [1, 2, 3, 4, 5, 6, 7, 8], "strike": [15, 16, 17, 18, 19, 20, 21, 22], "sstart": [9, 10, 11, 12, 13, 14], "end": [23, 24, 25, 26, 27, 28]}, x: 28, y: 6 }); g[6][28] = "#";
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["furnaceimp", 2, 12, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 22, 13, { respawn: G.levelRespawn("furnaceimp") }], ["slaggolem", 20, 22, { respawn: G.levelRespawn("slaggolem") }]],
+    npcs: [], bots: []
+  },
+  fd_isle: {
+    name: "The Floating Isle", exits: {}, arrive: {},
+    bgArt: ["fd_isle_bg1", "fd_isle_bg2"], noBanks: true, ground: "lava", miniWater: "#e0601c", tint: "rgba(70,20,0,.10)",
+    rows: [
+      "########~~~~~~~~~~~~~~~~~~~~~##~~~##########",
+      "#####~##~~~~~~~~~~~~~~~~~~~~~##~~~##########",
+      "####~~##~~~~~~~~~~~~~~~~~~~~~##~~~#########~",
+      "###~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#########~~",
+      "###~~~~~~~~..........~~~~~~~~~~~~#######~~~~",
+      "####~~~~~~............~~~~~~~~~~~########~~~",
+      "####~~~~~~.........#........~~~~~########~~#",
+      "####~~~~~~..#.............#~~~~~~########~~#",
+      "####~~~~~................#.~~~~~~########~~#",
+      "####~~~~~..................~~~~~~########~~#",
+      "###~~~~~..................#~~~~~~~#####~~~~#",
+      "###~~~~~..................#......~~####~~~~#",
+      "#~~~~~~~..........................~~###~~###",
+      "~~~~~~~~.....##...........#......~~~~~~~~###",
+      "~~~~~~~~........................#~~~~~~~####",
+      "~~~~~~~~.######...................~~~~~~####",
+      "~~~~~~~~~######............######.~~~~~~####",
+      "~~~~~~~~~######...........#######~~~~~~~~###",
+      "~~~~~~~~~~~................######~~~~~~~~~~#",
+      "~~~~~~~~~~~~~~..................~~~~~~~~~~~#",
+      "~~~~~~~~~~~~~~........#...#~~~~~~~~~~~~~~~~#",
+      "~~~~~~~~~~~~~~.##.#..#..#...~~~~~~~~~~~~~###",
+      "~~~~~~~~~~~~~~~############.~~~~~~~~~~~~~###",
+      "~~~~~~~~~~~~~~~############.~~~~~~~~~~~~~###",
+      "~~~~~~~~~~~~~~~~###########~~~~~~~~~~~~~~~##",
+      "~~~~~~~~~~~~~~~~~#########~~~~~~~~~~~~~~~~~~"
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      objs.push({ t: "rock", ore: "singularity_ore", art: "fd_vein_singularity", x: 10, y: 9, name: "Singularity vein", req: { skill: "mining", lvl: 90 }, xp: 300 }); g[9][10] = "#";
+      objs.push({ t: "rock", ore: "nova_ore", art: "fd_vein_nova", x: 30, y: 12, name: "Nova vein", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[12][30] = "#";
+      objs.push({ t: "vortex", anim: "fd_vortex", frames: 16, cols: 15, fw: 136, fh: 128, fps: 12, ox: -26.0, oy: -28.0, x: 12, y: 14, name: "The portal", row: { to: "fd_maze", x: 22, y: 4 } }); g[14][12] = "#";
+      objs.push({ t: "trap", trap: "crush", art: "fd_t_crush", frames: 30, cols: 12, fw: 163, fh: 392, ax: 76, ay: 316, seq: {"idle": [0], "warn": [1, 2, 3, 4], "strike": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], "end": [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]}, x: 21, y: 13 }); g[13][21] = "#";
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["cinderelemental", 15, 5, { respawn: G.levelRespawn("cinderelemental") }], ["cinderelemental", 28, 15, { respawn: G.levelRespawn("cinderelemental") }], ["furnaceimp", 20, 19, { respawn: G.levelRespawn("furnaceimp") }]],
+    npcs: [], bots: []
+  },
+  fd_chain: {
+    name: "The Chained Rock", exits: { n: "fd_maze", s: "fd_gate" }, arrive: { n: { x: 11, y: 1 }, s: { x: 26, y: 24 } },
+    bgArt: ["fd_chain_bg1", "fd_chain_bg2"], noBanks: true, ground: "lava", miniWater: "#e0601c", tint: "rgba(70,20,0,.10)",
+    rows: [
+      "~~~~~~~~~#eee~~~~~~~~~~~~~~###~~##~~~~~~~~~~",
+      "~~~~~~~~~....~~~~~~~~~~~~~~###~~##~~~~~~~~~~",
+      "~~~~~~~~~..#.~~~~~~~~~~~~~~###~~##~~~~~~~~~~",
+      "~~~~~~~~~....~~~~~~~~~~~~~~##~~~##~~~~~~~~~~",
+      "~~~~~~~~~......~~~~~~~~~~#####~~~#~~~~~~~~~~",
+      "~~~~~~~~~.####..~~~~~~~~######~~##~~~~~~~~~~",
+      "~~~~~~~~~.....#.~~~~~~~~######~~##~~~~~~~~~~",
+      "~~~~~~~~~....#..~~~~~~~~#####~~~~#~~~~~~~~~~",
+      "~~~~~~~~~.......~~~~~~~~#~~#~~~~~#~~~~~~~~~~",
+      "~~~~~~~~~.......~~~~~~###~~#~~~~~#~~~~~~~~~~",
+      "~~~~~~~~~....#..~~###########~~~~#~~~~~~~~~~",
+      "~~~~~~~~~.....#.~~####~#######~~##~~~~~~~~~~",
+      "~~~~~~~~~.####..~~.##.~~######~~##~~~~~~~~~~",
+      "~~~~~~~~~......~~~.....~~#####~~~#~~~~~~~~~~",
+      "~~~~~~~~~....~~~~......~~~~##~~~##~~~~~~~~~~",
+      "~~~~~~~~~..#.~~~~.##...~~~~###~~##~~~~~~~~~~",
+      "~~~~~~~~~....~~~..##...~~~~###~~##~~~~~~~~~~",
+      "~~~~~~~~~##..~.....#..~~~~~###~~##~~~~~~~~~~",
+      "~~~~~~~~~.......~~~...~~~~~~#~~~~#~~~~~~~~~~",
+      "~~~~~~~~~~~...~~~~~~..~~~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~....~~~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~..##..~~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~...................~~~~~~~~~~~~~",
+      "~~~~~~~~~~~..#..................~~~~~~~~~~~~",
+      "~~~~~~~~~~..#....######..........~~~~~~~~~~~",
+      "~~~~~~~~~~...........eee.........~~~~~~~~~~~"
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      objs.push({ t: "rock", ore: "singularity_ore", art: "fd_vein_singularity", x: 19, y: 13, name: "Singularity vein", req: { skill: "mining", lvl: 90 }, xp: 300 }); g[13][19] = "#";
+      objs.push({ t: "trap", trap: "geyser", art: "fd_t_geyser", frames: 39, cols: 26, fw: 76, fh: 150, ax: 32, ay: 137, seq: {"idle": [0], "warn": [1, 2, 3, 4, 5], "strike": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26], "end": [27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38]}, x: 16, y: 23 }); g[23][16] = "#";
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["cinderelemental", 12, 6, { respawn: G.levelRespawn("cinderelemental") }], ["cinderelemental", 28, 24, { respawn: G.levelRespawn("cinderelemental") }]],
+    npcs: [], bots: []
+  },
+  fd_gate: {
+    name: "The Boss Gate", exits: { s: "fd_chain" }, arrive: { s: { x: 21, y: 24 }, n: { x: 21, y: 12 } },
+    bgArt: ["fd_gate_bg1", "fd_gate_bg2"], noBanks: true, ground: "lava", miniWater: "#e0601c", tint: "rgba(70,20,0,.10)",
+    rows: [
+      "############################################",
+      "############################################",
+      "############################################",
+      "############################################",
+      "############################################",
+      "############################################",
+      "##################################..##..##..",
+      "################################............",
+      "#####################~########..............",
+      "~~~~~~~~############~~~#######......~~~~~~~~",
+      "~~~~~~~~~###########~~~#..........~~~~~~~~~~",
+      "~~~~~~~~~~~########.............~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~####~.....~....~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~.....~~~~~~~~~~~~~~~~~~~~",
+      "~~~~~~~~~~~~~~~~~~~eeeee~~~~~~~~~~~~~~~~~~~~"
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      objs.push({ t: "burndoor", anim: "fd_gatefx", frames: 16, cols: 16, fw: 76, fh: 112, fps: 10, ox: -11.0, oy: -40.0, x: 21, y: 10, name: "The burning door", row: { to: "fd_hall", x: 22, y: 24 } }); g[10][21] = "#";
+      objs.push({ t: "trap", trap: "volc", art: "fd_t_volc", frames: 25, cols: 25, fw: 68, fh: 96, ax: 39, ay: 92, seq: {"idle": [0, 1, 2, 3, 4, 5, 6, 7], "warn": [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]}, x: 35, y: 8, targets: [13, 14, 15, 16, 17, 18, 19, 20, 21, 22].flatMap((y) => [[19, y], [20, y], [21, y], [22, y], [23, y]]) });   /* its balls land on the causeway */ g[8][35] = "#";
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["furnaceimp", 21, 17, { respawn: G.levelRespawn("furnaceimp") }], ["cinderelemental", 38, 7, { respawn: G.levelRespawn("cinderelemental") }]],
+    npcs: [], bots: []
+  },
+  fd_hall: {
+    name: "The Giant's Hall", exits: { s: "fd_gate" }, arrive: { s: { x: 22, y: 24 } },
+    bgArt: ["fd_hall_bg1", "fd_hall_bg2"], noBanks: true, ground: "lava", miniWater: "#c8d020", tint: "rgba(70,20,0,.06)",
+    rows: [
+      "###~~~~.....################################",
+      "~~~~~~......################################",
+      "~......##..#################################",
+      "............################################",
+      "............################################",
+      "..........#.################################",
+      "............################################",
+      "............################################",
+      "............################################",
+      "#...........################################",
+      "............################################",
+      ".....#.#....################################",
+      ".#.#........################################",
+      ".....................#############..........",
+      ".....................#############..........",
+      ".....................#############..........",
+      ".....................#############..........",
+      "............................................",
+      "............................................",
+      "...........................................#",
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................",
+      ".....................eee...................#"
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      /* the eyes on top of the two towers, watching the floor */
+      for (const x of [17, 35]) objs.push({ t: "tuft", art: "fd_eye", anim: "fd_eye", frames: 16, cols: 16, fw: 110, fh: 72, fps: 10, x: x, y: 2, w: 1, h: 1, ox: -11.5, oy: -18.0, edge: true, flat: true, name: "A burning eye", phase: x });
+      g[17][27] = "#";   /* where Old Bessemer stands: his hands on the floor, his body in front of the wall */
+      return { g, objs, blobs: [] };
+    },
+    mobs: [["bessemer", 27, 17, { perch: true, aggro: 4, respawn: [2400000, 3000000] }]],
+    npcs: [], bots: []
   },
   depths: {
     name: "The Depths of the Mountain", exits: { s: "thunderhead", e: "trailer" }, bgArt: ["dp_bg1", "dp_bg2"], noBanks: true,

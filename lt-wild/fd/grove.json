@@ -1,0 +1,19 @@
+{
+ "out": "fd_grove",
+ "fill": [
+  40,
+  30,
+  34
+ ],
+ "rects": [
+  {
+   "src": "lt-wild/cut/volc/grove.png",
+   "sx": 0,
+   "sy": 0,
+   "w": 44,
+   "h": 26,
+   "dx": 0,
+   "dy": 0
+  }
+ ]
+}

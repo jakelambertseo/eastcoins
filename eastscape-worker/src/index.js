@@ -177,7 +177,7 @@ export default {
 
 /* (2026-09-27) where someone saved inside a held map comes back to: the door on the map next door (the Carnival's west edge, the
    Thunderhead's south, the Boneyard's corridor) */
-const HELD_MAPS = { boardwalk: { scene: "carnival", x: 1, y: 13 }, bw_cabin: { scene: "carnival", x: 1, y: 13 }, bw_light: { scene: "carnival", x: 1, y: 13 }, bw_wreck: { scene: "carnival", x: 1, y: 13 }, bw_pier: { scene: "carnival", x: 1, y: 13 }, bw_skull: { scene: "carnival", x: 1, y: 13 }, foundry: { scene: "thunderhead", x: 22, y: 21 }, orchard: { scene: "boneyard", x: 14, y: 20 } };
+const HELD_MAPS = { boardwalk: { scene: "carnival", x: 1, y: 13 }, bw_cabin: { scene: "carnival", x: 1, y: 13 }, bw_light: { scene: "carnival", x: 1, y: 13 }, bw_wreck: { scene: "carnival", x: 1, y: 13 }, bw_pier: { scene: "carnival", x: 1, y: 13 }, bw_skull: { scene: "carnival", x: 1, y: 13 }, foundry: { scene: "thunderhead", x: 22, y: 21 }, ...Object.fromEntries(["fd_grove", "fd_maze", "fd_isle", "fd_chain", "fd_gate", "fd_hall"].map((k) => [k, { scene: "thunderhead", x: 22, y: 21 }])),   /* (2026-09-27) the Foundry's seven areas */ orchard: { scene: "boneyard", x: 14, y: 20 } };
 const CHAT_KEEP = 50;   // (2026-09-27) lines of public chat a refresh or a restart opens on: see chatKeep
 
 export class World {
@@ -942,7 +942,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
-      let kind = { clawchest: "clawchest",   /* (2026-09-27) Captain Claw's chest */ rowboat: "rowboat",   /* (2026-09-27) the Boardwalk's islands */ blast: "smelt",   /* (2026-09-27) the Foundry's blast furnace: a furnace */ jbench: "jewel",   /* (2026-09-27) Jewelcrafting: a picker station like the anvil */ hatchery: "hatchery",   /* (2026-09-27) Breeding's hatchery */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      let kind = { clawchest: "clawchest",   /* (2026-09-27) Captain Claw's chest */ rowboat: "rowboat",   /* (2026-09-27) the Boardwalk's islands */ vortex: "rowboat", burndoor: "rowboat",   /* (2026-09-27) the Foundry's portals and its burning door travel the same way */ blast: "smelt",   /* (2026-09-27) the Foundry's blast furnace: a furnace */ jbench: "jewel",   /* (2026-09-27) Jewelcrafting: a picker station like the anvil */ hatchery: "hatchery",   /* (2026-09-27) Breeding's hatchery */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       /* MAGIC AND WIZARDRY, THE SERVER (2026-09-26): every altar is a print station, a picker station like the anvil */
       if (!kind && G.STATIONS[ob.t]?.kind === "print") kind = "print";
       if (!kind) return;
@@ -2427,6 +2427,7 @@ export class World {
       if (!live.has(key)) { S.idleSince ||= now; if (!S.run && !(key === G.HW.king.scene && this.hw?.kingUp) && now - S.idleSince > SCENE_IDLE_MS && !(S.def.pvp && S.mobs.some((m) => m.dead && now < m.respawnAt)) && !S.roulette?.bets.length && !S.fight?.bets.length) this.scenes.delete(key); continue; }   /* (2026-09-27) `!S.run`: a dungeon run keeps its own clock (cryptTick / pyramidTick / countTick) and its held time is LONGER than this sweep */
       S.idleSince = 0;
       for (const pl of this.playersIn(S)) this.playerTick(S, pl, now);
+      if (S.def.ground === "lava" && S.objs.some((o) => o.t === "trap")) this.trapsTick(S, now);   /* (2026-09-27) the Foundry's traps */
       for (const o of S.objs) if (o.t === "wheat" && S.g[o.y][o.x] === "f" && !(o.grownAt > now)) {
         if (this.occupied(S, o.x, o.y, null)) o.grownAt = now + 2000;   // someone's standing in it: grow back a moment later
         else S.g[o.y][o.x] = "#";
@@ -2682,9 +2683,10 @@ export class World {
     }
     if (a.kind === "rowboat") {
       pl.act = null; const r = a.ob?.row; if (!r || !G.SCENES[r.to]) return;
-      if (!G.OPEN.has(String(r.to)) && !pl.god) return this.say(pl, "The rowboat's tied up. Not today.", "bad");
-      this.moveToScene(pl, r.to, null, { x: r.x, y: r.y }); pl.dir = "south";
-      return this.say(pl, `You row across to ${G.SCENES[r.to].name}.`);
+      const how = a.ob?.t === "vortex" ? "portal" : a.ob?.t === "burndoor" ? "door" : "boat";
+      if (!G.OPEN.has(String(r.to)) && !pl.god) return this.say(pl, how === "boat" ? "The rowboat's tied up. Not today." : "It won't let you through. Not today.", "bad");
+      this.moveToScene(pl, r.to, null, { x: r.x, y: r.y }); pl.dir = how === "door" ? "north" : "south";
+      return this.say(pl, how === "portal" ? `The world turns violet and comes back as ${G.SCENES[r.to].name}.` : how === "door" ? `You walk through the fire. It doesn't burn. ${G.SCENES[r.to].name}.` : `You row across to ${G.SCENES[r.to].name}.`);
     }
     if (a.kind === "bank") return pl.out.push({ type: "bank" });
     /* (2026-09-23, reported by Calvinthesneak: "the house tour just says see Bom Tady, but doesn't go away when I
@@ -3447,6 +3449,26 @@ export class World {
     const p = this.pls.get(c.id); return p && p.C.scene === S.key && !p.dead ? p : null;
   }
   mayFight(S, m, pl, now) { if (S.def.shared || G.MOBS[m.t]?.open) return true;   /* (2026-09-27) an open boss (the Pumpkin King) belongs to nobody */ const c = this.claimOf(S, m, now); return !c || c === pl; }   /* (shared: the crypt, where a party hits the same monster) */
+  /* (2026-09-27) THE FOUNDRY'S TRAPS (G.TRAPS): every trap's phase is the wall clock's, so nothing is stored but who has been hit this strike.
+     Anyone standing on one of its tiles while it strikes loses G.TRAP_HIT of their health (less by their own toughness), once a strike, and
+     is told what hit them; a trap can finish somebody already low, as a monster's hit can, and never takes a god. */
+  trapsTick(S, now) {
+    S.trapHits ||= new Map();
+    S.objs.forEach((o, i) => {
+      if (o.t !== "trap") return;
+      const P = G.trapPhase(o, now); if (P.phase !== "strike") return;
+      const key = `${i}:${P.cycle}`; let hit = S.trapHits.get(key); if (!hit) { hit = new Set(); S.trapHits.set(key, hit); for (const k of S.trapHits.keys()) if (k.startsWith(`${i}:`) && k !== key) S.trapHits.delete(k); }
+      const cells = G.trapCells(o, P.cycle), T = G.TRAPS[o.trap];
+      for (const pl of this.playersIn(S)) {
+        if (hit.has(pl.id) || pl.god || !cells.some(([x, y]) => x === pl.x && y === pl.y)) continue;
+        hit.add(pl.id); const C = pl.C, dmg = Math.max(1, Math.round(G.maxHpOf(C) * G.TRAP_HIT * (1 - G.fxOf(C).tough)));
+        C.hp -= dmg; this.touch(pl); pl.hurtAt = now; pl.combatAt = now;
+        S.events.push({ type: "splat", who: `p:${pl.id}`, n: dmg, kind: "hit", t: now });
+        this.say(pl, T.say, "bad");
+        if (C.hp <= 0) this.die(pl, S, { mob: T.name });
+      }
+    });
+  }
   mobsTick(S, now) {
     const players = this.playersIn(S);
     for (const m of S.mobs) {

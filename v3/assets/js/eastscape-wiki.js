@@ -318,7 +318,7 @@ export const GUIDES = [
      the same levels and be a choice rather than a sequence. */
   { id: "road", title: "The road out", icon: "\u{1F5FA}️", cat: "Starting out",
     body: (G, H) => {
-      const ORDER = ["workyard", "gloam", "mire", "boneyard", "orchard", "cloud", "sands", "thunderhead", "carnival", "boardwalk", "bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull", "foundry", "vault", "depths", "trailer", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
+      const ORDER = ["workyard", "gloam", "mire", "boneyard", "orchard", "cloud", "sands", "thunderhead", "carnival", "boardwalk", "bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull", "foundry", "fd_grove", "fd_maze", "fd_isle", "fd_chain", "fd_gate", "fd_hall", "vault", "depths", "trailer", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
       const NOTE = {
         workyard: "the casino, the bank, the campfire, the furnace and anvil, sardines",
         gloam: "emerald and diamond ore, gloomwillow, trout and catfish",
@@ -336,7 +336,13 @@ export const GUIDES = [
         bw_wreck: "a ship broken in two on a sandbar: eclipse rocks, swordfish, and Kraken Arms in the shallows",
         bw_pier: "the pirates' house and a boathouse out on the pier: nova rocks, bluefin and swordfish",
         bw_skull: "the last island: the skull in the rock, nova rocks, Captain Claw, and the chest he sits on, which opens for everyone who put him down",
-        foundry: "the works under the Thunderhead, south of it: a lava river, a ring with two demon statues at its gate, the blast furnace (every furnace recipe, half as much xp again), Eclipse, Nova and Singularity veins out in the open, Slag Golems, Furnace Imps, Cinder Elementals and Old Bessemer rising out of the ring",   /* (2026-09-27) */
+        foundry: "the Works, the Foundry's way in, south of the Thunderhead: Basalt the foreman (he buys the imps' tallies), the blast furnace (every furnace recipe, half as much xp again, and a slag batch that makes a third bar), Eclipse veins, Slag Golems, and a field of bone spikes that go off on their own",   /* (2026-09-27) the Foundry rebuilt as seven areas */
+        fd_grove: "west of the Works: a dead tree, pools that pulse like something breathing, Eclipse veins, golems and an imp, and ground that catches fire",
+        fd_maze: "south of the Works: paths over the lava with the tower at the bottom and a lavafall, Nova veins, imps, the spitfire in the middle of the floor, and the portal to the Floating Isle",
+        fd_isle: "through the Lava Maze's portal: an island of rock on chains over the lava, the crusher on its pentagram, a Singularity vein and a Nova vein, Cinder Elementals",
+        fd_chain: "south of the Lava Maze: a rock hung on chains over the lava, walked across on the chains themselves, a Singularity vein, a geyser, Cinder Elementals",
+        fd_gate: "south of the Chained Rock: a causeway over the lava to the burning door in the castle wall, and a tiny volcano that throws lava balls at it",
+        fd_hall: "through the burning door: the wall of bodies, two towers with an eye on each, and Old Bessemer, the giant, up to his chest in it",
         depths: "ledges over a bottomless drop: monsters that shrug off a whole fighting style, abyss crystal, eclipse and nova ore, and the Deepwarden",   /* (2026-09-27) */
         trailer: "the best gathering in the game, and the meanest neighbours",
         wild: "the road past the Yard's east gate: nodes far apart, most things attack first, and the first of three monsters found nowhere else",
