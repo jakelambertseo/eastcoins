@@ -36,7 +36,7 @@
        the EastScape card, make the ribbon say now open, and link it to eastcoin.vip/eastscape") OPEN. `href` makes the card a plain
        link to the game's own page (it is not a route in this shell), and `open` is its ribbon; like `soon` it has no live line and
        no plays counter, because nothing on this floor polls it. `spooky` dresses it for the Long Night. */
-    eastscape: { title: "EastScape", icon: "🗺️", sub: "EastCoin Casino MMO", open: "Now Open", href: "/eastscape", spooky: true, line: "Now open: fight, mine, fish and craft for ZCoins.", blurb: "Every game on this floor, in a world you walk around. Fight, mine, fish and craft for ZCoins, and play the same tables at the same odds." },
+    eastscape: { title: "EastScape", icon: "🗺️", sub: "EastCoin Casino MMO", open: "Now Open", href: "/eastscape", online: "/api/eastscape/online", spooky: true, line: "Now open: fight, mine, fish and craft for ZCoins.", blurb: "Every game on this floor, in a world you walk around. Fight, mine, fish and craft for ZCoins, and play the same tables at the same odds." },
     flip: { title: "Coin Flip", icon: "🪙", blurb: "Heads or tails, about 2×. One coin for the whole room, every 30 seconds.", route: "flip" },
     wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black about 2.03×, the gold sliver about 60×. One spin a minute.", route: "wheel" },
     race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2× to 14×. They're off every minute.", route: "race", hidden: true },
@@ -216,6 +216,9 @@
       if (g.soon || g.href) {
         tile.title = g.blurb;
         tile.append(art, K.el("div", "cas-card-live", g.line));
+        /* (2026-09-27, the owner: "add a '{X} people online now' area below the card") how many are in the world right now, from the
+           game server's own count. Hidden until the first answer, and again if the server cannot be reached: no number beats a wrong one. */
+        if (g.online) { const on = K.el("div", "cas-card-online"); on.hidden = true; tile.append(on); refs.online = { el: on, url: g.online }; }
         refs.tiles.append(tile);
         continue;
       }
@@ -456,6 +459,22 @@
     refs.board.append(K.pager(pg, (n) => { boardPage = n; renderBoard(); }, "results"));
   }
 
+  /* The EastScape card's "N people online now". Once a minute while the tab is visible, and at once when it comes back: about 1,440
+     small requests a day for a tab left open, answered from /api/eastscape/online's 30-second edge cache, and no database anywhere. */
+  let onlineTimer = 0;
+  async function pollOnline() {
+    const o = refs.online; if (!o || document.hidden) return;
+    try {
+      const r = await fetch(o.url, { cache: "no-store" }); if (!r.ok) throw new Error(String(r.status));
+      const n = Math.max(0, Number((await r.json()).online) || 0);
+      if (refs.online !== o) return;   // the floor was left while this was on its way
+      o.el.textContent = "";
+      o.el.classList.toggle("none", n === 0);
+      o.el.append(K.el("i"), n === 0 ? document.createTextNode("Nobody online right now") : K.el("span", null, `${n.toLocaleString()} ${n === 1 ? "person" : "people"} online now`));
+      o.el.hidden = false;
+    } catch (e) { o.el.hidden = true; }
+  }
+
   const view = {
     mount(container) {
       root = container;
@@ -467,12 +486,17 @@
       onVis = () => { if (!document.hidden) { meAt = 0; poll(); } };
       document.addEventListener("visibilitychange", onVis);
       tickTimer = window.setInterval(renderTiles, 500);
+      pollOnline();
+      onlineTimer = window.setInterval(pollOnline, 60000);
+      document.addEventListener("visibilitychange", pollOnline);
     },
     unmount() {
       window.clearInterval(pollTimer);
       if (onVis) document.removeEventListener("visibilitychange", onVis);
       onVis = null;
       window.clearInterval(tickTimer);
+      window.clearInterval(onlineTimer);
+      document.removeEventListener("visibilitychange", pollOnline);
       data = null; refs = {};
       document.title = "EastCoin";
     }
