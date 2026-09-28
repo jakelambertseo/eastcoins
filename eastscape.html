@@ -1115,6 +1115,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .top .topl:hover{background:rgba(255,255,255,.08);text-decoration:none}
 .top .topl .topi{width:18px;height:18px;margin:0;vertical-align:0}
 .top .logo{margin-right:8px}
+/* (2026-09-28, the owner: "make the font color more relevant to our theme UI kit, and instead of the logo image lets use one of current icons")
+   the wordmark is the kit's display face in its gold, beside the compass from the guide set (the EastCoin coin was the site's mark, not the game's) */
+.top .logo{color:#ffd77a;font:800 18px/1 var(--k-disp);letter-spacing:.02em;text-shadow:0 1px 0 #000,0 0 10px rgba(255,190,80,.25)}
+.top .logo img{border-radius:0;image-rendering:pixelated}
 .top .topgear{padding:4px 5px}.top .topgear .topi{width:19px;height:19px}
 .top .topgear:hover .topi{transform:rotate(45deg);transition:transform .25s}
 .net.ok{gap:0}.net.ok #netText{display:none}.net.ok i{margin:0 4px}
@@ -1520,11 +1524,138 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .wl-paper .wl-h{color:var(--k-ink2)}.wl-paper .wl-job b{color:var(--k-gold-ink)}.wl-paper .wl-job.done b{color:var(--k-good)}
 .wl-paper .wl-job i{background:rgba(90,58,24,.14)}.wl-paper .wl-next{color:var(--k-ink2);border-top-color:var(--k-line)}
 .wl-paper .rarelog em{color:var(--k-gold-ink);text-shadow:none}
+
+/* ============================================================ THE MARKET AS A GRAND EXCHANGE (2026-09-28): see renderEx */
+#exWin .win-body{display:flex;flex-direction:column;min-height:0}
+#exBody{display:flex;flex-direction:column;gap:8px;min-height:0;flex:1}
+.gx-scroll{flex:1;min-height:0;overflow:auto;padding:0 2px 4px 0;display:grid;gap:6px;align-content:start}
+.btn.sm{border-width:6px;padding:0 8px;font-size:12.5px;line-height:1.5}
+.gx-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:5px}
+.gx-slot{position:relative;display:grid;gap:4px;align-content:start;padding:7px 8px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);min-width:0;min-height:74px;box-sizing:border-box}
+.gx-slot.buy{box-shadow:inset 0 0 0 2px #4f82b8}.gx-slot.sell{box-shadow:inset 0 0 0 2px var(--k-gold)}
+.gx-side{font:var(--k-f-label);text-transform:uppercase;letter-spacing:.08em;color:#2f5f8f}.gx-slot.sell .gx-side{color:var(--k-gold-ink)}
+.gx-x{position:absolute;top:5px;right:5px;width:20px;height:20px;font-size:13px;border-radius:4px}
+.gx-slot-i{display:flex;align-items:center;gap:6px;min-width:0}.gx-slot-i b{font:800 12.5px/1.15 var(--k-disp);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gx-slot-i .k-slot{width:34px;height:34px;border-width:4px}.gx-slot-i .k-slot .ico{width:22px;height:22px}
+.gx-bar{height:6px;border-radius:3px;background:rgba(90,58,24,.15);overflow:hidden}.gx-bar i{display:block;height:100%;background:var(--k-good)}
+.gx-slot small{font:700 11px/1.2 Lora,serif;color:var(--k-ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gx-slot small .ico{width:13px;height:13px;vertical-align:-2px}
+.gx-slot.empty{place-content:center;justify-items:center;background:rgba(90,58,24,.04);box-shadow:none;border:1.5px dashed var(--k-card-line)}
+.gx-slot-b{display:flex;gap:4px}.gx-slot-b .k-chip{border:0;cursor:pointer;font-size:11px}.gx-slot-b .k-chip:hover{background:#fbe6a8;color:var(--k-gold-ink)}
+@media (max-width:620px){.gx-slots{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.gx-price{display:inline-flex;flex-direction:column;align-items:flex-end;font:800 14px/1.1 Lora,serif;white-space:nowrap}.gx-price small{font:600 10.5px Lora,serif;color:var(--k-ink2)}.gx-price .ico{width:16px;height:16px;vertical-align:-3px}
+.gx-from{display:flex;flex-direction:column;align-items:flex-end}.gx-from>small{font:600 10.5px Lora,serif;color:var(--k-ink2)}
+.gx-item.on{background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold);border-radius:6px 6px 0 0;transform:none}
+.gx-ls{margin:0 4px 4px;border:2px solid var(--k-gold);border-top:0;border-radius:0 0 6px 6px;background:var(--k-paper-hi)}
+.gx-l{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:6px 10px;border-top:1px solid var(--k-line)}
+.gx-l:first-child{border-top:0}.gx-l.mine{background:rgba(200,150,58,.1)}
+.gx-l-who{font:700 13px/1.2 Lora,serif}.gx-l-who small{display:block;font-weight:600;color:var(--k-ink2);font-size:11.5px}
+.gx-buy{display:flex;align-items:center;gap:6px}.gx-buy input{width:74px}
+.gx-own{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:4px}
+.gx-o{position:relative;padding:0;border:0;background:none;cursor:pointer}.gx-o .k-slot{width:100%;height:auto;aspect-ratio:1}.gx-o .k-slot .ico{width:64%;height:64%}
+.gx-o:hover .k-slot,.gx-o:focus-visible .k-slot{filter:brightness(1.08);outline:2px solid var(--k-gold);outline-offset:-2px}
+.gx-o-p{position:absolute;left:3px;top:2px;font:700 9.5px/1.2 Lora,serif;font-style:normal;color:var(--k-good);background:rgba(255,246,220,.92);padding:0 3px;border-radius:3px}
+.gx-ticket{display:grid;gap:10px;width:100%;max-width:600px;margin:0 auto;align-content:start;overflow:auto}
+.gx-t-head{display:flex;justify-content:space-between;align-items:center}
+.gx-t-item{display:flex;gap:12px;align-items:center;padding:10px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.gx-t-item>.k-slot{width:64px;height:64px;border-width:6px}.gx-t-item>.k-slot .ico{width:44px;height:44px}
+.gx-t-item b{display:block;font:800 18px/1.2 var(--k-disp);margin-bottom:5px}
+.gx-which{display:flex;gap:6px;align-items:center;margin-top:6px;font:700 12.5px Lora,serif;color:var(--k-ink2)}
+.gx-market{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px}
+.gx-stat{display:grid;gap:2px;padding:6px 9px;border-radius:var(--k-r);background:rgba(90,58,24,.07)}.gx-stat small{font:var(--k-f-label);text-transform:uppercase;letter-spacing:.06em;color:var(--k-ink2)}.gx-stat b{font:800 15px Lora,serif}.gx-stat .ico{width:16px;height:16px;vertical-align:-3px}
+.gx-field{display:grid;gap:4px}.gx-in{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.gx-in input{width:130px}
+.gx-sum{display:grid;grid-template-columns:auto 1fr;align-items:baseline;gap:2px 12px;padding:10px 12px;border-radius:var(--k-r);background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold)}
+.gx-sum>span{font:var(--k-f-label);text-transform:uppercase;letter-spacing:.08em;color:var(--k-ink2)}.gx-sum>b{font:800 22px Lora,serif;justify-self:end}.gx-sum>b .ico{width:20px;height:20px;vertical-align:-3px}
+.gx-sum>small{grid-column:1/-1;color:var(--k-ink2);font:600 12px/1.35 Lora,serif}
+.gx-sum.short{box-shadow:inset 0 0 0 2px var(--k-bad)}.gx-sum.short>small{color:var(--k-bad)}
+.gx-t-foot{display:flex;justify-content:flex-end}
+.gx-done .k-slot .ico{filter:grayscale(.5)}
+
+/* ============================================================ THE QUEST JOURNAL (2026-09-28): see renderQuests */
+#questWin .win-body{padding:0;display:flex;min-height:0}
+.qj{flex:1;display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);min-height:0;width:100%}
+.qj-log{display:flex;flex-direction:column;gap:8px;min-height:0;overflow:auto;padding:10px;border-right:2px solid var(--k-line);background:rgba(90,58,24,.05)}
+.qj-tools{display:grid;gap:6px;min-width:0}.qj-tools .search{margin:0}.qj-tools .qfilt{margin:0;flex-wrap:wrap}.qj-tools .qfilt .qf{flex:1 1 auto}
+.qj-log{overflow-x:hidden}
+.search{box-sizing:border-box}
+.qj-tools .qfilt .qf{padding:5px 3px;font-size:11.5px;gap:3px}.qj-tools .qfilt .qf img{width:15px;height:15px}
+.qj-groups{display:grid;gap:8px;align-content:start}
+.qj-g{display:grid;gap:3px}
+.qj-gh{display:flex;align-items:center;gap:6px;padding:4px 6px;border:0;background:none;cursor:pointer;font:var(--k-f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2);text-align:left}
+.qj-gh span{flex:1}.qj-gh small{padding:0 6px;border-radius:99px;background:rgba(90,58,24,.12);font-size:10.5px}
+.qj-gh::before{content:"▾";font-size:10px;transition:transform .15s}.qj-g.shut .qj-gh::before{transform:rotate(-90deg)}
+.qj-e{display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;padding:6px 8px;border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);color:var(--k-ink);text-align:left;font:inherit;cursor:pointer}
+.qj-e:hover{background:var(--k-paper-hi)}
+.qj-e.on{background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold),inset 4px 0 0 var(--k-gold)}
+.qj-e b{display:block;font:800 13.5px/1.2 var(--k-disp);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qj-e small{display:block;font:600 11.5px/1.2 Lora,serif;color:var(--k-ink2)}
+.qj-e .qico{width:16px;height:16px;image-rendering:pixelated;opacity:.8}
+.qj-e.done,.qj-e.locked{opacity:.65}
+.qj-m{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font:900 12px/1 Lora,serif;box-sizing:border-box}
+.qj-m.ready{background:linear-gradient(#ffe27a,#e0a81c);color:#3a2400;box-shadow:0 0 0 1.5px #8a5a12,0 0 6px rgba(255,200,60,.6)}
+.qj-m.active{background:conic-gradient(var(--k-good) var(--p),rgba(90,58,24,.18) 0);-webkit-mask:radial-gradient(circle,transparent 5px,#000 5.5px);mask:radial-gradient(circle,transparent 5px,#000 5.5px)}
+.qj-m.new{background:rgba(90,58,24,.12);color:var(--k-ink2);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.qj-m.done{background:#d6ecd0;color:var(--k-good)}
+.qj-m.locked{background:rgba(90,58,24,.12)}.qj-m.locked::before{content:"";width:9px;height:10px;background:var(--k-ink2);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 12'%3E%3Cpath d='M3 5V3.5a2.5 2.5 0 015 0V5h1v7H2V5zm1.5 0h2V3.5a1 1 0 00-2 0z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 12'%3E%3Cpath d='M3 5V3.5a2.5 2.5 0 015 0V5h1v7H2V5zm1.5 0h2V3.5a1 1 0 00-2 0z'/%3E%3C/svg%3E") center/contain no-repeat}
+.qj-page{min-height:0;overflow:auto;padding:14px 18px}
+.qj-empty{height:100%;display:grid;place-content:center;justify-items:center;gap:8px;color:var(--k-ink2)}.qj-empty img{width:48px;height:48px;image-rendering:pixelated;opacity:.6}
+.qj-d{display:grid;gap:8px;max-width:620px}
+.qj-dh{display:flex;gap:12px;align-items:center}.qj-dh>.qico{width:40px;height:40px;image-rendering:pixelated}
+.qj-dh h3{margin:0 0 5px;font:800 23px/1.1 var(--k-disp);color:var(--k-ink)}
+.qj-chips{display:flex;flex-wrap:wrap;gap:4px}
+.qj-brief{margin:4px 0 0;font:500 15px/1.55 Lora,serif;font-style:italic;color:#3a2e1c}
+.qj-steps{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.qj-steps li{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start;padding:7px 9px;border-radius:var(--k-r);background:rgba(90,58,24,.05);font:600 14px/1.4 Lora,serif}
+.qj-steps li i{width:18px;height:18px;border-radius:4px;box-shadow:inset 0 0 0 1.5px var(--k-card-line);background:var(--k-paper-hi);margin-top:1px}
+.qj-steps li.done{color:var(--k-ink2)}.qj-steps li.done>span{text-decoration:line-through;text-decoration-color:rgba(90,58,24,.35)}
+.qj-steps li.done i{background:var(--k-good);box-shadow:none;-webkit-mask:none}.qj-steps li.done i::after{content:"✓";display:grid;place-items:center;height:100%;color:#fff;font:900 12px/18px Lora,serif}
+.qj-steps li.now{background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold)}.qj-steps li.now i{background:#fbe6a8;box-shadow:inset 0 0 0 2px var(--k-gold)}
+.qj-steps li.todo{opacity:.6}
+.qj-steps small{color:var(--k-ink2);font-weight:600}
+.qj-cnt{display:flex;align-items:center;gap:8px;margin-top:4px}.qj-cnt b{font-size:13px}.qj-cnt .xpb{flex:1;max-width:220px}
+.qj-kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font:600 14px/1.4 Lora,serif}.qj-kv>span:nth-child(odd){color:var(--k-ink2)}.qj-kv a{font-weight:800;cursor:pointer;color:#7a3c12}.qj-kv small{color:var(--k-ink2)}
+.qj-rw{display:flex;flex-wrap:wrap;gap:8px}
+.qj-r{display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;column-gap:8px;align-items:center;padding:6px 10px 6px 6px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.qj-r .k-slot{grid-row:span 2}.qj-r b{font:800 15px/1.1 Lora,serif}.qj-r small{font:600 11.5px Lora,serif;color:var(--k-ink2)}
+.qj-foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;padding-top:10px;border-top:2px solid var(--k-line)}
+@media (max-width:720px){#questWin .win-body{display:block;overflow:auto}.qj{display:block}.qj-log{border-right:0;border-bottom:2px solid var(--k-line);max-height:none;overflow:visible}.qj-page{overflow:visible;padding:12px}}
+
+/* ============================================================ THE HISCORES AS A LEADERBOARD (2026-09-28): see renderHs */
+.hstabs{width:190px;flex:none}
+.hstabs button{display:flex;align-items:center;gap:8px;text-align:left}
+.hstabs button i{width:20px;height:20px;display:grid;place-items:center;flex:none;font-style:normal}.hstabs button i .ico,.hstabs button i img{width:20px;height:20px;image-rendering:pixelated}
+.hstabs button span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hsbody{display:grid;gap:10px;align-content:start}
+.hs-head{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 12px;border-radius:var(--k-r);background:var(--k-head);color:var(--k-head-ink)}
+.hs-bi{width:44px;height:44px;display:grid;place-items:center;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch;image-rendering:pixelated}.hs-bi .ico,.hs-bi img{width:28px;height:28px}
+.hs-head h3{margin:0;font:800 21px/1.1 var(--k-disp)}.hs-head small{color:var(--k-head-sub);font:600 12.5px Lora,serif}
+.hs-me{display:grid;justify-items:end;gap:1px;padding:6px 12px;border-radius:var(--k-r);background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1.5px rgba(255,216,74,.5);text-align:right}
+.hs-me small{font:var(--k-f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--k-head-sub)}.hs-me b{font:800 22px/1 var(--k-disp);color:#ffd84a}.hs-me span{font:600 12px Lora,serif}.hs-me .ico,.hs-me .tixi{width:14px;height:14px}
+.hs-me.out b{color:var(--k-head-sub)}
+.hs-me .k-chip{margin-top:3px;border:0;cursor:pointer;background:rgba(255,255,255,.14);color:var(--k-head-ink)}
+#hsQ{margin:0}
+.hs-pod{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:8px;align-items:end}
+.hs-p{display:grid;justify-items:center;gap:3px;padding:12px 8px 10px;border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 2px var(--mc,var(--k-card-line));cursor:pointer;color:var(--k-ink);font:inherit;min-width:0}
+.hs-p:hover{background:var(--k-paper-hi)}
+.hs-p.p1{--mc:#d4a017;padding-top:18px;background:linear-gradient(#fff4cf,var(--k-card))}.hs-p.p2{--mc:#a8b2bd}.hs-p.p3{--mc:#b87333}
+.hs-p.me{outline:3px solid rgba(200,150,58,.45);outline-offset:1px}
+.hs-medal{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:800 15px/1 var(--k-disp);color:#fff;background:var(--mc);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2),0 0 0 2px rgba(255,255,255,.6)}
+.hs-p.p1 .hs-medal{width:38px;height:38px;font-size:18px}
+.hs-p b{font:800 15px/1.2 var(--k-disp);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hs-pv{font:800 18px/1.1 Lora,serif}.hs-p small{font:600 11px Lora,serif;color:var(--k-ink2)}
+.hs-list{display:grid;gap:2px}
+.hsr{grid-template-columns:34px minmax(0,1fr) auto minmax(90px,auto);row-gap:3px}
+.hsr .rk{font:800 13px Lora,serif;opacity:1;color:var(--k-ink2);text-align:center}
+.hsr b.who{font:700 14px Lora,serif}.hs-v{font:800 14px Lora,serif;text-align:right}
+.hs-bar{grid-column:2/-1;display:block;height:4px;border-radius:2px;background:rgba(90,58,24,.12);overflow:hidden}.hs-bar u{display:block;height:100%;background:linear-gradient(90deg,#c8963a,#e8bf35)}
+.hsr.me .hs-bar u{background:linear-gradient(90deg,var(--k-good),#4ddb8b)}
+.hsr[hidden],.hs-p[hidden]{display:none}
+@media (max-width:620px){.hswrap{grid-template-rows:auto minmax(0,1fr);overflow:hidden}.hstabs{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;min-height:auto;padding-bottom:4px;border-bottom:2px solid var(--k-line)}.hstabs .hsg{display:none}.hstabs button{flex:none;padding:6px 9px}.hsbody{overflow:auto}}
+@media (max-width:720px){.hstabs{width:auto}.hs-head{grid-template-columns:auto 1fr}.hs-me{grid-column:1/-1;justify-items:start;text-align:left}.hs-pod{grid-template-columns:1fr 1fr 1fr}}
 </style>
 </head>
 <body>
 <header class="top">
-  <span class="logo"><img src="/v3/assets/img/eastcoin-icon-96.png?v=1" alt="" width="22" height="22"><b class="logo-t">EastScape</b></span><button type="button" class="topl" id="gamesBtn" title="The real ZCoin games, one click (G)"><img src="/v3/assets/img/glad/flat/ui/g_casino.png?v=1" alt="" class="topi"><span>Games</span></button><button type="button" class="topl topl-store" id="storeBtn" title="The Store (tickets)"><img src="/v3/assets/img/glad/flat/ui/store.png?v=1" alt="" class="topi"><span>Store</span><em class="hot">HOT</em></button><button type="button" class="topl" id="wikiBtn" title="The EastScape wiki (H)"><img src="/v3/assets/img/glad/flat/ui/g_updates.png?v=1" alt="" class="topi"><span>Wiki</span></button>
+  <span class="logo"><img src="/v3/assets/img/glad/flat/ui/g_start.png?v=1" alt="" width="22" height="22"><b class="logo-t">EastScape</b></span><button type="button" class="topl" id="gamesBtn" title="The real ZCoin games, one click (G)"><img src="/v3/assets/img/glad/flat/ui/g_casino.png?v=1" alt="" class="topi"><span>Games</span></button><button type="button" class="topl topl-store" id="storeBtn" title="The Store (tickets)"><img src="/v3/assets/img/glad/flat/ui/store.png?v=1" alt="" class="topi"><span>Store</span><em class="hot">HOT</em></button><button type="button" class="topl" id="wikiBtn" title="The EastScape wiki (H)"><img src="/v3/assets/img/glad/flat/ui/g_updates.png?v=1" alt="" class="topi"><span>Wiki</span></button>
   <span class="spacer"></span>
   <button type="button" class="online" id="online" title="Who is online, and where"></button><span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span><button type="button" class="topl topgear" id="gearBtn" title="Settings"><img src="/v3/assets/img/glad/flat/ui/settings.png?v=1" alt="Settings" class="topi"></button><button type="button" class="me" id="topMe" title="You: profile, achievements, hiscores" aria-haspopup="menu" aria-expanded="false"><img id="topAv" alt="" hidden><span id="topName">—</span><i class="me-car" aria-hidden="true">▾</i></button>
 </header>
@@ -1584,8 +1715,8 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="win-head"><b id="pickTitle">Choose</b><button type="button" class="win-x" data-close="pickWin" aria-label="Close">×</button></div>
       <div class="win-body"><p class="note" id="pickNote" style="margin:0 0 8px"></p><div class="grid8" id="pickGrid"></div></div>
     </section>
-    <section class="win" id="hsWin" aria-label="Hiscores" hidden style="height:min(700px,calc(100% - 28px))">
-      <div class="win-head"><b>🏆 Hiscores</b><small id="hsSub"></small><button type="button" class="win-x" data-close="hsWin" aria-label="Close">×</button></div>
+    <section class="win" id="hsWin" aria-label="Hiscores" hidden style="width:min(920px,calc(100% - 28px));height:min(760px,calc(100% - 28px))">
+      <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/g_vip.png?v=1" alt="" class="topi">Hiscores</b><small id="hsSub"></small><button type="button" class="win-x" data-close="hsWin" aria-label="Close">×</button></div>
       <div class="win-body hswrap"><div class="hstabs" id="hsTabs" role="tablist" aria-label="Hiscore boards"></div><div class="hsbody" id="hsBody"><p class="note">Loading…</p></div></div>
     </section>
     <section class="win k-win" id="smithWin" aria-label="Anvil" hidden>
@@ -1672,7 +1803,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/g_bank.png?v=1" alt="" class="topi">The Bank</b><small id="bankCount"></small><button type="button" class="win-x" data-close="bankWin" aria-label="Close">×</button></div>
       <div class="win-body"><div id="bankRoot" class="view-loading" aria-live="polite"></div></div>
     </section>
-    <section class="win" id="exWin" aria-label="The Exchange" hidden>
+    <section class="win" id="exWin" aria-label="The Exchange" hidden style="width:min(860px,calc(100% - 28px));height:min(760px,calc(100% - 28px))">
       <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/g_trading.png?v=1" alt="" class="topi">Market</b><small>Everything lands in your bank · 1% of each sale to the house</small><button type="button" class="win-x" data-close="exWin" aria-label="Close">×</button></div>
       <div class="win-body">
         <div class="ex-tabs" role="tablist"><button data-ex="buy" aria-pressed="true">Buy</button><button data-ex="sell" aria-pressed="false">Sell</button><button data-ex="pets" aria-pressed="false">Pets</button></div>
@@ -1697,7 +1828,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="map-legend" id="mapLegend"></div>
       <div class="map-wrap" id="mapWrap"><div class="map-sheet" id="mapSheet"><canvas id="mapCanvas"></canvas><div id="mapPins"></div></div><div class="map-card" id="mapCard" hidden></div></div>
     </section>
-    <section class="win" id="questWin" aria-label="Quests" hidden style="width:min(640px,calc(100% - 28px));height:calc(100% - 60px)">
+    <section class="win" id="questWin" aria-label="Quests" hidden style="width:min(960px,calc(100% - 28px));height:calc(100% - 60px)">
       <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/quests.png?v=1" alt="" class="topi">Quests</b><small id="questSub"></small><button type="button" class="win-x" data-close="questWin" aria-label="Close">×</button></div>
       <div class="win-body" id="questBody"></div>
     </section>
@@ -4807,22 +4938,39 @@ async function openHiscores() {
   } catch (e) { $("hsBody").innerHTML = '<p class="note">The hiscores are unreachable right now.</p>'; return; }
   renderHs();
 }
+/* (2026-09-28, the owner: "make an attempt to modernize the ... hi scores ... think about what modern MMOs do") THE HISCORES, AS A
+   LEADERBOARD. What the modern ones share: every board wears its own icon; the board opens on a header that says what it ranks and where
+   YOU stand on it, pinned, so you never scroll to find yourself; the top three stand on a podium; a search finds anyone on it; and each
+   row carries a bar against the leader, so the gap reads at a glance rather than by subtracting. A clear-time board keeps its party-size
+   filter, and a faster clear is a longer bar. */
+const HS_ICON = { combat: "ui:combat", total: "ui:total", hp: "ui:hp", earned: "item:tickets", wagered: "ui:g_casino", kills: "ui:p_kills", zcoins: "item:zcoin", quests: "ui:quests", crypt1: "ui:g_crypt", crypt2: "ui:g_crypt", crypt3: "ui:g_crypt", runBest: "ui:g_agility", pyr1: "ui:g_sands", tower: "ui:g_tower", corn: "item:candycorn" };
+const hsIco = (k) => { const m = HS_ICON[k]; if (!m) return SKILLS[k] ? sico(k) : `<img class="ico" src="${UIA}total.png?v=1" alt="">`; const [t, n] = m.split(":"); return t === "item" && ITEMS[n] ? ico(n) : `<img class="ico" src="${UIA}${n}.png?v=1" alt="">`; };
+let hsQ = "";
 function renderHs() {   /* (v96) the boards are G.HISCORES; (2026-09-27) the rail is grouped (G.hsRail), a clear-time board filters by party size, and the Tower board prints floors */
   if (!hsData?.boards) return; if (!G.HISCORES.some(([k]) => k === hsTab)) hsTab = G.HISCORES[0][0];
-  const [, , what, kind] = G.HISCORES.find(([k]) => k === hsTab), all = hsData.boards[hsTab] || [];
+  const [, label, what, kind] = G.HISCORES.find(([k]) => k === hsTab), all = hsData.boards[hsTab] || [];
   /* a clear-time board arrives as EVERY kept clear, fastest first, each row carrying the party's size: filtering here and
      ranking what is left is what makes a 3-man #1 mean the fastest three, not "the fastest run that happened to be three" */
   const rows = kind === "time" ? (hsSize ? all.filter((r) => (r.n || 0) === hsSize) : all).slice(0, 20).map((r, i) => ({ ...r, rank: i + 1 })) : all;
   const isMe = (r) => !!you && (kind === "time" ? String(r.name).split(" + ").includes(you.name) : r.name === you.name), mine = rows.find(isMe);
-  $("hsSub").textContent = `${hsData.players} player${hsData.players === 1 ? "" : "s"} · ${mine ? `you're #${mine.rank}` : what}`;
-  $("hsTabs").innerHTML = G.hsRail().map((g) => `<small class="hsg">${g.name}</small>` + g.boards.map(([k, l]) => `<button type="button" role="tab" aria-selected="${k === hsTab}" data-hs="${k}" class="${k === hsTab ? "on" : ""}">${l}</button>`).join("")).join("");
+  $("hsSub").textContent = `${hsData.players} player${hsData.players === 1 ? "" : "s"}${mine ? ` · you're #${mine.rank}` : ""}`;
+  $("hsTabs").innerHTML = G.hsRail().map((g) => `<small class="hsg">${g.name}</small>` + g.boards.map(([k, l]) => `<button type="button" role="tab" aria-selected="${k === hsTab}" data-hs="${k}" class="${k === hsTab ? "on" : ""}"><i>${hsIco(k)}</i><span>${l}</span></button>`).join("")).join("");
   const val = (r) => kind === "time" ? `${Math.floor(r.v / 60)}:${String(r.v % 60).padStart(2, "0")}` : kind === "floor" ? `Floor ${Number(r.v).toLocaleString()}` : `${kind === "tix" ? TIX_ICO : ""}${Number(r.v).toLocaleString()}`;
   const sub = (r) => kind === "time" && !hsSize && r.n ? `${r.n}-man · ${r.sub || ""}` : (r.sub || "");
+  const top = rows[0]?.v || 1, bar = (r) => Math.max(3, Math.round((kind === "time" ? top / Math.max(1, r.v) : r.v / Math.max(1, top)) * 100));
   const sizes = kind === "time" ? `<div class="hssz" role="tablist" aria-label="Party size">${[0, 2, 3, 4].map((n) => `<button type="button" role="tab" aria-selected="${n === hsSize}" data-sz="${n}" class="${n === hsSize ? "on" : ""}">${n ? `${n}-man` : "All"}</button>`).join("")}</div>` : "";
-  $("hsBody").innerHTML = sizes + (rows.length
-    ? rows.map((r) => `<div class="hsr${isMe(r) ? " me" : ""}"><span class="rk">${r.rank <= 3 ? ["🥇", "🥈", "🥉"][r.rank - 1] : r.rank}</span><b class="who" data-who="${esc(r.name)}" title="${esc(r.name)}'s profile">${esc(r.name)}</b><span>${val(r)}</span><span class="xp">${esc(sub(r))}</span></div>`).join("")
-    : `<p class="note">${kind === "time" && hsSize ? `No ${hsSize}-man clear here yet. Be first.` : "Nobody's on this board yet. Be first."}</p>`);
-  $("hsTabs").querySelectorAll("[data-hs]").forEach((b) => b.addEventListener("click", () => { hsTab = b.dataset.hs; SFX.play("ui_click"); renderHs(); }));
+  const nameOf = (r) => esc(r.name);
+  const podium = rows.length ? `<div class="hs-pod">${[1, 0, 2].map((i) => rows[i]).filter(Boolean).map((r) => `<button type="button" class="hs-p p${r.rank}${isMe(r) ? " me" : ""}" data-who="${esc(r.name)}" data-name="${esc(String(r.name).toLowerCase())}" title="${esc(r.name)}'s profile"><span class="hs-medal">${r.rank}</span><b>${nameOf(r)}</b><span class="hs-pv">${val(r)}</span><small>${esc(sub(r))}</small></button>`).join("")}</div>` : "";
+  const list = rows.slice(3).map((r) => `<div class="hsr${isMe(r) ? " me" : ""}" data-name="${esc(String(r.name).toLowerCase())}"><span class="rk">${r.rank}</span><b class="who" data-who="${esc(r.name)}" title="${esc(r.name)}'s profile">${nameOf(r)}</b><span class="hs-v">${val(r)}</span><span class="xp">${esc(sub(r))}</span><i class="hs-bar"><u style="width:${bar(r)}%"></u></i></div>`).join("");
+  $("hsBody").innerHTML = `<div class="hs-head"><span class="hs-bi">${hsIco(hsTab)}</span><div><h3>${esc(label)}</h3><small>${esc(what)} · top ${rows.length.toLocaleString()}</small></div>
+      <div class="hs-me${mine ? "" : " out"}">${mine ? `<small>You</small><b>#${mine.rank}</b><span>${val(mine)}</span>${mine.rank > 3 ? `<button type="button" class="k-chip" id="hsJump">Show me</button>` : ""}` : `<small>You</small><b>—</b><span>not in the top ${rows.length || 100}</span>`}</div></div>
+    ${sizes}<input class="search" id="hsQ" placeholder="Find a player on this board…" value="${esc(hsQ)}" aria-label="Find a player">
+    ${rows.length ? podium + `<div class="hs-list">${list}</div>` : `<p class="note">${kind === "time" && hsSize ? `No ${hsSize}-man clear here yet. Be first.` : "Nobody's on this board yet. Be first."}</p>`}`;
+  const filt = () => { const q = hsQ.trim().toLowerCase(); $("hsBody").querySelectorAll("[data-name]").forEach((el) => { el.hidden = !!q && !el.dataset.name.includes(q); }); };
+  filt();
+  $("hsQ").addEventListener("input", (e) => { hsQ = e.target.value; filt(); });
+  $("hsJump")?.addEventListener("click", () => $("hsBody").querySelector(".hsr.me")?.scrollIntoView({ block: "center", behavior: "smooth" }));
+  $("hsTabs").querySelectorAll("[data-hs]").forEach((b) => b.addEventListener("click", () => { hsTab = b.dataset.hs; SFX.play("ui_click"); renderHs(); $("hsBody").scrollTop = 0; }));
   $("hsBody").querySelectorAll("[data-sz]").forEach((b) => b.addEventListener("click", () => { hsSize = Number(b.dataset.sz) || 0; SFX.play("ui_click"); renderHs(); }));
   $("hsBody").querySelectorAll("[data-who]").forEach((b) => b.addEventListener("click", () => openProfile(b.dataset.who.split(" + ")[0])));   /* (v107; a crypt row is "A + B", so the first of them) */
 }
@@ -5789,25 +5937,43 @@ function itemPicker(host, keys, value, onPick, { placeholder = "Choose an item",
     draw(); inp.focus(); document.addEventListener("pointerdown", outside, true);
   });
 }
+/* (2026-09-28, the owner: "make an attempt to modernize the exchange ... think about what modern MMOs do") THE MARKET, REBUILT AS A GRAND
+   EXCHANGE. What modern markets share, and what this now does:
+   - YOUR OFFERS ARE ALWAYS IN VIEW: a strip of G.EX_SLOTS slots across the top (OSRS's Grand Exchange), each open offer with its side, a
+     progress bar of how much has filled and its price, and empty slots that start a buy or a sell in one click.
+   - BROWSE BY ITEM, NOT BY LISTING (every auction house): one row per item with the lowest price, how many are for sale and from how many
+     sellers; open it for every seller's listing and buy from the one you pick.
+   - SELL FROM WHAT YOU HAVE: everything you own that can be listed, as a grid; click one to price it.
+   - AN ORDER TICKET: the item's market (cheapest, best offer, last sold, Bom's price) beside it, quick amounts, quick prices, and the total
+     before you commit.
+   Nothing the server is sent changed: the same place / buynow / cancel messages with the same fields. */
+let exOpenK = null;   /* the item row opened on the Browse tab: "<key>:<forge level>" */
 function renderEx() {
   $("exWin").querySelectorAll("[data-ex]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ex === exTab)));
   if (exTab === "pets") { if (!$("exPets")) $("exBody").innerHTML = `<div id="exPets"></div>`; petUi().then((u) => u.exPets($("exPets"), EX)); return; }   /* (2026-09-27) pets for sale, in the lazy pets module */
   const body = $("exBody"), book = (k) => EX.book[k] || {}, last = (k) => EX.last[k]?.price;
   const tradeable = Object.keys(ITEMS).filter((k) => k !== "coins").sort((a, b) => ITEMS[a].name.localeCompare(ITEMS[b].name));
-  /* (2026-09-23, the owner: the market should "show the stats on hover that we just did"). `k` is the item
-     this row is about. The page already has ONE pointerover listener for [data-item] that opens the gear
-     card, so a market row only has to say which item it is — no second tooltip, no second code path, and
-     the card it opens is the same one the bag shows, comparison against what you are wearing included. */
-  const row = (icon, title, sub, right, extra = "", cls = "", k = "", f = 0) => `<div class="mk-row ${cls}"${k ? ` data-item="${k}"${f ? ` data-f="${f}"` : ""}` : ""}><i>${icon}</i><span><b>${title}</b><small>${sub}</small></span>${right}${extra}</div>`;
+  const keep = body.querySelector(".gx-scroll")?.scrollTop || 0;
+  const slot = (k, f = 0, n = 0) => `<span class="k-slot" data-item="${k}"${f ? ` data-f="${f}"` : ""}>${ico(k)}${n > 1 ? `<u>${wlNum(n)}</u>` : ""}</span>`;
+  const priceTag = (p, each = true) => `<span class="gx-price"><span>${tixPrice(p)}</span>${each ? "<small>each</small>" : ""}</span>`;
 
-  // ---------- posting an offer (either side)
+  // ---------- your offers: the slot strip (on Browse and Sell, not while writing a ticket)
+  const open = EX.mine.filter((o) => o.open).sort((a, b) => a.at - b.at);
+  const slots = `<div class="gx-slots" aria-label="Your offers">${Array.from({ length: G.EX_SLOTS }, (_, i) => {
+    const o = open[i];
+    if (!o) return `<div class="gx-slot empty"><span class="k-label">Free slot</span><div class="gx-slot-b"><button type="button" class="k-chip" data-new="buy">+ Buy</button><button type="button" class="k-chip" data-new="sell">+ Sell</button></div></div>`;
+    const pc = Math.round((o.done / Math.max(1, o.qty)) * 100);
+    return `<div class="gx-slot ${o.side}" data-item="${o.k}"${o.f ? ` data-f="${o.f}"` : ""} title="${esc(`${o.side === "buy" ? "Buying" : "Selling"} ${G.forgeNameAt(o.k, o.f || 0)}: ${o.done.toLocaleString()} of ${o.qty.toLocaleString()} at ${o.price.toLocaleString()} each · ${ago(o.at)}`)}">
+      <span class="gx-side">${o.side === "buy" ? "Buying" : "Selling"}</span><button type="button" class="k-x gx-x" data-cancel="${o.id}" aria-label="Take it down" title="Take it down">×</button>
+      <span class="gx-slot-i">${slot(o.k, o.f || 0)}<b>${esc(G.forgeNameAt(o.k, o.f || 0))}</b></span>
+      <span class="gx-bar"><i style="width:${pc}%"></i></span><small>${o.done.toLocaleString()} / ${o.qty.toLocaleString()} · ${tixPrice(o.price)}</small></div>`;
+  }).join("")}</div>`;
+
+  // ---------- the order ticket (either side)
   if (exPost) {
     const d = exPost, sell = d.side === "sell";
     const keys = sell ? tradeable.filter((k) => ownAll(k) > 0) : tradeable;
-    /* (2026-09-23) WHICH ONE ARE YOU SELLING. A reforge belongs to the piece now, so owning a plain Diamond axe
-       and a +3 means two different goods with two different prices, and the market has to be told which. The
-       chooser only appears when there IS a choice; with one kind in hand it stays out of the way. A forged piece
-       is always sold singly, because each one is its own object. */
+    /* (2026-09-23) WHICH ONE ARE YOU SELLING: a reforged piece is its own good with its own price; the chooser appears only when there is a choice */
     const exLevels = (k) => {
       const by = new Map();
       for (const x of [...(me.inv || []), ...(me.bank || [])]) if (x.k === k) { const f = G.fOf(x); by.set(f, (by.get(f) || 0) + x.n); }
@@ -5815,53 +5981,63 @@ function renderEx() {
     };
     if (d.k && !keys.includes(d.k)) d.k = "";
     if (sell) { const ls = d.k ? exLevels(d.k) : []; if (!ls.some(([f]) => f === d.f)) d.f = ls[0]?.[0] || 0; } else d.f = 0;
-    const b = book(d.k), have = d.k ? (sell ? (exLevels(d.k).find(([f]) => f === d.f)?.[1] || 0) : ownAll(d.k)) : 0, total = d.qty * d.price, tax = G.exTax(total);
+    const b = book(d.k), have = d.k ? (sell ? (exLevels(d.k).find(([f]) => f === d.f)?.[1] || 0) : ownAll(d.k)) : 0;
     if (sell && d.f) d.qty = 1;
-    body.innerHTML = `<div class="mk-form">
-      <div class="mk-h">${sell ? "Post a sell offer" : "Post a buy offer"}</div>
-      <label>Item<span id="mkPick"></span></label>
-      ${sell && d.k && exLevels(d.k).length > 1 ? `<label>Which one<select id="mkF">${exLevels(d.k).map(([f, n]) => `<option value="${f}"${f === d.f ? " selected" : ""}>${f ? `+${f}` : "Plain"} · ${n.toLocaleString()} you own</option>`).join("")}</select></label>` : ""}
-      ${d.k ? `<div class="mk-note">Cheapest listed: <b>${b.sell != null ? G.fmtCash(b.sell) : "—"}</b> · best buy offer: <b>${b.buy != null ? G.fmtCash(b.buy) : "—"}</b> · last sold: <b>${last(d.k) ? G.fmtCash(last(d.k)) : "—"}</b>${MSRP[d.k] ? ` · Bom sells it for <b>${G.fmtCash(MSRP[d.k])}</b>` : ""}${sell ? `<br>You have ${have.toLocaleString()} (bag and bank).` : ""}</div>
-      <label>How many<input id="mkQty" type="number" min="1" ${sell ? `max="${have}"` : ""} value="${d.qty}"></label>
-      <label>Price each (tickets)<input id="mkPrice" type="number" min="1" value="${d.price}"></label>
-      <div class="mk-note">${sell ? `You'd get <b>${G.fmtCash(total - tax)}</b> when it all sells (${G.fmtCash(total)} less ${G.fmtCash(tax)} to the house). The items leave your bag or bank now; takings go to your bank.`
-        : `This puts up <b>${G.fmtCash(total)}</b> now (you have ${G.fmtCash(cashAll())}, bag and bank). If it fills cheaper, you get the difference back. Items go to your bank.`}</div>` : `<div class="mk-note">${sell ? "Pick something from your bag or bank to sell." : "Pick the item you want to buy."}</div>`}
-      <div class="row"><button class="btn" id="mkGo"${d.k ? "" : " disabled"}>${sell ? "Post sell offer" : "Post buy offer"}</button><button class="btn plain" id="mkBack">Back</button></div></div>`;
+    const total = d.qty * d.price, tax = G.exTax(total), cash = cashAll();
+    const stat = (label, v) => `<span class="gx-stat"><small>${label}</small><b>${v != null ? tixPrice(v) : "—"}</b></span>`;
+    const qtyBtns = (sell ? [[1, "1"], [10, "10"], [100, "100"], [have, "All"]] : [[1, "1"], [10, "10"], [100, "100"], [1000, "1,000"]]).filter(([n]) => n > 0);
+    const priceBtns = [["-5", "−5%"], ...(b.sell != null ? [["sell", "Cheapest"]] : []), ...(b.buy != null ? [["buy", "Best offer"]] : []), ...(last(d.k) ? [["last", "Last sold"]] : []), ["+5", "+5%"]];
+    const short = !sell && total > cash;
+    body.innerHTML = `<div class="gx-ticket">
+      <div class="gx-t-head"><span class="k-label">${sell ? "Sell offer" : "Buy offer"}</span><button type="button" class="btn plain sm" id="mkBack">← Back</button></div>
+      <div class="gx-t-item">${d.k ? slot(d.k, d.f) : `<span class="k-slot"></span>`}<div><b>${d.k ? esc(G.forgeNameAt(d.k, d.f || 0)) : sell ? "Choose something you own" : "Choose an item"}</b><span id="mkPick"></span>
+        ${sell && d.k && exLevels(d.k).length > 1 ? `<label class="gx-which">Which one <select id="mkF">${exLevels(d.k).map(([f, n]) => `<option value="${f}"${f === d.f ? " selected" : ""}>${f ? `+${f}` : "Plain"} · ${n.toLocaleString()} you own</option>`).join("")}</select></label>` : ""}</div></div>
+      ${d.k ? `<div class="gx-market">${stat("Cheapest listed", b.sell)}${stat("Best buy offer", b.buy)}${stat("Last sold", last(d.k))}${MSRP[d.k] ? stat("Bom sells it for", MSRP[d.k]) : ""}</div>
+      <div class="gx-field"><span class="k-label">How many${sell ? ` <small>· you have ${have.toLocaleString()}</small>` : ""}</span><div class="gx-in"><input id="mkQty" type="number" min="1" ${sell ? `max="${have}"` : ""} value="${d.qty}"${sell && d.f ? " disabled" : ""}><div class="qty">${qtyBtns.map(([n, l]) => `<button type="button" data-q="${n}" aria-pressed="${d.qty === n}">${l}</button>`).join("")}</div></div></div>
+      <div class="gx-field"><span class="k-label">Price each</span><div class="gx-in"><input id="mkPrice" type="number" min="1" value="${d.price}"><div class="qty">${priceBtns.map(([k, l]) => `<button type="button" data-pp="${k}">${l}</button>`).join("")}</div></div></div>
+      <div class="gx-sum${short ? " short" : ""}">${sell
+        ? `<span>When it all sells</span><b>${tixPrice(total - tax)}</b><small>${G.fmtCash(total)} less ${G.fmtCash(tax)} to the house · the items leave your bag or bank now, the takings go to your bank</small>`
+        : `<span>You put up</span><b>${tixPrice(total)}</b><small>${short ? `You have ${G.fmtCash(cash)} in your bag and bank: not enough.` : `You have ${G.fmtCash(cash)}. If it fills cheaper you get the difference back; the items go to your bank.`}</small>`}</div>` : `<p class="mk-note">${sell ? "Pick something from your bag or bank to sell." : "Pick the item you want to buy."}</p>`}
+      <div class="gx-t-foot"><button class="btn" id="mkGo"${d.k && !short ? "" : " disabled"}>${sell ? "Post sell offer" : "Post buy offer"}</button></div></div>`;
     itemPicker($("mkPick"), keys, d.k, (k) => {
       const bk = book(k); d.k = k;
       d.price = (sell ? bk.buy || bk.sell : bk.sell) || last(k) || 1; d.qty = sell ? ownAll(k) : 1; renderEx();
-    }, { note: (k) => [sell ? `×${ownAll(k).toLocaleString()}` : "", MSRP[k] ? `Bom ${MSRP[k].toLocaleString()}` : ""].filter(Boolean).join(" · ") });
+    }, { placeholder: d.k ? "Change item" : "Choose an item", note: (k) => [sell ? `×${ownAll(k).toLocaleString()}` : "", MSRP[k] ? `Bom ${MSRP[k].toLocaleString()}` : ""].filter(Boolean).join(" · ") });
     $("mkF")?.addEventListener("change", () => { d.f = +$("mkF").value || 0; d.qty = d.f ? 1 : ownAll(d.k); renderEx(); });
-    const upd = () => { d.qty = Math.max(1, +$("mkQty").value | 0); if (sell) d.qty = Math.min(d.qty, have); if (sell && d.f) d.qty = 1; d.price = Math.max(1, +$("mkPrice").value | 0); };
+    const upd = () => { if ($("mkQty")) { d.qty = Math.max(1, +$("mkQty").value | 0); if (sell) d.qty = Math.min(d.qty, have); if (sell && d.f) d.qty = 1; } if ($("mkPrice")) d.price = Math.max(1, +$("mkPrice").value | 0); };
     for (const id of ["mkQty", "mkPrice"]) $(id)?.addEventListener("change", () => { upd(); renderEx(); });
+    body.querySelectorAll("[data-q]").forEach((x) => x.addEventListener("click", () => { upd(); d.qty = Math.max(1, +x.dataset.q); if (sell) d.qty = Math.min(d.qty, have); SFX.play("ui_click"); renderEx(); }));
+    body.querySelectorAll("[data-pp]").forEach((x) => x.addEventListener("click", () => { upd(); const k = x.dataset.pp;
+      d.price = Math.max(1, k === "-5" ? Math.floor(d.price * 0.95) : k === "+5" ? Math.ceil(d.price * 1.05) : k === "sell" ? b.sell : k === "buy" ? b.buy : last(d.k)); SFX.play("ui_click"); renderEx(); }));
     $("mkGo").addEventListener("click", () => { upd(); send({ t: "ex", op: "place", side: d.side, k: d.k, qty: d.qty, price: d.price, f: d.f || 0 }); exPost = null; renderEx(); });
     $("mkBack").addEventListener("click", () => { exPost = null; renderEx(); });
     return;
   }
 
-  // ---------- the Buy tab: newest listings, a search and a picker, buy on the row
+  // ---------- Browse: one row per item, open it for every seller
   if (exTab === "buy") {
     const q = exQ.trim().toLowerCase();
     const list = EX.listings.filter((l) => (!exK || l.k === exK) && (!q || ITEMS[l.k].name.toLowerCase().includes(q)));
-    const myBuys = EX.mine.filter((o) => o.side === "buy" && o.open);
-    body.innerHTML = `<div class="mk-bar"><input class="search" id="mkQ" placeholder="Search listings…" value="${esc(exQ)}" aria-label="Search listings"><span id="mkK"></span><button class="btn" id="mkPostBuy">Post a buy offer</button></div>
-      <div class="mk-h">For sale · newest first</div>
-      <div class="mk-list">${list.map((l) => row(ico(l.k), esc(G.forgeNameAt(l.k, l.f || 0)), `${l.left.toLocaleString()} for sale · ${l.mine ? "your listing" : esc(l.name)} · ${ago(l.at)}`,
-        `<span class="pr">${tixPrice(l.price)}<small>each</small></span>`,
-        (l.mine ? `<span class="tag2 done">Yours</span>` : `<button class="btn" data-buy="${l.id}">${exBuyOpen === l.id ? "Close" : "Buy"}</button>`)
-        + (exBuyOpen !== l.id ? "" : l.mine
-          ? `<div class="mk-buy">This is your listing: other players see a Buy button here. <button class="btn plain" data-cancel="${EX.mine.find((o) => o.id === l.id) ? l.id : ""}">Take it down</button></div>`
-          : `<div class="mk-buy">How many <input type="number" id="mkBuyQ" min="1" max="${l.left}" value="${l.left}"> <span id="mkBuyT">${G.fmtCash(l.left * l.price)}</span> <button class="btn" id="mkBuyGo" data-k="${l.k}" data-p="${l.price}">Buy now</button></div>`),
-        `${l.mine ? "mine" : ""} click" data-row="${l.id}`, l.k, l.f || 0)).join("") || `<div class="mk-empty">${exK || q ? "Nothing listed that matches. Post a buy offer and sellers will come to you." : "Nothing is for sale yet. Be the first: post an offer."}</div>`}</div>
-      ${myBuys.length ? `<div class="mk-h">Your buy offers</div><div class="mk-list">${myBuys.map((o) => row(ico(o.k), esc(G.forgeNameAt(o.k, o.f || 0)), `${o.done.toLocaleString()} of ${o.qty.toLocaleString()} bought · ${ago(o.at)}`, `<span class="pr">${tixPrice(o.price)}<small>each</small></span>`, `<button class="btn plain" data-cancel="${o.id}">Take down</button>`)).join("")}</div>` : ""}`;
+    const groups = new Map();
+    for (const l of list) { const id = `${l.k}:${l.f || 0}`; const g = groups.get(id) || { id, k: l.k, f: l.f || 0, rows: [], left: 0, min: Infinity, sellers: new Set(), at: 0 }; g.rows.push(l); g.left += l.left; g.min = Math.min(g.min, l.price); g.sellers.add(l.name); g.at = Math.max(g.at, l.at); groups.set(id, g); }
+    const gs = [...groups.values()].sort((a, b) => b.at - a.at);
+    body.innerHTML = `${slots}<div class="mk-bar"><input class="search" id="mkQ" placeholder="Search the market…" value="${esc(exQ)}" aria-label="Search the market"><span id="mkK"></span><button class="btn" id="mkPostBuy">Post a buy offer</button></div>
+      <div class="gx-scroll"><div class="k-sect"><span class="k-label">For sale · ${gs.length.toLocaleString()} item${gs.length === 1 ? "" : "s"}</span></div>
+      <div class="mk-list">${gs.map((g) => {
+        const isOpen = exOpenK === g.id, sellers = g.sellers.size;
+        const head = `<button type="button" class="k-row gx-item${isOpen ? " on" : ""}" data-open="${g.id}">${slot(g.k, g.f)}<span><b>${esc(G.forgeNameAt(g.k, g.f))}</b><small>${g.left.toLocaleString()} for sale · ${sellers} seller${sellers === 1 ? "" : "s"} · ${ago(g.at)}</small></span><span class="k-end"><span class="gx-from"><small>from</small>${priceTag(g.min, false)}</span><span class="k-chip${isOpen ? " gold" : ""}">${isOpen ? "Close" : "View"}</span></span></button>`;
+        if (!isOpen) return head;
+        const rows = [...g.rows].sort((a, b) => a.price - b.price || a.at - b.at).map((l) => `<div class="gx-l${l.mine ? " mine" : ""}"><span class="gx-l-who">${l.mine ? "Your listing" : esc(l.name)}<small>${l.left.toLocaleString()} left · ${ago(l.at)}</small></span>${priceTag(l.price)}${l.mine
+          ? (EX.mine.find((o) => o.id === l.id) ? `<button class="btn plain sm" data-cancel="${l.id}">Take it down</button>` : `<span class="k-chip">Yours</span>`)
+          : exBuyOpen === l.id ? `<span class="gx-buy"><input type="number" id="mkBuyQ" min="1" max="${l.left}" value="${l.left}" aria-label="How many"><b id="mkBuyT">${G.fmtCash(l.left * l.price)}</b><button class="btn sm" id="mkBuyGo" data-k="${l.k}" data-p="${l.price}">Buy now</button></span>`
+          : `<button class="btn sm" data-buy="${l.id}">Buy</button>`}</div>`).join("");
+        return `<div class="gx-group">${head}<div class="gx-ls">${rows}</div></div>`;
+      }).join("") || `<div class="mk-empty">${exK || q ? "Nothing listed that matches. Post a buy offer and sellers will come to you." : "Nothing is for sale yet. Be the first: post an offer."}</div>`}</div></div>`;
     itemPicker($("mkK"), tradeable.filter((k) => EX.listings.some((l) => l.k === k)), exK, (k) => { exK = k; renderEx(); }, { allowAll: true });
     const qi = $("mkQ"); qi.addEventListener("input", () => { exQ = qi.value; const pos = qi.selectionStart; renderEx(); const n = $("mkQ"); n.focus(); n.setSelectionRange(pos, pos); });
     $("mkPostBuy").addEventListener("click", () => { exPost = { side: "buy", k: exK, qty: 1, price: book(exK).sell || last(exK) || 1 }; renderEx(); });
-    body.querySelectorAll("[data-row]").forEach((r) => r.addEventListener("click", (e) => {
-      if (e.target.closest(".mk-buy")) return;
-      exBuyOpen = exBuyOpen === +r.dataset.row ? null : +r.dataset.row; renderEx();
-      $("mkBuyQ")?.focus(); $("mkBuyQ")?.select();
-    }));
+    body.querySelectorAll("[data-open]").forEach((r) => r.addEventListener("click", () => { exOpenK = exOpenK === r.dataset.open ? null : r.dataset.open; exBuyOpen = null; SFX.play("ui_click"); renderEx(); }));
+    body.querySelectorAll("[data-buy]").forEach((x) => x.addEventListener("click", () => { exBuyOpen = +x.dataset.buy; renderEx(); $("mkBuyQ")?.focus(); $("mkBuyQ")?.select(); }));
     const bq = $("mkBuyQ");
     if (bq) {
       const go = $("mkBuyGo"), price = +go.dataset.p;
@@ -5870,22 +6046,22 @@ function renderEx() {
     }
   }
 
-  // ---------- the Sell tab: your offers, and what people want
+  // ---------- Sell: what people want that you have, everything you could list, and your finished offers
   if (exTab === "sell") {
-    const mySells = EX.mine.filter((o) => o.side === "sell").sort((a, b) => (b.open - a.open) || b.at - a.at);
     const wanted = EX.wanted.filter((w) => !w.mine && ownAll(w.k) > 0);
-    body.innerHTML = `<div class="mk-bar"><button class="btn" id="mkPostSell">Post a sell offer</button><small class="note" style="margin:0">From your bag or bank. You can have ${G.EX_SLOTS} offers up at once.</small></div>
-      <div class="mk-h">Your sell offers</div>
-      <div class="mk-list">${mySells.map((o) => row(ico(o.k), esc(G.forgeNameAt(o.k, o.f || 0)),
-        `${o.done.toLocaleString()} of ${o.qty.toLocaleString()} sold · ${o.open ? ago(o.at) : o.done >= o.qty ? "sold out" : "taken down"}`,
-        `<span class="pr">${tixPrice(o.price)}<small>each</small></span>`,
-        o.open ? `<button class="btn plain" data-cancel="${o.id}">Take down</button>` : `<span class="tag2 ${o.done >= o.qty ? "buy" : "done"}">${o.done >= o.qty ? "Sold" : "Closed"}</span>`)).join("") || `<div class="mk-empty">You haven't put anything up for sale.</div>`}</div>
-      ${wanted.length ? `<div class="mk-h">People want things you have</div><div class="mk-list">${wanted.map((w) => row(ico(w.k), esc(ITEMS[w.k].name), `${esc(w.name)} wants ${w.left.toLocaleString()} · you have ${ownAll(w.k).toLocaleString()}`,
-        `<span class="pr">${tixPrice(w.price)}<small>each</small></span>`, `<button class="btn" data-sellto="${w.k}" data-p="${w.price}" data-n="${Math.min(w.left, ownAll(w.k))}">Sell</button>`)).join("")}</div>` : ""}`;
-    $("mkPostSell").addEventListener("click", () => { exPost = { side: "sell", k: "", qty: 1, price: 1 }; renderEx(); });
+    const owned = tradeable.filter((k) => k !== "tickets" && ownAll(k) > 0 && !ITEMS[k].held);
+    const closed = EX.mine.filter((o) => !o.open).sort((a, b) => b.at - a.at).slice(0, 20);
+    body.innerHTML = `${slots}<div class="gx-scroll">
+      ${wanted.length ? `<div class="k-sect"><span class="k-label">People want things you have</span></div><div class="mk-list">${wanted.map((w) => `<div class="k-row gx-want" data-item="${w.k}">${slot(w.k)}<span><b>${esc(ITEMS[w.k].name)}</b><small>${esc(w.name)} wants ${w.left.toLocaleString()} · you have ${ownAll(w.k).toLocaleString()}</small></span><span class="k-end">${priceTag(w.price)}<button class="btn sm" data-sellto="${w.k}" data-p="${w.price}" data-n="${Math.min(w.left, ownAll(w.k))}">Sell</button></span></div>`).join("")}</div>` : ""}
+      <div class="k-sect"><span class="k-label">Sell something you own · bag and bank</span></div>
+      <div class="gx-own">${owned.map((k) => `<button type="button" class="gx-o" data-sellk="${k}" data-item="${k}" title="${esc(ITEMS[k].name)} · you have ${ownAll(k).toLocaleString()}${book(k).buy != null ? ` · best offer ${book(k).buy.toLocaleString()}` : ""}">${slot(k, 0, ownAll(k))}${book(k).buy != null ? `<em class="gx-o-p">${wlNum(book(k).buy)}</em>` : ""}</button>`).join("") || `<div class="mk-empty">Nothing in your bag or bank can be listed.</div>`}</div>
+      ${closed.length ? `<details class="qfold"><summary>Finished offers <small>${closed.length}</small></summary><div class="mk-list" style="padding:0 8px 8px">${closed.map((o) => `<div class="k-row off gx-done">${slot(o.k, o.f || 0)}<span><b>${esc(G.forgeNameAt(o.k, o.f || 0))}</b><small>${o.side === "buy" ? "Bought" : "Sold"} ${o.done.toLocaleString()} of ${o.qty.toLocaleString()} · ${o.done >= o.qty ? "complete" : "taken down"}</small></span><span class="k-end">${priceTag(o.price)}</span></div>`).join("")}</div></details>` : ""}</div>`;
     body.querySelectorAll("[data-sellto]").forEach((b) => b.addEventListener("click", () => { exPost = { side: "sell", k: b.dataset.sellto, qty: +b.dataset.n, price: +b.dataset.p }; renderEx(); }));
+    body.querySelectorAll("[data-sellk]").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.sellk, bk = book(k); exPost = { side: "sell", k, qty: ownAll(k), price: bk.buy || bk.sell || last(k) || 1 }; SFX.play("ui_click"); renderEx(); }));
   }
-  body.querySelectorAll("[data-cancel]").forEach((b) => b.addEventListener("click", () => send({ t: "ex", op: "cancel", id: +b.dataset.cancel })));
+  body.querySelectorAll("[data-new]").forEach((b) => b.addEventListener("click", () => { const side = b.dataset.new; exPost = { side, k: side === "buy" ? exK : "", qty: 1, price: side === "buy" ? book(exK).sell || last(exK) || 1 : 1 }; SFX.play("ui_click"); renderEx(); }));
+  body.querySelectorAll("[data-cancel]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); send({ t: "ex", op: "cancel", id: +b.dataset.cancel }); }));
+  const sc = body.querySelector(".gx-scroll"); if (sc) sc.scrollTop = keep;
 }
 
 /* ------------------------------------------------------------ the Casino's tables
@@ -6635,45 +6811,89 @@ function renderMap() {
 }
 setInterval(() => { if (!$("mapWin").hidden && document.visibilityState === "visible") { WORLD.asked = Date.now(); send({ t: "map" }); } }, 10000);
 $("mini").addEventListener("click", openMap);
-let QW = { st: "all", tier: null, open: null };
+/* (2026-09-28, the owner: "make an attempt to modernize the ... quest UIs using our UI kit styling. think about what modern MMOs do") THE
+   QUEST JOURNAL. Every modern MMO journal (WoW, ESO, GW2, OSRS's own) is two panes, and this is too:
+   - LEFT, THE LOG: a search, the state and difficulty strips, then the quests you are on in their own group at the top, and everything
+     else grouped by the area its giver stands in (yours first), each group folding. A mark says where each one is at a glance: ! ready
+     to hand in, a progress ring for one under way, ? to pick up, a lock, a tick.
+   - RIGHT, THE PAGE: the quest's story, its objectives as a checklist (done, the one you are on with its count and bar, what is to come),
+     who gives it and where, what it needs first, and its rewards as the items and skill icons they are; Track puts it on your screen.
+   On a phone the log sits above the page. QW.open is the page; it follows the tracked quest until you pick another. */
+let QW = { st: "all", tier: null, open: null, q: "", shut: {} };
 function renderQuests() {
   if (!me) return;
   const keys = Object.keys(QUESTS).filter((k) => (!QUESTS[k].event || G.hwOn() || G.qState(me, k) === "done") && (G.OPEN.has(WIKI.npcs[QUESTS[k].giver]?.scene) || ["active", "ready", "done"].includes(G.qState(me, k))));
-  const stOf = (k) => G.qState(me, k), order = { ready: 0, active: 1, new: 2, locked: 3, done: 4 };
+  const stOf = (k) => G.qState(me, k), order = { ready: 0, active: 1, new: 2, locked: 3, done: 4 }, TO = { easy: 0, medium: 1, hard: 2 };
   const done = keys.filter((k) => stOf(k) === "done").length;
   $("questSub").textContent = `${done} of ${keys.length} done`;
-  const STATES = [["ready", "Ready to hand in"], ["active", "In progress"], ["new", "Not started"], ["locked", "Locked"], ["done", "Finished"]], TAG = Object.fromEntries(STATES);
-  const cut = keys.filter((k) => (QW.st === "all" || stOf(k) === QW.st) && (!QW.tier || QUESTS[k].tier === QW.tier)).sort((a, b) => order[stOf(a)] - order[stOf(b)] || (QUESTS[a].tier > QUESTS[b].tier ? 1 : -1));
-  /* where somebody stands: the area they are placed in, from the wiki's index of every NPC */
   const whereIs = (name) => { const n = WIKI.npcs[name]; return n ? (SCENES[n.scene]?.name || n.scene) : null; };
-  const person = (name) => { const w = whereIs(name); return `<a data-wiki="npcs/${esc(name)}">${esc(name)}</a>${w ? ` <small class="qw-where">in ${esc(w)}</small>` : ""}`; };
+  const sceneOf = (name) => WIKI.npcs[name]?.scene, here = String(Z.key || me.scene || "").split(":")[0];
+  const person = (name) => { const w = whereIs(name); return `<a data-wiki="npcs/${esc(name)}">${esc(name)}</a>${w ? ` <small>in ${esc(w)}</small>` : ""}`; };
   const tierImg = (t) => `<img class="qico" src="${UIA}q_${t || "easy"}.png?v=1" alt="">`;
-  const filters = `<div class="qw-f"><div class="qfilt">${[["all", "All"], ...STATES].map(([st, l]) => `<button type="button" class="qf${QW.st === st ? " on" : ""}" data-st="${st}">${l}<small>${st === "all" ? keys.length : keys.filter((k) => stOf(k) === st).length}</small></button>`).join("")}</div>
-    <div class="qfilt">${["easy", "medium", "hard"].map((t) => `<button type="button" class="qf${QW.tier === t ? " on" : ""}" data-tier="${t}">${tierImg(t)}${G.QUEST_TIERS[t] || t}<small>${keys.filter((k) => QUESTS[k].tier === t && stOf(k) !== "done").length}</small></button>`).join("")}</div></div>`;
-  const row = (k) => {
-    const q = QUESTS[k], st = stOf(k), si = G.qGet(me, k).stage | 0, stg = st === "active" ? G.qStage(me, k) : null, need = stg ? G.qNeed(me, k) : 0, have = stg ? Math.min(G.qHave(me, k), need) : 0;
-    const line = st === "new" ? `Talk to ${q.giver}${whereIs(q.giver) ? ` in ${whereIs(q.giver)}` : ""}.` : st === "locked" ? `Finish ${(q.requires || []).map((r) => QUESTS[r]?.name).filter(Boolean).join(" and ") || "an earlier quest"} first.` : st === "done" ? `Reward: ${q.reward.text}` : st === "ready" ? `Hand in to ${G.qHandTo(k)}${whereIs(G.qHandTo(k)) ? ` in ${whereIs(G.qHandTo(k))}` : ""}.` : `Step ${si + 1} of ${q.stages.length}: ${G.stageText(k, stg)}.`;
-    const open = QW.open === k;
-    const steps = q.stages.map((s, i) => {
-      const done = st === "done" || (st === "ready") || i < si, now = st === "active" && i === si, who = s.type === "talk" ? s.npc : s.type === "bring" ? G.qBringTo(k, s) : null;
-      return `<li class="${done ? "done" : now ? "now" : ""}"><i>${done ? "\u2713" : now ? "\u25B8" : "\u25CB"}</i><span>${(s.give || []).length ? `<em class="qgive">handed ${s.give.map(([gk, gn]) => `${gn > 1 ? `${gn} ` : ""}${esc(ITEMS[gk]?.name.toLowerCase() || gk)}`).join(", ")} →</em> ` : ""}${esc(G.stageText(k, s))}${who && whereIs(who) ? ` <small class="qw-where">(${esc(whereIs(who))})</small>` : ""}${now && ["bring", "kill", "gather"].includes(s.type) ? ` <b>${have}/${need}</b>` : ""}</span></li>`;
+  const STATES = [["all", "All"], ["doing", "Doing"], ["new", "Available"], ["locked", "Locked"], ["done", "Finished"]];
+  const inState = (k) => QW.st === "all" || (QW.st === "doing" ? ["ready", "active"].includes(stOf(k)) : stOf(k) === QW.st);
+  const q = QW.q.trim().toLowerCase(), hit = (k) => !q || `${QUESTS[k].name} ${QUESTS[k].giver} ${whereIs(QUESTS[k].giver) || ""}`.toLowerCase().includes(q);
+  const cut = keys.filter((k) => inState(k) && (!QW.tier || QUESTS[k].tier === QW.tier) && hit(k));
+  if (!QW.open || !keys.includes(QW.open)) QW.open = trackedQuest() || cut.find((k) => stOf(k) === "ready") || cut.find((k) => stOf(k) === "active") || cut.find((k) => stOf(k) === "new") || cut[0] || null;
+  const trk = trackedQuest();
+  const count = (k) => { const st = stOf(k), stg = st === "active" ? G.qStage(me, k) : null; if (!stg || !["bring", "kill", "gather"].includes(stg.type)) return null; const need = G.qNeed(me, k); return { have: Math.min(G.qHave(me, k), need), need }; };
+  const mark = (k) => { const st = stOf(k), c = count(k);
+    return st === "ready" ? `<span class="qj-m ready" title="Ready to hand in">!</span>` : st === "active" ? `<span class="qj-m active" style="--p:${c ? Math.round((c.have / c.need) * 100) : 50}%" title="In progress"></span>` : st === "new" ? `<span class="qj-m new" title="Not started">?</span>` : st === "locked" ? `<span class="qj-m locked" title="Locked"></span>` : `<span class="qj-m done" title="Finished">✓</span>`; };
+
+  // ---------- the log: what you are on, then by area
+  const groups = [];
+  const doing = cut.filter((k) => ["ready", "active"].includes(stOf(k))).sort((a, b) => order[stOf(a)] - order[stOf(b)]);
+  if (doing.length) groups.push({ id: "doing", name: "In progress", list: doing });
+  const byArea = new Map();
+  for (const k of cut.filter((k) => !["ready", "active"].includes(stOf(k)))) { const sc = sceneOf(QUESTS[k].giver) || "elsewhere"; if (!byArea.has(sc)) byArea.set(sc, []); byArea.get(sc).push(k); }
+  [...byArea.entries()].sort((a, b) => (b[0] === here) - (a[0] === here) || String(SCENES[a[0]]?.name || a[0]).localeCompare(String(SCENES[b[0]]?.name || b[0])))
+    .forEach(([sc, list]) => groups.push({ id: sc, name: SCENES[sc]?.name || "Elsewhere", here: sc === here, list: list.sort((a, b) => order[stOf(a)] - order[stOf(b)] || (TO[QUESTS[a].tier] | 0) - (TO[QUESTS[b].tier] | 0)) }));
+  const entry = (k) => { const qq = QUESTS[k], c = count(k);
+    return `<button type="button" class="qj-e ${stOf(k)}${QW.open === k ? " on" : ""}" data-k="${k}">${mark(k)}<span><b>${esc(qq.name)}</b><small>${G.QUEST_TIERS[qq.tier] || ""}${trk === k ? " · tracking" : ""}${c ? ` · ${c.have}/${c.need}` : ""}</small></span>${tierImg(qq.tier)}</button>`; };
+  const log = `<div class="qj-tools"><input class="search" id="qjQ" placeholder="Search quests, people, places…" value="${esc(QW.q)}" aria-label="Search quests">
+      <div class="qfilt">${STATES.map(([st, l]) => `<button type="button" class="qf${QW.st === st ? " on" : ""}" data-st="${st}">${l}<small>${keys.filter((k) => st === "all" || (st === "doing" ? ["ready", "active"].includes(stOf(k)) : stOf(k) === st)).length}</small></button>`).join("")}</div>
+      <div class="qfilt">${["easy", "medium", "hard"].map((t) => `<button type="button" class="qf${QW.tier === t ? " on" : ""}" data-tier="${t}">${tierImg(t)}${G.QUEST_TIERS[t] || t}</button>`).join("")}</div></div>
+    <div class="qj-groups">${groups.map((g) => `<div class="qj-g${QW.shut[g.id] ? " shut" : ""}"><button type="button" class="qj-gh" data-g="${esc(g.id)}"><span>${esc(g.name)}${g.here ? ' <em class="qhere">here</em>' : ""}</span><small>${g.list.length}</small></button>${QW.shut[g.id] ? "" : g.list.map(entry).join("")}</div>`).join("")
+      || `<p class="note" style="padding:8px">No quests match. Clear the search or a filter.</p>`}</div>`;
+
+  // ---------- the page
+  let page = `<div class="qj-empty"><img src="${UIA}quests.png?v=1" alt=""><p>Pick a quest on the left.</p></div>`;
+  const k = QW.open;
+  if (k && QUESTS[k]) {
+    const qq = QUESTS[k], st = stOf(k), si = G.qGet(me, k).stage | 0, c = count(k);
+    const STATE = { ready: ["gold", "Ready to hand in"], active: ["good", "In progress"], new: ["", "Not started"], locked: ["lock", "Locked"], done: ["good", "Finished"] }[st];
+    const steps = qq.stages.map((s, i) => {
+      const isDone = st === "done" || st === "ready" || i < si, now = st === "active" && i === si, who = s.type === "talk" ? s.npc : s.type === "bring" ? G.qBringTo(k, s) : null;
+      return `<li class="${isDone ? "done" : now ? "now" : "todo"}"><i></i><span>${(s.give || []).length ? `<em class="qgive">handed ${s.give.map(([gk, gn]) => `${gn > 1 ? `${gn} ` : ""}${esc(ITEMS[gk]?.name.toLowerCase() || gk)}`).join(", ")} →</em> ` : ""}${esc(G.stageText(k, s))}${who && whereIs(who) ? ` <small>${esc(whereIs(who))}</small>` : ""}${now && c ? `<span class="qj-cnt"><b>${c.have}/${c.need}</b><span class="xpb"><i style="width:${(c.have / c.need) * 100}%"></i></span></span>` : ""}</span></li>`;
     }).join("");
-    const detail = open ? `<div class="qw-d">
-      <p>${esc(q.brief)}</p>
-      <div class="qw-kv"><b>Given by</b><span>${person(q.giver)}</span></div>
-      ${st !== "done" && G.qHandTo(k) !== q.giver ? `<div class="qw-kv"><b>Hand in to</b><span>${person(G.qHandTo(k))}</span></div>` : ""}
-      ${(q.requires || []).length ? `<div class="qw-kv"><b>Needs first</b><span>${q.requires.map((r) => `<a data-wiki="quests/${r}">${esc(QUESTS[r]?.name || r)}</a>${stOf(r) === "done" ? " \u2713" : ""}`).join(", ")}</span></div>` : ""}
-      <div class="qw-kv"><b>Steps</b><ol class="qw-steps">${steps}</ol></div>
-      <div class="qw-kv"><b>Reward</b><span>${esc(q.reward.text)}${st === "done" ? " <em>(collected)</em>" : ""}</span></div>
-      <div class="qw-kv"><b></b><span><a data-wiki="quests/${k}">Read it in the wiki \u2192</a></span></div>
-    </div>` : "";
-    return `<div class="arow qw ${st}${open ? " open" : ""}" data-k="${k}">${tierImg(q.tier)}<span><b>${esc(q.name)} <em class="qtier">${G.QUEST_TIERS[q.tier] || ""}</em></b><small>${esc(line)}</small>${st === "active" && stg && ["bring", "kill", "gather"].includes(stg.type) ? `<div class="xpb"><i style="width:${(have / need) * 100}%"></i></div>` : ""}</span><em class="qtag">${TAG[st] || st}</em></div>${detail}`;
-  };
-  $("questBody").innerHTML = filters + (cut.length ? cut.map(row).join("") : `<p class="note">Nothing here${QW.tier || QW.st !== "all" ? " with those cuts. Click a lit button to clear it." : "."}</p>`);
+    const rw = qq.reward || {};
+    const rewards = [
+      rw.coins ? `<span class="qj-r"><span class="k-slot">${ico("tickets")}</span><b>${rw.coins.toLocaleString()}</b><small>tickets</small></span>` : "",
+      ...Object.entries(rw.xp || {}).map(([sk, n]) => `<span class="qj-r"><span class="k-slot">${sico(sk)}</span><b>${Number(n).toLocaleString()}</b><small>${esc(SKILLS[sk]?.name || sk)} xp</small></span>`),
+      ...(rw.items || []).map(([ik, n]) => ITEMS[ik] ? `<span class="qj-r" data-item="${ik}"><span class="k-slot">${ico(ik)}${n > 1 ? `<u>×${n}</u>` : ""}</span><b>${esc(ITEMS[ik].name)}</b><small>item</small></span>` : "")].filter(Boolean).join("");
+    const canTrack = ["ready", "active"].includes(st);
+    page = `<article class="qj-d">
+      <header class="qj-dh">${tierImg(qq.tier)}<div><h3>${esc(qq.name)}</h3><div class="qj-chips"><span class="k-chip">${G.QUEST_TIERS[qq.tier] || ""}</span><span class="k-chip ${STATE[0]}">${STATE[1]}</span>${trk === k ? '<span class="k-chip gold">On your screen</span>' : ""}</div></div></header>
+      <p class="qj-brief">${esc(qq.brief)}</p>
+      <div class="k-sect"><span class="k-label">Objectives</span></div><ol class="qj-steps">${steps}</ol>
+      <div class="k-sect"><span class="k-label">Who</span></div>
+      <div class="qj-kv"><span>Given by</span><span>${person(qq.giver)}</span>${st !== "done" && G.qHandTo(k) !== qq.giver ? `<span>Hand in to</span><span>${person(G.qHandTo(k))}</span>` : ""}${(qq.requires || []).length ? `<span>Needs first</span><span>${qq.requires.map((r) => `<a data-open="${r}">${esc(QUESTS[r]?.name || r)}</a>${stOf(r) === "done" ? " ✓" : ""}`).join(", ")}</span>` : ""}</div>
+      <div class="k-sect"><span class="k-label">Rewards${st === "done" ? " · collected" : ""}</span></div><div class="qj-rw">${rewards || `<span class="note">${esc(rw.text || "")}</span>`}</div>
+      <div class="qj-foot">${canTrack ? `<button type="button" class="btn${trk === k ? " plain" : ""}" id="qjTrack">${trk === k ? "Stop tracking" : "Track on screen"}</button>` : ""}<button type="button" class="btn plain" data-wiki="quests/${k}">Read it in the wiki</button></div>
+    </article>`;
+  }
+  const L = $("questBody").querySelector(".qj-log"), keepL = L?.scrollTop || 0, typing = document.activeElement?.id === "qjQ" ? document.activeElement.selectionStart : null;
+  $("questBody").innerHTML = `<div class="qj"><div class="qj-log">${log}</div><div class="qj-page">${page}</div></div>`;
+  const L2 = $("questBody").querySelector(".qj-log"); L2.scrollTop = keepL;
+  if (typing != null) { const i = $("qjQ"); i.focus(); i.setSelectionRange(typing, typing); }
+  $("qjQ").addEventListener("input", (e) => { QW.q = e.target.value; renderQuests(); });
   $("questBody").querySelectorAll(".qf[data-st]").forEach((b) => b.addEventListener("click", () => { QW.st = b.dataset.st; renderQuests(); }));
   $("questBody").querySelectorAll(".qf[data-tier]").forEach((b) => b.addEventListener("click", () => { QW.tier = QW.tier === b.dataset.tier ? null : b.dataset.tier; renderQuests(); }));
-  $("questBody").querySelectorAll(".arow.qw").forEach((r) => r.addEventListener("click", () => { QW.open = QW.open === r.dataset.k ? null : r.dataset.k; renderQuests(); }));
-  $("questBody").querySelectorAll("a[data-wiki]").forEach((a) => a.addEventListener("click", (e) => { e.stopPropagation(); $("questWin").hidden = true; wikiRoute = a.dataset.wiki; openWin("wikiWin"); }));
+  $("questBody").querySelectorAll("[data-g]").forEach((b) => b.addEventListener("click", () => { QW.shut[b.dataset.g] = !QW.shut[b.dataset.g]; renderQuests(); }));
+  $("questBody").querySelectorAll(".qj-e").forEach((r) => r.addEventListener("click", () => { QW.open = r.dataset.k; SFX.play("ui_click"); renderQuests(); if (innerWidth <= 720) $("questBody").querySelector(".qj-page")?.scrollIntoView({ block: "start" }); }));
+  $("questBody").querySelectorAll("[data-open]").forEach((a) => a.addEventListener("click", () => { QW.open = a.dataset.open; renderQuests(); }));
+  $("qjTrack")?.addEventListener("click", () => { setTrack(trackedQuest() === QW.open ? "off" : QW.open); SFX.play("ui_click"); renderQuests(); });
+  $("questBody").querySelectorAll("[data-wiki]").forEach((a) => a.addEventListener("click", (e) => { e.stopPropagation(); $("questWin").hidden = true; wikiRoute = a.dataset.wiki; openWin("wikiWin"); }));
 }
 const openQuests = () => { if ($("questWin").hidden) { openWin("questWin"); renderQuests(); } else $("questWin").hidden = true; };
 $("questBtn").addEventListener("click", openQuests);
