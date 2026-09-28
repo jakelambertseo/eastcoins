@@ -19,10 +19,14 @@ const SUITS = ["♠", "♥", "♦", "♣"];
 const CSS = `
 /* ---------- (2026-09-28) BOM'S PRIZE COUNTER, TABBED, in the UI kit: see cashier() ---------- */
 #gameWin .bom{display:flex;flex-direction:column;min-height:0;max-height:min(72vh,720px);margin:-4px}
-.bom-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 4px 10px}
+.bom-top{display:flex;align-items:center;gap:14px;padding:4px 4px 10px}
+.bom-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .bom-tix{display:inline-flex;align-items:center;gap:8px;padding:5px 14px 5px 8px;border-radius:99px;background:var(--k-head);color:var(--k-head-ink)}
 .bom-tix .ico{width:26px;height:26px}.bom-tix b{font:800 22px/1 Lora,serif;color:#ffd84a;font-variant-numeric:tabular-nums}.bom-tix small{font:var(--k-f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--k-head-sub)}
 .bom-chips{display:flex;gap:6px;flex-wrap:wrap}
+.bom-face{flex:none;width:62px;height:62px;border-radius:10px;overflow:hidden;background:radial-gradient(circle at 50% 35%,#2e7a4a,#123a22);box-shadow:0 0 0 2px #e8bf35,0 0 0 4px #5a3a08,0 0 14px rgba(255,200,60,.35)}.bom-face img{display:block;width:62px;height:62px;image-rendering:pixelated}
+.bom-who{display:grid;gap:6px;min-width:0;flex:1}
+.bom-say{margin:0;font:italic 600 13.5px/1.3 Lora,serif;color:#f3e2bd}.bom-say b{font:800 12px var(--k-disp);font-style:normal;letter-spacing:.06em;color:#ffd84a;margin-right:6px}
 .bom-tabs{margin:0 -12px;padding-left:16px}
 .bom-tabs .k-chip{padding:0 6px;font-size:10.5px}
 .bom-pane{flex:1;min-height:0;overflow:auto;display:grid;gap:6px;align-content:start;padding:10px 12px;margin:0 -12px}
@@ -71,16 +75,16 @@ const CSS = `
 .bom-top .k-chip{background:rgba(255,235,190,.1);color:#f3e2bd;box-shadow:inset 0 0 0 1px rgba(255,215,140,.3)}
 .bom-top .k-chip.good{color:#9ff0a8;box-shadow:inset 0 0 0 1px rgba(120,230,140,.45)}.bom-top .k-chip.gold{color:#ffd84a;box-shadow:inset 0 0 0 1px rgba(255,216,74,.55)}
 .bom-tabs{background:linear-gradient(rgba(90,58,24,.16),rgba(90,58,24,.06))}
-#gameWin .bom .k-btn.bom-sell{border:0;border-image:none;border-radius:var(--k-r);background:linear-gradient(#4fc463,#2e9a44);color:#fff;text-shadow:0 1px 0 rgba(0,40,10,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 0 #1e6a2e;transition:transform .08s,filter .12s}
-#gameWin .bom .k-btn.bom-sell:hover{filter:brightness(1.1)}#gameWin .bom .k-btn.bom-sell:active{transform:translateY(2px) scale(.96);box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
-#gameWin .bom .k-btn.bom-sell.danger{background:linear-gradient(#cf4638,#a52e22);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 0 #6a1a12}
-#gameWin .bom .k-btn.bom-bb{border:0;border-image:none;border-radius:var(--k-r);background:linear-gradient(#ffe07a,#d99a22);color:#2a1800;text-shadow:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 0 #7a4a0a}
-#gameWin .bom .k-btn.bom-bb:active{transform:translateY(2px) scale(.96)}
-#gameWin .bom .k-btn.bom-lot{position:relative;overflow:hidden;min-height:46px;gap:10px;padding:0 18px;border:0;border-image:none;border-radius:10px;background:linear-gradient(180deg,#fff0a8 0%,#ffd24a 35%,#e09a1c 100%);color:#2a1600;text-shadow:0 1px 0 rgba(255,255,255,.5);font:900 15px/1 var(--k-disp),serif;letter-spacing:.02em;box-shadow:0 0 0 2px #7a4a0a,0 4px 0 #6a3a06,0 0 22px rgba(255,200,60,.55);animation:bomBreathe 1.8s ease-in-out infinite;transition:transform .08s}
+#gameWin .bom .k-btn.bom-sell{border:6px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn_zc.png?v=1) 10 fill / 6px stretch;border-radius:0;background:none;color:#e4ffe9;text-shadow:0 1px 0 #000;font-weight:900;filter:drop-shadow(0 0 3px rgba(61,220,114,.35));transition:transform .08s,filter .12s}
+#gameWin .bom .k-btn.bom-sell:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_zc_on.png?v=1);color:#fff;filter:drop-shadow(0 0 7px rgba(61,220,114,.7))}#gameWin .bom .k-btn.bom-sell:active{transform:translateY(1px) scale(.95)}
+#gameWin .bom .k-btn.bom-sell.danger{border:2px solid #2a140c;border-image:none;border-radius:var(--k-r);background:linear-gradient(#cf4638,#a52e22);filter:none;min-height:30px}
+#gameWin .bom .k-btn.bom-bb{border:6px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn_gold.png?v=1) 10 fill / 6px stretch;border-radius:0;background:none;color:#2a1600;text-shadow:0 1px 0 rgba(255,240,190,.6);font-weight:900;transition:transform .08s}
+#gameWin .bom .k-btn.bom-bb:hover:not(:disabled){border-image-source:url(/v3/assets/img/glad/flat/ui/btn_gold_on.png?v=1)}#gameWin .bom .k-btn.bom-bb:active:not(:disabled){transform:translateY(1px) scale(.95)}
+#gameWin .bom .k-btn.bom-lot{position:relative;overflow:hidden;min-height:50px;gap:10px;padding:0 14px;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn_gold.png?v=1) 10 fill / 7px stretch;border-radius:0;background:none;color:#2a1600;text-shadow:0 1px 0 rgba(255,240,190,.6);font:900 15px/1 var(--k-disp),serif;letter-spacing:.02em;animation:bomBreathe 1.8s ease-in-out infinite;transition:transform .08s}
 #gameWin .bom .k-btn.bom-lot b{display:inline-flex;align-items:center;gap:3px;padding:3px 8px 3px 5px;border-radius:99px;background:rgba(60,30,0,.82);color:#ffe27a;text-shadow:none;font:900 14px/1 Lora,serif}#gameWin .bom .k-btn.bom-lot b .ico,#gameWin .bom .k-btn.bom-lot b img{width:16px;height:16px}
-#gameWin .bom .k-btn.bom-lot::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%) -150% 0/50% 100% no-repeat;animation:bomGlint 2.6s ease-in-out infinite}
-#gameWin .bom .k-btn.bom-lot:hover{filter:brightness(1.07)}#gameWin .bom .k-btn.bom-lot:active{transform:translateY(3px);box-shadow:0 0 0 2px #7a4a0a,0 1px 0 #6a3a06,0 0 30px rgba(255,200,60,.8)}
-@keyframes bomBreathe{50%{box-shadow:0 0 0 2px #7a4a0a,0 4px 0 #6a3a06,0 0 34px rgba(255,210,70,.9)}}
+#gameWin .bom .k-btn.bom-lot::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.7) 50%,transparent 70%) -150% 0/50% 100% no-repeat;animation:bomGlint 2.6s ease-in-out infinite;pointer-events:none}
+#gameWin .bom .k-btn.bom-lot:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_gold_on.png?v=1)}#gameWin .bom .k-btn.bom-lot:active{transform:translateY(2px) scale(.98)}
+@keyframes bomBreathe{0%,100%{filter:drop-shadow(0 0 4px rgba(255,200,60,.45))}50%{filter:drop-shadow(0 0 14px rgba(255,210,70,.95))}}
 #gameWin .bom .k-btn.bom-zc{position:relative;min-height:46px;padding:0 16px;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn_zc.png?v=1) 10 fill / 7px stretch;border-radius:0;background:none;color:#d6ffde;text-shadow:0 1px 0 #000,0 0 8px rgba(80,230,120,.5);font:900 14px/1 Lora,serif;filter:drop-shadow(0 0 5px rgba(61,220,114,.5));transition:transform .08s,filter .15s}
 #gameWin .bom .k-btn.bom-zc:hover:not(:disabled){border-image-source:url(/v3/assets/img/glad/flat/ui/btn_zc_on.png?v=1);color:#fff;filter:drop-shadow(0 0 10px rgba(61,220,114,.8))}
 #gameWin .bom .k-btn.bom-zc:active:not(:disabled){transform:scale(.94)}
@@ -1145,9 +1149,11 @@ export function createCasino(env) {
     if (fresh) { roll.to = have; roll.from = have; }
     const body = $("gameBody"); body.replaceChildren();
     const w = el("div", env.calm() ? "bom calm" : "bom");
-    w.innerHTML = `<div class="bom-top"><span class="bom-tix" title="Your tickets">${env.ico("tickets")}<b>${Number(was != null ? rollNow() : have).toLocaleString()}</b><small>tickets</small></span>
-        <span class="bom-chips">${lootTotal ? `<span class="k-chip good" title="What the loot in your bag would fetch">+${lootTotal.toLocaleString()} in your bag</span>` : ""}${vip.off ? `<span class="k-chip gold" title="Your VIP discount on everything Bom sells">${esc(vip.name)} VIP · ${Math.round(vip.off * 100)}% off</span>` : ""}${lastCashed ? `<span class="k-chip good">Traded in for ${Number(lastCashed.total).toLocaleString()}</span>` : ""}</span></div>
-      <div class="k-tabs bom-tabs" role="tablist"><button type="button" role="tab" data-bt="sell" aria-selected="${bomTab === "sell"}">Sell${sellN ? ` <small class="k-chip good">${sellN}</small>` : ""}</button><button type="button" role="tab" data-bt="buy" aria-selected="${bomTab === "buy"}">Buy</button><button type="button" role="tab" data-bt="back" aria-selected="${bomTab === "back"}">Buy back${bb.length ? ` <small class="k-chip">${bb.length}</small>` : ""}</button><button type="button" role="tab" data-bt="zc" aria-selected="${bomTab === "zc"}">ZCoins</button></div>
+    /* (2026-09-28, the owner: "put Boms headshot in the top bar") his face, cut from his kiosk, and one line of patter that fits the moment */
+    const said = bomTab === "zc" ? "Real money, friend. Spend it wisely. Or don't." : bomTab === "back" ? (bb.length ? "Changed your mind? Happens to the best of us." : "Nothing you've sold me lately. Yet.") : lootTotal >= 1000 ? "Now THAT'S a haul. Let's talk tickets." : lootTotal ? "What've you got for me today?" : bomTab === "buy" ? "Tickets burning a hole? Take a look." : "Bring me drops, I'll make it worth your while.";
+    w.innerHTML = `<div class="bom-top"><span class="bom-face"><img src="/v3/assets/img/glad/flat/ui/bom_face.png?v=1" alt="Bom Trady"></span><span class="bom-who"><p class="bom-say"><b>BOM</b>${esc(said)}</p><span class="bom-row"><span class="bom-tix" title="Your tickets">${env.ico("tickets")}<b>${Number(was != null ? rollNow() : have).toLocaleString()}</b><small>tickets</small></span>
+        <span class="bom-chips">${lootTotal ? `<span class="k-chip good" title="What the loot in your bag would fetch">+${lootTotal.toLocaleString()} in your bag</span>` : ""}${vip.off ? `<span class="k-chip gold" title="Your VIP discount on everything Bom sells">${esc(vip.name)} VIP · ${Math.round(vip.off * 100)}% off</span>` : ""}${lastCashed ? `<span class="k-chip good">Traded in for ${Number(lastCashed.total).toLocaleString()}</span>` : ""}</span></span></span></div>
+      <div class="k-tabs bom-tabs" role="tablist"><button type="button" role="tab" data-bt="sell" aria-selected="${bomTab === "sell"}"><img src="/v3/assets/img/glad/flat/ui/w_sack.png?v=1" alt="">Sell${sellN ? ` <small class="k-chip good">${sellN}</small>` : ""}</button><button type="button" role="tab" data-bt="buy" aria-selected="${bomTab === "buy"}"><img src="/v3/assets/img/glad/flat/ui/store.png?v=1" alt="">Buy</button><button type="button" role="tab" data-bt="back" aria-selected="${bomTab === "back"}"><img src="/v3/assets/img/glad/flat/ui/g_trading.png?v=1" alt="">Buy back${bb.length ? ` <small class="k-chip">${bb.length}</small>` : ""}</button><button type="button" role="tab" data-bt="zc" aria-selected="${bomTab === "zc"}"><img src="/v3/assets/img/glad/flat/ui/g_zcoins.png?v=1" alt="">ZCoins</button></div>
       <div class="bom-pane k-paper">${pane}</div>${foot}`;
     body.append(w);
     const pn = w.querySelector(".bom-pane"); pn.scrollTop = keep;
