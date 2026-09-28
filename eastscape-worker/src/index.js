@@ -178,6 +178,8 @@ export default {
 /* (2026-09-27) where someone saved inside a held map comes back to: the door on the map next door (the Carnival's west edge, the
    Thunderhead's south, the Boneyard's corridor) */
 const HELD_MAPS = { boardwalk: { scene: "carnival", x: 1, y: 13 }, bw_cabin: { scene: "carnival", x: 1, y: 13 }, bw_light: { scene: "carnival", x: 1, y: 13 }, bw_wreck: { scene: "carnival", x: 1, y: 13 }, bw_pier: { scene: "carnival", x: 1, y: 13 }, bw_skull: { scene: "carnival", x: 1, y: 13 }, foundry: { scene: "thunderhead", x: 22, y: 21 }, orchard: { scene: "boneyard", x: 14, y: 20 } };
+const CHAT_KEEP = 50;   // (2026-09-27) lines of public chat a refresh or a restart opens on: see chatKeep
+
 export class World {
   constructor(ctx, env) {
     this.ctx = ctx; this.env = env;
@@ -203,6 +205,7 @@ export class World {
       this.hw = (await ctx.storage.get("hw")) || { kingAt: 0, kingDue: false, kingUp: null, night: false };
       if (env.DEV === "1" && env.HW_LIVE !== "0") G.HW.live = true;   /* (2026-09-27) a dev server runs the Long Night whatever the switch says, so it can be previewed before it opens (--var HW_LIVE:0 to see it dormant) */   /* (2026-09-27) the Long Night's clocks: the King's hour, and whether Nightfall has been called */
       this.radio = (await ctx.storage.get("radio")) || null;
+      this.chatLog = (await ctx.storage.get("chatlog")) || [];   /* (2026-09-27) the last CHAT_KEEP lines of public chat: see chatKeep */
       { const sg = (await ctx.storage.get("songs")) || null; this.song = sg?.song || null; this.songQ = Array.isArray(sg?.q) ? sg.q : []; }
       if (!(this.jack.pot >= G.JACKPOT.seed)) { this.jack.pot = G.JACKPOT.seed; this.jackDirty = true; }   // (the v107 seed top-up was in restore() too)
       await this.pitLoad();   // (v109) ticket bets on a fight that hasn't been settled yet
@@ -287,6 +290,7 @@ export class World {
     if (C.quiver && !(G.pouchOf(C) && G.pouchOf(C).pouch.ammo === G.ammoKind(C.quiver.k))) this.pocketOut(pl);
     this.send(pl, { type: "hello", version: G.VERSION, t: Date.now(), you: { id: pl.id, login: pl.login, name: pl.name, admin: pl.admin, role: pl.role }, me: this.meOf(pl) });
     this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S), npcs: this.npcsOf(S) });
+    if (this.chatLog?.length) this.send(pl, { type: "ev", list: this.chatLog.map((x) => ({ ...x, old: true })) });   /* (2026-09-27) the recent chat: see chatKeep */
     if (HEARD.has(String(S.key).split(":")[0])) { this.songTick(Date.now()); if (this.song || this.songQ?.length) this.send(pl, { type: "ev", list: [this.songMsg()] }); }
     if (this.radio && HEARD.has(String(S.key).split(":")[0])) this.send(pl, { type: "ev", list: [{ type: "radio", radio: this.radio }] });   /* (v86) the jukebox is already playing when you log in on the floor */
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
@@ -779,7 +783,9 @@ export class World {
         /* (2026-09-27, the owner: "add a chat command for users to time the pumpkin king. something like /pumpkin and it shows time
            remaining") THE FIRST CHAT COMMAND. It answers the asker alone and is never broadcast, so nobody else's chat fills with it. */
         if (/^[\/!](pumpkin|king)\b/i.test(text)) return this.say(pl, this.hwKingLine(now), "good");
-        for (const p of this.pls.values()) p.out.push({ type: "chat", id: pl.id, name: pl.name, nfx: G.nameFxOf(pl.C) || undefined, role: pl.role !== "user" ? pl.role : undefined, text, scene: pl.C.scene, t: now });
+        const msg = { type: "chat", id: pl.id, name: pl.name, nfx: G.nameFxOf(pl.C) || undefined, role: pl.role !== "user" ? pl.role : undefined, text, scene: pl.C.scene, t: now };
+        for (const p of this.pls.values()) p.out.push(msg);
+        this.chatKeep(msg);
         return;
       }
       case "quest": return this.questOp(S, pl, m);
@@ -1193,6 +1199,7 @@ export class World {
     }
     try { await this.ctx.storage.put("exchange", this.ex); } catch (e) { /* same */ }
     try { await this.ctx.storage.put("jackpot", this.jack); this.jackDirty = false; } catch (e) { /* same */ }
+    try { await this.ctx.storage.put("chatlog", this.chatLog || []); this.chatDirty = false; } catch (e) { /* same */ }
     try { await this.runsSave(true); } catch (e) { /* same */ }   /* (2026-09-27) the runs, written last so they are as fresh as the characters */
     return { saved: n };
   }
@@ -1357,6 +1364,7 @@ export class World {
     { const sg = (await this.ctx.storage.get("songs")) || null; this.song = sg?.song || null; this.songQ = Array.isArray(sg?.q) ? sg.q : []; }   /* (v96) the song queue outlives a restart too */
     this.cryptTop = (await this.ctx.storage.get("cryptTop")) || {};   /* (v103) the crypt's fastest clears */
     this.radio = (await this.ctx.storage.get("radio")) || null;
+    this.chatLog = (await this.ctx.storage.get("chatlog")) || [];
     this.dbl = (await this.ctx.storage.get("dbl")) || null;   /* (2026-09-25) a 2X event outlives a restart: it is the server's clock, not a player's */   /* (v86) the jukebox's station outlives a restart */
     this.fame = (await this.ctx.storage.get("fame")) || this.fame || null;
     return Response.json({ ok: true, restored: written, from: body.takenAt || null });
@@ -1531,7 +1539,13 @@ export class World {
      one place to get the answer wrong. */
   /* THE HOUSE'S OWN CHAT VOICE. A line in everybody's chat, from nobody in particular. `scene: null` matters:
      the client pops a speech bubble over the speaker when the scene matches, and there is no speaker here. */
-  houseSay(text) { const t = Date.now(); for (const p of this.pls.values()) p.out.push({ type: "chat", id: "house", name: "CASINO", role: "admin", text: String(text), scene: null, t }); }
+  houseSay(text) { const t = Date.now(), msg = { type: "chat", id: "house", name: "CASINO", role: "admin", text: String(text), scene: null, t }; for (const p of this.pls.values()) p.out.push(msg); this.chatKeep(msg); }
+  /* (2026-09-27, the owner: "is it possible that on a server refresh/restart that chat stays showing recent messages? every time we refresh it
+     clears", then "yes build the chat history, drop muted messages") THE ROOM'S LAST CHAT_KEEP LINES. Public chat and the house's lines are
+     kept here as they are sent, written to storage every five seconds while they change (and by saveAll), read back when the world starts,
+     and handed to every tab as it says hello - so a refresh, a restart and a new arrival all open on the conversation rather than a blank
+     box. Muting someone takes their lines out (the mute command). About 10 KB a hello; nothing extra a message. */
+  chatKeep(msg) { (this.chatLog ||= []).push(msg); if (this.chatLog.length > CHAT_KEEP) this.chatLog.splice(0, this.chatLog.length - CHAT_KEEP); this.chatDirty = true; }
   doubleOn() { return !!(this.dbl && Date.now() < this.dbl.until); }
   doubleView() { return this.dbl && Date.now() < this.dbl.until ? { until: this.dbl.until, by: this.dbl.by, mult: G.DOUBLE.mult } : null; }
   doubleStart(by, ms) {
@@ -2402,6 +2416,7 @@ export class World {
       if (C.charm) { C.charm.left = (C.charm.left | 0) - dt; if (C.charm.left <= 0) { this.say(pl, `Your ${G.CHARMS[C.charm.k]?.name || "page"} has worn off.`); C.charm = null; } this.touch(pl); }   /* (2026-09-26) the page buff */
       for (const k of ["meal", "drink"]) if (C[k]) { C[k].left = (C[k].left | 0) - dt; if (C[k].left <= 0) { this.say(pl, `Your ${G.ITEMS[C[k].k]?.name.toLowerCase() || k} has worn off.`); C[k] = null; } this.touch(pl); }
     }
+    if (this.chatDirty && this.tickN % 100 === 50) { this.chatDirty = false; this.ctx.storage.put("chatlog", this.chatLog).catch(() => { this.chatDirty = true; }); }
     if (this.jackDirty && this.tickN % 100 === 0) { this.jackDirty = false; this.ctx.storage.put("jackpot", this.jack).catch(() => { this.jackDirty = true; }); }
     this.restartTick(now);
     if (this.rrDueAt && now >= this.rrDueAt) { this.rrDueAt = 0; this.rrLook(now); }   /* the Russian Roulette lobby's clock ran out (or a look was put off): ask the site once */
@@ -4628,6 +4643,7 @@ export class World {
         if (who.role === "admin" || (who.role === "mod" && pl.role !== "admin")) return note("You cannot mute them.");
         const mins = Math.max(1, Math.min(240, Math.trunc(Number(m.n) || 10)));
         who.C.mutedUntil = Date.now() + mins * 60000; who.mutedTold = 0; this.touch(who);   /* on the character, and saved: a refresh must not clear it */
+        if (this.chatLog?.some((x) => x.id === who.id)) { this.chatLog = this.chatLog.filter((x) => x.id !== who.id); this.chatDirty = true; }   /* (2026-09-27, the owner: "drop muted messages") out of the kept history, so the next refresh does not bring them back */
         this.say(who, `You have been muted for ${mins} min.`, "bad");
         return note(`${who.name} is muted for ${mins} min.`);
       }
