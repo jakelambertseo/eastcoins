@@ -1713,6 +1713,14 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .xph-pop tr.on td{color:#ffd84a}
 .xph-f{display:block;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.12);color:#aca298;font-size:11.5px}.xph-f .lnk{color:#ffd77a}
 @media (max-width:560px){.xph-b small{display:none}.xph-pop{left:8px;right:8px;min-width:0}}
+
+/* (2026-09-28, the owner: "the bug button needs some padding away from the quick bar and it needs to be smaller as to not be confused with a
+   quick item") THE BUG BUTTON stands apart from the hotbar: a gap, a round button two-thirds the size of a quick slot, dark glass like the HUD
+   rather than the slots' wood, and sitting low beside the row. In the page, not the lazy module, because it is on screen before the module is. */
+.chat-tab.bugbtn{align-self:flex-end;width:32px;height:32px;margin-left:12px;padding:0;border:0;border-image:none;border-radius:50%;background:var(--hud-bg);box-shadow:var(--hud-ring);justify-content:center}
+.chat-tab.bugbtn:hover{border-image:none;background:rgba(60,34,22,.92)}
+.chat-tab.bugbtn img{width:18px;height:18px;image-rendering:pixelated}
+@media (max-width:520px){.chat-tab.bugbtn{width:30px;height:30px;margin-left:8px}}
 </style>
 </head>
 <body>
@@ -1945,6 +1953,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 
 /* ------------------------------------------------------------ the world is drawn small, then scaled up crisp */
 const T = 16, W = COLS * T, H = ROWS * T;
+const PETF = { m: new Map(), at: 0 };   /* (2026-09-28) where each pet is: see PETS FOLLOW in the frame */
 const cv = $("cv"), ctx = cv.getContext("2d");
 // kept on a 16-unit grid, drawn at art resolution (32px a tile) so PixelLab sprites land 1:1
 const A = 2, low = document.createElement("canvas"); low.width = W * A; low.height = H * A;
@@ -4792,14 +4801,52 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
          at all. It looked like "other people's pets are invisible" because the OWNER has a second way to see
          theirs (the Equipment doll), so only the world sprite was missing and only others noticed.
          `face` is trimmed out of the snapshot when it is falsy, so it is defaulted rather than multiplied blind. */
-      if (pv) { const fc = pl.face < 0 ? -1 : 1, rk = pv.legend ? "legend" : (pl.id === you.id ? G.activePet(me)?.tier : pl.pgr) ? "greater" : null;
-        if (rk) { lc.save(); lc.shadowColor = rk === "legend" ? "rgba(255,140,20,.95)" : "rgba(60,140,255,.95)"; lc.shadowBlur = (6 + Math.sin(pnow / 300) * 2) * A; }   /* (2026-09-27) a Greater glows blue, a Legendary orange */
-        spr(pv.art, p.px * T + 8 - fc * 11, p.py * T + 15 + bobOf(p.moving), fc < 0); if (rk) lc.restore(); } }
+      /* (2026-09-28) the pet is its own sprite now: see PETS FOLLOW, below */ }
     const fit = "tiro"   /* (v104, the owner: "when a user walks outside of the casino, it shows the gear they're wearing. it should only remain the user's customized character". Armour changed the whole sprite outdoors (G.outfitOf); now the person you made is who you are everywhere, and gear shows in the equipment panel only.) */, mine = pl.id === you.id ? me?.look || pl.look : pl.look   /* your own look is always known here; the roster takes a moment to say it again after a door */, myVan = pl.id === you.id ? me?.van || pl.van : pl.van   /* as with the look: your own is known here before the roster repeats it */,
       own = fit === "tiro" && mine ? lookSprite(mine, d, myVan) : null, lk = fit !== "tiro" ? null : own !== null ? own : lookArt(G.lookFor(pl), d), fk = fit !== "tiro" ? facedArt(`hero_${fit}`, d) : null, hk = lk === "" || fk === "" ? "" : lk || fk || (fit === "tiro" && IMG[`hero_tiro_${d}`] ? `hero_tiro_${d}` : `hero_${d}`);
     const seat = rrSeatOf(pl), down = seat && RRS.out.has(seat.i) && !p.moving;   /* shot at the table: slumped beside the stool until the table clears */
     spr(hk, p.px * T + 8 + ux * lunge * 0.7, p.py * T + 15 + uy * lunge * 0.7 + bobOf(p.moving), false, (down ? "grayscale(1) brightness(.7)" : hurtNow(pl) ? RED : "") + (pl.id === you.id || lk ? "" : " hue-rotate(200deg)"), 1, down ? Math.PI / 2 : 0);
   } });
+  /* (2026-09-28, the owner: "pets need to not be attached to the characters at the hip, and need to move around, even if theres no
+     animations, like mobs do. right now it looks like theyre sewn on the character") PETS FOLLOW. Each pet keeps its own spot, here in the
+     page (the server knows only that you wear one): while you walk it trails a step behind and catches up, a little quicker the further it
+     falls back; stand still and it potters about within a tile or so of you, a new spot every few seconds, turning to face the way it goes
+     and hopping as it moves. It is its own sprite, sorted by its own feet, so it passes in front of you and behind you like anything else.
+     A door or a long gap puts it straight back at your side. Nothing is sent: it is the same pet on everyone's screen, walking its own
+     way on each. */
+  { const dt = Math.min(0.1, (pnow - (PETF.at || pnow)) / 1000); PETF.at = pnow;
+    const seen = new Set();
+    for (const pl of Z.players) {
+      const pk = pl.id === you.id ? (G.activePet(me)?.k || pl.pet) : pl.pet, pv = pk && G.PETS[pk]; if (!pv) continue;
+      const p = pos(pl), ox = p.px * T + 8, oy = p.py * T + 15, key = `${Z.key}|${pl.id}`; seen.add(key);
+      let f = PETF.m.get(key);
+      if (!f || Math.hypot(f.x - ox, f.y - oy) > 5 * T) { f = { x: ox - 15, y: oy + 2, face: 1, tx: null, ty: null, next: pnow + 1500, moving: false }; PETF.m.set(key, f); }
+      const d = Math.hypot(f.x - ox, f.y - oy);
+      if (p.moving || d > 30) {
+        /* following: aim at a spot just behind the owner, and close the gap faster the further behind it is */
+        const back = pl.face < 0 ? 1 : -1, gx = ox + back * 15, gy = oy + 3, gd = Math.hypot(gx - f.x, gy - f.y);
+        f.tx = null; f.next = pnow + 1200 + Math.random() * 1800;
+        if (gd > 3) { const sp = Math.max(40, gd * 3.2), k = Math.min(1, (sp * dt) / gd); f.x += (gx - f.x) * k; f.y += (gy - f.y) * k; f.moving = true; if (Math.abs(gx - f.x) > 1) f.face = gx > f.x ? 1 : -1; }
+        else f.moving = false;
+      } else {
+        /* pottering: every few seconds a new spot within a tile or so of the owner, on open ground */
+        if (f.tx == null && pnow > f.next && !calm) {
+          for (let i = 0; i < 6; i++) { const side = f.x < ox ? -1 : 1, tx = ox + side * (15 + Math.random() * 12), ty = oy - 3 + Math.random() * 9;   /* beside you, never on you, and on the side it is already on so it never walks through you */
+            const gx = Math.floor(tx / T), gy = Math.floor((ty - 4) / T); if (Z.g && G.walkableIn(Z.g, gx, gy)) { f.tx = tx; f.ty = ty; break; } }
+          f.next = pnow + 2200 + Math.random() * 3800;
+        }
+        if (f.tx != null) { const gd = Math.hypot(f.tx - f.x, f.ty - f.y);
+          if (gd < 1) { f.tx = null; f.moving = false; if (Math.random() < 0.5) f.face = ox > f.x ? 1 : -1; }
+          else { const k = Math.min(1, (22 * dt) / gd); f.x += (f.tx - f.x) * k; f.y += (f.ty - f.y) * k; f.moving = true; if (Math.abs(f.tx - f.x) > 1) f.face = f.tx > f.x ? 1 : -1; } }
+        else f.moving = false;
+      }
+      const rk = pv.legend ? "legend" : (pl.id === you.id ? G.activePet(me)?.tier : pl.pgr) ? "greater" : null;
+      sprites.push({ y: f.y - 0.5, draw: () => {
+        if (rk) { lc.save(); lc.shadowColor = rk === "legend" ? "rgba(255,140,20,.95)" : "rgba(60,140,255,.95)"; lc.shadowBlur = (6 + Math.sin(pnow / 300) * 2) * A; }   /* (2026-09-27) a Greater glows blue, a Legendary orange */
+        spr(pv.art, f.x, f.y + bobOf(f.moving, 70), f.face < 0); if (rk) lc.restore(); } });
+    }
+    for (const k of PETF.m.keys()) if (!seen.has(k)) PETF.m.delete(k);
+  }
   sprites.sort((a, b) => a.y - b.y).forEach((s) => s.draw());
   drawMini();
   /* (v112) sparks and dust, over the scene: a little gravity, fading as they go */
@@ -5837,7 +5884,7 @@ const petPic = (k, r = "ordinary") => `<span class="pp rk-${r}"><img src="${ART}
 /* (2026-09-27) THE PEN AND THE HATCHERY LIVE IN THEIR OWN FILE (eastscape-pets.js), fetched the first time one is opened: with three new
    skills the first load had reached its budget, and nobody needs these windows to log in. */
 /* (2026-09-28) THE BUG BUTTON: a lazy module, like the pet windows. Its stylesheet is its own and goes in the first time it opens. */
-let REPUI = null; const REPUI_URL = "/v3/assets/js/eastscape-report.js?v=1";
+let REPUI = null; const REPUI_URL = "/v3/assets/js/eastscape-report.js?v=2";
 function repUi() { return REPUI ? Promise.resolve(REPUI) : import(REPUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (REPUI = m.createReportUi({ G, $, esc, send, SFX, openWin, get me() { return me; } })); }); }
 $("bugBtn").addEventListener("click", () => { SFX.play("ui_open"); if (!$("bugWin").hidden) { $("bugWin").hidden = true; return; } repUi().then((u) => u.open()); });
 let PETUI = null; const PETUI_URL = "/v3/assets/js/eastscape-pets.js?v=5";
@@ -7526,7 +7573,7 @@ function dblSet(on) {
   dblRender();
   if (DBL && !dblTimer) dblTimer = setInterval(dblRender, 1000);
 }
-window.__es = { openScreen, openPicks, openJuke, openVan, openLook, openMap, openPen, openHatch, openCraft, openSmith, openShop, CZ, renderTour, renderPanel, popup, showInfo, talkTo, set zc(n) { ZCBAL = n; renderPanel(); }, wlNum, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
+window.__es = { get PETF() { return PETF; }, openScreen, openPicks, openJuke, openVan, openLook, openMap, openPen, openHatch, openCraft, openSmith, openShop, CZ, renderTour, renderPanel, popup, showInfo, talkTo, set zc(n) { ZCBAL = n; renderPanel(); }, wlNum, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
 
 setInterval(() => {
   if (ws && ws.readyState === 1 && you) {

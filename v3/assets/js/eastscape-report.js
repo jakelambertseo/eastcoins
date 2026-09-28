@@ -91,7 +91,6 @@ export function createReportUi(E) {
 }
 
 export const CSS = `
-.bugbtn{width:44px;padding:0;justify-content:center}.bugbtn img{width:22px;height:22px;image-rendering:pixelated}
 #bugWin{width:min(680px,calc(100% - 28px));height:min(720px,calc(100% - 40px))}
 #bugBody{display:grid;gap:8px;align-content:start;overflow:auto}
 .rp-form{display:grid;gap:8px;padding:10px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
