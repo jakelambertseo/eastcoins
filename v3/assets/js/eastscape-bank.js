@@ -51,13 +51,15 @@ export function createBankUi(E) {
   function build() {
     const root = $("bankRoot"); if (!root) return; built = true; root.classList.remove("view-loading");
     root.innerHTML = `<div class="bk">
-      <nav class="bk-side"><div class="bk-pages" id="bkPages" aria-label="Bank pages"></div><p class="bk-pnote">Drag an item onto a page to file it there. Deposits go to the page you are on.</p></nav>
       <section class="bk-main">
+        <nav class="bk-side"><div class="bk-pages" id="bkPages" aria-label="Bank pages"></div><p class="bk-pnote">Drag an item onto a tab to file it there</p></nav>
+        <div class="bk-box">
         <div class="bk-tabs" id="bkTabs" role="tablist" aria-label="Kinds"></div>
         <div class="bk-top"><input class="search bk-search" id="bkSearch" placeholder="Search bank and bag…" aria-label="Search bank and bag" autocomplete="off">
           <div class="qty bk-sort" id="bkSort" role="group" aria-label="Sort">${[["recent", "Recent"], ["az", "A–Z"], ["value", "Value"], ["amount", "Amount"]].map(([k, n]) => `<button type="button" data-s="${k}">${n}</button>`).join("")}</div></div>
         <div class="bk-meter" id="bkMeter"></div>
         <div class="bk-grid" id="bkGrid"></div>
+      </div>
       </section>
       <aside class="bk-bag">
         <div class="bk-bagh"><img class="bk-bagi" src="/v3/assets/img/glad/flat/ui/bag.png?v=1" alt=""><b>Your bag</b><small id="bkBagN"></small></div>
@@ -146,8 +148,8 @@ export function createBankUi(E) {
     const bank = me.bank || [], rows = bank.map((s, i) => [s, i]);
     /* the pages: each tab wears the first item filed on it, the way an OSRS tab does, and its count */
     const onPage = Array.from({ length: NP }, () => []); for (const r of rows) onPage[pageOf(r[0])].push(r);
-    const pagesHtml = [`<button type="button" data-page="all" aria-pressed="${String(page === "all")}" title="Every page"><i>\u{1F3DB}\uFE0F</i><span>All</span><em>${rows.length}</em></button>`,
-      ...onPage.map((list, p) => `<button type="button" data-page="${p}" aria-pressed="${String(page === String(p))}" title="Page ${p + 1}: drop an item here to file it"><i>${list.length ? ico(list[0][0].k) : `<b>${p + 1}</b>`}</i><span>Page ${p + 1}</span><em>${list.length}</em></button>`)].join("");
+    const pagesHtml = [`<button type="button" data-page="all" aria-pressed="${String(page === "all")}" title="All pages: ${rows.length} item${rows.length === 1 ? "" : "s"}"><i>\u{1F3DB}\uFE0F</i><span>All</span><em>${rows.length}</em></button>`,
+      ...onPage.map((list, p) => `<button type="button" data-page="${p}" aria-pressed="${String(page === String(p))}" title="Page ${p + 1}: ${list.length} item${list.length === 1 ? "" : "s"}. Drop an item here to file it; deposits go to the page you are on."><i>${list.length ? ico(list[0][0].k) : `<b>${p + 1}</b>`}</i>${list.length ? `<small>${p + 1}</small>` : ""}<span>Page ${p + 1}</span><em>${list.length}</em></button>`)].join("");
     if (pagesHtml !== last.pages) { $("bkPages").innerHTML = pagesHtml; last.pages = pagesHtml; }
     const inPage = page === "all" ? rows : onPage[curPage()] || [];
     const counts = { all: inPage.length }; for (const [s] of inPage) { const c = catOf(s.k); counts[c] = (counts[c] || 0) + 1; }
@@ -180,18 +182,29 @@ const CSS = `
 /* (2026-09-27, the owner: "make the bank feel less wide and covering up the game") narrower, taller: fewer tiles across, the grid scrolls,
    and under 1100px the bag sits below the grid so the window is narrower still and the game shows either side */
 .win.wide{width:min(820px,calc(100% - 28px))}
-.bk{display:grid;grid-template-columns:110px minmax(0,1fr) 272px;gap:10px;min-height:0}
-@media (max-width:1100px){.win.wide{width:min(600px,calc(100% - 28px))}.bk{grid-template-columns:100px minmax(0,1fr)}.bk-bag{grid-column:1/-1}.bk-bag .bk-grid.sm{max-height:min(22vh,200px)}}
-.bk-side{display:flex;flex-direction:column;gap:6px;min-width:0}
-.bk-pages{display:flex;flex-direction:column;gap:3px}
-.bk-pages button{display:grid;grid-template-columns:26px 1fr auto;align-items:center;gap:6px;padding:6px 7px;border:2px dashed transparent;border-radius:8px;background:none;font:800 13px Nunito,sans-serif;color:#3a2c1c;text-align:left;cursor:pointer}
-.bk-pages button:hover{background:rgba(0,0,0,.06)}.bk-pages button[aria-pressed=true]{background:#fffaf0;border-style:solid;border-color:#c8963a;box-shadow:0 1px 3px rgba(60,40,10,.18)}
-.bk-pages button.over{border-color:#4aa84a;background:rgba(74,168,74,.16)}
-.bk-pages button i{font-style:normal;font-size:15px;text-align:center;display:grid;place-items:center}.bk-pages button i .ico{width:22px;height:22px}.bk-pages button i b{width:22px;height:22px;border-radius:6px;background:rgba(0,0,0,.1);display:grid;place-items:center;font-size:12px}
-.bk-pages button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bk-pages button em{font-style:normal;font-size:11px;padding:1px 6px;border-radius:999px;background:rgba(0,0,0,.1)}
-.bk-pnote{margin:2px 0 0;font-size:11px;line-height:1.35;opacity:.65}
-.bk-tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
-.bk-tabs button{position:relative;display:inline-grid;place-items:center;width:44px;height:40px;padding:0;border:2px solid rgba(0,0,0,.14);border-radius:10px;background:rgba(0,0,0,.05);cursor:pointer}
+/* (2026-09-28, the owner: "how can we make the left side of the banks pages section better. the text is cutoff, it looks odd") PAGES ARE TABS
+   ACROSS THE TOP, the way the OSRS bank does it. The left column was 110px for an icon, "Page 3" and a count, so every name read "Pag...";
+   now each page is a folder tab over the grid showing its first item (its number while it is empty, and a small number in the corner once
+   it has something), the count on a badge, the full name on the hover. The column's width went to the grid. The kinds under it became
+   small filter chips so the two rows of icons do not read as the same control. */
+.bk{display:grid;grid-template-columns:minmax(0,1fr) 272px;gap:10px;min-height:0}
+@media (max-width:1100px){.win.wide{width:min(600px,calc(100% - 28px))}.bk{grid-template-columns:minmax(0,1fr)}.bk-bag{grid-column:1/-1}.bk-bag .bk-grid.sm{max-height:min(22vh,200px)}}
+.bk-main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.bk-side{display:flex;align-items:flex-end;gap:10px;min-width:0}
+.bk-pages{display:flex;flex-direction:row;gap:4px;min-width:0;overflow-x:auto;padding:8px 6px 0 0;scrollbar-width:none}
+.bk-pages button{position:relative;flex:none;display:grid;place-items:center;width:50px;height:44px;margin-bottom:-2px;padding:0;border:2px solid #b89a6a;border-bottom-color:transparent;border-radius:9px 9px 0 0;background:#e3d3ae;color:#3a2c1c;cursor:pointer;font:800 12px Nunito,sans-serif;box-shadow:none}
+.bk-pages button:hover{background:#efe2c2}
+.bk-pages button[aria-pressed=true]{z-index:1;height:48px;background:#fffaf0;border-style:solid;border-color:#c8963a;border-bottom-color:#fffaf0;box-shadow:none}
+.bk-pages button.over{background:#dff3d8;border-color:#4aa84a;border-bottom-color:transparent}
+.bk-pages button i{font-style:normal;font-size:20px;line-height:1;display:grid;place-items:center}.bk-pages button i .ico{width:28px;height:28px}
+.bk-pages button i b{width:26px;height:26px;border-radius:7px;background:rgba(0,0,0,.08);display:grid;place-items:center;font-size:13px;color:#6a5a40}
+.bk-pages button small{position:absolute;left:4px;bottom:2px;font-size:10px;font-weight:900;color:#6a5a40;line-height:1}
+.bk-pages button>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.bk-pages button em{position:absolute;right:2px;top:2px;font-style:normal;font-size:9.5px;font-weight:800;line-height:1;padding:1px 4px;border-radius:999px;background:#5a3220;color:#f3e7cc}
+.bk-pnote{flex:1;margin:0 0 8px;font-size:11px;line-height:1.3;opacity:.6;text-align:right;min-width:90px}
+.bk-box{flex:1;min-height:0;display:flex;flex-direction:column;padding:8px;border:2px solid #c8963a;border-radius:0 9px 9px 9px;background:#fffaf0}
+.bk-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.bk-tabs button{position:relative;display:inline-grid;place-items:center;width:38px;height:32px;padding:0;border:1.5px solid rgba(0,0,0,.14);border-radius:99px;background:rgba(0,0,0,.04);cursor:pointer}.bk-tabs button img{max-width:22px;max-height:22px}
 .bk-tabs button img{image-rendering:pixelated;display:block}
 .bk-tabs button:hover{background:rgba(0,0,0,.1)}.bk-tabs button[aria-pressed=true]{background:#fffaf0;border-color:#c8963a;box-shadow:0 1px 3px rgba(60,40,10,.18)}
 .bk-tabs button em{position:absolute;right:-4px;top:-6px;font-style:normal;font-size:10px;font-weight:800;line-height:1;padding:2px 5px;border-radius:999px;background:#5a3220;color:#f3e7cc;box-shadow:0 0 0 1.5px #fffaf0}
@@ -219,4 +232,4 @@ const CSS = `
 .bk-menu{position:fixed;z-index:1000;min-width:190px;padding:4px;border-radius:10px;background:#fffaf0;color:#2a2016;box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 0 1px #c8b48a}
 .bk-menu-h{display:flex;align-items:center;gap:6px;padding:6px 8px 4px;font-size:12.5px;border-bottom:1px solid rgba(0,0,0,.1);margin-bottom:3px}.bk-menu-h small{opacity:.7}.bk-menu-h .ico{width:20px;height:20px}
 .bk-menu button{display:block;width:100%;padding:6px 10px;border:0;border-radius:6px;background:none;text-align:left;font:800 13px Nunito,sans-serif;color:#2a2016;cursor:pointer}.bk-menu button:hover{background:rgba(200,150,58,.22)}
-@media (max-width:820px){.bk-menu button{padding:10px 12px;font-size:14px}.bk{grid-template-columns:minmax(0,1fr)}.bk-pages{flex-direction:row;overflow-x:auto;padding-bottom:4px}.bk-pages button{flex:none;grid-template-columns:auto auto}.bk-pages button span{display:none}.bk-pnote{display:none}.bk-tabs{flex-wrap:nowrap;overflow-x:auto;padding:6px 2px 4px}.bk-tabs button{flex:none}.bk-grid{max-height:40vh}.bk-grid.sm{max-height:26vh}}`;
+@media (max-width:820px){.bk-menu button{padding:10px 12px;font-size:14px}.bk{grid-template-columns:minmax(0,1fr)}.bk-pnote{display:none}.bk-tabs{flex-wrap:nowrap;overflow-x:auto;padding:6px 2px 4px}.bk-tabs button{flex:none}.bk-grid{max-height:40vh}.bk-grid.sm{max-height:26vh}}`;
