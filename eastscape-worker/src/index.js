@@ -3230,7 +3230,7 @@ export class World {
     /* (2026-09-27) BREEDING: an egg, one kill in G.BREED.eggDrop, from the eggs whose home this map is */
     if (Math.random() < G.BREED.eggDrop) {
       const ek = G.eggFor(S.key), where = this.keepRare(pl, ek, 1);
-      if (where) { got.push([ek, 1]); this.emit(pl, "loot", { k: ek, n: 1 }); for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `\u{1F95A} ${pl.name} found a ${G.ITEMS[ek].name.toLowerCase()}!` }); }
+      if (where) { got.push([ek, 1]); this.emit(pl, "loot", { k: ek, n: 1 }); }   /* announced with every other egg, below */
     }
     /* (2026-09-27) THE LONG NIGHT rides every kill: candy corn at a flat rate (doubled at Nightfall), ectoplasm now and then, and a
        monster that carries its own pet (the King's Black Cat) rolls it here, outside the 1-in-1,000 pool above. */
@@ -3249,6 +3249,10 @@ export class World {
         for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `🐈‍⬛ ${pl.name} found a pet: ${G.PETS[k].name}, off ${def.name}!` });
       }
     }
+    /* (2026-09-28, the owner: "all egg drops should be announced in global chat too") EVERY EGG a kill turns up, the one-in-500 roll and a
+       boss's own (Captain Claw's velvet, the Gardener's sparking, Old Bessemer's cindered), is said in chat for everyone, and is kept in
+       the chat history like any house line */
+    for (const [k] of got) if (G.EGGS[k]) this.houseSay(`\u{1F95A} ${pl.name} found a ${G.ITEMS[k].name.toLowerCase()} off ${def.name.replace(/^The /, "the ")}!`);
     return got;
   }
   // killer: the player who landed the last hit, or { mob: name }
