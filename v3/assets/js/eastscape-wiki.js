@@ -1050,6 +1050,18 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-27", title: "The Depths of the Mountain, and chat that remembers",
+    items: [
+      "THE DEPTHS OF THE MOUNTAIN is open: north of the Thunderhead and south of the Trailer Park. Ledges of mossy rock over a drop nobody has found the bottom of, combat 73 to 84. Old Pickett at the landing has three quests.",
+      "A MINING MAP. Abyss crystal on the east wing (Mining 75), eclipse (70) and nova (80) in the throne room behind the Iron Ogres. Abyss crystal is the richest jewel vein in the game: any of ruby, sapphire, topaz or opal can turn up in it.",
+      "EVERY MONSTER HERE SHRUGS SOMETHING OFF. Pot Boys take 75% less from Magic; Abyss Wisps hang over the drop where no sword reaches (bring a bow); Crystal Ogres shatter arrows (90% less); Iron Ogres take 90% less from everything except Void magic. Goblin Cutters and the Deepwarden take it all, and hit very hard.",
+      "THE DEEPWARDEN guards the throne at the far end. Share the kill. He always drops nova ore and abyss crystal, sometimes an opal, 3% of the time the Deepwarden's sigil (an amulet: more tickets, a little tougher), one in sixty a Pot Boy pet, and ONE KILL IN A HUNDRED the chase: THE MOUNTAIN'S HEART, a ring with a singularity ring's stats at Hitpoints 84 that makes every jewel in the rock turn up twice as often.",
+      "Pot Boys carry the odd ruby, sapphire or topaz, about one kill in twenty-seven.",
+      "EVERY MONSTER'S CARD AND WIKI PAGE NOW SAYS WHAT IT RESISTS: Melee, Archery and Magic as a percentage, 0% included. Right-click one to see it.",
+      "CHAT REMEMBERS. A refresh, a restart or logging in now opens on the last fifty lines of chat instead of an empty box."
+    ]
+  },
+  {
     date: "2026-09-27", title: "The Boardwalk: six islands west of the Carnival",
     items: [
       "THE BOARDWALK is open, out the Carnival's west fence. It is six islands: the Market, Cabin Coast, the Lighthouse, Shipwreck Isle, Pirate's Pier and Skull Isle. Each island's rowboat takes you to the next (and back). The monsters get tougher the further out you row: gulls and deckhands (66-69), Clawhands (74), Kraken Arms (78).",

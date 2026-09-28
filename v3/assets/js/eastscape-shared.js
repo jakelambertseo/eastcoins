@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 336;
+export const VERSION = 337;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -4227,7 +4227,7 @@ export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) 
    Yard and the skill joins the panel, the hiscores and the wiki. Held, everything stays in the rules (a save that somehow carries
    the items or the xp still loads) but nobody can reach it and the wiki does not list it. The tests open both with
    globalThis.__ES_OPEN_ALL before they import this file. */
-export const HOLD = { depths: !globalThis.__ES_OPEN_ALL, jewel: !globalThis.__ES_OPEN_ALL, boardwalk: false,   /* (2026-09-27) OPEN: the owner, "the boardwalk is ready to launch" */ foundry: !globalThis.__ES_OPEN_ALL, orchard: !globalThis.__ES_OPEN_ALL };   /* (2026-09-27) the Boardwalk, the Foundry and the Orchard Wall: launched the same morning and held shut again at the owner's word ("close them for now and dont allow access until i reiterate them"). Held: no door to them, not in the wiki, and anyone saved inside is walked back out on login (the worker's HELD_MAPS) */
+export const HOLD = { depths: false,   /* (2026-09-27) OPEN: the owner, "lets push it live" */ jewel: !globalThis.__ES_OPEN_ALL, boardwalk: false,   /* (2026-09-27) OPEN: the owner, "the boardwalk is ready to launch" */ foundry: !globalThis.__ES_OPEN_ALL, orchard: !globalThis.__ES_OPEN_ALL };   /* (2026-09-27) the Boardwalk, the Foundry and the Orchard Wall: launched the same morning and held shut again at the owner's word ("close them for now and dont allow access until i reiterate them"). Held: no door to them, not in the wiki, and anyone saved inside is walked back out on login (the worker's HELD_MAPS) */
 export const OPEN = new Set(["carnival",   /* (2026-09-24) OPEN AT LAST. Built 2026-09-24 and held shut at the owner’s word until he said "launch the publish the carnival so its openn to peoople now". */ "casino", "roulette", "theatre", "fightpit", "vault", "wild", "deep", "agility",   /* (2026-09-22) The Run. Built with the Agility skill but never added here, so its door in the Yard answered with the bouncer's "Room's shut" — a scene is not enterable until it is in this set. */   /* (2026-09-22) the Wilderness reopened, down the rope ladder on the Gloam */ /* "highroller": closed for now (the owner, 2026-09-19) */ /* "forum", "bathhouse": closed in v108, what mattered there is in the Yard */ "workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "trailer",
   ]);   /* (2026-09-23) the Thieves' Guild. Deliberately NOT in BANDS: its rooms gate on Thieving through each mark's own `req`, and a combat band here would undo the whole point of a skill you cannot fight your way into. */   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
 export const OPEN_DAILY = new Set([
