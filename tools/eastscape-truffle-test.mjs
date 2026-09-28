@@ -31,6 +31,15 @@ const bed = (k) => {
   return G.countItems(pl.C, ["spawn_puffball"]);
 };
 is([bed(null), bed("trufflepig"), bed("trufflebaron")], [G.SEED_BACK, G.SEED_BACK * 3, G.SEED_BACK * 3], "cellar spawn back: two, or six with either");
+/* the shrooms themselves: a wild pick's 1-3 and a bed's yield, both tripled (the bed's in place of its harvest bonus) */
+const shrooms = (k, where) => { if (where === "wild") { const pl = { id: "sw" + k, name: "s", C: withPet(k), x: 1, y: 1, out: [], path: [] }; W.pls.set(pl.id, pl); const S = W.scene("mire"), ob = S.objs.find((o) => o.t === "shroom"); pl.C.scene = "mire";
+    const R = Math.random; Math.random = () => 0.999; try { W.fungPick(S, pl, ob); } finally { Math.random = R; } return G.countItems(pl.C, [ob.k]); }
+  const pl = { id: "sb" + k, name: "b", C: withPet(k), x: 1, y: 1, out: [], path: [] }; W.pls.set(pl.id, pl); pl.C.isle = { tier: 1, owned: {}, decor: [], shelf: [], beds: [{ k: "spawn_puffball", at: 0 }, null, null, null, null, null] };
+  const key = `cellar:${pl.id}`, S = W.scene(key); S.owner = pl.id; pl.C.scene = key; const ob = S.objs.find((o) => o.t === "fbed" && o.i === 0);
+  const R = Math.random; Math.random = () => 0.999; try { W.fungBed(S, pl, ob, Date.now()); } finally { Math.random = R; } return G.countItems(pl.C, ["puffball"]); };
+const wildMax = G.FUNG.wildN[1], bedMax = G.FUNGI.spawn_puffball.yield[1];
+is([shrooms(null, "wild"), shrooms("trufflepig", "wild"), shrooms("trufflebaron", "wild")], [wildMax, wildMax * 3, wildMax * 3], "wild shrooms: tripled with either");
+is([shrooms(null, "bed"), shrooms("trufflepig", "bed"), shrooms("trufflebaron", "bed")], [bedMax, bedMax * 3, bedMax * 3], "cellar shrooms: tripled with either");
 
 /* the Baron's truffles: a roll that the pig's 20% misses and the Baron's 35% catches */
 const truffle = (k, roll) => { const pl = { id: "t" + k, name: "t", C: withPet(k), x: 1, y: 1, out: [], path: [] }; W.pls.set(pl.id, pl);

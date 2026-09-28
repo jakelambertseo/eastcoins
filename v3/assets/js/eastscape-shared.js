@@ -6185,7 +6185,7 @@ HISCORES.push(["breeding", "Breeding", "level", "lvl"]);
 Object.assign(PETS, {
   pocketowl:  { name: "Pocket Owl",        art: "pet_pocketowl",  bred: true, egg: "egg_speckled", fx: { reach: 1 },            ex: "It watches what you shoot at. Your bow reaches a tile further." },
   mossback:   { name: "Mossback Tortoise", art: "pet_mossback",   bred: true, egg: "egg_mossy",    fx: { tough: 10 },           ex: "Slow, patient, and nothing gets past it. You take 10% less damage." },
-  trufflepig: { name: "Truffle Pig",       art: "pet_trufflepig", bred: true, egg: "egg_truffle",  fx: { grow: 25 },            ex: "Knows where the good stuff grows. Harvests come up a quarter heavier, it sniffs out black truffles, and the mushroom spawn you gather comes up three times over." },
+  trufflepig: { name: "Truffle Pig",       art: "pet_trufflepig", bred: true, egg: "egg_truffle",  fx: { grow: 25 },            ex: "Knows where the good stuff grows. Harvests come up a quarter heavier, it sniffs out black truffles, and the mushrooms and mushroom spawn you gather come up three times over." },
   stormling:  { name: "Stormling",         art: "pet_stormling",  bred: true, egg: "egg_sparking", fx: { bite: 10 },            ex: "A pocket cloud. The fish come up to see it. Bites 10% more often." },
   salamander: { name: "Cinder Salamander", art: "pet_salamander", bred: true, egg: "egg_cindered", fx: { noburn: 50, freesmelt: 10 }, ex: "It keeps the fire honest. Half the burns, and a smelt now and then costs nothing." },
   ferret:     { name: "Fortune Ferret",    art: "pet_ferret",     bred: true, egg: "egg_velvet",   fx: { steal: 10 },           ex: "Small hands, quick hands. Pickpockets succeed 10% more." },
@@ -6202,7 +6202,7 @@ Object.assign(PETS, {
      eight hatchlings, so an egg starts a pet that can climb all the way: hatch it, breed two into Greaters, two Greaters into this. */
   oracleowl:    { name: "Oracle Owl",         art: "pet_oracleowl",    bred: true, legend: true, base: "pocketowl",   fx: { reach: 2, swing: 8 },            ex: "It saw that coming. Your bow reaches two tiles further, and you work faster. Legendary." },
   shellback:    { name: "Ancient Shellback",  art: "pet_shellback",    bred: true, legend: true, base: "mossback",    fx: { tough: 18, hp: 20 },             ex: "A tree grows on its back and it has never once hurried. Legendary." },
-  trufflebaron: { name: "The Truffle Baron",  art: "pet_trufflebaron", bred: true, legend: true, base: "trufflepig",  fx: { grow: 45, tix: 5 },              ex: "Monocle, top hat, and a nose worth a fortune. It finds black truffles far more often than any pig, and the mushroom spawn you gather comes up three times over. Legendary." },
+  trufflebaron: { name: "The Truffle Baron",  art: "pet_trufflebaron", bred: true, legend: true, base: "trufflepig",  fx: { grow: 45, tix: 5 },              ex: "Monocle, top hat, and a nose worth a fortune. It finds black truffles far more often than any pig, and the mushrooms and mushroom spawn you gather come up three times over. Legendary." },
   tempest:      { name: "Tempest",            art: "pet_tempest",      bred: true, legend: true, base: "stormling",   fx: { bite: 20, speed: 8 },            ex: "The Stormling grew up angry. Fish bite, and you move with the wind. Legendary." },
   magmadrake:   { name: "Magma Drake",        art: "pet_magmadrake",   bred: true, legend: true, base: "salamander",  fx: { noburn: 80, freesmelt: 20 },     ex: "Nothing burns near it that it doesn't want burned. Legendary." },
   banditking:   { name: "The Bandit King",    art: "pet_banditking",   bred: true, legend: true, base: "ferret",      fx: { steal: 20, tix: 8 },             ex: "Mask, cape, and somebody else's coin purse. Legendary." },
@@ -7433,7 +7433,7 @@ export const ownsStore = (c, id) => !!(c?.store?.own || []).includes(id);
    - THE TRUFFLE, which grows nowhere wild: a Truffle Pig worn while picking or harvesting finds it (FUNG.truffle).
    Everything a shroom goes into is an existing system (a drink, a meal, a pet food, an ink) with its existing buff keys: no new
    plumbing, and nothing here buys xp. */
-export const FUNG = { beds: [0, 6, 8, 10], bedMax: 10, wildN: [1, 3], wildSpawn: 0.35, wildXp: 0.4, truffle: { pick: 0.2, spawn: 0.08, bed: 0.05 }, snoutSpawn: 3, ladder: "cellarladder" };
+export const FUNG = { beds: [0, 6, 8, 10], bedMax: 10, wildN: [1, 3], wildSpawn: 0.35, wildXp: 0.4, truffle: { pick: 0.2, spawn: 0.08, bed: 0.05 }, snoutSpawn: 3, snoutShroom: 3, ladder: "cellarladder" };
 SKILLS.fungiculture = { name: "Fungiculture", icon: "\u{1F344}" };
 SKILL_GROUPS.find((g) => g.name === "Skilling")?.keys.push("fungiculture");
 HISCORES.push(["fungiculture", "Fungiculture", "level", "lvl"]);

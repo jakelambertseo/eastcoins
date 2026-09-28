@@ -1608,7 +1608,7 @@ export class World {
     if (lv < F.lvl) return this.say(pl, `You need a Fungiculture level of ${F.lvl} to pick ${G.ITEMS[k].name.toLowerCase()}.`, "bad");
     const h = this.fungDay(C), lid = ob.lid || `${S.key}:${ob.x},${ob.y}`;
     if (h.got.includes(lid)) return this.say(pl, "You've had what this one had today. It'll fruit again tomorrow.", "bad");
-    const n = rint(G.FUNG.wildN[0], G.FUNG.wildN[1]);
+    const n = rint(G.FUNG.wildN[0], G.FUNG.wildN[1]) * (G.truffleNose(C) ? G.FUNG.snoutShroom : 1);   /* (2026-09-27, the owner: "they should return triple shrooms when harvested as well") */
     if (!this.give(pl, k, n)) return;
     h.got.push(lid); if (h.got.length > 60) h.got.splice(0, h.got.length - 60); this.touch(pl);
     this.gained(S, pl, k, n); this.grant(pl, "fungiculture", Math.max(10, Math.round(F.xp * G.FUNG.wildXp)));
@@ -1627,7 +1627,7 @@ export class World {
     if (!p) return pl.out.push({ type: "fplant", i: ob.i });
     const F = G.FUNGI[p.k], yk = G.fungYield(p.k), left = p.at + (p.ms || F.ms) - now, nm = G.ITEMS[yk].name.toLowerCase();
     if (left > 0) return this.say(pl, `Your ${nm} will be ready in ${left > 90000 ? `about ${Math.round(left / 60000)} minutes` : `${Math.ceil(left / 1000)} seconds`}.`);
-    const n = Math.max(1, Math.round(rint(F.yield[0], F.yield[1]) * (1 + G.petFx(pl.C).grow / 100)));   /* the Truffle Pig's heavier harvests reach the cellar too */
+    const n = Math.max(1, Math.round(rint(F.yield[0], F.yield[1]) * (G.truffleNose(pl.C) ? G.FUNG.snoutShroom : 1 + G.petFx(pl.C).grow / 100)));   /* (2026-09-27) a truffle pet triples a bed's shrooms (in place of its harvest bonus, not on top); any other grow pet adds its % */
     if (!this.give(pl, yk, n)) return;
     const nose = G.truffleNose(pl.C), want = (G.SEED_BACK + (Math.random() < G.SEED_EXTRA ? 1 : 0)) * (nose ? G.FUNG.snoutSpawn : 1), back = this.giveUpTo(pl, p.k, want);   /* (2026-09-27) a truffle pet triples the spawn back */
     const trufSp = nose && p.k !== "spawn_truffle" && Math.random() < G.FUNG.truffle.bed * nose && this.giveUpTo(pl, "spawn_truffle", 1);
