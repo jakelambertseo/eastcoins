@@ -1430,7 +1430,11 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 @media (max-width:420px){.pop-card .pop-btns.many{grid-template-columns:1fr}}
 
 /* ---------- batch 1b: the conversation (a window like the rest: who is talking in the header, the face in a bag slot, answers as rows) ---------- */
-.dlg.k-win{display:flex;flex-direction:column;gap:0;padding:0;background:none;border-radius:0;color:var(--k-ink);width:min(640px,calc(100% - 24px))}
+/* (2026-09-28, the owner: "i also couldnt close npc dialogue window", "cant click on any of the npc dialogue options either") ABOVE THE GREEN ROOM.
+   The music dock (eastscape-green.js) sits bottom-right at the same z-index 5 and comes later in the page, so it painted over the
+   conversation; with the new header the box grew into it and the dock took the clicks meant for the x and the answers. A conversation is
+   the thing you are doing: it goes over the dock (7), under popups and info cards (8). */
+.dlg.k-win{z-index:7;display:flex;flex-direction:column;gap:0;padding:0;background:none;border-radius:0;color:var(--k-ink);width:min(640px,calc(100% - 24px))}
 .dlg .k-head{padding:6px 8px 6px 12px}
 .dlg .k-head b{font-size:17px;color:var(--k-head-ink)}
 .dlg .dlg-x{position:static;width:26px;height:26px;font-size:18px;color:#fff}
@@ -1446,6 +1450,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .info .k-head{margin:-2px -2px 0;padding:5px 8px;gap:7px}
 .info .k-head>img,.info .k-head>.ico,.info .k-head .glow{width:22px;height:22px}
 .info .k-head b{font-size:15px}
+.info .info-x{width:22px;height:22px;font-size:16px;border-radius:4px}
 .info-b{padding:8px 10px 6px;background-color:var(--k-paper);background-image:radial-gradient(rgba(150,110,60,.07) 1px,transparent 1.5px);background-size:7px 9px}
 .info .sub{color:var(--k-ink2);font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
 .info dl{gap:3px 10px}.info dt{color:var(--k-ink2);font-weight:700}.info dd{font-weight:800;color:var(--k-ink)}
@@ -6653,7 +6658,7 @@ function resourceInfo(ob) {
 }
 /* (2026-09-28) THE INFO CARD wears the kit: a slim header with a pixel icon and the name in Cinzel, the facts on paper, and the wiki link as a
    secondary button in a foot. The three kinds keep their own facts; only the frame and the icon changed. */
-const infoHead = (icon, name) => `<div class="k-head">${icon}<b>${esc(name)}</b></div><div class="info-b">`;
+const infoHead = (icon, name) => `<div class="k-head">${icon}<b>${esc(name)}</b><button type="button" class="k-x info-x" aria-label="Close" title="Close (Esc)">×</button></div><div class="info-b">`;   /* (2026-09-28, the owner: "right click inspecting things need to have an X/close button") */
 const G_SKILL = new Set(["agility", "alchemy", "archery", "breeding", "cooking", "fishing", "fletching", "fungiculture", "harvesting", "magic", "mining", "smithing", "thieving", "woodcutting", "wizardry"]);
 function showInfo(t, cx, cy) {
   const box = $("info"); let html = "", wiki = null;
@@ -6682,6 +6687,7 @@ function showInfo(t, cx, cy) {
   const x = Math.min(cx + 12, game.width - box.offsetWidth - 8), y = Math.min(cy + 12, game.height - box.offsetHeight - 8);
   box.style.left = `${Math.max(8, x)}px`; box.style.top = `${Math.max(8, y)}px`;
   box.querySelector("[data-more]")?.addEventListener("click", (e) => { box.hidden = true; wikiRoute = e.target.dataset.more; openWin("wikiWin"); });
+  box.querySelector(".info-x")?.addEventListener("click", () => { box.hidden = true; });
 }
 cv.addEventListener("contextmenu", (e) => {
   e.preventDefault(); if (!Z.g) return;
