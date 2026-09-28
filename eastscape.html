@@ -2307,6 +2307,7 @@ function onEvent(e) {
   if (e.type === "real") { if ($("gameWin").hidden || CZ.game !== e.g) openReal(e.g); return; }
   if (e.type === "prize") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin"]) $(w).hidden = true; SFX.play("ui_open"); return CZ.prize(e); }
   if (e.type === "cashed") { SFX.play("coins"); return CZ.cashed(e); }
+  if (e.type === "boughtback") return CZ.boughtback(e);   /* (2026-09-28) Bom's buy-back */
   if (e.type === "casinonote") { chatLine("Casino", e.text, "casinonote"); if (/JACKPOT/.test(e.text)) SFX.play("jackpot"); return; }
   /* (2026-09-23, the owner) A LEVEL MILESTONE, to everyone online. It is a chat line rather than a banner on
      purpose: the point is that the room can reply to it. Your own gets a sound; other people's do not, or a
@@ -6226,12 +6227,12 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=53", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=54", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit", "boughtback"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
   onFight: (v) => { const was = FIGHT; FIGHT = { ...v, until: performance.now() + v.left }; if (v.phase === "fight" && was?.phase !== "fight" && was) SFX.play("task_done"); if (CZ.game === "fight") CZ.fight(FIGHT, false); },
-  onRoul: (v) => roulSet(v), winFx: (big, small) => winFx(big, small), bigWin: (w) => send({ t: "bigwin", game: w.game, mult: w.mult, jackpot: w.jackpot }), roomPeople: () => (String(Z.key).split(":")[0] === "roulette" ? Z.players.map((q) => ({ name: q.name, me: q.id === you?.id })) : []), rrChanged: () => { if (String(Z.key).split(":")[0] === "roulette") send({ t: "rr" }); }, me: () => me, room: () => Z.def, you: () => you, calm: () => set("reducedMotion"), now: () => snow() }))));
+  onRoul: (v) => roulSet(v), winFx: (big, small, label) => winFx(big, small, label), bigWin: (w) => send({ t: "bigwin", game: w.game, mult: w.mult, jackpot: w.jackpot }), roomPeople: () => (String(Z.key).split(":")[0] === "roulette" ? Z.players.map((q) => ({ name: q.name, me: q.id === you?.id })) : []), rrChanged: () => { if (String(Z.key).split(":")[0] === "roulette") send({ t: "rr" }); }, me: () => me, room: () => Z.def, you: () => you, calm: () => set("reducedMotion"), now: () => snow() }))));
 const CZ = new Proxy({}, { get: (_, k) => (czReal ? czReal[k] : k === "game" ? null : k === "real" || k === "tix" ? false : k === "realGames" ? () => Object.keys(G.REAL_TABLES) : CZ_QUIET.has(k) ? () => {} : (...a) => { czLoad().then((z) => z[k](...a)).catch(() => say("Couldn't load the game windows. Check your connection and try again.")); }) });
 setTimeout(czLoad, 6000);
 /* ------------------------------------------------------------ roulette: the shared table
@@ -6391,9 +6392,9 @@ const bursts = [];
 /* EVERY CASINO WIN FEELS LIKE A LEVEL UP (the owner, 2026-09-20: "replicate the level up effect, even on small wins"): the same
    gold banner, the same jingle (a little quieter, under the table's own win sound), a ring and a throw of sparks. Called by
    the game windows from the one place every win passes through (pop). No motion under reduced motion; the banner still shows. */
-function winFx(big, small) {
+function winFx(big, small, label) {
   SFX.play("levelup", { vol: 0.55 }); const jack = big === "JACKPOT", b = $("lvlup");
-  b.innerHTML = `<small>${jack ? "Jackpot!" : "Winner!"}</small><b>${jack ? small : big}</b>`; b.classList.add("over");
+  b.innerHTML = `<small>${label || (jack ? "Jackpot!" : "Winner!")}</small><b>${jack ? small : big}</b>`; b.classList.add("over");
   b.hidden = false; b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
   if (!set("reducedMotion")) { bursts.push({ at: performance.now() }); for (let i = 0; i < (jack ? 40 : 22); i++) { const sp = document.createElement("i"), a = Math.random() * 6.283, v = 70 + Math.random() * (jack ? 210 : 140); sp.className = "winspark"; sp.style.cssText = `--dx:${Math.round(Math.cos(a) * v)}px;--dy:${Math.round(Math.sin(a) * v * 0.7 + 40)}px;--r:${Math.round(Math.random() * 720 - 360)}deg;background:${STAR_COLS[i % STAR_COLS.length]}`; b.append(sp); } }
   clearTimeout(levelUp.t); levelUp.t = setTimeout(() => { b.hidden = true; b.classList.remove("over"); }, jack ? 3400 : 2000);

@@ -3931,6 +3931,8 @@ export const NEED_TEXT = { thirst: "You're too thirsty to gamble. There's a wate
 export const DEX = { rate: 1000, capHour: 50, capDay: 100, maxStake: 20 };   /* (2026-09-27) capDay: ZCoins that may leave the game to a wallet in a rolling 24 hours (trades and banked finds); capHour is the ticket-stake allowance */
 export const FX_CAP = { gear: { win: 0.015, back: 0.015, angel: 0.0075 }, all: { win: 0.05, back: 0.03, angel: 0.01 } };
 export const ROLLER = { kill: 0, bets: 10, max: 100, mult: 1 };   /* HIGH ROLLER is retired (the owner, 2026-09-19): nothing grants it and it doubles nothing */
+/** (2026-09-28) Bom's buy-back: the last `keep` things you sold him, for `ms`, at what he paid you (see bbAdd in the worker) */
+export const BUYBACK = { keep: 8, ms: 60 * 60000 };
 export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 1000 }, REWIND = { ms: 60000, max: 500 };
 /* BUFFS WORK OUT THE ARCH, AND NOWHERE ELSE (v65, 2026-09-19). Every casino game is eastcoin.vip's now and nothing in
    EastScape may touch a bet, so the old gambling effects had no table left to act on. The owner approved their
@@ -6923,6 +6925,8 @@ export function normChar(c) {
   /* (v93) A saved character keeps a copy of every setting, so changing a DEFAULT never reached anybody who already existed. The tile
      outline is switched off ONCE for each of them (hoverOff marks it done); anyone who wants it back turns it on and it stays. */
   if (!out.hoverOff) { out.settings.hoverTile = false; out.hoverOff = 1; }
+  /* (2026-09-28) Bom's buy-back: only real, whole entries, and never more than he keeps */
+  out.buyback = (Array.isArray(out.buyback) ? out.buyback : []).filter((x) => x && typeof x === "object" && ITEMS[x.k] && (x.n | 0) > 0 && Number.isFinite(x.paid) && x.paid >= 0 && x.id).slice(0, BUYBACK.keep);
   out.look = normLook(c.look);   /* (v80) who they chose to be, or null: not asked yet */
   out.bagUp = Math.max(0, Math.min(BAG_UPGRADES.length, Math.trunc(Number(c.bagUp)) || 0));   // clamped on load: a hand-edited save cannot grant a hundred slots
   /* (2026-09-22) THE TOWER. `best` is the highest floor ever cleared and is the only part that has to survive a

@@ -367,7 +367,7 @@ export class World {
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
-    pets: C.pets, isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
+    pets: C.pets, buyback: (C.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms),   /* (2026-09-28) Bom's buy-back */ isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
 
   /* ------------------------------------------------------------ reforging (2026-09-22)
      Spend bars to push a piece you own further. The odds and what a level is worth live in G.FORGE; this only
@@ -2236,6 +2236,13 @@ export class World {
      line rather than at the dozen places that pay. A doubled ticket is still a ticket: the caps, the books and
      the day counters all see the doubled number, which is what the owner asked for. */
   tixTo(pl, n) { if (n > 0 && this.doubleOn()) n = Math.round(n * G.DOUBLE.mult); this.earned(pl, n); if (n > 0 && !this.give(pl, "tickets", n) && !this.bankAdd(pl, "tickets", n)) this.say(pl, "Your bag and bank are both full: those tickets are lost. Make some room!", "bad"); }
+  /* (2026-09-28, the owner: "build the buy-back section too") BUY-BACK. What you sold Bom lately, his for G.BUYBACK.ms and the last
+     G.BUYBACK.keep of them, to buy back at EXACTLY what he paid you. Two things make that exact: `credited` is the tickets that actually
+     reached you (tixTo doubles a sale during 2X, so a buy-back at the base price would print tickets there), rounded UP per row so buying
+     back can never pay out; and a buy-back takes back the VIP credit the sale earned (`earned`), or selling and buying back in a loop
+     would climb VIP for nothing. A reforged piece comes back at its level. */
+  credited(n) { return n > 0 && this.doubleOn() ? Math.ceil(n * G.DOUBLE.mult) : n; }
+  bbAdd(C, e) { const now = Date.now(); C.buyback = [{ id: `${now.toString(36)}${Math.random().toString(36).slice(2, 6)}`, ...e, at: now }, ...(C.buyback || []).filter((x) => now - x.at < G.BUYBACK.ms)].slice(0, G.BUYBACK.keep); }
   /* THE PRIZE COUNTER: tickets in, prizes out (G.prizesOf). Chips are tickets, 1 for 1; everything else is an item. */
   counterOp(S, pl, m) {
     if (!this.atCounter(S, pl)) return this.say(pl, "You need to be at the Prize Counter: Bom Trady, in the middle of the casino floor.", "bad");
@@ -2250,6 +2257,17 @@ export class World {
       C.bagUp = (C.bagUp | 0) + 1;
       this.touch(pl);
       return this.say(pl, `Bom stitches another pocket on. Your bag holds ${G.bagMax(C)} now.`, "loot");
+    }
+    if (m.op === "buyback") {
+      const now = Date.now(), list = (C.buyback || []).filter((x) => now - x.at < G.BUYBACK.ms), e = list.find((x) => x.id === String(m.id));
+      if (!e) { C.buyback = list; this.touch(pl); return this.say(pl, "Bom's already moved that on. Buy-backs last an hour.", "bad"); }
+      if (tix < e.paid) return this.say(pl, `Buying that back is ${G.fmtTix(e.paid)}, what he paid you. You have ${G.fmtTix(tix)}.`, "bad");
+      if (G.roomFor(C.inv, e.k, C, e.f) < e.n) return this.say(pl, "Your bag's too full to take it back.", "bad");
+      G.takeInv(C.inv, "tickets", e.paid); G.addInv(C.inv, e.k, e.n, C, e.f);
+      C.earned = Math.max(0, (Number(C.earned) || 0) - e.paid);   /* the sale's VIP credit goes back with it */
+      C.buyback = list.filter((x) => x !== e); this.touch(pl);
+      pl.out.push({ type: "boughtback", k: e.k, n: e.n, paid: e.paid });
+      return this.say(pl, `Bom slides ${e.n > 1 ? `${e.n.toLocaleString()} × ` : "the "}${G.forgeNameAt(e.k, e.f).toLowerCase()} back across the counter for ${G.fmtTix(e.paid)}.`, "good");
     }
     if (m.op !== "buy") return;
     const p = G.prizesOf().find((x) => x.id === String(m.id)); if (!p) return;
@@ -2288,7 +2306,7 @@ export class World {
       for (let i = C.inv.length - 1; i >= 0; i--) { const st = C.inv[i]; if (st.k !== gk || G.fOf(st) !== wantF) continue; got += st.n; C.inv.splice(i, 1); }
       if (!got) return this.say(pl, `That is not in your bag: ${G.forgeNameAt(gk, wantF)}.`, "bad");
       const paid = got * priceOf(gk, wantF);
-      this.tixTo(pl, paid); this.touch(pl);
+      this.tixTo(pl, paid); this.bbAdd(C, { k: gk, n: got, f: wantF, paid: this.credited(paid) }); this.touch(pl);
       pl.out.push({ type: "cashed", total: paid, count: got });
       return this.say(pl, `"${G.forgeNameAt(gk, wantF)} — somebody put work into that." The counter hands over ${G.fmtTix(paid)}.`, "good");
     }
@@ -2301,6 +2319,7 @@ export class World {
       const gear = !!G.ITEMS[k]?.slot;
       const n = G.takeInv(C.inv, k, G.countItems({ inv: C.inv, bank: [] }, [k], gear ? { plainOnly: true } : undefined));
       total += n * priceOf(k); count += n;
+      if (n) this.bbAdd(C, { k, n, f: 0, paid: this.credited(n * priceOf(k)) });   /* (2026-09-28) BUY-BACK: see bbAdd */
     }
     if (!count) return this.say(pl, "The counter looks in your bag. \"Nothing in there I can give you tickets for. The arch is that way.\"");
     this.tixTo(pl, total); this.touch(pl);

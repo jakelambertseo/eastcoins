@@ -50,7 +50,54 @@ const CSS = `
 .bom-step .k-seg button:disabled{opacity:1;cursor:default}
 .bom-pane{overflow-x:hidden}
 @media (max-width:620px){.bom-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}#gameWin.cz:has(.bom) #gameSub{display:none}.bom .k-foot .k-note{display:none}.bom .k-foot{justify-content:stretch}.bom .k-foot .k-btn{flex:1}
-  .bom-r{gap:8px;padding-right:8px}.bom-r .k-end{flex-direction:column;align-items:flex-end;gap:4px}.bom-r b{font-size:14px}.bom-tix b{font-size:19px}}
+  .bom-r{gap:8px;padding-right:8px}.bom-r .k-end{flex-direction:column;align-items:flex-end;gap:4px}.bom-r b{font-size:14px}.bom-tix b{font-size:19px}
+  .bom-tabs{padding-left:8px;gap:2px}.bom-tabs button{white-space:nowrap;padding-left:8px;padding-right:8px;font-size:12.5px;gap:4px}}
+/* ---------- (2026-09-28, the owner: "pizaaz up the Bom window ... this should be a dopamine inducing experience") SHOWBIZ ----------
+   A marquee over the counter (a velvet band between two strings of chasing bulbs, trimmed in gold), a ticket pile that glints and
+   jumps when tickets land on it, a gold "Trade in the lot" that breathes while there is loot to sell, green trade buttons (money
+   in is green everywhere on the site), green-ringed ZCoin buttons that ping when pressed, and the fixed #bomFx layer the flying
+   tickets and ZCoins ride on. Every loop stops under reduced motion. */
+.bom-top{position:relative;margin:-8px -12px 0;padding:16px 16px 14px;background:radial-gradient(120% 160% at 15% 0%,#6a1a1e 0%,#340c10 55%,#1e0709 100%);box-shadow:inset 0 2px 0 #e8bf35,inset 0 -2px 0 #e8bf35}
+.bom-top::before,.bom-top::after{content:"";position:absolute;left:4px;right:4px;height:6px;pointer-events:none;background:radial-gradient(circle,#fff3c0 0 1.4px,#ffcc4a 1.9px,rgba(255,190,60,.35) 2.6px,transparent 3.2px) 0 50%/14px 6px repeat-x;animation:bomBulbs .9s steps(1) infinite}
+.bom-top::before{top:4px}.bom-top::after{bottom:4px;animation-delay:-.45s}
+@keyframes bomBulbs{0%{background-position:0 50%}50%{background-position:7px 50%}}
+.bom-tix{position:relative;overflow:hidden;background:linear-gradient(#2a1a08,#140b03);box-shadow:0 0 0 2px #c8963a,0 0 16px rgba(255,196,60,.35),inset 0 1px 0 rgba(255,230,150,.25)}
+.bom-tix::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,240,180,.45) 50%,transparent 65%) -120% 0/60% 100% no-repeat;animation:bomGlint 4.5s ease-in-out infinite;pointer-events:none}
+@keyframes bomGlint{0%,70%{background-position:-120% 0}100%{background-position:260% 0}}
+.bom-tix.bump{animation:bomBump .22s ease-out}
+@keyframes bomBump{40%{transform:scale(1.09)}100%{transform:scale(1)}}
+.bom-tix.up{box-shadow:0 0 0 2px #7de08a,0 0 22px rgba(90,230,120,.6)}.bom-tix.up b{color:#b6ffbe}
+.bom-tix.down b{color:#ffc7a8}
+.bom-top .k-chip{background:rgba(255,235,190,.1);color:#f3e2bd;box-shadow:inset 0 0 0 1px rgba(255,215,140,.3)}
+.bom-top .k-chip.good{color:#9ff0a8;box-shadow:inset 0 0 0 1px rgba(120,230,140,.45)}.bom-top .k-chip.gold{color:#ffd84a;box-shadow:inset 0 0 0 1px rgba(255,216,74,.55)}
+.bom-tabs{background:linear-gradient(rgba(90,58,24,.16),rgba(90,58,24,.06))}
+#gameWin .bom .k-btn.bom-sell{border:0;border-image:none;border-radius:var(--k-r);background:linear-gradient(#4fc463,#2e9a44);color:#fff;text-shadow:0 1px 0 rgba(0,40,10,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 0 #1e6a2e;transition:transform .08s,filter .12s}
+#gameWin .bom .k-btn.bom-sell:hover{filter:brightness(1.1)}#gameWin .bom .k-btn.bom-sell:active{transform:translateY(2px) scale(.96);box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+#gameWin .bom .k-btn.bom-sell.danger{background:linear-gradient(#cf4638,#a52e22);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 0 #6a1a12}
+#gameWin .bom .k-btn.bom-bb{border:0;border-image:none;border-radius:var(--k-r);background:linear-gradient(#ffe07a,#d99a22);color:#2a1800;text-shadow:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 0 #7a4a0a}
+#gameWin .bom .k-btn.bom-bb:active{transform:translateY(2px) scale(.96)}
+#gameWin .bom .k-btn.bom-lot{position:relative;overflow:hidden;min-height:46px;gap:10px;padding:0 18px;border:0;border-image:none;border-radius:10px;background:linear-gradient(180deg,#fff0a8 0%,#ffd24a 35%,#e09a1c 100%);color:#2a1600;text-shadow:0 1px 0 rgba(255,255,255,.5);font:900 15px/1 var(--k-disp),serif;letter-spacing:.02em;box-shadow:0 0 0 2px #7a4a0a,0 4px 0 #6a3a06,0 0 22px rgba(255,200,60,.55);animation:bomBreathe 1.8s ease-in-out infinite;transition:transform .08s}
+#gameWin .bom .k-btn.bom-lot b{display:inline-flex;align-items:center;gap:3px;padding:3px 8px 3px 5px;border-radius:99px;background:rgba(60,30,0,.82);color:#ffe27a;text-shadow:none;font:900 14px/1 Lora,serif}#gameWin .bom .k-btn.bom-lot b .ico,#gameWin .bom .k-btn.bom-lot b img{width:16px;height:16px}
+#gameWin .bom .k-btn.bom-lot::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%) -150% 0/50% 100% no-repeat;animation:bomGlint 2.6s ease-in-out infinite}
+#gameWin .bom .k-btn.bom-lot:hover{filter:brightness(1.07)}#gameWin .bom .k-btn.bom-lot:active{transform:translateY(3px);box-shadow:0 0 0 2px #7a4a0a,0 1px 0 #6a3a06,0 0 30px rgba(255,200,60,.8)}
+@keyframes bomBreathe{50%{box-shadow:0 0 0 2px #7a4a0a,0 4px 0 #6a3a06,0 0 34px rgba(255,210,70,.9)}}
+#gameWin .bom .k-btn.bom-zc{position:relative;min-height:42px;padding:0 18px;border:0;border-image:none;border-radius:10px;background:linear-gradient(#1c4a2a,#0e2c17);color:#c9ffd4;text-shadow:0 1px 0 #000;font:900 14px/1 Lora,serif;box-shadow:0 0 0 2px #3ddc72,0 0 14px rgba(61,220,114,.45),inset 0 1px 0 rgba(255,255,255,.18);transition:transform .08s,box-shadow .15s}
+#gameWin .bom .k-btn.bom-zc:hover:not(:disabled){box-shadow:0 0 0 2px #6dff9c,0 0 24px rgba(61,220,114,.75),inset 0 1px 0 rgba(255,255,255,.22);color:#fff}
+#gameWin .bom .k-btn.bom-zc:active:not(:disabled){transform:scale(.94)}
+#gameWin .bom .k-btn.bom-zc:disabled{box-shadow:0 0 0 2px #8a9a8e;background:linear-gradient(#5a625c,#3e4540);color:#d6ddd8;filter:none}
+#gameWin .bom .k-btn.bom-zc.ping::after{content:"";position:absolute;inset:-2px;border-radius:12px;box-shadow:0 0 0 2px #6dff9c;animation:bomPing .55s ease-out forwards;pointer-events:none}
+@keyframes bomPing{to{inset:-14px;border-radius:20px;opacity:0}}
+.bom-zseg button{font-weight:900}
+.bom-card:has(.bom-zc:not(:disabled)){box-shadow:inset 0 0 0 1.5px rgba(61,180,100,.55),0 0 0 3px rgba(61,220,114,.08)}
+.bom-meter i{background:linear-gradient(90deg,#2e9a44,#6dff9c)}
+.bom-r{transition:transform .12s,box-shadow .12s}.bom-r:hover{transform:translateX(2px)}
+.bom-r.bom-go,.bom-tile.bom-go{animation:bomGo .45s ease-out}
+@keyframes bomGo{30%{transform:scale(1.02);box-shadow:inset 0 0 0 2px #ffd24a,0 0 18px rgba(255,200,60,.6)}}
+#bomFx{position:fixed;inset:0;z-index:3000;pointer-events:none;overflow:hidden}
+.bom-coin{position:absolute;left:0;top:0;width:24px;height:24px;margin:-12px 0 0 -12px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.45))}.bom-coin img,.bom-coin .ico,.bom-coin svg{width:24px;height:24px;image-rendering:pixelated}
+.bom-float{position:absolute;left:0;top:0;font:900 24px/1 var(--k-disp,Cinzel),serif;color:#ffd84a;white-space:nowrap;-webkit-text-stroke:4px #3a2204;paint-order:stroke fill;text-shadow:0 2px 0 #4a2a04,0 0 12px rgba(255,200,60,.85)}.bom-float.good{-webkit-text-stroke-color:#0c3014;color:#9dffab;text-shadow:0 2px 0 #0e3a18,0 0 12px rgba(90,230,120,.85)}.bom-float.bad{-webkit-text-stroke-color:#44120a;color:#ffb39c;text-shadow:0 2px 0 #4a140a,0 0 10px rgba(255,120,90,.6)}.bom-float.gold{font-size:20px}
+@media (prefers-reduced-motion:reduce){.bom-top::before,.bom-top::after,.bom-tix::after,#gameWin .bom .k-btn.bom-lot,#gameWin .bom .k-btn.bom-lot::after,.bom-tix.bump,.bom-r.bom-go,.bom-tile.bom-go,#gameWin .bom .k-btn.bom-zc.ping::after{animation:none}}
+.bom.calm .bom-top::before,.bom.calm .bom-top::after,.bom.calm .bom-tix::after,#gameWin .bom.calm .k-btn.bom-lot,#gameWin .bom.calm .k-btn.bom-lot::after,.bom.calm .bom-tix.bump,.bom.calm .bom-go{animation:none}
 
 /* PARCHMENT (2026-09-19, the owner: "restyle the other windows towards the parchment look"). These windows used to wear
    eastcoin.vip's dark casino; they now wear the game's own paper: the wood-and-bronze frame and brown header come from the
@@ -917,8 +964,10 @@ export function createCasino(env) {
     const p = $("pop"); if (!p) return; $("popIco").innerHTML = icon || ""; $("popTitle").textContent = title; $("popText").textContent = text;
     $("popBtns").innerHTML = `<button type="button" class="btn">Let's go</button>`; $("popBtns").querySelector("button").addEventListener("click", () => { p.hidden = true; }); p.hidden = false; $("popBtns").querySelector("button").focus();
   }
+  let zcFrom = null;
+  const zcImg = `<img src="/v3/assets/img/zcoin.webp" alt="">`;
   function dex(e) {
-    dexWait = false; if (e.status) dexSt = e.status;
+    dexWait = false; if (e.done && zcFrom) { burst(zcFrom, Math.min(40, 14 + (e.done.zc | 0)), zcImg); zcFrom = null; } if (e.status) dexSt = e.status;
     if (e.error) dexMsg = { text: e.error, cls: "bad" };
     else if (e.done) {
       if (e.done.op === "cash") { const n = e.done.zc; dexMsg = { text: `Traded ${Number(e.done.tix || n * G.DEX.rate).toLocaleString()} tickets for ${n} ZCoin${n === 1 ? "" : "s"}${e.done.balance != null ? `: you now have ${Number(e.done.balance).toLocaleString()} ZC on eastcoin.vip` : ""}.`, cls: "good" }; SFX.play("jackpot"); pop(`+${n} ZC`, "real ZCoins"); bigNote(`You got ${n} ZCoin${n === 1 ? "" : "s"}!`, "Now get out there and grind some more.", `<img src="/v3/assets/img/zcoin.webp" alt="" style="width:54px;height:54px">`); cashZc = 1; }
@@ -960,6 +1009,59 @@ export function createCasino(env) {
      It opens on Sell when your bag holds loot and on Buy when it does not, and remembers the tab while it stays open. Every message it
      sends is the one the old window sent: cashout (all / one / a rare / a gear piece), counter (buy / bagup), dex (cash / bank). */
   let bomTab = null, bomCat = "gear";
+  /* (2026-09-28, the owner: "it feels dull when this should be a dopamine inducing experience (the highest in the game)") SHOWBIZ.
+     The window is rebuilt on every `me`, so nothing here lives in its DOM: the fx ride a fixed layer on <body>, and the ticket
+     count is remembered here so a rebuild can ROLL from the old number to the new one instead of jumping. Every trade shows
+     where the tickets went: selling throws them from the row into your pile, buying throws them from your pile onto what you
+     bought, and a big trade-in (or a ZCoin trade) gets the casino's own win banner. Nothing moves under reduced motion; the
+     numbers and the sounds still change. */
+  const roll = { from: 0, to: null, t0: 0, ms: 900 }, bomFx = { at: 0, rect: null, sel: "", what: "" };
+  const rollNow = () => { const p = Math.min(1, (performance.now() - roll.t0) / roll.ms); return Math.round(roll.from + (roll.to - roll.from) * (1 - Math.pow(1 - p, 3))); };
+  const fxLayer = () => document.getElementById("bomFx") || document.body.appendChild(Object.assign(document.createElement("div"), { id: "bomFx" }));
+  const mid = (r) => ({ x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height });
+  function floatText(r, text, cls = "") {
+    if (!r) return; const f = document.createElement("b"); f.className = `bom-float ${cls}`; f.textContent = text; fxLayer().append(f); const c = mid(r);
+    f.animate([{ transform: `translate(${c.x}px,${c.y}px) translate(-50%,-50%) scale(.6)`, opacity: 0 }, { transform: `translate(${c.x}px,${c.y - 26}px) translate(-50%,-50%) scale(1.15)`, opacity: 1, offset: 0.25 }, { transform: `translate(${c.x}px,${c.y - 70}px) translate(-50%,-50%) scale(1)`, opacity: 0 }], { duration: 1300, easing: "cubic-bezier(.2,.7,.3,1)" }).onfinish = () => f.remove();
+  }
+  let tickAt = 0;
+  /** n pieces of `html` thrown in an arc from one rect to another, each bumping the ticket pile as it lands */
+  function fly(from, to, n, html, land) {
+    if (!from || !to || env.calm()) return; const a = mid(from), b = mid(to), layer = fxLayer();
+    for (let i = 0; i < n; i++) {
+      const c = document.createElement("span"); c.className = "bom-coin"; c.innerHTML = html; layer.append(c);
+      const sx = a.x + (Math.random() - 0.5) * Math.min(a.w, 220) * 0.7, sy = a.y + (Math.random() - 0.5) * a.h * 0.5, mx = (sx + b.x) / 2 + (Math.random() - 0.5) * 140, my = Math.min(sy, b.y) - 50 - Math.random() * 90;
+      c.animate([{ transform: `translate(${sx}px,${sy}px) scale(.5) rotate(0deg)`, opacity: 0 }, { transform: `translate(${sx}px,${sy - 10}px) scale(1.1) rotate(40deg)`, opacity: 1, offset: 0.12 }, { transform: `translate(${mx}px,${my}px) scale(1.25) rotate(200deg)`, opacity: 1, offset: 0.5 }, { transform: `translate(${b.x}px,${b.y}px) scale(.7) rotate(360deg)`, opacity: 1 }],
+        { duration: 620 + Math.random() * 260, delay: i * 55, easing: "cubic-bezier(.35,.05,.45,1)", fill: "backwards" }).onfinish = () => { c.remove(); land?.(); };
+    }
+  }
+  /** a radial throw from one spot: the big-moment confetti (tickets for a trade-in, ZCoins for a cash-out) */
+  function burst(r, n, html) {
+    if (!r || env.calm()) return; const a = mid(r), layer = fxLayer();
+    for (let i = 0; i < n; i++) {
+      const c = document.createElement("span"); c.className = "bom-coin"; c.innerHTML = html; layer.append(c);
+      const ang = Math.random() * Math.PI * 2, v = 90 + Math.random() * 170, dx = Math.cos(ang) * v, dy = Math.sin(ang) * v * 0.8 - 60;
+      c.animate([{ transform: `translate(${a.x}px,${a.y}px) scale(.4)`, opacity: 1 }, { transform: `translate(${a.x + dx * 0.8}px,${a.y + dy * 0.8}px) scale(1.2) rotate(${dx}deg)`, opacity: 1, offset: 0.45 }, { transform: `translate(${a.x + dx}px,${a.y + dy + 160}px) scale(.8) rotate(${dx * 2}deg)`, opacity: 0 }],
+        { duration: 1100 + Math.random() * 500, delay: Math.random() * 120, easing: "cubic-bezier(.2,.6,.4,1)", fill: "backwards" }).onfinish = () => c.remove();
+    }
+  }
+  const pileEl = () => $("gameBody")?.querySelector(".bom-tix");
+  function bump() { const p = pileEl(); if (!p) return; p.classList.remove("bump"); void p.offsetWidth; p.classList.add("bump"); const t = performance.now(); if (t - tickAt > 70) { tickAt = t; SFX.play("chip", { vol: 0.22 }); } }
+  /** where a click came from, so the tickets it moves can be thrown from (or onto) it */
+  function mark(b, what) { const r = b.closest(".bom-r, .bom-tile, .k-foot, .bom-card") || b; bomFx.at = performance.now(); bomFx.rect = r.getBoundingClientRect(); bomFx.what = what; r.classList.remove("bom-go"); void r.offsetWidth; r.classList.add("bom-go"); }
+  /** the pile changed between two rebuilds: roll the number, float the difference, and throw the tickets */
+  function tixMoved(was, now) {
+    const d = now - was, pile = pileEl(); if (!pile || !d) return;
+    roll.from = roll.to == null ? was : rollNow(); roll.to = now; roll.t0 = performance.now(); roll.ms = env.calm() ? 1 : Math.min(1600, 500 + Math.log10(Math.abs(d) + 1) * 260);
+    pile.classList.toggle("up", d > 0); pile.classList.toggle("down", d < 0);
+    const tick = () => { const b = pileEl()?.querySelector("b"); if (!b || roll.to !== now) return; const v = rollNow(); b.textContent = v.toLocaleString(); if (v !== now) requestAnimationFrame(tick); else pileEl()?.classList.remove("up", "down"); };
+    requestAnimationFrame(tick);
+    const pr = pile.getBoundingClientRect(), recent = performance.now() - bomFx.at < 5000 ? bomFx.rect : null, pane = $("gameBody").querySelector(".bom-pane")?.getBoundingClientRect();
+    floatText(pr, `${d > 0 ? "+" : "−"}${Math.abs(d).toLocaleString()}`, d > 0 ? "good" : "bad");
+    const n = Math.max(4, Math.min(18, Math.round(Math.log2(Math.abs(d) + 1) * 1.6))), t = env.ico("tickets");
+    if (d > 0) fly(recent || pane, pr, n, t, bump);
+    else { fly(pr, recent || pane, Math.min(8, n), t); if (recent && bomFx.what) setTimeout(() => floatText(recent, bomFx.what, "gold"), 520); }
+    if (d > 0) bomFx.at = 0;
+  }
   function cashier(done) {
     const keep = GAME === "cashier" ? $("gameBody").querySelector(".bom-pane")?.scrollTop || 0 : 0, fresh = GAME !== "cashier";
     if (done !== undefined) lastCashed = done; GAME = "cashier";
@@ -973,7 +1075,7 @@ export function createCasino(env) {
     const byLevel = new Map();
     for (const st of me.inv) { if (!(G.gearSell(st.k) > 0)) continue; const f = G.fOf(st), id = st.k + "|" + f, r = byLevel.get(id) || { k: st.k, f, n: 0, v: G.gearSell(st.k, f) }; r.n += st.n; byLevel.set(id, r); }
     const sellGear = [...byLevel.values()].filter((r) => r.n > 0).sort((a, b) => b.v - a.v);
-    const sellN = loot.length + rare.length + sellGear.length;
+    const sellN = loot.length + rare.length + sellGear.length, bb = (me.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms);
     if (fresh || !bomTab) bomTab = loot.length ? "sell" : "buy";
     const slot = (k, f = 0, n = 0) => `<span class="k-slot" data-item="${k}"${f ? ` data-f="${f}"` : ""}>${env.ico(k)}${n > 1 ? `<u>×${n.toLocaleString()}</u>` : ""}${f ? `<em class="fgn">+${f}</em>` : ""}</span>`;
     const price = (n) => `<b class="bom-p">${env.ico("tickets")}${Number(n).toLocaleString()}</b>`;
@@ -983,13 +1085,20 @@ export function createCasino(env) {
     if (bomTab === "sell") {
       if (!sellN) pane = `<div class="bom-empty"><img src="/v3/assets/img/glad/flat/ui/w_sack.png?v=1" alt=""><b>Nothing to sell</b><p>Every kill and every catch outside pays tickets. Bring the drops and the fish here for more.</p></div>`;
       if (loot.length) {
-        pane += `<div class="k-sect"><span class="k-label">Loot · ${loot.length}</span></div>` + loot.map((r) => row(`${slot(r.k, 0, r.n)}<span><b>${esc(G.ITEMS[r.k].name)}</b><small>${r.v.toLocaleString()} each</small></span><span class="k-end">${price(r.n * r.v)}<button type="button" class="k-btn sec sm" data-cs="${r.k}">Trade</button></span>`)).join("");
-        foot = `<div class="k-foot"><span class="k-note">Trade in every drop and fish in your bag. Rares and gear are never swept up: sell those one at a time below.</span><button type="button" class="k-btn" id="bomAll">Trade in the lot · +${lootTotal.toLocaleString()}</button></div>`;
+        pane += `<div class="k-sect"><span class="k-label">Loot · ${loot.length}</span></div>` + loot.map((r) => row(`${slot(r.k, 0, r.n)}<span><b>${esc(G.ITEMS[r.k].name)}</b><small>${r.v.toLocaleString()} each</small></span><span class="k-end">${price(r.n * r.v)}<button type="button" class="k-btn sm bom-sell" data-cs="${r.k}">Trade</button></span>`)).join("");
+        foot = `<div class="k-foot"><span class="k-note">Trade in every drop and fish in your bag. Rares and gear are never swept up: sell those one at a time below.</span><button type="button" class="k-btn bom-lot" id="bomAll"><span>Trade in the lot</span><b>${env.ico("tickets")}+${lootTotal.toLocaleString()}</b></button></div>`;
       }
       if (rare.length) pane += `<div class="k-sect"><span class="k-label">Rares · quick sell</span></div><p class="bom-hint">Bom lowballs you for a rare. Another player will pay more on the Market.</p>`
-        + rare.map((r) => row(`${slot(r.k, 0, r.n)}<span><b>${esc(G.ITEMS[r.k].name)}</b><small>${r.v.toLocaleString()} each</small></span><span class="k-end">${price(r.n * r.v)}<button type="button" class="k-btn sec sm" data-qs="${r.k}">Sell${r.n > 1 ? " all" : ""}</button></span>`)).join("");
+        + rare.map((r) => row(`${slot(r.k, 0, r.n)}<span><b>${esc(G.ITEMS[r.k].name)}</b><small>${r.v.toLocaleString()} each</small></span><span class="k-end">${price(r.n * r.v)}<button type="button" class="k-btn sm bom-sell" data-qs="${r.k}">Sell${r.n > 1 ? " all" : ""}</button></span>`)).join("");
       if (sellGear.length) pane += `<div class="k-sect"><span class="k-label">Gear · a quarter back</span></div><p class="bom-hint">A quarter of what Bom sells it for, plus a quarter of the bars in any reforge. Reforged pieces ask twice.</p>`
-        + sellGear.map((r) => row(`${slot(r.k, r.f, r.n)}<span><b>${esc(G.forgeNameAt(r.k, r.f))}</b><small>${r.v.toLocaleString()} each${r.f ? ` · ${(r.v - G.gearSell(r.k)).toLocaleString()} of that is the reforge` : ""}</small></span><span class="k-end">${price(r.n * r.v)}<button type="button" class="k-btn sec sm${r.f ? " bom-arm" : ""}" data-gs="${r.k}" data-gf="${r.f}">Sell${r.n > 1 ? " all" : ""}</button></span>`, r.f ? " forged" : "")).join("");
+        + sellGear.map((r) => row(`${slot(r.k, r.f, r.n)}<span><b>${esc(G.forgeNameAt(r.k, r.f))}</b><small>${r.v.toLocaleString()} each${r.f ? ` · ${(r.v - G.gearSell(r.k)).toLocaleString()} of that is the reforge` : ""}</small></span><span class="k-end">${price(r.n * r.v)}<button type="button" class="k-btn sm bom-sell${r.f ? " bom-arm" : ""}" data-gs="${r.k}" data-gf="${r.f}">Sell${r.n > 1 ? " all" : ""}</button></span>`, r.f ? " forged" : "")).join("");
+    } else if (bomTab === "back") {
+      /* (2026-09-28, the owner: "build the buy-back section too") BUY-BACK: what you sold him in the last hour, at exactly what he paid */
+      const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "just now" : `${inHm(Date.now() - t)} ago`; };
+      pane = bb.length ? `<p class="bom-hint">Sold something by mistake? Bom keeps the last ${G.BUYBACK.keep} things you sold him for an hour, and sells each back for exactly what he paid you.</p>`
+        + bb.map((x) => { const f = x.f | 0, can = have >= x.paid;
+          return row(`${slot(x.k, f, x.n)}<span><b>${esc(G.forgeNameAt(x.k, f))}${x.n > 1 ? ` × ${x.n.toLocaleString()}` : ""}</b><small>sold ${ago(x.at)} · his in ${inHm(x.at + G.BUYBACK.ms - Date.now())}</small></span><span class="k-end">${price(x.paid)}<button type="button" class="k-btn sm bom-bb" data-bb="${esc(x.id)}"${can ? "" : ` disabled title="You need ${x.paid.toLocaleString()} tickets"`}>Buy back</button></span>`, f ? " forged" : ""); }).join("")
+        : `<div class="bom-empty"><img src="/v3/assets/img/glad/flat/ui/w_sack.png?v=1" alt=""><b>Nothing to buy back</b><p>Sell something by mistake? It waits here for an hour, and Bom sells it back for exactly what he paid you.</p></div>`;
     } else if (bomTab === "buy") {
       const kits = P.filter((x) => x.group === "kit"), bar = P.filter((x) => x.group === "bar"), bagCost = G.bagUpCost(me);
       const CATS = [["gear", "Arms & armour"], ...(kits.length ? [["kits", "Starter kits"]] : []), ["bar", "Food & drink"], ["bag", "A bigger bag"]];
@@ -1024,39 +1133,45 @@ export function createCasino(env) {
       pane = `<div class="bom-allow">${st ? (on ? `<div class="bom-meter"><i style="width:${Math.round(((left ?? 0) / D.capDay) * 100)}%"></i></div><p><b>${left}</b> of ${D.capDay} ZCoins free to leave the game now (a rolling 24 hours: trades and banking share it).${freeLine(st)}${st.dev ? " · PRETEND (dev server): no ZCoins move" : ""}</p>` : `<p class="bom-bad">${esc(st.message || "The Ruby isn't paying out right now.")}</p>`) : `<p>Asking the Ruby…</p>`}</div>
         <div class="bom-card"><div class="bom-ch"><b>Trade tickets for ZCoins</b><span class="k-chip">${D.rate.toLocaleString()} tickets = 1 ZCoin</span></div>
           <p class="bom-hint">You have ${Number(have).toLocaleString()} tickets: enough for <b>${Math.floor(have / D.rate)}</b>.</p>
-          <div class="bom-step"><div class="k-seg"><button type="button" data-c="-1" aria-label="One fewer">−</button><button type="button" disabled aria-pressed="true" id="czCashN">${cashZc} ZC</button><button type="button" data-c="1" aria-label="One more">+</button><button type="button" data-c="max">Max</button></div>
-          <button type="button" class="k-btn" id="czCashGo"${on && most >= 1 && !dexWait ? "" : " disabled"}>${most >= 1 ? `Trade ${(cashZc * D.rate).toLocaleString()} for ${cashZc} ZC` : have < D.rate ? `Needs ${D.rate.toLocaleString()} tickets` : next ? `${next.zc} more free in ${inHm(next.at - Date.now())}` : "That's your ZCoins out for now"}</button></div></div>
+          <div class="bom-step"><div class="k-seg bom-zseg"><button type="button" data-c="-1" aria-label="One fewer">−</button><button type="button" disabled aria-pressed="true" id="czCashN">${cashZc} ZC</button><button type="button" data-c="1" aria-label="One more">+</button><button type="button" data-c="max">Max</button></div>
+          <button type="button" class="k-btn bom-zc" id="czCashGo"${on && most >= 1 && !dexWait ? "" : " disabled"}>${most >= 1 ? `Trade ${(cashZc * D.rate).toLocaleString()} for ${cashZc} ZC` : have < D.rate ? `Needs ${D.rate.toLocaleString()} tickets` : next ? `${next.zc} more free in ${inHm(next.at - Date.now())}` : "That's your ZCoins out for now"}</button></div></div>
         <div class="bom-card"><div class="bom-ch"><b>ZCoins you found</b><span class="k-chip">${zc} in your bag</span></div>
           <p class="bom-hint">Real ZCoins drop, rarely, on a kill or a catch. Bank them here and they go onto your eastcoin.vip balance.</p>
-          <div class="bom-step"><span></span><button type="button" class="k-btn" id="czDexBank"${on && can >= 1 && !dexWait ? "" : " disabled"}>${zc ? `Bank ${can || zc} ZCoin${(can || zc) === 1 ? "" : "s"}` : "None in your bag"}</button></div></div>
+          <div class="bom-step"><span></span><button type="button" class="k-btn bom-zc" id="czDexBank"${on && can >= 1 && !dexWait ? "" : " disabled"}>${zc ? `Bank ${can || zc} ZCoin${(can || zc) === 1 ? "" : "s"}` : "None in your bag"}</button></div></div>
         ${dexMsg?.text ? `<p class="bom-msg ${dexMsg.cls || ""}">${esc(dexMsg.text)}</p>` : ""}`;
     }
 
+    const was = fresh || roll.to == null ? null : roll.to;
+    if (fresh) { roll.to = have; roll.from = have; }
     const body = $("gameBody"); body.replaceChildren();
-    const w = el("div", "bom");
-    w.innerHTML = `<div class="bom-top"><span class="bom-tix" title="Your tickets">${env.ico("tickets")}<b>${Number(have).toLocaleString()}</b><small>tickets</small></span>
+    const w = el("div", env.calm() ? "bom calm" : "bom");
+    w.innerHTML = `<div class="bom-top"><span class="bom-tix" title="Your tickets">${env.ico("tickets")}<b>${Number(was != null ? rollNow() : have).toLocaleString()}</b><small>tickets</small></span>
         <span class="bom-chips">${lootTotal ? `<span class="k-chip good" title="What the loot in your bag would fetch">+${lootTotal.toLocaleString()} in your bag</span>` : ""}${vip.off ? `<span class="k-chip gold" title="Your VIP discount on everything Bom sells">${esc(vip.name)} VIP · ${Math.round(vip.off * 100)}% off</span>` : ""}${lastCashed ? `<span class="k-chip good">Traded in for ${Number(lastCashed.total).toLocaleString()}</span>` : ""}</span></div>
-      <div class="k-tabs bom-tabs" role="tablist"><button type="button" role="tab" data-bt="sell" aria-selected="${bomTab === "sell"}">Sell${sellN ? ` <small class="k-chip good">${sellN}</small>` : ""}</button><button type="button" role="tab" data-bt="buy" aria-selected="${bomTab === "buy"}">Buy</button><button type="button" role="tab" data-bt="zc" aria-selected="${bomTab === "zc"}">ZCoins</button></div>
+      <div class="k-tabs bom-tabs" role="tablist"><button type="button" role="tab" data-bt="sell" aria-selected="${bomTab === "sell"}">Sell${sellN ? ` <small class="k-chip good">${sellN}</small>` : ""}</button><button type="button" role="tab" data-bt="buy" aria-selected="${bomTab === "buy"}">Buy</button><button type="button" role="tab" data-bt="back" aria-selected="${bomTab === "back"}">Buy back${bb.length ? ` <small class="k-chip">${bb.length}</small>` : ""}</button><button type="button" role="tab" data-bt="zc" aria-selected="${bomTab === "zc"}">ZCoins</button></div>
       <div class="bom-pane k-paper">${pane}</div>${foot}`;
     body.append(w);
     const pn = w.querySelector(".bom-pane"); pn.scrollTop = keep;
+    if (was != null && was !== have) tixMoved(was, have);
+    else if (was != null && rollNow() !== roll.to) { const b = w.querySelector(".bom-tix b"); requestAnimationFrame(function go() { if (!b.isConnected) return; const v = rollNow(); b.textContent = v.toLocaleString(); if (v !== roll.to) requestAnimationFrame(go); }); }
     w.querySelectorAll("[data-bt]").forEach((b) => b.addEventListener("click", () => { bomTab = b.dataset.bt; SFX.play("ui_click"); if (bomTab === "zc") send({ t: "dex", op: "status" }); cashier(); w.querySelector(".bom-pane") && ($("gameBody").querySelector(".bom-pane").scrollTop = 0); }));
     w.querySelectorAll("[data-cat]").forEach((b) => b.addEventListener("click", () => { bomCat = b.dataset.cat; SFX.play("ui_click"); cashier(); }));
     w.querySelectorAll("[data-tier]").forEach((b) => b.addEventListener("click", () => { gearTier = b.dataset.tier; SFX.play("ui_click"); cashier(); }));
-    w.querySelector("#bomAll")?.addEventListener("click", () => { SFX.play("coins"); send({ t: "cashout", op: "all" }); });
-    w.querySelectorAll("[data-cs]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "cashout", op: "one", k: b.dataset.cs }); }));
-    w.querySelectorAll("[data-qs]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "cashout", k: b.dataset.qs }); }));
+    w.querySelector("#bomAll")?.addEventListener("click", () => { SFX.play("coins"); mark(w.querySelector(".bom-pane"), ""); bomFx.lot = true; send({ t: "cashout", op: "all" }); });
+    w.querySelectorAll("[data-cs]").forEach((b) => b.addEventListener("click", () => { SFX.play("coins"); mark(b, ""); send({ t: "cashout", op: "one", k: b.dataset.cs }); }));
+    w.querySelectorAll("[data-qs]").forEach((b) => b.addEventListener("click", () => { SFX.play("coins"); mark(b, ""); send({ t: "cashout", k: b.dataset.qs }); }));
     w.querySelectorAll("[data-gs]").forEach((b) => b.addEventListener("click", () => {
       const f = Number(b.dataset.gf) | 0;
       if (f > 0 && b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "Sure?"; b.classList.add("danger"); SFX.play("ui_click"); return; }
-      SFX.play("ui_click"); send({ t: "cashout", k: b.dataset.gs, f });
+      SFX.play("coins"); mark(b, ""); send({ t: "cashout", k: b.dataset.gs, f });
     }));
-    w.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); send({ t: "counter", op: "buy", id: b.dataset.buy, n: 1 }); }));
-    w.querySelector("[data-bagup]")?.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); send({ t: "counter", op: "bagup" }); });
+    w.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); mark(b, "Bought!"); send({ t: "counter", op: "buy", id: b.dataset.buy, n: 1 }); }));
+    w.querySelector("[data-bagup]")?.addEventListener("click", (ev) => { SFX.play("chip", { vol: 0.5 }); mark(ev.currentTarget, "+1 pocket!"); send({ t: "counter", op: "bagup" }); });
+    w.querySelectorAll("[data-bb]").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); mark(b, "Back in your bag!"); send({ t: "counter", op: "buyback", id: b.dataset.bb }); }));
+    w.querySelectorAll(".bom-zc").forEach((b) => b.addEventListener("pointerdown", () => { b.classList.remove("ping"); void b.offsetWidth; b.classList.add("ping"); }));
     w.querySelectorAll("[data-c]").forEach((b) => b.addEventListener("click", () => { const D = G.DEX, st = dexSt, left = st?.ok ? (st.leftOut ?? st.left) : 0, most = Math.max(0, Math.min(Math.floor(tix() / D.rate), left ?? 0, D.capDay));
       SFX.play("chip", { vol: 0.5 }); cashZc = b.dataset.c === "max" ? Math.max(1, most) : Math.max(1, Math.min(Math.max(1, most), cashZc + Number(b.dataset.c))); cashier(); }));
-    w.querySelector("#czCashGo")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "Counting your tickets…" }; send({ t: "dex", op: "cash", zc: cashZc }); cashier(); });
-    w.querySelector("#czDexBank")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "The Ruby hums…" }; dexTicket = null; send({ t: "dex", op: "bank" }); cashier(); });
+    w.querySelector("#czCashGo")?.addEventListener("click", (ev) => { zcFrom = ev.currentTarget.getBoundingClientRect(); SFX.play("chip", { vol: 0.6 }); dexWait = true; dexMsg = { text: "Counting your tickets…" }; send({ t: "dex", op: "cash", zc: cashZc }); cashier(); });
+    w.querySelector("#czDexBank")?.addEventListener("click", (ev) => { zcFrom = ev.currentTarget.getBoundingClientRect(); SFX.play("chip", { vol: 0.6 }); dexWait = true; dexMsg = { text: "The Ruby hums…" }; dexTicket = null; send({ t: "dex", op: "bank" }); cashier(); });
   }
 
   const api = {
@@ -1079,7 +1194,10 @@ export function createCasino(env) {
     },
     run(e) { const had = RUNS[e.g]; RUNS[e.g] = e.run; if (e.luck != null && env.me()) env.me().luck = e.luck; if (GAME !== e.g) return; UI[e.g].run(e, had); lockStake(!!e.run); refresh(); },
     me() { if ($("gameWin").hidden) return; if (GAME === "cashier") cashier(); else refresh(); },
-    cashier() { lastCashed = null; dexSt = null; dexMsg = null; dexTicket = null; dexWait = false; send({ t: "dex", op: "status" }); cashier(); }, cashed(e) { cashier(e); }, dex, prize, fight,
+    cashier() { lastCashed = null; dexSt = null; dexMsg = null; dexTicket = null; dexWait = false; send({ t: "dex", op: "status" }); cashier(); }, cashed(e) { cashier(e); const n = Number(e.total) || 0, big = n >= 1000 || bomFx.lot; bomFx.lot = false;
+      if (n >= 5000) SFX.play("win_big"); else if (big) SFX.play("win_small");
+      if (big && n > 0) { env.winFx?.(`+${n.toLocaleString()}`, "tickets", "Cha-ching!"); setTimeout(() => { const p = pileEl(); if (p) burst(p.getBoundingClientRect(), Math.min(36, 12 + Math.round(Math.log2(n + 1) * 2)), env.ico("tickets")); }, 650); } },
+    boughtback() { SFX.play("task_done", { vol: 0.6 }); }, dex, prize, fight,
     closed() { token++; busy = false; GAME = null; prizeHush(); prizeSpin = null; },
     blocked(k) { if (!GAME || GAME === "cashier") return; if (GAME === "fight") { phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); return note(G.NEED_TEXT[k]); } busy = false; UI[GAME]?.idle?.(); phase(k === "thirst" ? "Too thirsty to gamble" : "Too hungry to gamble", "bad"); note(G.NEED_TEXT[k]); refresh(); },
     stake, russian, roundWatch, roundBet, get tix() { return TIX; }, setTix(v) { TIX = !!v; try { localStorage.setItem("gs_real_cur", TIX ? "tix" : "zc"); } catch (x) { /* fine */ } refresh(); },
