@@ -2795,7 +2795,7 @@ export class World {
         /* (2026-09-25) A STONE, sometimes. GEM_DROP is keyed by ore, so the rock you are mining decides which gem,
            and the same rock decides which arrows that gem tips. keepRare, because a gem that vanished into a full
            bag would be the rarest thing this skill loses. */
-        for (const [gk, gp] of (G.GEM_DROP[ob.ore] || [])) if (Math.random() < gp * (1 + G.charmOf(C, "stonesense") / 100 + G.petFx(C).gem / 100)) { const where = this.keepRare(pl, gk, 1); if (where) { this.emit(pl, "loot", { k: gk, n: 1 }); this.say(pl, `Something glints in the ore: a ${G.ITEMS[gk].name.toLowerCase()}!${where === "bank" ? " Your bag was full, so it went to your bank." : ""}`, "loot"); } }
+        for (const [gk, gp] of (G.GEM_DROP[ob.ore] || [])) if (Math.random() < gp * (1 + G.charmOf(C, "stonesense") / 100 + G.petFx(C).gem / 100 + G.fxOf(C).gem)) { const where = this.keepRare(pl, gk, 1); if (where) { this.emit(pl, "loot", { k: gk, n: 1 }); this.say(pl, `Something glints in the ore: a ${G.ITEMS[gk].name.toLowerCase()}!${where === "bank" ? " Your bag was full, so it went to your bank." : ""}`, "loot"); } }
         }
       } else {
         a.next = now + Math.round(1800 / tspd);
@@ -2805,7 +2805,7 @@ export class World {
         /* (2026-09-25) A STONE, sometimes. GEM_DROP is keyed by ore, so the rock you are mining decides which gem,
            and the same rock decides which arrows that gem tips. keepRare, because a gem that vanished into a full
            bag would be the rarest thing this skill loses. */
-        for (const [gk, gp] of (G.GEM_DROP[ob.ore] || [])) if (Math.random() < gp * (1 + G.charmOf(C, "stonesense") / 100 + G.petFx(C).gem / 100)) { const where = this.keepRare(pl, gk, 1); if (where) { this.emit(pl, "loot", { k: gk, n: 1 }); this.say(pl, `Something glints in the ore: a ${G.ITEMS[gk].name.toLowerCase()}!${where === "bank" ? " Your bag was full, so it went to your bank." : ""}`, "loot"); } }
+        for (const [gk, gp] of (G.GEM_DROP[ob.ore] || [])) if (Math.random() < gp * (1 + G.charmOf(C, "stonesense") / 100 + G.petFx(C).gem / 100 + G.fxOf(C).gem)) { const where = this.keepRare(pl, gk, 1); if (where) { this.emit(pl, "loot", { k: gk, n: 1 }); this.say(pl, `Something glints in the ore: a ${G.ITEMS[gk].name.toLowerCase()}!${where === "bank" ? " Your bag was full, so it went to your bank." : ""}`, "loot"); } }
           this.grant(pl, "mining", gx(ob.xp || (ob.ore === "tin" ? 18 : 17))); this.say(pl, `You mine some ${G.ITEMS[ob.ore].name.toLowerCase()}.`, "good");
           /* (2026-09-22) IT ONLY GOES EMPTY WHEN THE ROCK IS ACTUALLY OUT. This used to set emptyUntil and clear
              pl.act on EVERY success, so one ore cost a click and an eight-second wait. Same shape as the olive

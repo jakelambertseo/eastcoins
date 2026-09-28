@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 335;
+export const VERSION = 336;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -3950,8 +3950,8 @@ export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 10
    charcoal and do not know why. It also fills a hole that was already open - burnChance has a `range` multiplier
    worth 20%, and the only range in the game is in the CLOSED Cottage, so no player has ever had it. */
 export const COAL_STEADY_MIN = 0.10;
-export const OUT_CAP = { tix: 0.25, speed: 0.2, tough: 0.3, rare: 0.4, zdrop: 0.75, bite: 0.1, heal: 0.5, steal: 0.15, ammo: 0.5, leech: 0.25, double: 0.3, execute: 0.3, calm: 1, nobill: 1 };
-const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal", "steal", "ammo", "leech", "double", "execute", "calm", "nobill"];   /* (2026-09-27) the last six are the Long Night's pieces' effects; see fxText */
+export const OUT_CAP = { tix: 0.25, speed: 0.2, tough: 0.3, rare: 0.4, zdrop: 0.75, bite: 0.1, heal: 0.5, steal: 0.15, ammo: 0.5, leech: 0.25, double: 0.3, execute: 0.3, calm: 1, nobill: 1, gem: 1 };
+const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal", "steal", "ammo", "leech", "double", "execute", "calm", "nobill", "gem"];   /* (2026-09-27) gem: the Mountain's Heart */   /* (2026-09-27) the last six are the Long Night's pieces' effects; see fxText */
 
 /* ============================================================ ACHIEVEMENTS (2026-09-23, the owner)
 
@@ -4181,7 +4181,7 @@ export const fxText = (f) => [f.tix && `${pct(f.tix)} more tickets from kills, a
   f.bite && `fish bite ${pct(f.bite)} more often`, f.heal && `fish heal ${pct(f.heal)} more`,
   /* (2026-09-27) the Long Night's pieces */
   f.ammo && `${pct(f.ammo)} of your shots and casts spend no arrow or page`, f.leech && `${pct(f.leech)} of the damage you deal comes back as health`, f.double && `${pct(f.double)} of what you mine, cut or catch comes up double`,
-  f.execute && `a monster under ${pct(f.execute)} health dies to your next hit (never a boss)`, f.calm && `nothing outside attacks you first`, f.nobill && `the hospital never bills you`,
+  f.execute && `a monster under ${pct(f.execute)} health dies to your next hit (never a boss)`, f.calm && `nothing outside attacks you first`, f.nobill && `the hospital never bills you`, f.gem && `jewels turn up in the rock ${pct(f.gem)} more often`,
   f.power && `your other worn buff gear is ${pct(f.power)} stronger`].filter(Boolean).join("; ");
 for (const it of Object.values(ITEMS)) {   // say what it does, once, from the numbers
   if (it.fx) it.ex = `Worn: ${fxText(it.fx)}. ${it.ex || ""}`.trim();
@@ -7859,21 +7859,17 @@ export const elementWords = (x) => [].concat(x || []).filter((e) => ELEMENTS[e])
 /* ---- the things it gives */
 Object.assign(ITEMS, {
   abyss_crystal: { name: "Abyss crystal", icon: "\u{1F48E}", ex: "Grown in the dark with nothing to shine for. Mined in the Depths of the Mountain; the jewellers will want it." },
-  blindfish: { name: "Raw blindfish", icon: "\u{1F41F}", raw: true, ex: "No eyes, and it has never once missed them. Fished off the edge of the abyss." },
-  abysseel: { name: "Raw abyss eel", icon: "\u{1F40D}", raw: true, ex: "It hunts by the light on its own head. Fished off the edge of the abyss, by the brave." },
-  cblindfish: { name: "Cooked blindfish", icon: "\u{1F41F}", heal: 35, ex: "White, sweet and faintly glowing." },
-  cabysseel: { name: "Cooked abyss eel", icon: "\u{1F41F}", heal: 37, ex: "Rich, dark meat. The light goes out when it's done." },
   deep_sigil: { name: "Deepwarden's sigil", short: "D. sigil", icon: "\u{1F4FF}", slot: "amulet", fx: { tix: 0.07, tough: 0.04 }, req: { skill: "hp", lvl: 75 }, ex: "The Deepwarden's own. Iron, a pink crystal, and the weight of the mountain. More tickets, and you take a little less." }
 });
-Object.assign(VALUE, { abyss_crystal: 90, blindfish: 36, cblindfish: 72, abysseel: 40, cabysseel: 80, deep_sigil: 2400 });
-recipe("cook_blindfish", { skill: "cooking", station: "fire", in: [["blindfish", 1]], out: ["cblindfish", 1], lvl: 72, xp: 280, burnStop: 95 });
-recipe("cook_abysseel", { skill: "cooking", station: "fire", in: [["abysseel", 1]], out: ["cabysseel", 1], lvl: 78, xp: 310, burnStop: 97 });
-/* smoked, on the SMOKE rule: its cook plus two, about five levels above the cook */
-for (const [raw, lvl, coal, heal, sell, fx, blurb] of [["blindfish", 77, 3, 37, 145, { rare: 0.12, bite: 0.05 }, "The good things come to you in the dark."], ["abysseel", 83, 3, 39, 160, { tough: 0.12, speed: 0.05 }, "Hard to hurt, and quick with it."]]) {
-  const key = `s${raw}`; ITEMS[key] = { name: `Smoked ${ITEMS[raw].name.replace(/^Raw /, "").toLowerCase()}`, icon: "\u{1F41F}", heal, meal: { mins: 20, fx }, ex: `Smoked slow over charcoal. Eat it for twenty minutes of it: ${blurb}` };
-  VALUE[key] = sell; recipe(`smoke_${raw}`, { skill: "cooking", station: "fire", in: [[raw, 1], ["charcoal", coal]], out: [key, 1], lvl, xp: Math.round(lvl * 4), ms: 2400, fail: SMITH_FAIL });   /* smoked fish fails a tenth of the time, like every smoke recipe (SMITH_FAIL) */
-}
-ZDROP.fish.blindfish = 0.0017; ZDROP.fish.abysseel = 0.0018;
+Object.assign(VALUE, { abyss_crystal: 90, deep_sigil: 2400, deepheart: 9000 });
+/* (2026-09-27, the owner: "the boss needs a unique item drop (ring or necklace since that will tie in with jewelry), with new art, chase
+   item") THE MOUNTAIN'S HEART. A singularity ring's numbers six levels early, and the one effect nothing else in the game has: every jewel
+   a swing could turn up in the rock turns up TWICE as often (fx.gem, read where the server rolls GEM_DROP, beside Stone Sense and the
+   pets' gem nose). So the chase is a jeweller's ring, and the Depths is where it pays: a mining map with the richest gem vein in the game.
+   One Deepwarden kill in a hundred, like the Pumpkin King's legendaries; `chase` gives its icon the crystal glow. */
+ITEMS.deepheart = { name: "The Mountain's Heart", short: "Ring", icon: "\u{1F48D}", slot: "ring", acc: 16, str: 16, def: 16, chase: true, fx: { gem: 1, tough: 0.05 }, req: { skill: "hp", lvl: 84 },
+  ex: "Worn: every jewel you could find in the rock turns up twice as often; you take 5% less damage. A raw abyss crystal the size of a thumbnail, set in the Deepwarden's own black iron. It is warm. Only the Deepwarden drops it, one kill in a hundred." };
+/* (2026-09-27, the owner: "keep it mining only, no fish") the Drop's blindfish and abyss eel went with its fishing spots, before the map ever opened */
 PETS.potboy = { name: "Pot Boy", art: "pet_potboy", raid: true, fx: { slots: 2, tix: 4 }, ex: "It was pretending to be a pot. It is still pretending to be a pot. It follows you anyway. The Deepwarden's, one kill in sixty." };
 
 /* ---- the monsters. Tickets are worked out the way the BOUNTY loop does it (that loop ran long before this line) */
@@ -7902,6 +7898,7 @@ dmob("deepwarden", { name: "The Deepwarden", size: "xl", lvl: 84, hp: 5200, att:
   enrage: { at: 0.35, mul: 1.4, say: "The Deepwarden plants the greatsword and roars. The whole mountain answers." }, pet: ["potboy", 1 / 60],
   ex: "The mountain's keeper. He hits like a falling ceiling and he does not tire. Bring friends." }, 1200,
   [["tickets", [500, 900]], ["nova_ore", [2, 4]], ["abyss_crystal", [3, 6]], ["opal", 1, 0.08], ["deep_sigil", 1, 0.03]]   /* opal 20% -> 8% (see the Pot Boy) */, [["bookies_amulet", 0.05], ["angels_ring", 0.05]]);
+MOBS.deepwarden.drops.push(["deepheart", 1, 0.01]);   /* the chase: see ITEMS.deepheart */
 BOSSES.add("deepwarden");
 Object.assign(MOBS.dgoblin, { weak: "frost" }); Object.assign(MOBS.potboy, { weak: "storm" }); Object.assign(MOBS.dwisp, { weak: "sun", resist: "void" });
 Object.assign(MOBS.dogre, { weak: "storm", resist: "frost" }); Object.assign(MOBS.diron, { weak: "void" }); Object.assign(MOBS.deepwarden, { weak: "sun", resist: "fire" });

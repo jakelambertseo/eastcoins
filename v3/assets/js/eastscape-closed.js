@@ -862,8 +862,7 @@ export function createClosedScenes(G, H) {
       for (const [x, y] of [[32, 12], [36, 12], [33, 16], [35, 16], [34, 18]]) { objs.push({ t: "rock", ore: "abyss_crystal", x, y, name: "Abyss crystal vein", req: { skill: "mining", lvl: 75 }, xp: 230, tease: "Pink light through the rock. Your pickaxe skids off it." }); g[y][x] = "#"; }
       for (const [x, y] of [[14, 3], [29, 4], [15, 6]]) { objs.push({ t: "rock", ore: "eclipse_ore", art: "dp_vein_eclipse", x, y, name: "Eclipse crystal", req: { skill: "mining", lvl: 70 }, xp: 210 }); g[y][x] = "#"; }
       objs.push({ t: "rock", ore: "nova_ore", art: "dp_vein_nova", x: 28, y: 2, name: "Nova crystal", req: { skill: "mining", lvl: 80 }, xp: 240 }); g[2][28] = "#";
-      /* The Drop: fishing off the ends of both wings, into the dark */
-      for (const [x, y] of [[4, 13], [4, 16], [38, 13], [38, 16]]) objs.push({ t: "spot", x, y, name: "The Drop", req: { skill: "fishing", lvl: 70 }, fish: "blindfish", fish2: "abysseel", fish2lvl: 76, xp: 270, xp2: 300, glow: "#ff5ad0", tease: "A line goes down and down and never finds a bottom. Not yet." });
+      /* (2026-09-27, the owner: "keep it mining only, no fish") The Drop's four fishing spots are gone */
       /* the throne room's gate, lowered across its doorway, and a few crystals by the veins */
       objs.push({ t: "tuft", art: "dp_gatebar", x: 19, y: 6, w: 5, h: 1, edge: true, flat: true, name: "The gate, lowered" });
       for (const [art, x, y] of [["dp_crys_r", 35, 14], ["dp_crys_b", 31, 16], ["dp_crys_t", 37, 17]]) objs.push({ t: "tuft", art, x, y, w: 1, h: 1, edge: true, flat: true, name: "Crystals" });

@@ -14,7 +14,7 @@
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=359">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=360">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1025,6 +1025,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .rst .evchip{background:#4a1a5a!important;color:#ffd6ff!important}
 .slot .evtag{position:absolute;left:1px;top:0;font-size:10px;line-height:1;font-style:normal;pointer-events:none;filter:drop-shadow(0 0 2px #000)}
 .wev{margin:6px 0 4px;padding:6px 10px;border-radius:6px;background:rgba(74,26,90,.16);border:1px solid #4a1a5a;font-size:13px}
+.wev.wchase{background:rgba(224,36,156,.12);border-color:#e0249c}
 .wevl{margin:4px 0 8px;padding-left:18px;font-size:13px;line-height:1.5}
 /* (2026-09-27, rebuilt twice the same day on the owner's word: "keep trying to make it user friendly", "try to modernize the UI")
    the pet pen and the hatchery. Cards on the parchment: rounded, lifted, the pet big in a ring of its rank's colour. */
@@ -1180,8 +1181,14 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   0%,100%{filter:drop-shadow(0 0 2px #c9a6ff) drop-shadow(0 0 5px #6d3cff)}
   50%    {filter:drop-shadow(0 0 4px #e8dcff) drop-shadow(0 0 11px #4b1fd6)}
 }
+/* (2026-09-27) a boss's chase item: the abyss crystal's pink, pulsing */
+.glow-chase{filter:drop-shadow(0 0 2px #ffb3ec) drop-shadow(0 0 6px #e0249c);animation:glowChase 2.6s ease-in-out infinite}
+@keyframes glowChase{
+  0%,100%{filter:drop-shadow(0 0 2px #ffb3ec) drop-shadow(0 0 5px #e0249c)}
+  50%    {filter:drop-shadow(0 0 4px #ffe3f7) drop-shadow(0 0 11px #ff2fb4)}
+}
 @media (prefers-reduced-motion:reduce){
-  .glow-nova,.glow-sing{animation:none}
+  .glow-nova,.glow-sing,.glow-chase{animation:none}
 }
 </style>
 </head>
@@ -1371,7 +1378,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=359";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=360";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1524,7 +1531,7 @@ let TWR = null; const towerRules = () => (towerRules.p ||= import("/v3/assets/js
 /* (2026-09-24) THE MIDWAY GAMES. Loaded the first time somebody walks up to a stall, never at login — the
    whole module is three screens nobody outside the Carnival will ever open. */
 let CARN = null; const carnLoad = () => (carnLoad.p ||= import("/v3/assets/js/eastscape-carnival.js?v=2").then((m) => (CARN = m.createCarnival({ G, SFX, send, esc, $ }))));
-const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String(k).startsWith("count") ? countRules() : String(k).startsWith("pyramid") ? pyramidRules() : String(k).startsWith("tower") ? towerRules() : (moreScenes.p ||= import("/v3/assets/js/eastscape-closed.js?v=22").then((m) => { Object.assign(G.SCENES, m.createClosedScenes(G, G._MAP)); })));
+const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String(k).startsWith("count") ? countRules() : String(k).startsWith("pyramid") ? pyramidRules() : String(k).startsWith("tower") ? towerRules() : (moreScenes.p ||= import("/v3/assets/js/eastscape-closed.js?v=23").then((m) => { Object.assign(G.SCENES, m.createClosedScenes(G, G._MAP)); })));
 /* PARTIES AND THE CRYPT (v103; the server side is eastscape-worker/src/crypt.js, the numbers eastscape-crypt-rules.js, the windows eastscape-crypt.js,
    fetched on the first invitation, click on the stairway or step into a crypt). The page keeps only: the click menu's "Invite to
    party", the red tiles of a slam (TILEFX), and handing the crypt's messages to the module. */
@@ -2300,7 +2307,7 @@ function spr(k, x, y, flip = false, filter = "", sc = 1, rot = 0) {
   lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
 }
 // item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
-const ITEM_ART = new Set(["mackerel", "cmackerel", "smackerel", "bluefin", "cbluefin", "sbluefin", "swordfish", "cswordfish", "sswordfish", "clawpin", "clawgrip",   /* (2026-09-27) the Boardwalk's fish, the claw pin and Captain Claw's grip (PixelLab, on the art brief) */ "bronze_bead", "bronze_necklace", "glass_bead", "bead_necklace", "polished_diamond", "polished_dragonstone", "polished_onyx", "starfall_glass", "eclipse_pearl", "cut_abyss", "cut_ruby", "cut_sapphire", "cut_topaz", "cut_opal", "emerald_ring_ruby", "emerald_amulet_ruby", "dragonstone_ring_sapphire", "dragonstone_amulet_sapphire", "starfall_ring_topaz", "starfall_amulet_topaz", "nova_ring_opal", "nova_amulet_opal", "singularity_ring_abyss", "singularity_amulet_abyss",   /* (2026-09-27) Jewelcrafting */ "abyss_crystal", "blindfish", "abysseel", "deep_sigil",   /* (2026-09-27) the Depths */ "buttoncap", "oyster", "puffball", "bluemould", "inkcap", "bleedtooth", "glowcap", "ghostpipe", "truffle", "lionsmane", "voidmorel", "starcap", "spawn_sporecap", "spawn_buttoncap", "spawn_oyster", "spawn_puffball", "spawn_bluemould", "spawn_inkcap", "spawn_bleedtooth", "spawn_glowcap", "spawn_ghostpipe", "spawn_truffle", "spawn_lionsmane", "spawn_voidmorel", "spawn_starcap", "compost", "mushroom_soup", "truffle_dinner", "starcap_feast", "pot_sleep", "pot_bleed", "pot_pipe", "pot_mane", "pot_star",   /* (2026-09-27) Fungiculture */ "egg_speckled", "egg_mossy", "egg_truffle", "egg_sparking", "egg_cindered", "egg_velvet", "egg_geode", "egg_gilded", "petfood_ordinary", "petfood_greater", "petfood_legend",   /* (2026-09-27) Breeding */ "candycorn", "pumpkin", "seed_pumpkin", "pumpkinpie", "ectoplasm", "pot_witch", "hallowed_helm", "hallowed_body", "hallowed_legs", "gallows_bow", "lantern_quiver", "skull_wand", "bag_shroud", "drowned_boots", "coffin_ring", "reaper_scythe", "king_crown", "ferry_coin",   /* (2026-09-27) the Long Night */ "caravan_parcel", "audit_ledger",   /* (2026-09-27) the two quest props */ "wildsilk", "marrow", "marrow_arrowhead", "marrow_arrow", "grimcore", "voidfin", "cvoidfin", "svoidfin", "grimscale", "cgrimscale", "sgrimscale", "gallowslogs", "glassgourd", "emberwheat", "starfruit",
+const ITEM_ART = new Set(["mackerel", "cmackerel", "smackerel", "bluefin", "cbluefin", "sbluefin", "swordfish", "cswordfish", "sswordfish", "clawpin", "clawgrip",   /* (2026-09-27) the Boardwalk's fish, the claw pin and Captain Claw's grip (PixelLab, on the art brief) */ "bronze_bead", "bronze_necklace", "glass_bead", "bead_necklace", "polished_diamond", "polished_dragonstone", "polished_onyx", "starfall_glass", "eclipse_pearl", "cut_abyss", "cut_ruby", "cut_sapphire", "cut_topaz", "cut_opal", "emerald_ring_ruby", "emerald_amulet_ruby", "dragonstone_ring_sapphire", "dragonstone_amulet_sapphire", "starfall_ring_topaz", "starfall_amulet_topaz", "nova_ring_opal", "nova_amulet_opal", "singularity_ring_abyss", "singularity_amulet_abyss",   /* (2026-09-27) Jewelcrafting */ "abyss_crystal", "deep_sigil", "deepheart",   /* (2026-09-27) the Depths */ "buttoncap", "oyster", "puffball", "bluemould", "inkcap", "bleedtooth", "glowcap", "ghostpipe", "truffle", "lionsmane", "voidmorel", "starcap", "spawn_sporecap", "spawn_buttoncap", "spawn_oyster", "spawn_puffball", "spawn_bluemould", "spawn_inkcap", "spawn_bleedtooth", "spawn_glowcap", "spawn_ghostpipe", "spawn_truffle", "spawn_lionsmane", "spawn_voidmorel", "spawn_starcap", "compost", "mushroom_soup", "truffle_dinner", "starcap_feast", "pot_sleep", "pot_bleed", "pot_pipe", "pot_mane", "pot_star",   /* (2026-09-27) Fungiculture */ "egg_speckled", "egg_mossy", "egg_truffle", "egg_sparking", "egg_cindered", "egg_velvet", "egg_geode", "egg_gilded", "petfood_ordinary", "petfood_greater", "petfood_legend",   /* (2026-09-27) Breeding */ "candycorn", "pumpkin", "seed_pumpkin", "pumpkinpie", "ectoplasm", "pot_witch", "hallowed_helm", "hallowed_body", "hallowed_legs", "gallows_bow", "lantern_quiver", "skull_wand", "bag_shroud", "drowned_boots", "coffin_ring", "reaper_scythe", "king_crown", "ferry_coin",   /* (2026-09-27) the Long Night */ "caravan_parcel", "audit_ledger",   /* (2026-09-27) the two quest props */ "wildsilk", "marrow", "marrow_arrowhead", "marrow_arrow", "grimcore", "voidfin", "cvoidfin", "svoidfin", "grimscale", "cgrimscale", "sgrimscale", "gallowslogs", "glassgourd", "emberwheat", "starfruit",
   /* (2026-09-24) ALCHEMY's own icons. ITEM_ART is an allowlist: an item NOT in it falls back to its emoji, which
      is why every fish and log in the game is a glyph and only the new concepts get drawn. The ten potions are
      deliberately left on the emoji - they are the same bottle in fifteen colours, and one drawn vial per SIZE
@@ -2336,7 +2343,7 @@ const ITEM_ART = new Set(["mackerel", "cmackerel", "smackerel", "bluefin", "cblu
    flat/items/* a DAY of max-age plus a WEEK of stale-while-revalidate, so a bad entry is served for eight days
    and nothing can purge it. The version IS the purge. Bumping it costs everyone one re-download of ~246 icons at
    1-3 KB each, about 400 KB once, which is the cheap half of this trade. */
-const IART = "/v3/assets/img/glad/flat/items/", IART_V = 28, ICO_IMG = {};
+const IART = "/v3/assets/img/glad/flat/items/", IART_V = 29, ICO_IMG = {};
 /* UI ART — drawn furniture for windows, as opposed to items (IART) and world objects (ART). The folder already
    held 46 pictures and already had a constant; this was declared a second time up here on 2026-09-23 before that
    was noticed, and is the same UIA, hoisted, rather than a rival. Everything in here is served at ?v=1 and a
@@ -2385,11 +2392,11 @@ const tixPrice = (n) => `${ico("tickets")}${Math.round(n).toLocaleString()}`;
    would not: it covers all sixteen items of a tier including the TOOLS for free, it animates, and it turns
    itself off under prefers-reduced-motion. It also still works while a piece has no art yet, because the class
    goes on a wrapper around the emoji fallback too. */
-const GLOW_TIERS = { nova: "glow-nova", singularity: "glow-sing", hallowed: "glow-hallow" };
+const GLOW_TIERS = { nova: "glow-nova", singularity: "glow-sing", hallowed: "glow-hallow" };   /* and a CHASE item (the Mountain's Heart) glows like its crystal, whatever its tier: see ico */
 const NIGHT_FORCE = new URLSearchParams(location.search).get("night") === "1";
 if (new URLSearchParams(location.search).get("hw") === "1" && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) G.HW.live = true;   /* (2026-09-27) ?hw=1 on a LOCAL page previews the Long Night against a dev worker that has it on; production ignores it */   /* (2026-09-27) ?night=1 previews Nightfall's look at any hour; the drops are the server's and do not double */
 const ico = (k) => {
-  const a = ART_ALIAS[k] || k, glow = GLOW_TIERS[ITEMS[k]?.tier];
+  const a = ART_ALIAS[k] || k, glow = GLOW_TIERS[ITEMS[k]?.tier] || (ITEMS[k]?.chase ? "glow-chase" : null);
   const inner = ITEM_ART.has(a) ? artOf(a) : ITEMS[k]?.icon || "";
   const ev = ITEMS[k]?.event && ITEMS[k]?.slot;   /* (2026-09-27) a wearable event piece carries its tag on every icon of it */
   return glow && inner ? `<span class="glow ${glow}"${ev ? ` title="${G.EVENT_TAG}"` : ""}>${inner}</span>` : inner;
@@ -5820,7 +5827,8 @@ function wikiGo(route, setNav = true) {
         <h3>What it does</h3><ul class="wevl">${rows}</ul>
         ${src.length ? `<h3>Where it comes from</h3><ul class="wevl">${src.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}`;
     })() : "";
-    html = `<h2><i>${ico(id)}</i>${esc(it.name)}</h2>${evBlock}${it.ex ? `<p class="lede">“${esc(it.ex)}”</p>` : ""}
+    const chaseBlock = it.chase ? `<p class="wev wchase">\u{1F48E} <b>Chase item</b> &mdash; one of a kind. ${dr.length ? `Only ${dr.map(([t, p]) => `${esc(MOBS[t]?.name || t)} drops it, ${p >= 0.01 ? `${Math.round(p * 1000) / 10}%` : `1 in ${Math.round(1 / p).toLocaleString()}`} of kills`).join("; ")}.` : ""}</p>` : "";   /* (2026-09-27) the Mountain's Heart */
+    html = `<h2><i>${ico(id)}</i>${esc(it.name)}</h2>${evBlock}${chaseBlock}${it.ex ? `<p class="lede">“${esc(it.ex)}”</p>` : ""}
       ${it.slot ? `<h3>Equipment</h3><table class="tbl"><tr><th>Slot</th><th>Accuracy</th><th>Strength</th><th>Defence</th><th>Lets you</th></tr><tr><td>${it.slot}</td><td>+${it.acc || 0}</td><td>+${it.str || 0}</td><td>+${it.def || 0}</td><td>${it.tool ? `train ${wl(`skills/${it.tool}`, SKILLS[it.tool].name)}` : "—"}</td></tr></table>` : ""}
       ${src.length ? `<h3>Gathered from</h3><table class="tbl"><tr><th>What</th><th>Where</th><th>Skill</th><th>Level</th></tr>${src.map((s) => `<tr><td>${esc(s.obj)}</td><td>${areaLink(s.scene)}</td><td>${wl(`skills/${s.skill}`, SKILLS[s.skill].name)}</td><td>${s.lvl}</td></tr>`).join("")}</table>` : ""}
       ${(WIKI.gemFrom?.[id] || []).length ? (() => { const gf = WIKI.gemFrom[id], boost = Object.values(G.PETS).filter((p) => p.fx?.gem && !p.held).map((p) => `a ${esc(p.name)} (+${p.fx.gem}%)`);
