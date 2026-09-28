@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>EastScape body fonts</title>
+<!-- (2026-09-28) The owner: "is there a font that better matches with the new title fonts rather than nunito?" Cinzel stays on titles;
+     each card swaps the TEXT font: an info card, a conversation line, a row and a chat line. Loaded from Google for the comparison only;
+     the game self-hosts the one chosen. Local only: http://localhost:4321/tools/ui-kit/body-fonts.html -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;700;800&family=Alegreya:wght@400..800&family=Lora:wght@400..700&family=Crimson+Pro:wght@400..800&family=Vollkorn:wght@400..800&family=EB+Garamond:wght@400..800&family=Faustina:wght@400..800&family=Gentium+Book+Plus:wght@400;700&display=swap">
+<style>
+@font-face{font-family:"Nunito";font-style:normal;font-weight:400 800;font-display:swap;src:url(/v3/assets/fonts/nunito-v32-latin.woff2) format("woff2")}
+@font-face{font-family:"Cinzel";font-style:normal;font-weight:400 900;font-display:swap;src:url(/v3/assets/fonts/cinzel-latin.woff2) format("woff2")}
+html,body{margin:0;background:#0c0908;color:#e8e0cc;font-family:"Nunito",system-ui,sans-serif}
+main{max-width:1240px;margin:0 auto;padding:24px 16px 50px}
+h1{margin:0 0 4px;font-size:26px;color:#ffe7b0;font-family:Cinzel,serif}h1+p{margin:0 0 20px;color:#b8a888;max-width:860px;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:18px}
+.tag{display:flex;justify-content:space-between;align-items:baseline;margin:0 4px 6px;font:800 12px Nunito,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#e0b060}.tag small{color:#8a7a60;letter-spacing:0;text-transform:none;font-weight:700}
+.card{--f:Nunito}
+.card .k-body,.card .k-body *,.card .k-foot,.card .k-foot *,.card .chat,.card .chat *{font-family:var(--f),serif!important}
+.card .k-head b,.card .k-row b.n{font-family:Cinzel,serif!important}
+dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0}dt{color:var(--k-ink2);font-weight:700;font-size:13px}dd{margin:0;font-weight:800;font-size:13px}
+ul{margin:0;padding:0;list-style:none;display:grid;gap:2px;font-size:13px}li{display:flex;align-items:center;gap:6px}li img{width:18px;height:18px;image-rendering:pixelated}
+.said{margin:0;font-size:15px;line-height:1.4}
+.opt{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 6px;border-radius:6px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);font-weight:700;font-size:14px}.opt kbd{display:grid;place-items:center;width:20px;height:20px;border-radius:5px;background:var(--k-head);color:var(--k-head-ink);font:800 11px/1 Nunito,sans-serif!important}
+.chat{margin:0 12px 12px;padding:7px 10px;border-radius:8px;background:rgba(10,7,6,.92);color:#e8e0cc;font-size:14px;line-height:1.35}.chat b{color:#9fd0ff;font-weight:800}.chat .loot{color:#ffd23f}
+</style>
+<link rel="stylesheet" href="kit.css?v=2">
+</head>
+<body>
+<main>
+<h1>Text fonts under Cinzel</h1>
+<p>Cinzel stays on every title and name. Each card swaps only the <b>text</b> font: what an info card says, what an NPC says, a row's second line, and chat. Sizes are the extra download, one file each unless noted. Look hardest at the small numbers and the chat line, since that's where a font either stays readable or doesn't.</p>
+<div class="grid" id="grid"></div>
+</main>
+<script>
+const FONTS = [
+  ["Nunito (today)", "Nunito", "38 KB, already loaded", "rounded sans"],
+  ["Alegreya Sans", "Alegreya Sans", "+69 KB (3 weights)", "humanist sans with a calligraphic hand, made to sit beside Alegreya"],
+  ["Alegreya", "Alegreya", "+42 KB", "book serif with a pen's rhythm, made for long reading"],
+  ["Faustina", "Faustina", "+26 KB", "sturdy serif drawn for small screen text"],
+  ["Lora", "Lora", "+36 KB", "soft-edged book serif"],
+  ["Vollkorn", "Vollkorn", "+45 KB", "dark, hearty old-style serif"],
+  ["Crimson Pro", "Crimson Pro", "+47 KB", "classic Garamond-style book face"],
+  ["EB Garamond", "EB Garamond", "+43 KB", "the old-world one, thinnest of the set"],
+  ["Gentium Book Plus", "Gentium Book Plus", "+42 KB (2 weights)", "scholarly serif, wide and open"],
+];
+const I = "/v3/assets/img/glad/flat/items/", U = "/v3/assets/img/glad/flat/ui/";
+document.getElementById("grid").innerHTML = FONTS.map(([name, fam, size, what]) => `<div><div class="tag">${name}<small>${size}</small></div>
+<section class="k-win card" style="--f:'${fam}'">
+  <div class="k-head"><img src="${U}combat.png?v=1" alt=""><b>Angry Olive</b><button class="k-x" aria-label="Close">×</button></div>
+  <div class="k-body k-paper">
+    <span class="k-note" style="font-weight:700">Level 6 monster · ${what}</span>
+    <dl><dt>Hitpoints</dt><dd>6/6</dd><dt>Max hit</dt><dd>2</dd><dt>Attack / defence</dt><dd>5 / 4</dd><dt>Resists</dt><dd>Melee 0% · Archery 0% · Magic 0%</dd></dl>
+    <span class="k-label">Drops</span>
+    <ul><li><img src="${I}tickets.png?v=30" alt="">Tickets ×7–17 · always</li><li><img src="${I}olives.png?v=30" alt="" onerror="this.remove()">Olives ×2–5 · 36%</li><li><img src="${I}monocle.png?v=30" alt="" onerror="this.remove()">Tiny monocle · rare, 1%</li></ul>
+    <div class="k-sect"></div>
+    <p class="said">"Eggs! Every egg in the world, if you've got what its pet wants."</p>
+    <div class="opt"><kbd>1</kbd>What eggs have you got?</div>
+    <button class="k-row"><span class="k-slot"><img src="${I}csardine.png?v=30" alt=""></span><span><b class="n">Cooked sardine</b><small>3 raw sardines → 3 cooked · heals 3</small></span><span class="k-end"><span class="k-chip">11,501</span></span></button>
+  </div>
+  <p class="chat"><b>BeeEzRadio:</b> 1/500 egg drop lets go, 2,450 tickets on the Mimic <span class="loot">+37 xp</span></p>
+</section></div>`).join("");
+</script>
+</body>
+</html>

@@ -1233,9 +1233,9 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 
 /* (2026-09-28) THE WALLET STRIP, the chip on the Inventory heading and the VIP fold: see walletCard */
 .wl-strip{display:flex;gap:4px;padding:5px 6px;border-radius:9px;background:linear-gradient(#1c1613,#120e0c);box-shadow:0 0 0 2px #c8963a,0 0 0 4px #3a2410}
-.wl-s{flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:4px;padding:2px 3px;border-radius:6px;background:rgba(255,255,255,.04)}
+.wl-s{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:4px;padding:2px 3px;border-radius:6px;background:rgba(255,255,255,.04)}
 .wl-s .ico,.wl-s img{width:24px;height:24px;image-rendering:pixelated;flex:none}
-.wl-s b{font-size:15px;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wl-s b{min-width:0;font-size:15px;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wl-s .ico,.wl-s img{width:22px;height:22px}
 .ph>span{display:inline-flex;align-items:center;white-space:nowrap}
 .wl-s.wl-tix b{color:#ff9aa8}.wl-s.wl-zc b{color:#ffd84a}.wl-s.wl-corn b{color:#ffb04a}
@@ -6728,6 +6728,11 @@ function jobsCard() {
     return `<div class="wl-job${t.claimed ? " paid" : done ? " done" : ""}" title="${t.claimed ? "Paid" : done ? "Done: claim it at the task board in the casino" : d.what === "kill" ? "Fight: outside, in the Yard and beyond" : "Fish: there's a pond in every scene outside"}">${d.what === "kill" ? `<img class="ico" src="${UIA}combat.png?v=1" alt="">` : ico(d.k)}<span>${esc(what)}<i><u style="width:${Math.round(Math.min(1, t.got / d.n) * 100)}%"></u></i></span><b>${t.claimed ? "paid" : done ? "claim!" : `${d.cash} tickets`}</b></div>`; }).join("");
   return jobs ? `<div class="wallets"><div class="wallet"><div class="wl-h"><img src="${UIA}w_jobs.png?v=1" alt="">Today's paid jobs</div>${jobs}<div class="wl-next" style="border:0;padding-top:2px">Claim them at the task board by the casino's back wall. New ones every morning.</div></div></div>` : "";
 }
+/* (2026-09-28, the owner: "we need to make sure it doesnt overflow when users have large amounts of tickets/zcoins, corn etc") THE STRIP
+   SHORTENS BIG NUMBERS. Every figure is in full up to 99,999; past that 123.4K, then 1.23M / 12.3M / 123M, then 1.2B; the hover always says
+   the exact amount. The cells also share the width equally and clip as a last resort, so no amount can push the strip out of the panel. */
+const wlNum = (n) => { n = Math.floor(Number(n) || 0); const a = Math.abs(n), cut = (v, d) => v.toFixed(d).replace(/\.0+$/, "");
+  return a < 1e5 ? n.toLocaleString() : a < 999950 ? `${cut(n / 1e3, 1)}K` : a < 9.995e8 ? `${cut(n / 1e6, a < 1e7 ? 2 : a < 1e8 ? 1 : 0)}M` : `${cut(n / 1e9, 1)}B`; };
 let wlFoldOpen = false;   /* the VIP / jackpot fold stays as you left it while the bag redraws */
 document.addEventListener("toggle", (e) => { if (e.target.classList?.contains("wl-fold")) wlFoldOpen = e.target.open; }, true);
 /* (2026-09-28) the chip on the Inventory heading: what the Prize Counter would pay for the bag, the number the old "In your bag" card showed */
@@ -6757,9 +6762,9 @@ function walletCard() {
   const cornWhen = corn ? (G.nightfallOn() ? "Nightfall now: corn \u00d72" : (() => { const m = Math.round(G.nightfallIn() / 60000); return `Nightfall in ${Math.floor(m / 60)}h ${m % 60}m`; })()) : "";
   return `<div class="wallets">
     <div class="wl-strip">
-      <span class="wl-s wl-tix" title="Tickets: the one currency here. Kills, catches and jobs pay them; the Prize Counter and every table take them.">${ico("tickets")}<b>${G.tixIn(me).toLocaleString()}</b></span>
-      <span class="wl-s wl-zc" title="Your real ZCoins on eastcoin.vip. The tables on the main floor take ZCoins or tickets, and pay ZCoins either way.">${ico("zcoin")}<b>${ZCBAL == null ? "–" : Number(ZCBAL).toLocaleString()}</b></span>
-      ${corn ? `<span class="wl-s wl-corn${G.nightfallOn() ? " night" : ""}" title="Candy corn: the Long Night's coin. Kills and catches drop it; the Night Market and Ronde's rail take it. ${cornWhen}. ${G.hwDaysLeft()} day${G.hwDaysLeft() === 1 ? "" : "s"} left.">${ico("candycorn")}<b>${G.countItems(me, ["candycorn"]).toLocaleString()}</b>${G.nightfallOn() ? "<em>\u00d72</em>" : ""}</span>` : ""}
+      <span class="wl-s wl-tix" title="${G.tixIn(me).toLocaleString()} tickets. The one currency here: kills, catches and jobs pay them; the Prize Counter and every table take them.">${ico("tickets")}<b>${wlNum(G.tixIn(me))}</b></span>
+      <span class="wl-s wl-zc" title="${ZCBAL == null ? "" : `${Number(ZCBAL).toLocaleString()} ZCoins. `}Your real ZCoins on eastcoin.vip. The tables on the main floor take ZCoins or tickets, and pay ZCoins either way.">${ico("zcoin")}<b>${ZCBAL == null ? "–" : wlNum(ZCBAL)}</b></span>
+      ${corn ? `<span class="wl-s wl-corn${G.nightfallOn() ? " night" : ""}" title="${G.countItems(me, ["candycorn"]).toLocaleString()} candy corn: the Long Night's coin. Kills and catches drop it; the Night Market and Ronde's rail take it. ${cornWhen}. ${G.hwDaysLeft()} day${G.hwDaysLeft() === 1 ? "" : "s"} left.">${ico("candycorn")}<b>${wlNum(G.countItems(me, ["candycorn"]))}</b>${G.nightfallOn() ? "<em>\u00d72</em>" : ""}</span>` : ""}
     </div>
     <details class="wl-fold"${wlFoldOpen ? " open" : ""}><summary><b style="color:${v.col}">◆ ${esc(v.name)} VIP</b>${me.jack ? `<span>Jackpot <b>${G.fmtCash(me.jack)}</b></span>` : ""}</summary>
       <div class="wl-fold-b">
@@ -7130,7 +7135,7 @@ function dblSet(on) {
   dblRender();
   if (DBL && !dblTimer) dblTimer = setInterval(dblRender, 1000);
 }
-window.__es = { openCraft, CZ, renderTour, renderPanel, popup, showInfo, talkTo, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
+window.__es = { openCraft, CZ, renderTour, renderPanel, popup, showInfo, talkTo, set zc(n) { ZCBAL = n; renderPanel(); }, wlNum, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
 
 setInterval(() => {
   if (ws && ws.readyState === 1 && you) {
