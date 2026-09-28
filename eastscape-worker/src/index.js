@@ -793,6 +793,7 @@ export class World {
       case "hw": return this.hwOp(S, pl, m);
       case "pen": return this.penOp(S, pl, m);
       case "hatch": return this.hatchOp(S, pl, m);   /* (2026-09-27) Breeding: eggs */
+      case "eggtrade": return this.eggTrade(S, pl, m);   /* (2026-09-28) Nestor the Egg Man */
       case "fung": return this.fungOp(S, pl, m);   /* (2026-09-27) Fungiculture: planting a bed */   /* (2026-09-27) Breeding */   /* (2026-09-27) the Long Night: trick or treat, the Night Market, the corn-priced fits */
       case "talked": { const n = S.npcs.find((x) => x.id === m.npc); if (n) n.holdUntil = 0; return; }
       case "stance": return;   // stances were removed (2026-09-19)
@@ -1720,6 +1721,21 @@ export class World {
      pet comes out. No level, no gem, no nest. C.hatch is the one slot. */
   hatchOf(S) { return S?.objs?.find((o) => o.t === "hatchery") || null; }
   hatchView(S, pl) { const H = pl.C.hatch; pl.out.push({ type: "hatch", hatch: H ? { egg: H.egg, child: H.child, at: H.at, ms: H.ms } : null, now: Date.now() }); }
+  /* (2026-09-28) NESTOR THE EGG MAN: one egg for its price in G.EGG_TRADES, at his stand in the Yard. The price is checked in full before
+     anything is taken, and the egg goes to the bag (or the bank, when the bag is full) like a rare, so a trade can never eat the price and
+     drop the egg. */
+  eggTrade(S, pl, m) {
+    const C = pl.C, k = String(m.k || ""), bad = (t) => this.say(pl, t, "bad"), n = S.npcs.find((x) => x.name === "Nestor the Egg Man");
+    if (!n || G.cheb(pl, n) > 3) return bad("Nestor does his trading at his stand in the Yard, by the court.");
+    const T = G.eggTrades().find(([egg]) => egg === k); if (!T) return;
+    const short = T[1].filter(([i, q]) => G.countItems(C, [i]) < q);
+    if (short.length) return bad(`Nestor shakes his head. "${T[1].map(([i, q]) => `${q} ${G.ITEMS[i].name.toLowerCase()}`).join(" and ")}. You're short on ${short.map(([i]) => G.ITEMS[i].name.toLowerCase()).join(" and ")}."`);
+    if (G.roomFor(C.inv, k, C) < 1 && C.bank.length >= G.BANK_MAX && !C.bank.some((b) => b.k === k)) return bad("You've no room for an egg, in your bag or your bank.");
+    for (const [i, q] of T[1]) G.takeInv(C.inv, i, q);
+    const where = this.keepRare(pl, k, 1); this.touch(pl);
+    this.say(pl, `Nestor wraps up a ${G.ITEMS[k].name.toLowerCase()}${where === "bank" ? " (no room in your bag: it went to your bank)" : ""}. "Warm side down."`, "loot");
+    pl.out.push({ type: "eggtrade", k });
+  }
   hatchOp(S, pl, m) {
     const C = pl.C, op = String(m.op || ""), now = Date.now(), bad = (t) => this.say(pl, t, "bad"), hb = this.hatchOf(S), H = C.hatch;
     if (!hb) return;

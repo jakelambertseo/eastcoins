@@ -124,9 +124,23 @@ export function createPetUi(E) {
     el.querySelectorAll("[data-epb]").forEach((b) => b.addEventListener("click", () => { const l = L.find((x) => x.id === +b.dataset.epb); if (l && confirm(`Buy ${G.petLabel(l.pet)} for ${l.price.toLocaleString()} tickets?`)) send({ t: "ex", op: "petbuy", lid: l.id }); }));
     el.querySelectorAll("[data-epc]").forEach((b) => b.addEventListener("click", () => send({ t: "ex", op: "petcancel", lid: +b.dataset.epc })));
   }
-  return { openPen, openHatch, renderPen, renderHatch, tradePets, exPets };
+  /* (2026-09-28) NESTOR THE EGG MAN: every egg he trades, what it hatches into, its price with how much of each you carry, and one button */
+  function openTrader() { openWin("eggWin"); renderTrader(); }
+  function renderTrader() {
+    if ($("eggWin").hidden || !E.me) return;
+    $("eggBody").innerHTML = `<p class="pn-note">A kill turns up an egg one time in ${Math.round(1 / G.BREED.eggDrop).toLocaleString()}, and it's whichever one that map has. Nestor sells the one you want, for what its pet eats.</p>
+      <div class="eg-how"><b>How to hatch an egg</b><ol><li>Take the egg home to <b>your island</b> (Charon, at his cart in the Yard).</li><li>Put down a <b>Hatchery</b>: Yahsmeena sells them, by your cottage.</li><li>Click the hatchery and put the egg in with <b>${G.BREED.hatch.food} Ordinary pet food</b>. It hatches on its own, whether you're there or not.</li></ol><small>Two of the same pet in your pen make a Greater one; two Greaters make its Legendary.</small></div>
+      <div class="eg-list">${G.eggTrades().map(([egg, cost]) => { const pet = G.PETS[G.EGGS[egg]?.pet], ok = cost.every(([k, q]) => G.countItems(E.me, [k]) >= q);
+        return `<div class="eg-row"><span class="eg-egg">${ico(egg)}<b>${esc(ITEMS[egg].name)}</b><small>hatches ${pet ? esc(pet.name) : "a pet"}</small></span><span class="eg-cost">${cost.map(([k, q]) => need(k, q)).join("")}</span><button type="button" class="lk-btn" data-egg="${egg}"${ok ? "" : " disabled"}>Trade</button></div>`; }).join("")}</div>`;
+    $("eggBody").querySelectorAll("[data-egg]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "eggtrade", k: b.dataset.egg }); }));
+  }
+  return { openPen, openHatch, renderPen, renderHatch, tradePets, exPets, openTrader, renderTrader };
 }
-const CSS = `.pn-card{background:#fffaf0;border-radius:14px;box-shadow:0 2px 10px rgba(60,40,10,.14);padding:12px;margin:10px 0}
+const CSS = `.eg-how{margin:8px 0 4px;padding:8px 11px;border-radius:9px;background:#fff6d6;box-shadow:inset 0 0 0 2px #c8963a;font-size:13px}.eg-how b{color:#5a3e08}.eg-how ol{margin:4px 0 4px 18px;padding:0}.eg-how li{margin:2px 0}.eg-how small{color:#6a5a40;font-weight:700}
+.eg-list{display:grid;gap:7px;margin-top:8px}.eg-row{display:grid;grid-template-columns:minmax(150px,1fr) 2fr auto;gap:8px;align-items:center;padding:7px 9px;border-radius:9px;background:#efe5cf;box-shadow:inset 0 0 0 2px #b8a67e}
+.eg-egg{display:grid;grid-template-columns:auto 1fr;column-gap:7px;align-items:center}.eg-egg .ico{grid-row:span 2;width:34px;height:34px}.eg-egg b{font-size:14px}.eg-egg small{color:#6a5a40;font-weight:700}
+.eg-cost{display:flex;flex-wrap:wrap;gap:4px 10px}@media (max-width:620px){.eg-row{grid-template-columns:1fr auto}.eg-cost{grid-column:1/-1;grid-row:2}}
+.pn-card{background:#fffaf0;border-radius:14px;box-shadow:0 2px 10px rgba(60,40,10,.14);padding:12px;margin:10px 0}
 .pn-card h4{margin:0 0 8px;display:flex;align-items:center;gap:8px;font-size:13.5px}
 .pn-card h4 b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#2f6fd0;color:#fff;font-size:12px}
 .pn-card.dim{opacity:.55}.pn-card.dim h4 b{background:#8a7a5a}

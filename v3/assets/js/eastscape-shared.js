@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 342;
+export const VERSION = 343;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7360,6 +7360,27 @@ Object.assign(QUESTS, {
 /* the witch stands by her tent in the Yard for the month. She is in the list all year with `event: true`, and the scene builder on
    BOTH sides leaves event people out while the event is off. NOT `if (hwOn())` here: Cloudflare freezes the clock while a module
    loads, so at start-up the server's Date.now() is not today and the test would always say no. Decide at build time, never at load. */
+/* (2026-09-28, the owner: "lets also build a pet trader NPC ... you can trade raw thematically same items for pet eggs. for example, the pet trader
+   takes pork (if we have pork) or shrooms for eggs", then "the pet trader should be in the yard, in the court at tile 25 15", "custom art for
+   the NPC"). NESTOR THE EGG MAN. One egg for a sack of the raw things its pet would want, each from the maps that egg comes from: chicken and
+   feathers for the owl, shrooms for the tortoise, boar and puffballs for the pig, and so on up to casino chips for the Mimic. A kill turns
+   up an egg one time in 500 (BREED.eggDrop) and it is whichever egg that map has; Nestor is the way to the ONE you want, for a price in
+   that pet's own theme, so the drop stays the lucky way and he is the steady one. EGG_TRADES is the whole table: change a number here. */
+export const EGG_TRADES = {
+  egg_speckled: [["chicken", 150], ["feather", 100]],
+  egg_mossy: [["sporecap", 100], ["buttoncap", 100]],
+  egg_truffle: [["pork", 150], ["puffball", 50]],
+  egg_sparking: [["stormjelly", 100], ["staticfur", 60]],
+  egg_cindered: [["charcoal", 400], ["scarabshell", 60]],
+  egg_velvet: [["markedcard", 100], ["chip_red", 10]],
+  egg_geode: [["abyss_crystal", 60], ["geode", 2]],
+  egg_gilded: [["chip_red", 30], ["chip_black", 5]]
+};
+/** the trades anyone can make today: none whose egg or price is held content */
+export const eggTrades = () => Object.entries(EGG_TRADES).filter(([egg, cost]) => ITEMS[egg] && !ITEMS[egg].held && cost.every(([k]) => ITEMS[k] && !ITEMS[k].held));
+SCENES.workyard.npcs.push({ name: "Nestor the Egg Man", art: "nestor", x: 25, y: 15, still: true, opens: "eggtrade", reach: 2,
+  lines: ["Eggs! Every egg in the world, if you've got what its pet wants.", "A Truffle Pig won't come out of its shell for less than a sack of boar and some puffballs. Pigs.", "Found one yourself? Lucky. I'm the other way: the sure way.", "Owls like chicken. Don't ask how I know.",
+    "An egg's no good in your pocket. Take it home to your island and put it in a hatchery. Yahsmeena sells them, by your cottage.", "Three Ordinary pet food under the egg, and you wait. A Speckled egg is twelve hours. A Gilded one, five days. Worth it.", "Two of the same pet in your pen make a Greater one. Two Greaters make a Legendary. It all starts with an egg."] });
 SCENES.workyard.npcs.push({ name: "Hexa the Candy Witch", event: true, art: "hexa", x: 18, y: 11, still: true,   /* (2026-09-27) was 24,11 with the tent on the north road; the owner: "right in the road in the yard". West of the road now, on the grass between the bush and the Gloam sign */ quests: ["hw_king"], opens: "market", reach: 3, hair: "#3a2a4a", shirt: "#2a1a3a", pants: "#4a2a5a",
   lines: ["Candy corn. Bring me candy corn. It falls off everything this month, if you're the kind of person things fall off for.", "The King rises on the hour in the Mire. I sell to the ones who come back.", "Seeds, vials, slime, pie. And two fits, if you've the corn: a skeleton and a sheet. Ronde does the colours.", "I pack the tent on the second of November and the corn goes to sugar in your bag the same morning. Whatever you've bought, you keep. Whatever you haven't, you won't."] });
 
@@ -8187,5 +8208,6 @@ export function usesOf(k) {
   const crop = CROPS[k.replace(/^seed_/, "")]; if (crop && (k.startsWith("seed_") || !ITEMS[`seed_${k}`])) add("crop", "Planting on your island", `Harvesting ${crop.lvl}`);
   if (BREED.foodXp?.[k]) add("feed", "Feeding and breeding pets", "the pen");
   if (k === "compost") add("compost", "Planting a fungus bed", "the cellar");
+  for (const [egg, cost] of eggTrades()) if (cost.some(([i]) => i === k)) add(`egg:${egg}`, ITEMS[egg].name, "Nestor, the Yard");   /* (2026-09-28) the Egg Man */
   return out;
 }
