@@ -3587,11 +3587,11 @@ function sprAs(k, base, x, y, flip, filter) { const a = IMG[k], b = IMG[base]; i
 function trapFrame(ob, P, calm) {
   const S = ob.seq, T = G.TRAPS[ob.trap], at = (arr, k) => arr[Math.max(0, Math.min(arr.length - 1, k))];
   if (calm) return P.phase === "strike" ? S.strike?.[0] ?? S.idle[0] : S.idle[0];
-  if (P.phase === "warn" && S.warn) return at(S.warn, Math.floor((P.t / T.warn) * S.warn.length));
-  if (P.phase === "strike" && S.strike) {
-    const pre = S.sstart ? S.sstart.length * 70 : 0; if (P.t < pre) return S.sstart[Math.floor(P.t / 70)];
-    const t = P.t - pre, n = S.strike.length; return n * 90 >= T.strike - pre ? at(S.strike, Math.floor((t / (T.strike - pre)) * n)) : S.strike[Math.floor(t / 100) % n];
-  }
+  /* the spitfire's jets GROW at the end of the warning, so they are at full length for every moment they can hit you */
+  const grow = S.sstart ? S.sstart.length * 70 : 0;
+  if (P.phase === "warn" && grow && P.t >= T.warn - grow) return S.sstart[Math.min(S.sstart.length - 1, Math.floor((P.t - (T.warn - grow)) / 70))];
+  if (P.phase === "warn" && S.warn) return at(S.warn, Math.floor((P.t / (T.warn - grow)) * S.warn.length));
+  if (P.phase === "strike" && S.strike) { const n = S.strike.length; return n * 90 >= T.strike ? at(S.strike, Math.floor((P.t / T.strike) * n)) : S.strike[Math.floor(P.t / 100) % n]; }
   if (P.phase === "end" && S.end) return at(S.end, Math.floor((P.t / T.end) * S.end.length));
   return S.idle[Math.floor(P.t / 110) % S.idle.length];
 }

@@ -7772,7 +7772,7 @@ const ring = (r0, r1, sx = 1, sy = 1) => { const o = []; for (let dy = -r1; dy <
 export const TRAPS = {
   spikes: { name: "Bone spikes", period: 6500, warn: 1300, strike: 800, end: 900, cells: [[-1, -1], [0, -1], [1, -1], [-1, 0], [0, 0], [1, 0]], say: "Bone spikes burst out of the ground under you!" },
   burn: { name: "Burning ground", period: 9000, warn: 1500, strike: 2600, end: 900, cells: ring(0, 2, 1, 0.5).filter(([dx, dy]) => Math.abs(dy) <= 1), say: "The ground under you catches fire!" },
-  spit: { name: "The spitfire", period: 8000, warn: 1600, strike: 1800, end: 900, cells: [1, 2, 3, 4, 5, 6].flatMap((k) => [[k, Math.round(k * 0.45)], [-k, Math.round(k * 0.45)], [k, -Math.round(k * 0.45)], [-k, -Math.round(k * 0.45)]]), say: "The spitfire's jet catches you!" },
+  spit: { name: "The spitfire", period: 8000, warn: 1600, strike: 1800, end: 900, cells: [1, 2, 3, 4].flatMap((k) => [[k, Math.round(k * 0.4)], [-k, Math.round(k * 0.4)], [k, -Math.round(k * 0.4)], [-k, -Math.round(k * 0.4)]]),   /* the jets as drawn reach about four tiles */ say: "The spitfire's jet catches you!" },
   crush: { name: "The crusher", period: 9000, warn: 1500, strike: 1100, end: 1400, cells: ring(1, 2, 1, 1).filter(([dx, dy]) => Math.abs(dx) + Math.abs(dy) <= 3), say: "The crusher comes down on you!" },
   geyser: { name: "The geyser", period: 7000, warn: 900, strike: 2100, end: 1100, cells: ring(0, 1), say: "The geyser goes up under you!" },
   volc: { name: "The tiny volcano", period: 6000, warn: 1500, strike: 600, end: 300, balls: 3, say: "A lava ball lands on you!" }
