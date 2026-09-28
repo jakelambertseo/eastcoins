@@ -7457,7 +7457,7 @@ export const FUNGI = {};
 for (const [k, lvl, mins, yld, xp, compost, sell, name, ex] of FUNG_ROWS) {
   if (name) ITEMS[k] = { name, icon: "\u{1F344}", ex };
   const sk = `spawn_${k}`;
-  ITEMS[sk] = { name: `${ITEMS[k].name} spawn`, icon: "\u{1F9EB}", ex: `Plant it in a fungus bed in your cellar (Fungiculture ${lvl}) with ${compost} compost. It grows ${ITEMS[k].name.toLowerCase()}, and gives spawn back.` };
+  ITEMS[sk] = { name: `${ITEMS[k].name} spores`,   /* (2026-09-27, the owner: "rename spawn to spores") the NAME only: the keys stay spawn_<shroom>, so nobody's bag changes */ icon: "\u{1F9EB}", ex: `Plant them in a fungus bed in your cellar (Fungiculture ${lvl}) with ${compost} compost. They grow ${ITEMS[k].name.toLowerCase()}, and the bed gives spores back.` };
   FUNGI[sk] = { lvl, ms: mins * 60000, yield: yld, xp, compost, yields: k, art: k };
   VALUE[k] = sell; VALUE[sk] = 0;
 }
@@ -7521,7 +7521,7 @@ SCENES.cellar = {
   },
   mobs: [], npcs: [], bots: []
 };
-EXAMINE.fbed = ["A box of black earth that smells like a forest floor after rain. Plant spawn in it."];
+EXAMINE.fbed = ["A box of black earth that smells like a forest floor after rain. Plant spores in it."];
 EXAMINE.compost = ["It's warm. It is not supposed to be warm, and yet."];
 /* compost, at the cellar's bin: how Fungiculture is trained from level 1, and why the Yard's tomatoes, the olive trees' pits and
    the furnace's charcoal stay worth having */

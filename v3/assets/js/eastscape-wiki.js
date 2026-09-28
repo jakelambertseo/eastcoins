@@ -781,14 +781,14 @@ export const GUIDES = [
       return `<p><b>Mushrooms, grown in a cellar under your island and picked wild on every map.</b> Yahsmeena sells a <b>Cellar ladder</b>; put it down with Decorate and click it to climb down. Only you can.</p>
       <h3>The cellar</h3>
       <ol><li>Make <b>compost</b> at the bin in the corner. This is how Fungiculture is trained from level 1.</li>
-      <li>Click a <b>fungus bed</b> and plant <b>spawn</b> in it. Each planting takes compost, one to three by the shroom.</li>
-      <li>Come back when it is ripe. A bed gives its shrooms, and <b>${G.SEED_BACK} spawn back, ${G.SEED_BACK + 1} one time in ${Math.round(1 / G.SEED_EXTRA)}</b>, so a bed planted once keeps going.</li></ol>
+      <li>Click a <b>fungus bed</b> and plant <b>spores</b> in it. Each planting takes compost, one to three by the shroom.</li>
+      <li>Come back when it is ripe. A bed gives its shrooms, and <b>${G.SEED_BACK} spores back, ${G.SEED_BACK + 1} one time in ${Math.round(1 / G.SEED_EXTRA)}</b>, so a bed planted once keeps going.</li></ol>
       <p>A first island opens ${G.FUNG.beds[1]} beds, a bigger one ${G.FUNG.beds[2]}, the Far Shore all ${G.FUNG.beds[3]}. Rainmaker waters a bed like a plot, and a Truffle Pig makes every harvest a quarter heavier.</p>
       <h3>Compost</h3>
       <table class="tbl"><tr><th>Level</th><th>Makes</th><th>From</th></tr>${Object.values(G.RECIPES).filter((r) => r.station === "compost").sort((a, b) => a.lvl - b.lvl).map((r) => `<tr><td>${r.lvl}</td><td>${r.out[1]} ${nm("compost")}</td><td>${r.in.map(([k, n]) => `${n} ${nm(k)}`).join(", ")}</td></tr>`).join("")}</table>
       <h3>Wild clusters</h3>
-      <p>Every outdoor map has <b>three clusters</b>, always in the same places. Each gives you one pick a day: ${G.FUNG.wildN[0]} to ${G.FUNG.wildN[1]} shrooms, some xp, and about ${Math.round(G.FUNG.wildSpawn * 100)}% of the time its spawn. A cluster you have picked today is drawn faint. The Gloam's toadstools drop sporecap spawn now and then too.</p>
-      <p><b>The black truffle grows nowhere wild.</b> Wear a Truffle Pig while you pick: about ${Math.round(G.FUNG.truffle.pick * 100)}% of picks turn one up, and some turn up its spawn.</p>
+      <p>Every outdoor map has <b>three clusters</b>, always in the same places. Each gives you one pick a day: ${G.FUNG.wildN[0]} to ${G.FUNG.wildN[1]} shrooms, some xp, and about ${Math.round(G.FUNG.wildSpawn * 100)}% of the time its spores. A cluster you have picked today is drawn faint. The Gloam's toadstools drop sporecap spores now and then too.</p>
+      <p><b>The black truffle grows nowhere wild.</b> Wear a Truffle Pig while you pick: about ${Math.round(G.FUNG.truffle.pick * 100)}% of picks turn one up, and some turn up its spores.</p>
       <h3>The shrooms</h3>
       <table class="tbl"><tr><th>Level</th><th>Shroom</th><th>Grows</th><th>Compost</th><th>xp</th><th>Wild in</th><th>Goes into</th></tr>${Object.entries(G.FUNGI).map(([sk, F]) => `<tr><td>${F.lvl}</td><td>${H.ico(F.yields)} ${nm(F.yields)}</td><td>${mins(F.ms)}</td><td>${F.compost}</td><td>${F.xp.toLocaleString()}</td><td>${where[F.yields].length ? H.esc(where[F.yields].join(", ")) : "A Truffle Pig finds it"}</td><td>${uses(F.yields)}</td></tr>`).join("")}</table>
       <h3>What shrooms make</h3>

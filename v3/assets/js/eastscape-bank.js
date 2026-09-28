@@ -33,7 +33,7 @@ export function createBankUi(E) {
      UI pictures (v3/assets/img/glad/flat/ui), the same set the wiki's guides and the side tabs use, so nothing new is drawn */
   const UI = "/v3/assets/img/glad/flat/ui/";
   const TABS = [["all", "All", "g_bank"], ["gear", "Gear", "equip", "Armour, weapons, rings and amulets"], ["ranged", "Ranged", "g_archery", "Bows, wands, quivers, Magic Bags, arrows and pages"], ["tools", "Tools", "g_tools", "Pickaxes, axes and rods"], ["food", "Food", "g_cooking", "Food and drink, raw and cooked"],
-    ["materials", "Materials", "g_mining", "Ore, bars, logs, hides and everything else a recipe takes"], ["seeds", "Seeds", "g_harvesting", "Seeds, crops and mushroom spawn"], ["pets", "Breeding", "g_breeding", "Eggs and pet food"], ["potions", "Potions", "g_alchemy", "Potions, scrolls and charms"], ["misc", "Misc", "w_sack", "Everything else"]];
+    ["materials", "Materials", "g_mining", "Ore, bars, logs, hides and everything else a recipe takes"], ["seeds", "Seeds", "g_harvesting", "Seeds, crops and mushroom spores"], ["pets", "Breeding", "g_breeding", "Eggs and pet food"], ["potions", "Potions", "g_alchemy", "Potions, scrolls and charms"], ["misc", "Misc", "w_sack", "Everything else"]];
   const tabIco = (k) => `<img src="${UI}${k}.png?v=1" alt="" width="22" height="22" loading="lazy" decoding="async">`;
   const catOf = (k) => { const it = ITEMS[k]; if (!it) return "misc";
     if (it.ammo || it.pouch || it.launcher) return "ranged";
