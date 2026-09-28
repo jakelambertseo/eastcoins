@@ -3501,6 +3501,14 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .cas-card-plays{font-size:.68rem;font-weight:700;color:var(--muted-2);margin-top:-2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cas-card-plays.out{color:var(--red)}
 .cas-card-plays[hidden]{display:none}
+/* (2026-09-27) the EastScape card's "N people online now": a live dot, then the count */
+.cas-card-online{display:flex;align-items:center;gap:6px;font-size:.74rem;font-weight:800;color:var(--text);margin-top:-2px}
+.cas-card-online[hidden]{display:none}
+.cas-card-online i{width:7px;height:7px;border-radius:50%;background:var(--gr);box-shadow:0 0 8px rgba(var(--gr-rgb),.8);flex:0 0 auto;animation:casOnline 2s ease-in-out infinite}
+.cas-card-online.none{color:var(--muted-2)}
+.cas-card-online.none i{background:var(--muted-2);box-shadow:none;animation:none}
+@keyframes casOnline{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.cas-card-online i{animation:none}}
 
 /* One colour a game. Deeper than the page accents on purpose: these
    are full panels behind white type, not a 3px edge on a dark card. */
