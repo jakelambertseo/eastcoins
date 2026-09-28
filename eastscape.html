@@ -64,19 +64,6 @@ button,input,select{font:inherit}
    white-on-white 5% tint with a pale border, drawn for the old dark panel, and on the parchment they read as a caption. Now each is a raised
    parchment key with a hard shadow under it (it presses down when tapped), a heading that says what tapping does, and a USE / ON pill on
    the right, so the state is a word as well as a colour. */
-.an-aids{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin:0 10px 12px}
-.an-aids-h{grid-column:1/-1;font-size:12px;font-weight:800;color:#5a4a30;text-transform:uppercase;letter-spacing:.05em}
-.an-aid{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;background:linear-gradient(#fff8e6,#e8d9b4);border:2px solid #8a6a3a;box-shadow:0 3px 0 #6b4f26;color:#2e2416;font:inherit;cursor:pointer;text-align:left;transition:transform .08s,box-shadow .08s,filter .08s}
-.an-aid:hover{filter:brightness(1.05);transform:translateY(-1px);box-shadow:0 4px 0 #6b4f26}
-.an-aid:active{transform:translateY(2px);box-shadow:0 1px 0 #6b4f26}
-.an-aid:focus-visible{outline:3px solid #2f6fd6;outline-offset:2px}
-.an-aid i .ico{width:28px;height:28px}
-.an-aid b{font-size:15px;display:block}
-.an-aid small{font-size:12px;display:block;color:#5a4a30}
-.an-sw{font-style:normal;font-weight:900;font-size:12px;letter-spacing:.06em;padding:5px 11px;border-radius:999px;background:#6b4f26;color:#fff3d6;white-space:nowrap}
-.an-aid.on{background:linear-gradient(#ffe68a,#f2b93b);border-color:#a8740f;box-shadow:0 3px 0 #8a5c08,0 0 0 3px rgba(255,210,63,.5)}
-.an-aid.on:active{box-shadow:0 1px 0 #8a5c08,0 0 0 3px rgba(255,210,63,.5)}
-.an-aid.on .an-sw{background:#2e7d43;color:#fff}
 @media (prefers-reduced-motion:reduce){.an-aid,.an-aid:hover,.an-aid:active{transition:none;transform:none}}
 @keyframes escShake{10%,90%{transform:translateX(-2px)}30%,70%{transform:translateX(3px)}50%{transform:translateX(-3px)}}
 #cv.shake{animation:escShake .4s}
@@ -975,37 +962,9 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
    the fade carrying it.
    AND THE CHOSEN ROW IS A SLAB, NOT A TINT. On cream, a 12% wash of gold is invisible; it takes a solid fill, a
    dark border and the label as a pill with dark text on gold. */
-.cr-row{grid-template-columns:auto 1fr auto auto;background:rgba(90,50,32,.06);border-color:rgba(90,50,32,.14);border-radius:5px;padding:6px 8px}
-.cr-row:nth-child(even){background:rgba(90,50,32,.11)}
-.cr-row:hover:not(:disabled){background:rgba(255,205,90,.3);border-color:#a8791f}
-.cr-row b{color:#2a2016;font-size:13.5px}
-.cr-row small{color:#5c4c33;opacity:1;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cr-row>span{min-width:0}   /* a grid child will not shrink below its content unless it is told it may */   /* .rcpr small is .75 on a dark bar; on cream it needs a colour, not an opacity */
 /* not makeable: dim the PICTURE, never the words */
-.cr-row:disabled{opacity:1}
-.cr-row:disabled i{opacity:.45}
-.cr-row:disabled b{color:#6a5a40}
-.cr-miss{color:#a8452e;font-weight:700}
-.cr-lock{color:#8a6a2a;font-weight:700}
 /* the one you are making */
-.cr-row.on{background:#f8dd8c;border-color:#8a5a12;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
-.cr-row.on b{color:#2a1c08}
-.cr-row.on small{color:#5a4210}
-.cr-on{align-self:center;font-size:10.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:#2a1c08;background:#ffcf3f;border:1.5px solid #8a5a12;border-radius:4px;padding:2px 6px;white-space:nowrap;margin-left:6px}
-.cr-auto i{font-size:20px;line-height:1}
-.cr-auto{border-color:rgba(90,50,32,.3)}
 /* what it takes, on the right */
-.cr-in{display:flex;align-items:center;gap:5px;white-space:nowrap}
-.cr-in em{position:relative;display:inline-flex;align-items:center;font-style:normal;padding:2px;border-radius:4px;background:rgba(90,50,32,.1)}
-.cr-in em.no{background:rgba(168,69,46,.2);box-shadow:inset 0 0 0 1.5px rgba(168,69,46,.55)}
-.cr-in em u{position:absolute;right:-1px;bottom:-2px;font:800 10px Lora,sans-serif;text-decoration:none;color:#2a2016;text-shadow:0 0 2px #f3e7cc,0 0 2px #f3e7cc}
-.cr-in em s{position:absolute;left:-2px;top:-3px;font:800 9px Lora,sans-serif;text-decoration:none;color:#fff;background:#a8452e;border-radius:3px;padding:0 2px}
-.cr-in em img,.cr-in em .ico{width:20px;height:20px;image-rendering:pixelated}
-.cr-risk{display:inline-flex;align-items:center;margin-left:3px;padding:2px 5px;border-radius:999px;background:rgba(168,110,20,.2);box-shadow:inset 0 0 0 1px rgba(168,110,20,.4);font-size:11.5px;font-weight:800;color:#7a5410}
-.cr-in .lv{display:inline-flex;align-items:center;gap:3px;margin-left:4px;padding:2px 6px 2px 4px;border-radius:999px;background:rgba(90,50,32,.14);box-shadow:inset 0 0 0 1px rgba(90,50,32,.18);font-size:12.5px;font-weight:800;color:#4a3c26}
-.cr-in .lv .ico{width:17px;height:17px;image-rendering:pixelated}
-.cr-row.on .cr-in em{background:rgba(90,50,32,.16)}
-.cr-row.on .cr-in .lv{color:#4a3208;background:rgba(90,50,32,.2);box-shadow:inset 0 0 0 1px rgba(90,50,32,.3)}
 #craftSub .ico{width:17px;height:17px;image-rendering:pixelated;vertical-align:-4px}
 .pop-pic{float:right;width:82px;image-rendering:pixelated;margin:-2px 0 6px 12px}
 .twhud{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:8px;align-items:baseline;
@@ -1019,14 +978,6 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .twhud.clear{box-shadow:0 0 0 2px #2f6a34,0 6px 18px rgba(0,0,0,.55)}
 
 /* THE ANVIL's panel: tabs, a tier rail, and a grid of pieces instead of 81 rows. */
-.an-tabs{display:flex;gap:6px;margin:2px 10px 8px}
-.an-tab{flex:1;cursor:pointer;border:0;border-radius:6px;padding:7px 6px;font:inherit;font-size:12px;font-weight:800;color:#cbbfae;background:rgba(0,0,0,.28);box-shadow:inset 0 0 0 2px #3a2e22}
-.an-tab.on{color:#1a120a;background:#e0b968;box-shadow:none}
-.an-chips{display:flex;flex-wrap:wrap;gap:4px;margin:0 10px 6px}
-.an-chip{cursor:pointer;border:0;border-radius:5px;padding:4px 8px;font:inherit;font-size:11px;font-weight:700;color:#cbbfae;background:rgba(0,0,0,.24);box-shadow:inset 0 0 0 1px #3a2e22}
-.an-chip.on{color:#1a120a;background:#e0b968;box-shadow:none}
-.an-chip.locked{opacity:.45;cursor:default}
-.an-bars{display:flex;align-items:center;gap:6px;margin:0 10px 8px;font-size:12px;font-weight:700;color:#cbbfae}
 .wl-corn{gap:6px;margin-top:6px}.wl-corn em{margin-left:auto;font-style:normal;font-size:11px;font-weight:700;color:#e0b060;text-align:right}
 .hw-foot{margin:10px 10px 6px;padding:8px 10px;background:rgba(0,0,0,.14);border-radius:6px;font-size:13px;line-height:1.5;color:#e8dcc0}.hw-foot b{color:#ffd77a}#hwWin .hw-foot{background:#efe5cf;color:#3a2e1c;box-shadow:inset 0 0 0 2px #b8a67e}#hwWin .hw-foot b{color:#7a3c12}
 .hw-gone{margin:0 0 8px;padding:8px 10px;border-radius:6px;background:#3a1a10;color:#f3dcc0;font-size:13px;line-height:1.45;border:2px solid #7a3a10}.hw-gone b{color:#ffb05a}
@@ -1110,74 +1061,17 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .wl-corn .hw-last{color:#ff7a5a;font-weight:800}
 .hw-row.own{opacity:.6}.hw-fit{width:34px;height:34px;overflow:hidden;display:inline-block}.hw-fit .van-fig{width:34px;height:34px;image-rendering:pixelated}   /* (2026-09-27) the preview is an <img class="van-fig"> at 68px; this rule named ".van-face", matched nothing, and the box showed the empty top-left quarter of the picture */
 .glow.glow-hallow{filter:drop-shadow(0 0 3px rgba(255,140,30,.9))}
-.an-craft{display:grid;gap:6px;margin:0 10px 10px}.an-craft .an-row small{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:center}.an-craft .an-row small .ico{width:16px;height:16px;vertical-align:-3px}
-.an-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin:0 10px 10px}
-.an-tile{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:0;border-radius:7px;padding:8px 4px 6px;font:inherit;color:#f0e6d8;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 2px #3a2e22;text-align:center}
-.an-tile b{font-size:11px;font-weight:800;line-height:1.1}
-.an-tile small{font-size:10px;color:#a3968a}
-.an-tile:hover:not([disabled]){background:rgba(224,185,104,.15);box-shadow:inset 0 0 0 2px #e0b968}
-.an-tile.short{opacity:.55}
-.an-tile.short small{color:#d98a6a}
-.an-tile.lock{opacity:.4;cursor:default}
-.an-odds{font-size:12px;font-weight:800;color:#ffd77a;white-space:nowrap}
-.an-odds.max{color:#7ee081}
 
 /* BIGGER INSIDE THE ANVIL ONLY (the owner: "text and icons need to be a lot larger"). Scoped to #smithList so the
    shop, the bank and every other .rcpr list keep their own sizing. */
-#smithList .rcpr{padding:9px 10px;gap:11px}
-#smithList .rcpr i .ico{width:34px;height:34px}
-#smithList .rcpr b{font-size:16px}
-#smithList .rcpr small{font-size:13px;opacity:.85}
-#smithList .rst em{font-size:13px;padding:1px 7px 1px 3px}
-#smithList .rst em .ico{width:16px;height:16px}
-#smithList .fg{font-size:16px}
-#smithList .fgx{font-style:normal;font-weight:800;color:#2e7d43;margin-left:3px}
-#smithList .an-odds{font-size:17px}
-.an-tab{font-size:14px;padding:9px 8px}
-.an-chip{font-size:13px;padding:6px 11px}
-.an-bars{font-size:14px}
-.an-bars .ico{width:24px;height:24px}
-.an-grid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
-.an-tile{padding:10px 5px 8px}
-.an-tile .ico{width:36px;height:36px}
-.an-tile b{font-size:13px}
-.an-tile small{font-size:12px}
 
-#smithList .an-odds{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
 /* (2026-09-25) the reforge rows on parchment: a row you cannot do yet stays READABLE - only its icon fades - and the words are ink, not the
    pale grey that .rcpr:disabled faded to 42% on the old dark panel */
-#smithList .rcpr{background:#efe5cf;box-shadow:inset 0 0 0 2px #b8a67e;color:#2e2416}
-#smithList .rcpr small{color:#3a2e1c;opacity:1}
-#smithList .rcpr:disabled{opacity:1;background:#e4d8bf}
-#smithList .rcpr:disabled i .ico{opacity:.45}
-#smithList .rcpr:disabled b{color:#5a4a30}
-#smithList .an-cost-short{color:#b0281c;font-weight:800}
-#smithList .an-brk{font-size:11px;font-weight:800;color:#d9534f}
 
-.an-warn{margin:0 10px 8px;padding:8px 11px;border-radius:7px;font-size:13px;font-weight:800;color:#ffd7d2;
-  background:rgba(150,32,32,.28);box-shadow:inset 0 0 0 2px #a33}
 /* (2026-09-25, the owner: "the price of the cost of equipment (bars) in the reforging table, the text is hard to read"). THE ANVIL
    ON PARCHMENT. Every colour above was chosen for the dark panel it used to sit on - pale text, a pale-salmon cost, and a
    "short of bars" tile faded to 55% as a whole - and on the parchment window all three wash out. Dark ink here, the cost
    you cannot cover in a red that reads on paper, and the fade moved onto the ICON so the words stay legible. */
-.an-tab{color:#5a4a30;background:#d9ccb0;box-shadow:inset 0 0 0 2px #8a7a5a}
-.an-tab.on{color:#1a120a;background:#e0b968;box-shadow:inset 0 0 0 2px #a8842e}
-.an-chip{color:#3a2e1c;background:#e4d8be;box-shadow:inset 0 0 0 1px #8a7a5a}
-.an-chip.on{color:#1a120a;background:#e0b968;box-shadow:inset 0 0 0 1px #a8842e}
-.an-chip.locked{opacity:.55}
-.an-bars{color:#3a2e1c}
-.an-tile{color:#2e2416;background:#efe5cf;box-shadow:inset 0 0 0 2px #8a7a5a}
-.an-tile small{color:#4a3c26;font-weight:800}
-.an-tile:hover:not([disabled]){background:#f7eed9;box-shadow:inset 0 0 0 2px #c9962e}
-.an-tile.short{opacity:1;background:#e6dac2}
-.an-tile.short .ico{opacity:.5}
-.an-tile.short small{color:#b0281c}
-.an-tile.lock{opacity:1;background:#ddd1b8}
-.an-tile.lock .ico{opacity:.35}
-.an-tile.lock b,.an-tile.lock small{color:#6a5a40}
-.an-odds{color:#8a5a00}
-.an-odds.max{color:#2e7d43}
-.an-warn{color:#8a1f1a;background:rgba(200,60,50,.14);box-shadow:inset 0 0 0 2px #b8453c}
 
 /* ---- LEGENDARY GLOW (2026-09-25). Nova and Singularity only, everywhere an item icon is drawn: the bag, the
    bank, the equipment doll, shops, trades, tooltips and the Prize Counter. `filter: drop-shadow` rather than
@@ -1402,7 +1296,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .k-slot{position:relative;display:grid;place-items:center;width:40px;height:40px;flex:none;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch;image-rendering:pixelated;box-sizing:border-box}
 .k-slot img{width:26px;height:26px;image-rendering:pixelated}
 .k-slot.sm{width:32px;height:32px;border-width:4px}.k-slot.sm img{width:20px;height:20px}
-.k-slot u{position:absolute;right:-5px;bottom:-6px;text-decoration:none;font:900 10.5px/1 Lora,sans-serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}
+.k-slot u{position:absolute;right:-4px;bottom:-5px;padding:1px 3px;border-radius:4px;background:rgba(26,16,8,.85);text-decoration:none;font:700 10px/1 Lora,sans-serif;color:#fff}
 .k-slot.miss::after{content:"";position:absolute;inset:-4px;border-radius:3px;box-shadow:inset 0 0 0 2px var(--k-bad);background:rgba(184,48,42,.16)}
 /* ---------- ROWS: one shape for everything you can act on ---------- */
 .k-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;padding:7px 10px 7px 7px;border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45);color:var(--k-ink);text-align:left;font:inherit;cursor:pointer;transition:background .12s,box-shadow .12s,transform .12s}
@@ -1469,6 +1363,39 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 /* ---------- every existing window title, the banners and the level-up take Cinzel now; their windows follow in later batches ---------- */
 .win-head b{font-family:var(--k-disp);font-weight:800;letter-spacing:.01em}
 .qdone b,.lvlup b{font-family:var(--k-disp);font-weight:800}
+
+/* ---------- batch 2: the crafting stations and the anvil (see openCraft, openSmith) ----------
+   Every .cr-*, .an-* and #smithList rule before this went: the crafting picker and the anvil each carried three layers of colours (one for
+   the dark panel they were first drawn on, one "on parchment" pass, one "bigger inside the anvil" pass). They are kit rows now. */
+#craftWin .k-body{max-height:min(60vh,560px)}
+.k-row:disabled{cursor:default}
+.k-row .k-end{flex-wrap:wrap;justify-content:flex-end}
+.k-row>span:nth-child(2){min-width:0}
+.k-row small{overflow-wrap:anywhere}
+.k-warn{padding:8px 11px;border-radius:var(--k-r);font:var(--k-f-small);font-weight:700;color:var(--k-bad);background:#f5d3cc;box-shadow:inset 0 0 0 1.5px rgba(184,48,42,.55)}
+.k-warn::before{content:"! ";font-weight:900}
+#smithWin{width:min(640px,calc(100% - 28px))}
+#smithWin .k-body{max-height:min(62vh,600px)}
+.an-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:space-between}
+.an-tiers{flex-wrap:wrap}.an-tiers button.locked{opacity:.45;cursor:default}
+.an-bars .ico{width:18px;height:18px}
+.an-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px}
+.an-tile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 5px 7px;border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45);color:var(--k-ink);font:inherit;cursor:pointer;transition:background .12s,box-shadow .12s,transform .12s}
+.an-tile:hover:not(:disabled){background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold),0 2px 6px rgba(60,40,10,.15);transform:translateY(-1px)}
+.an-tile b{font:800 13px/1.1 var(--k-disp);text-align:center}
+.an-tile .k-slot{width:46px;height:46px}.an-tile .k-slot .ico{width:32px;height:32px}
+.an-tile:disabled{cursor:default}
+.an-tile.short>.k-slot .ico,.an-tile.lock>.k-slot .ico{filter:grayscale(.6);opacity:.6}
+.an-tile.lock{opacity:.62}
+.an-aids{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+.an-aids>.k-label{grid-column:1/-1}
+.an-aid.on{background:var(--k-paper-hi);box-shadow:inset 0 0 0 2.5px var(--k-good),0 0 0 3px rgba(47,122,58,.15)}
+.an-odds{flex-direction:column;align-items:flex-end;gap:3px}
+.an-row .fg{font-style:normal;color:var(--k-gold-ink)}
+.an-cost-short{color:var(--k-bad);font-weight:800}
+.an-craft{display:grid;gap:6px}
+.k-row small .ico{width:16px;height:16px;vertical-align:-3px}
+.fgx{font-style:normal;font-weight:800;color:var(--k-good);margin-left:3px}
 </style>
 </head>
 <body>
@@ -1537,13 +1464,15 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="win-head"><b>🏆 Hiscores</b><small id="hsSub"></small><button type="button" class="win-x" data-close="hsWin" aria-label="Close">×</button></div>
       <div class="win-body hswrap"><div class="hstabs" id="hsTabs" role="tablist" aria-label="Hiscore boards"></div><div class="hsbody" id="hsBody"><p class="note">Loading…</p></div></div>
     </section>
-    <section class="win" id="smithWin" aria-label="Anvil" hidden>
-      <div class="win-head"><b>🔨 Anvil</b><small id="smithSub"></small><button type="button" class="win-x" data-close="smithWin" aria-label="Close">×</button></div>
-      <div class="win-body"><div class="rcp" id="smithList"></div></div>
+    <section class="win k-win" id="smithWin" aria-label="Anvil" hidden>
+      <div class="k-head"><img src="/v3/assets/img/glad/flat/ui/g_smithing.png?v=1" alt=""><b>The Anvil</b><span class="k-sub" id="smithSub"></span><button type="button" class="k-x" data-close="smithWin" aria-label="Close">×</button></div>
+      <div class="k-tabs" id="smithTabs" role="tablist"></div>
+      <div class="k-body k-paper" id="smithList"></div>
     </section>
-    <section class="win" id="craftWin" aria-label="What to make" hidden style="width:min(440px,calc(100% - 28px))">
-      <div class="win-head"><b id="craftTitle">🔥 Campfire</b><small id="craftSub"></small><button type="button" class="win-x" data-close="craftWin" aria-label="Close">×</button></div>
-      <div class="win-body"><div class="rcp" id="craftList"></div></div>
+    <section class="win k-win" id="craftWin" aria-label="What to make" hidden style="width:min(460px,calc(100% - 28px))">
+      <div class="k-head"><img id="craftIco" src="/v3/assets/img/glad/flat/ui/g_cooking.png?v=1" alt=""><b id="craftTitle">Campfire</b><span class="k-sub" id="craftSub"></span><button type="button" class="k-x" data-close="craftWin" aria-label="Close">×</button></div>
+      <div class="k-body k-paper" id="craftList"></div>
+      <div class="k-foot"><span class="k-note">Pick one and you start making it.</span></div>
     </section>
     <section class="win" id="gameWin" aria-label="Casino game" hidden style="width:min(430px,calc(100% - 28px))">
       <div class="win-head"><b id="gameTitle">🎰 Casino</b><small id="gameSub">Tickets in, tickets out</small><button type="button" class="win-x" data-close="gameWin" aria-label="Close">×</button></div>
@@ -4846,6 +4775,8 @@ $("craftList").addEventListener("click", (e) => {
   const el = e.target.closest("[data-cr]");
   if (el && !el.disabled) craftChoose(el);
 });
+/* a station's header icon is its skill's guide picture; these two skills' pictures go by another name */
+const CRAFT_GUIDE = { jewelcrafting: "gems" };
 function openCraft(ob) {
   const fresh = $("craftWin").hidden;   /* a fresh open, as opposed to a redraw under someone who is reading it */
   craftAt = ob;
@@ -4853,42 +4784,42 @@ function openCraft(ob) {
   const skill = G.STATIONS[ob.t].skill, lv = lvl(skill);
   const have = (k) => G.countItems(me, [k]);   /* the SERVER's own count, not a second one: canMake uses countItems, so anything else here could grey a row the server would happily run */
   const chosen = craftPick[ob.t];
-  $("craftTitle").textContent = `${icon} ${title}`;
-  /* the skill's own icon beside its level, the way every other panel names a skill */
-  $("craftSub").innerHTML = `${sico(skill)} ${esc(G.SKILLS[skill].name)} ${lv}`;
-
-  /* Sorted EASIEST first, the opposite of recipesAt(). That order exists so "the best thing you can make" is
-     [0]; a human reading a list wants to start at the bottom of the ladder and find where they are on it. */
+  /* (2026-09-28) UI KIT, batch 2: the station's guide icon and name in the header, your level beside them; every recipe a kit row (ready /
+     off / chosen) with its product and ingredients in bag slots, a red ring on the one you are short of; the ones you can reach first,
+     then a divider for each level still to come. The row still carries data-cr, disabled and the same tooltips as before. */
+  $("craftTitle").textContent = title;
+  $("craftIco").src = `${UIA}g_${CRAFT_GUIDE[skill] || skill}.png?v=1`;
+  $("craftIco").onerror = () => { $("craftIco").onerror = null; $("craftIco").src = `${UIA}g_tools.png?v=1`; };
+  $("craftSub").textContent = `${G.SKILLS[skill].name} ${lv}`;
   const rows = [...all].sort((x, y) => x.lvl - y.lvl);
   const best = all.find((r) => G.canMake(me, r));
   const row = (r) => {
-    const out = ITEMS[r.out[0]], canLvl = lv >= r.lvl;
+    const out = ITEMS[r.out[0]], canLvl = lv >= r.lvl, on = chosen === r.id;
     const short = r.in.filter(([k, n]) => have(k) < n);
-    const on = chosen === r.id;
-    /* an ingredient you are short of is marked, not faded: "faded" reads as decoration, a red slab reads as the
-       reason the row is off. The count only shows when you have SOME of it, because "0 of 2" is the sentence
-       under the row and repeating it in the chip is noise. */
-    const needs = r.in.map(([k, n]) => {
-      const h = have(k), ok = h >= n;
-      return `<em class="${ok ? "" : "no"}" title="${esc(ITEMS[k].name)} — you have ${h}">${ico(k)}${n > 1 ? `<u>×${n}</u>` : ""}${!ok && h ? `<s>${h}</s>` : ""}</em>`;
-    }).join("");
+    const needs = r.in.map(([k, n]) => { const h = have(k), ok = h >= n;
+      return `<span class="k-slot sm${ok || !canLvl ? "" : " miss"}" title="${esc(ITEMS[k].name)}: it takes ${n}, you have ${h}">${ico(k)}${n > 1 ? `<u>×${n}</u>` : ""}</span>`; }).join("");
     const shortList = short.map(([k, n]) => `${n} × ${ITEMS[k].name.toLowerCase()}${have(k) ? ` (you have ${have(k)})` : ""}`).join(", ");
-    const why = !canLvl
-      ? `<span class="cr-lock">Needs ${esc(G.SKILLS[skill].name)} ${r.lvl}</span>`
-      : short.length
-        ? `<span class="cr-miss">You don't have the ingredients</span>`
-        : `${r.in.map(([k, n]) => `${n} × ${esc(ITEMS[k].name.toLowerCase())}`).join(" + ")} → ${r.out[1] > 1 ? `${r.out[1]} × ` : ""}${esc(out.name.toLowerCase())}`;
+    const recipe = `${r.in.map(([k, n]) => `${n} × ${esc(ITEMS[k].name.toLowerCase())}`).join(" + ")}`;
+    const why = !canLvl ? recipe
+      : short.length ? `Needs ${short.map(([k, n]) => `${n - have(k)} × ${esc(ITEMS[k].name.toLowerCase())}`).join(" + ")}`
+      : `${recipe} → ${r.out[1] > 1 ? `${r.out[1]} × ` : ""}${esc(out.name.toLowerCase())}`;
     const risk = canLvl ? G.spoilChance(r, lv) : 0;
     const tip = !canLvl ? `Needs ${G.SKILLS[skill].name} ${r.lvl}` : short.length ? `You don't have the ingredients: ${shortList}` : `Make ${out.name.toLowerCase()}`;
-    return `<button type="button" class="rcpr cr-row${on ? " on" : ""}" data-cr="${esc(r.id)}" title="${esc(tip)}"${canLvl && !short.length ? "" : " disabled"}>
-      <i>${ico(r.out[0])}</i><span><b>${esc(out.name)}${r.out[1] > 1 ? ` ×${r.out[1]}` : ""}</b><small>${why}</small></span>
-      <span class="cr-in">${needs}${risk ? `<b class="cr-risk" title="${Math.round(risk * 100)}% chance this spoils and the materials are lost, whatever your level.">${Math.round(risk * 100)}%</b>` : ""}<b class="lv" title="${esc(G.SKILLS[skill].name)} ${r.lvl}">${sico(skill)}${r.lvl}</b></span>
-      ${on ? '<span class="cr-on">Making this</span>' : ""}</button>`;
+    const off = !canLvl ? " off lock" : short.length ? " off" : "";
+    return `<button type="button" class="k-row cr-row${on ? " on" : ""}${off}" data-cr="${esc(r.id)}" title="${esc(tip)}"${canLvl && !short.length ? "" : " disabled"}>
+      <span class="k-slot">${ico(r.out[0])}</span><span><b>${esc(out.name)}${r.out[1] > 1 ? ` ×${r.out[1]}` : ""}</b><small${!off ? ' class="good"' : ""}>${why}</small></span>
+      <span class="k-end">${needs}${risk ? `<span class="k-chip bad" title="${Math.round(risk * 100)}% chance this spoils and the materials are lost, whatever your level.">${Math.round(risk * 100)}%</span>` : ""}${on ? '<span class="k-chip gold">Making this</span>' : ""}</span></button>`;
   };
-  $("craftList").innerHTML = `<button type="button" class="rcpr cr-row cr-auto${chosen ? "" : " on"}" data-cr="">
-      <i>✨</i><span><b>Best thing I can make</b><small>${best ? `Right now that is ${esc(ITEMS[best.out[0]].name.toLowerCase())}. Changes as your bag does.` : `<span class="cr-miss">You don't have the ingredients for anything here yet.</span>`}</small></span>
-      <span class="cr-in"></span>${chosen ? "" : '<span class="cr-on">Making this</span>'}</button>`
-    + rows.map(row).join("");
+  let list = `<button type="button" class="k-row cr-row cr-auto${chosen ? "" : " on"}" data-cr="">
+      <span class="k-slot"><img src="${UIA}total.png?v=1" alt=""></span><span><b>Best thing I can make</b><small>${best ? `Right now that is ${esc(ITEMS[best.out[0]].name.toLowerCase())}. Follows your bag.` : "Nothing yet: you're short on everything here. Follows your bag."}</small></span>
+      <span class="k-end">${chosen ? "" : '<span class="k-chip gold">Making this</span>'}</span></button>`;
+  let sect = null;
+  for (const r of rows) {
+    const sc = lv >= r.lvl ? "have" : r.lvl;
+    if (sc !== sect) { sect = sc; list += sc === "have" ? `<div class="k-sect"><span class="k-label">${esc(G.SKILLS[skill].name)} ${lv}</span></div>` : `<div class="k-sect"><span class="k-chip lock">Unlocks at ${esc(G.SKILLS[skill].name)} ${r.lvl}</span></div>`; }
+    list += row(r);
+  }
+  $("craftList").innerHTML = list;
   $("craftWin").hidden = false;
   /* (2026-09-25) OPEN ON WHERE YOU ACTUALLY ARE. The list is easiest-first because that is the order a ladder
      reads in, which puts a level-74 cook twenty rows they have outgrown below the fold - the same thing the
@@ -4897,7 +4828,7 @@ function openCraft(ob) {
   craftSig = craftSigOf(ob);
   if (!fresh) return;   /* only on a fresh open: yanking the scroll out from under someone mid-read is worse than a stale position */
   const on = $("craftList").querySelector(".cr-row.on:not(.cr-auto)")
-    || $("craftList").querySelector(".rcpr:not(:disabled):not(.cr-auto)");
+    || $("craftList").querySelector(".cr-row:not(:disabled):not(.cr-auto)");
   if (on) on.scrollIntoView({ block: "center" });
 }
 /* The panel is a live list of what your bag can do, so it has to be redrawn as the bag changes - otherwise it
@@ -4940,7 +4871,7 @@ function openSmith(ob) {
   smithAt = ob;
   const all = G.recipesAt("anvil");
   const lv = lvl("smithing");
-  $("smithSub").textContent = `Smithing ${lv}`;
+  $("smithSub").textContent = `Smithing ${lv}`;   /* (2026-09-28) the header is the kit's; the tabs live in #smithTabs under it */
 
   const tiers = G.TIERS.filter((t) => all.some((r) => ITEMS[r.out[0]]?.tier === t.key));
   const best = [...tiers].reverse().find((t) => lv >= t.gate) || tiers[0];
@@ -4965,10 +4896,9 @@ function openSmith(ob) {
      anvil recipe whose product has no slot, as rows: level, every input with have/need, and the same act the Smith tiles send. */
   const crafts = all.filter((r) => !ITEMS[r.out[0]]?.slot).sort((x, y) => x.lvl - y.lvl || ITEMS[x.out[0]].name.localeCompare(ITEMS[y.out[0]].name));
   const craftable = crafts.filter((r) => lv >= r.lvl && r.in.every(([k, n]) => G.countItems(me, [k]) >= n)).length;
-  const tabs = `<div class="an-tabs">
-    <button type="button" class="an-tab${smithTab === "make" ? " on" : ""}" data-tab="make">Smith</button>
-    <button type="button" class="an-tab${smithTab === "forge" ? " on" : ""}" data-tab="forge">Reforge${owned.length ? ` · ${owned.length}` : ""}</button>
-    <button type="button" class="an-tab${smithTab === "craft" ? " on" : ""}" data-tab="craft">Craftables${craftable ? ` · ${craftable}` : ""}</button></div>`;
+  /* (2026-09-28) UI KIT, batch 2: the three tabs are the kit's folder tabs under the header; the counts ride on them as chips */
+  const tab = (k, name, n, cls = "") => `<button type="button" role="tab" data-tab="${k}" aria-selected="${smithTab === k}">${name}${n ? ` <small class="k-chip${cls}">${n}</small>` : ""}</button>`;
+  const tabs = tab("make", "Smith") + tab("forge", "Reforge", owned.length) + tab("craft", "Craftables", craftable, " good");
 
   let body = "";
   if (smithTab === "craft") {
@@ -4976,14 +4906,14 @@ function openSmith(ob) {
       const out = ITEMS[r.out[0]], needLvl = lv < r.lvl;
       const ins = r.in.map(([k, n]) => { const have = G.countItems(me, [k]); return `<span class="${have < n ? "an-cost-short" : ""}">${ico(k)} ${have}/${n} ${esc(ITEMS[k]?.name.toLowerCase() || k)}</span>`; });
       const short = !needLvl && r.in.some(([k, n]) => G.countItems(me, [k]) < n);
-      return `<button type="button" class="rcpr an-row${needLvl ? " lock" : ""}" data-r="${r.id}"${needLvl || short ? " disabled" : ""}>
-        <i>${ico(r.out[0])}</i><span><b>${esc(out.name)}${r.out[1] > 1 ? ` ×${r.out[1]}` : ""}</b><small>${needLvl ? `Needs Smithing ${r.lvl}` : ins.join(" · ")} · ${r.xp} xp</small></span>
-        <span class="an-odds${needLvl ? " max" : ""}">${needLvl ? `Lv ${r.lvl}` : short ? "short" : "make"}</span></button>`;
+      return `<button type="button" class="k-row an-row${needLvl ? " off lock" : short ? " off" : ""}" data-r="${r.id}"${needLvl || short ? " disabled" : ""}>
+        <span class="k-slot">${ico(r.out[0])}</span><span><b>${esc(out.name)}${r.out[1] > 1 ? ` ×${r.out[1]}` : ""}</b><small>${needLvl ? `Needs Smithing ${r.lvl}` : ins.join(" · ")} · ${r.xp} xp</small></span>
+        <span class="k-end">${needLvl ? `<span class="k-chip lock">${r.lvl}</span>` : short ? '<span class="k-chip bad">Short</span>' : '<span class="k-chip good">Make</span>'}</span></button>`;
     }).join("") || `<p class="note">Nothing here yet.</p>`}</div>`;
   } else if (smithTab === "make") {
     const chips = tiers.map((t) => {
       const locked = lv < t.gate;
-      return `<button type="button" class="an-chip${t.key === smithTier ? " on" : ""}${locked ? " locked" : ""}" data-tier="${t.key}" title="${locked ? `Needs Smithing ${t.gate}` : esc(t.name)}">${esc(t.name)}${locked ? " \u{1F512}" : ""}</button>`;
+      return `<button type="button" class="${locked ? "locked" : ""}" aria-pressed="${t.key === smithTier}" data-tier="${t.key}" title="${locked ? `Needs Smithing ${t.gate}` : esc(t.name)}">${esc(t.name)}</button>`;
     }).join("");
     const slotAt = (k) => { const i = G.SLOTS.indexOf(ITEMS[k]?.slot); return i < 0 ? 99 : i; };
     const rows = all.filter((r) => ITEMS[r.out[0]]?.tier === smithTier)
@@ -4992,10 +4922,10 @@ function openSmith(ob) {
     const tiles = rows.map((r) => {
       const out = ITEMS[r.out[0]], need = r.in[0][1], needLvl = lv < r.lvl, short = !needLvl && haveBars < need;
       const label = out.short || out.name.replace(/^\S+\s+/, "");
-      return `<button type="button" class="an-tile${needLvl ? " lock" : short ? " short" : ""}" data-r="${r.id}"${needLvl || short ? " disabled" : ""} title="${esc(out.name)}${needLvl ? ` — needs Smithing ${r.lvl}` : ` — ${need} bar${need > 1 ? "s" : ""}, ${r.xp} xp`}"><i>${ico(r.out[0])}</i><b>${esc(label)}${r.out[1] > 1 ? ` ×${r.out[1]}` : ""}</b><small>${needLvl ? `\u{1F512} ${r.lvl}` : `${need} bar${need > 1 ? "s" : ""}`}</small></button>`;
+      return `<button type="button" class="an-tile${needLvl ? " lock" : short ? " short" : ""}" data-r="${r.id}"${needLvl || short ? " disabled" : ""} title="${esc(out.name)}${needLvl ? ` — needs Smithing ${r.lvl}` : ` — ${need} bar${need > 1 ? "s" : ""}, ${r.xp} xp`}"><span class="k-slot">${ico(r.out[0])}</span><b>${esc(label)}${r.out[1] > 1 ? ` ×${r.out[1]}` : ""}</b>${needLvl ? `<small class="k-chip lock">${r.lvl}</small>` : `<small class="k-chip${short ? " bad" : ""}">${need} bar${need > 1 ? "s" : ""}</small>`}</button>`;
     }).join("");
-    body = `<div class="an-chips">${chips}</div>
-      <div class="an-bars"><i>${ico(bar)}</i> ${haveBars} ${esc(ITEMS[bar] ? ITEMS[bar].name.toLowerCase() : "bars")}</div>
+    body = `<div class="an-top"><div class="k-seg an-tiers" role="group" aria-label="Tier">${chips}</div>
+      <span class="k-chip an-bars" title="What you carry for this tier">${ico(bar)} ${haveBars} ${esc(ITEMS[bar] ? ITEMS[bar].name.toLowerCase() : "bars")}</span></div>
       <div class="an-grid">${tiles || `<p class="note">Nothing at this tier.</p>`}</div>`;
   } else {
     /* (2026-09-22, the owner) THE WARNING SITS ABOVE THE LIST, not in a tooltip. Each row carries its own break
@@ -5008,9 +4938,9 @@ function openSmith(ob) {
     const AIDS = [["temper", "Temper", `+${Math.round(G.FORGE.temper * 100)}% chance`], ["flux", "Flux", "can't break"], ["masters_seal", "Master's seal", `past +${G.FORGE.max}`]];
     const held = AIDS.filter(([k]) => G.countItems(me, [k]) > 0);
     for (const k of [...forgeUse]) if (!held.some(([h]) => h === k)) forgeUse.delete(k);   // spent the last one: stop asking for it
-    const aids = held.length ? `<div class="an-aids"><div class="an-aids-h">Tap to add to your next reforge</div>${held.map(([k, name, what]) => `<button type="button" class="an-aid${forgeUse.has(k) ? " on" : ""}" data-aid="${k}" aria-pressed="${forgeUse.has(k)}"><i>${ico(k)}</i><span><b>${esc(name)}</b><small>${esc(what)} · ${G.countItems(me, [k])} held</small></span><em class="an-sw">${forgeUse.has(k) ? "✓ ON" : "USE"}</em></button>`).join("")}</div>` : "";
+    const aids = held.length ? `<div class="an-aids"><span class="k-label">Tap to add to your next reforge</span>${held.map(([k, name, what]) => `<button type="button" class="k-row an-aid${forgeUse.has(k) ? " on" : ""}" data-aid="${k}" aria-pressed="${forgeUse.has(k)}"><span class="k-slot sm">${ico(k)}</span><span><b>${esc(name)}</b><small>${esc(what)} · ${G.countItems(me, [k])} held</small></span><span class="k-end"><span class="k-chip${forgeUse.has(k) ? " good" : ""}">${forgeUse.has(k) ? "✓ On" : "Use"}</span></span></button>`).join("")}</div>` : "";
     const sealed = forgeUse.has("masters_seal"), tempered = forgeUse.has("temper"), fluxed = forgeUse.has("flux");
-    const warn = owned.length ? `<div class="an-warn">⚠ Your gear can break and it's gone. Be careful!</div>` : "";
+    const warn = owned.length ? `<div class="k-warn">Your gear can break, and then it's gone. Be careful!</div>` : "";
     body = warn + aids + (owned.length ? owned.map((k) => {
       const it = ITEMS[k], f = anvilLevel(k), cap = f >= (sealed ? G.FORGE.cap : G.FORGE.max);
       const [bk, n] = G.forgeCost(k), have = G.countItems(me, [bk]);
@@ -5025,14 +4955,14 @@ function openSmith(ob) {
       const whyHtml = !cap && !needLvl && short ? `<span class="an-cost-short">${esc(`${have}/${n} ${ITEMS[bk].name.toLowerCase()}`)}</span>${esc(miss)}` : esc(why);   /* (2026-09-25) the cost you cannot cover, in red that reads on parchment */
       /* What the NEXT level actually buys, in real numbers, so "is this worth bars" is answerable without maths. */
       const gain = cap ? "" : G.forgeNextAt(k, f, sealed).map(([fd, d]) => fd === "tspd" ? `+${(d * 100).toFixed(1)}% ${SKILL_VERB[it.tool] || "tool"} speed` : fd === "cap" ? `+${Math.round(d * 100)}% capacity` : `+${d} ${fd}`).join(", ");
-      return `<button type="button" class="rcpr an-row" data-forge="${esc(k)}"${cap || needLvl || short ? " disabled" : ""}>
-        <i>${ico(k)}</i><span><b>${esc(it.name)}${f ? ` <em class="fg">+${f}</em>` : ""}</b>${statChips(k, f)}<small>${whyHtml}${gain ? ` · next: ${gain}` : ""}</small></span>
-        <span class="an-odds${cap ? " max" : ""}">${cap ? "MAX" : `${odds}%`}${!cap && brk ? `<b class="an-brk">${brk}% break</b>` : ""}</span></button>`;
+      return `<button type="button" class="k-row an-row${cap || needLvl || short ? " off" : ""}${needLvl ? " lock" : ""}" data-forge="${esc(k)}"${cap || needLvl || short ? " disabled" : ""}>
+        <span class="k-slot">${ico(k)}</span><span><b>${esc(it.name)}${f ? ` <em class="fg">+${f}</em>` : ""}</b>${statChips(k, f)}<small>${whyHtml}${gain ? ` · next: ${gain}` : ""}</small></span>
+        <span class="k-end an-odds">${cap ? '<span class="k-chip good">Max</span>' : `<span class="k-chip gold" title="Chance this reforge lands">${odds}%</span>`}${!cap && brk ? `<span class="k-chip bad" title="Chance a miss destroys it">${brk}% break</span>` : ""}</span></button>`;
     }).join("") : `<p class="note">Nothing you are carrying can be reforged. Make or wear a piece of gear first.</p>`);
   }
 
-  $("smithList").innerHTML = tabs + body;
-  $("smithList").querySelectorAll("[data-tab]").forEach((el) => el.addEventListener("click", () => { smithTab = el.dataset.tab; SFX.play("ui_click"); openSmith(ob); }));
+  $("smithTabs").innerHTML = tabs; $("smithList").innerHTML = body;
+  $("smithTabs").querySelectorAll("[data-tab]").forEach((el) => el.addEventListener("click", () => { smithTab = el.dataset.tab; SFX.play("ui_click"); openSmith(ob); }));
   $("smithList").querySelectorAll("[data-tier]").forEach((el) => el.addEventListener("click", () => { if (el.classList.contains("locked")) return; smithTier = el.dataset.tier; SFX.play("ui_click"); openSmith(ob); }));
   $("smithList").querySelectorAll("[data-aid]").forEach((el) => el.addEventListener("click", () => { const k = el.dataset.aid; forgeUse.has(k) ? forgeUse.delete(k) : forgeUse.add(k); SFX.play("ui_click"); openSmith(ob); }));
   $("smithList").querySelectorAll("[data-forge]").forEach((el) => el.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "forge", k: el.dataset.forge, use: [...forgeUse] }); forgeUse.clear(); }));   /* cleared after the swing: they are spent, and leaving them ticked would quietly spend the next one too */
@@ -7142,7 +7072,7 @@ function dblSet(on) {
   dblRender();
   if (DBL && !dblTimer) dblTimer = setInterval(dblRender, 1000);
 }
-window.__es = { openCraft, CZ, renderTour, renderPanel, popup, showInfo, talkTo, set zc(n) { ZCBAL = n; renderPanel(); }, wlNum, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
+window.__es = { openCraft, openSmith, CZ, renderTour, renderPanel, popup, showInfo, talkTo, set zc(n) { ZCBAL = n; renderPanel(); }, wlNum, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
 
 setInterval(() => {
   if (ws && ws.readyState === 1 && you) {
