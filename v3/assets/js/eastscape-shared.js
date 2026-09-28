@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 337;
+export const VERSION = 338;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -3950,8 +3950,8 @@ export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 10
    charcoal and do not know why. It also fills a hole that was already open - burnChance has a `range` multiplier
    worth 20%, and the only range in the game is in the CLOSED Cottage, so no player has ever had it. */
 export const COAL_STEADY_MIN = 0.10;
-export const OUT_CAP = { tix: 0.25, speed: 0.2, tough: 0.3, rare: 0.4, zdrop: 0.75, bite: 0.1, heal: 0.5, steal: 0.15, ammo: 0.5, leech: 0.25, double: 0.3, execute: 0.3, calm: 1, nobill: 1, gem: 1 };
-const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal", "steal", "ammo", "leech", "double", "execute", "calm", "nobill", "gem"];   /* (2026-09-27) gem: the Mountain's Heart */   /* (2026-09-27) the last six are the Long Night's pieces' effects; see fxText */
+export const OUT_CAP = { tix: 0.25, speed: 0.2, tough: 0.3, rare: 0.4, zdrop: 0.75, bite: 0.1, heal: 0.5, steal: 0.15, ammo: 0.5, leech: 0.25, double: 0.3, execute: 0.3, calm: 1, nobill: 1, gem: 1, smelt: 0.5, forge: 0.2 };
+const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal", "steal", "ammo", "leech", "double", "execute", "calm", "nobill", "gem", "smelt", "forge"];   /* (2026-09-27) gem: the Mountain's Heart */   /* (2026-09-27) the last six are the Long Night's pieces' effects; see fxText */
 
 /* ============================================================ ACHIEVEMENTS (2026-09-23, the owner)
 
@@ -4181,7 +4181,7 @@ export const fxText = (f) => [f.tix && `${pct(f.tix)} more tickets from kills, a
   f.bite && `fish bite ${pct(f.bite)} more often`, f.heal && `fish heal ${pct(f.heal)} more`,
   /* (2026-09-27) the Long Night's pieces */
   f.ammo && `${pct(f.ammo)} of your shots and casts spend no arrow or page`, f.leech && `${pct(f.leech)} of the damage you deal comes back as health`, f.double && `${pct(f.double)} of what you mine, cut or catch comes up double`,
-  f.execute && `a monster under ${pct(f.execute)} health dies to your next hit (never a boss)`, f.calm && `nothing outside attacks you first`, f.nobill && `the hospital never bills you`, f.gem && `jewels turn up in the rock ${pct(f.gem)} more often`,
+  f.execute && `a monster under ${pct(f.execute)} health dies to your next hit (never a boss)`, f.calm && `nothing outside attacks you first`, f.nobill && `the hospital never bills you`, f.gem && `jewels turn up in the rock ${pct(f.gem)} more often`, f.smelt && `${pct(f.smelt)} of the bars you smelt come out double`, f.forge && `every reforge is ${pct(f.forge)} likelier to land`,
   f.power && `your other worn buff gear is ${pct(f.power)} stronger`].filter(Boolean).join("; ");
 for (const it of Object.values(ITEMS)) {   // say what it does, once, from the numbers
   if (it.fx) it.ex = `Worn: ${fxText(it.fx)}. ${it.ex || ""}`.trim();
@@ -7667,9 +7667,9 @@ const _preFoundry = new Set(Object.keys(ITEMS));
    elemental (the Cinder Elemental) and its crusher, a skull on a post that rises out of the lava (Old Bessemer). Basalt, the foreman,
    is the golem at rest, greyed. */
 Object.assign(ITEMS, {
-  slag: { name: "Slag", icon: "🪨", ex: "What a Slag Golem is made of, and what is left when it is not. Basalt buys it by the sack." },
-  emberglass: { name: "Emberglass", icon: "🔶", ex: "Glass a Cinder Elemental leaves where it stood. Still warm a week later." },
-  tally: { name: "Foreman's tally", icon: "🏷️", ex: "A stamped tin tag off a Furnace Imp. Basalt counts them." }
+  slag: { name: "Slag", icon: "🪨", ex: "What a Slag Golem is made of, and what is left when it is not. The blast furnace takes it: slag in a double batch of eclipse or nova makes a third bar." },
+  emberglass: { name: "Emberglass", icon: "🔶", ex: "Glass a Cinder Elemental leaves where it stood. Still warm a week later. Brewed, it makes an Emberglass tonic." },
+  tally: { name: "Foreman's tally", icon: "🏷️", ex: "A stamped tin tag off a Furnace Imp. Basalt pays 150 tickets a tag: talk to him with them in your bag." }
 });
 Object.assign(VALUE, { slag: 30, emberglass: 120, tally: 70 });
 /* THE BLAST FURNACE: every furnace recipe, half as much xp again, the same bars. It is a `nexus` station like the Nexus altar so the
@@ -7685,17 +7685,36 @@ const fmob = (t, def, want, drops, rare = []) => {
 };
 fmob("slaggolem", { name: "Slag Golem", size: "m", lvl: 76, hp: 300, att: 74, def: 66, max: 18, speed: 2500, box: [32, 18], aggro: 2, guard: { archery: 0.4 }, weak: "frost", resist: "fire",
   ex: "Slag that got up. Arrows chip it; a blade or a spell breaks it. Frost cracks it right open." }, 400,
-  [["slag", [1, 3]], ["eclipse_ore", 1, 0.15], ["sapphire", 1, 0.04]], [["sharps_gloves", 0.02]]);
+  [["slag", [1, 3]], ["eclipse_ore", 1, 0.15], ["sapphire", 1, 0.01]]   /* (2026-09-27) sapphire 4% -> 1%: the Depths is the jewel map */, [["sharps_gloves", 0.02]]);
 fmob("furnaceimp", { name: "Furnace Imp", size: "m", lvl: 78, hp: 280, att: 82, def: 56, max: 21, speed: 2000, box: [34, 24], aggro: 3, weak: "frost", resist: "fire",
   ex: "It stokes the furnace and steals from the floor. Quick, and it bites. Frost puts it out." }, 430,
   [["tally", 1, 0.3], ["charcoal", [2, 5]], ["nova_ore", 1, 0.08]], [["spiderboots", 0.02]]);
 fmob("cinderelemental", { name: "Cinder Elemental", size: "l", lvl: 84, hp: 380, att: 88, def: 64, max: 24, speed: 2600, box: [38, 28], aggro: 3, guard: { melee: 0.35 }, weak: "frost", resist: "fire",
   ex: "A fire with a shape and a grudge. A sword goes through it; arrows and frost are what it minds." }, 500,
-  [["emberglass", 1, 0.25], ["nova_ore", 1, 0.12], ["singularity_ore", 1, 0.02], ["opal", 1, 0.03]], [["angels_ring", 0.02]]);
+  [["emberglass", 1, 0.25], ["nova_ore", 1, 0.12], ["singularity_ore", 1, 0.02], ["opal", 1, 0.01]]   /* opal 3% -> 1% */, [["angels_ring", 0.02]]);
 fmob("bessemer", { name: "Old Bessemer", size: "xl", lvl: 88, hp: 5000, att: 100, def: 76, max: 32, speed: 2600, box: [20, 46], aggro: 3, range: 2, boss: true, open: true, guard: { archery: 0.35 }, weak: "frost",
   ex: "The foundry's first foreman, or what the lava left of him: a skull on a post that comes up out of the ring. Reaches two tiles. Anyone who hurts him shares the kill." }, 1200,
   [["tickets", [500, 1000]], ["nova_ore", [2, 4]], ["singularity_ore", [1, 2]], ["emberglass", [2, 4]], ["singularity_core", 1, 0.03]], [["bookies_amulet", 0.05], ["gamblers_ring", 0.05], ["egg_cindered", 0.05]]);
+MOBS.bessemer.drops.push(["bessemergloves", 1, 0.01]);   /* the chase: see ITEMS.bessemergloves */
 BOSSES.add("bessemer");
+/* (2026-09-27, the owner chose "Smithing uses" for the Foundry's three drops and "Smithing piece" for Old Bessemer's chase)
+   SLAG: a double batch at the BLAST FURNACE ONLY, with slag in it, gives three bars for two batches' ore and flux. Eclipse and nova only:
+   singularity stays at one bar a batch, because it is the ore behind the best gear in the game. Four slag an extra eclipse bar, six an
+   extra nova, which is a golem kill or two for a bar worth 381 or 988 - the reason to fight on the Foundry floor as well as mine it. */
+recipe("blast_eclipse", { skill: "smithing", station: "blast", ms: 4800, in: [["eclipse_ore", 8], ["voidglass", 4], ["charcoal", 16], ["slag", 4]], out: ["eclipse_bar", 3], lvl: 70, xp: 315, priceDiv: 2, fail: 0.1 });
+recipe("blast_nova", { skill: "smithing", station: "blast", ms: 4800, in: [["nova_ore", 8], ["eclipse_bar", 2], ["charcoal", 20], ["slag", 6]], out: ["nova_bar", 3], lvl: 80, xp: 360, priceDiv: 2 });
+/* EMBERGLASS: an Alchemy 82 tonic between the Fang (78) and the Salve (84) - harder to hurt, and food goes further */
+fdrink("pot_ember", "Emberglass tonic", 25, { tough: 0.12, heal: 0.2 }, "It glows in the glass and it glows going down. 25 minutes outside: you take less, and every fish you eat heals a fifth more.");
+VALUE.pot_ember = 300;
+fbrew("brew_ember", 82, 170, [["large_vial", 1], ["emberglass", 2], ["charcoal", 2]], "pot_ember");
+/* THE TALLY: Basalt buys them (the npc's `buys`, paid when you talk to him) */
+/* OLD BESSEMER'S GAUNTLETS: the chase. Singularity gloves' defence and a little bite, worn at Smithing 85 rather than Melee, and the two
+   things a smith wants: 15% of the bars you smelt come out double (fx.smelt, read where the server hands a bar over), and every reforge
+   is 10 points likelier to land (fx.forge, added to the anvil's odds beside a Temper). One kill in a hundred, like the Deepwarden's ring;
+   `chase: "ember"` gives the icon a furnace glow instead of the crystal's pink. */
+ITEMS.bessemergloves = { name: "Bessemer's Gauntlets", short: "Gloves", icon: "\u{1F9E4}", slot: "gloves", def: 10, acc: 4, str: 4, chase: "ember", fx: { smelt: 0.15, forge: 0.10 }, req: { skill: "smithing", lvl: 85 },
+  ex: "Worn: 15% of the bars you smelt come out double; every reforge is 10% likelier to land. Old Bessemer's own, riveted iron gone black and orange at the knuckles. The lava never got them off him. Only Old Bessemer drops them, one kill in a hundred." };
+VALUE.bessemergloves = 9000;
 for (const t of ["slaggolem", "furnaceimp", "cinderelemental", "bessemer"]) EXAMINE[t] = [MOBS[t].ex];
 FUNG_WILD.foundry = ["bleedtooth", "inkcap", "bleedtooth"];
 BANDS.foundry = [76, 86];

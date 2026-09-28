@@ -818,12 +818,14 @@ export function createClosedScenes(G, H) {
     },
     /* Slag Golems on the floor, the top-left and in the ring (76); Furnace Imps on the east side and the floor (78); Cinder Elementals
        in the ring, the bottom-left and the east (84); Old Bessemer up out of the lava at the bottom of the ring (88, open, reaches two) */
-    mobs: [["slaggolem", 10, 21, { respawn: G.levelRespawn("slaggolem") }], ["slaggolem", 18, 21, { respawn: G.levelRespawn("slaggolem") }], ["slaggolem", 8, 5, { respawn: G.levelRespawn("slaggolem") }], ["slaggolem", 19, 10, { respawn: G.levelRespawn("slaggolem") }], ["slaggolem", 13, 17, { respawn: G.levelRespawn("slaggolem") }],
-      ["furnaceimp", 34, 2, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 38, 2, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 34, 15, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 41, 15, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 34, 9, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 33, 21, { respawn: G.levelRespawn("furnaceimp") }],
-      ["cinderelemental", 25, 12, { respawn: G.levelRespawn("cinderelemental") }], ["cinderelemental", 6, 17, { respawn: G.levelRespawn("cinderelemental") }], ["cinderelemental", 41, 12, { respawn: G.levelRespawn("cinderelemental") }], ["cinderelemental", 22, 23, { respawn: G.levelRespawn("cinderelemental") }],
+    /* (2026-09-27, the owner: "3 of each") three golems (the floor, the top-left, the ring), three imps (the top-right, the east side, the
+       east ledge) and three elementals (the ring, the bottom-left, the east), and Old Bessemer */
+    mobs: [["slaggolem", 10, 21, { respawn: G.levelRespawn("slaggolem") }], ["slaggolem", 8, 5, { respawn: G.levelRespawn("slaggolem") }], ["slaggolem", 19, 10, { respawn: G.levelRespawn("slaggolem") }],
+      ["furnaceimp", 34, 2, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 34, 9, { respawn: G.levelRespawn("furnaceimp") }], ["furnaceimp", 41, 15, { respawn: G.levelRespawn("furnaceimp") }],
+      ["cinderelemental", 25, 12, { respawn: G.levelRespawn("cinderelemental") }], ["cinderelemental", 6, 17, { respawn: G.levelRespawn("cinderelemental") }], ["cinderelemental", 41, 12, { respawn: G.levelRespawn("cinderelemental") }],
       ["bessemer", 22, 17, { perch: true, aggro: 3, respawn: [2400000, 3000000] }]],
-    npcs: [{ name: "Basalt", art: "basalt", x: 27, y: 2, still: true, quests: ["fdslag", "fdimps", "fdbessemer"], hair: "#444", shirt: "#553", pants: "#332",
-      lines: ["Foreman. Mind the vents, mind the ring, and don't stand on anything orange.", "The blast furnace is on the floor, along the bottom. Every bar the little furnaces make, and more xp for it.", "The imps take from the floor. The golems ARE the floor. The elementals just don't like you.", "Old Bessemer comes up at the bottom of the ring. He was foreman before me. He still thinks he is."] }],
+    npcs: [{ name: "Basalt", art: "basalt", x: 27, y: 2, still: true, quests: ["fdslag", "fdimps", "fdbessemer"], buys: { tally: 150 },   /* (2026-09-27) he pays for the imps' tallies */ hair: "#444", shirt: "#553", pants: "#332",
+      lines: ["Foreman. Mind the vents, mind the ring, and don't stand on anything orange.", "The blast furnace is on the floor, along the bottom. Every bar the little furnaces make, and more xp for it.", "The imps take from the floor. The golems ARE the floor. The elementals just don't like you.", "Every imp wears one of my tallies. Bring them back and I pay a hundred and fifty a tag.", "Slag in a double batch at the blast furnace makes a third bar. Four for eclipse, six for nova.", "Old Bessemer comes up at the bottom of the ring. He was foreman before me. He still thinks he is."] }],
     bots: []
   },
   depths: {

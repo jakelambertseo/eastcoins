@@ -411,7 +411,7 @@ export class World {
     if (G.countItems(C, [barKey]) < n) return bad(`That takes ${n} × ${G.ITEMS[barKey].name.toLowerCase()}. You have ${G.countItems(C, [barKey])}.`);
     G.takeInv(C.inv, barKey, n);
     for (const k of using) G.takeInv(C.inv, k, 1);
-    const odds = Math.min(0.99, G.forgeOdds(lvl, sealed) + (using.includes("temper") ? G.FORGE.temper : 0));
+    const odds = Math.min(0.99, G.forgeOdds(lvl, sealed) + (using.includes("temper") ? G.FORGE.temper : 0) + G.fxOf(C).forge);   /* (2026-09-27) + Bessemer's Gauntlets */
     const win = Math.random() < odds;
     C.eqf ||= {};
     /* (2026-09-22) A FAILURE CAN NOW DESTROY THE PIECE. Only a failure can - +1 is a certainty, so the risk starts
@@ -2638,6 +2638,9 @@ export class World {
       /* (2026-09-27) look in the bag before the conversation opens: a gather stage that is already covered by what you carry moves on
          here, so the NPC answers the stage you are really at (the sheet goes out before this event in the same tick) */
       this.questCheck(pl);
+      /* (2026-09-27) AN NPC WHO BUYS: `buys` on the npc ({ item: tickets each }) - Basalt and the Foundry's tallies. Everything of those in the bag
+         goes over the moment you talk to them, paid through give() like any other tickets, and the conversation opens as usual */
+      if (n.buys) { let count = 0, paid = 0; for (const [k, price] of Object.entries(n.buys)) { const have = G.countItems(C, [k]); if (have > 0) { G.takeInv(C.inv, k, have); count += have; paid += have * price; } } if (paid && this.give(pl, "tickets", paid)) { this.touch(pl); this.say(pl, `${n.name} counts ${count} ${count === 1 ? "tag" : "tags"} and pays you ${G.fmtTix(paid)}.`, "loot"); } }
       pl.out.push({ type: "talk", npc: n.id }); return;
     }
     pl.act = null;   // most things are one go; the gathering ones below put it back
@@ -3006,6 +3009,8 @@ export class World {
            reached the inputs go back and the station stops, rather than eating a stack a fish at a time. */
         if (!this.give(pl, r.out[0], outN)) { for (const [k, n] of r.in) this.give(pl, k, n); this.touch(pl); pl.act = null; return; }
         this.gained(S, pl, r.out[0], outN, r.skill === "cooking" ? "cook" : "craft");
+        /* (2026-09-27) Bessemer's Gauntlets: a smelted bar may come out double (fx.smelt). Only if the bag has the room: a lucky bar is never a "bag full" */
+        if ((r.station === "furnace" || r.station === "blast") && String(r.out[0]).endsWith("_bar")) { const sm = G.fxOf(C).smelt; if (sm > 0 && Math.random() < sm && G.roomFor(C.inv, r.out[0], C) >= outN) { G.addInv(C.inv, r.out[0], outN, C); this.touch(pl); this.say(pl, `The gauntlets ring on the mould: ${outN > 1 ? `${outN} more` : "another"} ${G.ITEMS[r.out[0]].name.toLowerCase()}!`, "loot"); } }
         /* (2026-09-23, the owner: "lets make sure we have the group bonus (+1% etc) to the campfire when users are
            cooking"). Standing at a fire with other people now pays what standing at a rock with them does: +1% xp
            each. It was only ever wired into the GATHERING branch, so a busy campfire was worth exactly as much as

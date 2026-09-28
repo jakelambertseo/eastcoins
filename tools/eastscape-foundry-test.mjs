@@ -32,10 +32,26 @@ const veins = S.objs.filter((o) => o.t === "rock" && o.ore); is(veins.length, 9,
 for (const o of [...veins, ...S.objs.filter((o) => o.t === "blast")]) { if (S.g[o.y][o.x] !== "#") fail(`${o.name} at ${o.x},${o.y} is not on a blocked tile`); let near = 9; for (let y = 0; y < G.ROWS; y++) for (let x = 0; x < G.COLS; x++) if (walk(x, y)) near = Math.min(near, G.cheb({ x, y }, o)); if (near > 1) fail(`${o.name} cannot be reached (${near})`); }
 is(S.objs.filter((o) => o.t === "blast").length, 1, "one blast furnace");
 const furnace = G.recipesAt("furnace").map((r) => r.id).sort(), blast = G.recipesAt("blast").map((r) => r.id).sort();
-is(blast.join(","), furnace.join(","), "the blast furnace serves every furnace recipe"); is(G.STATIONS.blast.nexus && G.STATIONS.blast.boost.mult === 1 && G.STATIONS.blast.boost.xp === 1.5, true, "one bar, half as much xp again");
+is(blast.join(","), [...furnace, "blast_eclipse", "blast_nova"].sort().join(","), "the blast furnace serves every furnace recipe, and its own two slag batches"); is(G.STATIONS.blast.nexus && G.STATIONS.blast.boost.mult === 1 && G.STATIONS.blast.boost.xp === 1.5, true, "one bar, half as much xp again");
 is(G.MOBS.bessemer.open && G.BOSSES.has("bessemer") && G.MOBS.bessemer.range === 2, true, "Old Bessemer is an open boss with reach two");
 is(G.BANDS.foundry.join("-"), "76-86", "the band");
 is(G.FUNG_WILD.foundry?.length, 3, "three wild mushroom clusters"); is(S.objs.filter((o) => o.t === "shroom").length, 3, "and they stand on the map");
 is(G.EGGS.egg_cindered.from.includes("foundry"), true, "a Cindered egg can turn up here");
+/* (2026-09-27, the owner's picks: "3 of each", "Smithing uses", "Smithing piece", "Lower to ~1%") */
+{ const n = (t) => S.mobs.filter((m) => m.t === t).length; is([n("slaggolem"), n("furnaceimp"), n("cinderelemental"), n("bessemer")], [3, 3, 3, 1], "three of each, and Old Bessemer"); }
+is([G.MOBS.slaggolem.drops.find(([k]) => k === "sapphire")[2], G.MOBS.cinderelemental.drops.find(([k]) => k === "opal")[2]], [0.01, 0.01], "their jewels are 1% now");
+for (const k of ["slag", "emberglass"]) is(Object.values(G.RECIPES).some((r) => r.in.some(([i]) => i === k)), true, `${k} goes into a recipe`);
+is([G.RECIPES.blast_eclipse.out, G.RECIPES.blast_nova.out, G.RECIPES.blast_eclipse.station], [["eclipse_bar", 3], ["nova_bar", 3], "blast"], "slag makes a third bar, at the blast furnace only");
+is(G.ITEMS.pot_ember?.drink?.fx, { tough: 0.12, heal: 0.2 }, "emberglass brews the Emberglass tonic");
+/* Basalt buys tallies, through the real talk */
+{ const C = G.freshChar(), b = S.npcs.find((x) => x.name === "Basalt"), pl = { id: "tally", name: "t", C, x: b.x + 1, y: b.y, out: [], path: [] }; W.pls.set(pl.id, pl); C.scene = "foundry";
+  G.addInv(C.inv, "tally", 7, C); const before = G.countItems(C, ["tickets"]);
+  pl.act = { kind: "npc", id: b.id, x: b.x, y: b.y, started: 0 }; W.doAction(S, pl, Date.now());
+  is([G.countItems(C, ["tally"]), G.countItems(C, ["tickets"]) - before, pl.out.some((e) => e.type === "talk")], [0, 1050, true], "Basalt takes seven tallies for 1,050 tickets, and the conversation still opens"); }
+/* Bessemer's Gauntlets */
+{ const g = G.ITEMS.bessemergloves; is([g.slot, g.chase, g.req.skill, G.MOBS.bessemer.drops.some(([k, , p]) => k === "bessemergloves" && p === 0.01)], ["gloves", "ember", "smithing", true], "Old Bessemer's chase: gloves, one kill in a hundred");
+  const C = { eq: { gloves: "bessemergloves" } }; is([G.fxOf(C).smelt, G.fxOf(C).forge], [0.15, 0.1], "worn: 15% double bars, +10% reforge odds");
+  const src = (await import("fs")).readFileSync(new URL("../eastscape-worker/src/index.js", import.meta.url), "utf8");
+  is([/G\.fxOf\(C\)\.smelt/.test(src), /\+ G\.fxOf\(C\)\.forge\)/.test(src)], [true, true], "the server reads both where a bar is handed over and where the anvil rolls"); }
 console.log(bad ? `\n${bad} problem(s)` : "\nthe Foundry works: the map, the door, the veins, the blast furnace, the monsters, Basalt's quests");
 process.exitCode = bad ? 1 : 0;
