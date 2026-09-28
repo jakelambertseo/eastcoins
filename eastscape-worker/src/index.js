@@ -1595,7 +1595,7 @@ export class World {
     this.gained(S, pl, k, n); this.grant(pl, "fungiculture", Math.max(10, Math.round(F.xp * G.FUNG.wildXp)));
     const spawn = Math.random() < G.FUNG.wildSpawn && this.giveUpTo(pl, sk, 1);
     const nose = G.truffleNose(C), truf = nose && Math.random() < G.FUNG.truffle.pick && this.giveUpTo(pl, "truffle", 1), trufSp = nose && Math.random() < G.FUNG.truffle.spawn && this.giveUpTo(pl, "spawn_truffle", 1);
-    this.say(pl, `You pick ${n} ${G.ITEMS[k].name.toLowerCase()}${spawn ? ", and scrape up some spores with it" : ""}.${truf ? " Your pig roots out a black truffle beside it!" : ""}${trufSp ? " The pig turns up truffle spores, too." : ""}`, truf || trufSp ? "loot" : "good");
+    this.say(pl, `You pick ${n} ${G.ITEMS[k].name.toLowerCase()}${spawn ? ", and scrape up some spawn with it" : ""}.${truf ? " Your pig roots out a black truffle beside it!" : ""}${trufSp ? " The pig turns up truffle spawn, too." : ""}`, truf || trufSp ? "loot" : "good");
     this.emit(pl, "gather", { k, n });
   }
   /** a click on a bed: plant (the page asks what), wait, or harvest */
@@ -1614,7 +1614,7 @@ export class World {
     const trufSp = G.truffleNose(pl.C) && p.k !== "spawn_truffle" && Math.random() < G.FUNG.truffle.bed && this.giveUpTo(pl, "spawn_truffle", 1);
     I.beds[ob.i] = null; this.touch(pl);
     this.gained(S, pl, yk, n); this.grant(pl, "fungiculture", F.xp);
-    this.say(pl, `You harvest ${n} ${nm}${back ? `, and ${back === 1 ? "a handful" : back === 2 ? "two handfuls" : `${back} handfuls`} of spores with them` : ""}.${trufSp ? " Your pig has been rooting in the next bed: truffle spores!" : ""}`, trufSp ? "loot" : "good");
+    this.say(pl, `You harvest ${n} ${nm}${back ? `, and ${back === 1 ? "a handful" : back === 2 ? "two handfuls" : `${back} handfuls`} of spawn with them` : ""}.${trufSp ? " Your pig has been rooting in the next bed: truffle spawn!" : ""}`, trufSp ? "loot" : "good");
   }
   fungOp(S, pl, m) {
     if (m.op !== "plant" || !S.def?.cellar || S.owner !== pl.id) return;
@@ -1627,7 +1627,7 @@ export class World {
     G.takeInv(C.inv, k, 1); G.takeInv(C.inv, "compost", F.compost);
     const rain = G.charmOf(C, "rainmaker"), dev = this.env?.DEV === "1", ms = Math.round(F.ms * (1 - rain / 100) / (dev ? 60 : 1));   /* Rainmaker waters a cellar too; on a DEV server a bed grows sixty times faster, so it can be watched */
     I.beds[i] = { k, at: Date.now(), ...(rain || dev ? { ms } : {}) }; this.touch(pl);
-    return this.say(pl, `You work the spores into the compost. ${G.ITEMS[F.yields].name} in ${ms >= 5400000 ? `${Math.round(ms / 3600000 * 10) / 10} hours` : `${Math.round(ms / 60000)} minutes`}, whether you're here or not.`, "good");
+    return this.say(pl, `You work the spawn into the compost. ${G.ITEMS[F.yields].name} in ${ms >= 5400000 ? `${Math.round(ms / 3600000 * 10) / 10} hours` : `${Math.round(ms / 60000)} minutes`}, whether you're here or not.`, "good");
   }
   /* ------------------------------------------------------------ BREEDING (2026-09-27): the island's pen
      One pairing at a time, per island (eggs are the hatchery's, below). The food is taken ALL AT ONCE at the start - the
