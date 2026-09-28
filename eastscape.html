@@ -14,7 +14,7 @@
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=363">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=364">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1384,7 +1384,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=363";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=364";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1393,7 +1393,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=202").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=203").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -1732,7 +1732,10 @@ function onEvent(e) {
   if (e.type === "profile") { PROF?.on(e); return; }
   if (e.type === "pit") { CZ.pit(e); return; }   /* (v109) ticket bets on the Fight Pit */
   if (e.type === "pen") { openPen(e); return; }
-  if (e.type === "hatch") { openHatch(e); return; }   /* (2026-09-27) the hatchery */   /* (2026-09-27) Breeding: the server says you are at your pen */
+  if (e.type === "hatch") { openHatch(e); return; }
+  /* (2026-09-27) THE COLLECTION LOG: a podium was clicked (its owner's log), or a slot just filled (a chime; the words come as a message) */
+  if (e.type === "collog") { colUi().then((u) => u.open(e)); return; }
+  if (e.type === "colnew") { SFX.play("levelup", { vol: 0.7 }); return; }   /* (2026-09-27) the hatchery */   /* (2026-09-27) Breeding: the server says you are at your pen */
   if (e.type === "hiscores") { openHiscores(); return; }   /* (v96) the board on the casino wall */
   if (e.type === "dash") return dashDraw(e);
   if (e.type === "cinescreen") return openScreen();
@@ -3429,7 +3432,7 @@ const toWorld = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.cl
 const KIND_OF = { ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ ...Object.fromEntries(Object.entries(G.STATIONS).filter(([, s]) => s.kind === "print").map(([k]) => [k, "print"])),   /* (2026-09-26) altars */
   /* (2026-09-24) Alchemy. The WORKER decides whether a click does anything (its own map, in index.js); this
      only labels it, so a new clickable object has to be added in BOTH or the cursor lies. */
-  clawchest: "clawchest", rowboat: "rowboat", vortex: "rowboat", burndoor: "rowboat",   /* (2026-09-27) the Boardwalk's islands and Captain Claw's chest */ blast: "smelt",   /* (2026-09-27) the Foundry's blast furnace */ jbench: "jewel",   /* (2026-09-27) Jewelcrafting */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture */ pen: "pen", hatchery: "hatchery",   /* (2026-09-27) Breeding */ fletcher: "fletch", countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. A kind is what a click routes to; the PICTURE is an `art` override on the object, which is why three new interactions needed no new art. */ cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile", mark: "mark", guildgate: "guildgate", towerdoor: "tower", towerup: "towerup", cryptdoor: "crypt", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", hsboard: "hiscores", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", prizewheel: "prize", fameboard: "fame", cart: "ferry", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", wildladder: "hole", agilend: "agilend", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
+  clawchest: "clawchest", rowboat: "rowboat", vortex: "rowboat", burndoor: "rowboat", podium: "podium",   /* (2026-09-27) the Boardwalk's islands and Captain Claw's chest */ blast: "smelt",   /* (2026-09-27) the Foundry's blast furnace */ jbench: "jewel",   /* (2026-09-27) Jewelcrafting */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture */ pen: "pen", hatchery: "hatchery",   /* (2026-09-27) Breeding */ fletcher: "fletch", countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. A kind is what a click routes to; the PICTURE is an `art` override on the object, which is why three new interactions needed no new art. */ cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile", mark: "mark", guildgate: "guildgate", towerdoor: "tower", towerup: "towerup", cryptdoor: "crypt", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", hsboard: "hiscores", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", prizewheel: "prize", fameboard: "fame", cart: "ferry", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", cashier: "cashier", howto: "howto", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", roulette: "roulette", roomdoor: "door", walldoor: "door", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", rope: "rope", ferry: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign", vine: "olive", cypress: "tree", bigtomato: "bigtomato", press: "press", crate: "crate", scarecrow: "scarecrow", milestone: "milestone", toll: "toll", barricade: "barricade", chariot: "chariot", mule: "mule", plant: "plant", bench: "bench", goatstatue: "goatstatue", chest: "chest", chair: "chair", sack: "sack", cat: "cat", bucket: "bucket", booth: "bank", stall: "exchange", counter: "counter", pool: "pool", column: "column", range: "range", table: "table", barrel: "barrel", bed: "bed", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", olive: "olive", hole: "hole", wildladder: "hole", agilend: "agilend", well: "well", house: "door", shrine: "shrine", hive: "hive", notice: "notice", sign: "sign", statue: "statue", fountain: "fountain", fire: "fire", bush: "bush", boulder: "boulder", hay: "hay" };
 function thingAt(wx, wy) {
   const now = snow(), near = (x_, y_, rx, ry) => Math.abs(wx - x_) <= rx && wy <= y_ + 4 && wy >= y_ - ry;
   for (const m of Z.mobs) if (!m.dead) { const p = posOf(m, now); if (near(p.px * T + 8, p.py * T + 12, ...MOBS[m.t].box)) return { kind: "mob", id: m.id, x: m.x, y: m.y, reach: G.reachOfHeld(me), name: `${MOBS[m.t].name} (level ${MOBS[m.t].lvl})${m.c && m.c !== you?.id ? " · someone's fighting it" : ""}` }; }
@@ -3913,6 +3916,7 @@ function frame() {
       } }); }
     if (ob.t === "shroom" && me?.fung?.day === G.chicagoDay() && me.fung.got?.includes(ob.lid)) { sprites.push({ y: (ob.y + 1) * T - 1, draw: () => { lc.save(); lc.globalAlpha = 0.45; spr(`fung_${ob.k}_4`, (ob.x + 0.5) * T, (ob.y + 1) * T); lc.restore(); } }); continue; }   /* (2026-09-27) picked today */
     if (ob.t === "trap") { trapSprites(ob, now, pnow, calm, sprites); continue; }   /* (2026-09-27) the Foundry's traps */
+    if (ob.t === "podium" && !calm) sprites.push({ y: (ob.y + ob.h) * T + 1, draw: () => { for (let i = 0; i < 3; i++) { const ph = (pnow / 900 + i / 3) % 1, a = Math.sin(ph * Math.PI); if (a < 0.2) continue; lc.globalAlpha = a; const X = (ob.x + 0.5 + (i - 1) * 0.55) * T + 8, Y = ob.y * T - 6 - ph * 10; px(X, Y, 2, 2, "#fff4b0"); px(X - 1, Y + 0.5, 1, 1, "#ffd54a"); px(X + 2, Y + 0.5, 1, 1, "#ffd54a"); } lc.globalAlpha = 1; } });   /* (2026-09-27) the Collection podium twinkles */
     const oa = objArt(ob, now);
     if (oa) {
       const sc = OBJ_SCALE[oa] || (oa === "o_rock_empty" && ob.t === "vein" ? 2 : 1), bob = (ob.t === "ferry" || ob.t === "boatback") && !calm ? Math.round(Math.sin(pnow / 600)) : 0;
@@ -4874,7 +4878,7 @@ document.addEventListener("visibilitychange", () => radioSync());
    mode are v3/assets/js/eastscape-decor.js, fetched the first time you ask her or press Decorate). The page keeps only what every
    visitor needs: the pieces standing in this scene (sent by the server on the way in and on every change) laid over a fresh
    build of it, and a Decorate button on your own island. */
-let DECO = null, DR = null; const DECO_URL = "/v3/assets/js/eastscape-decor.js?v=2", DR_URL = "/v3/assets/js/eastscape-decor-rules.js?v=6";
+let DECO = null, DR = null; const DECO_URL = "/v3/assets/js/eastscape-decor.js?v=3", DR_URL = "/v3/assets/js/eastscape-decor-rules.js?v=7";
 const drLoad = () => (drLoad.p ||= import(DR_URL).then((m) => (DR = m.createDecorRules(G))));   /* the catalogue and the placing rules: fetched on the first furnished island, never at login */
 const decoLoad = () => (decoLoad.p ||= Promise.all([import(DECO_URL), drLoad()]).then(([m]) => (DECO = m.createDecor({ rules: DR, G, SFX, send, esc, $, me: () => me, you: () => you, key: () => Z.key, owner: () => Z.isle?.owner || G.ownerOf(Z.key), host: () => document.querySelector(".game"), say: (t, c) => say(t, c), onMode: (on) => $("decoBtn").setAttribute("aria-pressed", String(on)) }))));
 function decorSet(list) { const key = Z.key; if (!G.isIsle(key) || (!list?.length && !DR)) return; drLoad().then(() => { if (Z.key !== key) return; const b = DR.decorInto(key, G.buildScene(key), { decor: list || [] }); Z.g = b.g; Z.objs = b.objs; hoverThing = null; DECO?.refresh(); }).catch(() => {}); }
@@ -5208,6 +5212,8 @@ let PETUI = null; const PETUI_URL = "/v3/assets/js/eastscape-pets.js?v=3";
 function petUi() { return PETUI ? Promise.resolve(PETUI) : import(PETUI_URL).then((m) => (PETUI = m.createPetUi({ G, $, esc, ico, sico, lvl, send, SFX, openWin, say, rankTag, petPic, ITEMS, get me() { return me; } }))); }
 function openPen(e) { petUi().then((u) => u.openPen(e)); }
 function openHatch(e) { petUi().then((u) => u.openHatch(e)); }
+let COLUI = null; const COLUI_URL = "/v3/assets/js/eastscape-collog.js?v=1";   /* (2026-09-27) the collection log's window, fetched the first time a podium is clicked */
+function colUi() { return COLUI ? Promise.resolve(COLUI) : import(COLUI_URL).then((m) => (COLUI = m.createColLog({ G, $, esc, ico, flatArt, SFX, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); } }))); }
 function openMarket() { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin", "gameWin", "lookWin", "jukeWin", "vanWin"]) $(w).hidden = true; $("hwWin").hidden = false; SFX.play("ui_open"); renderMarket(); }
 function renderMarket() {
   if ($("hwWin").hidden || !me) return;
@@ -5849,7 +5855,7 @@ function wikiGo(route, setNav = true) {
   if (kind === "home") html = `<h2><i><img class="ico wico" src="${UIA}nav_wiki.png?v=1" alt=""></i>EastScape Wiki</h2>${G.hwOn() ? `<a class="whw" data-wiki="guides/longnight"><span class="whw-i">\u{1F383}</span><span><b>The Long Night is on</b><small>${G.hwDaysLeft()} day${G.hwDaysLeft() === 1 ? "" : "s"} left &middot; candy corn, the Night Market, the Pumpkin King and nine event pieces. Read the event guide &rarr;</small></span></a>` : ""}` + `<p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>
     <h3>Guides</h3>${byCat(wikiPages().filter((p) => p.group === "Guides"))}<h3>Browse</h3>${cards(["Skills", "Quests", "Monsters", "Areas", "People", "Items"].map((g) => ({ route: `list/${g}`, title: g, icon: { Skills: "📶", Quests: "📜", Monsters: "👹", Areas: "🗺️", People: "🧑", Items: "🎒" }[g] })))}
     <h3>Latest update</h3>${wikiUpdate(WK.UPDATES[0])}`;
-  else if (kind === "updates") html = `<h2><i>📰</i>Updates</h2><p class="lede">Every change to the game, newest first.</p>${WK.UPDATES.map(wikiUpdate).join("")}`;
+  else if (kind === "updates") html = `<h2><i>📰</i>Updates</h2><p class="lede">The three latest updates, newest first.</p>${WK.UPDATES.slice(0, 3).map(wikiUpdate).join("")}`;   /* (2026-09-27, the owner: "lets only show the most 3 recent updates on the wiki ... its getting super long now and bulky") */
   else if (kind === "list") { const inG = wikiPages().filter((p) => p.group === id); html = `<h2><i>📚</i>${esc(id)}</h2>${id === "Guides" ? byCat(inG) : cards(inG)}`; }
   else if (kind === "search") { const q = id.toLowerCase(); const hits = wikiPages().filter((p) => p.title.toLowerCase().includes(q)); html = `<h2><i>🔎</i>“${esc(id)}”</h2>${hits.length ? cards(hits) : '<p class="lede">Nothing by that name.</p>'}`; }
   else if (kind === "guides") {
@@ -6007,7 +6013,7 @@ $("wikiWin").addEventListener("click", (e) => { const a = e.target.closest("[dat
 // right-click any item (bag, gear, bank, shop, trade) to open its wiki page
 /* (2026-09-27) THE BAG'S MENU AND ARRANGING live in v3/assets/js/eastscape-bag.js, fetched on the first touch of the bag (and a few
    seconds after boot regardless): the first load is at its budget. The page only delegates: a right-click in the bag opens its menu. */
-let BAGUI = null; const BAGUI_URL = "/v3/assets/js/eastscape-bag.js?v=1";
+let BAGUI = null; const BAGUI_URL = "/v3/assets/js/eastscape-bag.js?v=2";
 function bagUi() { return BAGUI ? Promise.resolve(BAGUI) : import(BAGUI_URL).then((m) => (BAGUI = m.createBagUi({ G, $, esc, ico, send, say, SFX, ITEMS, useBagItem, renderPanel, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); }, get me() { return me; } }))); }
 document.addEventListener("pointerdown", (e) => { if (e.target.closest?.(".inv")) bagUi(); }, { passive: true }); setTimeout(bagUi, 4000);
 document.addEventListener("contextmenu", (e) => {

@@ -1,0 +1,65 @@
+/* ============================================================
+   EastScape: THE COLLECTION LOG's window (2026-09-27, the owner: "build the collection log ... a free item at yasmeena that people can place
+   down on their island ... it also contains seperate sections or areas or tabs for event items")
+
+   Opened by clicking a Collection podium on an island (the server answers with `collog`: whose log, and the log itself). The book is
+   the rules file's collectionBook(): tabs, and in each tab sections of slots. A slot you have is drawn in full with how many you have had;
+   one you have not is a dark silhouette with a question mark, and its name only on hover, so the page is a set of goals rather than a
+   spoiler list. Clicking any slot opens its wiki page. Fetched the first time a podium is clicked, never at login.
+
+   createColLog({ G, $, esc, ico, SFX, wikiGo }) -> { open(msg) }
+   ============================================================ */
+export function createColLog(E) {
+  const { G, $, esc, ico, SFX } = E;
+  let win = null, tab = null, last = null;
+  const petIco = (k) => { const p = G.PETS[k]; return p?.art ? E.flatArt(p.art) : "\u{1F43E}"; };
+  const icon = (k) => (k.startsWith("pet:") ? petIco(k.slice(4)) : ico(k));
+  function css() {
+    if (document.getElementById("esColCss")) return; const st = document.createElement("style"); st.id = "esColCss";
+    st.textContent = `#colWin{width:min(720px,calc(100% - 28px))}
+.cl-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}.cl-top b{font-size:15px}.cl-bar{flex:1;height:12px;border-radius:6px;background:rgba(0,0,0,.14);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.cl-bar i{display:block;height:100%;background:linear-gradient(90deg,#d4a017,#ffd54a)}.cl-top small{font-weight:800;color:#6a5a40;white-space:nowrap}
+.cl-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}.cl-tabs button{flex:1 1 auto;min-width:92px;padding:6px 8px;border:0;border-radius:7px;background:#d9ccb0;box-shadow:inset 0 0 0 2px #8a7a5a;color:#3a2e1c;font:800 12.5px Nunito,sans-serif;cursor:pointer}
+.cl-tabs button[aria-pressed="true"]{background:#f4d37a;box-shadow:inset 0 0 0 2px #a8740f;color:#2a1c06}.cl-tabs button small{display:block;font-size:10.5px;opacity:.8}
+.cl-tabs button.ev{background:#e8d3f0;box-shadow:inset 0 0 0 2px #7a3f95}.cl-tabs button.ev[aria-pressed="true"]{background:#f0b35a;box-shadow:inset 0 0 0 2px #b5561c}
+.cl-body{max-height:min(58vh,460px);overflow:auto;padding-right:4px}
+.cl-sec{margin:0 0 10px}.cl-sec h4{display:flex;justify-content:space-between;margin:6px 2px;font:900 13px Nunito,sans-serif;color:#3a2e1c}.cl-sec h4 small{color:#6a5a40}
+.cl-sec h4.done{color:#8a5c08}.cl-sec h4.done::after{content:" ★";color:#d4a017}
+.cl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px}
+.cl-slot{position:relative;display:grid;place-items:center;height:52px;border:0;border-radius:8px;background:#efe5cf;box-shadow:inset 0 0 0 2px #b8a67e;cursor:pointer;padding:0}
+.cl-slot .ico,.cl-slot img{width:34px;height:34px}.cl-slot.got{background:linear-gradient(160deg,#fff6d6,#f1dc9c);box-shadow:inset 0 0 0 2px #c8963a}
+.cl-slot.miss .ico,.cl-slot.miss img{filter:brightness(0) opacity(.28)}.cl-slot.miss::after{content:"?";position:absolute;z-index:1;font:900 16px Nunito,sans-serif;color:#8a7a5a}
+.cl-slot i.n{position:absolute;right:3px;bottom:1px;font:900 10.5px Nunito,sans-serif;font-style:normal;color:#5a3e08}
+.cl-note{font-size:12.5px;color:#6a5a40;margin:6px 2px 0}`;
+    document.head.append(st);
+  }
+  function ensure() {
+    if (win) return win; css();
+    win = document.createElement("section"); win.className = "win"; win.id = "colWin"; win.hidden = true; win.setAttribute("aria-label", "Collection log");
+    win.innerHTML = `<div class="win-head"><b id="colTitle">\u{1F4DC} Collection log</b><small id="colSub"></small><button type="button" class="win-x" aria-label="Close">×</button></div><div class="win-body" id="colBody"></div>`;
+    $("jukeWin").parentElement.append(win); win.querySelector(".win-x").addEventListener("click", () => { SFX.play("ui_close"); win.hidden = true; });
+    return win;
+  }
+  function render() {
+    if (!win || win.hidden || !last) return;
+    const B = G.collectionBook(), col = last.col || {}, have = (k) => (col[k] | 0) > 0, got = G.colCount(col);
+    if (!tab || !B.tabs.some((t) => t.id === tab)) tab = B.tabs[0]?.id;
+    $("colTitle").innerHTML = `\u{1F4DC} ${esc(last.mine ? "Your" : `${last.name}'s`)} collection log`;
+    $("colSub").textContent = last.mine ? "Everything you have earned from the world" : `${last.name} has found these`;
+    const cnt = (t) => { const ks = [...new Set(t.sections.flatMap((s) => s.keys))]; return [ks.filter(have).length, ks.length]; };
+    const T = B.tabs.find((t) => t.id === tab);
+    $("colBody").innerHTML = `<div class="cl-top"><b>${got} / ${B.total}</b><div class="cl-bar"><i style="width:${B.total ? Math.round((got / B.total) * 100) : 0}%"></i></div><small>${B.total ? Math.round((got / B.total) * 100) : 0}% collected</small></div>
+      <div class="cl-tabs">${B.tabs.map((t) => { const [a, n] = cnt(t); return `<button type="button" data-t="${t.id}" class="${t.event ? "ev" : ""}" aria-pressed="${t.id === tab}">${t.icon} ${esc(t.name)}<small>${a}/${n}</small></button>`; }).join("")}</div>
+      <div class="cl-body">${(T?.sections || []).map((s) => { const a = s.keys.filter(have).length;
+        return `<div class="cl-sec"><h4 class="${a === s.keys.length ? "done" : ""}"><span>${esc(s.name)}</span><small>${a}/${s.keys.length}</small></h4><div class="cl-grid">${s.keys.map((k) => {
+          const on = have(k), nm = G.colName(k);
+          return `<button type="button" class="cl-slot ${on ? "got" : "miss"}" data-k="${esc(k)}" title="${esc(on ? `${nm} ×${(col[k] | 0).toLocaleString()}` : `${nm} (not yet)`)}">${icon(k)}${on && col[k] > 1 ? `<i class="n">${col[k] > 999 ? "999+" : col[k]}</i>` : ""}</button>`; }).join("")}</div></div>`; }).join("")}
+        ${T?.event ? `<p class="cl-note">Event pieces are only found while their event is on. They stay in your log for good once you have them.</p>` : ""}
+        <p class="cl-note">A slot fills the first time you get it from the world: a drop, a chest, a gather, a craft, a quest or a hatch. Trades, the Exchange and your bank don't count.</p></div>`;
+    const Bd = $("colBody");
+    Bd.querySelectorAll("[data-t]").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.t; SFX.play("ui_click"); render(); }));
+    Bd.querySelectorAll("[data-k]").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.k; E.wikiGo(k.startsWith("pet:") ? `pets/${k.slice(4)}` : `items/${k}`); }));
+  }
+  function open(msg) { last = msg; ensure(); win.hidden = false; SFX.play("ui_open"); render(); }
+  return { open };
+}

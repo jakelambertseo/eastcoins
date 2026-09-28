@@ -26,6 +26,12 @@ export function createDecor(env) {
     st.textContent = `.dc-tabs{display:flex;gap:6px;margin-bottom:8px}.dc-tabs button{flex:1}
 .dc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;max-height:min(56vh,430px);overflow:auto;padding:2px}
 .dc-card{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 6px;border-radius:7px;background:rgba(0,0,0,.06);text-align:center}
+/* (2026-09-27) the Collection podium: the newest piece, and free. A gold card that breathes, a ribbon, and it sits first so nobody misses it */
+.dc-card.dc-new{position:relative;overflow:hidden;background:linear-gradient(160deg,#fff4c8,#f3d77e);box-shadow:0 0 0 2px #d4a017,0 0 14px rgba(255,196,40,.75);animation:dcNew 2.4s ease-in-out infinite}
+.dc-card.dc-new .dc-blurb{color:#6a4a10;font-weight:800;line-height:1.2}
+.dc-ribbon{position:absolute;top:8px;right:-30px;transform:rotate(35deg);padding:2px 32px;background:#c2185b;color:#fff;font:900 10.5px Nunito,sans-serif;letter-spacing:.06em;box-shadow:0 2px 4px rgba(0,0,0,.3)}
+@keyframes dcNew{0%,100%{box-shadow:0 0 0 2px #d4a017,0 0 10px rgba(255,196,40,.55)}50%{box-shadow:0 0 0 3px #ffd54a,0 0 22px rgba(255,196,40,.95)}}
+@media (prefers-reduced-motion:reduce){.dc-card.dc-new{animation:none}}
 .dc-card .dc-pic{height:56px;display:grid;place-items:center}.dc-card b{font-size:13.5px;line-height:1.15}.dc-card small{color:#6a5a40;font-weight:700}
 .dc-card .dc-row{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}.dc-card .lk-btn{padding:3px 9px;font-size:12.5px}
 .dc-top{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px;font-weight:800}
@@ -51,8 +57,8 @@ export function createDecor(env) {
     $("decorBody").innerHTML = `<div class="dc-top"><span>${TIX} ${have.toLocaleString()} tickets</span><span>Outside ${Math.ceil(used("isle"))}/${cap("isle")} · Cottage ${Math.ceil(used("home"))}/${cap("home")} placed</span></div>
       <div class="dc-tabs">${[["isle", "🏝️ Outside"], ["home", "🏠 Cottage"]].map(([k, l]) => `<button type="button" class="lk-btn" data-t="${k}" aria-pressed="${tab === k}">${l}</button>`).join("")}</div>
       <div class="dc-grid">${Object.entries(D).filter(([, P]) => P.in === tab).map(([k, P]) => { const own = I.owned?.[k] | 0, spare = R.decorSpare(I, k), maxed = P.max && own >= P.max;
-        return `<div class="dc-card"><div class="dc-pic">${img(k, 56)}</div><b>${esc(P.name)}</b><small>${P.w}×${P.h}${P.flat ? " · lies flat" : ""}${P.wall ? " · back wall" : ""}${own ? ` · you own ${own}` : ""}</small>
-          <div class="dc-row"><button type="button" class="lk-btn" data-buy="${k}"${have < P.price || maxed ? " disabled" : ""}>${maxed ? "Got it" : `Buy · ${P.price.toLocaleString()}`}</button>${spare > 0 ? `<button type="button" class="lk-btn" data-sell="${k}" title="She buys it back for a quarter">Sell · ${Math.floor(P.price * R.DECOR_SELLBACK).toLocaleString()}</button>` : ""}</div></div>`; }).join("")}</div>
+        return `<div class="dc-card${P.isNew ? " dc-new" : ""}">${P.isNew ? `<span class="dc-ribbon">NEW · FREE</span>` : ""}<div class="dc-pic">${img(k, 56)}</div><b>${esc(P.name)}</b>${P.blurb ? `<small class="dc-blurb">${esc(P.blurb)}</small>` : ""}<small>${P.w}×${P.h}${P.flat ? " · lies flat" : ""}${P.wall ? " · back wall" : ""}${own ? ` · you own ${own}` : ""}</small>
+          <div class="dc-row"><button type="button" class="lk-btn" data-buy="${k}"${have < P.price || maxed ? " disabled" : ""}>${maxed ? "Got it" : P.price ? `Buy · ${P.price.toLocaleString()}` : "Take one · free"}</button>${spare > 0 && P.price ? `<button type="button" class="lk-btn" data-sell="${k}" title="She buys it back for a quarter">Sell · ${Math.floor(P.price * R.DECOR_SELLBACK).toLocaleString()}</button>` : ""}</div></div>`; }).join("")}</div>
       <div class="jk-msg">Bought something? Close this and press <b>Decorate</b> (bottom right)${tab === "home" ? ", inside your cottage" : ""}. Pick a piece, click a tile.</div>`;
     const B = $("decorBody");
     B.querySelectorAll("[data-t]").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.t; SFX.play("ui_click"); renderShop(); }));

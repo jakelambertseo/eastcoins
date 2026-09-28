@@ -25,6 +25,11 @@ export function createDecorRules(G) {
    plots, the pedestals, the pen and Yahsmeena without naming any of them. */
 const DECOR_SELLBACK = 0.25, DECOR_CAP = { isle: [0, 12, 20, 32], home: 12 };   // isle: by island tier (the Far Shore shares the island's count); flat pieces count a quarter
 const DECOR = {
+  /* (2026-09-27, the owner: "build the collection log ... a free item at yasmeena that people can place down on their island so everyone gets one.
+     make it the newest item in the decor menu, and add a highlight/standout effect ... it needs to look like a podium"). FIRST in the list, so
+     it is the first thing in the shop; free (price 0), one each, and `isNew` is what the shop draws its glow and ribbon from. Clicking it, as
+     the owner or a visitor, opens the owner's collection log (the worker's `podium` action). She does not buy a free piece back. */
+  podium: { name: "Collection podium", w: 2, h: 1, in: "isle", price: 0, max: 1, art: "d_podium", podium: true, isNew: true, blurb: "Your collection log. Everyone who visits can read it." },
   /* (2026-09-23, the owner: "a purchase chest/real bank that users can purchase at Yahsmeena's Decor on their
      island ... allow them to put in crops/seeds etc while theyre farming"). It wears o_chest, the same picture as
      the Yard's bank, so it reads as a bank on sight rather than needing a label. `bank: true` is what decorInto
@@ -89,7 +94,7 @@ function decorInto(key, built, isle) {
        action was dropped without a word. That was invisible while nothing here could be clicked; the bank chest
        is the first piece meant to DO something, and it did nothing. Anything interactive added to this shop
        later needs the id to keep meaning the index. */
-    built.objs.push({ t: P.bank ? "booth" : P.cellar ? "cellar" : P.hatch ? "hatchery" : "decor", decor: true, k: d.k, art: decorArt(d.k), x: d.x, y: d.y, w: P.w, h: P.h, name: P.name, id: built.objs.length, ...(P.flat ? { flat: true, soft: true } : {}) });
+    built.objs.push({ t: P.bank ? "booth" : P.cellar ? "cellar" : P.hatch ? "hatchery" : P.podium ? "podium" : "decor", decor: true, k: d.k, art: decorArt(d.k), x: d.x, y: d.y, w: P.w, h: P.h, name: P.name, id: built.objs.length, ...(P.flat ? { flat: true, soft: true } : {}) });
     if (!P.flat) for (let y = d.y; y < d.y + P.h; y++) for (let x = d.x; x < d.x + P.w; x++) if (built.g[y]?.[x] !== undefined) built.g[y][x] = "#"; }
   return built;
 }

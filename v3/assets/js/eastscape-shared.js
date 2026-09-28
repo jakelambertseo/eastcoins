@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 339;
+export const VERSION = 340;
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -6923,6 +6923,8 @@ export function normChar(c) {
     : null;
   out.plays = recentPlays(c.plays, Date.now());   // trimmed on every load, so an idle week never carries a play log back in
   out.van = normVanity(c.van);
+  /* (2026-09-27) the collection log: { key: how many }, whole numbers only */
+  out.col = {}; if (c.col && typeof c.col === "object") for (const [k, n] of Object.entries(c.col)) { const v = Math.trunc(Number(n)); if (v > 0 && typeof k === "string" && k.length < 40) out.col[k] = v; }
   /* (2026-09-22) PETS. A kind that no longer exists, or a name with something nasty in it, simply stops being a pet.
      The slot is checked against the list it points into, so selling or banking one cannot leave a ghost applying its
      bonuses — activePet returns null and petFx reads zeroes. */
@@ -7655,7 +7657,8 @@ for (const [k, tier] of [["bwmackerel", "medium"], ["bwdeckhands", "hard"], ["bw
 export const BW_ISLES = ["bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull"];
 Object.assign(BANDS, { bw_cabin: [66, 72], bw_light: [70, 76], bw_wreck: [72, 80], bw_pier: [72, 80], bw_skull: [74, 82] });
 for (const k of BW_ISLES) DEATH[k] = { share: 0.1, cap: 4000 };
-Object.assign(VERB, { rowboat: "Row" });
+Object.assign(VERB, { rowboat: "Row", podium: "Read" });   /* (2026-09-27) the Collection podium */
+EXAMINE.podium = ["A podium with a gold-bound book on it. Everything its owner has ever found is written in there."];
 EXAMINE.rowboat = ["A rowboat, bailed out and tied up. It goes to the next island, or back to the last."];
 if (!HOLD.boardwalk) { OPEN.add("boardwalk"); SCENES.carnival.exits.w = "boardwalk"; PET_SCENES.add("boardwalk"); for (const k of BW_ISLES) { OPEN.add(k); PET_SCENES.add(k); } EGGS.egg_cindered.from.push("boardwalk"); EGGS.egg_velvet.from.push("boardwalk"); }
 const _preFoundry = new Set(Object.keys(ITEMS));
@@ -8103,3 +8106,82 @@ if (HOLD.jewel) for (const k of Object.keys(ITEMS)) if (!_preJewel.has(k)) ITEMS
 
 /* (2026-09-21) the map-building helpers, for the files that hold maps outside this one (eastscape-closed.js, and the dungeon's). */
 export const _MAP = { block, grid, keepOf, room, wild };
+
+/* ============================================================ THE COLLECTION LOG (2026-09-27, the owner: "build the collection log ... a free item at
+   yasmeena that people can place down on their island so everyone gets one ... it also contains seperate sections or areas or tabs for event
+   items"). What a character has EARNED at least once: the world's named drops, every boss's uniques, the pets, the eggs, the gems and the lucky
+   finds, the chase pieces, and each event's own tab. The book is worked out from the tables above the first time anybody asks (so a new boss or
+   a new rare turns up in it without being listed here), and held content stays out of it.
+
+   WHAT COUNTS is getting it from the world: a drop, a chest, a gather, a craft, a quest, a hatch. Buying it off another player (a trade, the
+   Exchange) and taking it out of your own bank do NOT, so the log is a record of play and not of wealth. The server keeps `C.col` { key: how
+   many }, pets as "pet:<kind>"; see colGet in the worker. */
+const COL_GEM = new Set(GEMS.map((g) => g.key));
+const colShut = (k) => ITEMS[k]?.held || !ITEMS[k];
+/** is this item worth a slot: a piece of gear, an egg, a gem, a chase or legendary piece, or something rare and valuable (not ore, bars, logs,
+    fish or tickets, which every monster in a band drops and nobody collects) */
+const colWorthy = (k) => { const it = ITEMS[k]; if (!it || it.held || k === "tickets" || k === "zcoin") return false;
+  if (it.slot || EGGS[k] || COL_GEM.has(k) || it.chase || it.legend) return true;
+  if (it.raw || /(_ore|_bar|logs|_arrowhead|_arrow|_bolt)$/.test(k) || it.heal || it.ammo) return false;
+  return (VALUE[k] ?? 0) >= 1000; };
+export function collectionBook() {
+  if (collectionBook.c) return collectionBook.c;
+  const live = (t) => MOBS[t] && !MOBS[t].held, uniq = (a) => [...new Set(a)];
+  const bossKeys = [...BOSSES].filter((t) => live(t) && !MOBS[t].event).sort((a, b) => MOBS[a].lvl - MOBS[b].lvl);
+  const bosses = bossKeys.map((t) => { const m = MOBS[t];
+    const keys = uniq([...m.drops.filter(([k, , p]) => p != null && p < 0.25 && colWorthy(k)).map(([k]) => k), ...(m.rare || []).map(([k]) => k).filter((k) => !colShut(k)), ...(m.pet && PETS[m.pet[0]] && !PETS[m.pet[0]].held ? [`pet:${m.pet[0]}`] : [])]);
+    return { name: m.name, keys }; }).filter((s) => s.keys.length);
+  /* the named rares every other monster carries, in bands by the lowest level that drops each */
+  const rareAt = {};
+  for (const [t, m] of Object.entries(MOBS)) { if (!live(t) || BOSSES.has(t) || m.event) continue;
+    for (const [k] of [...(m.rare || []), ...m.drops.filter(([k, , p]) => p != null && p < 0.1 && ITEMS[k]?.slot)]) if (!colShut(k)) rareAt[k] = Math.min(rareAt[k] ?? 999, m.lvl); }
+  const BANDS_ = [[1, 29, "Levels 1 to 29"], [30, 59, "Levels 30 to 59"], [60, 79, "Levels 60 to 79"], [80, 999, "Level 80 and up"]];
+  const rares = BANDS_.map(([lo, hi, name]) => ({ name, keys: Object.keys(rareAt).filter((k) => rareAt[k] >= lo && rareAt[k] <= hi && !ITEMS[k].event).sort((a, b) => rareAt[a] - rareAt[b]) })).filter((s) => s.keys.length);
+  const skilling = [{ name: "Gems", keys: GEMS.map((g) => g.key).filter((k) => !colShut(k)) },
+    { name: "Lucky finds", keys: ["goldtomatoe", "truffle", "geode", "clover", "horseshoe"].filter((k) => ITEMS[k] && !colShut(k)) }].filter((s) => s.keys.length);
+  const pets = [{ name: "Pets", keys: Object.keys(PETS).filter((k) => !PETS[k].held && !PETS[k].event).map((k) => `pet:${k}`) },
+    { name: "Eggs", keys: Object.keys(EGGS).filter((k) => !colShut(k) && !ITEMS[k].event) }].filter((s) => s.keys.length);
+  const finds = [{ name: "Casino finds", keys: uniq(["pot_double", ...FINDS.map((f) => f[0])]).filter((k) => !colShut(k)) }].filter((s) => s.keys.length);
+  const chase = [{ name: "Chase and legendary pieces", keys: Object.keys(ITEMS).filter((k) => (ITEMS[k].chase || ITEMS[k].legend) && !ITEMS[k].event && !colShut(k)) }].filter((s) => s.keys.length);
+  /* EVENTS: one section per event tag, its wearable pieces and its legendaries (an event's currency and snacks are not collectibles) */
+  const evTag = {}; for (const [k, it] of Object.entries(ITEMS)) if (it.event && !it.held && (it.slot || it.legend || EGGS[k])) (evTag[it.eventTag || EVENT_TAG] ||= []).push(k);
+  for (const [k, p] of Object.entries(PETS)) if (p.event && !p.held) (evTag[p.eventTag || EVENT_TAG] ||= []).push(`pet:${k}`);
+  const events = Object.entries(evTag).map(([name, keys]) => ({ name, keys }));
+  const tabs = [
+    { id: "bosses", name: "Bosses", icon: "\u{1F480}", sections: bosses },
+    { id: "rares", name: "Rare drops", icon: "\u{1F48E}", sections: rares },
+    { id: "skilling", name: "Skilling", icon: "⛏️", sections: skilling },
+    { id: "pets", name: "Pets & eggs", icon: "\u{1F43E}", sections: pets },
+    { id: "finds", name: "Casino finds", icon: "\u{1F3B0}", sections: finds },
+    { id: "chase", name: "Chase", icon: "\u{1F3C6}", sections: chase },
+    { id: "events", name: "Events", icon: "\u{1F383}", sections: events, event: true }
+  ].filter((t) => t.sections.length);
+  const keys = new Set(tabs.flatMap((t) => t.sections.flatMap((s) => s.keys)));
+  return (collectionBook.c = { tabs, keys, total: keys.size });
+}
+/** a log slot's name */
+export const colName = (k) => (k.startsWith("pet:") ? PETS[k.slice(4)]?.name || k.slice(4) : ITEMS[k]?.name || k);
+/** how many of the book's slots this log has filled */
+export const colCount = (col) => { const B = collectionBook(); let n = 0; for (const k of B.keys) if ((col?.[k] | 0) > 0) n++; return n; };
+
+/* ============================================================ WHAT AN ITEM IS FOR (2026-09-27, the owner: "right clicking anything in the bag could
+   show Used in X, Y"). Everything the rules know an item goes into, in words, for the bag's menu: the recipes it is an input to (and at what
+   level), the quests that want it, the gear it reforges, planting, feeding pets. The wiki item page says the same at length; this is the
+   one-line answer to "should I keep this?". */
+export function usesOf(k) {
+  if (!ITEMS[k]) return [];
+  const out = [], seen = new Set(), add = (key, what, how) => { if (seen.has(key)) return; seen.add(key); out.push({ what, how }); };
+  for (const r of Object.values(RECIPES)) {
+    if (!r.in?.some(([i]) => i === k) || r.out?.[0] === k) continue; const o = ITEMS[r.out?.[0]];   /* (a recipe that gives the same thing back is not a use) */
+    if (!o || o.held || SKILLS[r.skill]?.held) continue;
+    add(`r:${r.out[0]}`, o.name, `${SKILLS[r.skill]?.name || r.skill} ${r.lvl || 1}`);
+  }
+  for (const [qk, q] of Object.entries(QUESTS)) if (!q.held && (q.stages || [q.goal]).some((st) => (st?.items || []).includes(k))) add(`q:${qk}`, q.name, "quest");
+  const forged = Object.keys(ITEMS).filter((g) => { const c = canForge(g) && forgeCost(g); return c && c[0] === k && !ITEMS[g].held; });
+  if (forged.length) add("forge", forged.length === 1 ? `Reforging ${ITEMS[forged[0]].name}` : `Reforging ${forged.length} pieces of gear`, "the anvil");
+  if (FUNGI[k]) add("fung", "Planting a fungus bed", `Fungiculture ${FUNGI[k].lvl}`);
+  const crop = CROPS[k.replace(/^seed_/, "")]; if (crop && (k.startsWith("seed_") || !ITEMS[`seed_${k}`])) add("crop", "Planting on your island", `Harvesting ${crop.lvl}`);
+  if (BREED.foodXp?.[k]) add("feed", "Feeding and breeding pets", "the pen");
+  if (k === "compost") add("compost", "Planting a fungus bed", "the cellar");
+  return out;
+}

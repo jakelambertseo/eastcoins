@@ -273,6 +273,7 @@ export class World {
     this.cryptRejoin(pl); this.countRejoin(pl);   /* (2026-09-25) and the Count Room, same rule: a saved spot inside a run is only good if that run is still there */   /* (v104) saved inside a crypt run: back into it if it is still going, else to the stairs */
     this.pyramidRejoin(pl);
     this.towerRejoin(pl);   /* (2026-09-22) saved inside the Tower: rebuild that floor, or the room comes back empty and unwinnable */
+    this.colSeed(C);   /* (2026-09-27) the collection log: what this character already had */
     this.pls.set(user.id, pl);
     this.ctx.storage.put(`who:${String(user.login).toLowerCase()}`, { id: user.id, name: pl.name }).catch(() => {});
     /* (2026-09-27) A HELD MAP IS SHUT FOR EVERYONE, including anyone who logged off inside it: they come back at its door on the map next
@@ -309,7 +310,7 @@ export class World {
     if (pl.left) return; pl.left = true;
     if (pl.trade) this.tradeEnd(pl.trade, `${pl.name} left.`);
     if (pl.party) this.partyAway(pl);   /* (v104) a dropped connection keeps its place in the party and the crypt for a few minutes: see crypt.js */
-    for (const S of this.scenes.values()) if (S.owner === pl.id) S.isleCopy = pl.C.isle;   // visitors keep seeing it as it was left
+    for (const S of this.scenes.values()) if (S.owner === pl.id) { S.isleCopy = pl.C.isle; S.colCopy = pl.C.col; }   // visitors keep seeing it as it was left (and its podium, the log as it was)
     const S = this.scenes.get(pl.C.scene), now = Date.now();
     if (!replaced && S?.def.pvp && now - (pl.combatAt || 0) < G.PVP.lingerMs && this.pls.get(pl.id) === pl) {
       pl.lingerUntil = now + G.PVP.lingerMs; pl.path = []; pl.act = null; pl.needSave = true;
@@ -942,7 +943,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
-      let kind = { clawchest: "clawchest",   /* (2026-09-27) Captain Claw's chest */ rowboat: "rowboat",   /* (2026-09-27) the Boardwalk's islands */ vortex: "rowboat", burndoor: "rowboat",   /* (2026-09-27) the Foundry's portals and its burning door travel the same way */ blast: "smelt",   /* (2026-09-27) the Foundry's blast furnace: a furnace */ jbench: "jewel",   /* (2026-09-27) Jewelcrafting: a picker station like the anvil */ hatchery: "hatchery",   /* (2026-09-27) Breeding's hatchery */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      let kind = { clawchest: "clawchest",   /* (2026-09-27) Captain Claw's chest */ rowboat: "rowboat",   /* (2026-09-27) the Boardwalk's islands */ podium: "podium",   /* (2026-09-27) the collection log */ vortex: "rowboat", burndoor: "rowboat",   /* (2026-09-27) the Foundry's portals and its burning door travel the same way */ blast: "smelt",   /* (2026-09-27) the Foundry's blast furnace: a furnace */ jbench: "jewel",   /* (2026-09-27) Jewelcrafting: a picker station like the anvil */ hatchery: "hatchery",   /* (2026-09-27) Breeding's hatchery */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       /* MAGIC AND WIZARDRY, THE SERVER (2026-09-26): every altar is a print station, a picker station like the anvil */
       if (!kind && G.STATIONS[ob.t]?.kind === "print") kind = "print";
       if (!kind) return;
@@ -991,13 +992,31 @@ export class World {
   give(pl, k, n = 1, f = 0) {
     const C = pl.C;
     if (G.roomFor(C.inv, k, C, f) < n) { this.say(pl, "Your inventory is full.", "bad"); return false; }
-    G.addInv(C.inv, k, n, C, f); this.touch(pl); return true;
+    G.addInv(C.inv, k, n, C, f); this.touch(pl); this.colGet(pl, k, n); return true;
   }
   // as many of n as there's room for; returns how many went in
   giveUpTo(pl, k, n) {
     const q = Math.min(n, G.roomFor(pl.C.inv, k, pl.C));
     if (q < 1) { this.say(pl, "Your inventory is full.", "bad"); return 0; }
-    G.addInv(pl.C.inv, k, q, pl.C); this.touch(pl); return q;
+    G.addInv(pl.C.inv, k, q, pl.C); this.touch(pl); this.colGet(pl, k, q); return q;
+  }
+  /* (2026-09-27) THE COLLECTION LOG (G.collectionBook): the first time a character gets a slot's item from the world it is written down and
+     they are told; after that it only counts. `pl.noCol` is up while items come back out of their OWN bank or an unsold Exchange offer, so
+     moving what you already had never fills a slot; a trade does not come through here at all (it adds to the bag directly). */
+  colGet(pl, k, n = 1) {
+    if (pl.noCol || !(n > 0)) return; const B = G.collectionBook(); if (!B.keys.has(k)) return;
+    const C = pl.C, col = (C.col ||= {}), first = !((col[k] | 0) > 0); col[k] = (col[k] | 0) + n; this.touch(pl);
+    if (first) { this.say(pl, `\u{1F4DC} New collection log slot: ${G.colName(k)} (${G.colCount(col)}/${B.total}).`, "loot"); pl.out.push({ type: "colnew", k }); }
+  }
+  /* the first time a character is loaded after the log arrived, what it already holds is written in: bag, bank, worn, pets, its island's
+     pedestals. Quietly, and once. */
+  colSeed(C) {
+    if (C.colSeeded) return; const B = G.collectionBook(), col = (C.col ||= {}), put = (k) => { if (B.keys.has(k) && !(col[k] > 0)) col[k] = 1; };
+    for (const s of [...(C.inv || []), ...(C.bank || [])]) put(s.k);
+    for (const k of Object.values(C.eq || {})) if (typeof k === "string") put(k);
+    for (const p of C.pets || []) put(`pet:${p.k}`);
+    for (const k of C.isle?.shelf || []) if (k) put(k);
+    C.colSeeded = 1;
   }
   grant(pl, k, xp, track = true) {
     // A skill that no longer exists (a stale quest reward, an old admin macro)
@@ -1491,8 +1510,8 @@ export class World {
      straight to the bank instead, and says so. Only a full bag AND a full bank can lose one. -> "bag" | "bank" | null */
   keepRare(pl, k, n) {
     const C = pl.C;
-    if (G.roomFor(C.inv, k, C) >= n) { G.addInv(C.inv, k, n, C); return "bag"; }
-    return this.bankAdd(pl, k, n) ? "bank" : null;
+    if (G.roomFor(C.inv, k, C) >= n) { G.addInv(C.inv, k, n, C); this.colGet(pl, k, n); return "bag"; }
+    if (this.bankAdd(pl, k, n)) { this.colGet(pl, k, n); return "bank"; } return null;
   }
   zcoinDrop(pl, from) {
     const C = pl.C, n = Math.random() < G.ZDROP.big ? G.ZDROP.bigN : 1, where = this.keepRare(pl, "zcoin", n);
@@ -1681,7 +1700,7 @@ export class World {
       const back = [P.a, P.b].filter(Boolean);
       if (G.petsOf(C).length + back.length + 1 > 50) return bad("You have too many pets to take the baby and both parents back. Let some go first.");
       const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k: P.child.k, name: "", ...(P.child.tier ? { tier: 1 } : {}), ...(P.child.fx ? { fx: P.child.fx } : {}) };   /* a Legendary keeps its picked stats too */
-      C.pets.push(...back, pet);
+      C.pets.push(...back, pet); this.colGet(pl, `pet:${pet.k}`, 1);
       const xp = P.kind === "egg" ? G.EGGS[P.egg].xp : G.BREED[P.kind].xpEnd;
       C.pen = null; this.grant(pl, "breeding", xp); this.touch(pl);
       this.say(pl, `${P.kind === "egg" ? "The egg hatches" : "A new pet"}: ${G.petLabel(pet)}${pet.fx ? ` (${G.petFxText(pet.fx)})` : ""}. It's in your Equipment tab${back.length ? ", and both parents come back to you" : ""}.`, "loot");
@@ -1724,7 +1743,7 @@ export class World {
       if (now < H.at + H.ms) { const left = H.at + H.ms - now, h = Math.floor(left / 3600000), mi = Math.ceil((left % 3600000) / 60000); return bad(`Not yet: ${h ? `${h} h ` : ""}${mi} min to go.`); }
       if (G.petsOf(C).length + 1 > 50) return bad("You have too many pets to take another. Let one go first.");
       const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k: H.child.k, name: "" };
-      C.pets.push(pet); C.hatch = null; this.grant(pl, "breeding", G.EGGS[H.egg]?.xp || 0); this.touch(pl);
+      C.pets.push(pet); this.colGet(pl, `pet:${pet.k}`, 1); C.hatch = null; this.grant(pl, "breeding", G.EGGS[H.egg]?.xp || 0); this.touch(pl);
       this.say(pl, `The egg hatches: a ${G.PETS[pet.k].name}! It's in your Equipment tab.`, "loot");
       for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `\u{1F95A} ${pl.name} hatched a ${G.PETS[pet.k].name}!` });
       return this.hatchView(S, pl);
@@ -1889,7 +1908,7 @@ export class World {
       if (have < corn) return this.say(pl, `The ${G.PETS[k].name} is ${corn.toLocaleString()} candy corn. You have ${have.toLocaleString()}.`, "bad");
       G.takeInv(C.inv, "candycorn", corn);
       const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k, name: "" };
-      C.pets.push(pet); if (!C.eq.pet) C.eq.pet = pet.id; this.touch(pl);
+      C.pets.push(pet); if (!C.eq.pet) C.eq.pet = pet.id; this.touch(pl); this.colGet(pl, `pet:${k}`, 1);
       this.say(pl, `${G.PETS[k].name} - ${corn.toLocaleString()} candy corn. It looks at you like it was always going to come. Name it in your Equipment tab.`, "loot");
       for (const q of this.pls.values()) if (q !== pl) q.out.push({ type: "casinonote", text: `\u{1F408}‍⬛ ${pl.name} bought the Black Cat off Hexa's shelf.` });
       return;
@@ -2055,7 +2074,7 @@ export class World {
   // working turns up charms: called for every gather
   luckDrop(pl, k, chance) {
     if (Math.random() >= chance || G.roomFor(pl.C.inv, k, pl.C) < 1) return;
-    G.addInv(pl.C.inv, k, 1, pl.C); this.touch(pl);
+    G.addInv(pl.C.inv, k, 1, pl.C); this.touch(pl); this.colGet(pl, k, 1);
     this.say(pl, `You find a ${G.ITEMS[k].name.toLowerCase()}! Click it in your bag before a long session out here.`, "loot");
   }
   eat(pl, i, now) {
@@ -2740,7 +2759,11 @@ export class World {
     if (a.kind === "towerup") { pl.act = null; return this.towerUp(S, pl); }        /* the stairs: refuses until the floor is clear */
     if (a.kind === "cryptloot") { pl.act = null; return S.def.pyramid ? this.pyramidLootOpen(S, pl) : this.cryptLootOpen(S, pl); }
     if (a.kind === "pen") { pl.act = null; return this.penView(S, pl); }
-    if (a.kind === "hatchery") { pl.act = null; return this.hatchView(S, pl); }   /* (2026-09-27) the hatchery's window */
+    if (a.kind === "hatchery") { pl.act = null; return this.hatchView(S, pl); }
+    /* (2026-09-27) THE COLLECTION PODIUM: its owner's log, for its owner or anyone visiting. An owner who is offline is read from the copy kept
+       when they left (or loaded with their island), so a visit always shows something. */
+    if (a.kind === "podium") { pl.act = null; const own = this.pls.get(S.owner), col = S.owner === pl.id ? C.col : own ? own.C.col : S.colCopy;
+      return pl.out.push({ type: "collog", name: S.owner === pl.id ? pl.name : own?.name || S.ownerName || "Their", mine: S.owner === pl.id, col: col || {} }); }   /* (2026-09-27) the hatchery's window */
     if (a.kind === "shroom") { pl.act = null; return this.fungPick(S, pl, a.ob); }   /* (2026-09-27) Fungiculture */
     if (a.kind === "fbed") { pl.act = null; return this.fungBed(S, pl, a.ob, now); }
     if (a.kind === "cellar") { pl.act = null; return this.fungDown(S, pl); }   /* (2026-09-27) Breeding: the page opens the pen window */
@@ -3186,7 +3209,7 @@ export class World {
          off ordinary kills out here at a sixth of every one-in-a-thousand. */
       const k = G.PET_DROP_KEYS[Math.floor(Math.random() * G.PET_DROP_KEYS.length)];
       const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k, name: "" };
-      pl.C.pets.push(pet);
+      pl.C.pets.push(pet); this.colGet(pl, `pet:${k}`, 1);
       /* (2026-09-22) WEAR IT, if nothing else is worn. A drop only went into the pet LIST, so it followed nobody
          until its owner found the Equipment tab and switched it on - and the line below told them it was already
          "at your heel", which is why a pet could be found and then never seen by anyone, including the finder.
@@ -3221,7 +3244,7 @@ export class World {
       }
       if (def.pet && G.PETS[def.pet[0]] && Math.random() < def.pet[1] && !pl.C.pets.some((p) => p.k === def.pet[0])) {
         const k = def.pet[0], pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k, name: "" };
-        pl.C.pets.push(pet); if (!pl.C.eq.pet) pl.C.eq.pet = pet.id; this.touch(pl);
+        pl.C.pets.push(pet); if (!pl.C.eq.pet) pl.C.eq.pet = pet.id; this.touch(pl); this.colGet(pl, `pet:${k}`, 1);
         this.say(pl, `${G.PETS[k].name} steps out of the ${def.name.toLowerCase()}'s shadow and sits at your heel. A pet: name it in your Equipment tab.`, "loot");
         for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `🐈‍⬛ ${pl.name} found a pet: ${G.PETS[k].name}, off ${def.name}!` });
       }
@@ -3315,12 +3338,12 @@ export class World {
       }
       if (pl.left || pl.C.scene !== S.key) return;
       const owner = this.pls.get(id);
-      let copy = null;
-      if (id !== pl.id && !owner) copy = G.normChar(await this.ctx.storage.get(`char:${id}`)).isle;
+      let copy = null, colCopy = null;
+      if (id !== pl.id && !owner) { const ch = G.normChar(await this.ctx.storage.get(`char:${id}`)); copy = ch.isle; colCopy = ch.col; }
       if (pl.left || pl.C.scene !== S.key) return;
       const isle = owner ? owner.C.isle : copy || I, key = G.isleKey(isle, id);
       if (id !== pl.id && !isle.open) return this.say(pl, `${name}'s island is closed to visitors.`);
-      const S2 = this.scene(key); S2.ownerName = name; if (copy) { S2.isleCopy = copy; this.decorLay(S2); }
+      const S2 = this.scene(key); S2.ownerName = name; if (copy) { S2.isleCopy = copy; S2.colCopy = colCopy; this.decorLay(S2); }
       this.moveToScene(pl, key, null, G.SCENES.isle.entry); pl.dir = "north";
       return this.say(pl, id === pl.id ? "Charon takes you out to your island." : `Charon takes you out to ${name}'s island.`, "good");
     }
@@ -3732,8 +3755,11 @@ export class World {
     /* (2026-09-27) REORDER: a row dropped on another takes its place (the two swap) and its page, so a drop across pages is a refile too */
     else if (m.op === "swap") { const i = m.i | 0, j = m.j | 0; if (i === j || !C.bank[i] || !C.bank[j]) return; const pj = C.bank[j].p | 0; const t = C.bank[i]; C.bank[i] = C.bank[j]; C.bank[j] = t; if (pj) t.p = pj; else delete t.p; }
     else if (m.op === "wd") { const st = C.bank[m.i | 0]; if (!st) return;
-      if (G.fOf(st)) { if (!this.give(pl, st.k, 1, G.fOf(st))) return; C.bank.splice(m.i | 0, 1); this.touch(pl); return pl.out.push({ type: "bank" }); }
-      const q = this.giveUpTo(pl, st.k, qty(m.n, st.n)); if (!q) return; st.n -= q; if (!st.n) C.bank.splice(C.bank.indexOf(st), 1); }
+      pl.noCol = true;   /* (2026-09-27) your own things coming out of the bank are not new to your collection log */
+      try {
+        if (G.fOf(st)) { if (!this.give(pl, st.k, 1, G.fOf(st))) return; C.bank.splice(m.i | 0, 1); this.touch(pl); return pl.out.push({ type: "bank" }); }
+        const q = this.giveUpTo(pl, st.k, qty(m.n, st.n)); if (!q) return; st.n -= q; if (!st.n) C.bank.splice(C.bank.indexOf(st), 1);
+      } finally { pl.noCol = false; } }
     else return;
     this.touch(pl);
   }
@@ -3848,7 +3874,7 @@ export class World {
          room (you are standing there asking for it), the bank if there isn't, and the line names the thing and the place. If
          neither has room it stays in the offer's box, as before, and the line says that instead of claiming otherwise. */
       let where = "";
-      if (o.side === "sell" && left > 0) { const q = this.giveUpTo(pl, o.k, left); if (q) where = `${q.toLocaleString()} × ${G.ITEMS[o.k].name} back in your BAG`; if (left - q > 0) o.box.items += left - q; }
+      if (o.side === "sell" && left > 0) { pl.noCol = true; const q = this.giveUpTo(pl, o.k, left); pl.noCol = false; if (q) where = `${q.toLocaleString()} × ${G.ITEMS[o.k].name} back in your BAG`; if (left - q > 0) o.box.items += left - q; }
       else if (o.side === "buy") o.box.cash += left * o.price;
       const owed = o.box.items, owedCash = o.box.cash;
       this.exDeliver(pl);
