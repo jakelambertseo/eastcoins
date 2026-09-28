@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>EastScape fonts</title>
+<!-- (2026-09-28) The owner: "is there any other font that isnt huge in file size that matches the fantasy theme of the game, buts still readable
+     like nunito is". Each candidate on the kit's own window. Loaded from Google here for the comparison only; the game would self-host the
+     one chosen, like Nunito. Local only: http://localhost:4321/tools/ui-kit/fonts.html -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Marcellus&family=Almendra:wght@700&family=Macondo&family=Fondamento&family=Grenze:wght@700&family=Philosopher:wght@400;700&family=Uncial+Antiqua&display=swap">
+<style>
+@font-face{font-family:"Nunito";font-style:normal;font-weight:400 800;font-display:swap;src:url(/v3/assets/fonts/nunito-v32-latin.woff2) format("woff2")}
+html,body{margin:0;background:#0c0908;color:#e8e0cc;font-family:"Nunito",system-ui,sans-serif}
+main{max-width:1200px;margin:0 auto;padding:24px 16px 50px}
+h1{margin:0 0 4px;font-size:26px;color:#ffe7b0}h1+p{margin:0 0 20px;color:#b8a888;max-width:820px;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px}
+.tag{display:flex;justify-content:space-between;align-items:baseline;margin:0 4px 6px;font:800 12px Nunito,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#e0b060}.tag small{color:#8a7a60;letter-spacing:0;text-transform:none;font-weight:700}
+.k-win .d{font-family:var(--disp)}
+.k-head b.d{font-weight:var(--dw,700);font-size:var(--ds,19px)}
+.k-row b.d{font-weight:var(--dw,700)}
+.body-f p,.body-f small,.body-f .k-note{font-family:var(--body,Nunito)}
+</style>
+<link rel="stylesheet" href="kit.css?v=2">
+</head>
+<body>
+<main>
+<h1>Fonts for EastScape</h1>
+<p>Each card uses the candidate for <b>titles and names only</b> (window headers, row names, popup titles), with Nunito kept for the sentences, numbers and chat. That's how most fantasy games do it: a font with character where you read two words, and a plain one where you read twenty. The last card tries a fantasy font for everything, for comparison.</p>
+<div class="grid" id="grid"></div>
+</main>
+<script>
+const FONTS = [
+  ["Nunito (today)", "Nunito", 800, "19px", "already loaded: 38 KB"],
+  ["Cinzel", "Cinzel", 800, "18px", "+25 KB · Roman capitals"],
+  ["Marcellus", "Marcellus", 400, "19px", "+14 KB · flared, MMO-style"],
+  ["Almendra", "Almendra", 700, "20px", "+12 KB · medieval book hand"],
+  ["Fondamento", "Fondamento", 400, "20px", "+22 KB · calligraphic"],
+  ["Macondo", "Macondo", 400, "20px", "+11 KB · storybook"],
+  ["Grenze", "Grenze", 700, "20px", "+37 KB · condensed, stern"],
+  ["Uncial Antiqua", "Uncial Antiqua", 400, "18px", "+19 KB · Celtic uncial"],
+  ["Philosopher, for everything", "Philosopher", 700, "19px", "+43 KB (two weights) · replaces Nunito", "Philosopher"],
+];
+document.getElementById("grid").innerHTML = FONTS.map(([name, fam, w, sz, note, body]) => `<div><div class="tag">${name}<small>${note}</small></div>
+<section class="k-win${body ? " body-f" : ""}" style="--disp:'${fam}',serif;--dw:${w};--ds:${sz}${body ? `;--body:'${body}',serif` : ""}">
+  <div class="k-head"><img src="/v3/assets/img/glad/flat/ui/g_cooking.png?v=1" alt=""><b class="d">The Range</b><span class="k-sub">Cooking 12</span><button class="k-x" aria-label="Close">×</button></div>
+  <div class="k-body k-paper">
+    <button class="k-row"><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/csardine.png?v=30" alt=""></span><span><b class="d">Cooked sardine</b><small>3 raw sardines → 3 cooked · heals 3</small></span><span class="k-end"><span class="k-chip">11,501</span></span></button>
+    <button class="k-row off"><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/mushroom_soup.png?v=30" alt=""></span><span><b class="d">Mushroom soup</b><small>Needs 2 buttoncaps + 1 wheat</small></span><span class="k-end"><span class="k-chip lock">15</span></span></button>
+    <p style="margin:4px 2px 0">Down there, anyone can attack you. Die outside the Cage and there is a 1 in 4 chance you drop one of your items.</p>
+    <span class="k-note">Nestor the Egg Man · The Pumpkin King · 1,250 tickets</span>
+  </div>
+</section></div>`).join("");
+</script>
+</body>
+</html>
