@@ -81,12 +81,12 @@ const CSS = `
 #gameWin .bom .k-btn.bom-lot::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%) -150% 0/50% 100% no-repeat;animation:bomGlint 2.6s ease-in-out infinite}
 #gameWin .bom .k-btn.bom-lot:hover{filter:brightness(1.07)}#gameWin .bom .k-btn.bom-lot:active{transform:translateY(3px);box-shadow:0 0 0 2px #7a4a0a,0 1px 0 #6a3a06,0 0 30px rgba(255,200,60,.8)}
 @keyframes bomBreathe{50%{box-shadow:0 0 0 2px #7a4a0a,0 4px 0 #6a3a06,0 0 34px rgba(255,210,70,.9)}}
-#gameWin .bom .k-btn.bom-zc{position:relative;min-height:42px;padding:0 18px;border:0;border-image:none;border-radius:10px;background:linear-gradient(#1c4a2a,#0e2c17);color:#c9ffd4;text-shadow:0 1px 0 #000;font:900 14px/1 Lora,serif;box-shadow:0 0 0 2px #3ddc72,0 0 14px rgba(61,220,114,.45),inset 0 1px 0 rgba(255,255,255,.18);transition:transform .08s,box-shadow .15s}
-#gameWin .bom .k-btn.bom-zc:hover:not(:disabled){box-shadow:0 0 0 2px #6dff9c,0 0 24px rgba(61,220,114,.75),inset 0 1px 0 rgba(255,255,255,.22);color:#fff}
+#gameWin .bom .k-btn.bom-zc{position:relative;min-height:46px;padding:0 16px;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn_zc.png?v=1) 10 fill / 7px stretch;border-radius:0;background:none;color:#d6ffde;text-shadow:0 1px 0 #000,0 0 8px rgba(80,230,120,.5);font:900 14px/1 Lora,serif;filter:drop-shadow(0 0 5px rgba(61,220,114,.5));transition:transform .08s,filter .15s}
+#gameWin .bom .k-btn.bom-zc:hover:not(:disabled){border-image-source:url(/v3/assets/img/glad/flat/ui/btn_zc_on.png?v=1);color:#fff;filter:drop-shadow(0 0 10px rgba(61,220,114,.8))}
 #gameWin .bom .k-btn.bom-zc:active:not(:disabled){transform:scale(.94)}
-#gameWin .bom .k-btn.bom-zc:disabled{box-shadow:0 0 0 2px #8a9a8e;background:linear-gradient(#5a625c,#3e4540);color:#d6ddd8;filter:none}
-#gameWin .bom .k-btn.bom-zc.ping::after{content:"";position:absolute;inset:-2px;border-radius:12px;box-shadow:0 0 0 2px #6dff9c;animation:bomPing .55s ease-out forwards;pointer-events:none}
-@keyframes bomPing{to{inset:-14px;border-radius:20px;opacity:0}}
+#gameWin .bom .k-btn.bom-zc:disabled{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_zc_off.png?v=1);color:#c9cdca;text-shadow:0 1px 0 #000;filter:none;opacity:1}
+#gameWin .bom .k-btn.bom-zc.ping::after{content:"";position:absolute;inset:-9px;border-radius:8px;box-shadow:0 0 0 2px #6dff9c;animation:bomPing .55s ease-out forwards;pointer-events:none}
+@keyframes bomPing{to{inset:-22px;border-radius:16px;opacity:0}}
 .bom-zseg button{font-weight:900}
 .bom-card:has(.bom-zc:not(:disabled)){box-shadow:inset 0 0 0 1.5px rgba(61,180,100,.55),0 0 0 3px rgba(61,220,114,.08)}
 .bom-meter i{background:linear-gradient(90deg,#2e9a44,#6dff9c)}
