@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dungeon Report Sketch</title>
+<meta name="robots" content="noindex,nofollow">
+<!-- (2026-09-28) DESIGN SKETCH ONLY, not deployed and not wired to anything. The owner: "ideate with design/UI only for now how an after
+     action report would look like for parties who complete dungeons ... damage dealt, fish eaten, XP, damage taken" and "a damage meter
+     feature like how World of Warcraft does for parties". Every number here is made up; the data lives in RUN at the bottom. Open it
+     from the dev server: http://localhost:4321/mockups-archive/eastscape-dungeon-report.html -->
+<style>
+@font-face{font-family:"Lora";font-style:normal;font-weight:400 700;font-display:swap;src:url(/v3/assets/fonts/lora-latin.woff2) format("woff2")}
+@font-face{font-family:"Lora";font-style:italic;font-weight:400 700;font-display:swap;src:url(/v3/assets/fonts/lora-italic-latin.woff2) format("woff2")}
+@font-face{font-family:"Cinzel";font-style:normal;font-weight:400 900;font-display:swap;src:url(/v3/assets/fonts/cinzel-latin.woff2) format("woff2")}
+:root{
+  --k-ink:#2a2016; --k-ink2:#6a5a40; --k-ink3:#9a8866;
+  --k-paper:#efe2c4; --k-paper-hi:#fff6dc; --k-card:#e6d4ad; --k-card-line:#c2a574; --k-line:rgba(90,58,24,.2);
+  --k-head:#5a3220; --k-head-ink:#f6e9cc; --k-head-sub:#e0c890;
+  --k-gold:#c8963a; --k-gold-ink:#7a4e0e; --k-gold-hi:#ffd84a;
+  --k-good:#2f7a3a; --k-bad:#b8302a; --k-rare:#6a3aa8;
+  --k-r:6px; --k-disp:"Cinzel",Georgia,serif;
+  --melee:#d0463a; --archery:#3f9a4a; --magic:#4a7ad8;
+  --hud:#1a120c; --hud-2:#2a1c12; --hud-line:#6a4a28;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#0e0a14;color:var(--k-ink);font:600 14px/1.4 Lora,system-ui,sans-serif;min-height:100vh}
+img{image-rendering:pixelated}
+.page{max-width:1240px;margin:0 auto;padding:18px 16px 60px}
+.page>h1{margin:0 0 4px;font:900 26px var(--k-disp);color:#f6e9cc}
+.page>p.lede{margin:0 0 18px;color:#cdb892;max-width:780px}
+.switch{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px}
+.switch button{padding:8px 14px;border:0;border-radius:99px;background:#2a1c12;color:#e0c890;font:800 13px Lora,serif;cursor:pointer;box-shadow:inset 0 0 0 1.5px #6a4a28}
+.switch button[aria-pressed="true"]{background:#e8bf35;color:#2a1600;box-shadow:none}
+.stage{position:relative;border-radius:10px;overflow:hidden;min-height:640px;background:
+  linear-gradient(rgba(10,6,14,.55),rgba(10,6,14,.55)),
+  repeating-linear-gradient(45deg,#2a2130 0 22px,#241c2a 22px 44px);box-shadow:0 0 0 2px #3a2a1a}
+.stage .note{position:absolute;left:16px;top:14px;max-width:420px;color:#d8c8a8;font:italic 600 13px Lora,serif;opacity:.85}
+.view[hidden]{display:none!important}
+.why{margin:14px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.why div{padding:12px 14px;border-radius:8px;background:#1e1510;color:#e6d6b4;box-shadow:inset 0 0 0 1.5px #4a3420}
+.why>div>b{display:block;margin-bottom:4px;font:800 14px var(--k-disp);color:#ffd84a}
+.why p{margin:0;font-size:13.5px}
+
+/* ---------------- THE KIT (the game's own window, restated so the sketch stands alone) ---------------- */
+.k-win{display:flex;flex-direction:column;min-height:0;color:var(--k-ink);border:15px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/win.png?v=1) 12 fill / 15px stretch;filter:drop-shadow(0 12px 22px rgba(0,0,0,.5))}
+.k-head{display:flex;align-items:center;gap:10px;margin:-3px -3px 0;padding:8px 10px 8px 12px;background:var(--k-head);color:var(--k-head-ink);border-bottom:3px solid #3a1e12;border-radius:2px}
+.k-head h2{margin:0;font:800 19px var(--k-disp);flex:1}.k-head small{font:600 13px Lora,serif;color:var(--k-head-sub)}
+.k-head .x{width:30px;height:30px;border:0;border-radius:5px;background:#b8302a;color:#fff;font:900 16px Lora;cursor:pointer}
+.k-paper{background-color:var(--k-paper);background-image:radial-gradient(rgba(150,110,60,.07) 1px,transparent 1.5px),radial-gradient(rgba(150,110,60,.05) 1px,transparent 1.5px);background-size:7px 9px,11px 13px;background-position:0 0,4px 6px}
+.k-label{font:800 11px/1.2 Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2)}
+.k-sect{display:flex;align-items:center;gap:8px;margin:4px 2px 2px}.k-sect::after{content:"";flex:1;height:2px;background:var(--k-line)}
+.k-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;background:rgba(90,58,24,.12);color:var(--k-ink2);font:800 11.5px/1.3 Lora,serif;white-space:nowrap}
+.k-chip.good{background:#d6ecd0;color:var(--k-good)}.k-chip.bad{background:#f3d6d0;color:var(--k-bad)}.k-chip.gold{background:#f6e2a8;color:var(--k-gold-ink)}
+.k-chip img{width:16px;height:16px}
+.k-foot{display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:10px 12px;border-top:2px solid var(--k-line);background:rgba(90,58,24,.07)}
+.k-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 14px;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;background:none;color:#ffe27a;font:800 14px/1 Lora,sans-serif;text-shadow:0 1px 0 #000;cursor:pointer;white-space:nowrap}
+.k-btn:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_on.png?v=1)}
+.k-btn.gold{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_gold.png?v=1);color:#2a1600;text-shadow:0 1px 0 rgba(255,240,190,.6)}
+.k-btn.gold:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_gold_on.png?v=1)}
+.k-btn.green{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_zc.png?v=1);color:#e4ffe9}
+.k-btn.green:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_zc_on.png?v=1)}
+.k-tabs{display:flex;gap:3px;padding:8px 12px 0;border-bottom:2px solid var(--k-gold);background:rgba(90,58,24,.08)}
+.k-tabs button{position:relative;margin-bottom:-2px;padding:7px 14px 6px;border:2px solid var(--k-card-line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--k-card);color:var(--k-ink2);font:800 13px/1 Lora,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.k-tabs button[aria-selected="true"]{z-index:1;background:var(--k-paper);color:var(--k-ink);border-color:var(--k-gold);padding-bottom:8px}
+.k-tabs button img{width:18px;height:18px}
+
+/* ================= 1. THE LIVE METER (WoW's Details!/Recount, in the HUD's dark glass) ================= */
+.meter{position:absolute;right:16px;top:70px;width:300px;border-radius:8px;background:linear-gradient(rgba(26,18,12,.94),rgba(20,13,9,.94));box-shadow:0 0 0 2px var(--hud-line),0 8px 20px rgba(0,0,0,.5);color:#f0e0c0;overflow:hidden;font-size:13px}
+.m-head{display:flex;align-items:center;gap:6px;padding:6px 8px;background:linear-gradient(#3a2414,#26170d);border-bottom:1px solid #6a4a28;cursor:move}
+.m-head b{flex:1;font:800 12.5px var(--k-disp);letter-spacing:.04em;color:#ffd84a}
+.m-head button{border:0;background:rgba(255,230,170,.08);color:#e8d4a8;border-radius:4px;padding:3px 6px;font:800 11px Lora;cursor:pointer}
+.m-head button[aria-pressed="true"]{background:#e8bf35;color:#2a1600}
+.m-modes{display:flex;gap:2px;padding:5px 6px;border-bottom:1px solid rgba(106,74,40,.6)}
+.m-modes button{flex:1;padding:4px 0;border:0;border-radius:4px;background:transparent;color:#bfa77c;font:800 11px Lora;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px}
+.m-modes button img{width:14px;height:14px}
+.m-modes button[aria-pressed="true"]{background:rgba(255,216,74,.14);color:#ffd84a;box-shadow:inset 0 -2px 0 #ffd84a}
+.m-list{padding:4px}
+.bar{position:relative;display:grid;grid-template-columns:18px 22px 1fr auto;align-items:center;gap:6px;height:26px;margin:2px 0;padding:0 7px 0 5px;border-radius:4px;background:rgba(255,255,255,.04);overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;width:var(--w);background:linear-gradient(90deg,var(--c),color-mix(in srgb,var(--c) 70%,#000));opacity:.85;transition:width .6s cubic-bezier(.2,.7,.3,1)}
+.bar.me{box-shadow:inset 0 0 0 1.5px #ffd84a}
+.bar>*{position:relative}
+.bar .rk{font:900 11px Lora;color:#fff8;text-align:center}
+.bar .av{width:22px;height:22px;border-radius:4px;background:#0006 center/cover;overflow:hidden}.bar .av img{width:22px;height:22px;object-fit:cover;object-position:50% 12%}
+.bar .nm{font:800 12.5px Lora;color:#fff;text-shadow:0 1px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .v{font:800 12px Lora;color:#fff;text-shadow:0 1px 0 #000;white-space:nowrap;font-variant-numeric:tabular-nums}.bar .v small{font:700 10.5px Lora;color:#fffc;margin-left:4px}
+.m-foot{display:flex;justify-content:space-between;padding:5px 9px 7px;border-top:1px solid rgba(106,74,40,.6);font:700 11px Lora;color:#bfa77c}
+.m-foot b{color:#f0e0c0}
+.meter.mini{width:190px}.meter.mini .m-modes,.meter.mini .m-foot{display:none}.meter.mini .bar{height:18px;grid-template-columns:1fr auto}.meter.mini .bar .rk,.meter.mini .bar .av{display:none}.meter.mini .bar .v small{display:none}
+.boss{position:absolute;left:50%;top:18px;transform:translateX(-50%);width:min(460px,70%);text-align:center;color:#f6e9cc}
+.boss b{font:900 16px var(--k-disp);text-shadow:0 2px 0 #000}.boss .hpbar{height:14px;margin-top:4px;border-radius:7px;background:#2a0c0c;box-shadow:0 0 0 2px #6a2a1a;overflow:hidden}.boss .hpbar i{display:block;height:100%;width:38%;background:linear-gradient(#e0503a,#8a1c12)}
+.callouts{position:absolute;left:16px;bottom:16px;display:grid;gap:6px;max-width:360px}
+.callouts div{padding:8px 10px;border-radius:6px;background:rgba(20,13,9,.85);box-shadow:0 0 0 1.5px #6a4a28;color:#e6d6b4;font-size:12.5px}
+.callouts b{color:#ffd84a}
+.party{position:absolute;left:16px;top:64px;display:grid;gap:5px}
+.party>div{display:grid;grid-template-columns:30px 110px;gap:6px;align-items:center;padding:4px 6px;border-radius:6px;background:rgba(20,13,9,.75);color:#fff;font:800 12px Lora}
+.party img{width:30px;height:30px;object-fit:cover;object-position:50% 10%;border-radius:4px;background:#0006}
+.party .hp{height:6px;border-radius:3px;background:#3a0c0c;overflow:hidden;margin-top:3px}.party .hp i{display:block;height:100%;background:#4ac060}
+
+/* ================= 2. THE AFTER-ACTION REPORT ================= */
+.aar{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(900px,calc(100% - 24px));max-height:calc(100% - 24px)}
+.aar-body{overflow-y:auto;overflow-x:hidden;min-height:0;padding:0 0 4px}
+#tblWrap{overflow-x:auto}
+.aar-hero{position:relative;margin:0 -3px;padding:18px 18px 14px;background:radial-gradient(120% 160% at 15% 0%,#3a2a4a 0%,#1e1426 60%,#140c1a 100%);color:#f6e9cc;box-shadow:inset 0 -2px 0 #e8bf35;display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center}
+.aar-hero .crest{width:74px;height:74px;border-radius:12px;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#5a3a6a,#1e1426);box-shadow:0 0 0 2px #e8bf35,0 0 18px rgba(255,200,60,.35)}.aar-hero .crest img{width:64px;height:64px}
+.aar-hero h3{margin:0;font:900 13px var(--k-disp);letter-spacing:.14em;color:#e0c890}
+.aar-hero h2{margin:2px 0 4px;font:900 30px/1.05 var(--k-disp);color:#ffd84a;text-shadow:0 2px 0 #4a2a04,0 0 18px rgba(255,200,60,.4)}
+.aar-hero h2.wipe{color:#ff8a70;text-shadow:0 2px 0 #3a0c04}
+.aar-hero .facts{display:flex;gap:6px;flex-wrap:wrap}
+.aar-hero .facts .k-chip{background:rgba(255,235,190,.1);color:#f3e2bd;box-shadow:inset 0 0 0 1px rgba(255,215,140,.3)}
+.aar-hero .grade{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;background:radial-gradient(circle at 40% 30%,#fff3b0,#e8a824 60%,#8a5a0a);box-shadow:0 0 0 3px #5a3a08,0 0 24px rgba(255,200,60,.6);color:#3a2000;font:900 40px var(--k-disp);text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.aar-hero .grade small{display:block;margin-top:-10px;font:900 9px Lora;letter-spacing:.12em}
+.aar-pad{padding:12px 14px;display:grid;gap:12px}
+.awards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.award{position:relative;display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;padding:9px 10px;border-radius:var(--k-r);background:linear-gradient(#fff3d0,#f0dca8);box-shadow:inset 0 0 0 1.5px var(--k-gold),0 2px 0 rgba(122,78,14,.25)}
+.award .face{width:44px;height:44px;border-radius:8px;overflow:hidden;background:#3a2a4a;box-shadow:0 0 0 2px var(--k-gold)}.award .face img{width:44px;height:44px;object-fit:cover;object-position:50% 10%}
+.award .medal{position:absolute;left:36px;top:34px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:#ffd84a;box-shadow:0 0 0 2px #7a4e0e;font-size:11px}
+.award b{display:block;font:900 13px var(--k-disp);color:var(--k-gold-ink)}
+.award span{display:block;font:800 13.5px Lora;color:var(--k-ink)}.award small{font:700 12px Lora;color:var(--k-ink2)}
+.tbl{width:100%;border-collapse:separate;border-spacing:0 4px;font-variant-numeric:tabular-nums}
+.tbl th{padding:0 8px 2px;text-align:right;font:800 10.5px Lora;letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2);white-space:nowrap;cursor:pointer}
+.tbl th:first-child{text-align:left}.tbl th[aria-sort]{color:var(--k-ink)}.tbl th[aria-sort]::after{content:" ▾"}
+.tbl th img{width:15px;height:15px;vertical-align:-3px;margin-right:3px}
+.tbl td{padding:7px 8px;background:var(--k-card);text-align:right;font:800 14px Lora;white-space:nowrap}
+.tbl tr td:first-child{border-radius:var(--k-r) 0 0 var(--k-r);text-align:left}.tbl tr td:last-child{border-radius:0 var(--k-r) var(--k-r) 0}
+.tbl tr.me td{background:#f6e6b8;box-shadow:inset 0 1.5px 0 var(--k-gold),inset 0 -1.5px 0 var(--k-gold)}
+.who{display:flex;align-items:center;gap:8px}.who img{width:30px;height:30px;object-fit:cover;object-position:50% 10%;border-radius:5px;background:#3a2a4a}
+.who b{font:800 14px var(--k-disp)}.who small{display:block;font:700 11.5px Lora;color:var(--k-ink2)}
+.style{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:1px}
+.dmgcell{position:relative;min-width:150px}.dmgcell i{position:absolute;left:8px;right:8px;bottom:5px;height:4px;border-radius:2px;background:rgba(90,58,24,.12)}.dmgcell i u{display:block;height:100%;border-radius:2px;background:var(--c)}
+.muted{color:var(--k-ink3)!important;font-weight:700!important}
+.tbl td.bad{color:var(--k-bad)}.tbl td.good{color:var(--k-good)}
+.two{display:grid;grid-template-columns:1.35fr 1fr;gap:12px}
+.card{padding:10px 12px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.card>h4{margin:0 0 6px;font:800 11px Lora;letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2);display:flex;justify-content:space-between}
+.chart{width:100%;height:150px;display:block}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font:700 12px Lora;color:var(--k-ink2);margin-top:4px}
+.xp{display:grid;gap:6px}
+.xp .row{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center}
+.xp img{width:24px;height:24px}
+.xp .track{height:9px;border-radius:5px;background:rgba(90,58,24,.15);overflow:hidden}.xp .track i{display:block;height:100%;background:linear-gradient(90deg,#c8963a,#ffd84a)}
+.xp b{font:800 13px Lora}.xp small{font:700 11.5px Lora;color:var(--k-ink2)}
+.xp .lvl{font:900 10.5px Lora;color:#fff;background:var(--k-good);padding:1px 6px;border-radius:99px;margin-left:6px}
+.loot{display:flex;gap:6px;flex-wrap:wrap}
+.slot{position:relative;display:grid;place-items:center;width:46px;height:46px;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch}
+.slot img{width:30px;height:30px}.slot u{position:absolute;right:-4px;bottom:-5px;font:900 10px Lora;text-decoration:none;color:#fff;background:#2a1a0c;padding:0 4px;border-radius:3px}
+.slot.rare{filter:drop-shadow(0 0 5px rgba(160,100,255,.8))}
+.slot em{position:absolute;left:-5px;top:-7px;font:900 9px Lora;font-style:normal;color:#fff;background:var(--k-rare);padding:1px 4px;border-radius:3px}
+.fishline{display:flex;gap:4px;flex-wrap:wrap;align-items:center}.fishline img{width:18px;height:18px}
+.deaths{display:grid;gap:4px;font-size:13px}.deaths div{display:flex;gap:8px;align-items:center}.deaths b{font-weight:800}
+.deaths .t{font:800 11px Lora;color:var(--k-ink3);width:38px}
+.me-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.me-strip div{padding:8px;border-radius:var(--k-r);background:#2a1c12;color:#f0e0c0;text-align:center}
+.me-strip b{display:block;font:900 20px var(--k-disp);color:#ffd84a}.me-strip small{font:800 10px Lora;letter-spacing:.08em;text-transform:uppercase;color:#bfa77c}
+.me-strip .best{box-shadow:inset 0 0 0 2px #ffd84a}
+.pb{color:#7dff8a;font:900 10px Lora;letter-spacing:.06em}
+
+/* ================= 3. PHONE ================= */
+.phones{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;padding:30px 10px}
+.phone{position:relative;width:390px;height:780px;border-radius:40px;background:#000;padding:14px;box-shadow:0 0 0 3px #3a2a1a,0 20px 40px rgba(0,0,0,.6)}
+.phone .scr{position:relative;height:100%;border-radius:28px;overflow:hidden;background:
+  linear-gradient(rgba(10,6,14,.5),rgba(10,6,14,.5)),repeating-linear-gradient(45deg,#2a2130 0 22px,#241c2a 22px 44px)}
+.phone .cap{position:absolute;top:-26px;left:0;right:0;text-align:center;color:#cdb892;font:800 12px Lora}
+.phone .meter{position:absolute;right:8px;top:52px;width:200px}
+.phone .aar{width:calc(100% - 8px);max-height:calc(100% - 16px);top:50%}
+.phone .aar-hero{grid-template-columns:auto 1fr;padding:12px}
+.phone .aar-hero .grade{position:absolute;right:10px;top:10px;width:54px;height:54px;font-size:26px}
+.phone .aar-hero h2{font-size:21px}.phone .aar-hero .crest{width:52px;height:52px}.phone .aar-hero .crest img{width:44px;height:44px}
+.phone .awards{grid-template-columns:1fr}.phone .aar-hero>span:nth-child(2){padding-right:58px}.phone .aar-hero h3{font-size:10.5px}.phone .award{grid-template-columns:34px 1fr;padding:7px}.phone .award .face,.phone .award .face img{width:34px;height:34px}.phone .award .medal{left:28px;top:26px}
+.phone .me-strip{grid-template-columns:repeat(3,1fr)}.phone .aar-hero .facts .k-chip{font-size:10.5px;padding:1px 6px}
+.pcard{display:grid;gap:4px;padding:8px 10px;border-radius:var(--k-r);background:var(--k-card)}
+.pcard .top{display:flex;justify-content:space-between;align-items:center}
+.pcard .nums{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center}
+.pcard .nums b{display:block;font:900 14px Lora}.pcard .nums small{font:800 9.5px Lora;letter-spacing:.06em;text-transform:uppercase;color:var(--k-ink2)}
+@media (max-width:760px){.two{grid-template-columns:1fr}.meter{position:relative;right:auto;top:auto;margin:60px auto 0}}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Dungeon reports: a sketch</h1>
+  <p class="lede">Design only. Nothing here is wired to the game, and every number is made up. Three pieces: the <b>live meter</b> a party watches while it fights, the <b>after-action report</b> that opens when a run ends, and how both sit on a <b>phone</b>. Click the meter's modes and the report's column headings; they work.</p>
+  <div class="switch" role="group">
+    <button type="button" data-v="meter" aria-pressed="true">1 · Live meter</button>
+    <button type="button" data-v="aar" aria-pressed="false">2 · After-action report</button>
+    <button type="button" data-v="wipe" aria-pressed="false">2b · The same, on a wipe</button>
+    <button type="button" data-v="phone" aria-pressed="false">3 · On a phone</button>
+  </div>
+
+  <div class="view" id="v-meter">
+    <div class="stage" id="meterStage"></div>
+    <div class="why">
+      <div><b>Where it sits</b><p>Top right, under the minimap, in the HUD's dark glass rather than the paper windows: it is a gauge you glance at mid-fight, not a window you read. Drag it anywhere; the ▾ collapses it to names and numbers.</p></div>
+      <div><b>Four modes</b><p><b>Damage</b> (and damage per second), <b>Taken</b>, <b>Food</b> (every fish eaten, as the HP it gave back), and <b>Deaths</b>. The bar colour is your fighting style: red melee, green archery, blue magic. Your own bar wears a gold ring.</p></div>
+      <div><b>Two windows of time</b><p><b>Fight</b> resets when a boss or a floor starts, so each boss has its own leaderboard; <b>Run</b> is the whole dungeon. Details! players will know it as "current segment / overall".</p></div>
+      <div><b>What it costs</b><p>Today a run only keeps damage <i>to the boss</i> (and the Count Room's kills). The meter and the report want a handful of counters per player per run: damage to anything (storm arcs and burns included), damage taken, food eaten by kind, deaths, kills, XP by skill, hits and misses. All of them sit on code paths that already run on every swing and bite, so it is additions, not new systems. They reach the page with the updates the party already gets, a couple of times a second at most. No new poll.</p></div>
+    </div>
+  </div>
+
+  <div class="view" id="v-aar" hidden>
+    <div class="stage" id="aarStage" style="min-height:900px"></div>
+    <div class="why">
+      <div><b>The order it reads in</b><p>The result and the grade first (did we do it, how well), then the <b>awards</b> (the fun, screenshot-able part), then the <b>scoreboard</b>, then the detail: the damage over time with the bosses marked, your XP, the loot, and who went down and why.</p></div>
+      <div><b>Awards, not just rankings</b><p>A table only ever praises the top damage. Awards find something for everyone: most fish eaten, took the most hits, never died, landed the killing blow, most accurate. Every one is computed from the same counters.</p></div>
+      <div><b>The grade</b><p>S / A / B / C from time, deaths and damage taken against the dungeon's par. It gives a cleared run something to beat next time, and your best grade can sit on the Hiscores and your profile.</p></div>
+      <div><b>Share it</b><p>"Post to chat" drops a one-line summary in chat: <i>"The Crypt cleared in 11:42, grade A. MVP: Kellz (39% of the damage)."</i> Your party's, not a stranger's: only the people in the run get the window.</p></div>
+    </div>
+  </div>
+
+  <div class="view" id="v-wipe" hidden>
+    <div class="stage" id="wipeStage" style="min-height:760px"></div>
+    <div class="why">
+      <div><b>A wipe still gets a report</b><p>That is when people most want one. The headline says how far you got and the boss's HP when it ended, the grade is replaced by "how close", and the <b>deaths</b> card moves to the top: who went first, to what, and what they had left to eat.</p></div>
+      <div><b>No blame colours</b><p>Deaths are listed, not shamed: no red rows. The awards still run ("Last one standing", "Most fish eaten"), so a bad night still hands out something.</p></div>
+    </div>
+  </div>
+
+  <div class="view" id="v-phone" hidden>
+    <div class="phones" id="phones"></div>
+    <div class="why">
+      <div><b>The meter on a phone</b><p>Collapsed by default: names and numbers only, no mode strip. Tap it to open the full meter over the top of the screen; it never sits over the chat drawer.</p></div>
+      <div><b>The report on a phone</b><p>The table becomes one card per player (four numbers each), the awards go two across, and the chart and loot stack below. The same data, nothing dropped.</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------- the made-up run. Every figure in the sketch comes from here. ---------------- */
+const IMG = "/v3/assets/img/glad/flat/", IT = IMG + "items/", UI = IMG + "ui/";
+const RUN = {
+  /* the Crypt as it is: The Hoodie (900 hp) in the Sanctum, Skeleton Guards at half his health, an enrage at five minutes; food heals
+     6 (sardine) to 46 (grimscale), and a hit is worth 4 XP to its style's skill and 4/3 to Hitpoints (a third of that at range) */
+  dungeon: "The Crypt", sub: "Party of four · Ossuary to Sanctum", boss: "The Hoodie", bossArt: IMG + "hoodie.png", time: "11:42", par: "14:00", grade: "A",
+  party: [
+    { name: "Kellz", style: "melee", skin: "hero_emerald_south", dmg: 1420, taken: 480, fish: { clanternfish: 14, ctrout: 6 }, deaths: 0, kills: 41, acc: 71, last: true,
+      xp: [["melee", 5680, 0], ["hp", 1893, 1]] },
+    { name: "bootypaper", me: true, style: "archery", skin: "hero_bronze_south", dmg: 1010, taken: 170, fish: { clanternfish: 4, csardine: 5 }, deaths: 0, kills: 27, acc: 84,
+      xp: [["archery", 4040, 1], ["hp", 449, 0]] },
+    { name: "DookieBetts", style: "magic", skin: "hero_diamond_south", dmg: 780, taken: 300, fish: { cstormmarlin: 6, clanternfish: 5 }, deaths: 1, kills: 19, acc: 77,
+      xp: [["magic", 3120, 0], ["hp", 347, 0]] },
+    { name: "SlotGoblin", style: "melee", skin: "hero_onyx_south", dmg: 420, taken: 690, fish: { clanternfish: 18, ctrout: 8, csardine: 6 }, deaths: 2, kills: 8, acc: 58,
+      xp: [["melee", 1680, 0], ["hp", 560, 0]] }
+  ],
+  loot: [["tickets", 2500], ["clover", 2], ["scroll_haste", 1], ["beer", 3], ["horseshoe", 1, "rare"]],
+  deathsLog: [["6:12", "SlotGoblin", "the Hoodie's slam", "8 fish left"], ["9:48", "DookieBetts", "a Skeleton Guard, from behind", "0 fish left"], ["10:30", "SlotGoblin", "the Hoodie's slam (enraged)", "0 fish left"]],
+  wipe: { floor: "the Sanctum", bossHp: 14, deaths: [["6:12", "SlotGoblin", "the Hoodie's slam", "8 fish left"], ["8:40", "DookieBetts", "a Skeleton Guard, from behind", "0 fish left"], ["9:20", "Kellz", "the Hoodie's slam (enraged)", "2 fish left"], ["9:58", "bootypaper", "the Hoodie's slam (enraged)", "1 lanternfish left"]] }
+};
+const HEAL = { csardine: 6, ctrout: 10, ccatfish: 12, clanternfish: 20, cstormmarlin: 29, cthundersquid: 32, cgrimscale: 46 };
+for (const p of RUN.party) p.heal = Object.entries(p.fish).reduce((a, [k, n]) => a + (HEAL[k] || 0) * n, 0);
+const STYLE = { melee: "var(--melee)", archery: "var(--archery)", magic: "var(--magic)" };
+const fmt = (n) => Math.round(n).toLocaleString(), fmt1 = (n) => (Math.round(n * 10) / 10).toFixed(1);
+const secs = 11 * 60 + 42, dps = (p) => p.dmg / secs;
+const face = (p) => `${IMG}${p.skin}.png`;
+const fishN = (p) => Object.values(p.fish).reduce((a, b) => a + b, 0);
+const skill = (k) => `${IT}skill_${k}.png`;
+
+/* ---------------- 1. the meter ---------------- */
+const MODES = [["dmg", "Damage", "skill_melee"], ["taken", "Taken", "skill_defence"], ["heal", "Food", "clanternfish"], ["deaths", "Deaths", "skill_hp"]];
+function meter({ mode = "dmg", seg = "fight", mini = false } = {}) {
+  const val = (p) => mode === "deaths" ? p.deaths : (seg === "fight" ? p[mode] * 0.38 : p[mode]);
+  const rows = [...RUN.party].sort((a, b) => val(b) - val(a)), top = Math.max(1, val(rows[0])), total = rows.reduce((a, p) => a + val(p), 0);
+  const tail = (p) => mode === "dmg" ? `${fmt(val(p))}<small>${fmt1(val(p) / (seg === "fight" ? 94 : secs))}/s</small>` : mode === "deaths" ? `${val(p)}` : `${fmt(val(p))}<small>${total ? Math.round((val(p) / total) * 100) : 0}%</small>`;
+  return `<div class="meter${mini ? " mini" : ""}" data-mode="${mode}" data-seg="${seg}">
+    <div class="m-head"><b>${mode === "dmg" ? "Damage" : mode === "taken" ? "Damage taken" : mode === "heal" ? "Healed by food" : "Deaths"}</b>
+      <button type="button" data-seg="fight" aria-pressed="${seg === "fight"}" title="This fight: resets when a boss or floor starts">Fight</button><button type="button" data-seg="run" aria-pressed="${seg === "run"}" title="The whole run">Run</button><button type="button" data-mini title="Collapse">${mini ? "▸" : "▾"}</button></div>
+    <div class="m-modes">${MODES.map(([k, l, ic]) => `<button type="button" data-mode="${k}" aria-pressed="${k === mode}"><img src="${ic.startsWith("skill_") ? IT + ic : IT + ic}.png" alt="">${l}</button>`).join("")}</div>
+    <div class="m-list">${rows.map((p, i) => `<div class="bar${p.me ? " me" : ""}" style="--w:${(val(p) / top) * 100}%;--c:${STYLE[p.style]}"><i></i><span class="rk">${i + 1}</span><span class="av"><img src="${face(p)}" alt=""></span><span class="nm">${p.name}</span><span class="v">${tail(p)}</span></div>`).join("")}</div>
+    <div class="m-foot"><span>${seg === "fight" ? "vs " + RUN.boss + " · 1:34" : RUN.dungeon + " · " + RUN.time}</span><span>Party <b>${mode === "deaths" ? total : fmt(total)}</b></span></div>
+  </div>`;
+}
+function meterStage(el, opts, withScene = true) {
+  el.innerHTML = (withScene ? `<div class="boss"><b>${RUN.boss}</b><div class="hpbar"><i></i></div></div>
+    <div class="party">${RUN.party.map((p) => `<div><img src="${face(p)}" alt=""><span>${p.name}<div class="hp"><i style="width:${p.deaths ? 30 : 70 + (p.name.length % 3) * 10}%"></i></div></span></div>`).join("")}</div>
+    <div class="callouts"><div><b>Sketch:</b> the party frames on the left and the boss bar are the game's today, drawn roughly. The meter on the right is the new piece.</div><div>Try the modes (Damage / Taken / Food / Deaths), Fight vs Run, and ▾.</div></div>` : "") + meter(opts);
+  const m = el.querySelector(".meter");
+  m.querySelectorAll("[data-mode]").forEach((b) => b.onclick = () => meterStage(el, { ...opts, mode: b.dataset.mode }, withScene));
+  m.querySelectorAll("button[data-seg]").forEach((b) => b.onclick = () => meterStage(el, { ...opts, seg: b.dataset.seg }, withScene));
+  m.querySelector("[data-mini]").onclick = () => meterStage(el, { ...opts, mini: !opts.mini }, withScene);
+}
+
+/* ---------------- 2. the report ---------------- */
+const AWARDS = [
+  ["MVP", "⭐", (p) => p.dmg, (p, all) => `${Math.round((p.dmg / all.reduce((a, q) => a + q.dmg, 0)) * 100)}% of the party's damage`],
+  ["Killing Blow", "🗡", (p) => (p.last ? 1 : 0), () => `finished ${RUN.boss}`],
+  ["Iron Wall", "🛡", (p) => p.taken, (p) => `took ${fmt(p.taken)} damage, mostly slams`],
+  ["Snack King", "🐟", (p) => fishN(p), (p) => `ate ${fishN(p)} fish (+${fmt(p.heal)} HP)`],
+  ["Deadeye", "🎯", (p) => p.acc, (p) => `${p.acc}% of hits landed`],
+  ["Untouchable", "✨", (p) => (p.deaths ? 0 : 10000 - p.taken), (p) => `no deaths, least damage taken`]
+];
+const COLS = [["dmg", "Damage", "skill_melee"], ["dps", "DPS", null], ["taken", "Taken", "skill_defence"], ["heal", "Healed", "clanternfish"], ["fish", "Fish", "clanternfish"], ["kills", "Kills", null], ["deaths", "Deaths", null], ["xp", "XP", "skill_hp"]];
+let sortBy = "dmg";
+const colVal = (p, k) => k === "dps" ? dps(p) : k === "fish" ? fishN(p) : k === "xp" ? p.xp.reduce((a, x) => a + x[1], 0) : p[k];
+function table() {
+  const rows = [...RUN.party].sort((a, b) => colVal(b, sortBy) - colVal(a, sortBy)), top = Math.max(...RUN.party.map((p) => p.dmg));
+  return `<table class="tbl"><thead><tr><th>Player</th>${COLS.map(([k, l, ic]) => `<th data-sort="${k}"${k === sortBy ? ' aria-sort="descending"' : ""}>${ic ? `<img src="${IT}${ic}.png" alt="">` : ""}${l}</th>`).join("")}</tr></thead><tbody>
+    ${rows.map((p) => `<tr class="${p.me ? "me" : ""}"><td><span class="who"><img src="${face(p)}" alt=""><span><b>${p.name}</b><small><span class="style" style="background:${STYLE[p.style]}"></span>${p.style[0].toUpperCase() + p.style.slice(1)}${p.me ? " · you" : ""}</small></span></span></td>
+      <td class="dmgcell" style="--c:${STYLE[p.style]}">${fmt(p.dmg)}<i><u style="width:${(p.dmg / top) * 100}%"></u></i></td><td>${fmt1(dps(p))}</td><td>${fmt(p.taken)}</td><td class="good">+${fmt(p.heal)}</td>
+      <td><span class="fishline" style="justify-content:flex-end">${Object.entries(p.fish).map(([k, n]) => `<img src="${IT}${k}.png" alt="" title="${k}">${n}`).join(" ")}</span></td><td>${p.kills}</td><td class="${p.deaths ? "" : "muted"}">${p.deaths || "–"}</td><td>+${fmt(colVal(p, "xp"))}</td></tr>`).join("")}
+  </tbody></table>`;
+}
+function chart() {
+  /* damage per 30 seconds, one line per player, the two boss fights shaded */
+  const W = 520, H = 150, N = 24, series = RUN.party.map((p, pi) => Array.from({ length: N }, (_, i) => { const boss = i >= 17; return (p.dmg / N) * (0.55 + 0.9 * Math.abs(Math.sin(i * 0.7 + pi))) * (boss ? 1.6 : 1); }));
+  const max = Math.max(...series.flat()), x = (i) => (i / (N - 1)) * (W - 10) + 5, y = (v) => H - 14 - (v / max) * (H - 26);
+  const band = (a, b, label, ly = 11) => `<rect x="${x(a)}" y="0" width="${x(b) - x(a)}" height="${H - 14}" fill="rgba(184,48,42,.1)"/><text x="${x(a) + 4}" y="${ly}" font-size="10" font-weight="800" fill="#b8302a" font-family="Lora">${label}</text>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${band(14, 15, "Skeleton Guards", 24)}${band(17, 23, RUN.boss)}
+    <line x1="0" x2="${W}" y1="${H - 14}" y2="${H - 14}" stroke="rgba(90,58,24,.3)"/>
+    ${[["Ossuary", 0], ["Haunted Hall", 5], ["Antechamber", 10], ["Sanctum", 16]].map(([t, i]) => `<line x1="${x(i)}" x2="${x(i)}" y1="${H - 14}" y2="${H - 10}" stroke="#9a8866"/><text x="${x(i) + 2}" y="${H - 1}" font-size="10" fill="#9a8866" font-family="Lora" font-weight="700">${t}</text>`).join("")}
+    ${series.map((s, pi) => `<polyline fill="none" stroke="${getComputedStyle(document.documentElement).getPropertyValue("--" + RUN.party[pi].style)}" stroke-width="${RUN.party[pi].me ? 3 : 2}"${RUN.party.slice(0, pi).some((q) => q.style === RUN.party[pi].style) ? ' stroke-dasharray="5 3"' : ""} stroke-linejoin="round" points="${s.map((v, i) => `${x(i)},${y(v)}`).join(" ")}"/>`).join("")}
+    ${RUN.deathsLog.map(([t]) => { const [m, sec] = t.split(":").map(Number), i = ((m * 60 + sec) / secs) * (N - 1); return `<text x="${x(i) - 6}" y="${H - 18}" font-size="12">💀</text>`; }).join("")}
+  </svg><div class="legend">${RUN.party.map((p) => `<span><span class="style" style="background:${STYLE[p.style]}"></span>${p.name}</span>`).join("")}<span>💀 a death</span></div>`;
+}
+function report({ wipe = false } = {}) {
+  const me = RUN.party.find((p) => p.me), all = RUN.party;
+  const awards = AWARDS.map(([t, icon, score, line]) => { const p = [...all].sort((a, b) => score(b) - score(a))[0]; return `<div class="award"><span class="face"><img src="${face(p)}" alt=""></span><span class="medal">${icon}</span><span><b>${t}</b><span>${p.name}</span><small>${line(p, all)}</small></span></div>`; });
+  if (wipe) { awards.splice(5, 1); awards.splice(1, 2, `<div class="award"><span class="face"><img src="${face(all[1])}" alt=""></span><span class="medal">🕯</span><span><b>Last One Standing</b><span>${all[1].name}</span><small>held on 38 seconds alone</small></span></div>`); }
+  const mine = me.xp.filter((x) => x[1] > 0);
+  return `<div class="k-win aar"><div class="k-head"><img src="${UI}p_crypt.png?v=1" alt="" style="width:26px;height:26px"><h2>Run report</h2><small>${RUN.dungeon}</small><button class="x" type="button" aria-label="Close">✕</button></div>
+    <div class="aar-body k-paper">
+      <div class="aar-hero"><span class="crest"><img src="${RUN.bossArt}" alt=""></span>
+        <span><h3>${RUN.dungeon.toUpperCase()} · ${RUN.sub.toUpperCase()}</h3><h2 class="${wipe ? "wipe" : ""}">${wipe ? `Wiped in ${RUN.wipe.floor}` : "Cleared!"}</h2>
+          <span class="facts">${wipe ? `<span class="k-chip">${RUN.boss} at ${RUN.wipe.bossHp}% HP</span><span class="k-chip">9:58 in · enraged at 5:00</span><span class="k-chip">So close.</span>` : `<span class="k-chip">⏱ ${RUN.time} (par ${RUN.par})</span><span class="k-chip">💀 ${RUN.deathsLog.length} deaths</span><span class="k-chip">🐟 ${all.reduce((a, p) => a + fishN(p), 0)} eaten</span><span class="k-chip">🎟 2,500 each</span><span class="k-chip" style="color:#7dff8a">Party best!</span>`}</span></span>
+        ${wipe ? `<span class="grade" style="background:radial-gradient(circle at 40% 30%,#ffd6c8,#c85a3a 60%,#5a1a0a);font-size:26px">86%<small>OF THE WAY</small></span>` : `<span class="grade">${RUN.grade}<small>GRADE</small></span>`}</div>
+      <div class="aar-pad">
+        ${wipe ? `<div class="card"><h4><span>Who went down</span><span>Food left when it happened</span></h4><div class="deaths">${RUN.wipe.deaths.map(([t, n, what, left]) => `<div><span class="t">${t}</span><b>${n}</b> to ${what} <span class="k-chip" style="margin-left:auto">${left}</span></div>`).join("")}</div></div>` : ""}
+        <div class="k-sect"><span class="k-label">Awards</span></div>
+        <div class="awards">${awards.join("")}</div>
+        <div class="k-sect"><span class="k-label">Your run</span></div>
+        <div class="me-strip"><div class="best"><b>${fmt(me.dmg)}</b><small>Damage</small><div class="pb">YOUR BEST</div></div><div><b>${fmt1(dps(me))}</b><small>DPS</small></div><div><b>${fmt(me.taken)}</b><small>Taken</small></div><div><b>${fishN(me)}</b><small>Fish eaten</small></div><div><b>${me.acc}%</b><small>Accuracy</small></div></div>
+        <div class="k-sect"><span class="k-label">The party · click a heading to sort</span></div>
+        <div id="tblWrap">${table()}</div>
+        <div class="two">
+          <div class="card"><h4><span>Damage over the run</span><span>per 30 seconds</span></h4>${chart()}</div>
+          <div class="card"><h4><span>Your XP</span><span>+${fmt(mine.reduce((a, x) => a + x[1], 0))}</span></h4><div class="xp">${mine.map(([k, n, up]) => `<div class="row"><img src="${skill(k)}" alt=""><span><b>${k === "hp" ? "Hitpoints" : k[0].toUpperCase() + k.slice(1)}</b>${up ? `<span class="lvl">LEVEL UP · 43</span>` : ""}<div class="track"><i style="width:${40 + (n % 50)}%"></i></div></span><small>+${fmt(n)}</small></div>`).join("")}</div>
+            <h4 style="margin-top:12px"><span>${wipe ? "Kept from the run" : "Your loot"}</span><span>${wipe ? "boss chest lost" : "boss chest"}</span></h4><div class="loot">${(wipe ? RUN.loot.slice(0, 2) : RUN.loot).map(([k, n, r]) => `<span class="slot${r ? " rare" : ""}">${r ? "<em>RARE</em>" : ""}<img src="${k === "pumpkinking" ? IMG + k : IT + k}.png" alt=""><u>${n > 1 ? fmt(n) : ""}</u></span>`).join("")}</div></div>
+        </div>
+        ${wipe ? "" : `<div class="card"><h4><span>Deaths</span><span>Food left when it happened</span></h4><div class="deaths">${RUN.deathsLog.map(([t, n, what, left]) => `<div><span class="t">${t}</span><b>${n}</b> to ${what} <span class="k-chip" style="margin-left:auto">${left}</span></div>`).join("")}</div></div>`}
+      </div>
+    </div>
+    <div class="k-foot"><span style="margin-right:auto;font:700 12.5px Lora;color:var(--k-ink2)">Only this party sees this. It stays in your Run History for a week.</span><button class="k-btn" type="button">Post to chat</button>${wipe ? `<button class="k-btn green" type="button">Try again</button>` : `<button class="k-btn gold" type="button">Run it back</button>`}</div>
+  </div>`;
+}
+function aarStage(el, opts) {
+  el.innerHTML = report(opts);
+  el.querySelectorAll("[data-sort]").forEach((th) => th.onclick = () => { sortBy = th.dataset.sort; aarStage(el, opts); });
+}
+
+/* ---------------- 3. phones ---------------- */
+function phoneCards() {
+  return RUN.party.map((p) => `<div class="pcard" style="${p.me ? "box-shadow:inset 0 0 0 1.5px var(--k-gold);background:#f6e6b8" : ""}"><div class="top"><span class="who"><img src="${face(p)}" alt=""><span><b>${p.name}</b><small><span class="style" style="background:${STYLE[p.style]}"></span>${p.style}</small></span></span><b>${fmt(p.dmg)}</b></div>
+    <div class="nums"><span><b>${fmt1(dps(p))}</b><small>DPS</small></span><span><b>${fmt(p.taken)}</b><small>Taken</small></span><span><b>${fishN(p)}</b><small>Fish</small></span><span><b>${p.deaths || "–"}</b><small>Deaths</small></span></div></div>`).join("");
+}
+function phones(el) {
+  el.innerHTML = `<div class="phone"><div class="cap">Mid-fight: the meter collapsed</div><div class="scr" id="ph1"></div></div>
+    <div class="phone"><div class="cap">The report, scrolled to the top</div><div class="scr" id="ph2"></div></div>`;
+  meterStage(el.querySelector("#ph1"), { mini: true }, false);
+  const r = el.querySelector("#ph2"); r.innerHTML = report();
+  const pad = r.querySelector(".aar-pad"); const old = pad.querySelector("#tblWrap"); old.outerHTML = `<div style="display:grid;gap:6px">${phoneCards()}</div>`;
+  r.querySelector(".two").style.gridTemplateColumns = "1fr";
+  r.querySelector(".k-foot span").remove();
+}
+
+/* ---------------- the switcher ---------------- */
+const views = { meter: () => meterStage(document.getElementById("meterStage"), { mode: "dmg", seg: "fight" }), aar: () => aarStage(document.getElementById("aarStage"), {}), wipe: () => aarStage(document.getElementById("wipeStage"), { wipe: true }), phone: () => phones(document.getElementById("phones")) };
+document.querySelectorAll(".switch button").forEach((b) => b.onclick = () => {
+  document.querySelectorAll(".switch button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+  document.querySelectorAll(".view").forEach((v) => v.hidden = v.id !== "v-" + b.dataset.v); views[b.dataset.v]();
+  try { history.replaceState(null, "", "#" + b.dataset.v); } catch (e) { /* fine */ }
+});
+const start = (location.hash || "#meter").slice(1); (document.querySelector(`.switch [data-v="${start}"]`) || document.querySelector(".switch button")).click();
+</script>
+</body>
+</html>
