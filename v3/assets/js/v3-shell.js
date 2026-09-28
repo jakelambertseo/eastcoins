@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "grind", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights", "store"];
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "grind", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights", "store", "eastscape"];   /* (2026-09-28) eastscape: the game in the shell, a test */
 
   /* ------------------------------------------------------ loading views
 
@@ -78,6 +78,7 @@
     profile: [...LOGOS, "eastcoins-music-config.js", "v3-profile.js"],
     wrapped: [...LOGOS, "v3-wrapped.js"],
     highlights: ["v3-highlights.js"],
+    eastscape: ["v3-eastscape.js"],   /* (2026-09-28) the game framed inside the site, a test, not linked */
     // The store's preview is the real profile card, so it loads the profile script too.
     store: [...LOGOS, "v3-profile.js", "v3-store.js"],
     users: ["eastcoins-music-config.js", "v3-users.js"],
@@ -288,6 +289,7 @@
   const TITLES = {
     wrapped: "EastCoin Wrapped",
     highlights: "Highlights — EastCoin",
+    eastscape: "EastScape — EastCoin",
     store: "Store — EastCoin",
     events: "EastCoin — Sports", music: "The Green Room — EastCoin", screen: "Movies & TV — EastCoin",
     multiview: "MultiView — EastCoin", picks: "Picks — EastCoin", casino: "Casino — EastCoin",
