@@ -791,6 +791,7 @@ export class World {
       }
       case "quest": return this.questOp(S, pl, m);
       case "hw": return this.hwOp(S, pl, m);
+      case "report": return void this.reportOp(S, pl, m).catch((e) => console.error("report", e));   /* (2026-09-28) the bug button */
       case "pen": return this.penOp(S, pl, m);
       case "hatch": return this.hatchOp(S, pl, m);   /* (2026-09-27) Breeding: eggs */
       case "eggtrade": return this.eggTrade(S, pl, m);   /* (2026-09-28) Nestor the Egg Man */
@@ -1658,6 +1659,73 @@ export class World {
   penOf(S) { return S?.objs?.find((o) => o.t === "pen") || null; }
   /** (2026-09-27) the LOCAL dev server breeds 720 times faster (72 hours in 6 minutes) so a pairing can be tested end to end; production never */
   penMs(ms) { return this.env?.DEV === "1" ? Math.max(20000, Math.round(ms / 720)) : ms; }
+  /* ============================================================ THE BUG BUTTON (2026-09-28)
+     The owner: "I want to create a 'Bug Button' that is beside users hotbar. Users can click it and submit bugs. Inside of the popup they can
+     also request features. I want transparency on this, so below where users submit bugs or features, i want it to say which bugs were
+     fixed and which features were implemented or put on the backlog. we need a primitive admin panel for me where i can sort through bugs
+     and features as well".
+
+     A report is { id, kind: "bug"|"idea", text, by, name, scene, x, y, ver, env, at, status, title, note, upd }. Each is its own storage key
+     (`rep:<id>`), because one key holds at most 128 KB and a busy week of reports would not fit in one; they load into memory the first
+     time anybody opens the window, and never before. Status is set by an admin only:
+       new        the inbox
+       working    being looked at          (public: "In progress")
+       fixed      a bug, fixed              (public: "Fixed")
+       done       an idea, built            (public: "Added")
+       backlog    planned, not yet          (public: "On the backlog")
+       declined   not doing it              (private)
+     THE BOARD SHOWS ONLY WHAT AN ADMIN PUT ON IT, and shows the admin's title for it (the reporter's words until one is written), never the
+     reporter's name: nothing anyone types reaches the board without being read first. Each player also sees their own reports and what
+     became of them. A player may send G.REP.perHour an hour; the text is G.REP.max characters at most. */
+  async repLoad() {
+    if (this.reps) return this.reps;
+    const m = await this.ctx.storage.list({ prefix: "rep:" });
+    this.reps = new Map([...m.values()].filter((r) => r && r.id).map((r) => [r.id, r]));
+    return this.reps;
+  }
+  repView(pl) {
+    const R = [...this.reps.values()].sort((a, b) => b.at - a.at), admin = pl.role === "admin" || !!pl.admin;
+    const pub = (r) => ({ id: r.id, kind: r.kind, status: r.status, title: r.title || r.text.slice(0, G.REP.titleMax), note: r.note || "", at: r.at, upd: r.upd || r.at });
+    pl.out.push({ type: "reports",
+      mine: R.filter((r) => r.by === pl.id).slice(0, 30).map((r) => ({ id: r.id, kind: r.kind, text: r.text, status: r.status, note: r.note || "", at: r.at, upd: r.upd || r.at })),
+      board: R.filter((r) => G.REP.public.includes(r.status)).sort((a, b) => (b.upd || b.at) - (a.upd || a.at)).slice(0, 120).map(pub),
+      ...(admin ? { all: R.slice(0, 500) } : {}),
+      admin, perHour: G.REP.perHour, max: G.REP.max });
+  }
+  async reportOp(S, pl, m) {
+    const op = String(m.op || ""), now = Date.now(), admin = pl.role === "admin" || !!pl.admin, bad = (t) => this.say(pl, t, "bad");
+    await this.repLoad();
+    if (op === "list") return this.repView(pl);
+    if (op === "send") {
+      const kind = m.kind === "idea" ? "idea" : "bug", text = String(m.text || "").replace(/\s+/g, " ").trim().slice(0, G.REP.max);
+      if (text.length < G.REP.min) return bad(`Say a little more: at least ${G.REP.min} characters, so it can be found and fixed.`);
+      pl.repAt = (pl.repAt || []).filter((t) => now - t < 3600000);
+      if (pl.repAt.length >= G.REP.perHour && !admin) return bad(`That's ${G.REP.perHour} this hour. Thank you: send the next one a little later.`);
+      pl.repAt.push(now);
+      const r = { id: `${now.toString(36)}${Math.random().toString(36).slice(2, 6)}`, kind, text, by: pl.id, name: pl.name, scene: String(pl.C.scene || ""), x: pl.x | 0, y: pl.y | 0,
+        ver: G.VERSION, env: String(m.env || "").slice(0, 120), at: now, status: "new", title: "", note: "", upd: now };
+      this.reps.set(r.id, r);
+      try { await this.ctx.storage.put(`rep:${r.id}`, r); } catch (e) { this.reps.delete(r.id); return bad("That didn't save. Try again in a moment."); }
+      this.say(pl, kind === "bug" ? "Thank you. The bug is logged, and you'll see here what happens to it." : "Thank you. The idea is logged, and you'll see here what happens to it.", "good");
+      for (const p of this.pls.values()) if (p !== pl && (p.role === "admin" || p.admin)) this.say(p, `New ${kind === "bug" ? "bug report" : "feature idea"} from ${pl.name}: open the bug button's Inbox.`, "admin");
+      return this.repView(pl);
+    }
+    if (!admin) return;
+    const r = this.reps.get(String(m.id || "")); if (!r) return;
+    if (op === "set") {
+      const was = r.status;
+      if (G.REP.statuses.includes(String(m.status))) r.status = String(m.status);
+      if (m.title != null) r.title = String(m.title).replace(/\s+/g, " ").trim().slice(0, G.REP.titleMax);
+      if (m.note != null) r.note = String(m.note).replace(/\s+/g, " ").trim().slice(0, G.REP.noteMax);
+      r.upd = now;
+      await this.ctx.storage.put(`rep:${r.id}`, r).catch(() => {});
+      /* the reporter hears about it, if they are here, when it lands somewhere they would want to know */
+      const who = this.pls.get(r.by);
+      if (who && who !== pl && was !== r.status && G.REP.public.includes(r.status)) this.say(who, `Your ${r.kind === "bug" ? "bug report" : "idea"} ("${r.text.slice(0, 40)}${r.text.length > 40 ? "…" : ""}") is now: ${G.REP.label[r.status]}.`, "good");
+      return this.repView(pl);
+    }
+    if (op === "del") { this.reps.delete(r.id); await this.ctx.storage.delete(`rep:${r.id}`).catch(() => {}); return this.repView(pl); }
+  }
   penView(S, pl) { const P = pl.C.pen; pl.out.push({ type: "pen", pen: P ? { kind: P.kind, a: P.a || null, b: P.b || null, egg: P.egg || null, child: P.child, at: P.at, ms: P.ms } : null, now: Date.now() }); }
   penOp(S, pl, m) {
     const C = pl.C, op = String(m.op || ""), now = Date.now(), bad = (t) => this.say(pl, t, "bad");
@@ -1678,7 +1746,7 @@ export class World {
          sends none gets each parent's strongest, and a random look, which is what breeding did before. */
       const SA = G.petStats(a), SB = G.petStats(b), sa = String(m.sa || ""), sb = String(m.sb || "");
       const pA = sa && sa in SA ? [sa, SA[sa]] : G.bestStat(a, sb), pB = sb && sb in SB ? [sb, SB[sb]] : G.bestStat(b, pA[0]);
-      if (pA[0] && pA[0] === pB[0]) return bad("Pick two different stats, one from each parent.");
+      if (pA[0] && pA[0] === pB[0] && G.picksMustDiffer(a, b)) return bad("Pick two different stats, one from each parent.");   /* (2026-09-28) unless the pair has nothing else to offer: see picksMustDiffer */
       /* checked everything: now take the food and the pets */
       for (const [k, n] of pr.food) G.takeInv(C.inv, k, n);
       C.pets = C.pets.filter((p) => p.id !== a.id && p.id !== b.id);
@@ -2239,11 +2307,11 @@ export class World {
   }
   // `wrangler dev` has no key and must never reach the real site: a pretend Ruby with the same answers, so the window can be worked on
   dexDev(body) {
-    const D = (this.devDex ||= { used: 0, seen: new Map() }), left = Math.max(0, G.DEX.capHour - D.used), leftOut = Math.max(0, G.DEX.capDay - D.used);
-    if (body.op === "status") return { ok: true, left, leftOut, capHour: G.DEX.capHour, capDay: G.DEX.capDay, maxStake: G.DEX.maxStake, open: [], enabled: true, dev: true };
+    const D = (this.devDex ||= { used: 0, seen: new Map(), log: [] }), left = Math.max(0, G.DEX.capHour - D.used), leftOut = Math.max(0, G.DEX.capDay - D.used);
+    if (body.op === "status") return { ok: true, left, leftOut, outFree: D.log.map((x) => ({ zc: x.zc, at: x.at + 86400000 })), capHour: G.DEX.capHour, capDay: G.DEX.capDay, maxStake: G.DEX.maxStake, open: [], enabled: true, dev: true };
     if (D.seen.has(body.id)) return { ...D.seen.get(body.id), duplicate: true };
     const cost = body.zc | 0; if (cost > left) return { ok: false, code: "CAP", definite: true, left, message: "That's your EastScape ZCoins for this hour (pretend)." };
-    D.used += cost; const ans = body.op === "stake" ? { ok: true, voucher: body.id, zc: cost, left: left - cost } : { ok: true, zc: cost, balance: 1000 + cost, left: left - cost };
+    D.used += cost; if (body.op !== "stake") D.log.push({ zc: cost, at: Date.now() }); const ans = body.op === "stake" ? { ok: true, voucher: body.id, zc: cost, left: left - cost } : { ok: true, zc: cost, balance: 1000 + cost, left: left - cost };
     D.seen.set(body.id, ans); return ans;
   }
   dexKey(pl, id) { return `dex:${pl.id}:${id}`; }
@@ -3405,7 +3473,10 @@ export class World {
       st.n--; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1);
       const rain = G.charmOf(C, "rainmaker"), ms = Math.round(crop.ms * (1 - rain / 100));   /* (2026-09-26) Rainmaker: this plot grows faster, and remembers it */
       I.plots[i] = { k, at: Date.now(), ...(rain ? { ms } : {}) }; this.touch(pl);
-      return this.say(pl, `You plant some ${G.ITEMS[k].name.toLowerCase()}. It'll be ready in ${Math.round(ms / 60000)} minutes, whether you're here or not.${rain ? " The rain is on it." : ""}`, "good");
+      /* (2026-09-28, the owner: "Planting crops for harvesting needs to give a small amount of XP (1/30th of what the planting would)") a
+         thirtieth of what that crop's harvest pays (G.plantXp), so a planting is worth a little on its own and the harvest stays the pay */
+      const px = G.plantXp(k); if (px) this.grant(pl, "farming", px);
+      return this.say(pl, `You plant some ${G.ITEMS[k].name.toLowerCase()}. It'll be ready in ${Math.round(ms / 60000)} minutes, whether you're here or not.${rain ? " The rain is on it." : ""}${px ? ` +${px} Harvesting xp.` : ""}`, "good");
     }
     if (m.op === "show") {
       const i = m.i | 0, st = C.inv[m.s | 0];

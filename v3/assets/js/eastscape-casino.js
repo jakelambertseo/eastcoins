@@ -866,13 +866,24 @@ export function createCasino(env) {
   /* (v107) TICKETS FOR ZCOINS: the counter's own trade, 1,000 a ZCoin, under the same hourly allowance as everything else that turns
      the game into ZCoins. The window only asks; the game server takes the tickets and the SITE pays (or says no, and they come back). */
   let cashZc = 1;
+  /* (2026-09-28, a player: "i think i accidentally spaced my two 50coin cashouts far apart") WHEN IT COMES BACK. The 100 is a rolling 24
+     hours, not a day that resets: each ZCoin that left comes back 24 hours after it left. The site's status lists them (outFree), so the
+     counter says what is free now and when the next lot returns, in hours and on the clock: "50 more in 6h 12m (9:14 PM)". */
+  const inHm = (ms) => { const m = Math.max(1, Math.round(ms / 60000)); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`; };
+  const clock = (t) => new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  function freeLine(st) {
+    const soon = (st?.outFree || []).filter((x) => x.at > Date.now()).sort((a, b) => a.at - b.at);
+    if (!soon.length) return "";
+    const n = soon[0], rest = soon.slice(1);
+    return ` Next <b>${n.zc}</b> comes back in <b>${inHm(n.at - Date.now())}</b> (${clock(n.at)})${rest.length ? `, then ${rest.slice(0, 2).map((x) => `${x.zc} at ${clock(x.at)}`).join(", ")}` : ""}.`;
+  }
   function cashCard() {
     const card = el("section", "cz-card cz-dex"), D = G.DEX, st = dexSt, left = st?.ok ? (st.leftOut ?? st.left) : null, on = !!(st?.ok && st.enabled), have = tix(), most = Math.max(0, Math.min(Math.floor(have / D.rate), left ?? 0, D.capDay));   /* (2026-09-27) a trade draws on the DAY's allowance: 100 ZCoins out in 24 hours */
     cashZc = Math.max(1, Math.min(most || 1, cashZc));
     card.innerHTML = `<h2>Trade tickets for ZCoins<small>${D.rate.toLocaleString()} tickets = 1 ZCoin</small></h2>
-      <p class="cz-note" style="text-align:left">You have ${tixTxt(have)} tickets${on ? `: enough for <b>${Math.floor(have / D.rate)}</b> ZCoin${Math.floor(have / D.rate) === 1 ? "" : "s"}. ${left} of ${D.capDay} left today.` : "."}</p>
+      <p class="cz-note" style="text-align:left">You have ${tixTxt(have)} tickets${on ? `: enough for <b>${Math.floor(have / D.rate)}</b> ZCoin${Math.floor(have / D.rate) === 1 ? "" : "s"}. <b>${left}</b> of ${D.capDay} free now (a rolling 24 hours).${freeLine(st)}` : "."}</p>
       <div class="cz-cashrow"><button type="button" data-c="-1" aria-label="One fewer">−</button><b id="czCashN">${cashZc}</b><button type="button" data-c="1" aria-label="One more">+</button><button type="button" data-c="max">Max</button></div>
-      <button type="button" class="cz-dexgo" id="czCashGo"${on && most >= 1 && !dexWait ? "" : " disabled"}>${most >= 1 ? `Trade ${(cashZc * D.rate).toLocaleString()} tickets for ${cashZc} ZCoin${cashZc === 1 ? "" : "s"}` : have < D.rate ? `You need ${D.rate.toLocaleString()} tickets for 1 ZCoin` : "That's your ZCoins out for today"}</button>`;
+      <button type="button" class="cz-dexgo" id="czCashGo"${on && most >= 1 && !dexWait ? "" : " disabled"}>${most >= 1 ? `Trade ${(cashZc * D.rate).toLocaleString()} tickets for ${cashZc} ZCoin${cashZc === 1 ? "" : "s"}` : have < D.rate ? `You need ${D.rate.toLocaleString()} tickets for 1 ZCoin` : (() => { const n = (st?.outFree || []).filter((x) => x.at > Date.now()).sort((a, b) => a.at - b.at)[0]; return n ? `${n.zc} more free in ${inHm(n.at - Date.now())}` : "That's your ZCoins out for now"; })()}</button>`;
     card.querySelectorAll("[data-c]").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); cashZc = b.dataset.c === "max" ? Math.max(1, most) : Math.max(1, Math.min(Math.max(1, most), cashZc + Number(b.dataset.c))); cashier(); }));
     card.querySelector("#czCashGo")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "Counting your tickets…" }; send({ t: "dex", op: "cash", zc: cashZc }); cashier(); });
     return card;
@@ -886,7 +897,7 @@ export function createCasino(env) {
     const card = el("section", "cz-card cz-dex"), D = G.DEX, st = dexSt, left = st?.ok ? (st.leftOut ?? st.left) : null, on = !!(st?.ok && st.enabled), me = env.me();   /* (2026-09-27) banking a find leaves the game too: the day's allowance */
     const zc = me.inv.filter((x) => x.k === "zcoin").reduce((a, x) => a + x.n, 0), can = Math.min(zc, left ?? 0);
     card.innerHTML = `<h2>ZCoins you found<small>bank them here</small></h2>
-      ${st ? (on ? `<div class="cz-dexbar"><i style="width:${Math.round((left / D.capDay) * 100)}%"></i></div><p class="cz-note" style="text-align:left">${left} of ${D.capDay} left today (trades share it)${st.dev ? " · PRETEND (dev server): no ZCoins move" : ""}</p>` : `<p class="cz-dexmsg bad">${esc(st.message || "The Ruby isn't paying out right now.")}</p>`) : `<p class="cz-note" style="text-align:left">Asking the Ruby…</p>`}
+      ${st ? (on ? `<div class="cz-dexbar"><i style="width:${Math.round((left / D.capDay) * 100)}%"></i></div><p class="cz-note" style="text-align:left"><b>${left}</b> of ${D.capDay} free now (a rolling 24 hours; trades share it).${freeLine(st)}${st.dev ? " · PRETEND (dev server): no ZCoins move" : ""}</p>` : `<p class="cz-dexmsg bad">${esc(st.message || "The Ruby isn't paying out right now.")}</p>`) : `<p class="cz-note" style="text-align:left">Asking the Ruby…</p>`}
       <button type="button" class="cz-dexgo" id="czDexBank"${on && can >= 1 && !dexWait ? "" : " disabled"}>${zc ? `Bank ${can || zc} ZCoin${(can || zc) === 1 ? "" : "s"} from your bag` : "No ZCoins in your bag (they drop, rarely)"}</button>
       <p class="cz-dexmsg ${dexMsg?.cls || ""}">${esc(dexMsg?.text || "")}</p>`;
     card.querySelector("#czDexBank")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "The Ruby hums…" }; dexTicket = null; send({ t: "dex", op: "bank" }); cashier(); });

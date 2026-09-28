@@ -1135,7 +1135,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 
 /* (2026-09-28) THE WALLET STRIP, the chip on the Inventory heading and the VIP fold: see walletCard */
 .wl-strip{display:flex;gap:4px;padding:5px 6px;border-radius:9px;background:linear-gradient(#1c1613,#120e0c);box-shadow:0 0 0 2px #c8963a,0 0 0 4px #3a2410}
-.wl-s{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:4px;padding:2px 3px;border-radius:6px;background:rgba(255,255,255,.04)}
+.wl-s{flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;gap:4px;padding:2px 3px;border-radius:6px;background:rgba(255,255,255,.04)}
 .wl-s .ico,.wl-s img{image-rendering:pixelated;flex:none}
 .wl-s b{min-width:0;font-size:15px;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wl-s .ico,.wl-s img{width:22px;height:22px}
@@ -1207,7 +1207,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .buffbar:has(.buff.none){display:none}
 /* the hotbar, a size up */
 .qslot{width:50px;height:50px}.qslot .ico{width:30px;height:30px}.qslot kbd{font-size:11px;left:-3px;top:-5px}
-@media (max-width:520px){.qslot{width:44px;height:44px}.qslot .ico{width:26px;height:26px}.chat-tab{height:44px;padding:0 8px}.chat-tab .ct-l{display:none}.chat-tab .cti{width:20px;height:20px}}
+@media (max-width:520px){.qslot{width:42px;height:42px}.qslot .ico{width:25px;height:25px}.chat-tab{height:42px;width:42px;padding:0;justify-content:center}.chat-tab .ct-l{display:none}.chat-tab .cti{width:20px;height:20px}.chat-row{gap:4px}.chat-tab .chat-unread{position:absolute;top:-6px;right:-6px}.chat-tab{position:relative}}   /* (2026-09-28) Chat, Menu and the bug button are icons on a phone, so the row fits with the bug button in it */
 /* one wooden button: Chat, Menu and Decorate wear the hotbar's frame */
 .chat-tab,.decobtn{height:50px;padding:0 12px;border:7px solid transparent;border-radius:0;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;background:none;box-shadow:none;image-rendering:pixelated;color:#f3e7cc;text-shadow:0 1px 0 #000}
 .decobtn{height:40px}
@@ -1696,12 +1696,30 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 #eggWin .eg-row{background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
 #eggWin .eg-egg b{font-family:var(--k-disp)}
 #eggWin .eg-how{background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold)}
+
+/* (2026-09-28) THE XP/H TRACKER on the top bar: see renderXph */
+.xph{position:relative;display:inline-flex}.xph[hidden]{display:none}
+.xph-b{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 5px;border:0;border-radius:99px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,216,74,.3);color:#f4ede5;font:700 13px/1 Lora,serif;cursor:pointer}
+.xph-b:hover,.xph-b[aria-expanded="true"]{background:rgba(255,216,74,.14)}
+.xph-b i{display:grid;place-items:center;width:18px;height:18px;font-style:normal}.xph-b i .ico{width:18px;height:18px}
+.xph-b small{font:800 10.5px/1 Lora,serif;letter-spacing:.06em;text-transform:uppercase;color:#cfc6b8}
+.xph-b b{color:#ffd84a;font-variant-numeric:tabular-nums}
+.xph.idle .xph-b{opacity:.55;filter:grayscale(.6)}
+.xph-pop{position:fixed;top:34px;z-index:95;min-width:280px;padding:8px 10px;border-radius:10px;background:linear-gradient(#1f1713,#140f0c);box-shadow:0 0 0 2px #c8963a,0 0 0 4px #3a2410,0 12px 30px rgba(0,0,0,.6);color:#f4ede5;font:600 13px/1.3 Lora,serif}
+.xph-pop[hidden]{display:none}
+.xph-pop table{width:100%;border-collapse:collapse}.xph-pop th{font:800 10.5px Lora,serif;letter-spacing:.06em;text-transform:uppercase;color:#cfc6b8;text-align:right;padding:0 0 5px 12px}.xph-pop th:first-child{text-align:left;padding-left:0}
+.xph-pop td{padding:3px 0 3px 12px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.xph-pop td:first-child{text-align:left;padding-left:0;display:flex;align-items:center;gap:6px}
+.xph-pop td i{display:grid;width:16px;height:16px;font-style:normal}.xph-pop td i .ico{width:16px;height:16px}.xph-pop td small{color:#cfc6b8}
+.xph-pop tr.on td{color:#ffd84a}
+.xph-f{display:block;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.12);color:#aca298;font-size:11.5px}.xph-f .lnk{color:#ffd77a}
+@media (max-width:560px){.xph-b small{display:none}.xph-pop{left:8px;right:8px;min-width:0}}
 </style>
 </head>
 <body>
 <header class="top">
   <span class="logo"><img src="/v3/assets/img/glad/flat/ui/g_start.png?v=1" alt="" width="22" height="22"><b class="logo-t">EastScape</b></span><button type="button" class="topl" id="gamesBtn" title="The real ZCoin games, one click (G)"><img src="/v3/assets/img/glad/flat/ui/g_casino.png?v=1" alt="" class="topi"><span>Games</span></button><button type="button" class="topl topl-store" id="storeBtn" title="The Store (tickets)"><img src="/v3/assets/img/glad/flat/ui/store.png?v=1" alt="" class="topi"><span>Store</span><em class="hot">HOT</em></button><button type="button" class="topl" id="wikiBtn" title="The EastScape wiki (H)"><img src="/v3/assets/img/glad/flat/ui/g_updates.png?v=1" alt="" class="topi"><span>Wiki</span></button>
   <span class="spacer"></span>
+  <span class="xph" id="xph" hidden><button type="button" class="xph-b" id="xphBtn" aria-expanded="false" aria-controls="xphPop" title="XP per hour this session"><i id="xphIco"></i><small>XP/h</small><b id="xphRate">0</b></button><div class="xph-pop" id="xphPop" role="tooltip" hidden></div></span>
   <button type="button" class="online" id="online" title="Who is online, and where"></button><span class="net" id="net" role="status" aria-live="polite"><i></i><span id="netText">Connecting…</span></span><button type="button" class="topl topgear" id="gearBtn" title="Settings"><img src="/v3/assets/img/glad/flat/ui/settings.png?v=1" alt="Settings" class="topi"></button><button type="button" class="me" id="topMe" title="You: profile, achievements, hiscores" aria-haspopup="menu" aria-expanded="false"><img id="topAv" alt="" hidden><span id="topName">—</span><i class="me-car" aria-hidden="true">▾</i></button>
 </header>
 <!-- (2026-09-28) YOUR MENU: what used to be three more links across the bar. Fixed, not inside .top, because the bar clips its overflow. -->
@@ -1710,6 +1728,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   <button type="button" role="menuitem" id="achBtn"><img src="/v3/assets/img/glad/flat/ui/ach_badge.png?v=1" alt="">Achievements<kbd>Y</kbd></button>
   <button type="button" role="menuitem" id="questBtn"><img src="/v3/assets/img/glad/flat/ui/quests.png?v=1" alt="">Quest log<kbd>Q</kbd></button>
   <button type="button" role="menuitem" id="hsBtn"><img src="/v3/assets/img/glad/flat/ui/g_vip.png?v=1" alt="">Hiscores</button>
+  <button type="button" role="menuitem" id="meBug"><img src="/v3/assets/img/glad/flat/ui/bug.png?v=1" alt="">Bugs &amp; ideas</button>
   <button type="button" role="menuitem" id="meSettings"><img src="/v3/assets/img/glad/flat/ui/settings.png?v=1" alt="">Settings</button>
 </div>
 <main class="wrap">
@@ -1739,8 +1758,9 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       </div>
       <div class="chat-row">
         <button type="button" class="chat-tab" id="chatTab" aria-expanded="false" aria-controls="chatBox"><img src="/v3/assets/img/glad/flat/ui/chat.png?v=1" alt="" class="cti"><span class="ct-l">Chat</span> <span class="chat-unread" id="chatUnread" hidden>0</span></button>
-        <button type="button" class="chat-tab sidebtn" id="sideBtn" aria-expanded="false" title="Your bag, gear, skills and quests"><img src="/v3/assets/img/glad/flat/ui/bag.png?v=1" alt="" class="cti">Menu</button>
+        <button type="button" class="chat-tab sidebtn" id="sideBtn" aria-expanded="false" title="Your bag, gear, skills and quests"><img src="/v3/assets/img/glad/flat/ui/bag.png?v=1" alt="" class="cti"><span class="ct-l">Menu</span></button>
         <div class="quickbar" id="quickBar" role="toolbar" aria-label="Quick slots, keys 1 to 4"></div>
+        <button type="button" class="chat-tab bugbtn" id="bugBtn" title="Report a bug, or suggest a feature" aria-label="Report a bug, or suggest a feature"><img src="/v3/assets/img/glad/flat/ui/bug.png?v=1" alt=""></button>
       </div>
       <div class="qpick" id="qPick" hidden></div>
     </div>
@@ -1814,6 +1834,11 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
     <section class="win" id="dailyWin" aria-label="Daily tasks" hidden style="width:min(460px,calc(100% - 28px))">
       <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/g_jobs.png?v=1" alt="" class="topi">Daily tasks</b><small id="dailySub">Fresh every morning</small><button type="button" class="win-x" data-close="dailyWin" aria-label="Close">×</button></div>
       <div class="win-body" id="dailyBody"></div>
+    </section>
+    <section class="win" id="bugWin" aria-label="Bugs and ideas" hidden>
+      <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/bug.png?v=1" alt="" class="topi">Bugs &amp; ideas</b><small>Tell us, and see what gets done</small><button type="button" class="win-x" data-close="bugWin" aria-label="Close">×</button></div>
+      <div class="k-tabs" id="bugTabs" role="tablist"></div>
+      <div class="win-body" id="bugBody"></div>
     </section>
     <section class="win" id="setWin" aria-label="Settings" hidden style="width:min(520px,calc(100% - 28px))">
       <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/settings.png?v=1" alt="" class="topi">Settings</b><small>saved to your account</small><button type="button" class="win-x" data-close="setWin" aria-label="Close">×</button></div>
@@ -1908,7 +1933,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=205").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=206").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -2200,7 +2225,7 @@ function onEvent(e) {
     xpDrops.push({ k: e.k, xp: e.xp, at: performance.now() }); lootGain(e.k, e.xp);
     // every xp drop already arrives; counting them IS the tracker
     const row = (xpSess[e.k] ||= { xp: 0, first: Date.now(), last: 0 });
-    row.xp += e.xp; row.last = Date.now();
+    row.xp += e.xp; row.last = Date.now(); renderXph();
     if (e.track) tracker = { k: e.k, at: performance.now() };
     return;
   }
@@ -2247,6 +2272,7 @@ function onEvent(e) {
   if (e.type === "profile") { PROF?.on(e); return; }
   if (e.type === "pit") { CZ.pit(e); return; }   /* (v109) ticket bets on the Fight Pit */
   if (e.type === "pen") { openPen(e); return; }
+  if (e.type === "reports") { repUi().then((u) => u.got(e)); return; }   /* (2026-09-28) the bug button */
   if (e.type === "hatch") { openHatch(e); return; }
   if (e.type === "eggtrade") { SFX.play("coins"); setTimeout(() => PETUI?.renderTrader(), 250); return; }   /* (2026-09-28) Nestor: redraw the counts once the new bag has landed */
   /* (2026-09-27) THE COLLECTION LOG: a podium was clicked (its owner's log), or a slot just filled (a chime; the words come as a message) */
@@ -4097,6 +4123,33 @@ const xpDrops = [];
 let xpSess = {};
 const rateOf = (r) => { const mins = Math.max(0.5, (r.last - r.first) / 60000); return r.xp / (mins / 60); };
 const fmtHr = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(Math.round(n)));
+/* (2026-09-28, the owner: "can we also add an XP per hour tracker in the top nav for whichever skill a user has done the most recent?", with
+   RPG MO's "Exp/h 5950" bar as the picture) THE XP/H TRACKER. The skill you earned xp in most recently, its rate this session, on the top
+   bar; point at it (or tap it) for the table: every skill this session, how far through its level you are, the rate and the time to the
+   next level at that rate. It is xpSess, the same record the Skills tab's "This session" reads, so it costs nothing: drawn on each xp drop
+   and once every five seconds for the clock. Five minutes without xp and it greys, since a rate you are not earning is history. */
+const hms = (h) => { if (!Number.isFinite(h) || h <= 0 || h > 999) return "—"; const t = Math.round(h * 3600); return [Math.floor(t / 3600), Math.floor((t % 3600) / 60), t % 60].map((x) => String(x).padStart(2, "0")).join(":"); };
+function renderXph() {
+  if (!me) return;
+  const rows = Object.entries(xpSess).filter(([k, r]) => SKILLS[k] && r.xp > 0).sort((a, b) => b[1].last - a[1].last);
+  $("xph").hidden = !rows.length; if (!rows.length) return;
+  const [k0, r0] = rows[0], idle = Date.now() - r0.last > 5 * 60000;
+  $("xph").classList.toggle("idle", idle);
+  $("xphIco").innerHTML = sico(k0); $("xphRate").textContent = Math.round(rateOf(r0)).toLocaleString();
+  $("xphBtn").title = `${SKILLS[k0].name}: ${Math.round(rateOf(r0)).toLocaleString()} xp an hour this session${idle ? " (paused)" : ""}`;
+  if ($("xphPop").hidden) return;
+  $("xphPop").innerHTML = `<table><thead><tr><th>Skill</th><th>XP/h</th><th>Level in</th></tr></thead><tbody>${rows.slice(0, 6).map(([k, r]) => {
+    const L = lvl(k), lo = XP_AT[L], hi = XP_AT[Math.min(99, L + 1)], pc = L >= 99 ? 100 : Math.floor(((me.xp[k] - lo) / (hi - lo)) * 100), rate = rateOf(r);
+    return `<tr${k === k0 ? ' class="on"' : ""}><td><i>${sico(k)}</i>${esc(SKILLS[k].name)} <small>(${pc}%)</small></td><td>${Math.round(rate).toLocaleString()}</td><td>${L >= 99 ? "max" : hms((hi - me.xp[k]) / rate)}</td></tr>`; }).join("")}</tbody></table>
+    <small class="xph-f">This session · <button type="button" class="lnk" id="xphReset">reset</button></small>`;
+  $("xphReset")?.addEventListener("click", (e) => { e.stopPropagation(); xpSess = {}; renderXph(); renderPanel(); });
+}
+{ const pop = () => $("xphPop"), show = (on) => { pop().hidden = !on; $("xphBtn").setAttribute("aria-expanded", String(on)); if (!on) return; renderXph();
+    if (innerWidth > 560) { const b = $("xphBtn").getBoundingClientRect(), w = pop().offsetWidth; pop().style.left = `${Math.max(8, Math.min(b.left, innerWidth - w - 8))}px`; } else pop().style.left = ""; };
+  $("xph").addEventListener("mouseenter", () => show(true)); $("xph").addEventListener("mouseleave", () => show(false));
+  $("xphBtn").addEventListener("click", (e) => { e.stopPropagation(); show(pop().hidden); });
+  document.addEventListener("click", (e) => { if (!pop().hidden && !e.target.closest("#xph")) show(false); });
+  setInterval(() => { if (!$("xph").hidden) renderXph(); }, 5000); }
 // a drop chance people can read: "25%", "1.5%", "0.2% (1 in 500)"
 const pct = (c) => (c >= 0.1 ? `${Math.round(c * 100)}%` : c >= 0.01 ? `${+(c * 100).toFixed(1)}%` : `${+(c * 100).toFixed(2)}% (1 in ${Math.round(1 / c).toLocaleString()})`);
 const fmtMins = (m) => (!Number.isFinite(m) || m > 60 * 99 ? "—" : m >= 60 ? `${Math.floor(m / 60)}h ${Math.round(m % 60)}m` : `${Math.max(1, Math.round(m))}m`);
@@ -5351,7 +5404,7 @@ $("online").addEventListener("click", whoAllOpen);
 document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_close"); $(b.dataset.close).hidden = true; if (b.dataset.close === "gameWin") CZ.closed(); if (b.dataset.close === "wikiWin" && location.hash.startsWith("#wiki")) history.replaceState(null, "", location.pathname + location.search); }));
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape" || e.target.closest?.("input, textarea, select") || !$("pop").hidden || DLG) return;
-  for (const w of ["wikiWin", "mapWin", "storeWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin", "setWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
+  for (const w of ["wikiWin", "mapWin", "storeWin", "bankWin", "exWin", "isleWin", "pickWin", "shopWin", "smithWin", "hsWin", "gameWin", "dailyWin", "roulWin", "setWin", "bugWin"]) if (!$(w).hidden) { $(w).hidden = true; return; }
 });
 // windows that need you standing somewhere close themselves when you walk off
 setInterval(() => { if (PRED.on && PRED.step) for (const w of ["bankWin", "exWin"]) $(w).hidden = true; }, 300);
@@ -5783,7 +5836,11 @@ const rankTag = (r) => `<span class="rk rk-${r}">${G.RANKS[r].mark ? `${G.RANKS[
 const petPic = (k, r = "ordinary") => `<span class="pp rk-${r}"><img src="${ART}${G.PETS[k].art}.png?v=${ART_VER[G.PETS[k].art] || ART_V}" alt=""></span>`;
 /* (2026-09-27) THE PEN AND THE HATCHERY LIVE IN THEIR OWN FILE (eastscape-pets.js), fetched the first time one is opened: with three new
    skills the first load had reached its budget, and nobody needs these windows to log in. */
-let PETUI = null; const PETUI_URL = "/v3/assets/js/eastscape-pets.js?v=4";
+/* (2026-09-28) THE BUG BUTTON: a lazy module, like the pet windows. Its stylesheet is its own and goes in the first time it opens. */
+let REPUI = null; const REPUI_URL = "/v3/assets/js/eastscape-report.js?v=1";
+function repUi() { return REPUI ? Promise.resolve(REPUI) : import(REPUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (REPUI = m.createReportUi({ G, $, esc, send, SFX, openWin, get me() { return me; } })); }); }
+$("bugBtn").addEventListener("click", () => { SFX.play("ui_open"); if (!$("bugWin").hidden) { $("bugWin").hidden = true; return; } repUi().then((u) => u.open()); });
+let PETUI = null; const PETUI_URL = "/v3/assets/js/eastscape-pets.js?v=5";
 function petUi() { return PETUI ? Promise.resolve(PETUI) : import(PETUI_URL).then((m) => (PETUI = m.createPetUi({ G, $, esc, ico, sico, lvl, send, SFX, openWin, say, rankTag, petPic, ITEMS, get me() { return me; } }))); }
 function openPen(e) { petUi().then((u) => u.openPen(e)); }
 function openHatch(e) { petUi().then((u) => u.openHatch(e)); }
@@ -5792,7 +5849,7 @@ function colUi() { return COLUI ? Promise.resolve(COLUI) : import(COLUI_URL).the
 function openMarket() { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin", "gameWin", "lookWin", "jukeWin", "vanWin"]) $(w).hidden = true; $("hwWin").hidden = false; SFX.play("ui_open"); renderMarket(); }
 function renderMarket() {
   if ($("hwWin").hidden || !me) return;
-  const corn = G.countItems(me, ["candycorn"]), v = me.van || { own: [] }, h = me.hw?.day === G.chicagoDay() ? me.hw : null, left = G.hwDaysLeft();
+  const corn = G.countItems(me, ["candycorn"]), v = me.van || { own: [] },   /* the Night Market takes corn from the bag only, so it counts the bag */ h = me.hw?.day === G.chicagoDay() ? me.hw : null, left = G.hwDaysLeft();
   $("hwSub").textContent = `${corn.toLocaleString()} candy corn`;
   /* (2026-09-27, the owner: "it needs to be very clear that seasonal items will be going away to create a sense of urgency") the
      strip at the top says the date and the days, every row that is a KEEPSAKE wears a Leaves tag, and the last week turns it red */
@@ -6115,7 +6172,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=51", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=52", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
@@ -6660,6 +6717,7 @@ $("wikiBtn").addEventListener("click", () => { if ($("wikiWin").hidden) openWin(
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") show(false); });
   $("meProfile").addEventListener("click", () => { if (you) openProfile({ id: you.id, name: you.name }); });
   $("meSettings").addEventListener("click", () => openSettings());
+  $("meBug").addEventListener("click", () => $("bugBtn").click());
   $("gearBtn").addEventListener("click", () => openSettings()); }
 
 /* ------------------------------------------------------------ ACHIEVEMENTS (2026-09-23, the owner)
@@ -7058,8 +7116,14 @@ function jobsCard() {
 /* (2026-09-28, the owner: "we need to make sure it doesnt overflow when users have large amounts of tickets/zcoins, corn etc") THE STRIP
    SHORTENS BIG NUMBERS. Every figure is in full up to 99,999; past that 123.4K, then 1.23M / 12.3M / 123M, then 1.2B; the hover always says
    the exact amount. The cells also share the width equally and clip as a last resort, so no amount can push the strip out of the panel. */
-const wlNum = (n) => { n = Math.floor(Number(n) || 0); const a = Math.abs(n), cut = (v, d) => v.toFixed(d).replace(/\.0+$/, "");
-  return a < 1e5 ? n.toLocaleString() : a < 999950 ? `${cut(n / 1e3, 1)}K` : a < 9.995e8 ? `${cut(n / 1e6, a < 1e7 ? 2 : a < 1e8 ? 1 : 0)}M` : `${cut(n / 1e9, 1)}B`; };
+/* (2026-09-28, the owner, with a strip reading "313....": "Users tickets are not showing fully in their inventory when they have large amounts")
+   FIVE CHARACTERS AT MOST. Up to 9,999 in full; then one decimal under a hundred of a unit and none over it: 31.3K, 313K, 3.1M, 31.3M, 313M,
+   3.1B. Four digits and a letter is what one box of the strip can always show at the side panel's width. */
+const wlNum = (n) => { n = Math.floor(Number(n) || 0); const a = Math.abs(n); if (a < 1e4) return n.toLocaleString();
+  for (const [u, s, next] of [[1e3, "K", 1e6], [1e6, "M", 1e9], [1e9, "B", Infinity]]) { const v = n / u, d = Math.abs(v) < 99.95 ? 1 : 0, r = Number(v.toFixed(d));
+    if (Math.abs(r) < 1000 || next === Infinity) return `${r}${s}`; } };   /* rounds first, so 999,949 is 1M, never 1000K */
+/* (2026-09-28, the owner: "can we make it so the corn counter counts whats in their bank AND in their inventory?") */
+const cornAll = () => G.countItems(me, ["candycorn"]) + (me.bank || []).filter((x) => x.k === "candycorn").reduce((a, x) => a + x.n, 0);
 let wlFoldOpen = false;   /* the VIP / jackpot fold stays as you left it while the bag redraws */
 document.addEventListener("toggle", (e) => { if (e.target.classList?.contains("wl-fold")) wlFoldOpen = e.target.open; }, true);
 /* (2026-09-28) the chip on the Inventory heading: what the Prize Counter would pay for the bag, the number the old "In your bag" card showed */
@@ -7091,7 +7155,7 @@ function walletCard() {
     <div class="wl-strip">
       <span class="wl-s wl-tix" title="${G.tixIn(me).toLocaleString()} tickets. The one currency here: kills, catches and jobs pay them; the Prize Counter and every table take them.">${ico("tickets")}<b>${wlNum(G.tixIn(me))}</b></span>
       <span class="wl-s wl-zc" title="${ZCBAL == null ? "" : `${Number(ZCBAL).toLocaleString()} ZCoins. `}Your real ZCoins on eastcoin.vip. The tables on the main floor take ZCoins or tickets, and pay ZCoins either way.">${ico("zcoin")}<b>${ZCBAL == null ? "–" : wlNum(ZCBAL)}</b></span>
-      ${corn ? `<span class="wl-s wl-corn${G.nightfallOn() ? " night" : ""}" title="${G.countItems(me, ["candycorn"]).toLocaleString()} candy corn: the Long Night's coin. Kills and catches drop it; the Night Market and Ronde's rail take it. ${cornWhen}. ${G.hwDaysLeft()} day${G.hwDaysLeft() === 1 ? "" : "s"} left.">${ico("candycorn")}<b>${wlNum(G.countItems(me, ["candycorn"]))}</b>${G.nightfallOn() ? "<em>\u00d72</em>" : ""}</span>` : ""}
+      ${corn ? `<span class="wl-s wl-corn${G.nightfallOn() ? " night" : ""}" title="${cornAll().toLocaleString()} candy corn: the Long Night's coin. Kills and catches drop it; the Night Market and Ronde's rail take it. ${cornWhen}. ${G.hwDaysLeft()} day${G.hwDaysLeft() === 1 ? "" : "s"} left.">${ico("candycorn")}<b>${wlNum(cornAll())}</b>${G.nightfallOn() ? "<em>\u00d72</em>" : ""}</span>` : ""}
     </div>
     <details class="wl-fold"${wlFoldOpen ? " open" : ""}><summary><b style="color:${v.col}">◆ ${esc(v.name)} VIP</b>${me.jack ? `<span>Jackpot <b>${G.fmtCash(me.jack)}</b></span>` : ""}</summary>
       <div class="wl-fold-b">
@@ -7419,7 +7483,7 @@ function renderAdmin(p) {
   }));
 }
 document.addEventListener("click", (e) => {
-  if (e.target.id === "xpReset") { xpSess = {}; renderPanel(); return; }
+  if (e.target.id === "xpReset") { xpSess = {}; renderPanel(); renderXph(); return; }
   if (e.target.id === "hsBtn" || e.target.closest?.("#hsBtn")) { openHiscores(); return; }
   /* (2026-09-23) the [data-stance] handler went with the buttons; the server's own case for it has done nothing since 2026-09-19. */
 });

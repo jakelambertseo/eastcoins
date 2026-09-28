@@ -1062,6 +1062,11 @@ export const UPDATES = [
       "A NEW LOOK FOR EVERY WINDOW: one style across the game, with titles in a new face and a new text face for everything you read. The Market is a Grand Exchange (your eight offers always in view, browse by item, sell from what you own), the quest log is a journal (what you're on, what's near, the step you're on), and the Hiscores have a podium and your own rank pinned at the top.",
       "THE SCREEN: a slim health bar, a slimmer top bar with your menu under your name and settings behind the gear, one wallet strip under the bag, a quest tracker on screen, a paper-doll equipment tab, and I / U / K / J for the bag, gear, skills and quests.",
       "FIXED: right-clicking a tree, rock or fishing spot that needs a tool shows its card again.",
+      "THE BUG BUTTON: the ladybird beside your hotbar (or Bugs & ideas under your name). Report a bug or suggest a feature, and see what happens to it: your own reports show their status, and the board shows what's been fixed, what's been added, what's in progress and what's on the backlog.",
+      "XP/H ON THE TOP BAR: the skill you've trained most recently and its xp an hour this session. Point at it for every skill you've trained, how far through the level you are, and how long until the next one.",
+      "CASHING OUT: the Prize Counter now says how many of your 100 ZCoins a day are free right now and when the next lot comes back. It's a rolling 24 hours: each ZCoin comes back a day after it left.",
+      "BREEDING: two Greater pets that only have the same one stat can breed now (they could never pick two different stats).",
+      "Big numbers fit the wallet strip (313K, 3.1M), and its candy corn counts your bank too. Planting a crop pays a little Harvesting xp. Devil's dice turn up half as often.",
     ],
   },
   {

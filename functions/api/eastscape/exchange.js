@@ -118,7 +118,15 @@ export async function onRequestPost(context) {
   if (body.op === "status") {
     // vouchers written and never bet: the game hands one of these back rather than taking tickets again
     const open = await db.prepare(`SELECT id, zc FROM gamba_stakes WHERE user_id = ? AND status = 'OPEN' ORDER BY created_at LIMIT 20`).bind(userId).all();
-    return say({ ok: true, left, leftOut, capHour: CAP_HOUR, capDay: CAP_DAY, maxStake: MAX_STAKE, open: (open.results || []).map((r) => ({ id: r.id, zc: Number(r.zc) })), enabled: walletWritesEnabled(env) });
+    /* (2026-09-28, a player: "i think i accidentally spaced my two 50coin cashouts far apart, i think one is early in the morning and one is
+       late late at night") WHEN EACH CHUNK COMES BACK. The day's allowance rolls: every ZCoin that left in the last 24 hours comes back 24
+       hours after it left. The same rows usedToday sums, with their times, so the counter can say "50 more at 9:14 PM" instead of a
+       player having to remember when they cashed out. Only on "status", which the counter asks when it is opened. */
+    const outs = await db.prepare(`SELECT amount, created_at FROM wallet_operations
+        WHERE user_id = ? AND idempotency_key >= 'GAMBA:DEX:' AND idempotency_key < 'GAMBA:DEX;'
+          AND status IN ('CONFIRMED', 'PENDING', 'NEEDS_RECONCILIATION') AND created_at >= datetime('now', '-1 day') ORDER BY created_at LIMIT 50`).bind(userId).all();
+    const outFree = (outs.results || []).map((r) => ({ zc: Number(r.amount), at: Date.parse(`${String(r.created_at).replace(" ", "T")}Z`) + 86400000 })).filter((x) => x.zc > 0 && Number.isFinite(x.at));
+    return say({ ok: true, left, leftOut, outFree, capHour: CAP_HOUR, capDay: CAP_DAY, maxStake: MAX_STAKE, open: (open.results || []).map((r) => ({ id: r.id, zc: Number(r.zc) })), enabled: walletWritesEnabled(env) });
   }
   if (body.op !== "pay" && body.op !== "stake") return say({ ok: false, code: "BAD_OP", definite: true }, 400);
 

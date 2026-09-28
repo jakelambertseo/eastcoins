@@ -36,7 +36,7 @@ export function createPetUi(E) {
     if (pr && !pr.no) {
       const SA = G.petStats(a), SB = G.petStats(b);
       if (!(penPick.sa in SA)) penPick.sa = G.bestStat(a, penPick.sb)[0];
-      if (!(penPick.sb in SB) || penPick.sb === penPick.sa) penPick.sb = G.bestStat(b, penPick.sa)[0];
+      if (!(penPick.sb in SB) || (penPick.sb === penPick.sa && G.picksMustDiffer(a, b))) penPick.sb = G.bestStat(b, penPick.sa)[0];
       if (!pr.kinds?.includes(penPick.look)) penPick.look = a.k;
     }
     let out = `<div class="pn-slot out">?</div>`, picks = "", plan = "";
@@ -46,7 +46,7 @@ export function createPetUi(E) {
       const pA = [penPick.sa, G.petStats(a)[penPick.sa]], pB = [penPick.sb, G.petStats(b)[penPick.sb]];
       const fx = pr.kind === "legend" ? G.legendFx(pr.child, pA, pB) : G.mixFx("greater", pA, pB);
       out = `<div class="pn-slot full out${r === "legend" ? " rk-legend" : ""}">${petPic(kidK, r)}<b>${esc(G.PETS[kidK].name)}</b>${rankTag(r)}${statList(fx)}</div>`;
-      const chips = (p, side, other) => Object.entries(G.petStats(p)).map(([k, v]) => { const on = penPick[side] === k, same = other === k; return `<button type="button" class="pn-chip${on ? " on" : ""}${same ? " off" : ""}" data-pk="${side}:${k}"${same ? ` title="The other parent is already giving this one"` : ""}>${esc(G.petFxText({ [k]: v }))}</button>`; }).join("");
+      const differ = G.picksMustDiffer(a, b), chips = (p, side, other) => Object.entries(G.petStats(p)).map(([k, v]) => { const on = penPick[side] === k, same = differ && other === k;   /* (2026-09-28) a pair that can only offer one stat may take it twice */ return `<button type="button" class="pn-chip${on ? " on" : ""}${same ? " off" : ""}" data-pk="${side}:${k}"${same ? ` title="The other parent is already giving this one"` : ""}>${esc(G.petFxText({ [k]: v }))}</button>`; }).join("");
       picks = `<div class="pn-card"><h4><b>2</b>${pr.kind === "legend" ? "Pick a stat from each parent. The Legendary keeps its own and adds both." : "Pick a stat from each parent. The baby gets both, 25% stronger."}</h4>
         <div class="pn-picks"><div><small class="pn-head">${petPic(a.k, G.rankOf(a)).replace('class="pp', 'class="pp sm')}${esc(G.PETS[a.k].name)}</small>${chips(a, "sa", penPick.sb)}</div><div><small class="pn-head">${petPic(b.k, G.rankOf(b)).replace('class="pp', 'class="pp sm')}${esc(G.PETS[b.k].name)}</small>${chips(b, "sb", penPick.sa)}</div></div></div>
         ${pr.kind === "greater" && pr.kinds.length > 1 ? `<div class="pn-card"><h4><b>3</b>Which one should it look like?</h4><div class="pn-looks">${pr.kinds.map((k) => `<button type="button" class="pn-look${penPick.look === k ? " on" : ""}" data-look="${k}">${petPic(k, "greater")}<b>${esc(G.PETS[k].name)}</b></button>`).join("")}</div></div>` : ""}`;

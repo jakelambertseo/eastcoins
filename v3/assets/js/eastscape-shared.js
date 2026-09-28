@@ -3482,7 +3482,7 @@ export const LOOT = {
   pinhead:   { item: ["catalytic", 1], also: [["carnivalticket", 1, 0.01]], rare: [["glassgourd", 0.0125], ["lantern", 0.01], ["spiderboots", 0.01]] },
   tripled:   { item: ["catalytic", 1], also: [["carnivalticket", 1, 0.01]], rare: [["glassgourd", 0.0125], ["sharps_gloves", 0.01], ["markedcard", 0.01]] },
   fatlady:   { item: ["starfall_ore", 1], also: [["carnivalticket", 1, 0.01], ["feather", [1, 3]]], rare: [["glassgourd", 0.0125], ["angels_ring", 0.01], ["adjusters_visor", 0.01]] },
-  strongman: { item: ["starfall_ore", [1, 2]], also: [["carnivalticket", 1, 0.01]], rare: [["glassgourd", 0.0125], ["stake_loafers", 0.01], ["devils_dice", 0.01]] },
+  strongman: { item: ["starfall_ore", [1, 2]], also: [["carnivalticket", 1, 0.01]], rare: [["glassgourd", 0.0125], ["stake_loafers", 0.01], ["devils_dice", 0.005]] },   /* (2026-09-28) the dice halved here too: 0.01 -> 0.005 */
   grinner:   { item: ["starfall_ore", [2, 4]], rare: [["monocle", 0.01], ["angels_ring", 0.01], ["sharps_gloves", 0.01], ["adjusters_visor", 0.01], ["spiderboots", 0.01]] },
   /* HE PAYS IN THINGS. Bonegourds every time (the Boneyard’s alchemy crop, and the Coilbreaker wants one),
      and the map’s whole rare table on one kill instead of spread over five monsters. */
@@ -5511,7 +5511,7 @@ for (const [t, want] of Object.entries(BOUNTY)) {
 /* FINDS: what any kill can turn up on top of the monster's own drops. [item, share]: the chance is share x the
    monster's bounty / the find's worth, so every monster gives the same fraction of its pay this way and a chicken
    farmer sees a red chip about once in 250 kills while the Understudy coughs one up every 14. */
-export const FINDS = [["chip_red", 0.04, 250], ["chip_black", 0.03, 1000], ["chip_gold", 0.03, 5000], ["chip_free", 0.008, 50], ["mysterybox", 0.008, 60], ["devils_dice", 0.004, 50], ["rewind_watch", 0.006, 250]];
+export const FINDS = [["chip_red", 0.04, 250], ["chip_black", 0.03, 1000], ["chip_gold", 0.03, 5000], ["chip_free", 0.008, 50], ["mysterybox", 0.008, 60], ["devils_dice", 0.002, 50], ["rewind_watch", 0.006, 250]];   /* (2026-09-28, the owner: "Devils dice drop rates are far too common across the world. Cut by half") 0.004 -> 0.002 */
 /* The third number is the find's worth, and findChance divides the monster's bounty by it. Both sides have to be
    in the same money or halving BOUNTY would halve how often chips turn up as well, which was never asked for. */
 for (const f of FINDS) f[2] = Math.max(1, Math.round(f[2] * TIX_RATE));
@@ -5595,7 +5595,7 @@ export const raresOf = (mob) => {
   return [...out, ...finds.map(([k, p]) => [k, p * scale])];
 };
 export const rollRare = (mob, r, fx) => { for (const [k, p0] of raresOf(mob)) { const p = p0 * (1 + (k === "zcoin" ? fx?.zdrop || 0 : fx?.rare || 0)); if (r < p) return k; r -= p; } return null; };   /* fx: fxOf(character) */
-export const BOX = [["clover", 3], ["chip_red", 2], ["chip_free", 3], ["beer", 3], ["whiskey", 2], ["cocktail", 2], ["steakdinner", 2], ["tp_scroll", 3], ["devils_dice", 2], ["rewind_watch", 1], ["chip_black", 0.3]];   // what's in a mystery box, by weight
+export const BOX = [["clover", 3], ["chip_red", 2], ["chip_free", 3], ["beer", 3], ["whiskey", 2], ["cocktail", 2], ["steakdinner", 2], ["tp_scroll", 3], ["devils_dice", 1], ["rewind_watch", 1], ["chip_black", 0.3]];   // what's in a mystery box, by weight
 export const valueOf = (k) => VALUE[k] ?? SHOP.buys[k] ?? 0;
 /** The first thing a raw material can be made into, and what that's worth each: the Cashier's "worth more made" nudge. */
 export const madeFrom = (k) => { const r = Object.values(RECIPES).filter((x) => x.in.some(([i]) => i === k) && !ITEMS[x.out[0]]?.slot).sort((a, b) => a.lvl - b.lvl)[0]; return r ? { r, out: r.out[0], verb: STATIONS[r.station === "fire" ? "range" : r.station]?.verb || "make" } : null; };
@@ -5794,6 +5794,12 @@ export const CROPS = {
   emberwheat: { lvl: 78, ms: 6 * 3600000, yield: [3, 5], xp: 1900, col: "#ff8a30" },
   starfruit: { lvl: 92, ms: 8 * 3600000, yield: [2, 4], xp: 3200, col: "#ffe060" }
 };
+/* (2026-09-28) THE BUG BUTTON's rules, read by the page and the server alike: see reportOp in the worker */
+export const REP = { min: 8, max: 600, titleMax: 120, noteMax: 300, perHour: 6,
+  statuses: ["new", "working", "fixed", "done", "backlog", "declined"], public: ["working", "fixed", "done", "backlog"],
+  label: { new: "New", working: "In progress", fixed: "Fixed", done: "Added", backlog: "On the backlog", declined: "Not planned" } };
+/** (2026-09-28, the owner) what planting a crop pays in Harvesting xp: a thirtieth of its harvest, at least 1 */
+export const plantXp = (k) => (CROPS[k] ? Math.max(1, Math.round(CROPS[k].xp / 30)) : 0);
 ITEMS.glassgourd = { name: "Glass gourd", icon: "\u{1F52E}", ex: "Grows clear enough to read through. The Carnival's freaks carry the seed, which is the gourd." };
 ITEMS.emberwheat = { name: "Ember wheat", icon: "\u{1F33E}", ex: "The heads glow. Do not store it near anything that burns. The Vault's wardens carry it, for reasons." };
 ITEMS.starfruit = { name: "Starfruit", icon: "\u2B50", ex: "Five points and a light of its own. Fell into the Trailer Park with everything else." };
@@ -6265,6 +6271,11 @@ export function mixFx(kind, pickA, pickB) {
 }
 /** a Legendary's stats with the two picks added */
 export const legendFx = (child, pickA, pickB) => { const out = { ...(PETS[child]?.fx || {}) }; for (const [k, v] of [pickA, pickB]) if (k) out[k] = Math.max(out[k] || 0, v); return out; };
+/** (2026-09-28, the owner: "when a greater and greater are put together that have the same or only have 1 skill/buff, it wont let you click
+    breed") whether the two picks have to be different stats. They do whenever they CAN be: some stat of one parent differs from some stat
+    of the other. Two parents that can only offer the one same stat (two Greaters of a kind, each carrying just its own power) could never
+    satisfy "two different stats", so for them the same stat twice is allowed, and the child keeps the bigger of the two, as always. */
+export const picksMustDiffer = (a, b) => { const A = Object.keys(petStats(a)), B = Object.keys(petStats(b)); return A.some((x) => B.some((y) => y !== x)); };
 /** the default pick from a parent: its strongest stat that the other pick is not */
 export const bestStat = (p, not) => Object.entries(petStats(p)).filter(([k]) => k !== not && k !== "gift").sort((x, y) => y[1] - x[1])[0] || Object.entries(petStats(p))[0] || [null, 0];
 /** (before 2026-09-27's picks) a Greater child's effects: its own kind's a quarter better, and the other parent's strongest at a quarter. Kept for old callers. */

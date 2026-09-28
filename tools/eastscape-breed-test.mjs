@@ -58,6 +58,14 @@ W.penOp(S, pl, { op: "pair", a: "g1", b: "g2", sa: "speed", sb: "slots" }); is(C
 is(G.countItems(C, ["petfood_legend"]), 0, "and eat the Legendary pet food");
 C.pen.at -= G.BREED.legend.ms; W.penOp(S, pl, { op: "collect" }); const cer = C.pets.find((p) => p.k === "cerberpup"); is(G.rankOf(cer), "legend", "the Cerberpup is Legendary");
 is(JSON.stringify(cer.fx), JSON.stringify({ speed: 14, tix: 5, slots: 1 }), "it keeps its own powers and adds the picks (speed stays its bigger 14, slots 1 added)");
+/* (2026-09-28, the owner: "when a greater and greater are put together that have the same or only have 1 skill/buff, it wont let you click
+   breed") two Greaters that can only offer the one same stat may take it from both */
+{ const keepPets = C.pets, keepPen = C.pen; C.pets = [{ id: "s1", k: "bonepup", name: "", tier: 1, fx: { speed: 10 } }, { id: "s2", k: "bonepup", name: "", tier: 1, fx: { speed: 12 } }]; C.pen = null;
+  G.addInv(C.inv, "petfood_legend", G.BREED.legend.food, C);
+  is(G.picksMustDiffer(C.pets[0], C.pets[1]), false, "two Greaters with only the same stat do not have to pick different ones");
+  is(G.picksMustDiffer({ fx: { speed: 10 } }, { fx: { speed: 10, slots: 1 } }), true, "but a pair that has a second stat still does");
+  W.penOp(S, pl, { op: "pair", a: "s1", b: "s2", sa: "speed", sb: "speed" }); is(C.pen?.child?.k, "cerberpup", "so they breed");
+  is(C.pen?.child?.fx?.speed, 14, "and the Legendary keeps the bigger speed (its own 14)"); C.pets = keepPets; C.pen = keepPen; }
 is(JSON.stringify(G.normChar(JSON.parse(JSON.stringify(C))).pets.find((p) => p.k === "cerberpup").fx), JSON.stringify(cer.fx), "and keeps them through a save");
 is(G.pairOf({ id: "x", k: "cerberpup" }, { id: "y", k: "bonepup" }).no != null, true, "a Legendary cannot breed");
 is(G.pairOf({ id: "x", k: "blackcat" }, { id: "y", k: "bonepup" }).no != null, true, "an event pet cannot breed");
