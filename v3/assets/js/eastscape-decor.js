@@ -29,7 +29,7 @@ export function createDecor(env) {
 /* (2026-09-27) the Collection podium: the newest piece, and free. A gold card that breathes, a ribbon, and it sits first so nobody misses it */
 .dc-card.dc-new{position:relative;overflow:hidden;background:linear-gradient(160deg,#fff4c8,#f3d77e);box-shadow:0 0 0 2px #d4a017,0 0 14px rgba(255,196,40,.75);animation:dcNew 2.4s ease-in-out infinite}
 .dc-card.dc-new .dc-blurb{color:#6a4a10;font-weight:800;line-height:1.2}
-.dc-ribbon{position:absolute;top:8px;right:-30px;transform:rotate(35deg);padding:2px 32px;background:#c2185b;color:#fff;font:900 10.5px Nunito,sans-serif;letter-spacing:.06em;box-shadow:0 2px 4px rgba(0,0,0,.3)}
+.dc-ribbon{position:absolute;top:8px;right:-30px;transform:rotate(35deg);padding:2px 32px;background:#c2185b;color:#fff;font:900 10.5px Lora,sans-serif;letter-spacing:.06em;box-shadow:0 2px 4px rgba(0,0,0,.3)}
 @keyframes dcNew{0%,100%{box-shadow:0 0 0 2px #d4a017,0 0 10px rgba(255,196,40,.55)}50%{box-shadow:0 0 0 3px #ffd54a,0 0 22px rgba(255,196,40,.95)}}
 @media (prefers-reduced-motion:reduce){.dc-card.dc-new{animation:none}}
 .dc-card .dc-pic{height:56px;display:grid;place-items:center}.dc-card b{font-size:13.5px;line-height:1.15}.dc-card small{color:#6a5a40;font-weight:700}

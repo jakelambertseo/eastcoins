@@ -9,7 +9,7 @@
      font the machine has and is a different picture on every platform. -->
 <link rel="icon" type="image/png" sizes="32x32" href="/v3/assets/img/eastcoin-icon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="/v3/assets/img/eastcoin-icon-180.png?v=1">
-<link rel="preload" href="/v3/assets/fonts/nunito-v32-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/v3/assets/fonts/lora-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/v3/assets/fonts/cinzel-latin.woff2" as="font" type="font/woff2" crossorigin>
 <script>/* (2026-09-27) LOCAL ONLY: ?open=1 on localhost opens every held thing (the Depths, the Boardwalk, the Foundry, the Orchard Wall,
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
@@ -26,14 +26,18 @@ if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(
    visit) for a stylesheet and then the same one file. It is the latin subset of Google's own variable file (every weight in
    one, 400-800 used), OFL-licensed, held for a year like the site's other fonts. The head also asks for the rules and sounds
    modules early (modulepreload: they used to wait for the page's script to be read) and opens the line to the game server. */
-@font-face{font-family:"Nunito";font-style:normal;font-weight:400 800;font-display:swap;src:url(/v3/assets/fonts/nunito-v32-latin.woff2) format("woff2")}
+/* (2026-09-28, the owner: "is there a font that better matches with the new title fonts rather than nunito?", then "lets do lora") THE TEXT
+   FACE is Lora: every sentence, number, label, chat line and the words drawn on the map. Variable 400-700, so the 800s and 900s written
+   across this page draw at 700. The italic file is only fetched when something is set in italic. OFL, self-hosted. The rounded face it replaced is no longer loaded. */
+@font-face{font-family:"Lora";font-style:normal;font-weight:400 700;font-display:swap;src:url(/v3/assets/fonts/lora-latin.woff2) format("woff2")}
+@font-face{font-family:"Lora";font-style:italic;font-weight:400 700;font-display:swap;src:url(/v3/assets/fonts/lora-italic-latin.woff2) format("woff2")}
 /* (2026-09-28, the owner: "lets do cinzel, titles and names") the display face: window titles, popup titles, who is talking, what an item or a
-   monster is called. Everything you read in a sentence, every number and all of chat stays Nunito. 25 KB, variable 400-900, OFL. */
+   monster is called. Everything you read in a sentence, every number and all of chat is Lora. 25 KB, variable 400-900, OFL. */
 @font-face{font-family:"Cinzel";font-style:normal;font-weight:400 900;font-display:swap;src:url(/v3/assets/fonts/cinzel-latin.woff2) format("woff2")}
 
 :root{--ink:#e8e0cc;--muted:#9a917e;--gold:#f2c94c;--panel:#f3e7cc;--panel-ink:#2a2016;--frame:#1a1410;--bar:#0b0908;--link-a:#7ee07e;--link-b:#e0e0e0;--good:#7ee07e;--bad:#ff7a6a}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:"Nunito",system-ui,sans-serif;overflow:hidden}
+html,body{margin:0;height:100%;background:#000;color:var(--ink);font-family:"Lora",system-ui,sans-serif;overflow:hidden}
 button,input,select{font:inherit}
 /* (2026-09-23, the owner) THE BAR IS LINKS, NOT BUTTONS. It had grown five ornate framed buttons across the
    middle, which read as five things demanding attention; plain white text beside the logo reads as a menu.
@@ -240,7 +244,7 @@ button,input,select{font:inherit}
 .buff img{width:20px;height:20px;image-rendering:pixelated}.buff .bn{position:absolute;right:-5px;bottom:-5px;min-width:15px;padding:0 3px;border-radius:8px;background:#0c0a09;box-shadow:0 0 0 1.5px currentColor;font-size:10px;line-height:15px;text-align:center}.buff.worn{background:rgba(60,44,16,.92);color:#ffe9b0;box-shadow:0 0 0 2px #c8963a}.buff.b-roller{background:rgba(20,20,24,.95);color:#ffd84a;box-shadow:0 0 0 2px #ffd84a}.buff.b-drink{background:rgba(70,40,10,.92);color:#ffd9a0;box-shadow:0 0 0 2px #d8963a}.buff.b-meal{background:rgba(60,20,16,.92);color:#ffd0c0;box-shadow:0 0 0 2px #d86a4a}.buff.b-free{background:rgba(10,50,40,.92);color:#c0ffe6;box-shadow:0 0 0 2px #3ac89a}.buff.none{background:rgba(255,255,255,.06);box-shadow:0 0 0 1px rgba(255,255,255,.14);color:#aca298;padding:3px 10px;font-weight:700}
 /* the wallet, under the bag: money first, then what turns into money, then what improves your odds */
 .rarelog{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.rarelog span{position:relative;display:grid;place-items:center;aspect-ratio:1;border-radius:6px;background:rgba(255,255,255,.05);filter:grayscale(1) brightness(.45);cursor:help}.rarelog span.has{filter:none;background:rgba(232,191,53,.16);box-shadow:0 0 0 1px rgba(232,191,53,.5)}
-.rarelog .ico{width:22px;height:22px}.rarelog em{position:absolute;right:2px;bottom:0;font:800 9.5px Nunito,sans-serif;color:#ffd84a;font-style:normal;text-shadow:0 1px 1px #000}
+.rarelog .ico{width:22px;height:22px}.rarelog em{position:absolute;right:2px;bottom:0;font:800 9.5px Lora,sans-serif;color:#ffd84a;font-style:normal;text-shadow:0 1px 1px #000}
 .wl-two{display:grid;grid-template-columns:1fr 1fr;gap:6px}.wl-two .wl-cash{gap:6px}.wl-two .wl-cash img,.wl-two .wl-cash .ico{width:30px;height:30px;image-rendering:pixelated}.wl-two .wl-cash b{font-size:19px}.wl-tix b{color:#ff9aa8}.wl-zc b{color:#ffd84a}
 .wl-vipbar{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}.wl-vipbar>u{display:block;height:100%}
 .wallets{margin:6px 7px 4px 5px;display:grid;gap:6px}.wallets>.wl-next{border-top:0;padding:0 3px;color:#5a4a3a}
@@ -324,7 +328,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .slot.nobuy{opacity:.45}
 .cols2{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
 @media (max-width:620px){.cols2{grid-template-columns:1fr}}
-.invsort{margin-right:6px;font:800 11px/1.4 Nunito,sans-serif;padding:1px 9px;border-radius:9px;border:1px solid #8a6a3a;background:#e8d8a8;color:#3a2616;cursor:pointer;vertical-align:1px}
+.invsort{margin-right:6px;font:800 11px/1.4 Lora,sans-serif;padding:1px 9px;border-radius:9px;border:1px solid #8a6a3a;background:#e8d8a8;color:#3a2616;cursor:pointer;vertical-align:1px}
 .invsort:hover{background:#fff3c8}.invsort:focus-visible{outline:2px solid #3a2616;outline-offset:1px}
 .stnote{display:block;padding:4px 10px 2px;opacity:.75;font-size:12px;line-height:1.35}
 .skh{display:flex;align-items:center;gap:8px;margin:10px 10px 2px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;opacity:.6}
@@ -485,7 +489,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .rl-chips button{width:40px;height:40px;border-radius:50%;border:3px dashed #fff8;font-weight:900;color:#fff;cursor:pointer;font-size:12px}
 .rl-chips button[aria-pressed="true"]{outline:3px solid #ffe27a;outline-offset:1px}
 /* the game windows' gold buttons (eastscape-casino.js), so roulette's switch and chips match the other tables */
-.rl-gold button{width:auto;min-width:42px;height:38px;padding:0 12px;border-radius:10px;border:1px solid rgba(70,45,20,.38);background:#ecdcb6;color:#2a2016;font:800 13.5px Nunito,sans-serif}.rl-gold button[data-chip]{width:46px;min-width:46px;height:46px;padding:0;border:0;border-radius:50%;background:center/100% 100% no-repeat;box-shadow:none;color:#fff;font:900 14px Nunito,sans-serif;text-shadow:0 1px 0 #000,0 0 3px #000;image-rendering:pixelated;transition:transform .1s}
+.rl-gold button{width:auto;min-width:42px;height:38px;padding:0 12px;border-radius:10px;border:1px solid rgba(70,45,20,.38);background:#ecdcb6;color:#2a2016;font:800 13.5px Lora,sans-serif}.rl-gold button[data-chip]{width:46px;min-width:46px;height:46px;padding:0;border:0;border-radius:50%;background:center/100% 100% no-repeat;box-shadow:none;color:#fff;font:900 14px Lora,sans-serif;text-shadow:0 1px 0 #000,0 0 3px #000;image-rendering:pixelated;transition:transform .1s}
 .rl-gold button[data-chip="1"]{background-image:url(/v3/assets/img/glad/flat/ui/rlchip_1.png?v=1);color:#1a1410;text-shadow:0 1px 0 #fff}.rl-gold button[data-chip="5"]{background-image:url(/v3/assets/img/glad/flat/ui/rlchip_5.png?v=1)}.rl-gold button[data-chip="10"]{background-image:url(/v3/assets/img/glad/flat/ui/rlchip_10.png?v=1)}.rl-gold button[data-chip="20"]{background-image:url(/v3/assets/img/glad/flat/ui/rlchip_20.png?v=1)}
 .rl-gold button[data-chip]:hover{transform:translateY(-2px);border:0}.rl-gold button[data-chip="1"][aria-pressed="true"]{background:url(/v3/assets/img/glad/flat/ui/rlchip_1.png?v=1) center/100% 100% no-repeat}.rl-gold button[data-chip="5"][aria-pressed="true"]{background:url(/v3/assets/img/glad/flat/ui/rlchip_5.png?v=1) center/100% 100% no-repeat}.rl-gold button[data-chip="10"][aria-pressed="true"]{background:url(/v3/assets/img/glad/flat/ui/rlchip_10.png?v=1) center/100% 100% no-repeat}.rl-gold button[data-chip="20"][aria-pressed="true"]{background:url(/v3/assets/img/glad/flat/ui/rlchip_20.png?v=1) center/100% 100% no-repeat}.rl-gold button[data-chip][aria-pressed="true"]{box-shadow:0 0 0 3px #f0c848,0 3px 0 3px #8a6210;transform:translateY(-2px);color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}.rl-gold button[data-chip="1"][aria-pressed="true"]{color:#1a1410;text-shadow:0 1px 0 #fff}
 .rl-gold button.pill{height:32px;border-style:solid;border-color:transparent;border-width:0 14px;border-image:url(/v3/assets/img/glad/flat/ui/czpill.png?v=1) 0 20 fill / 0 14px stretch;background:none;border-radius:0;box-shadow:none;padding:0 2px;color:#f3e7cc;text-shadow:0 1px 0 #1a0e08;image-rendering:pixelated}
@@ -496,7 +500,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .rl-cell.red{background:#a81c26}.rl-cell.black{background:#1a1a1a}.rl-cell.green{background:#1f7a3a}.rl-cell.out{background:#16602f;font-size:11.5px}
 .rl-cell:hover{filter:brightness(1.25)}.rl-cell:disabled{cursor:default;filter:none;opacity:.85}
 .rl-cell.hit{box-shadow:0 0 0 3px #fff,0 0 12px 3px rgba(255,255,255,.55);z-index:1}.rl-cell.mine{box-shadow:0 0 0 3px #ffe27a;z-index:2}
-.rl-cell em{position:absolute;right:-3px;top:-5px;min-width:18px;padding:0 3px;border-radius:9px;background:#e8e0c8;color:#2a2016;font:800 10px/15px Nunito,sans-serif;font-style:normal;box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.rl-cell em{position:absolute;right:-3px;top:-5px;min-width:18px;padding:0 3px;border-radius:9px;background:#e8e0c8;color:#2a2016;font:800 10px/15px Lora,sans-serif;font-style:normal;box-shadow:0 1px 0 rgba(0,0,0,.4)}
 .rl-cell em.me{background:#ffd45a}
 .rl-who{margin-top:8px;font-size:12.5px;display:grid;gap:2px}.rl-who b{color:#3a2616}
 /* the market */
@@ -522,7 +526,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .ipick{position:relative}
 .ipick>button{display:flex;align-items:center;gap:6px;width:100%;min-width:170px;padding:4px 8px;border:1px solid #8a7a5a;border-radius:4px;background:#fffaf0;font:inherit;font-size:13px;cursor:pointer;text-align:left;color:#2a2016}
 .ipick>button .ico{width:20px;height:20px;vertical-align:0}.ipick>button::after{content:"▾";margin-left:auto;opacity:.6}
-.ipop{position:fixed;z-index:200;color:#2a2016;font-family:Nunito,sans-serif;display:flex;flex-direction:column;background:#fffaf0;border:1px solid #8a7a5a;border-radius:5px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.ipop{position:fixed;z-index:200;color:#2a2016;font-family:Lora,sans-serif;display:flex;flex-direction:column;background:#fffaf0;border:1px solid #8a7a5a;border-radius:5px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 .ipop input{margin:6px;padding:5px 7px;border:1px solid #bfb193;border-radius:4px;font:inherit;font-size:13px}
 .ipop ul{list-style:none;margin:0;padding:0 4px 4px;overflow:auto}
 .ipop li{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:4px;cursor:pointer;font-size:13px}
@@ -709,8 +713,8 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .hpb-bar{position:relative;flex:1;height:18px;border-radius:5px;background:#2a1414;box-shadow:inset 0 0 0 2px #120a0a;overflow:hidden}
 .hpb-bar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(#e2473f,#a3201a);transition:width .25s ease}
 .hpb.mid .hpb-bar i{background:linear-gradient(#f0a53a,#b86d12)}.hpb.low .hpb-bar i{background:linear-gradient(#ff3b30,#8e0e08);animation:hpbLow 1s ease-in-out infinite}
-.hpb-bar b{position:relative;display:block;text-align:center;font:800 12.5px/18px Nunito,sans-serif;color:#fff;text-shadow:1px 1px 0 #000;font-variant-numeric:tabular-nums}
-.hpb-area{flex:none;max-width:44%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 12.5px Nunito,sans-serif;color:#f2e2c0;text-shadow:1px 1px 0 #000}
+.hpb-bar b{position:relative;display:block;text-align:center;font:800 12.5px/18px Lora,sans-serif;color:#fff;text-shadow:1px 1px 0 #000;font-variant-numeric:tabular-nums}
+.hpb-area{flex:none;max-width:44%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 12.5px Lora,sans-serif;color:#f2e2c0;text-shadow:1px 1px 0 #000}
 @keyframes hpbLow{50%{filter:brightness(1.45)}}
 @media (prefers-reduced-motion:reduce){.hpb-bar i{transition:none}.hpb.low .hpb-bar i{animation:none}}
 .stat i{font-style:normal;font-size:22px;width:28px;height:28px;display:grid;place-items:center}
@@ -840,9 +844,9 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .jk-tabs{display:flex;gap:6px;margin-bottom:10px}.jk-tabs button{flex:1}
 .jk-now{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:rgba(0,0,0,.08);margin-bottom:10px}.jk-now b{display:block;font-size:15px}.jk-now small{color:#6a5a40;font-weight:700}
 .jk-now .lk-btn{margin-left:auto}.jk-vol{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-weight:800;font-size:13px;color:#5a3a20}.jk-vol input{flex:1;accent-color:#c8963a}
-.jk-find{display:flex;gap:6px;margin-bottom:8px}.jk-find input{flex:1;min-width:0;font:700 14px Nunito,sans-serif;padding:6px 8px;border-radius:6px;border:2px solid #3a1e12;background:#f3e7cc;color:#2a1a0a}
+.jk-find{display:flex;gap:6px;margin-bottom:8px}.jk-find input{flex:1;min-width:0;font:700 14px Lora,sans-serif;padding:6px 8px;border-radius:6px;border:2px solid #3a1e12;background:#f3e7cc;color:#2a1a0a}
 .jk-genres{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}.jk-list{display:grid;gap:4px;max-height:210px;overflow:auto}
-.jk-list button{display:flex;justify-content:space-between;gap:8px;text-align:left;font:700 13px Nunito,sans-serif;padding:6px 9px;border-radius:6px;border:2px solid rgba(58,30,18,.35);background:rgba(255,255,255,.35);color:#2a1a0a;cursor:pointer}
+.jk-list button{display:flex;justify-content:space-between;gap:8px;text-align:left;font:700 13px Lora,sans-serif;padding:6px 9px;border-radius:6px;border:2px solid rgba(58,30,18,.35);background:rgba(255,255,255,.35);color:#2a1a0a;cursor:pointer}
 .jk-list button:hover{background:#ffe9a8}.jk-list small{color:#6a5a40;white-space:nowrap}.jk-msg{color:#6a5a40;font-weight:700;font-size:13px;padding:6px 2px}
 .netpanel{position:absolute;right:10px;top:96px;z-index:9;width:190px;padding:8px 10px;border-radius:8px;background:rgba(10,8,14,.92);color:#e8dccb;font-size:12px;font-weight:700;box-shadow:0 0 0 2px #3a2e22}
 .netpanel[hidden]{display:none}
@@ -881,13 +885,13 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
    hand-drawn button frame the chat tab wears. The picker opens above the row. */
 .chat-row{display:flex;align-items:center;gap:6px;order:3}
 .quickbar{display:flex;gap:4px}
-.qslot{position:relative;width:44px;height:44px;padding:0;cursor:pointer;background:none;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;display:flex;align-items:center;justify-content:center;color:#f3e7cc;font:800 12px Nunito,sans-serif}
+.qslot{position:relative;width:44px;height:44px;padding:0;cursor:pointer;background:none;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;display:flex;align-items:center;justify-content:center;color:#f3e7cc;font:800 12px Lora,sans-serif}
 .qslot:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_on.png?v=1)}
 .qslot:active{transform:translateY(1px)}
 .qslot .ico{width:26px;height:26px}
-#wikiWin kbd{display:inline-block;min-width:18px;padding:1px 6px;border:1px solid #8a7a5a;border-bottom-width:3px;border-radius:4px;background:#f6ecd6;font:800 12px Nunito,sans-serif;color:#2e2416;text-align:center;line-height:1.3}   /* (2026-09-25) the Keybinds page */
-.qslot kbd{position:absolute;left:-4px;top:-5px;font:800 10px Nunito,sans-serif;color:#ffe27a;text-shadow:0 1px 0 #000,0 0 3px #000}
-.qslot small{position:absolute;right:-4px;bottom:-5px;font:800 10px Nunito,sans-serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}
+#wikiWin kbd{display:inline-block;min-width:18px;padding:1px 6px;border:1px solid #8a7a5a;border-bottom-width:3px;border-radius:4px;background:#f6ecd6;font:800 12px Lora,sans-serif;color:#2e2416;text-align:center;line-height:1.3}   /* (2026-09-25) the Keybinds page */
+.qslot kbd{position:absolute;left:-4px;top:-5px;font:800 10px Lora,sans-serif;color:#ffe27a;text-shadow:0 1px 0 #000,0 0 3px #000}
+.qslot small{position:absolute;right:-4px;bottom:-5px;font:800 10px Lora,sans-serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}
 .qslot.empty .qplus{font-size:18px;color:rgba(243,231,204,.55)}
 .qslot.out .ico{opacity:.35;filter:grayscale(1)}
 .qslot.worn{box-shadow:inset 0 0 0 2px rgba(126,224,129,.7)}
@@ -903,7 +907,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .qp-clear{margin-top:6px;width:100%}
 /* EMOTES (v81): five taps beside the chat button. They wear the same hand-drawn button as the chat tab. */
 .chat{flex-direction:column}.emotes{display:flex;gap:4px;order:3}
-.emotes button{min-width:34px;height:30px;padding:0 6px;cursor:pointer;font:800 13px Nunito,sans-serif;color:#f3e7cc;background:none;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch}
+.emotes button{min-width:34px;height:30px;padding:0 6px;cursor:pointer;font:800 13px Lora,sans-serif;color:#f3e7cc;background:none;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch}
 .emotes button:hover{filter:brightness(1.2)}.emotes button:active{transform:translateY(1px)}
 .chat-log p.bigwin{color:#ffe27a;font-weight:800}
 .lk{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:start}
@@ -913,15 +917,15 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .lk-row{display:grid;grid-template-columns:74px 1fr;align-items:center;gap:8px}
 .lk-row>span{font-weight:800;font-size:13px;color:#5a3a20}
 .lk-step{display:flex;align-items:center;gap:8px}.lk-step b{min-width:92px;text-align:center;font-size:14px}
-.lk-btn{border:0;background:none;cursor:pointer;font:800 15px Nunito,sans-serif;color:#f3e7cc;padding:0;min-width:34px;height:30px;border-style:solid;border-width:0 10px;border-image:url(/v3/assets/img/glad/flat/ui/czchip.png?v=1) 0 20 fill / 0 10px stretch;image-rendering:pixelated}
+.lk-btn{border:0;background:none;cursor:pointer;font:800 15px Lora,sans-serif;color:#f3e7cc;padding:0;min-width:34px;height:30px;border-style:solid;border-width:0 10px;border-image:url(/v3/assets/img/glad/flat/ui/czchip.png?v=1) 0 20 fill / 0 10px stretch;image-rendering:pixelated}
 .lk-btn:hover,.lk-btn[aria-pressed=true]{border-image-source:url(/v3/assets/img/glad/flat/ui/czchip_on.png?v=1);color:#2a1a0a}
 .lk-sw{display:flex;flex-wrap:wrap;gap:5px}
 .lk-sw button{width:22px;height:22px;border-radius:5px;border:2px solid #3a1e12;cursor:pointer;padding:0;box-shadow:inset 0 2px 0 rgba(255,255,255,.25)}
 .lk-sw button[aria-pressed=true]{outline:3px solid #ffd24a;outline-offset:1px}
 .lk-team{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.lk-team select{font:700 13px Nunito,sans-serif;padding:4px 6px;border-radius:6px;border:2px solid #3a1e12;background:#f3e7cc;color:#2a1a0a;max-width:100%}
+.lk-team select{font:700 13px Lora,sans-serif;padding:4px 6px;border-radius:6px;border:2px solid #3a1e12;background:#f3e7cc;color:#2a1a0a;max-width:100%}
 .lk-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
-.lk-go{border:0;background:none;cursor:pointer;font:800 17px Nunito,sans-serif;color:#2a1a0a;height:44px;padding:0 18px;border-style:solid;border-width:0 15px;border-image:url(/v3/assets/img/glad/flat/ui/czbtn.png?v=1) 0 16 fill / 0 15px stretch;image-rendering:pixelated}
+.lk-go{border:0;background:none;cursor:pointer;font:800 17px Lora,sans-serif;color:#2a1a0a;height:44px;padding:0 18px;border-style:solid;border-width:0 15px;border-image:url(/v3/assets/img/glad/flat/ui/czbtn.png?v=1) 0 16 fill / 0 15px stretch;image-rendering:pixelated}
 .lk-go:hover{filter:brightness(1.08)}
 @media (max-width:520px){.lk{grid-template-columns:1fr}}
 .dlg-x{color:#6a4a2a;top:0;right:2px}
@@ -994,8 +998,8 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .cr-in{display:flex;align-items:center;gap:5px;white-space:nowrap}
 .cr-in em{position:relative;display:inline-flex;align-items:center;font-style:normal;padding:2px;border-radius:4px;background:rgba(90,50,32,.1)}
 .cr-in em.no{background:rgba(168,69,46,.2);box-shadow:inset 0 0 0 1.5px rgba(168,69,46,.55)}
-.cr-in em u{position:absolute;right:-1px;bottom:-2px;font:800 10px Nunito,sans-serif;text-decoration:none;color:#2a2016;text-shadow:0 0 2px #f3e7cc,0 0 2px #f3e7cc}
-.cr-in em s{position:absolute;left:-2px;top:-3px;font:800 9px Nunito,sans-serif;text-decoration:none;color:#fff;background:#a8452e;border-radius:3px;padding:0 2px}
+.cr-in em u{position:absolute;right:-1px;bottom:-2px;font:800 10px Lora,sans-serif;text-decoration:none;color:#2a2016;text-shadow:0 0 2px #f3e7cc,0 0 2px #f3e7cc}
+.cr-in em s{position:absolute;left:-2px;top:-3px;font:800 9px Lora,sans-serif;text-decoration:none;color:#fff;background:#a8452e;border-radius:3px;padding:0 2px}
 .cr-in em img,.cr-in em .ico{width:20px;height:20px;image-rendering:pixelated}
 .cr-risk{display:inline-flex;align-items:center;margin-left:3px;padding:2px 5px;border-radius:999px;background:rgba(168,110,20,.2);box-shadow:inset 0 0 0 1px rgba(168,110,20,.4);font-size:11.5px;font-weight:800;color:#7a5410}
 .cr-in .lv{display:inline-flex;align-items:center;gap:3px;margin-left:4px;padding:2px 6px 2px 4px;border-radius:999px;background:rgba(90,50,32,.14);box-shadow:inset 0 0 0 1px rgba(90,50,32,.18);font-size:12.5px;font-weight:800;color:#4a3c26}
@@ -1227,7 +1231,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .memenu button{display:flex;align-items:center;gap:10px;padding:7px 10px;border:0;border-radius:7px;background:none;color:#f4ede5;font:inherit;font-size:14px;font-weight:700;text-align:left;cursor:pointer}
 .memenu button:hover,.memenu button:focus-visible{background:rgba(242,210,46,.14);color:#ffd77a;outline:0}
 .memenu img{width:22px;height:22px;image-rendering:pixelated;flex:none}
-.memenu kbd{margin-left:auto;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,.1);color:#cfc6b8;font:800 11px Nunito,sans-serif}
+.memenu kbd{margin-left:auto;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,.1);color:#cfc6b8;font:800 11px Lora,sans-serif}
 @media (max-width:820px){.top{flex-wrap:nowrap}.top .spacer{display:block}.top .net:not(.ok){display:inline-flex}}
 @media (max-width:560px){.top .topl>span,.top .logo-t,.topl-store .hot{display:none}.top .topl{padding:4px 6px}.top{gap:2px}#topName{max-width:92px;overflow:hidden;text-overflow:ellipsis}}
 
@@ -1246,13 +1250,13 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .wl-fold summary::after{content:"▾";margin-left:auto;opacity:.6;transition:transform .15s}.wl-fold[open] summary::after{transform:rotate(180deg)}
 .wl-fold summary>span{color:#aca298}.wl-fold summary>span b{color:#ffd84a}
 .wl-fold-b{display:grid;gap:6px;padding:0 8px 8px}.wl-fold-b small{display:block;font-size:11px;color:#aca298;margin-bottom:3px}
-.bagchip{display:inline-flex;align-items:center;gap:3px;margin-right:6px;padding:1px 7px 1px 3px;border-radius:99px;background:#2f6a3f;color:#dcffe6;font:800 11.5px Nunito,sans-serif;vertical-align:1px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3)}
+.bagchip{display:inline-flex;align-items:center;gap:3px;margin-right:6px;padding:1px 7px 1px 3px;border-radius:99px;background:#2f6a3f;color:#dcffe6;font:800 11.5px Lora,sans-serif;vertical-align:1px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3)}
 .bagchip img{width:16px;height:16px;image-rendering:pixelated}.bagchip.full{background:#a3401a;color:#fff;animation:bagfull 1.4s ease-in-out infinite}
 @keyframes bagfull{50%{filter:brightness(1.3)}}@media (prefers-reduced-motion:reduce){.bagchip.full{animation:none}}
 
 /* ============================================================ THE PANEL, MODERNISED (2026-09-28): see the Quests tab, THE PAPER DOLL, TAB BADGES */
 .tabs button{position:relative}
-.tabs button[data-badge]::after{content:attr(data-badge);position:absolute;top:-9px;right:-9px;min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:#e53935;color:#fff;font:900 10.5px/17px Nunito,sans-serif;text-align:center;box-shadow:0 0 0 2px #141010;pointer-events:none}
+.tabs button[data-badge]::after{content:attr(data-badge);position:absolute;top:-9px;right:-9px;min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:#e53935;color:#fff;font:900 10.5px/17px Lora,sans-serif;text-align:center;box-shadow:0 0 0 2px #141010;pointer-events:none}
 .tabs button[data-badge=""]::after{min-width:0;width:11px;height:11px;padding:0;top:-6px;right:-6px}
 .tabs button[data-tab="inv"][data-badge=""]::after{background:#ff9a2a}
 .skt.hot{background:#fff1b8;border-color:#e0a81c;box-shadow:0 0 0 2px rgba(224,168,28,.45);position:relative}
@@ -1271,7 +1275,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .q .qname{cursor:pointer;color:inherit;text-decoration:none}.q .qname:hover{text-decoration:underline}
 .q.trk{box-shadow:inset 3px 0 0 #c8963a}
 .qhere{font-style:normal;font-size:10px;font-weight:900;padding:1px 5px;border-radius:4px;background:#2f6a3f;color:#fff;text-transform:uppercase;letter-spacing:.04em;vertical-align:1px}
-.qpin{margin-left:auto;flex:none;padding:1px 8px;border:1px solid #8a7a5a;border-radius:99px;background:#efe5cf;color:#5a4a30;font:800 11px Nunito,sans-serif;cursor:pointer}
+.qpin{margin-left:auto;flex:none;padding:1px 8px;border:1px solid #8a7a5a;border-radius:99px;background:#efe5cf;color:#5a4a30;font:800 11px Lora,sans-serif;cursor:pointer}
 .qpin:hover{background:#ffe08a}.qpin.on{background:#c8963a;border-color:#8a5a1a;color:#fff}
 .q>b{display:flex;align-items:center;gap:5px}
 .qfold{margin:6px 6px 2px;border-radius:8px;background:rgba(0,0,0,.05)}
@@ -1340,21 +1344,24 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   --k-gold:#c8963a; --k-gold-ink:#7a4e0e; --k-gold-hi:#ffd84a;
   --k-good:#2f7a3a; --k-bad:#b8302a; --k-rare:#6a3aa8;
   --k-r:6px;
-  --k-f-label:800 11px/1.2 Nunito,system-ui,sans-serif;
-  --k-f-small:700 12.5px/1.3 Nunito,system-ui,sans-serif;
-  --k-f-body:600 14px/1.4 Nunito,system-ui,sans-serif;
-  --k-f-row:800 16px/1.2 Nunito,system-ui,sans-serif;
-  --k-f-title:800 19px/1.15 Nunito,system-ui,sans-serif;
+  --k-f-label:800 11px/1.2 Lora,system-ui,sans-serif;
+  --k-f-small:700 12.5px/1.3 Lora,system-ui,sans-serif;
+  --k-f-body:600 14px/1.4 Lora,system-ui,sans-serif;
+  --k-f-row:800 16px/1.2 Lora,system-ui,sans-serif;
+  --k-f-title:800 19px/1.15 Lora,system-ui,sans-serif;
   --k-disp:"Cinzel",Georgia,"Times New Roman",serif;
 }
 /* ---------- FRAME + HEAD + PAPER + FOOT ---------- */
+/* (2026-09-28) [hidden] must win: .k-win sets display:flex, which beats the browser's own [hidden]{display:none}, so a closed conversation or info
+   card stayed on screen, empty, with nothing in it to click (the owner: "couldnt close npc dialogue window") */
+.k-win[hidden]{display:none!important}
 .k-win{display:flex;flex-direction:column;min-height:0;color:var(--k-ink);font:var(--k-f-body);border:15px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/win.png?v=1) 12 fill / 15px stretch;image-rendering:pixelated;filter:drop-shadow(0 12px 22px rgba(0,0,0,.5))}
 .k-head{display:flex;align-items:center;gap:10px;margin:-3px -3px 0;padding:8px 10px 8px 12px;background:var(--k-head);color:var(--k-head-ink);border-bottom:3px solid #3a1e12;border-radius:2px}
 .k-head>img{width:26px;height:26px;image-rendering:pixelated;flex:none}
 .k-head b{font:800 18px/1.15 var(--k-disp);letter-spacing:.01em;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 0 rgba(0,0,0,.4)}
 .k-head .k-sub{display:inline-flex;align-items:center;gap:5px;font:var(--k-f-small);color:var(--k-head-sub);white-space:nowrap}
 .k-head .k-sub img{width:18px;height:18px;image-rendering:pixelated}
-.k-x{flex:none;width:28px;height:28px;padding:0;display:grid;place-items:center;font:800 20px/1 Nunito,sans-serif;color:#fff;background:#b8382c;border:2px solid #2a140c;border-radius:5px;box-shadow:inset 0 2px 0 rgba(255,255,255,.28);cursor:pointer}
+.k-x{flex:none;width:28px;height:28px;padding:0;display:grid;place-items:center;font:800 20px/1 Lora,sans-serif;color:#fff;background:#b8382c;border:2px solid #2a140c;border-radius:5px;box-shadow:inset 0 2px 0 rgba(255,255,255,.28);cursor:pointer}
 .k-x:hover{background:#d8483a}.k-x:active{transform:translateY(1px)}
 .k-paper{background-color:var(--k-paper);background-image:radial-gradient(rgba(150,110,60,.07) 1px,transparent 1.5px),radial-gradient(rgba(150,110,60,.05) 1px,transparent 1.5px);background-size:7px 9px,11px 13px;background-position:0 0,4px 6px}
 .k-body{padding:10px 12px;overflow:auto;min-height:0;display:grid;gap:6px;align-content:start}
@@ -1363,7 +1370,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .k-note{font:var(--k-f-small);color:var(--k-ink2)}
 .k-label{font:var(--k-f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2)}
 /* ---------- BUTTONS ---------- */
-.k-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 14px;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;background:none;color:#ffe27a;font:800 14px/1 Nunito,sans-serif;text-shadow:0 1px 0 #000;image-rendering:pixelated;cursor:pointer;white-space:nowrap}
+.k-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 14px;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;background:none;color:#ffe27a;font:800 14px/1 Lora,sans-serif;text-shadow:0 1px 0 #000;image-rendering:pixelated;cursor:pointer;white-space:nowrap}
 .k-btn:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_on.png?v=1)}
 .k-btn:active{transform:translateY(1px)}
 .k-btn.sec{border-width:6px;border-image:url(/v3/assets/img/glad/flat/ui/plain.png?v=1) 10 fill / 6px stretch;color:var(--k-ink);text-shadow:none}
@@ -1374,28 +1381,28 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .k-btn.sm{min-height:30px;padding:0 10px;font-size:12.5px}
 .k-btn img{width:18px;height:18px;image-rendering:pixelated}
 .k-seg{display:inline-flex;padding:2px;gap:2px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
-.k-seg button{border:0;border-radius:4px;padding:5px 11px;background:none;color:var(--k-ink2);font:800 12.5px/1 Nunito,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.k-seg button{border:0;border-radius:4px;padding:5px 11px;background:none;color:var(--k-ink2);font:800 12.5px/1 Lora,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
 .k-seg button:hover{background:rgba(255,255,255,.4);color:var(--k-ink)}
 .k-seg button[aria-pressed="true"]{background:var(--k-head);color:var(--k-head-ink);box-shadow:0 1px 0 rgba(0,0,0,.25)}
 .k-seg button img{width:16px;height:16px;image-rendering:pixelated}
-.k-seg button small{font:800 10.5px/1 Nunito,sans-serif;padding:1px 5px;border-radius:99px;background:rgba(0,0,0,.1)}
+.k-seg button small{font:800 10.5px/1 Lora,sans-serif;padding:1px 5px;border-radius:99px;background:rgba(0,0,0,.1)}
 .k-seg button[aria-pressed="true"] small{background:rgba(255,255,255,.2)}
 /* ---------- TABS (folder tabs over the body) ---------- */
 .k-tabs{display:flex;gap:3px;padding:8px 12px 0;border-bottom:2px solid var(--k-gold);background:rgba(90,58,24,.08)}
-.k-tabs button{position:relative;margin-bottom:-2px;padding:7px 14px 6px;border:2px solid var(--k-card-line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--k-card);color:var(--k-ink2);font:800 13px/1 Nunito,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.k-tabs button{position:relative;margin-bottom:-2px;padding:7px 14px 6px;border:2px solid var(--k-card-line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--k-card);color:var(--k-ink2);font:800 13px/1 Lora,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .k-tabs button:hover{background:#efdfbc;color:var(--k-ink)}
 .k-tabs button[aria-selected="true"]{z-index:1;background:var(--k-paper);color:var(--k-ink);border-color:var(--k-gold);padding-bottom:8px}
 .k-tabs button img{width:18px;height:18px;image-rendering:pixelated}
 /* ---------- CHIPS, BADGES, SLOTS ---------- */
-.k-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;background:rgba(90,58,24,.12);color:var(--k-ink2);font:800 11.5px/1.3 Nunito,sans-serif;white-space:nowrap}
+.k-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;background:rgba(90,58,24,.12);color:var(--k-ink2);font:800 11.5px/1.3 Lora,sans-serif;white-space:nowrap}
 .k-chip img{width:15px;height:15px;image-rendering:pixelated}
 .k-chip.good{background:#d6ecd0;color:var(--k-good)}.k-chip.bad{background:#f5d3cc;color:var(--k-bad)}.k-chip.gold{background:#fbe6a8;color:var(--k-gold-ink)}.k-chip.rare{background:#e4d6f5;color:var(--k-rare)}
 .k-chip.lock::before{content:"";width:11px;height:12px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 12'%3E%3Cpath d='M3 5V3.5a2.5 2.5 0 015 0V5h1v7H2V5zm1.5 0h2V3.5a1 1 0 00-2 0z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 12'%3E%3Cpath d='M3 5V3.5a2.5 2.5 0 015 0V5h1v7H2V5zm1.5 0h2V3.5a1 1 0 00-2 0z'/%3E%3C/svg%3E") center/contain no-repeat}
-.k-badge{min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;border-radius:99px;background:#e53935;color:#fff;font:900 10.5px/17px Nunito,sans-serif;text-align:center}
+.k-badge{min-width:17px;height:17px;padding:0 4px;box-sizing:border-box;border-radius:99px;background:#e53935;color:#fff;font:900 10.5px/17px Lora,sans-serif;text-align:center}
 .k-slot{position:relative;display:grid;place-items:center;width:40px;height:40px;flex:none;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch;image-rendering:pixelated;box-sizing:border-box}
 .k-slot img{width:26px;height:26px;image-rendering:pixelated}
 .k-slot.sm{width:32px;height:32px;border-width:4px}.k-slot.sm img{width:20px;height:20px}
-.k-slot u{position:absolute;right:-5px;bottom:-6px;text-decoration:none;font:900 10.5px/1 Nunito,sans-serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}
+.k-slot u{position:absolute;right:-5px;bottom:-6px;text-decoration:none;font:900 10.5px/1 Lora,sans-serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}
 .k-slot.miss::after{content:"";position:absolute;inset:-4px;border-radius:3px;box-shadow:inset 0 0 0 2px var(--k-bad);background:rgba(184,48,42,.16)}
 /* ---------- ROWS: one shape for everything you can act on ---------- */
 .k-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;padding:7px 10px 7px 7px;border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45);color:var(--k-ink);text-align:left;font:inherit;cursor:pointer;transition:background .12s,box-shadow .12s,transform .12s}
@@ -1441,9 +1448,9 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .dlg-main{display:grid;grid-template-columns:84px 1fr;gap:12px;padding:10px 12px 12px}
 .dlg-body p{margin:0 0 8px;font:var(--k-f-body);font-size:15px;line-height:1.4}
 .dlg-opts{gap:4px}
-.dlg-opts button{display:flex;align-items:center;gap:8px;border:0;border-image:none;border-radius:var(--k-r);padding:6px 10px 6px 6px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45);font:700 14px/1.25 Nunito,sans-serif;color:var(--k-ink);transition:background .12s,box-shadow .12s}
+.dlg-opts button{display:flex;align-items:center;gap:8px;border:0;border-image:none;border-radius:var(--k-r);padding:6px 10px 6px 6px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45);font:700 14px/1.25 Lora,sans-serif;color:var(--k-ink);transition:background .12s,box-shadow .12s}
 .dlg-opts button:hover,.dlg-opts button:focus-visible{background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold);filter:none;outline:none}
-.dlg-opts kbd{flex:none;display:grid;place-items:center;width:20px;height:20px;border-radius:5px;background:var(--k-head);color:var(--k-head-ink);font:800 11px/1 Nunito,sans-serif}
+.dlg-opts kbd{flex:none;display:grid;place-items:center;width:20px;height:20px;border-radius:5px;background:var(--k-head);color:var(--k-head-ink);font:800 11px/1 Lora,sans-serif}
 .game:has(.dlg:not([hidden])) .feed{bottom:230px}
 /* ---------- batch 1c: the info card ---------- */
 .info.k-win{width:272px;padding:0;border-width:11px;border-image-width:11px;border-radius:0;background:none;color:var(--k-ink);font:var(--k-f-small);line-height:1.35;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5));box-shadow:none}
@@ -3176,7 +3183,7 @@ function paintRoom(o, f) {
     for (let i = X + 3; i < X + w - 3; i += 4) { f(i, Y, 2, 1, "#e8d8a8"); f(i, Y + h - 1, 2, 1, "#e8d8a8"); }
   }
   // a lettered sign over a door in the back wall (def.doorSigns)
-  for (const d of def.doorSigns || []) { o.font = "800 6.5px Nunito, sans-serif"; o.textAlign = "center"; o.textBaseline = "middle"; const w = o.measureText(d.text).width + 9, cx = (d.x + 0.5) * T, cy = Y0 - 29; f(cx - w / 2 - 1, cy - 5.5, w + 2, 11, "#2a1a10"); f(cx - w / 2, cy - 4.5, w, 9, "#7a1a22"); f(cx - w / 2, cy - 4.5, w, 1, "#c8963a"); f(cx - w / 2, cy + 3.5, w, 1, "#c8963a"); o.fillStyle = "#ffd98a"; o.fillText(d.text, cx, cy + 0.5); }
+  for (const d of def.doorSigns || []) { o.font = "800 6.5px Lora, sans-serif"; o.textAlign = "center"; o.textBaseline = "middle"; const w = o.measureText(d.text).width + 9, cx = (d.x + 0.5) * T, cy = Y0 - 29; f(cx - w / 2 - 1, cy - 5.5, w + 2, 11, "#2a1a10"); f(cx - w / 2, cy - 4.5, w, 9, "#7a1a22"); f(cx - w / 2, cy - 4.5, w, 1, "#c8963a"); f(cx - w / 2, cy + 3.5, w, 1, "#c8963a"); o.fillStyle = "#ffd98a"; o.fillText(d.text, cx, cy + 0.5); }
   // the fight pit: a sunk oval of sand with a plank rail round it, and the scuffs of everybody who lost in it
   if (def.pit && !PITF) {
     const P = def.pit, cx = (P.x + P.w / 2) * T, cy = (P.y + P.h / 2) * T, rx = P.w * T / 2 - 3, ry = P.h * T / 2 - 3;
@@ -3188,10 +3195,10 @@ function paintRoom(o, f) {
     o.strokeStyle = "#3a2410"; o.lineWidth = 1; for (let i = 0; i < 28; i++) { const a = i / 28 * 6.283; f(Math.round(cx + Math.cos(a) * (rx + 0.5)) - 1, Math.round(cy + Math.sin(a) * (ry + 0.5)) - 3, 2, 5, "#8a5a32"); }
   }
   // what each roped-off room is called, lettered in gold on the carpet at its way in (def.zones)
-  for (const z of def.zones || []) { o.font = "800 7px Nunito, sans-serif"; o.textAlign = "center"; o.textBaseline = "middle"; const w = o.measureText(z.text).width + 10, cx = z.x * T, cy = z.y * T; f(cx - w / 2, cy - 5.5, w, 11, "rgba(20,8,10,.78)"); f(cx - w / 2, cy - 5.5, w, 1, "#c8963a"); f(cx - w / 2, cy + 4.5, w, 1, "#c8963a"); o.fillStyle = "#ffd98a"; o.fillText(z.text, cx, cy + 0.5); }
+  for (const z of def.zones || []) { o.font = "800 7px Lora, sans-serif"; o.textAlign = "center"; o.textBaseline = "middle"; const w = o.measureText(z.text).width + 10, cx = z.x * T, cy = z.y * T; f(cx - w / 2, cy - 5.5, w, 11, "rgba(20,8,10,.78)"); f(cx - w / 2, cy - 5.5, w, 1, "#c8963a"); f(cx - w / 2, cy + 4.5, w, 1, "#c8963a"); o.fillStyle = "#ffd98a"; o.fillText(z.text, cx, cy + 0.5); }
   // plaques over the ways out (def.labels): on the side walls beside the arches, and over the front door
   if (def.labels) {
-    const plaque = (cx, cy, text) => { const w = text.length * 4.4 + 8; f(cx - w / 2, cy - 5, w, 10, "#2a1a10"); f(cx - w / 2 + 1, cy - 4, w - 2, 8, "#c8963a"); o.fillStyle = "#2a1a10"; o.font = "800 6.5px Nunito, sans-serif"; o.textAlign = "center"; o.textBaseline = "middle"; o.fillText(text, cx, cy + 0.5); };
+    const plaque = (cx, cy, text) => { const w = text.length * 4.4 + 8; f(cx - w / 2, cy - 5, w, 10, "#2a1a10"); f(cx - w / 2 + 1, cy - 4, w - 2, 8, "#c8963a"); o.fillStyle = "#2a1a10"; o.font = "800 6.5px Lora, sans-serif"; o.textAlign = "center"; o.textBaseline = "middle"; o.fillText(text, cx, cy + 0.5); };
     const ay = G.SPAN.w[0] * T - 9;
     if (def.labels.w && Z.g[G.SPAN.w[0]]?.[x0 - 1] === "e") plaque(X0 + 24, ay, `‹ ${def.labels.w}`);
     if (def.labels.e && Z.g[G.SPAN.e[0]]?.[x1 + 1] === "e") plaque(X1 - 22, ay, `${def.labels.e} ›`);
@@ -3988,7 +3995,7 @@ function idleArt(art, phase, t) {
 const gains = [];   // items popping up over whoever gathered them
 const botBets = [];   // (v88) what a bot at a table just won (green) or lost (red), over their head
 function tixLabel(n, x, y, color, size = 13, pre = "") {
-  const text = `${pre}${Number(n).toLocaleString()}`; ctx.font = `700 ${size}px "Nunito", system-ui, sans-serif`;
+  const text = `${pre}${Number(n).toLocaleString()}`; ctx.font = `700 ${size}px "Lora", system-ui, sans-serif`;
   const w = ctx.measureText(text).width, ic = size + 3; label(text, x + ic / 2 + 1, y, color, size); drawIco("tickets", x - w / 2 - 1, y + size / 2 + 1, ic);
 }
 /* (2026-09-27) THE STORE'S NAME COSMETICS over a head: a colour, a badge before the name, a frame around it, an effect in time.
@@ -4002,17 +4009,17 @@ function nameLabel(text, x, y, color, nfx, t) {
   else if (nfx.fx === "pulse") size = 13 + Math.sin(t / 260) * 1.5;
   else if (nfx.fx === "glitch") { if ((t % 1400) < 90) dx = ((t / 30) | 0) % 2 ? 3 : -3; }
   else if (nfx.fx === "flicker") alpha = (t % 700) < 60 ? 0.35 : 1;
-  ctx.font = `700 ${size}px "Nunito", system-ui, sans-serif`; const w = ctx.measureText(text).width;
+  ctx.font = `700 ${size}px "Lora", system-ui, sans-serif`; const w = ctx.measureText(text).width;
   if (nfx.frame) { ctx.strokeStyle = G.NAME_FRAMES[nfx.frame] || "#fff"; ctx.lineWidth = 1.5; ctx.setLineDash(nfx.frame === "chain" ? [3, 2] : []); ctx.strokeRect(x - w / 2 - 6 + dx, y - 2, w + 12, size + 5); ctx.setLineDash([]); }
   ctx.globalAlpha = alpha; label(text, x + dx, y, c, size); ctx.globalAlpha = 1;
   if (nfx.icon && IMG[`nb_${nfx.icon}`]) ctx.drawImage(IMG[`nb_${nfx.icon}`].im, x - w / 2 - 20 + dx, y - 1, 16, 16);
 }
 function label(text, x, y, color, size = 13) {
-  ctx.font = `700 ${size}px "Nunito", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "top";
+  ctx.font = `700 ${size}px "Lora", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "top";
   ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,.85)"; ctx.strokeText(text, x, y); ctx.fillStyle = color; ctx.fillText(text, x, y);
 }
 function bubble(text, x, y) {
-  ctx.font = `700 13px "Nunito", system-ui, sans-serif`; const w = Math.min(260, ctx.measureText(text).width + 14);
+  ctx.font = `700 13px "Lora", system-ui, sans-serif`; const w = Math.min(260, ctx.measureText(text).width + 14);
   ctx.fillStyle = "rgba(255,255,240,.94)"; ctx.fillRect(x - w / 2, y - 26, w, 22); ctx.strokeStyle = "#2a2016"; ctx.lineWidth = 2; ctx.strokeRect(x - w / 2, y - 26, w, 22);
   ctx.fillStyle = "#2a2016"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(text.length > 40 ? text.slice(0, 38) + "…" : text, x, y - 15);
 }
@@ -4639,8 +4646,8 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
     if (FX) { const pop2 = pop * (k < 0.12 && !calm ? 0.6 + (k / 0.12) * 0.4 : 1), wpx = (s.kind === "miss" ? 28 : s.crit ? 52 : 38) * pop2, hpx = wpx * FX.im.height / FX.im.width; ctx.drawImage(FX.im, Math.round(x - wpx / 2), Math.round(y - k * 10 - hpx / 2), wpx, hpx); }
     else { ctx.fillStyle = s.kind === "miss" ? "#2f6fd6" : s.crit ? "#e0a010" : "#c42a2a"; ctx.beginPath(); ctx.arc(x, y - k * 10, R0 * pop, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "#000"; ctx.lineWidth = s.crit ? 2.5 : 1.5; ctx.stroke(); }
-    ctx.fillStyle = "#fff"; ctx.font = `800 ${s.crit ? 16 : 13}px "Nunito", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(s.n), x, y - k * 10 + 1);
-    if (s.crit) { ctx.font = `800 11px "Nunito", system-ui, sans-serif`; ctx.fillStyle = "#ffd23f"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.strokeText("CRIT", x, y - k * 10 - 21); ctx.fillText("CRIT", x, y - k * 10 - 21); }
+    ctx.fillStyle = "#fff"; ctx.font = `800 ${s.crit ? 16 : 13}px "Lora", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(s.n), x, y - k * 10 + 1);
+    if (s.crit) { ctx.font = `800 11px "Lora", system-ui, sans-serif`; ctx.fillStyle = "#ffd23f"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.strokeText("CRIT", x, y - k * 10 - 21); ctx.fillText("CRIT", x, y - k * 10 - 21); }
     ctx.globalAlpha = 1;
   }
   // what someone just gathered pops up over their head, a little bigger, then drifts up and fades
@@ -4651,7 +4658,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
     const x = sx(p.px * T + 8), y = sy(p.py * T + 15) - 30 * S2 - k * 26;
     ctx.globalAlpha = Math.min(1, (1 - k) * 2.5);
     drawIco(g.k, x - (set("xpDrops") && pl.id === you.id ? 46 : 0), y, Math.round(42 * pop));   /* (the owner, 2026-09-21: "a little bit larger": 30 -> 42, and moved left to stay clear of the xp text) */
-    if (g.n > 1) { ctx.font = `800 13px "Nunito", system-ui, sans-serif`; ctx.lineWidth = 3; ctx.strokeStyle = "#000"; ctx.strokeText(`×${g.n}`, x + 14, y + 8); ctx.fillStyle = "#fff"; ctx.fillText(`×${g.n}`, x + 14, y + 8); }
+    if (g.n > 1) { ctx.font = `800 13px "Lora", system-ui, sans-serif`; ctx.lineWidth = 3; ctx.strokeStyle = "#000"; ctx.strokeText(`×${g.n}`, x + 14, y + 8); ctx.fillStyle = "#fff"; ctx.fillText(`×${g.n}`, x + 14, y + 8); }
     ctx.globalAlpha = 1;
   }
   /* (v88, the owner: "show how much / when bots are losin above thier heads") a bot's last result at the table drifts up off their
@@ -4660,7 +4667,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   for (const bt of botBets) {
     const b = Z.bots.find((q) => q.id === bt.id); if (!b) continue;
     const p = posOf(b, now), k = (pnow - bt.at) / 1600, won = bt.n > 0, text = `${won ? "+" : "−"}${Math.abs(bt.n)}`;
-    ctx.save(); ctx.globalAlpha = Math.min(1, (1 - k) * 2.5); ctx.font = `800 ${won ? 15 : 13}px "Nunito", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.lineWidth = 3; ctx.strokeStyle = "#000";
+    ctx.save(); ctx.globalAlpha = Math.min(1, (1 - k) * 2.5); ctx.font = `800 ${won ? 15 : 13}px "Lora", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.lineWidth = 3; ctx.strokeStyle = "#000";
     const x = sx(p.px * T + 8), y = sy(p.py * T - 22) - k * 24; ctx.strokeText(text, x, y); ctx.fillStyle = won ? "#7ee07e" : "#ff7a6a"; ctx.fillText(text, x, y); ctx.restore();
   }
   // level up: a ring of gold sparks bursting off your head
@@ -4676,7 +4683,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   if (P && set("xpDrops")) xpDrops.forEach((d, i) => {
     const k = (pnow - d.at) / 1600, y = hy - 31 * S2 - k * 34 - (xpDrops.length - 1 - i) * 16;
     ctx.globalAlpha = Math.min(1, (1 - k) * 2.2);
-    ctx.font = `800 15px "Nunito", system-ui, sans-serif`; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.font = `800 15px "Lora", system-ui, sans-serif`; ctx.textAlign = "left"; ctx.textBaseline = "middle";
     const t = `+${xpShort(d.xp)} xp`, tw = ctx.measureText(t).width, x = hx - tw / 2;   /* (the owner, 2026-09-21: no skill icon beside it. "it shows the fish and also fishing, it should just show the fish") */
     ctx.lineWidth = 3; ctx.strokeStyle = "#0a1a08"; ctx.strokeText(t, x, y); ctx.fillStyle = "#5dff4a"; ctx.fillText(t, x, y);
     ctx.globalAlpha = 1;
@@ -4695,13 +4702,13 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
       ctx.strokeStyle = "rgba(255,255,255,.14)"; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
       ctx.strokeStyle = "#f2d22e"; ctx.lineCap = "round"; ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0.02, f)); ctx.stroke(); ctx.lineCap = "butt";
       ctx.fillStyle = "#fff"; drawIco(k, cx, cy + 1, 26, true);
-      ctx.font = `800 12px "Nunito", system-ui, sans-serif`; ctx.lineWidth = 3; ctx.strokeStyle = "#000"; ctx.strokeText(String(l), cx + r - 2, cy + r - 4); ctx.fillStyle = "#fff"; ctx.fillText(String(l), cx + r - 2, cy + r - 4);
+      ctx.font = `800 12px "Lora", system-ui, sans-serif`; ctx.lineWidth = 3; ctx.strokeStyle = "#000"; ctx.strokeText(String(l), cx + r - 2, cy + r - 4); ctx.fillStyle = "#fff"; ctx.fillText(String(l), cx + r - 2, cy + r - 4);
       const gb = busy && P.ob != null ? Z.bots.filter((b) => b.work === P.ob).length + Z.players.filter((q) => q.id !== you.id && q.ob === P.ob && q.started).length : 0;
-      if (gb) { ctx.font = `800 12px "Nunito", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.strokeText(`+${gb}% group`, cx, cy + r + 14); ctx.fillStyle = "#7dff6a"; ctx.fillText(`+${gb}% group`, cx, cy + r + 14); }
+      if (gb) { ctx.font = `800 12px "Lora", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.strokeText(`+${gb}% group`, cx, cy + r + 14); ctx.fillStyle = "#7dff6a"; ctx.fillText(`+${gb}% group`, cx, cy + r + 14); }
       if (mouse && Math.hypot(mouse.x - cx, mouse.y - cy) <= r + 6) {
         tracker.at = pnow;
         const lines = l >= 99 ? [`${SKILLS[k].name} 99`, "Max level"] : [`${SKILLS[k].name} ${l} → ${l + 1}`, `${Math.ceil(hi - me.xp[k]).toLocaleString()} xp to go`];
-        ctx.font = `800 13px "Nunito", system-ui, sans-serif`; const bw = Math.max(...lines.map((t) => ctx.measureText(t).width)) + 18, bx = cx + r + 12, by = cy - 21;
+        ctx.font = `800 13px "Lora", system-ui, sans-serif`; const bw = Math.max(...lines.map((t) => ctx.measureText(t).width)) + 18, bx = cx + r + 12, by = cy - 21;
         ctx.fillStyle = "rgba(20,24,20,.92)"; ctx.fillRect(bx, by, bw, 42); ctx.strokeStyle = "#f2d22e"; ctx.lineWidth = 1.5; ctx.strokeRect(bx + 0.5, by + 0.5, bw - 1, 41);
         ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillStyle = "#fff"; ctx.fillText(lines[0], bx + 9, by + 13);
         ctx.fillStyle = "#f2d22e"; ctx.fillText(lines[1], bx + 9, by + 29);
@@ -4711,7 +4718,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   }
   if (pvp || Z.isle) {
     const cage = P && G.inCage(Z.def, P.x, P.y), text = Z.isle ? `${Z.def.home ? "🏠" : "🏝️"} ${Z.isle.owner === you.id ? `Your ${Z.def.home ? "cottage" : Z.def.name === "The Far Shore" ? "far shore" : "island"}` : `${Z.isle.name}'s ${Z.def.home ? "cottage" : "island"}`}` : cage ? "🛡️ The Cage: fights here cost nothing" : "☠️ PvP: anyone can attack you";
-    ctx.font = `800 13px "Nunito", system-ui, sans-serif`; const bw = ctx.measureText(text).width + 20, bx = view.bx + 10, by = view.by + 10;
+    ctx.font = `800 13px "Lora", system-ui, sans-serif`; const bw = ctx.measureText(text).width + 20, bx = view.bx + 10, by = view.by + 10;
     ctx.fillStyle = Z.isle ? "rgba(20,60,90,.85)" : cage ? "rgba(30,60,40,.88)" : "rgba(110,14,14,.88)"; ctx.fillRect(bx, by, bw, 24);
     ctx.fillStyle = "#fff"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(text, bx + 10, by + 12);
   }
@@ -5199,7 +5206,7 @@ document.addEventListener("visibilitychange", () => radioSync());
    mode are v3/assets/js/eastscape-decor.js, fetched the first time you ask her or press Decorate). The page keeps only what every
    visitor needs: the pieces standing in this scene (sent by the server on the way in and on every change) laid over a fresh
    build of it, and a Decorate button on your own island. */
-let DECO = null, DR = null; const DECO_URL = "/v3/assets/js/eastscape-decor.js?v=3", DR_URL = "/v3/assets/js/eastscape-decor-rules.js?v=7";
+let DECO = null, DR = null; const DECO_URL = "/v3/assets/js/eastscape-decor.js?v=4", DR_URL = "/v3/assets/js/eastscape-decor-rules.js?v=7";
 const drLoad = () => (drLoad.p ||= import(DR_URL).then((m) => (DR = m.createDecorRules(G))));   /* the catalogue and the placing rules: fetched on the first furnished island, never at login */
 const decoLoad = () => (decoLoad.p ||= Promise.all([import(DECO_URL), drLoad()]).then(([m]) => (DECO = m.createDecor({ rules: DR, G, SFX, send, esc, $, me: () => me, you: () => you, key: () => Z.key, owner: () => Z.isle?.owner || G.ownerOf(Z.key), host: () => document.querySelector(".game"), say: (t, c) => say(t, c), onMode: (on) => $("decoBtn").setAttribute("aria-pressed", String(on)) }))));
 function decorSet(list) { const key = Z.key; if (!G.isIsle(key) || (!list?.length && !DR)) return; drLoad().then(() => { if (Z.key !== key) return; const b = DR.decorInto(key, G.buildScene(key), { decor: list || [] }); Z.g = b.g; Z.objs = b.objs; hoverThing = null; DECO?.refresh(); }).catch(() => {}); }
@@ -5533,7 +5540,7 @@ let PETUI = null; const PETUI_URL = "/v3/assets/js/eastscape-pets.js?v=4";
 function petUi() { return PETUI ? Promise.resolve(PETUI) : import(PETUI_URL).then((m) => (PETUI = m.createPetUi({ G, $, esc, ico, sico, lvl, send, SFX, openWin, say, rankTag, petPic, ITEMS, get me() { return me; } }))); }
 function openPen(e) { petUi().then((u) => u.openPen(e)); }
 function openHatch(e) { petUi().then((u) => u.openHatch(e)); }
-let COLUI = null; const COLUI_URL = "/v3/assets/js/eastscape-collog.js?v=1";   /* (2026-09-27) the collection log's window, fetched the first time a podium is clicked */
+let COLUI = null; const COLUI_URL = "/v3/assets/js/eastscape-collog.js?v=2";   /* (2026-09-27) the collection log's window, fetched the first time a podium is clicked */
 function colUi() { return COLUI ? Promise.resolve(COLUI) : import(COLUI_URL).then((m) => (COLUI = m.createColLog({ G, $, esc, ico, flatArt, SFX, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); } }))); }
 function openMarket() { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin", "gameWin", "lookWin", "jukeWin", "vanWin"]) $(w).hidden = true; $("hwWin").hidden = false; SFX.play("ui_open"); renderMarket(); }
 function renderMarket() {
@@ -5585,7 +5592,7 @@ function renderShop() {
    (2026-09-27) REBUILT AND MOVED OUT: v3/assets/js/eastscape-bank.js, fetched the first time the bank opens. Tabs by kind, one
    search over bank and bag, an amount of your own, a right-click menu, a slots meter. The page only opens it and tells it when
    `me` changed; every rule of the old window (true bank index on every tile, rebuild only on change, tickets stay) lives there. */
-let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=8";
+let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=9";
 function bankUi() { return BANKUI ? Promise.resolve(BANKUI) : import(BANKUI_URL).then((m) => (BANKUI = m.createBankUi({ G, $, esc, ico, qty, fgTag, slotHtml, send, SFX, say, ITEMS, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); }, get me() { return me; } }))); }
 function renderBank() { if ($("bankWin").hidden || !me) return; $("bankCount").textContent = `${(me.bank || []).length}/${G.BANK_MAX}`; bankUi().then((u) => u.render()); }
 
@@ -5833,7 +5840,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=50", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=51", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
@@ -6340,7 +6347,7 @@ $("wikiWin").addEventListener("click", (e) => { const a = e.target.closest("[dat
 // right-click any item (bag, gear, bank, shop, trade) to open its wiki page
 /* (2026-09-27) THE BAG'S MENU AND ARRANGING live in v3/assets/js/eastscape-bag.js, fetched on the first touch of the bag (and a few
    seconds after boot regardless): the first load is at its budget. The page only delegates: a right-click in the bag opens its menu. */
-let BAGUI = null; const BAGUI_URL = "/v3/assets/js/eastscape-bag.js?v=2";
+let BAGUI = null; const BAGUI_URL = "/v3/assets/js/eastscape-bag.js?v=3";
 function bagUi() { return BAGUI ? Promise.resolve(BAGUI) : import(BAGUI_URL).then((m) => (BAGUI = m.createBagUi({ G, $, esc, ico, send, say, SFX, ITEMS, useBagItem, renderPanel, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); }, get me() { return me; } }))); }
 document.addEventListener("pointerdown", (e) => { if (e.target.closest?.(".inv")) bagUi(); }, { passive: true }); setTimeout(bagUi, 4000);
 document.addEventListener("contextmenu", (e) => {
@@ -6519,7 +6526,7 @@ function drawWorld(sfx, opts = {}) {
   for (const [a, b, kind] of L.links) { if (!keys.includes(a) || !keys.includes(b)) continue; o.strokeStyle = kind === "ladder" ? "#8a5a2a" : kind === "boat" ? "#3f8fd8" : "#c9a86c"; o.lineWidth = 6 * sc; o.setLineDash(kind === "ladder" ? [6, 5] : kind === "boat" ? [3, 6] : []); o.beginPath(); o.moveTo(px(a) + TW / 2, py(a) + TH / 2); o.lineTo(px(b) + TW / 2, py(b) + TH / 2); o.stroke(); o.setLineDash([]); }
   for (const k of keys) { const x = px(k), y = py(k), th = known(k) ? worldThumb(k) : null;
     o.fillStyle = "#3a2e22"; o.fillRect(x - 2, y - 2, TW + 4, TH + 4);
-    if (th) o.drawImage(th, x, y, TW, TH); else { o.fillStyle = "#d9ccb0"; o.fillRect(x, y, TW, TH); o.fillStyle = "#8a7a5a"; o.font = `800 ${Math.round(28 * sc)}px Nunito, sans-serif`; o.textAlign = "center"; o.fillText("?", x + TW / 2, y + TH / 2 + 10 * sc); }
+    if (th) o.drawImage(th, x, y, TW, TH); else { o.fillStyle = "#d9ccb0"; o.fillRect(x, y, TW, TH); o.fillStyle = "#8a7a5a"; o.font = `800 ${Math.round(28 * sc)}px Lora, sans-serif`; o.textAlign = "center"; o.fillText("?", x + TW / 2, y + TH / 2 + 10 * sc); }
     if (k === here) { o.strokeStyle = "#ffd23f"; o.lineWidth = 3; o.strokeRect(x - 2, y - 2, TW + 4, TH + 4); }
   }
   if (G.nightfallOn()) { o.fillStyle = "rgba(10,5,30,.35)"; o.fillRect(0, 0, Wc, Hc); }

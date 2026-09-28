@@ -192,7 +192,7 @@ const CSS = `
 .bk-main{display:flex;flex-direction:column;min-width:0;min-height:0}
 .bk-side{display:flex;align-items:flex-end;gap:10px;min-width:0}
 .bk-pages{display:flex;flex-direction:row;gap:4px;min-width:0;overflow-x:auto;padding:8px 6px 0 0;scrollbar-width:none}
-.bk-pages button{position:relative;flex:none;display:grid;place-items:center;width:50px;height:44px;margin-bottom:-2px;padding:0;border:2px solid #b89a6a;border-bottom-color:transparent;border-radius:9px 9px 0 0;background:#e3d3ae;color:#3a2c1c;cursor:pointer;font:800 12px Nunito,sans-serif;box-shadow:none}
+.bk-pages button{position:relative;flex:none;display:grid;place-items:center;width:50px;height:44px;margin-bottom:-2px;padding:0;border:2px solid #b89a6a;border-bottom-color:transparent;border-radius:9px 9px 0 0;background:#e3d3ae;color:#3a2c1c;cursor:pointer;font:800 12px Lora,sans-serif;box-shadow:none}
 .bk-pages button:hover{background:#efe2c2}
 .bk-pages button[aria-pressed=true]{z-index:1;height:48px;background:#fffaf0;border-style:solid;border-color:#c8963a;border-bottom-color:#fffaf0;box-shadow:none}
 .bk-pages button.over{background:#dff3d8;border-color:#4aa84a;border-bottom-color:transparent}
@@ -226,10 +226,10 @@ const CSS = `
 .bk-bag .bk-up{background:rgba(0,0,0,.28);color:#f6e9cf}.bk-bag .bk-grid.sm{background:rgba(0,0,0,.18);border-radius:8px;padding:4px}
 .bk-actions{display:flex;flex-wrap:wrap;gap:5px}.bk-actions .btn{min-width:0;flex:1 1 auto;padding:2px 8px;font-size:12px}
 .bk-move{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800}.bk-move .qty button{padding:3px 8px;font-size:12px}
-#bkX{width:64px;padding:3px 6px;border:1px solid #8a7a5a;border-radius:4px;background:#fffaf0;font:800 12px Nunito,sans-serif}#bkX.on{border-color:#c8963a;box-shadow:0 0 0 2px rgba(200,150,58,.35)}
+#bkX{width:64px;padding:3px 6px;border:1px solid #8a7a5a;border-radius:4px;background:#fffaf0;font:800 12px Lora,sans-serif}#bkX.on{border-color:#c8963a;box-shadow:0 0 0 2px rgba(200,150,58,.35)}
 .bk-hint{margin:0;font-size:11.5px;opacity:.75;line-height:1.4}
 .bk-up{display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:8px;background:rgba(0,0,0,.05);font-size:12px}.bk-up .btn{align-self:flex-start;min-width:0;font-size:12px}
 .bk-menu{position:fixed;z-index:1000;min-width:190px;padding:4px;border-radius:10px;background:#fffaf0;color:#2a2016;box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 0 1px #c8b48a}
 .bk-menu-h{display:flex;align-items:center;gap:6px;padding:6px 8px 4px;font-size:12.5px;border-bottom:1px solid rgba(0,0,0,.1);margin-bottom:3px}.bk-menu-h small{opacity:.7}.bk-menu-h .ico{width:20px;height:20px}
-.bk-menu button{display:block;width:100%;padding:6px 10px;border:0;border-radius:6px;background:none;text-align:left;font:800 13px Nunito,sans-serif;color:#2a2016;cursor:pointer}.bk-menu button:hover{background:rgba(200,150,58,.22)}
+.bk-menu button{display:block;width:100%;padding:6px 10px;border:0;border-radius:6px;background:none;text-align:left;font:800 13px Lora,sans-serif;color:#2a2016;cursor:pointer}.bk-menu button:hover{background:rgba(200,150,58,.22)}
 @media (max-width:820px){.bk-menu button{padding:10px 12px;font-size:14px}.bk{grid-template-columns:minmax(0,1fr)}.bk-pnote{display:none}.bk-tabs{flex-wrap:nowrap;overflow-x:auto;padding:6px 2px 4px}.bk-tabs button{flex:none}.bk-grid{max-height:40vh}.bk-grid.sm{max-height:26vh}}`;

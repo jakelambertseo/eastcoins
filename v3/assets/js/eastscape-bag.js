@@ -50,8 +50,8 @@ export function createBagUi(E) {
 }
 const CSS = `.inv .slot.dragging{opacity:.4}.inv .slot.over{outline:3px dashed #c8963a;outline-offset:-4px}.inv.moving .slot.empty{outline:2px dashed rgba(200,150,58,.6);outline-offset:-4px}.inv .slot.lifted{outline:3px solid #ffd45a;outline-offset:-4px;transform:scale(1.06)}.inv.moving .slot:not(.lifted){cursor:copy;box-shadow:inset 0 0 0 2px rgba(200,150,58,.45)}
 .bagmenu{position:fixed;z-index:1000;min-width:180px;padding:4px;border-radius:10px;background:#fffaf0;color:#2a2016;box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 0 1px #c8b48a}
-.bagmenu-u{padding:2px 9px 6px;margin-bottom:3px;border-bottom:1px solid rgba(0,0,0,.1);font-size:12px;max-width:260px}.bagmenu-u b{display:block;font:900 11px Nunito,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#8a6a3a;margin-bottom:2px}
+.bagmenu-u{padding:2px 9px 6px;margin-bottom:3px;border-bottom:1px solid rgba(0,0,0,.1);font-size:12px;max-width:260px}.bagmenu-u b{display:block;font:900 11px Lora,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#8a6a3a;margin-bottom:2px}
 .bagmenu-u span{display:flex;justify-content:space-between;gap:8px;font-weight:800;line-height:1.35}.bagmenu-u span small{font-weight:700;color:#8a7a5a;white-space:nowrap}.bagmenu-u em{display:block;font-style:normal;color:#8a7a5a;font-weight:700}.bagmenu-u .bagmenu-bom{color:#2e7d43;margin-top:2px}
 .bagmenu-h{display:flex;align-items:center;gap:6px;padding:6px 8px 4px;font-size:12.5px;border-bottom:1px solid rgba(0,0,0,.1);margin-bottom:3px}.bagmenu-h .ico{width:20px;height:20px}
-.bagmenu button{display:block;width:100%;padding:7px 10px;border:0;border-radius:6px;background:none;text-align:left;font:800 13px Nunito,sans-serif;color:#2a2016;cursor:pointer}.bagmenu button:hover{background:rgba(200,150,58,.22)}
+.bagmenu button{display:block;width:100%;padding:7px 10px;border:0;border-radius:6px;background:none;text-align:left;font:800 13px Lora,sans-serif;color:#2a2016;cursor:pointer}.bagmenu button:hover{background:rgba(200,150,58,.22)}
 @media (max-width:820px){.bagmenu button{padding:10px 12px;font-size:14px}}`;

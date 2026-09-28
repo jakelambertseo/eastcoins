@@ -25,7 +25,7 @@ const CSS = `
    locally, in the block at the end of this sheet. */
 #gameWin.cz{--ink:#f3e7cc;--panel:#ecdcb6;--panel-2:#e4d2a6;--panel-3:#dbc797;--line:rgba(70,45,20,.2);--line-2:rgba(70,45,20,.38);--text:#2a2016;--muted:#6a5a40;--muted-2:#8a7858;
   --gold:#96650a;--gold-dim:rgba(168,116,10,.16);--green:#1c7a3c;--green-dim:rgba(28,122,60,.14);--red:#b8202a;--red-dim:rgba(184,32,42,.12);
-  --display:"Nunito","Segoe UI",system-ui,sans-serif;--body:"Nunito","Segoe UI",system-ui,sans-serif;
+  --display:"Lora","Segoe UI",system-ui,sans-serif;--body:"Lora","Segoe UI",system-ui,sans-serif;
   width:min(880px,calc(100% - 20px));color:var(--text);font-family:var(--body)}
 #gameWin.cz .win-head b{font-family:var(--display);font-weight:900;font-size:19px}
 #gameWin.cz .win-body{padding:12px}
