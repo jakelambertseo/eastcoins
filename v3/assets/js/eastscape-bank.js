@@ -17,7 +17,7 @@ function createBankUi(E){const{G,$,esc,ico,qty,fgTag,slotHtml,send,SFX,say,ITEMS
 /* (2026-09-27, the owner: "make the bank feel less wide and covering up the game") narrower, taller: fewer tiles across, the grid scrolls,
    and under 1100px the bag sits below the grid so the window is narrower still and the game shows either side */
 .win.wide{width:min(820px,calc(100% - 28px))}
-.bk{display:grid;grid-template-columns:110px minmax(0,1fr) 206px;gap:10px;min-height:0}
+.bk{display:grid;grid-template-columns:110px minmax(0,1fr) 272px;gap:10px;min-height:0}
 @media (max-width:1100px){.win.wide{width:min(600px,calc(100% - 28px))}.bk{grid-template-columns:100px minmax(0,1fr)}.bk-bag{grid-column:1/-1}.bk-bag .bk-grid.sm{max-height:min(22vh,200px)}}
 .bk-side{display:flex;flex-direction:column;gap:6px;min-width:0}
 .bk-pages{display:flex;flex-direction:column;gap:3px}
@@ -39,7 +39,7 @@ function createBankUi(E){const{G,$,esc,ico,qty,fgTag,slotHtml,send,SFX,say,ITEMS
 .bk-bar{flex:1;height:8px;border-radius:999px;background:rgba(0,0,0,.12);overflow:hidden}.bk-bar i{display:block;height:100%;background:#4aa84a;border-radius:999px}.bk-bar i.warn{background:#d8963a}.bk-bar i.full{background:#c8283a}
 .bk-worth{white-space:nowrap}
 .bk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(50px,1fr));gap:4px;align-content:start;max-height:min(62vh,600px);overflow:auto;padding:2px}
-.bk-grid .slot{font-size:24px}.bk-grid.sm{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));max-height:min(34vh,300px)}.bk-grid.sm .slot{font-size:20px}
+.bk-grid .slot{font-size:24px}.bk-grid.sm{grid-template-columns:repeat(auto-fill,minmax(44px,1fr));max-height:min(34vh,300px)}.bk-bag .bk-grid.sm{grid-template-columns:repeat(4,minmax(0,1fr));max-height:min(48vh,440px)}   /* (2026-09-28, the owner: "the users backpack needs to be 4 items wide") four across: the column grew 206 -> 272px, which takes one column off the bank beside it */.bk-grid.sm .slot{font-size:20px}
 .bk-grid .slot.dim{opacity:.32}.bk-grid .slot.stay{cursor:not-allowed}
 .bk-empty{grid-column:1/-1;margin:8px 4px;font-size:13px;opacity:.75}
 .bk-bag{position:relative;display:flex;flex-direction:column;gap:8px;min-width:0;padding:12px 10px 10px;border-radius:14px;color:#f6e9cf;background:radial-gradient(ellipse at 28% 18%,#8a5f38,#5a3a1f 62%,#462c17);box-shadow:inset 0 0 0 3px #2a1608,inset 0 0 0 5px #c69a5c,0 6px 14px rgba(0,0,0,.28)}
