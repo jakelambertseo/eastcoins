@@ -17,6 +17,41 @@
 const CART = "/v3/assets/img/glad/flat/casino/", CV = 2;   /* (2: the coin's two faces were redrawn as a real gold coin, 2026-09-21; every picture in this folder shares the number) */
 const SUITS = ["♠", "♥", "♦", "♣"];
 const CSS = `
+/* ---------- (2026-09-28) BOM'S PRIZE COUNTER, TABBED, in the UI kit: see cashier() ---------- */
+#gameWin .bom{display:flex;flex-direction:column;min-height:0;max-height:min(72vh,720px);margin:-4px}
+.bom-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 4px 10px}
+.bom-tix{display:inline-flex;align-items:center;gap:8px;padding:5px 14px 5px 8px;border-radius:99px;background:var(--k-head);color:var(--k-head-ink)}
+.bom-tix .ico{width:26px;height:26px}.bom-tix b{font:800 22px/1 Lora,serif;color:#ffd84a;font-variant-numeric:tabular-nums}.bom-tix small{font:var(--k-f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--k-head-sub)}
+.bom-chips{display:flex;gap:6px;flex-wrap:wrap}
+.bom-tabs{margin:0 -12px;padding-left:16px}
+.bom-tabs .k-chip{padding:0 6px;font-size:10.5px}
+.bom-pane{flex:1;min-height:0;overflow:auto;display:grid;gap:6px;align-content:start;padding:10px 12px;margin:0 -12px}
+.bom .k-foot{margin:0 -12px -12px}
+.bom-r .k-end{gap:10px}
+.bom-p{display:inline-flex;align-items:center;gap:3px;font:800 14px/1 Lora,serif;font-variant-numeric:tabular-nums;white-space:nowrap}.bom-p .ico{width:15px;height:15px}
+.bom-r.forged{box-shadow:inset 0 0 0 1.5px var(--k-gold)}
+.bom-r .k-slot .fgn{position:absolute;left:-4px;top:-6px;font:900 10px/1 Lora,serif;font-style:normal;color:#fff;background:var(--k-gold-ink);padding:1px 3px;border-radius:3px}
+.bom-hint{margin:-2px 2px 2px;font:600 12.5px/1.4 Lora,serif;color:var(--k-ink2)}
+.bom-empty{display:grid;justify-items:center;gap:6px;padding:28px 10px;text-align:center;color:var(--k-ink2)}.bom-empty img{width:44px;height:44px;image-rendering:pixelated;opacity:.8}.bom-empty b{font:800 17px var(--k-disp);color:var(--k-ink)}.bom-empty p{margin:0;max-width:340px;font:600 13.5px/1.45 Lora,serif}
+.bom-cats{flex-wrap:wrap}.bom-tiers{flex-wrap:wrap}.bom-tiers button.locked{opacity:.55}
+.bom-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px}
+.bom-tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 6px 8px;border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45);color:var(--k-ink);font:inherit;cursor:pointer;transition:background .12s,box-shadow .12s,transform .12s}
+.bom-tile:hover:not(:disabled){background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold),0 2px 6px rgba(60,40,10,.15);transform:translateY(-1px)}
+.bom-tile:disabled{cursor:default;opacity:.62}
+.bom-tile .k-slot{width:46px;height:46px}.bom-tile .k-slot .ico{width:32px;height:32px}
+.bom-tile b{font:800 13px/1.1 var(--k-disp);text-align:center}.bom-tile small{font:600 11px/1.2 Lora,serif;color:var(--k-ink2);text-align:center}
+.bom-own{position:absolute;top:5px;right:5px;font:800 9.5px/1 Lora,serif;font-style:normal;padding:2px 5px;border-radius:99px;background:#d6ecd0;color:var(--k-good)}
+.bom-allow{padding:8px 10px;border-radius:var(--k-r);background:rgba(90,58,24,.07)}.bom-allow p{margin:6px 0 0;font:600 13px/1.45 Lora,serif;color:var(--k-ink2)}.bom-allow p b{color:var(--k-ink)}
+.bom-meter{height:8px;border-radius:4px;background:rgba(90,58,24,.15);overflow:hidden}.bom-meter i{display:block;height:100%;background:linear-gradient(90deg,#c8963a,#ffd84a)}
+.bom-bad,.bom-msg.bad{color:var(--k-bad)!important}.bom-msg{margin:0;padding:6px 10px;border-radius:var(--k-r);font:700 13px/1.4 Lora,serif;background:rgba(90,58,24,.07)}.bom-msg.good{color:var(--k-good);background:#e3f1de}
+.bom-card{display:grid;gap:6px;padding:10px 12px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.bom-ch{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.bom-ch b{font:800 16px var(--k-disp)}
+.bom-step{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.bom-step .k-seg button:disabled{opacity:1;cursor:default}
+.bom-pane{overflow-x:hidden}
+@media (max-width:620px){.bom-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}#gameWin.cz:has(.bom) #gameSub{display:none}.bom .k-foot .k-note{display:none}.bom .k-foot{justify-content:stretch}.bom .k-foot .k-btn{flex:1}
+  .bom-r{gap:8px;padding-right:8px}.bom-r .k-end{flex-direction:column;align-items:flex-end;gap:4px}.bom-r b{font-size:14px}.bom-tix b{font-size:19px}}
+
 /* PARCHMENT (2026-09-19, the owner: "restyle the other windows towards the parchment look"). These windows used to wear
    eastcoin.vip's dark casino; they now wear the game's own paper: the wood-and-bronze frame and brown header come from the
    page's .win rules (nothing here overrides them), and the palette below is ink on parchment. Almost every rule in this
@@ -27,7 +62,7 @@ const CSS = `
   --gold:#96650a;--gold-dim:rgba(168,116,10,.16);--green:#1c7a3c;--green-dim:rgba(28,122,60,.14);--red:#b8202a;--red-dim:rgba(184,32,42,.12);
   --display:"Lora","Segoe UI",system-ui,sans-serif;--body:"Lora","Segoe UI",system-ui,sans-serif;
   width:min(880px,calc(100% - 20px));color:var(--text);font-family:var(--body)}
-#gameWin.cz .win-head b{font-family:var(--display);font-weight:900;font-size:19px}
+#gameWin.cz .win-head b{font-family:var(--k-disp,var(--display));font-weight:800;font-size:18px}   /* (2026-09-28) the kit's display face, like every window */
 #gameWin.cz .win-body{padding:12px}
 #gameWin.cz [hidden]{display:none!important}
 .cz-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(230px,1fr);gap:12px;align-items:start}
@@ -277,7 +312,7 @@ export function createCasino(env) {
   /* ---------------------------------------------------------- the frame every table shares */
   function frame(title, sub) {
     style(); token++; busy = false; R = {};
-    const win = $("gameWin"); win.classList.add("cz"); win.style.width = "min(880px, calc(100% - 20px))"; /* (the element carries an inline width from its parchment days) */ $("gameTitle").textContent = title; $("gameSub").textContent = sub;
+    const win = $("gameWin"); win.classList.add("cz"); win.style.width = "min(880px, calc(100% - 20px))"; /* (the element carries an inline width from its parchment days) */ $("gameTitle").innerHTML = `<img src="/v3/assets/img/glad/flat/ui/${GAME === "cashier" ? "w_cash" : "g_casino"}.png?v=1" alt="" class="topi">${esc(title)}`;   /* (2026-09-28) a pixel icon like every window's title */ $("gameSub").textContent = sub;
     const body = $("gameBody"); body.replaceChildren();
     const grid = el("div", "cz-grid"), stage = el("section", "cz-stage"), side = el("div", "cz-side");
     R.phase = el("div", "cz-phase"); R.board = el("div", "cz-board"); R.mult = el("div", "cz-mult"); R.bet = el("div", "cz-bet"); R.pop = el("div", "cz-pop");
@@ -877,31 +912,10 @@ export function createCasino(env) {
     const n = soon[0], rest = soon.slice(1);
     return ` Next <b>${n.zc}</b> comes back in <b>${inHm(n.at - Date.now())}</b> (${clock(n.at)})${rest.length ? `, then ${rest.slice(0, 2).map((x) => `${x.zc} at ${clock(x.at)}`).join(", ")}` : ""}.`;
   }
-  function cashCard() {
-    const card = el("section", "cz-card cz-dex"), D = G.DEX, st = dexSt, left = st?.ok ? (st.leftOut ?? st.left) : null, on = !!(st?.ok && st.enabled), have = tix(), most = Math.max(0, Math.min(Math.floor(have / D.rate), left ?? 0, D.capDay));   /* (2026-09-27) a trade draws on the DAY's allowance: 100 ZCoins out in 24 hours */
-    cashZc = Math.max(1, Math.min(most || 1, cashZc));
-    card.innerHTML = `<h2>Trade tickets for ZCoins<small>${D.rate.toLocaleString()} tickets = 1 ZCoin</small></h2>
-      <p class="cz-note" style="text-align:left">You have ${tixTxt(have)} tickets${on ? `: enough for <b>${Math.floor(have / D.rate)}</b> ZCoin${Math.floor(have / D.rate) === 1 ? "" : "s"}. <b>${left}</b> of ${D.capDay} free now (a rolling 24 hours).${freeLine(st)}` : "."}</p>
-      <div class="cz-cashrow"><button type="button" data-c="-1" aria-label="One fewer">−</button><b id="czCashN">${cashZc}</b><button type="button" data-c="1" aria-label="One more">+</button><button type="button" data-c="max">Max</button></div>
-      <button type="button" class="cz-dexgo" id="czCashGo"${on && most >= 1 && !dexWait ? "" : " disabled"}>${most >= 1 ? `Trade ${(cashZc * D.rate).toLocaleString()} tickets for ${cashZc} ZCoin${cashZc === 1 ? "" : "s"}` : have < D.rate ? `You need ${D.rate.toLocaleString()} tickets for 1 ZCoin` : (() => { const n = (st?.outFree || []).filter((x) => x.at > Date.now()).sort((a, b) => a.at - b.at)[0]; return n ? `${n.zc} more free in ${inHm(n.at - Date.now())}` : "That's your ZCoins out for now"; })()}</button>`;
-    card.querySelectorAll("[data-c]").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); cashZc = b.dataset.c === "max" ? Math.max(1, most) : Math.max(1, Math.min(Math.max(1, most), cashZc + Number(b.dataset.c))); cashier(); }));
-    card.querySelector("#czCashGo")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "Counting your tickets…" }; send({ t: "dex", op: "cash", zc: cashZc }); cashier(); });
-    return card;
-  }
   /** a pop-up over everything, the page's own (#pop): used for the one thing at the counter worth stopping the game for */
   function bigNote(title, text, icon) {
     const p = $("pop"); if (!p) return; $("popIco").innerHTML = icon || ""; $("popTitle").textContent = title; $("popText").textContent = text;
     $("popBtns").innerHTML = `<button type="button" class="btn">Let's go</button>`; $("popBtns").querySelector("button").addEventListener("click", () => { p.hidden = true; }); p.hidden = false; $("popBtns").querySelector("button").focus();
-  }
-  function dexCard() {
-    const card = el("section", "cz-card cz-dex"), D = G.DEX, st = dexSt, left = st?.ok ? (st.leftOut ?? st.left) : null, on = !!(st?.ok && st.enabled), me = env.me();   /* (2026-09-27) banking a find leaves the game too: the day's allowance */
-    const zc = me.inv.filter((x) => x.k === "zcoin").reduce((a, x) => a + x.n, 0), can = Math.min(zc, left ?? 0);
-    card.innerHTML = `<h2>ZCoins you found<small>bank them here</small></h2>
-      ${st ? (on ? `<div class="cz-dexbar"><i style="width:${Math.round((left / D.capDay) * 100)}%"></i></div><p class="cz-note" style="text-align:left"><b>${left}</b> of ${D.capDay} free now (a rolling 24 hours; trades share it).${freeLine(st)}${st.dev ? " · PRETEND (dev server): no ZCoins move" : ""}</p>` : `<p class="cz-dexmsg bad">${esc(st.message || "The Ruby isn't paying out right now.")}</p>`) : `<p class="cz-note" style="text-align:left">Asking the Ruby…</p>`}
-      <button type="button" class="cz-dexgo" id="czDexBank"${on && can >= 1 && !dexWait ? "" : " disabled"}>${zc ? `Bank ${can || zc} ZCoin${(can || zc) === 1 ? "" : "s"} from your bag` : "No ZCoins in your bag (they drop, rarely)"}</button>
-      <p class="cz-dexmsg ${dexMsg?.cls || ""}">${esc(dexMsg?.text || "")}</p>`;
-    card.querySelector("#czDexBank")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "The Ruby hums…" }; dexTicket = null; send({ t: "dex", op: "bank" }); cashier(); });
-    return card;
   }
   function dex(e) {
     dexWait = false; if (e.status) dexSt = e.status;
@@ -934,88 +948,115 @@ export function createCasino(env) {
   }
   /* THE PRIZE COUNTER (the House Ruby and both Cashier windows). Left: your tickets, and what your bag trades in for.
      Right: what tickets buy. Everything is decided by the server; this only asks. */
+  /* (2026-09-28, the owner: "can we work on updating Boms popup UI to match the new UI kit? also make changes or suggestions to the general
+     flow and layout of it, i feel like a tabbed approach would be better") THE PRIZE COUNTER, TABBED. It was two columns: selling on the
+     left, and on the right one 2,300px scroll that ran ZCoins, then armour, then kits, then the bar, then the bag, so the shop sat under the
+     ZCoin cards and the "Trade in the lot" button sat between the gear you could sell and the loot it would sell. A vendor in every modern
+     MMO is a set of tabs over one list, with your money pinned at the top and the big action at the bottom:
+       the top    your tickets, what your bag would fetch, your VIP discount, and the last trade-in
+       Sell       the loot (each row Trade, the lot in the footer), then rares at Bom's lowball, then gear back at a quarter
+       Buy        Arms & armour (the tier strip and a grid of tiles, like the anvil), Starter kits, Food & drink, A bigger bag
+       ZCoins     tickets into ZCoins, and banking ZCoins you found, with what is free now and when the next lot comes back
+     It opens on Sell when your bag holds loot and on Buy when it does not, and remembers the tab while it stays open. Every message it
+     sends is the one the old window sent: cashout (all / one / a rare / a gear piece), counter (buy / bagup), dex (cash / bank). */
+  let bomTab = null, bomCat = "gear";
   function cashier(done) {
-    const keepScroll = GAME === "cashier" ? R.side?.scrollTop || 0 : 0;
-    if (done !== undefined) lastCashed = done; GAME = "cashier"; frame("The Prize Counter", G.vipOf(env.me()).off ? `Tickets in, prizes out · ${G.vipOf(env.me()).name} VIP: ${Math.round(G.vipOf(env.me()).off * 100)}% off everything` : "Tickets in, prizes out"); const me = env.me(), have = tix(), cp = (x) => G.counterPrice(me, x.price), vip = G.vipOf(me);
-    const keys = [...new Set(me.inv.filter((x) => G.isLoot(x.k)).map((x) => x.k))], rows = keys.map((k) => ({ k, n: me.inv.filter((x) => x.k === k).reduce((a, x) => a + x.n, 0), v: G.valueOf(k) }));
-    const total = rows.reduce((a, r) => a + r.n * r.v, 0);
-    phase(lastCashed ? `Traded in for ${Number(lastCashed.total).toLocaleString()} tickets` : "Your tickets", lastCashed ? "done" : "open");
-    R.board.innerHTML = `<div style="text-align:center"><div class="cz-total cz-tixtotal">${tixTxt(have)}</div><div class="cz-note" style="margin-top:6px">${rows.length ? `and ${Number(total).toLocaleString()} more for what's in your bag` : "Every kill and every catch outside pays tickets. Bring the drops and the fish here for more."}</div></div>`;
-    R.lock = lockBtn(); R.lock.textContent = rows.length ? `Trade in the lot · +${Number(total).toLocaleString()} tickets` : "Nothing to trade in"; R.lock.disabled = !rows.length; R.lock.addEventListener("click", () => send({ t: "cashout", op: "all" })); R.bet.append(R.lock);
-    if (rows.length) { const bag = el("div", "cz-cbag"); bag.innerHTML = rows.map((r) => `<div class="cz-csrow">${env.ico(r.k)}<span><b>${esc(G.ITEMS[r.k].name)}</b> × ${r.n.toLocaleString()}<small>${r.v} each</small></span><strong>${(r.n * r.v).toLocaleString()}</strong><button type="button" class="cz-chip" data-cs="${r.k}">Trade</button></div>`).join(""); R.bet.append(bag); bag.querySelectorAll("[data-cs]").forEach((b) => b.addEventListener("click", () => send({ t: "cashout", op: "one", k: b.dataset.cs }))); }
-    /* (2026-09-23) QUICK SELL, its own list and its own buttons. Rares are NOT in `rows` and never go through
-       "Trade in the lot": each one is a separate, deliberate click, so nobody loses a week's drop to the big
-       button. The price is poor on purpose and the copy says so rather than hiding it — the point is a floor
-       under a duplicate, not a fair price. Selling to another player should always be the better idea. */
-    const rare = [...new Set(me.inv.map((x) => x.k))].filter((k) => !G.isLoot(k) && G.quickSell(k) > 0)
-      .map((k) => ({ k, n: me.inv.filter((x) => x.k === k).reduce((a, x) => a + x.n, 0), v: G.quickSell(k) }));
-    if (rare.length) {
-      const box = el("div", "cz-cbag cz-qsell");
-      box.innerHTML = `<div class="cz-qhead">Quick sell<small>Bom lowballs you for a rare. Another player will pay more.</small></div>` +
-        rare.map((r) => `<div class="cz-csrow"><span class="cz-qico">${env.ico(r.k)}</span><span><b>${esc(G.ITEMS[r.k].name)}</b>${r.n > 1 ? ` \u00d7 ${r.n.toLocaleString()}` : ""}<small>${r.v.toLocaleString()} each</small></span><button type="button" class="cz-qbtn" data-qs="${r.k}">Sell${r.n > 1 ? " all" : ""} \u00b7 ${(r.n * r.v).toLocaleString()}</button></div>`).join("");
-      box.querySelectorAll("[data-qs]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "cashout", k: b.dataset.qs }); }));
-      R.board.append(box);
+    const keep = GAME === "cashier" ? $("gameBody").querySelector(".bom-pane")?.scrollTop || 0 : 0, fresh = GAME !== "cashier";
+    if (done !== undefined) lastCashed = done; GAME = "cashier";
+    const me = env.me(), have = tix(), vip = G.vipOf(me), cp = (x) => G.counterPrice(me, x.price), P = G.prizesOf();
+    frame("Bom's Prize Counter", "Tickets in, prizes out");
+    const cnt = (k) => me.inv.filter((x) => x.k === k).reduce((a, x) => a + x.n, 0);
+    const loot = [...new Set(me.inv.filter((x) => G.isLoot(x.k)).map((x) => x.k))].map((k) => ({ k, n: cnt(k), v: G.valueOf(k) }));
+    const lootTotal = loot.reduce((a, r) => a + r.n * r.v, 0);
+    const rare = [...new Set(me.inv.map((x) => x.k))].filter((k) => !G.isLoot(k) && G.quickSell(k) > 0).map((k) => ({ k, n: cnt(k), v: G.quickSell(k) }));
+    /* gear back at a quarter: ONE ROW PER LEVEL, plain copies and each reforge apart, and a reforged row asks twice (see the 2026-09-24 notes) */
+    const byLevel = new Map();
+    for (const st of me.inv) { if (!(G.gearSell(st.k) > 0)) continue; const f = G.fOf(st), id = st.k + "|" + f, r = byLevel.get(id) || { k: st.k, f, n: 0, v: G.gearSell(st.k, f) }; r.n += st.n; byLevel.set(id, r); }
+    const sellGear = [...byLevel.values()].filter((r) => r.n > 0).sort((a, b) => b.v - a.v);
+    const sellN = loot.length + rare.length + sellGear.length;
+    if (fresh || !bomTab) bomTab = loot.length ? "sell" : "buy";
+    const slot = (k, f = 0, n = 0) => `<span class="k-slot" data-item="${k}"${f ? ` data-f="${f}"` : ""}>${env.ico(k)}${n > 1 ? `<u>×${n.toLocaleString()}</u>` : ""}${f ? `<em class="fgn">+${f}</em>` : ""}</span>`;
+    const price = (n) => `<b class="bom-p">${env.ico("tickets")}${Number(n).toLocaleString()}</b>`;
+    const row = (inner, cls = "") => `<div class="k-row bom-r${cls}">${inner}</div>`;
+
+    let pane = "", foot = "";
+    if (bomTab === "sell") {
+      if (!sellN) pane = `<div class="bom-empty"><img src="/v3/assets/img/glad/flat/ui/w_sack.png?v=1" alt=""><b>Nothing to sell</b><p>Every kill and every catch outside pays tickets. Bring the drops and the fish here for more.</p></div>`;
+      if (loot.length) {
+        pane += `<div class="k-sect"><span class="k-label">Loot · ${loot.length}</span></div>` + loot.map((r) => row(`${slot(r.k, 0, r.n)}<span><b>${esc(G.ITEMS[r.k].name)}</b><small>${r.v.toLocaleString()} each</small></span><span class="k-end">${price(r.n * r.v)}<button type="button" class="k-btn sec sm" data-cs="${r.k}">Trade</button></span>`)).join("");
+        foot = `<div class="k-foot"><span class="k-note">Trade in every drop and fish in your bag. Rares and gear are never swept up: sell those one at a time below.</span><button type="button" class="k-btn" id="bomAll">Trade in the lot · +${lootTotal.toLocaleString()}</button></div>`;
+      }
+      if (rare.length) pane += `<div class="k-sect"><span class="k-label">Rares · quick sell</span></div><p class="bom-hint">Bom lowballs you for a rare. Another player will pay more on the Market.</p>`
+        + rare.map((r) => row(`${slot(r.k, 0, r.n)}<span><b>${esc(G.ITEMS[r.k].name)}</b><small>${r.v.toLocaleString()} each</small></span><span class="k-end">${price(r.n * r.v)}<button type="button" class="k-btn sec sm" data-qs="${r.k}">Sell${r.n > 1 ? " all" : ""}</button></span>`)).join("");
+      if (sellGear.length) pane += `<div class="k-sect"><span class="k-label">Gear · a quarter back</span></div><p class="bom-hint">A quarter of what Bom sells it for, plus a quarter of the bars in any reforge. Reforged pieces ask twice.</p>`
+        + sellGear.map((r) => row(`${slot(r.k, r.f, r.n)}<span><b>${esc(G.forgeNameAt(r.k, r.f))}</b><small>${r.v.toLocaleString()} each${r.f ? ` · ${(r.v - G.gearSell(r.k)).toLocaleString()} of that is the reforge` : ""}</small></span><span class="k-end">${price(r.n * r.v)}<button type="button" class="k-btn sec sm${r.f ? " bom-arm" : ""}" data-gs="${r.k}" data-gf="${r.f}">Sell${r.n > 1 ? " all" : ""}</button></span>`, r.f ? " forged" : "")).join("");
+    } else if (bomTab === "buy") {
+      const kits = P.filter((x) => x.group === "kit"), bar = P.filter((x) => x.group === "bar"), bagCost = G.bagUpCost(me);
+      const CATS = [["gear", "Arms & armour"], ...(kits.length ? [["kits", "Starter kits"]] : []), ["bar", "Food & drink"], ["bag", "A bigger bag"]];
+      if (!CATS.some(([k]) => k === bomCat)) bomCat = "gear";
+      pane = `<div class="k-seg bom-cats" role="group" aria-label="What to buy">${CATS.map(([k, l]) => `<button type="button" data-cat="${k}" aria-pressed="${bomCat === k}">${l}</button>`).join("")}</div>`;
+      const buyBtn = (x) => `<button type="button" class="k-btn sm" data-buy="${x.id}"${have >= cp(x) ? "" : " disabled"}>Buy</button>`;
+      if (bomCat === "gear") {
+        const lvl = G.lvlOf(me, "melee"), tiers = G.TIERS.filter((t) => P.some((x) => x.group === `gear:${t.key}`));
+        gearTier = gearTier || ([...tiers].reverse().find((t) => t.gate <= lvl) || tiers[0]).key;
+        const gate = G.tierOf(gearTier).gate;
+        pane += `<div class="k-seg bom-tiers" role="group" aria-label="Tier">${tiers.map((t) => `<button type="button" data-tier="${t.key}" aria-pressed="${t.key === gearTier}" class="${t.gate > lvl ? "locked" : ""}" title="Combat ${t.gate} to wear">${esc(t.name)}</button>`).join("")}</div>
+          <p class="bom-hint">${lvl < gate ? `<span class="k-chip lock">Combat ${gate}</span> you're ${lvl}, so you can buy it but not wear it yet. ` : `Wear it from Combat ${gate}. `}The plain set: the good stuff only drops.</p>
+          <div class="bom-grid">${P.filter((x) => x.group === `gear:${gearTier}`).map((x) => { const k = x.give[0], it = G.ITEMS[k], own = cnt(k) > 0 || Object.values(me.eq || {}).includes(k), c = cp(x);
+            const stat = it.tool ? G.toolSpec(it) : [it.acc && `+${it.acc} acc`, it.str && `+${it.str} str`, it.def && `+${it.def} def`].filter(Boolean).join(" · ");
+            return `<button type="button" class="bom-tile${own ? " own" : ""}" data-buy="${x.id}" data-item="${k}"${have >= c ? "" : " disabled"} title="${esc(`${it.name}${own ? " (you have one)" : ""}: ${stat}`)}"><span class="k-slot">${env.ico(k)}</span><b>${esc(it.short || it.name.replace(/^\S+\s+/, ""))}</b><small>${esc(stat)}</small><span class="k-chip${have >= c ? " gold" : ""}">${c >= 10000 ? `${Math.round(c / 100) / 10}K` : c.toLocaleString()}</span>${own ? '<em class="bom-own">Have</em>' : ""}</button>`; }).join("")}</div>`;
+      } else if (bomCat === "kits") {
+        pane += kits.map((x) => { const [k, n] = x.give, it = G.ITEMS[k], note = it.launcher ? `${it.launcher.style === "magic" ? "Magic" : "Archery"} 1, reaches ${it.launcher.range} tiles` : it.pouch ? `holds ${Number(it.pouch.cap).toLocaleString()}` : `a bundle of ${n}`;
+          return row(`${slot(k, 0, n)}<span><b>${esc(it.name)}${n > 1 ? ` × ${n}` : ""}</b><small>${esc(note)}</small></span><span class="k-end">${price(cp(x))}${buyBtn(x)}</span>`); }).join("");
+      } else if (bomCat === "bar") {
+        pane += bar.map((x) => { const it = G.ITEMS[x.give[0]], f = (it.meal || it.drink)?.fx;
+          return row(`${slot(x.give[0])}<span><b>${esc(it.name)}</b><small>${esc(f ? `${(it.meal || it.drink).mins} min outside: ${G.fxText(f)}` : it.use === "tp" ? "click it anywhere: back to the casino" : G.toolUse(it))}</small></span><span class="k-end">${price(cp(x))}${buyBtn(x)}</span>`); }).join("");
+      } else {
+        pane += row(`<span class="k-slot"><img src="/v3/assets/img/glad/flat/ui/bag.png?v=1" alt=""></span><span><b>${bagCost == null ? "Every pocket sewn on" : "One more pocket"}</b><small>${bagCost == null ? `Your bag holds ${G.bagMax(me)}, which is as big as Bom will make it.` : `Takes your bag from ${G.bagMax(me)} to ${G.bagMax(me) + 1} slots. ${G.BAG_UPGRADES.length - (me.bagUp | 0)} left, and each costs more than the last.`}</small></span>${bagCost == null ? "" : `<span class="k-end">${price(bagCost)}<button type="button" class="k-btn sm" data-bagup="1"${have >= bagCost ? "" : " disabled"}>Buy</button></span>`}`)
+          + `<p class="bom-hint">${me.inv.length} of ${G.bagMax(me)} slots in use right now.</p>`;
+      }
+    } else {
+      /* ZCoins: the two old cards, as kit cards. Same state, same sends, same answers (dex()) */
+      const D = G.DEX, st = dexSt, left = st?.ok ? (st.leftOut ?? st.left) : null, on = !!(st?.ok && st.enabled), most = Math.max(0, Math.min(Math.floor(have / D.rate), left ?? 0, D.capDay));
+      cashZc = Math.max(1, Math.min(most || 1, cashZc));
+      const zc = me.inv.filter((x) => x.k === "zcoin").reduce((a, x) => a + x.n, 0), can = Math.min(zc, left ?? 0);
+      const next = (st?.outFree || []).filter((x) => x.at > Date.now()).sort((a, b) => a.at - b.at)[0];
+      pane = `<div class="bom-allow">${st ? (on ? `<div class="bom-meter"><i style="width:${Math.round(((left ?? 0) / D.capDay) * 100)}%"></i></div><p><b>${left}</b> of ${D.capDay} ZCoins free to leave the game now (a rolling 24 hours: trades and banking share it).${freeLine(st)}${st.dev ? " · PRETEND (dev server): no ZCoins move" : ""}</p>` : `<p class="bom-bad">${esc(st.message || "The Ruby isn't paying out right now.")}</p>`) : `<p>Asking the Ruby…</p>`}</div>
+        <div class="bom-card"><div class="bom-ch"><b>Trade tickets for ZCoins</b><span class="k-chip">${D.rate.toLocaleString()} tickets = 1 ZCoin</span></div>
+          <p class="bom-hint">You have ${Number(have).toLocaleString()} tickets: enough for <b>${Math.floor(have / D.rate)}</b>.</p>
+          <div class="bom-step"><div class="k-seg"><button type="button" data-c="-1" aria-label="One fewer">−</button><button type="button" disabled aria-pressed="true" id="czCashN">${cashZc} ZC</button><button type="button" data-c="1" aria-label="One more">+</button><button type="button" data-c="max">Max</button></div>
+          <button type="button" class="k-btn" id="czCashGo"${on && most >= 1 && !dexWait ? "" : " disabled"}>${most >= 1 ? `Trade ${(cashZc * D.rate).toLocaleString()} for ${cashZc} ZC` : have < D.rate ? `Needs ${D.rate.toLocaleString()} tickets` : next ? `${next.zc} more free in ${inHm(next.at - Date.now())}` : "That's your ZCoins out for now"}</button></div></div>
+        <div class="bom-card"><div class="bom-ch"><b>ZCoins you found</b><span class="k-chip">${zc} in your bag</span></div>
+          <p class="bom-hint">Real ZCoins drop, rarely, on a kill or a catch. Bank them here and they go onto your eastcoin.vip balance.</p>
+          <div class="bom-step"><span></span><button type="button" class="k-btn" id="czDexBank"${on && can >= 1 && !dexWait ? "" : " disabled"}>${zc ? `Bank ${can || zc} ZCoin${(can || zc) === 1 ? "" : "s"}` : "None in your bag"}</button></div></div>
+        ${dexMsg?.text ? `<p class="bom-msg ${dexMsg.cls || ""}">${esc(dexMsg.text)}</p>` : ""}`;
     }
 
-    /* (2026-09-23, the owner) SELLING A SMITHED PIECE BACK, at a quarter of the counter's own shelf price. Until
-       now nothing bought gear at all: isLoot excludes anything with a `slot`, so a player who smithed a new suit
-       had no use for the old one. PLAIN COPIES ONLY, counted exactly as the server counts them - a reforged
-       piece is never swept up here, because it is worth far more than a quarter of a plain one and losing a +3
-       to a tidy-up click would be unforgivable. */
-    /* (2026-09-24) ONE ROW PER LEVEL, not per item: a +3 is worth more than a plain one and they are not the
-       same thing to sell. Grouping on key-and-level is what lets a spare plain cuirass and a +3 both sit in the
-       list at their own prices; the server is told the level and sells only that. A reforged row ARMS FIRST and
-       has to be clicked twice, because the reason these were unsellable at all was that losing a +3 to one
-       careless click would be unforgivable. */
-    const byLevel = new Map();
-    for (const st of me.inv) {
-      if (!(G.gearSell(st.k) > 0)) continue;
-      const f = G.fOf(st), id = st.k + "|" + f;
-      const r = byLevel.get(id) || { k: st.k, f, n: 0, v: G.gearSell(st.k, f) };
-      r.n += st.n; byLevel.set(id, r);
-    }
-    const sellGear = [...byLevel.values()].filter((r) => r.n > 0).sort((a, b) => b.v - a.v);
-    if (sellGear.length) {
-      const box = el("div", "cz-cbag cz-qsell");
-      box.innerHTML = `<div class="cz-qhead">Sell gear<small>A quarter of what Bom sells it for, plus a quarter of the bars in any reforge. Reforged pieces ask twice.</small></div>` +
-        sellGear.map((r) => `<div class="cz-csrow${r.f ? " cz-forged" : ""}"><span class="cz-qico">${env.ico(r.k)}${r.f ? `<em class="fgn">+${r.f}</em>` : ""}</span><span><b>${esc(G.forgeNameAt(r.k, r.f))}</b>${r.n > 1 ? ` × ${r.n.toLocaleString()}` : ""}<small>${r.v.toLocaleString()} each${r.f ? ` — ${(r.v - G.gearSell(r.k)).toLocaleString()} of that is the reforge` : ""}</small></span><button type="button" class="lk-btn" data-gs="${esc(r.k)}" data-gf="${r.f}">Sell</button></div>`).join("");
-      box.querySelectorAll("[data-gs]").forEach((b) => b.addEventListener("click", () => {
-        const f = Number(b.dataset.gf) | 0;
-        if (f > 0 && b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "Sure?"; b.classList.add("cz-arm"); SFX.play("ui_click"); return; }
-        SFX.play("ui_click"); send({ t: "cashout", k: b.dataset.gs, f });
-      }));
-      R.board.append(box);
-    }
-    // the shelves
-    R.side.classList.add("cz-shelves"); const P = G.prizesOf(), buy = (id) => { SFX.play("chip", { vol: 0.5 }); send({ t: "counter", op: "buy", id, n: 1 }); };
-    const bar = el("section", "cz-card"); bar.innerHTML = `<h2>Drinks, dinners and the way home</h2>` + P.filter((x) => x.group === "bar").map((x) => { const it = G.ITEMS[x.give[0]], f = (it.meal || it.drink)?.fx; return `<div class="cz-csrow">${env.ico(x.give[0])}<span><b>${esc(it.name)}</b><small>${esc(f ? `${(it.meal || it.drink).mins} min outside: ${G.fxText(f)}` : it.use === "tp" ? "click it anywhere: back to the casino" : G.toolUse(it))}</small></span><strong>${cp(x).toLocaleString()}</strong><button type="button" class="cz-chip" data-buy="${x.id}"${have >= cp(x) ? "" : " disabled"}>Get</button></div>`; }).join("");
-    const lvl = G.lvlOf(me, "melee"), tiers = G.TIERS.filter((t) => P.some((x) => x.group === `gear:${t.key}`)); gearTier = gearTier || ([...tiers].reverse().find((t) => t.gate <= lvl) || tiers[0]).key;
-    const gear = el("section", "cz-card"); gear.innerHTML = `<h2>Arms and armour<small>better gear, faster kills</small></h2><div class="cz-dexrow">${tiers.map((t) => `<button type="button" class="cz-chip" data-tier="${t.key}" aria-pressed="${t.key === gearTier}" title="Combat ${t.gate} to wear">${esc(t.name)}</button>`).join("")}</div>`
-      + `<p class="cz-note" style="text-align:left">Needs Combat ${G.tierOf(gearTier).gate}${lvl < G.tierOf(gearTier).gate ? ` (you're ${lvl})` : ""}. The plain set: the good stuff only drops.</p><div class="cz-gear">${P.filter((x) => x.group === `gear:${gearTier}`).map((x) => { const it = G.ITEMS[x.give[0]], own = me.inv.some((q) => q.k === x.give[0]) || Object.values(me.eq || {}).includes(x.give[0]); return `<span data-item="${x.give[0]}" title="${esc(`${it.name}${own ? " (you have one)" : ""}: ${it.tool ? G.toolSpec(it) : [it.acc && `+${it.acc} accuracy`, it.str && `+${it.str} strength`, it.def && `+${it.def} defence`].filter(Boolean).join(", ")}`)}"><button type="button" data-buy="${x.id}"${have >= cp(x) ? "" : " disabled"} class="${own ? "own" : ""}">${env.ico(x.give[0])}<small>${cp(x) >= 10000 ? `${Math.round(cp(x) / 100) / 10}K` : cp(x).toLocaleString()}</small></button></span>`; }).join("")}</div>`;
-    gear.querySelectorAll("[data-tier]").forEach((b) => b.addEventListener("click", () => { gearTier = b.dataset.tier; cashier(); }));
-    /* (2026-09-22) A BIGGER BAG. Its own small card rather than a row in the gear grid, because it is not a thing
-       you carry and it has no icon — and because the number that sells it is how full your bag is right now, which
-       belongs next to the price and nowhere else. Sold out, the card says so instead of disappearing: a shelf that
-       empties looks like a bug to whoever bought the last one. */
-    const bagCost = G.bagUpCost(me), bagCard = el("section", "cz-card");
-    bagCard.innerHTML = `<h2>A bigger bag<small>${me.inv.length} of ${G.bagMax(me)} slots used</small></h2>`
-      /* THE EMPTY <i> IS LOAD-BEARING. .cz-csrow is `grid-template-columns: 30px 1fr auto auto` and every other row
-         starts with an item icon; this one has no item, so without a first child the TEXT landed in the 30px icon
-         column and wrapped to one word a line. A placeholder keeps the columns lined up with the rows above it. */
-      + `<div class="cz-csrow"><i></i><span><b>${bagCost == null ? "Every pocket sewn on" : "One more pocket"}</b><small>${bagCost == null
-        ? `Your bag holds ${G.bagMax(me)}, which is as big as Bom will make it.`
-        : `Takes your bag to ${G.bagMax(me) + 1} slots. ${G.BAG_UPGRADES.length - (me.bagUp | 0)} left, and each costs more than the last.`}</small></span>`
-      + (bagCost == null ? "" : `<strong>${bagCost.toLocaleString()}</strong><button type="button" class="cz-chip" data-bagup="1"${have >= bagCost ? "" : " disabled"}>Get</button>`) + `</div>`;
-    bagCard.querySelector("[data-bagup]")?.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); send({ t: "counter", op: "bagup" }); });
-    /* (2026-09-26) STARTER KITS: a bow and a wand, what holds their ammo, and a bundle of it, so Archery and Magic can
-       start at level 1 without fletching or printing first. One Get buys one row; a bundle row buys the whole bundle. */
-    const kits = P.filter((x) => x.group === "kit"), kitCard = el("section", "cz-card");
-    if (kits.length) kitCard.innerHTML = `<h2>Starter kits<small>shoot or cast from level 1</small></h2>` + kits.map((x) => { const [k, n] = x.give, it = G.ITEMS[k];
-      const note = it.launcher ? `${it.launcher.style === "magic" ? "Magic" : "Archery"} 1, reaches ${it.launcher.range} tiles` : it.pouch ? `holds ${Number(it.pouch.cap).toLocaleString()}` : `a bundle of ${n}`;
-      return `<div class="cz-csrow">${env.ico(k)}<span><b>${esc(it.name)}${n > 1 ? ` × ${n}` : ""}</b><small>${esc(note)}</small></span><strong>${cp(x).toLocaleString()}</strong><button type="button" class="cz-chip" data-buy="${x.id}"${have >= cp(x) ? "" : " disabled"}>Get</button></div>`; }).join("");
-    R.side.append(cashCard(), dexCard(), gear, ...(kits.length ? [kitCard] : []), bar, bagCard);   /* (the owner, 2026-09-21: armour and arms above the drinks and dinners) */
-    R.side.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => buy(b.dataset.buy)));
-    R.side.scrollTop = keepScroll;
+    const body = $("gameBody"); body.replaceChildren();
+    const w = el("div", "bom");
+    w.innerHTML = `<div class="bom-top"><span class="bom-tix" title="Your tickets">${env.ico("tickets")}<b>${Number(have).toLocaleString()}</b><small>tickets</small></span>
+        <span class="bom-chips">${lootTotal ? `<span class="k-chip good" title="What the loot in your bag would fetch">+${lootTotal.toLocaleString()} in your bag</span>` : ""}${vip.off ? `<span class="k-chip gold" title="Your VIP discount on everything Bom sells">${esc(vip.name)} VIP · ${Math.round(vip.off * 100)}% off</span>` : ""}${lastCashed ? `<span class="k-chip good">Traded in for ${Number(lastCashed.total).toLocaleString()}</span>` : ""}</span></div>
+      <div class="k-tabs bom-tabs" role="tablist"><button type="button" role="tab" data-bt="sell" aria-selected="${bomTab === "sell"}">Sell${sellN ? ` <small class="k-chip good">${sellN}</small>` : ""}</button><button type="button" role="tab" data-bt="buy" aria-selected="${bomTab === "buy"}">Buy</button><button type="button" role="tab" data-bt="zc" aria-selected="${bomTab === "zc"}">ZCoins</button></div>
+      <div class="bom-pane k-paper">${pane}</div>${foot}`;
+    body.append(w);
+    const pn = w.querySelector(".bom-pane"); pn.scrollTop = keep;
+    w.querySelectorAll("[data-bt]").forEach((b) => b.addEventListener("click", () => { bomTab = b.dataset.bt; SFX.play("ui_click"); if (bomTab === "zc") send({ t: "dex", op: "status" }); cashier(); w.querySelector(".bom-pane") && ($("gameBody").querySelector(".bom-pane").scrollTop = 0); }));
+    w.querySelectorAll("[data-cat]").forEach((b) => b.addEventListener("click", () => { bomCat = b.dataset.cat; SFX.play("ui_click"); cashier(); }));
+    w.querySelectorAll("[data-tier]").forEach((b) => b.addEventListener("click", () => { gearTier = b.dataset.tier; SFX.play("ui_click"); cashier(); }));
+    w.querySelector("#bomAll")?.addEventListener("click", () => { SFX.play("coins"); send({ t: "cashout", op: "all" }); });
+    w.querySelectorAll("[data-cs]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "cashout", op: "one", k: b.dataset.cs }); }));
+    w.querySelectorAll("[data-qs]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "cashout", k: b.dataset.qs }); }));
+    w.querySelectorAll("[data-gs]").forEach((b) => b.addEventListener("click", () => {
+      const f = Number(b.dataset.gf) | 0;
+      if (f > 0 && b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "Sure?"; b.classList.add("danger"); SFX.play("ui_click"); return; }
+      SFX.play("ui_click"); send({ t: "cashout", k: b.dataset.gs, f });
+    }));
+    w.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); send({ t: "counter", op: "buy", id: b.dataset.buy, n: 1 }); }));
+    w.querySelector("[data-bagup]")?.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); send({ t: "counter", op: "bagup" }); });
+    w.querySelectorAll("[data-c]").forEach((b) => b.addEventListener("click", () => { const D = G.DEX, st = dexSt, left = st?.ok ? (st.leftOut ?? st.left) : 0, most = Math.max(0, Math.min(Math.floor(tix() / D.rate), left ?? 0, D.capDay));
+      SFX.play("chip", { vol: 0.5 }); cashZc = b.dataset.c === "max" ? Math.max(1, most) : Math.max(1, Math.min(Math.max(1, most), cashZc + Number(b.dataset.c))); cashier(); }));
+    w.querySelector("#czCashGo")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "Counting your tickets…" }; send({ t: "dex", op: "cash", zc: cashZc }); cashier(); });
+    w.querySelector("#czDexBank")?.addEventListener("click", () => { dexWait = true; dexMsg = { text: "The Ruby hums…" }; dexTicket = null; send({ t: "dex", op: "bank" }); cashier(); });
   }
 
   const api = {
