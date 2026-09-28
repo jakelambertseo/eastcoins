@@ -47,7 +47,7 @@ export function createDecor(env) {
   function ensureWin() {
     if (win) return win; css();
     win = document.createElement("section"); win.className = "win"; win.id = "decorWin"; win.hidden = true; win.setAttribute("aria-label", "Yahsmeena's decor shop"); win.style.width = "min(680px,calc(100% - 28px))";
-    win.innerHTML = `<div class="win-head"><b>🪑 Yahsmeena's Decor</b><small>All for show. Yours to keep.</small><button type="button" class="win-x" aria-label="Close">×</button></div><div class="win-body" id="decorBody"></div>`;
+    win.innerHTML = `<div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/g_home.png?v=1" alt="" class="topi">Yahsmeena's Decor</b><small>All for show. Yours to keep.</small><button type="button" class="win-x" aria-label="Close">×</button></div><div class="win-body" id="decorBody"></div>`;
     $("jukeWin").parentElement.append(win); win.querySelector(".win-x").addEventListener("click", () => { SFX.play("ui_close"); win.hidden = true; });
     return win;
   }

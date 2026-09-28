@@ -42,7 +42,7 @@ export function createCrypt(env) {
   /* ---------------------------------------------------------------- the stairway */
   function renderDoor() {
     css(); if (!winEl) { winEl = document.createElement("section"); winEl.className = "win"; winEl.id = "cryptWin"; winEl.hidden = true; winEl.style.width = "min(520px,calc(100% - 28px))"; winEl.setAttribute("aria-label", "The Crypt");
-      winEl.innerHTML = `<div class="win-head"><b>🗝️ The Crypt</b><small>A party dungeon. Bring friends.</small><button type="button" class="win-x" aria-label="Close">×</button></div><div class="win-body" id="cryptBody"></div>`;
+      winEl.innerHTML = `<div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/g_crypt.png?v=1" alt="" class="topi">The Crypt</b><small>A party dungeon. Bring friends.</small><button type="button" class="win-x" aria-label="Close">×</button></div><div class="win-body" id="cryptBody"></div>`;
       $("jukeWin").parentElement.append(winEl); winEl.querySelector(".win-x").addEventListener("click", () => { SFX.play("ui_close"); winEl.hidden = true; }); }
     const d = last || {}, me = env.me(), you = env.you(), lvl = G.lvlOf(me, "melee"), tix = G.tixIn(me || { inv: [] }), n = party ? party.members.length : 1, lead = !party || party.leader === you?.id, okParty = (party && n >= C.party[0]) || d.solo, left = Math.max(0, C.runsPaid - (d.runsToday | 0));
     $("cryptBody").innerHTML = `<div class="jk-msg">${party ? `<b>Your party: ${party.members.map((m) => esc(m.name)).join(", ")}.</b>` : d.solo ? "<b>No party.</b> You're an admin, so you may go down alone to test it." : `<b>You need a party of ${C.party[0]} to ${C.party[1]}.</b> Click another player and choose Invite to party.`} Everybody stands by the stairs and goes down together.</div>

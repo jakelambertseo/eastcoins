@@ -118,7 +118,7 @@ export function createPyramid(env) {
     if (!winEl) {
       winEl = document.createElement("section"); winEl.className = "win"; winEl.id = "pyrWin"; winEl.hidden = true;
       winEl.style.width = "min(520px,calc(100% - 28px))"; winEl.setAttribute("aria-label", "The Great Pyramid");
-      winEl.innerHTML = `<div class="win-head"><b>\u{1F40D} The Great Pyramid</b><small>A party dungeon. Something very old is at the top.</small><button type="button" class="win-x" aria-label="Close">×</button></div><div class="win-body" id="pyrBody"></div>`;
+      winEl.innerHTML = `<div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/g_sands.png?v=1" alt="" class="topi">The Great Pyramid</b><small>A party dungeon. Something very old is at the top.</small><button type="button" class="win-x" aria-label="Close">×</button></div><div class="win-body" id="pyrBody"></div>`;
       $("jukeWin").parentElement.append(winEl);
       winEl.querySelector(".win-x").addEventListener("click", () => { SFX.play("ui_close"); winEl.hidden = true; });
     }
