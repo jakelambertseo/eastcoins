@@ -18,7 +18,13 @@ const CART = "/v3/assets/img/glad/flat/casino/", CV = 2;   /* (2: the coin's two
 const SUITS = ["♠", "♥", "♦", "♣"];
 const CSS = `
 /* ---------- (2026-09-28) BOM'S PRIZE COUNTER, TABBED, in the UI kit: see cashier() ---------- */
-#gameWin .bom{display:flex;flex-direction:column;min-height:0;max-height:min(72vh,720px);margin:-4px}
+#gameWin .bom{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;max-height:min(72vh,720px);margin:-4px}
+/* (2026-09-28, the owner: "the scroll bar is stuck in the sell items area") ONE SCROLLER. The window's body scrolled as well as the list
+   whenever the window was shorter than 72vh (a laptop, a short browser), so the wheel scrolled the wrong one and the footer rode over
+   the list. The body now hands its height down and never scrolls; only .bom-pane does. */
+#gameWin #gameBody:has(> .bom){overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.bom .k-foot{flex-wrap:nowrap}.bom .k-foot .k-note{flex:1 1 auto;min-width:0}#gameWin .bom .k-foot .k-btn.bom-lot{flex:none}
+@media (max-width:760px){.bom .k-foot .k-note{display:none}#gameWin .bom .k-foot .k-btn.bom-lot{flex:1}}
 .bom-top{display:flex;align-items:center;gap:14px;padding:4px 4px 10px}
 .bom-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .bom-tix{display:inline-flex;align-items:center;gap:8px;padding:5px 14px 5px 8px;border-radius:99px;background:var(--k-head);color:var(--k-head-ink)}
@@ -1013,6 +1019,23 @@ export function createCasino(env) {
      It opens on Sell when your bag holds loot and on Buy when it does not, and remembers the tab while it stays open. Every message it
      sends is the one the old window sent: cashout (all / one / a rare / a gear piece), counter (buy / bagup), dex (cash / bank). */
   let bomTab = null, bomCat = "gear";
+  /* (2026-09-28, the owner: "give bom a few more random sayings ... so it adds some variation each time a user trades them in") */
+  const SAY = {
+    haul: ["Now THAT'S a haul. Let's talk tickets.", "Look at all that. Somebody's been busy.", "Easy, easy. Lay it on the counter nice and slow.", "You rob a museum on the way in? Don't answer that.", "That's a lot of stuff. I love a lot of stuff.", "Whoa. I'm gonna need a bigger drawer."],
+    some: ["What've you got for me today?", "Let's see what the cat dragged in.", "Everything's got a price. Even that.", "Put it on the counter, friend.", "I've seen worse. Not much worse, but worse.", "Ooh, what's in the bag?"],
+    none: ["Bring me drops, I'll make it worth your while.", "Empty pockets? The world's full of loot. Go get it.", "Nothing to sell? Go hit something and come back.", "I buy anything that isn't nailed down. Bring me something."],
+    sold: ["Pleasure doing business.", "Tickets fresh off the press. Spend 'em.", "Cha-ching. Music to my ears.", "Come back with more. You always do.", "Don't spend it all in one place. Actually, do. Spend it here.", "Another satisfied customer.", "Nice doing business with you. Mostly nice.", "Counted twice. You're all square."],
+    buy: ["Tickets burning a hole? Take a look.", "Finest goods in the casino. Only goods in the casino, but still.", "Browse all you like. Buy all you like, more like.", "Everything's on sale. Everything's always on sale."],
+    bought: ["Wear it in good health.", "Excellent choice. They're all excellent choices.", "Sold! To the one with the tickets.", "Looks good on you. Everything looks good on a paying customer.", "No returns. Well, buy-backs. Different thing."],
+    back: ["Changed your mind? Happens to the best of us.", "Seller's remorse. I've got a cure for that.", "Still got it. Same price I paid, not a ticket more.", "Kept it safe for you. Mostly."],
+    backNone: ["Nothing you've sold me lately. Yet.", "Sell me something first, then we'll talk regrets.", "No regrets on file. Good for you."],
+    zc: ["Real money, friend. Spend it wisely. Or don't.", "ZCoins. The good stuff.", "A thousand tickets a coin. Best rate in town. Only rate in town, too.", "Cash it out. I won't tell anyone."]
+  };
+  let bomSaid = { key: "", text: "" }, bomMood = null, bomBeat = 0, bomVisit = 0;
+  function patter(key, pool) {
+    if (bomSaid.key !== key) { const opts = pool.filter((t) => t !== bomSaid.text); bomSaid = { key, text: opts[Math.floor(Math.random() * opts.length)] || pool[0] }; }
+    return bomSaid.text;
+  }
   /* (2026-09-28, the owner: "it feels dull when this should be a dopamine inducing experience (the highest in the game)") SHOWBIZ.
      The window is rebuilt on every `me`, so nothing here lives in its DOM: the fx ride a fixed layer on <body>, and the ticket
      count is remembered here so a rebuild can ROLL from the old number to the new one instead of jumping. Every trade shows
@@ -1150,7 +1173,11 @@ export function createCasino(env) {
     const body = $("gameBody"); body.replaceChildren();
     const w = el("div", env.calm() ? "bom calm" : "bom");
     /* (2026-09-28, the owner: "put Boms headshot in the top bar") his face, cut from his kiosk, and one line of patter that fits the moment */
-    const said = bomTab === "zc" ? "Real money, friend. Spend it wisely. Or don't." : bomTab === "back" ? (bb.length ? "Changed your mind? Happens to the best of us." : "Nothing you've sold me lately. Yet.") : lootTotal >= 1000 ? "Now THAT'S a haul. Let's talk tickets." : lootTotal ? "What've you got for me today?" : bomTab === "buy" ? "Tickets burning a hole? Take a look." : "Bring me drops, I'll make it worth your while.";
+    if (fresh) { bomMood = null; bomVisit++; }
+    if (was != null && have !== was) { bomMood = have > was ? "sold" : "bought"; bomBeat++; }
+    const mood = bomTab === "zc" ? "zc" : bomTab === "back" ? (bb.length ? "back" : "backNone") : bomTab === "buy" ? (bomMood === "bought" ? "bought" : "buy")
+      : bomMood === "sold" ? "sold" : lootTotal >= 1000 ? "haul" : lootTotal ? "some" : "none";
+    const said = patter(`${bomVisit}|${bomTab}|${mood}|${bomBeat}`, SAY[mood]);
     w.innerHTML = `<div class="bom-top"><span class="bom-face"><img src="/v3/assets/img/glad/flat/ui/bom_face.png?v=1" alt="Bom Trady"></span><span class="bom-who"><p class="bom-say"><b>BOM</b>${esc(said)}</p><span class="bom-row"><span class="bom-tix" title="Your tickets">${env.ico("tickets")}<b>${Number(was != null ? rollNow() : have).toLocaleString()}</b><small>tickets</small></span>
         <span class="bom-chips">${lootTotal ? `<span class="k-chip good" title="What the loot in your bag would fetch">+${lootTotal.toLocaleString()} in your bag</span>` : ""}${vip.off ? `<span class="k-chip gold" title="Your VIP discount on everything Bom sells">${esc(vip.name)} VIP · ${Math.round(vip.off * 100)}% off</span>` : ""}${lastCashed ? `<span class="k-chip good">Traded in for ${Number(lastCashed.total).toLocaleString()}</span>` : ""}</span></span></span></div>
       <div class="k-tabs bom-tabs" role="tablist"><button type="button" role="tab" data-bt="sell" aria-selected="${bomTab === "sell"}"><img src="/v3/assets/img/glad/flat/ui/w_sack.png?v=1" alt="">Sell${sellN ? ` <small class="k-chip good">${sellN}</small>` : ""}</button><button type="button" role="tab" data-bt="buy" aria-selected="${bomTab === "buy"}"><img src="/v3/assets/img/glad/flat/ui/store.png?v=1" alt="">Buy</button><button type="button" role="tab" data-bt="back" aria-selected="${bomTab === "back"}"><img src="/v3/assets/img/glad/flat/ui/g_trading.png?v=1" alt="">Buy back${bb.length ? ` <small class="k-chip">${bb.length}</small>` : ""}</button><button type="button" role="tab" data-bt="zc" aria-selected="${bomTab === "zc"}"><img src="/v3/assets/img/glad/flat/ui/g_zcoins.png?v=1" alt="">ZCoins</button></div>
@@ -1159,7 +1186,7 @@ export function createCasino(env) {
     const pn = w.querySelector(".bom-pane"); pn.scrollTop = keep;
     if (was != null && was !== have) tixMoved(was, have);
     else if (was != null && rollNow() !== roll.to) { const b = w.querySelector(".bom-tix b"); requestAnimationFrame(function go() { if (!b.isConnected) return; const v = rollNow(); b.textContent = v.toLocaleString(); if (v !== roll.to) requestAnimationFrame(go); }); }
-    w.querySelectorAll("[data-bt]").forEach((b) => b.addEventListener("click", () => { bomTab = b.dataset.bt; SFX.play("ui_click"); if (bomTab === "zc") send({ t: "dex", op: "status" }); cashier(); w.querySelector(".bom-pane") && ($("gameBody").querySelector(".bom-pane").scrollTop = 0); }));
+    w.querySelectorAll("[data-bt]").forEach((b) => b.addEventListener("click", () => { bomTab = b.dataset.bt; bomMood = null; SFX.play("ui_click"); if (bomTab === "zc") send({ t: "dex", op: "status" }); cashier(); w.querySelector(".bom-pane") && ($("gameBody").querySelector(".bom-pane").scrollTop = 0); }));
     w.querySelectorAll("[data-cat]").forEach((b) => b.addEventListener("click", () => { bomCat = b.dataset.cat; SFX.play("ui_click"); cashier(); }));
     w.querySelectorAll("[data-tier]").forEach((b) => b.addEventListener("click", () => { gearTier = b.dataset.tier; SFX.play("ui_click"); cashier(); }));
     w.querySelector("#bomAll")?.addEventListener("click", () => { SFX.play("coins"); mark(w.querySelector(".bom-pane"), ""); bomFx.lot = true; send({ t: "cashout", op: "all" }); });
