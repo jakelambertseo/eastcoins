@@ -314,6 +314,8 @@ export function createClosedScenes(G, H) {
          dragonstone in the south-east, mooncarp under the gloomfin. One grimstone and one deadwood stay for the level-20s. */
       for (const [x, y] of [[35, 3], [39, 2]]) { objs.push({ t: "deadtree", x, y, name: "Deadwood tree", log: "ashlogs", req: { skill: "woodcutting", lvl: 20 }, xp: 70, tease: "Grey, hard as bone. Your axe just bounces." }); g[y][x] = "#"; }
       objs.push({ t: "yew", x: 37, y: 5, log: "yewlogs", name: "Ancient yew", req: { skill: "woodcutting", lvl: 35 }, xp: 170 }); g[5][37] = "#";
+      /* (2026-09-29) THE WILD BENCH: fletching's Nexus, in the grove against the west rock (G.STATIONS.wildbench) */
+      objs.push({ t: "wildbench", art: "o_wildbench", x: 33, y: 3, w: 1, h: 1, name: "The Wild Bench: fletches everything, half as much again" }); g[3][33] = "#";
       objs.push({ t: "rock", ore: "grimstone", x: 36, y: 19, name: "Grimstone rock", req: { skill: "mining", lvl: 20 }, xp: 60, tease: "Cold purple stone. Your pickaxe skids right off." }); g[19][36] = "#";
       for (const [x, y] of [[40, 20], [38, 22]]) { objs.push({ t: "rock", ore: "dragonstone_ore", x, y, name: "Dragonstone rock", req: { skill: "mining", lvl: 40 }, xp: 95 }); g[y][x] = "#"; }
       for (const x of [9, 11]) objs.push({ t: "spot", x, y: 20, name: "Dead pool", req: { skill: "fishing", lvl: 20 }, fish: "gloomfin", fish2: "mooncarp", fish2lvl: 40, xp: 80, xp2: 150, glow: "#b080ff", tease: "The water is black and very still. Something down there is even stiller." });

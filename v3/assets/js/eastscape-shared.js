@@ -4864,7 +4864,7 @@ export const forgeCost = (key) => { const sl = forgeSlot(key), it = ITEMS[key]; 
 
 /** Every recipe a station can run, hardest first so "the best thing you can make" is recipesAt()[0]. */
 export const recipesAt = (station) => Object.values(RECIPES)
-  .filter((r) => r.station === station || (station === "range" && r.station === "fire") || (station === "altar_nexus" && String(r.station).startsWith("altar_")) || (station === "blast" && r.station === "furnace"))   /* (2026-09-26) the Nexus: every altar's recipes; (2026-09-27) the Foundry's blast furnace: every furnace recipe */
+  .filter((r) => r.station === station || (station === "range" && r.station === "fire") || (station === "altar_nexus" && String(r.station).startsWith("altar_")) || (station === "wildbench" && r.station === "fletcher") ||(station === "blast" && r.station === "furnace"))   /* (2026-09-26) the Nexus: every altar's recipes; (2026-09-27) the Foundry's blast furnace: every furnace recipe */
   .sort((a, b) => b.lvl - a.lvl);
 /** Do they have everything the recipe needs? */
 export const canMake = (c, r) => lvlOf(c, r.skill) >= r.lvl && r.in.every(([k, n]) => countItems(c, [k]) >= n);
@@ -5418,8 +5418,11 @@ export const FLETCH = { live: true, perLog: 15, perBar: 15, station: "fletcher",
   /* how many shafts a log gives, by wood: the reason to cut a better tree for fletching. The arrow is the same
      either way, you just get more of them per trip. */
   shaftsPerLog: [15, 18, 21, 25, 28, 30, 34, 38, 45],
-  /* how many arrows a quiver of each wood holds */
-  quiverCap: [100, 150, 200, 300, 400, 500, 650, 800, 1000],
+  /* how many arrows a quiver of each wood holds. (2026-09-29, the owner: "make the quivers larger across the board so users have to
+     come to town less and refill so its less of a grind") THREE TIMES what they were (100 .. 1,000): a rough quiver is now a
+     quarter of an hour of shortbow, a bogwood one well over an hour. Loading takes every stack of that arrow in the bag at once,
+     so a 3,000 quiver is still one click. */
+  quiverCap: [300, 450, 600, 900, 1200, 1500, 2000, 2500, 3000],
 };
 SKILLS.fletching = { name: "Fletching", icon: "🪶" };
 /* ARCHERY (2026-09-25, the owner: "we need an Archery combat skill, not just fletching ... Damage for XP is calculated in
@@ -5440,6 +5443,12 @@ export const ARCHERY = {
 recipe("brew_feathers", { skill: "alchemy", station: "cauldron", ms: 2200, lvl: 5, xp: 14, in: [["small_vial", 1], ["feather", 3], ["sporecap", 1]], out: ["feather", 15] });
 recipe("brew_ink_grim", { skill: "alchemy", station: "cauldron", ms: 2200, lvl: 60, xp: 130, in: [["medium_vial", 1], ["grimcore", 1], ["grimstone", 2]], out: ["ink_void", 2] });   /* (2026-09-27) Void ink without a seed: a Grim Lich's core and the wild's grimstone */
 STATIONS.fletcher = { skill: "fletching", verb: "fletch", name: "fletching table", auto: false, kind: "fletch" };
+/* THE WILD BENCH (2026-09-29, the owner: "we also need to add a fletching table that matches the nexus altar buffs"). Fletching's
+   Nexus: it fletches everything the fletching table does, half as much again, for a quarter more xp (G.NEXUS, the same numbers),
+   and like the Nexus it is somewhere dangerous: the grove pocket in the north-east of the Wilderness, beside the Ancient yew,
+   among the ushers, a weaver and a revenant. The Long Count is the one recipe it does not multiply (`noBoost`): its core is a
+   one-in-2,000 drop and a bench is not a way to turn one into two. */
+STATIONS.wildbench = { skill: "fletching", verb: "fletch", name: "the Wild Bench", auto: false, kind: "fletch", nexus: true };
 
 /* the woods. `wc` is the Woodcutting level of the tree the log comes off; the fletching levels sit a little above
    it, because you should be cutting a wood comfortably before you are shaping it. */
@@ -5541,7 +5550,7 @@ for (const m of ARROW_METALS) {
 /* tipping: fifteen arrows of the LOWEST metal in the gem's band plus one stone. The lowest, so the stone is what
    you are paying for rather than the metal, and so the arrows you tip are the ones you had spare. */
 for (const g of GEMS) fl(`fletch_${g.key}_arrow`, { lvl: g.lvl, xp: 40 + GEMS.indexOf(g) * 60, in: [[g.tips[0], FLETCH.perLog], [g.key, 1]], out: [`${g.key}_arrow`, FLETCH.perLog] });
-fl("fletch_longcount", { lvl: 99, xp: 6000, ms: 4000, in: [["bogwoodlogs", 5], ["silkstring", 2], ["singularity_core", 1]], out: ["longcount", 1] });
+fl("fletch_longcount", { lvl: 99, xp: 6000, ms: 4000, in: [["bogwoodlogs", 5], ["silkstring", 2], ["singularity_core", 1]], out: ["longcount", 1], noBoost: true });   /* (the Wild Bench makes one, like the table) */
 
 /* ---------------- ranged, as launcher + ammo (see the note at the top on why it is not "bow + arrow") */
 /** the launcher in the weapon slot, or null */
@@ -7440,7 +7449,7 @@ export const eventSourcesOf = (k) => {
   return out;
 };
 ITEMS.gallows_bow = { name: "Gallows Bow", short: "Bow", icon: "\u{1F3F9}", slot: "weapon", acc: 17, str: 9, launcher: { range: 6, ammo: "arrow" }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { tix: 0.06, rare: 0.10 }, req: { skill: "archery", lvl: 50 }, ex: "Cut from the gallows tree. One chop in ten thousand brings it down, during the Long Night only. Kills pay 6% more and rare drops come 10% easier." };
-ITEMS.lantern_quiver = { name: "Lantern Quiver", short: "Quiver", icon: "\u{1F383}", slot: "shield", pouch: { ammo: "arrow", cap: 400 }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { ammo: 0.25 }, req: { skill: "archery", lvl: 50 }, ex: "A carved pumpkin with a strap. One arrow in four flies back into it: a quarter of your shots spend nothing. The King drops it; Hexa sells it." };
+ITEMS.lantern_quiver = { name: "Lantern Quiver", short: "Quiver", icon: "\u{1F383}", slot: "shield", pouch: { ammo: "arrow", cap: 1200 }, tier: "hallowed",   /* (2026-09-29) 400, tripled with the rest */ forgeWith: ["candycorn", 400], event: true, fx: { ammo: 0.25 }, req: { skill: "archery", lvl: 50 }, ex: "A carved pumpkin with a strap. One arrow in four flies back into it: a quarter of your shots spend nothing. The King drops it; Hexa sells it." };
 ITEMS.skull_wand = { name: "Skull Wand", short: "Wand", icon: "\u{1F480}", slot: "weapon", acc: 20, str: 8, launcher: { range: 5, ammo: "page", style: "magic" }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { leech: 0.10 }, req: { skill: "magic", lvl: 50 }, ex: "Somebody's, once. A tenth of every spell's damage comes back to you as health. The King drops it; Hexa sells it." };
 ITEMS.bag_shroud = { name: "Shroud Satchel", short: "Satchel", icon: "\u{1F45D}", slot: "shield", pouch: { ammo: "page", cap: 1000 },   /* (2026-09-27, the owner: "a noticeable increase in spells held") twice a level-50 bag: the Starweave's 1,000, twenty levels early */ tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { ammo: 0.25 }, req: { skill: "magic", lvl: 50 }, ex: "Sewn from a burial shroud, and deeper than it looks: it holds 1,000 pages, twice any other bag at its level. A quarter of your casts spend no page. The King drops it; Hexa sells it." };
 ITEMS.drowned_boots = { name: "Drowned Boots", short: "Boots", icon: "\u{1F462}", slot: "boots", def: 6, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { speed: 0.08, tix: 0.03 }, req: { skill: "melee", lvl: 50 }, ex: "They came up on a line. One cast in ten thousand, during the Long Night only. You move, swing and fish 8% faster, and kills pay 3% more." };
