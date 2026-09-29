@@ -8,13 +8,15 @@
 export function installTinker(World, { G }) {
   const P = World.prototype, T = G.TINK;
   const atBench = (S, pl) => S.objs?.some((o) => o.t === "scrapbench" && G.cheb(pl, o) <= T.reach) || S.npcs?.some((n) => n.name === T.npc && G.cheb(pl, n) <= T.reach);
-  const view = (pl) => ({ parts: { ...pl.C.parts }, lvl: G.lvlOf(pl.C, "tinkering") });
+  const view = (pl, w) => ({ parts: { ...pl.C.parts }, lvl: G.lvlOf(pl.C, "tinkering"), ...(w ? { proj: w.projView(pl), tiers: w.projTiers() } : {}) });
 
   P.tinkerOp = function (S, pl, m) {
     if (G.HOLD.tinker && !pl.admin) return;
     const C = pl.C, op = String(m.op || "view"), bad = (t) => { this.say(pl, t, "bad"); pl.out.push({ type: "tinkererr", text: t }); };
     C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 };
-    if (op === "view") return pl.out.push({ type: "tinker", view: view(pl) });
+    if (op === "view") return this.projPush(pl, m.focus ? { open: true, focus: String(m.focus) } : {});
+    if (op === "give") return this.projGive(S, pl, m, bad);
+    if (op === "finish") return this.projFinish(S, pl, m, bad);
     if (!atBench(S, pl)) return bad("The Scrap Bench is at Bronny's worksite, by the Yard's west gate.");
     if (op === "salvage") {
       const f = m.f | 0, keys = m.lot ? [...new Set(C.inv.map((s) => s.k))].filter((k) => G.salvageLot(k) && !G.isFav(C, k)) : [String(m.k)];
@@ -37,7 +39,7 @@ export function installTinker(World, { G }) {
       this.touch(pl);
       const parts = Object.entries(T.parts).filter(([p]) => got[p]).map(([p, d]) => `${got[p].toLocaleString()} ${d.name.toLowerCase()}`).join(", ");
       this.say(pl, `Sal breaks down ${what.length > 3 ? `${what.length} kinds of junk` : what.join(", ")}: ${parts}.`, "good");
-      pl.out.push({ type: "tinker", view: view(pl), got });
+      pl.out.push({ type: "tinker", view: view(pl, this), got });
       return;
     }
 
@@ -56,7 +58,7 @@ export function installTinker(World, { G }) {
       this.grant(pl, "tinkering", Math.max(1, Math.round(G.tkPv(g) * T.buildXp + g.fee * T.feeXp)));
       this.touch(pl);
       this.say(pl, master ? `MASTERWORK! Sal whistles: ${n} ${g.name.toLowerCase()}${n > 1 ? "s" : ""} for the price of ${g.n}.` : `Sal hands over ${n > 1 ? `${n} ${g.name.toLowerCase()}s` : `a ${g.name.toLowerCase()}`}.`, master ? "loot" : "good");
-      pl.out.push({ type: "tinker", view: view(pl), built: { id, n, master } });
+      pl.out.push({ type: "tinker", view: view(pl, this), built: { id, n, master } });
       return;
     }
   };
@@ -101,5 +103,98 @@ export function installTinker(World, { G }) {
       take(); C.tkBomb = g.bomb; this.touch(pl);
       return this.say(pl, `\u{1F4A3} Boss Bomb armed. Your next hit on a boss does ${g.bomb} more damage.`, "good");
     }
+  };
+
+  /* ============================================================ WORLD PROJECTS (step four). The rules are PROJECTS in the rules file.
+     this.proj = { <id>: { tier, got: { scrap, gears, sparks, relic, tickets }, by: { <login>: { name, pv, tix } }, done: [{ tier, by, at }] } }
+     saved as "proj" and read back in the constructor (and restore()), then handed to the rules with setProjects so both halves build
+     the same map. Parts and tickets are GIVEN, never handed back; every tier's last step needs one person with the Tinkering to
+     finish it, standing at the site. */
+  const PJ = G.PROJECTS, PARTS = [...Object.keys(T.parts), "tickets"];
+  P.projLoad = async function () { this.proj = (await this.ctx.storage.get("proj")) || {}; this.bpot = (await this.ctx.storage.get("bpot")) || null; G.setProjects(this.projTiers()); };
+  P.projSave = function () { this.ctx.storage.put("proj", this.proj).catch(() => {}); };
+  P.projTiers = function () { return Object.fromEntries(Object.keys(PJ).map((id) => [id, Math.min(3, this.proj?.[id]?.tier | 0)])); };
+  P.projOf = function (id) { const st = ((this.proj ||= {})[id] ||= { tier: 0, got: {}, by: {}, done: [] }); st.got ||= {}; st.by ||= {}; st.done ||= []; return st; };
+  const needOf = (id, st) => PJ[id].tiers[st.tier]?.need || null;
+  const readyOf = (id, st) => { const need = needOf(id, st); return !!need && Object.entries(need).every(([p, n]) => (st.got[p] | 0) >= n); };
+  const atSite = (S, pl, id) => S.key === PJ[id].scene && S.objs.some((o) => o.proj === id && G.cheb(pl, G.nearestCell(o, pl)) <= 4);
+  P.projView = function (pl) {
+    return Object.fromEntries(Object.keys(PJ).map((id) => {
+      const st = this.projOf(id), score = (v) => v.pv + (v.tix | 0) / 100;
+      const top = Object.values(st.by).sort((a, b) => score(b) - score(a)).slice(0, 5).map((v) => ({ name: v.name, pv: v.pv, tix: v.tix | 0 }));
+      return [id, { tier: st.tier, got: { ...st.got }, ready: readyOf(id, st), top, mine: st.by[pl.login || pl.name] || null, done: st.done.slice(-3) }];
+    }));
+  };
+  P.projPush = function (pl, extra = {}) { pl.out.push({ type: "tinker", view: view(pl, this), ...extra }); };
+
+  /* op "give" { id, part, n }: from the pouch (tickets from the bag), capped at what the tier still needs. At the site or Sal's bench. */
+  P.projGive = function (S, pl, m, bad) {
+    const id = String(m.id), Pd = PJ[id]; if (!Pd) return;
+    if (!atSite(S, pl, id) && !atBench(S, pl)) return bad(`Give at Sal's bench, or at ${Pd.name} in ${Pd.where}.`);
+    const st = this.projOf(id), need = needOf(id, st), part = String(m.part); if (!need) return bad(`${Pd.name} is finished.`);
+    if (!PARTS.includes(part) || !need[part]) return bad("It doesn't need any of that.");
+    const C = pl.C, have = part === "tickets" ? G.tixIn(C) : C.parts[part] | 0, left = need[part] - (st.got[part] | 0);
+    if (left <= 0) return bad(`It has all the ${part === "tickets" ? "tickets" : T.parts[part].name.toLowerCase()} it needs.`);
+    const n = Math.min(Math.floor(Number(m.n)) || 0, have, left);
+    if (n <= 0) return bad(part === "tickets" ? "You've no tickets in your bag." : `You've no ${T.parts[part].name.toLowerCase()} in your pouch.`);
+    const was = readyOf(id, st);
+    if (part === "tickets") G.takeInv(C.inv, "tickets", n); else C.parts[part] -= n;
+    st.got[part] = (st.got[part] | 0) + n;
+    const who = (st.by[pl.login || pl.name] ||= { name: pl.name, pv: 0, tix: 0 }); who.name = pl.name;
+    if (part === "tickets") who.tix = (who.tix | 0) + n; else who.pv += n * T.parts[part].pv;
+    this.grant(pl, "tinkering", Math.max(1, Math.round(part === "tickets" ? n * T.feeXp : n * T.parts[part].pv * T.donateXp)));
+    this.touch(pl); this.projSave();
+    this.say(pl, `You give ${part === "tickets" ? G.fmtTix(n) : `${n.toLocaleString()} ${T.parts[part].name.toLowerCase()}`} to ${Pd.name}.`, "good");
+    if (!was && readyOf(id, st)) { const t = Pd.tiers[st.tier]; this.houseSay(`\u{1F527} ${Pd.name} has everything it needs for ${t.name.toLowerCase()}. Somebody with Tinkering ${t.finish} has to finish it, in ${Pd.where}.`, "BRONNY"); }
+    this.projPush(pl, { gave: { id, part, n } });
+  };
+  /* op "finish" { id }: the tier's last step. At the site, with the level; the tier goes up for everybody at once. */
+  P.projFinish = function (S, pl, m, bad) {
+    const id = String(m.id), Pd = PJ[id]; if (!Pd) return;
+    const st = this.projOf(id), tier = Pd.tiers[st.tier]; if (!tier) return bad(`${Pd.name} is finished.`);
+    if (!readyOf(id, st)) return bad("It still wants parts. Everybody chips in first.");
+    if (!atSite(S, pl, id)) return bad(`The last step is done on site: ${Pd.where}.`);
+    const lvl = G.lvlOf(pl.C, "tinkering"); if (lvl < tier.finish) return bad(`That's a Tinkering ${tier.finish} job. You're ${lvl}.`);
+    st.tier++; st.got = {}; st.done.push({ tier: st.tier, by: pl.name, at: Date.now() }); this.projSave();
+    this.grant(pl, "tinkering", Math.round(G.projPv(tier.need) * 0.2));
+    G.setProjects(this.projTiers()); this.projRebuild(Pd.scene);
+    this.houseSay(`\u{1F3D7}\u{FE0F} ${pl.name} finished ${tier.name.toLowerCase()} on ${Pd.name}: ${tier.does}. Thanks to everybody who chipped in.`, "BRONNY");
+    for (const p of this.pls.values()) { p.out.push({ type: "projects", tiers: this.projTiers(), id, tier: st.tier }); p.out.push({ type: "casinonote", text: `\u{1F3D7}\u{FE0F} ${Pd.name}: ${tier.name} is built!` }); }
+    this.projPush(pl, { finished: { id, tier: st.tier } });
+  };
+  /* A tier went up: swap the project's own objects in a live scene. Everything before them keeps its index and its state (a half-mined
+     rock stays half-mined), because projObjs only ever appends; the project's tiles are copied from the new build. */
+  P.projRebuild = function (key) {
+    const S = this.scenes.get(key); if (!S) return;
+    const b = G.buildScene(key), cut = S.objs.findIndex((o) => o.proj), head = cut < 0 ? S.objs : S.objs.slice(0, cut);
+    const tail = b.objs.slice(b.projFrom).map((o, i) => ({ ...o, id: head.length + i }));
+    S.objs = [...head, ...tail];
+    for (const [x, y] of b.projTiles || []) S.g[y][x] = b.g[y][x];
+    for (const p of this.playersIn(S)) if (p.act?.ob != null && p.act.ob >= head.length) p.act = null;
+    S.whoSig = null;
+  };
+
+  /* THE KING'S CANNON (the Mire project): Sparks from the pouch, a volley at a boss in range, one shot a minute for the whole server.
+     Tier 2 fires twice; tier 3's shell stuns. The damage is the firer's, through the same books as a burn: combat xp, the party
+     meter, the boss's report and an open boss's shared kill. */
+  P.cannonFire = function (S, pl, now = Date.now()) {
+    const tier = G.projTier("cannon"), K = G.CANNON, C = pl.C, bad = (t) => this.say(pl, t, "bad");
+    if (!tier) return bad("It's a wreck. Bronny's collecting parts to fix it: see the plan board.");
+    C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 };
+    if ((this.cannonAt || 0) > now) return bad(`It's still cooling: ${Math.ceil((this.cannonAt - now) / 1000)} seconds.`);
+    const gun = S.objs.find((o) => o.t === "cannon"); if (!gun) return;
+    const m = S.mobs.filter((x) => !x.dead && G.MOBS[x.t]?.boss && G.cheb(x, gun) <= K.range).sort((a, b) => G.cheb(a, gun) - G.cheb(b, gun))[0];
+    if (!m) return bad("Nothing worth the powder in range. It's for bosses.");
+    if ((C.parts.sparks | 0) < K.sparks) return bad(`A shot takes ${K.sparks} Sparks. You've ${C.parts.sparks | 0}.`);
+    C.parts.sparks -= K.sparks; this.cannonAt = now + K.cdMs; this.touch(pl);
+    const volleys = tier >= 2 ? 2 : 1; let total = 0;
+    for (let v = 0; v < volleys && m.hp > 0; v++) {
+      const d = Math.min(m.hp, K.dmg); m.hp -= d; m.hurtAt = now; total += d;
+      S.events.push({ type: "splat", who: m.id, n: d, kind: "hit", t: now + v * 350, crit: true });
+      this.award(pl, d); this.bossAdd(pl, m, "dmg", d); if (G.MOBS[m.t]?.open) (m.by ||= {})[pl.id] = (m.by[pl.id] || 0) + d;
+    }
+    if (tier >= 3) m.stunUntil = now + K.stunMs;
+    for (const p of this.playersIn(S)) { p.out.push({ type: "cannon", x: gun.x, y: gun.y, to: { x: m.x, y: m.y }, n: volleys }); this.say(p, `\u{1F4A5} ${p === pl ? "You fire" : `${pl.name} fires`} the King's Cannon: ${total} damage${tier >= 3 ? ", and it's stunned" : ""}!`, "loot"); }
+    if (m.hp <= 0) this.killMob(S, pl, m, now);
   };
 }

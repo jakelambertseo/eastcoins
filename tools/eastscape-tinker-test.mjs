@@ -8,7 +8,7 @@ const G = await import("../v3/assets/js/eastscape-shared.js");
 const { World } = await import("../eastscape-worker/src/index.js");
 let bad = 0;
 const is = (got, want, what) => { if (JSON.stringify(got) === JSON.stringify(want)) console.log(`  ${what}: ${JSON.stringify(got)}`); else { console.log(`  !! ${what}: got ${JSON.stringify(got)}, wanted ${JSON.stringify(want)}`); bad++; } };
-const ctx = { blockConcurrencyWhile: (fn) => fn(), storage: { get: async () => undefined, put: async () => {}, delete: async () => {}, list: async () => new Map() } };
+const store = new Map(), ctx = { blockConcurrencyWhile: (fn) => fn(), storage: { get: async (k) => (store.has(k) ? structuredClone(store.get(k)) : undefined), put: async (k, v) => { if (k === "proj") store.set(k, structuredClone(v)); }, delete: async () => {}, list: async () => new Map() } };
 const W = new World(ctx, { SITE: "https://example.invalid", DEV: "0" }); await new Promise((r) => setTimeout(r, 20)); W.save = async () => {}; W.houseSay = () => {};
 const S = W.scene("workyard"), bench = S.objs.find((o) => o.t === "scrapbench");
 is([!!bench, !!S.npcs.find((n) => n.name === G.TINK.npc)], [true, true], "Sal and her bench are in the Yard (Tinkering open)");
@@ -56,7 +56,7 @@ const before = { ...C.parts }; C.parts.gears = 0; W.tinkerOp(S, pl, { op: "build
 const useK = (k) => W.useItem(pl, C.inv.findIndex((s) => s.k === k));
 pl.x = 30; pl.y = 5;   /* out in the Yard, where buff clocks run */
 useK("tk_whetstone"); is([!!C.tk?.whetstone, G.tkDmg(C, "melee")], [true, g.dmg.melee], "the Whetstone is running: melee damage up");
-G.addInv(C.inv, "tk_whetstone", 1, C); useK("tk_whetstone"); is(cnt("tk_whetstone"), 1, "a second one while it runs is refused and kept");
+C.inv = C.inv.filter((s) => s.k !== "tk_whetstone"); G.addInv(C.inv, "tk_whetstone", 1, C); useK("tk_whetstone");   /* (a Masterwork build leaves a second one: start from exactly one) */ is(cnt("tk_whetstone"), 1, "a second one while it runs is refused and kept");
 const sc = C.parts.scrap; C.tk.whetstone.left = 900; let t = Date.now(); pl.fxAt = t; for (let i = 0; i < 40; i++) { t += 50; W.tickTimed(t); }
 is([!!C.tk.whetstone, C.parts.scrap - sc], [false, Math.floor(g.parts.scrap * 0.1)], "it runs out and hands back a tenth of its scrap");
 
@@ -79,6 +79,50 @@ miner.x = r0.x + 1; miner.y = r0.y; miner.act = null; W.tkNext(S, miner, r0, "ro
 const went = S.objs[miner.act?.ob ?? -1] || (miner.act && S.objs.find((o) => o.x === miner.act.x && o.y === miner.act.y));
 is([!!miner.act, went && went !== r0 && went.ore === "copper"], [true, true], "a rock runs dry: the Auger walks you to the next copper rock");
 miner.act = null; miner.C.tk = {}; W.tkNext(S, miner, r0, "rock"); is(miner.act, null, "without an Auger: you stop, as ever");
+
+/* 10. WORLD PROJECTS: the dock. Given at the bench, capped at the need; finished on site with the level; the map changes; a restart keeps it */
+is([G.projTier("dock"), !!S.objs.find((o) => o.t === "dockruin"), !!S.objs.find((o) => o.t === "dock")], [0, true, false], "the Yard pond has a rotten jetty, and no dock");
+const D = G.PROJECTS.dock.tiers[0], bldr = pl; bldr.x = bench.x + 1; bldr.y = bench.y; bldr.login = "t1";
+bldr.C.parts = { scrap: 99999, gears: 9999, sparks: 9999, relic: 99 }; G.addInv(bldr.C.inv, "tickets", 400000, bldr.C);
+const xpd = bldr.C.xp.tinkering, sc0 = bldr.C.parts.scrap;
+W.tinkerOp(S, bldr, { op: "give", id: "dock", part: "scrap", n: 999999 });
+is([sc0 - bldr.C.parts.scrap, W.projOf("dock").got.scrap, bldr.C.xp.tinkering - xpd], [D.need.scrap, D.need.scrap, Math.round(D.need.scrap * G.TINK.donateXp)], "scrap given at the bench: only what the tier needs, and xp for it");
+W.tinkerOp(S, bldr, { op: "give", id: "dock", part: "relic", n: 5 }); is(bldr.C.parts.relic, 99, "tier 1 wants no relic shards: none taken");
+const tx0 = G.tixIn(bldr.C); for (const part of ["gears", "sparks", "tickets"]) W.tinkerOp(S, bldr, { op: "give", id: "dock", part, n: 9e9 });
+is([tx0 - G.tixIn(bldr.C), W.projView(bldr).dock.ready], [D.need.tickets, true], "the tickets go from the bag; the tier is ready");
+W.tinkerOp(S, bldr, { op: "finish", id: "dock" }); is(G.projTier("dock"), 0, "finishing at the bench is refused: it's done on site");
+bldr.x = 18; bldr.y = 16; bldr.C.xp.tinkering = G.XP_AT[19];
+W.tinkerOp(S, bldr, { op: "finish", id: "dock" }); is(G.projTier("dock"), 0, "Tinkering 19 can't finish a Tinkering 20 job");
+bldr.C.xp.tinkering = G.XP_AT[20]; const rock0 = S.objs.find((o) => o.t === "rock"); rock0.left = 1;
+W.tinkerOp(S, bldr, { op: "finish", id: "dock" });
+is([G.projTier("dock"), !!S.objs.find((o) => o.t === "dock"), S.objs.filter((o) => o.proj === "dock" && o.t === "spot").length, G.walkableIn(S.g, 16, 19), S.objs.find((o) => o.t === "rock").left, !!S.objs.find((o) => o.t === "dockruin")], [1, true, 2, true, 1, false], "finished: the dock is in the pond with two spots, you can walk it, and nothing else in the Yard moved");
+is(S.objs.every((o, i) => o.id === i), true, "every object's id is still its place in the list");
+is(!!pl.out.find((e) => e.type === "projects" && e.tiers.dock === 1), true, "everybody is told the new tier");
+const W2 = new World(ctx, { SITE: "https://example.invalid", DEV: "0" }); await new Promise((r) => setTimeout(r, 20));
+is([W2.projTiers().dock, !!W2.scene("workyard").objs.find((o) => o.t === "dock")], [1, true], "after a restart the dock is still built");
+
+/* 11. THE KING'S CANNON: a wreck until built; Sparks a shot, a minute's cooldown, two volleys at tier 2, only at a boss */
+const M = W.scene("mire"), gunner = { id: "g1", name: "g1", login: "g1", C: G.freshChar(), x: 18, y: 13, out: [], path: [] }; gunner.C.scene = "mire"; W.pls.set("g1", gunner);
+gunner.C.parts = { scrap: 0, gears: 0, sparks: 100, relic: 0 };
+is(!!M.objs.find((o) => o.t === "cannonruin"), true, "the Mire has a rusted cannon");
+W.projOf("cannon").tier = 2; G.setProjects(W.projTiers()); W.projRebuild("mire");
+const dK = G.MOBS.pumpkinking, king = { id: "kk", t: "pumpkinking", x: 22, y: 14, hx: 22, hy: 14, hp: dK.hp, maxHp: dK.hp, path: [], step: null, face: 1, nextWander: 0, dead: false, respawnAt: Infinity, hurtAt: 0, swingAt: 0, lastSwing: 0 };
+M.mobs = M.mobs.filter((m) => !G.MOBS[m.t]?.boss);
+W.cannonFire(M, gunner); is(gunner.C.parts.sparks, 100, "no boss in range: no shot, no Sparks spent");
+M.mobs.push(king); const tNow = Date.now(); W.cannonAt = 0; W.cannonFire(M, gunner, tNow);
+is([dK.hp - king.hp, gunner.C.parts.sparks], [G.CANNON.dmg * 2, 100 - G.CANNON.sparks], "tier 2: two volleys at the King, 25 Sparks spent");
+W.cannonFire(M, gunner, tNow + 1000); is(gunner.C.parts.sparks, 100 - G.CANNON.sparks, "cooling: the second shot is refused");
+W.projOf("cannon").tier = 3; G.setProjects(W.projTiers()); W.projRebuild("mire"); W.cannonFire(M, gunner, tNow + G.CANNON.cdMs + 1);
+is(king.stunUntil > tNow + G.CANNON.cdMs, true, "tier 3: the shell stuns him");
+
+/* 12. THE BOILER: no table until it's built; then a fair game in the band */
+const Cz = W.scene("casino"), gam = { id: "b1", name: "b1", login: "b1", C: G.freshChar(), x: 35, y: 18, out: [], path: [] }; gam.C.scene = "casino"; W.pls.set("b1", gam);
+G.addInv(gam.C.inv, "tickets", 50000, gam.C);
+W.bet(Cz, gam, { g: "boiler", amt: 100, pick: 2 }, Date.now()); is(!!gam.out.find((e) => e.type === "gameResult"), false, "the Boiler isn't built: no bet");
+W.projOf("table").tier = 1; G.setProjects(W.projTiers()); W.projRebuild("casino");
+W.bet(Cz, gam, { g: "boiler", amt: 100, pick: 2.5 }, Date.now()); const br = gam.out.find((e) => e.type === "gameResult");
+is([!!br, br?.target, br ? (br.blow >= 2.5) === (br.payout > 0) : null], [true, 2.5, true], `a Boiler bet: target 2.5x, blew at ${br?.blow}x, paid ${br?.payout}`);
+{ let won = 0; const n = 200000; for (let i = 0; i < n; i++) if (G.boilerBlow(Math.random()) >= 4) won++; is(Math.abs(won / n - 0.25) < 0.005, true, `it holds past 4x ${(won / n * 100).toFixed(2)}% of the time (fair: 25%)`); }
 
 console.log(bad ? `\n${bad} problem(s)` : "\nTinkering works: salvage by the rules and safe, gadgets built, used and broken, and the automation tools carry on while you're away");
 process.exitCode = bad ? 1 : 0;

@@ -174,6 +174,10 @@ const CSS = `
 .cz-coin.spin{animation:czflip .45s linear infinite;transition:none}.cz-coin img{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;backface-visibility:hidden;filter:drop-shadow(0 10px 18px rgba(0,0,0,.55))}
 .cz-coin img.t{transform:rotateY(180deg)}@keyframes czflip{to{transform:rotateY(360deg)}}
 /* dice */
+.cz-boil{width:100%;display:grid;justify-items:center;gap:8px}.cz-dial{position:relative;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,#f6ecd2 0 58%,#c89a3a 59% 64%,#6a4a1a 65% 68%,#2a1a08 69%);box-shadow:0 6px 0 rgba(0,0,0,.35),inset 0 0 0 3px #3a2408;display:grid;place-items:center;align-content:center}
+.cz-dial::before{content:"";position:absolute;inset:18px;border-radius:50%;background:conic-gradient(from -120deg,#4ad08a 0 80deg,#ffd84a 80deg 160deg,#e04a3a 160deg 240deg,transparent 240deg);-webkit-mask:radial-gradient(circle,transparent 62%,#000 63% 70%,transparent 71%);mask:radial-gradient(circle,transparent 62%,#000 63% 70%,transparent 71%)}
+.cz-needle{position:absolute;left:50%;top:50%;width:4px;height:84px;margin-left:-2px;margin-top:-84px;background:#c01e1e;border-radius:2px;transform-origin:50% 100%;transform:rotate(-120deg);box-shadow:0 0 0 1px #3a0808}.cz-dial b{position:relative;z-index:1;margin-top:70px;font:800 34px var(--display);color:#2a1a08}.cz-dial b.w{color:#1e8a4a}.cz-dial b.l{color:#c01e1e}.cz-dial small{position:relative;z-index:1;font:700 12px Lora,serif;color:#6a4a1a}
+.cz-boilpot{margin:0;font:800 13px Lora,serif;color:var(--gold,#e8bf35)}.cz-boilin{width:100%;padding:8px 10px;border-radius:8px;border:2px solid #3a2408;font:800 16px Lora,serif;text-align:center}
 .cz-roll{font:800 72px var(--display);letter-spacing:-.04em;line-height:1;text-shadow:0 4px 0 rgba(0,0,0,.4)}.cz-roll.w{color:var(--green)}.cz-roll.l{color:var(--red)}
 .cz-track{position:relative;width:min(420px,100%);height:18px;border-radius:9px;background:rgba(255,107,133,.35);margin:18px 0 6px}.cz-zone{position:absolute;left:0;top:0;bottom:0;border-radius:9px 0 0 9px;background:var(--green)}
 .cz-marker{position:absolute;top:-9px;width:12px;height:36px;margin-left:-6px;border-radius:5px;background:#fff;box-shadow:0 3px 10px rgba(0,0,0,.6);transition:left .55s cubic-bezier(.2,.8,.2,1)}
@@ -352,7 +356,7 @@ export function createCasino(env) {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   let styled = false, GAME = null, R = {}, bet = 100, betCash = 100, betZc = 5, busy = false, token = 0, jack = { pot: null, last: null };
   const SESS = {}, RUNS = { hilo: null, mines: null }, PICK = { cointable: "heads", wheel: "red" };
-  let diceTarget = 50, mineCount = 3, wheelRot = 0, trail = [], scratch = null;
+  let boilT = 2, diceTarget = 50, mineCount = 3, wheelRot = 0, trail = [], scratch = null;
   const sess = (g) => (SESS[g] ||= { bets: 0, net: 0, best: 0, recent: [] });
 
   function style() {
@@ -477,6 +481,34 @@ export function createCasino(env) {
       start() { phase("Rolling…"); SFX.play("dice"); const r = $("czRoll"); r.className = "cz-roll"; this.iv = setInterval(() => { r.textContent = 1 + Math.floor(Math.random() * 100); $("czMark").style.left = `${Math.random() * 100}%`; }, 70); refresh(); },
       idle() { clearInterval(this.iv); refresh(); },
       async result(e) { const t = token; await wait(calm() ? 0 : 450); clearInterval(this.iv); if (t !== token) return; const r = $("czRoll"); r.textContent = e.roll; r.className = `cz-roll ${e.payout ? "w" : "l"}`; $("czMark").style.left = `${e.roll}%`; await wait(calm() ? 0 : 550); if (t !== token) return; settle(e, `Rolled ${e.roll} · needed under ${e.target} · ${e.payout ? `you win ${money(e.payout)}` : "you lose"}`); }
+    },
+    /* (2026-09-28) THE BOILER: the New Table, built by the whole server through Tinkering. Set a pressure; the boiler climbs and blows
+       at 1 / (1 - r), so it holds past x one time in x and a win pays x (then the band). The needle is playback of the server's number. */
+    boiler: {
+      title: "The Boiler", sub: "Set the pressure. If it holds past it, you win that many times your stake.",
+      build() {
+        R.board.innerHTML = `<div class="cz-boil"><div class="cz-dial"><i class="cz-needle" id="czNeedle"></i><b id="czPsi">1.00\u00d7</b><small id="czBoilT">target ${boilT}\u00d7</small></div><p class="cz-boilpot" id="czBoilPot"></p></div>`;
+        R.in = el("input", "cz-boilin"); R.in.type = "number"; R.in.min = G.BOILER.min; R.in.max = G.BOILER.max; R.in.step = "0.1"; R.in.value = boilT; R.in.setAttribute("aria-label", "Target pressure");
+        R.in.addEventListener("input", () => { boilT = G.boilerTarget(R.in.value); refresh(); });
+        const chips = el("div", "cz-picks"); for (const x of [1.5, 2, 3, 5, 10, 50]) { const b = el("button", "cz-pick", `<b>${x}\u00d7</b><small>${Math.round(100 / x)}%</small>`); b.type = "button"; b.addEventListener("click", () => { boilT = x; R.in.value = x; SFX.play("ui_click"); refresh(); }); chips.append(b); }
+        R.lock = lockBtn(); R.lock.addEventListener("click", () => place(boilT)); R.note = el("p", "cz-note");
+        R.bet.append(chips, R.in, stakeRow(), R.lock, R.note); sideCards("What it pays", "set any target from 1.1\u00d7 to 100\u00d7"); phase("Set your pressure", "open");
+      },
+      refresh() {
+        $("czBoilT").textContent = `target ${boilT}\u00d7`; R.lock.disabled = busy; R.lock.textContent = busy ? "Building pressure\u2026" : `Fire it up \u00b7 ${stakeTxt(bet)} to win ${money(Math.floor(bet * boilT))}`;
+        R.mult.innerHTML = `Holds past ${boilT}\u00d7<small>${(100 / boilT).toFixed(boilT > 20 ? 2 : 1)}% of the time \u00b7 pays ${boilT}\u00d7</small>`;
+        R.pays.innerHTML = [1.5, 2, 5, 10, 100].map((x) => `<div class="cz-rung${x === boilT ? " at" : ""}"><span>Past ${x}\u00d7 \u00b7 ${+(100 / x).toFixed(1)}%</span><strong>${x}\u00d7</strong></div>`).join("") + (G.projTier("table") >= 2 ? `<div class="cz-rung"><span>Past ${G.BOILER.pot.toLocaleString()}\u00d7</span><strong>POT</strong></div>` : "");
+      },
+      start() { phase("Building pressure\u2026"); SFX.play("slots_spin", { vol: 0.5 }); const n = $("czNeedle"); n.style.transition = "none"; n.style.transform = "rotate(-120deg)"; $("czPsi").className = ""; $("czPsi").textContent = "1.00\u00d7"; refresh(); },
+      idle() { refresh(); },
+      async result(e) {
+        const t = token, top = e.blow, dur = calm() ? 0 : Math.min(2200, 500 + Math.log(top) * 420), t0 = performance.now(), psi = $("czPsi"), nd = $("czNeedle");
+        if (e.pot != null) $("czBoilPot").textContent = `Pressure Pot: ${money(e.pot)}`;
+        await new Promise((res) => { const step = (now) => { if (t !== token) return res(); const k = dur ? Math.min(1, (now - t0) / dur) : 1, x = Math.exp(Math.log(top) * k); psi.textContent = `${x.toFixed(2)}\u00d7`; nd.style.transform = `rotate(${-120 + Math.min(240, Math.log(x) / Math.log(100) * 240)}deg)`; if (k < 1) requestAnimationFrame(step); else res(); }; requestAnimationFrame(step); });
+        if (t !== token) return; psi.textContent = `${top.toFixed(2)}\u00d7`; psi.className = e.payout ? "w" : "l"; if (!e.payout) SFX.play("hit", { vol: 0.8 });
+        await wait(calm() ? 0 : 450); if (t !== token) return;
+        settle(e, `${e.payout ? "Held" : "Blew"} at ${top.toFixed(2)}\u00d7 \u00b7 you set ${e.target}\u00d7 \u00b7 ${e.payout ? `you win ${money(e.payout)}` : "you lose"}`);
+      }
     },
     slots: {
       title: "Slots", sub: "Match three. 7-7-7 wins the jackpot.",

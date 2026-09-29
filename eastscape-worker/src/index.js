@@ -219,6 +219,7 @@ export class World {
          was lost), and a 2X running at a deploy simply ended. Anything saved with ctx.storage.put has to be read back HERE. */
       this.dbl = (await ctx.storage.get("dbl")) || null;
       await this.orderLoad();
+      await this.projLoad();   /* (2026-09-28) World Projects: the tiers build the maps, so they are read before any scene is */
     });
   }
 
@@ -298,7 +299,7 @@ export class World {
     /* (2026-09-27) A LOAD WITH NOTHING TO HOLD IT: the pocket outlived its quiver somehow (an old save, a lost piece). It can no longer
        fire (G.ammoOf wants the pouch), so it is handed back to the bag here rather than left invisible. */
     if (C.quiver && !(G.pouchOf(C) && G.pouchOf(C).pouch.ammo === G.ammoKind(C.quiver.k))) this.pocketOut(pl);
-    this.send(pl, { type: "hello", version: G.VERSION, t: Date.now(), you: { id: pl.id, login: pl.login, name: pl.name, admin: pl.admin, role: pl.role }, me: this.meOf(pl) });
+    this.send(pl, { type: "hello", version: G.VERSION, t: Date.now(), you: { id: pl.id, login: pl.login, name: pl.name, admin: pl.admin, role: pl.role }, me: this.meOf(pl), proj: this.projTiers() });
     this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S), npcs: this.npcsOf(S) });
     if (this.chatLog?.length) this.send(pl, { type: "ev", list: this.chatLog.map((x) => ({ ...x, old: true })) });   /* (2026-09-27) the recent chat: see chatKeep */
     if (HEARD.has(String(S.key).split(":")[0])) { this.songTick(Date.now()); if (this.song || this.songQ?.length) this.send(pl, { type: "ev", list: [this.songMsg()] }); }
@@ -958,7 +959,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
-      let kind = { scrapbench: "tinker",   /* (2026-09-28) Sprocket Sal's Scrap Bench */ clawchest: "clawchest",   /* (2026-09-27) Captain Claw's chest */ rowboat: "rowboat",   /* (2026-09-27) the Boardwalk's islands */ podium: "podium",   /* (2026-09-27) the collection log */ vortex: "rowboat", burndoor: "rowboat",   /* (2026-09-27) the Foundry's portals and its burning door travel the same way */ blast: "smelt",   /* (2026-09-27) the Foundry's blast furnace: a furnace */ jbench: "jewel",   /* (2026-09-27) Jewelcrafting: a picker station like the anvil */ hatchery: "hatchery",   /* (2026-09-27) Breeding's hatchery */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      let kind = { scrapbench: "tinker",   /* (2026-09-28) Sprocket Sal's Scrap Bench */ projboard: "project", dockruin: "project", cannonruin: "project", tableruin: "project", cannon: "cannon", boiler: "game",   /* (2026-09-28) World Projects */ clawchest: "clawchest",   /* (2026-09-27) Captain Claw's chest */ rowboat: "rowboat",   /* (2026-09-27) the Boardwalk's islands */ podium: "podium",   /* (2026-09-27) the collection log */ vortex: "rowboat", burndoor: "rowboat",   /* (2026-09-27) the Foundry's portals and its burning door travel the same way */ blast: "smelt",   /* (2026-09-27) the Foundry's blast furnace: a furnace */ jbench: "jewel",   /* (2026-09-27) Jewelcrafting: a picker station like the anvil */ hatchery: "hatchery",   /* (2026-09-27) Breeding's hatchery */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       /* MAGIC AND WIZARDRY, THE SERVER (2026-09-26): every altar is a print station, a picker station like the anvil */
       if (!kind && G.STATIONS[ob.t]?.kind === "print") kind = "print";
       if (!kind) return;
@@ -1401,7 +1402,7 @@ export class World {
     this.cryptTop = (await this.ctx.storage.get("cryptTop")) || {};   /* (v103) the crypt's fastest clears */
     this.radio = (await this.ctx.storage.get("radio")) || null;
     this.chatLog = (await this.ctx.storage.get("chatlog")) || [];
-    this.dbl = (await this.ctx.storage.get("dbl")) || null; await this.orderLoad();   /* (2026-09-28) Bronny's order outlives a restart too */   /* (2026-09-25) a 2X event outlives a restart: it is the server's clock, not a player's */   /* (v86) the jukebox's station outlives a restart */
+    this.dbl = (await this.ctx.storage.get("dbl")) || null; await this.orderLoad(); await this.projLoad(); for (const k of G.projScenes()) this.projRebuild(k);   /* (2026-09-28) Bronny's order outlives a restart too */   /* (2026-09-25) a 2X event outlives a restart: it is the server's clock, not a player's */   /* (v86) the jukebox's station outlives a restart */
     this.fame = (await this.ctx.storage.get("fame")) || this.fame || null;
     return Response.json({ ok: true, restored: written, from: body.takenAt || null });
   }
@@ -2925,6 +2926,8 @@ export class World {
     if (a.kind === "fbed") { pl.act = null; return this.fungBed(S, pl, a.ob, now); }
     if (a.kind === "cellar") { pl.act = null; return this.fungDown(S, pl); }   /* (2026-09-27) Breeding: the page opens the pen window */
     if (a.kind === "hiscores") { pl.act = null; return pl.out.push({ type: "hiscores" }); }
+    if (a.kind === "project") { pl.act = null; if (G.HOLD.tinker && !pl.admin) return; pl.C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 }; return this.projPush(pl, { open: true, focus: a.ob?.proj || S.objs[a.ob]?.proj || null }); }   /* (2026-09-28) a project's plan board or ruin: the bench window, on that project */
+    if (a.kind === "cannon") { pl.act = null; return this.cannonFire(S, pl, now); }   /* (2026-09-28) the King's Cannon */
     if (a.kind === "tinker") { pl.act = null; pl.C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 }; return pl.out.push({ type: "tinker", open: true, view: { parts: { ...pl.C.parts }, lvl: G.lvlOf(pl.C, "tinkering") } }); }   /* (2026-09-28) the Scrap Bench opens its window */   /* (v96) the board on the wall opens the page's own Hiscores window */
     if (a.kind === "howto") { pl.act = null; return pl.out.push({ type: "popup", title: "How EastScape works", text: G.HOWTO, icon: "🎰" }); }
     if (a.kind === "board") { pl.act = null; this.tourStep(pl, "play"); this.tourStep(pl, "board"); return this.dailySend(pl); }   /* (v96: the board also clears "play a game", so a player with no ZCoins is sent to work, not left stuck) */
@@ -3277,7 +3280,7 @@ export class World {
       a.next = now + Math.round(G.FISHING.ms / ((1 + G.swingFx(C)) * G.toolSpeed(C, "fishing")) * this.tkSlow(pl, now, "spot"));
       const lvl = G.lvlOf(C, "fishing"), fish = G.fishAt(ob, lvl, Math.random()), trout = fish === ob.fish2;   /* v68: every spot names its fish, and a second one from fish2lvl (`trout` now just means "the second fish") */
       this.groupNote(S, pl, a);
-      if (Math.random() < Math.min(0.97, G.FISHING.chance(lvl) + bonus + fx.bite) * G.gatherMul(S.def)) {   /* half out in the Wilderness: see WILD_GATHER */
+      if (Math.random() < Math.min(0.97, G.FISHING.chance(lvl) + bonus + fx.bite + (ob.bite || 0)) * G.gatherMul(S.def)) {   /* (2026-09-28) ob.bite: the Fishing Dock's tackle shed */   /* half out in the Wilderness: see WILD_GATHER */
         if (!this.give(pl, fish)) { pl.act = null; return; }
         this.gained(S, pl, fish, 1, "gather", "fishing");
         if (fx.tix > 0 && Math.random() < fx.tix && this.give(pl, fish)) this.say(pl, "Two on one line!", "good");   /* the ticket buffs, for a fisher: that chance of a second fish */
@@ -3286,7 +3289,7 @@ export class World {
            dropped - until now a cast could only ever give a fish. `rare` gear helps, the same as it does on a
            kill, so a fisher who has kitted themselves for finds is better at finding these too. It is the one
            piece of thief's kit nobody in the guild sells, which is the point: Fishing feeds Thieving. */
-        if (Math.random() < G.DITCHED_ODDS * (1 + fx.rare)) {
+        if (Math.random() < G.DITCHED_ODDS * (1 + fx.rare + (ob.rare || 0))) {   /* (2026-09-28) ob.rare: the dock's spots */
           const k = G.DITCHED[Math.floor(Math.random() * G.DITCHED.length)];
           if (this.keepRare(pl, k, 1)) this.say(pl, `Your line goes heavy. You haul up ${G.ITEMS[k].name.toLowerCase()} — somebody went in the water rather than be caught holding them.`, "loot");
         }
@@ -3708,7 +3711,7 @@ export class World {
       }
       if (foe) {
         m.face = foe.x > m.x ? 1 : -1;
-        if (now - m.lastSwing >= G.MOBS[m.t].speed * (m.slowUntil > now ? G.MAGIC.slow.mult : 1)) {   /* (2026-09-26) Frost slows the swing */
+        if (now - m.lastSwing >= G.MOBS[m.t].speed * (m.slowUntil > now ? G.MAGIC.slow.mult : 1) && !(m.stunUntil > now)) {   /* (2026-09-26) Frost slows the swing */   /* (2026-09-28) the King's Cannon's shock shell stuns */
           m.lastSwing = now; m.swingAt = now;
           const C = foe.C, hit = Math.random() < (G.MOBS[m.t].outside ? G.mobHitChance : G.hitChance)(G.MOBS[m.t].att, G.defenceRollOf(C)),   /* (2026-09-28) an open-world monster aims by ratio: A MONSTER'S AIM in the rules file */ dmg = hit ? Math.max(1, Math.round(rint(1, G.MOBS[m.t].max) * (m.enraged ? (G.MOBS[m.t].enrage?.mul ?? CR.CRYPT.enrageMul) : 1) * (1 - G.fxOf(C).tough))) : 0;   /* (tough: the visor, the Safety Net; whiskey makes it worse) */
           if (!foe.god) { C.hp -= dmg; this.touch(foe); }
@@ -4201,8 +4204,8 @@ export class World {
     if (gate && !pl.god) return this.say(pl, gate.why === "plays"
       ? `That's ${gate.cap} goes on the ${game.name.toLowerCase()} this hour. Try another table, or come back later.`
       : `You're up ${G.fmtTix(gate.n)} this hour, which is the house limit. Come back in a bit — you keep every ticket of it.`, "bad");
-    const amt = Math.floor(Number(m.amt)), have = G.cashIn(pl.C);
-    if (!(amt >= G.minBetOf(S.def) && amt <= G.maxBetOf(pl.C, S.def))) return this.say(pl, `Bets here are ${G.fmtCash(G.minBetOf(S.def))} to ${G.fmtCash(G.maxBetOf(pl.C, S.def))}.`, "bad");
+    const amt = Math.floor(Number(m.amt)), have = G.cashIn(pl.C), maxB = G.maxBetOf(pl.C, S.def) * (g === "boiler" && G.projTier("table") >= 3 ? 2 : 1);   /* (2026-09-28) the New Table's VIP valve */
+    if (!(amt >= G.minBetOf(S.def) && amt <= maxB)) return this.say(pl, `Bets here are ${G.fmtCash(G.minBetOf(S.def))} to ${G.fmtCash(maxB)}.`, "bad");
     const onHouse = Math.min(amt, pl.C.free | 0);   // a free-play chip covers this much of the stake
     if (have < amt - onHouse) return this.say(pl, `You only have ${G.fmtCash(have)} in your bag.`, "bad");
     if (this.tooEmpty(pl)) return;
@@ -4219,6 +4222,11 @@ export class World {
     } else if (g === "plinko") {
       const path = Array.from({ length: G.PLINKO.rows }, () => (Math.random() < 0.5 ? 0 : 1)), bucket = path.reduce((a, b) => a + b, 0);
       res = { path, bucket }; mult = G.PLINKO.pays[bucket];
+    } else if (g === "boiler") {
+      /* (2026-09-28) THE BOILER, the New Table's first tier. It only exists once the server has built it. */
+      if (!G.projTier("table")) return this.say(pl, "That table isn't built yet. See the plan board beside it.", "bad");
+      const target = G.boilerTarget(m.pick), blow = G.boilerBlow(Math.random()), potOn = G.projTier("table") >= 2;
+      res = { target, blow, potOn }; if (blow >= target) mult = target;
     } else if (g === "scratch") {
       // the card is decided first, then laid out to match it: exactly three of the winner, and never three of anything else
       let x = Math.random() * 1000, prize = null; for (const s of G.SCRATCH) { if ((x -= s.w) < 0) { prize = s; break; } }
@@ -4232,6 +4240,11 @@ export class World {
       const reels = [spin(), spin(), spin()]; res = { reels }; mult = G.slotsPay(reels);
     }
     let jackpot = 0;
+    if (g === "boiler" && res.potOn) {   /* (2026-09-28) the Pressure Pot: the slots' jackpot rules, its own pot, won when the boiler holds past BOILER.pot */
+      const J = (this.bpot ||= { pot: G.BOILER.seed, wins: [] }); if (J.pot < G.BOILER.cap) J.pot = Math.min(G.BOILER.cap, J.pot + amt * G.JACKPOT.slice);
+      if (res.blow >= G.BOILER.pot) { jackpot = Math.floor(J.pot * G.jackpotShare(amt)); J.pot = Math.max(G.BOILER.seed, J.pot - jackpot); J.wins = [{ name: pl.name, amt: jackpot, at: now }, ...(J.wins || [])].slice(0, 10); }
+      res.pot = Math.floor(J.pot); this.ctx.storage.put("bpot", J).catch(() => {});
+    }
     if (g === "slots") {
       const J = this.jack; if (J.pot < G.JACKPOT.cap) J.pot = Math.min(G.JACKPOT.cap, J.pot + amt * G.JACKPOT.slice);
       if (res.reels.every((r) => r === "seven")) {
@@ -4259,7 +4272,7 @@ export class World {
     if (jackpot) {
       // a jackpot is written at once, with the winner, so a crash can't pay it twice or lose it
       this.persist(pl).catch(() => {}); this.ctx.storage.put("jackpot", this.jack).then(() => { this.jackDirty = false; }).catch(() => {});
-      for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: `🎰💰 JACKPOT! ${pl.name} hit three sevens and won ${G.fmtCash(jackpot)} from the jackpot!` });
+      for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: g === "boiler" ? `♨️💰 PRESSURE POT! The Boiler held past ${G.BOILER.pot}× for ${pl.name}: ${G.fmtCash(jackpot)} from the pot!` : `🎰💰 JACKPOT! ${pl.name} hit three sevens and won ${G.fmtCash(jackpot)} from the jackpot!` });
     }
     // the room hears about a good win; everyone hears about a great one
     if (mult >= G.CASINO.roomWin && payout - amt > 0) {
@@ -4809,6 +4822,7 @@ export class World {
         const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k, name: "", ...(m.tier ? { tier: 1, fx: G.greaterFx(k, k) } : {}) };
         C.pets.push(pet); this.touch(pl); return note(`Gave ${G.petLabel(pet)}.`);
       }
+      case "projtier": { const id = String(m.id); if (!G.PROJECTS[id]) return; const st = this.projOf(id); st.tier = Math.max(0, Math.min(3, m.tier | 0)); st.got = m.fill ? { ...(G.PROJECTS[id].tiers[st.tier]?.need || {}) } : {}; this.projSave(); G.setProjects(this.projTiers()); this.projRebuild(G.PROJECTS[id].scene); for (const p of this.pls.values()) p.out.push({ type: "projects", tiers: this.projTiers(), id, tier: st.tier }); return note(`${G.PROJECTS[id].name}: tier ${st.tier}${m.fill ? ", parts filled" : ""}.`); }   /* (2026-09-28) World Projects, for testing */
       case "setlvl": { const l = Math.max(1, Math.min(99, m.lvl | 0)); if (!skill) return; C.xp[skill] = G.XP_AT[l]; if (skill === "hp") C.hp = G.maxHpOf(C); C.hp = Math.min(C.hp, G.maxHpOf(C)); this.touch(pl); return note(`${G.SKILLS[skill].name} set to ${l}.`); }
       case "clearxp": {
         const f = G.freshChar().xp;

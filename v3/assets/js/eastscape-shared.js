@@ -3195,10 +3195,78 @@ export const ownerOf = (key) => (isIsle(key) ? String(key).slice(String(key).ind
 // which island layout an owner's island uses, by upgrade tier
 export const isleKey = (isle, id) => `${["isle", "isle", "isle2", "isle3"][isle?.tier || 1]}:${id}`;
 // the same scene, built the same way everywhere; every object gets its index as its id
+/* ------------------------------------------------------------ WORLD PROJECTS (2026-09-28, Tinkering step four)
+   The owner: "instead of just Yard specific projects, can we create 'unbuilt' tools/areas/features in other maps, and they
+   unlock/get better as it gets better". Something UNBUILT stands in a map; the whole server feeds it parts and tickets; it
+   is built in three TIERS, and each tier's last step needs somebody with Tinkering 20 / 50 / 80 standing at it to finish the
+   job. Several are open at once. The design is EASTSCAPE-DRAFTS.md §11b; these three were the owner's first pick.
+
+   The tiers are WORLD state the server owns and saves; the page is told them in the hello and on every change, and both
+   build the map from them here, so a finished dock is in the pond for everybody at once. projObjs runs LAST in buildScene
+   and only ever APPENDS, and everything it lays down carries `proj`, so the server can swap a project's objects on a tier-up
+   without moving the index of anything a player is already standing at (see projRebuild in tinker.js). */
+export const PROJECTS = {
+  dock: { name: "The Fishing Dock", scene: "workyard", where: "the Yard pond", board: [18, 17],
+    blurb: "A rotten jetty in the Yard pond. Bronny says it can be saved.",
+    tiers: [
+      { need: { scrap: 2500, gears: 400, sparks: 80, tickets: 150000 }, finish: 20, name: "The dock", does: "planks out into the pond, and two new fishing spots off the end of it" },
+      { need: { scrap: 7000, gears: 1200, sparks: 250, relic: 10, tickets: 450000 }, finish: 50, name: "The tackle shed", does: "the dock's spots bite 10% more often and turn up rare finds three times as often" },
+      { need: { scrap: 18000, gears: 3000, sparks: 700, relic: 40, tickets: 1200000 }, finish: 80, name: "The Deep End", does: "a legendary spot off the end of the dock: bonefish and ghostcarp, for Fishing 30" }] },
+  cannon: { name: "The King's Cannon", scene: "mire", where: "the Mire's clearing", board: [17, 12],
+    blurb: "An old swamp cannon, knocked off its carriage. Aimed right at where the Pumpkin King climbs out.",
+    tiers: [
+      { need: { scrap: 2000, gears: 300, sparks: 400, tickets: 120000 }, finish: 20, name: "The cannon", does: "load it with Sparks and fire a volley at a boss in the Mire" },
+      { need: { scrap: 5000, gears: 900, sparks: 1200, relic: 10, tickets: 400000 }, finish: 50, name: "The second barrel", does: "every shot is two volleys" },
+      { need: { scrap: 12000, gears: 2200, sparks: 3000, relic: 40, tickets: 1000000 }, finish: 80, name: "The shock shell", does: "a volley stuns the boss for four seconds" }] },
+  table: { name: "The New Table", scene: "casino", where: "the Casino's instant-win room", board: [40, 18],
+    blurb: "An empty table under a dust sheet. Sal has plans for it.",
+    tiers: [
+      { need: { scrap: 2000, gears: 500, sparks: 150, tickets: 300000 }, finish: 20, name: "The Boiler", does: "a new ticket game: set the pressure, and win it if the boiler holds past it" },
+      { need: { scrap: 6000, gears: 1500, sparks: 400, relic: 10, tickets: 900000 }, finish: 50, name: "The Pressure Pot", does: "the Boiler gets its own jackpot, won when it holds past 1,000×" },
+      { need: { scrap: 15000, gears: 3500, sparks: 1000, relic: 40, tickets: 2500000 }, finish: 80, name: "The VIP valve", does: "the Boiler takes bets twice as big" }] }
+};
+/* THE CANNON: what a shot costs and does. Server-wide cooldown, so one person cannot hold the button down. */
+export const CANNON = { sparks: 25, cdMs: 60000, dmg: 260, range: 14, stunMs: 4000 };
+/* THE BOILER: a target from 1.1x to 100x; the boiler blows at 1 / (1 - r), so it holds past x exactly 1 time in x and a win
+   pays x: fair before the band, like every table (tableReturn 1). The Pressure Pot takes JACKPOT.slice of each bet at tier 2. */
+export const BOILER = { min: 1.1, max: 100, pot: 1000, seed: 5000, cap: 150000 };
+export const boilerBlow = (r) => Math.min(1e6, Math.floor(100 / (1 - Math.min(0.999999, r))) / 100);
+export const boilerTarget = (x) => Math.round(Math.max(BOILER.min, Math.min(BOILER.max, Number(x) || 2)) * 100) / 100;
+let PROJ_LIVE = false;   /* flipped at the end of the file, once HOLD exists: buildScene runs during this module's own load */
+let PROJ_TIERS = {};
+export const setProjects = (t) => { PROJ_TIERS = { ...(t || {}) }; };
+export const projTier = (id) => (PROJ_LIVE ? PROJ_TIERS[id] | 0 : 0);
+export const projTiers = () => ({ ...PROJ_TIERS });
+export const projScenes = () => Object.values(PROJECTS).map((p) => p.scene);
+export function projObjs(key, b) {
+  if (!PROJ_LIVE) return;
+  const g = b.g, objs = b.objs, tiles = (b.projTiles = []), at = (x, y, c) => { g[y][x] = c; tiles.push([x, y]); };
+  b.projFrom = objs.length;
+  for (const [id, P] of Object.entries(PROJECTS)) {
+    if (P.scene !== key) continue;
+    const tier = PROJ_TIERS[id] | 0, [bx, by] = P.board;
+    objs.push({ t: "projboard", art: "o_projboard", proj: id, x: bx, y: by, name: `${P.name}: ${tier >= 3 ? "finished" : `tier ${tier + 1} of 3 wants parts`}` }); at(bx, by, "#");
+    if (id === "dock") {
+      if (!tier) { objs.push({ t: "dockruin", art: "o_dockruin", proj: id, x: 16, y: 18, w: 2, h: 1, name: "A rotten old jetty" }); continue; }
+      for (let y = 18; y <= 21; y++) for (const x of [16, 17]) at(x, y, "p");
+      objs.push({ t: "dock", proj: id, x: 16, y: 18, w: 2, h: 4, name: "The Fishing Dock" });
+      const boost = tier >= 2 ? { bite: 0.1, rare: 2 } : {};
+      for (const [x, y] of [[15, 21], [18, 21]]) objs.push({ t: "spot", proj: id, x, y, name: "Fishing spot off the dock", fish: "sardine", fish2: "perch", fish2lvl: 5, xp: 20, xp2: 30, look: 2, ...boost });
+      if (tier >= 3) objs.push({ t: "spot", proj: id, x: 17, y: 22, special: true, art: "o_spot6", name: "The Deep End", fish: "bonefish", fish2: "ghostcarp", fish2lvl: 35, req: { skill: "fishing", lvl: 30 }, xp: 90, xp2: 110, bite: 0.1, rare: 4 });
+    } else if (id === "cannon") {
+      objs.push(tier ? { t: "cannon", art: "o_cannon", proj: id, x: 18, y: 12, w: 2, h: 1, name: `The King's Cannon: ${CANNON.sparks} Sparks a shot` } : { t: "cannonruin", art: "o_cannonruin", proj: id, x: 18, y: 12, w: 2, h: 1, name: "A rusted old cannon" });
+      at(18, 12, "#"); at(19, 12, "#");
+    } else if (id === "table") {
+      objs.push(tier ? { t: "boiler", art: "o_boiler", proj: id, x: 35, y: 19, w: 2, h: 1, name: "The Boiler" } : { t: "tableruin", art: "o_tableruin", proj: id, x: 35, y: 19, w: 2, h: 1, name: "A table under a dust sheet" });
+      at(35, 19, "#"); at(36, 19, "#");
+    }
+  }
+}
 export function buildScene(key) {
   const sc = sceneDef(key), b = sc.build.call(sc);
   fungObjs(String(key).split(":")[0], b);   /* (2026-09-27) Fungiculture's wild clusters: before the event's objects, so they never depend on it */
   hwObjs(String(key).split(":")[0], b);   /* (2026-09-27) the Long Night's jack-o'-lanterns and ghost lanterns, while the event is on */
+  projObjs(String(key), b);   /* (2026-09-28) World Projects: LAST, and append-only */
   if (!sc.noBanks) markBanks(b.g);   /* (2026-09-27) the Depths' abyss is its own edge: see its map */
   b.objs.forEach((o, i) => { o.id = i; o.w ??= 1; o.h ??= 1; });
   return b;
@@ -3857,7 +3925,7 @@ export function tableReturn(g, res = {}) {
   return 1;
 }
 /** the multiplier a simple game actually pays: its nominal one, made fair, times this play's draw */
-export const paidMult = (g, nominal, res, edge) => (nominal > 0 ? (nominal * (g === "slots" ? edge - JACKPOT.slice : edge)) / tableReturn(g, res) : 0);
+export const paidMult = (g, nominal, res, edge) => (nominal > 0 ? (nominal * (g === "slots" || (g === "boiler" && res.potOn) ? edge - JACKPOT.slice : edge)) / tableReturn(g, res) : 0);   /* (2026-09-28) the Boiler's Pressure Pot takes the same slice as the slots' jackpot */
 /* the slots jackpot: 2% of every spin goes into one pot everybody shares; three sevens wins it (a 500 tickets spin
    wins all of it, smaller spins a share in proportion, the rest stays in the pot). The regular pays above were
    trimmed to make room, so slots still return about 96.5% overall. The house seeds it again after a win. */
@@ -8458,3 +8526,9 @@ TINK.autoRate = 0.75;
 export const tkRegen = (c) => tkOn(c).reduce((a, g) => a + (g.regen || 0), 0);
 /** the part value of a build: what its xp is worked out from */
 export const tkPv = (g) => Object.entries(g.parts || {}).reduce((a, [p, n]) => a + n * TINK.parts[p].pv, 0);
+/* (2026-09-28) World Projects go live with Tinkering (PROJECTS, beside buildScene) */
+PROJ_LIVE = !HOLD.tinker;
+TINK.donateXp = 0.5;   /* Tinkering xp per part value given to a project (salvage already paid 1 for it); tickets give feeXp each */
+/** part value of a project tier's parts (tickets aside): what the finisher's xp is worked out from */
+export const projPv = (need) => Object.entries(need || {}).reduce((a, [p, n]) => a + (TINK.parts[p] ? n * TINK.parts[p].pv : 0), 0);
+GAMES.boiler = { name: "The Boiler", icon: "♨️", proj: "table", ex: "Set the pressure from 1.1× to 100×. If the boiler holds past it, you win that many times your stake." };

@@ -7,7 +7,7 @@
    worth a Relic shard ask "Sure?" first. The foot is "Salvage the lot": plain drops only, never gear, bars, food, magic or a favourite. */
 export function createTinker(E) {
   const { G, $, esc, send, SFX, ico, openWin } = E, T = G.TINK, UI = "/v3/assets/img/glad/flat/ui/";
-  let win = null, v = null, tab = "salvage", err = null, bagSig = "";
+  let win = null, v = null, tab = "salvage", err = null, bagSig = "", focus = null;
   const partChip = (p, n) => `<span class="tk-part" style="--c:${T.parts[p].col}"><i></i>${Number(n).toLocaleString()} ${esc(T.parts[p].name)}</span>`;
   const partsOf = (g) => Object.keys(T.parts).filter((p) => g[p] > 0).map((p) => partChip(p, g[p])).join("");
   const SAYS = ["Everything's worth something. Mostly bits.", "Bring me your junk. I'll turn it into parts.", "Parts don't sell. Parts BUILD.", "Your favourites are safe with me, love."];
@@ -56,7 +56,27 @@ export function createTinker(E) {
       }).join("") + `</div>`;
       foot = `<span class="k-note">Built gadgets go in your bag: click one there to use it. Timed ones run while you're outside, one of each at a time, and show on your buffs bar.</span>`;
     } else {
-      pane = `<div class="tk-empty"><b>World Projects are next</b><p>Bronny's drawing up the plans. The parts you salvage now will build them.</p></div>`;
+      /* STEP FOUR: WORLD PROJECTS. One card each: the tier ladder, what this tier does, a bar per part with Give buttons, who has
+         given most, and Finish once it is full (the server checks you are on site and have the level). */
+      const PV = v?.proj || {}, tix = G.tixIn(E.me || { inv: [] });
+      pane = `<div class="k-sect"><span class="k-label">World Projects · the whole server builds them · give here or at the site · the last step of each tier is done on site</span></div>` + Object.entries(G.PROJECTS).map(([id, P]) => {
+        const st = PV[id] || { tier: G.projTier(id), got: {}, top: [] }, t = P.tiers[st.tier], pips = P.tiers.map((x, i) => `<i class="${i < st.tier ? "on" : i === st.tier ? "now" : ""}" title="${esc(x.name)}"></i>`).join("");
+        if (!t) return `<div class="tk-proj done${focus === id ? " focus" : ""}" data-proj="${id}"><div class="tk-ph"><b>${esc(P.name)}</b><span class="tk-pips">${pips}</span></div><p class="tk-pd">Finished. ${esc(P.tiers.map((x) => x.name).join(", "))}.</p></div>`;
+        const bars = Object.entries(t.need).map(([part, n]) => {
+          const got = st.got?.[part] | 0, full = got >= n, isT = part === "tickets", have = isT ? tix : pouch[part] | 0, col = isT ? "#e8bf35" : T.parts[part].col, name = isT ? "Tickets" : T.parts[part].name;
+          const steps = isT ? [1000, 10000] : [10, 100], btn = (k, lbl) => `<button type="button" class="k-btn sm tk-give" data-id="${id}" data-part="${part}" data-n="${k}"${full || !have ? " disabled" : ""}>${lbl}</button>`;
+          return `<div class="tk-bar${full ? " full" : ""}" style="--c:${col}"><span class="tk-bl"><i></i>${esc(name)}<small>${got.toLocaleString()} / ${n.toLocaleString()}</small></span><span class="tk-bt"><u style="width:${Math.min(100, (got / n) * 100)}%"></u></span>
+            <span class="tk-bg">${full ? `<em>Full</em>` : `${btn(steps[0], `+${steps[0].toLocaleString()}`)}${btn(steps[1], `+${steps[1].toLocaleString()}`)}${btn(1e12, "All")}`}</span></div>`;
+        }).join("");
+        const top = (st.top || []).map((w) => `<li><b>${esc(w.name)}</b><small>${w.pv.toLocaleString()} parts${w.tix ? ` · ${G.fmtTix(w.tix)}` : ""}</small></li>`).join("");
+        return `<div class="tk-proj${st.ready ? " ready" : ""}${focus === id ? " focus" : ""}" data-proj="${id}">
+          <div class="tk-ph"><b>${esc(P.name)}</b><span class="tk-where">${esc(P.where)}</span><span class="tk-pips" aria-label="tier ${st.tier + 1} of 3">${pips}</span></div>
+          <p class="tk-pd"><b>Tier ${st.tier + 1}: ${esc(t.name)}.</b> ${esc(t.does[0].toUpperCase() + t.does.slice(1))}.</p>
+          <div class="tk-bars">${bars}</div>
+          <div class="tk-pf">${top ? `<ol class="tk-top5">${top}</ol>` : `<span class="k-note">Nobody's given yet. Be first.</span>`}
+            <button type="button" class="k-btn tk-finish" data-id="${id}"${st.ready ? "" : " disabled"}>${st.ready ? `Finish it · Tinkering ${t.finish}` : `Finishing needs Tinkering ${t.finish}`}</button></div></div>`;
+      }).join("");
+      foot = `<span class="k-note">Giving pays Tinkering xp. What's given stays given: it's in the build now.</span>`;
     }
     $("tkBody").innerHTML = `<div class="tk">
       <div class="tk-top"><span class="tk-face"><img src="${UI}sal_face.png?v=1" alt="Sprocket Sal" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'\\u{1F527}'}))"></span>
@@ -72,6 +92,9 @@ export function createTinker(E) {
       SFX.play("chip", { vol: 0.5 }); send({ t: "tinker", op: "salvage", k: b.dataset.k, f: Number(b.dataset.f) | 0 });
     }));
     body.querySelector("#tkLot")?.addEventListener("click", () => { SFX.play("coins"); send({ t: "tinker", op: "salvage", lot: true }); });
+    body.querySelectorAll(".tk-give").forEach((b) => b.addEventListener("click", () => { SFX.play("coins", { vol: 0.6 }); send({ t: "tinker", op: "give", id: b.dataset.id, part: b.dataset.part, n: Number(b.dataset.n) }); }));
+    body.querySelectorAll(".tk-finish").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); b.disabled = true; send({ t: "tinker", op: "finish", id: b.dataset.id }); }));
+    if (focus && tab === "projects") { body.querySelector(`[data-proj="${focus}"]`)?.scrollIntoView({ block: "nearest" }); }
     body.querySelectorAll(".tk-build").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.6 }); b.disabled = true; send({ t: "tinker", op: "build", id: b.dataset.id }); }));
   }
   function floatGot(got) {
@@ -79,8 +102,10 @@ export function createTinker(E) {
     const f = document.createElement("b"); f.className = "tk-float"; f.textContent = `+${Object.keys(T.parts).filter((p) => got[p]).map((p) => `${got[p]} ${T.parts[p].name}`).join(", ")}`; top.append(f); setTimeout(() => f.remove(), 1500);
   }
   return {
-    open() { mount(); openWin("tkWin"); err = null; send({ t: "tinker", op: "view" }); render(); },
+    open(on) { mount(); if (on) { tab = "projects"; focus = on; } openWin("tkWin"); err = null; if (!on) send({ t: "tinker", op: "view" }); render(); },
+    tiers() { if (win && !win.hidden) send({ t: "tinker", op: "view" }); },   /* a tier went up somewhere: ask for the fresh bars */
     got(view, got, built) { v = view; err = null; if (win && !win.hidden) { render(); if (got) { SFX.play("coins"); floatGot(got); } if (built) { SFX.play(built.master ? "win_big" : "task_done"); if (built.master) E.winFx?.(`${built.n}\u00d7 ${G.GADGETS[built.id]?.name || ""}`, "", "Masterwork!"); } } },
+    done(f) { SFX.play("win_big"); E.winFx?.(G.PROJECTS[f.id]?.tiers[f.tier - 1]?.name || "Built", "", "Project built!"); },
     oops(text) { err = text; SFX.play("ui_error"); render(); },
     /* the page calls this on every update of you; redraw only when the bag's salvageable part has changed */
     bag() { if (!win || win.hidden) return; const sig = (E.me?.inv || []).filter((s) => G.canSalvage(s.k)).map((s) => `${s.k}:${s.n}:${G.fOf(s)}`).join(","); if (sig !== bagSig) { bagSig = sig; render(); } }
@@ -109,6 +134,21 @@ export const CSS = `
 #tkWin .k-btn.tk-go.danger{border:2px solid #2a140c;border-image:none;border-radius:var(--k-r);background:linear-gradient(#cf4638,#a52e22)}
 #tkWin .k-btn.tk-lot{flex:none;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn_gold.png?v=1) 10 fill / 7px stretch;background:none;color:#2a1600;text-shadow:none;font:900 14px var(--k-disp,Cinzel),serif}
 .tk-foot{margin:0;gap:10px}.tk-foot .k-note{flex:1 1 auto;min-width:0}
+/* the Projects tab */
+.tk-proj{display:grid;gap:8px;padding:12px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.tk-proj.focus{box-shadow:inset 0 0 0 2.5px #e8bf35}.tk-proj.ready{box-shadow:inset 0 0 0 2.5px var(--k-good)}.tk-proj.done{opacity:.8}
+.tk-ph{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.tk-ph b{font:800 17px var(--k-disp,Cinzel),serif}.tk-where{font:700 12px Lora,serif;color:var(--k-ink2)}
+.tk-pips{margin-left:auto;display:flex;gap:4px}.tk-pips i{width:22px;height:8px;border-radius:99px;background:rgba(90,58,24,.18)}.tk-pips i.on{background:var(--k-good)}.tk-pips i.now{background:#e8bf35}
+.tk-pd{margin:0;font:600 13px/1.4 Lora,serif}.tk-pd b{font-weight:800}
+.tk-bars{display:grid;gap:6px}
+.tk-bar{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:10px;align-items:center}
+.tk-bl{display:flex;align-items:center;gap:6px;font:800 13px Lora,serif}.tk-bl i{width:12px;height:12px;border-radius:3px;background:var(--c);flex:none}.tk-bl small{margin-left:auto;font:700 11.5px Lora,serif;color:var(--k-ink2)}
+.tk-bt{height:12px;border-radius:99px;background:rgba(90,58,24,.15);overflow:hidden}.tk-bt u{display:block;height:100%;background:var(--c);text-decoration:none}
+.tk-bg{display:flex;gap:4px}.tk-bg em{font:900 11px Lora,serif;font-style:normal;color:var(--k-good);text-transform:uppercase;letter-spacing:.06em}
+#tkWin .k-btn.tk-give{padding:3px 8px;font-size:12px}
+.tk-pf{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.tk-top5{flex:1;min-width:0;margin:0;padding-left:18px;display:flex;gap:14px;flex-wrap:wrap;font:700 12px Lora,serif}.tk-top5 small{display:block;color:var(--k-ink2);font-weight:600}
+#tkWin .k-btn.tk-finish{margin-left:auto;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn_gold.png?v=1) 10 fill / 7px stretch;background:none;color:#2a1600;font:900 13.5px var(--k-disp,Cinzel),serif}#tkWin .k-btn.tk-finish:disabled{filter:grayscale(.8);opacity:.7}
+@media (max-width:620px){.tk-bar{grid-template-columns:1fr auto}.tk-bt{grid-column:1/-1;order:3}}
 /* the Build tab's cards */
 .tk-gad{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
 .tk-card{display:grid;gap:6px;align-content:start;padding:10px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}.tk-card.lock{opacity:.6}
