@@ -203,8 +203,8 @@
 > adding a refresh here.
 >
 > **MLB slate line** — quiet sports still get one chat line a day when
-> the 4 PM slate opens (`composeSlateOpen`, keyed `slateopen:<sport>:<day>`
-> in `ops_status`); refills through the evening stay silent.
+> the day's first game opens (`composeSlateOpen`, keyed `slateopen:<sport>:<day>`
+> in `ops_status`); the games opening after it stay silent.
 >
 > **The Daily Pot (2026-09-13)** — 100 ZC from the house, once a day, paid
 > on a bet at a moment nobody can predict. `functions/api/casino/_pot.js`:
@@ -1288,9 +1288,9 @@
 > API returns 403 to Cloudflare's IP range. `settle.js` also runs
 > `_autoopen.js` every tick: NFL games due within an hour get a market
 > with the median h2h line and one slate-wide chat message; **MLB opens
-> every day at 4 PM Central** (that evening's games and the next day's
-> day games, `SPORTS` in `_autoopen.js`), **at most 5 open at a time**
-> (`maxOpen`; earliest first, the next opens when one locks) and is **quiet in chat** —
+> each game an hour before first pitch too** (since 2026-09-29; it was
+> a 4 PM Central slate capped at 5 open — `maxOpen` is still supported
+> in `SPORTS` but unset) and is **quiet in chat** —
 > `quietInChat(sport)` keeps open/countdown/closed lines to NFL; MLB
 > finals still get one chat line per settled game **that had at least one pick** — since 2026-09-15 a final nobody bet on is silent (`settle.js`), and the
 > site, `!pick`/`!odds` replies and Discord carry the rest. Then
@@ -1299,8 +1299,8 @@
 > minutes. The schedule
 > is cached 30 minutes (one credit per refresh, shared with the Picks
 > page's Upcoming list via `/api/picks/upcoming`; since 2026-09-15 a
-> paused sport, or a daily sport outside its opening hours — MLB before
-> 3 PM or after 1 AM Central — is served from a 12-hour shadow copy
+> paused sport, or a sport outside its `refreshHoursCT` window — MLB
+> before 9 AM or after 1 AM Central — is served from a 12-hour shadow copy
 > instead of refetched, `refreshWorthIt` in `_autoopen.js`; and live
 > score tracking runs every other tick, `live:last` in `ops_status`); a fresh price is
 > fetched only when a game is due, so section 9.5's quota concern is

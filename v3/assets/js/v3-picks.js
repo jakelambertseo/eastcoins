@@ -393,8 +393,8 @@
 
   function upcomingCard(game) {
     const card = el("article", "market upcoming");
-    // The server says when each game opens (NFL an hour out, MLB at the
-    // 4 PM Central slot); the hour-before rule is only the fallback.
+    // The server says when each game opens (NFL and MLB both an hour
+    // before the start); the same rule is the fallback here.
     const opensAt = new Date(game.opensAt || new Date(game.startsAt).getTime() - 60 * 60 * 1000);
 
     const head = el("div", "market-head");
@@ -432,11 +432,11 @@
     return card;
   }
 
-  /** "Betting opens in 4 hours, 38 minutes", or the wait for a free slot once the time has passed. */
+  /** "Betting opens in 4 hours, 38 minutes", or "any minute" once the time has passed and the next run is due. */
   function opensInText(at) {
-    if (!Number.isFinite(at)) return "Betting opens an hour before kickoff";
+    if (!Number.isFinite(at)) return "Betting opens an hour before the game starts";
     const ms = at - Date.now();
-    if (ms <= 0) return "Betting opens when a slot frees up";
+    if (ms <= 0) return "Betting opens any minute";
     const mins = Math.round(ms / 60000);
     if (mins < 1) return "Betting opens any minute";
     if (mins < 60) return `Betting opens in ${mins} minute${mins === 1 ? "" : "s"}`;
@@ -471,7 +471,7 @@
     const asOf = stamp && !Number.isNaN(stamp.getTime())
       ? ` · lines as of ${stamp.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
       : "";
-    copy.append(el("p", null, `${games.length} game${games.length === 1 ? "" : "s"} on the way — NFL opens an hour before kickoff, MLB every day at 4 PM CT${asOf}.`));
+    copy.append(el("p", null, `${games.length} game${games.length === 1 ? "" : "s"} on the way — betting on every game opens an hour before it starts${asOf}.`));
     head.append(copy);
     section.append(head);
 
@@ -539,8 +539,8 @@
           local.failed
             ? "The Picks catalog didn't answer. This is usually temporary."
             : local.upcoming.length
-              ? (nflDayNow() ? "The next games are listed below. NFL opens an hour before kickoff." : "The next games are listed below. NFL opens an hour before kickoff; MLB opens every day at 4 PM CT.")
-              : (nflDayNow() ? "NFL opens an hour before kickoff. Check back closer to game time." : "NFL opens an hour before kickoff; MLB opens every day at 4 PM CT. Check back closer to game time."))
+              ? (nflDayNow() ? "The next games are listed below. NFL opens an hour before kickoff." : "The next games are listed below. NFL and MLB games open for betting an hour before they start.")
+              : (nflDayNow() ? "NFL opens an hour before kickoff. Check back closer to game time." : "NFL and MLB games open for betting an hour before they start. Check back closer to game time."))
       );
       wrap.append(empty);
     } else {
@@ -1141,7 +1141,7 @@
       return wrap;
     }
     if (!rows.length) {
-      wrap.append(emptyNote("No standings yet", "The board fills in as games settle. NFL markets open an hour before each kick-off."));
+      wrap.append(emptyNote("No standings yet", "The board fills in as games settle. NFL and MLB markets open an hour before each game starts."));
       return wrap;
     }
 

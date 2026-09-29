@@ -7,13 +7,13 @@
            with its consensus line locked, and chat is told once —
            one message for the whole slate.
 
-     MLB   every day at 4:00 PM Central the next day's worth of
-           games become eligible — tonight's, and tomorrow's day
-           games — but at most FIVE are open at any one time, the
-           earliest first; as one locks at first pitch the next in
-           line opens on the following tick. Quiet in chat: no open line,
-           no countdown, no closing or settlement line. The site,
-           the game pages, the bot's replies and Discord carry it.
+     MLB   the same rule since 2026-09-29: every game opens an hour
+           before first pitch, with no cap on how many are open at
+           once. (It used to open a whole slate at 4 PM Central, five
+           at a time, so a late game could sit waiting for a slot.)
+           Quiet in chat: one line a day when the first game opens,
+           no countdown, no closing line. The site, the game pages,
+           the bot's replies and Discord carry the rest.
 
    Quota is the design constraint. The Odds API bills per request:
 
@@ -35,7 +35,7 @@ const TZ = "America/Chicago";
 
 export const SPORTS = [
   { key: "americanfootball_nfl", sport: "american-football", league: "NFL", open: "lead", leadMs: HOUR, horizonMs: 8 * DAY, quiet: false },
-  { key: "baseball_mlb", sport: "baseball", league: "MLB", open: "daily", openHourCT: 16, horizonMs: 30 * HOUR, quiet: true, maxOpen: 5 }
+  { key: "baseball_mlb", sport: "baseball", league: "MLB", open: "lead", leadMs: HOUR, horizonMs: 30 * HOUR, quiet: true, refreshHoursCT: [9, 1] }
 ];
 
 /** Sports whose markets run without a word in Twitch chat. */
@@ -46,27 +46,33 @@ export function quietInChat(sport) {
 // One credit per refresh; at most 48 a day per sport, and only while
 // someone is looking or a game is near.
 const SCHEDULE_TTL_S = 30 * 60;
-// v3: entries carry sport, league and the open time.
-const cacheUrl = (cfg) => `https://eastcoin-picks.internal/schedule-v3/${cfg.key}`;
+// v4: MLB's open time became an hour before first pitch, so any copy
+// cached under the 4 PM rule is left behind rather than served.
+const cacheUrl = (cfg) => `https://eastcoin-picks.internal/schedule-v4/${cfg.key}`;
 // A second, longer-lived copy of the last fetch, served whenever a
-// refresh would buy nothing: a paused sport, or a daily sport outside
-// the hours it can open. Twelve hours covers a whole off-window.
-const shadowUrl = (cfg) => `https://eastcoin-picks.internal/schedule-v3-long/${cfg.key}`;
+// refresh would buy nothing: a paused sport, or a sport outside the
+// hours it can open. Twelve hours covers a whole off-window.
+const shadowUrl = (cfg) => `https://eastcoin-picks.internal/schedule-v4-long/${cfg.key}`;
 const SHADOW_TTL_S = 12 * 60 * 60;
 
 /**
  * Whether spending a credit on this sport's schedule right now can
- * change anything. NFL opens an hour before any kickoff, so always.
- * A daily sport only opens at its hour — MLB at 4 PM Central — and
- * refills through the evening, so from an hour before that until 1 AM
- * is the only stretch a fresh copy matters; the rest of the day the
- * shadow copy is as good.
+ * change anything. NFL can kick off at any hour, so always. A sport
+ * with `refreshHoursCT: [from, until]` only has games opening inside
+ * that stretch of the Central clock — MLB's earliest first pitch is
+ * around 11 AM, so 9 AM to 1 AM — and the rest of the day the shadow
+ * copy is as good. A daily sport keeps its own window: an hour before
+ * its opening hour until 1 AM.
  */
 export function refreshWorthIt(cfg, now = Date.now()) {
-  if (cfg.open !== "daily" || !Number.isFinite(cfg.openHourCT)) return true;
+  const window = Array.isArray(cfg.refreshHoursCT) ? cfg.refreshHoursCT
+    : cfg.open === "daily" && Number.isFinite(cfg.openHourCT) ? [cfg.openHourCT - 1, 1]
+    : null;
+  if (!window) return true;
   const ct = new Date(new Date(now).toLocaleString("en-US", { timeZone: "America/Chicago" }));
   const h = ct.getHours();
-  return h >= cfg.openHourCT - 1 || h < 1;
+  const [from, until] = window;
+  return from <= until ? h >= from && h < until : h >= from || h < until;
 }
 
 function median(values) {
@@ -98,7 +104,8 @@ function ctHourOn(ms, hour) {
 }
 
 /**
- * When a game opens for picks. NFL: an hour before. MLB: the 4 PM
+ * When a game opens for picks. A "lead" sport (NFL, MLB): `leadMs`
+ * before the start. A "daily" sport (none today): the `openHourCT`
  * Central slot that precedes it — the same afternoon for a night game,
  * the afternoon before for a day game.
  */

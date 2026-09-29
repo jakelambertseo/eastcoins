@@ -100,7 +100,7 @@ export function recapEmbed(recap, dayStartMs) {
     return {
       color: 0x8a8580,
       title: `Daily recap — ${pretty}`,
-      description: "Nothing settled. The next slate opens at 4 PM Central.",
+      description: "Nothing settled. Every game opens for picks an hour before it starts.",
       url: `${SITE}/?view=picks`,
       timestamp: new Date().toISOString()
     };

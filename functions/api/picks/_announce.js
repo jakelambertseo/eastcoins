@@ -81,16 +81,19 @@ function club(name) {
 }
 
 /**
- * The quiet sports' one line a day: the slate is open. Games and first
- * pitch times, no prices — !odds has those, and chat stays readable.
+ * The quiet sports' one line a day, when the day's first game opens.
+ * Each game opens an hour before its first pitch, so this names only
+ * what opened this tick and says the rule for the rest. No prices —
+ * !odds has those, and chat stays readable.
  */
 export function composeSlateOpen(markets) {
   if (!markets.length) return "";
   const league = String(markets[0].league || "").toUpperCase() || "Picks";
   const sorted = [...markets].sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
   const games = sorted.map((m) => `${club(m.away_name)} at ${club(m.home_name)} ${timeOf(m.starts_at)}`);
-  const list = games.length <= 6 ? games.join(" \u00b7 ") : `${games.slice(0, 5).join(" \u00b7 ")} and ${games.length - 5} more`;
-  return `${BADGE} ${league} is open \u2014 ${games.length} game${games.length === 1 ? "" : "s"} tonight: ${list} \u00b7 !odds <team> for a line \u00b7 !pick <amount> <team>`;
+  // Four at most: the rule sentence costs room under say()'s 400 bytes.
+  const list = games.length <= 4 ? games.join(" \u00b7 ") : `${games.slice(0, 3).join(" \u00b7 ")} and ${games.length - 3} more`;
+  return `${BADGE} ${league} picks are open \u2014 every game opens an hour before first pitch. Open now: ${list} \u00b7 !odds <team> for a line \u00b7 !pick <amount> <team>`;
 }
 
 /**

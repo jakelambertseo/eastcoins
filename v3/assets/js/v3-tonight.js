@@ -197,7 +197,7 @@
         const opens = next.opensAt ? new Date(next.opensAt) : new Date(new Date(next.startsAt).getTime() - 3600000);
         copy.append(el("strong", null, `Next up: ${nick(teamName(next.away))} at ${nick(teamName(next.home))}`), document.createTextNode(` · opens ${when(opens.toISOString())}, kicks off ${when(next.startsAt)}`));
       } else {
-        copy.append(el("strong", null, "Nothing open right now"), document.createTextNode(" · NFL opens an hour before kickoff."));
+        copy.append(el("strong", null, "Nothing open right now"), document.createTextNode(" · NFL and MLB games open an hour before they start."));
       }
       box.append(copy);
       const cta = go(shell, "picks", "/?view=picks"); cta.textContent = "Open Picks →";

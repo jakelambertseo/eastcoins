@@ -550,9 +550,10 @@ export async function onRequestPost(context) {
     const said = await sayInChat(context.env, composeOpen(loudOpened));
     if (!said.ok) console.error(`Picks: couldn't announce ${loudOpened.length} auto-opened market(s): ${said.error}`);
   }
-  // The quiet sports (MLB) get exactly one line a day, when the 4 PM
-  // slate opens. The refills as games lock through the evening stay
-  // silent, and !odds carries the prices.
+  // The quiet sports (MLB) get exactly one line a day, when the first
+  // game of the day opens (an hour before its first pitch). The rest,
+  // opening one by one through the day, stay silent, and !odds carries
+  // the prices.
   const quietOpened = opened.filter((m) => quietInChat(m.sport));
   if (quietOpened.length) {
     const day = new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
