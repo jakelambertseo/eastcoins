@@ -7397,6 +7397,46 @@ export const eggTrades = () => Object.entries(EGG_TRADES).filter(([egg, cost]) =
 SCENES.workyard.npcs.push({ name: "Nestor the Egg Man", art: "nestor", x: 25, y: 15, still: true, opens: "eggtrade", reach: 2,
   lines: ["Eggs! Every egg in the world, if you've got what its pet wants.", "A Truffle Pig won't come out of its shell for less than a sack of boar and some puffballs. Pigs.", "Found one yourself? Lucky. I'm the other way: the sure way.", "Owls like chicken. Don't ask how I know.",
     "An egg's no good in your pocket. Take it home to your island and put it in a hatchery. Yahsmeena sells them, by your cottage.", "Three Ordinary pet food under the egg, and you wait. A Speckled egg is twelve hours. A Gilded one, five days. Worth it.", "Two of the same pet in your pen make a Greater one. Two Greaters make a Legendary. It all starts with an egg."] });
+/* (2026-09-28, the owner: "lets just start with a Daily for the server for now. Create a new NPC thats placed near the court in the yard.
+   There has to be at least 5 items/jobs turned in. No unused potions, instead the potion only resets after one is claimed. then new tasks
+   are given and include a timer countdown/time remaining in the NPC UI") GUS'S ORDER: THE SERVER'S DAILY.
+
+   ONE ORDER FOR THE WHOLE SERVER, five lines, each from a different kind of work (fishing, the woods, the rocks, the hunt, the kitchen,
+   the fields), so whatever somebody likes doing, they can help. Anyone hands in from their bag at Gus, any time, in any amount, and it
+   all lands on the same bars.
+
+   EVERYTHING HANDED IN IS GONE. That is the balance (the owner: so a party can't keep its drops, sell them to Bom AND take a 2X for doing
+   the daily): an item on Gus's order is an item nobody sold. And nothing on it is anything Bom sells, so nobody can buy from him and hand
+   it straight back.
+
+   FILLED, IT IS ONE 2X POTION FOR THE WHOLE SERVER, held at Gus until somebody who helped claims it. It never expires unused, and the
+   next order only goes up once it is claimed (so it never fires at 2 PM on a Tuesday with nobody on). An order that runs out UNFILLED
+   (ORDER.ms after it went up) is replaced by a fresh one, and what was handed in stays handed in.
+
+   The counts are a first guess at about half an hour of one person's work a line. Tune them here; the worker and the window read nothing
+   else. */
+export const ORDER = {
+  npc: "Gus the Foreman", ms: 24 * 3600 * 1000, lines: 5,
+  kinds: {
+    fish: [["csardine", 120], ["cperch", 100], ["ctrout", 70]],
+    wood: [["logs", 150], ["willowlogs", 90], ["charcoal", 40]],
+    ore: [["copper", 120], ["tin", 120], ["bronze_bar", 25]],
+    hunt: [["bones", 80], ["hide", 40], ["tusk", 40], ["feather", 200]],
+    kitchen: [["cchicken", 70], ["cbeef", 50], ["cpork", 40]],
+    field: [["tomatoe", 80], ["olives", 120], ["sporecap", 50]]
+  }
+};
+/** a fresh order's lines: ORDER.lines different kinds, one thing from each. `r` is the random source (Math.random, or a test's). */
+export function orderPick(r = Math.random) {
+  const kinds = Object.entries(ORDER.kinds).map(([kind, list]) => [kind, list.filter(([k]) => ITEMS[k] && !ITEMS[k].held)]).filter(([, l]) => l.length);
+  for (let i = kinds.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [kinds[i], kinds[j]] = [kinds[j], kinds[i]]; }
+  return kinds.slice(0, ORDER.lines).map(([kind, l]) => { const [k, n] = l[Math.floor(r() * l.length)]; return { kind, k, n, got: 0 }; });
+}
+/** how far along an order is, 0..1: each line counts the same, however big it is, so a line of 200 feathers does not drown out 25 bars */
+export const orderPct = (o) => (o?.lines?.length ? o.lines.reduce((a, l) => a + Math.min(1, l.got / l.n), 0) / o.lines.length : 0);
+SCENES.workyard.npcs.push({ name: "Gus the Foreman", art: "gus", x: 3, y: 15,   /* (2026-09-28, the owner: "move him to the west side of the yard") by the west gate, just off the road in from the Carnival */ still: true, opens: "order", reach: 2,
+  lines: ["Order's on the board. Fill it and the whole server gets doubled. Simple.", "Everybody chips in. Fish, logs, ore, whatever's on the list. It all counts.", "What you hand me, I keep. That's the deal. The 2X is the pay.",
+    "Somebody who helped claims the potion. Then I put up the next one. Not before.", "Don't sell it to Bom if it's on my list. He'll only give you tickets. I'll give everybody double.", "Clock's on the board. Run out and I start over, and I keep what you gave me."] });
 SCENES.workyard.npcs.push({ name: "Hexa the Candy Witch", event: true, art: "hexa", x: 18, y: 11, still: true,   /* (2026-09-27) was 24,11 with the tent on the north road; the owner: "right in the road in the yard". West of the road now, on the grass between the bush and the Gloam sign */ quests: ["hw_king"], opens: "market", reach: 3, hair: "#3a2a4a", shirt: "#2a1a3a", pants: "#4a2a5a",
   lines: ["Candy corn. Bring me candy corn. It falls off everything this month, if you're the kind of person things fall off for.", "The King rises on the hour in the Mire. I sell to the ones who come back.", "Seeds, vials, slime, pie. And two fits, if you've the corn: a skeleton and a sheet. Ronde does the colours.", "I pack the tent on the second of November and the corn goes to sugar in your bag the same morning. Whatever you've bought, you keep. Whatever you haven't, you won't."] });
 

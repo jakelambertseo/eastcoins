@@ -30,6 +30,7 @@ import { installPyramid } from "./pyramid.js";
 import { installCount } from "./count.js";
 import { installCarnival, installTurnstile } from "./carnival.js";
 import { installPit } from "./pit.js";
+import { installOrder } from "./order.js";   /* (2026-09-28) Gus's order, the server's daily */
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
 const CR = createCryptRules(G, G._MAP); Object.assign(G.SCENES, CR.scenes); Object.assign(G.MOBS, CR.mobs);
 /* (2026-09-24) THE GREAT PYRAMID, the second party dungeon: same shape, its own map, monsters and boss. */
@@ -795,6 +796,7 @@ export class World {
       case "report": return void this.reportOp(S, pl, m).catch((e) => console.error("report", e));   /* (2026-09-28) the bug button */
       case "pen": return this.penOp(S, pl, m);
       case "hatch": return this.hatchOp(S, pl, m);   /* (2026-09-27) Breeding: eggs */
+      case "order": return this.orderOp(S, pl, m);   /* (2026-09-28) Gus's order, the server's daily */
       case "eggtrade": return this.eggTrade(S, pl, m);   /* (2026-09-28) Nestor the Egg Man */
       case "fung": return this.fungOp(S, pl, m);   /* (2026-09-27) Fungiculture: planting a bed */   /* (2026-09-27) Breeding */   /* (2026-09-27) the Long Night: trick or treat, the Night Market, the corn-priced fits */
       case "talked": { const n = S.npcs.find((x) => x.id === m.npc); if (n) n.holdUntil = 0; return; }
@@ -1387,7 +1389,7 @@ export class World {
     this.cryptTop = (await this.ctx.storage.get("cryptTop")) || {};   /* (v103) the crypt's fastest clears */
     this.radio = (await this.ctx.storage.get("radio")) || null;
     this.chatLog = (await this.ctx.storage.get("chatlog")) || [];
-    this.dbl = (await this.ctx.storage.get("dbl")) || null;   /* (2026-09-25) a 2X event outlives a restart: it is the server's clock, not a player's */   /* (v86) the jukebox's station outlives a restart */
+    this.dbl = (await this.ctx.storage.get("dbl")) || null; await this.orderLoad();   /* (2026-09-28) Gus's order outlives a restart too */   /* (2026-09-25) a 2X event outlives a restart: it is the server's clock, not a player's */   /* (v86) the jukebox's station outlives a restart */
     this.fame = (await this.ctx.storage.get("fame")) || this.fame || null;
     return Response.json({ ok: true, restored: written, from: body.takenAt || null });
   }
@@ -1561,7 +1563,7 @@ export class World {
      one place to get the answer wrong. */
   /* THE HOUSE'S OWN CHAT VOICE. A line in everybody's chat, from nobody in particular. `scene: null` matters:
      the client pops a speech bubble over the speaker when the scene matches, and there is no speaker here. */
-  houseSay(text) { const t = Date.now(), msg = { type: "chat", id: "house", name: "CASINO", role: "admin", text: String(text), scene: null, t }; for (const p of this.pls.values()) p.out.push(msg); this.chatKeep(msg); }
+  houseSay(text, name = "CASINO") { const t = Date.now(), msg = { type: "chat", id: "house", name, role: "admin", text: String(text), scene: null, t }; for (const p of this.pls.values()) p.out.push(msg); this.chatKeep(msg); }
   /* (2026-09-27, the owner: "is it possible that on a server refresh/restart that chat stays showing recent messages? every time we refresh it
      clears", then "yes build the chat history, drop muted messages") THE ROOM'S LAST CHAT_KEEP LINES. Public chat and the house's lines are
      kept here as they are sent, written to storage every five seconds while they change (and by saveAll), read back when the world starts,
@@ -2551,7 +2553,7 @@ export class World {
       const gates = S.def?.gates; if (!gates) continue;
       for (const gt of gates) { const open = G.gateOpenAt(now, gt) ? "i" : "#"; for (const [gx, gy] of G.gateTiles(gt)) S.g[gy][gx] = open; }
     }
-    if (this.tickN % 20 === 0) { this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.hwTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
+    if (this.tickN % 20 === 0) { this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.hwTick(now); this.orderTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
     if (this.tickN % 40 === 0) this.runsSave();   /* (2026-09-27) the dungeon runs, so a deploy does not end them */
     if (this.tickN % 20 === 0) for (const pl of this.pls.values()) {   /* once a second */
       const C = pl.C, dt = Math.min(5000, now - (pl.fxAt || now)); pl.fxAt = now; if (!(C.meal || C.drink || C.charm) || !(G.SCENES[String(C.scene).split(":")[0]]?.mobs?.length)) continue;
@@ -4900,3 +4902,4 @@ installCarnival(World, { G, rint });
 installTurnstile(World, { G });
 installPit(World, { G });
 installTower(World, { G, R: TW, rint });
+installOrder(World, { G });
