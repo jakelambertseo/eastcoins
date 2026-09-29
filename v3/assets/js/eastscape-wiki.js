@@ -1056,6 +1056,16 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-28", title: "Party meter, run reports, and a report for the Pumpkin King",
+    items: [
+      "THE PARTY METER: in a party, a meter sits under the minimap: damage (and damage a second), damage taken, HP healed by food, and deaths, for this fight or the whole run. Fold it, drag it, reset it.",
+      "RUN REPORTS: when a Crypt or Pyramid run clears or wipes, or the Count Room's floor is cleared, everybody in it gets a report: the time against your best, awards (MVP, Killing Blow, Snack King, Deadeye and more), the party's numbers, damage over the run, your xp, and who went down to what. Post it to chat, or open it again from the meter.",
+      "THE PUMPKIN KING GETS ONE TOO: everybody who fought him gets the report when he falls, or when he gets away, party or not.",
+      "FIXED: Bronny's order and a running 2X now survive the server restarting. Before, a restart posted a fresh order and lost what had been handed in. The countdown shows seconds now too.",
+      "Eggs drop one kill in 1,500 (it was one in 500 for a few hours today).",
+    ],
+  },
+  {
     date: "2026-09-28", title: "Bronny's order: the server's daily 2X",
     items: [
       "BRONNY THE FOREMAN is rebuilding the Yard. Find him at his worksite by the Yard's west gate. He posts ONE ORDER for the whole server: five lines, one each from fishing, woodcutting, mining, monster drops and cooking, always two early-game, two mid-game and one late-game, so there's something for everybody to bring.",

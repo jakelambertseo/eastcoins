@@ -212,6 +212,12 @@ export class World {
       if (!(this.jack.pot >= G.JACKPOT.seed)) { this.jack.pot = G.JACKPOT.seed; this.jackDirty = true; }   // (the v107 seed top-up was in restore() too)
       await this.pitLoad();   // (v109) ticket bets on a fight that hasn't been settled yet
       await this.runsLoad();   // (2026-09-27) the dungeon runs that were on when the world went down: see RUNS SURVIVE A RESTART
+      /* (2026-09-28, the owner: "Bronnys countdown isnt working properly. still at 23 hours and 35 minutes") THE SAME TRAP AS v109, TWICE MORE.
+         Bronny's order and the 2X event were each read back only in restore() below, so every deploy started with neither: the order was
+         thrown away and a fresh one posted with a new 24-hour clock (the countdown "never moved" across a deploy, and everything handed in
+         was lost), and a 2X running at a deploy simply ended. Anything saved with ctx.storage.put has to be read back HERE. */
+      this.dbl = (await ctx.storage.get("dbl")) || null;
+      await this.orderLoad();
     });
   }
 
@@ -1931,7 +1937,7 @@ export class World {
          out of the Mire quietly ended the fight for everybody. Now a missing King who is still inside his twenty minutes is put
          back, at the health he was left on, the moment somebody is in the Mire. Only the clock running out, or a kill, ends him. */
       if (m && !m.dead && now < H.kingUp.until) { if (H.kingUp.hp !== m.hp) { H.kingUp.hp = m.hp; if (this.tickN % 100 === 0) this.hwSave(); } }
-      else if (now >= H.kingUp.until) { if (S && m) { S.mobs = S.mobs.filter((x) => x.id !== m.id); S.whoSig = null; } H.kingUp = null; H.kingAt = now + G.HW.king.every; this.hwSave(); this.houseSay("🎃 The Pumpkin King sinks back into the Mire. Next hour."); }
+      else if (now >= H.kingUp.until) { if (S && m) { this.bossEnd(S, m, "escaped");   /* (2026-09-28) he got away: the report says how close it was */ S.mobs = S.mobs.filter((x) => x.id !== m.id); S.whoSig = null; } H.kingUp = null; H.kingAt = now + G.HW.king.every; this.hwSave(); this.houseSay("🎃 The Pumpkin King sinks back into the Mire. Next hour."); }
       else if (!m && S && this.playersIn(S).length) {
         const d = G.MOBS.pumpkinking, [x, y] = G.HW.king.at, hp = Math.max(1, Math.min(d.hp, H.kingUp.hp || d.hp));
         S.mobs.push({ id: H.kingUp.id, t: "pumpkinking", x, y, hx: x, hy: y, hp, maxHp: d.hp, path: [], step: null, face: 1, nextWander: 0, dead: false, respawnAt: Infinity, hurtAt: 0, swingAt: 0, lastSwing: now, aggro: d.aggro });
@@ -2065,7 +2071,7 @@ export class World {
     else if (el === "storm") {
       const o = S.mobs.find((x) => x !== m && !x.dead && G.cheb(x, m) <= 1 && this.mayFight(S, x, pl, now)); if (!o) return;
       const d2 = Math.max(1, Math.round(dmg * M.arc.share * G.elementMul(o.t, "storm")));
-      o.hp -= d2; o.hurtAt = now; S.events.push({ type: "splat", who: o.id, n: d2, kind: "hit", t: now, arc: true }); this.award(pl, d2);
+      o.hp -= d2; o.hurtAt = now; S.events.push({ type: "splat", who: o.id, n: d2, kind: "hit", t: now, arc: true }); this.award(pl, d2); this.bossAdd(pl, o, "dmg", d2);
       if (o.hp <= 0) { const keep = pl.act; this.killMob(S, pl, o, now); if (m.hp > 0) pl.act = keep; }
     }
   }
@@ -2754,6 +2760,7 @@ export class World {
            whose max hit is 2: every hit that was not a 1 flashed CRIT. Now it is the top TENTH, and never under 4 damage, so it is
            about one landed hit in nine and nobody sees one until their max hit reaches 5, around Combat 10.) */
         this.meterAdd(pl, "swing", 1, m); if (dmg) this.meterAdd(pl, "hit", 1, m);   /* (2026-09-28) accuracy, for the run report */
+        this.bossAdd(pl, m, "swing", 1); if (dmg) { this.bossAdd(pl, m, "hit", 1); this.bossAdd(pl, m, "dmg", dmg); }   /* (2026-09-28) and a world boss's own report */
         m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, ranged: G.launcherOf(C) ? true : undefined, ak: shotK || undefined,   /* (2026-09-25) the page flies an arrow from `by` to `who` before it shows the number; marked HERE so the page needs nothing about equipment, and a staff marks it the same way */ crit: (dmg >= 4 && dmg > G.maxHitOf(C) * 0.9) || undefined, kill: m.hp <= 0 || undefined });
         this.award(pl, dmg); if (S.def.crypt) this.cryptHit(S, pl, m, dmg); else if (S.def.pyramid) this.pyramidHit(S, pl, m, dmg);
         if (dmg > 0 && G.MOBS[m.t]?.open) (m.by ||= {})[pl.id] = (m.by[pl.id] || 0) + dmg;   /* (2026-09-27) an open boss remembers who hurt him, for the shared kill */
@@ -3275,6 +3282,7 @@ export class World {
 
   killMob(S, pl, m, now) {
     this.meterAdd(pl, "kills", 1, m);   /* (2026-09-28) the party meter: and the toughest thing killed names the fight */
+    if (G.MOBS[m.t]?.open) this.bossEnd(S, m, "clear", pl);   /* (2026-09-28) a world boss falls: everybody who fought gets the report */
     /* (2026-09-23) THE SOUND IS TOLD WHAT DIED. It used to be the page matching /^You defeat / on the chat line,
        which said nothing about the creature, so a Sulking Toadstool and The House went out with the same scream.
        Sending the type lets the page pitch it by size. This is also the fragile-trigger fix the backlog asks for:
@@ -3643,7 +3651,7 @@ export class World {
     for (const m of S.mobs) {
       /* (2026-09-26) FIRE'S BURN lands here, on its own clock, credited to whoever lit it - if they are still in the scene */
       if (m.dot && !m.dead && now >= m.dot.at) { const d = m.dot, by = this.pls.get(d.by); m.dot = null;
-        if (by && by.C.scene === S.key) { m.hp -= d.dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: d.dmg, kind: "hit", t: now, burn: true }); this.award(by, d.dmg); if (G.MOBS[m.t]?.open) (m.by ||= {})[by.id] = (m.by[by.id] || 0) + d.dmg; if (m.hp <= 0) { const keep = by.act; this.killMob(S, by, m, now); if (keep && keep.id !== m.id) by.act = keep; } } }
+        if (by && by.C.scene === S.key) { m.hp -= d.dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: d.dmg, kind: "hit", t: now, burn: true }); this.award(by, d.dmg); this.bossAdd(by, m, "dmg", d.dmg); if (G.MOBS[m.t]?.open) (m.by ||= {})[by.id] = (m.by[by.id] || 0) + d.dmg; if (m.hp <= 0) { const keep = by.act; this.killMob(S, by, m, now); if (keep && keep.id !== m.id) by.act = keep; } } }
       if (m.dead) {
         if (S.def.crypt || S.def.pyramid || now < m.respawnAt) continue;   /* (nothing comes back in a crypt or pyramid run) */   /* (2026-09-24) the pyramid relied on pyramidKill setting respawnAt to Infinity; saying it here too means a monster killed some other way cannot quietly come back and re-lock a cleared chamber */
         // back at home, or the nearest free tile to it: never on top of someone
@@ -3688,7 +3696,7 @@ export class World {
           m.lastSwing = now; m.swingAt = now;
           const C = foe.C, hit = Math.random() < (G.MOBS[m.t].outside ? G.mobHitChance : G.hitChance)(G.MOBS[m.t].att, G.defenceRollOf(C)),   /* (2026-09-28) an open-world monster aims by ratio: A MONSTER'S AIM in the rules file */ dmg = hit ? Math.max(1, Math.round(rint(1, G.MOBS[m.t].max) * (m.enraged ? (G.MOBS[m.t].enrage?.mul ?? CR.CRYPT.enrageMul) : 1) * (1 - G.fxOf(C).tough))) : 0;   /* (tough: the visor, the Safety Net; whiskey makes it worse) */
           if (!foe.god) { C.hp -= dmg; this.touch(foe); }
-          if (dmg) this.meterAdd(foe, "taken", dmg, m);   /* (2026-09-28) the party meter */
+          if (dmg) { this.meterAdd(foe, "taken", dmg, m); this.bossAdd(foe, m, "taken", dmg); }   /* (2026-09-28) the party meter, and a world boss's report */
           if (dmg) foe.hurtAt = now;
           foe.combatAt = now;
           if (!S.def.pvp && !S.def.shared && !G.MOBS[m.t]?.open && this.mayFight(S, m, foe, now)) m.claim = { id: foe.id, until: now + CLAIM_MS };

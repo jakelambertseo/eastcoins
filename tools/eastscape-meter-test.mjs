@@ -62,6 +62,25 @@ S.mobs = [{ ...boss, hp: 126, dead: false }]; a.out = [];
 W.reportEnd(S, "crypt", "wipe", { title: "The Crypt" }); const RW = a.out.find((e) => e.type === "runreport")?.r;
 is([RW?.result, RW?.bossLeft], ["wipe", Math.round((100 * 126) / G.MOBS.hoodie.hp)], "a wipe says how much of the boss was left");
 
+/* 8. A WORLD BOSS (the Pumpkin King): no party needed, everybody who fought gets the report */
+const kingT = Object.keys(G.MOBS).find((k) => G.MOBS[k].open) || "pumpkinking";
+a.party = b.party = null; a.C.scene = b.C.scene = solo.C.scene = "mire"; clock += 60000;
+const king = { id: "k1", t: kingT, hp: G.MOBS[kingT].hp, maxHp: G.MOBS[kingT].hp, dead: false };
+W.bossAdd(a, king, "swing", 1); W.bossAdd(a, king, "hit", 1); W.bossAdd(a, king, "dmg", 120);
+W.bossAdd(solo, king, "swing", 1); W.bossAdd(solo, king, "dmg", 60); W.bossAdd(b, king, "taken", 30);
+W.meterAdd(a, "eat", 1, null, "clanternfish"); W.meterAdd(a, "heal", 20);
+const c = mk("cat"); c.C.scene = "workyard"; W.meterAdd(c, "eat", 1, null, "csardine");
+W.bossAdd(a, { id: "x", t: "boar" }, "dmg", 999);   /* an ordinary monster is never a world boss */
+clock += 20000; a.out = []; b.out = []; solo.out = []; c.out = [];
+W.bossEnd({ key: "mire" }, { ...king, dead: true }, "clear", a);
+const RB = a.out.find((e) => e.type === "runreport")?.r, rowOf = (id) => RB?.rows.find((r) => r.id === id);
+is([RB?.kind, RB?.result, RB?.boss, RB?.secs, RB?.rows.length, RB?.kb?.name], ["boss", "clear", G.MOBS[kingT].name, 20, 3, "ann"], "the King falls: a boss report, 20 s, three fought, the killing blow");
+is([!!b.out.find((e) => e.type === "runreport"), !!solo.out.find((e) => e.type === "runreport"), !!c.out.find((e) => e.type === "runreport")], [true, true, false], "everybody who fought gets it, party or not; somebody who never touched him does not");
+is([rowOf("ann").dmg, rowOf("ann").eat, rowOf("ann").heal, rowOf("sol").dmg, rowOf("bob").taken], [120, 1, 20, 60, 30], "his damage, what you ate in his fight, what he did to you");
+const king2 = { ...king, id: "k2", hp: Math.round(king.maxHp * 0.4) }; W.bossAdd(b, king2, "dmg", 5); b.out = [];
+W.bossEnd({ key: "mire" }, king2, "escaped"); const RE = b.out.find((e) => e.type === "runreport")?.r;
+is([RE?.result, RE?.bossLeft, RE?.kb], ["escaped", 40, null], "he got away: the report says how much of him was left");
+
 Date.now = realNow;
 console.log(bad ? `\n${bad} problem(s)` : "\nthe party meter works: the right member, the run and the fight, a new run per dungeon, once a second at most");
 process.exitCode = bad ? 1 : 0;

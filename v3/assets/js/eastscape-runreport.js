@@ -32,11 +32,11 @@ export function createRunReport(E) {
     const add = (t, icon, r, line) => r && out.push({ t, icon, r, line });
     { const r = best((x) => x.dmg, (x) => x.dmg > 0); add(many ? "MVP" : "Damage", "⭐", r, r && `${fmt(r.dmg)} damage${many ? `, ${Math.round((r.dmg / dmgAll) * 100)}% of the party's` : ""}`); }
     if (R.kb) { const r = rows.find((x) => x.id === R.kb.id); add("Killing Blow", "\u{1F5E1}", r, `finished ${R.kb.boss || R.boss || "it"}`); }
-    if (R.result === "wipe" && R.log.length) { const last = [...R.log].sort((a, b) => b.t - a.t)[0], r = rows.find((x) => x.id === last.id); if (many) add("Last One Standing", "\u{1F56F}", r, `went down at ${clock(last.t)}`); }
+    if ((R.result === "wipe" || R.result === "escaped") && R.log.length) { const last = [...R.log].sort((a, b) => b.t - a.t)[0], r = rows.find((x) => x.id === last.id); if (many) add("Last One Standing", "\u{1F56F}", r, `went down at ${clock(last.t)}`); }
     { const r = best((x) => x.taken, (x) => x.taken > 0); if (many) add("Iron Wall", "\u{1F6E1}", r, r && `took ${fmt(r.taken)} damage`); }
     { const r = best((x) => x.eat, (x) => x.eat > 0); add("Snack King", "\u{1F41F}", r, r && `ate ${r.eat} (+${fmt(r.heal)} HP)`); }
     { const r = best((x) => acc(x) ?? -1, (x) => x.swing >= 5); add("Deadeye", "\u{1F3AF}", r, r && `${acc(r)}% of swings landed`); }
-    if (many && R.result !== "wipe") { const r = best((x) => -x.taken, (x) => !x.deaths); add("Untouchable", "✨", r, r && (r.taken ? `no deaths, least damage taken (${fmt(r.taken)})` : "no deaths, not a scratch")); }
+    if (many && R.result !== "wipe" && R.result !== "escaped") { const r = best((x) => -x.taken, (x) => !x.deaths); add("Untouchable", "✨", r, r && (r.taken ? `no deaths, least damage taken (${fmt(r.taken)})` : "no deaths, not a scratch")); }
     return out.slice(0, 6);
   }
   function table() {
@@ -67,15 +67,18 @@ export function createRunReport(E) {
 
   function render() {
     mount();
-    const me = R.rows.find((r) => r.id === E.you()?.id) || R.rows[0], wipe = R.result === "wipe", many = R.rows.length > 1;
+    /* (2026-09-28) a WORLD BOSS (kind "boss": the Pumpkin King) reads the same, with his own words: he falls or he gets away, and the
+       people in it are everybody who fought him, not a party */
+    const boss = R.kind === "boss", me = R.rows.find((r) => r.id === E.you()?.id) || R.rows[0], wipe = R.result === "wipe" || R.result === "escaped", many = R.rows.length > 1;
+    const crowd = boss ? `${R.rows.length} fought` : `party of ${R.rows.length}`;
     const food = R.rows.reduce((a, r) => a + (r.eat || 0), 0), deaths = R.log.length;
-    const headline = wipe ? `Wiped in ${R.title}` : R.kind === "count" ? "Job done!" : "Cleared!";
+    const headline = boss ? (wipe ? `${R.boss} got away` : `${R.boss} falls!`) : wipe ? `Wiped in ${R.title}` : R.kind === "count" ? "Job done!" : "Cleared!";
     const newBest = !wipe && R.best != null && R.secs < R.best;
-    $("rrSub").textContent = `${R.title}${many ? ` · party of ${R.rows.length}` : ""}`;
+    $("rrSub").textContent = `${R.title}${many || boss ? ` · ${crowd}` : ""}`;
     const mine = Object.entries(me?.xp || {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
     $("rrBody").innerHTML = `
       <div class="rr-hero${wipe ? " wipe" : ""}"><span class="rr-crest"><img src="${R.bossArt ? `${FLAT}${R.bossArt}.png` : `${UI}p_crypt.png?v=1`}" alt=""></span>
-        <span class="rr-htxt"><h3>${esc(R.title.toUpperCase())}${many ? ` · PARTY OF ${R.rows.length}` : ""}</h3><h2>${esc(headline)}</h2>
+        <span class="rr-htxt"><h3>${boss ? "WORLD BOSS" : esc(R.title.toUpperCase())}${many || boss ? ` · ${crowd.toUpperCase()}` : ""}</h3><h2>${esc(headline)}</h2>
           <span class="rr-facts">${wipe ? `${R.boss && R.bossLeft != null ? `<span class="k-chip">${esc(R.boss)} at ${R.bossLeft}%</span>` : ""}<span class="k-chip">⏱ ${clock(R.secs)} in</span>` : `<span class="k-chip">⏱ ${clock(R.secs)}${R.best != null && !newBest ? ` (best ${clock(R.best)})` : ""}</span>`}
             <span class="k-chip">\u{1F480} ${deaths} death${deaths === 1 ? "" : "s"}</span><span class="k-chip">\u{1F41F} ${food} eaten</span>${newBest ? `<span class="k-chip rr-best">New best time!</span>` : ""}</span></span>
         <span class="rr-badge">${wipe ? (R.bossLeft != null ? `${100 - R.bossLeft}%<small>OF THE WAY</small>` : `\u{1F480}<small>WIPED</small>`) : `${clock(R.secs)}<small>${newBest ? "NEW BEST" : "CLEAR TIME"}</small>`}</span></div>
@@ -85,19 +88,21 @@ export function createRunReport(E) {
         <div class="rr-awards">${awards().map((a) => `<div class="rr-award"><span class="rr-medal">${a.icon}</span><span><b>${a.t}</b><span>${esc(a.r.name)}</span><small>${esc(a.line || "")}</small></span></div>`).join("") || `<p class="rr-none">No awards this time.</p>`}</div>
         <div class="k-sect"><span class="k-label">Your run</span></div>
         <div class="rr-me"><div><b>${fmt(me?.dmg)}</b><small>Damage</small></div><div><b>${fmt1((me?.dmg || 0) / Math.max(1, R.secs))}</b><small>DPS</small></div><div><b>${fmt(me?.taken)}</b><small>Taken</small></div><div><b>${me?.eat || 0}</b><small>Food eaten</small></div><div><b>${acc(me || {}) == null ? "–" : acc(me) + "%"}</b><small>Hit %</small></div></div>
-        ${many ? `<div class="k-sect"><span class="k-label">The party · click a heading to sort</span></div>${table()}` : ""}
+        ${many ? `<div class="k-sect"><span class="k-label">${boss ? "Everybody who fought" : "The party"} · click a heading to sort</span></div>${table()}` : ""}
         <div class="rr-two">
           <div class="rr-card"><h4><span>Damage over the run</span><span>per ${Math.round(R.tlMs / 1000)} seconds</span></h4>${chart()}</div>
           <div class="rr-card"><h4><span>Your xp</span><span>+${fmt(mine.reduce((a, [, n]) => a + n, 0))}</span></h4><div class="rr-xp">${mine.length ? mine.slice(0, 5).map(([k, n]) => `<div><img src="${IT}skill_${k}.png" alt=""><b>${esc(G.SKILLS[k]?.name || cap(k))}</b><small>+${fmt(n)}</small></div>`).join("") : `<p class="rr-none">None this run.</p>`}</div></div>
         </div>
         ${wipe ? "" : deathsCard()}
       </div>`;
-    $("rrFoot").innerHTML = `<span class="k-note">${wipe ? "Regroup, eat, and go again." : R.kind === "count" ? "The boxes are still down there, and the way out is open." : "Your share is in the chest. The way out is back where you came in."}</span><button type="button" class="k-btn sec" id="rrPost">Post to chat</button><button type="button" class="k-btn" id="rrClose">Close</button>`;
+    $("rrFoot").innerHTML = `<span class="k-note">${boss ? (wipe ? "He'll be back. So will you." : "Well fought. He rises again next hour.") : wipe ? "Regroup, eat, and go again." : R.kind === "count" ? "The boxes are still down there, and the way out is open." : "Your share is in the chest. The way out is back where you came in."}</span><button type="button" class="k-btn sec" id="rrPost">Post to chat</button><button type="button" class="k-btn" id="rrClose">Close</button>`;
     $("rrBody").querySelectorAll("[data-sort]").forEach((th) => th.addEventListener("click", () => { sortBy = th.dataset.sort; SFX.play("ui_click"); render(); }));
     $("rrClose").addEventListener("click", () => { SFX.play("ui_close"); win.hidden = true; });
     $("rrPost").addEventListener("click", (ev) => {
       const top = [...R.rows].sort((a, b) => b.dmg - a.dmg)[0], all = R.rows.reduce((a, r) => a + r.dmg, 0) || 1;
-      const line = wipe ? `\u{1F480} Wiped in ${R.title} at ${clock(R.secs)}${R.bossLeft != null ? `, ${R.boss} at ${R.bossLeft}%` : ""}.${many && top ? ` Top damage: ${top.name}.` : ""}`
+      const line = boss ? (wipe ? `\u{1F383} ${R.boss} got away at ${R.bossLeft ?? "?"}% after ${clock(R.secs)}. ${R.rows.length} fought.${top ? ` Top damage: ${top.name}.` : ""}`
+          : `\u{1F383} ${R.boss} fell in ${clock(R.secs)}! ${R.rows.length} fought.${top ? ` MVP: ${top.name} (${Math.round((top.dmg / all) * 100)}% of the damage).` : ""}${R.kb ? ` Killing blow: ${R.kb.name}.` : ""}`)
+        : wipe ? `\u{1F480} Wiped in ${R.title} at ${clock(R.secs)}${R.bossLeft != null ? `, ${R.boss} at ${R.bossLeft}%` : ""}.${many && top ? ` Top damage: ${top.name}.` : ""}`
         : `\u{1F5DD}️ ${R.title} ${R.kind === "count" ? "done" : "cleared"} in ${clock(R.secs)}${newBest ? " (new best!)" : ""}.${many && top ? ` MVP: ${top.name} (${Math.round((top.dmg / all) * 100)}% of the damage).` : ""} ${deaths} death${deaths === 1 ? "" : "s"}, ${food} fish eaten.`;
       send({ t: "chat", text: line }); ev.currentTarget.disabled = true; ev.currentTarget.textContent = "Posted"; SFX.play("ui_click");
     });

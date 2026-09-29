@@ -23,12 +23,25 @@ export function installMeter(World, { G }) {
   /* a member's row: the meter's five numbers, and what the end-of-run report adds: food by kind, swings and hits (accuracy), xp by skill,
      and damage in 30-second buckets for the report's chart */
   const blank = () => ({ dmg: 0, taken: 0, heal: 0, deaths: 0, kills: 0, eat: 0, swing: 0, hit: 0, eats: {}, xp: {}, tl: [] });
+  const foodOf = (pl) => G.countItems({ inv: pl.C.inv, bank: [] }, Object.keys(G.ITEMS).filter((k) => G.ITEMS[k].heal));
+  /* ONE TALLY for a row, used by the party meter's segments and by a world boss's fight, so the two can never count differently */
+  const tally = (s, pl, key, n, extra, now) => {
+    const r = (s.by[pl.id] ||= blank());
+    r.name = pl.name; r.style = G.styleOf(pl.C);
+    if (key === "eat") { r.eat += n; if (extra) r.eats[extra] = (r.eats[extra] || 0) + n; }
+    else if (key === "xp") { if (extra) r.xp[extra] = (r.xp[extra] || 0) + n; }
+    else r[key] = (r[key] || 0) + n;
+    if (key === "dmg") { const b = Math.floor((now - s.at) / TL_MS); r.tl[b] = (r.tl[b] || 0) + n; }
+    if (key === "deaths") s.log.push({ t: Math.round((now - s.at) / 1000), id: pl.id, name: pl.name, cause: extra || null, food: foodOf(pl) });
+    return r;
+  };
   const zoneOf = (pl) => { const k = String(pl.C.scene || ""); return /^(crypt|pyramid|count):/.test(k) ? k : null; };
 
   /* the party to count for: yours, or (inside a dungeon, with no party: an admin testing alone) one of your own that nobody else sees */
   P.meterParty = function (pl) { const pt = this.partyOf?.(pl); if (pt) return pt; if (!zoneOf(pl)) return null; return (pl.soloPt ||= { id: `solo:${pl.id}`, leader: pl.id, members: [pl.id], solo: true }); };
   P.meterAdd = function (pl, key, n, foe, extra) {
     if (!pl || !(n > 0)) return;
+    if (this.bossFights?.size && (QUIET.has(key) || key === "deaths")) this.bossNote(pl, key, n, extra);
     const pt = this.meterParty(pl); if (!pt) return;
     const now = Date.now(), zone = zoneOf(pl);
     let M = pt.meter;
@@ -38,13 +51,7 @@ export function installMeter(World, { G }) {
     const live = M.fight && now - M.fight.last <= FIGHT_GAP ? M.fight : null;
     for (const s of [M.run, combat ? M.fight : live]) {
       if (!s) continue;
-      const r = (s.by[pl.id] ||= blank());
-      r.name = pl.name; r.style = G.styleOf(pl.C);
-      if (key === "eat") { r.eat += n; if (extra) r.eats[extra] = (r.eats[extra] || 0) + n; }
-      else if (key === "xp") { if (extra) r.xp[extra] = (r.xp[extra] || 0) + n; }
-      else r[key] = (r[key] || 0) + n;
-      if (key === "dmg") { const b = Math.floor((now - s.at) / TL_MS); r.tl[b] = (r.tl[b] || 0) + n; }
-      if (key === "deaths") s.log.push({ t: Math.round((now - s.at) / 1000), id: pl.id, name: pl.name, cause: extra || null, food: G.countItems({ inv: pl.C.inv, bank: [] }, Object.keys(G.ITEMS).filter((k) => G.ITEMS[k].heal)) });
+      tally(s, pl, key, n, extra, now);
       if (combat) s.last = now;
       const mob = foe && G.MOBS[foe.t];
       if (mob && (mob.lvl || 0) > s.foeLvl) { s.foeLvl = mob.lvl || 0; s.foe = mob.name || foe.t; }
@@ -97,6 +104,31 @@ export function installMeter(World, { G }) {
     for (const id of ids) { const p = this.pls.get(id); if (p) { p.lastReport = R; p.out.push({ type: "runreport", r: R }); } }
     return R;
   };
+  /* ------------------------------------------------------------ A WORLD BOSS'S REPORT (2026-09-28, the owner: "can do an after party report
+     for the bosses, or at least the pumpkin king, as well?"). An OPEN boss (MOBS[..].open: the Pumpkin King, and any like him) belongs to
+     nobody, so his numbers are not a party's: each one keeps its own fight (this.bossFights, by the monster's id), which everybody who hits
+     it, or is hit by it, joins. What is counted against HIM is counted where the target is known (a swing, a storm arc, a burn, his swing
+     at you); what you eat, the xp you earn and whether you die are counted while you are in the fight and in his map (bossNote, from
+     meterAdd). When he dies or leaves, everybody who fought gets the same report as a dungeon run, kind "boss". Kept in memory only. */
+  P.bossAdd = function (pl, m, key, n) {
+    if (!pl || !m || !(n > 0) || !G.MOBS[m.t]?.open) return;
+    const now = Date.now(), fights = (this.bossFights ||= new Map());
+    let F = fights.get(m.id); if (!F) { F = { id: m.id, t: m.t, scene: pl.C.scene, at: now, last: now, by: {}, log: [], kb: null }; fights.set(m.id, F); }
+    tally(F, pl, key, n, null, now); F.last = now;
+  };
+  P.bossNote = function (pl, key, n, extra) {
+    const now = Date.now();
+    for (const F of this.bossFights.values()) if (F.by[pl.id] && F.scene === pl.C.scene) tally(F, pl, key, n, extra, now);
+  };
+  P.bossEnd = function (S, m, result, killer) {
+    const F = this.bossFights?.get(m.id); if (!F) return; this.bossFights.delete(m.id);
+    const B = G.MOBS[m.t], now = Date.now(), rows = Object.entries(F.by).map(([id, r]) => ({ id, ...blank(), ...r }));
+    const R = { at: now, kind: "boss", title: B.name, result, secs: Math.max(1, Math.round((now - F.at) / 1000)), boss: B.name, bossArt: B.art || m.t,
+      bossLeft: result === "escaped" && !m.dead ? Math.max(1, Math.round((100 * m.hp) / (m.maxHp || B.hp))) : null, best: null, pay: null, rows, log: F.log,
+      kb: killer && result === "clear" ? { id: killer.id, name: killer.name, boss: B.name } : null, bossAt: 0, tlMs: TL_MS };
+    for (const id of Object.keys(F.by)) { const p = this.pls.get(id); if (p) { p.lastReport = R; p.out.push({ type: "runreport", r: R }); } }
+    return R;
+  };
   /* the dungeons' one call: what they know at the end of a run, from the scene itself (its boss, its clock) */
   P.reportEnd = function (S, kind, result, extra = {}) {
     const run = S.run || {}, bossM = S.mobs?.find((m) => G.MOBS[m.t]?.boss), B = bossM && G.MOBS[bossM.t];
@@ -108,4 +140,9 @@ export function installMeter(World, { G }) {
     if (m.op === "reset") { this.meterReset(pl); return this.meterTick(Date.now() + 1000); }
     const pt = this.partyOf?.(pl); if (pt) pl.out.push({ type: "meter", m: this.meterView(pt, Date.now()) });
   };
+  /* NOTHING HERE MAY BREAK A FIGHT. These run inside the swing, the kill, the King's despawn and the world's tick; a counting bug must cost a
+     number, never a kill, a payout or the tick. Every method is wrapped: an error is logged and swallowed. */
+  for (const k of ["meterAdd", "meterReset", "meterView", "meterTick", "meterOp", "bossAdd", "bossNote", "bossEnd", "reportRun", "reportEnd"]) {
+    const f = P[k]; P[k] = function (...a) { try { return f.apply(this, a); } catch (e) { console.warn(`meter: ${k} failed`, e?.message || e); return undefined; } };
+  }
 }

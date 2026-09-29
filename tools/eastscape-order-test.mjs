@@ -63,5 +63,16 @@ W.orderOp(S, c, { op: "give" }); is([W.order.lines[0].got, cnt(c, W.order.lines[
 /* 7. the view */
 c.x = foreman.x; c.y = foreman.y + 1; W.orderOp(S, c, { op: "view" }); const v = last(c, "order").view;
 is([v.lines.length, v.lines[0].have, typeof v.until, v.canClaim], [5, 5, "number", false], "the window's view: lines, what's in your bag, the clock, whether you can claim");
+/* 8. A RESTART (2026-09-28: every deploy threw the order away and posted a new one). Two worlds on the same storage. */
+{
+  const store = new Map(), sctx = { blockConcurrencyWhile: (fn) => fn(), storage: { get: async (k) => store.get(k), put: async (k, v) => { if (typeof k === "object") for (const [a2, b2] of Object.entries(k)) store.set(a2, structuredClone(b2)); else store.set(k, structuredClone(v)); }, delete: async (k) => store.delete(k), list: async () => new Map() } };
+  const W1 = new World(sctx, { SITE: "https://example.invalid", DEV: "0" }); await new Promise((r) => setTimeout(r, 20)); W1.houseSay = () => {};
+  W1.order = null; W1.orderTick(Date.now()); W1.order.lines[0].got = 7; W1.orderSave(); W1.doubleStart("ann", 30 * 60000);
+  await new Promise((r) => setTimeout(r, 20));
+  const W2 = new World(sctx, { SITE: "https://example.invalid", DEV: "0" }); await new Promise((r) => setTimeout(r, 20)); W2.houseSay = () => {};
+  W2.orderTick(Date.now());
+  is([W2.order?.id === W1.order.id, W2.order?.lines[0].got, W2.order?.until === W1.order.until, W2.doubleOn(), W2.dbl?.by], [true, 7, true, true, "ann"], "after a restart: the same order, what was handed in, the same clock, and the 2X still running");
+}
+
 console.log(bad ? `\n${bad} problem(s)` : "\nBronny's order works: hand-ins are gone for good, a filled order waits for a helper to claim it, and the claim starts the 2X and the next order");
 process.exitCode = bad ? 1 : 0;

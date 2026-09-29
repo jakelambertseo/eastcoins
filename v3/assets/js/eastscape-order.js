@@ -9,7 +9,7 @@ export function createOrderUi(E) {
   const { G, $, esc, send, SFX, openWin, ico } = E, UIA = "/v3/assets/img/glad/flat/ui/";
   let v = null, skew = 0, timer = 0, err = null;
   const now = () => Date.now() + skew;
-  const hms = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return h ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m ${String(x).padStart(2, "0")}s`; };
+  const hms = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return h ? `${h}h ${String(m).padStart(2, "0")}m ${String(x).padStart(2, "0")}s` : `${m}m ${String(x).padStart(2, "0")}s`; };   /* seconds always, so it is plainly counting down */
   const nameOf = (k) => G.ITEMS[k]?.name || k;
   /* what's in YOUR bag is read here, not from the server's view, so it is right the moment the bag changes (a catch, a bank trip) */
   const have = (k) => (E.me?.inv ? G.countItems({ inv: E.me.inv, bank: [] }, [k]) : 0);
