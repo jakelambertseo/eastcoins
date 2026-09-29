@@ -167,6 +167,7 @@ export function installCrypt(World, { G, R, rint }) {
     const run = S.run; if (!run || run.paid) return; run.paid = true; const T = C_.tiers[run.tier], secs = Math.round((now - run.started) / 1000), total = Object.values(run.dmg).reduce((a, b) => a + b, 0) || 1, here = this.playersIn(S), names = here.map((p) => p.name);
     run.cleared = { secs, total }; for (const p of here) this.cryptPayOne(S, p);
     for (const p of here) this.emit(p, "crypt", { tier: run.tier });   /* (2026-09-23) a cleared crypt is an event: the achievements that count them were only ever swept up at the next login */
+    this.reportEnd(S, "crypt", "clear", { title: T.name, secs, best: this.cryptTop?.[run.tier]?.[0]?.secs ?? null });   /* (2026-09-28) the run report; the best is the one to beat, read before this clear joins it */
     this.cryptBest(run.tier, secs, names);
     for (const p of this.pls.values()) if (!here.includes(p)) p.out.push({ type: "casinonote", text: `🗝️ ${names.join(", ")} cleared ${T.name} in ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}.` });
     for (const p of here) this.say(p, "The way out is back where you came in. Take your time.", "good");
@@ -200,7 +201,7 @@ export function installCrypt(World, { G, R, rint }) {
   };
   /** once a second: a chest owed to somebody who is online and NOT in a crypt any more goes to them (they walked out, were moved out, or logged back in after the run had gone) */
   P.cryptLootSweep = function () { for (const p of this.pls.values()) if (p.C.crypt?.loot && !inCrypt(p)) this.cryptLootGive(p, true); };
-  P.cryptEnd = function (S, why) { const T = C_.tiers[S.run.tier]; for (const p of this.playersIn(S)) { this.moveToScene(p, C_.door.scene, null, C_.door); this.say(p, why === "wipe" ? `A WIPE. Everybody down at once: the crypt keeps your ${G.fmtTix(T.ante)}.` : "The run is over.", "bad"); } (this.cryptGone ||= new Set()).add(S.key); this.scenes.delete(S.key); };
+  P.cryptEnd = function (S, why) { const T = C_.tiers[S.run.tier]; if (why === "wipe") this.reportEnd(S, "crypt", "wipe", { title: T.name }); for (const p of this.playersIn(S)) { this.moveToScene(p, C_.door.scene, null, C_.door); this.say(p, why === "wipe" ? `A WIPE. Everybody down at once: the crypt keeps your ${G.fmtTix(T.ante)}.` : "The run is over.", "bad"); } (this.cryptGone ||= new Set()).add(S.key); this.scenes.delete(S.key); };
   P.cryptBest = function (tier, secs, names) { this.cryptTop ||= {}; const list = (this.cryptTop[tier] ||= []); list.push({ secs, names, at: Date.now() }); list.sort((a, b) => a.secs - b.secs); const kept = {}; this.cryptTop[tier] = list.filter((r) => { const n = r.names?.length || 0; kept[n] = (kept[n] || 0) + 1; return kept[n] <= 20; });   /* (2026-09-27) twenty PER PARTY SIZE, not twenty in all: the hiscores filter by 2-, 3- and 4-man, and a top twenty kept as one list would let a run of four-man clears push every pair off it */ this.ctx.storage.put("cryptTop", this.cryptTop).catch(() => {}); this.hsAt = 0; };
   /* once a second: parties hear each other's health while a run is on; an empty copy is thrown away */
   P.cryptTick = function (now) {

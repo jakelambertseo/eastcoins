@@ -1030,6 +1030,7 @@ export class World {
     // used to throw in here, and this runs inside the tick — one bad key would
     // stop the world for everybody. Ignore it instead.
     if (!G.SKILLS[k]) { console.warn(`grant: no such skill "${k}"`); return; }
+    this.meterAdd(pl, "xp", xp, null, k);   /* (2026-09-28) xp by skill, for the run report */
     const C = pl.C, before = G.lvlOf(C, k);
     C.xp[k] = Math.max(0, (C.xp[k] || 0) + xp); const after = G.lvlOf(C, k);
     if (xp > 0) pl.out.push({ type: "xp", k, xp, track });
@@ -2195,7 +2196,7 @@ export class World {
     pl.lastEat = now; pl.lastSwing = Math.max(pl.lastSwing, now - 1200);
     st.n--; if (!st.n) C.inv.splice(i, 1);
     const before = C.hp; C.hp = Math.min(G.maxHpOf(C), C.hp + Math.round(it.heal * (1 + (it.meal ? 0 : G.fxOf(C).heal))));
-    this.meterAdd(pl, "heal", C.hp - before);   /* (2026-09-28) the party meter: what the food actually gave back */
+    this.meterAdd(pl, "heal", C.hp - before); this.meterAdd(pl, "eat", 1, null, st.k);   /* (2026-09-28) the party meter: what the food actually gave back */
     if (it.meal) { C.meal = { k: st.k, left: it.meal.mins * 60000 }; this.say(pl, `A proper dinner. For ${it.meal.mins} minutes outside: ${G.fxText(it.meal.fx)}.`, "loot"); }
     this.touch(pl);
     this.say(pl, C.hp > before ? `You eat the ${it.name.toLowerCase()}. It heals ${C.hp - before}.` : `You eat the ${it.name.toLowerCase()}. You were already full.`, "good");
@@ -2752,6 +2753,7 @@ export class World {
            It was `>= ceil(max x 0.85)`, which with whole numbers is a fifth of every landed hit, and FIFTY PERCENT for a new player
            whose max hit is 2: every hit that was not a 1 flashed CRIT. Now it is the top TENTH, and never under 4 damage, so it is
            about one landed hit in nine and nobody sees one until their max hit reaches 5, around Combat 10.) */
+        this.meterAdd(pl, "swing", 1, m); if (dmg) this.meterAdd(pl, "hit", 1, m);   /* (2026-09-28) accuracy, for the run report */
         m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, ranged: G.launcherOf(C) ? true : undefined, ak: shotK || undefined,   /* (2026-09-25) the page flies an arrow from `by` to `who` before it shows the number; marked HERE so the page needs nothing about equipment, and a staff marks it the same way */ crit: (dmg >= 4 && dmg > G.maxHitOf(C) * 0.9) || undefined, kill: m.hp <= 0 || undefined });
         this.award(pl, dmg); if (S.def.crypt) this.cryptHit(S, pl, m, dmg); else if (S.def.pyramid) this.pyramidHit(S, pl, m, dmg);
         if (dmg > 0 && G.MOBS[m.t]?.open) (m.by ||= {})[pl.id] = (m.by[pl.id] || 0) + dmg;   /* (2026-09-27) an open boss remembers who hurt him, for the shared kill */
@@ -3392,7 +3394,7 @@ export class World {
   }
   // killer: the player who landed the last hit, or { mob: name }
   die(pl, S, killer) {
-    this.meterAdd(pl, "deaths", 1);   /* (2026-09-28) the party meter */
+    this.meterAdd(pl, "deaths", 1, null, killer?.mob || killer?.name || (killer?.t && G.MOBS[killer.t]?.name) || null);   /* a monster kills with { mob: name }, a player with themselves */   /* (2026-09-28) the party meter, and what did it, for the run report */
     if (S?.def.count) return this.countDeath(pl, S);
     if (S?.def.crypt) return this.cryptDeath(pl, S);
     if (S?.def.pyramid) return this.pyramidDeath(pl, S);

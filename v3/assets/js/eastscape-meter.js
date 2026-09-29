@@ -35,6 +35,7 @@ export function createMeter(E) {
       if (b.dataset.mode) { st.mode = b.dataset.mode; SFX.play("ui_click"); }
       else if (b.dataset.seg) { st.seg = b.dataset.seg; SFX.play("ui_click"); }
       else if (b.dataset.mini != null) { st.mini = !st.mini; SFX.play("ui_click"); }
+      else if (b.dataset.rep != null) { E.openReport?.(); return; }   /* (2026-09-28) the last run report */
       else if (b.dataset.reset != null) { if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "Sure?"; return; } send({ t: "meter", op: "reset" }); }
       save(); render();
     });
@@ -59,7 +60,7 @@ export function createMeter(E) {
         <button type="button" data-seg="fight" aria-pressed="${st.seg === "fight"}" title="This fight: starts over when a new one begins">Fight</button><button type="button" data-seg="run" aria-pressed="${st.seg === "run"}" title="The whole run: since the party formed, or since this dungeon run began">Run</button><button type="button" data-mini aria-label="${st.mini ? "Open" : "Fold"} the meter" title="${st.mini ? "Open" : "Fold"}">${st.mini ? "▸" : "▾"}</button></div>
       <div class="pm-modes" role="group" aria-label="What to show">${MODES.map(([k, l, ic]) => `<button type="button" data-mode="${k}" aria-pressed="${k === st.mode}"><img src="${IT}${ic}.png" alt="">${l}</button>`).join("")}</div>
       <div class="pm-list">${rows.length ? rows.map((r, i) => `<div class="pm-bar${r.id === me ? " me" : ""}" style="--w:${(val(r) / top) * 100}%;--c:${COL[r.style] || COL.melee}"><i></i><span class="rk">${i + 1}</span><img class="st" src="${IT}skill_${r.style || "melee"}.png" alt="" title="${esc(r.style || "")}"><span class="nm">${esc(r.name)}</span><span class="v">${tail(r)}</span></div>`).join("") : `<p class="pm-none">Nothing yet. Go hit something.</p>`}</div>
-      <div class="pm-foot"><span>${when}</span><span>${st.mode === "deaths" ? `<b>${total}</b>` : `Party <b>${fmt(total)}</b>`}<button type="button" data-reset title="Start the meter over for the whole party">Reset</button></span></div>`;
+      <div class="pm-foot"><span>${when}</span><span>${st.mode === "deaths" ? `<b>${total}</b>` : `Party <b>${fmt(total)}</b>`}${E.hasReport?.() ? `<button type="button" data-rep title="Open the last run report">Report</button>` : ""}<button type="button" data-reset title="Start the meter over for the whole party">Reset</button></span></div>`;
   }
   return {
     got(view) { m = view; inParty = true; render(); },
@@ -91,7 +92,7 @@ export const CSS = `
 .pm-bar .v{font:800 11.5px Lora,serif;color:#fff;text-shadow:0 1px 0 #000;white-space:nowrap;font-variant-numeric:tabular-nums}.pm-bar .v small{font:700 10px Lora,serif;color:#fffc;margin-left:4px}
 .pm-none{margin:6px 4px;color:#bfa77c;font:italic 600 12px Lora,serif}
 .pm-foot{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:4px 8px 6px;border-top:1px solid rgba(106,74,40,.6);font:700 10.5px Lora,serif;color:#bfa77c}
-.pm-foot>span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pm-foot>span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.pm-foot>span:last-child{white-space:nowrap;flex:none}
 .pm-foot b{color:#f0e0c0}.pm-foot button{margin-left:6px;border:0;background:none;color:#bfa77c;font:800 10px Lora,serif;text-decoration:underline;cursor:pointer;padding:0}
 .pmeter.mini{width:180px}.pmeter.mini .pm-head button[data-seg]{display:none}.pmeter.mini .pm-modes,.pmeter.mini .pm-foot{display:none}.pmeter.mini .pm-bar{height:18px;grid-template-columns:minmax(0,1fr) auto}.pmeter.mini .pm-bar .rk,.pmeter.mini .pm-bar .st,.pmeter.mini .pm-bar .v small{display:none}
 @media (prefers-reduced-motion:reduce){.pm-bar i{transition:none}}

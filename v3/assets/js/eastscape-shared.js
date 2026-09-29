@@ -6174,7 +6174,7 @@ export const BREED = {
   greater: { lvl: 1, ms: 12 * 3600000, food: 18, xpStart: 400, xpEnd: 4000 },   /* any two ordinary pets, from Breeding 1: pairing is how the skill is trained. (2026-09-27) food 6 -> 18, three times, the owner's word, once the parents came back */
   legend: { lvl: 50, ms: 72 * 3600000, food: 36, xpStart: 3000, xpEnd: 40000 },  /* two Greater pets of the same kind. (2026-09-27) food 12 -> 36, with the Greater */
   hatch: { food: 3 },                                                             /* an egg eats three Ordinary pet food, taken when it goes in */
-  eggDrop: 1 / 500,   /* one kill in five hundred, anywhere (2026-09-28, the owner: "buff all egg drops to be 1/500"; was one in three thousand) */
+  eggDrop: 1 / 1500,   /* one kill in fifteen hundred, anywhere (2026-09-28, the owner: "reduce egg drop rates again"; it was buffed to 1/500 the same day, from one in three thousand) */
   reach: 3,
   /* (2026-09-27, the owner: "add cooking pet food giving a little breeding XP if a user doesnt have a pet or egg") THE WAY IN. Every other
      source of Breeding xp needs a pet or an egg first, so a player who had found neither could not touch the skill. Cooking a batch of pet
@@ -7387,7 +7387,7 @@ Object.assign(QUESTS, {
    takes pork (if we have pork) or shrooms for eggs", then "the pet trader should be in the yard, in the court at tile 25 15", "custom art for
    the NPC"). NESTOR THE EGG MAN. One egg for a sack of the raw things its pet would want, each from the maps that egg comes from: chicken and
    feathers for the owl, shrooms for the tortoise, boar and puffballs for the pig, and so on up to casino chips for the Mimic. A kill turns
-   up an egg one time in 500 (BREED.eggDrop) and it is whichever egg that map has; Nestor is the way to the ONE you want, for a price in
+   up an egg one time in 1,500 (BREED.eggDrop) and it is whichever egg that map has; Nestor is the way to the ONE you want, for a price in
    that pet's own theme, so the drop stays the lucky way and he is the steady one. EGG_TRADES is the whole table: change a number here. */
 export const EGG_TRADES = {
   egg_speckled: [["chicken", 150], ["feather", 100]],

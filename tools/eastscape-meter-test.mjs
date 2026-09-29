@@ -43,6 +43,25 @@ W.meterTick(clock + 1200); is(a.out.filter((e) => e.type === "meter").length, 2,
 /* 6. reset */
 W.meterOp(null, b, { op: "reset" }); is([row("run", "ann").dmg, W.meterView(pt, clock).fight], [0, null], "reset empties the run and the fight");
 
+/* 7. THE RUN REPORT: a run in the Crypt, then a clear and a wipe */
+a.C.scene = b.C.scene = "crypt:rep"; clock += 60000;
+const boss = { id: "m1", t: "hoodie", hp: 900, dead: false };
+W.meterAdd(a, "swing", 1, boss); W.meterAdd(a, "hit", 1, boss); W.award(a, 40); W.meterAdd(a, "swing", 1, boss);
+W.meterAdd(b, "eat", 1, null, "clanternfish"); W.meterAdd(b, "eat", 1, null, "clanternfish"); W.meterAdd(b, "heal", 20);
+W.meterAdd(a, "xp", 160, null, "melee"); W.meterAdd(b, "deaths", 1, null, "The Hoodie");
+clock += 11000; W.award(b, 25); W.meterAdd(a, "kills", 1, boss);
+const S = { key: "crypt:rep", mobs: [{ ...boss, dead: true }], run: { started: clock - 95000 } };
+a.out = []; b.out = [];
+W.reportEnd(S, "crypt", "clear", { title: "The Crypt", best: 700 });
+const R = a.out.find((e) => e.type === "runreport")?.r, ra = R?.rows.find((r) => r.id === "ann"), rb = R?.rows.find((r) => r.id === "bob");
+is([!!b.out.find((e) => e.type === "runreport"), R?.result, R?.title, R?.secs, R?.boss, R?.best], [true, "clear", "The Crypt", 95, G.MOBS.hoodie.name, 700], "a clear sends both of them the report: result, name, time, boss, the best to beat");
+is([ra.dmg, ra.swing, ra.hit, ra.xp.melee, rb.eat, rb.eats.clanternfish, rb.heal, rb.deaths], [40, 2, 1, 160 + 160, 2, 2, 20, 1], "the rows (the 40 damage also paid its own 160 xp): damage, swings and hits (accuracy), xp by skill, food by kind, healed, deaths");
+is([R.kb?.name, R.log[0]?.name, R.log[0]?.cause, R.log[0]?.t, ra.tl[0], rb.tl[1]], ["ann", "bob", "The Hoodie", 0, 40, 25], "the killing blow, the death (who, what, when), damage in 10-second buckets");
+a.out = []; W.meterOp(null, a, { op: "report" }); is(!!a.out.find((e) => e.type === "runreport" && e.again), true, "the last report can be asked for again");
+S.mobs = [{ ...boss, hp: 126, dead: false }]; a.out = [];
+W.reportEnd(S, "crypt", "wipe", { title: "The Crypt" }); const RW = a.out.find((e) => e.type === "runreport")?.r;
+is([RW?.result, RW?.bossLeft], ["wipe", Math.round((100 * 126) / G.MOBS.hoodie.hp)], "a wipe says how much of the boss was left");
+
 Date.now = realNow;
 console.log(bad ? `\n${bad} problem(s)` : "\nthe party meter works: the right member, the run and the fight, a new run per dungeon, once a second at most");
 process.exitCode = bad ? 1 : 0;

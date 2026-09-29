@@ -283,6 +283,7 @@ export function installPyramid(World, { G, R, rint }) {
     const total = Object.values(run.dmg).reduce((a, b) => a + b, 0) || 1;
     const here = this.playersIn(S), names = here.map((p) => p.name);
     run.cleared = { secs, total };
+    this.reportEnd(S, "pyramid", "clear", { title: T.name, secs });   /* (2026-09-28) the run report */
     for (const p of here) this.pyramidPayOne(S, p);
     for (const p of here) this.emit(p, "pyramid", { tier: run.tier });
     this.cryptBest("p1", secs, names);   /* (2026-09-27) kept beside the Crypt's clears, under "p1", for the hiscores' Pyramid board; it was timed and announced and then forgotten */
@@ -342,6 +343,7 @@ export function installPyramid(World, { G, R, rint }) {
   /* ------------------------------------------------------------ housekeeping */
   P.pyramidEnd = function (S, why) {
     const run = S.run; if (!run) return;
+    if (why === "wipe") this.reportEnd(S, "pyramid", "wipe", { title: P_.tiers[run.tier]?.name || "The Great Pyramid" });   /* (2026-09-28) the run report */
     for (const p of this.playersIn(S)) {
       this.say(p, why === "wipe" ? "Everybody is down. The tomb closes." : "The tomb closes.", "bad");
       this.moveToScene(p, P_.door.scene, null, P_.door);
