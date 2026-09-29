@@ -5997,7 +5997,7 @@ function renderShop() {
    (2026-09-27) REBUILT AND MOVED OUT: v3/assets/js/eastscape-bank.js, fetched the first time the bank opens. Tabs by kind, one
    search over bank and bag, an amount of your own, a right-click menu, a slots meter. The page only opens it and tells it when
    `me` changed; every rule of the old window (true bank index on every tile, rebuild only on change, tickets stay) lives there. */
-let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=12";
+let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=13";
 function bankUi() { return BANKUI ? Promise.resolve(BANKUI) : import(BANKUI_URL).then((m) => (BANKUI = m.createBankUi({ G, $, esc, ico, qty, fgTag, slotHtml, send, SFX, say, ITEMS, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); }, get me() { return me; } }))); }
 function renderBank() { if ($("bankWin").hidden || !me) return; $("bankCount").textContent = `${(me.bank || []).length}/${G.BANK_MAX}`; bankUi().then((u) => u.render()); }
 
@@ -6274,7 +6274,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=58", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit", "boughtback"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=59", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit", "boughtback"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
@@ -6834,7 +6834,7 @@ document.addEventListener("keydown", (e) => { if ($("wikiWin").hidden || !e.altK
 // right-click any item (bag, gear, bank, shop, trade) to open its wiki page
 /* (2026-09-27) THE BAG'S MENU AND ARRANGING live in v3/assets/js/eastscape-bag.js, fetched on the first touch of the bag (and a few
    seconds after boot regardless): the first load is at its budget. The page only delegates: a right-click in the bag opens its menu. */
-let BAGUI = null; const BAGUI_URL = "/v3/assets/js/eastscape-bag.js?v=3";
+let BAGUI = null; const BAGUI_URL = "/v3/assets/js/eastscape-bag.js?v=4";
 function bagUi() { return BAGUI ? Promise.resolve(BAGUI) : import(BAGUI_URL).then((m) => (BAGUI = m.createBagUi({ G, $, esc, ico, send, say, SFX, ITEMS, useBagItem, renderPanel, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); }, get me() { return me; } }))); }
 document.addEventListener("pointerdown", (e) => { if (e.target.closest?.(".inv")) bagUi(); }, { passive: true }); setTimeout(bagUi, 4000);
 document.addEventListener("contextmenu", (e) => {
