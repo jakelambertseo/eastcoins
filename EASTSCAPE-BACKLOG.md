@@ -161,6 +161,12 @@ Not Roman: the user wants new content original and imaginative (NGU / Dungeon Cr
 
 ## Next up
 
+- **BUG (low, owner: "not that big of a deal"): +250 tickets to each player at the Crypt boss kill.** `tools/eastscape-crypt-test.mjs`
+  (26 pass, 5 fail, 2026-09-29): each player gains 250 at the kill though crypt.js pays nothing there; the same 250 throws off the
+  chest-ticket and "second go gives nothing" checks, and "walked out without the chest" returns `sent:true` in a shape the test
+  doesn't expect. Suspect the kill-side bounty/finds path (killFinds / BOUNTY, added after the test) rather than the ante; confirm
+  before calling the test stale. Also: one test character's tickets went 9,775 -> 17,085 across the ante (local-char leftovers?).
+
 - ~~**Nerf the Nexus altar some**~~ DONE 2026-09-28 (local, not shipped): NEXUS {mult 2, xp 1.5} -> {mult 1.5, xp 1.25}, fractional output rounds by chance. (owner, 2026-09-28: "Nerf the Nexus alter some"). Not scoped yet: find the altar's
   rules first (what it pays or buffs, and how often), measure it against the other altars, and bring a number to the owner.
 
