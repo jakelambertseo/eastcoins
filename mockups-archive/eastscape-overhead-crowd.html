@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Overhead Bars: Crowd</title>
+<meta name="robots" content="noindex,nofollow">
+<!-- (2026-09-29) DESIGN SKETCH ONLY, not deployed. The owner, on eastscape-overhead.html: "can you mockup a with icons on of multible (4-5)
+     mobs together because thats how it would be on our small maps". Style A (the plate) with icons, on five Thunderhead monsters one or two
+     tiles apart at the game's own scale (a tile is 32 px on screen), and three ways of handling the pile-up. Real sprites, real
+     weak / resist data; the fight is pretend. http://localhost:4321/mockups-archive/eastscape-overhead-crowd.html -->
+<style>
+@font-face{font-family:"Lora";font-style:normal;font-weight:400 700;font-display:swap;src:url(/v3/assets/fonts/lora-latin.woff2) format("woff2")}
+@font-face{font-family:"Cinzel";font-style:normal;font-weight:400 900;font-display:swap;src:url(/v3/assets/fonts/cinzel-latin.woff2) format("woff2")}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#0e0a14;color:#e8dcc0;font:600 14px/1.45 Lora,Georgia,serif;min-height:100vh}
+.page{max-width:1000px;margin:0 auto;padding:18px 16px 60px}
+h1{margin:0 0 4px;font:900 24px Cinzel,serif;color:#f6e9cc}
+.lede{margin:0 0 14px;color:#cdb892}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}
+.bar b{font:800 12px Cinzel,serif;letter-spacing:.08em;color:#c8963a;text-transform:uppercase;margin-right:4px;min-width:62px}
+.bar button{padding:7px 13px;border:0;border-radius:99px;background:#2a1c12;color:#e0c890;font:800 13px Lora,serif;cursor:pointer;box-shadow:inset 0 0 0 1.5px #6a4a28}
+.bar button[aria-pressed="true"]{background:#e8bf35;color:#2a1600;box-shadow:none}
+.bar button.hit{background:#5a1a14;color:#ffd0c0;box-shadow:inset 0 0 0 1.5px #b8302a}
+.stage{border-radius:10px;overflow:hidden;box-shadow:0 0 0 2px #3a2a1a;width:960px;max-width:100%}
+canvas{display:block;width:960px;max-width:100%;height:auto;image-rendering:pixelated;cursor:crosshair}
+.card{background:#1a120c;border-radius:10px;padding:14px 16px;box-shadow:inset 0 0 0 1.5px #3a2a1a;margin-top:14px}
+.card h2{margin:0 0 8px;font:800 15px Cinzel,serif;color:#f6e9cc}.card li{color:#d8c8a8;font-size:13.5px;margin:0 0 6px}.card ul{margin:0;padding-left:18px}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Five monsters, one screen</h1>
+  <p class="lede">The Thunderhead at the game's own scale: a Thunder Goose, two Thunderwolves, a Storm Golem and a Hail Drake, a tile or two apart, and you. Move the mouse over one to hover it, click to target it, then hit.</p>
+  <div class="bar"><b>Plates</b>
+    <button data-m="all" aria-pressed="false">1 · Every plate, as is</button>
+    <button data-m="stack" aria-pressed="false">2 · Every plate, stacked</button>
+    <button data-m="focus" aria-pressed="true">3 · Focus (recommended)</button>
+  </div>
+  <div class="bar"><b>Hit</b>
+    <button class="hit" data-hit="melee">⚔ Sword</button>
+    <button class="hit" data-hit="fire">🔥 Fire</button>
+    <button class="hit" data-hit="frost">❄ Frost</button>
+    <button class="hit" data-hit="void">🌀 Void</button>
+    <button class="hit" data-hit="storm">⚡ Storm</button>
+    <button data-hit="aoe">💥 Hit them all</button>
+    <button data-hit="reset">Reset</button>
+  </div>
+  <div class="stage"><canvas id="cv" width="960" height="480"></canvas></div>
+  <div class="card">
+    <h2>The three ways</h2>
+    <ul>
+      <li><b>1 · Every plate, as is.</b> What you'd get by just turning plates on for everything: on a small map they sit on top of each other and nothing is readable.</li>
+      <li><b>2 · Every plate, stacked.</b> Plates push each other upward until nothing overlaps, with a thin line down to whoever owns it (how Final Fantasy XIV and Guild Wars 2 handle a crowd). Everything readable, but it's a tower of boxes and it jumps about as monsters walk.</li>
+      <li><b>3 · Focus (recommended).</b> The full plate, with name, number and icons, only on what you've targeted and what's under your mouse. Everything else gets a slim bar with its number, and only once it's hurt, so a pack at full health is just monsters. The weaknesses you care about are the ones on the thing you're hitting; hover any other to read it. Stacking still applies to the two full plates so they never cover each other.</li>
+    </ul>
+  </div>
+</div>
+<script>
+/* ------------------------------------------------------------ icons (as in eastscape-overhead.html) */
+const ICONS = {
+  fire:  { c: ["#ff6a2a", "#ffd84a"], px: ["...#....", "...##...", "..###.#.", "..####..", ".##o###.", ".#ooo##.", ".##o##..", "..###..."] },
+  frost: { c: ["#9ad8ff", "#ffffff"], px: ["...#....", ".#.#.#..", "..###...", "###o###.", "..###...", ".#.#.#..", "...#....", "........"] },
+  storm: { c: ["#ffe24a", "#fff6b0"], px: ["....##..", "...##...", "..##....", ".####o..", "...##...", "..##....", ".##.....", ".#......"] },
+  void:  { c: ["#b070ff", "#e8d0ff"], px: ["..####..", ".#....#.", "#..##..#", "#.#..#.#", "#.#.o#.#", "#..##.#.", ".#...#..", "..###..."] },
+  sun:   { c: ["#ffd84a", "#fff6b0"], px: ["#..#..#.", ".#.#.#..", "..###...", "###o###.", "..###...", ".#.#.#..", "#..#..#.", "........"] },
+  buff:  { c: ["#4aa8ff", "#d0ecff"], px: ["...#....", "..#o#...", ".#ooo#..", "#ooooo#.", "..#o#...", "..#o#...", "..#o#...", "..###..."] },
+};
+const KIND = { weak: { bg: "#1d4a28", edge: "#6fdc8c", mark: "▲", markC: "#8ff0a8" }, resist: { bg: "#4a1a1a", edge: "#ff6a5a", mark: "▼", markC: "#ff9a8a" }, has: { bg: "#1a2a3a", edge: "#6fb4e8" } };
+function drawIcon(ctx, key, kind, x, y, s, glow, grey) {
+  const I = ICONS[key], K = KIND[kind], w = 8 * s + 4;
+  ctx.save(); if (glow > 0) { ctx.shadowColor = K.edge; ctx.shadowBlur = 10 * glow; }
+  ctx.fillStyle = K.bg; ctx.strokeStyle = grey ? "#666" : K.edge; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x, y, w, w, 3); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+  I.px.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === ".") return; ctx.fillStyle = grey ? (ch === "o" ? "#bbb" : "#888") : ch === "o" ? I.c[1] : I.c[0]; ctx.fillRect(x + 2 + i * s, y + 2 + j * s, s, s); }));
+  if (K.mark) { ctx.font = "700 8px Lora"; ctx.fillStyle = K.markC; ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillText(K.mark, x + w + 1, y + w + 3); }
+  ctx.restore(); return w;
+}
+/* ------------------------------------------------------------ the scene: a tile is 32 px, as in the game */
+const TS = 32, ART = "/v3/assets/img/glad/flat/", PK = "/v3/assets/img/glad/packs/";
+const img = (s) => { const i = new Image(); i.src = s; return i; };
+const IM = { goose: img(ART + "goose.png"), wolf: img(ART + "wolf.png"), golem: img(ART + "golem.png"), drake: img(ART + "drake.png"), hero: img(PK + "f-hero_onyx.png"), ground: img(ART + "t_wildg.png") };
+const U = (o) => ({ ...o, shown: o.hp, trail: o.hp, trailAt: 0, pulse: {}, px: o.tx * TS + TS / 2, py: o.ty * TS + TS });
+const UNITS = [
+  U({ id: "you", name: "You", lvl: 88, hp: 212, max: 240, tx: 6, ty: 10, sprite: "hero", crop: [276, 0, 68, 68], h: 64, player: true, has: ["buff"] }),
+  U({ id: "goose", name: "Thunder Goose", lvl: 55, hp: 63, max: 63, tx: 12, ty: 7, sprite: "goose", h: 80, weak: ["frost"], resist: ["storm"] }),
+  U({ id: "wolf1", name: "Thunderwolf", lvl: 58, hp: 60, max: 60, tx: 14, ty: 9, sprite: "wolf", h: 58, weak: ["frost"], resist: ["storm"] }),
+  U({ id: "golem", name: "Storm Golem", lvl: 52, hp: 57, max: 57, tx: 11, ty: 10, sprite: "golem", h: 80, weak: ["void"], resist: ["storm"] }),
+  U({ id: "drake", name: "Hail Drake", lvl: 62, hp: 71, max: 71, tx: 15, ty: 11, sprite: "drake", h: 80, weak: ["fire"], resist: ["frost"] }),
+  U({ id: "wolf2", name: "Thunderwolf", lvl: 58, hp: 60, max: 60, tx: 13, ty: 12, sprite: "wolf", h: 58, weak: ["frost"], resist: ["storm"] }),
+];
+let mode = "focus", target = UNITS[3], hover = null; const splats = [];
+function hit(kind) {
+  const now = performance.now();
+  if (kind === "reset") { for (const u of UNITS) { u.hp = u.max; u.shown = u.max; u.trail = u.max; } return; }
+  const list = kind === "aoe" ? UNITS.filter((u) => !u.player) : [target];
+  for (const u of list) {
+    if (u.hp <= 0) { u.hp = u.max; u.shown = u.max; u.trail = u.max; }
+    let dmg = Math.max(1, Math.round(u.max * (0.08 + Math.random() * 0.14))), tag = null, col = "#fff";
+    const el = ["fire", "frost", "void", "storm"].includes(kind) ? kind : null;
+    if (el && u.weak?.includes(el)) { dmg = Math.round(dmg * 1.35); tag = "WEAK"; col = "#ffe27a"; u.pulse[el] = now; }
+    else if (el && u.resist?.includes(el)) { dmg = Math.max(1, Math.round(dmg * 0.5)); tag = "RESIST"; col = "#b8b8c0"; u.pulse[el] = now; }
+    if (u.trailAt < now - 700) u.trail = u.hp; u.hp = Math.max(0, u.hp - dmg); u.trailAt = now;
+    splats.push({ u, text: `${dmg}`, tag, col, at: now });
+  }
+}
+/* ------------------------------------------------------------ plates */
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const hpCol = (f) => (f > 0.5 ? ["#3fbf5a", "#6fe08a"] : f > 0.25 ? ["#e0a02a", "#ffd06a"] : ["#d0402a", "#ff7a5a"]);
+const iconsOf = (u) => (u.player ? u.has.map((k) => ({ k, kind: "has" })) : [...(u.weak || []).map((k) => ({ k, kind: "weak" })), ...(u.resist || []).map((k) => ({ k, kind: "resist" }))]);
+const IS = 1.5, IW = 8 * IS + 4;   // icons at 1.5 px a dot: 16 px, the game's scale
+function fullRect(u) { const pw = 130, ph = 34 + IW + 3; return { u, kind: "full", w: pw, h: ph, x: u.px - pw / 2, y: u.py - u.h - 4 - ph }; }
+function slimRect(u) { const w = 46, h = 17; return { u, kind: "slim", w, h, x: u.px - w / 2, y: u.py - u.h - 4 - h }; }
+function drawFull(r, now) {
+  const u = r.u, f = Math.max(0, u.shown / u.max), tf = Math.max(0, u.trail / u.max), [c1, c2] = hpCol(f), sel = u === target;
+  const ic = iconsOf(u); let x = r.x + r.w / 2 - (ic.length * (IW + 3) - 3) / 2; const iy = r.y;
+  for (const i of ic) { const age = now - (u.pulse[i.k] || -1e9), p = age < 900 ? 1 - age / 900 : 0; drawIcon(ctx, i.k, i.kind, x, iy - p * 4, IS, p, i.kind === "resist" && p > 0); x += IW + 3; }
+  const py = r.y + IW + 3, ph = 34;
+  ctx.fillStyle = "rgba(14,9,6,.85)"; ctx.strokeStyle = sel ? "#e8bf35" : "rgba(200,150,58,.6)"; ctx.lineWidth = sel ? 2 : 1; ctx.beginPath(); ctx.roundRect(r.x, py, r.w, ph, 5); ctx.fill(); ctx.stroke();
+  ctx.font = "700 10px Lora"; ctx.textAlign = "right"; ctx.textBaseline = "alphabetic"; ctx.fillStyle = "#ffe45c"; const lv = `Lv ${u.lvl}`; ctx.fillText(lv, r.x + r.w - 6, py + 13);
+  const room = r.w - 16 - ctx.measureText(lv).width; ctx.font = "700 11px Lora"; let nm = u.name; while (ctx.measureText(nm).width > room && nm.length > 3) nm = nm.slice(0, -2) + "…";
+  ctx.textAlign = "left"; ctx.fillStyle = u.player ? "#fff" : "#ffb23f"; ctx.fillText(nm, r.x + 6, py + 13);
+  bar(r.x + 6, py + 18, r.w - 12, 11, f, tf, c1, c2, `${Math.round(u.shown)} / ${u.max}`, 9.5);
+}
+function drawSlim(r) {
+  const u = r.u, f = Math.max(0, u.shown / u.max), tf = Math.max(0, u.trail / u.max), [c1, c2] = hpCol(f);
+  bar(r.x, r.y + 6, r.w, 9, f, tf, c1, c2, `${Math.round(u.shown)}`, 8.5);
+}
+function bar(x, y, w, h, f, tf, c1, c2, text, fs) {
+  ctx.fillStyle = "#2a0a08"; ctx.fillRect(x, y, w, h);
+  if (tf > f) { ctx.fillStyle = "#ffe9a8"; ctx.fillRect(x + w * f, y, w * (tf - f), h); }
+  const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, c2); g.addColorStop(1, c1); ctx.fillStyle = g; ctx.fillRect(x, y, w * f, h);
+  ctx.strokeStyle = "#000"; ctx.lineWidth = 1; ctx.strokeRect(x - .5, y - .5, w + 1, h + 1);
+  ctx.font = `700 ${fs}px Lora`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "rgba(0,0,0,.85)"; ctx.fillText(text, x + w / 2 + 1, y + h / 2 + 1.5); ctx.fillStyle = "#fff"; ctx.fillText(text, x + w / 2, y + h / 2 + .5);
+}
+/* stacking: the most important first, and each later plate pushed up until it touches nobody */
+function stack(rects) {
+  const placed = [];
+  for (const r of rects) { r.y0 = r.y; let moved = true, guard = 0;
+    while (moved && guard++ < 40) { moved = false; for (const q of placed) if (r.x < q.x + q.w + 2 && r.x + r.w + 2 > q.x && r.y < q.y + q.h + 2 && r.y + r.h + 2 > q.y) { r.y = q.y - r.h - 3; moved = true; } }
+    placed.push(r); }
+  return placed;
+}
+function frame(now) {
+  ctx.imageSmoothingEnabled = false;
+  if (IM.ground.complete && IM.ground.naturalWidth) { const s = TS * 2; for (let y = 0; y < cv.height; y += s) for (let x = 0; x < cv.width; x += s) ctx.drawImage(IM.ground, x, y, s, s); } else { ctx.fillStyle = "#2a3a1c"; ctx.fillRect(0, 0, cv.width, cv.height); }
+  ctx.fillStyle = "rgba(10,6,14,.2)"; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.strokeStyle = "rgba(255,255,255,.04)"; for (let x = 0; x < cv.width; x += TS) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, cv.height); ctx.stroke(); } for (let y = 0; y < cv.height; y += TS) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cv.width, y); ctx.stroke(); }
+  for (const u of UNITS) { u.shown += (u.hp - u.shown) * 0.18; if (Math.abs(u.hp - u.shown) < .3) u.shown = u.hp; if (now - u.trailAt > 380) u.trail += (u.hp - u.trail) * 0.09; if (Math.abs(u.trail - u.hp) < .3) u.trail = u.hp; }
+  for (const u of [...UNITS].sort((a, b) => a.py - b.py)) { const im = IM[u.sprite]; if (!im.complete || !im.naturalWidth) continue;
+    const [sx, sy, sw, sh] = u.crop || [0, 0, im.naturalWidth, im.naturalHeight], h = u.crop ? u.h * 1.25 : u.h, w = sw * h / sh;
+    if (u === target) { ctx.strokeStyle = "#e8bf35"; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(u.px, u.py - 2, w * .3, 7, 0, 0, Math.PI * 2); ctx.stroke(); }
+    else if (u === hover) { ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(u.px, u.py - 2, w * .3, 7, 0, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(u.px, u.py - 2, w * .26, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = u.hp <= 0 ? .35 : 1; ctx.drawImage(im, sx, sy, sw, sh, u.px - w / 2, u.py - h + (u.crop ? h * .12 : 2), w, h); ctx.globalAlpha = 1; }
+  /* the plates */
+  const prio = (u) => (u === target ? 0 : u === hover ? 1 : u.player ? 2 : 3);
+  const order = [...UNITS].sort((a, b) => prio(a) - prio(b) || b.py - a.py);
+  let rects = [];
+  if (mode === "all") rects = order.map(fullRect);
+  else if (mode === "stack") rects = stack(order.map(fullRect));
+  else { rects = order.map((u) => (u === target || u === hover ? fullRect(u) : u.hp < u.max || u.shown < u.max ? slimRect(u) : null)).filter(Boolean); rects = stack(rects); }
+  for (const r of [...rects].reverse()) {
+    if (r.y0 != null && r.y < r.y0 - 1) { ctx.strokeStyle = "rgba(232,191,53,.55)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(r.u.px, r.y + r.h); ctx.lineTo(r.u.px, r.y0 + r.h); ctx.stroke(); }
+    r.kind === "full" ? drawFull(r, now) : drawSlim(r);
+  }
+  for (let i = splats.length - 1; i >= 0; i--) { const s = splats[i], age = now - s.at; if (age > 1100) { splats.splice(i, 1); continue; }
+    const y = s.u.py - s.u.h * .45 - age / 30, a = age < 800 ? 1 : 1 - (age - 800) / 300;
+    ctx.globalAlpha = a; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "800 18px Cinzel"; ctx.fillStyle = "#000"; ctx.fillText(s.text, s.u.px + 2, y + 2); ctx.fillStyle = s.col; ctx.fillText(s.text, s.u.px, y);
+    if (s.tag) { ctx.font = "800 10px Lora"; ctx.fillStyle = "#000"; ctx.fillText(s.tag, s.u.px + 1, y + 14); ctx.fillStyle = s.col; ctx.fillText(s.tag, s.u.px, y + 13); } ctx.globalAlpha = 1; }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+const pick = (e) => { const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) * cv.width / r.width, y = (e.clientY - r.top) * cv.height / r.height; let best = null, bd = 1e9; for (const u of UNITS) { if (u.player) continue; const d = Math.hypot(u.px - x, u.py - u.h / 2 - y); if (d < bd) { bd = d; best = u; } } return bd < 44 ? best : null; };
+cv.addEventListener("mousemove", (e) => { hover = pick(e); });
+cv.addEventListener("mouseleave", () => { hover = null; });
+cv.addEventListener("click", (e) => { const u = pick(e); if (u) target = u; });
+document.querySelectorAll("[data-m]").forEach((b) => b.addEventListener("click", () => { mode = b.dataset.m; document.querySelectorAll("[data-m]").forEach((q) => q.setAttribute("aria-pressed", q === b)); }));
+document.querySelectorAll("[data-hit]").forEach((b) => b.addEventListener("click", () => hit(b.dataset.hit)));
+/* start mid-fight: the golem targeted and hit with its weakness, a wolf and the drake already scratched */
+setTimeout(() => { target = UNITS[2]; hit("melee"); target = UNITS[4]; hit("melee"); target = UNITS[3]; hit("void"); }, 500);
+</script>
+</body>
+</html>
