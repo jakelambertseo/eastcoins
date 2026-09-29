@@ -1,23 +1,24 @@
-/* ============================================================ GUS'S ORDER (2026-09-28), the page's half. Lazy: loaded the first time
-   somebody opens Gus's window. The rules are ORDER / orderPct in the rules file and the server's half is eastscape-worker/src/order.js.
+/* ============================================================ BRONNY'S ORDER (2026-09-28), the page's half. Lazy: loaded the first time
+   somebody opens Bronny's window. The rules are ORDER / orderPct in the rules file and the server's half is eastscape-worker/src/order.js.
 
-   ONE WINDOW: Gus and the clock at the top (time left, or "filled: waiting for a claim"), the whole order's bar, then the five lines, each
+   ONE WINDOW: Bronny and the clock at the top (time left, or "filled: waiting for a claim"), the whole order's bar, then the five lines, each
    with its own bar, what you have in your bag and a Hand in button; underneath, who has helped. The foot is the one big action: "Hand in
    everything I've got" while it is open, "Claim the 2X" once it is filled and you helped. The clock ticks here from the server's own
    time (view.now), so a wrong clock on somebody's computer cannot show them the wrong countdown. */
 export function createOrderUi(E) {
   const { G, $, esc, send, SFX, openWin, ico } = E, UIA = "/v3/assets/img/glad/flat/ui/";
-  let v = null, skew = 0, timer = 0;
+  let v = null, skew = 0, timer = 0, err = null;
   const now = () => Date.now() + skew;
   const hms = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return h ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m ${String(x).padStart(2, "0")}s`; };
   const nameOf = (k) => G.ITEMS[k]?.name || k;
   /* what's in YOUR bag is read here, not from the server's view, so it is right the moment the bag changes (a catch, a bank trip) */
   const have = (k) => (E.me?.inv ? G.countItems({ inv: E.me.inv, bank: [] }, [k]) : 0);
-  const KIND = { fish: "Fishing", wood: "The woods", ore: "The rocks", hunt: "The hunt", kitchen: "The kitchen", field: "The fields" };
-  const SAYS = ["Order's on the board. Everybody chips in.", "Fill it and the whole server gets doubled.", "What you hand me, I keep. The 2X is the pay.", "Don't sell it to Bom if it's on my list."];
+  const KIND = (k) => G.ORDER.kinds[k]?.name || k, TIER = (t) => G.ORDER.tiers?.[t] || "";
+  const SAYS = ["We're rebuilding the Yard. Everybody chips in.", "Fill the order and the whole server gets doubled.", "What you hand me goes into the Yard. The 2X is the pay.", "Rebuilding season. Every good team has one."];
 
   function open() { openWin("ordWin"); send({ t: "order", op: "view" }); render(); clearInterval(timer); timer = setInterval(tick, 1000); }
-  function got(view) { if (!view) return; v = view; skew = view.now - Date.now(); if (!$("ordWin").hidden) render(); }
+  function got(view) { if (!view) return; v = view; err = null; skew = view.now - Date.now(); if (!$("ordWin").hidden) render(); }
+  function oops(text) { err = text; SFX.play("ui_error"); render(); }
   function gave(n) { const b = $("ordBody")?.querySelector(".od-top"); if (!b || E.calm?.()) return; const f = document.createElement("b"); f.className = "od-float"; f.textContent = `+${Number(n).toLocaleString()}`; b.append(f); setTimeout(() => f.remove(), 1300); }
   /* only the clock moves between the server's updates, so only the clock is redrawn */
   function tick() {
@@ -28,35 +29,39 @@ export function createOrderUi(E) {
 
   function render() {
     const box = $("ordBody"); if (!box || $("ordWin").hidden) return;
-    if (!v) { box.innerHTML = `<p class="note" style="padding:14px">Gus is finding his clipboard…</p>`; return; }
+    if (!v) { box.innerHTML = `<p class="note" style="padding:14px">Bronny is finding his clipboard…</p>`; return; }
     for (const l of v.lines) l.have = have(l.k);
     const pct = Math.round(v.pct * 100), done = !!v.doneAt, anyHave = v.lines.some((l) => l.have > 0 && l.got < l.n);
     const line = (l, i) => {
       const full = l.got >= l.n, p = Math.min(100, Math.round((l.got / l.n) * 100)), give = Math.min(l.have, l.n - l.got);
       return `<div class="k-row od-line${full ? " full" : ""}"><span class="k-slot" data-item="${l.k}">${ico(l.k)}</span>
-        <span class="od-mid"><span class="od-name"><b>${esc(nameOf(l.k))}</b><small>${esc(KIND[l.kind] || "")}</small></span>
+        <span class="od-mid"><span class="od-name"><b>${esc(nameOf(l.k))}</b><small>${esc(KIND(l.kind))}</small>${l.tier ? `<em class="od-tier ${l.tier}">${esc(TIER(l.tier))}</em>` : ""}</span>
           <span class="od-bar"><i style="width:${p}%"></i><em>${l.got.toLocaleString()} / ${l.n.toLocaleString()}</em></span></span>
         <span class="k-end">${full ? `<span class="k-chip good">Done ✓</span>` : `<small class="od-have${l.have ? "" : " none"}">You have ${l.have.toLocaleString()}</small><button type="button" class="k-btn sm od-give" data-give="${l.k}"${give > 0 && !done ? "" : " disabled"}>Hand in${give > 0 ? ` ${give.toLocaleString()}` : ""}</button>`}</span></div>`;
     };
     const foot = done
       ? (v.canClaim
           ? (v.dbl ? `<span class="k-note">A 2X is already running: <b data-dbl>${hms(v.dbl.until - now())}</b> left. Claim this one after it.</span><button type="button" class="k-btn od-claim" disabled>Claim the 2X</button>`
-                   : `<span class="k-note">You helped fill it: start 30 minutes of 2X for everyone on the server. Gus puts up the next order when you do.</span><button type="button" class="k-btn od-claim" id="odClaim">✨ Claim the 2X</button>`)
-          : `<span class="k-note">Filled! Somebody who helped claims the 2X for the whole server, and then Gus puts up the next order. Help with the next one and it could be you.</span>`)
+                   : `<span class="k-note">You helped fill it: start 30 minutes of 2X for everyone on the server. Bronny puts up the next order when you do.</span><button type="button" class="k-btn od-claim" id="odClaim">✨ Claim the 2X</button>`)
+          : `<span class="k-note">Filled! Somebody who helped claims the 2X for the whole server, and then Bronny puts up the next order. Help with the next one and it could be you.</span>`)
       : `<span class="k-note">Everything you hand in is gone for good: that's the deal. Only what the order still needs is taken.</span><button type="button" class="k-btn od-all" id="odAll"${anyHave ? "" : " disabled"}>Hand in everything I've got</button>`;
     box.innerHTML = `<div class="od">
-      <div class="od-top"><span class="od-face"><img src="${UIA}gus_face.png?v=1" alt="Gus the Foreman"></span>
-        <span class="od-who"><p class="od-say"><b>GUS</b>${esc(done ? (v.canClaim ? "That's the lot! Go on, claim it. You earned it." : "That's the lot. Somebody who helped needs to claim it.") : pct >= 75 ? "Nearly there. Don't stop now." : SAYS[(v.id || "").length % SAYS.length])}</p>
+      <div class="od-top"><span class="od-face"><img src="${UIA}bronny_face.png?v=1" alt="Bronny the Foreman"></span>
+        <span class="od-who"><p class="od-say"><b>BRONNY</b>${esc(done ? (v.canClaim ? "That's the lot! Go on, claim it. You earned it." : "That's the lot. Somebody who helped needs to claim it.") : pct >= 75 ? "Nearly there. Don't stop now." : SAYS[(v.id || "").length % SAYS.length])}</p>
           <span class="od-row">${done ? `<span class="od-clock ok">✅ <b>Filled</b> waiting for a claim</span>` : `<span class="od-clock">⏱ <b>${hms(v.until - now())}</b> left</span>`}
             <span class="od-total"><span class="od-bar big"><i style="width:${pct}%"></i><em>${pct}%</em></span></span></span></span></div>
+      <div class="od-prize${done ? " ready" : ""}"><span class="od-pot">${ico("pot_double")}</span>
+        <span class="od-ptxt"><small>${done ? "Filled! The reward is waiting" : "The reward when it's filled"}</small><b>A 2X Potion for the whole server</b>
+          <span>30 minutes of double tickets and double crafting xp for everyone online. Somebody who helped claims it.</span></span>
+        <span class="od-pbadge">${done ? "READY" : "2X"}</span></div>
       <div class="od-pane k-paper">
-        <div class="k-sect"><span class="k-label">Today's order · five lines, all of them for the 2X</span></div>
+        <div class="k-sect"><span class="k-label">What the Yard needs · two early, two mid and one late-game line</span></div>
         ${v.lines.map(line).join("")}
         <div class="k-sect"><span class="k-label">Helping${v.helpersN ? ` · ${v.helpersN}` : ""}</span></div>
         ${v.helpersN ? `<div class="od-helpers">${v.helpers.map((h) => `<span class="k-chip${h.name === E.me?.name ? " gold" : ""}">${esc(h.name)} <b>${h.n.toLocaleString()}</b></span>`).join("")}</div>${v.mine ? `<p class="od-mine">You've handed in <b>${v.mine.toLocaleString()}</b> on this order.</p>` : ""}`
           : `<p class="od-mine">Nobody yet. Be the first.</p>`}
       </div>
-      <div class="k-foot od-foot">${foot}</div></div>`;
+      ${err ? `<p class="od-err">${esc(err)}</p>` : ""}<div class="k-foot od-foot">${foot}</div></div>`;
     box.querySelectorAll("[data-give]").forEach((b) => b.addEventListener("click", () => { SFX.play("coins"); send({ t: "order", op: "give", k: b.dataset.give }); }));
     box.querySelector("#odAll")?.addEventListener("click", () => { SFX.play("coins"); send({ t: "order", op: "give" }); });
     box.querySelector("#odClaim")?.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "order", op: "claim" }); });
@@ -64,11 +69,11 @@ export function createOrderUi(E) {
   let bagSig = "";
   /* the page calls this on every update of you; the window only redraws when a count it shows has changed */
   function bag() { if (!v || $("ordWin").hidden) return; const sig = v.lines.map((l) => have(l.k)).join(","); if (sig !== bagSig) { bagSig = sig; render(); } }
-  return { open, got, gave, bag, claimed() { SFX.play("task_done"); } };
+  return { open, got, gave, bag, oops, claimed() { SFX.play("task_done"); } };
 }
 
 export const CSS = `
-/* ---------- (2026-09-28) GUS'S ORDER ---------- */
+/* ---------- (2026-09-28) BRONNY'S ORDER ---------- */
 #ordWin{width:min(720px,calc(100% - 20px))}
 #ordWin .win-body{padding:0;display:flex;flex-direction:column;min-height:0;overflow:hidden}
 .od{display:flex;flex-direction:column;min-height:0;flex:1}
@@ -84,9 +89,16 @@ export const CSS = `
 .od-bar{position:relative;display:block;height:14px;border-radius:7px;background:rgba(90,58,24,.18);overflow:hidden}.od-bar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#2e9a44,#6dff9c);transition:width .5s cubic-bezier(.2,.7,.3,1)}
 .od-bar em{position:relative;display:block;text-align:center;font:800 10.5px/14px Lora,serif;font-style:normal;color:#1a2a10;text-shadow:0 1px 0 rgba(255,255,255,.5)}
 .od-bar.big{height:20px;border-radius:10px;background:#140e04;box-shadow:0 0 0 2px #c8963a}.od-bar.big em{line-height:20px;font-size:12px;color:#fff;text-shadow:0 1px 0 #000}
+/* the reward, said plainly (the owner: "add a small area where it clearly calls out that the server gets a 2X potion when its complete") */
+.od-prize{position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:10px 16px;background:linear-gradient(90deg,#fff3c8,#f6dc8a 55%,#e8bf35);border-bottom:2px solid #c8963a;color:#3a2400}
+.od-pot{display:grid;place-items:center;width:46px;height:46px;border-radius:10px;background:radial-gradient(circle at 50% 40%,#fff8d8,#e8b830);box-shadow:0 0 0 2px #7a4e0e,0 0 14px rgba(255,200,60,.7)}.od-pot img,.od-pot .ico{width:32px;height:32px;image-rendering:pixelated}
+.od-ptxt{display:grid;gap:1px;min-width:0}.od-ptxt small{font:800 10.5px Lora,serif;letter-spacing:.1em;text-transform:uppercase;color:#7a4e0e}.od-ptxt b{font:900 17px var(--k-disp);color:#2a1600}.od-ptxt span{font:600 12.5px/1.35 Lora,serif;color:#5a3a08}
+.od-pbadge{font:900 20px var(--k-disp);color:#fff;background:linear-gradient(#e8543a,#a82a1a);padding:6px 10px;border-radius:8px;box-shadow:0 2px 0 #5a1208,inset 0 1px 0 rgba(255,255,255,.35);text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.od-prize.ready{background:linear-gradient(90deg,#e4f8d8,#b8eaa0 55%,#6dcf6a);border-bottom-color:#2f7a3a}.od-prize.ready .od-pbadge{background:linear-gradient(#4fc463,#2e9a44);box-shadow:0 2px 0 #1e5a2a,inset 0 1px 0 rgba(255,255,255,.35);font-size:15px;animation:odGlow 1.6s ease-in-out infinite}
+.od-tier{font:800 10px/1 Lora,serif;font-style:normal;letter-spacing:.06em;text-transform:uppercase;padding:3px 6px;border-radius:99px;background:#d6ecd0;color:#2f7a3a;white-space:nowrap}.od-tier.mid{background:#d8e2f6;color:#2a4a8a}.od-tier.late{background:#f6e2a8;color:#7a4e0e;box-shadow:inset 0 0 0 1px #c8963a}
 .od-pane{flex:1;min-height:0;overflow:auto;display:grid;gap:6px;align-content:start;padding:10px 12px}
 .od-line{grid-template-columns:auto minmax(0,1fr) auto;cursor:default}.od-line.full{box-shadow:inset 0 0 0 1.5px #3fa556;background:#dcebcf}
-.od-mid{display:grid;gap:5px;min-width:0}.od-name{display:flex;align-items:baseline;gap:8px}.od-name b{font:800 15px var(--k-disp)}.od-name small{font:700 11.5px Lora,serif;color:var(--k-ink2)}
+.od-mid{display:grid;gap:5px;min-width:0}.od-name{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.od-name b{font:800 15px var(--k-disp)}.od-name small{font:700 11.5px Lora,serif;color:var(--k-ink2)}
 .od-line .k-end{display:flex;align-items:center;gap:10px}
 .od-have{font:700 12px Lora,serif;color:var(--k-ink2);white-space:nowrap}.od-have.none{color:var(--k-ink3)}
 #ordWin .k-btn.od-give{border:6px solid transparent;border-image:url(${"/v3/assets/img/glad/flat/ui/"}btn_zc.png?v=1) 10 fill / 6px stretch;background:none;color:#e4ffe9;text-shadow:0 1px 0 #000;font-weight:900}
@@ -94,6 +106,7 @@ export const CSS = `
 #ordWin .k-btn.od-give:active:not(:disabled){transform:translateY(1px) scale(.95)}
 .od-helpers{display:flex;gap:6px;flex-wrap:wrap}.od-helpers .k-chip b{margin-left:2px}
 .od-mine{margin:0 2px;font:600 13px Lora,serif;color:var(--k-ink2)}.od-mine b{color:var(--k-ink)}
+.od-err{margin:0;padding:8px 14px;background:#f6d6d0;color:var(--k-bad);font:700 13px/1.35 Lora,serif;border-top:2px solid #e0a09a}
 .od-foot{margin:0}.od-foot .k-note{flex:1 1 auto;min-width:0}
 #ordWin .k-btn.od-all,#ordWin .k-btn.od-claim{flex:none;min-height:48px;padding:0 16px;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn_gold.png?v=1) 10 fill / 7px stretch;background:none;color:#2a1600;text-shadow:0 1px 0 rgba(255,240,190,.6);font:900 14.5px/1 var(--k-disp),serif}
 #ordWin .k-btn.od-all:hover:not(:disabled),#ordWin .k-btn.od-claim:hover:not(:disabled){border-image-source:url(/v3/assets/img/glad/flat/ui/btn_gold_on.png?v=1)}
@@ -102,5 +115,5 @@ export const CSS = `
 .od-float{position:absolute;right:24px;top:10px;font:900 24px var(--k-disp),serif;color:#9dffab;-webkit-text-stroke:4px #0c3014;paint-order:stroke fill;animation:odUp 1.3s ease-out forwards;pointer-events:none}
 @keyframes odUp{from{transform:translateY(10px);opacity:0}20%{opacity:1}to{transform:translateY(-34px);opacity:0}}
 @media (prefers-reduced-motion:reduce){#ordWin .k-btn.od-claim{animation:none}.od-float{animation:none;display:none}}
-@media (max-width:620px){.od-line{grid-template-columns:auto minmax(0,1fr)}.od-line .k-end{grid-column:1/-1;justify-content:flex-end}.od-foot{flex-wrap:wrap}.od-foot .k-note{flex-basis:100%}.od-foot .k-btn{flex:1}}
+@media (max-width:620px){.od-prize{grid-template-columns:auto 1fr}.od-pbadge{display:none}.od-line{grid-template-columns:auto minmax(0,1fr)}.od-line .k-end{grid-column:1/-1;justify-content:flex-end}.od-foot{flex-wrap:wrap}.od-foot .k-note{flex-basis:100%}.od-foot .k-btn{flex:1}}
 `;

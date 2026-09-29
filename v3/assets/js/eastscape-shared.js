@@ -2595,6 +2595,13 @@ Object.assign(SCENES, {
          spacing etc in the yard is good"), so the override is gone and the sprite is core art again. The three
          positions are unchanged, which is the part that was right. */
       for (const [x, y] of [[8, 4], [28, 8], [7, 20]]) { objs.push({ t: "wheat", x, y, name: "Wheat" }); g[y][x] = "#"; keep.push([x, y]); }
+      /* (2026-09-28, the owner: "add some theme relevant pixel art beside him, like a road sign or construction related things. he thematically
+         needs the items to 'rebuild' the yard") BRONNY'S WORKSITE at the west gate, round Bronny the Foreman (3,15, npcs below): his lumber and
+         the barrier behind him, cones at his side, and the roadwork sign in front of him saying what the order is for. Clear of rows 12 and 14,
+         which are the road's verges and stay walkable. */
+      dress("lumber", 1, 15, "Lumber and bricks, waiting for the rebuild."); dress("sawhorse", 2, 16, "A road barrier. The Yard's under construction.");
+      dress("cones", 4, 16, "Cones. Somebody's rebuilding something.");
+      objs.push({ t: "sign", art: "o_roadwork", x: 5, y: 15, name: "YARD UNDER CONSTRUCTION. Bronny the Foreman is rebuilding the Yard, and he needs materials. Fill his order together and the whole server gets a 2X Potion." }); g[15][5] = "#"; keep.push([5, 15]);
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, [...keepOf(this), ...keep], 12);
       return { g, objs, blobs: [] };
@@ -7399,44 +7406,70 @@ SCENES.workyard.npcs.push({ name: "Nestor the Egg Man", art: "nestor", x: 25, y:
     "An egg's no good in your pocket. Take it home to your island and put it in a hatchery. Yahsmeena sells them, by your cottage.", "Three Ordinary pet food under the egg, and you wait. A Speckled egg is twelve hours. A Gilded one, five days. Worth it.", "Two of the same pet in your pen make a Greater one. Two Greaters make a Legendary. It all starts with an egg."] });
 /* (2026-09-28, the owner: "lets just start with a Daily for the server for now. Create a new NPC thats placed near the court in the yard.
    There has to be at least 5 items/jobs turned in. No unused potions, instead the potion only resets after one is claimed. then new tasks
-   are given and include a timer countdown/time remaining in the NPC UI") GUS'S ORDER: THE SERVER'S DAILY.
+   are given and include a timer countdown/time remaining in the NPC UI") BRONNY'S ORDER: THE SERVER'S DAILY.
 
    ONE ORDER FOR THE WHOLE SERVER, five lines, each from a different kind of work (fishing, the woods, the rocks, the hunt, the kitchen,
-   the fields), so whatever somebody likes doing, they can help. Anyone hands in from their bag at Gus, any time, in any amount, and it
+   the fields), so whatever somebody likes doing, they can help. Anyone hands in from their bag at Bronny, any time, in any amount, and it
    all lands on the same bars.
 
    EVERYTHING HANDED IN IS GONE. That is the balance (the owner: so a party can't keep its drops, sell them to Bom AND take a 2X for doing
-   the daily): an item on Gus's order is an item nobody sold. And nothing on it is anything Bom sells, so nobody can buy from him and hand
+   the daily): an item on Bronny's order is an item nobody sold. And nothing on it is anything Bom sells, so nobody can buy from him and hand
    it straight back.
 
-   FILLED, IT IS ONE 2X POTION FOR THE WHOLE SERVER, held at Gus until somebody who helped claims it. It never expires unused, and the
+   FILLED, IT IS ONE 2X POTION FOR THE WHOLE SERVER, held at Bronny until somebody who helped claims it. It never expires unused, and the
    next order only goes up once it is claimed (so it never fires at 2 PM on a Tuesday with nobody on). An order that runs out UNFILLED
    (ORDER.ms after it went up) is replaced by a fresh one, and what was handed in stays handed in.
 
    The counts are a first guess at about half an hour of one person's work a line. Tune them here; the worker and the window read nothing
    else. */
+/* (2026-09-28, the owner: "there should also be a mix of later game items (a few) and mid game and early game") EVERY ORDER IS TWO EARLY
+   LINES, TWO MID AND ONE LATE (ORDER.mix), one from each of the five kinds of work, the tiers dealt out at random. So a beginner always has
+   two lines they can do and a veteran always has one worth their time. Tiers are by the level that item needs in the open world:
+   early 1-19, mid 20-49, late 50+ (fishing spot, tree, rock, the monster that drops it, the cooking recipe). The COUNTS fall as the tier
+   rises, aiming at about the same half hour of work a line for somebody at that level; they are a first guess, so tune them here. */
 export const ORDER = {
-  npc: "Gus the Foreman", ms: 24 * 3600 * 1000, lines: 5,
+  npc: "Bronny the Foreman", ms: 24 * 3600 * 1000, lines: 5, mix: ["early", "early", "mid", "mid", "late"],
+  tiers: { early: "Early game", mid: "Mid game", late: "Late game" },
   kinds: {
-    fish: [["csardine", 120], ["cperch", 100], ["ctrout", 70]],
-    wood: [["logs", 150], ["willowlogs", 90], ["charcoal", 40]],
-    ore: [["copper", 120], ["tin", 120], ["bronze_bar", 25]],
-    hunt: [["bones", 80], ["hide", 40], ["tusk", 40], ["feather", 200]],
-    kitchen: [["cchicken", 70], ["cbeef", 50], ["cpork", 40]],
-    field: [["tomatoe", 80], ["olives", 120], ["sporecap", 50]]
+    fish: { name: "Fishing",
+      early: [["sardine", 150], ["perch", 120], ["trout", 100]],
+      mid: [["lanternfish", 60], ["mudskipper", 50], ["bonefish", 45], ["ghostcarp", 40], ["skyeel", 35]],
+      late: [["stormmarlin", 20], ["thundersquid", 18], ["goldfish", 15], ["koi", 15]] },
+    wood: { name: "Woodcutting",
+      early: [["logs", 150], ["willowlogs", 100]],
+      mid: [["ashlogs", 70], ["yewlogs", 30], ["skyashlogs", 50], ["palmlogs", 50]],
+      late: [["pinelogs", 25], ["voidlogs", 12]] },
+    ore: { name: "Mining and the forge",
+      early: [["copper", 150], ["tin", 150], ["bronze_bar", 25]],
+      mid: [["sand", 80], ["diamond_ore", 40], ["dragonstone_ore", 30], ["diamond_bar", 10]],
+      late: [["onyx_ore", 20], ["starfall_ore", 12], ["onyx_bar", 5]] },
+    hunt: { name: "Monster drops",
+      early: [["feather", 200], ["bones", 100], ["hide", 50], ["tusk", 50], ["olives", 150], ["tomatoe", 100], ["sporecap", 60]],
+      mid: [["markedcard", 40], ["receipt", 40], ["sharktooth", 30], ["cobweb", 30], ["flashlight", 25], ["bonegourd", 15]],
+      late: [["scarabshell", 15], ["staticfur", 15], ["hailshard", 12], ["snakefang", 12], ["catalytic", 8]] },
+    kitchen: { name: "Cooking",
+      early: [["csardine", 120], ["cchicken", 100], ["cbeef", 80], ["cperch", 100], ["cpork", 60], ["ctrout", 70]],
+      mid: [["ccatfish", 50], ["cmudskipper", 40], ["clanternfish", 40], ["cbonefish", 35], ["cghostcarp", 30]],
+      late: [["cstormmarlin", 15], ["cthundersquid", 15], ["cmudcat", 12], ["sghostcarp", 15]] }
   }
 };
-/** a fresh order's lines: ORDER.lines different kinds, one thing from each. `r` is the random source (Math.random, or a test's). */
+/** a fresh order's lines: one from each kind, with ORDER.mix's tiers dealt out at random. Anything held, or anything Bom sells (so it
+    could be bought and handed straight back), is never picked. `r` is the random source (Math.random, or a test's). */
 export function orderPick(r = Math.random) {
-  const kinds = Object.entries(ORDER.kinds).map(([kind, list]) => [kind, list.filter(([k]) => ITEMS[k] && !ITEMS[k].held)]).filter(([, l]) => l.length);
-  for (let i = kinds.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [kinds[i], kinds[j]] = [kinds[j], kinds[i]]; }
-  return kinds.slice(0, ORDER.lines).map(([kind, l]) => { const [k, n] = l[Math.floor(r() * l.length)]; return { kind, k, n, got: 0 }; });
+  const sold = new Set(prizesOf().map((p) => p.give?.[0]).filter(Boolean)), ok = ([k]) => ITEMS[k] && !ITEMS[k].held && !sold.has(k);
+  const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const kinds = shuffle(Object.keys(ORDER.kinds)).slice(0, ORDER.lines), tiers = shuffle([...ORDER.mix]);
+  return kinds.map((kind, i) => {
+    const K = ORDER.kinds[kind], order = [tiers[i], "mid", "early", "late"];   /* if a tier has nothing usable, fall back rather than leave a hole */
+    const tier = order.find((t) => (K[t] || []).some(ok)), list = K[tier].filter(ok), [k, n] = list[Math.floor(r() * list.length)];
+    return { kind, tier, k, n, got: 0 };
+  });
 }
 /** how far along an order is, 0..1: each line counts the same, however big it is, so a line of 200 feathers does not drown out 25 bars */
 export const orderPct = (o) => (o?.lines?.length ? o.lines.reduce((a, l) => a + Math.min(1, l.got / l.n), 0) / o.lines.length : 0);
-SCENES.workyard.npcs.push({ name: "Gus the Foreman", art: "gus", x: 3, y: 15,   /* (2026-09-28, the owner: "move him to the west side of the yard") by the west gate, just off the road in from the Carnival */ still: true, opens: "order", reach: 2,
-  lines: ["Order's on the board. Fill it and the whole server gets doubled. Simple.", "Everybody chips in. Fish, logs, ore, whatever's on the list. It all counts.", "What you hand me, I keep. That's the deal. The 2X is the pay.",
-    "Somebody who helped claims the potion. Then I put up the next one. Not before.", "Don't sell it to Bom if it's on my list. He'll only give you tickets. I'll give everybody double.", "Clock's on the board. Run out and I start over, and I keep what you gave me."] });
+SCENES.workyard.npcs.push({ name: "Bronny the Foreman", art: "bronny", face: "east", x: 3, y: 15,   /* (2026-09-28, the owner: "make him face to the east so it's different than other NPCs", and "name him Bronny") */   /* (2026-09-28, the owner: "move him to the west side of the yard") by the west gate, just off the road in from the Carnival */ still: true, opens: "order", reach: 2,
+  lines: ["We're rebuilding the Yard, one order at a time. Fill it and the whole server gets doubled.", "Timber, ore, fish for the crew. Everybody chips in, and it all counts.", "What you hand me goes into the Yard. That's the deal. The 2X is the pay.",
+    "Somebody who helped claims the potion. Then I put up the next order. Not before.", "Don't sell it to Bom if it's on my list. He'll give you tickets. I'll give everybody double.", "Rebuilding season. Every good team has one.", "Clock's on the board. Run out and I start over, and I keep what you gave me."] });
 SCENES.workyard.npcs.push({ name: "Hexa the Candy Witch", event: true, art: "hexa", x: 18, y: 11, still: true,   /* (2026-09-27) was 24,11 with the tent on the north road; the owner: "right in the road in the yard". West of the road now, on the grass between the bush and the Gloam sign */ quests: ["hw_king"], opens: "market", reach: 3, hair: "#3a2a4a", shirt: "#2a1a3a", pants: "#4a2a5a",
   lines: ["Candy corn. Bring me candy corn. It falls off everything this month, if you're the kind of person things fall off for.", "The King rises on the hour in the Mire. I sell to the ones who come back.", "Seeds, vials, slime, pie. And two fits, if you've the corn: a skeleton and a sheet. Ronde does the colours.", "I pack the tent on the second of November and the corn goes to sugar in your bag the same morning. Whatever you've bought, you keep. Whatever you haven't, you won't."] });
 

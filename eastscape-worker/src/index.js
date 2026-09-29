@@ -30,7 +30,7 @@ import { installPyramid } from "./pyramid.js";
 import { installCount } from "./count.js";
 import { installCarnival, installTurnstile } from "./carnival.js";
 import { installPit } from "./pit.js";
-import { installOrder } from "./order.js";   /* (2026-09-28) Gus's order, the server's daily */
+import { installOrder } from "./order.js";   /* (2026-09-28) Bronny's order, the server's daily */
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
 const CR = createCryptRules(G, G._MAP); Object.assign(G.SCENES, CR.scenes); Object.assign(G.MOBS, CR.mobs);
 /* (2026-09-24) THE GREAT PYRAMID, the second party dungeon: same shape, its own map, monsters and boss. */
@@ -796,7 +796,7 @@ export class World {
       case "report": return void this.reportOp(S, pl, m).catch((e) => console.error("report", e));   /* (2026-09-28) the bug button */
       case "pen": return this.penOp(S, pl, m);
       case "hatch": return this.hatchOp(S, pl, m);   /* (2026-09-27) Breeding: eggs */
-      case "order": return this.orderOp(S, pl, m);   /* (2026-09-28) Gus's order, the server's daily */
+      case "order": return this.orderOp(S, pl, m);   /* (2026-09-28) Bronny's order, the server's daily */
       case "eggtrade": return this.eggTrade(S, pl, m);   /* (2026-09-28) Nestor the Egg Man */
       case "fung": return this.fungOp(S, pl, m);   /* (2026-09-27) Fungiculture: planting a bed */   /* (2026-09-27) Breeding */   /* (2026-09-27) the Long Night: trick or treat, the Night Market, the corn-priced fits */
       case "talked": { const n = S.npcs.find((x) => x.id === m.npc); if (n) n.holdUntil = 0; return; }
@@ -1389,7 +1389,7 @@ export class World {
     this.cryptTop = (await this.ctx.storage.get("cryptTop")) || {};   /* (v103) the crypt's fastest clears */
     this.radio = (await this.ctx.storage.get("radio")) || null;
     this.chatLog = (await this.ctx.storage.get("chatlog")) || [];
-    this.dbl = (await this.ctx.storage.get("dbl")) || null; await this.orderLoad();   /* (2026-09-28) Gus's order outlives a restart too */   /* (2026-09-25) a 2X event outlives a restart: it is the server's clock, not a player's */   /* (v86) the jukebox's station outlives a restart */
+    this.dbl = (await this.ctx.storage.get("dbl")) || null; await this.orderLoad();   /* (2026-09-28) Bronny's order outlives a restart too */   /* (2026-09-25) a 2X event outlives a restart: it is the server's clock, not a player's */   /* (v86) the jukebox's station outlives a restart */
     this.fame = (await this.ctx.storage.get("fame")) || this.fame || null;
     return Response.json({ ok: true, restored: written, from: body.takenAt || null });
   }
@@ -4776,6 +4776,7 @@ export class World {
         if (m.skill === "all") { C.xp = { ...f }; C.hp = Math.min(C.hp, G.maxHpOf(C)); this.touch(pl); return note("All xp cleared."); }
         if (!skill) return; C.xp[skill] = f[skill]; C.hp = Math.min(C.hp, G.maxHpOf(C)); this.touch(pl); return note(`${G.SKILLS[skill].name} xp cleared.`);
       }
+      case "neworder": { this.orderNew(Date.now()); note("Bronny has put up a fresh order."); return; }   /* (2026-09-28) Bronny's order: replace the current one (to test, or to retune the lines) */
       case "item": { const k = String(m.k), n = Math.max(1, Math.min(1000000, m.n | 0)); if (!G.ITEMS[k]) return; const got = this.giveUpTo(pl, k, n); if (got) note(`Gave ${got.toLocaleString()} × ${G.ITEMS[k].name}.`); return; }
       /* (2026-09-25, the owner: "allow me to spawn it in admin menu") Two ways, because they are different
          jobs: `item pot_double` puts one in your bag to test the drinking, and this STARTS one outright without
