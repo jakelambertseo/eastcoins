@@ -1107,6 +1107,15 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-29", title: "Tinkering rebalanced, and every map's missing art back",
+    items: [
+      "TINKERING XP IS PACED LIKE THE OTHER SKILLS NOW. Salvaging pays half an item's part value, and never more than 40 xp for one item, so a rare or a piece of top gear isn't a shortcut any more. Building a gadget pays 15 xp for each level it needs. Giving parts and tickets to a World Project pays less xp than it did (finishing a stage still pays well). Levels already earned stay earned.",
+      "GADGETS MOVED UP AND COST TEN TIMES AS MUCH: the Confetti Cannon is Tinkering 31, the Whetstone, Scope and Arc Coil 40, the Lantern 58, the Auger 78 and the Boss Bomb 90. Every part and ticket fee is ten times what it was. The early levels are salvaging and World Projects. The Tinkering guide has the full table.",
+      "TINKERING HAS ITS OWN ICON everywhere (skills, profiles, the Hiscores and the wiki), five achievements (Scrapper, Gadgeteer, Automation, Builder and Town Planner), and a Builder's Pins page in the collection log.",
+      "MISSING ART FIXED: the Boneyard's dragonstone rocks, Cloudreach's onyx rocks, and the barrels on the Gloam, the Golden Sands, the Fight Pit and the Thieves' Guild all show again.",
+    ],
+  },
+  {
     date: "2026-09-29", title: "Tinkering, World Projects, and gems are open",
     items: [
       "TINKERING, A NEW SKILL: take your junk to Sprocket Sal's Scrap Bench by Bronny's worksite in the Yard and salvage it into parts (Scrap, Gears, Sparks and Relic shards, kept in their own pouch). Build gadgets out of them: a Whetstone, a Scope, a Pressure Cooker, a Lantern for rare drops, the Auger, Chainsaw and Auto-Reel that keep you gathering, a Boss Bomb, and more. See the Tinkering guide.",
