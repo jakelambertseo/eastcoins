@@ -3184,9 +3184,9 @@ Object.assign(SCENES, {
   },
   isle: { name: "Island", island: true, exitTo: { scene: "workyard", x: 38, y: 15 }, entry: { x: 10, y: 10 }, build() { return isleBuild(1); }, mobs: [], npcs: ISLE_NPCS, bots: [] },
   isle2: { name: "Island", island: true, wikiHide: true, exitTo: { scene: "workyard", x: 38, y: 15 }, entry: { x: 10, y: 10 }, build() { return isleBuild(2); }, mobs: [], npcs: ISLE_NPCS, bots: [] },
-  isle3: { name: "Island", island: true, wikiHide: true, exits: { e: "shore" }, exitTo: { scene: "workyard", x: 38, y: 15 }, entry: { x: 10, y: 10 }, build() { return isleBuild(3); }, mobs: [], npcs: ISLE_NPCS, bots: [] },
+  isle3: { name: "Island", island: true, wikiHide: true, exits: { e: "shore" }, arrive: { e: { x: 41, y: 6 } },   /* (2026-09-29) back from the Far Shore: onto the bridge (rows 5-7), not the middle of the east edge, which is sea */ exitTo: { scene: "workyard", x: 38, y: 15 }, entry: { x: 10, y: 10 }, build() { return isleBuild(3); }, mobs: [], npcs: ISLE_NPCS, bots: [] },
   shore: {
-    name: "The Far Shore", island: true, exits: { w: "isle3" },
+    name: "The Far Shore", island: true, exits: { w: "isle3" }, arrive: { w: { x: 2, y: 6 } },   /* (2026-09-29) off the bridge onto the dock (rows 5-7), not the middle of the west edge, which is sea */
     build() {
       const g = grid("~"), objs = [];
       isleLand(g, 11, 6, 8.6, 5.3);

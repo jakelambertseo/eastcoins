@@ -285,6 +285,7 @@ export class World {
     this.cryptRejoin(pl); this.countRejoin(pl);   /* (2026-09-25) and the Count Room, same rule: a saved spot inside a run is only good if that run is still there */   /* (v104) saved inside a crypt run: back into it if it is still going, else to the stairs */
     this.pyramidRejoin(pl);
     this.towerRejoin(pl);   /* (2026-09-22) saved inside the Tower: rebuild that floor, or the room comes back empty and unwinnable */
+    this.isleRejoin(pl, stored);   /* (2026-09-29) saved on your own island: back there, not the casino */
     this.colSeed(C);   /* (2026-09-27) the collection log: what this character already had */
     this.pls.set(user.id, pl);
     this.ctx.storage.put(`who:${String(user.login).toLowerCase()}`, { id: user.id, name: pl.name }).catch(() => {});
@@ -293,6 +294,7 @@ export class World {
     const heldAt = HELD_MAPS[String(C.scene)];
     if (heldAt && !G.OPEN.has(String(C.scene))) { C.scene = heldAt.scene; C.x = pl.x = heldAt.x; C.y = pl.y = heldAt.y; pl.needSave = true; }
     const S = this.scene(C.scene);
+    if (S.owner && !S.decorLaid) this.decorLay(S);   /* (2026-09-29) an island logged into directly: its furniture stands before anyone is placed on it */
     this.placeSafely(S, pl); this.markSeen(pl, C.scene);
     ws.addEventListener("message", (e) => { try { this.onMessage(pl, JSON.parse(e.data)); } catch (err) { /* ignore bad frames */ } });
     ws.addEventListener("close", () => this.leave(pl));
@@ -308,6 +310,7 @@ export class World {
     if (HEARD.has(String(S.key).split(":")[0])) { this.songTick(Date.now()); if (this.song || this.songQ?.length) this.send(pl, { type: "ev", list: [this.songMsg()] }); }
     if (this.radio && HEARD.has(String(S.key).split(":")[0])) this.send(pl, { type: "ev", list: [{ type: "radio", radio: this.radio }] });   /* (v86) the jukebox is already playing when you log in on the floor */
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
+    if (S.owner) pl.out.push({ type: "decor", decor: this.isleOf(S)?.decor || [] });   /* (2026-09-29) as moveToScene sends it on the way in */
     this.cryptHello(pl, S); if (S.def.count) this.countHello(pl, S);
     if (this.doubleOn()) pl.out.push({ type: "double", on: this.doubleView() });   /* (2026-09-25) walk in mid-event and the timer is already there */
     this.pyramidHello(pl, S);
@@ -320,6 +323,22 @@ export class World {
     this.start();
   }
 
+  /* (2026-09-29, a player's bug report: "while on your island you get teleported to casino if game refreshes or updates") YOUR OWN ISLAND
+     SURVIVES A LOAD. normChar sends any scene it cannot find to the casino, and an island (isle / isle2 / isle3, the Far Shore, the
+     cottage, the cellar) is built per owner on demand, so it is never in SCENES: every refresh and every deploy put an islander on the
+     casino floor. The backlog's rule for this is that an exempt key needs something to rebuild it; for YOUR OWN island that is certain
+     (it is built from your own character), so only the owner comes back to it: somebody else's may be closed, or its owner offline, and
+     that visitor wakes at Charon's cart as before. An island key follows the tier you have now; the Far Shore needs the third tier and
+     the cellar its ladder, or you come up on the island instead. */
+  isleRejoin(pl, stored) {
+    const was = String(stored?.scene || ""), C = pl.C;
+    if (!G.isIsle(was) || G.ownerOf(was) !== pl.id) return;
+    const base = was.split(":")[0], isle = G.isleKey(C.isle, pl.id), hasLadder = (C.isle?.decor || []).some((d) => d.k === G.FUNG.ladder);
+    const key = /^isle\d?$/.test(base) || (base === "shore" && (C.isle?.tier | 0) < 3) || (base === "cellar" && !hasLadder) ? isle : base === "shore" || base === "cellar" || base === "home" ? was : null;
+    if (!key) return;
+    const keepSpot = key === was || /^isle\d?$/.test(base);
+    C.scene = key; C.x = pl.x = keepSpot && Number.isInteger(stored.x) ? stored.x : G.SCENES.isle.entry.x; C.y = pl.y = keepSpot && Number.isInteger(stored.y) ? stored.y : G.SCENES.isle.entry.y;
+  }
   async leave(pl, replaced = false) {
     if (pl.left) return; pl.left = true;
     if (pl.trade) this.tradeEnd(pl.trade, `${pl.name} left.`);
@@ -512,9 +531,13 @@ export class World {
   }
   placeSafely(S, pl) {
     if (G.walkableIn(S.g, pl.x, pl.y) && S.g[pl.y][pl.x] !== "e") return;
-    // nearest open tile to the middle
+    /* (2026-09-29, a player's bug report: "character will teleport to right side of map when exiting cellar; and arriving at secondary
+       island") THE NEAREST OPEN TILE TO WHERE YOU WERE MEANT TO LAND, not to the middle of the map. On an island the middle of the map is
+       open water, so the nearest dry tile to it was the island's far side: a cellar ladder with a flower bed below it, or an arrival on
+       the wrong row of the Far Shore's bridge, put you across the island. Only a spot off the map falls back to the middle. */
+    const on = pl.x >= 0 && pl.y >= 0 && pl.x < G.COLS && pl.y < G.ROWS, ax = on ? pl.x : G.COLS / 2, ay = on ? pl.y : G.ROWS / 2;
     let best = null;
-    for (let y = 1; y < G.ROWS - 1; y++) for (let x = 1; x < G.COLS - 1; x++) if (G.walkableIn(S.g, x, y) && S.g[y][x] !== "e") { const d = Math.hypot(x - G.COLS / 2, y - G.ROWS / 2); if (!best || d < best.d) best = { x, y, d }; }
+    for (let y = 1; y < G.ROWS - 1; y++) for (let x = 1; x < G.COLS - 1; x++) if (G.walkableIn(S.g, x, y) && S.g[y][x] !== "e") { const d = Math.hypot(x - ax, y - ay); if (!best || d < best.d) best = { x, y, d }; }
     if (S.key === G.START.scene && G.walkableIn(S.g, G.START.x, G.START.y)) best = G.START;
     pl.x = best.x; pl.y = best.y; this.touch(pl);
   }

@@ -59,7 +59,8 @@ const ok = (m) => console.log("  " + m);
      in progress or on the list below of ones that are MEANT to be transient. That is what stops the next one. */
   const TRANSIENT = {
     pit: "the Fight Pit's rounds are transient; coming back in the casino afterwards costs nothing",
-    home: "a player's house on their island. Being put in the casino instead of your own front room loses no progress, so it is left alone deliberately — see the backlog",
+    home: "a player's house on their island: normChar still drops it, and the worker's isleRejoin puts the OWNER back (2026-09-29; tools/eastscape-arrive-test.mjs)",
+    cellar: "the mushroom cellar under an island: the same, restored for its owner by isleRejoin (2026-09-29; tools/eastscape-arrive-test.mjs)",
   };
   const src = ["index.js", "crypt.js", "tower.js", "pit.js"].map((f) => fs.readFileSync("C:/Users/jake/code/eastcoins/eastscape-worker/src/" + f, "utf8")).join("\n");
   const prefixes = new Set();
