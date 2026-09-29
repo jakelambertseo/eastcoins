@@ -2024,3 +2024,8 @@ its band colour; clicking a sorted gem sets it in the first empty setting of its
 - SITE: The Grind CLOSED (functions/api/casino/grind/_grind.js CLOSED; start.js 410; home.js closed flag; v3-grind 10 shows
   "The Grind is closed. Check out EastScape instead."; v3-casino 53 card "Closed"; v3.css 280). In-progress shifts can still finish.
 - IDEA (owner): the outfitters could wander to a new mid/late map each day.
+
+## 2026-09-29, rules 362 LIVE (worker da4c15a6): outfitter prices
+Armour = Bom's plate price for the same tier and slot (leather/linen = bronze ... voidstalker/astral = singularity: a body
+600 .. 1,440,000). Weapons = 10x that tier's longsword (bows, wands) or shield (quivers, bags): a bogwood longbow 6,000,000.
+Buy-back unchanged (an eighth, capped 2,500). Shared ?v=393.
