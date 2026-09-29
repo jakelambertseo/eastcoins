@@ -2608,7 +2608,7 @@ Object.assign(SCENES, {
       dress("cones", 4, 16, "Cones. Somebody's rebuilding something.");
       /* (2026-09-28) SPROCKET SAL'S SCRAP BENCH (Tinkering), at the slab's south-east corner beside her: the jeweller's bench picture until
          the bench has its own art. Only while Tinkering is open. */
-      if (!HOLD.tinker) { objs.push({ t: "scrapbench", art: "o_jbench", x: 5, y: 17, name: "The Scrap Bench: salvage your junk into parts, and build gadgets" }); g[17][5] = "P"; keep.push([5, 17]); }
+      if (!HOLD.tinker) { objs.push({ t: "scrapbench", art: "o_scrapbench", x: 5, y: 17, name: "The Scrap Bench: salvage your junk into parts, and build gadgets" }); g[17][5] = "P"; keep.push([5, 17]); }
       objs.push({ t: "sign", art: "o_roadwork", x: 5, y: 15, name: "YARD UNDER CONSTRUCTION. Bronny the Foreman is rebuilding the Yard, and he needs materials. Fill his order together and the whole server gets a 2X Potion." }); g[15][5] = "#"; keep.push([5, 15]);
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, [...keepOf(this), ...keep], 12);
