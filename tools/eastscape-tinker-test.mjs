@@ -18,7 +18,7 @@ const C = pl.C, cnt = (k, f) => C.inv.filter((s) => s.k === k && (f == null || (
 /* 1. one stack */
 G.addInv(C.inv, "bones", 46, C); const want = G.salvageOf("bones", 46), xp0 = C.xp.tinkering || 0;
 W.tinkerOp(S, pl, { op: "salvage", k: "bones" });
-is([cnt("bones"), C.parts.scrap, (C.xp.tinkering || 0) - xp0], [0, want.scrap, want.pv], "46 bones: gone from the bag, their scrap in the pouch, their part value as xp");
+is([cnt("bones"), C.parts.scrap, (C.xp.tinkering || 0) - xp0], [0, want.scrap, Math.max(1, Math.round(Math.min(want.pv * G.TINK.xpPerPv, 46 * G.TINK.salvXpCap)))], "46 bones: gone from the bag, their scrap in the pouch, half their part value as xp (rules 357)");
 
 /* 2. the lot: plain drops only */
 G.addInv(C.inv, "pit", 30, C); G.addInv(C.inv, "husk", 10, C); G.addInv(C.inv, "cchicken", 5, C); G.addInv(C.inv, "bronze_bar", 3, C); G.addInv(C.inv, "feather", 20, C);
@@ -46,7 +46,7 @@ is(!!last("tinker")?.view?.parts, true, "the window is told the pouch");
 pl.x = bench.x + 1; pl.y = bench.y; W.hwTick = () => {}; W.pitTick = async () => {}; W.songTick = () => {};
 C.parts = { scrap: 1000, gears: 100, sparks: 100, relic: 10 }; G.addInv(C.inv, "tickets", 5000, C); C.xp.tinkering = 0;
 W.tinkerOp(S, pl, { op: "build", id: "whetstone" }); is(cnt("tk_whetstone"), 0, "a Tinkering 12 build at level 1 is refused");
-C.xp.tinkering = G.XP_AT[30]; W.grant(pl, "tinkering", 1);   /* (the level-30 achievements pay tickets: settle them before measuring the fee) */
+C.xp.tinkering = G.XP_AT[G.GADGETS.whetstone.lvl]; W.grant(pl, "tinkering", 1);   /* (rules 357: the Whetstone is Tinkering 40 now) */   /* (the level-30 achievements pay tickets: settle them before measuring the fee) */
 const t0 = G.tixIn(C), s1 = C.parts.scrap, xpb = C.xp.tinkering;
 W.tinkerOp(S, pl, { op: "build", id: "whetstone" }); const g = G.GADGETS.whetstone;
 is([cnt("tk_whetstone") >= 1, t0 - G.tixIn(C), s1 - C.parts.scrap, C.xp.tinkering > xpb], [true, g.fee, g.parts.scrap, true], "a Whetstone: parts and the fee gone, the gadget in the bag, xp paid");

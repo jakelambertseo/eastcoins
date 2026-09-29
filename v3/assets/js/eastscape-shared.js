@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 356;   /* (2026-09-29) a refresh so every open tab picks up the maps that name their own rocks and barrels */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 357;   /* (2026-09-29) Tinkering xp paced like the other skills; every gadget higher and ten times the cost */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -8687,6 +8687,12 @@ export const salvageLot = (k) => { const it = ITEMS[k] || {}; return canSalvage(
    `n` is how many one build makes (a "three shots" gadget is a stack of three), and a build has TINK.masterwork of coming out a
    Masterwork: twice as many. The Lucky Coin (free ticket bets) and the four automation tools are later steps. */
 Object.assign(TINK, { masterwork: 0.05, buildXp: 3, feeXp: 0.05 });
+/* (2026-09-29, rules 357) TINKERING XP, PACED LIKE THE OTHER SKILLS. It had paid 1 xp per point of part value on a salvage (an onyx
+   piece was 1,750 xp, a rare tens of thousands), 3x the parts' value on a build, and 0.05 xp a ticket given: players reached 40 in a
+   few clicks. Now a salvage pays half its part value but never more than salvXpCap an ITEM, so value stops being xp; a build pays
+   buildXpLvl x the gadget's level, whatever its parts cost (they cost ten times as much now, and were paid for once as salvage);
+   and a gift pays donateXp per part value and feeXp per ticket. Existing levels were left alone (the owner). */
+Object.assign(TINK, { xpPerPv: 0.5, salvXpCap: 40, buildXpLvl: 15, feeXp: 0.005 });
 const S_ = (lvl) => 20 + lvl;   /* scrap: a little more the higher it is */
 export const GADGETS = {
   confetti: { name: "Confetti Cannon", icon: "\u{1F389}", lvl: 1, parts: { scrap: 20 }, fee: 50, n: 3, kind: "confetti", does: "a burst of confetti and a cheer for everyone around you" },
@@ -8717,6 +8723,16 @@ export const GADGETS = {
   autoreel: { name: "Auto-Reel", icon: "\u{1F3A3}", lvl: 80, parts: { scrap: 80, gears: 30, sparks: 5, relic: 1 }, fee: 1500, n: 1, mins: 15, auto: "spot", skill: "fishing", does: "keeps you fishing with no clicks: no idle cutoff (75% speed while you're away)" },
   bomb: { name: "Boss Bomb", icon: "\u{1F4A3}", lvl: 75, parts: { scrap: 80, gears: 20, sparks: 20, relic: 2 }, fee: 2000, n: 1, kind: "bomb", bomb: 300, does: "your next hit on a boss does 300 more damage" }
 };
+/* (2026-09-29, rules 357, the owner, a day after Tinkering opened: "users are already at level 40 just breaking down a few things",
+   "we need to move all tinkering recipes to higher levels now that users are already at 25-40", "the cost for items needs to be 10x
+   higher") EVERY GADGET MOVES UP AND COSTS TEN TIMES AS MUCH. The table above is kept as written (its spacing is the design) and
+   re-based here: level 30 + 0.8 x the old one (Confetti 1 -> 31, Whetstone 12 -> 40, Auger 60 -> 78, Boss Bomb 75 -> 90), and every
+   part and the ticket fee x10. The early levels are salvage and World Project work now, which is where a sink's first levels belong. */
+for (const g of Object.values(GADGETS)) {
+  if (g.lvl) g.lvl = Math.min(99, 30 + Math.round(g.lvl * 0.8));
+  if (g.parts) for (const p of Object.keys(g.parts)) g.parts[p] *= 10;
+  if (g.fee) g.fee *= 10;
+}
 for (const [id, g] of Object.entries(GADGETS)) if (g.item !== false)
   ITEMS[`tk_${id}`] = { name: g.name, icon: g.icon, use: "gadget", gadget: id, held: HOLD.tinker, ex: `A Tinkering gadget (Tinkering ${g.lvl}): ${g.does}${g.mins ? `, for ${g.mins} minute${g.mins === 1 ? "" : "s"} outside` : ""}. Used up when it's done.` };
 ITEMS.tk_banner ||= { name: "Party Banner", icon: "\u{1F6A9}", held: true };
@@ -8735,7 +8751,7 @@ export const tkRegen = (c) => tkOn(c).reduce((a, g) => a + (g.regen || 0), 0);
 export const tkPv = (g) => Object.entries(g.parts || {}).reduce((a, [p, n]) => a + n * TINK.parts[p].pv, 0);
 /* (2026-09-28) World Projects go live with Tinkering (PROJECTS, beside buildScene) */
 PROJ_LIVE = !HOLD.tinker;
-TINK.donateXp = 0.5;   /* Tinkering xp per part value given to a project (salvage already paid 1 for it); tickets give feeXp each */
+TINK.donateXp = 0.1;   /* (2026-09-29) was 0.5 */   /* Tinkering xp per part value given to a project (salvage already paid 1 for it); tickets give feeXp each */
 /** part value of a project tier's parts (tickets aside): what the finisher's xp is worked out from */
 export const projPv = (need) => Object.entries(need || {}).reduce((a, [p, n]) => a + (TINK.parts[p] ? n * TINK.parts[p].pv : 0), 0);
 GAMES.boiler = { name: "The Boiler", icon: "♨️", proj: "table", ex: "Set the pressure from 1.1× to 100×. If the boiler holds past it, you win that many times your stake." };
@@ -8750,7 +8766,7 @@ if (!HOLD.tinker) HISCORES.push(["built", "Builders", "given to World Projects (
 if (!HOLD.tinker) Object.assign(ACH, {
   a_tinker:  { name: "Scrapper",      blurb: "Salvage something at Sprocket Sal's Scrap Bench.",       tier: "novice",  on: ["xp", "login"], has: (c) => (c?.xp?.tinkering | 0) > 0 },
   s_tink30:  { name: "Gadgeteer",     blurb: "Reach Tinkering 30.",                                    tier: "skilled", on: ["xp"],          has: (c) => lvlOf(c, "tinkering") >= 30 },
-  e_tink60:  { name: "Automation",    blurb: "Reach Tinkering 60 and build your own Auger.",           tier: "expert",  on: ["xp"],          has: (c) => lvlOf(c, "tinkering") >= 60 },
+  e_tink60:  { name: "Automation",    blurb: `Reach Tinkering ${GADGETS.auger.lvl}: enough to build your own Auger.`, tier: "expert",  on: ["xp"],          has: (c) => lvlOf(c, "tinkering") >= GADGETS.auger.lvl },   /* (rules 357) the Auger's level, wherever it moves; the id stays, it is saved */
   s_pin:     { name: "Builder",       blurb: "Earn a Builder's Pin by giving to a World Project.",     tier: "skilled", on: ["xp", "login"], has: (c) => (c?.pins?.length | 0) >= 1 },
   m_pins:    { name: "Town Planner",  blurb: "Hold ten different Builder's Pins.",                     tier: "master",  on: ["xp", "login"], has: (c) => (c?.pins?.length | 0) >= 10 }
 });

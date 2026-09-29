@@ -20,7 +20,7 @@ export function installTinker(World, { G }) {
     if (!atBench(S, pl)) return bad("The Scrap Bench is at Bronny's worksite, by the Yard's west gate.");
     if (op === "salvage") {
       const f = m.f | 0, keys = m.lot ? [...new Set(C.inv.map((s) => s.k))].filter((k) => G.salvageLot(k) && !G.isFav(C, k)) : [String(m.k)];
-      const got = { scrap: 0, gears: 0, sparks: 0, relic: 0, pv: 0 }, what = [];
+      const got = { scrap: 0, gears: 0, sparks: 0, relic: 0, pv: 0 }, what = []; let xp = 0;   /* (rules 357) xp is capped per ITEM, so it is added up stack by stack */
       for (const k of keys) {
         if (!G.canSalvage(k)) { if (!m.lot) return bad("Sal shakes her head. \"Not that. That's worth more whole.\""); continue; }
         if (G.isFav(C, k)) return bad("That's favourited. Unfavourite it first.");
@@ -33,10 +33,10 @@ export function installTinker(World, { G }) {
         /* take exactly those stacks (by level), then pay out */
         for (const s of stacks) s.n = 0; C.inv = C.inv.filter((s) => s.n > 0);
         for (const p of Object.keys(T.parts)) { got[p] += g[p]; C.parts[p] = (C.parts[p] || 0) + g[p]; }
-        got.pv += g.pv; what.push(`${n.toLocaleString()} ${(G.ITEMS[k]?.name || k).toLowerCase()}`);
+        got.pv += g.pv; xp += Math.min(g.pv * T.xpPerPv, n * T.salvXpCap); what.push(`${n.toLocaleString()} ${(G.ITEMS[k]?.name || k).toLowerCase()}`);
       }
       if (!got.pv) return bad(m.lot ? "Nothing in your bag for the lot. Gear, bars, food and rares go one at a time." : "You've none of that in your bag.");
-      this.grant(pl, "tinkering", Math.max(1, Math.round(got.pv * T.xpPerPv)));
+      this.grant(pl, "tinkering", Math.max(1, Math.round(xp)));
       this.touch(pl);
       const parts = Object.entries(T.parts).filter(([p]) => got[p]).map(([p, d]) => `${got[p].toLocaleString()} ${d.name.toLowerCase()}`).join(", ");
       this.say(pl, `Sal breaks down ${what.length > 3 ? `${what.length} kinds of junk` : what.join(", ")}: ${parts}.`, "good");
@@ -45,7 +45,7 @@ export function installTinker(World, { G }) {
     }
 
     /* BUILD a gadget: the level, the parts from the pouch and the ticket fee from the bag, all checked before anything is taken. A build
-       has TINK.masterwork of making twice as many. The xp is the build's part value times TINK.buildXp, plus a little for the fee. */
+       has TINK.masterwork of making twice as many. The xp is TINK.buildXpLvl times the gadget's level (rules 357: it was the parts' value x3, which made price into xp). */
     if (op === "build") {
       const id = String(m.id), g = G.GADGETS[id]; if (!g || g.item === false || !g.lvl) return;
       const lvl = G.lvlOf(C, "tinkering"); if (lvl < g.lvl) return bad(`That's a Tinkering ${g.lvl} build. You're ${lvl}.`);
@@ -57,7 +57,7 @@ export function installTinker(World, { G }) {
       if (G.roomFor(C.inv, k, C) < n) return bad("Your bag's too full to take it.");
       for (const [p, q] of Object.entries(g.parts || {})) C.parts[p] -= q;
       G.takeInv(C.inv, "tickets", g.fee); for (const [nk, nn] of g.need || []) G.takeInv(C.inv, nk, nn); G.addInv(C.inv, k, n, C);
-      this.grant(pl, "tinkering", Math.max(1, Math.round(G.tkPv(g) * T.buildXp + g.fee * T.feeXp)));
+      this.grant(pl, "tinkering", Math.max(1, Math.round(g.lvl * T.buildXpLvl)));   /* (rules 357) by the gadget's level, not its price */
       this.touch(pl);
       this.say(pl, master ? `MASTERWORK! Sal whistles: ${n} ${g.name.toLowerCase()}${n > 1 ? "s" : ""} for the price of ${g.n}.` : `Sal hands over ${n > 1 ? `${n} ${g.name.toLowerCase()}s` : `a ${g.name.toLowerCase()}`}.`, master ? "loot" : "good");
       pl.out.push({ type: "tinker", view: view(pl, this), built: { id, n, master } });
