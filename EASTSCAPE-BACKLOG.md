@@ -2006,3 +2006,8 @@ find the source before calling it a stale test.
 Salvage xp = half the part value, capped 40 an item; a build = 15 x the gadget's level; gifts 0.1 xp/part value and 0.005/ticket.
 Gadgets at 30 + 0.8 x old level (Confetti 31 .. Auto-Reel 94), parts and fees x10. Existing xp untouched (the owner). Wiki 215
 (Updates entry). Shared ?v=388. WATCH: whether 1-31 (salvage and projects only) feels too slow for a new player.
+
+## 2026-09-29, rules 358 LIVE (worker 1856b9d5): sorted gems are single items
+
+normChar splits stacks of sorted gems (bag, then bank); a Sorter re-roll touches one gem; the bag badge shows the roll in
+its band colour; clicking a sorted gem sets it in the first empty setting of its side (else opens the gem bag). Shared ?v=389.
