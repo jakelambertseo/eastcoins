@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Overhead Bars Sketch</title>
+<meta name="robots" content="noindex,nofollow">
+<!-- (2026-09-29) DESIGN SKETCH ONLY, not deployed and not wired to anything. The owner: "mockup changes to the users bar above their head,
+     including their health and damage bar. i want to show a number representing their health, and the health going down, possibly in the
+     bar and then tiny icons above their head that show their weakness/resistences". Real sprites and real monster data (weak / resist /
+     guard from the rules); the fight is pretend. Open it from the dev server:
+     http://localhost:4321/mockups-archive/eastscape-overhead.html -->
+<style>
+@font-face{font-family:"Lora";font-style:normal;font-weight:400 700;font-display:swap;src:url(/v3/assets/fonts/lora-latin.woff2) format("woff2")}
+@font-face{font-family:"Cinzel";font-style:normal;font-weight:400 900;font-display:swap;src:url(/v3/assets/fonts/cinzel-latin.woff2) format("woff2")}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#0e0a14;color:#e8dcc0;font:600 14px/1.45 Lora,Georgia,serif;min-height:100vh}
+.page{max-width:1240px;margin:0 auto;padding:18px 16px 60px}
+h1{margin:0 0 4px;font:900 26px Cinzel,serif;color:#f6e9cc}
+.lede{margin:0 0 16px;color:#cdb892;max-width:820px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
+.bar b{font:800 12px Cinzel,serif;letter-spacing:.08em;color:#c8963a;text-transform:uppercase;margin-right:4px}
+.bar button{padding:7px 13px;border:0;border-radius:99px;background:#2a1c12;color:#e0c890;font:800 13px Lora,serif;cursor:pointer;box-shadow:inset 0 0 0 1.5px #6a4a28}
+.bar button[aria-pressed="true"]{background:#e8bf35;color:#2a1600;box-shadow:none}
+.bar button.hit{background:#5a1a14;color:#ffd0c0;box-shadow:inset 0 0 0 1.5px #b8302a}
+.stage{position:relative;border-radius:10px;overflow:hidden;box-shadow:0 0 0 2px #3a2a1a;background:#1c2a14}
+canvas{display:block;width:100%;height:auto;image-rendering:pixelated;cursor:pointer}
+.cols{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;margin-top:16px}
+.card{background:#1a120c;border-radius:10px;padding:14px 16px;box-shadow:inset 0 0 0 1.5px #3a2a1a}
+.card h2{margin:0 0 8px;font:800 15px Cinzel,serif;color:#f6e9cc}
+.card p,.card li{color:#d8c8a8;font-size:13.5px}.card ul{margin:0;padding-left:18px}.card li{margin:0 0 6px}
+.legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 14px;margin-top:6px}
+.legend div{display:flex;align-items:center;gap:8px;font-size:13px}
+.legend canvas{width:32px;height:32px;cursor:default;flex:none}
+.tag{display:inline-block;padding:0 6px;border-radius:4px;background:#2a1c12;color:#e8bf35;font:800 11px Lora,serif}
+@media (max-width:820px){.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Overhead bars: health you can read, weaknesses you can see</h1>
+  <p class="lede">Click a monster (or a player) to pick your target, then hit it. The bar carries the health as a number, the lost chunk flashes and drains so you can see a hit land, and the tiny icons over the head say what it's weak to and what it shrugs off. Hitting a weakness makes its icon pulse, so the game teaches it without a wiki.</p>
+
+  <div class="bar"><b>Style</b>
+    <button data-v="plate" aria-pressed="true">A · Plate (recommended)</button>
+    <button data-v="slim" aria-pressed="false">B · Slim bar</button>
+    <button data-v="bare" aria-pressed="false">C · Just the bar</button>
+  </div>
+  <div class="bar"><b>Icons</b>
+    <button data-i="always" aria-pressed="true">Always shown</button>
+    <button data-i="learn" aria-pressed="false">Learned (shown once you've found it)</button>
+    <button data-i="off" aria-pressed="false">Off</button>
+  </div>
+  <div class="bar"><b>Hit</b>
+    <button class="hit" data-hit="melee">⚔ Sword</button>
+    <button class="hit" data-hit="archery">🏹 Arrow</button>
+    <button class="hit" data-hit="fire">🔥 Fire page</button>
+    <button class="hit" data-hit="frost">❄ Frost page</button>
+    <button class="hit" data-hit="sun">☀ Sun page</button>
+    <button class="hit" data-hit="storm">⚡ Storm page</button>
+    <button data-hit="heal">+ Heal</button>
+    <button data-hit="reset">Reset</button>
+  </div>
+
+  <div class="stage"><canvas id="cv" width="1200" height="400"></canvas></div>
+
+  <div class="cols">
+    <div class="card">
+      <h2>What's on the plate</h2>
+      <ul>
+        <li><b>The number.</b> Current health, in the bar itself (<span class="tag">214 / 300</span>). It counts down with the hit rather than snapping, and turns amber under half and red under a quarter.</li>
+        <li><b>The drain.</b> What a hit took stays lit in pale gold for a moment, then drains away. Big hits read as big at a glance, even in a crowd.</li>
+        <li><b>The icons, over the name.</b> Green with a ▲: weak to it (+35% damage). Red with a ▼: resists it (half damage). A style icon with a percent: it guards against that style (the Slag Golem shrugs off 40% of every arrow).</li>
+        <li><b>A pulse when it matters.</b> Land a hit on a weakness and that icon pops and the splat says WEAK. Hit a resistance and it goes grey and says RESIST.</li>
+        <li><b>Players</b> carry the same plate. They have no elemental weaknesses today, so their icon row shows what's protecting them: a Witch's ward, a page buff, Hematite toughness. In the Wilderness that is exactly what an attacker wants to know.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>The icons</h2>
+      <div class="legend" id="legend"></div>
+      <h2 style="margin-top:14px">Decisions for you</h2>
+      <ul>
+        <li><b>Which style:</b> A (a plate with the name on it) is the clearest in a crowd; B keeps the name under the feet where it is today; C is the smallest change.</li>
+        <li><b>Always, or learned?</b> "Learned" hides a monster's icons until you've hit it with that element once (or read it in the wiki), then remembers them for good. It turns weaknesses into something you find, which suits a game about exploring. "Always" is friendlier to new players.</li>
+        <li><b>When the plate shows:</b> today a bar appears only once something is hurt. The sketch shows plates all the time so you can compare; in the game I'd show them on anything in a fight, anything you hover, and your own when you're hurt.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+<script>
+/* ------------------------------------------------------------ the icons, drawn by hand, 8 x 8 */
+const ICONS = {
+  fire:  { c: ["#ff6a2a", "#ffd84a"], px: ["...#....", "...##...", "..###.#.", "..####..", ".##o###.", ".#ooo##.", ".##o##..", "..###..."] },
+  frost: { c: ["#9ad8ff", "#ffffff"], px: ["...#....", ".#.#.#..", "..###...", "###o###.", "..###...", ".#.#.#..", "...#....", "........"] },
+  storm: { c: ["#ffe24a", "#fff6b0"], px: ["....##..", "...##...", "..##....", ".####o..", "...##...", "..##....", ".##.....", ".#......"] },
+  void:  { c: ["#b070ff", "#e8d0ff"], px: ["..####..", ".#....#.", "#..##..#", "#.#..#.#", "#.#.o#.#", "#..##.#.", ".#...#..", "..###..."] },
+  sun:   { c: ["#ffd84a", "#fff6b0"], px: ["#..#..#.", ".#.#.#..", "..###...", "###o###.", "..###...", ".#.#.#..", "#..#..#.", "........"] },
+  arcane:{ c: ["#e070d0", "#ffd0f4"], px: ["...#....", "...#....", "..#o#...", "###o###.", "..#o#...", "...#....", "...#....", "........"] },
+  melee: { c: ["#e0e0ec", "#a06a2a"], px: ["...#....", "...#....", "...#....", "...#....", "...#....", ".ooooo..", "...o....", "...o...."] },
+  archery:{ c: ["#c8963a", "#f4ecd8"], px: ["......##", ".....###", "....#.#.", "...#....", "o.#.....", ".o......", "o.o.....", ".o.o...."] },
+  magic: { c: ["#8a5a32", "#ffd84a"], px: [".....o.o", "......o.", ".....o.o", "....#...", "...#....", "..#.....", ".#......", "#......."] },
+  ward:  { c: ["#9fd4a8", "#ffffff"], px: [".######.", "#o.....#", "#o.....#", "#......#", ".#....#.", ".#....#.", "..#..#..", "...##..."] },
+  tough: { c: ["#8a8a96", "#d8d8e8"], px: ["########", "#o.oo.o#", "#.o..o.#", "#o.oo.o#", "#.o..o.#", ".#o..o#.", "..#oo#..", "...##..."] },
+  buff:  { c: ["#4aa8ff", "#d0ecff"], px: ["...#....", "..#o#...", ".#ooo#..", "#ooooo#.", "..#o#...", "..#o#...", "..#o#...", "..###..."] },
+};
+const KIND = { weak: { bg: "#1d4a28", edge: "#6fdc8c", mark: "▲", markC: "#8ff0a8" }, resist: { bg: "#4a1a1a", edge: "#ff6a5a", mark: "▼", markC: "#ff9a8a" }, guard: { bg: "#3a2a1a", edge: "#c8963a" }, has: { bg: "#1a2a3a", edge: "#6fb4e8" } };
+function drawIcon(ctx, key, kind, x, y, s = 2, glow = 0, grey = false) {
+  const I = ICONS[key], K = KIND[kind], w = 8 * s + 6;
+  ctx.save();
+  if (glow > 0) { ctx.shadowColor = K.edge; ctx.shadowBlur = 10 * glow; }
+  ctx.fillStyle = K.bg; ctx.strokeStyle = grey ? "#666" : K.edge; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect(x, y, w, w, 3); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+  I.px.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === ".") return; ctx.fillStyle = grey ? (ch === "o" ? "#bbb" : "#888") : ch === "o" ? I.c[1] : I.c[0]; ctx.fillRect(x + 3 + i * s, y + 3 + j * s, s, s); }));
+  if (K.mark) { ctx.font = "700 9px Lora"; ctx.fillStyle = K.markC; ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillText(K.mark, x + w + 1, y + w + 3); }
+  ctx.restore();
+  return w;
+}
+
+/* ------------------------------------------------------------ the scene: real sprites, real monster data */
+const ART = "/v3/assets/img/glad/flat/", PK = "/v3/assets/img/glad/packs/";
+const img = (src) => { const i = new Image(); i.src = src; return i; };
+const IM = { drake: img(ART + "drake.png"), slaggolem: img(ART + "slaggolem.png"), ghoul: img(ART + "ghoul.png"), hero: img(PK + "f-hero_onyx.png"), hero2: img(PK + "f-hero_bronze.png"), ground: img(ART + "t_wildg.png") };
+const UNITS = [
+  { id: "you", name: "You", lvl: 88, hp: 240, max: 240, x: 150, y: 300, sprite: "hero", crop: [276, 0, 68, 68], sc: 1.45, player: true, has: [["buff", "has", "Storm Ward page: +10% defence, 4 min"]] },
+  { id: "drake", name: "Hail Drake", lvl: 62, hp: 71, max: 71, x: 390, y: 300, sprite: "drake", sc: 1.15, weak: ["fire"], resist: ["frost"] },
+  { id: "golem", name: "Slag Golem", lvl: 76, hp: 300, max: 300, x: 630, y: 300, sprite: "slaggolem", sc: 1.45, weak: ["frost"], resist: ["fire"], guard: { archery: 0.4 } },
+  { id: "ghoul", name: "Sorry Ghoul", lvl: 30, hp: 26, max: 26, x: 850, y: 300, sprite: "ghoul", sc: 1.45, weak: ["sun"], resist: ["frost"] },
+  { id: "pk", name: "Rival", lvl: 91, hp: 180, max: 260, x: 1060, y: 300, sprite: "hero2", crop: [276, 0, 68, 68], sc: 1.45, player: true, pvp: true, has: [["ward", "has", "Witch's ward: the next death is free"], ["tough", "has", "Hematite +8%: takes less damage"]] },
+];
+for (const u of UNITS) { u.shown = u.hp; u.trail = u.hp; u.trailAt = 0; u.pulse = {}; u.found = new Set(); }
+let target = UNITS[2], style = "plate", icons = "always";
+const splats = [];
+
+/* ------------------------------------------------------------ hitting */
+function hit(kind) {
+  const u = target, now = performance.now();
+  if (kind === "reset") { for (const q of UNITS) { q.hp = q.max; q.shown = q.max; q.trail = q.max; q.found.clear(); } return; }
+  if (kind === "heal") { u.hp = Math.min(u.max, u.hp + Math.round(u.max * 0.25)); u.trail = u.hp; splats.push({ u, text: `+${Math.round(u.max * 0.25)}`, col: "#8ff0a8", at: now }); return; }
+  if (u.hp <= 0) { u.hp = u.max; u.shown = u.max; u.trail = u.max; }
+  let dmg = Math.max(1, Math.round(u.max * (0.08 + Math.random() * 0.14))), tag = null, col = "#ffffff";
+  const el = ["fire", "frost", "sun", "storm"].includes(kind) ? kind : null;
+  if (el && u.weak?.includes(el)) { dmg = Math.round(dmg * 1.35); tag = "WEAK"; col = "#ffe27a"; u.pulse[el] = now; u.found.add(el); }
+  else if (el && u.resist?.includes(el)) { dmg = Math.max(1, Math.round(dmg * 0.5)); tag = "RESIST"; col = "#b8b8c0"; u.pulse[el] = now; u.found.add(el); }
+  if (!el && u.guard?.[kind]) { dmg = Math.max(1, Math.round(dmg * (1 - u.guard[kind]))); tag = "GUARD"; col = "#c8b8a0"; u.pulse[kind] = now; u.found.add(kind); }
+  if (u.player && u.has) for (const [k] of u.has) if (k === "tough") { dmg = Math.round(dmg * 0.92); u.pulse.tough = now; }
+  if (u.trailAt < now - 700) u.trail = u.hp;   // a fresh hit starts a fresh drain from where the bar is
+  u.hp = Math.max(0, u.hp - dmg); u.trailAt = now;
+  splats.push({ u, text: `${dmg}`, tag, col, at: now });
+}
+
+/* ------------------------------------------------------------ drawing */
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+function iconsOf(u) {
+  if (u.player) return (u.has || []).map(([k, kind]) => ({ k, kind }));
+  const list = [];
+  for (const e of u.weak || []) list.push({ k: e, kind: "weak" });
+  for (const e of u.resist || []) list.push({ k: e, kind: "resist" });
+  for (const [s, v] of Object.entries(u.guard || {})) list.push({ k: s, kind: "guard", pct: Math.round(v * 100) });
+  if (icons === "off") return [];
+  if (icons === "learn") return list.map((i) => (u.found.has(i.k) ? i : { ...i, unknown: true }));
+  return list;
+}
+function hpCol(f) { return f > 0.5 ? ["#3fbf5a", "#6fe08a"] : f > 0.25 ? ["#e0a02a", "#ffd06a"] : ["#d0402a", "#ff7a5a"]; }
+function plate(u, now) {
+  const f = Math.max(0, u.shown / u.max), tf = Math.max(0, u.trail / u.max), [c1, c2] = hpCol(f);
+  const headY = u.y - u.h - 8, cx = u.x, sel = u === target;
+  const ic = iconsOf(u);
+  if (style === "plate") {
+    const bw = 116, bh = 13, pw = bw + 16, ph = 44, px = cx - pw / 2, py = headY - ph;
+    ctx.fillStyle = "rgba(14,9,6,.82)"; ctx.strokeStyle = sel ? "#e8bf35" : "rgba(200,150,58,.55)"; ctx.lineWidth = sel ? 2 : 1;
+    ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 6); ctx.fill(); ctx.stroke();
+    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    /* the level on the right edge, the name on the left, cut short to fit what the level leaves */
+    ctx.font = "700 10.5px Lora"; ctx.fillStyle = "#ffe45c"; ctx.textAlign = "right"; const lv = `Lv ${u.lvl}`; ctx.fillText(lv, px + pw - 8, py + 16);
+    const room = pw - 22 - ctx.measureText(lv).width; ctx.font = "700 12px Lora"; let nm = u.name; while (ctx.measureText(nm).width > room && nm.length > 3) nm = nm.slice(0, -2) + "…";
+    ctx.textAlign = "left"; ctx.fillStyle = u.pvp ? "#ff9a8a" : u.player ? "#ffffff" : "#ffb23f"; ctx.fillText(nm, px + 8, py + 16);
+    bar(px + 8, py + 23, bw, bh, f, tf, c1, c2, u, true);
+    iconRow(ic, cx, py - 4, u, now);
+  } else if (style === "slim") {
+    const bw = 64, bh = 9, bx = cx - bw / 2 - 14, by = headY - 12;
+    bar(bx, by, bw, bh, f, tf, c1, c2, u, false);
+    ctx.font = "700 12px Lora"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillStyle = "#000"; ctx.fillText(Math.round(u.shown), bx + bw + 6 + 1, by + bh / 2 + 1); ctx.fillStyle = hpCol(f)[1]; ctx.fillText(Math.round(u.shown), bx + bw + 6, by + bh / 2);
+    iconRow(ic, cx, by - 5, u, now);
+    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; ctx.font = "700 12px Lora"; ctx.fillStyle = u.pvp ? "#ff9a8a" : u.player ? "#ffffff" : "#ffb23f"; ctx.fillText(u.name, cx, u.y + 18); ctx.font = "700 11px Lora"; ctx.fillStyle = "#ffe45c"; ctx.fillText(`level ${u.lvl}`, cx, u.y + 32);
+    if (sel) { ctx.strokeStyle = "#e8bf35"; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(cx, u.y + 2, 30, 8, 0, 0, Math.PI * 2); ctx.stroke(); }
+  } else {
+    const bw = 50, bh = 7, bx = cx - bw / 2, by = headY - 10;
+    bar(bx, by, bw, bh, f, tf, "#0c0", "#0c0", u, false, true);
+    ctx.font = "700 11px Lora"; ctx.textAlign = "center"; ctx.fillStyle = "#000"; ctx.fillText(`${Math.round(u.shown)}`, cx + 1, by - 3 + 1); ctx.fillStyle = "#fff"; ctx.fillText(`${Math.round(u.shown)}`, cx, by - 3);
+    iconRow(ic, cx, by - 16, u, now, 1.5);
+    ctx.font = "700 12px Lora"; ctx.fillStyle = u.pvp ? "#ff9a8a" : u.player ? "#ffffff" : "#ffb23f"; ctx.fillText(u.name, cx, u.y + 18); ctx.font = "700 11px Lora"; ctx.fillStyle = "#ffe45c"; ctx.fillText(`level ${u.lvl}`, cx, u.y + 32);
+    if (sel) { ctx.strokeStyle = "#e8bf35"; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(cx, u.y + 2, 30, 8, 0, 0, Math.PI * 2); ctx.stroke(); }
+  }
+}
+function bar(x, y, w, h, f, tf, c1, c2, u, numberIn, flat) {
+  ctx.fillStyle = "#2a0a08"; ctx.fillRect(x, y, w, h);
+  if (tf > f) { ctx.fillStyle = "#ffe9a8"; ctx.fillRect(x + w * f, y, w * (tf - f), h); }   // the drain: what the last hit took
+  if (flat) { ctx.fillStyle = c1; ctx.fillRect(x, y, w * f, h); }
+  else { const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, c2); g.addColorStop(1, c1); ctx.fillStyle = g; ctx.fillRect(x, y, w * f, h); ctx.fillStyle = "rgba(255,255,255,.18)"; ctx.fillRect(x, y, w * f, 2); }
+  ctx.strokeStyle = "#000"; ctx.lineWidth = 1; ctx.strokeRect(x - .5, y - .5, w + 1, h + 1);
+  if (numberIn) { ctx.font = "700 10.5px Lora"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; const t = `${Math.round(u.shown)} / ${u.max}`; ctx.fillStyle = "rgba(0,0,0,.8)"; ctx.fillText(t, x + w / 2 + 1, y + h / 2 + 1.5); ctx.fillStyle = "#fff"; ctx.fillText(t, x + w / 2, y + h / 2 + .5); }
+}
+function iconRow(ic, cx, bottom, u, now, s = 2) {
+  if (!ic.length) return;
+  const w = 8 * s + 6, gap = 4, total = ic.reduce((a, i) => a + w + (i.pct ? 22 : 0) + gap, -gap);
+  let x = cx - total / 2;
+  for (const i of ic) {
+    const age = now - (u.pulse[i.k] || -9999), p = age < 900 ? 1 - age / 900 : 0, bump = p * 5;
+    const y = bottom - w - bump;
+    if (i.unknown) { ctx.fillStyle = "#1a1410"; ctx.strokeStyle = "#5a4a38"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x, y, w, w, 3); ctx.fill(); ctx.stroke(); ctx.font = "700 12px Lora"; ctx.fillStyle = "#8a7a60"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("?", x + w / 2, y + w / 2 + 1); x += w + gap; continue; }
+    drawIcon(ctx, i.k, i.kind, x, y, s, p, i.kind === "resist" && p > 0);
+    if (i.pct) { ctx.font = "700 10px Lora"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillStyle = "#000"; ctx.fillText(`−${i.pct}%`, x + w + 3, y + w / 2 + 1); ctx.fillStyle = "#e8c890"; ctx.fillText(`−${i.pct}%`, x + w + 2, y + w / 2); x += 22; }
+    x += w + gap;
+  }
+}
+function frame(now) {
+  ctx.imageSmoothingEnabled = false;
+  if (IM.ground.complete && IM.ground.naturalWidth) { const s = IM.ground.naturalWidth * 1.5; for (let y = 0; y < cv.height; y += s) for (let x = 0; x < cv.width; x += s) ctx.drawImage(IM.ground, x, y, s, s); }
+  else { ctx.fillStyle = "#2a3a1c"; ctx.fillRect(0, 0, cv.width, cv.height); }
+  ctx.fillStyle = "rgba(10,6,14,.28)"; ctx.fillRect(0, 0, cv.width, cv.height);
+  for (const u of UNITS) {
+    // ease the number down and hold, then drain, the lit chunk
+    u.shown += (u.hp - u.shown) * 0.18; if (Math.abs(u.hp - u.shown) < 0.3) u.shown = u.hp;
+    if (now - u.trailAt > 380) u.trail += (u.hp - u.trail) * 0.09; if (Math.abs(u.trail - u.hp) < 0.3) u.trail = u.hp;
+    const im = IM[u.sprite]; if (!im.complete || !im.naturalWidth) continue;
+    const [sx, sy, sw, sh] = u.crop || [0, 0, im.naturalWidth, im.naturalHeight], w = sw * u.sc, h = sh * u.sc; u.h = h * (u.crop ? 0.78 : 0.9);
+    ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.beginPath(); ctx.ellipse(u.x, u.y, w * 0.28, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = u.hp <= 0 ? 0.35 : 1; ctx.drawImage(im, sx, sy, sw, sh, u.x - w / 2, u.y - h + (u.crop ? h * 0.12 : 4), w, h); ctx.globalAlpha = 1;
+  }
+  for (const u of UNITS) if (u.h) plate(u, now);
+  for (let i = splats.length - 1; i >= 0; i--) { const s = splats[i], age = now - s.at; if (age > 1100) { splats.splice(i, 1); continue; }
+    const y = s.u.y - s.u.h * 0.45 - age / 28, a = age < 800 ? 1 : 1 - (age - 800) / 300;
+    ctx.globalAlpha = a; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "800 22px Cinzel"; ctx.fillStyle = "#000"; ctx.fillText(s.text, s.u.x + 2, y + 2); ctx.fillStyle = s.col; ctx.fillText(s.text, s.u.x, y);
+    if (s.tag) { ctx.font = "800 11px Lora"; ctx.fillStyle = "#000"; ctx.fillText(s.tag, s.u.x + 1, y + 17); ctx.fillStyle = s.col; ctx.fillText(s.tag, s.u.x, y + 16); }
+    ctx.globalAlpha = 1; }
+  ctx.font = "italic 600 13px Lora"; ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillStyle = "rgba(232,220,192,.8)"; ctx.fillText(`Target: ${target.name}. Click another to switch.`, 14, 12);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+cv.addEventListener("click", (e) => { const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) * cv.width / r.width, y = (e.clientY - r.top) * cv.height / r.height; let best = null, bd = 1e9; for (const u of UNITS) { const d = Math.hypot(u.x - x, u.y - 40 - y); if (d < bd) { bd = d; best = u; } } if (best && bd < 120) target = best; });
+document.querySelectorAll("[data-v]").forEach((b) => b.addEventListener("click", () => { style = b.dataset.v; document.querySelectorAll("[data-v]").forEach((q) => q.setAttribute("aria-pressed", q === b)); }));
+document.querySelectorAll("[data-i]").forEach((b) => b.addEventListener("click", () => { icons = b.dataset.i; document.querySelectorAll("[data-i]").forEach((q) => q.setAttribute("aria-pressed", q === b)); }));
+document.querySelectorAll("[data-hit]").forEach((b) => b.addEventListener("click", () => hit(b.dataset.hit)));
+/* the legend: the same icons, drawn the same way */
+const LEG = [["fire", "weak", "Weak to fire: +35%"], ["frost", "resist", "Resists frost: half damage"], ["archery", "guard", "Guards against arrows (−40%)"], ["melee", "guard", "Guards against swords"], ["magic", "guard", "Guards against spells"], ["sun", "weak", "Weak to sun"], ["storm", "weak", "Weak to storm"], ["void", "weak", "Weak to void"], ["ward", "has", "Player: warded (next death free)"], ["tough", "has", "Player: Hematite, takes less"], ["buff", "has", "Player: a page buff running"]];
+const lg = document.getElementById("legend");
+for (const [k, kind, text] of LEG) { const d = document.createElement("div"), c = document.createElement("canvas"); c.width = 32; c.height = 32; const x = c.getContext("2d"); x.imageSmoothingEnabled = false; drawIcon(x, k, kind, 5, 5, 2.4 > 2 ? 2 : 2); d.append(c, document.createTextNode(text)); lg.append(d); }
+/* start mid-fight so the drain shows on first look */
+setTimeout(() => { target = UNITS[1]; hit("fire"); target = UNITS[2]; hit("archery"); }, 600);
+</script>
+</body>
+</html>
