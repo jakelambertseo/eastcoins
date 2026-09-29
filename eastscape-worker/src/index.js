@@ -30,7 +30,8 @@ import { installPyramid } from "./pyramid.js";
 import { installCount } from "./count.js";
 import { installCarnival, installTurnstile } from "./carnival.js";
 import { installPit } from "./pit.js";
-import { installOrder } from "./order.js";   /* (2026-09-28) Bronny's order, the server's daily */
+import { installOrder } from "./order.js";
+import { installMeter } from "./meter.js";   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
 const CR = createCryptRules(G, G._MAP); Object.assign(G.SCENES, CR.scenes); Object.assign(G.MOBS, CR.mobs);
 /* (2026-09-24) THE GREAT PYRAMID, the second party dungeon: same shape, its own map, monsters and boss. */
@@ -796,6 +797,7 @@ export class World {
       case "report": return void this.reportOp(S, pl, m).catch((e) => console.error("report", e));   /* (2026-09-28) the bug button */
       case "pen": return this.penOp(S, pl, m);
       case "hatch": return this.hatchOp(S, pl, m);   /* (2026-09-27) Breeding: eggs */
+      case "meter": return this.meterOp(S, pl, m);   /* (2026-09-28) the party meter: reset, or ask for it now */
       case "order": return this.orderOp(S, pl, m);   /* (2026-09-28) Bronny's order, the server's daily */
       case "eggtrade": return this.eggTrade(S, pl, m);   /* (2026-09-28) Nestor the Egg Man */
       case "fung": return this.fungOp(S, pl, m);   /* (2026-09-27) Fungiculture: planting a bed */   /* (2026-09-27) Breeding */   /* (2026-09-27) the Long Night: trick or treat, the Night Market, the corn-priced fits */
@@ -1430,6 +1432,7 @@ export class World {
      the combat skill the player is actually training. */
   award(pl, dmg) {
     if (!(dmg > 0)) return;
+    this.meterAdd(pl, "dmg", dmg);   /* (2026-09-28) the party meter: every hit that pays combat xp, arcs and burns included */
     for (const [skill, xp] of G.xpForDamage(pl.C, dmg)) this.grant(pl, skill, xp, skill !== "hp");
   }
 
@@ -2192,6 +2195,7 @@ export class World {
     pl.lastEat = now; pl.lastSwing = Math.max(pl.lastSwing, now - 1200);
     st.n--; if (!st.n) C.inv.splice(i, 1);
     const before = C.hp; C.hp = Math.min(G.maxHpOf(C), C.hp + Math.round(it.heal * (1 + (it.meal ? 0 : G.fxOf(C).heal))));
+    this.meterAdd(pl, "heal", C.hp - before);   /* (2026-09-28) the party meter: what the food actually gave back */
     if (it.meal) { C.meal = { k: st.k, left: it.meal.mins * 60000 }; this.say(pl, `A proper dinner. For ${it.meal.mins} minutes outside: ${G.fxText(it.meal.fx)}.`, "loot"); }
     this.touch(pl);
     this.say(pl, C.hp > before ? `You eat the ${it.name.toLowerCase()}. It heals ${C.hp - before}.` : `You eat the ${it.name.toLowerCase()}. You were already full.`, "good");
@@ -2553,10 +2557,15 @@ export class World {
       const gates = S.def?.gates; if (!gates) continue;
       for (const gt of gates) { const open = G.gateOpenAt(now, gt) ? "i" : "#"; for (const [gx, gy] of G.gateTiles(gt)) S.g[gy][gx] = open; }
     }
-    if (this.tickN % 20 === 0) { this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.hwTick(now); this.orderTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
+    if (this.tickN % 20 === 0) { this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.hwTick(now); this.orderTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
     if (this.tickN % 40 === 0) this.runsSave();   /* (2026-09-27) the dungeon runs, so a deploy does not end them */
     if (this.tickN % 20 === 0) for (const pl of this.pls.values()) {   /* once a second */
-      const C = pl.C, dt = Math.min(5000, now - (pl.fxAt || now)); pl.fxAt = now; if (!(C.meal || C.drink || C.charm) || !(G.SCENES[String(C.scene).split(":")[0]]?.mobs?.length)) continue;
+      /* (2026-09-28, the owner: "user is testing in the thieving guild but its buff isnt counting down") A BUFF'S CLOCK RUNS WHERE IT WORKS.
+         It counted only in maps with monsters, and the Thieves' Guild has none, so sleep dust (a thieving buff, and the Guild is the only
+         place to steal) never wore off there. A map with pickpocket marks counts too; the answer is cached on the scene. */
+      const C = pl.C, dt = Math.min(5000, now - (pl.fxAt || now)); pl.fxAt = now; if (!(C.meal || C.drink || C.charm)) continue;
+      { const Sx = this.scenes.get(C.scene); if (Sx && Sx.buffClock === undefined) Sx.buffClock = !!(G.SCENES[String(C.scene).split(":")[0]]?.mobs?.length || Sx.objs?.some((o) => o.t === "mark"));
+        if (!(Sx ? Sx.buffClock : G.SCENES[String(C.scene).split(":")[0]]?.mobs?.length)) continue; }
       if (C.charm) { C.charm.left = (C.charm.left | 0) - dt; if (C.charm.left <= 0) { this.say(pl, `Your ${G.CHARMS[C.charm.k]?.name || "page"} has worn off.`); C.charm = null; } this.touch(pl); }   /* (2026-09-26) the page buff */
       for (const k of ["meal", "drink"]) if (C[k]) { C[k].left = (C[k].left | 0) - dt; if (C[k].left <= 0) { this.say(pl, `Your ${G.ITEMS[C[k].k]?.name.toLowerCase() || k} has worn off.`); C[k] = null; } this.touch(pl); }
     }
@@ -3263,6 +3272,7 @@ export class World {
   }
 
   killMob(S, pl, m, now) {
+    this.meterAdd(pl, "kills", 1, m);   /* (2026-09-28) the party meter: and the toughest thing killed names the fight */
     /* (2026-09-23) THE SOUND IS TOLD WHAT DIED. It used to be the page matching /^You defeat / on the chat line,
        which said nothing about the creature, so a Sulking Toadstool and The House went out with the same scream.
        Sending the type lets the page pitch it by size. This is also the fragile-trigger fix the backlog asks for:
@@ -3382,6 +3392,7 @@ export class World {
   }
   // killer: the player who landed the last hit, or { mob: name }
   die(pl, S, killer) {
+    this.meterAdd(pl, "deaths", 1);   /* (2026-09-28) the party meter */
     if (S?.def.count) return this.countDeath(pl, S);
     if (S?.def.crypt) return this.cryptDeath(pl, S);
     if (S?.def.pyramid) return this.pyramidDeath(pl, S);
@@ -3438,6 +3449,7 @@ export class World {
     const shotK = G.launcherOf(C) ? G.ammoOf(C)?.k : null;
     this.spendAmmo(pl);
     if (!T.god) { TC.hp -= dmg; this.touch(T); }
+    this.meterAdd(T, "taken", dmg);
     if (dmg) T.hurtAt = now;
     S.events.push({ type: "splat", who: `p:${T.id}`, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, ranged: G.launcherOf(C) ? true : undefined, ak: shotK || undefined });
     // real fights train you; the Cage doesn't
@@ -3617,7 +3629,7 @@ export class World {
       for (const pl of this.playersIn(S)) {
         if (hit.has(pl.id) || pl.god || !cells.some(([x, y]) => x === pl.x && y === pl.y)) continue;
         hit.add(pl.id); const C = pl.C, dmg = Math.max(1, Math.round(G.maxHpOf(C) * G.TRAP_HIT * (1 - G.fxOf(C).tough)));
-        C.hp -= dmg; this.touch(pl); pl.hurtAt = now; pl.combatAt = now;
+        C.hp -= dmg; this.touch(pl); pl.hurtAt = now; pl.combatAt = now; this.meterAdd(pl, "taken", dmg);
         S.events.push({ type: "splat", who: `p:${pl.id}`, n: dmg, kind: "hit", t: now });
         this.say(pl, T.say, "bad");
         if (C.hp <= 0) this.die(pl, S, { mob: T.name });
@@ -3674,6 +3686,7 @@ export class World {
           m.lastSwing = now; m.swingAt = now;
           const C = foe.C, hit = Math.random() < (G.MOBS[m.t].outside ? G.mobHitChance : G.hitChance)(G.MOBS[m.t].att, G.defenceRollOf(C)),   /* (2026-09-28) an open-world monster aims by ratio: A MONSTER'S AIM in the rules file */ dmg = hit ? Math.max(1, Math.round(rint(1, G.MOBS[m.t].max) * (m.enraged ? (G.MOBS[m.t].enrage?.mul ?? CR.CRYPT.enrageMul) : 1) * (1 - G.fxOf(C).tough))) : 0;   /* (tough: the visor, the Safety Net; whiskey makes it worse) */
           if (!foe.god) { C.hp -= dmg; this.touch(foe); }
+          if (dmg) this.meterAdd(foe, "taken", dmg, m);   /* (2026-09-28) the party meter */
           if (dmg) foe.hurtAt = now;
           foe.combatAt = now;
           if (!S.def.pvp && !S.def.shared && !G.MOBS[m.t]?.open && this.mayFight(S, m, foe, now)) m.claim = { id: foe.id, until: now + CLAIM_MS };
@@ -4904,3 +4917,4 @@ installTurnstile(World, { G });
 installPit(World, { G });
 installTower(World, { G, R: TW, rint });
 installOrder(World, { G });
+installMeter(World, { G });

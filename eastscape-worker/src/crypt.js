@@ -139,7 +139,7 @@ export function installCrypt(World, { G, R, rint }) {
     }
     if (!m.slamAt && now - (m.lastSlam || run.bossAt) > C_.slam.everyMs) { m.slamAt = now + C_.slam.warnMs; S.events.push({ type: "slam", x: m.x, y: m.y, r: C_.slam.reach, ms: C_.slam.warnMs, t: now }); }
     if (m.slamAt && now >= m.slamAt) { m.slamAt = 0; m.lastSlam = now;
-      for (const p of players) if (!p.dead && Math.max(Math.abs(p.x - m.x), Math.abs(p.y - m.y)) <= C_.slam.reach) { const hurt = Math.ceil(G.maxHpOf(p.C) * C_.slam.hurt); if (!p.god) { p.C.hp -= hurt; this.touch(p); } p.hurtAt = now; S.events.push({ type: "splat", who: `p:${p.id}`, n: hurt, kind: "hit", t: now }); if (p.C.hp <= 0) this.die(p, S, { mob: "The Hoodie" }); }
+      for (const p of players) if (!p.dead && Math.max(Math.abs(p.x - m.x), Math.abs(p.y - m.y)) <= C_.slam.reach) { const hurt = Math.ceil(G.maxHpOf(p.C) * C_.slam.hurt); if (!p.god) { p.C.hp -= hurt; this.touch(p); } this.meterAdd?.(p, "taken", hurt, m); p.hurtAt = now; S.events.push({ type: "splat", who: `p:${p.id}`, n: hurt, kind: "hit", t: now }); if (p.C.hp <= 0) this.die(p, S, { mob: "The Hoodie" }); }
       S.events.push({ type: "slammed", x: m.x, y: m.y, r: C_.slam.reach, t: now }); }
   };
   P.cryptKill = function (S, pl, m, now) {   // no drops in here: the run pays at the end. A cleared chamber opens its gate.

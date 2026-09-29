@@ -2282,6 +2282,8 @@ function onEvent(e) {
   if (e.type === "radio") { radioSet(e.radio); return; }
   if (e.type === "song") return;   /* (v116) the game server's own queue is gone: the jukebox is the real Green Room now */
   if (e.type === "decor") { decorSet(e.decor); return; }
+  if (e.type === "meter") { meterUi().then((u) => u.got(e.m)).catch(() => {}); return; }   /* (2026-09-28) the party meter */
+  if (e.type === "party") METER?.party(e.party);   /* (and it goes when the party does) */
   if (["party", "partyask", "crypt", "cryptgates", "cryptwon", "cryptloot"].includes(e.type)) { cryptLoad().then((c) => c.on(e)).catch(() => {}); return; }
   if (["count", "countstate", "countloot", "countwon"].includes(e.type)) { countLoad().then((c) => c.on(e)).catch(() => {}); return; }   /* (2026-09-25) the Count Room. `party` and `partyask` stay with the crypt module, which owns the party box for both dungeons. */
   if (["carnival", "carnivalround", "carnivalwon"].includes(e.type)) { carnLoad().then((c) => c.on(e)).catch(() => {}); return; }   /* (2026-09-24) the Carnival’s three stalls, one window */
@@ -5903,6 +5905,9 @@ const petPic = (k, r = "ordinary") => `<span class="pp rk-${r}"><img src="${ART}
 /* (2026-09-28) THE BUG BUTTON: a lazy module, like the pet windows. Its stylesheet is its own and goes in the first time it opens. */
 let REPUI = null; const REPUI_URL = "/v3/assets/js/eastscape-report.js?v=2";
 /* (2026-09-28) BRONNY'S ORDER, the server's daily: its window is a lazy module like the bug button's */
+/* (2026-09-28) THE PARTY METER: a lazy module, loaded when a party's numbers first arrive */
+let METER = null; const METER_URL = "/v3/assets/js/eastscape-meter.js?v=1";
+function meterUi() { return METER ? Promise.resolve(METER) : import(METER_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (METER = m.createMeter({ G, $, esc, send, SFX, you: () => you })); }); }
 let ORDUI = null; const ORDUI_URL = "/v3/assets/js/eastscape-order.js?v=5";
 function ordUi() { return ORDUI ? Promise.resolve(ORDUI) : import(ORDUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (ORDUI = m.createOrderUi({ G, $, esc, send, SFX, openWin, ico, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
 function repUi() { return REPUI ? Promise.resolve(REPUI) : import(REPUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (REPUI = m.createReportUi({ G, $, esc, send, SFX, openWin, get me() { return me; } })); }); }

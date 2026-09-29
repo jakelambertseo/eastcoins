@@ -220,7 +220,7 @@ export function installPyramid(World, { G, R, rint }) {
     if (now - c.hurtAt >= 1000) {
       c.hurtAt = now;
       const max = G.maxHpOf(held.C), hurt = Math.max(1, Math.round(max * P_.coil.hurt));
-      held.C.hp = Math.max(0, held.C.hp - hurt); this.touch(held);
+      held.C.hp = Math.max(0, held.C.hp - hurt); this.touch(held); this.meterAdd?.(held, "taken", hurt);
       held.out.push({ type: "hurt", n: hurt });
       if (held.C.hp <= 0) { this.pyramidFreeCoil(S, "killed"); return this.pyramidDeath(held, S); }
     }
