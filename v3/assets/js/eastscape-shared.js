@@ -8433,6 +8433,13 @@ export const GADGETS = {
   pettoy: { name: "Pet Toy", icon: "\u{1F9F8}", lvl: 45, parts: { scrap: 40, gears: 10, sparks: 10 }, fee: 700, n: 1, kind: "xpchunk", xpChunk: { skill: "breeding", n: 800 }, skill: "breeding", does: "800 Breeding xp, played with once" },
   banner: { name: "Party Banner", icon: "\u{1F6A9}", lvl: 55, parts: { scrap: 60, gears: 15, sparks: 15 }, fee: 1000, n: 1, kind: "banner", does: "your whole party near you takes 5% less damage and swings 5% faster for ten minutes" },
   banner_buff: { name: "Under the Banner", icon: "\u{1F6A9}", item: false, mins: 10, fx: { tough: 0.05, speed: 0.05 }, does: "5% less damage taken and 5% faster" },
+  /* THE AUTOMATION TOOLS (§11: "yes to auto reel, lets also expand this idea similarly into mining (auger), woodcutting (chainsaw)").
+     While one runs, that skill ignores the idle cutoff, and when a rock empties or a tree falls it walks you to the nearest of the same
+     and carries on. But whenever NOBODY has touched the game for G.AFK_MS it works at TINK.autoRate of the speed: it is for the parent
+     cooking dinner, not a replacement for playing, so clicking yourself is always better. You stay logged in; nothing gathers offline. */
+  auger: { name: "Auger", icon: "\u{1FA9B}", lvl: 60, parts: { scrap: 80, gears: 30, sparks: 5, relic: 1 }, fee: 1500, n: 1, mins: 15, auto: "rock", skill: "mining", does: "keeps you mining with no clicks: no idle cutoff, and the next rock of the same ore when one runs out (75% speed while you're away)" },
+  chainsaw: { name: "Chainsaw", icon: "\u{1FA9A}", lvl: 70, parts: { scrap: 80, gears: 30, sparks: 5, relic: 1 }, fee: 1500, n: 1, mins: 15, auto: "tree", skill: "woodcutting", does: "keeps you chopping with no clicks: no idle cutoff, and the next tree of the same kind when one falls (75% speed while you're away)" },
+  autoreel: { name: "Auto-Reel", icon: "\u{1F3A3}", lvl: 80, parts: { scrap: 80, gears: 30, sparks: 5, relic: 1 }, fee: 1500, n: 1, mins: 15, auto: "spot", skill: "fishing", does: "keeps you fishing with no clicks: no idle cutoff (75% speed while you're away)" },
   bomb: { name: "Boss Bomb", icon: "\u{1F4A3}", lvl: 75, parts: { scrap: 80, gears: 20, sparks: 20, relic: 2 }, fee: 2000, n: 1, kind: "bomb", bomb: 300, does: "your next hit on a boss does 300 more damage" }
 };
 for (const [id, g] of Object.entries(GADGETS)) if (g.item !== false)
@@ -8445,6 +8452,9 @@ export const tkAcc = (c, style) => tkOn(c).reduce((a, g) => a + (g.acc?.[style] 
 export const tkCraft = (c, skill) => { let dbl = 0, noburn = false; for (const g of tkOn(c)) if (g.craft?.skill === skill) { dbl += g.craft.dbl || 0; noburn ||= !!g.craft.noburn; } return { dbl, noburn }; };
 export const tkXp = (c, skill) => tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0);
 export const tkSalv = (c) => tkOn(c).reduce((a, g) => a + (g.salv || 0), 0);
+/** is an automation tool running for this kind of work ("rock", "tree", "spot")? */
+export const tkAuto = (c, kind) => tkOn(c).some((g) => g.auto === kind || (g.auto === "rock" && kind === "vein"));
+TINK.autoRate = 0.75;
 export const tkRegen = (c) => tkOn(c).reduce((a, g) => a + (g.regen || 0), 0);
 /** the part value of a build: what its xp is worked out from */
 export const tkPv = (g) => Object.entries(g.parts || {}).reduce((a, [p, n]) => a + n * TINK.parts[p].pv, 0);

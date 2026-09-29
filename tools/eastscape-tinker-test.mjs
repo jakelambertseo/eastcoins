@@ -70,5 +70,15 @@ W.parties ||= new Map(); W.parties.set("pp", { id: "pp", leader: "t1", members: 
 G.addInv(C.inv, "tk_banner", 1, C); useK("tk_banner"); is([!!C.tk.banner_buff, !!mate.C.tk?.banner_buff, G.fxOf(mate.C).tough >= 0.05], [true, true, true], "the Party Banner buffs you and your party");
 G.addInv(C.inv, "tk_confetti", 3, C); mate.out = []; useK("tk_confetti"); is([cnt("tk_confetti"), !!mate.out.find((e) => e.type === "confetti")], [2, true], "confetti: one shot used, everyone around sees it");
 
-console.log(bad ? `\n${bad} problem(s)` : "\nTinkering's salvage works: parts by the rules, the lot is safe, reforges by level, only at the bench, and it saves");
+/* 9. THE AUTOMATION TOOLS: slower only while nobody is there, and on to the next rock of the same ore */
+const miner = { id: "m1", name: "m1", C: G.freshChar(), x: 5, y: 8, out: [], path: [], lastInput: Date.now() }; miner.C.scene = "workyard"; W.pls.set("m1", miner);
+const now9 = Date.now(); miner.C.tk = { auger: { left: 600000 } };
+is([W.tkSlow(miner, now9, "rock"), (miner.lastInput = now9 - 10 * 60000, Math.round(W.tkSlow(miner, now9, "rock") * 100) / 100), W.tkSlow(miner, now9, "tree")], [1, 1.33, 1], "the Auger: full speed while you're there, 75% while you're away, nothing for trees");
+const rocks = S.objs.map((o, i) => [o, i]).filter(([o]) => o.t === "rock" && o.ore === "copper"), [r0] = rocks[0];
+miner.x = r0.x + 1; miner.y = r0.y; miner.act = null; W.tkNext(S, miner, r0, "rock");
+const went = S.objs[miner.act?.ob ?? -1] || (miner.act && S.objs.find((o) => o.x === miner.act.x && o.y === miner.act.y));
+is([!!miner.act, went && went !== r0 && went.ore === "copper"], [true, true], "a rock runs dry: the Auger walks you to the next copper rock");
+miner.act = null; miner.C.tk = {}; W.tkNext(S, miner, r0, "rock"); is(miner.act, null, "without an Auger: you stop, as ever");
+
+console.log(bad ? `\n${bad} problem(s)` : "\nTinkering works: salvage by the rules and safe, gadgets built, used and broken, and the automation tools carry on while you're away");
 process.exitCode = bad ? 1 : 0;

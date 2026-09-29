@@ -61,6 +61,18 @@ export function installTinker(World, { G }) {
     }
   };
 
+  /* THE AUTOMATION TOOLS. Slower while nobody is at the keyboard (TINK.autoRate); full speed the moment you are. */
+  P.tkSlow = function (pl, now, kind) { return G.tkAuto(pl.C, kind) && now - pl.lastInput > G.AFK_MS ? 1 / T.autoRate : 1; };
+  /* A rock ran dry or a tree fell: with the tool running, walk to the nearest one of the SAME ore or wood you can work, and carry on. */
+  P.tkNext = function (S, pl, ob, kind) {
+    if (!G.tkAuto(pl.C, kind)) return;
+    const now = Date.now(), same = (o) => o.t === ob.t && (o.ore || null) === (ob.ore || null) && (o.log || null) === (ob.log || null) && o !== ob && !o.edge && !(o.emptyUntil > now) && !(o.stumpUntil > now) && (!o.req || G.lvlOf(pl.C, o.req.skill) >= o.req.lvl);
+    let best = -1, bd = 1e9;
+    S.objs.forEach((o, i) => { if (!same(o)) return; const d = G.cheb(pl, o); if (d < bd && d <= 15) { bd = d; best = i; } });
+    if (best < 0) return this.say(pl, `Your ${kind === "rock" ? "Auger" : "Chainsaw"} can't find another nearby. It'll wait.`);
+    this.startAct(S, pl, { ob: best });
+  };
+
   /* USING one, from the bag (useSpecial hands it here): a timed gadget starts its clock, one of each at a time; the rest happen at once */
   P.tinkerUse = function (pl, st, it, take) {
     const C = pl.C, id = it.gadget, g = G.GADGETS[id], bad = (t) => this.say(pl, t, "bad"); if (!g) return;

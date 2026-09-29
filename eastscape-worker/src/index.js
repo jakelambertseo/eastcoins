@@ -2718,7 +2718,7 @@ export class World {
     const a = pl.act, C = pl.C; if (!a || pl.path.length) return;
     // AFK: a repeating skill stops once nobody has touched the game for a while (see G.AFK_MS)
     const afkMs = (a.kind === "spot" || a.kind === "tree") && G.charmOf(C, "stillness") ? G.AFK_MS + G.charmOf(C, "stillness") * 60000 : S.def.tower ? G.AFK_TOWER_MS : a.kind === "mob" && G.ammoOf(C) ? G.ARCHERY.afkMs : G.AFK_MS;   /* (2026-09-25) an archer with a loaded quiver gets the long timer: AFK-friendly is the point of the quiver */   /* (2026-09-25) a tower floor is a 4-5 minute fight by design; see AFK_TOWER_MS */
-    if (G.AFK_KINDS[a.kind] && now - pl.lastInput > afkMs) {
+    if (G.AFK_KINDS[a.kind] && now - pl.lastInput > afkMs && !G.tkAuto(C, a.kind)) {   /* (2026-09-28) an Auger, Chainsaw or Auto-Reel keeps it going */
       pl.act = null;
       return this.say(pl, `You stop ${G.AFK_KINDS[a.kind]}: you've been idle for ${Math.round(afkMs / 60000)} minutes. Click to carry on.`);
     }
@@ -2991,7 +2991,7 @@ export class World {
       if (now < a.next) return;
       this.groupNote(S, pl, a);
       if (vein) {
-        a.next = now + Math.round(6000 / tspd);
+        a.next = now + Math.round(6000 / tspd * this.tkSlow(pl, now, a.kind));
         if (Math.random() < (0.55 + bonus) * G.gatherMul(S.def)) { if (!this.give(pl, ob.ore)) { pl.act = null; return; } this.gained(S, pl, ob.ore, 1, "gather", "mining"); this.grant(pl, "mining", gx(9)); this.questCheck(pl);
         /* (2026-09-25) A STONE, sometimes. GEM_DROP is keyed by ore, so the rock you are mining decides which gem,
            and the same rock decides which arrows that gem tips. keepRare, because a gem that vanished into a full
@@ -2999,7 +2999,7 @@ export class World {
         for (const [gk, gp] of (G.GEM_DROP[ob.ore] || [])) if (Math.random() < gp * (1 + G.charmOf(C, "stonesense") / 100 + G.petFx(C).gem / 100 + G.fxOf(C).gem)) { const where = this.keepRare(pl, gk, 1); if (where) { this.emit(pl, "loot", { k: gk, n: 1 }); this.say(pl, `Something glints in the ore: a ${G.ITEMS[gk].name.toLowerCase()}!${where === "bank" ? " Your bag was full, so it went to your bank." : ""}`, "loot"); } }
         }
       } else {
-        a.next = now + Math.round(1800 / tspd);
+        a.next = now + Math.round(1800 / tspd * this.tkSlow(pl, now, a.kind));
         if (Math.random() < (Math.min(0.9, 0.4 + G.lvlOf(C, "mining") * 0.02) + bonus) * G.gatherMul(S.def)) {   /* half out in the Wilderness: see WILD_GATHER */
           if (!this.give(pl, ob.ore)) { pl.act = null; return; }
           this.gained(S, pl, ob.ore, 1, "gather", "mining");
@@ -3021,7 +3021,7 @@ export class World {
             ob.left = rint(G.ORE_IN_ROCK[0], G.ORE_IN_ROCK[1]);
             ob.emptyUntil = now + (ob.special ? 30000 : 8000);
             this.say(pl, "That's the last of the ore in this rock.");
-            pl.act = null;
+            pl.act = null; this.tkNext(S, pl, ob, "rock");   /* (2026-09-28) an Auger moves on to the next one */
           }
         }
       }
@@ -3227,7 +3227,7 @@ export class World {
       if (!a.started) { a.started = now; a.next = now + chop; pl.swingAt = now; this.say(pl, "You swing your axe at the tree."); return; }
       if (now - pl.swingAt > 1000) pl.swingAt = now;
       if (now < a.next) return;
-      a.next = now + chop;
+      a.next = now + Math.round(chop * this.tkSlow(pl, now, "tree"));
       const oak = ob.t === "oak";
       this.groupNote(S, pl, a);
       if (Math.random() < (Math.min(0.9, (oak ? 0.5 : 0.35) + G.lvlOf(C, "woodcutting") * 0.02) + bonus) * G.gatherMul(S.def)) {   /* half out in the Wilderness: see WILD_GATHER */
@@ -3241,7 +3241,7 @@ export class World {
            tree, and every fall also cleared pl.act, so it was a re-click as well as a wait. Now a tree is good for
            about 25 logs (~55s) and an oak for 50 (~110s). The three-minute AFK cutoff is untouched and is still
            what ends a long session; this only stops the tree itself interrupting you every few swings. */
-        if (Math.random() < (oak || ob.special ? 0.02 : 0.04)) { ob.stumpUntil = now + 15000; this.say(pl, `The ${oak ? "oak" : "tree"} falls.`); pl.out.push({ type: "fell" }); pl.act = null; }   /* (2026-09-23) a real event for the sound: mob_die, die and idle_stop are still matched off their chat TEXT, which would fail silently the day somebody rewords one */
+        if (Math.random() < (oak || ob.special ? 0.02 : 0.04)) { ob.stumpUntil = now + 15000; this.say(pl, `The ${oak ? "oak" : "tree"} falls.`); pl.out.push({ type: "fell" }); pl.act = null; this.tkNext(S, pl, ob, "tree"); }   /* (2026-09-28) a Chainsaw moves on */   /* (2026-09-23) a real event for the sound: mob_die, die and idle_stop are still matched off their chat TEXT, which would fail silently the day somebody rewords one */
       }
       return;
     }
@@ -3274,7 +3274,7 @@ export class World {
          just replaying over and over". Exactly the same slip I had already caught one branch up in thieving,
          and did not check for here. */
       const fx = G.fxOf(C);
-      a.next = now + Math.round(G.FISHING.ms / ((1 + G.swingFx(C)) * G.toolSpeed(C, "fishing")));
+      a.next = now + Math.round(G.FISHING.ms / ((1 + G.swingFx(C)) * G.toolSpeed(C, "fishing")) * this.tkSlow(pl, now, "spot"));
       const lvl = G.lvlOf(C, "fishing"), fish = G.fishAt(ob, lvl, Math.random()), trout = fish === ob.fish2;   /* v68: every spot names its fish, and a second one from fish2lvl (`trout` now just means "the second fish") */
       this.groupNote(S, pl, a);
       if (Math.random() < Math.min(0.97, G.FISHING.chance(lvl) + bonus + fx.bite) * G.gatherMul(S.def)) {   /* half out in the Wilderness: see WILD_GATHER */
