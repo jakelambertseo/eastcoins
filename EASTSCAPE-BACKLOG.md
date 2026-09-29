@@ -1980,3 +1980,9 @@ Bug board: statuses still to be set by the owner in game (admin only).
 HOLD.tinker and HOLD.gems false. Marked Cards still held. Yard north pasture -9 monsters (20 in the Yard).
 Wiki 212: Tinkering and World Projects guide, gem bag guide now visible, Updates entry. Wiki words budget 90.
 Shared ?v=385. Watch: gem drop rate (1/1,500 at 60+), Tinkering salvage as a sink, World Project donations.
+
+## 2026-09-29, rules 355 LIVE (worker faac6518): Tinkering's art and achievements
+
+skill_tinkering icon (SKILL_ART), ui/built (Builders board), ui/g_tinkering (guide), five Tinkering achievements
+(a_tinker, s_tink30, e_tink60, s_pin, m_pins), Builder's Pins in the collection log's Skilling tab, and projPin
+fills the log on the bank path. Shared ?v=386. Gadgets, pins, parts and Sal already had art.
