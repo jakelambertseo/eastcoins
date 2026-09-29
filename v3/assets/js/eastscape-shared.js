@@ -3215,7 +3215,7 @@ export const PROJECTS = {
   cannon: { name: "The King's Cannon", scene: "mire", where: "the Mire's clearing", board: [17, 12],
     blurb: "An old swamp cannon, knocked off its carriage. Aimed right at where the Pumpkin King climbs out.",
     tiers: [
-      { need: { scrap: 2000, gears: 300, sparks: 400, tickets: 120000 }, finish: 20, name: "The cannon", does: "load it with Sparks and fire a volley at a boss in the Mire" },
+      { need: { scrap: 2000, gears: 300, sparks: 400, tickets: 120000 }, finish: 20, name: "The cannon", does: "load it with Sparks and fire a volley at a boss: the Mire's first, and with none there, any open-world boss that's up" },
       { need: { scrap: 5000, gears: 900, sparks: 1200, relic: 10, tickets: 400000 }, finish: 50, name: "The second barrel", does: "every shot is two volleys" },
       { need: { scrap: 12000, gears: 2200, sparks: 3000, relic: 40, tickets: 1000000 }, finish: 80, name: "The shock shell", does: "a volley stuns the boss for four seconds" }] },
   table: { name: "The New Table", scene: "casino", where: "the Casino's instant-win room", board: [40, 18],

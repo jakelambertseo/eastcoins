@@ -174,27 +174,39 @@ export function installTinker(World, { G }) {
     S.whoSig = null;
   };
 
-  /* THE KING'S CANNON (the Mire project): Sparks from the pouch, a volley at a boss in range, one shot a minute for the whole server.
+  /* THE KING'S CANNON (the Mire project): Sparks from the pouch, a volley at a boss, one shot a minute for the whole server.
      Tier 2 fires twice; tier 3's shell stuns. The damage is the firer's, through the same books as a burn: combat xp, the party
-     meter, the boss's report and an open boss's shared kill. */
+     meter, the boss's report and an open boss's shared kill.
+     (2026-09-28, the owner: "make the cannon work on other bosses after the long night") THE LONG SHOT. The Pumpkin King is the
+     Mire's only boss, so once he is gone for the year the cannon lobs its shell at whichever OPEN-WORLD boss is up anywhere
+     (Captain Claw, the Deep Warden, ...). A boss in its own range always comes first. A long shot is support, not a way to farm a
+     boss from safety: it pays the xp and shows on the boss's report, but it never takes a share of the loot and never lands the
+     killing blow (it stops at 1 health); the people standing there finish it. */
   P.cannonFire = function (S, pl, now = Date.now()) {
     const tier = G.projTier("cannon"), K = G.CANNON, C = pl.C, bad = (t) => this.say(pl, t, "bad");
     if (!tier) return bad("It's a wreck. Bronny's collecting parts to fix it: see the plan board.");
     C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 };
     if ((this.cannonAt || 0) > now) return bad(`It's still cooling: ${Math.ceil((this.cannonAt - now) / 1000)} seconds.`);
     const gun = S.objs.find((o) => o.t === "cannon"); if (!gun) return;
-    const m = S.mobs.filter((x) => !x.dead && G.MOBS[x.t]?.boss && G.cheb(x, gun) <= K.range).sort((a, b) => G.cheb(a, gun) - G.cheb(b, gun))[0];
-    if (!m) return bad("Nothing worth the powder in range. It's for bosses.");
+    let TS = S, m = S.mobs.filter((x) => !x.dead && G.MOBS[x.t]?.boss && G.cheb(x, gun) <= K.range).sort((a, b) => G.cheb(a, gun) - G.cheb(b, gun))[0];
+    if (!m) for (const Q of this.scenes.values()) {   /* the long shot: an open-world boss up anywhere, never a dungeon's, an island's or a held map's */
+      if (Q === S || Q.run || Q.owner || G.HOLD[Q.key] || !this.playersIn(Q).length) continue;
+      const b = Q.mobs.find((x) => !x.dead && x.hp > 1 && G.MOBS[x.t]?.boss && G.MOBS[x.t]?.open); if (b) { TS = Q; m = b; break; }
+    }
+    if (!m) return bad("No boss is up anywhere. It's for bosses.");
+    const far = TS !== S, bossName = G.MOBS[m.t].name, where = TS.def?.name || TS.key;
     if ((C.parts.sparks | 0) < K.sparks) return bad(`A shot takes ${K.sparks} Sparks. You've ${C.parts.sparks | 0}.`);
     C.parts.sparks -= K.sparks; this.cannonAt = now + K.cdMs; this.touch(pl);
     const volleys = tier >= 2 ? 2 : 1; let total = 0;
-    for (let v = 0; v < volleys && m.hp > 0; v++) {
-      const d = Math.min(m.hp, K.dmg); m.hp -= d; m.hurtAt = now; total += d;
-      S.events.push({ type: "splat", who: m.id, n: d, kind: "hit", t: now + v * 350, crit: true });
-      this.award(pl, d); this.bossAdd(pl, m, "dmg", d); if (G.MOBS[m.t]?.open) (m.by ||= {})[pl.id] = (m.by[pl.id] || 0) + d;
+    for (let v = 0; v < volleys && m.hp > (far ? 1 : 0); v++) {
+      const d = Math.min(far ? m.hp - 1 : m.hp, K.dmg); m.hp -= d; m.hurtAt = now; total += d;
+      TS.events.push({ type: "splat", who: m.id, n: d, kind: "hit", t: now + v * 350, crit: true });
+      this.award(pl, d); this.bossAdd(pl, m, "dmg", d); if (!far && G.MOBS[m.t]?.open) (m.by ||= {})[pl.id] = (m.by[pl.id] || 0) + d;
     }
     if (tier >= 3) m.stunUntil = now + K.stunMs;
-    for (const p of this.playersIn(S)) { p.out.push({ type: "cannon", x: gun.x, y: gun.y, to: { x: m.x, y: m.y }, n: volleys }); this.say(p, `\u{1F4A5} ${p === pl ? "You fire" : `${pl.name} fires`} the King's Cannon: ${total} damage${tier >= 3 ? ", and it's stunned" : ""}!`, "loot"); }
+    const stun = tier >= 3 ? ", and it's stunned" : "";
+    for (const p of this.playersIn(S)) { p.out.push({ type: "cannon", x: gun.x, y: gun.y, n: volleys }); this.say(p, `\u{1F4A5} ${p === pl ? "You fire" : `${pl.name} fires`} the King's Cannon${far ? ` at ${bossName} in ${where}` : ""}: ${total} damage${stun}!`, "loot"); }
+    if (far) for (const p of this.playersIn(TS)) { p.out.push({ type: "cannon", far: true, n: volleys }); this.say(p, `\u{1F4A5} A shell whistles in from the Mire: ${pl.name} fired the King's Cannon at ${bossName}. ${total} damage${stun}!`, "loot"); }
     if (m.hp <= 0) this.killMob(S, pl, m, now);
   };
 }

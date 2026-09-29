@@ -115,6 +115,23 @@ W.cannonFire(M, gunner, tNow + 1000); is(gunner.C.parts.sparks, 100 - G.CANNON.s
 W.projOf("cannon").tier = 3; G.setProjects(W.projTiers()); W.projRebuild("mire"); W.cannonFire(M, gunner, tNow + G.CANNON.cdMs + 1);
 is(king.stunUntil > tNow + G.CANNON.cdMs, true, "tier 3: the shell stuns him");
 
+/* 11b. THE LONG SHOT: no boss in the Mire, so the cannon hits an open-world boss up elsewhere; support only (no loot share, never the kill) */
+M.mobs = M.mobs.filter((m) => m !== king);
+const BW = W.scene("boardwalk"), watcher = { id: "w1", name: "w1", login: "w1", C: G.freshChar(), x: 5, y: 5, out: [], path: [] }; watcher.C.scene = "boardwalk"; W.pls.set("w1", watcher);
+const dC = G.MOBS.captainclaw, claw = { id: "cc", t: "captainclaw", x: 8, y: 8, hx: 8, hy: 8, hp: 300, maxHp: dC.hp, path: [], step: null, face: 1, nextWander: 0, dead: false, respawnAt: Infinity, hurtAt: 0, swingAt: 0, lastSwing: 0 };
+BW.mobs.push(claw); W.cannonAt = 0; gunner.C.parts.sparks = 100; W.projOf("cannon").tier = 2; G.setProjects(W.projTiers());
+W.cannonFire(M, gunner, tNow + 5 * G.CANNON.cdMs);
+is([claw.hp, claw.dead, !!claw.by?.g1, gunner.C.parts.sparks, !!watcher.out.find((e) => e.type === "cannon")], [1, false, false, 75, true], "no boss in the Mire: the shell lands on Captain Claw, stops at 1 health, takes no loot share, and the Boardwalk hears it");
+W.cannonAt = 0; W.cannonFire(M, gunner, tNow + 7 * G.CANNON.cdMs); is(gunner.C.parts.sparks, 75, "a boss on 1 health isn't a target: no shot, no Sparks");
+BW.mobs = BW.mobs.filter((m) => m !== claw);
+
+/* 11c. /project in chat: anyone can ask; only an admin can set one */
+const plain = { id: "u1", name: "u1", login: "u1", C: G.freshChar(), x: 10, y: 10, out: [], path: [], lastInput: 0, msgWindow: 0, msgs: 0 }; plain.C.scene = "workyard"; W.pls.set("u1", plain);
+W.onMessage(plain, { t: "chat", text: "/project" }); is(/Fishing Dock \(dock\): tier 1 of 3/.test(JSON.stringify(plain.out)), true, "/project tells anyone where each project stands");
+plain.lastChat = 0; W.onMessage(plain, { t: "chat", text: "/project dock 3" }); is(G.projTier("dock"), 1, "a player can't set one");
+const boss = { ...plain, id: "a1", name: "a1", login: "a1", admin: true, out: [], lastChat: 0 }; W.pls.set("a1", boss);
+W.onMessage(boss, { t: "chat", text: "/project dock 2 fill" }); is([G.projTier("dock"), W.projView(boss).dock.ready], [2, true], "an admin's /project dock 2 fill sets tier 2 with its parts in");
+
 /* 12. THE BOILER: no table until it's built; then a fair game in the band */
 const Cz = W.scene("casino"), gam = { id: "b1", name: "b1", login: "b1", C: G.freshChar(), x: 35, y: 18, out: [], path: [] }; gam.C.scene = "casino"; W.pls.set("b1", gam);
 G.addInv(gam.C.inv, "tickets", 50000, gam.C);

@@ -795,6 +795,15 @@ export class World {
         /* (2026-09-27, the owner: "add a chat command for users to time the pumpkin king. something like /pumpkin and it shows time
            remaining") THE FIRST CHAT COMMAND. It answers the asker alone and is never broadcast, so nobody else's chat fills with it. */
         if (/^[\/!](pumpkin|king)\b/i.test(text)) return this.say(pl, this.hwKingLine(now), "good");
+        /* (2026-09-28) /project: where every World Project stands. An admin can set one: /project dock 1, and "fill" fills that tier's
+           parts so the Finish button lights (it is the admin projtier command, so it answers to the same permission). */
+        { const pj = text.match(/^[\/!]projects?\b\s*([a-z]+)?\s*(\d)?\s*(fill)?/i);
+          if (pj) {
+            if (pj[2] == null) return this.say(pl, `${Object.entries(G.PROJECTS).map(([id, P]) => `${P.name} (${id}): tier ${G.projTier(id)} of 3`).join(" · ")}.${this.canRun(pl, "projtier") ? " Admins: /project dock 1, add fill to fill its parts." : ""}`, "good");
+            if (!this.canRun(pl, "projtier")) return this.say(pl, "That one is admins only.", "bad");
+            if (!G.PROJECTS[String(pj[1]).toLowerCase()]) return this.say(pl, `No project called ${pj[1]}. It's one of: ${Object.keys(G.PROJECTS).join(", ")}.`, "bad");
+            return this.admin(S, pl, { cmd: "projtier", id: String(pj[1]).toLowerCase(), tier: +pj[2], fill: !!pj[3] });
+          } }
         const msg = { type: "chat", id: pl.id, name: pl.name, nfx: G.nameFxOf(pl.C) || undefined, role: pl.role !== "user" ? pl.role : undefined, text, scene: pl.C.scene, t: now };
         for (const p of this.pls.values()) p.out.push(msg);
         this.chatKeep(msg);
