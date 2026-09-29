@@ -44,9 +44,9 @@ export function installGems(World, { G }) {
       this.say(pl, `${G.gemText(st.k, roll)} goes into your Gem Case: ${G.GEM_OF[st.k].does}, wherever you are.`, "good");
       return this.gemPush(pl, { cased: { k: st.k, roll } });
     }
-    /* ---- the Sorter */
+    /* ---- the Sorter (on a DEV server an admin can work it from anywhere: /sorter, for testing) */
     if (!G.projTier("sorter")) return bad("The Gem Sorter isn't built yet. It's a World Project in the Depths.");
-    if (!atSorter(S, pl)) return bad("That's done at the Gem Sorter, in the Depths.");
+    if (!atSorter(S, pl) && !(this.env?.DEV === "1" && pl.admin)) return bad("That's done at the Gem Sorter, in the Depths.");
     if (op === "sort") {
       const i = m.i | 0, st = C.inv[i]; if (!st || !G.isGem(st.k)) return bad("Pick a gem from your bag.");
       const cost = G.sortCost(); if (G.tixIn(C) < cost) return bad(`A roll costs ${G.fmtTix(cost)}. You have ${G.fmtTix(G.tixIn(C))}.`);
@@ -110,6 +110,33 @@ export function installGems(World, { G }) {
     const boss = d.boss && d.open, combat = G.GEMSET.list.filter((g) => g.where === "gear");
     if ((d.lvl || 0) >= S_.dropLvl && Math.random() < (boss ? 0.2 : S_.drop * 10)) this.gemFind(pl, combat[Math.floor(Math.random() * combat.length)].k);
     if (boss && Math.random() < 1 / 60 && this.keepRare(pl, "voidheart_bit", 1)) this.say(pl, "\u{1F529} A Voidheart drill bit comes loose from the boss. Sal will want to see this.", "loot");
+  };
+
+  /* (2026-09-28, the owner: "load a dev character so i can test the gems function in totality ... its a lot of work getting all the
+     items") /gemkit, DEV SERVER ONLY: everything the gem system needs, on whoever types it. The Sorter built; combat, gathering,
+     crafting and Tinkering levels up; the whole Nova set worn with no sockets yet; a Nova axe, pickaxe and rod in the bag to socket;
+     punches, Master Punches, Voidheart bits and every Gem Case kit; five million tickets; and in the bank, three of every gem unsorted
+     plus a perfect one of each, so a socket or a case slot can be filled before a single roll. /sorter opens the Sorter from anywhere. */
+  P.gemKit = function (pl) {
+    if (this.env?.DEV !== "1") return this.say(pl, "That's for the dev server only.", "bad");
+    const C = pl.C;
+    if (G.projTier("sorter") < 1) { this.projOf("sorter").tier = 1; this.projSave(); G.setProjects(this.projTiers()); this.projRebuild("depths"); for (const p of this.pls.values()) p.out.push({ type: "projects", tiers: this.projTiers(), grand: this.projGrand() }); }
+    for (const [k, lv] of Object.entries({ melee: 99, hp: 99, archery: 99, magic: 99, tinkering: 90, mining: 90, woodcutting: 90, fishing: 90, cooking: 80, smithing: 80, alchemy: 80, fletching: 80, wizardry: 80, farming: 80, agility: 80, thieving: 80, breeding: 80, fungiculture: 80 })) C.xp[k] = Math.max(C.xp[k] || 0, G.XP_AT[lv]);
+    C.hp = G.maxHpOf(C);
+    /* the Nova set, worn, sockets empty (the gear already worn goes to the bank rather than the floor) */
+    C.eqf ||= {};
+    for (const [sl, k] of Object.entries({ weapon: "nova_sword", body: "nova_body", legs: "nova_legs", helm: "nova_helm", boots: "nova_boots", gloves: "nova_gloves", shield: "nova_shield", amulet: "nova_amulet", ring: "nova_ring" })) {
+      if (C.eq[sl] && C.eq[sl] !== k) this.bankAdd(pl, C.eq[sl], 1, G.eqCode(C, sl));
+      C.eq[sl] = k; delete C.eqf[sl];
+    }
+    const bag = [["tickets", 5000000], ["nova_axe", 1], ["nova_pickaxe", 1], ["nova_rod", 1], ["tk_punch", 10], ["tk_masterpunch", 4], ["tk_caseslot", 3], ["tk_caseslot2", 3], ["tk_caseslot3", 3], ["voidheart_bit", 3]];
+    for (const [k, n] of bag) if (G.addInv(C.inv, k, n, C) > 0) this.bankAdd(pl, k, n);
+    for (const g of G.GEMSET.list) { this.bankAdd(pl, g.k, 3); this.bankAdd(pl, g.k, 1, G.gemCode(G.GEMSET.roll[1])); }
+    for (const [k, r] of [["ruby", 10], ["carnelian", 7], ["topaz", 10], ["opal", -3]]) if (G.addInv(C.inv, k, 1, C, G.gemCode(r)) > 0) this.bankAdd(pl, k, 1, G.gemCode(r));   /* a few sorted ones in the bag, to socket and case straight away */
+    C.parts = { scrap: 20000, gears: 5000, sparks: 3000, relic: 200 };
+    this.touch(pl); this.persist?.(pl).catch?.(() => {});
+    this.say(pl, "\u{1F48E} Gem kit loaded: the Sorter is built, you're wearing the Nova set with empty sockets, the bag has punches, case kits and 5M tickets, and the bag has four sorted gems to try, and the bank three of every gem unsorted plus a perfect one of each. /sorter opens the Sorter from here.", "loot");
+    this.gemPush(pl);
   };
 
   /* the Gem Case's slots, from the bag: a Hinge takes it to 6, a Frame to 9, a Heart to 12, each only from the step below */
