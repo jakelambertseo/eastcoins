@@ -80,7 +80,7 @@ else console.log(`  ok    sprite sheets fresh: ${pk.packs} sheets, ${pk.pictures
 /* (2026-09-27) THE DEPTHS IS ONE PICTURE. Its ground is the pack's own mockup, two 256-colour halves (79 KB) fetched loose, in place of the
    Wang sheets every other map loads; with its monsters' walk, attack and rise frames on the area sheet it comes to about 136 KB on
    the wire. Allowed on purpose, for this map only: a new map that wants more should cut its art, not raise this. */
-const AREA_BUDGET = { wild: 135,   /* (2026-09-29) the Wild Bench, 2.6 KB, took it 1.5 over 130 */ depths: 160, boardwalk: 210, bw_cabin: 210, bw_light: 210, bw_wreck: 210, bw_pier: 210, bw_skull: 210,   /* (2026-09-27) the islands' clutter, flags and chest; the owner: "dont worry about any budgets" */  foundry: 270, orchard: 210,
+const AREA_BUDGET = { deep: 135,   /* (2026-09-29) the Wild Bench, 2.6 KB (it was the Wilderness's for a day) */ depths: 160, boardwalk: 210, bw_cabin: 210, bw_light: 210, bw_wreck: 210, bw_pier: 210, bw_skull: 210,   /* (2026-09-27) the islands' clutter, flags and chest; the owner: "dont worry about any budgets" */  foundry: 270, orchard: 210,
   /* (2026-09-27) the Foundry rebuilt as seven areas: each its own picture, trap strip and moving scenery; the Hall carries the Giant (five breaths,
      a slam and a rise, each 492x476) */ fd_grove: 200, fd_maze: 240, fd_isle: 300, fd_chain: 180, fd_gate: 140, fd_hall: 400 };   /* (the Foundry: its lava picture is 204 KB of the 260 and will not go smaller; the owner: "dont worry about any budgets") */
 for (const [area, list] of Object.entries(AREA_ART)) line(`area art: ${area}`, kb([...new Set(list)].reduce((a, k) => a + size(k), 0)), AREA_BUDGET[area] || BUDGET.areaArtKB, "KB");

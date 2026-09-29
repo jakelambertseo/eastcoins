@@ -749,7 +749,7 @@ export class World {
       case "wild": {
         /* (2026-09-22) TWO WAYS IN NOW. This was pinned to the farm's hole, and the farm is a closed area — so when the
            farm shut, the Wilderness had no entrance at all. Either mouth will do, and we remember which one you used. */
-        const mouth = (S.key === "farm" && this.near(S, pl, "hole", 2)) || (S.key === "gloam" && this.near(S, pl, "wildladder", 2));
+        const mouth = (S.key === "farm" && this.near(S, pl, "hole", 2)) || (S.key === "thunderhead" && this.near(S, pl, "wildladder", 2));   /* (2026-09-29) the Thunderhead's, moved from the Gloam */
         if (!mouth || G.lvlOf(C, G.WILD_REQ.skill) < G.WILD_REQ.lvl) return;
         pl.wildFrom = { scene: S.key, x: pl.x, y: pl.y };
         this.moveToScene(pl, "wild", null, G.SCENES.wild.entry);
@@ -3021,7 +3021,7 @@ export class World {
     if (a.kind === "rope") {
       /* Back the way you came. It used to be hardcoded to the farm, which is CLOSED: climbing out would have stranded
          you somewhere with no exits. A relog loses wildFrom, so the Gloam's ladder is the fallback. */
-      const back = pl.wildFrom && G.OPEN.has(pl.wildFrom.scene) ? pl.wildFrom : { scene: "gloam", x: 7, y: 20 };
+      const back = pl.wildFrom && G.OPEN.has(pl.wildFrom.scene) ? pl.wildFrom : { scene: "thunderhead", x: 29, y: 20 };   /* (2026-09-29) beside the ladder, which moved here from the Gloam */
       pl.wildFrom = null;
       this.moveToScene(pl, back.scene, null, { x: back.x, y: back.y });
       return this.say(pl, `You climb back up to ${G.SCENES[back.scene]?.name || "safety"}. Nobody can attack you up here.`);

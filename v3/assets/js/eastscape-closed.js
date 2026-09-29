@@ -314,8 +314,6 @@ export function createClosedScenes(G, H) {
          dragonstone in the south-east, mooncarp under the gloomfin. One grimstone and one deadwood stay for the level-20s. */
       for (const [x, y] of [[35, 3], [39, 2]]) { objs.push({ t: "deadtree", x, y, name: "Deadwood tree", log: "ashlogs", req: { skill: "woodcutting", lvl: 20 }, xp: 70, tease: "Grey, hard as bone. Your axe just bounces." }); g[y][x] = "#"; }
       objs.push({ t: "yew", x: 37, y: 5, log: "yewlogs", name: "Ancient yew", req: { skill: "woodcutting", lvl: 35 }, xp: 170 }); g[5][37] = "#";
-      /* (2026-09-29) THE WILD BENCH: fletching's Nexus, in the grove against the west rock (G.STATIONS.wildbench) */
-      objs.push({ t: "wildbench", art: "o_wildbench", x: 33, y: 3, w: 1, h: 1, name: "The Wild Bench: fletches everything, half as much again" }); g[3][33] = "#";
       objs.push({ t: "rock", ore: "grimstone", x: 36, y: 19, name: "Grimstone rock", req: { skill: "mining", lvl: 20 }, xp: 60, tease: "Cold purple stone. Your pickaxe skids right off." }); g[19][36] = "#";
       for (const [x, y] of [[40, 20], [38, 22]]) { objs.push({ t: "rock", ore: "dragonstone_ore", x, y, name: "Dragonstone rock", req: { skill: "mining", lvl: 40 }, xp: 95 }); g[y][x] = "#"; }
       for (const x of [9, 11]) objs.push({ t: "spot", x, y: 20, name: "Dead pool", req: { skill: "fishing", lvl: 20 }, fish: "gloomfin", fish2: "mooncarp", fish2lvl: 40, xp: 80, xp2: 150, glow: "#b080ff", tease: "The water is black and very still. Something down there is even stiller." });
@@ -1170,6 +1168,9 @@ export function createClosedScenes(G, H) {
       /* THE NEXUS: the best altar in the game, in the most dangerous place: the far north-west pocket, two ways in, drakes and
          golems on the door. It prints what every altar prints, twice over, for half as much Wizardry xp again (G.NEXUS). */
       objs.push({ t: "altar_nexus", art: "o_altar_nexus", x: 4, y: 2, w: 2, h: 2, name: "The Nexus: prints every page, twice over" }); block(g, 4, 2, 2, 2);
+      /* (2026-09-29, the owner: "move the wild bench to the deep wilder") THE WILD BENCH, fletching's Nexus, beside the Nexus altar: both of
+         the half-again stations in the one place, and that place is the Deep Wild. It stood in the Wilderness grove for a day. */
+      objs.push({ t: "wildbench", art: "o_wildbench", x: 7, y: 3, w: 1, h: 1, name: "The Wild Bench: fletches everything, half as much again" }); g[3][7] = "#";
       // the Black Pool, fished from two tiles back (north-east); the grimstone (south-west); the deadwood (east)
       animPiece(g, objs, walls, { t: "waterfall", anim: "a_wfall_d", frames: 8, cols: 4, fw: 128, fh: 128, fps: 9, pad: 1, x: 36, y: 3, w: 2, h: 2, name: "Waterfall" });
       /* LAVA (Set3's animated sheets): two pools sunk into the rock, each tile on its own frame, a bubbling tile or two on top; steam

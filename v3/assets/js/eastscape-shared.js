@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 358;   /* (2026-09-29) a sorted gem is always one item, shows its roll, and a click sets it in the gem bag */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 359;   /* (2026-09-29) the Wilderness ladder to the Thunderhead, the Wild Bench to the Deep Wild, Bronny x1.5 */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -1394,8 +1394,10 @@ Object.assign(SCENES, {
       put("bush", 19, 17, "Glowcap cluster", { art: "o_glowcap" });
       put("bush", 35, 17, "Glowcap cluster", { art: "o_glowcap" });
 
-      /* the rope ladder down into the Wilderness, on Holloway's edge where a cellar would have been */
-      put("wildladder", 12, 21, "Rope ladder: down into the Wilderness");
+      /* the rope ladder down into the Wilderness hung here, on Holloway's edge, until 2026-09-29: the owner, "move the wildy entrance
+         further away its too OP right now". The Gloam is combat 10-19, one map from the Yard; the ladder hangs from the Thunderhead now,
+         and a sign says so where it was. */
+      put("sign", 12, 21, "The rope ladder into the Wilderness is gone from here. It hangs from the Thunderhead now, on the storm-plain's south edge.");
 
       /* (2026-09-24) THE THIEVES' GUILD MOVED HERE, far north-east corner, with Vance beside it. It stood in the
          Yard beside the pond - the brightest, busiest, most municipal square in the game, and the worst possible
@@ -2167,6 +2169,8 @@ Object.assign(SCENES, {
          are untouched and every other one of them on this map still waits to be hit first. */
       put("rock", 9, 4, "Starfall rock", { ore: "starfall_ore", req: { skill: "mining", lvl: 60 }, xp: 150 });
       put("rock", 7, 8, "Starfall rock", { ore: "starfall_ore", req: { skill: "mining", lvl: 60 }, xp: 150 });
+      /* (2026-09-29) THE WAY INTO THE WILDERNESS, moved here from the Gloam (the owner: "move the wildy entrance further away") */
+      put("wildladder", 29, 21, "Rope ladder: down into the Wilderness");
       put("rock", 40, 20, "Voidglass shards", { ore: "voidglass", req: { skill: "mining", lvl: 70 }, xp: 190 });
       put("rock", 36, 22, "Voidglass shards", { ore: "voidglass", req: { skill: "mining", lvl: 70 }, xp: 190 });
       put("skyash", 30, 6, "Storm-struck skyash", { log: "skyashlogs", req: { skill: "woodcutting", lvl: 50 }, xp: 200 });
@@ -7741,6 +7745,10 @@ export const ORDER = {
       late: [["cstormmarlin", 15], ["cthundersquid", 15], ["cmudcat", 12], ["sghostcarp", 15]] }
   }
 };
+/* (2026-09-29, the owner: "Bronny 2x requirements need to be 50% more") EVERY COUNT HALF AGAIN, rounded to a whole five. Filling the order
+   is what starts the Yard's 2X, so this is the 2X getting harder to earn. The table above stays as written; an order already out keeps
+   the counts it was dealt (they are saved on it), so only the next one feels this. */
+for (const K of Object.values(ORDER.kinds)) for (const t of ["early", "mid", "late"]) for (const row of K[t] || []) row[1] = Math.max(5, Math.round((row[1] * 1.5) / 5) * 5);
 /** a fresh order's lines: one from each kind, with ORDER.mix's tiers dealt out at random. Anything held, or anything Bom sells (so it
     could be bought and handed straight back), is never picked. `r` is the random source (Math.random, or a test's). */
 export function orderPick(r = Math.random) {

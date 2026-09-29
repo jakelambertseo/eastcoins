@@ -1107,6 +1107,15 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-29", title: "The Wilderness moves out to the Thunderhead, and Bronny wants more",
+    items: [
+      "THE WILDERNESS LADDER HAS MOVED from the Gloam to the Thunderhead, on the storm-plain's south edge. It was far too close to the Yard for somewhere that dangerous and that rewarding. A sign in the Gloam points the way. Climbing back out brings you up where you went down.",
+      "THE WILD BENCH has moved to the Deep Wild, beside the Nexus altar: both half-again stations in one place, and that place is the Deep Wild.",
+      "BRONNY'S ORDERS ASK FOR HALF AS MUCH AGAIN, so the Yard's 2X takes more to earn. An order already out keeps the counts it was given.",
+      "SORTED GEMS ARE SINGLE ITEMS NOW: each shows its roll on its corner (+10%, -3%) in its band's colour, and clicking one in your bag sets it straight into your gem bag.",
+    ],
+  },
+  {
     date: "2026-09-29", title: "Tinkering rebalanced, and every map's missing art back",
     items: [
       "TINKERING XP IS PACED LIKE THE OTHER SKILLS NOW. Salvaging pays half an item's part value, and never more than 40 xp for one item, so a rare or a piece of top gear isn't a shortcut any more. Building a gadget pays 15 xp for each level it needs. Giving parts and tickets to a World Project pays less xp than it did (finishing a stage still pays well). Levels already earned stay earned.",
