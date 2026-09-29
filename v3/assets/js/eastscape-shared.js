@@ -7271,10 +7271,16 @@ export function normChar(c) {
      `mig` marks it done so a later load cannot run it twice and re-stamp a level onto a piece that has since
      been traded away. c.forge is left in place, unread, rather than deleted: it is the only record of what
      somebody had if this ever needs looking at. */
+  /* (2026-09-29, found chasing the owner's "it shows +5 on the anvil") A SAVED CODE IS KEPT WHOLE WHEN IT IS VALID. These clamps were
+     written when `f` was only a reforge level, so each load cut every code to 0..4 and dropped it from anything that cannot be
+     reforged: a sorted gem came back unsorted, and a socketed piece lost its gems and read its socket bits as a level (a plain sword
+     with an empty socket loaded as "+4"). keepCode asks codeOk, the same test the Exchange puts a code to, and keeps it if it passes; a
+     code that fails still keeps a plain, capped level on gear that can be reforged, so an odd old save loses its junk and not its level. */
+  const keepCode = (k, v) => { const c0 = Math.trunc(Number(v)) || 0; if (c0 <= 0 || !ITEMS[k]) return 0; if (codeOk(k, c0)) return c0; if (isGem(k)) return 0; const l = Math.min(FORGE.cap, c0 % PL); return l > 0 && canForge(k) ? l : 0; };
   out.eqf = {};
   if (c.eqf && typeof c.eqf === "object") for (const [sl, v] of Object.entries(c.eqf)) {
-    const n = Math.max(0, Math.min(FORGE.cap, Math.trunc(Number(v)) || 0));
-    if (n > 0 && out.eq[sl] && canForge(out.eq[sl])) out.eqf[sl] = n;
+    const n = out.eq[sl] ? keepCode(out.eq[sl], v) : 0;
+    if (n > 0) out.eqf[sl] = n;
   }
   if (!c.forgeMig && c.forge && typeof c.forge === "object") {
     for (const [k, v] of Object.entries(c.forge)) {
@@ -7294,8 +7300,8 @@ export function normChar(c) {
   /* A hand-edited save cannot invent a +99 axe, hang a level on a stack of logs, or keep a forged stack of 40:
      a forged entry is always exactly one item. Same clamp on the bag and the bank. */
   for (const list of [out.inv, out.bank]) if (Array.isArray(list)) for (const st of list) {
-    const n = Math.max(0, Math.min(FORGE.cap, Math.trunc(Number(st.f)) || 0));
-    if (n > 0 && canForge(st.k)) { st.f = n; st.n = 1; } else delete st.f;
+    const n = keepCode(st.k, st.f);
+    if (n > 0) { st.f = n; if (!isGem(st.k)) st.n = 1; } else delete st.f;   /* (2026-09-29) a coded piece of gear is one item; a sorted gem keeps its count */
   }
 
   /* (v104) saved INSIDE a crypt run ("crypt:<run id>"): left alone here. The game server decides at login whether that run is still going (back where you stood) or not (the stairs in the Forum): cryptRejoin in eastscape-worker/src/crypt.js. */

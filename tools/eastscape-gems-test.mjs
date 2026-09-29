@@ -18,6 +18,11 @@ const sw = G.withSockets(2, [{ k: "ruby", roll: 8 }, null]);
 is([G.fOf({ f: sw }), G.socketsOf(sw), G.forgeNameAt("nova_sword", sw)], [2, [{ k: "ruby", roll: 8 }, null], "Nova halberd +2 [Ruby +8%, empty socket]"], "one number: reforge +2, a ruby at +8% and an empty socket");
 { const s4 = G.withSockets(4, [{ k: "ruby", roll: 8 }, null]);   /* (2026-09-29, the owner: "what if people already have +4") a Master's seal's +4 must survive the packing */
   is([G.fOf({ f: 4 }), G.fOf({ f: s4 }), G.forgeNameAt("nova_sword", s4), G.codeOk("nova_sword", 4)], [4, 4, "Nova halberd +4 [Ruby +8%, empty socket]", true], "a sealed +4 stays +4, plain or socketed, and trades"); }
+{ const c = G.freshChar(), sw = G.withSockets(2, [{ k: "ruby", roll: 8 }, null]);   /* (2026-09-29) a load used to clamp every code to a bare level: gems lost their rolls, sockets their gems */
+  c.inv = [{ k: "ruby", n: 2, f: G.gemCode(9) }, { k: "nova_sword", n: 1, f: sw }]; c.eq.weapon = "nova_sword"; c.eqf = { weapon: G.withSockets(4, [{ k: "jet", roll: 10 }, null]) };
+  const o = G.normChar(JSON.parse(JSON.stringify(c)));
+  const rubies = o.inv.filter((s) => s.k === "ruby");   /* (a sorted gem never stacks: two come back as two entries) */
+  is([rubies.every((s) => G.rollOf(s) === 9), rubies.reduce((a, s) => a + s.n, 0), G.fCode(o.inv.find((s) => s.k === "nova_sword")) === sw, G.forgeNameAt("nova_sword", o.eqf.weapon)], [true, 2, true, "Nova halberd +4 [Jet +10%, empty socket]"], "a save and a load keep a sorted gem, its count, a socketed piece and a worn +4 with its gem"); }
 is([G.sockMax("nova_sword"), G.sockMax("nova_axe"), G.sockMax("nova_body"), G.sockMax("bronze_sword")], [2, 2, 1, 0], "sockets: two on a level-80 weapon (tools too), one on armour, none below 80");
 is([G.codeOk("ruby", G.gemCode(10)), G.codeOk("ruby", G.gemCode(11)), G.codeOk("nova_sword", G.withSockets(0, [{ k: "topaz", roll: 5 }]))], [true, false, false], "the Exchange takes only real codes: no +11, no topaz in a sword");
 
