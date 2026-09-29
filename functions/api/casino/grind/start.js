@@ -8,7 +8,7 @@
 
 import { getSessionUser, walletWritesEnabled, readBalance, newId, json, fail } from "../../picks/_lib.js";
 import { ensureSchema, touchPresence, randomSeed } from "../_engine.js";
-import { ensureGrind, workingShift, nextShiftAt, publicShift, jobOf, BROKE_LINE, SHIFT_COOLDOWN_MS } from "./_grind.js";
+import { ensureGrind, workingShift, nextShiftAt, publicShift, jobOf, BROKE_LINE, SHIFT_COOLDOWN_MS, CLOSED } from "./_grind.js";
 
 const GRIND = { key: "grind" };
 
@@ -18,6 +18,7 @@ export async function onRequestPost(context) {
   await ensureSchema(db);
   await ensureGrind(db);
 
+  if (CLOSED) return fail("CLOSED", "The Grind is closed. Check out EastScape instead: eastcoin.vip/eastscape", 410);   /* (2026-09-29) see CLOSED in _grind.js */
   const user = await getSessionUser(db, context.request);
   if (!user) return fail("NOT_LOGGED_IN", "Log in with Twitch to work a shift.", 401);
   if (!walletWritesEnabled(context.env)) return fail("WALLET_NOT_CONFIGURED", "ZCoin transfers aren't configured.", 503);

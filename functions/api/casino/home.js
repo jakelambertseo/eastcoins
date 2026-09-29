@@ -10,7 +10,7 @@ import { ensureHilo } from "./hilo/_hilo.js";
 import { ensureMines } from "./mines/_mines.js";
 import { ensurePlinko } from "./plinko/_plinko.js";
 import { ensureScratch } from "./scratch/_scratch.js";
-import { ensureGrind } from "./grind/_grind.js";
+import { ensureGrind, CLOSED as GRIND_CLOSED } from "./grind/_grind.js";
 import { ensurePvp, settleDue as settlePvp, GAMES as PVP, lobbyFor as pvpLobby, entriesFor as pvpEntries, STAKE as PVP_STAKE, lobbyMsFor as pvpLobbyMs } from "./pvp/_pvp.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
@@ -92,7 +92,7 @@ export async function onRequestGet(context) {
     db.prepare(`SELECT COUNT(*) AS n FROM casino_presence WHERE game = 'grind' AND seen_at >= ?`).bind(since).first().catch(() => null),
     people("casino_presence", "grind")
   ]);
-  games.push({ key: "grind", name: "The Grind", route: "grind", round: null, inRound: Number(grindWorking?.n || 0), staked: 0, room: Number(grindRoom?.n || 0), people: grindPeople, work: true });
+  games.push({ key: "grind", name: "The Grind", route: "grind", round: null, inRound: Number(grindWorking?.n || 0), staked: 0, room: Number(grindRoom?.n || 0), people: grindPeople, work: true, closed: GRIND_CLOSED });   /* (2026-09-29) the floor card says it is closed */
 
   /* THE LAST RESORT FOR A ROUND NOBODY WATCHED (2026-09-21). A shared round is only settled by a state poll on its own page,
      so a flip whose players all closed their tabs left the stake taken and the bet ACTIVE for good. The state endpoints sweep

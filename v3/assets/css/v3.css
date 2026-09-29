@@ -5405,3 +5405,5 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .grd-poor .zcoin-mark{width:18px;height:18px;display:inline-block;vertical-align:-3px}
 @keyframes grd-poor{0%,100%{transform:rotate(-2deg) scale(1)}50%{transform:rotate(-2deg) scale(1.04)}}
 @media (prefers-reduced-motion:reduce){.grd-poor{animation:none}}
+/* (2026-09-29) The Grind is closed: the same sign, pointing at EastScape */
+.grd-poor.grd-closed{font-size:1.1rem;padding:9px 16px}.grd-poor.grd-closed a{color:#8a0f22;text-decoration:underline;text-underline-offset:3px}.grd-poor.grd-closed a:hover{color:#c8203a}

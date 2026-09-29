@@ -45,6 +45,10 @@
 import { moveBalance, beginOperation, finishOperation, newId } from "../../picks/_lib.js";
 import { sha256 } from "../_engine.js";
 
+/* (2026-09-29, the owner: "close the \"The Grind\" game on eastcoin.vip casino ... \"The Grind is closed. Check out EastScape instead.\"")
+   CLOSED: no new shift can start (start.js refuses), the page shows the notice instead of the jobs, and the floor card says so. A shift
+   already being worked when this shipped can still be finished and paid (work.js and sort.js are untouched), so nobody loses one. */
+export const CLOSED = true;
 export const BROKE_LINE = 50;
 /* FOUR hours since 2026-09-19 (the owner: "its getting abused"); it was one. Each job still has its own clock. */
 export const SHIFT_COOLDOWN_MS = 4 * 60 * 60 * 1000;
@@ -145,7 +149,7 @@ export const config = () => ({
   // The first job's figures at the top level, for pages from before the second job.
   clicks: JOBS.clicks.units, pay: JOBS.clicks.pay, cooldownMinutes: SHIFT_COOLDOWN_MS / 60000,
   brokeLine: BROKE_LINE, batchMax: JOBS.clicks.batchMax, msPerClick: JOBS.clicks.msPerUnit,
-  jobs: publicJobs(), suits: SUITS
+  jobs: publicJobs(), suits: SUITS, closed: CLOSED
 });
 
 /**
