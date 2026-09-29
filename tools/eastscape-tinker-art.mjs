@@ -46,6 +46,8 @@ Object.assign(ICONS, { jade: "1c0d278a-f56e-45d5-bfe1-76f43fefbf1a", amethyst: "
   sunstone: "960c4cf2-2bd0-40b9-b8b0-b204608fc269", tanzanite: "002eb1db-a140-464d-ae5b-988635d2269b", jet: "0197d135-ca83-4c56-b5b2-d9eff050204b",
   tk_punch: "62cb5999-2856-4673-b1aa-14dffcad4c13", tk_masterpunch: "dd7efdd6-45cc-474c-9afc-b87965e4570f", voidheart_bit: "75de7987-4c07-4eb4-94dc-8739ffd18e36",
   tk_caseslot: "2fbe3747-6e61-4e91-900d-8ab2b135e66f", tk_caseslot2: "2fbe3747-6e61-4e91-900d-8ab2b135e66f", tk_caseslot3: "2fbe3747-6e61-4e91-900d-8ab2b135e66f" });   /* (one Gem Case kit picture for all three) */
+/* (2026-09-28) the Gem Satchel's leather (ui/leather.png, a 64 px tile) and its pouch (ui/gem_pouch.png) are PixelLab images
+   40e14095-725b-4f23-863b-17731c5155a5 and 06f217d0-f4cd-461c-8a8b-fdf398b0b46d, saved as they came. */
 const GRASS_CUT = new Set(["o_pj_smoke0"]);
 const only = (() => { const i = process.argv.indexOf("--only"); return i > 0 ? new Set(process.argv[i + 1].split(",")) : null; })();
 const get = async (url) => { const r = await fetch(url); if (!r.ok) throw new Error(`${url} ${r.status}`); return Buffer.from(await r.arrayBuffer()); };

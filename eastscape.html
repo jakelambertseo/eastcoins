@@ -5940,8 +5940,8 @@ function meterUi() { return METER ? Promise.resolve(METER) : import(METER_URL).t
 /* (2026-09-28) TINKERING: Sprocket Sal's Scrap Bench is a lazy module */
 let TINKUI = null; const TINKUI_URL = "/v3/assets/js/eastscape-tinker.js?v=7";
 /* (2026-09-28) the Gem Sorter and the Gem Case: loaded the first time either opens */
-let GEMUI = null; const GEMUI_URL = "/v3/assets/js/eastscape-gems.js?v=1";
-function gemsUi() { return GEMUI ? Promise.resolve(GEMUI) : import(GEMUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (GEMUI = m.createGems({ G, $, esc, send, SFX, ico, openWin, winFx, get me() { return me; } })); }); }
+let GEMUI = null; const GEMUI_URL = "/v3/assets/js/eastscape-gems.js?v=3";
+function gemsUi() { return GEMUI ? Promise.resolve(GEMUI) : import(GEMUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (GEMUI = m.createGems({ G, $, esc, send, SFX, ico, openWin, winFx, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
 function tinkUi() { return TINKUI ? Promise.resolve(TINKUI) : import(TINKUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (TINKUI = m.createTinker({ G, $, esc, send, SFX, ico, openWin, winFx, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
 let ORDUI = null; const ORDUI_URL = "/v3/assets/js/eastscape-order.js?v=6";
 function ordUi() { return ORDUI ? Promise.resolve(ORDUI) : import(ORDUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (ORDUI = m.createOrderUi({ G, $, esc, send, SFX, openWin, ico, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
@@ -7368,7 +7368,7 @@ function renderPanel() {
        a used-up stack leaves a gap, a new item takes the first gap, and any empty slot takes a drop. data-i is still the stack's index in
        the list (what every message sends); data-to is the SLOT. */
     const lay = G.invLayout(me), cells = lay.map((idx, pos) => idx >= 0 ? cell(me.inv[idx], idx).replace(`data-to="${idx}"`, `data-to="${pos}"`) : `<div class="slot empty" data-to="${pos}"></div>`);
-    p.innerHTML = `<div class="ph">Inventory <span>${bagChip()}${G.HOLD.gems ? "" : `<button type="button" class="invsort" id="invGems" title="Your Gem Case: skilling gems that work wherever you are">Gems</button> `}<button type="button" class="invsort" id="invSort" title="Sort: tickets, tools, gear, food, then the rest. Merges part-stacks.">Sort</button> <small>${me.inv.length}/${G.bagMax(me)}</small></span></div><div class="inv">${cells.join("")}</div>${walletCard()}`;
+    p.innerHTML = `<div class="ph">Inventory <span>${bagChip()}${G.HOLD.gems ? "" : `<button type="button" class="invsort" id="invGems" title="Your Gem Satchel: pockets for skilling gems, settings for combat gems">Gems</button> `}<button type="button" class="invsort" id="invSort" title="Sort: tickets, tools, gear, food, then the rest. Merges part-stacks.">Sort</button> <small>${me.inv.length}/${G.bagMax(me)}</small></span></div><div class="inv">${cells.join("")}</div>${walletCard()}`;
     $("invSort").addEventListener("click", () => send({ t: "sort" }));
     $("invGems")?.addEventListener("click", () => { SFX.play("ui_click"); gemsUi().then((u) => u.openCase()).catch(() => {}); });   /* (2026-09-28) the Gem Case */
     p.querySelectorAll(".slot[data-i]").forEach((el) => el.addEventListener("click", (e) => {
