@@ -1986,3 +1986,11 @@ Shared ?v=385. Watch: gem drop rate (1/1,500 at 60+), Tinkering salvage as a sin
 skill_tinkering icon (SKILL_ART), ui/built (Builders board), ui/g_tinkering (guide), five Tinkering achievements
 (a_tinker, s_tink30, e_tink60, s_pin, m_pins), Builder's Pins in the collection log's Skilling tab, and projPin
 fills the log on the bank path. Shared ?v=386. Gadgets, pins, parts and Sal already had art.
+
+## 2026-09-29, rules 356 LIVE (worker 41ac4a37), after the Pumpkin King fell at 21:58 UTC
+
+A version bump so every tab reloaded onto PACKS_V 140: the Boneyard's dragonstone, Cloudreach's onyx and the barrels on
+the Gloam, Sands, Fight Pit and Guild are named in their own maps' art lists. tools/eastscape-art-reach.mjs (in the
+content check) guards it. Wiki 213 (Tinkering guide icons). Shared ?v=387.
+OPEN QUESTION: the Crypt test sees +250 tickets to each player at the boss kill (crypt.js pays nothing there);
+find the source before calling it a stale test.
