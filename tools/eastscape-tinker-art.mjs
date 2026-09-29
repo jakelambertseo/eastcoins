@@ -46,7 +46,6 @@ Object.assign(ICONS, { jade: "1c0d278a-f56e-45d5-bfe1-76f43fefbf1a", amethyst: "
   sunstone: "960c4cf2-2bd0-40b9-b8b0-b204608fc269", tanzanite: "002eb1db-a140-464d-ae5b-988635d2269b", jet: "0197d135-ca83-4c56-b5b2-d9eff050204b",
   tk_punch: "62cb5999-2856-4673-b1aa-14dffcad4c13", tk_masterpunch: "dd7efdd6-45cc-474c-9afc-b87965e4570f", voidheart_bit: "75de7987-4c07-4eb4-94dc-8739ffd18e36",
   tk_caseslot: "2fbe3747-6e61-4e91-900d-8ab2b135e66f", tk_caseslot2: "2fbe3747-6e61-4e91-900d-8ab2b135e66f", tk_caseslot3: "2fbe3747-6e61-4e91-900d-8ab2b135e66f" });   /* (one Gem Case kit picture for all three) */
-Object.assign(BUILDS, { o_pj_sorter0: MAP("4bd7b6e8-45db-4e38-990b-629c2d1f368f"), o_pj_sorter1: MAP("16e163a6-bab2-4b7b-8103-8a6f406f8166"), o_pj_sorter2: IMG("6ca92570-3c61-4e1f-b9dd-b79c31357fb0"), o_pj_sorter3: IMG("e84d9697-d540-47fd-9b1e-d759b7291c86") });
 const GRASS_CUT = new Set(["o_pj_smoke0"]);
 const only = (() => { const i = process.argv.indexOf("--only"); return i > 0 ? new Set(process.argv[i + 1].split(",")) : null; })();
 const get = async (url) => { const r = await fetch(url); if (!r.ok) throw new Error(`${url} ${r.status}`); return Buffer.from(await r.arrayBuffer()); };
@@ -72,7 +71,7 @@ for (const [name, id] of Object.entries(ICONS)) {
 
 /* THE BUILDER'S PINS (items/pin_<id>.png): a brass badge with that build's finished picture in it, made here from the art above, so a
    pin always matches its build and needs no generation of its own. 32x32 like every item icon. */
-const PIN_ART = { sorter: "o_pj_sorter3", dock: "o_pj_dockshed", cannon: "o_pj_cannon3", table: "o_pj_boiler3", sawmill: "o_pj_sawmill3", crusher: "o_pj_crusher3", still: "o_pj_still3", press: "o_pj_press3", rod: "o_pj_rod3", crane: "o_pj_crane3", wheel: "o_pj_wheel3", smoke: "o_pj_smoke3", camp: "o_pj_camp3" };
+const PIN_ART = { dock: "o_pj_dockshed", cannon: "o_pj_cannon3", table: "o_pj_boiler3", sawmill: "o_pj_sawmill3", crusher: "o_pj_crusher3", still: "o_pj_still3", press: "o_pj_press3", rod: "o_pj_rod3", crane: "o_pj_crane3", wheel: "o_pj_wheel3", smoke: "o_pj_smoke3", camp: "o_pj_camp3" };
 const badge = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" shape-rendering="crispEdges">
   <circle cx="16" cy="16" r="15" fill="#2a1a08"/><circle cx="16" cy="16" r="14" fill="#c8963a"/><circle cx="16" cy="16" r="12" fill="#f0c860"/>
   <circle cx="16" cy="16" r="11" fill="#3a2a1a"/><circle cx="16" cy="16" r="10" fill="#4a3a26"/></svg>`);

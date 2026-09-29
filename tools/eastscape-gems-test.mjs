@@ -32,10 +32,10 @@ W.bankOp(S, pl, { op: "wd", i: C.bank.indexOf(inBank) }); is(G.fCode(C.inv.find(
 W.equip(pl, C.inv.findIndex((s) => s.k === "nova_sword"));
 
 /* 3. the Sorter: shut until built, then sort, re-roll, sell */
-W.projOf("sorter").tier = 1; G.setProjects(W.projTiers());
-const D = W.scene("depths"), sorter = D.objs.find((o) => o.t === "gemsorter");
-is(!!sorter, true, "the Gem Sorter stands in the Depths at tier 1");
-pl.C.scene = "depths"; pl.x = sorter.x; pl.y = sorter.y + 1;
+const D = W.scene("workyard"), sorter = D.objs.find((o) => o.t === "gemsorter");
+is([!!sorter, sorter?.x, sorter?.y], [true, 33, 18], "the Gem Sorter stands in the middle of the Yard's Market Square");
+pl.C.scene = "workyard"; pl.x = sorter.x; pl.y = sorter.y + 1;
+{ pl.x = 5; pl.y = 5; const n0 = G.tixIn(C); W.gemOp(D, pl, { op: "sort", i: 0 }); is(G.tixIn(C), n0, "away from the machine: no roll"); pl.x = sorter.x; pl.y = sorter.y + 1; }
 G.addInv(C.inv, "tickets", 500000, C); G.addInv(C.inv, "ruby", 3, C); G.addInv(C.inv, "topaz", 2, C);
 const t0 = G.tixIn(C); W.gemOp(D, pl, { op: "sort", i: C.inv.findIndex((s) => s.k === "ruby" && !G.fCode(s)) });
 const sortedRuby = C.inv.find((s) => s.k === "ruby" && G.fCode(s));
@@ -69,9 +69,13 @@ is(G.normChar(JSON.parse(JSON.stringify(C))).gemcase.n, 4, "the case survives a 
 /* 6. the elements, the odds, the prices */
 is(G.gemVs({ eq: { weapon: "nova_sword" }, eqf: { weapon: G.withSockets(0, [{ k: "carnelian", roll: 10 }]) } }, "pumpkinking"), 0.1, "a +10% carnelian against the Pumpkin King (weak to fire): +10%");
 { let top = 0, n = 100000; for (let i = 0; i < n; i++) if (G.gemRoll() === 10) top++; is(Math.abs(top / n - 1 / 16) < 0.004, true, `tier 1: a perfect roll ${(top / n * 100).toFixed(2)}% of the time (1 in 16 = 6.25%)`); }
-W.projOf("sorter").tier = 3; G.setProjects(W.projTiers());
-{ let top = 0, n = 100000; for (let i = 0; i < n; i++) if (G.gemRoll() === 10) top++; is(Math.abs(top / n - (1 - (15 / 16) ** 2)) < 0.005, true, `tier 3's double sort: ${(top / n * 100).toFixed(2)}% (12.1%)`); }
-is(G.sortCost(), 7500, "tier 2 onwards: a quarter off");
+{ let top = 0, n = 100000; for (let i = 0; i < n; i++) if (G.gemRoll() === 10) top++; is(Math.abs(top / n - 1 / 16) < 0.005, true, `tier 3's double sort: ${(top / n * 100).toFixed(2)}% (12.1%)`); }
+is(G.sortCost(), G.GEMSET.cost, "a roll is always 10,000 (no tiers: the Sorter is a fixture)");
+/* the auto-roll: one message, many rolls, stops on the target or the budget */
+{ pl.C.scene = "workyard"; pl.x = sorter.x; pl.y = sorter.y + 1; G.addInv(C.inv, "garnet", 1, C); const t0 = G.tixIn(C);
+  W.gemOp(D, pl, { op: "auto", i: C.inv.findIndex((s) => s.k === "garnet" && !G.fCode(s)), target: 8, budget: 300000 }); const a = pl.out.filter((e) => e.type === "gems" && e.auto).pop()?.auto;
+  const g = C.inv[a.i]; is([a.rolls.length >= 1, a.spent === a.rolls.length * G.GEMSET.cost, t0 - G.tixIn(C) === a.spent, a.hit ? a.rolls.at(-1) >= 8 : a.spent + G.GEMSET.cost > 300000, G.rollOf(g) === a.rolls.at(-1)], [true, true, true, true, true], `auto-roll to +8 within 300k: ${a.rolls.length} rolls, ${a.hit ? "hit" : "ran out"} at ${a.rolls.at(-1)}%`);
+  const n1 = G.tixIn(C); W.gemOp(D, pl, { op: "auto", i: a.i, target: 5, budget: 300000 }); if (a.hit) is(G.tixIn(C), n1, "already at or past the target: no rolls"); }
 /* 7. finding them */
 { const r = Math.random; Math.random = () => 0; C.xp.woodcutting = G.XP_AT[70]; const cnt = () => [...C.inv, ...C.bank].filter((s) => s.k === "topaz").reduce((a, s) => a + s.n, 0), n0 = cnt(); W.gemOnXp(pl, "woodcutting", 25); Math.random = r; is(cnt() - n0, 1, "woodcutting at 70 turns up a topaz (forced roll)"); }
 
