@@ -4280,7 +4280,11 @@ const PL_KIND = { weak: ["#1d4a28", "#6fdc8c", "\u25B2", "#8ff0a8"], resist: ["#
 function plIcon(key, kind, x, y, glow, grey) {
   const I = PL_ICONS[key], K = PL_KIND[kind], s = 1.5, w = 16;
   ctx.save(); if (glow > 0) { ctx.shadowColor = K[1]; ctx.shadowBlur = 10 * glow; }
-  ctx.fillStyle = K[0]; ctx.strokeStyle = grey ? "#666" : K[1]; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x, y, w, w, 3); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+  x = Math.round(x); y = Math.round(y);
+  ctx.fillStyle = "#140a04"; ctx.fillRect(x + 1, y, w - 2, w); ctx.fillRect(x, y + 1, w, w - 2);   /* the outline, corners chipped */
+  ctx.fillStyle = grey ? "#6a6a6a" : K[1]; ctx.fillRect(x + 1, y + 1, w - 2, w - 2);                   /* the rim, in the kind's colour */
+  ctx.shadowBlur = 0; ctx.fillStyle = K[0]; ctx.fillRect(x + 2, y + 2, w - 4, w - 4);
+  ctx.fillStyle = "rgba(255,240,200,.18)"; ctx.fillRect(x + 2, y + 2, w - 4, 1); ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.fillRect(x + 2, y + w - 3, w - 4, 1);
   for (let j = 0; j < 8; j++) for (let i = 0; i < 8; i++) { const ch = I[2][j * 8 + i]; if (!ch || ch === ".") continue; ctx.fillStyle = grey ? (ch === "o" ? "#bbb" : "#888") : ch === "o" ? I[1] : I[0]; ctx.fillRect(x + 2 + i * s, y + 2 + j * s, s, s); }
   if (K[2]) { ctx.font = "700 8px Lora"; ctx.fillStyle = K[3]; ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillText(K[2], x + w + 1, y + w + 3); }
   ctx.restore();
@@ -4299,14 +4303,53 @@ function mobIcons(t) {
   for (const [st, v] of Object.entries(M.guard || {})) if (v < 1 && PL_ICONS[st]) out.push({ k: st, kind: "guard", pct: Math.round((1 - v) * 100) });
   return out;
 }
-const plCol = (f) => (f > 0.5 ? ["#3fbf5a", "#6fe08a"] : f > 0.25 ? ["#e0a02a", "#ffd06a"] : ["#d0402a", "#ff7a5a"]);
+/* (2026-09-29, the owner: "can we draw a sort of custom 'worn' background for the health bar? it seems to clean and doesnt fit our style
+   kit/guide") WORN, in the UI kit's own terms: dark walnut with a lit top edge and a shaded bottom one (win.png's bevel), chipped corners,
+   grain, nicks and two brass rivets; the bar is a trough sunk into it, filled in the kit's muted greens, ambers and reds with a dithered
+   lower edge and a few scratches across it. All pixels on whole coordinates, and every board and scratch sheet is drawn once per size and
+   kept (PL_CACHE), so a plate costs two drawImage calls a frame. */
+const PL_CACHE = new Map();
+const plHash = (t) => { let h = 2166136261; for (const ch of String(t)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+const plRand = (seed) => { let x = (seed >>> 0) || 1; return () => { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return (x % 10000) / 10000; }; };
+function plBoard(w, h, seed, sel) {
+  const key = `b${w}x${h}:${seed % 5}:${sel ? 1 : 0}`; let c = PL_CACHE.get(key); if (c) return c;
+  c = document.createElement("canvas"); c.width = w; c.height = h; const o = c.getContext("2d"), r = plRand(seed % 5 + 7), px = (x, y, ww, hh, col) => { o.fillStyle = col; o.fillRect(x, y, ww, hh); };
+  const rim = sel ? "#d8a840" : "#140a04";
+  px(2, 0, w - 4, h, rim); px(0, 2, w, h - 4, rim); px(1, 1, w - 2, h - 2, rim);                  /* the edge, two pixels off each corner */
+  px(2, 1, w - 4, h - 2, "#3b2415"); px(1, 2, w - 2, h - 4, "#3b2415");                           /* walnut */
+  for (let y = 3; y < h - 3; y += 2 + Math.floor(r() * 3)) px(3 + Math.floor(r() * 10), y, Math.floor(w * (0.25 + r() * 0.55)), 1, r() < 0.5 ? "#301b0e" : "#4a311c");   /* grain */
+  px(2, 1, w - 4, 1, "#6e4a28"); px(1, 2, 1, h - 4, "#553619");                                    /* lit from the top left */
+  px(2, h - 2, w - 4, 1, "#1f1208"); px(w - 2, 2, 1, h - 4, "#27170b");
+  for (let i = 0; i < 7; i++) { const x = 4 + Math.floor(r() * (w - 8)), top = r() < 0.5; px(x, top ? 1 : h - 2, 1 + Math.floor(r() * 2), 1, "#140a04"); }   /* nicks in the edge */
+  for (let i = 0; i < 3; i++) px(6 + Math.floor(r() * (w - 12)), 3 + Math.floor(r() * (h - 6)), 2, 1, "#2a180b");   /* knots */
+  for (const x of [3, w - 5]) { const y = Math.floor(h / 2) - 1; px(x, y, 2, 2, sel ? "#ffd84a" : "#a07830"); px(x, y, 1, 1, "#fff2b0"); px(x + 1, y + 1, 1, 1, "#5a3a10"); }   /* brass rivets */
+  PL_CACHE.set(key, c); return c;
+}
+function plScratch(w, h) {
+  const key = `s${w}x${h}`; let c = PL_CACHE.get(key); if (c) return c;
+  c = document.createElement("canvas"); c.width = w; c.height = h; const o = c.getContext("2d"), r = plRand(w * 31 + h);
+  for (let i = 0; i < Math.max(2, Math.floor(w / 22)); i++) { let x = Math.floor(r() * w); for (let y = 1; y < h; y++, x += r() < 0.6 ? 1 : 0) { o.fillStyle = "rgba(0,0,0,.26)"; o.fillRect(x, y, 1, 1); } }
+  for (let i = 0; i < Math.floor(w / 9); i++) { o.fillStyle = "rgba(255,240,200,.14)"; o.fillRect(Math.floor(r() * w), 1 + Math.floor(r() * (h - 2)), 1, 1); }   /* scuffs */
+  PL_CACHE.set(key, c); return c;
+}
+const PL_FILL = { g: ["#3d8a36", "#64b04e", "#2a6426"], a: ["#b87a22", "#e0a444", "#8a5a14"], r: ["#a0301c", "#d45436", "#701e10"] };
 function plBar(x, y, w, h, P_, max, text, fs) {
-  const f = Math.max(0, Math.min(1, P_.shown / max)), tf = Math.max(0, Math.min(1, P_.trail / max)), [c1, c2] = plCol(f);
-  ctx.fillStyle = "#2a0a08"; ctx.fillRect(x, y, w, h);
-  if (tf > f) { ctx.fillStyle = "#ffe9a8"; ctx.fillRect(x + w * f, y, w * (tf - f), h); }
-  const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, c2); g.addColorStop(1, c1); ctx.fillStyle = g; ctx.fillRect(x, y, w * f, h);
-  ctx.strokeStyle = "#000"; ctx.lineWidth = 1; ctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
-  ctx.font = `700 ${fs}px Lora`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "rgba(0,0,0,.85)"; ctx.fillText(text, x + w / 2 + 1, y + h / 2 + 1.5); ctx.fillStyle = "#fff"; ctx.fillText(text, x + w / 2, y + h / 2 + 0.5);
+  x = Math.round(x); y = Math.round(y);
+  const f = Math.max(0, Math.min(1, P_.shown / max)), tf = Math.max(0, Math.min(1, P_.trail / max)), [c, hi, lo] = PL_FILL[f > 0.5 ? "g" : f > 0.25 ? "a" : "r"];
+  ctx.fillStyle = "#140a04"; ctx.fillRect(x - 1, y - 1, w + 2, h + 2);          /* the trough, sunk into the board */
+  ctx.fillStyle = "#231208"; ctx.fillRect(x, y, w, h); ctx.fillStyle = "#0a0402"; ctx.fillRect(x, y, w, 1);
+  const fw = Math.round(w * f), tw = Math.round(w * tf);
+  if (tw > fw) { ctx.fillStyle = "#e0cc9e"; ctx.fillRect(x + fw, y + 1, tw - fw, h - 1); ctx.fillStyle = "#a8906a"; ctx.fillRect(x + fw, y + h - 1, tw - fw, 1); }   /* the drain: old parchment, not bright yellow */
+  if (fw > 0) { ctx.fillStyle = c; ctx.fillRect(x, y + 1, fw, h - 1); ctx.fillStyle = hi; ctx.fillRect(x, y + 1, fw, Math.max(1, Math.round((h - 1) * 0.35))); ctx.fillStyle = lo; for (let i = 0; i < fw; i += 2) ctx.fillRect(x + i, y + h - 1, 1, 1); }
+  ctx.drawImage(plScratch(w, h), x, y);
+  ctx.font = `700 ${fs}px Lora`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineJoin = "round"; ctx.lineWidth = 2.5; ctx.strokeStyle = "#140a04"; ctx.strokeText(text, x + w / 2, y + h / 2 + 0.5); ctx.fillStyle = "#f6e9cc"; ctx.fillText(text, x + w / 2, y + h / 2 + 0.5);
+}
+/** a slim bar is its own little plank: a walnut edge round the trough */
+function plSlim(x, y, w, h, P_, max, text, fs) {
+  x = Math.round(x); y = Math.round(y);
+  ctx.fillStyle = "#140a04"; ctx.fillRect(x - 2, y - 3, w + 4, h + 6); ctx.fillRect(x - 3, y - 2, w + 6, h + 4);
+  ctx.fillStyle = "#3b2415"; ctx.fillRect(x - 2, y - 2, w + 4, h + 4); ctx.fillStyle = "#6e4a28"; ctx.fillRect(x - 2, y - 2, w + 4, 1);
+  plBar(x, y, w, h, P_, max, text, fs);
 }
 function drawPlates(rects, t, calm) {
   /* the most important first; each later one pushed up until it touches none already placed */
@@ -4317,7 +4360,7 @@ function drawPlates(rects, t, calm) {
     placed.push(r); }
   for (const r of placed.reverse()) {
     if (r.y < r.y0 - 1) { ctx.strokeStyle = "rgba(232,191,53,.55)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(r.x, r.y + r.h); ctx.lineTo(r.x, r.y0 + r.h); ctx.stroke(); }
-    if (!r.full) { plBar(r.x0, r.y + 1, r.w, 9, r.P, r.max, `${Math.round(r.P.shown)}`, 8.5); continue; }
+    if (!r.full) { plSlim(r.x0 + 3, r.y + 3, r.w - 6, 8, r.P, r.max, `${Math.round(r.P.shown)}`, 8.5); continue; }
     let py = r.y;
     if (r.icons.length) { let ix = r.x - (r.icons.reduce((a, i) => a + 16 + (i.pct ? 24 : 0) + 3, -3)) / 2;
       for (const i of r.icons) { const age = t - (r.P.pulse[i.k] || -1e9), p = age < 900 ? 1 - age / 900 : 0;
@@ -4325,11 +4368,12 @@ function drawPlates(rects, t, calm) {
         if (i.pct) { ctx.font = "700 10px Lora"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillStyle = "#000"; ctx.fillText(`\u2212${i.pct}%`, ix + 20, py + 9); ctx.fillStyle = "#e8c890"; ctx.fillText(`\u2212${i.pct}%`, ix + 19, py + 8); ix += 24; }
         ix += 19; }
       py += 19; }
-    ctx.fillStyle = "rgba(14,9,6,.85)"; ctx.strokeStyle = r.sel ? "#e8bf35" : "rgba(200,150,58,.6)"; ctx.lineWidth = r.sel ? 2 : 1; ctx.beginPath(); ctx.roundRect(r.x0, py, r.w, 34, 5); ctx.fill(); ctx.stroke();
-    ctx.font = "700 10px Lora"; ctx.textAlign = "right"; ctx.textBaseline = "alphabetic"; ctx.fillStyle = "#ffe45c"; const lv = `Lv ${r.lvl}`; ctx.fillText(lv, r.x0 + r.w - 6, py + 13);
-    const room = r.w - 16 - ctx.measureText(lv).width; ctx.font = "700 11px Lora"; let nm = r.name; while (ctx.measureText(nm).width > room && nm.length > 3) nm = nm.slice(0, -2) + "\u2026";
-    ctx.textAlign = "left"; ctx.fillStyle = r.col; ctx.fillText(nm, r.x0 + 6, py + 13);
-    plBar(r.x0 + 6, py + 18, r.w - 12, 11, r.P, r.max, `${Math.round(r.P.shown)} / ${r.max}`, 9.5);
+    ctx.drawImage(plBoard(r.w, 34, plHash(r.name), r.sel), Math.round(r.x0), Math.round(py));
+    const tx = (t, x, al, col, font) => { ctx.font = font; ctx.textAlign = al; ctx.textBaseline = "alphabetic"; ctx.lineJoin = "round"; ctx.lineWidth = 2.5; ctx.strokeStyle = "#140a04"; ctx.strokeText(t, x, py + 14); ctx.fillStyle = col; ctx.fillText(t, x, py + 14); };
+    ctx.font = "700 10px Lora"; const lv = `Lv ${r.lvl}`, room = r.w - 20 - ctx.measureText(lv).width; tx(lv, Math.round(r.x0 + r.w - 8), "right", "#ffd84a", "700 10px Lora");
+    ctx.font = "700 11px Lora"; let nm = r.name; while (ctx.measureText(nm).width > room && nm.length > 3) nm = nm.slice(0, -2) + "\u2026";
+    tx(nm, Math.round(r.x0 + 8), "left", r.col, "700 11px Lora");
+    plBar(r.x0 + 8, py + 19, r.w - 16, 10, r.P, r.max, `${Math.round(r.P.shown)} / ${r.max}`, 9.5);
   }
 }
 /* SPELL EFFECTS (2026-09-26, the owner's sprite sheets: CraftPix "10 Magic Sprite Sheet Effects", free licence, craftpix.net/file-licenses).
