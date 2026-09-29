@@ -8,7 +8,8 @@
 export function createTinker(E) {
   const { G, $, esc, send, SFX, ico, openWin } = E, T = G.TINK, UI = "/v3/assets/img/glad/flat/ui/";
   let win = null, v = null, tab = "salvage", err = null, bagSig = "", focus = null;
-  const partChip = (p, n) => `<span class="tk-part" style="--c:${T.parts[p].col}"><i></i>${Number(n).toLocaleString()} ${esc(T.parts[p].name)}</span>`;
+  const PIC = (p) => `<img class="tk-pic" src="/v3/assets/img/glad/flat/items/part_${p}.png?v=1" alt="" onerror="this.replaceWith(Object.assign(document.createElement('i'),{}))">`;   /* (2026-09-28) the parts' own icons; the colour square if one is missing */
+  const partChip = (p, n) => `<span class="tk-part" style="--c:${T.parts[p].col}">${PIC(p)}${Number(n).toLocaleString()} ${esc(T.parts[p].name)}</span>`;
   const partsOf = (g) => Object.keys(T.parts).filter((p) => g[p] > 0).map((p) => partChip(p, g[p])).join("");
   const SAYS = ["Everything's worth something. Mostly bits.", "Bring me your junk. I'll turn it into parts.", "Parts don't sell. Parts BUILD.", "Your favourites are safe with me, love."];
 
@@ -51,7 +52,7 @@ export function createTinker(E) {
         const last = g.mins ? `${g.mins} min` : g.n > 1 ? `${g.n} uses` : "one use";
         return `<div class="tk-card${lock ? " lock" : ""}"><span class="tk-ctop"><span class="tk-cico">${ico(`tk_${id}`)}</span><span><b>${esc(g.name)}</b><span class="tk-lv${lock ? " no" : ""}">Tinkering ${g.lvl}</span>${g.skill ? `<span class="tk-sk">${esc(G.SKILLS[g.skill]?.name || g.skill)}</span>` : ""}</span></span>
           <small>${esc(g.does)} · ${last}</small>
-          <span class="tk-gets tk-cost">${Object.entries(g.parts || {}).map(([p, n]) => `<span class="tk-part${(pouch[p] || 0) < n ? " short" : ""}" style="--c:${T.parts[p].col}"><i></i>${n} ${esc(T.parts[p].name)}</span>`).join("")}<span class="tk-part fee${broke ? " short" : ""}" style="--c:#e8bf35"><i></i>${g.fee.toLocaleString()} tickets</span></span>
+          <span class="tk-gets tk-cost">${Object.entries(g.parts || {}).map(([p, n]) => `<span class="tk-part${(pouch[p] || 0) < n ? " short" : ""}" style="--c:${T.parts[p].col}">${PIC(p)}${n} ${esc(T.parts[p].name)}</span>`).join("")}<span class="tk-part fee${broke ? " short" : ""}" style="--c:#e8bf35"><i></i>${g.fee.toLocaleString()} tickets</span></span>
           <button type="button" class="k-btn sm tk-build" data-id="${id}"${can ? "" : " disabled"}>${lock ? `Tinkering ${g.lvl}` : short ? "Need parts" : broke ? "Need tickets" : "Build"}</button></div>`;
       }).join("") + `</div>`;
       foot = `<span class="k-note">Built gadgets go in your bag: click one there to use it. Timed ones run while you're outside, one of each at a time, and show on your buffs bar.</span>`;
@@ -65,7 +66,7 @@ export function createTinker(E) {
         const bars = Object.entries(t.need).map(([part, n]) => {
           const got = st.got?.[part] | 0, full = got >= n, isT = part === "tickets", have = isT ? tix : pouch[part] | 0, col = isT ? "#e8bf35" : T.parts[part].col, name = isT ? "Tickets" : T.parts[part].name;
           const steps = isT ? [1000, 10000] : [10, 100], btn = (k, lbl) => `<button type="button" class="k-btn sm tk-give" data-id="${id}" data-part="${part}" data-n="${k}"${full || !have ? " disabled" : ""}>${lbl}</button>`;
-          return `<div class="tk-bar${full ? " full" : ""}" style="--c:${col}"><span class="tk-bl"><i></i>${esc(name)}<small>${got.toLocaleString()} / ${n.toLocaleString()}</small></span><span class="tk-bt"><u style="width:${Math.min(100, (got / n) * 100)}%"></u></span>
+          return `<div class="tk-bar${full ? " full" : ""}" style="--c:${col}"><span class="tk-bl">${isT ? "<i></i>" : PIC(part)}${esc(name)}<small>${got.toLocaleString()} / ${n.toLocaleString()}</small></span><span class="tk-bt"><u style="width:${Math.min(100, (got / n) * 100)}%"></u></span>
             <span class="tk-bg">${full ? `<em>Full</em>` : `${btn(steps[0], `+${steps[0].toLocaleString()}`)}${btn(steps[1], `+${steps[1].toLocaleString()}`)}${btn(1e12, "All")}`}</span></div>`;
         }).join("");
         const top = (st.top || []).map((w) => `<li><b>${esc(w.name)}</b><small>${w.pv.toLocaleString()} parts${w.tix ? ` · ${G.fmtTix(w.tix)}` : ""}</small></li>`).join("");
@@ -122,7 +123,7 @@ export const CSS = `
 .tk-who{flex:1;min-width:0;display:grid;gap:6px}
 .tk-say{margin:0;font:italic 600 13.5px Lora,serif}.tk-say b{font:800 12px var(--k-disp,Cinzel),serif;font-style:normal;letter-spacing:.06em;color:#ffd84a;margin-right:6px}
 .tk-pouch,.tk-gets{display:flex;gap:5px;flex-wrap:wrap}.tk-gets{justify-content:flex-end}
-.tk-part{display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 5px;border-radius:99px;background:#1a1a1c;box-shadow:inset 0 0 0 1.5px var(--c);font:800 12.5px Lora,serif;color:#fff;white-space:nowrap}.tk-part i{width:12px;height:12px;border-radius:3px;background:var(--c)}
+.tk-part{display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 5px;border-radius:99px;background:#1a1a1c;box-shadow:inset 0 0 0 1.5px var(--c);font:800 12.5px Lora,serif;color:#fff;white-space:nowrap}.tk-part i{width:12px;height:12px;border-radius:3px;background:var(--c)}.tk-pic{width:18px;height:18px;image-rendering:pixelated;flex:none;margin:-2px 0}
 .tk-gets .tk-part{background:#2a2a2c;font-size:11.5px;padding:2px 8px 2px 4px}
 .tk-tabs{margin:0}
 .tk-pane{flex:1;min-height:0;max-height:min(58vh,560px);overflow:auto;display:grid;gap:6px;align-content:start;padding:10px 12px}

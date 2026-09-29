@@ -28,7 +28,8 @@ export function installTinker(World, { G }) {
         const stacks = C.inv.filter((s) => s.k === k && (G.fOf(s) | 0) === (m.lot ? 0 : f)), n = stacks.reduce((a, s) => a + s.n, 0); if (!n) continue;
         const g = G.salvageOf(k, n, m.lot ? 0 : f);
         if (!g.pv) continue;
-        { const bonus = G.tkSalv(C); if (bonus > 0) for (const p of Object.keys(T.parts)) g[p] = Math.floor(g[p] * (1 + bonus)); }   /* the Magnifier */
+        { const bonus = G.tkSalv(C); if (bonus > 0) for (const p of Object.keys(T.parts)) g[p] = Math.floor(g[p] * (1 + bonus)); }   /* the Magnifier, and the Bone Crusher's rollers */
+        { const rs = G.projFx(C)?.relicSalv; if (rs) { const r = g.pv / rs; g.relic += Math.floor(r) + (Math.random() < r % 1 ? 1 : 0); } }   /* (2026-09-28) the Bone Crusher's sieve */
         /* take exactly those stacks (by level), then pay out */
         for (const s of stacks) s.n = 0; C.inv = C.inv.filter((s) => s.n > 0);
         for (const p of Object.keys(T.parts)) { got[p] += g[p]; C.parts[p] = (C.parts[p] || 0) + g[p]; }
@@ -172,6 +173,25 @@ export function installTinker(World, { G }) {
     for (const [x, y] of b.projTiles || []) S.g[y][x] = b.g[y][x];
     for (const p of this.playersIn(S)) if (p.act?.ob != null && p.act.ob >= head.length) p.act = null;
     S.whoSig = null;
+  };
+
+  /* THE FERRIS WHEEL (the Carnival project): a ride a day (two at tier 3) with a handful of parts at the top, doubled at tier 2, when a
+     Relic shard can be in it too. House money in parts, not tickets: parts cannot be sold, so this cannot be farmed into the economy. */
+  P.ferrisRide = function (pl) {
+    const C = pl.C, fx = G.projFx(C) || {}, rides = fx.rides | 0, day = G.chicagoDay(); if (!rides) return;
+    const f = (C.ferris?.day === day ? C.ferris : (C.ferris = { day, n: 0 }));
+    if (f.n >= rides) return this.say(pl, rides > 1 ? "Two rides a day. The wheel's resting." : "One ride a day. Come back tomorrow.", "bad");
+    f.n++; C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 };
+    const m = fx.prize || 1, rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), got = { scrap: rnd(30, 90) * m, gears: rnd(4, 14) * m, sparks: rnd(3, 10) * m, relic: m >= 2 && Math.random() < 0.15 ? 1 : 0 };
+    for (const [k, n] of Object.entries(got)) C.parts[k] = (C.parts[k] | 0) + n;
+    this.touch(pl);
+    this.say(pl, `\u{1F3A1} Round and up you go. At the top, stuck in the seat: ${Object.entries(got).filter(([, n]) => n).map(([k, n]) => `${n} ${T.parts[k].name.toLowerCase()}`).join(", ")}.`, got.relic ? "loot" : "good");
+    pl.out.push({ type: "ferris", got });
+  };
+  /* once a minute (the world's slow tick): the Lightning Rod's charged air, a Spark for everyone standing on the Thunderhead */
+  P.projTick = function (now) {
+    if ((this.projTickAt || 0) > now) return; this.projTickAt = now + 60000;
+    for (const p of this.pls.values()) { const n = G.projFx(p.C)?.sparkTick | 0; if (!n) continue; p.C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 }; p.C.parts.sparks += n; this.touch(p); p.out.push({ type: "spark", n }); }
   };
 
   /* THE KING'S CANNON (the Mire project): Sparks from the pouch, a volley at a boss, one shot a minute for the whole server.

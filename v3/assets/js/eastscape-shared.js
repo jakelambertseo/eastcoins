@@ -3225,6 +3225,94 @@ export const PROJECTS = {
       { need: { scrap: 6000, gears: 1500, sparks: 400, relic: 10, tickets: 900000 }, finish: 50, name: "The Pressure Pot", does: "the Boiler gets its own jackpot, won when it holds past 1,000×" },
       { need: { scrap: 15000, gears: 3500, sparks: 1000, relic: 40, tickets: 2500000 }, finish: 80, name: "The VIP valve", does: "the Boiler takes bets twice as big" }] }
 };
+/* (2026-09-28, the owner: "there should be 12 builds currently - one on each map, with a unique mechanic/improvement to crafting etc on
+   each") THE OTHER NINE, one on every main map. They share one shape, so they are laid out by projObjs from `site` rather than by
+   hand: the plan board at site, the build itself (two tiles) beside it, and an `extra` one tile further on when a tier adds one.
+   The build is a RUIN until tier 1 and then a working STATION of `t` (so clicking it does what that station does anywhere), drawn
+   with o_pj_<id><tier>. `fx` is what each tier adds for anybody standing in that map (see projFx): a craft's double chance or
+   no-burn, an xp bonus, a gathering double, better salvage, or one of the named specials the server handles itself. */
+const PJ_NEED = (f, lean) => [
+  { scrap: 2500, gears: 400, sparks: 100, tickets: 150000 },
+  { scrap: 7000, gears: 1200, sparks: 300, relic: 10, tickets: 450000 },
+  { scrap: 18000, gears: 3000, sparks: 800, relic: 40, tickets: 1200000 }].map((n) => Object.fromEntries(Object.entries(n).map(([k, v]) => [k, Math.round((v * f * (k === lean ? 1.6 : 1)) / (k === "tickets" ? 10000 : k === "relic" ? 1 : 50)) * (k === "tickets" ? 10000 : k === "relic" ? 1 : 50)])));
+const PJ_T = (need, list) => list.map((t, i) => ({ need: need[i], finish: [20, 50, 80][i], ...t }));
+Object.assign(PROJECTS, {
+  sawmill: { name: "The Sawmill", scene: "gloam", where: "the Gloam", site: [24, 13], t: "fletcher", ruin: "A collapsed sawmill",
+    blurb: "A sawmill fallen in on itself under the willows. The blade's still good.",
+    tiers: PJ_T(PJ_NEED(1, "gears"), [
+      { name: "The saw bench", does: "a fletching bench in the Gloam" },
+      { name: "The bandsaw", does: "fletching in the Gloam has a 20% chance of making twice as many", fx: { craft: { fletching: { dbl: 0.2 } } } },
+      { name: "Seasoned timber", does: "logs chopped in the Gloam come in pairs a quarter of the time", fx: { gather: { tree: 0.25 } } }]) },
+  crusher: { name: "The Bone Crusher", scene: "boneyard", where: "the Boneyard", site: [19, 15], t: "scrapbench", ruin: "A seized bone crusher",
+    blurb: "An old crusher choked with bones. Sal wants a bench out here.",
+    tiers: PJ_T(PJ_NEED(1.3, "scrap"), [
+      { name: "The crusher", does: "a second Scrap Bench, in the Boneyard: salvage and build without the walk" },
+      { name: "The fine rollers", does: "salvage in the Boneyard gives 25% more parts", fx: { salv: 0.25 } },
+      { name: "The sieve", does: "salvage in the Boneyard turns up Relic shards: one for every 300 of part value, rounded by chance", fx: { relicSalv: 300 } }]) },
+  still: { name: "The Oasis Still", scene: "sands", where: "the Golden Sands", site: [22, 16], t: "cauldron", ruin: "A dry, broken still",
+    blurb: "A still left to bake in the sand. The copper's worth saving.",
+    tiers: PJ_T(PJ_NEED(1.5, "sparks"), [
+      { name: "The still", does: "a cauldron at the oasis" },
+      { name: "The copper coil", does: "brewing in the Sands has a 15% chance of an extra potion", fx: { craft: { alchemy: { dbl: 0.15 } } } },
+      { name: "Oasis water", does: "brewing in the Sands pays 25% more Alchemy xp", fx: { xp: { alchemy: 0.25 } } }]) },
+  press: { name: "The Sky Press", scene: "cloud", where: "Cloudreach", site: [28, 15], t: "altar_arcane", ruin: "A toppled press",
+    blurb: "A marble press knocked flat by the wind. Pages everywhere.",
+    tiers: PJ_T(PJ_NEED(1.5, "sparks"), [
+      { name: "The press", does: "an Arcane altar in Cloudreach: print practice pages up here" },
+      { name: "The fast plate", does: "printing in Cloudreach has a 20% chance of twice the pages", fx: { craft: { wizardry: { dbl: 0.2 } } } },
+      { name: "Thin air", does: "printing in Cloudreach pays 30% more Wizardry xp", fx: { xp: { wizardry: 0.3 } } }]) },
+  rod: { name: "The Lightning Rod", scene: "thunderhead", where: "the Thunderhead", site: [19, 13], t: "furnace", ruin: "A fallen lightning rod",
+    blurb: "A lightning rod struck one time too many. Bronny wants a forge under it.",
+    extra: { from: 1, t: "anvil", name: "The storm anvil" },
+    tiers: PJ_T(PJ_NEED(2, "sparks"), [
+      { name: "The storm forge", does: "a furnace and an anvil on the Thunderhead" },
+      { name: "The charged hearth", does: "smithing on the Thunderhead has a 15% chance of making twice as many", fx: { craft: { smithing: { dbl: 0.15 } } } },
+      { name: "Charged air", does: "anybody standing on the Thunderhead gets a free Spark every minute", fx: { sparkTick: 1 } }]) },
+  crane: { name: "The Magnet Crane", scene: "trailer", where: "the Trailer Park", site: [35, 11], t: "booth", ruin: "A toppled crane",
+    blurb: "A scrapyard crane on its side, magnet and all. Put it back up and it'll haul for you.",
+    tiers: PJ_T(PJ_NEED(2.5, "gears"), [
+      { name: "The deposit bin", does: "a bank in the Trailer Park" },
+      { name: "The magnet", does: "mining in the Trailer Park turns up double ore 15% of the time", fx: { gather: { rock: 0.15 } } },
+      { name: "The conveyor", does: "ore mined in the Trailer Park goes straight to your bank when your bag is full", fx: { oreBank: true } }]) },
+  wheel: { name: "The Ferris Wheel", scene: "carnival", where: "the Carnival", site: [27, 15], t: "ferris", ruin: "A fallen ferris wheel",
+    blurb: "The Carnival's wheel came down in a storm. Get it turning and there's a prize at the top.",
+    tiers: PJ_T(PJ_NEED(2.2, "scrap"), [
+      { name: "The wheel", does: "a ride once a day, with a prize of parts at the top", fx: { rides: 1, prize: 1 } },
+      { name: "The lights", does: "the prize at the top doubles, and can be a Relic shard", fx: { prize: 2 } },
+      { name: "The second car", does: "ride it twice a day", fx: { rides: 2 } }]) },
+  smoke: { name: "The Smokehouse", scene: "boardwalk", where: "the Boardwalk", site: [3, 5], t: "range", ruin: "A caved-in smokehouse",
+    blurb: "The pier's smokehouse, roof in. Salty Meg misses it.",
+    tiers: PJ_T(PJ_NEED(2, "scrap"), [
+      { name: "The smokehouse", does: "a cooking range on the Boardwalk" },
+      { name: "The slow smoke", does: "cooking on the Boardwalk never burns", fx: { craft: { cooking: { noburn: true } } } },
+      { name: "The big racks", does: "cooking on the Boardwalk has a 20% chance of cooking two", fx: { craft: { cooking: { dbl: 0.2 } } } }]) },
+  camp: { name: "The Forward Camp", scene: "wild", also: ["deep"], where: "the Wilderness", site: [7, 5], t: "booth", ruin: "A raided camp",
+    blurb: "Somebody's camp, cut to ribbons. Rebuild it and the Wild gets a little less wild.",
+    extra: { from: 2, t: "fire", name: "The camp fire" },
+    tiers: PJ_T(PJ_NEED(1.5, "tickets"), [
+      { name: "The supply chest", does: "a bank chest in the Wilderness" },
+      { name: "The camp fire", does: "a campfire to cook on, and 10% more combat xp anywhere in the Wild", fx: { xp: { melee: 0.1, archery: 0.1, magic: 0.1, hp: 0.1 } } },
+      { name: "The field hospital", does: "dying in the Wild is half as likely to cost you a worn piece of gear", fx: { pvpDrop: 0.5 } }]) }
+});
+/** what the World Projects built in c's map give anybody standing in it: every built tier's fx, added up */
+export function projFx(c) {
+  if (!PROJ_LIVE || !c) return null;
+  const key = String(c.scene || "").split(":")[0]; let out = null;
+  for (const [id, P] of Object.entries(PROJECTS)) {
+    if (P.scene !== key && !P.also?.includes(key)) continue;
+    const tier = PROJ_TIERS[id] | 0;
+    for (let i = 0; i < tier; i++) {
+      const fx = P.tiers[i]?.fx; if (!fx) continue; out ||= { craft: {}, xp: {}, gather: {} };
+      for (const [sk, v] of Object.entries(fx.craft || {})) { const o = (out.craft[sk] ||= { dbl: 0, noburn: false }); o.dbl += v.dbl || 0; o.noburn ||= !!v.noburn; }
+      for (const [sk, v] of Object.entries(fx.xp || {})) out.xp[sk] = (out.xp[sk] || 0) + v;
+      for (const [k, v] of Object.entries(fx.gather || {})) out.gather[k] = (out.gather[k] || 0) + v;
+      for (const k of ["salv", "relicSalv", "sparkTick", "oreBank", "rides", "prize", "pvpDrop"]) if (fx[k] != null) out[k] = typeof fx[k] === "number" && k !== "pvpDrop" && k !== "rides" && k !== "prize" && k !== "relicSalv" ? (out[k] || 0) + fx[k] : fx[k];
+    }
+  }
+  return out;
+}
+/** a gathering double from the map's project: "tree" for logs, "rock" for ore */
+export const projGather = (c, kind) => projFx(c)?.gather?.[kind] || 0;
 /* THE CANNON: what a shot costs and does. Server-wide cooldown, so one person cannot hold the button down. */
 export const CANNON = { sparks: 25, cdMs: 60000, dmg: 260, range: 14, stunMs: 4000 };
 /* THE BOILER: a target from 1.1x to 100x; the boiler blows at 1 / (1 - r), so it holds past x exactly 1 time in x and a win
@@ -3244,20 +3332,30 @@ export function projObjs(key, b) {
   b.projFrom = objs.length;
   for (const [id, P] of Object.entries(PROJECTS)) {
     if (P.scene !== key) continue;
-    const tier = PROJ_TIERS[id] | 0, [bx, by] = P.board;
+    const tier = PROJ_TIERS[id] | 0, [bx, by] = P.board || P.site;
     objs.push({ t: "projboard", art: "o_projboard", proj: id, x: bx, y: by, name: `${P.name}: ${tier >= 3 ? "finished" : `tier ${tier + 1} of 3 wants parts`}` }); at(bx, by, "#");
+    if (tier >= 3) { const bd = objs[objs.length - 1]; bd.art = "o_pj_plaque"; }   /* a finished build's board becomes its brass plaque */
+    if (P.site) {   /* the nine that share a shape */
+      const [sx, sy] = P.site, T0 = P.tiers[Math.max(0, tier - 1)];
+      objs.push(tier ? { t: P.t, art: `o_pj_${id}${tier}`, proj: id, x: sx + 1, y: sy, w: 2, h: 1, name: `${P.name}: ${T0.name.toLowerCase()}` } : { t: "pjruin", art: `o_pj_${id}0`, proj: id, x: sx + 1, y: sy, w: 2, h: 1, name: P.ruin });
+      at(sx + 1, sy, "#"); at(sx + 2, sy, "#");
+      if (P.extra && tier >= P.extra.from) { objs.push({ t: P.extra.t, proj: id, x: sx + 3, y: sy, name: P.extra.name }); at(sx + 3, sy, "#"); }
+      continue;
+    }
     if (id === "dock") {
       if (!tier) { objs.push({ t: "dockruin", art: "o_dockruin", proj: id, x: 16, y: 18, w: 2, h: 1, name: "A rotten old jetty" }); continue; }
+      if (tier >= 2) { objs.push({ t: "pjdeco", art: "o_pj_dockshed", proj: id, x: 14, y: 17, name: "The tackle shed" }); at(14, 17, "#"); }
+      if (tier >= 3) { objs.push({ t: "pjdeco", art: "o_pj_docklamp", proj: id, x: 19, y: 17, name: "The Deep End's lamp" }); at(19, 17, "#"); }
       for (let y = 18; y <= 21; y++) for (const x of [16, 17]) at(x, y, "p");
       objs.push({ t: "dock", proj: id, x: 16, y: 18, w: 2, h: 4, name: "The Fishing Dock" });
       const boost = tier >= 2 ? { bite: 0.1, rare: 2 } : {};
       for (const [x, y] of [[15, 21], [18, 21]]) objs.push({ t: "spot", proj: id, x, y, name: "Fishing spot off the dock", fish: "sardine", fish2: "perch", fish2lvl: 5, xp: 20, xp2: 30, look: 2, ...boost });
       if (tier >= 3) objs.push({ t: "spot", proj: id, x: 17, y: 22, special: true, art: "o_spot6", name: "The Deep End", fish: "bonefish", fish2: "ghostcarp", fish2lvl: 35, req: { skill: "fishing", lvl: 30 }, xp: 90, xp2: 110, bite: 0.1, rare: 4 });
     } else if (id === "cannon") {
-      objs.push(tier ? { t: "cannon", art: "o_cannon", proj: id, x: 18, y: 12, w: 2, h: 1, name: `The King's Cannon: ${CANNON.sparks} Sparks a shot` } : { t: "cannonruin", art: "o_cannonruin", proj: id, x: 18, y: 12, w: 2, h: 1, name: "A rusted old cannon" });
+      objs.push(tier ? { t: "cannon", art: tier >= 3 ? "o_pj_cannon3" : tier >= 2 ? "o_pj_cannon2" : "o_cannon", proj: id, x: 18, y: 12, w: 2, h: 1, name: `The King's Cannon: ${CANNON.sparks} Sparks a shot` } : { t: "cannonruin", art: "o_cannonruin", proj: id, x: 18, y: 12, w: 2, h: 1, name: "A rusted old cannon" });
       at(18, 12, "#"); at(19, 12, "#");
     } else if (id === "table") {
-      objs.push(tier ? { t: "boiler", art: "o_boiler", proj: id, x: 35, y: 19, w: 2, h: 1, name: "The Boiler" } : { t: "tableruin", art: "o_tableruin", proj: id, x: 35, y: 19, w: 2, h: 1, name: "A table under a dust sheet" });
+      objs.push(tier ? { t: "boiler", art: tier >= 3 ? "o_pj_boiler3" : tier >= 2 ? "o_pj_boiler2" : "o_boiler", proj: id, x: 35, y: 19, w: 2, h: 1, name: "The Boiler" } : { t: "tableruin", art: "o_tableruin", proj: id, x: 35, y: 19, w: 2, h: 1, name: "A table under a dust sheet" });
       at(35, 19, "#"); at(36, 19, "#");
     }
   }
@@ -8523,9 +8621,9 @@ ITEMS.tk_banner ||= { name: "Party Banner", icon: "\u{1F6A9}", held: true };
 export const tkOn = (c) => Object.entries(c?.tk || {}).filter(([id, t]) => GADGETS[id] && (t?.left | 0) > 0).map(([id]) => GADGETS[id]);
 export const tkDmg = (c, style) => tkOn(c).reduce((a, g) => a + (g.dmg?.[style] || 0), 0);
 export const tkAcc = (c, style) => tkOn(c).reduce((a, g) => a + (g.acc?.[style] || 0), 0);
-export const tkCraft = (c, skill) => { let dbl = 0, noburn = false; for (const g of tkOn(c)) if (g.craft?.skill === skill) { dbl += g.craft.dbl || 0; noburn ||= !!g.craft.noburn; } return { dbl, noburn }; };
-export const tkXp = (c, skill) => tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0);
-export const tkSalv = (c) => tkOn(c).reduce((a, g) => a + (g.salv || 0), 0);
+export const tkCraft = (c, skill) => { let dbl = 0, noburn = false; for (const g of tkOn(c)) if (g.craft?.skill === skill) { dbl += g.craft.dbl || 0; noburn ||= !!g.craft.noburn; } const pc = projFx(c)?.craft?.[skill]; if (pc) { dbl += pc.dbl; noburn ||= pc.noburn; } return { dbl, noburn }; };   /* (2026-09-28) and the map's World Project */
+export const tkXp = (c, skill) => tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0) + (projFx(c)?.xp?.[skill] || 0);
+export const tkSalv = (c) => tkOn(c).reduce((a, g) => a + (g.salv || 0), 0) + (projFx(c)?.salv || 0);
 /** is an automation tool running for this kind of work ("rock", "tree", "spot")? */
 export const tkAuto = (c, kind) => tkOn(c).some((g) => g.auto === kind || (g.auto === "rock" && kind === "vein"));
 TINK.autoRate = 0.75;

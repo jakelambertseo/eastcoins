@@ -141,5 +141,41 @@ W.bet(Cz, gam, { g: "boiler", amt: 100, pick: 2.5 }, Date.now()); const br = gam
 is([!!br, br?.target, br ? (br.blow >= 2.5) === (br.payout > 0) : null], [true, 2.5, true], `a Boiler bet: target 2.5x, blew at ${br?.blow}x, paid ${br?.payout}`);
 { let won = 0; const n = 200000; for (let i = 0; i < n; i++) if (G.boilerBlow(Math.random()) >= 4) won++; is(Math.abs(won / n - 0.25) < 0.005, true, `it holds past 4x ${(won / n * 100).toFixed(2)}% of the time (fair: 25%)`); }
 
+/* 13. THE OTHER NINE: one per main map, each built by tier from `site`, each with its own effect */
+{ const { createClosedScenes } = await import("../v3/assets/js/eastscape-closed.js"); if (!G.SCENES.wild) Object.assign(G.SCENES, createClosedScenes(G, G._MAP)); }
+is(Object.keys(G.PROJECTS).length, 12, "twelve World Projects, one on every main map");
+is(new Set(Object.values(G.PROJECTS).map((p) => p.scene)).size, 12, "no two on the same map");
+const setT = (id, t) => { W.projOf(id).tier = t; G.setProjects(W.projTiers()); W.projRebuild(G.PROJECTS[id].scene); };
+for (const [id, P] of Object.entries(G.PROJECTS)) if (P.site) {
+  const Sx = W.scene(P.scene); setT(id, 0);
+  const r0 = Sx.objs.find((o) => o.proj === id && o.t === "pjruin"); setT(id, 1); const s1 = Sx.objs.find((o) => o.proj === id && o.t === P.t);
+  is([!!r0, !!s1, s1?.art], [true, true, `o_pj_${id}1`], `${P.name}: a ruin at tier 0, a working ${P.t} at tier 1`);
+}
+/* the Sawmill: fletching doubles in the Gloam and nowhere else; logs in pairs at tier 3 */
+setT("sawmill", 2); is([G.tkCraft({ scene: "gloam" }, "fletching").dbl, G.tkCraft({ scene: "workyard" }, "fletching").dbl], [0.2, 0], "the Sawmill's bandsaw: 20% double fletching, only in the Gloam");
+setT("sawmill", 3); is(G.projGather({ scene: "gloam" }, "tree"), 0.25, "seasoned timber: logs in pairs a quarter of the time");
+/* the Bone Crusher: a bench in the Boneyard, more parts, and Relic shards out of the sieve */
+setT("crusher", 3); const BY = W.scene("boneyard"), bench2 = BY.objs.find((o) => o.t === "scrapbench");
+const dig = { id: "d1", name: "d1", login: "d1", C: G.freshChar(), x: bench2.x, y: bench2.y + 1, out: [], path: [] }; dig.C.scene = "boneyard"; W.pls.set("d1", dig);
+G.addInv(dig.C.inv, "bones", 300, dig.C); const plainSalv = G.salvageOf("bones", 300);
+W.tinkerOp(BY, dig, { op: "salvage", k: "bones" });
+is([dig.C.parts.scrap >= Math.floor(plainSalv.scrap * 1.25) - 1, dig.C.parts.relic >= 1], [true, true], `the Boneyard's bench: 25% more scrap and a Relic shard from 300 bones (${dig.C.parts.scrap} scrap, ${dig.C.parts.relic} relic)`);
+/* the Lightning Rod: a Spark a minute on the Thunderhead at tier 3 */
+setT("rod", 3); const TH = W.scene("thunderhead"), zap = { id: "z1", name: "z1", login: "z1", C: G.freshChar(), x: 20, y: 12, out: [], path: [] }; zap.C.scene = "thunderhead"; W.pls.set("z1", zap);
+W.projTickAt = 0; W.projTick(Date.now()); W.projTick(Date.now() + 1000); is(zap.C.parts?.sparks, 1, "the charged air: one Spark a minute, and not twice in the same minute");
+is(!!TH.objs.find((o) => o.proj === "rod" && o.t === "anvil"), true, "the storm forge has its anvil");
+/* the Magnet Crane: a full bag's ore goes to the bank at tier 3 */
+setT("crane", 3); const TP = W.scene("trailer"), mnr = { id: "m2", name: "m2", login: "m2", C: G.freshChar(), x: 10, y: 10, out: [], path: [] }; mnr.C.scene = "trailer"; W.pls.set("m2", mnr);
+const bank0 = (mnr.C.bank.find((b) => b.k === "copper")?.n | 0); is([W.oreConveyor(mnr, "copper"), (mnr.C.bank.find((b) => b.k === "copper")?.n | 0) - bank0], [true, 1], "the conveyor: ore to the bank");
+mnr.C.scene = "workyard"; is(W.oreConveyor(mnr, "copper"), false, "and only in the Trailer Park");
+/* the Ferris Wheel: one ride a day at tier 1, two at tier 3 */
+setT("wheel", 1); const rider = { id: "r1", name: "r1", login: "r1", C: G.freshChar(), x: 5, y: 5, out: [], path: [] }; rider.C.scene = "carnival"; W.pls.set("r1", rider);
+W.ferrisRide(rider); const afterOne = { ...rider.C.parts }; W.ferrisRide(rider);
+is([afterOne.scrap > 0, rider.C.parts.scrap === afterOne.scrap], [true, true], "the Ferris Wheel: a prize of parts, once a day");
+setT("wheel", 3); W.ferrisRide(rider); is(rider.C.parts.scrap > afterOne.scrap, true, "tier 3: the second ride of the day");
+/* the Smokehouse and the Forward Camp */
+setT("smoke", 3); is(G.tkCraft({ scene: "boardwalk" }, "cooking"), { dbl: 0.2, noburn: true }, "the Smokehouse: no burning, 20% doubles on the Boardwalk");
+setT("camp", 3); is([G.tkXp({ scene: "wild" }, "melee"), G.projFx({ scene: "deep" })?.pvpDrop, G.projFx({ scene: "workyard" })], [0.1, 0.5, null], "the Forward Camp: combat xp and the field hospital, in the Wild and the Deep Wild only");
+
 console.log(bad ? `\n${bad} problem(s)` : "\nTinkering works: salvage by the rules and safe, gadgets built, used and broken, and the automation tools carry on while you're away");
 process.exitCode = bad ? 1 : 0;
