@@ -7754,24 +7754,22 @@ for (const K of Object.values(ORDER.kinds)) for (const t of ["early", "mid", "la
    lines already there: an early line is a hundred-odd actions for one player, a late one a day's work for the server. Harvesting is sized
    on a twelve-plot island (wheat is ten minutes and four a plot; starfruit eight hours and three); fletching and wizardry make ten or
    fifteen an action; tinkering hands in GADGETS, which are expensive since rules 357, so its counts are small and every one is a sink.
-   orderPick still skips anything held or on Bom's shelf, and falls back a tier when nothing in one is open. */
+   orderPick still skips anything held or on Bom's shelf, and falls back a tier when nothing in one is open.
+   (Same day, the owner: "remove the late game stages needed at bronny for the harvesting fletching wizardry and tinkering skills") these
+   four have no LATE tier: a late line dealt to one of them falls back to its mid tier (orderPick's fallback order). */
 Object.assign(ORDER.kinds, {
   harvest: { name: "Harvesting",
     early: [["wheat", 300], ["tomatoe", 250], ["rattlebean", 200]],
-    mid: [["lanternroot", 150], ["bonegourd", 100], ["stormcorn", 60]],
-    late: [["glassgourd", 30], ["emberwheat", 25], ["starfruit", 15]] },
+    mid: [["lanternroot", 150], ["bonegourd", 100], ["stormcorn", 60]], },
   fletch: { name: "Fletching",
     early: [["shaft", 1500], ["bronze_arrow", 900], ["ruby_arrow", 600]],
-    mid: [["emerald_arrow", 600], ["diamond_arrow", 450], ["sapphire_arrow", 450], ["dragonstone_arrow", 375], ["willowlogs_longbow", 20], ["ashlogs_longbow", 15]],
-    late: [["onyx_arrow", 300], ["starfall_arrow", 225], ["eclipse_arrow", 150], ["yewlogs_longbow", 10]] },
+    mid: [["emerald_arrow", 600], ["diamond_arrow", 450], ["sapphire_arrow", 450], ["dragonstone_arrow", 375], ["willowlogs_longbow", 20], ["ashlogs_longbow", 15]], },
   wizard: { name: "Wizardry",
     early: [["spellpaper", 500], ["page_sun_bolt", 600], ["page_fire_bolt", 500]],
-    mid: [["page_sun_blast", 400], ["page_frost_bolt", 400], ["page_fire_blast", 300], ["page_void_bolt", 300]],
-    late: [["page_sun_surge", 200], ["page_frost_blast", 200], ["page_storm_bolt", 200], ["page_fire_surge", 150]] },
+    mid: [["page_sun_blast", 400], ["page_frost_bolt", 400], ["page_fire_blast", 300], ["page_void_bolt", 300]], },
   tinker: { name: "Tinkering",
     early: [["tk_confetti", 9], ["tk_baitbox", 3], ["tk_medkit", 6]],
-    mid: [["tk_whetstone", 3], ["tk_scope", 3], ["tk_arccoil", 3], ["tk_lockpick", 3], ["tk_cooker", 3]],
-    late: [["tk_lantern", 2], ["tk_grapple", 2], ["tk_auger", 1]] }
+    mid: [["tk_whetstone", 3], ["tk_scope", 3], ["tk_arccoil", 3], ["tk_lockpick", 3], ["tk_cooker", 3]], }
 });
 /** a fresh order's lines: one from each kind, with ORDER.mix's tiers dealt out at random. Anything held, or anything Bom sells (so it
     could be bought and handed straight back), is never picked. `r` is the random source (Math.random, or a test's). */
