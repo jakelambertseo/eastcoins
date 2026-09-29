@@ -1974,3 +1974,9 @@ Stale tests, not regressions: pit/tix (EDGE_BAND 0.93-0.99 since 09-22), jewel (
 thieving (8), quicksell (4 items with no buyer), tower checkpoint, crypt (timeout).
 Known: 22 walkable tiles in the Yard no exit reaches (the river's east bank strip x28-29 and behind the Tower door).
 Bug board: statuses still to be set by the owner in game (admin only).
+
+## 2026-09-29, rules 354 LIVE (worker e1801f66): Tinkering, World Projects and the gem bag OPEN
+
+HOLD.tinker and HOLD.gems false. Marked Cards still held. Yard north pasture -9 monsters (20 in the Yard).
+Wiki 212: Tinkering and World Projects guide, gem bag guide now visible, Updates entry. Wiki words budget 90.
+Shared ?v=385. Watch: gem drop rate (1/1,500 at 60+), Tinkering salvage as a sink, World Project donations.
