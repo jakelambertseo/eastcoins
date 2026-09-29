@@ -1,8 +1,9 @@
 /* GEMS —  node tools/eastscape-gems-test.mjs
-   (2026-09-28) The real World with storage stubbed and Tinkering opened as on the dev server. A socketed piece and a sorted gem keep
-   their whole code through equipping, taking off, the bank and a reforge; the Gem Sorter sorts, re-rolls, sells, punches, sockets
-   and pulls (combat gems only, and the roll lost on the way out); the Gem Case takes skilling gems anywhere and grows with its kits;
-   the gems do what they say (capped), and the odds are the odds. */
+   (2026-09-28, rebuilt 2026-09-29 with the gem bag) The real World with storage stubbed, opened as on the dev server. A sorted gem keeps
+   its roll through the bag, the bank and a save; a reforged piece keeps its level (a sealed +4 included) and carries nothing else; the
+   Sorter stands in the Yard and sorts, re-rolls and sells there and nowhere else; the gem bag takes each gem on its own side only, opens
+   its slots for their prices, gives a gem back unsorted, and counts only the best two of any one gem; the gems do what they say; and
+   the odds are the odds. */
 globalThis.__ES_OPEN_ALL = true;
 const G = await import("../v3/assets/js/eastscape-shared.js");
 const { createClosedScenes } = await import("../v3/assets/js/eastscape-closed.js"); Object.assign(G.SCENES, createClosedScenes(G, G._MAP));
@@ -10,83 +11,63 @@ const { World } = await import("../eastscape-worker/src/index.js");
 let bad = 0;
 const is = (got, want, what) => { if (JSON.stringify(got) === JSON.stringify(want)) console.log(`  ${what}: ${JSON.stringify(got)}`); else { console.log(`  !! ${what}: got ${JSON.stringify(got)}, wanted ${JSON.stringify(want)}`); bad++; } };
 const ctx = { blockConcurrencyWhile: (fn) => fn(), storage: { get: async () => undefined, put: async () => {}, delete: async () => {}, list: async () => new Map() } };
-const W = new World(ctx, { SITE: "https://example.invalid", DEV: "0" }); await new Promise((r) => setTimeout(r, 20)); W.save = async () => {}; W.houseSay = () => {};
+const W = new World(ctx, { SITE: "https://example.invalid", DEV: "0" }); await new Promise((r) => setTimeout(r, 20)); W.save = async () => {};
 const said = []; W.houseSay = (t) => said.push(t);
 
-/* 1. the code */
-const sw = G.withSockets(2, [{ k: "ruby", roll: 8 }, null]);
-is([G.fOf({ f: sw }), G.socketsOf(sw), G.forgeNameAt("nova_sword", sw)], [2, [{ k: "ruby", roll: 8 }, null], "Nova halberd +2 [Ruby +8%, empty socket]"], "one number: reforge +2, a ruby at +8% and an empty socket");
-{ const s4 = G.withSockets(4, [{ k: "ruby", roll: 8 }, null]);   /* (2026-09-29, the owner: "what if people already have +4") a Master's seal's +4 must survive the packing */
-  is([G.fOf({ f: 4 }), G.fOf({ f: s4 }), G.forgeNameAt("nova_sword", s4), G.codeOk("nova_sword", 4)], [4, 4, "Nova halberd +4 [Ruby +8%, empty socket]", true], "a sealed +4 stays +4, plain or socketed, and trades"); }
-{ const c = G.freshChar(), sw = G.withSockets(2, [{ k: "ruby", roll: 8 }, null]);   /* (2026-09-29) a load used to clamp every code to a bare level: gems lost their rolls, sockets their gems */
-  c.inv = [{ k: "ruby", n: 2, f: G.gemCode(9) }, { k: "nova_sword", n: 1, f: sw }]; c.eq.weapon = "nova_sword"; c.eqf = { weapon: G.withSockets(4, [{ k: "jet", roll: 10 }, null]) };
-  const o = G.normChar(JSON.parse(JSON.stringify(c)));
-  const rubies = o.inv.filter((s) => s.k === "ruby");   /* (a sorted gem never stacks: two come back as two entries) */
-  is([rubies.every((s) => G.rollOf(s) === 9), rubies.reduce((a, s) => a + s.n, 0), G.fCode(o.inv.find((s) => s.k === "nova_sword")) === sw, G.forgeNameAt("nova_sword", o.eqf.weapon)], [true, 2, true, "Nova halberd +4 [Jet +10%, empty socket]"], "a save and a load keep a sorted gem, its count, a socketed piece and a worn +4 with its gem"); }
-is([G.sockMax("nova_sword"), G.sockMax("nova_axe"), G.sockMax("nova_body"), G.sockMax("bronze_sword")], [2, 2, 1, 0], "sockets: two on a level-80 weapon (tools too), one on armour, none below 80");
-is([G.codeOk("ruby", G.gemCode(10)), G.codeOk("ruby", G.gemCode(11)), G.codeOk("nova_sword", G.withSockets(0, [{ k: "topaz", roll: 5 }]))], [true, false, false], "the Exchange takes only real codes: no +11, no topaz in a sword");
+/* 1. the codes: a gem's roll, a piece's level, nothing else */
+is([G.codeOk("ruby", G.gemCode(10)), G.codeOk("ruby", G.gemCode(11)), G.codeOk("nova_sword", 4), G.codeOk("nova_sword", 5), G.codeOk("nova_sword", 12), G.codeOk("logs", 1)], [true, false, true, false, false, false], "real codes only: a gem up to +10, a piece up to +4, nothing on logs");
+is([G.fOf({ f: 4 }), G.forgeNameAt("nova_sword", 4), G.forgeNameAt("ruby", G.gemCode(-3)), G.forgeNameAt("ruby", 0)], [4, "Nova halberd +4", "Ruby -3%", "Ruby (unsorted)"], "names: a sealed +4 stays +4; a gem says its roll");
+{ const c = G.freshChar(); c.inv = [{ k: "ruby", n: 2, f: G.gemCode(9) }, { k: "nova_sword", n: 1, f: 4 }, { k: "nova_sword", n: 1, f: 99 }];
+  c.eq.weapon = "nova_sword"; c.eqf = { weapon: 3 }; c.gembag = { cn: 2, sn: 1, c: [{ k: "ruby", roll: 10 }, { k: "topaz", roll: 5 }], s: [{ k: "topaz", roll: 7 }] };
+  const o = G.normChar(JSON.parse(JSON.stringify(c))), rubies = o.inv.filter((s) => s.k === "ruby"), swords = o.inv.filter((s) => s.k === "nova_sword").map((s) => G.fOf(s));
+  is([rubies.every((s) => G.rollOf(s) === 9), rubies.reduce((a, s) => a + s.n, 0), swords, o.eqf.weapon, o.gembag], [true, 2, [4, 3], 3, { cn: 2, sn: 1, c: [{ k: "ruby", roll: 10 }, null], s: [{ k: "topaz", roll: 7 }] }],
+    "a save and a load: sorted gems keep their rolls and count, a +4 stays +4, a junk code keeps only a level, and the bag keeps what fits each side"); }
 
-/* 2. a socketed piece keeps its code when it moves */
-const S = W.scene("workyard"), pl = { id: "p1", name: "Pip", login: "pip", C: G.freshChar(), x: 35, y: 15, out: [], path: [], admin: true }; pl.C.scene = "workyard"; W.pls.set("p1", pl);
-const C = pl.C; C.xp.melee = G.XP_AT[99]; C.xp.hp = G.XP_AT[99];
-G.addInv(C.inv, "nova_sword", 1, C, sw);
-W.equip(pl, C.inv.findIndex((s) => s.k === "nova_sword"));
-is([C.eq.weapon, G.eqCode(C, "weapon") === sw], ["nova_sword", true], "equipped: the whole code rides in eqf");
-W.unequip(pl, "weapon"); is(G.fCode(C.inv.find((s) => s.k === "nova_sword")), sw, "taken off: back on the bag entry, sockets and all");
-W.bankOp(S, pl, { op: "dep", i: C.inv.findIndex((s) => s.k === "nova_sword") }); const inBank = C.bank.find((s) => s.k === "nova_sword");
-is(G.fCode(inBank), sw, "banked with its code");
-W.bankOp(S, pl, { op: "wd", i: C.bank.indexOf(inBank) }); is(G.fCode(C.inv.find((s) => s.k === "nova_sword") || {}), sw, "and out again");
-W.equip(pl, C.inv.findIndex((s) => s.k === "nova_sword"));
+/* 2. the Sorter stands in the Yard's north court, and works only there */
+const S = W.scene("workyard"), sorter = S.objs.find((o) => o.t === "gemsorter");
+is([!!sorter, sorter?.x, sorter?.y], [true, 30, 9], "the Gem Sorter stands in the Yard's north court");
+const pl = { id: "p1", name: "Pip", login: "pip", C: G.freshChar(), x: 5, y: 5, out: [], path: [], admin: false }; pl.C.scene = "workyard"; W.pls.set("p1", pl);
+const C = pl.C; G.addInv(C.inv, "tickets", 900000, C); G.addInv(C.inv, "ruby", 3, C); G.addInv(C.inv, "topaz", 2, C);
+{ const n0 = G.tixIn(C); W.gemOp(S, pl, { op: "sort", i: C.inv.findIndex((s) => s.k === "ruby") }); is(G.tixIn(C), n0, "across the Yard from the bench: no roll"); }
+pl.x = sorter.x; pl.y = sorter.y + 1;
+const t0 = G.tixIn(C); W.gemOp(S, pl, { op: "sort", i: C.inv.findIndex((s) => s.k === "ruby" && !G.fCode(s)) });
+const ruby = () => C.inv.find((s) => s.k === "ruby" && G.fCode(s));
+is([t0 - G.tixIn(C), C.inv.filter((s) => s.k === "ruby" && !G.fCode(s)).reduce((a, s) => a + s.n, 0), G.rollOf(ruby()) >= -5 && G.rollOf(ruby()) <= 10], [G.GEMSET.cost, 2, true], `sort: one ruby off the stack of three, rolled ${G.rollOf(ruby())}%, for 10,000`);
+{ const r = Math.random; Math.random = () => 0.9999; W.gemOp(S, pl, { op: "sort", i: C.inv.indexOf(ruby()) }); Math.random = r; }   /* (a perfect is 1 in 213: the dice are forced) */
+is([G.rollOf(ruby()), said.some((t) => /PERFECT ruby/.test(t))], [10, true], "re-rolled until perfect, and the room hears about it");
+{ const t1 = G.tixIn(C); W.gemOp(S, pl, { op: "sell", i: C.inv.findIndex((s) => s.k === "ruby" && !G.fCode(s)) }); is(G.tixIn(C) - t1, G.GEMSET.sell, "sell one back: a flat 1,500"); }
 
-/* 3. the Sorter: shut until built, then sort, re-roll, sell */
-/* (2026-09-29) PARKED: no Sorter stands in the world until its new home is chosen, so the test puts one down in the Yard itself */
-const D = W.scene("workyard");
-is(D.objs.some((o) => o.t === "gemsorter"), false, "no Gem Sorter stands in the Yard while it is parked");
-const sorter = { t: "gemsorter", x: 33, y: 18, w: 2, h: 1, name: "The Gem Sorter (test)" }; D.objs.push(sorter);
-pl.C.scene = "workyard"; pl.x = sorter.x; pl.y = sorter.y + 1;
-{ pl.x = 5; pl.y = 5; const n0 = G.tixIn(C); W.gemOp(D, pl, { op: "sort", i: 0 }); is(G.tixIn(C), n0, "away from the machine: no roll"); pl.x = sorter.x; pl.y = sorter.y + 1; }
-G.addInv(C.inv, "tickets", 500000, C); G.addInv(C.inv, "ruby", 3, C); G.addInv(C.inv, "topaz", 2, C);
-const t0 = G.tixIn(C); W.gemOp(D, pl, { op: "sort", i: C.inv.findIndex((s) => s.k === "ruby" && !G.fCode(s)) });
-const sortedRuby = C.inv.find((s) => s.k === "ruby" && G.fCode(s));
-is([t0 - G.tixIn(C), C.inv.filter((s) => s.k === "ruby" && !G.fCode(s)).reduce((a, s) => a + s.n, 0), G.rollOf(sortedRuby) >= -5 && G.rollOf(sortedRuby) <= 10], [G.GEMSET.cost, 2, true], `sort: one ruby out of the stack of three, rolled ${G.rollOf(sortedRuby)}%, 10,000 tickets`);
-for (let k = 0; k < 40 && G.rollOf(sortedRuby) < 10; k++) W.gemOp(D, pl, { op: "sort", i: C.inv.indexOf(sortedRuby) });
-is(G.rollOf(sortedRuby), 10, "re-roll until it's perfect");
-is(said.some((t) => /PERFECT ruby/.test(t)), true, "a perfect roll is announced");
-const t1 = G.tixIn(C); W.gemOp(D, pl, { op: "sell", i: C.inv.findIndex((s) => s.k === "ruby" && !G.fCode(s)) }); is(G.tixIn(C) - t1, G.GEMSET.sell, "sell one back: a flat 1,500");
-/* 4. sockets: a punch makes one, only combat gems go in, pulling loses the roll */
-W.gemOp(D, pl, { op: "punch", slot: "weapon" }); is(G.socketsOf(G.eqCode(C, "weapon")).length, 2, "the sword already has two: no third");
-G.addInv(C.inv, "nova_body", 1, C); W.equip(pl, C.inv.findIndex((s) => s.k === "nova_body"));
-W.gemOp(D, pl, { op: "punch", slot: "body" }); is(G.socketsOf(G.eqCode(C, "body")).length, 0, "no Socket Punch in the bag: no socket");
-G.addInv(C.inv, "tk_punch", 1, C); W.gemOp(D, pl, { op: "punch", slot: "body" }); is([G.socketsOf(G.eqCode(C, "body")), C.inv.some((s) => s.k === "tk_punch")], [[null], false], "a Socket Punch: an empty socket, the punch used up");
-W.gemOp(D, pl, { op: "sort", i: C.inv.findIndex((s) => s.k === "topaz" && !G.fCode(s)) }); const sortedTopaz = C.inv.find((s) => s.k === "topaz" && G.fCode(s));
-W.gemOp(D, pl, { op: "socket", slot: "body", s: 0, i: C.inv.indexOf(sortedTopaz) }); is(G.socketsOf(G.eqCode(C, "body")), [null], "a topaz (skilling) won't go in a socket");
-W.gemOp(D, pl, { op: "socket", slot: "body", s: 0, i: C.inv.indexOf(sortedRuby) }); is(G.socketsOf(G.eqCode(C, "body")), [{ k: "ruby", roll: 10 }], "the +10% ruby goes in the body's socket");
-is([G.gemBonus(C).ruby, G.tkDmg(C, "melee")], [18, 0.18], "the sword's +8 and the body's +10: +18% melee damage");
-{ const T = { eq: { weapon: "nova_sword", body: "nova_body", legs: "nova_legs", helm: "nova_helm" }, eqf: { weapon: G.withSockets(0, [{ k: "ruby", roll: 10 }, { k: "ruby", roll: 10 }]), body: G.withSockets(0, [{ k: "ruby", roll: 10 }]), legs: G.withSockets(0, [{ k: "ruby", roll: 9 }]), helm: G.withSockets(0, [{ k: "ruby", roll: -5 }]) } };
-  is([G.gemBonus(T).ruby, G.gemRolls(T).ruby.length], [20, 5], "five rubies worn (10, 10, 10, 9, -5): only the best two count, +20%"); }
-W.gemOp(D, pl, { op: "pull", slot: "body", s: 0 }); is([G.socketsOf(G.eqCode(C, "body")), C.inv.some((s) => s.k === "ruby" && !G.fCode(s))], [[null], true], "pulled: the socket is empty and the ruby comes back unsorted");
-const lvBefore = G.fLevelOf(C, "weapon"); { const code = G.eqCode(C, "weapon"); C.eqf.weapon = code - (code % 4) + 3; } is([G.fLevelOf(C, "weapon"), G.socketsOf(G.eqCode(C, "weapon"))[0]], [3, { k: "ruby", roll: 8 }], "a reforge changes the level bits and leaves the gems");
-/* 5. the Gem Case: anywhere, skilling gems only, grows with Sal's kits */
-pl.C.scene = "workyard"; pl.x = 20; pl.y = 5;
-W.gemOp(S, pl, { op: "case", s: 0, i: C.inv.indexOf(sortedTopaz) }); is(G.caseOf(C).g[0]?.k, "topaz", "the topaz goes in the Gem Case, out in the Yard");
-is(W.tkSlow(pl, Date.now(), "tree") < 1, G.rollOf(sortedTopaz) > 0, `and chopping is ${G.rollOf(sortedTopaz) > 0 ? "faster" : "no faster"} (topaz ${G.rollOf(sortedTopaz)}%)`);
-G.addInv(C.inv, "jasper", 1, C, G.gemCode(6)); W.gemOp(S, pl, { op: "case", s: 1, i: C.inv.findIndex((s) => s.k === "jasper") }); is(G.caseOf(C).g[1], null, "a combat gem won't go in the case");
-W.gemOp(S, pl, { op: "caseout", s: 0 }); is([G.caseOf(C).g[0], C.inv.some((s) => s.k === "topaz" && !G.fCode(s))], [null, true], "out of the case: unsorted again");
-G.addInv(C.inv, "tk_caseslot2", 1, C); W.useItem(pl, C.inv.findIndex((s) => s.k === "tk_caseslot2")); is(G.caseOf(C).n, 3, "a Frame won't fit a 3-slot case");
-G.addInv(C.inv, "tk_caseslot", 1, C); W.useItem(pl, C.inv.findIndex((s) => s.k === "tk_caseslot")); is([G.caseOf(C).n, C.inv.some((s) => s.k === "tk_caseslot")], [4, false], "a Hinge: 4 slots");
-is(G.normChar(JSON.parse(JSON.stringify(C))).gemcase.n, 4, "the case survives a save");
-/* 6. the elements, the odds, the prices */
-is(G.gemVs({ eq: { weapon: "nova_sword" }, eqf: { weapon: G.withSockets(0, [{ k: "carnelian", roll: 10 }]) } }, "pumpkinking"), 0.1, "a +10% carnelian against the Pumpkin King (weak to fire): +10%");
-{ let top = 0, n = 100000; for (let i = 0; i < n; i++) if (G.gemRoll() === 10) top++; is(Math.abs(top / n - 1 / 16) < 0.004, true, `tier 1: a perfect roll ${(top / n * 100).toFixed(2)}% of the time (1 in 16 = 6.25%)`); }
-{ let top = 0, n = 100000; for (let i = 0; i < n; i++) if (G.gemRoll() === 10) top++; is(Math.abs(top / n - 1 / 16) < 0.005, true, `tier 3's double sort: ${(top / n * 100).toFixed(2)}% (12.1%)`); }
-is(G.sortCost(), G.GEMSET.cost, "a roll is always 10,000 (no tiers: the Sorter is a fixture)");
-/* the auto-roll: one message, many rolls, stops on the target or the budget */
-{ pl.C.scene = "workyard"; pl.x = sorter.x; pl.y = sorter.y + 1; G.addInv(C.inv, "garnet", 1, C); const t0 = G.tixIn(C);
-  W.gemOp(D, pl, { op: "auto", i: C.inv.findIndex((s) => s.k === "garnet" && !G.fCode(s)), target: 8, budget: 300000 }); const a = pl.out.filter((e) => e.type === "gems" && e.auto).pop()?.auto;
-  const g = C.inv[a.i]; is([a.rolls.length >= 1, a.spent === a.rolls.length * G.GEMSET.cost, t0 - G.tixIn(C) === a.spent, a.hit ? a.rolls.at(-1) >= 8 : a.spent + G.GEMSET.cost > 300000, G.rollOf(g) === a.rolls.at(-1)], [true, true, true, true, true], `auto-roll to +8 within 300k: ${a.rolls.length} rolls, ${a.hit ? "hit" : "ran out"} at ${a.rolls.at(-1)}%`);
-  const n1 = G.tixIn(C); W.gemOp(D, pl, { op: "auto", i: a.i, target: 5, budget: 300000 }); if (a.hit) is(G.tixIn(C), n1, "already at or past the target: no rolls"); }
-/* 7. finding them */
+/* 3. the gem bag: anywhere, each gem on its own side, slots for tickets, out unsorted */
+pl.x = 5; pl.y = 5;
+is([G.bagOf(C).cn, G.bagOf(C).sn, G.bagPrice(C, "c"), G.bagPrice(C, "s")], [1, 1, 25000, 25000], "a new bag: one combat and one skilling setting, the next of each 25,000");
+W.gemOp(S, pl, { op: "sort", i: 0 });   /* (not at the bench: refused, and nothing charged) */
+W.gemOp(S, pl, { op: "put", side: "c", slot: 0, i: C.inv.findIndex((s) => s.k === "topaz") }); is(G.bagOf(C).c[0], null, "an unsorted topaz won't go in");
+G.addInv(C.inv, "topaz", 1, C, G.gemCode(6));
+W.gemOp(S, pl, { op: "put", side: "c", slot: 0, i: C.inv.findIndex((s) => s.k === "topaz" && G.fCode(s)) }); is(G.bagOf(C).c[0], null, "a sorted topaz is a skilling gem: not on the combat side");
+W.gemOp(S, pl, { op: "put", side: "s", slot: 0, i: C.inv.findIndex((s) => s.k === "topaz" && G.fCode(s)) }); is(G.bagOf(C).s[0], { k: "topaz", roll: 6 }, "on the skilling side it goes in, out here in the Yard");
+is(W.tkSlow(pl, Date.now(), "tree") < 1, true, "and chopping is faster (+6%)");
+W.gemOp(S, pl, { op: "put", side: "c", slot: 0, i: C.inv.indexOf(ruby()) }); is(G.bagOf(C).c[0], { k: "ruby", roll: 10 }, "the perfect ruby on the combat side");
+is([G.gemBonus(C).ruby, G.tkDmg(C, "melee")], [10, 0.1], "+10% melee damage");
+{ const t = G.tixIn(C); W.gemOp(S, pl, { op: "open", side: "c" }); W.gemOp(S, pl, { op: "open", side: "c" }); W.gemOp(S, pl, { op: "open", side: "c" });
+  is([G.bagOf(C).cn, t - G.tixIn(C), G.bagPrice(C, "c")], [4, 375000, null], "three more combat settings: 25,000 + 100,000 + 250,000, and then it's full");
+  W.gemOp(S, pl, { op: "open", side: "c" }); is(G.bagOf(C).cn, 4, "no fifth"); }
+{ const poor = { id: "p2", name: "Poor", login: "poor", C: G.freshChar(), x: 5, y: 5, out: [], path: [] }; poor.C.scene = "workyard"; W.pls.set("p2", poor);
+  W.gemOp(S, poor, { op: "open", side: "s" }); is(G.bagOf(poor.C).sn, 1, "no tickets: no new setting"); }
+W.gemOp(S, pl, { op: "take", side: "s", slot: 0 }); is([G.bagOf(C).s[0], C.inv.some((s) => s.k === "topaz" && !G.fCode(s))], [null, true], "taken out: the setting is empty and the topaz comes back unsorted");
+{ const T = { gembag: { cn: 4, sn: 1, c: [{ k: "ruby", roll: 10 }, { k: "ruby", roll: 9 }, { k: "ruby", roll: 10 }, { k: "ruby", roll: -5 }], s: [null] } };
+  is([G.gemBonus(T).ruby, G.gemRolls(T).ruby.length], [20, 4], "four rubies set (10, 9, 10, -5): only the best two count, +20%"); }
+is(G.normChar(JSON.parse(JSON.stringify(C))).gembag.cn, 4, "the bag's settings survive a save");
+
+/* 4. the elements, the odds, the price */
+is(G.gemVs({ gembag: { cn: 1, sn: 1, c: [{ k: "carnelian", roll: 10 }], s: [null] } }, "pumpkinking"), 0.1, "a +10% carnelian against the Pumpkin King (weak to fire): +10%");
+{ const n = 200000, got = {}; for (let i = 0; i < n; i++) { const r = G.gemRoll(); got[r] = (got[r] || 0) + 1; }
+  const near = (r) => Math.abs((got[r] || 0) / n - G.gemOdds(r)) < 0.004, hi = [5, 6, 7, 8, 9, 10].map((r) => G.gemOdds(r));
+  is([G.GEMSET.odds.length, G.GEMSET.odds.reduce((a, w) => a + w, 0), Array.from({ length: 16 }, (_, i) => near(i - 5)).every(Boolean), hi.every((p, i) => i === 0 || p < hi[i - 1]), hi[0] < G.gemOdds(4), Math.min(...Object.keys(got).map(Number)), Math.max(...Object.keys(got).map(Number))],
+    [16, 213, true, true, true, -5, 10], `the odds: every roll lands as often as the table says, and +5 to +10 each rarer than the last (a perfect ${((got[10] || 0) / n * 100).toFixed(2)}% of the time, 1 in 213 = 0.47%)`); }
+is(G.sortCost(), G.GEMSET.cost, "a roll is always 10,000");
+
+/* 5. finding them */
 { const r = Math.random; Math.random = () => 0; C.xp.woodcutting = G.XP_AT[70]; const cnt = () => [...C.inv, ...C.bank].filter((s) => s.k === "topaz").reduce((a, s) => a + s.n, 0), n0 = cnt(); W.gemOnXp(pl, "woodcutting", 25); Math.random = r; is(cnt() - n0, 1, "woodcutting at 70 turns up a topaz (forced roll)"); }
 
-console.log(bad ? `\n${bad} problem(s)` : "\nGems work: the code travels, the Sorter sorts, sockets and the case take the right gems, the bonuses add up and cap, and the odds are the odds");
+console.log(bad ? `\n${bad} problem(s)` : "\nGems work: codes are what they say, the Sorter sorts at its bench, the bag takes the right gems and grows for tickets, the bonuses add up and cap, and the odds are the odds");
 process.exitCode = bad ? 1 : 0;

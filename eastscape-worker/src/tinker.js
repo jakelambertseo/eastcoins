@@ -82,8 +82,6 @@ export function installTinker(World, { G }) {
     const C = pl.C, id = it.gadget, g = G.GADGETS[id], bad = (t) => this.say(pl, t, "bad"); if (!g) return;
     if (G.HOLD.tinker && !pl.admin) return;
     C.tk ||= {};
-    if (g.kind === "punch") return this.say(pl, `Take it to the Gem Sorter in the Depths: it punches the socket there, into what you're wearing.`);   /* (2026-09-28) */
-    if (g.kind === "caseslot") return this.caseSlotUse(pl, g, take);
     if (g.mins) {
       const cur = C.tk[id]; if (cur && cur.left > 0) return bad(`Your ${g.name} is already going: ${Math.ceil(cur.left / 60000)} minutes left.`);
       take(); C.tk[id] = { left: g.mins * 60000 };
