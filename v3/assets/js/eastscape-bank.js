@@ -19,7 +19,11 @@ export function createBankUi(E) {
   const st = document.createElement("style"); st.textContent = CSS; document.head.append(st);
   const ls = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch (e) { return d; } }, lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
   let tab = ls("es_bank_tab", "all"), sort = ls("es_bank_sort", "recent"), mode = ls("es_bank_n", "1"), x = Math.max(1, +ls("es_bank_x", "50") || 50), q = "";
-  if (!["1", "99", "x"].includes(mode)) mode = "1";   /* (2026-09-27, the owner) the amounts are 1, 99 or a number of your own; All lives on shift-click and in the menu */
+  /* (2026-09-27, the owner) the amounts were cut to 1, 99 or a number of your own; All lives on shift-click and in the menu.
+     (2026-09-29, a player's idea on the bug board: "the 1,5,10,25,99 quick select buttons were pog and i miss them ... those 5 and 10 buttons
+     were my jam") and the owner said bring them back: 1, 5, 10, 25, 99 and X. */
+  const AMOUNTS = ["1", "5", "10", "25", "99"];
+  if (![...AMOUNTS, "x"].includes(mode)) mode = "1";
   /* (2026-09-27) PAGES, as in OSRS: BANK_PAGES of them, "all" shows every page in order with a heading each. A deposit lands on the page you
      are looking at (or the first, from "all"); a stack the bank already holds grows where it already is. An item moves page by being dragged
      onto a page tab, or from its hold / right-click menu. The page is on the row itself (bank[i].p), so it follows the character. */
@@ -47,6 +51,17 @@ export function createBankUi(E) {
     return "misc"; };
   const SORTS = { recent: null, az: (a, b) => ITEMS[a[0].k].name.localeCompare(ITEMS[b[0].k].name), value: (a, b) => G.valueOf(b[0].k) * b[0].n - G.valueOf(a[0].k) * a[0].n, amount: (a, b) => b[0].n - a[0].n };
   const amount = () => (mode === "x" ? x : +mode);
+  /* (2026-09-29, the same player: "when bank is sorted by Quantity ... with every click the item moves further down the inventory list, and i
+     have to 'chase' it") THE ORDER HOLDS STILL WHILE YOU WORK. Sorted by Amount or Value, taking five out re-ranked the stack and it slid
+     away from the mouse. The order is worked out once and kept (by item and forge code) until you pick a sort, a tab or a page, search, or
+     open the bank again; anything new that arrives meanwhile goes after what was already there. */
+  let held = null;
+  const idOf = (s) => `${s.k}:${G.fCode(s)}`;
+  const steady = (list, cmp) => {
+    if (!cmp) return list;
+    if (!held) held = new Map([...(E.me?.bank || []).map((s, i) => [s, i])].sort(cmp).map(([s], n) => [idOf(s), n]));
+    return list.sort((a, b) => (held.get(idOf(a[0])) ?? 1e9) - (held.get(idOf(b[0])) ?? 1e9) || cmp(a, b));
+  };
 
   function build() {
     const root = $("bankRoot"); if (!root) return; built = true; root.classList.remove("view-loading");
@@ -65,16 +80,16 @@ export function createBankUi(E) {
         <div class="bk-bagh"><img class="bk-bagi" src="/v3/assets/img/glad/flat/ui/bag.png?v=1" alt=""><b>Your bag</b><small id="bkBagN"></small></div>
         <div class="bk-grid sm" id="bkBag"></div>
         <div class="bk-actions"><button type="button" class="btn plain" id="bkDepInv" title="Everything in your bag goes in (tickets stay with you)">Deposit bag</button><button type="button" class="btn plain" id="bkDepEq" title="Everything you are wearing goes in">Deposit worn</button><button type="button" class="btn plain" id="bkStack" title="Every stack your bank already holds goes in, all of it">Stack all</button></div>
-        <div class="bk-move"><span>Move</span><div class="qty" id="bkQty">${[["1", "1"], ["99", "99"]].map(([k, n]) => `<button type="button" data-n="${k}">${n}</button>`).join("")}</div><input type="number" id="bkX" min="1" step="1" value="${x}" aria-label="A number of your own" title="A number of your own: type it, then click an item"></div>
+        <div class="bk-move"><span>Move</span><div class="qty" id="bkQty">${AMOUNTS.map((k) => `<button type="button" data-n="${k}">${k}</button>`).join("")}</div><input type="number" id="bkX" min="1" step="1" value="${x}" aria-label="A number of your own" title="A number of your own: type it, then click an item"></div>
         <p class="bk-hint">Click moves that many. <b>Shift-click</b> moves the lot. <b>Right-click</b> (or hold) an item for more, and to drag it to a page.</p>
       </aside></div>`;
-    $("bkSearch").addEventListener("input", () => { q = $("bkSearch").value.trim().toLowerCase(); render(); });
-    $("bkSort").addEventListener("click", (e) => { const b = e.target.closest("[data-s]"); if (!b) return; sort = b.dataset.s; lsSet("es_bank_sort", sort); SFX.play("ui_click"); render(); });
+    $("bkSearch").addEventListener("input", () => { q = $("bkSearch").value.trim().toLowerCase(); held = null; render(); });
+    $("bkSort").addEventListener("click", (e) => { const b = e.target.closest("[data-s]"); if (!b) return; sort = b.dataset.s; held = null; lsSet("es_bank_sort", sort); SFX.play("ui_click"); render(); });
     $("bkQty").addEventListener("click", (e) => { const b = e.target.closest("[data-n]"); if (!b) return; mode = b.dataset.n; lsSet("es_bank_n", mode); if (mode === "x") $("bkX").focus(); paintQty(); });
     $("bkX").addEventListener("input", () => { x = Math.max(1, Math.floor(+$("bkX").value) || 1); lsSet("es_bank_x", String(x)); if (mode !== "x") { mode = "x"; lsSet("es_bank_n", mode); paintQty(); } });
     $("bkX").addEventListener("focus", () => { if (mode !== "x") { mode = "x"; lsSet("es_bank_n", mode); paintQty(); } });
-    $("bkTabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (!b) return; tab = b.dataset.tab; lsSet("es_bank_tab", tab); SFX.play("ui_click"); render(); });
-    $("bkPages").addEventListener("click", (e) => { const b = e.target.closest("[data-page]"); if (!b) return; page = b.dataset.page; lsSet("es_bank_page", page); SFX.play("ui_click"); render(); });
+    $("bkTabs").addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (!b) return; tab = b.dataset.tab; held = null; lsSet("es_bank_tab", tab); SFX.play("ui_click"); render(); });
+    $("bkPages").addEventListener("click", (e) => { const b = e.target.closest("[data-page]"); if (!b) return; page = b.dataset.page; held = null; lsSet("es_bank_page", page); SFX.play("ui_click"); render(); });
     /* drag a tile onto a page: a bank row is refiled, a bag stack is deposited there. HTML5 drag is mouse-only; touch has the hold menu. */
     const dragAt = { bank: -1, bag: -1 };
     for (const [id, ev] of [["bkGrid", "b"], ["bkBag", "i"]]) {
@@ -143,8 +158,8 @@ export function createBankUi(E) {
   }
 
   /* ---- the draw: on open and on every "me" while open, cheap when nothing changed */
-  function render() {
-    const me = E.me; if (!me || !$("bankRoot")) return; if (!built) build();
+  function render(fresh) {
+    const me = E.me; if (!me || !$("bankRoot")) return; if (!built) build(); if (fresh) held = null;
     const bank = me.bank || [], rows = bank.map((s, i) => [s, i]);
     /* the pages: each tab wears the first item filed on it, the way an OSRS tab does, and its count */
     const onPage = Array.from({ length: NP }, () => []); for (const r of rows) onPage[pageOf(r[0])].push(r);
@@ -165,8 +180,8 @@ export function createBankUi(E) {
     let shown, gridHtml;
     if (page === "all" && onPage.filter((l) => l.length).length > 1) {   /* every page, each under its heading, each sorted on its own */
       shown = rows.filter(keep);
-      gridHtml = onPage.map((list, p) => { const l = list.filter(keep); if (cmp) l.sort(cmp); return l.length ? `<div class="bk-ph">Page ${p + 1}</div>${l.map(tile).join("")}` : ""; }).join("");
-    } else { shown = inPage.filter(keep); if (cmp) shown.sort(cmp); gridHtml = shown.map(tile).join(""); }
+      gridHtml = onPage.map((list, p) => { const l = steady(list.filter(keep), cmp); return l.length ? `<div class="bk-ph">Page ${p + 1}</div>${l.map(tile).join("")}` : ""; }).join("");
+    } else { shown = steady(inPage.filter(keep), cmp); gridHtml = shown.map(tile).join(""); }
     gridHtml = shown.length ? gridHtml
       : `<p class="bk-empty">${!bank.length ? "Your bank is empty. Click things in your bag to put them in, or <b>Deposit bag</b> for the lot." : q ? `Nothing in the bank matches “${esc(q)}”.` : "Nothing on this tab."}</p>`;
     if (gridHtml !== last.grid) { $("bkGrid").innerHTML = gridHtml; last.grid = gridHtml; }

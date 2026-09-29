@@ -113,8 +113,8 @@ export const CSS = `
 .mc-pay{font-size:12px;flex:1}.mc-pay summary{cursor:pointer;font-weight:800}.mc-pay table{margin-top:6px;border-collapse:collapse;width:100%}.mc-pay td{padding:2px 4px;border-bottom:1px solid rgba(200,150,58,.25)}.mc-pay td:last-child{text-align:right;font-weight:800}.mc-pay p{margin:6px 0 0;opacity:.8}
 .mc-fold{border:0;background:none;color:inherit;opacity:.65;text-decoration:underline;cursor:pointer;font:700 12px Lora,serif;white-space:nowrap}
 .mc-out ul{margin:6px 0 10px;padding-left:18px}.mc-out li img{width:18px;height:18px;vertical-align:middle;image-rendering:pixelated}
-.mc-chip{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:6px;max-width:min(460px,70%);padding:4px 10px 4px 6px;border:1px solid #c8963a;border-radius:14px;background:rgba(20,12,6,.88);color:#f4ecd8;font:700 12px Lora,serif;cursor:pointer}
+.mc-chip{position:absolute;top:128px;left:50%;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:6px;max-width:min(460px,70%);padding:4px 10px 4px 6px;border:1px solid #c8963a;border-radius:14px;background:rgba(20,12,6,.88);color:#f4ecd8;font:700 12px Lora,serif;cursor:pointer}
 .mc-chip[hidden]{display:none}.mc-chip b{font:800 15px Cinzel,serif;color:#ffe9a8}.mc-chip span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mc-chip-c{display:grid;place-items:center;width:20px;height:26px;border-radius:3px;background:#a82424;box-shadow:inset 0 0 0 2px #fbf7ec;font-size:12px}.mc-chip-c.blue{background:#2448a8}.mc-chip-c.black{background:#2a2a2a}
-@media (max-width:620px){.mc-card{width:48px;height:68px}.mc-card em{font-size:24px}.mc-chip{top:4px;max-width:90%}}
+@media (max-width:620px){.mc-card{width:48px;height:68px}.mc-card em{font-size:24px}.mc-chip{max-width:90%}}
 `;

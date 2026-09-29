@@ -952,8 +952,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .rcpr .fg{font-style:normal;color:#ffd77a}
 /* (2026-09-25) THE 2X EVENT BANNER. Top centre, above everything, on every screen in the game - the event is
    server-wide so it must not belong to any one view. It sits UNDER the count room's HUD position on purpose
-   (top:10px against its 46) because both can be up at once: you can be in a dungeon when somebody pops one. */
-#dblBar{position:absolute;left:50%;top:58px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;background:linear-gradient(#ffd23f,#e8a01f);color:#2a1c08;font-weight:800;font-size:13px;letter-spacing:.04em;box-shadow:0 0 0 2px #7a5410,0 3px 10px rgba(0,0,0,.45);white-space:nowrap}
+   (top:10px against its 46) because both can be up at once: you can be in a dungeon when somebody pops one.
+   (2026-09-29, a player's bug report: "Move 2X marquee down a little bit below XP orb") 94px, not 58: the skill ring is drawn on the
+   canvas at the top centre, 30 to 82 px down, and the banner sat across it. */
+#dblBar{position:absolute;left:50%;top:94px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;background:linear-gradient(#ffd23f,#e8a01f);color:#2a1c08;font-weight:800;font-size:13px;letter-spacing:.04em;box-shadow:0 0 0 2px #7a5410,0 3px 10px rgba(0,0,0,.45);white-space:nowrap}
 #dblBar[hidden]{display:none}
 #dblBar b{font-size:14px}
 #dblBar .dblt{font-variant-numeric:tabular-nums;background:rgba(0,0,0,.18);border-radius:999px;padding:1px 7px}
@@ -2101,7 +2103,7 @@ let TWR = null; const towerRules = () => (towerRules.p ||= import("/v3/assets/js
 /* (2026-09-24) THE MIDWAY GAMES. Loaded the first time somebody walks up to a stall, never at login — the
    whole module is three screens nobody outside the Carnival will ever open. */
 let CARN = null; const carnLoad = () => (carnLoad.p ||= import("/v3/assets/js/eastscape-carnival.js?v=2").then((m) => (CARN = m.createCarnival({ G, SFX, send, esc, $ }))));
-const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String(k).startsWith("count") ? countRules() : String(k).startsWith("pyramid") ? pyramidRules() : String(k).startsWith("tower") ? towerRules() : (moreScenes.p ||= import("/v3/assets/js/eastscape-closed.js?v=25").then((m) => { Object.assign(G.SCENES, m.createClosedScenes(G, G._MAP)); })));
+const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String(k).startsWith("count") ? countRules() : String(k).startsWith("pyramid") ? pyramidRules() : String(k).startsWith("tower") ? towerRules() : (moreScenes.p ||= import("/v3/assets/js/eastscape-closed.js?v=26").then((m) => { Object.assign(G.SCENES, m.createClosedScenes(G, G._MAP)); })));
 /* PARTIES AND THE CRYPT (v103; the server side is eastscape-worker/src/crypt.js, the numbers eastscape-crypt-rules.js, the windows eastscape-crypt.js,
    fetched on the first invitation, click on the stairway or step into a crypt). The page keeps only: the click menu's "Invite to
    party", the red tiles of a slam (TILEFX), and handing the crypt's messages to the module. */
@@ -2114,7 +2116,7 @@ const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String
 let TIP = null; const tipLoad = () => (tipLoad.p ||= import("/v3/assets/js/eastscape-tip.js?v=3").then((m) => (TIP = m.createTip({ G, esc, ico, me: () => me }))));
 document.addEventListener("pointerover", (e) => { if (e.pointerType === "touch") return; const el = e.target.closest?.("[data-item], [data-k], [data-rm]"), k = el && (el.dataset.item || el.dataset.k || el.dataset.rm); if (k && ITEMS[k]?.slot) tipLoad().then((t) => t.show(el, k, Number(el.dataset.f) || 0)).catch(() => {}); });   /* (2026-09-23) data-f is the level of THIS piece: the card describes what you are pointing at, not whatever of that kind you happen to be wearing */
 let PROF = null;
-const profLoad = () => (profLoad.p ||= import("/v3/assets/js/eastscape-profile.js?v=8").then((m) => (PROF = m.createProfile({ G, SFX, send, esc, $, sico, ico, you: () => you,   /* (2026-09-23) ico: the Gear tab draws real item icons, and the PNG-or-emoji decision lives on the page */
+const profLoad = () => (profLoad.p ||= import("/v3/assets/js/eastscape-profile.js?v=9").then((m) => (PROF = m.createProfile({ G, SFX, send, esc, $, sico, ico, you: () => you,   /* (2026-09-23) ico: the Gear tab draws real item icons, and the PNG-or-emoji decision lives on the page */
   sprite: (look, d, name, van) => { const L = look && G.normLook(look), k = L ? lookSprite(L, d, van) : lookArt(G.lookFor({ name }), d); if (!k) return k === null ? null : ""; const im = IMG[k].im, c = document.createElement("canvas"); c.width = im.width; c.height = im.height; c.getContext("2d").drawImage(im, 0, 0); return c; },
   nearby: (name) => Z.players.find((p) => p.name === name && p.id !== you?.id)?.id || null }))));
 /* (2026-09-22) The net panel's switch. Zeroing the correction count on open matters: what you want to know is how
@@ -5620,7 +5622,7 @@ function openWin(id) {
   SFX.play("ui_open");
   for (const w of ["bankWin", "exWin", "wikiWin", "achWin"]) if (w !== id && id !== "tradeWin") $(w).hidden = true;
   $(id).hidden = false;
-  if (id === "bankWin") renderBank();
+  if (id === "bankWin") renderBank(true);
   if (id === "shopWin") renderShop();
   if (id === "exWin") { renderEx(); send({ t: "ex", op: "open" }); }
   if (id === "tradeWin") renderTrade();
@@ -6123,7 +6125,7 @@ let TINKUI = null; const TINKUI_URL = "/v3/assets/js/eastscape-tinker.js?v=7";
 /* (2026-09-28) the Gem Sorter and the Gem Case: loaded the first time either opens */
 let GEMUI = null; const GEMUI_URL = "/v3/assets/js/eastscape-gems.js?v=3";
 /* (2026-09-29) Marked Cards: the card table, loaded the first time a hand is in play or a card is flipped */
-let CARDUI = null; const CARDUI_URL = "/v3/assets/js/eastscape-cards.js?v=2";
+let CARDUI = null; const CARDUI_URL = "/v3/assets/js/eastscape-cards.js?v=3";
 let CARDP = null;   /* one load, however many callers ask at once: two racing imports made two tables and two trackers */
 function cardsUi() { return CARDUI ? Promise.resolve(CARDUI) : CARDP ||= import(CARDUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (CARDUI = m.createCards({ G, $, esc, send, SFX, ico, openWin, get me() { return me; } })); }); }
 function gemsUi() { return GEMUI ? Promise.resolve(GEMUI) : import(GEMUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (GEMUI = m.createGems({ G, $, esc, send, SFX, ico, openWin, winFx, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
@@ -6188,9 +6190,9 @@ function renderShop() {
    (2026-09-27) REBUILT AND MOVED OUT: v3/assets/js/eastscape-bank.js, fetched the first time the bank opens. Tabs by kind, one
    search over bank and bag, an amount of your own, a right-click menu, a slots meter. The page only opens it and tells it when
    `me` changed; every rule of the old window (true bank index on every tile, rebuild only on change, tickets stay) lives there. */
-let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=13";
+let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=14";
 function bankUi() { return BANKUI ? Promise.resolve(BANKUI) : import(BANKUI_URL).then((m) => (BANKUI = m.createBankUi({ G, $, esc, ico, qty, fgTag, slotHtml, send, SFX, say, ITEMS, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); }, get me() { return me; } }))); }
-function renderBank() { if ($("bankWin").hidden || !me) return; $("bankCount").textContent = `${(me.bank || []).length}/${G.BANK_MAX}`; bankUi().then((u) => u.render()); }
+function renderBank(fresh) { if ($("bankWin").hidden || !me) return; $("bankCount").textContent = `${(me.bank || []).length}/${G.BANK_MAX}`; bankUi().then((u) => u.render(fresh)); }   /* (2026-09-29) fresh: the bank was just opened, so its order is sorted anew */
 
 /* ------------------------------------------------------------ QUICK SLOTS (2026-09-25)
    Four slots beside the chat button, keys 1-4. A slot holds an item KEY, stored on the character (the "quick" message), so it
@@ -6342,6 +6344,9 @@ function itemPicker(host, keys, value, onPick, { placeholder = "Choose an item",
      before you commit.
    Nothing the server is sent changed: the same place / buynow / cancel messages with the same fields. */
 let exOpenK = null;   /* the item row opened on the Browse tab: "<key>:<forge level>" */
+/* (2026-09-29, a player's bug report: "clicking the dropdown arrow for 'past deals' opens then closes back immediately") the Sell tab's
+   Finished offers fold remembers it is open: the window is redrawn on every Exchange update, and each redraw built it shut again */
+let exDoneOpen = false;
 function renderEx() {
   $("exWin").querySelectorAll("[data-ex]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ex === exTab)));
   if (exTab === "pets") { if (!$("exPets")) $("exBody").innerHTML = `<div id="exPets"></div>`; petUi().then((u) => u.exPets($("exPets"), EX)); return; }   /* (2026-09-27) pets for sale, in the lazy pets module */
@@ -6450,7 +6455,8 @@ function renderEx() {
       ${wanted.length ? `<div class="k-sect"><span class="k-label">People want things you have</span></div><div class="mk-list">${wanted.map((w) => `<div class="k-row gx-want" data-item="${w.k}">${slot(w.k)}<span><b>${esc(ITEMS[w.k].name)}</b><small>${esc(w.name)} wants ${w.left.toLocaleString()} · you have ${ownAll(w.k).toLocaleString()}</small></span><span class="k-end">${priceTag(w.price)}<button class="btn sm" data-sellto="${w.k}" data-p="${w.price}" data-n="${Math.min(w.left, ownAll(w.k))}">Sell</button></span></div>`).join("")}</div>` : ""}
       <div class="k-sect"><span class="k-label">Sell something you own · bag and bank</span></div>
       <div class="gx-own">${owned.map((k) => `<button type="button" class="gx-o" data-sellk="${k}" data-item="${k}" title="${esc(ITEMS[k].name)} · you have ${ownAll(k).toLocaleString()}${book(k).buy != null ? ` · best offer ${book(k).buy.toLocaleString()}` : ""}">${slot(k, 0, ownAll(k))}${book(k).buy != null ? `<em class="gx-o-p">${wlNum(book(k).buy)}</em>` : ""}</button>`).join("") || `<div class="mk-empty">Nothing in your bag or bank can be listed.</div>`}</div>
-      ${closed.length ? `<details class="qfold"><summary>Finished offers <small>${closed.length}</small></summary><div class="mk-list" style="padding:0 8px 8px">${closed.map((o) => `<div class="k-row off gx-done">${slot(o.k, o.f || 0)}<span><b>${esc(G.forgeNameAt(o.k, o.f || 0))}</b><small>${o.side === "buy" ? "Bought" : "Sold"} ${o.done.toLocaleString()} of ${o.qty.toLocaleString()} · ${o.done >= o.qty ? "complete" : "taken down"}</small></span><span class="k-end">${priceTag(o.price)}</span></div>`).join("")}</div></details>` : ""}</div>`;
+      ${closed.length ? `<details class="qfold" id="exDone"${exDoneOpen ? " open" : ""}><summary>Finished offers <small>${closed.length}</small></summary><div class="mk-list" style="padding:0 8px 8px">${closed.map((o) => `<div class="k-row off gx-done">${slot(o.k, o.f || 0)}<span><b>${esc(G.forgeNameAt(o.k, o.f || 0))}</b><small>${o.side === "buy" ? "Bought" : "Sold"} ${o.done.toLocaleString()} of ${o.qty.toLocaleString()} · ${o.done >= o.qty ? "complete" : "taken down"}</small></span><span class="k-end">${priceTag(o.price)}</span></div>`).join("")}</div></details>` : ""}</div>`;
+    body.querySelector("#exDone")?.addEventListener("toggle", (e) => { exDoneOpen = e.target.open; });
     body.querySelectorAll("[data-sellto]").forEach((b) => b.addEventListener("click", () => { exPost = { side: "sell", k: b.dataset.sellto, qty: +b.dataset.n, price: +b.dataset.p }; renderEx(); }));
     body.querySelectorAll("[data-sellk]").forEach((b) => b.addEventListener("click", () => { const k = b.dataset.sellk, bk = book(k); exPost = { side: "sell", k, qty: ownAll(k), price: bk.buy || bk.sell || last(k) || 1 }; SFX.play("ui_click"); renderEx(); }));
   }

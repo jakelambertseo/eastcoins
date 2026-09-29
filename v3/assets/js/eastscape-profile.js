@@ -106,7 +106,10 @@ export function createProfile(env) {
     const cells = AREAS.map((a) => {
       const k = eq[a], it = k && G.ITEMS[k], f = k ? forge[k] | 0 : 0;
       const title = it ? `${it.name}${f ? ` +${f}` : ""}` : a;
-      return `<div class="pr-slot${it ? "" : " none"}" style="grid-area:${a}" title="${esc(title)}">${it ? (env.ico ? env.ico(k) : it.icon || "") : ""}${f ? `<em>+${f}</em>` : ""}</div>`;
+      /* (2026-09-29, a player's idea on the bug board: "right-click on their equipped items to reveal name, (stats too?), and a link to wiki")
+         data-item and data-f are all it takes: the page's own hover card shows the piece's name and stats at its reforge level, and a
+         right-click on anything carrying data-item opens its wiki page, exactly as in your own bag */
+      return `<div class="pr-slot${it ? "" : " none"}" style="grid-area:${a}"${it ? ` data-item="${esc(k)}"${f ? ` data-f="${f}"` : ""}` : ""} title="${esc(title)}${it ? " — right-click for its wiki page" : ""}">${it ? (env.ico ? env.ico(k) : it.icon || "") : ""}${f ? `<em>+${f}</em>` : ""}</div>`;
     }).join("");
     const worn = AREAS.filter((a) => eq[a]).length;
     return `<div class="pr-doll">${cells}</div>

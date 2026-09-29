@@ -6048,7 +6048,7 @@ export const REP = { min: 8, max: 600, titleMax: 120, noteMax: 300, perHour: 6,
   statuses: ["new", "working", "fixed", "done", "backlog", "declined"], public: ["working", "fixed", "done", "backlog"],
   label: { new: "New", working: "In progress", fixed: "Fixed", done: "Added", backlog: "On the backlog", declined: "Not planned" } };
 /** (2026-09-28, the owner) what planting a crop pays in Harvesting xp: a thirtieth of its harvest, at least 1 */
-export const plantXp = (k) => (CROPS[k] ? Math.max(1, Math.round(CROPS[k].xp / 30)) : 0);
+export const plantXp = (k) => (CROPS[k] ? Math.max(1, Math.round(CROPS[k].xp / 30)) : FUNGI?.[k] ? Math.max(1, Math.round(FUNGI[k].xp / 30)) : 0);   /* (2026-09-29, a player's idea on the bug board: "Planting xp for shrooms too?") a cellar bed's spawn pays the same thirtieth, in Fungiculture */
 ITEMS.glassgourd = { name: "Glass gourd", icon: "\u{1F52E}", ex: "Grows clear enough to read through. The Carnival's freaks carry the seed, which is the gourd." };
 ITEMS.emberwheat = { name: "Ember wheat", icon: "\u{1F33E}", ex: "The heads glow. Do not store it near anything that burns. The Vault's wardens carry it, for reasons." };
 ITEMS.starfruit = { name: "Starfruit", icon: "\u2B50", ex: "Five points and a light of its own. Fell into the Trailer Park with everything else." };

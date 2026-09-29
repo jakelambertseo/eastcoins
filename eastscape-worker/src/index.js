@@ -1688,6 +1688,7 @@ export class World {
     G.takeInv(C.inv, k, 1); G.takeInv(C.inv, "compost", F.compost);
     const rain = G.charmOf(C, "rainmaker"), dev = this.env?.DEV === "1", ms = Math.round(F.ms * (1 - rain / 100) / (dev ? 60 : 1));   /* Rainmaker waters a cellar too; on a DEV server a bed grows sixty times faster, so it can be watched */
     I.beds[i] = { k, at: Date.now(), ...(rain || dev ? { ms } : {}) }; this.touch(pl);
+    { const px = G.plantXp(k); if (px) this.grant(pl, "fungiculture", px); }   /* (2026-09-29) planting pays a little, as a crop's does (G.plantXp) */
     return this.say(pl, `You work the spawn into the compost. ${G.ITEMS[F.yields].name} in ${ms >= 5400000 ? `${Math.round(ms / 3600000 * 10) / 10} hours` : `${Math.round(ms / 60000)} minutes`}, whether you're here or not.`, "good");
   }
   /* ------------------------------------------------------------ BREEDING (2026-09-27): the island's pen
