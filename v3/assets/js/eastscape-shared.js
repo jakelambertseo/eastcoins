@@ -3300,13 +3300,20 @@ export function projFx(c) {
   const key = String(c.scene || "").split(":")[0]; let out = null;
   for (const [id, P] of Object.entries(PROJECTS)) {
     if (P.scene !== key && !P.also?.includes(key)) continue;
-    const tier = PROJ_TIERS[id] | 0;
+    const tier = PROJ_TIERS[id] | 0, party = grandLeft(id) > 0, m = party ? 2 : 1;   /* the Grand Opening doubles it all */
+    if (party) { out ||= { craft: {}, xp: {}, gather: {} }; out.xpAll = (out.xpAll || 0) + GRAND.xp; out.grand = id; }
     for (let i = 0; i < tier; i++) {
       const fx = P.tiers[i]?.fx; if (!fx) continue; out ||= { craft: {}, xp: {}, gather: {} };
-      for (const [sk, v] of Object.entries(fx.craft || {})) { const o = (out.craft[sk] ||= { dbl: 0, noburn: false }); o.dbl += v.dbl || 0; o.noburn ||= !!v.noburn; }
-      for (const [sk, v] of Object.entries(fx.xp || {})) out.xp[sk] = (out.xp[sk] || 0) + v;
-      for (const [k, v] of Object.entries(fx.gather || {})) out.gather[k] = (out.gather[k] || 0) + v;
-      for (const k of ["salv", "relicSalv", "sparkTick", "oreBank", "rides", "prize", "pvpDrop"]) if (fx[k] != null) out[k] = typeof fx[k] === "number" && k !== "pvpDrop" && k !== "rides" && k !== "prize" && k !== "relicSalv" ? (out[k] || 0) + fx[k] : fx[k];
+      for (const [sk, v] of Object.entries(fx.craft || {})) { const o = (out.craft[sk] ||= { dbl: 0, noburn: false }); o.dbl += (v.dbl || 0) * m; o.noburn ||= !!v.noburn; }
+      for (const [sk, v] of Object.entries(fx.xp || {})) out.xp[sk] = (out.xp[sk] || 0) + v * m;
+      for (const [k, v] of Object.entries(fx.gather || {})) out.gather[k] = (out.gather[k] || 0) + v * m;
+      if (fx.salv != null) out.salv = (out.salv || 0) + fx.salv * m;
+      if (fx.sparkTick != null) out.sparkTick = (out.sparkTick || 0) + fx.sparkTick * m;
+      if (fx.relicSalv != null) out.relicSalv = fx.relicSalv / m;       /* a divisor: twice as many shards */
+      if (fx.pvpDrop != null) out.pvpDrop = fx.pvpDrop ** m;              /* half as likely, then a quarter */
+      if (fx.rides != null) out.rides = fx.rides + (party ? 1 : 0);      /* one more ride on opening day */
+      if (fx.prize != null) out.prize = fx.prize * m;
+      if (fx.oreBank != null) out.oreBank = fx.oreBank;
     }
   }
   return out;
@@ -3323,6 +3330,12 @@ export const boilerTarget = (x) => Math.round(Math.max(BOILER.min, Math.min(BOIL
 let PROJ_LIVE = false;   /* flipped at the end of the file, once HOLD exists: buildScene runs during this module's own load */
 let PROJ_TIERS = {};
 export const setProjects = (t) => { PROJ_TIERS = { ...(t || {}) }; };
+/* (2026-09-28, the owner: "build 1-3") THE GRAND OPENING. A stage finished is an hour's party in its map: the build's bonuses are
+   doubled and every skill pays GRAND.xp more xp there. The server owns the clock (proj[id].grand) and hands it out with the tiers. */
+export const GRAND = { ms: 3600000, xp: 0.1 };
+let PROJ_GRAND = {};
+export const setGrand = (g) => { PROJ_GRAND = { ...(g || {}) }; };
+export const grandLeft = (id, now = Date.now()) => Math.max(0, (PROJ_GRAND[id] || 0) - now);
 export const projTier = (id) => (PROJ_LIVE ? PROJ_TIERS[id] | 0 : 0);
 export const projTiers = () => ({ ...PROJ_TIERS });
 export const projScenes = () => Object.values(PROJECTS).map((p) => p.scene);
@@ -4381,6 +4394,7 @@ export const buffsOf = (c) => {
   if ((c?.luck | 0) > 0) one("luck", "Lucky", "clover", `A real ZCoin is ${LUCK.zdrop * 100}% more likely to drop. One is used up per kill or catch. Only fishing finds clovers.`, c.luck | 0);
   for (const st of [c?.meal, c?.drink]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k]; if (it) one(it.meal ? "meal" : "drink", it.short || it.name, st.k, `${it.name}: ${fxText((it.meal || it.drink).fx)}. The clock only runs while you're outside.`, Math.max(1, Math.ceil((st.left | 0) / 60000)), "minute"); }
   for (const k0 of SLOTS) { const k = c?.eq?.[k0], it = k && ITEMS[k]; if (it?.fx) one(`worn:${k}`, it.short || it.name, k, `${it.name} (worn): ${fxText(it.fx)}.`); }
+  { const gid = projFx(c)?.grand, P = gid && PROJECTS[gid]; if (P) one("grand", "Grand Opening", `pin_${gid}`, `${P.name} just opened in ${P.where}: its bonuses are doubled and every skill pays ${GRAND.xp * 100}% more xp here, for the hour.`, Math.max(1, Math.ceil(grandLeft(gid) / 60000)), "minute"); }   /* (2026-09-28) */
   for (const [id, t] of Object.entries(c?.tk || {})) { const g = GADGETS[id]; if (g && (t.left | 0) > 0) one(`tk:${id}`, g.name, g.item === false ? "tk_banner" : `tk_${id}`, `${g.name}: ${g.does}. The clock only runs while you're outside.`, Math.max(1, Math.ceil((t.left | 0) / 60000)), "minute"); }   /* (2026-09-28) Tinkering's gadgets */
   if (c?.charm && (c.charm.left | 0) > 0 && CHARMS[c.charm.k]) { const C_ = CHARMS[c.charm.k], t = c.charm.tier || 1; one("charm", `${C_.name} ${"I".repeat(t)}`, `scroll_${c.charm.k}`, `${C_.name} (tier ${"I".repeat(t)}): ${C_.what(C_.vals[t - 1])}. The clock only runs while you're outside.`, Math.ceil(c.charm.left / 60000), "minute"); }   /* (2026-09-26) the page buff */
   return out;
@@ -7113,6 +7127,7 @@ export function normChar(c) {
   out.buyback = (Array.isArray(out.buyback) ? out.buyback : []).filter((x) => x && typeof x === "object" && ITEMS[x.k] && (x.n | 0) > 0 && Number.isFinite(x.paid) && x.paid >= 0 && x.id).slice(0, BUYBACK.keep);
   /* (2026-09-28) Tinkering's parts: a pouch of four counts, never items (they take no bag space, and Bom cannot buy them) */
   { const pp = out.parts && typeof out.parts === "object" ? out.parts : {}; out.parts = Object.fromEntries(Object.keys(TINK.parts).map((k) => [k, Math.max(0, Math.floor(Number(pp[k]) || 0))])); }
+  out.pins = Array.isArray(out.pins) ? [...new Set(out.pins.filter((id) => PROJECTS[id]))] : [];   /* (2026-09-28) the Builder's Pins collected */
   out.tk = Object.fromEntries(Object.entries(out.tk && typeof out.tk === "object" ? out.tk : {}).filter(([id, t]) => GADGETS[id] && t && (t.left | 0) > 0).map(([id, t]) => [id, { left: t.left | 0 }]));
   out.tkBomb = Math.max(0, out.tkBomb | 0);
   out.look = normLook(c.look);   /* (v80) who they chose to be, or null: not asked yet */
@@ -8622,7 +8637,7 @@ export const tkOn = (c) => Object.entries(c?.tk || {}).filter(([id, t]) => GADGE
 export const tkDmg = (c, style) => tkOn(c).reduce((a, g) => a + (g.dmg?.[style] || 0), 0);
 export const tkAcc = (c, style) => tkOn(c).reduce((a, g) => a + (g.acc?.[style] || 0), 0);
 export const tkCraft = (c, skill) => { let dbl = 0, noburn = false; for (const g of tkOn(c)) if (g.craft?.skill === skill) { dbl += g.craft.dbl || 0; noburn ||= !!g.craft.noburn; } const pc = projFx(c)?.craft?.[skill]; if (pc) { dbl += pc.dbl; noburn ||= pc.noburn; } return { dbl, noburn }; };   /* (2026-09-28) and the map's World Project */
-export const tkXp = (c, skill) => tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0) + (projFx(c)?.xp?.[skill] || 0);
+export const tkXp = (c, skill) => { const pf = projFx(c); return tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0) + (pf?.xp?.[skill] || 0) + (pf?.xpAll || 0); };   /* (and a Grand Opening's +10% on everything) */
 export const tkSalv = (c) => tkOn(c).reduce((a, g) => a + (g.salv || 0), 0) + (projFx(c)?.salv || 0);
 /** is an automation tool running for this kind of work ("rock", "tree", "spot")? */
 export const tkAuto = (c, kind) => tkOn(c).some((g) => g.auto === kind || (g.auto === "rock" && kind === "vein"));
@@ -8636,3 +8651,8 @@ TINK.donateXp = 0.5;   /* Tinkering xp per part value given to a project (salvag
 /** part value of a project tier's parts (tickets aside): what the finisher's xp is worked out from */
 export const projPv = (need) => Object.entries(need || {}).reduce((a, [p, n]) => a + (TINK.parts[p] ? n * TINK.parts[p].pv : 0), 0);
 GAMES.boiler = { name: "The Boiler", icon: "♨️", proj: "table", ex: "Set the pressure from 1.1× to 100×. If the boiler holds past it, you win that many times your stake." };
+/* (2026-09-28) A BUILDER'S PIN for every World Project: everybody who gave to a stage gets that build's pin when the stage is finished,
+   once per build. A keepsake: it cannot be sold, salvaged or traded to Bom (no value), and it is drawn as a little brass badge of the
+   finished build (tools/eastscape-tinker-art.mjs). C.pins is the collection, so a lost or banked pin is still remembered. */
+for (const [id, P] of Object.entries(PROJECTS)) ITEMS[`pin_${id}`] = { name: `${P.name.replace(/^The /, "")} Builder's Pin`, icon: "\u{1F4CC}", held: HOLD.tinker, ex: `Given to everybody who helped build ${P.name} in ${P.where}. It doesn't do anything. You were there.` };
+if (!HOLD.tinker) HISCORES.push(["built", "Builders", "given to World Projects (part value, and a point per 100 tickets)", "n"]);

@@ -112,18 +112,27 @@ export function installTinker(World, { G }) {
      the same map. Parts and tickets are GIVEN, never handed back; every tier's last step needs one person with the Tinkering to
      finish it, standing at the site. */
   const PJ = G.PROJECTS, PARTS = [...Object.keys(T.parts), "tickets"];
-  P.projLoad = async function () { this.proj = (await this.ctx.storage.get("proj")) || {}; this.bpot = (await this.ctx.storage.get("bpot")) || null; G.setProjects(this.projTiers()); };
+  P.projLoad = async function () { this.proj = (await this.ctx.storage.get("proj")) || {}; this.bpot = (await this.ctx.storage.get("bpot")) || null; G.setProjects(this.projTiers()); G.setGrand(this.projGrand()); };
+  P.projGrand = function () { return Object.fromEntries(Object.entries(this.proj || {}).filter(([, st]) => st?.grand > Date.now()).map(([id, st]) => [id, st.grand])); };
+  /* what the plan boards say on hover, for every page: the stage, how full it is, and who has given most. Small (twelve rows), sent in
+     the hello and again at most every few seconds after a gift (projTick), never per click. */
+  P.projBoard = function () {
+    return Object.fromEntries(Object.keys(PJ).map((id) => { const st = this.projOf(id), need = needOf(id, st); return [id, { tier: st.tier, pct: need ? pctOf(need, st.got) : 100, top: topOf(st.by, 3).map((v) => v.name), grand: st.grand > Date.now() ? st.grand : 0 }]; }));
+  };
   P.projSave = function () { this.ctx.storage.put("proj", this.proj).catch(() => {}); };
-  P.projTiers = function () { return Object.fromEntries(Object.keys(PJ).map((id) => [id, Math.min(3, this.proj?.[id]?.tier | 0)])); };
+  P.projTiers = function () { return Object.fromEntries(Object.keys(PJ).map((id) => [id, Math.min(3, this.proj?.[id]?.tier | 0)])); };   /* (this.proj._owed is the pins waiting for a login, not a project) */
   P.projOf = function (id) { const st = ((this.proj ||= {})[id] ||= { tier: 0, got: {}, by: {}, done: [] }); st.got ||= {}; st.by ||= {}; st.done ||= []; return st; };
   const needOf = (id, st) => PJ[id].tiers[st.tier]?.need || null;
+  const pctOf = (need, got) => { const e = Object.entries(need); return Math.floor((e.reduce((a, [p, n]) => a + Math.min(1, (got?.[p] | 0) / n), 0) / e.length) * 100); };
+  const score = (v) => v.pv + (v.tix | 0) / 100, topOf = (by, n) => Object.values(by || {}).sort((a, b) => score(b) - score(a)).slice(0, n);
+  const partsText = (run) => [...Object.entries(run.parts).filter(([, n]) => n).map(([p, n]) => `${n.toLocaleString()} ${T.parts[p].name.toLowerCase()}`), ...(run.tix ? [G.fmtTix(run.tix)] : [])].reduce((a, x, i, l) => a + (i === 0 ? "" : i === l.length - 1 ? " and " : ", ") + x, "");
   const readyOf = (id, st) => { const need = needOf(id, st); return !!need && Object.entries(need).every(([p, n]) => (st.got[p] | 0) >= n); };
   const atSite = (S, pl, id) => S.key === PJ[id].scene && S.objs.some((o) => o.proj === id && G.cheb(pl, G.nearestCell(o, pl)) <= 4);
   P.projView = function (pl) {
     return Object.fromEntries(Object.keys(PJ).map((id) => {
-      const st = this.projOf(id), score = (v) => v.pv + (v.tix | 0) / 100;
-      const top = Object.values(st.by).sort((a, b) => score(b) - score(a)).slice(0, 5).map((v) => ({ name: v.name, pv: v.pv, tix: v.tix | 0 }));
-      return [id, { tier: st.tier, got: { ...st.got }, ready: readyOf(id, st), top, mine: st.by[pl.login || pl.name] || null, done: st.done.slice(-3) }];
+      const st = this.projOf(id);
+      const top = topOf(st.by, 5).map((v) => ({ name: v.name, pv: v.pv, tix: v.tix | 0 }));
+      return [id, { tier: st.tier, got: { ...st.got }, ready: readyOf(id, st), top, mine: st.by[pl.login || pl.name] || null, done: st.done.slice(-3), grand: st.grand > Date.now() ? st.grand : 0, pin: (pl.C.pins || []).includes(id) }];
     }));
   };
   P.projPush = function (pl, extra = {}) { pl.out.push({ type: "tinker", view: view(pl, this), ...extra }); };
@@ -138,11 +147,18 @@ export function installTinker(World, { G }) {
     if (left <= 0) return bad(`It has all the ${part === "tickets" ? "tickets" : T.parts[part].name.toLowerCase()} it needs.`);
     const n = Math.min(Math.floor(Number(m.n)) || 0, have, left);
     if (n <= 0) return bad(part === "tickets" ? "You've no tickets in your bag." : `You've no ${T.parts[part].name.toLowerCase()} in your pouch.`);
-    const was = readyOf(id, st);
+    const was = readyOf(id, st), pct0 = pctOf(need, st.got);
     if (part === "tickets") G.takeInv(C.inv, "tickets", n); else C.parts[part] -= n;
     st.got[part] = (st.got[part] | 0) + n;
-    const who = (st.by[pl.login || pl.name] ||= { name: pl.name, pv: 0, tix: 0 }); who.name = pl.name;
+    const me = pl.login || pl.name, who = (st.by[me] ||= { name: pl.name, pv: 0, tix: 0 }); who.name = pl.name;
     if (part === "tickets") who.tix = (who.tix | 0) + n; else who.pv += n * T.parts[part].pv;
+    (st.tierBy ||= {})[me] = pl.name;   /* this stage's builders: the ones who get its pin */
+    { const s = (C.stats ||= G.freshStats()); s.built = (s.built | 0) + Math.round(part === "tickets" ? n / 100 : n * T.parts[part].pv); }   /* the Builders hiscore */
+    /* 25 / 50 / 75%: once each per stage, to everyone */
+    { const pct1 = pctOf(need, st.got), mark = [75, 50, 25].find((m) => pct0 < m && pct1 >= m); if (mark && (st.ms | 0) < mark) { st.ms = mark; this.houseSay(`\u{1F6A7} ${Pd.name} is ${mark}% of the way to ${Pd.tiers[st.tier].name.toLowerCase()}. ${mark === 75 ? "Nearly there." : "Keep it coming."}`, "BRONNY"); } }
+    /* a big gift gets a line in chat, but a player's clicks are added up first (projTick says it once they stop) */
+    { const r = pl.projRun; if (r && r.id !== id) this.projRunSay(pl); const run = (pl.projRun ||= { id, parts: {}, tix: 0, pv: 0 }); run.at = Date.now(); if (part === "tickets") { run.tix += n; run.pv += n / 100; } else { run.parts[part] = (run.parts[part] | 0) + n; run.pv += n * T.parts[part].pv; } }
+    this.projDirty = true;
     this.grant(pl, "tinkering", Math.max(1, Math.round(part === "tickets" ? n * T.feeXp : n * T.parts[part].pv * T.donateXp)));
     this.touch(pl); this.projSave();
     this.say(pl, `You give ${part === "tickets" ? G.fmtTix(n) : `${n.toLocaleString()} ${T.parts[part].name.toLowerCase()}`} to ${Pd.name}.`, "good");
@@ -156,11 +172,15 @@ export function installTinker(World, { G }) {
     if (!readyOf(id, st)) return bad("It still wants parts. Everybody chips in first.");
     if (!atSite(S, pl, id)) return bad(`The last step is done on site: ${Pd.where}.`);
     const lvl = G.lvlOf(pl.C, "tinkering"); if (lvl < tier.finish) return bad(`That's a Tinkering ${tier.finish} job. You're ${lvl}.`);
-    st.tier++; st.got = {}; st.done.push({ tier: st.tier, by: pl.name, at: Date.now() }); this.projSave();
+    const builders = { ...(st.tierBy || {}) }; builders[pl.login || pl.name] ||= pl.name;   /* the finisher helped too */
+    st.tier++; st.got = {}; st.tierBy = {}; st.ms = 0; st.grand = Date.now() + G.GRAND.ms; st.done.push({ tier: st.tier, by: pl.name, at: Date.now(), n: Object.keys(builders).length }); this.projSave();
     this.grant(pl, "tinkering", Math.round(G.projPv(tier.need) * 0.2));
-    G.setProjects(this.projTiers()); this.projRebuild(Pd.scene);
-    this.houseSay(`\u{1F3D7}\u{FE0F} ${pl.name} finished ${tier.name.toLowerCase()} on ${Pd.name}: ${tier.does}. Thanks to everybody who chipped in.`, "BRONNY");
-    for (const p of this.pls.values()) { p.out.push({ type: "projects", tiers: this.projTiers(), id, tier: st.tier }); p.out.push({ type: "casinonote", text: `\u{1F3D7}\u{FE0F} ${Pd.name}: ${tier.name} is built!` }); }
+    G.setProjects(this.projTiers()); G.setGrand(this.projGrand()); this.projRebuild(Pd.scene);
+    this.houseSay(`\u{1F3D7}\u{FE0F} ${pl.name} finished ${tier.name.toLowerCase()} on ${Pd.name}: ${tier.does}. GRAND OPENING for the next hour in ${Pd.where}: its bonuses are doubled and every skill pays ${G.GRAND.xp * 100}% more xp there. ${Object.keys(builders).length} builders get the pin.`, "BRONNY");
+    for (const p of this.pls.values()) { p.out.push({ type: "projects", tiers: this.projTiers(), grand: this.projGrand(), id, tier: st.tier }); p.out.push({ type: "casinonote", text: `\u{1F3D7}\u{FE0F} ${Pd.name}: ${tier.name} is built! Grand Opening in ${Pd.where}.` }); if (p.C.scene === Pd.scene || Pd.also?.includes(p.C.scene)) p.out.push({ type: "confetti", id: pl.id, name: pl.name }); }
+    /* the pins: now for anyone online, on their next login for the rest */
+    for (const [login, name] of Object.entries(builders)) { const on = [...this.pls.values()].find((p) => (p.login || p.name) === login); if (on) this.projPin(on, id); else { ((this.proj._owed ||= {})[login] ||= []).includes(id) || this.proj._owed[login].push(id); } }
+    this.projSave(); this.projDirty = true;
     this.projPush(pl, { finished: { id, tier: st.tier } });
   };
   /* A tier went up: swap the project's own objects in a live scene. Everything before them keeps its index and its state (a half-mined
@@ -190,8 +210,28 @@ export function installTinker(World, { G }) {
   };
   /* once a minute (the world's slow tick): the Lightning Rod's charged air, a Spark for everyone standing on the Thunderhead */
   P.projTick = function (now) {
+    for (const p of this.pls.values()) if (p.projRun && now - p.projRun.at > 15000) this.projRunSay(p);   /* a giver who has stopped clicking */
+    if (this.projDirty && now - (this.projBoardAt || 0) > 5000) { this.projDirty = false; this.projBoardAt = now; const board = this.projBoard(); for (const p of this.pls.values()) p.out.push({ type: "projboard", board }); }
+    if (this.projGrandSig !== JSON.stringify(this.projGrand())) { this.projGrandSig = JSON.stringify(this.projGrand()); G.setGrand(this.projGrand()); }   /* a party ending */
     if ((this.projTickAt || 0) > now) return; this.projTickAt = now + 60000;
     for (const p of this.pls.values()) { const n = G.projFx(p.C)?.sparkTick | 0; if (!n) continue; p.C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 }; p.C.parts.sparks += n; this.touch(p); p.out.push({ type: "spark", n }); }
+  };
+
+  /* the big-gift line: one chat line for a run of gifts worth 1,000 part value (or 100,000 tickets) or more */
+  P.projRunSay = function (pl) {
+    const run = pl.projRun; pl.projRun = null; if (!run || run.pv < 1000) return;
+    this.houseSay(`\u{1F527} ${pl.name} just gave ${partsText(run)} to ${PJ[run.id].name}.`, "BRONNY");
+  };
+  /* a Builder's Pin, once per build per person: the bag, else the bank, else it waits for the next login */
+  P.projPin = function (pl, id) {
+    const C = pl.C, k = `pin_${id}`; C.pins ||= []; if (C.pins.includes(id)) return true;
+    if (!this.give(pl, k) && !this.bankAdd(pl, k, 1)) return false;
+    C.pins.push(id); this.touch(pl); this.say(pl, `\u{1F4CC} You get the ${G.ITEMS[k].name} for helping build it.`, "loot"); return true;
+  };
+  /* on login: any pins earned while away */
+  P.projOwed = function (pl) {
+    const owed = this.proj?._owed?.[pl.login || pl.name]; if (!owed?.length) return;
+    this.proj._owed[pl.login || pl.name] = owed.filter((id) => !this.projPin(pl, id)); this.projSave();
   };
 
   /* THE KING'S CANNON (the Mire project): Sparks from the pouch, a volley at a boss, one shot a minute for the whole server.

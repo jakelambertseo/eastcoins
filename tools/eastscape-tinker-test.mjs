@@ -177,5 +177,41 @@ setT("wheel", 3); W.ferrisRide(rider); is(rider.C.parts.scrap > afterOne.scrap, 
 setT("smoke", 3); is(G.tkCraft({ scene: "boardwalk" }, "cooking"), { dbl: 0.2, noburn: true }, "the Smokehouse: no burning, 20% doubles on the Boardwalk");
 setT("camp", 3); is([G.tkXp({ scene: "wild" }, "melee"), G.projFx({ scene: "deep" })?.pvpDrop, G.projFx({ scene: "workyard" })], [0.1, 0.5, null], "the Forward Camp: combat xp and the field hospital, in the Wild and the Deep Wild only");
 
+/* 14. THE FUN PASS: the Grand Opening, the pins and the Builders board, the plan boards' progress and the lines in chat */
+{
+  const said = []; W.houseSay = (t) => said.push(t);
+  setT("still", 0); const stS = W.projOf("still"); stS.got = {}; stS.tierBy = {}; stS.ms = 0; stS.grand = 0; G.setGrand(W.projGrand());
+  const SA = W.scene("sands"), stillBoard = SA.objs.find((o) => o.t === "projboard" && o.proj === "still");
+  const giver = { id: "gv", name: "Gia", login: "gia", C: G.freshChar(), x: stillBoard.x, y: stillBoard.y + 1, out: [], path: [] }; giver.C.scene = "sands"; W.pls.set("gv", giver);
+  const away = { name: "Otto" }; stS.tierBy = { otto: "Otto" };   /* somebody who gave and then logged off */
+  const need = G.PROJECTS.still.tiers[0].need; giver.C.parts = { scrap: 1e6, gears: 1e6, sparks: 1e6, relic: 100 }; G.addInv(giver.C.inv, "tickets", 5e6, giver.C);
+  /* the milestones: give a third of every part, then the rest */
+  for (const [p, n] of Object.entries(need)) W.tinkerOp(SA, giver, { op: "give", id: "still", part: p, n: Math.ceil(n * 0.3) });
+  is(said.filter((t) => /25% of the way/.test(t)).length, 1, "25%: said once, to everybody");
+  is(W.projBoard().still.pct >= 25 && W.projBoard().still.pct < 50, true, `the plan board knows how full it is (${W.projBoard().still.pct}%)`);
+  for (const [p, n] of Object.entries(need)) W.tinkerOp(SA, giver, { op: "give", id: "still", part: p, n });
+  is([said.some((t) => /50% of the way/.test(t)), said.some((t) => /75% of the way/.test(t))], [true, true], "50% and 75% said too");
+  /* the big-gift line: nothing while the clicks keep coming, one line once they stop */
+  const before = said.length; W.projTick(Date.now()); is(said.length, before, "no gift line while the giver is still clicking");
+  W.projTick(Date.now() + 20000); is(said.slice(before).filter((t) => /Gia just gave/.test(t)).length, 1, "one line for the whole run once they stop: " + (said.slice(before).find((t) => /Gia just gave/.test(t)) || "").slice(0, 90));
+  is((giver.C.stats.built | 0) > 1000, true, `the Builders board counts it (${giver.C.stats.built})`);
+  /* the finish: a party, the pins, confetti */
+  giver.C.xp.tinkering = G.XP_AT[30]; giver.out = [];
+  W.tinkerOp(SA, giver, { op: "finish", id: "still" });
+  is([G.projTier("still"), G.grandLeft("still") > 50 * 60000], [1, true], "stage 1 built, and an hour's Grand Opening");
+  is([giver.C.pins.includes("still"), giver.C.inv.some((s) => s.k === "pin_still"), !!giver.out.find((e) => e.type === "confetti")], [true, true, true], "the builder gets the pin, and the confetti goes off");
+  is(W.proj._owed?.otto, ["still"], "the builder who was away is owed theirs");
+  const otto = { id: "ot", name: "Otto", login: "otto", C: G.freshChar(), x: 5, y: 5, out: [], path: [] }; otto.C.scene = "workyard"; W.pls.set("ot", otto);
+  W.projOwed(otto); is([otto.C.pins, W.proj._owed.otto], [["still"], []], "and gets it on their next login");
+  W.projOwed(otto); is(otto.C.inv.filter((s) => s.k === "pin_still").length, 1, "never twice");
+  /* the party doubles the build's bonuses and adds 10% xp to every skill in that map, and only there */
+  setT("still", 2); W.projOf("still").grand = Date.now() + 60000; G.setGrand(W.projGrand());
+  is([G.tkCraft({ scene: "sands" }, "alchemy").dbl, G.tkXp({ scene: "sands" }, "mining"), G.tkXp({ scene: "workyard" }, "mining")], [0.3, 0.1, 0], "Grand Opening: the still's 15% becomes 30%, +10% xp on everything in the Sands, nothing elsewhere");
+  is(!!G.buffsOf({ scene: "sands" }).find((b) => b.id === "grand"), true, "the buffs bar shows the party");
+  W.projOf("still").grand = 0; G.setGrand(W.projGrand()); is(G.tkCraft({ scene: "sands" }, "alchemy").dbl, 0.15, "and it ends");
+  is(G.normChar(JSON.parse(JSON.stringify(giver.C))).pins, ["still"], "the pins survive a save");
+  W.houseSay = () => {};
+}
+
 console.log(bad ? `\n${bad} problem(s)` : "\nTinkering works: salvage by the rules and safe, gadgets built, used and broken, and the automation tools carry on while you're away");
 process.exitCode = bad ? 1 : 0;

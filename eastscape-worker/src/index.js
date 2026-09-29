@@ -299,7 +299,8 @@ export class World {
     /* (2026-09-27) A LOAD WITH NOTHING TO HOLD IT: the pocket outlived its quiver somehow (an old save, a lost piece). It can no longer
        fire (G.ammoOf wants the pouch), so it is handed back to the bag here rather than left invisible. */
     if (C.quiver && !(G.pouchOf(C) && G.pouchOf(C).pouch.ammo === G.ammoKind(C.quiver.k))) this.pocketOut(pl);
-    this.send(pl, { type: "hello", version: G.VERSION, t: Date.now(), you: { id: pl.id, login: pl.login, name: pl.name, admin: pl.admin, role: pl.role }, me: this.meOf(pl), proj: this.projTiers() });
+    this.send(pl, { type: "hello", version: G.VERSION, t: Date.now(), you: { id: pl.id, login: pl.login, name: pl.name, admin: pl.admin, role: pl.role }, me: this.meOf(pl), proj: this.projTiers(), grand: this.projGrand(), pboard: this.projBoard() });
+    this.projOwed(pl);   /* (2026-09-28) Builder's Pins earned while away */
     this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S), npcs: this.npcsOf(S) });
     if (this.chatLog?.length) this.send(pl, { type: "ev", list: this.chatLog.map((x) => ({ ...x, old: true })) });   /* (2026-09-27) the recent chat: see chatKeep */
     if (HEARD.has(String(S.key).split(":")[0])) { this.songTick(Date.now()); if (this.song || this.songQ?.length) this.send(pl, { type: "ev", list: [this.songMsg()] }); }
@@ -800,12 +801,12 @@ export class World {
         /* (2026-09-28) /parts 500: an admin's pouch topped up with that many of every part, for testing Tinkering */
         { const pp = text.match(/^[\/!]parts\b\s*(\d+)?/i);
           if (pp) { if (!this.canRun(pl, "projtier")) return this.say(pl, "That one is admins only.", "bad"); const n = Math.min(1e6, +(pp[1] || 500)); C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 }; for (const k of Object.keys(G.TINK.parts)) C.parts[k] = (C.parts[k] | 0) + n; this.touch(pl); this.projPush(pl); return this.say(pl, `+${n.toLocaleString()} of every part. Your pouch: ${Object.entries(C.parts).map(([k, v]) => `${v.toLocaleString()} ${G.TINK.parts[k].name.toLowerCase()}`).join(", ")}.`, "good"); } }
-        { const pj = text.match(/^[\/!]projects?\b\s*([a-z]+)?\s*(\d)?\s*(fill)?/i);
+        { const pj = text.match(/^[\/!]projects?\b\s*([a-z]+)?\s*(\d)?\s*((?:fill|party|\s)*)/i);
           if (pj) {
-            if (pj[2] == null) return this.say(pl, `${Object.entries(G.PROJECTS).map(([id, P]) => `${P.name} (${id}): tier ${G.projTier(id)} of 3`).join(" · ")}.${this.canRun(pl, "projtier") ? " Admins: /project dock 1, add fill to fill its parts." : ""}`, "good");
+            if (pj[2] == null) return this.say(pl, `${Object.entries(G.PROJECTS).map(([id, P]) => `${P.name} (${id}): tier ${G.projTier(id)} of 3`).join(" · ")}.${this.canRun(pl, "projtier") ? " Admins: /project dock 1, add fill to fill its parts, party for a Grand Opening." : ""}`, "good");
             if (!this.canRun(pl, "projtier")) return this.say(pl, "That one is admins only.", "bad");
             if (!G.PROJECTS[String(pj[1]).toLowerCase()]) return this.say(pl, `No project called ${pj[1]}. It's one of: ${Object.keys(G.PROJECTS).join(", ")}.`, "bad");
-            return this.admin(S, pl, { cmd: "projtier", id: String(pj[1]).toLowerCase(), tier: +pj[2], fill: !!pj[3] });
+            return this.admin(S, pl, { cmd: "projtier", id: String(pj[1]).toLowerCase(), tier: +pj[2], fill: /fill/i.test(pj[3] || ""), party: /party/i.test(pj[3] || "") });
           } }
         const msg = { type: "chat", id: pl.id, name: pl.name, nfx: G.nameFxOf(pl.C) || undefined, role: pl.role !== "user" ? pl.role : undefined, text, scene: pl.C.scene, t: now };
         for (const p of this.pls.values()) p.out.push(msg);
@@ -1318,7 +1319,8 @@ export class World {
           quests: G.questsDone(C), jobs: C.stats?.jobs | 0, tourDone: !!(C.tour && C.tour.step >= G.TOUR.length), earned: Math.round(Number(C.earned) || 0), wagered: Math.round(Number(C.wagered) || 0), zcoins: (C.found && typeof C.found === "object" ? C.found.zcoin : 0) | 0,
           runBest: C.stats?.runBest || 0,   // (2026-09-22) The Run's board; 0 means never finished a lap, and board() drops those
           tower: C.tower?.best | 0,   // (2026-09-27) the highest floor cleared, for the Tower board; 0 (never climbed) is dropped the same way
-          corn: C.stats?.corn | 0,   // (2026-09-27) candy corn earned this Long Night, for the season's board
+          corn: C.stats?.corn | 0,
+          built: C.stats?.built | 0,   // (2026-09-28) the Builders board: what was given to World Projects   // (2026-09-27) candy corn earned this Long Night, for the season's board
           playMs: C.stats?.playMs || 0
         });
       }
@@ -4843,7 +4845,7 @@ export class World {
         const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k, name: "", ...(m.tier ? { tier: 1, fx: G.greaterFx(k, k) } : {}) };
         C.pets.push(pet); this.touch(pl); return note(`Gave ${G.petLabel(pet)}.`);
       }
-      case "projtier": { const id = String(m.id); if (!G.PROJECTS[id]) return; const st = this.projOf(id); st.tier = Math.max(0, Math.min(3, m.tier | 0)); st.got = m.fill ? { ...(G.PROJECTS[id].tiers[st.tier]?.need || {}) } : {}; this.projSave(); G.setProjects(this.projTiers()); this.projRebuild(G.PROJECTS[id].scene); for (const p of this.pls.values()) p.out.push({ type: "projects", tiers: this.projTiers(), id, tier: st.tier }); return note(`${G.PROJECTS[id].name}: tier ${st.tier}${m.fill ? ", parts filled" : ""}.`); }   /* (2026-09-28) World Projects, for testing */
+      case "projtier": { const id = String(m.id); if (!G.PROJECTS[id]) return; const st = this.projOf(id); st.tier = Math.max(0, Math.min(3, m.tier | 0)); st.grand = m.party ? Date.now() + G.GRAND.ms : 0; G.setGrand(this.projGrand()); st.got = m.fill ? { ...(G.PROJECTS[id].tiers[st.tier]?.need || {}) } : {}; this.projSave(); G.setProjects(this.projTiers()); this.projRebuild(G.PROJECTS[id].scene); this.projDirty = true; for (const p of this.pls.values()) { p.out.push({ type: "projects", tiers: this.projTiers(), grand: this.projGrand(), id, tier: st.tier }); if (m.party && p.C.scene === G.PROJECTS[id].scene) p.out.push({ type: "confetti", id: pl.id }); } return note(`${G.PROJECTS[id].name}: tier ${st.tier}${m.fill ? ", parts filled" : ""}${m.party ? ", Grand Opening on" : ""}.`); }   /* (2026-09-28) World Projects, for testing */
       case "setlvl": { const l = Math.max(1, Math.min(99, m.lvl | 0)); if (!skill) return; C.xp[skill] = G.XP_AT[l]; if (skill === "hp") C.hp = G.maxHpOf(C); C.hp = Math.min(C.hp, G.maxHpOf(C)); this.touch(pl); return note(`${G.SKILLS[skill].name} set to ${l}.`); }
       case "clearxp": {
         const f = G.freshChar().xp;

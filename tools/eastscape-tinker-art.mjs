@@ -59,3 +59,16 @@ for (const [name, id] of Object.entries(ICONS)) {
   await sharp(buf).trim({ threshold: 0 }).resize(30, 30, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 }, kernel: "lanczos3" }).extend({ top: 1, bottom: 1, left: 1, right: 1, background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toFile(`${items}${name}.png`);
   console.log(`items/${name}.png`);
 }
+
+/* THE BUILDER'S PINS (items/pin_<id>.png): a brass badge with that build's finished picture in it, made here from the art above, so a
+   pin always matches its build and needs no generation of its own. 32x32 like every item icon. */
+const PIN_ART = { dock: "o_pj_dockshed", cannon: "o_pj_cannon3", table: "o_pj_boiler3", sawmill: "o_pj_sawmill3", crusher: "o_pj_crusher3", still: "o_pj_still3", press: "o_pj_press3", rod: "o_pj_rod3", crane: "o_pj_crane3", wheel: "o_pj_wheel3", smoke: "o_pj_smoke3", camp: "o_pj_camp3" };
+const badge = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" shape-rendering="crispEdges">
+  <circle cx="16" cy="16" r="15" fill="#2a1a08"/><circle cx="16" cy="16" r="14" fill="#c8963a"/><circle cx="16" cy="16" r="12" fill="#f0c860"/>
+  <circle cx="16" cy="16" r="11" fill="#3a2a1a"/><circle cx="16" cy="16" r="10" fill="#4a3a26"/></svg>`);
+for (const [id, art] of Object.entries(PIN_ART)) {
+  if (only && !only.has(`pin_${id}`)) continue;
+  const inner = await sharp(`${flat}${art}.png`).trim({ threshold: 0 }).resize(19, 19, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 }, kernel: "lanczos3" }).png().toBuffer();
+  await sharp(badge).composite([{ input: inner, left: 6, top: 6 }]).png().toFile(`${items}pin_${id}.png`);
+  console.log(`items/pin_${id}.png`);
+}

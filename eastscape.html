@@ -2139,7 +2139,7 @@ function onMsg(m) {
     return; }
   // the server is about to go down on purpose; the close that follows is not a fault
   if (m.type === "restarting") { restartHold = Number(m.holdMs) || 25000; return; }
-  if (m.type === "hello") { G.setProjects(m.proj || {});   /* (2026-09-28) World Projects: the tiers build the maps */ setTimeout(welcomeOnce, 4500);   /* (after the look window has had its turn; it does nothing until you have a face) */
+  if (m.type === "hello") { G.setProjects(m.proj || {}); G.setGrand(m.grand || {}); PBOARD = m.pboard || null;   /* (2026-09-28) World Projects: the tiers build the maps */ setTimeout(welcomeOnce, 4500);   /* (after the look window has had its turn; it does nothing until you have a face) */
     // the server runs newer rules than this page: fetch the new page (at most once a minute, so a half-finished deploy can't loop)
     if (m.version !== G.VERSION) {
       let last = 0; try { last = +sessionStorage.getItem("es_reload") || 0; } catch (e) { /* no storage */ }
@@ -2326,7 +2326,8 @@ function onEvent(e) {
   if (e.type === "order") { ORDUI?.got(e.view); return; }   /* (2026-09-28) Bronny's order: nothing to draw until the window has been opened once */
   if (e.type === "ordererr") { ORDUI?.oops(e.text); return; }
   if (e.type === "tinker") { tinkUi().then((u) => { u.got(e.view, e.got, e.built); if (e.open) { u.open(e.focus); u.got(e.view); } if (e.finished) u.done(e.finished); }).catch(() => {}); return; }   /* (2026-09-28) the Scrap Bench */
-  if (e.type === "projects") { G.setProjects(e.tiers); projRefresh(); if (TINKUI) TINKUI.tiers?.(e.tiers); return; }   /* (2026-09-28) a World Project went up a tier */
+  if (e.type === "projects") { G.setProjects(e.tiers); if (e.grand) G.setGrand(e.grand); projRefresh(); if (TINKUI) TINKUI.tiers?.(e.tiers); renderStats(); return; }
+  if (e.type === "projboard") { PBOARD = e.board; G.setGrand(Object.fromEntries(Object.entries(e.board || {}).filter(([, b]) => b.grand).map(([id, b]) => [id, b.grand]))); return; }   /* (2026-09-28) the plan boards' hover text */   /* (2026-09-28) a World Project went up a tier */
   if (e.type === "ferris") { SFX.play("win_small", { vol: 0.7 }); return; }   /* (2026-09-28) the Ferris Wheel's prize: the line in chat says what it was */
   if (e.type === "spark") { if (TINKUI) TINKUI.tiers?.(); return; }   /* (2026-09-28) the Lightning Rod's minute Spark */
   if (e.type === "cannon") { SFX.play("win_big", { vol: 0.8 }); cannonFx(e); return; }   /* (2026-09-28) the King's Cannon */
@@ -2913,7 +2914,7 @@ function spr(k, x, y, flip = false, filter = "", sc = 1, rot = 0) {
   lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
 }
 // item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
-const ITEM_ART = new Set(["tk_confetti", "tk_baitbox", "tk_medkit", "tk_whetstone", "tk_scope", "tk_arccoil", "tk_lockpick", "tk_cooker", "tk_bellows", "tk_distiller", "tk_featherjig", "tk_handpress", "tk_magnifier", "tk_humidifier", "tk_lantern", "tk_grapple", "tk_pettoy", "tk_banner", "tk_auger", "tk_chainsaw", "tk_autoreel", "tk_bomb",   /* (2026-09-28) Tinkering's gadgets */ "mackerel", "cmackerel", "smackerel", "bluefin", "cbluefin", "sbluefin", "swordfish", "cswordfish", "sswordfish", "clawpin", "clawgrip",   /* (2026-09-27) the Boardwalk's fish, the claw pin and Captain Claw's grip (PixelLab, on the art brief) */ "bronze_bead", "bronze_necklace", "glass_bead", "bead_necklace", "polished_diamond", "polished_dragonstone", "polished_onyx", "starfall_glass", "eclipse_pearl", "cut_abyss", "cut_ruby", "cut_sapphire", "cut_topaz", "cut_opal", "emerald_ring_ruby", "emerald_amulet_ruby", "dragonstone_ring_sapphire", "dragonstone_amulet_sapphire", "starfall_ring_topaz", "starfall_amulet_topaz", "nova_ring_opal", "nova_amulet_opal", "singularity_ring_abyss", "singularity_amulet_abyss",   /* (2026-09-27) Jewelcrafting */ "abyss_crystal", "deep_sigil", "deepheart", "slag", "emberglass", "tally", "pot_ember", "bessemergloves",   /* (2026-09-27) the Foundry's drops, its tonic and Old Bessemer's chase */   /* (2026-09-27) the Depths */ "buttoncap", "oyster", "puffball", "bluemould", "inkcap", "bleedtooth", "glowcap", "ghostpipe", "truffle", "lionsmane", "voidmorel", "starcap", "spawn_sporecap", "spawn_buttoncap", "spawn_oyster", "spawn_puffball", "spawn_bluemould", "spawn_inkcap", "spawn_bleedtooth", "spawn_glowcap", "spawn_ghostpipe", "spawn_truffle", "spawn_lionsmane", "spawn_voidmorel", "spawn_starcap", "compost", "mushroom_soup", "truffle_dinner", "starcap_feast", "pot_sleep", "pot_bleed", "pot_pipe", "pot_mane", "pot_star",   /* (2026-09-27) Fungiculture */ "egg_speckled", "egg_mossy", "egg_truffle", "egg_sparking", "egg_cindered", "egg_velvet", "egg_geode", "egg_gilded", "petfood_ordinary", "petfood_greater", "petfood_legend",   /* (2026-09-27) Breeding */ "candycorn", "pumpkin", "seed_pumpkin", "pumpkinpie", "ectoplasm", "pot_witch", "hallowed_helm", "hallowed_body", "hallowed_legs", "gallows_bow", "lantern_quiver", "skull_wand", "bag_shroud", "drowned_boots", "coffin_ring", "reaper_scythe", "king_crown", "ferry_coin",   /* (2026-09-27) the Long Night */ "caravan_parcel", "audit_ledger",   /* (2026-09-27) the two quest props */ "wildsilk", "marrow", "marrow_arrowhead", "marrow_arrow", "grimcore", "voidfin", "cvoidfin", "svoidfin", "grimscale", "cgrimscale", "sgrimscale", "gallowslogs", "glassgourd", "emberwheat", "starfruit",
+const ITEM_ART = new Set(["pin_dock", "pin_cannon", "pin_table", "pin_sawmill", "pin_crusher", "pin_still", "pin_press", "pin_rod", "pin_crane", "pin_wheel", "pin_smoke", "pin_camp",   /* (2026-09-28) the Builder's Pins */ "tk_confetti", "tk_baitbox", "tk_medkit", "tk_whetstone", "tk_scope", "tk_arccoil", "tk_lockpick", "tk_cooker", "tk_bellows", "tk_distiller", "tk_featherjig", "tk_handpress", "tk_magnifier", "tk_humidifier", "tk_lantern", "tk_grapple", "tk_pettoy", "tk_banner", "tk_auger", "tk_chainsaw", "tk_autoreel", "tk_bomb",   /* (2026-09-28) Tinkering's gadgets */ "mackerel", "cmackerel", "smackerel", "bluefin", "cbluefin", "sbluefin", "swordfish", "cswordfish", "sswordfish", "clawpin", "clawgrip",   /* (2026-09-27) the Boardwalk's fish, the claw pin and Captain Claw's grip (PixelLab, on the art brief) */ "bronze_bead", "bronze_necklace", "glass_bead", "bead_necklace", "polished_diamond", "polished_dragonstone", "polished_onyx", "starfall_glass", "eclipse_pearl", "cut_abyss", "cut_ruby", "cut_sapphire", "cut_topaz", "cut_opal", "emerald_ring_ruby", "emerald_amulet_ruby", "dragonstone_ring_sapphire", "dragonstone_amulet_sapphire", "starfall_ring_topaz", "starfall_amulet_topaz", "nova_ring_opal", "nova_amulet_opal", "singularity_ring_abyss", "singularity_amulet_abyss",   /* (2026-09-27) Jewelcrafting */ "abyss_crystal", "deep_sigil", "deepheart", "slag", "emberglass", "tally", "pot_ember", "bessemergloves",   /* (2026-09-27) the Foundry's drops, its tonic and Old Bessemer's chase */   /* (2026-09-27) the Depths */ "buttoncap", "oyster", "puffball", "bluemould", "inkcap", "bleedtooth", "glowcap", "ghostpipe", "truffle", "lionsmane", "voidmorel", "starcap", "spawn_sporecap", "spawn_buttoncap", "spawn_oyster", "spawn_puffball", "spawn_bluemould", "spawn_inkcap", "spawn_bleedtooth", "spawn_glowcap", "spawn_ghostpipe", "spawn_truffle", "spawn_lionsmane", "spawn_voidmorel", "spawn_starcap", "compost", "mushroom_soup", "truffle_dinner", "starcap_feast", "pot_sleep", "pot_bleed", "pot_pipe", "pot_mane", "pot_star",   /* (2026-09-27) Fungiculture */ "egg_speckled", "egg_mossy", "egg_truffle", "egg_sparking", "egg_cindered", "egg_velvet", "egg_geode", "egg_gilded", "petfood_ordinary", "petfood_greater", "petfood_legend",   /* (2026-09-27) Breeding */ "candycorn", "pumpkin", "seed_pumpkin", "pumpkinpie", "ectoplasm", "pot_witch", "hallowed_helm", "hallowed_body", "hallowed_legs", "gallows_bow", "lantern_quiver", "skull_wand", "bag_shroud", "drowned_boots", "coffin_ring", "reaper_scythe", "king_crown", "ferry_coin",   /* (2026-09-27) the Long Night */ "caravan_parcel", "audit_ledger",   /* (2026-09-27) the two quest props */ "wildsilk", "marrow", "marrow_arrowhead", "marrow_arrow", "grimcore", "voidfin", "cvoidfin", "svoidfin", "grimscale", "cgrimscale", "sgrimscale", "gallowslogs", "glassgourd", "emberwheat", "starfruit",
   /* (2026-09-24) ALCHEMY's own icons. ITEM_ART is an allowlist: an item NOT in it falls back to its emoji, which
      is why every fish and log in the game is a glyph and only the new concepts get drawn. The ten potions are
      deliberately left on the emoji - they are the same bottle in fifteen colours, and one drawn vial per SIZE
@@ -5091,7 +5092,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   if (hovEx && hovEx.dest) label(`${{ n: "↑", s: "↓", w: "←", e: "→" }[hovEx.side]} To ${hovEx.dest.replace(/^The /, "the ")}`, view.bx + view.bw / 2, view.by + 8, "#fff", 14);
   if (hoverThing) {
     const rq = hoverThing.ob?.req, low = rq && lvl(rq.skill) < rq.lvl;
-    label(`${G.VERB[hoverThing.kind] || "Examine"} ${hoverThing.name}${rq ? ` (${SKILLS[rq.skill].name} ${rq.lvl})` : ""}`, view.bx + view.bw / 2, view.by + 8, low ? "#ff8a7a" : "#fff", 14);
+    label(`${G.VERB[hoverThing.kind] || "Examine"} ${hoverThing.name}${rq ? ` (${SKILLS[rq.skill].name} ${rq.lvl})` : ""}${projHover(hoverThing.ob)}`, view.bx + view.bw / 2, view.by + 8, low ? "#ff8a7a" : "#fff", 14);
   }
   // the map beyond the window is hidden behind the page's black
   ctx.fillStyle = "#000"; ctx.fillRect(0, 0, w, view.by); ctx.fillRect(0, view.by + view.bh, w, h); ctx.fillRect(0, 0, view.bx, h); ctx.fillRect(view.bx + view.bw, 0, w, h);
@@ -5929,7 +5930,7 @@ function runRepUi() { return RUNREP ? Promise.resolve(RUNREP) : import(RUNREP_UR
 let METER = null; const METER_URL = "/v3/assets/js/eastscape-meter.js?v=2";
 function meterUi() { return METER ? Promise.resolve(METER) : import(METER_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (METER = m.createMeter({ G, $, esc, send, SFX, you: () => you, hasReport: () => !!RUNREP?.has(), openReport: () => RUNREP?.open() })); }); }
 /* (2026-09-28) TINKERING: Sprocket Sal's Scrap Bench is a lazy module */
-let TINKUI = null; const TINKUI_URL = "/v3/assets/js/eastscape-tinker.js?v=6";
+let TINKUI = null; const TINKUI_URL = "/v3/assets/js/eastscape-tinker.js?v=7";
 function tinkUi() { return TINKUI ? Promise.resolve(TINKUI) : import(TINKUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (TINKUI = m.createTinker({ G, $, esc, send, SFX, ico, openWin, winFx, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
 let ORDUI = null; const ORDUI_URL = "/v3/assets/js/eastscape-order.js?v=6";
 function ordUi() { return ORDUI ? Promise.resolve(ORDUI) : import(ORDUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (ORDUI = m.createOrderUi({ G, $, esc, send, SFX, openWin, ico, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
@@ -6437,6 +6438,13 @@ const bursts = [];
 /* (2026-09-28) A WORLD PROJECT WENT UP A TIER while you stand in its map: rebuild the map from the same rules the server just used, so
    the dock is in the pond (or the cannon on its wheels) without walking out and back. The objects are the rules' own; the server's
    state for the rest of the map (a rock's ore, a tree's stump) arrives with its next update as usual. */
+/* (2026-09-28) what every plan board says on hover: the stage and how full it is, a Grand Opening, and the top builders */
+let PBOARD = null;
+function projHover(ob) {
+  const b = ob?.t === "projboard" && PBOARD?.[ob.proj]; if (!b) return "";
+  const top = b.top?.length ? ` · top builders: ${b.top.join(", ")}` : "";
+  return b.tier >= 3 ? ` · finished${top}` : ` · stage ${b.tier + 1} of 3: ${b.pct}%${b.grand > Date.now() ? " · GRAND OPENING" : ""}${top}`;
+}
 function projRefresh() {
   if (!Z.key || !G.projScenes().includes(String(Z.key).split(":")[0])) return;
   const b = G.buildScene(Z.key); Z.g = b.g; Z.objs = b.objs; hoverThing = null; Z.bg = paintBg(); loadAreaArt(Z.key);
@@ -7666,7 +7674,7 @@ function dblSet(on) {
   dblRender();
   if (DBL && !dblTimer) dblTimer = setInterval(dblRender, 1000);
 }
-window.__es = { get PETF() { return PETF; }, openScreen, openPicks, openJuke, openVan, openLook, openMap, openPen, openHatch, openCraft, openSmith, openShop, CZ, renderTour, renderPanel, popup, showInfo, talkTo, set zc(n) { ZCBAL = n; renderPanel(); }, wlNum, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
+window.__es = { get PETF() { return PETF; }, get PBOARD() { return PBOARD; }, projHover, openScreen, openPicks, openJuke, openVan, openLook, openMap, openPen, openHatch, openCraft, openSmith, openShop, CZ, renderTour, renderPanel, popup, showInfo, talkTo, set zc(n) { ZCBAL = n; renderPanel(); }, wlNum, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
 
 setInterval(() => {
   if (ws && ws.readyState === 1 && you) {

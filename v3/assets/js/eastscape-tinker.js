@@ -71,8 +71,9 @@ export function createTinker(E) {
         }).join("");
         const top = (st.top || []).map((w) => `<li><b>${esc(w.name)}</b><small>${w.pv.toLocaleString()} parts${w.tix ? ` · ${G.fmtTix(w.tix)}` : ""}</small></li>`).join("");
         return `<div class="tk-proj${st.ready ? " ready" : ""}${focus === id ? " focus" : ""}" data-proj="${id}">
-          <div class="tk-ph"><b>${esc(P.name)}</b><span class="tk-where">${esc(P.where)}</span><span class="tk-pips" aria-label="tier ${st.tier + 1} of 3">${pips}</span></div>
+          <div class="tk-ph"><b>${esc(P.name)}</b><span class="tk-where">${esc(P.where)}</span>${st.grand > Date.now() ? `<span class="tk-grand">\u{1F389} Grand Opening · ${Math.ceil((st.grand - Date.now()) / 60000)} min</span>` : ""}<span class="tk-pips" aria-label="tier ${st.tier + 1} of 3">${pips}</span></div>
           <p class="tk-pd"><b>Tier ${st.tier + 1}: ${esc(t.name)}.</b> ${esc(t.does[0].toUpperCase() + t.does.slice(1))}.</p>
+          <p class="tk-pin">${ico(`pin_${id}`)}${st.pin ? "You have this build's pin." : "Give anything to this stage and you get the Builder's Pin when it's finished."}</p>
           <div class="tk-bars">${bars}</div>
           <div class="tk-pf">${top ? `<ol class="tk-top5">${top}</ol>` : `<span class="k-note">Nobody's given yet. Be first.</span>`}
             <button type="button" class="k-btn tk-finish" data-id="${id}"${st.ready ? "" : " disabled"}>${st.ready ? `Finish it · Tinkering ${t.finish}` : `Finishing needs Tinkering ${t.finish}`}</button></div></div>`;
@@ -136,6 +137,8 @@ export const CSS = `
 #tkWin .k-btn.tk-lot{flex:none;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn_gold.png?v=1) 10 fill / 7px stretch;background:none;color:#2a1600;text-shadow:none;font:900 14px var(--k-disp,Cinzel),serif}
 .tk-foot{margin:0;gap:10px}.tk-foot .k-note{flex:1 1 auto;min-width:0}
 /* the Projects tab */
+.tk-grand{padding:2px 9px;border-radius:99px;background:#ffd84a;color:#3a2400;font:900 11px Lora,serif;letter-spacing:.04em;animation:tkGrand 1.6s ease-in-out infinite}@keyframes tkGrand{50%{box-shadow:0 0 0 4px rgba(255,216,74,.35)}}@media (prefers-reduced-motion:reduce){.tk-grand{animation:none}}
+.tk-pin{margin:0;display:flex;align-items:center;gap:6px;font:700 12px Lora,serif;color:var(--k-ink2)}.tk-pin img{width:22px;height:22px;image-rendering:pixelated}
 .tk-proj{display:grid;gap:8px;padding:12px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
 .tk-proj.focus{box-shadow:inset 0 0 0 2.5px #e8bf35}.tk-proj.ready{box-shadow:inset 0 0 0 2.5px var(--k-good)}.tk-proj.done{opacity:.8}
 .tk-ph{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.tk-ph b{font:800 17px var(--k-disp,Cinzel),serif}.tk-where{font:700 12px Lora,serif;color:var(--k-ink2)}
