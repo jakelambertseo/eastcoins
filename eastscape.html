@@ -569,6 +569,11 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 @keyframes gamesglow{0%,100%{box-shadow:0 0 0 0 rgba(242,210,46,0)}50%{box-shadow:0 0 10px 2px rgba(242,210,46,.75)}}
 @media (prefers-reduced-motion:reduce){.top .topl.glow{animation:none;text-decoration:underline}}
 .wiki{display:grid;grid-template-columns:190px minmax(0,1fr);gap:0;min-height:0;flex:1}
+/* (2026-09-28) the wiki's own back and forward: see WKH */
+.wk-hist{display:inline-flex;gap:4px;margin-right:2px}
+.wk-hist button{width:30px;height:28px;display:grid;place-items:center;border:0;border-radius:6px;background:rgba(255,235,190,.14);color:#f6e9cc;font:900 20px/1 Lora,serif;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,215,140,.3)}
+.wk-hist button:hover:not(:disabled){background:rgba(255,216,74,.28);color:#fff}
+.wk-hist button:disabled{opacity:.35;cursor:default}
 .wiki nav{overflow:auto;padding:8px;}
 .wiki nav button{display:block;width:100%;text-align:left;border:0;background:none;padding:5px 8px;font-weight:700;cursor:pointer;font-size:14px}
 .wiki nav button:hover,.wiki nav button[aria-current="true"]{background:#d9c9a2}
@@ -1919,7 +1924,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="win-body" id="questBody"></div>
     </section>
     <section class="win" id="wikiWin" aria-label="Wiki" hidden style="width:min(980px,calc(100% - 28px));height:calc(100% - 28px)">
-      <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/g_updates.png?v=1" alt="" class="topi">EastScape Wiki</b><small>built from the game itself</small><button type="button" class="win-x" data-close="wikiWin" aria-label="Close">×</button></div>
+      <div class="win-head"><span class="wk-hist"><button type="button" id="wikiBack" aria-label="Back" title="Back (Alt+←)" disabled>‹</button><button type="button" id="wikiFwd" aria-label="Forward" title="Forward (Alt+→)" disabled>›</button></span><b><img src="/v3/assets/img/glad/flat/ui/g_updates.png?v=1" alt="" class="topi">EastScape Wiki</b><small>built from the game itself</small><button type="button" class="win-x" data-close="wikiWin" aria-label="Close">×</button></div>
       <div class="wiki"><nav id="wikiNav"></nav><article id="wikiPage"></article></div>
     </section>
     <div class="cover" id="gate" hidden>
@@ -6549,10 +6554,26 @@ function wikiNav(active) {
     ${groups.map((g) => `<button data-wiki="list/${g}"${active === `list/${g}` ? ' aria-current="true"' : ""}>${GROUP_ICO[g]} ${g}</button>`).join("")}`;
   $("wikiSearch").addEventListener("input", (e) => { const q = e.target.value.trim(); if (q) wikiGo(`search/${q}`, false); });
 }
+/* (2026-09-28, the owner: "add back/forward buttons into the wiki") THE WIKI'S OWN HISTORY. The address bar is REPLACED on every page
+   (history.replaceState, below), on purpose, so the game's Back button leaves the game rather than walking the wiki; so the wiki keeps its
+   own list: every page you land on, the last 50, with a cursor. Back and forward move the cursor without adding to the list; landing on a
+   new page cuts everything after the cursor, as a browser does. Typing in the search box updates one search entry rather than adding one
+   a keystroke. Alt+Left / Alt+Right and a mouse's side buttons work while the wiki is open. */
+const WKH = { list: [], i: -1, moving: false };
+function wikiHist(route) {
+  if (WKH.moving) { WKH.moving = false; }
+  else if (WKH.list[WKH.i] !== route) {
+    const cur = WKH.list[WKH.i];
+    if (cur && cur.startsWith("search/") && route.startsWith("search/")) WKH.list[WKH.i] = route;
+    else { WKH.list = WKH.list.slice(0, WKH.i + 1); WKH.list.push(route); if (WKH.list.length > 50) WKH.list.shift(); WKH.i = WKH.list.length - 1; }
+  }
+  $("wikiBack").disabled = WKH.i <= 0; $("wikiFwd").disabled = WKH.i >= WKH.list.length - 1;
+}
+function wikiStep(d) { const j = WKH.i + d; if (j < 0 || j >= WKH.list.length) return; WKH.i = j; WKH.moving = true; SFX.play("ui_click"); wikiGo(WKH.list[j]); $("wikiPage").scrollTop = 0; }
 function wikiGo(route, setNav = true) {
   if (WK.stub) loadWiki().then(() => { if (!$("wikiWin").hidden) wikiGo(route, setNav); }).catch(() => {});
   { const p = wikiMapsReady(); if (p) p.then(() => { if (!$("wikiWin").hidden) wikiGo(wikiRoute, true); }); }   /* the wild maps, once: the page redraws itself when they land */
-  wikiRoute = route;
+  wikiRoute = route; wikiHist(route);
   if (setNav) wikiNav(route);
   if (!location.hash.startsWith(`#wiki/${route}`)) history.replaceState(null, "", `#wiki/${route}`);
   const [kind, ...rest] = route.split("/"), id = decodeURIComponent(rest.join("/")), page = $("wikiPage");
@@ -6749,6 +6770,9 @@ function wikiGo(route, setNav = true) {
 }
 function wikiUpdate(u) { return `<div class="up"><small>${u.date}</small><h3 style="margin:2px 0 4px">${esc(u.title)}</h3><ul>${u.items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></div>`; }
 $("wikiWin").addEventListener("click", (e) => { const a = e.target.closest("[data-wiki]"); if (a) { e.preventDefault(); wikiGo(a.dataset.wiki); } });
+$("wikiBack").addEventListener("click", () => wikiStep(-1)); $("wikiFwd").addEventListener("click", () => wikiStep(1));
+$("wikiWin").addEventListener("mouseup", (e) => { if (e.button === 3 || e.button === 4) { e.preventDefault(); wikiStep(e.button === 3 ? -1 : 1); } });   /* a mouse's back and forward buttons */
+document.addEventListener("keydown", (e) => { if ($("wikiWin").hidden || !e.altKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return; e.preventDefault(); wikiStep(e.key === "ArrowLeft" ? -1 : 1); });
 // right-click any item (bag, gear, bank, shop, trade) to open its wiki page
 /* (2026-09-27) THE BAG'S MENU AND ARRANGING live in v3/assets/js/eastscape-bag.js, fetched on the first touch of the bag (and a few
    seconds after boot regardless): the first load is at its budget. The page only delegates: a right-click in the bag opens its menu. */
