@@ -1132,7 +1132,7 @@ export function createCasino(env) {
     const rare = [...new Set(me.inv.map((x) => x.k))].filter((k) => !G.isLoot(k) && G.quickSell(k) > 0).map((k) => ({ k, n: cnt(k), v: G.quickSell(k) }));
     /* gear back at a quarter: ONE ROW PER LEVEL, plain copies and each reforge apart, and a reforged row asks twice (see the 2026-09-24 notes) */
     const byLevel = new Map();
-    for (const st of me.inv) { if (!(G.gearSell(st.k) > 0)) continue; const f = G.fOf(st), id = st.k + "|" + f, r = byLevel.get(id) || { k: st.k, f, n: 0, v: G.gearSell(st.k, f) }; r.n += st.n; byLevel.set(id, r); }
+    for (const st of me.inv) { if (!(G.gearSell(st.k) > 0)) continue; const f = G.fCode(st), id = st.k + "|" + f, r = byLevel.get(id) || { k: st.k, f, n: 0, v: G.gearSell(st.k, f % 4) };   /* (2026-09-28) the whole code keeps a socketed piece its own row; the price is its level */ r.n += st.n; byLevel.set(id, r); }
     const sellGear = [...byLevel.values()].filter((r) => r.n > 0).sort((a, b) => b.v - a.v);
     const sellN = loot.length + rare.length + sellGear.length, bb = (me.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms);
     if (fresh || !bomTab) bomTab = loot.length ? "sell" : "buy";

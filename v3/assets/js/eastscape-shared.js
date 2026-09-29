@@ -882,8 +882,14 @@ export const bagMax = (c) => INV_MAX + (c ? petFx(c).slots + (achFx(c).slots | 0
         reach for the reforged one while an ordinary one is sitting there. This is the rule that stops the
         feature eating somebody's best item, and it is why every existing caller could be left alone.
    ============================================================================================================ */
+/* (2026-09-28) THE ENTRY'S CODE CARRIES MORE THAN THE REFORGE NOW. `f` is one whole number: the reforge level in its lowest two bits
+   (0-3, FORGE.cap), and above that either a SORTED GEM'S ROLL (on a gem) or the GEM SOCKETS (on a level-80+ piece): see GEMS near the
+   end of this file. fOf still answers "what reforge level" and nothing else, so every stat and reforge path is untouched; fCode is
+   the whole number, and it is what anything that MOVES an item (bag, bank, equip, market, trade) must carry. An entry with any code
+   at all never stacks, which is rule 1 below applied to gems and sockets too. Old saves hold 1-3 and mean exactly what they did. */
+export const fCode = (s) => Math.max(0, (s?.f | 0) || 0);
 /** The reforge level on an inventory/bank entry (0 for an ordinary one). */
-export const fOf = (s) => Math.max(0, Math.min(FORGE.cap, (s?.f | 0) || 0));
+export const fOf = (s) => Math.max(0, Math.min(FORGE.cap, fCode(s) % 4));
 /** The highest reforge level anywhere on this character: worn, carried, banked - or in the pre-migration map. */
 /* (2026-09-24) THE ONE PLACE THAT ANSWERS "HAS THIS PERSON REFORGED ANYTHING". The level lives in three places
    since it moved onto the item, and the achievements were still reading a fourth that nothing writes. The legacy
@@ -894,14 +900,14 @@ export const topForge = (c) => {
   if (!c) return 0;
   let top = 0;
   const bump = (v) => { const n = Math.max(0, Math.min(FORGE.cap, v | 0)); if (n > top) top = n; };
-  for (const v of Object.values(c.eqf || {})) bump(v);
+  for (const v of Object.values(c.eqf || {})) bump((v | 0) % 4);
   for (const s of c.inv || []) bump(fOf(s));
   for (const s of c.bank || []) bump(fOf(s));
   for (const v of Object.values(c.forge || {})) bump(v);
   return top;
 };
 /** May these two entries share a stack? Only if neither is reforged. */
-export const sameStack = (a, b) => a.k === b.k && !fOf(a) && !fOf(b);
+export const sameStack = (a, b) => a.k === b.k && !fCode(a) && !fCode(b);
 
 /* (2026-09-24) `c` HAS NO SAFE DEFAULT, so it no longer has one. It defaulted to null, and bagMax(null) returns
    a bare INV_MAX - which means every caller that forgot the character quietly measured a 20-slot bag and refused
@@ -913,8 +919,8 @@ export const sameStack = (a, b) => a.k === b.k && !fOf(a) && !fOf(b);
 export const roomFor = (inv, k, c, f = 0) => {
   const cap = capOf(k), free = bagMax(c) - inv.length;
   if (f > 0) return free > 0 ? 1 : 0;   // a reforged piece needs a slot of its own; it can never join a stack
-  if (cap === Infinity) return inv.some((s) => s.k === k && !fOf(s)) || free > 0 ? Infinity : 0;
-  return inv.reduce((r, s) => r + (s.k === k && !fOf(s) ? Math.max(0, cap - s.n) : 0), 0) + free * cap;
+  if (cap === Infinity) return inv.some((s) => s.k === k && !fCode(s)) || free > 0 ? Infinity : 0;
+  return inv.reduce((r, s) => r + (s.k === k && !fCode(s) ? Math.max(0, cap - s.n) : 0), 0) + free * cap;
 };
 // top up the stacks already there, then open new ones; returns what didn't fit
 /* (2026-09-24) `c` IS REQUIRED HERE TOO, for the reason roomFor's is. Both stop at bagMax(c), and bagMax(null)
@@ -926,7 +932,7 @@ export const addInv = (inv, k, n, c, f = 0) => {
     while (n > 0 && inv.length < bagMax(c)) { const p = firstFree(inv, c); inv.push({ k, n: 1, f, ...(p >= 0 ? { p } : {}) }); n -= 1; }
     return n;
   }
-  for (const s of inv) { if (n <= 0) break; if (s.k === k && !fOf(s) && s.n < cap) { const t = Math.min(n, cap - s.n); s.n += t; n -= t; } }
+  for (const s of inv) { if (n <= 0) break; if (s.k === k && !fCode(s) && s.n < cap) { const t = Math.min(n, cap - s.n); s.n += t; n -= t; } }
   /* (2026-09-27) a new stack takes the first empty SLOT (OSRS), not just the end of the list: see invLayout */
   while (n > 0 && inv.length < bagMax(c)) { const t = Math.min(n, cap), p = firstFree(inv, c); inv.push({ k, n: t, ...(p >= 0 ? { p } : {}) }); n -= t; }
   return n;
@@ -945,8 +951,8 @@ export function sortInv(inv, c) {
   /* REFORGED PIECES ARE SET ASIDE AND PUT BACK WHOLE. This function rebuilds the bag by totalling each key and
      re-adding it, which would happily melt a +3 and a plain one into a stack of two and lose the level. They go
      back first, best last, right after the plain ones of the same kind. */
-  const forged = inv.filter((s) => fOf(s)).map((s) => ({ k: s.k, n: 1, f: fOf(s) }));
-  const totals = new Map(); for (const s of inv) if (!fOf(s)) totals.set(s.k, (totals.get(s.k) || 0) + s.n);
+  const forged = inv.filter((s) => fCode(s)).map((s) => ({ k: s.k, n: 1, f: fCode(s) }));
+  const totals = new Map(); for (const s of inv) if (!fCode(s)) totals.set(s.k, (totals.get(s.k) || 0) + s.n);
   const fav = new Set(Array.isArray(c?.fav) ? c.fav : []);   /* (2026-09-27) favourites first, then the old order */
   const keys = [...new Set([...totals.keys(), ...forged.map((s) => s.k)])].sort((a, b) => (a === "tickets" ? 0 : 1) - (b === "tickets" ? 0 : 1) || (fav.has(a) ? 0 : 1) - (fav.has(b) ? 0 : 1) || group(a) - group(b) || tierRank(a) - tierRank(b) || (ITEMS[a]?.name || a).localeCompare(ITEMS[b]?.name || b));
   const out = [];
@@ -961,8 +967,8 @@ export function sortInv(inv, c) {
 export const takeInv = (inv, k, n) => {
   let got = 0;
   for (const forged of [false, true]) {
-    const idx = inv.map((s, i) => [s, i]).filter(([s]) => s.k === k && !!fOf(s) === forged)
-      .sort((a, b) => fOf(a[0]) - fOf(b[0]) || b[1] - a[1]).map(([, i]) => i);
+    const idx = inv.map((s, i) => [s, i]).filter(([s]) => s.k === k && !!fCode(s) === forged)
+      .sort((a, b) => fCode(a[0]) - fCode(b[0]) || b[1] - a[1]).map(([, i]) => i);
     for (const i of idx) { if (got >= n) break; const s = inv[i]; const t = Math.min(n - got, s.n); s.n -= t; got += t; }
   }
   for (let i = inv.length - 1; i >= 0; i--) if (!inv[i].n) inv.splice(i, 1);
@@ -971,7 +977,7 @@ export const takeInv = (inv, k, n) => {
 /** Take ONE specific entry by index — what the anvil, equipping and a trade offer need. Returns { k, f } or null. */
 export const takeAt = (inv, i) => {
   const s = inv[i | 0]; if (!s || s.n < 1) return null;
-  const out = { k: s.k, f: fOf(s) };
+  const out = { k: s.k, f: fCode(s) };
   s.n -= 1; if (!s.n) inv.splice(i | 0, 1);
   return out;
 };       // different items the bank holds (stacks are unlimited)
@@ -4333,7 +4339,8 @@ export function fxOf(c) {
   if ((c?.luck | 0) > 0) out.zdrop += LUCK.zdrop;
   { const a = achFx(c); for (const k of OUT_KEYS) out[k] += a[k] || 0; }
   { const pf = petFx(c); out.tough += pf.tough / 100; out.bite += pf.bite / 100; out.steal += pf.steal / 100; }   /* (2026-09-27) the Breeding pets, inside the caps below */
-  for (const g of tkOn(c)) if (g.fx) for (const k of OUT_KEYS) out[k] += g.fx[k] || 0;   /* (2026-09-28) Tinkering's timed gadgets, inside the caps below */
+  for (const g of tkOn(c)) if (g.fx) for (const k of OUT_KEYS) out[k] += g.fx[k] || 0;
+  out.heal += gemFor(c, "bloodstone"); out.steal += gemFor(c, "obsidian"); out.tough += gemFor(c, "hematite");   /* (2026-09-28) gems, inside the caps below */   /* (2026-09-28) Tinkering's timed gadgets, inside the caps below */
   out.rare += charmOf(c, "keeneye") / 100;   /* (2026-09-26) Keen Eye, before the caps below */   /* (2026-09-23) achievement milestones, before the caps below so they cannot escape them */
   for (const k of OUT_KEYS) out[k] = Math.max(k === "tough" ? -0.5 : 0, Math.min(OUT_CAP[k], out[k]));
   return out;
@@ -4862,7 +4869,9 @@ export const canForge = (key) => { const it = ITEMS[key]; if (it?.forgeWith) ret
                          your bag must not buff the plain one on your back.
    Anything DISPLAYING a piece (a bag slot, a market row, a trade offer) has the entry in its hand and should use
    its `f` through the *At helpers below, never these. */
-export const fLevelOf = (c, slot) => Math.max(0, Math.min(FORGE.cap, (c?.eqf?.[slot] | 0) || 0));
+export const fLevelOf = (c, slot) => Math.max(0, Math.min(FORGE.cap, ((c?.eqf?.[slot] | 0) || 0) % 4));
+/** (2026-09-28) the whole code of a worn piece (reforge and sockets): what taking it off must carry */
+export const eqCode = (c, slot) => Math.max(0, (c?.eqf?.[slot] | 0) || 0);
 export const forgeLevel = (c, key) => { for (const sl in c?.eq || {}) if (c.eq[sl] === key) return fLevelOf(c, sl); return 0; };
 /** The chance the NEXT step succeeds, or 0 at the cap. */
 export const forgeOdds = (lvl, sealed = false) => (lvl >= (sealed ? FORGE.cap : FORGE.max) ? 0 : FORGE.odds[lvl] ?? FORGE.odds[FORGE.odds.length - 1]);
@@ -4923,7 +4932,13 @@ export const forgeGainTextAt = (key, lvl) => forgeGainsAt(key, lvl)
   .map(([f, v]) => (f === "tspd" || f === "cap" ? `+${Math.round(v * 1000) / 10}% ${FIELD_NAME[f]}` : `+${v} ${FIELD_NAME[f]}`)).join(" \u00b7 ");
 export const forgeGainText = (c, key) => forgeGainTextAt(key, forgeLevel(c, key));
 /** A piece's name with its level on it. Takes the LEVEL, so a bag slot names what it is holding. */
-export const forgeNameAt = (key, lvl) => `${ITEMS[key]?.name || key}${lvl > 0 ? ` +${Math.min(FORGE.cap, lvl | 0)}` : ""}`;
+/* (2026-09-28) given the whole CODE (a plain reforge level is a code with nothing else in it): a sorted gem says its roll, and a piece
+   with sockets lists them. Every name in the game goes through here, so the bag, the bank, the Exchange and the counter all say so. */
+export const forgeNameAt = (key, code) => {
+  if (isGem(key)) return gemText(key, (code | 0) >= 4 ? Math.floor((code | 0) / 4) - 6 : null);
+  const lvl = (code | 0) % 4, socks = (code | 0) >= 4 ? socketsOf(code) : [];
+  return `${ITEMS[key]?.name || key}${lvl > 0 ? ` +${Math.min(FORGE.cap, lvl)}` : ""}${socks.length ? ` [${socks.map((g) => (g ? gemText(g.k, g.roll) : "empty socket")).join(", ")}]` : ""}`;
+};
 export const forgeName = (c, key) => forgeNameAt(key, forgeLevel(c, key));
 export const forgeCost = (key) => { const sl = forgeSlot(key), it = ITEMS[key]; if (it?.forgeWith) return it.forgeWith; return sl && it?.tier ? [`${it.tier}_bar`, FORGE.bars(sl)] : null; };
 
@@ -7127,6 +7142,7 @@ export function normChar(c) {
   out.buyback = (Array.isArray(out.buyback) ? out.buyback : []).filter((x) => x && typeof x === "object" && ITEMS[x.k] && (x.n | 0) > 0 && Number.isFinite(x.paid) && x.paid >= 0 && x.id).slice(0, BUYBACK.keep);
   /* (2026-09-28) Tinkering's parts: a pouch of four counts, never items (they take no bag space, and Bom cannot buy them) */
   { const pp = out.parts && typeof out.parts === "object" ? out.parts : {}; out.parts = Object.fromEntries(Object.keys(TINK.parts).map((k) => [k, Math.max(0, Math.floor(Number(pp[k]) || 0))])); }
+  if (out.gemcase) out.gemcase = caseOf(out);   /* (2026-09-28) the Gem Case, cleaned */
   out.pins = Array.isArray(out.pins) ? [...new Set(out.pins.filter((id) => PROJECTS[id]))] : [];   /* (2026-09-28) the Builder's Pins collected */
   out.tk = Object.fromEntries(Object.entries(out.tk && typeof out.tk === "object" ? out.tk : {}).filter(([id, t]) => GADGETS[id] && t && (t.left | 0) > 0).map(([id, t]) => [id, { left: t.left | 0 }]));
   out.tkBomb = Math.max(0, out.tkBomb | 0);
@@ -8634,11 +8650,11 @@ for (const [id, g] of Object.entries(GADGETS)) if (g.item !== false)
 ITEMS.tk_banner ||= { name: "Party Banner", icon: "\u{1F6A9}", held: true };
 /** the gadgets running on a character right now */
 export const tkOn = (c) => Object.entries(c?.tk || {}).filter(([id, t]) => GADGETS[id] && (t?.left | 0) > 0).map(([id]) => GADGETS[id]);
-export const tkDmg = (c, style) => tkOn(c).reduce((a, g) => a + (g.dmg?.[style] || 0), 0);
-export const tkAcc = (c, style) => tkOn(c).reduce((a, g) => a + (g.acc?.[style] || 0), 0);
-export const tkCraft = (c, skill) => { let dbl = 0, noburn = false; for (const g of tkOn(c)) if (g.craft?.skill === skill) { dbl += g.craft.dbl || 0; noburn ||= !!g.craft.noburn; } const pc = projFx(c)?.craft?.[skill]; if (pc) { dbl += pc.dbl; noburn ||= pc.noburn; } return { dbl, noburn }; };   /* (2026-09-28) and the map's World Project */
-export const tkXp = (c, skill) => { const pf = projFx(c); return tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0) + (pf?.xp?.[skill] || 0) + (pf?.xpAll || 0); };   /* (and a Grand Opening's +10% on everything) */
-export const tkSalv = (c) => tkOn(c).reduce((a, g) => a + (g.salv || 0), 0) + (projFx(c)?.salv || 0);
+export const tkDmg = (c, style) => tkOn(c).reduce((a, g) => a + (g.dmg?.[style] || 0), 0) + gemFor(c, GEM_DMG[style]);   /* (2026-09-28) and a socketed gem */
+export const tkAcc = (c, style) => tkOn(c).reduce((a, g) => a + (g.acc?.[style] || 0), 0) + gemFor(c, "jade");
+export const tkCraft = (c, skill) => { let dbl = 0, noburn = false; for (const g of tkOn(c)) if (g.craft?.skill === skill) { dbl += g.craft.dbl || 0; noburn ||= !!g.craft.noburn; } const pc = projFx(c)?.craft?.[skill]; if (pc) { dbl += pc.dbl; noburn ||= pc.noburn; } dbl += gemFor(c, GEM_SKILL[skill]?.fx === "dbl" ? GEM_SKILL[skill].k : null); return { dbl: Math.max(0, dbl), noburn }; };   /* (2026-09-28) and the map's World Project */
+export const tkXp = (c, skill) => { const pf = projFx(c); return tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0) + (pf?.xp?.[skill] || 0) + (pf?.xpAll || 0) + gemFor(c, GEM_SKILL[skill]?.fx === "xp" ? GEM_SKILL[skill].k : null); };   /* (and a Grand Opening's +10% on everything) */
+export const tkSalv = (c) => tkOn(c).reduce((a, g) => a + (g.salv || 0), 0) + (projFx(c)?.salv || 0) + gemFor(c, "quartz");
 /** is an automation tool running for this kind of work ("rock", "tree", "spot")? */
 export const tkAuto = (c, kind) => tkOn(c).some((g) => g.auto === kind || (g.auto === "rock" && kind === "vein"));
 TINK.autoRate = 0.75;
@@ -8656,3 +8672,121 @@ GAMES.boiler = { name: "The Boiler", icon: "♨️", proj: "table", ex: "Set the
    finished build (tools/eastscape-tinker-art.mjs). C.pins is the collection, so a lost or banked pin is still remembered. */
 for (const [id, P] of Object.entries(PROJECTS)) ITEMS[`pin_${id}`] = { name: `${P.name.replace(/^The /, "")} Builder's Pin`, icon: "\u{1F4CC}", held: HOLD.tinker, ex: `Given to everybody who helped build ${P.name} in ${P.where}. It doesn't do anything. You were there.` };
 if (!HOLD.tinker) HISCORES.push(["built", "Builders", "given to World Projects (part value, and a point per 100 tickets)", "n"]);
+
+/* ============================================================ GEMS, SOCKETS, THE GEM CASE AND THE GEM SORTER (2026-09-28, the owner; EASTSCAPE-DRAFTS §12)
+   "gem slots into weapons and gear ... level 80 and higher ... 1-2 gem slots on a weapon ... a gem sorter box ... random rng stats between
+   (-5% and +10%) ... it takes tickets to roll ... sell back your gems ... tied to a certain skill ... users have to build the gem sorter",
+   and then, the same hour: "the idol mechanic from last epoch / charm mechanic from diablo ... an openable window ... users could increase
+   the slots ... skilling based gems. for weapons and gear ... only combat based gems". It REPLACES Jewelcrafting.
+
+   TWO KINDS OF GEM, TWO PLACES TO PUT THEM, AND NOTHING TO SWAP.
+   - COMBAT gems (`where: "gear"`) go in SOCKETS: one on every level-80+ piece, a second on a weapon, punched with a Socket Punch /
+     Master Punch built at Sal's bench. They travel with the piece (in its code), so a bow's gems are the bow's.
+   - SKILLING gems (`where: "case"`) go in the GEM CASE, a window of slots that is always on wherever you are: 3 to start, up to 12 with
+     Case Slot kits (Sal again). So the woodcutter never has to remember to put the topaz back.
+   A found gem is UNSORTED and fits nowhere; the Sorter rolls it a whole-number percent in GEMSET.roll (kept in the entry's code,
+   (roll + 6) * 4, so a sorted gem never stacks and TRADES with its roll). Taking a gem OUT of a socket or the case gives it back
+   UNSORTED (the owner's call): changing your mind costs a roll. A NEGATIVE roll is that much worse.
+   (2026-09-28, the owner: "they shouldnt be able to use 8 10% melee gems as thats 80% extra damage which is game breaking") ONLY THE
+   BEST GEMSET.perType OF EACH KIND COUNT, sockets and case together: two perfect rubies is +20% and a third does nothing, so the most
+   any one gem can ever add is perType x the top roll, and filling every socket with the same stone is never the answer.
+
+   THE ORDER OF GEMSET.list IS PART OF THE SAVE FORMAT (a socket stores the gem's index). Add new gems at the END, never in between. */
+export const GEMSET = { roll: [-5, 10], cost: 10000, sell: 1500, perType: 2, minLvl: 80, drop: 1 / 1500, dropLvl: 60, caseStart: 3, caseMax: 12,
+  list: [
+    { k: "ruby", where: "gear", fx: "dmg", style: "melee", does: "melee hits harder" },
+    { k: "jasper", where: "gear", fx: "dmg", style: "archery", does: "arrows hit harder" },
+    { k: "amethyst", where: "gear", fx: "dmg", style: "magic", does: "spells hit harder" },
+    { k: "jade", where: "gear", fx: "acc", does: "more accurate, every style" },
+    { k: "bloodstone", where: "gear", fx: "heal", does: "food and regeneration heal more" },
+    { k: "hematite", where: "gear", fx: "tough", does: "take less damage" },
+    { k: "carnelian", where: "gear", fx: "vs", el: "fire", does: "hit harder against anything weak to fire" },
+    { k: "aquamarine", where: "gear", fx: "vs", el: "frost", does: "hit harder against anything weak to frost" },
+    { k: "sunstone", where: "gear", fx: "vs", el: "sun", does: "hit harder against anything weak to sun" },
+    { k: "tanzanite", where: "gear", fx: "vs", el: "storm", does: "hit harder against anything weak to storm" },
+    { k: "jet", where: "gear", fx: "vs", el: "void", does: "hit harder against anything weak to void" },
+    { k: "sapphire", where: "case", skill: "fishing", fx: "speed", kind: "spot", does: "fish faster" },
+    { k: "opal", where: "case", skill: "mining", fx: "speed", kind: "rock", does: "mine faster" },
+    { k: "topaz", where: "case", skill: "woodcutting", fx: "speed", kind: "tree", does: "chop faster" },
+    { k: "amber", where: "case", skill: "farming", fx: "xp", does: "more Harvesting xp" },
+    { k: "obsidian", where: "case", skill: "thieving", fx: "steal", does: "pick pockets more often" },
+    { k: "moonstone", where: "case", skill: "agility", fx: "xp", does: "more Agility xp" },
+    { k: "citrine", where: "case", skill: "cooking", fx: "dbl", does: "a chance of cooking two" },
+    { k: "garnet", where: "case", skill: "smithing", fx: "dbl", does: "a chance of making two" },
+    { k: "peridot", where: "case", skill: "alchemy", fx: "dbl", does: "a chance of an extra potion" },
+    { k: "tigerseye", where: "case", skill: "fletching", fx: "dbl", does: "a chance of fletching two" },
+    { k: "lapis", where: "case", skill: "wizardry", fx: "dbl", does: "a chance of extra pages" },
+    { k: "turquoise", where: "case", skill: "breeding", fx: "xp", does: "more Breeding xp" },
+    { k: "malachite", where: "case", skill: "fungiculture", fx: "xp", does: "more Fungiculture xp" },
+    { k: "quartz", where: "case", skill: "tinkering", fx: "salv", does: "more parts from salvage" }] };
+export const GEM_OF = Object.fromEntries(GEMSET.list.map((g, i) => [g.k, { ...g, i }]));
+export const GEM_SKILL = Object.fromEntries(GEMSET.list.filter((g) => g.skill).map((g) => [g.skill, g]));
+export const GEM_DMG = Object.fromEntries(GEMSET.list.filter((g) => g.fx === "dmg").map((g) => [g.style, g.k]));
+export const isGem = (k) => !!GEM_OF[k];
+/** a gem entry's roll (null = unsorted) */
+export const rollOf = (s) => (isGem(s?.k) && fCode(s) >= 4 ? Math.floor(fCode(s) / 4) - 6 : null);
+export const gemCode = (roll) => (roll + 6) * 4;
+/** (2026-09-28) is this a code a message may name for this item: a gem's roll, or a reforge level with sockets the piece can have */
+export const codeOk = (k, code) => {
+  code = Math.floor(Number(code)) || 0; if (code <= 0) return code === 0;
+  if (isGem(k)) { const r = Math.floor(code / 4) - 6; return code % 4 === 0 && r >= GEMSET.roll[0] && r <= GEMSET.roll[1]; }
+  if (code % 4 > FORGE.max || (code % 4 && !canForge(k))) return false;
+  const socks = socketsOf(code); return socks.length <= sockMax(k) && withSockets(code, socks) === code && socks.every((g) => !g || GEM_OF[g.k]?.where === "gear");
+};
+export const gemText = (k, roll) => `${ITEMS[k]?.name || k}${roll == null ? " (unsorted)" : ` ${roll > 0 ? "+" : ""}${roll}%`}`;
+/* a piece's sockets: above the reforge bits, two socket values in base SB. 0 no socket, 1 empty, 2 + gemIndex*16 + (roll+5) a gem */
+const SB = 1024, sv = (x) => (x === undefined ? 0 : x === null ? 1 : 2 + GEM_OF[x.k].i * 16 + (x.roll + 5));
+export const socketsOf = (code) => { const s = Math.floor((code | 0) / 4); return [s % SB, Math.floor(s / SB) % SB].filter((v) => v > 0).map((v) => (v === 1 ? null : { k: GEMSET.list[Math.floor((v - 2) / 16)]?.k, roll: ((v - 2) % 16) - 5 })); };
+/** a code with these sockets (an array of up to two: null for an empty socket, { k, roll } for a gem), keeping the reforge level */
+export const withSockets = (code, socks) => ((code | 0) % 4) + 4 * (sv(socks[0]) + SB * sv(socks[1]));
+export const itemLvl = (k) => ITEMS[k]?.req?.lvl ?? ITEMS[k]?.tool?.lvl ?? 0;
+/** how many sockets this piece can have: one on any level-80+ piece, two on a weapon (tools are weapons), none on pets */
+export const sockMax = (k) => { const it = ITEMS[k]; if (!it?.slot || it.slot === "pet" || itemLvl(k) < GEMSET.minLvl) return 0; return it.slot === "weapon" ? 2 : 1; };
+/** the Gem Case, cleaned: { n: slots, g: [ { k, roll } | null ] } */
+export const caseOf = (c) => { const gc = c?.gemcase || {}, n = Math.max(GEMSET.caseStart, Math.min(GEMSET.caseMax, gc.n | 0)); return { n, g: Array.from({ length: n }, (_, i) => { const x = gc.g?.[i]; return x && GEM_OF[x.k]?.where === "case" ? { k: x.k, roll: Math.max(GEMSET.roll[0], Math.min(GEMSET.roll[1], x.roll | 0)) } : null; }) }; };
+/** every gem working for you (worn sockets and the case): the best GEMSET.perType of each kind, added up: { ruby: 18, topaz: -5 } (percent) */
+export const gemRolls = (c) => {
+  const by = {};
+  for (const sl of SLOTS) { if (!c?.eq?.[sl]) continue; for (const g of socketsOf(eqCode(c, sl))) if (g?.k) (by[g.k] ||= []).push(g.roll); }
+  for (const g of caseOf(c).g) if (g) (by[g.k] ||= []).push(g.roll);
+  for (const k of Object.keys(by)) by[k].sort((a, b) => b - a);
+  return by;
+};
+export const gemBonus = (c) => Object.fromEntries(Object.entries(gemRolls(c)).map(([k, r]) => [k, r.slice(0, GEMSET.perType).reduce((a, x) => a + x, 0)]));
+/** one gem's bonus as a fraction (0.18 for +18%); 0 for none */
+export const gemFor = (c, k) => (k && c ? (gemBonus(c)[k] || 0) / 100 : 0);
+/** gathering speed from the case: "fish / mine / chop faster" */
+export const gemSpeed = (c, kind) => { const g = GEMSET.list.find((x) => x.kind === (kind === "vein" ? "rock" : kind)); return g ? gemFor(c, g.k) : 0; };
+/** the elemental gems against one monster: the sum of the gems for every element it is weak to */
+export const gemVs = (c, mobT) => (MOBS[mobT]?.weak || []).reduce((a, el) => a + gemFor(c, GEMSET.list.find((g) => g.el === el)?.k), 0);
+/** what a roll costs at the Sorter today: tier 2 takes a quarter off, a Grand Opening half */
+export const sortCost = () => Math.round(GEMSET.cost * (projTier("sorter") >= 2 ? 0.75 : 1) * (grandLeft("sorter") > 0 ? 0.5 : 1));
+/** one roll: a whole percent from GEMSET.roll, uniform; tier 3's double sort draws twice and keeps the better */
+export const gemRoll = (rnd = Math.random) => { const [lo, hi] = GEMSET.roll, one = () => lo + Math.floor(rnd() * (hi - lo + 1)); return projTier("sorter") >= 3 ? Math.max(one(), one()) : one(); };
+/* the gems as items. Ruby, sapphire, topaz and opal already exist (mining finds them, wands and bags use them); the rest are new */
+for (const g of GEMSET.list) {
+  const it = (ITEMS[g.k] ||= { name: g.k === "tigerseye" ? "Tiger's eye" : g.k[0].toUpperCase() + g.k.slice(1), icon: "\u{1F48E}" });
+  it.gem = g.k;
+  it.ex = `${it.ex ? it.ex.replace(/\s*Take it to the Gem Sorter.*$/, "") + " " : ""}Take it to the Gem Sorter in the Depths: it rolls a bonus from ${GEMSET.roll[0]}% to +${GEMSET.roll[1]}% (${g.does}), and then it goes ${g.where === "gear" ? `in a socket on level ${GEMSET.minLvl}+ gear` : "in your Gem Case, where it works wherever you are"}.`;
+}
+TK_NEVER.add?.("voidheart_bit");
+ITEMS.voidheart_bit = { name: "Voidheart drill bit", icon: "\u{1F529}", ex: "A drill bit that bores through anything, pried off a boss. Sal can build it into a Master Punch (a weapon's second gem socket) or the last Gem Case slots." };
+/* what Sal builds for it: the two punches (used at the Sorter) and the Gem Case's slots (used anywhere) */
+Object.assign(GADGETS, {
+  punch: { name: "Socket Punch", icon: "\u{1F528}", lvl: 70, parts: { scrap: 600, gears: 200, sparks: 60, relic: 5 }, fee: 50000, n: 1, kind: "punch", does: `punches a gem socket into a worn level-${GEMSET.minLvl}+ piece, at the Gem Sorter` },
+  masterpunch: { name: "Master Punch", icon: "\u{1F6E0}\u{FE0F}", lvl: 85, parts: { scrap: 1500, gears: 500, sparks: 150, relic: 15 }, fee: 150000, n: 1, kind: "punch", master: true, need: [["voidheart_bit", 1]], does: `punches the SECOND socket into a worn level-${GEMSET.minLvl}+ weapon, at the Gem Sorter` },
+  caseslot: { name: "Gem Case Hinge", icon: "\u{1F9F0}", lvl: 40, parts: { scrap: 300, gears: 80, sparks: 40 }, fee: 25000, n: 1, kind: "caseslot", upto: 6, does: "adds a slot to your Gem Case (up to 6)" },
+  caseslot2: { name: "Gem Case Frame", icon: "\u{1F9F0}", lvl: 60, parts: { scrap: 800, gears: 250, sparks: 120, relic: 3 }, fee: 75000, n: 1, kind: "caseslot", upto: 9, does: "adds a slot to your Gem Case (up to 9)" },
+  caseslot3: { name: "Gem Case Heart", icon: "\u{1F9F0}", lvl: 80, parts: { scrap: 2000, gears: 600, sparks: 300, relic: 10 }, fee: 200000, n: 1, kind: "caseslot", upto: 12, need: [["voidheart_bit", 1]], does: "adds a slot to your Gem Case (up to 12)" } });
+for (const id of ["punch", "masterpunch", "caseslot", "caseslot2", "caseslot3"]) { const g = GADGETS[id]; ITEMS[`tk_${id}`] = { name: g.name, icon: g.icon, use: "gadget", gadget: id, held: HOLD.tinker, ex: `Built at the Scrap Bench (Tinkering ${g.lvl}): ${g.does}.` }; }
+/* the Sorter itself: the 13th World Project, in the Depths */
+PROJECTS.sorter = { name: "The Gem Sorter", scene: "depths", where: "the Depths", site: [21, 17], t: "gemsorter", ruin: "A jammed gem sorter",
+  blurb: "A sorting machine choked with crystal grit. Get it running and every gem you find is worth something.",
+  tiers: PJ_T(PJ_NEED(2.5, "sparks"), [
+    { name: "The sorter", does: `gems in, rolled from ${GEMSET.roll[0]}% to +${GEMSET.roll[1]}%, for ${GEMSET.cost.toLocaleString()} tickets a roll; socket them, case them, sell them back` },
+    { name: "The fine sieve", does: "every roll costs a quarter less" },
+    { name: "The double sort", does: "every roll draws twice and keeps the better" }]) };
+/* (2026-09-28, the owner: "replace jewelcrafting") JEWELCRAFTING IS RETIRED: the Sorter is what gems are for now. Held everywhere, dev
+   server included; its items and recipes stay in the file so a save that holds them still loads. */
+HOLD.jewel = true;
+ITEMS.pin_sorter = { name: "Gem Sorter Builder's Pin", icon: "\u{1F4CC}", held: HOLD.tinker, ex: `Given to everybody who helped build ${PROJECTS.sorter.name} in ${PROJECTS.sorter.where}. It doesn't do anything. You were there.` };   /* (the pins loop above ran before the Sorter existed) */

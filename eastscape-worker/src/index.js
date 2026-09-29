@@ -32,7 +32,8 @@ import { installCarnival, installTurnstile } from "./carnival.js";
 import { installPit } from "./pit.js";
 import { installOrder } from "./order.js";
 import { installMeter } from "./meter.js";
-import { installTinker } from "./tinker.js";   /* (2026-09-28) Tinkering: the sink */   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
+import { installTinker } from "./tinker.js";
+import { installGems } from "./gems.js";   /* (2026-09-28) gems, sockets, the Gem Case and the Gem Sorter */   /* (2026-09-28) Tinkering: the sink */   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
 const CR = createCryptRules(G, G._MAP); Object.assign(G.SCENES, CR.scenes); Object.assign(G.MOBS, CR.mobs);
 /* (2026-09-24) THE GREAT PYRAMID, the second party dungeon: same shape, its own map, monsters and boss. */
@@ -378,7 +379,7 @@ export class World {
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
-    pets: C.pets, parts: C.parts || null, tk: C.tk || null, tkBomb: C.tkBomb || 0,   /* (2026-09-28) Tinkering's pouch, the gadgets running, an armed bomb */ buyback: (C.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms),   /* (2026-09-28) Bom's buy-back */ isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
+    pets: C.pets, parts: C.parts || null, tk: C.tk || null, tkBomb: C.tkBomb || 0, gemcase: G.caseOf(C), pins: C.pins || [],   /* (2026-09-28) Tinkering's pouch, the gadgets running, an armed bomb */ buyback: (C.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms),   /* (2026-09-28) Bom's buy-back */ isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
 
   /* ------------------------------------------------------------ reforging (2026-09-22)
      Spend bars to push a piece you own further. The odds and what a level is worth live in G.FORGE; this only
@@ -442,8 +443,8 @@ export class World {
       (C.stats ||= G.freshStats()).forgeBroke = (C.stats.forgeBroke | 0) + 1;   /* (2026-09-23) what the "Easy Come" achievement counts; nothing else recorded a break */
       if (wornSlot) { C.eq[wornSlot] = null; delete C.eqf[wornSlot]; }
       else G.takeAt(C.inv, bagI);
-    } else if (wornSlot) { if (nowLvl > 0) C.eqf[wornSlot] = nowLvl; else delete C.eqf[wornSlot]; }
-    else { const st = C.inv[bagI]; if (nowLvl > 0) { if (st.n > 1) { st.n -= 1; G.addInv(C.inv, key, 1, C, nowLvl); } else st.f = nowLvl; } else delete st.f; }
+    } else if (wornSlot) { const keep = G.eqCode(C, wornSlot) - G.fLevelOf(C, wornSlot), nc = keep + nowLvl; if (nc > 0) C.eqf[wornSlot] = nc; else delete C.eqf[wornSlot]; }   /* (2026-09-28) the level changes; the gem sockets stay */
+    else { const st = C.inv[bagI], keep = G.fCode(st) - G.fOf(st); if (keep + nowLvl > 0) { if (st.n > 1) { st.n -= 1; G.addInv(C.inv, key, 1, C, keep + nowLvl); } else st.f = keep + nowLvl; } else delete st.f; }
 
     this.grant(pl, "smithing", Math.round(20 * (tier ? G.TIERS.indexOf(tier) + 1 : 1) * (win ? 1 : 0.4)));
     this.touch(pl);
@@ -818,7 +819,8 @@ export class World {
       case "report": return void this.reportOp(S, pl, m).catch((e) => console.error("report", e));   /* (2026-09-28) the bug button */
       case "pen": return this.penOp(S, pl, m);
       case "hatch": return this.hatchOp(S, pl, m);   /* (2026-09-27) Breeding: eggs */
-      case "tinker": return this.tinkerOp(S, pl, m);   /* (2026-09-28) Tinkering: salvage at the Scrap Bench */
+      case "tinker": return this.tinkerOp(S, pl, m);
+      case "gems": return this.gemOp(S, pl, m);   /* (2026-09-28) the Gem Sorter and the Gem Case */   /* (2026-09-28) Tinkering: salvage at the Scrap Bench */
       case "meter": return this.meterOp(S, pl, m);   /* (2026-09-28) the party meter: reset, or ask for it now */
       case "order": return this.orderOp(S, pl, m);   /* (2026-09-28) Bronny's order, the server's daily */
       case "eggtrade": return this.eggTrade(S, pl, m);   /* (2026-09-28) Nestor the Egg Man */
@@ -972,7 +974,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
-      let kind = { scrapbench: "tinker",   /* (2026-09-28) Sprocket Sal's Scrap Bench */ projboard: "project", dockruin: "project", cannonruin: "project", tableruin: "project", pjruin: "project", pjdeco: "project", cannon: "cannon", boiler: "game", ferris: "ferris",   /* (2026-09-28) World Projects */ clawchest: "clawchest",   /* (2026-09-27) Captain Claw's chest */ rowboat: "rowboat",   /* (2026-09-27) the Boardwalk's islands */ podium: "podium",   /* (2026-09-27) the collection log */ vortex: "rowboat", burndoor: "rowboat",   /* (2026-09-27) the Foundry's portals and its burning door travel the same way */ blast: "smelt",   /* (2026-09-27) the Foundry's blast furnace: a furnace */ jbench: "jewel",   /* (2026-09-27) Jewelcrafting: a picker station like the anvil */ hatchery: "hatchery",   /* (2026-09-27) Breeding's hatchery */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      let kind = { scrapbench: "tinker",   /* (2026-09-28) Sprocket Sal's Scrap Bench */ projboard: "project", dockruin: "project", cannonruin: "project", tableruin: "project", pjruin: "project", pjdeco: "project", cannon: "cannon", boiler: "game", ferris: "ferris", gemsorter: "gems",   /* (2026-09-28) World Projects */ clawchest: "clawchest",   /* (2026-09-27) Captain Claw's chest */ rowboat: "rowboat",   /* (2026-09-27) the Boardwalk's islands */ podium: "podium",   /* (2026-09-27) the collection log */ vortex: "rowboat", burndoor: "rowboat",   /* (2026-09-27) the Foundry's portals and its burning door travel the same way */ blast: "smelt",   /* (2026-09-27) the Foundry's blast furnace: a furnace */ jbench: "jewel",   /* (2026-09-27) Jewelcrafting: a picker station like the anvil */ hatchery: "hatchery",   /* (2026-09-27) Breeding's hatchery */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       /* MAGIC AND WIZARDRY, THE SERVER (2026-09-26): every altar is a print station, a picker station like the anvil */
       if (!kind && G.STATIONS[ob.t]?.kind === "print") kind = "print";
       if (!kind) return;
@@ -1052,7 +1054,8 @@ export class World {
     // used to throw in here, and this runs inside the tick — one bad key would
     // stop the world for everybody. Ignore it instead.
     if (!G.SKILLS[k]) { console.warn(`grant: no such skill "${k}"`); return; }
-    { const bx = G.tkXp(pl.C, k); if (bx > 0) xp = Math.round(xp * (1 + bx)); }   /* (2026-09-28) a Tinkering gadget (the Humidifier, the Grappling Hook) */
+    { const bx = G.tkXp(pl.C, k); if (bx) xp = Math.max(0, Math.round(xp * (1 + bx))); }   /* (a gem rolled below zero takes some off) */
+    this.gemOnXp(pl, k, xp);   /* (2026-09-28) every skill turns up its own gem, rarely */   /* (2026-09-28) a Tinkering gadget (the Humidifier, the Grappling Hook) */
     this.meterAdd(pl, "xp", xp, null, k);   /* (2026-09-28) xp by skill, for the run report */
     const C = pl.C, before = G.lvlOf(C, k);
     C.xp[k] = Math.max(0, (C.xp[k] || 0) + xp); const after = G.lvlOf(C, k);
@@ -1501,17 +1504,17 @@ export class World {
     /* (2026-09-23) THE LEVEL GOES ON AND COMES OFF WITH THE PIECE. eq holds a bare key, so a worn piece keeps its
        level in eqf[slot]; taking it off puts that level back on the entry that goes into the bag. Swapping a worn
        +2 for a bagged +3 has to move BOTH, which is why the old one is handed back with its own level. */
-    const old = C.eq[it.slot], oldF = G.fLevelOf(C, it.slot);
+    const old = C.eq[it.slot], oldF = G.eqCode(C, it.slot);   /* (2026-09-28) the whole code: level and gem sockets */
     /* (2026-09-27, the owner: "if you switch between the magic bag and quiver, it used the spell in the quiver and the arrows in the
        magic bag") A SWAP HANDS THE LOAD BACK FIRST. C.quiver is one pocket whatever is worn, so swapping a quiver straight for a bag
        carried the arrows into the bag. Anything loaded that the new piece cannot hold goes back to the bag now, and if the bag has no
        room the swap is refused rather than the load silently changing kind. */
     if (it.slot === "shield" && C.quiver && (!it.pouch || it.pouch.ammo !== G.ammoKind(C.quiver.k))) { if (!this.pocketOut(pl)) return; }
-    const takeF = G.fOf(st);
+    const takeF = G.fCode(st), takeLv = G.fOf(st);
     /* (2026-09-27) A SMALLER POUCH OF THE SAME KIND. The load stayed as it was, so a 1,000 carried into a 100 quiver and it held ten
        times its size. What it cannot hold goes back to the bag first; with no room, the swap is refused rather than overfilled. */
     if (it.pouch && C.quiver && it.pouch.ammo === G.ammoKind(C.quiver.k)) {
-      const cap = Math.round(it.pouch.cap * (1 + G.FORGE.pcap * (takeF | 0))), extra = Math.floor(C.quiver.n) - cap;
+      const cap = Math.round(it.pouch.cap * (1 + G.FORGE.pcap * (takeLv | 0))), extra = Math.floor(C.quiver.n) - cap;
       if (extra > 0) {
         if (G.roomFor(C.inv, C.quiver.k, C) < extra) return this.say(pl, `The ${it.name.toLowerCase()} holds ${cap}, and ${extra} ${G.ITEMS[C.quiver.k].name.toLowerCase()}s would not fit back in your bag. Make room first.`, "bad");
         G.addInv(C.inv, C.quiver.k, extra, C); C.quiver.n = cap;
@@ -2330,14 +2333,14 @@ export class World {
        piece is priced on the LEVEL - two +1 helms and a +3 are three different prices for one key. The level has
        to be NAMED by the client, so no sweep and no plain-gear click can ever reach one of these, which is the
        rule the plainOnly count was protecting in the first place. Only what is CARRIED: worn gear is in C.eq. */
-    const wantF = G.fOf({ f: m.f });
+    const wantF = G.fCode({ f: m.f }), wantLv = wantF % 4;   /* (2026-09-28) the whole code picks the piece; the price is its level */
     if (m.op !== "all" && wantF > 0) {
       const gk = String(m.k);
       if (!G.gearSell(gk) && !G.ITEMS[gk]?.event) return this.say(pl, "The counter only takes gear it stocks itself.", "bad");   /* (2026-09-27) or an event piece, at one ticket */
       let got = 0;
-      for (let i = C.inv.length - 1; i >= 0; i--) { const st = C.inv[i]; if (st.k !== gk || G.fOf(st) !== wantF) continue; got += st.n; C.inv.splice(i, 1); }
+      for (let i = C.inv.length - 1; i >= 0; i--) { const st = C.inv[i]; if (st.k !== gk || G.fCode(st) !== wantF) continue; got += st.n; C.inv.splice(i, 1); }
       if (!got) return this.say(pl, `That is not in your bag: ${G.forgeNameAt(gk, wantF)}.`, "bad");
-      const paid = got * priceOf(gk, wantF);
+      const paid = got * priceOf(gk, wantLv);
       this.tixTo(pl, paid); this.bbAdd(C, { k: gk, n: got, f: wantF, paid: this.credited(paid) }); this.touch(pl);
       pl.out.push({ type: "cashed", total: paid, count: got });
       return this.say(pl, `"${G.forgeNameAt(gk, wantF)} — somebody put work into that." The counter hands over ${G.fmtTix(paid)}.`, "good");
@@ -2479,7 +2482,7 @@ export class World {
     /* (2026-09-25) a LOADED quiver hands its arrows back first; if the bag cannot take them all it stays on. Otherwise the
        arrows would ride along in C.quiver with nothing to hold them, and reappear on the next quiver worn. */
     if (C.quiver && G.ITEMS[k]?.pouch) { if (!this.pocketOut(pl)) return; }
-    const f = G.fLevelOf(C, slot);
+    const f = G.eqCode(C, slot);   /* (2026-09-28) the whole code goes back on the bag entry: level and gem sockets */
     if (!this.give(pl, k, 1, f)) return;
     C.eq[slot] = null; if (C.eqf) delete C.eqf[slot];
     this.say(pl, `You take off the ${G.forgeNameAt(k, f).toLowerCase()}.`); this.touch(pl);
@@ -2788,6 +2791,7 @@ export class World {
            It was `>= ceil(max x 0.85)`, which with whole numbers is a fifth of every landed hit, and FIFTY PERCENT for a new player
            whose max hit is 2: every hit that was not a 1 flashed CRIT. Now it is the top TENTH, and never under 4 damage, so it is
            about one landed hit in nine and nobody sees one until their max hit reaches 5, around Combat 10.) */
+        if (dmg > 0) { const ev = G.gemVs(C, m.t); if (ev) dmg = Math.max(1, Math.round(dmg * (1 + ev))); }   /* (2026-09-28) an elemental gem against a monster weak to it */
         this.meterAdd(pl, "swing", 1, m); if (dmg) this.meterAdd(pl, "hit", 1, m);   /* (2026-09-28) accuracy, for the run report */
         this.bossAdd(pl, m, "swing", 1); if (dmg) { this.bossAdd(pl, m, "hit", 1); this.bossAdd(pl, m, "dmg", dmg); }   /* (2026-09-28) and a world boss's own report */
         m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, ranged: G.launcherOf(C) ? true : undefined, ak: shotK || undefined,   /* (2026-09-25) the page flies an arrow from `by` to `who` before it shows the number; marked HERE so the page needs nothing about equipment, and a staff marks it the same way */ crit: (dmg >= 4 && dmg > G.maxHitOf(C) * 0.9) || undefined, kill: m.hp <= 0 || undefined });
@@ -2942,7 +2946,8 @@ export class World {
     if (a.kind === "hiscores") { pl.act = null; return pl.out.push({ type: "hiscores" }); }
     if (a.kind === "project") { pl.act = null; if (G.HOLD.tinker && !pl.admin) return; pl.C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 }; return this.projPush(pl, { open: true, focus: a.ob?.proj || S.objs[a.ob]?.proj || null }); }   /* (2026-09-28) a project's plan board or ruin: the bench window, on that project */
     if (a.kind === "cannon") { pl.act = null; return this.cannonFire(S, pl, now); }   /* (2026-09-28) the King's Cannon */
-    if (a.kind === "ferris") { pl.act = null; return this.ferrisRide(pl); }   /* (2026-09-28) the Carnival's Ferris Wheel */
+    if (a.kind === "ferris") { pl.act = null; return this.ferrisRide(pl); }
+    if (a.kind === "gems") { pl.act = null; return this.gemOp(S, pl, { op: "view", open: "sorter" }); }   /* (2026-09-28) the Gem Sorter */   /* (2026-09-28) the Carnival's Ferris Wheel */
     if (a.kind === "tinker") { pl.act = null; pl.C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 }; return pl.out.push({ type: "tinker", open: true, view: { parts: { ...pl.C.parts }, lvl: G.lvlOf(pl.C, "tinkering") } }); }   /* (2026-09-28) the Scrap Bench opens its window */   /* (v96) the board on the wall opens the page's own Hiscores window */
     if (a.kind === "howto") { pl.act = null; return pl.out.push({ type: "popup", title: "How EastScape works", text: G.HOWTO, icon: "🎰" }); }
     if (a.kind === "board") { pl.act = null; this.tourStep(pl, "play"); this.tourStep(pl, "board"); return this.dailySend(pl); }   /* (v96: the board also clears "play a game", so a player with no ZCoins is sent to work, not left stuck) */
@@ -3318,6 +3323,7 @@ export class World {
 
   killMob(S, pl, m, now) {
     this.meterAdd(pl, "kills", 1, m);   /* (2026-09-28) the party meter: and the toughest thing killed names the fight */
+    this.gemOnKill(pl, m);   /* (2026-09-28) combat gems, and a boss's Voidheart bit */
     if (G.MOBS[m.t]?.open) this.bossEnd(S, m, "clear", pl);   /* (2026-09-28) a world boss falls: everybody who fought gets the report */
     /* (2026-09-23) THE SOUND IS TOLD WHAT DIED. It used to be the page matching /^You defeat / on the chat line,
        which said nothing about the creature, so a Sulking Toadstool and The House went out with the same scream.
@@ -3922,7 +3928,7 @@ export class World {
     this.touch(pl); return true;
   }
   bankAdd(pl, k, n, f = 0, p = 0) {
-    const C = pl.C, s = !f && C.bank.find((x) => x.k === k && !G.fOf(x)); p = Math.max(0, Math.min(G.BANK_PAGES - 1, p | 0));
+    const C = pl.C, s = !f && C.bank.find((x) => x.k === k && !G.fCode(x)); p = Math.max(0, Math.min(G.BANK_PAGES - 1, p | 0));
     if (s) { s.n += n; return true; }
     if (C.bank.length >= G.BANK_MAX) { this.say(pl, `Your bank is full (${G.BANK_MAX} different items).`, "bad"); return false; }
     if (f) { for (let i = 0; i < n; i++) { if (C.bank.length >= G.BANK_MAX) return i > 0; C.bank.push({ k, n: 1, f, ...(p ? { p } : {}) }); } return true; }
@@ -3938,15 +3944,15 @@ export class World {
     if (m.op === "dep") { const st = C.inv[m.i | 0]; if (!st) return;
       /* A reforged piece is banked as ITSELF: by index, one item, keeping its level. "Deposit all" of a plain
          stack still sweeps every plain one, and takeInv leaves the forged ones alone by design. */
-      if (G.fOf(st)) { const f = G.fOf(st); if (!this.bankAdd(pl, st.k, 1, f, page)) return; G.takeAt(C.inv, m.i | 0); }
+      if (G.fCode(st)) { const f = G.fCode(st); if (!this.bankAdd(pl, st.k, 1, f, page)) return; G.takeAt(C.inv, m.i | 0); }
       else { const k = st.k, q = qty(m.n, G.countItems(C, [k], { plainOnly: true })); if (!this.bankAdd(pl, k, q, 0, page)) return; G.takeInv(C.inv, k, q); } }
-    else if (m.op === "depinv") { for (const st of [...C.inv]) { if (st.k === "tickets" || G.isFav(C, st.k)) continue; if (!this.bankAdd(pl, st.k, st.n, G.fOf(st), page)) break; C.inv.splice(C.inv.indexOf(st), 1); } }
+    else if (m.op === "depinv") { for (const st of [...C.inv]) { if (st.k === "tickets" || G.isFav(C, st.k)) continue; if (!this.bankAdd(pl, st.k, st.n, G.fCode(st), page)) break; C.inv.splice(C.inv.indexOf(st), 1); } }
     /* (2026-09-25) STACK ALL: every plain stack in the bag whose item the bank already holds goes in, all of it. A reforged
        piece is never swept (it is banked as itself, one at a time, by index), and neither are tickets. */
-    else if (m.op === "stackall") { const have = new Set(C.bank.filter((b) => !G.fOf(b)).map((b) => b.k));
-      for (const k of [...new Set(C.inv.filter((s) => !G.fOf(s) && s.k !== "tickets" && have.has(s.k) && !G.isFav(C, s.k)).map((s) => s.k))]) {
+    else if (m.op === "stackall") { const have = new Set(C.bank.filter((b) => !G.fCode(b)).map((b) => b.k));
+      for (const k of [...new Set(C.inv.filter((s) => !G.fCode(s) && s.k !== "tickets" && have.has(s.k) && !G.isFav(C, s.k)).map((s) => s.k))]) {
         const q = G.countItems(C, [k], { plainOnly: true }); if (q && this.bankAdd(pl, k, q, 0, page)) G.takeInv(C.inv, k, q); } }
-    else if (m.op === "depeq") { for (const sl of G.SLOTS) { const k = C.eq[sl]; if (k && this.bankAdd(pl, k, 1, G.fLevelOf(C, sl), page)) { C.eq[sl] = null; if (C.eqf) delete C.eqf[sl]; } } }
+    else if (m.op === "depeq") { for (const sl of G.SLOTS) { const k = C.eq[sl]; if (k && this.bankAdd(pl, k, 1, G.eqCode(C, sl), page)) { C.eq[sl] = null; if (C.eqf) delete C.eqf[sl]; } } }
     /* (2026-09-27) REFILE: a row moves to another page, by its true index; nothing else about it changes */
     else if (m.op === "page") { const st = C.bank[m.i | 0]; if (!st) return; if (page) st.p = page; else delete st.p; }
     /* (2026-09-27) REORDER: a row dropped on another takes its place (the two swap) and its page, so a drop across pages is a refile too */
@@ -3954,7 +3960,7 @@ export class World {
     else if (m.op === "wd") { const st = C.bank[m.i | 0]; if (!st) return;
       pl.noCol = true;   /* (2026-09-27) your own things coming out of the bank are not new to your collection log */
       try {
-        if (G.fOf(st)) { if (!this.give(pl, st.k, 1, G.fOf(st))) return; C.bank.splice(m.i | 0, 1); this.touch(pl); return pl.out.push({ type: "bank" }); }
+        if (G.fCode(st)) { if (!this.give(pl, st.k, 1, G.fCode(st))) return; C.bank.splice(m.i | 0, 1); this.touch(pl); return pl.out.push({ type: "bank" }); }
         const q = this.giveUpTo(pl, st.k, qty(m.n, st.n)); if (!q) return; st.n -= q; if (!st.n) C.bank.splice(C.bank.indexOf(st), 1);
       } finally { pl.noCol = false; } }
     else return;
@@ -4021,7 +4027,7 @@ export class World {
     // items for a sell offer come from your bag first, then your bank
     /* (2026-09-23) BY LEVEL, bag and bank. A forged piece is listed as itself: counting or taking "diamond axes"
        without saying which level would let somebody list a +3 and hand over a plain one. */
-    const matches = (x, k, f) => x.k === k && G.fOf(x) === (f | 0);
+    const matches = (x, k, f) => x.k === k && G.fCode(x) === (f | 0);   /* (2026-09-28) the whole code: a +10% ruby is not a -5% one */
     const haveAll = (k, f = 0) => C.inv.filter((x) => matches(x, k, f)).reduce((n, x) => n + x.n, 0) + C.bank.filter((x) => matches(x, k, f)).reduce((n, x) => n + x.n, 0);
     const takeItems = (k, n, f = 0) => {
       let left = n;
@@ -4044,7 +4050,7 @@ export class World {
       /* (2026-09-23) A REFORGED PIECE IS SOLD ONE AT A TIME. Each one is its own object, so a quantity above one
          could not say which levels were in the pile. The level is clamped to something the item could actually
          have, so a hand-made message cannot list a "+9" and take a plain one off the shelf. */
-      const f = G.canForge(k) ? Math.max(0, Math.min(G.FORGE.max, Math.floor(Number(m.f)) || 0)) : 0;
+      const f = G.codeOk(k, m.f) ? Math.floor(Number(m.f)) || 0 : 0;   /* (2026-09-28) a reforge level, a gem's roll or a piece's sockets, checked (codeOk) */
       let qty = Math.floor(Number(m.qty)); if (f) qty = 1;
       if (!G.ITEMS[k] || k === "tickets") return this.say(pl, "You can't trade that on the market.", "bad");
       if (!(qty >= 1 && qty <= 1e9 && price >= 1 && price <= 1e9)) return this.say(pl, "Pick a quantity and a price of at least 1.", "bad");
@@ -4982,3 +4988,4 @@ installTower(World, { G, R: TW, rint });
 installOrder(World, { G });
 installMeter(World, { G });
 installTinker(World, { G });
+installGems(World, { G });

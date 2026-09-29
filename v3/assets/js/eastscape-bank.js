@@ -128,7 +128,7 @@ export function createBankUi(E) {
   function openMenu(e, at) {
     closeMenu();
     const me = E.me, s = at.bank != null ? me?.bank?.[at.bank] : me?.inv?.[at.bag]; if (!s) return;
-    const out = at.bank != null, verb = out ? "Withdraw" : "Deposit", it = ITEMS[s.k], name = G.forgeNameAt(s.k, G.fOf(s));
+    const out = at.bank != null, verb = out ? "Withdraw" : "Deposit", it = ITEMS[s.k], name = G.forgeNameAt(s.k, G.fCode(s));
     const rows = [[1, `${verb} 1`], [5, `${verb} 5`], [10, `${verb} 10`], ["x", `${verb} ${x.toLocaleString()} (X)`], ["all", out ? `Withdraw all ${s.n.toLocaleString()}` : `Deposit all ${s.n.toLocaleString()}`]].filter(([n]) => n === "all" || n === "x" || n < s.n);
     menu = document.createElement("div"); menu.className = "bk-menu"; menu.setAttribute("role", "menu");
     menu.innerHTML = `<div class="bk-menu-h">${ico(s.k)}<b>${esc(name)}</b>${s.n > 1 ? `<small>×${s.n.toLocaleString()}</small>` : ""}</div>${rows.map(([n, t]) => `<button type="button" role="menuitem" data-n="${n}">${t}</button>`).join("")}${out ? (() => { const pg = Array.from({ length: NP }, (_, p) => p).filter((p) => p !== pageOf(s)).map((p) => `<button type="button" role="menuitem" data-page="${p}">Move to page ${p + 1}</button>`).join(""); return `<div class="bk-menu-s"></div>${pg}`; })() : ""}<button type="button" role="menuitem" data-wiki="1">Wiki page</button>`;

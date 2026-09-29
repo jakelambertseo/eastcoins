@@ -25,7 +25,7 @@ export function installTinker(World, { G }) {
         if (!G.canSalvage(k)) { if (!m.lot) return bad("Sal shakes her head. \"Not that. That's worth more whole.\""); continue; }
         if (G.isFav(C, k)) return bad("That's favourited. Unfavourite it first.");
         /* one level of one item at a time: plain copies, or the reforge asked for; never both mixed up */
-        const stacks = C.inv.filter((s) => s.k === k && (G.fOf(s) | 0) === (m.lot ? 0 : f)), n = stacks.reduce((a, s) => a + s.n, 0); if (!n) continue;
+        const stacks = C.inv.filter((s) => s.k === k && (G.fOf(s) | 0) === (m.lot ? 0 : f) && G.fCode(s) < 4), n = stacks.reduce((a, s) => a + s.n, 0); if (!n) continue;   /* (2026-09-28) never a sorted gem or a socketed piece: pull the gems first */
         const g = G.salvageOf(k, n, m.lot ? 0 : f);
         if (!g.pv) continue;
         { const bonus = G.tkSalv(C); if (bonus > 0) for (const p of Object.keys(T.parts)) g[p] = Math.floor(g[p] * (1 + bonus)); }   /* the Magnifier, and the Bone Crusher's rollers */
@@ -52,10 +52,11 @@ export function installTinker(World, { G }) {
       const short = Object.entries(g.parts || {}).filter(([p, n]) => (C.parts[p] || 0) < n);
       if (short.length) return bad(`Not enough parts: ${short.map(([p, n]) => `${n - (C.parts[p] || 0)} more ${T.parts[p].name.toLowerCase()}`).join(", ")}.`);
       if (G.tixIn(C) < g.fee) return bad(`The bench fee for that is ${G.fmtTix(g.fee)}. You have ${G.fmtTix(G.tixIn(C))}.`);
+      { const miss = (g.need || []).find(([k, n]) => C.inv.filter((s) => s.k === k).reduce((a, s) => a + s.n, 0) < n); if (miss) return bad(`That build needs ${miss[1]} ${G.ITEMS[miss[0]].name.toLowerCase()} in your bag.`); }   /* (2026-09-28) */
       const master = Math.random() < T.masterwork, n = g.n * (master ? 2 : 1), k = `tk_${id}`;
       if (G.roomFor(C.inv, k, C) < n) return bad("Your bag's too full to take it.");
       for (const [p, q] of Object.entries(g.parts || {})) C.parts[p] -= q;
-      G.takeInv(C.inv, "tickets", g.fee); G.addInv(C.inv, k, n, C);
+      G.takeInv(C.inv, "tickets", g.fee); for (const [nk, nn] of g.need || []) G.takeInv(C.inv, nk, nn); G.addInv(C.inv, k, n, C);
       this.grant(pl, "tinkering", Math.max(1, Math.round(G.tkPv(g) * T.buildXp + g.fee * T.feeXp)));
       this.touch(pl);
       this.say(pl, master ? `MASTERWORK! Sal whistles: ${n} ${g.name.toLowerCase()}${n > 1 ? "s" : ""} for the price of ${g.n}.` : `Sal hands over ${n > 1 ? `${n} ${g.name.toLowerCase()}s` : `a ${g.name.toLowerCase()}`}.`, master ? "loot" : "good");
@@ -65,7 +66,7 @@ export function installTinker(World, { G }) {
   };
 
   /* THE AUTOMATION TOOLS. Slower while nobody is at the keyboard (TINK.autoRate); full speed the moment you are. */
-  P.tkSlow = function (pl, now, kind) { return G.tkAuto(pl.C, kind) && now - pl.lastInput > G.AFK_MS ? 1 / T.autoRate : 1; };
+  P.tkSlow = function (pl, now, kind) { return (G.tkAuto(pl.C, kind) && now - pl.lastInput > G.AFK_MS ? 1 / T.autoRate : 1) / Math.max(0.5, 1 + G.gemSpeed(pl.C, kind)); };   /* (2026-09-28) and the Gem Case's sapphire / opal / topaz */
   /* A rock ran dry or a tree fell: with the tool running, walk to the nearest one of the SAME ore or wood you can work, and carry on. */
   P.tkNext = function (S, pl, ob, kind) {
     if (!G.tkAuto(pl.C, kind)) return;
@@ -81,6 +82,8 @@ export function installTinker(World, { G }) {
     const C = pl.C, id = it.gadget, g = G.GADGETS[id], bad = (t) => this.say(pl, t, "bad"); if (!g) return;
     if (G.HOLD.tinker && !pl.admin) return;
     C.tk ||= {};
+    if (g.kind === "punch") return this.say(pl, `Take it to the Gem Sorter in the Depths: it punches the socket there, into what you're wearing.`);   /* (2026-09-28) */
+    if (g.kind === "caseslot") return this.caseSlotUse(pl, g, take);
     if (g.mins) {
       const cur = C.tk[id]; if (cur && cur.left > 0) return bad(`Your ${g.name} is already going: ${Math.ceil(cur.left / 60000)} minutes left.`);
       take(); C.tk[id] = { left: g.mins * 60000 };

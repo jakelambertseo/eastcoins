@@ -37,6 +37,16 @@ const ICONS = {
   tk_autoreel: "79a98333-a5f2-4d18-bca4-c75e78a86468", tk_bomb: "160948db-abef-49d0-8597-97a7fc419ed9",
   part_scrap: "45f5c96c-11bc-4a5b-9e4d-270aea765741", part_gears: "1c131959-ad3f-4f17-a62d-eb496461e984", part_sparks: "6e821777-8112-47f8-b975-d7f902c71034", part_relic: "ee5aa9b7-c0f3-41d8-943c-5cc188086ce9"
 };
+/* (2026-09-28) THE GEMS (items/<gem>.png): one per skill, for the Gem Sorter. Ruby, sapphire, topaz and opal already had pictures. */
+Object.assign(ICONS, { jade: "1c0d278a-f56e-45d5-bfe1-76f43fefbf1a", amethyst: "a3dd8b5d-ba84-427b-964f-b2bd86961b68", bloodstone: "01dfa889-a35a-42c9-b7e2-b5ed46ab4553", amber: "7f387a40-e171-4b7d-9f98-435a92a2bd4e",
+  obsidian: "6acb5dc8-aee2-4923-bf18-a1922d5456d2", moonstone: "732a1c29-c3ae-4fc6-8f7e-e5d472a84d03", citrine: "cc3a68a9-c499-42db-801b-ee677cf252ac", garnet: "f9d63361-00ba-4e70-9162-364f0e6a12ac",
+  peridot: "5099531b-e3f8-492e-a8fc-dc9c844ec60e", tigerseye: "1e7de5d4-51fc-4255-9d5f-6b1dd46dc31d",
+  lapis: "991e00f2-e0d4-420e-9150-decd66f47190", turquoise: "4edfe4dc-699f-4f28-a14a-3371d6b0dd65", malachite: "c42376b8-82b4-43b8-8736-9da1e22b36c9", quartz: "3c1bff0a-f5f2-4c3b-a032-4ff2001ef76e",
+  jasper: "956a6e0c-b398-4632-b520-caf4db8bcca2", hematite: "c0e7b017-24a8-485e-8acd-5bf2de5b9a4c", carnelian: "f6ae53c9-8332-4236-816c-da5ceea3ff69", aquamarine: "b5f12665-c840-48dc-9230-0dc8765c0293",
+  sunstone: "960c4cf2-2bd0-40b9-b8b0-b204608fc269", tanzanite: "002eb1db-a140-464d-ae5b-988635d2269b", jet: "0197d135-ca83-4c56-b5b2-d9eff050204b",
+  tk_punch: "62cb5999-2856-4673-b1aa-14dffcad4c13", tk_masterpunch: "dd7efdd6-45cc-474c-9afc-b87965e4570f", voidheart_bit: "75de7987-4c07-4eb4-94dc-8739ffd18e36",
+  tk_caseslot: "2fbe3747-6e61-4e91-900d-8ab2b135e66f", tk_caseslot2: "2fbe3747-6e61-4e91-900d-8ab2b135e66f", tk_caseslot3: "2fbe3747-6e61-4e91-900d-8ab2b135e66f" });   /* (one Gem Case kit picture for all three) */
+Object.assign(BUILDS, { o_pj_sorter0: MAP("4bd7b6e8-45db-4e38-990b-629c2d1f368f"), o_pj_sorter1: MAP("16e163a6-bab2-4b7b-8103-8a6f406f8166"), o_pj_sorter2: IMG("6ca92570-3c61-4e1f-b9dd-b79c31357fb0"), o_pj_sorter3: IMG("e84d9697-d540-47fd-9b1e-d759b7291c86") });
 const GRASS_CUT = new Set(["o_pj_smoke0"]);
 const only = (() => { const i = process.argv.indexOf("--only"); return i > 0 ? new Set(process.argv[i + 1].split(",")) : null; })();
 const get = async (url) => { const r = await fetch(url); if (!r.ok) throw new Error(`${url} ${r.status}`); return Buffer.from(await r.arrayBuffer()); };
@@ -62,7 +72,7 @@ for (const [name, id] of Object.entries(ICONS)) {
 
 /* THE BUILDER'S PINS (items/pin_<id>.png): a brass badge with that build's finished picture in it, made here from the art above, so a
    pin always matches its build and needs no generation of its own. 32x32 like every item icon. */
-const PIN_ART = { dock: "o_pj_dockshed", cannon: "o_pj_cannon3", table: "o_pj_boiler3", sawmill: "o_pj_sawmill3", crusher: "o_pj_crusher3", still: "o_pj_still3", press: "o_pj_press3", rod: "o_pj_rod3", crane: "o_pj_crane3", wheel: "o_pj_wheel3", smoke: "o_pj_smoke3", camp: "o_pj_camp3" };
+const PIN_ART = { sorter: "o_pj_sorter3", dock: "o_pj_dockshed", cannon: "o_pj_cannon3", table: "o_pj_boiler3", sawmill: "o_pj_sawmill3", crusher: "o_pj_crusher3", still: "o_pj_still3", press: "o_pj_press3", rod: "o_pj_rod3", crane: "o_pj_crane3", wheel: "o_pj_wheel3", smoke: "o_pj_smoke3", camp: "o_pj_camp3" };
 const badge = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" shape-rendering="crispEdges">
   <circle cx="16" cy="16" r="15" fill="#2a1a08"/><circle cx="16" cy="16" r="14" fill="#c8963a"/><circle cx="16" cy="16" r="12" fill="#f0c860"/>
   <circle cx="16" cy="16" r="11" fill="#3a2a1a"/><circle cx="16" cy="16" r="10" fill="#4a3a26"/></svg>`);

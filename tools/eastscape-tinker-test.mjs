@@ -143,8 +143,8 @@ is([!!br, br?.target, br ? (br.blow >= 2.5) === (br.payout > 0) : null], [true, 
 
 /* 13. THE OTHER NINE: one per main map, each built by tier from `site`, each with its own effect */
 { const { createClosedScenes } = await import("../v3/assets/js/eastscape-closed.js"); if (!G.SCENES.wild) Object.assign(G.SCENES, createClosedScenes(G, G._MAP)); }
-is(Object.keys(G.PROJECTS).length, 12, "twelve World Projects, one on every main map");
-is(new Set(Object.values(G.PROJECTS).map((p) => p.scene)).size, 12, "no two on the same map");
+is(Object.keys(G.PROJECTS).length, 13, "thirteen World Projects: one on every main map, and the Gem Sorter in the Depths");
+is(new Set(Object.values(G.PROJECTS).map((p) => p.scene)).size, 13, "no two on the same map");
 const setT = (id, t) => { W.projOf(id).tier = t; G.setProjects(W.projTiers()); W.projRebuild(G.PROJECTS[id].scene); };
 for (const [id, P] of Object.entries(G.PROJECTS)) if (P.site) {
   const Sx = W.scene(P.scene); setT(id, 0);
