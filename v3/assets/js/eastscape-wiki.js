@@ -1063,6 +1063,7 @@ export const UPDATES = [
       "THE PUMPKIN KING GETS ONE TOO: everybody who fought him gets the report when he falls, or when he gets away, party or not.",
       "FIXED: Bronny's order and a running 2X now survive the server restarting. Before, a restart posted a fresh order and lost what had been handed in. The countdown shows seconds now too.",
       "Eggs drop one kill in 1,500 (it was one in 500 for a few hours today).",
+      "THE NEXUS, TONED DOWN: it prints half as much again as another altar (it was twice as much), for a quarter more Wizardry xp (it was half as much again). A print that makes one page makes one or two, one and a half on average.",
     ],
   },
   {

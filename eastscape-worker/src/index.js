@@ -3135,7 +3135,7 @@ export class World {
          NULL, and bagMax(null) is a flat INV_MAX - so this line sized every station in the game at 20 slots and
          silently ignored the pockets bought with tickets and earned from achievements. The `burnt` check beside
          it always passed C, which is exactly why it read as correct at a glance. */
-      if (G.roomFor(C.inv, r.out[0], C) < r.out[1] * (nx ? nx.mult : 1) || (r.burnStop != null && G.roomFor(C.inv, "burnt", C) < 1)) { this.say(pl, "Your inventory is full.", "bad"); pl.act = null; return; }
+      if (G.roomFor(C.inv, r.out[0], C) < Math.ceil(r.out[1] * (nx ? nx.mult : 1)) || (r.burnStop != null && G.roomFor(C.inv, "burnt", C) < 1)) { this.say(pl, "Your inventory is full.", "bad"); pl.act = null; return; }
       const freeSmelt = st.kind === "smelt" && Math.random() < G.petFx(C).freesmelt / 100;   /* (2026-09-27) the Cinder Salamander: now and then a smelt costs nothing */
       if (freeSmelt) this.say(pl, "The salamander breathes on the ore. That one cost you nothing.", "good");
       else for (const [k, n] of r.in) G.takeInv(C.inv, k, n);
@@ -3169,7 +3169,8 @@ export class World {
           : `The ${G.ITEMS[r.in[0][0]].name.toLowerCase()} crumbles to ash. Nothing usable.`, "bad");
       }
       if (!burnt) {
-        const outN = r.out[1] * (nx ? nx.mult : 1);
+        /* (2026-09-28) a fractional boost (the Nexus: 1.5) rounds by chance, so one page makes one or two, 1.5 on average, rather than always two */
+        const outRaw = r.out[1] * (nx ? nx.mult : 1), outN = Math.floor(outRaw) + (Math.random() < outRaw - Math.floor(outRaw) ? 1 : 0);
         /* (2026-09-27, a player: "it's using my charcoal and koi and I'm getting the xp but the smoked product doesn't deposit")
            THE PRODUCT IS CHECKED BEFORE THE XP IS PAID. give() refuses when the bag cannot take it and its answer was being thrown
            away, so a refusal here would have spent the inputs, paid the xp and handed over nothing. The room check above makes that

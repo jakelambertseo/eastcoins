@@ -6060,8 +6060,9 @@ export const charmOf = (c, k) => (c?.charm && c.charm.k === k && (c.charm.left |
 /* ---------------- stations: seven altars, paper at the fletching table, ink at the cauldron */
 for (const el of ["arcane", ...ELEMENT_KEYS]) STATIONS[`altar_${el}`] = { skill: "wizardry", verb: "print", name: `${ELEMENTS[el].name} altar`, auto: false, kind: "print" };
 STATIONS.altar_nexus = { skill: "wizardry", verb: "print", name: "the Nexus", auto: false, kind: "print", nexus: true };
-/** the Nexus prints anything any altar prints, twice over, for half as much xp again */
-export const NEXUS = { mult: 2, xp: 1.5 };
+/** the Nexus prints anything any altar prints, half as much again, for a quarter more xp (2026-09-28, the owner: "nerf the nexus altar some";
+    it was twice the pages for half as much xp again). A print that makes one thing makes one or two at even odds (see the worker). */
+export const NEXUS = { mult: 1.5, xp: 1.25 };
 const pr = (id, r) => recipe(id, { ms: 2400, skill: "wizardry", ...r });
 /* paper is pressed at the ARCANE altar: a Wizardry recipe belongs at a Wizardry station (the content check holds every station to its own skill) */
 pr("press_paper", { station: "altar_arcane", lvl: 1, xp: 4, ms: 1800, in: [["logs", 1]], out: ["spellpaper", 5] });
