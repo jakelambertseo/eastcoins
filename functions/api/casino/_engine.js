@@ -94,7 +94,65 @@ export async function ensureColumn(db, table, column, decl) {
   await db.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${decl}`).run().catch(() => {});
 }
 
+/* EASTSCAPE'S TWO SHARED ROOMS (2026-09-19): classic roulette and the Fight Pit. They run on this engine like the Wheel
+   (one round for the whole room, one bet a player a round, fair prices quoted and the play's own edge multiplied in at
+   settle) and are `hidden`: they have no page or floor card on eastcoin.vip, only a window in EastScape.
+
+   ROULETTE (key "roul": "roulette" is the PvP Russian Roulette table everywhere else in this codebase). A single-zero
+   wheel, 37 pockets. ONE spot a spin (the owner's call): an even-money spot, a dozen, or one number. The FAIR prices:
+   18 pockets in 37 is 37/18, a dozen 37/12, a number 37. n = floor(sha256(seed:roul) as a fraction x 37).
+
+   THE FIGHT PIT (key "pit"). Two fighters from PIT_POOL. WHO IS FIGHTING is a pure function of the ROUND NUMBER, which
+   is public, so the card and its prices can be shown before the bets close without touching the seed; WHO WINS is
+   sha256(seed:pit) as a fraction against side a's chance, and the seed stays secret until the round closes. The chance
+   comes from the fighters' levels (square roots, clamped 25-75%); each side's FAIR price is 1 / its chance. PIT_POOL and
+   PIT_TITLES mirror FIGHTS.pool / MOBS levels / FIGHTS.titles in v3/assets/js/eastscape-shared.js so the game can draw the
+   same two monsters: tools/dex-test.mjs fails if they drift. */
+const ROUL_RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+const ROUL_SPOTS = {
+  red: (n) => ROUL_RED.has(n), black: (n) => n > 0 && !ROUL_RED.has(n), odd: (n) => n > 0 && n % 2 === 1, even: (n) => n > 0 && n % 2 === 0,
+  low: (n) => n >= 1 && n <= 18, high: (n) => n >= 19, d1: (n) => n >= 1 && n <= 12, d2: (n) => n >= 13 && n <= 24, d3: (n) => n >= 25
+};
+const ROUL_PICKS = [...Object.keys(ROUL_SPOTS), ...Array.from({ length: 37 }, (_, n) => `n${n}`)];
+export const PIT_POOL = [["chicken", 1], ["cow", 2], ["rotten", 4], ["olive", 6], ["hornworm", 7], ["boar", 8], ["goat", 12], ["highwayman", 12], ["gnasher", 18], ["moth", 22], ["taxwraith", 28], ["ghoul", 30], ["chandelier", 34], ["understudy", 38], ["ram", 42], ["revenant", 45], ["angel", 48], ["goose", 55]];
+export const PIT_TITLES = 12, PIT_MIN_P = 0.25, PIT_MAX_P = 0.75;
+/** The card for a round: two different fighters, a title each, side a's chance, and both fair prices. From the round number alone. */
+export async function pitCard(no) {
+  const h = await sha256(`pit:card:${no}`), at = (i, mod) => parseInt(h.slice(i * 6, i * 6 + 6), 16) % mod;
+  const a = at(0, PIT_POOL.length); let b = at(1, PIT_POOL.length - 1); if (b >= a) b += 1;
+  const ta = at(2, PIT_TITLES); let tb = at(3, PIT_TITLES - 1); if (tb >= ta) tb += 1;
+  const sa = Math.sqrt(PIT_POOL[a][1]), sb = Math.sqrt(PIT_POOL[b][1]), p = Math.max(PIT_MIN_P, Math.min(PIT_MAX_P, sa / (sa + sb)));
+  return { no, f: [{ t: PIT_POOL[a][0], title: ta }, { t: PIT_POOL[b][0], title: tb }], p: [p, 1 - p], price: { a: 1 / p, b: 1 / (1 - p) } };
+}
+
 export const GAMES = {
+  roul: {
+    key: "roul", name: "Roulette", hidden: true,
+    cycleMs: 60 * 1000, betMs: 40 * 1000,
+    picks: ROUL_PICKS,
+    payout: Object.fromEntries(ROUL_PICKS.map((k) => [k, ROUL_SPOTS[k] ? (k[0] === "d" ? 37 / 12 : 37 / 18) : 37])),
+    async outcome(seed) {
+      const h = await sha256(`${seed}:roul`);
+      const n = Math.floor((parseInt(h.slice(0, 8), 16) / 0x100000000) * 37);
+      return { n, color: n === 0 ? "green" : ROUL_RED.has(n) ? "red" : "black" };
+    },
+    wins: (pick, result) => (ROUL_SPOTS[pick] ? ROUL_SPOTS[pick](result.n) : pick === `n${result.n}`),
+    describe: (result) => `${result.n} ${result.color}`
+  },
+  pit: {
+    key: "pit", name: "The Fight Pit", hidden: true,
+    cycleMs: 90 * 1000, betMs: 40 * 1000,
+    picks: ["a", "b"],
+    payout: { a: 2, b: 2 },   // (never used: priceFor below prices each round's card)
+    cardFor: (no) => pitCard(no),
+    async priceFor(pick, no) { return (await pitCard(no)).price[pick]; },
+    async outcome(seed, no) {
+      const h = await sha256(`${seed}:pit`), u = parseInt(h.slice(0, 8), 16) / 0x100000000, card = await pitCard(no);
+      return { winner: u < card.p[0] ? "a" : "b", draw: u, t: card.f[u < card.p[0] ? 0 : 1].t };
+    },
+    wins: (pick, result) => pick === result.winner,
+    describe: (result) => result.t
+  },
   wheel: {
     key: "wheel",
     name: "Wheel",
@@ -228,6 +286,26 @@ const parseResult = (text) => { try { return text ? JSON.parse(text) : null; } c
  * NULL runs first, and payouts are idempotent per bet regardless, so
  * a crash mid-way is finished by the next caller rather than doubled.
  */
+/* SETTLE WHATEVER WAS LEFT BEHIND (2026-09-21). Nothing but a state poll ever settles a shared round, and it only ever asked
+   about the current round and the one before it. So if the last player bets and closes the tab, and nobody opens the page
+   again for a minute, that round falls out of the window for good: the stake was taken and the bet stays ACTIVE — never paid
+   on a winning side, never marked LOST, and invisible to hourlyNet, the ledger, the book and the feed, all of which filter on
+   WON/LOST. On a quiet night with one player that is the ordinary case, not an edge case.
+
+   This finds any round that still has money on it and has already closed, oldest first, and settles it. Bounded, because it
+   runs on a hot public endpoint: a backlog drains over several calls rather than making one request do all the work.
+   Settlement itself is idempotent per bet, so two callers racing here is the case settleRound already handles. */
+export async function settleStale(env, db, game, now = Date.now(), limit = 8) {
+  const openNo = Math.floor(now / game.cycleMs);
+  const rows = await db
+    .prepare(`SELECT DISTINCT round_no FROM casino_bets WHERE game = ? AND status = 'ACTIVE' AND round_no < ? ORDER BY round_no LIMIT ?`)
+    .bind(game.key, openNo, limit)
+    .all()
+    .catch(() => ({ results: [] }));
+  for (const r of rows.results || []) await settleRound(env, db, game, Number(r.round_no), now).catch(() => {});
+  return (rows.results || []).length;
+}
+
 export async function settleRound(env, db, game, no, now = Date.now()) {
   const closesAt = no * game.cycleMs + game.betMs;
   if (now < closesAt) return null;
@@ -235,7 +313,7 @@ export async function settleRound(env, db, game, no, now = Date.now()) {
   const round = await ensureRound(db, game, no);
   let result = parseResult(round.result);
   if (!result) {
-    result = await game.outcome(round.seed);
+    result = await game.outcome(round.seed, no);   // (the round number: the Fight Pit's card is a function of it)
     const claimed = await db
       .prepare(`UPDATE casino_rounds SET result = ?, settled_at = CURRENT_TIMESTAMP WHERE game = ? AND no = ? AND result IS NULL`)
       .bind(JSON.stringify(result), game.key, no)
@@ -261,7 +339,8 @@ export async function settleRound(env, db, game, no, now = Date.now()) {
       continue;
     }
     const edge = await edgeFor(round.seed);
-    const payout = Math.round(Number(b.wager) * Number(game.payout[b.pick] || 0) * edge);
+    const price = game.priceFor ? await game.priceFor(b.pick, no) : game.payout[b.pick];
+    const payout = Math.round(Number(b.wager) * Number(price || 0) * edge);
     const opId = newId("op");
     const begun = await beginOperation(db, {
       id: opId,
@@ -346,7 +425,7 @@ export function publicConfig(game, canBet) {
     segments: game.segments || undefined,
     runners: game.runners ? game.runners.map((r) => ({ key: r.key, name: r.name, pays: r.pays, p: Math.round(r.p * 1000) / 1000, color: r.color })) : undefined,
     hourCap: HOUR_WIN_CAP,
-    paused: Boolean(game.paused),
+    paused: Boolean(game.paused), hidden: Boolean(game.hidden),
     canBet: canBet && !game.paused
   };
 }
@@ -358,15 +437,24 @@ export async function hourlyNet(db, userId) {
   const q = async (sql) => {
     try { const r = await db.prepare(sql).bind(userId).first(); return Number(r?.net || 0); } catch { return 0; }
   };
-  const coin = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM coin_bets WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
-  const shared = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM casino_bets WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
-  const hilo = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM hilo_games WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`);
-  const mines = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM mines_games WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`);
-  const plinko = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM plinko_drops WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
-  // The PvP tables. A refund is neither a win nor a loss.
-  const pvp = await q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - stake WHEN status = 'LOST' THEN -stake ELSE 0 END), 0) AS net FROM pvp_entries WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`);
-  const scratch = await q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM scratch_cards WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`);
-  return coin + shared + hilo + mines + plinko + pvp + scratch;
+  /* NINE TABLES, ONE WAIT (2026-09-21). These used to be nine sequential awaits, so the endpoint paid nine D1 round trips
+     one after another — and it is called on EVERY state poll of every casino page to render a single number that can only
+     change when the viewer bets. On Hi-Lo's four-second poll that was nine of the sixteen queries in the request, about
+     345,000 a day from one tab left open. They do not depend on each other, so they go together; the latency is now one
+     round trip rather than nine, and D1 sees the same nine reads either way.
+     A refund is neither a win nor a loss (PvP). A slots jackpot is inside `payout`, so it counts. */
+  const parts = await Promise.all([
+    q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM coin_bets WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager WHEN status = 'LOST' THEN -wager ELSE 0 END), 0) AS net FROM casino_bets WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM hilo_games WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake WHEN status = 'BUST' THEN -stake ELSE 0 END), 0) AS net FROM mines_games WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM plinko_drops WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - stake WHEN status = 'LOST' THEN -stake ELSE 0 END), 0) AS net FROM pvp_entries WHERE user_id = ? AND updated_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM scratch_cards WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM dice_rolls WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`),
+    q(`SELECT COALESCE(SUM(payout - stake), 0) AS net FROM slots_spins WHERE user_id = ? AND created_at >= datetime('now', '-1 hour')`)
+  ]);
+  return parts.reduce((a, n) => a + n, 0);
 }
 
 /** Whether this person may place another bet, and where they stand. */

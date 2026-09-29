@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Flip Cup Relay — Test</title>
+<link rel="stylesheet" href="/v3/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/arcade-test.css?v=1">
+</head>
+<body>
+<div class="topbar"><a class="brand" href="/arcade-test" style="text-decoration:none;color:inherit">East<span>Coin</span> Arcade</a><div class="mock-tag">Test page</div></div>
+<div class="page">
+  <div class="head">
+    <div class="eyebrow">Arcade · game 5</div>
+    <h1>Flip Cup Relay</h1>
+    <p class="sub">Two teams of four across a table. Drink yours, flip it so it lands upside down, and only then does the next one go. First team to flip all four wins. Tonight you're the whole team; online, every cup is a different person and you get to yell at them.</p>
+  </div>
+  <div class="layout">
+    <div class="stage" id="stage">
+      <canvas id="cv" width="960" height="580" style="aspect-ratio:960/580" aria-label="Flip Cup Relay"></canvas>
+      <div class="veil" id="veil">
+        <div>
+          <h2 id="vTitle">Flip Cup Relay</h2>
+          <p id="vSub">One button for everything: click, tap or <span class="keys">Space</span>. <b>Mash</b> to drink. Then <b>one press</b> when the marker is in the green to flip.</p>
+          <div><div class="seg" id="diffSeg" role="group" aria-label="The other team">
+            <button data-diff="fresh" aria-pressed="false">Freshmen</button><button data-diff="senior" aria-pressed="true">Seniors</button><button data-diff="alumni" aria-pressed="false">Alumni</button>
+          </div></div>
+          <div class="row"><button class="btn go" id="play">Line 'em up</button></div>
+        </div>
+      </div>
+    </div>
+    <aside>
+      <div class="card"><h3>Your records</h3>
+        <div class="stat"><span>Best time</span><b id="rBest">–</b></div>
+        <div class="stat"><span>Wins · games</span><b id="rWins">0 · 0</b></div>
+        <div class="stat"><span>Best win streak</span><b id="rStreak">0</b></div>
+        <div class="stat"><span>Perfect relays (4 first-try flips)</span><b id="rPerfect">0</b></div>
+        <p class="note">Kept in this browser only while this is a test.</p>
+      </div>
+      <div class="card"><h3>How it goes</h3>
+        <ul class="how">
+          <li><b>Drink:</b> ten presses empties the cup. Faster is faster.</li>
+          <li><b>Flip:</b> press once while the marker is in the green. Too soft and it flops; too hard and it's on the floor. Miss and you go again.</li>
+          <li>The green gets <b>smaller</b> and the marker <b>quicker</b> with every cup. The anchor's is nasty.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+<script>
+(() => {
+"use strict";
+const cv = document.getElementById("cv"), c = cv.getContext("2d"), W = 960, H = 580, $ = (id) => document.getElementById(id);
+const CUPS = 4, SIPS = 10, MIN_GAP = 70, TX = 130, TW = 700, TY = 170, TH = 110, CX = (i) => TX + 110 + i * 160;
+const DIFF = { fresh: { sip: [0.16, 0.28], tryT: [0.6, 1.1], ok: 0.45 }, senior: { sip: [0.12, 0.2], tryT: [0.4, 0.8], ok: 0.6 }, alumni: { sip: [0.1, 0.16], tryT: [0.35, 0.7], ok: 0.75 } };   // about 18s, 13s and 10s a relay
+const COLS = [["#e8bf35", "#f0cf5a", "#d8aa20", "#f7dc7a"], ["#ff6b85", "#ff8aa0", "#e84a68", "#ffa4b6"]];
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches, rnd = (a, b) => a + Math.random() * (b - a);
+
+const KEY = "ec_flipcup_test_v1"; let REC = { best: 0, wins: 0, games: 0, streak: 0, bestStreak: 0, perfect: 0 };
+try { REC = { ...REC, ...(JSON.parse(localStorage.getItem(KEY)) || {}) }; } catch (e) {}
+const showRec = () => { $("rBest").textContent = REC.best ? `${REC.best.toFixed(2)}s` : "–"; $("rWins").textContent = `${REC.wins} · ${REC.games}`; $("rStreak").textContent = REC.bestStreak; $("rPerfect").textContent = REC.perfect; };
+const saveRec = () => { try { localStorage.setItem(KEY, JSON.stringify(REC)); } catch (e) {} showRec(); }; showRec();
+
+let AC = null;
+function tone(f0, f1, dur, vol = 0.1, type = "triangle") { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t + dur); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + dur); } catch (e) {} }
+const SND = { beep: (hi) => tone(hi ? 880 : 440, hi ? 880 : 440, hi ? 0.35 : 0.12, 0.12), gulp: (k) => tone(260 - k * 9, 150, 0.07, 0.09, "sine"), flick: () => tone(400, 900, 0.1, 0.08), land: () => { tone(700, 1100, 0.12, 0.12); setTimeout(() => tone(1100, 1500, 0.14, 0.1), 90); }, flop: () => tone(300, 90, 0.3, 0.12, "square"), win: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, f, 0.2, 0.12), i * 100)), lose: () => tone(300, 120, 0.7, 0.1, "sawtooth") };
+
+let M = null, diff = "senior", lastT = 0, lastPress = 0;
+const team = (side) => ({ side, idx: 0, phase: "chug", drink: 1, anim: 0, ok: false, how: "", tries: 0, firstTry: 0, bar: 0, barT: Math.random() * 3, done: 0, next: 0, cupDone: [] });
+function newGame() { M = { t: -3.2, state: "count", lastBeep: 9, T: [team(0), team(1)], banner: null, shake: 0 }; $("veil").hidden = true; }
+// the flip meter for cup i: a marker sweeping end to end, and a green patch in the middle that shrinks
+const zoneHalf = (i) => 0.13 - 0.02 * i, sweepHz = (i) => 0.85 + 0.22 * i;
+const tri = (x) => { const f = x % 2; return f < 1 ? f : 2 - f; };
+
+function flip(tm, power) {
+  const i = tm.idx, d = power - 0.5; tm.tries++; tm.phase = "anim"; tm.anim = 0; tm.ok = Math.abs(d) <= zoneHalf(i); tm.how = tm.ok ? "" : d < 0 ? "soft" : "hard";
+  if (tm.side === 0) { SND.flick(); M.banner = tm.ok ? null : { t: 0, text: d < 0 ? "TOO SOFT" : "TOO HARD", col: "#ff8a96" }; }
+}
+function press() {
+  if (!M || M.state !== "run") return; const now = performance.now(); if (now - lastPress < MIN_GAP) return; lastPress = now;
+  const tm = M.T[0]; if (tm.done) return;
+  if (tm.phase === "chug") { tm.drink = Math.max(0, tm.drink - 1 / SIPS); SND.gulp(Math.round((1 - tm.drink) * SIPS)); if (tm.drink <= 0.001) { tm.phase = "flip"; tm.tries = 0; tm.barT = 0.5; } }
+  else if (tm.phase === "flip") flip(tm, tm.bar);
+}
+function update(dt) {
+  M.t += dt; M.shake = Math.max(0, M.shake - dt * 40); if (M.banner) { M.banner.t += dt; if (M.banner.t > 1.1) M.banner = null; }
+  if (M.state === "count") { const n = Math.ceil(-M.t); if (n !== M.lastBeep && n >= 1 && n <= 3) { M.lastBeep = n; SND.beep(false); } if (M.t >= 0) { M.state = "run"; SND.beep(true); M.banner = { t: 0, text: "DRINK!", col: "#8ff0b4" }; } return; }
+  const D = DIFF[diff];
+  for (const tm of M.T) {
+    if (tm.done) continue;
+    if (tm.phase === "flip") { tm.barT += dt * sweepHz(tm.idx) * 2; tm.bar = tri(tm.barT); }
+    if (tm.side === 1) {                                  // the other team: they drink at their pace and land a flip some of the time
+      tm.next -= dt;
+      if (tm.phase === "chug" && tm.next <= 0) { tm.drink = Math.max(0, tm.drink - 1 / SIPS); tm.next = rnd(...D.sip); if (tm.drink <= 0.001) { tm.phase = "flip"; tm.tries = 0; tm.next = rnd(...D.tryT); } }
+      else if (tm.phase === "flip" && tm.next <= 0) { const ok = Math.random() < D.ok - tm.idx * 0.04; flip(tm, ok ? 0.5 : Math.random() < 0.5 ? 0.2 : 0.85); tm.next = rnd(...D.tryT); }
+    }
+    if (tm.phase === "anim") {
+      tm.anim += dt / (tm.ok ? 0.55 : 0.8);
+      if (tm.anim >= 1) {
+        if (tm.ok) { if (tm.tries === 1) tm.firstTry++; tm.cupDone[tm.idx] = true; if (tm.side === 0) SND.land(); tm.idx++; if (tm.idx >= CUPS) { tm.done = M.t; if (!M.T[1 - tm.side].done) { M.banner = { t: 0, text: tm.side === 0 ? "YOUR TEAM WINS!" : "They got there first", col: tm.side === 0 ? "#e8bf35" : "#ff8a96" }; (tm.side === 0 ? SND.win : SND.lose)(); M.shake = 8; } } else { tm.phase = "chug"; tm.drink = 1; } }
+        else { if (tm.side === 0) SND.flop(); tm.phase = "flip"; }
+      }
+    }
+  }
+  const a = M.T[0], b = M.T[1]; if ((a.done && b.done) || (a.done && M.t > a.done + 1.8) || (b.done && !a.done && M.t > b.done + 6) || M.t > 90) finish();
+}
+function finish() {
+  M.state = "over"; const a = M.T[0], b = M.T[1], won = a.done && (!b.done || a.done < b.done);
+  REC.games++; if (won) { REC.wins++; REC.streak++; REC.bestStreak = Math.max(REC.bestStreak, REC.streak); } else REC.streak = 0;
+  const nb = a.done && (!REC.best || a.done < REC.best); if (nb) REC.best = Math.round(a.done * 100) / 100; if (a.done && a.firstTry === CUPS) REC.perfect++; saveRec();
+  $("vTitle").textContent = won ? "Your team wins!" : "They out-drank you";
+  $("vSub").innerHTML = `${a.done ? `${a.done.toFixed(2)}s` : `Stuck on cup ${a.idx + 1}`} · ${a.firstTry} of ${CUPS} flipped first try${a.done && a.firstTry === CUPS ? " · <b>PERFECT RELAY</b>" : ""}${nb ? " · <b>new best</b>" : ""}<br>Them: ${b.done ? `${b.done.toFixed(2)}s` : `still on cup ${b.idx + 1}`}`;
+  $("play").textContent = "Run it back"; $("veil").hidden = false;
+}
+
+/* ---------------- drawing ---------------- */
+function cup(x, y, s, fill, rot = 0, up = true, alpha = 1) {     // a party cup; fill 0..1 is how much is left
+  c.save(); c.translate(x, y); c.rotate(rot); c.scale(s, s); c.globalAlpha = alpha; if (!up) c.scale(1, -1);
+  c.fillStyle = "#d8202a"; c.beginPath(); c.moveTo(-13, -18); c.lineTo(13, -18); c.lineTo(9, 18); c.lineTo(-9, 18); c.closePath(); c.fill(); c.lineWidth = 2; c.strokeStyle = "rgba(0,0,0,.45)"; c.stroke();
+  c.fillStyle = "#f4f4f4"; c.fillRect(-14, -21, 28, 5);
+  if (fill > 0 && up) { const h = 30 * fill; c.fillStyle = "rgba(240,180,40,.95)"; c.beginPath(); c.moveTo(-12 + (30 - h) * 0.12, 14 - h); c.lineTo(12 - (30 - h) * 0.12, 14 - h); c.lineTo(8.5, 16); c.lineTo(-8.5, 16); c.fill(); c.fillStyle = "#fff8e0"; c.fillRect(-11 + (30 - h) * 0.12, 12 - h, 22 - (30 - h) * 0.24, 3); }
+  c.restore(); c.globalAlpha = 1;
+}
+function person(x, y, col, mood, facingDown) {      // mood: wait | go | done
+  const t = performance.now(), bob = mood === "done" && !calm ? Math.abs(Math.sin(t / 140 + x)) * -10 : mood === "go" && !calm ? Math.sin(t / 70) * 2 : 0;
+  c.save(); c.translate(x, y + bob);
+  c.fillStyle = col; c.beginPath(); c.ellipse(0, 0, 26, 30, 0, 0, 7); c.fill(); c.lineWidth = 3; c.strokeStyle = "rgba(0,0,0,.45)"; c.stroke();
+  const ey = facingDown ? 4 : -8; for (const dx of [-9, 9]) { c.fillStyle = "#fff"; c.beginPath(); c.arc(dx, ey, 7, 0, 7); c.fill(); c.fillStyle = "#111"; c.beginPath(); c.arc(dx, ey + (facingDown ? 2 : -2), 3, 0, 7); c.fill(); }
+  c.strokeStyle = "#111"; c.lineWidth = 2.5; c.beginPath(); const my = facingDown ? 18 : 6; if (mood === "done") c.arc(0, my - 3, 8, 0.1, Math.PI - 0.1); else if (mood === "go") c.arc(0, my, 5, 0, 7); else { c.moveTo(-5, my); c.lineTo(5, my); } c.stroke();
+  if (mood === "done") { c.strokeStyle = col; c.lineWidth = 7; c.lineCap = "round"; c.beginPath(); c.moveTo(-22, -12); c.lineTo(-34, -34); c.moveTo(22, -12); c.lineTo(34, -34); c.stroke(); }
+  c.restore();
+}
+function draw() {
+  const t = performance.now();
+  c.save(); if (M.shake > 0 && !calm) c.translate((Math.random() - 0.5) * M.shake, (Math.random() - 0.5) * M.shake);
+  c.fillStyle = "#1a1210"; c.fillRect(0, 0, W, H);
+  for (let k = 0; k < 14; k++) { c.fillStyle = k % 2 ? "#241a16" : "#20161200"; c.fillRect(0, k * 42, W, 42); }
+  c.fillStyle = "rgba(0,0,0,.4)"; c.beginPath(); c.roundRect(TX + 8, TY + 12, TW, TH, 16); c.fill();
+  c.fillStyle = "#8a5a2e"; c.beginPath(); c.roundRect(TX, TY, TW, TH, 16); c.fill(); c.strokeStyle = "#5a3a1c"; c.lineWidth = 4; c.stroke();
+  c.strokeStyle = "rgba(0,0,0,.12)"; c.lineWidth = 2; for (let k = 1; k < 5; k++) { c.beginPath(); c.moveTo(TX + 10, TY + k * 22); c.lineTo(TX + TW - 10, TY + k * 22); c.stroke(); }
+  for (const tm of M.T) {
+    const top = tm.side === 1, py = top ? TY - 46 : TY + TH + 46, cy = top ? TY + 26 : TY + TH - 26;
+    for (let i = 0; i < CUPS; i++) {
+      const x = CX(top ? CUPS - 1 - i : i), active = i === tm.idx && !tm.done, doneCup = tm.cupDone[i];
+      person(x, py, COLS[tm.side][i], tm.done ? "done" : doneCup ? "done" : active ? "go" : "wait", top);
+      if (active) { c.strokeStyle = "#fff"; c.lineWidth = 3; c.setLineDash([6, 6]); c.beginPath(); c.ellipse(x, py, 34, 38, 0, 0, 7); c.stroke(); c.setLineDash([]); }
+      if (doneCup) cup(x, cy, 1, 0, 0, false);
+      else if (active && tm.phase === "anim") { const k = Math.min(1, tm.anim), hop = Math.sin(k * Math.PI) * (tm.how === "hard" ? 70 : tm.how === "soft" ? 18 : 46); cup(x + (tm.ok ? 0 : (tm.how === "hard" ? 60 : 10) * k), cy - hop, 1, 0, k * Math.PI * (tm.ok ? 1 : tm.how === "hard" ? 2.6 : 0.6), true, tm.ok ? 1 : 1 - k * 0.3); }
+      else if (active && tm.phase === "chug") cup(x, py + (top ? 30 : -30), 0.9, tm.drink, (top ? -1 : 1) * (0.5 + (1 - tm.drink) * 1.3), true);
+      else if (active) cup(x + 0, cy + (top ? -14 : 14), 1, 0);
+      else cup(x, cy, 1, 1);
+    }
+    c.font = "800 14px Figtree, sans-serif"; c.textAlign = "left"; c.fillStyle = COLS[tm.side][0]; c.fillText(top ? "THEM" : "YOUR TEAM", 22, top ? TY - 40 : TY + TH + 52);
+    c.fillStyle = "rgba(255,255,255,.75)"; c.font = "700 12px Figtree, sans-serif"; c.fillText(tm.done ? `done · ${tm.done.toFixed(2)}s` : `cup ${tm.idx + 1} of ${CUPS}`, 22, (top ? TY - 40 : TY + TH + 52) + 18);
+  }
+  c.restore();
+  // the panel: whatever your hands are doing right now, big
+  const a = M.T[0], px = W / 2, pyy = 470; c.fillStyle = "rgba(0,0,0,.55)"; c.beginPath(); c.roundRect(140, 400, W - 280, 164, 16); c.fill();
+  c.textAlign = "center";
+  if (M.state === "run" && !a.done) {
+    if (a.phase === "chug") { cup(px - 170, pyy + 12, 2.6, a.drink, 0, true); c.fillStyle = "#fff"; c.font = "800 34px 'Bricolage Grotesque', sans-serif"; c.fillText("MASH TO DRINK", px + 40, pyy - 8); c.fillStyle = "rgba(255,255,255,.18)"; c.fillRect(px - 110, pyy + 14, 300, 16); c.fillStyle = "#f0b428"; c.fillRect(px - 110, pyy + 14, 300 * (1 - a.drink), 16); c.font = "700 13px Figtree, sans-serif"; c.fillStyle = "#aca298"; c.fillText(`cup ${a.idx + 1} of ${CUPS} · click or Space, fast`, px + 40, pyy + 56); }
+    else { const bx = 200, bw = W - 400, by = pyy - 6, zh = zoneHalf(a.idx); c.fillStyle = "#fff"; c.font = "800 26px 'Bricolage Grotesque', sans-serif"; c.fillText(a.phase === "anim" ? (a.ok ? "LANDED!" : a.how === "soft" ? "too soft…" : "too hard…") : "ONE PRESS IN THE GREEN", px, pyy - 30);
+      const g = c.createLinearGradient(bx, 0, bx + bw, 0); g.addColorStop(0, "#3a5a8a"); g.addColorStop(0.5, "#6a6a3a"); g.addColorStop(1, "#8a2a2a"); c.fillStyle = g; c.beginPath(); c.roundRect(bx, by, bw, 26, 8); c.fill();
+      c.fillStyle = "#3ce37f"; c.fillRect(bx + bw * (0.5 - zh), by, bw * zh * 2, 26); c.fillStyle = "#fff"; c.fillRect(bx + bw * a.bar - 3, by - 8, 6, 42);
+      c.font = "700 12px Figtree, sans-serif"; c.fillStyle = "#aca298"; c.textAlign = "left"; c.fillText("soft", bx, by + 44); c.textAlign = "right"; c.fillText("hard", bx + bw, by + 44); c.textAlign = "center"; c.fillText(a.tries ? `attempt ${a.tries + (a.phase === "anim" ? 0 : 1)}` : `cup ${a.idx + 1} of ${CUPS}`, px, by + 62); }
+  } else if (M.state === "count") { const n = Math.ceil(-M.t), s = n > 3 ? "CUPS UP" : String(n); c.fillStyle = "#fff"; c.font = "800 70px 'Bricolage Grotesque', sans-serif"; c.fillText(s, px, pyy + 34); }
+  else { c.fillStyle = "#fff"; c.font = "800 30px 'Bricolage Grotesque', sans-serif"; c.fillText(a.done ? `Done in ${a.done.toFixed(2)}s` : "…", px, pyy + 20); }
+  c.fillStyle = "#aca298"; c.font = "700 14px Figtree, sans-serif"; c.textAlign = "right"; c.fillText(`${Math.max(0, M.t).toFixed(1)}s`, W - 22, 30);
+  if (M.banner) { c.textAlign = "center"; c.globalAlpha = Math.min(1, (1.1 - M.banner.t) * 3); c.font = "800 44px 'Bricolage Grotesque', sans-serif"; c.lineWidth = 8; c.strokeStyle = "rgba(0,0,0,.7)"; c.strokeText(M.banner.text, W / 2, 70); c.fillStyle = M.banner.col; c.fillText(M.banner.text, W / 2, 70); c.globalAlpha = 1; }
+}
+function frame(t) { const dt = Math.min(0.05, (t - lastT) / 1000 || 0); lastT = t; if (M) { if (M.state !== "over" && M.state !== "demo") update(dt); draw(); } requestAnimationFrame(frame); }
+
+$("stage").addEventListener("pointerdown", (e) => { if (e.target.closest(".veil")) return; e.preventDefault(); press(); });
+addEventListener("keydown", (e) => { if (e.code !== "Space" && e.code !== "Enter") return; if (!$("veil").hidden) { if (e.code === "Enter") newGame(); return; } e.preventDefault(); if (!e.repeat) press(); });
+document.querySelectorAll("#diffSeg button").forEach((b) => b.addEventListener("click", () => { diff = b.dataset.diff; document.querySelectorAll("#diffSeg button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }));
+$("play").addEventListener("click", newGame);
+newGame(); M.state = "demo"; M.t = 0; $("veil").hidden = false;
+requestAnimationFrame(frame);
+window.__g = { get M() { return M; }, press, tick: (dt) => { if (M.state !== "over") update(dt); draw(); } };
+})();
+</script>
+</body>
+</html>

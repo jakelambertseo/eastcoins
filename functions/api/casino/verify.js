@@ -16,8 +16,11 @@ import { bombsFor, ladderFor, MIN_MINES, MAX_MINES, DEFAULT_MINES, TILES } from 
 import { pathFor, bucketOf, multiplierFor, ROWS, TABLE_RETURN as PLINKO_RETURN } from "./plinko/_plinko.js";
 import { resultOf } from "../coin/_coin.js";
 import { GAMES as PVP, outcomeFor, chambersFor, MIN_PLAYERS, MAX_PLAYERS } from "./pvp/_pvp.js";
+import { RL, turnFor } from "./pvp/_redlight.js";
 import { triggerFor, drawFor, TRIGGER_MIN, TRIGGER_MAX } from "./_pot.js";
 import { rarityFor, coinsFor, pickIndex, tierItems, ODDS, COINS } from "../crate/_crate.js";
+import { rollFor as diceRoll, fairFor as diceFair, MIN_TARGET as DICE_MIN, MAX_TARGET as DICE_MAX } from "./dice/_dice.js";
+import { reelsFor as slotsReels, lineFor as slotsLine, priceFor as slotsPrice, payTable as slotsTable } from "./slots/_slots.js";
 import { outcomeFor as scratchOutcome, gridFor as scratchGrid, PRIZES as SCRATCH_PRIZES, RETURN as SCRATCH_RETURN } from "./scratch/_scratch.js";
 
 const clampInt = (v, lo, hi, dflt) => {
@@ -74,6 +77,16 @@ export async function onRequestGet({ request }) {
     return json({ ...base, name: g.name, result, describe: g.describe(result), rule: `from sha256(seed:${game})` });
   }
 
+  if (game === "roul") {
+    const g = SHARED.roul, result = await g.outcome(seed);
+    return json({ ...base, name: g.name, result, describe: g.describe(result), rule: "n = floor(sha256(seed:roul) as a fraction x 37) on a single-zero wheel; an even-money spot pays 37/18, a dozen 37/12, a number 37, each times the round's edge" });
+  }
+
+  if (game === "pit") {
+    const g = SHARED.pit, no = clampInt(q.get("round"), 0, 1e12, 0), card = await g.cardFor(no), result = await g.outcome(seed, no);
+    return json({ ...base, name: g.name, round: no, card, result, rule: "the card (who fights, and side a's chance p from the square roots of their levels, clamped 25-75%) comes from sha256(pit:card:<round>), so it is public before the bets close; side a wins when sha256(seed:pit) as a fraction is under p; each side pays 1/its chance times the round's edge. Pass &round=<the round number>." });
+  }
+
   if (game === "flip") {
     return json({ ...base, name: "Coin Flip", result: await resultOf(seed), rule: "the low bit of sha256(seed:flip): even is heads, odd is tails" });
   }
@@ -92,6 +105,15 @@ export async function onRequestGet({ request }) {
     });
   }
 
+  if (game === "redlight") {
+    const turns = [];
+    for (let k = 0; k < RL.maxLights; k += 1) turns.push({ light: k + 1, turnsAfterMs: await turnFor(seed, k) });
+    return json({
+      ...base, name: PVP.redlight.name, turns, rules: RL,
+      rule: "light k: the referee turns sha256(seed:light:k) of the way from 0.8s to 4.0s after it goes green; anyone whose sprint is longer than that is out; first across 100 yards wins, or the last runner in; a dead heat is decided by sha256(seed:tie:k)"
+    });
+  }
+
   if (game === "scratch") {
     const prize = await scratchOutcome(seed);
     const grid = await scratchGrid(seed, prize);
@@ -99,6 +121,22 @@ export async function onRequestGet({ request }) {
       ...base, name: "Scratch-Off", grid, prize: prize ? { key: prize.key, name: prize.name, multiplier: Math.round((prize.x * (await edgeFor(seed)) / SCRATCH_RETURN) * 10000) / 10000, nominal: prize.x } : null,
       table: SCRATCH_PRIZES.map((p) => ({ key: p.key, name: p.name, multiplier: p.x, chance: p.p })),
       rule: "u = sha256(seed:scratch) as a fraction; walked down the prize table rarest first, the prize whose slice u falls in wins (none past 43.4%); the nine cells then come from sha256(seed:cell:i)"
+    });
+  }
+
+  if (game === "dice") {
+    const roll = await diceRoll(seed), target = clampInt(q.get("target"), DICE_MIN, DICE_MAX, 50);
+    return json({
+      ...base, name: "Dice", roll, target, won: roll < target, fairPrice: Math.round(diceFair(target) * 10000) / 10000,
+      rule: "roll = floor(sha256(seed:dice) as a fraction x 100) + 1; you win when the roll is UNDER your number; a win pays 100/(number-1) times the play's edge"
+    });
+  }
+
+  if (game === "slots") {
+    const reels = await slotsReels(seed), line = slotsLine(reels);
+    return json({
+      ...base, name: "Slots", reels, line: line.key, jackpot: line.jackpot, quotedPrice: Math.round(slotsPrice(line) * 10000) / 10000, table: slotsTable(),
+      rule: "reel i = sha256(seed:reel:i) as a fraction of 80, walked down cherry 30, lemon 22, bell 14, star 8, diamond 4, seven 2; three of a kind pays that symbol, exactly two cherries pays a little, three sevens pays the jackpot as it stood"
     });
   }
 
@@ -128,5 +166,5 @@ export async function onRequestGet({ request }) {
     });
   }
 
-  return fail("BAD_GAME", "game must be one of: hilo, mines, plinko, scratch, wheel, race, flip, roulette, standing, pot, crate");
+  return fail("BAD_GAME", "game must be one of: hilo, mines, plinko, scratch, dice, slots, roul, pit, wheel, race, flip, roulette, standing, redlight, pot, crate");
 }

@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "grind", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights", "store"];
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "grind", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights", "store", "eastscape"];   /* (2026-09-28) eastscape: the game in the shell, a test */
 
   /* ------------------------------------------------------ loading views
 
@@ -78,6 +78,7 @@
     profile: [...LOGOS, "eastcoins-music-config.js", "v3-profile.js"],
     wrapped: [...LOGOS, "v3-wrapped.js"],
     highlights: ["v3-highlights.js"],
+    eastscape: ["v3-eastscape.js"],   /* (2026-09-28) the game framed inside the site, a test, not linked */
     // The store's preview is the real profile card, so it loads the profile script too.
     store: [...LOGOS, "v3-profile.js", "v3-store.js"],
     users: ["eastcoins-music-config.js", "v3-users.js"],
@@ -288,6 +289,7 @@
   const TITLES = {
     wrapped: "EastCoin Wrapped",
     highlights: "Highlights — EastCoin",
+    eastscape: "EastScape — EastCoin",
     store: "Store — EastCoin",
     events: "EastCoin — Sports", music: "The Green Room — EastCoin", screen: "Movies & TV — EastCoin",
     multiview: "MultiView — EastCoin", picks: "Picks — EastCoin", casino: "Casino — EastCoin",
@@ -307,14 +309,30 @@
      records a choice on this browser. ?spooky=1 / 0 do the same from a
      link; ?spooky=auto clears the choice and hands it back to the date. */
 
-  const SPOOKY_KEY = "ec_spooky";
+  /* (2026-09-25) THE KEY WAS RETIRED WHEN THE SEASON LAUNCHED, and that is the only reason it is not "ec_spooky".
+     A stored choice beats the date by design, and localStorage survives a hard refresh - so every tester who had
+     ever flipped the switch off while trying it out in September was carrying ec_spooky="0" and saw nothing when
+     the season went live. The owner hit it himself within a minute of launch.
+
+     Those old values were answers to a different question: "do I want this in September", asked before there was
+     a season. They are not answers to "do I want the Halloween theme", so the launch is allowed to reach past
+     them. Anything chosen from now on is stored under the new key and is respected for good.
+     DO NOT bump this again for an ordinary change - only a new season is worth overriding somebody's setting. */
+  const SPOOKY_KEY = "ec_spooky26";
 
   function spookyChoice() {
     try { return localStorage.getItem(SPOOKY_KEY) || "auto"; } catch { return "auto"; }
   }
 
+  /* (2026-09-25, the owner: "users are asking for it, lets activate the spooky theme on EastCoin.vip right now")
+     THE SEASON STARTS IN LATE SEPTEMBER NOW, not on the 1st of October. Written as month/day rather than as a
+     date this year, so it comes back on its own every September and nobody has to remember to switch it on.
+     A player's own choice still beats this either way - see spookyChoice. */
+  const SPOOKY_FROM = { month: 9, day: 25 };   // and it runs to the end of October
   function spookyByDate() {
-    return new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric" }) === "10";
+    const p = new Date().toLocaleDateString("en-US", { timeZone: "America/Chicago", month: "numeric", day: "numeric" }).split("/");
+    const m = Number(p[0]), d = Number(p[1]);
+    return m === 10 || (m === SPOOKY_FROM.month && d >= SPOOKY_FROM.day);
   }
 
   /* A stylesheet the page needs only sometimes, linked once. The October
@@ -339,6 +357,12 @@
       sw.setAttribute("aria-checked", String(on));
       const knob = sw.querySelector(".switch");
       if (knob) knob.dataset.on = on ? "1" : "0";
+      /* (2026-09-25, the owner: "in settings the switch back option is now to 'Default Theme' instead of spooky
+         theme") THE LABEL SAYS WHERE THE BUTTON TAKES YOU, not what is currently on. With the season running by
+         default, "Spooky theme" sat next to a switch already flipped and read as if it would turn it ON. */
+      const lab = sw.querySelector("span:not(.switch)");
+      if (lab) lab.innerHTML = on ? "\u{1F311}&nbsp; Default Theme" : "\u{1F383}&nbsp; Spooky theme";
+      sw.title = on ? "Back to the ordinary EastCoin colours." : "Pumpkin, purple, cobwebs and bats. On by itself from late September through October.";
     }
     if (!on || document.querySelector(".spooky-layer")) return;
 

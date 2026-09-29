@@ -92,6 +92,23 @@ export async function commitFor(db, userId) {
   return db.prepare(`SELECT * FROM scratch_commits WHERE user_id = ?`).bind(userId).first();
 }
 
+/* TAKE THE SEED, ONCE (2026-09-21) — the same fix as plinko/_plinko.js claimCommit, and its note has the why. Two cards bought
+   at the same instant read one committed seed and came out identical; a burst of them also walked straight past the ten-an-hour
+   limit and HOUR_WIN_CAP, which are read-then-act counts with nothing serialising them. Claiming the seed serialises a player's
+   cards, so those counts mean what they say, and restores the promise that a seed is the commitment for ONE card. */
+export async function claimCommit(db, userId) {
+  const cur = await commitFor(db, userId);
+  if (!cur) return null;
+  const seed = randomSeed();
+  const hash = await sha256(seed);
+  const claimed = await db
+    .prepare(`UPDATE scratch_commits SET seed = ?, hash = ?, created_at = CURRENT_TIMESTAMP WHERE user_id = ? AND seed = ?`)
+    .bind(seed, hash, userId, cur.seed)
+    .run();
+  if (!claimed?.meta?.changes) return null;
+  return { used: { seed: cur.seed, hash: cur.hash }, next: { seed, hash } };
+}
+
 /** Replaces a used seed with a fresh commitment for the next card. */
 export async function rotateCommit(db, userId) {
   const seed = randomSeed();

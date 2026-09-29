@@ -3,7 +3,7 @@
    poll after a round closes is what pays the winners. */
 
 import { getSessionUser, walletWritesEnabled } from "../../picks/_lib.js";
-import { gameFor, ensureSchema, roundAt, ensureRound, settleRound, betsFor, roomFor, touchPresence, betsLastHour, hourlyNet, publicConfig } from "../_engine.js";
+import { gameFor, ensureSchema, roundAt, ensureRound, settleRound, settleStale, betsFor, roomFor, touchPresence, betsLastHour, hourlyNet, publicConfig } from "../_engine.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const parse = (t) => { try { return t ? JSON.parse(t) : null; } catch { return null; } };
@@ -22,7 +22,7 @@ export async function onRequestGet(context) {
 
   const row = await ensureRound(db, game, round.no);
   const settledNow = round.phase === "result" ? await settleRound(context.env, db, game, round.no, now) : null;
-  await settleRound(context.env, db, game, round.no - 1, now);
+  await settleStale(context.env, db, game, now);   // (2026-09-21) anything older that still has money on it, not just the round before
 
   const [bets, last, room, prevRow] = await Promise.all([
     betsFor(db, game, round.no),
@@ -43,8 +43,9 @@ export async function onRequestGet(context) {
       result,
       seed: result ? row.seed : null
     },
+    card: game.cardFor ? await game.cardFor(round.no) : undefined,   // the Fight Pit: who is fighting this round, and at what price
     bets,
-    last: prevRow ? { no: prevRow.no, result: parse(prevRow.result), hash: prevRow.hash, seed: prevRow.seed, bets: last } : null,
+    last: prevRow ? { no: prevRow.no, result: parse(prevRow.result), hash: prevRow.hash, seed: prevRow.seed, bets: last, card: game.cardFor ? await game.cardFor(prevRow.no) : undefined } : null,
     room,
     me: user ? { id: user.id, login: user.login, displayName: user.displayName, bet: mine, betsThisHour: await betsLastHour(db, game, user.id), hourNet: await hourlyNet(db, user.id) } : null
   });

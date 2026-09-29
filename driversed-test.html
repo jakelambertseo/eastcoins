@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Drunk Driver's Ed — Test</title>
+<link rel="stylesheet" href="/v3/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/arcade-test.css?v=1">
+</head>
+<body>
+<div class="topbar"><a class="brand" href="/arcade-test" style="text-decoration:none;color:inherit">East<span>Coin</span> Arcade</a><div class="mock-tag">Test page</div></div>
+<div class="page">
+  <div class="head">
+    <div class="eyebrow">Arcade · game 4</div>
+    <h1>Drunk Driver's Ed</h1>
+    <p class="sub">A golf cart, a stadium parking lot, and a steering wheel that has had more than you have. The cart drives itself; all you do is steer, and it does not listen. Get through the cones faster than the other students. It's a golf cart on a closed lot: don't try this in anything else.</p>
+  </div>
+  <div class="layout">
+    <div class="stage" id="stage">
+      <canvas id="cv" width="960" height="560" style="aspect-ratio:960/560" aria-label="Drunk Driver's Ed"></canvas>
+      <div class="veil" id="veil">
+        <div>
+          <h2 id="vTitle">Drunk Driver's Ed</h2>
+          <p id="vSub">Steer with <span class="keys">↑</span> <span class="keys">↓</span> (or W / S), or hold the mouse above or below your cart. That's it. Good luck.</p>
+          <table class="board" id="vBoard" hidden></table>
+          <div class="row"><button class="btn go" id="play">Start the test</button></div>
+        </div>
+      </div>
+    </div>
+    <aside>
+      <div class="card"><h3>Your records</h3>
+        <div class="stat"><span>Best time</span><b id="rBest">–</b></div>
+        <div class="stat"><span>Wins · tests taken</span><b id="rWins">0 · 0</b></div>
+        <div class="stat"><span>Clean runs (nothing hit)</span><b id="rClean">0</b></div>
+        <div class="stat"><span>Cones flattened, lifetime</span><b id="rCones">0</b></div>
+        <p class="note">Kept in this browser only while this is a test.</p>
+      </div>
+      <div class="card"><h3>What's out there</h3>
+        <ul class="how">
+          <li><b>Cones</b> slow you down. They also fly, which is nice.</li>
+          <li><b>Tents and porta-potties</b> stop you dead.</li>
+          <li><b>Puddles</b>: no steering at all for a moment.</li>
+          <li><b>HIC!</b> The wheel jerks on its own. Often.</li>
+          <li>The <b>grass</b> is slow. The wobble gets worse the further you go.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+<script>
+(() => {
+"use strict";
+const cv = document.getElementById("cv"), c = cv.getContext("2d"), W = 960, H = 560, $ = (id) => document.getElementById(id);
+const LEN = 3600, SPEED = 215, GRASS = 105, ROADW = 86, X_ME = 250, N = 6;
+const COLS = ["#e8bf35", "#ff6b85", "#4ddb8b", "#6ab7ff", "#c58bff", "#ff9d4d"];
+const NAMES = ["GoalLineGary", "BlitzBetty", "HailMaryHank", "PuntPolice", "TurfToeTina", "SnapCountSam", "PylonPete", "FlagOnThePlay"];
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches, ORD = ["1st", "2nd", "3rd", "4th", "5th", "6th"];
+function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+const KEY = "ec_driversed_test_v1"; let REC = { best: 0, wins: 0, races: 0, clean: 0, cones: 0 };
+try { REC = { ...REC, ...(JSON.parse(localStorage.getItem(KEY)) || {}) }; } catch (e) {}
+const showRec = () => { $("rBest").textContent = REC.best ? `${REC.best.toFixed(2)}s` : "–"; $("rWins").textContent = `${REC.wins} · ${REC.races}`; $("rClean").textContent = REC.clean; $("rCones").textContent = REC.cones; };
+const saveRec = () => { try { localStorage.setItem(KEY, JSON.stringify(REC)); } catch (e) {} showRec(); }; showRec();
+
+let AC = null;
+function tone(f0, f1, dur, vol = 0.1, type = "triangle") { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t + dur); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + dur); } catch (e) {} }
+const SND = { beep: (hi) => tone(hi ? 880 : 440, hi ? 880 : 440, hi ? 0.35 : 0.12, 0.12), cone: () => tone(500, 200, 0.12, 0.1, "square"), crash: () => { tone(140, 40, 0.45, 0.22, "square"); tone(900, 200, 0.2, 0.08, "sawtooth"); }, splash: () => tone(300, 900, 0.3, 0.07, "sine"), hic: () => { tone(500, 900, 0.07, 0.1); setTimeout(() => tone(900, 600, 0.09, 0.08), 80); }, win: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, f, 0.2, 0.12), i * 100)) };
+
+let M = null, lastT = 0; const keys = { up: false, down: false }; let pointerY = null;
+function newRace() {
+  const seed = (Math.random() * 2 ** 31) | 0, r = rng(seed), ph = [r() * 6, r() * 6, r() * 6];
+  // the road: a centre line that wanders more the further you get
+  const mid = (x) => H / 2 + Math.min(1, x / 900) * (92 * Math.sin(x / 330 + ph[0]) + 46 * Math.sin(x / 141 + ph[1]) + 20 * Math.sin(x / 67 + ph[2]));
+  const half = (x) => ROADW - 22 * Math.min(1, x / LEN);
+  const obs = []; let x = 520;
+  while (x < LEN - 160) { const k = r(), off = (r() * 2 - 1) * (half(x) - 14); if (k < 0.6) { const n = 1 + Math.floor(r() * 3); for (let j = 0; j < n; j++) obs.push({ kind: "cone", x: x + j * 26, y: mid(x + j * 26) + off + j * (r() * 24 - 12), r: 10 }); } else if (k < 0.8) obs.push({ kind: "puddle", x, y: mid(x) + off * 0.6, r: 30 }); else obs.push({ kind: r() < 0.5 ? "tent" : "potty", x, y: mid(x) + off, r: 22 }); x += 120 + r() * 150; }
+  const names = [...NAMES].sort(() => Math.random() - 0.5);
+  M = { seed, mid, half, obs, t: -3, state: "count", cam: -120, lastBeep: 9, shake: 0, banner: null, flying: [], hicAt: 2.5 + r() * 2, r,
+    K: Array.from({ length: N }, (_, i) => ({ i, me: i === 0, name: i === 0 ? "YOU" : names[i], col: COLS[i], x: 0, y: H / 2 + (i - (N - 1) / 2) * 24, th: 0, om: 0, v: 0, u: 0, stun: 0, slide: 0, hits: 0, big: 0, done: 0, ph: r() * 6, skill: 0.55 + r() * 0.4, used: new Set() })) };
+  $("veil").hidden = true;
+}
+const me = () => M.K[0];
+function update(dt) {
+  M.t += dt; M.shake = Math.max(0, M.shake - dt * 40); if (M.banner) { M.banner.t += dt; if (M.banner.t > 1.3) M.banner = null; }
+  for (const f of M.flying) { f.t += dt; f.x += f.vx * dt; f.y += f.vy * dt; f.vy += 500 * dt; } M.flying = M.flying.filter((f) => f.t < 1);
+  if (M.state === "count") { const n = Math.ceil(-M.t); if (n !== M.lastBeep && n >= 1 && n <= 3) { M.lastBeep = n; SND.beep(false); } if (M.t >= 0) { M.state = "run"; SND.beep(true); } return; }
+  if (M.t >= M.hicAt) { M.hicAt = M.t + 2.2 + M.r() * 2.6; const k = me(); if (!k.done) { k.om += (M.r() < 0.5 ? -1 : 1) * (2.2 + M.r() * 1.6); M.banner = { t: 0, text: "HIC!", col: "#ffe27a" }; SND.hic(); M.shake = 6; } }
+  for (const k of M.K) {
+    if (k.done) { k.x += k.v * dt; k.v *= Math.exp(-2 * dt); continue; }
+    const drunk = 0.55 + 0.75 * Math.min(1, k.x / LEN);                                    // it gets worse
+    let want = 0;
+    if (k.me) { want = (keys.down ? 1 : 0) - (keys.up ? 1 : 0); if (!want && pointerY != null) { const d = pointerY - (k.y); want = Math.abs(d) < 14 ? 0 : Math.sign(d); } }
+    else { const ahead = M.mid(k.x + 90) + (k.i - 2.5) * 10, err = ahead - k.y; let avoid = 0; for (const o of M.obs) if (o.x > k.x && o.x - k.x < 150 && Math.abs(o.y - k.y) < o.r + 22 && o.kind !== "puddle") avoid += (k.y >= o.y ? 1 : -1) * k.skill; want = Math.max(-1, Math.min(1, err / 38 - k.th * 1.5 + avoid * 1.2 + Math.sin(M.t * 1.7 + k.ph) * (1.15 - k.skill))); }
+    k.u += (want - k.u) * Math.min(1, dt / 0.16);                                          // the wheel answers late
+    const sway = (1.5 * Math.sin(M.t * 1.25 + k.ph) + 0.9 * Math.sin(M.t * 2.9 + k.ph * 2)) * drunk;
+    if (k.stun > 0) { k.stun -= dt; k.th += 9 * dt; if (k.stun <= 0) { k.th = 0; k.om = 0; } }
+    else { k.om += ((k.slide > 0 ? 0 : k.u * 6.4) + sway * 1.05 - k.om * 4 - k.th * 1.6) * dt; k.th = Math.max(-0.8, Math.min(0.8, k.th + k.om * dt)); if (Math.abs(k.th) >= 0.8) k.om *= 0.5; }   // the cart wants to go straight; the driver has other ideas
+    k.slide = Math.max(0, k.slide - dt);
+    const onRoad = Math.abs(k.y - M.mid(k.x)) < M.half(k.x) + 6, top = k.stun > 0 ? 0 : onRoad ? SPEED : GRASS;
+    k.v += (top - k.v) * Math.min(1, dt * (top > k.v ? 1.6 : 4));
+    k.x += Math.cos(k.th) * k.v * dt; k.y = Math.max(24, Math.min(H - 24, k.y + Math.sin(k.th) * k.v * dt));
+    for (let j = 0; j < M.obs.length; j++) { const o = M.obs[j]; if (k.used.has(j) || Math.abs(o.x - k.x) > 60) continue; if (Math.hypot(o.x - k.x, o.y - k.y) < o.r + 13) {
+      k.used.add(j);
+      if (o.kind === "cone") { k.v *= 0.45; k.hits++; if (k.me) { SND.cone(); o.gone = true; M.flying.push({ x: o.x, y: o.y, vx: 160 + Math.random() * 120, vy: -260 - Math.random() * 120, t: 0 }); } }
+      else if (o.kind === "puddle") { k.slide = 0.8; k.om += (Math.random() - 0.5) * 3; if (k.me) { SND.splash(); M.banner = { t: 0, text: "WHEEEE", col: "#a8d8ff" }; } }
+      else { k.v = 0; k.stun = 0.9; k.big++; k.hits++; if (k.me) { SND.crash(); M.shake = 16; M.banner = { t: 0, text: o.kind === "tent" ? "THAT WAS SOMEONE'S TAILGATE" : "OCCUPIED!", col: "#ff8a96" }; } }
+    } }
+    if (k.x >= LEN) { k.done = M.t; if (k.me) SND.win(); }
+  }
+  const mine = me(); M.cam += (mine.x - X_ME - M.cam) * (calm ? 1 : 1 - Math.pow(0.0005, dt));
+  if (M.K.every((k) => k.done) || (mine.done && M.t > mine.done + 2) || M.t > 70) finish();
+}
+function finish() {
+  M.state = "over"; const mine = me(), order = [...M.K].sort((a, b) => (a.done || 1e9) - (b.done || 1e9) || b.x - a.x), my = order.indexOf(mine) + 1;
+  REC.races++; if (my === 1) REC.wins++; if (mine.done && (!REC.best || mine.done < REC.best)) REC.best = Math.round(mine.done * 100) / 100; if (mine.done && !mine.hits) REC.clean++; REC.cones += mine.hits - mine.big; saveRec();
+  $("vTitle").textContent = my === 1 ? "You passed! (first)" : `You came ${ORD[my - 1]}`;
+  $("vSub").textContent = `${mine.done ? `${mine.done.toFixed(2)}s` : "Did not finish"} · ${mine.hits ? `${mine.hits - mine.big} cone${mine.hits - mine.big === 1 ? "" : "s"}, ${mine.big} thing${mine.big === 1 ? "" : "s"} you really shouldn't have hit` : "a clean run, somehow"}`;
+  const b = $("vBoard"); b.hidden = false; b.innerHTML = order.map((k, i) => `<tr class="${k.me ? "me" : ""}"><td>${ORD[i]}</td><td><i style="background:${k.col}"></i>${k.name}</td><td>${k.done ? `${k.done.toFixed(2)}s` : "still out there"}</td></tr>`).join("");
+  $("play").textContent = "Take it again"; $("veil").hidden = false;
+}
+
+/* ---------------- drawing ---------------- */
+function road() {
+  const x0 = Math.max(-200, M.cam - 40), x1 = M.cam + W + 60;
+  for (const [w, col] of [[10, "#e9e2d0"], [0, "#3a3a40"]]) { c.strokeStyle = col; c.lineCap = "round"; c.lineJoin = "round"; for (let x = x0; x < x1; x += 24) { c.lineWidth = (M.half(Math.max(0, x)) + w / 2) * 2; c.beginPath(); c.moveTo(x - M.cam, M.mid(Math.max(0, x))); c.lineTo(x + 26 - M.cam, M.mid(Math.max(0, x + 26))); c.stroke(); } }
+  c.strokeStyle = "rgba(255,221,90,.8)"; c.lineWidth = 3; c.setLineDash([22, 22]); c.lineDashOffset = M.cam % 44; c.beginPath(); for (let x = x0; x < x1; x += 16) { const X = x - M.cam, Y = M.mid(Math.max(0, x)); x === x0 ? c.moveTo(X, Y) : c.lineTo(X, Y); } c.stroke(); c.setLineDash([]);
+  for (const [X, label, col] of [[0, "START", "#fff"], [LEN, "FINISH", "#e8bf35"]]) { const sx = X - M.cam; if (sx < -60 || sx > W + 60) continue; for (let k = 0; k < 14; k++) for (let q = 0; q < 2; q++) { c.fillStyle = (k + q) % 2 ? "#111" : "#f4f4f4"; c.fillRect(sx + q * 9, M.mid(X) - 126 + k * 18, 9, 18); } c.fillStyle = col; c.font = "800 18px 'Bricolage Grotesque', sans-serif"; c.textAlign = "center"; c.fillText(label, sx + 9, M.mid(X) - 136); }
+}
+function cart(k) {
+  const px = k.x - M.cam, py = k.y; if (px < -80 || px > W + 80) return;
+  c.save(); c.translate(px, py); c.rotate(k.th); if (!k.me) c.globalAlpha = 0.72;
+  c.fillStyle = "#15151a"; for (const [wx, wy] of [[-18, -16], [10, -16], [-18, 11], [10, 11]]) c.fillRect(wx, wy, 12, 5);
+  c.fillStyle = k.col; c.beginPath(); c.roundRect(-24, -13, 48, 26, 7); c.fill(); c.lineWidth = 2.5; c.strokeStyle = "rgba(0,0,0,.5)"; c.stroke();
+  c.fillStyle = "rgba(255,255,255,.9)"; c.beginPath(); c.roundRect(-18, -10, 22, 20, 4); c.fill();
+  c.fillStyle = "#f2d2b0"; c.beginPath(); c.arc(11, 0, 7, 0, 7); c.fill();
+  c.restore(); c.globalAlpha = 1;
+  c.font = `800 ${k.me ? 13 : 10}px Figtree, sans-serif`; c.textAlign = "center"; c.lineWidth = 4; c.strokeStyle = "rgba(0,0,0,.6)"; const label = k.me ? "YOU" : k.name.slice(0, 12); c.strokeText(label, px, py - 24); c.fillStyle = k.me ? "#fff" : "rgba(255,255,255,.7)"; c.fillText(label, px, py - 24);
+}
+function draw() {
+  const t = performance.now() / 1000, mine = me(), drunk = 0.55 + 0.75 * Math.min(1, mine.x / LEN);
+  c.fillStyle = "#1f4a26"; c.fillRect(0, 0, W, H);
+  c.save();
+  if (!calm) { c.translate(W / 2, H / 2); c.rotate(Math.sin(t * 0.9) * 0.022 * drunk); c.scale(1 + Math.sin(t * 0.6) * 0.012 * drunk, 1 + Math.cos(t * 0.7) * 0.012 * drunk); c.translate(-W / 2 + (Math.random() - 0.5) * M.shake, -H / 2 + (Math.random() - 0.5) * M.shake); }
+  for (let k = 0; k < 40; k++) { const gx = ((k * 211 - M.cam * 1) % (W + 200) + W + 200) % (W + 200) - 100, gy = (k * 137) % H; c.fillStyle = "rgba(255,255,255,.05)"; c.fillRect(gx, gy, 3, 9); }
+  road();
+  for (const pass of [0, 1]) {        // pass 1 is the double vision: everything again, faint, a little to one side
+    if (pass && (calm || drunk < 0.8)) break; c.save(); if (pass) { c.globalAlpha = 0.28; c.translate(Math.sin(t * 1.4) * 14 * drunk, Math.cos(t * 1.1) * 8 * drunk); }
+    for (const o of M.obs) { const sx = o.x - M.cam; if (sx < -60 || sx > W + 60 || o.gone) continue;
+      if (o.kind === "cone") { c.fillStyle = "#ff7a1a"; c.beginPath(); c.moveTo(sx, o.y - 13); c.lineTo(sx + 9, o.y + 9); c.lineTo(sx - 9, o.y + 9); c.fill(); c.fillStyle = "#fff"; c.fillRect(sx - 5, o.y - 1, 10, 3); c.fillStyle = "#c85a10"; c.fillRect(sx - 11, o.y + 8, 22, 4); }
+      else if (o.kind === "puddle") { c.fillStyle = "rgba(120,180,230,.75)"; c.beginPath(); c.ellipse(sx, o.y, 34, 20, 0, 0, 7); c.fill(); c.fillStyle = "rgba(255,255,255,.35)"; c.beginPath(); c.ellipse(sx - 8, o.y - 5, 12, 5, 0, 0, 7); c.fill(); }
+      else { c.font = "44px serif"; c.textAlign = "center"; c.fillText(o.kind === "tent" ? "⛺" : "🚽", sx, o.y + 15); } }
+    c.restore(); }
+  for (const f of M.flying) { c.save(); c.translate(f.x - M.cam, f.y); c.rotate(f.t * 14); c.fillStyle = "#ff7a1a"; c.beginPath(); c.moveTo(0, -13); c.lineTo(9, 9); c.lineTo(-9, 9); c.fill(); c.restore(); }
+  [...M.K].sort((a, b) => a.me - b.me).forEach(cart);
+  c.restore();
+  if (!calm) { const g = c.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.8); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, `rgba(10,0,20,${0.35 * drunk})`); c.fillStyle = g; c.fillRect(0, 0, W, H); }
+  // HUD
+  const place = 1 + M.K.filter((k) => (k.done && (!mine.done || k.done < mine.done)) || (!k.done && !mine.done && k.x > mine.x)).length;
+  c.fillStyle = "rgba(0,0,0,.55)"; c.beginPath(); c.roundRect(14, 12, 300, 58, 12); c.fill();
+  c.textAlign = "left"; c.fillStyle = "#fff"; c.font = "800 30px 'Bricolage Grotesque', sans-serif"; c.fillText(M.state === "run" ? ORD[place - 1] : "–", 28, 52);
+  c.font = "700 13px Figtree, sans-serif"; c.fillStyle = "#aca298"; c.fillText(`${Math.max(0, M.t).toFixed(1)}s · ${mine.hits} hit`, 100, 36);
+  c.fillStyle = "rgba(255,255,255,.18)"; c.fillRect(100, 46, 196, 8); for (const k of [...M.K].sort((a, b) => a.me - b.me)) { c.fillStyle = k.col; c.beginPath(); c.arc(100 + 196 * Math.min(1, k.x / LEN), 50, k.me ? 7 : 4, 0, 7); c.fill(); }
+  c.textAlign = "center";
+  if (M.state === "count") { const n = Math.ceil(-M.t), s = n > 3 ? "READY" : String(n); c.font = "800 130px 'Bricolage Grotesque', sans-serif"; c.lineWidth = 12; c.strokeStyle = "rgba(0,0,0,.6)"; c.strokeText(s, W / 2, H / 2 + 46); c.fillStyle = "#fff"; c.fillText(s, W / 2, H / 2 + 46); }
+  if (M.banner) { c.globalAlpha = Math.min(1, (1.3 - M.banner.t) * 3); c.font = "800 40px 'Bricolage Grotesque', sans-serif"; c.lineWidth = 8; c.strokeStyle = "rgba(0,0,0,.7)"; c.strokeText(M.banner.text, W / 2, 120); c.fillStyle = M.banner.col; c.fillText(M.banner.text, W / 2, 120); c.globalAlpha = 1; }
+}
+function frame(t) { const dt = Math.min(0.05, (t - lastT) / 1000 || 0); lastT = t; if (M) { if (M.state !== "over" && M.state !== "demo") update(dt); draw(); } requestAnimationFrame(frame); }
+
+const KEYMAP = { ArrowUp: "up", KeyW: "up", ArrowLeft: "up", KeyA: "up", ArrowDown: "down", KeyS: "down", ArrowRight: "down", KeyD: "down" };
+addEventListener("keydown", (e) => { if (!$("veil").hidden) { if (e.code === "Enter") newRace(); return; } const k = KEYMAP[e.code]; if (k) { e.preventDefault(); keys[k] = true; } });
+addEventListener("keyup", (e) => { const k = KEYMAP[e.code]; if (k) keys[k] = false; });
+const py = (e) => { const r = cv.getBoundingClientRect(); return (e.clientY - r.top) * H / r.height; };
+$("stage").addEventListener("pointerdown", (e) => { if (e.target.closest(".veil")) return; e.preventDefault(); pointerY = py(e); });
+$("stage").addEventListener("pointermove", (e) => { if (pointerY != null) pointerY = py(e); });
+addEventListener("pointerup", () => { pointerY = null; });
+$("play").addEventListener("click", newRace);
+newRace(); M.state = "demo"; M.t = 0; M.cam = 300; M.K.forEach((k, i) => { k.x = 420 + i * 40; k.y = M.mid(k.x) + (i - 2.5) * 22; }); $("veil").hidden = false;
+requestAnimationFrame(frame);
+window.__g = { get M() { return M; }, keys, tick: (dt) => { if (M.state !== "over") update(dt); draw(); } };
+})();
+</script>
+</body>
+</html>

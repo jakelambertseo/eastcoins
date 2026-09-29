@@ -49,7 +49,10 @@
   let ledgerPage = 1;
 
   const fmt = K.fmt;
-  const cfg = () => data?.config || { brokeLine: 50, cooldownMinutes: 60, jobs: DEFAULT_JOBS };
+  const cfg = () => data?.config || { brokeLine: 50, cooldownMinutes: 240, jobs: DEFAULT_JOBS };
+  /* "every 4 hours" / "an hour", from whatever the server says the cooldown is */
+  const every = () => { const m = Number(cfg().cooldownMinutes) || 240; return m === 60 ? "an hour" : m % 60 === 0 ? `every ${m / 60} hours` : `every ${m} minutes`; };
+  const waitText = () => { const m = Number(cfg().cooldownMinutes) || 240; return m % 60 === 0 ? `${m / 60} hour${m === 60 ? "" : "s"}` : `${m} minutes`; };
   const jobCfg = (k) => cfg().jobs?.[k] || DEFAULT_JOBS[k];
   const jobState = (k) => data?.me?.jobs?.[k] || { shift: null, nextShiftAt: null };
   const shiftOf = (k) => jobState(k).shift || null;
@@ -154,7 +157,7 @@
         setJobState("clicks", { shift: null, nextShiftAt: payload.nextShiftAt || null });
         render();
         if (payload.balance != null) window.ECV3?.setWallet?.(payload.balance);
-        pop({ won: true, big: false, amount: payload.payout, headline: "Payday", detail: `A hundred clicks, ${fmt(payload.payout)} ZC. Next shift in ${cfg().cooldownMinutes} minutes.` });
+        pop({ won: true, big: false, amount: payload.payout, headline: "Payday", detail: `A hundred clicks, ${fmt(payload.payout)} ZC. Next shift in ${waitText()}.` });
         window.ECV3?.refreshSession?.();
         await load({ balance: true });
       } else if (payload.code === "PAYOUT_FAILED") {
@@ -225,7 +228,7 @@
           setJobState("sort", { shift: null, nextShiftAt: payload.nextShiftAt || null });
           render();
           if (payload.balance != null) window.ECV3?.setWallet?.(payload.balance);
-          pop({ won: true, big: false, amount: payload.payout, headline: "Payday", detail: `${jobCfg("sort").units} chips sorted, ${fmt(payload.payout)} ZC. Next shift in ${cfg().cooldownMinutes} minutes.` });
+          pop({ won: true, big: false, amount: payload.payout, headline: "Payday", detail: `${jobCfg("sort").units} chips sorted, ${fmt(payload.payout)} ZC. Next shift in ${waitText()}.` });
           window.ECV3?.refreshSession?.();
           await load({ balance: true });
         }
@@ -284,7 +287,7 @@
     emote.addEventListener("error", () => emote.remove());
     h1.append(emote);
     copy.append(h1, poor,
-      K.el("p", null, `Broke? Pick up a shift. Clock in for ${DEFAULT_JOBS.clicks.pay} ZC, or sort chips for ${DEFAULT_JOBS.sort.pay} if you can stand it. One shift of each an hour, for anyone under ${cfg().brokeLine} — a way back to the tables, not a job.`));
+      K.el("p", null, `Broke? Pick up a shift. Clock in for ${DEFAULT_JOBS.clicks.pay} ZC, or sort chips for ${DEFAULT_JOBS.sort.pay} if you can stand it. One shift of each ${every()}, for anyone under ${cfg().brokeLine} — a way back to the tables, not a job.`));
     head.append(copy);
     const right = K.el("div", "cas-headright");
     refs.status = K.el("span", "cf-status", "Connecting…");
@@ -382,7 +385,7 @@
       `Under ${cfg().brokeLine} ZC when you clock in, for either job.`,
       `Clock in: ${DEFAULT_JOBS.clicks.units} clicks pays ${DEFAULT_JOBS.clicks.pay} ZC. The foreman counts about eight a second.`,
       `Sort the Chips: ${DEFAULT_JOBS.sort.units} chips into their suit's tray pays ${DEFAULT_JOBS.sort.pay} ZC. A wrong tray costs a second. Keys 1–4 work too.`,
-      `One shift of each job an hour, counted from when that shift finished.`
+      `One shift of each job ${every()}, counted from when that shift finished.`
     ]) list.append(K.el("li", null, line));
     rules.append(list);
 
@@ -439,6 +442,7 @@
 
   function mmss(ms) {
     const t = Math.max(0, Math.ceil(ms / 1000));
+    if (t >= 3600) return `${Math.floor(t / 3600)}:${String(Math.floor((t % 3600) / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;   /* a four-hour wait reads 3:59:59, not 239:59 */
     return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
   }
 
@@ -448,7 +452,7 @@
     const j = jobCfg(k);
     const me = data?.me || null;
     if (!data?.config?.canWork) return { label: "Closed", sub: "", disabled: true, resting: true, phase: "Not taking shifts right now", phaseCls: "bad", note: "The wallet isn't connected, so there's nobody to pay you. Check back soon." };
-    if (coolingOf(k)) return { label: mmss(nextAtOf(k) - Date.now()), sub: "until your next shift", disabled: true, resting: true, phase: "Shift done", phaseCls: "", note: `One ${j.name} shift an hour.${coolingOf(k === "clicks" ? "sort" : "clicks") ? " Go spend it." : ` The other job's still open.`}` };
+    if (coolingOf(k)) return { label: mmss(nextAtOf(k) - Date.now()), sub: "until your next shift", disabled: true, resting: true, phase: "Shift done", phaseCls: "", note: `One ${j.name} shift ${every()}.${coolingOf(k === "clicks" ? "sort" : "clicks") ? " Go spend it." : ` The other job's still open.`}` };
     if (me?.eligible === false) return { label: "Not today", sub: `for under ${c.brokeLine} ZC`, disabled: true, resting: true, phase: "You're doing fine", phaseCls: "", note: `You've got ${fmt(me.balance)} ZC. The Grind is for anyone under ${c.brokeLine} — come back if the tables go cold.` };
     return { label: k === "sort" ? "Start sorting" : "Clock in", sub: `${j.units} ${j.unitName} · ${j.pay} ZC`, disabled: busy, resting: false, phase: "Ready when you are", phaseCls: "open", note: `Checked when you clock in: you need to be under ${c.brokeLine} ZC.` };
   }

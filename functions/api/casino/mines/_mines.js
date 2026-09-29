@@ -34,7 +34,7 @@
    casino's, and winnings count toward the same hourly cap.
    ============================================================ */
 
-import { moveBalance, beginOperation, finishOperation, newId } from "../../picks/_lib.js";
+import { moveBalance, beginOperation, finishOperation, opDone, retryKey, newId } from "../../picks/_lib.js";
 import { sha256, randomSeed, edgeFor, ensureColumn, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
 export const TILES = 25;
@@ -197,9 +197,16 @@ export async function cashOut(env, db, g, login) {
   // A stored multiplier can never legitimately pass the ceiling — the run
   // auto-cashes below it — but clamp anyway so a bad write cannot overpay.
   const payout = Math.round(Number(g.stake) * Math.min(MAX_MULTIPLIER, Number(g.multiplier)));
+  /* Same fix as Hi-Lo's cashOut, and its note has the why: a failed payout left the board LIVE and the one key spent, so
+     that player could never cash out and never start another board. */
+  const base = `CASINO:MINES:PAY:${g.id}`;
+  if (await opDone(db, base) || await opDone(db, await retryKey(db, base))) {
+    await db.prepare(`UPDATE mines_games SET status = 'CASHED', payout = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'LIVE'`).bind(payout, g.id).run();
+    return { ok: true, payout, balance: null };
+  }
   const opId = newId("op");
   const begun = await beginOperation(db, {
-    id: opId, idempotencyKey: `CASINO:MINES:PAY:${g.id}`, userId: g.user_id,
+    id: opId, idempotencyKey: await retryKey(db, base), userId: g.user_id,
     marketId: null, pickId: null, type: "PAYOUT_CREDIT", amount: payout
   });
   if (!begun.ok) return { ok: false, code: "DUPLICATE" };

@@ -5,6 +5,7 @@
    the round settles. Same money path and limits as the coin flip. */
 
 import { getSessionUser, walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOperation, newId, json, fail } from "../../picks/_lib.js";
+import { stakeFor, reopenStake, BAD_VOUCHER } from "../../eastscape/_stake.js";
 import { settlePot } from "../_pot.js";
 import { gameFor, ensureSchema, roundAt, ensureRound, betsLastHour, capCheck, MAX_BET, MIN_BET, MAX_BETS_PER_HOUR } from "../_engine.js";
 
@@ -33,7 +34,12 @@ export async function onRequestPost(context) {
   // A little grace at the edge for a slow network; the seed decides the
   // outcome, so a late bet still cannot see the result first.
   if (round.phase !== "bets" && now - round.closesAt > 1500) return fail("BETS_CLOSED", "Bets are closed — next round in a moment.", 409);
-  await ensureRound(db, game, round.no);
+  /* THE LATE-BET HOLE (closed 2026-09-19). The grace above lets a bet land up to 1.5 s after the clock closes, but the
+     state endpoint settles the round and publishes its result and seed the moment it closes. Until today nothing here
+     looked, so for a second and a half anyone could READ the result and then bet on it. A round that has a result
+     takes no more bets: the grace now only ever covers a round nobody has settled yet, whose seed is still secret. */
+  const roundRow = await ensureRound(db, game, round.no);
+  if (roundRow?.result) return fail("BETS_CLOSED", "Bets are closed — next round in a moment.", 409);
 
   const already = await db.prepare(`SELECT id FROM casino_bets WHERE game = ? AND round_no = ? AND user_id = ?`).bind(game.key, round.no, user.id).first();
   if (already) return fail("ALREADY_IN", "You're already in this round.", 409);
@@ -45,17 +51,23 @@ export async function onRequestPost(context) {
 
   const balance = await readBalance(context.env, user.login);
   if (balance === null) return fail("BALANCE_UNAVAILABLE", "Couldn't read your ZCoin balance.", 503);
-  if (wager > balance) return fail("INSUFFICIENT_FUNDS", `That's more than your ${balance.toLocaleString()} ZCoins.`, 409);
+  if (!body.voucher && wager > balance) return fail("INSUFFICIENT_FUNDS", `That's more than your ${balance.toLocaleString()} ZCoins.`, 409);
 
   const betId = newId("kb");
+  /* A GambaScape TICKET STAKE (eastscape/_stake.js): the house put this one up, so no ZCoin leaves the wallet and no
+     debit is written. Claimed here, after every limit above, so a refused bet never spends one. Everything after
+     this point (the seed, the edge, the payout, the rows) is the same bet. */
+  const voucher = await stakeFor(db, user.id, body, wager, `${game.key}:${betId}`);
+  if (voucher && !voucher.ok) return fail("BAD_VOUCHER", BAD_VOUCHER, 409);
+
   const opId = newId("op");
-  const begun = await beginOperation(db, {
+  const begun = voucher ? { ok: true } : await beginOperation(db, {
     id: opId, idempotencyKey: `CASINO:BET:${game.key}:${round.no}:${user.id}`, userId: user.id,
     marketId: null, pickId: null, type: "WAGER_DEBIT", amount: -wager
   });
   if (!begun.ok) return fail("DUPLICATE", "That bet is already being placed.", 409);
 
-  const debit = await moveBalance(context.env, user.login, -wager);
+  const debit = voucher ? { ok: true, balance } : await moveBalance(context.env, user.login, -wager);
   if (!debit.ok) {
     await finishOperation(db, opId, "FAILED", { error: debit.error });
     return fail("DEBIT_FAILED", "Couldn't take the stake from your balance. Nothing was charged.", 502);
@@ -67,6 +79,7 @@ export async function onRequestPost(context) {
       .bind(betId, game.key, round.no, user.id, pick, wager)
       .run();
   } catch (error) {
+    if (voucher) { await reopenStake(db, voucher.id); return fail("BET_FAILED", "That didn't go through. Your ticket stake is still good: try again.", 500); }
     const refund = await moveBalance(context.env, user.login, wager);
     await finishOperation(db, opId, refund.ok ? "FAILED" : "NEEDS_RECONCILIATION", {
       balanceAfter: refund.ok ? refund.balance : null,
@@ -82,7 +95,7 @@ export async function onRequestPost(context) {
     return fail("NEEDS_RECONCILIATION", "Something went wrong and your stake couldn't be returned automatically. A moderator has been notified.", 500);
   }
 
-  await finishOperation(db, opId, "CONFIRMED", { balanceAfter: debit.balance });
+  if (!voucher) await finishOperation(db, opId, "CONFIRMED", { balanceAfter: debit.balance });
   // The Daily Pot pays on a bet: this one may be the one that crosses
   // its line. Never lets the bet fail; the next bet tries again.
   await settlePot(context.env, db).catch(() => {});

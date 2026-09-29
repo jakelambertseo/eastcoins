@@ -498,6 +498,23 @@
       bkBtn.textContent = r?.ok ? `Done · ${Math.round(r.bytes / 1024)} KB` : `Failed${r?.code ? " · " + r.code : ""}`;
       setTimeout(() => { bkBtn.textContent = "Back up now"; bkBtn.disabled = false; }, 5000);
     });
+    // EastScape: is the world up, is it keeping up, and is it backed up.
+    // Tick time is the one to read — the world steps every 50ms, so a p95 near
+    // that budget means everybody is playing a slow game.
+    const es = d.eastscape || {};
+    const esState = !es.configured ? "warn" : es.down ? "bad" : es.at === null ? "warn"
+      : es.ageMin > 20 ? "warn" : es.p95 >= es.budgetMs ? "bad" : es.p95 >= es.budgetMs / 2 ? "warn" : "ok";
+    const busiest = es.busiest && Object.keys(es.busiest).length
+      ? Object.entries(es.busiest).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => `${k} ${n}`).join(", ") : "nobody";
+    grid.append(card("EastScape world", esState, [
+      ["Status", !es.configured ? "NOT CONFIGURED — set ESCAPE_WORKER_URL" : es.down ? `DOWN — ${es.error || "no answer"}` : `up${es.ageMin !== null ? `, sampled ${es.ageMin}m ago` : ""}`],
+      ["Online", es.online === null ? "—" : `${es.online} now · peak ${es.peak ?? 0} · ${es.scenes ?? 0} scene${es.scenes === 1 ? "" : "s"}`],
+      ["Busiest", busiest],
+      ["Tick", es.p95 === null ? "—" : `p50 ${es.p50}ms · p95 ${es.p95}ms · max ${es.max}ms of ${es.budgetMs}ms`],
+      ["Sending", es.outBytesPerS === null ? "—" : `${Math.round(es.outBytesPerS / 1024)} KB/s`],
+      ["World backup", es.backup ? `${ago(es.backup.at)} (${es.backup.ageHours} h) · ${es.backup.characters} characters · ${Math.round(es.backup.bytes / 1024)} KB` : "never"]
+    ]));
+
     const bkState = !bk.bound ? "bad" : bk.ageHours === null ? "warn" : bk.ageHours > 30 ? "bad" : "ok";
     grid.append(card("Database backup", bkState, [
       ["R2 bucket", bk.bound ? "bound" : "NOT BOUND — add BACKUPS"],

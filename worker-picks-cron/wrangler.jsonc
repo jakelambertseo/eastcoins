@@ -19,15 +19,20 @@
   // settlement trigger also owns: on 2026-09-14 the 21:05 firing
   // delivered only the settlement event and the roundup never ran, so
   // the two schedules must never share a minute.
+  // And the EastScape world backup at 09:20 UTC. Deliberately NOT 09:00, which
+  // the D1 backup owns: a cron firing delivers ONE event, so two jobs sharing a
+  // minute means one of them silently never runs (see 2026-09-14, above).
   "triggers": {
-    "crons": ["*/5 * * * *", "0 9 * * *", "50 13,14 * * *", "6 21,22 * * 1"]
+    "crons": ["*/5 * * * *", "0 9 * * *", "20 9 * * *", "50 13,14 * * *", "6 21,22 * * 1"]
   },
 
   "vars": {
     "SETTLE_URL": "https://eastcoin.vip/api/picks/settle",
     "BACKUP_URL": "https://eastcoin.vip/api/admin/backup",
     "RECAP_URL": "https://eastcoin.vip/api/admin/recap",
-    "WEEKLY_URL": "https://eastcoin.vip/api/admin/weekly"
+    "WEEKLY_URL": "https://eastcoin.vip/api/admin/weekly",
+    "ESCAPE_BACKUP_URL": "https://eastcoin.vip/api/eastscape/backup",
+    "ESCAPE_HEALTH_URL": "https://eastcoin.vip/api/eastscape/health"
   }
 
   // PICKS_CRON_KEY is a secret, set with:

@@ -179,19 +179,72 @@ export async function onRequestGet(context) {
     if (list === "casino") {
       return json({ ok: true, list: "casino", page, pageSize: PAGE, total: all.length, pages: Math.max(1, Math.ceil(all.length / PAGE)), items: all.slice((page - 1) * PAGE, page * PAGE) }, 200, { "Cache-Control": "private, max-age=15" });
     }
-    if (all.length) {
-      const perGame = {};
-      for (const r of all) {
-        const g = perGame[r.game] || (perGame[r.game] = { plays: 0, wins: 0, losses: 0, net: 0, staked: 0 });
-        g.plays += 1; if (r.status === "WON") g.wins += 1; else g.losses += 1; g.net += r.profit; g.staked += r.wager;
+    /* The totals are AGGREGATED over every row, never counted from the rows
+       above. Those carry LIMIT 200 apiece because they are the recent feed,
+       and summing them silently truncated anyone past 200 plays in a single
+       game: saturdaysfortheufcv2 read 1,569 here against 3,263 on the casino
+       floor, because hilo and mines were both sitting on exactly 200. The
+       floor was right — it has always used SUM() — and the two now agree by
+       construction, both summing whole tables.
+
+       Keep it that way. If a figure is a total, it comes from a SUM; the row
+       queries below exist to show the last few plays and nothing else. */
+    const agg = await Promise.all([
+      db.prepare(`SELECT 'flip' AS game, COUNT(*) AS plays, COALESCE(SUM(status = 'WON'), 0) AS wins,
+                         COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager ELSE -wager END), 0) AS net,
+                         COALESCE(SUM(wager), 0) AS staked,
+                         COALESCE(MAX(CASE WHEN status = 'WON' THEN payout - wager END), 0) AS best
+                    FROM coin_bets WHERE user_id = ? AND status IN ('WON','LOST')`).bind(uid).all().catch(() => ({ results: [] })),
+      db.prepare(`SELECT game, COUNT(*) AS plays, COALESCE(SUM(status = 'WON'), 0) AS wins,
+                         COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - wager ELSE -wager END), 0) AS net,
+                         COALESCE(SUM(wager), 0) AS staked,
+                         COALESCE(MAX(CASE WHEN status = 'WON' THEN payout - wager END), 0) AS best
+                    FROM casino_bets WHERE user_id = ? AND status IN ('WON','LOST') GROUP BY game`).bind(uid).all().catch(() => ({ results: [] })),
+      db.prepare(`SELECT 'hilo' AS game, COUNT(*) AS plays, COALESCE(SUM(status = 'CASHED'), 0) AS wins,
+                         COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake ELSE -stake END), 0) AS net,
+                         COALESCE(SUM(stake), 0) AS staked,
+                         COALESCE(MAX(CASE WHEN status = 'CASHED' THEN payout - stake END), 0) AS best
+                    FROM hilo_games WHERE user_id = ? AND status IN ('CASHED','BUST')`).bind(uid).all().catch(() => ({ results: [] })),
+      db.prepare(`SELECT 'mines' AS game, COUNT(*) AS plays, COALESCE(SUM(status = 'CASHED'), 0) AS wins,
+                         COALESCE(SUM(CASE WHEN status = 'CASHED' THEN payout - stake ELSE -stake END), 0) AS net,
+                         COALESCE(SUM(stake), 0) AS staked,
+                         COALESCE(MAX(CASE WHEN status = 'CASHED' THEN payout - stake END), 0) AS best
+                    FROM mines_games WHERE user_id = ? AND status IN ('CASHED','BUST')`).bind(uid).all().catch(() => ({ results: [] })),
+      db.prepare(`SELECT 'plinko' AS game, COUNT(*) AS plays, COALESCE(SUM(payout > stake), 0) AS wins,
+                         COALESCE(SUM(payout - stake), 0) AS net, COALESCE(SUM(stake), 0) AS staked,
+                         COALESCE(MAX(payout - stake), 0) AS best
+                    FROM plinko_drops WHERE user_id = ?`).bind(uid).all().catch(() => ({ results: [] })),
+      db.prepare(`SELECT game, COUNT(*) AS plays, COALESCE(SUM(status = 'WON'), 0) AS wins,
+                         COALESCE(SUM(CASE WHEN status = 'WON' THEN payout - stake ELSE -stake END), 0) AS net,
+                         COALESCE(SUM(stake), 0) AS staked,
+                         COALESCE(MAX(CASE WHEN status = 'WON' THEN payout - stake END), 0) AS best
+                    FROM pvp_entries WHERE user_id = ? AND status IN ('WON','LOST') GROUP BY game`).bind(uid).all().catch(() => ({ results: [] })),
+      db.prepare(`SELECT 'scratch' AS game, COUNT(*) AS plays, COALESCE(SUM(payout > stake), 0) AS wins,
+                         COALESCE(SUM(payout - stake), 0) AS net, COALESCE(SUM(stake), 0) AS staked,
+                         COALESCE(MAX(payout - stake), 0) AS best
+                    FROM scratch_cards WHERE user_id = ?`).bind(uid).all().catch(() => ({ results: [] }))
+    ]);
+    const perGame = {};
+    let best = 0;
+    for (const set of agg) {
+      for (const r of set.results || []) {
+        const plays = Number(r.plays || 0);
+        if (!plays) continue;
+        const wins = Number(r.wins || 0);
+        perGame[String(r.game)] = { plays, wins, losses: plays - wins, net: Number(r.net || 0), staked: Number(r.staked || 0) };
+        best = Math.max(best, Number(r.best || 0));
       }
-      const wins = all.filter((r) => r.status === "WON").length;
+    }
+    const totals = Object.values(perGame).reduce((t, g) => ({
+      plays: t.plays + g.plays, wins: t.wins + g.wins, net: t.net + g.net, staked: t.staked + g.staked
+    }), { plays: 0, wins: 0, net: 0, staked: 0 });
+    if (totals.plays) {
       const fav = Object.entries(perGame).sort((a, b) => b[1].plays - a[1].plays)[0];
       casino = {
-        total: all.length, wins, losses: all.length - wins,
-        net: all.reduce((n, r) => n + r.profit, 0),
-        staked: all.reduce((n, r) => n + r.wager, 0),
-        biggestWin: Math.max(0, ...all.filter((r) => r.status === "WON").map((r) => r.profit)),
+        total: totals.plays, wins: totals.wins, losses: totals.plays - totals.wins,
+        net: totals.net,
+        staked: totals.staked,
+        biggestWin: best,
         favourite: fav ? { game: fav[0], plays: fav[1].plays } : null,
         games: perGame,
         pageSize: PAGE,

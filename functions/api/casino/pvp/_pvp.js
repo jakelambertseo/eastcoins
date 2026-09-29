@@ -44,8 +44,9 @@
    escapes the cap.
    ============================================================ */
 
-import { moveBalance, beginOperation, finishOperation, newId } from "../../picks/_lib.js";
+import { moveBalance, beginOperation, finishOperation, opDone, retryKey, newId } from "../../picks/_lib.js";
 import { sha256, randomSeed, MAX_BETS_PER_HOUR } from "../_engine.js";
+import { RL, replay, lightsClosed, lightOpen, lightMs } from "./_redlight.js";
 
 export const STAKE = 20;
 export const LOBBY_MS = 60 * 1000;
@@ -64,8 +65,15 @@ const STUCK_MS = 2 * 60 * 1000;
 // in the browser, where no ZCoin can move. Flip to false to reopen.
 export const GAMES = {
   roulette: { key: "roulette", name: "Russian Roulette", paused: false, lobbyMs: 30 * 1000 },
-  standing: { key: "standing", name: "Last One Standing", paused: true }
+  standing: { key: "standing", name: "Last One Standing", paused: true },
+  // PLAYED, not drawn: after the lobby closes the round stays open while the runners send a sprint for every light,
+  // and it settles when the replay of those sprints (rules in _redlight.js) has a winner. Same buy-in, same lobby,
+  // same winner-takes-all, same idempotent payout as the tables above.
+  redlight: { key: "redlight", name: "Red Light, Green Light", paused: true, played: true, lobbyMs: 30 * 1000, maxPlayers: RL.maxPlayers, practice: "/redlight-test" }
 };
+export const maxPlayersFor = (game) => game?.maxPlayers ?? MAX_PLAYERS;
+// the longest a race can take from the lobby closing: every light, then a beat for the last poll to land
+export const RACE_MAX_MS = RL.introMs + RL.maxLights * lightMs() + 5000;
 export const gameFor = (key) => GAMES[String(key || "").toLowerCase()] || null;
 
 let ready = false;
@@ -107,7 +115,16 @@ export async function ensurePvp(db) {
     )`),
     db.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_pvp_entry_once ON pvp_entries (round_id, user_id)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_pvp_entries_round ON pvp_entries (round_id, seat)`),
-    db.prepare(`CREATE INDEX IF NOT EXISTS idx_pvp_entries_user ON pvp_entries (user_id, updated_at)`)
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_pvp_entries_user ON pvp_entries (user_id, updated_at)`),
+    // a played game's inputs: one sprint per seat per light, and the first one sent is the one that stands
+    db.prepare(`CREATE TABLE IF NOT EXISTS pvp_moves (
+      round_id TEXT NOT NULL,
+      seat INTEGER NOT NULL,
+      light INTEGER NOT NULL,
+      run_ms INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (round_id, seat, light)
+    )`)
   ]);
   ready = true;
 }
@@ -216,6 +233,31 @@ export async function joinsLastHour(db, game, userId) {
 
 const parse = (t) => { try { return t ? JSON.parse(t) : null; } catch { return null; } };
 
+/** Every sprint sent for a round, as runs[light][seat]. */
+export async function runsFor(db, roundId) {
+  const rows = await db.prepare(`SELECT seat, light, run_ms FROM pvp_moves WHERE round_id = ?`).bind(roundId).all();
+  const runs = [];
+  for (const m of rows.results || []) { (runs[Number(m.light)] ||= [])[Number(m.seat)] = Number(m.run_ms); }
+  return runs;
+}
+
+/**
+ * A race in progress, as the page may see it: every light that has CLOSED (its turn, everyone's sprint, who went
+ * out), the standings after them, and for the light being picked right now only WHO has locked in — never what.
+ * The turn of an open light is not in here, and neither is the seed.
+ */
+export async function raceView(db, row, entries, now, viewerId = null) {
+  const startsAt = Number(row.starts_at), runs = await runsFor(db, row.id);
+  const closed = lightsClosed(startsAt, now), open = lightOpen(startsAt, now);
+  const rep = await replay(row.seed, entries.length, runs, closed);
+  const mine = viewerId ? entries.findIndex((e) => e.user_id === String(viewerId)) : -1;
+  return {
+    light: open, closed, lights: rep.lights, pos: rep.pos, alive: rep.alive, outAt: rep.outAt, winner: rep.winner, how: rep.how,
+    locked: entries.map((_, s) => open >= 0 && runs[open]?.[s] != null),
+    mySeat: mine, myRun: mine >= 0 && open >= 0 ? runs[open]?.[mine] ?? null : null
+  };
+}
+
 export function publicRound(row, entries, { revealSeed = false, viewerId = null } = {}) {
   if (!row) return null;
   const over = row.status === "SETTLED" || row.status === "VOID";
@@ -254,12 +296,18 @@ export async function openLobby(db, game, now = Date.now()) {
 }
 
 async function credit(env, db, entry, amount, key) {
+  /* "ALREADY DONE" WAS A GUESS, AND IT COST WINNERS THEIR POT (fixed 2026-09-21). A duplicate key was reported as ok:true —
+     but the key is also left behind by the failure path below, so once a credit had failed, every later attempt said "already
+     done", payEntry marked the entry WON and nobody was ever paid. Nothing retries a SETTLED round, so 60–240 ZC simply
+     vanished with the round showing as finished. Now a refusal is only success if the operation actually CONFIRMED, and a
+     genuine retry takes a key of its own. See opDone/retryKey in picks/_lib.js. */
+  if (await opDone(db, key)) return { ok: true, duplicate: true };
   const opId = newId("op");
   const begun = await beginOperation(db, {
-    id: opId, idempotencyKey: key, userId: entry.user_id,
+    id: opId, idempotencyKey: await retryKey(db, key), userId: entry.user_id,
     marketId: null, pickId: null, type: "PAYOUT_CREDIT", amount
   });
-  if (!begun.ok) return { ok: true, duplicate: true };   // already done
+  if (!begun.ok) return { ok: false };   // another request holds this exact key: let it finish and leave the entry IN
   const moved = await moveBalance(env, entry.login, amount);
   if (!moved.ok) {
     await finishOperation(db, opId, "NEEDS_RECONCILIATION", { error: moved.error });
@@ -272,12 +320,13 @@ async function credit(env, db, entry, amount, key) {
 async function payEntry(env, db, entry, payout) {
   if (payout > 0) {
     const paid = await credit(env, db, entry, payout, `CASINO:PVP:PAY:${entry.id}`);
-    if (!paid.ok) return;   // left IN for the next attempt; the op row says why
+    if (!paid.ok) return false;   // left IN, and the round stays SETTLING so the stuck-round retry comes back for it
   }
   await db
     .prepare(`UPDATE pvp_entries SET status = ?, payout = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'IN'`)
     .bind(payout > 0 ? "WON" : "LOST", payout, entry.id)
     .run();
+  return true;   // the caller only marks the round SETTLED when every seat came back true
 }
 
 async function refundEntry(env, db, entry) {
@@ -304,11 +353,20 @@ export async function settleDue(env, db, game, now = Date.now()) {
           AND (status = 'LOBBY' OR (status = 'SETTLING' AND starts_at < ?))
         ORDER BY starts_at ASC LIMIT 3`
     )
-    .bind(game.key, now, now - STUCK_MS)
+    .bind(game.key, now, now - STUCK_MS - (game.played ? RACE_MAX_MS : 0))
     .all();
 
   const done = [];
   for (const r of due.results || []) {
+    // A played game is only due once its race has a winner; until then the round stays open and is left alone.
+    let raced = null;
+    if (game.played) {
+      const seats = await entriesFor(db, r.id);
+      if (seats.length >= MIN_PLAYERS) {
+        raced = await replay(r.seed, seats.length, await runsFor(db, r.id), lightsClosed(Number(r.starts_at), now));
+        if (raced.winner === null) continue;
+      }
+    }
     const claim = await db
       .prepare(`UPDATE pvp_rounds SET status = 'SETTLING' WHERE id = ? AND status IN ('LOBBY', 'SETTLING')`)
       .bind(r.id)
@@ -327,9 +385,18 @@ export async function settleDue(env, db, game, now = Date.now()) {
       continue;
     }
 
-    const outcome = await outcomeFor(game, r.seed, entries.map((e) => e.user_id));
+    // (a seat cannot be added once the clock has run out, so the replay above saw the same seats as `entries`)
+    const outcome = raced && raced.alive.length === entries.length ? raced : game.played
+      ? await replay(r.seed, entries.length, await runsFor(db, r.id), lightsClosed(Number(r.starts_at), now))
+      : await outcomeFor(game, r.seed, entries.map((e) => e.user_id));
     const pays = payoutsFor(game, outcome, entries.length);
-    for (let i = 0; i < entries.length; i += 1) await payEntry(env, db, entries[i], pays[i]);
+    /* A ROUND IS ONLY SETTLED WHEN EVERYONE IS PAID (2026-09-21). It used to be marked SETTLED regardless, and the due
+       query only ever picks up LOBBY or a stuck SETTLING — so an entry payEntry could not pay was left IN with nothing in
+       the world that would ever look at it again. Left in SETTLING, the same stuck-round reclaim that already exists brings
+       it back in two minutes, and the credit is idempotent per entry, so the retry pays only who is still owed. */
+    let allPaid = true;
+    for (let i = 0; i < entries.length; i += 1) { if (!(await payEntry(env, db, entries[i], pays[i]))) allPaid = false; }
+    if (!allPaid) { console.log(`pvp: round ${r.id} has an unpaid seat — left SETTLING for the stuck-round retry`); continue; }
     await db
       .prepare(`UPDATE pvp_rounds SET status = 'SETTLED', settled_at = ?, players = ?, pot = ?, result = ? WHERE id = ?`)
       .bind(now, entries.length, STAKE * entries.length, JSON.stringify(outcome), r.id)

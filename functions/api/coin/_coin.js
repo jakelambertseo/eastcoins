@@ -121,6 +121,20 @@ export async function ensureRound(db, no) {
  * pays anyone. Payouts are idempotent per bet, so a crash mid-way is
  * finished by the next caller rather than doubled.
  */
+/* SETTLE WHATEVER WAS LEFT BEHIND (2026-09-21) — the same fix as settleStale in casino/_engine.js, and its note has the why.
+   The state poll only ever settled this round and the one before, so a flip nobody was watching stranded the stake forever.
+   Bounded: a backlog drains over several polls rather than one request doing the lot. */
+export async function settleStale(env, db, now = Date.now(), limit = 8) {
+  const openNo = Math.floor(now / CYCLE_MS);
+  const rows = await db
+    .prepare(`SELECT DISTINCT round_no FROM coin_bets WHERE status = 'ACTIVE' AND round_no < ? ORDER BY round_no LIMIT ?`)
+    .bind(openNo, limit)
+    .all()
+    .catch(() => ({ results: [] }));
+  for (const r of rows.results || []) await settleRound(env, db, Number(r.round_no), now).catch(() => {});
+  return (rows.results || []).length;
+}
+
 export async function settleRound(env, db, no, now = Date.now()) {
   const { flipsAt } = { flipsAt: no * CYCLE_MS + BET_MS };
   if (now < flipsAt) return null;

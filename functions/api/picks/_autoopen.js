@@ -262,7 +262,29 @@ export async function autoOpenMarkets(env, db) {
       .bind(...due.map((g) => g.id))
       .all();
     const have = new Set((existing.results || []).map((r) => String(r.provider_event_id)));
-    let missing = due.filter((g) => !have.has(g.id)).sort((a, b) => a.commence.localeCompare(b.commence));
+
+    /* AND ANYTHING OPENED BY HAND FOR THE SAME FIXTURE (2026-09-21). The check above matches on the feed's own event id, which
+       a manual market does not carry — admin/open-market.js writes provider 'manual' and an id of its own — so opening tonight's
+       game from the admin page and then waiting for this tick produced TWO live markets on one game. It was found by opening a
+       Blue Jays market by hand to test the EastScape Sportsbook and noticing the 4 PM tick would open it again.
+       Matched on the two team names and the calendar day rather than the id, because the names are the only thing the two rows
+       are guaranteed to share, and a day is enough to separate a double-header's two games from a repeat of one. */
+    const sameFixture = await db
+      .prepare(
+        `SELECT away_name, home_name, substr(starts_at, 1, 10) AS day
+           FROM markets
+          WHERE sport = ? AND state NOT IN ('SETTLED', 'VOID') AND datetime(starts_at) > datetime('now')`
+      )
+      .bind(cfg.sport)
+      .all();
+    const already = new Set(
+      (sameFixture.results || []).map((r) => `${String(r.away_name).toLowerCase()}|${String(r.home_name).toLowerCase()}|${r.day}`)
+    );
+    const fixtureKey = (g) => `${String(g.away).toLowerCase()}|${String(g.home).toLowerCase()}|${String(g.commence).slice(0, 10)}`;
+
+    let missing = due
+      .filter((g) => !have.has(g.id) && !already.has(fixtureKey(g)))
+      .sort((a, b) => a.commence.localeCompare(b.commence));
     if (!missing.length) continue;
 
     // A cap on how many of this sport are open at once: the earliest

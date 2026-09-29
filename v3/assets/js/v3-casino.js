@@ -16,7 +16,7 @@
   /* The card art is served with an hour of cache and no version in its
      own path, so a redrawn card would take up to an hour to appear.
      Bump this whenever an image in /v3/assets/img/casino/ changes. */
-  const ART_V = 3;
+  const ART_V = 4;   // bumped whenever a card image changes: the art is cached at the edge for an hour with no version in its path
   let root = null;
   let refs = {};
   let data = null;
@@ -27,6 +27,16 @@
   let boardPage = 1;
 
   const GAMES = {
+    /* Not a game on this floor: a trailer for one, and the first card on
+       the floor by the owner's call. `soon` makes the card a plain div
+       with a ribbon and no link, no live line and no plays counter —
+       there is nothing to poll and nowhere to click, so it must not
+       pretend otherwise by looking like the seven that do. */
+    /* (2026-09-27, the owner: "the game is in a good shape for a few more users ... add a special highlight/splash/spooky effect to
+       the EastScape card, make the ribbon say now open, and link it to eastcoin.vip/eastscape") OPEN. `href` makes the card a plain
+       link to the game's own page (it is not a route in this shell), and `open` is its ribbon; like `soon` it has no live line and
+       no plays counter, because nothing on this floor polls it. `spooky` dresses it for the Long Night. */
+    eastscape: { title: "EastScape", icon: "🗺️", sub: "EastCoin Casino MMO", open: "Now Open", href: "/eastscape", online: "/api/eastscape/online", spooky: true, line: "Now open: fight, mine, fish and craft for ZCoins.", blurb: "Every game on this floor, in a world you walk around. Fight, mine, fish and craft for ZCoins, and play the same tables at the same odds." },
     flip: { title: "Coin Flip", icon: "🪙", blurb: "Heads or tails, about 2×. One coin for the whole room, every 30 seconds.", route: "flip" },
     wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black about 2.03×, the gold sliver about 60×. One spin a minute.", route: "wheel" },
     race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2× to 14×. They're off every minute.", route: "race", hidden: true },
@@ -34,7 +44,7 @@
     mines: { title: "Mines", icon: "💣", blurb: "Twenty-five tiles, a few of them bombs. Every safe one pays more; cash out before you find one.", route: "mines" },
     plinko: { title: "Plinko", icon: "🎯", blurb: "Drop a ball through the pegs. Every bucket but the middle pays; the edges pay 25×.", route: "plinko" },
     scratch: { title: "Scratch-Off", icon: "🎟️", blurb: "Rub the foil off. Three of a kind pays, from money back on coins to 100× on crowns.", route: "scratch" },
-    grind: { title: "The Grind", icon: "🔨", blurb: "Broke? Put in a shift: 100 clicks pays 5 ZC, sorting 35 chips pays 15. One shift of each an hour, for anyone under 50.", route: "grind" },
+    grind: { title: "The Grind", icon: "🔨", blurb: "Broke? Put in a shift: 100 clicks pays 5 ZC, sorting 35 chips pays 15. One shift of each every 4 hours, for anyone under 50.", route: "grind" },
     roulette: { title: "Russian Roulette - PVP", iconUrl: "https://cdn.7tv.app/emote/01G1FDHE4R0005G1MWWMPGSX71/1x.webp", icon: "🔫", blurb: "Everyone puts in 20. One live round. Whoever it fires on pays the rest.", route: "roulette" },
     standing: { title: "Last One Standing - PVP", icon: "🏆", blurb: "Everyone puts in 20. One knocked out at a time; the last one takes the lot.", route: "standing", hidden: true }
   };
@@ -170,13 +180,16 @@
     refs.tiles = K.el("div", "cas-cards");
     for (const [key, g] of Object.entries(GAMES)) {
       if (g.hidden) continue;
-      const tile = K.el("a", `cas-card cas-${key}`);
-      tile.href = `/?view=${g.route}`;
-      tile.addEventListener("click", (event) => {
-        if (event.metaKey || event.ctrlKey || event.shiftKey) return;
-        event.preventDefault();
-        go(g.route);
-      });
+      const tile = K.el(g.soon ? "div" : "a", `cas-card cas-${key}${g.soon ? " soon" : ""}${g.href ? " open" : ""}${g.spooky ? " spooky" : ""}`);
+      if (g.href) tile.href = g.href;   /* (2026-09-27) a page of its own, not a route: an ordinary link */
+      else if (!g.soon) {
+        tile.href = `/?view=${g.route}`;
+        tile.addEventListener("click", (event) => {
+          if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+          event.preventDefault();
+          go(g.route);
+        });
+      }
 
       const art = K.el("div", "cas-card-art");
       /* The painted art for this game. Every card is eager: all seven
@@ -192,8 +205,23 @@
       pic.addEventListener("error", () => { pic.remove(); art.classList.add("no-art"); });
       const icon = K.el("span", "cas-card-ico", g.icon || "");
       const name = K.el("div", "cas-card-name");
-      name.append(K.el("b", null, g.title), K.el("small", null, "EastCoin original"));
+      name.append(K.el("b", null, g.title), K.el("small", null, g.sub || "EastCoin original"));
       art.append(pic, icon, name);
+      if (g.soon || g.open) art.append(K.el("span", `cas-card-ribbon${g.open ? " open" : ""}`, g.soon || g.open));
+      if (g.spooky) for (const c of ["es-fog", "es-bat b1", "es-bat b2", "es-glow"]) art.append(K.el("span", `es-fx ${c}`));   /* (2026-09-27) the Long Night's dressing: see .cas-card.spooky in v3.css */
+
+      /* A card with nothing behind it gets its pitch on the second line
+         and stops there: no live line, no plays counter, and no entry in
+         refs, so the half-second repaint never looks for it. */
+      if (g.soon || g.href) {
+        tile.title = g.blurb;
+        tile.append(art, K.el("div", "cas-card-live", g.line));
+        /* (2026-09-27, the owner: "add a '{X} people online now' area below the card") how many are in the world right now, from the
+           game server's own count. Hidden until the first answer, and again if the server cannot be reached: no number beats a wrong one. */
+        if (g.online) { const on = K.el("div", "cas-card-online"); on.hidden = true; tile.append(on); refs.online = { el: on, url: g.online }; }
+        refs.tiles.append(tile);
+        continue;
+      }
 
       const live = K.el("div", "cas-card-live");
       const dot = K.el("i", "cas-card-dot");
@@ -369,9 +397,9 @@
           const waits = jobs.map((j) => (j.nextShiftAt ? Date.parse(j.nextShiftAt) - now : 0));
           const open = waits.filter((w) => w <= 0).length;
           const soonest = Math.min(...waits.filter((w) => w > 0));
-          r.plays.textContent = gr.working ? "On a shift" : open ? `${open} job${open === 1 ? "" : "s"} open` : `Next job in ${Math.ceil(soonest / 60000)}m`;
+          r.plays.textContent = gr.working ? "On a shift" : open ? `${open} job${open === 1 ? "" : "s"} open` : `Next job in ${soonest >= 3600000 ? `${Math.floor(soonest / 3600000)}h ${Math.ceil((soonest % 3600000) / 60000)}m` : `${Math.ceil(soonest / 60000)}m`}`;
           r.plays.classList.toggle("out", !open && !gr.working);
-          r.plays.title = "One shift of each job an hour, for anyone under 50 ZC.";
+          r.plays.title = "One shift of each job every 4 hours, for anyone under 50 ZC.";
         }
       } else if (cap && data.me?.played) {
         const left = Math.max(0, cap - Number(data.me.played[g.key] || 0));
@@ -431,6 +459,22 @@
     refs.board.append(K.pager(pg, (n) => { boardPage = n; renderBoard(); }, "results"));
   }
 
+  /* The EastScape card's "N people online now". Once a minute while the tab is visible, and at once when it comes back: about 1,440
+     small requests a day for a tab left open, answered from /api/eastscape/online's 30-second edge cache, and no database anywhere. */
+  let onlineTimer = 0;
+  async function pollOnline() {
+    const o = refs.online; if (!o || document.hidden) return;
+    try {
+      const r = await fetch(o.url, { cache: "no-store" }); if (!r.ok) throw new Error(String(r.status));
+      const n = Math.max(0, Number((await r.json()).online) || 0);
+      if (refs.online !== o) return;   // the floor was left while this was on its way
+      o.el.textContent = "";
+      o.el.classList.toggle("none", n === 0);
+      o.el.append(K.el("i"), n === 0 ? document.createTextNode("Nobody online right now") : K.el("span", null, `${n.toLocaleString()} ${n === 1 ? "person" : "people"} online now`));
+      o.el.hidden = false;
+    } catch (e) { o.el.hidden = true; }
+  }
+
   const view = {
     mount(container) {
       root = container;
@@ -442,12 +486,17 @@
       onVis = () => { if (!document.hidden) { meAt = 0; poll(); } };
       document.addEventListener("visibilitychange", onVis);
       tickTimer = window.setInterval(renderTiles, 500);
+      pollOnline();
+      onlineTimer = window.setInterval(pollOnline, 60000);
+      document.addEventListener("visibilitychange", pollOnline);
     },
     unmount() {
       window.clearInterval(pollTimer);
       if (onVis) document.removeEventListener("visibilitychange", onVis);
       onVis = null;
       window.clearInterval(tickTimer);
+      window.clearInterval(onlineTimer);
+      document.removeEventListener("visibilitychange", pollOnline);
       data = null; refs = {};
       document.title = "EastCoin";
     }

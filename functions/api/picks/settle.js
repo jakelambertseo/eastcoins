@@ -23,7 +23,7 @@ import { dueReminders, markSent } from "./_reminders.js";
 import { autoOpenMarkets, quietInChat } from "./_autoopen.js";
 import { slugFor, etDate } from "./_slug.js";
 import { noteStatus, readStatus } from "./_ops.js";
-import { discordEnabled, postDiscord, openedEmbed, settledEmbed } from "./_discord.js";
+import { discordEnabled, postDiscord, openedEmbed, closedEmbed, settledEmbed } from "./_discord.js";
 import { lastOddsQuota } from "./_autoopen.js";
 import { MANUAL_SPORTS } from "./_fights.js";
 import {
@@ -160,10 +160,17 @@ async function ensureLive(db) {
 }
 
 /** The feed's game for this market, if it is on the board. */
+/* (2026-09-22) THE EVENT ID FIRST, here too. This is the live-score half of the doubleheader bug that mis-settled a
+   Yankees/Rays nightcap: two fixtures between the same clubs three hours apart both match on names inside the
+   twelve-hour window, and this returned whichever the feed listed first. That put the afternoon score on the
+   evening market's ticker. Unlike settlement there is no money in it, so an ambiguous match falls back to the old
+   first-match behaviour rather than refusing - a slightly wrong live score is better than none, and settlement
+   still refuses to guess when it matters. */
 function boardGameFor(board, market) {
   const wantAway = nickname(market.away_name);
   const wantHome = nickname(market.home_name);
   const started = new Date(market.starts_at).getTime();
+  const cands = [];
   for (const game of board.games) {
     const gotAway = nickname(game.away_team);
     const gotHome = nickname(game.home_team);
@@ -172,16 +179,17 @@ function boardGameFor(board, market) {
     if (!straight && !flipped) continue;
     const when = new Date(game.commence_time).getTime();
     if (Number.isFinite(when) && Number.isFinite(started) && Math.abs(when - started) > SAME_FIXTURE_MS) continue;
-    return { game, straight };
+    cands.push({ game, straight });
   }
-  return null;
+  const wantId = String(market.provider_event_id || "");
+  return (wantId && cands.find((c) => String(c.game.id || "") === wantId)) || cands[0] || null;
 }
 
 async function trackLiveScores(env, db, boards) {
   await ensureLive(db);
   const rows = await db
     .prepare(
-      `SELECT m.id, m.sport, m.away_name, m.home_name, m.starts_at, m.live_away_score, m.live_home_score
+      `SELECT m.id, m.provider_event_id, m.sport, m.away_name, m.home_name, m.starts_at, m.live_away_score, m.live_home_score
          FROM markets m
         WHERE m.state = 'LOCKED'
           AND datetime(m.starts_at) <= datetime('now')
@@ -261,19 +269,32 @@ async function findResult(env, market, boards) {
     statuses.push(`${sportKey}=${board.status}${board.note ? ` (${board.note})` : ""}`);
     seen += board.games.length;
 
+    /* (2026-09-22) DOUBLEHEADERS. This used to take the FIRST game whose team names matched inside a twelve-hour
+       window and grade the market from it. Two games between the same clubs on the same day are three to five hours
+       apart, so both fixtures matched both markets and whichever the feed happened to list first graded them BOTH.
+       A Yankees/Rays doubleheader settled one player's nightcap pick off the afternoon result, as a loss.
+
+       The market has carried `provider_event_id` since it was created and this never read it. Now: collect every
+       candidate, take the one whose id matches, and if there is no id match and MORE THAN ONE candidate, refuse to
+       guess - an ambiguous fixture goes to the admin page instead of being decided by feed order. A single match
+       still settles exactly as before, which is every ordinary game. */
+    const cands = [];
     for (const game of board.games) {
       const gotAway = nickname(game.away_team);
       const gotHome = nickname(game.home_team);
-
-      // Both sides must match, in either orientation.
       const straight = gotAway === wantAway && gotHome === wantHome;
       const flipped = gotAway === wantHome && gotHome === wantAway;
       if (!straight && !flipped) continue;
-
-      // Right teams, wrong night: keep looking.
       const when = new Date(game.commence_time).getTime();
       if (Number.isFinite(when) && Math.abs(when - started) > SAME_FIXTURE_MS) continue;
-
+      cands.push({ game, straight });
+    }
+    const wantId = String(market.provider_event_id || "");
+    const byId = wantId ? cands.find((c) => String(c.game.id || "") === wantId) : null;
+    if (!byId && cands.length > 1) {
+      return { skip: "ambiguous", detail: `${cands.length} fixtures match ${market.away_name} at ${market.home_name} near this time (doubleheader?) and none carries event id ${wantId || "(none)"} - settle it from the admin page` };
+    }
+    for (const { game, straight } of (byId ? [byId] : cands)) {
       if (!game.completed) {
         return { skip: "not-final", detail: `in progress, commenced ${game.commence_time}` };
       }
@@ -571,28 +592,44 @@ export async function onRequestPost(context) {
   // Read the set BEFORE the update so chat can be told which games shut,
   // and so the count is what actually changed rather than what happens to
   // match a second later.
+  /* THE CLOSE LINE IS NOW DURABLE (2026-09-21). It used to be one fire-and-forget attempt on the single tick a
+     market crossed OPEN -> LOCKED: if StreamElements hiccuped at that moment the message was gone for good, with
+     only a console line to show for it — which is exactly what happened to Giants at Rams. Its neighbours were
+     already careful (the reminders skip markSent on failure so the next tick retries; the MLB slate line writes
+     its key only on success), so this is the odd one out being brought in line rather than a new idea.
+
+     Candidates are the markets ABOUT to close plus any that already locked and were never successfully announced.
+     The window is deliberately short: a "betting closed" line an hour late is worse than none, and it is what
+     stops a backlog of old games being announced the first time this runs. */
+  const CLOSE_RETRY_MIN = 30;
   const closing = await db
     .prepare(
-      `SELECT id, sport, away_name, home_name, question
+      `SELECT id, sport, league, away_name, home_name, question, starts_at
          FROM markets
-        WHERE state = 'OPEN'
-          AND datetime(starts_at) <= datetime('now')`
+        WHERE datetime(starts_at) <= datetime('now')
+          AND datetime(starts_at) > datetime('now', '-${CLOSE_RETRY_MIN} minutes')
+          AND (state = 'OPEN' OR (state = 'LOCKED' AND settled_at IS NULL))`
     )
     .all();
 
-  // Only the loud sports get a closing line; the totals are theirs too.
-  const closingRows = (closing.results || []).filter((m) => !quietInChat(m.sport));
+  /* Only the loud sports get a CHAT line; Discord hears every sport, as it does for opens and settlements.
+     Anything already announced is dropped here — that key is the whole retry mechanism. */
+  const closeCands = closing.results || [];
+  const closeKeys = closeCands.map((m) => `closed:${m.id}`);
+  const closeDone = closeKeys.length ? await readStatus(db, closeKeys).catch(() => ({})) : {};
+  const closingAll = closeCands.filter((m) => !closeDone[`closed:${m.id}`]);
+  const closingRows = closingAll.filter((m) => !quietInChat(m.sport));
   let riding = { picks: 0, staked: 0 };
 
-  if (closingRows.length) {
-    const marks = closingRows.map(() => "?").join(",");
+  if (closingAll.length) {
+    const marks = closingAll.map(() => "?").join(",");
     const totals = await db
       .prepare(
         `SELECT COUNT(*) AS picks, COALESCE(SUM(wager), 0) AS staked
            FROM picks
           WHERE status = 'ACTIVE' AND market_id IN (${marks})`
       )
-      .bind(...closingRows.map((m) => m.id))
+      .bind(...closingAll.map((m) => m.id))
       .first();
     riding = { picks: Number(totals?.picks || 0), staked: Number(totals?.staked || 0) };
   }
@@ -609,18 +646,27 @@ export async function onRequestPost(context) {
   // Safe to run every tick: a market crosses OPEN -> LOCKED exactly once,
   // so the next run finds nothing to announce. One message regardless of
   // how many closed at the same moment.
+  /* Discord hears every sport; chat hears the loud ones. The `closed:` key is written only once the CHAT line has
+     actually landed (or when there was never going to be one, for a quiet sport), so a failed post is retried on
+     the next tick instead of being lost. The one cost of a single key is that a chat failure re-posts the Discord
+     card on the retry — a rare duplicate, which is a far better failure than the silence this replaces. */
+  if (closingAll.length && discordEnabled(context.env)) {
+    await postDiscord(context.env, closedEmbed(closingAll, riding)).catch(() => {});
+  }
+  const closedDone = closingAll.filter((m) => quietInChat(m.sport)).map((m) => m.id);
   if (closingRows.length) {
-    const message = composeClosed(closingRows, riding);
-    const said = await sayInChat(context.env, message);
-    if (!said.ok) {
-      console.error(`Picks: couldn't announce ${closingRows.length} closing market(s): ${said.error}`);
-    }
+    const said = await sayInChat(context.env, composeClosed(closingRows, riding));
+    if (said.ok) closedDone.push(...closingRows.map((m) => m.id));
+    else console.error(`Picks: couldn't announce ${closingRows.length} closing market(s): ${said.error} — retrying next tick`);
+  }
+  for (const id of closedDone) {
+    await noteStatus(db, `closed:${id}`, { at: new Date().toISOString() }).catch(() => {});
   }
 
   // Anything past its start time and not yet finished is a candidate.
   const markets = await db
     .prepare(
-      `SELECT id, sport, league, away_name, home_name, starts_at, state
+      `SELECT id, provider_event_id, sport, league, away_name, home_name, starts_at, state
          FROM markets
         WHERE state IN ('OPEN', 'LOCKED', 'SETTLING')
           AND datetime(starts_at) < datetime('now')

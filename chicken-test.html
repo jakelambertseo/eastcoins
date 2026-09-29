@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Chicken — Test</title>
+<link rel="stylesheet" href="/v3/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/arcade-test.css?v=1">
+</head>
+<body>
+<div class="topbar"><a class="brand" href="/arcade-test" style="text-decoration:none;color:inherit">East<span>Coin</span> Arcade</a><div class="mock-tag">Test page</div></div>
+<div class="page">
+  <div class="head">
+    <div class="eyebrow">Arcade · game 3</div>
+    <h1>Chicken</h1>
+    <p class="sub">Eight golf carts, one cliff, and fog so thick nobody knows where the edge is. The carts only get faster. Hit the brakes once: closest to the edge without going over takes the round. Five rounds. No ZCoins, only nerve.</p>
+  </div>
+  <div class="layout">
+    <div class="stage" id="stage">
+      <canvas id="cv" width="960" height="600" style="aspect-ratio:960/600" aria-label="Chicken"></canvas>
+      <div class="veil" id="veil">
+        <div>
+          <h2 id="vTitle">Chicken</h2>
+          <p id="vSub">One button. Click, tap or press <span class="keys">Space</span> to slam the brakes. You skid, so brake early when you're flying.</p>
+          <table class="board" id="vBoard" hidden></table>
+          <div class="row"><button class="btn go" id="play">Start</button></div>
+        </div>
+      </div>
+    </div>
+    <aside>
+      <div class="card"><h3>Your records</h3>
+        <div class="stat"><span>Best game (5 rounds)</span><b id="rBest">–</b></div>
+        <div class="stat"><span>Games won · played</span><b id="rWins">0 · 0</b></div>
+        <div class="stat"><span>Closest stop</span><b id="rClose">–</b></div>
+        <div class="stat"><span>Times over the edge</span><b id="rFalls">0</b></div>
+        <p class="note">Kept in this browser only while this is a test.</p>
+      </div>
+      <div class="card"><h3>How it scores</h3>
+        <ul class="how">
+          <li>Stop safely and you score <b>how far along you got</b>: 93% of the way to the edge is 93 points.</li>
+          <li>Closest safe cart gets <b>+25</b>.</li>
+          <li>Over the edge is <b>zero</b>, and a long way down.</li>
+          <li>The fog only shows the last few yards. Early on you can react to it. At full speed you can't: that's the game.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+<script>
+(() => {
+"use strict";
+const cv = document.getElementById("cv"), c = cv.getContext("2d"), W = 960, H = 600, $ = (id) => document.getElementById(id);
+const LANES = 8, PXM = 13, TOP = 92, LH = 56, FH = LH * LANES, X_ME = 240, ROUNDS = 5;
+const V0 = 8, ACC = 4, VMAX = 34, DECEL = 52, SEE = 14, EDGE_MIN = 38, EDGE_MAX = 100;       // yards and seconds; SEE: how far the fog lets you see
+const COLS = ["#e8bf35", "#ff6b85", "#4ddb8b", "#6ab7ff", "#c58bff", "#ff9d4d", "#5fe0d8", "#f2f2f2"];
+const NAMES = ["GoalLineGary", "BlitzBetty", "HailMaryHank", "PuntPolice", "TurfToeTina", "SnapCountSam", "PylonPete", "FlagOnThePlay", "OnsideOllie"];
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches, ORD = ["1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
+
+const KEY = "ec_chicken_test_v1"; let REC = { best: 0, wins: 0, games: 0, close: 0, falls: 0 };
+try { REC = { ...REC, ...(JSON.parse(localStorage.getItem(KEY)) || {}) }; } catch (e) {}
+const showRec = () => { $("rBest").textContent = REC.best ? `${REC.best} pts` : "–"; $("rWins").textContent = `${REC.wins} · ${REC.games}`; $("rClose").textContent = REC.close ? `${REC.close.toFixed(1)} yd from the edge` : "–"; $("rFalls").textContent = REC.falls; };
+const saveRec = () => { try { localStorage.setItem(KEY, JSON.stringify(REC)); } catch (e) {} showRec(); }; showRec();
+
+let AC = null;
+function tone(f0, f1, dur, vol = 0.1, type = "triangle") { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t + dur); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + dur); } catch (e) {} }
+const SND = { beep: (hi) => tone(hi ? 880 : 440, hi ? 880 : 440, hi ? 0.35 : 0.12, 0.12), skid: () => tone(900, 300, 0.5, 0.08, "sawtooth"), fall: () => tone(900, 80, 1.1, 0.1, "sine"), crash: () => tone(120, 40, 0.4, 0.2, "square"), win: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, f, 0.2, 0.12), i * 100)), safe: () => tone(500, 750, 0.15, 0.1) };
+
+let M = null, lastT = 0;
+function newGame() {
+  const names = [...NAMES].sort(() => Math.random() - 0.5);
+  M = { round: 0, score: new Array(LANES).fill(0), names: names.slice(0, LANES).map((n, i) => (i === 3 ? "YOU" : n)), nerve: Array.from({ length: LANES }, () => 0.35 + Math.random() * 0.55), myFalls: 0, myClose: 0 };
+  $("veil").hidden = true; newRound();
+}
+function newRound() {
+  M.round++; M.edge = EDGE_MIN + Math.random() * (EDGE_MAX - EDGE_MIN); M.t = -2.4; M.state = "count"; M.cam = -6; M.lastBeep = 9; M.banner = null; M.shake = 0;
+  M.C = Array.from({ length: LANES }, (_, i) => ({ i, me: i === 3, name: M.names[i], col: COLS[i], pos: 0, v: 0, braking: false, stopped: false, fell: 0, fallY: 0, fallV: 0, skidFrom: null, pts: 0,
+    // a bot's plan: where it means to brake if the fog hasn't shown it the edge first, and how quick its foot is
+    plan: EDGE_MIN - 8 + (M.nerve[i] * 0.75 + Math.random() * 0.45) * (EDGE_MAX - EDGE_MIN), react: 0.22 + Math.random() * 0.3, saw: -1 }));
+}
+const me = () => M.C[3];
+function brake(x) { if (M.state !== "go" || x.braking || x.fell) return; x.braking = true; x.skidFrom = x.pos; if (x.me) SND.skid(); }
+function update(dt) {
+  M.t += dt; M.shake = Math.max(0, M.shake - dt * 40); if (M.banner) { M.banner.t += dt; if (M.banner.t > 2.2) M.banner = null; }
+  if (M.state === "count") { const n = Math.ceil(-M.t); if (n !== M.lastBeep && n >= 1 && n <= 2) { M.lastBeep = n; SND.beep(false); } if (M.t >= 0) { M.state = "go"; SND.beep(true); } }
+  if (M.state === "go" || M.state === "settle") {
+    for (const x of M.C) {
+      if (x.fell) { x.fallV += 900 * dt; x.fallY += x.fallV * dt; x.pos += x.v * dt * 0.6; x.fell += dt; continue; }
+      if (x.stopped) continue;
+      if (!x.braking) { x.v = Math.min(VMAX, V0 + ACC * Math.max(0, M.t)); if (!x.me) { if (x.saw < 0 && M.edge - x.pos <= SEE) x.saw = M.t; if (x.pos >= x.plan || (x.saw >= 0 && M.t - x.saw >= x.react)) brake(x); } }
+      else x.v = Math.max(0, x.v - DECEL * dt);
+      x.pos += x.v * dt;
+      if (x.pos > M.edge) { x.fell = 0.001; x.fallV = -120; if (x.me) { SND.fall(); M.shake = 12; M.myFalls++; } }
+      else if (x.braking && x.v <= 0) { x.stopped = true; if (x.me) SND.safe(); }
+    }
+    if (M.state === "go" && M.C.every((x) => x.stopped || x.fell)) { M.state = "settle"; M.t2 = 0; score(); }
+    if (M.state === "settle") { M.t2 += dt; if (M.t2 > 3.4) { if (M.round >= ROUNDS) finish(); else newRound(); } }
+  }
+  const mine = me(), follow = M.state === "settle" ? Math.min(M.edge - 40, Math.max(...M.C.filter((x) => !x.fell).map((x) => x.pos), mine.pos) - 30) : mine.pos - 4;
+  M.cam += (Math.max(-6, follow) - M.cam) * (calm ? 1 : 1 - Math.pow(0.001, dt));
+}
+function score() {
+  const safe = M.C.filter((x) => !x.fell).sort((a, b) => b.pos - a.pos);
+  for (const x of safe) x.pts = Math.round((x.pos / M.edge) * 100);
+  if (safe[0]) { safe[0].pts += 25; safe[0].best = true; }
+  for (const x of M.C) M.score[x.i] += x.pts;
+  const mine = me();
+  if (!mine.fell) { const gap = M.edge - mine.pos; M.myClose = M.myClose ? Math.min(M.myClose, gap) : gap; }
+  M.banner = { t: 0, text: mine.fell ? "OVER THE EDGE · 0" : mine.best ? `CLOSEST! ${(M.edge - mine.pos).toFixed(1)} yd short · +${mine.pts}` : `${(M.edge - mine.pos).toFixed(1)} yd short · +${mine.pts}`, col: mine.fell ? "#ff8a96" : mine.best ? "#e8bf35" : "#fff" };
+  if (mine.best) SND.win();
+}
+function finish() {
+  M.state = "over"; const order = M.C.map((x) => x.i).sort((a, b) => M.score[b] - M.score[a]), my = order.indexOf(3) + 1;
+  REC.games++; if (my === 1) REC.wins++; REC.best = Math.max(REC.best, M.score[3]); REC.falls += M.myFalls; if (M.myClose) REC.close = REC.close ? Math.min(REC.close, M.myClose) : M.myClose; saveRec();
+  $("vTitle").textContent = my === 1 ? "You win!" : `You came ${ORD[my - 1]}`; $("vSub").textContent = `${M.score[3]} points over ${ROUNDS} rounds${M.myFalls ? ` · over the edge ${M.myFalls} time${M.myFalls === 1 ? "" : "s"}` : " · never went over"}`;
+  const b = $("vBoard"); b.hidden = false; b.innerHTML = order.map((i, k) => `<tr class="${i === 3 ? "me" : ""}"><td>${ORD[k]}</td><td><i style="background:${COLS[i]}"></i>${M.names[i]}</td><td>${M.score[i]} pts</td></tr>`).join("");
+  $("play").textContent = "Play again"; $("veil").hidden = false;
+}
+
+/* ---------------- drawing ---------------- */
+const sx = (yd) => X_ME + (yd - M.cam) * PXM, laneY = (i) => TOP + LH * i + LH / 2;
+function cart(x) {
+  const px = sx(x.pos), py = laneY(x.i) + (x.fell ? x.fallY : 0), t = performance.now();
+  if (x.skidFrom != null) { c.strokeStyle = "rgba(20,14,10,.55)"; c.lineWidth = 4; for (const dy of [-12, 12]) { c.beginPath(); c.moveTo(sx(x.skidFrom) - 18, laneY(x.i) + dy); c.lineTo(Math.min(px, sx(M.edge)) - 18, laneY(x.i) + dy); c.stroke(); } }
+  if (py > H + 60) return;
+  c.save(); c.translate(px, py); if (x.fell) c.rotate(Math.min(1.4, x.fell * 2.2)); else if (x.braking && !x.stopped && !calm) c.translate(Math.random() * 2 - 1, Math.random() * 2 - 1);
+  c.fillStyle = "#1a1a1a"; for (const [wx, wy] of [[-16, -17], [14, -17], [-16, 13], [14, 13]]) c.fillRect(wx, wy, 12, 5);
+  c.fillStyle = x.col; c.beginPath(); c.roundRect(-26, -14, 52, 28, 7); c.fill(); c.lineWidth = 2.5; c.strokeStyle = "rgba(0,0,0,.45)"; c.stroke();
+  c.fillStyle = "rgba(255,255,255,.85)"; c.beginPath(); c.roundRect(-20, -11, 24, 22, 4); c.fill();                       // the roof
+  c.fillStyle = "#f2d2b0"; c.beginPath(); c.arc(12, 0, 7, 0, 7); c.fill(); c.fillStyle = "#111"; c.beginPath(); c.arc(15, -2, 1.5, 0, 7); c.arc(15, 3, 1.5, 0, 7); c.fill();
+  if (x.braking && !x.stopped && !x.fell) { c.fillStyle = "#ff3a3a"; c.fillRect(-28, -11, 4, 7); c.fillRect(-28, 4, 4, 7); }
+  c.restore();
+  if (x.braking && !x.stopped && !x.fell && !calm) { c.fillStyle = "rgba(230,220,200,.4)"; for (let k = 0; k < 4; k++) { c.beginPath(); c.arc(px - 34 - Math.random() * 26, py - 12 + Math.random() * 24, 4 + Math.random() * 6, 0, 7); c.fill(); } }
+  if (!x.fell) { c.font = `800 ${x.me ? 13 : 11}px Figtree, sans-serif`; c.textAlign = "right"; c.lineWidth = 4; c.strokeStyle = "rgba(0,0,0,.6)"; const label = x.me ? "YOU ▶" : x.name.length > 12 ? `${x.name.slice(0, 11)}…` : x.name, lx = Math.max(px - 34, 100); c.strokeText(label, lx, py - 14); c.fillStyle = x.me ? "#fff" : "rgba(255,255,255,.8)"; c.fillText(label, lx, py - 14); }
+  if (M.state === "settle" && (x.stopped || x.fell)) { c.textAlign = "left"; c.font = "800 14px Figtree, sans-serif"; c.lineWidth = 4; c.strokeStyle = "rgba(0,0,0,.65)"; const tx = x.fell ? sx(M.edge) + 14 : px + 34, ty = laneY(x.i) + 5, text = x.fell ? "0" : `${(M.edge - x.pos).toFixed(1)} yd · +${x.pts}`; c.strokeText(text, tx, ty); c.fillStyle = x.fell ? "#ff8a96" : x.best ? "#e8bf35" : "#fff"; c.fillText(text, tx, ty); }
+}
+function draw() {
+  const mine = me(), t = performance.now();
+  c.save(); if (M.shake > 0 && !calm) c.translate((Math.random() - 0.5) * M.shake, (Math.random() - 0.5) * M.shake);
+  c.fillStyle = "#1b1410"; c.fillRect(0, 0, W, H);
+  const ex = sx(M.edge), roadTo = Math.min(W, ex);
+  for (let yd = Math.floor(M.cam / 5) * 5 - 5; yd < M.cam + W / PXM; yd += 5) { const x0 = sx(yd); if (x0 > roadTo) break; c.fillStyle = Math.floor(yd / 5) % 2 ? "#6a4e36" : "#634830"; c.fillRect(x0, TOP, Math.min(5 * PXM + 1, roadTo - x0), FH); }
+  c.strokeStyle = "rgba(255,255,255,.18)"; c.lineWidth = 2; for (let i = 0; i <= LANES; i++) { c.beginPath(); c.moveTo(0, TOP + LH * i); c.lineTo(roadTo, TOP + LH * i); c.stroke(); }
+  c.font = "800 13px Figtree, sans-serif"; c.textAlign = "center"; c.fillStyle = "rgba(255,255,255,.55)"; for (let yd = Math.max(0, Math.ceil(M.cam / 10) * 10); yd < M.cam + W / PXM; yd += 10) { const x = sx(yd); if (x > roadTo - 4) break; c.fillRect(x, TOP, 2, FH); c.fillText(yd ? `${yd} yd` : "START", x, TOP + FH + 18); }
+  if (ex < W + 40) {        // the drop: sky, a long way down, and the lip of the cliff
+    const g = c.createLinearGradient(0, TOP, 0, H); g.addColorStop(0, "#2a4a78"); g.addColorStop(1, "#0a1428"); c.fillStyle = g; c.fillRect(ex, 0, W - ex + 40, H);
+    c.fillStyle = "#3a2a1c"; c.beginPath(); c.moveTo(ex, TOP - 6); for (let y = TOP; y <= TOP + FH; y += 14) c.lineTo(ex + 5 + Math.sin(y * 0.7) * 5, y); c.lineTo(ex, TOP + FH + 6); c.lineTo(ex - 10, TOP + FH + 6); c.lineTo(ex - 10, TOP - 6); c.fill();
+    c.fillStyle = "#c8262e"; c.fillRect(ex - 14, TOP - 6, 4, FH + 12);
+  }
+  M.C.filter((x) => x.fell).forEach(cart); M.C.filter((x) => !x.fell).forEach(cart);
+  // the fog: everything more than SEE yards past your cart is gone, until the round is over
+  if (M.state !== "settle" && M.state !== "over") { const fx = sx(mine.pos + SEE), g = c.createLinearGradient(fx - 70, 0, fx + 40, 0); g.addColorStop(0, "rgba(190,196,204,0)"); g.addColorStop(1, "rgba(190,196,204,.98)"); c.fillStyle = g; c.fillRect(fx - 70, TOP - 10, 110, FH + 20); c.fillStyle = "rgba(190,196,204,.98)"; c.fillRect(fx + 40, TOP - 10, W, FH + 20);
+    if (!calm) { c.fillStyle = "rgba(255,255,255,.35)"; for (let k = 0; k < 9; k++) { const y = TOP + ((k * 61) % FH), x = fx + 30 + ((t / 30 + k * 97) % 300); c.beginPath(); c.ellipse(x, y, 60, 12, 0, 0, 7); c.fill(); } } }
+  c.restore();
+  // HUD
+  c.fillStyle = "rgba(0,0,0,.6)"; c.fillRect(0, 0, W, TOP - 12);
+  c.textAlign = "left"; c.fillStyle = "#fff"; c.font = "800 26px 'Bricolage Grotesque', sans-serif"; c.fillText(`Round ${M.round} of ${ROUNDS}`, 20, 36);
+  c.font = "700 13px Figtree, sans-serif"; c.fillStyle = "#aca298"; c.fillText(mine.fell ? "You went over." : mine.stopped ? "Stopped. Now watch the brave ones." : mine.braking ? "Skidding…" : `${Math.round(mine.v * 2.05)} mph and climbing`, 20, 60);
+  const order = M.C.map((x) => x.i).sort((a, b) => M.score[b] - M.score[a]); c.font = "800 12px Figtree, sans-serif";
+  order.forEach((i, k) => { const x = 300 + (k % 4) * 162, y = 30 + Math.floor(k / 4) * 26; c.fillStyle = COLS[i]; c.beginPath(); c.arc(x, y - 4, 5, 0, 7); c.fill(); c.fillStyle = i === 3 ? "#fff" : "rgba(255,255,255,.75)"; c.fillText(`${(i === 3 ? "YOU" : M.names[i]).slice(0, 12)}  ${M.score[i]}`, x + 10, y); });
+  c.textAlign = "center";
+  if (M.state === "count") { c.font = "800 120px 'Bricolage Grotesque', sans-serif"; c.lineWidth = 12; c.strokeStyle = "rgba(0,0,0,.6)"; const n = Math.ceil(-M.t), s = n > 2 ? "READY" : String(n); c.strokeText(s, W / 2, H / 2 + 50); c.fillStyle = "#fff"; c.fillText(s, W / 2, H / 2 + 50); }
+  if (M.state === "go" && !mine.braking && !mine.fell) { c.font = "800 18px Figtree, sans-serif"; c.fillStyle = "#e8bf35"; c.fillText("CLICK or SPACE to brake", W / 2, H - 14); }
+  if (M.banner) { c.globalAlpha = Math.min(1, (2.2 - M.banner.t) * 3); c.fillStyle = "rgba(0,0,0,.7)"; c.fillRect(0, H - 44, W, 44); c.font = "800 28px 'Bricolage Grotesque', sans-serif"; c.fillStyle = M.banner.col; c.fillText(M.banner.text, W / 2, H - 13); c.globalAlpha = 1; }
+}
+function frame(t) { const dt = Math.min(0.05, (t - lastT) / 1000 || 0); lastT = t; if (M) { if (M.state !== "over" && M.state !== "demo") update(dt); draw(); } requestAnimationFrame(frame); }
+
+$("stage").addEventListener("pointerdown", (e) => { if (e.target.closest(".veil")) return; e.preventDefault(); if (M) brake(me()); });
+addEventListener("keydown", (e) => { if (e.code !== "Space" && e.code !== "Enter") return; if (!$("veil").hidden) { if (e.code === "Enter") newGame(); return; } e.preventDefault(); if (!e.repeat && M) brake(me()); });
+$("play").addEventListener("click", newGame);
+newGame(); M.state = "demo"; M.edge = 46; M.C.forEach((x, i) => { x.pos = 6 + ((i * 7) % 11); }); M.cam = -6; $("veil").hidden = false;
+requestAnimationFrame(frame);
+window.__g = { get M() { return M; }, brake: () => brake(me()), tick: (dt) => { if (M.state !== "over") update(dt); draw(); } };
+})();
+</script>
+</body>
+</html>

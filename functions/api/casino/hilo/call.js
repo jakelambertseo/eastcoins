@@ -75,7 +75,14 @@ export async function onRequestPost(context) {
     return json({ ok: true, outcome: "bust", card: next, game: publicGame(done) });
   }
 
-  const multiplier = Math.round(Number(g.multiplier) * price * 100) / 100;
+  /* THE ×50 CEILING IS NOW ACTUALLY ×50 (2026-09-21). It was only the point at which the run auto-cashed, not a limit on what
+     it paid: the multiplier kept whatever the last call happened to be worth, so a run sitting at ×49 that hit a ×12 call
+     (from a 2 "lower" or a Q "higher") cashed at ×588 — 11,760 ZC on the 20 ZC maximum, more than the hourly cap can ever
+     claw back, while the page advertised a maximum of 50.
+     Clamped where the multiplier is WRITTEN, not just where it is paid, so the card that ends the run, the number on the
+     page and the payout are all the same figure. Mines has had the same ceiling in multiplierFor since it came down to ×30;
+     this is Hi-Lo catching up. Nothing about the per-call prices changes — only the very top of a very rare run. */
+  const multiplier = Math.min(MAX_MULTIPLIER, Math.round(Number(g.multiplier) * price * 100) / 100);
   const r = await db
     .prepare(`UPDATE hilo_games SET cards = ?, calls = ?, multiplier = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND status = 'LIVE' AND cards = ?`)
     .bind(JSON.stringify(newCards), JSON.stringify(newCalls), multiplier, id, g.cards)

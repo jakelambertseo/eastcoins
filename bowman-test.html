@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Bowman — Test</title>
+<link rel="stylesheet" href="/v3/assets/fonts/fonts.css">
+<style>
+:root{
+  --ink:#0c0a09;--panel:#161311;--panel-2:#1e1a17;--panel-3:#241f1b;
+  --line:rgba(255,255,255,.1);--line-2:rgba(255,255,255,.16);
+  --text:#f4ede5;--muted:#aca298;--muted-2:#7d746a;
+  --gold:#e8bf35;--gold-dim:rgba(232,191,53,.13);--green:#4ddb8b;--red:#ff6b85;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Figtree","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{background:var(--ink);color-scheme:dark}
+body{margin:0;min-height:100vh;background:var(--ink);color:var(--text);font-family:var(--body);padding:0 16px 40px}
+button{font:inherit;color:inherit}
+.topbar{max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--display);font-weight:800}.brand span{color:var(--gold)}
+.mock-tag{font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2a1300;background:var(--gold);padding:4px 9px;border-radius:99px}
+.page{max-width:1180px;margin:0 auto}
+.head{padding:18px 0 14px}
+.eyebrow{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);letter-spacing:-.02em;margin:4px 0;line-height:1}
+.sub{color:var(--muted);margin:0;max-width:70ch;line-height:1.5}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:18px;align-items:start}
+@media (max-width:920px){.layout{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:0 24px 60px rgba(0,0,0,.55);background:#0a0d18;touch-action:none;user-select:none;-webkit-user-select:none}
+.stage canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;cursor:crosshair}
+.veil{position:absolute;inset:0;display:grid;place-items:center;background:rgba(8,7,10,.78);backdrop-filter:blur(3px);text-align:center;padding:20px}
+.veil[hidden]{display:none}
+.veil h2{font-family:var(--display);font-size:clamp(1.6rem,4vw,2.4rem);margin:0 0 6px;letter-spacing:-.02em}
+.veil p{color:var(--muted);margin:0 0 16px;line-height:1.5}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line-2);background:var(--panel-3);border-radius:10px;padding:10px 18px;font-weight:800;cursor:pointer}
+.btn:hover{border-color:var(--gold)}.btn.go{background:var(--gold);color:#2a1300;border-color:var(--gold)}
+.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:10px;overflow:hidden;margin:0 0 14px}
+.seg button{border:0;background:var(--panel-2);padding:7px 14px;font-weight:700;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--gold-dim);color:var(--gold)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.card h3{font-family:var(--display);font-size:1rem;margin:0 0 10px}
+.stat{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--line);font-size:.92rem}
+.stat:first-of-type{border-top:0}.stat span{color:var(--muted)}.stat b{font-variant-numeric:tabular-nums}
+.how{margin:0;padding-left:18px;color:var(--muted);line-height:1.55;font-size:.9rem}.how b{color:var(--text)}
+.note{font-size:.8rem;color:var(--muted-2);line-height:1.5;margin:8px 0 0}
+.stats-end{display:grid;grid-template-columns:repeat(3,auto);gap:4px 18px;justify-content:center;margin:0 0 16px;font-size:.92rem;color:var(--muted)}
+.stats-end b{color:var(--text);font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="brand">East<span>Coin</span> Arcade</div><div class="mock-tag">Test page</div></div>
+<div class="page">
+  <div class="head">
+    <div class="eyebrow">Arcade · game 1</div>
+    <h1>Bowman</h1>
+    <p class="sub">Two archers, too far apart to see each other. Pull back, let go, watch it fly, then fix your aim. Head shots hurt most. No ZCoins here: wins and records only.</p>
+  </div>
+  <div class="layout">
+    <div class="stage" id="stage">
+      <canvas id="cv" width="960" height="540" aria-label="Bowman game"></canvas>
+      <div class="veil" id="veil">
+        <div>
+          <h2 id="vTitle">Bowman</h2>
+          <p id="vSub">Click and drag anywhere to pull the bow back. Let go to shoot.</p>
+          <div class="stats-end" id="vStats" hidden></div>
+          <div class="seg" id="diffSeg" role="group" aria-label="CPU difficulty">
+            <button data-diff="easy" aria-pressed="false">Easy</button><button data-diff="normal" aria-pressed="true">Normal</button><button data-diff="hard" aria-pressed="false">Hard</button>
+          </div>
+          <div class="row"><button class="btn go" id="playCpu">Play the CPU</button><button class="btn" id="play2p">2 players, one screen</button></div>
+        </div>
+      </div>
+    </div>
+    <aside>
+      <div class="card"><h3>Your records <small style="color:var(--muted-2);font-weight:600">(vs CPU)</small></h3>
+        <div class="stat"><span>Wins · easy / normal / hard</span><b id="rWins">0 / 0 / 0</b></div>
+        <div class="stat"><span>Best win streak</span><b id="rStreak">0</b></div>
+        <div class="stat"><span>Fewest arrows to win</span><b id="rFast">–</b></div>
+        <div class="stat"><span>Longest hit</span><b id="rLong">–</b></div>
+        <div class="stat"><span>Head shots</span><b id="rHead">0</b></div>
+        <p class="note">Kept in this browser only while this is a test. On the site these become the leaderboard.</p>
+      </div>
+      <div class="card"><h3>How to play</h3>
+        <ul class="how">
+          <li><b>Drag back</b> from anywhere, like a slingshot. Longer pull, more power.</li>
+          <li>The <b>wind</b> changes every turn. Check it before you pull.</li>
+          <li>Your <b>last shot</b> stays drawn as a dotted line. Adjust from it.</li>
+          <li>Head 60 · body 30 · legs 20. First to empty the other's 100 wins.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</div>
+<script>
+(() => {
+"use strict";
+const cv = document.getElementById("cv"), c = cv.getContext("2d"), W = 960, H = 540, GY = 450;   // GY: the ground line on screen
+const G = 900, VMAX = 1750, WIND_ACC = 14, DMG = { head: 60, body: 30, legs: 20 };
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const COL = ["#e8bf35", "#ff6b85"], NAME_2P = ["Player 1", "Player 2"];
+const $ = (id) => document.getElementById(id);
+const rnd = (a, b) => a + Math.random() * (b - a), gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / 0.5;
+const SKILL = { easy: { p: 0.13, a: 7, learn: 0.85 }, normal: { p: 0.075, a: 4, learn: 0.74 }, hard: { p: 0.04, a: 2.2, learn: 0.6 } };
+
+/* ---------------- records (this browser only) ---------------- */
+const KEY = "ec_bowman_test_v1";
+let REC = { wins: { easy: 0, normal: 0, hard: 0 }, streak: 0, best: 0, fast: 0, long: 0, heads: 0 };
+try { REC = { ...REC, ...(JSON.parse(localStorage.getItem(KEY)) || {}) }; } catch (e) {}
+const saveRec = () => { try { localStorage.setItem(KEY, JSON.stringify(REC)); } catch (e) {} showRec(); };
+function showRec() {
+  $("rWins").textContent = `${REC.wins.easy} / ${REC.wins.normal} / ${REC.wins.hard}`; $("rStreak").textContent = REC.best;
+  $("rFast").textContent = REC.fast || "–"; $("rLong").textContent = REC.long ? `${REC.long} m` : "–"; $("rHead").textContent = REC.heads;
+}
+showRec();
+
+/* ---------------- a little sound, made here ---------------- */
+let AC = null;
+function tone(f0, f1, dur, type = "triangle", vol = 0.12) {
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + dur);
+  } catch (e) {}
+}
+const SND = { shoot: () => tone(520, 140, 0.18, "sawtooth", 0.08), thud: () => tone(140, 50, 0.16, "sine", 0.2), hit: () => tone(240, 70, 0.22, "square", 0.12), head: () => { tone(880, 1320, 0.12, "triangle", 0.14); setTimeout(() => tone(1320, 1760, 0.2, "triangle", 0.12), 90); }, win: () => [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, f, 0.22, "triangle", 0.12), i * 110)) };
+
+/* ---------------- the match ---------------- */
+let M = null, diff = "normal", lastT = 0;
+function newMatch(mode) {
+  const gap = Math.round(rnd(1500, 2100)), worldW = gap + 700;
+  M = {
+    mode, worldW, turn: M && M.mode === mode ? 1 - M.first : 0, state: "pan", camX: 0, camY: 0, wind: 0, arrow: null, stuck: [], texts: [], parts: [], aim: null, cpu: null, t: 0,
+    P: [0, 1].map((i) => ({ i, x: i ? 350 + gap : 350, dir: i ? -1 : 1, hp: 100, shots: 0, hits: 0, heads: 0, long: 0, last: null, trail: [], hurt: 0, fall: 0, draw: 0, ang: 40, cpuShots: 0, name: mode === "cpu" ? (i ? "CPU" : "You") : NAME_2P[i] }))
+  };
+  M.first = M.turn; M.camX = camFor(M.P[M.turn]); newWind(); $("veil").hidden = true; M.state = "aim"; if (isCpuTurn()) cpuPlan();
+}
+const isCpuTurn = () => M.mode === "cpu" && M.turn === 1;
+const newWind = () => { M.wind = Math.round(rnd(-8, 8)); };
+const camFor = (p) => Math.max(0, Math.min(M.worldW - W, p.x - (p.dir > 0 ? 250 : W - 250)));
+const bowOf = (p) => ({ x: p.x + p.dir * 16, y: 62 });
+
+/* one step of flight, shared by the real arrow and the CPU's practice shots */
+function step(a, dt, wind) { a.vx += wind * WIND_ACC * dt; a.vy -= G * dt; a.x += a.vx * dt; a.y += a.vy * dt; }
+function hitPart(p, x, y) {
+  if (Math.hypot(x - p.x, y - 84) < 12) return "head";
+  if (Math.abs(x - p.x) < 9 && y > 34 && y < 73) return "body";
+  if (Math.abs(x - p.x) < 8 && y > 0 && y <= 34) return "legs";
+  return null;
+}
+function fire(p, angDeg, power) {
+  const b = bowOf(p), r = angDeg * Math.PI / 180, v = power * VMAX;
+  M.arrow = { x: b.x, y: b.y, vx: Math.cos(r) * v * p.dir, vy: Math.sin(r) * v, by: p.i, age: 0, from: b.x };
+  p.shots++; p.last = { ang: Math.round(angDeg), pow: Math.round(power * 100) }; p.trail = []; p.draw = 0; M.state = "fly"; M.aim = null; SND.shoot();
+}
+function land(how, part) {
+  const a = M.arrow, shooter = M.P[a.by], target = M.P[1 - a.by], ang = Math.atan2(a.vy, a.vx);
+  if (how === "hit") {
+    const dmg = DMG[part], dist = Math.round(Math.abs(a.x - a.from) / 10);
+    target.hp = Math.max(0, target.hp - dmg); target.hurt = 1; shooter.hits++; shooter.long = Math.max(shooter.long, dist);
+    M.stuck.push({ on: target.i, dx: a.x - target.x, y: a.y, ang });
+    M.texts.push({ x: target.x, y: 120, t: 0, text: part === "head" ? `HEAD SHOT  −${dmg}` : `−${dmg}`, big: part === "head" });
+    for (let i = 0; i < (part === "head" ? 16 : 9); i++) M.parts.push({ x: a.x, y: a.y, vx: rnd(-120, 120) + a.vx * 0.08, vy: rnd(40, 260), t: 0 });
+    if (part === "head") { shooter.heads++; SND.head(); } else SND.hit();
+    if (M.mode === "cpu" && a.by === 0) { REC.long = Math.max(REC.long, dist); if (part === "head") REC.heads++; saveRec(); }
+    if (target.hp <= 0) { target.fall = 0.001; M.state = "dying"; M.t = 0; M.arrow = null; return; }
+  } else if (how === "ground") { M.stuck.push({ on: -1, x: a.x, y: 0, ang }); if (M.stuck.length > 40) M.stuck.shift(); SND.thud(); }
+  M.arrow = null; M.state = "land"; M.t = 0;
+}
+function nextTurn() { M.turn = 1 - M.turn; newWind(); M.state = "pan"; }
+
+/* the CPU shoots like a person: it works out the right shot, then misses by an amount that shrinks every arrow */
+function cpuPlan() {
+  const me = M.P[1], foe = M.P[0], sk = SKILL[diff], b = bowOf(me);
+  const reach = (ang, pow) => { const r = ang * Math.PI / 180, a = { x: b.x, y: b.y, vx: Math.cos(r) * pow * VMAX * me.dir, vy: Math.sin(r) * pow * VMAX }; for (let i = 0; i < 3000; i++) { step(a, 1 / 120, M.wind); if (a.vy < 0 && a.y <= 55) break; } return Math.abs(a.x - b.x); };
+  const want = Math.abs(foe.x - b.x); let ang = rnd(34, 50), lo = 0.15, hi = 1;
+  if (reach(ang, 1) < want) ang = 45;
+  for (let i = 0; i < 22; i++) { const mid = (lo + hi) / 2; if (reach(ang, mid) < want) lo = mid; else hi = mid; }
+  const k = Math.pow(sk.learn, me.cpuShots++), pow = Math.max(0.15, Math.min(1, ((lo + hi) / 2) * (1 + gauss() * sk.p * k)));
+  M.cpu = { ang: ang + gauss() * sk.a * k, pow, t: 0 };
+}
+
+/* ---------------- aiming: drag back like a slingshot ---------------- */
+function ptr(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height }; }
+cv.addEventListener("pointerdown", (e) => { if (!M || M.state !== "aim" || isCpuTurn()) return; cv.setPointerCapture(e.pointerId); const p = ptr(e); M.aim = { x0: p.x, y0: p.y, x: p.x, y: p.y }; });
+cv.addEventListener("pointermove", (e) => { if (!M?.aim) return; const p = ptr(e); M.aim.x = p.x; M.aim.y = p.y; });
+function aimOf() {
+  const a = M.aim, p = M.P[M.turn], dx = (a.x0 - a.x) * p.dir, dy = a.y - a.y0, len = Math.hypot(dx, dy);
+  return { ang: Math.max(-10, Math.min(88, Math.atan2(dy, dx) * 180 / Math.PI)), pow: Math.min(1, len / 190), len };
+}
+function release() { if (!M?.aim) return; const s = aimOf(); if (s.pow < 0.08) { M.aim = null; M.P[M.turn].draw = 0; return; } fire(M.P[M.turn], s.ang, s.pow); }
+cv.addEventListener("pointerup", release); cv.addEventListener("pointercancel", () => { if (M) M.aim = null; });
+
+/* ---------------- the loop ---------------- */
+function update(dt) {
+  M.t += dt;
+  for (const p of M.P) { p.hurt = Math.max(0, p.hurt - dt * 2.5); if (p.fall) p.fall = Math.min(1, p.fall + dt * 1.8); }
+  for (const t of M.texts) t.t += dt; M.texts = M.texts.filter((t) => t.t < 1.6);
+  for (const q of M.parts) { q.t += dt; q.vy -= G * dt; q.x += q.vx * dt; q.y = Math.max(0, q.y + q.vy * dt); } M.parts = M.parts.filter((q) => q.t < 0.9);
+  const cur = M.P[M.turn];
+  if (M.state === "aim") {
+    if (M.aim) { const s = aimOf(); cur.ang = s.ang; cur.draw = s.pow; }
+    else if (isCpuTurn() && M.cpu) { const k = M.cpu; k.t += dt; cur.ang = k.ang; cur.draw = Math.min(k.pow, Math.max(0, (k.t - 0.5) / 0.9) * k.pow); if (k.t > 1.7) { M.cpu = null; fire(cur, k.ang, k.pow); } }
+  }
+  if (M.state === "fly") {
+    const a = M.arrow, shooter = M.P[a.by], n = Math.max(1, Math.ceil(dt * 480));
+    for (let i = 0; i < n && M.arrow; i++) {
+      step(a, dt / n, M.wind); a.age += dt / n;
+      for (const p of M.P) { if (p.i === a.by && a.age < 0.25) continue; const part = hitPart(p, a.x, a.y); if (part) { land("hit", part); break; } }
+      if (M.arrow && a.y <= 0) { a.y = 0; land("ground"); }
+      else if (M.arrow && (a.x < -400 || a.x > M.worldW + 400)) land("gone");
+    }
+    if (M.arrow) { if (!shooter.trail.length || Math.hypot(a.x - shooter.trail.at(-1).x, a.y - shooter.trail.at(-1).y) > 26) shooter.trail.push({ x: a.x, y: a.y }); }
+  }
+  if (M.state === "land" && M.t > 1.1) nextTurn();
+  if (M.state === "dying" && M.t > 1.6) finish();
+  // the camera: on the arrow while it flies, otherwise on whoever's turn it is
+  const tx = M.arrow ? Math.max(0, Math.min(M.worldW - W, M.arrow.x - W / 2)) : M.state === "land" || M.state === "dying" ? M.camX : camFor(cur), ty = M.arrow ? Math.max(0, M.arrow.y - 300) : 0;
+  const ease = calm ? 1 : 1 - Math.pow(0.0015, dt); M.camX += (tx - M.camX) * (M.arrow ? Math.min(1, ease * 2.5) : ease); M.camY += (ty - M.camY) * Math.min(1, ease * 2.5);
+  if (M.state === "pan" && Math.abs(tx - M.camX) < 6) { M.state = "aim"; if (isCpuTurn()) cpuPlan(); }
+}
+function finish() {
+  const win = M.P.find((p) => p.hp > 0), me = M.P[0]; M.state = "over"; SND.win();
+  if (M.mode === "cpu") {
+    if (win.i === 0) { REC.wins[diff]++; REC.streak++; REC.best = Math.max(REC.best, REC.streak); REC.fast = REC.fast ? Math.min(REC.fast, me.shots) : me.shots; } else REC.streak = 0;
+    saveRec();
+  }
+  $("vTitle").textContent = M.mode === "cpu" ? (win.i === 0 ? "You win" : "The CPU wins") : `${win.name} wins`;
+  $("vSub").textContent = M.mode === "cpu" && win.i === 0 ? `Win streak: ${REC.streak}` : "Again?";
+  const acc = (p) => (p.shots ? Math.round(p.hits / p.shots * 100) : 0);
+  $("vStats").hidden = false; $("vStats").innerHTML = M.P.map((p) => `<span style="color:${COL[p.i]};font-weight:800">${p.name}</span><span>arrows <b>${p.shots}</b> · hit <b>${acc(p)}%</b></span><span>head shots <b>${p.heads}</b> · longest <b>${p.long} m</b></span>`).join("");
+  $("playCpu").textContent = "Play the CPU"; $("veil").hidden = false;
+}
+
+/* ---------------- drawing ---------------- */
+const sx = (x) => x - M.camX, sy = (y) => GY - (y - M.camY);
+function drawWorld() {
+  const sky = c.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, "#070a1a"); sky.addColorStop(0.7, "#1a2140"); sky.addColorStop(1, "#2a2a4a"); c.fillStyle = sky; c.fillRect(0, 0, W, H);
+  c.fillStyle = "#f4ecd0"; c.beginPath(); c.arc(760 - M.camX * 0.03, 90 + M.camY * 0.1, 30, 0, 7); c.fill(); c.fillStyle = "#070a1a"; c.beginPath(); c.arc(772 - M.camX * 0.03, 82 + M.camY * 0.1, 27, 0, 7); c.fill();
+  for (let i = 0; i < 60; i++) { const x = ((i * 173.3 - M.camX * 0.05) % W + W) % W, y = (i * 97.7) % 300 + M.camY * 0.12; c.fillStyle = `rgba(255,255,255,${0.25 + (i % 5) * 0.12})`; c.fillRect(x, y, i % 7 ? 1 : 2, i % 7 ? 1 : 2); }
+  for (const [par, base, col, amp] of [[0.18, 80, "#151a33", 50], [0.4, 40, "#10162a", 34]]) {   // two rows of hills, drifting slower than the ground
+    c.fillStyle = col; c.beginPath(); c.moveTo(0, H);
+    for (let x = 0; x <= W; x += 16) { const wx = x + M.camX * par; c.lineTo(x, sy(0) - base - Math.sin(wx / 190) * amp - Math.sin(wx / 71) * amp * 0.3 + M.camY * (1 - par) * 0 ); }
+    c.lineTo(W, H); c.fill();
+  }
+  c.fillStyle = "#16301c"; c.fillRect(0, sy(0), W, H); c.fillStyle = "#24502c"; c.fillRect(0, sy(0), W, 4);
+  c.font = "700 11px Figtree, sans-serif"; c.textAlign = "center";
+  for (let x = Math.floor(M.camX / 100) * 100; x < M.camX + W + 100; x += 100) {   // distance posts every 10 m, measured from the left archer
+    const d = Math.round((x - M.P[0].x) / 10); if (x < 0 || x > M.worldW) continue;
+    c.fillStyle = "rgba(255,255,255,.22)"; c.fillRect(sx(x), sy(0) + 4, 1, d % 50 ? 6 : 12); if (d % 50 === 0) { c.fillStyle = "rgba(255,255,255,.4)"; c.fillText(`${d} m`, sx(x), sy(0) + 30); }
+  }
+}
+function arrowShape(x, y, ang, col = "#e8e0d0") {
+  c.save(); c.translate(sx(x), sy(y)); c.rotate(-ang); c.strokeStyle = col; c.lineWidth = 2; c.beginPath(); c.moveTo(-30, 0); c.lineTo(0, 0); c.stroke();
+  c.fillStyle = "#c8ccd4"; c.beginPath(); c.moveTo(3, 0); c.lineTo(-5, -3.5); c.lineTo(-5, 3.5); c.fill();
+  c.strokeStyle = "#b8403a"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(-30, 0); c.lineTo(-36, -4); c.moveTo(-30, 0); c.lineTo(-36, 4); c.moveTo(-26, 0); c.lineTo(-32, -4); c.moveTo(-26, 0); c.lineTo(-32, 4); c.stroke(); c.restore();
+}
+function drawArcher(p) {
+  const col = COL[p.i], fall = p.fall, shake = p.hurt ? Math.sin(p.hurt * 40) * 3 * p.hurt : 0;
+  c.save(); c.translate(sx(p.x) + shake, sy(0)); if (fall) { c.rotate(p.dir * -fall * Math.PI / 2); }
+  c.strokeStyle = p.hurt > 0.5 ? "#fff" : col; c.lineWidth = 4; c.lineCap = "round"; c.lineJoin = "round";
+  c.beginPath(); c.moveTo(-8, 0); c.lineTo(0, -34); c.lineTo(8, 0); c.moveTo(0, -34); c.lineTo(0, -72); c.stroke();               // legs, spine
+  c.fillStyle = p.hurt > 0.5 ? "#fff" : col; c.beginPath(); c.arc(0, -84, 11, 0, 7); c.fill();
+  if (!fall) {
+    const r = p.ang * Math.PI / 180, ux = Math.cos(r) * p.dir, uy = -Math.sin(r), hx = ux * 22, hy = -62 + uy * 22, pull = 6 + p.draw * 16;
+    c.beginPath(); c.moveTo(0, -66); c.lineTo(hx, hy); c.stroke();                                                                  // bow arm
+    c.beginPath(); c.moveTo(0, -66); c.lineTo(-ux * 4 - uy * 0, -58); c.lineTo(hx - ux * pull, hy - uy * pull); c.lineWidth = 3; c.stroke();   // drawing arm
+    c.save(); c.translate(hx, hy); c.rotate(Math.atan2(uy, ux)); c.strokeStyle = "#a8743a"; c.lineWidth = 3; c.beginPath(); c.arc(-14, 0, 26, -1.05, 1.05); c.stroke();
+    const tipX = -14 + Math.cos(1.05) * 26, tipY = Math.sin(1.05) * 26; c.strokeStyle = "rgba(255,255,255,.75)"; c.lineWidth = 1; c.beginPath(); c.moveTo(tipX, -tipY); c.lineTo(-pull, 0); c.lineTo(tipX, tipY); c.stroke();
+    if (M.state === "aim" && M.turn === p.i) { c.strokeStyle = "#e8e0d0"; c.lineWidth = 2; c.beginPath(); c.moveTo(-pull, 0); c.lineTo(-pull + 34, 0); c.stroke(); }
+    c.restore();
+  }
+  c.restore();
+  for (const s of M.stuck) if (s.on === p.i && !fall) arrowShape(p.x + s.dx + shake, s.y, s.ang);
+}
+function hud() {
+  c.textBaseline = "alphabetic";
+  M.P.forEach((p, i) => {
+    const x = i ? W - 250 : 20; c.fillStyle = "rgba(0,0,0,.45)"; c.fillRect(x, 16, 230, 40);
+    c.fillStyle = COL[i]; c.font = "800 14px Figtree, sans-serif"; c.textAlign = "left"; c.fillText(p.name + (M.turn === i && M.state !== "over" ? "  ◂ turn" : ""), x + 10, 33);
+    c.fillStyle = "rgba(255,255,255,.14)"; c.fillRect(x + 10, 40, 210, 8); c.fillStyle = p.hp > 35 ? "#4ddb8b" : "#ff6b85"; c.fillRect(x + 10, 40, 210 * p.hp / 100, 8);
+    c.fillStyle = "#fff"; c.textAlign = "right"; c.fillText(p.hp, x + 220, 33);
+  });
+  // wind, in the middle
+  c.textAlign = "center"; c.fillStyle = "rgba(0,0,0,.45)"; c.fillRect(W / 2 - 80, 16, 160, 40); c.fillStyle = "#aca298"; c.font = "800 10px Figtree, sans-serif"; c.fillText("WIND", W / 2, 30);
+  c.fillStyle = "#f4ede5"; c.font = "800 16px Figtree, sans-serif"; c.fillText(M.wind ? `${M.wind < 0 ? "◀ " : ""}${Math.abs(M.wind)}${M.wind > 0 ? " ▶" : ""}` : "calm", W / 2, 49);
+  const cur = M.P[M.turn];
+  if (M.state === "aim") {
+    c.font = "700 14px Figtree, sans-serif"; c.fillStyle = "#f4ede5";
+    if (M.aim) { const s = aimOf(); c.fillText(`${Math.round(s.ang)}°  ·  power ${Math.round(s.pow * 100)}`, W / 2, H - 22); c.strokeStyle = "rgba(255,255,255,.35)"; c.setLineDash([4, 5]); c.beginPath(); c.moveTo(M.aim.x0, M.aim.y0); c.lineTo(M.aim.x, M.aim.y); c.stroke(); c.setLineDash([]); }
+    else c.fillText(isCpuTurn() ? "The CPU is taking aim…" : cur.last ? `${cur.name}: drag back to shoot  ·  last shot ${cur.last.ang}° at ${cur.last.pow}` : `${cur.name}: drag back anywhere to shoot`, W / 2, H - 22);
+    // where the other archer is, since you can't see them
+    const foe = M.P[1 - M.turn], off = sx(foe.x); if (off < 0 || off > W) { c.fillStyle = COL[foe.i]; c.font = "800 13px Figtree, sans-serif"; c.textAlign = off < 0 ? "left" : "right"; c.fillText(off < 0 ? `◀ ${foe.name} · ${Math.round(Math.abs(foe.x - cur.x) / 10)} m` : `${foe.name} · ${Math.round(Math.abs(foe.x - cur.x) / 10)} m ▶`, off < 0 ? 16 : W - 16, H / 2); }
+  }
+  if (M.arrow) { c.textAlign = "center"; c.fillStyle = "rgba(255,255,255,.7)"; c.font = "700 13px Figtree, sans-serif"; c.fillText(`${Math.round(Math.abs(M.arrow.x - M.arrow.from) / 10)} m`, W / 2, H - 22); }
+}
+function draw() {
+  drawWorld();
+  const cur = M.P[M.turn];
+  if (M.state === "aim" && cur.trail.length) { c.fillStyle = COL[cur.i]; c.globalAlpha = 0.45; for (const t of cur.trail) c.fillRect(sx(t.x) - 1, sy(t.y) - 1, 3, 3); c.globalAlpha = 1; }
+  for (const s of M.stuck) if (s.on === -1) arrowShape(s.x, 2, s.ang, "#b8b0a0");
+  M.P.forEach(drawArcher);
+  if (M.arrow) arrowShape(M.arrow.x, M.arrow.y, Math.atan2(M.arrow.vy, M.arrow.vx));
+  c.fillStyle = "#c8262e"; for (const q of M.parts) { c.globalAlpha = 1 - q.t / 0.9; c.fillRect(sx(q.x), sy(q.y), 3, 3); } c.globalAlpha = 1;
+  c.textAlign = "center"; for (const t of M.texts) { c.globalAlpha = Math.min(1, (1.6 - t.t) * 2); c.font = `800 ${t.big ? 26 : 20}px "Bricolage Grotesque", sans-serif`; c.fillStyle = t.big ? "#e8bf35" : "#fff"; c.fillText(t.text, sx(t.x), sy(t.y + t.t * 50)); } c.globalAlpha = 1;
+  hud();
+}
+function frame(t) { const dt = Math.min(0.05, (t - lastT) / 1000 || 0); lastT = t; if (M) { if (M.state !== "over") update(dt); draw(); } requestAnimationFrame(frame); }
+
+/* ---------------- start ---------------- */
+document.querySelectorAll("#diffSeg button").forEach((b) => b.addEventListener("click", () => { diff = b.dataset.diff; document.querySelectorAll("#diffSeg button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }));
+$("playCpu").addEventListener("click", () => newMatch("cpu")); $("play2p").addEventListener("click", () => newMatch("2p"));
+// something to look at behind the menu
+M = { mode: "demo", worldW: 2600, turn: 0, state: "over", camX: 0, camY: 0, wind: 3, arrow: null, stuck: [], texts: [], parts: [], aim: null, P: [0, 1].map((i) => ({ i, x: i ? 2250 : 350, dir: i ? -1 : 1, hp: 100, trail: [], hurt: 0, fall: 0, draw: 0.3, ang: 38, name: i ? "CPU" : "You" })) };
+requestAnimationFrame(frame);
+window.__bow = { get M() { return M; }, fire: (a, p) => fire(M.P[M.turn], a, p), tick: (dt) => { if (M.state !== "over") update(dt); draw(); } };   // a handle for testing
+})();
+</script>
+</body>
+</html>
