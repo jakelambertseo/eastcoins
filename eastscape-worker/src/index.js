@@ -33,6 +33,7 @@ import { installPit } from "./pit.js";
 import { installOrder } from "./order.js";
 import { installMeter } from "./meter.js";
 import { installTinker } from "./tinker.js";
+import { installCards } from "./cards.js";   /* (2026-09-29) Marked Cards */
 import { installGems } from "./gems.js";   /* (2026-09-28) gems, sockets, the Gem Case and the Gem Sorter */   /* (2026-09-28) Tinkering: the sink */   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
 const CR = createCryptRules(G, G._MAP); Object.assign(G.SCENES, CR.scenes); Object.assign(G.MOBS, CR.mobs);
@@ -379,7 +380,7 @@ export class World {
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
-    pets: C.pets, parts: C.parts || null, tk: C.tk || null, tkBomb: C.tkBomb || 0, gemcase: G.caseOf(C), pins: C.pins || [],   /* (2026-09-28) Tinkering's pouch, the gadgets running, an armed bomb */ buyback: (C.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms),   /* (2026-09-28) Bom's buy-back */ isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
+    pets: C.pets, parts: C.parts || null, tk: C.tk || null, tkBomb: C.tkBomb || 0, gemcase: G.caseOf(C), pins: C.pins || [], hand: G.handView(C),   /* (2026-09-29) the Marked Card hand in play, never its deck */   /* (2026-09-28) Tinkering's pouch, the gadgets running, an armed bomb */ buyback: (C.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms),   /* (2026-09-28) Bom's buy-back */ isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
 
   /* ------------------------------------------------------------ reforging (2026-09-22)
      Spend bars to push a piece you own further. The odds and what a level is worth live in G.FORGE; this only
@@ -800,6 +801,7 @@ export class World {
         /* (2026-09-28) /project: where every World Project stands. An admin can set one: /project dock 1, and "fill" fills that tier's
            parts so the Finish button lights (it is the admin projtier command, so it answers to the same permission). */
         /* (2026-09-28) /gemkit and /sorter: the gem system, set up for testing on the dev server (see gemKit in gems.js) */
+        { const ck = text.match(/^[\/!]cards\b\s*(red|blue|black)?/i); if (ck) { if (!this.canRun(pl, "projtier")) return this.say(pl, "That one is admins only.", "bad"); return this.cardKit(pl, String(ck[1] || "red").toLowerCase()); } }   /* (2026-09-29) /cards: Marked Cards to test with, dev server only */
         if (/^[\/!]gemkit\b/i.test(text)) { if (!this.canRun(pl, "projtier")) return this.say(pl, "That one is admins only.", "bad"); return this.gemKit(pl); }
         if (/^[\/!]sorter\b/i.test(text)) { if (!this.canRun(pl, "projtier") || this.env?.DEV !== "1") return this.say(pl, "There's no Gem Sorter standing anywhere yet.", "bad"); return this.gemOp(S, pl, { op: "view", open: "sorter" }); }
         /* (2026-09-28) /parts 500: an admin's pouch topped up with that many of every part, for testing Tinkering */
@@ -823,6 +825,7 @@ export class World {
       case "pen": return this.penOp(S, pl, m);
       case "hatch": return this.hatchOp(S, pl, m);   /* (2026-09-27) Breeding: eggs */
       case "tinker": return this.tinkerOp(S, pl, m);
+      case "cards": return this.cardOp(S, pl, m);   /* (2026-09-29) Marked Cards */
       case "gems": return this.gemOp(S, pl, m);   /* (2026-09-28) the Gem Sorter and the Gem Case */   /* (2026-09-28) Tinkering: salvage at the Scrap Bench */
       case "meter": return this.meterOp(S, pl, m);   /* (2026-09-28) the party meter: reset, or ask for it now */
       case "order": return this.orderOp(S, pl, m);   /* (2026-09-28) Bronny's order, the server's daily */
@@ -1917,6 +1920,7 @@ export class World {
       C.store.name[slot] = id; this.touch(pl); return;
     }
     if (op !== "buy" || !it) return;
+    if (it.card) return this.say(pl, "That one only comes out of a Marked Card hand.", "bad");   /* (2026-09-29) */
     if (it.corn) return this.say(pl, `Hexa sells that, at the Night Market, for candy corn.`, "bad");   /* (2026-09-27) a Long Night cosmetic has no ticket price */
     const have = G.tixIn(C);
     if (it.kind === "double" && this.dbl && Date.now() < this.dbl.until) { const left = Math.ceil((this.dbl.until - Date.now()) / 60000); return this.say(pl, `A 2X event is already running - ${left} minute${left === 1 ? "" : "s"} left. It's yours to buy when it ends.`, "bad"); }
@@ -2134,6 +2138,8 @@ export class World {
   useSpecial(pl, i, st, it) {
     const C = pl.C, now = Date.now(), take = () => { st.n--; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1); this.touch(pl); };
     if (it.use === "gadget") return this.tinkerUse(pl, st, it, take);   /* (2026-09-28) Tinkering */
+    if (it.use === "cards") return this.cardUse(pl, st, it, take);   /* (2026-09-29) Marked Cards: flip one */
+    if (it.use === "cardlook") return this.cardLook(pl, st, it, take);   /* (2026-09-29) a Marked Card name look */
     if (it.drink) {
       const k = st.k; take(); C.drink = { k, left: it.drink.mins * 60000 };
       return this.say(pl, `You drink the ${it.name.toLowerCase()}. For ${it.drink.mins} minutes outside: ${G.fxText(it.drink.fx)}.`, "good");
@@ -2716,6 +2722,7 @@ export class World {
   gained(S, pl, k, n = 1, how = "gather", skill = null) {   /* (2026-09-27) `skill`: which gathering skill this came off (mining / woodcutting / fishing), for the Coffin Ring and the Long Night's skilling drops */
     S.events.push({ type: "gain", who: pl.id, k, n, t: Date.now() });
     this.emit(pl, how, { k, n });
+    if (how === "gather") this.cardOnGain(pl, S, k, skill);   /* (2026-09-29) Marked Cards: a card in the catch, or a gather tip done */
     if (how === "gather" && skill) {
       const fxG = G.fxOf(pl.C);
       if (fxG.double > 0 && Math.random() < fxG.double && this.give(pl, k, n)) { S.events.push({ type: "gain", who: pl.id, k, n, t: Date.now() }); this.emit(pl, how, { k, n }); this.say(pl, "…and again. The Coffin Ring is warm.", "loot"); }
@@ -3329,6 +3336,7 @@ export class World {
   killMob(S, pl, m, now) {
     this.meterAdd(pl, "kills", 1, m);   /* (2026-09-28) the party meter: and the toughest thing killed names the fight */
     this.gemOnKill(pl, m);   /* (2026-09-28) combat gems, and a boss's Voidheart bit */
+    this.cardOnKill(pl, m);   /* (2026-09-29) Marked Cards: a card drops, or a kill tip is done */
     if (G.MOBS[m.t]?.open) this.bossEnd(S, m, "clear", pl);   /* (2026-09-28) a world boss falls: everybody who fought gets the report */
     /* (2026-09-23) THE SOUND IS TOLD WHAT DIED. It used to be the page matching /^You defeat / on the chat line,
        which said nothing about the creature, so a Sulking Toadstool and The House went out with the same scream.
@@ -4994,3 +5002,4 @@ installOrder(World, { G });
 installMeter(World, { G });
 installTinker(World, { G });
 installGems(World, { G });
+installCards(World, { G });

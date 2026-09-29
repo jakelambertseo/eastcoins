@@ -7178,7 +7178,10 @@ export function normChar(c) {
   /* (2026-09-28) Tinkering's parts: a pouch of four counts, never items (they take no bag space, and Bom cannot buy them) */
   { const pp = out.parts && typeof out.parts === "object" ? out.parts : {}; out.parts = Object.fromEntries(Object.keys(TINK.parts).map((k) => [k, Math.max(0, Math.floor(Number(pp[k]) || 0))])); }
   if (out.gemcase) out.gemcase = caseOf(out);   /* (2026-09-28) the Gem Case, cleaned */
-  out.pins = Array.isArray(out.pins) ? [...new Set(out.pins.filter((id) => PROJECTS[id]))] : [];   /* (2026-09-28) the Builder's Pins collected */
+  out.pins = Array.isArray(out.pins) ? [...new Set(out.pins.filter((id) => PROJECTS[id]))] : [];
+  /* (2026-09-29) a Marked Card hand in play: only a whole one survives a load (a known back, real cards, a known state) */
+  { const h = out.hand, okC = (c) => c && Number.isInteger(c.r) && c.r >= 1 && c.r <= 13 && Number.isInteger(c.s) && c.s >= 0 && c.s <= 3;
+    out.hand = h && typeof h === "object" && CARDS.tiers[h.tier] && Array.isArray(h.deck) && h.deck.every(okC) && Array.isArray(h.cards) && h.cards.length && h.cards.every(okC) && ["tip", "decide", "bust"].includes(h.state) ? h : null; }   /* (2026-09-28) the Builder's Pins collected */
   out.tk = Object.fromEntries(Object.entries(out.tk && typeof out.tk === "object" ? out.tk : {}).filter(([id, t]) => GADGETS[id] && t && (t.left | 0) > 0).map(([id, t]) => [id, { left: t.left | 0 }]));
   out.tkBomb = Math.max(0, out.tkBomb | 0);
   out.look = normLook(c.look);   /* (v80) who they chose to be, or null: not asked yet */
@@ -8552,6 +8555,7 @@ export function collectionBook() {
     { id: "pets", name: "Pets & eggs", icon: "\u{1F43E}", sections: pets },
     { id: "finds", name: "Casino finds", icon: "\u{1F3B0}", sections: finds },
     { id: "chase", name: "Chase", icon: "\u{1F3C6}", sections: chase },
+    { id: "cards", name: "Marked Cards", icon: "\u{1F0CF}", sections: CARDS.order.map((t) => ({ name: `${CARDS.tiers[t].name} cards`, keys: CARDS.tiers[t].uniques.filter((k) => !colShut(k)) })).filter((s) => s.keys.length) },   /* (2026-09-29) */
     { id: "events", name: "Events", icon: "\u{1F383}", sections: events, event: true }
   ].filter((t) => t.sections.length);
   const keys = new Set(tabs.flatMap((t) => t.sections.flatMap((s) => s.keys)));
@@ -8826,3 +8830,86 @@ for (const id of ["punch", "masterpunch", "caseslot", "caseslot2", "caseslot3"])
 /* (2026-09-28, the owner: "replace jewelcrafting") JEWELCRAFTING IS RETIRED: the Sorter is what gems are for now. Held everywhere, dev
    server included; its items and recipes stay in the file so a save that holds them still loads. */
 HOLD.jewel = true;
+
+/* ============================================================ MARKED CARDS (2026-09-29, the owner: "can you test build clue scrolls, but call them
+   something else and differentiate them from osrs"). A treasure trail played as a hand of BLACKJACK, which is the difference:
+     - A MARKED CARD drops face down (a Red, Blue or Black back by the level of what dropped it). Flip it and you are dealt one card and
+       handed a TIP: an errand somewhere in the world (kill a thing, flip the card beside somebody or something, bring up a catch).
+     - Finish the tip and you are dealt the next card, and paid a little TIP MONEY, so legwork is never wasted.
+     - With two cards or more it is YOUR CALL: HIT (take another tip, and the card it deals) or STAND (cash the hand where you are).
+       Over 21 is a bust and the hand pays nothing more. The prize is set by what you stood on: 17 to 20 climb, 21 pays well, a natural
+       (21 on two cards) better, and five cards without busting, a FIVE-CARD CHARLIE, best of all.
+     - The deck is dealt when the card is flipped and kept on the server, so a relog, a tab or a second device cannot redraw it.
+   The UNIQUES are the trail's own: three tools that only work in a hand (peek at the next card, burn it, turn a bust into an ace) and
+   three name looks that are sold nowhere. The server's half is eastscape-worker/src/cards.js; the window is eastscape-cards.js. */
+HOLD.cards = !globalThis.__ES_OPEN_ALL;
+export const CARDS = {
+  order: ["red", "blue", "black"],
+  tiers: {
+    red: { name: "Red", stakes: "Low Stakes", lo: 1, hi: 39, leg: 60, base: 150, drop: 1 / 150, uniq: 1 / 30, uniques: ["peekglass", "feltswatch"],
+      supplies: [["csardine", [4, 8]], ["ctrout", [3, 6]], ["bronze_arrow", [40, 80]], ["emerald_arrow", [25, 50]], ["bronze_bar", [3, 6]], ["pot_swift", [1, 2]], ["page_arcane", [20, 40]]] },
+    blue: { name: "Blue", stakes: "High Stakes", lo: 40, hi: 74, leg: 400, base: 1000, drop: 1 / 180, uniq: 1 / 40, uniques: ["dealershoe", "markeddeck"],
+      supplies: [["ccloudray", [4, 8]], ["cmackerel", [4, 8]], ["dragonstone_arrow", [40, 80]], ["onyx_arrow", [25, 50]], ["dragonstone_bar", [3, 6]], ["pot_salve2", [1, 2]], ["pot_prospect", [1, 2]]] },
+    black: { name: "Black", stakes: "VIP", lo: 75, hi: 999, leg: 800, base: 2000, drop: 1 / 200, uniq: 1 / 50, uniques: ["acesleeve", "sharkpin"],
+      supplies: [["cswordfish", [4, 8]], ["sgrimscale", [3, 6]], ["eclipse_arrow", [40, 80]], ["nova_arrow", [25, 50]], ["nova_bar", [2, 4]], ["pot_salve3", [1, 2]], ["pot_star", [1, 2]]] },
+  },
+  bossDrop: 1 / 12,      // a boss of the tier's band
+  gatherDrop: 1 / 900,   // any gathering action; the back is the node's level
+  reach: 2,              // how close a flip has to be
+  charlie: 5,            // cards for a Five-card Charlie
+  deck: 9,               // cards dealt face down when the hand opens (five to play, plus burns)
+  /* the hand's prize, in multiples of the tier's base */
+  pay: { bust: 0, low: 1, 17: 1.5, 18: 2, 19: 3, 20: 4, 21: 6, natural: 8, charlie: 10, charlie21: 15 },
+  /* how much a result multiplies the chance at a unique */
+  uniqMul: { bust: 0, low: 0.5, 17: 1, 18: 1, 19: 1, 20: 1.5, 21: 2, natural: 3, charlie: 4, charlie21: 5 },
+};
+export const CARD_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+export const CARD_SUITS = ["♠", "♥", "♦", "♣"];
+export const cardTierAt = (lvl) => (lvl >= CARDS.tiers.black.lo ? "black" : lvl >= CARDS.tiers.blue.lo ? "blue" : "red");
+/** a hand's total: aces are 11 while that doesn't bust, else 1 */
+export function handTotal(cards) {
+  let t = 0, aces = 0; for (const c of cards || []) { t += Math.min(10, c.r); if (c.r === 1) aces++; }
+  const soft = aces > 0 && t + 10 <= 21; return { t: soft ? t + 10 : t, soft };
+}
+/** what a hand is worth if it stops here */
+export function handResult(cards) {
+  const { t } = handTotal(cards), n = (cards || []).length;
+  if (t > 21) return "bust";
+  if (n >= CARDS.charlie) return t === 21 ? "charlie21" : "charlie";
+  if (t === 21) return n === 2 ? "natural" : "21";
+  return t >= 17 ? String(t) : "low";
+}
+export const RESULT_NAME = { bust: "Bust", low: "Under 17", 17: "Seventeen", 18: "Eighteen", 19: "Nineteen", 20: "Twenty", 21: "Twenty-one", natural: "Blackjack!", charlie: "Five-card Charlie", charlie21: "Five-card Twenty-one" };
+export const handPay = (tier, res) => Math.round(CARDS.tiers[tier].base * (CARDS.pay[res] ?? 0));
+export const cardName = (c) => `${CARD_RANKS[c.r - 1]}${CARD_SUITS[c.s]}`;
+/** the half of a hand the page may see: never the deck */
+export const handView = (c) => { const h = c?.hand; if (!h) return null; const { t, soft } = handTotal(h.cards);
+  return { tier: h.tier, cards: h.cards, total: t, soft, state: h.state, tip: h.tip ? { kind: h.tip.kind, text: h.tip.text, hint: h.tip.hint, where: h.tip.where } : null,
+    tips: h.tips | 0, won: h.won | 0, used: h.used || {}, peek: h.peek || null, result: handResult(h.cards) }; };
+/* the cards and their uniques */
+for (const k of CARDS.order) { const T = CARDS.tiers[k];
+  ITEMS[`card_${k}`] = { name: `${T.name} Marked Card`, icon: "\u{1F0CF}", use: "cards", cardTier: k, held: HOLD.cards,
+    ex: `${T.stakes}. Flip it to be dealt a hand of blackjack: every card after the first is behind a tip, somewhere in the world. Stand close to 21 and the house pays; go over and it doesn't.` };
+  VALUE[`card_${k}`] = { red: 40, blue: 250, black: 800 }[k]; }
+Object.assign(ITEMS, {
+  peekglass: { name: "Peeking Glass", icon: "\u{1F50D}", cardTool: "peek", held: HOLD.cards, ex: "A card-sharp's lens. Once a hand, before you hit or stand, it shows you the next card. Keep it in your bag." },
+  dealershoe: { name: "The Shoe", icon: "\u{1F5C3}️", cardTool: "burn", held: HOLD.cards, ex: "A dealer's shoe with a loose bottom. Once a hand, before you hit, the next card slides out and into the bin unseen. Keep it in your bag." },
+  acesleeve: { name: "Ace Up the Sleeve", icon: "♠️", cardTool: "ace", held: HOLD.cards, ex: "Once a hand, when a card busts you, it was an ace all along. Keep it in your bag." },
+  feltswatch: { name: "Swatch of Table Felt", icon: "\u{1F7E9}", use: "cardlook", unlock: "col_felt", held: HOLD.cards, ex: "Cut from a blackjack table. Use it: your name, in felt green, for good. Sold nowhere." },
+  markeddeck: { name: "Marked Deck", icon: "\u{1F3B4}", use: "cardlook", unlock: "frame_marked", held: HOLD.cards, ex: "Every back nicked with a pin. Use it: a card-back red frame around your name, for good. Sold nowhere." },
+  sharkpin: { name: "Card Shark Pin", icon: "\u{1F988}", use: "cardlook", unlock: "col_shark", held: HOLD.cards, ex: "Worn by people the casino has asked to leave. Use it: your name in card-shark teal, for good. Sold nowhere." },
+});
+Object.assign(VALUE, { peekglass: 5000, feltswatch: 5000, dealershoe: 20000, markeddeck: 20000, acesleeve: 60000, sharkpin: 60000 });
+/* the looks: store rows on a tab of their own, never bought (storeOp refuses a `card` row), shown in the Name tab once owned */
+NAME_COLS.felt = "#4cbc72"; NAME_COLS.shark = "#6fd6c6"; NAME_FRAMES.marked = "#d8433a";
+st("col_felt", { tab: "cards", kind: "col", slot: "col", val: "felt", col: NAME_COLS.felt, name: "Felt name", price: 0, card: true, ex: "Blackjack-table green. Only from a Swatch of Table Felt, out of a Red Marked Card hand." });
+st("frame_marked", { tab: "cards", kind: "frame", slot: "frame", val: "marked", col: NAME_FRAMES.marked, name: "Marked frame", price: 0, card: true, ex: "Card-back red. Only from a Marked Deck, out of a Blue Marked Card hand." });
+st("col_shark", { tab: "cards", kind: "col", slot: "col", val: "shark", col: NAME_COLS.shark, name: "Card Shark name", price: 0, card: true, ex: "Card-shark teal. Only from a Card Shark Pin, out of a Black Marked Card hand." });
+/* THE TIPS: the wording. {x} is the target, {w} where it is. A tip is picked on the server from what is actually in the world (cards.js),
+   so nothing here names a monster or a place. Bookie's patter rather than riddles: the gamble is the puzzle, not the wording. */
+export const TIP_TEXT = {
+  kill: ["Word is a {x} in {w} is holding your next card. Take it off them.", "A {x} in {w} owes the house. Collect.", "Your card went home with a {x}. {w}, last anyone saw."],
+  npc: ["{x} is in on it. Find them and turn this card over where they can see.", "Ask {x} to cut the deck. {w}.", "{x} has been told to expect you."],
+  spot: ["Your next card is tucked under {x}, in {w}.", "Somebody left a card by {x}. {w}.", "Turn this card over at {x}, in {w}, and see what's under it."],
+  gather: ["The tipster wants a {x}, fresh. Bring one up yourself.", "Get a {x} with your own hands and the next card is yours.", "No card until you've got a {x} of your own."],
+};

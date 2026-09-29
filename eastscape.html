@@ -2148,7 +2148,7 @@ function onMsg(m) {
     you = m.you; me = m.me; everConnected = true; veil(null); $("gate").hidden = true;
     $("topName").textContent = you.name;
     document.querySelector('[data-tab="admin"]').hidden = !isStaff();   /* (v130) a mod gets the panel too; renderAdmin prunes it to their tools */
-    net("ok", "Connected"); renderTour(); renderPanel(); return;
+    net("ok", "Connected"); renderTour(); renderPanel(); if (me.hand || CARDUI) cardsUi().then((u) => u.sync()).catch(() => {});   /* (2026-09-29) a Marked Card hand carried over a reload */ return;
   }
   if (m.type === "snap") {
     const est = m.t - Date.now(); offset = offset == null ? est : Math.max(offset - 5, Math.min(offset + 5, offset * 0.8 + est * 0.2));
@@ -2228,7 +2228,7 @@ function onMsg(m) {
   }
   if (m.type === "me") { const prevCharm = me?.charm; me = m.me;
     if (me.charm && (me.charm.left | 0) > 0 && (!prevCharm || prevCharm.k !== me.charm.k || me.charm.left > (prevCharm.left | 0) + 5000)) { spellFx(`p:${you?.id}`, "shield"); SFX.play("spell_buff"); }   /* (2026-09-26) a page buff read */
-    DECO?.refresh(); ORDUI?.bag(); TINKUI?.bag(); GEMUI?.bag(); renderQuick(); if (!me.look && !lookOffered) { lookOffered = true; setTimeout(() => { if (!me.look) welcomeOnce(true); }, 1500); } renderTour(); renderPanel(); if (!$("questWin").hidden) renderQuests(); if (!$("hwWin").hidden) renderMarket(); if (!$("mapWin").hidden) renderMap(); if (!$("storeWin").hidden) renderStore(); CZ.me(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); craftRefresh(); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("vanWin").hidden) renderVan(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
+    DECO?.refresh(); ORDUI?.bag(); TINKUI?.bag(); GEMUI?.bag(); if (me.hand && !CARDUI) cardsUi().then((u) => u.sync()).catch(() => {}); else CARDUI?.sync(); renderQuick(); if (!me.look && !lookOffered) { lookOffered = true; setTimeout(() => { if (!me.look) welcomeOnce(true); }, 1500); } renderTour(); renderPanel(); if (!$("questWin").hidden) renderQuests(); if (!$("hwWin").hidden) renderMarket(); if (!$("mapWin").hidden) renderMap(); if (!$("storeWin").hidden) renderStore(); CZ.me(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); craftRefresh(); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("vanWin").hidden) renderVan(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
   if (m.type === "map") { WORLD.counts = m.counts || {}; if (!$("mapWin").hidden) renderMap(); return; }   /* (2026-09-27) who is where, for the world map */
   if (m.type === "exch") { EX = m; if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input:not(#mkQ)"))) renderEx(); return; }
   if (m.type === "trade") { if (m.closed) { TR = null; $("tradeWin").hidden = true; } else { TR = m; openWin("tradeWin"); } return; }
@@ -2333,6 +2333,7 @@ function onEvent(e) {
   if (e.type === "cannon") { SFX.play("win_big", { vol: 0.8 }); cannonFx(e); return; }   /* (2026-09-28) the King's Cannon */
   if (e.type === "confetti") { confettiFx(e.id === you?.id); return; }   /* (2026-09-28) somebody fired a Confetti Cannon */
   if (e.type === "tinkererr") { TINKUI?.oops(e.text); return; }
+  if (e.type === "cards") { cardsUi().then((u) => u.got(e)).catch(() => {}); return; }   /* (2026-09-29) Marked Cards */
   if (e.type === "gems") { gemsUi().then((u) => u.got(e)).catch(() => {}); return; }   /* (2026-09-28) the Gem Sorter and the Gem Case */
   if (e.type === "gemserr") { GEMUI?.oops(e.text); return; }
   if (e.type === "ordergave") { SFX.play("coins"); ORDUI?.gave(e.n); return; }
@@ -5945,7 +5946,7 @@ function renderStore() {
   if ($("storeWin").hidden || !me) return;
   const tix = G.tixIn(me), st = me.store || { own: [], name: {} }, own = new Set(st.own || []), worn = st.name || {}, nfx = G.nameFxOf(me);
   $("storeSub").textContent = `${G.fmtTix(tix)}`;
-  const rows = Object.values(G.STORE).filter((it) => it.tab === storeTab || (storeTab === "name" && it.tab === "night" && own.has(it.id)));   /* (2026-09-27) a Long Night cosmetic you own lives here after the tent has gone */
+  const rows = Object.values(G.STORE).filter((it) => it.tab === storeTab || (storeTab === "name" && (it.tab === "night" || it.tab === "cards") && own.has(it.id)));   /* (2026-09-29) and a Marked Card look */   /* (2026-09-27) a Long Night cosmetic you own lives here after the tent has gone */
   const pv = `<div class="st-preview"><span class="st-pvname${nfx?.fx ? ` nfx-${nfx.fx}` : ""}${nfx?.frame ? " nfx-framed" : ""}" style="${nfx?.col ? `color:${G.NAME_COLS[nfx.col]};` : ""}${nfx?.frame ? `outline-color:${G.NAME_FRAMES[nfx.frame]};` : ""}">${nfx?.icon ? `<img class="nfx-badge" src="${ART}nb_${nfx.icon}.png?v=${ART_V}" alt="">` : ""}${esc(you?.name || "You")}</span><small>How your name looks to everyone</small></div>`;
   const card = (it) => {
     const owned = own.has(it.id), isWorn = it.slot && worn[it.slot] === it.id, afford = tix >= it.price;
@@ -5986,6 +5987,10 @@ function meterUi() { return METER ? Promise.resolve(METER) : import(METER_URL).t
 let TINKUI = null; const TINKUI_URL = "/v3/assets/js/eastscape-tinker.js?v=7";
 /* (2026-09-28) the Gem Sorter and the Gem Case: loaded the first time either opens */
 let GEMUI = null; const GEMUI_URL = "/v3/assets/js/eastscape-gems.js?v=3";
+/* (2026-09-29) Marked Cards: the card table, loaded the first time a hand is in play or a card is flipped */
+let CARDUI = null; const CARDUI_URL = "/v3/assets/js/eastscape-cards.js?v=2";
+let CARDP = null;   /* one load, however many callers ask at once: two racing imports made two tables and two trackers */
+function cardsUi() { return CARDUI ? Promise.resolve(CARDUI) : CARDP ||= import(CARDUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (CARDUI = m.createCards({ G, $, esc, send, SFX, ico, openWin, get me() { return me; } })); }); }
 function gemsUi() { return GEMUI ? Promise.resolve(GEMUI) : import(GEMUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (GEMUI = m.createGems({ G, $, esc, send, SFX, ico, openWin, winFx, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
 function tinkUi() { return TINKUI ? Promise.resolve(TINKUI) : import(TINKUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (TINKUI = m.createTinker({ G, $, esc, send, SFX, ico, openWin, winFx, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
 let ORDUI = null; const ORDUI_URL = "/v3/assets/js/eastscape-order.js?v=6";
