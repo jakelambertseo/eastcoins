@@ -2448,7 +2448,7 @@ Object.assign(SCENES, {
       /* A BANK CHEST in the Yard (the owner, 2026-09-19): a `booth` in a chest's clothes, so it IS the bank, the same
          window and the same rules as Aurelia's counters in town (tickets still can't go in). Saves the walk. */
       objs.push({ t: "booth", art: "o_chest", x: 35, y: 16, name: "Bank chest" }); g[16][35] = "#";
-      objs.push({ t: "sign", x: 27, y: 15, name: "GEAR AND PRIZES are at the Prize Counter: Bom Trady, in the middle of the casino. Bring your tickets." }); g[15][27] = "#";
+      objs.push({ t: "sign", x: 28, y: 12, name: "GEAR AND PRIZES are at the Prize Counter: Bom Trady, in the middle of the casino. Bring your tickets." }); g[12][28] = "#";   /* (2026-09-29) at the bridge's east end: 27,15 is the river now */
       objs.push({ t: "sign", x: 41, y: 11, name: "THE YARD. Click a monster to fight it. Chickens by the gate; it gets meaner the further from the gate you walk. Nothing here attacks first. The pond is for anyone who'd rather fish." }); g[11][41] = "#";
       /* (v88) A JUKEBOX IN THE MARKET, the same station as the casino's: see RADIO.heard. (2026-09-22: moved from
          38,9 in the north court to the south one, because the Tower went up beside it and a five-tile building
@@ -2529,7 +2529,7 @@ Object.assign(SCENES, {
       /* (2026-09-29, the owner: "i like the fence moving to the treeline too") THE SOUTH COURT RUNS DOWN TO THE TREES: its rail was at
          y19 with a strip of grass and trees between it and the treeline; the court now takes that strip (to y22) and the rail stands at
          y23, against the trees, the way the town's did. */
-      court(28, 14, 42, 22, [0, 0, 1, 1, 2, 2, 2, 2, 2]);       // south court: the Exchange, the bank chest, Charon's cart, the fire
+      court(30, 14, 42, 22, [0, 0, 0, 1, 1, 1, 1, 1, 1]);       // (2026-09-29) from x30: the river and its bank are x26-28. South court: the Exchange, the bank chest, Charon's cart, the fire
       /* (2026-09-22) THE NORTH COURT GREW TWO ROWS NORTH, to y6, because the Tower went up in it and the smithy had
          to go somewhere: five rows were already holding the Crypt stairs and a five-tile building. The taper is kept
          so the left edge still reads as a shape rather than a box.
@@ -2537,7 +2537,7 @@ Object.assign(SCENES, {
          THE FORGE GOES AT THE WEST END, and that is not decoration. The Tower's sprite is about four tiles tall and
          anchored at y9, so it covers y5..y9 on the EAST side of this court — a furnace at 41,6 would be drawn behind
          a building. The new space is only usable on the left. */
-      court(33, 6, 42, 12, [2, 1, 1, 0, 0, 1, 2]);                // north court: the Crypt stairs, the Tower, and the smithy
+      court(30, 6, 42, 12, [1, 0, 0, 0, 0, 0, 0]);                // (2026-09-29) grown west to the river's bank, from x33. North court: the Crypt stairs, the Tower, and the smithy
       /* Each gap in a rail is somebody's way in: 31 and 38 on the south line up with Livia's stall and Charon's
          cart, 36 on the north lines up with the stairs down. */
       /* CLOSED ON THREE SIDES, OPEN ON THE ROAD (the owner: "they should be closed on three sides, so one is open
@@ -2568,18 +2568,18 @@ Object.assign(SCENES, {
          posts, corner posts) because a tall thing at a corner reads as a boundary; the low clutter fills the dead
          ground behind the stalls where nobody stands. */
       const dress = (t, x, y, name) => { objs.push({ t, x, y, name }); g[y][x] = g[y][x] === "p" ? "P" : "#"; keep.push([x, y]); };
-      dress("fencepost", 27, 23, "Corner post"); dress("fencepost", 32, 7, "Corner post");
-      dress("lamppost", 28, 15, "A lamp post. It comes on when the light goes."); dress("lamppost", 42, 18, "A lamp post. It comes on when the light goes.");
+      dress("fencepost", 29, 23, "Corner post"); dress("fencepost", 29, 5, "Corner post");
+      dress("lamppost", 42, 18, "A lamp post. It comes on when the light goes.");
       dress("lamppost", 33, 8, "A lamp post. It comes on when the light goes."); dress("lamppost", 42, 12, "A lamp post. It comes on when the light goes.");
-      dress("crates", 28, 17, "Crates. Livia's, probably."); dress("crate", 29, 18, "A crate. Nailed shut.");
+      dress("crates", 30, 19, "Crates. Livia's, probably."); dress("crate", 31, 21, "A crate. Nailed shut.");
       dress("barrel", 33, 15, "A barrel. Something sloshes."); dress("sacks", 34, 18, "Sacks of grain.");
       dress("crates", 41, 17, "Crates, stacked by the cart."); dress("barrel", 42, 15, "A barrel, going soft in the rain.");
       dress("handcart", 34, 8, "A handcart, parked."); dress("crate", 41, 8, "A crate. Somebody sat on it.");
       dress("barrel", 33, 12, "A barrel by the stairs."); dress("sacks", 40, 12, "Sacks, dumped and forgotten.");
-      railing(upTo(27, 42).map((x) => [x, 23]), "h");   /* (2026-09-29) at the treeline: y19 until today */
-      railing(upTo(34, 42).filter((x) => x !== 40 && x !== 41).map((x) => [x, 5]), "h");        // the north court's top rail, moved up from y7 with the court; (2026-09-25) open at 40-41, the Tower's gate
-      railing(upTo(14, 22).map((y) => [27, y]), "v");
-      railing(upTo(6, 12).map((y) => [32, y]), "v");        // and its west rail runs the full new height
+      railing(upTo(29, 42).map((x) => [x, 23]), "h");   /* (2026-09-29) at the treeline: y19 until today */
+      railing(upTo(30, 42).filter((x) => x !== 40 && x !== 41).map((x) => [x, 5]), "h");        // the north court's top rail, moved up from y7 with the court; (2026-09-25) open at 40-41, the Tower's gate
+      railing(upTo(14, 22).map((y) => [29, y]), "v");   /* (2026-09-29) along the river's bank */
+      railing(upTo(6, 12).map((y) => [29, y]), "v");        // and its west rail runs the full height, along the river's bank (x32 until 2026-09-29)
       NORTH_ROAD(g, keep); objs.push({ t: "sign", x: 20, y: 11, name: "North: the Gloam. It opens at Combat 10 for its monsters, and Fishing 10 for its pond. Bigger tickets, better fish." }); g[11][20] = "#";
       /* (2026-09-29, the owner: "the only thing i liked from your revamp was the cobble road but it should extend north and west to
          those maps", "and the lampposts on the road") THE COBBLED ROAD. Three tiles wide, like the exits it runs to: west from the
@@ -2587,15 +2587,25 @@ Object.assign(SCENES, {
          lane it always was (y13), so the courts keep their brick right up to it. The cobbles are `rug`s with a `tile` (painted by the
          page's rug pass, walkable); the tiles under them are road (",") so wild() leaves them clear and the Long Night's lanterns
          line the verges rather than stand in the road. Lamp posts every few tiles along the verges, alternating sides. */
-      for (let y = 12; y <= 14; y++) for (let x = 0; x <= 26; x++) { if (g[y][x] === ".") g[y][x] = ","; keep.push([x, y]); }
+      /* (2026-09-29, the owner: "add a river in the middle that cuts the map in half, crafting and workbenches one one side, mobs and
+         bronny and sal on the other") THE RIVER. Two tiles wide, in from the north treeline (a tile further east for its first four
+         rows, so it bends rather than rules a line) and down past the crossroads into the pond, which it joins. East of it: the two
+         courts, every workbench, Livia, Charon and the casino door. West of it: every monster, Bronny, Sal, Hexa and the Night Market.
+         The road crosses it on a plank bridge (`bridge: true`: the page paints water under the planks, so the river runs on beneath
+         it rather than stopping at a shore on either side). */
+      const RIVER = (y) => (y <= 3 ? 27 : 26);
+      for (let y = 0; y <= 22; y++) for (const x of [RIVER(y), RIVER(y) + 1]) if (y < 12 || y > 14) g[y][x] = "~";
+      for (let y = 12; y <= 14; y++) for (const x of [26, 27]) g[y][x] = "p";
+      objs.push({ t: "dock", bridge: true, x: 26, y: 12, w: 2, h: 3, name: "The bridge" });
+      for (let y = 12; y <= 14; y++) for (let x = 0; x <= 25; x++) { if (g[y][x] === ".") g[y][x] = ","; keep.push([x, y]); }
       for (let y = 0; y <= 11; y++) for (let x = 21; x <= 23; x++) { if (g[y][x] === ".") g[y][x] = ","; keep.push([x, y]); }
-      objs.push({ t: "rug", tile: "t_cobble", x: 0, y: 12, w: 27, h: 3, name: "The road west, to the Carnival" });
-      objs.push({ t: "rug", tile: "t_cobble", x: 27, y: 13, w: 17, h: 1, name: "The road in from the casino" });
+      objs.push({ t: "rug", tile: "t_cobble", x: 0, y: 12, w: 26, h: 3, name: "The road west, to the Carnival" });
+      objs.push({ t: "rug", tile: "t_cobble", x: 28, y: 13, w: 16, h: 1, name: "The road in from the casino" });
       objs.push({ t: "rug", tile: "t_cobble", x: 21, y: 0, w: 3, h: 12, name: "The north road, to the Gloam" });
-      for (const [x, y] of [[7, 11], [13, 15], [19, 15], [26, 11], [20, 7], [24, 3]]) dress("lamppost", x, y, "A lamp post. It comes on when the light goes.");
+      for (const [x, y] of [[7, 11], [13, 15], [19, 15], [25, 11], [28, 15], [20, 7], [24, 3]]) dress("lamppost", x, y, "A lamp post. It comes on when the light goes.");
       /* (2026-09-22) the first bale moved off 36,7: that is now the north court's doorway, and a bale in it made a
          fence with no way through. The court is laid above, so anything decorative here must dodge it. */
-      for (const [x, y] of [[30, 5], [2, 21], [17, 6], [7, 8]]) { objs.push({ t: "hay", x, y, name: "Hay bale" }); g[y][x] = "#"; }
+      for (const [x, y] of [[14, 3], [2, 21], [17, 6], [7, 8]]) { objs.push({ t: "hay", x, y, name: "Hay bale" }); g[y][x] = "#"; }
       /* (2026-09-23, the owner: "put some in the yard ... spread them out randomly and not all by each other
          though, just 3 of them") WHEAT, AND WITH IT THE WHOLE OF FARMING. There was no wheat anywhere a player
          could reach: the only patches in the game are in the closed farm scene (eastscape-closed.js), and the
@@ -2615,7 +2625,7 @@ Object.assign(SCENES, {
          the owner preferred the original ("it looks better than these you made, just replace the graphics but the
          spacing etc in the yard is good"), so the override is gone and the sprite is core art again. The three
          positions are unchanged, which is the part that was right. */
-      for (const [x, y] of [[8, 4], [28, 8], [7, 20]]) { objs.push({ t: "wheat", x, y, name: "Wheat" }); g[y][x] = "#"; keep.push([x, y]); }
+      for (const [x, y] of [[8, 4], [13, 6], [7, 20]]) { objs.push({ t: "wheat", x, y, name: "Wheat" }); g[y][x] = "#"; keep.push([x, y]); }
       /* (2026-09-28, the owner: "add some theme relevant pixel art beside him, like a road sign or construction related things. he thematically
          needs the items to 'rebuild' the yard") BRONNY'S WORKSITE at the west gate, round Bronny the Foreman (3,15, npcs below): his lumber and
          the barrier behind him, cones at his side, and the roadwork sign in front of him saying what the order is for. Clear of rows 12 and 14,
@@ -2636,10 +2646,11 @@ Object.assign(SCENES, {
       return { g, objs, blobs: [] };
     },
     // east to west, easy to hard: chickens at the gate, then cows, bad tomatoes, hornworms, and boars at the far end
-    mobs: [["chicken", 38, 5], ["chicken", 41, 5], ["chicken", 33, 9],   /* (v88: two of them moved a little, off the jukebox's slab) */
-       ["chicken", 39, 18], ["chicken", 41, 21], ["chicken", 36, 20],
-      ["cow", 30, 4], ["cow", 33, 7], ["cow", 27, 6], ["cow", 30, 21], ["cow", 34, 22],
-      ["rotten", 18, 4], ["rotten", 26, 7], ["rotten", 19, 8], ["rotten", 27, 10], ["olive", 16, 4], ["olive", 17, 10], ["olive", 25, 10],
+    /* (2026-09-29) ALL WEST OF THE RIVER: the chickens and cows that wandered the courts, and the two tomatoes on its line, graze the
+       pasture by the north road now; the courts on the east bank are for working. */
+    mobs: [["chicken", 19, 2], ["chicken", 15, 2], ["chicken", 12, 3], ["chicken", 18, 3], ["chicken", 14, 10], ["chicken", 10, 11],
+      ["cow", 14, 6], ["cow", 11, 10], ["cow", 3, 2], ["cow", 13, 19], ["cow", 10, 16],
+      ["rotten", 18, 4], ["rotten", 24, 6], ["rotten", 19, 8], ["rotten", 24, 9], ["olive", 16, 4], ["olive", 17, 10], ["olive", 20, 10],
       ["hornworm", 12, 5], ["hornworm", 15, 8], ["hornworm", 10, 9], ["hornworm", 11, 17],
       ["boar", 5, 5], ["boar", 8, 17], ["boar", 4, 19], ["boar", 11, 21], ["boar", 6, 22]],
     npcs: [   // (v108: Livia and Charon came over from the Forum, which is closed. Brutus sold gear here for a few hours on 2026-09-20; it is behind the Prize Counter now)

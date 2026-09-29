@@ -81,7 +81,7 @@ is([!!miner.act, went && went !== r0 && went.ore === "copper"], [true, true], "a
 miner.act = null; miner.C.tk = {}; W.tkNext(S, miner, r0, "rock"); is(miner.act, null, "without an Auger: you stop, as ever");
 
 /* 10. WORLD PROJECTS: the dock. Given at the bench, capped at the need; finished on site with the level; the map changes; a restart keeps it */
-is([G.projTier("dock"), !!S.objs.find((o) => o.t === "dockruin"), !!S.objs.find((o) => o.t === "dock")], [0, true, false], "the Yard pond has a rotten jetty, and no dock");
+is([G.projTier("dock"), !!S.objs.find((o) => o.t === "dockruin"), !!S.objs.find((o) => o.t === "dock" && !o.bridge)], [0, true, false], "the Yard pond has a rotten jetty, and no dock (the river's bridge is planks too, and is not it)");
 const D = G.PROJECTS.dock.tiers[0], bldr = pl; bldr.x = bench.x + 1; bldr.y = bench.y; bldr.login = "t1";
 bldr.C.parts = { scrap: 99999, gears: 9999, sparks: 9999, relic: 99 }; G.addInv(bldr.C.inv, "tickets", 400000, bldr.C);
 const xpd = bldr.C.xp.tinkering, sc0 = bldr.C.parts.scrap;

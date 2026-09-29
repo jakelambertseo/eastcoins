@@ -3121,7 +3121,9 @@ function paintBg() {
   if (BGA) { let x0 = 0; for (const k of BGA) { o.drawImage(IMG[k].im, x0, 0); x0 += IMG[k].im.width; } }
   else if (DIRT && WATER) {
     // the Wilderness paints its sand (the Cage floor) as dirt
-    const cell = (x, y) => { const t = Z.g[Math.max(0, Math.min(ROWS - 1, y))][Math.max(0, Math.min(COLS - 1, x))]; return t === "~" ? "w" : t === "," || (dark && t === "s") ? "d" : "g"; };
+    /* (2026-09-29) a BRIDGE's tiles paint as water, so the river runs on under the planks rather than ending at a shore either side */
+    const UNDER = new Set(); for (const ob of Z.objs) if (ob.bridge) for (let j = 0; j < (ob.h || 1); j++) for (let i = 0; i < (ob.w || 1); i++) UNDER.add((ob.y + j) * COLS + ob.x + i);
+    const cell = (x, y) => { x = Math.max(0, Math.min(COLS - 1, x)); y = Math.max(0, Math.min(ROWS - 1, y)); if (UNDER.has(y * COLS + x)) return "w"; const t = Z.g[y][x]; return t === "~" ? "w" : t === "," || (dark && t === "s") ? "d" : "g"; };
     const vert = (x, y, k) => [cell(x - 1, y - 1), cell(x, y - 1), cell(x - 1, y), cell(x, y)].includes(k);
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       const corners = [[x, y], [x + 1, y], [x, y + 1], [x + 1, y + 1]], wet = corners.map(([a, b]) => vert(a, b, "w"));
@@ -3252,7 +3254,10 @@ function paintBg() {
     if (ob.t === "skeleton") { if (bgSpr("skeleton", X + 8, Y + 15, ob)) continue; f(X + 3, Y + 8, 10, 2, "#e8e4d8"); f(X + 2, Y + 6, 4, 4, "#e8e4d8"); f(X + 3, Y + 7, 1, 1, "#222"); for (let i = 0; i < 4; i++) f(X + 6 + i * 2, Y + 7, 1, 4, "#d8d4c8"); f(X + 12, Y + 2, 1, 10, "#8a6a3a"); }
     /* (2026-09-23) THE DOCK IS DECKING NOW. t_dock is a seamless tile drawn once per square — the planks run edge
        to edge so a pier of any length has no line across it. The fill below stays as the fallback. */
-    if (ob.t === "dock" && IMG.t_dock) { for (let dy = 0; dy < ob.h; dy++) for (let dx = 0; dx < ob.w; dx++) o.drawImage(IMG.t_dock.im, X + dx * T, Y + dy * T, T, T); continue; }
+    if (ob.t === "dock" && IMG.t_dock) { for (let dy = 0; dy < ob.h; dy++) for (let dx = 0; dx < ob.w; dx++) o.drawImage(IMG.t_dock.im, X + dx * T, Y + dy * T, T, T);
+      /* (2026-09-29) a bridge carries a rail along each side, with a post at each end and one in the middle */
+      if (ob.bridge) { const dw = ob.w * T, dh = ob.h * T; for (const yy of [Y - 2, Y + dh - 2]) { f(X - 1, yy + 1, dw + 2, 2, "rgba(0,0,0,.35)"); f(X - 1, yy, dw + 2, 2, "#6b4423"); for (const px of [X - 1, X + dw / 2 - 1, X + dw - 1]) { f(px, yy - 3, 2, 5, "#5a3418"); f(px, yy - 3, 2, 1, "#8a5a32"); } } }
+      continue; }
     if (ob.t === "dock") { const dw = ob.w * T; for (let y = 0; y < ob.h; y++) { f(X, Y + y * T, dw, T, "#8a5a32"); for (let i = 0; i < 4; i++) f(X, Y + y * T + i * 4, dw, 1, "#6b4423"); } f(X, Y, 1, ob.h * T, "#5a3418"); f(X + dw - 1, Y, 1, ob.h * T, "#5a3418"); }
     if (ob.t === "pen" && IMG.o_pen) continue;   /* (2026-09-21) the pen is a picture now (o_pen, PixelLab), drawn with the other objects; this is only the fallback */
     if (ob.t === "pen") { f(X, Y + 2, 48, 13, "#c8a860"); for (let i = 0; i < 12; i++) f(X + 2 + Math.floor(hashRand(i, 3, 91) * 44), Y + 4 + Math.floor(hashRand(i, 4, 92) * 9), 3, 1, "#a88a40");
@@ -3317,9 +3322,49 @@ function paintBg() {
   for (const ob of Z.objs) if (ob.t === "rug" && ob.concrete) paintSlab(f, ob);
   /* (2026-09-28) A TILED FLOOR (the Yard's Main Street cobbles and the Old Quarter's stone): a rug with `tile`, a square picture of
      one or more 32 px cells laid down by map position, so neighbouring tiles carry on the pattern instead of repeating one cell */
-  for (const ob of Z.objs) if (ob.t === "rug" && ob.tile && IMG[ob.tile]) {
-    const im = IMG[ob.tile].im, c = Math.max(1, Math.floor(im.width / 32));
-    for (let j = 0; j < ob.h; j++) for (let i = 0; i < ob.w; i++) { const gx = ob.x + i, gy = ob.y + j; o.drawImage(im, (gx % c) * 32, (gy % c) * 32, 32, 32, gx * T, gy * T, T, T); }
+  /* (2026-09-29, the owner: "theres no blending between the road and the grass/dirt tiles beside it") A RAGGED EDGE. Each floor is
+     laid on its own layer, then every side that meets something other than the same floor is broken up: stone-sized notches are cut
+     out of it (hashed by position, so the edge is the same on every load), a few loose stones are dropped on the dirt beyond it, and
+     the layer goes down with a soft shadow under it, so the cobbles sit IN the dirt road the way a real street does rather than
+     being a flat rectangle laid over it. Drawn in canvas pixels (A per map pixel) so a notch is a whole stone at any scale. */
+  const floors = {}; for (const ob of Z.objs) if (ob.t === "rug" && ob.tile && IMG[ob.tile]) (floors[ob.tile] ||= []).push(ob);
+  for (const [tile, rugs] of Object.entries(floors)) {
+    const im = IMG[tile].im, cc = Math.max(1, Math.floor(im.width / 32)), P = T * A;
+    const on = new Set(); for (const ob of rugs) for (let j = 0; j < ob.h; j++) for (let i = 0; i < ob.w; i++) on.add((ob.y + j) * COLS + ob.x + i);
+    const deck = new Set(); for (const ob of Z.objs) if (ob.bridge) for (let j = 0; j < (ob.h || 1); j++) for (let i = 0; i < (ob.w || 1); i++) deck.add((ob.y + j) * COLS + ob.x + i);
+    const has = (x, y) => x < 0 || y < 0 || x >= COLS || y >= ROWS || on.has(y * COLS + x) || deck.has(y * COLS + x);   /* off the map counts as floor: the road runs out through the exits; and it meets a bridge square */
+    const L = document.createElement("canvas"); L.width = W * A; L.height = H * A;
+    const lo = L.getContext("2d"); lo.imageSmoothingEnabled = false;
+    for (const k of on) { const gx = k % COLS, gy = Math.floor(k / COLS); lo.drawImage(im, (gx % cc) * 32, (gy % cc) * 32, 32, 32, gx * P, gy * P, P, P); }
+    const SIDES = [[0, -1], [1, 0], [0, 1], [-1, 0]], deep = Math.round(P * 0.28);
+    lo.globalCompositeOperation = "destination-out";
+    for (const k of on) { const gx = k % COLS, gy = Math.floor(k / COLS);
+      SIDES.forEach(([dx, dy], s) => { if (has(gx + dx, gy + dy)) return;
+        for (let t = 0, n = 0; t < P; n++) {
+          const len = 3 + Math.floor(hashRand(gx * 7 + n, gy * 13 + s, 301) * 5), d = Math.floor(hashRand(gx * 11 + n, gy * 5 + s, 302) * deep);
+          const a = gx * P + t, b = gy * P + t;
+          if (dx === 0) lo.fillRect(a, dy < 0 ? gy * P : (gy + 1) * P - d, Math.min(len, P - t), d);
+          else lo.fillRect(dx < 0 ? gx * P : (gx + 1) * P - d, b, d, Math.min(len, P - t));
+          t += len;
+        } });
+    }
+    lo.globalCompositeOperation = "source-over";
+    /* loose stones: two or three a side, a few pixels out onto whatever is beyond the edge */
+    for (const k of on) { const gx = k % COLS, gy = Math.floor(k / COLS);
+      const wet = (x, y) => { for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) if (Z.g[y + j]?.[x + i] === "~") return true; return false; };   /* a bank tile is partly painted as water */
+      SIDES.forEach(([dx, dy], s) => { if (has(gx + dx, gy + dy) || wet(gx + dx, gy + dy)) return;   /* (never onto water) */
+        for (let n = 0; n < 3; n++) { if (hashRand(gx * 3 + n, gy * 17 + s, 303) < 0.35) continue;
+          const along = Math.floor(hashRand(gx + n * 5, gy + s, 304) * (P - 6)), out = 1 + Math.floor(hashRand(gx + n, gy * 3 + s, 305) * (P * 0.22)), sw = 3 + Math.floor(hashRand(gx, gy + n + s, 306) * 3), sh = 2 + Math.floor(hashRand(gy, gx + n + s, 307) * 2);
+          const x = dx === 0 ? gx * P + along : dx < 0 ? gx * P - out - sw : (gx + 1) * P + out, y = dy === 0 ? gy * P + along : dy < 0 ? gy * P - out - sh : (gy + 1) * P + out;
+          lo.drawImage(im, (along * 7) % (im.width - sw), (out * 5) % (im.height - sh), sw, sh, x, y, sw, sh);
+        } });
+    }
+    /* the shadow: the layer's own shape in black (source-in, not ctx.filter, which Safari does not draw) */
+    const Sh = document.createElement("canvas"); Sh.width = L.width; Sh.height = L.height;
+    const so = Sh.getContext("2d"); so.drawImage(L, 0, 0); so.globalCompositeOperation = "source-in"; so.fillStyle = "#000"; so.fillRect(0, 0, Sh.width, Sh.height);
+    o.save(); o.setTransform(1, 0, 0, 1, 0, 0);
+    o.globalAlpha = 0.35; o.drawImage(Sh, A, A); o.globalAlpha = 1; o.drawImage(L, 0, 0);
+    o.restore();
   }
   return c;
 }
