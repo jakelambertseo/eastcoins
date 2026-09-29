@@ -2599,6 +2599,11 @@ Object.assign(SCENES, {
          needs the items to 'rebuild' the yard") BRONNY'S WORKSITE at the west gate, round Bronny the Foreman (3,15, npcs below): his lumber and
          the barrier behind him, cones at his side, and the roadwork sign in front of him saying what the order is for. Clear of rows 12 and 14,
          which are the road's verges and stay walkable. */
+      /* (2026-09-28, the owner: "add some 'concrete' or rocks under him and bronny so it feels more constructiony and like theyre not working
+         in the grass") a poured slab under the whole worksite, Bronny, his props and the tinker's bench beside him: the page's paintSlab, the
+         same as a jukebox slab, painted into the ground so it is walkable and costs nothing a frame. Kept from wild(), or a bush grows through it. */
+      objs.push({ t: "rug", concrete: true, x: 1, y: 14, w: 7, h: 4, name: "Poured concrete: Bronny's worksite" });
+      for (let y = 14; y <= 17; y++) for (let x = 1; x <= 7; x++) keep.push([x, y]);
       dress("lumber", 1, 15, "Lumber and bricks, waiting for the rebuild."); dress("sawhorse", 2, 16, "A road barrier. The Yard's under construction.");
       dress("cones", 4, 16, "Cones. Somebody's rebuilding something.");
       objs.push({ t: "sign", art: "o_roadwork", x: 5, y: 15, name: "YARD UNDER CONSTRUCTION. Bronny the Foreman is rebuilding the Yard, and he needs materials. Fill his order together and the whole server gets a 2X Potion." }); g[15][5] = "#"; keep.push([5, 15]);

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Scrap Bench Sketch</title>
+<meta name="robots" content="noindex,nofollow">
+<!-- (2026-09-28) DESIGN SKETCH ONLY, not deployed and not wired to anything: the Scrap Bench window for Tinkering (EASTSCAPE-DRAFTS.md §11).
+     Every number is made up. Open it from the dev server: http://localhost:4321/mockups-archive/eastscape-tinkering.html -->
+<style>
+@font-face{font-family:"Lora";font-style:normal;font-weight:400 700;font-display:swap;src:url(/v3/assets/fonts/lora-latin.woff2) format("woff2")}
+@font-face{font-family:"Lora";font-style:italic;font-weight:400 700;font-display:swap;src:url(/v3/assets/fonts/lora-italic-latin.woff2) format("woff2")}
+@font-face{font-family:"Cinzel";font-style:normal;font-weight:400 900;font-display:swap;src:url(/v3/assets/fonts/cinzel-latin.woff2) format("woff2")}
+:root{--k-ink:#2a2016;--k-ink2:#6a5a40;--k-ink3:#9a8866;--k-paper:#efe2c4;--k-paper-hi:#fff6dc;--k-card:#e6d4ad;--k-card-line:#c2a574;--k-line:rgba(90,58,24,.2);--k-head:#5a3220;--k-head-ink:#f6e9cc;--k-head-sub:#e0c890;--k-gold:#c8963a;--k-gold-ink:#7a4e0e;--k-good:#2f7a3a;--k-bad:#b8302a;--k-r:6px;--k-disp:"Cinzel",Georgia,serif;
+  --scrap:#8a8a86;--gears:#c8963a;--sparks:#4a7ad8;--relic:#9a4ad8}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:#0e0a14;color:var(--k-ink);font:600 14px/1.4 Lora,system-ui,sans-serif;min-height:100vh}
+img{image-rendering:pixelated}
+.page{max-width:1000px;margin:0 auto;padding:18px 16px 60px}
+.page>h1{margin:0 0 4px;font:900 24px var(--k-disp);color:#f6e9cc}.page>p{margin:0 0 16px;color:#cdb892;max-width:760px}
+.stage{padding:24px 12px;border-radius:10px;background:linear-gradient(rgba(10,6,14,.5),rgba(10,6,14,.5)),repeating-linear-gradient(45deg,#2a3a22 0 22px,#243220 22px 44px)}
+.k-win{max-width:820px;margin:0 auto;display:flex;flex-direction:column;border:15px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/win.png?v=1) 12 fill / 15px stretch;filter:drop-shadow(0 12px 22px rgba(0,0,0,.5))}
+.k-head{display:flex;align-items:center;gap:10px;margin:-3px -3px 0;padding:8px 10px 8px 12px;background:var(--k-head);color:var(--k-head-ink);border-bottom:3px solid #3a1e12}
+.k-head h2{margin:0;font:800 19px var(--k-disp);flex:1}.k-head small{font:600 13px Lora;color:var(--k-head-sub)}.k-head img{width:24px;height:24px}
+.k-paper{background-color:var(--k-paper);background-image:radial-gradient(rgba(150,110,60,.07) 1px,transparent 1.5px);background-size:7px 9px}
+.k-tabs{display:flex;gap:3px;padding:8px 12px 0;border-bottom:2px solid var(--k-gold);background:rgba(90,58,24,.08)}
+.k-tabs button{margin-bottom:-2px;padding:7px 14px 6px;border:2px solid var(--k-card-line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--k-card);color:var(--k-ink2);font:800 13px Lora;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.k-tabs button[aria-selected="true"]{background:var(--k-paper);color:var(--k-ink);border-color:var(--k-gold);padding-bottom:8px}
+.k-tabs button img{width:18px;height:18px}
+.k-sect{display:flex;align-items:center;gap:8px;margin:4px 2px}.k-sect::after{content:"";flex:1;height:2px;background:var(--k-line)}
+.k-label{font:800 11px Lora;letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2)}
+.k-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;background:rgba(90,58,24,.12);color:var(--k-ink2);font:800 11.5px Lora;white-space:nowrap}
+.k-slot{position:relative;display:grid;place-items:center;width:40px;height:40px;flex:none;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png?v=1) 7 fill / 5px stretch}
+.k-slot img{width:26px;height:26px}.k-slot u{position:absolute;right:-4px;bottom:-5px;font:900 10px Lora;text-decoration:none;color:#fff;background:#2a1a0c;padding:0 4px;border-radius:3px}
+.k-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 12px;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;background:none;color:#ffe27a;font:800 13.5px Lora;text-shadow:0 1px 0 #000;cursor:pointer;white-space:nowrap}
+.k-btn.green{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_zc.png?v=1);color:#e4ffe9}.k-btn.gold{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_gold.png?v=1);color:#2a1600;text-shadow:none}
+.k-btn:disabled{opacity:.45}
+.k-foot{display:flex;align-items:center;gap:10px;justify-content:flex-end;padding:10px 12px;border-top:2px solid var(--k-line);background:rgba(90,58,24,.07)}.k-foot .note{flex:1;font:600 12.5px Lora;color:var(--k-ink2)}
+/* the bench's top strip: the tinker, and your parts */
+.tk-top{display:flex;align-items:center;gap:14px;padding:12px 16px;background:linear-gradient(135deg,#4a4a4e,#2e2e32 60%,#222226);box-shadow:inset 0 -2px 0 #e8bf35;color:#eee}
+.tk-face{width:58px;height:58px;border-radius:10px;display:grid;place-items:center;background:radial-gradient(circle,#6a6a70,#333);box-shadow:0 0 0 2px #e8bf35;font-size:30px}
+.tk-say{margin:0 0 6px;font:italic 600 13.5px Lora}.tk-say b{font:800 12px var(--k-disp);font-style:normal;letter-spacing:.06em;color:#ffd84a;margin-right:6px}
+.parts{display:flex;gap:6px;flex-wrap:wrap}
+.part{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:99px;background:#1a1a1c;box-shadow:inset 0 0 0 1.5px var(--c);font:800 13px Lora;color:#fff}
+.part i{width:14px;height:14px;border-radius:3px;background:var(--c);display:inline-block}
+.pane{padding:10px 12px;display:grid;gap:8px;max-height:520px;overflow:auto}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:7px 10px 7px 7px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.row b{font:800 15px var(--k-disp)}.row small{display:block;font:700 12px Lora;color:var(--k-ink2)}
+.gets{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.gets .part{background:#2a2a2c;font-size:11.5px;padding:2px 8px 2px 4px}
+.gad{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.card{display:grid;gap:6px;padding:10px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.card.lock{opacity:.55}.card.auto{box-shadow:inset 0 0 0 2px var(--k-gold);background:linear-gradient(#f6e6b8,#ead29a)}
+.card .top{display:flex;gap:8px;align-items:center}.card .ico{font-size:24px;width:38px;height:38px;display:grid;place-items:center;border-radius:8px;background:#2a2016}
+.card b{font:800 15px var(--k-disp)}.card small{font:700 12px Lora;color:var(--k-ink2)}
+.cost{display:flex;gap:4px;flex-wrap:wrap}.cost .part{background:#2a2a2c;font-size:11px;padding:2px 7px 2px 4px}.cost .fee{background:#3a2400;box-shadow:inset 0 0 0 1.5px #e8bf35}
+.tag{font:900 10px Lora;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:99px;background:#d6ecd0;color:var(--k-good)}.tag.auto{background:#f6e2a8;color:var(--k-gold-ink)}
+.proj{display:grid;gap:10px}
+.pj{display:grid;grid-template-columns:120px 1fr;gap:12px;padding:12px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.pj .art{height:90px;border-radius:8px;display:grid;place-items:center;font-size:44px;background:linear-gradient(#6a8ab0,#3a5a3a)}
+.pj b{font:900 18px var(--k-disp)}.pj p{margin:2px 0 8px;font:600 13px Lora;color:var(--k-ink2)}
+.bars{display:grid;gap:5px}.bar{display:grid;grid-template-columns:70px 1fr 90px;gap:8px;align-items:center;font:800 12px Lora}
+.bar .t{height:12px;border-radius:6px;background:rgba(90,58,24,.15);overflow:hidden}.bar .t i{display:block;height:100%;background:var(--c)}
+.helpers{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.pj.next{opacity:.6}
+.view[hidden]{display:none}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>The Scrap Bench: a sketch</h1>
+  <p>Tinkering, as drafted in EASTSCAPE-DRAFTS.md §11. Design only; every number is made up. The tabs work.</p>
+  <div class="stage">
+  <section class="k-win">
+    <div class="k-head"><img src="/v3/assets/img/glad/flat/ui/g_tools.png?v=1" alt=""><h2>The Scrap Bench</h2><small>Tinkering · level 34</small></div>
+    <div class="tk-top">
+      <span class="tk-face">&#x1F527;</span>
+      <span style="flex:1"><p class="tk-say"><b>SPROCKET</b>Everything's worth something. Mostly bits.</p>
+        <span class="parts"><span class="part" style="--c:var(--scrap)"><i></i>1,284 Scrap</span><span class="part" style="--c:var(--gears)"><i></i>212 Gears</span><span class="part" style="--c:var(--sparks)"><i></i>96 Sparks</span><span class="part" style="--c:var(--relic)"><i></i>3 Relic shards</span></span></span>
+    </div>
+    <div class="k-tabs" role="tablist">
+      <button type="button" data-v="salvage" aria-selected="true"><img src="/v3/assets/img/glad/flat/ui/w_sack.png?v=1" alt="">Salvage</button>
+      <button type="button" data-v="build" aria-selected="false"><img src="/v3/assets/img/glad/flat/ui/g_tools.png?v=1" alt="">Build</button>
+      <button type="button" data-v="projects" aria-selected="false"><img src="/v3/assets/img/glad/flat/ui/g_home.png?v=1" alt="">Yard Projects</button>
+    </div>
+    <div class="k-paper">
+      <div class="view pane" id="v-salvage"></div>
+      <div class="view pane" id="v-build" hidden></div>
+      <div class="view pane" id="v-projects" hidden></div>
+    </div>
+    <div class="k-foot" id="foot"></div>
+  </section>
+  </div>
+</div>
+<script>
+const IT = "/v3/assets/img/glad/flat/items/";
+const P = { s: ["Scrap", "var(--scrap)"], g: ["Gears", "var(--gears)"], p: ["Sparks", "var(--sparks)"], r: ["Relic", "var(--relic)"] };
+const part = (k, n) => `<span class="part" style="--c:${P[k][1]}"><i></i>${n.toLocaleString()} ${P[k][0]}</span>`;
+const JUNK = [["bronze_helm", "Bronze helm", 3, "plain gear", { s: 4, g: 2 }], ["bones", "Bones", 46, "a monster drop", { s: 18 }], ["pit", "Olive pit", 80, "worth nothing to Bom", { s: 16 }],
+  ["husk", "Hornworm husk", 22, "a monster drop", { s: 20 }], ["page_arcane", "Arcane page", 60, "magic", { s: 10, p: 6 }], ["cchicken", "Cooked chicken", 12, "food", { s: 9 }], ["hailshard", "Hail shard", 2, "a late drop", { s: 6, p: 3, r: 1 }]];
+const GAD = [[1, "\u{1F389}", "Confetti Cannon", "confetti and a sound for everyone nearby · 3 shots", { s: 20 }, 50], [5, "\u{1FAB1}", "Bait Box", "better rare-fish chance · 20 min", { s: 30, g: 2 }, 100],
+  [15, "\u{1F5DD}️", "Lockpick Set", "better pickpocket chance · 20 picks", { s: 20, g: 6 }, 200], [25, "\u{1FA99}", "Lucky Coin", "five free ticket bets, the house stakes 10 each", { s: 40, p: 5 }, 400],
+  [35, "\u{1F3EE}", "Lantern", "lights dark maps, shows hidden chests · 30 min", { s: 30, g: 10, p: 5 }, 500], [45, "\u{1F9F8}", "Pet Toy", "a chunk of pet xp", { s: 40, g: 10, p: 10 }, 700],
+  [55, "\u{1F6A9}", "Party Banner", "your party gets a buff near it · 10 min", { s: 60, g: 15, p: 15 }, 1000], [60, "\u{1FA9B}", "Auger", "mines the rock you set it on, no clicks · 15 min", { s: 80, g: 30, p: 5, r: 1 }, 1500, true],
+  [65, "\u{1FA9D}", "Grappling Hook", "shortcuts on the Run and in dungeons · 10 uses", { s: 50, g: 20 }, 800], [70, "\u{1FA9A}", "Chainsaw", "fells the tree you set it on, no clicks · 15 min", { s: 80, g: 30, p: 5, r: 1 }, 1500, true],
+  [75, "\u{1F4A3}", "Boss Bomb", "a big opening hit on a boss · 1 use", { s: 80, g: 20, p: 20, r: 2 }, 2000], [80, "\u{1F3A3}", "Auto-Reel", "fishes the spot you set it on, no clicks · 15 min", { s: 80, g: 30, p: 5, r: 1 }, 1500, true],
+  [90, "\u{1F69C}", "Harvest Rig", "tends your island plots and beds · 15 min", { s: 100, g: 40, p: 10, r: 2 }, 2000, true]];
+const LV = 34;
+function salvage() {
+  const total = { s: 0, g: 0, p: 0, r: 0 }; for (const j of JUNK) for (const [k, n] of Object.entries(j[4])) total[k] += n;
+  document.getElementById("v-salvage").innerHTML = `<div class="k-sect"><span class="k-label">In your bag, and what it breaks into</span></div>` + JUNK.map(([k, name, n, what, gets]) => `<div class="row"><span class="k-slot"><img src="${IT}${k}.png" alt=""><u>${n}</u></span><span><b>${name}</b><small>${what}</small></span><span class="gets">${Object.entries(gets).map(([p, v]) => part(p, v)).join("")}<button class="k-btn green" type="button" style="min-height:30px">Salvage</button></span></div>`).join("");
+  document.getElementById("foot").innerHTML = `<span class="note">Parts can't be sold to Bom: that's the deal. Favourites and equipped gear are never salvaged.</span><span class="gets">${Object.entries(total).filter(([, v]) => v).map(([p, v]) => part(p, v)).join("")}</span><button class="k-btn gold" type="button">Salvage the lot</button>`;
+}
+function build() {
+  document.getElementById("v-build").innerHTML = `<div class="k-sect"><span class="k-label">Gadgets · every one gets used up · a build can come out a Masterwork (double charges)</span></div><div class="gad">` + GAD.map(([lvl, icon, name, does, cost, fee, auto]) => `<div class="card${lvl > LV ? " lock" : ""}${auto ? " auto" : ""}"><span class="top"><span class="ico">${icon}</span><span><b>${name}</b><br><span class="tag${auto ? " auto" : ""}">${auto ? "Automation · " : ""}Lvl ${lvl}</span></span></span><small>${does}</small><span class="cost">${Object.entries(cost).map(([p, v]) => part(p, v)).join("")}<span class="part fee" style="--c:#e8bf35"><i></i>${fee.toLocaleString()} tickets</span></span><button class="k-btn${lvl > LV ? "" : " green"}" type="button"${lvl > LV ? " disabled" : ""}>${lvl > LV ? `Tinkering ${lvl}` : "Build"}</button></div>`).join("") + `</div>`;
+  document.getElementById("foot").innerHTML = `<span class="note">The automation tools (gold) gather at 75% of your normal rate while you stay logged in, into your bag, and stop when it's full.</span>`;
+}
+function projects() {
+  const bar = (k, got, need) => `<div class="bar"><span>${P[k][0]}</span><span class="t"><i style="width:${Math.round((got / need) * 100)}%;--c:${P[k][1]};background:${P[k][1]}"></i></span><span>${got.toLocaleString()} / ${need.toLocaleString()}</span></div>`;
+  document.getElementById("v-projects").innerHTML = `<div class="k-sect"><span class="k-label">Bronny's long job · the whole server builds it · everyone who helps goes on the plaque</span></div><div class="proj">
+    <div class="pj"><span class="art">\u{1F3A3}</span><span><b>The Fishing Dock</b><p>More spots on the Yard's pond, and a better rare-fish chance off the end of the dock. For good.</p><div class="bars">${bar("s", 3120, 5000)}${bar("g", 410, 800)}${bar("p", 96, 300)}${bar("r", 4, 20)}</div>
+      <div class="helpers"><span class="k-chip">Kellz 1,240</span><span class="k-chip">DookieBetts 980</span><span class="k-chip">bootypaper 610</span><span class="k-chip">+6 more</span></div>
+      <div style="display:flex;gap:8px;margin-top:8px"><button class="k-btn green" type="button">Give 100 Scrap</button><button class="k-btn green" type="button">Give what's needed</button></div></span></div>
+    <div class="pj next"><span class="art" style="background:linear-gradient(#8a6a4a,#4a3a2a)">\u{1F525}</span><span><b>Next: The Smokehouse</b><p>A second campfire and smoking racks by the pond.</p></span></div>
+    <div class="pj next"><span class="art" style="background:linear-gradient(#5a4a6a,#2a2a3a)">\u{1F6D2}</span><span><b>Then: The Mire Cart</b><p>A ride from the Yard straight to the Mire.</p></span></div></div>`;
+  document.getElementById("foot").innerHTML = `<span class="note">One project at a time. When it's done the Yard changes for everyone, and Bronny starts the next.</span>`;
+}
+const views = { salvage, build, projects };
+document.querySelectorAll("[data-v]").forEach((b) => b.onclick = () => { document.querySelectorAll("[data-v]").forEach((x) => x.setAttribute("aria-selected", x === b)); document.querySelectorAll(".view").forEach((v) => v.hidden = v.id !== "v-" + b.dataset.v); views[b.dataset.v](); });
+salvage();
+</script>
+</body>
+</html>
