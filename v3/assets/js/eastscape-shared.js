@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 353;   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 354;   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -2667,10 +2667,13 @@ Object.assign(SCENES, {
     // east to west, easy to hard: chickens at the gate, then cows, bad tomatoes, hornworms, and boars at the far end
     /* (2026-09-29) ALL WEST OF THE RIVER: the chickens and cows that wandered the courts, and the two tomatoes on its line, graze the
        pasture by the north road now; the courts on the east bank are for working. */
-    mobs: [["chicken", 19, 2], ["chicken", 15, 2], ["chicken", 12, 3], ["chicken", 18, 3], ["chicken", 14, 10], ["chicken", 10, 11],
-      ["cow", 14, 6], ["cow", 11, 10], ["cow", 3, 2], ["cow", 13, 19], ["cow", 10, 16],
-      ["rotten", 18, 4], ["rotten", 24, 6], ["rotten", 19, 8], ["rotten", 24, 9], ["olive", 16, 4], ["olive", 17, 10], ["olive", 20, 10],
-      ["hornworm", 12, 5], ["hornworm", 15, 8], ["hornworm", 10, 9], ["hornworm", 11, 17],
+    /* (2026-09-29, the owner, with a screenshot round Hexa's stall: "theres also still too many mobs in this area of the yard, tone it
+       down a bit") NINE FEWER in the north pasture: chickens 19,2 12,3 14,10, the cow at 11,10, tomatoes 24,6 19,8, the olive beside
+       the Night Market (17,10) and hornworms 15,8 10,9. Every kind is still here; the pasture just has room to walk through. */
+    mobs: [["chicken", 15, 2], ["chicken", 18, 3], ["chicken", 10, 11],
+      ["cow", 14, 6], ["cow", 3, 2], ["cow", 13, 19], ["cow", 10, 16],
+      ["rotten", 18, 4], ["rotten", 24, 9], ["olive", 16, 4], ["olive", 20, 10],
+      ["hornworm", 12, 5], ["hornworm", 11, 17],
       ["boar", 5, 5], ["boar", 8, 17], ["boar", 4, 19], ["boar", 11, 21], ["boar", 6, 22],
       /* (2026-09-29, the owner: "add a mob or two in the new version of the yard in the court") two chickens loose in the south court,
          at its empty south end: a mob wanders 3 across and 2 down from home, so they stay between the stalls and the railing and never
@@ -4483,7 +4486,7 @@ export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) 
    Yard and the skill joins the panel, the hiscores and the wiki. Held, everything stays in the rules (a save that somehow carries
    the items or the xp still loads) but nobody can reach it and the wiki does not list it. The tests open both with
    globalThis.__ES_OPEN_ALL before they import this file. */
-export const HOLD = { tinker: !globalThis.__ES_OPEN_ALL, gems: !globalThis.__ES_OPEN_ALL,   /* (2026-09-28) the Gem Sorter, the sockets and the Gem Case */   /* (2026-09-28) Tinkering: built on the dev server, shut until the owner opens it */ depths: false,   /* (2026-09-27) OPEN: the owner, "lets push it live" */ jewel: true,   /* (2026-09-28) retired: the Gem Sorter replaced it */ boardwalk: false,   /* (2026-09-27) OPEN: the owner, "the boardwalk is ready to launch" */ foundry: !globalThis.__ES_OPEN_ALL, orchard: !globalThis.__ES_OPEN_ALL };   /* (2026-09-27) the Boardwalk, the Foundry and the Orchard Wall: launched the same morning and held shut again at the owner's word ("close them for now and dont allow access until i reiterate them"). Held: no door to them, not in the wiki, and anyone saved inside is walked back out on login (the worker's HELD_MAPS) */
+export const HOLD = { tinker: false, gems: false,   /* (2026-09-29, the owner: "open the gem bag and sorter live, and tinkering") OPEN */   /* (2026-09-28) the Gem Sorter, the sockets and the Gem Case */   /* (2026-09-28) Tinkering: built on the dev server, shut until the owner opens it */ depths: false,   /* (2026-09-27) OPEN: the owner, "lets push it live" */ jewel: true,   /* (2026-09-28) retired: the Gem Sorter replaced it */ boardwalk: false,   /* (2026-09-27) OPEN: the owner, "the boardwalk is ready to launch" */ foundry: !globalThis.__ES_OPEN_ALL, orchard: !globalThis.__ES_OPEN_ALL };   /* (2026-09-27) the Boardwalk, the Foundry and the Orchard Wall: launched the same morning and held shut again at the owner's word ("close them for now and dont allow access until i reiterate them"). Held: no door to them, not in the wiki, and anyone saved inside is walked back out on login (the worker's HELD_MAPS) */
 export const OPEN = new Set(["carnival",   /* (2026-09-24) OPEN AT LAST. Built 2026-09-24 and held shut at the owner’s word until he said "launch the publish the carnival so its openn to peoople now". */ "casino", "roulette", "theatre", "fightpit", "vault", "wild", "deep", "agility",   /* (2026-09-22) The Run. Built with the Agility skill but never added here, so its door in the Yard answered with the bouncer's "Room's shut" — a scene is not enterable until it is in this set. */   /* (2026-09-22) the Wilderness reopened, down the rope ladder on the Gloam */ /* "highroller": closed for now (the owner, 2026-09-19) */ /* "forum", "bathhouse": closed in v108, what mattered there is in the Yard */ "workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "trailer",
   ]);   /* (2026-09-23) the Thieves' Guild. Deliberately NOT in BANDS: its rooms gate on Thieving through each mark's own `req`, and a combat band here would undo the whole point of a skill you cannot fight your way into. */   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
 export const OPEN_DAILY = new Set([

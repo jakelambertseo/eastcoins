@@ -906,6 +906,32 @@ export const GUIDES = [
         <h3>Skilling gems</h3>
         <table class="tbl"><tr><th>Gem</th><th>Does</th><th>From</th></tr>${side("case").map(row).join("")}</table>`;
     } },
+  /* (2026-09-29, opened with the skill) TINKERING: salvage into parts, gadgets out of parts, and the World Projects everybody builds
+     together. Every number is read from TINK, GADGETS and PROJECTS; the page hides it while HOLD.tinker. */
+  { id: "tinkering", title: "Tinkering and World Projects", icon: "\u{1F527}", cat: "Skills",
+    body: (G, H) => {
+      const T = G.TINK, P = T.parts, num = (n) => Number(n).toLocaleString();
+      const parts = (o) => Object.entries(o || {}).filter(([p, n]) => n > 0).map(([p, n]) => p === "tickets" ? `${num(n)} tickets` : `${num(n)} ${H.esc(P[p]?.name || p)}`).join(", ");
+      const gad = Object.entries(G.GADGETS).filter(([, g]) => g.item !== false).sort((a, b) => a[1].lvl - b[1].lvl);
+      const proj = Object.values(G.PROJECTS);
+      return `<p><b>Tinkering turns junk into things.</b> Talk to <b>${H.esc(T.npc)}</b> at her Scrap Bench by Bronny's worksite in the Yard. Salvage what you don't need into <b>parts</b>, build <b>gadgets</b> out of parts and a ticket fee, and give parts to the <b>World Projects</b> the whole server builds together.</p>
+        <h3>Parts</h3>
+        <p>Four kinds, kept in a pouch of their own: they take no bag space, and Bom won't buy them.</p>
+        <table class="tbl"><tr><th>Part</th><th>Worth</th><th>Mostly from</th></tr>
+          <tr><td><b>${P.scrap.name}</b></td><td>${P.scrap.pv}</td><td>anything: drops, loot, the leftovers of everything else</td></tr>
+          <tr><td><b>${P.gears.name}</b></td><td>${P.gears.pv}</td><td>metal: gear, tools, bars and ore</td></tr>
+          <tr><td><b>${P.sparks.name}</b></td><td>${P.sparks.pv}</td><td>magic: spell pages, ink, wands, and magical drops like stardust and voidglass</td></tr>
+          <tr><td><b>${P.relic.name}</b></td><td>${P.relic.pv}</td><td>anything Bom would pay ${num(T.relicAt)} or more for</td></tr></table>
+        <h3>Salvage</h3>
+        <p>An item salvages into parts worth <b>${Math.round(T.rate * 100)}%</b> of what Bom would pay you for it, and something he pays nothing for (a feather, a pit) is still worth a little Scrap. A stack is added up before it's rounded down, so a pile of junk is worth more than one piece of it. <b>Salvage the lot</b> takes only plain drops and loot, never gear, food or anything rare; those go one at a time. Every point of part value is a point of Tinkering xp. Money, keys, eggs, pets and quest or event items can't be salvaged.</p>
+        <h3>Gadgets</h3>
+        <p>Built at the Scrap Bench from parts plus a ticket fee. A timed gadget runs only outside (and in the Guild), like a drink, and you can run one of each at once; the others are used on the spot. Every build has a ${Math.round(T.masterwork * 100)}% chance of a <b>Masterwork</b>: twice as many. Gadgets are items, so they trade on the Market.</p>
+        <table class="tbl"><tr><th>Level</th><th>Gadget</th><th>Does</th><th>Costs</th></tr>${gad.map(([id, g]) => `<tr><td>${g.lvl}</td><td>${H.wl(`items/tk_${id}`, `${g.icon} ${H.esc(g.name)}`)}${g.n > 1 ? ` ×${g.n}` : ""}</td><td>${H.esc(g.does)}${g.mins ? ` (${g.mins} min)` : ""}</td><td>${parts(g.parts)}, ${num(g.fee)} tickets</td></tr>`).join("")}</table>
+        <p><b>The automation tools</b> (Auger, Chainsaw, Auto-Reel) keep you gathering with no clicks and walk you to the next rock, tree or spot of the same kind. Whenever nobody has touched the game for a few minutes they work at ${Math.round(T.autoRate * 100)}% speed, and nothing gathers while you're logged out.</p>
+        <h3>World Projects</h3>
+        <p>Broken things around the world that the whole server rebuilds together. Anyone can give parts and tickets to the current stage at its board; when a stage is full, somebody with the Tinkering level it asks for has to stand at it and finish the job. Everybody who gave gets that build's <b>Builder's Pin</b>, and the Builders board on the Hiscores counts what each person gave. Each project has three stages:</p>
+        ${proj.map((p) => `<h3>${H.esc(p.name)} <small>${H.esc(p.where)}</small></h3><p>${H.esc(p.blurb)}</p><table class="tbl"><tr><th>Stage</th><th>Needs</th><th>Finish at</th><th>Does</th></tr>${p.tiers.map((t) => `<tr><td><b>${H.esc(t.name)}</b></td><td>${parts(t.need)}</td><td>Tinkering ${t.finish}</td><td>${H.esc(t.does)}</td></tr>`).join("")}</table>`).join("")}`;
+    } },
   { id: "fletching", title: "Fletching and archery", icon: "\u{1F3F9}", cat: "Skills",
     body: (G, H) => {
       const rs = Object.values(G.RECIPES).filter((r) => r.skill === "fletching").sort((a, b) => a.lvl - b.lvl);
@@ -1080,6 +1106,15 @@ export const GUIDES = [
 ];
 
 export const UPDATES = [
+  {
+    date: "2026-09-29", title: "Tinkering, World Projects, and gems are open",
+    items: [
+      "TINKERING, A NEW SKILL: take your junk to Sprocket Sal's Scrap Bench by Bronny's worksite in the Yard and salvage it into parts (Scrap, Gears, Sparks and Relic shards, kept in their own pouch). Build gadgets out of them: a Whetstone, a Scope, a Pressure Cooker, a Lantern for rare drops, the Auger, Chainsaw and Auto-Reel that keep you gathering, a Boss Bomb, and more. See the Tinkering guide.",
+      "WORLD PROJECTS: broken things around the world, starting with the jetty in the Yard pond, that the whole server rebuilds together. Give parts and tickets at a project's board; when a stage is full somebody with the Tinkering level it asks for finishes the job, and everybody who helped gets a Builder's Pin. There's a Builders board on the Hiscores.",
+      "GEMS: from level 60 in a skill you'll turn up that skill's gem now and then, and monsters of level 60 or more drop combat gems. Take one to the Gem Sorter, a jeweller's bench in the Yard's north court, to roll it a bonus from -5% to +10% (the high rolls are rare), then put it in your gem bag: the Gems button on your inventory. One combat and one skilling setting to start, more for tickets. See the gem bag guide.",
+      "THE YARD'S NORTH PASTURE is less crowded: nine fewer monsters around Hexa's stall, every kind still there.",
+    ],
+  },
   {
     date: "2026-09-29", title: "A river through the Yard, quivers and Magic Bags three times the size, and a round of fixes from the bug board",
     items: [
@@ -2104,6 +2139,7 @@ export const SKILL_EXTRA = {
   },
 };
 export const SKILL_GUIDE = {
+  tinkering: "Salvage what you don't need into parts at Sprocket Sal's Scrap Bench in the Yard, build gadgets out of them, and give parts to the World Projects the whole server builds together. Every point of part value you salvage is a point of xp, and so is building, and finishing a project's stage pays the most.",
   breeding: "Breed two pets in the pet pen on your island to make a better one, and hatch eggs in a hatchery. Starting a pair gives some xp and collecting the baby gives far more. Every pairing and every hatch trains it.",
   fungiculture: "Grow mushrooms in the cellar under your island, and pick the wild clusters on every map once a day. Compost from the bin in the cellar trains it from level 1 and feeds the beds.",
   cooking: "Cook raw fish and meat at a range, hearth or campfire. Each food needs a level to cook and stops burning at a higher one. Cooked food heals when you eat it.",
