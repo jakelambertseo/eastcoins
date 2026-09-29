@@ -2011,3 +2011,16 @@ Gadgets at 30 + 0.8 x old level (Confetti 31 .. Auto-Reel 94), parts and fees x1
 
 normChar splits stacks of sorted gems (bag, then bank); a Sorter re-roll touches one gem; the bag badge shows the roll in
 its band colour; clicking a sorted gem sets it in the first empty setting of its side (else opens the gem bag). Shared ?v=389.
+
+## 2026-09-29, rules 361 LIVE (worker 07f55f5b) + the site's Grind closed
+
+- THE OUTFITTERS: Wren the Ranger (Cloudreach 10,17) and Morwenna the Mage (the Thunderhead 10,15), stalls below them. OUTFIT at
+  the end of the rules; 25 armour pieces a style (5 tiers x 5 slots, Archery/Magic 10-90; half plate's def; set +10% style dmg,
+  archers +6% speed); weapons at max(20x crafted value, 150*lvl^1.4); buy-back = gearSell via cashTo. outfit.js / eastscape-outfit.js
+  (v1) / tools/eastscape-outfit-test.mjs. Art by a PixelLab subagent (50 icons, wren/morwenna + faces, two stalls from o_stall edits).
+- Longbow str x2 (4 + 4i). CRAFT_P seeds the four Mining gems and three herbs (every wand/bag now has a price).
+- Bronny: nine kinds; the four new ones early/mid only; the late slot always dealt to a kind with a late tier.
+- Versions: VERSION 361, shared ?v=392, wiki 218, outfit 1, PACKS_V bumped by the pack tool.
+- SITE: The Grind CLOSED (functions/api/casino/grind/_grind.js CLOSED; start.js 410; home.js closed flag; v3-grind 10 shows
+  "The Grind is closed. Check out EastScape instead."; v3-casino 53 card "Closed"; v3.css 280). In-progress shifts can still finish.
+- IDEA (owner): the outfitters could wander to a new mid/late map each day.
