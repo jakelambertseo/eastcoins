@@ -109,7 +109,7 @@ const shelf = new Map(G.prizesOf().filter((p) => Array.isArray(p.give) && p.give
   let rose = 0, unsafe = 0, flat = 0;
   for (const k of gear) {
     const plain = G.gearSellRaw(k), step = G.forgeSellStep(k);
-    const [bar, bars] = G.forgeCost(k), barCash = (G.quickSell(bar) || G.valueOf(bar) || 0) * bars;
+    const [bar, bars] = G.forgeCost(k), barCash = (G.quickSell(bar) || G.valueOf(bar) || G.craftMatPrice(bar) || 0) * bars;   /* (2026-09-29) spell paper, which Bom will not buy, at what it is worth: the same fallback forgeSellStep uses */
     if (!(step > 0)) { flat++; continue; }
     /* THE RULE THAT KEEPS IT HONEST: a level must pay back LESS than the bars it ate would have fetched sold
        straight. Otherwise reforging is a better way to turn bars into tickets than selling bars, and the anvil
@@ -125,7 +125,9 @@ const shelf = new Map(G.prizesOf().filter((p) => Array.isArray(p.give) && p.give
   /* it must still be the LEVEL that is priced, not the key */
   const k = gear.find((x) => G.forgeSellStep(x) > 0 && G.gearSellRaw(x, G.FORGE.cap) < G.GEAR_SELL_MAX);   /* one the ceiling does not reach, or +0 and +3 are both 2,500 */
   if (G.gearSell(k, 0) === G.gearSell(k, 3)) fail("the level is being ignored");
-  if (G.gearSell(k, 99) !== G.gearSell(k, G.FORGE.cap)) fail("a level past the cap is not clamped, so a bad number could be paid for");
+  /* (2026-09-29) the level is the code's low bits now (G.PL wide) and the rest is gem sockets, so "99" is not a level: the largest level
+     the bits can carry, PL - 1, is what must clamp to the cap */
+  if (G.gearSell(k, G.PL - 1) !== G.gearSell(k, G.FORGE.cap)) fail("a level past the cap is not clamped, so a bad number could be paid for");
   ok(`a ${G.ITEMS[k].name.toLowerCase()} goes ${G.gearSell(k, 0).toLocaleString()} -> ${G.gearSell(k, 3).toLocaleString()} at +3, and anything past +${G.FORGE.cap} is clamped`);
 }
 

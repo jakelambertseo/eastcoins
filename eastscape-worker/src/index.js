@@ -1020,6 +1020,10 @@ export class World {
         const id = String(m.pick);
         if (G.recipesAt(ob.t).some((r) => r.id === id)) act.pick = id;
       }
+      /* (2026-09-29, a player's idea on the bug board: "Crafting table Amount toggles ... so you don't sink all your resources into things
+         like crafting multiple armor") HOW MANY: the window sends 1, 5, 10 or 25, and the station stops after that many goes. Nothing sent
+         is "until I stop or run out", as before. */
+      if (["smith", "cook", "smelt", "brew", "fletch", "print", "breed", "rot", "jewel"].includes(kind)) { const n = Math.floor(Number(m.n)); if (n > 0 && n <= 1000) { act.left = n; act.want = n; } }
     }
     if (!act) return;
     act.started = 0;
@@ -2367,7 +2371,7 @@ export class World {
        piece is priced on the LEVEL - two +1 helms and a +3 are three different prices for one key. The level has
        to be NAMED by the client, so no sweep and no plain-gear click can ever reach one of these, which is the
        rule the plainOnly count was protecting in the first place. Only what is CARRIED: worn gear is in C.eq. */
-    const wantF = G.fCode({ f: m.f }), wantLv = wantF % 4;   /* (2026-09-28) the whole code picks the piece; the price is its level */
+    const wantF = G.fCode({ f: m.f }), wantLv = wantF % G.PL;   /* (2026-09-28) the whole code picks the piece; the price is its level */
     if (m.op !== "all" && wantF > 0) {
       const gk = String(m.k);
       if (!G.gearSell(gk) && !G.ITEMS[gk]?.event) return this.say(pl, "The counter only takes gear it stocks itself.", "bad");   /* (2026-09-27) or an event piece, at one ticket */
@@ -3280,6 +3284,8 @@ export class World {
       }
       this.touch(pl);
       this.questCheck(pl);
+      /* (2026-09-29) a go is a go: a burnt fish or a spoilt vial used its materials, so it counts toward the number asked for */
+      if (a.left != null && --a.left <= 0) { this.say(pl, `That's the ${a.want} you asked for.`, "good"); pl.act = null; return; }
       const again = a.pick ? G.canMake(C, r) : (st.auto ? all.some((x) => G.canMake(C, x)) : G.canMake(C, r));
       if (!again) { this.say(pl, a.pick ? `That's the last ${outName.toLowerCase()} you can ${st.verb}.` : `That's everything you can ${st.verb} for now.`); pl.act = null; }
       return;

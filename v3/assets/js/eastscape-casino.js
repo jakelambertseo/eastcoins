@@ -1132,7 +1132,7 @@ export function createCasino(env) {
     const rare = [...new Set(me.inv.map((x) => x.k))].filter((k) => !G.isLoot(k) && G.quickSell(k) > 0).map((k) => ({ k, n: cnt(k), v: G.quickSell(k) }));
     /* gear back at a quarter: ONE ROW PER LEVEL, plain copies and each reforge apart, and a reforged row asks twice (see the 2026-09-24 notes) */
     const byLevel = new Map();
-    for (const st of me.inv) { if (!(G.gearSell(st.k) > 0)) continue; const f = G.fCode(st), id = st.k + "|" + f, r = byLevel.get(id) || { k: st.k, f, n: 0, v: G.gearSell(st.k, f % 4) };   /* (2026-09-28) the whole code keeps a socketed piece its own row; the price is its level */ r.n += st.n; byLevel.set(id, r); }
+    for (const st of me.inv) { if (!(G.gearSell(st.k) > 0)) continue; const f = G.fCode(st), id = st.k + "|" + f, r = byLevel.get(id) || { k: st.k, f, n: 0, v: G.gearSell(st.k, f) };   /* (2026-09-28) the whole code keeps a socketed piece its own row; the price is its level (2026-09-29: gearSell reads the level out of the code itself; the "% 4" here turned a +4 into +0) */ r.n += st.n; byLevel.set(id, r); }
     const sellGear = [...byLevel.values()].filter((r) => r.n > 0).sort((a, b) => b.v - a.v);
     const sellN = loot.length + rare.length + sellGear.length, bb = (me.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms);
     if (fresh || !bomTab) bomTab = loot.length ? "sell" : "buy";
@@ -1149,7 +1149,7 @@ export function createCasino(env) {
       }
       if (rare.length) pane += `<div class="k-sect"><span class="k-label">Rares · quick sell</span></div><p class="bom-hint">Bom lowballs you for a rare. Another player will pay more on the Market.</p>`
         + rare.map((r) => row(`${slot(r.k, 0, r.n)}<span><b>${esc(G.ITEMS[r.k].name)}</b><small>${r.v.toLocaleString()} each</small></span><span class="k-end">${price(r.n * r.v)}<button type="button" class="k-btn sm bom-sell" data-qs="${r.k}">Sell${r.n > 1 ? " all" : ""}</button></span>`)).join("");
-      if (sellGear.length) pane += `<div class="k-sect"><span class="k-label">Gear · a quarter back</span></div><p class="bom-hint">A quarter of what Bom sells it for, plus a quarter of the bars in any reforge. Reforged pieces ask twice.</p>`
+      if (sellGear.length) pane += `<div class="k-sect"><span class="k-label">Gear</span></div><p class="bom-hint">An eighth of what Bom sells it for, and for the bows, quivers, wands and bags he doesn't stock, what they're made of. A reforge adds its share. Reforged pieces ask twice.</p>`   /* (2026-09-29) was "a quarter", stale since the rate halved on 2026-09-27; bows and the rest are priced by craftGearPrice */
         + sellGear.map((r) => row(`${slot(r.k, r.f, r.n)}<span><b>${esc(G.forgeNameAt(r.k, r.f))}</b><small>${r.v.toLocaleString()} each${r.f ? ` · ${(r.v - G.gearSell(r.k)).toLocaleString()} of that is the reforge` : ""}</small></span><span class="k-end">${price(r.n * r.v)}<button type="button" class="k-btn sm bom-sell${r.f ? " bom-arm" : ""}" data-gs="${r.k}" data-gf="${r.f}">Sell${r.n > 1 ? " all" : ""}</button></span>`, r.f ? " forged" : "")).join("");
     } else if (bomTab === "back") {
       /* (2026-09-28, the owner: "build the buy-back section too") BUY-BACK: what you sold him in the last hour, at exactly what he paid */

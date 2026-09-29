@@ -16,6 +16,8 @@ const said = []; W.houseSay = (t) => said.push(t);
 /* 1. the code */
 const sw = G.withSockets(2, [{ k: "ruby", roll: 8 }, null]);
 is([G.fOf({ f: sw }), G.socketsOf(sw), G.forgeNameAt("nova_sword", sw)], [2, [{ k: "ruby", roll: 8 }, null], "Nova halberd +2 [Ruby +8%, empty socket]"], "one number: reforge +2, a ruby at +8% and an empty socket");
+{ const s4 = G.withSockets(4, [{ k: "ruby", roll: 8 }, null]);   /* (2026-09-29, the owner: "what if people already have +4") a Master's seal's +4 must survive the packing */
+  is([G.fOf({ f: 4 }), G.fOf({ f: s4 }), G.forgeNameAt("nova_sword", s4), G.codeOk("nova_sword", 4)], [4, 4, "Nova halberd +4 [Ruby +8%, empty socket]", true], "a sealed +4 stays +4, plain or socketed, and trades"); }
 is([G.sockMax("nova_sword"), G.sockMax("nova_axe"), G.sockMax("nova_body"), G.sockMax("bronze_sword")], [2, 2, 1, 0], "sockets: two on a level-80 weapon (tools too), one on armour, none below 80");
 is([G.codeOk("ruby", G.gemCode(10)), G.codeOk("ruby", G.gemCode(11)), G.codeOk("nova_sword", G.withSockets(0, [{ k: "topaz", roll: 5 }]))], [true, false, false], "the Exchange takes only real codes: no +11, no topaz in a sword");
 

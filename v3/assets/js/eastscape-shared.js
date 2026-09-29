@@ -889,7 +889,12 @@ export const bagMax = (c) => INV_MAX + (c ? petFx(c).slots + (achFx(c).slots | 0
    at all never stacks, which is rule 1 below applied to gems and sockets too. Old saves hold 1-3 and mean exactly what they did. */
 export const fCode = (s) => Math.max(0, (s?.f | 0) || 0);
 /** The reforge level on an inventory/bank entry (0 for an ordinary one). */
-export const fOf = (s) => Math.max(0, Math.min(FORGE.cap, fCode(s) % 4));
+/* (2026-09-29, the owner: "why is +3 the max reforge now? what if people already have +4 or +5?") THE LEVEL HAS THREE BITS, not two.
+   The gem work packed it into the code's low two bits (% 4), which hold 0 to 3 - and FORGE.cap is 4, a Master's seal's step, so every
+   +4 piece would have read as +0 the day gems shipped. PL (8) is the one place that says how wide the level is; every reader and writer
+   of a code goes through it. A plain +4 is stored as the number 4, today and after, so no live save changes meaning. */
+export const PL = 8;
+export const fOf = (s) => Math.max(0, Math.min(FORGE.cap, fCode(s) % PL));
 /** The highest reforge level anywhere on this character: worn, carried, banked - or in the pre-migration map. */
 /* (2026-09-24) THE ONE PLACE THAT ANSWERS "HAS THIS PERSON REFORGED ANYTHING". The level lives in three places
    since it moved onto the item, and the achievements were still reading a fourth that nothing writes. The legacy
@@ -900,7 +905,7 @@ export const topForge = (c) => {
   if (!c) return 0;
   let top = 0;
   const bump = (v) => { const n = Math.max(0, Math.min(FORGE.cap, v | 0)); if (n > top) top = n; };
-  for (const v of Object.values(c.eqf || {})) bump((v | 0) % 4);
+  for (const v of Object.values(c.eqf || {})) bump((v | 0) % PL);
   for (const s of c.inv || []) bump(fOf(s));
   for (const s of c.bank || []) bump(fOf(s));
   for (const v of Object.values(c.forge || {})) bump(v);
@@ -4895,7 +4900,7 @@ export const canForge = (key) => { const it = ITEMS[key]; if (it?.forgeWith) ret
                          your bag must not buff the plain one on your back.
    Anything DISPLAYING a piece (a bag slot, a market row, a trade offer) has the entry in its hand and should use
    its `f` through the *At helpers below, never these. */
-export const fLevelOf = (c, slot) => Math.max(0, Math.min(FORGE.cap, ((c?.eqf?.[slot] | 0) || 0) % 4));
+export const fLevelOf = (c, slot) => Math.max(0, Math.min(FORGE.cap, ((c?.eqf?.[slot] | 0) || 0) % PL));
 /** (2026-09-28) the whole code of a worn piece (reforge and sockets): what taking it off must carry */
 export const eqCode = (c, slot) => Math.max(0, (c?.eqf?.[slot] | 0) || 0);
 export const forgeLevel = (c, key) => { for (const sl in c?.eq || {}) if (c.eq[sl] === key) return fLevelOf(c, sl); return 0; };
@@ -4961,8 +4966,8 @@ export const forgeGainText = (c, key) => forgeGainTextAt(key, forgeLevel(c, key)
 /* (2026-09-28) given the whole CODE (a plain reforge level is a code with nothing else in it): a sorted gem says its roll, and a piece
    with sockets lists them. Every name in the game goes through here, so the bag, the bank, the Exchange and the counter all say so. */
 export const forgeNameAt = (key, code) => {
-  if (isGem(key)) return gemText(key, (code | 0) >= 4 ? Math.floor((code | 0) / 4) - 6 : null);
-  const lvl = (code | 0) % 4, socks = (code | 0) >= 4 ? socketsOf(code) : [];
+  if (isGem(key)) return gemText(key, (code | 0) >= PL ? Math.floor((code | 0) / PL) - 6 : null);
+  const lvl = (code | 0) % PL, socks = (code | 0) >= PL ? socketsOf(code) : [];
   return `${ITEMS[key]?.name || key}${lvl > 0 ? ` +${Math.min(FORGE.cap, lvl)}` : ""}${socks.length ? ` [${socks.map((g) => (g ? gemText(g.k, g.roll) : "empty socket")).join(", ")}]` : ""}`;
 };
 export const forgeName = (c, key) => forgeNameAt(key, forgeLevel(c, key));
@@ -5968,7 +5973,7 @@ export const forgeSellStep = (k) => {
   const cost = forgeCost(k);
   if (!cost) return 0;
   const [bar, n] = cost;
-  return Math.round(GEAR_SELL_RATE * n * (quickSell(bar) || valueOf(bar) || 0));
+  return Math.round(GEAR_SELL_RATE * n * (quickSell(bar) || valueOf(bar) || craftMatPrice(bar) || 0));   /* (2026-09-29) craftMatPrice: a Magic Bag is reforged with spell paper, which has no price of its own */
 };
 /* (2026-09-27, the owner: "after diamond put a limit on bom buying gear back for 2500 max. users can just craft a ton of cuirass
    for example right and break the inflation"). THE ANVIL WAS A TICKET PRINTER FROM ONYX UP. A fraction of the shelf price scales
@@ -5980,7 +5985,7 @@ export const forgeSellStep = (k) => {
    onyx up every piece pays the ceiling, and from nova up that is LESS than the bars would fetch sold on their own, so nobody
    smiths high gear to sell it. gearSellRaw is the uncapped figure, kept for the test that proves reforging is not a laundry. */
 export const GEAR_SELL_MAX = 2500;
-export const gearSellRaw = (k, f = 0) => { const p = COUNTER_PRICE.get(k); return p && ITEMS[k]?.slot ? Math.max(1, Math.round(p * GEAR_SELL_RATE)) + fOf({ f }) * forgeSellStep(k) : 0; };
+export const gearSellRaw = (k, f = 0) => { const p = COUNTER_PRICE.get(k); if (p && ITEMS[k]?.slot) return Math.max(1, Math.round(p * GEAR_SELL_RATE)) + fOf({ f }) * forgeSellStep(k); const c = craftGearPrice(k); return c ? c + fOf({ f }) * forgeSellStep(k) : 0; };   /* (2026-09-29) and the bows, quivers, wands and Magic Bags he does not stock: craftGearPrice, at the end of this file */
 export const gearSell = (k, f = 0) => Math.min(GEAR_SELL_MAX, gearSellRaw(k, f));
 export const canSell = (k) => isLoot(k) || quickSell(k) > 0 || gearSell(k) > 0;
 export const isLoot = (k) => !ITEMS[k]?.event && k !== "tickets" && k !== "tickets" && k !== "zcoin" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck && !ITEMS[k]?.use && !ITEMS[k]?.drink && !ITEMS[k]?.raw;
@@ -8724,7 +8729,7 @@ if (!HOLD.tinker) HISCORES.push(["built", "Builders", "given to World Projects (
    - SKILLING gems (`where: "case"`) go in the GEM CASE, a window of slots that is always on wherever you are: 3 to start, up to 12 with
      Case Slot kits (Sal again). So the woodcutter never has to remember to put the topaz back.
    A found gem is UNSORTED and fits nowhere; the Sorter rolls it a whole-number percent in GEMSET.roll (kept in the entry's code,
-   (roll + 6) * 4, so a sorted gem never stacks and TRADES with its roll). Taking a gem OUT of a socket or the case gives it back
+   (roll + 6) * PL, so a sorted gem never stacks and TRADES with its roll). Taking a gem OUT of a socket or the case gives it back
    UNSORTED (the owner's call): changing your mind costs a roll. A NEGATIVE roll is that much worse.
    (2026-09-28, the owner: "they shouldnt be able to use 8 10% melee gems as thats 80% extra damage which is game breaking") ONLY THE
    BEST GEMSET.perType OF EACH KIND COUNT, sockets and case together: two perfect rubies is +20% and a third does nothing, so the most
@@ -8763,21 +8768,21 @@ export const GEM_SKILL = Object.fromEntries(GEMSET.list.filter((g) => g.skill).m
 export const GEM_DMG = Object.fromEntries(GEMSET.list.filter((g) => g.fx === "dmg").map((g) => [g.style, g.k]));
 export const isGem = (k) => !!GEM_OF[k];
 /** a gem entry's roll (null = unsorted) */
-export const rollOf = (s) => (isGem(s?.k) && fCode(s) >= 4 ? Math.floor(fCode(s) / 4) - 6 : null);
-export const gemCode = (roll) => (roll + 6) * 4;
+export const rollOf = (s) => (isGem(s?.k) && fCode(s) >= PL ? Math.floor(fCode(s) / PL) - 6 : null);
+export const gemCode = (roll) => (roll + 6) * PL;
 /** (2026-09-28) is this a code a message may name for this item: a gem's roll, or a reforge level with sockets the piece can have */
 export const codeOk = (k, code) => {
   code = Math.floor(Number(code)) || 0; if (code <= 0) return code === 0;
-  if (isGem(k)) { const r = Math.floor(code / 4) - 6; return code % 4 === 0 && r >= GEMSET.roll[0] && r <= GEMSET.roll[1]; }
-  if (code % 4 > FORGE.max || (code % 4 && !canForge(k))) return false;
+  if (isGem(k)) { const r = Math.floor(code / PL) - 6; return code % PL === 0 && r >= GEMSET.roll[0] && r <= GEMSET.roll[1]; }
+  if (code % PL > FORGE.cap || (code % PL && !canForge(k))) return false;   /* (2026-09-29) cap, not max: a sealed +4 is a real piece */
   const socks = socketsOf(code); return socks.length <= sockMax(k) && withSockets(code, socks) === code && socks.every((g) => !g || GEM_OF[g.k]?.where === "gear");
 };
 export const gemText = (k, roll) => `${ITEMS[k]?.name || k}${roll == null ? " (unsorted)" : ` ${roll > 0 ? "+" : ""}${roll}%`}`;
 /* a piece's sockets: above the reforge bits, two socket values in base SB. 0 no socket, 1 empty, 2 + gemIndex*16 + (roll+5) a gem */
 const SB = 1024, sv = (x) => (x === undefined ? 0 : x === null ? 1 : 2 + GEM_OF[x.k].i * 16 + (x.roll + 5));
-export const socketsOf = (code) => { const s = Math.floor((code | 0) / 4); return [s % SB, Math.floor(s / SB) % SB].filter((v) => v > 0).map((v) => (v === 1 ? null : { k: GEMSET.list[Math.floor((v - 2) / 16)]?.k, roll: ((v - 2) % 16) - 5 })); };
+export const socketsOf = (code) => { const s = Math.floor((code | 0) / PL); return [s % SB, Math.floor(s / SB) % SB].filter((v) => v > 0).map((v) => (v === 1 ? null : { k: GEMSET.list[Math.floor((v - 2) / 16)]?.k, roll: ((v - 2) % 16) - 5 })); };
 /** a code with these sockets (an array of up to two: null for an empty socket, { k, roll } for a gem), keeping the reforge level */
-export const withSockets = (code, socks) => ((code | 0) % 4) + 4 * (sv(socks[0]) + SB * sv(socks[1]));
+export const withSockets = (code, socks) => ((code | 0) % PL) + PL * (sv(socks[0]) + SB * sv(socks[1]));
 export const itemLvl = (k) => ITEMS[k]?.req?.lvl ?? ITEMS[k]?.tool?.lvl ?? 0;
 /** how many sockets this piece can have: one on any level-80+ piece, two on a weapon (tools are weapons), none on pets */
 export const sockMax = (k) => { const it = ITEMS[k]; if (!it?.slot || it.slot === "pet" || itemLvl(k) < GEMSET.minLvl) return 0; return it.slot === "weapon" ? 2 : 1; };
@@ -8913,3 +8918,30 @@ export const TIP_TEXT = {
   spot: ["Your next card is tucked under {x}, in {w}.", "Somebody left a card by {x}. {w}.", "Turn this card over at {x}, in {w}, and see what's under it."],
   gather: ["The tipster wants a {x}, fresh. Bring one up yourself.", "Get a {x} with your own hands and the next card is yours.", "No card until you've got a {x} of your own."],
 };
+
+/* ============================================================ ARCHERY AND MAGIC GEAR AT BOM (2026-09-29, a player's idea on the bug board:
+   "Ability to sell Archery weapons and equipment at Bom"). Bom buys gear at an eighth of what his own shelf asks for it (gearSellRaw), and
+   bows, quivers, wands and Magic Bags have never been on his shelf, so he had no price for them and turned them away. They get one here,
+   from what they are made of: each craft is worth its ingredients and a quarter again (CRAFT_STEP), worked up the recipe ladder (logs and a
+   string make a bow; hide makes the string). It is kept in its own table, NOT in VALUE, so nothing else (a bowstring, a shaft, an arrow)
+   becomes loot by accident. Two ceilings, as for everything Bom buys: never more than 70% of what he sells the same piece for (the rough
+   shortbow and quiver), and GEAR_SELL_MAX like the anvil's gear. Arrows and pages are left out: the ask was gear. Worked out once, after
+   every recipe in this file exists (the fletching, wand and bag recipes are all above), which is why it sits at the very end. */
+const CRAFT_GEAR = new Map(), CRAFT_P = new Map();
+{ const P = CRAFT_P, byOut = {}; for (const [k, v] of Object.entries(VALUE)) if (v > 0) P.set(k, v);
+  for (const r of Object.values(RECIPES)) (byOut[r.out[0]] ||= []).push(r);
+  for (let pass = 0; pass < 8; pass++) for (const [k, rs] of Object.entries(byOut)) {
+    if (P.has(k)) continue;
+    const r = rs.find((x) => x.in.every(([i]) => P.has(i))); if (!r) continue;
+    P.set(k, Math.max(1, Math.round(r.in.reduce((a, [i, n]) => a + P.get(i) * n, 0) / (r.out[1] || 1) * CRAFT_STEP)));
+  }
+  const sold = Object.fromEntries(SHOP.sells);
+  for (const [k, it] of Object.entries(ITEMS)) {
+    if (!it.slot || it.event || it.held || COUNTER_PRICE.has(k) || !(it.bow || it.pouch || it.launcher) || !P.has(k)) continue;
+    CRAFT_GEAR.set(k, sold[k] ? Math.min(P.get(k), Math.floor(sold[k] * 0.7)) : P.get(k));
+  }
+}
+/** what Bom pays for a bow, quiver, wand or Magic Bag he does not stock, before its reforge level; 0 for anything else */
+export const craftGearPrice = (k) => CRAFT_GEAR.get(k) || 0;
+/** what a crafted material is worth, by the same ladder, for pricing a reforge step (spell paper for a Magic Bag); never a sale price on its own */
+export const craftMatPrice = (k) => CRAFT_P.get(k) || 0;
