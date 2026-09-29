@@ -296,6 +296,11 @@ head("dead inventory");
   console.log("");
   const r = spawnSync(process.execPath, [fileURLToPath(new URL("./eastscape-budget.mjs", import.meta.url))], { stdio: "inherit" });
   if (r.status) errors++;
+  /* (2026-09-29) and every open map loads the pictures it stands on: a picture named in one area's list leaves core and vanishes
+     from every other map (the Yard's barrels, the Boneyard's and Cloudreach's rocks) */
+  console.log("\nart every map loads");
+  const r2 = spawnSync(process.execPath, [fileURLToPath(new URL("./eastscape-art-reach.mjs", import.meta.url))], { stdio: "inherit" });
+  if (r2.status) errors++;
 }
 
 /* ONE RATE FOR EVERY NAMED RARE (2026-09-23). raresOf applies RARE_RATE, so this cannot drift by someone editing
