@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 354;   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 355;   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -8571,7 +8571,8 @@ export function collectionBook() {
   const BANDS_ = [[1, 29, "Levels 1 to 29"], [30, 59, "Levels 30 to 59"], [60, 79, "Levels 60 to 79"], [80, 999, "Level 80 and up"]];
   const rares = BANDS_.map(([lo, hi, name]) => ({ name, keys: Object.keys(rareAt).filter((k) => rareAt[k] >= lo && rareAt[k] <= hi && !ITEMS[k].event).sort((a, b) => rareAt[a] - rareAt[b]) })).filter((s) => s.keys.length);
   const skilling = [{ name: "Gems", keys: GEMS.map((g) => g.key).filter((k) => !colShut(k)) },
-    { name: "Lucky finds", keys: ["goldtomatoe", "truffle", "geode", "clover", "horseshoe"].filter((k) => ITEMS[k] && !colShut(k)) }].filter((s) => s.keys.length);
+    { name: "Lucky finds", keys: ["goldtomatoe", "truffle", "geode", "clover", "horseshoe"].filter((k) => ITEMS[k] && !colShut(k)) },
+    { name: "Builder's Pins", keys: Object.keys(PROJECTS).map((id) => `pin_${id}`).filter((k) => ITEMS[k] && !colShut(k)) }].filter((s) => s.keys.length);   /* (2026-09-29) one per World Project, from helping build it */
   const pets = [{ name: "Pets", keys: Object.keys(PETS).filter((k) => !PETS[k].held && !PETS[k].event).map((k) => `pet:${k}`) },
     { name: "Eggs", keys: Object.keys(EGGS).filter((k) => !colShut(k) && !ITEMS[k].event) }].filter((s) => s.keys.length);
   const finds = [{ name: "Casino finds", keys: uniq(["pot_double", ...FINDS.map((f) => f[0])]).filter((k) => !colShut(k)) }].filter((s) => s.keys.length);
@@ -8743,6 +8744,16 @@ GAMES.boiler = { name: "The Boiler", icon: "♨️", proj: "table", ex: "Set the
    finished build (tools/eastscape-tinker-art.mjs). C.pins is the collection, so a lost or banked pin is still remembered. */
 for (const [id, P] of Object.entries(PROJECTS)) ITEMS[`pin_${id}`] = { name: `${P.name.replace(/^The /, "")} Builder's Pin`, icon: "\u{1F4CC}", held: HOLD.tinker, ex: `Given to everybody who helped build ${P.name} in ${P.where}. It doesn't do anything. You were there.` };
 if (!HOLD.tinker) HISCORES.push(["built", "Builders", "given to World Projects (part value, and a point per 100 tickets)", "n"]);
+/* (2026-09-29, the owner: Tinkering needs to be "applied in skill menus, profiles, hi scores, etc") ITS ACHIEVEMENTS, one per step of the
+   skill: salvage, the gadget levels, the automation tools, and the pins. All predicates over the character, like every other one, so the
+   login sweep awards them to anybody who already did it; salvaging, building and giving all pay xp, which is the event they listen for. */
+if (!HOLD.tinker) Object.assign(ACH, {
+  a_tinker:  { name: "Scrapper",      blurb: "Salvage something at Sprocket Sal's Scrap Bench.",       tier: "novice",  on: ["xp", "login"], has: (c) => (c?.xp?.tinkering | 0) > 0 },
+  s_tink30:  { name: "Gadgeteer",     blurb: "Reach Tinkering 30.",                                    tier: "skilled", on: ["xp"],          has: (c) => lvlOf(c, "tinkering") >= 30 },
+  e_tink60:  { name: "Automation",    blurb: "Reach Tinkering 60 and build your own Auger.",           tier: "expert",  on: ["xp"],          has: (c) => lvlOf(c, "tinkering") >= 60 },
+  s_pin:     { name: "Builder",       blurb: "Earn a Builder's Pin by giving to a World Project.",     tier: "skilled", on: ["xp", "login"], has: (c) => (c?.pins?.length | 0) >= 1 },
+  m_pins:    { name: "Town Planner",  blurb: "Hold ten different Builder's Pins.",                     tier: "master",  on: ["xp", "login"], has: (c) => (c?.pins?.length | 0) >= 10 }
+});
 
 /* ============================================================ GEMS AND THE GEM BAG (2026-09-28, rebuilt 2026-09-29; EASTSCAPE-DRAFTS §12)
    The owner, after testing the first build (sockets on level-80 gear, punches from Sal, a Gem Case of up to twelve): "Primitive gem system.

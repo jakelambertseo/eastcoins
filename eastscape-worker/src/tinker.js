@@ -226,7 +226,7 @@ export function installTinker(World, { G }) {
   /* a Builder's Pin, once per build per person: the bag, else the bank, else it waits for the next login */
   P.projPin = function (pl, id) {
     const C = pl.C, k = `pin_${id}`; C.pins ||= []; if (C.pins.includes(id)) return true;
-    if (!this.give(pl, k) && !this.bankAdd(pl, k, 1)) return false;
+    if (!this.give(pl, k)) { if (!this.bankAdd(pl, k, 1)) return false; this.colGet(pl, k, 1); }   /* (give() writes the collection log itself; the bank path has to) */
     C.pins.push(id); this.touch(pl); this.say(pl, `\u{1F4CC} You get the ${G.ITEMS[k].name} for helping build it.`, "loot"); return true;
   };
   /* on login: any pins earned while away */
