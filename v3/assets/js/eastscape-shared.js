@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 359;   /* (2026-09-29) the Wilderness ladder to the Thunderhead, the Wild Bench to the Deep Wild, Bronny x1.5 */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 360;   /* (2026-09-29) Bronny draws on nine skills; the 2X banner on the server clock */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7749,6 +7749,30 @@ export const ORDER = {
    is what starts the Yard's 2X, so this is the 2X getting harder to earn. The table above stays as written; an order already out keeps
    the counts it was dealt (they are saved on it), so only the next one feels this. */
 for (const K of Object.values(ORDER.kinds)) for (const t of ["early", "mid", "late"]) for (const row of K[t] || []) row[1] = Math.max(5, Math.round((row[1] * 1.5) / 5) * 5);
+/* (2026-09-29, the owner: "lets add needed skills from bronny to harvesting and tinkering fletching and wizardry as well") FOUR MORE KINDS,
+   so an order's five lines are five of nine skills. Their counts are final as written (they come after the x1.5 above), sized like the
+   lines already there: an early line is a hundred-odd actions for one player, a late one a day's work for the server. Harvesting is sized
+   on a twelve-plot island (wheat is ten minutes and four a plot; starfruit eight hours and three); fletching and wizardry make ten or
+   fifteen an action; tinkering hands in GADGETS, which are expensive since rules 357, so its counts are small and every one is a sink.
+   orderPick still skips anything held or on Bom's shelf, and falls back a tier when nothing in one is open. */
+Object.assign(ORDER.kinds, {
+  harvest: { name: "Harvesting",
+    early: [["wheat", 300], ["tomatoe", 250], ["rattlebean", 200]],
+    mid: [["lanternroot", 150], ["bonegourd", 100], ["stormcorn", 60]],
+    late: [["glassgourd", 30], ["emberwheat", 25], ["starfruit", 15]] },
+  fletch: { name: "Fletching",
+    early: [["shaft", 1500], ["bronze_arrow", 900], ["ruby_arrow", 600]],
+    mid: [["emerald_arrow", 600], ["diamond_arrow", 450], ["sapphire_arrow", 450], ["dragonstone_arrow", 375], ["willowlogs_longbow", 20], ["ashlogs_longbow", 15]],
+    late: [["onyx_arrow", 300], ["starfall_arrow", 225], ["eclipse_arrow", 150], ["yewlogs_longbow", 10]] },
+  wizard: { name: "Wizardry",
+    early: [["spellpaper", 500], ["page_sun_bolt", 600], ["page_fire_bolt", 500]],
+    mid: [["page_sun_blast", 400], ["page_frost_bolt", 400], ["page_fire_blast", 300], ["page_void_bolt", 300]],
+    late: [["page_sun_surge", 200], ["page_frost_blast", 200], ["page_storm_bolt", 200], ["page_fire_surge", 150]] },
+  tinker: { name: "Tinkering",
+    early: [["tk_confetti", 9], ["tk_baitbox", 3], ["tk_medkit", 6]],
+    mid: [["tk_whetstone", 3], ["tk_scope", 3], ["tk_arccoil", 3], ["tk_lockpick", 3], ["tk_cooker", 3]],
+    late: [["tk_lantern", 2], ["tk_grapple", 2], ["tk_auger", 1]] }
+});
 /** a fresh order's lines: one from each kind, with ORDER.mix's tiers dealt out at random. Anything held, or anything Bom sells (so it
     could be bought and handed straight back), is never picked. `r` is the random source (Math.random, or a test's). */
 export function orderPick(r = Math.random) {

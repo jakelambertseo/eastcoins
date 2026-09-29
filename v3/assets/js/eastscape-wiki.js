@@ -1107,6 +1107,13 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-29", title: "Bronny needs more trades",
+    items: [
+      "BRONNY'S ORDERS NOW DRAW ON NINE SKILLS, not five: Harvesting (crops from your island), Fletching (shafts, arrows and bows), Wizardry (spell paper and pages) and Tinkering (gadgets, a few at a time) join Fishing, Woodcutting, Mining, monster drops and Cooking. Each order still has five lines, picked from the nine.",
+      "THE 2X BANNER keeps time by the server's clock, so a computer whose clock runs fast no longer loses it early.",
+    ],
+  },
+  {
     date: "2026-09-29", title: "The Wilderness moves out to the Thunderhead, and Bronny wants more",
     items: [
       "THE WILDERNESS LADDER HAS MOVED from the Gloam to the Thunderhead, on the storm-plain's south edge. It was far too close to the Yard for somewhere that dangerous and that rewarding. A sign in the Gloam points the way. Climbing back out brings you up where you went down.",

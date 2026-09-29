@@ -15,7 +15,7 @@
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=390">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=391">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1952,7 +1952,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=390";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=391";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1961,7 +1961,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=216").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=217").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -7886,8 +7886,11 @@ document.addEventListener("keydown", (e) => {
    starts, when it ends, and on login if one is already running - so the banner cannot get stuck on after a
    refresh, which is the only way a countdown like this normally goes wrong. */
 let DBL = null, dblEl = null, dblTimer = 0;
+/* (2026-09-29, the owner: "make sure 2x stays up when server refreshes") the SERVER's clock, not this computer's: `until` is server time,
+   and a machine running a few minutes fast used to end the banner early, or never show it, while the server went on paying double */
+const dblNow = () => Date.now() + (offset || 0);
 function dblRender() {
-  const left = DBL ? DBL.until - Date.now() : 0;
+  const left = DBL ? DBL.until - dblNow() : 0;
   if (!DBL || left <= 0) {
     DBL = null; if (dblEl) dblEl.hidden = true;
     if (dblTimer) { clearInterval(dblTimer); dblTimer = 0; }
@@ -7904,7 +7907,7 @@ function dblRender() {
   dblEl.hidden = false;
 }
 function dblSet(on) {
-  DBL = on && on.until > Date.now() ? on : null;
+  DBL = on && on.until > dblNow() ? on : null;
   dblRender();
   if (DBL && !dblTimer) dblTimer = setInterval(dblRender, 1000);
 }
