@@ -1056,6 +1056,14 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-28", title: "Bronny's order: the server's daily 2X",
+    items: [
+      "BRONNY THE FOREMAN is rebuilding the Yard. Find him at his worksite by the Yard's west gate. He posts ONE ORDER for the whole server: five lines, one each from fishing, woodcutting, mining, monster drops and cooking, always two early-game, two mid-game and one late-game, so there's something for everybody to bring.",
+      "Hand in from your bag, any amount, any time: it all goes on the same bars, and his window shows the clock, the bars, what you've got and who's helping. What you hand in is gone for good (he's building with it), and he only takes what the order still needs.",
+      "FILL IT AND THE WHOLE SERVER GETS A 2X POTION. It waits at Bronny until somebody who helped claims it, then it's 30 minutes of double tickets and double crafting xp for everyone online, and Bronny puts up the next order. An order that runs out unfilled is replaced by a fresh one.",
+    ],
+  },
+  {
     date: "2026-09-28", title: "A new look, and monsters that land their hits",
     items: [
       "MONSTERS LAND THEIR HITS: out in the world, a monster now aims at the gear its level asks for, all of it, amulet and ring included. Fight something at your level in your tier's kit and it lands about 4 swings in 10 (it was nearer 2). More defence still helps all the way up, reforges included, but it never switches a monster off. Its hits are a little smaller to match, so a fight costs about half again what it did: pack food. The Yard's starters, the Tower and the dungeons are unchanged.",

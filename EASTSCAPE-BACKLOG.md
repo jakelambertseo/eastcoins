@@ -161,6 +161,28 @@ Not Roman: the user wants new content original and imaginative (NGU / Dungeon Cr
 
 ## Next up
 
+- **Nerf the Nexus altar some** (owner, 2026-09-28: "Nerf the Nexus alter some"). Not scoped yet: find the altar's
+  rules first (what it pays or buffs, and how often), measure it against the other altars, and bring a number to the owner.
+
+- **Back and forward buttons in the wiki** (owner, 2026-09-28). The wiki already routes by hash
+  (`/eastscape#wiki/items/logs`), so these are history.back()/forward() over those routes, or a small stack of
+  its own if hash history mixes with the game's.
+
+- **The Crypt test's failures** (owner, 2026-09-28: "add the crypt failures to the backlog"). `node tools/eastscape-crypt-test.mjs`
+  fails 5 of 31 (7 on the commit before Bronny's order, so some are flaky, not new):
+  1. "the ante is taken from each of them, once": one player's tickets went 9,775 -> 17,085 instead of down by the ante.
+  2. "the kill itself pays NOTHING into the bag any more": 250 / 250. **Likely a real bug**: the Hoodie's kill still puts 250 tickets
+     straight in the bag, when the design (crypt rules, ~line 54: "dont give the users tickets directly after a boss defeat") says the
+     chest is the only pay.
+  3. "the bag gained exactly the chest's tickets": 2,750 vs 2,500, the same 250 as #2.
+  4. "a second go gives nothing: one each": opening the chest again still gives something.
+  5. "B walked out WITHOUT opening the chest: it is sent after them": the cryptloot event says sent:true but the assertion fails.
+  For each: real bug (fix the worker/rules) or a test that fell behind (fix the test); make the flaky ones deterministic (stub
+  Math.random, the 2X event and bounty drops).
+
+- **Party damage meters and after-dungeon reports** (owner, 2026-09-28). The sketch is
+  mockups-archive/eastscape-dungeon-report.html; build on the dev server after Gus's order.
+
 - **Rename "Wagered" on the profile** (owner asked 2026-09-22, deferred). It reads as "tickets put in", so it
   looks impossible next to "Earned" — dookiebetts800 showed 38k earned against 455k wagered and the owner
   reasonably asked how. It is lifetime TURNOVER: `bigBet()` adds every stake, and the same tickets are re-staked

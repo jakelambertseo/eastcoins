@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 349;   /* (2026-09-28) Bom's buy-back (BUYBACK, C.buyback) and the rebuilt Prize Counter */
+export const VERSION = 350;   /* (2026-09-28) Bronny's order, the server's daily (ORDER, orderPick, orderPct) */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7432,12 +7432,12 @@ export const ORDER = {
   tiers: { early: "Early game", mid: "Mid game", late: "Late game" },
   kinds: {
     fish: { name: "Fishing",
-      early: [["sardine", 150], ["perch", 120], ["trout", 100]],
-      mid: [["lanternfish", 60], ["mudskipper", 50], ["bonefish", 45], ["ghostcarp", 40], ["skyeel", 35]],
+      early: [["sardine", 300], ["perch", 250], ["trout", 200]],   /* (2026-09-28, the owner: "up the amount needed ... for early/mid game fishing, woodcutting") doubled */
+      mid: [["lanternfish", 120], ["mudskipper", 100], ["bonefish", 90], ["ghostcarp", 80], ["skyeel", 70]],
       late: [["stormmarlin", 20], ["thundersquid", 18], ["goldfish", 15], ["koi", 15]] },
     wood: { name: "Woodcutting",
-      early: [["logs", 150], ["willowlogs", 100]],
-      mid: [["ashlogs", 70], ["yewlogs", 30], ["skyashlogs", 50], ["palmlogs", 50]],
+      early: [["logs", 300], ["willowlogs", 200]],   /* doubled, as fishing */
+      mid: [["ashlogs", 140], ["yewlogs", 60], ["skyashlogs", 100], ["palmlogs", 100]],
       late: [["pinelogs", 25], ["voidlogs", 12]] },
     ore: { name: "Mining and the forge",
       early: [["copper", 150], ["tin", 150], ["bronze_bar", 25]],
