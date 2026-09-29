@@ -797,6 +797,9 @@ export class World {
         if (/^[\/!](pumpkin|king)\b/i.test(text)) return this.say(pl, this.hwKingLine(now), "good");
         /* (2026-09-28) /project: where every World Project stands. An admin can set one: /project dock 1, and "fill" fills that tier's
            parts so the Finish button lights (it is the admin projtier command, so it answers to the same permission). */
+        /* (2026-09-28) /parts 500: an admin's pouch topped up with that many of every part, for testing Tinkering */
+        { const pp = text.match(/^[\/!]parts\b\s*(\d+)?/i);
+          if (pp) { if (!this.canRun(pl, "projtier")) return this.say(pl, "That one is admins only.", "bad"); const n = Math.min(1e6, +(pp[1] || 500)); C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 }; for (const k of Object.keys(G.TINK.parts)) C.parts[k] = (C.parts[k] | 0) + n; this.touch(pl); this.projPush(pl); return this.say(pl, `+${n.toLocaleString()} of every part. Your pouch: ${Object.entries(C.parts).map(([k, v]) => `${v.toLocaleString()} ${G.TINK.parts[k].name.toLowerCase()}`).join(", ")}.`, "good"); } }
         { const pj = text.match(/^[\/!]projects?\b\s*([a-z]+)?\s*(\d)?\s*(fill)?/i);
           if (pj) {
             if (pj[2] == null) return this.say(pl, `${Object.entries(G.PROJECTS).map(([id, P]) => `${P.name} (${id}): tier ${G.projTier(id)} of 3`).join(" · ")}.${this.canRun(pl, "projtier") ? " Admins: /project dock 1, add fill to fill its parts." : ""}`, "good");

@@ -8433,7 +8433,7 @@ export function usesOf(k) {
    something and one pit is not; what is left over is lost, which is part of the sink. PARTS ARE NOT ITEMS: they sit in a pouch on the
    character (C.parts), take no bag space, and Bom cannot buy them, so salvaging is a real choice between tickets now and parts. */
 export const TINK = {
-  npc: "Sprocket Sal", reach: 3, rate: 0.7, zeroScrap: 0.2, magicPv: 1, relicAt: 150, xpPerPv: 1,   /* magicPv: a page or an ink Bom pays nothing for is still worth a little, in Sparks */
+  npc: "Sprocket Sal", reach: 3, rate: 0.7, zeroScrap: 0.2, magicPv: 10, relicAt: 150, xpPerPv: 1,   /* magicPv: a page or an ink Bom pays nothing for is still worth a little, in Sparks */
   parts: { scrap: { name: "Scrap", pv: 1, col: "#8a8a86" }, gears: { name: "Gears", pv: 5, col: "#c8963a" }, sparks: { name: "Sparks", pv: 5, col: "#4a7ad8" }, relic: { name: "Relic shards", pv: 50, col: "#9a4ad8" } },
   share: { metal: ["gears", 0.6], magic: ["sparks", 0.6], relic: ["relic", 0.5] }
 };
@@ -8450,9 +8450,15 @@ export const bomPays = (k, f = 0) => (isLoot(k) ? valueOf(k) : gearSell(k, f) > 
 /** may this be salvaged at all? Never money, keys, eggs, pets, quest or event items, or anything held shut */
 export const canSalvage = (k) => { const it = ITEMS[k]; if (!it || it.held || it.event || it.quest || TK_NEVER.has(k) || /^(egg_|pet_|key_)/.test(k) || /key$/.test(k)) return false; return bomPays(k) > 0 || tkDrops().has(k) || /^(page_|ink_)/.test(k); };
 /** what kind of thing it is, which decides the part it mostly becomes */
+/* (2026-09-28, the owner testing: "how do i get sparks") SPARKS HAD NO REAL SOURCE. Only pages, ink and wands were "magic", and a page
+   sells for nothing, so it was worth TINK.magicPv = 1 of part value: a tenth of a Spark, and the dock's 80 Sparks were 1,300 pages.
+   Now a page or an ink is worth 10 (one Spark each, and a little Scrap), and the world's MAGICAL DROPS salvage mostly into Sparks
+   too. They are still plain drops, so they still go in "Salvage the lot". */
+export const TK_MAGIC = new Set(["stardust", "voidglass", "stormjelly", "hailshard", "grimcore", "glowcap", "ghostpipe", "stormcorn", "singularity_core"]);
 export const salvageKind = (k, f = 0) => {
   const it = ITEMS[k] || {};
   if (bomPays(k, f) >= TINK.relicAt) return "relic";
+  if (TK_MAGIC.has(k)) return "magic";
   if (/^(page_|ink_)/.test(k) || it.launcher?.style === "magic" || /wand/.test(k)) return "magic";
   if (it.slot || it.tool || /_(bar|ore)$/.test(k) || ["copper", "tin"].includes(k)) return "metal";
   return "junk";
@@ -8467,7 +8473,7 @@ export function salvageOf(k, n = 1, f = 0) {
   return out;
 }
 /** "Salvage the lot": only plain drops and loot, never gear, rares or anything you'd miss (they go one at a time) */
-export const salvageLot = (k) => { const it = ITEMS[k] || {}; return canSalvage(k) && salvageKind(k) === "junk" && !it.heal && !it.meal && !it.drink && !it.use && (isLoot(k) || tkDrops().has(k)); };   /* never gear, bars, magic, rares or anything you eat or use */
+export const salvageLot = (k) => { const it = ITEMS[k] || {}; return canSalvage(k) && (salvageKind(k) === "junk" || TK_MAGIC.has(k)) && !it.heal && !it.meal && !it.drink && !it.use && (isLoot(k) || tkDrops().has(k)); };   /* never gear, bars, magic, rares or anything you eat or use */
 
 /* ------------------------------------------------------------ TINKERING, STEP TWO: THE GADGETS (2026-09-28, EASTSCAPE-DRAFTS.md §11b:
    "there should be a buildable tinker item for every skill, including combat ones"). Built at the bench from PARTS plus a TICKET FEE
