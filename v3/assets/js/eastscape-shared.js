@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 361;   /* (2026-09-29) the outfitters (Wren and Morwenna), longbows x2, Bronny nine skills (no late tier for the new four) */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 362;   /* (2026-09-29) outfitter prices match Bom's melee gear tier for tier */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -9087,8 +9087,16 @@ export const OUTFIT = {
     gloves: { w: 0.35, dmg: 0.015, spd: 0.5, names: { archery: "bracers", magic: "gloves" }, icon: "\u{1F9E4}" },
     boots:  { w: 0.35, dmg: 0.01,  spd: 2,   names: { archery: "boots", magic: "slippers" }, icon: "\u{1F97E}" }
   },
-  armourPrice: (lvl, w) => r50(60 * Math.pow(lvl, 1.4) * w),   /* a level-90 body ~33,000; a whole level-90 set ~96,000 */
-  weaponPrice: (k) => r50(Math.max(craftMatPrice(k) * 20, 150 * Math.pow(ITEMS[k]?.req?.lvl || 1, 1.4)))   /* a level-50 longbow ~36,000 */
+  /* (2026-09-29, the owner, after launch: "prices of mage and archery gear need to be 75% more", then "actually they need to match their tiers
+     of melee gear at bom ... theyre way too cheap") PRICED OFF BOM'S OWN SHELF, tier for tier. A piece of armour costs what Bom asks for the
+     plate piece in the same slot at the same level (bronze, diamond, onyx, eclipse, singularity). A bow or wand costs what he asks for that
+     tier's longsword, and a quiver or Magic Bag his shield (the offhand), the tier being the highest a weapon's level reaches (TIERS' gates).
+     Buy-back is still an eighth of the shelf price, capped at GEAR_SELL_MAX, exactly as for his plate. */
+  armourPrice: (lvl, slot) => { const plate = Object.keys(ITEMS).find((x) => ITEMS[x].tier === OUTFIT.plate[lvl] && ITEMS[x].slot === slot && !ITEMS[x].event); return COUNTER_PRICE.get(plate) || 0; },
+  /* (same evening, the owner: "bags and wands need to be 10x more expensive too", "and bows and quivers") weapons at TEN TIMES that tier's
+     longsword or shield: making your own with Fletching or Wizardry is the way, and buying is for the very rich */
+  weaponMult: 10,
+  weaponPrice: (k) => { const it = ITEMS[k], t = [...TIERS].reverse().find((x) => x.gate <= (it?.req?.lvl || 1))?.key || "bronze"; return (COUNTER_PRICE.get(`${t}_${it?.pouch ? "shield" : "sword"}`) || 0) * OUTFIT.weaponMult; }
 };
 const OUTFIT_SHELF = { ranger: [], mage: [] }, OUTFIT_BUYS = { ranger: new Set(), mage: new Set() };
 for (const [shop, style] of Object.entries(OUTFIT.style)) for (const [key, tname, lvl] of OUTFIT.tiers[style]) for (const [slot, S] of Object.entries(OUTFIT.slots)) {
@@ -9097,7 +9105,7 @@ for (const [shop, style] of Object.entries(OUTFIT.style)) for (const [key, tname
   ITEMS[k] = { name, short: piece[0].toUpperCase() + piece.slice(1), icon: S.icon, slot, def: Math.max(1, Math.round((ITEMS[plate]?.def || 2) / 2)), sdmg: { [style]: S.dmg },
     ...(style === "archery" ? { spd: S.spd } : {}), outfit: shop, req: { skill: style, lvl },
     ex: `${style === "archery" ? "Light armour for an archer" : "A mage's robes"}: half the defence of plate, but +${Math.round(S.dmg * 1000) / 10}% ${style === "archery" ? "Archery" : "Magic"} damage while you fight that way${style === "archery" ? `, and ${S.spd}% faster on your feet` : ""}. A full set is +10%${style === "archery" ? " and 6% faster" : ""}. ${OUTFIT.npc[shop]} sells it, in ${OUTFIT.where[shop]}.` };
-  OUTFIT_SHELF[shop].push({ k, price: OUTFIT.armourPrice(lvl, S.w), kind: "armour", lvl });
+  OUTFIT_SHELF[shop].push({ k, price: OUTFIT.armourPrice(lvl, slot), kind: "armour", lvl });
   OUTFIT_BUYS[shop].add(k);
 }
 { const bom = new Set(prizesOf().map((p) => p.give?.[0]).filter(Boolean));
