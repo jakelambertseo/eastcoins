@@ -4154,6 +4154,7 @@ export function fxOf(c) {
   if ((c?.luck | 0) > 0) out.zdrop += LUCK.zdrop;
   { const a = achFx(c); for (const k of OUT_KEYS) out[k] += a[k] || 0; }
   { const pf = petFx(c); out.tough += pf.tough / 100; out.bite += pf.bite / 100; out.steal += pf.steal / 100; }   /* (2026-09-27) the Breeding pets, inside the caps below */
+  for (const g of tkOn(c)) if (g.fx) for (const k of OUT_KEYS) out[k] += g.fx[k] || 0;   /* (2026-09-28) Tinkering's timed gadgets, inside the caps below */
   out.rare += charmOf(c, "keeneye") / 100;   /* (2026-09-26) Keen Eye, before the caps below */   /* (2026-09-23) achievement milestones, before the caps below so they cannot escape them */
   for (const k of OUT_KEYS) out[k] = Math.max(k === "tough" ? -0.5 : 0, Math.min(OUT_CAP[k], out[k]));
   return out;
@@ -4214,6 +4215,7 @@ export const buffsOf = (c) => {
   if ((c?.luck | 0) > 0) one("luck", "Lucky", "clover", `A real ZCoin is ${LUCK.zdrop * 100}% more likely to drop. One is used up per kill or catch. Only fishing finds clovers.`, c.luck | 0);
   for (const st of [c?.meal, c?.drink]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k]; if (it) one(it.meal ? "meal" : "drink", it.short || it.name, st.k, `${it.name}: ${fxText((it.meal || it.drink).fx)}. The clock only runs while you're outside.`, Math.max(1, Math.ceil((st.left | 0) / 60000)), "minute"); }
   for (const k0 of SLOTS) { const k = c?.eq?.[k0], it = k && ITEMS[k]; if (it?.fx) one(`worn:${k}`, it.short || it.name, k, `${it.name} (worn): ${fxText(it.fx)}.`); }
+  for (const [id, t] of Object.entries(c?.tk || {})) { const g = GADGETS[id]; if (g && (t.left | 0) > 0) one(`tk:${id}`, g.name, g.item === false ? "tk_banner" : `tk_${id}`, `${g.name}: ${g.does}. The clock only runs while you're outside.`, Math.max(1, Math.ceil((t.left | 0) / 60000)), "minute"); }   /* (2026-09-28) Tinkering's gadgets */
   if (c?.charm && (c.charm.left | 0) > 0 && CHARMS[c.charm.k]) { const C_ = CHARMS[c.charm.k], t = c.charm.tier || 1; one("charm", `${C_.name} ${"I".repeat(t)}`, `scroll_${c.charm.k}`, `${C_.name} (tier ${"I".repeat(t)}): ${C_.what(C_.vals[t - 1])}. The clock only runs while you're outside.`, Math.ceil(c.charm.left / 60000), "minute"); }   /* (2026-09-26) the page buff */
   return out;
 };
@@ -6945,6 +6947,8 @@ export function normChar(c) {
   out.buyback = (Array.isArray(out.buyback) ? out.buyback : []).filter((x) => x && typeof x === "object" && ITEMS[x.k] && (x.n | 0) > 0 && Number.isFinite(x.paid) && x.paid >= 0 && x.id).slice(0, BUYBACK.keep);
   /* (2026-09-28) Tinkering's parts: a pouch of four counts, never items (they take no bag space, and Bom cannot buy them) */
   { const pp = out.parts && typeof out.parts === "object" ? out.parts : {}; out.parts = Object.fromEntries(Object.keys(TINK.parts).map((k) => [k, Math.max(0, Math.floor(Number(pp[k]) || 0))])); }
+  out.tk = Object.fromEntries(Object.entries(out.tk && typeof out.tk === "object" ? out.tk : {}).filter(([id, t]) => GADGETS[id] && t && (t.left | 0) > 0).map(([id, t]) => [id, { left: t.left | 0 }]));
+  out.tkBomb = Math.max(0, out.tkBomb | 0);
   out.look = normLook(c.look);   /* (v80) who they chose to be, or null: not asked yet */
   out.bagUp = Math.max(0, Math.min(BAG_UPGRADES.length, Math.trunc(Number(c.bagUp)) || 0));   // clamped on load: a hand-edited save cannot grant a hundred slots
   /* (2026-09-22) THE TOWER. `best` is the highest floor ever cleared and is the only part that has to survive a
@@ -7126,7 +7130,7 @@ export const styleBonusOf = (c) => {
   for (const sl of ["weapon", "shield"]) { const k = c.eq?.[sl]; if (k && ITEMS[k]) { b.acc += statOf(c, k, "acc"); b.str += statOf(c, k, "str"); } }
   return b;
 };
-export const maxHitOf = (c) => Math.floor((1 + Math.floor(styleLvlOf(c) / 6) + Math.floor(styleBonusOf(c).str / 2)) * (1 + charmOf(c, "focus") / 100));   /* (2026-09-26) Focus */
+export const maxHitOf = (c) => Math.floor((1 + Math.floor(styleLvlOf(c) / 6) + Math.floor(styleBonusOf(c).str / 2)) * (1 + charmOf(c, "focus") / 100) * (1 + tkDmg(c, styleOf(c))));   /* (2026-09-28) the Whetstone / Arc Coil */   /* (2026-09-26) Focus */
 
 /* The two rolls, in one place so the server and the page can never disagree.
 
@@ -7136,7 +7140,7 @@ export const maxHitOf = (c) => Math.floor((1 + Math.floor(styleLvlOf(c) / 6) + M
    hits. Halved, a Defensive character ends up exactly as hard to hit as a
    melee-50 character was before the split, while somebody who poured everything
    into Strength is genuinely fragile. That difference IS the split. */
-export const attackRollOf = (c) => (styleLvlOf(c) + 1 + styleBonusOf(c).acc) * (1 + charmOf(c, "focus") / 100);   /* (2026-09-26) Focus */
+export const attackRollOf = (c) => (styleLvlOf(c) + 1 + styleBonusOf(c).acc) * (1 + charmOf(c, "focus") / 100) * (1 + tkAcc(c, styleOf(c)));   /* (2026-09-28) the Scope */   /* (2026-09-26) Focus */
 export const defenceRollOf = (c) => ((styleLvlOf(c) + bonusOf(c).def) / 2) * (1 + charmOf(c, "ward") / 100);   /* (2026-09-26) Ward */
 /* THE FLOOR IS THE DANGER KNOB (2026-09-25). It was 0.1, and that one number is why the open world felt safe:
    defenceRollOf is (melee level + gear def) / 2, gear outruns a monster's `att`, and so EVERY level-appropriate
@@ -8396,3 +8400,51 @@ export function salvageOf(k, n = 1, f = 0) {
 }
 /** "Salvage the lot": only plain drops and loot, never gear, rares or anything you'd miss (they go one at a time) */
 export const salvageLot = (k) => { const it = ITEMS[k] || {}; return canSalvage(k) && salvageKind(k) === "junk" && !it.heal && !it.meal && !it.drink && !it.use && (isLoot(k) || tkDrops().has(k)); };   /* never gear, bars, magic, rares or anything you eat or use */
+
+/* ------------------------------------------------------------ TINKERING, STEP TWO: THE GADGETS (2026-09-28, EASTSCAPE-DRAFTS.md §11b:
+   "there should be a buildable tinker item for every skill, including combat ones"). Built at the bench from PARTS plus a TICKET FEE
+   (both gone: the sink), each one an ITEM (so it trades on the Market), and every one gets used up:
+     - `mins`: a TIMED gadget. Using it starts a clock (C.tk[id]) that, like a drink's, only runs where buffs run (outside, and the Guild).
+       One of each at a time. What it does is `fx` (the game's own buff keys, inside their caps), `dmg`/`acc` for a combat style
+       (read by maxHitOf / attackRollOf, the way the Focus charm is), `craft` (a chance of a double make, or no burns, at that skill's
+       stations), `xp` (more xp in a skill) or `regen` (a little health back every five seconds).
+     - a `kind`: used once, on the spot (the confetti cannon, the pet toy, the party banner, the boss bomb).
+   `n` is how many one build makes (a "three shots" gadget is a stack of three), and a build has TINK.masterwork of coming out a
+   Masterwork: twice as many. The Lucky Coin (free ticket bets) and the four automation tools are later steps. */
+Object.assign(TINK, { masterwork: 0.05, buildXp: 3, feeXp: 0.05 });
+const S_ = (lvl) => 20 + lvl;   /* scrap: a little more the higher it is */
+export const GADGETS = {
+  confetti: { name: "Confetti Cannon", icon: "\u{1F389}", lvl: 1, parts: { scrap: 20 }, fee: 50, n: 3, kind: "confetti", does: "a burst of confetti and a cheer for everyone around you" },
+  baitbox: { name: "Bait Box", icon: "\u{1FAB1}", lvl: 5, parts: { scrap: 30, gears: 2 }, fee: 100, n: 1, mins: 20, fx: { bite: 0.1, rare: 0.05 }, skill: "fishing", does: "fish bite 10% more often and rare catches come up 5% more" },
+  medkit: { name: "Field Medkit", icon: "\u{1FA79}", lvl: 10, parts: { scrap: S_(10), sparks: 2 }, fee: 150, n: 2, mins: 2, regen: 0.03, skill: "hp", does: "3% of your health back every five seconds for two minutes" },
+  whetstone: { name: "Whetstone", icon: "\u{1FAA8}", lvl: 12, parts: { scrap: S_(12), gears: 4 }, fee: 180, n: 1, mins: 20, dmg: { melee: 0.08 }, skill: "melee", does: "8% harder hits with a melee weapon" },
+  scope: { name: "Scope", icon: "\u{1F52D}", lvl: 12, parts: { scrap: S_(12), gears: 4 }, fee: 180, n: 1, mins: 20, acc: { archery: 0.12 }, skill: "archery", does: "12% more accurate with a bow" },
+  arccoil: { name: "Arc Coil", icon: "\u{1F300}", lvl: 12, parts: { scrap: S_(12), sparks: 4 }, fee: 180, n: 1, mins: 20, dmg: { magic: 0.08 }, skill: "magic", does: "8% harder hits with magic" },
+  lockpick: { name: "Lockpick Set", icon: "\u{1F5DD}\uFE0F", lvl: 15, parts: { scrap: 20, gears: 6 }, fee: 200, n: 1, mins: 20, fx: { steal: 0.05 }, skill: "thieving", does: "5% better at picking pockets" },
+  cooker: { name: "Pressure Cooker", icon: "\u{1F372}", lvl: 18, parts: { scrap: S_(18), gears: 6 }, fee: 220, n: 1, mins: 20, craft: { skill: "cooking", dbl: 0.1, noburn: true }, skill: "cooking", does: "nothing burns, and one cook in ten comes out double" },
+  bellows: { name: "Bellows", icon: "\u{1F32C}\uFE0F", lvl: 20, parts: { scrap: S_(20), gears: 8 }, fee: 250, n: 1, mins: 20, fx: { smelt: 0.2 }, craft: { skill: "smithing", dbl: 0.05 }, skill: "smithing", does: "a 20% chance to save the charcoal, and one make in twenty comes out double" },
+  distiller: { name: "Distiller", icon: "\u2697\uFE0F", lvl: 22, parts: { scrap: S_(22), gears: 4, sparks: 4 }, fee: 260, n: 1, mins: 20, craft: { skill: "alchemy", dbl: 0.15 }, skill: "alchemy", does: "15% of brews come out double" },
+  featherjig: { name: "Feather Jig", icon: "\u{1FAB6}", lvl: 24, parts: { scrap: S_(24), gears: 6 }, fee: 270, n: 1, mins: 20, craft: { skill: "fletching", dbl: 0.15 }, skill: "fletching", does: "15% of fletches come out double" },
+  handpress: { name: "Hand Press", icon: "\u{1F5A8}\uFE0F", lvl: 26, parts: { scrap: S_(26), gears: 4, sparks: 6 }, fee: 280, n: 1, mins: 20, craft: { skill: "wizardry", dbl: 0.15 }, skill: "wizardry", does: "15% of prints come out double" },
+  magnifier: { name: "Magnifier", icon: "\u{1F50D}", lvl: 28, parts: { scrap: S_(28), gears: 6, sparks: 2 }, fee: 300, n: 1, mins: 20, salv: 0.15, skill: "tinkering", does: "15% more parts from everything you salvage" },
+  humidifier: { name: "Humidifier", icon: "\u{1F4A7}", lvl: 30, parts: { scrap: S_(30), gears: 6, sparks: 4 }, fee: 320, n: 1, mins: 20, xp: { skill: "fungiculture", mult: 0.25 }, skill: "fungiculture", does: "25% more Fungiculture xp" },
+  lantern: { name: "Lantern", icon: "\u{1F3EE}", lvl: 35, parts: { scrap: 30, gears: 10, sparks: 5 }, fee: 500, n: 1, mins: 30, fx: { rare: 0.1 }, does: "rare drops come up 10% more often" },
+  grapple: { name: "Grappling Hook", icon: "\u{1FA9D}", lvl: 40, parts: { scrap: 50, gears: 20 }, fee: 600, n: 1, mins: 20, xp: { skill: "agility", mult: 0.25 }, skill: "agility", does: "25% more Agility xp" },
+  pettoy: { name: "Pet Toy", icon: "\u{1F9F8}", lvl: 45, parts: { scrap: 40, gears: 10, sparks: 10 }, fee: 700, n: 1, kind: "xpchunk", xpChunk: { skill: "breeding", n: 800 }, skill: "breeding", does: "800 Breeding xp, played with once" },
+  banner: { name: "Party Banner", icon: "\u{1F6A9}", lvl: 55, parts: { scrap: 60, gears: 15, sparks: 15 }, fee: 1000, n: 1, kind: "banner", does: "your whole party near you takes 5% less damage and swings 5% faster for ten minutes" },
+  banner_buff: { name: "Under the Banner", icon: "\u{1F6A9}", item: false, mins: 10, fx: { tough: 0.05, speed: 0.05 }, does: "5% less damage taken and 5% faster" },
+  bomb: { name: "Boss Bomb", icon: "\u{1F4A3}", lvl: 75, parts: { scrap: 80, gears: 20, sparks: 20, relic: 2 }, fee: 2000, n: 1, kind: "bomb", bomb: 300, does: "your next hit on a boss does 300 more damage" }
+};
+for (const [id, g] of Object.entries(GADGETS)) if (g.item !== false)
+  ITEMS[`tk_${id}`] = { name: g.name, icon: g.icon, use: "gadget", gadget: id, held: HOLD.tinker, ex: `A Tinkering gadget (Tinkering ${g.lvl}): ${g.does}${g.mins ? `, for ${g.mins} minute${g.mins === 1 ? "" : "s"} outside` : ""}. Used up when it's done.` };
+ITEMS.tk_banner ||= { name: "Party Banner", icon: "\u{1F6A9}", held: true };
+/** the gadgets running on a character right now */
+export const tkOn = (c) => Object.entries(c?.tk || {}).filter(([id, t]) => GADGETS[id] && (t?.left | 0) > 0).map(([id]) => GADGETS[id]);
+export const tkDmg = (c, style) => tkOn(c).reduce((a, g) => a + (g.dmg?.[style] || 0), 0);
+export const tkAcc = (c, style) => tkOn(c).reduce((a, g) => a + (g.acc?.[style] || 0), 0);
+export const tkCraft = (c, skill) => { let dbl = 0, noburn = false; for (const g of tkOn(c)) if (g.craft?.skill === skill) { dbl += g.craft.dbl || 0; noburn ||= !!g.craft.noburn; } return { dbl, noburn }; };
+export const tkXp = (c, skill) => tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0);
+export const tkSalv = (c) => tkOn(c).reduce((a, g) => a + (g.salv || 0), 0);
+export const tkRegen = (c) => tkOn(c).reduce((a, g) => a + (g.regen || 0), 0);
+/** the part value of a build: what its xp is worked out from */
+export const tkPv = (g) => Object.entries(g.parts || {}).reduce((a, [p, n]) => a + n * TINK.parts[p].pv, 0);

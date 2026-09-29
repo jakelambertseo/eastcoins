@@ -42,8 +42,21 @@ export function createTinker(E) {
           <span class="k-end"><span class="tk-gets">${partsOf(r.g)}</span><button type="button" class="k-btn sm tk-go${careful ? " arm" : ""}" data-k="${r.k}" data-f="${r.f}"${r.fav ? " disabled" : ""}>Salvage</button></span></div>`;
       }).join("") : `<div class="tk-empty"><b>Nothing to salvage</b><p>Bones, husks, pits, spare gear, pages: bring me what you'd sell to Bom for pennies.</p></div>`;
       foot = `<span class="k-note">Parts can't be sold to Bom: that's the deal. Favourites and what you're wearing are never touched.</span>${lot.pv ? `<span class="tk-gets">${partsOf(lot)}</span>` : ""}<button type="button" class="k-btn tk-lot" id="tkLot"${lot.pv ? "" : " disabled"}>Salvage the lot</button>`;
+    } else if (tab === "build") {
+      /* STEP TWO: every gadget, lowest level first; what it costs (parts and the ticket fee), what it does, and a Build button that is
+         only lit when you have the level, the parts and the fee. Running gadgets are on the buffs bar, not here. */
+      const tix = G.tixIn(E.me || { inv: [] }), list = Object.entries(G.GADGETS).filter(([, g]) => g.item !== false && g.lvl).sort((a, b) => a[1].lvl - b[1].lvl);
+      pane = `<div class="k-sect"><span class="k-label">Gadgets · every one gets used up · ${Math.round(T.masterwork * 100)}% of builds come out a Masterwork (twice as many)</span></div><div class="tk-gad">` + list.map(([id, g]) => {
+        const lock = lvl < g.lvl, short = Object.entries(g.parts || {}).some(([p, n]) => (pouch[p] || 0) < n), broke = tix < g.fee, can = !lock && !short && !broke;
+        const last = g.mins ? `${g.mins} min` : g.n > 1 ? `${g.n} uses` : "one use";
+        return `<div class="tk-card${lock ? " lock" : ""}"><span class="tk-ctop"><span class="tk-cico">${ico(`tk_${id}`)}</span><span><b>${esc(g.name)}</b><span class="tk-lv${lock ? " no" : ""}">Tinkering ${g.lvl}</span>${g.skill ? `<span class="tk-sk">${esc(G.SKILLS[g.skill]?.name || g.skill)}</span>` : ""}</span></span>
+          <small>${esc(g.does)} · ${last}</small>
+          <span class="tk-gets tk-cost">${Object.entries(g.parts || {}).map(([p, n]) => `<span class="tk-part${(pouch[p] || 0) < n ? " short" : ""}" style="--c:${T.parts[p].col}"><i></i>${n} ${esc(T.parts[p].name)}</span>`).join("")}<span class="tk-part fee${broke ? " short" : ""}" style="--c:#e8bf35"><i></i>${g.fee.toLocaleString()} tickets</span></span>
+          <button type="button" class="k-btn sm tk-build" data-id="${id}"${can ? "" : " disabled"}>${lock ? `Tinkering ${g.lvl}` : short ? "Need parts" : broke ? "Need tickets" : "Build"}</button></div>`;
+      }).join("") + `</div>`;
+      foot = `<span class="k-note">Built gadgets go in your bag: click one there to use it. Timed ones run while you're outside, one of each at a time, and show on your buffs bar.</span>`;
     } else {
-      pane = `<div class="tk-empty"><b>${tab === "build" ? "Gadgets are next" : "World Projects are next"}</b><p>${tab === "build" ? "Sal's still sorting her drawers. Salvage now, and the parts will be waiting." : "Bronny's drawing up the plans. The parts you salvage now will build them."}</p></div>`;
+      pane = `<div class="tk-empty"><b>World Projects are next</b><p>Bronny's drawing up the plans. The parts you salvage now will build them.</p></div>`;
     }
     $("tkBody").innerHTML = `<div class="tk">
       <div class="tk-top"><span class="tk-face"><img src="${UI}sal_face.png?v=1" alt="Sprocket Sal" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'\\u{1F527}'}))"></span>
@@ -59,6 +72,7 @@ export function createTinker(E) {
       SFX.play("chip", { vol: 0.5 }); send({ t: "tinker", op: "salvage", k: b.dataset.k, f: Number(b.dataset.f) | 0 });
     }));
     body.querySelector("#tkLot")?.addEventListener("click", () => { SFX.play("coins"); send({ t: "tinker", op: "salvage", lot: true }); });
+    body.querySelectorAll(".tk-build").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.6 }); b.disabled = true; send({ t: "tinker", op: "build", id: b.dataset.id }); }));
   }
   function floatGot(got) {
     if (!got?.pv || E.calm?.()) return; const top = $("tkBody")?.querySelector(".tk-top"); if (!top) return;
@@ -66,7 +80,7 @@ export function createTinker(E) {
   }
   return {
     open() { mount(); openWin("tkWin"); err = null; send({ t: "tinker", op: "view" }); render(); },
-    got(view, got) { v = view; err = null; if (win && !win.hidden) { render(); if (got) { SFX.play("coins"); floatGot(got); } } },
+    got(view, got, built) { v = view; err = null; if (win && !win.hidden) { render(); if (got) { SFX.play("coins"); floatGot(got); } if (built) { SFX.play(built.master ? "win_big" : "task_done"); if (built.master) E.winFx?.(`${built.n}\u00d7 ${G.GADGETS[built.id]?.name || ""}`, "", "Masterwork!"); } } },
     oops(text) { err = text; SFX.play("ui_error"); render(); },
     /* the page calls this on every update of you; redraw only when the bag's salvageable part has changed */
     bag() { if (!win || win.hidden) return; const sig = (E.me?.inv || []).filter((s) => G.canSalvage(s.k)).map((s) => `${s.k}:${s.n}:${G.fOf(s)}`).join(","); if (sig !== bagSig) { bagSig = sig; render(); } }
@@ -95,6 +109,14 @@ export const CSS = `
 #tkWin .k-btn.tk-go.danger{border:2px solid #2a140c;border-image:none;border-radius:var(--k-r);background:linear-gradient(#cf4638,#a52e22)}
 #tkWin .k-btn.tk-lot{flex:none;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn_gold.png?v=1) 10 fill / 7px stretch;background:none;color:#2a1600;text-shadow:none;font:900 14px var(--k-disp,Cinzel),serif}
 .tk-foot{margin:0;gap:10px}.tk-foot .k-note{flex:1 1 auto;min-width:0}
+/* the Build tab's cards */
+.tk-gad{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.tk-card{display:grid;gap:6px;align-content:start;padding:10px;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}.tk-card.lock{opacity:.6}
+.tk-ctop{display:flex;gap:8px;align-items:center}.tk-cico{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:8px;background:#2a2016;font-size:22px}.tk-cico img{width:28px;height:28px;image-rendering:pixelated}
+.tk-card b{display:block;font:800 14.5px var(--k-disp,Cinzel),serif}.tk-card small{font:700 12px/1.35 Lora,serif;color:var(--k-ink2)}
+.tk-lv,.tk-sk{display:inline-block;margin-right:4px;font:900 9.5px Lora,serif;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:99px;background:#d6ecd0;color:var(--k-good)}.tk-lv.no{background:#f3d6d0;color:var(--k-bad)}.tk-sk{background:rgba(90,58,24,.12);color:var(--k-ink2)}
+.tk-cost{justify-content:flex-start}.tk-cost .tk-part.short{opacity:.55;box-shadow:inset 0 0 0 1.5px #b8302a}.tk-cost .fee{background:#3a2400}
+#tkWin .k-btn.tk-build{border:6px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn_zc.png?v=1) 10 fill / 6px stretch;background:none;color:#e4ffe9;text-shadow:0 1px 0 #000;font-weight:900}#tkWin .k-btn.tk-build:disabled{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_zc_off.png?v=1);color:#c9cdca;opacity:1;filter:none}
 .tk-empty{display:grid;justify-items:center;gap:4px;padding:30px 10px;text-align:center;color:var(--k-ink2)}.tk-empty b{font:800 17px var(--k-disp,Cinzel),serif;color:var(--k-ink)}.tk-empty p{margin:0;max-width:380px;font:600 13.5px Lora,serif}
 .tk-err{margin:0;padding:8px 14px;background:#f6d6d0;color:var(--k-bad);font:700 13px/1.35 Lora,serif;border-top:2px solid #e0a09a}
 .tk-float{position:absolute;right:16px;top:8px;font:900 18px var(--k-disp,Cinzel),serif;color:#9dffab;-webkit-text-stroke:4px #0c3014;paint-order:stroke fill;animation:tkUp 1.4s ease-out forwards;pointer-events:none;white-space:nowrap}

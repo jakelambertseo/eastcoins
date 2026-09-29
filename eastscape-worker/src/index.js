@@ -376,7 +376,7 @@ export class World {
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
-    pets: C.pets, parts: C.parts || null,   /* (2026-09-28) Tinkering's pouch */ buyback: (C.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms),   /* (2026-09-28) Bom's buy-back */ isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
+    pets: C.pets, parts: C.parts || null, tk: C.tk || null, tkBomb: C.tkBomb || 0,   /* (2026-09-28) Tinkering's pouch, the gadgets running, an armed bomb */ buyback: (C.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms),   /* (2026-09-28) Bom's buy-back */ isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
 
   /* ------------------------------------------------------------ reforging (2026-09-22)
      Spend bars to push a piece you own further. The odds and what a level is worth live in G.FORGE; this only
@@ -1038,6 +1038,7 @@ export class World {
     // used to throw in here, and this runs inside the tick — one bad key would
     // stop the world for everybody. Ignore it instead.
     if (!G.SKILLS[k]) { console.warn(`grant: no such skill "${k}"`); return; }
+    { const bx = G.tkXp(pl.C, k); if (bx > 0) xp = Math.round(xp * (1 + bx)); }   /* (2026-09-28) a Tinkering gadget (the Humidifier, the Grappling Hook) */
     this.meterAdd(pl, "xp", xp, null, k);   /* (2026-09-28) xp by skill, for the run report */
     const C = pl.C, before = G.lvlOf(C, k);
     C.xp[k] = Math.max(0, (C.xp[k] || 0) + xp); const after = G.lvlOf(C, k);
@@ -2110,6 +2111,7 @@ export class World {
 
   useSpecial(pl, i, st, it) {
     const C = pl.C, now = Date.now(), take = () => { st.n--; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1); this.touch(pl); };
+    if (it.use === "gadget") return this.tinkerUse(pl, st, it, take);   /* (2026-09-28) Tinkering */
     if (it.drink) {
       const k = st.k; take(); C.drink = { k, left: it.drink.mins * 60000 };
       return this.say(pl, `You drink the ${it.name.toLowerCase()}. For ${it.drink.mins} minutes outside: ${G.fxText(it.drink.fx)}.`, "good");
@@ -2572,11 +2574,20 @@ export class World {
       /* (2026-09-28, the owner: "user is testing in the thieving guild but its buff isnt counting down") A BUFF'S CLOCK RUNS WHERE IT WORKS.
          It counted only in maps with monsters, and the Thieves' Guild has none, so sleep dust (a thieving buff, and the Guild is the only
          place to steal) never wore off there. A map with pickpocket marks counts too; the answer is cached on the scene. */
-      const C = pl.C, dt = Math.min(5000, now - (pl.fxAt || now)); pl.fxAt = now; if (!(C.meal || C.drink || C.charm)) continue;
+      const C = pl.C, dt = Math.min(5000, now - (pl.fxAt || now)); pl.fxAt = now; if (!(C.meal || C.drink || C.charm || (C.tk && Object.keys(C.tk).length))) continue;
       { const Sx = this.scenes.get(C.scene); if (Sx && Sx.buffClock === undefined) Sx.buffClock = !!(G.SCENES[String(C.scene).split(":")[0]]?.mobs?.length || Sx.objs?.some((o) => o.t === "mark"));
         if (!(Sx ? Sx.buffClock : G.SCENES[String(C.scene).split(":")[0]]?.mobs?.length)) continue; }
       if (C.charm) { C.charm.left = (C.charm.left | 0) - dt; if (C.charm.left <= 0) { this.say(pl, `Your ${G.CHARMS[C.charm.k]?.name || "page"} has worn off.`); C.charm = null; } this.touch(pl); }   /* (2026-09-26) the page buff */
       for (const k of ["meal", "drink"]) if (C[k]) { C[k].left = (C[k].left | 0) - dt; if (C[k].left <= 0) { this.say(pl, `Your ${G.ITEMS[C[k].k]?.name.toLowerCase() || k} has worn off.`); C[k] = null; } this.touch(pl); }
+      /* (2026-09-28) TINKERING'S GADGETS: the same clock. The Field Medkit heals every five seconds while it runs; a gadget that runs out
+         breaks, and hands back a tenth of its Scrap (never all of it: that is the sink). */
+      if (C.tk) for (const [id, t] of Object.entries(C.tk)) {
+        const g = G.GADGETS[id]; if (!g) { delete C.tk[id]; continue; }
+        if (g.regen && !pl.dead) { t.acc = (t.acc || 0) + dt; while (t.acc >= 5000) { t.acc -= 5000; const mx = G.maxHpOf(C); if (C.hp < mx) C.hp = Math.min(mx, C.hp + Math.max(1, Math.round(mx * g.regen))); } }
+        t.left = (t.left | 0) - dt;
+        if (t.left <= 0) { delete C.tk[id]; const back = Math.floor((g.parts?.scrap || 0) * 0.1); if (back) { C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 }; C.parts.scrap += back; } this.say(pl, `Your ${g.name} has run out${back ? `. Sal would take the pieces: ${back} Scrap back in your pouch` : ""}.`); }
+        this.touch(pl);
+      }
     }
     if (this.chatDirty && this.tickN % 100 === 50) { this.chatDirty = false; this.ctx.storage.put("chatlog", this.chatLog).catch(() => { this.chatDirty = true; }); }
     if (this.jackDirty && this.tickN % 100 === 0) { this.jackDirty = false; this.ctx.storage.put("jackpot", this.jack).catch(() => { this.jackDirty = true; }); }
@@ -2754,6 +2765,7 @@ export class World {
            feels one element. Said once per monster per fight, with the numbers, so a player knows to switch rather than wonder. */
         { const gm = G.guardMul(m.t, G.styleOf(C), el); if (gm !== 1) { if (dmg) dmg = gm <= 0 ? 0 : Math.max(1, Math.round(dmg * gm)); if (m.guardTold !== pl.id) { m.guardTold = pl.id; this.say(pl, `${def.name}: ${G.guardText(m.t)}`, "bad"); } } }
         if (dmg && G.launcherOf(C) && (def.size === "l" || def.size === "xl")) dmg = Math.round(dmg * (1 + G.ARCHERY.bigBonus));   /* (2026-09-25) a big target is hard to miss */
+        if (C.tkBomb > 0 && (def.boss || def.open)) { dmg += C.tkBomb; C.tkBomb = 0; this.touch(pl); this.say(pl, `BOOM. The Boss Bomb goes off on ${def.name}.`, "loot"); }   /* (2026-09-28) Tinkering: an armed Boss Bomb, hit or miss */
         const shotK = G.launcherOf(C) ? G.ammoOf(C)?.k : null;   /* (2026-09-25) which arrow: the page flies its own icon */
         this.spendAmmo(pl);   /* (2026-09-25) one arrow a shot, hit or miss; nothing happens for a sword */
         /* (v81) `crit` and `kill` are for the page's effects ONLY: a crit is a roll at the very top of what you can hit, and it does
@@ -3153,7 +3165,7 @@ export class World {
          fine until players reported losing fish. Keep the outcome in a variable and decide separately. */
       let burnt = false;
       if (r.burnStop != null) {
-        const risk = G.burnChance(r, lv, ob.t === "range") * (1 - G.charmOf(C, "steadyhands") / 100) * (1 - G.petFx(C).noburn / 100);   /* (2026-09-27) the Cinder Salamander */   /* (2026-09-26) Steady Hands */
+        const risk = G.burnChance(r, lv, ob.t === "range") * (1 - G.charmOf(C, "steadyhands") / 100) * (1 - G.petFx(C).noburn / 100) * (G.tkCraft(C, r.skill).noburn ? 0 : 1);   /* (2026-09-28) the Pressure Cooker */   /* (2026-09-27) the Cinder Salamander */   /* (2026-09-26) Steady Hands */
         if (risk >= G.COAL_STEADY_MIN && G.countItems(C, ["charcoal"]) > 0) G.takeInv(C.inv, "charcoal", 1);
         else if (Math.random() < risk) { burnt = true; this.give(pl, "burnt"); this.emit(pl, "burn", {}); this.say(pl, "You burn it.", "bad"); }
       }
@@ -3173,7 +3185,7 @@ export class World {
       }
       if (!burnt) {
         /* (2026-09-28) a fractional boost (the Nexus: 1.5) rounds by chance, so one page makes one or two, 1.5 on average, rather than always two */
-        const outRaw = r.out[1] * (nx ? nx.mult : 1), outN = Math.floor(outRaw) + (Math.random() < outRaw - Math.floor(outRaw) ? 1 : 0);
+        const outRaw = r.out[1] * (nx ? nx.mult : 1), outN = (Math.floor(outRaw) + (Math.random() < outRaw - Math.floor(outRaw) ? 1 : 0)) * (Math.random() < G.tkCraft(C, r.skill).dbl ? 2 : 1);   /* (2026-09-28) and a Tinkering gadget's double make */
         /* (2026-09-27, a player: "it's using my charcoal and koi and I'm getting the xp but the smoked product doesn't deposit")
            THE PRODUCT IS CHECKED BEFORE THE XP IS PAID. give() refuses when the bag cannot take it and its answer was being thrown
            away, so a refusal here would have spent the inputs, paid the xp and handed over nothing. The room check above makes that

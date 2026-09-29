@@ -1703,6 +1703,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 #eggWin .eg-how{background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold)}
 
 /* (2026-09-28) THE XP/H TRACKER on the top bar: see renderXph */
+.confetti{position:absolute;top:-12px;width:8px;height:12px;border-radius:2px;z-index:20;pointer-events:none;animation:confettiFall 2s ease-in forwards}@keyframes confettiFall{to{transform:translate(var(--dx),110vh) rotate(var(--r))}}
 .xph{position:relative;display:inline-flex}.xph[hidden]{display:none}
 .xph-b{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 5px;border:0;border-radius:99px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,216,74,.3);color:#f4ede5;font:700 13px/1 Lora,serif;cursor:pointer}
 .xph-b:hover,.xph-b[aria-expanded="true"]{background:rgba(255,216,74,.14)}
@@ -2323,7 +2324,8 @@ function onEvent(e) {
   if (e.type === "boughtback") return CZ.boughtback(e);
   if (e.type === "order") { ORDUI?.got(e.view); return; }   /* (2026-09-28) Bronny's order: nothing to draw until the window has been opened once */
   if (e.type === "ordererr") { ORDUI?.oops(e.text); return; }
-  if (e.type === "tinker") { tinkUi().then((u) => { u.got(e.view, e.got); if (e.open) u.open(); }).catch(() => {}); return; }   /* (2026-09-28) the Scrap Bench */
+  if (e.type === "tinker") { tinkUi().then((u) => { u.got(e.view, e.got, e.built); if (e.open) u.open(); }).catch(() => {}); return; }   /* (2026-09-28) the Scrap Bench */
+  if (e.type === "confetti") { confettiFx(e.id === you?.id); return; }   /* (2026-09-28) somebody fired a Confetti Cannon */
   if (e.type === "tinkererr") { TINKUI?.oops(e.text); return; }
   if (e.type === "ordergave") { SFX.play("coins"); ORDUI?.gave(e.n); return; }
   if (e.type === "orderclaimed") { ORDUI?.claimed(); return; }   /* the window stays open: the next order arrives in it straight away */   /* (2026-09-28) Bom's buy-back */
@@ -5922,8 +5924,8 @@ function runRepUi() { return RUNREP ? Promise.resolve(RUNREP) : import(RUNREP_UR
 let METER = null; const METER_URL = "/v3/assets/js/eastscape-meter.js?v=2";
 function meterUi() { return METER ? Promise.resolve(METER) : import(METER_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (METER = m.createMeter({ G, $, esc, send, SFX, you: () => you, hasReport: () => !!RUNREP?.has(), openReport: () => RUNREP?.open() })); }); }
 /* (2026-09-28) TINKERING: Sprocket Sal's Scrap Bench is a lazy module */
-let TINKUI = null; const TINKUI_URL = "/v3/assets/js/eastscape-tinker.js?v=1";
-function tinkUi() { return TINKUI ? Promise.resolve(TINKUI) : import(TINKUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (TINKUI = m.createTinker({ G, $, esc, send, SFX, ico, openWin, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
+let TINKUI = null; const TINKUI_URL = "/v3/assets/js/eastscape-tinker.js?v=2";
+function tinkUi() { return TINKUI ? Promise.resolve(TINKUI) : import(TINKUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (TINKUI = m.createTinker({ G, $, esc, send, SFX, ico, openWin, winFx, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
 let ORDUI = null; const ORDUI_URL = "/v3/assets/js/eastscape-order.js?v=6";
 function ordUi() { return ORDUI ? Promise.resolve(ORDUI) : import(ORDUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (ORDUI = m.createOrderUi({ G, $, esc, send, SFX, openWin, ico, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
 function repUi() { return REPUI ? Promise.resolve(REPUI) : import(REPUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (REPUI = m.createReportUi({ G, $, esc, send, SFX, openWin, get me() { return me; } })); }); }
@@ -6425,6 +6427,19 @@ const bursts = [];
 /* EVERY CASINO WIN FEELS LIKE A LEVEL UP (the owner, 2026-09-20: "replicate the level up effect, even on small wins"): the same
    gold banner, the same jingle (a little quieter, under the table's own win sound), a ring and a throw of sparks. Called by
    the game windows from the one place every win passes through (pop). No motion under reduced motion; the banner still shows. */
+/* (2026-09-28) THE CONFETTI CANNON (Tinkering): a shower of paper over the game for everybody in the room, and a cheer. Nothing moves
+   under reduced motion; the sound still plays. */
+function confettiFx(mine) {
+  SFX.play(mine ? "win_small" : "chip", { vol: mine ? 0.7 : 0.5 });
+  if (set("reducedMotion")) return;
+  const host = document.querySelector(".game"); if (!host) return;
+  const cols = ["#ff4d6d", "#ffd84a", "#4ad08a", "#4a9aff", "#c86aff", "#ff9a3a"];
+  for (let i = 0; i < 70; i++) {
+    const c = document.createElement("i"); c.className = "confetti";
+    c.style.cssText = `left:${Math.random() * 100}%;background:${cols[i % cols.length]};--dx:${Math.round((Math.random() - 0.5) * 160)}px;--r:${Math.round(Math.random() * 720)}deg;animation-duration:${1.6 + Math.random() * 1.4}s;animation-delay:${Math.random() * 0.4}s`;
+    host.append(c); setTimeout(() => c.remove(), 3600);
+  }
+}
 function winFx(big, small, label) {
   SFX.play("levelup", { vol: 0.55 }); const jack = big === "JACKPOT", b = $("lvlup");
   b.innerHTML = `<small>${label || (jack ? "Jackpot!" : "Winner!")}</small><b>${jack ? small : big}</b>`; b.classList.add("over");

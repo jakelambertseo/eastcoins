@@ -42,5 +42,33 @@ const round = G.normChar(JSON.parse(JSON.stringify(C)));
 is(round.parts, C.parts, "the pouch survives a save");
 is(!!last("tinker")?.view?.parts, true, "the window is told the pouch");
 
+/* 6. GADGETS: building */
+pl.x = bench.x + 1; pl.y = bench.y; W.hwTick = () => {}; W.pitTick = async () => {}; W.songTick = () => {};
+C.parts = { scrap: 1000, gears: 100, sparks: 100, relic: 10 }; G.addInv(C.inv, "tickets", 5000, C); C.xp.tinkering = 0;
+W.tinkerOp(S, pl, { op: "build", id: "whetstone" }); is(cnt("tk_whetstone"), 0, "a Tinkering 12 build at level 1 is refused");
+C.xp.tinkering = G.XP_AT[30]; W.grant(pl, "tinkering", 1);   /* (the level-30 achievements pay tickets: settle them before measuring the fee) */
+const t0 = G.tixIn(C), s1 = C.parts.scrap, xpb = C.xp.tinkering;
+W.tinkerOp(S, pl, { op: "build", id: "whetstone" }); const g = G.GADGETS.whetstone;
+is([cnt("tk_whetstone") >= 1, t0 - G.tixIn(C), s1 - C.parts.scrap, C.xp.tinkering > xpb], [true, g.fee, g.parts.scrap, true], "a Whetstone: parts and the fee gone, the gadget in the bag, xp paid");
+const before = { ...C.parts }; C.parts.gears = 0; W.tinkerOp(S, pl, { op: "build", id: "bellows" }); is(cnt("tk_bellows"), 0, "short of parts: refused, nothing taken"); C.parts = before;
+
+/* 7. using one: a timed gadget runs, can't be doubled, counts down and breaks into a little scrap */
+const useK = (k) => W.useItem(pl, C.inv.findIndex((s) => s.k === k));
+pl.x = 30; pl.y = 5;   /* out in the Yard, where buff clocks run */
+useK("tk_whetstone"); is([!!C.tk?.whetstone, G.tkDmg(C, "melee")], [true, g.dmg.melee], "the Whetstone is running: melee damage up");
+G.addInv(C.inv, "tk_whetstone", 1, C); useK("tk_whetstone"); is(cnt("tk_whetstone"), 1, "a second one while it runs is refused and kept");
+const sc = C.parts.scrap; C.tk.whetstone.left = 900; let t = Date.now(); pl.fxAt = t; for (let i = 0; i < 40; i++) { t += 50; W.tickTimed(t); }
+is([!!C.tk.whetstone, C.parts.scrap - sc], [false, Math.floor(g.parts.scrap * 0.1)], "it runs out and hands back a tenth of its scrap");
+
+/* 8. the Medkit heals; the Humidifier adds xp; the bomb arms; the banner reaches the party */
+G.addInv(C.inv, "tk_medkit", 1, C); C.xp.hp = G.XP_AT[40]; C.hp = 5; useK("tk_medkit"); pl.fxAt = t; for (let i = 0; i < 120; i++) { t += 50; W.tickTimed(t); }
+is(C.hp > 5, true, `the Medkit heals over time (5 -> ${C.hp})`);
+G.addInv(C.inv, "tk_humidifier", 1, C); useK("tk_humidifier"); const f0 = C.xp.fungiculture || 0; W.grant(pl, "fungiculture", 100); is((C.xp.fungiculture || 0) - f0, 125, "the Humidifier: 100 xp becomes 125");
+G.addInv(C.inv, "tk_bomb", 1, C); useK("tk_bomb"); is(C.tkBomb, G.GADGETS.bomb.bomb, "the Boss Bomb is armed");
+const mate = { id: "t2", name: "t2", C: G.freshChar(), x: pl.x + 2, y: pl.y, out: [], path: [] }; mate.C.scene = "workyard"; W.pls.set("t2", mate);
+W.parties ||= new Map(); W.parties.set("pp", { id: "pp", leader: "t1", members: ["t1", "t2"] }); pl.party = mate.party = "pp";
+G.addInv(C.inv, "tk_banner", 1, C); useK("tk_banner"); is([!!C.tk.banner_buff, !!mate.C.tk?.banner_buff, G.fxOf(mate.C).tough >= 0.05], [true, true, true], "the Party Banner buffs you and your party");
+G.addInv(C.inv, "tk_confetti", 3, C); mate.out = []; useK("tk_confetti"); is([cnt("tk_confetti"), !!mate.out.find((e) => e.type === "confetti")], [2, true], "confetti: one shot used, everyone around sees it");
+
 console.log(bad ? `\n${bad} problem(s)` : "\nTinkering's salvage works: parts by the rules, the lot is safe, reforges by level, only at the bench, and it saves");
 process.exitCode = bad ? 1 : 0;
