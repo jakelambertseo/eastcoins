@@ -2000,3 +2000,9 @@ the Gloam, Sands, Fight Pit and Guild are named in their own maps' art lists. to
 content check) guards it. Wiki 213 (Tinkering guide icons). Shared ?v=387.
 OPEN QUESTION: the Crypt test sees +250 tickets to each player at the boss kill (crypt.js pays nothing there);
 find the source before calling it a stale test.
+
+## 2026-09-29, rules 357 LIVE (worker 958b6a05): Tinkering rebalanced
+
+Salvage xp = half the part value, capped 40 an item; a build = 15 x the gadget's level; gifts 0.1 xp/part value and 0.005/ticket.
+Gadgets at 30 + 0.8 x old level (Confetti 31 .. Auto-Reel 94), parts and fees x10. Existing xp untouched (the owner). Wiki 215
+(Updates entry). Shared ?v=388. WATCH: whether 1-31 (salvage and projects only) feels too slow for a new player.
