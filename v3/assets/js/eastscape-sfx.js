@@ -92,6 +92,37 @@ export const SOUNDS = {
   swing:      { vol: 0.4, files: takes("swing", 3), layers: [{ w: "noise", a: 0.01, d: 0.12, v: 0.3, lp: 5000, hp: 1400 }] },
   hit:        { vol: 0.55, files: takes("hit", 4), layers: [{ w: "noise", d: 0.08, v: 0.45, lp: 1800 }, tone(150, 0, 0.09, 0.3, "square", { f2: 60, lp: 1500 })] },
   miss:       { vol: 0.3, layers: [{ w: "noise", d: 0.05, v: 0.2, lp: 7000, hp: 3000 }] },
+  /* ARCHERY (2026-09-25). The two landings are Kenney's "Impact Sounds" (CC0, kenney.nl/assets/impact-sounds, the licence
+     file in that zip says Creative Commons Zero; no credit needed): impactSoft_medium 000/001/003/004 as arrowhit1-4,
+     impactSoft_heavy 000/002 as arrowcrit1-2, copied as they came. They were picked by measuring, not by ear: the soft
+     mediums are dull thuds that are over in about 0.1 s, short enough not to smear at a shortbow's pace; the punches peak
+     20-40 ms late and read as fists, and the wood knocks are clicks. No free CC0 bow TWANG was found (the popular ones on
+     OpenGameArt are CC-BY-SA / GPL), so the release and the miss are synthesised here, like every other sound. */
+  /* (2026-09-25, later the same day, the owner: the twang was "very annoying and repetitive"). Now four RECORDED takes: the light
+     swishes from artisticdude's CC0 "Swishes Sound Pack" (OpenGameArt), cut by tools/eastscape-sfx-import.mjs. Four takes, never the
+     same one twice running, and a wider pitch wobble than the default, because this plays on every shot. The synth is the fallback. */
+  bow_release: { vol: 0.34, jitter: 0.12, files: takes("arrowfly", 4), layers: [{ w: "noise", a: 0.02, d: 0.09, v: 0.18, lp: 7000, hp: 2600 }] },
+  arrow_hit:   { vol: 0.6, files: oggs("arrowhit", 4), layers: [{ w: "noise", d: 0.06, v: 0.4, lp: 1400 }, tone(170, 0, 0.07, 0.3, "sine", { f2: 80 })] },
+  arrow_crit:  { vol: 0.75, files: oggs("arrowcrit", 2), layers: [{ w: "noise", d: 0.12, v: 0.5, lp: 1200 }, tone(130, 0, 0.14, 0.35, "sine", { f2: 55 })] },
+  arrow_miss:  { vol: 0.3, layers: [{ w: "noise", a: 0.05, d: 0.16, v: 0.22, lp: 7000, hp: 2400 }] },
+  /* MAGIC (2026-09-26). Kenney's "Sci-fi Sounds" (CC0, kenney.nl/assets/sci-fi-sounds): laserSmall 001-003 as the cast, laserSmall_000
+     for Arcane, explosionCrunch_000 for Fire, laserRetro 000/003 for Storm, lowFrequency_explosion_001 for Void, forceField_000 for Sun and
+     forceField_004 for a buff; Frost is bart's CC0 "Ice spells" (opengameart.org/content/ice-spells), cut by eastscape-sfx-import.mjs.
+     Picked by measuring length and brightness, not by ear: the casts are 0.2-0.3 s zaps so they do not pile up at a wand's pace. */
+  /* (2026-09-26) MORE TAKES PER SPELL, so a minute of casting is not one sound on a loop. Two CC0 packs from OpenGameArt:
+     rubberduck's "80 CC0 RPG SFX" (the two plain spells -> casts, four of the seven fire spells -> Fire) and JaggedStone's
+     "Magic Spell SFX" (the two darkest -> Void, the slow shimmers -> Sun and Arcane, the longest swell -> reading a scroll).
+     Decoded, summed to mono at 22.05 kHz, trimmed, faded and peak-matched to the takes already here (the packs came in up
+     to 25 dB quieter), in the browser; the "b" in the file names keeps them apart from the first set. Frost and Storm
+     keep their own: nothing in either pack sounded like ice or lightning. */
+  spell_cast:   { vol: 0.28, jitter: 0.1, files: [...oggs("spellcast", 3), ...takes("spellcastb", 2)], layers: [tone(900, 0, 0.08, 0.2, "sine", { f2: 1600 })] },
+  spell_arcane: { vol: 0.4, files: [...oggs("spellarcane", 1), ...takes("spellarcaneb", 2)], layers: [tone(700, 0, 0.1, 0.25, "sine", { f2: 300 })] },
+  spell_fire:   { vol: 0.45, files: [...oggs("spellfire", 1), ...takes("spellfireb", 4)], layers: [{ w: "noise", d: 0.2, v: 0.4, lp: 1200 }] },
+  spell_frost:  { vol: 0.4, files: takes("spellfrost", 2), layers: [{ w: "noise", d: 0.12, v: 0.3, hp: 3000 }] },
+  spell_storm:  { vol: 0.35, jitter: 0.08, files: oggs("spellstorm", 2), layers: [tone(1400, 0, 0.1, 0.25, "square", { f2: 200 })] },
+  spell_void:   { vol: 0.5, files: [...oggs("spellvoid", 1), ...takes("spellvoidb", 2)], layers: [tone(90, 0, 0.3, 0.4, "sine", { f2: 40 })] },
+  spell_sun:    { vol: 0.4, files: [...oggs("spellsun", 1), ...takes("spellsunb", 2)], layers: [tone(660, 0, 0.3, 0.25, "tri", { f2: 990 })] },
+  spell_buff:   { vol: 0.4, files: [...oggs("spellbuff", 1), ...takes("spellbuffb", 1)], layers: [tone(520, 0, 0.25, 0.25, "tri", { f2: 1040 })] },
   hurt:       { vol: 0.45, files: takes("hurt", 3), layers: [tone(300, 0, 0.15, 0.3, "square", { f2: 120, lp: 1800 })] },
   mob_die:    { vol: 0.45, files: takes("mobdie", 1), layers: [tone(420, 0, 0.35, 0.28, "square", { f2: 60, lp: 2000 }), { w: "noise", d: 0.22, v: 0.25, lp: 1000 }] },
   die:        { vol: 0.5, layers: [tone(400, 0, 0.8, 0.3, "saw", { f2: 45, s: 0.2, lp: 1500 })] },
@@ -211,7 +242,7 @@ export function play(name, o = {}) {
     let i = Math.floor(Math.random() * list.length); if (list.length > 1 && i === lastTake.get(name)) i = (i + 1) % list.length; lastTake.set(name, i);
     const b = list[i];
     src = ac.createBufferSource(); src.buffer = b; src.loop = !!def.loop;
-    const j = o.jitter ?? (def.loop || def.steady ? 0 : 0.05);   /* (steady: the same pitch every time) */ src.playbackRate.value = (o.rate || 1) * (1 + (Math.random() * 2 - 1) * j);
+    const j = o.jitter ?? def.jitter ?? (def.loop || def.steady ? 0 : 0.05);   /* (2026-09-25) a sound may ask for its own wobble */   /* (steady: the same pitch every time) */ src.playbackRate.value = (o.rate || 1) * (1 + (Math.random() * 2 - 1) * j);
     const g = ac.createGain(); g.gain.value = (def.vol ?? 0.4) * (o.vol ?? 1);
     src.connect(g); g.connect(master); src.start();
   });

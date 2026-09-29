@@ -13,7 +13,7 @@ const is = (got, want, what) => { if (JSON.stringify(got) === JSON.stringify(wan
 const ctx = { blockConcurrencyWhile: (fn) => fn(), storage: { get: async () => undefined, put: async () => {}, delete: async () => {}, list: async () => new Map() } };
 const W = new World(ctx, { SITE: "https://example.invalid", DEV: "0" }); W.save = async () => {}; W.houseSay = () => {};
 const B = G.collectionBook(), DR = createDecorRules(G);
-is(B.tabs.map((t) => t.id), ["bosses", "rares", "skilling", "pets", "finds", "chase", "events"], "the tabs, events last");
+is(B.tabs.map((t) => t.id), ["bosses", "rares", "skilling", "pets", "finds", "chase", "cards", "events"], "the tabs, events last");
 is(B.tabs.find((t) => t.id === "events").sections[0].name, G.EVENT_TAG, "the events tab has a section per event");
 is(B.total > 60 && B.keys.has("deepheart") && B.keys.has("bessemergloves") && B.keys.has("pet:potboy") && !B.keys.has("copper") && !B.keys.has("tickets"), true, "the chase rings, a pet in; ore and tickets out");
 const player = (id) => { const C = G.freshChar(); const pl = { id, name: id, C, x: 1, y: 1, out: [], path: [] }; W.pls.set(id, pl); return pl; };

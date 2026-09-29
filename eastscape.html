@@ -15,7 +15,7 @@
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=381">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=384">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1951,7 +1951,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=381";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=384";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1960,7 +1960,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=210").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=211").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
@@ -2663,7 +2663,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 138;
+const PACKS_V = 139;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -2738,6 +2738,9 @@ const AREA_ART = {
        from 154 to 162. t_brick stays core, because the islands are paved too. o_crate and o_barrel are the ones
        that already existed — the market reuses them rather than drawing its own. */
     "o_fencepost", "o_crates", "o_sacks", "o_handcart",
+    /* (2026-09-29) and the barrel and the bucket, which went into the cellar's list (and the closed areas') and so never loaded in the
+       Yard at all: its barrels had been drawn as nothing since. An area's sheet is whole, so naming them here too costs one copy each. */
+    "o_barrel", "o_bucket",
     /* (v114/v115) the walk cycles and idle breaths of the six that live here: loaded with the Yard, not at login */
     ...["chicken", "cow", "rotten", "olive", "hornworm", "boar"].flatMap((k) => [...[1, 2, 3, 4].map((i) => `${k}_w${i}`), `${k}_i2`])],   /* (v108: Charon, his cart and the Crypt's stairs came over from the Forum) */   // (monsters and a pond in every scene since 2026-09-20: the rocks', the trees' and the stations' pictures are no longer asked for out here)
   /* v68: the six bands. The Mire wears the Gloam's ground, the Thunderhead wears Cloudreach's; each list is that scene's monsters and nothing it doesn't draw */
@@ -4656,6 +4659,13 @@ function frame() {
     for (const o of Z.objs) if (o.t === "jack" || o.t === "ghostlantern") {
       const cx = o.x * T + T / 2, cy = o.y * T + T / 2, r = o.t === "jack" ? T * 1.7 : T * 1.4, c = o.t === "jack" ? "255,150,40" : "120,255,220";
       const gr = lc.createRadialGradient(cx, cy, 1, cx, cy, r); gr.addColorStop(0, `rgba(${c},${night ? 0.38 : 0.16})`); gr.addColorStop(1, `rgba(${c},0)`);
+      lc.fillStyle = gr; lc.fillRect(cx - r, cy - r, r * 2, r * 2);
+    }
+    /* (2026-09-29, the owner: "make sure night mode ... is still enabled in the yard") and the lamp posts do what their hover says, "it
+       comes on when the light goes": a warm pool from the lamp head, which sits most of a tile above the post's foot. Dark only. */
+    if (night) for (const o of Z.objs) if (o.t === "lamppost") {
+      const cx = o.x * T + T / 2, cy = o.y * T - T * 0.35, r = T * 2.1;
+      const gr = lc.createRadialGradient(cx, cy, 1, cx, cy, r); gr.addColorStop(0, "rgba(255,214,130,.34)"); gr.addColorStop(0.45, "rgba(255,190,100,.12)"); gr.addColorStop(1, "rgba(255,190,100,0)");
       lc.fillStyle = gr; lc.fillRect(cx - r, cy - r, r * 2, r * 2);
     }
   }
@@ -6793,12 +6803,12 @@ const mico = (k, px = 26) => `<img class="mico" style="height:${px}px" src="${AR
    and Fungiculture guides went live without their g_ icons, the Guides list requested g_breeding.png?v=1 and the edge now holds the
    site's HTML under that URL for a year. A picture added after its page shipped starts at 2 here. */
 const UI_V = { g_breeding: 2, g_fungiculture: 2 };
-const uico = (k) => { if (k === "g_jewelcrafting") k = "g_gems";   /* (2026-09-28) the skill has no guide picture of its own: it borrows the gems */
+const uico = (k) => { if (k === "g_jewelcrafting" || k === "g_gembag") k = "g_gems";   /* (2026-09-28) the skill has no guide picture of its own: it borrows the gems */
   return `<img class="ico wico" src="${UIA}${k}.png?v=${UI_V[k] || 1}" alt="" loading="lazy" decoding="async">`; };
 const nico = (name) => { const a = WIKI.npcs[name]?.art || NPC_ART[name]; return a ? `<img class="ico nico" src="${ART}${a}_south.png?v=${ART_V}" alt="" loading="lazy" decoding="async">` : "🧑"; };
 function wikiPages() {
   const pages = [{ route: "home", title: "Home", icon: uico("g_home"), group: "" }, { route: "updates", title: "Updates", icon: uico("g_updates"), group: "" }];
-  for (const g of WK.GUIDES) { if (g.id === "thieving" && !G.THIEF.live) continue; if (g.id === "longnight" && !G.hwOn()) continue; if (g.id === "jewelcrafting" && G.HOLD.jewel) continue;   /* (2026-09-27) the Long Night's guide appears with the season */ pages.push({ route: `guides/${g.id}`, title: g.title, icon: uico(`g_${g.id}`), group: "Guides", cat: g.cat || "More" }); }   /* (2026-09-23) the Thieving guide rides THIEF.live with the rest of the skill; it is written and ready, it just must not be readable before the guild opens */
+  for (const g of WK.GUIDES) { if (g.id === "thieving" && !G.THIEF.live) continue; if (g.id === "longnight" && !G.hwOn()) continue; if (g.id === "jewelcrafting" && G.HOLD.jewel) continue; if (g.id === "gembag" && G.HOLD.gems) continue;   /* (2026-09-29) the gem bag's guide opens with gems */   /* (2026-09-27) the Long Night's guide appears with the season */ pages.push({ route: `guides/${g.id}`, title: g.title, icon: uico(`g_${g.id}`), group: "Guides", cat: g.cat || "More" }); }   /* (2026-09-23) the Thieving guide rides THIEF.live with the rest of the skill; it is written and ready, it just must not be readable before the guild opens */
   /* (2026-09-22) PETS ARE THEIR OWN CATEGORY, not a line in Guides: five things with stats, a drop rate and a
      picture each is a category, and the guide alone made them look like a footnote. Built from G.PETS, so a sixth
      pet appears here without anyone remembering to add it. */

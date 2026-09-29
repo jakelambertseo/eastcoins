@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 352;   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 353;   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -2581,6 +2581,17 @@ Object.assign(SCENES, {
       dress("crates", 41, 17, "Crates, stacked by the cart."); dress("barrel", 42, 15, "A barrel, going soft in the rain.");
       dress("handcart", 34, 8, "A handcart, parked."); dress("crate", 41, 8, "A crate. Somebody sat on it.");
       dress("barrel", 33, 12, "A barrel by the stairs."); dress("sacks", 40, 12, "Sacks, dumped and forgotten.");
+      /* (2026-09-29, the owner: "some barrels in the south and north court, maybe boxes, etc. items that make it feel more lived in")
+         A second round, against the rails and in the corners, never in front of a station: the north court's quench bucket sits
+         between the furnace and the anvil (both still reachable from the row below), the Tower's gate column (40-41) stays open,
+         and the south court's middle is left for the two chickens that scratch about in it (mobs, below). */
+      dress("barrel", 30, 7, "A barrel of charcoal."); dress("bucket", 36, 6, "The quench bucket. The water's gone black.");
+      dress("crates", 41, 10, "Crates of arrow shafts."); dress("barrel", 39, 11, "A barrel. Empty, by the sound.");
+      dress("crate", 30, 11, "A crate of scrap iron.");
+      /* (the treeline's canopy hangs over row 22 and column 42, so these stay above and inside it, where they can be seen) */
+      dress("crates", 32, 22, "Crates, waiting for the ferry."); dress("sacks", 33, 21, "Sacks of feed. The chickens know.");
+      dress("bucket", 33, 19, "A rain bucket, full to the brim."); dress("handcart", 40, 19, "A handcart with a wheel off.");
+      dress("barrel", 41, 20, "A barrel. It's been tapped."); dress("barrel", 41, 21, "A barrel. It hasn't, yet.");
       railing(upTo(29, 42).map((x) => [x, 23]), "h");   /* (2026-09-29) at the treeline: y19 until today */
       railing(upTo(30, 42).filter((x) => x !== 40 && x !== 41).map((x) => [x, 5]), "h");        // the north court's top rail, moved up from y7 with the court; (2026-09-25) open at 40-41, the Tower's gate
       railing(upTo(14, 22).map((y) => [29, y]), "v");   /* (2026-09-29) along the river's bank */
@@ -2660,7 +2671,11 @@ Object.assign(SCENES, {
       ["cow", 14, 6], ["cow", 11, 10], ["cow", 3, 2], ["cow", 13, 19], ["cow", 10, 16],
       ["rotten", 18, 4], ["rotten", 24, 6], ["rotten", 19, 8], ["rotten", 24, 9], ["olive", 16, 4], ["olive", 17, 10], ["olive", 20, 10],
       ["hornworm", 12, 5], ["hornworm", 15, 8], ["hornworm", 10, 9], ["hornworm", 11, 17],
-      ["boar", 5, 5], ["boar", 8, 17], ["boar", 4, 19], ["boar", 11, 21], ["boar", 6, 22]],
+      ["boar", 5, 5], ["boar", 8, 17], ["boar", 4, 19], ["boar", 11, 21], ["boar", 6, 22],
+      /* (2026-09-29, the owner: "add a mob or two in the new version of the yard in the court") two chickens loose in the south court,
+         at its empty south end: a mob wanders 3 across and 2 down from home, so they stay between the stalls and the railing and never
+         reach the road on row 14. At the END of the list, so every other monster keeps its id. */
+      ["chicken", 36, 20], ["chicken", 39, 21]],
     npcs: [   // (v108: Livia and Charon came over from the Forum, which is closed. Brutus sold gear here for a few hours on 2026-09-20; it is behind the Prize Counter now)
       { name: "Livia the Broker", art: "livia", x: 31, y: 16, still: true, quests: ["copperbell", "wheatrun", "emeraldedge"], opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Buying? Selling? Use the stall. I take 1%.", "It keeps selling while you sleep."] },
       { name: "Charon the Ferryman", art: "charon", x: 39, y: 16, still: true, quests: ["sardines", "ferry"], opens: "ferry", hair: "#e8e8e8", shirt: "#3a3a5a", pants: "#2a2a3a", lines: ["Islands. Everyone gets one. Nobody knows who's paying for them.", "The river's closed, so now it's a cart. Don't ask how a cart gets to an island. I don't.", "Plant something before you go back in there and lose your shirt. It grows while you're away.", "Wheat, ten minutes. Tomatoes, twenty. Both sell. Both cook."] }],
@@ -6198,7 +6213,7 @@ export const MAGIC = {
   arc: { share: 0.5 },                               // STORM: half the hit jumps to one other monster beside the target
   pierce: 0.3,                                       // VOID: ignores 30% of the target's defence
   sunHeal: 0.15,                                     // SUN: you heal 15% of the damage you deal
-  bagLvl: [1, 30, 50, 70, 90], bagCap: [100, 250, 500, 1000, 2500],
+  bagLvl: [1, 30, 50, 70, 90], bagCap: [300, 750, 1500, 3000, 7500],   // (2026-09-29, the owner: "increase the size of the magic bags to match archery") three times what they were, as the quivers went the same day
   tierAt: [70, 90],                                  // utility page tiers: I below Wizardry 70, II from 70, III from 90 (2026-09-26, the owner: the pages start at Wizardry 50 and run to 99, so the tiers moved up with them)
 };
 /* the elements. `base` is the Magic level of its first page and the Wizardry level to print it; Blast is +20, Surge +40 */
@@ -7576,7 +7591,7 @@ export const eventSourcesOf = (k) => {
 ITEMS.gallows_bow = { name: "Gallows Bow", short: "Bow", icon: "\u{1F3F9}", slot: "weapon", acc: 17, str: 9, launcher: { range: 6, ammo: "arrow" }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { tix: 0.06, rare: 0.10 }, req: { skill: "archery", lvl: 50 }, ex: "Cut from the gallows tree. One chop in ten thousand brings it down, during the Long Night only. Kills pay 6% more and rare drops come 10% easier." };
 ITEMS.lantern_quiver = { name: "Lantern Quiver", short: "Quiver", icon: "\u{1F383}", slot: "shield", pouch: { ammo: "arrow", cap: 1200 }, tier: "hallowed",   /* (2026-09-29) 400, tripled with the rest */ forgeWith: ["candycorn", 400], event: true, fx: { ammo: 0.25 }, req: { skill: "archery", lvl: 50 }, ex: "A carved pumpkin with a strap. One arrow in four flies back into it: a quarter of your shots spend nothing. The King drops it; Hexa sells it." };
 ITEMS.skull_wand = { name: "Skull Wand", short: "Wand", icon: "\u{1F480}", slot: "weapon", acc: 20, str: 8, launcher: { range: 5, ammo: "page", style: "magic" }, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { leech: 0.10 }, req: { skill: "magic", lvl: 50 }, ex: "Somebody's, once. A tenth of every spell's damage comes back to you as health. The King drops it; Hexa sells it." };
-ITEMS.bag_shroud = { name: "Shroud Satchel", short: "Satchel", icon: "\u{1F45D}", slot: "shield", pouch: { ammo: "page", cap: 1000 },   /* (2026-09-27, the owner: "a noticeable increase in spells held") twice a level-50 bag: the Starweave's 1,000, twenty levels early */ tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { ammo: 0.25 }, req: { skill: "magic", lvl: 50 }, ex: "Sewn from a burial shroud, and deeper than it looks: it holds 1,000 pages, twice any other bag at its level. A quarter of your casts spend no page. The King drops it; Hexa sells it." };
+ITEMS.bag_shroud = { name: "Shroud Satchel", short: "Satchel", icon: "\u{1F45D}", slot: "shield", pouch: { ammo: "page", cap: 3000 },   /* (2026-09-27, the owner: "a noticeable increase in spells held") twice a level-50 bag: the Starweave's 3,000, twenty levels early (tripled 2026-09-29 with the rest) */ tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { ammo: 0.25 }, req: { skill: "magic", lvl: 50 }, ex: "Sewn from a burial shroud, and deeper than it looks: it holds 3,000 pages, twice any other bag at its level. A quarter of your casts spend no page. The King drops it; Hexa sells it." };
 ITEMS.drowned_boots = { name: "Drowned Boots", short: "Boots", icon: "\u{1F462}", slot: "boots", def: 6, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { speed: 0.08, tix: 0.03 }, req: { skill: "melee", lvl: 50 }, ex: "They came up on a line. One cast in ten thousand, during the Long Night only. You move, swing and fish 8% faster, and kills pay 3% more." };
 ITEMS.coffin_ring = { name: "Coffin Ring", short: "Ring", icon: "\u{1F48D}", slot: "ring", acc: 8, str: 8, def: 8, tier: "hallowed", forgeWith: ["candycorn", 400], event: true, fx: { double: 0.10 }, req: { skill: "hp", lvl: 50 }, ex: "Coffin iron, with a coffin on it. One swing in ten thousand at any rock turns it up, during the Long Night only. One dig, cut or catch in ten comes up double." };
 /* the three legendaries: level 90, nova-grade numbers, one effect each that nothing else in the game has */
@@ -8831,9 +8846,13 @@ export const GEM_BANDS = [["Perfect", 10, 10], ["Brilliant", 7, 9], ["Fine", 4, 
 export const gemBand = (r) => GEM_BANDS.find(([, lo, hi]) => r >= lo && r <= hi)?.[0] || "Rough";
 /* the gems as items. Ruby, sapphire, topaz and opal already exist (mining finds them, wands and bags use them); the rest are new */
 for (const g of GEMSET.list) {
+  /* (2026-09-29) WHILE HOLD.gems IS ON the new stones are held (off the wiki, like any held item) and the four Mining gems keep their own
+     words: a live description must not send anybody to a Sorter that is not standing there. */
+  const isNew = !ITEMS[g.k];
   const it = (ITEMS[g.k] ||= { name: g.k === "tigerseye" ? "Tiger's eye" : g.k[0].toUpperCase() + g.k.slice(1), icon: "\u{1F48E}" });
+  if (HOLD.gems) { if (isNew) it.held = true; continue; }
   it.gem = g.k;
-  it.ex = `${it.ex ? it.ex.replace(/\s*Take it to the Gem Sorter.*$/, "") + " " : ""}Take it to the Gem Sorter in the Yard: it rolls a bonus from ${GEMSET.roll[0]}% to +${GEMSET.roll[1]}% (${g.does}), and then it goes on the ${g.where === "gear" ? "Combat" : "Skilling"} side of your gem bag.`;
+  it.ex =`${it.ex ? it.ex.replace(/\s*Take it to the Gem Sorter.*$/, "") + " " : ""}Take it to the Gem Sorter in the Yard: it rolls a bonus from ${GEMSET.roll[0]}% to +${GEMSET.roll[1]}% (${g.does}), and then it goes on the ${g.where === "gear" ? "Combat" : "Skilling"} side of your gem bag.`;
 }
 /* THE SORTER IS A FIXTURE in the Yard's north court, on the crafting side of the river (SCENES.workyard), whenever HOLD.gems is off. */
 /* (2026-09-28, the owner: "replace jewelcrafting") JEWELCRAFTING IS RETIRED: the Sorter is what gems are for now. Held everywhere, dev

@@ -882,6 +882,30 @@ export const GUIDES = [
         <p><b>More gems:</b> the <b>${H.esc(G.CHARMS.stonesense.name)}</b> page (Wizardry ${G.CHARMS.stonesense.lvl}) makes them turn up ${G.CHARMS.stonesense.vals.join("/")}% more often by tier${boost.length ? `, and so does ${boost.join(" or ")} following you` : ""}. A rock gives the same chance on every ore, so a vein that never runs dry is the best place to stand.</p>
         ${G.GEMS.map(gem).join("")}`;
     } },
+  /* (2026-09-29, the owner: "wiki needs updates for new gems and gem sorter etc as well") THE GEM BAG AND THE SORTER. Every number is read
+     from GEMSET, gemOdds and GEM_BANDS, so a retune of the odds or the prices cannot leave this page behind. The page hides it while
+     HOLD.gems is on (wikiPages in eastscape.html), like the other held systems. */
+  { id: "gembag", title: "The gem bag and the Gem Sorter", icon: "\u{1F48E}", cat: "Going further",
+    body: (G, H) => {
+      const S = G.GEMSET, nm = (k) => H.wl(`items/${k}`, `${H.ico(k)} ${H.esc(H.ITEMS[k]?.name || k)}`), tix = (n) => `${n.toLocaleString()} tickets`;
+      const odds = (lo, hi) => { let p = 0; for (let r = lo; r <= hi; r++) p += G.gemOdds(r); p *= 100; return p < 1 ? `${p.toFixed(1)}%` : `${Math.round(p)}%`; };
+      const sgn = (r) => `${r > 0 ? "+" : ""}${r}%`, side = (w) => S.list.filter((g) => g.where === w);
+      const row = (g) => `<tr><td>${nm(g.k)}</td><td>${H.esc(g.does)}</td><td>${g.skill ? H.esc(H.SKILLS?.[g.skill]?.name || g.skill) : "monsters of level " + S.dropLvl + "+"}</td></tr>`;
+      return `<p><b>Gems are small permanent bonuses you carry with you.</b> Find one, have the Gem Sorter roll it a bonus, and put it in your <b>gem bag</b>, which works wherever you are. Open the bag from the <b>Gems</b> button on your inventory; it pops open beside it.</p>
+        <h3>The gem bag</h3>
+        <p>Two sides of ${S.bag.max} settings each: <b>Combat</b> gems on one side, <b>Skilling</b> gems on the other, and a gem only fits its own side. ${S.bag.start === 1 ? "One setting on each side is open" : `${S.bag.start} settings on each side are open`} from the start; the rest open for tickets, each side on its own: ${S.bag.price.map(tix).join(", then ")}.</p>
+        <p>Only a <b>sorted</b> gem goes in. Taking one out gives it back <b>unsorted</b>, so changing your mind costs a roll. <b>Only the best ${S.perType} of any one gem count</b>: a third ruby adds nothing, so fill the bag with different stones.</p>
+        <h3>The Gem Sorter</h3>
+        <p>A jeweller's bench in the Yard's north court. Stand by it and it will <b>sort</b> a gem (roll its bonus) for <b>${tix(S.cost)}</b> a roll, <b>re-roll</b> a sorted one for the same, or <b>buy any gem back</b> for ${tix(S.sell)}, whatever its roll. A roll lands between <b>${sgn(S.roll[0])}</b> and <b>${sgn(S.roll[1])}</b>, and the higher it is, the rarer it is. A negative roll is exactly that much worse.</p>
+        <table class="tbl"><tr><th>Band</th><th>Roll</th><th>Chance</th></tr>${G.GEM_BANDS.map(([n, lo, hi]) => `<tr><td><b>${n}</b></td><td>${lo === hi ? sgn(lo) : `${sgn(lo)} to ${sgn(hi)}`}</td><td>${odds(lo, hi)}</td></tr>`).join("")}</table>
+        <p>A perfect ${sgn(S.roll[1])} is about <b>1 in ${Math.round(1 / G.gemOdds(S.roll[1]))}</b> rolls, and the room hears about it when somebody lands one.</p>
+        <h3>Finding gems</h3>
+        <p>From level <b>${S.dropLvl}</b> in a skill, every action has a 1 in ${Math.round(1 / S.drop).toLocaleString()} chance of turning up that skill's gem. Monsters of level ${S.dropLvl} or more drop a combat gem now and then, and a boss more often. Every gem found is unsorted; they trade and bank like anything else, and a sorted one keeps its roll when it changes hands.</p>
+        <h3>Combat gems</h3>
+        <table class="tbl"><tr><th>Gem</th><th>Does</th><th>From</th></tr>${side("gear").map(row).join("")}</table>
+        <h3>Skilling gems</h3>
+        <table class="tbl"><tr><th>Gem</th><th>Does</th><th>From</th></tr>${side("case").map(row).join("")}</table>`;
+    } },
   { id: "fletching", title: "Fletching and archery", icon: "\u{1F3F9}", cat: "Skills",
     body: (G, H) => {
       const rs = Object.values(G.RECIPES).filter((r) => r.skill === "fletching").sort((a, b) => a.lvl - b.lvl);
@@ -1056,6 +1080,20 @@ export const GUIDES = [
 ];
 
 export const UPDATES = [
+  {
+    date: "2026-09-29", title: "A river through the Yard, quivers and Magic Bags three times the size, and a round of fixes from the bug board",
+    items: [
+      "THE YARD, REDONE: a river runs down its middle. East of it are the two courts with every workbench, Livia, Charon and the road to the casino; west of it, every monster, Bronny and Sal. The road crosses on a plank bridge and is cobbled all the way west to the Carnival and north to the Gloam, with lamp posts along it that light up after dark. The courts are fuller too: barrels, crates, sacks, a quench bucket by the anvil, and two chickens loose in the south court.",
+      "QUIVERS AND MAGIC BAGS HOLD THREE TIMES AS MUCH: a rough quiver is 300 arrows and a Bogwood one 3,000; Magic Bags run from 300 to 7,500 pages, and the Shroud Satchel holds 3,000. Loading takes every stack of that arrow or page in your bag in one click.",
+      "THE WILD BENCH: fletching's own Nexus, in the Wilderness grove against the west rock. It fletches everything, and half as much again.",
+      "THE NEXUS, TONED DOWN: it prints one and a half times the pages (was twice) for a quarter more xp (was half as much again).",
+      "HOW MANY TO MAKE: every crafting window and the anvil ask how many first (1, 5, 10, 25 or All), and stop when that many are done.",
+      "BOM BUYS BOWS, QUIVERS, WANDS AND MAGIC BAGS now, which he used to turn away.",
+      "THE BANK takes 1, 5, 10, 25 or 99 at a time, and your stacks stay where they are while you work instead of shuffling.",
+      "OTHER PEOPLE'S GEAR: on someone's profile, hover a piece they are wearing to see it, and right-click it for its wiki page.",
+      "FIXES: you arrive where you meant to (the nearest open tile, never inside a wall), both ways across the Far Shore bridge; a refresh on your own island keeps you on it; a Master's seal +4 stays +4 through a save; Finished offers stays open; the Gallows oak no longer stands on the onyx rock; the 2X banner sits below the skill ring; and planting a mushroom bed pays Fungiculture xp like a seed pays Farming. Thanks to everyone who used the bug button.",
+    ],
+  },
   {
     date: "2026-09-28", title: "Party meter, run reports, and a report for the Pumpkin King",
     items: [

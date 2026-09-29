@@ -10,7 +10,7 @@ const ctx = { blockConcurrencyWhile: (fn) => fn(), storage: { get: async () => u
 const W = new World(ctx, { SITE: "https://example.invalid", DEV: "0" }); W.save = async () => {}; W.houseSay = () => {};
 const S = W.scene("workyard"), n = S.npcs.find((x) => x.name === "Nestor the Egg Man");
 is([n?.x, n?.y, n?.opens], [25, 15, "eggtrade"], "Nestor stands in the Yard's court, at 25,15");
-is(G.walkableIn(G.buildScene("workyard").g, 25, 15), true, "on open ground");
+{ const g = G.buildScene("workyard").g; is([[-1, 0], [1, 0], [0, -1], [0, 1]].some(([dx, dy]) => G.walkableIn(g, 25 + dx, 15 + dy)), true, "with open ground beside him (the river's bank runs under him since 2026-09-29)"); }
 is(Object.keys(G.EGGS).every((e) => G.EGG_TRADES[e]), true, "every egg has a trade");
 is(Object.values(G.EGG_TRADES).flat().every(([k, q]) => G.ITEMS[k] && q > 0), true, "and every price is real items");
 const pl = { id: "t", name: "t", C: G.freshChar(), x: 25, y: 16, out: [], path: [] }; W.pls.set(pl.id, pl); pl.C.scene = "workyard";
