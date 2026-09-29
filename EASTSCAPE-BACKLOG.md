@@ -161,10 +161,10 @@ Not Roman: the user wants new content original and imaginative (NGU / Dungeon Cr
 
 ## Next up
 
-- **Nerf the Nexus altar some** (owner, 2026-09-28: "Nerf the Nexus alter some"). Not scoped yet: find the altar's
+- ~~**Nerf the Nexus altar some**~~ DONE 2026-09-28 (local, not shipped): NEXUS {mult 2, xp 1.5} -> {mult 1.5, xp 1.25}, fractional output rounds by chance. (owner, 2026-09-28: "Nerf the Nexus alter some"). Not scoped yet: find the altar's
   rules first (what it pays or buffs, and how often), measure it against the other altars, and bring a number to the owner.
 
-- **Back and forward buttons in the wiki** (owner, 2026-09-28). The wiki already routes by hash
+- ~~**Back and forward buttons in the wiki**~~ DONE and live 2026-09-28 (its own 50-page history, Alt+arrows, mouse side buttons). (owner, 2026-09-28). The wiki already routes by hash
   (`/eastscape#wiki/items/logs`), so these are history.back()/forward() over those routes, or a small stack of
   its own if hash history mixes with the game's.
 
@@ -1955,3 +1955,22 @@ Still open on the tiers:
   600,000 for a Nova cuirass is the right shape now the tools are cheap.
 - Eclipse is still under-priced against starfall in every slot (its recipe
   eats raw ore where starfall's eats a bar). Nova inherits it.
+
+## 2026-09-29, rules 353 LIVE (page b73e00f + assets fed85ee on Desktop; worker 0e48d6a1)
+
+Shipped: the Nexus toned down (1.5x pages, 1.25x xp); Bronny's worksite on concrete; quivers x3 and one-click
+loading; Magic Bags x3 (300..7,500, Shroud Satchel 3,000); the Wild Bench (art PixelLab 94fbfd64); the Yard's
+two courts, cobbled road west and north, lamp posts (they glow when the Yard is dark), the river and the plank
+bridge, fences at the treeline; a second round of court clutter and two chickens in the south court; o_barrel and
+o_bucket added to the Yard's art list (every court barrel had been invisible); bug board steps 1, 2a, 2b (make
+amounts, Bom buys bows/quivers/wands/bags, bank amounts and steady order, profile gear hover/right-click,
+arrivals via placeSafely, isleRejoin, +4 keeps through a save, Finished offers, the Gallows oak, the 2X banner,
+fungi planting xp). Wiki 211: the Updates entry and the gem bag guide (hidden while HOLD.gems).
+Live versions: VERSION 353, shared ?v=384, wiki 211, bank 14, bag 4, casino 60, closed 26, profile 9, gems 6,
+cards 3, tinker 7, PACKS_V 139. Wilderness sheet budget 135 (tools/eastscape-budget.mjs).
+
+STILL HELD SHUT (shipped dark): Tinkering + World Projects, the gem bag and Sorter, Marked Cards.
+Stale tests, not regressions: pit/tix (EDGE_BAND 0.93-0.99 since 09-22), jewel (Jewelcrafting retired),
+thieving (8), quicksell (4 items with no buyer), tower checkpoint, crypt (timeout).
+Known: 22 walkable tiles in the Yard no exit reaches (the river's east bank strip x28-29 and behind the Tower door).
+Bug board: statuses still to be set by the owner in game (admin only).
