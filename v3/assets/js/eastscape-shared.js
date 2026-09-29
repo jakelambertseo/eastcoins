@@ -8797,7 +8797,7 @@ export const gemFor = (c, k) => (k && c ? (gemBonus(c)[k] || 0) / 100 : 0);
 /** gathering speed from the case: "fish / mine / chop faster" */
 export const gemSpeed = (c, kind) => { const g = GEMSET.list.find((x) => x.kind === (kind === "vein" ? "rock" : kind)); return g ? gemFor(c, g.k) : 0; };
 /** the elemental gems against one monster: the sum of the gems for every element it is weak to */
-export const gemVs = (c, mobT) => (MOBS[mobT]?.weak || []).reduce((a, el) => a + gemFor(c, GEMSET.list.find((g) => g.el === el)?.k), 0);
+export const gemVs = (c, mobT) => [].concat(MOBS[mobT]?.weak || []).reduce((a, el) => a + gemFor(c, GEMSET.list.find((g) => g.el === el)?.k), 0);
 /** what a roll costs at the Sorter */
 export const sortCost = () => GEMSET.cost;
 /** one roll: a whole percent from GEMSET.roll, uniform (1 in 16 is +10) */

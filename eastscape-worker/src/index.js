@@ -2789,10 +2789,12 @@ export class World {
            defence, and after the hit Fire may burn, Frost slows, Storm arcs to a neighbour and Sun heals you (below). */
         const el = G.launcherOf(C) ? G.ammoElOf(C) : null;
         const def = G.MOBS[m.t], hit = Math.random() < G.hitChance(G.attackRollOf(C), def.def * (el === "void" ? 1 - G.MAGIC.pierce : 1)); let dmg = hit ? rint(1, G.maxHitOf(C) + G.ammoStrOf(C)) : 0;
-        if (dmg && el) dmg = Math.max(1, Math.round(dmg * G.elementMul(m.t, el)));
+        const emul = el ? G.elementMul(m.t, el) : 1;   /* (2026-09-29) kept for the splat: the page lights the weakness or resistance it met */
+        if (dmg && el) dmg = Math.max(1, Math.round(dmg * emul));
         /* (2026-09-27) THE GUARD (the Depths of the Mountain): some monsters take a tenth, or nothing, from a style, and one only
            feels one element. Said once per monster per fight, with the numbers, so a player knows to switch rather than wonder. */
-        { const gm = G.guardMul(m.t, G.styleOf(C), el); if (gm !== 1) { if (dmg) dmg = gm <= 0 ? 0 : Math.max(1, Math.round(dmg * gm)); if (m.guardTold !== pl.id) { m.guardTold = pl.id; this.say(pl, `${def.name}: ${G.guardText(m.t)}`, "bad"); } } }
+        const gmul = G.guardMul(m.t, G.styleOf(C), el);
+        { const gm = gmul; if (gm !== 1) { if (dmg) dmg = gm <= 0 ? 0 : Math.max(1, Math.round(dmg * gm)); if (m.guardTold !== pl.id) { m.guardTold = pl.id; this.say(pl, `${def.name}: ${G.guardText(m.t)}`, "bad"); } } }
         if (dmg && G.launcherOf(C) && (def.size === "l" || def.size === "xl")) dmg = Math.round(dmg * (1 + G.ARCHERY.bigBonus));   /* (2026-09-25) a big target is hard to miss */
         if (C.tkBomb > 0 && (def.boss || def.open)) { dmg += C.tkBomb; C.tkBomb = 0; this.touch(pl); this.say(pl, `BOOM. The Boss Bomb goes off on ${def.name}.`, "loot"); }   /* (2026-09-28) Tinkering: an armed Boss Bomb, hit or miss */
         const shotK = G.launcherOf(C) ? G.ammoOf(C)?.k : null;   /* (2026-09-25) which arrow: the page flies its own icon */
@@ -2805,7 +2807,9 @@ export class World {
         if (dmg > 0) { const ev = G.gemVs(C, m.t); if (ev) dmg = Math.max(1, Math.round(dmg * (1 + ev))); }   /* (2026-09-28) an elemental gem against a monster weak to it */
         this.meterAdd(pl, "swing", 1, m); if (dmg) this.meterAdd(pl, "hit", 1, m);   /* (2026-09-28) accuracy, for the run report */
         this.bossAdd(pl, m, "swing", 1); if (dmg) { this.bossAdd(pl, m, "hit", 1); this.bossAdd(pl, m, "dmg", dmg); }   /* (2026-09-28) and a world boss's own report */
-        m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, ranged: G.launcherOf(C) ? true : undefined, ak: shotK || undefined,   /* (2026-09-25) the page flies an arrow from `by` to `who` before it shows the number; marked HERE so the page needs nothing about equipment, and a staff marks it the same way */ crit: (dmg >= 4 && dmg > G.maxHitOf(C) * 0.9) || undefined, kill: m.hp <= 0 || undefined });
+        m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, ranged: G.launcherOf(C) ? true : undefined, ak: shotK || undefined,   /* (2026-09-25) the page flies an arrow from `by` to `who` before it shows the number; marked HERE so the page needs nothing about equipment, and a staff marks it the same way */ crit: (dmg >= 4 && dmg > G.maxHitOf(C) * 0.9) || undefined, kill: m.hp <= 0 || undefined,
+          /* (2026-09-29) what the hit met, for the overhead plate: em 1 a weakness, -1 a resistance (with el, the element); gs the style a guard took from */
+          el: emul !== 1 ? el : undefined, em: emul > 1 ? 1 : emul < 1 ? -1 : undefined, gs: gmul !== 1 ? G.styleOf(C) : undefined });
         this.award(pl, dmg); if (S.def.crypt) this.cryptHit(S, pl, m, dmg); else if (S.def.pyramid) this.pyramidHit(S, pl, m, dmg);
         if (dmg > 0 && G.MOBS[m.t]?.open) (m.by ||= {})[pl.id] = (m.by[pl.id] || 0) + dmg;   /* (2026-09-27) an open boss remembers who hurt him, for the shared kill */
         { const fxH = G.fxOf(C);   /* (2026-09-27) the Long Night's pieces: the Skull Wand drinks, the Reaper's Scythe finishes */

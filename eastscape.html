@@ -2198,7 +2198,8 @@ function onMsg(m) {
         if (e.arc) { spellFx(e.who, "lightning"); if (e.by === you?.id || mine?.mob) SFX.play("spell_storm", { vol: 0.6 }); }   /* Storm's arc */
         const flies = e.ranged && e.by && !calmNow();   /* calmNow(), NOT calm: `calm` is a local of the draw loop, and reading it here threw on every bow hit - which dropped the splat AND the xp drop behind it in the same message (2026-09-25) */
         if (flies) arrows.push({ from: e.by, to: e.who, at: performance.now(), k: e.ak || null });
-        splats.push({ who: e.who, n: e.n, kind: e.kind, crit: !!e.crit, kill: !!e.kill, at: performance.now() + (flies ? FLIGHT_MS : 0) });
+        splats.push({ who: e.who, n: e.n, kind: e.kind, crit: !!e.crit, kill: !!e.kill, at: performance.now() + (flies ? FLIGHT_MS : 0), vs: e.em > 0 ? "WEAK" : e.em < 0 ? "RESIST" : e.gs ? "GUARD" : null });
+        if (e.em || e.gs) { const pp = PLATE.get(e.who), at = performance.now() + (flies ? FLIGHT_MS : 0); if (pp) { if (e.em && e.el) pp.pulse[e.el] = at; if (e.gs) pp.pulse[e.gs] = at; } }   /* (2026-09-29) the plate's icon pops as the hit lands */
         /* (v112) sparks off whatever was hit, in its own colours: more for a crit, and a kill's dust is thrown by the death below.
            (v113: the sprite no longer FLINCHES with them, which was the part that read as noise.) */
         /* (2026-09-25) THE LANDING. Everything a hit does to the ear and the eye - the thud, the sparks, the shake - happens
@@ -4256,6 +4257,81 @@ const fmtMins = (m) => (!Number.isFinite(m) || m > 60 * 99 ? "—" : m >= 60 ? `
 // one decimal, and none at all when it lands whole: "+4", "+1.3"
 const xpShort = (n) => (Number.isInteger(n) ? n.toLocaleString() : (Math.round(n * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 }));
 let tracker = null, splats = [], hintSlot = null;
+/* ============================================================ OVERHEAD PLATES (2026-09-29, the owner: "a number representing their health, and
+   the health going down, possibly in the bar and then tiny icons above their head that show their weakness/resistences", then, from the crowd
+   sketch in mockups-archive/eastscape-overhead-crowd.html, "go with focus"). FOCUS: a full plate (name, level, the health as a number in
+   the bar, and the icons) only on what you are fighting and what is under the mouse; anything else that is hurt gets a slim bar with its
+   number; anything at full health shows nothing, so a pack on a small map is just monsters. What a hit took stays lit in pale gold and
+   drains; a hit that meets a weakness, a resistance or a guard makes that icon pop (the splat carries em / gs, set by the server).
+   Plates push each other up so none covers another. The icons are drawn here, 8 x 8 dots, so they need no art. */
+const PLATE = new Map();   // unit id ("<mob id>" or "p:<player id>") -> { shown, trail, trailAt, last, pulse }
+const PL_ICONS = {
+  fire:  ["#ff6a2a", "#ffd84a", "...#.......##.....###.#...####...##o###..#ooo##..##o##....###..."],
+  frost: ["#9ad8ff", "#ffffff", "...#.....#.#.#....###...###o###...###....#.#.#.....#............"],
+  storm: ["#ffe24a", "#fff6b0", "....##.....##.....##.....####o.....##.....##.....##......#......"],
+  void:  ["#b070ff", "#e8d0ff", "..####...#....#.#..##..##.#..#.##.#.o#.##..##.#..#...#....###..."],
+  sun:   ["#ffd84a", "#fff6b0", "#..#..#..#.#.#....###...###o###...###....#.#.#..#..#..#........."],
+  arcane:["#e070d0", "#ffd0f4", "...#.......#......#o#...###o###...#o#.......#.......#..........."],
+  melee: ["#e0e0ec", "#a06a2a", "...#.......#.......#.......#.......#.....ooooo.....o.......o...."],
+  archery:["#c8963a", "#f4ecd8", "......##.....###....#.#....#....o.#......o......o.o......o.o...."],
+  magic: ["#8a5a32", "#ffd84a", ".....o.o......o......o.o....#......#......#......#......#......."],
+};
+const PL_KIND = { weak: ["#1d4a28", "#6fdc8c", "\u25B2", "#8ff0a8"], resist: ["#4a1a1a", "#ff6a5a", "\u25BC", "#ff9a8a"], guard: ["#3a2a1a", "#c8963a", "", ""] };
+function plIcon(key, kind, x, y, glow, grey) {
+  const I = PL_ICONS[key], K = PL_KIND[kind], s = 1.5, w = 16;
+  ctx.save(); if (glow > 0) { ctx.shadowColor = K[1]; ctx.shadowBlur = 10 * glow; }
+  ctx.fillStyle = K[0]; ctx.strokeStyle = grey ? "#666" : K[1]; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x, y, w, w, 3); ctx.fill(); ctx.stroke(); ctx.shadowBlur = 0;
+  for (let j = 0; j < 8; j++) for (let i = 0; i < 8; i++) { const ch = I[2][j * 8 + i]; if (!ch || ch === ".") continue; ctx.fillStyle = grey ? (ch === "o" ? "#bbb" : "#888") : ch === "o" ? I[1] : I[0]; ctx.fillRect(x + 2 + i * s, y + 2 + j * s, s, s); }
+  if (K[2]) { ctx.font = "700 8px Lora"; ctx.fillStyle = K[3]; ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillText(K[2], x + w + 1, y + w + 3); }
+  ctx.restore();
+}
+function plateOf(id, hp) { let p = PLATE.get(id); if (!p) { p = { shown: hp, trail: hp, trailAt: 0, last: hp, pulse: {} }; PLATE.set(id, p); } return p; }
+function plateTick(p, hp, t) {
+  if (hp < p.last) { if (t - p.trailAt > 700) p.trail = Math.max(p.trail, p.last); p.trailAt = t; } else if (hp > p.last) p.trail = hp;
+  p.last = hp; p.shown += (hp - p.shown) * 0.2; if (Math.abs(hp - p.shown) < 0.3) p.shown = hp;
+  if (t - p.trailAt > 380) p.trail += (hp - p.trail) * 0.09; if (Math.abs(p.trail - hp) < 0.3 || p.trail < hp) p.trail = hp;
+}
+/** a monster's icons: what it is weak to, what it resists, the styles it guards against and by how much */
+function mobIcons(t) {
+  const M = MOBS[t], out = []; if (!M) return out;
+  for (const e of [].concat(M.weak || [], M.onlyEl || [])) if (PL_ICONS[e] && !out.some((i) => i.k === e)) out.push({ k: e, kind: "weak" });
+  for (const e of [].concat(M.resist || [])) if (PL_ICONS[e]) out.push({ k: e, kind: "resist" });
+  for (const [st, v] of Object.entries(M.guard || {})) if (v < 1 && PL_ICONS[st]) out.push({ k: st, kind: "guard", pct: Math.round((1 - v) * 100) });
+  return out;
+}
+const plCol = (f) => (f > 0.5 ? ["#3fbf5a", "#6fe08a"] : f > 0.25 ? ["#e0a02a", "#ffd06a"] : ["#d0402a", "#ff7a5a"]);
+function plBar(x, y, w, h, P_, max, text, fs) {
+  const f = Math.max(0, Math.min(1, P_.shown / max)), tf = Math.max(0, Math.min(1, P_.trail / max)), [c1, c2] = plCol(f);
+  ctx.fillStyle = "#2a0a08"; ctx.fillRect(x, y, w, h);
+  if (tf > f) { ctx.fillStyle = "#ffe9a8"; ctx.fillRect(x + w * f, y, w * (tf - f), h); }
+  const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, c2); g.addColorStop(1, c1); ctx.fillStyle = g; ctx.fillRect(x, y, w * f, h);
+  ctx.strokeStyle = "#000"; ctx.lineWidth = 1; ctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
+  ctx.font = `700 ${fs}px Lora`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "rgba(0,0,0,.85)"; ctx.fillText(text, x + w / 2 + 1, y + h / 2 + 1.5); ctx.fillStyle = "#fff"; ctx.fillText(text, x + w / 2, y + h / 2 + 0.5);
+}
+function drawPlates(rects, t, calm) {
+  /* the most important first; each later one pushed up until it touches none already placed */
+  rects.sort((a, b) => a.prio - b.prio); const placed = [];
+  for (const r of rects) { r.w = r.full ? 130 : 46; r.h = r.full ? 34 + (r.icons.length ? 19 : 0) : 11; r.x0 = r.x - r.w / 2; r.y = r.top - r.h; r.y0 = r.y;
+    for (let n = 0, moved = true; moved && n < 40; n++) { moved = false; for (const q of placed) if (r.x0 < q.x0 + q.w + 2 && r.x0 + r.w + 2 > q.x0 && r.y < q.y + q.h + 2 && r.y + r.h + 2 > q.y) { r.y = q.y - r.h - 3; moved = true; } }
+    r.y = Math.max(r.y, 4);   /* never off the top of the view: a monster at the map's top edge keeps its plate on screen, over its own head */
+    placed.push(r); }
+  for (const r of placed.reverse()) {
+    if (r.y < r.y0 - 1) { ctx.strokeStyle = "rgba(232,191,53,.55)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(r.x, r.y + r.h); ctx.lineTo(r.x, r.y0 + r.h); ctx.stroke(); }
+    if (!r.full) { plBar(r.x0, r.y + 1, r.w, 9, r.P, r.max, `${Math.round(r.P.shown)}`, 8.5); continue; }
+    let py = r.y;
+    if (r.icons.length) { let ix = r.x - (r.icons.reduce((a, i) => a + 16 + (i.pct ? 24 : 0) + 3, -3)) / 2;
+      for (const i of r.icons) { const age = t - (r.P.pulse[i.k] || -1e9), p = age < 900 ? 1 - age / 900 : 0;
+        plIcon(i.k, i.kind, ix, py - (calm ? 0 : p * 4), p, i.kind === "resist" && p > 0);
+        if (i.pct) { ctx.font = "700 10px Lora"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillStyle = "#000"; ctx.fillText(`\u2212${i.pct}%`, ix + 20, py + 9); ctx.fillStyle = "#e8c890"; ctx.fillText(`\u2212${i.pct}%`, ix + 19, py + 8); ix += 24; }
+        ix += 19; }
+      py += 19; }
+    ctx.fillStyle = "rgba(14,9,6,.85)"; ctx.strokeStyle = r.sel ? "#e8bf35" : "rgba(200,150,58,.6)"; ctx.lineWidth = r.sel ? 2 : 1; ctx.beginPath(); ctx.roundRect(r.x0, py, r.w, 34, 5); ctx.fill(); ctx.stroke();
+    ctx.font = "700 10px Lora"; ctx.textAlign = "right"; ctx.textBaseline = "alphabetic"; ctx.fillStyle = "#ffe45c"; const lv = `Lv ${r.lvl}`; ctx.fillText(lv, r.x0 + r.w - 6, py + 13);
+    const room = r.w - 16 - ctx.measureText(lv).width; ctx.font = "700 11px Lora"; let nm = r.name; while (ctx.measureText(nm).width > room && nm.length > 3) nm = nm.slice(0, -2) + "\u2026";
+    ctx.textAlign = "left"; ctx.fillStyle = r.col; ctx.fillText(nm, r.x0 + 6, py + 13);
+    plBar(r.x0 + 6, py + 18, r.w - 12, 11, r.P, r.max, `${Math.round(r.P.shown)} / ${r.max}`, 9.5);
+  }
+}
 /* SPELL EFFECTS (2026-09-26, the owner's sprite sheets: CraftPix "10 Magic Sprite Sheet Effects", free licence, craftpix.net/file-licenses).
    Each sheet is one row of 72px frames in v3/assets/img/glad/fx/. Loaded the first time anyone casts, never at login. An effect follows
    its target, so a burn plays on a monster that is walking away. `beam` sheets (a strike from the sky) are anchored at the feet. */
@@ -4972,7 +5048,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
     const p = pos(pl), x = sx(p.px * T + 8), y = sy(p.py * T + 15);
     /* (v81) a name colour and a title bought in eastcoin.vip's store show here too. A VIP colour is EARNED, so it wins. */
     if (pl.id === you.id || names) { const tier = G.VIP[pl.id === you.id ? G.vipOf(me).i : pl.vip | 0], bought = STORE_NAME[pl.cos?.name], nfx = pl.id === you.id ? G.nameFxOf(me) : pl.nfx; nameLabel(tier?.at ? `◆ ${pl.name}` : pl.name, x, y + 4, tier?.at ? tier.col : bought || (pl.id === you.id ? "#fff" : pvp ? "#ff7a6a" : "#9fd0ff"), nfx, pnow); label(`level ${pl.lvl}`, x, y + 18, "#ffe45c", 12); if (pl.cos?.title) label(`« ${pl.cos.title} »`, x, y + 31, "#e8d8a8", 11); }
-    if (pvp && pl.id !== you.id && pl.hp < pl.maxHp) { const bw = 30, by = sy(p.py * T - 13); ctx.fillStyle = "#c00"; ctx.fillRect(x - bw / 2, by, bw, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(x - bw / 2, by, bw * Math.max(0, pl.hp / pl.maxHp), 5); }
+    /* (2026-09-29) a hurt player's bar is an overhead plate now (drawPlates, after the monsters) */
     /* BLEEDING (2026-09-24, the owner: "when a user is bleeding it needs to show an icon above their head
        (small)"). Over the head of whoever HELD names, so the three people who are meant to go and save them can
        see which one it is from across the chamber - the banner says somebody is held, this says who. Small on
@@ -4993,12 +5069,26 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   }
   // your island: what's on each pedestal
   if (Z.isle) for (const ob of Z.objs) if (ob.t === "pedestal") { const k = Z.isle.shelf[ob.i]; if (k && ITEMS[k]) drawIco(k, sx(ob.x * T + 8), sy(ob.y * T - 2) + (calm ? 0 : Math.sin(pnow / 500 + ob.i) * 2), 30); }
+  /* (2026-09-29) FOCUS: what you're fighting and what's under the mouse get a full plate, which carries the name, so theirs is not repeated underfoot */
+  const plMe = Z.players.find((q) => q.id === you?.id), plTgt = plMe?.mob || null, plHov = hoverThing && (hoverThing.kind === "mob" || hoverThing.kind === "pvp") ? hoverThing.id : null;
   for (const m of Z.mobs) if (!m.dead) {
     const p = posOf(m, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15);
-    if (names) { label(MOBS[m.t].name, x, y + 2, "#ffb23f", 12); const mv = G.mobValue(m.t), gate = me ? G.bandBlock(me, Z.key, "fight") : null; if (gate) label(gate.text, x, y + 15, "#ff6b6b", 11); else if (mv) tixLabel(mv, x, y + 15, "#ff9aa8", 11, "~"); }   /* (LEVEL BANDS: what you need, where the pay would be) */
-    if (m.hp < (m.mx || MOBS[m.t].hp)) { const bw = 30, top = sy(p.py * T + 14 - artTop(MOBS[m.t].art || m.t)) - 7;   /* (v110) always clear of the picture's own top, whatever size it is drawn at: it used to be 5 px over the TILE, which is the face of anything taller than one */
-      ctx.fillStyle = "#c00"; ctx.fillRect(x - bw / 2, top, bw, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(x - bw / 2, top, bw * Math.max(0, m.hp / (m.mx || MOBS[m.t].hp)), 5); }
+    if (names) { if (m.id !== plTgt && m.id !== plHov) label(MOBS[m.t].name, x, y + 2, "#ffb23f", 12); const mv = G.mobValue(m.t), gate = me ? G.bandBlock(me, Z.key, "fight") : null; if (gate) label(gate.text, x, y + 15, "#ff6b6b", 11); else if (mv) tixLabel(mv, x, y + 15, "#ff9aa8", 11, "~"); }   /* (LEVEL BANDS: what you need, where the pay would be) */
   }
+  /* (2026-09-29) THE PLATES: monsters, then players (yours when you're hurt; another's in the Wilderness), measured from the top of the
+     picture as the old bar was (v110: clear of anything taller than a tile) */
+  { const rects = [];
+    for (const m of Z.mobs) { if (m.dead) continue; const max = m.mx || MOBS[m.t].hp, P_ = plateOf(m.id, m.hp); plateTick(P_, m.hp, pnow);
+      const p = posOf(m, now), x = sx(p.px * T + 8), top = sy(p.py * T + 14 - artTop(MOBS[m.t].art || m.t)) - 4;
+      if (m.id === plTgt || m.id === plHov) rects.push({ full: true, x, top, name: MOBS[m.t].name, lvl: MOBS[m.t].lvl, max, P: P_, icons: mobIcons(m.t), col: "#ffb23f", sel: m.id === plTgt, prio: m.id === plTgt ? 0 : 1 });
+      else if (m.hp < max || P_.shown < max - 0.5) rects.push({ full: false, x, top, max, P: P_, prio: 3 }); }
+    for (const pl of Z.players) { const own = pl.id === you?.id, hp = own ? me?.hp : pl.hp, max = own ? maxHp() : pl.maxHp; if (!(max > 0) || hp == null) continue;
+      const P_ = plateOf(`p:${pl.id}`, hp); plateTick(P_, hp, pnow);
+      const p = pos(pl), x = sx(p.px * T + 8), top = sy(p.py * T - 13);
+      if (!own && pvp && pl.id === plHov) rects.push({ full: true, x, top, name: pl.name, lvl: pl.lvl, max, P: P_, icons: [], col: "#ff9a8a", sel: false, prio: 1 });
+      else if (hp < max && (own || pvp) || P_.shown < max - 0.5) rects.push({ full: false, x, top, max, P: P_, prio: own ? 2 : 3 }); }
+    for (const id of PLATE.keys()) if (!Z.mobs.some((m) => m.id === id) && !Z.players.some((q) => `p:${q.id}` === id)) PLATE.delete(id);   /* gone from the room */
+    drawPlates(rects, pnow, calm); }
   for (const n of Z.npcs) {
     const p = posOf(n, now), R = G.npcRole(me, n), st = R ? (R.role === "offer" ? "new" : R.role === "hand" ? "ready" : R.role === "stage" ? "stage" : null) : null;   /* (2026-09-27) a stage's person gets the blue marker */
     if (st === "new" || st === "ready" || st === "stage") {
@@ -5030,7 +5120,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
        small tag over their head saying so. It bobs a little, hides while they're talking, and costs one label a person. */
     else if (b.work != null && !p.moving && BUSY_TAG[b.workT]) label(BUSY_TAG[b.workT], x, sy(p.py * T - 13) + (calm ? 0 : Math.sin(pnow / 420 + b.x) * 2 * S2 * 0.5), "#ffe9a8", 11); }
   const pp = P ? ownPos(P, now) : null, hx = pp ? sx(pp.px * T + 8) : 0, hy = pp ? sy(pp.py * T + 15) : 0;
-  if (P && P.mob && me.hp < maxHp()) { ctx.fillStyle = "#c00"; ctx.fillRect(hx - 18, hy - 29 * S2, 36, 5); ctx.fillStyle = "#0c0"; ctx.fillRect(hx - 18, hy - 29 * S2, 36 * Math.max(0, me.hp / maxHp()), 5); }
+  /* (2026-09-29) your own bar is a plate now (drawPlates) */
   // arrows in flight (2026-09-25): a short shaft lerping attacker -> target, a little arc, drawn before the splat it belongs to lands
   arrows = arrows.filter((a) => pnow - a.at < FLIGHT_MS);
   for (const a of arrows) {
@@ -5068,6 +5158,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
     ctx.strokeStyle = "#000"; ctx.lineWidth = s.crit ? 2.5 : 1.5; ctx.stroke(); }
     ctx.fillStyle = "#fff"; ctx.font = `800 ${s.crit ? 16 : 13}px "Lora", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(s.n), x, y - k * 10 + 1);
     if (s.crit) { ctx.font = `800 11px "Lora", system-ui, sans-serif`; ctx.fillStyle = "#ffd23f"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.strokeText("CRIT", x, y - k * 10 - 21); ctx.fillText("CRIT", x, y - k * 10 - 21); }
+    if (s.vs && s.n) { ctx.font = `800 10px "Lora", system-ui, sans-serif`; ctx.fillStyle = s.vs === "WEAK" ? "#ffe27a" : "#c8c0b0"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.strokeText(s.vs, x, y - k * 10 + 21); ctx.fillText(s.vs, x, y - k * 10 + 21); }   /* (2026-09-29) what the hit met */
     ctx.globalAlpha = 1;
   }
   // what someone just gathered pops up over their head, a little bigger, then drifts up and fades
