@@ -913,7 +913,7 @@ export const GUIDES = [
       const T = G.TINK, P = T.parts, num = (n) => Number(n).toLocaleString();
       const parts = (o) => Object.entries(o || {}).filter(([p, n]) => n > 0).map(([p, n]) => p === "tickets" ? `${num(n)} tickets` : `${num(n)} ${H.esc(P[p]?.name || p)}`).join(", ");
       const gad = Object.entries(G.GADGETS).filter(([, g]) => g.item !== false).sort((a, b) => a[1].lvl - b[1].lvl);
-      const proj = Object.values(G.PROJECTS);
+      const proj = Object.entries(G.PROJECTS);
       return `<p><b>Tinkering turns junk into things.</b> Talk to <b>${H.esc(T.npc)}</b> at her Scrap Bench by Bronny's worksite in the Yard. Salvage what you don't need into <b>parts</b>, build <b>gadgets</b> out of parts and a ticket fee, and give parts to the <b>World Projects</b> the whole server builds together.</p>
         <h3>Parts</h3>
         <p>Four kinds, kept in a pouch of their own: they take no bag space, and Bom won't buy them.</p>
@@ -926,11 +926,11 @@ export const GUIDES = [
         <p>An item salvages into parts worth <b>${Math.round(T.rate * 100)}%</b> of what Bom would pay you for it, and something he pays nothing for (a feather, a pit) is still worth a little Scrap. A stack is added up before it's rounded down, so a pile of junk is worth more than one piece of it. <b>Salvage the lot</b> takes only plain drops and loot, never gear, food or anything rare; those go one at a time. Every point of part value is a point of Tinkering xp. Money, keys, eggs, pets and quest or event items can't be salvaged.</p>
         <h3>Gadgets</h3>
         <p>Built at the Scrap Bench from parts plus a ticket fee. A timed gadget runs only outside (and in the Guild), like a drink, and you can run one of each at once; the others are used on the spot. Every build has a ${Math.round(T.masterwork * 100)}% chance of a <b>Masterwork</b>: twice as many. Gadgets are items, so they trade on the Market.</p>
-        <table class="tbl"><tr><th>Level</th><th>Gadget</th><th>Does</th><th>Costs</th></tr>${gad.map(([id, g]) => `<tr><td>${g.lvl}</td><td>${H.wl(`items/tk_${id}`, `${g.icon} ${H.esc(g.name)}`)}${g.n > 1 ? ` ×${g.n}` : ""}</td><td>${H.esc(g.does)}${g.mins ? ` (${g.mins} min)` : ""}</td><td>${parts(g.parts)}, ${num(g.fee)} tickets</td></tr>`).join("")}</table>
+        <table class="tbl"><tr><th>Level</th><th>Gadget</th><th>Does</th><th>Costs</th></tr>${gad.map(([id, g]) => `<tr><td>${g.lvl}</td><td>${H.wl(`items/tk_${id}`, `${H.ico(`tk_${id}`)} ${H.esc(g.name)}`)}${g.n > 1 ? ` ×${g.n}` : ""}</td><td>${H.esc(g.does)}${g.mins ? ` (${g.mins} min)` : ""}</td><td>${parts(g.parts)}, ${num(g.fee)} tickets</td></tr>`).join("")}</table>
         <p><b>The automation tools</b> (Auger, Chainsaw, Auto-Reel) keep you gathering with no clicks and walk you to the next rock, tree or spot of the same kind. Whenever nobody has touched the game for a few minutes they work at ${Math.round(T.autoRate * 100)}% speed, and nothing gathers while you're logged out.</p>
         <h3>World Projects</h3>
         <p>Broken things around the world that the whole server rebuilds together. Anyone can give parts and tickets to the current stage at its board; when a stage is full, somebody with the Tinkering level it asks for has to stand at it and finish the job. Everybody who gave gets that build's <b>Builder's Pin</b>, and the Builders board on the Hiscores counts what each person gave. Each project has three stages:</p>
-        ${proj.map((p) => `<h3>${H.esc(p.name)} <small>${H.esc(p.where)}</small></h3><p>${H.esc(p.blurb)}</p><table class="tbl"><tr><th>Stage</th><th>Needs</th><th>Finish at</th><th>Does</th></tr>${p.tiers.map((t) => `<tr><td><b>${H.esc(t.name)}</b></td><td>${parts(t.need)}</td><td>Tinkering ${t.finish}</td><td>${H.esc(t.does)}</td></tr>`).join("")}</table>`).join("")}`;
+        ${proj.map(([pid, p]) => `<h3>${H.ico(`pin_${pid}`)} ${H.esc(p.name)} <small>${H.esc(p.where)}</small></h3><p>${H.esc(p.blurb)}</p><table class="tbl"><tr><th>Stage</th><th>Needs</th><th>Finish at</th><th>Does</th></tr>${p.tiers.map((t) => `<tr><td><b>${H.esc(t.name)}</b></td><td>${parts(t.need)}</td><td>Tinkering ${t.finish}</td><td>${H.esc(t.does)}</td></tr>`).join("")}</table>`).join("")}`;
     } },
   { id: "fletching", title: "Fletching and archery", icon: "\u{1F3F9}", cat: "Skills",
     body: (G, H) => {
