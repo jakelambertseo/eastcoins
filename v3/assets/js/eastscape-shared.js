@@ -2606,6 +2606,9 @@ Object.assign(SCENES, {
       for (let y = 14; y <= 17; y++) for (let x = 1; x <= 7; x++) keep.push([x, y]);
       dress("lumber", 1, 15, "Lumber and bricks, waiting for the rebuild."); dress("sawhorse", 2, 16, "A road barrier. The Yard's under construction.");
       dress("cones", 4, 16, "Cones. Somebody's rebuilding something.");
+      /* (2026-09-28) SPROCKET SAL'S SCRAP BENCH (Tinkering), at the slab's south-east corner beside her: the jeweller's bench picture until
+         the bench has its own art. Only while Tinkering is open. */
+      if (!HOLD.tinker) { objs.push({ t: "scrapbench", art: "o_jbench", x: 5, y: 17, name: "The Scrap Bench: salvage your junk into parts, and build gadgets" }); g[17][5] = "P"; keep.push([5, 17]); }
       objs.push({ t: "sign", art: "o_roadwork", x: 5, y: 15, name: "YARD UNDER CONSTRUCTION. Bronny the Foreman is rebuilding the Yard, and he needs materials. Fill his order together and the whole server gets a 2X Potion." }); g[15][5] = "#"; keep.push([5, 15]);
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, [...keepOf(this), ...keep], 12);
@@ -4242,7 +4245,7 @@ export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) 
    Yard and the skill joins the panel, the hiscores and the wiki. Held, everything stays in the rules (a save that somehow carries
    the items or the xp still loads) but nobody can reach it and the wiki does not list it. The tests open both with
    globalThis.__ES_OPEN_ALL before they import this file. */
-export const HOLD = { depths: false,   /* (2026-09-27) OPEN: the owner, "lets push it live" */ jewel: !globalThis.__ES_OPEN_ALL, boardwalk: false,   /* (2026-09-27) OPEN: the owner, "the boardwalk is ready to launch" */ foundry: !globalThis.__ES_OPEN_ALL, orchard: !globalThis.__ES_OPEN_ALL };   /* (2026-09-27) the Boardwalk, the Foundry and the Orchard Wall: launched the same morning and held shut again at the owner's word ("close them for now and dont allow access until i reiterate them"). Held: no door to them, not in the wiki, and anyone saved inside is walked back out on login (the worker's HELD_MAPS) */
+export const HOLD = { tinker: !globalThis.__ES_OPEN_ALL,   /* (2026-09-28) Tinkering: built on the dev server, shut until the owner opens it */ depths: false,   /* (2026-09-27) OPEN: the owner, "lets push it live" */ jewel: !globalThis.__ES_OPEN_ALL, boardwalk: false,   /* (2026-09-27) OPEN: the owner, "the boardwalk is ready to launch" */ foundry: !globalThis.__ES_OPEN_ALL, orchard: !globalThis.__ES_OPEN_ALL };   /* (2026-09-27) the Boardwalk, the Foundry and the Orchard Wall: launched the same morning and held shut again at the owner's word ("close them for now and dont allow access until i reiterate them"). Held: no door to them, not in the wiki, and anyone saved inside is walked back out on login (the worker's HELD_MAPS) */
 export const OPEN = new Set(["carnival",   /* (2026-09-24) OPEN AT LAST. Built 2026-09-24 and held shut at the owner’s word until he said "launch the publish the carnival so its openn to peoople now". */ "casino", "roulette", "theatre", "fightpit", "vault", "wild", "deep", "agility",   /* (2026-09-22) The Run. Built with the Agility skill but never added here, so its door in the Yard answered with the bouncer's "Room's shut" — a scene is not enterable until it is in this set. */   /* (2026-09-22) the Wilderness reopened, down the rope ladder on the Gloam */ /* "highroller": closed for now (the owner, 2026-09-19) */ /* "forum", "bathhouse": closed in v108, what mattered there is in the Yard */ "workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "trailer",
   ]);   /* (2026-09-23) the Thieves' Guild. Deliberately NOT in BANDS: its rooms gate on Thieving through each mark's own `req`, and a combat band here would undo the whole point of a skill you cannot fight your way into. */   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
 export const OPEN_DAILY = new Set([
@@ -6940,6 +6943,8 @@ export function normChar(c) {
   if (!out.hoverOff) { out.settings.hoverTile = false; out.hoverOff = 1; }
   /* (2026-09-28) Bom's buy-back: only real, whole entries, and never more than he keeps */
   out.buyback = (Array.isArray(out.buyback) ? out.buyback : []).filter((x) => x && typeof x === "object" && ITEMS[x.k] && (x.n | 0) > 0 && Number.isFinite(x.paid) && x.paid >= 0 && x.id).slice(0, BUYBACK.keep);
+  /* (2026-09-28) Tinkering's parts: a pouch of four counts, never items (they take no bag space, and Bom cannot buy them) */
+  { const pp = out.parts && typeof out.parts === "object" ? out.parts : {}; out.parts = Object.fromEntries(Object.keys(TINK.parts).map((k) => [k, Math.max(0, Math.floor(Number(pp[k]) || 0))])); }
   out.look = normLook(c.look);   /* (v80) who they chose to be, or null: not asked yet */
   out.bagUp = Math.max(0, Math.min(BAG_UPGRADES.length, Math.trunc(Number(c.bagUp)) || 0));   // clamped on load: a hand-edited save cannot grant a hundred slots
   /* (2026-09-22) THE TOWER. `best` is the highest floor ever cleared and is the only part that has to survive a
@@ -8343,3 +8348,51 @@ export function usesOf(k) {
   for (const [egg, cost] of eggTrades()) if (cost.some(([i]) => i === k)) add(`egg:${egg}`, ITEMS[egg].name, "Nestor, the Yard");   /* (2026-09-28) the Egg Man */
   return out;
 }
+
+/* ============================================================ TINKERING (2026-09-28): THE SINK. EASTSCAPE-DRAFTS.md §11 and §11b.
+   The owner: "tinkering makes the most sense since it provides something we desperately need: a sink". Junk goes in, gadgets come out,
+   gadgets get used up. STEP ONE (this block): the skill, the four PARTS, and SALVAGE at Sprocket Sal's Scrap Bench in Bronny's worksite.
+   Gadgets, the automation tools and the World Projects come after.
+
+   SALVAGE turns an item into parts worth TINK.rate of what Bom would pay you for it (loot at its value, gear at its trade-in, a rare at
+   Bom's lowball), split by what the item IS: metal (gear, bars, ore, tools) is mostly Gears, magic (pages, ink, wands) mostly Sparks,
+   anything Bom pays TINK.relicAt or more for is partly Relic shards, and everything else is Scrap. Something Bom pays nothing for still
+   gives TINK.zeroScrap Scrap each. The fractions are added across the whole stack and then floored, so a stack of pits is worth
+   something and one pit is not; what is left over is lost, which is part of the sink. PARTS ARE NOT ITEMS: they sit in a pouch on the
+   character (C.parts), take no bag space, and Bom cannot buy them, so salvaging is a real choice between tickets now and parts. */
+export const TINK = {
+  npc: "Sprocket Sal", reach: 3, rate: 0.7, zeroScrap: 0.2, magicPv: 1, relicAt: 150, xpPerPv: 1,   /* magicPv: a page or an ink Bom pays nothing for is still worth a little, in Sparks */
+  parts: { scrap: { name: "Scrap", pv: 1, col: "#8a8a86" }, gears: { name: "Gears", pv: 5, col: "#c8963a" }, sparks: { name: "Sparks", pv: 5, col: "#4a7ad8" }, relic: { name: "Relic shards", pv: 50, col: "#9a4ad8" } },
+  share: { metal: ["gears", 0.6], magic: ["sparks", 0.6], relic: ["relic", 0.5] }
+};
+SKILLS.tinkering = { held: HOLD.tinker, name: "Tinkering", icon: "\u{1F527}" };
+if (!HOLD.tinker) { SKILL_GROUPS.find((g) => g.name === "Skilling")?.keys.push("tinkering"); HISCORES.push(["tinkering", "Tinkering", "level", "lvl"]); }
+if (!HOLD.tinker) SCENES.workyard.npcs.push({ name: TINK.npc, art: "sal", x: 6, y: 17, still: true, opens: "tinker", reach: 2,
+  lines: ["Everything's worth something. Mostly bits.", "Bring me your junk. Bones, pits, that helmet you'll never wear. I'll turn it into parts.", "Parts don't sell. Parts BUILD. That's the whole point.",
+    "Bronny builds the Yard. I build the things that build the Yard.", "Salvage the lot, love. Your favourites are safe with me."] });
+const TK_NEVER = new Set(["tickets", "zcoin", "pot_double", "candycorn"]);
+let TK_DROPS = null;   /* every monster drop, worked out once: a drop Bom pays nothing for (a feather) is still worth salvaging */
+const tkDrops = () => TK_DROPS || (TK_DROPS = new Set(Object.values(MOBS).flatMap((m) => (m.drops || []).map((d) => d[0]))));
+/** what Bom would pay for one: loot at its value, gear at its trade-in (by level), a rare at his quick-sell, else its value */
+export const bomPays = (k, f = 0) => (isLoot(k) ? valueOf(k) : gearSell(k, f) > 0 ? gearSell(k, f) : quickSell(k) > 0 ? quickSell(k) : valueOf(k));
+/** may this be salvaged at all? Never money, keys, eggs, pets, quest or event items, or anything held shut */
+export const canSalvage = (k) => { const it = ITEMS[k]; if (!it || it.held || it.event || it.quest || TK_NEVER.has(k) || /^(egg_|pet_|key_)/.test(k) || /key$/.test(k)) return false; return bomPays(k) > 0 || tkDrops().has(k) || /^(page_|ink_)/.test(k); };
+/** what kind of thing it is, which decides the part it mostly becomes */
+export const salvageKind = (k, f = 0) => {
+  const it = ITEMS[k] || {};
+  if (bomPays(k, f) >= TINK.relicAt) return "relic";
+  if (/^(page_|ink_)/.test(k) || it.launcher?.style === "magic" || /wand/.test(k)) return "magic";
+  if (it.slot || it.tool || /_(bar|ore)$/.test(k) || ["copper", "tin"].includes(k)) return "metal";
+  return "junk";
+};
+/** the parts n of an item become: { scrap, gears, sparks, relic, pv } (pv = the part value, which is also the xp) */
+export function salvageOf(k, n = 1, f = 0) {
+  const out = { scrap: 0, gears: 0, sparks: 0, relic: 0, pv: 0 }; if (!canSalvage(k) || !(n > 0)) return out;
+  const each = bomPays(k, f), kind = salvageKind(k, f), pv = each > 0 ? each * TINK.rate * n : (kind === "magic" ? TINK.magicPv : TINK.zeroScrap) * n, sh = TINK.share[kind];
+  let rest = pv;
+  if (sh) { const [part, frac] = sh, P = TINK.parts[part].pv, got = Math.floor((pv * frac) / P); out[part] = got; rest -= got * P; }
+  out.scrap += Math.floor(rest); out.pv = Object.entries(TINK.parts).reduce((a, [p, d]) => a + out[p] * d.pv, 0);
+  return out;
+}
+/** "Salvage the lot": only plain drops and loot, never gear, rares or anything you'd miss (they go one at a time) */
+export const salvageLot = (k) => { const it = ITEMS[k] || {}; return canSalvage(k) && salvageKind(k) === "junk" && !it.heal && !it.meal && !it.drink && !it.use && (isLoot(k) || tkDrops().has(k)); };   /* never gear, bars, magic, rares or anything you eat or use */
