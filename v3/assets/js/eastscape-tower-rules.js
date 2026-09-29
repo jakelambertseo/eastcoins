@@ -65,7 +65,7 @@ export function createTowerRules(G, H) {
                             // it made a 25-MINUTE one, ten times over. Two keeps the worst at about eleven.)
     bossEnrage: 0.5,        // and hits harder under half health (the `enrage` hook, wired 2026-09-22)
 
-    door: { scene: "workyard", x: 27, y: 7 },   /* (2026-09-28) the Old Quarter */   /* (2026-09-25) the Tower moved behind the court's railing: you come out in the gap below its door */   // where you stand when you come back out: the Yard's north court
+    door: { scene: "workyard", x: 40, y: 6 },   /* (2026-09-25) the Tower moved behind the court's railing: you come out in the gap below its door */   // where you stand when you come back out: the Yard's north court
 
     /* WHAT IS ON EACH FLOOR. A band is [firstFloor, baseMob]; the last band runs to the top. Every one of these is
        a monster that already exists somewhere in the game, reused at tower health — "buffed versions of our

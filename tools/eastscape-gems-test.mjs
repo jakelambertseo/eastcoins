@@ -32,8 +32,10 @@ W.bankOp(S, pl, { op: "wd", i: C.bank.indexOf(inBank) }); is(G.fCode(C.inv.find(
 W.equip(pl, C.inv.findIndex((s) => s.k === "nova_sword"));
 
 /* 3. the Sorter: shut until built, then sort, re-roll, sell */
-const D = W.scene("workyard"), sorter = D.objs.find((o) => o.t === "gemsorter");
-is([!!sorter, sorter?.x, sorter?.y], [true, 33, 18], "the Gem Sorter stands in the middle of the Yard's Market Square");
+/* (2026-09-29) PARKED: no Sorter stands in the world until its new home is chosen, so the test puts one down in the Yard itself */
+const D = W.scene("workyard");
+is(D.objs.some((o) => o.t === "gemsorter"), false, "no Gem Sorter stands in the Yard while it is parked");
+const sorter = { t: "gemsorter", x: 33, y: 18, w: 2, h: 1, name: "The Gem Sorter (test)" }; D.objs.push(sorter);
 pl.C.scene = "workyard"; pl.x = sorter.x; pl.y = sorter.y + 1;
 { pl.x = 5; pl.y = 5; const n0 = G.tixIn(C); W.gemOp(D, pl, { op: "sort", i: 0 }); is(G.tixIn(C), n0, "away from the machine: no roll"); pl.x = sorter.x; pl.y = sorter.y + 1; }
 G.addInv(C.inv, "tickets", 500000, C); G.addInv(C.inv, "ruby", 3, C); G.addInv(C.inv, "topaz", 2, C);

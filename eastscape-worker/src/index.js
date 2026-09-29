@@ -801,7 +801,7 @@ export class World {
            parts so the Finish button lights (it is the admin projtier command, so it answers to the same permission). */
         /* (2026-09-28) /gemkit and /sorter: the gem system, set up for testing on the dev server (see gemKit in gems.js) */
         if (/^[\/!]gemkit\b/i.test(text)) { if (!this.canRun(pl, "projtier")) return this.say(pl, "That one is admins only.", "bad"); return this.gemKit(pl); }
-        if (/^[\/!]sorter\b/i.test(text)) { if (!this.canRun(pl, "projtier") || this.env?.DEV !== "1") return this.say(pl, "The Gem Sorter is in the Depths.", "bad"); return this.gemOp(S, pl, { op: "view", open: "sorter" }); }
+        if (/^[\/!]sorter\b/i.test(text)) { if (!this.canRun(pl, "projtier") || this.env?.DEV !== "1") return this.say(pl, "There's no Gem Sorter standing anywhere yet.", "bad"); return this.gemOp(S, pl, { op: "view", open: "sorter" }); }
         /* (2026-09-28) /parts 500: an admin's pouch topped up with that many of every part, for testing Tinkering */
         { const pp = text.match(/^[\/!]parts\b\s*(\d+)?/i);
           if (pp) { if (!this.canRun(pl, "projtier")) return this.say(pl, "That one is admins only.", "bad"); const n = Math.min(1e6, +(pp[1] || 500)); C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 }; for (const k of Object.keys(G.TINK.parts)) C.parts[k] = (C.parts[k] | 0) + n; this.touch(pl); this.projPush(pl); return this.say(pl, `+${n.toLocaleString()} of every part. Your pouch: ${Object.entries(C.parts).map(([k, v]) => `${v.toLocaleString()} ${G.TINK.parts[k].name.toLowerCase()}`).join(", ")}.`, "good"); } }

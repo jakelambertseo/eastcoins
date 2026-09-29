@@ -2433,70 +2433,169 @@ Object.assign(SCENES, {
       // the pond, south: fished from its north bank. The one quiet job out here.
       for (let y = 19; y <= 22; y++) for (let x = 15; x <= 25; x++) g[y][x] = "~";
       scatterSpots(objs, 15, 25, 19, 5, [1, 2, 3, 5], { name: "Fishing spot", fish: "sardine", fish2: "perch", fish2lvl: 5, xp: 20, xp2: 30 });
-      /* ============================================================ THE TOWN (2026-09-28, the owner: "since we're adding more stuff to the
-         court, and the yard, its starting to feel cramped with everything including players having moving pets. can we reduce the mobs in
-         the court area, and try to increase the court size, and make it feel a little bit more like a city?", and "the crypt could
-         probabaly be put in a special area in the west of the court with the towers").
-         The two little railed courts by the casino door became the Yard's east half, a small town of four parts off one street:
-           MAIN STREET        rows 12-14, x 24-42, cobbled (t_cobble). Rows 12 and 14 stay clear: they are how everybody walks in.
-           THE OLD QUARTER    x 24-31, rows 3-11, on the dark stone (t_oldstone): the Tower and the Crypt stairs, side by side.
-           THE SMITHY         x 33-42, rows 3-11: the pack's open workshop, with the furnace, anvil, fletching table and altar before it.
-           THE MARKET SQUARE  x 25-42, rows 15-22: the Gem Sorter in the middle, the fountain, Livia, Charon, the bank chest, the fire,
-                              the jukebox, two market stalls along the south rail, a bench and planters.
-         NO MONSTER LIVES IN TOWN: the chickens and cows that wandered the courts graze west of the north road now (the mobs list below).
-         The art: tools/eastscape-town-art.mjs (the street, the stone, the smithy and the stalls, cut from the packs), and the fountain,
-         bench, planter, gargoyle and lamps that were already drawn. The ground patches are `rug`s with a `tile`, painted by the page's
-         rug pass (walkable, drawn over the paving). The casino door drops you at 38,15 and the islands' ferry at the same tile, so
-         that tile and the ones round it stay clear. */
+      /* (v104) A CAMPFIRE by the way in (the owner: "where is the low level campfire for cooking? ... add it near the entrance of the yard"): cook what you catch on the walk back to the casino. A cooked fish sells for twice the raw one. */
+      objs.push({ t: "fire", x: 40, y: 15, name: "Campfire: cook your catch" }); g[15][40] = "#"; keep.push([39, 15], [41, 15], [40, 14], [40, 16], [40, 13]);
+      /* (v108) THE FORUM IS GONE (the owner, 2026-09-21: "lets get rid of the forum area, and move the important npcs to the area by the
+         jukebox. the market lady, the crypts entrance, and the boat guy should all be there. no need to move the bank since there's a
+         bank box"). Everything a player walked to town for is now a few steps from the casino's door: Livia and her Exchange stall,
+         Charon and his cart (the islands), the stairs down to the Crypt, beside the bank chest, the campfire and the jukebox that were
+         already here. The Forum and the Bank building still exist in this file and are closed (OPEN, below). */
+      objs.push({ t: "stall", x: 30, y: 17, w: 2, h: 1, name: "Exchange stall" }); block(g, 30, 17, 2, 1);
+      objs.push({ t: "cart", art: "o_chariot", x: 37, y: 17, w: 2, h: 1, name: "Charon's cart" }); block(g, 37, 17, 2, 1);
+      objs.push({ t: "cryptdoor", x: 35, y: 10, name: "Stairs down to the Crypt: bring a party" }); g[10][35] = "#";
+      for (let x = 28; x <= 41; x++) keep.push([x, 16], [x, 15]); for (const [x, y] of [[29, 17], [32, 17], [36, 17], [39, 17], [30, 18], [31, 18], [37, 18], [38, 18], [34, 10], [36, 10], [34, 11], [35, 11], [36, 11], [35, 12], [34, 12], [36, 12]]) keep.push([x, y]);
+      for (let x = 14; x <= 26; x++) keep.push([x, 18], [x, 17]);
+      /* A BANK CHEST in the Yard (the owner, 2026-09-19): a `booth` in a chest's clothes, so it IS the bank, the same
+         window and the same rules as Aurelia's counters in town (tickets still can't go in). Saves the walk. */
+      objs.push({ t: "booth", art: "o_chest", x: 35, y: 16, name: "Bank chest" }); g[16][35] = "#";
+      objs.push({ t: "sign", x: 27, y: 15, name: "GEAR AND PRIZES are at the Prize Counter: Bom Trady, in the middle of the casino. Bring your tickets." }); g[15][27] = "#";
+      objs.push({ t: "sign", x: 41, y: 11, name: "THE YARD. Click a monster to fight it. Chickens by the gate; it gets meaner the further from the gate you walk. Nothing here attacks first. The pond is for anyone who'd rather fish." }); g[11][41] = "#";
+      /* (v88) A JUKEBOX IN THE MARKET, the same station as the casino's: see RADIO.heard. (2026-09-22: moved from
+         38,9 in the north court to the south one, because the Tower went up beside it and a five-tile building
+         leaning over a jukebox is not somewhere you can see to click it.) It sits on paving the court lays, so it
+         is set blocked here and court() turns that "#" into "P" on its way past — the same pass that puts paving
+         under Livia and the bank chest. Kept from wild() explicitly: the south court has no keep box of its own,
+         so without this a bush can grow through it. */
+      objs.push({ t: "jukebox", x: 41, y: 18, name: "Jukebox" }); g[18][41] = "#"; keep.push([41, 18]);
+      /* (2026-09-22) THE TOWER, in the same court as the jukebox and the stairs down. It is drawn from a sprite far
+         taller than its tile, so it looms up out of the court and off the top of the screen — which is the whole
+         point of it and the reason it went here rather than out in the open: the court's rails give it something to
+         stand behind. Two tiles wide, and inside the keep box the jukebox already claims (36..41 x 8..12), so
+         wild() cannot scatter a bush through the doorway. */
+      /* (2026-09-22) THE SMITHY. A furnace and an anvil existed as recipes, as stations, in the click map, in
+         ART_FILES and as two drawn pictures — and as NO OBJECT ANYWHERE IN THE WORLD. Eighty-eight smithing recipes
+         and both cooking's range bonus were unreachable for want of these two lines, which is why smithing read as
+         unbuilt when the data said otherwise. They go at the WEST end: the Tower's sprite covers the east side of
+         this court from y5 down to y9, and anything put over there is drawn behind a building. */
+      /* (2026-09-25) THE FLETCHING TABLE, beside the furnace and the anvil so the three crafts share a court:
+         a bar hammered into heads at the anvil is fletched onto shafts two tiles away. */
+      /* (2026-09-25, later) MOVED to where the Tower's door was, 40,9, when the Tower went up behind the railing (below). */
+      objs.push({ t: "fletcher", x: 40, y: 9, name: "Fletching table: shafts, bows, quivers and arrows" });
+      block(g, 40, 9, 1, 1); keep.push([40, 9]);
+      objs.push({ t: "furnace", x: 35, y: 6, name: "Furnace: smelt ore into bars, and burn logs to charcoal" });
+      block(g, 35, 6, 1, 1); keep.push([35, 6]);
+      objs.push({ t: "anvil", x: 37, y: 6, name: "Anvil: hammer bars into gear, and reforge what you have" });
+      block(g, 37, 6, 1, 1); keep.push([37, 6]);
+      /* (2026-09-25, the owner: "lets move the tower up behind the fences in the court, as if its nestled in the woods. that
+         will give us more space in the court"). Its door sits on row 4, just north of the court's top railing, and the
+         sprite rises into the treeline behind it; the railing crosses in FRONT of its foot, which is what puts it
+         behind the fence. The two rail tiles in front of the door are left out (see railing below) so you still walk
+         in from the court. The trees behind are left where wild() puts them: anything north of row 4 is drawn behind
+         the building, so they frame it rather than poke through it. Only the door row and the gap are kept clear. */
+      objs.push({ t: "towerdoor", art: "o_tower", x: 40, y: 4, w: 2, h: 1, name: "The Tower: thirty floors, one room at a time" });   /* `art` because the picture is o_tower and the type is towerdoor: without it the page looks for "o_towerdoor", finds nothing and draws NO TOWER */
+      block(g, 40, 4, 2, 1);
+      for (let y = 4; y <= 5; y++) for (let x = 39; x <= 42; x++) keep.push([x, y]);   /* only the door row and the gap in front of it: the trees behind stay, and draw BEHIND the building, which is the "nestled in the woods" look */
+      for (let y = 8; y <= 12; y++) for (let x = 36; x <= 41; x++) keep.push([x, y]);
+      /* ------------------------------------------------ THE MARKET (2026-09-22)
+
+         Everything a player walks to — Livia, the bank chest, Charon, the campfire, the jukebox, the stairs down —
+         was moved here one at a time, and each one ended up standing on open grass, so the busiest corner of the game
+         read as a field with furniture in it. Two paved courts now flank the road in from the casino, fenced along
+         their outside edges with gaps left in them: the owner asked for "semi gated off / fenced off areas with light
+         brick flooring on both sides ... more of a market feel near the entrance."
+
+         SEMI-gated is the design, not a compromise. A closed pen would trap the Yard's chickens, which wander, and
+         would put a gate between a new player and the bank. So the railing runs along the OUTSIDE edges only and the
+         road side of each court is wide open: it frames the market rather than shutting it.
+
+         `p` is paving, which the page already draws (and paints with t_brick now the art exists). THE COURTS ARE LAID
+         FIRST and every tile goes into `keep`, because wild() scatters trees and boulders over anything it has not
+         been told to leave alone — otherwise a boulder lands on the bank counter. Only grass is paved, so a rock,
+         a sign or the road that is already there stays exactly as it was. */
       const upTo = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+      /* (2026-09-22) PAVE UNDER THE FURNITURE TOO. The first version only turned GRASS into paving, and every tile
+         holding something — the stall, the bank chest, Charon's cart, the fire, the stairs down, the jukebox — was
+         already "#" by the time the court was laid, so each one sat on its own green square in the middle of the
+         brick (the owner, testing: "some items like the bank, livias market, etc have grass underneath them still").
+         "#" blocks and draws NOTHING, which is why the grass showed through; "P" is the paved blocked tile, so it
+         keeps the block and paints the floor. Anything already paved, road, water or interior is left alone. */
+      /* (2026-09-22) A COURT IS NOT A RECTANGLE (the owner, testing: "can you make it not feel so blocky? its just
+         a square and a rectangle for now, and doesnt blend that well"). Two hard rects of brick dropped on grass
+         read as a floor plan. `inset` pulls the WEST end of each row back, so the paving steps in as it goes away
+         from the road and ends on a broken line rather than a ruled one; the grass it gives back becomes a verge
+         between the brick and the railing, which is what stops the fence looking glued on.
+
+         The ROAD side is never inset: it meets dirt rather than grass, it is where everyone walks in, and pulling
+         it back would only narrow the entrance. */
       const pave = (x, y) => { if (g[y][x] === ".") g[y][x] = "p"; else if (g[y][x] === "#") g[y][x] = "P"; keep.push([x, y]); };
-      const court = (x0, y0, x1, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) pave(x, y); };
-      const put = (t, x, y, name, extra = {}, w = 1, h = 1) => { objs.push({ t, x, y, ...(w > 1 || h > 1 ? { w, h } : {}), name, ...extra }); for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) { g[yy][xx] = g[yy][xx] === "p" ? "P" : "#"; keep.push([xx, yy]); } };
-      const floor = (tile, x, y, w, h, name) => objs.push({ t: "rug", tile, x, y, w, h, name });
-      const dress = (t, x, y, name) => { objs.push({ t, x, y, name }); g[y][x] = g[y][x] === "p" ? "P" : "#"; keep.push([x, y]); };   /* (Bronny's worksite, further down, dresses with this) */
-      /* the ground first, so everything after it stands on paving */
-      court(24, 3, 42, 11);                                          // the Old Quarter and the Smithy
-      court(25, 15, 42, 22);                                         // the Market Square (x 25 on rows 19-22 is the pond; x 26 is its quay)
-      for (let y = 12; y <= 14; y++) for (let x = 24; x <= 42; x++) { g[y][x] = "p"; keep.push([x, y]); }
-      floor("t_cobble", 24, 12, 19, 3, "Main Street");
-      floor("t_oldstone", 24, 3, 8, 9, "The Old Quarter");
-      /* THE OLD QUARTER: the Tower (its sprite rises into the treeline behind) and the Crypt, with a gargoyle either side of the stairs */
-      put("towerdoor", 27, 6, "The Tower: thirty floors, one room at a time", { art: "o_tower" }, 2, 1);
-      put("cryptdoor", 30, 9, "Stairs down to the Crypt: bring a party");
-      put("gargoyle", 29, 9, "A gargoyle. It has watched a lot of parties go down.");
-      put("gargoyle", 31, 9, "A gargoyle. It counts them coming back up.");
-      put("crypttorch", 26, 6, "A torch, never quite out."); put("crypttorch", 29, 6, "A torch. Somebody keeps it lit.");
-      put("sign", 24, 11, "THE OLD QUARTER. The Tower: thirty floors, alone. The Crypt: bring a party.");
-      /* THE SMITHY: the building's footprint is the five rows behind the furnace line, so nobody walks round behind it */
-      put("townhouse", 35, 3, "The Smithy", { art: "o_town_smithy" }, 8, 5);
-      put("furnace", 34, 9, "Furnace: smelt ore into bars, and burn logs to charcoal");
-      put("anvil", 36, 9, "Anvil: hammer bars into gear, and reforge what you have");
-      put("fletcher", 38, 9, "Fletching table: shafts, bows, quivers and arrows");
-      /* (the Arcane altar is placed at 40,9 by the altars' own table, STATION_SPOTS) */
-      /* MAIN STREET's lamps, on the kerbs */
-      for (const [x, y] of [[26, 11], [32, 11], [42, 11], [28, 15], [42, 15]]) put("lamppost", x, y, "A lamp post. It comes on when the light goes.");
-      /* THE MARKET SQUARE */
-      put("fire", 40, 15, "Campfire: cook your catch");
-      put("stall", 30, 17, "Exchange stall", {}, 2, 1);
-      put("cart", 37, 17, "Charon's cart", { art: "o_chariot" }, 2, 1);
-      put("booth", 35, 16, "Bank chest", { art: "o_chest" });
-      put("jukebox", 41, 18, "Jukebox");
-      put("fountain", 26, 17, "The fountain. The bottom is all tickets.", {}, 3, 2);
-      if (!HOLD.gems) put("gemsorter", 33, 18, "The Gem Sorter: roll your gems", { art: "o_gemsorter" }, 2, 1);   /* (2026-09-28) the Yard's centrepiece */
-      put("townstall", 28, 21, "A market stall. Back next week.", { art: "o_town_stall1" }, 4, 1);
-      put("townstall", 37, 21, "A market stall, shut up for the night.", { art: "o_town_stall2" }, 4, 1);
-      put("bench", 32, 20, "A bench. Somebody's scratched their initials in it.", {}, 3, 1);
-      put("planter", 26, 21, "A planter.", {}, 2, 1);
-      put("planter", 35, 21, "A planter.", {}, 2, 1);
-      put("sign", 42, 16, "GEAR AND PRIZES are at the Prize Counter: Bom Trady, in the middle of the casino. Bring your tickets.");
-      put("sign", 42, 19, "THE YARD. The town's east of the north road; the monsters are west of it, and they get meaner the further out you walk. Nothing here attacks first. The pond is for anyone who'd rather fish.");
-      for (const [x, y] of [[38, 15], [37, 15], [39, 15], [38, 16], [36, 15]]) keep.push([x, y]);   // the casino door's landing
-      const railing = (pts) => { for (const [x, y] of pts) { keep.push([x, y]); if (g[y][x] !== "." && g[y][x] !== "p") continue; objs.push({ t: "fenceH", x, y, name: "Market railing" }); g[y][x] = g[y][x] === "p" ? "P" : "#"; } };
-      railing(upTo(27, 42).map((x) => [x, 23]));
+      const court = (x0, y0, x1, y1, inset = []) => { for (let y = y0; y <= y1; y++) for (let x = x0 + (inset[y - y0] || 0); x <= x1; x++) pave(x, y); };
+      /* THE LOOSE SLABS ARE GONE (2026-09-22, second look). The idea was that a yard walked on for years does not
+         stop dead, so single tiles were paved past the edge. On the map they were single SQUARES with grass either
+         side of them, and under the railing they made the whole line read as checkered — the owner: "the court
+         looks weird with random grass blocks now". A tile is the wrong grain for wear. The outline is softened in
+         the PAGE instead, by rounding the corners of the paving where it meets grass, which works at the pixel and
+         costs nothing here. */
+      const railing = (pts, dir) => { for (const [x, y] of pts) { keep.push([x, y]); if (g[y][x] !== "." && g[y][x] !== "p") continue; objs.push({ t: dir === "h" ? "fenceH" : "fenceV", x, y, name: "Market railing" }); g[y][x] = g[y][x] === "p" ? "P" : "#"; } };
+      /* (2026-09-29, the owner: "i like the fence moving to the treeline too") THE SOUTH COURT RUNS DOWN TO THE TREES: its rail was at
+         y19 with a strip of grass and trees between it and the treeline; the court now takes that strip (to y22) and the rail stands at
+         y23, against the trees, the way the town's did. */
+      court(28, 14, 42, 22, [0, 0, 1, 1, 2, 2, 2, 2, 2]);       // south court: the Exchange, the bank chest, Charon's cart, the fire
+      /* (2026-09-22) THE NORTH COURT GREW TWO ROWS NORTH, to y6, because the Tower went up in it and the smithy had
+         to go somewhere: five rows were already holding the Crypt stairs and a five-tile building. The taper is kept
+         so the left edge still reads as a shape rather than a box.
+
+         THE FORGE GOES AT THE WEST END, and that is not decoration. The Tower's sprite is about four tiles tall and
+         anchored at y9, so it covers y5..y9 on the EAST side of this court — a furnace at 41,6 would be drawn behind
+         a building. The new space is only usable on the left. */
+      court(33, 6, 42, 12, [2, 1, 1, 0, 0, 1, 2]);                // north court: the Crypt stairs, the Tower, and the smithy
+      /* Each gap in a rail is somebody's way in: 31 and 38 on the south line up with Livia's stall and Charon's
+         cart, 36 on the north lines up with the stairs down. */
+      /* CLOSED ON THREE SIDES, OPEN ON THE ROAD (the owner: "they should be closed on three sides, so one is open
+         to get in"). The road at y13 runs between the two courts, so each one's road side IS the entrance — which
+         means the rails want no gaps cut in them at all. An earlier pass cut doorways at 31, 38 and 36 and then
+         had to protect them from wild(); with a whole side open they are simply gone.
+
+         The fourth side of each court is the map's east edge, which is already impassable and dressed as treeline
+         by wild(), so the rails run along the outer long edge and down the west end and stop there.
+
+         The vertical runs are drawn with their OWN tile (o_fencev), a full square whose rails touch the top and
+         bottom edges, so a column of them joins up. The front-on rail could not do this: at seven pixels in a
+         sixteen-pixel tile a stack of them is separate railings with gaps, which is what the west edges looked
+         like before. Two pieces, each tiling along its own axis. */
+      /* WHAT MAKES IT A MARKET AND NOT A CAR PARK (2026-09-22, the owner: "add a few artifacts to the courts, some
+         light posts, etc. make it feel lived in", with concept art of a fenced yard full of crates and barrels).
+
+         All of it is scenery: blocked, named so the hover says something, and nothing to click. It goes down AFTER
+         the courts are paved, and each piece keeps whatever is under it: on brick it becomes "P" (blocked, but
+         still drawn as floor) rather than the plain "#" that draws NOTHING and would give every crate the square
+         of grass the bank chest and the stall had; on the verge outside the paving "#" is right, because there
+         the ground really is grass. The railings do the same thing for the same reason. Since the courts were
+         given their stepped west ends a few of these now stand on the verge rather than the brick, which is where
+         you would put a crate anyway.
+
+         Nothing goes on row 14 or row 12, the two rows nearest the road: that is where everyone walks in, and a
+         crate there is something to path around on the way to the bank. The corners take the tall pieces (lamp
+         posts, corner posts) because a tall thing at a corner reads as a boundary; the low clutter fills the dead
+         ground behind the stalls where nobody stands. */
+      const dress = (t, x, y, name) => { objs.push({ t, x, y, name }); g[y][x] = g[y][x] === "p" ? "P" : "#"; keep.push([x, y]); };
+      dress("fencepost", 27, 23, "Corner post"); dress("fencepost", 32, 7, "Corner post");
+      dress("lamppost", 28, 15, "A lamp post. It comes on when the light goes."); dress("lamppost", 42, 18, "A lamp post. It comes on when the light goes.");
+      dress("lamppost", 33, 8, "A lamp post. It comes on when the light goes."); dress("lamppost", 42, 12, "A lamp post. It comes on when the light goes.");
+      dress("crates", 28, 17, "Crates. Livia's, probably."); dress("crate", 29, 18, "A crate. Nailed shut.");
+      dress("barrel", 33, 15, "A barrel. Something sloshes."); dress("sacks", 34, 18, "Sacks of grain.");
+      dress("crates", 41, 17, "Crates, stacked by the cart."); dress("barrel", 42, 15, "A barrel, going soft in the rain.");
+      dress("handcart", 34, 8, "A handcart, parked."); dress("crate", 41, 8, "A crate. Somebody sat on it.");
+      dress("barrel", 33, 12, "A barrel by the stairs."); dress("sacks", 40, 12, "Sacks, dumped and forgotten.");
+      railing(upTo(27, 42).map((x) => [x, 23]), "h");   /* (2026-09-29) at the treeline: y19 until today */
+      railing(upTo(34, 42).filter((x) => x !== 40 && x !== 41).map((x) => [x, 5]), "h");        // the north court's top rail, moved up from y7 with the court; (2026-09-25) open at 40-41, the Tower's gate
+      railing(upTo(14, 22).map((y) => [27, y]), "v");
+      railing(upTo(6, 12).map((y) => [32, y]), "v");        // and its west rail runs the full new height
       NORTH_ROAD(g, keep); objs.push({ t: "sign", x: 20, y: 11, name: "North: the Gloam. It opens at Combat 10 for its monsters, and Fishing 10 for its pond. Bigger tickets, better fish." }); g[11][20] = "#";
+      /* (2026-09-29, the owner: "the only thing i liked from your revamp was the cobble road but it should extend north and west to
+         those maps", "and the lampposts on the road") THE COBBLED ROAD. Three tiles wide, like the exits it runs to: west from the
+         courts to the Carnival (y12-14) and north from the crossroads to the Gloam (x21-23). Between the two courts it stays the one
+         lane it always was (y13), so the courts keep their brick right up to it. The cobbles are `rug`s with a `tile` (painted by the
+         page's rug pass, walkable); the tiles under them are road (",") so wild() leaves them clear and the Long Night's lanterns
+         line the verges rather than stand in the road. Lamp posts every few tiles along the verges, alternating sides. */
+      for (let y = 12; y <= 14; y++) for (let x = 0; x <= 26; x++) { if (g[y][x] === ".") g[y][x] = ","; keep.push([x, y]); }
+      for (let y = 0; y <= 11; y++) for (let x = 21; x <= 23; x++) { if (g[y][x] === ".") g[y][x] = ","; keep.push([x, y]); }
+      objs.push({ t: "rug", tile: "t_cobble", x: 0, y: 12, w: 27, h: 3, name: "The road west, to the Carnival" });
+      objs.push({ t: "rug", tile: "t_cobble", x: 27, y: 13, w: 17, h: 1, name: "The road in from the casino" });
+      objs.push({ t: "rug", tile: "t_cobble", x: 21, y: 0, w: 3, h: 12, name: "The north road, to the Gloam" });
+      for (const [x, y] of [[7, 11], [13, 15], [19, 15], [26, 11], [20, 7], [24, 3]]) dress("lamppost", x, y, "A lamp post. It comes on when the light goes.");
       /* (2026-09-22) the first bale moved off 36,7: that is now the north court's doorway, and a bale in it made a
          fence with no way through. The court is laid above, so anything decorative here must dodge it. */
-      for (const [x, y] of [[13, 3], [2, 21], [17, 6], [7, 8]]) { objs.push({ t: "hay", x, y, name: "Hay bale" }); g[y][x] = "#"; }
+      for (const [x, y] of [[30, 5], [2, 21], [17, 6], [7, 8]]) { objs.push({ t: "hay", x, y, name: "Hay bale" }); g[y][x] = "#"; }
       /* (2026-09-23, the owner: "put some in the yard ... spread them out randomly and not all by each other
          though, just 3 of them") WHEAT, AND WITH IT THE WHOLE OF FARMING. There was no wheat anywhere a player
          could reach: the only patches in the game are in the closed farm scene (eastscape-closed.js), and the
@@ -2516,7 +2615,7 @@ Object.assign(SCENES, {
          the owner preferred the original ("it looks better than these you made, just replace the graphics but the
          spacing etc in the yard is good"), so the override is gone and the sprite is core art again. The three
          positions are unchanged, which is the part that was right. */
-      for (const [x, y] of [[8, 4], [14, 3], [7, 20]]) { objs.push({ t: "wheat", x, y, name: "Wheat" }); g[y][x] = "#"; keep.push([x, y]); }
+      for (const [x, y] of [[8, 4], [28, 8], [7, 20]]) { objs.push({ t: "wheat", x, y, name: "Wheat" }); g[y][x] = "#"; keep.push([x, y]); }
       /* (2026-09-28, the owner: "add some theme relevant pixel art beside him, like a road sign or construction related things. he thematically
          needs the items to 'rebuild' the yard") BRONNY'S WORKSITE at the west gate, round Bronny the Foreman (3,15, npcs below): his lumber and
          the barrier behind him, cones at his side, and the roadwork sign in front of him saying what the order is for. Clear of rows 12 and 14,
@@ -2537,14 +2636,12 @@ Object.assign(SCENES, {
       return { g, objs, blobs: [] };
     },
     // east to west, easy to hard: chickens at the gate, then cows, bad tomatoes, hornworms, and boars at the far end
-    /* (2026-09-28, the owner: "reduce the mobs in the court area") NONE IN TOWN, and fewer overall: 27 became 20. They still get meaner
-       walking west: chickens and cows in the pasture by the north road, the tomatoes and olives past them, hornworms and boars out by
-       the west gate and the worksite. Every home is at x 19 or less, so a monster wandering its four tiles never reaches the street. */
-    mobs: [["chicken", 19, 4], ["chicken", 19, 6], ["chicken", 15, 5], ["chicken", 19, 10],
-      ["cow", 16, 3], ["cow", 14, 8], ["cow", 13, 11],
-      ["rotten", 11, 4], ["rotten", 10, 7], ["rotten", 12, 9], ["olive", 9, 5], ["olive", 8, 10],
-      ["hornworm", 4, 4], ["hornworm", 3, 7], ["hornworm", 5, 10], ["hornworm", 11, 17],
-      ["boar", 8, 17], ["boar", 4, 19], ["boar", 11, 21], ["boar", 6, 22]],
+    mobs: [["chicken", 38, 5], ["chicken", 41, 5], ["chicken", 33, 9],   /* (v88: two of them moved a little, off the jukebox's slab) */
+       ["chicken", 39, 18], ["chicken", 41, 21], ["chicken", 36, 20],
+      ["cow", 30, 4], ["cow", 33, 7], ["cow", 27, 6], ["cow", 30, 21], ["cow", 34, 22],
+      ["rotten", 18, 4], ["rotten", 26, 7], ["rotten", 19, 8], ["rotten", 27, 10], ["olive", 16, 4], ["olive", 17, 10], ["olive", 25, 10],
+      ["hornworm", 12, 5], ["hornworm", 15, 8], ["hornworm", 10, 9], ["hornworm", 11, 17],
+      ["boar", 5, 5], ["boar", 8, 17], ["boar", 4, 19], ["boar", 11, 21], ["boar", 6, 22]],
     npcs: [   // (v108: Livia and Charon came over from the Forum, which is closed. Brutus sold gear here for a few hours on 2026-09-20; it is behind the Prize Counter now)
       { name: "Livia the Broker", art: "livia", x: 31, y: 16, still: true, quests: ["copperbell", "wheatrun", "emeraldedge"], opens: "exchange", reach: 2, hair: "#2a1a10", shirt: "#c89a2a", pants: "#3a2a1a", lines: ["Buying? Selling? Use the stall. I take 1%.", "It keeps selling while you sleep."] },
       { name: "Charon the Ferryman", art: "charon", x: 39, y: 16, still: true, quests: ["sardines", "ferry"], opens: "ferry", hair: "#e8e8e8", shirt: "#3a3a5a", pants: "#2a2a3a", lines: ["Islands. Everyone gets one. Nobody knows who's paying for them.", "The river's closed, so now it's a cart. Don't ask how a cart gets to an island. I don't.", "Plant something before you go back in there and lose your shirt. It grows while you're away.", "Wheat, ten minutes. Tomatoes, twenty. Both sell. Both cook."] }],
@@ -6226,7 +6323,7 @@ for (const el of Object.keys(INK)) RECIPES[`brew_ink_${el}`].failStop = Math.min
 /* ---------------- the altars in the world: added to each area's layout after it is built, on tiles found open all round
    (lt-magic/altarspots.mjs). The Nexus is in the Deep Wild, which lives in eastscape-closed.js and is added there. */
 export const ALTAR_SITES = {
-  workyard:    { t: "altar_arcane", x: 40, y: 9,  name: "Arcane altar: practice pages, wands and Magic Bags" },
+  workyard:    { t: "altar_arcane", x: 41, y: 6,  name: "Arcane altar: practice pages, wands and Magic Bags" },
   carnival:    { t: "altar_fire",   x: 22, y: 12, name: "Fire altar: Fire pages, Focus and Steady Hands" },
   cloud:       { t: "altar_frost",  x: 22, y: 12, name: "Frost altar: Frost pages, Ward and Stillness" },
   thunderhead: { t: "altar_storm",  x: 23, y: 10, name: "Storm altar: Storm pages, Haste, Tailwind and the Waystones" },
@@ -8697,7 +8794,7 @@ export const gemBand = (r) => GEM_BANDS.find(([, lo, hi]) => r >= lo && r <= hi)
 for (const g of GEMSET.list) {
   const it = (ITEMS[g.k] ||= { name: g.k === "tigerseye" ? "Tiger's eye" : g.k[0].toUpperCase() + g.k.slice(1), icon: "\u{1F48E}" });
   it.gem = g.k;
-  it.ex = `${it.ex ? it.ex.replace(/\s*Take it to the Gem Sorter.*$/, "") + " " : ""}Take it to the Gem Sorter in the Yard's Market Square: it rolls a bonus from ${GEMSET.roll[0]}% to +${GEMSET.roll[1]}% (${g.does}), and then it goes ${g.where === "gear" ? `in a socket on level ${GEMSET.minLvl}+ gear` : "in your Gem Case, where it works wherever you are"}.`;
+  it.ex = `${it.ex ? it.ex.replace(/\s*Take it to the Gem Sorter.*$/, "") + " " : ""}Take it to the Gem Sorter: it rolls a bonus from ${GEMSET.roll[0]}% to +${GEMSET.roll[1]}% (${g.does}), and then it goes ${g.where === "gear" ? `in a socket on level ${GEMSET.minLvl}+ gear` : "in your Gem Case, where it works wherever you are"}.`;
 }
 TK_NEVER.add?.("voidheart_bit");
 ITEMS.voidheart_bit = { name: "Voidheart drill bit", icon: "\u{1F529}", ex: "A drill bit that bores through anything, pried off a boss. Sal can build it into a Master Punch (a weapon's second gem socket) or the last Gem Case slots." };
@@ -8711,7 +8808,10 @@ Object.assign(GADGETS, {
 for (const id of ["punch", "masterpunch", "caseslot", "caseslot2", "caseslot3"]) { const g = GADGETS[id]; ITEMS[`tk_${id}`] = { name: g.name, icon: g.icon, use: "gadget", gadget: id, held: HOLD.tinker, ex: `Built at the Scrap Bench (Tinkering ${g.lvl}): ${g.does}.` }; }
 /* (2026-09-28, the owner: "the gem sorter can be the biggest source of ticket sink ... it does NOT need to be built from tinkering, but
    instead in the yard in a very noticable place in the court yard") THE SORTER IS A FIXTURE, not a World Project: it stands in the middle
-   of the Yard's Market Square (the town, in SCENES.workyard) whenever HOLD.gems is off. */
+   of the Yard's Market Square (the town, in SCENES.workyard) whenever HOLD.gems is off.
+   (2026-09-29) PARKED: the town went back to the two courts (the owner: "there is zero flow to the world ... revert all changes ...
+   to what the yard was previously"), and the machine went with it ("the bubble gum machine doesnt fit thematically"). No Sorter
+   stands anywhere until its new home and look are chosen; on the dev server /sorter still opens one for testing. */
 /* (2026-09-28, the owner: "replace jewelcrafting") JEWELCRAFTING IS RETIRED: the Sorter is what gems are for now. Held everywhere, dev
    server included; its items and recipes stay in the file so a save that holds them still loads. */
 HOLD.jewel = true;

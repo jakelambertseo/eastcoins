@@ -34,7 +34,7 @@ export function createCryptRules(G, H) {
     wipeMs: 15000, rejoinMs: 3 * 60 * 1000,   // a dropped connection keeps its place in the party and the run this long
                                               // everybody in the party dead inside this window = a wipe
     zdropMul: 10,                                            // the boss's real-ZCoin chance, times a normal kill's
-    door: { scene: "workyard", x: 30, y: 10 },   /* (2026-09-28) the Old Quarter */               // where you stand by the stairway (v108: it is in the Yard, by the jukebox; it was in the Forum)
+    door: { scene: "workyard", x: 35, y: 12 },               // where you stand by the stairway (v108: it is in the Yard, by the jukebox; it was in the Forum)
     tiers: [null,
       /* (2026-09-23) `lvl` IS THE DOOR; `rec` IS THE FIGHT, and they are nowhere near each other. A boss is hit
          on clamp(0.5 + (yourAttackRoll - itsDefence) * 0.04, 0.10, 0.95), and an attack roll is your melee level
