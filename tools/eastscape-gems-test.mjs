@@ -20,8 +20,8 @@ is([G.fOf({ f: 4 }), G.forgeNameAt("nova_sword", 4), G.forgeNameAt("ruby", G.gem
 { const c = G.freshChar(); c.inv = [{ k: "ruby", n: 2, f: G.gemCode(9) }, { k: "nova_sword", n: 1, f: 4 }, { k: "nova_sword", n: 1, f: 99 }];
   c.eq.weapon = "nova_sword"; c.eqf = { weapon: 3 }; c.gembag = { cn: 2, sn: 1, c: [{ k: "ruby", roll: 10 }, { k: "topaz", roll: 5 }], s: [{ k: "topaz", roll: 7 }] };
   const o = G.normChar(JSON.parse(JSON.stringify(c))), rubies = o.inv.filter((s) => s.k === "ruby"), swords = o.inv.filter((s) => s.k === "nova_sword").map((s) => G.fOf(s));
-  is([rubies.every((s) => G.rollOf(s) === 9), rubies.reduce((a, s) => a + s.n, 0), swords, o.eqf.weapon, o.gembag], [true, 2, [4, 3], 3, { cn: 2, sn: 1, c: [{ k: "ruby", roll: 10 }, null], s: [{ k: "topaz", roll: 7 }] }],
-    "a save and a load: sorted gems keep their rolls and count, a +4 stays +4, a junk code keeps only a level, and the bag keeps what fits each side"); }
+  is([rubies.every((s) => G.rollOf(s) === 9), rubies.reduce((a, s) => a + s.n, 0), rubies.map((s) => s.n), swords, o.eqf.weapon, o.gembag], [true, 2, [1, 1], [4, 3], 3, { cn: 2, sn: 1, c: [{ k: "ruby", roll: 10 }, null], s: [{ k: "topaz", roll: 7 }] }],
+    "a save and a load: sorted gems keep their rolls and count (as single items: a stack of two is split), a +4 stays +4, a junk code keeps only a level, and the bag keeps what fits each side"); }
 
 /* 2. the Sorter stands in the Yard's north court, and works only there */
 const S = W.scene("workyard"), sorter = S.objs.find((o) => o.t === "gemsorter");

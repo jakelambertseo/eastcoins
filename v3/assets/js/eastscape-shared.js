@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 357;   /* (2026-09-29) Tinkering xp paced like the other skills; every gadget higher and ten times the cost */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 358;   /* (2026-09-29) a sorted gem is always one item, shows its roll, and a click sets it in the gem bag */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -7324,6 +7324,12 @@ export function normChar(c) {
     const n = keepCode(st.k, st.f);
     if (n > 0) { st.f = n; if (!isGem(st.k)) st.n = 1; } else delete st.f;   /* (2026-09-29) a coded piece of gear is one item; a sorted gem keeps its count */
   }
+  /* (2026-09-29, the owner: sorted gems "need to display in individual items in the inventory") A SORTED GEM IS ALWAYS ONE ITEM, like a
+     reforged piece: a stack of them (saved by the first build, or two at the same roll) is split into singles here, into the bag while it
+     has room and the bank after that, so each can be set in the gem bag, re-rolled or sold on its own. Nothing is lost either way. */
+  { const spill = [];
+    for (const list of [out.inv, out.bank]) if (Array.isArray(list)) for (const st of list) if (isGem(st.k) && st.f > 0 && st.n > 1) { for (let i = 1; i < st.n; i++) spill.push({ k: st.k, f: st.f, bank: list === out.bank }); st.n = 1; }
+    for (const x of spill) { if (!x.bank && Array.isArray(out.inv) && addInv(out.inv, x.k, 1, out, x.f) === 0) continue; if (Array.isArray(out.bank)) out.bank.push({ k: x.k, n: 1, f: x.f }); } }
 
   /* (v104) saved INSIDE a crypt run ("crypt:<run id>"): left alone here. The game server decides at login whether that run is still going (back where you stood) or not (the stairs in the Forum): cryptRejoin in eastscape-worker/src/crypt.js. */
   /* (2026-09-24, reported by jimmytomato: "I was on Floor 30 of the Tower ... now demoted back to Floor 21")

@@ -56,6 +56,7 @@ export function installGems(World, { G }) {
       G.takeInv(C.inv, "tickets", cost);
       const at = C.inv.indexOf(st);   /* (the tickets may have emptied a slot before it) */
       if (was == null) { if (st.n > 1) st.n -= 1; else C.inv.splice(at, 1); if (G.addInv(C.inv, st.k, 1, C, G.gemCode(roll)) > 0) this.bankAdd(pl, st.k, 1, G.gemCode(roll)); }
+      else if (st.n > 1) { st.n -= 1; if (G.addInv(C.inv, st.k, 1, C, G.gemCode(roll)) > 0) this.bankAdd(pl, st.k, 1, G.gemCode(roll)); }   /* (2026-09-29) a re-roll is ONE gem, never the stack it sat in */
       else st.f = G.gemCode(roll);
       this.touch(pl);
       if (roll >= S_.roll[1]) this.houseSay(`\u{1F48E} ${pl.name} sorted a PERFECT ${G.ITEMS[st.k].name.toLowerCase()}: +${roll}%.`, "SORTER");

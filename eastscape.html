@@ -15,7 +15,7 @@
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=388">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=389">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -747,6 +747,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
    quantity owns top left - and it sits on .slot and .eq alike, both being position:relative already. */
 .fgn{position:absolute;right:0;top:0;font-style:normal;font-size:10px;font-weight:800;line-height:1;color:#ffd77a;background:rgba(26,16,8,.72);padding:1px 3px;border-radius:2px;pointer-events:none;text-shadow:0 0 5px rgba(255,190,60,.9);z-index:2}
 .eq .fgn{font-size:11px;right:1px;top:1px}
+.fgn.gm{background:rgba(14,10,24,.85)}.fgn.g-perfect{color:#ffd84a;box-shadow:0 0 0 1px #ffd84a}.fgn.g-brilliant{color:#d49aff}.fgn.g-fine{color:#7cc4ff}.fgn.g-rough{color:#b8dcb2}.fgn.g-cracked{color:#ff8a7a}
 .doll{display:grid;
   }
 .eq{display:grid;place-items:center;font-size:30px;position:relative;cursor:pointer;color:inherit;padding:0}
@@ -1951,7 +1952,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=388";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=389";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -5716,8 +5717,8 @@ const qty = (n) => n >= 1e6 ? `<em class="m">${(n / 1e6).toFixed(n < 1e7 ? 1 : 0
 /* (2026-09-23) A LEVEL, AND ONLY A LEVEL. The equipment grid called this with the item KEY by mistake, and
    because "diamond_helm" is truthy every worn piece wore a gold "+diamond_helm" band whether it had ever
    been near an anvil or not. Coercing here means the only thing that can get through is a real level. */
-const fgTag = (f) => { const n = Number(f) | 0; return n > 0 ? `<em class="fgn">+${n}</em>` : ""; };
-const slotHtml = (s, i, attr = "data-i") => { const f = G.fCode(s);   /* (2026-09-28) the whole code: a gem's roll, a piece's sockets */ return `<div class="slot" ${attr}="${i}" data-item="${s.k}"${f ? ` data-f="${f}"` : ""} title="${esc(G.forgeNameAt(s.k, f))}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}${G.valueOf(s.k) ? ` — worth ${G.fmtCash(G.valueOf(s.k) * s.n)}` : ""}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(f)}${me?.fav?.includes(s.k) ? `<em class="fav" title="Favourite">\u2605</em>` : ""}</div>`; };
+const fgTag = (f, k) => { const n = Number(f) | 0; if (n > 0 && k && G.isGem(k)) { const r = G.rollOf({ k, f: n }); return r == null ? "" : `<em class="fgn gm g-${G.gemBand(r).toLowerCase()}">${r > 0 ? "+" : ""}${r}%</em>`; } return n > 0 ? `<em class="fgn">+${n}</em>` : ""; };   /* (2026-09-29, the owner) a sorted gem wears its ROLL, in its band's colour, not its code (+72 was +3%) */
+const slotHtml = (s, i, attr = "data-i") => { const f = G.fCode(s);   /* (2026-09-28) the whole code: a gem's roll, a piece's sockets */ return `<div class="slot" ${attr}="${i}" data-item="${s.k}"${f ? ` data-f="${f}"` : ""} title="${esc(G.forgeNameAt(s.k, f))}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}${G.valueOf(s.k) ? ` — worth ${G.fmtCash(G.valueOf(s.k) * s.n)}` : ""}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(f, s.k)}${me?.fav?.includes(s.k) ? `<em class="fav" title="Favourite">\u2605</em>` : ""}</div>`; };
 
 /* ------------------------------------------------------------ islands */
 function renderIsles(list) {
@@ -6227,6 +6228,14 @@ function useBagItem(i) {
   if (ITEMS[s.k].luck || ITEMS[s.k].use || ITEMS[s.k].drink) return send({ t: "use", i });
   if (ITEMS[s.k].ammo) { const w = G.ammoWords(G.ammoKind(s.k)), P = G.pouchOf(me); return P && P.pouch.ammo === G.ammoKind(s.k) ? send({ t: "quiver", op: "load", i }) : say(`${ITEMS[s.k].name}. ${w.many === "arrows" ? "A bow" : "A wand"} only fires what is loaded in a ${w.pouch}: wear one in your offhand, then click these to load it.`); }
   if (ITEMS[s.k].slot) return send({ t: "equip", i });
+  /* (2026-09-29, the owner: sorted gems were "hard to put in the gem bag") A SORTED GEM GOES STRAIGHT IN: the first empty setting on its
+     own side; with that side full (or none open) the bag opens so you can choose what comes out. An unsorted one says where to sort it. */
+  if (G.isGem(s.k) && !G.HOLD.gems) {
+    if (G.rollOf(s) == null) return say(`${ITEMS[s.k].name}, unsorted. The Gem Sorter in the Yard's north court rolls it a bonus, then it goes in your gem bag.`);
+    const side = G.gemSide(s.k), slot = G.bagOf(me)[side].indexOf(null);
+    if (slot >= 0) return send({ t: "gems", op: "put", side, slot, i });
+    say(`Your gem bag has no empty ${side === "c" ? "combat" : "skilling"} setting. Take one out, or open another.`, "bad"); return gemsUi().then((u) => u.openBag()).catch(() => {});
+  }
   say(`${ITEMS[s.k].name}${s.n > 1 ? ` (×${s.n.toLocaleString()})` : ""}.${ITEMS[s.k].ex ? " " + ITEMS[s.k].ex : ""}`);
 }
 const quickOf = () => (Array.isArray(me?.quick) ? me.quick : [null, null, null, null]);
@@ -7564,7 +7573,7 @@ function renderPanel() {
     // "is this better than what I have on" is the only question being asked here
     const cell = (s, i) => {
       const it = ITEMS[s.k], cmp = it.slot ? G.compareText(me, s.k) : "";
-      const what = it.luck ? `click to use: your next ${it.luck} kills or catches are lucky` : it.drink ? "click to drink" : it.use ? "click to use" : it.meal ? "click to eat: a buff for outside" : it.heal ? `click to eat (heals ${it.heal})` : it.slot ? (it.slot === "weapon" ? "click to wield" : "click to wear") : "click to examine";
+      const what = G.isGem(s.k) && !G.HOLD.gems ? (G.rollOf(s) != null ? "click to set it in your gem bag" : "unsorted: the Gem Sorter in the Yard's north court rolls it") : it.luck ? `click to use: your next ${it.luck} kills or catches are lucky` : it.drink ? "click to drink" : it.use ? "click to use" : it.meal ? "click to eat: a buff for outside" : it.heal ? `click to eat (heals ${it.heal})` : it.slot ? (it.slot === "weapon" ? "click to wield" : "click to wear") : "click to examine";
       /* (2026-09-24, reported by the owner: "reforged gear in your inventory doesnt show +3") THE BADGE AND THE
          FORGED NAME. This cell is built by hand here instead of going through slotHtml(), which has drawn data-f
          and the +N all along - so the bag was the one place in the game that showed a reforged piece as though
@@ -7574,7 +7583,7 @@ function renderPanel() {
       const f = G.fCode(s);   /* (2026-09-28) names and data-f carry the whole code */
       const ev = it.event && it.slot;   /* (2026-09-27) "Halloween 2026 Event", in the tooltip and as a corner mark */
       const title = `${G.forgeNameAt(s.k, f)}${ev ? ` · ${G.EVENT_TAG}` : ""}${s.n > 1 ? ` ×${s.n.toLocaleString()}` : ""}` + (cmp ? `\n${cmp}` : "") + `\n${what}, shift-click to drop, drag to another slot, right-click for more`;
-      return `<div class="slot${s.k === hint ? " hint" : ""}" draggable="true" data-i="${i}" data-to="${i}" data-item="${s.k}"${f ? ` data-f="${f}"` : ""} title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(f)}${me.fav?.includes(s.k) ? '<em class="fav" title="Favourite">★</em>' : ""}${ev ? '<em class="evtag" aria-hidden="true">\u{1F383}</em>' : ""}</div>`;
+      return `<div class="slot${s.k === hint ? " hint" : ""}" draggable="true" data-i="${i}" data-to="${i}" data-item="${s.k}"${f ? ` data-f="${f}"` : ""} title="${esc(title)}">${ico(s.k)}${s.n > 1 ? `${qty(s.n)}` : ""}${fgTag(f, s.k)}${me.fav?.includes(s.k) ? '<em class="fav" title="Favourite">★</em>' : ""}${ev ? '<em class="evtag" aria-hidden="true">\u{1F383}</em>' : ""}</div>`;
     };
     /* (2026-09-27, the owner: "literally replicate OSRS/RS3 inventory") THE BAG HAS SLOTS. Each stack sits where it was put (G.invLayout),
        a used-up stack leaves a gap, a new item takes the first gap, and any empty slot takes a drop. data-i is still the stack's index in

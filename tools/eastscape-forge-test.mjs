@@ -127,7 +127,7 @@ const ok = (m) => console.log("  " + m);
   if (!/Number\(f\)/.test(def)) fail("fgTag does not coerce its argument — an item key would render as a reforge band again");
   let clean = true;
   for (const m of src.matchAll(/fgTag\(([^)]*)\)/g)) {
-    const arg = m[1].trim();
+    const arg = m[1].trim().replace(/,\s*s\.k$/, "");   /* (2026-09-29) fgTag(f, s.k): the key only lets a gem show its roll */
     if (arg === "f" || arg === "ef" || /^\d+$/.test(arg)) continue;
     fail(`fgTag is called with \`${arg}\`, which does not look like a level`); clean = false;
   }
