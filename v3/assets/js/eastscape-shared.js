@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 360;   /* (2026-09-29) Bronny draws on nine skills; the 2X banner on the server clock */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 361;   /* (2026-09-29) the outfitters (Wren and Morwenna), longbows x2, Bronny nine skills (no late tier for the new four) */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -5641,7 +5641,10 @@ for (const w of WOODS) {
      is what marks it ranged and holds the reach and what it fires; `bow: true` is just a name for the page. */
   ITEMS[`${w.log}_shortbow`] = { name: `${w.name} shortbow`, icon: "🏹", slot: "weapon", speed: 1800, acc: 6 + i * 4, launcher: { range: 4, ammo: "arrow" }, bow: true,
     req: { skill: "archery", lvl: ARCHERY.useLvl.short[i] }, ex: "Quick to draw and short in the reach. Feed it cheap arrows." };
-  ITEMS[`${w.log}_longbow`] = { name: `${w.name} longbow`, icon: "🏹", slot: "weapon", speed: 2800, acc: 4 + i * 4, str: 2 + i * 2, launcher: { range: 6, ammo: "arrow" }, bow: true,
+  /* (2026-09-29, the owner: "increase archery damage") LONGBOW STRENGTH DOUBLED (2 + 2i -> 4 + 4i). Measured first: with a shortbow archery
+     already out-damages melee at every level (x1.07-1.30); the LONGBOW was the weak one, 71-79% of a shortbow for its two extra tiles of
+     reach. Doubled it is 92-94% of a shortbow from level 40 (80-86% below, where small numbers round): the reach still costs a little. */
+  ITEMS[`${w.log}_longbow`] = { name: `${w.name} longbow`, icon: "🏹", slot: "weapon", speed: 2800, acc: 4 + i * 4, str: 4 + i * 4, launcher: { range: 6, ammo: "arrow" }, bow: true,
     req: { skill: "archery", lvl: ARCHERY.useLvl.long[i] }, ex: "Slow, heavy and it reaches two tiles further. Worth good arrows." };
   ITEMS[`${w.log}_quiver`] = { name: `${w.name} quiver`, icon: "🎒", slot: "shield", pouch: { ammo: "arrow", cap: FLETCH.quiverCap[i] },
     req: { skill: "archery", lvl: ARCHERY.useLvl.quiver[i] }, ex: `Holds ${FLETCH.quiverCap[i]} arrows of one kind in the offhand. Load it from your bag: a bow shoots only what is in its quiver.` };
@@ -6010,7 +6013,10 @@ export const forgeSellStep = (k) => {
    onyx up every piece pays the ceiling, and from nova up that is LESS than the bars would fetch sold on their own, so nobody
    smiths high gear to sell it. gearSellRaw is the uncapped figure, kept for the test that proves reforging is not a laundry. */
 export const GEAR_SELL_MAX = 2500;
-export const gearSellRaw = (k, f = 0) => { const p = COUNTER_PRICE.get(k); if (p && ITEMS[k]?.slot) return Math.max(1, Math.round(p * GEAR_SELL_RATE)) + fOf({ f }) * forgeSellStep(k); const c = craftGearPrice(k); return c ? c + fOf({ f }) * forgeSellStep(k) : 0; };   /* (2026-09-29) and the bows, quivers, wands and Magic Bags he does not stock: craftGearPrice, at the end of this file */
+/* (2026-09-29) THE OUTFITTERS' ARMOUR (OUTFIT, at the end of this file) sells back like Bom's shelf: an eighth of what Wren or Morwenna asks */
+const OUTFIT_PRICE = new Map();
+function OUTFIT_PRICE_FILL(shelves) { for (const L of Object.values(shelves)) for (const r of L) if (r.kind === "armour") OUTFIT_PRICE.set(r.k, r.price); }
+export const gearSellRaw = (k, f = 0) => { const p = COUNTER_PRICE.get(k) || OUTFIT_PRICE.get(k); if (p && ITEMS[k]?.slot) return Math.max(1, Math.round(p * GEAR_SELL_RATE)) + fOf({ f }) * forgeSellStep(k); const c = craftGearPrice(k); return c ? c + fOf({ f }) * forgeSellStep(k) : 0; };   /* (2026-09-29) and the bows, quivers, wands and Magic Bags he does not stock: craftGearPrice, at the end of this file */
 export const gearSell = (k, f = 0) => Math.min(GEAR_SELL_MAX, gearSellRaw(k, f));
 export const canSell = (k) => isLoot(k) || quickSell(k) > 0 || gearSell(k) > 0;
 export const isLoot = (k) => !ITEMS[k]?.event && k !== "tickets" && k !== "tickets" && k !== "zcoin" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck && !ITEMS[k]?.use && !ITEMS[k]?.drink && !ITEMS[k]?.raw;
@@ -7777,6 +7783,10 @@ export function orderPick(r = Math.random) {
   const sold = new Set(prizesOf().map((p) => p.give?.[0]).filter(Boolean)), ok = ([k]) => ITEMS[k] && !ITEMS[k].held && !sold.has(k);
   const shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const kinds = shuffle(Object.keys(ORDER.kinds)).slice(0, ORDER.lines), tiers = shuffle([...ORDER.mix]);
+  /* (2026-09-29) four kinds have no late tier, so the late slot goes to a kind that has one (swapped with its tier): every order still asks
+     two early, two mid and ONE late. Five of nine kinds always include at least one of the five that have a late tier. */
+  const hasLate = (kind) => (ORDER.kinds[kind].late || []).some(ok);
+  for (let i = 0; i < tiers.length; i++) if (tiers[i] === "late" && !hasLate(kinds[i])) { const j = kinds.findIndex((k2, jj) => jj !== i && hasLate(k2)); if (j >= 0) [tiers[i], tiers[j]] = [tiers[j], tiers[i]]; }
   return kinds.map((kind, i) => {
     const K = ORDER.kinds[kind], order = [tiers[i], "mid", "early", "late"];   /* if a tier has nothing usable, fall back rather than leave a hole */
     const tier = order.find((t) => (K[t] || []).some(ok)), list = K[tier].filter(ok), [k, n] = list[Math.floor(r() * list.length)];
@@ -8774,7 +8784,7 @@ for (const [id, g] of Object.entries(GADGETS)) if (g.item !== false)
 ITEMS.tk_banner ||= { name: "Party Banner", icon: "\u{1F6A9}", held: true };
 /** the gadgets running on a character right now */
 export const tkOn = (c) => Object.entries(c?.tk || {}).filter(([id, t]) => GADGETS[id] && (t?.left | 0) > 0).map(([id]) => GADGETS[id]);
-export const tkDmg = (c, style) => tkOn(c).reduce((a, g) => a + (g.dmg?.[style] || 0), 0) + gemFor(c, GEM_DMG[style]);   /* (2026-09-28) and a socketed gem */
+export const tkDmg = (c, style) => tkOn(c).reduce((a, g) => a + (g.dmg?.[style] || 0), 0) + gemFor(c, GEM_DMG[style]) + outfitDmg(c, style);   /* (2026-09-29) and the outfitters' armour for that style (OUTFIT) */   /* (2026-09-28) and a socketed gem */
 export const tkAcc = (c, style) => tkOn(c).reduce((a, g) => a + (g.acc?.[style] || 0), 0) + gemFor(c, "jade");
 export const tkCraft = (c, skill) => { let dbl = 0, noburn = false; for (const g of tkOn(c)) if (g.craft?.skill === skill) { dbl += g.craft.dbl || 0; noburn ||= !!g.craft.noburn; } const pc = projFx(c)?.craft?.[skill]; if (pc) { dbl += pc.dbl; noburn ||= pc.noburn; } dbl += gemFor(c, GEM_SKILL[skill]?.fx === "dbl" ? GEM_SKILL[skill].k : null); return { dbl: Math.max(0, dbl), noburn }; };   /* (2026-09-28) and the map's World Project */
 export const tkXp = (c, skill) => { const pf = projFx(c); return tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0) + (pf?.xp?.[skill] || 0) + (pf?.xpAll || 0) + gemFor(c, GEM_SKILL[skill]?.fx === "xp" ? GEM_SKILL[skill].k : null); };   /* (and a Grand Opening's +10% on everything) */
@@ -9018,6 +9028,10 @@ export const TIP_TEXT = {
    every recipe in this file exists (the fletching, wand and bag recipes are all above), which is why it sits at the very end. */
 const CRAFT_GEAR = new Map(), CRAFT_P = new Map();
 { const P = CRAFT_P, byOut = {}; for (const [k, v] of Object.entries(VALUE)) if (v > 0) P.set(k, v);
+  /* (2026-09-29) THE LADDER'S MISSING RUNGS. The four Mining gems and the altar herbs have no VALUE (they are not loot), so every wand and
+     Magic Bag made with one priced at 0: Bom turned away a Yew wand and the Conjurer's bag though step 2b said he bought them all. They get a
+     worth here, for this ladder only: a gem by how deep the ores it comes out of run (one ore in 70), a herb like the cheap drops. */
+  for (const [k, v] of Object.entries({ ruby: 120, sapphire: 180, topaz: 250, opal: 350, sunpetal: 8, frostcap: 10, emberbloom: 10 })) if (!P.has(k)) P.set(k, v);
   for (const r of Object.values(RECIPES)) (byOut[r.out[0]] ||= []).push(r);
   for (let pass = 0; pass < 8; pass++) for (const [k, rs] of Object.entries(byOut)) {
     if (P.has(k)) continue;
@@ -9034,3 +9048,90 @@ const CRAFT_GEAR = new Map(), CRAFT_P = new Map();
 export const craftGearPrice = (k) => CRAFT_GEAR.get(k) || 0;
 /** what a crafted material is worth, by the same ladder, for pricing a reforge step (spell paper for a Magic Bag); never a sale price on its own */
 export const craftMatPrice = (k) => CRAFT_P.get(k) || 0;
+
+/* ============================================================ THE OUTFITTERS (2026-09-29, the owner's pre-launch list: "archery and magic gear
+   bought / sold at archery and magic gear npc. Archery and magic gear should have lower defense but hit harder in those areas. Archery gear
+   should make user faster"; then, asked: five tiers, two NPCs, "armour and weapons but weapons are very expensive", the balanced strength).
+
+   ARMOUR FOR EACH STYLE, five pieces (helm, body, legs, gloves, boots) in five tiers at 10 / 30 / 50 / 70 / 90 of that style's level:
+   - HALF THE DEFENCE of the melee plate at the same level (bronze, diamond, onyx, eclipse, singularity), piece for piece.
+   - A STYLE DAMAGE BONUS that only counts while you fight in that style (`sdmg`, read by tkDmg into maxHitOf, the same multiplier the
+     Whetstone and Arc Coil use): a full set is +10%, the body carrying the most.
+   - ARCHERY PIECES ADD MOVEMENT (`spd`, the field speedRaw already reads off worn gear, inside SPEED_CAP): a full set is +6%.
+   No `tier`, so the anvil does not take them (canForge wants a metal tier or its own forgeWith): a later decision, not an oversight.
+
+   TWO NPCs in the Yard's south court: Wren the Ranger (archery armour, every bow and quiver) and Morwenna the Mage (magic armour, every wand
+   and Magic Bag). Armour is priced by level; WEAPONS ARE THE EXPENSIVE WAY TO GET THEM (the owner): twenty times what the crafted piece is
+   worth, or a level price if that is higher, so Fletching and Wizardry stay the sensible route. Each buys its own style's gear back the way
+   Bom does (gearSell: an eighth of the shelf price, GEAR_SELL_MAX at most), so a buy and a sell never make tickets. Pieces Bom already sells
+   cheaply (the rough shortbow, quiver and wand, the scrap bag) are left to him. */
+const r50 = (n) => Math.max(50, Math.round(n / 50) * 50);
+export const OUTFIT = {
+  npc: { ranger: "Wren the Ranger", mage: "Morwenna the Mage" },
+  /* (2026-09-29, the owner: "wren and morwenna need to be in random places scattered through the world, preferably in mid tier/late tier
+     maps") not in town: each keeps her stall out where her customers are, Wren in Cloudreach (combat 40-49), Morwenna on the Thunderhead
+     (50+), by the Storm altar that her Stormweave is named for. `at` is where she stands; her stall is the two tiles below her. */
+  where: { ranger: "Cloudreach", mage: "the Thunderhead" },
+  at: { ranger: { scene: "cloud", x: 10, y: 17 }, mage: { scene: "thunderhead", x: 10, y: 15 } },
+  style: { ranger: "archery", mage: "magic" },
+  tiers: {
+    archery: [["leather", "Leather", 10], ["studded", "Studded", 30], ["wyvern", "Wyvernhide", 50], ["stormhide", "Stormhide", 70], ["voidstalker", "Voidstalker", 90]],
+    magic: [["linen", "Linen", 10], ["silk", "Silk", 30], ["moonweave", "Moonweave", 50], ["stormweave", "Stormweave", 70], ["astral", "Astral", 90]]
+  },
+  plate: { 10: "bronze", 30: "diamond", 50: "onyx", 70: "eclipse", 90: "singularity" },   /* the melee tier whose defence is halved, per level */
+  /* per slot: the price weight, the share of the set's damage, archery's speed, and the piece's name in each style */
+  slots: {
+    helm:   { w: 0.5,  dmg: 0.015, spd: 0.5, names: { archery: "coif", magic: "hood" }, icon: "\u{1FA96}" },
+    body:   { w: 1,    dmg: 0.035, spd: 2,   names: { archery: "jerkin", magic: "robe" }, icon: "\u{1F9E5}" },
+    legs:   { w: 0.7,  dmg: 0.025, spd: 1,   names: { archery: "chaps", magic: "robe skirt" }, icon: "\u{1F456}" },
+    gloves: { w: 0.35, dmg: 0.015, spd: 0.5, names: { archery: "bracers", magic: "gloves" }, icon: "\u{1F9E4}" },
+    boots:  { w: 0.35, dmg: 0.01,  spd: 2,   names: { archery: "boots", magic: "slippers" }, icon: "\u{1F97E}" }
+  },
+  armourPrice: (lvl, w) => r50(60 * Math.pow(lvl, 1.4) * w),   /* a level-90 body ~33,000; a whole level-90 set ~96,000 */
+  weaponPrice: (k) => r50(Math.max(craftMatPrice(k) * 20, 150 * Math.pow(ITEMS[k]?.req?.lvl || 1, 1.4)))   /* a level-50 longbow ~36,000 */
+};
+const OUTFIT_SHELF = { ranger: [], mage: [] }, OUTFIT_BUYS = { ranger: new Set(), mage: new Set() };
+for (const [shop, style] of Object.entries(OUTFIT.style)) for (const [key, tname, lvl] of OUTFIT.tiers[style]) for (const [slot, S] of Object.entries(OUTFIT.slots)) {
+  const k = `${key}_${slot}`, plate = Object.keys(ITEMS).find((x) => ITEMS[x].tier === OUTFIT.plate[lvl] && ITEMS[x].slot === slot && !ITEMS[x].event);
+  const piece = S.names[style], name = `${tname} ${piece}`;
+  ITEMS[k] = { name, short: piece[0].toUpperCase() + piece.slice(1), icon: S.icon, slot, def: Math.max(1, Math.round((ITEMS[plate]?.def || 2) / 2)), sdmg: { [style]: S.dmg },
+    ...(style === "archery" ? { spd: S.spd } : {}), outfit: shop, req: { skill: style, lvl },
+    ex: `${style === "archery" ? "Light armour for an archer" : "A mage's robes"}: half the defence of plate, but +${Math.round(S.dmg * 1000) / 10}% ${style === "archery" ? "Archery" : "Magic"} damage while you fight that way${style === "archery" ? `, and ${S.spd}% faster on your feet` : ""}. A full set is +10%${style === "archery" ? " and 6% faster" : ""}. ${OUTFIT.npc[shop]} sells it, in ${OUTFIT.where[shop]}.` };
+  OUTFIT_SHELF[shop].push({ k, price: OUTFIT.armourPrice(lvl, S.w), kind: "armour", lvl });
+  OUTFIT_BUYS[shop].add(k);
+}
+{ const bom = new Set(prizesOf().map((p) => p.give?.[0]).filter(Boolean));
+  for (const [k, it] of Object.entries(ITEMS)) {
+    if (!it.slot || it.event || it.held || !it.req) continue;
+    const shop = it.bow || (it.pouch && it.pouch.ammo === "arrow") ? "ranger" : it.wand || (it.pouch && it.pouch.ammo === "page") ? "mage" : null;
+    if (!shop || !craftMatPrice(k) || !/_(shortbow|longbow|quiver|wand)$|^bag_/.test(k)) continue;   /* the ladders only: the Long Count and the Last Word stay made, never sold */
+    OUTFIT_BUYS[shop].add(k);
+    if (!bom.has(k)) OUTFIT_SHELF[shop].push({ k, price: OUTFIT.weaponPrice(k), kind: "weapon", lvl: it.req.lvl });
+  }
+  const SLOT_ORDER = ["helm", "body", "legs", "gloves", "boots"], so = (r) => SLOT_ORDER.indexOf(ITEMS[r.k].slot);
+  for (const L of Object.values(OUTFIT_SHELF)) L.sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "armour" ? -1 : 1) || a.lvl - b.lvl || (a.kind === "armour" ? so(a) - so(b) : a.price - b.price));   /* a set reads top to toe */
+}
+/** what an outfitter sells: [{ k, price, kind: "armour" | "weapon", lvl }], armour first, by level */
+export const outfitShelf = (shop) => OUTFIT_SHELF[shop] || [];
+/** does this outfitter buy that item back? (its own style's armour, bows and quivers or wands and Magic Bags) */
+export const outfitBuys = (shop, k) => !!OUTFIT_SHELF[shop] && OUTFIT_BUYS[shop].has(k);
+/** the worn outfit's damage bonus for a style, as a fraction (0.10 for a full set); tkDmg adds it to maxHitOf */
+export function outfitDmg(c, style) { let n = 0; for (const k of Object.values(c?.eq || {})) if (typeof k === "string") n += ITEMS[k]?.sdmg?.[style] || 0; return n; }
+OUTFIT_PRICE_FILL(OUTFIT_SHELF);
+
+/* THE TWO OUTFITTERS, each out in the world (OUTFIT.at), behind a two-tile stall. The stall is scenery; talking to her opens the shop. */
+{ const LINES = {
+    ranger: ["Leather's quiet. Quiet's alive.", "A good bow is fletched, not bought. But I'll sell you one if you've the tickets.", "Wear the set, not the jerkin. The set's where the speed is.", "You'll hear a ranger coming about as well as you'll hear an arrow."],
+    mage: ["Robes, dear. Plate is for people who plan to be hit.", "Every stitch is a little spell. Don't ask which.", "A wand from me costs more than one from the altar. You're paying for my patience.", "Silk first. Moonweave when you've earned it."] };
+  const STALL = { ranger: ["o_rangerstall", "Wren's stall: bows, quivers and leathers"], mage: ["o_magestall", "Morwenna's stall: wands, bags and robes"] };
+  for (const shop of ["ranger", "mage"]) {
+    const { scene, x, y } = OUTFIT.at[shop], D = SCENES[scene];
+    D.npcs.push({ name: OUTFIT.npc[shop], art: shop === "ranger" ? "wren" : "morwenna", x, y, still: true, opens: "outfit", shop, reach: 2, lines: LINES[shop] });
+    const build = D.build;
+    D.build = function () {
+      const b = build.call(this), [art, name] = STALL[shop];
+      b.objs.push({ t: "outfitstall", art, x: x - 1, y: y + 1, w: 2, h: 1, name }); for (const xx of [x - 1, x]) b.g[y + 1][xx] = "#";
+      return b;
+    };
+  }
+}

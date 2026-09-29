@@ -34,7 +34,8 @@ import { installOrder } from "./order.js";
 import { installMeter } from "./meter.js";
 import { installTinker } from "./tinker.js";
 import { installCards } from "./cards.js";   /* (2026-09-29) Marked Cards */
-import { installGems } from "./gems.js";   /* (2026-09-28) gems, sockets, the Gem Case and the Gem Sorter */   /* (2026-09-28) Tinkering: the sink */   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
+import { installGems } from "./gems.js";
+import { installOutfit } from "./outfit.js";   /* (2026-09-29) the outfitters: Wren and Morwenna */   /* (2026-09-28) gems, sockets, the Gem Case and the Gem Sorter */   /* (2026-09-28) Tinkering: the sink */   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
 const CR = createCryptRules(G, G._MAP); Object.assign(G.SCENES, CR.scenes); Object.assign(G.MOBS, CR.mobs);
 /* (2026-09-24) THE GREAT PYRAMID, the second party dungeon: same shape, its own map, monsters and boss. */
@@ -849,6 +850,7 @@ export class World {
       case "hatch": return this.hatchOp(S, pl, m);   /* (2026-09-27) Breeding: eggs */
       case "tinker": return this.tinkerOp(S, pl, m);
       case "cards": return this.cardOp(S, pl, m);   /* (2026-09-29) Marked Cards */
+      case "outfit": return this.outfitOp(S, pl, m);   /* (2026-09-29) Wren the Ranger and Morwenna the Mage */
       case "gems": return this.gemOp(S, pl, m);   /* (2026-09-28) the Gem Sorter and the Gem Case */   /* (2026-09-28) Tinkering: salvage at the Scrap Bench */
       case "meter": return this.meterOp(S, pl, m);   /* (2026-09-28) the party meter: reset, or ask for it now */
       case "order": return this.orderOp(S, pl, m);   /* (2026-09-28) Bronny's order, the server's daily */
@@ -5036,4 +5038,5 @@ installOrder(World, { G });
 installMeter(World, { G });
 installTinker(World, { G });
 installGems(World, { G });
+installOutfit(World, { G });
 installCards(World, { G });

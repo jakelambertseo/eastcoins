@@ -123,6 +123,7 @@
   /* ---------------------------------------------------------- clocking in */
 
   function press() {
+    return;   /* (2026-09-29) The Grind is closed: see CLOSED in functions/api/casino/grind/_grind.js */
     const s = shiftOf("clicks");
     if (!s) { startPressed("clicks"); return; }
     const room = jobCfg("clicks").units - s.clicks - queued;
@@ -275,7 +276,13 @@
     coin.height = 18;
     const line = K.el("span", "grd-poor-line");
     line.append(document.createTextNode(`(<${cfg().brokeLine} `), coin, document.createTextNode(")"));
-    poor.append(K.el("b", null, "Only for poors!"), line);
+    /* (2026-09-29, the owner: "close The Grind ... a message on the page thats highlighted that says 'The Grind is closed. Check out
+       EastScape instead.' hyperlink eastscape, and put it where the 'only for the poors' button is and remove that") The same loud sign,
+       saying something else; the shifts below it are hidden and the server refuses to start one (CLOSED in functions/api/casino/grind). */
+    poor.classList.add("grd-closed");
+    const es = document.createElement("a"); es.href = "/eastscape"; es.textContent = "EastScape";
+    poor.append(document.createTextNode("The Grind is closed. Check out "), es, document.createTextNode(" instead."));
+    void line;
     // The emote beside the title, sized and placed like the casino floor's.
     const h1 = K.el("h1", null, "The Grind");
     const emote = document.createElement("img");
@@ -286,8 +293,7 @@
     // A dead CDN link must not leave a broken-image box beside the title.
     emote.addEventListener("error", () => emote.remove());
     h1.append(emote);
-    copy.append(h1, poor,
-      K.el("p", null, `Broke? Pick up a shift. Clock in for ${DEFAULT_JOBS.clicks.pay} ZC, or sort chips for ${DEFAULT_JOBS.sort.pay} if you can stand it. One shift of each ${every()}, for anyone under ${cfg().brokeLine} — a way back to the tables, not a job.`));
+    copy.append(h1, poor);   /* (2026-09-29) the "Broke? Pick up a shift" line went with the Grind */
     head.append(copy);
     const right = K.el("div", "cas-headright");
     refs.status = K.el("span", "cf-status", "Connecting…");
@@ -296,6 +302,7 @@
     page.append(head);
 
     const grid = K.el("div", "cf-grid");
+    grid.hidden = true;   /* (2026-09-29) The Grind is closed: no shifts to show */
     const stage = K.el("section", "cf-stage grd-stage");
     refs.phase = K.el("div", "cf-phase", "");
 

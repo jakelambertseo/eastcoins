@@ -388,7 +388,11 @@
       r.clock.textContent = clock;
 
       const cap = Number(data.me?.playsCap || 0);
-      if (g.work) {
+      if (g.work && g.closed) {
+        // (2026-09-29) The Grind is closed: the card says so, and its page points at EastScape.
+        r.plays.hidden = false; r.plays.textContent = "Closed"; r.plays.classList.add("out");
+        r.plays.title = "The Grind is closed. Check out EastScape instead.";
+      } else if (g.work) {
         // Not plays: whether a shift is open, and if not, when it will be.
         const gr = data.me?.grind;
         r.plays.hidden = !gr;

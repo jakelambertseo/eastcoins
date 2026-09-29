@@ -932,6 +932,25 @@ export const GUIDES = [
         <p>Broken things around the world that the whole server rebuilds together. Anyone can give parts and tickets to the current stage at its board; when a stage is full, somebody with the Tinkering level it asks for has to stand at it and finish the job. Everybody who gave gets that build's <b>Builder's Pin</b>, and the Builders board on the Hiscores counts what each person gave. Each project has three stages:</p>
         ${proj.map(([pid, p]) => `<h3>${H.ico(`pin_${pid}`)} ${H.esc(p.name)} <small>${H.esc(p.where)}</small></h3><p>${H.esc(p.blurb)}</p><table class="tbl"><tr><th>Stage</th><th>Needs</th><th>Finish at</th><th>Does</th></tr>${p.tiers.map((t) => `<tr><td><b>${H.esc(t.name)}</b></td><td>${parts(t.need)}</td><td>Tinkering ${t.finish}</td><td>${H.esc(t.does)}</td></tr>`).join("")}</table>`).join("")}`;
     } },
+  /* (2026-09-29) THE OUTFITTERS: every piece, price and bonus read from OUTFIT and outfitShelf, so the page cannot drift from the shops */
+  { id: "outfitters", title: "Archery and magic gear: the outfitters", icon: "\u{1F9E5}", cat: "Going further",
+    body: (G, H) => {
+      const O = G.OUTFIT, tix = (n) => `${n.toLocaleString()} tickets`, nm = (k) => H.wl(`items/${k}`, `${H.ico(k)} ${H.esc(G.ITEMS[k]?.name || k)}`);
+      const setTable = (shop) => { const style = O.style[shop];
+        return `<table class="tbl"><tr><th>Level</th><th>Set</th><th>Defence (whole set)</th><th>Whole set costs</th></tr>${O.tiers[style].map(([key, name, lvl]) => {
+          const ks = Object.keys(O.slots).map((s) => `${key}_${s}`), def = ks.reduce((a, k) => a + (G.ITEMS[k]?.def || 0), 0), cost = ks.reduce((a, k) => a + (G.outfitShelf(shop).find((r) => r.k === k)?.price || 0), 0);
+          return `<tr><td>${lvl}</td><td>${ks.map((k) => H.ico(k)).join("")} <b>${H.esc(name)}</b></td><td>${def}</td><td>${tix(cost)}</td></tr>`; }).join("")}</table>`; };
+      const weapons = (shop) => G.outfitShelf(shop).filter((r) => r.kind === "weapon").map((r) => `${nm(r.k)} (${tix(r.price)})`).join(", ");
+      return `<p><b>Two outfitters keep stalls out in the world:</b> <b>${H.esc(O.npc.ranger)}</b> dresses archers, in ${H.areaLink(O.at.ranger.scene)}, and <b>${H.esc(O.npc.mage)}</b> dresses mages, on ${H.areaLink(O.at.mage.scene)}. Each sells five-piece sets of armour (helm, body, legs, gloves and boots) in five tiers, the weapons of her style, and buys that gear back.</p>
+        <h3>What the armour does</h3>
+        <p>It has <b>half the defence of plate</b> at the same level, but every piece adds damage for its style, and <b>a whole set is +10%</b>: the body the most, then the legs, the helm and gloves, the boots least. The bonus only counts while you fight in that style: a ranger's set does nothing for a sword or a wand. <b>Archers' pieces also make you faster on your feet</b>, up to <b>6%</b> for a whole set. It needs your Archery or Magic level to wear, and the anvil doesn't reforge it.</p>
+        <h3>${H.esc(O.npc.ranger)}: archery</h3>${setTable("ranger")}
+        <h3>${H.esc(O.npc.mage)}: magic</h3>${setTable("mage")}
+        <h3>Weapons, the expensive way</h3>
+        <p>They also sell every bow and quiver, or every wand and Magic Bag, but at a steep price on purpose: making your own with Fletching or Wizardry is far cheaper. Wren: ${weapons("ranger")}.</p><p>Morwenna: ${weapons("mage")}.</p>
+        <h3>Selling back</h3>
+        <p>Each buys her own style's armour and weapons for what Bom would pay: an eighth of the shelf price, and never more than ${tix(G.GEAR_SELL_MAX)} for a piece.</p>`;
+    } },
   { id: "fletching", title: "Fletching and archery", icon: "\u{1F3F9}", cat: "Skills",
     body: (G, H) => {
       const rs = Object.values(G.RECIPES).filter((r) => r.skill === "fletching").sort((a, b) => a.lvl - b.lvl);
@@ -1106,6 +1125,15 @@ export const GUIDES = [
 ];
 
 export const UPDATES = [
+  {
+    date: "2026-09-29", title: "Archers and mages get their own gear",
+    items: [
+      "TWO OUTFITTERS keep stalls out in the world: Wren the Ranger in Cloudreach and Morwenna the Mage on the Thunderhead. Each sells five-piece sets in five tiers (Archery or Magic 10, 30, 50, 70 and 90): half the defence of plate, but a whole set adds +10% damage for its style, and an archer's set makes you 6% faster on your feet. They also sell bows, quivers, wands and Magic Bags, expensively (make your own, it's far cheaper), and buy it all back at Bom's rate.",
+      "LONGBOWS ARE TWICE AS STRONG. With a shortbow, archery already kept up with a sword; the longbow was the weak one for its extra reach. Now it hits nearly as hard as a shortbow.",
+      "Bom (and the outfitters) now buy every wand and Magic Bag. Ones made with a gem had no price and were turned away.",
+      "BRONNY'S NEW SKILLS ask for early and mid-game things only: Harvesting, Fletching, Wizardry and Tinkering lines are never late-game.",
+    ],
+  },
   {
     date: "2026-09-29", title: "Bronny needs more trades",
     items: [
