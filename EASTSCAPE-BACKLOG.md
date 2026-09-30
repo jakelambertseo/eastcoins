@@ -2041,3 +2041,12 @@ NOT DONE (considered): hit-stop; real attack frames (the owner chose drawn effec
 Roads: paintBg lays t_cobble over every "," (and the Sands' paving, ROAD_PAVE) through the floor painter, shaded by ROAD_TINT; the
 Depths and Boardwalk islands are bgArt pictures and keep their drawn walkways. Gems: take-out returns the sorted gem (gems module 7).
 Shared 395, wiki 221. The player who reported the gem take-out can be told it's changed.
+
+## 2026-09-30 02:53 UTC, rules 365 LIVE (worker 631ec223): THE PRIMEVAL VALLEY OPENS
+- Three maps north of the Trailer Park (valley, valley_ridge, valley_lair), scenes in eastscape-closed.js WRITTEN BY lt-wild/valley-gen.py (edit that, not the scene): the Yard's own ground + cobble roads, pack art only for what stands (plateaus = tools/eastscape-valley-art.mjs, pv_* pieces; NB the pv_ prefix is shared with someone's untracked pv_chicken_* files in flat/).
+- Archery country: ARCH_BAND (a bow + Archery 40 opens it), ARCH_FLOOR (arrows land at least 50% there), archery x1.4 (pterodactyls x1.7). Bands 90/95/100 for Combat.
+- Old Rex (110) and the Matriarch (108): open world bosses on plateaus, arrows only, shared kill (12-20k / 8-14k tickets EACH), run reports, CASINO lines on fall, return and (once) launch (storage flag valleyLaunched). Health never resets.
+- Cycad tier (bows/quiver/wand, sinew + fossils); Skyripper, Raptor-claw ring, Hunter's Fang, Hunter's draught (fx adm, OUT_CAP 0.25).
+- Also: outfitters' armour reforges like plate; gear never multiplied at the Nexus / Wild Bench / a gadget double make.
+- Tests: valley, valley-boss, valley-reach, nexus-gear. Known-failing before this release and still: crypt (slow), jewel (held), pit, tix, thieving, tower, quicksell (eggs and chase items have no buyer by design).
+- Next: maps 2-4 (Frozen Reach: map boss + the daily open boss; Sunken Temple: the group boss 4+; Void Rift: the endgame open boss).
