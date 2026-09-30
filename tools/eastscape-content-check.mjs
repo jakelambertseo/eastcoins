@@ -76,13 +76,21 @@ head("items");
   console.log(`  checked ${Object.keys(G.ITEMS).length} items, ${Object.keys(G.ITEM_ALIASES).length} aliases`);
 }
 
+/* (2026-09-30) HELD CONTENT MAY WAIT FOR ITS ART. A map built but held shut (HOLD) ships in the rules while its pictures are still being drawn;
+   nobody can reach it, so a monster that lives ONLY on held maps (or a daily boss whose map is held), and a pet that hatches only from them, is
+   a warning here rather than an error until the map opens. The moment it opens (OPEN has the map) the same miss is an error again. */
+const homesOf = (t) => Object.entries(G.SCENES).filter(([, d]) => (d.mobs || []).some(([x]) => x === t)).map(([k]) => k);
+const heldMob = (t) => { const h = homesOf(t); return (h.length > 0 && h.every((k) => !G.OPEN.has(k))) || (t === "icewyrm" && G.WYRM && !G.OPEN.has(G.WYRM.scene)); };
+const heldPet = (pt) => { const egg = pt.egg && G.EGGS[pt.egg], base = pt.base && G.PETS[pt.base];
+  if (egg) return (egg.from || []).length > 0 && egg.from.every((k) => !G.OPEN.has(k));
+  return base ? heldPet(base) : false; };
 head("monsters");
 {
   const obtainable = new Set();
   for (const [k, m] of Object.entries(G.MOBS)) {
     if (!m.size) bad(`mob "${k}" has no size`, `one of ${Object.keys(G.MOB_SIZES).join(", ")}`);
     else if (!G.MOB_SIZES[m.size]) bad(`mob "${k}" has size "${m.size}"`, "not a real size");
-    if (!ART_FILES.includes(m.art || k)) bad(`mob "${k}" has no picture`, `expected "${m.art || k}" in ART_FILES`);   /* m.art: a twin drawn from another's picture (the Golden Raptor) */
+    if (!ART_FILES.includes(m.art || k)) (heldMob(k) ? warn : bad)(`mob "${k}" has no picture${heldMob(k) ? " (its map is held)" : ""}`, `expected "${m.art || k}" in ART_FILES`);   /* m.art: a twin drawn from another's picture (the Golden Raptor) */
     if (!Array.isArray(m.drops)) { bad(`mob "${k}" has no drops array`); continue; }
     for (const d of m.drops) {
       const [item, n, chance] = d;
@@ -386,7 +394,7 @@ scene objects
     const on = (l) => new RegExp(`"${pt.art}"`).test(l);
     const miss = [!existsSync(join(ROOT, `v3/assets/img/glad/flat/${pt.art}.png`)) && "no picture on disk",
       !on(AF) && "not in ART_FILES", !on(CA) && "not in CASINO_ART"].filter(Boolean);
-    if (miss.length) bad(`${pt.name} (${pt.art})`, miss.join(", ")); else n++;
+    if (miss.length) (heldPet(pt) ? warn : bad)(`${pt.name} (${pt.art})${heldPet(pt) ? " (its map is held)" : ""}`, miss.join(", ")); else n++;
   }
   if (n === Object.keys(G.PETS).length) console.log(`  ok  all ${n} pets have a picture, and both lists carry it`);
 

@@ -1133,6 +1133,16 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-30", title: "The Yard Raid: the Ice Man",
+    items: [
+      "THE YARD CAN BE RAIDED. When the frost starts creeping over the Yard, CASINO counts it down: five minutes, then every minute, then thirty seconds. Then THE ICE MAN comes through the north gate with his war party of frost wolves, yetis and frost giants.",
+      "STAND ON THE WEST BANK: the war party will not cross the river into the court. Everyone of every level can fight: the raiders come in waves, from wolves a new player can put down to giants that need a crowd, and they carry logs, ores, bars, fish, feathers, bowstrings, spell paper, ink and now and then a gem.",
+      "THE ICE MAN is enormous, his health grows with how many are online, and every 10 to 15 seconds he casts DEEP FREEZE on a few of the people fighting him: locked in ice, a few seconds, no moving, no swinging. When he is badly hurt he calls THE LAST WAVE, his huscarls.",
+      "WIN and everyone who fought shares the spoils, split by how much of the fighting they did, with a floor for anyone who joined in, plus 15,000 to 25,000 tickets each from the Ice Man himself for everyone who hurt him enough. You get the after report too.",
+      "LOSE (he is still standing after twenty minutes) and the Yard is sacked: Bom, Nestor, Livia and Hexa are boarded up for ten minutes. Nobody loses anything they own.",
+    ],
+  },
+  {
     date: "2026-09-30", title: "The Primeval Valley",
     items: [
       "THREE NEW MAPS NORTH OF THE TRAILER PARK: the Primeval Valley's Lowlands, the Ridge and Old Rex's Lair, with monsters from level 90 to 110.",
