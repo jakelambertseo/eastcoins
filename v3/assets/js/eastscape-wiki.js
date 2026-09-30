@@ -1133,6 +1133,19 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-30", title: "The Frozen Reach",
+    items: [
+      "TWO NEW MAPS NORTH OF CLOUDREACH: the Frozen Reach and the Frostspire, monsters from level 100 to 115. A MAGE'S COUNTRY: a wand and Magic 60 let you in whatever your Combat, every creature takes 40% more from spells (the owls 70%), spells land at least half the time up there, and most of them stand on snowy shelves and ice floes where no sword reaches.",
+      "THE COLD KILLS: without a Frost ward it takes 25 health a second. Wren (Cloudreach) and Morwenna (the Thunderhead) sell a plain Frost charm, and the anvil makes a Frost ward ring and amulet from the Yard raid's frost shards and yeti pelts.",
+      "THE FROST JARL waits on the Frostspire's high shelf, and ONCE A DAY, at an hour nobody knows between 2 PM and midnight, THE ICE WYRM comes up through the Reach's lake for half an hour. Both are spells only and shared: everyone who hurts them gets the drop (14,000-22,000 and 20,000-32,000 tickets each), the report, and CASINO calls it.",
+      "NEW LOOT: Rimeheart (a legendary ice wand), the Crown of the Frost Jarl (a helm that keeps out the cold), Winter's Heart and the Frostbite ring (spells hit harder), the Frostmind draught, the Glacier Satchel (10,000 pages), the Frostpine wand, glacite (Mining 94), frostpine (Woodcutting 94) and icefin through the ice (Fishing 94).",
+      "THE RAID'S SPOILS MAKE THINGS NOW: Frost wards, Yeti-fur boots (the best boots in the game), Rimefang arrows (the strongest arrow) and Frostmind draughts; and the Ice Man carries a legendary axe, Rimecleaver.",
+      "BOSS PETS: every late boss can drop its own pet, stronger than anything that hatches: the Rexling (Old Rex), the Matriarch's Calf, the Jarl's Hound, the Wyrmling (the Ice Wyrm) and the Ice Imp (the Ice Man). The Valley's and the Reach's hatchlings and Legendaries are stronger too: the Snow Owlet, the Yeti Cub, the Blizzard Owl and the Abominable.",
+      "THE ROAD BEHIND YOU: the Valley's and the Reach's monsters now also drop a few plain materials from the maps before them, now and then.",
+      "FIX: a boss's own pet (the Deepwarden's Pot Boy) could only drop during the Long Night. It drops all year now.",
+    ],
+  },
+  {
     date: "2026-09-30", title: "The Yard Raid: the Ice Man",
     items: [
       "THE YARD CAN BE RAIDED. When the frost starts creeping over the Yard, CASINO counts it down: five minutes, then every minute, then thirty seconds. Then THE ICE MAN comes through the north gate with his war party of frost wolves, yetis and frost giants.",

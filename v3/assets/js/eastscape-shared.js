@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 366;   /* (2026-09-30) THE YARD RAID: the Ice Man (the Frozen Reach stays held) */   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 367;   /* (2026-09-30) THE FROZEN REACH OPENS */   /* (2026-09-30) THE YARD RAID: the Ice Man (the Frozen Reach stays held) */   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -9317,7 +9317,7 @@ if (!HOLD.valley) { for (const k of VALLEY_MAPS) { OPEN.add(k); PET_SCENES.add(k
    time here (MAGE_FLOOR), everything takes more from spells (x1.4, the owls x1.7) and less from arrows and swords, ice creatures weak to fire
    and resisting frost, and most of them on ledges and ice floes only a spell or an arrow reaches. Two maps north of Cloudreach: the Frozen
    Reach (100-108, the Ice Wyrm's lake) and the Frostspire (106-115, the Frost Jarl). HELD (HOLD.frozen) until the owner has walked it. */
-HOLD.frozen = !globalThis.__ES_OPEN_ALL;
+HOLD.frozen = false;   /* (2026-09-30, the owner: "push the frozen reach live and refresh for users") OPEN */
 export const FROZEN_MAPS = ["frozen", "frostspire"];
 Object.assign(ITEMS, {
   glacite:       { name: "Glacite", icon: "\u{1F48E}", ex: "Pale-blue crystal out of the Frozen Reach's rock, cold to the touch for days. It makes the Glacier Satchel and the frostpine wand." },

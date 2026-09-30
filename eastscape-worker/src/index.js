@@ -222,6 +222,10 @@ export class World {
         this.houseSay("\u{1F996} THE PRIMEVAL VALLEY IS OPEN, north of the Trailer Park: three maps, and most of what lives there is up on the ledges where only an arrow reaches. OLD REX is on his throne in the Lair, and THE MAMMOTH MATRIARCH is on the Lowlands' great plateau. Anyone who lands an arrow shares the kill.");
         await ctx.storage.put("valleyLaunched", Date.now());
       }
+      if (G.OPEN.has("frozen") && !(await ctx.storage.get("frozenLaunched"))) {   /* (2026-09-30) the same, once, for the Frozen Reach */
+        this.houseSay("\u2744\uFE0F THE FROZEN REACH IS OPEN, north of Cloudreach: a mage's country, and the cold up there kills. Wear a Frost ward (Wren and Morwenna sell a charm) or it will take 25 a second. THE FROST JARL waits on the Frostspire's high shelf, and once a day, at an hour nobody knows, THE ICE WYRM comes up through the lake.");
+        await ctx.storage.put("frozenLaunched", Date.now());
+      }
       { const sg = (await ctx.storage.get("songs")) || null; this.song = sg?.song || null; this.songQ = Array.isArray(sg?.q) ? sg.q : []; }
       if (!(this.jack.pot >= G.JACKPOT.seed)) { this.jack.pot = G.JACKPOT.seed; this.jackDirty = true; }   // (the v107 seed top-up was in restore() too)
       await this.pitLoad();   // (v109) ticket bets on a fight that hasn't been settled yet
