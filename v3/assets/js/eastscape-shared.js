@@ -9473,7 +9473,7 @@ recipe("smith_yeti_boots", { skill: "smithing", station: "anvil", lvl: 85, xp: 1
 fl("fletch_rimefang_arrow", { lvl: 95, xp: 520, in: [["shaft", FLETCH.perLog], ["frost_shard", 1], ["feather", FLETCH.perLog]], out: ["rimefang_arrow", FLETCH.perLog] });
 recipe("brew_frostmind", { skill: "alchemy", station: "cauldron", lvl: 80, xp: 380, ms: 2200, in: [["small_vial", 1], ["frost_shard", 1], ["glacite", 1]], out: ["pot_frost", 2] });
 /* Wren sells the plain charm; Morwenna too, so a mage finds it on the Thunderhead */
-for (const shop of ["ranger", "mage"]) OUTFIT_SHELF[shop].unshift({ k: "frostcharm", price: 15000, kind: "trinket", lvl: 1 }), OUTFIT_BUYS[shop].add("frostcharm");
+for (const shop of ["ranger", "mage"]) OUTFIT_SHELF[shop].unshift({ k: "frostcharm", price: 50000, kind: "trinket", lvl: 1 })   /* (2026-09-30, the owner: "next update it needs to be 50,000 tickets") */, OUTFIT_BUYS[shop].add("frostcharm");
 /* the Ice Man's chase axe, and what the raiders and the Reach add to the drops */
 MOBS.raidchief.drops.push(["rimecleaver", 1, 0.01]);
 MOBS.raidhuscarl.drops.push(["yeti_pelt", 1, 0.15], ["frostward_ring", 1, 0.01]);
