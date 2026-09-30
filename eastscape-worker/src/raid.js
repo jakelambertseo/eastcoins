@@ -112,6 +112,7 @@ export function installRaid(World, { G }) {
     const now = Date.now();
     if (arg === "end") { if (!this.raid) return note("There's no raid on."); const Sx = scene(this); this.raid = null; clear(Sx); this.houseSay("❄️ The war party pulls back out of the Yard."); return note("Raid ended."); }
     if (arg === "unsack") { this.raidSack = null; this.ctx.storage.delete("raidSack").catch(() => {}); return note("The Yard's stalls are open again."); }
+    if (arg === "now") { if (this.raid?.phase !== "warn") return note("Start a raid first; this skips its warning."); this.raid.at = now; this.raidTick(now); return note("The warning is skipped: the Ice Man is in the Yard."); }   /* for trying it on dev */
     if (this.raid) return note(`A raid is already ${this.raid.phase === "warn" ? "on its way" : "on"}.`);
     this.raid = { phase: "warn", at: now + R.warnMs, by: {}, said: {} };
     const mins = Math.round(R.warnMs / 60000);
