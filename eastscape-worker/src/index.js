@@ -5206,6 +5206,10 @@ export class World {
         /* SAVED FIRST. A kick is a moderation tool, not a punishment that costs somebody the loot they were carrying. */
         return void this.persist(who).catch(() => {}).then(() => { try { who.ws.close(4001, "kicked"); } catch { /* already gone */ } });
       }
+      case "trk": {   /* (2026-09-30) THE WORLD DATA WINDOW: what track.js has recorded, added up over `n` days (admins only; once per 3 s; cached 30 s in trkReport) */
+        const t = Date.now(); if (t - (pl.trkAsk || 0) < 3000) return; pl.trkAsk = t;
+        return void this.trkReport(m.n).then((v) => this.send(pl, { type: "trk", ...v })).catch((e) => { console.error("trkReport", e); this.say(pl, "The world data could not be read just now.", "bad"); });
+      }
       case "dash": {
         const now = Date.now();   /* admin() takes (S, pl, m) — there is no `now` in this scope */
         const seen = [...this.pls.values()];

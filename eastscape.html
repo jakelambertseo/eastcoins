@@ -1155,6 +1155,33 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .wl-s.wl-frag b{color:#e8d0ff}
 /* (2026-09-30) Who's online, in the kit */
 .who-win{width:min(460px,calc(100% - 28px));max-height:min(620px,calc(100% - 28px))}
+/* (2026-09-30) THE WORLD DATA WINDOW (admins): track.js's numbers. Bars are thin, rounded at the value end, 2px apart; every bar carries its number,
+   because four of the seven activity colours sit under 3:1 on the parchment (the colours pass the colour-blind checks; the numbers carry the rest). */
+.trk-win{width:min(960px,calc(100% - 28px));max-height:min(760px,calc(100% - 28px))}
+.trk-bar{display:flex;align-items:center;gap:10px}
+.trk-refresh{margin-left:auto;border:0;border-radius:4px;padding:5px 11px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);color:var(--k-ink);font:800 12.5px/1 Lora,sans-serif;cursor:pointer}
+.trk-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:6px}
+.trk-kpi{background:var(--k-card);border-radius:6px;padding:8px 10px;box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.trk-kpi b{display:block;font:800 20px/1.1 Cinzel,serif;color:var(--k-ink)}.trk-kpi small{font:700 11.5px Lora,serif;color:var(--k-ink2)}
+.trk-sec{margin-top:6px}.trk-sec>h3{margin:4px 0 6px;font:800 15px Cinzel,serif;color:var(--k-ink)}.trk-sec>p{margin:0 0 6px;font:600 12.5px Lora,serif;color:var(--k-ink2)}
+.trk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.trk-list{display:grid;gap:2px}
+.trk-row{display:grid;grid-template-columns:minmax(90px,150px) 1fr 74px;gap:8px;align-items:center;font:600 12.5px Lora,serif;color:var(--k-ink)}
+.trk-row .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--k-ink)}
+.trk-row .l{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trk-track{height:10px;border-radius:0 4px 4px 0;background:rgba(90,58,24,.08);overflow:hidden;display:flex;gap:2px}
+.trk-track i{display:block;height:100%;border-radius:0 4px 4px 0;min-width:2px}
+.trk-track.stack i{border-radius:0}.trk-track.stack i:last-child{border-radius:0 4px 4px 0}
+.trk-key{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 6px;font:700 12px Lora,serif;color:var(--k-ink2)}.trk-key i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.trk-cols{display:flex;align-items:flex-end;gap:2px;height:96px;padding-top:14px}
+.trk-cols .c{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0}
+.trk-cols .c i{display:block;width:100%;max-width:28px;border-radius:4px 4px 0 0;background:#2a78d6;min-height:2px}
+.trk-cols .c span{font:700 10.5px Lora,serif;color:var(--k-ink);margin-bottom:2px;font-variant-numeric:tabular-nums}
+.trk-cols .c small{font:600 10px Lora,serif;color:var(--k-ink2);margin-top:3px;white-space:nowrap}
+.trk-table{width:100%;border-collapse:collapse;font:600 12px Lora,serif}.trk-table th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.06em;text-transform:uppercase;color:var(--k-ink2);padding:3px 5px}
+.trk-table td{padding:3px 5px;border-top:1px solid var(--k-line)}.trk-table td.n{text-align:right;font-variant-numeric:tabular-nums}
+.trk-win details>summary{cursor:pointer;font:700 12px Lora,serif;color:var(--k-ink2);margin:4px 0}
+.trk-empty{padding:14px;text-align:center;font:600 13px Lora,serif;color:var(--k-ink2)}
 .who-win .k-body{gap:6px}
 .who-bar{padding:8px 12px 0;background:var(--k-paper)}.who-bar[hidden]{display:none}
 .who-row{cursor:pointer;text-align:left;font:inherit;color:inherit}
@@ -1835,6 +1862,12 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/skills.png?v=1" alt="" class="topi">Dashboard</b><small>Read only. Who is here, and what the world is holding.</small><button type="button" class="win-x" data-close="dashWin" aria-label="Close">×</button></div>
       <div class="win-body"><div id="dashBody"></div></div>
     </section>
+    <section class="win k-win trk-win" id="trkWin" aria-label="World data" hidden>
+      <div class="k-head"><img src="/v3/assets/img/glad/flat/ui/skills.png?v=1" alt=""><b>World data</b><span class="k-sub" id="trkSub"></span><button type="button" class="k-x" data-close="trkWin" aria-label="Close">×</button></div>
+      <div class="who-bar trk-bar"><div class="k-seg" role="group" aria-label="How many days"><button type="button" data-tn="1" aria-pressed="true">Today</button><button type="button" data-tn="7" aria-pressed="false">7 days</button><button type="button" data-tn="14" aria-pressed="false">14 days</button><button type="button" data-tn="30" aria-pressed="false">30 days</button></div><button type="button" class="trk-refresh" id="trkRefresh">Refresh</button></div>
+      <div class="k-body k-paper" id="trkBody"></div>
+      <div class="k-foot"><span class="k-note">What the game server records (since 30 September, rules 376). Admins only, read when you open or refresh it.</span></div>
+    </section>
     <section class="win k-win who-win" id="whoWin" aria-label="Who's online" hidden>
       <div class="k-head"><img src="/v3/assets/img/glad/flat/ui/g_home.png?v=1" alt=""><b>Who's online</b><span class="k-sub" id="whoSub"></span><button type="button" class="k-x" data-close="whoWin" aria-label="Close">×</button></div>
       <div class="who-bar" id="whoBar" hidden><div class="k-seg" role="group" aria-label="Show"><button type="button" data-wf="all" aria-pressed="true">Everyone</button><button type="button" data-wf="on" aria-pressed="false">Active</button><button type="button" data-wf="idle" aria-pressed="false">Idle</button></div></div>
@@ -2276,6 +2309,7 @@ function onMsg(m) {
      just stops. A checker now compares every this.send type against onMsg and every out.push type against
      onEvent, because this is a mistake with no symptom other than a feature quietly not working. */
   if (m.type === "whoall") return whoAllDraw(m.people || []);
+  if (m.type === "trk") return trkDraw(m);   /* (2026-09-30) THE WORLD DATA WINDOW */
   if (m.type === "weekly") { WSTATS[m.n] = { ...m, got: Date.now() }; if (wikiRoute === `weekly/${m.n}` && !$("wikiWin").hidden) { const st = $("wikiPage").scrollTop; wikiGo(wikiRoute, false); $("wikiPage").scrollTop = st; } return; }   /* (2026-09-30) THE WEEKLY ISSUE */
   if (m.type === "ev") for (const e of m.list) onEvent(e);
 }
@@ -6029,12 +6063,70 @@ function dashOpen() {
   clearInterval(dashAt);
   dashAt = setInterval(() => { if ($("dashWin").hidden) return clearInterval(dashAt); send({ t: "admin", cmd: "dash" }); }, 5000);
 }
+/* (2026-09-30, the owner: "now that we have track.js, can we build a dashboard that i can see what we have so far") THE WORLD DATA WINDOW. Admins
+   only (the server refuses anyone else). One request when it opens and one per Refresh or range change; nothing polls. */
+let trkN = 1;
+function trkOpen() { if (!isStaff()) return; $("trkWin").hidden = false; SFX.play("ui_open"); $("trkBody").innerHTML = `<div class="trk-empty">Reading what the world has recorded…</div>`; send({ t: "admin", cmd: "trk", n: trkN }); }
+const TRK_ACTS = [["f", "Fighting", "#2a78d6"], ["g", "Gathering", "#eb6834"], ["c", "Crafting", "#1baf7a"], ["p", "At a table", "#eda100"], ["w", "Walking", "#e87ba4"], ["s", "Standing", "#008300"], ["a", "Away", "#4a3aa7"]];
+const TRK_SRC = { kills: "Monster kills", sell: "Selling", dailies: "Daily jobs", quests: "Quests", achievements: "Achievements", dungeons: "Dungeons", raid: "The raid", events: "World events", bosses: "Bosses", jackpot: "Jackpot kills", chips: "Cashed chips", island: "Island", carnival: "Carnival", pvp: "Player kills", devil: "Devil's dice", other: "Other",
+  bill: "Hospital bills", store: "The Store", counter: "Prize Counter", buyback: "Buy-backs", extax: "Exchange tax", radio: "The radio", permit: "Thieves' permit", vanity: "Outfits", gems: "Gems", tinker: "Tinkering", outfit: "Outfitters", robbed: "Robbed in the Wild" };
+function trkDraw(d) {
+  if ($("trkWin").hidden) return;
+  const n = (x) => Math.round(Number(x || 0)).toLocaleString(), hm = (sec) => { const m = Math.round(sec / 60); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`; };
+  const map = (k) => esc(d.names?.[k] || G.SCENES[k]?.name || k), itm = (k) => esc(String(k).startsWith("store:") ? `Store: ${G.STORE?.[k.slice(6)]?.name || k.slice(6)}` : String(k).startsWith("vanity:") ? `Outfit: ${G.VANITY?.[k.slice(7)]?.name || k.slice(7)}` : G.ITEMS[k]?.name || k);
+  const nice = (k) => String(k).replace(/([a-z])(\d+)$/, "$1 $2").replace(/^./, (c) => c.toUpperCase());   /* a dungeon monster whose rules this page has not loaded: "cryptguard2" reads "Cryptguard 2" */
+  const mob = (k) => esc(G.MOBS[k]?.name || nice(k)), sk = (k) => esc(G.SKILLS[k]?.name || k);
+  const sumO = (o) => Object.values(o || {}).reduce((a, v) => a + (Array.isArray(v) ? v[0] : typeof v === "object" ? sumO(v) : v), 0);
+  const bars = (rows, fmt = n, top = 10, color = "#2a78d6") => { rows = rows.filter((r) => r[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, top); const mx = Math.max(1, ...rows.map((r) => r[1]));
+    return rows.length ? `<div class="trk-list">${rows.map(([l, v, tip]) => `<div class="trk-row" title="${esc(tip || "")}"><span class="l">${l}</span><span class="trk-track"><i style="width:${(100 * v) / mx}%;background:${color}"></i></span><span class="v">${fmt(v)}</span></div>`).join("")}</div>` : `<div class="trk-empty">Nothing yet.</div>`; };
+  const W = d.where || {}, E = d.econ || {}, P = d.people || {};
+  const secs = sumO(W.t), mapsT = Object.entries(W.t || {}).map(([k, o]) => [k, sumO(o), o]).sort((a, b) => b[1] - a[1]);
+  $("trkSub").textContent = d.n === 1 ? `today, ${d.to}` : `${d.from} to ${d.to}`;
+  document.querySelectorAll("#trkWin [data-tn]").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.tn === d.n)));
+  if (!secs && !P.sessions) { $("trkBody").innerHTML = `<div class="trk-empty">Nothing recorded yet for ${d.n === 1 ? "today" : "these days"}. The counting started with rules 376.</div>`; return; }
+  const kpi = (v, l) => `<div class="trk-kpi"><b>${v}</b><small>${l}</small></div>`, tixIn = sumO(E.tixIn), tixOut = sumO(E.tixOut);
+  let h = `<div class="trk-kpis">${kpi(n(P.players), "players")}${kpi(n(P.fresh), "new players")}${kpi(n(P.sessions), "sessions")}${kpi(P.ended ? hm(P.sessMs / 1000 / P.ended) : "–", "average session")}${kpi(hm(secs), "played, in all")}${kpi(n(P.peak), "most online at once")}${kpi(n(tixIn), "tickets earned")}${kpi(n(tixOut), "tickets spent")}</div>`;
+  /* the trend, one measure a chart */
+  const ser = (d.series || []).filter((x) => !x.none);
+  if (d.n > 1 && ser.length) { const col = (key, fmt) => { const mx = Math.max(1, ...ser.map((x) => x[key] || 0)); return `<div class="trk-cols">${d.series.map((x) => `<div class="c" title="${esc(x.day)}: ${x.none ? "nothing recorded" : fmt(x[key] || 0)}">${x.none ? "" : `<span>${fmt(x[key] || 0)}</span><i style="height:${(100 * (x[key] || 0)) / mx}%"></i>`}<small>${esc(x.day.slice(5))}</small></div>`).join("")}</div>`; };
+    h += `<div class="trk-sec"><div class="trk-grid"><div><h3>Players a day</h3>${col("players", n)}</div><div><h3>Hours played a day</h3>${col("hours", (v) => (v >= 10 ? Math.round(v) : v.toFixed(1)))}</div></div></div>`; }
+  /* where the time goes */
+  const mxT = Math.max(1, ...mapsT.map((r) => r[1]));
+  h += `<div class="trk-sec"><h3>Where the time goes</h3><p>Every second someone is online, by map and by what they were doing. The bar is that map's share of the busiest one; hover a colour for its time.</p>
+    <div class="trk-key">${TRK_ACTS.map(([, l, c]) => `<span><i style="background:${c}"></i>${l}</span>`).join("")}</div>
+    <div class="trk-list">${mapsT.slice(0, 18).map(([k, tot, o]) => `<div class="trk-row"><span class="l">${map(k)} <small style="color:var(--k-ink2)">· ${n(W.who?.[k])}</small></span><span class="trk-track stack" style="width:${Math.max(2, (100 * tot) / mxT)}%">${TRK_ACTS.filter(([a]) => o[a]).map(([a, l, c]) => `<i title="${l}: ${hm(o[a])} (${Math.round((100 * o[a]) / tot)}%)" style="flex:${o[a]};background:${c}"></i>`).join("")}</span><span class="v">${hm(tot)}</span></div>`).join("")}</div>
+    <details><summary>As a table (minutes)</summary><table class="trk-table"><tr><th>Map</th><th>People</th>${TRK_ACTS.map(([, l]) => `<th>${l}</th>`).join("")}<th>All</th></tr>${mapsT.map(([k, tot, o]) => `<tr><td>${map(k)}</td><td class="n">${n(W.who?.[k])}</td>${TRK_ACTS.map(([a]) => `<td class="n">${n((o[a] || 0) / 60)}</td>`).join("")}<td class="n">${n(tot / 60)}</td></tr>`).join("")}</table></details></div>`;
+  /* tickets */
+  const casino = Object.entries(E.casino || {});
+  h += `<div class="trk-sec"><h3>Tickets</h3><p>${n(tixIn)} came in and ${n(tixOut)} went out: ${tixIn >= tixOut ? `${n(tixIn - tixOut)} more in the world` : `${n(tixOut - tixIn)} fewer in the world`}. Casino tables are counted apart, as what players won or lost.</p>
+    <div class="trk-grid"><div><h3 style="font-size:13px">Where they came from</h3>${bars(Object.entries(E.tixIn || {}).map(([k, v]) => [esc(TRK_SRC[k] || k), v]))}</div><div><h3 style="font-size:13px">Where they went</h3>${bars(Object.entries(E.tixOut || {}).map(([k, v]) => [esc(TRK_SRC[k] || k), v]))}</div>
+    <div><h3 style="font-size:13px">The casino, by game</h3>${casino.length ? `<table class="trk-table"><tr><th>Game</th><th>Plays</th><th>Players' net</th></tr>${casino.sort((a, b) => b[1][0] - a[1][0]).map(([g, [c, net]]) => `<tr><td>${esc(G.GAMES?.[g]?.name || g)}</td><td class="n">${n(c)}</td><td class="n">${net > 0 ? "+" : ""}${n(net)}</td></tr>`).join("")}</table>` : `<div class="trk-empty">No plays.</div>`}</div></div></div>`;
+  /* xp and what people did */
+  const kills = []; for (const [k, o] of Object.entries(W.kills || {})) for (const [m2, c] of Object.entries(o)) kills.push([`${mob(m2)} <small style="color:var(--k-ink2)">· ${map(k)}</small>`, c]);
+  const gath = []; for (const [k, o] of Object.entries(W.gathered || {})) for (const [it, c] of Object.entries(o)) gath.push([`${itm(it)} <small style="color:var(--k-ink2)">· ${map(k)}</small>`, c]);
+  h += `<div class="trk-sec"><div class="trk-grid"><div><h3>Xp by skill</h3>${bars(Object.entries(P.xp || {}).map(([k, v]) => [sk(k), v]), n, 20)}</div><div><h3>Most killed</h3>${bars(kills)}</div><div><h3>Most gathered</h3>${bars(gath)}</div></div></div>`;
+  /* deaths */
+  const deaths = []; for (const [k, o] of Object.entries(W.deaths || {})) for (const [c, v] of Object.entries(o)) deaths.push([`${c === "player" ? "a player" : G.MOBS[c] ? mob(c) : esc(c)} <small style="color:var(--k-ink2)">· ${map(k)}</small>`, v]);
+  h += `<div class="trk-sec"><div class="trk-grid"><div><h3>Deaths</h3>${bars(deaths, n, 10, "#e34948")}</div><div><h3>Player kills (latest)</h3>${(d.pvp || []).length ? `<table class="trk-table"><tr><th>When</th><th>Killer</th><th>Victim</th><th>Where</th><th>Took</th></tr>${d.pvp.map((r) => `<tr><td>${esc(new Date(r.t).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}</td><td>${esc(r.k)} <small>(${r.kc})</small></td><td>${esc(r.v)} <small>(${r.vc})</small></td><td>${map(r.map)}</td><td class="n">${n(r.took)}</td></tr>`).join("")}</table>` : `<div class="trk-empty">None yet.</div>`}</div></div></div>`;
+  /* what moved */
+  const pairs = (o) => Object.entries(o || {}).map(([k, [c, t]]) => [itm(k), t, `${n(c)} for ${n(t)} tickets`]);
+  const crafts = []; for (const [st, o] of Object.entries(E.craft || {})) crafts.push([esc(G.STATIONS?.[st]?.name || st.replace(/_/g, " ")), sumO(o)]);
+  h += `<div class="trk-sec"><div class="trk-grid"><div><h3>Sold to Bom (tickets)</h3>${bars(pairs(E.sold))}</div><div><h3>Bought (tickets)</h3>${bars(pairs(E.bought))}</div><div><h3>Exchange trades (tickets)</h3>${bars(pairs(E.ex))}</div><div><h3>Made, by station</h3>${bars(crafts)}</div></div></div>`;
+  /* tickets held, from each day's snapshot */
+  const held = (d.series || []).filter((x) => x.held);
+  if (held.length) h += `<div class="trk-sec"><h3>Tickets held at the end of each day</h3><table class="trk-table"><tr><th>Day</th><th>All tickets</th><th>Holders</th><th>Median</th><th>Top 10 hold</th></tr>${held.map((x) => `<tr><td>${esc(x.day)}</td><td class="n">${n(x.held.total)}</td><td class="n">${n(x.held.holders)}</td><td class="n">${n(x.held.median)}</td><td class="n">${Math.round(x.held.top10Share * 100)}%</td></tr>`).join("")}</table></div>`;
+  else h += `<div class="trk-sec"><p>Tickets held are measured at the end of each Chicago day; the first snapshot lands at midnight.</p></div>`;
+  $("trkBody").innerHTML = h;
+}
+$("trkWin").addEventListener("click", (e) => { const b = e.target.closest("[data-tn]"); if (b) { trkN = +b.dataset.tn; SFX.play("ui_click"); $("trkBody").innerHTML = `<div class="trk-empty">Reading…</div>`; send({ t: "admin", cmd: "trk", n: trkN }); }
+  if (e.target.closest("#trkRefresh")) { SFX.play("ui_click"); send({ t: "admin", cmd: "trk", n: trkN }); } });
 function dashDraw(d) {
   if ($("dashWin").hidden) return;
   const n = (x) => Number(x || 0).toLocaleString();
   const rows = (d.online || []);
   const where = Object.entries(d.where || {}).sort((a, b) => b[1] - a[1]);
   $("dashBody").innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button type="button" class="k-btn" id="dashTrk" style="min-height:32px">World data →</button></div>
     <div class="pk-strip">
       <div><b>${rows.length}</b><small>Online</small></div>
       <div><b>${n(d.tickets)}</b><small>Tickets held</small></div>
@@ -6057,6 +6149,7 @@ function dashDraw(d) {
    are now reserved and none of them is bound to anything.
    The backtick is the right home for it beyond just being free: it is the universal open-the-console key, it is
    nowhere near the movement hand, and nobody presses it by accident. */
+$("dashWin").addEventListener("click", (e) => { if (e.target.closest("#dashTrk")) { SFX.play("ui_click"); trkOpen(); } });   /* (2026-09-30) the World data window */
 addEventListener("keydown", (e) => { if ((e.key === "`" || e.key === "~") && !e.repeat && !e.ctrlKey && !e.metaKey && isStaff() && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) { e.preventDefault(); dashOpen(); } });
 
 /* THE PICTURE HOUSE (v119). eastcoin.vip's Movies & TV, on the screen in the theatre — the module's header has how a room

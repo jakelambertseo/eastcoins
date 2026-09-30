@@ -15,7 +15,7 @@ const { World } = await import("../eastscape-worker/src/index.js");
 let bad = 0;
 const is = (got, want, what) => { if (JSON.stringify(got) === JSON.stringify(want)) console.log(`  ${what}: ${JSON.stringify(got)}`); else { console.log(`  !! ${what}: got ${JSON.stringify(got)}, wanted ${JSON.stringify(want)}`); bad++; } };
 const store = new Map(), puts = [];
-const storage = { get: async (k) => store.get(k), put: async (k, v) => { if (typeof k === "object") { for (const [a, b] of Object.entries(k)) { store.set(a, structuredClone(b)); puts.push(a); } } else { store.set(k, structuredClone(v)); puts.push(k); } }, delete: async (k) => { for (const x of [].concat(k)) store.delete(x); },
+const storage = { get: async (k) => (Array.isArray(k) ? new Map(k.filter((x) => store.has(x)).map((x) => [x, structuredClone(store.get(x))])) : store.get(k)),   /* (like the real thing: several keys at once come back as a Map) */ put: async (k, v) => { if (typeof k === "object") { for (const [a, b] of Object.entries(k)) { store.set(a, structuredClone(b)); puts.push(a); } } else { store.set(k, structuredClone(v)); puts.push(k); } }, delete: async (k) => { for (const x of [].concat(k)) store.delete(x); },
   list: async (o = {}) => new Map([...store].filter(([k]) => k.startsWith(o.prefix || "") && (!o.startAfter || k > o.startAfter) && (!o.end || k < o.end)).sort(([a], [b]) => (a < b ? -1 : 1)).slice(0, o.limit || 1e9)) };
 const mk = async () => { const W = new World({ blockConcurrencyWhile: (fn) => fn(), storage }, { SITE: "https://example.invalid", DEV: "0" }); await new Promise((r) => setTimeout(r, 20)); W.save = async () => {}; W.houseSay = () => {}; return W; };
 let W = await mk(), n = 0;
@@ -86,6 +86,11 @@ is([pickK(walker.C.stats.tixIn, ["dailies", "sell"]), walker.C.stats.tixOut, wal
   const kills0 = store.get(`trk:${G.dayKeyCT()}:where`).kills.gloam.gnasher;
   const W2 = await mk(); W = W2; W.trkDay(); await flush(); W.trkEvent(fighter, "kill", { mob: "gnasher" });
   is(W.trkDay().where.kills.gloam.gnasher, kills0 + 1, "after a restart the day picks up where the last write left it"); }
+
+/* 7b. THE WORLD DATA WINDOW's report: the days added up, ids sent only as counts, the maps named */
+{ W.trkLogin(fighter, true); W.trkRep = {}; const R = await W.trkReport(1);
+  is([R.n, R.days.length, typeof R.where.who.workyard, R.names.gloam, R.people.players > 0, Array.isArray(R.series) && R.series.length === 1, JSON.stringify(R).includes('"t1"')], [1, 1, "number", G.SCENES.gloam.name, true, true, false], "today's report: counts, not ids; map names; one day in the series");
+  const R7 = await W.trkReport(7); is([R7.days.length, R7.series.length, R7.people.sessions >= R.people.sessions], [7, 7, true], "seven days: seven in the series, the totals at least today's"); }
 
 /* 8. THE TURN OF THE DAY */
 { store.set("trk:2020-01-01:where", { old: true });

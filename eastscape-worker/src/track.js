@@ -136,6 +136,39 @@ export function installTrack(World, { G }) {
   P.trkLogin = function (pl, isNew) { const D = this.trkDay(); D.people.players[pl.id] = 1; D.people.sessions++; if (isNew) D.people.fresh++; pl.trkJoined = Date.now(); this.trk.dirty.add("people"); };
   P.trkLeave = function (pl) { if (!pl.trkJoined) return; const D = this.trkDay(); D.people.sessMs += Date.now() - pl.trkJoined; D.people.ended++; pl.trkJoined = 0; this.trk.dirty.add("people"); };
 
+  /* THE WORLD DATA WINDOW (2026-09-30, the owner: "now that we have track.js, can we build a dashboard that i can see what we have so far").
+     `n` Chicago days ending today, ADDED UP into one day's shape (today straight from memory, the rest from storage in one read), plus a short line
+     per day for the trend and the last 20 player kills. Only an admin asks, only when the window opens or is refreshed, and the answer is cached
+     for half a minute, so it costs nothing while nobody is looking. The id lists are sent as counts: the page never sees who was where. */
+  P.trkReport = async function (n) {
+    n = Math.max(1, Math.min(KEEP_DAYS, n | 0 || 1));
+    const hit = (this.trkRep ||= {})[n]; if (hit && Date.now() - hit.at < 30000) return hit.v;
+    const today = this.trkDay(), days = [];
+    for (let i = 0, t = Date.now(); days.length < n && i < n + 3; i++) { const d = G.chicagoDay(t - i * 864e5); if (!days.includes(d)) days.push(d); }
+    const keys = days.slice(1).flatMap((d) => [`trk:${d}:where`, `trk:${d}:econ`, `trk:${d}:people`, `trk:${d}:econ-held`]);
+    const got = keys.length ? await this.ctx.storage.get(keys) : new Map();
+    const dayOf = (d) => (d === today.day ? today : { day: d, where: got.get(`trk:${d}:where`), econ: got.get(`trk:${d}:econ`), people: got.get(`trk:${d}:people`) });
+    const sum = fresh(null), series = [];
+    for (const d of days) {
+      const D = dayOf(d); if (!D.where && !D.econ && !D.people) { series.push({ day: d, none: true }); continue; }
+      for (const part of ["where", "econ", "people"]) if (D[part]) merge(sum[part], D[part]);
+      const secs = Object.values(D.where?.t || {}).reduce((a, o) => a + Object.values(o).reduce((b, v) => b + v, 0), 0);
+      const tot = (o) => Object.values(o || {}).reduce((a, v) => a + v, 0);
+      series.push({ day: d, players: Object.keys(D.people?.players || {}).length, fresh: D.people?.fresh | 0, sessions: D.people?.sessions | 0, peak: D.people?.peak | 0,
+        hours: Math.round(secs / 36) / 100, tixIn: tot(D.econ?.tixIn), tixOut: tot(D.econ?.tixOut), deaths: Object.values(D.where?.deaths || {}).reduce((a, o) => a + tot(o), 0),
+        held: got.get(`trk:${d}:econ-held`) || null });
+    }
+    const W = sum.where, Pp = sum.people;
+    const v = { n, days, from: days.at(-1), to: days[0], series: series.reverse(),
+      where: { t: W.t, who: Object.fromEntries(Object.entries(W.who).map(([k, o]) => [k, Object.keys(o).length])), kills: W.kills, gathered: W.gathered, deaths: W.deaths, xpMap: W.xpMap },
+      econ: sum.econ, people: { players: Object.keys(Pp.players).length, fresh: Pp.fresh, sessions: Pp.sessions, sessMs: Pp.sessMs, ended: Pp.ended, peak: Pp.peak, xp: Pp.xp },
+      pvp: ((await this.ctx.storage.get("trk:pvp")) || []).slice(0, 20), since: KEEP_DAYS, at: Date.now() };
+    /* the maps' names: the page only holds the maps it has loaded */
+    v.names = Object.fromEntries([...new Set([...Object.keys(W.t), ...Object.keys(W.kills), ...Object.keys(W.gathered), ...Object.keys(W.deaths), ...v.pvp.map((r) => r.map)])].map((k) => [k, G.SCENES[k]?.name || k]));
+    this.trkRep[n] = { at: Date.now(), v };
+    return v;
+  };
+
   /* THE GUARD: nothing in here may ever throw into the game */
   for (const k of ["trkSecond", "trkEvent", "trkCraft", "trkTix", "trkSold", "trkBought", "trkEx", "trkDeath", "trkLogin", "trkLeave", "trkWrite"]) {
     const f = P[k]; P[k] = function (...a) { try { return f.apply(this, a); } catch (e) { console.error(k, e); } };
