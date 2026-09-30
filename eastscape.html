@@ -2012,7 +2012,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=234").then((m) => { WK = m; rmLiveNote(); }),
+  import("/v3/assets/js/eastscape-wiki.js?v=235").then((m) => { WK = m; rmLiveNote(); }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
@@ -7572,8 +7572,11 @@ $("wikiWin").addEventListener("click", (e) => {
   const sh = e.target.closest("[data-rmshare]"); if (sh) { const url = `${location.origin}/eastscape#wiki/roadmap`; (navigator.clipboard?.writeText(url) || Promise.reject()).then(() => { sh.textContent = "Link copied"; }).catch(() => { sh.textContent = url; }); SFX.play("ui_click"); }
 });
 $("wikiWin").addEventListener("submit", (e) => { const f = e.target.closest("[data-rmidea]"); if (!f) return; e.preventDefault(); const i = f.querySelector("input"), text = (i.value || "").trim();
-  if (text.length < G.REP.min) { i.placeholder = `A little more: at least ${G.REP.min} characters`; i.value = text; return; }
-  send({ t: "report", op: "send", kind: "idea", text, env: "roadmap" }); i.value = ""; i.placeholder = "Sent. Thank you! Bom's passing it on."; SFX.play("ui_click"); });
+  /* (2026-09-30, the owner: "i tried entering "test" and clicking submit and nothing happened") the answer goes in a line you can SEE: it was the placeholder,
+     which the text still in the box hid */
+  const msg = f.parentElement.querySelector(".rm-msg"), tell = (t, cls) => { if (msg) { msg.textContent = t; msg.className = `rm-msg ${cls}`; } };
+  if (text.length < G.REP.min) { tell(`A little more, please: at least ${G.REP.min} characters, so Bom knows what you mean.`, "bad"); i.focus(); return; }
+  send({ t: "report", op: "send", kind: "idea", text, env: "roadmap" }); i.value = ""; tell("Sent. Thank you! Bom's passing it on, and you can follow it in the bug button's Inbox.", "ok"); SFX.play("ui_click"); });
 function rmLiveNote() {
   if (G.HOLD.roadmap || !WK?.ROADMAP_WORDS) return;
   let seen = null; try { seen = JSON.parse(localStorage.getItem("es_rm_seen") || "null"); } catch (e) { /* storage off: say nothing */ return; }
