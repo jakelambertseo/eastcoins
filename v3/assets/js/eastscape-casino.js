@@ -1154,10 +1154,14 @@ export function createCasino(env) {
     } else if (bomTab === "back") {
       /* (2026-09-28, the owner: "build the buy-back section too") BUY-BACK: what you sold him in the last hour, at exactly what he paid */
       const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "just now" : `${inHm(Date.now() - t)} ago`; };
-      pane = bb.length ? `<p class="bom-hint">Sold something by mistake? Bom keeps the last ${G.BUYBACK.keep} things you sold him for an hour, and sells each back for exactly what he paid you.</p>`
+      /* (2026-09-30) RETURNS: gear and kits bought from him in the last hour, for exactly what was paid, while it is still in the bag as bought */
+      const rt = (me.bought || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms);
+      const returns = rt.length ? `<p class="bom-hint"><b>Returns.</b> Bought the wrong thing? Anything worn or wielded that you bought from Bom in the last hour goes back for exactly what you paid, if it's still in your bag as you bought it.</p>`
+        + rt.map((x) => { const inBag = cnt(x.k) >= x.n; return row(`${slot(x.k, 0, x.n)}<span><b>${esc(G.ITEMS[x.k]?.name || x.k)}${x.n > 1 ? ` × ${x.n.toLocaleString()}` : ""}</b><small>bought ${ago(x.at)} · returnable for ${inHm(x.at + G.BUYBACK.ms - Date.now())}${inBag ? "" : " · not in your bag"}</small></span><span class="k-end">${price(x.paid)}<button type="button" class="k-btn sm" data-ret="${esc(x.id)}"${inBag ? "" : " disabled"}>Return</button></span>`); }).join("") : "";
+      pane = returns + (bb.length ? `<p class="bom-hint">Sold something by mistake? Bom keeps the last ${G.BUYBACK.keep} things you sold him for an hour, and sells each back for exactly what he paid you.</p>`
         + bb.map((x) => { const f = x.f | 0, can = have >= x.paid;
           return row(`${slot(x.k, f, x.n)}<span><b>${esc(G.forgeNameAt(x.k, f))}${x.n > 1 ? ` × ${x.n.toLocaleString()}` : ""}</b><small>sold ${ago(x.at)} · his in ${inHm(x.at + G.BUYBACK.ms - Date.now())}</small></span><span class="k-end">${price(x.paid)}<button type="button" class="k-btn sm bom-bb" data-bb="${esc(x.id)}"${can ? "" : ` disabled title="You need ${x.paid.toLocaleString()} tickets"`}>Buy back</button></span>`, f ? " forged" : ""); }).join("")
-        : `<div class="bom-empty"><img src="/v3/assets/img/glad/flat/ui/w_sack.png?v=1" alt=""><b>Nothing to buy back</b><p>Sell something by mistake? It waits here for an hour, and Bom sells it back for exactly what he paid you.</p></div>`;
+        : rt.length ? "" : `<div class="bom-empty"><img src="/v3/assets/img/glad/flat/ui/w_sack.png?v=1" alt=""><b>Nothing to buy back</b><p>Sell something by mistake? It waits here for an hour, and Bom sells it back for exactly what he paid you. Buy the wrong gear? It comes back here too, for an hour.</p></div>`);
     } else if (bomTab === "buy") {
       const kits = P.filter((x) => x.group === "kit"), bar = P.filter((x) => x.group === "bar"), bagCost = G.bagUpCost(me);
       const CATS = [["gear", "Arms & armour"], ...(kits.length ? [["kits", "Starter kits"]] : []), ["bar", "Food & drink"], ["bag", "A bigger bag"]];
@@ -1169,10 +1173,10 @@ export function createCasino(env) {
         gearTier = gearTier || ([...tiers].reverse().find((t) => t.gate <= lvl) || tiers[0]).key;
         const gate = G.tierOf(gearTier).gate;
         pane += `<div class="k-seg bom-tiers" role="group" aria-label="Tier">${tiers.map((t) => `<button type="button" data-tier="${t.key}" aria-pressed="${t.key === gearTier}" class="${t.gate > lvl ? "locked" : ""}" title="Combat ${t.gate} to wear">${esc(t.name)}</button>`).join("")}</div>
-          <p class="bom-hint">${lvl < gate ? `<span class="k-chip lock">Combat ${gate}</span> you're ${lvl}, so you can buy it but not wear it yet. ` : `Wear it from Combat ${gate}. `}The plain set: the good stuff only drops.</p>
+          <p class="bom-hint"><b>${esc(G.tierOf(gearTier).name)} gear.</b> ${lvl < gate ? `<span class="k-chip lock">Combat ${gate}</span> you're ${lvl}, so you can buy it but not wear it yet. ` : `Wear it from Combat ${gate}. `}The plain set: the good stuff only drops. Bought the wrong thing? Bom takes it back within the hour (Buy back tab).</p>
           <div class="bom-grid">${P.filter((x) => x.group === `gear:${gearTier}`).map((x) => { const k = x.give[0], it = G.ITEMS[k], own = cnt(k) > 0 || Object.values(me.eq || {}).includes(k), c = cp(x);
             const stat = it.tool ? G.toolSpec(it) : [it.acc && `+${it.acc} acc`, it.str && `+${it.str} str`, it.def && `+${it.def} def`].filter(Boolean).join(" · ");
-            return `<button type="button" class="bom-tile${own ? " own" : ""}" data-buy="${x.id}" data-item="${k}"${have >= c ? "" : " disabled"} title="${esc(`${it.name}${own ? " (you have one)" : ""}: ${stat}`)}"><span class="k-slot">${env.ico(k)}</span><b>${esc(it.short || it.name.replace(/^\S+\s+/, ""))}</b><small>${esc(stat)}</small><span class="k-chip${have >= c ? " gold" : ""}">${c >= 10000 ? `${Math.round(c / 100) / 10}K` : c.toLocaleString()}</span>${own ? '<em class="bom-own">Have</em>' : ""}</button>`; }).join("")}</div>`;
+            return `<button type="button" class="bom-tile${own ? " own" : ""}" data-buy="${x.id}" data-item="${k}"${have >= c ? "" : " disabled"} title="${esc(`${it.name}${own ? " (you have one)" : ""}: ${stat}`)}"><span class="k-slot">${env.ico(k)}</span><b>${esc(it.name)}</b><small>${esc(stat)}</small><span class="k-chip${have >= c ? " gold" : ""}">${c >= 10000 ? `${Math.round(c / 100) / 10}K` : c.toLocaleString()}</span>${own ? '<em class="bom-own">Have</em>' : ""}</button>`; }).join("")}</div>`;
       } else if (bomCat === "kits") {
         pane += kits.map((x) => { const [k, n] = x.give, it = G.ITEMS[k], note = it.launcher ? `${it.launcher.style === "magic" ? "Magic" : "Archery"} 1, reaches ${it.launcher.range} tiles` : it.pouch ? `holds ${Number(it.pouch.cap).toLocaleString()}` : `a bundle of ${n}`;
           return row(`${slot(k, 0, n)}<span><b>${esc(it.name)}${n > 1 ? ` × ${n}` : ""}</b><small>${esc(note)}</small></span><span class="k-end">${price(cp(x))}${buyBtn(x)}</span>`); }).join("");
@@ -1231,6 +1235,7 @@ export function createCasino(env) {
     }));
     w.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); mark(b, "Bought!"); send({ t: "counter", op: "buy", id: b.dataset.buy, n: 1 }); }));
     w.querySelector("[data-bagup]")?.addEventListener("click", (ev) => { SFX.play("chip", { vol: 0.5 }); mark(ev.currentTarget, "+1 pocket!"); send({ t: "counter", op: "bagup" }); });
+    w.querySelectorAll("[data-ret]").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); mark(b, "Returned!"); send({ t: "counter", op: "return", id: b.dataset.ret }); }));   /* (2026-09-30) RETURNS */
     w.querySelectorAll("[data-bb]").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); mark(b, "Back in your bag!"); send({ t: "counter", op: "buyback", id: b.dataset.bb }); }));
     w.querySelectorAll(".bom-zc").forEach((b) => b.addEventListener("pointerdown", () => { b.classList.remove("ping"); void b.offsetWidth; b.classList.add("ping"); }));
     w.querySelectorAll("[data-c]").forEach((b) => b.addEventListener("click", () => { const D = G.DEX, st = dexSt, left = st?.ok ? (st.leftOut ?? st.left) : 0, most = Math.max(0, Math.min(Math.floor(tix() / D.rate), left ?? 0, D.capDay));

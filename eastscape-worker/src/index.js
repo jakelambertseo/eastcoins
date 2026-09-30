@@ -425,7 +425,7 @@ export class World {
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
-    pets: C.pets, frags: C.frags || 0, takes: C.takes || 0,   /* (2026-09-30) WORLD EVENTS: Star Fragments, Wanted posters taken */ parts: C.parts || null, tk: C.tk || null, tkBomb: C.tkBomb || 0, gembag: G.bagOf(C),   /* (2026-09-29) the gem bag */ pins: C.pins || [], hand: G.handView(C),   /* (2026-09-29) the Marked Card hand in play, never its deck */   /* (2026-09-28) Tinkering's pouch, the gadgets running, an armed bomb */ buyback: (C.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms),   /* (2026-09-28) Bom's buy-back */ isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
+    pets: C.pets, frags: C.frags || 0, takes: C.takes || 0,   /* (2026-09-30) WORLD EVENTS: Star Fragments, Wanted posters taken */ parts: C.parts || null, tk: C.tk || null, tkBomb: C.tkBomb || 0, gembag: G.bagOf(C),   /* (2026-09-29) the gem bag */ pins: C.pins || [], hand: G.handView(C),   /* (2026-09-29) the Marked Card hand in play, never its deck */   /* (2026-09-28) Tinkering's pouch, the gadgets running, an armed bomb */ buyback: (C.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms), bought: (C.bought || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms),   /* (2026-09-30) RETURNS: see counterOp */   /* (2026-09-28) Bom's buy-back */ isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
 
   /* ------------------------------------------------------------ reforging (2026-09-22)
      Spend bars to push a piece you own further. The odds and what a level is worth live in G.FORGE; this only
@@ -2496,6 +2496,17 @@ export class World {
       pl.out.push({ type: "boughtback", k: e.k, n: e.n, paid: e.paid });
       return this.say(pl, `Bom slides ${e.n > 1 ? `${e.n.toLocaleString()} × ` : "the "}${G.forgeNameAt(e.k, e.f).toLowerCase()} back across the counter for ${G.fmtTix(e.paid)}.`, "good");
     }
+    /* (2026-09-30, a player: "i was trying to buy a bronze kit for calvin, starting clicking fast and it was all nova") RETURNS. Anything worn or
+       wielded, or a starter kit, bought from Bom in the last hour goes back for exactly what was paid, as long as it is still in the bag as it was
+       bought (plain, all of it). The same hour and the same eight as the buy-back. Food and drink are not returnable: they are spent. */
+    if (m.op === "return") {
+      const now = Date.now(), list = (C.bought || []).filter((x) => now - x.at < G.BUYBACK.ms), e = list.find((x) => x.id === String(m.id));
+      if (!e) { C.bought = list; this.touch(pl); return this.say(pl, "Bom only takes things back within the hour.", "bad"); }
+      if (G.countItems({ inv: C.inv, bank: [] }, [e.k], G.ITEMS[e.k]?.slot ? { plainOnly: true } : undefined) < e.n) return this.say(pl, `Bring ${e.n > 1 ? `all ${e.n}` : "it"} back in your bag, as it was, and he'll take ${e.n > 1 ? "them" : "it"}.`, "bad");
+      G.takeInv(C.inv, e.k, e.n); this.cashTo(pl, e.paid); this.trkTix(pl, e.paid, "returns");
+      C.bought = list.filter((x) => x !== e); this.touch(pl);
+      return this.say(pl, `Bom takes the ${e.n > 1 ? `${e.n} × ` : ""}${G.ITEMS[e.k].name.toLowerCase()} back and hands over ${G.fmtTix(e.paid)}.`, "good");
+    }
     if (m.op !== "buy") return;
     const p = G.prizesOf().find((x) => x.id === String(m.id)); if (!p) return;
     const n = Math.max(1, Math.min(99, m.n | 0 || 1)), cost = G.counterPrice(C, p.price) * n, it = p.give && G.ITEMS[p.give[0]];
@@ -2505,6 +2516,7 @@ export class World {
     if (it && G.roomFor(C.inv, p.give[0], C) < p.give[1] * n) return this.say(pl, "Your bag's too full for that.", "bad");
     G.takeInv(C.inv, "tickets", cost); this.trkTix(pl, -cost, "counter"); this.trkBought(pl, p.give[0], p.give[1] * n, cost);
     this.give(pl, p.give[0], p.give[1] * n);
+    if (it?.slot || it?.launcher || it?.pouch || p.group === "kit" || String(p.group).startsWith("gear")) { const now = Date.now(); C.bought = [{ id: `${now.toString(36)}${Math.random().toString(36).slice(2, 6)}`, k: p.give[0], n: p.give[1] * n, paid: cost, at: now }, ...(C.bought || []).filter((x) => now - x.at < G.BUYBACK.ms)].slice(0, G.BUYBACK.keep); }   /* (2026-09-30) RETURNS */
     this.touch(pl);
     this.say(pl, `${p.give[1] * n > 1 ? `${(p.give[1] * n).toLocaleString()} × ` : ""}${it.name} for ${G.fmtTix(cost)}.`, "good");
   }
@@ -5205,6 +5217,31 @@ export class World {
         note(`${who.name} kicked.`);
         /* SAVED FIRST. A kick is a moderation tool, not a punishment that costs somebody the loot they were carrying. */
         return void this.persist(who).catch(() => {}).then(() => { try { who.ws.close(4001, "kicked"); } catch { /* already gone */ } });
+      }
+      /* (2026-09-30, the owner, after a player bought Nova gear instead of Bronze: "how can we fix/revert?") A STAFF REFUND OF BOM'S GEAR. With no item:
+         lists what the named player holds that Bom sells (bag and bank, plain pieces only) and what he charges them for each. With an item and a count:
+         takes up to that many plain pieces from their bag, then their bank, and pays back Bom's price for each (their VIP discount included). Online or
+         not; an offline character is written back at once. Admins only. */
+      case "refund": {
+        const login = String(m.name || "").trim().toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 30); if (!login) return note("Put their name in the name box.");
+        return void this.ctx.storage.get(`who:${login}`).then(async (w) => {
+          if (!w) return note(`Nobody called ${login} has played.`);
+          const on = this.pls.get(w.id), C2 = on ? on.C : G.normChar(await this.ctx.storage.get(`char:${w.id}`));
+          const sold = {}; for (const x of G.prizesOf()) if (x.give && (G.ITEMS[x.give[0]]?.slot || x.group === "kit" || String(x.group).startsWith("gear"))) sold[x.give[0]] ||= Math.round(G.counterPrice(C2, x.price) / (x.give[1] || 1));
+          const plain = (s) => !(G.fCode ? G.fCode(s) : s.f), held = (k) => [...(C2.inv || []), ...(C2.bank || [])].filter((s) => s && s.k === k && plain(s)).reduce((a, s) => a + (s.n || 1), 0);
+          const k = String(m.k || "").trim().toLowerCase();
+          if (!k) { const rows = Object.keys(sold).map((kk) => [kk, held(kk)]).filter(([, c]) => c > 0);
+            return note(rows.length ? `${w.name} holds from Bom: ${rows.map(([kk, c]) => `${kk} ×${c} (${sold[kk].toLocaleString()} each)`).join(", ")}` : `${w.name} holds nothing Bom sells.`); }
+          if (!sold[k]) return note(`${k} is not something Bom sells.`);
+          let want = Math.max(1, Math.min(held(k), m.n | 0 || 1)); if (!want) return note(`${w.name} has no plain ${k}.`);
+          let left = want; for (const list of [C2.inv || [], C2.bank || []]) for (let i = list.length - 1; i >= 0 && left > 0; i--) { const s = list[i]; if (!s || s.k !== k || !plain(s)) continue; const t = Math.min(left, s.n || 1); s.n = (s.n || 1) - t; left -= t; if (s.n <= 0) list.splice(i, 1); }
+          const pay = (want - left) * sold[k];
+          if (on) { this.cashTo(on, pay); this.touch(on); this.say(on, `Staff refunded ${want - left} × ${G.ITEMS[k].name}: ${G.fmtTix(pay)} back in your bag.`, "good"); }
+          else { const rest = G.addInv(C2.inv, "tickets", pay, C2);   /* addInv returns what did NOT fit: only that goes to the bank */
+            if (rest > 0) { const b = (C2.bank ||= []).find((x) => x.k === "tickets"); if (b) b.n += rest; else C2.bank.push({ k: "tickets", n: rest }); } await this.ctx.storage.put(`char:${w.id}`, C2); }
+          this.trkTix(on || null, pay, "refund");
+          note(`Refunded ${want - left} × ${k} to ${w.name}: ${pay.toLocaleString()} tickets${on ? "" : " (offline: saved to their character)"}.`);
+        }).catch((e) => note(`Refund failed: ${e.message}`));
       }
       case "trk": {   /* (2026-09-30) THE WORLD DATA WINDOW: what track.js has recorded, added up over `n` days (admins only; once per 3 s; cached 30 s in trkReport) */
         const t = Date.now(); if (t - (pl.trkAsk || 0) < 3000) return; pl.trkAsk = t;

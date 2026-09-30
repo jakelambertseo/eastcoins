@@ -6769,7 +6769,7 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=60", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit", "boughtback"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=61", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit", "boughtback"]);
 let czReal = null;
 const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
@@ -8261,6 +8261,7 @@ function renderAdmin(p) {
     <fieldset><legend>The world</legend>
       <div class="row"><button class="btn" data-a="stats">My stats</button><span class="tag">kills, gathers, xp, cash, time played</span></div>
       <div class="row"><input id="aWho" placeholder="Twitch name" maxlength="30" style="width:130px"><button class="btn" data-a="statsof">Their stats</button><span class="tag">anyone's playtime, tickets, levels (online or not)</span></div>
+      <div class="row"><input id="aRefK" placeholder="item (blank: list)" maxlength="40" style="width:130px"><input id="aRefN" value="1" style="width:46px"><button class="btn" data-a="refund">Refund Bom gear</button><span class="tag">for the name above: blank lists what they hold from Bom; an item refunds that many at his price</span></div>
       <div class="row"><button class="btn" data-a="saveall">Save everyone</button><span class="tag">every character and the Exchange, written now</span></div>
       <div class="row"><input type="number" id="aRestart" value="120" min="0" max="3600" aria-label="Seconds until restart"><button class="btn" data-a="restart">Announce restart</button><button class="btn" data-a="restartoff">Cancel</button></div>
       <div class="row"><span class="tag">Counts down, saves every character, then drops everyone with a "restarting" message instead of "connection lost". Deploy once it has run.</span></div>
@@ -8288,7 +8289,7 @@ function renderAdmin(p) {
     evstarend: () => ({ cmd: "ev", arg: "star end" }), evwantedend: () => ({ cmd: "ev", arg: "wanted end" }), evthiefend: () => ({ cmd: "ev", arg: "thief end" }),   /* (2026-09-30) WORLD EVENTS */ wyrmdown: () => ({ cmd: "wyrm", arg: "down" }), raid: () => ({ cmd: "raid" }), raidnow: () => ({ cmd: "raid", arg: "now" }), raidend: () => ({ cmd: "raid", arg: "end" }), unsack: () => ({ cmd: "raid", arg: "unsack" }),   /* (2026-09-30) */
     quest: () => ({ cmd: "quest", k: v("aQuest"), state: v("aQState") }), resetquests: () => ({ cmd: "resetquests" }),
     reset: () => ({ cmd: "reset" }), speed: () => ({ cmd: "speed", n: +v("aSpeed") }),
-    stats: () => ({ cmd: "stats" }), statsof: () => ({ cmd: "stats", name: v("aWho") }), saveall: () => ({ cmd: "saveall" }),
+    stats: () => ({ cmd: "stats" }), statsof: () => ({ cmd: "stats", name: v("aWho") }), refund: () => ({ cmd: "refund", name: v("aWho"), k: v("aRefK"), n: +v("aRefN") }), saveall: () => ({ cmd: "saveall" }),
     mute: () => ({ cmd: "mute", name: v("aMod"), n: +v("aMuteMin") }), unmute: () => ({ cmd: "unmute", name: v("aMod") }), kick: () => ({ cmd: "kick", name: v("aMod") }),
     restart: () => ({ cmd: "restart", n: +v("aRestart") }), restartoff: () => ({ cmd: "restart", n: "cancel" }),
     /* (2026-09-25) two different jobs: START one outright, or put a potion in your bag so the whole path gets

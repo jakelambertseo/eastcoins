@@ -58,7 +58,7 @@ export function installEvents(World, { G }) {
     if (th) { const back = Math.max(0, Math.min(th.sack | 0, th.fromPot ?? th.sack) | 0); this.jack.pot += back; this.jackDirty = true; await st.delete("thief");   /* a restart ends a chase: what the Jackpot lent goes home */
       /* (2026-09-30, the owner: "i didnt see any completion message") and SAYS so: it used to end in silence, so a chase cut off by a deploy (or the
          dev server reloading) just vanished. Said into the kept chat, which everyone gets back as they reconnect. */
-      this.houseSay(`\u{1F4B0} The Jackpot Thief slipped away while the lights were out.${back ? ` ${G.fmtTix(back)} finds its way back into the Jackpot.` : ""} He'll be back.`); }
+      this.houseSay(`\u{1F4B0} The Jackpot Thief slipped away while the lights were out.${back ? ` The Jackpot gets ${G.fmtTix(back)} back.` : ""} He'll be back.`); }
     this.thief = null;
   };
   P.evPlanDay = function (now) {
@@ -387,7 +387,7 @@ export function installEvents(World, { G }) {
     if (S && m) { this.bossEnd(S, m, "escaped"); S.mobs = S.mobs.filter((x) => x !== m); S.whoSig = null; }
     const back = Math.max(0, Math.min(H.sack, H.fromPot ?? H.sack));   /* (2026-09-30) only what the Jackpot lent goes back; the house's part is simply gone */
     this.jack.pot += back; this.jackDirty = true;
-    this.houseSay(`\u{1F4B0} The Jackpot Thief got away with ${G.fmtTix(H.sack)}.${back ? ` ${G.fmtTix(back)} of it finds its way back into the Jackpot.` : ""}${H.spilled ? ` ${G.fmtTix(H.spilled)} was knocked loose along the way.` : ""} He'll be back.`);
+    this.houseSay(`\u{1F4B0} The Jackpot Thief got away with ${G.fmtTix(H.sack)}.${back ? ` The Jackpot gets ${G.fmtTix(back)} of it back.` : ""}${H.spilled ? ` ${G.fmtTix(H.spilled)} was knocked loose along the way.` : ""} He'll be back.`);
     this.thief = null; save(this, "thief", null); this.evBroadcast(now, true);
   };
 
