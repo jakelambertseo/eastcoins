@@ -2060,3 +2060,11 @@ Shared 395, wiki 221. The player who reported the gem take-out can be told it's 
 - Win: pool 20k + 3k per fighter by damage share (floor 400) + the Ice Man's own 15-25k to each who did 5%; lose: the shopping boarded up 10 min.
 - The Frozen Reach and the Ice Wyrm ship HELD (their rules and maps are in, unreachable). The content check now lets held maps wait for art (warn).
 - Next: wire the Frozen Reach's finished art (the agent's 113 files, uncommitted in flat/), walk it, open it on the owner's word.
+
+## 2026-09-30, rules 367 LIVE (worker 17778b92): THE FROZEN REACH OPENS
+- frozen + frostspire north of Cloudreach (lt-wild/frozen-gen.py writes the scenes); Magic 60 + a wand (MAGE_BAND), the sure cast (MAGE_FLOOR 0.5), spells x1.4.
+- THE COLD: 25/s without a Frost ward (COLD, coldTick); wards: Frost charm (Wren/Morwenna 15k), ward ring/amulet (anvil, raid shards + pelts), the Crown of the Frost Jarl (helm, chase).
+- The Frost Jarl (open, spells only), the Ice Wyrm daily 2 PM-midnight CT (wyrm.js, admin rise/down), once-only CASINO launch line (frozenLaunched).
+- Boss pets on every late boss (Rexling, Calf, Jarl's Hound, Wyrmling, Ice Imp); stronger late egg pets; MIX (plain drops from the 2-3 maps before, 3%).
+- FIX live: boss pets only rolled during the Long Night (the Pot Boy).
+- Held for the all-up wiki pass: the Gems page (the sorter, the new gem drops). Parked for the owner: world-event ideas (combat raids + skilling events), EASTSCAPE-DRAFTS.md section 15.
