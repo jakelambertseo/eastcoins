@@ -1183,6 +1183,8 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .trk-win details>summary{cursor:pointer;font:700 12px Lora,serif;color:var(--k-ink2);margin:4px 0}
 .trk-empty{padding:14px;text-align:center;font:600 13px Lora,serif;color:var(--k-ink2)}
 /* (2026-09-30) MY STATS: a 60-day calendar, one square a day, one hue light to dark by how long you played */
+.ms-entry{display:flex;align-items:center;gap:10px;margin:0 0 8px}.ms-entry .k-btn img{width:18px;height:18px;image-rendering:pixelated}.ms-entry .lnk{font:700 12.5px Lora,serif}
+#topName{cursor:pointer}#topName:hover{text-decoration:underline}
 .ms-cal{display:grid;grid-template-columns:repeat(15,1fr);gap:3px;max-width:420px}
 .ms-cal i{display:block;aspect-ratio:1;border-radius:3px;background:rgba(90,58,24,.1)}
 .ms-scale{display:flex;align-items:center;gap:4px;margin-top:6px;font:700 11px Lora,serif;color:var(--k-ink2)}.ms-scale i{display:inline-block;width:12px;height:12px;border-radius:3px}
@@ -2171,7 +2173,7 @@ const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String
 let TIP = null; const tipLoad = () => (tipLoad.p ||= import("/v3/assets/js/eastscape-tip.js?v=3").then((m) => (TIP = m.createTip({ G, esc, ico, me: () => me }))));
 document.addEventListener("pointerover", (e) => { if (e.pointerType === "touch") return; const el = e.target.closest?.("[data-item], [data-k], [data-rm]"), k = el && (el.dataset.item || el.dataset.k || el.dataset.rm); if (k && ITEMS[k]?.slot) tipLoad().then((t) => t.show(el, k, Number(el.dataset.f) || 0)).catch(() => {}); });   /* (2026-09-23) data-f is the level of THIS piece: the card describes what you are pointing at, not whatever of that kind you happen to be wearing */
 let PROF = null;
-const profLoad = () => (profLoad.p ||= import("/v3/assets/js/eastscape-profile.js?v=11").then((m) => (PROF = m.createProfile({ G, SFX, send, esc, $, sico, ico, you: () => you, myStats: () => msOpen(),   /* (2026-09-30) MY STATS, from your own profile */   /* (2026-09-23) ico: the Gear tab draws real item icons, and the PNG-or-emoji decision lives on the page */
+const profLoad = () => (profLoad.p ||= import("/v3/assets/js/eastscape-profile.js?v=12").then((m) => (PROF = m.createProfile({ G, SFX, send, esc, $, sico, ico, you: () => you, myStats: () => msOpen(),   /* (2026-09-30) MY STATS, from your own profile */   /* (2026-09-23) ico: the Gear tab draws real item icons, and the PNG-or-emoji decision lives on the page */
   sprite: (look, d, name, van) => { const L = look && G.normLook(look), k = L ? lookSprite(L, d, van) : lookArt(G.lookFor({ name }), d); if (!k) return k === null ? null : ""; const im = IMG[k].im, c = document.createElement("canvas"); c.width = im.width; c.height = im.height; c.getContext("2d").drawImage(im, 0, 0); return c; },
   nearby: (name) => Z.players.find((p) => p.name === name && p.id !== you?.id)?.id || null }))));
 /* (2026-09-22) The net panel's switch. Zeroing the correction count on open matters: what you want to know is how
@@ -6107,9 +6109,9 @@ function msDraw(d) {
       <div class="trk-key">${TRK_ACTS.filter(([a]) => acts[a]).map(([a, l, c]) => `<span><i style="background:${c}"></i>${l} ${Math.round((100 * acts[a]) / tSecs)}%</span>`).join("")}</div>
       <div class="trk-list">${rows.slice(0, 10).map(([k, tot, o]) => `<div class="trk-row"><span class="l">${map(k)}</span><span class="trk-track stack" style="width:${Math.max(2, (100 * tot) / mx)}%">${TRK_ACTS.filter(([a]) => o[a]).map(([a, l, c]) => `<i title="${l}: ${hm(o[a])}" style="flex:${o[a]};background:${c}"></i>`).join("")}</span><span class="v">${hm(tot)}</span></div>`).join("")}</div></div>`; }
   /* tickets */
-  h += `<div class="trk-sec"><h3>Your tickets</h3><p>${tixIn || tixOut ? `Since 30 September: ${n(tixIn)} in and ${n(tixOut)} out. ` : ""}All time you've earned ${n(d.earned)} and bet ${n(d.wagered)}.</p>
+  h += `<div class="trk-sec"><h3>Your tickets</h3><p>${tixIn || tixOut ? `Since 30 September: ${n(tixIn)} in and ${n(tixOut)} out. ` : ""}All time you've earned ${n(d.earned)}.</p>
     <div class="trk-grid"><div><h3 style="font-size:13px">Where they came from</h3>${bars(Object.entries(d.tixIn || {}).map(([k, v]) => [esc(TRK_SRC[k] || nice(k)), v]))}</div><div><h3 style="font-size:13px">Where they went</h3>${bars(Object.entries(d.tixOut || {}).map(([k, v]) => [esc(TRK_SRC[k] || nice(k)), v]))}</div>
-    <div><h3 style="font-size:13px">The casino</h3>${d.casino.plays ? `<div class="trk-kpis" style="grid-template-columns:repeat(2,1fr)">${kpi(n(d.casino.plays), "plays")}${kpi(`${d.casino.net > 0 ? "+" : ""}${n(d.casino.net)}`, "up or down")}${kpi(n(d.casino.best), "best result")}${kpi(n(d.casino.worst), "worst result")}</div>${bars(Object.entries(d.casino.games || {}).map(([g, v]) => [esc(G.GAMES?.[g]?.name || nice(g)), v]), (v) => `${n(v)} plays`, 8, "#eda100")}` : `<div class="trk-empty">You haven't played a table yet.</div>`}</div></div></div>`;
+    </div></div>`;
   /* fighting */
   const died = Object.entries(d.diedTo || {}).map(([k, v]) => [k === "player" ? "a player" : G.MOBS[k] ? mob(k) : esc(nice(k)), v]);
   h += `<div class="trk-sec"><div class="trk-grid"><div><h3>Most killed</h3>${bars(Object.entries(d.kills || {}).map(([k, v]) => [mob(k), v]))}</div>
@@ -6206,7 +6208,11 @@ function dashDraw(d) {
    are now reserved and none of them is bound to anything.
    The backtick is the right home for it beyond just being free: it is the universal open-the-console key, it is
    nowhere near the movement hand, and nobody presses it by accident. */
-$("dashWin").addEventListener("click", (e) => { if (e.target.closest("#dashTrk")) { SFX.play("ui_click"); trkOpen(); } });   /* (2026-09-30) the World data window */
+$("dashWin").addEventListener("click", (e) => { if (e.target.closest("#dashTrk")) { SFX.play("ui_click"); trkOpen(); } });
+/* (2026-09-30, the owner: "it says my stats is shipped on the roadmap but it isnt showing in players profiles") it is on your OWN profile only (private), and
+   nobody could find their own profile: your name in the top bar opens it now, and the Skills tab leads with My stats */
+$("topName").addEventListener("click", () => { if (you) { SFX.play("ui_click"); openProfile(you.name); } });
+document.addEventListener("click", (e) => { if (e.target.closest("[data-mystats]")) { SFX.play("ui_click"); msOpen(); } else if (e.target.closest("[data-myprof]") && you) { SFX.play("ui_click"); openProfile(you.name); } });   /* (2026-09-30) the World data window */
 addEventListener("keydown", (e) => { if ((e.key === "`" || e.key === "~") && !e.repeat && !e.ctrlKey && !e.metaKey && isStaff() && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) { e.preventDefault(); dashOpen(); } });
 
 /* THE PICTURE HOUSE (v119). eastcoin.vip's Movies & TV, on the screen in the theatre — the module's header has how a room
@@ -8191,7 +8197,7 @@ function renderPanel() {
   if (tab !== "inv") p.dataset.tab = tab;
   if (tab === "skills") {
     /* (2026-09-23) the stance buttons are gone: they were removed from the game on 2026-09-19 and had been sitting here ever since, four of them, promising xp splits that do not exist and doing nothing at all when clicked. */
-    p.innerHTML = `      ${(() => {
+    p.innerHTML = `<div class="ms-entry"><button type="button" class="k-btn sm" data-mystats><img src="/v3/assets/img/glad/flat/ui/skills.png?v=1" alt="">My stats</button><button type="button" class="lnk" data-myprof>My profile</button></div>      ${(() => {
       const rows = Object.entries(xpSess).filter(([k, r]) => SKILLS[k] && r.xp > 0).sort((a, b) => b[1].last - a[1].last);
       if (!rows.length) return "";
       return `<div class="ph">This session <small><button type="button" class="lnk" id="xpReset">reset</button></small></div><div class="xps">${rows.map(([k, r]) => {

@@ -146,8 +146,7 @@ export function installTrack(World, { G }) {
     return { type: "mystats", at: Date.now(), name: pl.name,
       play: { ms: st.playMs || 0, sessions: st.sessions | 0, firstSeen: st.firstSeen || C.created || 0, days: st.playDay || {} },
       xp: { total: st.xpTotal || 0, days: st.xpDay || {}, skills: Object.fromEntries(Object.entries(C.xp || {}).filter(([, v]) => v > 0)) },
-      t: st.t || {}, tixIn: st.tixIn || {}, tixOut: st.tixOut || {}, earned: Math.round(Number(C.earned) || 0), wagered: Math.round(Number(C.wagered) || 0),
-      casino: { plays: st.casPlays | 0, net: st.casNet | 0, best: st.casBest | 0, worst: st.casWorst | 0, games: st.played || {} },
+      t: st.t || {}, tixIn: st.tixIn || {}, tixOut: st.tixOut || {}, earned: Math.round(Number(C.earned) || 0),   /* (2026-09-30, the owner: "remove casino stats") nothing from the tables */
       kills: pick(st.kills), gathered: pick(st.gathered), crafted: pick(st.crafted), cooked: pick(st.cooked), sold: pick(st.sold),
       deaths: st.deaths | 0, diedIn: st.diedIn || {}, diedTo: st.diedTo || {}, pvp: { kills: st.pvpKills | 0, deaths: st.pvpDeaths | 0 },
       done: { quests: st.questsDone | 0, jobs: st.jobs | 0, crypt: st.crypt | 0, pyramid: st.pyramid | 0 },
