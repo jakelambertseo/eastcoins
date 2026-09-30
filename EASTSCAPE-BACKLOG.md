@@ -2050,3 +2050,13 @@ Shared 395, wiki 221. The player who reported the gem take-out can be told it's 
 - Also: outfitters' armour reforges like plate; gear never multiplied at the Nexus / Wild Bench / a gadget double make.
 - Tests: valley, valley-boss, valley-reach, nexus-gear. Known-failing before this release and still: crypt (slow), jewel (held), pit, tix, thieving, tower, quicksell (eggs and chase items have no buyer by design).
 - Next: maps 2-4 (Frozen Reach: map boss + the daily open boss; Sunken Temple: the group boss 4+; Void Rift: the endgame open boss).
+
+## 2026-09-30 04:24 UTC, rules 366 LIVE (worker 3a0638aa): THE YARD RAID
+- Admin-only (panel: Start a Yard raid / Skip the warning / End it / Reopen the stalls). eastscape-worker/src/raid.js + RAID at the end of the rules.
+- Five-minute CASINO countdown (4/3/2/1 min, 30 s), then The Ice Man (raidchief, 246 px, hp 4000 + 1200 per player online, cap 40k) through the north
+  gate; waves every 2 min at the north and west gates (wolf 6, yeti 16, giant 32; early/mid materials); the last wave (huscarls, lvl 45) under 30%.
+- Deep Freeze every 10-15 s on 1 + 1 per 4 fighters within 8 (cap 4): 3.5 s frozen (no walk/act/swing), 6% hit, an ice block on screen.
+- The west bank: S.raidG walls off x > 24; raiders never target, chase, go home or wander over the river (tested five minutes of the loop).
+- Win: pool 20k + 3k per fighter by damage share (floor 400) + the Ice Man's own 15-25k to each who did 5%; lose: the shopping boarded up 10 min.
+- The Frozen Reach and the Ice Wyrm ship HELD (their rules and maps are in, unreachable). The content check now lets held maps wait for art (warn).
+- Next: wire the Frozen Reach's finished art (the agent's 113 files, uncommitted in flat/), walk it, open it on the owner's word.
