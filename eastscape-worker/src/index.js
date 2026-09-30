@@ -3225,7 +3225,11 @@ export class World {
          NULL, and bagMax(null) is a flat INV_MAX - so this line sized every station in the game at 20 slots and
          silently ignored the pockets bought with tickets and earned from achievements. The `burnt` check beside
          it always passed C, which is exactly why it read as correct at a glance. */
-      const nxMult = nx && !r.noBoost ? nx.mult : 1;   /* (2026-09-29) the Long Count is never multiplied */
+      /* (2026-09-30, the owner: "nexus altar shouldnt double satchels and wands, same for fletching table ... gear/bows") GEAR IS NEVER MULTIPLIED:
+         the Nexus and the Wild Bench make more PAGES, ARROWS and SHAFTS, but a wand, a Magic Bag, a bow or a quiver comes out one at a time, and
+         so does anything worn; so does a Tinkering gadget's double make below. The xp bonus stays. */
+      const gearOut = !!G.ITEMS[r.out[0]]?.slot;
+      const nxMult = nx && !r.noBoost && !gearOut ? nx.mult : 1;   /* (2026-09-29) the Long Count is never multiplied */
       if (G.roomFor(C.inv, r.out[0], C) < Math.ceil(r.out[1] * nxMult) || (r.burnStop != null && G.roomFor(C.inv, "burnt", C) < 1)) { this.say(pl, "Your inventory is full.", "bad"); pl.act = null; return; }
       const freeSmelt = st.kind === "smelt" && Math.random() < G.petFx(C).freesmelt / 100;   /* (2026-09-27) the Cinder Salamander: now and then a smelt costs nothing */
       if (freeSmelt) this.say(pl, "The salamander breathes on the ore. That one cost you nothing.", "good");
@@ -3261,7 +3265,7 @@ export class World {
       }
       if (!burnt) {
         /* (2026-09-28) a fractional boost (the Nexus: 1.5) rounds by chance, so one page makes one or two, 1.5 on average, rather than always two */
-        const outRaw = r.out[1] * nxMult, outN = (Math.floor(outRaw) + (Math.random() < outRaw - Math.floor(outRaw) ? 1 : 0)) * (Math.random() < G.tkCraft(C, r.skill).dbl ? 2 : 1);   /* (2026-09-28) and a Tinkering gadget's double make */
+        const outRaw = r.out[1] * nxMult, outN = (Math.floor(outRaw) + (Math.random() < outRaw - Math.floor(outRaw) ? 1 : 0)) * (!gearOut && Math.random() < G.tkCraft(C, r.skill).dbl ? 2 : 1);   /* (2026-09-28) and a Tinkering gadget's double make; (2026-09-30) never on gear */
         /* (2026-09-27, a player: "it's using my charcoal and koi and I'm getting the xp but the smoked product doesn't deposit")
            THE PRODUCT IS CHECKED BEFORE THE XP IS PAID. give() refuses when the bag cannot take it and its answer was being thrown
            away, so a refusal here would have spent the inputs, paid the xp and handed over nothing. The room check above makes that
