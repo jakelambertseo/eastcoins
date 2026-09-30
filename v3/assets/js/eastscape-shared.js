@@ -9438,7 +9438,7 @@ rmob("raidhuscarl", { name: "Ice Man's Huscarl", size: "l", lvl: 45, hp: 520, at
   ex: "One of the war-chief's own guard, called in for the last wave when the Ice Man is losing. The hardest thing in the raid after him, and the best spoils." }, 300,
   [["tickets", [150, 300]], ["onyx_ore", [3, 6], 0.5], ["dragonstone_bar", [1, 3], 0.4], ["onyx_bar", [1, 2], 0.25], ["skyashlogs", [3, 6], 0.45], ["diamond_arrowhead", [10, 20], 0.3], ["ink_fire", [2, 5], 0.3],
    ["topaz", 1, 0.05], ["opal", 1, 0.04], ["frost_shard", 1, 0.05]]);
-rmob("raidchief", { name: "The Ice Man", size: "xl", lvl: 60, hp: 4000, att: 60, def: 50, max: 14, speed: 2600, box: [80, 70], aggro: 6, boss: true, open: true, raid: true, weak: "fire",
+rmob("raidchief", { name: "The Ice Man", size: "xl", lvl: 60, hp: 4000, att: 60, def: 50, max: 14, speed: 2600, box: [150, 200],   /* (2026-09-30) drawn huge (246 px): the click box matches */ aggro: 6, boss: true, open: true, raid: true, weak: "fire",
   ex: "The Frost Jarl's war-chief, come to sack the Yard. Everyone who fights the raid shares the spoils when he falls: drive him out before the time is up or the Yard's stalls are boarded up." }, 3000,
   [["tickets", [15000, 25000]], ["frost_shard", [2, 4]], ["yeti_pelt", [1, 2]], ["pot_frost", 1, 0.5], ["onyx_bar", [2, 4]], ["dragonstone_bar", [3, 6]], ["skyashlogs", [10, 20]]]);
 BOSSES.add("raidchief");
