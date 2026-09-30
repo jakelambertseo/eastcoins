@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 364;   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 365;   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -9177,7 +9177,7 @@ OUTFIT_PRICE_FILL(OUTFIT_SHELF);
    - `weak` / `resist`: an element that hits harder or softer.
    Old Rex is the MAP boss (claimed like any monster, back on a boss's timer); the Matriarch is the OPEN-WORLD boss (`open`: nobody
    claims her, everyone who did a share of her health shares the kill) and `rise` announces her return to the whole server. */
-HOLD.valley = !globalThis.__ES_OPEN_ALL;
+HOLD.valley = false;   /* (2026-09-30, the owner: "lets bundle these and launch them") OPEN */
 Object.assign(ITEMS, {
   fossil:          { name: "Fossil", icon: "\u{1F41A}", ex: "A shell turned to stone before anything had a name. The Primeval Valley's rocks are full of them." },
   cycadlogs:       { name: "Cycad logs", icon: "\u{1FAB5}", ex: "Scaly, diamond-barked and older than trees. Cut in the Primeval Valley." },

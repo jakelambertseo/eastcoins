@@ -15,7 +15,7 @@
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=395">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=396">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1957,7 +1957,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=395";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=396";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1966,7 +1966,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=221").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=222").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
@@ -2984,7 +2984,7 @@ const ITEM_ART = new Set(["cycadlogs_shortbow", "cycadlogs_longbow", "cycadlogs_
    and nothing can purge it. The version IS the purge. Bumping it costs everyone one re-download of ~246 icons at
    1-3 KB each, about 400 KB once, which is the cheap half of this trade. */
 let chatSeenT = 0;   /* (2026-09-27) the newest chat line this tab has drawn: see the chat event */
-const IART = "/v3/assets/img/glad/flat/items/", IART_V = 30, ICO_IMG = {};
+const IART = "/v3/assets/img/glad/flat/items/", IART_V = 31,   /* (2026-09-30) 30 -> 31: the Valley's twenty new icons */ ICO_IMG = {};
 /* UI ART — drawn furniture for windows, as opposed to items (IART) and world objects (ART). The folder already
    held 46 pictures and already had a constant; this was declared a second time up here on 2026-09-23 before that
    was noticed, and is the same UIA, hoisted, rather than a rival. Everything in here is served at ?v=1 and a

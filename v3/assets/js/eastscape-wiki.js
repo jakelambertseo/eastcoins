@@ -1131,6 +1131,20 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-30", title: "The Primeval Valley",
+    items: [
+      "THREE NEW MAPS NORTH OF THE TRAILER PARK: the Primeval Valley's Lowlands, the Ridge and Old Rex's Lair, with monsters from level 90 to 110.",
+      "A BOW'S COUNTRY: ARCHERY 40 AND A BOW LET YOU IN, whatever your Combat (everyone else needs Combat 90, 95 and 100). Most of what lives here stands up on the ledges where no sword reaches, every monster takes 40% MORE from arrows (pterodactyls 70%), and in the Valley your arrows land at least half the time, whatever the monster's defence.",
+      "TWO WORLD BOSSES, UP ON THE PLATEAUS, ARROWS ONLY: Old Rex on his throne in the Lair and the Mammoth Matriarch on the Lowlands' great plateau. Swords and spells do nothing to them. Everyone who lands arrows shares the kill (12,000 to 20,000 tickets EACH from Rex, 8,000 to 14,000 from the Matriarch), everybody gets the after report, and CASINO tells the server when they fall and when they are back. Their health never resets, so go back for more arrows if you need to.",
+      "ARCHERY LOOT: the Skyripper (a pterodactyl-wing longbow), the Raptor-claw ring and the Hunter's Fang (your arrows hit harder), the Hunter's draught (15 minutes of harder arrows), pterodactyl sinew, silkstring and arrowheads. The Golden Raptor turns up one time in 500.",
+      "THE CYCAD TIER: cycad shortbows, longbows, quivers and wands, the best a fletcher or a wizard can make, strung with pterodactyl sinew and weighted with fossils.",
+      "NEW GATHERING: fossil rocks (Mining 92), cycads (Woodcutting 92) and coelacanth in the lake (Fishing 92).",
+      "NEW PETS: the Raptor Hatchling and the Pterodactyl Chick hatch from the Valley's eggs, and each has a Legendary: the Little Tyrant and the Sky King. Nestor takes both eggs.",
+      "ARCHER AND MAGE ARMOUR CAN BE REFORGED: Wren's and Morwenna's armour now reforges at an anvil like plate, with the same bars and the same Smithing as the plate piece at its level.",
+      "FIX: the Nexus and the Wild Bench no longer double gear. A wand, a Magic Bag, a bow or a quiver comes out one at a time (pages, arrows and shafts still get the extra), and so does a Tinkering gadget's double make.",
+    ],
+  },
+  {
     date: "2026-09-30", title: "Roads on every map",
     items: ["COBBLED ROADS EVERYWHERE: every map's paths are laid in the Yard's cobbles now, each shaded to its ground (dark and damp in the Gloam and the Mire, pale in Cloudreach, stormy on the Thunderhead, sandy in the Golden Sands) with the edges broken into the ground around them, so every road feels like part of one world.", "A GEM TAKEN OUT OF YOUR GEM BAG KEEPS ITS ROLL: take out a +4% topaz and you get a +4% topaz, to put back, swap round, trade or sell. It used to come back unsorted."],
   },
