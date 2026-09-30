@@ -2036,3 +2036,8 @@ element), sounds (mob_swing, crit, weak/resist/guard, heartbeat, died; mobgone s
 event and #diedCard. The Green Room player is out of the game (greenHere() is empty; the module is still there): the jukebox is the
 radio only. Shared 394, sfx 18, wiki 220. Mark the bug-board idea "Remove Green Room ... radio.garden only" as done.
 NOT DONE (considered): hit-stop; real attack frames (the owner chose drawn effects).
+
+## 2026-09-30 00:28 UTC, rules 364 LIVE (worker 146be8cb): roads on every map; gems keep their roll
+Roads: paintBg lays t_cobble over every "," (and the Sands' paving, ROAD_PAVE) through the floor painter, shaded by ROAD_TINT; the
+Depths and Boardwalk islands are bgArt pictures and keep their drawn walkways. Gems: take-out returns the sorted gem (gems module 7).
+Shared 395, wiki 221. The player who reported the gem take-out can be told it's changed.
