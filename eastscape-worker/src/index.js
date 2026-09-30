@@ -2785,7 +2785,7 @@ export class World {
   }
 
   /* (2026-09-30, the owner: "a player has to wear a 'Frost' item or else they take constant frozen/frost damage in this area") THE COLD. On a map in
-     G.COLD.maps, anyone without a ward (G.wardOf) is warned once on arrival and then loses G.COLD.share of their health every G.COLD.every until
+     G.COLD.maps, anyone without a ward (G.wardOf) is warned once on arrival and then loses G.COLD.dmg health every G.COLD.every (told every G.COLD.tellEvery) until
      they leave, put one on, or die of it. Nothing happens to a ghost between death and waking, or to an admin in god mode. */
   coldTick(now) {
     for (const pl of this.pls.values()) {
@@ -2794,10 +2794,10 @@ export class World {
       if (!pl.coldAt) { pl.coldAt = now + G.COLD.every; this.say(pl, "The cold up here goes straight through you. Without a Frost ward it will kill you: a Frost charm from Wren in Cloudreach or Morwenna on the Thunderhead, or a ward ring or amulet from the anvil.", "bad"); continue; }
       if (now < pl.coldAt) continue;
       pl.coldAt = now + G.COLD.every;
-      const S = this.scenes.get(C.scene), dmg = Math.max(1, Math.round(G.maxHpOf(C) * G.COLD.share));
+      const S = this.scenes.get(C.scene), dmg = G.COLD.dmg;
       C.hp -= dmg; this.touch(pl); pl.hurtAt = now;
       if (S) S.events.push({ type: "splat", who: `p:${pl.id}`, n: dmg, kind: "hit", t: now });
-      this.say(pl, `The cold bites (${dmg}). You need a Frost ward.`, "bad");
+      if (now - (pl.coldSaid || 0) >= G.COLD.tellEvery) { pl.coldSaid = now; this.say(pl, `The cold bites for ${dmg} a second. You need a Frost ward.`, "bad"); }
       if (C.hp <= 0 && S) this.die(pl, S, { mob: "the cold" });
     }
   }

@@ -325,7 +325,7 @@ export const GUIDES = [
         mire: "lanternfish, mudskipper, the first real gear drops",
         boneyard: "bonefish, ghost carp, the Crypt &mdash; and <b>pets start dropping here</b>",
         cloud: "dragonstone and onyx ore, skyash, sky eel and cloud ray",
-        frozen: "north of Cloudreach, and a mage's country (Combat 100, or Magic 40 with a wand): yetis and snow owls on shelves and ice floes only a spell or an arrow reaches, frost wolves and wraiths on the snow, glacite (Mining 94), frostpine (Woodcutting 94), icefin through the ice (Fishing 94), and the Ice Wyrm, which comes up through the lake once a day",   /* (2026-09-30) held until the owner opens it */
+        frozen: "north of Cloudreach, and a mage's country (Combat 100, or Magic 60 with a wand): yetis and snow owls on shelves and ice floes only a spell or an arrow reaches, frost wolves and wraiths on the snow, glacite (Mining 94), frostpine (Woodcutting 94), icefin through the ice (Fishing 94), and the Ice Wyrm, which comes up through the lake once a day",   /* (2026-09-30) held until the owner opens it */
         frostspire: "north of the Frozen Reach: Frost Giants on the shelves, Ice Elementals on the tarn's floes, Frost Wraiths, and the Frost Jarl on the high ice shelf, an open-world boss only spells reach",
         sands: "sand for <a data-wiki=\"guides/alchemy\">Alchemy</a>, the cauldron, the Great Pyramid",
         thunderhead: "storm marlin, thunder squid, the way to the last two",

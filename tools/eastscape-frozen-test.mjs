@@ -29,8 +29,9 @@ const nearest = (S, m) => openCells(S).reduce((b, c) => { const d = G.cheb(c, m)
 /* 1. the rules */
 is([G.FROZEN_MAPS.every((k) => G.OPEN.has(k)), G.SCENES.cloud.exits.n, G.SCENES.frozen.exits.s, G.SCENES.frozen.exits.n, G.SCENES.frostspire.exits.s], [true, "frozen", "cloud", "frostspire", "frozen"], "two maps north of Cloudreach");
 is(["frostwolf", "yeti", "snowowl", "frostwraith", "iceelemental", "frostgiant", "frostjarl", "icewyrm"].every((k) => G.guardMul(k, "magic") > 1 && G.MOBS[k].weak === "fire"), true, "every creature takes more from spells and is weak to fire");
-{ const c = G.freshChar(); c.xp.magic = G.XP_AT[40]; c.eq.weapon = "logs_wand"; const w = G.bandBlock(c, "frostspire", "fight"); c.eq.weapon = "bronze_sword"; const s = G.bandBlock(c, "frozen", "fight");
-  is([w, /Magic 40 with a wand/.test(s?.text || ""), JSON.stringify([G.BANDS.frozen, G.BANDS.frostspire])], [null, true, "[[100,108],[106,115]]"], "a wand at Magic 40 opens it, a sword does not; bands 100-115"); }
+{ const c = G.freshChar(); c.xp.magic = G.XP_AT[60]; c.eq.weapon = "logs_wand"; const w = G.bandBlock(c, "frostspire", "fight"); c.eq.weapon = "bronze_sword"; const s = G.bandBlock(c, "frozen", "fight");
+  c.xp.magic = G.XP_AT[59]; c.eq.weapon = "logs_wand"; const w59 = G.bandBlock(c, "frozen", "fight");
+  is([w, !!w59, /Magic 60 with a wand/.test(s?.text || ""), JSON.stringify([G.BANDS.frozen, G.BANDS.frostspire])], [null, true, true, "[[100,108],[106,115]]"], "a wand at Magic 60 opens it, Magic 59 and a sword do not; bands 100-115"); }
 const B = Object.fromEntries(G.FROZEN_MAPS.map((k) => [k, G.buildScene(k)])), count = (f) => G.FROZEN_MAPS.reduce((a, k) => a + B[k].objs.filter(f).length, 0);
 is([count((o) => o.t === "frostpine"), count((o) => o.t === "rock" && o.ore === "glacite"), count((o) => o.t === "spot" && o.fish === "icefin")], [7, 7, 7], "seven frostpines, seven glacite rocks, seven holes in the ice");
 /* 2. every shelf and floe creature: out of a sword's reach, inside a wand's, and a real cast lands */
@@ -77,8 +78,8 @@ for (const key of G.FROZEN_MAPS) {
   for (const p of [bare, warded, charm]) { p.C.hp = G.maxHpOf(p.C); p.out = []; p.coldAt = 0; }
   const t0 = Date.now(); W.coldTick(t0); const warned = bare.out.some((e) => /Frost ward/.test(e.text || ""));
   const hp0 = bare.C.hp; W.coldTick(t0 + G.COLD.every + 1);
-  is([warned, hp0 - bare.C.hp, Math.max(1, Math.round(G.maxHpOf(bare.C) * G.COLD.share)), warded.C.hp === G.maxHpOf(warded.C), charm.C.hp === G.maxHpOf(charm.C)], [true, hp0 - bare.C.hp, hp0 - bare.C.hp, true, true], "without a ward: warned, then 5% every 5 s; a ward ring or Wren's charm stops it");
-  is(hp0 - bare.C.hp, Math.max(1, Math.round(G.maxHpOf(bare.C) * G.COLD.share)), "the bite is 5% of max health");
+  const hp1 = bare.C.hp; W.coldTick(t0 + 2 * G.COLD.every + 2);
+  is([warned, hp0 - bare.C.hp, warded.C.hp === G.maxHpOf(warded.C), charm.C.hp === G.maxHpOf(charm.C)], [true, 2 * G.COLD.dmg, true, true], "without a ward: warned, then 25 every second; a ward ring or Wren's charm stops it");
   const cloud = mage(W.scene("cloud"), 20, 12); cloud.C.hp = G.maxHpOf(cloud.C); W.coldTick(t0); W.coldTick(t0 + 99999); is(cloud.C.hp, G.maxHpOf(cloud.C), "and nothing in Cloudreach");
   is([G.outfitShelf("ranger")[0]?.k, G.outfitShelf("mage")[0]?.k, G.RECIPES.smith_frostward_ring.in.map(([k]) => k).includes("frost_shard"), G.RECIPES.smith_frostward_amulet.in.map(([k]) => k).includes("yeti_pelt")], ["frostcharm", "frostcharm", true, true], "Wren and Morwenna sell the charm; the wards are made from the raid's shards and pelts");
   is([!!G.RECIPES.smith_yeti_boots, G.RECIPES.fletch_rimefang_arrow.out[0], G.RECIPES.brew_frostmind.out[0], G.MOBS.raidchief.drops.some(([k]) => k === "rimecleaver"), G.ITEMS.rimecleaver.chase], [true, "rimefang_arrow", "pot_frost", true, true], "the raid's spoils make boots, arrows and draughts; the Ice Man carries Rimecleaver");

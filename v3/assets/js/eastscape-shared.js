@@ -9399,7 +9399,7 @@ for (const t of ["frostwolf", "yeti", "snowowl", "frostwraith", "iceelemental", 
   m.max = Math.max(2, Math.round((m.max + 1) * MOB_DANGER * (was / now) - 1)); m.att = aim;
 }
 Object.assign(BANDS, { frozen: [100, 108], frostspire: [106, 115] });
-for (const k of FROZEN_MAPS) { DEATH[k] = { share: 0.1, cap: 10000 }; MAGE_BAND[k] = 40; MAGE_FLOOR[k] = 0.5; }   /* a wand and Magic 40 opens both; spells land half the time */
+for (const k of FROZEN_MAPS) { DEATH[k] = { share: 0.1, cap: 10000 }; MAGE_BAND[k] = 60; MAGE_FLOOR[k] = 0.5; }   /* (2026-09-30, the owner: "the minimum magic needed to fight in there is 60") a wand and Magic 60 opens both; spells land half the time */
 /* SCENES.frozen and SCENES.frostspire are in eastscape-closed.js, written by lt-wild/frozen-gen.py */
 if (!HOLD.frozen) { for (const k of FROZEN_MAPS) { OPEN.add(k); PET_SCENES.add(k); } SCENES.cloud.exits.n = "frozen"; }
 
@@ -9452,7 +9452,7 @@ BOSSES.add("raidchief");
      THE WARDS: the ring and the amulet are made at the anvil from the raid's frost shards and yeti pelts (the raid first, then north); a plain
      Frost charm that does nothing else is sold by Wren in Cloudreach, so nobody is locked out.
      THE RAID'S SPOILS also make Yeti-fur boots, Rimefang arrows and Frostmind draughts, and the Ice Man carries a chase axe, Rimecleaver. */
-export const COLD = { maps: new Set(FROZEN_MAPS), every: 5000, share: 0.05 };
+export const COLD = { maps: new Set(FROZEN_MAPS), every: 1000, dmg: 25, tellEvery: 5000 };   /* (2026-09-30, the owner: "the freeze effect should be stronger, 25 damage per second") was 5% every 5 s */
 export const wardOf = (c) => SLOTS.some((s) => ITEMS[c?.eq?.[s]]?.ward === "frost");
 Object.assign(ITEMS, {
   frostcharm:       { name: "Frost charm", short: "Charm", icon: "\u{1F9FF}", slot: "amulet", ward: "frost", ex: "A plain charm of warm stone on a cord. It does one thing: in the Frozen Reach the cold cannot touch you while you wear it. Wren sells them in Cloudreach." },
