@@ -934,6 +934,7 @@ export class World {
          business. Name, combat level and place only. Rate-limited exactly like `who` above, and the page polls
          it only while the window is actually open — a roster is cheap to build but it is one message per viewer
          per tick if you let it run in the background. */
+      case "mystats": { if (now - (pl.myStatsAsk || 0) < 3000) return; pl.myStatsAsk = now; return this.send(pl, this.myStats(pl)); }   /* (2026-09-30) MY STATS: your own numbers only (track.js) */
       case "whoall": {
         if (now - (pl.whoAllAsk || 0) < 3000) return; pl.whoAllAsk = now;
         const people = [...this.pls.values()].map((p) => ({

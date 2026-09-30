@@ -1182,6 +1182,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .trk-table td{padding:3px 5px;border-top:1px solid var(--k-line)}.trk-table td.n{text-align:right;font-variant-numeric:tabular-nums}
 .trk-win details>summary{cursor:pointer;font:700 12px Lora,serif;color:var(--k-ink2);margin:4px 0}
 .trk-empty{padding:14px;text-align:center;font:600 13px Lora,serif;color:var(--k-ink2)}
+/* (2026-09-30) MY STATS: a 60-day calendar, one square a day, one hue light to dark by how long you played */
+.ms-cal{display:grid;grid-template-columns:repeat(15,1fr);gap:3px;max-width:420px}
+.ms-cal i{display:block;aspect-ratio:1;border-radius:3px;background:rgba(90,58,24,.1)}
+.ms-scale{display:flex;align-items:center;gap:4px;margin-top:6px;font:700 11px Lora,serif;color:var(--k-ink2)}.ms-scale i{display:inline-block;width:12px;height:12px;border-radius:3px}
 .who-win .k-body{gap:6px}
 .who-bar{padding:8px 12px 0;background:var(--k-paper)}.who-bar[hidden]{display:none}
 .who-row{cursor:pointer;text-align:left;font:inherit;color:inherit}
@@ -1862,6 +1866,11 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/skills.png?v=1" alt="" class="topi">Dashboard</b><small>Read only. Who is here, and what the world is holding.</small><button type="button" class="win-x" data-close="dashWin" aria-label="Close">×</button></div>
       <div class="win-body"><div id="dashBody"></div></div>
     </section>
+    <section class="win k-win trk-win" id="msWin" aria-label="My stats" hidden>
+      <div class="k-head"><img src="/v3/assets/img/glad/flat/ui/skills.png?v=1" alt=""><b>My stats</b><span class="k-sub" id="msSub"></span><button type="button" class="k-x" data-close="msWin" aria-label="Close">×</button></div>
+      <div class="k-body k-paper" id="msBody"></div>
+      <div class="k-foot"><span class="k-note">Only you can see this. Kills, gathering, the casino and xp go back to your first day; time by map, where tickets came from and what killed you start on 30 September.</span></div>
+    </section>
     <section class="win k-win trk-win" id="trkWin" aria-label="World data" hidden>
       <div class="k-head"><img src="/v3/assets/img/glad/flat/ui/skills.png?v=1" alt=""><b>World data</b><span class="k-sub" id="trkSub"></span><button type="button" class="k-x" data-close="trkWin" aria-label="Close">×</button></div>
       <div class="who-bar trk-bar"><div class="k-seg" role="group" aria-label="How many days"><button type="button" data-tn="1" aria-pressed="true">Today</button><button type="button" data-tn="7" aria-pressed="false">7 days</button><button type="button" data-tn="14" aria-pressed="false">14 days</button><button type="button" data-tn="30" aria-pressed="false">30 days</button></div><button type="button" class="trk-refresh" id="trkRefresh">Refresh</button></div>
@@ -2162,7 +2171,7 @@ const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String
 let TIP = null; const tipLoad = () => (tipLoad.p ||= import("/v3/assets/js/eastscape-tip.js?v=3").then((m) => (TIP = m.createTip({ G, esc, ico, me: () => me }))));
 document.addEventListener("pointerover", (e) => { if (e.pointerType === "touch") return; const el = e.target.closest?.("[data-item], [data-k], [data-rm]"), k = el && (el.dataset.item || el.dataset.k || el.dataset.rm); if (k && ITEMS[k]?.slot) tipLoad().then((t) => t.show(el, k, Number(el.dataset.f) || 0)).catch(() => {}); });   /* (2026-09-23) data-f is the level of THIS piece: the card describes what you are pointing at, not whatever of that kind you happen to be wearing */
 let PROF = null;
-const profLoad = () => (profLoad.p ||= import("/v3/assets/js/eastscape-profile.js?v=10").then((m) => (PROF = m.createProfile({ G, SFX, send, esc, $, sico, ico, you: () => you,   /* (2026-09-23) ico: the Gear tab draws real item icons, and the PNG-or-emoji decision lives on the page */
+const profLoad = () => (profLoad.p ||= import("/v3/assets/js/eastscape-profile.js?v=11").then((m) => (PROF = m.createProfile({ G, SFX, send, esc, $, sico, ico, you: () => you, myStats: () => msOpen(),   /* (2026-09-30) MY STATS, from your own profile */   /* (2026-09-23) ico: the Gear tab draws real item icons, and the PNG-or-emoji decision lives on the page */
   sprite: (look, d, name, van) => { const L = look && G.normLook(look), k = L ? lookSprite(L, d, van) : lookArt(G.lookFor({ name }), d); if (!k) return k === null ? null : ""; const im = IMG[k].im, c = document.createElement("canvas"); c.width = im.width; c.height = im.height; c.getContext("2d").drawImage(im, 0, 0); return c; },
   nearby: (name) => Z.players.find((p) => p.name === name && p.id !== you?.id)?.id || null }))));
 /* (2026-09-22) The net panel's switch. Zeroing the correction count on open matters: what you want to know is how
@@ -2309,7 +2318,8 @@ function onMsg(m) {
      just stops. A checker now compares every this.send type against onMsg and every out.push type against
      onEvent, because this is a mistake with no symptom other than a feature quietly not working. */
   if (m.type === "whoall") return whoAllDraw(m.people || []);
-  if (m.type === "trk") return trkDraw(m);   /* (2026-09-30) THE WORLD DATA WINDOW */
+  if (m.type === "trk") return trkDraw(m);
+  if (m.type === "mystats") return msDraw(m);   /* (2026-09-30) MY STATS */   /* (2026-09-30) THE WORLD DATA WINDOW */
   if (m.type === "weekly") { WSTATS[m.n] = { ...m, got: Date.now() }; if (wikiRoute === `weekly/${m.n}` && !$("wikiWin").hidden) { const st = $("wikiPage").scrollTop; wikiGo(wikiRoute, false); $("wikiPage").scrollTop = st; } return; }   /* (2026-09-30) THE WEEKLY ISSUE */
   if (m.type === "ev") for (const e of m.list) onEvent(e);
 }
@@ -6063,12 +6073,58 @@ function dashOpen() {
   clearInterval(dashAt);
   dashAt = setInterval(() => { if ($("dashWin").hidden) return clearInterval(dashAt); send({ t: "admin", cmd: "dash" }); }, 5000);
 }
+/* (2026-09-30, the owner: "give them their own dashboard with advanced stats ... a button in their profile that pops up", "keep it private") MY STATS.
+   The server answers with the asker's own character and nobody else's; one request when it opens. Drawn with the World data window's pieces. */
+function msOpen() { $("msWin").hidden = false; SFX.play("ui_open"); $("msBody").innerHTML = `<div class="trk-empty">Adding it all up…</div>`; send({ t: "mystats" }); }
+function msDraw(d) {
+  if ($("msWin").hidden) return;
+  const n = (x) => Math.round(Number(x || 0)).toLocaleString(), hm = (sec) => { const m = Math.round(sec / 60); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`; };
+  const nice = (k) => String(k).replace(/([a-z])(\d+)$/, "$1 $2").replace(/^./, (c) => c.toUpperCase());
+  const map = (k) => esc(d.names?.[k] || G.SCENES[k]?.name || nice(k)), itm = (k) => esc(G.ITEMS[k]?.name || nice(k)), mob = (k) => esc(G.MOBS[k]?.name || nice(k)), sk = (k) => esc(G.SKILLS[k]?.name || nice(k));
+  const sumO = (o) => Object.values(o || {}).reduce((a, v) => a + (typeof v === "object" ? sumO(v) : v), 0);
+  const bars = (rows, fmt = n, top = 8, color = "#2a78d6") => { rows = rows.filter((r) => r[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, top); const mx = Math.max(1, ...rows.map((r) => r[1]));
+    return rows.length ? `<div class="trk-list">${rows.map(([l, v]) => `<div class="trk-row"><span class="l">${l}</span><span class="trk-track"><i style="width:${(100 * v) / mx}%;background:${color}"></i></span><span class="v">${fmt(v)}</span></div>`).join("")}</div>` : `<div class="trk-empty">Nothing yet.</div>`; };
+  const kpi = (v, l) => `<div class="trk-kpi"><b>${v}</b><small>${l}</small></div>`;
+  $("msSub").textContent = d.play.firstSeen ? `playing since ${new Date(d.play.firstSeen).toLocaleDateString([], { month: "short", day: "numeric" })}` : "";
+  const days = Object.keys(d.play.days || {}).length, t = d.t || {}, tSecs = sumO(t);
+  const tixIn = sumO(d.tixIn), tixOut = sumO(d.tixOut), top = (o) => Object.entries(o || {}).sort((a, b) => b[1] - a[1])[0];
+  const topMap = Object.entries(t).map(([k, o]) => [k, sumO(o)]).sort((a, b) => b[1] - a[1])[0], topKill = top(d.kills);
+  let h = `<div class="trk-kpis">${kpi(hm((d.play.ms || 0) / 1000), "played")}${kpi(n(d.play.sessions), "sessions")}${kpi(d.play.sessions ? hm((d.play.ms || 0) / 1000 / d.play.sessions) : "–", "average session")}${kpi(n(d.xp.total), "xp earned")}${kpi(n(d.earned), "tickets earned, ever")}${kpi(n(sumO(d.kills)), "kills")}${kpi(topMap ? map(topMap[0]) : "–", "favourite map")}${kpi(topKill ? mob(topKill[0]) : "–", "most killed")}</div>`;
+  /* the last 60 days: when you played, and your xp a day */
+  { const today = new Date(), keys = []; for (let i = 59; i >= 0; i--) { const x = new Date(today.getTime() - i * 864e5); keys.push(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" }).format(x)); }
+    const ramp = ["#86b6ef", "#5598e7", "#2a78d6", "#1c5cab", "#0d366b"], xpDay = d.xp.days || {}, pd = d.play.days || {};
+    const lvl = (v, mx) => (v > 0 ? ramp[Math.min(4, Math.floor((v / Math.max(1, mx)) * 4.999))] : null);
+    const mxX = Math.max(1, ...keys.map((k) => xpDay[k] || 0));
+    h += `<div class="trk-sec"><div class="trk-grid"><div><h3>Your last 60 days</h3><p>One square a day, darker for more xp that day. Hover a square for the day.</p>
+      <div class="ms-cal">${keys.map((k) => { const v = xpDay[k] || 0, c = lvl(v, mxX); return `<i title="${esc(k)}: ${n(v)} xp${pd[k] ? `, ${hm(pd[k])} on` : ""}"${c ? ` style="background:${c}"` : ""}></i>`; }).join("")}</div>
+      <div class="ms-scale">less ${ramp.map((c) => `<i style="background:${c}"></i>`).join("")} more</div></div>
+      <div><h3>Xp by skill, all time</h3>${bars(Object.entries(d.xp.skills || {}).map(([k, v]) => [sk(k), v]), n, 10)}</div></div></div>`; }
+  /* where the time goes (since 30 September) */
+  if (tSecs) { const rows = Object.entries(t).map(([k, o]) => [k, sumO(o), o]).sort((a, b) => b[1] - a[1]), mx = Math.max(1, ...rows.map((r) => r[1])), acts = {};
+    for (const [, , o] of rows) for (const [a, v] of Object.entries(o)) acts[a] = (acts[a] || 0) + v;
+    h += `<div class="trk-sec"><h3>Where your time goes</h3><p>Since 30 September: every second you're on, by map and by what you were doing. Hover a colour for its time.</p>
+      <div class="trk-key">${TRK_ACTS.filter(([a]) => acts[a]).map(([a, l, c]) => `<span><i style="background:${c}"></i>${l} ${Math.round((100 * acts[a]) / tSecs)}%</span>`).join("")}</div>
+      <div class="trk-list">${rows.slice(0, 10).map(([k, tot, o]) => `<div class="trk-row"><span class="l">${map(k)}</span><span class="trk-track stack" style="width:${Math.max(2, (100 * tot) / mx)}%">${TRK_ACTS.filter(([a]) => o[a]).map(([a, l, c]) => `<i title="${l}: ${hm(o[a])}" style="flex:${o[a]};background:${c}"></i>`).join("")}</span><span class="v">${hm(tot)}</span></div>`).join("")}</div></div>`; }
+  /* tickets */
+  h += `<div class="trk-sec"><h3>Your tickets</h3><p>${tixIn || tixOut ? `Since 30 September: ${n(tixIn)} in and ${n(tixOut)} out. ` : ""}All time you've earned ${n(d.earned)} and bet ${n(d.wagered)}.</p>
+    <div class="trk-grid"><div><h3 style="font-size:13px">Where they came from</h3>${bars(Object.entries(d.tixIn || {}).map(([k, v]) => [esc(TRK_SRC[k] || nice(k)), v]))}</div><div><h3 style="font-size:13px">Where they went</h3>${bars(Object.entries(d.tixOut || {}).map(([k, v]) => [esc(TRK_SRC[k] || nice(k)), v]))}</div>
+    <div><h3 style="font-size:13px">The casino</h3>${d.casino.plays ? `<div class="trk-kpis" style="grid-template-columns:repeat(2,1fr)">${kpi(n(d.casino.plays), "plays")}${kpi(`${d.casino.net > 0 ? "+" : ""}${n(d.casino.net)}`, "up or down")}${kpi(n(d.casino.best), "best result")}${kpi(n(d.casino.worst), "worst result")}</div>${bars(Object.entries(d.casino.games || {}).map(([g, v]) => [esc(G.GAMES?.[g]?.name || nice(g)), v]), (v) => `${n(v)} plays`, 8, "#eda100")}` : `<div class="trk-empty">You haven't played a table yet.</div>`}</div></div></div>`;
+  /* fighting */
+  const died = Object.entries(d.diedTo || {}).map(([k, v]) => [k === "player" ? "a player" : G.MOBS[k] ? mob(k) : esc(nice(k)), v]);
+  h += `<div class="trk-sec"><div class="trk-grid"><div><h3>Most killed</h3>${bars(Object.entries(d.kills || {}).map(([k, v]) => [mob(k), v]))}</div>
+    <div><h3>What killed you</h3>${died.length ? bars(died, n, 8, "#e34948") : `<div class="trk-empty">${d.deaths ? `${n(d.deaths)} deaths in all; what did it is counted from 30 September.` : "You haven't died. Yet."}</div>`}
+    ${d.pvp.kills || d.pvp.deaths ? `<p style="margin-top:6px">In the Wild: <b>${n(d.pvp.kills)}</b> player kills, <b>${n(d.pvp.deaths)}</b> deaths there.</p>` : ""}</div>
+    <div><h3>Done</h3><div class="trk-kpis" style="grid-template-columns:repeat(2,1fr)">${kpi(n(d.done.quests), "quests")}${kpi(n(d.done.jobs), "daily jobs")}${kpi(n(d.done.crypt), "Crypt clears")}${kpi(n(d.done.pyramid), "Pyramid clears")}</div></div></div></div>`;
+  /* skilling */
+  h += `<div class="trk-sec"><div class="trk-grid"><div><h3>Most gathered</h3>${bars(Object.entries(d.gathered || {}).map(([k, v]) => [itm(k), v]), n, 8, "#eb6834")}</div><div><h3>Most made</h3>${bars([...Object.entries(d.crafted || {}), ...Object.entries(d.cooked || {})].map(([k, v]) => [itm(k), v]), n, 8, "#1baf7a")}</div><div><h3>Sold to Bom</h3>${bars(Object.entries(d.sold || {}).map(([k, v]) => [itm(k), v]), n, 8, "#e87ba4")}</div></div></div>`;
+  $("msBody").innerHTML = h;
+}
 /* (2026-09-30, the owner: "now that we have track.js, can we build a dashboard that i can see what we have so far") THE WORLD DATA WINDOW. Admins
    only (the server refuses anyone else). One request when it opens and one per Refresh or range change; nothing polls. */
 let trkN = 1;
 function trkOpen() { if (!isStaff()) return; $("trkWin").hidden = false; SFX.play("ui_open"); $("trkBody").innerHTML = `<div class="trk-empty">Reading what the world has recorded…</div>`; send({ t: "admin", cmd: "trk", n: trkN }); }
 const TRK_ACTS = [["f", "Fighting", "#2a78d6"], ["g", "Gathering", "#eb6834"], ["c", "Crafting", "#1baf7a"], ["p", "At a table", "#eda100"], ["w", "Walking", "#e87ba4"], ["s", "Standing", "#008300"], ["a", "Away", "#4a3aa7"]];
-const TRK_SRC = { kills: "Monster kills", sell: "Selling", dailies: "Daily jobs", quests: "Quests", achievements: "Achievements", dungeons: "Dungeons", raid: "The raid", events: "World events", bosses: "Bosses", jackpot: "Jackpot kills", chips: "Cashed chips", island: "Island", carnival: "Carnival", pvp: "Player kills", devil: "Devil's dice", other: "Other",
+const TRK_SRC = { kills: "Monster kills", sell: "Selling", dailies: "Daily jobs", quests: "Quests", achievements: "Achievements", dungeons: "Dungeons", raid: "The raid", events: "World events", bosses: "Bosses", jackpot: "Jackpot kills", chips: "Cashed chips", island: "Island", carnival: "Carnival", pvp: "Player kills", devil: "Devil's dice", returns: "Returns to Bom", refund: "Staff refunds", other: "Other",
   bill: "Hospital bills", store: "The Store", counter: "Prize Counter", buyback: "Buy-backs", extax: "Exchange tax", radio: "The radio", permit: "Thieves' permit", vanity: "Outfits", gems: "Gems", tinker: "Tinkering", outfit: "Outfitters", robbed: "Robbed in the Wild" };
 function trkDraw(d) {
   if ($("trkWin").hidden) return;

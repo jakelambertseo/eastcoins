@@ -193,6 +193,7 @@ export function createProfile(env) {
         nobody who has logged in for a month, and the page never learns where somebody it cannot already see is standing.) */
     const you = env.you(), here = p.online && (!you || p.name !== you.name) ? env.nearby(p.name) : null, btns = [];
     if (here) btns.push(["🤝 Trade", () => send({ t: "trade", op: "req", to: here })], ["🗝️ Invite to party", () => send({ t: "party", op: "invite", to: here })]);
+    if (you && p.name === you.name && env.myStats) btns.push(["My stats", () => env.myStats()]);   /* (2026-09-30) MY STATS: your own profile only, and private */
     $("profBtns").innerHTML = btns.map(([l], i) => `<button type="button" class="btn plain" data-i="${i}">${esc(l)}</button>`).join("");
     $("profBtns").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { btns[+b.dataset.i][1](); close(); }));
     el.hidden = false;

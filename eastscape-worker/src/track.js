@@ -136,6 +136,24 @@ export function installTrack(World, { G }) {
   P.trkLogin = function (pl, isNew) { const D = this.trkDay(); D.people.players[pl.id] = 1; D.people.sessions++; if (isNew) D.people.fresh++; pl.trkJoined = Date.now(); this.trk.dirty.add("people"); };
   P.trkLeave = function (pl) { if (!pl.trkJoined) return; const D = this.trkDay(); D.people.sessMs += Date.now() - pl.trkJoined; D.people.ended++; pl.trkJoined = 0; this.trk.dirty.add("people"); };
 
+  /* MY STATS (2026-09-30, the owner: "give them their own dashboard with advanced stats ... a button in their profile that pops up", then "keep it
+     private"). YOUR OWN numbers and nobody else's: the asker's character, never a name, so there is no way to ask for somebody else's. Read from the
+     character already in memory (play time banked first), sent once when the window opens; nothing polls. */
+  P.myStats = function (pl) {
+    this.accrue?.(pl);
+    const C = pl.C, st = C.stats || {}, pick = (o, n = 40) => Object.fromEntries(Object.entries(o || {}).sort((a, b) => b[1] - a[1]).slice(0, n));
+    const maps = new Set([...Object.keys(st.t || {}), ...Object.keys(st.diedIn || {})]);
+    return { type: "mystats", at: Date.now(), name: pl.name,
+      play: { ms: st.playMs || 0, sessions: st.sessions | 0, firstSeen: st.firstSeen || C.created || 0, days: st.playDay || {} },
+      xp: { total: st.xpTotal || 0, days: st.xpDay || {}, skills: Object.fromEntries(Object.entries(C.xp || {}).filter(([, v]) => v > 0)) },
+      t: st.t || {}, tixIn: st.tixIn || {}, tixOut: st.tixOut || {}, earned: Math.round(Number(C.earned) || 0), wagered: Math.round(Number(C.wagered) || 0),
+      casino: { plays: st.casPlays | 0, net: st.casNet | 0, best: st.casBest | 0, worst: st.casWorst | 0, games: st.played || {} },
+      kills: pick(st.kills), gathered: pick(st.gathered), crafted: pick(st.crafted), cooked: pick(st.cooked), sold: pick(st.sold),
+      deaths: st.deaths | 0, diedIn: st.diedIn || {}, diedTo: st.diedTo || {}, pvp: { kills: st.pvpKills | 0, deaths: st.pvpDeaths | 0 },
+      done: { quests: st.questsDone | 0, jobs: st.jobs | 0, crypt: st.crypt | 0, pyramid: st.pyramid | 0 },
+      names: Object.fromEntries([...maps].map((k) => [k, G.SCENES[k]?.name || k])) };
+  };
+
   /* THE WORLD DATA WINDOW (2026-09-30, the owner: "now that we have track.js, can we build a dashboard that i can see what we have so far").
      `n` Chicago days ending today, ADDED UP into one day's shape (today straight from memory, the rest from storage in one read), plus a short line
      per day for the trend and the last 20 player kills. Only an admin asks, only when the window opens or is refreshed, and the answer is cached

@@ -92,6 +92,9 @@ is([pickK(walker.C.stats.tixIn, ["dailies", "sell"]), walker.C.stats.tixOut, wal
   is([R.n, R.days.length, typeof R.where.who.workyard, R.names.gloam, R.people.players > 0, Array.isArray(R.series) && R.series.length === 1, JSON.stringify(R).includes('"t1"')], [1, 1, "number", G.SCENES.gloam.name, true, true, false], "today's report: counts, not ids; map names; one day in the series");
   const R7 = await W.trkReport(7); is([R7.days.length, R7.series.length, R7.people.sessions >= R.people.sessions], [7, 7, true], "seven days: seven in the series, the totals at least today's"); }
 
+/* 7c. MY STATS: the asker's own numbers, nobody else's */
+{ const M = W.myStats(fighter); is([M.type, M.name, M.t.gloam?.f > 0, M.kills.gnasher, "who" in M, M.names.gloam], ["mystats", "Fighter", true, 1, false, G.SCENES.gloam.name], "My stats: your own time by map, kills and map names, and no list of other people"); }
+
 /* 8. THE TURN OF THE DAY */
 { store.set("trk:2020-01-01:where", { old: true });
   W.trk.cur.day = "2026-01-01"; W.trkDay(); await flush(); await flush();
