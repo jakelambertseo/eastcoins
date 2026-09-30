@@ -20,9 +20,7 @@
 export function createProfile(env) {
   const { G, SFX, send, esc, $ } = env, UI = "/v3/assets/img/glad/flat/ui/", art = (src) => `<img class="pi" src="${src}" alt="">`;
   let el = null, asked = null, drawTimer = 0, tab = "overview", last = null;
-  /* (2026-09-30, the owner: "we need to not show casino data in the stats of players profiles") no Casino tab: what somebody has won or lost at the tables is
-     theirs (it is in their own My stats). The server stopped sending it too. */
-  const TABS = [["overview", "Highlights"], ["gear", "Worn gear"], ["totals", "Totals"]];
+  const TABS = [["overview", "Highlights"], ["gear", "Worn gear"], ["casino", "Casino"], ["totals", "Totals"]];
 
   function css() {
     if (document.getElementById("esProfCss")) return; const st = document.createElement("style"); st.id = "esProfCss";
@@ -119,6 +117,22 @@ export function createProfile(env) {
       ${worn ? "" : `<p class="pr-none">Wearing nothing at all.</p>`}`;
   }
 
+  /* CASINO: turnover has always been recorded; the rest starts from the day it shipped, so a long-standing
+     player can honestly show a big staked figure and no plays. Said out loud rather than hidden. */
+  function panelCasino(p) {
+    const c = p.casino || {}, g = G.GAMES || {};
+    const head = rows([
+      ["", "Staked, all time", num(c.staked)],
+      ["", "Plays counted", num(c.plays)],
+      ["", "Up or down", signed(c.net), c.net > 0 ? "up" : c.net < 0 ? "dn" : ""],
+      ["", "Biggest win", c.best > 0 ? signed(c.best) : "\u2014", c.best > 0 ? "up" : ""],
+      ["", "Worst loss", c.worst < 0 ? signed(c.worst) : "\u2014", c.worst < 0 ? "dn" : ""]
+    ]);
+    return `<div class="pr-h">The line</div>${head}` + (c.byGame && c.byGame.length
+      ? `<div class="pr-h">Where they play</div>` + rows(c.byGame.map(([k, n]) => ["", (g[k] && g[k].name) || k, num(n)]))
+      : (c.plays ? "" : `<p class="pr-none">No plays counted yet. Only turnover was recorded before this.</p>`));
+  }
+
   /* TOTALS: their own counters, biggest first. Everything is trimmed server-side to what fits. */
   function panelTotals(p) {
     const t = p.totals || {}, M = G.MOBS || {}, I = G.ITEMS || {};
@@ -154,7 +168,7 @@ export function createProfile(env) {
     el.querySelectorAll(".pr-tabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.t === tab)));
     const box = el.querySelector(".pr-panel"); if (!box) return;
     try {
-      box.innerHTML = tab === "gear" ? panelGear(p) : tab === "totals" ? panelTotals(p) : panelOverview(p);
+      box.innerHTML = tab === "gear" ? panelGear(p) : tab === "casino" ? panelCasino(p) : tab === "totals" ? panelTotals(p) : panelOverview(p);
     } catch (e) {
       box.innerHTML = `<p class="pr-none">That tab could not be drawn.</p>`;
       console.error("profile panel", tab, e);

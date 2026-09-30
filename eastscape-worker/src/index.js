@@ -4143,7 +4143,7 @@ export class World {
       forge: Object.fromEntries(G.SLOTS.map((sl) => [sl, C.eq[sl]]).filter(([sl, k]) => k && G.fLevelOf(C, sl) > 0).map(([sl, k]) => [k, G.fLevelOf(C, sl)])),
       bonus: G.bonusOf(C),
       ach: { n: (Array.isArray(C.ach) ? C.ach.length : 0), pts: G.achPts(C) },
-      /* (2026-09-30, the owner: "not show casino data in the stats of players profiles") no casino block: it is in the player's own My stats */
+      casino: { staked: Math.round(Number(C.wagered) || 0), plays: st.casPlays | 0, net: st.casNet | 0, best: st.casBest | 0, worst: st.casWorst | 0, byGame: top(st.played, 8) },   /* (2026-09-30, the owner: "casino data on the tab popup of a users profile, no casino data on advanced tab stats") the profile's Casino tab stays; My stats has none */
       totals: { xp: Math.round(st.xpTotal || 0), kills: top(st.kills, 6), gathered: top(st.gathered, 8), cooked: top(st.cooked, 5), crafted: top(st.crafted, 5),
         looted: Object.values(st.looted || {}).reduce((n, v) => n + v, 0), burnt: st.burnt | 0, pvpKills: st.pvpKills | 0, pvpDeaths: st.pvpDeaths | 0, sessions: st.sessions | 0 } });
   }
