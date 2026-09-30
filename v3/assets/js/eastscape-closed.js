@@ -724,6 +724,66 @@ export function createClosedScenes(G, H) {
     npcs: [],
     bots: []
   },
+  /* (2026-09-30) THE PRIMEVAL VALLEY, north of the Trailer Park (HELD by HOLD.valley in the rules). The owner, on the first build: "the mob density
+     is a little too high, the map is too dull/the same. try and draw it/lay it out like [the reference world map], lets add some random
+     thematically okay art from our tile packs". So it is a COMPOSED picture now (lt-wild/valley.json, compose-rects.mjs), not tiles: the
+     cavemen's forest and campfire (north-west), the dragon fossil and its throne where Old Rex sits (north), the cave, the hut and the
+     waterfall with a stone bridge (south-west), the tusk camp (south), and a volcano with tar holes and steaming vents (south-east). The
+     grid is lt-wild/valley-walk.py. Eighteen monsters, down from twenty-five. */
+  valley: {
+    name: "The Primeval Valley", exits: { s: "trailer" }, arrive: { s: { x: 21, y: 24 } }, bgArt: ["valley_bg1", "valley_bg2"], noBanks: true, miniWater: "#3f8fd8", tint: "rgba(60,40,10,.08)",
+    rows: [
+          "##################..########################",
+          "###.........######.#########################",
+          "###...........####.#########################",
+          "###.....##....####.#########################",
+          "###.....##..######..########################",
+          "............######..########################",
+          "............######..########################",
+          "....##############..########################",
+          "....##############..########################",
+          "....##############........##.#########......",
+          "..################.#......##.#########...#..",
+          "..################.#.........######...##....",
+          "......############.#.##.#.............##..#.",
+          ".####................##.....................",
+          ".####.....######.........#...############.##",
+          ".....##~~~######.........#.#.############...",
+          "#######~~~#####..........#...############...",
+          "#######~~~#####.#######..#...############...",
+          "#######~~~#####.#######..##..############...",
+          "#######~~~#####.#######..################..#",
+          "#######~~~~~~~#.#######..################..#",
+          "#########~~~~~#.#######..################...",
+          "#######...~~~...#######....####..........#..",
+          "######........##.##.......................#.",
+          "######....~~~.##.##.......#..#.......#....#.",
+          "..........~~~.##....eeee..##.#.##......##..."
+    ],
+    build() {
+      const { g, objs } = fromRows(this.rows, G);
+      const put = (o) => { objs.push(o); g[o.y][o.x] = "#"; };
+      /* WOODCUTTING: cycads at 92, in the forest clearing, on its west track, by the camp and down the east side */
+      for (const [x, y] of [[4, 2], [11, 5], [1, 6], [42, 16], [42, 21], [24, 23]]) put({ t: "cycad", x, y, log: "cycadlogs", name: "Cycad", req: { skill: "woodcutting", lvl: 92 }, xp: 330 });
+      /* MINING: fossil rocks at 92, round the fossil and the volcano */
+      for (const [x, y] of [[24, 10], [28, 12], [36, 12], [41, 17], [33, 23]]) put({ t: "rock", x, y, ore: "fossil", name: "Fossil rock", req: { skill: "mining", lvl: 92 }, xp: 330 });
+      /* FISHING: coelacanth at 92, in the stream below the waterfall, either side of the bridge */
+      for (const [x, y] of [[13, 20], [11, 21], [11, 24], [12, 25]]) objs.push({ t: "spot", x, y, name: "Primordial stream", req: { skill: "fishing", lvl: 92 }, fish: "coelacanth", xp: 420, glow: "#9ad8a0", tease: "Something with legs for fins turns over under the waterfall." });
+      objs.push({ t: "sign", x: 24, y: 24, name: "THE PRIMEVAL VALLEY: Combat 85 and up. Most things here shrug off one way of fighting and fear another: read them (right-click) before you swing. Old Rex sits on the fossil's throne. The Matriarch walks the plain." }); g[24][24] = "#";
+      return { g, objs, blobs: [] };
+    },
+    /* Cavemen in the forest and the camp; sabretooths by the cave and the hut; pterodactyls over the stream (a bow or a wand); mammoths on
+       the plain; raptors down the east side; tar horrors at the volcano's tar holes; Old Rex at his throne; the Matriarch on the plain */
+    mobs: [["caveman", 6, 3], ["caveman", 10, 2], ["caveman", 23, 16], ["caveman", 20, 23],
+      ["sabretooth", 1, 9], ["sabretooth", 7, 24],
+      ["pterodactyl", 8, 17, { perch: true }], ["pterodactyl", 11, 20, { perch: true }], ["pterodactyl", 27, 13],
+      ["mammoth", 21, 14], ["mammoth", 33, 13],
+      ["raptor", 42, 18], ["raptor", 40, 23], ["raptor", 35, 23],
+      ["tarhorror", 30, 23], ["tarhorror", 38, 22],
+      ["rex", 31, 12], ["matriarch", 12, 13]],
+    npcs: [],
+    bots: []
+  },
   orchard: {
     name: "The Orchard Wall", exits: { n: "boneyard" }, arrive: { n: { x: 12, y: 1 } }, bgArt: ["orchard_bg1", "orchard_bg2"], noBanks: true, miniWater: "#3f8fd8", tint: "rgba(20,60,20,.10)",   /* (the door is on the grass between the canopies, not under SPAN) */
     rows: [

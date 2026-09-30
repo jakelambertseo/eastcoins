@@ -9232,47 +9232,5 @@ BOSSES.add("rex"); BOSSES.add("matriarch");
 export const MOB_GOLD = { raptor: { t: "goldenraptor", odds: 500 } };
 BANDS.valley = [85, 99];
 DEATH.valley = { share: 0.1, cap: 10000 };
-SCENES.valley = {
-  name: "The Primeval Valley", exits: { s: "trailer" }, tint: "rgba(60,40,10,.12)",
-  build() {
-    const g = grid(), objs = [], keep = [];
-    const put = (o, w = 1, h = 1) => { objs.push(o); if (w > 1 || h > 1) block(g, o.x, o.y, w, h); else g[o.y][o.x] = "#"; keep.push([o.x, o.y]); };
-    /* THE ROAD: up from the Trailer Park, then across the valley east and west, and a spur north-east to Old Rex's clearing */
-    for (let y = 13; y <= 25; y++) g[y][22] = ",";
-    for (let x = 3; x <= 41; x++) g[13][x] = ",";
-    for (let y = 5; y <= 13; y++) g[y][34] = ",";
-    /* THE PRIMORDIAL LAKE, north-west, fished from its south bank: coelacanth at Fishing 92 */
-    for (let y = 3; y <= 7; y++) for (let x = 2; x <= 13; x++) g[y][x] = "~";
-    scatterSpots(objs, 2, 13, 6, 4, [1, 2, 3], { name: "Primordial lake", req: { skill: "fishing", lvl: 92 }, fish: "coelacanth", xp: 420, glow: "#9ad8a0", tease: "Something with legs for fins turns over in the deep water." });
-    for (let x = 2; x <= 13; x++) keep.push([x, 2], [x, 8]);
-    /* WOODCUTTING, south-west: cycads at 92 */
-    for (const [x, y] of [[4, 17], [8, 16], [5, 20], [10, 19], [3, 22], [12, 22]]) put({ t: "cycad", x, y, log: "cycadlogs", name: "Cycad", req: { skill: "woodcutting", lvl: 92 }, xp: 330 });
-    /* MINING, south-east: fossil rocks at 92 */
-    for (const [x, y] of [[35, 17], [38, 16], [41, 18], [36, 20], [40, 21]]) put({ t: "rock", x, y, ore: "fossil", name: "Fossil rock", req: { skill: "mining", lvl: 92 }, xp: 330 });
-    /* OLD REX'S CLEARING, north-east: the skull of the last one that stood in his way, and a ribcage */
-    put({ t: "rexskull", x: 37, y: 2, name: "A T-rex skull, bigger than a cart" }, 3, 2);
-    put({ t: "ribcage", x: 30, y: 8, name: "A ribcage you could stand inside" }, 2, 1);
-    for (let y = 3; y <= 11; y++) for (let x = 30; x <= 42; x++) keep.push([x, y]);
-    /* the cavemen's camp, south of the road; tar pools where the horrors are; nests and ferns about the plain */
-    put({ t: "fire", x: 17, y: 18, name: "A cave fire that never goes out" });
-    for (const [x, y] of [[16, 17], [18, 17], [16, 19], [18, 19]]) keep.push([x, y]);
-    for (const [x, y] of [[15, 9], [19, 10], [26, 9]]) put({ t: "tarpool", x, y, name: "A tar pool, bubbling" });
-    for (const [x, y] of [[24, 4], [28, 11], [14, 21]]) put({ t: "nest", x, y, name: "A nest of speckled eggs. Something is watching it." });
-    for (const [x, y] of [[20, 5], [26, 16], [30, 19], [13, 11], [7, 12]]) put({ t: "fern", x, y, name: "Giant ferns" });
-    objs.push({ t: "sign", x: 23, y: 23, name: "THE PRIMEVAL VALLEY: Combat 85 and up. Most things here shrug off one way of fighting and fear another: read them (right-click) before you swing. Old Rex is north-east. The Matriarch walks the plain." }); g[23][23] = "#";
-    for (let y = 14; y <= 25; y++) keep.push([21, y], [22, y], [23, y]);
-    for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
-    for (let y = 2; y <= 12; y++) for (let x = 14; x <= 29; x++) keep.push([x, y]);   // the plain, where the Matriarch walks
-    wild(g, objs, this.exits, { n: "rocky", s: "forest", w: "forest", e: "rocky" }, [...keepOf(this), ...keep], 17);
-    return { g, objs, blobs: [] };
-  },
-  mobs: [["caveman", 15, 16], ["caveman", 19, 16], ["caveman", 15, 20], ["caveman", 20, 20], ["caveman", 25, 21],
-    ["sabretooth", 6, 15], ["sabretooth", 9, 21], ["sabretooth", 13, 18], ["sabretooth", 3, 11],
-    ["pterodactyl", 8, 9, { perch: true }], ["pterodactyl", 12, 10, { perch: true }], ["pterodactyl", 4, 10, { perch: true }], ["pterodactyl", 20, 3],
-    ["mammoth", 17, 6], ["mammoth", 23, 7], ["mammoth", 27, 5],
-    ["raptor", 32, 15], ["raptor", 38, 14], ["raptor", 33, 22], ["raptor", 28, 18], ["raptor", 42, 15],
-    ["tarhorror", 16, 10], ["tarhorror", 25, 10],
-    ["rex", 36, 7], ["matriarch", 22, 8]],
-  npcs: [], bots: []
-};
+/* SCENES.valley is a composed map now, in eastscape-closed.js (2026-09-30, the owner: "lay it out like above") */
 if (!HOLD.valley) { OPEN.add("valley"); SCENES.trailer.exits.n = "valley"; PET_SCENES.add("valley"); }
