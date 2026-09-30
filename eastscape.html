@@ -5048,6 +5048,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   for (const m of Z.mobs) if (!m.dead) sprites.push({ y: posOf(m, now).py * T + 14, draw: () => {
     const p = posOf(m, now), hurt = hurtNow(m), lunge = (now - m.swingAt < 200 ? m.face * 2 : 0) - (m.face || 1) * flinchOf(m), gild = MOBS[m.t]?.gild ? "sepia(1) saturate(4) hue-rotate(8deg) brightness(1.25) drop-shadow(0 0 3px #ffd84a)" : "";   /* (2026-09-30) a gilded one, the Golden Raptor */   /* (the flinch rides the lunge's offset, backwards) */
     /* (v114/v115) the legs move if this one has frames, and it breathes when it stops */
+    if (MOBS[m.t].raid && !IMG[MOBS[m.t].art || m.t]) loadAreaArt("raid");   /* (2026-09-30) the raiders' pictures come the first time one is drawn */
     const art = MOBS[m.t].art || m.t, ph = walkPhase(m.id), walking = calm ? null : p.moving ? walkArt(art, ph, pnow) : idleArt(art, ph, pnow);
     /* (2026-09-27, the owner: "the boss and gifs from the pack") a monster with drawn attack frames plays them as it swings, and one with
        rise frames plays them when it comes back; both are drawn on the standing frame's anchor, so the feet stay where they were */
@@ -7884,6 +7885,7 @@ function renderAdmin(p) {
       <div class="row"><select id="aScene">${opts(scenes)}</select><button class="btn" data-a="tp">Teleport</button></div>
       <div class="row"><button class="btn plain" data-a="resetscene">Reset this area</button><span class="tag">monsters, trees, rocks, bots</span></div>
       <div class="row"><button class="btn" data-a="wyrm">Ice Wyrm: rise now</button><button class="btn plain" data-a="wyrmdown">Send it away</button><span class="tag">the Frozen Reach's daily boss</span></div>
+      <div class="row"><button class="btn" data-a="raid">Start a Yard raid</button><button class="btn plain" data-a="raidend">End it</button><button class="btn plain" data-a="unsack">Reopen the stalls</button><span class="tag">Hrimgar's war party</span></div>
     </fieldset>
     <fieldset><legend>Speed test</legend>
       <div class="row"><input type="number" id="aSpeed" value="${me.speedTest || 0}" min="0" max="200" aria-label="Raw speed bonus percent"><button class="btn" data-a="speed">Set</button><span class="tag">raw %, before the taper and the +${G.SPEED_CAP}% cap; this session only</span></div>
@@ -7917,7 +7919,7 @@ function renderAdmin(p) {
     item: () => ({ cmd: "item", k: v("aItem"), n: +v("aQty") }),
     clearinv: () => ({ cmd: "clearinv" }), heal: () => ({ cmd: "heal" }), god: () => ({ cmd: "god" }), respin: () => ({ cmd: "respin" }),
     achclear: () => ({ cmd: "ach", k: "clear" }),   /* (2026-09-23) forget every achievement, so one can be watched landing */
-    tp: () => ({ cmd: "tp", scene: v("aScene") }), resetscene: () => ({ cmd: "resetscene" }), wyrm: () => ({ cmd: "wyrm" }), wyrmdown: () => ({ cmd: "wyrm", arg: "down" }),   /* (2026-09-30) */
+    tp: () => ({ cmd: "tp", scene: v("aScene") }), resetscene: () => ({ cmd: "resetscene" }), wyrm: () => ({ cmd: "wyrm" }), wyrmdown: () => ({ cmd: "wyrm", arg: "down" }), raid: () => ({ cmd: "raid" }), raidend: () => ({ cmd: "raid", arg: "end" }), unsack: () => ({ cmd: "raid", arg: "unsack" }),   /* (2026-09-30) */
     quest: () => ({ cmd: "quest", k: v("aQuest"), state: v("aQState") }), resetquests: () => ({ cmd: "resetquests" }),
     reset: () => ({ cmd: "reset" }), speed: () => ({ cmd: "speed", n: +v("aSpeed") }),
     stats: () => ({ cmd: "stats" }), statsof: () => ({ cmd: "stats", name: v("aWho") }), saveall: () => ({ cmd: "saveall" }),

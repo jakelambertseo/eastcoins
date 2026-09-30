@@ -35,7 +35,8 @@ import { installMeter } from "./meter.js";
 import { installTinker } from "./tinker.js";
 import { installCards } from "./cards.js";   /* (2026-09-29) Marked Cards */
 import { installGems } from "./gems.js";
-import { installWyrm } from "./wyrm.js";   /* (2026-09-30) the Frozen Reach's daily boss */
+import { installWyrm } from "./wyrm.js";   
+import { installRaid } from "./raid.js";   /* (2026-09-30) the Yard raid */   /* (2026-09-30) the Frozen Reach's daily boss */
 import { installOutfit } from "./outfit.js";   /* (2026-09-29) the outfitters: Wren and Morwenna */   /* (2026-09-28) gems, sockets, the Gem Case and the Gem Sorter */   /* (2026-09-28) Tinkering: the sink */   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
 const CR = createCryptRules(G, G._MAP); Object.assign(G.SCENES, CR.scenes); Object.assign(G.MOBS, CR.mobs);
@@ -210,7 +211,8 @@ export class World {
          crypt hiscore anymore"), and the first clear after a restart would have WRITTEN that empty list over the saved one. */
       this.cryptTop = (await ctx.storage.get("cryptTop")) || {};
       this.hw = (await ctx.storage.get("hw")) || { kingAt: 0, kingDue: false, kingUp: null, night: false };
-      this.wyrm = (await ctx.storage.get("wyrm")) || {};   /* (2026-09-30) the Ice Wyrm's day: see wyrm.js */
+      this.wyrm = (await ctx.storage.get("wyrm")) || {};
+      this.raidSack = (await ctx.storage.get("raidSack")) || null;   /* (2026-09-30) a sacked Yard stays sacked across a restart */   /* (2026-09-30) the Ice Wyrm's day: see wyrm.js */
       if (env.DEV === "1" && env.HW_LIVE !== "0") G.HW.live = true;   /* (2026-09-27) a dev server runs the Long Night whatever the switch says, so it can be previewed before it opens (--var HW_LIVE:0 to see it dormant) */   /* (2026-09-27) the Long Night's clocks: the King's hour, and whether Nightfall has been called */
       this.radio = (await ctx.storage.get("radio")) || null;
       this.chatLog = (await ctx.storage.get("chatlog")) || [];   /* (2026-09-27) the last CHAT_KEEP lines of public chat: see chatKeep */
@@ -733,6 +735,7 @@ export class World {
     if (++pl.msgs > 40) return;                       // more than 40 a second is not a person
     const S = this.scene(pl.C.scene), C = pl.C;
     if (m.t !== "ping") pl.lastInput = now;               // anything but the page's own heartbeat means someone is there
+    if (this.raidClosed?.(m.t)) return this.say(pl, `The stalls are boarded up after the raid. They open again in ${Math.max(1, Math.ceil((this.raidSack.until - Date.now()) / 60000))} minutes.`, "bad");   /* (2026-09-30) the Yard is sacked */
     switch (m.t) {
       case "ping": return this.send(pl, { type: "pong", t: now, c: m.c });
       case "walk": {
@@ -1319,7 +1322,7 @@ export class World {
     const upS = Math.max(1, Math.round((Date.now() - this.startedAt) / 1000));
     const scenes = {};
     for (const [key, S] of this.scenes) { const n = this.playersIn(S).length; if (n) scenes[key] = n; }
-    return { king: this.hwKingState(), wyrm: this.wyrmState(),   /* (2026-09-27) */   /* (2026-09-30) the Ice Wyrm */
+    return { king: this.hwKingState(), wyrm: this.wyrmState(), raid: this.raidState(),   /* (2026-09-27) */   /* (2026-09-30) the Ice Wyrm */
       online: this.pls.size, peak: this.peak, scenes: this.scenes.size, busiest: scenes,
       tick: { budgetMs: TICK_MS, samples: ms.length, p50: at(0.5), p95: at(0.95), p99: at(0.99), max: ms.at(-1) || 0 },
       rate: { inPerS: +(this.msgsIn / upS).toFixed(1), outPerS: +(this.sentOut / upS).toFixed(1), outBytesPerS: Math.round(this.bytesOut / upS) },
@@ -2634,7 +2637,7 @@ export class World {
       const gates = S.def?.gates; if (!gates) continue;
       for (const gt of gates) { const open = G.gateOpenAt(now, gt) ? "i" : "#"; for (const [gx, gy] of G.gateTiles(gt)) S.g[gy][gx] = open; }
     }
-    if (this.tickN % 20 === 0) { this.wyrmTick(now);   /* (2026-09-30) the Ice Wyrm */ this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.hwTick(now); this.orderTick(now); this.projTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
+    if (this.tickN % 20 === 0) { this.wyrmTick(now);   /* (2026-09-30) the Ice Wyrm */ this.raidTick(now);   /* (2026-09-30) the Yard raid */ this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.hwTick(now); this.orderTick(now); this.projTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
     if (this.tickN % 40 === 0) this.runsSave();   /* (2026-09-27) the dungeon runs, so a deploy does not end them */
     if (this.tickN % 20 === 0) for (const pl of this.pls.values()) {   /* once a second */
       /* (2026-09-28, the owner: "user is testing in the thieving guild but its buff isnt counting down") A BUFF'S CLOCK RUNS WHERE IT WORKS.
@@ -3426,7 +3429,8 @@ export class World {
     if (m.t === "captainclaw") { S.treasure = { until: m.respawnAt, who: new Set([pl.id, ...shared.map((q) => q.id)]), got: new Set() }; for (const q of this.playersIn(S)) q.out.push({ type: "clawchest", up: true }); }
     if (def.announce) { const who = shared.length ? `${pl.name} and ${shared.length} other${shared.length === 1 ? "" : "s"}` : pl.name;   /* (2026-09-30) a Valley boss falls: the whole server hears who, and when he is back */
       this.houseSay(`${def.announce} ${who} put ${def.name} down in ${S.def.name}. Back in about ${Math.max(1, Math.round((m.respawnAt - now) / 60000))} minutes.`); }
-    if (m.t === "icewyrm") this.wyrmDown(S, m, pl, now, shared);   /* (2026-09-30) the daily boss: no respawn, tomorrow instead */
+    if (m.t === "icewyrm") this.wyrmDown(S, m, pl, now, shared);
+    if (m.raid) this.raidKill(S, m, pl, now);   /* (2026-09-30) a raider never comes back; Hrimgar down wins the raid */   /* (2026-09-30) the daily boss: no respawn, tomorrow instead */
     if (G.hwOn() && m.t === "pumpkinking") { m.respawnAt = Infinity; S.mobs = S.mobs.filter((x) => x !== m); S.whoSig = null; this.hwKingDown(pl, now, shared); }   /* the corpse goes: the ordinary respawn loop must never bring him back, the hour does */
     this.say(pl, `You defeat the ${def.name.toLowerCase()}.${got.length ? ` It drops ${got.map(([k, n]) => `${n > 1 ? n + " " : ""}${G.ITEMS[k].name.toLowerCase()}`).join(", ")}.` : ""}`, "loot");
     this.emit(pl, "kill", { mob: m.t, style: G.styleOf(pl.C) });   /* (2026-09-27) the style, for a quest that asks for a bow or a wand */
@@ -3795,15 +3799,16 @@ export class World {
            through it the moment it opened and follow you down. Comparing chambers instead of distance is what
            makes a cleared room stay cleared. */
         const ok = (p) => p.C.scene === S.key && !(G.fxOf(p.C).calm > 0) && !G.inCage(S.def, p.x, p.y)   /* (2026-09-27) the Pumpkin King's Crown: nothing attacks its wearer first */ && G.cheb(p, { x: m.hx, y: m.hy }) <= aggro + 5
-          && (!S.def.pyramid || PR.roomOf(p.x, p.y) === PR.roomOf(m.hx, m.hy));
+          && (!S.def.pyramid || PR.roomOf(p.x, p.y) === PR.roomOf(m.hx, m.hy))
+          && (!m.raid || !S.raidG || p.x <= G.RAID.zoneX);   /* (2026-09-30) the raid keeps to the west bank: nobody in the court is a target */
         const owner = this.claimOf(S, m, now);
         let tgt = owner || (m.target ? players.find((p) => p.id === m.target) : null);
         if (!tgt || !ok(tgt)) { tgt = players.filter((p) => ok(p) && G.cheb(p, m) <= aggro).sort((a, b) => G.cheb(a, m) - G.cheb(b, m))[0] || null; m.target = tgt ? tgt.id : null; }
         if (tgt) {
           if (inRange(tgt) && !tgt.step) foe = tgt;
           else if (m.perch) continue;   /* (2026-09-27) it does not leave its perch to chase */
-          else { if (!m.step && now > (m.nextChase || 0)) { m.nextChase = now + 500; m.path = G.findPath(S.g, m, tgt, 1) || []; } this.stepEntity(S, m, now, false); continue; }
-        } else if (G.cheb(m, { x: m.hx, y: m.hy }) > 4 && !m.step && !m.path.length) m.path = G.findPath(S.g, m, { x: m.hx, y: m.hy }, 0)?.slice(0, 6) || [];
+          else { if (!m.step && now > (m.nextChase || 0)) { m.nextChase = now + 500; m.path = G.findPath(m.raid && S.raidG ? S.raidG : S.g, m, tgt, 1) || []; } this.stepEntity(S, m, now, false); continue; }   /* (2026-09-30) a raider paths on the walled-off Yard */
+        } else if (G.cheb(m, { x: m.hx, y: m.hy }) > 4 && !m.step && !m.path.length) m.path = G.findPath(m.raid && S.raidG ? S.raidG : S.g, m, { x: m.hx, y: m.hy }, 0)?.slice(0, 6) || [];
       }
       if (foe) {
         m.face = foe.x > m.x ? 1 : -1;
@@ -3832,7 +3837,7 @@ export class World {
       if (!this.stepEntity(S, m, now, false) && now > m.nextWander && !m.perch) {
         m.nextWander = now + 2000 + Math.random() * 4000;
         const [dx, dy] = pick(G.D8), x = m.x + dx, y = m.y + dy;
-        if (Math.abs(x - m.hx) <= 3 && Math.abs(y - m.hy) <= 2 && G.canStepIn(S.g, m.x, m.y, dx, dy) && S.g[y][x] !== "e" && !this.occupied(S, x, y, m)) m.path = [{ x, y }];
+        if (Math.abs(x - m.hx) <= 3 && Math.abs(y - m.hy) <= 2 && G.canStepIn(S.g, m.x, m.y, dx, dy) && S.g[y][x] !== "e" && !this.occupied(S, x, y, m) && (!m.raid || x <= G.RAID.zoneX)) m.path = [{ x, y }];
       }
     }
     // the simulated players: go and work something for a while, or wander
@@ -4959,6 +4964,7 @@ export class World {
       case "heal": C.hp = G.maxHpOf(C); this.touch(pl); return note("Healed.");
       case "god": pl.god = !pl.god; this.touch(pl); return note(pl.god ? "God mode on: nothing can hurt you." : "God mode off.");
       case "tp": { const key = String(m.scene); if (!G.SCENES[key] && key !== pl.C.scene) return;   /* (or somewhere else in the private copy you are already standing in: an island, a crypt run) */ this.moveToScene(pl, key, null, Number.isInteger(m.x) && Number.isInteger(m.y) ? { x: m.x, y: m.y } : null); return note(`Teleported to ${G.SCENES[key].name}.`); }
+      case "raid": return this.raidAdmin(S, pl, String(m.arg || ""), note);   /* (2026-09-30, the owner: "Admin-only") the Yard raid */
       case "wyrm": return this.wyrmAdmin(S, pl, String(m.arg || ""), note);   /* (2026-09-30, the owner: "add an admin setting for me to be able to spawn it") */
       case "hwking": { this.hw.kingAt = Date.now() - 1; this.hw.kingDue = false; this.hw.kingUp = null; this.hwSave(); return note("The Pumpkin King is due now: he rises the moment somebody is in the Mire."); }   /* (2026-09-27) dev/admin: call the King */
       case "quest": { const k = String(m.k), state = String(m.state); if (!G.QUESTS[k] || !["new", "active", "done"].includes(state)) return; if (state === "new") delete C.qs[k]; else C.qs[k] = { state, stage: 0, n: 0 }; this.touch(pl); return note(`${G.QUESTS[k].name} set to ${state}.`); }
@@ -5065,4 +5071,5 @@ installTinker(World, { G });
 installGems(World, { G });
 installOutfit(World, { G });
 installWyrm(World, { G });
+installRaid(World, { G });
 installCards(World, { G });

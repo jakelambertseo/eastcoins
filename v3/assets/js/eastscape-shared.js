@@ -9402,3 +9402,31 @@ Object.assign(BANDS, { frozen: [100, 108], frostspire: [106, 115] });
 for (const k of FROZEN_MAPS) { DEATH[k] = { share: 0.1, cap: 10000 }; MAGE_BAND[k] = 40; MAGE_FLOOR[k] = 0.5; }   /* a wand and Magic 40 opens both; spells land half the time */
 /* SCENES.frozen and SCENES.frostspire are in eastscape-closed.js, written by lt-wild/frozen-gen.py */
 if (!HOLD.frozen) { for (const k of FROZEN_MAPS) { OPEN.add(k); PET_SCENES.add(k); } SCENES.cloud.exits.n = "frozen"; }
+
+/* ============================================================ THE YARD RAID (2026-09-30). The owner: "i want to bundle this update with a boss who raids
+   the yard, everyone must team up to save the yard", then "Frost Giant raiding party", "Admin-only", "The Yard is sacked, 10 min", "Waves for all,
+   boss scales", and "dont let the raid mobs or boss cross the river into the court in the yard". The server's half is eastscape-worker/src/raid.js.
+     - an admin starts it; CASINO gives a minute's warning, then HRIMGAR, the Jarl's war-chief, comes through the north gate, and waves of
+       raiders (levels 6 to 32, so new players have something to fight) come through the north and west gates every two minutes;
+     - his health is set when he arrives: RAID.hp.base plus RAID.hp.per for every player online, so a busy Yard gets a bigger fight;
+     - they keep to the WEST bank: nothing of the raid crosses the river into the court (x <= RAID.zoneX), chases anybody over it, or hits them;
+     - WIN (Hrimgar down inside RAID.lasts): every player who hurt anything of the raid is paid from a pool that grows with the crowd, by their
+       share of the damage, never less than RAID.pay.floor; the boss's own report and shared drops as any open boss;
+     - LOSE: the Yard is sacked for RAID.sackMs: the shopping (RAID.closes: Bom's counter and cashier, Nestor, Livia's market, Hexa) is boarded
+       up. Nobody loses anything they own. */
+export const RAID = { scene: "workyard", zoneX: 24, warnMs: 60000, lasts: 20 * 60000, waveEvery: 2 * 60000, sackMs: 10 * 60000,
+  boss: { t: "raidchief", at: [22, 4] }, gates: [[20, 1], [21, 2], [22, 1], [23, 2], [1, 12], [1, 13], [1, 14], [2, 13]],
+  wave: { base: 4, perPlayers: 2, cap: 12, kinds: [["raidwolf", 5], ["raidyeti", 3], ["raidgiant", 2]] },
+  hp: { base: 4000, per: 1200, cap: 40000 }, pay: { pool: 20000, per: 3000, floor: 400 },
+  closes: ["counter", "cashout", "eggtrade", "ex", "hw"] };
+const rmob = (t, def, want, drops) => { MOBS[t] = { ...def, drops, rare: [] }; BOUNTY[t] = want; EXAMINE[t] = [def.ex]; };
+rmob("raidwolf", { name: "Raider Wolf", size: "m", lvl: 6, hp: 40, att: 6, def: 5, max: 3, speed: 2000, box: [32, 22], aggro: 5, art: "frostwolf", raid: true, weak: "fire",
+  ex: "One of the war party's wolves, sent ahead to scatter the Yard. Anyone can put one down." }, 20, [["tickets", [8, 20]]]);
+rmob("raidyeti", { name: "Raider Yeti", size: "m", lvl: 16, hp: 130, att: 16, def: 14, max: 6, speed: 2400, box: [30, 34], aggro: 5, art: "yeti", raid: true, weak: "fire",
+  ex: "A yeti on a chain, loosed on the Yard by the war party." }, 60, [["tickets", [25, 60]]]);
+rmob("raidgiant", { name: "Frost Raider", size: "l", lvl: 32, hp: 320, att: 32, def: 28, max: 10, speed: 2800, box: [44, 44], aggro: 5, art: "frostgiant", raid: true, weak: "fire",
+  ex: "A frost giant of Hrimgar's war party, come down from the Reach to sack the Yard." }, 150, [["tickets", [60, 140]], ["frost_shard", 1, 0.03]]);
+rmob("raidchief", { name: "Hrimgar, the Jarl's War-Chief", size: "xl", lvl: 60, hp: 4000, att: 60, def: 50, max: 14, speed: 2600, box: [80, 70], aggro: 6, boss: true, open: true, raid: true, weak: "fire",
+  ex: "The Frost Jarl's war-chief, come to sack the Yard. Everyone who fights the raid shares the spoils when he falls: drive him out before the time is up or the Yard's stalls are boarded up." }, 3000,
+  [["frost_shard", [2, 4]], ["yeti_pelt", [1, 2]], ["pot_frost", 1, 0.5]]);
+BOSSES.add("raidchief");
