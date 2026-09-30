@@ -9414,19 +9414,27 @@ if (!HOLD.frozen) { for (const k of FROZEN_MAPS) { OPEN.add(k); PET_SCENES.add(k
        share of the damage, never less than RAID.pay.floor; the boss's own report and shared drops as any open boss;
      - LOSE: the Yard is sacked for RAID.sackMs: the shopping (RAID.closes: Bom's counter and cashier, Nestor, Livia's market, Hexa) is boarded
        up. Nobody loses anything they own. */
-export const RAID = { scene: "workyard", zoneX: 24, warnMs: 60000, lasts: 20 * 60000, waveEvery: 2 * 60000, sackMs: 10 * 60000,
+export const RAID = { scene: "workyard", zoneX: 24, warnMs: 5 * 60000, warnAt: [240, 180, 120, 60, 30],   /* (2026-09-30, the owner: "a 5 minute warning too with a countdown every minute, then one at 30 seconds") */ lasts: 20 * 60000, waveEvery: 2 * 60000, sackMs: 10 * 60000,
   boss: { t: "raidchief", at: [22, 4] }, gates: [[20, 1], [21, 2], [22, 1], [23, 2], [1, 12], [1, 13], [1, 14], [2, 13]],
   wave: { base: 4, perPlayers: 2, cap: 12, kinds: [["raidwolf", 5], ["raidyeti", 3], ["raidgiant", 2]] },
   hp: { base: 4000, per: 1200, cap: 40000 }, pay: { pool: 20000, per: 3000, floor: 400 },
+  /* (2026-09-30, the owner: "add one more wave of raiders") THE LAST WAVE: when Hrimgar is down to this share of his health he roars for his
+     huscarls, and this many come through the gates at once, over the ordinary wave's cap, so the end of the fight is the hardest part of it */
+  last: { at: 0.3, count: 10, kinds: [["raidhuscarl", 5], ["raidgiant", 3], ["raidyeti", 2]] },
   closes: ["counter", "cashout", "eggtrade", "ex", "hw"] };
 const rmob = (t, def, want, drops) => { MOBS[t] = { ...def, drops, rare: [] }; BOUNTY[t] = want; EXAMINE[t] = [def.ex]; };
 rmob("raidwolf", { name: "Raider Wolf", size: "m", lvl: 6, hp: 40, att: 6, def: 5, max: 3, speed: 2000, box: [32, 22], aggro: 5, art: "frostwolf", raid: true, weak: "fire",
-  ex: "One of the war party's wolves, sent ahead to scatter the Yard. Anyone can put one down." }, 20, [["tickets", [8, 20]]]);
+  ex: "One of the war party's wolves, sent ahead to scatter the Yard. Anyone can put one down." }, 20, [["tickets", [8, 20]], ["logs", [3, 8], 0.5], ["copper", [3, 8], 0.5], ["tin", [3, 8], 0.4], ["feather", [10, 25], 0.5], ["hide", [1, 3], 0.5], ["bones", [2, 5], 0.5], ["sardine", [2, 5], 0.3]]);
 rmob("raidyeti", { name: "Raider Yeti", size: "m", lvl: 16, hp: 130, att: 16, def: 14, max: 6, speed: 2400, box: [30, 34], aggro: 5, art: "yeti", raid: true, weak: "fire",
-  ex: "A yeti on a chain, loosed on the Yard by the war party." }, 60, [["tickets", [25, 60]]]);
+  ex: "A yeti on a chain, loosed on the Yard by the war party." }, 60, [["tickets", [25, 60]], ["willowlogs", [3, 8], 0.5], ["ashlogs", [2, 6], 0.4], ["emerald_ore", [2, 6], 0.45], ["diamond_ore", [2, 5], 0.35], ["bowstring", [2, 5], 0.35], ["spellpaper", [3, 8], 0.4], ["trout", [2, 5], 0.3], ["bronze_bar", [1, 3], 0.3], ["cobweb", 1, 0.1]]);
 rmob("raidgiant", { name: "Frost Raider", size: "l", lvl: 32, hp: 320, att: 32, def: 28, max: 10, speed: 2800, box: [44, 44], aggro: 5, art: "frostgiant", raid: true, weak: "fire",
-  ex: "A frost giant of Hrimgar's war party, come down from the Reach to sack the Yard." }, 150, [["tickets", [60, 140]], ["frost_shard", 1, 0.03]]);
+  ex: "A frost giant of Hrimgar's war party, come down from the Reach to sack the Yard." }, 150, [["tickets", [60, 140]], ["frost_shard", 1, 0.03], ["yewlogs", [2, 6], 0.45], ["palmlogs", [2, 6], 0.35], ["skyashlogs", [2, 5], 0.3], ["dragonstone_ore", [2, 5], 0.45], ["onyx_ore", [1, 4], 0.35],
+  ["emerald_bar", [1, 3], 0.35], ["diamond_bar", [1, 2], 0.25], ["ctrout", [2, 5], 0.35], ["ink_arcane", [2, 5], 0.25], ["ruby", 1, 0.04], ["sapphire", 1, 0.03]]);
+rmob("raidhuscarl", { name: "Hrimgar's Huscarl", size: "l", lvl: 45, hp: 520, att: 45, def: 40, max: 13, speed: 2700, box: [44, 44], aggro: 6, art: "frostgiant", raid: true, weak: "fire",
+  ex: "One of the war-chief's own guard, called in for the last wave when Hrimgar is losing. The hardest thing in the raid after him, and the best spoils." }, 300,
+  [["tickets", [150, 300]], ["onyx_ore", [3, 6], 0.5], ["dragonstone_bar", [1, 3], 0.4], ["onyx_bar", [1, 2], 0.25], ["skyashlogs", [3, 6], 0.45], ["diamond_arrowhead", [10, 20], 0.3], ["ink_fire", [2, 5], 0.3],
+   ["topaz", 1, 0.05], ["opal", 1, 0.04], ["frost_shard", 1, 0.05]]);
 rmob("raidchief", { name: "Hrimgar, the Jarl's War-Chief", size: "xl", lvl: 60, hp: 4000, att: 60, def: 50, max: 14, speed: 2600, box: [80, 70], aggro: 6, boss: true, open: true, raid: true, weak: "fire",
   ex: "The Frost Jarl's war-chief, come to sack the Yard. Everyone who fights the raid shares the spoils when he falls: drive him out before the time is up or the Yard's stalls are boarded up." }, 3000,
-  [["frost_shard", [2, 4]], ["yeti_pelt", [1, 2]], ["pot_frost", 1, 0.5]]);
+  [["tickets", [15000, 25000]], ["frost_shard", [2, 4]], ["yeti_pelt", [1, 2]], ["pot_frost", 1, 0.5], ["onyx_bar", [2, 4]], ["dragonstone_bar", [3, 6]], ["skyashlogs", [10, 20]]]);
 BOSSES.add("raidchief");

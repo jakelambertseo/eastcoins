@@ -26,7 +26,11 @@ const court = player(31, 13, 99), court2 = player(26, 13, 5), west = player(18, 
 let t = Date.now();
 /* 1. start */
 W.raidAdmin(S, admin, "", (x) => notes.push(x));
-is([W.raid?.phase, said.some((x) => /RAID!/.test(x))], ["warn", true], "an admin starts it: a minute's warning in CASINO's voice");
+is([W.raid?.phase, said.some((x) => /RAID!/.test(x))], ["warn", true], "an admin starts it: five minutes' warning in CASINO's voice");
+/* the countdown (the owner: five minutes, a call every minute, then one at 30 seconds) */
+{ const start = W.raid.at - R.warnMs; said.length = 0; for (let s = 0; s <= R.warnMs / 1000; s += 5) W.raidTick(start + s * 1000 - 1);
+  const calls = said.filter((x) => /RAID: /.test(x));
+  is([calls.length, calls.map((x) => (x.match(/in (\d) minute|(\d+) SECONDS/) || []).filter(Boolean)[1])], [5, ["4", "3", "2", "1", "30"]], "the countdown: 4, 3, 2, 1 minutes, then 30 seconds, each once"); }
 W.raid.at = t - 1; W.raidTick(t);
 const boss = S.mobs.find((m) => m.t === "raidchief"), online = W.pls.size;
 is([!!boss, boss && [boss.x, boss.y].join(","), boss?.maxHp, said.some((x) => /HRIMGAR IS IN THE YARD/.test(x))], [true, R.boss.at.join(","), Math.min(R.hp.cap, R.hp.base + R.hp.per * online), true], `Hrimgar arrives with health for ${online} online`);
@@ -44,6 +48,11 @@ for (let i = 0; i < 1200; i++) {
   if (i % 480 === 0) { W.raid.nextWave = t; W.raidTick(t); }
 }
 is([crossed, courtHit, westHit > 0], [0, 0, true], "five minutes of the loop: no raider east of the river, nobody in the court hurt, the west bank fought");
+/* 2b. the last wave (the owner: "add one more wave of raiders"): once, when he is down to R.last.at */
+{ const bm = S.mobs.find((m) => m.raid === "boss"), before = S.mobs.filter((m) => m.raid === "wave").length; said.length = 0;
+  bm.hp = Math.floor(bm.maxHp * R.last.at) - 1; W.raidTick(t += 1000); const after = S.mobs.filter((m) => m.raid === "wave").length;
+  W.raidTick(t += 1000); const again = S.mobs.filter((m) => m.raid === "wave").length;
+  is([after - before, S.mobs.filter((m) => m.t === "raidhuscarl").length > 0, said.some((x) => /THE LAST WAVE/.test(x)), again === after, S.mobs.filter((m) => m.raid).every((m) => m.x <= R.zoneX)], [R.last.count, true, true, true, true], "under 30% he calls the last wave, once: huscarls among them, all on the west bank"); }
 /* 3. a win */
 const a = player(20, 5, 99, "singularity_sword"), b = player(8, 13, 3);
 const raiders = S.mobs.filter((m) => m.raid);

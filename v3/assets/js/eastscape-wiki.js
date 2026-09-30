@@ -318,13 +318,15 @@ export const GUIDES = [
      the same levels and be a choice rather than a sequence. */
   { id: "road", title: "The road out", icon: "\u{1F5FA}️", cat: "Starting out",
     body: (G, H) => {
-      const ORDER = ["workyard", "gloam", "mire", "boneyard", "orchard", "cloud", "sands", "thunderhead", "carnival", "boardwalk", "bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull", "foundry", "fd_grove", "fd_maze", "fd_isle", "fd_chain", "fd_gate", "fd_hall", "vault", "depths", "trailer", "valley", "valley_ridge", "valley_lair", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
+      const ORDER = ["workyard", "gloam", "mire", "boneyard", "orchard", "cloud", "frozen", "frostspire", "sands", "thunderhead", "carnival", "boardwalk", "bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull", "foundry", "fd_grove", "fd_maze", "fd_isle", "fd_chain", "fd_gate", "fd_hall", "vault", "depths", "trailer", "valley", "valley_ridge", "valley_lair", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
       const NOTE = {
         workyard: "the casino, the bank, the campfire, the furnace and anvil, sardines",
         gloam: "emerald and diamond ore, gloomwillow, trout and catfish",
         mire: "lanternfish, mudskipper, the first real gear drops",
         boneyard: "bonefish, ghost carp, the Crypt &mdash; and <b>pets start dropping here</b>",
         cloud: "dragonstone and onyx ore, skyash, sky eel and cloud ray",
+        frozen: "north of Cloudreach, and a mage's country (Combat 100, or Magic 40 with a wand): yetis and snow owls on shelves and ice floes only a spell or an arrow reaches, frost wolves and wraiths on the snow, glacite (Mining 94), frostpine (Woodcutting 94), icefin through the ice (Fishing 94), and the Ice Wyrm, which comes up through the lake once a day",   /* (2026-09-30) held until the owner opens it */
+        frostspire: "north of the Frozen Reach: Frost Giants on the shelves, Ice Elementals on the tarn's floes, Frost Wraiths, and the Frost Jarl on the high ice shelf, an open-world boss only spells reach",
         sands: "sand for <a data-wiki=\"guides/alchemy\">Alchemy</a>, the cauldron, the Great Pyramid",
         thunderhead: "storm marlin, thunder squid, the way to the last two",
         carnival: "the games, the duck pond, goldfish and koi",
