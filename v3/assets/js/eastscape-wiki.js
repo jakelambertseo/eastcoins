@@ -1133,6 +1133,7 @@ export const UPDATES = [
       "NEW SOUNDS: you hear a monster wind up before it swings at you, a crit has its own heavy impact, and a hit that is WEAK, RESISTED or GUARDED rings, thuds or clanks. When your health drops below a quarter in a fight, you hear your heartbeat. Monsters falling, and other people's fights nearby, can be heard across the map.",
       "DYING SAYS SO: the screen greys over with what got you, wherever it happened, dungeons included.",
       "Wren and Morwenna's prices now match Bom's melee gear, tier for tier; their weapons cost ten times that.",
+      "THE JUKEBOX IS THE RADIO NOW: the Green Room's songs no longer play in the game or follow you around. Pick a station at the jukebox, as before; the Green Room itself is still on eastcoin.vip.",
     ],
   },
   {

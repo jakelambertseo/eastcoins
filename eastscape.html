@@ -1844,7 +1844,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="win-body"><div id="picksBody"></div></div>
     </section>
     <section class="win" id="jukeWin" aria-label="Jukebox" hidden style="width:min(480px,calc(100% - 28px))">
-      <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/music.png?v=1" alt="" class="topi">Jukebox</b><small>The Green Room, wired into the casino and the Yard.</small><button type="button" class="win-x" data-close="jukeWin" aria-label="Close">×</button></div>
+      <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/music.png?v=1" alt="" class="topi">Jukebox</b><small>The radio, for the casino and the Yard.</small><button type="button" class="win-x" data-close="jukeWin" aria-label="Close">×</button></div>
       <div class="win-body"><div class="jk-tabs" id="jukeTabs" role="tablist"></div><div id="jukeBody"></div></div>
     </section>
     <div id="netPanel" class="netpanel" hidden></div>
@@ -1966,7 +1966,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=219").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=220").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
@@ -5961,7 +5961,7 @@ function openPicks() {
   picksLoad().then((p) => { if (!$("picksWin").hidden) p.open($("picksBody")); })
     .catch(() => { $("picksBody").innerHTML = `<div class="jk-msg">The Sportsbook did not load. Close this and try again.</div>`; });
 }
-let GREEN = null, jukeTab = "green";
+let GREEN = null, jukeTab = "radio";   /* (2026-09-29) the Green Room is out of the game: the jukebox is the radio */
 const GREEN_URL = "/v3/assets/js/eastscape-green.js?v=9";
 /* `mute` is the mini player's ✕. It writes the SAME es_radio_off the jukebox window's Mute button reads, so the dock has no
    private idea of "closed" that the rest of the game cannot see — and the way back on is that button, already sitting in the
@@ -5974,7 +5974,10 @@ const songOn = () => !!GREEN?.playing();
    floor with a jukebox on it and let go again on the way out. The Green Room now follows you everywhere — the Wilderness, the
    Crypt, the islands — so this connects once and stays, and only the volume, the mute or another tab's player stops the sound.
    A connection IS a listener, which is now honest: someone with the game open is listening, wherever they happen to be. */
-function greenHere() { greenLoad().then((g) => { g.connect(); g.sync(); }).catch(() => {}); }
+/* (2026-09-29, the owner, and a player's idea on the bug board: "remove the green room player ... and only keep the radio") THE GREEN ROOM IS
+   OUT OF THE GAME. It no longer connects, so it plays nowhere and draws no floating player; songOn() is false, so the jukebox's radio plays on
+   the floors it always did. The module and greenLoad are left in place, unused, so bringing it back is this one line. */
+function greenHere() { }
 function radioSync() { GREEN?.sync();
   const want = RADIO_NOW && onFloor() && !radioOff() && !SFX.muted() && !radioGone() && !songOn() ? RADIO_NOW.url : ""; RADIO_EL.volume = radioVol() * SFX.allVolume();
   if (!want) { if (!RADIO_EL.paused) RADIO_EL.pause(); if (RADIO_EL.getAttribute("src")) { RADIO_EL.removeAttribute("src"); RADIO_EL.load(); } return; }
@@ -6072,7 +6075,8 @@ async function jukeFind(params) {
 }
 function renderJuke() {
   const n = GREEN?.count() || 0;
-  $("jukeTabs").innerHTML = [["green", `🎵 Green Room${n ? ` · ${n}` : ""}`], ["radio", "📻 Radio"]].map(([k, l]) => `<button type="button" class="lk-btn" role="tab" data-jt="${k}" aria-pressed="${jukeTab === k}">${l}</button>`).join("");
+  jukeTab = "radio";   /* (2026-09-29) one tab left: the radio */
+  $("jukeTabs").innerHTML = [["radio", "📻 Radio"]].map(([k, l]) => `<button type="button" class="lk-btn" role="tab" data-jt="${k}" aria-pressed="${jukeTab === k}">${l}</button>`).join("");
   $("jukeTabs").querySelectorAll("[data-jt]").forEach((b) => b.addEventListener("click", () => { jukeTab = b.dataset.jt; SFX.play("ui_click"); renderJuke(); }));
   if (jukeTab === "green") { if (!GREEN) $("jukeBody").innerHTML = `<div class="jk-msg">Warming up the jukebox…</div>`; greenLoad().then((g) => { if (jukeTab === "green" && !$("jukeWin").hidden) g.render($("jukeBody")); }).catch(() => { $("jukeBody").innerHTML = `<div class="jk-msg">The Green Room didn't load. Close this and try again.</div>`; }); return; }
   const r = RADIO_NOW, off = radioOff(), left = r?.hold ? r.hold - snow() : 0, mine = r && r.byId === you?.id, held = left > 0 && !mine && !you?.admin;   // (v89) a paid pick is its buyer's for RADIO.holdMs
