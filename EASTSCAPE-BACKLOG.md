@@ -2077,3 +2077,10 @@ Shared 395, wiki 221. The player who reported the gem take-out can be told it's 
   pet tix sits outside the 25% tix cap; bloodstone says "food and regeneration" but only food reads it.
 - Options: (1) measure real multipliers per fight into /stats first; (2) soft caps (full to ~+40%, half after) on damage and accuracy, Ward
   inside one damage-reduction ceiling; (3) a Buffs panel showing each buff and how close to each cap; (4) fix the three bugs. Recommended 4 + 1, then decide 2.
+
+## BUG (2026-09-30, reported live): the Frost ward ring and amulet (and Yeti-fur boots) can't be made at the anvil
+- The owner: "frost charm, amulet, ring not available to craft on anvil".
+- Likely cause (checked, not fixed): the anvil's Smith tab lists recipes by metal TIER (eastscape.html ~5677, `ITEMS[r.out[0]]?.tier === smithTier`),
+  and smith_frostward_ring / smith_frostward_amulet / smith_yeti_boots make items with no `tier`, so they never appear in any tab. The server would
+  make them if asked. Fix: give them a place in the anvil window (e.g. a "Frost" group, or a tier such as the onyx/dragonstone one their bars come from).
+- The Frost CHARM is not craftable by design: it is bought from Wren / Morwenna (50,000 since rules 368). Say so in the wiki if players expect it at the anvil.
