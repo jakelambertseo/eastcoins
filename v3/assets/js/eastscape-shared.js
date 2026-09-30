@@ -9224,7 +9224,7 @@ vmob("goldenraptor", { name: "Golden Raptor", size: "m", lvl: 98, hp: 460, att: 
 vmob("tarhorror", { name: "Tar Pit Horror", size: "m", lvl: 99, hp: 520, att: 100, def: 80, max: 30, speed: 2700, box: [30, 26], aggro: 2, guard: { melee: 0, archery: 1.25, magic: 0.5 }, weak: "fire",
   ex: "Tar with bones in it. A sword sinks in and comes back out with nothing; an arrow finds the skull inside: 25% more from archery, half from spells." }, 700,
   [["fossil", [2, 4]], ["waystone_valley", 1, 0.008]], [["rex_tooth", 0.015]]);
-vmob("rex", { name: "Old Rex", size: "xl", lvl: 105, hp: 9000, att: 115, def: 90, max: 42, speed: 2800, box: [100, 70], aggro: 4, boss: true, guard: { archery: 1.25, melee: 0.75, magic: 0.75 }, weak: "frost", resist: "fire",
+vmob("rex", { name: "Old Rex", size: "xl", lvl: 105, hp: 9000, att: 115, def: 90, max: 42, speed: 2800, box: [100, 70], aggro: 4, boss: true, respawn: 40 * 60000,   /* (2026-09-30) a boss's own timer: without it he came back on the ordinary clock, in seconds */ guard: { archery: 1.25, melee: 0.75, magic: 0.75 }, weak: "frost", resist: "fire",
   ex: "The valley's end, and its oldest thing, on the fossil's throne. Stand off and shoot: 25% more from arrows, 25% less from swords and spells. He is cold-blooded, and frost slows the whole of him down." }, 2000,
   [["tickets", [1200, 2400]], ["rex_tooth", [1, 2]], ["fossil", [4, 8]], ["waystone_valley", 1, 0.25], ["rex_necklace", 1, 0.02]], [["egg_raptor", 0.05]]);
 vmob("matriarch", { name: "The Mammoth Matriarch", size: "xl", lvl: 110, hp: 16000, att: 118, def: 92, max: 40, speed: 3000, box: [90, 70], aggro: 3, boss: true, open: true, rise: true, respawn: 45 * 60000,
@@ -9232,6 +9232,14 @@ vmob("matriarch", { name: "The Mammoth Matriarch", size: "xl", lvl: 110, hp: 160
   ex: "The oldest mammoth in the valley, and the herd follows her. The size of a hill, and arrows find her 25% more. She comes back every three quarters of an hour, and the whole server hears when she does. Anyone who hurts her shares the kill." }, 3000,
   [["tickets", [1500, 3000]], ["mammoth_ivory", [2, 4]], ["hide", [8, 14]], ["waystone_valley", 1, 0.3]], [["egg_ptero", 0.05], ["rex_necklace", 0.03]]);
 BOSSES.add("rex"); BOSSES.add("matriarch");
+/* (2026-09-30) THE LATE-MAP PASSES, which ran before these monsters existed (see "THE LATE MAPS MISSED attFor" and "A MONSTER'S AIM"):
+   the accuracy of their level, then the aim rule and its rescaled max hit, exactly as every other open-world monster gets them. Without
+   this they would swing at the old hand-set accuracy and hit a geared player for zeros, the Boardwalk's bug all over again. */
+for (const t of ["caveman", "sabretooth", "pterodactyl", "mammoth", "raptor", "goldenraptor", "tarhorror", "rex", "matriarch"]) {
+  const m = MOBS[t]; m.att = Math.max(m.att, attFor(m.lvl)); m.outside = true;
+  const d = kitDefence(Math.min(99, m.lvl)), was = hitChance(m.att, d), aim = Math.round(d * Math.pow(MOB_AIM / 0.5, 1 / MOB_K)), now = mobHitChance(aim, d);
+  m.max = Math.max(2, Math.round((m.max + 1) * MOB_DANGER * (was / now) - 1)); m.att = aim;
+}
 /* THE GOLDEN RAPTOR: one raptor respawn in GOLD_ODDS comes back gilded (the server's respawn loop, see `gild` / MOB_GOLD) */
 export const MOB_GOLD = { raptor: { t: "goldenraptor", odds: 500 } };
 /* (2026-09-30) THREE MAPS, the owner's second pass ("it needs to be larger"): the Lowlands off the Trailer Park, the Ridge north of them,
