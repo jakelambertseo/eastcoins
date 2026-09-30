@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 369;   /* (2026-09-30) THE STORE, REBUILT: effects, titles, decor, the War Horn, 2X Skilling XP, the loupes, bank pages, quick slots; and "speed" walks */   /* (2026-09-30) the Frost charm is 50,000 and the outfitters show it */   /* (2026-09-30) THE FROZEN REACH OPENS */   /* (2026-09-30) THE YARD RAID: the Ice Man (the Frozen Reach stays held) */   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 370;   /* (2026-09-30) the Store: pet skins, eggs, bag slots, art for everything; the wiki pages its long tables */   /* was 369: */   /* (2026-09-30) THE STORE, REBUILT: effects, titles, decor, the War Horn, 2X Skilling XP, the loupes, bank pages, quick slots; and "speed" walks */   /* (2026-09-30) the Frost charm is 50,000 and the outfitters show it */   /* (2026-09-30) THE FROZEN REACH OPENS */   /* (2026-09-30) THE YARD RAID: the Ice Man (the Frozen Reach stays held) */   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -862,7 +862,7 @@ export const invLayout = (c) => {
 export const settleSlots = (c) => { const lay = invLayout(c); lay.forEach((i, pos) => { if (i >= 0 && c.inv[i].p !== pos) c.inv[i].p = pos; }); return c; };
 /** the first empty slot of a bag being filled (the `inv` given, laid out for the character `c`), or -1 when it is full */
 const firstFree = (inv, c) => { const v = Object.create(c || {}); v.inv = inv; return invLayout(v).indexOf(-1); };
-export const bagMax = (c) => INV_MAX + (c ? petFx(c).slots + (achFx(c).slots | 0) + Math.min(BAG_UPGRADES.length, c.bagUp | 0) : 0);   /* achFx: the two pockets the milestones give */
+export const bagMax = (c) => INV_MAX + (c ? petFx(c).slots + (achFx(c).slots | 0) + Math.min(BAG_UPGRADES.length, c.bagUp | 0) + upOf(c, "bag") : 0);   /* (2026-09-30) upOf bag: the Store's extra bag slots */   /* achFx: the two pockets the milestones give */
 /* ============================================================================================================
    THE REFORGE BELONGS TO THE ITEM (2026-09-23, the owner: "make the reforge travel with the item")
 
@@ -7290,7 +7290,7 @@ export function normChar(c) {
   /* (2026-09-27, the owner: "literally replicate OSRS/RS3 inventory") THE SLOTS COME BACK. The re-pack above merges stacks through addInv,
      which knows nothing of positions, so each source stack's slot is queued by its item and handed to the rebuilt stacks of that item in
      order. A stack with no slot, or one the bag no longer has, falls into the first free slot when the bag is laid out (invLayout). */
-  { const want = new Map(); for (const s of (Array.isArray(c.inv) ? c.inv : []).map(renamed)) if (s && Number.isInteger(s.p) && s.p >= 0 && s.p < INV_MAX + BAG_UPGRADES.length + 16) { const key = `${s.k}|${s.f || 0}`; (want.get(key) || want.set(key, []).get(key)).push(s.p); }
+  { const want = new Map(); for (const s of (Array.isArray(c.inv) ? c.inv : []).map(renamed)) if (s && Number.isInteger(s.p) && s.p >= 0 && s.p < INV_MAX + BAG_UPGRADES.length + 16 + 5) { const key = `${s.k}|${s.f || 0}`; (want.get(key) || want.set(key, []).get(key)).push(s.p); }
     for (const s of out.inv) { const q = want.get(`${s.k}|${s.f || 0}`); if (q?.length) s.p = q.shift(); } }
   { const bt = out.bank.find((x) => x.k === "tickets"); if (bt) { out.bank.splice(out.bank.indexOf(bt), 1); addInv(out.inv, "tickets", bt.n, out); } }
   settleSlots(out);   /* (2026-09-27) every stack knows its slot from here on */   /* tickets stay on you (2026-09-19): any that were banked come back to the bag (they never take a slot's cap) */
@@ -9604,7 +9604,7 @@ st("loupe2", { tab: "boost", kind: "loupe", name: "Master Jeweller's Loupe", pri
 export const STORE_UP = { bank: { max: 5, slots: 40 }, quick: { max: 4 } };
 st("bankpage", { tab: "extra", kind: "bank", name: "Extra bank page", price: 60000, sale: 0.2, fresh: true, emo: "\u{1F3E6}", ex: "One more bank page and 40 more bank slots. Up to five more." });
 st("quickslot", { tab: "extra", kind: "quick", name: "Extra quick slot", price: 40000, fresh: true, emo: "\u{26A1}", ex: "One more quick slot on your bar, with its own number key. Up to four more (keys 5-8)." });
-export const upOf = (c, k) => Math.max(0, Math.min(STORE_UP[k].max, (k === "bank" ? c?.store?.bankx : c?.store?.qx) | 0));
+export const upOf = (c, k) => Math.max(0, Math.min(STORE_UP[k]?.max || 0, c?.store?.[{ bank: "bankx", quick: "qx", bag: "bagx" }[k]] | 0));
 export const bankMaxOf = (c) => BANK_MAX + STORE_UP.bank.slots * upOf(c, "bank");
 export const bankPagesOf = (c) => BANK_PAGES + upOf(c, "bank");
 export const quickNOf = (c) => 4 + upOf(c, "quick");
@@ -9690,3 +9690,42 @@ STORE_TABS.decor = "Decor";
   F("horn", "Calls the Ice Man down on the Yard, in your name.", [["Warning", "5 minutes, then the raid"], ["Needs", `${RAID.horn.minOnline} people online`], ["Not while", "the Pumpkin King is up, a raid is on, or the Yard is sacked"], ["Cooldown", `${RAID.horn.gapMs / 3600000} hours between raids`]]);
   F("bankpage", "One more bank page.", [["Adds", `1 page and ${STORE_UP.bank.slots} bank slots`], ["Up to", `${STORE_UP.bank.max} more (${BANK_PAGES + STORE_UP.bank.max} pages, ${BANK_MAX + STORE_UP.bank.max * STORE_UP.bank.slots} slots)`]]);
   F("quickslot", "One more quick slot on your bar.", [["Adds", "1 slot with its own number key"], ["Up to", `${STORE_UP.quick.max} more (keys 5 to 8)`]]); }
+
+/* ============================================================ THE STORE, ROUND THREE (2026-09-30): PETS, EGGS AND BAG SLOTS. The owner: "lets add some
+   P2W elements like new pets, new eggs, and inventory slots as well", then "the pets are vanity only, and have to look really cool. they
+   apply over peoples current pets, and keep the blue and orange hues if users have upgraded pets from breeding".
+     PET SKINS change how your pet LOOKS and nothing else: worn in their own slot, drawn in place of whatever pet you have out (its
+     bonuses, name and rank are untouched), and a Greater's blue or a Legendary's orange glow is still drawn around the skin. No pet out,
+     no skin. A few carry their own touch (`fx`, drawn by eastscape-looks.js): sparks, a glow.
+     EGGS are the paying part: every egg there is, for tickets, priced by what it hatches (its hatch xp x15), hatched the usual way.
+     BAG SLOTS are room: up to STORE_UP.bag.max more, on top of the five BAG_UPGRADES sold in the game. */
+export const PET_SKINS = {
+  babydragon: { name: "Baby Dragon", price: 250000, fx: "embers", ex: "A tiny red dragon that puffs smoke when it's happy, which is always." },
+  phoenix:    { name: "Phoenix Chick", price: 400000, fx: "embers", ex: "A little bird made of fire. It leaves sparks wherever it hops." },
+  ghostcat:   { name: "Ghost Cat", price: 200000, sale: 0.2, fx: "glow:#9af0ff", ex: "A cat that isn't quite there, and glows a little in the dark." },
+  neonfox:    { name: "Neon Fox", price: 300000, fx: "glow:#ff4fd8", ex: "A fox traced in pink and blue neon. The casino's favourite animal." },
+  luckycat:   { name: "Lucky Cat", price: 250000, fx: "sparkle", ex: "Solid gold, one paw always waving. It will not give the coin back." },
+  kraken:     { name: "Tiny Kraken", price: 200000, ex: "A purple octopus the size of a cat, which follows you on land somehow." },
+  mechapup:   { name: "Mecha Pup", price: 300000, fx: "glow:#7ae8ff", ex: "A robot puppy with a glowing core and a tail that wags on a motor." },
+  voidwisp:   { name: "Void Wisp", price: 350000, fx: "glow:#b06aff", ex: "A small purple flame with two eyes in it. It hums." },
+  unicorn:    { name: "Unicorn Foal", price: 350000, fx: "sparkle", ex: "A white foal with a rainbow mane and a horn that sparkles." },
+  slotbot:    { name: "Slot Bot", price: 500000, fx: "sparkle", ex: "A little slot machine on legs. Its reels spin when it walks and always land on 777." }
+};
+for (const [k, P] of Object.entries(PET_SKINS)) st(`pskin_${k}`, { tab: "pets", kind: "pskin", slot: "pskin", val: k, name: P.name, price: P.price, fresh: true, art: `pskin_${k}`, ...(P.sale ? { sale: P.sale } : {}),
+  ex: `${P.ex} A pet skin: your pet out looks like this, and keeps everything it does. A Greater or Legendary keeps its glow.`, lead: P.ex, facts: [["What it does", "your pet out looks like this: its bonuses, name and rank stay the same"], ["Bred pets", "a Greater keeps its blue glow, a Legendary its orange"], ["Wear", "one skin at a time, switch any time"]] });
+for (const [k, e] of Object.entries(EGGS)) { const pet = PETS[e.pet]; if (!pet || pet.held) continue;
+  st(`egg_${k}`, { tab: "pets", kind: "give", give: [k, 1], name: ITEMS[k].name, price: Math.round((e.xp * 15) / 1000) * 1000, fresh: true, icon: k,
+    ex: `One ${ITEMS[k].name.toLowerCase()}: a ${pet.name} in ${Math.round(e.ms / 3600000)} hours at a hatchery on your island.`, lead: `Hatches a ${pet.name}.`,
+    facts: [["Hatches", `a ${pet.name}${pet.legend ? " (Legendary)" : ""}`], ["Takes", `${Math.round(e.ms / 3600000)} hours in a hatchery on your island`], ["Needs", `${BREED.hatch.food} Ordinary pet food`], ["Breeding xp", e.xp.toLocaleString()]] }); }
+STORE_UP.bag = { max: 5 };
+st("bagslot", { tab: "extra", kind: "bag", name: "Extra bag slot", price: 75000, fresh: true, art: "st_bagslot", ex: "One more slot in your bag. Up to five more, on top of the five sold in the game.", lead: "One more slot in your bag.", facts: [["Adds", "1 bag slot"], ["Up to", "5 more, on top of the 5 sold in the game"]] });
+/* the tab, and every item's picture: flat/items/st_<key> for the Store's own icons */
+{ const t = { ...STORE_TABS, pets: "Pets" }; for (const k of Object.keys(STORE_TABS)) delete STORE_TABS[k]; for (const k of ["boost", "looks", "name", "pets", "decor", "world", "extra"]) STORE_TABS[k] = t[k]; }
+Object.assign(STORE.skill2x, { art: "st_skill2x" }); Object.assign(STORE.loupe, { art: "st_loupe" }); Object.assign(STORE.loupe2, { art: "st_loupe2" });
+for (const k of ["fireworks", "confetti", "lanterns", "snow"]) STORE[`wfx_${k}`].art = `st_${k}`;
+Object.assign(STORE.horn, { art: "st_horn" }); Object.assign(STORE.bankpage, { art: "st_bankpage" }); Object.assign(STORE.quickslot, { art: "st_quickslot" });
+for (const it of Object.values(STORE)) if (it.kind === "title") it.art = it.val === "custom" ? "st_titlecustom" : "st_title";
+export const STORE_TAB_ART = { boost: "st_skill2x", looks: "st_effects", name: "st_title", pets: "st_pets", decor: "st_decor", world: "st_fireworks", extra: "st_bagslot" };
+/** the skin a character's pet wears, as a PET_SKINS key, or null (none, not owned, or no pet out) */
+export const petSkinOf = (c) => { const id = c?.store?.name?.pskin, it = id && STORE[id]; return it && it.kind === "pskin" && (c.store.own || []).includes(id) && activePet(c) ? it.val : null; };
+WEAR_SLOTS.push("pskin");

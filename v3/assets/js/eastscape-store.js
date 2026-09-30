@@ -12,8 +12,8 @@ export function createStore(E) {
   const UI = "/v3/assets/img/glad/flat/ui/", FLAT = "/v3/assets/img/glad/flat/";
   let tab = "boost", trial = {}, stageOn = false, LK = null;
   const GROUPS = { name: [["title", "Title", "one worn at a time, under your name"], ["col", "Colour"], ["fx", "Effect"], ["icon", "Badge"], ["frame", "Frame"]],
-    looks: Object.entries(G.LOOK_GROUPS).map(([k, l]) => [k, l, "one worn at a time"]), decor: [["isle", "For your island"], ["home", "For your cottage"]] };
-  const TAB_ICO = { boost: "g_alchemy", looks: "g_magic", name: "g_vip", decor: "g_islands", world: "g_carnival", extra: "g_bank" };
+    looks: Object.entries(G.LOOK_GROUPS).map(([k, l]) => [k, l, "one worn at a time"]), decor: [["isle", "For your island"], ["home", "For your cottage"]],
+    pets: [["pskin", "Pet skins", "looks only: your pet out wears it, and keeps everything it does"], ["give", "Eggs", "hatch them in a hatchery on your island"]] };
   const win = () => $("storeWin");
   const S = () => E.me?.store || { own: [], name: {} };
   const owns = (id) => (S().own || []).includes(id);
@@ -41,8 +41,10 @@ export function createStore(E) {
     });
   }
   const priceHtml = (it) => { const p = G.priceOf(it); return `<span class="st2-price">${it.sale ? `<s>${it.price.toLocaleString()}</s>` : ""}<img src="${UI}g_tickets.png?v=1" alt="" onerror="this.remove()">${p.toLocaleString()}</span>`; };
+  const artUrl = (k) => (k.startsWith("pskin_") ? `${FLAT}${k}.png?v=1` : `${E.IART}${k}.png?v=1`);
   function pic(it) {
     const L = G.STORE_LOOKS;
+    if (it.art) return `<img class="st2-art${it.kind === "pskin" ? " pet" : ""}" src="${artUrl(it.art)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('i'),{className:'st2-emo',textContent:'${it.kind === "pskin" ? "\u{1F43E}" : "\u{2728}"}'}))">`;
     if (it.kind === "col") return `<i class="st-sw" style="background:${it.col}"></i>`;
     if (it.kind === "frame") return `<i class="st-sw st-fr" style="border-color:${it.col}"></i>`;
     if (it.kind === "icon") return `<i class="st-sw st-ic"><img src="${ART}nb_${it.val}.png?v=${ART_V}" alt=""></i>`;
@@ -56,21 +58,22 @@ export function createStore(E) {
   function status(it) {
     const me = E.me || {};
     if (it.kind === "loupe") { const n = G.loupeOf(me, it.id); return n ? `<em class="k-chip gold">${n} rolls held</em>` : ""; }
-    if (it.kind === "bank" || it.kind === "quick") { const n = G.upOf(me, it.kind), m = G.STORE_UP[it.kind].max; return `<em class="k-chip${n >= m ? " good" : ""}">${n} of ${m}${n >= m ? " · all bought" : ""}</em>`; }
+    if (it.kind === "bank" || it.kind === "quick" || it.kind === "bag") { const n = G.upOf(me, it.kind), m = G.STORE_UP[it.kind].max; return `<em class="k-chip${n >= m ? " good" : ""}">${n} of ${m}${n >= m ? " · all bought" : ""}</em>`; }
     if (it.kind === "decor") { const n = me.isle?.owned?.[it.dk] | 0; return n ? `<em class="k-chip good">you own ${n}</em>` : ""; }
+    if (it.kind === "pskin" && !G.activePet(me)) return owns(it.id) ? `<em class="k-chip">${worn(it) ? "Worn" : "Owned"} · bring a pet out to see it</em>` : "";
     if (worn(it)) return `<em class="k-chip gold">Worn</em>`; if (owns(it.id)) return `<em class="k-chip good">Owned</em>`;
     return "";
   }
   function act(it) {
     const tix = G.tixIn(E.me || {}), p = G.priceOf(it), afford = tix >= p;
     const buy = (label = "Buy") => `<button type="button" class="k-btn sm" data-op="buy" data-id="${it.id}"${afford ? "" : " disabled"}>${afford ? label : "Not enough"}</button>`;
-    let tryB = G.STORE_LOOKS[it.kind] && it.kind !== "ptag" ? `<button type="button" class="k-btn sec sm" data-try="${it.kind}:${it.val}">${trial[it.kind] === it.val ? "Trying" : "Try"}</button>` : "";
+    let tryB = (G.STORE_LOOKS[it.kind] && it.kind !== "ptag") || it.kind === "pskin" ? `<button type="button" class="k-btn sec sm" data-try="${it.kind}:${it.val}">${trial[it.kind] === it.val ? "Trying" : "Try"}</button>` : "";
     if (it.id === "title_custom") {
       const mine = owns(it.id), cur = mine ? esc(S().ttext || "") : "";
       return `<span class="st2-tt"><input class="st2-in" data-tt="title_custom" maxlength="${G.TITLE_MAX}" placeholder="Your title" value="${cur}">${mine ? `<button type="button" class="k-btn sec sm" data-op="ttext">Save</button>${worn(it) ? `<button type="button" class="k-btn sec sm" data-op="off" data-slot="title">Take off</button>` : `<button type="button" class="k-btn sm" data-op="wear" data-slot="title" data-id="${it.id}">Wear</button>`}` : buy()}</span>`;
     }
     if (it.slot && owns(it.id)) return worn(it) ? `${tryB}<button type="button" class="k-btn sec sm" data-op="off" data-slot="${it.slot}">Take off</button>` : `${tryB}<button type="button" class="k-btn sm" data-op="wear" data-slot="${it.slot}" data-id="${it.id}">Wear</button>`;
-    if ((it.kind === "bank" || it.kind === "quick") && G.upOf(E.me || {}, it.kind) >= G.STORE_UP[it.kind].max) return "";
+    if ((it.kind === "bank" || it.kind === "quick" || it.kind === "bag") && G.upOf(E.me || {}, it.kind) >= G.STORE_UP[it.kind].max) return "";
     return `${tryB}${buy(it.kind === "wfx" ? "Set it off" : it.kind === "horn" ? "Blow it" : "Buy")}`;
   }
   /* (2026-09-30, the owner: "format how the boosts descriptions read better, either rows or something thats easier to understand") A BOOST,
@@ -95,17 +98,17 @@ export function createStore(E) {
     const nfx = G.nameFxOf(E.me), ttl = G.titleOf(E.me);
     return `<div class="st2-stage st2-namestage"><span class="st-pvname${nfx?.fx ? ` nfx-${nfx.fx}` : ""}${nfx?.frame ? " nfx-framed" : ""}" style="${nfx?.col ? `color:${G.NAME_COLS[nfx.col]};` : ""}${nfx?.frame ? `outline-color:${G.NAME_FRAMES[nfx.frame]};` : ""}">${nfx?.icon ? `<img class="nfx-badge" src="${ART}nb_${nfx.icon}.png?v=${ART_V}" alt="">` : ""}${esc(E.you?.name || "You")}</span>${ttl ? `<span class="st2-pvttl">« ${esc(ttl)} »</span>` : ""}<small>How your name looks over your head, to everyone</small></div>`;
   }
-  const lookNow = () => ({ ...(G.looksOf(E.me) || {}), ...Object.fromEntries(Object.entries(trial).filter(([, v]) => v)) });
+  const lookNow = () => ({ ...(G.looksOf(E.me) || {}), ...(G.petSkinOf(E.me) ? { pskin: G.petSkinOf(E.me) } : {}), ...Object.fromEntries(Object.entries(trial).filter(([, v]) => v)) });
   let sig = "";
   function render(force) {
     const w = win(); if (!w || w.hidden || !E.me) return; frame();
     /* only when something the window shows has changed: this runs on every update of you, and a rebuild restarts the stage */
     const now = JSON.stringify([tab, trial, G.tixIn(E.me), E.me.store || null, E.me.isle?.owned || null, E.me.pets?.length]); if (!force && now === sig) return; sig = now;
     w.querySelector(".st2-tix").innerHTML = `<img src="${UI}g_tickets.png?v=1" alt="" onerror="this.remove()">${G.tixIn(E.me).toLocaleString()}`; w.querySelector(".st2-tix").title = "Your tickets";
-    w.querySelector(".st2-tabs").innerHTML = Object.entries(G.STORE_TABS).map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${tab === k}"><img src="${UI}${TAB_ICO[k]}.png?v=1" alt="" onerror="this.remove()">${l}</button>`).join("");   /* (2026-09-30, the owner: "take away the tags from the tabs") */
+    w.querySelector(".st2-tabs").innerHTML = Object.entries(G.STORE_TABS).map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${tab === k}"><img src="${E.IART}${G.STORE_TAB_ART[k]}.png?v=1" alt="" onerror="this.remove()">${l}</button>`).join("");   /* (2026-09-30, the owner: "take away the tags from the tabs") */
     const R = rowsOf(tab), grid = (list) => `<div class="st2-grid${list.every((it) => it.facts) ? " st2-list" : ""}">${list.map(card).join("")}</div>`;
     let body = "";
-    if (tab === "looks") body += `<div class="st2-stage"><canvas class="st2-stagecv" width="560" height="150"></canvas><small>${Object.values(trial).some(Boolean) ? "Trying on: press Try again to stop. Nobody else sees this until you buy it and wear it." : "You, in what you wear now. Press Try on anything below to see it on you."}</small></div>`;
+    if (tab === "looks" || tab === "pets") body += `<div class="st2-stage"><canvas class="st2-stagecv" width="560" height="150"></canvas><small>${Object.values(trial).some(Boolean) ? "Trying on: press Try again to stop. Nobody else sees this until you buy it and wear it." : "You, in what you wear now. Press Try on anything below to see it on you."}</small></div>`;
     if (tab === "name") body += nameStage();
     if (tab === "boost") body += `<p class="k-note st2-lead">The two 2X potions are for the whole server, for 30 minutes, in your name. The loupes change the Gem Sorter's odds, and show exactly how.</p>`;
     if (tab === "world") body += `<p class="k-note st2-lead">Set off where you're standing, for everyone in that area. One show at a time in any one place.</p>`;
@@ -116,7 +119,7 @@ export function createStore(E) {
     if (focus) { const box = B.querySelector(`[data-tt="${focus}"]`); if (box) { box.value = val; box.focus(); } }
     E.looks().then((L) => { LK = L;
       B.querySelectorAll("canvas[data-thumb]").forEach((cv) => { const [slot, v] = cv.dataset.thumb.split(":"); L.thumb ? L.thumb(cv, slot, v) : null; });
-      const cv = B.querySelector(".st2-stagecv"); if (cv) { cv.width = Math.round(cv.clientWidth || 560); L.preview(cv, () => ({ look: lookNow(), art: E.meArt, calm: E.calm() })); }
+      const cv = B.querySelector(".st2-stagecv"); if (cv) { L.preview(cv, () => { const look = lookNow(), sk = look.pskin || null;   /* a skin being tried shows even with no pet out: it is a preview */ return { look, art: E.meArt, calm: E.calm(), pet: E.petArt(sk), petGlow: E.petRank(), petSkinFx: sk ? G.PET_SKINS[sk]?.fx : null }; }); }
     }).catch(() => {});
   }
   function open(t) { if (t && G.STORE_TABS[t]) tab = t; trial = {}; E.openWin("storeWin"); frame(); render(true); }
@@ -151,7 +154,7 @@ export const CSS = `
 .st2-card.owned{background:#e9dcbc}
 .st2-pic{grid-row:1/3;display:grid;place-items:center;width:64px;height:64px;border-radius:6px;background:rgba(58,36,16,.1);box-shadow:inset 0 0 0 1.5px rgba(90,58,24,.2);overflow:hidden}
 .st2-pic .st-sw{width:40px;height:40px}.st2-thumb{width:64px;height:43px;image-rendering:pixelated;border-radius:4px}
-.st2-decor{max-width:58px;max-height:58px;image-rendering:pixelated}.st2-emo{font-style:normal;font-size:34px;line-height:1}.st2-emo img{width:40px;height:40px;image-rendering:pixelated}
+.st2-decor{max-width:58px;max-height:58px;image-rendering:pixelated}.st2-art{width:48px;height:48px;image-rendering:pixelated;object-fit:contain}.st2-art.pet{width:58px;height:58px}.st2-emo{font-style:normal;font-size:34px;line-height:1}.st2-emo img{width:40px;height:40px;image-rendering:pixelated}
 .st2-ttl{font:800 12px/1.2 var(--k-disp);color:#e8d8a8;background:#2a1c10;padding:6px 4px;border-radius:5px;text-align:center;font-style:normal;max-width:60px;overflow:hidden}
 .st2-txt{min-width:0}.st2-txt b{display:block;font:800 15px/1.2 var(--k-disp);padding-right:40px}.st2-txt small{display:block;margin-top:3px;font:var(--k-f-small);color:var(--k-ink2)}.st2-txt .k-chip{margin-top:3px}
 .st2-row{grid-column:2;display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}

@@ -93,6 +93,15 @@ const told = (pl) => pl.out.map((e) => e.text || "").join(" | ");
 /* 9. the Store's decor is placed like Yahsmeena's, and she will not sell it */
 { const DR = createDecorRules(G); is([DR.DECOR.portal?.store, DR.DECOR.fireplace?.wall, DR.DECOR.bench?.store || false], [true, true, false], "the decor rules carry the Store's pieces, marked store");
   const missing = Object.keys(G.STORE_DECOR).filter((k) => !(DR.DECOR[k].art || `d_${k}`)); is(missing, [], "every Store piece has a picture key"); }
+/* 11. round three: pet skins are looks only, eggs are real, bag slots are room */
+{ const p = player(); p.C.pets = [{ id: "pt1", k: "bonepup", name: "", tier: 1 }]; p.C.eq.pet = "pt1";
+  const fx0 = JSON.stringify(G.petFx(p.C)), bag0 = G.bagMax(p.C);
+  is([buy(p, "pskin_phoenix"), G.petSkinOf(p.C), JSON.stringify(G.petFx(p.C)) === fx0, G.activePet(p.C).tier], [400000, "phoenix", true, 1], "a pet skin: worn at once, the pet's bonuses and Greater rank untouched");
+  is(W.whoOf(W.scene("workyard")).find((x) => x.id === p.id).psk, "phoenix", "the roster carries the skin");
+  p.C.eq.pet = null; is(G.petSkinOf(p.C), null, "no pet out, no skin"); p.C.eq.pet = "pt1";
+  is([buy(p, "egg_egg_raptor"), p.C.inv.some((s) => s.k === "egg_raptor")], [G.priceOf(G.STORE.egg_egg_raptor), true], "an egg: charged, and in the bag");
+  for (let i = 0; i < 6; i++) buy(p, "bagslot"); is([G.upOf(p.C, "bag"), G.bagMax(p.C) - bag0, buy(p, "bagslot")], [5, 5, 0], "bag slots: five more at most, the sixth refused");
+  const miss = Object.values(G.STORE).filter((it) => !it.art && !["col", "fx", "icon", "frame", "decor", "give"].includes(it.kind) && !G.STORE_LOOKS[it.kind] && !it.icon).map((it) => it.id); is(miss, [], "every Store item has a picture"); }
 /* 10. the walking fix */
 { const C = G.freshChar(), base = G.stepMsOf(C); C.drink = { k: "pot_quick", left: 10 }; const quick = G.stepMsOf(C);
   is([quick < base, G.fxWalk(C)], [true, 7], `a "speed" drink walks faster now (${base} ms a step -> ${quick})`); }

@@ -1986,7 +1986,7 @@ export class World {
     if (it.kind === "skill2x" && this.skill2xOn()) { const left = Math.ceil((this.sx2.until - now) / 60000); return this.say(pl, `2X Skilling XP is already running - ${left} minute${left === 1 ? "" : "s"} left. It's yours to buy when it ends.`, "bad"); }
     if (it.slot && C.store.own.includes(id)) return this.say(pl, "You own that already.", "bad");
     if (it.kind === "loupe" && G.loupeOf(C, id) + G.LOUPES[id].rolls > G.LOUPE_MAX) return this.say(pl, `You're holding ${G.loupeOf(C, id)} rolls of that already. Use some at the Gem Sorter first (${G.LOUPE_MAX} at most).`, "bad");
-    if ((it.kind === "bank" || it.kind === "quick") && G.upOf(C, it.kind) >= G.STORE_UP[it.kind].max) return this.say(pl, `That's as many as there are (${G.STORE_UP[it.kind].max} more).`, "bad");
+    if ((it.kind === "bank" || it.kind === "quick" || it.kind === "bag") && G.upOf(C, it.kind) >= G.STORE_UP[it.kind].max) return this.say(pl, `That's as many as there are (${G.STORE_UP[it.kind].max} more).`, "bad");
     let P = null, I = null;
     if (it.kind === "decor") {
       P = G.STORE_DECOR[it.dk]; I = C.isle; if (!P || !I?.tier) return this.say(pl, "You need an island first: Charon, at the Yard's dock.", "bad");
@@ -2011,6 +2011,7 @@ export class World {
     if (it.kind === "give") { if (!this.give(pl, it.give[0], it.give[1])) { G.addInv(C.inv, "tickets", price, C); this.touch(pl); return; } this.touch(pl); return this.say(pl, paid(), "loot"); }
     if (it.kind === "loupe") { C.store[id] = G.loupeOf(C, id) + G.LOUPES[id].rolls; this.touch(pl); return this.say(pl, `${paid()} You hold ${C.store[id]} lifted rolls: the Gem Sorter uses one every roll.`, "loot"); }
     if (it.kind === "bank") { C.store.bankx = G.upOf(C, "bank") + 1; this.touch(pl); return this.say(pl, `${paid()} Your bank has ${G.bankPagesOf(C)} pages and ${G.bankMaxOf(C)} slots now.`, "loot"); }
+    if (it.kind === "bag") { C.store.bagx = G.upOf(C, "bag") + 1; this.touch(pl); return this.say(pl, `${paid()} Your bag holds ${G.bagMax(C)} now.`, "loot"); }   /* (2026-09-30) */
     if (it.kind === "quick") { C.store.qx = G.upOf(C, "quick") + 1; this.touch(pl); return this.say(pl, `${paid()} ${G.quickNOf(C)} quick slots now: key ${G.quickNOf(C)} is the new one.`, "loot"); }
     if (it.kind === "decor") { I.owned[it.dk] = (I.owned[it.dk] | 0) + 1; this.touch(pl); return this.say(pl, `${paid()} It's waiting on your island: press Decorate there${P.in === "home" ? ", inside your cottage," : ""} and put it down.`, "loot"); }
     if (it.kind === "wfx") { pl.wfxAt = now; this.touch(pl); this.wfxStart(S, pl, it.val, now); return this.say(pl, paid(), "loot"); }
@@ -4000,7 +4001,7 @@ export class World {
   npcsOf(S) { return (S.npcs || []).map((n) => ({ id: n.id, name: n.name, art: n.art, tag: n.tag, look: n.look, reach: n.reach, opens: n.opens, shop: n.shop })); }
   whoOf(S) {
     const out = [];
-    for (const p of this.playersIn(S)) out.push({ id: p.id, name: p.name, nfx: G.nameFxOf(p.C) || undefined, role: p.role !== "user" ? p.role : undefined, vip: G.vipOf(p.C).i || undefined, lvl: G.totalOf(p.C), weapon: p.C.eq.weapon, body: p.C.eq.body, maxHp: G.maxHpOf(p.C), look: p.C.look || undefined, van: G.wearsVanity(p.C.van) ? { on: p.C.van.on, col: p.C.van.col } : undefined, pet: G.activePet(p.C)?.k || undefined, pgr: G.activePet(p.C)?.tier ? 1 : undefined,   /* (2026-09-27) a Greater pet glows */ cos: p.cos || undefined, lk: G.looksOf(p.C) || undefined, ttl: G.titleOf(p.C) || undefined, pnm: G.looksOf(p.C)?.ptag && G.activePet(p.C) ? G.petLabel(G.activePet(p.C)) : undefined });   /* (2026-09-30) the Store's looks, title and pet tag */
+    for (const p of this.playersIn(S)) out.push({ id: p.id, name: p.name, nfx: G.nameFxOf(p.C) || undefined, role: p.role !== "user" ? p.role : undefined, vip: G.vipOf(p.C).i || undefined, lvl: G.totalOf(p.C), weapon: p.C.eq.weapon, body: p.C.eq.body, maxHp: G.maxHpOf(p.C), look: p.C.look || undefined, van: G.wearsVanity(p.C.van) ? { on: p.C.van.on, col: p.C.van.col } : undefined, pet: G.activePet(p.C)?.k || undefined, pgr: G.activePet(p.C)?.tier ? 1 : undefined,   /* (2026-09-27) a Greater pet glows */ cos: p.cos || undefined, lk: G.looksOf(p.C) || undefined, ttl: G.titleOf(p.C) || undefined, pnm: G.looksOf(p.C)?.ptag && G.activePet(p.C) ? G.petLabel(G.activePet(p.C)) : undefined, psk: G.petSkinOf(p.C) || undefined });   /* (2026-09-30) the Store's looks, title and pet tag */
     for (const b of S.bots) out.push({ id: b.id, name: b.name, level: b.level, art: b.art, hue: b.hue });
     return out;
   }
@@ -4051,7 +4052,7 @@ export class World {
         looted: Object.values(st.looted || {}).reduce((n, v) => n + v, 0), burnt: st.burnt | 0, pvpKills: st.pvpKills | 0, pvpDeaths: st.pvpDeaths | 0, sessions: st.sessions | 0 } });
   }
   // cheap enough to build every broadcast; it only ever SENDS when it differs
-  whoSigOf(who) { let sig = ""; for (const w of who) sig += `${w.id}|${w.name}|${w.vip || 0}|${w.lvl ?? w.level}|${w.weapon || ""}|${w.body || ""}|${w.maxHp || ""}|${w.art || ""}|${w.hue || ""}|${w.look ? w.look.join(".") : ""}|${G.vanityKey(w.van)}|${w.pet || ""}|${w.cos ? `${w.cos.name}/${w.cos.title}` : ""}|${G.nameFxSig(w.nfx)}|${G.looksSig(w.lk)}|${w.ttl || ""}|${w.pnm || ""};`; return sig; }
+  whoSigOf(who) { let sig = ""; for (const w of who) sig += `${w.id}|${w.name}|${w.vip || 0}|${w.lvl ?? w.level}|${w.weapon || ""}|${w.body || ""}|${w.maxHp || ""}|${w.art || ""}|${w.hue || ""}|${w.look ? w.look.join(".") : ""}|${G.vanityKey(w.van)}|${w.pet || ""}|${w.cos ? `${w.cos.name}/${w.cos.title}` : ""}|${G.nameFxSig(w.nfx)}|${G.looksSig(w.lk)}|${w.ttl || ""}|${w.pnm || ""}|${w.psk || ""};`; return sig; }
 
   snapOf(S, now, withEvents = true) {
     const st = (e) => (e.step ? [e.step.fx, e.step.fy, e.step.tx, e.step.ty, e.step.t0, e.step.ms] : 0);

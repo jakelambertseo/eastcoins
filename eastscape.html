@@ -15,7 +15,7 @@
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=400">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=401">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -953,6 +953,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
    canvas at the top centre, 30 to 82 px down, and the banner sat across it. */
 #dblBar{position:absolute;left:50%;top:94px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;background:linear-gradient(#ffd23f,#e8a01f);color:#2a1c08;font-weight:800;font-size:13px;letter-spacing:.04em;box-shadow:0 0 0 2px #7a5410,0 3px 10px rgba(0,0,0,.45);white-space:nowrap}
 #dblBar[hidden]{display:none}
+.wpager{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 14px}.wpager button{padding:4px 10px;border-radius:5px;border:1.5px solid #c2a574;background:#e6d4ad;color:#2a2016;font:800 12.5px Lora,sans-serif;cursor:pointer}.wpager button:disabled{opacity:.45;cursor:default}.wpager span{font:700 13px Lora,sans-serif;margin:0 4px}.wpager small{opacity:.7}.wpager label{margin-left:auto;font:700 12.5px Lora,sans-serif}.wpager input{width:58px;margin-left:4px;padding:3px 6px;border-radius:5px;border:1.5px solid #c2a574;font:700 12.5px Lora,sans-serif}
 #sx2Bar{position:absolute;left:50%;top:94px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;background:linear-gradient(#7ae07a,#3aa048);color:#0a2a10;font-weight:800;font-size:13px;letter-spacing:.04em;box-shadow:0 0 0 2px #1a5a24,0 3px 10px rgba(0,0,0,.45);white-space:nowrap}
 #sx2Bar.low{top:124px}#sx2Bar[hidden]{display:none}#sx2Bar b{font-size:14px}#sx2Bar .dblt{font-variant-numeric:tabular-nums;background:rgba(0,0,0,.18);border-radius:999px;padding:1px 7px}
 /* (2026-09-29) the death card: greys the view and fades out on its own; nothing to click */
@@ -1947,7 +1948,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=400";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=401";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 const FROZEN = new Map();   /* (2026-09-30) player id -> when their Deep Freeze ends (performance.now) */
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
@@ -1957,7 +1958,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=225").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=226").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
@@ -5149,7 +5150,9 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
       const rk = pv.legend ? "legend" : (pl.id === you.id ? G.activePet(me)?.tier : pl.pgr) ? "greater" : null;
       sprites.push({ y: f.y - 0.5, draw: () => {
         if (rk) { lc.save(); lc.shadowColor = rk === "legend" ? "rgba(255,140,20,.95)" : "rgba(60,140,255,.95)"; lc.shadowBlur = (6 + Math.sin(pnow / 300) * 2) * A; }   /* (2026-09-27) a Greater glows blue, a Legendary orange */
-        spr(pv.art, f.x, f.y + bobOf(f.moving, 70), f.face < 0); if (rk) lc.restore(); } });
+        const sk = pl.id === you.id ? G.petSkinOf(me) : pl.psk, skArt = sk ? wantArt(`pskin_${sk}`) : null;   /* (2026-09-30) the Store's pet skins: the look, never the pet */
+        spr(skArt || pv.art, f.x, f.y + bobOf(f.moving, 70), f.face < 0); if (rk) lc.restore();
+        if (sk && LOOKS) LOOKS.petFx(lc, f.x, f.y, G.PET_SKINS[sk]?.fx, pnow, calm); } });
       { const tag = pl.id === you.id ? G.looksOf(me)?.ptag : pl.lk?.ptag, nm = pl.id === you.id ? G.petLabel(G.activePet(me)) : pl.pnm; if (tag && nm) PTAGS.push({ x: f.x, y: f.y, nm, tag }); }   /* (2026-09-30) the Store's pet name tags */
     }
     for (const k of PETF.m.keys()) if (!seen.has(k)) PETF.m.delete(k);
@@ -5157,7 +5160,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   /* (2026-09-30) THE LOOKS, under everybody's feet: trails and glows (see THE LOOKS) */
   { const lkOf = (pl) => (pl.id === you.id ? G.looksOf(me) : pl.lk);
     if (LOOKS) { LOOKS.frame(Z.players.map((pl) => { const L = lkOf(pl); if (!L) return null; const p = pos(pl); return { id: pl.id, lk: L, x: p.px * T + 8, y: p.py * T + 15, moving: p.moving, face: pl.face }; }).filter(Boolean)); LOOKS.ground(lc, pnow, calm); LOOKS.decor(lc, pnow, Z.objs, IMG, A, calm); }
-    else if (Z.players.some(lkOf) || Z.objs.some((o) => o.decor && G.STORE_DECOR[o.k]?.fx)) looksLoad().catch(() => {}); }
+    else if (Z.players.some((pl) => lkOf(pl) || (pl.id === you.id ? G.petSkinOf(me) : pl.psk)) || Z.objs.some((o) => o.decor && G.STORE_DECOR[o.k]?.fx)) looksLoad().catch(() => {}); }
   sprites.sort((a, b) => a.y - b.y).forEach((s) => s.draw());
   drawMini();
   /* (v112) sparks and dust, over the scene: a little gravity, fading as they go */
@@ -6198,15 +6201,15 @@ addEventListener("keydown", (e) => { if ((e.key === "g" || e.key === "G") && !e.
 /* ------------------------------------------------------------ the Forge: Brutus's shop */
 let shopN = 1, shopKind = "shop";   // "shop": Brutus at the Forge; "bar": Dex, who sells and never buys
 /* (2026-09-30) THE STORE lives in eastscape-store.js, fetched the first time it opens (see there). renderStore is what the "me" update calls. */
-let STOREUI = null; const STORE_URL = "/v3/assets/js/eastscape-store.js?v=1";
+let STOREUI = null; const STORE_URL = "/v3/assets/js/eastscape-store.js?v=2";   /* (2026-09-30) v2: art for every item, the Pets tab */
 function storeUi() { return STOREUI ? Promise.resolve(STOREUI) : import(STORE_URL).then((m) => (STOREUI = m.createStore({ G, $, esc, send, SFX, ico, ART, ART_V, openWin: (id) => { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin", "gameWin", "lookWin", "jukeWin", "vanWin", "hwWin", "mapWin", "questWin"]) $(w).hidden = true; openWin(id); },
-  looks: looksLoad, calm: calmNow, meArt: (d) => { const k = me?.look ? lookSprite(me.look, d, G.wearsVanity(me.van) ? me.van : null) : null; return k && IMG[k] ? IMG[k] : null; }, get me() { return me; }, get you() { return you; } }))); }
+  looks: looksLoad, calm: calmNow, IART, petArt: (sk) => { const pk = G.activePet(me)?.k, k = sk ? `pskin_${sk}` : pk ? G.PETS[pk]?.art : null; return k ? (IMG[k] || (wantArt(k), null)) : null; }, petRank: () => { const p = G.activePet(me); return p ? (G.PETS[p.k]?.legend ? "legend" : p.tier ? "greater" : null) : null; }, meArt: (d) => { const k = me?.look ? lookSprite(me.look, d, G.wearsVanity(me.van) ? me.van : null) : null; return k && IMG[k] ? IMG[k] : null; }, get me() { return me; }, get you() { return you; } }))); }
 function openStore(t) { storeUi().then((u) => u.open(t)).catch(() => say("The Store didn't load. Try again in a moment.", "bad")); }
 function renderStore() { STOREUI?.render(); }
 $("storeBtn").addEventListener("click", () => { if ($("storeWin").hidden) openStore(); else $("storeWin").hidden = true; });
 /* (2026-09-30) THE LOOKS: trails, glows, weapon hits, hit splats, world shows and what Store decor does, drawn by eastscape-looks.js. Fetched
    the first time anybody in the room wears one, a show goes off, a Store piece is down, or the Store opens. */
-let LOOKS = null; const LOOKS_URL = "/v3/assets/js/eastscape-looks.js?v=1";
+let LOOKS = null; const LOOKS_URL = "/v3/assets/js/eastscape-looks.js?v=2";   /* (2026-09-30) v2: pet skins */
 function looksLoad() { return (looksLoad.p ||= import(LOOKS_URL).then((m) => (LOOKS = m.createLooks({ G })))); }
 /* (2026-09-27) THE NIGHT MARKET: Hexa's board. Priced in candy corn, nothing else; the two fits are bought here or at Ronde's and
    coloured at Ronde's. The foot of it is the day's state — Nightfall, the lantern count, whether you have said trick or treat. */
@@ -6945,6 +6948,20 @@ function wikiHist(route) {
   $("wikiBack").disabled = WKH.i <= 0; $("wikiFwd").disabled = WKH.i >= WKH.list.length - 1;
 }
 function wikiStep(d) { const j = WKH.i + d; if (j < 0 || j >= WKH.list.length) return; WKH.i = j; WKH.moving = true; SFX.play("ui_click"); wikiGo(WKH.list[j]); $("wikiPage").scrollTop = 0; }
+/* (2026-09-30, a player: "In Smithing Wiki Skill Guide it only shows the first 60 items. Don't see a 'next page' or 'view more' option") A LONG
+   TABLE IS PAGED, not cut: any wiki table marked data-paged="N" shows N rows at a time with First / Prev / "Page 2 of 5" / Next / Last
+   under it, and a level box that jumps to the page holding that level. Every row is in the page, so the browser's own find still works. */
+function wikiPaged(root) {
+  for (const tb of root.querySelectorAll("table[data-paged]")) {
+    const per = +tb.dataset.paged || 25, rows = [...tb.querySelectorAll("tr")].slice(1), pages = Math.ceil(rows.length / per); if (pages < 2) continue;
+    const bar = document.createElement("div"); bar.className = "wpager"; tb.after(bar); let at = 0;
+    const show = (p) => { at = Math.max(0, Math.min(pages - 1, p)); rows.forEach((r, i) => { r.hidden = Math.floor(i / per) !== at; });
+      bar.innerHTML = `<button type="button" data-p="0"${at ? "" : " disabled"}>« First</button><button type="button" data-p="${at - 1}"${at ? "" : " disabled"}>‹ Prev</button><span>Page ${at + 1} of ${pages} <small>(${at * per + 1}-${Math.min(rows.length, (at + 1) * per)} of ${rows.length})</small></span><button type="button" data-p="${at + 1}"${at < pages - 1 ? "" : " disabled"}>Next ›</button><button type="button" data-p="${pages - 1}"${at < pages - 1 ? "" : " disabled"}>Last »</button><label>Level <input type="number" min="1" max="120" inputmode="numeric" placeholder="go"></label>`; };
+    bar.addEventListener("click", (e) => { const b = e.target.closest("button[data-p]"); if (!b || b.disabled) return; SFX.play("ui_click"); show(+b.dataset.p); tb.scrollIntoView({ block: "nearest" }); });
+    bar.addEventListener("change", (e) => { const v = +e.target.value; if (!v) return; const i = rows.findIndex((r) => +r.cells[0]?.textContent >= v); show(Math.floor((i < 0 ? rows.length - 1 : i) / per)); });
+    show(0);
+  }
+}
 function wikiGo(route, setNav = true) {
   if (WK.stub) loadWiki().then(() => { if (!$("wikiWin").hidden) wikiGo(route, setNav); }).catch(() => {});
   { const p = wikiMapsReady(); if (p) p.then(() => { if (!$("wikiWin").hidden) wikiGo(wikiRoute, true); }); }   /* the wild maps, once: the page redraws itself when they land */
@@ -7104,7 +7121,7 @@ function wikiGo(route, setNav = true) {
       ${rows.length ? `<h3>What you can train on</h3><table class="tbl"><tr><th>Level</th><th>What</th><th>Gives</th><th>Where</th></tr>${rows.map((r) => `<tr><td>${r.lvl}</td><td>${esc(r.obj)}</td><td>${wl(`items/${r.k}`, `${ico(r.k)} ${esc(ITEMS[r.k].name)}`)}</td><td>${areaLink(r.scene)}</td></tr>`).join("")}</table>` : ""}
       ${WK.SKILL_EXTRA?.[id] ? WK.SKILL_EXTRA[id](G, { ico, wl, esc }) : ""}
       ${id === "farming" && WK.cropTable ? `<h3>What you can grow</h3><p>On ${wl("guides/islands", "your island")}, in real time, logged in or not.</p>${WK.cropTable(G, { ico, wl, esc })}` : ""}
-      ${made.length ? `<h3>What you can make</h3><table class="tbl"><tr><th>Level</th><th>Makes</th><th>From</th><th>xp</th></tr>${made.slice(0, 60).map((r) => `<tr><td>${r.lvl}</td><td>${wl(`items/${r.out[0]}`, `${ico(r.out[0])} ${esc(ITEMS[r.out[0]]?.name || r.out[0])}`)}${r.out[1] > 1 ? ` &times;${r.out[1]}` : ""}</td><td>${r.in.map(([k, n]) => `${n}&times; ${wl(`items/${k}`, esc(ITEMS[k]?.name || k))}`).join(" + ")}</td><td>${r.xp}</td></tr>`).join("")}</table>${made.length > 60 ? `<p class="note">The first 60 of ${made.length}.</p>` : ""}` : ""}
+      ${made.length ? `<h3>What you can make</h3><table class="tbl" data-paged="25"><tr><th>Level</th><th>Makes</th><th>From</th><th>xp</th></tr>${made.map((r) => `<tr><td>${r.lvl}</td><td>${wl(`items/${r.out[0]}`, `${ico(r.out[0])} ${esc(ITEMS[r.out[0]]?.name || r.out[0])}`)}${r.out[1] > 1 ? ` &times;${r.out[1]}` : ""}</td><td>${r.in.map(([k, n]) => `${n}&times; ${wl(`items/${k}`, esc(ITEMS[k]?.name || k))}`).join(" + ")}</td><td>${r.xp}</td></tr>`).join("")}</table>` : ""}
       ${Object.values(ITEMS).some((it) => it.tool === id) ? `<h3>Tool</h3><p>${Object.entries(ITEMS).filter(([, it]) => it.tool === id).map(([k, it]) => wl(`items/${k}`, `${ico(k)} ${esc(it.name)}`)).join(", ")}: hold it in your weapon hand.</p>` : ""}
       <h3>Levels</h3><p>Levels go from 1 to 99 on the classic curve: level 10 is ${XP_AT[10].toLocaleString()} xp, level 50 is ${XP_AT[50].toLocaleString()}, level 99 is ${XP_AT[99].toLocaleString()}.</p>`;
   }
@@ -7141,6 +7158,7 @@ function wikiGo(route, setNav = true) {
   /* the parentheses matter: crumbHtml is non-empty on nearly every route, so `crumbHtml + html || fallback` would
      make the whole thing truthy and the Not-found page could never appear. */
   page.innerHTML = crumbHtml + (html || `<h2><i>❓</i>Not found</h2><p class="lede">There's no page here yet.</p>`);
+  wikiPaged(page);
   page.scrollTop = 0;
 }
 function wikiUpdate(u) { return `<div class="up"><small>${u.date}</small><h3 style="margin:2px 0 4px">${esc(u.title)}</h3><ul>${u.items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></div>`; }

@@ -1133,6 +1133,16 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-30", title: "The Store: pets, eggs and bag slots",
+    items: [
+      "A PETS TAB in the Store. TEN PET SKINS: the Baby Dragon, Phoenix Chick, Ghost Cat, Neon Fox, Lucky Cat, Tiny Kraken, Mecha Pup, Void Wisp, Unicorn Foal and the Slot Bot. A skin changes how your pet LOOKS and nothing else: it keeps its bonuses, its name and its rank, and a Greater keeps its blue glow, a Legendary its orange. Some of them spark or glow. Press Try to see one at your heel first.",
+      "EGGS FOR TICKETS: every egg in the game, from the Speckled egg to the Gilded, the Raptor and the Yeti. Hatch them in a hatchery on your island as usual.",
+      "EXTRA BAG SLOTS: up to five more, on top of the five sold in the game.",
+      "EVERYTHING IN THE STORE HAS ITS OWN PICTURE NOW, and the boosts, shows and upgrades read as a short line and a table of what they do.",
+      "THE WIKI: long tables are paged. A skill's 'What you can make' shows every recipe, 25 to a page, with a box that jumps to a level (a player found Smithing stopped at 60).",
+    ],
+  },
+  {
     date: "2026-09-30", title: "The Store, rebuilt",
     items: [
       "THE STORE IS REBUILT, with six tabs: Boosts, Effects, Name, Decor, World and Upgrades. New things wear a NEW ribbon and come first, and a few are ON SALE.",

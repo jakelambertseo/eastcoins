@@ -215,13 +215,24 @@ export function createLooks(E) {
     }
   }
 
+  /* ---------------------------------------------------------------- A PET SKIN'S TOUCH: embers, a glow or sparkles around the pet */
+  function petFx(c, x, y, fx, pnow, calm) {
+    if (!fx) return; const cy = y - 7;
+    c.save();
+    if (fx.startsWith("glow:")) { const col = fx.slice(5), p = calm ? 1 : 0.8 + 0.2 * Math.sin(pnow / 420 + x); c.globalCompositeOperation = "lighter"; const g = c.createRadialGradient(x, cy, 1, x, cy, 11 * p); g.addColorStop(0, hexA(col, 0.4)); g.addColorStop(1, hexA(col, 0)); c.fillStyle = g; c.fillRect(x - 12, cy - 12, 24, 24); }
+    else if (fx === "embers" && !calm) { c.globalCompositeOperation = "lighter"; for (let i = 0; i < 5; i++) { const life = 900, t = ((pnow + i * 180 + (x | 0) * 13) % life) / life, px = x + (hr(i, (pnow / life) | 0) - 0.5) * 10, py = cy + 4 - t * 16; c.globalAlpha = 1 - t; c.fillStyle = i % 2 ? "#ffd24a" : "#ff6a1a"; c.fillRect(px, py, 1, 1); } }
+    else if (fx === "sparkle" && !calm) { for (let i = 0; i < 3; i++) { const per = 1300, t = ((pnow + i * 430) % per) / per, seed = Math.floor((pnow + i * 430) / per) * 5 + i, px = x + (hr(seed, 3) - 0.5) * 14, py = cy + (hr(seed, 4) - 0.5) * 12, s = Math.sin(t * Math.PI) * 1.5; c.globalAlpha = Math.sin(t * Math.PI); c.fillStyle = "#fffbe0"; c.fillRect(px - s / 2, py - 0.25, s, 0.5); c.fillRect(px - 0.25, py - s / 2, 0.5, s); } }
+    c.restore();
+  }
+
   /* ---------------------------------------------------------------- THE STORE'S STAGE: try it on before the tickets go */
   function preview(cv, get) {
     const st = newStage(), c = cv.getContext("2d"); let last = 0, hitAt = 0, splats = [], dir = 1, x = 40;
     const tick = (pnow) => {
       if (!cv.isConnected) return; requestAnimationFrame(tick); if (cv.offsetParent === null) return;
+      { const cw = Math.round(cv.clientWidth); if (cw > 40 && cw !== cv.width) cv.width = cw; }   /* the stage follows its box: sized at the first paint it could be 53px wide and stretched to the window */
       const W = cv.width, H = cv.height, sc = H / 60, dt = Math.min(0.05, (pnow - (last || pnow)) / 1000); last = pnow;
-      const { look, art, calm } = get();
+      const { look, art, calm, pet, petGlow, petSkinFx } = get();
       c.setTransform(1, 0, 0, 1, 0, 0); c.imageSmoothingEnabled = false;
       const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#1f2a3a"); g.addColorStop(0.62, "#2a3a4a"); g.addColorStop(0.62, "#4a7a3a"); g.addColorStop(1, "#35602a"); c.fillStyle = g; c.fillRect(0, 0, W, H);
       c.fillStyle = "rgba(0,0,0,.12)"; for (let i = 0; i < W / sc; i += 7) c.fillRect(((i * 13) % (W / sc)) * sc, H * 0.66 + ((i * 7) % 12) * sc, sc, sc);
@@ -230,6 +241,8 @@ export function createLooks(E) {
       st.list = [{ id: "me", lk: look, x, y: feetY, moving: true, face: dir }];
       c.setTransform(sc, 0, 0, sc, 0, 0);
       groundOn(c, st, pnow, calm);
+      /* your pet at your heel, wearing whatever skin is being tried, with its bred glow */
+      if (pet) { const px = x - dir * 11, py = feetY + 1; c.save(); if (petGlow) { c.shadowColor = petGlow === "legend" ? "rgba(255,140,20,.95)" : "rgba(60,140,255,.95)"; c.shadowBlur = 6 * sc; } c.translate(px, py); if (dir < 0) c.scale(-1, 1); c.drawImage(pet.im, -pet.im.width / 4, -pet.im.height / 2, pet.im.width / 2, pet.im.height / 2); c.restore(); petFx(c, px, py, petSkinFx, pnow, calm); }
       const a = art(dir > 0 ? "east" : "west"); if (a) c.drawImage(a.im, Math.round((x - a.cx / 2) * 2) / 2, feetY - a.foot / 2, a.im.width / 2, a.im.height / 2); else { c.fillStyle = "#d8c8a8"; c.fillRect(x - 3, feetY - 14, 6, 14); }
       /* the dummy: a straw target on a post, hit every 1.3 s */
       c.fillStyle = "#6a4a2a"; c.fillRect(dummyX - 0.75, feetY - 16, 1.5, 16); c.fillStyle = "#d8b060"; c.beginPath(); c.arc(dummyX, feetY - 18, 6, 0, 6.283); c.fill(); c.fillStyle = "#b8302a"; c.beginPath(); c.arc(dummyX, feetY - 18, 3.5, 0, 6.283); c.fill(); c.fillStyle = "#fff"; c.beginPath(); c.arc(dummyX, feetY - 18, 1.5, 0, 6.283); c.fill();
@@ -267,7 +280,7 @@ export function createLooks(E) {
     ground(lc, pnow, calm) { groundOn(lc, WORLD, pnow, calm); },
     over(ctx, pnow, sx, sy, S2, calm) { overOn(ctx, WORLD, pnow, sx, sy, S2, calm); showsOn(ctx, pnow, S2, calm); },
     hit(x, y, k) { if (G.STORE_LOOKS.hit[k]) WORLD.hits.push({ x, y, k, at: performance.now(), seed: (Math.random() * 1e9) | 0 }); },
-    splat, wfx, decor, preview,
+    splat, wfx, decor, preview, petFx,
     busy() { return shows.length > 0; }
   };
 }
