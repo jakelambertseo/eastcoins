@@ -29,6 +29,12 @@ const C = pl.C; G.addInv(C.inv, "tickets", 400000, C);
   const plate = Object.keys(G.ITEMS).find((k) => G.ITEMS[k].tier === "singularity" && G.ITEMS[k].slot === "body");
   is(G.ITEMS.voidstalker_body.def, Math.round(G.ITEMS[plate].def / 2), "half the defence of the plate at its level"); }
 is([G.ITEMS.logs_longbow.str, G.ITEMS.bogwoodlogs_longbow.str], [4, 36], "longbows twice as strong (4 + 4 a wood)");
-is([G.canForge("wyvern_body"), G.craftGearPrice("yewlogs_wand") > 0, G.craftGearPrice("bag_conjurer") > 0], [false, true, true], "outfits aren't reforged; wands and bags made with gems have a price again");
+is([G.craftGearPrice("yewlogs_wand") > 0, G.craftGearPrice("bag_conjurer") > 0], [true, true], "wands and bags made with gems have a price again");
+/* (2026-09-30) the owner: "yes make the armour reforgeable too". Every piece, with the bars and the Smithing of the plate it matches, at an anvil */
+{ const all = Object.keys(G.ITEMS).filter((k) => G.ITEMS[k].outfit);
+  is(all.every((k) => G.canForge(k)), true, "every outfit piece can be reforged");
+  const plate = Object.keys(G.ITEMS).find((x) => G.ITEMS[x].tier === G.OUTFIT.plate[90] && G.ITEMS[x].slot === "body" && !G.ITEMS[x].event);
+  is([JSON.stringify(G.forgeCost("voidstalker_body")), G.ITEMS.voidstalker_body.forgeReq.skill], [JSON.stringify(G.forgeCost(plate)), "smithing"], "with the same bars as its plate, and Smithing");
+  is(G.forgeSellStep("voidstalker_body"), G.forgeSellStep(plate), "and a reforge adds to its sale price exactly as it does the plate's"); }
 console.log(bad ? `\n${bad} problem(s)` : "\nThe outfitters work: two stalls, five tiers a style, weapons dear, buy-back at Bom's rate and never a profit, and the sets do what they say");
 process.exitCode = bad ? 1 : 0;

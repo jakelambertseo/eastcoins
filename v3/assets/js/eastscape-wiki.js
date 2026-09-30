@@ -949,6 +949,8 @@ export const GUIDES = [
         <h3>${H.esc(O.npc.mage)}: magic</h3>${setTable("mage")}
         <h3>Weapons, the expensive way</h3>
         <p>They also sell every bow and quiver, or every wand and Magic Bag, but at a steep price on purpose: making your own with Fletching or Wizardry is far cheaper. Wren: ${weapons("ranger")}.</p><p>Morwenna: ${weapons("mage")}.</p>
+        <h3>Reforging</h3>
+        <p><b>The armour reforges at an anvil like plate</b>: each piece takes the same bars, and the same Smithing, as the plate piece at its level. See <a data-wiki="guides/smithing">Smithing</a> for the odds. Bows and quivers reforge with their wood, wands with theirs and Magic Bags with spell paper, as they always have.</p>
         <h3>Selling back</h3>
         <p>Each buys her own style's armour and weapons for what Bom would pay: an eighth of the shelf price, and never more than ${tix(G.GEAR_SELL_MAX)} for a piece.</p>`;
     } },

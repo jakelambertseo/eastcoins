@@ -7852,7 +7852,7 @@ function renderAdmin(p) {
     .map(([k, it]) => [k, `${it.icon} ${it.name}`]));
   /* the teleport list has the same problem for the same reason — it was in whatever order the rules file
      declares scenes, which is roughly the order they were built. Forty-odd of them now. */
-  const scenes = Object.fromEntries(Object.entries({ ...SCENES, ...Object.fromEntries([["depths", "The Depths of the Mountain"], ["wild", "The Wilderness"], ["deep", "The Deep Wild"]].filter(([k]) => !SCENES[k]).map(([k, name]) => [k, { name }])) })   /* (2026-09-27) the closed file's maps, before the page has fetched it */
+  const scenes = Object.fromEntries(Object.entries({ ...SCENES, ...Object.fromEntries([["depths", "The Depths of the Mountain"], ["wild", "The Wilderness"], ["deep", "The Deep Wild"], ["valley", "The Primeval Valley"]].filter(([k]) => !SCENES[k]).map(([k, name]) => [k, { name }])) })   /* (2026-09-27) the closed file's maps, before the page has fetched it */
     .sort((a, b) => String(a[1].name).localeCompare(String(b[1].name), undefined, { sensitivity: "base" }))
     .map(([k, s]) => [k, s.name]));
   const quests = Object.fromEntries(Object.entries(QUESTS).map(([k, q]) => [k, `${q.name} (${G.qState(me, k)})`]));

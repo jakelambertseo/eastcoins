@@ -413,7 +413,7 @@ export class World {
   forgeDo(S, pl, m) {
     const C = pl.C, key = String(m.k || ""), bad = (t) => this.say(pl, t, "bad");
     if (!G.canForge(key)) return bad("That can't be reforged.");
-    const fletched = !!G.ITEMS[key].forgeWith;   /* (2026-09-25) bows and quivers: the fletching table works as well as the anvil */
+    const fletched = !!G.ITEMS[key].forgeWith && !G.ITEMS[key].outfit;   /* (2026-09-25) bows and quivers: the fletching table works as well as the anvil; (2026-09-30) the outfitters' armour is bars, so the anvil only */
     const anvil = S.objs.find((o) => (o.t === "anvil" || (fletched && (o.t === "fletcher" || o.t === "wildbench"))) && G.cheb(pl, o) <= 2);
     if (!anvil && !pl.god) return bad(fletched ? "You need to be at the fletching table or an anvil." : "You need to be at an anvil.");
     /* (2026-09-23) WHICH ONE. A level belongs to a piece now, so "reforge my diamond axe" has to name one when

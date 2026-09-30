@@ -9060,7 +9060,10 @@ export const craftMatPrice = (k) => CRAFT_P.get(k) || 0;
    - A STYLE DAMAGE BONUS that only counts while you fight in that style (`sdmg`, read by tkDmg into maxHitOf, the same multiplier the
      Whetstone and Arc Coil use): a full set is +10%, the body carrying the most.
    - ARCHERY PIECES ADD MOVEMENT (`spd`, the field speedRaw already reads off worn gear, inside SPEED_CAP): a full set is +6%.
-   No `tier`, so the anvil does not take them (canForge wants a metal tier or its own forgeWith): a later decision, not an oversight.
+   REFORGEABLE since 2026-09-30 (the owner, after a player asked "can the ranger/mage gear be reforged?": "yes make the armour reforgeable
+   too"): each piece carries `forgeWith`, the SAME bars in the same number as the plate piece it is priced against, and `forgeReq`, the
+   Smithing that plate asks, so an outfit set reforges exactly like the melee set at its level, at an anvil. Still no `tier` (it is not
+   metal and must not sort into the Smith tab's grid).
 
    TWO NPCs in the Yard's south court: Wren the Ranger (archery armour, every bow and quiver) and Morwenna the Mage (magic armour, every wand
    and Magic Bag). Armour is priced by level; WEAPONS ARE THE EXPENSIVE WAY TO GET THEM (the owner): twenty times what the crafted piece is
@@ -9106,6 +9109,7 @@ for (const [shop, style] of Object.entries(OUTFIT.style)) for (const [key, tname
   const piece = S.names[style], name = `${tname} ${piece}`;
   ITEMS[k] = { name, short: piece[0].toUpperCase() + piece.slice(1), icon: S.icon, slot, def: Math.max(1, Math.round((ITEMS[plate]?.def || 2) / 2)), sdmg: { [style]: S.dmg },
     ...(style === "archery" ? { spd: S.spd } : {}), outfit: shop, req: { skill: style, lvl },
+    ...(ITEMS[plate]?.tier ? { forgeWith: [`${ITEMS[plate].tier}_bar`, FORGE.bars(slot)], forgeReq: { skill: "smithing", lvl: TIERS.find((t) => t.key === ITEMS[plate].tier)?.gate || 1 } } : {}),   /* (2026-09-30) reforged like its plate */
     ex: `${style === "archery" ? "Light armour for an archer" : "A mage's robes"}: half the defence of plate, but +${Math.round(S.dmg * 1000) / 10}% ${style === "archery" ? "Archery" : "Magic"} damage while you fight that way${style === "archery" ? `, and ${S.spd}% faster on your feet` : ""}. A full set is +10%${style === "archery" ? " and 6% faster" : ""}. ${OUTFIT.npc[shop]} sells it, in ${OUTFIT.where[shop]}.` };
   OUTFIT_SHELF[shop].push({ k, price: OUTFIT.armourPrice(lvl, slot), kind: "armour", lvl });
   OUTFIT_BUYS[shop].add(k);
