@@ -9505,3 +9505,34 @@ Object.assign(MOBS.matriarch, { pet: ["calf", 1 / 60] });
 Object.assign(MOBS.frostjarl, { pet: ["jarlhound", 1 / 50] });
 Object.assign(MOBS.icewyrm, { pet: ["wyrmling", 1 / 25] });
 Object.assign(MOBS.raidchief, { pet: ["iceimp", 1 / 30] });
+
+/* ============================================================ (2026-09-30) THE CROWN OF THE FROST JARL, and THE ROAD BEHIND YOU IN THE DROPS.
+   The owner: "yes add the crown of the frost jarl", and "we also need to start slightly (with lowish drop rates) mixing in 2-3 previous maps plain
+   drops, so users still get a gelled sense of progress".
+   THE CROWN is the Reach's map chase item beside Rimeheart: a helm that keeps out the cold (`ward`), so the ring or amulet slot is yours again.
+   MIXED DROPS: each late map's ordinary monsters also carry a few PLAIN drops from the maps before it (materials only: no tickets, gear, waystones,
+   eggs, drinks or chase items, nothing already rarer than 2% where it comes from), each at MIX.chance (or its own rate, if that is lower), picked
+   the same way every time by the monster's name. The rule for every later map: list its monsters and the maps before it in MIX.maps. */
+ITEMS.frostjarl_crown = { name: "Crown of the Frost Jarl", short: "Crown", icon: "\u{1F451}", slot: "helm", def: 16, acc: 6, str: 4, ward: "frost", fx: { mdm: 0.06 }, req: { skill: "magic", lvl: 95 }, chase: true,
+  ex: "Icicles that never melt, on a band of frozen iron. Your spells hit 6% harder, and the Frozen Reach's cold cannot touch you while you wear it, so your ring and amulet are your own again. The Frost Jarl drops it, rarely; now and then something on the Frostspire has it." };
+VALUE.frostjarl_crown = 110000;
+MOBS.frostjarl.drops.push(["frostjarl_crown", 1, 0.01]);
+MOBS.iceelemental.drops.push(["frostjarl_crown", 1, 0.0005]);
+MOBS.frostgiant.drops.push(["frostjarl_crown", 1, 0.0005]);
+export const MIX = { chance: 0.03, pick: 4, maps: [
+  { mobs: ["caveman", "cavehunter", "sabretooth", "pterodactyl", "pteroelder", "mammoth", "raptor", "tarhorror"], from: ["junkdog", "possum", "scrapper", "gator", "potboy", "dgoblin", "dwisp", "dogre", "diron"] },   // the Valley <- the Trailer Park, the Depths
+  { mobs: ["frostwolf", "yeti", "snowowl", "frostwraith", "iceelemental", "frostgiant"], from: ["caveman", "sabretooth", "pterodactyl", "mammoth", "raptor", "tarhorror", "junkdog", "possum", "scrapper", "gator"] }   // the Frozen Reach <- the Valley, the Trailer Park
+] };
+const plainDrop = (k, p) => k !== "tickets" && !k.startsWith("waystone_") && !EGGS[k] && !ITEMS[k]?.slot && !ITEMS[k]?.drink && !ITEMS[k]?.chase && !ITEMS[k]?.use && (p ?? 1) >= 0.02 && (VALUE[k] ?? 0) <= 1500;
+for (const M of MIX.maps) {
+  const pool = new Map();
+  for (const t of M.from) for (const [k, n, p] of MOBS[t]?.drops || []) if (plainDrop(k, p) && !pool.has(k)) pool.set(k, { n, p: p ?? 1 });
+  const keys = [...pool.keys()].sort();
+  for (const t of M.mobs) {
+    const m = MOBS[t]; if (!m) continue;
+    let h = 0; for (const ch of t) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    const got = new Set(m.drops.map(([k]) => k)), picks = [];
+    for (let i = 0; i < keys.length && picks.length < MIX.pick; i++) { const k = keys[(h + i * 7) % keys.length]; if (!got.has(k) && !picks.includes(k)) picks.push(k); }
+    for (const k of picks) { const { n, p } = pool.get(k); m.drops.push([k, n, Math.min(MIX.chance, p)]); }
+  }
+}
