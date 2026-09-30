@@ -30,6 +30,27 @@ function deco(g, objs, art, x, y, w, h, name) {
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { if (g[y + j][x + i] !== "." && g[y + j][x + i] !== ",") throw new Error(`${art} at ${x},${y} is not on open ground`); g[y + j][x + i] = "#"; }
   objs.push({ t: "cliff", art, x, y, w, h, edge: true, name });
 }
+/* (2026-09-30) THE PRIMEVAL VALLEY'S BUILDER. The ground is the game's own (the rows: grass, the cobble road on ",", water); what
+   stands on it is data from lt-wild/valley-gen.py:
+     cliffs  [w, h, x, y]        a raised plateau (pv_cliff_WxH), FLAT so a monster standing on top draws over it; its whole footprint
+                                 blocks, which is what keeps a ledge monster out of a sword's reach
+     props   [art, x, y, w, h]   something standing, blocking only its footprint (the picture may hang above it)
+     decor   [art, x, y]         ferns, bones, tar holes: drawn flat and WALKED OVER (the owner: "far too many path blocking items")
+     cycads, rocks, spots        the valley's Woodcutting, Mining and Fishing at 92 */
+function pvBuild(G, def, L) {
+  const { g, objs } = fromRows(def.rows, G), shut = (x, y, w, h) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = "#"; };
+  for (const [w, h, x, y] of L.cliffs) { objs.push({ t: "cliff", art: `pv_cliff_${w}x${h}`, x, y, w, h, edge: true, flat: true, name: "A ledge" }); shut(x, y, w, h); }
+  for (const [art, x, y, w, h] of L.props) { objs.push({ t: "cliff", art, x, y, w, h, edge: true, name: PV_NAMES[art.replace(/\d+$/, "")] || "" }); shut(x, y, w, h); }
+  for (const [art, x, y] of L.decor) objs.push({ t: "cliff", art, x, y, w: 1, h: 1, edge: true, flat: true, name: PV_NAMES[art.replace(/\d+$/, "")] || "" });
+  for (const [x, y] of L.cycads) { objs.push({ t: "cycad", x, y, log: "cycadlogs", name: "Cycad", req: { skill: "woodcutting", lvl: 92 }, xp: 330 }); g[y][x] = "#"; }
+  for (const [x, y] of L.rocks) { objs.push({ t: "rock", x, y, ore: "fossil", name: "Fossil rock", req: { skill: "mining", lvl: 92 }, xp: 330 }); g[y][x] = "#"; }
+  for (const [x, y] of L.spots) objs.push({ t: "spot", x, y, name: "Primordial lake", req: { skill: "fishing", lvl: 92 }, fish: "coelacanth", xp: 420, glow: "#9ad8a0", tease: "Something with legs for fins turns over in the deep water." });
+  if (L.sign) { const [x, y, name] = L.sign; objs.push({ t: "sign", x, y, name }); g[y][x] = "#"; }
+  return { g, objs, blobs: [] };
+}
+const PV_NAMES = { pv_palm: "A cycad palm", pv_fern: "Giant ferns", pv_tent_red: "A hide tent", pv_tent_green: "A hide tent", pv_tusk_l: "A mammoth tusk", pv_tusk_r: "A mammoth tusk",
+  pv_totem: "A bone totem", pv_skeleton: "The fossil of something enormous", pv_skull: "A skull bigger than a cart", pv_throne: "Old Rex's throne, of bones", pv_bone: "Old bones",
+  pv_vent: "A steaming vent", pv_tarhole: "A tar pit, bubbling", pv_crystal: "Red crystal", pv_lavarock: "Cooled lava", pv_volcano: "The volcano" };
 /* an animated piece on rock (a waterfall, a lava pool): the footprint stays blocked, its cells leave the wall set */
 function animPiece(g, objs, walls, spec) {
   for (let j = 0; j < spec.h; j++) for (let i = 0; i < spec.w; i++) { const k = `${spec.x + i},${spec.y + j}`; if (!walls.has(k)) throw new Error(`${spec.anim} at ${spec.x},${spec.y} is not on rock at ${k}`); walls.delete(k); }
@@ -724,66 +745,110 @@ export function createClosedScenes(G, H) {
     npcs: [],
     bots: []
   },
-  /* (2026-09-30) THE PRIMEVAL VALLEY, north of the Trailer Park (HELD by HOLD.valley in the rules). The owner, on the first build: "the mob density
-     is a little too high, the map is too dull/the same. try and draw it/lay it out like [the reference world map], lets add some random
-     thematically okay art from our tile packs". So it is a COMPOSED picture now (lt-wild/valley.json, compose-rects.mjs), not tiles: the
-     cavemen's forest and campfire (north-west), the dragon fossil and its throne where Old Rex sits (north), the cave, the hut and the
-     waterfall with a stone bridge (south-west), the tusk camp (south), and a volcano with tar holes and steaming vents (south-east). The
-     grid is lt-wild/valley-walk.py. Eighteen monsters, down from twenty-five. */
+  /* VALLEY-GEN: the Primeval Valley's three maps, written by lt-wild/valley-gen.py (edit that, not this) */
   valley: {
-    name: "The Primeval Valley", exits: { s: "trailer" }, arrive: { s: { x: 21, y: 24 } }, bgArt: ["valley_bg1", "valley_bg2"], noBanks: true, miniWater: "#3f8fd8", tint: "rgba(60,40,10,.08)",
+    name: "The Primeval Valley", exits: {"s": "trailer", "n": "valley_ridge"}, arrive: {"s": {"x": 21, "y": 24}, "n": {"x": 21, "y": 1}}, noBanks: true, tint: "rgba(60,40,10,.06)",
     rows: [
-          "##################..########################",
-          "###.........######.#########################",
-          "###...........####.#########################",
-          "###.....##....####.#########################",
-          "###.....##..######..########################",
-          "............######..########################",
-          "............######..########################",
-          "....##############..########################",
-          "....##############..########################",
-          "....##############........##.#########......",
-          "..################.#......##.#########...#..",
-          "..################.#.........######...##....",
-          "......############.#.##.#.............##..#.",
-          ".####................##.....................",
-          ".####.....######.........#...############.##",
-          ".....##~~~######.........#.#.############...",
-          "#######~~~#####..........#...############...",
-          "#######~~~#####.#######..#...############...",
-          "#######~~~#####.#######..##..############...",
-          "#######~~~#####.#######..################..#",
-          "#######~~~~~~~#.#######..################..#",
-          "#########~~~~~#.#######..################...",
-          "#######...~~~...#######....####..........#..",
-          "######........##.##.......................#.",
-          "######....~~~.##.##.......#..#.......#....#.",
-          "..........~~~.##....eeee..##.#.##......##..."
+      ".....................eee....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".............,,,,,,,,,,.....................",
+      ".............,,,,,,,,,,.....................",
+      ".............,,.............................",
+      ".............,,.............................",
+      ".............,,.............................",
+      ".............,,.............................",
+      ".............,,.............................",
+      ".............,,.............................",
+      ".............,,.............................",
+      ".............,,,,,,,,,,,,,,,,,,,,,..........",
+      ".............,,,,,,,,,,,,,,,,,,,,,..........",
+      "..~~~~~~~~...........,,.....................",
+      "..~~~~~~~~...........,,.....................",
+      "..~~~~~~~~...........,,.....................",
+      "..~~~~~~~~...........,,.....................",
+      "..~~~~~~~~...........,,.....................",
+      "..~~~~~~~~...........,,.....................",
+      "..~~~~~~~~...........,,.....................",
+      ".....................eee...................."
     ],
-    build() {
-      const { g, objs } = fromRows(this.rows, G);
-      const put = (o) => { objs.push(o); g[o.y][o.x] = "#"; };
-      /* WOODCUTTING: cycads at 92, in the forest clearing, on its west track, by the camp and down the east side */
-      for (const [x, y] of [[4, 2], [11, 5], [1, 6], [42, 16], [42, 21], [24, 23]]) put({ t: "cycad", x, y, log: "cycadlogs", name: "Cycad", req: { skill: "woodcutting", lvl: 92 }, xp: 330 });
-      /* MINING: fossil rocks at 92, round the fossil and the volcano */
-      for (const [x, y] of [[24, 10], [28, 12], [36, 12], [41, 17], [33, 23]]) put({ t: "rock", x, y, ore: "fossil", name: "Fossil rock", req: { skill: "mining", lvl: 92 }, xp: 330 });
-      /* FISHING: coelacanth at 92, in the stream below the waterfall, either side of the bridge */
-      for (const [x, y] of [[13, 20], [11, 21], [11, 24], [12, 25]]) objs.push({ t: "spot", x, y, name: "Primordial stream", req: { skill: "fishing", lvl: 92 }, fish: "coelacanth", xp: 420, glow: "#9ad8a0", tease: "Something with legs for fins turns over under the waterfall." });
-      objs.push({ t: "sign", x: 24, y: 24, name: "THE PRIMEVAL VALLEY: Combat 85 and up. Most things here shrug off one way of fighting and fear another: read them (right-click) before you swing. Old Rex sits on the fossil's throne. The Matriarch walks the plain." }); g[24][24] = "#";
-      return { g, objs, blobs: [] };
-    },
-    /* Cavemen in the forest and the camp; sabretooths by the cave and the hut; pterodactyls over the stream (a bow or a wand); mammoths on
-       the plain; raptors down the east side; tar horrors at the volcano's tar holes; Old Rex at his throne; the Matriarch on the plain */
-    mobs: [["caveman", 6, 3], ["caveman", 10, 2], ["caveman", 23, 16], ["caveman", 20, 23],
-      ["sabretooth", 1, 9], ["sabretooth", 7, 24],
-      ["pterodactyl", 8, 17, { perch: true }], ["pterodactyl", 11, 20, { perch: true }], ["pterodactyl", 27, 13],
-      ["mammoth", 21, 14], ["mammoth", 33, 13],
-      ["raptor", 42, 18], ["raptor", 40, 23], ["raptor", 35, 23],
-      ["tarhorror", 30, 23], ["tarhorror", 38, 22],
-      ["rex", 31, 12], ["matriarch", 12, 13]],
-    npcs: [],
-    bots: []
+    build() { return pvBuild(G, this, {"cliffs": [[7, 7, 2, 2], [5, 7, 15, 0], [8, 7, 25, 2], [6, 8, 36, 3], [6, 7, 35, 18], [5, 7, 24, 19]], "props": [["pv_tent_red", 29, 20, 4, 2], ["pv_tent_green", 30, 23, 4, 2], ["pv_totem", 19, 24, 1, 1], ["pv_palm1", 11, 2, 1, 1], ["pv_palm2", 1, 12, 1, 1], ["pv_palm1", 42, 14, 1, 1], ["pv_palm2", 34, 1, 1, 1], ["pv_palm1", 12, 24, 1, 1], ["pv_palm2", 42, 24, 1, 1]], "decor": [["pv_fern1", 4, 12], ["pv_fern2", 18, 11], ["pv_fern3", 27, 11], ["pv_bone1", 33, 20], ["pv_fern2", 16, 21], ["pv_bone2", 24, 12], ["pv_fern1", 41, 12], ["pv_fern3", 10, 16]], "cycads": [[10, 4], [11, 14], [16, 23], [42, 21]], "rocks": [], "spots": [[9, 19], [9, 22], [5, 18], [7, 18]], "sign": [23, 24, "THE PRIMEVAL VALLEY: Combat 85 and up, and a bow's country. Most of what lives here is up on the ledges, out of a sword's reach: bring arrows. The Matriarch walks the Lowlands. The Ridge is north, and Old Rex's lair beyond it."]}); },
+    mobs: [["caveman", 5, 4, { perch: true }], ["pterodactyl", 17, 2, { perch: true }], ["caveman", 27, 4, { perch: true }], ["pterodactyl", 30, 4, { perch: true }], ["caveman", 39, 5, { perch: true }], ["pterodactyl", 38, 20, { perch: true }], ["caveman", 26, 21, { perch: true }], ["sabretooth", 17, 20], ["sabretooth", 31, 12], ["mammoth", 10, 11], ["matriarch", 32, 10]],
+    npcs: [], bots: []
   },
+  valley_ridge: {
+    name: "The Primeval Ridge", exits: {"s": "valley", "n": "valley_lair"}, arrive: {"s": {"x": 21, "y": 24}, "n": {"x": 21, "y": 1}}, noBanks: true, tint: "rgba(60,40,10,.06)",
+    rows: [
+      ".....................eee....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,,,,,,,,,,............",
+      ".....................,,,,,,,,,,,............",
+      "..............................,,............",
+      "..............................,,............",
+      "..............................,,............",
+      "..............................,,............",
+      "..............................,,............",
+      "..............................,,............",
+      "..............................,,............",
+      "..............................,,............",
+      "..............................,,............",
+      ".....................,,,,,,,,,,,............",
+      ".....................,,,,,,,,,,,............",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................eee...................."
+    ],
+    build() { return pvBuild(G, this, {"cliffs": [[7, 7, 2, 1], [6, 8, 10, 3], [5, 7, 2, 11], [8, 7, 8, 15], [5, 7, 24, 9], [9, 7, 33, 0], [6, 8, 35, 10], [5, 7, 25, 19]], "props": [["pv_skull", 15, 23, 4, 2], ["pv_crystal", 42, 19, 1, 1], ["pv_palm1", 18, 1, 1, 1], ["pv_palm2", 1, 22, 1, 1], ["pv_palm1", 42, 24, 1, 1], ["pv_lavarock", 33, 23, 1, 1]], "decor": [["pv_fern1", 17, 9], ["pv_bone1", 28, 16], ["pv_fern2", 6, 20], ["pv_bone2", 40, 21], ["pv_fern3", 19, 13], ["pv_fern1", 33, 8]], "cycads": [[1, 19], [42, 22], [17, 15]], "rocks": [[18, 4], [23, 21], [33, 13], [42, 8], [17, 20]], "spots": [], "sign": null}); },
+    mobs: [["pterodactyl", 5, 3, { perch: true }], ["caveman", 13, 5, { perch: true }], ["pterodactyl", 4, 13, { perch: true }], ["caveman", 10, 17, { perch: true }], ["pterodactyl", 13, 17, { perch: true }], ["caveman", 26, 11, { perch: true }], ["pterodactyl", 35, 2, { perch: true }], ["caveman", 39, 2, { perch: true }], ["pterodactyl", 38, 12, { perch: true }], ["caveman", 27, 21, { perch: true }], ["raptor", 17, 12], ["raptor", 36, 21], ["raptor", 6, 23]],
+    npcs: [], bots: []
+  },
+  valley_lair: {
+    name: "Old Rex's Lair", exits: {"s": "valley_ridge"}, arrive: {"s": {"x": 21, "y": 24}}, noBanks: true, tint: "rgba(60,40,10,.06)",
+    rows: [
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,,,,,,,,,,,,,.........",
+      ".....................,,,,,,,,,,,,,,.........",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................eee...................."
+    ],
+    build() { return pvBuild(G, this, {"cliffs": [[7, 7, 1, 1], [6, 8, 2, 13], [6, 7, 10, 16], [5, 7, 36, 10], [5, 7, 25, 19]], "props": [["pv_skeleton", 15, 6, 12, 3], ["pv_skull", 10, 7, 4, 2], ["pv_throne", 21, 10, 2, 1], ["pv_tusk_l", 19, 10, 1, 1], ["pv_tusk_r", 24, 10, 1, 1], ["pv_volcano", 28, 3, 15, 6], ["pv_vent1", 31, 12, 1, 1], ["pv_vent2", 42, 11, 1, 1], ["pv_vent1", 33, 24, 1, 1], ["pv_crystal", 42, 16, 1, 1], ["pv_palm1", 9, 1, 1, 1], ["pv_palm2", 16, 24, 1, 1], ["pv_palm1", 42, 24, 1, 1]], "decor": [["pv_tarhole1", 30, 21], ["pv_tarhole2", 37, 22], ["pv_tarhole1", 34, 15], ["pv_bone1", 19, 14], ["pv_bone2", 26, 13], ["pv_fern1", 17, 19], ["pv_fern2", 8, 11]], "cycads": [], "rocks": [[28, 14], [40, 19], [18, 21]], "spots": [], "sign": null}); },
+    mobs: [["caveman", 4, 3, { perch: true }], ["pterodactyl", 5, 15, { perch: true }], ["caveman", 13, 18, { perch: true }], ["caveman", 38, 12, { perch: true }], ["pterodactyl", 27, 21, { perch: true }], ["pterodactyl", 19, 7, { perch: true }], ["pterodactyl", 24, 7, { perch: true }], ["tarhorror", 30, 20], ["tarhorror", 37, 21], ["tarhorror", 34, 16], ["raptor", 17, 16], ["raptor", 40, 22], ["rex", 21, 12]],
+    npcs: [], bots: []
+  },
+  /* VALLEY-GEN END */
   orchard: {
     name: "The Orchard Wall", exits: { n: "boneyard" }, arrive: { n: { x: 12, y: 1 } }, bgArt: ["orchard_bg1", "orchard_bg2"], noBanks: true, miniWater: "#3f8fd8", tint: "rgba(20,60,20,.10)",   /* (the door is on the grass between the canopies, not under SPAN) */
     rows: [
