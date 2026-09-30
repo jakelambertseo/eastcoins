@@ -23,7 +23,7 @@ export function createDecorRules(G) {
    must be yours and spare, belong in this kind of scene, sit on open ground, overlap nothing, and WALL NOTHING OFF: after it
    goes down every tile that could be walked to before can still be walked to. That one rule covers the door, the dock, the
    plots, the pedestals, the pen and Yahsmeena without naming any of them. */
-const DECOR_SELLBACK = 0.25, DECOR_CAP = { isle: [0, 12, 20, 32], home: 12 };   // isle: by island tier (the Far Shore shares the island's count); flat pieces count a quarter
+const DECOR_SELLBACK = 0.25, DECOR_CAP = { isle: [0, 20, 32, 48], home: 20 };   /* (2026-09-30) the bigger cottage: 12 -> 20 inside */   /* (2026-09-30) the bigger islands: 12/20/32 -> 20/32/48 outside */   // isle: by island tier (the Far Shore shares the island's count); flat pieces count a quarter
 const DECOR = {
   /* (2026-09-27, the owner: "build the collection log ... a free item at yasmeena that people can place down on their island so everyone gets one.
      make it the newest item in the decor menu, and add a highlight/standout effect ... it needs to look like a podium"). FIRST in the list, so
@@ -80,6 +80,8 @@ const DECOR = {
 /* (2026-09-30) THE STORE'S DECOR (G.STORE_DECOR, the rules file): bought in the Store, placed and capped exactly like Yahsmeena's. `store`
    keeps them off her shelf; she still takes one back at DECOR_SELLBACK. */
 for (const [k, P] of Object.entries(G.STORE_DECOR || {})) if (!DECOR[k]) DECOR[k] = { ...P, store: true };
+/* (2026-09-30) THE LIVESTOCK (G.ISLE_FARM): Yahsmeena sells them, and each fills up with its produce while you are away (see farmReady) */
+for (const [k, F] of Object.entries(G.ISLE_FARM || {})) if (!DECOR[k]) DECOR[k] = { name: F.name, w: F.w, h: F.h, in: "isle", price: F.price, max: G.FARM_MAX, farm: k, art: `d_${k}`, isNew: false, blurb: F.ex };
 const decorArt = (k) => DECOR[k]?.art || `d_${k}`;
 /** Which kind of scene this is for decorating: "isle" (an island or its far shore), "home" (the cottage), or null. "at" is what a placed piece records. */
 const decorPlace = (key) => { const b = String(key).split(":")[0]; return b === "home" ? "home" : /^isle\d?$/.test(b) || b === "shore" ? "isle" : null; };
@@ -97,7 +99,7 @@ function decorInto(key, built, isle) {
        action was dropped without a word. That was invisible while nothing here could be clicked; the bank chest
        is the first piece meant to DO something, and it did nothing. Anything interactive added to this shop
        later needs the id to keep meaning the index. */
-    built.objs.push({ t: P.bank ? "booth" : P.cellar ? "cellar" : P.hatch ? "hatchery" : P.podium ? "podium" : "decor", decor: true, k: d.k, art: decorArt(d.k), x: d.x, y: d.y, w: P.w, h: P.h, name: P.name, id: built.objs.length, ...(P.flat ? { flat: true, soft: true } : {}) });
+    built.objs.push({ t: P.bank ? "booth" : P.cellar ? "cellar" : P.hatch ? "hatchery" : P.podium ? "podium" : P.farm ? "farm" : "decor", ...(P.farm ? { farm: P.farm } : {}), decor: true, k: d.k, art: decorArt(d.k), x: d.x, y: d.y, w: P.w, h: P.h, name: P.name, id: built.objs.length, ...(P.flat ? { flat: true, soft: true } : {}) });
     if (!P.flat) for (let y = d.y; y < d.y + P.h; y++) for (let x = d.x; x < d.x + P.w; x++) if (built.g[y]?.[x] !== undefined) built.g[y][x] = "#"; }
   return built;
 }
@@ -121,5 +123,22 @@ function decorFits(key, isle, k, x, y) {
   let lost = 0; for (const id of before) if (!then.has(id) && after.g[(id / G.COLS) | 0][id % G.COLS] !== "#") lost++;
   return lost ? "That would wall part of the place off. Leave a way through." : null;
 }
-  return { DECOR, DECOR_SELLBACK, DECOR_CAP, decorArt, decorPlace, decorAt, decorCount, decorCap, decorSpare, decorInto, decorFits };
+/* (2026-09-30) THE SAFETY NET. Every piece an island record holds is checked against the scene it stands in, built fresh: each tile it
+   covers must be on the map, walkable and not a dock or an exit; a back-wall piece must still be on the back wall. One that is not goes
+   BACK TO THE TRAY (it stays in `owned`, so it is only unplaced, never lost). The game server runs this when a character loads and after
+   an island upgrade; decorInto never checks, so without this a piece could be drawn standing in the sea. Returns the pieces sent back. */
+function decorSweep(isle) {
+  if (!isle || !Array.isArray(isle.decor)) return [];
+  const base = {}, keyOf = (at) => (at === "isle" ? G.isleKey(isle, "sweep") : `${at}:sweep`), back = [];
+  isle.decor = isle.decor.filter((d) => {
+    const P = DECOR[d.k]; if (!P || !["isle", "shore", "home"].includes(d.at)) { back.push(d); return false; }
+    const key = keyOf(d.at), def = G.sceneDef(key); if (!def) { back.push(d); return false; }
+    const g = (base[key] ||= G.buildScene(key).g);
+    if (P.wall && d.y !== (def.room ? def.room[1] : -1)) { back.push(d); return false; }
+    for (let y = d.y; y < d.y + P.h; y++) for (let x = d.x; x < d.x + P.w; x++) if (!G.walkableIn(g, x, y) || "ep".includes(g[y][x])) { back.push(d); return false; }
+    return true;
+  });
+  return back;
+}
+  return { DECOR, DECOR_SELLBACK, DECOR_CAP, decorArt, decorPlace, decorAt, decorCount, decorCap, decorSpare, decorInto, decorFits, decorSweep };
 }

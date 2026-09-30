@@ -12,7 +12,7 @@ export function createStore(E) {
   const UI = "/v3/assets/img/glad/flat/ui/", FLAT = "/v3/assets/img/glad/flat/";
   let tab = "boost", trial = {}, stageOn = false, LK = null;
   const GROUPS = { name: [["title", "Title", "one worn at a time, under your name"], ["col", "Colour"], ["fx", "Effect"], ["icon", "Badge"], ["frame", "Frame"]],
-    looks: Object.entries(G.LOOK_GROUPS).map(([k, l]) => [k, l, "one worn at a time"]), decor: [["isle", "For your island"], ["home", "For your cottage"]],
+    looks: Object.entries(G.LOOK_GROUPS).map(([k, l]) => [k, l, "one worn at a time"]), decor: [["cot", "Cottage styles", "the building itself, outside"], ["wall", "Cottage walls"], ["floor", "Cottage floors"], ["isle", "For your island"], ["home", "For your cottage"]],
     pets: [["pskin", "Pet skins", "looks only: your pet out wears it, and keeps everything it does"], ["give", "Eggs", "hatch them in a hatchery on your island"]] };
   const win = () => $("storeWin");
   const S = () => E.me?.store || { own: [], name: {} };
@@ -41,11 +41,13 @@ export function createStore(E) {
     });
   }
   const priceHtml = (it) => { const p = G.priceOf(it); return `<span class="st2-price">${it.sale ? `<s>${it.price.toLocaleString()}</s>` : ""}<img src="${UI}g_tickets.png?v=1" alt="" onerror="this.remove()">${p.toLocaleString()}</span>`; };
-  const artUrl = (k) => (k.startsWith("pskin_") ? `${FLAT}${k}.png?v=1` : `${E.IART}${k}.png?v=1`);
+  const artUrl = (k) => (k.startsWith("st_") ? `${E.IART}${k}.png?v=1` : `${FLAT}${k}.png?v=1`);   /* the Store's icons are items; skins and cottages are flat pictures */
   function pic(it) {
     const L = G.STORE_LOOKS;
     if (it.art) return `<img class="st2-art${it.kind === "pskin" ? " pet" : ""}" src="${artUrl(it.art)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('i'),{className:'st2-emo',textContent:'${it.kind === "pskin" ? "\u{1F43E}" : "\u{2728}"}'}))">`;
     if (it.kind === "col") return `<i class="st-sw" style="background:${it.col}"></i>`;
+    if (it.kind === "wall") return `<i class="st2-room" style="--wall:${it.col}"><b></b></i>`;   /* (2026-09-30) a corner of the room, in that wall */
+    if (it.kind === "floor") return `<i class="st2-room fl-${it.val}"><b></b></i>`;
     if (it.kind === "frame") return `<i class="st-sw st-fr" style="border-color:${it.col}"></i>`;
     if (it.kind === "icon") return `<i class="st-sw st-ic"><img src="${ART}nb_${it.val}.png?v=${ART_V}" alt=""></i>`;
     if (it.kind === "fx") return `<i class="st-sw st-fx"><b class="nfx-${it.val}">Aa</b></i>`;
@@ -112,7 +114,7 @@ export function createStore(E) {
     if (tab === "name") body += nameStage();
     if (tab === "boost") body += `<p class="k-note st2-lead">The two 2X potions are for the whole server, for 30 minutes, in your name. The loupes change the Gem Sorter's odds, and show exactly how.</p>`;
     if (tab === "world") body += `<p class="k-note st2-lead">Set off where you're standing, for everyone in that area. One show at a time in any one place.</p>`;
-    if (GROUPS[tab]) for (const [k, l, sub] of GROUPS[tab]) { const list = R.filter((it) => (tab === "decor" ? G.STORE_DECOR[it.dk]?.in === k : it.kind === k)); if (list.length) body += `<div class="k-label st2-gl">${l}${sub ? ` <small>${sub}</small>` : ""}</div>${grid(list)}`; }
+    if (GROUPS[tab]) for (const [k, l, sub] of GROUPS[tab]) { const list = R.filter((it) => (tab === "decor" && it.kind === "decor" ? G.STORE_DECOR[it.dk]?.in === k : it.kind === k)); if (list.length) body += `<div class="k-label st2-gl">${l}${sub ? ` <small>${sub}</small>` : ""}</div>${grid(list)}`; }
     else body += grid(R);
     const B = w.querySelector(".st2-body"), keep = B.scrollTop, focus = document.activeElement?.dataset?.tt, val = focus ? document.activeElement.value : null;
     B.innerHTML = body; B.scrollTop = keep;
@@ -154,7 +156,10 @@ export const CSS = `
 .st2-card.owned{background:#e9dcbc}
 .st2-pic{grid-row:1/3;display:grid;place-items:center;width:64px;height:64px;border-radius:6px;background:rgba(58,36,16,.1);box-shadow:inset 0 0 0 1.5px rgba(90,58,24,.2);overflow:hidden}
 .st2-pic .st-sw{width:40px;height:40px}.st2-thumb{width:64px;height:43px;image-rendering:pixelated;border-radius:4px}
-.st2-decor{max-width:58px;max-height:58px;image-rendering:pixelated}.st2-art{width:48px;height:48px;image-rendering:pixelated;object-fit:contain}.st2-art.pet{width:58px;height:58px}.st2-emo{font-style:normal;font-size:34px;line-height:1}.st2-emo img{width:40px;height:40px;image-rendering:pixelated}
+.st2-decor{max-width:58px;max-height:58px;image-rendering:pixelated}
+.st2-room{display:block;position:relative;width:52px;height:52px;border-radius:4px;overflow:hidden;background:var(--wall,#b8986a);box-shadow:inset 0 0 0 2px rgba(0,0,0,.25)}.st2-room b{position:absolute;left:0;right:0;bottom:0;height:60%;background:#9a6a3a;background-image:repeating-linear-gradient(0deg,#7a4a26 0 1px,transparent 1px 7px)}
+.st2-room.fl-marble b{background:#e8e2d4;background-image:conic-gradient(#cfc6b2 25%,transparent 0 50%,#cfc6b2 0 75%,transparent 0);background-size:14px 14px}.st2-room.fl-carpet b{background:#5a1626;background-image:radial-gradient(#c8963a 1.5px,transparent 2px);background-size:9px 9px}
+.st2-room.fl-checker b{background:#ece6d8;background-image:conic-gradient(#1c1a20 25%,transparent 0 50%,#1c1a20 0 75%,transparent 0);background-size:14px 14px}.st2-room.fl-stone b{background:#7a7468;background-image:linear-gradient(#5a554c 1px,transparent 1px),linear-gradient(90deg,#5a554c 1px,transparent 1px);background-size:12px 10px}.st2-art{width:48px;height:48px;image-rendering:pixelated;object-fit:contain}.st2-art.pet{width:58px;height:58px}.st2-emo{font-style:normal;font-size:34px;line-height:1}.st2-emo img{width:40px;height:40px;image-rendering:pixelated}
 .st2-ttl{font:800 12px/1.2 var(--k-disp);color:#e8d8a8;background:#2a1c10;padding:6px 4px;border-radius:5px;text-align:center;font-style:normal;max-width:60px;overflow:hidden}
 .st2-txt{min-width:0}.st2-txt b{display:block;font:800 15px/1.2 var(--k-disp);padding-right:40px}.st2-txt small{display:block;margin-top:3px;font:var(--k-f-small);color:var(--k-ink2)}.st2-txt .k-chip{margin-top:3px}
 .st2-row{grid-column:2;display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}

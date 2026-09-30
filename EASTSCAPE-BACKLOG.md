@@ -2092,3 +2092,20 @@ Shared 395, wiki 221. The player who reported the gem take-out can be told it's 
   anything that no longer fits goes back to isle.owned as spare, never lost). Plots, pedestals, pen, hatchery, cellar ladder, bank chest too.
 - To bring: bigger island tiers/maps, a look pass (Yard ground rules, shoreline, props), cottage styles (interior/exterior skins, wallpaper,
   floors), and a list of ideas (visiting/likes, island ratings, guest book, decor sets, lighting at night, etc.).
+
+## BUILT ON DEV (2026-09-30), NOT LIVE: the islands, phases 1-3 (the owner: "start phase 1, then 2, then 3 ... all on dev for now")
+- Phase 1, bigger islands: `isleBuild` = the old oval (ISLE_OLD) UNION a much bigger coast (ISLE_SHAPE); every old object stays put,
+  new palms/rocks/bushes only on tiles that were sea; dock + ferry at the new south shore (planks run up the beach), T3 bridge at the
+  new east shore; cobble path dock -> door (","); stranded pockets get a sandy way through. Decor caps 20/32/48 outside, 20 inside.
+  SAFETY NET `decorSweep` (decor rules): runs at login and after an upgrade, any piece on a bad tile goes back to the tray (owned kept).
+  Looks: themes are real ground sets now (t_isle_<theme>[_w], tools/eastscape-isle-ground-art.mjs): sand beach at every coast; new
+  themes Tropical 5,000 / Autumn 5,000 / Frozen 7,500; trees tinted per theme (ISLE_TREE_FX). Roads now paint on islands.
+- Phase 2, the cottage: bigger inside for everybody (room [5,3,16,10] -> [3,3,18,12], old floor all still floor, ferns moved to the new
+  corners, door on the new front wall); COTTAGE styles (Stone Manor, Log Cabin, Beach Hut, Witch's House, Casino Villa: PixelLab art,
+  tools/eastscape-isle-extra-art.mjs), walls (cream, burgundy, navy, forest, gold damask) and floors (marble, casino carpet, checker,
+  flagstone), sold in the Store's Decor tab, mirrored onto isle.look (isleLookSync) so visitors see them offline.
+- Phase 3, livestock: chicken coop / cow pen / fishing cage (ISLE_FARM) sold by Yahsmeena, fill in real time up to a day's worth, two of a
+  kind fill twice as fast, click to empty (bag, then bank), bubble shows rounds waiting. Dev admin: `farmage` ages the clocks.
+- Also: Yahsmeena's shop lists every Store piece with a STORE ribbon and a button to the Store.
+- Tests: tools/eastscape-isle-resize-test.mjs (every old decor tile still usable, 300 random pieces survive per tier, cottage floor kept),
+  tools/eastscape-isle-farm-test.mjs. Wiki islands guide rewritten. Ships with a VERSION bump when the owner says go.

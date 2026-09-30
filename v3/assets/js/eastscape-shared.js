@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 370;   /* (2026-09-30) the Store: pet skins, eggs, bag slots, art for everything; the wiki pages its long tables */   /* was 369: */   /* (2026-09-30) THE STORE, REBUILT: effects, titles, decor, the War Horn, 2X Skilling XP, the loupes, bank pages, quick slots; and "speed" walks */   /* (2026-09-30) the Frost charm is 50,000 and the outfitters show it */   /* (2026-09-30) THE FROZEN REACH OPENS */   /* (2026-09-30) THE YARD RAID: the Ice Man (the Frozen Reach stays held) */   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 371;   /* (2026-09-30) THE ISLANDS: bigger, better-looking, eight themes, cottage styles, livestock */   /* was 370: */   /* (2026-09-30) the Store: pet skins, eggs, bag slots, art for everything; the wiki pages its long tables */   /* was 369: */   /* (2026-09-30) THE STORE, REBUILT: effects, titles, decor, the War Horn, 2X Skilling XP, the loupes, bank pages, quick slots; and "speed" walks */   /* (2026-09-30) the Frost charm is 50,000 and the outfitters show it */   /* (2026-09-30) THE FROZEN REACH OPENS */   /* (2026-09-30) THE YARD RAID: the Ice Man (the Frozen Reach stays held) */   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -2977,16 +2977,33 @@ function isleLand(g, cx, cy, rx, ry) {
    now she talks. When it is, she is the one who opens it. */
 export const ISLE_NPCS = [{ name: "Yahsmeena", tag: "NPC" /* (v100, the owner: over her head it reads "Yahsmeena - NPC") */, look: [3, 9, 3, 0, 0, -1, 5, 0], x: 13, y: 3, still: true, opens: "decor",
   lines: ["Hi, I'm Yahsmeena. I'll be doing the decorating round here: furniture, rugs, the lot.", "The shop's open. Ask to see what I've got.", "Buy it from me, then press Decorate and put it where you like.", "Good taste isn't free. It is, however, for sale.", "That patch by the dock? I'm thinking a bench. Maybe a flamingo. Don't argue.", "Every island gets me. Lucky islands."] }];
+/* (2026-09-30, the owner: "we need to make the island sizes bigger (and make sure to retain everyones custom placed decor), make them look
+   better") BIGGER ISLANDS THAT KEEP EVERY PIECE WHERE IT STANDS. Decor is saved as tiles on this 44x26 map, and the old land was a small
+   oval in the top-left corner (ISLE_OLD). The new land is that SAME oval plus a much bigger coast around it (ISLE_SHAPE, with a wandering
+   shoreline), so no tile that was ever land becomes sea, and every object of the old island (cottage, plots, pedestals, pen, sign, palms,
+   Yahsmeena) stays exactly where it was: a piece that fitted before still fits. What moves is only what stood IN the sea: the dock and the
+   ferry now start at the new south shore, and the Far Shore's bridge at the new east one. The new land gets a cobble path from the dock
+   to the cottage door, and palms and rocks, but ONLY on tiles that were sea before, so nothing new can land on anybody's furniture.
+   tools/eastscape-isle-resize-test.mjs rebuilds the old islands and proves all of it. */
+export const ISLE_OLD = (tier) => (tier >= 2 ? [10.5, 6, 10.3, 5.6] : [10.5, 5.5, 8.6, 4.9]);
+export const ISLE_SHAPE = { 1: [14.5, 8, 13.5, 7], 2: [17.5, 9.5, 17, 9], 3: [21, 11.5, 20, 11] };
+const isleCoast = (x, y) => 0.09 * Math.sin(x * 0.9 + y * 0.35) + 0.07 * Math.sin(y * 1.3 - x * 0.45) + 0.05 * Math.sin((x + y) * 2.1);
+export function isleOldLand(tier) { const g = grid("~"); isleLand(g, ...ISLE_OLD(tier)); return g; }
 function isleBuild(tier) {
-  const g = grid("~"), objs = [], big = tier >= 2;
-  if (big) isleLand(g, 10.5, 6, 10.3, 5.6); else isleLand(g, 10.5, 5.5, 8.6, 4.9);
-  // the dock: planks out to the ferry; the far end takes you back to River Bend
-  const d0 = big ? 11 : 10;
+  const g = grid("~"), objs = [], big = tier >= 2, [cx, cy, rx, ry] = ISLE_SHAPE[Math.min(3, Math.max(1, tier))], old = isleOldLand(tier);
+  for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) if (old[y][x] !== "~" || ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1 + isleCoast(x, y)) g[y][x] = ".";
+  /* no lone puddles inside the land and no one-tile spits: a sea tile with land on three sides becomes land */
+  for (let pass = 0; pass < 2; pass++) for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) if (g[y][x] === "~" && [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => g[y + dy][x + dx] === ".").length >= 3) g[y][x] = ".";
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (g[y][x] === ".") { let wet = false; for (const [dx, dy] of D8) if (g[y + dy]?.[x + dx] === "~") wet = true; if (wet) g[y][x] = "s"; }
+  const fresh = (x, y) => old[y]?.[x] === "~";   /* a tile that was sea on the old island: the only ones new things may stand on */
+  // the dock: planks out from the new south shore to the ferry; the far end takes you back to the Yard
+  let d0 = 10; while (d0 < ROWS - 3 && (g[d0][10] !== "~" || g[d0][11] !== "~")) d0++;
   for (let y = d0; y < ROWS; y++) for (const x of [10, 11]) g[y][x] = y === ROWS - 1 ? "e" : "p";
   objs.push({ t: "dock", x: 10, y: d0, w: 2, h: ROWS - d0 });
-  objs.push({ t: "boatback", x: 12, y: 11, w: 2, h: 1, name: "Ferry" });
-  // the Far Shore: a bridge off the east side
-  if (tier >= 3) { for (let y = 5; y <= 7; y++) { g[y][COLS - 1] = "e"; for (let x = 19; x < COLS - 1; x++) g[y][x] = "p"; } objs.push({ t: "dock", x: 19, y: 5, w: 2, h: 3 }); }
+  objs.push({ t: "boatback", x: 12, y: Math.min(ROWS - 2, d0 + 1), w: 2, h: 1, name: "Ferry" });
+  // the Far Shore: a bridge off the new east shore
+  if (tier >= 3) { let bx = COLS - 2; while (bx > 20 && [5, 6, 7].every((y) => g[y][bx - 1] === "~")) bx--;
+    for (let y = 5; y <= 7; y++) { g[y][COLS - 1] = "e"; for (let x = bx; x < COLS - 1; x++) g[y][x] = "p"; } objs.push({ t: "dock", x: bx, y: 5, w: COLS - 1 - bx, h: 3 }); }
   const house = { t: "house", img: "cottage", x: 8, y: 1, w: 5, h: 3, door: { x: 10, y: 3 }, name: "Cottage", enter: "home" }; objs.push(house); block(g, 8, 1, 5, 3);
   const plots = big ? [[3, 5], [4, 5], [5, 5], [6, 5], [3, 7], [4, 7], [5, 7], [6, 7], [7, 5], [8, 5], [7, 7], [8, 7]] : [[4, 5], [5, 5], [6, 5], [7, 5], [4, 7], [5, 7], [6, 7], [7, 7]];
   plots.forEach(([x, y], i) => { objs.push({ t: "plot", i, x, y, name: "Plot" }); g[y][x] = "#"; });
@@ -2996,7 +3013,31 @@ function isleBuild(tier) {
   else { objs.push({ t: "pen", x: 13, y: 9, w: 3, h: 1, name: "Pet pen" }); block(g, 13, 9, 3, 1); }
   objs.push({ t: "islesign", x: 8, y: 9, name: "Island sign" }); g[9][8] = "#";
   for (const [x, y] of big ? [[3, 3], [18, 3], [2, 8], [19, 9]] : [[4, 3], [16, 3], [3, 8]]) { objs.push({ t: "palm", x, y, name: "Tree" }); g[y][x] = "#"; }
+  /* THE PATH: cobbles from the dock up to the cottage door. "," is walkable ground a piece may still stand on, so laying it over the
+     old land never displaces anything; the page paints it in the Yard's cobbles. */
+  for (let y = 4; y < d0; y++) for (const x of [10, 11]) if (".s".includes(g[y][x])) g[y][x] = ",";
+  /* THE NEW LAND'S OWN THINGS, on fresh tiles only, spaced out, never on the path or beside the dock */
+  const hr = (x, y, s) => { const v = Math.sin(x * 127.1 + y * 311.7 + s * 74.7) * 43758.5453; return v - Math.floor(v); };
+  const taken = (x, y) => { for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) if (!".s,".includes(g[y + j]?.[x + i] ?? "~") && g[y + j]?.[x + i] !== "~") return true; return false; };
+  for (let y = 2; y < ROWS - 2; y++) for (let x = 2; x < COLS - 2; x++) {
+    if (g[y][x] !== "." || !fresh(x, y) || Math.abs(x - 10.5) < 3 || taken(x, y)) continue;
+    const r = hr(x, y, tier); if (r < 0.045) { objs.push({ t: "palm", x, y, name: "Tree" }); g[y][x] = "#"; } else if (r < 0.07) { objs.push({ t: r < 0.058 ? "boulder" : "bush", x, y, name: r < 0.058 ? "Rock" : "Bush" }); g[y][x] = "#"; }
+  }
   markBanks(g);
+  /* the bank (land touching the sea) cannot be walked, so the dock's planks run on up the beach to the first land you can stand on */
+  for (const x of [10, 11]) for (let y = d0 - 1; y > 3 && g[y][x] === "b"; y--) g[y][x] = "p";
+  /* NOTHING STRANDED: a pocket of the new coast that only a strip of bank joins to the rest gets a sandy way through (s, walkable) */
+  { const e = SCENES.isle?.entry || { x: 10, y: 10 }, K = (x, y) => y * COLS + x;
+    for (let round = 0; round < 6; round++) {
+      const seen = new Set([K(e.x, e.y)]), q = [[e.x, e.y]]; while (q.length) { const [x, y] = q.pop(); for (const [dx, dy] of D8) { const X = x + dx, Y = y + dy; if (!seen.has(K(X, Y)) && canStepIn(g, x, y, dx, dy)) { seen.add(K(X, Y)); q.push([X, Y]); } } }
+      const lost = []; for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (walkableIn(g, x, y) && !seen.has(K(x, y))) lost.push([x, y]);
+      if (!lost.length) break;
+      /* from the stranded pocket, the shortest way over bank tiles back to reached ground; those bank tiles become sand */
+      const [sx, sy] = lost[0], from = new Map([[K(sx, sy), null]]), bq = [[sx, sy]]; let hit = null;
+      while (bq.length && !hit) { const [x, y] = bq.shift(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const X = x + dx, Y = y + dy, k = K(X, Y); if (from.has(k) || X < 0 || Y < 0 || X >= COLS || Y >= ROWS) continue; const c = g[Y][X]; if (seen.has(k)) { from.set(k, K(x, y)); hit = k; break; } if (c === "b" || walkableIn(g, X, Y)) { from.set(k, K(x, y)); bq.push([X, Y]); } } }
+      if (!hit) break;
+      for (let k = hit; k != null; k = from.get(k)) { const x = k % COLS, y = Math.floor(k / COLS); if (g[y][x] === "b") g[y][x] = "s"; }
+    } }
   return { g, objs, blobs: [] };
 }
 
@@ -3235,17 +3276,20 @@ Object.assign(SCENES, {
     mobs: [], npcs: [], bots: []
   },
   home: {
-    name: "The Cottage", interior: true, home: true, floor: "wood", room: [5, 3, 16, 10], exitTo: { scene: "isle", x: 10, y: 4 }, entry: { x: 10, y: 10 },
-    wall: [{ t: "window", x: 8 }, { t: "shelf", x: 11 }, { t: "window", x: 14 }],
+    /* (2026-09-30, the islands phase 2) BIGGER INSIDE, FOR EVERYBODY: the room was [5,3,16,10]; it is [3,3,18,12] now, the same back wall
+       (so every back-wall piece is still on it) and every old floor tile still floor. The door moves down to the new front wall, and the
+       two ferns that stood in the old front corners stand in the new ones (their old tiles are free floor now). */
+    name: "The Cottage", interior: true, home: true, floor: "wood", room: [3, 3, 18, 12], exitTo: { scene: "isle", x: 10, y: 4 }, entry: { x: 10, y: 12 },
+    wall: [{ t: "window", x: 5 }, { t: "window", x: 8 }, { t: "shelf", x: 11 }, { t: "window", x: 14 }, { t: "window", x: 17 }],
     build() {
       // the furniture that comes with it; the rest of the floor is left open for your own, later
-      const g = room(5, 3, 16, 10, 10), objs = [];
+      const g = room(3, 3, 18, 12, 10), objs = [];
       objs.push({ t: "range", x: 5, y: 3, w: 2, h: 1, name: "Hearth" }); block(g, 5, 3, 2, 1);
       objs.push({ t: "bed", x: 16, y: 3, w: 1, h: 2, name: "Bed" }); block(g, 16, 3, 1, 2);
       objs.push({ t: "rug", x: 8, y: 5, w: 6, h: 4, color: "#3a6a8a", name: "Rug" });
       objs.push({ t: "chest", x: 15, y: 3, name: "Chest" }); g[3][15] = "#";
-      objs.push({ t: "plant", x: 5, y: 10, name: "Potted fern" }); g[10][5] = "#";
-      objs.push({ t: "plant", x: 16, y: 10, name: "Potted fern" }); g[10][16] = "#";
+      objs.push({ t: "plant", x: 3, y: 12, name: "Potted fern" }); g[12][3] = "#";
+      objs.push({ t: "plant", x: 18, y: 12, name: "Potted fern" }); g[12][18] = "#";
       return { g, objs, blobs: [] };
     },
     mobs: [], npcs: [], bots: []
@@ -6067,9 +6111,9 @@ export const inCage = (def, x, y) => !!def?.cage && x >= def.cage[0] && x <= def
 // islands: everyone has one. Plots grow in real time (online or not); pedestals show off one item each.
 export const ISLE = { plots: 20, shelf: 15 };
 // upgrades, bought from Charon: each tier is a bigger layout; the plots and pedestals you already have stay put
-export const ISLE_TIERS = [null,
+export const ISLE_TIERS = [null,   /* (2026-09-30) every size is much bigger now (ISLE_SHAPE): the counts below are what grows, the land is free */
   { name: "Island", plots: 8, shelf: 6 },
-  { name: "Bigger island", price: 5000, plots: 12, shelf: 9, ex: "More land: 12 plots, 9 pedestals and a bigger pen." },
+  { name: "Bigger island", price: 5000, plots: 12, shelf: 9, ex: "Much more land (room for 32 pieces of decor outside), 12 plots, 9 pedestals and a bigger pen." },
   { name: "The Far Shore", price: 20000, plots: 20, shelf: 15, ex: "A bridge off the east side to a second island: 8 more plots, 6 more pedestals and a lighthouse." }];
 /* (v101) YAHSMEENA'S DECOR SHOP: the catalogue and the rules of placing are in their OWN file, v3/assets/js/eastscape-decor-rules.js, because
    the first load is on a budget and nobody needs a furniture catalogue to log in. The game server imports it; the page fetches
@@ -6113,7 +6157,14 @@ ITEMS.starfruit = { name: "Starfruit", icon: "\u2B50", ex: "Five points and a li
 export const THEMES = {
   meadow: { name: "Meadow", icon: "🌿", ex: "Green grass, round trees, a nice breeze.", price: 0 },
   dunes: { name: "Sunny Dunes", icon: "🏝️", ex: "Warm sand, palm trees and one crab that watches you.", price: 2500 },
-  gloom: { name: "Gloom", icon: "🕸️", ex: "Grey grass, bare trees, a little fog. Not for sale.", price: null }
+  gloom: { name: "Gloom", icon: "🕸️", ex: "Grey grass, bare trees, a little fog. Not for sale.", price: null },
+  /* (2026-09-30) the bigger islands' new themes: each is its own ground (the page's GROUNDS isle_*), sand at the coast */
+  tropical: { name: "Tropical", icon: "🌴", ex: "Bright grass, white sand, turquoise sea and palms.", price: 5000 },
+  autumn: { name: "Autumn", icon: "🍂", ex: "Amber grass, turning trees, a cold blue sea.", price: 5000 },
+  frozen: { name: "Frozen", icon: "❄️", ex: "Snow to the waterline, frosted trees, an icy sea.", price: 7500 },
+  /* (2026-09-30, the owner: "add a dark/void version, and a casino version of island themes") */
+  void: { name: "The Void", icon: "🌌", ex: "Purple-black ground, a violet shore and a sea of nothing with stars in it.", price: 10000 },
+  casino: { name: "High Roller", icon: "🎰", ex: "Red casino carpet for grass, a beach of gold and a deep purple sea.", price: 10000 }
 };
 export const EXAMINE = {
   /* (2026-09-24) THE LANTERN MIRE'S DRESSING. The Crypt drew all of this and never named any of it, because down
@@ -7386,7 +7437,10 @@ export function normChar(c) {
     theme: fi.theme, open: ci.open !== false, tier: [1, 2, 3].includes(ci.tier) ? ci.tier : 1,
     /* (v101) decor: what you own and where it stands. Shape only: the catalogue is not in this file (see above), and a piece it no longer lists is simply not drawn. */
     owned: Object.fromEntries(Object.entries(ci.owned && typeof ci.owned === "object" ? ci.owned : {}).filter(([k, n]) => /^[a-z_]{2,24}$/.test(k) && (n | 0) > 0).slice(0, 80).map(([k, n]) => [k, Math.min(99, n | 0)])),
-    decor: []
+    decor: [],
+    /* (2026-09-30) the cottage's look (mirrored from the Store, see isleLookFrom) and the livestock's clocks (ISLE_FARM) */
+    look: Object.fromEntries(["cot", "wall", "floor"].filter((s) => typeof COTTAGE !== "undefined" && COTTAGE[s][ci.look?.[s]]).map((s) => [s, ci.look[s]])),
+    farm: Object.fromEntries(["coop", "cowpen", "cage"].filter((k) => Number.isFinite(ci.farm?.[k])).map((k) => [k, ci.farm[k]]))
   };
   { const left = { ...out.isle.owned }; for (const d of (Array.isArray(ci.decor) ? ci.decor : []).slice(0, 120)) if (d && left[d.k] > 0 && Number.isInteger(d.x) && Number.isInteger(d.y) && ["isle", "shore", "home"].includes(d.at)) { left[d.k]--; out.isle.decor.push({ k: d.k, x: d.x, y: d.y, at: d.at }); } }
   if (out.isle.themes.includes(ci.theme)) out.isle.theme = ci.theme;
@@ -9729,3 +9783,46 @@ export const STORE_TAB_ART = { boost: "st_skill2x", looks: "st_effects", name: "
 /** the skin a character's pet wears, as a PET_SKINS key, or null (none, not owned, or no pet out) */
 export const petSkinOf = (c) => { const id = c?.store?.name?.pskin, it = id && STORE[id]; return it && it.kind === "pskin" && (c.store.own || []).includes(id) && activePet(c) ? it.val : null; };
 WEAR_SLOTS.push("pskin");
+
+/* ============================================================ THE COTTAGE, CUSTOMISED (2026-09-30, the islands, phase 2). The owner: "offer different cottage
+   customization". Three things you choose, bought in the Store's Decor tab and worn like anything else there, and MIRRORED onto the island
+   record (isle.look) so a visitor sees them whether you are online or not:
+     cot    the building itself, outside (six styles: the thatched one is everybody's and free)
+     wall   the cottage's walls inside, floor  its floor inside (the plaster and the planks are free).
+   The inside is bigger for everybody too (see SCENES.home): the old floor is all still floor, so nothing placed in there moves. */
+export const COTTAGE = {
+  cot: { thatched: { name: "Thatched cottage", art: "cottage", price: 0 }, stone: { name: "Stone Manor", art: "cottage_stone", price: 120000 }, cabin: { name: "Log Cabin", art: "cottage_cabin", price: 90000 },
+    beach: { name: "Beach Hut", art: "cottage_beach", price: 80000 }, witch: { name: "Witch's House", art: "cottage_witch", price: 150000 }, villa: { name: "Casino Villa", art: "cottage_villa", price: 250000 } },
+  wall: { plaster: { name: "Plaster walls", col: "#b8986a", price: 0 }, cream: { name: "Cream walls", col: "#e8dcc0", price: 15000 }, burgundy: { name: "Burgundy walls", col: "#7a2a34", price: 20000 },
+    navy: { name: "Navy walls", col: "#2a3a5a", price: 20000 }, forest: { name: "Forest-green walls", col: "#2f5a3a", price: 20000 }, damask: { name: "Gold damask walls", col: "#8a6a24", price: 40000, pattern: true } },
+  floor: { wood: { name: "Plank floor", price: 0 }, marble: { name: "Marble floor", price: 40000 }, carpet: { name: "Casino carpet", price: 35000 }, checker: { name: "Checkered tiles", price: 25000 }, stone: { name: "Flagstone floor", price: 20000 } }
+};
+for (const [slot, set] of Object.entries(COTTAGE)) for (const [v, P] of Object.entries(set)) if (P.price) st(`${slot}_${v}`, { tab: "decor", kind: slot, slot, val: v, name: P.name, price: P.price, fresh: true, ...(P.art ? { art: P.art } : {}), ...(P.col ? { col: P.col } : {}),
+  ex: slot === "cot" ? `Your cottage, outside, as a ${P.name}. Everyone who visits sees it. Take it off any time for the thatched one.` : `Inside your cottage: ${P.name.toLowerCase()}. Visitors see it too.`,
+  lead: slot === "cot" ? `Your cottage becomes a ${P.name}.` : `${P.name} inside your cottage.`, facts: [["Seen by", "you and everyone who visits"], ["Switch", "any time, free, once it's yours"], ["Default", slot === "cot" ? "the thatched cottage" : slot === "wall" ? "plaster walls" : "a plank floor"]] });
+WEAR_SLOTS.push("cot", "wall", "floor");
+/** what an island's cottage wears: { cot, wall, floor } keys, defaults filled in */
+export const isleLookOf = (isle) => ({ cot: COTTAGE.cot[isle?.look?.cot] ? isle.look.cot : "thatched", wall: COTTAGE.wall[isle?.look?.wall] ? isle.look.wall : "plaster", floor: COTTAGE.floor[isle?.look?.floor] ? isle.look.floor : "wood" });
+/** the island record's copy of what the Store says is worn (the game server calls this after every buy or change) */
+export const isleLookFrom = (c) => { const out = {}; for (const s of ["cot", "wall", "floor"]) { const id = c?.store?.name?.[s], it = id && STORE[id]; if (it && it.slot === s && (c.store.own || []).includes(id)) out[s] = it.val; } return out; };
+
+/* ============================================================ THE ISLAND'S LIVESTOCK (2026-09-30, the islands, phase 3). The owner: "add fishing cages, chicken
+   coops, and cow pens that return fish, raw chicken and feathers, and leather/beef when away for awhile". Three pieces Yahsmeena sells
+   (DECOR in the decor rules reads this), placed like any other; each FILLS UP IN REAL TIME, logged in or not, a round every `ms`, up to
+   `cap` rounds, and its owner empties it with a click. Two of a kind fill twice as fast. The clock is per kind, on the island record
+   (isle.farm[kind] = when it was last emptied); placing the first one starts it, so nothing is ever paid for time before you had it.
+   Worth: a full coop is about the same as an hour of chickens in the Paddock. It is a thing that happens while you are away, not a living. */
+export const ISLE_FARM = {   /* (2026-09-30, the owner: "make their cost 5k tickets only") */
+  coop:   { name: "Chicken coop", w: 2, h: 2, price: 5000, ms: 60 * 60000, cap: 24, gives: [["chicken", 1], ["feather", 3]], ex: "Hens, a roost and a lot of opinions. Every hour it has a raw chicken and three feathers for you, up to a day's worth." },
+  cowpen: { name: "Cow pen", w: 3, h: 2, price: 5000, ms: 90 * 60000, cap: 16, gives: [["beef", 1], ["hide", 1]], ex: "A fenced pen and a cow who has seen things. Every hour and a half: raw beef and a cowhide, up to a day's worth." },
+  cage:   { name: "Fishing cage", w: 2, h: 1, price: 5000, ms: 45 * 60000, cap: 32, fish: [["sardine", 5], ["trout", 3], ["catfish", 2]], ex: "A crab-pot of a cage, re-baited with whatever you left in it. Every 45 minutes it has a fish for you, up to a day's worth." }
+};
+export const FARM_MAX = 2;
+/** how many rounds a kind has waiting now, and the items they come to: { rounds, items: [[k, n]] }. `n` is how many of that kind are placed. */
+export const farmReady = (isle, kind, now = Date.now(), n = 1) => {
+  const F = ISLE_FARM[kind], at = isle?.farm?.[kind]; if (!F || !Number.isFinite(at) || n < 1) return { rounds: 0, items: [] };
+  const rounds = Math.min(F.cap, Math.floor(Math.max(0, now - at) / F.ms) * Math.min(FARM_MAX, n));
+  return { rounds, items: F.gives ? F.gives.map(([k, q]) => [k, q * rounds]) : [] };
+};
+/** a fishing cage's catch for so many rounds: a fixed shuffle of its table, so the same rounds give the same fish */
+export const cageCatch = (rounds, rnd = Math.random) => { const T = ISLE_FARM.cage.fish, sum = T.reduce((a, [, w]) => a + w, 0), out = {}; for (let i = 0; i < rounds; i++) { let x = rnd() * sum; for (const [k, w] of T) if ((x -= w) < 0) { out[k] = (out[k] || 0) + 1; break; } } return Object.entries(out); };

@@ -1106,23 +1106,38 @@ export const GUIDES = [
       <p><b>Gear cannot be sold to other players yet.</b> A reforged piece belongs to whoever reforged it &mdash; a known limitation and a real project to fix, not an oversight.</p>` },
   { id: "islands", title: "Your island", icon: "\u{1F3DD}️", cat: "Going further",
     body: (G, H) => `<p><b>Charon keeps a cart in the Yard</b>, a few steps out of the casino's front door, and everyone gets an island. It is yours, it keeps growing things while you are logged off, and you decide whether anybody else can visit.</p>
-      <p><b>Three sizes.</b> You start with the first and buy the others from Charon's cart. The Far Shore is a second island joined to yours by a bridge off the east side, so it is one walk, not a second trip.</p>
-      <table class="tbl"><tr><th>Island</th><th>Costs</th><th>Plots</th><th>Pedestals</th></tr>
-        <tr><td>Island</td><td>&mdash;</td><td>8</td><td>6</td></tr>
-        <tr><td>Bigger island</td><td>5,000</td><td>12</td><td>9</td></tr>
-        <tr><td>The Far Shore</td><td>20,000</td><td>20</td><td>15</td></tr>
+      <p><b>Three sizes, and every one of them is big.</b> You start with the first and buy the others from Charon's cart. A cobbled path runs from the dock up to your cottage, with sand all round the coast. The Far Shore is a second island joined to yours by a bridge off the east side, so it is one walk, not a second trip.</p>
+      <table class="tbl"><tr><th>Island</th><th>Costs</th><th>Plots</th><th>Pedestals</th><th>Decor outside</th></tr>
+        <tr><td>Island</td><td>&mdash;</td><td>8</td><td>6</td><td>20</td></tr>
+        <tr><td>Bigger island</td><td>5,000</td><td>12</td><td>9</td><td>32</td></tr>
+        <tr><td>The Far Shore</td><td>20,000</td><td>20</td><td>15</td><td>48</td></tr>
       </table>
-      <h3>Yahsmeena's Decor</h3>
-      <p><b>Yahsmeena stands outside the cottage and sells furniture for your island and your cottage.</b> Buy a piece from her, then press <b>Decorate</b> and put it where you want it. She buys back at a quarter of what you paid, and a piece can be picked up and moved as often as you like.</p>
-      <p><b>The one piece that does something is the bank chest</b> (10,000). It opens the same bank as the chest in the Yard, so you can empty a full bag into it between harvests instead of sailing back. Everything else she sells is for show, which is the point of it.</p>
+      <p>The cottage holds 20 pieces inside. Rugs and paths count as a quarter of a piece.</p>
+      <h3>Themes</h3>
+      <p><b>A theme changes the whole island: the grass, the beach, the sea and the trees.</b> Buy one at Charon's cart, then choose it at the sign on your island.</p>
+      <table class="tbl"><tr><th>Theme</th><th>Costs</th><th>What it looks like</th></tr>
+        ${Object.values(G.THEMES).map((t) => `<tr><td>${t.icon} ${t.name}</td><td>${t.price == null ? "not for sale" : t.price ? t.price.toLocaleString() : "free"}</td><td>${t.ex}</td></tr>`).join("")}
+      </table>
+      <h3>Your cottage</h3>
+      <p><b>The Store sells the cottage itself in five other styles</b>: a Stone Manor, a Log Cabin, a Beach Hut, a Witch's House and a Casino Villa. It also sells walls (cream, burgundy, navy, forest green, gold damask) and floors (marble, casino carpet, checkered tiles, flagstone) for inside. Everyone who visits sees them, and you can switch back any time.</p>
+      <h3>Yahsmeena's Decor, and the Store's</h3>
+      <p><b>Yahsmeena stands outside the cottage and sells furniture for your island and your cottage.</b> Buy a piece from her, then press <b>Decorate</b> and put it where you want it. She buys back at a quarter of what you paid, and a piece can be picked up and moved as often as you like. Her shop also lists the Store's decor, with a button straight to it.</p>
+      <p><b>A few pieces do something.</b> The bank chest (10,000) opens your bank on the island. The hatchery hatches eggs, and the cellar ladder takes you down to your mushroom beds.</p>
+      <h3>Livestock</h3>
+      <p><b>A chicken coop, a cow pen and a fishing cage fill up while you are away</b>, logged in or not. Yahsmeena sells them. Click one on your island to empty it into your bag (anything that doesn't fit goes to the bank). A bubble over it shows how many rounds are waiting, and a gold "!" means it is full.</p>
+      <table class="tbl"><tr><th>Piece</th><th>Costs</th><th>Every</th><th>Gives</th><th>Holds</th></tr>
+        ${Object.values(G.ISLE_FARM).map((f) => `<tr><td>${f.name}</td><td>${f.price.toLocaleString()}</td><td>${f.ms >= 3600000 ? `${f.ms / 3600000} hour${f.ms === 3600000 ? "" : "s"}` : `${f.ms / 60000} minutes`}</td><td>${f.gives ? f.gives.map(([k, n]) => `${n} ${G.ITEMS[k].name.toLowerCase()}`).join(" + ") : "a fish (sardine, trout or catfish)"}</td><td>${f.cap} rounds</td></tr>`).join("")}
+      </table>
+      <p>Two of the same kind fill twice as fast, and ${G.FARM_MAX} is the most of each that works. Nothing fills for time before you put it down.</p>
       <h3>Growing things</h3>
       <p><b>Plant a crop and it grows in real time, whether you are online or not.</b> Click an empty plot, pick what to put in it, come back when it is ready. A ripe plot pays several of what you planted, so one crop feeds the next.</p>
       ${SEEDS_NOTE(G)}
       ${cropTable(G, H)}
       <p><b>Farming is background money, not a living.</b> A full set of plots kept going comes to roughly a sixth of what fighting the same zone pays &mdash; it is something that happens while you do something else, which is the whole point of it running while you are logged off.</p>
       <h3>The rest of the island</h3>
-      <p><b>Pedestals</b> put an item on display for visitors. <b>Themes</b> repaint the place &mdash; Meadow is free, Dunes is 2,500, and Gloom is not for sale. The <b>pet pen</b> is built but not open yet.</p>
-      <p><b>Open or closed.</b> The sign by the dock decides whether anyone can ferry over. Closing it sends any visitors home.</p>` },
+      <p><b>Pedestals</b> put an item on display for visitors. The <b>pet pen</b> breeds two pets into a better one.</p>
+      <p><b>Open or closed.</b> The island sign decides whether anyone can ferry over. Closing it sends any visitors home.</p>
+      <p><b>Type /island in chat</b>, anywhere, to see how long everything on your island has left: crops, mushrooms, the breeding pen, a hatching egg and the livestock.</p>` },
   { id: "saving", title: "Saving", icon: "\u{1F4BE}", cat: "Starting out",
     body: `<p><b>There is no save button and there is nothing to lose.</b> The server owns your character, not your browser &mdash; every level, item and ticket is written down as it happens.</p>
       <p><b>Closing the tab is safe.</b> So is losing your connection, and so is your battery dying mid-fight. You come back where you were.</p>
@@ -1132,6 +1147,19 @@ export const GUIDES = [
 ];
 
 export const UPDATES = [
+  {
+    date: "2026-09-30", title: "The islands, rebuilt",
+    items: [
+      "EVERY ISLAND IS MUCH BIGGER, for everyone and for free: the first is about 28 by 15 tiles now (it was 17 by 10), the Bigger island 34 by 18 and the Far Shore 41 by 22. Everything you put down is exactly where you left it; the new land grows round it. Decor goes from 12/20/32 outside to 20/32/48.",
+      "THEY LOOK BETTER: a sand beach all round, a cobbled path from the dock up to your door, and new trees and rocks on the new land.",
+      "THEMES ARE THE WHOLE ISLAND NOW, grass, beach, sea and trees. Five new ones at Charon's cart: Tropical and Autumn (5,000), Frozen (7,500), The Void and High Roller (10,000). Choose yours at the island sign.",
+      "YOUR COTTAGE: bigger inside for everyone (20 pieces of decor, from 12). The Store sells it in five other styles (Stone Manor, Log Cabin, Beach Hut, Witch's House, Casino Villa), and new walls and floors for inside. Visitors see all of it.",
+      "LIVESTOCK, 5,000 each at Yahsmeena's: a chicken coop (raw chicken and feathers), a cow pen (raw beef and cowhide) and a fishing cage (fish). They fill up while you're away, up to a day's worth; click one to empty it. A bubble shows what's waiting. Two of a kind fill twice as fast.",
+      "NEW PLOTS AND PEN: the garden plots are wooden raised beds now, and the breeding pen has a picket fence, straw and a little kennel.",
+      "TYPE /island IN CHAT to see every clock on your island at once: how long your crops, mushrooms, breeding pen, hatching egg and livestock have left.",
+      "Yahsmeena's shop lists the livestock first, and every piece the Store sells with a button straight to it.",
+    ],
+  },
   {
     date: "2026-09-30", title: "The Store: pets, eggs and bag slots",
     items: [

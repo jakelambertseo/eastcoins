@@ -30,7 +30,10 @@ check("beside her, a bench costs its price and is owned", t0 - A.tix() === DR.DE
 A.clear(); A.send({ t: "decor", op: "place", k: "bench", x: 0, y: 0 }); await wait(700); check("it can't go in the sea", A.said(/no room/) && !(A.me.isle.decor || []).length);
 A.clear(); A.send({ t: "decor", op: "place", k: "gnome", x: 9, y: 6 }); await wait(700); check("a piece you don't own can't be placed", A.said(/spare/));
 A.send({ t: "decor", op: "buy", k: "toilet" }); await wait(800); A.clear(); A.send({ t: "decor", op: "place", k: "toilet", x: 9, y: 6 }); await wait(700); check("a cottage piece can't go outside", A.said(/inside the cottage/));
-A.clear(); A.send({ t: "decor", op: "place", k: "bench", x: 10, y: 9 }); await wait(700); check("a piece that would wall the dock off is refused", A.said(/wall|no room|standing/i) && !(A.me.isle.decor || []).length, JSON.stringify(A.ev.filter((x) => x.type === "say").slice(-1)));
+/* (2026-09-30) the bigger islands: the dock's choke point is where its planks meet the land, not (10,9) any more. The bench goes on the
+   two tiles just above the planks, which is the only way from the island to the dock. */
+const CHOKE = (() => { const key = G.isleKey(A.me.isle, "t"), isle = { ...A.me.isle, owned: { bench: 1 }, decor: [] }; for (let y = 4; y < G.ROWS; y++) for (let x = 1; x < G.COLS - 1; x++) if (/wall/.test(DR.decorFits(key, isle, "bench", x, y) || "")) return [x, y]; return null; })();
+A.clear(); if (CHOKE) A.send({ t: "decor", op: "place", k: "bench", x: CHOKE[0], y: CHOKE[1] }); await wait(700); check(`a piece that would wall part of the island off is refused (at ${CHOKE})`, A.said(/wall|no room|standing/i) && !(A.me.isle.decor || []).length, JSON.stringify(A.ev.filter((x) => x.type === "say").slice(-1)));
 A.clear(); A.send({ t: "decor", op: "place", k: "bench", x: 9, y: 6 }); await wait(900);
 check("on open grass it goes down, and the island is told", (A.me.isle.decor || []).some((d) => d.k === "bench" && d.x === 9 && d.y === 6) && (A.last("decor")?.decor || []).length === 1);
 A.clear(); A.send({ t: "walk", x: 9, y: 6 }); await wait(2500); check("you can't walk through it", !(A.me && A.ev.some((x) => x.type === "arrived")) );

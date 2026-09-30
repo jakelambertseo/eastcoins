@@ -302,6 +302,7 @@ export class World {
     this.cryptRejoin(pl); this.countRejoin(pl);   /* (2026-09-25) and the Count Room, same rule: a saved spot inside a run is only good if that run is still there */   /* (v104) saved inside a crypt run: back into it if it is still going, else to the stairs */
     this.pyramidRejoin(pl);
     this.towerRejoin(pl);   /* (2026-09-22) saved inside the Tower: rebuild that floor, or the room comes back empty and unwinnable */
+    { const back = DR.decorSweep(C.isle); if (back.length) { pl.needSave = true; setTimeout(() => this.say(pl, `${back.length} piece${back.length === 1 ? "" : "s"} of your island decor could not stand where ${back.length === 1 ? "it was" : "they were"} and went back in your tray (still yours). Press Decorate on your island to put ${back.length === 1 ? "it" : "them"} down again.`), 4000); } }   /* (2026-09-30) THE SAFETY NET: see decorSweep */
     this.isleRejoin(pl, stored);   /* (2026-09-29) saved on your own island: back there, not the casino */
     this.colSeed(C);   /* (2026-09-27) the collection log: what this character already had */
     this.pls.set(user.id, pl);
@@ -841,6 +842,7 @@ export class World {
         /* (2026-09-27, the owner: "add a chat command for users to time the pumpkin king. something like /pumpkin and it shows time
            remaining") THE FIRST CHAT COMMAND. It answers the asker alone and is never broadcast, so nobody else's chat fills with it. */
         if (/^[\/!](pumpkin|king)\b/i.test(text)) return this.say(pl, this.hwKingLine(now), "good");
+        if (/^[\/!](island|isle)\b/i.test(text)) return this.isleTimers(pl, now);   /* (2026-09-30) every timer on your island, to you alone */
         /* (2026-09-28) /project: where every World Project stands. An admin can set one: /project dock 1, and "fill" fills that tier's
            parts so the Finish button lights (it is the admin projtier command, so it answers to the same permission). */
         /* (2026-09-28) /gemkit and /sorter: the gem system, set up for testing on the dev server (see gemKit in gems.js) */
@@ -1024,7 +1026,7 @@ export class World {
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
-      let kind = { scrapbench: "tinker",   /* (2026-09-28) Sprocket Sal's Scrap Bench */ projboard: "project", dockruin: "project", cannonruin: "project", tableruin: "project", pjruin: "project", pjdeco: "project", cannon: "cannon", boiler: "game", ferris: "ferris", gemsorter: "gems",   /* (2026-09-28) World Projects */ clawchest: "clawchest",   /* (2026-09-27) Captain Claw's chest */ rowboat: "rowboat",   /* (2026-09-27) the Boardwalk's islands */ podium: "podium",   /* (2026-09-27) the collection log */ vortex: "rowboat", burndoor: "rowboat",   /* (2026-09-27) the Foundry's portals and its burning door travel the same way */ blast: "smelt",   /* (2026-09-27) the Foundry's blast furnace: a furnace */ jbench: "jewel",   /* (2026-09-27) Jewelcrafting: a picker station like the anvil */ hatchery: "hatchery",   /* (2026-09-27) Breeding's hatchery */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ wildbench: "fletch",   /* (2026-09-29) the Wild Bench */ cycad: "tree", frostpine: "tree",   /* (2026-09-30) the Primeval Valley's cycads */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      let kind = { scrapbench: "tinker",   /* (2026-09-28) Sprocket Sal's Scrap Bench */ projboard: "project", dockruin: "project", cannonruin: "project", tableruin: "project", pjruin: "project", pjdeco: "project", cannon: "cannon", boiler: "game", ferris: "ferris", gemsorter: "gems",   /* (2026-09-28) World Projects */ clawchest: "clawchest",   /* (2026-09-27) Captain Claw's chest */ rowboat: "rowboat",   /* (2026-09-27) the Boardwalk's islands */ podium: "podium",   /* (2026-09-27) the collection log */ vortex: "rowboat", burndoor: "rowboat",   /* (2026-09-27) the Foundry's portals and its burning door travel the same way */ blast: "smelt",   /* (2026-09-27) the Foundry's blast furnace: a furnace */ jbench: "jewel",   /* (2026-09-27) Jewelcrafting: a picker station like the anvil */ farm: "farm",   /* (2026-09-30) the island's livestock */ hatchery: "hatchery",   /* (2026-09-27) Breeding's hatchery */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ wildbench: "fletch",   /* (2026-09-29) the Wild Bench */ cycad: "tree", frostpine: "tree",   /* (2026-09-30) the Primeval Valley's cycads */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       /* MAGIC AND WIZARDRY, THE SERVER (2026-09-26): every altar is a print station, a picker station like the anvil */
       if (!kind && G.STATIONS[ob.t]?.kind === "print") kind = "print";
       if (!kind) return;
@@ -1965,9 +1967,9 @@ export class World {
     C.store ||= { own: [], name: {} }; C.store.own ||= []; C.store.name ||= {};
     if (op === "set") {
       const slot = String(m.slot || ""); if (!G.WEAR_SLOTS.includes(slot)) return;   /* (2026-09-30) the name's four, the title and the looks */
-      if (!m.id) { C.store.name[slot] = null; this.touch(pl); return; }
+      if (!m.id) { C.store.name[slot] = null; this.isleLookSync(pl); this.touch(pl); return; }
       if (!it || it.slot !== slot || !C.store.own.includes(id)) return this.say(pl, "You don't own that.", "bad");
-      C.store.name[slot] = id; this.touch(pl); return;
+      C.store.name[slot] = id; this.isleLookSync(pl); this.touch(pl); return;
     }
     /* (2026-09-30) YOUR OWN TITLE: written when bought, rewritten free whenever you like, at most once every 20 seconds */
     if (op === "ttext") {
@@ -2016,8 +2018,45 @@ export class World {
     if (it.kind === "decor") { I.owned[it.dk] = (I.owned[it.dk] | 0) + 1; this.touch(pl); return this.say(pl, `${paid()} It's waiting on your island: press Decorate there${P.in === "home" ? ", inside your cottage," : ""} and put it down.`, "loot"); }
     if (it.kind === "wfx") { pl.wfxAt = now; this.touch(pl); this.wfxStart(S, pl, it.val, now); return this.say(pl, paid(), "loot"); }
     if (it.kind === "horn") { this.touch(pl); this.raidCall(pl.name, now); return this.say(pl, `${paid()} The horn's note rolls north over the hills. Something answers.`, "loot"); }
-    C.store.own.push(id); C.store.name[it.slot] = id; if (title) C.store.ttext = title; this.touch(pl);
+    C.store.own.push(id); C.store.name[it.slot] = id; if (title) C.store.ttext = title; this.isleLookSync(pl); this.touch(pl);
     return this.say(pl, `${paid()} Wearing it now.`, "loot");
+  }
+  /* (2026-09-30, the owner: "a chat command /island that shows users how long their pets, eggs, crops and shrooms have left until
+     harvest") EVERY CLOCK ON YOUR ISLAND, in one small window, answered to you alone: the crops (plot by plot, soonest first, the ripe
+     ones counted), the cellar's mushrooms, the breeding pen, the hatchery and the livestock. Read-only: it changes nothing. */
+  isleTimers(pl, now = Date.now()) {
+    const C = pl.C, I = C.isle || {}, left = (at) => { const ms = at - now; if (ms <= 0) return "ready"; const mins = Math.ceil(ms / 60000), h = Math.floor(mins / 60), m = mins % 60; return h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`; };
+    const growing = (list, msOf, nameOf) => { const rows = list.filter(Boolean).map((p) => ({ n: nameOf(p), at: p.at + (p.ms || msOf(p)) })).sort((a, b) => a.at - b.at);
+      if (!rows.length) return "nothing planted"; const ripe = rows.filter((r) => r.at <= now).length, soon = rows.filter((r) => r.at > now).slice(0, 5).map((r) => `${r.n} in ${left(r.at)}`);
+      return [ripe ? `${ripe} ready to pick` : "", ...soon].filter(Boolean).join(" · ") + (rows.length - ripe > 5 ? ` · and ${rows.length - ripe - 5} more` : ""); };
+    const lines = [];
+    lines.push(`🌾 CROPS: ${growing(I.plots || [], (p) => G.CROPS[p.k]?.ms || 0, (p) => G.ITEMS[p.k]?.name || p.k)}`);
+    if ((I.decor || []).some((d) => d.k === G.FUNG.ladder)) lines.push(`🍄 MUSHROOMS: ${growing((I.beds || []).slice(0, G.bedsOf(I)), (p) => G.FUNGI[p.k]?.ms || 0, (p) => G.ITEMS[G.fungYield(p.k)]?.name || p.k)}`);
+    lines.push(`🐾 BREEDING PEN: ${C.pen ? `${G.PETS[C.pen.child?.k]?.name || "a pet"} ${C.pen.at + C.pen.ms <= now ? "is ready to collect" : `in ${left(C.pen.at + C.pen.ms)}`}` : "empty"}`);
+    if ((I.decor || []).some((d) => DR.DECOR[d.k]?.hatch)) lines.push(`🥚 HATCHERY: ${C.hatch ? `${G.PETS[C.hatch.child?.k]?.name || "a pet"} from a ${G.ITEMS[C.hatch.egg]?.name.toLowerCase() || "egg"} ${C.hatch.at + C.hatch.ms <= now ? "has hatched" : `in ${left(C.hatch.at + C.hatch.ms)}`}` : "empty"}`);
+    for (const [k, F] of Object.entries(G.ISLE_FARM)) { const n = (I.decor || []).filter((d) => DR.DECOR[d.k]?.farm === k).length; if (!n) continue;
+      const r = G.farmReady(I, k, now, n), step = F.ms / Math.min(G.FARM_MAX, n), next = (I.farm?.[k] || now) + (Math.floor(Math.max(0, now - (I.farm?.[k] || now)) / step) + 1) * step;
+      lines.push(`${{ coop: "🐔", cowpen: "🐄", cage: "🐟" }[k]} ${F.name.toUpperCase()}${n > 1 ? ` ×${n}` : ""}: ${r.rounds >= F.cap ? "FULL, empty it" : `${r.rounds} round${r.rounds === 1 ? "" : "s"} waiting, next in ${left(next)}`}`); }
+    pl.out.push({ type: "popup", title: "Your island", icon: "\u{1F3DD}\uFE0F", text: lines.join("\n\n") });
+  }
+  /* (2026-09-30) THE COTTAGE'S LOOK lives on the island record too, so a visitor sees it with its owner offline; every scene of this
+     owner that is loaded is rebuilt so the new cottage stands at once */
+  isleLookSync(pl) { const C = pl.C; if (!C.isle) return; const was = JSON.stringify(C.isle.look || {}); C.isle.look = G.isleLookFrom(C); if (JSON.stringify(C.isle.look) !== was) for (const S of this.scenes.values()) if (S.owner === pl.id) S.whoSig = null; }
+  /* (2026-09-30) THE LIVESTOCK: empty a coop, a cow pen or a fishing cage. Only its owner can; a visitor is told whose it is and how
+     full. Two of a kind fill twice as fast (farmReady counts them). What will not fit in the bag goes to the bank. */
+  farmCollect(S, pl, ob) {
+    const kind = ob?.farm, F = G.ISLE_FARM[kind]; if (!F) return;
+    const I = this.isleOf(S), now = Date.now(); if (!I) return;
+    const n = (I.decor || []).filter((d) => DR.DECOR[d.k]?.farm === kind && (d.at === "isle" || d.at === "shore")).length;
+    const r = G.farmReady(I, kind, now, n);
+    if (S.owner !== pl.id) return this.say(pl, `${S.ownerName || this.pls.get(S.owner)?.name || "Somebody"}'s ${F.name.toLowerCase()}${r.rounds ? `: ${r.rounds} round${r.rounds === 1 ? "" : "s"} waiting for them` : ""}.`);
+    if (!r.rounds) { const left = Math.ceil((F.ms / Math.min(G.FARM_MAX, Math.max(1, n)) - (now - (I.farm?.[kind] || now)) % (F.ms / Math.min(G.FARM_MAX, Math.max(1, n)))) / 60000); return this.say(pl, `Nothing in the ${F.name.toLowerCase()} yet. Next in about ${left} minute${left === 1 ? "" : "s"}.`); }
+    const items = kind === "cage" ? G.cageCatch(r.rounds) : r.items, got = [];
+    for (const [k, q] of items) { if (q < 1) continue; const inBag = this.giveUpTo(pl, k, q), rest = q - inBag; if (rest > 0) this.bankAdd(pl, k, rest); got.push(`${G.ITEMS[k].name} ×${q}${rest > 0 ? ` (${rest} to the bank)` : ""}`); }
+    const step = F.ms / Math.min(G.FARM_MAX, n), elapsed = now - I.farm[kind];
+    I.farm[kind] = r.rounds >= F.cap ? now : I.farm[kind] + Math.floor(elapsed / step) * step;   /* full: the clock starts again now; otherwise the part-round carries */
+    this.touch(pl); S.whoSig = null;
+    return this.say(pl, `The ${F.name.toLowerCase()}: ${got.join(", ")}.`, "loot");
   }
   /* (2026-09-30) WORLD MOMENTS: a show over one area, for everyone there. Kept on the scene so somebody walking in mid-show sees the rest of it
      (moveToScene sends it), and gone with the scene. CASINO names whoever lit the big ones. */
@@ -3094,6 +3133,7 @@ export class World {
     if (a.kind === "cryptloot") { pl.act = null; return S.def.pyramid ? this.pyramidLootOpen(S, pl) : this.cryptLootOpen(S, pl); }
     if (a.kind === "pen") { pl.act = null; return this.penView(S, pl); }
     if (a.kind === "hatchery") { pl.act = null; return this.hatchView(S, pl); }
+    if (a.kind === "farm") { pl.act = null; return this.farmCollect(S, pl, a.ob); }   /* (2026-09-30) the island's livestock */
     /* (2026-09-27) THE COLLECTION PODIUM: its owner's log, for its owner or anyone visiting. An owner who is offline is read from the copy kept
        when they left (or loaded with their island), so a visit always shows something. */
     if (a.kind === "podium") { pl.act = null; const own = this.pls.get(S.owner), col = S.owner === pl.id ? C.col : own ? own.C.col : S.colCopy;
@@ -3724,8 +3764,9 @@ export class World {
       cash.n -= next.price; if (!cash.n) C.inv.splice(C.inv.indexOf(cash), 1);
       const oldKey = G.isleKey(I, pl.id); I.tier++; this.touch(pl);
       const newKey = G.isleKey(I, pl.id);
-      /* (v101) a bigger island has plots and pedestals where there was grass: any piece now standing on one goes back in the tray (still owned) */
-      { const base = G.buildScene(newKey).g, was = (I.decor || []).length; I.decor = (I.decor || []).filter((d) => { const Q = DR.DECOR[d.k]; if (!Q || d.at !== "isle") return true; for (let y = d.y; y < d.y + Q.h; y++) for (let x = d.x; x < d.x + Q.w; x++) if (!G.walkableIn(base, x, y) || "ep".includes(base[y][x])) return false; return true; }); if (I.decor.length < was) this.say(pl, "Some of your decorations were in the way of the new land. They are back in your tray."); }
+      /* (v101) a bigger island has plots and pedestals where there was grass: any piece now standing on one goes back in the tray (still owned).
+         (2026-09-30) through decorSweep, the same safety net a load runs */
+      { const back = DR.decorSweep(I); if (back.length) this.say(pl, `${back.length} piece${back.length === 1 ? "" : "s"} of your decor went back in your tray: the new island has something where ${back.length === 1 ? "it" : "they"} stood. Press Decorate to put ${back.length === 1 ? "it" : "them"} down again.`); }
       for (const p of this.pls.values()) if (p.C.scene === oldKey) { this.moveToScene(p, newKey, null, G.SCENES.isle.entry); this.say(p, "The island grows around you. Somebody paid for an upgrade."); }
       return this.say(pl, `Your island is now: ${next.name}. ${next.ex}`, "good");
     }
@@ -3798,6 +3839,7 @@ export class World {
     if (!mine) return this.say(pl, "You can only decorate your own island.", "bad");
     if (op === "place") {
       const x = m.x | 0, y = m.y | 0, why = DR.decorFits(S.key, I, k, x, y); if (why) return this.say(pl, why, "bad");
+      if (P.farm) { I.farm ||= {}; if (!Number.isFinite(I.farm[P.farm])) I.farm[P.farm] = Date.now(); }   /* (2026-09-30) the livestock's clock starts when the first one goes down */
       if (!P.flat) { const hit = (e) => e.x >= x && e.x < x + P.w && e.y >= y && e.y < y + P.h; if (this.playersIn(S).some(hit) || S.npcs.some(hit)) return this.say(pl, "Somebody's standing there.", "bad"); }
       I.decor.push({ k, x, y, at: DR.decorAt(S.key) }); this.touch(pl); this.decorTell(pl.id); return;
     }
@@ -4068,7 +4110,7 @@ export class World {
       npcs: S.npcs.map((n) => trim({ id: n.id, x: n.x, y: n.y, s: st(n), face: n.face, held: n.holdUntil > now })),
       bots: S.bots.map((b) => trim({ id: b.id, x: b.x, y: b.y, s: st(b), dir: b.dir, face: b.face, work: b.working ? b.working.ob.id : null, workT: b.working ? b.working.ob.t : null })),
       ground: S.ground.map((x) => ({ id: x.id, k: x.k, n: x.n, x: x.x, y: x.y, owner: x.owner, until: x.until })),
-      isle: S.owner ? (() => { const I = this.isleOf(S); return I && { owner: S.owner, name: S.ownerName || this.pls.get(S.owner)?.name || "Someone", plots: I.plots, beds: I.beds || null, bedsOpen: G.bedsOf(I), shelf: I.shelf, theme: I.theme, open: I.open, pen: (() => { const P = this.pls.get(S.owner)?.C.pen; return P?.a && P?.b ? { a: P.a.k, b: P.b.k, ag: P.a.tier ? 1 : 0, bg: P.b.tier ? 1 : 0 } : null; })() }   /* (2026-09-27) the two parents, so everyone on the island sees them in the pen */; })() : null,
+      isle: S.owner ? (() => { const I = this.isleOf(S); return I && { owner: S.owner, name: S.ownerName || this.pls.get(S.owner)?.name || "Someone", plots: I.plots, beds: I.beds || null, bedsOpen: G.bedsOf(I), shelf: I.shelf, theme: I.theme, open: I.open, look: G.isleLookOf(I), farm: I.farm || null,   /* (2026-09-30) the cottage's look and the livestock's clocks */ pen: (() => { const P = this.pls.get(S.owner)?.C.pen; return P?.a && P?.b ? { a: P.a.k, b: P.b.k, ag: P.a.tier ? 1 : 0, bg: P.b.tier ? 1 : 0 } : null; })() }   /* (2026-09-27) the two parents, so everyone on the island sees them in the pen */; })() : null,
       dyn: S.objs.filter((o) => o.stumpUntil > now || o.emptyUntil > now || o.bareUntil > now || o.grownAt > now).map((o) => [o.id, o.stumpUntil || 0, o.emptyUntil || 0, o.bareUntil || 0, o.grownAt || 0]),
       ev: withEvents ? S.events : []
     };
@@ -5051,6 +5093,7 @@ export class World {
         if (!mins) { if (this.sx2) { this.sx2.until = 0; this.skill2xTick(); } return note("2X Skilling XP stopped."); }
         this.skill2xStart(m.by ? String(m.by).slice(0, 24) : pl.name, mins * 60000); return note(`2X Skilling XP started for ${mins} minutes.`);
       }
+      case "farmage": { if (this.env?.DEV !== "1") return note("That one is for the dev server only."); const h = Math.max(0, Math.min(72, Number(m.n) || 5)), F = C.isle?.farm || {}; for (const k of Object.keys(F)) F[k] -= h * 3600000; this.touch(pl); for (const S2 of this.scenes.values()) if (S2.owner === pl.id) S2.whoSig = null; return note(`Your livestock is ${h} hours older (dev testing).`); }   /* (2026-09-30) */
       case "storeup": { if (this.env?.DEV !== "1") return note("That one is for the dev server only."); C.store ||= { own: [], name: {} }; C.store.bankx = 0; C.store.qx = 0; C.store.loupe = 0; C.store.loupe2 = 0; this.touch(pl); return note("Your Store upgrades and loupes are reset (dev testing)."); }
       case "double": {
         const mins = Math.max(0, Math.min(180, m.mins == null ? Math.round(G.DOUBLE.ms / 60000) : m.mins | 0));

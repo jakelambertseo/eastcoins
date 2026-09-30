@@ -101,7 +101,7 @@ const told = (pl) => pl.out.map((e) => e.text || "").join(" | ");
   p.C.eq.pet = null; is(G.petSkinOf(p.C), null, "no pet out, no skin"); p.C.eq.pet = "pt1";
   is([buy(p, "egg_egg_raptor"), p.C.inv.some((s) => s.k === "egg_raptor")], [G.priceOf(G.STORE.egg_egg_raptor), true], "an egg: charged, and in the bag");
   for (let i = 0; i < 6; i++) buy(p, "bagslot"); is([G.upOf(p.C, "bag"), G.bagMax(p.C) - bag0, buy(p, "bagslot")], [5, 5, 0], "bag slots: five more at most, the sixth refused");
-  const miss = Object.values(G.STORE).filter((it) => !it.art && !["col", "fx", "icon", "frame", "decor", "give"].includes(it.kind) && !G.STORE_LOOKS[it.kind] && !it.icon).map((it) => it.id); is(miss, [], "every Store item has a picture"); }
+  const miss = Object.values(G.STORE).filter((it) => !it.art && !["col", "fx", "icon", "frame", "decor", "give", "wall", "floor"].includes(it.kind) && !G.STORE_LOOKS[it.kind] && !it.icon).map((it) => it.id); is(miss, [], "every Store item has a picture"); }
 /* 10. the walking fix */
 { const C = G.freshChar(), base = G.stepMsOf(C); C.drink = { k: "pot_quick", left: 10 }; const quick = G.stepMsOf(C);
   is([quick < base, G.fxWalk(C)], [true, 7], `a "speed" drink walks faster now (${base} ms a step -> ${quick})`); }
