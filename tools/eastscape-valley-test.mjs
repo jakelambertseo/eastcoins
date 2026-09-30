@@ -11,7 +11,14 @@ let bad = 0;
 const is = (got, want, what) => { if (JSON.stringify(got) === JSON.stringify(want)) console.log(`  ${what}: ${JSON.stringify(got)}`); else { console.log(`  !! ${what}: got ${JSON.stringify(got)}, wanted ${JSON.stringify(want)}`); bad++; } };
 is([G.VALLEY_MAPS.every((k) => G.OPEN.has(k)), G.SCENES.trailer.exits.n, G.SCENES.valley.exits.s, G.SCENES.valley.exits.n, G.SCENES.valley_ridge.exits.n, G.SCENES.valley_lair.exits.s], [true, "valley", "trailer", "valley_ridge", "valley_lair", "valley_ridge"], "three maps in a chain north of the Trailer Park");
 /* (2026-09-30, the owner: "this should be an archery focused map for archers") every monster here takes MORE from arrows */
-is(["caveman", "sabretooth", "pterodactyl", "mammoth", "raptor", "tarhorror", "rex", "matriarch"].every((t) => G.guardMul(t, "archery") > 1), true, "every Valley monster takes more from archery");
+is(["caveman", "cavehunter", "sabretooth", "pterodactyl", "pteroelder", "mammoth", "raptor", "tarhorror", "rex", "matriarch"].every((t) => G.guardMul(t, "archery") > 1), true, "every Valley monster takes more from archery");
+/* (2026-09-30, the owner) Archery 40 with a bow opens the Valley whatever your Combat; a sword does not, nor Archery 39; the bands run 90-110 */
+{ const c = G.freshChar(), at = (sk, l) => { c.xp[sk] = G.XP_AT[l]; };
+  at("archery", 40); c.eq.weapon = "logs_shortbow"; c.eq.shield = "logs_quiver"; const bow = G.bandBlock(c, "valley_lair", "fight");
+  c.eq.weapon = "bronze_sword"; c.eq.shield = null; const sword = G.bandBlock(c, "valley", "fight");
+  at("archery", 39); c.eq.weapon = "logs_shortbow"; c.eq.shield = "logs_quiver"; const low = G.bandBlock(c, "valley", "fight");
+  is([bow, !!sword, !!low, /Archery 40 with a bow/.test(sword?.text || ""), JSON.stringify([G.BANDS.valley, G.BANDS.valley_ridge, G.BANDS.valley_lair])], [null, true, true, true, "[[90,98],[95,103],[100,110]]"], "Archery 40 and a bow opens it; a sword or Archery 39 does not; bands 90-110"); }
+is([G.MOBS.rex.lvl, G.MOBS.matriarch.lvl, G.MOBS.cavehunter.art, G.MOBS.pteroelder.art], [110, 108, "caveman", "pterodactyl"], "Rex 110, the Matriarch 108, and the stronger kinds on the same pictures");
 is([G.guardMul("pterodactyl", "melee"), G.guardMul("pterodactyl", "archery"), G.guardMul("tarhorror", "melee"), G.guardMul("raptor", "magic"), G.MOBS.caveman.range], [0, 1.5, 0, 0.5, 4], "pterodactyls and tar horrors out of a sword's use, raptors half from spells, cavemen throw from 4");
 is([G.MOBS.rex.boss, !!G.MOBS.rex.open, G.MOBS.matriarch.boss, G.MOBS.matriarch.open, G.MOBS.matriarch.rise, G.MOBS.rex.weak, G.MOBS.matriarch.weak], [true, false, true, true, true, "frost", "fire"], "Old Rex a map boss (weak to frost), the Matriarch an open boss that rises (weak to fire)");
 const B = Object.fromEntries(G.VALLEY_MAPS.map((k) => [k, G.buildScene(k)])), count = (f) => G.VALLEY_MAPS.reduce((a, k) => a + B[k].objs.filter(f).length, 0);

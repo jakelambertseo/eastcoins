@@ -999,7 +999,7 @@ export class World {
       const mob = S.mobs.find((x) => x.id === m.id && !x.dead); if (!mob) return;
       if (!this.mayFight(S, mob, pl, now)) return this.say(pl, `${this.claimOf(S, mob, now).name} is already fighting that.`, "bad");
       { const gate = mob.target === pl.id || pl.god ? null : G.bandBlock(C, S.key, "fight");   /* LEVEL BANDS: a soft gate. Something already attacking you can always be fought back */
-        if (gate) return this.say(pl, `${S.def.name} is for Combat ${gate.need} and up. You're ${gate.have}. ${gate.need <= 10 ? "The Yard will get you there." : "Work the scene before this one a while longer."}`, "bad"); }
+        if (gate) return this.say(pl, `${S.def.name} is for Combat ${gate.need} and up${gate.arch ? `, or Archery ${gate.arch} with a bow` : ""}. You're ${gate.have}. ${gate.need <= 10 ? "The Yard will get you there." : "Work the scene before this one a while longer."}`, "bad"); }
       act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: G.MOBS[mob.t].name, reach: G.reachOfHeld(C) };   /* (2026-09-25) SHOOT FROM WHERE YOU STAND: the walk below stops at the bow's reach, not next to the thing (the owner: "it runs up to them, which feels very much like melee") */
     }
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
