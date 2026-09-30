@@ -1959,6 +1959,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 <script type="module">
 import * as G from "/v3/assets/js/eastscape-shared.js?v=396";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
+const FROZEN = new Map();   /* (2026-09-30) player id -> when their Deep Freeze ends (performance.now) */
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
    their monsters on first VISIT, so a reader who has never been down there was shown a drop list missing those
@@ -2200,6 +2201,7 @@ function onMsg(m) {
     for (const e of m.ev || []) {
       if (e.type === "mobgone") { const z = MOBS[e.t]?.size; SFX.play("mob_die", { rate: z === "s" ? 1.42 : z === "m" ? 1.12 : z === "xl" ? 0.62 : 0.84, jitter: 0.14, vol: (z === "xl" || z === "l" ? 1.15 : 0.95) * (e.by === you?.id ? 1 : 0.45) }); continue; }   /* (2026-09-29) the whole map hears it; yours loudest */
       if (e.type === "slam") { TILEFX.push({ x: e.x, y: e.y, r: e.r, from: performance.now(), until: performance.now() + e.ms }); SFX.play("ui_error"); }
+      if (e.type === "frozen") { FROZEN.set(e.who, performance.now() + e.ms); if (e.who === you?.id) { shakeUntil = performance.now() + 200; SFX.play("hit", { rate: 1.6, vol: 0.9 }); } }   /* (2026-09-30) the Ice Man's Deep Freeze */
       if (e.type === "slammed") { shakeUntil = performance.now() + 260; SFX.play("hit", { rate: 0.5, vol: 1 }); }
       if (e.type === "splat") {
         /* HITS THAT LAND (v81, the owner: "improve combat effects to make them feel more impactful. Visual effects, crit hits").
@@ -5082,6 +5084,11 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   } });
   // players (you among them): 8 facings, a lunge when swinging, red when hit
   const pos = (pl) => (pl.id === you.id ? ownPos(pl, now) : posOf(pl, now));
+  /* (2026-09-30) DEEP FREEZE: a block of ice over anyone the Ice Man has frozen, drawn in front of them, fading in its last half second */
+  for (const pl of Z.players) { const until = FROZEN.get(pl.id) || 0, left = until - performance.now(); if (left > 0) sprites.push({ y: pos(pl).py * T + 15, draw: () => {
+    const p = pos(pl), X = p.px * T + 8, Y = p.py * T + 15, a = Math.min(1, left / 500);
+    lc.save(); lc.globalAlpha = 0.55 * a; lc.fillStyle = "#bfe6ff"; lc.fillRect(X - 10, Y - 28, 20, 29); lc.globalAlpha = 0.9 * a; lc.strokeStyle = "#ffffff"; lc.lineWidth = 1; lc.strokeRect(X - 9.5, Y - 27.5, 19, 28);
+    lc.fillStyle = "#ffffff"; lc.fillRect(X - 7, Y - 25, 3, 8); lc.fillRect(X + 3, Y - 12, 2, 5); lc.restore(); } }); }
   for (const pl of Z.players) sprites.push({ y: pos(pl).py * T + 14.5, draw: () => {
     const p = pos(pl), d = (pl.id === you.id && PRED.on ? PRED.dir : pl.dir) || "south", sw = now - pl.swingAt, working = pl.started && pl.act !== "spot" && !p.moving;
     const lunge = working && sw < 260 && !calm ? Math.sin((sw / 260) * Math.PI) * 4 : 0;

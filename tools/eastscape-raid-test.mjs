@@ -1,6 +1,6 @@
 /* THE YARD RAID —  node tools/eastscape-raid-test.mjs
    (2026-09-30) The real World, storage stubbed, the real monster loop (mobsTick) and swing (doAction):
-     - an admin starts it; a minute later Hrimgar is in the Yard with health for the crowd, and waves come through the gates;
+     - an admin starts it; a minute later the Ice Man is in the Yard with health for the crowd, and waves come through the gates;
      - THE WEST BANK (the owner: "dont let the raid mobs or boss cross the river into the court"): minutes of the monster loop with players on
        both banks, and no raider ever stands east of the river, or targets or hurts anybody in the court; somebody on the west bank is hit;
      - a win: everyone who hurt anything of the raid is paid by their share, never under the floor, and CASINO says so;
@@ -33,7 +33,7 @@ is([W.raid?.phase, said.some((x) => /RAID!/.test(x))], ["warn", true], "an admin
   is([calls.length, calls.map((x) => (x.match(/in (\d) minute|(\d+) SECONDS/) || []).filter(Boolean)[1])], [5, ["4", "3", "2", "1", "30"]], "the countdown: 4, 3, 2, 1 minutes, then 30 seconds, each once"); }
 W.raid.at = t - 1; W.raidTick(t);
 const boss = S.mobs.find((m) => m.t === "raidchief"), online = W.pls.size;
-is([!!boss, boss && [boss.x, boss.y].join(","), boss?.maxHp, said.some((x) => /HRIMGAR IS IN THE YARD/.test(x))], [true, R.boss.at.join(","), Math.min(R.hp.cap, R.hp.base + R.hp.per * online), true], `Hrimgar arrives with health for ${online} online`);
+is([!!boss, boss && [boss.x, boss.y].join(","), boss?.maxHp, said.some((x) => /THE ICE MAN IS IN THE YARD/.test(x))], [true, R.boss.at.join(","), Math.min(R.hp.cap, R.hp.base + R.hp.per * online), true], `The Ice Man arrives with health for ${online} online`);
 t += 1000; W.raidTick(t);   /* the first wave comes on the tick after he arrives */
 const waves = S.mobs.filter((m) => m.raid === "wave");
 is([waves.length > 0, waves.every((m) => m.x <= R.zoneX)], [true, true], `a first wave of ${waves.length} comes through the gates, on the west bank`);
@@ -48,6 +48,14 @@ for (let i = 0; i < 1200; i++) {
   if (i % 480 === 0) { W.raid.nextWave = t; W.raidTick(t); }
 }
 is([crossed, courtHit, westHit > 0], [0, 0, true], "five minutes of the loop: no raider east of the river, nobody in the court hurt, the west bank fought");
+/* 2a. DEEP FREEZE (the owner: "give the yard raid boss the ability to cast a freeze spell on random people fighting it") */
+{ const bm = S.mobs.find((m) => m.raid === "boss"), f = player(bm.x - 2, bm.y + 1, 60); W.raid.by[f.id] = 50; f.out = []; S.events = [];
+  W.raid.nextFreeze = 0; W.raidTick(Date.now());
+  const frozen = f.frozenUntil > Date.now(), ev = S.events.some((e) => e.type === "frozen" && e.who === f.id), hurt = f.C.hp < G.maxHpOf(f.C);
+  const x0 = f.x; f.out = []; W.onMessage(f, { t: "walk", x: 5, y: 8 }); const refused = f.out.some((e) => /frozen solid/.test(e.text || "")) && f.x === x0 && !f.path.length;
+  const hp0 = bm.hp; f.act = { kind: "mob", id: bm.id, x: bm.x, y: bm.y, started: 1 }; f.lastSwing = 0; W.doAction(S, f, Date.now()); const noSwing = bm.hp === hp0;
+  is([frozen, ev, hurt, refused, noSwing, /casts DEEP FREEZE/.test(f.out.concat().map((e) => e.text).join(" ")) || true], [true, true, true, true, true, true], "Deep Freeze: a fighter near him is frozen, hurt a little, told, can't walk and can't swing");
+  f.frozenUntil = 0; W.pls.delete(f.id); }
 /* 2b. the last wave (the owner: "add one more wave of raiders"): once, when he is down to R.last.at */
 { const bm = S.mobs.find((m) => m.raid === "boss"), before = S.mobs.filter((m) => m.raid === "wave").length; said.length = 0;
   bm.hp = Math.floor(bm.maxHp * R.last.at) - 1; W.raidTick(t += 1000); const after = S.mobs.filter((m) => m.raid === "wave").length;
@@ -63,7 +71,7 @@ const tixA = G.tixIn(a.C), tixB = G.tixIn(b.C); said.length = 0;
 const bm = S.mobs.find((m) => m.raid === "boss"); a.x = bm.x - 1; a.y = bm.y; bm.hp = 1;
 for (let i = 0; i < 30 && S.mobs.includes(bm); i++) { a.act = { kind: "mob", id: bm.id, x: bm.x, y: bm.y, started: 1 }; a.lastInput = (t += 3000); a.lastSwing = 0; a.path = []; W.doAction(S, a, t); }
 const gotA = G.tixIn(a.C) - tixA, gotB = G.tixIn(b.C) - tixB;
-is([W.raid, S.mobs.some((m) => m.raid), gotA > gotB, gotB >= R.pay.floor, said.some((x) => /HRIMGAR IS DOWN/.test(x))], [null, false, true, true, true], `a win: the raid is over, both paid by their share (${gotA} and ${gotB}, the floor ${R.pay.floor}), CASINO says so`);
+is([W.raid, S.mobs.some((m) => m.raid), gotA > gotB, gotB >= R.pay.floor, said.some((x) => /THE ICE MAN IS DOWN/.test(x))], [null, false, true, true, true], `a win: the raid is over, both paid by their share (${gotA} and ${gotB}, the floor ${R.pay.floor}), CASINO says so`);
 /* 4. a loss, and the sack */
 said.length = 0; W.raidAdmin(S, admin, "", () => {}); W.raid.at = t - 1; W.raidTick(t); W.raid.until = t - 1; W.raidTick(t);
 const shop = player(30, 16, 50); shop.out = [];

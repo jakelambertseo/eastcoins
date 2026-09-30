@@ -9406,11 +9406,11 @@ if (!HOLD.frozen) { for (const k of FROZEN_MAPS) { OPEN.add(k); PET_SCENES.add(k
 /* ============================================================ THE YARD RAID (2026-09-30). The owner: "i want to bundle this update with a boss who raids
    the yard, everyone must team up to save the yard", then "Frost Giant raiding party", "Admin-only", "The Yard is sacked, 10 min", "Waves for all,
    boss scales", and "dont let the raid mobs or boss cross the river into the court in the yard". The server's half is eastscape-worker/src/raid.js.
-     - an admin starts it; CASINO gives a minute's warning, then HRIMGAR, the Jarl's war-chief, comes through the north gate, and waves of
+     - an admin starts it; CASINO gives a minute's warning, then THE ICE MAN, the Jarl's war-chief, comes through the north gate, and waves of
        raiders (levels 6 to 32, so new players have something to fight) come through the north and west gates every two minutes;
      - his health is set when he arrives: RAID.hp.base plus RAID.hp.per for every player online, so a busy Yard gets a bigger fight;
      - they keep to the WEST bank: nothing of the raid crosses the river into the court (x <= RAID.zoneX), chases anybody over it, or hits them;
-     - WIN (Hrimgar down inside RAID.lasts): every player who hurt anything of the raid is paid from a pool that grows with the crowd, by their
+     - WIN (the Ice Man down inside RAID.lasts): every player who hurt anything of the raid is paid from a pool that grows with the crowd, by their
        share of the damage, never less than RAID.pay.floor; the boss's own report and shared drops as any open boss;
      - LOSE: the Yard is sacked for RAID.sackMs: the shopping (RAID.closes: Bom's counter and cashier, Nestor, Livia's market, Hexa) is boarded
        up. Nobody loses anything they own. */
@@ -9418,9 +9418,13 @@ export const RAID = { scene: "workyard", zoneX: 24, warnMs: 5 * 60000, warnAt: [
   boss: { t: "raidchief", at: [22, 4] }, gates: [[20, 1], [21, 2], [22, 1], [23, 2], [1, 12], [1, 13], [1, 14], [2, 13]],
   wave: { base: 4, perPlayers: 2, cap: 12, kinds: [["raidwolf", 5], ["raidyeti", 3], ["raidgiant", 2]] },
   hp: { base: 4000, per: 1200, cap: 40000 }, pay: { pool: 20000, per: 3000, floor: 400 },
-  /* (2026-09-30, the owner: "add one more wave of raiders") THE LAST WAVE: when Hrimgar is down to this share of his health he roars for his
+  /* (2026-09-30, the owner: "add one more wave of raiders") THE LAST WAVE: when the Ice Man is down to this share of his health he roars for his
      huscarls, and this many come through the gates at once, over the ordinary wave's cap, so the end of the fight is the hardest part of it */
   last: { at: 0.3, count: 10, kinds: [["raidhuscarl", 5], ["raidgiant", 3], ["raidyeti", 2]] },
+  /* (2026-09-30, the owner: "give the yard raid boss the ability to cast a freeze spell on random people fighting it") DEEP FREEZE: every
+     10-15 s he picks among the people who have hurt the raid and stand within `range` of him, one plus one more per `perPlayers` of them
+     (at most `cap`), and locks each in ice for `ms` (no walking, no acting, no swinging) with a hit of `hit` of their health. */
+  freeze: { every: [10000, 15000], first: 8000, range: 8, ms: 3500, hit: 0.06, perPlayers: 4, cap: 4 },
   closes: ["counter", "cashout", "eggtrade", "ex", "hw"] };
 const rmob = (t, def, want, drops) => { MOBS[t] = { ...def, drops, rare: [] }; BOUNTY[t] = want; EXAMINE[t] = [def.ex]; };
 rmob("raidwolf", { name: "Raider Wolf", size: "m", lvl: 6, hp: 40, att: 6, def: 5, max: 3, speed: 2000, box: [32, 22], aggro: 5, art: "frostwolf", raid: true, weak: "fire",
@@ -9428,13 +9432,13 @@ rmob("raidwolf", { name: "Raider Wolf", size: "m", lvl: 6, hp: 40, att: 6, def: 
 rmob("raidyeti", { name: "Raider Yeti", size: "m", lvl: 16, hp: 130, att: 16, def: 14, max: 6, speed: 2400, box: [30, 34], aggro: 5, art: "yeti", raid: true, weak: "fire",
   ex: "A yeti on a chain, loosed on the Yard by the war party." }, 60, [["tickets", [25, 60]], ["willowlogs", [3, 8], 0.5], ["ashlogs", [2, 6], 0.4], ["emerald_ore", [2, 6], 0.45], ["diamond_ore", [2, 5], 0.35], ["bowstring", [2, 5], 0.35], ["spellpaper", [3, 8], 0.4], ["trout", [2, 5], 0.3], ["bronze_bar", [1, 3], 0.3], ["cobweb", 1, 0.1]]);
 rmob("raidgiant", { name: "Frost Raider", size: "l", lvl: 32, hp: 320, att: 32, def: 28, max: 10, speed: 2800, box: [44, 44], aggro: 5, art: "frostgiant", raid: true, weak: "fire",
-  ex: "A frost giant of Hrimgar's war party, come down from the Reach to sack the Yard." }, 150, [["tickets", [60, 140]], ["frost_shard", 1, 0.03], ["yewlogs", [2, 6], 0.45], ["palmlogs", [2, 6], 0.35], ["skyashlogs", [2, 5], 0.3], ["dragonstone_ore", [2, 5], 0.45], ["onyx_ore", [1, 4], 0.35],
+  ex: "A frost giant of the Ice Man's war party, come down from the Reach to sack the Yard." }, 150, [["tickets", [60, 140]], ["frost_shard", 1, 0.03], ["yewlogs", [2, 6], 0.45], ["palmlogs", [2, 6], 0.35], ["skyashlogs", [2, 5], 0.3], ["dragonstone_ore", [2, 5], 0.45], ["onyx_ore", [1, 4], 0.35],
   ["emerald_bar", [1, 3], 0.35], ["diamond_bar", [1, 2], 0.25], ["ctrout", [2, 5], 0.35], ["ink_arcane", [2, 5], 0.25], ["ruby", 1, 0.04], ["sapphire", 1, 0.03]]);
-rmob("raidhuscarl", { name: "Hrimgar's Huscarl", size: "l", lvl: 45, hp: 520, att: 45, def: 40, max: 13, speed: 2700, box: [44, 44], aggro: 6, art: "frostgiant", raid: true, weak: "fire",
-  ex: "One of the war-chief's own guard, called in for the last wave when Hrimgar is losing. The hardest thing in the raid after him, and the best spoils." }, 300,
+rmob("raidhuscarl", { name: "Ice Man's Huscarl", size: "l", lvl: 45, hp: 520, att: 45, def: 40, max: 13, speed: 2700, box: [44, 44], aggro: 6, art: "frostgiant", raid: true, weak: "fire",
+  ex: "One of the war-chief's own guard, called in for the last wave when the Ice Man is losing. The hardest thing in the raid after him, and the best spoils." }, 300,
   [["tickets", [150, 300]], ["onyx_ore", [3, 6], 0.5], ["dragonstone_bar", [1, 3], 0.4], ["onyx_bar", [1, 2], 0.25], ["skyashlogs", [3, 6], 0.45], ["diamond_arrowhead", [10, 20], 0.3], ["ink_fire", [2, 5], 0.3],
    ["topaz", 1, 0.05], ["opal", 1, 0.04], ["frost_shard", 1, 0.05]]);
-rmob("raidchief", { name: "Hrimgar, the Jarl's War-Chief", size: "xl", lvl: 60, hp: 4000, att: 60, def: 50, max: 14, speed: 2600, box: [80, 70], aggro: 6, boss: true, open: true, raid: true, weak: "fire",
+rmob("raidchief", { name: "The Ice Man", size: "xl", lvl: 60, hp: 4000, att: 60, def: 50, max: 14, speed: 2600, box: [80, 70], aggro: 6, boss: true, open: true, raid: true, weak: "fire",
   ex: "The Frost Jarl's war-chief, come to sack the Yard. Everyone who fights the raid shares the spoils when he falls: drive him out before the time is up or the Yard's stalls are boarded up." }, 3000,
   [["tickets", [15000, 25000]], ["frost_shard", [2, 4]], ["yeti_pelt", [1, 2]], ["pot_frost", 1, 0.5], ["onyx_bar", [2, 4]], ["dragonstone_bar", [3, 6]], ["skyashlogs", [10, 20]]]);
 BOSSES.add("raidchief");

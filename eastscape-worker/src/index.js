@@ -738,7 +738,7 @@ export class World {
     if (this.raidClosed?.(m.t)) return this.say(pl, `The stalls are boarded up after the raid. They open again in ${Math.max(1, Math.ceil((this.raidSack.until - Date.now()) / 60000))} minutes.`, "bad");   /* (2026-09-30) the Yard is sacked */
     switch (m.t) {
       case "ping": return this.send(pl, { type: "pong", t: now, c: m.c });
-      case "walk": {
+      case "walk": if (pl.frozenUntil > now) return this.frozenSay(pl, now);   /* (2026-09-30) the Ice Man's Deep Freeze */ {
         if (!Number.isInteger(m.x) || !Number.isInteger(m.y)) return;
         /* (2026-09-24, reported by the owner: "while getting held ... i can still move slightly and then it
            pulls me back close to it, is that intended") IT WAS NOT. The coil was enforced only from the boss's
@@ -750,13 +750,13 @@ export class World {
         // path from where you'll be when the current step lands, so a new click never stops you dead
         pl.act = null; const p = G.pathTowards(S.g, this.from(pl), { x: m.x, y: m.y }, 0); if (p) { pl.path = p; this.kick(S, pl, now); } return;
       }
-      case "step": {
+      case "step": if (pl.frozenUntil > now) return this.frozenSay(pl, now); {
         const dx = Math.sign(m.dx | 0), dy = Math.sign(m.dy | 0), f = this.from(pl);
         // held keys: queue the next step behind the one in progress rather than dropping it
         if ((dx || dy) && G.canStepIn(S.g, f.x, f.y, dx, dy)) { pl.act = null; pl.path = [{ x: f.x + dx, y: f.y + dy }]; this.kick(S, pl, now); }
         return;
       }
-      case "act": return this.startAct(S, pl, m);
+      case "act": if (pl.frozenUntil > now) return this.frozenSay(pl, now); return this.startAct(S, pl, m);
       case "carnival": return this.carnivalOp(S, pl, m);   /* (2026-09-24) the midway games: start a round, hand in a score */
       case "wild": {
         /* (2026-09-22) TWO WAYS IN NOW. This was pinned to the farm's hole, and the farm is a closed area — so when the
@@ -2784,7 +2784,9 @@ export class World {
     if (n) this.say(pl, `Group bonus: ${n} other${n > 1 ? "s" : ""} working this ${a.ob.name.toLowerCase()} with you. +${n}% to ${what}.`, "good", "group");
   }
 
+  frozenSay(pl, now) { if (now - (pl.frozeSaid || 0) > 1500) { pl.frozeSaid = now; this.say(pl, `You're frozen solid for another ${Math.max(1, Math.ceil((pl.frozenUntil - now) / 1000))}s.`, "bad"); } }
   doAction(S, pl, now) {
+    if (pl.frozenUntil > now) return;   /* (2026-09-30) frozen: no swing, no work, until the ice goes */
     const a = pl.act, C = pl.C; if (!a || pl.path.length) return;
     // AFK: a repeating skill stops once nobody has touched the game for a while (see G.AFK_MS)
     const afkMs = (a.kind === "spot" || a.kind === "tree") && G.charmOf(C, "stillness") ? G.AFK_MS + G.charmOf(C, "stillness") * 60000 : S.def.tower ? G.AFK_TOWER_MS : a.kind === "mob" && G.ammoOf(C) ? G.ARCHERY.afkMs : G.AFK_MS;   /* (2026-09-25) an archer with a loaded quiver gets the long timer: AFK-friendly is the point of the quiver */   /* (2026-09-25) a tower floor is a 4-5 minute fight by design; see AFK_TOWER_MS */
