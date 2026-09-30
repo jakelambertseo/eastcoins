@@ -37,7 +37,8 @@ const DEBITS = [
   { re: /^CASINO:PVP:JOIN:(.+)$/, what: "PvP table seat", sql: `SELECT 1 FROM pvp_entries WHERE id = ?`, args: (m) => [m[1]] },
   { re: /^COIN:BET:(\d+):(.+)$/, what: "Coin Flip bet", sql: `SELECT 1 FROM coin_bets WHERE round_no = ? AND user_id = ?`, args: (m) => [Number(m[1]), m[2]] },
   { re: /^CASINO:BET:([a-z]+):(\d+):(.+)$/, what: "Wheel/Race bet", sql: `SELECT 1 FROM casino_bets WHERE game = ? AND round_no = ? AND user_id = ?`, args: (m) => [m[1], Number(m[2]), m[3]] },
-  { re: /^(STORE:BUY:.+)$/, what: "Store purchase", sql: `SELECT 1 FROM store_purchases WHERE op_key = ?`, args: (m) => [m[1]] }
+  { re: /^(STORE:BUY:.+)$/, what: "Store purchase", sql: `SELECT 1 FROM store_purchases WHERE op_key = ?`, args: (m) => [m[1]] },
+  { re: /^(STORE:EMOTE:.+)$/, what: "7TV emote bought from chat (check 7TV before refunding: it may be on the channel)", sql: `SELECT 1 FROM emote_log WHERE op_key = ?`, args: (m) => [m[1]] }
 ];
 
 const utc = (v) => (v ? String(v).replace(" ", "T") + (/Z$/.test(String(v)) ? "" : "Z") : null);
