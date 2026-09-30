@@ -5869,7 +5869,7 @@ function whoAllDraw(people) {
     .sort((a, b) => idle(a) - idle(b) || (idle(a) ? (a.idle | 0) - (b.idle | 0) : 0) || a.name.localeCompare(b.name));
   const ago = (m) => m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`;
   $("whoBody").innerHTML = list.length ? list.map((p) => { const i = idle(p);
-    return `<button type="button" class="k-row who-row${i ? " idle" : ""}" data-who="${esc(p.name)}"><span class="who-dot" aria-hidden="true"></span><span><b>${esc(p.name)}${p.admin ? ' <em class="who-staff">staff</em>' : ""}</b><small>Combat ${p.combat}</small></span><span class="k-end"><span class="k-chip ${i ? "" : "good"}">${i ? `Idle ${ago(p.idle | 0)}` : "Active"}</span></span></button>`; }).join("")
+    return `<button type="button" class="k-row who-row${i ? " idle" : ""}" data-who="${esc(p.name)}"><span class="who-dot" aria-hidden="true"></span><span><b>${esc(p.name)}${p.staff || p.admin ? ' <em class="who-staff">staff</em>' : ""}</b><small>Combat ${p.combat}</small></span><span class="k-end"><span class="k-chip ${i ? "" : "good"}">${i ? `Idle ${ago(p.idle | 0)}` : "Active"}</span></span></button>`; }).join("")
     : `<div class="k-note" style="padding:8px">${whoFilter === "on" ? "Nobody is active right now." : "Nobody is idle. Everybody's busy."}</div>`;
   $("whoBody").querySelectorAll("[data-who]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); openProfile(b.dataset.who); }));
 }

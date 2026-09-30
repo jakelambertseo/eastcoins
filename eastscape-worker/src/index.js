@@ -935,7 +935,7 @@ export class World {
       case "whoall": {
         if (now - (pl.whoAllAsk || 0) < 3000) return; pl.whoAllAsk = now;
         const people = [...this.pls.values()].map((p) => ({
-          name: p.name, scene: String(p.C.scene || "?").split(":")[0], combat: G.combatOf(p.C), admin: !!p.admin,
+          name: p.name, scene: String(p.C.scene || "?").split(":")[0], combat: G.combatOf(p.C), admin: !!p.admin, staff: !!p.admin || p.role === "admin" || p.role === "mod" || undefined,   /* (2026-09-30, the owner: "give kellzifer the staff tag") mods wear it too */
           idle: Math.max(0, Math.floor((now - (p.lastInput || now)) / 60000))   /* (2026-09-30, the owner: an "active" and "idle" status beside each user) minutes since they last did anything */
         })).sort((a, b) => a.name.localeCompare(b.name));
         return this.send(pl, { type: "whoall", people });
