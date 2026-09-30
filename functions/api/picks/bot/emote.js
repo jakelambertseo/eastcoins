@@ -2,14 +2,15 @@
    !addemote / !removeemote — put a 7TV emote on zwades' channel
    straight from chat (2026-09-30).
 
-   ANYONE CAN ADD ONE FOR 250 ZCOINS; ZWADES ADDS FREE (the owner,
-   2026-09-30, changing it from zwades-only the same day). ANY emote
-   with a working 7TV link goes on: no NSFW or "not publicly listed"
-   filter, by the owner's call. Removing stays with REMOVERS (zwades
-   and bootypaper): otherwise anyone could take down an emote somebody
-   else paid for. StreamElements fills the sender from the real chat
-   message (botGate in _bot.js), so "!addemote ... as zwades" can't
-   mean anything.
+   ANYONE CAN ADD OR REMOVE ONE FOR 250 ZCOINS; ONLY ZWADES IS FREE
+   (the owner, 2026-09-30; bootypaper pays too, by his own call). ANY
+   emote with a working 7TV link goes on: no NSFW or "not publicly
+   listed" filter, by the owner's call. A PAID REMOVAL CAN'T TOUCH AN
+   EMOTE ADDED IN THE LAST 24 HOURS (PROTECT_MS, from 7TV's own addedAt,
+   so it covers emotes added any way at all): somebody who just paid 250
+   gets a day of it. Zwades removes anything, any time, free.
+   StreamElements fills the sender from the real chat message (botGate
+   in _bot.js), so "!addemote ... as zwades" can't mean anything.
 
    THE MONEY PATH IS THE STORE'S (store/buy.js), because ZCoin accuracy
    is the one thing that can't be wrong here:
@@ -30,17 +31,18 @@
         two minutes is a crashed request and is cleared;
      4. an emote_log row carries the op key, so the admin Wallet tab's
         stuck-charge tool can tell a charge that never reached 7TV.
+   A paid removal is the same path with the key STORE:EMOTEOFF:<user>:<emote>.
    The STORE: prefix is also what puts it on a profile's store line.
 
      !addemote https://7tv.app/emotes/01ABC…            add it (250 ZC, free for zwades)
      !addemote https://7tv.app/emotes/01ABC… newName    add it renamed
-     !removeemote peepoClap                             remove by name
+     !removeemote peepoClap                             remove by name (250 ZC, free for zwades)
      !removeemote https://7tv.app/emotes/01ABC…         or by link
 
    StreamElements commands (User level: Everyone, cooldown 0; this
    endpoint does the gating, like !pick):
      !addemote     $(customapi https://eastcoin.vip/api/picks/bot/emote?k=KEY&user=$(sender.name)&id=$(sender.twitchid)&name=$(queryescape $(sender))&args=$(queryescape $(1:)))
-     !removeemote  $(customapi https://eastcoin.vip/api/picks/bot/emote?op=remove&k=KEY&user=$(sender.name)&args=$(queryescape $(1:)))
+     !removeemote  $(customapi https://eastcoin.vip/api/picks/bot/emote?op=remove&k=KEY&user=$(sender.name)&id=$(sender.twitchid)&name=$(queryescape $(sender))&args=$(queryescape $(1:)))
 
    7TV. Their current API is GraphQL at api.7tv.app/v4/gql (the one
    7tv.app itself uses). Reading is public; changing a set needs a
@@ -60,9 +62,9 @@ import { walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOp
 
 const GQL = "https://api.7tv.app/v4/gql";
 const CHANNEL_TWITCH_ID = "215028532";            // zwades on Twitch (7TV user 01KXEPYPN1X8M68ABH7QR10PAH)
-const FREE = new Set(["zwades"]);                    // adds without paying
-const REMOVERS = new Set(["zwades", "bootypaper"]);  // the only ones who can take an emote off
+const FREE = new Set(["zwades"]);          // adds and removes without paying, and ignores the 24 hours
 export const PRICE = 250;
+export const PROTECT_MS = 24 * 60 * 60 * 1000;   // a paid removal can't touch an emote this new
 
 /** A 7TV emote id out of whatever was pasted: a 7tv.app page, the old site, a CDN image, or a bare id. */
 export function emoteIdFrom(text) {
@@ -102,7 +104,7 @@ async function ensureLog(db) {
   for (const col of ["price INTEGER NOT NULL DEFAULT 0", "op_key TEXT"]) await db.prepare(`ALTER TABLE emote_log ADD COLUMN ${col}`).run().catch(() => {});   /* (a table made before paid adds) */
   await db.prepare(`CREATE TABLE IF NOT EXISTS emote_inflight (emote_id TEXT PRIMARY KEY, login TEXT NOT NULL, at INTEGER NOT NULL)`).run();
 }
-/** Hold an emote while it is being added (3b in the header). true = ours; false = somebody else is adding it right now. */
+/** Hold an emote while it is being added or removed (3b in the header). true = ours; false = somebody else is on it right now. */
 async function hold(db, emoteId, login) {
   await ensureLog(db);
   await db.prepare(`DELETE FROM emote_inflight WHERE at < ?`).bind(Date.now() - 120000).run();
@@ -127,111 +129,126 @@ async function channelSet(env) {
 /** Emotes in the set whose name matches `name` exactly (7TV's search is fuzzy, so the exact match is ours). */
 async function inSetByName(env, setId, name) {
   const r = await gql(env, `query ($id: Id!, $q: String!) { emoteSets { emoteSet(id: $id) { emotes(page: 1, perPage: 50, query: $q) {
-    items { alias emote { id defaultName } } } } } }`, { id: setId, q: name }, false);
+    items { alias addedAt emote { id defaultName } } } } } }`, { id: setId, q: name }, false);
   if (r.error) return r;
   return { items: (r.data?.emoteSets?.emoteSet?.emotes?.items || []).filter((x) => x.alias === name) };
 }
+/** The set's entry for one emote id (a removal by link). Reads the whole set's ids, so only removal-by-link pays for it. */
+async function inSetById(env, setId, emoteId) {
+  const r = await gql(env, `query ($id: Id!) { emoteSets { emoteSet(id: $id) { emotes(page: 1, perPage: 1000) { items { alias addedAt emote { id defaultName } } } } } }`, { id: setId }, false);
+  if (r.error) return r;
+  return { items: (r.data?.emoteSets?.emoteSet?.emotes?.items || []).filter((x) => x.emote?.id === emoteId) };
+}
+const hoursLeft = (addedAt) => Math.max(1, Math.ceil((new Date(addedAt).getTime() + PROTECT_MS - Date.now()) / 3600000));
 
 export async function onRequestGet(context) {
   const gate = botGate(context);
   if (!gate.ok) return gate.response;
   const env = context.env, op = new URL(context.request.url).searchParams.get("op") === "remove" ? "remove" : "add";
-  if (op === "remove" && !REMOVERS.has(gate.login)) return new Response("", { status: 200, headers: { "Cache-Control": "no-store" } });   // silent, like a mod-only command
   const who = `@${gate.login}`, free = FREE.has(gate.login);
   if (!String(env.SEVENTV_TOKEN || "").trim()) return say("7TV isn't hooked up yet: the site needs a 7TV editor token (SEVENTV_TOKEN).");
 
   const words = gate.args.split(/\s+/).filter(Boolean);
-  if (!words.length) return say(op === "add" ? `${who} paste a 7TV link after it: !addemote https://7tv.app/emotes/… (${PRICE} ZC)` : "Say which one: !removeemote <name>");
+  if (!words.length) return say(op === "add" ? `${who} paste a 7TV link after it: !addemote https://7tv.app/emotes/… (${PRICE} ZC)` : `${who} say which one: !removeemote <name> (${PRICE} ZC)`);
+  const db = env.PICKS_DB;
+  if (!db) return say(`${who} emotes are offline right now. Nothing was charged.`);
 
   const set = await channelSet(env);
-  if (set.error) return say(`Couldn't read the channel's emotes: ${explain(set)}`);
+  if (set.error) return say(`${who} couldn't read the channel's emotes: ${explain(set)}`);
+  const mutate = (kind, emote) => gql(env, `mutation ($set: Id!, $emote: EmoteSetEmoteId!) { emoteSets { emoteSet(id: $set) { ${kind}(id: $emote) { id } } } }`, { set: set.id, emote });
 
+  /* ---------------- REMOVE ---------------- */
   if (op === "remove") {
-    let emoteId = emoteIdFrom(words[0]), alias = null;
-    if (!emoteId) {
-      const hit = await inSetByName(env, set.id, words[0]);
-      if (hit.error) return say(`Couldn't check the channel: ${explain(hit)}`);
-      if (!hit.items.length) return say(`No emote called ${words[0].slice(0, 40)} on the channel.`);
-      emoteId = hit.items[0].emote.id; alias = hit.items[0].alias;
-    }
-    const r = await gql(env, `mutation ($set: Id!, $emote: EmoteSetEmoteId!) { emoteSets { emoteSet(id: $set) { removeEmote(id: $emote) { id } } } }`,
-      { set: set.id, emote: alias ? { emoteId, alias } : { emoteId } });
-    if (r.error) return say(`Didn't remove it: ${explain(r)}`);
-    await note(env, gate.login, "remove", emoteId, alias || words[0]);
-    return say(`Removed ${alias || "it"} from the channel (${Math.max(0, set.count - 1)}/${set.capacity}).`);
+    const byId = emoteIdFrom(words[0]);
+    const found = byId ? await inSetById(env, set.id, byId) : await inSetByName(env, set.id, words[0]);
+    if (found.error) return say(`${who} couldn't check the channel: ${explain(found)}`);
+    const entry = found.items[0];
+    if (!entry) return say(`${who} ${byId ? "that emote isn't" : `no emote called ${words[0].slice(0, 40)} is`} on the channel. Nothing was charged.`);
+    const name = entry.alias, emoteId = entry.emote.id;
+    if (!free && entry.addedAt && Date.now() - new Date(entry.addedAt).getTime() < PROTECT_MS) return say(`${who} ${name} went on in the last 24 hours, so it's safe for another ${hoursLeft(entry.addedAt)}h. Nothing was charged.`);
+    if (!(await hold(db, emoteId, gate.login).catch(() => false))) return say(`${who} someone's changing that one right now. Nothing was charged.`);
+    let done = false;
+    try {
+      const act = () => mutate("removeEmote", { emoteId, alias: name });
+      const gone = async () => { const c = await inSetByName(env, set.id, name); return !c.error && !c.items.some((x) => x.emote.id === emoteId); };
+      if (free) {
+        const r = await act();
+        if (r.error && !(r.error === "NETWORK" && await gone())) return say(`Didn't remove it: ${explain(r)}`);
+        done = true; await note(env, gate.login, "remove", emoteId, name);
+        return say(`Removed ${name} from the channel (${Math.max(0, set.count - 1)}/${set.capacity}).`);
+      }
+      const out = await charge(env, db, gate, who, { keyBase: `STORE:EMOTEOFF:`, emoteId, name, verb: "removing", act, check: gone, logOp: "remove",
+        success: (left) => `${who} removed ${name} from the channel for ${PRICE} ZC (${Math.max(0, set.count - 1)}/${set.capacity}).${left}` });
+      done = out.ok; return say(out.text);
+    } finally { if (!done) await release(db, emoteId); }
   }
 
+  /* ---------------- ADD ---------------- */
   const emoteId = emoteIdFrom(words[0]);
   if (!emoteId) return say(`${who} that isn't a 7TV emote link. It should look like https://7tv.app/emotes/…`);
   const alias = words[1] || null;
   if (alias && !aliasOk(alias)) return say(`${who} that name won't work as an emote. One word, no quotes.`);
-
   const e = await gql(env, `query ($id: Id!) { emotes { emote(id: $id) { id defaultName deleted } } }`, { id: emoteId }, false);
   if (e.error) return say(`${who} couldn't look that emote up: ${explain(e)}`);
   const emote = e.data?.emotes?.emote;
   if (!emote || emote.deleted) return say(`${who} 7TV doesn't have that emote (deleted, or the link is wrong). Nothing was charged.`);
   const name = alias || emote.defaultName;
-  const db = env.PICKS_DB;
-  if (!db) return say(`${who} emote adding is offline right now. Nothing was charged.`);
 
   /* THE HOLD COMES FIRST (3b): taken before "is it already on?" is asked, so no second request can pass that question while
-     this one is still adding. It is let go on a failure, and KEPT for two minutes after a success, so a request that reads the
-     channel before 7TV's lists catch up still finds it held. */
+     this one is still working. Let go on a failure, KEPT for two minutes after a success, so a request that reads the channel
+     before 7TV's lists catch up still finds it held. */
   if (!(await hold(db, emote.id, gate.login).catch(() => false))) return say(`${who} someone's adding that one right now. Nothing was charged.`);
-  let added = false;
+  let done = false;
   try {
     const clash = await inSetByName(env, set.id, name);
     if (clash.error) return say(`${who} couldn't check the channel: ${explain(clash)}`);
     if (clash.items.some((x) => x.emote.id === emote.id)) return say(`${who} ${name} is already on the channel. Nothing was charged.`);
     if (clash.items.length) return say(`${who} there's already an emote called ${name}. Add it with a new name: !addemote <link> <newName>`);
     if (set.capacity && set.count >= set.capacity) return say(`${who} the channel's emote set is full (${set.count}/${set.capacity}). Nothing was charged.`);
-
-    const variables = { set: set.id, emote: alias && alias !== emote.defaultName ? { emoteId: emote.id, alias } : { emoteId: emote.id } };
-    const addIt = () => gql(env, `mutation ($set: Id!, $emote: EmoteSetEmoteId!) { emoteSets { emoteSet(id: $set) { addEmote(id: $emote) { id } } } }`, variables);
+    const act = () => mutate("addEmote", alias && alias !== emote.defaultName ? { emoteId: emote.id, alias } : { emoteId: emote.id });
     /* 7TV's answer can be LOST (network): look at the channel before deciding it didn't happen */
     const landed = async () => { const c = await inSetByName(env, set.id, name); return !c.error && c.items.some((x) => x.emote.id === emote.id); };
-
     if (free) {
-      const r = await addIt();
+      const r = await act();
       if (r.error && !(r.error === "NETWORK" && await landed())) return say(`Didn't add it: ${explain(r)}`);
-      added = true;
-      await note(env, gate.login, "add", emote.id, name);
+      done = true; await note(env, gate.login, "add", emote.id, name);
       return say(`Added ${name} to the channel (${set.count + 1}/${set.capacity}).`);
     }
-    const out = await buy(env, db, gate, who, emote, name, set, addIt, landed);
-    added = out.added;
-    return say(out.text);
-  } finally { if (!added) await release(db, emote.id); }
+    const out = await charge(env, db, gate, who, { keyBase: `STORE:EMOTE:`, emoteId: emote.id, name, verb: "adding", act, check: landed, logOp: "add",
+      success: (left) => `${who} added ${name} to the channel for ${PRICE} ZC (${set.count + 1}/${set.capacity}).${left}` });
+    done = out.ok; return say(out.text);
+  } finally { if (!done) await release(db, emote.id); }
 }
 
-/* ---- paid: the store's money path (see the header). Runs only while this request holds the emote. */
-async function buy(env, db, gate, who, emote, name, set, addIt, landed) {
-  const fin = (added, text) => ({ added, text });
+/* ---- THE MONEY PATH (see the header), shared by paid adds and paid removals. Runs only while this request holds the emote.
+   `act` asks 7TV to do it; `check` answers "did it happen?" when 7TV's answer was lost. Returns { ok, text }. */
+async function charge(env, db, gate, who, { keyBase, emoteId, name, verb, act, check, logOp, success }) {
+  const fin = (ok, text) => ({ ok, text });
   if (!walletWritesEnabled(env)) return fin(false, `${who} ZCoin payments aren't set up right now. Nothing was charged.`);
   const user = await findOrCreateUser(db, { login: gate.login, twitchId: gate.twitchId, displayName: gate.displayName }, env);
   if (!user) return fin(false, `${who} log in once at eastcoin.vip so your ZCoins can be used here.`);
   const balance = await readBalance(env, gate.login);
   if (balance === null) return fin(false, `${who} couldn't read your ZCoins right now. Nothing was charged.`);
-  if (balance < PRICE) return fin(false, `${who} adding an emote is ${PRICE} ZC and you have ${balance.toLocaleString()}.`);
+  if (balance < PRICE) return fin(false, `${who} ${verb} an emote is ${PRICE} ZC and you have ${balance.toLocaleString()}.`);
 
-  const opKey = await retryKey(db, `STORE:EMOTE:${user.id}:${emote.id}`), opId = newId("op");
+  const opKey = await retryKey(db, `${keyBase}${user.id}:${emoteId}`), opId = newId("op");
   const begun = await beginOperation(db, { id: opId, idempotencyKey: opKey, userId: user.id, marketId: null, pickId: null, type: "WAGER_DEBIT", amount: -PRICE });
   if (!begun.ok) return fin(false, `${who} that one's already going through.`);
   const debit = await moveBalance(env, gate.login, -PRICE);
   if (!debit.ok) { await finishOperation(db, opId, "FAILED", { error: debit.error }); return fin(false, `${who} couldn't take the ZCoins. Nothing was charged.`); }
 
-  const r = await addIt();
-  if (r.error && !(r.error === "NETWORK" && await landed())) {
+  const r = await act();
+  if (r.error && !(r.error === "NETWORK" && await check())) {
     const refund = await moveBalance(env, gate.login, PRICE);
     await finishOperation(db, opId, refund.ok ? "FAILED" : "NEEDS_RECONCILIATION", { balanceAfter: refund.ok ? refund.balance : null, error: `7tv:${String(r.error).slice(0, 60)}` });
     if (refund.ok) {
       await db.prepare(`INSERT INTO wallet_operations (id, idempotency_key, user_id, market_id, pick_id, type, amount, status, balance_after) VALUES (?, ?, ?, NULL, NULL, 'COMPENSATING_REFUND', ?, 'CONFIRMED', ?)`)
         .bind(newId("op"), `REFUND:${opKey}`, user.id, PRICE, refund.balance).run().catch(() => {});
-      return fin(false, `${who} didn't add it (${explain(r)}) Your ${PRICE} ZC is back.`);
+      return fin(false, `${who} that didn't go through (${explain(r)}) Your ${PRICE} ZC is back.`);
     }
-    return fin(false, `${who} didn't add it, and your ${PRICE} ZC couldn't be returned automatically. An admin can see it and fix it.`);
+    return fin(false, `${who} that didn't go through, and your ${PRICE} ZC couldn't be returned automatically. An admin can see it and fix it.`);
   }
-  await note(env, gate.login, "add", emote.id, name, PRICE, opKey);
+  await note(env, gate.login, logOp, emoteId, name, PRICE, opKey);
   await finishOperation(db, opId, "CONFIRMED", { balanceAfter: debit.balance });
-  return fin(true, `${who} added ${name} to the channel for ${PRICE} ZC (${set.count + 1}/${set.capacity}).${Number.isFinite(debit.balance) ? ` You have ${Number(debit.balance).toLocaleString()} left.` : ""}`);
+  return fin(true, success(Number.isFinite(debit.balance) ? ` You have ${Number(debit.balance).toLocaleString()} left.` : ""));
 }
