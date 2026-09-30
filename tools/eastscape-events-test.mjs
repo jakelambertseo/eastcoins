@@ -71,30 +71,44 @@ const wm = () => Y.mobs.find((m) => m.wanted);
 { h1.C.takes = 9; t = Date.now(); W.wantedPost(t, "workyard"); W.wantedTick(t); const m = wm(); W.bossAdd(h1, m, "dmg", m.maxHp); m.hp = 0; W.killMob(Y, h1, m, t);
   is(h1.C.store.own.includes("title_bountyhunter"), true, "the tenth poster taken: « Bounty Hunter » is theirs"); }
 
-/* 4. THE JACKPOT THIEF */
-const c1 = player("Chaser", "workyard", 20, 13, { melee: 30 }), c2 = player("Scooper", "workyard", 24, 16);
+/* 4. THE JACKPOT THIEF (2026-09-30: never the Yard; a 30,000-50,000 sack, the Jackpot lending 10% and the house the rest; one CASINO line, no copy) */
+is(G.JTHIEF.scenes.includes("workyard"), false, "the Yard is not on his list");
+const c1 = player("Chaser", "gloam", 20, 13, { melee: 30 }), c2 = player("Scooper", "gloam", 24, 16), GLT = W.scene("gloam");
+said.length = 0; for (const p of W.pls.values()) p.out = [];
 t = Date.now(); W.jack.pot = 100000; W.thief = null; W.thiefStart(t);
-const th = () => Y.mobs.find((m) => m.thief);
-is([W.thief.sack, W.jack.pot, !!th(), th()?.hp], [5000, 95000, true, Math.min(80, 30 + 3 * W.playersIn(Y).length)], "he grabs 5% of a 100,000 Jackpot and runs into the Yard, 30 hits plus 3 a person");
-{ const m = th(), g0 = Y.ground.length;
-  for (let i = 0; i < 10; i++) { m.hp -= 1; W.thiefHit(Y, c1, m, t + i); }
-  const piles = Y.ground.slice(g0);
-  is([piles.length, piles[0]?.k, piles[0]?.n, piles[0]?.owner, W.thief.sack, m.dizzyUntil > t], [10, "tickets", 75, null, 4250, true], "ten hits: ten piles of 75 tickets for anyone, the sack down to 4,250, and he's dizzy");
-  const pile = piles[0]; c2.x = pile.x; c2.y = pile.y; c2.path = []; const b0 = tix(c2); c2.act = { kind: "ground", id: pile.id, x: pile.x, y: pile.y }; W.doAction(Y, c2, t);
-  is(tix(c2) - b0, 75, "someone who never hit him picks one up");
+const th = () => GLT.mobs.find((m) => m.thief), S0 = W.thief.sack;
+is([S0 >= 30000 && S0 <= 50000, W.thief.fromPot, W.jack.pot, W.thief.scene, !!th(), th()?.hp], [true, 10000, 90000, "gloam", true, G.JTHIEF.hits.base], `he takes ${S0} (the Jackpot lends 10,000 of a 100,000 pot, the house the rest) into the Gloam, the only map on his list with people on it`);
+is([said.length, /There's a thief loose in The Gloam! He stole [\d,]+ tickets from Bom's Jackpot/.test(said[0]), c1.out.filter((e) => e.type === "casinonote").length], [1, true, 0], "one vague CASINO line, and no second copy of it");
+{ const m = th(), g0 = GLT.ground.length, spill = Math.round(S0 * G.JTHIEF.spill);
+  for (let i = 0; i < 10; i++) { m.hp -= 1; W.thiefHit(GLT, c1, m, t + i); }
+  const piles = GLT.ground.slice(g0);
+  is([piles.length, piles[0]?.k, piles[0]?.n, piles[0]?.owner, W.thief.sack, m.dizzyUntil > t], [10, "tickets", spill, null, S0 - 10 * spill, true], `ten hits: ten piles of ${spill} tickets for anyone, and he's dizzy`);
+  { const h0 = m.hp, mx0 = m.maxHp; m.hp -= 1; W.thiefHit(GLT, c2, m, t + 20); m.hp -= 1; W.thiefHit(GLT, c2, m, t + 21);
+    is([m.hp - h0, m.maxHp - mx0], [G.JTHIEF.hits.per - 2, G.JTHIEF.hits.per], `a second person joins in: ${G.JTHIEF.hits.per} more hits on him (once, however often they hit)`); }
+  const pile = piles[0]; c2.x = pile.x; c2.y = pile.y; c2.path = []; const b0 = tix(c2); c2.act = { kind: "ground", id: pile.id, x: pile.x, y: pile.y }; W.doAction(GLT, c2, t);
+  is(tix(c2) - b0, spill, "someone who never hit him picks one up");
   /* he runs */
-  for (const q of W.playersIn(Y)) if (q !== c1) { q.x = 3; q.y = 3; }   /* the bystanders step well back: one beside him on each side would box him in (and should) */
+  for (const q of W.playersIn(GLT)) if (q !== c1) { q.x = 3; q.y = 3; }   /* the bystanders step well back: one beside him on each side would box him in (and should) */
   m.dizzyUntil = 0; m.step = null; m.path = []; c1.x = m.x + 1; c1.y = m.y; const s0 = { x: m.x, y: m.y }; let tt = t + 1000;
-  for (let i = 0; i < 20; i++, tt += 200) W.thiefMove(Y, m, tt, W.playersIn(Y));
-  is(G.cheb(s0, m) >= 3 && m.x < s0.x, true, `he runs, away from the chaser at his side (${G.cheb(s0, m)} tiles in four seconds)`); }
-{ const m = th(), a0 = tix(c1), left = W.thief.sack; m.hp = 0; W.killMob(Y, c1, m, t);
-  is([tix(c1) - a0, W.thief, !th(), c1.out.some((e) => e.type === "jackpotkill")], [left, null, true, true], "the last hit takes what's left in the sack"); }
-{ const far = player("Faraway", "gloam", 20, 10); t = Date.now(); W.thiefStart(t); const G0 = W.scene("gloam");
+  for (let i = 0; i < 20; i++, tt += 200) W.thiefMove(GLT, m, tt, W.playersIn(GLT));
+  is(G.cheb(s0, m) >= 3, true, `he runs from the chaser (${G.cheb(s0, m)} tiles in four seconds)`);
+  /* (2026-09-30, the owner: "keeps getting stuck on the edges of maps") pinned against the edge with someone on him, he gets out into the open */
+  { const g = GLT.g, edge = (x, y) => Math.min(x, y, g[0].length - 1 - x, g.length - 1 - y);
+    const spot = []; for (let y = 1; y < g.length - 1; y++) for (let x = 1; x < g[0].length - 1; x++) if (edge(x, y) === 1 && G.walkableIn(g, x, y) && g[y][x] !== "e" && G.walkableIn(g, x + (x === 1 ? 1 : x === g[0].length - 2 ? -1 : 0), y + (y === 1 ? 1 : y === g.length - 2 ? -1 : 0))) spot.push({ x, y });
+    const at = spot[0]; m.x = at.x; m.y = at.y; m.step = null; m.path = []; m.dizzyUntil = 0; m.cornered = 0;
+    c1.x = at.x + (at.x === 1 ? 1 : at.x === g[0].length - 2 ? -1 : 0); c1.y = at.y + (at.y === 1 ? 1 : at.y === g.length - 2 ? -1 : 0);
+    let tt2 = t + 10000; for (let i = 0; i < 40; i++, tt2 += 150) W.thiefMove(GLT, m, tt2, W.playersIn(GLT));
+    is(edge(m.x, m.y) >= 3, true, `pinned at the edge (${at.x},${at.y}) with a chaser beside him, six seconds later he is ${edge(m.x, m.y)} tiles in`); } }
+{ const m = th(), a0 = tix(c1), left = W.thief.sack; said.length = 0; m.hp = 0; W.killMob(GLT, c1, m, t);
+  is([tix(c1) - a0, W.thief, !th(), c1.out.some((e) => e.type === "jackpotkill")], [left, null, true, true], "the last hit takes what's left in the sack");
+  is([said.length, /Chaser CAUGHT THE JACKPOT THIEF/.test(said[0] || "")], [1, true], "and CASINO says who caught him, once"); }
+{ const far = player("Faraway", "mire", 20, 10); t = Date.now(); W.thief = null; W.thiefStart(t, "gloam"); const M0 = W.scene("mire");
   W.thief.nextHop = t - 1; W.thiefTick(t);
-  is([W.thief.scene, !!G0.mobs.find((m) => m.thief), !th(), said.some((s) => /he's in THE GLOAM/.test(s))], ["gloam", true, true, true], "a minute on: he dives down a hole and comes up where people are, and CASINO says where");
-  const pot0 = W.jack.pot, sack = W.thief.sack; W.thief.hop = G.JTHIEF.hops; W.thief.nextHop = t - 1; W.thiefTick(t);
-  is([W.thief, W.jack.pot - pot0, !G0.mobs.find((m) => m.thief)], [null, sack, true], "five hops and he's gone: the whole sack goes back into the Jackpot");
+  is([W.thief.scene, !!M0.mobs.find((m) => m.thief), !th(), said.some((s) => /he's in THE LANTERN MIRE|he's in /.test(s))], ["mire", true, true, true], "a minute on: he dives down a hole and comes up where people are, and CASINO says where");
+  const pot0 = W.jack.pot, lent = W.thief.fromPot; W.thief.hop = G.JTHIEF.hops; W.thief.nextHop = t - 1; W.thiefTick(t);
+  is([W.thief, W.jack.pot - pot0, !M0.mobs.find((m) => m.thief)], [null, lent, true], "five hops and he's gone: the Jackpot gets back what it lent, the house's part goes with him");
   W.pls.delete(far.id); }
+for (const q of [c1, c2]) W.pls.delete(q.id);
 
 /* 5. THE STAR TENT */
 { const b = player("Buyer", "cloud", 18, 17, { mining: 64 }), CL = W.scene("cloud"); b.C.frags = 5000;

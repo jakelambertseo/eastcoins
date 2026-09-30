@@ -9880,9 +9880,15 @@ export const WANTED = { lasts: 60 * 60000, hpX: 6, minHp: [150, 1500, 5000],   /
     frozen: [["frostwolf", "The Grizzled Frostwolf", "Leads the pack that ate the last expedition's sled."], ["yeti", "The Abominable Bob", "Throws snowballs the size of a cart. Laughs about it."]] } };
 /* THE JACKPOT THIEF: grabs a sack of the slots' Jackpot and runs; every hit spills tickets for anyone; the last hit takes the rest of the sack.
    He escapes after `hops` hops, and whatever is left in the sack goes back into the Jackpot, so the Jackpot is only ever lent. */
-export const JTHIEF = { sack: { share: 0.05, min: 2000, max: 15000 }, spill: 0.015, hits: { base: 30, per: 3, cap: 80 }, hopMs: 60000, hops: 5, dizzy: { every: 10, ms: 3000 },
-  stepMs: 190, flee: 7, keepMs: 60000, start: { scene: "workyard", x: 27, y: 13 },
-  scenes: ["workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "trailer", "boardwalk", "valley", "frozen"] };
+/* (2026-09-30, the owner: "make it so he never spawns in the yard", then "he needs to drop like 30k-50k tickets since hes hopping maps") THE SACK
+   is 30,000 to 50,000 tickets, drawn fresh each time. The Jackpot lends its `share` (10%, and never below its seed) and THE HOUSE MAKES UP THE REST,
+   so a chase can never empty the slots' Jackpot; if he escapes, only what the Jackpot lent goes back to it. The Yard is off his list: he starts on a
+   map with people on it (the way he hops), never at a fixed spot. */
+/* (2026-09-30, the owner: "he needs to be scaled to how many users are fighting him, as far as HP goes") HITS: `base` for the first person on him, `per`
+   more for every other person who lands a hit on this map, up to `cap`. Counted from who actually hits him, not who is standing on the map. */
+export const JTHIEF = { sack: { share: 0.1, min: 30000, max: 50000 }, spill: 0.015, hits: { base: 40, per: 25, cap: 200 }, hopMs: 60000, hops: 5, dizzy: { every: 10, ms: 3000 },
+  stepMs: 190, flee: 7, keepMs: 60000,
+  scenes: ["gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "trailer", "boardwalk", "valley", "frozen"] };
 rmob("fallenstar", { name: "Shooting star", size: "l", lvl: 1, hp: 1, att: 0, def: 0, max: 0, speed: 3600000, box: [52, 50], art: "o_fallenstar", star: true, event: true,
   ex: "It fell out of the sky and it is still warm. Mine it with a pickaxe: the top tiers need a high Mining level, the bottom ones anybody." }, 0, []);
 rmob("jackthief", { name: "The Jackpot Thief", size: "m", lvl: 1, hp: 30, att: 0, def: 0, max: 0, speed: 3600000, box: [36, 40], thief: true, event: true, open: true,

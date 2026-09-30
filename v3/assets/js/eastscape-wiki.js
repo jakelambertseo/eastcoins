@@ -1275,7 +1275,7 @@ export const GUIDES = [
       const bands = ["Low", "Middle", "High"], bandOf = (k) => W.bands.findIndex((b) => b.includes(k));
       const targets = Object.entries(W.targets).filter(([k]) => G.OPEN.has(k) && G.SCENES[k]).flatMap(([k, list]) => list.filter(([t]) => G.MOBS[t]).map(([t, name]) => { const b = bandOf(k);
         return `<tr><td><b>${H.esc(name)}</b></td><td>${mobL(G, H, t)}</td><td>${areaL(G, H, k)}</td><td>${bands[b] || "&mdash;"}</td><td>${num(Math.max(W.minHp[b] || 0, Math.round(G.MOBS[t].hp * W.hpX)))}</td><td>${num(W.bounty[b] || 0)}</td></tr>`; })).join("");
-      const hits = (n) => Math.min(J.hits.cap, J.hits.base + J.hits.per * n);
+      const hits = (n) => Math.min(J.hits.cap, J.hits.base + J.hits.per * (n - 1));
       return `<p><b>Three things happen in the world every day, once each, at times nobody knows:</b> a Shooting Star falls, a Wanted poster goes up, and the Jackpot Thief robs the slots. CASINO says so in chat when each one starts, a card for it appears under the minimap (click it for the details), and the world map puts a pin on the area it is in. <b>Type /events</b> in chat to hear what is on now and what is still to come today.</p>
       <p><b>When.</b> Between ${hr(E.from)} and ${hr(E.to)}, Chicago time. The ${E.to - E.from} hours are cut into three equal stretches, the three events are dealt into them in a random order, and each takes a minute at least ${E.margin} minutes in from either end of its stretch, so no two ever land within ${Math.round(E.margin * 2 / 60) === 1 ? "an hour" : `${E.margin * 2} minutes`} of each other. All three are open to everyone, and all three pay by what you put in.</p>
 
@@ -1298,10 +1298,10 @@ export const GUIDES = [
       <table class="tbl" data-paged="25"><tr><th>Poster</th><th>Is really</th><th>Where</th><th>Band</th><th>Health</th><th>Bounty</th></tr>${targets}</table>
 
       <h3>The Jackpot Thief</h3>
-      <p><b>A goblin grabs a sack of the slots' Jackpot and runs.</b> The sack is ${Math.round(J.sack.share * 100)}% of the Jackpot, never under ${num(J.sack.min)} or over ${num(J.sack.max)} tickets. He starts in the Yard.</p>
-      <p><b>He runs from people.</b> Get close and he makes for open ground; corner him and he vaults clear. He does not fight back, and he counts <b>hits, not damage</b>: when he lands he takes ${J.hits.base} hits, plus ${J.hits.per} for every person in the area, never more than ${J.hits.cap} (${hits(1)} for one of you, ${hits(5)} for five). Every ${J.dizzy.every} hits he sees stars for ${J.dizzy.ms / 1000} seconds and stands still.</p>
+      <p><b>A goblin grabs a sack of the slots' Jackpot and runs.</b> The sack holds <b>${num(J.sack.min)} to ${num(J.sack.max)} tickets</b>: ${Math.round(J.sack.share * 100)}% of it is the Jackpot's, and the house puts in the rest. He turns up on a map with people on it, never the Yard.</p>
+      <p><b>He runs from people.</b> Get close and he makes for open ground; corner him and he vaults clear. He does not fight back, and he counts <b>hits, not damage</b>: with one of you on him he takes ${J.hits.base} hits, and every other person who joins in adds ${J.hits.per}, up to ${J.hits.cap} (${hits(1)} for one of you, ${hits(5)} for five). Every ${J.dizzy.every} hits he sees stars for ${J.dizzy.ms / 1000} seconds and stands still.</p>
       <p><b>Every hit spills ${Math.round(J.spill * 1000) / 10}% of the sack</b> onto the ground as tickets anybody can pick up, for a minute, until the sack is down to a fifth. <b>That last fifth goes to whoever lands the last hit.</b></p>
-      <p><b>He hops.</b> Every minute he dives down a hole and comes up on another map with people on it (${names(J.scenes)}), and CASINO says where. After ${J.hops} hops he is gone for good, and whatever is left in the sack goes back into the Jackpot: the Jackpot is only ever lent.</p>`;
+      <p><b>He hops.</b> Every minute he dives down a hole and comes up on another map with people on it (${names(J.scenes)}), and CASINO says where. After ${J.hops} hops he is gone for good, and the Jackpot gets back what it lent (as far as the sack still holds it); the house's part is gone with him.</p>`;
     } },
   /* (2026-09-30) CHAT COMMANDS, drawn from G.COMMANDS: /help in the game and this page read the same list, so a command added there is
      documented in both places at once. */

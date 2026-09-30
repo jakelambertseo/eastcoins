@@ -15,8 +15,12 @@ const WALKS = {
   olive:    ["fa7ca86f-cb53-44aa-81d9-414db4522887", "69ca3bee-dfe2-461f-ac57-d8510bbd2f35"],
   cow:      ["2642667f-32bc-4d36-a2e2-b4a58fccb997", "fbcdaeda-4abd-4698-a92b-28ab7144b023"],
   hornworm: ["ac02f8e4-3766-40a2-b664-4f85a2e2fddb", "f900b350-2ecf-4112-affb-b9bb8a9f0aca"],
-  boar:     ["8b859808-7d3d-474c-9e69-05a35be7212c", "19752fd7-749e-4210-9ea9-2d145d1d742d"]
+  boar:     ["8b859808-7d3d-474c-9e69-05a35be7212c", "19752fd7-749e-4210-9ea9-2d145d1d742d"],
+  /* (2026-09-30, the owner: "add walking/running animation to the jackpot guy") a template RUN (running-4-frames), not a walk: he is always fleeing.
+     His standing picture (jackthief.png) is the same character's east rotation, so the two match. */
+  jackthief: ["05a046d5-33db-4353-be40-4a11ff6fedbb", "7acb8b82-8083-4b83-a24c-a7800869fbe7"]
 };
+const ONLY = process.argv.slice(2);   /* node tools/eastscape-walk-art.mjs jackthief  -> only that one */
 const KEY = process.env.PIXELLAB_KEY || "";
 /** the animation id for a character, from the MCP's own listing if it was not written down above */
 async function animOf(charId, given) {
@@ -29,6 +33,7 @@ async function animOf(charId, given) {
 }
 let wrote = 0;
 for (const [mob, [charId, animId]] of Object.entries(WALKS)) {
+  if (ONLY.length && !ONLY.includes(mob)) continue;
   let id; try { id = await animOf(charId, animId); } catch (e) { console.log(`  skip ${mob}: ${e.message}`); continue; }
   for (let i = 0; i < 4; i++) {
     const url = `https://backblaze.pixellab.ai/file/pixellab-characters/${ACC}/${charId}/animations/${id}/east/${i}.png`;

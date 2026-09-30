@@ -21,7 +21,8 @@ export function installEvents(World, { G }) {
   const clockCT = (t) => new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "2-digit" }).format(t);
   const save = (w, key, v) => { if (v) w.ctx.storage.put(key, v).catch(() => {}); else w.ctx.storage.delete(key).catch(() => {}); };
   const tell = (w, S, text) => { for (const p of w.playersIn(S)) p.out.push({ type: "casinonote", text }); };
-  const everyone = (w, text) => { for (const p of w.pls.values()) p.out.push({ type: "casinonote", text }); };
+  /* (2026-09-30, the owner: "the initial announcement of the jackpot guy being spawned is duplicating") every announcement here is CASINO's chat line
+     (houseSay) and nothing else: a second "casinonote" beside it drew the same news twice in chat. */
   const blank = (id, t, x, y, hp, maxHp, now, extra) => ({ id, t, x, y, hx: x, hy: y, hp, maxHp, path: [], step: null, face: 1, nextWander: 0, dead: false, respawnAt: Infinity, hurtAt: 0, swingAt: 0, lastSwing: now, ...extra });
   const gridOf = (w, key) => w.scenes.get(key)?.g || G.buildScene(key).g;
   /* a free standing tile in a map: walkable, not an edge, all eight neighbours walkable, away from the border */
@@ -36,6 +37,8 @@ export function installEvents(World, { G }) {
     }
     return null;
   };
+  /* (2026-09-30) how far a tile is from the nearest open-edge of the map, counting walls: the Jackpot Thief keeps EDGE_KEEP tiles off it */
+  const EDGE_KEEP = 4, edgeOf = (g, x, y) => Math.min(x, y, g[0].length - 1 - x, g.length - 1 - y);
   const freeNear = (w, S, x, y) => {
     for (let r = 0; r <= 4; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
       const xx = x + dx, yy = y + dy;
@@ -52,7 +55,10 @@ export function installEvents(World, { G }) {
     this.wanted = (await st.get("wanted")) || null;
     this.wantedLog = (await st.get("wantedLog")) || { log: [], up: 0 };
     const th = await st.get("thief");
-    if (th) { this.jack.pot += Math.max(0, th.sack | 0); this.jackDirty = true; await st.delete("thief"); }   /* a restart ends a chase: the sack goes home */
+    if (th) { const back = Math.max(0, Math.min(th.sack | 0, th.fromPot ?? th.sack) | 0); this.jack.pot += back; this.jackDirty = true; await st.delete("thief");   /* a restart ends a chase: what the Jackpot lent goes home */
+      /* (2026-09-30, the owner: "i didnt see any completion message") and SAYS so: it used to end in silence, so a chase cut off by a deploy (or the
+         dev server reloading) just vanished. Said into the kept chat, which everyone gets back as they reconnect. */
+      this.houseSay(`\u{1F4B0} The Jackpot Thief slipped away while the lights were out.${back ? ` ${G.fmtTix(back)} finds its way back into the Jackpot.` : ""} He'll be back.`); }
     this.thief = null;
   };
   P.evPlanDay = function (now) {
@@ -109,7 +115,6 @@ export function installEvents(World, { G }) {
     this.sstar = { phase: "warn", at, scene: key, hint, wild: key === "wild" }; save(this, "sstar", this.sstar);
     const mins = Math.max(1, Math.round((at - now) / 60000));
     this.houseSay(`\u{1F320} A star is falling! It'll come down ${hint} in about ${mins} minute${mins === 1 ? "" : "s"}. Bring a pickaxe: everyone who mines it takes a share of its Star Fragments.`);
-    everyone(this, `\u{1F320} A star is falling ${hint}. It lands in about ${mins} minute${mins === 1 ? "" : "s"}.`);
     this.evBroadcast(now, true);
   };
   P.starLand = function (now) {
@@ -121,7 +126,6 @@ export function installEvents(World, { G }) {
     save(this, "sstar", H);
     const where = whereOf(H.scene);
     this.houseSay(`\u{1F320} IMPACT! The star came down in ${where}${H.wild ? ", in the Wilderness, where every fragment counts double. Mind yourselves out there" : ""}. It's tier ${tier}: Mining ${tier * SS.tierLvl} to start, and it gets easier as it breaks. It cools in an hour.`);
-    everyone(this, `\u{1F320} The star landed in ${where}. Tier ${tier}: Mining ${tier * SS.tierLvl}.`);
     const S = this.scenes.get(H.scene); if (S && this.playersIn(S).length) { this.starPut(S, now); for (const p of this.playersIn(S)) this.say(p, "Something bright tears across the sky and hits the ground close by. The ground shakes.", "bad"); }
     this.evBroadcast(now, true);
   };
@@ -203,7 +207,6 @@ export function installEvents(World, { G }) {
     this.wanted = { id: `want${now.toString(36)}`, t, scene, name, ex, band, bounty, at: now, until: now + WA.lasts, hp, maxHp: hp, by: {} };
     save(this, "wanted", this.wanted);
     this.houseSay(`\u{1F4DC} WANTED: ${name.toUpperCase()}, in ${whereOf(scene)}. ${G.fmtTix(bounty)} for bringing it down, shared by everyone who hurts it.${up ? ` (${Math.round(up * 100)}% more than usual: the last one got away.)` : ""} The poster's on the Bounty Board in the Yard, and it has an hour.`);
-    everyone(this, `\u{1F4DC} Wanted: ${name}, in ${whereOf(scene)}. ${G.fmtTix(bounty)} shared.`);
     this.evBroadcast(now, true);
   };
   P.wantedPut = function (S, now) {
@@ -246,7 +249,6 @@ export function installEvents(World, { G }) {
     this.wantedLog.up = 0; save(this, "wantedLog", this.wantedLog);
     const top = paid.slice(0, 3).map(([nm, n]) => `${nm} (${n.toLocaleString()})`).join(", ");
     this.houseSay(`\u{1F4DC} ${pl.name} landed the last blow: ${H.name.toUpperCase()} IS TAKEN. ${rows.length} hunter${rows.length === 1 ? "" : "s"} split ${G.fmtTix(H.bounty)}. Top: ${top}.`);
-    everyone(this, `\u{1F4DC} ${H.name} is taken!`);
     this.wanted = null; save(this, "wanted", null); this.evBroadcast(now, true);
   };
   P.wantedEscape = function (S, m, now) {
@@ -263,21 +265,24 @@ export function installEvents(World, { G }) {
   /* ------------------------------------------------------------------ THE JACKPOT THIEF */
   P.thiefStart = function (now, scene, at) {
     if (this.thief) return false;
-    const J = this.jack, sack = Math.round(Math.max(TH.sack.min, Math.min(TH.sack.max, (J.pot || 0) * TH.sack.share)));
-    const fromPot = Math.max(0, Math.min(sack, Math.floor((J.pot || 0) - G.JACKPOT.seed)));
+    /* (2026-09-30) 30,000-50,000, to the hundred; the Jackpot lends its share, the house the rest (JTHIEF in the rules) */
+    const J = this.jack, sack = Math.round((TH.sack.min + Math.random() * (TH.sack.max - TH.sack.min)) / 100) * 100;
+    const fromPot = Math.max(0, Math.min(sack, Math.floor((J.pot || 0) * TH.sack.share), Math.floor((J.pot || 0) - G.JACKPOT.seed)));
     J.pot -= fromPot; this.jackDirty = true;
-    const key = scene && TH.scenes.includes(scene) ? scene : TH.start.scene;
-    this.thief = { id: `thief${now.toString(36)}`, scene: key, sack0: sack, sack, fromPot, hits: 0, hop: 0, nextHop: now + TH.hopMs, hp: null, by: {}, spilled: 0, x: at ? at.x : TH.start.x, y: at ? at.y : TH.start.y, fresh: !!at || key === TH.start.scene };
+    /* (2026-09-30) NEVER THE YARD, AND NO FIXED START: a map on his list with people on it (the way he hops), else any open one on it */
+    const open = TH.scenes.filter((k) => G.OPEN.has(k)), busy = open.filter((k) => { const Sk = this.scenes.get(k); return Sk && this.playersIn(Sk).length; });
+    const key = scene && TH.scenes.includes(scene) ? scene : pick(busy.length ? busy : open);
+    this.thief = { id: `thief${now.toString(36)}`, scene: key, sack0: sack, sack, fromPot, hits: 0, hop: 0, nextHop: now + TH.hopMs, hp: null, by: {}, spilled: 0, x: at ? at.x : null, y: at ? at.y : null, fresh: !!at };
     save(this, "thief", this.thief);
-    this.houseSay(`\u{1F4B0} STOP, THIEF! A goblin just grabbed ${G.fmtTix(sack)} out of the Jackpot and ran off into ${whereOf(key)}. Every hit knocks tickets out of his sack for anybody to grab, and whoever lands the LAST hit keeps what's left. Every minute he dives down a hole to another map. Five hops and he's gone.`);
-    everyone(this, `\u{1F4B0} STOP, THIEF! A goblin robbed the Jackpot and ran into ${whereOf(key)}!`);
+    /* (2026-09-30, the owner: "make this more vague") who, where and how much; how he works is the wiki's and the tracker's to tell */
+    this.houseSay(`\u{1F4B0} There's a thief loose in ${whereOf(key)}! He stole ${G.fmtTix(sack)} from Bom's Jackpot. Knock some loose before he gets away.`);
     for (const p of this.pls.values()) p.out.push({ type: "thiefheist", sack });
     const S = this.scenes.get(key); if (S && this.playersIn(S).length) this.thiefPut(S, now);
     this.evBroadcast(now, true);
     return true;
   };
   P.thiefPut = function (S, now) {
-    const H = this.thief, n = this.playersIn(S).length, max = Math.min(TH.hits.cap, TH.hits.base + TH.hits.per * n);
+    const H = this.thief, max = TH.hits.base;   /* (2026-09-30) one person's worth; every other person who hits him adds TH.hits.per (thiefHit) */
     let spot;
     if (H.x != null && (H.fresh || H.placed === S.key)) spot = freeNear(this, S, H.x, H.y);
     else { const ps = this.playersIn(S), c = ps.length ? ps[Math.floor(Math.random() * ps.length)] : null; spot = openTile(S.g, c, 6, 10) || openTile(S.g) || { x: H.x ?? 10, y: H.y ?? 10 }; }
@@ -292,7 +297,10 @@ export function installEvents(World, { G }) {
     const live = players.filter((p) => !p.dead && p.C.hp > 0), dist = (x, y) => live.reduce((a, p) => Math.min(a, G.cheb(p, { x, y })), 99);
     const here = dist(m.x, m.y);
     if (here > TH.flee) {
-      if (now > (m.nextWander || 0)) { m.nextWander = now + 1200 + Math.random() * 1500; const [dx, dy] = pick(G.D8), x = m.x + dx, y = m.y + dy;
+      if (now > (m.nextWander || 0)) { m.nextWander = now + 1200 + Math.random() * 1500;
+        /* (2026-09-30) near an edge, the wander leans back toward the middle of the map */
+        const inward = edgeOf(S.g, m.x, m.y) < EDGE_KEEP ? G.D8.filter(([ex, ey]) => edgeOf(S.g, m.x + ex, m.y + ey) > edgeOf(S.g, m.x, m.y)) : [];
+        const [dx, dy] = pick(inward.length ? inward : G.D8), x = m.x + dx, y = m.y + dy;
         if (G.canStepIn(S.g, m.x, m.y, dx, dy) && S.g[y][x] !== "e" && !this.occupied(S, x, y, m)) { m.path = [{ x, y }]; this.stepEntity(S, m, now, false); } }
       return;
     }
@@ -301,13 +309,16 @@ export function installEvents(World, { G }) {
       const x = m.x + dx, y = m.y + dy;
       if (!G.canStepIn(S.g, m.x, m.y, dx, dy) || S.g[y][x] === "e" || this.occupied(S, x, y, m)) continue;
       const room = G.D8.filter(([ex, ey]) => G.walkableIn(S.g, x + ex, y + ey)).length;   /* prefers open ground to a dead end */
-      const sc = dist(x, y) * 10 + room + Math.random() * 3; if (sc > bs) { bs = sc; best = { x, y, d: dist(x, y) }; }
+      const edge = edgeOf(S.g, x, y), sc = dist(x, y) * 10 + room + Math.random() * 3 - Math.max(0, EDGE_KEEP - edge) * 8;   /* (2026-09-30, the owner: "keeps getting stuck on the edges of maps") the border counts against a tile */
+      if (sc > bs) { bs = sc; best = { x, y, d: dist(x, y) }; }
     }
-    if (!best || best.d < here) {
+    if (!best || best.d < here || (edgeOf(S.g, m.x, m.y) <= 1 && here <= 2)) {
       m.cornered ||= now;
-      if (now - m.cornered > 1200) {   /* THE VAULT: a hop over whoever has him boxed in, to open ground a few tiles away */
-        const near = live.sort((a, b) => G.cheb(a, m) - G.cheb(b, m))[0], to = openTile(S.g, m, 3, 6);
-        if (to && !this.occupied(S, to.x, to.y, m) && (!near || G.cheb(near, to) >= 3)) { m.x = to.x; m.y = to.y; m.path = []; m.step = null; S.events.push({ type: "vault", who: m.id, t: now }); }
+      if (now - m.cornered > 900) {   /* THE VAULT: a hop over whoever has him boxed in. (2026-09-30) Picked, not taken at random: of a dozen open tiles
+                                          4-9 away, the one furthest from everybody and from the border, so a vault out of a corner lands in the open. */
+        let to = null, ts = -1;
+        for (let i = 0; i < 12; i++) { const c = openTile(S.g, m, 4, 9); if (!c || this.occupied(S, c.x, c.y, m)) continue; const v = dist(c.x, c.y) * 3 + Math.min(edgeOf(S.g, c.x, c.y), EDGE_KEEP * 2); if (v > ts) { ts = v; to = c; } }
+        if (to && dist(to.x, to.y) >= 3) { m.x = to.x; m.y = to.y; m.path = []; m.step = null; S.events.push({ type: "vault", who: m.id, t: now }); }
         m.cornered = 0;
       }
       if (!best) return;
@@ -317,6 +328,9 @@ export function installEvents(World, { G }) {
   /* from the swing: every hit spills tickets onto the ground for anyone (until the sack is down to a fifth, which is kept for the last hit) */
   P.thiefHit = function (S, pl, m, now) {
     const H = this.thief; if (!H || H.id !== m.id) return;
+    /* (2026-09-30) A NEW PAIR OF HANDS MAKES HIM TOUGHER: the first person to hit him on this map meets `base`; each one after adds `per` to his health
+       (and to the bar), up to `cap`. Kept on the monster, so a hop to a new map starts the count again. */
+    m.hitBy ||= {}; if (!m.hitBy[pl.id]) { m.hitBy[pl.id] = 1; if (Object.keys(m.hitBy).length > 1) { const add = Math.max(0, Math.min(TH.hits.per, TH.hits.cap - (m.maxHp || 0))); m.hp += add; m.maxHp = (m.maxHp || 0) + add; } }
     H.hits++; H.by[pl.id] = (H.by[pl.id] || 0) + 1; H.hp = m.hp;
     const spill = Math.max(1, Math.round(H.sack0 * TH.spill));
     if (H.sack - spill >= H.sack0 * 0.2) {
@@ -363,14 +377,14 @@ export function installEvents(World, { G }) {
     this.say(pl, `\u{1F4B0} You caught the Jackpot Thief! The sack bursts: ${G.fmtTix(n)} are yours.`, "loot");
     S.events.push({ type: "thiefcaught", x: m.x, y: m.y, t: now });
     this.houseSay(`\u{1F4B0} ${pl.name} CAUGHT THE JACKPOT THIEF in ${whereOf(H.scene)}! ${G.fmtTix(n)} was left in the sack, and ${G.fmtTix(H.spilled)} spilled out along the way for everybody else.`);
-    everyone(this, `\u{1F4B0} ${pl.name} caught the Jackpot Thief!`);
     this.thief = null; save(this, "thief", null); this.evBroadcast(now, true);
   };
   P.thiefEscape = function (S, m, now) {
     const H = this.thief;
     if (S && m) { this.bossEnd(S, m, "escaped"); S.mobs = S.mobs.filter((x) => x !== m); S.whoSig = null; }
-    this.jack.pot += H.sack; this.jackDirty = true;
-    this.houseSay(`\u{1F4B0} The Jackpot Thief got away. ${G.fmtTix(H.sack)} goes back into the Jackpot${H.spilled ? `, and ${G.fmtTix(H.spilled)} was knocked loose along the way` : ""}. He'll be back.`);
+    const back = Math.max(0, Math.min(H.sack, H.fromPot ?? H.sack));   /* (2026-09-30) only what the Jackpot lent goes back; the house's part is simply gone */
+    this.jack.pot += back; this.jackDirty = true;
+    this.houseSay(`\u{1F4B0} The Jackpot Thief got away with ${G.fmtTix(H.sack)}.${back ? ` ${G.fmtTix(back)} of it finds its way back into the Jackpot.` : ""}${H.spilled ? ` ${G.fmtTix(H.spilled)} was knocked loose along the way.` : ""} He'll be back.`);
     this.thief = null; save(this, "thief", null); this.evBroadcast(now, true);
   };
 

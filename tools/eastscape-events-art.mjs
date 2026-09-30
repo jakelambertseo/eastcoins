@@ -6,13 +6,13 @@
      o_fallenstar   the fallen star, drawn at a size that shrinks with its tier
      o_startent     the Star Tent in the Yard, where Star Fragments are spent
      o_bountyboard  the Bounty Board in the Yard, where the Wanted posters go up
-     jackthief      the Jackpot Thief (a monster; he runs and never swings)
+     (jackthief     the Jackpot Thief: since 2026-09-30 a PixelLab character with a run cycle, drawn by tools/eastscape-walk-art.mjs, not copied here)
      pet_starling   the Starling (hatches from egg_starling)
      ui/ev_poster   the poster drawn in the Bounty Board's window
      items/starfrag, items/egg_starling, items/star_crate   the icons */
 import sharp from "sharp"; import fs from "fs";
 const FLAT = "v3/assets/img/glad/flat/", ITEMS = FLAT + "items/", MOCK = "tools/events-mock/art/", TMP = "lt-store/"; fs.mkdirSync(TMP, { recursive: true });
-const COPY = { ev_star: "o_fallenstar", ev_tent: "o_startent", ev_board: "o_bountyboard", ev_thief: "jackthief", ev_starling: "pet_starling", ev_poster: "ui/ev_poster" };
+const COPY = { ev_star: "o_fallenstar", ev_tent: "o_startent", ev_board: "o_bountyboard", ev_starling: "pet_starling", ev_poster: "ui/ev_poster" };
 for (const [from, to] of Object.entries(COPY)) await sharp(`${MOCK}${from}.png`).ensureAlpha().trim().png({ compressionLevel: 9 }).toFile(`${FLAT}${to}.png`);
 export const ICONS = { starfrag: "3d57666c-f589-4254-aeeb-5194b3175aa9", egg_starling: "bc44c61f-8599-43bb-ba75-4070767cc0a7", star_crate: "f7cc3f09-0aa3-409c-aa8a-66390e3b7082" };
 const missing = [];
