@@ -6242,7 +6242,7 @@ let TINKUI = null; const TINKUI_URL = "/v3/assets/js/eastscape-tinker.js?v=7";
 /* (2026-09-28) the Gem Sorter and the Gem Case: loaded the first time either opens */
 let GEMUI = null; const GEMUI_URL = "/v3/assets/js/eastscape-gems.js?v=7";
 /* (2026-09-29) THE OUTFITTERS: Wren the Ranger and Morwenna the Mage, a lazy module like the gems */
-let OUTFITUI = null; const OUTFIT_URL = "/v3/assets/js/eastscape-outfit.js?v=1";
+let OUTFITUI = null; const OUTFIT_URL = "/v3/assets/js/eastscape-outfit.js?v=2";   /* (2026-09-30) v2: the Frost ward tab */
 function outfitUi() { return OUTFITUI ? Promise.resolve(OUTFITUI) : import(OUTFIT_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (OUTFITUI = m.createOutfit({ G, $, esc, send, SFX, ico, openWin, get me() { return me; } })); }); }
 /* (2026-09-29) Marked Cards: the card table, loaded the first time a hand is in play or a card is flipped */
 let CARDUI = null; const CARDUI_URL = "/v3/assets/js/eastscape-cards.js?v=3";

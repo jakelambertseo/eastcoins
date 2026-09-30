@@ -29,6 +29,7 @@ export function createOutfit(E) {
     if (it.acc) out.push(`Acc ${it.acc}`); if (it.str) out.push(`Str ${it.str}`);
     if (it.launcher?.range) out.push(`reach ${it.launcher.range}`);
     if (it.pouch) out.push(`holds ${it.pouch.cap.toLocaleString()}`);
+    if (it.ward === "frost") out.push("keeps out the Frozen Reach's cold");
     return out.join(" · ");
   };
   function render() {
@@ -37,7 +38,8 @@ export function createOutfit(E) {
     win.querySelector(".of-face").src = `${UIA}${FACE[shop]}.png?v=1`;
     win.querySelector(".of-name").textContent = who;
     win.querySelector(".of-sub").textContent = `You have ${G.fmtTix(tix)}`;
-    const tabs = [["armour", style === "archery" ? "Leathers" : "Robes"], ["weapon", style === "archery" ? "Bows & quivers" : "Wands & bags"], ["sell", "Sell"]];
+    const tabs = [["armour", style === "archery" ? "Leathers" : "Robes"], ["weapon", style === "archery" ? "Bows & quivers" : "Wands & bags"],
+      ...(G.outfitShelf(shop).some((r) => r.kind === "trinket") ? [["trinket", "Frost ward"]] : []), ["sell", "Sell"]];   /* (2026-09-30) the Frost charm: it was on the shelf with no tab to show it */
     win.querySelector(".of-tabs").innerHTML = tabs.map(([k, l]) => `<button type="button" role="tab" data-tab="${k}" class="k-tab${tab === k ? " on" : ""}" aria-selected="${tab === k}">${l}</button>`).join("");
     let rows;
     if (tab === "sell") {
@@ -52,7 +54,7 @@ export function createOutfit(E) {
       }).join("");
     }
     win.querySelector(".of-body").innerHTML = rows + (note ? `<p class="of-note">${esc(note)}</p>` : "");
-    win.querySelector(".of-foot").innerHTML = `<span class="k-note">${tab === "armour" ? `A full set: +10% ${skillName(style)} damage${style === "archery" ? " and 6% faster on your feet" : ""}, at half the defence of plate. The bonus only counts while you fight with ${style === "archery" ? "a bow" : "a wand"}.` : tab === "weapon" ? `Made ones are far cheaper: ${style === "archery" ? "Fletching, at the table in the north court" : "Wizardry, at the Arcane altar"}.` : `${who.split(" ")[0]} pays what Bom would: an eighth of the shelf price, ${G.fmtTix(G.GEAR_SELL_MAX)} at most.`}</span>`;
+    win.querySelector(".of-foot").innerHTML = `<span class="k-note">${tab === "armour" ? `A full set: +10% ${skillName(style)} damage${style === "archery" ? " and 6% faster on your feet" : ""}, at half the defence of plate. The bonus only counts while you fight with ${style === "archery" ? "a bow" : "a wand"}.` : tab === "trinket" ? `Without a Frost ward the cold in the Frozen Reach takes 25 health a second. The anvil makes a ward ring or amulet (with stats) from the Yard raid's frost shards and yeti pelts.` : tab === "weapon" ? `Made ones are far cheaper: ${style === "archery" ? "Fletching, at the table in the north court" : "Wizardry, at the Arcane altar"}.` : `${who.split(" ")[0]} pays what Bom would: an eighth of the shelf price, ${G.fmtTix(G.GEAR_SELL_MAX)} at most.`}</span>`;
   }
   return {
     open(s) { shop = s === "mage" ? "mage" : "ranger"; tab = "armour"; note = ""; win ||= frame(); openWin("outfitWin"); render(); },
