@@ -318,7 +318,7 @@ export const GUIDES = [
      the same levels and be a choice rather than a sequence. */
   { id: "road", title: "The road out", icon: "\u{1F5FA}️", cat: "Starting out",
     body: (G, H) => {
-      const ORDER = ["workyard", "gloam", "mire", "boneyard", "orchard", "cloud", "sands", "thunderhead", "carnival", "boardwalk", "bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull", "foundry", "fd_grove", "fd_maze", "fd_isle", "fd_chain", "fd_gate", "fd_hall", "vault", "depths", "trailer", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
+      const ORDER = ["workyard", "gloam", "mire", "boneyard", "orchard", "cloud", "sands", "thunderhead", "carnival", "boardwalk", "bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull", "foundry", "fd_grove", "fd_maze", "fd_isle", "fd_chain", "fd_gate", "fd_hall", "vault", "depths", "trailer", "valley", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
       const NOTE = {
         workyard: "the casino, the bank, the campfire, the furnace and anvil, sardines",
         gloam: "emerald and diamond ore, gloomwillow, trout and catfish",
@@ -345,6 +345,7 @@ export const GUIDES = [
         fd_hall: "through the burning door: the wall of bodies, two towers with an eye on each, and Old Bessemer, the giant, up to his chest in it",
         depths: "ledges over a bottomless drop: monsters that shrug off a whole fighting style, abyss crystal, eclipse and nova ore, and the Deepwarden",   /* (2026-09-27) */
         trailer: "the best gathering in the game, and the meanest neighbours",
+        valley: "north of the Trailer Park, the first of the last four: cavemen, sabretooths, mammoths, raptors and pterodactyls that only a bow or a wand reaches, a tar horror only fire hurts, fossil rocks (Mining 92), cycads (Woodcutting 92), coelacanth in the lake (Fishing 92), the Tyrant Rex at the rex skull, and the Mammoth Matriarch, an open-world boss the whole server can share",   /* (2026-09-30) held until the owner opens it */
         wild: "the road past the Yard's east gate: nodes far apart, most things attack first, and the first of three monsters found nowhere else",
         deep: "the far end of the Wilderness: the Black Pool (Fishing 92 and 97), the Gallows oak (Woodcutting 90), the Grim Liches, the Nexus",
       };

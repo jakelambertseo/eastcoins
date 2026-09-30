@@ -3032,6 +3032,8 @@ Object.assign(SCENES, {
          you can see a road and the road goes somewhere. */
       for (let x = 0; x < COLS; x++) g[13][x] = ",";
       for (let y = 13; y <= 25; y++) g[y][21] = ",";
+      /* (2026-09-30) THE ROAD NORTH, to the Primeval Valley, when it is open (SCENES.valley sets exits.n) */
+      if (this.exits.n) { for (let y = 0; y < 13; y++) { g[y][21] = ","; keep.push([20, y], [21, y], [22, y]); } objs.push({ t: "sign", x: 22, y: 12, name: "North: the Primeval Valley. Combat 85, and nothing up there is what you'd call friendly." }); g[12][22] = "#"; }
       /* THE SWAMP, north-west. It runs ACROSS and not down, because scatterSpots lays its spots in two rows fished
          from the bank above them — a tall pond puts the far ones out of a rod's three-tile reach, which is exactly
          what the first build did. The band gates it at Fishing 80 and the spots say so. */
@@ -8344,7 +8346,7 @@ export const guardMul = (t, style, el) => { const m = MOBS[t]; let k = m?.guard?
 export const guardText = (t) => {
   const m = MOBS[t]; if (!m?.guard && !m?.onlyEl) return "";
   const S = { melee: "Melee", archery: "Archery", magic: "Magic" }, out = [];
-  for (const [s, k] of Object.entries(m.guard || {})) if (k < 1) out.push(k <= 0 ? `nothing from ${S[s]}` : `${Math.round((1 - k) * 100)}% less from ${S[s]}`);
+  for (const [s, k] of Object.entries(m.guard || {})) if (k < 1) out.push(k <= 0 ? `nothing from ${S[s]}` : `${Math.round((1 - k) * 100)}% less from ${S[s]}`); else if (k > 1) out.push(`${Math.round((k - 1) * 100)}% MORE from ${S[s]}`);   /* (2026-09-30) a style weakness */
   if (m.onlyEl) out.push(`only ${ELEMENTS[m.onlyEl]?.name || m.onlyEl} magic gets through`);
   return `Takes ${out.join("; ")}.`;
 };
@@ -8352,14 +8354,14 @@ export const guardText = (t) => {
    monster's three styles as a percentage it shrugs off, 0% included, so "does my bow work on this?" never needs the examine text. An
    `onlyEl` monster shrugs off magic of every OTHER element on top of its guard (MAGIC.guardMul), so that one reads "Magic 90% (Void 0%)". */
 export const resistsOf = (t) => {
-  const m = MOBS[t], pc = (k) => Math.max(0, Math.min(100, Math.round((1 - k) * 100)));
+  const m = MOBS[t], pc = (k) => Math.max(-100, Math.min(100, Math.round((1 - k) * 100)));   /* (2026-09-30) negative is a weakness: it takes MORE from that style */
   return ["melee", "archery", "magic"].map((s) => {
     const k = m?.guard?.[s] ?? 1;
     if (s === "magic" && m?.onlyEl) return { style: s, pct: pc(k * MAGIC.guardMul), el: m.onlyEl, elPct: pc(k) };
     return { style: s, pct: pc(k) };
   });
 };
-export const resistText = (t) => resistsOf(t).map((r) => `${{ melee: "Melee", archery: "Archery", magic: "Magic" }[r.style]} ${r.pct}%${r.el ? ` (${ELEMENTS[r.el]?.name || r.el} ${r.elPct}%)` : ""}`).join(" · ");
+export const resistText = (t) => resistsOf(t).map((r) => `${{ melee: "Melee", archery: "Archery", magic: "Magic" }[r.style]} ${r.pct < 0 ? `weak (+${-r.pct}%)` : `${r.pct}%`}${r.el ? ` (${ELEMENTS[r.el]?.name || r.el} ${r.elPct}%)` : ""}`).join(" · ");
 /** a monster's weak / resist element(s) as words: either may be one element or a list (the Pumpkin King's ["fire", "sun"]) */
 export const elementWords = (x) => [].concat(x || []).filter((e) => ELEMENTS[e]).map((e) => `${ELEMENTS[e].icon} ${ELEMENTS[e].name}`).join(", ");
 
@@ -9143,3 +9145,134 @@ OUTFIT_PRICE_FILL(OUTFIT_SHELF);
     };
   }
 }
+
+/* ============================================================ THE PRIMEVAL VALLEY (2026-09-30, the owner's pre-launch list: "4 new maps ... Keep maps simple
+   like original ones", then: "the first one should be a dinosaur map with sabertooth tigers, cavemen, wholly mammoths too maybe, - maybe even
+   pterodactyls and t-rex final boss. these are late game maps that scale to level 120 ... thematically, the mobs should be weak to certain
+   things ie pterodactyls are immune to melee but weak to arch"). HELD (HOLD.valley) until the owner has walked it on the dev server.
+
+   The first of four late maps (EASTSCAPE-DRAFTS §14): north of the Trailer Park, entered at Combat 85, monsters 90-100, Old Rex 105 and
+   the Mammoth Matriarch 110. Every monster leans on a style or an element, with the rules the game already has plus one:
+   - `guard[style] < 1`: that much less from that style (0 = nothing gets through); `onlyEl`: only one element of magic hurts it.
+   - `guard[style] > 1` (NEW, 2026-09-30): that much MORE from that style, which is what "weak to archery" means. guardMul already
+     multiplied by it; the server now tells the page (`gw`) so the hit says WEAK, and guardText / resistText say it in words.
+   - `weak` / `resist`: an element that hits harder or softer.
+   Old Rex is the MAP boss (claimed like any monster, back on a boss's timer); the Matriarch is the OPEN-WORLD boss (`open`: nobody
+   claims her, everyone who did a share of her health shares the kill) and `rise` announces her return to the whole server. */
+HOLD.valley = !globalThis.__ES_OPEN_ALL;
+Object.assign(ITEMS, {
+  fossil:          { name: "Fossil", icon: "\u{1F41A}", ex: "A shell turned to stone before anything had a name. The Primeval Valley's rocks are full of them." },
+  cycadlogs:       { name: "Cycad logs", icon: "\u{1FAB5}", ex: "Scaly, diamond-barked and older than trees. Cut in the Primeval Valley." },
+  coelacanth:      { name: "Raw coelacanth", icon: "\u{1F41F}", raw: true, ex: "A fish that was meant to have died out with the dinosaurs. It did not get the message." },
+  ccoelacanth:     { name: "Cooked coelacanth", icon: "\u{1F41F}", heal: 42, ex: "Oily, dense and very old. The best meal in the valley." },
+  sabretooth_fang: { name: "Sabretooth fang", icon: "\u{1F9B7}", ex: "Longer than your hand and curved like a sickle. Collectors pay well." },
+  mammoth_ivory:   { name: "Mammoth ivory", icon: "\u{1F9B4}", ex: "A length of woolly mammoth tusk, yellow with age." },
+  rex_tooth:       { name: "Rex tooth", icon: "\u{1F9B7}", ex: "One tooth from Old Rex, serrated like a saw and the size of a dagger." },
+  rex_necklace:    { name: "Rex-tooth necklace", short: "Amulet", icon: "\u{1F4FF}", slot: "amulet", acc: 12, str: 12, def: 6, req: { skill: "melee", lvl: 90 }, fx: { rare: 0.05 }, chase: true,
+    ex: "A cord of gold beads and one of Old Rex's teeth. A little of everything, and rare things turn up 5% more around whoever wears it. Only Old Rex drops it." }
+});
+Object.assign(VALUE, { fossil: 90, cycadlogs: 70, coelacanth: 45, ccoelacanth: 90, sabretooth_fang: 900, mammoth_ivory: 1300, rex_tooth: 6000, rex_necklace: 60000 });
+recipe("cook_coelacanth", { skill: "cooking", station: "fire", lvl: 92, xp: 420, ms: 1800, in: [["coelacanth", 1]], out: ["ccoelacanth", 1], burnStop: 99 });
+WAYSTONES.waystone_valley = { scene: "valley", side: "s", lvl: 95, name: "The Primeval Valley" };
+ITEMS.waystone_valley = { name: "Waystone: The Primeval Valley", icon: "\u{1F4DC}", use: "waystone", ex: "A scroll sealed with a footprint in green wax. Read it to arrive at the edge of the Primeval Valley. Only its own monsters drop it, now and then." };
+/* the two hatchlings: eggs that only the valley's kills turn up (eggFor: an egg whose home this map is) */
+Object.assign(PETS, {
+  raptorling: { name: "Raptor Hatchling", art: "pet_raptor", bred: true, egg: "egg_raptor", fx: { speed: 8 }, ex: "It runs everywhere, so you do too. You walk 8% faster." },
+  pterochick: { name: "Pterodactyl Chick", art: "pet_ptero", bred: true, egg: "egg_ptero", fx: { tix: 5 }, ex: "It spots the shiny things from above. You find 5% more tickets." }
+});
+Object.assign(EGGS, {
+  egg_raptor: { pet: "raptorling", ms: 60 * 3600000, xp: 16000, from: ["valley"] },
+  egg_ptero:  { pet: "pterochick", ms: 72 * 3600000, xp: 19000, from: ["valley"] }
+});
+/* their Legendaries (two Greater of one kind, in the pen), and Nestor's trade for each egg, as every hatchling has */
+Object.assign(PETS, {
+  tyrant:  { name: "The Little Tyrant", art: "pet_tyrant", bred: true, legend: true, base: "raptorling", fx: { speed: 14, tough: 5 }, ex: "The Raptor Hatchling grew teeth and an attitude. You walk 14% faster and take 5% less damage. Legendary." },
+  skyking: { name: "The Sky King", art: "pet_skyking", bred: true, legend: true, base: "pterochick", fx: { tix: 10, speed: 5 }, ex: "The chick grew into a wingspan. You find 10% more tickets and walk 5% faster. Legendary." }
+});
+Object.assign(LEGEND_OF, { raptorling: "tyrant", pterochick: "skyking" });   /* LEGEND_OF was built before this block */
+Object.assign(EGG_TRADES, { egg_raptor: [["fossil", 120], ["sabretooth_fang", 3]], egg_ptero: [["feather", 400], ["mammoth_ivory", 2]] });
+for (const [k, nm] of [["egg_raptor", "Raptor egg"], ["egg_ptero", "Pterodactyl egg"]]) ITEMS[k] = { name: nm, icon: "\u{1F95A}", ex: `Put it in a hatchery on your island with ${BREED.hatch.food} Ordinary pet food: a ${PETS[EGGS[k].pet].name} in ${Math.round(EGGS[k].ms / 3600000)} hours. Found only in the Primeval Valley. Tradable.` };
+/* the monsters, on the Boardwalk's helper (a bounty, and tickets to make up the gap between it and the drops) */
+const vmob = (t, def, want, drops, rare = []) => {
+  MOBS[t] = { ...def, drops, rare }; BOUNTY[t] = want;
+  const other = drops.reduce((a, [k, n, p]) => a + (VALUE[k] ?? 0) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0), gap = Math.round(want * 0.88 - other);
+  if (gap >= 2 && !def.boss) MOBS[t].drops.unshift(["tickets", [Math.max(1, Math.round(gap * 0.6)), Math.round(gap * 1.4)]]);
+  EXAMINE[t] = [MOBS[t].ex];
+};
+vmob("caveman", { name: "Caveman", size: "m", lvl: 90, hp: 420, att: 90, def: 70, max: 24, speed: 2400, box: [24, 30], aggro: 3, guard: { magic: 1.25 }, weak: "storm", resist: "fire",
+  ex: "Wrapped in hides and swinging a thighbone. He keeps a fire going day and night, and he has never seen a spell: magic hits him 25% harder." }, 520,
+  [["fossil", [1, 3], 0.4], ["ccoelacanth", 1, 0.08], ["waystone_valley", 1, 0.006]], [["mammoth_ivory", 0.02]]);
+vmob("sabretooth", { name: "Sabretooth", size: "m", lvl: 92, hp: 440, att: 96, def: 72, max: 26, speed: 2000, box: [34, 20], aggro: 4, guard: { archery: 0.5 }, weak: "fire",
+  ex: "Low to the ground and never where the arrow lands: half from archery. Every animal in the valley is afraid of fire, and so is this one." }, 560,
+  [["sabretooth_fang", 1, 0.12], ["hide", [2, 4]], ["waystone_valley", 1, 0.006]], [["sabretooth_fang", 0.02]]);
+vmob("pterodactyl", { name: "Pterodactyl", size: "m", lvl: 95, hp: 400, att: 94, def: 70, max: 24, speed: 2300, box: [34, 20], aggro: 3, range: 3, sky: true, guard: { melee: 0, archery: 1.25 }, weak: "storm",
+  ex: "It never lands. Out of a sword's reach entirely, and it attacks from three tiles; an arrow brings it down 25% faster than anything." }, 600,
+  [["feather", [6, 12]], ["fossil", 1, 0.25], ["waystone_valley", 1, 0.006]], [["rex_tooth", 0.01]]);
+vmob("mammoth", { name: "Woolly Mammoth", size: "l", lvl: 96, hp: 560, att: 96, def: 80, max: 28, speed: 2800, box: [44, 34], aggro: 2, guard: { archery: 0.3 }, weak: "fire", resist: "frost",
+  ex: "Arrows stick in the fur and stay there: 30% from archery. Built for the cold and frightened of fire." }, 640,
+  [["mammoth_ivory", 1, 0.1], ["hide", [3, 6]], ["waystone_valley", 1, 0.006]], [["mammoth_ivory", 0.02]]);
+vmob("raptor", { name: "Raptor", size: "m", lvl: 98, hp: 460, att: 102, def: 76, max: 28, speed: 1800, box: [28, 22], aggro: 4, guard: { melee: 1.25, magic: 0.4 },
+  ex: "Too quick to aim a spell at (40% from magic) and too proud to run from a blade: melee hits it 25% harder. They hunt in threes." }, 660,
+  [["fossil", 1, 0.3], ["waystone_valley", 1, 0.006]], [["rex_tooth", 0.01]]);
+vmob("goldenraptor", { name: "Golden Raptor", size: "m", lvl: 98, hp: 460, att: 102, def: 76, max: 28, speed: 1800, box: [28, 22], aggro: 4, guard: { melee: 1.25, magic: 0.4 }, art: "raptor", gild: true,
+  ex: "A raptor turned to gold, one in five hundred. Everything it drops is worth ten times the plain one." }, 6600,
+  [["fossil", [3, 6]], ["rex_tooth", 1, 0.2], ["waystone_valley", 1, 0.2]], [["rex_necklace", 0.01]]);
+vmob("tarhorror", { name: "Tar Pit Horror", size: "m", lvl: 99, hp: 520, att: 100, def: 80, max: 30, speed: 2700, box: [30, 26], aggro: 2, guard: { melee: 0, archery: 0 }, onlyEl: "fire", weak: "fire",
+  ex: "Tar with bones in it. Swords and arrows sink in and come back out: only magic hurts it, and only FIRE magic hurts it properly." }, 700,
+  [["fossil", [2, 4]], ["waystone_valley", 1, 0.008]], [["rex_tooth", 0.015]]);
+vmob("rex", { name: "Old Rex", size: "xl", lvl: 105, hp: 9000, att: 115, def: 90, max: 42, speed: 2800, box: [100, 70], aggro: 4, boss: true, guard: { archery: 0.5 }, weak: "frost", resist: "fire",
+  ex: "The valley's end, and its oldest thing. Half from arrows through the hide; he is cold-blooded, and frost slows the whole of him down." }, 2000,
+  [["tickets", [1200, 2400]], ["rex_tooth", [1, 2]], ["fossil", [4, 8]], ["waystone_valley", 1, 0.25], ["rex_necklace", 1, 0.02]], [["egg_raptor", 0.05]]);
+vmob("matriarch", { name: "The Mammoth Matriarch", size: "xl", lvl: 110, hp: 16000, att: 118, def: 92, max: 40, speed: 3000, box: [90, 70], aggro: 3, boss: true, open: true, rise: true, respawn: 45 * 60000,
+  guard: { archery: 0.3 }, weak: "fire", resist: "frost",
+  ex: "The oldest mammoth in the valley, and the herd follows her. Arrows barely trouble her (30%). She comes back every three quarters of an hour, and the whole server hears when she does. Anyone who hurts her shares the kill." }, 3000,
+  [["tickets", [1500, 3000]], ["mammoth_ivory", [2, 4]], ["hide", [8, 14]], ["waystone_valley", 1, 0.3]], [["egg_ptero", 0.05], ["rex_necklace", 0.03]]);
+BOSSES.add("rex"); BOSSES.add("matriarch");
+/* THE GOLDEN RAPTOR: one raptor respawn in GOLD_ODDS comes back gilded (the server's respawn loop, see `gild` / MOB_GOLD) */
+export const MOB_GOLD = { raptor: { t: "goldenraptor", odds: 500 } };
+BANDS.valley = [85, 99];
+DEATH.valley = { share: 0.1, cap: 10000 };
+SCENES.valley = {
+  name: "The Primeval Valley", exits: { s: "trailer" }, tint: "rgba(60,40,10,.12)",
+  build() {
+    const g = grid(), objs = [], keep = [];
+    const put = (o, w = 1, h = 1) => { objs.push(o); if (w > 1 || h > 1) block(g, o.x, o.y, w, h); else g[o.y][o.x] = "#"; keep.push([o.x, o.y]); };
+    /* THE ROAD: up from the Trailer Park, then across the valley east and west, and a spur north-east to Old Rex's clearing */
+    for (let y = 13; y <= 25; y++) g[y][22] = ",";
+    for (let x = 3; x <= 41; x++) g[13][x] = ",";
+    for (let y = 5; y <= 13; y++) g[y][34] = ",";
+    /* THE PRIMORDIAL LAKE, north-west, fished from its south bank: coelacanth at Fishing 92 */
+    for (let y = 3; y <= 7; y++) for (let x = 2; x <= 13; x++) g[y][x] = "~";
+    scatterSpots(objs, 2, 13, 6, 4, [1, 2, 3], { name: "Primordial lake", req: { skill: "fishing", lvl: 92 }, fish: "coelacanth", xp: 420, glow: "#9ad8a0", tease: "Something with legs for fins turns over in the deep water." });
+    for (let x = 2; x <= 13; x++) keep.push([x, 2], [x, 8]);
+    /* WOODCUTTING, south-west: cycads at 92 */
+    for (const [x, y] of [[4, 17], [8, 16], [5, 20], [10, 19], [3, 22], [12, 22]]) put({ t: "cycad", x, y, log: "cycadlogs", name: "Cycad", req: { skill: "woodcutting", lvl: 92 }, xp: 330 });
+    /* MINING, south-east: fossil rocks at 92 */
+    for (const [x, y] of [[35, 17], [38, 16], [41, 18], [36, 20], [40, 21]]) put({ t: "rock", x, y, ore: "fossil", name: "Fossil rock", req: { skill: "mining", lvl: 92 }, xp: 330 });
+    /* OLD REX'S CLEARING, north-east: the skull of the last one that stood in his way, and a ribcage */
+    put({ t: "rexskull", x: 37, y: 2, name: "A T-rex skull, bigger than a cart" }, 3, 2);
+    put({ t: "ribcage", x: 30, y: 8, name: "A ribcage you could stand inside" }, 2, 1);
+    for (let y = 3; y <= 11; y++) for (let x = 30; x <= 42; x++) keep.push([x, y]);
+    /* the cavemen's camp, south of the road; tar pools where the horrors are; nests and ferns about the plain */
+    put({ t: "fire", x: 17, y: 18, name: "A cave fire that never goes out" });
+    for (const [x, y] of [[16, 17], [18, 17], [16, 19], [18, 19]]) keep.push([x, y]);
+    for (const [x, y] of [[15, 9], [19, 10], [26, 9]]) put({ t: "tarpool", x, y, name: "A tar pool, bubbling" });
+    for (const [x, y] of [[24, 4], [28, 11], [14, 21]]) put({ t: "nest", x, y, name: "A nest of speckled eggs. Something is watching it." });
+    for (const [x, y] of [[20, 5], [26, 16], [30, 19], [13, 11], [7, 12]]) put({ t: "fern", x, y, name: "Giant ferns" });
+    objs.push({ t: "sign", x: 23, y: 23, name: "THE PRIMEVAL VALLEY: Combat 85 and up. Most things here shrug off one way of fighting and fear another: read them (right-click) before you swing. Old Rex is north-east. The Matriarch walks the plain." }); g[23][23] = "#";
+    for (let y = 14; y <= 25; y++) keep.push([21, y], [22, y], [23, y]);
+    for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
+    for (let y = 2; y <= 12; y++) for (let x = 14; x <= 29; x++) keep.push([x, y]);   // the plain, where the Matriarch walks
+    wild(g, objs, this.exits, { n: "rocky", s: "forest", w: "forest", e: "rocky" }, [...keepOf(this), ...keep], 17);
+    return { g, objs, blobs: [] };
+  },
+  mobs: [["caveman", 15, 16], ["caveman", 19, 16], ["caveman", 15, 20], ["caveman", 20, 20], ["caveman", 25, 21],
+    ["sabretooth", 6, 15], ["sabretooth", 9, 21], ["sabretooth", 13, 18], ["sabretooth", 3, 11],
+    ["pterodactyl", 8, 9, { perch: true }], ["pterodactyl", 12, 10, { perch: true }], ["pterodactyl", 4, 10, { perch: true }], ["pterodactyl", 20, 3],
+    ["mammoth", 17, 6], ["mammoth", 23, 7], ["mammoth", 27, 5],
+    ["raptor", 32, 15], ["raptor", 38, 14], ["raptor", 33, 22], ["raptor", 28, 18], ["raptor", 42, 15],
+    ["tarhorror", 16, 10], ["tarhorror", 25, 10],
+    ["rex", 36, 7], ["matriarch", 22, 8]],
+  npcs: [], bots: []
+};
+if (!HOLD.valley) { OPEN.add("valley"); SCENES.trailer.exits.n = "valley"; PET_SCENES.add("valley"); }

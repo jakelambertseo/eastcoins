@@ -82,7 +82,7 @@ head("monsters");
   for (const [k, m] of Object.entries(G.MOBS)) {
     if (!m.size) bad(`mob "${k}" has no size`, `one of ${Object.keys(G.MOB_SIZES).join(", ")}`);
     else if (!G.MOB_SIZES[m.size]) bad(`mob "${k}" has size "${m.size}"`, "not a real size");
-    if (!ART_FILES.includes(k)) bad(`mob "${k}" has no picture`, `expected "${k}" in ART_FILES`);
+    if (!ART_FILES.includes(m.art || k)) bad(`mob "${k}" has no picture`, `expected "${m.art || k}" in ART_FILES`);   /* m.art: a twin drawn from another's picture (the Golden Raptor) */
     if (!Array.isArray(m.drops)) { bad(`mob "${k}" has no drops array`); continue; }
     for (const d of m.drops) {
       const [item, n, chance] = d;
