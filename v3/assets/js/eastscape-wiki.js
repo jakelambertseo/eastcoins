@@ -894,7 +894,7 @@ export const GUIDES = [
       return `<p><b>Gems are small permanent bonuses you carry with you.</b> Find one, have the Gem Sorter roll it a bonus, and put it in your <b>gem bag</b>, which works wherever you are. Open the bag from the <b>Gems</b> button on your inventory; it pops open beside it.</p>
         <h3>The gem bag</h3>
         <p>Two sides of ${S.bag.max} settings each: <b>Combat</b> gems on one side, <b>Skilling</b> gems on the other, and a gem only fits its own side. ${S.bag.start === 1 ? "One setting on each side is open" : `${S.bag.start} settings on each side are open`} from the start; the rest open for tickets, each side on its own: ${S.bag.price.map(tix).join(", then ")}.</p>
-        <p>Only a <b>sorted</b> gem goes in. Taking one out gives it back <b>unsorted</b>, so changing your mind costs a roll. <b>Only the best ${S.perType} of any one gem count</b>: a third ruby adds nothing, so fill the bag with different stones.</p>
+        <p>Only a <b>sorted</b> gem goes in. Taking one out gives it back <b>as it was</b>, roll and all, so you can rearrange the bag, trade a sorted gem or sell it on the Market. <b>Only the best ${S.perType} of any one gem count</b>: a third ruby adds nothing, so fill the bag with different stones.</p>
         <h3>The Gem Sorter</h3>
         <p>A jeweller's bench in the Yard's north court. Stand by it and it will <b>sort</b> a gem (roll its bonus) for <b>${tix(S.cost)}</b> a roll, <b>re-roll</b> a sorted one for the same, or <b>buy any gem back</b> for ${tix(S.sell)}, whatever its roll. A roll lands between <b>${sgn(S.roll[0])}</b> and <b>${sgn(S.roll[1])}</b>, and the higher it is, the rarer it is. A negative roll is exactly that much worse.</p>
         <table class="tbl"><tr><th>Band</th><th>Roll</th><th>Chance</th></tr>${G.GEM_BANDS.map(([n, lo, hi]) => `<tr><td><b>${n}</b></td><td>${lo === hi ? sgn(lo) : `${sgn(lo)} to ${sgn(hi)}`}</td><td>${odds(lo, hi)}</td></tr>`).join("")}</table>
@@ -1125,6 +1125,10 @@ export const GUIDES = [
 ];
 
 export const UPDATES = [
+  {
+    date: "2026-09-30", title: "Roads on every map",
+    items: ["COBBLED ROADS EVERYWHERE: every map's paths are laid in the Yard's cobbles now, each shaded to its ground (dark and damp in the Gloam and the Mire, pale in Cloudreach, stormy on the Thunderhead, sandy in the Golden Sands) with the edges broken into the ground around them, so every road feels like part of one world.", "A GEM TAKEN OUT OF YOUR GEM BAG KEEPS ITS ROLL: take out a +4% topaz and you get a +4% topaz, to put back, swap round, trade or sell. It used to come back unsorted."],
+  },
   {
     date: "2026-09-29", title: "Fights hit harder",
     items: [

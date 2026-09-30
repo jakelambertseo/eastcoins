@@ -2,7 +2,7 @@
    (2026-09-28, rebuilt 2026-09-29 with the gem bag) The real World with storage stubbed, opened as on the dev server. A sorted gem keeps
    its roll through the bag, the bank and a save; a reforged piece keeps its level (a sealed +4 included) and carries nothing else; the
    Sorter stands in the Yard and sorts, re-rolls and sells there and nowhere else; the gem bag takes each gem on its own side only, opens
-   its slots for their prices, gives a gem back unsorted, and counts only the best two of any one gem; the gems do what they say; and
+   its slots for their prices, gives a gem back with its roll, and counts only the best two of any one gem; the gems do what they say; and
    the odds are the odds. */
 globalThis.__ES_OPEN_ALL = true;
 const G = await import("../v3/assets/js/eastscape-shared.js");
@@ -37,7 +37,7 @@ is([t0 - G.tixIn(C), C.inv.filter((s) => s.k === "ruby" && !G.fCode(s)).reduce((
 is([G.rollOf(ruby()), said.some((t) => /PERFECT ruby/.test(t))], [10, true], "re-rolled until perfect, and the room hears about it");
 { const t1 = G.tixIn(C); W.gemOp(S, pl, { op: "sell", i: C.inv.findIndex((s) => s.k === "ruby" && !G.fCode(s)) }); is(G.tixIn(C) - t1, G.GEMSET.sell, "sell one back: a flat 1,500"); }
 
-/* 3. the gem bag: anywhere, each gem on its own side, slots for tickets, out unsorted */
+/* 3. the gem bag: anywhere, each gem on its own side, slots for tickets, out with its roll */
 pl.x = 5; pl.y = 5;
 is([G.bagOf(C).cn, G.bagOf(C).sn, G.bagPrice(C, "c"), G.bagPrice(C, "s")], [1, 1, 25000, 25000], "a new bag: one combat and one skilling setting, the next of each 25,000");
 W.gemOp(S, pl, { op: "sort", i: 0 });   /* (not at the bench: refused, and nothing charged) */
@@ -53,7 +53,7 @@ is([G.gemBonus(C).ruby, G.tkDmg(C, "melee")], [10, 0.1], "+10% melee damage");
   W.gemOp(S, pl, { op: "open", side: "c" }); is(G.bagOf(C).cn, 4, "no fifth"); }
 { const poor = { id: "p2", name: "Poor", login: "poor", C: G.freshChar(), x: 5, y: 5, out: [], path: [] }; poor.C.scene = "workyard"; W.pls.set("p2", poor);
   W.gemOp(S, poor, { op: "open", side: "s" }); is(G.bagOf(poor.C).sn, 1, "no tickets: no new setting"); }
-W.gemOp(S, pl, { op: "take", side: "s", slot: 0 }); is([G.bagOf(C).s[0], C.inv.some((s) => s.k === "topaz" && !G.fCode(s))], [null, true], "taken out: the setting is empty and the topaz comes back unsorted");
+W.gemOp(S, pl, { op: "take", side: "s", slot: 0 }); is([G.bagOf(C).s[0], C.inv.some((s) => s.k === "topaz" && G.rollOf(s) === 6)], [null, true], "taken out: the setting is empty and the topaz comes back as it went in, +6%");
 { const T = { gembag: { cn: 4, sn: 1, c: [{ k: "ruby", roll: 10 }, { k: "ruby", roll: 9 }, { k: "ruby", roll: 10 }, { k: "ruby", roll: -5 }], s: [null] } };
   is([G.gemBonus(T).ruby, G.gemRolls(T).ruby.length], [20, 4], "four rubies set (10, 9, 10, -5): only the best two count, +20%"); }
 is(G.normChar(JSON.parse(JSON.stringify(C))).gembag.cn, 4, "the bag's settings survive a save");

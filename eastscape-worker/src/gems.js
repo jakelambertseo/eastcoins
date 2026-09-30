@@ -4,7 +4,8 @@
    THE GEM BAG, anywhere:
      op "view"                   the bag, what it is doing for you, and what the next slots cost
      op "put"  { side, slot, i } a SORTED gem from your bag into an empty open slot on its own side ("c" combat, "s" skilling)
-     op "take" { side, slot }    a gem out of the bag: it comes back UNSORTED (the owner's rule: changing your mind costs a roll)
+     op "take" { side, slot }    a gem out of the bag, KEEPING ITS ROLL (2026-09-30, a player's ask and the owner: "if i take out a 4% topaz, it
+                                 should go in my inventory as a 4% topaz"; it used to come back unsorted, so changing your mind cost a roll)
      op "open" { side }          the next slot on that side, for bagPrice() tickets
    AT THE GEM SORTER (the bench in the Yard's north court):
      op "sort" { i }             roll one gem (unsorted, or re-roll a sorted one) for sortCost() tickets
@@ -34,9 +35,9 @@ export function installGems(World, { G }) {
       if (!side) return; const s = m.slot | 0; if (s < 0 || s >= list.length) return;
       if (op === "take") {
         const g = list[s]; if (!g) return;
-        if (!this.give(pl, g.k)) return bad("Your bag's full.");
+        if (G.addInv(C.inv, g.k, 1, C, G.gemCode(g.roll)) > 0) return bad("Your bag's full.");   /* one sorted gem, its own slot, the same roll */
         list[s] = null; this.touch(pl);
-        this.say(pl, `You take the ${G.ITEMS[g.k].name.toLowerCase()} out of your gem bag. It needs sorting again to go back in.`);
+        this.say(pl, `You take the ${G.gemText(g.k, g.roll).toLowerCase()} out of your gem bag.`);
         return this.gemPush(pl);
       }
       if (list[s]) return bad("That slot has a gem in it. Take it out first.");

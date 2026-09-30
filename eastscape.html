@@ -15,7 +15,7 @@
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=394">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=395">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1957,7 +1957,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=394";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=395";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1966,7 +1966,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=220").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=221").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
@@ -2681,7 +2681,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 142;
+const PACKS_V = 143;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -2749,7 +2749,7 @@ const AREA_ART = {
        the Casino drew him as the plain fallback figure. tools/eastscape-art-reach.mjs is the check. */
     "t_guild", ...["marla", "quietman", "odile"].flatMap((k) => [`${k}_south`, `${k}_east`])],
   // the one line out of the casino (2026-09-20): every scene has its rocks, trees, fish AND its monsters
-  workyard: ["t_cobble",   /* (2026-09-29) the cobbled road */ "o_gemsorter", "sal_south", "sal_east", "o_scrapbench", "o_projboard", "o_dockruin", "t_dock",   /* (2026-09-28) the Fishing Dock */ "o_jbench", "o_nightmarket", "hexa_south", "hexa_east", "bronny_south", "bronny_east", "o_roadwork", "o_cones", "o_sawhorse", "o_lumber",   /* (2026-09-28) Bronny's worksite */ "nestor_south", "nestor_east",   /* (2026-09-28) Nestor the Egg Man */ "o_altar_arcane", "o_yardtree", "o_yardtree_stump", "o_tower", "hornworm", "boar", "olive", "o_chest", "o_chariot", "charon_south", "charon_east", "livia_south", "livia_east", "o_stall", "o_cryptdoor",
+  workyard: [   /* (2026-09-30) t_cobble moved to the startup art: every map's road is laid in it now */ "o_gemsorter", "sal_south", "sal_east", "o_scrapbench", "o_projboard", "o_dockruin", "t_dock",   /* (2026-09-28) the Fishing Dock */ "o_jbench", "o_nightmarket", "hexa_south", "hexa_east", "bronny_south", "bronny_east", "o_roadwork", "o_cones", "o_sawhorse", "o_lumber",   /* (2026-09-28) Bronny's worksite */ "nestor_south", "nestor_east",   /* (2026-09-28) Nestor the Egg Man */ "o_altar_arcane", "o_yardtree", "o_yardtree_stump", "o_tower", "hornworm", "boar", "olive", "o_chest", "o_chariot", "charon_south", "charon_east", "livia_south", "livia_east", "o_stall", "o_cryptdoor",
     /* (2026-09-22) the market's railings and clutter. ART_FILES is the MASTER list of every picture; naming one
        here as well is what DEFERS it out of the login download (core.png is "ART_FILES less the per-area lists").
        They live in the Yard and nowhere else, and left out of this list they pushed the startup request budget
@@ -3093,6 +3093,15 @@ const flipOf = (ob) => VARY.has(ob.t) && hashRand(ob.x, ob.y, 77) < 0.5;
 const OBJ_SCALE = {}, HOUSE_SCALE = {};   // integer sizes only (Bom Trady is 2x, but inside his kiosk's own picture, o_bomkiosk)   // integer sizes only: a fractional scale makes pixel art uneven
 const objBusy = (ob, now) => ob.stumpUntil > now || ob.emptyUntil > now || ob.bareUntil > now;
 // themed ground: its two Wang sheets, and what the edge bushes and boulders look like there
+/* (2026-09-30) THE ROAD'S SHADE PER MAP: a colour laid over the Yard's cobbles (source-atop) so each map's road belongs to its ground */
+const ROAD_TINT = {
+  gloam: "rgba(20,48,30,.34)", mire: "rgba(18,40,26,.42)", boneyard: "rgba(210,196,160,.20)", cloud: "rgba(235,240,255,.34)",
+  thunderhead: "rgba(70,60,120,.30)", wild: "rgba(40,20,30,.36)", deep: "rgba(30,14,30,.44)", trailer: "rgba(150,110,60,.22)", carnival: "rgba(120,60,40,.12)",
+  sands: "rgba(230,176,96,.34)"
+};
+/* the maps whose roads are paving, not paths (see ROADS EVERYWHERE in paintBg). The Depths and the Boardwalk's islands are one painted
+   picture each (bgArt), their walkways drawn into it, so they keep them. */
+const ROAD_PAVE = new Set(["sands"]);
 const GROUNDS = {
   gloam: { water: "t_gwater", path: "t_gpath", bush: "o_glowcap", boulder: "w_boulder" },
   cloud: { water: "t_csky", path: "t_cpath", bush: "o_cloudbush", boulder: "o_cloudcolumn" },
@@ -3355,6 +3364,16 @@ function paintBg() {
      the layer goes down with a soft shadow under it, so the cobbles sit IN the dirt road the way a real street does rather than
      being a flat rectangle laid over it. Drawn in canvas pixels (A per map pixel) so a notch is a whole stone at any scale. */
   const floors = {}; for (const ob of Z.objs) if (ob.t === "rug" && ob.tile && IMG[ob.tile]) (floors[ob.tile] ||= []).push(ob);
+  /* (2026-09-30, the owner: "lets add roads to every map. the cobble tile art thats in the yard works well, just blend in the sides of it
+     with the tiles that are on the map so it looks normal") ROADS EVERYWHERE. Every walkable path square ("," in the map) of an outdoor map is
+     laid in the Yard's cobbles, through the same floor painter below: the ragged edge, the loose stones and the shadow blend it into whatever
+     that map's ground is. Nothing is added to the map's objects (no ids move, the server never knows): it is paint. A map can opt out with
+     `noRoad`; rooms (a `floor`) and islands never get one. ROAD_TINT then shades the stone per map, so Cloudreach's is pale and the
+     Mire's is wet, instead of one grey street through every world. */
+  /* ROAD_PAVE: a map whose roads are its PAVING rather than paths (the Golden Sands' sandstone streets) gets the cobbles over those too;
+     nowhere else, because the Yard's paving is its brick courts, which are not a road */
+  if (IMG.t_cobble && !Z.def.floor && !Z.def.interior && !Z.def.noRoad && !Z.isle) { const base = String(Z.key).split(":")[0], pave = ROAD_PAVE.has(base);
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { const c = Z.g[y][x]; if (c === "," || (pave && (c === "p" || c === "P"))) (floors.t_cobble ||= []).push({ t: "rug", tile: "t_cobble", x, y, w: 1, h: 1 }); } }
   for (const [tile, rugs] of Object.entries(floors)) {
     const im = IMG[tile].im, cc = Math.max(1, Math.floor(im.width / 32)), P = T * A;
     const on = new Set(); for (const ob of rugs) for (let j = 0; j < ob.h; j++) for (let i = 0; i < ob.w; i++) on.add((ob.y + j) * COLS + ob.x + i);
@@ -3386,6 +3405,9 @@ function paintBg() {
           lo.drawImage(im, (along * 7) % (im.width - sw), (out * 5) % (im.height - sh), sw, sh, x, y, sw, sh);
         } });
     }
+    /* (2026-09-30) the map's own shade on its stone (ROAD_TINT), over the cobbles and their loose stones alike */
+    const tint = tile === "t_cobble" ? ROAD_TINT[String(Z.key).split(":")[0]] : null;
+    if (tint) { lo.globalCompositeOperation = "source-atop"; lo.fillStyle = tint; lo.fillRect(0, 0, L.width, L.height); lo.globalCompositeOperation = "source-over"; }
     /* the shadow: the layer's own shape in black (source-in, not ctx.filter, which Safari does not draw) */
     const Sh = document.createElement("canvas"); Sh.width = L.width; Sh.height = L.height;
     const so = Sh.getContext("2d"); so.drawImage(L, 0, 0); so.globalCompositeOperation = "source-in"; so.fillStyle = "#000"; so.fillRect(0, 0, Sh.width, Sh.height);
@@ -6201,7 +6223,7 @@ function meterUi() { return METER ? Promise.resolve(METER) : import(METER_URL).t
 /* (2026-09-28) TINKERING: Sprocket Sal's Scrap Bench is a lazy module */
 let TINKUI = null; const TINKUI_URL = "/v3/assets/js/eastscape-tinker.js?v=7";
 /* (2026-09-28) the Gem Sorter and the Gem Case: loaded the first time either opens */
-let GEMUI = null; const GEMUI_URL = "/v3/assets/js/eastscape-gems.js?v=6";
+let GEMUI = null; const GEMUI_URL = "/v3/assets/js/eastscape-gems.js?v=7";
 /* (2026-09-29) THE OUTFITTERS: Wren the Ranger and Morwenna the Mage, a lazy module like the gems */
 let OUTFITUI = null; const OUTFIT_URL = "/v3/assets/js/eastscape-outfit.js?v=1";
 function outfitUi() { return OUTFITUI ? Promise.resolve(OUTFITUI) : import(OUTFIT_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (OUTFITUI = m.createOutfit({ G, $, esc, send, SFX, ico, openWin, get me() { return me; } })); }); }

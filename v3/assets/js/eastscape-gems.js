@@ -3,7 +3,7 @@
    THE GEM BAG. The owner: "small bag that pops open beside inventory - contains 4 combat gems, 4 skilling gems", with a screenshot of
    where: the top of the game view, just right of the inventory. A little leather pouch, not a window: two rows of four settings, Combat
    and Skilling. An open empty setting, clicked, shows the sorted gems in your bag that fit it; a filled one offers to take the gem out
-   (it comes back unsorted, so it asks); the next locked one offers itself for its price. What the bag is doing for you is written
+   (it keeps its roll, since 2026-09-30; it still asks); the next locked one offers itself for its price. What the bag is doing for you is written
    underneath. Opened from the inventory's Gems button.
 
    THE GEM SORTER. The owner, on the first build's casino cabinet: "its over done". So this is a plain kit window at the bench in the
@@ -51,7 +51,7 @@ export function createGems(E) {
       const g = ask.lock ? null : b[ask.side][ask.slot];
       under = ask.lock
         ? `<div class="gb-ask"><span>Open a new ${ask.side === "c" ? "combat" : "skilling"} setting for <b>${G.fmtTix(next[ask.side])}</b>?</span><div><button type="button" class="gb-btn" data-yes="1">Open it</button><button type="button" class="gb-link" data-cancel="1">Not now</button></div></div>`
-        : `<div class="gb-ask"><span>Take out the <b>${esc(G.gemText(g.k, g.roll))}</b>? It comes back <b>unsorted</b>.</span><div><button type="button" class="gb-btn" data-yes="1">Take it out</button><button type="button" class="gb-link" data-cancel="1">Keep it</button></div></div>`;
+        : `<div class="gb-ask"><span>Take out the <b>${esc(G.gemText(g.k, g.roll))}</b>? It keeps its roll.</span><div><button type="button" class="gb-btn" data-yes="1">Take it out</button><button type="button" class="gb-link" data-cancel="1">Keep it</button></div></div>`;
     }
     const bonus = Object.entries(v?.bonus || G.gemBonus(E.me)).filter(([, r]) => r);
     const working = bonus.length ? bonus.map(([k, r]) => `<span class="${r < 0 ? "neg" : ""}">${ico(k)} ${pct(r)} ${esc(G.GEM_OF[k].does)}</span>`).join("") : `<span class="gb-none">Nothing yet. Sort a gem at the bench in the Yard, then set it here.</span>`;
