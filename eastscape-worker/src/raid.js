@@ -90,7 +90,7 @@ export function installRaid(World, { G }) {
     const rows = Object.entries(Rd.by).filter(([, d]) => d > 0), total = rows.reduce((a, [, d]) => a + d, 0) || 1, pool = R.pay.pool + R.pay.per * rows.length, paid = [];
     for (const [id, d] of rows.sort((a, b) => b[1] - a[1])) {
       const n = Math.max(R.pay.floor, Math.round((pool * d) / total)), p = this.pls.get(id);
-      if (p) { this.tixTo(p, n); this.say(p, `The ice cracks, and the Ice Man falls. The Yard is saved. Your share of the spoils: ${G.fmtTix(n)} (${Math.round((100 * d) / total)}% of the fighting).`, "loot"); }
+      if (p) { this.tixTo(p, n, "raid"); this.say(p, `The ice cracks, and the Ice Man falls. The Yard is saved. Your share of the spoils: ${G.fmtTix(n)} (${Math.round((100 * d) / total)}% of the fighting).`, "loot"); }
       paid.push([p?.name || "someone", n]);
     }
     const top = paid.slice(0, 3).map(([nm, n]) => `${nm} (${n.toLocaleString()})`).join(", ");

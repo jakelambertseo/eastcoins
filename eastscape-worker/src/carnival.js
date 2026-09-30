@@ -116,7 +116,7 @@ export function installCarnival(World, { G, rint }) {
     if (m.op === "start") {
       if (now < row.at + COOLDOWN_MS) return bad(`${G0.name} is being reset. ${Math.ceil((row.at + COOLDOWN_MS - now) / 1000)}s.`);
       if (G.tixIn(c) < G0.cost) return bad(`${G0.name} is ${G.fmtTix(G0.cost)} a go. You have ${G.fmtTix(G.tixIn(c))}.`);
-      G.takeInv(c.inv, "tickets", G0.cost);
+      G.takeInv(c.inv, "tickets", G0.cost); this.trkTix(pl, -G0.cost, "carnival");
       row.at = now; row.seed = `${now.toString(36)}${rint(1e5, 9e5)}`; row.started = now; row.runs++;
       this.touch(pl);
       pl.out.push({ type: "carnivalround", game: key, board: scheduleFor(key, row.seed).map((s) => ({ i: s.i, at: s.at, lane: s.lane, ms: s.ms })), tix: G.tixIn(c) });   /* (2026-09-24) `i` MUST be here. This map is a hand-picked subset, exactly like meOf, and dropping the index left the page asking for cg_undefined.png for every target: the board ran, the hits counted, and not one icon drew. The client keys the picture on WHICH TARGET this is rather than which lane, so a round runs through the whole set instead of the same face always appearing in the same hole. */
@@ -134,7 +134,7 @@ export function installCarnival(World, { G, rint }) {
     const seed = row.seed;
     row.seed = null; row.started = 0;            // the round is spent before a ticket moves
     if (hits > row.best) row.best = hits;
-    if (pay > 0) this.tixTo(pl, pay);
+    if (pay > 0) this.tixTo(pl, pay, "carnival");
     this.touch(pl);
     pl.out.push({ type: "carnivalwon", game: key, hits, of: G0.shots, pay, cost: G0.cost, best: row.best, seed, tix: G.tixIn(pl.C) });
     this.say(pl, `${G0.name}: ${hits} of ${G0.shots}. ${pay > G0.cost ? `You are up ${G.fmtTix(pay - G0.cost)}.` : pay ? `${G.fmtTix(pay)} back.` : "Nothing back."}`, pay > G0.cost ? "good" : undefined);

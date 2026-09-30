@@ -54,7 +54,7 @@ export function installCount(World, { G, R, rint }) {
     const key = `count:${Date.now().toString(36)}${rint(10, 99)}`;
     const seed = `${key}:${rint(100000, 999999)}`;
     for (const p of mem) {
-      G.takeInv(p.C.inv, "tickets", C_.ante);
+      G.takeInv(p.C.inv, "tickets", C_.ante); this.trkTix(p, -C_.ante, "dungeons");
       p.C.count = { ...(p.C.count && p.C.count.day === dayOf() ? p.C.count : { day: dayOf(), n: 0 }), run: key, ante: C_.ante };
       this.touch(p);
     }
@@ -168,7 +168,7 @@ export function installCount(World, { G, R, rint }) {
     const fast = (loot.mult || 1) >= 1.25;
     const got = [];
     for (const it of items) {
-      if (it.k === "tickets") { this.tixTo(pl, it.n); got.push(it); continue; }
+      if (it.k === "tickets") { this.tixTo(pl, it.n, "dungeons"); got.push(it); continue; }
       if (!G.ITEMS[it.k]) continue;
       const where = this.keepRare(pl, it.k, it.n);
       if (where) got.push({ ...it, bank: where === "bank" || undefined });
@@ -207,7 +207,7 @@ export function installCount(World, { G, R, rint }) {
        straight back out and handed over here. Reusing the arithmetic and not the delivery. */
     const { pay, low, late } = this.dungeonOwe(pl, { key: "count", tier: 0, pay: C_.pay, share, cfg: C_, runs });
     if (pl.C.count) delete pl.C.count.loot;
-    this.tixTo(pl, pay);
+    this.tixTo(pl, pay, "dungeons");
     this.touch(pl);
     const boxes = r.boxes.filter(Boolean).length;
     this.say(pl, `${G.fmtTix(pay)} for the job, and ${boxes} of ${C_.keys} boxes.${low ? " (Lighter: you took under a tenth of them.)" : ""}${late ? " (And lighter again: past today's three paid runs.)" : ""}`, "loot");

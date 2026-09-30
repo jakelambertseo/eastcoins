@@ -73,7 +73,7 @@ export function installPyramid(World, { G, R, rint }) {
 
     const key = `pyramid:${Date.now().toString(36)}${rint(10, 99)}`;
     for (const p of mem) {
-      G.takeInv(p.C.inv, "tickets", T.ante);
+      G.takeInv(p.C.inv, "tickets", T.ante); this.trkTix(p, -T.ante, "dungeons");
       p.C.pyramid = { ...(p.C.pyramid && p.C.pyramid.day === dayOf() ? p.C.pyramid : { day: dayOf(), n: 0 }), run: key, ante: T.ante };
       this.touch(p);
     }
@@ -315,7 +315,7 @@ export function installPyramid(World, { G, R, rint }) {
     delete C.pyramid.loot; this.touch(pl);   // off the character BEFORE anything is handed over: it opens once
     const { items } = R.rollLoot(L), got = [];
     for (const it of items) {
-      if (it.k === "tickets") { this.tixTo(pl, it.n); got.push(it); continue; }
+      if (it.k === "tickets") { this.tixTo(pl, it.n, "dungeons"); got.push(it); continue; }
       /* THE PET IS AN INSTANCE, not a stack - the same shape killMob uses when one drops in the world. */
       if (it.k === "pet:coilling") {
         const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k: "coilling", name: "" };

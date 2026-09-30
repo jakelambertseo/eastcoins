@@ -292,7 +292,7 @@ export function createClosedScenes(G, H) {
      footprint as w/h, which is what the page anchors the picture by. tools/eastscape-wild-check.mjs walks both maps:
      every open tile reachable from the exits, every monster and node on open ground, every piece on rock. */
   wild: {
-    name: "The Wilderness", pvp: true, exits: { n: "deep" }, entry: { x: 3, y: 10 }, tint: "rgba(60,20,70,.2)", ground: "wild",
+    name: "The Wilderness", pvp: true, killMul: 1.25, exits: { n: "deep" }, entry: { x: 3, y: 10 }, tint: "rgba(60,20,70,.2)", ground: "wild",
     cage: [6, 3, 12, 6], cageOut: { x: 9, y: 9 },
     rows: [
       "############################################",
@@ -361,9 +361,14 @@ export function createClosedScenes(G, H) {
     mobs: [["gnasher", 5, 10, { respawn: [45000, 75000] }], ["gnasher", 13, 11, { respawn: [50000, 90000] }], ["gnasher", 10, 12, { respawn: [60000, 100000] }],
       ["ghoul", 19, 7, { respawn: [45000, 80000] }], ["ghoul", 25, 7, { respawn: [70000, 120000] }], ["ghoul", 21, 19, { respawn: [55000, 95000] }], ["ghoul", 24, 22, { respawn: [45000, 90000] }], ["ghoul", 6, 19, { aggro: 3, respawn: [60000, 110000] }], ["ghoul", 14, 22, { respawn: [50000, 100000] }],
       ["taxwraith", 28, 10, { respawn: [45000, 85000] }], ["taxwraith", 30, 12, { respawn: [65000, 120000] }], ["taxwraith", 34, 5, { aggro: 3, respawn: [55000, 100000] }], ["taxwraith", 16, 15, { respawn: [45000, 75000] }],
-      ["usher", 22, 3, { aggro: 3, respawn: [60000, 120000] }], ["usher", 38, 4, { respawn: [50000, 90000] }], ["usher", 36, 2, { respawn: [70000, 110000] }],
-      ["revenant", 40, 6, { aggro: 4, respawn: [75000, 120000] }], ["revenant", 37, 21, { aggro: 4, respawn: [60000, 105000] }], ["revenant", 41, 22, { respawn: [80000, 120000] }], ["revenant", 20, 21, { respawn: [50000, 95000] }],
-      ["wolf", 39, 18, { aggro: 5, respawn: [90000, 120000] }],
+      /* (2026-09-30, the Wilderness check: "the monsters might be too low level ... now that users have outleveled them") THE POCKETS GO TO THE LATE
+         MAPS. Ushers, revenants and the wolf were 36-58 against a server whose top five are 75-91; the grove, the ores and the north door now hold
+         Pot Boys, Goblin Cutters, Vault Wardens and Crystal Ogres (73-78). The entry pocket and the halls (gnashers, ghouls, wraiths) stay for the
+         level 20s, and the Weavers and Marrow Hounds stay: they are the Wild's own, and a quest asks for Weavers. `aggro: 0` keeps a type that is
+         aggressive elsewhere calm here, so the third-of-the-map rule holds. */
+      ["dgoblin", 22, 3, { aggro: 3, respawn: [60000, 120000] }], ["potboy", 38, 4, { aggro: 0, respawn: [50000, 90000] }], ["potboy", 36, 2, { aggro: 0, respawn: [70000, 110000] }],
+      ["dogre", 40, 6, { aggro: 4, respawn: [75000, 120000] }], ["warden", 37, 21, { aggro: 3, respawn: [60000, 105000] }], ["warden", 41, 22, { aggro: 0, respawn: [80000, 120000] }], ["dgoblin", 20, 21, { aggro: 0, respawn: [50000, 95000] }],
+      ["dogre", 39, 18, { aggro: 4, respawn: [90000, 120000] }],
       ["weaver", 41, 5, { aggro: 4, respawn: [80000, 120000] }], ["weaver", 14, 20, { aggro: 4, respawn: [70000, 115000] }],
       ["marrowhound", 34, 19, { aggro: 5, respawn: [75000, 120000] }], ["marrowhound", 40, 22, { respawn: [60000, 100000] }]],
 
@@ -1332,7 +1337,7 @@ export function createClosedScenes(G, H) {
     bots: []
   },
   deep: {
-    name: "The Deep Wild", pvp: true, exits: { s: "wild" }, tint: "rgba(50,10,45,.3)", ground: "deep", xpMul: 1.5, luck: 0.1, geode: 0.01,
+    name: "The Deep Wild", pvp: true, killMul: 1.5, exits: { s: "wild" }, tint: "rgba(50,10,45,.3)", ground: "deep", xpMul: 1.5, luck: 0.1, geode: 0.01,
     rows: [
       "############################################",
       "#.........##..................##############",
@@ -1401,13 +1406,17 @@ export function createClosedScenes(G, H) {
     },
     /* the Nexus door is drakes and golems; the pool is wolves; everything between is a revenant or a wraith */
     /* the Deep: 11 of 32 aggressive - the Nexus door, the pool, the ores, the skyash, and the two Liches */
-    mobs: [["drake", 3, 5, { aggro: 5, respawn: [90000, 120000] }], ["drake", 7, 2, { aggro: 5, respawn: [90000, 120000] }], ["golem", 8, 4, { aggro: 4, respawn: [75000, 120000] }], ["golem", 2, 1, { respawn: [70000, 110000] }],
-      ["revenant", 9, 9, { respawn: [55000, 95000] }], ["taxwraith", 14, 8, { respawn: [45000, 80000] }], ["chandelier", 14, 2, { respawn: [50000, 90000] }], ["chandelier", 25, 1, { respawn: [60000, 100000] }], ["wolf", 20, 2, { respawn: [65000, 110000] }],
-      ["wolf", 33, 4, { aggro: 4, respawn: [70000, 120000] }], ["wolf", 41, 5, { respawn: [60000, 105000] }], ["wolf", 39, 3, { aggro: 4, respawn: [80000, 120000] }],
-      ["goose", 38, 12, { aggro: 4, respawn: [70000, 115000] }], ["goose", 39, 17, { respawn: [55000, 100000] }], ["golem", 36, 14, { aggro: 4, respawn: [75000, 120000] }], ["jackal", 40, 9, { respawn: [45000, 75000] }],
-      ["revenant", 17, 13, { respawn: [50000, 90000] }], ["revenant", 27, 13, { respawn: [60000, 100000] }], ["taxwraith", 23, 12, { respawn: [45000, 80000] }],
-      ["chandelier", 19, 22, { respawn: [50000, 95000] }], ["chandelier", 26, 23, { respawn: [55000, 100000] }], ["golem", 5, 19, { aggro: 4, respawn: [80000, 120000] }], ["golem", 7, 23, { respawn: [70000, 115000] }], ["revenant", 3, 21, { respawn: [60000, 100000] }],
-      ["revenant", 35, 22, { respawn: [55000, 95000] }], ["revenant", 38, 23, { respawn: [65000, 110000] }], ["wolf", 33, 20, { respawn: [70000, 120000] }], ["taxwraith", 22, 18, { respawn: [45000, 85000] }],
+    /* (2026-09-30, the Wilderness check) THE DEEP IS THE TOP OF THE GAME NOW: 73-93, from the Depths, the Vault, the Trailer Park and the Valley, the
+       Nexus door held by Sabretooths and a Caveman, the Black pool by a Yard Gator and a Sabretooth. Same spots, same respawns, same eleven aggressive;
+       the Grim Liches and Marrow Hounds stay (the Deep's own, and a quest's). No Iron Ogre: only the Void touches one, and the Wild is no place to
+       find that out. */
+    mobs: [["sabretooth", 3, 5, { aggro: 4, respawn: [90000, 120000] }], ["sabretooth", 7, 2, { aggro: 4, respawn: [90000, 120000] }], ["caveman", 8, 4, { aggro: 3, respawn: [75000, 120000] }], ["dogre", 2, 1, { aggro: 0, respawn: [70000, 110000] }],
+      ["dgoblin", 9, 9, { aggro: 0, respawn: [55000, 95000] }], ["junkdog", 14, 8, { aggro: 0, respawn: [45000, 80000] }], ["possum", 14, 2, { aggro: 0, respawn: [50000, 90000] }], ["possum", 25, 1, { aggro: 0, respawn: [60000, 100000] }], ["scrapper", 20, 2, { aggro: 0, respawn: [65000, 110000] }],
+      ["gator", 33, 4, { aggro: 3, respawn: [70000, 120000] }], ["possum", 41, 5, { aggro: 0, respawn: [60000, 105000] }], ["sabretooth", 39, 3, { aggro: 4, respawn: [80000, 120000] }],
+      ["dogre", 38, 12, { aggro: 4, respawn: [70000, 115000] }], ["junkdog", 39, 17, { aggro: 0, respawn: [55000, 100000] }], ["caveman", 36, 14, { aggro: 3, respawn: [75000, 120000] }], ["possum", 40, 9, { aggro: 0, respawn: [45000, 75000] }],
+      ["dgoblin", 17, 13, { aggro: 0, respawn: [50000, 90000] }], ["potboy", 27, 13, { aggro: 0, respawn: [60000, 100000] }], ["scrapper", 23, 12, { aggro: 0, respawn: [45000, 80000] }],
+      ["potboy", 19, 22, { aggro: 0, respawn: [50000, 95000] }], ["dgoblin", 26, 23, { aggro: 0, respawn: [55000, 100000] }], ["gator", 5, 19, { aggro: 3, respawn: [80000, 120000] }], ["dogre", 7, 23, { aggro: 0, respawn: [70000, 115000] }], ["scrapper", 3, 21, { aggro: 0, respawn: [60000, 100000] }],
+      ["warden", 35, 22, { aggro: 0, respawn: [55000, 95000] }], ["junkdog", 38, 23, { aggro: 0, respawn: [65000, 110000] }], ["possum", 33, 20, { aggro: 0, respawn: [70000, 120000] }], ["potboy", 22, 18, { aggro: 0, respawn: [45000, 85000] }],
       ["grimlich", 13, 4, { aggro: 4, respawn: [90000, 120000] }], ["grimlich", 40, 7, { aggro: 4, respawn: [90000, 120000] }],
       ["marrowhound", 2, 20, { aggro: 5, respawn: [75000, 120000] }], ["marrowhound", 8, 22, { respawn: [65000, 110000] }]],
 

@@ -38,7 +38,8 @@ import { installGems } from "./gems.js";
 import { installWyrm } from "./wyrm.js";
 import { installEvents } from "./events.js";   /* (2026-09-30) WORLD EVENTS */
 import { installCommands } from "./commands.js";   /* (2026-09-30) CHAT COMMANDS */
-import { installWeekly } from "./weekly.js";   /* (2026-09-30) THE WEEKLY ISSUE */   
+import { installWeekly } from "./weekly.js";
+import { installTrack } from "./track.js";   /* (2026-09-30) WHAT THE WORLD RECORDS: see track.js and tools/tracking-mock/ */   /* (2026-09-30) THE WEEKLY ISSUE */   
 import { installRaid } from "./raid.js";   /* (2026-09-30) the Yard raid */   /* (2026-09-30) the Frozen Reach's daily boss */
 import { installOutfit } from "./outfit.js";   /* (2026-09-29) the outfitters: Wren and Morwenna */   /* (2026-09-28) gems, sockets, the Gem Case and the Gem Sorter */   /* (2026-09-28) Tinkering: the sink */   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
@@ -301,6 +302,7 @@ export class World {
        so a deploy announces nobody. */
     const away = Date.now() - (C.stats?.lastSeen || 0);
     const sayHello = away > 10 * 60 * 1000;   // ten minutes: a deploy, a refresh or a dropped phone all stay quiet
+    this.trkLogin(pl, !(C.stats?.sessions > 0));   /* (2026-09-30) sessions and new players (track.js) */
     if (C.stats) { C.stats.sessions++; C.stats.firstSeen ||= Number(C.created) || Date.now(); C.stats.lastSeen = Date.now(); }
     if (sayHello) setTimeout(() => { for (const q of this.pls.values()) if (q.id !== user.id) q.out.push({ type: "casinonote", text: `\u{1F44B} ${pl.name} just logged on.` }); }, 400);
     this.cryptRejoin(pl); this.countRejoin(pl);   /* (2026-09-25) and the Count Room, same rule: a saved spot inside a run is only good if that run is still there */   /* (v104) saved inside a crypt run: back into it if it is still going, else to the stairs */
@@ -364,7 +366,7 @@ export class World {
     C.scene = key; C.x = pl.x = keepSpot && Number.isInteger(stored.x) ? stored.x : G.SCENES.isle.entry.x; C.y = pl.y = keepSpot && Number.isInteger(stored.y) ? stored.y : G.SCENES.isle.entry.y;
   }
   async leave(pl, replaced = false) {
-    if (pl.left) return; pl.left = true;
+    if (pl.left) return; pl.left = true; this.trkLeave(pl);   /* (2026-09-30) how long the session lasted (track.js) */
     if (pl.trade) this.tradeEnd(pl.trade, `${pl.name} left.`);
     if (pl.party) this.partyAway(pl);   /* (v104) a dropped connection keeps its place in the party and the crypt for a few minutes: see crypt.js */
     for (const S of this.scenes.values()) if (S.owner === pl.id) { S.isleCopy = pl.C.isle; S.colCopy = pl.C.col; }   // visitors keep seeing it as it was left (and its podium, the log as it was)
@@ -706,7 +708,7 @@ export class World {
       if (!v.found || !v.embeddable || v.live) return this.say(pl, v.live ? "That's a live stream. Pick a song." : "That one can't be played here. Nothing was charged.", "bad");
       if (v.seconds < R.minSec || v.seconds > R.maxSec) return this.say(pl, `Songs only: ${R.minSec} seconds to ${Math.round(R.maxSec / 60)} minutes. That one is ${Math.floor(v.seconds / 60)}:${String(v.seconds % 60).padStart(2, "0")}.`, "bad");
       if (this.songQ.length >= R.queue || G.tixIn(pl.C) < R.cost) return this.say(pl, "Somebody beat you to the last slot. Nothing was charged.", "bad");   // checked again: the lookup took a moment
-      G.takeInv(pl.C.inv, "tickets", R.cost); this.touch(pl);
+      G.takeInv(pl.C.inv, "tickets", R.cost); this.trkTix(pl, -R.cost, "radio"); this.touch(pl);
       const clean = (t) => String(t || "").replace(/[\u0000-\u001f<>]/g, "").trim();
       this.songQ.push({ id, title: clean(v.title).slice(0, 90) || "A song", ch: clean(v.channelTitle).slice(0, 50), dur: v.seconds, by: pl.name, byId: pl.id });
       const ahead = this.songQ.length - 1 + (this.song ? 1 : 0); this.songTick(Date.now()); this.songTell();
@@ -728,7 +730,7 @@ export class World {
       let st = null; for (const h of G.RADIO.hosts) { try { const r = await fetch(`https://${h}/json/stations/byuuid/${m.uuid}`, { headers: { "User-Agent": "EastScape/1.0 (eastcoin.vip)" } }); if (r.ok) { st = (await r.json())?.[0] || null; if (st) break; } } catch (e) { /* next mirror */ } }
       const url = String(st?.url_resolved || st?.url || ""); if (!st || !/^https:\/\/[^\s"'<>]{4,300}$/.test(url)) return this.say(pl, "That station won't play here. Try another.", "bad");
       if (G.tixIn(pl.C) < G.RADIO.cost) return this.say(pl, `The jukebox takes ${G.fmtTix(G.RADIO.cost)}.`, "bad");   // checked again: the lookup above took a moment
-      G.takeInv(pl.C.inv, "tickets", G.RADIO.cost); this.touch(pl);
+      G.takeInv(pl.C.inv, "tickets", G.RADIO.cost); this.trkTix(pl, -G.RADIO.cost, "radio"); this.touch(pl);
       this.radioAt = Date.now(); this.radio = { byId: pl.id, hold: Date.now() + G.RADIO.holdMs, uuid: String(m.uuid), name: String(st.name || "A station").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 60) || "A station", url, cc: String(st.countrycode || "").slice(0, 2), by: pl.name, at: this.radioAt };
       tell(); for (const p of this.pls.values()) if (HEARD.has(String(p.C.scene).split(":")[0])) p.out.push({ type: "casinonote", text: `🎵 ${pl.name} paid ${G.fmtTix(G.RADIO.cost)} and put on ${this.radio.name}.` });
     } finally { this.radioBusy = false; }
@@ -914,7 +916,7 @@ export class World {
         const price = G.THIEF.permit, have = G.tixIn(C);
         if (have < price) return this.say(pl, `"${G.fmtTix(price)}. You've got ${G.fmtTix(have)}." He goes back to watching the door.`, "bad");
         if (!G.roomFor(C.inv, "thieves_permit", 1, C)) return this.say(pl, "Your bag is full.", "bad");
-        G.takeInv(C.inv, "tickets", price);
+        G.takeInv(C.inv, "tickets", price); this.trkTix(pl, -price, "permit");
         this.give(pl, "thieves_permit");
         this.touch(pl);
         return this.say(pl, `Vance folds the chit into your hand. "Door's behind me. Don't come back."`, "loot");
@@ -989,7 +991,7 @@ export class World {
           if (it.corn) return this.hwFit(pl, k);   /* (2026-09-27) the Long Night's fits are priced in candy corn, at Ronde's or at the tent */
           const price = it.price, have = G.tixIn(C);
           if (have < price) return this.say(pl, `${it.name} is ${G.fmtTix(price)}. You have ${G.fmtTix(have)}.`, "bad");
-          G.takeInv(C.inv, "tickets", price);
+          G.takeInv(C.inv, "tickets", price); this.trkTix(pl, -price, "vanity"); this.trkBought(pl, `vanity:${k}`, 1, price);
           v.own.push(k); v.on[it.slot] = k;   /* bought is worn: nobody buys a hat to leave it in a drawer */
           this.touch(pl);   /* the roster carries van in its signature, so the tick broadcasts the change by itself */
           return this.say(pl, `${it.name} — ${G.fmtTix(price)}. Wearing it now.`, "loot");
@@ -1170,6 +1172,7 @@ export class World {
      will forget to add. It is measured by difference in persist() instead.
      ------------------------------------------------------------ */
   emit(pl, type, d = {}) {
+    this.trkEvent(pl, type, d);   /* (2026-09-30) the day's tally by map (track.js) */
     this.countEvent(pl, type, d);
     this.questEvent(pl, type, d);
     this.dailyEvent(pl, type, d);
@@ -1531,7 +1534,8 @@ export class World {
   award(pl, dmg) {
     if (!(dmg > 0)) return;
     this.meterAdd(pl, "dmg", dmg);   /* (2026-09-28) the party meter: every hit that pays combat xp, arcs and burns included */
-    for (const [skill, xp] of G.xpForDamage(pl.C, dmg)) this.grant(pl, skill, xp, skill !== "hp");
+    const km = G.sceneDef(pl.C.scene)?.killMul || 1;   /* (2026-09-30, the Wilderness check) the Wild pays 1.25x combat xp and the Deep 1.5x (killMul on the map) */
+    for (const [skill, xp] of G.xpForDamage(pl.C, dmg)) this.grant(pl, skill, km === 1 ? xp : Math.round(xp * km), skill !== "hp");
   }
 
   /* (2026-09-22) THE RUNG AS WELL AS THE TOOL, AND IT HAS TO BE IN YOUR HANDS. `lvl` is the node's own requirement
@@ -1649,7 +1653,7 @@ export class World {
       } }
     }
     if (Math.random() < 1 / G.JACKPOT_KILL.odds) {   /* (v92) JACKPOT KILL: the rules file says why */
-      const n = G.BOUNTY[mob] * G.JACKPOT_KILL.mult, name = G.MOBS[mob].name; this.tixTo(pl, n); this.touch(pl);
+      const n = G.BOUNTY[mob] * G.JACKPOT_KILL.mult, name = G.MOBS[mob].name; this.tixTo(pl, n, "jackpot"); this.touch(pl);
       pl.out.push({ type: "jackpotkill", n, mob: name }); this.say(pl, `JACKPOT KILL! That ${name.toLowerCase()} was carrying the house's money: +${G.fmtTix(n)}.`, "loot");
       for (const p of this.pls.values()) if (p !== pl && p.C.scene === C.scene) p.out.push({ type: "casinonote", text: `🎰 ${pl.name} hit a JACKPOT KILL on a ${name.toLowerCase()}: +${G.fmtTix(n)}!` });
     }
@@ -2022,7 +2026,7 @@ export class World {
     if (it.kind === "horn") { const why = this.hornWhy(now); if (why) return this.say(pl, why, "bad"); }
     if (have < price) return this.say(pl, `${it.name} is ${G.fmtTix(price)}. You have ${G.fmtTix(have)}.`, "bad");
     if (it.kind === "give") { if (!G.roomFor(C.inv, it.give[0], C)) return this.say(pl, "Your bag is full.", "bad"); }
-    G.takeInv(C.inv, "tickets", price);
+    G.takeInv(C.inv, "tickets", price); this.trkTix(pl, -price, "store"); this.trkBought(pl, `store:${id}`, 1, price);   /* (2026-09-30) track.js */
     if (it.kind === "double") { this.touch(pl); this.doubleStart(pl.name, G.DOUBLE.ms); this.say(pl, `${paid()} The room is yours for half an hour.`, "loot"); return; }
     if (it.kind === "skill2x") { this.touch(pl); this.skill2xStart(pl.name, G.SKILL2X.ms); this.say(pl, `${paid()} 2X Skilling XP for everyone, for half an hour, in your name.`, "loot"); return; }
     if (it.kind === "give") { if (!this.give(pl, it.give[0], it.give[1])) { G.addInv(C.inv, "tickets", price, C); this.touch(pl); return; } this.touch(pl); return this.say(pl, paid(), "loot"); }
@@ -2375,7 +2379,7 @@ export class World {
       take(); pl.act = null; pl.path = []; this.moveToScene(pl, G.START.scene, null, G.START);
       return this.say(pl, "The scroll burns up in your hand, and you're standing on the casino floor.", "good");
     }
-    if (it.use === "bundle") { take(); this.tixTo(pl, it.worth | 0); return this.say(pl, `You cash the chip: ${G.fmtTix(it.worth | 0)}, in your bag. Tickets bet like ZCoins at any table: ${G.DEX.rate.toLocaleString()} tickets a ZCoin.`, "good"); }
+    if (it.use === "bundle") { take(); this.tixTo(pl, it.worth | 0, "chips"); return this.say(pl, `You cash the chip: ${G.fmtTix(it.worth | 0)}, in your bag. Tickets bet like ZCoins at any table: ${G.DEX.rate.toLocaleString()} tickets a ZCoin.`, "good"); }
     if (it.use === "box") {
       const total = G.BOX.reduce((a, [, w]) => a + w, 0); let r = Math.random() * total, got = G.BOX[0][0];
       for (const [k, w] of G.BOX) { r -= w; if (r < 0) { got = k; break; } }
@@ -2384,9 +2388,9 @@ export class World {
     }
     if (it.use === "devil") {   /* (v65) no table to have won at: the Devil plays for the tickets in your bag */
       const amt = Math.min(G.DEVIL.max, G.tixIn(C)); if (amt < 1) return this.say(pl, "The Devil doesn't play for nothing. Come back with tickets.", "bad");
-      take(); G.takeInv(C.inv, "tickets", amt);
+      take(); G.takeInv(C.inv, "tickets", amt); this.trkTix(pl, -amt, "devil");
       if (Math.random() < G.DEVIL.odds) {
-        this.give(pl, "tickets", amt * G.DEVIL.pays); this.touch(pl); this.say(pl, `The Devil's dice come up sixes. Your ${G.fmtTix(amt)} are now ${G.fmtTix(amt * G.DEVIL.pays)}!`, "loot");
+        this.give(pl, "tickets", amt * G.DEVIL.pays); this.trkTix(pl, amt * G.DEVIL.pays, "devil"); this.touch(pl); this.say(pl, `The Devil's dice come up sixes. Your ${G.fmtTix(amt)} are now ${G.fmtTix(amt * G.DEVIL.pays)}!`, "loot");
         const S = this.scenes.get(C.scene); if (S && amt >= 200) for (const q of this.playersIn(S)) if (q !== pl) q.out.push({ type: "casinonote", text: `😈 ${pl.name} rolled the Devil's dice and tripled ${G.fmtTix(amt)}!` });
       } else this.say(pl, `Snake eyes. The Devil keeps your ${G.fmtTix(amt)}.`, "bad");
       return;
@@ -2445,7 +2449,7 @@ export class World {
       const st = C.inv[m.i | 0]; if (!st) return; const price = G.SHOP.buys[st.k];
       if (!price) return this.say(pl, `Brutus squints at the ${G.ITEMS[st.k].name.toLowerCase()}. "Not buying that."`);
       const k = st.k, all = G.countItems(C, [k]), qty = G.takeInv(C.inv, k, Math.max(1, Math.min(all, m.n === "all" ? all : m.n | 0)));
-      this.give(pl, "tickets", qty * price); this.touch(pl);
+      this.give(pl, "tickets", qty * price); this.trkTix(pl, qty * price, "sell"); this.trkSold(pl, k, qty, qty * price); this.touch(pl);
       return this.say(pl, `You sell ${qty > 1 ? `${qty} × ` : "the "}${G.ITEMS[k].name.toLowerCase()} for ${G.fmtCash(qty * price)}.`, "good");
     }
   }
@@ -2453,12 +2457,12 @@ export class World {
      leaves tools, charms and anything wearable alone; one item at a time sells whatever you point at. */
   atCounter(S, pl) { return this.near(S, pl, "coinstatue", 3) || this.near(S, pl, "prizecase", 3) || this.near(S, pl, "cashier", 3); }   /* (v82: Bom Trady and the prize cases round him are one counter) */
   /* every ticket EARNED (kills, trade-ins, daily jobs) counts toward VIP; buying and betting never do */
-  earned(pl, n) { if (!(n > 0)) return; const C = pl.C, was = G.vipOf(C).i; C.earned = (Number(C.earned) || 0) + n; const now = G.vipOf(C);
+  earned(pl, n, src) { if (!(n > 0)) return; this.trkTix(pl, n, src);   /* (2026-09-30) every ticket earned, by where it came from (track.js) */ const C = pl.C, was = G.vipOf(C).i; C.earned = (Number(C.earned) || 0) + n; const now = G.vipOf(C);
     if (now.i > was) { this.say(pl, `You've made ${now.name} VIP: ${Math.round(now.off * 100)}% off everything at the Prize Counter, and everyone can see it by your name.`, "loot"); for (const q of this.pls.values()) if (q !== pl) q.out.push({ type: "casinonote", text: `👑 ${pl.name} made ${now.name} VIP.` }); } }
   /* (2026-09-25) EVERY TICKET IN THE GAME COMES THROUGH HERE, which is why the 2X event is applied at this one
      line rather than at the dozen places that pay. A doubled ticket is still a ticket: the caps, the books and
      the day counters all see the doubled number, which is what the owner asked for. */
-  tixTo(pl, n) { if (n > 0 && this.doubleOn()) n = Math.round(n * G.DOUBLE.mult); this.earned(pl, n); if (n > 0 && !this.give(pl, "tickets", n) && !this.bankAdd(pl, "tickets", n)) this.say(pl, "Your bag and bank are both full: those tickets are lost. Make some room!", "bad"); }
+  tixTo(pl, n, src) { if (n > 0 && this.doubleOn()) n = Math.round(n * G.DOUBLE.mult); this.earned(pl, n, src); if (n > 0 && !this.give(pl, "tickets", n) && !this.bankAdd(pl, "tickets", n)) this.say(pl, "Your bag and bank are both full: those tickets are lost. Make some room!", "bad"); }
   /* (2026-09-28, the owner: "build the buy-back section too") BUY-BACK. What you sold Bom lately, his for G.BUYBACK.ms and the last
      G.BUYBACK.keep of them, to buy back at EXACTLY what he paid you. Two things make that exact: `credited` is the tickets that actually
      reached you (tixTo doubles a sale during 2X, so a buy-back at the base price would print tickets there), rounded UP per row so buying
@@ -2476,7 +2480,7 @@ export class World {
       const cost = G.bagUpCost(C);
       if (cost == null) return this.say(pl, "That's every pocket he'll sew on. Your bag is as big as it gets.", "bad");
       if (tix < cost) return this.say(pl, `Another pocket is ${G.fmtTix(cost)}. You have ${G.fmtTix(tix)}.`, "bad");
-      G.takeInv(C.inv, "tickets", cost);
+      G.takeInv(C.inv, "tickets", cost); this.trkTix(pl, -cost, "counter");
       C.bagUp = (C.bagUp | 0) + 1;
       this.touch(pl);
       return this.say(pl, `Bom stitches another pocket on. Your bag holds ${G.bagMax(C)} now.`, "loot");
@@ -2486,7 +2490,7 @@ export class World {
       if (!e) { C.buyback = list; this.touch(pl); return this.say(pl, "Bom's already moved that on. Buy-backs last an hour.", "bad"); }
       if (tix < e.paid) return this.say(pl, `Buying that back is ${G.fmtTix(e.paid)}, what he paid you. You have ${G.fmtTix(tix)}.`, "bad");
       if (G.roomFor(C.inv, e.k, C, e.f) < e.n) return this.say(pl, "Your bag's too full to take it back.", "bad");
-      G.takeInv(C.inv, "tickets", e.paid); G.addInv(C.inv, e.k, e.n, C, e.f);
+      G.takeInv(C.inv, "tickets", e.paid); this.trkTix(pl, -e.paid, "buyback"); G.addInv(C.inv, e.k, e.n, C, e.f);
       C.earned = Math.max(0, (Number(C.earned) || 0) - e.paid);   /* the sale's VIP credit goes back with it */
       C.buyback = list.filter((x) => x !== e); this.touch(pl);
       pl.out.push({ type: "boughtback", k: e.k, n: e.n, paid: e.paid });
@@ -2499,7 +2503,7 @@ export class World {
     /* roomFor's owner argument was being left out here, so the counter measured the BASE bag: a Pack Rat owner was
        told a 24-slot bag was full at 20, and a bought slot would have been invisible to the very shop that sold it. */
     if (it && G.roomFor(C.inv, p.give[0], C) < p.give[1] * n) return this.say(pl, "Your bag's too full for that.", "bad");
-    G.takeInv(C.inv, "tickets", cost);
+    G.takeInv(C.inv, "tickets", cost); this.trkTix(pl, -cost, "counter"); this.trkBought(pl, p.give[0], p.give[1] * n, cost);
     this.give(pl, p.give[0], p.give[1] * n);
     this.touch(pl);
     this.say(pl, `${p.give[1] * n > 1 ? `${(p.give[1] * n).toLocaleString()} × ` : ""}${it.name} for ${G.fmtTix(cost)}.`, "good");
@@ -2529,7 +2533,7 @@ export class World {
       for (let i = C.inv.length - 1; i >= 0; i--) { const st = C.inv[i]; if (st.k !== gk || G.fCode(st) !== wantF) continue; got += st.n; C.inv.splice(i, 1); }
       if (!got) return this.say(pl, `That is not in your bag: ${G.forgeNameAt(gk, wantF)}.`, "bad");
       const paid = got * priceOf(gk, wantLv);
-      this.earned(pl, paid); this.cashTo(pl, paid); this.bbAdd(C, { k: gk, n: got, f: wantF, paid }); this.touch(pl);   /* (2026-09-30, the balance pass) a sale is never doubled by 2X: see below */
+      this.earned(pl, paid, "sell"); this.trkSold(pl, gk, got, paid); this.cashTo(pl, paid); this.bbAdd(C, { k: gk, n: got, f: wantF, paid }); this.touch(pl);   /* (2026-09-30, the balance pass) a sale is never doubled by 2X: see below */
       pl.out.push({ type: "cashed", total: paid, count: got });
       return this.say(pl, `"${G.forgeNameAt(gk, wantF)} — somebody put work into that." The counter hands over ${G.fmtTix(paid)}.`, "good");
     }
@@ -2542,13 +2546,13 @@ export class World {
       const gear = !!G.ITEMS[k]?.slot;
       const n = G.takeInv(C.inv, k, G.countItems({ inv: C.inv, bank: [] }, [k], gear ? { plainOnly: true } : undefined));
       total += n * priceOf(k); count += n;
-      if (n) this.bbAdd(C, { k, n, f: 0, paid: n * priceOf(k) });   /* (2026-09-28) BUY-BACK: see bbAdd */
+      if (n) { this.bbAdd(C, { k, n, f: 0, paid: n * priceOf(k) }); this.trkSold(pl, k, n, n * priceOf(k)); }   /* (2026-09-28) BUY-BACK: see bbAdd */
     }
     if (!count) return this.say(pl, "The counter looks in your bag. \"Nothing in there I can give you tickets for. The arch is that way.\"");
     /* (2026-09-30, the balance pass: "The 2X Tickets potion doubles every Bom sale, including stockpiles") A SALE IS NOT EARNING. tixTo doubles under 2X,
        so an hour of smithing banked and sold in a 30-minute window came back twice over; a 100,000 potion paid for itself three times. Sales are
        paid like a pet sale (cashTo, never doubled) and still count toward what you have earned (VIP). What 2X doubles is what a kill drops. */
-    this.earned(pl, total); this.cashTo(pl, total); this.touch(pl);
+    this.earned(pl, total, "sell"); this.cashTo(pl, total); this.touch(pl);
     pl.out.push({ type: "cashed", total, count });
     this.say(pl, `The counter hands over ${G.fmtTix(total)} for ${count} thing${count === 1 ? "" : "s"}. Spend them right here.`, "good");
   }
@@ -2750,7 +2754,7 @@ export class World {
     const C = pl.C, q = G.QUESTS[k], last = q.stages[q.stages.length - 1];
     if (G.qGet(C, k).state !== "ready" && last.type === "bring") { if (G.countItems(C, last.items) < last.n) return; this.takeAny(C, last.items, last.n); }
     C.qs[k] = { ...(C.qs[k] || {}), state: "done" };
-    if (q.reward.coins) this.give(pl, "tickets", q.reward.coins);
+    if (q.reward.coins) { this.give(pl, "tickets", q.reward.coins); this.trkTix(pl, q.reward.coins, "quests"); }
     for (const [sk, xp] of Object.entries(q.reward.xp || {})) this.grant(pl, sk, xp);
     for (const [it, n] of q.reward.items || []) this.give(pl, it, n);
     pl.out.push({ type: "questdone", k });
@@ -2777,6 +2781,7 @@ export class World {
       const gates = S.def?.gates; if (!gates) continue;
       for (const gt of gates) { const open = G.gateOpenAt(now, gt) ? "i" : "#"; for (const [gx, gy] of G.gateTiles(gt)) S.g[gy][gx] = open; }
     }
+    if (this.tickN % 20 === 0) this.trkSecond(now);   /* (2026-09-30) WHAT THE WORLD RECORDS: a second on this map doing this (track.js) */
     if (this.tickN % 20 === 0) { this.evTick(now);   /* (2026-09-30) WORLD EVENTS */ this.weekTick(now);   /* (2026-09-30) THE WEEKLY ISSUE */ this.wyrmTick(now);   /* (2026-09-30) the Ice Wyrm */ this.coldTick(now);   /* (2026-09-30) the Frozen Reach's cold */ this.raidTick(now);   /* (2026-09-30) the Yard raid */ this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.skill2xTick(); this.hwTick(now); this.orderTick(now); this.projTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
     if (this.tickN % 40 === 0) this.runsSave();   /* (2026-09-27) the dungeon runs, so a deploy does not end them */
     if (this.tickN % 20 === 0) for (const pl of this.pls.values()) {   /* once a second */
@@ -3089,7 +3094,7 @@ export class World {
       if (!T.who.has(pl.id)) return this.say(pl, "The chest is for the ones who put the captain down. You weren't in that fight.", "bad");
       T.got.add(pl.id); faceIt();
       const tix = rint(G.CLAW_CHEST.tickets[0], G.CLAW_CHEST.tickets[1]), got = [];
-      this.tixTo(pl, tix);
+      this.tixTo(pl, tix, "bosses");
       for (const [k, n, p] of G.CLAW_CHEST.items) if (Math.random() < (p ?? 1)) { const q = Array.isArray(n) ? rint(n[0], n[1]) : n; if (this.give(pl, k, q) || this.bankAdd(pl, k, q)) got.push([k, q]); }
       this.touch(pl); pl.out.push({ type: "clawchest", opened: true });
       if (got.some(([k]) => k === "clawgrip")) for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `\u{1F980} ${pl.name} found Captain Claw's grip in his chest!` });
@@ -3443,6 +3448,7 @@ export class World {
            reached the inputs go back and the station stops, rather than eating a stack a fish at a time. */
         if (!this.give(pl, r.out[0], outN)) { for (const [k, n] of r.in) this.give(pl, k, n); this.touch(pl); pl.act = null; return; }
         this.gained(S, pl, r.out[0], outN, r.skill === "cooking" ? "cook" : "craft");
+        this.trkCraft(pl, ob.t, r.out[0], outN);   /* (2026-09-30) which station made it: the Nexus and the Wild Bench apart (track.js) */
         /* (2026-09-27) Bessemer's Gauntlets: a smelted bar may come out double (fx.smelt). Only if the bag has the room: a lucky bar is never a "bag full" */
         if ((r.station === "furnace" || r.station === "blast") && String(r.out[0]).endsWith("_bar")) { const sm = G.fxOf(C).smelt; if (sm > 0 && Math.random() < sm && G.roomFor(C.inv, r.out[0], C) >= outN) { G.addInv(C.inv, r.out[0], outN, C); this.touch(pl); this.say(pl, `The gauntlets ring on the mould: ${outN > 1 ? `${outN} more` : "another"} ${G.ITEMS[r.out[0]].name.toLowerCase()}!`, "loot"); } }
         /* (2026-09-23, the owner: "lets make sure we have the group bonus (+1% etc) to the campfire when users are
@@ -3622,7 +3628,7 @@ export class World {
          Doubling the QUANTITY at the drop covers all fifty-odd monsters without touching a single drop table,
          and it happens AFTER the ticket buffs so a Coin Toad and a 2X multiply rather than one swallowing the
          other. tools/eastscape-content-check.mjs now fails if either of the two paths loses its doubling. */
-      if (k === "tickets") { qty = Math.round(qty * (1 + G.fxOf(pl.C).tix + G.petFx(pl.C).tix / 100)); if (this.doubleOn()) qty = Math.round(qty * G.DOUBLE.mult); this.earned(pl, qty); }   /* fxOf is a fraction; petFx.tix is a percent */   /* the ticket buffs (G.fxOf), and the VIP count */
+      if (k === "tickets") { qty = Math.round(qty * (1 + G.fxOf(pl.C).tix + G.petFx(pl.C).tix / 100) * (S.def.killMul || 1)); if (this.doubleOn()) qty = Math.round(qty * G.DOUBLE.mult); this.earned(pl, qty, "kills"); }   /* (2026-09-30, the Wilderness check) killMul: the Wild pays 1.25x a kill's tickets and the Deep 1.5x, for the danger */   /* fxOf is a fraction; petFx.tix is a percent */   /* the ticket buffs (G.fxOf), and the VIP count */
       if (this.give(pl, k, qty)) { got.push([k, qty]); this.emit(pl, "loot", { k, n: qty }); }
     }
     /* (2026-09-22) A PET. 1 in 1,000 in the Boneyard and beyond, rolled per kill and never more than one at a time.
@@ -3706,18 +3712,24 @@ export class World {
        makes the risk out there visible to people who never go. Only a real player kill in a pvp scene: a death
        to a monster, a fall, or a duel in the Cage is not somebody being robbed. */
     if (pk && S?.def?.pvp && !G.inCage(S.def, pl.x, pl.y)) this.houseSay(`⚔️ ${pl.name} was just slain by ${pk.name} in ${S.def.name}.`);
-    let lost = null;
+    let lost = null, took = 0;
     if (S?.def.pvp) {
       const worn = G.SLOTS.filter((s) => C.eq[s]);
       if (worn.length && Math.random() < G.PVP.drop * (G.projFx(C)?.pvpDrop ?? 1)) {   /* (2026-09-28) the Forward Camp's field hospital */ const s = pick(worn); lost = C.eq[s]; C.eq[s] = null; this.dropGround(S, lost, 1, pl.x, pl.y, pk ? pk.id : null, now); }
-      const nm = lost ? G.ITEMS[lost].name.toLowerCase() : null;
-      if (pk) this.say(pk, `You have defeated ${pl.name}.${nm ? ` They dropped their ${nm}. It's yours for the next minute.` : ""}`, "loot");
-      this.say(pl, `${pk ? `${pk.name} killed you` : `A ${killer?.mob?.toLowerCase() || "monster"} killed you`} in the Wilderness.${nm ? ` You dropped your ${nm}.` : " You kept everything this time."}`, "bad");
+      /* (2026-09-30, the Wilderness check: "dying there costs less than dying anywhere else") THE WILD TAKES YOUR POCKETS. A death out here
+         costs the same share of the tickets you carry as a death anywhere (G.DEATH.wild / .deep: 10%, capped at 10,000), and nothing waives it:
+         not the Witch's brew, not the Ferryman's Coin. Killed by a PLAYER, it is theirs; killed by a monster, it is a bill, like anywhere else. */
+      took = pl.god ? 0 : Math.min(G.deathBill(C, S.key), G.tixIn(C));
+      if (took > 0) { G.takeInv(C.inv, "tickets", took); this.touch(pl); this.trkTix(pl, -took, pk ? "robbed" : "bill"); if (pk) { this.cashTo(pk, took); this.touch(pk); this.trkTix(pk, took, "pvp"); } }
+      const nm = lost ? G.ITEMS[lost].name.toLowerCase() : null, tk = took > 0 ? G.fmtTix(took) : null;
+      if (pk) this.say(pk, `You have defeated ${pl.name}.${tk ? ` You take ${tk} from their pockets.` : ""}${nm ? ` They dropped their ${nm}. It's yours for the next minute.` : ""}`, "loot");
+      this.say(pl, `${pk ? `${pk.name} killed you` : `A ${killer?.mob?.toLowerCase() || "monster"} killed you`} in the ${S.def.name.replace(/^The /, "")}.${tk ? (pk ? ` They took ${tk} from your pockets.` : ` THE HOSPITAL BILL: ${tk}.`) : ""}${nm ? ` You dropped your ${nm}.` : ""}${!tk && !nm ? " You kept everything this time." : ""}`, "bad");
       for (const p of this.pls.values()) if (p !== pl && p !== pk && G.sceneDef(p.C.scene)?.pvp) this.say(p, `☠️ ${pl.name} was killed by ${pk ? pk.name : `a ${killer?.mob?.toLowerCase() || "monster"}`}.`);
     }
+    this.trkDeath(pl, S, killer, pk && S?.def?.pvp ? pk : null, lost, took);   /* (2026-09-30) where, and what did it (track.js) */
     if (C.ward && !S?.def.pvp) { C.ward = false; this.touch(pl); this.say(pl, "The Witch's brew takes the fall for you: no hospital bill this time.", "good"); }   /* (2026-09-27) the ward is spent by the death it saves you from */
     else if (G.fxOf(C).nobill > 0 && !S?.def.pvp) this.say(pl, "The Ferryman's Coin pays the hospital. No bill.", "good");   /* (2026-09-27) the Long Night's amulet */
-    else { const bill = pl.god || S?.def.pvp ? 0 : G.deathBill(C, S?.key); if (bill > 0) { G.takeInv(C.inv, "tickets", bill); this.touch(pl); this.say(pl, `THE HOSPITAL BILL: ${G.fmtTix(bill)}. They patched you up and went through your pockets.`, "bad"); } }   /* v68: the only thing a death costs */
+    else { const bill = pl.god || S?.def.pvp ? 0 : G.deathBill(C, S?.key); if (bill > 0) { G.takeInv(C.inv, "tickets", bill); this.trkTix(pl, -bill, "bill"); this.touch(pl); this.say(pl, `THE HOSPITAL BILL: ${G.fmtTix(bill)}. They patched you up and went through your pockets.`, "bad"); } }   /* v68: the only thing a death costs */
     this.say(pl, "Oh dear, you are dead! You wake up on the casino floor. Nobody looks surprised.", "bad");
     C.hp = G.maxHpOf(C);
     this.moveToScene(pl, G.START.scene, null, { x: G.START.x, y: G.START.y });
@@ -3855,11 +3867,11 @@ export class World {
         if (P.max && (I.owned[k] | 0) >= P.max) return this.say(pl, `One ${P.name.toLowerCase()} is plenty.`, "bad");
         if ((I.owned[k] | 0) >= 99) return;
         if (G.tixIn(C) < P.price) return this.say(pl, `That's ${G.fmtTix(P.price)}. You have ${G.fmtTix(G.tixIn(C))}.`, "bad");
-        G.takeInv(C.inv, "tickets", P.price); I.owned[k] = (I.owned[k] | 0) + 1; this.touch(pl);
+        G.takeInv(C.inv, "tickets", P.price); this.trkTix(pl, -P.price, "island"); I.owned[k] = (I.owned[k] | 0) + 1; this.touch(pl);
         return this.say(pl, `Yahsmeena wraps up a ${P.name.toLowerCase()}. Press Decorate to put it down${P.in === "home" ? ", inside your cottage" : ""}.`, "good");
       }
       if (DR.decorSpare(I, k) < 1) return this.say(pl, "Pick it up first: she only takes back what isn't standing somewhere.", "bad");
-      const back = Math.floor(P.price * DR.DECOR_SELLBACK); I.owned[k]--; if (!I.owned[k]) delete I.owned[k]; this.tixTo(pl, back); this.touch(pl);
+      const back = Math.floor(P.price * DR.DECOR_SELLBACK); I.owned[k]--; if (!I.owned[k]) delete I.owned[k]; this.tixTo(pl, back, "island"); this.touch(pl);
       return this.say(pl, `Yahsmeena takes the ${P.name.toLowerCase()} back: ${G.fmtTix(back)}.`, "good");
     }
     if (!mine) return this.say(pl, "You can only decorate your own island.", "bad");
@@ -4005,7 +4017,7 @@ export class World {
              fight already running; this stops a new one being started for somebody who has not touched the game
              since. Together they mean an idle player simply gets hit, which is the point of a dangerous place. */
           if (!foe.act && !foe.path.length && !foe.lingerUntil && now - foe.lastInput <= G.AFK_MS) foe.act = { kind: "mob", id: m.id, x: m.x, y: m.y, name: def.name, started: 0 };
-          if (C.hp <= 0) this.die(foe, S, { mob: def.name });
+          if (C.hp <= 0) this.die(foe, S, { mob: def.name, t: m.t });
         }
         continue;
       }
@@ -4368,7 +4380,7 @@ export class World {
     if (cashAll() < l.price) return this.say(pl, `That needs ${G.fmtCash(l.price)}. You have ${G.fmtCash(cashAll())} (bag and bank).`, "bad");
     payCash(l.price);
     this.ex.pets = L.filter((x) => x !== l); C.pets.push(this.petFresh(C, l.pet));
-    const tax = G.exTax(l.price), net = l.price - tax; this.ex.tax += tax;
+    const tax = G.exTax(l.price), net = l.price - tax; this.ex.tax += tax; this.trkEx("pet", 1, l.price); this.trkTix(null, -tax, "extax");
     const seller = this.pls.get(l.owner), what = `sold ${G.petLabel(l.pet)} for ${G.fmtCash(net)}`;
     if (seller && this.bankAdd(seller, "tickets", net)) seller.out.push({ type: "exnote", text: `You ${what}. It's in your bank.` });
     else { (this.ex.petOwed ||= {})[l.owner] = ((this.ex.petOwed || {})[l.owner] || 0) + net; this.exNote(l.owner, what); }
@@ -4389,7 +4401,7 @@ export class World {
       buy.box.items += q;
       sell.box.cash += gross - tax;
       if (buy.price > price) buy.box.cash += (buy.price - price) * q;   // bid more than it cost: the difference comes back
-      this.ex.last[o.k] = { price, at: Date.now() }; this.ex.tax += tax;
+      this.ex.last[o.k] = { price, at: Date.now() }; this.ex.tax += tax; this.trkEx(o.k, q, gross); this.trkTix(null, -tax, "extax");   /* (2026-09-30) Exchange volume and tax (track.js) */
       const nm = G.ITEMS[o.k].name;
       for (const side of [sell, buy]) {
         if (side.done >= side.qty) { side.open = false; side.closedAt = Date.now(); }
@@ -4906,7 +4918,7 @@ export class World {
     }
     if (!last) return 0;
     /* the tickets go through tixTo like every other payout, so the wallet, the caps and the books all see it */
-    if (tix > 0) this.tixTo(pl, tix);
+    if (tix > 0) this.tixTo(pl, tix, "achievements");
     this.touch(pl);
     const pts = G.achPts(C);
     if (quiet) this.say(pl, `You have earned ${ids.length} achievement${ids.length === 1 ? "" : "s"} for things you had already done \u2014 ${G.fmtCash(tix)} and ${pts} points. Have a look at the Achievements list.`, "good");
@@ -4966,7 +4978,7 @@ export class World {
     if (m.op !== "claim" || !this.near(S, pl, "notice", 2)) return;
     const D = this.dailyState(pl), t = D.tasks.find((x) => x.id === m.id), def = t && G.dailyDef(t.id);
     if (!def || t.claimed || t.got < G.dailyNeed(t)) return;
-    t.claimed = true; pl.C.stats.jobs = (pl.C.stats.jobs | 0) + 1;   /* (v98) a lifetime tally, for the Quests completed board */ this.tixTo(pl, def.cash); this.touch(pl);
+    t.claimed = true; pl.C.stats.jobs = (pl.C.stats.jobs | 0) + 1;   /* (v98) a lifetime tally, for the Quests completed board */ this.tixTo(pl, def.cash, "dailies"); this.touch(pl);
     this.say(pl, `You're paid ${G.fmtTix(def.cash)} for the day's work. The Prize Counter's in the middle of the floor.`, "good");
     this.dailySend(pl);
   }
@@ -5255,7 +5267,8 @@ installTinker(World, { G });
 installGems(World, { G });
 installOutfit(World, { G });
 installWyrm(World, { G });
-installEvents(World, { G });   /* (2026-09-30) WORLD EVENTS: Shooting Stars, Wanted! and the Jackpot Thief */
+installEvents(World, { G });
+installTrack(World, { G });   /* (2026-09-30) WHAT THE WORLD RECORDS */   /* (2026-09-30) WORLD EVENTS: Shooting Stars, Wanted! and the Jackpot Thief */
 installCommands(World, { G });
 installWeekly(World, { G });   /* (2026-09-30) THE WEEKLY ISSUE: a snapshot a week, and the numbers the wiki's issue shows */   /* (2026-09-30) CHAT COMMANDS: /find, /help, /price, /count, /xp, /timers, /bosses, /wiki, /map, /online, /roll, /stuck */
 installRaid(World, { G });

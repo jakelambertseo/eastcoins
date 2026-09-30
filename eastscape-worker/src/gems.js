@@ -27,7 +27,7 @@ export function installGems(World, { G }) {
     if (op === "open") {
       if (!side) return; const price = G.bagPrice(C, side); if (price == null) return bad(`Your ${word} side is fully open.`);
       if (G.tixIn(C) < price) return bad(`The next ${word.toLowerCase()} slot is ${G.fmtTix(price)}. You have ${G.fmtTix(G.tixIn(C))}.`);
-      G.takeInv(C.inv, "tickets", price); B[side === "c" ? "cn" : "sn"] += 1; list.push(null); this.touch(pl);
+      G.takeInv(C.inv, "tickets", price); this.trkTix(pl, -price, "gems"); B[side === "c" ? "cn" : "sn"] += 1; list.push(null); this.touch(pl);
       this.say(pl, `A new ${word.toLowerCase()} slot in your gem bag, for ${G.fmtTix(price)}.`, "good");
       return this.gemPush(pl, { opened: side });
     }
@@ -54,7 +54,7 @@ export function installGems(World, { G }) {
       const i = m.i | 0, st = C.inv[i]; if (!st || !G.isGem(st.k)) return bad("Pick a gem from your bag.");
       const cost = G.sortCost(); if (G.tixIn(C) < cost) return bad(`A roll costs ${G.fmtTix(cost)}. You have ${G.fmtTix(G.tixIn(C))}.`);
       const lk = G.loupeOf(C, "loupe2") ? "loupe2" : G.loupeOf(C, "loupe") ? "loupe" : null, was = G.rollOf(st), roll = lk ? G.gemRollLoupe(lk) : G.gemRoll();   /* (2026-09-30) the Store's loupes */
-      G.takeInv(C.inv, "tickets", cost); if (lk) C.store[lk] = G.loupeOf(C, lk) - 1;
+      G.takeInv(C.inv, "tickets", cost); this.trkTix(pl, -cost, "gems"); if (lk) C.store[lk] = G.loupeOf(C, lk) - 1;
       const at = C.inv.indexOf(st);   /* (the tickets may have emptied a slot before it) */
       if (was == null) { if (st.n > 1) st.n -= 1; else C.inv.splice(at, 1); if (G.addInv(C.inv, st.k, 1, C, G.gemCode(roll)) > 0) this.bankAdd(pl, st.k, 1, G.gemCode(roll)); }
       else if (st.n > 1) { st.n -= 1; if (G.addInv(C.inv, st.k, 1, C, G.gemCode(roll)) > 0) this.bankAdd(pl, st.k, 1, G.gemCode(roll)); }   /* (2026-09-29) a re-roll is ONE gem, never the stack it sat in */

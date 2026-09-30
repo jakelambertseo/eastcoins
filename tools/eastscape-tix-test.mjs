@@ -18,7 +18,7 @@ check("coin: nominal / tableReturn is fair", near(0.5 * G.FLIP_PAYS / G.tableRet
 check("scratch: fair over the prize table", near(G.SCRATCH.reduce((a, s) => a + (s.w / 1000) * s.x, 0) / G.tableReturn("scratch"), 1));
 { const W = G.REELS.reduce((a, r) => a + r.w, 0); let t = 0; for (const a of G.REELS) for (const b of G.REELS) for (const c of G.REELS) t += ((a.w * b.w * c.w) / W ** 3) * G.slotsPay([a.k, b.k, c.k]);
   const e = 1.0; check("slots: the table pays the draw LESS the jackpot's 2%, and the jackpot is the rest", near(t * G.paidMult("slots", 1, {}, e), e - G.JACKPOT.slice, 1e-9), `${t * G.paidMult("slots", 1, {}, e)}`); }
-{ let s = 0, lo = 9, hi = 0; const n = 200000; for (let i = 0; i < n; i++) { const e = G.edgeDraw(Math.random()); s += e; lo = Math.min(lo, e); hi = Math.max(hi, e); } check(`the draw: inside ${LO}-${HI}, mean 1.00 (got ${(s / n).toFixed(4)}, ${lo.toFixed(4)} to ${hi.toFixed(4)})`, lo >= LO && hi <= HI && Math.abs(s / n - 1) < 0.001); }
+{ let s = 0, lo = 9, hi = 0; const n = 200000; for (let i = 0; i < n; i++) { const e = G.edgeDraw(Math.random()); s += e; lo = Math.min(lo, e); hi = Math.max(hi, e); } check(`the draw: inside ${LO}-${HI}, mean ${((LO + HI) / 2).toFixed(2)} (got ${(s / n).toFixed(4)}, ${lo.toFixed(4)} to ${hi.toFixed(4)})`, lo >= LO && hi <= HI && Math.abs(s / n - (LO + HI) / 2) < 0.001); }
 check("Mines and Hi-Lo: the run's draw is the whole edge (fair price x draw)", near(G.minesMult(3, 1, 1), Math.floor((25 / 22) * 100) / 100) && G.hiloPays(1000, 2, 1.04) === 2080 && G.hiloPays(1000, 2, 0.96) === 1920);
 
 /* ---- over the socket */
@@ -29,11 +29,14 @@ await new Promise((res, rej) => { ws.onopen = res; ws.onerror = () => rej(new Er
 const send = (m) => ws.send(JSON.stringify(m)), tix = () => G.tixIn(me);
 send({ t: "admin", cmd: "reset" }); await wait(500); send({ t: "admin", cmd: "tp", scene: "casino", x: 21, y: 14 }); send({ t: "admin", cmd: "item", k: "tickets", n: 400000 }); await wait(1500);
 send({ t: "tixgame", g: "slots" }); await wait(800); check("the Tickets button's message opens a ticket table, with the ticket jackpot", games[0]?.g === "slots" && games[0].tix === true && games[0].pot >= G.JACKPOT.seed, JSON.stringify(games[0]));
-const play = async (g, amt, pick) => { const before = tix(), n = results.length; send({ t: "bet", g, amt, pick }); for (let i = 0; i < 30 && results.length === n; i++) await wait(100); await wait(G.CASINO.betMs + 60); const r = results[n]; return r ? { r, moved: tix() - before } : null; };
+/* (2026-09-30) AN ACHIEVEMENT CAN LAND MID-PLAY (a first win, ten plays …) and pays its tickets into the same bag, so the bag's move is the play
+   plus whatever the achievements that arrived with it pay; `bonus` is that sum, read from the ach list either side of the play. */
+const achTix = () => (me?.ach || []).reduce((a, id) => a + (G.ACH_TIERS[G.ACH[id]?.tier]?.tix || 0), 0);
+const play = async (g, amt, pick) => { const before = tix(), b0 = achTix(), n = results.length; send({ t: "bet", g, amt, pick }); for (let i = 0; i < 30 && results.length === n; i++) await wait(100); await wait(G.CASINO.betMs + 60); const r = results[n]; return r ? { r, moved: tix() - before - (achTix() - b0) } : null; };
 says = []; send({ t: "bet", g: "cointable", amt: 5, pick: "heads" }); await wait(1100); check("under 10 tickets is refused", results.length === 0 && says.some((t) => /Bets here are/.test(t)), says.join(" | "));
 says = []; send({ t: "bet", g: "cointable", amt: 20001, pick: "heads" }); await wait(1100); check("over 20,000 is refused", results.length === 0 && says.some((t) => /Bets here are/.test(t)), says.join(" | "));
 const all = []; let bad = [];
-for (const [g, amt, pick, n] of [["cointable", 1000, "heads", 14], ["dicetable", 500, 50, 6], ["wheel", 500, "red", 6], ["plinko", 1000, null, 8], ["scratch", 200, null, 8], ["slots", 20000, null, 6]]) for (let i = 0; i < n; i++) {
+for (const [g, amt, pick, n] of [["cointable", 1000, "heads", Math.min(14, G.TIX_HOUR.perGame)], ["dicetable", 500, 50, 6], ["wheel", 500, "red", 6], ["plinko", 1000, null, 8], ["scratch", 200, null, 8], ["slots", 20000, null, 6]]) for (let i = 0; i < n; i++) {
   const p = await play(g, amt, pick); if (!p) { bad.push(`${g}: no answer`); continue; } const { r, moved } = p; all.push(r);
   const want = Math.round(amt * G.paidMult(g, r.mult, r, r.edge)) + (r.jackpot || 0);
   if (!(r.edge >= LO && r.edge <= HI)) bad.push(`${g}: draw ${r.edge}`); if (Math.abs(r.payout - want) > Math.max(1, amt * r.mult * 0.0006)) bad.push(`${g}: paid ${r.payout}, rule says ${want} (x${r.mult}, draw ${r.edge})`); if (moved !== r.payout - amt) bad.push(`${g}: bag moved ${moved}, payout - stake is ${r.payout - amt}`);

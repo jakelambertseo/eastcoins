@@ -1174,7 +1174,7 @@ export const GUIDES = [
       <table class="tbl" data-paged="25"><tr><th>Where</th><th>You lose</th><th>At most</th></tr>${rows.map(([k, d]) => `<tr><td>${areaL(G, H, k)}</td><td>${Math.round(d.share * 100)}%</td><td>${num(d.cap)}</td></tr>`).join("")}</table>
       ${free.length ? `<p><b>${free.map((k) => H.esc(G.SCENES[k].name)).join(" and ")} ${free.length > 1 ? "send" : "sends"} no bill at all.</b></p>` : ""}
       <p><b>The bank will not hold tickets, so spend them before a long trip out</b> and a death costs you almost nothing &mdash; the percentage is of what you are carrying. A ${itemL(G, H, "pot_witch")} (in the Long Night) or the Ferryman's Coin makes a death free.</p>
-      <p><b>The Wilderness is different.</b> Other players can attack you there. It sends no hospital bill, but ${Math.round(G.PVP.drop * 100)}% of the time a death there drops one piece of what you are wearing on the ground, and whoever killed you has first claim on it for a minute.</p>
+      <p><b>The Wilderness is different.</b> Other players can attack you there, and nothing waives the bill: a death there takes ${Math.round(G.DEATH.wild.share * 100)}% of the tickets you carry (up to ${G.fmtTix(G.DEATH.wild.cap)}), and if a player killed you, <b>they</b> get it. ${Math.round(G.PVP.drop * 100)}% of the time you also drop one piece of what you are wearing on the ground, and whoever killed you has first claim on it for a minute. In return, a kill there pays more: ${Math.round((G.SCENES.wild?.killMul || 1) * 100 - 100)}% more combat xp and tickets in the Wilderness, ${Math.round((G.SCENES.deep?.killMul || 1) * 100 - 100)}% more in the ${H.wl("areas/deep", "Deep Wild")}.</p>
       <p><b>Eat before you need to.</b> Cooked and smoked fish are most of the healing in the game, and the ${H.wl("guides/alchemy", "cauldron's")} salves heal at once: ${salves.map((r) => `${itemL(G, H, r.out[0])} ${G.ITEMS[r.out[0]].heal}`).join(", ")}. Out of a fight your health creeps back, a point every twenty seconds; in one, nothing comes back on its own, and the fight does not pause while you find something.</p>`;
     } },
   /* (2026-09-30) GENERATED: "three jobs a day, from a pool of seventy" had become six from the fifty-odd that are open. */
@@ -1512,6 +1512,14 @@ export const GUIDES = [
 ];
 
 export const UPDATES = [
+  {
+    date: "2026-09-30", title: "The Wilderness, rearmed",
+    items: [
+      "THE WILDERNESS AND THE DEEP WILD HAVE NEW MONSTERS. The entrance and the halls of the Wilderness still hold the level 20s; its three pockets now hold Pot Boys, Goblin Cutters, Vault Wardens and Crystal Ogres (73-78). The Deep Wild is the top of the game: Sabretooths and a Caveman on the Nexus door, a Yard Gator at the Black pool, Scrappers, Possums and Junkyard Dogs between (73-93). Weavers, Marrow Hounds and Grim Liches stay where they were.",
+      "A KILL THERE PAYS MORE: 25% more combat xp and tickets in the Wilderness, 50% more in the Deep Wild.",
+      "AND A DEATH THERE COSTS WHAT IT COSTS ANYWHERE: 10% of the tickets you carry, up to 10,000. If another player killed you, they take it. Nothing waives it out there, not the Witch's brew and not the Ferryman's Coin."
+    ]
+  },
   {
     date: "2026-09-30", title: "/find, the wiki rebuilt, and a balance pass",
     items: [

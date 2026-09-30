@@ -236,7 +236,7 @@ export function installEvents(World, { G }) {
     for (const [id, d] of rows) {
       const n = Math.max(Math.round(H.bounty * WA.floor), Math.round((H.bounty * d) / total)), p = this.pls.get(id);
       if (p) {
-        this.tixTo(p, n); p.C.takes = (p.C.takes | 0) + 1; this.touch(p);
+        this.tixTo(p, n, "events"); p.C.takes = (p.C.takes | 0) + 1; this.touch(p);
         this.say(p, `\u{1F4DC} ${H.name} is taken. Your share of the bounty: ${G.fmtTix(n)} (${Math.round((100 * d) / total)}% of the damage). Posters taken: ${p.C.takes}.`, "loot");
         if (p.C.takes >= WA.title) { p.C.store ||= { own: [], name: {} }; p.C.store.own ||= []; if (!p.C.store.own.includes("title_bountyhunter")) { p.C.store.own.push("title_bountyhunter"); this.say(p, `${WA.title} posters taken: you've earned the title « Bounty Hunter ». Wear it from the Store's Name tab.`, "loot"); } }
       }

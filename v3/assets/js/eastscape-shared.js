@@ -10025,3 +10025,13 @@ function G_isWalk(g, x, y) { return g[y] && ".,".includes(g[y][x]); }
    launch day (Thursday 1 October 2026, Chicago time) and every seven days is the next. The server keeps a snapshot a week (eastscape-worker/src/weekly.js);
    the issues themselves (the words and pictures) are WEEKLY in eastscape-wiki.js. */
 export const WEEKLY = { start: "2026-10-01" };
+/* ============================================================ THE WILDERNESS CHECK (2026-09-30). The owner: "i feel like users are camping there now without fighting,
+   the monsters might be too low level as well now that users have outleveled them", then "build ... the wild changes" (tools/wild-mock/). The data: 0.6% of
+   all kills were Wild-only monsters, seven player kills ever, every monster there dead in three swings to a combat 90, and a death there costing nothing.
+   Three changes, and the monsters themselves are in eastscape-closed.js (the Wild 18-78, the Deep 66-93):
+     - A DEATH IN THE WILD COSTS WHAT A DEATH ANYWHERE COSTS: 10% of the tickets you carry, capped at 10,000 (the Valley's), and a player who kills you
+       takes it (the death code in the worker). Nothing waives it out there.
+     - A KILL THERE PAYS MORE: `killMul` on the map (the Wild 1.25, the Deep 1.5) multiplies combat xp and a kill's tickets. The Deep's `xpMul` is still
+       gathering's alone. */
+DEATH.wild = { share: 0.1, cap: 10000 };
+DEATH.deep = { share: 0.1, cap: 10000 };

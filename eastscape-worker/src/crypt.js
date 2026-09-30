@@ -113,7 +113,7 @@ export function installCrypt(World, { G, R, rint }) {
     }
     if ([...this.scenes.keys()].filter((k) => k.startsWith("crypt:")).length >= C_.maxRuns) return bad("The crypt is full of other parties. Give it a minute.");
     const key = `crypt:${Date.now().toString(36)}${rint(10, 99)}`;
-    for (const p of mem) { G.takeInv(p.C.inv, "tickets", T.ante); p.C.crypt = { ...(p.C.crypt && p.C.crypt.day === dayOf() ? p.C.crypt : { day: dayOf(), n: 0 }), run: key, ante: T.ante }; this.touch(p); }   // everybody could pay: now everybody pays (and the character remembers which run, for cryptRejoin)
+    for (const p of mem) { G.takeInv(p.C.inv, "tickets", T.ante); this.trkTix(p, -T.ante, "dungeons"); p.C.crypt = { ...(p.C.crypt && p.C.crypt.day === dayOf() ? p.C.crypt : { day: dayOf(), n: 0 }), run: key, ante: T.ante }; this.touch(p); }   // everybody could pay: now everybody pays (and the character remembers which run, for cryptRejoin)
     const run = this.scene(key);
     run.tier = tier; run.run = { tier, members: [...ids], started: Date.now(), bossAt: 0, dmg: {}, died: {}, gates: [false, false, false], paid: false, paidTo: {}, cleared: null, added: false, party: pt ? pt.id : null };
     for (const mob of run.mobs) { mob.t = mob.t + T.sfx; const d = G.MOBS[mob.t]; mob.hp = d.boss ? C_.bossHp(d.hp, ids.length) : d.hp; mob.maxHp = mob.hp; mob.respawnAt = Infinity; }
@@ -192,7 +192,7 @@ export function installCrypt(World, { G, R, rint }) {
   P.cryptLootGive = function (pl, sent) {
     const C = pl.C, L = C.crypt?.loot; if (!L) return; delete C.crypt.loot; this.touch(pl);   // gone from the character BEFORE anything is handed over: it can be opened once
     const { items } = R.rollLoot(L), got = [];
-    for (const it of items) { if (it.k === "tickets") { this.tixTo(pl, it.n); got.push(it); continue; } if (!G.ITEMS[it.k]) continue; const where = this.keepRare(pl, it.k, it.n); if (where) got.push({ ...it, bank: where === "bank" || undefined }); }
+    for (const it of items) { if (it.k === "tickets") { this.tixTo(pl, it.n, "dungeons"); got.push(it); continue; } if (!G.ITEMS[it.k]) continue; const where = this.keepRare(pl, it.k, it.n); if (where) got.push({ ...it, bank: where === "bank" || undefined }); }
     const T = C_.tiers[L.tier], names = got.filter((x) => x.k !== "tickets").map((x) => `${x.n > 1 ? x.n + " x " : ""}${G.ITEMS[x.k].name}`);
     this.say(pl, `${sent ? "The chest you left in the Crypt was sent up after you" : "You open the hoard"}: ${G.fmtTix(got[0]?.k === "tickets" ? got[0].n : 0)}${names.length ? `, ${names.join(", ")}` : ""}.${got.some((x) => x.bank) ? " (No room in your bag for some of it: it's in your bank.)" : ""}`, "loot");
     pl.out.push({ type: "cryptloot", tier: L.tier, items: got, sent: !!sent });

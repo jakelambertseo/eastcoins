@@ -464,7 +464,7 @@ head("wilderness gathering");
 head("the 2X event");
 {
   const idx = fs.readFileSync("eastscape-worker/src/index.js", "utf8");
-  const paidLine = idx.split(String.fromCharCode(10)).find((l) => l.includes("tixTo(pl, n) {")) || "";
+  const paidLine = idx.split(String.fromCharCode(10)).find((l) => /tixTo\(pl, n(, src)?\) \{/.test(l)) || "";
   const dropLine = idx.split(String.fromCharCode(10)).find((l) => l.includes('k === "tickets"') && l.includes("qty = Math.round")) || "";
   const inPaid = paidLine.includes("doubleOn()"), inDropped = dropLine.includes("doubleOn()");
   if (!inPaid) bad("tixTo does not apply the 2X event", "everything PAID in tickets would miss it");

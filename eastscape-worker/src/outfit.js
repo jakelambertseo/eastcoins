@@ -18,7 +18,7 @@ export function installOutfit(World, { G }) {
       const k = String(m.k), row = G.outfitShelf(shop).find((r) => r.k === k); if (!row) return;
       if (G.tixIn(C) < row.price) return bad(`${G.ITEMS[k].name} is ${G.fmtTix(row.price)}. You have ${G.fmtTix(G.tixIn(C))}.`);
       if (G.roomFor(C.inv, k, C) < 1) return bad("Your bag's full.");
-      G.takeInv(C.inv, "tickets", row.price); G.addInv(C.inv, k, 1, C); this.touch(pl);
+      G.takeInv(C.inv, "tickets", row.price); this.trkTix(pl, -row.price, "outfit"); this.trkBought(pl, k, 1, row.price); G.addInv(C.inv, k, 1, C); this.touch(pl);
       this.say(pl, `${who} wraps up a ${G.ITEMS[k].name.toLowerCase()} for ${G.fmtTix(row.price)}.`, "good");
       return pl.out.push({ type: "outfit", bought: k });
     }

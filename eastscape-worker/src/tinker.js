@@ -56,7 +56,7 @@ export function installTinker(World, { G }) {
       const master = Math.random() < T.masterwork, n = g.n * (master ? 2 : 1), k = `tk_${id}`;
       if (G.roomFor(C.inv, k, C) < n) return bad("Your bag's too full to take it.");
       for (const [p, q] of Object.entries(g.parts || {})) C.parts[p] -= q;
-      G.takeInv(C.inv, "tickets", g.fee); for (const [nk, nn] of g.need || []) G.takeInv(C.inv, nk, nn); G.addInv(C.inv, k, n, C);
+      G.takeInv(C.inv, "tickets", g.fee); this.trkTix(pl, -g.fee, "tinker"); for (const [nk, nn] of g.need || []) G.takeInv(C.inv, nk, nn); G.addInv(C.inv, k, n, C);
       this.grant(pl, "tinkering", Math.max(1, Math.round(g.lvl * T.buildXpLvl)));   /* (rules 357) by the gadget's level, not its price */
       this.touch(pl);
       this.say(pl, master ? `MASTERWORK! Sal whistles: ${n} ${g.name.toLowerCase()}${n > 1 ? "s" : ""} for the price of ${g.n}.` : `Sal hands over ${n > 1 ? `${n} ${g.name.toLowerCase()}s` : `a ${g.name.toLowerCase()}`}.`, master ? "loot" : "good");
@@ -149,7 +149,7 @@ export function installTinker(World, { G }) {
     const n = Math.min(Math.floor(Number(m.n)) || 0, have, left);
     if (n <= 0) return bad(part === "tickets" ? "You've no tickets in your bag." : `You've no ${T.parts[part].name.toLowerCase()} in your pouch.`);
     const was = readyOf(id, st), pct0 = pctOf(need, st.got);
-    if (part === "tickets") G.takeInv(C.inv, "tickets", n); else C.parts[part] -= n;
+    if (part === "tickets") { G.takeInv(C.inv, "tickets", n); this.trkTix(pl, -n, "tinker"); } else C.parts[part] -= n;
     st.got[part] = (st.got[part] | 0) + n;
     const me = pl.login || pl.name, who = (st.by[me] ||= { name: pl.name, pv: 0, tix: 0 }); who.name = pl.name;
     if (part === "tickets") who.tix = (who.tix | 0) + n; else who.pv += n * T.parts[part].pv;

@@ -14,8 +14,13 @@ let site = null; try { site = await import("../functions/api/casino/_engine.js")
 if (site) {
   let bad = []; for (let no = 19000000; no < 19000400; no++) { const a = await pitCard(G, no), b = await site.pitCard(no); if (a.f[0] !== b.f[0].t || a.f[1] !== b.f[1].t || Math.abs(a.p[0] - b.p[0]) > 1e-12 || Math.abs(a.price[0] - b.price.a) > 1e-9 || Math.abs(a.price[1] - b.price.b) > 1e-9) bad.push(no); }
   check("400 rounds: the same two fighters at the same prices as the site's own pitCard", !bad.length, `first mismatch at round ${bad[0]}`);
-  bad = []; for (let i = 0; i < 400; i++) { const seed = `seed-${i}-${i * 7919}`; if ((await pitEdge(G, seed)) !== (await site.edgeFor(seed))) bad.push(seed); }
-  check("400 seeds: the same edge draw as the site's own edgeFor, always inside the band", !bad.length, bad[0]);
+  /* (2026-09-30) THE SAME PLACE IN EACH ONE'S OWN BAND. The game's ticket tables were moved to G.EDGE_BAND [0.93, 0.99] (a 4% house edge, on
+     purpose: see EDGE_BAND in the rules) while the site's ZCoin tables stay on [EDGE_MIN, EDGE_MAX]. So a seed can no longer give the same NUMBER
+     on both; what must still hold is that it lands at the same POINT in each band (the one sha256 position), so neither side can pick a seed. */
+  const [LO, HI] = G.EDGE_BAND, pos = (e, lo, hi) => (e - lo) / (hi - lo);
+  bad = []; for (let i = 0; i < 400; i++) { const seed = `seed-${i}-${i * 7919}`, g = await pitEdge(G, seed), w = await site.edgeFor(seed);
+    if (!(g >= LO && g <= HI) || Math.abs(pos(g, LO, HI) - pos(w, site.EDGE_MIN, site.EDGE_MAX)) > 0.0025) bad.push(`${seed}: game ${g}, site ${w}`); }
+  check(`400 seeds: the game's draw sits at the same point of its band (${LO}-${HI}) as the site's edgeFor does in its own (${site.EDGE_MIN}-${site.EDGE_MAX})`, !bad.length, bad[0]);
   check("the clock is the site's: 90 s rounds, 40 s of betting", PIT.cycle === site.GAMES.pit.cycleMs && PIT.bet === site.GAMES.pit.betMs);
 } else { check("the site's engine could be imported to compare against", false); }
 

@@ -33,7 +33,7 @@ export async function pitCard(G, no) {
   const sa = Math.sqrt(pool[a][1]), sb = Math.sqrt(pool[b][1]), p = Math.max(PIT.minP, Math.min(PIT.maxP, sa / (sa + sb)));
   return { no, f: [pool[a][0], pool[b][0]], p: [p, 1 - p], price: [1 / p, 1 / (1 - p)] };
 }
-/** the site's edgeFor(seed): this round's place in the 96-104% band */
+/** the site's edgeFor(seed), on the GAME's band: the same sha256 position, placed in G.EDGE_BAND (93-99% since the house edge; the site's ZCoin tables stay 96-104%) */
 export async function pitEdge(G, seed) { const h = await sha256(`${seed}:edge`), r = parseInt(h.slice(0, 8), 16) / 0x100000000; return Math.round((G.EDGE_BAND[0] + r * (G.EDGE_BAND[1] - G.EDGE_BAND[0])) * 10000) / 10000; }
 
 export function installPit(World, { G }) {
