@@ -4489,6 +4489,12 @@ export const FISH_BAND = { boardwalk: 60, bw_cabin: 60, bw_light: 72, bw_wreck: 
    here also lets in anyone fighting with a bow at this Archery level, whatever their Combat; everyone else still needs the band. Filled by
    the maps that want it (the Primeval Valley's three). */
 export const ARCH_BAND = {};
+/* (2026-09-30, the owner: "most users right now are around 40 arch, so i want it to feel fun but not too easy"). THE SURE SHOT: on a map listed
+   here an ARROW lands at least this often, whatever the monster's defence. Measured first: at Archery 40 a Valley monster's defence left
+   18% of shots landing (HIT_FLOOR), a caveman took 12-14 minutes, and +40% damage alone only made it 11-12; the floor makes it about 4, still
+   three times what a 60 takes, and a 60 or better already lands 95% so it changes nothing for them. Arrows only: spells and swords keep the
+   ordinary roll. */
+export const ARCH_FLOOR = {};
 export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) return null;
   const ab = kind === "fight" ? ARCH_BAND[String(scene || "").split(":")[0]] : null;
   if (ab != null && styleOf(c) === "archery" && lvlOf(c, "archery") >= ab) return null;
@@ -9211,40 +9217,40 @@ const vmob = (t, def, want, drops, rare = []) => {
   if (gap >= 2 && !def.boss) MOBS[t].drops.unshift(["tickets", [Math.max(1, Math.round(gap * 0.6)), Math.round(gap * 1.4)]]);
   EXAMINE[t] = [MOBS[t].ex];
 };
-vmob("caveman", { name: "Caveman", size: "m", lvl: 90, hp: 420, att: 90, def: 70, max: 24, speed: 2400, box: [24, 30], aggro: 3, range: 4, guard: { archery: 1.25, magic: 0.75 }, weak: "storm", resist: "fire",
-  ex: "Wrapped in hides, up on the ledges, throwing rocks from four tiles. A bow outranges him and his hides are thin: arrows hit him 25% harder, spells 25% softer." }, 520,
+vmob("caveman", { name: "Caveman", size: "m", lvl: 90, hp: 420, att: 90, def: 70, max: 24, speed: 2400, box: [24, 30], aggro: 3, range: 4, guard: { archery: 1.4, magic: 0.75 }, weak: "storm", resist: "fire",
+  ex: "Wrapped in hides, up on the ledges, throwing rocks from four tiles. A bow outranges him and his hides are thin: arrows hit him 40% harder, spells 25% softer." }, 520,
   [["fossil", [1, 3], 0.4], ["ccoelacanth", 1, 0.08], ["waystone_valley", 1, 0.006]], [["mammoth_ivory", 0.02]]);
-vmob("sabretooth", { name: "Sabretooth", size: "m", lvl: 93, hp: 450, att: 96, def: 73, max: 26, speed: 2000, box: [34, 20], aggro: 4, guard: { archery: 1.25, magic: 0.75 }, weak: "fire",
-  ex: "It comes straight at you along the road, which is exactly where an arrow goes: 25% more from archery, 25% less from spells. Every animal in the valley is afraid of fire, and so is this one." }, 560,
+vmob("sabretooth", { name: "Sabretooth", size: "m", lvl: 93, hp: 450, att: 96, def: 73, max: 26, speed: 2000, box: [34, 20], aggro: 4, guard: { archery: 1.4, magic: 0.75 }, weak: "fire",
+  ex: "It comes straight at you along the road, which is exactly where an arrow goes: 40% more from archery, 25% less from spells. Every animal in the valley is afraid of fire, and so is this one." }, 560,
   [["sabretooth_fang", 1, 0.12], ["hide", [2, 4]], ["waystone_valley", 1, 0.006]], [["sabretooth_fang", 0.02]]);
-vmob("pterodactyl", { name: "Pterodactyl", size: "m", lvl: 95, hp: 400, att: 94, def: 70, max: 24, speed: 2300, box: [34, 20], aggro: 3, range: 3, sky: true, guard: { melee: 0, archery: 1.5, magic: 0.75 }, weak: "storm",
-  ex: "It never lands. Out of a sword's reach entirely, and it attacks from three tiles; an arrow brings it down half again as fast as anything else." }, 600,
+vmob("pterodactyl", { name: "Pterodactyl", size: "m", lvl: 95, hp: 400, att: 94, def: 70, max: 24, speed: 2300, box: [34, 20], aggro: 3, range: 3, sky: true, guard: { melee: 0, archery: 1.7, magic: 0.75 }, weak: "storm",
+  ex: "It never lands. Out of a sword's reach entirely, and it attacks from three tiles; an arrow brings it down 70% faster than anything else." }, 600,
   [["feather", [6, 12]], ["fossil", 1, 0.25], ["waystone_valley", 1, 0.006]], [["rex_tooth", 0.01]]);
-vmob("mammoth", { name: "Woolly Mammoth", size: "l", lvl: 98, hp: 580, att: 96, def: 81, max: 28, speed: 2800, box: [44, 34], aggro: 2, range: 4, guard: { melee: 0, magic: 0, archery: 1.25 }, resist: ["frost", "fire"],
-  ex: "Up on the ledges where the grass is, out of reach of anything but an arrow: swords and spells do nothing to it. It kicks stones down from four tiles. That much fur shrugs off frost and fire alike." }, 640,
+vmob("mammoth", { name: "Woolly Mammoth", size: "l", lvl: 98, hp: 580, att: 96, def: 81, max: 28, speed: 2800, box: [44, 34], aggro: 2, range: 4, guard: { melee: 0, magic: 0, archery: 1.4 }, resist: ["frost", "fire"],
+  ex: "Up on the ledges where the grass is, out of reach of anything but an arrow (40% more from archery): swords and spells do nothing to it. It kicks stones down from four tiles. That much fur shrugs off frost and fire alike." }, 640,
   [["mammoth_ivory", 1, 0.1], ["hide", [3, 6]], ["waystone_valley", 1, 0.006]], [["mammoth_ivory", 0.02]]);
-vmob("raptor", { name: "Raptor", size: "m", lvl: 100, hp: 480, att: 102, def: 78, max: 28, speed: 1800, box: [28, 22], aggro: 4, guard: { archery: 1.25, magic: 0.5 },
-  ex: "Too quick to aim a spell at (half from magic), but it runs in straight lines: arrows hit it 25% harder. They hunt in threes." }, 660,
+vmob("raptor", { name: "Raptor", size: "m", lvl: 100, hp: 480, att: 102, def: 78, max: 28, speed: 1800, box: [28, 22], aggro: 4, guard: { archery: 1.4, magic: 0.5 },
+  ex: "Too quick to aim a spell at (half from magic), but it runs in straight lines: arrows hit it 40% harder. They hunt in threes." }, 660,
   [["fossil", 1, 0.3], ["waystone_valley", 1, 0.006]], [["rex_tooth", 0.01]]);
-vmob("goldenraptor", { name: "Golden Raptor", size: "m", lvl: 100, hp: 480, att: 102, def: 78, max: 28, speed: 1800, box: [28, 22], aggro: 4, guard: { archery: 1.25, magic: 0.5 }, art: "raptor", gild: true,
+vmob("goldenraptor", { name: "Golden Raptor", size: "m", lvl: 100, hp: 480, att: 102, def: 78, max: 28, speed: 1800, box: [28, 22], aggro: 4, guard: { archery: 1.4, magic: 0.5 }, art: "raptor", gild: true,
   ex: "A raptor turned to gold, one in five hundred. Everything it drops is worth ten times the plain one." }, 6600,
   [["fossil", [3, 6]], ["rex_tooth", 1, 0.2], ["waystone_valley", 1, 0.2]], [["rex_necklace", 0.01]]);
-vmob("tarhorror", { name: "Tar Pit Horror", size: "m", lvl: 105, hp: 580, att: 100, def: 84, max: 32, speed: 2700, box: [30, 26], aggro: 2, guard: { melee: 0, archery: 1.25, magic: 0.5 }, weak: "fire",
-  ex: "Tar with bones in it. A sword sinks in and comes back out with nothing; an arrow finds the skull inside: 25% more from archery, half from spells." }, 700,
+vmob("tarhorror", { name: "Tar Pit Horror", size: "m", lvl: 105, hp: 580, att: 100, def: 84, max: 32, speed: 2700, box: [30, 26], aggro: 2, guard: { melee: 0, archery: 1.4, magic: 0.5 }, weak: "fire",
+  ex: "Tar with bones in it. A sword sinks in and comes back out with nothing; an arrow finds the skull inside: 40% more from archery, half from spells." }, 700,
   [["fossil", [2, 4]], ["waystone_valley", 1, 0.008]], [["rex_tooth", 0.015]]);
-vmob("rex", { name: "Old Rex", size: "xl", lvl: 110, hp: 10500, att: 115, def: 94, max: 46, speed: 2800, box: [100, 70], aggro: 4, boss: true, open: true, rise: true, announce: "\u{1F996}", range: 6, respawn: 40 * 60000,   /* (2026-09-30) a boss's own timer: without it he came back on the ordinary clock, in seconds. OPEN (the owner: "double check that multiple archers can tag/damage them at once"): nobody claims him, everyone who hurts him shares the kill and gets the report */ guard: { melee: 0, magic: 0, archery: 1.25 }, weak: "frost", resist: "fire",
-  ex: "The valley's end, and its oldest thing, on his throne up on the high plateau. Only an arrow reaches him (25% more from archery; swords and spells do nothing), and he roars stones down six tiles. Anyone who hurts him shares the kill." }, 2000,
+vmob("rex", { name: "Old Rex", size: "xl", lvl: 110, hp: 10500, att: 115, def: 94, max: 46, speed: 2800, box: [100, 70], aggro: 4, boss: true, open: true, rise: true, announce: "\u{1F996}", range: 6, respawn: 40 * 60000,   /* (2026-09-30) a boss's own timer: without it he came back on the ordinary clock, in seconds. OPEN (the owner: "double check that multiple archers can tag/damage them at once"): nobody claims him, everyone who hurts him shares the kill and gets the report */ guard: { melee: 0, magic: 0, archery: 1.4 }, weak: "frost", resist: "fire",
+  ex: "The valley's end, and its oldest thing, on his throne up on the high plateau. Only an arrow reaches him (40% more from archery; swords and spells do nothing), and he roars stones down six tiles. Anyone who hurts him shares the kill." }, 2000,
   [["tickets", [12000, 20000]],   /* (2026-09-30, the owner: "old rex needs to drop a ton of tickets for the time investment"): about twenty minutes alone, so about 1,200 a minute with everything else he drops, against 500-850 farming the valley */ ["rex_tooth", [1, 2]], ["fossil", [4, 8]], ["waystone_valley", 1, 0.25], ["rex_necklace", 1, 0.02]], [["egg_raptor", 0.05]]);
 vmob("matriarch", { name: "The Mammoth Matriarch", size: "xl", lvl: 108, hp: 15500, att: 118, def: 91, max: 40, speed: 3000, box: [90, 70], aggro: 3, boss: true, open: true, rise: true, announce: "\u{1F9A3}", range: 6, respawn: 45 * 60000,
-  guard: { melee: 0, magic: 0, archery: 1.25 }, resist: ["frost", "fire"],
-  ex: "The oldest mammoth in the valley, up on the Lowlands' great plateau with her herd. Only an arrow reaches her (25% more from archery), she stamps stones down six tiles, and she shrugs off frost and fire. She comes back every three quarters of an hour, and the whole server hears when she does. Anyone who hurts her shares the kill." }, 3000,
+  guard: { melee: 0, magic: 0, archery: 1.4 }, resist: ["frost", "fire"],
+  ex: "The oldest mammoth in the valley, up on the Lowlands' great plateau with her herd. Only an arrow reaches her (40% more from archery), she stamps stones down six tiles, and she shrugs off frost and fire. She comes back every three quarters of an hour, and the whole server hears when she does. Anyone who hurts her shares the kill." }, 3000,
   [["tickets", [8000, 14000]], ["mammoth_ivory", [2, 4]],   /* (2026-09-30) half an hour alone; shared, every fighter gets this */ ["hide", [8, 14]], ["waystone_valley", 1, 0.3]], [["egg_ptero", 0.05], ["rex_necklace", 0.03]]);
 /* (2026-09-30, the owner: "the band here should be higher", 90-110) the Ridge and the Lair's stronger kinds, drawn with the same pictures */
-vmob("cavehunter", { name: "Caveman Hunter", size: "m", lvl: 100, hp: 480, att: 100, def: 78, max: 27, speed: 2300, box: [24, 30], aggro: 3, range: 4, art: "caveman", guard: { archery: 1.25, magic: 0.75 }, weak: "storm", resist: "fire",
-  ex: "A caveman who has lived long enough to stand on the highest ledge and throw straight. Rocks from four tiles; arrows 25% harder, spells 25% softer." }, 680,
+vmob("cavehunter", { name: "Caveman Hunter", size: "m", lvl: 100, hp: 480, att: 100, def: 78, max: 27, speed: 2300, box: [24, 30], aggro: 3, range: 4, art: "caveman", guard: { archery: 1.4, magic: 0.75 }, weak: "storm", resist: "fire",
+  ex: "A caveman who has lived long enough to stand on the highest ledge and throw straight. Rocks from four tiles; arrows 40% harder, spells 25% softer." }, 680,
   [["fossil", [1, 3], 0.5], ["ccoelacanth", 1, 0.1], ["waystone_valley", 1, 0.007]], [["mammoth_ivory", 0.03]]);
-vmob("pteroelder", { name: "Elder Pterodactyl", size: "m", lvl: 103, hp: 470, att: 100, def: 80, max: 28, speed: 2200, box: [34, 20], aggro: 3, range: 3, sky: true, art: "pterodactyl", guard: { melee: 0, archery: 1.5, magic: 0.75 }, weak: "storm",
-  ex: "Older, bigger and meaner, and it still never lands. No sword reaches it; an arrow brings it down half again as fast as anything." }, 720,
+vmob("pteroelder", { name: "Elder Pterodactyl", size: "m", lvl: 103, hp: 470, att: 100, def: 80, max: 28, speed: 2200, box: [34, 20], aggro: 3, range: 3, sky: true, art: "pterodactyl", guard: { melee: 0, archery: 1.7, magic: 0.75 }, weak: "storm",
+  ex: "Older, bigger and meaner, and it still never lands. No sword reaches it; an arrow brings it down 70% faster than anything." }, 720,
   [["feather", [10, 18]], ["fossil", 1, 0.3], ["waystone_valley", 1, 0.007]], [["rex_tooth", 0.012]]);
 BOSSES.add("rex"); BOSSES.add("matriarch");
 /* (2026-09-30, the owner: "this area needs to also drop unique archery gear, archery rings/necklaces, fletching mats, buffs, etc since this is an
@@ -9295,6 +9301,7 @@ export const MOB_GOLD = { raptor: { t: "goldenraptor", odds: 500 } };
    road door to door, and most monsters up on ledges only a bow or a wand reaches. */
 export const VALLEY_MAPS = ["valley", "valley_ridge", "valley_lair"];
 Object.assign(BANDS, { valley: [90, 98], valley_ridge: [95, 103], valley_lair: [100, 110] });   /* (2026-09-30, the owner: 90-110) */
-for (const k of VALLEY_MAPS) ARCH_BAND[k] = 40;   /* (2026-09-30, the owner) a bow and Archery 40 opens all three, whatever your Combat */
+for (const k of VALLEY_MAPS) ARCH_BAND[k] = 40;
+for (const k of VALLEY_MAPS) ARCH_FLOOR[k] = 0.5;   /* (2026-09-30, the owner: "Both: 50% floor + 40%") the sure shot, and the archery multipliers above went 1.25 -> 1.4, 1.5 -> 1.7 */   /* (2026-09-30, the owner) a bow and Archery 40 opens all three, whatever your Combat */
 for (const k of VALLEY_MAPS) DEATH[k] = { share: 0.1, cap: 10000 };
 if (!HOLD.valley) { for (const k of VALLEY_MAPS) { OPEN.add(k); PET_SCENES.add(k); } SCENES.trailer.exits.n = "valley"; }

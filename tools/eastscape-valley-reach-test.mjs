@@ -35,5 +35,15 @@ for (const key of G.VALLEY_MAPS) {
   }
 }
 console.table(rows);
+/* (2026-09-30) THE SURE SHOT, measured through the real swing: an Archery-40 archer lands about half their arrows in the Valley (18% without it) */
+{ const S = W.scene("valley"), m = S.mobs.find((q) => q.t === "caveman"), open = [];
+  for (let y = 0; y < S.g.length; y++) for (let x = 0; x < S.g[0].length; x++) if (G.walkableIn(S.g, x, y) && G.cheb({ x, y }, m) <= 4) open.push({ x, y });
+  const pl = archer(S, open[0].x, open[0].y, "ashlogs_shortbow", "ashlogs_quiver"); pl.C.xp.archery = G.XP_AT[40]; pl.C.quiver = { k: "bronze_arrow", n: 5000 };   /* an arrow Archery 40 may fire */
+  let hits = 0; const N = 600;
+  for (let i = 0; i < N; i++) { m.hp = 99999; pl.act = { kind: "mob", id: m.id, x: m.x, y: m.y, started: 1 }; pl.lastInput = (t += 3000); pl.lastSwing = 0; pl.path = []; W.doAction(S, pl, t); if (m.hp < 99999) hits++; }
+  const rate = hits / N, bare = G.hitChance(G.attackRollOf(pl.C), G.MOBS.caveman.def);
+  console.log(`  the sure shot: Archery 40 lands ${Math.round(rate * 100)}% of ${N} arrows on a caveman (the ordinary roll would be ${Math.round(bare * 100)}%)`);
+  if (rate < 0.42 || rate > 0.6) { bad++; console.log("  !! the sure shot is not landing about half"); }
+  W.pls.delete(pl.id); }
 console.log(bad ? `\n${bad} problem(s)` : `\nEvery ledge in the Valley (${rows.length}) is out of a sword's reach and inside a bow's, and a real shot lands on each`);
 process.exitCode = bad ? 1 : 0;

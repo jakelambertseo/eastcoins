@@ -2824,7 +2824,7 @@ export class World {
         /* (2026-09-26) THE ELEMENT. The loaded page's element meets the monster's weakness or resistance, Void pierces part of its
            defence, and after the hit Fire may burn, Frost slows, Storm arcs to a neighbour and Sun heals you (below). */
         const el = G.launcherOf(C) ? G.ammoElOf(C) : null;
-        const def = G.MOBS[m.t], hit = Math.random() < G.hitChance(G.attackRollOf(C), def.def * (el === "void" ? 1 - G.MAGIC.pierce : 1)); let dmg = hit ? rint(1, G.maxHitOf(C) + G.ammoStrOf(C)) : 0;
+        const def = G.MOBS[m.t], hit = Math.random() < Math.max(G.hitChance(G.attackRollOf(C), def.def * (el === "void" ? 1 - G.MAGIC.pierce : 1)), G.styleOf(C) === "archery" ? G.ARCH_FLOOR[String(S.key).split(":")[0]] || 0 : 0);   /* (2026-09-30) the sure shot (ARCH_FLOOR) */ let dmg = hit ? rint(1, G.maxHitOf(C) + G.ammoStrOf(C)) : 0;
         const emul = el ? G.elementMul(m.t, el) : 1;   /* (2026-09-29) kept for the splat: the page lights the weakness or resistance it met */
         if (dmg && el) dmg = Math.max(1, Math.round(dmg * emul));
         /* (2026-09-27) THE GUARD (the Depths of the Mountain): some monsters take a tenth, or nothing, from a style, and one only
