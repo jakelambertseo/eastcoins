@@ -76,6 +76,9 @@ export function installEvents(World, { G }) {
   };
   P.evTick = function (now) {
     if (G.HOLD.events) return;   /* (2026-09-30, the owner: "lets hold on the world events until i test them") nothing plans or runs while held */
+    /* (2026-09-30, the owner: "just let me run them via admin for now, take them off the schedule until tomorrow") before G.EVDAY.firstDay (Chicago)
+       there is no daily plan: an event only starts from the admin panel, and one that is running still runs (the ticks below). */
+    if (G.EVDAY.firstDay && G.chicagoDay(now) < G.EVDAY.firstDay) { this.starTick(now); this.wantedTick(now); this.thiefTick(now); if (this.tickN % 600 === 0) { save(this, "sstar", this.sstar); save(this, "wanted", this.wanted); } this.evBroadcast(now); return; }
     if (!this.ev || this.ev.day !== G.chicagoDay(now)) this.evPlanDay(now);
     const E = this.ev;
     if (!E.done.star && now >= E.plan.star - SS.warnMs) { E.done.star = true; save(this, "evplan", E); if (!this.sstar) this.starWarn(now, E.plan.star); }

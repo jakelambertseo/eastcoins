@@ -9847,7 +9847,7 @@ export const cageCatch = (rounds, rnd = Math.random) => { const T = ISLE_FARM.ca
    All three are MONSTERS, because monsters already travel in the snapshot, already have a plate, a bar and a click: the star is one that never
    moves or swings and that a pickaxe mines (events.js starSwing), the Wanted target is an ordinary map monster opened to everyone (`m.open`) with
    a name and six times the health, and the thief is one that runs from people instead of at them and counts hits rather than damage. */
-export const EVDAY = { from: 12, to: 24, margin: 30 };   /* hours, Chicago time; minutes in from each window's edge */
+export const EVDAY = { from: 12, to: 24, margin: 30, firstDay: "2026-10-01" };   /* firstDay: the first Chicago day with a schedule; before it, events only start from the admin panel */   /* hours, Chicago time; minutes in from each window's edge */
 
 /* SHOOTING STARS: a warning with a hint, then it lands; tier N needs Mining 10×N; every swing takes one of the tier's health and pays fragments */
 export const SSTAR = { warnMs: 10 * 60000, lasts: 60 * 60000, tierLvl: 10, hp: { base: 30, per: 20 }, frags: [0, 1, 1, 2, 2, 3, 3, 4, 5, 6], cap: 400, starling: 1 / 6000,

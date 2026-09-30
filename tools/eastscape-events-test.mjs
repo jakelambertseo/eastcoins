@@ -33,6 +33,13 @@ const HR = 3600000, MIN = 60000;
   is(ts.every((t) => mins(t) >= 12 * 60 && mins(t) < 24 * 60), true, "all three between noon and midnight, Chicago time");
   is(ts[1] - ts[0] >= HR && ts[2] - ts[1] >= HR, true, `never within an hour of each other (gaps ${Math.round((ts[1] - ts[0]) / MIN)} and ${Math.round((ts[2] - ts[1]) / MIN)} minutes)`); }
 
+/* 1b. (2026-09-30) off the schedule until EVDAY.firstDay: no plan before it, a plan on it */
+{ const day = (d) => Date.parse(`${d}T20:00:00Z`), real = Date.now;
+  Date.now = () => day("2026-09-30"); W.ev = null; W.evTick(day("2026-09-30")); const before = W.ev;
+  Date.now = () => day(G.EVDAY.firstDay); W.evTick(day(G.EVDAY.firstDay)); const on = W.ev?.day;
+  Date.now = real; W.ev = null; W.sstar = null; W.wanted = null; W.thief = null;
+  is([before, on], [null, G.EVDAY.firstDay], `no schedule before ${G.EVDAY.firstDay} (the admin panel only), a plan from that day`); }
+
 /* 2. SHOOTING STARS */
 const mA = player("Miner", "gloam", 20, 8, { mining: 64 }), mB = player("Newbie", "gloam", 22, 8, { mining: 12 });
 const Y = W.scene("workyard"), GL = W.scene("gloam"); let t = Date.now();
