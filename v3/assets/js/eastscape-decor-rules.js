@@ -77,6 +77,9 @@ const DECOR = {
   pooltable: { name: "Pool table", w: 3, h: 2, in: "home", price: 18000, max: 1 },
   toilet:    { name: "Gold toilet", w: 1, h: 1, in: "home", price: 50000, max: 1 }
 };
+/* (2026-09-30) THE STORE'S DECOR (G.STORE_DECOR, the rules file): bought in the Store, placed and capped exactly like Yahsmeena's. `store`
+   keeps them off her shelf; she still takes one back at DECOR_SELLBACK. */
+for (const [k, P] of Object.entries(G.STORE_DECOR || {})) if (!DECOR[k]) DECOR[k] = { ...P, store: true };
 const decorArt = (k) => DECOR[k]?.art || `d_${k}`;
 /** Which kind of scene this is for decorating: "isle" (an island or its far shore), "home" (the cottage), or null. "at" is what a placed piece records. */
 const decorPlace = (key) => { const b = String(key).split(":")[0]; return b === "home" ? "home" : /^isle\d?$/.test(b) || b === "shore" ? "isle" : null; };

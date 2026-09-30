@@ -628,3 +628,64 @@ The owner's fifteen items, grouped by what they share. Sizes are rough build day
 
 **Running order:** A (today) -> B -> C in parallel with D's art -> D -> E and F -> G whenever. About 16-20 days in total, so
 **this list does not fit a 1 October launch**: either launch on A+B+C and ship D-G as the first updates, or move the date.
+
+## 14. The Primeval Valley: the Updates entry to add ON SHIP DAY (not before: the wiki ships with every push)
+
+    {
+      date: "<ship day>", title: "The Primeval Valley",
+      items: [
+        "THREE NEW MAPS NORTH OF THE TRAILER PARK: the Primeval Valley's Lowlands, the Ridge and Old Rex's Lair, monsters from level 90 to 110.",
+        "A BOW'S COUNTRY: most of what lives here is up on the ledges, out of a sword's reach. Cavemen throw rocks from four tiles and pterodactyls dive from three, so an archer outranges them, and every monster in the valley takes MORE from arrows. A hit that finds a weakness now says WEAK.",
+        "TWO WORLD BOSSES, UP ON THE PLATEAUS, ARROWS ONLY: Old Rex on his throne in the Lair and the Mammoth Matriarch on the Lowlands' great plateau. Swords and spells do nothing to them. Anyone who lands arrows shares the kill (12,000 to 20,000 tickets EACH from Rex, 8,000 to 14,000 from the Matriarch), everybody gets the after report, and CASINO tells the server when they fall and when they are back. Their health never resets, so you can go back for more arrows.",
+        "ARCHERY 40 OPENS IT: anyone with a bow and Archery 40 can fight anywhere in the Valley, whatever their Combat.",
+        "ARCHERY LOOT: the Skyripper (a pterodactyl-wing longbow), the Raptor-claw ring and the Hunter's Fang (arrows hit harder), the Hunter's draught (15 minutes of harder arrows), pterodactyl sinew, silkstring and arrowheads.",
+        "THE CYCAD TIER: cycad shortbows, longbows, quivers and wands, the best a fletcher or a wizard can make, strung with pterodactyl sinew and weighted with fossils.",
+        "THE GOLDEN RAPTOR: one raptor in five hundred comes back gilded, and it is worth ten of the ordinary kind.",
+        "NEW GATHERING: fossil rocks (Mining 92), cycads (Woodcutting 92) and coelacanth in the lake (Fishing 92).",
+        "NEW PETS: the Raptor Hatchling and the Pterodactyl Chick hatch from eggs dropped in the Valley, and each has a Legendary: the Little Tyrant and the Sky King. Nestor takes both eggs.",
+        "THE REX-TOOTH NECKLACE: the Valley's chase drop.",
+      ],
+    },
+
+   Ship-day extra for the same Updates entry (built 2026-09-30, rides with the Valley):
+        "ARCHER AND MAGE ARMOUR CAN BE REFORGED: Wren's and Morwenna's armour now reforges at an anvil like plate, with the same bars and the same Smithing as the plate piece at its level.",
+
+## 15. World events after the Yard raid (DRAFT, held until the Frozen Reach and the Frostspire are finished; the owner: "hold on that idea and send it to me after")
+The raid's formula: the whole server in one place, a CASINO countdown, every level contributes, a visible boss mechanic, spoils shared by
+contribution, a nuisance stake if they lose. The owner wants "a few mob / boss based raids, but we need some skilling ones/competitions as well".
+
+### A. Mob / boss raids
+1. THE CASINO HEIST (a raid in reverse): the House's vault opens for 15 min; vault doors with health, guard waves, the Pit Boss "calls security" at 50%. Lose: the House keeps it and the jackpot grows. Medium.
+2. RIFT INCURSION: void rifts open on 3-4 maps at once (leads into map 4); players split up to close them (mini-boss + spawns each); all closed in time = 2X for everyone online for 30 min. Lose: rift monsters linger an hour. Medium.
+3. THE STAMPEDE: the Matriarch's herd charges across the Lowlands in telegraphed lanes (the Foundry's slam tiles); dodge, and archers shoot calves out for loot. Small.
+4. ESCORT: BOM'S CART: the prize cart crosses from the Yard gate to the casino under raider attack; the cart has health; arrive = jackpot bonus + shared pay; lose = Bom's prices +10% for an hour. Medium.
+5. THE LEVIATHAN: a multi-part sea boss at the Boardwalk; tentacles pull players off the pier; fishers harpoon it with a Fishing-based hit. Lose: a pier sinks for an hour. Large.
+6. WANTED!: every hour CASINO names a monster somewhere as Wanted; everyone who hurts it shares the bounty. Small, runs itself. (my first pick)
+   Reusable boss mechanics: Deep Freeze (stun), the last wave, an enrage timer, telegraphed ground attacks, a one-style-only phase, something to protect.
+
+### B. Skilling events and competitions
+1. SKILLING WORLD BOSSES (the raid, for skillers; my first pick): a LIVING VEIN (a giant ore golem you damage only with a pickaxe, Mining level sets the hit), an ELDER TREANT (axes, Woodcutting), THE OLD ONE (a monster fish pulled in by everyone's Fishing, a tug-of-war bar). Huge health scaled to the crowd, a CASINO countdown, spoils by contribution (rare ores / logs / fish, pets), and a mechanic each (the golem shakes loose rocks that stun, the treant drops branches in telegraphed lanes, the fish snaps lines).
+2. THE GREAT CATCH (a fishing tournament): 20 min, every catch scores by rarity and weight, CASINO reads the top five every 5 min, prizes for the top three and something for everyone who entered; a trophy fish surfaces at one spot for the last two minutes.
+3. THE GOLD RUSH: CASINO announces a strike; gold veins appear on random maps for 15 min; a server-wide target (e.g. 2,000 gold ore) unlocks a 2X skilling hour for everyone; top miners paid.
+4. BRONNY'S RUSH ORDER: a server-wide order for N bars / planks / arrows in 20 min, a live tally in chat; met = shared pay + World Project progress; missed = Bronny's normal orders pay less for an hour.
+5. THE COOK-OFF: Dex names a dish; most cooked (without burning) in 10 min wins; burns count against you; titles and tickets.
+6. HARVEST FESTIVAL: crops grow 5x faster for 30 min on every island and a giant-vegetable weigh-in at the end.
+7. TEAM RELAYS: the online players split into two teams at random for a 15-min mixed-skill race (log -> plank -> fletch, ore -> bar -> smith); CASINO commentary; the winning team splits a pot.
+
+## 16. The Store, round two: the Updates entry to add ON SHIP DAY (built on dev 2026-09-30)
+
+    {
+      date: "<ship day>", title: "The Store, rebuilt",
+      items: [
+        "THE STORE IS REBUILT, with six tabs: Boosts, Effects, Name, Decor, World and Upgrades. New things wear a NEW ribbon and come first; a few are ON SALE.",
+        "EFFECTS: walking trails (embers, frost, gold dust, sakura petals, hearts, bubbles, shadow steps, coins, and the Rainbow Road), glows (gilded, frost, ember, void, a halo, toxic haze), weapon hits (thunderstrike, flame burst, frost shatter, shadow slash, jackpot coins, starburst, petals) and OSRS-style hit splats (blood, gold coin, ice, venom, void, heart, skull). Everyone sees them. Press Try in the Store to walk about in one before you buy it.",
+        "TITLES are the game's own now: fourteen to pick from, or write your own (2-20 letters, change it whenever you like). Titles from eastcoin.vip no longer show in the game.",
+        "PET NAME TAGS: your pet's name over its head, in leather, gold or glowing.",
+        "2X POTIONS SAY WHAT THEY DO: the old 2X Potion is now 2X Tickets & Crafting XP, and there is a new 2X SKILLING XP potion (every non-combat skill, for everyone, 30 minutes). They don't stack into 4X.",
+        "THE LOUPES: the Jeweller's Loupe (a Perfect gem 1 in 56 instead of 1 in 213) and the Master Jeweller's Loupe (1 in 20), 10 rolls at the Gem Sorter each.",
+        "DECOR: 29 pieces you can only get here, for your island and your cottage: a Jackpot Monument, a Void Portal, a Backyard Volcano, a Dragon Skull, a Pirate Wreck, a Grand Piano, a Fireplace, a Canopy Bed, a Frog Chair, a Cherry Blossom Tree, an Ornate Pool and more. Some of them glow, smoke or play music.",
+        "WORLD: Fireworks, a Confetti Cannon, Sky Lanterns and a Snow Globe, set off wherever you are for everyone there, and the WAR HORN, which calls the Ice Man down on the Yard in your name (5 online, 3 hours between raids).",
+        "UPGRADES: extra bank pages (40 slots each, up to five) and extra quick slots (up to 8, keys 5 to 8).",
+        "FIX: anything that said it made you faster (food, drinks, the Ditched set, Yeti-fur boots, the achievement) only ever sped up your swings. It makes you walk faster too now.",
+      ],
+    },

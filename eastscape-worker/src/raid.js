@@ -116,13 +116,22 @@ export function installRaid(World, { G }) {
     if (arg === "unsack") { this.raidSack = null; this.ctx.storage.delete("raidSack").catch(() => {}); return note("The Yard's stalls are open again."); }
     if (arg === "now") { if (this.raid?.phase !== "warn") return note("Start a raid first; this skips its warning."); this.raid.at = now; this.raidTick(now); return note("The warning is skipped: the Ice Man is in the Yard."); }   /* for trying it on dev */
     if (this.raid) return note(`A raid is already ${this.raid.phase === "warn" ? "on its way" : "on"}.`);
-    this.raid = { phase: "warn", at: now + R.warnMs, by: {}, said: {} };
-    const mins = Math.round(R.warnMs / 60000);
-    this.houseSay(`\u2744\uFE0F RAID! The air over the Yard has turned cold, and the pumpkins are frosting over. Something is coming down from the north: the Ice Man and his war party, ${mins} minutes out. Take up arms on the west bank. Everyone who bleeds for the Yard shares the spoils. If it falls, its stalls are ransacked.`);
-    for (const p of this.pls.values()) { p.out.push({ type: "casinonote", text: "\u2744\uFE0F RAID! Frost is creeping over the Yard. Something is coming." }); p.out.push({ type: "raid", on: true }); }
+    this.raidCall(null, now);
     return note(`Raid started: the Ice Man arrives in ${Math.round(R.warnMs / 60000)} minutes.`);
   };
-  for (const k of ["raidTick", "raidKill", "raidWon", "raidLost", "raidState"]) {   /* nothing here may break the world's tick or a kill */
+  /* (2026-09-30) THE CALL, from an admin or from the Store's War Horn (`horn` names whoever blew it). Either one starts the three hours
+     hornWhy() waits out before the horn can be blown again, kept in storage so a restart does not reset it. */
+  P.raidCall = function (horn, now = Date.now()) {
+    if (this.raid) return false;
+    this.raid = { phase: "warn", at: now + R.warnMs, by: {}, said: {}, horn: horn || null };
+    this.raidLast = now; this.ctx.storage.put("raidLast", now).catch(() => {});
+    const mins = Math.round(R.warnMs / 60000);
+    if (horn) this.houseSay(`\u{1F4EF} ${horn} HAS BLOWN THE WAR HORN. The note rolls north over the hills, and something up there answers it.`);
+    this.houseSay(`\u2744\uFE0F RAID! The air over the Yard has turned cold, and the pumpkins are frosting over. Something is coming down from the north: the Ice Man and his war party, ${mins} minutes out. Take up arms on the west bank. Everyone who bleeds for the Yard shares the spoils. If it falls, its stalls are ransacked.`);
+    for (const p of this.pls.values()) { p.out.push({ type: "casinonote", text: "\u2744\uFE0F RAID! Frost is creeping over the Yard. Something is coming." }); p.out.push({ type: "raid", on: true }); }
+    return true;
+  };
+  for (const k of ["raidTick", "raidKill", "raidWon", "raidLost", "raidState", "raidCall"]) {   /* nothing here may break the world's tick or a kill */
     const f = P[k]; P[k] = function (...a) { try { return f.apply(this, a); } catch (e) { console.error(k, e); return null; } };
   }
 }

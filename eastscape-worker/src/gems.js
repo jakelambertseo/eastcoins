@@ -53,15 +53,16 @@ export function installGems(World, { G }) {
     if (op === "sort") {
       const i = m.i | 0, st = C.inv[i]; if (!st || !G.isGem(st.k)) return bad("Pick a gem from your bag.");
       const cost = G.sortCost(); if (G.tixIn(C) < cost) return bad(`A roll costs ${G.fmtTix(cost)}. You have ${G.fmtTix(G.tixIn(C))}.`);
-      const was = G.rollOf(st), roll = G.gemRoll();
-      G.takeInv(C.inv, "tickets", cost);
+      const lk = G.loupeOf(C, "loupe2") ? "loupe2" : G.loupeOf(C, "loupe") ? "loupe" : null, was = G.rollOf(st), roll = lk ? G.gemRollLoupe(lk) : G.gemRoll();   /* (2026-09-30) the Store's loupes */
+      G.takeInv(C.inv, "tickets", cost); if (lk) C.store[lk] = G.loupeOf(C, lk) - 1;
       const at = C.inv.indexOf(st);   /* (the tickets may have emptied a slot before it) */
       if (was == null) { if (st.n > 1) st.n -= 1; else C.inv.splice(at, 1); if (G.addInv(C.inv, st.k, 1, C, G.gemCode(roll)) > 0) this.bankAdd(pl, st.k, 1, G.gemCode(roll)); }
       else if (st.n > 1) { st.n -= 1; if (G.addInv(C.inv, st.k, 1, C, G.gemCode(roll)) > 0) this.bankAdd(pl, st.k, 1, G.gemCode(roll)); }   /* (2026-09-29) a re-roll is ONE gem, never the stack it sat in */
       else st.f = G.gemCode(roll);
       this.touch(pl);
       if (roll >= S_.roll[1]) this.houseSay(`\u{1F48E} ${pl.name} sorted a PERFECT ${G.ITEMS[st.k].name.toLowerCase()}: +${roll}%.`, "SORTER");
-      return this.gemPush(pl, { rolled: { k: st.k, roll, was } });
+      if (lk) this.say(pl, `${G.STORE[lk].name}: ${G.loupeOf(C, lk)} lifted roll${G.loupeOf(C, lk) === 1 ? "" : "s"} left.`);
+      return this.gemPush(pl, { rolled: { k: st.k, roll, was, loupe: lk || undefined } });
     }
     if (op === "sell") {
       const i = m.i | 0, st = C.inv[i]; if (!st || !G.isGem(st.k)) return;

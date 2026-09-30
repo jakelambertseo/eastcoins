@@ -89,7 +89,9 @@ export function createGems(E) {
   function renderSorter() {
     if (!sorter || sorter.hidden) return;
     const cost = v?.cost ?? S_.cost, sell = v?.sell ?? S_.sell, tix = G.tixIn(E.me), gems = bagGems();
-    sorter.querySelector(".gx-sub").textContent = `Sort ${G.fmtTix(cost)} · Sell ${G.fmtTix(sell)}`;
+    /* (2026-09-30) the Store's loupes: how many lifted rolls you hold, and the odds they give, in the header and the foot */
+    const lk = G.loupeOf?.(E.me, "loupe2") ? "loupe2" : G.loupeOf?.(E.me, "loupe") ? "loupe" : null;
+    sorter.querySelector(".gx-sub").textContent = `Sort ${G.fmtTix(cost)} · Sell ${G.fmtTix(sell)}${lk ? ` · ${G.STORE[lk].name}: ${G.loupeOf(E.me, lk)} rolls` : ""}`;
     sorter.querySelector(".gx-body").innerHTML = gems.length ? gems.map(({ s, i }) => {
       const r = G.rollOf(s), side = G.gemSide(s.k), f = flick && flick.k === s.k && flick.i === i ? flick : null, shown = f ? f.show : r;
       return `<div class="k-row gx-row ${bandCls(shown)}${f ? " rolling" : ""}"><span class="k-slot">${ico(s.k)}${s.n > 1 ? `<u>×${s.n}</u>` : ""}</span>
@@ -97,7 +99,7 @@ export function createGems(E) {
         <span class="gx-roll"><strong>${shown == null ? "Unsorted" : pct(shown)}</strong><small>${shown == null ? "" : G.gemBand(shown)}</small></span>
         <span class="k-end"><button type="button" class="k-btn sm" data-op="sort" data-i="${i}"${tix < cost || f ? " disabled" : ""}>${r == null ? "Sort" : "Re-roll"}</button><button type="button" class="k-btn sec sm" data-op="sell" data-i="${i}"${f ? " disabled" : ""}>Sell</button></span></div>`;
     }).join("") : `<p class="gx-none">No gems in your bag. Every skill turns one up now and then from level ${S_.dropLvl}, and so do monsters of that level.</p>`;
-    const odds = (lo, hi) => { let p = 0; for (let r = lo; r <= hi; r++) p += G.gemOdds(r); p *= 100; return p < 1 ? `${p.toFixed(1)}%` : `${Math.round(p)}%`; };
+    const odds = (lo, hi) => { let p = 0; for (let r = lo; r <= hi; r++) p += lk ? G.gemOddsLoupe(lk, r) : G.gemOdds(r); p *= 100; return p < 1 ? `${p.toFixed(1)}%` : `${Math.round(p)}%`; };
     sorter.querySelector(".gx-foot").innerHTML = `<span class="k-note">${G.GEM_BANDS.map(([n, lo, hi]) => `<b class="${n.toLowerCase()}">${n}</b> ${lo === hi ? pct(lo) : `${pct(lo)} to ${pct(hi)}`} (${odds(lo, hi)})`).join(" · ")}. The higher the roll, the rarer it is.</span>`;
   }
   /* the roll lands with a short flicker of numbers (skipped under reduced motion) */

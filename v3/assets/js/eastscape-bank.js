@@ -27,7 +27,7 @@ export function createBankUi(E) {
   /* (2026-09-27) PAGES, as in OSRS: BANK_PAGES of them, "all" shows every page in order with a heading each. A deposit lands on the page you
      are looking at (or the first, from "all"); a stack the bank already holds grows where it already is. An item moves page by being dragged
      onto a page tab, or from its hold / right-click menu. The page is on the row itself (bank[i].p), so it follows the character. */
-  let page = ls("es_bank_page", "all"); const NP = G.BANK_PAGES || 5, pageOf = (s) => Math.min(NP - 1, s.p | 0), curPage = () => (page === "all" ? 0 : +page);
+  let page = ls("es_bank_page", "all"); let NP = G.BANK_PAGES || 5; const pageOf = (s) => Math.min(NP - 1, s.p | 0)   /* (2026-09-30) NP follows the Store's extra pages: set on every render */, curPage = () => (page === "all" ? 0 : +page);
   const last = { tabs: null, pages: null, grid: null, bag: null, meter: null, up: null };
   let built = false, menu = null;
 
@@ -159,6 +159,7 @@ export function createBankUi(E) {
 
   /* ---- the draw: on open and on every "me" while open, cheap when nothing changed */
   function render(fresh) {
+    { const n = G.bankPagesOf(E.me); if (n !== NP) { NP = n; last.pages = null; last.grid = null; } }   /* (2026-09-30) a page bought in the Store appears at once */
     const me = E.me; if (!me || !$("bankRoot")) return; if (!built) build(); if (fresh) held = null;
     const bank = me.bank || [], rows = bank.map((s, i) => [s, i]);
     /* the pages: each tab wears the first item filed on it, the way an OSRS tab does, and its count */
@@ -172,8 +173,8 @@ export function createBankUi(E) {
     const tabsHtml = TABS.filter(([k]) => k === "all" || counts[k]).map(([k, n, i, t]) => `<button type="button" role="tab" data-tab="${k}" aria-pressed="${String(k === tab)}" aria-label="${n}" title="${t || n}">${tabIco(i)}<em>${counts[k] || 0}</em></button>`).join("");
     if (tabsHtml !== last.tabs) { $("bkTabs").innerHTML = tabsHtml; last.tabs = tabsHtml; }
     $("bkSort").querySelectorAll("[data-s]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.s === sort)));
-    const worth = bank.reduce((a, s) => a + G.valueOf(s.k) * s.n, 0), pct = Math.min(100, Math.round(bank.length / G.BANK_MAX * 100));
-    const meter = `<span class="bk-slots"><b>${bank.length}</b> of ${G.BANK_MAX} slots</span><span class="bk-bar" aria-hidden="true"><i style="width:${pct}%" class="${pct >= 95 ? "full" : pct >= 80 ? "warn" : ""}"></i></span><span class="bk-worth">worth ${G.fmtCash(worth)}</span>`;
+    const worth = bank.reduce((a, s) => a + G.valueOf(s.k) * s.n, 0), pct = Math.min(100, Math.round(bank.length / G.bankMaxOf(E.me) * 100));
+    const meter = `<span class="bk-slots"><b>${bank.length}</b> of ${G.bankMaxOf(E.me)} slots</span><span class="bk-bar" aria-hidden="true"><i style="width:${pct}%" class="${pct >= 95 ? "full" : pct >= 80 ? "warn" : ""}"></i></span><span class="bk-worth">worth ${G.fmtCash(worth)}</span>`;
     if (meter !== last.meter) { $("bkMeter").innerHTML = meter; last.meter = meter; }
     const keep = ([s]) => (tab === "all" || catOf(s.k) === tab) && (!q || ITEMS[s.k].name.toLowerCase().includes(q)), cmp = SORTS[sort];
     const tile = ([s, i]) => slotHtml(s, i, "data-b").replace('class="slot"', 'class="slot" draggable="true"');

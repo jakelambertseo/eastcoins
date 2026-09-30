@@ -15,7 +15,7 @@
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=399">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=400">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -614,13 +614,8 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 
 #achBody .arow i{font-style:normal;font-size:17px;line-height:1.2;flex:0 0 auto}
 .topl-store .hot{display:inline-block;margin-left:7px;vertical-align:3px;font-style:normal;font-size:8.5px;font-weight:900;letter-spacing:.06em;line-height:1;padding:2px 4px;border-radius:3px;background:#e53935;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.5);animation:hotpulse 1.6s ease-in-out infinite}@keyframes hotpulse{50%{transform:scale(1.12)}}@media (prefers-reduced-motion:reduce){.topl-store .hot{animation:none}}
-.st-tabs{padding:8px 10px 4px}.st-note{padding:4px 12px 6px;font-size:12px}
-.st-preview{margin:6px 10px 2px;padding:14px 12px;background:#1d1a16;border-radius:6px;text-align:center}.st-preview small{display:block;color:#a99e8c;font-size:11px;margin-top:6px}
 .st-pvname{font-weight:800;font-size:20px;color:#fff;text-shadow:0 0 3px #000,0 1px 2px #000;display:inline-block;padding:2px 8px}
-.st-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px 10px 8px}@media (max-width:560px){.st-grid{grid-template-columns:1fr}}
-.st-card{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;padding:6px 8px;color:#2e2416}.st-card.worn{box-shadow:inset 0 0 0 2px #b8901a;background:#ffe9a8}.st-card b{display:block;font-size:13px}.st-card small{display:block;font-size:11px;color:#6a5a40;line-height:1.25}
 .st-sw{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(0,0,0,.25);font-style:normal}.st-sw.st-fr{background:transparent;border:3px solid;border-radius:6px;box-shadow:none}.st-sw.st-ic{background:#1d1a16;border-radius:6px}.st-sw.st-ic img{width:16px;height:16px;image-rendering:pixelated}.st-sw.st-fx{background:#1d1a16;border-radius:6px;color:#fff;font-size:13px;font-weight:800}.st-sw.st-it{background:transparent;box-shadow:none}.st-sw.st-it .ico{width:28px;height:28px}
-.st-act{white-space:nowrap;font-size:12px;padding:5px 9px}
 .nfx-badge{width:14px;height:14px;image-rendering:pixelated;vertical-align:-2px;margin-right:3px}
 .nfx-framed{outline:1.5px solid;outline-offset:1px;border-radius:3px}
 .nfx-shine{background:linear-gradient(90deg,currentColor 0%,currentColor 40%,#fff 50%,currentColor 60%,currentColor 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:inherit;-webkit-text-fill-color:transparent;animation:nfxshine 2.4s linear infinite}@keyframes nfxshine{from{background-position:200% 0}to{background-position:-200% 0}}
@@ -958,6 +953,8 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
    canvas at the top centre, 30 to 82 px down, and the banner sat across it. */
 #dblBar{position:absolute;left:50%;top:94px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;background:linear-gradient(#ffd23f,#e8a01f);color:#2a1c08;font-weight:800;font-size:13px;letter-spacing:.04em;box-shadow:0 0 0 2px #7a5410,0 3px 10px rgba(0,0,0,.45);white-space:nowrap}
 #dblBar[hidden]{display:none}
+#sx2Bar{position:absolute;left:50%;top:94px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;background:linear-gradient(#7ae07a,#3aa048);color:#0a2a10;font-weight:800;font-size:13px;letter-spacing:.04em;box-shadow:0 0 0 2px #1a5a24,0 3px 10px rgba(0,0,0,.45);white-space:nowrap}
+#sx2Bar.low{top:124px}#sx2Bar[hidden]{display:none}#sx2Bar b{font-size:14px}#sx2Bar .dblt{font-variant-numeric:tabular-nums;background:rgba(0,0,0,.18);border-radius:999px;padding:1px 7px}
 /* (2026-09-29) the death card: greys the view and fades out on its own; nothing to click */
 #diedCard{position:absolute;inset:0;z-index:7;display:none;place-items:center;align-content:center;gap:6px;pointer-events:none;background:radial-gradient(circle,rgba(20,20,24,.45),rgba(0,0,0,.82));backdrop-filter:grayscale(1)}
 #diedCard.show{display:grid;animation:diedFade 2.6s ease-out forwards}#diedCard b{font:800 40px Cinzel,serif;color:#e8d8c8;letter-spacing:.06em;text-shadow:0 3px 0 #2a0a0a,0 0 18px rgba(200,40,40,.6)}#diedCard small{font:600 15px Lora,serif;color:#d8c8b8}
@@ -1481,7 +1478,6 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .qfilt .qf.on small{background:rgba(255,255,255,.2)}
 
 
-.st-tabs.qfilt{margin:10px 12px 4px;padding:2px}
 /* a quest is a card; its name is Cinzel; its state a chip */
 .q{border:0;border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45)}
 .q>b{font:800 15px/1.2 var(--k-disp)}
@@ -1525,9 +1521,6 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .hsr.me{background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold),inset 4px 0 0 var(--k-gold)}
 .hsr .xp{color:var(--k-ink2);opacity:1}
 /* the Store */
-.st-card{border-radius:var(--k-r);background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line),inset 0 1px 0 rgba(255,255,255,.45)}
-.st-card b{font-family:var(--k-disp)}
-.st-note{color:var(--k-ink2)}
 
 /* batch 4, two more: the quest log's rows (.arow.qw) are cards with Cinzel names like the Quests tab's; and today's jobs and the rares on
    the Quests tab are paper cards (the money strip under the bag keeps its dark case: it is the one money display, the HUD's colours) */
@@ -1922,10 +1915,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/ach_badge.png?v=1" alt="" class="topi">Achievements</b><small id="achSub"></small><button type="button" class="win-x" data-close="achWin" aria-label="Close">×</button></div>
       <div class="win-body" id="achBody"></div>
     </section>
-    <section class="win" id="storeWin" aria-label="The Store" hidden style="width:min(720px,calc(100% - 28px));height:calc(100% - 60px)">
-      <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/store.png?v=1" alt="" class="topi">The Store</b><small id="storeSub"></small><button type="button" class="win-x" data-close="storeWin" aria-label="Close">×</button></div>
-      <div class="win-body" id="storeBody"></div>
-    </section>
+    <section class="win k-win st-win" id="storeWin" aria-label="The Store" hidden></section>
     <section class="win" id="mapWin" aria-label="World map" hidden style="width:min(1000px,calc(100% - 28px));height:calc(100% - 40px)">
       <div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/map.png?v=1" alt="" class="topi">World map</b><small id="mapSub"></small><button type="button" class="win-x" data-close="mapWin" aria-label="Close">×</button></div>
       <div class="map-legend" id="mapLegend"></div>
@@ -1957,7 +1947,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=399";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=400";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 const FROZEN = new Map();   /* (2026-09-30) player id -> when their Deep Freeze ends (performance.now) */
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
@@ -1967,7 +1957,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=224").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=225").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
@@ -1979,7 +1969,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 
 /* ------------------------------------------------------------ the world is drawn small, then scaled up crisp */
 const T = 16, W = COLS * T, H = ROWS * T;
-const PETF = { m: new Map(), at: 0 };   /* (2026-09-28) where each pet is: see PETS FOLLOW in the frame */
+const PETF = { m: new Map(), at: 0 }, PTAGS = [];   /* (2026-09-28) where each pet is: see PETS FOLLOW in the frame */
 const cv = $("cv"), ctx = cv.getContext("2d");
 // kept on a 16-unit grid, drawn at art resolution (32px a tile) so PixelLab sprites land 1:1
 const A = 2, low = document.createElement("canvas"); low.width = W * A; low.height = H * A;
@@ -2126,7 +2116,7 @@ const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String
 let TIP = null; const tipLoad = () => (tipLoad.p ||= import("/v3/assets/js/eastscape-tip.js?v=3").then((m) => (TIP = m.createTip({ G, esc, ico, me: () => me }))));
 document.addEventListener("pointerover", (e) => { if (e.pointerType === "touch") return; const el = e.target.closest?.("[data-item], [data-k], [data-rm]"), k = el && (el.dataset.item || el.dataset.k || el.dataset.rm); if (k && ITEMS[k]?.slot) tipLoad().then((t) => t.show(el, k, Number(el.dataset.f) || 0)).catch(() => {}); });   /* (2026-09-23) data-f is the level of THIS piece: the card describes what you are pointing at, not whatever of that kind you happen to be wearing */
 let PROF = null;
-const profLoad = () => (profLoad.p ||= import("/v3/assets/js/eastscape-profile.js?v=9").then((m) => (PROF = m.createProfile({ G, SFX, send, esc, $, sico, ico, you: () => you,   /* (2026-09-23) ico: the Gear tab draws real item icons, and the PNG-or-emoji decision lives on the page */
+const profLoad = () => (profLoad.p ||= import("/v3/assets/js/eastscape-profile.js?v=10").then((m) => (PROF = m.createProfile({ G, SFX, send, esc, $, sico, ico, you: () => you,   /* (2026-09-23) ico: the Gear tab draws real item icons, and the PNG-or-emoji decision lives on the page */
   sprite: (look, d, name, van) => { const L = look && G.normLook(look), k = L ? lookSprite(L, d, van) : lookArt(G.lookFor({ name }), d); if (!k) return k === null ? null : ""; const im = IMG[k].im, c = document.createElement("canvas"); c.width = im.width; c.height = im.height; c.getContext("2d").drawImage(im, 0, 0); return c; },
   nearby: (name) => Z.players.find((p) => p.name === name && p.id !== you?.id)?.id || null }))));
 /* (2026-09-22) The net panel's switch. Zeroing the correction count on open matters: what you want to know is how
@@ -2216,7 +2206,7 @@ function onMsg(m) {
         if (e.arc) { spellFx(e.who, "lightning"); if (e.by === you?.id || mine?.mob) SFX.play("spell_storm", { vol: 0.6 }); }   /* Storm's arc */
         const flies = e.ranged && e.by && !calmNow();   /* calmNow(), NOT calm: `calm` is a local of the draw loop, and reading it here threw on every bow hit - which dropped the splat AND the xp drop behind it in the same message (2026-09-25) */
         if (flies) arrows.push({ from: e.by, to: e.who, at: performance.now(), k: e.ak || null });
-        splats.push({ who: e.who, n: e.n, kind: e.kind, crit: !!e.crit, kill: !!e.kill, at: performance.now() + (flies ? FLIGHT_MS : 0), vs: e.em > 0 || e.gw ? "WEAK" : e.em < 0 ? "RESIST" : e.gs ? "GUARD" : null });   /* (2026-09-30) gw: weak to that style */
+        splats.push({ who: e.who, by: e.by, n: e.n, kind: e.kind, crit: !!e.crit, kill: !!e.kill, at: performance.now() + (flies ? FLIGHT_MS : 0), vs: e.em > 0 || e.gw ? "WEAK" : e.em < 0 ? "RESIST" : e.gs ? "GUARD" : null });   /* (2026-09-30) gw: weak to that style */
         if (e.em || e.gs) { const pp = PLATE.get(e.who), at = performance.now() + (flies ? FLIGHT_MS : 0); if (pp) { if (e.em && e.el) pp.pulse[e.el] = at; if (e.gs) pp.pulse[e.gs] = at; } }   /* (2026-09-29) the plate's icon pops as the hit lands */
         /* (v112) sparks off whatever was hit, in its own colours: more for a crit, and a kill's dust is thrown by the death below.
            (v113: the sprite no longer FLINCHES with them, which was the part that read as noise; 2026-09-29, the owner: flinches back on,
@@ -2226,6 +2216,8 @@ function onMsg(m) {
         const pel = e.ranged && e.ak ? ITEMS[e.ak]?.ammo?.el : null;   /* (2026-09-26) a spell page's element: its own impact and sound */
         const land = () => {
           if (pel && e.n) spellFx(e.who, EL_FX[pel]?.hit, !!e.crit);
+          { const lk = e.by && e.n ? (e.by === you?.id ? G.looksOf(me) : Z.players.find((q) => q.id === e.by)?.lk) : null;   /* (2026-09-30) the Store's weapon hits */
+            if (lk?.hit) { const hm = Z.mobs.find((q) => q.id === e.who), hp = hm || (e.who.startsWith("p:") ? Z.players.find((q) => `p:${q.id}` === e.who) : null); if (hp) { const p = posOf(hp, Date.now()); looksLoad().then((L) => L.hit(p.px * T + 8, p.py * T + (hm ? 6 : 4), lk.hit)).catch(() => {}); } } }
           if (e.n) { const hitMob = Z.mobs.find((q) => q.id === e.who), pl = e.who.startsWith("p:") ? Z.players.find((q) => `p:${q.id}` === e.who) : null, who = hitMob || pl;
             if (who) { const p = posOf(who, Date.now()), key = hitMob ? MOBS[hitMob.t]?.art || hitMob.t : null, cols = (key && IMG[key]?.cols) || ["#c42a2a", "#e8b0a0"];
               bitsAt(p.px * T + 8, p.py * T + (hitMob ? 6 : 8), e.crit ? 10 : 5, e.crit ? ["#ffd23f", "#fff0a0", ...cols] : cols, e.crit ? 1.5 : 1, 0.6); } }
@@ -2385,6 +2377,8 @@ function onEvent(e) {
   if (e.type === "ach") { SFX.play("task_done"); if (!$("achWin").hidden) renderAch(); return; }
   if (e.type === "fell") return void SFX.play("tree_fall");
   if (e.type === "double") { dblSet(e.on); if (e.on) SFX.play("jackpot"); return; }
+  if (e.type === "skill2x") { sx2Set(e.on); if (e.on) SFX.play("jackpot"); return; }   /* (2026-09-30) 2X Skilling XP */
+  if (e.type === "wfx") { looksLoad().then((L) => L.wfx(e)).catch(() => {}); if (!e.late) SFX.play(e.k === "confetti" ? "task_done" : "jackpot", { vol: 0.5 }); return; }   /* (2026-09-30) a show over this area */
   if (e.type === "hw") { if (e.king) SFX.play("mob_die"); if (e.night != null) SFX.play(e.night ? "ui_open" : "ui_click"); renderPanel(); return; }   /* (2026-09-27) the Long Night's clocks turned; the painter reads the clock itself */
   if (e.type === "tradereq") { SFX.play("chat"); tradeReqLine(e.from, e.name); return; }
   if (e.type === "levelup") return levelUp(e.k, e.lvl);
@@ -5125,6 +5119,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
      and hopping as it moves. It is its own sprite, sorted by its own feet, so it passes in front of you and behind you like anything else.
      A door or a long gap puts it straight back at your side. Nothing is sent: it is the same pet on everyone's screen, walking its own
      way on each. */
+  PTAGS.length = 0;
   { const dt = Math.min(0.1, (pnow - (PETF.at || pnow)) / 1000); PETF.at = pnow;
     const seen = new Set();
     for (const pl of Z.players) {
@@ -5155,9 +5150,14 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
       sprites.push({ y: f.y - 0.5, draw: () => {
         if (rk) { lc.save(); lc.shadowColor = rk === "legend" ? "rgba(255,140,20,.95)" : "rgba(60,140,255,.95)"; lc.shadowBlur = (6 + Math.sin(pnow / 300) * 2) * A; }   /* (2026-09-27) a Greater glows blue, a Legendary orange */
         spr(pv.art, f.x, f.y + bobOf(f.moving, 70), f.face < 0); if (rk) lc.restore(); } });
+      { const tag = pl.id === you.id ? G.looksOf(me)?.ptag : pl.lk?.ptag, nm = pl.id === you.id ? G.petLabel(G.activePet(me)) : pl.pnm; if (tag && nm) PTAGS.push({ x: f.x, y: f.y, nm, tag }); }   /* (2026-09-30) the Store's pet name tags */
     }
     for (const k of PETF.m.keys()) if (!seen.has(k)) PETF.m.delete(k);
   }
+  /* (2026-09-30) THE LOOKS, under everybody's feet: trails and glows (see THE LOOKS) */
+  { const lkOf = (pl) => (pl.id === you.id ? G.looksOf(me) : pl.lk);
+    if (LOOKS) { LOOKS.frame(Z.players.map((pl) => { const L = lkOf(pl); if (!L) return null; const p = pos(pl); return { id: pl.id, lk: L, x: p.px * T + 8, y: p.py * T + 15, moving: p.moving, face: pl.face }; }).filter(Boolean)); LOOKS.ground(lc, pnow, calm); LOOKS.decor(lc, pnow, Z.objs, IMG, A, calm); }
+    else if (Z.players.some(lkOf) || Z.objs.some((o) => o.decor && G.STORE_DECOR[o.k]?.fx)) looksLoad().catch(() => {}); }
   sprites.sort((a, b) => a.y - b.y).forEach((s) => s.draw());
   drawMini();
   /* (v112) sparks and dust, over the scene: a little gravity, fading as they go */
@@ -5197,7 +5197,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   for (const pl of Z.players) {
     const p = pos(pl), x = sx(p.px * T + 8), y = sy(p.py * T + 15);
     /* (v81) a name colour and a title bought in eastcoin.vip's store show here too. A VIP colour is EARNED, so it wins. */
-    if (pl.id === you.id || names) { const tier = G.VIP[pl.id === you.id ? G.vipOf(me).i : pl.vip | 0], bought = STORE_NAME[pl.cos?.name], nfx = pl.id === you.id ? G.nameFxOf(me) : pl.nfx; nameLabel(tier?.at ? `◆ ${pl.name}` : pl.name, x, y + 4, tier?.at ? tier.col : bought || (pl.id === you.id ? "#fff" : pvp ? "#ff7a6a" : "#9fd0ff"), nfx, pnow); label(`level ${pl.lvl}`, x, y + 18, "#ffe45c", 12); if (pl.cos?.title) label(`« ${pl.cos.title} »`, x, y + 31, "#e8d8a8", 11); }
+    if (pl.id === you.id || names) { const tier = G.VIP[pl.id === you.id ? G.vipOf(me).i : pl.vip | 0], bought = STORE_NAME[pl.cos?.name], nfx = pl.id === you.id ? G.nameFxOf(me) : pl.nfx; nameLabel(tier?.at ? `◆ ${pl.name}` : pl.name, x, y + 4, tier?.at ? tier.col : bought || (pl.id === you.id ? "#fff" : pvp ? "#ff7a6a" : "#9fd0ff"), nfx, pnow); label(`level ${pl.lvl}`, x, y + 18, "#ffe45c", 12); { const tt = pl.id === you.id ? G.titleOf(me) : pl.ttl; if (tt) label(`« ${tt} »`, x, y + 31, "#e8d8a8", 11); } }   /* (2026-09-30) the Store's titles */
     /* (2026-09-29) a hurt player's bar is an overhead plate now (drawPlates, after the monsters) */
     /* BLEEDING (2026-09-24, the owner: "when a user is bleeding it needs to show an icon above their head
        (small)"). Over the head of whoever HELD names, so the three people who are meant to go and save them can
@@ -5207,6 +5207,8 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
     { const h = heldNow(); if (h && h.id === pl.id) { const im = IMG.fx_bleed, bx = x, by = sy(p.py * T - 22) + (calm ? 0 : Math.sin(pnow / 220) * 1.5), s = 18 * S2;
       if (im) ctx.drawImage(im.im, bx - s / 2, by - s, s, s); else label("🩸", bx, by, "#ff6b85", 16); } }
   }
+  /* (2026-09-30) pet name tags, under the names so a person's own name always wins */
+  for (const t of PTAGS) { const col = G.STORE_LOOKS.ptag[t.tag]?.[1] || ["#e8d0a0", "#5a3220"], gx = sx(t.x), gy = sy(t.y - 17); ctx.save(); if (t.tag === "glow" && !calm) { ctx.shadowColor = col[0]; ctx.shadowBlur = 6 + Math.sin(pnow / 300) * 2; } label(t.nm, gx, gy, col[0], 10); ctx.restore(); }
   // confetti over whoever just hit a big one (v81): 26 squares thrown up and out, falling, for 1.8 s. Only if they're in this room.
   for (let i = BURSTS.length - 1; i >= 0; i--) { const b = BURSTS[i], age = (pnow - b.at) / 1000; if (age > 1.8) { BURSTS.splice(i, 1); continue; } const pl = Z.players.find((q) => q.id === b.id); if (!pl || calm) continue;
     const p = pos(pl), cx = sx(p.px * T + 8), cy = sy(p.py * T - 6); for (let k = 0; k < 26; k++) { const a = hashRand(k, 7, 3) * 6.283, v = 60 + hashRand(k, 2, 9) * 110, x = cx + Math.cos(a) * v * age * S2 * 0.5, y = cy + (Math.sin(a) * v * age - 90 * age + 160 * age * age) * S2 * 0.5; ctx.globalAlpha = Math.max(0, 1 - age / 1.8); ctx.fillStyle = STAR_COLS[k % STAR_COLS.length]; ctx.fillRect(x, y, 3 * S2 * 0.5 + 1, 3 * S2 * 0.5 + 1); } ctx.globalAlpha = 1; }
@@ -5291,6 +5293,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
     ctx.restore();
   }
   drawSpellFx(pnow, now);   /* (2026-09-26) spell impacts, under the numbers */
+  if (LOOKS) LOOKS.over(ctx, pnow, sx, sy, S2, calm);   /* (2026-09-30) weapon hits, halos, and the world shows */
   // hit splats (a ranged one is stamped FLIGHT_MS ahead, so it waits here until its arrow has landed)
   splats = splats.filter((s) => pnow - s.at < 900);
   for (const s of splats) {
@@ -5303,10 +5306,13 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
     if (s.kill && !calm && k < 0.6) { const q = k / 0.6; ctx.fillStyle = `rgba(240,236,224,${0.7 * (1 - q)})`; for (let i = 0; i < 7; i++) { const a = (i / 7) * 6.283; ctx.beginPath(); ctx.arc(x + Math.cos(a) * (8 + q * 26), y + 14 + Math.sin(a) * (5 + q * 12), 6 * (1 - q) + 2, 0, 6.283); ctx.fill(); } }
     const R0 = s.crit ? 15 : 11, pop = s.crit ? 1 + Math.max(0, 0.35 - k) * 1.6 : 1;
     const FX = IMG[s.kind === "miss" ? "fx_miss" : s.crit ? "fx_crit" : "fx_hit"];
-    if (FX) { const pop2 = pop * (k < 0.12 && !calm ? 0.6 + (k / 0.12) * 0.4 : 1), wpx = (s.kind === "miss" ? 28 : s.crit ? 52 : 38) * pop2, hpx = wpx * FX.im.height / FX.im.width; ctx.drawImage(FX.im, Math.round(x - wpx / 2), Math.round(y - k * 10 - hpx / 2), wpx, hpx); }
+    const sty = s.n && s.by && LOOKS ? (s.by === you.id ? G.looksOf(me) : Z.players.find((q) => q.id === s.by)?.lk)?.splat : null;   /* (2026-09-30) the Store's hit splats */
+    let numCol = "#fff";
+    if (sty) numCol = LOOKS.splat(ctx, sty, x, y - k * 10, R0 * pop * (k < 0.12 && !calm ? 0.6 + (k / 0.12) * 0.4 : 1), k) || "#fff";
+    else if (FX) { const pop2 = pop * (k < 0.12 && !calm ? 0.6 + (k / 0.12) * 0.4 : 1), wpx = (s.kind === "miss" ? 28 : s.crit ? 52 : 38) * pop2, hpx = wpx * FX.im.height / FX.im.width; ctx.drawImage(FX.im, Math.round(x - wpx / 2), Math.round(y - k * 10 - hpx / 2), wpx, hpx); }
     else { ctx.fillStyle = s.kind === "miss" ? "#2f6fd6" : s.crit ? "#e0a010" : "#c42a2a"; ctx.beginPath(); ctx.arc(x, y - k * 10, R0 * pop, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "#000"; ctx.lineWidth = s.crit ? 2.5 : 1.5; ctx.stroke(); }
-    ctx.fillStyle = "#fff"; ctx.font = `800 ${s.crit ? 16 : 13}px "Lora", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(s.n), x, y - k * 10 + 1);
+    ctx.fillStyle = numCol; ctx.font = `800 ${s.crit ? 16 : 13}px "Lora", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(s.n), x, y - k * 10 + 1);
     if (s.crit) { ctx.font = `800 11px "Lora", system-ui, sans-serif`; ctx.fillStyle = "#ffd23f"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.strokeText("CRIT", x, y - k * 10 - 21); ctx.fillText("CRIT", x, y - k * 10 - 21); }
     if (s.vs && s.n) { ctx.font = `800 10px "Lora", system-ui, sans-serif`; ctx.fillStyle = s.vs === "WEAK" ? "#ffe27a" : "#c8c0b0"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.strokeText(s.vs, x, y - k * 10 + 21); ctx.fillText(s.vs, x, y - k * 10 + 21); }   /* (2026-09-29) what the hit met */
     ctx.globalAlpha = 1;
@@ -5894,7 +5900,7 @@ document.addEventListener("visibilitychange", () => radioSync());
    mode are v3/assets/js/eastscape-decor.js, fetched the first time you ask her or press Decorate). The page keeps only what every
    visitor needs: the pieces standing in this scene (sent by the server on the way in and on every change) laid over a fresh
    build of it, and a Decorate button on your own island. */
-let DECO = null, DR = null; const DECO_URL = "/v3/assets/js/eastscape-decor.js?v=5", DR_URL = "/v3/assets/js/eastscape-decor-rules.js?v=7";
+let DECO = null, DR = null; const DECO_URL = "/v3/assets/js/eastscape-decor.js?v=6", DR_URL = "/v3/assets/js/eastscape-decor-rules.js?v=8";   /* (2026-09-30) v6/v8: the Store's decor */
 const drLoad = () => (drLoad.p ||= import(DR_URL).then((m) => (DR = m.createDecorRules(G))));   /* the catalogue and the placing rules: fetched on the first furnished island, never at login */
 const decoLoad = () => (decoLoad.p ||= Promise.all([import(DECO_URL), drLoad()]).then(([m]) => (DECO = m.createDecor({ rules: DR, G, SFX, send, esc, $, me: () => me, you: () => you, key: () => Z.key, owner: () => Z.isle?.owner || G.ownerOf(Z.key), host: () => document.querySelector(".game"), say: (t, c) => say(t, c), onMode: (on) => $("decoBtn").setAttribute("aria-pressed", String(on)) }))));
 function decorSet(list) { const key = Z.key; if (!G.isIsle(key) || (!list?.length && !DR)) return; drLoad().then(() => { if (Z.key !== key) return; const b = DR.decorInto(key, G.buildScene(key), { decor: list || [] }); Z.g = b.g; Z.objs = b.objs; hoverThing = null; DECO?.refresh(); }).catch(() => {}); }
@@ -6191,31 +6197,17 @@ addEventListener("keydown", (e) => { if ((e.key === "g" || e.key === "G") && !e.
 
 /* ------------------------------------------------------------ the Forge: Brutus's shop */
 let shopN = 1, shopKind = "shop";   // "shop": Brutus at the Forge; "bar": Dex, who sells and never buys
-/* (2026-09-27) THE STORE. Two tabs to start - Boosts, Name - each row a card with the price as the button; owned cosmetics show
-   Wear / Worn / Take off instead. A live preview of your own name at the top redraws with every change so a colour, a badge and a
-   frame can be tried in combination before the tickets go. Everything the window knows comes from G.STORE and me.store. */
-let storeTab = "boost";
-function openStore() { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin", "gameWin", "lookWin", "jukeWin", "vanWin", "hwWin", "mapWin", "questWin"]) $(w).hidden = true; $("storeWin").hidden = false; SFX.play("ui_open"); renderStore(); }
-function renderStore() {
-  if ($("storeWin").hidden || !me) return;
-  const tix = G.tixIn(me), st = me.store || { own: [], name: {} }, own = new Set(st.own || []), worn = st.name || {}, nfx = G.nameFxOf(me);
-  $("storeSub").textContent = `${G.fmtTix(tix)}`;
-  const rows = Object.values(G.STORE).filter((it) => it.tab === storeTab || (storeTab === "name" && (it.tab === "night" || it.tab === "cards") && own.has(it.id)));   /* (2026-09-29) and a Marked Card look */   /* (2026-09-27) a Long Night cosmetic you own lives here after the tent has gone */
-  const pv = `<div class="st-preview"><span class="st-pvname${nfx?.fx ? ` nfx-${nfx.fx}` : ""}${nfx?.frame ? " nfx-framed" : ""}" style="${nfx?.col ? `color:${G.NAME_COLS[nfx.col]};` : ""}${nfx?.frame ? `outline-color:${G.NAME_FRAMES[nfx.frame]};` : ""}">${nfx?.icon ? `<img class="nfx-badge" src="${ART}nb_${nfx.icon}.png?v=${ART_V}" alt="">` : ""}${esc(you?.name || "You")}</span><small>How your name looks to everyone</small></div>`;
-  const card = (it) => {
-    const owned = own.has(it.id), isWorn = it.slot && worn[it.slot] === it.id, afford = tix >= it.price;
-    const swatch = it.kind === "col" ? `<i class="st-sw" style="background:${it.col}"></i>` : it.kind === "frame" ? `<i class="st-sw st-fr" style="border-color:${it.col}"></i>` : it.kind === "icon" ? `<i class="st-sw st-ic"><img src="${ART}nb_${it.val}.png?v=${ART_V}" alt=""></i>` : it.kind === "fx" ? `<i class="st-sw st-fx"><b class="nfx-${it.val}">Aa</b></i>` : `<i class="st-sw st-it">${ico(it.icon)}</i>`;
-    const act = it.slot ? (owned ? (isWorn ? `<button type="button" class="lk-btn st-act" data-stset="${it.slot}" data-stid="">Take off</button>` : `<button type="button" class="lk-btn st-act" data-stset="${it.slot}" data-stid="${it.id}">Wear</button>`) : `<button type="button" class="lk-btn st-act st-buy" data-stbuy="${it.id}"${afford ? "" : " disabled"}>${afford ? `Buy · ${it.price.toLocaleString()}` : `${it.price.toLocaleString()} needed`}</button>`)
-      : `<button type="button" class="lk-btn st-act st-buy" data-stbuy="${it.id}"${afford ? "" : " disabled"}>${afford ? `Buy · ${it.price.toLocaleString()}` : `${it.price.toLocaleString()} needed`}</button>`;
-    return `<div class="st-card${isWorn ? " worn" : ""}${owned ? " owned" : ""}">${swatch}<span><b>${esc(it.name)}${isWorn ? ` <em class="qtag">Worn</em>` : owned ? ` <em class="qtag">Owned</em>` : ""}</b><small>${esc(it.ex)}</small></span>${act}</div>`;
-  };
-  const groups = storeTab === "name" ? [["Colour", "col"], ["Effect", "fx"], ["Badge", "icon"], ["Frame", "frame"]].map(([t, k]) => `<div class="ph">${t} <small>one worn at a time</small></div><div class="st-grid">${rows.filter((it) => it.kind === k).map(card).join("")}</div>`).join("") : `<div class="st-grid">${rows.map(card).join("")}</div>`;
-  $("storeBody").innerHTML = `<div class="qfilt st-tabs">${Object.entries(G.STORE_TABS).map(([k, l]) => `<button type="button" class="qf${storeTab === k ? " on" : ""}" data-sttab="${k}">${l}</button>`).join("")}</div>${storeTab === "name" ? pv : `<p class="note st-note">Tickets only. Nothing here changes a fight or a roll; the 2X is the room's, for half an hour, in your name.</p>`}${groups}`;
-  $("storeBody").querySelectorAll("[data-sttab]").forEach((b) => b.addEventListener("click", () => { storeTab = b.dataset.sttab; SFX.play("ui_click"); renderStore(); }));
-  $("storeBody").querySelectorAll("[data-stbuy]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "store", op: "buy", id: b.dataset.stbuy }); }));
-  $("storeBody").querySelectorAll("[data-stset]").forEach((b) => b.addEventListener("click", () => { SFX.play("ui_click"); send({ t: "store", op: "set", slot: b.dataset.stset, id: b.dataset.stid || null }); }));
-}
+/* (2026-09-30) THE STORE lives in eastscape-store.js, fetched the first time it opens (see there). renderStore is what the "me" update calls. */
+let STOREUI = null; const STORE_URL = "/v3/assets/js/eastscape-store.js?v=1";
+function storeUi() { return STOREUI ? Promise.resolve(STOREUI) : import(STORE_URL).then((m) => (STOREUI = m.createStore({ G, $, esc, send, SFX, ico, ART, ART_V, openWin: (id) => { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin", "gameWin", "lookWin", "jukeWin", "vanWin", "hwWin", "mapWin", "questWin"]) $(w).hidden = true; openWin(id); },
+  looks: looksLoad, calm: calmNow, meArt: (d) => { const k = me?.look ? lookSprite(me.look, d, G.wearsVanity(me.van) ? me.van : null) : null; return k && IMG[k] ? IMG[k] : null; }, get me() { return me; }, get you() { return you; } }))); }
+function openStore(t) { storeUi().then((u) => u.open(t)).catch(() => say("The Store didn't load. Try again in a moment.", "bad")); }
+function renderStore() { STOREUI?.render(); }
 $("storeBtn").addEventListener("click", () => { if ($("storeWin").hidden) openStore(); else $("storeWin").hidden = true; });
+/* (2026-09-30) THE LOOKS: trails, glows, weapon hits, hit splats, world shows and what Store decor does, drawn by eastscape-looks.js. Fetched
+   the first time anybody in the room wears one, a show goes off, a Store piece is down, or the Store opens. */
+let LOOKS = null; const LOOKS_URL = "/v3/assets/js/eastscape-looks.js?v=1";
+function looksLoad() { return (looksLoad.p ||= import(LOOKS_URL).then((m) => (LOOKS = m.createLooks({ G })))); }
 /* (2026-09-27) THE NIGHT MARKET: Hexa's board. Priced in candy corn, nothing else; the two fits are bought here or at Ronde's and
    coloured at Ronde's. The foot of it is the day's state — Nightfall, the lantern count, whether you have said trick or treat. */
 
@@ -6240,7 +6232,7 @@ function meterUi() { return METER ? Promise.resolve(METER) : import(METER_URL).t
 /* (2026-09-28) TINKERING: Sprocket Sal's Scrap Bench is a lazy module */
 let TINKUI = null; const TINKUI_URL = "/v3/assets/js/eastscape-tinker.js?v=7";
 /* (2026-09-28) the Gem Sorter and the Gem Case: loaded the first time either opens */
-let GEMUI = null; const GEMUI_URL = "/v3/assets/js/eastscape-gems.js?v=7";
+let GEMUI = null; const GEMUI_URL = "/v3/assets/js/eastscape-gems.js?v=8";   /* (2026-09-30) v8: the loupes */
 /* (2026-09-29) THE OUTFITTERS: Wren the Ranger and Morwenna the Mage, a lazy module like the gems */
 let OUTFITUI = null; const OUTFIT_URL = "/v3/assets/js/eastscape-outfit.js?v=2";   /* (2026-09-30) v2: the Frost ward tab */
 function outfitUi() { return OUTFITUI ? Promise.resolve(OUTFITUI) : import(OUTFIT_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (OUTFITUI = m.createOutfit({ G, $, esc, send, SFX, ico, openWin, get me() { return me; } })); }); }
@@ -6310,9 +6302,9 @@ function renderShop() {
    (2026-09-27) REBUILT AND MOVED OUT: v3/assets/js/eastscape-bank.js, fetched the first time the bank opens. Tabs by kind, one
    search over bank and bag, an amount of your own, a right-click menu, a slots meter. The page only opens it and tells it when
    `me` changed; every rule of the old window (true bank index on every tile, rebuild only on change, tickets stay) lives there. */
-let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=14";
+let BANKUI = null; const BANKUI_URL = "/v3/assets/js/eastscape-bank.js?v=15";   /* (2026-09-30) v15: the Store's extra pages */
 function bankUi() { return BANKUI ? Promise.resolve(BANKUI) : import(BANKUI_URL).then((m) => (BANKUI = m.createBankUi({ G, $, esc, ico, qty, fgTag, slotHtml, send, SFX, say, ITEMS, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); }, get me() { return me; } }))); }
-function renderBank(fresh) { if ($("bankWin").hidden || !me) return; $("bankCount").textContent = `${(me.bank || []).length}/${G.BANK_MAX}`; bankUi().then((u) => u.render(fresh)); }   /* (2026-09-29) fresh: the bank was just opened, so its order is sorted anew */
+function renderBank(fresh) { if ($("bankWin").hidden || !me) return; $("bankCount").textContent = `${(me.bank || []).length}/${G.bankMaxOf(me)}`; bankUi().then((u) => u.render(fresh)); }   /* (2026-09-29) fresh: the bank was just opened, so its order is sorted anew */
 
 /* ------------------------------------------------------------ QUICK SLOTS (2026-09-25)
    Four slots beside the chat button, keys 1-4. A slot holds an item KEY, stored on the character (the "quick" message), so it
@@ -6336,7 +6328,7 @@ function useBagItem(i) {
   }
   say(`${ITEMS[s.k].name}${s.n > 1 ? ` (×${s.n.toLocaleString()})` : ""}.${ITEMS[s.k].ex ? " " + ITEMS[s.k].ex : ""}`);
 }
-const quickOf = () => (Array.isArray(me?.quick) ? me.quick : [null, null, null, null]);
+const quickOf = () => { const n = G.quickNOf(me), q = (Array.isArray(me?.quick) ? me.quick : []).slice(0, n); while (q.length < n) q.push(null); return q; };   /* (2026-09-30) 4, plus the Store's extra slots */
 const quickUsable = (k) => { const it = ITEMS[k]; return !!it && !it.raw && k !== "tickets" && k !== "coins" && !!(it.heal || it.drink || it.use || it.luck || it.ammo || it.slot); };
 function useQuick(n) {
   const k = quickOf()[n]; if (!k) return openQuickPick(n);
@@ -6407,7 +6399,7 @@ document.addEventListener("keydown", (e) => {
 });
 /* keys 1-4: never while typing, never with a modifier (ctrl+1 is the browser's), and a held key does not repeat a potion */
 document.addEventListener("keydown", (e) => {
-  if (!/^[1-4]$/.test(e.key) || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!/^[1-8]$/.test(e.key) || +e.key > G.quickNOf(me) || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;   /* (2026-09-30) up to 8 with the Store's slots */
   if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "") || document.activeElement?.isContentEditable) return;
   if (!$("pop").hidden) return;
   if (DLG && !$("dlg").hidden) return;   /* (2026-09-25) in a conversation the number keys pick the answer (the dialog's own keydown): they must not also drink a potion */
@@ -7910,7 +7902,8 @@ function renderAdmin(p) {
       <div class="row"><span class="tag">Counts down, saves every character, then drops everyone with a "restarting" message instead of "connection lost". Deploy once it has run.</span></div>
     </fieldset>
     <fieldset><legend>2X event</legend>
-      <div class="row"><input type="number" id="a2xMins" value="30" min="0" max="180" aria-label="Minutes"><button class="btn" data-a="double">Start 2X event</button><button class="btn" data-a="doubleoff">Stop</button><span class="tag">double tickets and crafting xp for EVERYONE on the server; 0 minutes stops it</span></div>
+      <div class="row"><input type="number" id="a2xMins" value="30" min="0" max="180" aria-label="Minutes"><button class="btn" data-a="double">Start 2X Tickets &amp; Crafting XP</button><button class="btn" data-a="doubleoff">Stop</button><span class="tag">double tickets and crafting xp for EVERYONE on the server; 0 minutes stops it</span></div>
+      <div class="row"><button class="btn" data-a="skill2x">Start 2X Skilling XP</button><button class="btn" data-a="skill2xoff">Stop</button><button class="btn" data-a="storeup">Reset my Store upgrades</button><span class="tag">(2026-09-30) double xp in every non-combat skill, same minutes box; the reset is for testing bank pages, quick slots and loupes</span></div>
       <div class="row"><button class="btn" data-a="give2x">Give me a 2X Potion</button><span class="tag">to test the drinking, the chat line and the timer as a player sees them</span></div>
     </fieldset>
     <fieldset><legend>Danger</legend>
@@ -7935,7 +7928,7 @@ function renderAdmin(p) {
     restart: () => ({ cmd: "restart", n: +v("aRestart") }), restartoff: () => ({ cmd: "restart", n: "cancel" }),
     /* (2026-09-25) two different jobs: START one outright, or put a potion in your bag so the whole path gets
        exercised the way a player meets it - the drink, the refusal if one is already up, the chat line, the timer. */
-    double: () => ({ cmd: "double", mins: +v("a2xMins") }), doubleoff: () => ({ cmd: "double", mins: 0 }),
+    double: () => ({ cmd: "double", mins: +v("a2xMins") }), doubleoff: () => ({ cmd: "double", mins: 0 }), skill2x: () => ({ cmd: "skill2x", mins: +v("a2xMins") }), skill2xoff: () => ({ cmd: "skill2x", mins: 0 }), storeup: () => ({ cmd: "storeup" }),
     give2x: () => ({ cmd: "item", k: "pot_double", n: 1 })
   };
   for (const [id, val] of keep) if ($(id)) $(id).value = val;
@@ -8016,20 +8009,31 @@ function dblRender() {
   }
   if (!dblEl) {
     dblEl = document.createElement("div"); dblEl.id = "dblBar";
-    dblEl.innerHTML = '<b>✨ 2X EVENT</b><span class="dblt"></span>';
+    dblEl.innerHTML = '<b>✨ 2X TICKETS + CRAFTING XP</b><span class="dblt"></span>';
     (document.querySelector(".game") || document.body).append(dblEl);
   }
   const s = Math.ceil(left / 1000);
   dblEl.querySelector(".dblt").textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
-  dblEl.title = DBL.by ? DBL.by + " popped a 2X Potion. Double tickets and double crafting xp for everyone." : "";
+  dblEl.title = DBL.by ? DBL.by + " popped 2X Tickets & Crafting XP: double tickets and double crafting xp for everyone. Gathering and combat xp are not doubled." : "";
   dblEl.hidden = false;
 }
+/* (2026-09-30) 2X SKILLING XP's bar, under the 2X Tickets one when both run */
+let SX2 = null, sx2El = null, sx2Timer = 0;
+function sx2Render() {
+  const left = SX2 ? SX2.until - dblNow() : 0;
+  if (!SX2 || left <= 0) { SX2 = null; if (sx2El) sx2El.hidden = true; if (sx2Timer) { clearInterval(sx2Timer); sx2Timer = 0; } return; }
+  if (!sx2El) { sx2El = document.createElement("div"); sx2El.id = "sx2Bar"; sx2El.innerHTML = '<b>⚒️ 2X SKILLING XP</b><span class="dblt"></span>'; (document.querySelector(".game") || document.body).append(sx2El); }
+  const s = Math.ceil(left / 1000); sx2El.querySelector(".dblt").textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  sx2El.title = SX2.by ? SX2.by + " popped 2X Skilling XP: double xp in every non-combat skill, gathering and crafting, for everyone. Tickets and combat xp are not doubled." : "";
+  sx2El.classList.toggle("low", !!(DBL && DBL.until > dblNow())); sx2El.hidden = false;
+}
+function sx2Set(on) { SX2 = on && on.until > dblNow() ? on : null; sx2Render(); if (SX2 && !sx2Timer) sx2Timer = setInterval(sx2Render, 1000); }
 function dblSet(on) {
   DBL = on && on.until > dblNow() ? on : null;
   dblRender();
   if (DBL && !dblTimer) dblTimer = setInterval(dblRender, 1000);
 }
-window.__es = { get PETF() { return PETF; }, FROZEN,   /* (2026-09-30) the Ice Man's Deep Freeze, for checking its ice block */ get PBOARD() { return PBOARD; }, projHover, openScreen, openPicks, openJuke, openVan, openLook, openMap, openPen, openHatch, openCraft, openSmith, openShop, CZ, renderTour, renderPanel, popup, showInfo, talkTo, set zc(n) { ZCBAL = n; renderPanel(); }, wlNum, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
+window.__es = { get PETF() { return PETF; }, get LOOKS() { return LOOKS; },   /* (2026-09-30) the Store's looks, for checking what they draw */ FROZEN,   /* (2026-09-30) the Ice Man's Deep Freeze, for checking its ice block */ get PBOARD() { return PBOARD; }, projHover, openScreen, openPicks, openJuke, openVan, openLook, openMap, openPen, openHatch, openCraft, openSmith, openShop, CZ, renderTour, renderPanel, popup, showInfo, talkTo, set zc(n) { ZCBAL = n; renderPanel(); }, wlNum, get EX() { return EX; }, get TR() { return TR; }, wikiGo, get me() { return me; }, get you() { return you; }, Z, send, get ws() { return ws; }, PRED, IMG, anim: { walkArt, idleArt, walkPhase }, van: { open: openVan, render: renderVan, preview: vanPreviewOf }, get green() { return GREEN; } };
 
 setInterval(() => {
   if (ws && ws.readyState === 1 && you) {

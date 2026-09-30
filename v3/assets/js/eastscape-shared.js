@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 368;   /* (2026-09-30) the Frost charm is 50,000 and the outfitters show it */   /* (2026-09-30) THE FROZEN REACH OPENS */   /* (2026-09-30) THE YARD RAID: the Ice Man (the Frozen Reach stays held) */   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 369;   /* (2026-09-30) THE STORE, REBUILT: effects, titles, decor, the War Horn, 2X Skilling XP, the loupes, bank pages, quick slots; and "speed" walks */   /* (2026-09-30) the Frost charm is 50,000 and the outfitters show it */   /* (2026-09-30) THE FROZEN REACH OPENS */   /* (2026-09-30) THE YARD RAID: the Ice Man (the Frozen Reach stays held) */   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -159,7 +159,7 @@ export const ITEMS = {
      room is busy, and the chat line exists to make that a moment rather than a private buff nobody sees.
      `use: "double"` rather than `drink`, because a drink is a personal ten-minute buff held on the character
      and this is a SERVER clock held on the world. */
-  pot_double: { name: "2X Potion", icon: "✨", use: "double", ex: "Something the house did not mean to bottle. Drink it and, for thirty minutes, EVERY player on the server earns double tickets and double crafting xp. One at a time." },
+  pot_double: { name: "2X Tickets & Crafting XP Potion", short: "2X Tickets", icon: "✨", use: "double", ex: "Something the house did not mean to bottle. Drink it and, for 30 minutes, EVERY player on the server earns 2X TICKETS and 2X CRAFTING XP (anything made at a station). Gathering and combat xp are not doubled: that is the 2X Skilling XP Potion. One at a time." },
   carnivalticket: { name: "Carnival ticket", icon: "🎟️", ex: "ADMIT ONE. Torn off a roll a long time ago. The turnstile in the north-west still takes them." },
   clover: { name: "Lucky clover", icon: "🍀", luck: 15, ex: "Turns up while you fish. Click it: your next 15 kills or catches are LUCKY (a real ZCoin is 25% more likely to drop)." },
   horseshoe: { name: "Lucky horseshoe", icon: "🧲", luck: 25, ex: "Rare, and only found while fishing. Click it: your next 25 kills or catches are LUCKY." },
@@ -1113,7 +1113,7 @@ export const STEP_MS = 200 /* (v95, the owner: "make users default walk speed ab
    anywhere, so every level of it did precisely nothing — which is most of why The Run felt like a treadmill. It
    goes in with the meals and the boots rather than beside them, so it lands inside SPEED_FULL/SPEED_CAP's
    diminishing returns and cannot stack past a ceiling that was designed before the skill existed. */
-export function speedRaw(c, extra = 0) { let raw = extra + petFx(c).speed + agilBonus(c) + charmOf(c, "haste"); for (const k of Object.values(c.eq || {})) if (k && ITEMS[k]?.spd) raw += ITEMS[k].spd; return raw; }   /* eq.pet is an id, not an item key, so the loop below skips it and petFx adds it instead */
+export function speedRaw(c, extra = 0) { let raw = extra + petFx(c).speed + agilBonus(c) + charmOf(c, "haste") + fxWalk(c);   /* (2026-09-30) fxWalk: food, drinks, gear and achievements that say "speed" now walk too (see the Store, round two) */ for (const k of Object.values(c.eq || {})) if (k && ITEMS[k]?.spd) raw += ITEMS[k].spd; return raw; }   /* eq.pet is an id, not an item key, so the loop below skips it and petFx adds it instead */
 export function speedBonus(c, extra = 0) { const raw = speedRaw(c, extra); return Math.max(0, Math.min(SPEED_CAP, Math.min(SPEED_FULL, raw) + Math.max(0, raw - SPEED_FULL) * 0.5)); }
 export const stepMsOf = (c, extra = 0) => Math.round(STEP_MS / (1 + speedBonus(c, extra) / 100));
 /* (2026-09-22) THE NUMBER, FOR READING. Every speed source used to be a whole number, so the stat panel could print
@@ -2663,7 +2663,7 @@ Object.assign(SCENES, {
       /* (2026-09-28) SPROCKET SAL'S SCRAP BENCH (Tinkering), at the slab's south-east corner beside her: the jeweller's bench picture until
          the bench has its own art. Only while Tinkering is open. */
       if (!HOLD.tinker) { objs.push({ t: "scrapbench", art: "o_scrapbench", x: 5, y: 17, name: "The Scrap Bench: salvage your junk into parts, and build gadgets" }); g[17][5] = "P"; keep.push([5, 17]); }
-      objs.push({ t: "sign", art: "o_roadwork", x: 5, y: 15, name: "YARD UNDER CONSTRUCTION. Bronny the Foreman is rebuilding the Yard, and he needs materials. Fill his order together and the whole server gets a 2X Potion." }); g[15][5] = "#"; keep.push([5, 15]);
+      objs.push({ t: "sign", art: "o_roadwork", x: 5, y: 15, name: "YARD UNDER CONSTRUCTION. Bronny the Foreman is rebuilding the Yard, and he needs materials. Fill his order together and the whole server gets 2X Tickets & Crafting XP." }); g[15][5] = "#"; keep.push([5, 15]);
       for (let x = 0; x < COLS; x++) keep.push([x, 12], [x, 14]);
       wild(g, objs, this.exits, { n: "forest", s: "forest", w: "forest", e: "forest" }, [...keepOf(this), ...keep], 12);
       return { g, objs, blobs: [] };
@@ -7269,7 +7269,7 @@ export function normChar(c) {
      feature last exactly until the player's next login. A forged entry is passed to addInv with its level, so it
      lands in a slot of its own instead of being merged into the plain stack beside it. */
   const renamed = (st) => (st && st.k ? { k: aliasKey(st.k), n: st.n, ...(st.f ? { f: st.f } : {}), ...(Number.isInteger(st.p) && st.p >= 0 ? { p: st.p } : {}) } : st);   /* (2026-09-27) the bank page, or the bag slot, rides along */
-  out.bank = (Array.isArray(c.bank) ? c.bank : []).map(renamed).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, BANK_MAX).map((s) => ({ k: s.k, n: s.n, ...(s.f ? { f: s.f } : {}), ...(s.p > 0 ? { p: Math.min(BANK_PAGES - 1, s.p | 0) } : {}) }));   /* (2026-09-27) the page comes through a save */
+  out.bank = (Array.isArray(c.bank) ? c.bank : []).map(renamed).filter((s) => s && ITEMS[s.k] && s.n > 0).slice(0, bankMaxOf(out)).map((s) => ({ k: s.k, n: s.n, ...(s.f ? { f: s.f } : {}), ...(s.p > 0 ? { p: Math.min(bankPagesOf(out) - 1, s.p | 0) } : {}) }));   /* (2026-09-30) the Store's extra pages */   /* (2026-09-27) the page comes through a save */
   /* (2026-09-27) CANDY CORN EXPIRES: the day after the Long Night, every load sweeps it from the bag and the bank. The wiki and the
      item say so from the first day, so nobody is surprised; the fits, the set and the cat it bought stay. */
   const expired = !hwOn() && chicagoDay() > HW.until;
@@ -7858,7 +7858,7 @@ export const NAME_FRAMES = { bone: "#efe6d0", gold: "#ffd24a", neon: "#ff4fd8", 
 export const STORE = {};
 const st = (id, row) => { STORE[id] = { id, ...row }; };
 /* boosts: consumables; the 2X is the room's, one at a time */
-st("double", { tab: "boost", kind: "double", name: "2X Potion", price: 100000, icon: "pot_double", ex: "Thirty minutes of double tickets and double crafting xp for EVERYONE on the server, popped in your name. One at a time: while one runs, this waits." });
+st("double", { tab: "boost", kind: "double", name: "2X Tickets & Crafting XP Potion", price: 100000, icon: "pot_double", ex: "30 minutes of 2X TICKETS and 2X CRAFTING XP (anything made at a station) for EVERYONE on the server, popped in your name. Gathering and combat xp are not doubled. One at a time: while one runs, this waits." });
 st("clovers", { tab: "boost", kind: "give", give: ["clover", 5], name: "Lucky Clovers ×5", price: 8000, icon: "clover", ex: "Five clovers. Each makes your next fifteen kills or catches lucky." });
 st("homeward", { tab: "boost", kind: "give", give: ["scroll_homeward", 3], name: "Homeward Scrolls ×3", price: 5000, icon: "scroll_homeward", ex: "Three pages home. Wizardry prints them cheaper; this is for people in a hurry." });
 /* name colours: the ten, three of them dear */
@@ -9414,7 +9414,7 @@ if (!HOLD.frozen) { for (const k of FROZEN_MAPS) { OPEN.add(k); PET_SCENES.add(k
        share of the damage, never less than RAID.pay.floor; the boss's own report and shared drops as any open boss;
      - LOSE: the Yard is sacked for RAID.sackMs: the shopping (RAID.closes: Bom's counter and cashier, Nestor, Livia's market, Hexa) is boarded
        up. Nobody loses anything they own. */
-export const RAID = { scene: "workyard", zoneX: 24, warnMs: 5 * 60000, warnAt: [240, 180, 120, 60, 30],   /* (2026-09-30, the owner: "a 5 minute warning too with a countdown every minute, then one at 30 seconds") */ lasts: 20 * 60000, waveEvery: 2 * 60000, sackMs: 10 * 60000,
+export const RAID = { horn: { minOnline: 5, gapMs: 3 * 3600000 },   /* (2026-09-30) the Store's War Horn: 5 online, 3 hours between raids (from any start) */ scene: "workyard", zoneX: 24, warnMs: 5 * 60000, warnAt: [240, 180, 120, 60, 30],   /* (2026-09-30, the owner: "a 5 minute warning too with a countdown every minute, then one at 30 seconds") */ lasts: 20 * 60000, waveEvery: 2 * 60000, sackMs: 10 * 60000,
   boss: { t: "raidchief", at: [22, 4] }, gates: [[20, 1], [21, 2], [22, 1], [23, 2], [1, 12], [1, 13], [1, 14], [2, 13]],
   wave: { base: 4, perPlayers: 2, cap: 12, kinds: [["raidwolf", 5], ["raidyeti", 3], ["raidgiant", 2]] },
   hp: { base: 4000, per: 1200, cap: 40000 }, pay: { pool: 20000, per: 3000, floor: 400 },
@@ -9536,3 +9536,157 @@ for (const M of MIX.maps) {
     for (const k of picks) { const { n, p } = pool.get(k); m.drops.push([k, n, Math.min(MIX.chance, p)]); }
   }
 }
+
+/* ============================================================ THE STORE, ROUND TWO (2026-09-30). The owner: "i like custom titles ... pet name tags,
+   extra bank pages, war horn, fireworks (more like this) extra quick slots (not rows, just 1 at a time), 2X skilling potion, but i REALLY like
+   the walking trails idea ... glowing effects, weapon hits, unique hit dots (the osrs type splashes)", with the new ones first under a NEW
+   ribbon and a few on sale; then "an item that increases odds of rolling a perfect gem". Still tickets only, still nothing that changes a
+   fight: the upgrades are room (bank, quick bar), the boosts are the room's (2X) or a roll's odds at the Sorter, everything else is looks.
+     `fresh` draws the NEW ribbon and sorts the item first in its tab; `sale` is the fraction off, and priceOf() is the one price anyone
+     charges or shows. SITE TITLES ARE GONE: a title bought on eastcoin.vip used to ride under your name; the title is the game's own now. */
+for (const k of Object.keys(STORE_TABS)) delete STORE_TABS[k];
+Object.assign(STORE_TABS, { boost: "Boosts", looks: "Effects", name: "Name", world: "World", extra: "Upgrades" });
+export const priceOf = (it) => (it ? (it.sale ? Math.round((it.price * (1 - it.sale)) / 100) * 100 : it.price) : 0);
+/* STORE_LOOKS: what the effects module (eastscape-looks.js) draws. Colours live here so the Store's swatches and the world agree. */
+export const STORE_LOOKS = {
+  trail: { embers: ["Ember trail", ["#ff7a1a", "#ffd24a", "#c42a1a"], "Sparks off your heels that float up and go out."], frost: ["Frost trail", ["#bfe8ff", "#ffffff", "#7ab8e8"], "Every step leaves a little frost on the ground."],
+    gold: ["Gold dust", ["#ffd84a", "#fff2a8", "#c8963a"], "You shed glitter. Somebody will be finding it for days."], petals: ["Sakura petals", ["#ffb7d0", "#ff8ab8", "#fff0f5"], "Petals drift down behind you and settle."],
+    hearts: ["Heart trail", ["#ff5a8a", "#ff9ab8", "#e0304a"], "Little hearts, bobbing up where you walked."], bubbles: ["Bubble trail", ["#bfe8ff", "#e8fbff", "#8ad0f0"], "Soap bubbles, rising and popping."],
+    shadow: ["Shadow steps", ["#2a1a3a", "#5a3a7a", "#140a1e"], "Dark footprints that smoke a moment before they fade."], coins: ["Coin trail", ["#ffd24a", "#e8a01f", "#fff0a0"], "Coins fall out of your pockets. They are not real. Nobody believes that."],
+    rainbow: ["Rainbow road", ["#ff4a4a", "#ffb03a", "#ffe45a", "#4fd05a", "#4a9ae8", "#b06ae8"], "A ribbon of every colour, laid down behind you. The loudest thing in the Store."] },
+  aura: { gold: ["Gilded glow", ["#ffd84a", "#fff2a8"], "A warm light around you, like you are standing under the jackpot sign."], frost: ["Frost aura", ["#9ad8ff", "#e8f8ff"], "A cold blue shine, and a little snow that never lands."],
+    ember: ["Ember aura", ["#ff6a1a", "#ffc24a"], "Heat and the odd spark, as if you were stood by a forge."], void: ["Void aura", ["#8a3ae8", "#2a0a4a"], "Something dark and purple leaks off you."],
+    holy: ["Halo", ["#fff6c0", "#ffe27a"], "A ring of light over your head. You earned it. Probably."], toxic: ["Toxic haze", ["#7ae83a", "#2a6a1a"], "A green haze and a bubble or two. People give you room."] },
+  hit: { lightning: ["Thunderstrike", ["#fff6a0", "#8ad0ff"], "A bolt comes down on whatever you hit."], flame: ["Flame burst", ["#ff7a1a", "#ffd24a"], "Your hits land in a burst of fire."],
+    shatter: ["Frost shatter", ["#bfe8ff", "#ffffff"], "Hits break off shards of ice."], slash: ["Shadow slash", ["#b06ae8", "#2a0a4a"], "A dark slash across the target, crossed twice."],
+    coins: ["Jackpot hit", ["#ffd24a", "#fff0a0"], "Every hit pays out, in coins that are not real."], stars: ["Starburst", ["#fff6c0", "#ffe45a"], "Hits land with a ring of little stars."], petals: ["Petal burst", ["#ffb7d0", "#ff8ab8"], "A cloud of petals where your hit lands."] },
+  splat: { blood: ["Blood splat", ["#8a0a14", "#e0303a"], "Your hit numbers land in a proper red splash."], gold: ["Gold splat", ["#b87a0a", "#ffe27a"], "Your hit numbers on a gold coin."],
+    ice: ["Ice splat", ["#2a6ab8", "#bfe8ff"], "Your hit numbers on a crystal of ice."], toxic: ["Venom splat", ["#2a7a10", "#9ae04a"], "Your hit numbers in a green drip of venom."],
+    void: ["Void splat", ["#3a0a6a", "#b07aff"], "Your hit numbers in a purple rift."], heart: ["Heart splat", ["#c0203a", "#ff8ab0"], "Your hit numbers on a heart. It still hurts."], skull: ["Skull splat", ["#1a1a1a", "#efe6d0"], "Your hit numbers on a little skull."] },
+  ptag: { leather: ["Leather pet tag", ["#e8d0a0", "#5a3220"], "Your pet's name over its head, for everyone to read."], gold: ["Gold pet tag", ["#ffd84a", "#5a3a08"], "Your pet's name over its head, in gold."],
+    glow: ["Glowing pet tag", ["#9af0ff", "#0a3a4a"], "Your pet's name over its head, glowing."] }
+};
+export const LOOK_SLOTS = Object.keys(STORE_LOOKS);
+export const LOOK_GROUPS = { trail: "Walking trail", aura: "Glow", hit: "Weapon hit", splat: "Hit splat", ptag: "Pet name tag" };
+const LOOK_PRICE = { trail: { embers: 40000, frost: 40000, gold: 50000, petals: 45000, hearts: 35000, bubbles: 30000, shadow: 60000, coins: 50000, rainbow: 150000 },
+  aura: { gold: 60000, frost: 50000, ember: 50000, void: 80000, holy: 90000, toxic: 45000 }, hit: { lightning: 60000, flame: 45000, shatter: 45000, slash: 55000, coins: 50000, stars: 35000, petals: 40000 },
+  splat: { blood: 25000, gold: 40000, ice: 30000, toxic: 30000, void: 45000, heart: 30000, skull: 35000 }, ptag: { leather: 10000, gold: 25000, glow: 40000 } };
+const LOOK_SALE = { trail_embers: 0.3, splat_gold: 0.25 };
+for (const [slot, set] of Object.entries(STORE_LOOKS)) for (const [v, [name, cols, ex]] of Object.entries(set)) st(`${slot}_${v}`, { tab: "looks", kind: slot, slot, val: v, cols, name, price: LOOK_PRICE[slot][v], ex, fresh: true, ...(LOOK_SALE[`${slot}_${v}`] ? { sale: LOOK_SALE[`${slot}_${v}`] } : {}) });
+/* TITLES: under your name, in « », for everyone. Presets, or words of your own. */
+export const TITLES = ["GAMBA", "Degen", "the Unlucky", "High Roller", "Card Counter", "House Money", "the Grinder", "Big Fish", "Ticket Goblin", "Yard Defender", "Frostbitten", "Fossil Hunter", "Touch Grass", "No Sleep"];
+for (const t of TITLES) st(`title_${t.toLowerCase().replace(/[^a-z]+/g, "")}`, { tab: "name", kind: "title", slot: "title", val: t, name: `« ${t} »`, price: 15000, fresh: true, ex: "A title under your name, over your head and on your profile." });
+st("title_custom", { tab: "name", kind: "title", slot: "title", val: "custom", name: "Your own title", price: 150000, fresh: true, ex: "Write your own title (2-20 letters), and change it whenever you like once it's yours." });
+export const TITLE_MAX = 20;
+const TITLE_BAN = /n[i1!|]+gg|f[a@4]gg?[o0]t|f[a@4]g$|r[e3]t[a@4]rd|k[i1]ke$|tr[a@4]nn|ch[i1]nk|sp[i1]c$|wh[o0]re|sl[u*]t|c[u*]nt|n[a@4]z[i1]|h[i1]tl[e3]r|r[a@4]p[e3]|p[e3]d[o0]|k[i1]lly[o0]urs[e3]lf|^kys$/i;
+/** A title somebody typed, safe to draw over their head, or "" when it will not do. */
+export const cleanTitle = (s) => { const t = String(s || "").replace(/[\u0000-\u001f<>&"`\\]/g, "").replace(/\s+/g, " ").trim().slice(0, TITLE_MAX); return t.length >= 2 && !TITLE_BAN.test(t.replace(/[\s._'-]/g, "")) && !/https?:|www\.|\.(com|gg|tv|net)\b/i.test(t) ? t : ""; };
+/* WORLD MOMENTS: bought, set off where you stand, seen by everyone in that area. One at a time in any one area. */
+export const WFX = { fireworks: { ms: 25000, say: "\u{1F386}" }, confetti: { ms: 6000 }, lanterns: { ms: 40000, say: "\u{1F3EE}" }, snow: { ms: 5 * 60000 } };
+st("wfx_fireworks", { tab: "world", kind: "wfx", val: "fireworks", name: "Fireworks", price: 20000, sale: 0.25, fresh: true, emo: "\u{1F386}", ex: "Twenty-five seconds of rockets over wherever you are standing, for everyone there, and CASINO tells the server who lit them." });
+st("wfx_confetti", { tab: "world", kind: "wfx", val: "confetti", name: "Confetti Cannon", price: 6000, fresh: true, emo: "\u{1F389}", ex: "One big bang of confetti over everyone near you. For a win, a level, or no reason." });
+st("wfx_lanterns", { tab: "world", kind: "wfx", val: "lanterns", name: "Sky Lanterns", price: 15000, fresh: true, emo: "\u{1F3EE}", ex: "Forty seconds of paper lanterns rising over the area you're in. CASINO tells the server." });
+st("wfx_snow", { tab: "world", kind: "wfx", val: "snow", name: "Snow Globe", price: 12000, fresh: true, emo: "\u{2744}\u{FE0F}", ex: "Five minutes of snow over the area you're in, for everyone there." });
+st("horn", { tab: "world", kind: "horn", name: "War Horn", price: 350000, fresh: true, emo: "\u{1F4EF}", ex: "Blow it and the Ice Man comes for the Yard in five minutes, in your name. Needs 5 people online, never while the Pumpkin King is up, and three hours between raids." });
+/* THE 2X SKILLING POTION: its own clock beside the 2X Potion's. Double xp in every skill that is not a fighting one, for everyone. */
+export const SKILL2X = { ms: 30 * 60000, mult: 2, not: new Set(["melee", "hp", "archery", "magic"]) };
+st("skill2x", { tab: "boost", kind: "skill2x", name: "2X Skilling XP Potion", price: 75000, fresh: true, emo: "\u{2692}\u{FE0F}", ex: "30 minutes of 2X XP in every non-combat skill (gathering AND crafting) for EVERYONE on the server, in your name. Tickets are not doubled; combat xp is not doubled. Does not stack with the 2X Tickets potion's crafting xp. One at a time." });
+/* THE LOUPES (the owner: "an item that increases odds of rolling a perfect gem", then "they should be expensive and clearly say the rate
+   changes"): rolls at the Gem Sorter with the top of the table lifted. Charges, not minutes, so one is never wasted standing still; the Sorter
+   spends one on every roll while you hold any, the Master's first. PRICED AT ABOUT BREAK-EVEN per Perfect against plain rolls (213 rolls at
+   10,000 is 2.13M): the Loupe comes to ~1.96M a Perfect, the Master's ~2.0M. What they buy is SPEED (a Perfect in 56 or 20 rolls rather
+   than 213) and the +8s and +9s on the way. Every rate is in the item's own words, before and after; the content check recomputes them. */
+export const LOUPES = { loupe: { rolls: 10, lift: { 8: 2, 9: 3, 10: 4 } }, loupe2: { rolls: 10, lift: { 8: 3, 9: 6, 10: 12 } } };
+export const LOUPE_MAX = 50;
+st("loupe", { tab: "boost", kind: "loupe", name: "Jeweller's Loupe", price: 250000, fresh: true, emo: "\u{1F50E}", ex: "10 rolls at the Gem Sorter with better odds. PERFECT +10: 1 in 213 -> 1 in 56. +9: 1 in 107 -> 1 in 37. +8: 1 in 53 -> 1 in 28. Each roll still costs its 10,000. Stacks up to 50 rolls." });
+st("loupe2", { tab: "boost", kind: "loupe", name: "Master Jeweller's Loupe", price: 900000, fresh: true, emo: "\u{1F48E}", ex: "10 rolls at the Gem Sorter with far better odds. PERFECT +10: 1 in 213 -> 1 in 20. +9: 1 in 107 -> 1 in 20. +8: 1 in 53 -> 1 in 20. About a 40% chance of a Perfect in the 10. Used before a plain Loupe. Each roll still costs its 10,000. Stacks up to 50 rolls." });
+/* UPGRADES: room. Each one bought again adds one more, up to its max. */
+export const STORE_UP = { bank: { max: 5, slots: 40 }, quick: { max: 4 } };
+st("bankpage", { tab: "extra", kind: "bank", name: "Extra bank page", price: 60000, sale: 0.2, fresh: true, emo: "\u{1F3E6}", ex: "One more bank page and 40 more bank slots. Up to five more." });
+st("quickslot", { tab: "extra", kind: "quick", name: "Extra quick slot", price: 40000, fresh: true, emo: "\u{26A1}", ex: "One more quick slot on your bar, with its own number key. Up to four more (keys 5-8)." });
+export const upOf = (c, k) => Math.max(0, Math.min(STORE_UP[k].max, (k === "bank" ? c?.store?.bankx : c?.store?.qx) | 0));
+export const bankMaxOf = (c) => BANK_MAX + STORE_UP.bank.slots * upOf(c, "bank");
+export const bankPagesOf = (c) => BANK_PAGES + upOf(c, "bank");
+export const quickNOf = (c) => 4 + upOf(c, "quick");
+/** how many lifted rolls a character holds of one loupe */
+export const loupeOf = (c, k = "loupe") => Math.max(0, Math.min(LOUPE_MAX, c?.store?.[k] | 0));
+/** the chance of a roll (0..1) with a loupe's lift, for the item's words and the content check */
+export const gemOddsLoupe = (k, r) => { const lift = LOUPES[k]?.lift || {}, W = GEMSET.odds.map((w, i) => w * (lift[GEMSET.roll[0] + i] || 1)); return (W[r - GEMSET.roll[0]] || 0) / W.reduce((a, w) => a + w, 0); };
+/** the Sorter's roll with a loupe's lift on the top of the table */
+export const gemRollLoupe = (k, rnd = Math.random) => {
+  const lift = LOUPES[k]?.lift || {}, W = GEMSET.odds.map((w, i) => w * (lift[GEMSET.roll[0] + i] || 1)), sum = W.reduce((a, w) => a + w, 0); let x = rnd() * sum;
+  for (let i = 0; i < W.length; i++) if ((x -= W[i]) < 0) return GEMSET.roll[0] + i;
+  return GEMSET.roll[0];
+};
+/** what everything you can wear goes in: the name's four, the title, and the looks */
+export const WEAR_SLOTS = [...STORE_SLOTS, "title", ...LOOK_SLOTS];
+const wornIn = (c, slot) => { const id = c?.store?.name?.[slot], it = id && STORE[id]; return it && it.slot === slot && (c.store.own || []).includes(id) ? it : null; };
+/** the looks a character wears, { trail, aura, hit, splat, ptag } of STORE_LOOKS keys, or null */
+export const looksOf = (c) => { let out = null; for (const s of LOOK_SLOTS) { const it = wornIn(c, s); if (it) (out ||= {})[s] = it.val; } return out; };
+export const looksSig = (l) => (l ? LOOK_SLOTS.map((s) => l[s] || "").join(".") : "");
+/** the title under a character's name, or "" */
+export const titleOf = (c) => { const it = wornIn(c, "title"); return !it ? "" : it.val === "custom" ? cleanTitle(c.store.ttext) : it.val; };
+/** (2026-09-30) THE WALKING FIX (see speedRaw): the fxOf speed lever, as whole percent of walking */
+export const fxWalk = (c) => Math.round(fxOf(c).speed * 1000) / 10;
+/* THE STORE'S DECOR (2026-09-30). The owner: "lets also add some crazy cool house decor and island items", then "take a look at other games
+   with customization options like the sims, etc. what are the most popular decor items? lets add those". Showpieces nobody else sells, and
+   the pieces other games' players reach for first: the grand piano, fireplace, canopy bed and clawfoot tub (the Sims), the frog chair,
+   crescent-moon chair, mushroom parasol and cherry tree (Animal Crossing), the mounted head, spirit tree and ornate pool (OSRS's house).
+   ONE LIST, read by the decor rules (createDecorRules folds them into DECOR with store: true, so placing, the caps and the walling-off
+   check are Yahsmeena's) and by the Store below (which sells them into isle.owned). Yahsmeena will not sell these, only buy one back.
+   `fx` is what the looks module draws over a placed piece: embers, swirl, bulbs, sparkle, notes, petals, or glow:<colour>. */
+export const STORE_DECOR = {
+  slotstatue:  { name: "Jackpot Monument", in: "isle", w: 2, h: 1, price: 250000, max: 1, fx: "bulbs", ex: "A solid gold slot machine on a marble plinth, three sevens up, lights running round it. The loudest thing you can own." },
+  portal:      { name: "Void Portal", in: "isle", w: 2, h: 1, price: 200000, max: 1, fx: "swirl", ex: "An old stone arch with somewhere else swirling in it. It goes nowhere. Probably." },
+  volcano:     { name: "Backyard Volcano", in: "isle", w: 2, h: 2, price: 150000, max: 1, fx: "embers", ex: "Waist-high, smoking, and throwing sparks. The neighbours have stopped asking." },
+  dragonskull: { name: "Dragon Skull", in: "isle", w: 3, h: 2, price: 120000, max: 1, fx: "glow:#7aff6a", ex: "Something enormous died here a long time ago. Its eyes still glow a little." },
+  wreck:       { name: "Pirate Wreck", in: "isle", w: 3, h: 2, price: 120000, max: 1, fx: "sparkle", ex: "A beached little pirate ship and the chest it could not carry any more." },
+  balloon:     { name: "Hot Air Balloon", in: "isle", w: 2, h: 2, price: 100000, max: 1, ex: "Red and gold, tied down at the corners, going nowhere in style." },
+  obelisk:     { name: "Crystal Obelisk", in: "isle", w: 1, h: 1, price: 60000, fx: "glow:#9af0ff", ex: "A spire of cold blue crystal that lights the ground around it." },
+  neonpalm:    { name: "Neon Palm", in: "isle", w: 1, h: 1, price: 40000, fx: "glow:#ff4fd8", ex: "A palm tree made of pink and blue neon. The casino's idea of nature." },
+  cherrytree:  { name: "Cherry Blossom Tree", in: "isle", w: 2, h: 2, price: 45000, fx: "petals", ex: "Pink the whole year round, and always dropping a petal or two." },
+  mushparasol: { name: "Mushroom Parasol", in: "isle", w: 1, h: 1, price: 15000, ex: "A giant red-capped mushroom to sit under. The cellar grew it; you keep it." },
+  telescope:   { name: "Brass Telescope", in: "isle", w: 1, h: 1, price: 20000, ex: "On a tripod, pointed at the sky, and at the neighbours when nobody is looking." },
+  swingset:    { name: "Swing Set", in: "isle", w: 2, h: 1, price: 18000, ex: "Two swings on a painted frame. Everybody has a go." },
+  trampoline:  { name: "Trampoline", in: "isle", w: 2, h: 2, price: 22000, ex: "A big round trampoline with a safety net nobody uses." },
+  rejuvpool:   { name: "Ornate Pool", in: "isle", w: 2, h: 2, price: 90000, max: 1, fx: "glow:#7ae8ff", ex: "A marble basin of glowing blue water, carved like a shrine. It heals nobody. It looks like it should." },
+  spirittree:  { name: "Spirit Tree", in: "isle", w: 2, h: 2, price: 80000, max: 1, ex: "An old tree with a face in its bark. It watches your plots for you. It does not do anything else." },
+  pumpkins:    { name: "Jack-o'-Lantern Pile", in: "isle", w: 1, h: 1, price: 12000, fx: "glow:#ff9a2a", ex: "Three carved pumpkins, lit, grinning. Allowed in any month." },
+  hoard:       { name: "Dragon's Hoard", in: "home", w: 2, h: 1, price: 150000, max: 1, fx: "sparkle", ex: "A heap of gold, gems and a crown, right there on the cottage floor. Do not ask where it came from." },
+  sharktank:   { name: "Shark Tank", in: "home", w: 2, h: 1, price: 90000, max: 1, wall: true, ex: "A wall of glass, a little shark and a sunken chest. It keeps an eye on you." },
+  throne:      { name: "Casino Throne", in: "home", w: 1, h: 1, price: 80000, max: 1, ex: "Gold, red velvet and poker chips carved into the back. For the house's best customer." },
+  piano:       { name: "Grand Piano", in: "home", w: 2, h: 2, price: 60000, max: 1, ex: "Black lacquer, lid up, gold pedals. Nobody here can play it. Doesn't matter." },
+  jukebox:     { name: "Jukebox", in: "home", w: 1, h: 1, price: 50000, max: 1, fx: "notes", ex: "Neon tubes, chrome and a stack of records. It hums to itself." },
+  canopybed:   { name: "Canopy Bed", in: "home", w: 2, h: 2, price: 50000, max: 1, ex: "Four carved posts, red velvet curtains and a gold canopy. You will never want to log off." },
+  arcade:      { name: "Arcade Cabinet", in: "home", w: 1, h: 1, price: 45000, fx: "glow:#9a7aff", ex: "A purple arcade machine with its screen always on attract mode." },
+  fireplace:   { name: "Stone Fireplace", in: "home", w: 2, h: 1, price: 40000, max: 1, wall: true, fx: "embers", ex: "A crackling fire, a mantel and a little clock. The cosiest thing in the Store." },
+  mountedhead: { name: "Mounted Dragon Head", in: "home", w: 1, h: 1, price: 35000, max: 1, wall: true, ex: "The trophy wall's centrepiece. You definitely killed it yourself." },
+  bathtub:     { name: "Clawfoot Tub", in: "home", w: 2, h: 1, price: 30000, max: 1, ex: "White porcelain on gold feet, full of bubbles, with a duck." },
+  lavalamp:    { name: "Giant Lava Lamp", in: "home", w: 1, h: 1, price: 25000, fx: "glow:#ff4fa8", ex: "Taller than you, glowing pink, blobs going up and down forever." },
+  moonchair:   { name: "Crescent Moon Chair", in: "home", w: 1, h: 1, price: 25000, ex: "A sleepy crescent moon to sit in, and a few stars that never go out." },
+  frogchair:   { name: "Frog Chair", in: "home", w: 1, h: 1, price: 20000, ex: "A green armchair shaped like a smiling frog. Every game has one. Now this one does." }
+};
+for (const [k, P] of Object.entries(STORE_DECOR)) st(`decor_${k}`, { tab: "decor", kind: "decor", dk: k, name: P.name, price: P.price, ex: `${P.ex} ${P.in === "home" ? "For inside your cottage" : "For your island"}; ${P.w}x${P.h}${P.wall ? ", on the back wall" : ""}. Put it down with Decorate.`, fresh: true, ...(k === "cherrytree" || k === "fireplace" ? { sale: 0.2 } : {}) });
+STORE_TABS.decor = "Decor";
+{ const t = { ...STORE_TABS }; for (const k of Object.keys(STORE_TABS)) delete STORE_TABS[k]; for (const k of ["boost", "looks", "name", "decor", "world", "extra"]) STORE_TABS[k] = t[k]; }
+/* (2026-09-30, the owner, on the Store's Boosts: "format how the boosts descriptions read better, either rows or something thats easier to
+   understand/better UX") EVERY BOOST, SHOW, HORN AND UPGRADE CARRIES `lead` (one line: what it is) and `facts` (rows: label, value; or
+   label, before, after for a rate that changes), and the Store draws them as a table in a full-width row. `ex` stays the long form, for the
+   wiki. The loupes' rows are WORKED OUT from gemOdds / gemOddsLoupe, so their words can never drift from the rates they pay. */
+{ const F = (id, lead, facts) => Object.assign(STORE[id], { lead, facts }), oneIn = (p) => `1 in ${Math.round(1 / p)}`;
+  F("double", "Double tickets and double crafting xp, for everyone.", [["Lasts", "30 minutes"], ["For", "everyone on the server, in your name"], ["Doubles", "all tickets, and crafting xp (anything made at a station)"], ["Not doubled", "gathering xp, combat xp"], ["Limit", "one at a time"]]);
+  F("skill2x", "Double xp in every non-combat skill, for everyone.", [["Lasts", "30 minutes"], ["For", "everyone on the server, in your name"], ["Doubles", "gathering and crafting xp: every skill that isn't a fighting one"], ["Not doubled", "tickets, combat xp"], ["With 2X Tickets", "crafting xp stays 2X, never 4X"], ["Limit", "one at a time"]]);
+  for (const k of ["loupe", "loupe2"]) F(k, k === "loupe" ? "Better odds at the Gem Sorter, for 10 rolls." : "Far better odds at the Gem Sorter, for 10 rolls.", [
+    ["Rolls", `${LOUPES[k].rolls}, used one per roll at the Sorter${k === "loupe2" ? " (before a plain Loupe)" : ""}`],
+    ...[10, 9, 8].map((r) => [r === 10 ? "Perfect +10" : `+${r}`, oneIn(gemOdds(r)), oneIn(gemOddsLoupe(k, r))]),
+    ...(k === "loupe2" ? [["A Perfect in the 10", `about ${Math.round((1 - (1 - gemOddsLoupe(k, 10)) ** 10) * 100)}%`]] : []),
+    ["Each roll", "still costs 10,000"], ["Holds", `up to ${LOUPE_MAX} rolls`]]);
+  F("clovers", "Five lucky clovers.", [["Each", "makes your next 15 kills or catches lucky"]]);
+  F("homeward", "Three pages home.", [["Each", "takes you straight to your island"], ["Cheaper", "Wizardry prints them"]]);
+  F("wfx_fireworks", "Rockets over wherever you're standing.", [["Lasts", "25 seconds"], ["Seen by", "everyone in that area"], ["CASINO", "tells the server who lit them"]]);
+  F("wfx_confetti", "One big bang of confetti over everyone near you.", [["Lasts", "6 seconds"], ["Seen by", "everyone in that area"]]);
+  F("wfx_lanterns", "Paper lanterns rising over the area.", [["Lasts", "40 seconds"], ["Seen by", "everyone in that area"], ["CASINO", "tells the server"]]);
+  F("wfx_snow", "Snow over the area you're in.", [["Lasts", "5 minutes"], ["Seen by", "everyone in that area"]]);
+  F("horn", "Calls the Ice Man down on the Yard, in your name.", [["Warning", "5 minutes, then the raid"], ["Needs", `${RAID.horn.minOnline} people online`], ["Not while", "the Pumpkin King is up, a raid is on, or the Yard is sacked"], ["Cooldown", `${RAID.horn.gapMs / 3600000} hours between raids`]]);
+  F("bankpage", "One more bank page.", [["Adds", `1 page and ${STORE_UP.bank.slots} bank slots`], ["Up to", `${STORE_UP.bank.max} more (${BANK_PAGES + STORE_UP.bank.max} pages, ${BANK_MAX + STORE_UP.bank.max * STORE_UP.bank.slots} slots)`]]);
+  F("quickslot", "One more quick slot on your bar.", [["Adds", "1 slot with its own number key"], ["Up to", `${STORE_UP.quick.max} more (keys 5 to 8)`]]); }

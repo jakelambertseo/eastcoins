@@ -469,7 +469,7 @@ head("the 2X event");
   const inPaid = paidLine.includes("doubleOn()"), inDropped = dropLine.includes("doubleOn()");
   if (!inPaid) bad("tixTo does not apply the 2X event", "everything PAID in tickets would miss it");
   if (!inDropped) bad("a kill's dropped tickets do not apply the 2X event", "the biggest ticket source in the game would miss it");
-  const xp = idx.includes("this.doubleOn() ? G.DOUBLE.mult : 1");
+  const xp = idx.includes("this.doubleOn() && !this.skill2xOn() ? G.DOUBLE.mult : 1") && idx.includes("this.skill2xOn() && !G.SKILL2X.not.has(k)");   /* (2026-09-30) the 2X Tickets potion doubles crafting xp unless 2X Skilling XP (which doubles it in grant) is running: never 4X */
   if (!xp) bad("crafting xp does not apply the 2X event", "the station loop is what the owner meant by crafting");
   if (inPaid && inDropped && xp) console.log(`  checked both ticket paths and crafting xp at x${G.DOUBLE.mult} for ${Math.round(G.DOUBLE.ms / 60000)} minutes`);
 }

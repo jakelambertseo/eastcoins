@@ -1133,6 +1133,21 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-30", title: "The Store, rebuilt",
+    items: [
+      "THE STORE IS REBUILT, with six tabs: Boosts, Effects, Name, Decor, World and Upgrades. New things wear a NEW ribbon and come first, and a few are ON SALE.",
+      "EFFECTS: walking trails (embers, frost, gold dust, sakura petals, hearts, bubbles, shadow steps, coins and the Rainbow Road), glows (gilded, frost, ember, void, a halo, toxic haze), weapon hits (thunderstrike, flame burst, frost shatter, shadow slash, jackpot coins, starburst, petals) and hit splats (blood, gold coin, ice, venom, void, heart, skull). Everyone sees them. Press Try in the Store to walk about in one before you buy it.",
+      "TITLES are the game's own now: fourteen to pick from, or write your own (2 to 20 letters, change it whenever you like). Titles from eastcoin.vip no longer show in the game.",
+      "PET NAME TAGS: your pet's name over its head, in leather, gold or glowing.",
+      "THE 2X POTIONS SAY WHAT THEY DO: the old 2X Potion is now 2X TICKETS & CRAFTING XP, and there is a new 2X SKILLING XP potion (every non-combat skill, for everyone, 30 minutes). Running together, crafting xp stays 2X, never 4X.",
+      "THE LOUPES, for the Gem Sorter: the Jeweller's Loupe (a Perfect gem 1 in 56 instead of 1 in 213) and the Master Jeweller's Loupe (1 in 20), 10 rolls each. The Sorter shows the odds you're rolling at.",
+      "DECOR: 29 pieces you can only get here, for your island and your cottage: a Jackpot Monument, a Void Portal, a Backyard Volcano, a Dragon Skull, a Pirate Wreck, a Grand Piano, a Fireplace, a Canopy Bed, a Frog Chair, a Cherry Blossom Tree, an Ornate Pool and more. Some of them glow, smoke or play music. Put them down with Decorate.",
+      "WORLD: Fireworks, a Confetti Cannon, Sky Lanterns and a Snow Globe, set off wherever you are for everyone there; and the WAR HORN, which calls the Ice Man down on the Yard in your name (5 online, 3 hours between raids).",
+      "UPGRADES: extra bank pages (40 slots each, up to five more) and extra quick slots (up to 8, keys 5 to 8).",
+      "FIX: anything that said it made you faster (food, drinks, the Ditched set, Yeti-fur boots, the achievement) only ever sped up your swings. It makes you walk faster too now.",
+    ],
+  },
+  {
     date: "2026-09-30", title: "The Frozen Reach",
     items: [
       "TWO NEW MAPS NORTH OF CLOUDREACH: the Frozen Reach and the Frostspire, monsters from level 100 to 115. A MAGE'S COUNTRY: a wand and Magic 60 let you in whatever your Combat, every creature takes 40% more from spells (the owls 70%), spells land at least half the time up there, and most of them stand on snowy shelves and ice floes where no sword reaches.",

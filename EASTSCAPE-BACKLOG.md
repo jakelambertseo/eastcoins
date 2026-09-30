@@ -2084,3 +2084,11 @@ Shared 395, wiki 221. The player who reported the gem take-out can be told it's 
   and smith_frostward_ring / smith_frostward_amulet / smith_yeti_boots make items with no `tier`, so they never appear in any tab. The server would
   make them if asked. Fix: give them a place in the anvil window (e.g. a "Frost" group, or a tier such as the onyx/dragonstone one their bars come from).
 - The Frost CHARM is not craftable by design: it is bought from Wren / Morwenna (50,000 since rules 368). Say so in the wiki if players expect it at the anvil.
+
+## NEXT (2026-09-30, the owner, during the Store build): ISLAND IMPROVEMENTS, significantly - "its a fan favorite of players"
+- The owner: "we need to make the island sizes bigger (and make sure to retain everyones custom placed decor), make them look better,
+  offer different cottage customization, and ideate how we can make islands better in general".
+- Constraints: every existing isle.decor [{k,x,y,at}] must survive a resize (shift or re-map coordinates; decorFits must still pass, and
+  anything that no longer fits goes back to isle.owned as spare, never lost). Plots, pedestals, pen, hatchery, cellar ladder, bank chest too.
+- To bring: bigger island tiers/maps, a look pass (Yard ground rules, shoreline, props), cottage styles (interior/exterior skins, wallpaper,
+  floors), and a list of ideas (visiting/likes, island ratings, guest book, decor sets, lighting at night, etc.).

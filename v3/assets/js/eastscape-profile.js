@@ -179,7 +179,7 @@ export function createProfile(env) {
     frame(); const S = G.SKILLS;
     $("profSub").innerHTML = `<i class="dot${p.online ? " on" : ""}" aria-hidden="true"></i>${p.online ? "online now" : "offline"}`;   /* (the owner: a green pulsing circle when they're online, a red one when they're not) */
     $("profBody").innerHTML = `<div class="pr-top">
-        <div class="pr-who"><div class="pr-pic"></div><div class="pr-name">${esc(p.name)}</div><div class="pr-sub">${p.cos?.title ? esc(p.cos.title) : `Combat ${p.combat}`}</div></div>
+        <div class="pr-who"><div class="pr-pic"></div><div class="pr-name">${esc(p.name)}</div><div class="pr-sub">${p.ttl ? `« ${esc(p.ttl)} »` : `Combat ${p.combat}`}</div></div>
         <div class="pr-sk">${Object.entries(S).filter(([, d]) => !d.held).map(([k, d]) => `<div title="${esc(d.name)}: ${(p.skills[k]?.xp || 0).toLocaleString()} xp">${env.sico(k)}${esc(d.name)}<b>${p.skills[k]?.lvl ?? 1}</b></div>`).join("")}
           <div class="pr-tot">${art(UI + "total.png?v=1")}Total level<b>${p.total}</b></div></div>
       </div>
