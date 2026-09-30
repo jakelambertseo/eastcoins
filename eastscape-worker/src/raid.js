@@ -86,7 +86,7 @@ export function installRaid(World, { G }) {
     if (m.raid === "boss" && this.raid) this.raidWon(S, pl, now);
   };
   P.raidWon = function (S, pl, now) {
-    const Rd = this.raid; this.raid = null; clear(S);
+    const Rd = this.raid; this.raid = null; clear(S); this.weekCount?.("raid", "won");   /* (2026-09-30) the weekly issue */
     const rows = Object.entries(Rd.by).filter(([, d]) => d > 0), total = rows.reduce((a, [, d]) => a + d, 0) || 1, pool = R.pay.pool + R.pay.per * rows.length, paid = [];
     for (const [id, d] of rows.sort((a, b) => b[1] - a[1])) {
       const n = Math.max(R.pay.floor, Math.round((pool * d) / total)), p = this.pls.get(id);
@@ -100,7 +100,7 @@ export function installRaid(World, { G }) {
   P.raidLost = function (S, now) {
     const boss = S.mobs.find((m) => m.id === this.raid.bossId);
     if (boss) this.bossEnd(S, boss, "escaped");
-    this.raid = null; clear(S);
+    this.raid = null; clear(S); this.weekCount?.("raid", "lost");   /* (2026-09-30) the weekly issue */
     this.raidSack = { until: now + R.sackMs }; this.ctx.storage.put("raidSack", this.raidSack).catch(() => {});
     this.houseSay(`\u2744\uFE0F THE ICE MAN'S WAR PARTY HAS SACKED THE YARD. They walked out with the frost behind them and nobody stopped them. Bom, Nestor, Livia and Hexa are boarded up for ${Math.round(R.sackMs / 60000)} minutes. He will remember how easy it was.`);
   };

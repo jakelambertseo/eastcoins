@@ -37,7 +37,8 @@ import { installCards } from "./cards.js";   /* (2026-09-29) Marked Cards */
 import { installGems } from "./gems.js";
 import { installWyrm } from "./wyrm.js";
 import { installEvents } from "./events.js";   /* (2026-09-30) WORLD EVENTS */
-import { installCommands } from "./commands.js";   /* (2026-09-30) CHAT COMMANDS */   
+import { installCommands } from "./commands.js";   /* (2026-09-30) CHAT COMMANDS */
+import { installWeekly } from "./weekly.js";   /* (2026-09-30) THE WEEKLY ISSUE */   
 import { installRaid } from "./raid.js";   /* (2026-09-30) the Yard raid */   /* (2026-09-30) the Frozen Reach's daily boss */
 import { installOutfit } from "./outfit.js";   /* (2026-09-29) the outfitters: Wren and Morwenna */   /* (2026-09-28) gems, sockets, the Gem Case and the Gem Sorter */   /* (2026-09-28) Tinkering: the sink */   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
@@ -873,6 +874,7 @@ export class World {
       case "quest": return this.questOp(S, pl, m);
       case "hw": return this.hwOp(S, pl, m);
       case "tent": return this.tentOp(S, pl, m);   /* (2026-09-30) the Star Tent */
+      case "weekly": { if (now - (pl.weeklyAt || 0) < 3000) return; pl.weeklyAt = now; const n = Math.max(1, Math.min(520, m.n | 0)); this.weekStats(n).then((v) => this.send(pl, { type: "weekly", ...v })).catch(() => {}); return; }   /* (2026-09-30) THE WEEKLY ISSUE: its numbers, for the wiki */
       case "evboard": { if (now - (pl.evBoardAt || 0) < 2000) return; pl.evBoardAt = now; return this.evOpen(pl, "bountyboard"); }   /* (2026-09-30) the Bounty Board, redrawn while it is open */
       case "report": return void this.reportOp(S, pl, m).catch((e) => console.error("report", e));   /* (2026-09-28) the bug button */
       case "pen": return this.penOp(S, pl, m);
@@ -1407,6 +1409,7 @@ export class World {
       if (page.size < 500) break;
     }
     for (const r of rows) r.name = names.get(r.id) || r.name || "Someone";
+    this.hsRows = rows;   /* (2026-09-30) every character, for the weekly snapshot (weekly.js) */
 
     /* (v96) G.HISCORES names the boards. A level board breaks ties on xp; a number board lists only people who have one (nobody is
        ranked 40th for finding no ZCoins). A row is { rank, name, v, sub }: the number, and one small thing beside it. */
@@ -2774,7 +2777,7 @@ export class World {
       const gates = S.def?.gates; if (!gates) continue;
       for (const gt of gates) { const open = G.gateOpenAt(now, gt) ? "i" : "#"; for (const [gx, gy] of G.gateTiles(gt)) S.g[gy][gx] = open; }
     }
-    if (this.tickN % 20 === 0) { this.evTick(now);   /* (2026-09-30) WORLD EVENTS */ this.wyrmTick(now);   /* (2026-09-30) the Ice Wyrm */ this.coldTick(now);   /* (2026-09-30) the Frozen Reach's cold */ this.raidTick(now);   /* (2026-09-30) the Yard raid */ this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.skill2xTick(); this.hwTick(now); this.orderTick(now); this.projTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
+    if (this.tickN % 20 === 0) { this.evTick(now);   /* (2026-09-30) WORLD EVENTS */ this.weekTick(now);   /* (2026-09-30) THE WEEKLY ISSUE */ this.wyrmTick(now);   /* (2026-09-30) the Ice Wyrm */ this.coldTick(now);   /* (2026-09-30) the Frozen Reach's cold */ this.raidTick(now);   /* (2026-09-30) the Yard raid */ this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.skill2xTick(); this.hwTick(now); this.orderTick(now); this.projTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
     if (this.tickN % 40 === 0) this.runsSave();   /* (2026-09-27) the dungeon runs, so a deploy does not end them */
     if (this.tickN % 20 === 0) for (const pl of this.pls.values()) {   /* once a second */
       /* (2026-09-28, the owner: "user is testing in the thieving guild but its buff isnt counting down") A BUFF'S CLOCK RUNS WHERE IT WORKS.
@@ -3550,7 +3553,8 @@ export class World {
     this.meterAdd(pl, "kills", 1, m);   /* (2026-09-28) the party meter: and the toughest thing killed names the fight */
     this.gemOnKill(pl, m);   /* (2026-09-28) combat gems, and a boss's Voidheart bit */
     this.cardOnKill(pl, m);   /* (2026-09-29) Marked Cards: a card drops, or a kill tip is done */
-    if (G.MOBS[m.t]?.open || m.open) this.bossEnd(S, m, "clear", pl);   /* (2026-09-28) a world boss falls: everybody who fought gets the report */
+    if (G.MOBS[m.t]?.open || m.open) this.bossEnd(S, m, "clear", pl);
+    if (G.MOBS[m.t]?.open && G.MOBS[m.t]?.boss) this.weekCount("boss", m.t);   /* (2026-09-30) the weekly issue counts world bosses */   /* (2026-09-28) a world boss falls: everybody who fought gets the report */
     /* (2026-09-23) THE SOUND IS TOLD WHAT DIED. It used to be the page matching /^You defeat / on the chat line,
        which said nothing about the creature, so a Sulking Toadstool and The House went out with the same scream.
        Sending the type lets the page pitch it by size. This is also the fragile-trigger fix the backlog asks for:
@@ -4521,7 +4525,7 @@ export class World {
     let jackpot = 0;
     if (g === "boiler" && res.potOn) {   /* (2026-09-28) the Pressure Pot: the slots' jackpot rules, its own pot, won when the boiler holds past BOILER.pot */
       const J = (this.bpot ||= { pot: G.BOILER.seed, wins: [] }); if (J.pot < G.BOILER.cap) J.pot = Math.min(G.BOILER.cap, J.pot + amt * G.JACKPOT.slice);
-      if (res.blow >= G.BOILER.pot) { jackpot = Math.floor(J.pot * G.jackpotShare(amt)); J.pot = Math.max(G.BOILER.seed, J.pot - jackpot); J.wins = [{ name: pl.name, amt: jackpot, at: now }, ...(J.wins || [])].slice(0, 10); }
+      if (res.blow >= G.BOILER.pot) { this.weekCount("jackpot");   /* (2026-09-30) the weekly issue */ jackpot = Math.floor(J.pot * G.jackpotShare(amt)); J.pot = Math.max(G.BOILER.seed, J.pot - jackpot); J.wins = [{ name: pl.name, amt: jackpot, at: now }, ...(J.wins || [])].slice(0, 10); }
       res.pot = Math.floor(J.pot); this.ctx.storage.put("bpot", J).catch(() => {});
     }
     if (g === "slots") {
@@ -4529,7 +4533,7 @@ export class World {
       if (res.reels.every((r) => r === "seven")) {
         jackpot = Math.floor(J.pot * G.jackpotShare(amt)); J.pot -= jackpot;
         if (J.pot < G.JACKPOT.seed) J.pot = G.JACKPOT.seed;   // the house tops it back up
-        J.wins = [{ name: pl.name, amt: jackpot, at: now }, ...(J.wins || [])].slice(0, 10);
+        J.wins = [{ name: pl.name, amt: jackpot, at: now }, ...(J.wins || [])].slice(0, 10); this.weekCount("jackpot");   /* (2026-09-30) the weekly issue */
       }
       this.jackDirty = true; res.pot = Math.floor(J.pot);
     }
@@ -5252,6 +5256,7 @@ installGems(World, { G });
 installOutfit(World, { G });
 installWyrm(World, { G });
 installEvents(World, { G });   /* (2026-09-30) WORLD EVENTS: Shooting Stars, Wanted! and the Jackpot Thief */
-installCommands(World, { G });   /* (2026-09-30) CHAT COMMANDS: /find, /help, /price, /count, /xp, /timers, /bosses, /wiki, /map, /online, /roll, /stuck */
+installCommands(World, { G });
+installWeekly(World, { G });   /* (2026-09-30) THE WEEKLY ISSUE: a snapshot a week, and the numbers the wiki's issue shows */   /* (2026-09-30) CHAT COMMANDS: /find, /help, /price, /count, /xp, /timers, /bosses, /wiki, /map, /online, /roll, /stuck */
 installRaid(World, { G });
 installCards(World, { G });

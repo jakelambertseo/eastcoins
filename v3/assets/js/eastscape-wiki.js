@@ -2705,3 +2705,100 @@ export const SKILL_GUIDE = {
   fletching: "Cut logs into shafts and bows, fletch arrows from a shaft, a smithed head and a feather, and load them into a quiver. A bow in your hand is speed and reach; the arrow in it is the damage.",
   agility: "Run the obstacle course north of the Yard. Each obstacle pays, a finished lap pays far more, and what it buys you is movement speed everywhere else."
 };
+
+/* ============================================================ THE WEEKLY ISSUE (2026-09-30). The owner: "user friendly mockups that are sharable with all users that live
+   inside the wiki that use this same kind of formating … like a link in the wiki like updates: week 1 (post launch) and it includes major changes with
+   pictures, links to relevant wiki information, stats of the week, total tickets wagered, interesting stats, dungeon clears, etc. we'll start doing once a
+   week major updates after this anyways".
+   ONE ISSUE A WEEK, written here: a hero, the big changes as picture cards (each links to its wiki page), what's worth knowing, and links. The NUMBERS
+   are not written: the page asks the server for the week's ({t:"weekly", n}; eastscape-worker/src/weekly.js) and weeklyPage draws them, live while the
+   week runs. A picture is "ui/<k>", "items/<k>", "mob/<k>" or "flat/<k>". Add next week's issue at the TOP. */
+export const WEEKLY = [
+  {
+    n: 1, title: "Launch week", from: "2026-10-01", to: "2026-10-07",
+    lede: "EastScape is open to everyone. Here's what's in the world on day one, the changes that landed in the last week before launch, and the numbers as the first week happens.",
+    hero: ["mob/icewyrm", "mob/raidchief", "flat/pet_wyrmling", "ui/g_islands", "mob/rex"],
+    big: [
+      { img: "ui/g_islands", title: "Islands, rebuilt", text: "Much bigger, with beaches and paths, eight themes, cottage styles and interiors, and livestock that fill up while you're away. Type /island for every timer.", wiki: "guides/islands" },
+      { img: "ui/g_store", title: "The Store", text: "Trails, glows, weapon hits, hit splats, titles, pet skins, decor, the War Horn, 2X boosts for the whole server, loupes, bank pages, quick slots and bag slots.", wiki: "guides/store" },
+      { img: "ui/g_raid", title: "The Yard raid", text: "The Ice Man and his war party come for the Yard. Everyone who fights shares the spoils; lose, and the Yard's stalls are boarded up.", wiki: "guides/raid" },
+      { img: "ui/g_frozen", title: "The Frozen Reach", text: "A mage's country north of Cloudreach, where the cold itself hurts. The Frost Jarl, and the Ice Wyrm rising once a day at an hour nobody knows.", wiki: "guides/frozen" },
+      { img: "ui/g_valley", title: "The Primeval Valley", text: "Three maps of ledges and dinosaurs where an arrow reaches what a sword can't. Old Rex, the Mammoth Matriarch, and a Golden Raptor now and then.", wiki: "guides/valley" },
+      { img: "ui/g_commands", title: "/find and chat commands", text: "/find anything and it tells you where it is and the way there. Plus /price, /count, /xp, /timers, /bosses and more. /help lists them.", wiki: "guides/commands" },
+      { img: "ui/g_updates", title: "The wiki, rebuilt", text: "Every list is a sortable table, every area shows its monsters and nodes with levels, every item says who sells it and what it does. Eleven new guides.", wiki: "list/Guides" },
+      { img: "items/skill_smithing", title: "A balance pass", text: "From the hiscores and every skill side by side: smithed gear sells for its bars, late monsters pay far more, the Tower pays, Wizardry and Harvesting are quicker, Thieving is cheaper to start.", wiki: "updates" }
+    ],
+    worth: [
+      "New here? The Start here guide and the house tour take ten minutes, and the Yard has everything you need for your first twenty levels.",
+      "Tickets are the one currency: every kill, catch and job pays them, and the Prize Counter turns 1,000 into a real ZCoin.",
+      "The Pumpkin King rises on the hour during the Long Night, and the Ice Wyrm once a day: /bosses says what's up right now.",
+      "Can't find something? Type /find and its name in chat. Want to know what it IS? That's what this wiki is for."
+    ],
+    links: [["guides/start", "Start here"], ["guides/road", "The road out"], ["guides/commands", "Chat commands"], ["updates", "Every update"]]
+  }
+];
+export const WEEKLY_CSS = `
+.wk{--wk-ink:#2a2016;--wk-dim:#6a5a40;--wk-gold:#c8963a}
+.wk-hero{position:relative;overflow:hidden;border-radius:10px;padding:18px 18px 16px;background:linear-gradient(135deg,#3a1e12,#5a3220 55%,#2a1810);color:#f6e9cc;box-shadow:0 0 0 2px #c8963a,0 6px 18px rgba(40,20,5,.35)}
+.wk-hero small{display:block;font:800 11px Lora,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#e0c890}
+.wk-hero h2{margin:4px 0 6px!important;font:800 26px/1.1 "Cinzel",Georgia,serif!important;color:#ffe7b0!important;border:0!important}
+.wk-hero p{margin:0;max-width:640px;color:#f0e2c0;font-size:14px;line-height:1.5}
+.wk-art{display:flex;gap:10px;margin-top:12px;align-items:flex-end}.wk-art img{height:44px;image-rendering:pixelated;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.wk-share{position:absolute;right:12px;top:12px;padding:5px 10px;border:0;border-radius:999px;background:rgba(255,231,176,.15);color:#ffe7b0;font:800 12px Lora,sans-serif;cursor:pointer}.wk-share:hover{background:rgba(255,231,176,.28)}
+.wk h3{margin:18px 0 8px;font:800 13px Lora,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--wk-gold)}
+.wk-big{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.wk-card{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:start;padding:10px 12px;border-radius:8px;background:#e6d4ad;box-shadow:inset 0 0 0 1.5px #c2a574;cursor:pointer;text-decoration:none;color:inherit}
+.wk-card:hover{background:#fff6dc;box-shadow:inset 0 0 0 2px #c8963a}
+.wk-card,.wk-card *,.wk-list a,.wk-list a *{text-decoration:none!important}
+.wk-card img{width:40px;height:40px;image-rendering:pixelated;object-fit:contain}
+.wk-card b{display:block;font:800 15px/1.2 "Cinzel",Georgia,serif;color:var(--wk-ink)}.wk-card span{display:block;margin-top:3px;font:600 12.5px/1.4 Lora,sans-serif;color:var(--wk-dim)}
+.wk-card i{display:block;margin-top:4px;font:800 11.5px Lora,sans-serif;font-style:normal;color:#8a5a14}
+.wk-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+.wk-tile{padding:10px;border-radius:8px;background:#2a1a10;color:#f6e9cc;text-align:center;box-shadow:inset 0 0 0 1.5px #5a3a1a}
+.wk-tile b{display:block;font:900 20px/1.1 "Cinzel",Georgia,serif;color:#ffd84a}.wk-tile small{display:block;margin-top:3px;font:700 11px Lora,sans-serif;color:#d8c8a8}
+.wk-note{margin:6px 0 0;font:600 12.5px Lora,sans-serif;color:var(--wk-dim)}
+.wk-bars{display:grid;gap:4px}.wk-bar{display:grid;grid-template-columns:22px 110px 1fr 90px;gap:8px;align-items:center;font:700 12.5px Lora,sans-serif}
+.wk-bar .ico{width:20px;height:20px}.wk-bar em{display:block;height:10px;border-radius:5px;background:linear-gradient(90deg,#c8963a,#ffd84a)}.wk-bar u{text-decoration:none;text-align:right;font-variant-numeric:tabular-nums;color:var(--wk-dim)}
+.wk-tops{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.wk-top{padding:10px 12px;border-radius:8px;background:#e6d4ad;box-shadow:inset 0 0 0 1.5px #c2a574}.wk-top b{display:block;font:800 12px Lora,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8a5a14;margin-bottom:4px}
+.wk-top ol{margin:0;padding-left:20px;font:600 13px Lora,sans-serif}.wk-top li span{float:right;font-variant-numeric:tabular-nums;color:var(--wk-dim)}
+.wk-worth{margin:0;padding-left:18px;font:600 13.5px/1.55 Lora,sans-serif}
+.wk-links{display:flex;flex-wrap:wrap;gap:6px}.wk-links a{padding:5px 11px;border-radius:999px;background:#e6d4ad;box-shadow:inset 0 0 0 1.5px #c2a574;font:800 12.5px Lora,sans-serif;cursor:pointer}
+.wk-list{display:grid;gap:8px}.wk-list a{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;padding:10px 12px;border-radius:8px;background:#e6d4ad;box-shadow:inset 0 0 0 1.5px #c2a574;cursor:pointer;text-decoration:none;color:inherit}
+.wk-list a b{display:block;font:800 16px "Cinzel",Georgia,serif}.wk-list a small{display:block;font:600 12.5px Lora,sans-serif;color:#6a5a40}.wk-list a i{font:900 13px "Cinzel",serif;font-style:normal;text-align:center;padding:8px 0;border-radius:8px;background:#5a3220;color:#ffe7b0}
+@media (max-width:620px){.wk-bar{grid-template-columns:22px 80px 1fr 70px}.wk-hero h2{font-size:21px!important}}
+`;
+/** a week's dates, in words: "Thu 1 Oct to Wed 7 Oct" */
+const wkDays = (a, b) => { const f = (s) => new Date(`${s}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }); return `${f(a)} to ${f(b)}`; };
+/** one issue's page. H: { esc, wl, img(key) -> <img>, sico(skill) -> icon html, SKILLS, BOSS(t) -> name, TIER(t) -> dungeon name } and S, the server's numbers (or null while they come) */
+export function weeklyPage(G, H, W, S) {
+  const n = (v) => Math.round(v || 0).toLocaleString(), k = (v) => v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e4 ? `${Math.round(v / 1e3)}k` : n(v);
+  const cards = W.big.map((c) => `<a class="wk-card" data-wiki="${H.esc(c.wiki)}">${H.img(c.img)}<span><b>${H.esc(c.title)}</b><span>${H.esc(c.text)}</span><i>Read more &rarr;</i></span></a>`).join("");
+  let nums = "";
+  if (!S) nums = `<p class="wk-note">Asking the server for the week's numbers&hellip;</p>`;
+  else if (!S.have) nums = `<p class="wk-note">The numbers start when the week does, on ${H.esc(wkDays(W.from, W.from).split(" to ")[0])}.</p>`;
+  else {
+    const T = S.totals || {}, A = S.acc || {}, clears = Object.values(S.clears || {}).reduce((a, b) => a + b, 0), bosses = Object.values(A.bosses || {}).reduce((a, b) => a + b, 0);
+    const tiles = [[k(T.earned), "tickets earned"], [k(T.wagered), "tickets wagered"], [k(T.xp), "xp gained"], [n(T.kills), "monsters killed"], [n(T.quests), "quests finished"], [n(clears), "dungeon clears"], [n(bosses), "world bosses down"], [n(T.floors), "Tower floors climbed"], [n(S.jackpots), "Jackpots hit"], [n(T.zcoins), "ZCoins found"], [n(A.raids?.won || 0), "raids beaten"], [n(A.peak), "most online at once"], [n(S.active), "people played"], ...(S.sofar ? [] : [[n(S.fresh), "new players"]]), [n(T.hours), "hours played"]];
+    const sk = Object.entries(S.skills || {}).sort((a, b) => b[1] - a[1]), mx = sk[0]?.[1] || 1;
+    const tops = [["xp", "Most xp"], ["kills", "Most kills"], ["earned", "Most tickets earned"], ["quests", "Most quests"]].filter(([key]) => (S.top?.[key] || []).length)
+      .map(([key, label]) => `<div class="wk-top"><b>${label}</b><ol>${S.top[key].map((r) => `<li>${H.esc(r.name)} <span>${k(r.v)}</span></li>`).join("")}</ol></div>`).join("");
+    const bossList = Object.entries(A.bosses || {}).map(([t, c]) => `${H.esc(H.BOSS(t))} &times;${c}`).join(", "), clearList = Object.entries(S.clears || {}).map(([t, c]) => `${H.esc(H.TIER(t))} &times;${c}`).join(", ");
+    nums = `<div class="wk-tiles">${tiles.map(([v, l]) => `<div class="wk-tile"><b>${v}</b><small>${l}</small></div>`).join("")}</div>
+      <p class="wk-note">${S.sofar ? `Before launch: everything the world has done so far. The week's own numbers start on ${H.esc(wkDays(W.from, W.from).split(" to ")[0])}.` : S.live ? "Live: the week isn't over yet, so these climb as it goes." : "The whole week."}${bossList ? ` World bosses: ${bossList}.` : ""}${clearList ? ` Clears: ${clearList}.` : ""}</p>
+      ${sk.length ? `<h3>Where the xp went</h3><div class="wk-bars">${sk.slice(0, 12).map(([s, v]) => `<div class="wk-bar">${H.sico(s)}<span>${H.esc(H.SKILLS[s]?.name || s)}</span><em style="width:${Math.max(2, (100 * v) / mx)}%"></em><u>${k(v)} xp</u></div>`).join("")}</div>` : ""}
+      ${tops ? `<h3>Top of the week</h3><div class="wk-tops">${tops}</div>` : ""}`;
+  }
+  return `<style>${WEEKLY_CSS}</style><div class="wk">
+    <div class="wk-hero"><small>Week ${W.n} &middot; ${H.esc(wkDays(W.from, W.to))}</small><h2>${H.esc(W.title)}</h2><p>${H.esc(W.lede)}</p>
+      <div class="wk-art">${(W.hero || []).map(H.img).join("")}</div><button type="button" class="wk-share" data-wkshare="${W.n}">Copy link</button></div>
+    <h3>The big ones</h3><div class="wk-big">${cards}</div>
+    <h3>By the numbers</h3>${nums}
+    ${(W.worth || []).length ? `<h3>Worth knowing</h3><ul class="wk-worth">${W.worth.map((t) => `<li>${H.esc(t)}</li>`).join("")}</ul>` : ""}
+    ${(W.links || []).length ? `<h3>Read next</h3><div class="wk-links">${W.links.map(([r, t]) => H.wl(r, H.esc(t))).join("")}</div>` : ""}
+  </div>`;
+}
+/** the list of issues, newest first */
+export function weeklyList(H) {
+  return `<style>${WEEKLY_CSS}</style><p class="lede">A new issue every week: the big changes with pictures, and the week's numbers.</p><div class="wk-list">${WEEKLY.map((W) => `<a data-wiki="weekly/${W.n}"><i>WEEK<br>${W.n}</i><span><b>${H.esc(W.title)}</b><small>${H.esc(wkDays(W.from, W.to))} &middot; ${H.esc(W.lede.slice(0, 110))}${W.lede.length > 110 ? "&hellip;" : ""}</small></span></a>`).join("")}</div>`;
+}

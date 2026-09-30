@@ -15,7 +15,7 @@
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=403">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=404">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1960,7 +1960,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=403";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=404";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 const FROZEN = new Map();   /* (2026-09-30) player id -> when their Deep Freeze ends (performance.now) */
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
@@ -1970,7 +1970,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=228").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=229").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
@@ -2276,6 +2276,7 @@ function onMsg(m) {
      just stops. A checker now compares every this.send type against onMsg and every out.push type against
      onEvent, because this is a mistake with no symptom other than a feature quietly not working. */
   if (m.type === "whoall") return whoAllDraw(m.people || []);
+  if (m.type === "weekly") { WSTATS[m.n] = { ...m, got: Date.now() }; if (wikiRoute === `weekly/${m.n}` && !$("wikiWin").hidden) { const st = $("wikiPage").scrollTop; wikiGo(wikiRoute, false); $("wikiPage").scrollTop = st; } return; }   /* (2026-09-30) THE WEEKLY ISSUE */
   if (m.type === "ev") for (const e of m.list) onEvent(e);
 }
 function onEvent(e) {
@@ -7011,6 +7012,7 @@ function wikiPages() {
   /* (2026-09-22) PETS ARE THEIR OWN CATEGORY, not a line in Guides: five things with stats, a drop rate and a
      picture each is a category, and the guide alone made them look like a footnote. Built from G.PETS, so a sixth
      pet appears here without anyone remembering to add it. */
+  for (const W of WK.WEEKLY || []) pages.push({ route: `weekly/${W.n}`, title: `Week ${W.n}: ${W.title}`, icon: uico("g_updates"), group: "Weekly" });   /* (2026-09-30) THE WEEKLY ISSUE */
   for (const [k, pt] of Object.entries(G.PETS)) if (!pt.held) pages.push({ route: `pets/${k}`, title: pt.name, icon: `<img class="ico" src="${IART.replace("items/", "")}${pt.art}.png?v=${ART_V}" alt="">`, group: "Pets" });
   for (const [k, s] of Object.entries(SKILLS)) { if ((k === "thieving" && !G.THIEF.live) || s.held) continue; pages.push({ route: `skills/${k}`, title: s.name, icon: sico(k), group: "Skills" }); }   /* (2026-09-23) a skill that ships dark has no wiki page yet, so it must not be offered one */
   for (const [k, q] of Object.entries(QUESTS)) if ((!q.event || G.hwOn()) && !q.held) pages.push({ route: `quests/${k}`, title: q.name, icon: uico(`q_${q.tier || "easy"}`), group: "Quests" });
@@ -7021,9 +7023,9 @@ function wikiPages() {
   return pages;
 }
 /* the nav's seven groups wear the side panel's own tab pictures where one fits, a monster and a person otherwise */
-const GROUP_ICO = { Guides: uico("g_road"), Skills: `<img class="ico wico" src="${UIA}skills.png?v=1" alt="">`, Quests: `<img class="ico wico" src="${UIA}quests.png?v=1" alt="">`, Monsters: mico("gnasher", 22), Areas: `<img class="ico wico" src="${UIA}area.png?v=1" alt="">`, People: `<img class="ico nico" src="${ART}dex_south.png?v=${ART_V}" alt="">`, Items: `<img class="ico wico" src="${UIA}bag.png?v=1" alt="">`, Pets: uico("g_pets") };   /* (2026-09-30, the wiki pass) Pets were a category nobody could reach: no nav button, no Browse card */
+const GROUP_ICO = { Guides: uico("g_road"), Skills: `<img class="ico wico" src="${UIA}skills.png?v=1" alt="">`, Quests: `<img class="ico wico" src="${UIA}quests.png?v=1" alt="">`, Monsters: mico("gnasher", 22), Areas: `<img class="ico wico" src="${UIA}area.png?v=1" alt="">`, People: `<img class="ico nico" src="${ART}dex_south.png?v=${ART_V}" alt="">`, Items: `<img class="ico wico" src="${UIA}bag.png?v=1" alt="">`, Pets: uico("g_pets"), Weekly: uico("g_updates") };   /* (2026-09-30, the wiki pass) Pets were a category nobody could reach: no nav button, no Browse card */
 function wikiNav(active) {
-  const pages = wikiPages(), groups = ["Guides", "Skills", "Quests", "Monsters", "Areas", "People", "Items", "Pets"];
+  const pages = wikiPages(), groups = ["Weekly", "Guides", "Skills", "Quests", "Monsters", "Areas", "People", "Items", "Pets"];
   $("wikiNav").innerHTML = `<input class="search" id="wikiSearch" placeholder="Search the wiki…" aria-label="Search the wiki">
     <button data-wiki="home"${active === "home" ? ' aria-current="true"' : ""}>${uico("g_home")} Home</button><button data-wiki="updates"${active === "updates" ? ' aria-current="true"' : ""}>${uico("g_updates")} Updates</button><hr>
     ${groups.map((g) => `<button data-wiki="list/${g}"${active === `list/${g}` ? ' aria-current="true"' : ""}>${GROUP_ICO[g]} ${g}</button>`).join("")}`;
@@ -7092,7 +7094,7 @@ function wikiGo(route, setNav = true) {
      place and person, and the only ways back were the nav and the browser. A crumb per level, built from the route
      itself so a new kind of page gets one without anybody remembering to add it. `list/<Group>` is the section
      index that already exists, which is what the middle crumb points at. */
-  const CRUMB_OF = { items: "Items", monsters: "Monsters", skills: "Skills", quests: "Quests", npcs: "People", areas: "Areas", guides: "Guides", pets: "Pets" };
+  const CRUMB_OF = { items: "Items", monsters: "Monsters", skills: "Skills", quests: "Quests", npcs: "People", areas: "Areas", guides: "Guides", pets: "Pets", weekly: "Weekly" };
   const crumbs = () => {
     const out = [["home", "Home"]];
     if (kind === "list") out.push([null, id]);
@@ -7117,11 +7119,15 @@ function wikiGo(route, setNav = true) {
     return inC.length ? `<h4 class="gcat">${esc(c)}</h4>${cards(inC)}` : "";
   }).join("");
   let html = "";
-  if (kind === "home") html = `<h2><i><img class="ico wico" src="${UIA}g_updates.png?v=1" alt=""></i>EastScape Wiki</h2>${G.hwOn() ? `<a class="whw" data-wiki="guides/longnight"><span class="whw-i">\u{1F383}</span><span><b>The Long Night is on</b><small>${G.hwDaysLeft()} day${G.hwDaysLeft() === 1 ? "" : "s"} left &middot; candy corn, the Night Market, the Pumpkin King and nine event pieces. Read the event guide &rarr;</small></span></a>` : ""}` + `<p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>
+  if (kind === "home") html = `<h2><i><img class="ico wico" src="${UIA}g_updates.png?v=1" alt=""></i>EastScape Wiki</h2>${G.hwOn() ? `<a class="whw" data-wiki="guides/longnight"><span class="whw-i">\u{1F383}</span><span><b>The Long Night is on</b><small>${G.hwDaysLeft()} day${G.hwDaysLeft() === 1 ? "" : "s"} left &middot; candy corn, the Night Market, the Pumpkin King and nine event pieces. Read the event guide &rarr;</small></span></a>` : ""}` + `<p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>${(WK.WEEKLY || [])[0] ? `<a class="whw wkhome" data-wiki="weekly/${WK.WEEKLY[0].n}"><span class="whw-i">${uico("g_updates")}</span><span><b>This week: Week ${WK.WEEKLY[0].n}, ${esc(WK.WEEKLY[0].title)}</b><small>The big changes with pictures, and the week's numbers as they happen. Read the issue &rarr;</small></span></a>` : ""}
     <h3>Guides</h3>${byCat(wikiPages().filter((p) => p.group === "Guides"))}<h3>Browse</h3>${cards(["Skills", "Quests", "Monsters", "Areas", "People", "Items", "Pets"].map((g) => ({ route: `list/${g}`, title: g, icon: GROUP_ICO[g] })))}
     <h3>Latest update</h3>${wikiUpdate(WK.UPDATES[0])}`;
   else if (kind === "updates") html = `<h2><i>📰</i>Updates</h2><p class="lede">The three latest updates, newest first.</p>${WK.UPDATES.slice(0, 3).map(wikiUpdate).join("")}`;   /* (2026-09-27, the owner: "lets only show the most 3 recent updates on the wiki ... its getting super long now and bulky") */
-  else if (kind === "list") { const inG = wikiPages().filter((p) => p.group === id); html = `<h2><i>${GROUP_ICO[id] || "📚"}</i>${esc(id)}</h2>${id === "Guides" ? byCat(inG) : wikiTables(id, inG) || cards(inG)}`; }
+  else if (kind === "list") { const inG = wikiPages().filter((p) => p.group === id); html = `<h2><i>${GROUP_ICO[id] || "📚"}</i>${esc(id)}</h2>${id === "Guides" ? byCat(inG) : id === "Weekly" && WK.weeklyList ? WK.weeklyList(weekH()) : wikiTables(id, inG) || cards(inG)}`; }
+  else if (kind === "weekly" && WK.weeklyPage) {   /* (2026-09-30) THE WEEKLY ISSUE: the words from the wiki module, the numbers from the server (asked for here, redrawn when they land) */
+    const W = (WK.WEEKLY || []).find((x) => String(x.n) === id), S = WSTATS[id];
+    if (W) { html = WK.weeklyPage(G, weekH(), W, S || null); if (!S || Date.now() - S.got > 60000) send({ t: "weekly", n: W.n }); }
+  }
   else if (kind === "search") { const q = id.toLowerCase(); const hits = wikiPages().filter((p) => p.title.toLowerCase().includes(q)); html = `<h2><i>🔎</i>“${esc(id)}”</h2>${hits.length ? cards(hits) : '<p class="lede">Nothing by that name.</p>'}`; }
   else if (kind === "guides") {
     const g = WK.GUIDES.find((x) => x.id === id);
@@ -7399,6 +7405,14 @@ function wikiTables(group, inG) {
 }
 function wikiUpdate(u) { return `<div class="up"><small>${u.date}</small><h3 style="margin:2px 0 4px">${esc(u.title)}</h3><ul>${u.items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></div>`; }
 $("wikiWin").addEventListener("click", (e) => { const a = e.target.closest("[data-wiki]"); if (a) { e.preventDefault(); wikiGo(a.dataset.wiki); } });
+/* (2026-09-30) THE WEEKLY ISSUE: its numbers (by issue), what it draws with, and "Copy link" (the wiki's own address for it, which opens it for anyone signed in) */
+const WSTATS = {};
+function weekH() {
+  const img = (key) => { const [kind, k] = String(key).split("/"), src = kind === "ui" ? `${UIA}${k}.png?v=${UI_V[k] || 1}` : kind === "items" ? `${IART}${k}.png?v=${IART_V}` : kind === "mob" ? `${ART}${MOBS[k]?.art || k}.png?v=${ART_V}` : `${ART}${k}.png?v=${ART_VER[k] || ART_V}`; return `<img src="${src}" alt="">`; };
+  return { esc, wl, img, sico: (k) => `<span class="ico">${sico(k)}</span>`, SKILLS, BOSS: (t) => MOBS[t]?.name || t, TIER: (t) => ({ 1: "Crypt I", 2: "Crypt II", 3: "Crypt III", p1: "the Great Pyramid" })[t] || t };
+}
+$("wikiWin").addEventListener("click", (e) => { const b = e.target.closest("[data-wkshare]"); if (!b) return; const url = `${location.origin}/eastscape#wiki/weekly/${b.dataset.wkshare}`;
+  (navigator.clipboard?.writeText(url) || Promise.reject()).then(() => { b.textContent = "Link copied"; }).catch(() => { b.textContent = url; }); SFX.play("ui_click"); });
 $("wikiBack").addEventListener("click", () => wikiStep(-1)); $("wikiFwd").addEventListener("click", () => wikiStep(1));
 $("wikiWin").addEventListener("mouseup", (e) => { if (e.button === 3 || e.button === 4) { e.preventDefault(); wikiStep(e.button === 3 ? -1 : 1); } });   /* a mouse's back and forward buttons */
 document.addEventListener("keydown", (e) => { if ($("wikiWin").hidden || !e.altKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return; e.preventDefault(); wikiStep(e.key === "ArrowLeft" ? -1 : 1); });

@@ -62,12 +62,15 @@ for (const [k, d] of Object.entries(G.SCENES)) {
   for (const [t] of (d.mobs || [])) routes.add("monsters/" + t);
   for (const n of (d.npcs || [])) routes.add("npcs/" + n.name);
 }
-for (const g of ["Guides", "Skills", "Quests", "Monsters", "Areas", "People", "Items"]) routes.add("list/" + g);
+for (const g of ["Guides", "Skills", "Quests", "Monsters", "Areas", "People", "Items", "Pets", "Weekly"]) routes.add("list/" + g);   /* (2026-09-30) Pets and the Weekly issues are categories now */
+routes.add("home"); routes.add("updates");
 
 /* ---------------------------------------------------------------- 1. every link goes somewhere */
 {
   const src = fs.readFileSync("v3/assets/js/eastscape-wiki.js", "utf8");
-  const links = [...src.matchAll(/data-wiki=\\?"([^"\\]+)/g)].map((m) => m[1]);
+  const links = [...src.matchAll(/data-wiki=\\?"([^"\\]+)/g)].map((m) => m[1]).filter((r) => !r.includes("${"));   /* (2026-09-30) a link built from data (a weekly card) is checked below, from the data */
+  const WM = await import("../v3/assets/js/eastscape-wiki.js");
+  for (const I of WM.WEEKLY || []) { routes.add(`weekly/${I.n}`); for (const c of I.big || []) links.push(c.wiki); for (const [r] of I.links || []) links.push(r); }
   const dead = [...new Set(links.filter((r) => !routes.has(r) && !r.startsWith("search/")))];
   if (dead.length) fail(dead.length + " guide link(s) point at a page that does not exist: " + dead.join(", "));
   else ok("all " + links.length + " links in the guides resolve to a real page");
