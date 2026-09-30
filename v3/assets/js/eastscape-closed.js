@@ -38,19 +38,24 @@ function deco(g, objs, art, x, y, w, h, name) {
      decor   [art, x, y]         ferns, bones, tar holes: drawn flat and WALKED OVER (the owner: "far too many path blocking items")
      cycads, rocks, spots        the valley's Woodcutting, Mining and Fishing at 92 */
 function pvBuild(G, def, L) {
+  /* (2026-09-30) a map may bring its own KIT (the Frozen Reach: snowy shelves, frostpine, glacite, icefin); the Valley's is the default */
+  const K = { cliff: "pv_cliff_", tree: { t: "cycad", log: "cycadlogs", name: "Cycad", lvl: 92, xp: 330 }, rock: { ore: "fossil", name: "Fossil rock", lvl: 92, xp: 330 },
+    spot: { name: "Primordial lake", fish: "coelacanth", lvl: 92, xp: 420, glow: "#9ad8a0", tease: "Something with legs for fins turns over in the deep water." }, ...(L.kit || {}) };
   const { g, objs } = fromRows(def.rows, G), shut = (x, y, w, h) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = "#"; };
-  for (const [w, h, x, y] of L.cliffs) { objs.push({ t: "cliff", art: `pv_cliff_${w}x${h}`, x, y, w, h, edge: true, flat: true, name: "A ledge" }); shut(x, y, w, h); }
-  for (const [art, x, y, w, h] of L.props) { objs.push({ t: "cliff", art, x, y, w, h, edge: true, name: PV_NAMES[art.replace(/\d+$/, "")] || "" }); shut(x, y, w, h); }
-  for (const [art, x, y] of L.decor) objs.push({ t: "cliff", art, x, y, w: 1, h: 1, edge: true, flat: true, name: PV_NAMES[art.replace(/\d+$/, "")] || "" });
-  for (const [x, y] of L.cycads) { objs.push({ t: "cycad", x, y, log: "cycadlogs", name: "Cycad", req: { skill: "woodcutting", lvl: 92 }, xp: 330 }); g[y][x] = "#"; }
-  for (const [x, y] of L.rocks) { objs.push({ t: "rock", x, y, ore: "fossil", name: "Fossil rock", req: { skill: "mining", lvl: 92 }, xp: 330 }); g[y][x] = "#"; }
-  for (const [x, y] of L.spots) objs.push({ t: "spot", x, y, name: "Primordial lake", req: { skill: "fishing", lvl: 92 }, fish: "coelacanth", xp: 420, glow: "#9ad8a0", tease: "Something with legs for fins turns over in the deep water." });
+  const nameOf = (art) => PV_NAMES[art.replace(/\d+$/, "")] || "";
+  for (const [w, h, x, y] of L.cliffs) { objs.push({ t: "cliff", art: `${K.cliff}${w}x${h}`, x, y, w, h, edge: true, flat: true, name: K.cliffName || "A ledge" }); shut(x, y, w, h); }
+  for (const [art, x, y, w, h] of L.props) { objs.push({ t: "cliff", art, x, y, w, h, edge: true, name: nameOf(art) }); shut(x, y, w, h); }
+  for (const [art, x, y, w = 1, h = 1] of L.decor) objs.push({ t: "cliff", art, x, y, w, h, edge: true, flat: true, name: nameOf(art) });
+  for (const [x, y] of L.cycads) { objs.push({ t: K.tree.t, x, y, log: K.tree.log, name: K.tree.name, req: { skill: "woodcutting", lvl: K.tree.lvl }, xp: K.tree.xp }); g[y][x] = "#"; }
+  for (const [x, y] of L.rocks) { objs.push({ t: "rock", x, y, ore: K.rock.ore, name: K.rock.name, req: { skill: "mining", lvl: K.rock.lvl }, xp: K.rock.xp }); g[y][x] = "#"; }
+  for (const [x, y] of L.spots) objs.push({ t: "spot", x, y, name: K.spot.name, req: { skill: "fishing", lvl: K.spot.lvl }, fish: K.spot.fish, xp: K.spot.xp, glow: K.spot.glow, tease: K.spot.tease });
   if (L.sign) { const [x, y, name] = L.sign; objs.push({ t: "sign", x, y, name }); g[y][x] = "#"; }
   return { g, objs, blobs: [] };
 }
 const PV_NAMES = { pv_palm: "A cycad palm", pv_fern: "Giant ferns", pv_tent_red: "A hide tent", pv_tent_green: "A hide tent", pv_tusk_l: "A mammoth tusk", pv_tusk_r: "A mammoth tusk",
   pv_totem: "A bone totem", pv_skeleton: "The fossil of something enormous", pv_skull: "A skull bigger than a cart", pv_throne: "Old Rex's throne, of bones", pv_bone: "Old bones",
-  pv_vent: "A steaming vent", pv_tarhole: "A tar pit, bubbling", pv_crystal: "Red crystal", pv_lavarock: "Cooled lava", pv_volcano: "The volcano" };
+  pv_vent: "A steaming vent", pv_tarhole: "A tar pit, bubbling", pv_crystal: "Red crystal", pv_lavarock: "Cooled lava", pv_volcano: "The volcano",
+  fz_statue: "A giant frozen where it stood", fz_rock: "Rocks under snow", fz_pine: "A pine under snow", fz_crystal: "Ice crystals", fz_floe: "An ice floe" };   /* (2026-09-30) the Frozen Reach */
 /* an animated piece on rock (a waterfall, a lava pool): the footprint stays blocked, its cells leave the wall set */
 function animPiece(g, objs, walls, spec) {
   for (let j = 0; j < spec.h; j++) for (let i = 0; i < spec.w; i++) { const k = `${spec.x + i},${spec.y + j}`; if (!walls.has(k)) throw new Error(`${spec.anim} at ${spec.x},${spec.y} is not on rock at ${k}`); walls.delete(k); }
@@ -745,6 +750,76 @@ export function createClosedScenes(G, H) {
     npcs: [],
     bots: []
   },
+  /* FROZEN-GEN: the Frozen Reach's two maps, written by lt-wild/frozen-gen.py (edit that, not this) */
+  frozen: {
+    name: "The Frozen Reach", ground: "frozen", exits: {"s": "cloud", "n": "frostspire"}, arrive: {"s": {"x": 21, "y": 24}, "n": {"x": 21, "y": 1}}, noBanks: true, tint: "rgba(120,160,220,.08)",
+    rows: [
+      "...............,,,,,,eee....................",
+      "...............,,,,,,,,,....................",
+      "...............,,.~~~~~~~~~.................",
+      "...............,,.~~~~~~~~~.................",
+      "...............,,.~~~~~~~~~.................",
+      "...............,,.~~~~~~~~~.................",
+      "...............,,.~~~~~~~~~.................",
+      "...............,,.~~~~~~~~~.................",
+      "...............,,.~~~~~~~~~.................",
+      "...............,,...........................",
+      "...............,,,,,,,,.....................",
+      "...............,,,,,,,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      "...~~~~~~~~..........,,.....................",
+      "...~~~~~~~~..........,,.....................",
+      "...~~~~~~~~..........,,.....................",
+      "...~~~~~~~~..........,,.....................",
+      "...~~~~~~~~..........,,.....................",
+      "...~~~~~~~~..........,,.....................",
+      "...~~~~~~~~..........,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................eee...................."
+    ],
+    build() { return pvBuild(G, this, {"kit": {"cliff": "fz_cliff_", "cliffName": "A snowy shelf", "tree": {"t": "frostpine", "log": "frostpinelogs", "name": "Frostpine", "lvl": 94, "xp": 340}, "rock": {"ore": "glacite", "name": "Glacite rock", "lvl": 94, "xp": 340}, "spot": {"name": "Hole in the ice", "fish": "icefin", "lvl": 94, "xp": 440, "glow": "#bfe8ff", "tease": "Something pale drifts under the ice and looks up at you."}}, "cliffs": [[7, 7, 2, 2], [6, 8, 28, 2], [8, 7, 35, 12], [5, 7, 24, 16]], "props": [["fz_statue", 38, 2, 3, 2], ["fz_pine1", 10, 1, 1, 1], ["fz_pine2", 1, 11, 1, 1], ["fz_pine1", 33, 23, 1, 1], ["fz_rock1", 12, 22, 3, 2], ["fz_pine2", 42, 24, 1, 1]], "decor": [["fz_floe4", 19, 3, 6, 4], ["fz_floe1", 19, 7, 2, 2], ["fz_floe1", 24, 2, 2, 2], ["fz_floe3", 5, 15, 3, 3], ["fz_floe2", 7, 18, 3, 2], ["fz_crystal1", 13, 7], ["fz_crystal2", 30, 12], ["fz_crystal3", 18, 22], ["fz_crystal1", 40, 22], ["fz_crystal2", 1, 22]], "cycads": [[12, 4], [13, 16], [38, 20], [42, 8], [3, 24]], "rocks": [[36, 6], [41, 19], [27, 12]], "spots": [[18, 8], [26, 8], [18, 2], [26, 3], [10, 17]], "sign": [23, 24, "THE FROZEN REACH: Combat 100 and up, or Magic 40 with a wand: this is a mage's country. Most of what lives here stands on the shelves and the ice floes where no sword reaches, and spells land at least half the time. Once a day, at an hour nobody knows, the Ice Wyrm comes up through the lake."]}); },
+    mobs: [["yeti", 5, 4, { perch: true, respawn: G.levelRespawn("yeti") }], ["yeti", 30, 4, { perch: true, respawn: G.levelRespawn("yeti") }], ["yeti", 37, 14, { perch: true, respawn: G.levelRespawn("yeti") }], ["yeti", 40, 14, { perch: true, respawn: G.levelRespawn("yeti") }], ["snowowl", 20, 7, { perch: true, respawn: G.levelRespawn("snowowl") }], ["snowowl", 25, 3, { perch: true, respawn: G.levelRespawn("snowowl") }], ["snowowl", 26, 18, { perch: true, respawn: G.levelRespawn("snowowl") }], ["snowowl", 6, 16, { perch: true, respawn: G.levelRespawn("snowowl") }], ["frostwolf", 12, 14, { respawn: G.levelRespawn("frostwolf") }], ["frostwolf", 30, 21, { respawn: G.levelRespawn("frostwolf") }], ["frostwolf", 18, 19, { respawn: G.levelRespawn("frostwolf") }], ["frostwraith", 8, 9, { respawn: G.levelRespawn("frostwraith") }], ["frostwraith", 33, 11, { respawn: G.levelRespawn("frostwraith") }]],
+    npcs: [], bots: []
+  },
+  frostspire: {
+    name: "The Frostspire", ground: "frozen", exits: {"s": "frozen"}, arrive: {"s": {"x": 21, "y": 24}}, noBanks: true, tint: "rgba(120,160,220,.08)",
+    rows: [
+      "............................................",
+      "............................................",
+      "............................................",
+      "..~~~~~~~~..................................",
+      "..~~~~~~~~..................................",
+      "..~~~~~~~~..................................",
+      "..~~~~~~~~..................................",
+      "..~~~~~~~~..................................",
+      "..~~~~~~~~..................................",
+      "..~~~~~~~~..................................",
+      "..~~~~~~~~..................................",
+      "..~~~~~~~~..................................",
+      "............................................",
+      "............................................",
+      "...........,,,,,,,,,,,,,,,,,,,,.............",
+      "...........,,,,,,,,,,,,,,,,,,,,.............",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................eee...................."
+    ],
+    build() { return pvBuild(G, this, {"kit": {"cliff": "fz_cliff_", "cliffName": "A snowy shelf", "tree": {"t": "frostpine", "log": "frostpinelogs", "name": "Frostpine", "lvl": 94, "xp": 340}, "rock": {"ore": "glacite", "name": "Glacite rock", "lvl": 94, "xp": 340}, "spot": {"name": "Hole in the ice", "fish": "icefin", "lvl": 94, "xp": 440, "glow": "#bfe8ff", "tease": "Something pale drifts under the ice and looks up at you."}}, "cliffs": [[10, 7, 17, 4], [8, 7, 30, 2], [7, 7, 33, 17], [6, 8, 2, 15]], "props": [["fz_statue", 39, 11, 3, 2], ["fz_pine1", 13, 1, 1, 1], ["fz_pine2", 27, 23, 1, 1], ["fz_rock1", 10, 22, 3, 2], ["fz_pine1", 42, 24, 1, 1], ["fz_rock2", 15, 10, 2, 1]], "decor": [["fz_floe2", 4, 4, 3, 2], ["fz_floe2", 5, 8, 3, 2], ["fz_crystal1", 12, 18], ["fz_crystal3", 29, 20], ["fz_crystal2", 40, 7], ["fz_crystal1", 25, 12]], "cycads": [[12, 9], [41, 22]], "rocks": [[13, 3], [28, 12], [40, 13], [11, 24]], "spots": [[9, 6], [9, 10]], "sign": null}); },
+    mobs: [["iceelemental", 5, 5, { perch: true, respawn: G.levelRespawn("iceelemental") }], ["iceelemental", 6, 9, { perch: true, respawn: G.levelRespawn("iceelemental") }], ["frostgiant", 32, 4, { perch: true, respawn: G.levelRespawn("frostgiant") }], ["frostgiant", 35, 4, { perch: true, respawn: G.levelRespawn("frostgiant") }], ["frostgiant", 36, 19, { perch: true, respawn: G.levelRespawn("frostgiant") }], ["yeti", 4, 17, { perch: true, respawn: G.levelRespawn("yeti") }], ["frostwraith", 12, 20, { respawn: G.levelRespawn("frostwraith") }], ["frostwraith", 28, 20, { respawn: G.levelRespawn("frostwraith") }], ["frostwraith", 17, 17, { respawn: G.levelRespawn("frostwraith") }], ["frostjarl", 21, 7, { perch: true }]],
+    npcs: [], bots: []
+  },
+  /* FROZEN-GEN END */
   /* VALLEY-GEN: the Primeval Valley's three maps, written by lt-wild/valley-gen.py (edit that, not this) */
   valley: {
     name: "The Primeval Valley", exits: {"s": "trailer", "n": "valley_ridge"}, arrive: {"s": {"x": 21, "y": 24}, "n": {"x": 21, "y": 1}}, noBanks: true, tint: "rgba(60,40,10,.06)",

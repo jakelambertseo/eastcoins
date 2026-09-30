@@ -4211,8 +4211,8 @@ export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 10
    charcoal and do not know why. It also fills a hole that was already open - burnChance has a `range` multiplier
    worth 20%, and the only range in the game is in the CLOSED Cottage, so no player has ever had it. */
 export const COAL_STEADY_MIN = 0.10;
-export const OUT_CAP = { tix: 0.25, speed: 0.2, tough: 0.3, rare: 0.4, zdrop: 0.75, bite: 0.1, heal: 0.5, steal: 0.15, ammo: 0.5, leech: 0.25, double: 0.3, execute: 0.3, calm: 1, nobill: 1, gem: 1, smelt: 0.5, forge: 0.2, adm: 0.25 };   /* (2026-09-30) adm: arrows harder, at most a quarter (Skyripper 6 + Fang 8 + Ring 5 + a draught 6 = 25) */
-const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal", "steal", "ammo", "leech", "double", "execute", "calm", "nobill", "gem", "smelt", "forge", "adm"];   /* (2026-09-30) adm: arrows hit harder (the Primeval Valley's drops) */   /* (2026-09-27) gem: the Mountain's Heart */   /* (2026-09-27) the last six are the Long Night's pieces' effects; see fxText */
+export const OUT_CAP = { tix: 0.25, speed: 0.2, tough: 0.3, rare: 0.4, zdrop: 0.75, bite: 0.1, heal: 0.5, steal: 0.15, ammo: 0.5, leech: 0.25, double: 0.3, execute: 0.3, calm: 1, nobill: 1, gem: 1, smelt: 0.5, forge: 0.2, adm: 0.25, mdm: 0.25 };   /* (2026-09-30) adm: arrows harder, at most a quarter (Skyripper 6 + Fang 8 + Ring 5 + a draught 6 = 25) */
+const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal", "steal", "ammo", "leech", "double", "execute", "calm", "nobill", "gem", "smelt", "forge", "adm", "mdm"];   /* (2026-09-30) adm: arrows hit harder (the Primeval Valley's drops) */   /* (2026-09-27) gem: the Mountain's Heart */   /* (2026-09-27) the last six are the Long Night's pieces' effects; see fxText */
 
 /* ============================================================ ACHIEVEMENTS (2026-09-23, the owner)
 
@@ -4445,7 +4445,7 @@ export const fxText = (f) => [f.tix && `${pct(f.tix)} more tickets from kills, a
   /* (2026-09-27) the Long Night's pieces */
   f.ammo && `${pct(f.ammo)} of your shots and casts spend no arrow or page`, f.leech && `${pct(f.leech)} of the damage you deal comes back as health`, f.double && `${pct(f.double)} of what you mine, cut or catch comes up double`,
   f.execute && `a monster under ${pct(f.execute)} health dies to your next hit (never a boss)`, f.calm && `nothing outside attacks you first`, f.nobill && `the hospital never bills you`, f.gem && `jewels turn up in the rock ${pct(f.gem)} more often`, f.smelt && `${pct(f.smelt)} of the bars you smelt come out double`, f.forge && `every reforge is ${pct(f.forge)} likelier to land`,
-  f.power && `your other worn buff gear is ${pct(f.power)} stronger`, f.adm && `your arrows hit ${pct(f.adm)} harder`].filter(Boolean).join("; ");
+  f.power && `your other worn buff gear is ${pct(f.power)} stronger`, f.adm && `your arrows hit ${pct(f.adm)} harder`, f.mdm && `your spells hit ${pct(f.mdm)} harder`].filter(Boolean).join("; ");
 for (const it of Object.values(ITEMS)) {   // say what it does, once, from the numbers
   if (it.fx) it.ex = `Worn: ${fxText(it.fx)}. ${it.ex || ""}`.trim();
   if (it.meal) it.ex = `${it.ex || ""} Eat it: for ${it.meal.mins} minutes outside, ${fxText(it.meal.fx)}.`.trim();
@@ -4495,11 +4495,16 @@ export const ARCH_BAND = {};
    three times what a 60 takes, and a 60 or better already lands 95% so it changes nothing for them. Arrows only: spells and swords keep the
    ordinary roll. */
 export const ARCH_FLOOR = {};
+/* (2026-09-30) THE MAGES' MAP'S TWO, the Frozen Reach's mirror of the Valley's: a wand at this Magic level opens a map listed in MAGE_BAND
+   whatever your Combat, and on a map in MAGE_FLOOR a SPELL lands at least that often. */
+export const MAGE_BAND = {}, MAGE_FLOOR = {};
 export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) return null;
   const ab = kind === "fight" ? ARCH_BAND[String(scene || "").split(":")[0]] : null;
   if (ab != null && styleOf(c) === "archery" && lvlOf(c, "archery") >= ab) return null;
+  const mb = kind === "fight" ? MAGE_BAND[String(scene || "").split(":")[0]] : null;
+  if (mb != null && styleOf(c) === "magic" && lvlOf(c, "magic") >= mb) return null;
   const skill = kind === "fish" ? "fishing" : "melee", need = kind === "fish" ? FISH_BAND[String(scene || "").split(":")[0]] ?? b[0] : b[0], have = lvlOf(c, skill);
-  return have >= need ? null : { need, have, skill, arch: ab ?? undefined, text: `needs ${kind === "fish" ? "Fishing" : "Combat"} ${need}${ab != null ? `, or Archery ${ab} with a bow` : ""}` }; };
+  return have >= need ? null : { need, have, skill, arch: ab ?? undefined, mage: mb ?? undefined, text: `needs ${kind === "fish" ? "Fishing" : "Combat"} ${need}${ab != null ? `, or Archery ${ab} with a bow` : ""}${mb != null ? `, or Magic ${mb} with a wand` : ""}` }; };
 /* (2026-09-27, the owner: "push it with depths and jewelcrafting held shut") WHAT SHIPS BUILT BUT SHUT. Flip one to false to open it:
    the Depths goes into OPEN and takes its place between the Thunderhead and the Trailer Park; Jewelcrafting's bench stands in the
    Yard and the skill joins the panel, the hiscores and the wiki. Held, everything stays in the rules (a save that somehow carries
@@ -8800,7 +8805,7 @@ for (const [id, g] of Object.entries(GADGETS)) if (g.item !== false)
 ITEMS.tk_banner ||= { name: "Party Banner", icon: "\u{1F6A9}", held: true };
 /** the gadgets running on a character right now */
 export const tkOn = (c) => Object.entries(c?.tk || {}).filter(([id, t]) => GADGETS[id] && (t?.left | 0) > 0).map(([id]) => GADGETS[id]);
-export const tkDmg = (c, style) => tkOn(c).reduce((a, g) => a + (g.dmg?.[style] || 0), 0) + gemFor(c, GEM_DMG[style]) + outfitDmg(c, style) + (style === "archery" ? fxOf(c).adm || 0 : 0);   /* (2026-09-29) and the outfitters' armour for that style (OUTFIT) */   /* (2026-09-28) and a socketed gem */   /* (2026-09-30) and adm, archery damage from gear and drinks */
+export const tkDmg = (c, style) => tkOn(c).reduce((a, g) => a + (g.dmg?.[style] || 0), 0) + gemFor(c, GEM_DMG[style]) + outfitDmg(c, style) + (style === "archery" ? fxOf(c).adm || 0 : style === "magic" ? fxOf(c).mdm || 0 : 0);   /* (2026-09-29) and the outfitters' armour for that style (OUTFIT) */   /* (2026-09-28) and a socketed gem */   /* (2026-09-30) and adm, archery damage from gear and drinks */
 export const tkAcc = (c, style) => tkOn(c).reduce((a, g) => a + (g.acc?.[style] || 0), 0) + gemFor(c, "jade");
 export const tkCraft = (c, skill) => { let dbl = 0, noburn = false; for (const g of tkOn(c)) if (g.craft?.skill === skill) { dbl += g.craft.dbl || 0; noburn ||= !!g.craft.noburn; } const pc = projFx(c)?.craft?.[skill]; if (pc) { dbl += pc.dbl; noburn ||= pc.noburn; } dbl += gemFor(c, GEM_SKILL[skill]?.fx === "dbl" ? GEM_SKILL[skill].k : null); return { dbl: Math.max(0, dbl), noburn }; };   /* (2026-09-28) and the map's World Project */
 export const tkXp = (c, skill) => { const pf = projFx(c); return tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0) + (pf?.xp?.[skill] || 0) + (pf?.xpAll || 0) + gemFor(c, GEM_SKILL[skill]?.fx === "xp" ? GEM_SKILL[skill].k : null); };   /* (and a Grand Opening's +10% on everything) */
@@ -9305,3 +9310,95 @@ for (const k of VALLEY_MAPS) ARCH_BAND[k] = 40;
 for (const k of VALLEY_MAPS) ARCH_FLOOR[k] = 0.5;   /* (2026-09-30, the owner: "Both: 50% floor + 40%") the sure shot, and the archery multipliers above went 1.25 -> 1.4, 1.5 -> 1.7 */   /* (2026-09-30, the owner) a bow and Archery 40 opens all three, whatever your Combat */
 for (const k of VALLEY_MAPS) DEATH[k] = { share: 0.1, cap: 10000 };
 if (!HOLD.valley) { for (const k of VALLEY_MAPS) { OPEN.add(k); PET_SCENES.add(k); } SCENES.trailer.exits.n = "valley"; }
+
+/* ============================================================ THE FROZEN REACH (2026-09-30), the second of the four late maps.
+   The owner: "start on the frozen reach map next", then "Magic", the daily boss "once a day, random hour, but not between 12am and 2pm", and
+   "Off Cloudreach, 100-115". THE MAGES' MAP, the Valley's mirror: a wand and Magic 40 opens it (MAGE_BAND), a spell lands at least half the
+   time here (MAGE_FLOOR), everything takes more from spells (x1.4, the owls x1.7) and less from arrows and swords, ice creatures weak to fire
+   and resisting frost, and most of them on ledges and ice floes only a spell or an arrow reaches. Two maps north of Cloudreach: the Frozen
+   Reach (100-108, the Ice Wyrm's lake) and the Frostspire (106-115, the Frost Jarl). HELD (HOLD.frozen) until the owner has walked it. */
+HOLD.frozen = !globalThis.__ES_OPEN_ALL;
+export const FROZEN_MAPS = ["frozen", "frostspire"];
+Object.assign(ITEMS, {
+  glacite:       { name: "Glacite", icon: "\u{1F48E}", ex: "Pale-blue crystal out of the Frozen Reach's rock, cold to the touch for days. It makes the Glacier Satchel and the frostpine wand." },
+  frostpinelogs: { name: "Frostpine logs", icon: "\u{1FAB5}", ex: "Dark, dense and frozen through. The best wand wood there is." },
+  icefin:        { name: "Raw icefin", icon: "\u{1F41F}", raw: true, ex: "A fish with fins like frosted glass, pulled from under the ice." },
+  cicefin:       { name: "Cooked icefin", icon: "\u{1F41F}", heal: 44, ex: "Sweet, clean and very cold in the middle however long you cook it." },
+  yeti_pelt:     { name: "Yeti pelt", icon: "\u{1F9E3}", ex: "Thick white fur that never quite dries. Worth a lot to the right tailor." },
+  frost_shard:   { name: "Frost shard", icon: "❄️", ex: "A splinter of an Ice Elemental's heart. It glows faintly and does not melt." },
+  wyrm_scale:    { name: "Wyrm scale", icon: "\u{1F409}", ex: "One scale off the Ice Wyrm, the size of a shield and clear as ice." },
+  rimeheart:     { name: "Rimeheart", short: "Wand", icon: "\u{1FA84}", slot: "weapon", speed: 2000, acc: 48, str: 22, launcher: { range: 5, ammo: "page", style: "magic" }, wand: true, req: { skill: "magic", lvl: 96 },
+    fx: { mdm: 0.06 }, forgeWith: ["frostpinelogs", 8], forgeReq: { skill: "wizardry", lvl: 98 }, chase: true,
+    ex: "A wand of clear ice with a frozen heart at the tip that still beats. Your spells hit 6% harder. Only the Frost Jarl and the Ice Wyrm carry it." },
+  frostbite_ring: { name: "Frostbite ring", short: "Ring", icon: "\u{1F48D}", slot: "ring", acc: 8, str: 8, req: { skill: "magic", lvl: 85 }, fx: { mdm: 0.05 },
+    ex: "Silver, set with a stone of ice that numbs the finger. Your spells hit 5% harder. Frost Giants drop it, and the bosses more often." },
+  winters_heart: { name: "Winter's Heart", short: "Amulet", icon: "\u{1F4FF}", slot: "amulet", acc: 12, str: 10, req: { skill: "magic", lvl: 90 }, fx: { mdm: 0.08 },
+    ex: "A heart of blue ice on a silver chain. Your spells hit 8% harder. Frost Wraiths, Ice Elementals and the Reach's bosses drop it." },
+  pot_frost:     { name: "Frostmind draught", short: "Draught", icon: "\u{1F9EA}", drink: { mins: 15, fx: { mdm: 0.06 } }, ex: "It glows and it is cold enough to hurt your teeth. The Reach's creatures carry it; nobody knows who brews it." },
+  frostpine_wand: { name: "Frostpine wand", icon: "\u{1FA84}", slot: "weapon", speed: 2200, acc: 46, str: 21, launcher: { range: 5, ammo: "page", style: "magic" }, wand: true, req: { skill: "magic", lvl: 97 },
+    forgeWith: ["frostpinelogs", 4], forgeReq: { skill: "wizardry", lvl: 97 }, ex: "Frostpine and glacite: the best wand a wizard can make. Casts from five tiles." },
+  bag_glacier:   { name: "Glacier Satchel", icon: "\u{1F45C}", slot: "shield", pouch: { ammo: "page", cap: 10000 }, req: { skill: "magic", lvl: 96 }, forgeWith: ["spellpaper", 60], forgeReq: { skill: "wizardry", lvl: 96 },
+    ex: "White fur and ice-blue leather with a glacite clasp. Holds 10,000 spell pages of one kind in the offhand, more than any other bag." }
+});
+Object.assign(VALUE, { glacite: 100, frostpinelogs: 80, icefin: 50, cicefin: 100, yeti_pelt: 1100, frost_shard: 900, wyrm_scale: 8000, rimeheart: 95000, frostbite_ring: 24000, winters_heart: 40000, pot_frost: 180 });
+recipe("cook_icefin", { skill: "cooking", station: "fire", lvl: 94, xp: 440, ms: 1800, in: [["icefin", 1]], out: ["cicefin", 1], burnStop: 99 });
+pr("make_frostpine_wand", { station: "altar_arcane", lvl: 97, xp: 900, in: [["frostpinelogs", 3], ["ink_frost", 2], ["sapphire", 1], ["glacite", 4]], out: ["frostpine_wand", 1] });
+pr("make_bag_glacier", { station: "altar_arcane", lvl: 96, xp: 1800, in: [["glacite", 12], ["yeti_pelt", 2], ["spellpaper", 20]], out: ["bag_glacier", 1] });
+WAYSTONES.waystone_frozen = { scene: "frozen", side: "s", lvl: 100, name: "The Frozen Reach" };
+ITEMS.waystone_frozen = { name: "Waystone: The Frozen Reach", icon: "\u{1F4DC}", use: "waystone", ex: "A scroll sealed with ice-blue wax. Read it to arrive at the southern edge of the Frozen Reach. Only its own creatures drop it, now and then." };
+/* the pets: an owlet and a yeti cub, and their Legendaries */
+Object.assign(PETS, {
+  owlet:     { name: "Snow Owlet", art: "pet_owlet", bred: true, egg: "egg_owl", fx: { bite: 6 }, ex: "It watches the water under the ice. Fish bite 6% more often." },
+  yeticub:   { name: "Yeti Cub", art: "pet_yeticub", bred: true, egg: "egg_yeti", fx: { tough: 5 }, ex: "Round, warm and in the way. You take 5% less damage." },
+  blizzardowl: { name: "The Blizzard Owl", art: "pet_blizzardowl", bred: true, legend: true, base: "owlet", fx: { bite: 10, tix: 5 }, ex: "The owlet grew into a storm. Fish bite 10% more often and you find 5% more tickets. Legendary." },
+  abominable:  { name: "The Abominable", art: "pet_abominable", bred: true, legend: true, base: "yeticub", fx: { tough: 10, speed: 4 }, ex: "The cub grew horns. You take 10% less damage and walk 4% faster. Legendary." }
+});
+Object.assign(LEGEND_OF, { owlet: "blizzardowl", yeticub: "abominable" });
+Object.assign(EGGS, {
+  egg_owl:  { pet: "owlet", ms: 60 * 3600000, xp: 17000, from: [...FROZEN_MAPS] },
+  egg_yeti: { pet: "yeticub", ms: 72 * 3600000, xp: 20000, from: [...FROZEN_MAPS] }
+});
+Object.assign(EGG_TRADES, { egg_owl: [["frost_shard", 3], ["feather", 400]], egg_yeti: [["yeti_pelt", 3], ["glacite", 120]] });
+for (const [k, nm] of [["egg_owl", "Snow owl egg"], ["egg_yeti", "Yeti egg"]]) ITEMS[k] = { name: nm, icon: "\u{1F95A}", ex: `Put it in a hatchery on your island with ${BREED.hatch.food} Ordinary pet food: a ${PETS[EGGS[k].pet].name} in ${Math.round(EGGS[k].ms / 3600000)} hours. Found only in the Frozen Reach. Tradable.` };
+/* the creatures. Every one takes MORE from spells (x1.4, the owls x1.7); ice resists frost and fears fire */
+const FZ = { magic: 1.4, archery: 0.75, melee: 0.75 };
+vmob("frostwolf", { name: "Frost Wolf", size: "m", lvl: 100, hp: 500, att: 100, def: 80, max: 28, speed: 1900, box: [32, 22], aggro: 4, guard: { ...FZ }, weak: "fire", resist: "frost",
+  ex: "It runs the snow in packs and comes straight at you. 40% more from spells, 25% less from arrows and swords; afraid of fire, at home in the frost." }, 700,
+  [["frost_shard", 1, 0.08], ["spellpaper", [2, 5], 0.25], ["waystone_frozen", 1, 0.006]], [["yeti_pelt", 0.01]]);
+vmob("yeti", { name: "Yeti", size: "m", lvl: 104, hp: 540, att: 102, def: 82, max: 29, speed: 2400, box: [30, 34], aggro: 3, range: 4, guard: { ...FZ, melee: 0 }, weak: "fire", resist: "frost",
+  ex: "Up on the ledges, hurling snowballs from four tiles. A wand outreaches him: 40% more from spells, less from arrows, and no sword reaches that high." }, 740,
+  [["yeti_pelt", 1, 0.12], ["glacite", [1, 3], 0.3], ["pot_frost", 1, 0.04], ["waystone_frozen", 1, 0.006]], [["frost_shard", 0.01]]);
+vmob("snowowl", { name: "Snow Owl", size: "m", lvl: 102, hp: 480, att: 100, def: 80, max: 28, speed: 2200, box: [34, 24], aggro: 3, range: 3, sky: true, guard: { melee: 0, archery: 0.75, magic: 1.7 }, weak: "fire", resist: "frost",
+  ex: "It never lands. No sword reaches it, arrows glance off the feathers, and a spell brings it down 70% faster than anything." }, 720,
+  [["feather", [8, 14]], ["spellpaper", [2, 4], 0.25], ["waystone_frozen", 1, 0.006]], [["frost_shard", 0.01]]);
+vmob("frostwraith", { name: "Frost Wraith", size: "m", lvl: 106, hp: 560, att: 104, def: 84, max: 30, speed: 2500, box: [28, 34], aggro: 3, guard: { melee: 0, archery: 0, magic: 1.4 }, weak: "fire", resist: "frost",
+  ex: "Ice and mist in a hood. Swords and arrows go straight through it: only a spell hurts it, 40% harder than anything else does." }, 780,
+  [["ink_frost", [2, 4], 0.2], ["frost_shard", 1, 0.12], ["winters_heart", 1, 0.002], ["waystone_frozen", 1, 0.007]], [["pot_frost", 0.01]]);
+vmob("iceelemental", { name: "Ice Elemental", size: "m", lvl: 110, hp: 600, att: 106, def: 86, max: 31, speed: 2600, box: [30, 36], aggro: 3, range: 4, guard: { melee: 0, archery: 0.5, magic: 1.4 }, weak: "fire", resist: "frost",
+  ex: "A walking heap of blue ice on the ice floes and the ledges, throwing shards from four tiles. Arrows chip it (half), spells shatter it (40% more)." }, 820,
+  [["frost_shard", [1, 2], 0.3], ["glacite", [2, 4], 0.3], ["winters_heart", 1, 0.002], ["waystone_frozen", 1, 0.007]], [["wyrm_scale", 0.01]]);
+vmob("frostgiant", { name: "Frost Giant", size: "l", lvl: 112, hp: 680, att: 108, def: 88, max: 33, speed: 2900, box: [44, 44], aggro: 2, range: 4, guard: { melee: 0, archery: 0.75, magic: 1.4 }, weak: "fire", resist: "frost",
+  ex: "Up on the Frostspire's shelves with a club of stone, throwing boulders from four tiles. 40% more from spells, 25% less from arrows, no sword reaches him." }, 860,
+  [["yeti_pelt", 1, 0.15], ["glacite", [2, 5], 0.35], ["pot_frost", 1, 0.05], ["frostbite_ring", 1, 0.003], ["waystone_frozen", 1, 0.007]], [["frost_shard", 0.01]]);
+vmob("frostjarl", { name: "The Frost Jarl", size: "xl", lvl: 113, hp: 12000, att: 118, def: 94, max: 46, speed: 2900, box: [100, 80], aggro: 4, boss: true, open: true, rise: true, announce: "❄️", range: 6, respawn: 40 * 60000,
+  guard: { melee: 0, archery: 0, magic: 1.4 }, weak: "fire", resist: "frost",
+  ex: "The giants' king, on the high ice shelf at the top of the Frostspire. Only a spell reaches him (40% more; swords and arrows do nothing), he hurls ice six tiles, and anyone who hurts him shares the kill." }, 2400,
+  [["tickets", [14000, 22000]], ["frost_shard", [4, 8]], ["yeti_pelt", [2, 4]], ["pot_frost", [2, 4]], ["waystone_frozen", 1, 0.25], ["rimeheart", 1, 0.03], ["winters_heart", 1, 0.04], ["frostbite_ring", 1, 0.04]], [["egg_yeti", 0.05]]);
+/* THE DAILY BOSS: the Ice Wyrm rises once a day out of the Reach's frozen lake at an hour nobody knows (the worker's wyrm.js, WYRM below) */
+vmob("icewyrm", { name: "The Ice Wyrm", size: "xl", lvl: 115, hp: 22000, att: 120, def: 96, max: 48, speed: 3000, box: [120, 90], aggro: 5, boss: true, open: true, range: 6, respawn: 24 * 3600000,
+  guard: { melee: 0, archery: 0, magic: 1.4 }, weak: "fire", resist: "frost",
+  ex: "It sleeps under the Frozen Reach's lake and comes up once a day, at an hour nobody knows, for half an hour. Only a spell reaches it (40% more), it breathes ice six tiles, and everyone who hurts it shares the kill." }, 4000,
+  [["tickets", [20000, 32000]], ["wyrm_scale", [1, 3]], ["frost_shard", [6, 10]], ["pot_frost", [3, 6]], ["waystone_frozen", 1, 0.3], ["rimeheart", 1, 0.05], ["winters_heart", 1, 0.06], ["bag_glacier", 1, 0.05]], [["egg_owl", 0.05]]);
+BOSSES.add("frostjarl"); BOSSES.add("icewyrm");
+/* when and where it rises: once per Chicago day, at a random minute between 2 PM and midnight (the owner: "not between 12am and 2pm") */
+export const WYRM = { scene: "frozen", at: [22, 5],   /* on the big floe in the lake: lt-wild/frozen-gen.py checks it */ fromHour: 14, toHour: 24, stays: 30 * 60000 };
+/* the late-map passes (see the Valley block): their level's accuracy, then the aim rule */
+for (const t of ["frostwolf", "yeti", "snowowl", "frostwraith", "iceelemental", "frostgiant", "frostjarl", "icewyrm"]) {
+  const m = MOBS[t]; m.att = Math.max(m.att, attFor(m.lvl)); m.outside = true;
+  const d = kitDefence(Math.min(99, m.lvl)), was = hitChance(m.att, d), aim = Math.round(d * Math.pow(MOB_AIM / 0.5, 1 / MOB_K)), now = mobHitChance(aim, d);
+  m.max = Math.max(2, Math.round((m.max + 1) * MOB_DANGER * (was / now) - 1)); m.att = aim;
+}
+Object.assign(BANDS, { frozen: [100, 108], frostspire: [106, 115] });
+for (const k of FROZEN_MAPS) { DEATH[k] = { share: 0.1, cap: 10000 }; MAGE_BAND[k] = 40; MAGE_FLOOR[k] = 0.5; }   /* a wand and Magic 40 opens both; spells land half the time */
+/* SCENES.frozen and SCENES.frostspire are in eastscape-closed.js, written by lt-wild/frozen-gen.py */
+if (!HOLD.frozen) { for (const k of FROZEN_MAPS) { OPEN.add(k); PET_SCENES.add(k); } SCENES.cloud.exits.n = "frozen"; }
