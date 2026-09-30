@@ -63,7 +63,7 @@ for (const [k, d] of Object.entries(G.SCENES)) {
   for (const n of (d.npcs || [])) routes.add("npcs/" + n.name);
 }
 for (const g of ["Guides", "Skills", "Quests", "Monsters", "Areas", "People", "Items", "Pets", "Weekly"]) routes.add("list/" + g);   /* (2026-09-30) Pets and the Weekly issues are categories now */
-routes.add("home"); routes.add("updates");
+routes.add("home"); routes.add("updates"); if (G.ROADMAP) { routes.add("roadmap"); for (const c of G.ROADMAP.cards) routes.add(`roadmap/${c.id}`); }   /* (2026-09-30) the Road Ahead */
 
 /* ---------------------------------------------------------------- 1. every link goes somewhere */
 {

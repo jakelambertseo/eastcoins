@@ -154,6 +154,26 @@ export function installTrack(World, { G }) {
       names: Object.fromEntries([...maps].map((k) => [k, G.SCENES[k]?.name || k])) };
   };
 
+  /* THE ROAD AHEAD's hearts (2026-09-30, the owner: "build it on dev with votes"). One heart per player per card, a second press takes it back. Kept as
+     { cardId: [playerId, …] } in storage "roadmap:votes" (a few hundred ids at most), written on each vote (votes are rare), read once and kept in memory.
+     Only a card G.roadmapVotable says takes votes counts. The page asks when the wiki page opens; nothing polls. While HOLD.roadmap, only staff reach it. */
+  P.roadmapOp = async function (pl, m, now) {
+    if (G.HOLD.roadmap && !(pl.role === "admin" || pl.role === "mod" || pl.admin)) return;
+    await (this.rmvP ||= this.ctx.storage.get("roadmap:votes").then((v) => { this.rmv = v || {}; }));
+    const V = this.rmv, view = () => this.send(pl, { type: "roadmap",
+      counts: Object.fromEntries(Object.entries(V).filter(([k]) => G.roadmapVotable(k)).map(([k, l]) => [k, l.length])),
+      mine: Object.keys(V).filter((k) => G.roadmapVotable(k) && V[k].includes(pl.id)) });
+    if (m.op === "vote") {
+      const id = String(m.id || ""); if (!G.roadmapVotable(id)) return view();
+      if (now - (pl.rmVoteAt || 0) < 500) return; pl.rmVoteAt = now;
+      const l = (V[id] ||= []), i = l.indexOf(pl.id); if (i >= 0) l.splice(i, 1); else l.push(pl.id);
+      await this.ctx.storage.put("roadmap:votes", V);
+      return view();
+    }
+    if (now - (pl.rmAsk || 0) < 1500) return; pl.rmAsk = now;
+    return view();
+  };
+
   /* THE WORLD DATA WINDOW (2026-09-30, the owner: "now that we have track.js, can we build a dashboard that i can see what we have so far").
      `n` Chicago days ending today, ADDED UP into one day's shape (today straight from memory, the rest from storage in one read), plus a short line
      per day for the trend and the last 20 player kills. Only an admin asks, only when the window opens or is refreshed, and the answer is cached

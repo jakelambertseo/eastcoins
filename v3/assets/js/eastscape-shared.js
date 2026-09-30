@@ -10048,3 +10048,17 @@ export const KILL_MUL = { wild: 1.25, deep: 1.5 };   /* read by the two maps' `k
 export const RETALIATE_MS = 60 * 1000;
 DEATH.wild = { share: 0.1, cap: 10000 };
 DEATH.deep = { share: 0.1, cap: 10000 };
+/* ============================================================ THE ROAD AHEAD (2026-09-30). The owner: "users love the look and info in the weekly update, can we mockup
+   ... how a roadmap feature would look? lets use imagery as well", then "build it on dev with votes, then ill decide if i hold it or not". A page in the wiki
+   (tools/roadmap-mock/ was the mockup). The CARDS are here, because the server needs their ids to take a vote; their WORDS and pictures are ROADMAP_WORDS in
+   eastscape-wiki.js, keyed by the same ids. `lane` is where the card sits: live (just shipped), now, next, later or rumour; `status` is its chip; `pct` fills the
+   bar on a card being built. Only now, next and later take votes (one heart a player a card). Held live until the owner says (HOLD.roadmap). */
+HOLD.roadmap = !globalThis.__ES_OPEN_ALL;
+export const ROADMAP = { updated: "2026-10-01", cards: [
+  { id: "events", lane: "live" }, { id: "wildrearm", lane: "live" }, { id: "returns", lane: "live" },
+  { id: "mystats", lane: "now", status: "testing", pct: 85 }, { id: "phone", lane: "now", status: "building", pct: 35 }, { id: "tables", lane: "now", status: "building", pct: 20 },
+  { id: "featured", lane: "next", status: "planned" }, { id: "gifting", lane: "next", status: "planned" }, { id: "callworld", lane: "next", status: "planned" }, { id: "waystone", lane: "next", status: "planned" },
+  { id: "newmap_fire", lane: "next", status: "planned" }, { id: "chase", lane: "next", status: "planned" },   /* (2026-09-30, the owner: "add ... the maps that are held, new chase items, mobs till levels higher than 99") */
+  { id: "event4", lane: "later", status: "idea" }, { id: "newmap_green", lane: "later", status: "planned" }, { id: "past99", lane: "later", status: "idea" }, { id: "ideas", lane: "later", status: "idea" },
+  { id: "rumour_fire", lane: "rumour" }, { id: "rumour_wall", lane: "rumour" }, { id: "rumour_ascend", lane: "rumour" }] };   /* (2026-09-30, the owner: "tease ascendency classes as well") */
+export const roadmapVotable = (id) => ROADMAP.cards.some((c) => c.id === id && ["now", "next", "later"].includes(c.lane));
