@@ -2029,3 +2029,10 @@ its band colour; clicking a sorted gem sets it in the first empty setting of its
 Armour = Bom's plate price for the same tier and slot (leather/linen = bronze ... voidstalker/astral = singularity: a body
 600 .. 1,440,000). Weapons = 10x that tier's longsword (bows, wands) or shield (quivers, bags): a bogwood longbow 6,000,000.
 Buy-back unchanged (an eighth, capped 2,500). Shared ?v=393.
+
+## 2026-09-30 00:11 UTC, rules 363 LIVE (worker fc49eb72): the combat pass + the jukebox is the radio
+Flinch back (recoil + 70 ms white flash), drawn attack effects (attackFx: sword arc by tier colour, bow snap and streak, wand ring by
+element), sounds (mob_swing, crit, weak/resist/guard, heartbeat, died; mobgone scene event; others' fights at 0.3, 4/s), the "died"
+event and #diedCard. The Green Room player is out of the game (greenHere() is empty; the module is still there): the jukebox is the
+radio only. Shared 394, sfx 18, wiki 220. Mark the bug-board idea "Remove Green Room ... radio.garden only" as done.
+NOT DONE (considered): hit-stop; real attack frames (the owner chose drawn effects).
