@@ -869,6 +869,7 @@ const SEEDED_BY={wheat:"grows wild in the Yard",tomatoe:"rotten tomatoes, in the
 .rm-idea img{width:52px;height:52px;image-rendering:pixelated}.rm-idea b{display:block;font:800 16px "Cinzel",serif;color:#ffe7b0}.rm-idea span{font:600 12.5px Lora,serif;color:#d8c8a8}
 .rm-idea form{grid-column:1/-1;display:flex;gap:6px}.rm-idea input{flex:1;min-width:0;padding:8px 10px;border-radius:6px;border:0;background:#f6ecd3;font:600 13px Lora,serif;color:#2a2016}
 .rm-idea button{padding:0 14px;border:0;border-radius:6px;background:#c8963a;color:#fff;font:800 13px Lora,serif;cursor:pointer}
+.rm-msg{grid-column:1/-1;margin:0;min-height:1em;font:700 12.5px Lora,serif;color:#ffd98a}.rm-msg.ok{color:#9fe8a0}.rm-msg.bad{color:#ffb0a0}
 .rm-open{border-radius:12px;overflow:hidden;background:#f6ecd3;box-shadow:0 0 0 2px #c8963a,0 8px 22px rgba(40,20,5,.35);margin:0 0 12px}
 .rm-open .rm-top{position:relative;height:140px;background:#2a1810;overflow:hidden;display:flex;align-items:flex-end;gap:14px;padding:0 54px 12px 18px;box-sizing:border-box}
 .rm-open .rm-top .rm-bg{position:absolute;inset:0;background-size:cover;background-position:center;image-rendering:pixelated;filter:brightness(.5)}
@@ -898,5 +899,5 @@ const SEEDED_BY={wheat:"grows wild in the Yard",tomatoe:"rotten tomatoes, in the
     ${rum.length?`<h3>Rumours</h3><div class="rm-tease">${rum.map(c=>{const w=W[c.id];return`<div class="rm-tz ${w.hue==="leaf"||w.hue==="arcane"?w.hue:""}"><div class="rm-bg" style="background-image:url(${H.src(w.bg)})"></div><div class="rm-glow"></div><small>${esc(w.heard||"A rumour")}</small><b>${esc(w.title)}</b><p>${esc(w.text)}</p>${H.img(w.sil).replace("<img ",'<img class="rm-sil" ')}</div>`}).join("")}</div>`:""}
     <h3>Tell us what you want</h3>
     <div class="rm-idea">${H.img("ui/bom_face")}<span><b>Got an idea?</b><span>Bom passes the good ones on. The best of them end up on this page.</span></span>
-      <form data-rmidea><input id="rmIdea" maxlength="600" placeholder="A world event where…" aria-label="Your idea"><button type="submit">Send</button></form></div>
+      <form data-rmidea><input id="rmIdea" maxlength="600" placeholder="A world event where…" aria-label="Your idea"><button type="submit">Send</button></form><p class="rm-msg" role="status" aria-live="polite"></p></div>
   </div>`}function roadmapNext(G,H){if(!G.ROADMAP||G.HOLD?.roadmap)return"";const cards=[...rmCardsIn(G,"now"),...rmCardsIn(G,"next")].slice(0,6);return cards.length?`<style>${ROADMAP_CSS}</style><h3>Coming next</h3><div class="rm-next">${cards.map(c=>`<a data-wiki="roadmap">${H.img(ROADMAP_WORDS[c.id].img)}${H.esc(ROADMAP_WORDS[c.id].title)}</a>`).join("")}</div>`:""}export{GUIDES,ROADMAP_CSS,ROADMAP_WORDS,SKILL_EXTRA,SKILL_GUIDE,UPDATES,WEEKLY,WEEKLY_CSS,CRYPT_T as _CRYPT_T,PYR_T as _PYR_T,cropTable,roadmapNext,roadmapPage,weeklyList,weeklyPage};
