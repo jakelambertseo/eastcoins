@@ -95,7 +95,8 @@ export function createTowerRules(G, H) {
 
        Items are dropped entirely. A tower monster's `drops` is the tickets line and nothing after it, so no ore, no
        gear, no rares. Pets are a separate roll and PET_SCENES does not list the tower, so none of those either. */
-    tixShare: 0.2
+    tixShare: 0.2,   /* (2026-09-30) no longer used: a floor is paid by hpShare, below */
+    hpShare: 0.5
   };
 
   /* ---------------------------------------------------------------- the climber a floor expects */
@@ -147,9 +148,13 @@ export function createTowerRules(G, H) {
     /* A FIFTH OF THE BASE MONSTER'S TICKETS, and only tickets. Its drops list is read for the tickets line and the
        rest is thrown away; a monster that pays none outside pays none here. Rounded up to 1 so a floor is never
        literally worthless, and the range is kept so the number still varies. */
+    /* (2026-09-30, the balance pass: "The Tower pays ~0.3% of open-world tickets") A FLOOR PAYS FOR THE HEALTH IT HOLDS. A fifth of ONE base kill
+       was 110-300 tickets an hour against 50-90k outside, for a room that is a 25-40-kill fight; five of the eight climbers stopped at 30 and
+       never came back. Now a floor pays half of what the same damage earns outside (TOWER.hpShare): the base monster's tickets a hitpoint times
+       the floor's hitpoints. Half, because a room you sit in and swing at is easier than walking a map; the range is kept. */
     const tx = (b.drops || []).find(([k]) => k === "tickets")?.[1];
-    const cut = (n) => Math.max(1, Math.round(n * TOWER.tixShare));
-    const tixDrop = tx == null ? [] : [["tickets", Array.isArray(tx) ? [cut(tx[0]), cut(tx[1])] : cut(tx)]];
+    const avg = tx == null ? 0 : Array.isArray(tx) ? (tx[0] + tx[1]) / 2 : tx, want = (avg / Math.max(1, b.hp)) * s.hp * TOWER.hpShare;
+    const tixDrop = want >= 1 ? [["tickets", [Math.max(1, Math.round(want * 0.6)), Math.max(1, Math.round(want * 1.4))]]] : [];
     mobs[`tw${f}`] = { name: b.name, art: b.art || s.base, size: b.size, box: b.box, lvl: s.lvl, hp: s.hp, att: s.att, def: s.def,
       max: s.max, speed: b.speed, aggro: 0, tower: true, drops: tixDrop, ...(s.boss ? { boss: true, enrage: { at: TOWER.bossEnrage, mul: 1.5,
         say: s.top ? "The House stops pretending to be a building. \"You are up a lot tonight. Let's fix that.\"" : `${b.name} stops playing with you.` } } : {}) };

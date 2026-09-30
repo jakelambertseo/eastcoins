@@ -35,7 +35,9 @@ import { installMeter } from "./meter.js";
 import { installTinker } from "./tinker.js";
 import { installCards } from "./cards.js";   /* (2026-09-29) Marked Cards */
 import { installGems } from "./gems.js";
-import { installWyrm } from "./wyrm.js";   
+import { installWyrm } from "./wyrm.js";
+import { installEvents } from "./events.js";   /* (2026-09-30) WORLD EVENTS */
+import { installCommands } from "./commands.js";   /* (2026-09-30) CHAT COMMANDS */   
 import { installRaid } from "./raid.js";   /* (2026-09-30) the Yard raid */   /* (2026-09-30) the Frozen Reach's daily boss */
 import { installOutfit } from "./outfit.js";   /* (2026-09-29) the outfitters: Wren and Morwenna */   /* (2026-09-28) gems, sockets, the Gem Case and the Gem Sorter */   /* (2026-09-28) Tinkering: the sink */   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
@@ -237,6 +239,7 @@ export class World {
       this.dbl = (await ctx.storage.get("dbl")) || null;
       this.sx2 = (await ctx.storage.get("sx2")) || null; this.raidLast = (await ctx.storage.get("raidLast")) || 0;   /* (2026-09-30) the 2X Skilling XP clock and the War Horn's three hours */
       await this.orderLoad();
+      await this.evLoad();   /* (2026-09-30) WORLD EVENTS: the day's plan, a star, a poster, a thief (see events.js) */
       await this.projLoad();   /* (2026-09-28) World Projects: the tiers build the maps, so they are read before any scene is */
     });
   }
@@ -331,6 +334,7 @@ export class World {
     if (S.owner) pl.out.push({ type: "decor", decor: this.isleOf(S)?.decor || [] });   /* (2026-09-29) as moveToScene sends it on the way in */
     this.cryptHello(pl, S); if (S.def.count) this.countHello(pl, S);
     if (this.doubleOn()) pl.out.push({ type: "double", on: this.doubleView() });
+    pl.out.push({ type: "wev", ...this.evView() });   /* (2026-09-30) WORLD EVENTS: what is on right now */
     if (this.skill2xOn()) pl.out.push({ type: "skill2x", on: this.skill2xView() });   /* (2026-09-30) */   /* (2026-09-25) walk in mid-event and the timer is already there */
     this.pyramidHello(pl, S);
     this.repCatchUp(pl).catch(() => {});   /* (2026-09-28) news on their bug reports and ideas from while they were away */
@@ -418,7 +422,7 @@ export class World {
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
-    pets: C.pets, parts: C.parts || null, tk: C.tk || null, tkBomb: C.tkBomb || 0, gembag: G.bagOf(C),   /* (2026-09-29) the gem bag */ pins: C.pins || [], hand: G.handView(C),   /* (2026-09-29) the Marked Card hand in play, never its deck */   /* (2026-09-28) Tinkering's pouch, the gadgets running, an armed bomb */ buyback: (C.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms),   /* (2026-09-28) Bom's buy-back */ isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
+    pets: C.pets, frags: C.frags || 0, takes: C.takes || 0,   /* (2026-09-30) WORLD EVENTS: Star Fragments, Wanted posters taken */ parts: C.parts || null, tk: C.tk || null, tkBomb: C.tkBomb || 0, gembag: G.bagOf(C),   /* (2026-09-29) the gem bag */ pins: C.pins || [], hand: G.handView(C),   /* (2026-09-29) the Marked Card hand in play, never its deck */   /* (2026-09-28) Tinkering's pouch, the gadgets running, an armed bomb */ buyback: (C.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms),   /* (2026-09-28) Bom's buy-back */ isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
 
   /* ------------------------------------------------------------ reforging (2026-09-22)
      Spend bars to push a piece you own further. The odds and what a level is worth live in G.FORGE; this only
@@ -843,6 +847,7 @@ export class World {
            remaining") THE FIRST CHAT COMMAND. It answers the asker alone and is never broadcast, so nobody else's chat fills with it. */
         if (/^[\/!](pumpkin|king)\b/i.test(text)) return this.say(pl, this.hwKingLine(now), "good");
         if (/^[\/!](island|isle)\b/i.test(text)) return this.isleTimers(pl, now);   /* (2026-09-30) every timer on your island, to you alone */
+        if (/^[\/!](events?)\b/i.test(text)) return this.evTell(pl, now);   /* (2026-09-30) WORLD EVENTS: what is on, and what is still to come today */
         /* (2026-09-28) /project: where every World Project stands. An admin can set one: /project dock 1, and "fill" fills that tier's
            parts so the Finish button lights (it is the admin projtier command, so it answers to the same permission). */
         /* (2026-09-28) /gemkit and /sorter: the gem system, set up for testing on the dev server (see gemKit in gems.js) */
@@ -859,13 +864,16 @@ export class World {
             if (!G.PROJECTS[String(pj[1]).toLowerCase()]) return this.say(pl, `No project called ${pj[1]}. It's one of: ${Object.keys(G.PROJECTS).join(", ")}.`, "bad");
             return this.admin(S, pl, { cmd: "projtier", id: String(pj[1]).toLowerCase(), tier: +pj[2], fill: /fill/i.test(pj[3] || ""), party: /party/i.test(pj[3] || "") });
           } }
-        const msg = { type: "chat", id: pl.id, name: pl.name, nfx: G.nameFxOf(pl.C) || undefined, role: pl.role !== "user" ? pl.role : undefined, text, scene: pl.C.scene, t: now };
+        if (/^[\/!]/.test(text) && this.slashCmd(S, pl, text, now)) return;   /* (2026-09-30) CHAT COMMANDS: /find, /help, /price … (commands.js); a "/typo" is answered, never broadcast */
+        const msg ={ type: "chat", id: pl.id, name: pl.name, nfx: G.nameFxOf(pl.C) || undefined, role: pl.role !== "user" ? pl.role : undefined, text, scene: pl.C.scene, t: now };
         for (const p of this.pls.values()) p.out.push(msg);
         this.chatKeep(msg);
         return;
       }
       case "quest": return this.questOp(S, pl, m);
       case "hw": return this.hwOp(S, pl, m);
+      case "tent": return this.tentOp(S, pl, m);   /* (2026-09-30) the Star Tent */
+      case "evboard": { if (now - (pl.evBoardAt || 0) < 2000) return; pl.evBoardAt = now; return this.evOpen(pl, "bountyboard"); }   /* (2026-09-30) the Bounty Board, redrawn while it is open */
       case "report": return void this.reportOp(S, pl, m).catch((e) => console.error("report", e));   /* (2026-09-28) the bug button */
       case "pen": return this.penOp(S, pl, m);
       case "hatch": return this.hatchOp(S, pl, m);   /* (2026-09-27) Breeding: eggs */
@@ -925,7 +933,8 @@ export class World {
       case "whoall": {
         if (now - (pl.whoAllAsk || 0) < 3000) return; pl.whoAllAsk = now;
         const people = [...this.pls.values()].map((p) => ({
-          name: p.name, scene: String(p.C.scene || "?").split(":")[0], combat: G.combatOf(p.C), admin: !!p.admin
+          name: p.name, scene: String(p.C.scene || "?").split(":")[0], combat: G.combatOf(p.C), admin: !!p.admin,
+          idle: Math.max(0, Math.floor((now - (p.lastInput || now)) / 60000))   /* (2026-09-30, the owner: an "active" and "idle" status beside each user) minutes since they last did anything */
         })).sort((a, b) => a.name.localeCompare(b.name));
         return this.send(pl, { type: "whoall", people });
       }   /* (v111) the page asks when it is drawing somebody it cannot name */
@@ -1018,15 +1027,16 @@ export class World {
     else if (m.kind === "ground") { const it = S.ground.find((x) => x.id === m.id); if (it) act = { kind: "ground", id: it.id, x: it.x, y: it.y, name: G.ITEMS[it.k].name }; }
     else if (m.kind === "mob") {
       const mob = S.mobs.find((x) => x.id === m.id && !x.dead); if (!mob) return;
+      if (mob.star) { pl.act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: mob.nm || "Shooting star", reach: 1, started: 0 }; pl.path = G.findPath(S.g, f, mob, 1) || []; return this.kick(S, pl, now); }   /* (2026-09-30) a SHOOTING STAR: see events.js starSwing */
       if (!this.mayFight(S, mob, pl, now)) return this.say(pl, `${this.claimOf(S, mob, now).name} is already fighting that.`, "bad");
-      { const gate = mob.target === pl.id || pl.god ? null : G.bandBlock(C, S.key, "fight");   /* LEVEL BANDS: a soft gate. Something already attacking you can always be fought back */
+      { const gate = mob.target === pl.id || pl.god || mob.thief ? null : G.bandBlock(C, S.key, "fight");   /* (2026-09-30) anyone may chase the Jackpot Thief, wherever he runs */   /* LEVEL BANDS: a soft gate. Something already attacking you can always be fought back */
         if (gate) return this.say(pl, `${S.def.name} is for Combat ${gate.need} and up${gate.arch ? `, or Archery ${gate.arch} with a bow` : ""}${gate.mage ? `, or Magic ${gate.mage} with a wand` : ""}. You're ${gate.have}. ${gate.need <= 10 ? "The Yard will get you there." : "Work the scene before this one a while longer."}`, "bad"); }
-      act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: G.MOBS[mob.t].name, reach: G.reachOfHeld(C) };   /* (2026-09-25) SHOOT FROM WHERE YOU STAND: the walk below stops at the bow's reach, not next to the thing (the owner: "it runs up to them, which feels very much like melee") */
+      act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: mob.nm || G.MOBS[mob.t].name, reach: G.reachOfHeld(C) };   /* (2026-09-25) SHOOT FROM WHERE YOU STAND: the walk below stops at the bow's reach, not next to the thing (the owner: "it runs up to them, which feels very much like melee") */
     }
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
       const ob = S.objs[m.ob | 0]; if (!ob || ob.edge) return;   // (the border's trees and rocks are scenery)
-      let kind = { scrapbench: "tinker",   /* (2026-09-28) Sprocket Sal's Scrap Bench */ projboard: "project", dockruin: "project", cannonruin: "project", tableruin: "project", pjruin: "project", pjdeco: "project", cannon: "cannon", boiler: "game", ferris: "ferris", gemsorter: "gems",   /* (2026-09-28) World Projects */ clawchest: "clawchest",   /* (2026-09-27) Captain Claw's chest */ rowboat: "rowboat",   /* (2026-09-27) the Boardwalk's islands */ podium: "podium",   /* (2026-09-27) the collection log */ vortex: "rowboat", burndoor: "rowboat",   /* (2026-09-27) the Foundry's portals and its burning door travel the same way */ blast: "smelt",   /* (2026-09-27) the Foundry's blast furnace: a furnace */ jbench: "jewel",   /* (2026-09-27) Jewelcrafting: a picker station like the anvil */ farm: "farm",   /* (2026-09-30) the island's livestock */ hatchery: "hatchery",   /* (2026-09-27) Breeding's hatchery */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ wildbench: "fletch",   /* (2026-09-29) the Wild Bench */ cycad: "tree", frostpine: "tree",   /* (2026-09-30) the Primeval Valley's cycads */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
+      let kind = { startent: "startent", bountyboard: "bountyboard",   /* (2026-09-30) WORLD EVENTS */ scrapbench: "tinker",   /* (2026-09-28) Sprocket Sal's Scrap Bench */ projboard: "project", dockruin: "project", cannonruin: "project", tableruin: "project", pjruin: "project", pjdeco: "project", cannon: "cannon", boiler: "game", ferris: "ferris", gemsorter: "gems",   /* (2026-09-28) World Projects */ clawchest: "clawchest",   /* (2026-09-27) Captain Claw's chest */ rowboat: "rowboat",   /* (2026-09-27) the Boardwalk's islands */ podium: "podium",   /* (2026-09-27) the collection log */ vortex: "rowboat", burndoor: "rowboat",   /* (2026-09-27) the Foundry's portals and its burning door travel the same way */ blast: "smelt",   /* (2026-09-27) the Foundry's blast furnace: a furnace */ jbench: "jewel",   /* (2026-09-27) Jewelcrafting: a picker station like the anvil */ farm: "farm",   /* (2026-09-30) the island's livestock */ hatchery: "hatchery",   /* (2026-09-27) Breeding's hatchery */ shroom: "shroom", fbed: "fbed", cellar: "cellar", compost: "rot",   /* (2026-09-27) Fungiculture: a wild cluster, a cellar bed, the ladder down, the compost bin (a picker station) */ pen: "pen",   /* (2026-09-27) the island's pet pen: opens the Breeding window on arrival; with a picked recipe it is a station */ ghostlantern: "ghostlantern",   /* (2026-09-27) the Long Night's Ghost Hunt */ fletcher: "fletch",   /* (2026-09-25) the fletching table: a picker station like the anvil */ wildbench: "fletch",   /* (2026-09-29) the Wild Bench */ cycad: "tree", frostpine: "tree",   /* (2026-09-30) the Primeval Valley's cycads */ countdoor: "countdoor", countsearch: "countsearch", countbox: "countbox", countexit: "countexit",   /* (2026-09-25) the Count Room. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so a new clickable object has to be in BOTH. */ mark: "mark", guildgate: "guildgate", wheat: "wheat", spot: "spot", rock: "rock", vein: "vein", tree: "tree", oak: "tree", yew: "tree", cypress: "tree", deadtree: "tree", willow: "tree", skyash: "tree", rustpine: "tree", bogwood: "tree", wreck: "rock", range: "cook", fire: "cook", furnace: "smelt", anvil: "smith", cauldron: "brew", sandpit: "rock", datepalm: "tree", pyramid: "pyramid", balloonpop: "carnival", shootgallery: "carnival", whackamole: "carnival", turnstile: "turnstile",   /* (2026-09-24) the Carnival’s stalls. As ever this map and the page’s KIND_OF both need the entry: this one decides if the click DOES anything, that one only labels it. */   /* (2026-09-24) the Great Pyramid on the Sands: clicking it opens the party window */   /* (2026-09-24) Alchemy. THIS map is what decides whether a click does anything - the page's KIND_OF only labels it - so a new clickable object has to be added in BOTH. A sand pit is mined like a rock and a date palm is chopped like a tree. */ olive: "olive", vine: "olive", hole: "hole", wildladder: "hole", agilend: "agilend",   /* (2026-09-22) the Gloam's rope ladder is a second mouth of the same pit. THIS map is the one that decides whether a click does anything; the page's KIND_OF only labels it, so adding a clickable object means adding it in BOTH. */ well: "well", house: "door", shrine: "shrine", booth: "bank", stall: "exchange", fightring: "fight", fightboard: "fight", coinstatue: "cashier", cooler: "cooler", buffet: "buffet", prizewheel: "prize", fameboard: "fame", hsboard: "hiscores", cryptdoor: "crypt", towerdoor: "tower", towerup: "towerup", cryptlever: "cryptlever", cryptexit: "cryptexit", cryptloot: "cryptloot", cashier: "cashier", slots: "game", wheel: "game", hilo: "game", mines: "game", plinko: "game", scratch: "game", cointable: "game", dicetable: "game", notice: "board", howto: "howto", jukebox: "jukebox", oddsboard: "picks", cinescreen: "cinescreen", popcorn: "popcorn", projector: "projector", cineseat: "cineseat", prizecase: "cashier", mirror: "mirror", roulette: "roulette", rrtable: "rr", rrseat: "rr", rrboard: "rrboard", barcart: "shot", roomdoor: "door", walldoor: "door", rope: "rope", ferry: "ferry", cart: "ferry", boatback: "boatback", plot: "plot", pedestal: "pedestal", islesign: "islesign" }[ob.t] || (EXAMINE_KINDS.has(ob.t) || G.EXAMINE[ob.t] ? ob.t : null);
       /* MAGIC AND WIZARDRY, THE SERVER (2026-09-26): every altar is a print station, a picker station like the anvil */
       if (!kind && G.STATIONS[ob.t]?.kind === "print") kind = "print";
       if (!kind) return;
@@ -1981,7 +1991,9 @@ export class World {
     }
     if (op !== "buy" || !it) return;
     if (it.card) return this.say(pl, "That one only comes out of a Marked Card hand.", "bad");   /* (2026-09-29) */
-    if (it.corn) return this.say(pl, `Hexa sells that, at the Night Market, for candy corn.`, "bad");   /* (2026-09-27) a Long Night cosmetic has no ticket price */
+    if (it.corn) return this.say(pl, `Hexa sells that, at the Night Market, for candy corn.`, "bad");
+    if (it.frags) return this.say(pl, "The Star Tent sells that, in Cloudreach, for Star Fragments.", "bad");   /* (2026-09-30) */
+    if (it.earned) return this.say(pl, "That one is earned, never sold.", "bad");   /* (2026-09-27) a Long Night cosmetic has no ticket price */
     const have = G.tixIn(C), price = G.priceOf(it), now = Date.now(), paid = () => `${it.name} - ${G.fmtTix(price)}.`;
     /* EVERY REFUSAL COMES BEFORE THE CHARGE: nothing below takes a ticket and then says no */
     if (it.kind === "double" && this.dbl && now < this.dbl.until) { const left = Math.ceil((this.dbl.until - now) / 60000); return this.say(pl, `2X Tickets & Crafting XP is already running - ${left} minute${left === 1 ? "" : "s"} left. It's yours to buy when it ends.`, "bad"); }
@@ -2260,7 +2272,7 @@ export class World {
     else if (el === "frost") m.slowUntil = now + M.slow.ms;
     else if (el === "sun") { pl.C.hp = Math.min(G.maxHpOf(pl.C), pl.C.hp + Math.max(1, Math.round(dmg * M.sunHeal))); this.touch(pl); }
     else if (el === "storm") {
-      const o = S.mobs.find((x) => x !== m && !x.dead && G.cheb(x, m) <= 1 && this.mayFight(S, x, pl, now)); if (!o) return;
+      const o = S.mobs.find((x) => x !== m && !x.dead && !x.thief && !x.star && G.cheb(x, m) <= 1 && this.mayFight(S, x, pl, now)); if (!o) return;   /* (2026-09-30) never onto a star or the Jackpot Thief */
       const d2 = Math.max(1, Math.round(dmg * M.arc.share * G.elementMul(o.t, "storm")));
       o.hp -= d2; o.hurtAt = now; S.events.push({ type: "splat", who: o.id, n: d2, kind: "hit", t: now, arc: true }); this.award(pl, d2); this.bossAdd(pl, o, "dmg", d2);
       if (o.hp <= 0) { const keep = pl.act; this.killMob(S, pl, o, now); if (m.hp > 0) pl.act = keep; }
@@ -2514,7 +2526,7 @@ export class World {
       for (let i = C.inv.length - 1; i >= 0; i--) { const st = C.inv[i]; if (st.k !== gk || G.fCode(st) !== wantF) continue; got += st.n; C.inv.splice(i, 1); }
       if (!got) return this.say(pl, `That is not in your bag: ${G.forgeNameAt(gk, wantF)}.`, "bad");
       const paid = got * priceOf(gk, wantLv);
-      this.tixTo(pl, paid); this.bbAdd(C, { k: gk, n: got, f: wantF, paid: this.credited(paid) }); this.touch(pl);
+      this.earned(pl, paid); this.cashTo(pl, paid); this.bbAdd(C, { k: gk, n: got, f: wantF, paid }); this.touch(pl);   /* (2026-09-30, the balance pass) a sale is never doubled by 2X: see below */
       pl.out.push({ type: "cashed", total: paid, count: got });
       return this.say(pl, `"${G.forgeNameAt(gk, wantF)} — somebody put work into that." The counter hands over ${G.fmtTix(paid)}.`, "good");
     }
@@ -2527,10 +2539,13 @@ export class World {
       const gear = !!G.ITEMS[k]?.slot;
       const n = G.takeInv(C.inv, k, G.countItems({ inv: C.inv, bank: [] }, [k], gear ? { plainOnly: true } : undefined));
       total += n * priceOf(k); count += n;
-      if (n) this.bbAdd(C, { k, n, f: 0, paid: this.credited(n * priceOf(k)) });   /* (2026-09-28) BUY-BACK: see bbAdd */
+      if (n) this.bbAdd(C, { k, n, f: 0, paid: n * priceOf(k) });   /* (2026-09-28) BUY-BACK: see bbAdd */
     }
     if (!count) return this.say(pl, "The counter looks in your bag. \"Nothing in there I can give you tickets for. The arch is that way.\"");
-    this.tixTo(pl, total); this.touch(pl);
+    /* (2026-09-30, the balance pass: "The 2X Tickets potion doubles every Bom sale, including stockpiles") A SALE IS NOT EARNING. tixTo doubles under 2X,
+       so an hour of smithing banked and sold in a 30-minute window came back twice over; a 100,000 potion paid for itself three times. Sales are
+       paid like a pet sale (cashTo, never doubled) and still count toward what you have earned (VIP). What 2X doubles is what a kill drops. */
+    this.earned(pl, total); this.cashTo(pl, total); this.touch(pl);
     pl.out.push({ type: "cashed", total, count });
     this.say(pl, `The counter hands over ${G.fmtTix(total)} for ${count} thing${count === 1 ? "" : "s"}. Spend them right here.`, "good");
   }
@@ -2759,7 +2774,7 @@ export class World {
       const gates = S.def?.gates; if (!gates) continue;
       for (const gt of gates) { const open = G.gateOpenAt(now, gt) ? "i" : "#"; for (const [gx, gy] of G.gateTiles(gt)) S.g[gy][gx] = open; }
     }
-    if (this.tickN % 20 === 0) { this.wyrmTick(now);   /* (2026-09-30) the Ice Wyrm */ this.coldTick(now);   /* (2026-09-30) the Frozen Reach's cold */ this.raidTick(now);   /* (2026-09-30) the Yard raid */ this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.skill2xTick(); this.hwTick(now); this.orderTick(now); this.projTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
+    if (this.tickN % 20 === 0) { this.evTick(now);   /* (2026-09-30) WORLD EVENTS */ this.wyrmTick(now);   /* (2026-09-30) the Ice Wyrm */ this.coldTick(now);   /* (2026-09-30) the Frozen Reach's cold */ this.raidTick(now);   /* (2026-09-30) the Yard raid */ this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.skill2xTick(); this.hwTick(now); this.orderTick(now); this.projTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
     if (this.tickN % 40 === 0) this.runsSave();   /* (2026-09-27) the dungeon runs, so a deploy does not end them */
     if (this.tickN % 20 === 0) for (const pl of this.pls.values()) {   /* once a second */
       /* (2026-09-28, the owner: "user is testing in the thieving guild but its buff isnt counting down") A BUFF'S CLOCK RUNS WHERE IT WORKS.
@@ -2824,7 +2839,7 @@ export class World {
     if (Math.max(Math.abs(dx), Math.abs(dy)) !== 1 || !G.canStepIn(S.g, e.x, e.y, dx, dy)) { e.path = []; return false; }
     // everyone but players waits rather than stepping onto someone
     if (!isPlayer && this.occupied(S, n.x, n.y, e)) { e.path = []; return false; }
-    const base = isPlayer ? G.stepMsOf(e.C, e.speedTest || 0) : STEP;
+    const base = isPlayer ? G.stepMsOf(e.C, e.speedTest || 0) : e.stepMs || STEP;   /* (2026-09-30) the Jackpot Thief is a little quicker than you */
     e.step = { fx: e.x, fy: e.y, tx: n.x, ty: n.y, t0: now, ms: Math.round(dx && dy ? base * 1.4 : base) };
     if (dx) e.face = dx > 0 ? 1 : -1;
     e.dir = G.DIRS[`${dx},${dy}`];
@@ -2936,6 +2951,7 @@ export class World {
     const faceIt = () => { pl.dir = G.DIRS[`${Math.sign(a.x - pl.x)},${Math.sign(a.y - pl.y)}`] || pl.dir; pl.face = a.x > pl.x ? 1 : a.x < pl.x ? -1 : pl.face; };
     if (a.kind === "mob") {
       const m = S.mobs.find((x) => x.id === a.id); if (!m || m.dead) { pl.act = null; return; }
+      if (m.star) return this.starSwing(S, pl, m, a, now);   /* (2026-09-30) SHOOTING STARS */
       if (!this.mayFight(S, m, pl, now)) { pl.act = null; return this.say(pl, `${this.claimOf(S, m, now).name} is already fighting that.`, "bad"); }
       /* (2026-09-25) A BOW WITH NOTHING TO FIRE IS NOT A WEAPON. Checked before the walk, so you are told at the
          click rather than after crossing the room. */
@@ -2966,7 +2982,7 @@ export class World {
         pl.urgeStep = pl.urge ? Math.min((pl.urgeStep | 0) + 1, G.SWING_STACK.length - 1) : 0;
         pl.urge = false;
         pl.lastSwing = now; pl.swingAt = now; pl.fightAt = now;
-        if (!S.def.pvp && !S.def.shared && !G.MOBS[m.t]?.open) m.claim = { id: pl.id, until: now + CLAIM_MS };
+        if (!S.def.pvp && !S.def.shared && !G.MOBS[m.t]?.open && !m.open) m.claim = { id: pl.id, until: now + CLAIM_MS };
         /* (2026-09-26) THE ELEMENT. The loaded page's element meets the monster's weakness or resistance, Void pierces part of its
            defence, and after the hit Fire may burn, Frost slows, Storm arcs to a neighbour and Sun heals you (below). */
         const el = G.launcherOf(C) ? G.ammoElOf(C) : null;
@@ -2987,16 +3003,17 @@ export class World {
            whose max hit is 2: every hit that was not a 1 flashed CRIT. Now it is the top TENTH, and never under 4 damage, so it is
            about one landed hit in nine and nobody sees one until their max hit reaches 5, around Combat 10.) */
         if (dmg > 0) { const ev = G.gemVs(C, m.t); if (ev) dmg = Math.max(1, Math.round(dmg * (1 + ev))); }   /* (2026-09-28) an elemental gem against a monster weak to it */
+        if (m.thief && dmg) dmg = 1;   /* (2026-09-30) THE JACKPOT THIEF counts hits, not damage: a level 3 and a level 99 knock the same tickets loose */
         this.meterAdd(pl, "swing", 1, m); if (dmg) this.meterAdd(pl, "hit", 1, m);   /* (2026-09-28) accuracy, for the run report */
         this.bossAdd(pl, m, "swing", 1); if (dmg) { this.bossAdd(pl, m, "hit", 1); this.bossAdd(pl, m, "dmg", dmg); }   /* (2026-09-28) and a world boss's own report */
         m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, ranged: G.launcherOf(C) ? true : undefined, ak: shotK || undefined,   /* (2026-09-25) the page flies an arrow from `by` to `who` before it shows the number; marked HERE so the page needs nothing about equipment, and a staff marks it the same way */ crit: (dmg >= 4 && dmg > G.maxHitOf(C) * 0.9) || undefined, kill: m.hp <= 0 || undefined,
           /* (2026-09-29) what the hit met, for the overhead plate: em 1 a weakness, -1 a resistance (with el, the element); gs the style a guard took from */
           el: emul !== 1 ? el : undefined, em: emul > 1 ? 1 : emul < 1 ? -1 : undefined, gs: gmul < 1 ? G.styleOf(C) : undefined, gw: gmul > 1 ? G.styleOf(C) : undefined });   /* (2026-09-30) gw: a style weakness */
         this.award(pl, dmg); if (S.def.crypt) this.cryptHit(S, pl, m, dmg); else if (S.def.pyramid) this.pyramidHit(S, pl, m, dmg);
-        if (dmg > 0 && G.MOBS[m.t]?.open) (m.by ||= {})[pl.id] = (m.by[pl.id] || 0) + dmg;   /* (2026-09-27) an open boss remembers who hurt him, for the shared kill */
+        if (dmg > 0 && (G.MOBS[m.t]?.open || m.open)) (m.by ||= {})[pl.id] = (m.by[pl.id] || 0) + dmg;   /* (2026-09-27) an open boss remembers who hurt him, for the shared kill */
         { const fxH = G.fxOf(C);   /* (2026-09-27) the Long Night's pieces: the Skull Wand drinks, the Reaper's Scythe finishes */
           if (dmg > 0 && fxH.leech > 0 && C.hp < G.maxHpOf(C)) { C.hp = Math.min(G.maxHpOf(C), C.hp + Math.max(1, Math.round(dmg * fxH.leech))); this.touch(pl); }
-          if (dmg > 0 && m.hp > 0 && fxH.execute > 0 && !G.MOBS[m.t].boss && m.hp <= m.maxHp * fxH.execute) { const rest = m.hp; m.hp = 0; S.events.push({ type: "splat", who: m.id, n: rest, kind: "hit", t: now, by: pl.id }); } }
+          if (dmg > 0 && m.hp > 0 && fxH.execute > 0 && !G.MOBS[m.t].boss && !m.wanted && !m.thief && m.hp <= m.maxHp * fxH.execute) { const rest = m.hp; m.hp = 0; S.events.push({ type: "splat", who: m.id, n: rest, kind: "hit", t: now, by: pl.id }); } }
         /* (2026-09-22) ENRAGE. `m.enraged` was read by the mob's swing and set by NOTHING — the crypt declared an
            enrage and never wired it up, so the flag had been dead since the day it was written. It flips once, on
            the hit that takes a mob under its threshold, and everyone in the scene is told. */
@@ -3005,7 +3022,8 @@ export class World {
           m.enraged = true;
           for (const p of this.playersIn(S)) p.out.push({ type: "casinonote", text: en.say });
         }
-        if (dmg && el) this.elementAfter(S, pl, m, el, dmg, now);
+        if (dmg && el && !m.thief) this.elementAfter(S, pl, m, el, dmg, now);
+        if (m.thief && dmg) this.thiefHit(S, pl, m, now);   /* (2026-09-30) every hit spills tickets; every tenth leaves him dizzy */
         if (m.hp <= 0) this.killMob(S, pl, m, now);
       }
       return;
@@ -3020,6 +3038,7 @@ export class World {
       S.ground.splice(S.ground.indexOf(it), 1);
       /* (2026-09-22) some things pay a skill for being picked up (the Run's marks). It is a property of the ITEM,
          so this handler never learns what agility is — the same shape as `heal` or `luck`. */
+      if (it.k === "tickets") return this.say(pl, `You grab ${G.fmtTix(it.n)} off the ground.`, "loot");   /* (2026-09-30) the Jackpot Thief's spill */
       const pick = G.ITEMS[it.k]?.pickXp;
       if (pick) this.grant(pl, pick.skill, pick.xp * (it.n || 1));
       return this.say(pl, `You pick up the ${G.ITEMS[it.k].name.toLowerCase()}.${pick ? ` +${pick.xp * (it.n || 1)} ${G.SKILLS[pick.skill].name} xp.` : ""}`, "loot");
@@ -3142,6 +3161,7 @@ export class World {
     if (a.kind === "fbed") { pl.act = null; return this.fungBed(S, pl, a.ob, now); }
     if (a.kind === "cellar") { pl.act = null; return this.fungDown(S, pl); }   /* (2026-09-27) Breeding: the page opens the pen window */
     if (a.kind === "hiscores") { pl.act = null; return pl.out.push({ type: "hiscores" }); }
+    if (a.kind === "startent" || a.kind === "bountyboard") { pl.act = null; return this.evOpen(pl, a.kind); }   /* (2026-09-30) WORLD EVENTS */
     if (a.kind === "project") { pl.act = null; if (G.HOLD.tinker && !pl.admin) return; pl.C.parts ||= { scrap: 0, gears: 0, sparks: 0, relic: 0 }; return this.projPush(pl, { open: true, focus: a.ob?.proj || S.objs[a.ob]?.proj || null }); }   /* (2026-09-28) a project's plan board or ruin: the bench window, on that project */
     if (a.kind === "cannon") { pl.act = null; return this.cannonFire(S, pl, now); }   /* (2026-09-28) the King's Cannon */
     if (a.kind === "ferris") { pl.act = null; return this.ferrisRide(pl); }
@@ -3530,13 +3550,14 @@ export class World {
     this.meterAdd(pl, "kills", 1, m);   /* (2026-09-28) the party meter: and the toughest thing killed names the fight */
     this.gemOnKill(pl, m);   /* (2026-09-28) combat gems, and a boss's Voidheart bit */
     this.cardOnKill(pl, m);   /* (2026-09-29) Marked Cards: a card drops, or a kill tip is done */
-    if (G.MOBS[m.t]?.open) this.bossEnd(S, m, "clear", pl);   /* (2026-09-28) a world boss falls: everybody who fought gets the report */
+    if (G.MOBS[m.t]?.open || m.open) this.bossEnd(S, m, "clear", pl);   /* (2026-09-28) a world boss falls: everybody who fought gets the report */
     /* (2026-09-23) THE SOUND IS TOLD WHAT DIED. It used to be the page matching /^You defeat / on the chat line,
        which said nothing about the creature, so a Sulking Toadstool and The House went out with the same scream.
        Sending the type lets the page pitch it by size. This is also the fragile-trigger fix the backlog asks for:
        reword that chat line now and the sound is unaffected. */
     pl.out.push({ type: "mobdie", t: m.t });
     S.events?.push({ type: "mobgone", t: m.t, who: m.id, by: pl.id, at: now });   /* (2026-09-29) the whole map hears it fall, not only the killer (the combat pass) */
+    if (m.thief) return this.thiefDown(S, m, pl, now);   /* (2026-09-30) THE JACKPOT THIEF: the last hit takes the sack, and nothing else drops */
     if (S.def.count) return this.countKill(S, pl, m, now);
     if (S.def.crypt) return this.cryptKill(S, pl, m, now);
     if (S.def.pyramid) return this.pyramidKill(S, pl, m, now);
@@ -3561,7 +3582,7 @@ export class World {
     /* (2026-09-27) AN OPEN BOSS PAYS EVERYONE WHO FOUGHT HIM: each of them who is still here and took at least OPEN_SHARE of his
        health gets their own roll of the same table, their own kill for quests and finds, and their own line. The killer is
        counted once, above. */
-    const shared = def.open ? this.playersIn(S).filter((q) => q !== pl && (m.by?.[q.id] || 0) >= (m.maxHp || def.hp) * G.OPEN_SHARE) : [];
+    const shared = def.open || m.open ? this.playersIn(S).filter((q) => q !== pl && (m.by?.[q.id] || 0) >= (m.maxHp || def.hp) * G.OPEN_SHARE) : [];
     for (const q of shared) {
       const g2 = this.killLoot(S, q, m, def, now); q.out.push({ type: "mobdie", t: m.t });
       this.say(q, `The ${def.name.toLowerCase()} goes down, and you were in it.${g2.length ? ` You get ${g2.map(([k, n]) => `${n > 1 ? n + " " : ""}${G.ITEMS[k].name.toLowerCase()}`).join(", ")}.` : ""}`, "loot");
@@ -3572,6 +3593,7 @@ export class World {
     if (def.announce) { const who = shared.length ? `${pl.name} and ${shared.length} other${shared.length === 1 ? "" : "s"}` : pl.name;   /* (2026-09-30) a Valley boss falls: the whole server hears who, and when he is back */
       this.houseSay(`${def.announce} ${who} put ${def.name} down in ${S.def.name}. Back in about ${Math.max(1, Math.round((m.respawnAt - now) / 60000))} minutes.`); }
     if (m.t === "icewyrm") this.wyrmDown(S, m, pl, now, shared);
+    if (m.wanted) this.wantedDown(S, m, pl, now);   /* (2026-09-30) WANTED!: the bounty, shared by damage */
     if (m.raid) this.raidKill(S, m, pl, now);   /* (2026-09-30) a raider never comes back; Hrimgar down wins the raid */   /* (2026-09-30) the daily boss: no respawn, tomorrow instead */
     if (G.hwOn() && m.t === "pumpkinking") { m.respawnAt = Infinity; S.mobs = S.mobs.filter((x) => x !== m); S.whoSig = null; this.hwKingDown(pl, now, shared); }   /* the corpse goes: the ordinary respawn loop must never bring him back, the hour does */
     this.say(pl, `You defeat the ${def.name.toLowerCase()}.${got.length ? ` It drops ${got.map(([k, n]) => `${n > 1 ? n + " " : ""}${G.ITEMS[k].name.toLowerCase()}`).join(", ")}.` : ""}`, "loot");
@@ -3886,7 +3908,7 @@ export class World {
     const c = m.claim; if (!c || S.def.pvp || now > c.until) return null;
     const p = this.pls.get(c.id); return p && p.C.scene === S.key && !p.dead ? p : null;
   }
-  mayFight(S, m, pl, now) { if (S.def.shared || G.MOBS[m.t]?.open) return true;   /* (2026-09-27) an open boss (the Pumpkin King) belongs to nobody */ const c = this.claimOf(S, m, now); return !c || c === pl; }   /* (shared: the crypt, where a party hits the same monster) */
+  mayFight(S, m, pl, now) { if (S.def.shared || G.MOBS[m.t]?.open || m.open) return true;   /* (2026-09-27) an open boss (the Pumpkin King) belongs to nobody */ const c = this.claimOf(S, m, now); return !c || c === pl; }   /* (shared: the crypt, where a party hits the same monster) */
   /* (2026-09-27) THE FOUNDRY'S TRAPS (G.TRAPS): every trap's phase is the wall clock's, so nothing is stored but who has been hit this strike.
      Anyone standing on one of its tiles while it strikes loses G.TRAP_HIT of their health (less by their own toughness), once a strike, and
      is told what hit them; a trap can finish somebody already low, as a monster's hit can, and never takes a god. */
@@ -3931,6 +3953,8 @@ export class World {
         continue;
       }
       const def = G.MOBS[m.t];
+      if (m.star) continue;   /* (2026-09-30) a SHOOTING STAR never moves or swings: it is mined (events.js starSwing) */
+      if (m.thief) { this.thiefMove(S, m, now, players); continue; }   /* (2026-09-30) THE JACKPOT THIEF runs from people and never swings */
       const R = G.MOBS[m.t]?.range || 1, inRange = (p) => { const d = G.cheb(p, m); return d >= 1 && d <= R; };   /* (2026-09-27) a ranged monster */
       let foe = players.find((p) => p.act?.kind === "mob" && p.act.id === m.id && inRange(p) && !p.step);
       if (def.boss && S.def.crypt) { this.cryptBossTick(S, m, now, players); const tt = this.cryptThreat(S, m, players, now); if (tt) { m.target = tt.id; foe = G.cheb(tt, m) === 1 && !tt.step ? tt : null; } }
@@ -3961,12 +3985,12 @@ export class World {
         m.face = foe.x > m.x ? 1 : -1;
         if (now - m.lastSwing >= G.MOBS[m.t].speed * (m.slowUntil > now ? G.MAGIC.slow.mult : 1) && !(m.stunUntil > now)) {   /* (2026-09-26) Frost slows the swing */   /* (2026-09-28) the King's Cannon's shock shell stuns */
           m.lastSwing = now; m.swingAt = now;
-          const C = foe.C, hit = Math.random() < (G.MOBS[m.t].outside ? G.mobHitChance : G.hitChance)(G.MOBS[m.t].att, G.defenceRollOf(C)),   /* (2026-09-28) an open-world monster aims by ratio: A MONSTER'S AIM in the rules file */ dmg = hit ? Math.max(1, Math.round(rint(1, G.MOBS[m.t].max) * (m.enraged ? (G.MOBS[m.t].enrage?.mul ?? CR.CRYPT.enrageMul) : 1) * (1 - G.fxOf(C).tough))) : 0;   /* (tough: the visor, the Safety Net; whiskey makes it worse) */
+          const C = foe.C, hit = Math.random() < (G.MOBS[m.t].outside ? G.mobHitChance : G.hitChance)(G.MOBS[m.t].att, G.defenceRollOf(C)),   /* (2026-09-28) an open-world monster aims by ratio: A MONSTER'S AIM in the rules file */ dmg = hit ? Math.max(1, Math.round(rint(1, G.MOBS[m.t].max) * (m.enraged ? (m.enrMul || G.MOBS[m.t].enrage?.mul || CR.CRYPT.enrageMul) : 1) * (1 - G.fxOf(C).tough))) : 0;   /* (tough: the visor, the Safety Net; whiskey makes it worse) */
           if (!foe.god) { C.hp -= dmg; this.touch(foe); }
           if (dmg) { this.meterAdd(foe, "taken", dmg, m); this.bossAdd(foe, m, "taken", dmg); }   /* (2026-09-28) the party meter, and a world boss's report */
           if (dmg) foe.hurtAt = now;
           foe.combatAt = now;
-          if (!S.def.pvp && !S.def.shared && !G.MOBS[m.t]?.open && this.mayFight(S, m, foe, now)) m.claim = { id: foe.id, until: now + CLAIM_MS };
+          if (!S.def.pvp && !S.def.shared && !G.MOBS[m.t]?.open && !m.open && this.mayFight(S, m, foe, now)) m.claim = { id: foe.id, until: now + CLAIM_MS };
           S.events.push({ type: "splat", who: `p:${foe.id}`, n: dmg, kind: dmg ? "hit" : "miss", t: now });
           /* AUTO-RETALIATE, AND NOT FOR SOMEBODY WHO IS NOT THERE (2026-09-24, the owner: "can you make sure
              users arent afking vs aggressive mobs? if theyre high enough i think they can just stand there and
@@ -4106,7 +4130,8 @@ export class World {
     const out = {
       type: "snap", t: now, scene: S.key, online: this.pls.size,
       players: this.playersIn(S).map((p) => trim({ id: p.id, x: p.x, y: p.y, s: st(p), dir: p.dir, face: p.face, hurtAt: p.hurtAt, swingAt: p.swingAt, act: p.act?.kind || null, started: !!p.act?.started, ob: p.act?.ob ? p.act.ob.id : null, mob: p.act?.kind === "mob" ? p.act.id : null, hp: p.C.hp, moving: !!(p.step || p.path.length) })),
-      mobs: S.mobs.map((m) => trim({ id: m.id, t: m.t, x: m.x, y: m.y, s: st(m), face: m.face, hp: m.hp, mx: m.maxHp && m.maxHp !== G.MOBS[m.t].hp ? m.maxHp : undefined, dead: m.dead, hurtAt: m.hurtAt, swingAt: m.swingAt, c: this.claimOf(S, m, now)?.id })),
+      mobs: S.mobs.map((m) => trim({ id: m.id, t: m.t, x: m.x, y: m.y, s: st(m), face: m.face, hp: m.hp, mx: m.maxHp && m.maxHp !== G.MOBS[m.t].hp ? m.maxHp : undefined, dead: m.dead, hurtAt: m.hurtAt, swingAt: m.swingAt, c: this.claimOf(S, m, now)?.id,
+        nm: m.nm, lv: m.lv, w: m.wanted ? 1 : undefined, dz: m.dizzyUntil > now ? 1 : undefined, tr: m.tier })),   /* (2026-09-30) WORLD EVENTS: see events.js */
       npcs: S.npcs.map((n) => trim({ id: n.id, x: n.x, y: n.y, s: st(n), face: n.face, held: n.holdUntil > now })),
       bots: S.bots.map((b) => trim({ id: b.id, x: b.x, y: b.y, s: st(b), dir: b.dir, face: b.face, work: b.working ? b.working.ob.id : null, workT: b.working ? b.working.ob.t : null })),
       ground: S.ground.map((x) => ({ id: x.id, k: x.k, n: x.n, x: x.x, y: x.y, owner: x.owner, until: x.until })),
@@ -5119,7 +5144,8 @@ export class World {
       case "god": pl.god = !pl.god; this.touch(pl); return note(pl.god ? "God mode on: nothing can hurt you." : "God mode off.");
       case "tp": { const key = String(m.scene); if (!G.SCENES[key] && key !== pl.C.scene) return;   /* (or somewhere else in the private copy you are already standing in: an island, a crypt run) */ this.moveToScene(pl, key, null, Number.isInteger(m.x) && Number.isInteger(m.y) ? { x: m.x, y: m.y } : null); return note(`Teleported to ${G.SCENES[key].name}.`); }
       case "raid": return this.raidAdmin(S, pl, String(m.arg || ""), note);   /* (2026-09-30, the owner: "Admin-only") the Yard raid */
-      case "wyrm": return this.wyrmAdmin(S, pl, String(m.arg || ""), note);   /* (2026-09-30, the owner: "add an admin setting for me to be able to spawn it") */
+      case "wyrm": return this.wyrmAdmin(S, pl, String(m.arg || ""), note);
+      case "ev": return this.evAdmin(S, pl, String(m.arg || ""), note);   /* (2026-09-30) WORLD EVENTS: "star", "wanted", "thief", each with "end"; "plan" */   /* (2026-09-30, the owner: "add an admin setting for me to be able to spawn it") */
       case "hwking": { this.hw.kingAt = Date.now() - 1; this.hw.kingDue = false; this.hw.kingUp = null; this.hwSave(); return note("The Pumpkin King is due now: he rises the moment somebody is in the Mire."); }   /* (2026-09-27) dev/admin: call the King */
       case "quest": { const k = String(m.k), state = String(m.state); if (!G.QUESTS[k] || !["new", "active", "done"].includes(state)) return; if (state === "new") delete C.qs[k]; else C.qs[k] = { state, stage: 0, n: 0 }; this.touch(pl); return note(`${G.QUESTS[k].name} set to ${state}.`); }
       case "resetquests": C.qs = {}; this.touch(pl); return note("All quests reset.");
@@ -5225,5 +5251,7 @@ installTinker(World, { G });
 installGems(World, { G });
 installOutfit(World, { G });
 installWyrm(World, { G });
+installEvents(World, { G });   /* (2026-09-30) WORLD EVENTS: Shooting Stars, Wanted! and the Jackpot Thief */
+installCommands(World, { G });   /* (2026-09-30) CHAT COMMANDS: /find, /help, /price, /count, /xp, /timers, /bosses, /wiki, /map, /online, /roll, /stuck */
 installRaid(World, { G });
 installCards(World, { G });

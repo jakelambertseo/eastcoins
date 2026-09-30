@@ -22,7 +22,7 @@ export function createLooks(E) {
   let shows = [];
 
   /* ---------------------------------------------------------------- TRAILS */
-  const EMIT = { embers: 55, frost: 120, gold: 60, petals: 110, hearts: 130, bubbles: 110, shadow: 170, coins: 120, rainbow: 40 };
+  const EMIT = { embers: 55, frost: 120, gold: 60, petals: 110, hearts: 130, bubbles: 110, shadow: 170, coins: 120, rainbow: 40, starfall: 70 };   /* (2026-09-30) starfall: the Star Tent's */
   function emit(st, tr, k, x, y, pnow, face) {
     const cols = colsOf("trail", k), P = tr.parts, add = (p) => { if (st.parts < MAXP) { P.push({ at: pnow, ...p }); st.parts++; } };
     if (k === "rainbow") { tr.ribbon.push({ x, y: y - 1, at: pnow }); return; }
@@ -33,6 +33,7 @@ export function createLooks(E) {
     if (k === "hearts") add({ s: "heart", x: x + (Math.random() - 0.5) * 6, y: y - 4, vx: (Math.random() - 0.5) * 3, vy: -9, g: 0, life: 950, c: pick(cols) });
     if (k === "bubbles") add({ s: "bubble", x: x + (Math.random() - 0.5) * 8, y: y - 3, vx: (Math.random() - 0.5) * 3, vy: -7 - Math.random() * 4, g: 0, life: 1000 + Math.random() * 300, c: pick(cols), z: 1 + Math.random() * 1.6 });
     if (k === "shadow") { tr.side = -(tr.side || 1); add({ s: "foot", x: x + tr.side * 2, y: y - 0.5, life: 1200, c: cols[0] }); add({ s: "puff", x: x + tr.side * 2, y: y - 1, vx: 0, vy: -6, g: 0, life: 900, c: cols[1] }); }
+    if (k === "starfall") { add({ s: "sq", x: x + (Math.random() - 0.5) * 9, y: y - 3 - Math.random() * 12, vx: (Math.random() - 0.5) * 5, vy: -3, g: 7, life: 800 + Math.random() * 600, c: pick(cols), z: Math.random() < 0.25 ? 2 : 1, tw: 1, glow: Math.random() < 0.35 }); }   /* (2026-09-30) little stars that twinkle out */
     if (k === "coins") add({ s: "coin", x: x + (Math.random() - 0.5) * 5, y: y - 6, vx: (Math.random() - 0.5) * 16, vy: -22 - Math.random() * 10, g: 90, floor: y + 1, life: 900, c: cols[0] });
   }
   function stepParts(P, pnow, dt) {
@@ -61,7 +62,7 @@ export function createLooks(E) {
     c.globalAlpha = 1;
   }
   /* ---------------------------------------------------------------- AURAS: the ground half (a glow under the body) */
-  const AURA_SPARK = { ember: 90, toxic: 160, void: 140, gold: 180 };
+  const AURA_SPARK = { ember: 90, toxic: 160, void: 140, gold: 180, starlit: 150 };   /* (2026-09-30) starlit: the Star Tent's */
   function auraGround(c, st, who, pnow, calm) {
     const k = who.lk.aura, cols = colsOf("aura", k), x = who.x, y = who.y, pulse = calm ? 1 : 0.85 + 0.15 * Math.sin(pnow / 380 + x);
     c.save();
@@ -75,7 +76,7 @@ export function createLooks(E) {
     if (AURA_SPARK[k] && pnow - A.at > AURA_SPARK[k] && st.parts < MAXP) { A.at = pnow; st.parts++;
       A.parts.push(k === "toxic" ? { at: pnow, s: "bubble", x: x + (Math.random() - 0.5) * 12, y: y - Math.random() * 6, vx: 0, vy: -8, g: 0, life: 900, c: cols[0], z: 0.8 + Math.random() }
         : k === "void" ? { at: pnow, s: "puff", x: x + (Math.random() - 0.5) * 10, y: y - Math.random() * 14, vx: 0, vy: -5, g: 0, life: 1000, c: cols[0] }
-          : { at: pnow, s: "sq", x: x + (Math.random() - 0.5) * 12, y: y - Math.random() * 18, vx: 0, vy: k === "ember" ? -12 : -2, g: 0, life: 700, c: pick(cols), z: 1, tw: k === "gold" ? 1 : 0, glow: k === "ember" ? 1 : 0 }); }
+          : { at: pnow, s: "sq", x: x + (Math.random() - 0.5) * 12, y: y - Math.random() * 18, vx: 0, vy: k === "ember" ? -12 : -2, g: 0, life: 700, c: pick(cols), z: 1, tw: k === "gold" || k === "starlit" ? 1 : 0, glow: k === "ember" || k === "starlit" ? 1 : 0 }); }
   }
   const hexA = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; };
 

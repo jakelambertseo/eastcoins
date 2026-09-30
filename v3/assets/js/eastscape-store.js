@@ -40,7 +40,8 @@ export function createStore(E) {
       if (op === "ttext") { const box = w.querySelector(`[data-tt="title_custom"]`); return send({ t: "store", op: "ttext", text: box?.value || "" }); }
     });
   }
-  const priceHtml = (it) => { const p = G.priceOf(it); return `<span class="st2-price">${it.sale ? `<s>${it.price.toLocaleString()}</s>` : ""}<img src="${UI}g_tickets.png?v=1" alt="" onerror="this.remove()">${p.toLocaleString()}</span>`; };
+  const priceHtml = (it) => { if (it.frags || it.earned) return `<span class="st2-price">${it.earned ? "Earned" : `<img src="${E.IART}starfrag.png?v=1" alt="">${it.frags.toLocaleString()}`}</span>`;   /* (2026-09-30) the Star Tent's, and the earned title */
+    const p = G.priceOf(it); return `<span class="st2-price">${it.sale ? `<s>${it.price.toLocaleString()}</s>` : ""}<img src="${UI}g_tickets.png?v=1" alt="" onerror="this.remove()">${p.toLocaleString()}</span>`; };
   const artUrl = (k) => (k.startsWith("st_") ? `${E.IART}${k}.png?v=1` : `${FLAT}${k}.png?v=1`);   /* the Store's icons are items; skins and cottages are flat pictures */
   function pic(it) {
     const L = G.STORE_LOOKS;
@@ -93,7 +94,8 @@ export function createStore(E) {
       <div class="st2-txt"><b>${esc(it.name)}</b>${status(it)}<small>${esc(it.ex)}</small></div>
       <div class="st2-row">${priceHtml(it)}<span class="st2-acts">${act(it)}</span></div></div>`;
   function rowsOf(t) {
-    const all = Object.values(G.STORE).filter((it) => it.tab === t || (t === "name" && (it.tab === "night" || it.tab === "cards") && owns(it.id)));
+    const all = Object.values(G.STORE).filter((it) => it.tab === t || (t === "name" && (it.tab === "night" || it.tab === "cards") && owns(it.id))
+      || ((it.tab === "star" || it.tab === "earned") && owns(it.id) && (t === "name" ? it.kind === "title" : t === "looks" && it.kind !== "title")));   /* (2026-09-30) the Star Tent's and the earned ones, worn from here once owned */
     return all.filter((it) => it.fresh || it.sale).concat(all.filter((it) => !it.fresh && !it.sale));   /* NEW (and on sale) first */
   }
   function nameStage() {

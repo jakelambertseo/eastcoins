@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 371;   /* (2026-09-30) THE ISLANDS: bigger, better-looking, eight themes, cottage styles, livestock */   /* was 370: */   /* (2026-09-30) the Store: pet skins, eggs, bag slots, art for everything; the wiki pages its long tables */   /* was 369: */   /* (2026-09-30) THE STORE, REBUILT: effects, titles, decor, the War Horn, 2X Skilling XP, the loupes, bank pages, quick slots; and "speed" walks */   /* (2026-09-30) the Frost charm is 50,000 and the outfitters show it */   /* (2026-09-30) THE FROZEN REACH OPENS */   /* (2026-09-30) THE YARD RAID: the Ice Man (the Frozen Reach stays held) */   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 373;   /* (2026-09-30) THE BALANCE PASS, /find and the chat commands, the wiki rebuilt; world events built and HELD */   /* was 372: */   /* (2026-09-30) WORLD EVENTS: Shooting Stars, Wanted! and the Jackpot Thief, one each a day; Who's online in the kit */   /* was 371: */   /* (2026-09-30) THE ISLANDS: bigger, better-looking, eight themes, cottage styles, livestock */   /* was 370: */   /* (2026-09-30) the Store: pet skins, eggs, bag slots, art for everything; the wiki pages its long tables */   /* was 369: */   /* (2026-09-30) THE STORE, REBUILT: effects, titles, decor, the War Horn, 2X Skilling XP, the loupes, bank pages, quick slots; and "speed" walks */   /* (2026-09-30) the Frost charm is 50,000 and the outfitters show it */   /* (2026-09-30) THE FROZEN REACH OPENS */   /* (2026-09-30) THE YARD RAID: the Ice Man (the Frozen Reach stays held) */   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -38,7 +38,7 @@ export const levelOf = (xp) => { let l = 1; while (l < 99 && xp >= XP_AT[l + 1])
 
 /* ------------------------------------------------------------ things you can carry */
 export const ITEMS = {
-  tickets: { name: "Tickets", icon: "🎟️", nocap: true, ex: "The one currency in EastScape. They stay on you: they can't be dropped, banked or handed over, only spent. Every kill, catch and daily job pays tickets. They buy everything at the Prize Counter, and every table takes them: 1,000 tickets stand in for 1 ZCoin at the real tables, and what you win there is paid in real ZCoins." },
+  tickets: { name: "Tickets", icon: "🎟️", nocap: true, ex: "The one currency in EastScape. They stay on you: they can't be dropped or banked, but you can hand them to another player in a trade. Every kill, catch and daily job pays tickets. They buy everything at the Prize Counter, every table takes them as a bet and pays tickets back, and the Prize Counter turns 1,000 of them into 1 real ZCoin." },   /* (2026-09-30, the wiki pass) it said they could not be traded (they can since v96) and that table wins pay ZCoins (tickets since v107) */
   zcoin: { name: "ZCoin", icon: "🪙", ex: "A REAL ZCoin, from eastcoin.vip. Rare. Take it to the Prize Counter and it goes straight onto your ZCoin balance." }, wheat: { name: "Wheat", icon: "🌾" }, bones: { name: "Bones", icon: "🦴" },
   beef: { name: "Raw beef", icon: "🥩" }, hide: { name: "Cowhide", icon: "🟫" }, chicken: { name: "Raw chicken", icon: "🍗" },
   feather: { name: "Feather", icon: "🪶" }, sardine: { name: "Sardine", icon: "🐟", heal: 3, ex: "Sell it, or eat it as it comes. You're a gambler, not a chef." }, trout: { name: "Trout", icon: "🐠", heal: 5, ex: "Sell it or eat it. From Fishing 10 the Yard's pond gives these up too." },
@@ -3213,8 +3213,8 @@ Object.assign(SCENES, {
            the room you are working always has the next rung in it - which is the actual cure for "work this room
            to 50 to get to the next room". Sorted by level so the assignment cannot depend on MARKS' key order. */
         const band = Object.entries(MARKS).filter(([, m]) => m.room === i).sort((c, d) => c[1].lvl - d[1].lvl);
-        [[1, 2], [4, 5], [6, 2]].forEach(([dx, dy], n) => {
-          const [mk, MM] = band[n === 2 && band[1] ? 1 : 0];
+        [[1, 2], [4, 5], [6, 2], ...(band[2] ? [[3, 4]] : [])].forEach(([dx, dy], n) => {   /* (2026-09-30, the balance pass) a room with a third mark (the Grand Larcenist, 97) gives it a fourth spot */
+          const [mk, MM] = band[n === 3 ? 2 : n === 2 && band[1] ? 1 : 0];
           const x = x0 + dx, y = 8 + dy; if (x >= COLS - 2 || g[y][x] !== "i") return;
           objs.push({ t: "mark", mark: mk, x, y, name: MM.name, lvl: MM.lvl, xp: MM.xp, look: MM.look, req: { skill: "thieving", lvl: MM.lvl },
             tease: i ? "You would be noticed. Get better at this first." : "" });
@@ -3939,9 +3939,9 @@ for (const [id, r] of Object.entries({
   brew_fang: { in: [["large_vial", 1], ["sharktooth", 1], ["snakefang", 1], ["rattlebean", 1]], out: ["pot_fang", 1], lvl: 78, xp: 250 },
   brew_salve3: { in: [["large_vial", 1], ["lanternroot", 4], ["scarabshell", 1]], out: ["pot_salve3", 1], lvl: 84, xp: 275 },
   brew_storm: { in: [["large_vial", 1], ["staticfur", 1], ["stormjelly", 1], ["lanternroot", 1]], out: ["pot_storm", 1], lvl: 90, xp: 300 },
-  brew_pharaoh: { in: [["large_vial", 1], ["scarabshell", 2], ["snakefang", 1], ["goldtomatoe", 1]], out: ["pot_pharaoh", 1], lvl: 100, xp: 360 },
+  brew_pharaoh: { in: [["large_vial", 1], ["scarabshell", 2], ["snakefang", 1], ["goldtomatoe", 1]], out: ["pot_pharaoh", 1], lvl: 99, xp: 360 },   /* (2026-09-30, the wiki pass) was 100: levels stop at 99, so nobody could ever brew it */
   /* the raid's own recipe: Alchemy 100 AND venom out of the Great Pyramid, which is the only place it exists */
-  brew_coilbreaker: { in: [["large_vial", 1], ["serpentvenom", 2], ["scarabshell", 2], ["bonegourd", 1]], out: ["pot_coilbreaker", 1], lvl: 100, xp: 420 },
+  brew_coilbreaker: { in: [["large_vial", 1], ["serpentvenom", 2], ["scarabshell", 2], ["bonegourd", 1]], out: ["pot_coilbreaker", 1], lvl: 99, xp: 420 },   /* (2026-09-30) was 100, the same */
 })) recipe(id, { skill: "alchemy", station: "cauldron", ms: 2200, ...r });
 /* THE STOP LEVEL, per recipe. A vial keeps a long tail on purpose - glass is the front of the whole chain, so
    blowing it should stay a real cost well past the level that unlocks it - and a potion settles down over the
@@ -4058,10 +4058,10 @@ export function tixBlock(plays, g, now) {
 export const CASINO = { minBet: 10, maxBet: 20000, betMs: 900, roomWin: 5, worldWin: 25 };   /* (v107) TICKET bets, now that a table takes tickets and PAYS tickets: 10 to 20,000 (20,000 is the ZCoin tables' 20, at 1,000 a ZCoin). It was 1 to 500 when these tables were a side show. */
 export const GAMES = {
   slots: { name: "Slots", icon: "🎰", ex: "Three of a kind pays; two cherries pay 1.4×. Three sevens also wins the jackpot." },
-  cointable: { name: "Coin Flip", icon: "🪙", ex: "Heads or tails. Pays 1.95×." },
+  cointable: { name: "Coin Flip", icon: "🪙", ex: "Heads or tails. Pays about 2×." },   /* (2026-09-30) was 1.95×: FLIP_PAYS is the fair 2 since v107, and each play's draw moves it a little */
   dicetable: { name: "Dice", icon: "🎲", ex: "Roll 1–100 under your number. The lower you go, the more it pays." },
   // the games people know from the site's casino, for tickets (2026-09-19). They stand round the rug you arrive on.
-  wheel: { name: "Wheel", icon: "🎡", ex: "Red or black pays 1.97×. The thin gold sliver pays 58×." },
+  wheel: { name: "Wheel", icon: "🎡", ex: "Red or black pays about 2×. The thin gold sliver pays about 60×." },   /* (2026-09-30) was 1.97× and 58×: WHEEL.pays since v107 */
   hilo: { name: "Higher or Lower", icon: "🃏", run: true, ex: "Is the next card higher or lower? Every right call multiplies your stake; cash out whenever you like. A tie is a push." },
   mines: { name: "Mines", icon: "💣", run: true, ex: "25 tiles, some are bombs. Every gem multiplies your stake; cash out before you find a bomb." },
   plinko: { name: "Plinko", icon: "🟠", ex: "Drop the ball through twelve rows of pegs. The edges pay 25×." },
@@ -6081,7 +6081,13 @@ export const GEAR_SELL_MAX = 2500;
 /* (2026-09-29) THE OUTFITTERS' ARMOUR (OUTFIT, at the end of this file) sells back like Bom's shelf: an eighth of what Wren or Morwenna asks */
 const OUTFIT_PRICE = new Map();
 function OUTFIT_PRICE_FILL(shelves) { for (const L of Object.values(shelves)) for (const r of L) if (r.kind === "armour") OUTFIT_PRICE.set(r.k, r.price); }
-export const gearSellRaw = (k, f = 0) => { const p = COUNTER_PRICE.get(k) || OUTFIT_PRICE.get(k); if (p && ITEMS[k]?.slot) return Math.max(1, Math.round(p * GEAR_SELL_RATE)) + fOf({ f }) * forgeSellStep(k); const c = craftGearPrice(k); return c ? c + fOf({ f }) * forgeSellStep(k) : 0; };   /* (2026-09-29) and the bows, quivers, wands and Magic Bags he does not stock: craftGearPrice, at the end of this file */
+/* (2026-09-30, the balance pass: "Smithed gear sells to Bom for 5-10x its bars") ANVIL GEAR IS WORTH WHAT IT IS MADE OF. An eighth of the shelf price
+   took no notice of the bars: a one-bar dragonstone gladius sold for 825 against its 109-ticket bar, an onyx one for 2,063, eclipse boots for the
+   2,500 ceiling off one bar, and mine-smelt-smith-sell paid 5x any other job in the game. A piece an anvil makes now sells for the lesser of that
+   and its bars' worth and a quarter again (CRAFT_STEP), the rule the fletcher's bows already follow. Bought-only gear is untouched. */
+const anvilWorth = (k) => { const r = Object.values(RECIPES).find((x) => x.station === "anvil" && x.out[0] === k); if (!r) return 0;
+  const inp = r.in.reduce((a, [ik, n]) => a + n * (quickSell(ik) || valueOf(ik) || craftMatPrice(ik) || 0), 0) / (r.out[1] || 1); return inp > 0 ? Math.max(1, Math.round(inp * CRAFT_STEP)) : 0; };
+export const gearSellRaw = (k, f = 0) => { const p = COUNTER_PRICE.get(k) || OUTFIT_PRICE.get(k); if (p && ITEMS[k]?.slot) { const a = anvilWorth(k), base = Math.max(1, Math.round(p * GEAR_SELL_RATE)); return (a ? Math.min(base, a) : base) + fOf({ f }) * forgeSellStep(k); } const c = craftGearPrice(k); return c ? c + fOf({ f }) * forgeSellStep(k) : 0; };   /* (2026-09-29) and the bows, quivers, wands and Magic Bags he does not stock: craftGearPrice, at the end of this file */
 export const gearSell = (k, f = 0) => Math.min(GEAR_SELL_MAX, gearSellRaw(k, f));
 export const canSell = (k) => isLoot(k) || quickSell(k) > 0 || gearSell(k) > 0;
 export const isLoot = (k) => !ITEMS[k]?.event && k !== "tickets" && k !== "tickets" && k !== "zcoin" && valueOf(k) > 0 && !ITEMS[k]?.slot && !ITEMS[k]?.luck && !ITEMS[k]?.use && !ITEMS[k]?.drink && !ITEMS[k]?.raw;
@@ -7285,6 +7291,7 @@ export function normChar(c) {
   out.buyback = (Array.isArray(out.buyback) ? out.buyback : []).filter((x) => x && typeof x === "object" && ITEMS[x.k] && (x.n | 0) > 0 && Number.isFinite(x.paid) && x.paid >= 0 && x.id).slice(0, BUYBACK.keep);
   /* (2026-09-28) Tinkering's parts: a pouch of four counts, never items (they take no bag space, and Bom cannot buy them) */
   { const pp = out.parts && typeof out.parts === "object" ? out.parts : {}; out.parts = Object.fromEntries(Object.keys(TINK.parts).map((k) => [k, Math.max(0, Math.floor(Number(pp[k]) || 0))])); }
+  out.frags = Math.max(0, Math.floor(Number(out.frags) || 0)); out.takes = Math.max(0, Math.floor(Number(out.takes) || 0));   /* (2026-09-30) WORLD EVENTS: Star Fragments (spent at the Star Tent) and Wanted posters taken */
   out.gembag = bagOf(out); delete out.gemcase;   /* (2026-09-29) the gem bag, cleaned (the Gem Case of the first build is gone) */
   out.pins = Array.isArray(out.pins) ? [...new Set(out.pins.filter((id) => PROJECTS[id]))] : [];
   /* (2026-09-29) a Marked Card hand in play: only a whole one survives a load (a known back, real cards, a known state) */
@@ -9768,7 +9775,7 @@ export const PET_SKINS = {
 for (const [k, P] of Object.entries(PET_SKINS)) st(`pskin_${k}`, { tab: "pets", kind: "pskin", slot: "pskin", val: k, name: P.name, price: P.price, fresh: true, art: `pskin_${k}`, ...(P.sale ? { sale: P.sale } : {}),
   ex: `${P.ex} A pet skin: your pet out looks like this, and keeps everything it does. A Greater or Legendary keeps its glow.`, lead: P.ex, facts: [["What it does", "your pet out looks like this: its bonuses, name and rank stay the same"], ["Bred pets", "a Greater keeps its blue glow, a Legendary its orange"], ["Wear", "one skin at a time, switch any time"]] });
 for (const [k, e] of Object.entries(EGGS)) { const pet = PETS[e.pet]; if (!pet || pet.held) continue;
-  st(`egg_${k}`, { tab: "pets", kind: "give", give: [k, 1], name: ITEMS[k].name, price: Math.round((e.xp * 15) / 1000) * 1000, fresh: true, icon: k,
+  st(`egg_${k}`, { tab: "pets", kind: "give", give: [k, 1], name: ITEMS[k].name, price: Math.round((e.xp * 30) / 1000) * 1000, fresh: true, icon: k,   /* (2026-09-30, the owner: "increase the cost of all pet eggs by 2x") was xp × 15 */
     ex: `One ${ITEMS[k].name.toLowerCase()}: a ${pet.name} in ${Math.round(e.ms / 3600000)} hours at a hatchery on your island.`, lead: `Hatches a ${pet.name}.`,
     facts: [["Hatches", `a ${pet.name}${pet.legend ? " (Legendary)" : ""}`], ["Takes", `${Math.round(e.ms / 3600000)} hours in a hatchery on your island`], ["Needs", `${BREED.hatch.food} Ordinary pet food`], ["Breeding xp", e.xp.toLocaleString()]] }); }
 STORE_UP.bag = { max: 5 };
@@ -9826,3 +9833,189 @@ export const farmReady = (isle, kind, now = Date.now(), n = 1) => {
 };
 /** a fishing cage's catch for so many rounds: a fixed shuffle of its table, so the same rounds give the same fish */
 export const cageCatch = (rounds, rnd = Math.random) => { const T = ISLE_FARM.cage.fish, sum = T.reduce((a, [, w]) => a + w, 0), out = {}; for (let i = 0; i < rounds; i++) { let x = rnd() * sum; for (const [k, w] of T) if ((x -= w) < 0) { out[k] = (out[k] || 0) + 1; break; } } return Object.entries(out); };
+
+/* ============================================================ WORLD EVENTS (2026-09-30): SHOOTING STARS, WANTED! AND THE JACKPOT THIEF.
+   The owner, after the events mockup (tools/events-mock/detail.html): "lets build all of them on the dev server", then "can we set wanted as once
+   per day, stars as once per day and jackpot once per day, all spread out? we already have the halloween event going on per hour, and these are
+   new so want to take it slow on the live server". The server's half is eastscape-worker/src/events.js; the page's windows and tracker are
+   v3/assets/js/eastscape-events.js.
+
+   ONE PLANNER, ONE EACH A DAY. At the first tick of a Chicago day the planner cuts EVDAY.from..to into three equal windows, deals the three events
+   into them in a random order and picks a minute in each, `margin` in from both edges, so no two are ever closer than twice the margin. Saved, so a
+   deploy neither loses nor repeats the day's events. All three are CASINO-narrated, open to everyone, and paid by what you put in.
+
+   All three are MONSTERS, because monsters already travel in the snapshot, already have a plate, a bar and a click: the star is one that never
+   moves or swings and that a pickaxe mines (events.js starSwing), the Wanted target is an ordinary map monster opened to everyone (`m.open`) with
+   a name and six times the health, and the thief is one that runs from people instead of at them and counts hits rather than damage. */
+export const EVDAY = { from: 12, to: 24, margin: 30 };   /* hours, Chicago time; minutes in from each window's edge */
+
+/* SHOOTING STARS: a warning with a hint, then it lands; tier N needs Mining 10×N; every swing takes one of the tier's health and pays fragments */
+export const SSTAR = { warnMs: 10 * 60000, lasts: 60 * 60000, tierLvl: 10, hp: { base: 30, per: 20 }, frags: [0, 1, 1, 2, 2, 3, 3, 4, 5, 6], cap: 400, starling: 1 / 6000,
+  xp: (tier) => 10 + tier * 11, activeMs: 60000,
+  /* where it may land, and the hint CASINO gives ten minutes before (a direction, never the spot). Never the Yard (the owner: "the yard is too croweded, and the star shouldnt ever land there either") */
+  scenes: { gloam: "in the woods north of the Yard", mire: "out over the marshes", boneyard: "somewhere among the graves",
+    cloud: "up in the clouds", sands: "out in the desert", thunderhead: "high up in the storm", trailer: "out past the scrapyards", boardwalk: "down by the sea",
+    valley: "somewhere prehistoric", frozen: "somewhere very, very cold" },
+  wild: { chance: 1 / 8, mul: 2, hint: "somewhere dangerous" } };
+/* WANTED!: one poster a day on the Bounty Board; a named copy of a map's monster, six times the health, everyone who hurts it shares the bounty.
+   The level band turns over each day (low, mid, high), and drops a band when nobody online could fight in it. */
+export const WANTED = { lasts: 60 * 60000, hpX: 6, minHp: [150, 1500, 5000],   /* a Yard chicken ×6 is 12: the floor keeps even the smallest a minute's work for a crowd */ floor: 0.03, share: 0.05, up: 0.25, upMax: 2, enrage: { at: 0.25, mul: 1.3 }, title: 10,
+  bounty: [5000, 20000, 50000], bands: [["workyard", "gloam", "mire"], ["boneyard", "cloud", "sands", "thunderhead"], ["trailer", "carnival", "vault", "boardwalk", "bw_wreck", "depths", "valley", "valley_ridge", "frozen"]],
+  targets: {
+    workyard: [["boar", "Old Tom Tusk", "A boar the size of a car. Knocked over Bronny's cart twice and ate the evidence."], ["chicken", "Sir Clucksalot", "Has escaped the pot eleven times. Wears the scars like medals."], ["cow", "Big Bertha", "Kicked a man clean over the Yard wall. He says he's fine. He is not fine."]],
+    gloam: [["highwayman", "Dandy Dick Turnip", "Stand and deliver. He's been delivering nothing but trouble for years."], ["gnasher", "Old Gnashers", "All the teeth. Somehow more teeth than last time."]],
+    mire: [["taxwraith", "The Tax Wraith Supreme", "It has audited three villages dry. It's coming for your receipts."], ["shark", "Marsh Jaws", "Nobody knows how a shark got into a marsh. Nobody's asking it."]],
+    boneyard: [["critic", "The Harshest Critic", "Gave the Boneyard's opening night one star. Then ate the cast."], ["ghoul", "Graverobber Greg", "Robs graves. Also robs the people robbing graves."]],
+    cloud: [["angel", "The Fallen Seraph", "Kicked out of somewhere nicer for cheating at harps."], ["ram", "Thunderhorn", "Headbutted a cloud so hard it rained for a week."]],
+    sands: [["mummy", "The Pharaoh's Accountant", "Three thousand years dead and still chasing late invoices."], ["cobra", "Queen Hiss", "Bit a camel. The camel apologised."]],
+    thunderhead: [["drake", "Stormjaw", "Eats lightning. Spits worse."], ["golem", "The Unmovable Bob", "Stood in one spot for a century. Recently started moving, angrily."]],
+    trailer: [["gator", "Swamp Daddy", "Owns three trailers and the pond behind all of them."], ["junkdog", "Rusty", "Guarded the scrapyard so well he stole it."]],
+    carnival: [["strongman", "The Strongest Man Alive", "Bent the High Striker's bell into a hat. Wears it."]],
+    vault: [["dealer", "The Dealer Who Never Loses", "Nobody has beaten him at cards. Nobody has asked twice."]],
+    boardwalk: [["deckhand", "Bilge-Rat Bartholomew", "Mutinied on four ships. The ships were in harbour."]],
+    bw_wreck: [["krakenarm", "The Arm That Got Away", "The rest of the kraken is looking for it too."]],
+    depths: [["dogre", "Big Nosh", "Ate a dwarf's lunch. Then the dwarf. Then the dwarf's lunch again."]],
+    valley: [["sabretooth", "Ol' Fang", "Older than the valley and twice as cross."], ["mammoth", "Woolly Wendell", "Sat on a caveman once. The caveman lives there now."]],
+    valley_ridge: [["raptor", "Clever Girl", "Opened three gates this week. Nobody taught her."]],
+    frozen: [["frostwolf", "The Grizzled Frostwolf", "Leads the pack that ate the last expedition's sled."], ["yeti", "The Abominable Bob", "Throws snowballs the size of a cart. Laughs about it."]] } };
+/* THE JACKPOT THIEF: grabs a sack of the slots' Jackpot and runs; every hit spills tickets for anyone; the last hit takes the rest of the sack.
+   He escapes after `hops` hops, and whatever is left in the sack goes back into the Jackpot, so the Jackpot is only ever lent. */
+export const JTHIEF = { sack: { share: 0.05, min: 2000, max: 15000 }, spill: 0.015, hits: { base: 30, per: 3, cap: 80 }, hopMs: 60000, hops: 5, dizzy: { every: 10, ms: 3000 },
+  stepMs: 190, flee: 7, keepMs: 60000, start: { scene: "workyard", x: 27, y: 13 },
+  scenes: ["workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "trailer", "boardwalk", "valley", "frozen"] };
+rmob("fallenstar", { name: "Shooting star", size: "l", lvl: 1, hp: 1, att: 0, def: 0, max: 0, speed: 3600000, box: [52, 50], art: "o_fallenstar", star: true, event: true,
+  ex: "It fell out of the sky and it is still warm. Mine it with a pickaxe: the top tiers need a high Mining level, the bottom ones anybody." }, 0, []);
+rmob("jackthief", { name: "The Jackpot Thief", size: "m", lvl: 1, hp: 30, att: 0, def: 0, max: 0, speed: 3600000, box: [36, 40], thief: true, event: true, open: true,
+  ex: "A goblin with a sack of the Jackpot over his shoulder. Every hit knocks tickets out of the sack for anyone to grab, and the last hit takes the rest." }, 0, []);
+BOSSES.add("jackthief");
+/* THE STARLING: from a star (1 swing in 6,000) or the Star Tent. Hatches like any other egg; no monster drops it (`from` is empty on purpose) */
+PETS.starling = { name: "Starling", art: "pet_starling", bred: true, egg: "egg_starling", fx: { speed: 5, gem: 10 }, ex: "It fell out of a shooting star and decided it lives with you now. You walk 5% faster and find 10% more gems." };
+PETS.supernova = { name: "Supernova", art: "pet_supernova", bred: true, legend: true, base: "starling", fx: { speed: 8, gem: 18 }, ex: "Two Greater Starlings, bred, and something went off like a star. You walk 8% faster and find 18% more gems. Legendary." };
+Object.assign(LEGEND_OF, { starling: "supernova" });
+/* Nestor trades one too, for the Golden Sands' stardust and the Vault's starfall ore: a second road to it that is work rather than luck */
+EGG_TRADES.egg_starling = [["stardust", 400], ["starfall_ore", 200]];
+EGGS.egg_starling = { pet: "starling", ms: 48 * 3600000, xp: 15000, from: [], where: "a Shooting Star (1 swing in 6,000), or the Star Tent in Cloudreach" };
+ITEMS.egg_starling = { name: "Starling egg", icon: "\u{1F95A}", ex: `Put it in a hatchery on your island with ${BREED.hatch.food} Ordinary pet food: a Starling in 48 hours. From a Shooting Star, or the Star Tent. Tradable.` };
+/* THE STAR TENT: Star Fragments buy these and nothing else. The trail and the aura are Store looks (worn from the Store once owned); `frags` is the price */
+STORE_LOOKS.trail.starfall = ["Starfall trail", ["#fff6c0", "#ffe45a", "#b09aff"], "Little stars fall off your heels and twinkle out. Only from the Star Tent."];
+STORE_LOOKS.aura.starlit = ["Starlight", ["#fff2b0", "#b09aff"], "A soft starlight around you, and the odd twinkle. Only from the Star Tent."];
+st("trail_starfall", { tab: "star", kind: "trail", slot: "trail", val: "starfall", cols: STORE_LOOKS.trail.starfall[1], name: "Starfall trail", frags: 2500, ex: STORE_LOOKS.trail.starfall[2] });
+st("aura_starlit", { tab: "star", kind: "aura", slot: "aura", val: "starlit", cols: STORE_LOOKS.aura.starlit[1], name: "Starlight", frags: 4000, ex: STORE_LOOKS.aura.starlit[2] });
+st("title_stargazer", { tab: "star", kind: "title", slot: "title", val: "Stargazer", name: "« Stargazer »", frags: 1200, art: "st_title", ex: "A title, for the patient. Only from the Star Tent." });
+st("title_bountyhunter", { tab: "earned", kind: "title", slot: "title", val: "Bounty Hunter", name: "« Bounty Hunter »", earned: true, art: "st_title", ex: `Earned, never sold: be one of the hunters on ${WANTED.title} Wanted posters that are taken.` });
+export const STAR_TENT = { scene: "cloud", at: { x: 17, y: 15 }, board: { x: 13, y: 11 },   /* (2026-09-30, the owner: "the star tent needs to be in a map decently away from the yard") on Cloudreach's road; the Bounty Board stays in the Yard */
+  stock: [{ id: "trail_starfall" }, { id: "aura_starlit" }, { id: "title_stargazer" }, { id: "egg_starling", give: ["egg_starling", 1], frags: 6000, icon: "egg_starling" },
+    { id: "star_crate", crate: true, frags: 150, icon: "star_crate", name: "Star crate", ex: "A crate of ore: twenty of the best you can mine and six of the next rung up. Delivered straight to your bag." }] };
+/** a Star Tent row: its name, price and blurb, whether it is a Store look or an item */
+export const tentRow = (r) => { const it = STORE[r.id]; return { ...r, name: r.name || it?.name || ITEMS[r.give?.[0]]?.name || r.id, frags: r.frags ?? it?.frags ?? 0, ex: r.ex || it?.ex || ITEMS[r.give?.[0]]?.ex || "", store: it || null }; };
+/** what a Star crate holds for this Mining level: 20 of the best ore it can mine and 6 of the next one up (when there is one) */
+export const starCrate = (lvl) => { const R = [["copper", 1], ["iron_ore", 15], ["emerald_ore", 20], ["diamond_ore", 40], ["dragonstone_ore", 50], ["onyx_ore", 55], ["starfall_ore", 60], ["glacite", 100]].filter(([k]) => ITEMS[k]);
+  let i = 0; for (let j = 0; j < R.length; j++) if (lvl >= R[j][1]) i = j; return [[R[i][0], 20], ...(R[i + 1] ? [[R[i + 1][0], 6]] : [])]; };
+/* the two fixtures: the Star Tent (3×2) on Cloudreach's road, the Bounty Board in the Yard, west of the north road */
+{ const D = SCENES[STAR_TENT.scene], build = D.build, { at } = STAR_TENT;
+  D.build = function () {
+    const b = build.call(this);
+    if (!HOLD.events) b.objs.push({ t: "startent", art: "o_startent", x: at.x, y: at.y, w: 3, h: 2, name: "The Star Tent: Star Fragments spent here" }); if (!HOLD.events) for (let y = at.y; y < at.y + 2; y++) for (let x = at.x; x < at.x + 3; x++) b.g[y][x] = "#";   /* (2026-09-30) not while the events are held */
+    return b;
+  };
+}
+{ const D = SCENES.workyard, build = D.build, { board } = STAR_TENT;
+  D.build = function () {
+    const b = build.call(this);
+    if (!HOLD.events) { b.objs.push({ t: "bountyboard", art: "o_bountyboard", x: board.x, y: board.y, name: "The Bounty Board: today's Wanted poster" }); b.g[board.y][board.x] = "#"; }
+    return b;
+  };
+}
+Object.assign(VERB, { startent: "Browse", bountyboard: "Read" });
+
+/* ============================================================ CHAT COMMANDS (2026-09-30). The owner: "/find [x] … its a chat command they can use to tell them WHERE
+   things are in the world", then "can we ideate what other / commands would be helpful for users, now that we've engrained that into users they
+   can do that? lets come up with some helpful ones, build those … and add a wiki page for it". Every one answers the person who typed it and nobody
+   else (except /roll, which is for the people around you). The server's half is eastscape-worker/src/commands.js; /help and the wiki's Commands
+   page are both drawn from this list, so a command added here is documented in both places at once. */
+export const COMMANDS = [
+  { c: "/find", args: "thing", ex: "Where something is: an item, a monster, a place, a person, a furnace, a skill to train. The way there from where you stand.", eg: ["/find ruby", "/find rotten tomatoes", "/find the yard", "/find mining"] },
+  { c: "/help", also: ["/commands"], ex: "Every chat command, like this." },
+  { c: "/events", ex: "Today's world events: a Shooting Star, a Wanted poster, the Jackpot Thief. What's on now and what's still to come." },
+  { c: "/bosses", ex: "Every world boss: which are up, which are coming back and when." },
+  { c: "/timers", ex: "Everything of yours on a clock: food, drink, pages, gadgets, and the server's 2X boosts." },
+  { c: "/island", also: ["/isle"], ex: "Your island's timers: crops, mushrooms, the breeding pen, the hatchery, livestock." },
+  { c: "/price", args: "item", ex: "What an item is worth at the Prize Counter, and what people are asking and offering on the Exchange right now.", eg: ["/price ruby", "/price yew logs"] },
+  { c: "/count", args: "item", ex: "How many of something you have, bag and bank together.", eg: ["/count tickets", "/count feathers"] },
+  { c: "/xp", args: "skill", ex: "Your level in a skill and how far to the next. On its own: your total level and the skill closest to going up.", eg: ["/xp", "/xp fishing"] },
+  { c: "/wiki", args: "anything", ex: "Opens the wiki on it.", eg: ["/wiki breeding"] },
+  { c: "/map", ex: "Opens the world map." },
+  { c: "/online", also: ["/who"], ex: "How many people are on, and opens the list of who (active or idle)." },
+  { c: "/roll", args: "number", ex: "Rolls a dice everyone around you sees. 1 to 100 unless you say otherwise.", eg: ["/roll", "/roll 6"] },
+  { c: "/stuck", ex: "Frees you if you're ever caught in a wall or out in the water." },
+  { c: "/pumpkin", also: ["/king"], ex: "When the Pumpkin King rises (the Long Night only).", season: true }
+];
+
+/* ============================================================ THE BALANCE PASS (2026-09-30). The owner, after the balance write-up (tools/balance-mock/, built from
+   the rules and the live hiscores, 36 players): "are we considering the wild and the deep wild into these equations? if so, apply all fixes and
+   suggestions". They are: combat was measured on safe maps and with the Wilderness, gathering at WILD_GATHER, and the smithing chain outside it.
+   Everything here is set LAST, after the halving and every map's own block, so each number below is the number the game uses. The anvil gear
+   price (anvilWorth, beside gearSellRaw), Bom's sales not doubling under 2X (the worker's cashOut), the Tower's pay (eastscape-tower-rules.js)
+   and the Thieves' Guild's fourth spot are in their own places. */
+/* WORLD EVENTS ARE HELD (the owner: "lets hold on the world events until i test them"): no plan, no star, no poster, no thief, no Star Tent or
+   Bounty Board in the world and no guide, live; everything is on for the dev server and the tests (__ES_OPEN_ALL). Flip to false to launch. */
+HOLD.events = !globalThis.__ES_OPEN_ALL;
+if (HOLD.events) { ITEMS.egg_starling.held = true; PETS.starling.held = true; PETS.supernova.held = true; delete EGG_TRADES.egg_starling; delete EGGS.egg_starling; const i = COMMANDS.findIndex((c) => c.c === "/events"); if (i >= 0) COMMANDS.splice(i, 1); }
+{
+  /* 2. MINING: the two sell-only rocks paid three times their tier (stardust at 50, no recipe uses it; abyss crystal at 75, only the held
+        Jewelcrafting does), which is most of why mining out-earned fighting 3x from level 50. Down to their tier's ore. */
+  Object.assign(VALUE, { stardust: 20, abyss_crystal: 45 });
+  /* 11. LOGS paid more at Woodcutting 35 (yew, 35) than anywhere up to 74: palm and skyash 14, rustpine 20. Now they climb. */
+  Object.assign(VALUE, { palmlogs: 38, skyashlogs: 40, pinelogs: 42 });
+  /* 7. AGILITY paid ~11k tickets an hour, the least of any active skill, so nobody trained it: marks are worth 50 and a lap drops four */
+  VALUE.agilmark = 50;
+  /* 13. THIEVING: a 50,000 permit to start and 17-50k an hour after it. The permit is 15,000 and the two best goods pay more */
+  THIEF.permit = 15000; Object.assign(VALUE, { stolen_signet: 80, blackmarket_ledger: 110 });
+  /* ...and a ninth mark at 97, the top room's third, so the last rung is not 90 */
+  MARKS.larcenist = { name: "The Grand Larcenist", lvl: 97, xp: 400, room: 3, look: { hair: "#f0f0f0", shirt: "#6a1a2a", pants: "#1a1020" },
+    drop: [["blackmarket_ledger", 0.55], ["nova_ore", 0.15], ["eclipse_ore", 0.12], ["voidglass", 0.1], ["seal_wax", 0.08]] };
+  /* 14. BREEDING: an egg dropped one kill in 1,500, so the skill was bought, not trained. One in 400 */
+  BREED.eggDrop = 1 / 400;
+  /* 10. ALCHEMY: every recipe needs a vial and sand was the only way to one (Mining 20, the Golden Sands). Bom sells small vials; and the two
+        ingredients with no source (the Coilbreaker's venom, the Witch's brew's ectoplasm) drop from a cobra and a revenant */
+  if (!SHOP.sells.some(([k]) => k === "small_vial")) SHOP.sells.push(["small_vial", 15]);
+  MOBS.cobra?.drops.push(["serpentvenom", 1, 0.03]); MOBS.revenant?.drops.push(["ectoplasm", 1, 0.03]);
+  /* 5. WIZARDRY was starved: 1,271 hours to 99 on your own inks and gems, because a print made 10 pages from an ink that took a crop hours
+        to grow, and a gem came off one ore in 70. Thirty pages a print, two and a half times the ink a brew, and gems twice as often. */
+  for (const r of Object.values(RECIPES)) {
+    if (/^print_page_/.test(r.id)) r.out[1] = 30;
+    if (/^brew_ink_/.test(r.id)) r.out[1] = Math.round(r.out[1] * 2.5);
+  }
+  for (const list of Object.values(GEM_DROP)) for (const row of list) if (row[1] === 0.014) row[1] = 0.03;
+  /* 12. ARCHERY: a shot spends an arrow hit or miss, and top arrows burned 132-282k tickets of bars an hour against 84-103k of income.
+        More arrowheads a bar at the top, and shortbows (accuracy only until now) get strength from the yew up */
+  const ah = { smith_eclipse_arrowhead: 30, smith_nova_arrowhead: 45, smith_singularity_arrowhead: 45 };
+  for (const [id, n] of Object.entries(ah)) if (RECIPES[id]) RECIPES[id].out[1] = n;
+  ["yewlogs", "palmlogs", "skyashlogs", "pinelogs", "voidlogs", "bogwoodlogs", "cycadlogs"].forEach((w, i) => { const b = ITEMS[`${w}_shortbow`]; if (b) b.str = 2 * (i + 1); });
+  /* 6. HARVESTING AND FUNGICULTURE: 99 took 1,579 real hours at 20 plots, and nothing after bonegourd (30) paid more xp a plot-hour until
+        starfruit tied it at 92. Xp a plot-hour (and a bed-hour) now climbs with every crop */
+  Object.assign(CROPS.stormcorn, { xp: 1000 }); Object.assign(CROPS.goldtomatoe, { xp: 2000 }); Object.assign(CROPS.glassgourd, { xp: 3000 });
+  Object.assign(CROPS.emberwheat, { xp: 4500 }); Object.assign(CROPS.starfruit, { xp: 8000 });
+  for (const [k, xp] of Object.entries({ spawn_glowcap: 900, spawn_ghostpipe: 1300, spawn_truffle: 1800, spawn_lionsmane: 2800, spawn_voidmorel: 4000, spawn_starcap: 6000 })) if (FUNGI[k]) FUNGI[k].xp = xp;
+  /* 15. THE BANDS ABOVE THE CAP: the Frozen Reach (100), the Frostspire (106) and Old Rex's Lair (100) asked for a Combat level melee can
+        never reach (levels stop at 99), so only a bow or a wand could ever fight there */
+  BANDS.frozen[0] = 95; BANDS.frostspire[0] = 99; BANDS.valley_lair[0] = 97;
+  /* 3. LATE MONSTERS PAID HALF: bounties were set per kill, but xp is per point of damage everywhere, so tickets per hitpoint decide where a
+        high level farms, and every level-70+ monster paid 1.1-1.8 a hitpoint against 3-4 for a Cloudreach angel or a Wilderness lich. From
+        level 30 up every ordinary monster's bounty follows its health, rising with its level; the Yard, the Gloam and the Mire keep theirs.
+        Its tickets line is rebuilt the way the BOUNTY loop does it. */
+  for (const [t, m] of Object.entries(MOBS)) {
+    if (BOUNTY[t] == null || BOSSES.has(t) || m.boss || m.raid || m.event || m.tower || !(m.lvl >= 30)) continue;
+    const want = Math.max(1, Math.round(m.hp * (1.5 + 0.02 * m.lvl) * BOUNTY_BAND));
+    BOUNTY[t] = want; m.drops = m.drops.filter(([k]) => k !== "tickets");
+    const other = m.drops.reduce((a, [k, n, p]) => a + (VALUE[k] ?? 0) * (Array.isArray(n) ? (n[0] + n[1]) / 2 : n) * (p ?? 1), 0), gap = Math.round(want * 0.88 - other), [lo, hi] = tixSpread(t);
+    if (gap >= 2) m.drops.unshift(["tickets", [Math.max(1, Math.round(gap * lo)), Math.round(gap * hi)]]);
+  }
+}
+/* 8. ONYX AND STARFALL BARS NEEDED THE WILDERNESS: smelting onyx takes grimstone, and grimstone grew only in the Wilderness and the Deep Wild
+      (PvP, gathering halved). One grimstone rock on Cloudreach's west side, beside its onyx, so a level-50 bar has a safe road */
+{ const D = SCENES.cloud, build = D.build;
+  D.build = function () { const b = build.call(this);
+    if (G_isWalk(b.g, 4, 19)) { b.objs.push({ t: "rock", ore: "grimstone", x: 4, y: 19, name: "Grimstone rock", req: { skill: "mining", lvl: 20 }, xp: 60, tease: "Cold purple stone. Your pickaxe skids right off." }); b.g[19][4] = "#"; }
+    return b; }; }
+function G_isWalk(g, x, y) { return g[y] && ".,".includes(g[y][x]); }

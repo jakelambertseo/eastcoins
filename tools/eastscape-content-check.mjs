@@ -406,7 +406,7 @@ scene objects
   for (const k of raid) if (G.PET_DROP_KEYS.includes(k)) bad(`${G.PETS[k].name} is a raid pet`, "but a kill can still roll it — it is in PET_DROP_KEYS");
   for (const [k, p] of Object.entries(G.PETS)) if (!p.raid && !p.bred && !G.PET_DROP_KEYS.includes(k)) bad(`${p.name} drops from nowhere`, "not a raid pet, and not in PET_DROP_KEYS either");
   /* (2026-09-27) A BRED PET COMES FROM THE PEN: a hatchling from an egg that exists, a Legendary from a kind that has one */
-  for (const [k, p] of Object.entries(G.PETS)) if (p.bred && !(p.egg ? G.EGGS?.[p.egg]?.pet === k : p.legend && G.LEGEND_OF?.[p.base] === k)) bad(`${p.name} is a bred pet with no way in`, "no egg hatches it and no pairing makes it");
+  for (const [k, p] of Object.entries(G.PETS)) if (p.bred && !p.held && !(p.egg ? G.EGGS?.[p.egg]?.pet === k : p.legend && G.LEGEND_OF?.[p.base] === k)) bad(`${p.name} is a bred pet with no way in`, "no egg hatches it and no pairing makes it");
   if (raid.length) console.log(`  ok  ${raid.length} raid pet${raid.length === 1 ? " is" : "s are"} out of the kill pool (${G.PET_DROP_KEYS.length} of ${G.PET_KEYS.length} can drop)`);
   /* (2026-09-27) the wiki's pets page is BUILT from the rules now, so render it and read the rows: every raid pet is listed, and its
      "how to get it" is not the kill pool's line */

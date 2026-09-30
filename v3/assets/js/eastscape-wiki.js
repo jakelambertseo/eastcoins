@@ -31,6 +31,89 @@ export function cropTable(G, H) {
   });
   return `<table class="tbl"><tr><th>Crop</th><th>Harvesting</th><th>Grows in</th><th>Pays back</th><th>xp</th><th>Sells</th><th>Seeded by</th></tr>${rows.join("")}</table>`;
 }
+/* (2026-09-30, the owner's "full wiki rundown") SHARED HELPERS FOR THE GENERATED GUIDES. Every map guide below reads its monsters, its
+   rocks, trees and water, and the drops worth knowing straight off the map and the monster, so a moved rock or a new monster is in the
+   guide the moment it is in the game. The page hands a guide H (ico, wl, esc, areaLink...); the node checks hand it a thinner one, so
+   anything past wl/esc/ico is used only when it is there. */
+const WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+const word = (n) => WORDS[n] || String(n), Word = (n) => word(n).replace(/^./, (c) => c.toUpperCase());
+const an = (w) => `${/^[aeiou]/i.test(w) ? "an" : "a"} ${w}`, num = (n) => Number(n).toLocaleString("en-GB"), pctOf = (x) => `${Math.round(x * 1000) / 10}%`, oneIn = (p) => `1 in ${num(Math.round(1 / p))}`;
+const itemL = (G, H, k) => H.wl(`items/${k}`, `${H.ico ? H.ico(k) : ""} ${H.esc(G.ITEMS[k]?.name || k)}`);
+const areaL = (G, H, k) => (H.areaLink ? H.areaLink(k) : H.esc(G.SCENES[k]?.name || k));
+/* a monster page exists where a map places it, or for the few that come at a time rather than on a tile (eastscape.html spawnedOf) */
+const SPAWNED = new Set(["icewyrm", "raidchief", "raidwolf", "raidyeti", "raidgiant", "raidhuscarl", "goldenraptor"]);
+const mobL = (G, H, t) => {
+  const n = H.esc(G.MOBS[t]?.name || t), placed = Object.entries(G.SCENES).some(([k, d]) => !d.wikiHide && G.OPEN.has(k) && (d.mobs || []).some(([x]) => x === t));
+  return placed || SPAWNED.has(t) ? H.wl(`monsters/${t}`, n) : n;
+};
+const TOOL_OF = { mining: "pickaxe", woodcutting: "axe", fishing: "rod" };
+const skillName = (G, s) => G.SKILLS[s]?.name || s;
+/** what can be mined, cut or fished on these maps: one row per kind of node, with the level, the tool grade and what it gives */
+function gatherTable(G, H, scenes) {
+  const rows = new Map();
+  for (const s of scenes) {
+    if (!G.SCENES[s]) continue;
+    let b; try { b = G.buildScene(s); } catch { continue; }
+    for (const o of b.objs) {
+      const sk = o.req?.skill; if (!TOOL_OF[sk]) continue;
+      const k = o.ore || o.log || o.fish || (sk === "woodcutting" ? "logs" : sk === "fishing" ? "sardine" : null); if (!k || G.ITEMS[k]?.held) continue;
+      const key = `${o.name}|${k}|${o.req.lvl}`, r = rows.get(key) || { name: o.name, k, k2: o.fish2 || null, l2: o.fish2lvl, sk, lvl: o.req.lvl, where: new Set() };
+      r.where.add(s); rows.set(key, r);
+    }
+  }
+  const list = [...rows.values()].sort((a, b) => a.sk.localeCompare(b.sk) || a.lvl - b.lvl), many = scenes.length > 1;
+  if (!list.length) return "";
+  return `<table class="tbl"><tr><th>What</th><th>Needs</th><th>Gives</th>${many ? "<th>Where</th>" : ""}</tr>${list.map((r) => `<tr><td>${H.esc(r.name)}</td><td>${skillName(G, r.sk)} ${r.lvl}, ${an(H.esc(G.toolNeed(r.lvl).name.toLowerCase()))} ${TOOL_OF[r.sk]}</td><td>${itemL(G, H, r.k)}${r.k2 && G.ITEMS[r.k2] ? `; ${itemL(G, H, r.k2)} from ${skillName(G, r.sk)} ${r.l2}` : ""}</td>${many ? `<td>${[...r.where].map((s) => areaL(G, H, s)).join(", ")}</td>` : ""}</tr>`).join("")}</table>`;
+}
+/** every monster the maps place, weakest first: level, health, what it shrugs off, its element weakness */
+function mobTable(G, H, scenes, extra = []) {
+  const seen = new Map();
+  for (const s of scenes) for (const [t] of (G.SCENES[s]?.mobs || [])) { if (!G.MOBS[t] || G.MOBS[t].held) continue; const r = seen.get(t) || { t, where: new Set() }; r.where.add(s); seen.set(t, r); }
+  for (const [t, s] of extra) if (G.MOBS[t] && !seen.has(t)) seen.set(t, { t, where: new Set([s]) });
+  const list = [...seen.values()].sort((a, b) => G.MOBS[a.t].lvl - G.MOBS[b.t].lvl), many = scenes.length > 1;
+  const el = (x) => (x ? (G.elementWords ? G.elementWords(x) : [].concat(x).join(", ")) : "&mdash;");
+  return `<table class="tbl"><tr><th>Monster</th><th>Level</th><th>Health</th><th>Takes</th><th>Weak to</th>${many ? "<th>Where</th>" : ""}</tr>${list.map(({ t, where }) => { const m = G.MOBS[t], gt = G.guardText ? G.guardText(t).replace(/^Takes /, "").replace(/\.$/, "") : "";
+    return `<tr><td>${m.boss ? "<b>" : ""}${mobL(G, H, t)}${m.boss ? "</b> (boss)" : ""}</td><td>${m.lvl}</td><td>${num(m.hp)}</td><td>${gt ? H.esc(gt) : "every style in full"}</td><td>${el(m.weak)}</td>${many ? `<td>${[...where].map((s) => areaL(G, H, s)).join(", ")}</td>` : ""}</tr>`; }).join("")}</table>`;
+}
+/** the drops worth walking for: gear, chase pieces, cores, eggs and pets, and who drops them. A monster's `rare` list rolls at the
+    game's flat rare rate whatever is written beside it, so those say "rare" rather than a number that would be wrong. */
+function chaseDrops(G, H, mobs) {
+  const rows = [];
+  for (const t of new Set(mobs)) {
+    const m = G.MOBS[t]; if (!m) continue;
+    const want = (k) => { const it = G.ITEMS[k]; return it && !it.held && (it.slot || it.chase || G.EGGS[k] || /_core$/.test(k)); };
+    for (const [k, , p] of m.drops || []) if (want(k)) rows.push([itemL(G, H, k), t, p == null || p >= 1 ? "every kill" : oneIn(p)]);
+    for (const [k] of m.rare || []) if (want(k)) rows.push([itemL(G, H, k), t, "rare"]);
+    if (m.pet && G.PETS[m.pet[0]]) rows.push([`${H.wl(`pets/${m.pet[0]}`, H.esc(G.PETS[m.pet[0]].name))} (a pet)`, t, oneIn(m.pet[1])]);
+  }
+  if (!rows.length) return "";
+  return `<table class="tbl" data-paged="25"><tr><th>Drop</th><th>From</th><th>Chance</th></tr>${rows.map(([what, t, ch]) => `<tr><td>${what}</td><td>${mobL(G, H, t)}</td><td>${ch}</td></tr>`).join("")}</table>`;
+}
+/** how you get to fight on a map: its band's bottom, or a bow or a wand where the map lets one in (Combat stops at 99) */
+function gateText(G, k) {
+  const b = G.BANDS[k]; if (!b) return "";
+  if (b[0] <= 1) return "anyone";
+  const w = [];
+  if (b[0] <= 99) w.push(`Combat ${b[0]}`);
+  if (G.ARCH_BAND?.[k] != null) w.push(`Archery ${G.ARCH_BAND[k]} with a bow`);
+  if (G.MAGE_BAND?.[k] != null) w.push(`Magic ${G.MAGE_BAND[k]} with a wand`);
+  return w.join(", or ");
+}
+/* THE TWO DUNGEONS' NUMBERS. Their rules live in eastscape-crypt-rules.js and eastscape-pyramid-rules.js, which the page loads only when a
+   party needs them, and a guide is handed G and H, not those. So the Crypt and Pyramid guides read H.CRR / H.PYR when the page passes them
+   and these mirrors otherwise; the wiki test (and anything that imports _CRYPT_T / _PYR_T) holds each figure to the rule file. */
+const CRYPT_T = { party: [2, 4], runsPaid: 3, lateShare: 0.25, fullShare: 0.1, lowShare: 0.5,
+  tiers: [null, { name: "The Crypt", lvl: 10, rec: 22, ante: 250, pay: 2500 }, { name: "The Deep Crypt", lvl: 30, rec: 47, ante: 750, pay: 7000 }, { name: "The Black Crypt", lvl: 40, rec: 76, ante: 1250, pay: 11000 }] };
+const PYR_T = { party: [2, 4], runsPaid: 3, lateShare: 0.25, fullShare: 0.1, lowShare: 0.5, jitter: 0.25,
+  coil: { everyMs: 21000, warnMs: 3000, maxMs: 9000, hurt: 0.09, breakFrac: 0.05, reach: 4 }, burrow: { at: [0.7, 0.4], downMs: 5000 },
+  tiers: [null, { name: "The Great Pyramid", lvl: 40, rec: 76, ante: 1250, pay: 6500 }],
+  loot: { rolls: [[3, 26], [4, 30], [5, 22], [6, 14], [7, 8]], lateRolls: 3, venom: [1, 2],
+    table: [["tix", 26], ["shell", 16], ["fang", 14], ["drink", 12], ["meal", 10], ["clover", 9], ["chip", 6], ["gear", 4], ["pet", 1.6], ["horseshoe", 1.4]] },
+  mobs: [["swarm", 53, "Scarab Swarm"], ["grifter", 54, "Grave Grifter"], ["canopic", 56, "Canopic Horror"], ["dustwraith", 57, "Sand Wraith"], ["pharaoh", 60, "Risen Pharaoh"], ["squeeze", 68, "The Squeeze"]] };
+export { CRYPT_T as _CRYPT_T, PYR_T as _PYR_T };
+/** the chance a Pyramid clear's chest holds the Coilling: every roll after the first is one line of the table, and the roll count is itself drawn */
+const coilChance = (P) => { const L = P.loot, W = L.table.reduce((a, [, w]) => a + w, 0), p = (L.table.find(([k]) => k === "pet") || [, 0])[1] / W, RW = L.rolls.reduce((a, [, w]) => a + w, 0);
+  return 1 - L.rolls.reduce((a, [n, w]) => a + (w / RW) * Math.pow(1 - p, n - 1), 0); };
 const SEEDS_NOTE = (G) => `<p><b>Most crops are their own seed</b>: planting spends one of the thing you are growing, so the first of each kind has to be found. They drop from the monsters of the zone that grows them, at about <b>one kill in eighty</b>. <b>The four Wizardry flowers are the exception.</b> They grow from ${["seed_sun", "seed_ember", "seed_frost", "seed_void"].map((k) => G.ITEMS[k]?.name).filter(Boolean).join(", ").replace(/, ([^,]*)$/, " and $1")}, which drop from monsters all over the map at about <b>one kill in a hundred and twenty-five</b>, and you harvest the flower that ink is brewed from. What you can grow is decided by where you can survive.</p>`;
 
 export const GUIDES = [
@@ -45,13 +128,19 @@ export const GUIDES = [
       const R = G.RANKS, rk = (r) => `<b style="color:${R[r].col}">${R[r].mark ? `${R[r].mark} ` : ""}${R[r].name}</b>`;
       const eggOf = Object.fromEntries(Object.entries(G.EGGS).map(([k, e]) => [e.pet, k]));
       const places = (list) => list.map((s) => G.SCENES[s]?.name || (s === "wild" ? "The Wilderness" : s === "deep" ? "The Deep Wild" : s)).join(", ");
+      /* (2026-09-30) EVERY BOSS PET FROM THE BOSS: MOBS[t].pet is [pet, chance]. This listed three by hand and the Valley, the Frozen
+         Reach, the Ice Wyrm and the raid had added five more that it did not know about. */
+      const bossOf = {};
+      for (const [t, m] of Object.entries(G.MOBS)) if (m.pet && G.PETS[m.pet[0]] && !m.held) (bossOf[m.pet[0]] ||= []).push([t, m.pet[1]]);
+      const bossWhere = (t) => { const s = Object.entries(G.SCENES).find(([k, d]) => G.OPEN.has(k) && (d.mobs || []).some(([x]) => x === t))?.[0];
+        return s ? `, in ${H.esc(G.SCENES[s].name)}` : t === "icewyrm" ? ", which rises out of the Frozen Reach's lake once a day" : /^raid/.test(t) ? ", in a Yard raid" : t === "pumpkinking" ? ", during the Long Night only" : ""; };
       const from = (k, p) => {
+        if (bossOf[k] && k !== "coilling") return bossOf[k].map(([t, ch]) => `${H.esc(G.MOBS[t].name)}${bossWhere(t)}, about 1 kill in ${Math.round(1 / ch)}`).join("; or ")
+          + (k === "blackcat" && G.HW?.pet ? `; or ${num(G.HW.pet[1])} candy corn at the Night Market` : "");
         if (G.PET_DROP_KEYS.includes(k)) return `Any monster, about 1 kill in ${Math.round(1 / G.PET_DROP).toLocaleString()}, in: ${places([...G.PET_SCENES])}`;
         if (p.legend) return `Breed two Greater ${H.esc(G.PETS[p.base]?.name || p.base)} in your pet pen`;
-        if (eggOf[k]) return `Hatch a ${H.esc(G.ITEMS[eggOf[k]]?.name || eggOf[k])} in a hatchery. Eggs drop from monsters in: ${places(G.EGGS[eggOf[k]].from)}`;
-        if (k === "coilling") return "The chest at the end of the Great Pyramid, about 1 clear in 20";
-        if (k === "blackcat") return "The Pumpkin King, during the Long Night only, about 1 King in 40";
-        if (k === "potboy") return "The Deepwarden, in the Depths of the Mountain, about 1 kill in 60";
+        if (eggOf[k]) return `Hatch a ${H.esc(G.ITEMS[eggOf[k]]?.name || eggOf[k])} in a hatchery. ${G.EGGS[eggOf[k]].where ? `It comes from ${H.esc(G.EGGS[eggOf[k]].where)}.` : `Eggs drop from monsters in: ${places(G.EGGS[eggOf[k]].from)}`}`;   /* (2026-09-30) the Starling egg drops from no monster */
+        if (k === "coilling") return `The chest at the end of ${H.wl("guides/pyramid", "the Great Pyramid")}, about 1 clear in ${Math.round(1 / coilChance(H.PYR?.PYRAMID || PYR_T))}`;
         return "&mdash;";
       };
       const rows = Object.entries(G.PETS).filter(([k, p]) => !p.held && (k !== "blackcat" || G.hwOn()))
@@ -157,59 +246,55 @@ export const GUIDES = [
       </table>
       <p>The Night Market says how many days are left at the top of its window, so does your candy corn chip, and the last week turns both red. Spend the corn.</p>`;
     } },
+  /* (2026-09-30) GENERATED. It said "north off the Thunderhead" after the Depths of the Mountain went in between, its gathering table had
+     no Singularity pocket, and "twice the hitpoints of anything else" stopped being true when the Valley's bosses came. */
   { id: "trailer", title: "The Trailer Park", icon: "🚚", cat: "Going further",
-    body: `<p><b>North off the Thunderhead.</b> The road west ends at the Vault; this is the turning before it, and the two are the top of the game side by side rather than one after the other.</p>
-      <p><b>Combat 80</b> to start a fight here, <b>Fishing 80</b> for the black water. Everything in it bites.</p>
-      <table class="tbl"><tr><th>Who</th><th>Level</th></tr>
-        <tr><td>Junkyard Dog</td><td>80</td></tr><tr><td>Rabid Possum</td><td>84</td></tr>
-        <tr><td>The Scrapper</td><td>88</td></tr><tr><td>Yard Gator</td><td>92</td></tr>
-        <tr><td><b>The Junk King</b></td><td><b>98</b></td></tr>
-      </table>
-      <p><b>The King</b> stands in the fenced yard at the east end. He has more than twice the hitpoints of anything else in the game and he is the only thing that drops <b>his cap</b> or <b>his wrench</b>. He is meant to be killed many times over.</p>
-      <p><b>The richest gathering there is</b>, and all of it wants a top-rung tool:</p>
-      <table class="tbl"><tr><th>What</th><th>Needs</th></tr>
-        <tr><td>Truck on blocks — catalytic converter</td><td>Mining 65, Starfall pickaxe</td></tr>
-        <tr><td>Slag bank — slagstone</td><td>Mining 85, Eclipse pickaxe</td></tr>
-        <tr><td>Rustpine</td><td>Woodcutting 65, Starfall axe</td></tr>
-        <tr><td>Bogwood</td><td>Woodcutting 80, Eclipse axe</td></tr>
-        <tr><td>Black water — mud cat and bowfin</td><td>Fishing 80, Eclipse rod</td></tr>
-      </table>
-      <p>Cook the fish and they are the best food this side of the <a data-wiki="areas/deep">Deep Wild</a>, whose Black Pool holds the two that beat them. Until this zone there was nothing above Vaultwood to cut and nothing above the Vault to mine, so the top of the <a data-wiki="guides/tools">tool ladder</a> had nothing to work on; the Deep's Gallows oak (Woodcutting 90) is the one tree past it.</p>` },
+    body: (G, H) => {
+      const T = G.SCENES.trailer, b = G.BANDS.trailer || [80, 99], K = G.MOBS.junkking;
+      const others = Object.entries(G.MOBS).filter(([t, m]) => t !== "junkking" && !m.boss && !m.held && Object.entries(G.SCENES).some(([k, d]) => G.OPEN.has(k) && (d.mobs || []).some(([x]) => x === t)));
+      const bigger = others.filter(([, m]) => m.hp * 2 >= K.hp).length;
+      const via = T.exits?.s === "depths" && G.OPEN.has("depths") ? `Walk north off the Thunderhead into ${areaL(G, H, "depths")}; the Trailer Park is past it` : "North off the Thunderhead";
+      const north = T.exits?.n && G.OPEN.has(T.exits.n) ? `, and ${areaL(G, H, T.exits.n)} is north of it` : "";
+      return `<p><b>${via}${north}.</b> The road west ends at the Vault; the two are the top of the old game side by side rather than one after the other.</p>
+      <p><b>Combat ${b[0]}</b> to start a fight here, <b>Fishing ${G.FISH_BAND?.trailer ?? b[0]}</b> for the black water. Everything in it bites.</p>
+      ${mobTable(G, H, ["trailer"])}
+      <p><b>The Junk King</b> stands in the fenced yard at the east end: ${num(K.hp)} hitpoints${bigger ? "" : ", more than twice anything else that is not a boss"}, and the only thing that drops <b>his cap</b> or <b>his wrench</b>. He is meant to be killed many times over.</p>
+      <p><b>The richest gathering of the old maps</b>, and all of it wants a top-rung tool:</p>
+      ${gatherTable(G, H, ["trailer"])}
+      <p>Cook the fish and they are some of the best food this side of the ${H.wl("areas/deep", "Deep Wild")}. Before this zone there was nothing above Vaultwood to cut and nothing above the Vault to mine; the top of the ${H.wl("guides/tools", "tool ladder")} works here.</p>
+      <h3>Worth knowing</h3>
+      ${chaseDrops(G, H, ["junkdog", "possum", "scrapper", "gator", "junkking"])}`;
+    } },
+  /* (2026-09-30) GENERATED. The typed ladder had fifteen potions against a cauldron that brews over twenty, and a heading that said "the
+     vial is the tier, and the timer": it is the tier, but every potion's time is its own (a small-vial sleeping draught lasts fifteen
+     minutes, a large-flask Starcap tonic thirty). Every row is read from RECIPES and the potion itself now. */
   { id: "alchemy", title: "Alchemy: sand into potions", icon: "\u{1F9EA}", cat: "Skills",
-    body: `<p><b>Alchemy runs 1 to 100 and it starts with sand.</b> Dig it out of the pits in <a data-wiki="guides/sands">The Golden Sands</a> at <b>Mining 20</b>, melt it to glass at the <b>cauldron</b> under the temple colonnade, then brew the glass with whatever the world drops.</p>
-      <p><b>One cauldron does both jobs.</b> It is the only one in the game, and it both blows the vials and brews the potions &mdash; so everything to do with Alchemy happens on one tile, and you never need a single level of Smithing to train it.</p>
+    body: (G, H) => {
+      const rs = Object.values(G.RECIPES).filter((r) => r.skill === "alchemy" && !G.ITEMS[r.out[0]]?.held).sort((a, b) => a.lvl - b.lvl || a.id.localeCompare(b.id));
+      const ing = (r) => r.in.map(([k, n]) => `${n > 1 ? `${n} ` : ""}${itemL(G, H, k)}`).join(", ");
+      const vials = rs.filter((r) => /_vial$/.test(r.out[0]));
+      const does = (it) => { const fx = it.drink?.fx || {}, w = [G.fxText(fx)]; if (fx.steal) w.push(`you pick pockets ${Math.round(fx.steal * 100)}% more reliably`); return w.filter(Boolean).join("; "); };
+      const pots = rs.filter((r) => { const it = G.ITEMS[r.out[0]]; return it && (it.drink || it.heal) && (!it.event || G.hwOn()); });
+      const witch = rs.find((r) => r.out[0] === "pot_witch" && G.hwOn());
+      const inks = rs.filter((r) => /^ink_/.test(r.out[0])), other = rs.filter((r) => !vials.includes(r) && !pots.includes(r) && !inks.includes(r) && r.out[0] !== "pot_witch");
+      return `<p><b>Alchemy runs 1 to 99 and it starts with sand.</b> Dig it out of the pits in ${H.wl("guides/sands", "the Golden Sands")} at <b>Mining 20</b>, melt it to glass at the <b>cauldron</b> under the temple colonnade, then brew the glass with what the world drops.</p>
+      <p><b>One cauldron does both jobs.</b> It is the only one in the game: it blows the vials and it brews the potions, so everything to do with Alchemy happens on one tile, and you never need a level of Smithing to train it.</p>
       <h4>It can go wrong</h4>
-      <p><b>Nothing here is a certainty.</b> A recipe spoils about <b>half</b> the time at the level that unlocks it and settles down as you climb past it &mdash; but it never reaches nothing. Glasswork bottoms out around <b>one batch in fifty</b>, for ever. A spoiled batch leaves nothing behind.</p>
-      <h4>The vial is the tier, and the timer</h4>
-      <table class="tbl"><tr><th>Vial</th><th>Alchemy</th><th>Sand</th><th>Holds</th></tr>
-        <tr><td><b>Small vial</b></td><td>1</td><td>1</td><td>10 minutes</td></tr>
-        <tr><td><b>Medium vial</b></td><td>34</td><td>2</td><td>15 minutes</td></tr>
-        <tr><td><b>Large flask</b></td><td>68</td><td>4</td><td>20 minutes</td></tr>
-      </table>
-      <p>So a potion's strength and how long it lasts are both written on the bottle. There is nothing else to learn about the ladder.</p>
-      <h4>The ingredients are things you already throw away</h4>
-      <p>This is the point of the skill. <b>Six of the seven farm crops</b> go in a potion and had no other use at all; so do <b>staticfur</b> off a Thunderwolf, a <b>marked card</b> off a Card Counter, a <b>receipt</b> off a Tax Wraith, a <b>shark tooth</b>, a <b>cobweb</b>, a <b>sporecap</b>, a <b>husk</b>, <b>bones</b> and <b>stormjelly</b>. Two are native to the Sands: a <b>scarab shell</b> and a <b>cobra fang</b>.</p>
+      <p><b>Nothing here is a certainty.</b> A recipe spoils about <b>half</b> the time at the level that unlocks it and settles down as you climb past it, but it never reaches nothing. Glasswork bottoms out around <b>one batch in fifty</b>, for ever. A spoiled batch leaves nothing behind.</p>
+      <h4>The vials</h4>
+      <p>The vial is the tier: a better potion wants a bigger bottle. How long a potion lasts is its own, and it is in the table below.</p>
+      <table class="tbl"><tr><th>Alchemy</th><th>Vial</th><th>Takes</th><th>xp</th></tr>${vials.map((r) => `<tr><td>${r.lvl}</td><td>${itemL(G, H, r.out[0])}</td><td>${ing(r)}</td><td>${r.xp}</td></tr>`).join("")}</table>
       <h4>Every potion, in order</h4>
-      <p>The ladder <b>alternates a skilling buff with a combat one</b> all the way up, so whichever sort of player you are there is never a dead stretch. <b>"Bite" is fishing</b> &mdash; it is how readily a fish takes the hook, not how hard you hit.</p>
-      <table class="tbl"><tr><th>Alch</th><th>Potion</th><th>Does</th><th>Needs</th></tr>
-        <tr><td>1</td><td><b>Swift draught</b></td><td>skilling: +4% speed</td><td>small vial, 2 sporecap</td></tr>
-        <tr><td>10</td><td><b>Hide tonic</b></td><td>combat: +5% tough</td><td>small vial, 2 hide</td></tr>
-        <tr><td>19</td><td><b>Keen-eye water</b></td><td>skilling: +6% rare</td><td>small vial, 2 wheat, sporecap</td></tr>
-        <tr><td>23</td><td><b>Salt salve</b></td><td>heals 14 at once</td><td>small vial, 2 lanternroot</td></tr>
-        <tr><td>28</td><td><b>Rattle brew</b></td><td>fishing: fish bite 2% more often</td><td>small vial, 2 rattlebean</td></tr>
-        <tr><td>36</td><td><b>Quickhand philtre</b></td><td>skilling: +7% speed</td><td>medium vial, marked card, lanternroot</td></tr>
-        <tr><td>45</td><td><b>Gourd draught</b></td><td>combat: +9% tough</td><td>medium vial, 2 bonegourd, bones</td></tr>
-        <tr><td>50</td><td><b>Field salve</b></td><td>heals 26 at once</td><td>medium vial, 3 lanternroot, bonegourd</td></tr>
-        <tr><td>54</td><td><b>Ghost grease</b></td><td>skilling: +5% steal</td><td>medium vial, cobweb, husk</td></tr>
-        <tr><td>62</td><td><b>Tax-dodger's tincture</b></td><td>combat: +9% tickets</td><td>medium vial, receipt, stormcorn</td></tr>
-        <tr><td>70</td><td><b>Prospector's flask</b></td><td>skilling: +14% rare</td><td>large flask, gold tomato, marked card, scarab shell</td></tr>
-        <tr><td>78</td><td><b>Fang flask</b></td><td>fishing: fish bite 4.5% more often</td><td>large flask, shark tooth, cobra fang, rattlebean</td></tr>
-        <tr><td>84</td><td><b>Royal salve</b></td><td>heals 44 at once</td><td>large flask, 4 lanternroot, scarab shell</td></tr>
-        <tr><td>90</td><td><b>Storm flask</b></td><td>skilling: +12% speed</td><td>large flask, staticfur, stormjelly, lanternroot</td></tr>
-        <tr><td>100</td><td><b>Pharaoh's draught</b></td><td>combat: +18% tough; fishing: +3% bite</td><td>large flask, 2 scarab shell, cobra fang, gold tomato</td></tr>
-      </table>
-      <p><b>A potion stacks with your gear.</b> Every number above sits well under the ceiling the game caps each effect at, so drinking one adds to what you are wearing instead of replacing it.</p>
-      <p><b>They only work outside.</b> Like the bar's food and drink, a buff counts down in places that have monsters in them, not on the casino floor.</p>` },
+      <p>The ladder <b>alternates a skilling buff with a combat one</b> most of the way up, so whichever sort of player you are there is rarely a dead stretch. <b>"Bite" is fishing</b>: it is how readily a fish takes the hook, not how hard you hit.</p>
+      <table class="tbl" data-paged="25"><tr><th>Alchemy</th><th>Potion</th><th>Does</th><th>Lasts</th><th>Needs</th></tr>${pots.map((r) => { const it = G.ITEMS[r.out[0]];
+        return `<tr><td>${r.lvl}</td><td>${itemL(G, H, r.out[0])}${r.out[1] > 1 ? ` &times;${r.out[1]}` : ""}</td><td>${it.heal ? `heals ${it.heal} at once` : H.esc(does(it))}</td><td>${it.drink ? `${it.drink.mins} min` : "&mdash;"}</td><td>${ing(r)}</td></tr>`; }).join("")}</table>
+      ${witch ? `<p><b>During the Long Night</b> the cauldron also brews ${itemL(G, H, "pot_witch")} at Alchemy ${witch.lvl} (${ing(witch)}): drink it and your next death costs no hospital bill.</p>` : ""}
+      <p><b>A potion is a drink.</b> It takes the same slot as the Prize Counter's lager, whiskey and champagne, so drinking one replaces whichever drink is running, and the other way round. A salve is not a drink: it heals on the spot, like food, and sits happily alongside everything else.</p>
+      <p><b>A potion stacks with your gear.</b> Every number above sits under the ceiling the game caps each effect at, so drinking one adds to what you are wearing instead of replacing it.</p>
+      <p><b>They only work outside.</b> Like the bar's food and drink, a buff counts down in places that have monsters in them, not on the casino floor.</p>
+      <h4>Ink, and the odd extra</h4>
+      <p>The cauldron also brews <b>ink</b> for ${H.wl("guides/wizardry", "Wizardry")}: ${inks.map((r) => `${itemL(G, H, r.out[0])} (Alchemy ${r.lvl}, from ${ing(r)})`).join("; ")}.${other.length ? ` And: ${other.map((r) => `${r.out[1] > 1 ? `${r.out[1]} ` : ""}${itemL(G, H, r.out[0])} at Alchemy ${r.lvl}, from ${ing(r)}`).join("; ")}.` : ""}</p>`;
+    } },
   { id: "sands", title: "The Golden Sands", icon: "\u{1F3DC}\uFE0F", cat: "Going further",
     body: `<p><b>Combat 40 to 49, west out of <a data-wiki="guides/road">the Boneyard</a></b> &mdash; and it is a <b>second route, not a rung</b>. At Combat 40 you may go north to Cloudreach or west to here, and each has its own ore, tree and fish. Neither is ahead of the other.</p>
       <p>It is where <a data-wiki="guides/alchemy">Alchemy</a> lives. The <b>sand pits</b> are the front of that whole chain, and the game's only <b>cauldron</b> stands under the temple colonnade in the middle of the map.</p>
@@ -223,7 +308,7 @@ export const GUIDES = [
       <h4>What lives there</h4>
       <p><b>Sand Cobras</b> (41) in the dunes and <b>Gilt Scarabs</b> (45) round the pits &mdash; the cobra drops the <b>fang</b> and the scarab the <b>shell</b>, both of which go in the best potions. <b>Bandaged Debtors</b> (43) shuffle about the precinct and <b>Tomb Jackals</b> (47) hold the pyramid. Everything waits to be hit first except <b>one jackal by the pyramid door</b>, which comes at you on sight.</p>
       <h4>The Great Pyramid</h4>
-      <p>It stands on the eastern skyline and <b>the tomb door is sealed</b>. The party fight behind it is still being built &mdash; when it opens it will work like <a data-wiki="guides/crypt">the Crypt</a>: a private copy of the tomb for your group, an ante each, and something very old at the bottom of it.</p>` },
+      <p>It stands on the eastern skyline, and <b>the tomb door is open</b>. It is a party dungeon like <a data-wiki="guides/crypt">the Crypt</a>: two to four of you pay an ante each, get a private copy of the tomb, and climb four chambers to something very old at the top. See <a data-wiki="guides/pyramid">The Great Pyramid</a>.</p>` },
   /* (2026-09-25) GENERATED, like the smoking guide and for the same reason. This was titled "the seven rungs"
      with a table that stopped at Eclipse and called it "anything", two tiers after Nova and Singularity shipped;
      the prose above it had been half-corrected to "nine grades", so the page disagreed with itself. The rungs,
@@ -245,26 +330,27 @@ export const GUIDES = [
       <p><b>You have to be holding it.</b> Pickaxe, axe or rod, it goes in the weapon slot &mdash; one in your bag will not do. That is the whole cost of the ladder: while you are working you are not carrying a sword.</p>`;
     } },
   { id: "start", title: "Start here", icon: "\u{1F9ED}", cat: "Starting out",
-    body: `<p><b>This is a casino with a world attached.</b> The tables are the point; everything outside exists to pay for them.</p>
+    body: (G) => `<p><b>This is a casino with a world attached.</b> The tables are the point; everything outside exists to pay for them.</p>
       <h3>The first five minutes</h3>
-      <p><b>Play a table.</b> You start with enough to play. Every game takes tickets or real ZCoins &mdash; the window has a toggle, and the odds are identical either way.</p>
+      <p><b>Play a table.</b> You start with enough to play. Every game takes tickets or real ZCoins: bet tickets and a win pays tickets, bet ZCoins and it pays ZCoins. The window has a toggle. See <a data-wiki="guides/casino">The casino</a>.</p>
       <p><b>When you run out, go outside.</b> Walk out of the casino into the Yard. Hit something, chop something, or fish. Take what you find to <a data-wiki="npcs/Bom Trady">Bom Trady</a> in the middle of the floor and it becomes tickets.</p>
       <p><b>Cook your fish before you sell it.</b> Raw fish is worth nothing and Bom will not take it &mdash; the campfire is by the casino door, and cooking roughly doubles what a fish is worth.</p>
       <h3>Then what</h3>
-      <p><b>Check the task board</b> inside the casino: three <a data-wiki="guides/jobs">jobs a day</a>, usually things you were going to do anyway.</p>
+      <p><b>Check the task board</b> inside the casino: ${word(G.DAILY_COUNT)} <a data-wiki="guides/jobs">jobs a day</a>, usually things you were going to do anyway. <a data-wiki="guides/order">Bronny's order</a> in the Yard is the whole server's daily, and three <a data-wiki="guides/events">world events</a> turn up every afternoon and evening.</p>
       <p><b>Buy a better tool before better gear.</b> <a data-wiki="guides/tools">Tools</a> decide what you can gather at all, and a grade up is 8% off every swing forever.</p>
       <p><b>Walk north when the Yard gets easy.</b> The world is a chain of areas about ten levels apart &mdash; see <a data-wiki="guides/road">The road out</a>.</p>
       <h3>Worth knowing early</h3>
-      <p><b>Nothing is locked.</b> You can walk anywhere at level one, and die there.</p>
-      <p><b>Dying does not cost you your gear</b>, only some of the tickets in your pocket. Bank them before a long trip.</p>
+      <p><b>You can walk anywhere at level one</b>, but every area outside has a level band: below its bottom you cannot start a fight there, or fish its water. A sign at the way in says what it asks. The few monsters that attack on sight do not check your level first.</p>
+      <p><b>Dying does not cost you your gear</b>, only some of the tickets in your pocket. The bank will not hold tickets, so spend them before a long trip.</p>
+      <p><b>Lost? Type /find</b> and a thing, a place or a person in the chat box, and it tells you where it is and the way there. The <a data-wiki="guides/commands">Chat commands</a> page has the rest.</p>
       <p><b>Press H</b> to open this wiki at any time.</p>` },
   /* (2026-09-25, the owner: "can you add a section in the wiki for keybinds"). Every key the page listens for, read out of its
      keydown handlers. Staff-only keys are left out. When a key is added or moved, this table is the other place it goes. */
   { id: "keys", title: "Keybinds", icon: "\u2328\uFE0F", cat: "Starting out",
-    body: `<p><b>Every key, in one place.</b> None of them fire while you are typing in a box (chat, a search, a name), or while Ctrl, Alt or Cmd is held, so they never get in the way of the browser's own shortcuts.</p>
+    body: (G) => `<p><b>Every key, in one place.</b> None of them fire while you are typing in a box (chat, a search, a name), or while Ctrl, Alt or Cmd is held, so they never get in the way of the browser's own shortcuts.</p>
       <h3>Moving and fighting</h3><table class="tbl"><tr><th>Key</th><th>Does</th></tr>
       <tr><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or the arrow keys</td><td>Walk. Holding a key keeps walking. A click on the ground or on anything walks you there and does it.</td></tr>
-      <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></td><td>Use your quick slots, the four squares beside the Chat button: a potion, food, a buff, arrows, or a piece of gear (press again to take it off). <b>Press and hold</b> a slot, or right-click it, to change what is in it.</td></tr>
+      <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></td><td>Use your quick slots, the four squares beside the Chat button: a potion, food, a buff, arrows, or a piece of gear (press again to take it off). <b>Press and hold</b> a slot, or right-click it, to change what is in it. <a data-wiki="guides/store">The Store</a> sells up to ${word(G.STORE_UP.quick.max)} more, each on its own key: <kbd>5</kbd> to <kbd>${4 + G.STORE_UP.quick.max}</kbd>.</td></tr>
       <tr><td><kbd>E</kbd></td><td>Eat the best <b>cooked</b> food in your bag, whatever heals most. It never touches potions, drinks, buff meals or smoked fish, and does nothing at full health.</td></tr>
       </table>
       <h3>Windows</h3><table class="tbl"><tr><th>Key</th><th>Does</th></tr>
@@ -287,29 +373,34 @@ export const GUIDES = [
       <tr><td>Shift-click in the bank</td><td>Take out a full stack, or put in every one you carry.</td></tr>
       <tr><td>Shift-click in a trade</td><td>Offer the whole stack.</td></tr>
       </table>` },
+  /* (2026-09-30) GENERATED from GAMES. It said "eight tables" after the Boiler made nine, and that the odds were identical in tickets
+     and ZCoins: a ticket bet is played by the game server in its own band (EDGE_BAND), a ZCoin bet by eastcoin.vip in the site's. */
   { id: "casino", title: "The casino", icon: "\u{1F3B0}", cat: "Starting out",
-    body: `<p><b>Eight tables, and every one of them plays for tickets or for real ZCoins.</b> Same game, same odds, same server roll &mdash; the only difference is what you put in. The window has a toggle.</p>
-      <table class="tbl"><tr><th>Table</th><th>How it goes</th></tr>
-        <tr><td>&#127920; Slots</td><td>Three of a kind pays; two cherries pay 1.4&times;. Three sevens takes the jackpot</td></tr>
-        <tr><td>&#129689; Coin Flip</td><td>Heads or tails, pays 1.95&times;</td></tr>
-        <tr><td>&#127922; Dice</td><td>Roll under your number. The lower you call it, the more it pays</td></tr>
-        <tr><td>&#127905; Wheel</td><td>Red or black pays 1.97&times;. The thin gold sliver pays 58&times;</td></tr>
-        <tr><td>&#127183; Higher or Lower</td><td>Every right call multiplies your stake; cash out whenever. A tie is a push</td></tr>
-        <tr><td>&#128163; Mines</td><td>25 tiles, some are bombs. Every gem multiplies; cash out before you find one</td></tr>
-        <tr><td>&#128992; Plinko</td><td>Twelve rows of pegs. The edges pay 25&times;</td></tr>
-        <tr><td>&#127903;&#65039; Scratch-Off</td><td>Nine boxes; three of a kind wins that symbol's prize</td></tr>
-      </table>
-      <p><b>The odds are not a secret and they are not fixed per game.</b> Every play draws its own house edge inside a narrow band, sealed behind a committed hash before your stake is taken and revealed when the play is over. No table is a better bet than another &mdash; that is deliberate, because a game that pays better than the rest is one people would only play.</p>
-      <p><b>Limits.</b> Minimum 10 a bet, and a short pause between bets so nothing can be machine-gunned. The ZCoin side carries the same hourly limits the site's own floor has always had.</p>
-      <p><b>Wins get announced.</b> Anything from 5&times; tells the room; 25&times; and up tells everyone in the game.</p>
-      <p>Broke? <b>Go outside.</b> Hit something or fish, and take what you find to <a data-wiki="npcs/Bom Trady">Bom Trady</a>. See <a data-wiki="guides/tickets">Tickets</a>.</p>` },
+    body: (G, H) => {
+      const games = Object.values(G.GAMES), C = G.CASINO, T = G.TIX_HOUR, B = G.EDGE_BAND;
+      return `<p><b>${Word(games.length)} tables, and every one of them plays for tickets or for real ZCoins.</b> Bet tickets and a win pays tickets; bet ZCoins and it pays ZCoins. The window has a toggle, and <kbd>G</kbd> opens every table from anywhere on the floor.</p>
+      <table class="tbl"><tr><th>Table</th><th>How it goes</th></tr>${games.map((g) => `<tr><td>${g.icon} ${H.esc(g.name)}</td><td>${H.esc(g.ex)}</td></tr>`).join("")}</table>
+      <p><b>The odds are not a secret and they are not fixed per game.</b> Every play draws its own house edge inside a narrow band, sealed behind a committed hash before your stake is taken and revealed when the play is over. On tickets a play returns between <b>${Math.round(B[0] * 100)}%</b> and <b>${Math.round(B[1] * 100)}%</b> of what went in; the ZCoin side is eastcoin.vip's own tables and its own band. No table is a better bet than another &mdash; that is deliberate, because a game that pays better than the rest is one people would only play.</p>
+      <p><b>The slots carry a Jackpot.</b> ${Math.round(G.JACKPOT.slice * 100)}% of every spin goes into one pot everybody shares, and three sevens wins it (a full-size spin takes all of it). It never starts from nothing: the house puts ${num(G.JACKPOT.seed)} back in after a win.</p>
+      <p><b>Limits, on tickets.</b> ${num(C.minBet)} to ${num(C.maxBet)} a bet, a short pause between bets, <b>${T.perGame} plays an hour at each table</b>, and no new bet once you are ${num(T.winCap)} up across the last hour (a win already paid is never trimmed). The ZCoin side carries the site's own limits.</p>
+      <p><b>Wins get announced.</b> Anything from ${C.roomWin}&times; tells the room; ${C.worldWin}&times; and up tells everyone in the game.</p>
+      <p><b>Through the back wall</b> are three more rooms: the Fight Pit, the Picture House and the Roulette Room. See <a data-wiki="guides/rooms">The casino's back rooms</a>.</p>
+      <p>Broke? <b>Go outside.</b> Hit something or fish, and take what you find to <a data-wiki="npcs/Bom Trady">Bom Trady</a>. See <a data-wiki="guides/tickets">Tickets</a>.</p>`;
+    } },
+  /* (2026-09-30) Rewritten against the rules. It said Bom sells bronze gear only (he sells every grade), that tickets cannot be traded
+     (they can, since v96), and that there is no way from tickets to ZCoins (the Prize Counter trades them in, since v107). */
   { id: "tickets", title: "Tickets and the Prize Counter", icon: "\u{1F3AB}", cat: "Starting out",
-    body: `<p><b>Tickets are the money and Bom Trady is the whole economy.</b> He stands in the middle of the casino floor. Everything you find outside becomes tickets at his counter, and everything you want comes back over it.</p>
+    body: (G, H) => {
+      const D = G.DEX, grades = G.TOOL_RUNGS.map((r) => r.name.toLowerCase());
+      return `<p><b>Tickets are the money and Bom Trady is the whole economy.</b> He stands in the middle of the casino floor. Everything you find outside becomes tickets at his counter, and everything you want comes back over it.</p>
       <p><b>He buys loot and things you made</b> &mdash; ore, bars, logs, cooked fish, monster drops. He does <b>not</b> buy raw fish, so cook it first, and he leaves your tools, charms and anything wearable alone so you cannot cash in the set you are standing in by accident.</p>
-      <p><b>He sells</b> tools, bronze gear, food, drinks and your bag upgrades. Your <a data-wiki="guides/vip">VIP rank</a> is a standing discount on all of it.</p>
-      <p><b>Tickets stay on you.</b> They cannot be banked, dropped or given away in a trade &mdash; they only leave by being spent. What a death costs you is a share of the tickets in your pocket, which is the argument for spending them before a long trip out.</p>
-      <p><b>Real ZCoins are a different thing entirely.</b> Find one and the counter puts it straight onto your balance on the site. There is no exchange rate in either direction: you cannot buy ZCoins with tickets and you cannot turn ZCoins into tickets. That wall is deliberate &mdash; without it, fishing would print real currency.</p>
-      <p>Other players are usually the better price for anything rare. See <a data-wiki="guides/trading">Trading and the Market</a>.</p>` },
+      <p><b>He sells</b> every tool and every grade of armour and weapon, ${grades[0]} to ${grades.at(-1)}; the first ${itemL(G, H, "logs_shortbow")}, ${itemL(G, H, "logs_quiver")}, ${itemL(G, H, "logs_wand")} and ${itemL(G, H, "bag_scrap")}, with arrows and spell pages to go in them; food, drinks, and your bag upgrades. Your <a data-wiki="guides/vip">VIP rank</a> is a standing discount on all of it.</p>
+      <p><b>Tickets stay on you.</b> You cannot drop them and the bank will not take them, but you <b>can</b> hand them to another player in a trade. What a death costs you is a share of the tickets in your pocket, which is the argument for spending them before a long trip out.</p>
+      <h3>Tickets into ZCoins</h3>
+      <p><b>Real ZCoins are eastcoin.vip's money</b>, and there are two ways to get them here. Find one outside (see <a data-wiki="guides/zcoins">Finding ZCoins</a>) and the counter puts it straight onto your balance on the site. Or <b>trade tickets in</b> at the counter: <b>${num(D.rate)} tickets for 1 ZCoin</b>, up to ${D.capDay} ZCoins in any 24 hours, and a found ZCoin banked counts toward the same ${D.capDay}. It only goes one way: ZCoins never turn back into tickets.</p>
+      <p><b>At the tables</b> a ticket bet pays tickets and a ZCoin bet pays ZCoins. See <a data-wiki="guides/casino">The casino</a>.</p>
+      <p>Other players are usually the better price for anything rare. See <a data-wiki="guides/trading">Trading and the Market</a>.</p>`;
+    } },
   /* (2026-09-25) THE TABLE IS GENERATED, the colour is not. This listed neither the Golden Sands nor the Carnival
      and had the Boneyard ending eight levels early - an area can be built, placed and mined for a fortnight
      without anything making the map of the world mention it. The rows and the level bands now come from where the
@@ -320,12 +411,12 @@ export const GUIDES = [
     body: (G, H) => {
       const ORDER = ["workyard", "gloam", "mire", "boneyard", "orchard", "cloud", "frozen", "frostspire", "sands", "thunderhead", "carnival", "boardwalk", "bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull", "foundry", "fd_grove", "fd_maze", "fd_isle", "fd_chain", "fd_gate", "fd_hall", "vault", "depths", "trailer", "valley", "valley_ridge", "valley_lair", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
       const NOTE = {
-        workyard: "the casino, the bank, the campfire, the furnace and anvil, sardines",
+        workyard: "the casino, the bank, the campfire, the furnace and anvil, the Tower, the Crypt stairs, the Bounty Board, Bronny's order, sardines",
         gloam: "emerald and diamond ore, gloomwillow, trout and catfish",
         mire: "lanternfish, mudskipper, the first real gear drops",
-        boneyard: "bonefish, ghost carp, the Crypt &mdash; and <b>pets start dropping here</b>",
+        boneyard: "bonefish and ghost carp in the flooded crypt &mdash; and <b>pets start dropping here</b>",
         cloud: "dragonstone and onyx ore, skyash, sky eel and cloud ray",
-        frozen: "north of Cloudreach, and a mage's country (Combat 100, or Magic 60 with a wand): yetis and snow owls on shelves and ice floes only a spell or an arrow reaches, frost wolves and wraiths on the snow, glacite (Mining 94), frostpine (Woodcutting 94), icefin through the ice (Fishing 94), and the Ice Wyrm, which comes up through the lake once a day",   /* (2026-09-30) held until the owner opens it */
+        frozen: "north of Cloudreach, and a mage's country, with a cold that hurts without a frost ward: yetis and snow owls on shelves and ice floes only a spell or an arrow reaches, frost wolves and wraiths on the snow, glacite (Mining 94), frostpine (Woodcutting 94), icefin through the ice (Fishing 94), and the Ice Wyrm, which comes up through the lake once a day",   /* (2026-09-30) held until the owner opens it */
         frostspire: "north of the Frozen Reach: Frost Giants on the shelves, Ice Elementals on the tarn's floes, Frost Wraiths, and the Frost Jarl on the high ice shelf, an open-world boss only spells reach",
         sands: "sand for <a data-wiki=\"guides/alchemy\">Alchemy</a>, the cauldron, the Great Pyramid",
         thunderhead: "storm marlin, thunder squid, the way to the last two",
@@ -347,23 +438,25 @@ export const GUIDES = [
         fd_hall: "through the burning door: the wall of bodies, two towers with an eye on each, and Old Bessemer, the giant, up to his chest in it",
         depths: "ledges over a bottomless drop: monsters that shrug off a whole fighting style, abyss crystal, eclipse and nova ore, and the Deepwarden",   /* (2026-09-27) */
         trailer: "the best gathering in the game, and the meanest neighbours",
-        valley: "north of the Trailer Park, and a bow's country (Combat 90, or Archery 40 with a bow): cavemen and pterodactyls on ledges only an arrow reaches, sabretooths on the road, woolly mammoths on the plateaus, coelacanth in the lake (Fishing 92), cycads (Woodcutting 92), and the Mammoth Matriarch, an open-world boss up on the great plateau",   /* (2026-09-30) held until the owner opens it */
+        valley: "north of the Trailer Park, and a bow's country: cavemen and pterodactyls on ledges only an arrow reaches, sabretooths on the road, woolly mammoths on the plateaus, coelacanth in the lake (Fishing 92), cycads (Woodcutting 92), and the Mammoth Matriarch, an open-world boss up on the great plateau",   /* (2026-09-30) held until the owner opens it */
         valley_ridge: "north of the Lowlands: plateau after plateau with Caveman Hunters and Elder Pterodactyls on top, raptors on the ground, fossil rocks (Mining 92)",
         valley_lair: "the end of the valley: the dragon fossil, a volcano, tar horrors in the tar pits, and Old Rex on his throne up on the high plateau, an open-world boss only arrows reach",
-        wild: "the road past the Yard's east gate: nodes far apart, most things attack first, and the first of three monsters found nowhere else",
+        wild: "down the rope ladder on the Thunderhead's south edge: other players can attack you, nodes far apart, most things attack first, and the first of three monsters found nowhere else",
         deep: "the far end of the Wilderness: the Black Pool (Fishing 92 and 97), the Gallows oak (Woodcutting 90), the Grim Liches, the Nexus",
       };
       const rows = ORDER.filter((k) => G.SCENES[k] && G.OPEN.has(k)).map((k) => {   /* (2026-09-27) a held map (the Depths, and for now the Boardwalk, the Foundry and the Orchard Wall) is not listed */
         const ls = [...new Set((G.SCENES[k].mobs || []).map(([t]) => G.MOBS[t]?.lvl))].filter(Boolean).sort((a, b) => a - b);
-        return { k, name: G.SCENES[k].name, band: ls.length ? `${ls[0]}&ndash;${ls.at(-1)}` : "&mdash;", note: NOTE[k] || "" };
+        return { k, name: G.SCENES[k].name, band: ls.length ? `${ls[0]}&ndash;${ls.at(-1)}` : "&mdash;", gate: gateText(G, k) || "&mdash;", note: NOTE[k] || "" };
       });
-      return `<p><b>The world is a chain.</b> Each area is about ten levels past the last, and the way on is an edge of the map &mdash; walk off it and you are in the next one. Nothing is locked; you can walk anywhere at level one and die there.</p>
-      <table class="tbl"><tr><th>Area</th><th>Monsters</th><th>What it has</th></tr>
-        ${rows.map((r) => `<tr><td>${H.wl(`areas/${r.k}`, H.esc(r.name))}</td><td>${r.band}</td><td>${r.note}</td></tr>`).join("")}
+      const past = ORDER.filter((k) => G.OPEN.has(k) && (G.BANDS[k]?.[0] || 0) > 99);
+      return `<p><b>The world is a chain.</b> Each area is about ten levels past the last, and the way on is an edge of the map &mdash; walk off it and you are in the next one. <b>You can walk anywhere at level one</b>, but an area will not let you start a fight until you reach the bottom of its band, and its water wants the same in Fishing; the sign at the way in says what it asks.</p>
+      <table class="tbl"><tr><th>Area</th><th>Monsters</th><th>To start a fight</th><th>What it has</th></tr>
+        ${rows.map((r) => `<tr><td>${H.wl(`areas/${r.k}`, H.esc(r.name))}</td><td>${r.band}</td><td>${r.gate}</td><td>${r.note}</td></tr>`).join("")}
       </table>
+      ${past.length ? `<p><b>Past 99.</b> Combat stops at 99, so the areas whose band starts above it are opened by the other two styles instead: ${past.map((k) => `${H.esc(G.SCENES[k].name)} (${gateText(G, k)})`).join(", ")}. The Primeval Valley is a bow's country and the Frozen Reach a wand's, and much of what lives in them shrugs off a sword entirely.</p>` : ""}
       <p><b>Cloudreach and the Golden Sands are a fork, not a rung.</b> At Combat 40 either will have you; they hold different ore, different trees and different fish, and neither is ahead of the other.</p>
       <p><b>Go one area past comfortable, not three.</b> Monsters hit harder than their level suggests once you are out of your depth, and dying costs a bigger share of your tickets the deeper you are &mdash; see <a data-wiki="guides/dying">Dying</a>.</p>
-      <p><b>Bank first.</b> A death takes a percentage of what you are <i>carrying</i>, so an empty pocket makes a long trip out nearly free.</p>
+      <p><b>Spend first.</b> A death takes a percentage of the tickets you are <i>carrying</i>, and the bank will not hold tickets, so a trip out with an empty pocket is nearly free.</p>
       <p><b>The Wilderness is off this chain</b> and other players can attack you in it.</p>`;
     } },
   /* (2026-09-25) THE TOWER HAD NO PAGE AT ALL, through the climb going from 30 floors to 99, and it is the one
@@ -391,7 +484,7 @@ export const GUIDES = [
     body: (G, H) => {
       const band = [...new Set((G.SCENES.carnival?.mobs || []).map(([t]) => G.MOBS[t]?.lvl))].filter(Boolean).sort((a, b) => a - b);
       const gr = G.MOBS.grinner, tix = G.BOUNTY?.grinner;
-      return `<p><b>Combat ${band[0]} to ${band.at(-1)}, east off the Thunderhead.</b> Four freaks on the midway, a duck pond, and a cage in the north-west with something in it.</p>
+      return `<p><b>Combat ${band[0]} to ${band.at(-1)}, west out of the Yard.</b> The Boardwalk is west of it again. Four freaks on the midway, a duck pond, and a cage in the north-west with something in it.</p>
       <h3>The three stalls</h3>
       <p>Balloon Pop, the Shooting Gallery and Whack-a-Mole. <b>100 tickets a go</b>, a perfect round pays about <b>five times that</b>, and there is a short wait between rounds. They pay on how many you hit and they get faster as you go, so the last few shots are the ones worth having.</p>
       <p>They are a <b>game, not a wage</b>: a good round beats the fee, and no amount of practice beats fighting the midway for the same minutes. Play them because they are there.</p>
@@ -402,17 +495,28 @@ export const GUIDES = [
       <p>Which is why he pays what he pays: <b>${tix ? tix.toLocaleString() : "thousands"} tickets</b>, against a few hundred for anything else on the map. He is slow, he hits like the band above him, and he is only back every <b>five minutes</b> &mdash; so a party splits one of him rather than farming him.</p>
       <p><b>The ticket is a cover charge, paid once.</b> Going out costs nothing, and going back in costs another ticket.</p>`;
     } },
+  /* (2026-09-30) Rewritten. It put the stairs in the Boneyard (they have been in the Yard since v108) and called the Crypt "the only
+     thing you cannot do alone" after the Great Pyramid opened. The numbers are the crypt rules' own: the page reads H.CRR when it hands
+     one over, and otherwise CRYPT_T, which the wiki test holds to eastscape-crypt-rules.js. */
   { id: "crypt", title: "The Crypt (parties)", icon: "\u{1F5DD}\uFE0F", cat: "Going further",
-    body: `<p><b>The only thing in the game you cannot do alone.</b> The stairs are in the Boneyard. Two to four of you go in, the door shuts, and what is inside is yours &mdash; nobody else can wander through it.</p>
+    body: (G, H) => {
+      const C = H.CRR?.CRYPT || CRYPT_T, T = C.tiers.slice(1), hp = (n) => Math.round((0.6 + 0.1 * n * n) * 100) / 100;
+      return `<p><b>One of two things in the game you cannot do alone</b>; the other is ${H.wl("guides/pyramid", "the Great Pyramid")}. The stairs down are in the Yard's north court, just below the furnace. ${Word(C.party[0])} to ${word(C.party[1])} of you go in, the door shuts, and what is inside is yours &mdash; nobody else can wander through it.</p>
       <h3>Getting a party</h3>
-      <p><b>Click someone and invite them.</b> They get a line with an Accept on it, good for a minute. While anyone in the party is inside, everybody sees everybody health and where they are.</p>
+      <p><b>Click someone and invite them.</b> They get a line with an Accept on it, good for a minute. While anyone in the party is inside, everybody sees everybody's health and where they are.</p>
       <p><b>Leaving the game does not leave the party.</b> Your place is held for three minutes, so a dropped connection is not a lost run &mdash; log back in and you are still in it, on the floor you were on.</p>
+      <h3>Three depths, one map</h3>
+      <table class="tbl"><tr><th>Crypt</th><th>Door opens at</th><th>The fight wants</th><th>Ante each</th><th>A clear pays each</th></tr>${T.map((t) => `<tr><td>${H.esc(t.name)}</td><td>Combat ${t.lvl}</td><td>about Combat ${t.rec}</td><td>${num(t.ante)}</td><td>${num(t.pay)}</td></tr>`).join("")}</table>
+      <p><b>The door and the fight are different numbers.</b> At the door's level, in the best gear that level can wear, you land about one swing in ten on the boss; the next column is where you land about half.</p>
       <h3>The run</h3>
-      <p><b>There is an ante</b>, taken on the way in, the same for everyone. A cleared crypt pays every member still in the party and still inside.</p>
-      <p><b>The boss scales to how many of you there are</b>, so four people do not make it four times easier &mdash; they make the deeper tiers survivable at all.</p>
-      <p><b>Monsters do not come back inside a run</b>, and the party shares them: you all hit the same thing instead of fighting over it.</p>
-      <p><b>Nothing drops on the floor in there.</b> The run pays at the end, which is why clearing it matters and killing things in it does not, on its own.</p>
-      <p><b>Fastest clears are recorded.</b> That is the actual reason to go back.</p>` },
+      <p><b>Four chambers in a row</b>: the Ossuary (skeleton guards), the Haunted Hall (ghosts and bone golems), the Antechamber (a chest to restock from, and a lever), and the Hoodie's Sanctum. A gate opens when its chamber is clear; the last one opens at the lever, and only once everybody still alive is in the Antechamber, so nobody is left behind.</p>
+      <p><b>The Hoodie</b> telegraphs a slam about every twenty seconds: step out of reach when the warning shows, or it takes a big bite of your health. At half health he calls in help, and after five minutes he hits twice as hard. <b>He scales to the party</b>: with ${C.party[0]} of you he has his plain health, with 3 about ${hp(3)}&times;, with 4 about ${hp(4)}&times;, so four people do not make it four times easier &mdash; they make the deeper crypts survivable at all.</p>
+      <p><b>Monsters do not come back inside a run</b>, and the party shares them. <b>Nothing drops on the floor in there</b>, and if everybody is dead at once it is a wipe.</p>
+      <h3>The Hoodie's hoard</h3>
+      <p>When he dies a chest appears in front of the throne, and <b>everybody who earned the clear opens it for their own roll</b>: the clear's tickets, then two to six more things &mdash; drinks, dinners, clovers, scrolls, casino chips, a horseshoe, now and then a piece of buff gear or a Thieves' permit. The deeper the crypt, the better the odds on the good rolls.</p>
+      <p><b>${Word(C.runsPaid)} paid clears a Chicago day</b> each. After that a clear pays ${Math.round(C.lateShare * 100)}% and three rolls with no gear. Anybody who did under ${Math.round(C.fullShare * 100)}% of the boss's damage gets half pay and fewer rolls: nobody is carried for nothing.</p>
+      <p><b>Fastest clears are recorded.</b> That is the other reason to go back.</p>`;
+    } },
   { id: "fighting", title: "Fighting", icon: "⚔️", cat: "Skills",
     body: (G, H) => `<p><b>Click a monster.</b> You walk to it and keep swinging until one of you stops. Whoever hits it first owns it &mdash; nobody else can take your kill, except in the Wilderness where nothing is owned.</p>
       <h3>One skill, not four</h3>
@@ -425,21 +529,21 @@ export const GUIDES = [
         <tr><td>Longsword</td><td>2.4s</td><td>the middle of the three</td></tr>
         <tr><td>Maul</td><td>3.0s</td><td>slow and heavy, big hits</td></tr>
       </table>
-      <h3>The nine grades</h3>
-      <p>Weapons and armour gate on <b>Combat</b>, rings and amulets on <b>Hitpoints</b>. Bronze is the only tier Brutus sells; everything above it is <a data-wiki="guides/smithing">smithed</a> or dropped.</p>
-      <table class="tbl"><tr><th>Grade</th><th>Needs</th><th>Full set defence</th><th>Weapon</th></tr>
-        <tr><td>Bronze</td><td>10</td><td>20</td><td>+8 acc, +6 str</td></tr>
-        <tr><td>Emerald</td><td>20</td><td>34</td><td>+12 acc, +10 str</td></tr>
-        <tr><td>Diamond</td><td>30</td><td>48</td><td>+16 acc, +14 str</td></tr>
-        <tr><td>Dragonstone</td><td>40</td><td>62</td><td>+20 acc, +18 str</td></tr>
-        <tr><td>Onyx</td><td>50</td><td>76</td><td>+24 acc, +22 str</td></tr>
-        <tr><td>Starfall</td><td>60</td><td>90</td><td>+28 acc, +26 str</td></tr>
-        <tr><td>Eclipse</td><td>70</td><td>104</td><td>+32 acc, +30 str</td></tr>
-        <tr><td>Nova</td><td>80</td><td>118</td><td>+36 acc, +34 str</td></tr>
-        <tr><td>Singularity</td><td>90</td><td>132</td><td>+40 acc, +38 str</td></tr>
-      </table>
-      <p><b>The top two name their weapons differently.</b> Nova and Singularity do not carry a gladius, a longsword and a maul: they are the <b>flare knife, halberd and starbreaker</b>, and the <b>event blade, voidglaive and collapser</b>. The three roles are unchanged &mdash; quick, balanced, slow and heavy &mdash; only the names.</p>
-      <p><b>And their weapons are a chase.</b> Every Nova or Singularity weapon wants a <b>core</b> as well as bars. A core drops from the hardest things in the game &mdash; the Junk King, the Yard Gator, the Last Dealer, the Hoodie and the Squeeze &mdash; at about one kill in two thousand, or it can be built at an anvil out of a heap of what those places drop. The armour and the tools need no core.</p>
+      <h3>The ${word(G.TOOL_RUNGS.length)} grades</h3>
+      <p>Weapons and armour gate on <b>Combat</b>, rings and amulets on <b>Hitpoints</b>. <a data-wiki="npcs/Bom Trady">Bom's Prize Counter</a> sells every grade, bronze to the top, but it is dear: everything is far cheaper <a data-wiki="guides/smithing">smithed</a>, and plenty of it drops.</p>
+      ${(() => {
+        const set = ["helm", "body", "legs", "shield", "boots", "gloves"], wpn = (g) => Object.keys(G.ITEMS).filter((k) => k.startsWith(`${g}_`) && G.ITEMS[k].slot === "weapon" && G.ITEMS[k].speed && !G.ITEMS[k].tspd && !G.ITEMS[k].launcher).sort((a, b) => G.ITEMS[a].speed - G.ITEMS[b].speed);
+        return `<table class="tbl"><tr><th>Grade</th><th>Needs</th><th>Full set defence</th><th>Weapons: quick, balanced, heavy (accuracy / strength)</th></tr>${G.TOOL_RUNGS.filter((r) => G.ITEMS[`${r.key}_body`]).map((r) => `<tr><td>${H.ico(`${r.key}_body`)} ${H.esc(r.name)}</td><td>${G.ITEMS[`${r.key}_body`].req?.lvl}</td><td>${set.reduce((a, s) => a + (G.ITEMS[`${r.key}_${s}`]?.def || 0), 0)}</td><td>${wpn(r.key).map((k) => `${H.wl(`items/${k}`, H.esc(G.ITEMS[k].name))} (+${G.ITEMS[k].acc} / +${G.ITEMS[k].str})`).join(", ")}</td></tr>`).join("")}</table>
+        <p>Full set defence is helm, body, legs, shield, gloves and boots together.</p>`;
+      })()}
+      <p><b>The top two name their weapons differently.</b> Nova and Singularity do not carry a gladius, a longsword and a maul: the three roles are unchanged &mdash; quick, balanced, slow and heavy &mdash; only the names.</p>
+      ${(() => {
+        const open = (t) => !G.MOBS[t]?.held && Object.entries(G.SCENES).some(([k, d]) => G.OPEN.has(k) && (d.mobs || []).some(([x]) => x === t));
+        const by = (core) => Object.entries(G.MOBS).filter(([t, m]) => open(t) && (m.drops || []).some(([k]) => k === core)).map(([t, m]) => [t, m.drops.find(([k]) => k === core)[2]]);
+        const nova = by("nova_core"), sing = by("singularity_core"), usual = nova[0]?.[1] || 0.0005, better = sing.filter(([, p]) => p > usual);
+        const craft = (core) => Object.values(G.RECIPES).find((r) => r.out[0] === core);
+        return `<p><b>And their weapons are a chase.</b> Every Nova or Singularity weapon wants a <b>core</b> as well as bars. Both cores drop from ${nova.map(([t]) => mobL(G, H, t)).join(", ")}, and from the Black Crypt's Hoodie and the Great Pyramid's Squeeze, at about one kill in ${num(Math.round(1 / usual))}${better.length ? `; the singularity core comes far oftener off ${better.map(([t, p]) => `${mobL(G, H, t)} (${oneIn(p)})`).join(" and ")}` : ""}. Or build one at an anvil: ${["nova_core", "singularity_core"].map((c) => craft(c)).filter(Boolean).map((r) => `${itemL(G, H, r.out[0])} at Smithing ${r.lvl} from ${r.in.map(([k, n]) => `${n} ${H.esc((G.ITEMS[k]?.name || k).toLowerCase())}`).join(", ")}`).join("; ")}. The armour and the tools need no core.</p>`;
+      })()}
       <p><b>Reforging is the other way up.</b> Bars spent at the anvil push a piece you already own three levels further, which is worth about a tier &mdash; a way to keep going when the next grade is out of reach, not a way past it. It can also destroy the piece. See the anvil.</p>
       <h3>Clicking again makes you swing faster</h3>
       <p><b>Click the monster you are already fighting and your next swing comes sooner.</b> Keep doing it and it comes sooner still, in four steps:</p>
@@ -506,7 +610,7 @@ export const GUIDES = [
       <p><b>A better rod is faster, not luckier.</b> Each grade up takes 8% off the time between casts. See <a data-wiki="guides/tools">Tools</a>.</p>
       <p><b>A bite is not guaranteed.</b> It starts at about ${Math.round(G.FISHING.chance(1) * 100)}% a cast and climbs with your level to ${Math.round(G.FISHING.chance(99) * 100)}%, so a rod is never quite a conveyor belt.</p>
       <p><b>Raw fish is not food and Bom will not buy it.</b> That is the point rather than an inconvenience: cooking roughly doubles what a fish is worth and is the only thing that makes it heal. See <a data-wiki="guides/cooking">Cooking</a>, and <a data-wiki="guides/smoking">Smoked fish</a> for the ${["no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"][smokes] || smokes} that smoke into a 20-minute buff.</p>
-      <p><b>Fishing is also the best place to find a real ZCoin</b> &mdash; roughly one cast in three hundred, creeping up with the better fish. See <a data-wiki="guides/zcoins">Finding ZCoins</a>.</p>`;
+      <p><b>Fishing is also the best place to find a real ZCoin</b> &mdash; about one catch in ${num(Math.round(1 / Math.min(...Object.values(G.ZDROP.fish))))} for the plainest fish, creeping up to one in ${num(Math.round(1 / Math.max(...Object.values(G.ZDROP.fish))))} for the best. See <a data-wiki="guides/zcoins">Finding ZCoins</a>.</p>`;
     } },
   /* (2026-09-25) GENERATED, and it was the worst of them: nine dishes missing, six heal values wrong (sky eel
      said 24 against a real 28, mud cat 26 against 30) and every sell price exactly DOUBLE what Bom pays - the
@@ -528,57 +632,51 @@ export const GUIDES = [
       <p><b>${H.esc(String(WORD[smokes] || smokes).replace(/^./, (c) => c.toUpperCase()))} of these can be smoked instead</b>, which heals more, sells for far more and gives a 20-minute buff. It needs charcoal, and the fire does it automatically when you are carrying some. See <a data-wiki="guides/smoking">Smoked fish</a>.</p>
       <p><b>Meat sits under fish on purpose.</b> A chicken is not a worse sardine; it is something you can cook at level 1 without a rod.</p>`;
     } },
+  /* (2026-09-30) GENERATED. Its burn table was missing palm, pine and bogwood logs and had skyash at half its charcoal; the bar, piece,
+     reforge and aid numbers are read from RECIPES and FORGE now as well, so none of it is typed twice. */
   { id: "smithing", title: "Smithing", icon: "\u{1F528}", cat: "Skills",
-    body: `<p><b>The most common question about this skill is how to start it at all</b>, because at Smithing 1 you cannot make a single bar or a single piece of gear. Everything asks for level 10.</p>
+    body: (G, H) => {
+      const R = Object.values(G.RECIPES), F = G.FORGE, pc = (x) => `${Math.round(x * 100)}%`, nm = (k) => H.esc(G.ITEMS[k]?.name || k);
+      const ing = (r) => r.in.map(([k, n]) => `${n} ${nm(k).toLowerCase()}`).join(" + ");
+      const burns = R.filter((r) => r.station === "furnace" && r.out[0] === "charcoal" && r.in.length === 1 && !G.ITEMS[r.in[0][0]]?.held);
+      const byN = {}; for (const r of burns) (byN[r.out[1]] ||= { xp: r.xp, logs: [] }).logs.push(r.in[0][0]);
+      const logXp = burns.find((r) => r.in[0][0] === "logs")?.xp || 5, ten = G.XP_AT[10];
+      const bars = R.filter((r) => r.station === "furnace" && /_bar$/.test(r.out[0]) && !G.ITEMS[r.out[0]]?.held).sort((a, b) => a.lvl - b.lvl);
+      const pieces = ["body", "legs", "shield", "maul", "amulet", "helm", "sword", "ring", "boots", "gloves", "gladius"].map((s) => R.find((r) => r.out[0] === `bronze_${s}`)).filter(Boolean);
+      const byBars = {}; for (const r of pieces) (byBars[r.in[0][1]] ||= { xp: r.xp, names: [] }).names.push(nm(r.out[0]).replace(/^Bronze /, "").toLowerCase());
+      const gradeLvl = G.TOOL_RUNGS.map((g) => [g.name, R.find((r) => r.out[0] === `${g.key}_body`)?.lvl]).filter(([, l]) => l);
+      const setKeys = ["helm", "body", "legs", "shield", "boots", "gloves", "sword", "ring", "amulet"].map((s) => `eclipse_${s}`);
+      const shelf = setKeys.reduce((a, k) => a + ((G.prizesOf().find((p) => p.give?.[0] === k) || {}).price || 0), 0);
+      const barsFor = setKeys.reduce((a, k) => a + ((R.find((r) => r.out[0] === k)?.in.find(([x]) => x === "eclipse_bar") || [, 0])[1]), 0);
+      const aid = (k) => R.find((r) => r.out[0] === k);
+      return `<p><b>The most common question about this skill is how to start it at all</b>, because at Smithing 1 you cannot make a single bar or a single piece of gear. Everything asks for level 10.</p>
       <p><b>You start by burning logs.</b> That is the whole answer. Take logs to the <b>furnace</b> in the Yard's north court and it turns them into <b>charcoal</b> &mdash; a Smithing level 1 job, and the only one there is. Charcoal is then the fuel every smelt needs, so the logs you burn getting to level 10 are not wasted: you need them anyway.</p>
-      <table class="tbl"><tr><th>Burn</th><th>Gives</th><th>xp each</th></tr>
-        <tr><td>Logs, Gloomwillow logs</td><td>1 charcoal</td><td>5</td></tr>
-        <tr><td>Deadwood, Skyash, Rustpine logs</td><td>2 charcoal</td><td>10</td></tr>
-        <tr><td>Ancient yew logs</td><td>3 charcoal</td><td>15</td></tr>
-        <tr><td>Vaultwood, Bogwood logs</td><td>4 charcoal</td><td>20</td></tr>
-        <tr><td>Gallows logs</td><td>8 charcoal</td><td>40</td></tr>
-      </table>
-      <p><b>Level 10 is 1,154 xp</b>, so it is about 230 ordinary logs &mdash; or far fewer if you are already cutting something better. Burning has a small chance to fail and eat the log; that is normal and it does not stop.</p>
+      <table class="tbl"><tr><th>Burn</th><th>Gives</th><th>xp each</th></tr>${Object.entries(byN).sort((a, b) => a[0] - b[0]).map(([n, v]) => `<tr><td>${v.logs.map((k) => `${H.ico(k)} ${nm(k)}`).join(", ")}</td><td>${n} charcoal</td><td>${v.xp}</td></tr>`).join("")}</table>
+      <p><b>Level 10 is ${num(ten)} xp</b>, so it is about ${num(Math.round(ten / logXp / 10) * 10)} ordinary logs &mdash; or far fewer if you are already cutting something better. Burning has a small chance to fail and eat the log; that is normal and it does not stop.</p>
       <h3>Then the chain</h3>
-      <p><b>Ore + charcoal &rarr; bar, at the furnace. Bars &rarr; gear, at the anvil.</b> Both are in the Yard's north court, beside the Crypt stairs.</p>
-      <table class="tbl"><tr><th>Bar</th><th>Smithing</th><th>Takes</th><th>xp</th></tr>
-        <tr><td>Bronze</td><td>10</td><td>1 copper + 1 tin + 1 charcoal</td><td>15</td></tr>
-        <tr><td>Emerald</td><td>20</td><td>2 emerald ore + 1 charcoal</td><td>30</td></tr>
-        <tr><td>Diamond</td><td>30</td><td>2 diamond ore + <b>2</b> charcoal</td><td>45</td></tr>
-        <tr><td>Dragonstone</td><td>40</td><td>2 dragonstone ore + <b>2</b> charcoal</td><td>60</td></tr>
-        <tr><td>Onyx</td><td>50</td><td>4 onyx ore + 2 <b>grimstone</b> + <b>6</b> charcoal</td><td>75</td></tr>
-        <tr><td>Starfall</td><td>60</td><td>4 starfall ore + 1 <b>onyx bar</b> + <b>6</b> charcoal</td><td>90</td></tr>
-        <tr><td>Eclipse</td><td>70</td><td>4 eclipse ore + 2 <b>voidglass</b> + <b>8</b> charcoal</td><td>105</td></tr>
-        <tr><td>Nova</td><td>80</td><td>4 nova ore + 1 <b>eclipse bar</b> + <b>10</b> charcoal</td><td>120</td></tr>
-        <tr><td>Singularity</td><td>90</td><td>4 singularity ore + 1 <b>nova bar</b> + <b>12</b> charcoal</td><td>135</td></tr>
-      </table>
-      <p><b>From onyx up a bar costs twice what it used to</b> (2026-09-27): twice the ore, twice the extra and twice the charcoal. The bar of the tier below is still one, because it has already doubled.</p>
+      <p><b>Ore + charcoal &rarr; bar, at the furnace. Bars &rarr; gear, at the anvil.</b> Both are in the Yard's north court, just above the Crypt stairs.</p>
+      <table class="tbl"><tr><th>Bar</th><th>Smithing</th><th>Takes</th><th>xp</th></tr>${bars.map((r) => `<tr><td>${H.ico(r.out[0])} ${H.wl(`items/${r.out[0]}`, nm(r.out[0]))}</td><td>${r.lvl}</td><td>${ing(r)}</td><td>${r.xp}</td></tr>`).join("")}</table>
       <p><b>The top of the ladder wants more than ore.</b> Onyx needs grimstone, eclipse needs voidglass, and starfall, nova and singularity each want a finished bar of the tier below &mdash; so a Singularity bar is a Nova bar is an Eclipse bar, all the way down &mdash; so the last stretch is a chain, not a grind, and the charcoal bill climbs with it.</p>
       <p><b>You do not choose what to make.</b> The furnace and the anvil always make the best thing you can, out of what is in your bag, which is why a furnace with logs AND ore in front of it burns, smelts, burns and smelts by itself.</p>
       <h3>What a piece costs</h3>
-      <table class="tbl"><tr><th>Piece</th><th>Bars</th><th>xp at bronze</th></tr>
-        <tr><td>Cuirass</td><td>5</td><td>100</td></tr>
-        <tr><td>Greaves, shield, maul</td><td>3</td><td>60</td></tr>
-        <tr><td>Helm, longsword, ring</td><td>2</td><td>40</td></tr>
-        <tr><td>Amulet</td><td>3</td><td>60</td></tr>
-        <tr><td>Boots, gloves, gladius</td><td>1</td><td>20</td></tr>
-      </table>
-      <p>Each grade wants Smithing equal to its <a data-wiki="guides/fighting">gear tier</a> &mdash; emerald at 20, diamond at 30, and so on up to eclipse at 70.</p>
+      <table class="tbl"><tr><th>Piece</th><th>Bars</th><th>xp at bronze</th></tr>${Object.entries(byBars).sort((a, b) => b[0] - a[0]).map(([n, v]) => `<tr><td>${v.names.join(", ").replace(/^./, (c) => c.toUpperCase())}</td><td>${n}</td><td>${v.xp}</td></tr>`).join("")}</table>
+      <p>Each grade wants the Smithing of its <a data-wiki="guides/fighting">gear tier</a>: ${gradeLvl.map(([n, l]) => `${n.toLowerCase()} ${l}`).join(", ")}.</p>
       <h3>Why bother, when Bom sells gear</h3>
-      <p><b>Because he is not cheap.</b> A full eclipse set over his counter is around 819,000 tickets; the ore to smith one is about 2,125. Diamond is 62 times dearer bought, onyx 138, eclipse 386. Once you have a furnace and an anvil there is no sensible reason to buy gear again.</p>
-      <p><b>Smith to wear it, not to sell it.</b> Bom buys smithed gear back for an eighth of his shelf price and never more than <b>2,500</b> a piece, reforged or not. Everything from onyx up hits that ceiling, and from nova up the bars are worth more sold on their own than the finished piece.</p>
+      <p><b>Because he is not cheap.</b> A full eclipse set over his counter (helm, body, legs, shield, boots, gloves, longsword, ring and amulet) is ${num(shelf)} tickets; smithing it takes ${barsFor} eclipse bars. Once you have a furnace and an anvil there is no sensible reason to buy gear again.</p>
+      <p><b>Smith to wear it, not to sell it.</b> Bom buys smithed gear back for an eighth of his shelf price and never more than <b>${num(G.GEAR_SELL_MAX)}</b> a piece, reforged or not, so the big pieces from onyx up all hit that ceiling, and from nova up the bars are worth more sold on their own than the finished piece.</p>
       <h3>Reforging</h3>
-      <p><b>Bars also push gear you already own further.</b> At the anvil, three levels, each worth 5.5% of that piece's own stats or +1, whichever is more &mdash; about a tier in total. A reforge costs the same bars the piece cost to make.</p>
-      <p><b>It can destroy the piece.</b> +1 always works. +2 is 80%, and a miss there has an 8% chance of breaking it; +3 is 55%, with a 15% chance. About one piece in seven is lost on the way to +3, and the bars go whether it works or not.</p>
-      <p>Tools reforge too, and they buy <b>speed</b> rather than combat &mdash; +2.5% a level at mining, chopping or fishing.</p>
+      <p><b>Bars also push gear you already own further.</b> At the anvil, ${word(F.max)} levels, each worth ${Math.round(F.step * 1000) / 10}% of that piece's own stats or +1, whichever is more &mdash; about a tier in total. A reforge costs the same bars the piece cost to make.</p>
+      <p><b>It can destroy the piece.</b> +1 always works. +2 is ${pc(F.odds[1])}, and a miss there breaks the piece ${pc(F.brk[1])} of the time; +3 is ${pc(F.odds[2])}, and a miss breaks it ${pc(F.brk[2])} of the time. The bars go whether it works or not.</p>
+      <p>Tools reforge too, and they buy <b>speed</b> rather than combat &mdash; +${Math.round(F.tspd * 1000) / 10}% a level at mining, chopping or fishing.</p>
       <h3>Temper, Flux and the Master's seal</h3>
       <p><b>Carrying one does nothing on its own.</b> At the anvil, open the <b>Reforge</b> tab. Every aid you are carrying shows as a button above the list of your gear. <b>Click the button so it lights up</b>, then reforge. A lit aid is used up on that one attempt, whether it works or not, so light it again before the next swing. You can light more than one at once.</p>
       <table class="tbl"><tr><th>Aid</th><th>What it does</th><th>Make it at the anvil</th></tr>
-        <tr><td><a data-wiki="items/temper">Temper</a></td><td><b>+20% to that attempt's chance.</b> +2 goes from 80% to 99%, +3 from 55% to 75%, +4 from 35% to 55%. It does <b>not</b> stop a failure breaking the piece.</td><td>Smithing 20: 2 whetgrit and 1 bronze bar</td></tr>
-        <tr><td><a data-wiki="items/flux">Flux</a></td><td><b>A failure cannot destroy the piece:</b> it drops one level instead. It does not raise the chance.</td><td>Smithing 40: 2 quench salts and 1 whetgrit</td></tr>
-        <tr><td><a data-wiki="items/masters_seal">Master's seal</a></td><td>Takes a piece <b>one step past +3, to +4</b> (35% to succeed).</td><td>Smithing 60: 1 seal wax and 1 flux</td></tr>
+        <tr><td>${H.wl("items/temper", nm("temper"))}</td><td><b>+${pc(F.temper)} to that attempt's chance.</b> +2 goes from ${pc(F.odds[1])} to ${pc(Math.min(0.99, F.odds[1] + F.temper))}, +3 from ${pc(F.odds[2])} to ${pc(F.odds[2] + F.temper)}, +4 from ${pc(F.odds[3])} to ${pc(F.odds[3] + F.temper)}. It does <b>not</b> stop a failure breaking the piece.</td><td>Smithing ${aid("temper")?.lvl}: ${aid("temper") ? ing(aid("temper")) : "&mdash;"}</td></tr>
+        <tr><td>${H.wl("items/flux", nm("flux"))}</td><td><b>A failure cannot destroy the piece:</b> it drops one level instead. It does not raise the chance.</td><td>Smithing ${aid("flux")?.lvl}: ${aid("flux") ? ing(aid("flux")) : "&mdash;"}</td></tr>
+        <tr><td>${H.wl("items/masters_seal", nm("masters_seal"))}</td><td>Takes a piece <b>one step past +${F.max}, to +${F.cap}</b> (${pc(F.odds[3])} to succeed).</td><td>Smithing ${aid("masters_seal")?.lvl}: ${aid("masters_seal") ? ing(aid("masters_seal")) : "&mdash;"}</td></tr>
       </table>
-      <p><b>Temper and Flux together</b> on a +3 attempt is 75% to succeed and no chance of losing the piece. Whetgrit, quench salts and seal wax come from pickpocketing in the Thieves' Guild.</p>` },
+      <p><b>Temper and Flux together</b> on a +3 attempt is ${pc(F.odds[2] + F.temper)} to succeed and no chance of losing the piece. Whetgrit, quench salts and seal wax come from pickpocketing in the ${H.wl("guides/thieving", "Thieves' Guild")}.</p>`;
+    } },
 
   /* (2026-09-25) GENERATED. Its table had four facts wrong at once and two rows that were not there at all:
      grimstone was listed as Mining 1 with a bronze pickaxe in the Wilderness (it is 20, emerald, the Deep Wild),
@@ -660,13 +758,13 @@ export const GUIDES = [
       <p><b>It is background money, not a living.</b> A full set of plots kept going comes to a fraction of what fighting the same zone pays; the appeal is that it happens while you are doing something else.</p>` },
 
   { id: "thieving", title: "Thieving", icon: "\u{1F90F}", cat: "Skills",
-    body: (G, H) => `<p><b>The Thieves&rsquo; Guild is south of the Yard</b>, behind a door that wants a permit. Inside are four rooms of guild members, two marks to a room, and you pick their pockets. <b>Nothing in there fights back and nothing can be attacked</b> &mdash; it is the only skill in the game that needs no combat level at all, no weapon and no armour.</p>
+    body: (G, H) => `<p><b>The Thieves&rsquo; Guild is in the far north-east corner of ${H.wl("areas/gloam", "the Gloam")}</b>, a shed in the dark at the end of a bad road, behind a door that wants a permit. Inside are four rooms of guild members, two marks to a room, and you pick their pockets. <b>Nothing in there fights back and nothing can be attacked</b> &mdash; it is the only skill in the game that needs no combat level at all, no weapon and no armour.</p>
 
       <h3>Getting in</h3>
       <p>You need a <b>Thieves&rsquo; permit</b>, and there are two ways to hold one:</p>
-      <ul><li>Buy one at the shop for <b>50,000 tickets</b>.</li>
+      <ul><li>Buy one from ${H.wl("npcs/Vance the Fence", "Vance the Fence")}, who stands beside the door, for <b>${num((G.SHOP.sells.find(([k]) => k === "thieves_permit") || [, 50000])[1])} tickets</b>.</li>
         <li>Find one in <b>the Hoodie&rsquo;s hoard</b> at the end of a Crypt run &mdash; about one chest in 105, 62 or 39 depending on the difficulty. Not past your three paid runs for the day.</li></ul>
-      <p>It is an ordinary item, so it can be <b>bought and sold on the market</b>, which usually means it changes hands for rather less than the shop charges. The door takes it off you the first time and never asks again &mdash; so a permit you have already used cannot be sold on.</p>
+      <p>It is an ordinary item, so it can be <b>bought and sold on the market</b>, which usually means it changes hands for rather less than Vance charges. The door takes it off you the first time and never asks again &mdash; so a permit you have already used cannot be sold on.</p>
 
       <h3>The four rooms</h3>
       <p><b>A clean run pays twice.</b> Lift five in a row without being caught and the fifth one comes out with two things instead of one. Getting caught puts you back to nothing &mdash; so the stun is not just lost time, it is the run it breaks.</p>
@@ -747,7 +845,7 @@ export const GUIDES = [
       const byEl = (el, f) => Object.keys(G.MOBS).filter((t) => G.MOBS[t][f] === el).map((t) => H.wl(`monsters/${t}`, H.esc(G.MOBS[t].name)));
       return `<p><b>The third way to fight.</b> Hold a wand and every roll reads your <b>Magic</b> level &mdash; accuracy, max hit and defence &mdash; and every point of damage pays Magic xp, one for one, the way Melee and Archery do. Your combat level takes your best style in full and a little of the others.</p>
       <h3>Getting started</h3>
-      <p>Brutus sells a <b>rough wand</b>, a <b>Scrap Satchel</b> and <b>Arcane bolts</b>, all Magic 1. Wand in the weapon hand, bag in the offhand, click the pages in your bag to load it. A wand casts from ${G.ITEMS.logs_wand.launcher.range} tiles and spends one page a cast.</p>
+      <p><a data-wiki="npcs/Bom Trady">Bom's Prize Counter</a> sells a ${itemL(G, H, "logs_wand")}, a ${itemL(G, H, "bag_scrap")} and ${itemL(G, H, "page_arcane")}, all Magic 1 (and Morwenna the Mage sells every wand and Magic Bag, dearly: see ${H.wl("guides/outfitters", "the outfitters")}). Wand in the weapon hand, bag in the offhand, click the pages in your bag to load it. A wand casts from ${G.ITEMS.logs_wand.launcher.range} tiles and spends one page a cast.</p>
       <h3>The five elements</h3>
       <p>A page carries an element. A monster <b>weak</b> to it takes ${Math.round((G.MAGIC.weakMul - 1) * 100)}% more; one that <b>resists</b> it takes ${Math.round((1 - G.MAGIC.resistMul) * 100)}% less. Hover a monster to see which. Each element also does something of its own:</p>
       <table class="tbl"><tr><th>Element</th><th>Does</th><th>Weak to it</th></tr>
@@ -822,7 +920,7 @@ export const GUIDES = [
       <h3>The hatchery</h3>
       <p>Yahsmeena sells a <b>Hatchery</b>. Put it down on your island, click it, and put an egg in with ${G.BREED.hatch.food} ${nm(R.ordinary.food)}. That is all: it hatches when the clock runs out.</p>
       <p>About one kill in ${Math.round(1 / G.BREED.eggDrop).toLocaleString()} drops an egg, and each map has its own. Eggs trade and list on the Exchange.</p>
-      <table class="tbl"><tr><th>Egg</th><th>Hatches in</th><th>Into</th><th>Does</th><th>Found</th></tr>${Object.entries(G.EGGS).map(([k, e]) => `<tr><td>${H.ico(k)} ${nm(k)}</td><td>${hrs(e.ms)}</td><td>${pet(e.pet)}</td><td>${H.esc(G.petFxText(G.PETS[e.pet].fx))}</td><td>${e.from.map((s) => H.esc(G.SCENES[s]?.name || s)).join(", ")}</td></tr>`).join("")}</table>
+      <table class="tbl"><tr><th>Egg</th><th>Hatches in</th><th>Into</th><th>Does</th><th>Found</th></tr>${Object.entries(G.EGGS).map(([k, e]) => `<tr><td>${H.ico(k)} ${nm(k)}</td><td>${hrs(e.ms)}</td><td>${pet(e.pet)}</td><td>${H.esc(G.petFxText(G.PETS[e.pet].fx))}</td><td>${e.where ? H.esc(e.where) : e.from.map((s) => H.esc(G.SCENES[s]?.name || s)).join(", ")}</td></tr>`).join("")}</table>
       <h3>Pet food</h3>
       <p>Three kinds, cooked at any campfire, each from more than one pair of ingredients so whatever you are carrying from that part of the game will do.</p>
       <p><b>No pet yet? Cook pet food.</b> While you own no pet, hold no egg and have nothing in the pen or hatchery, every batch you cook trains Breeding a little: ${G.BREED.foodXp.petfood_ordinary} xp for Ordinary, ${G.BREED.foodXp.petfood_greater} for Greater, ${G.BREED.foodXp.petfood_legend} for Legendary. Once you have a pet or an egg, the xp comes from the pen and the hatchery instead.</p>
@@ -832,7 +930,7 @@ export const GUIDES = [
     body: (G, H) => {
       const nm = (k) => H.esc(G.ITEMS[k]?.name || k), E = G.ELEMENTS;
       const sites = Object.entries(G.ALTAR_SITES).map(([sc, A]) => `<tr><td>${H.esc(G.STATIONS[A.t].name[0].toUpperCase() + G.STATIONS[A.t].name.slice(1))}</td><td>${H.esc(G.SCENES[sc]?.name || sc)}</td></tr>`).join("");
-      const seeds = Object.entries(G.CROPS).filter(([, c]) => c.yields);
+      const seeds = Object.entries(G.CROPS).filter(([, c]) => c.yields && Object.values(E).some((e) => e.bloom === c.yields));   /* (2026-09-30) only the four ink flowers: the pumpkin seed also `yields` and printed ink_undefined */
       const tier = (C_) => C_.vals.map((v) => C_.what(v)).join(" / ");
       return `<p><b>Wizardry ties the others together.</b> Seeds from monsters grow on your island (Harvesting), the flowers are brewed into ink at the cauldron (Alchemy), paper is pressed from logs (eight sheets a willow log, fourteen from a Gallows log at Wizardry 90), and pages and scrolls are <b>printed at altars</b> around the world. Every print can fail, like any craft.</p>
       <h3>The altars</h3>
@@ -854,7 +952,7 @@ export const GUIDES = [
   { id: "archery", title: "Archery", icon: "\u{1F3F9}", cat: "Skills",
     body: (G) => `<p><b>A second way to fight.</b> Hold a bow and every roll in the fight reads your Archery level instead of Combat &mdash; accuracy, max hit and defence &mdash; and every point of damage pays Archery the xp Combat would have had. Hitpoints trains alongside it at <b>a third of melee's rate</b>: you are not the one getting hit. Your combat level takes the higher of the two.</p>
       <h3>Getting started</h3>
-      <p>Brutus sells a <b>rough shortbow</b>, a <b>rough quiver</b> and <b>bone arrows</b>, all Archery 1. Bow in the weapon hand, quiver in the offhand (it takes the shield's place), click the arrows in your bag to load it. Arrows stack to 1,000 in the bag.</p>
+      <p><a data-wiki="npcs/Bom Trady">Bom's Prize Counter</a> sells a <b>${G.ITEMS.logs_shortbow.name.toLowerCase()}</b>, a <b>${G.ITEMS.logs_quiver.name.toLowerCase()}</b> and <b>${G.ITEMS.bone_arrow.name.toLowerCase()}s</b>, all Archery 1. Bow in the weapon hand, quiver in the offhand (it takes the shield's place), click the arrows in your bag to load it. Arrows stack to 1,000 in the bag.</p>
       <h3>How a bow fights</h3>
       <ul><li><b>You shoot from where you stand.</b> A shortbow reaches ${G.ITEMS.logs_shortbow.launcher.range} tiles, a longbow ${G.ITEMS.logs_longbow.launcher.range}; click something inside that and you never move. Click something further and you walk only to the edge of your reach.</li>
       <li><b>One arrow a shot, hit or miss, and only from the quiver.</b> Arrows in your bag do not fire: load them into the quiver first. When the quiver is empty the bow stops.</li>
@@ -892,7 +990,7 @@ export const GUIDES = [
      HOLD.gems is on (wikiPages in eastscape.html), like the other held systems. */
   { id: "gembag", title: "The gem bag and the Gem Sorter", icon: "\u{1F48E}", cat: "Going further",
     body: (G, H) => {
-      const S = G.GEMSET, nm = (k) => H.wl(`items/${k}`, `${H.ico(k)} ${H.esc(H.ITEMS[k]?.name || k)}`), tix = (n) => `${n.toLocaleString()} tickets`;
+      const S = G.GEMSET, nm = (k) => H.wl(`items/${k}`, `${H.ico(k)} ${H.esc(G.ITEMS[k]?.name || k)}`), tix = (n) => `${n.toLocaleString()} tickets`;
       const odds = (lo, hi) => { let p = 0; for (let r = lo; r <= hi; r++) p += G.gemOdds(r); p *= 100; return p < 1 ? `${p.toFixed(1)}%` : `${Math.round(p)}%`; };
       const sgn = (r) => `${r > 0 ? "+" : ""}${r}%`, side = (w) => S.list.filter((g) => g.where === w);
       const row = (g) => `<tr><td>${nm(g.k)}</td><td>${H.esc(g.does)}</td><td>${g.skill ? H.esc(H.SKILLS?.[g.skill]?.name || g.skill) : "monsters of level " + S.dropLvl + "+"}</td></tr>`;
@@ -904,6 +1002,10 @@ export const GUIDES = [
         <p>A jeweller's bench in the Yard's north court. Stand by it and it will <b>sort</b> a gem (roll its bonus) for <b>${tix(S.cost)}</b> a roll, <b>re-roll</b> a sorted one for the same, or <b>buy any gem back</b> for ${tix(S.sell)}, whatever its roll. A roll lands between <b>${sgn(S.roll[0])}</b> and <b>${sgn(S.roll[1])}</b>, and the higher it is, the rarer it is. A negative roll is exactly that much worse.</p>
         <table class="tbl"><tr><th>Band</th><th>Roll</th><th>Chance</th></tr>${G.GEM_BANDS.map(([n, lo, hi]) => `<tr><td><b>${n}</b></td><td>${lo === hi ? sgn(lo) : `${sgn(lo)} to ${sgn(hi)}`}</td><td>${odds(lo, hi)}</td></tr>`).join("")}</table>
         <p>A perfect ${sgn(S.roll[1])} is about <b>1 in ${Math.round(1 / G.gemOdds(S.roll[1]))}</b> rolls, and the room hears about it when somebody lands one.</p>
+        ${G.LOUPES && G.gemOddsLoupe ? (() => { const L = Object.keys(G.LOUPES).filter((k) => G.STORE?.[k]), top = [S.roll[1] - 2, S.roll[1] - 1, S.roll[1]], odd = (p) => `1 in ${Math.round(1 / p)}`;
+          return L.length ? `<h3>The loupes</h3>
+        <p><b>The <a data-wiki="guides/store">Store</a> sells two loupes that lift the top of the Sorter's table.</b> A loupe is a number of rolls, not a clock: while you hold any, the Sorter spends one on every roll (the Master's first), and each roll still costs its ${tix(S.cost)}. You can hold up to ${G.LOUPE_MAX || 50} rolls. They buy speed, not money: a Perfect costs about what plain rolls would, it just comes sooner, with the +8s and +9s on the way.</p>
+        <table class="tbl"><tr><th>Roll</th><th>Plain</th>${L.map((k) => `<th>${H.esc(G.STORE[k].name)} (${G.LOUPES[k].rolls} rolls, ${tix(G.priceOf(G.STORE[k]))})</th>`).join("")}</tr>${top.map((r) => `<tr><td>${sgn(r)}</td><td>${odd(G.gemOdds(r))}</td>${L.map((k) => `<td>${odd(G.gemOddsLoupe(k, r))}</td>`).join("")}</tr>`).join("")}</table>` : ""; })() : ""}
         <h3>Finding gems</h3>
         <p>From level <b>${S.dropLvl}</b> in a skill, every action has a 1 in ${Math.round(1 / S.drop).toLocaleString()} chance of turning up that skill's gem. Monsters of level ${S.dropLvl} or more drop a combat gem now and then, and a boss more often. Every gem found is unsorted; they trade and bank like anything else, and a sorted one keeps its roll when it changes hands.</p>
         <h3>Combat gems</h3>
@@ -946,7 +1048,7 @@ export const GUIDES = [
           const ks = Object.keys(O.slots).map((s) => `${key}_${s}`), def = ks.reduce((a, k) => a + (G.ITEMS[k]?.def || 0), 0), cost = ks.reduce((a, k) => a + (G.outfitShelf(shop).find((r) => r.k === k)?.price || 0), 0);
           return `<tr><td>${lvl}</td><td>${ks.map((k) => H.ico(k)).join("")} <b>${H.esc(name)}</b></td><td>${def}</td><td>${tix(cost)}</td></tr>`; }).join("")}</table>`; };
       const weapons = (shop) => G.outfitShelf(shop).filter((r) => r.kind === "weapon").map((r) => `${nm(r.k)} (${tix(r.price)})`).join(", ");
-      return `<p><b>Two outfitters keep stalls out in the world:</b> <b>${H.esc(O.npc.ranger)}</b> dresses archers, in ${H.areaLink(O.at.ranger.scene)}, and <b>${H.esc(O.npc.mage)}</b> dresses mages, on ${H.areaLink(O.at.mage.scene)}. Each sells five-piece sets of armour (helm, body, legs, gloves and boots) in five tiers, the weapons of her style, and buys that gear back.</p>
+      return `<p><b>Two outfitters keep stalls out in the world:</b> <b>${H.esc(O.npc.ranger)}</b> dresses archers, in ${areaL(G, H, O.at.ranger.scene)}, and <b>${H.esc(O.npc.mage)}</b> dresses mages, on ${areaL(G, H, O.at.mage.scene)}. Each sells five-piece sets of armour (helm, body, legs, gloves and boots) in five tiers, the weapons of her style, and buys that gear back.</p>
         <h3>What the armour does</h3>
         <p>It has <b>half the defence of plate</b> at the same level, but every piece adds damage for its style, and <b>a whole set is +10%</b>: the body the most, then the legs, the helm and gloves, the boots least. The bonus only counts while you fight in that style: a ranger's set does nothing for a sword or a wand. <b>Archers' pieces also make you faster on your feet</b>, up to <b>6%</b> for a whole set. It needs your Archery or Magic level to wear, and the anvil doesn't reforge it.</p>
         <h3>${H.esc(O.npc.ranger)}: archery</h3>${setTable("ranger")}
@@ -980,7 +1082,7 @@ export const GUIDES = [
       <h3>The ladder</h3>
       <table class="tbl"><tr><th>Fletching</th><th>Makes</th><th>From</th></tr>${rs.map(row).join("")}</table>
       <p><b>Arrowheads</b> are hammered at the anvil at each metal's own Smithing gate, fifteen to a bar.</p>
-      <p><b>Fletching makes it, <a data-wiki="guides/archery">Archery</a> draws it.</b> Every bow, quiver and arrow carries an Archery level to use, which sits at the Fletching level to make it &mdash; except the rough shortbow, the rough quiver and bone arrows, which are Archery 1 and on Brutus's shelf.</p>
+      <p><b>Fletching makes it, <a data-wiki="guides/archery">Archery</a> draws it.</b> Every bow, quiver and arrow carries an Archery level to use, which sits at the Fletching level to make it &mdash; except the rough shortbow, the rough quiver and bone arrows, which are Archery 1 and on the Prize Counter's shelf.</p>
       <p><b>The Long Count</b> at 99 wants a singularity core &mdash; the same one-in-two-thousand drop the top melee weapons want &mdash; so the two ladders end on the same chase.</p>`;
     } },
   { id: "agility", title: "Agility", icon: "\u{1F3C3}", cat: "Skills",
@@ -1024,75 +1126,84 @@ export const GUIDES = [
       <p><b>Cooking is usually what holds you back, not fishing.</b> A fish comes out of the water long before you can smoke it &mdash; a smoke sits about five levels above its own plain cook.</p>
       <p><b>Nothing here buffs experience</b>, and that is deliberate &mdash; a stacked xp buff would be a multiplier on the one thing the Tower exists to pay. The best smoke heals <b>${best}</b>.</p>`;
     } },
+  /* (2026-09-30) GENERATED. The dinners table had four rows when there were seven (the Truffle dinner, the Starcap feast and, in season,
+     the pumpkin pie were missing), and it never said an Alchemy potion is a drink. Every meal and drink is read from ITEMS now. */
   { id: "buffs", title: "Food, drinks and luck", icon: "\u{1F37A}", cat: "Going further",
-    body: `<p><b>Eating heals you. Some food also buffs you for twenty minutes, and a drink for ten.</b> You can have one meal and one drink running at once, so the good combination is a dinner plus a drink, not two dinners.</p>
-      <h3>Dinners &mdash; 20 minutes</h3>
-      <table class="tbl"><tr><th>Dish</th><th>Heals</th><th>Gives</th></tr>
-        <tr><td>Winner's chicken dinner</td><td>6</td><td>+10% tickets</td></tr>
-        <tr><td>Steak dinner</td><td>8</td><td>+10% speed</td></tr>
-        <tr><td>High roller's chops</td><td>10</td><td>+25% rare drops</td></tr>
-        <tr><td>Fisherman's platter</td><td>14</td><td>+10% bite rate and +10% tickets</td></tr>
-      </table>
-      <p>The <a data-wiki="guides/smoking">smoked fish</a> are dinners too, and they heal far more &mdash; up to 48. That page has their buffs.</p>
-      <h3>Drinks &mdash; 10 minutes</h3>
-      <table class="tbl"><tr><th>Drink</th><th>Gives</th></tr>
-        <tr><td>House lager</td><td>+5% tickets</td></tr>
-        <tr><td>Top-shelf whiskey</td><td>+15% speed, but <b>&minus;10% toughness</b></td></tr>
-        <tr><td>The Safety Net</td><td>+20% toughness</td></tr>
-        <tr><td>Champagne</td><td><b>+50% ZCoin drop chance</b></td></tr>
-      </table>
+    body: (G, H) => {
+      const alch = new Set(Object.values(G.RECIPES).filter((r) => r.skill === "alchemy").map((r) => r.out[0]));
+      const smoked = (k) => k.startsWith("s") && !!G.ITEMS[k.slice(1)];
+      const from = (k) => { const p = G.prizesOf().find((x) => x.give?.[0] === k), r = Object.values(G.RECIPES).find((x) => x.out[0] === k);
+        return p ? `the Prize Counter, ${num(p.price)}` : r ? `${H.esc(G.SKILLS[r.skill]?.name || r.skill)} ${r.lvl}` : "a monster drop"; };
+      const meals = Object.entries(G.ITEMS).filter(([k, it]) => it.meal && !smoked(k) && !it.held && (!it.event || G.hwOn())).sort((a, b) => (a[1].heal || 0) - (b[1].heal || 0));
+      const drinks = Object.entries(G.ITEMS).filter(([k, it]) => it.drink && !alch.has(k) && !it.held && (!it.event || G.hwOn()));
+      const row = ([k, it], w) => `<tr><td>${itemL(G, H, k)}</td>${w ? `<td>${it.heal || "&mdash;"}</td>` : ""}<td>${H.esc(G.fxText((it.meal || it.drink).fx))}</td><td>${(it.meal || it.drink).mins} min</td><td>${from(k)}</td></tr>`;
+      const cl = G.ITEMS.clover, sh = G.ITEMS.horseshoe;
+      return `<p><b>Eating heals you. Some food also buffs you for a while, and so does a drink.</b> You can have one meal and one drink running at once, so the good combination is a dinner plus a drink, not two dinners: a second meal replaces the first.</p>
+      <h3>Meals</h3>
+      <table class="tbl"><tr><th>Dish</th><th>Heals</th><th>Gives</th><th>Lasts</th><th>From</th></tr>${meals.map((m) => row(m, true)).join("")}</table>
+      <p>The ${H.wl("guides/smoking", "smoked fish")} are meals too, and they heal more than most of these. That page has their buffs.</p>
+      <h3>Drinks</h3>
+      <table class="tbl"><tr><th>Drink</th><th>Gives</th><th>Lasts</th><th>From</th></tr>${drinks.map((d) => row(d, false)).join("")}</table>
+      <p><b>Every ${H.wl("guides/alchemy", "Alchemy")} potion is a drink as well</b>: it takes the drink slot, so a potion replaces a lager and a lager replaces a potion. The salves are the exception: they heal on the spot and take no slot at all.</p>
       <p>Whiskey is the only thing in the game that makes you worse at something. Champagne is the one to drink before a long session outside.</p>
       <h3>Luck</h3>
-      <p>A <b>Lucky clover</b> turns up while you fish. Click it and your next <b>15 kills or catches</b> are lucky &mdash; a real ZCoin is 5% more likely on each. It counts down by events, not by time, so there is no rush to use it.</p>
-      <p><b>None of this touches the casino.</b> Buffs work outside only; no drink, dinner or clover can move the odds at a table.</p>` },
+      <p>A <b>${H.esc(cl.name)}</b> turns up while you fish or gather, and a <b>${H.esc(sh.name)}</b> far more rarely. Click one and your next <b>${cl.luck}</b> (clover) or <b>${sh.luck}</b> (horseshoe) kills or catches are lucky &mdash; a real ZCoin is ${Math.round(G.LUCK.zdrop * 100)}% more likely on each. It counts down by events, not by time, so there is no rush to use it. The Store sells clovers five at a time.</p>
+      <p><b>None of this touches the casino.</b> Buffs work outside only; no drink, dinner or clover can move the odds at a table.</p>`;
+    } },
+  /* (2026-09-30) GENERATED. It said there was no way from tickets to ZCoins; the Prize Counter has traded them in since v107. */
   { id: "zcoins", title: "Finding ZCoins", icon: "\u{1F48E}", cat: "Money",
-    body: `<p><b>Real ZCoins drop in the world.</b> Not tickets &mdash; the actual currency from eastcoin.vip. They are rare on purpose and there is no way to buy them with tickets, in either direction.</p>
-      <p><b>Fishing drops them</b> at roughly <b>one cast in six hundred</b>, creeping up slightly with the better fish &mdash; a sardine is about 1 in 800, a thunder squid about 1 in 556. It is close enough to flat that you should fish wherever you actually enjoy fishing.</p>
-      <p><b>Fighting drops them too</b>, scaled to what you killed, so the Thunderhead pays better than the Yard.</p>
-      <p><b>A big one lands about one time in twenty</b>, worth five of the ordinary find.</p>
+    body: (G, H) => {
+      const F = G.ZDROP.fish, lo = Math.min(...Object.values(F)), hi = Math.max(...Object.values(F)), fishOf = (p) => Object.keys(F).find((k) => F[k] === p), D = G.DEX;
+      return `<p><b>Real ZCoins drop in the world.</b> Not tickets &mdash; the actual currency from eastcoin.vip. They are rare on purpose.</p>
+      <p><b>Fishing drops them</b> at about <b>one catch in ${num(Math.round(2 / (lo + hi)))}</b>, creeping up slightly with the better fish &mdash; ${an(H.esc((G.ITEMS[fishOf(lo)]?.name || "").replace(/^Raw /, "").toLowerCase()))} is ${oneIn(lo)}, ${an(H.esc((G.ITEMS[fishOf(hi)]?.name || "").replace(/^Raw /, "").toLowerCase()))} ${oneIn(hi)}. It is close enough to flat that you should fish wherever you actually enjoy fishing.</p>
+      <p><b>Fighting drops them too</b>, scaled to what you killed, so the deeper maps pay better than the Yard; a Crypt or Pyramid boss's hoard is far likelier than any one kill.</p>
+      <p><b>A big one lands about one time in ${Math.round(1 / G.ZDROP.big)}</b>, worth ${G.ZDROP.bigN} of the ordinary find.</p>
       <p>Take a ZCoin to <a data-wiki="npcs/Bom Trady">the Prize Counter</a> and it goes straight onto your real balance on the site.</p>
-      <p><b>Nothing you can buy improves the rate</b> beyond the drop buffs the game already hands out, and no world buff can ever touch the casino's odds. The two are deliberately separate.</p>` },
+      <p><b>Or trade tickets in.</b> The same counter turns <b>${num(D.rate)} tickets into 1 ZCoin</b>. Everything that leaves the game for a wallet, found or traded, shares one allowance of ${D.capDay} ZCoins in any 24 hours. It only goes one way: ZCoins never become tickets. See <a data-wiki="guides/tickets">Tickets</a>.</p>
+      <p><b>What raises the find rate</b> is the game's own drop buffs &mdash; champagne, a lucky clover or horseshoe &mdash; and nothing else; and no world buff can ever touch the casino's odds. The two are deliberately separate.</p>`;
+    } },
+  /* (2026-09-30) GENERATED from DEATH. The table stopped at the Trailer Park (the Sands, the Carnival, the Boardwalk and its isles, the
+     Valley and the Frozen Reach were missing), and "there is no potion" had been wrong since the cauldron's salves. */
   { id: "dying", title: "Dying", icon: "\u{1F480}", cat: "Starting out",
-    body: `<p><b>You keep everything you are wearing and carrying.</b> Dying costs you tickets, not gear &mdash; there is no gravestone to run back to and nothing to lose permanently.</p>
-      <p><b>What it costs is a share of the tickets on you, capped by where you died.</b> The cap is what matters: the deeper the zone, the more a death stings, but it is never everything.</p>
-      <table class="tbl"><tr><th>Where</th><th>You lose</th><th>At most</th></tr>
-        <tr><td>The Yard</td><td>5%</td><td>250</td></tr>
-        <tr><td>The Gloam</td><td>10%</td><td>1,000</td></tr>
-        <tr><td>The Lantern Mire</td><td>10%</td><td>2,000</td></tr>
-        <tr><td>The Boneyard</td><td>10%</td><td>3,500</td></tr>
-        <tr><td>Cloudreach</td><td>10%</td><td>5,000</td></tr>
-        <tr><td>The Thunderhead</td><td>10%</td><td>6,000</td></tr>
-        <tr><td>The Vault</td><td>10%</td><td>8,000</td></tr>
-        <tr><td>The Trailer Park</td><td>10%</td><td>9,000</td></tr>
-      </table>
-      <p><b>Bank your tickets before a long trip out</b> and a death costs you almost nothing &mdash; the percentage is of what you are carrying.</p>
-      <p><b>The Wilderness is different.</b> Other players can attack you there and the rules are its own; see the signs on the way in.</p>
-      <p><b>Eat before you need to.</b> There is no potion and no auto-heal &mdash; cooked fish is the entire system, and the fight does not pause while you find some.</p>` },
+    body: (G, H) => {
+      const rows = Object.entries(G.DEATH).filter(([k]) => G.OPEN.has(k) && G.SCENES[k] && !G.SCENES[k].wikiHide).sort((a, b) => a[1].cap - b[1].cap || a[0].localeCompare(b[0]));
+      const free = ["depths", "vault"].filter((k) => G.OPEN.has(k) && !G.DEATH[k] && G.SCENES[k]);
+      const salves = Object.values(G.RECIPES).filter((r) => r.skill === "alchemy" && G.ITEMS[r.out[0]]?.heal && !G.ITEMS[r.out[0]].drink).sort((a, b) => a.lvl - b.lvl);
+      return `<p><b>You keep everything you are wearing and carrying.</b> Dying costs you tickets, not gear &mdash; there is no gravestone to run back to and nothing to lose permanently. (The Wilderness is the exception; see below.)</p>
+      <p><b>What it costs is a share of the tickets on you, capped by where you died.</b> The cap is what matters: the deeper the zone, the more a death stings, but it is never everything. They call it the hospital bill.</p>
+      <table class="tbl" data-paged="25"><tr><th>Where</th><th>You lose</th><th>At most</th></tr>${rows.map(([k, d]) => `<tr><td>${areaL(G, H, k)}</td><td>${Math.round(d.share * 100)}%</td><td>${num(d.cap)}</td></tr>`).join("")}</table>
+      ${free.length ? `<p><b>${free.map((k) => H.esc(G.SCENES[k].name)).join(" and ")} ${free.length > 1 ? "send" : "sends"} no bill at all.</b></p>` : ""}
+      <p><b>The bank will not hold tickets, so spend them before a long trip out</b> and a death costs you almost nothing &mdash; the percentage is of what you are carrying. A ${itemL(G, H, "pot_witch")} (in the Long Night) or the Ferryman's Coin makes a death free.</p>
+      <p><b>The Wilderness is different.</b> Other players can attack you there. It sends no hospital bill, but ${Math.round(G.PVP.drop * 100)}% of the time a death there drops one piece of what you are wearing on the ground, and whoever killed you has first claim on it for a minute.</p>
+      <p><b>Eat before you need to.</b> Cooked and smoked fish are most of the healing in the game, and the ${H.wl("guides/alchemy", "cauldron's")} salves heal at once: ${salves.map((r) => `${itemL(G, H, r.out[0])} ${G.ITEMS[r.out[0]].heal}`).join(", ")}. Out of a fight your health creeps back, a point every twenty seconds; in one, nothing comes back on its own, and the fight does not pause while you find something.</p>`;
+    } },
+  /* (2026-09-30) GENERATED: "three jobs a day, from a pool of seventy" had become six from the fifty-odd that are open. */
   { id: "jobs", title: "Today's jobs", icon: "\u{1F4CB}", cat: "Money",
-    body: `<p><b>Three jobs a day, from a pool of seventy</b>, on the task board inside the casino. They reset every day and they are the same three for you until you claim them.</p>
+    body: (G) => {
+      const open = G.DAILY.filter((t) => G.OPEN_DAILY.has(t.id)), cash = open.map((t) => t.cash).sort((a, b) => a - b);
+      return `<p><b>${Word(G.DAILY_COUNT)} jobs a day, from a pool of ${open.length}</b>, on the task board inside the casino. They reset every day and they are the same ${word(G.DAILY_COUNT)} for you until you claim them.</p>
       <p>They are things you were going to do anyway &mdash; gather fifty logs, catch twenty sardines, kill some number of something &mdash; so the trick is reading them <b>before</b> you go out, not after.</p>
       <p><b>They count themselves.</b> Nothing to start and nothing to hand in: fishing a sardine counts a sardine job wherever you are. You go back to the board only to take the money.</p>
-      <p><b>The pool is level-aware.</b> Jobs you have no chance at will not be handed to you, so what you see is doable today.</p>
-      <p>Pays in tickets, and scales with what it asked for &mdash; a few hundred for an easy gather, more for the ones that send you somewhere unpleasant.</p>` },
+      <p><b>The pool grows with you.</b> Jobs you have no chance at are never handed to you, and the easiest half of what you can do is left out of the draw once you have outgrown it, so what you see is doable today and worth your time.</p>
+      <p>Pays in tickets, and scales with what it asked for: from ${num(cash[0])} for the easiest to ${num(cash.at(-1))} for the ones that send you somewhere unpleasant. For the whole server's daily, see <a data-wiki="guides/order">Bronny's order</a>.</p>`;
+    } },
+  /* (2026-09-30) GENERATED from VIP. It said VIP counted every ticket staked; since v65 it counts tickets EARNED (vipOf reads c.earned). */
   { id: "vip", title: "VIP", icon: "\u{1F451}", cat: "Money",
-    body: `<p><b>VIP is lifetime turnover, not a purchase.</b> It counts every ticket you have ever staked, so it goes up by playing and never goes down.</p>
+    body: (G) => `<p><b>VIP is lifetime earnings, not a purchase.</b> It counts every ticket you have ever <b>earned</b> &mdash; kills, trade-ins at the Prize Counter, daily jobs &mdash; so it goes up by playing outside and never goes down. What you bet does not count.</p>
       <p>What it buys is a <b>standing discount at the Prize Counter</b> &mdash; everything Bom sells, permanently cheaper.</p>
-      <table class="tbl"><tr><th>Rank</th><th>Staked</th><th>Off at the counter</th></tr>
-        <tr><td>Guest</td><td>&mdash;</td><td>&mdash;</td></tr>
-        <tr><td>Bronze</td><td>25,000</td><td>2%</td></tr>
-        <tr><td>Silver</td><td>100,000</td><td>4%</td></tr>
-        <tr><td>Gold</td><td>400,000</td><td>6%</td></tr>
-        <tr><td>Platinum</td><td>1,500,000</td><td>8%</td></tr>
-        <tr><td>Diamond</td><td>5,000,000</td><td>10%</td></tr>
-      </table>
-      <p><b>Those numbers are turnover, which climbs faster than it sounds.</b> The same tickets get staked again every time you re-bet them, so Bronze is a session or two rather than a fortune.</p>` },
+      <table class="tbl"><tr><th>Rank</th><th>Tickets earned</th><th>Off at the counter</th></tr>${G.VIP.map((v) => `<tr><td style="color:${v.col}"><b>${v.name}</b></td><td>${v.at ? num(v.at) : "&mdash;"}</td><td>${v.off ? `${Math.round(v.off * 100)}%` : "&mdash;"}</td></tr>`).join("")}</table>
+      <p><b>Every ticket counts once</b>, when it comes in, so spending it afterwards costs you nothing here.</p>` },
+  /* (2026-09-30) GENERATED. It said tickets could not be given away (they trade), and knew nothing of the Store's bank pages and bag slots. */
   { id: "bank", title: "The bank", icon: "\u{1F3DB}️", cat: "Money",
-    body: `<p><b>A booth holds 200 different items</b> and everything in it is safe &mdash; a death never touches your bank.</p>
+    body: (G) => {
+      const U = G.STORE_UP, B = G.BAG_UPGRADES;
+      return `<p><b>A booth holds ${num(G.BANK_MAX)} different items across ${word(G.BANK_PAGES)} pages</b>, and everything in it is safe &mdash; a death never touches your bank. <a data-wiki="guides/store">The Store</a> sells up to ${word(U.bank.max)} more pages, ${U.bank.slots} slots each, so a full bank is ${num(G.BANK_MAX + U.bank.max * U.bank.slots)}.</p>
       <p><b>Click to move one thing; the 1 / 5 / 10 / All selector at the foot decides how many.</b> Or <b>shift-click to move a whole stack</b> in either direction, which is the same gesture the trade window uses.</p>
       <p><b>Sort it</b> by Recent, A&ndash;Z, Value or Amount &mdash; the chips sit under the search box, and your choice is remembered. The header shows what the whole bank is worth, and hovering any stack tells you what that stack is worth.</p>
-      <p><b>Deposit bag</b> and <b>Deposit worn</b> empty you out in one click. Neither will take your tickets: those stay on you always, and cannot be banked, dropped or given away.</p>
-      <p><b>Your bag is the thing worth upgrading.</b> Bom sews on extra pockets &mdash; five of them, each dearer than the last, from 50,000 up to 400,000 tickets, taking you from 25 slots to 30. The button is in the bank as well as at his counter, because "I need more room" is a thought you have with the bank open.</p>
-      <p><b>The Market delivers here.</b> Anything you buy, and anything your sell offers earn, lands in your bank whether you are online or not. See <a data-wiki="guides/trading">Trading</a>.</p>` },
+      <p><b>Deposit bag</b> and <b>Deposit worn</b> empty you out in one click. Neither will take your tickets: the bank never takes tickets from you, and they cannot be dropped either, though you can hand them to another player in a trade. (Tickets the Market pays you do land in the bank, and you can take them out.)</p>
+      <p><b>Your bag is the thing worth upgrading.</b> It starts at ${G.INV_MAX} slots. Bom sews on extra pockets &mdash; ${word(B.length)} of them, each dearer than the last, from ${num(B[0])} up to ${num(B.at(-1))} tickets. The button is in the bank as well as at his counter, because "I need more room" is a thought you have with the bank open. The Store adds up to ${word(U.bag.max)} more on top, and a few pets and achievements add their own.</p>
+      <p><b>The Market delivers here.</b> Anything you buy, and anything your sell offers earn, lands in your bank whether you are online or not. See <a data-wiki="guides/trading">Trading</a>.</p>`;
+    } },
   { id: "trading", title: "Trading and the Market", icon: "\u{1F91D}", cat: "Money",
     body: `<h3>Face to face</h3>
       <p><b>Click another player and offer a trade.</b> Both sides put things up, both sides see exactly what is on the table, and both have to accept. <b>Shift-click offers a whole stack</b> rather than one of a thing.</p>
@@ -1135,9 +1246,263 @@ export const GUIDES = [
       ${cropTable(G, H)}
       <p><b>Farming is background money, not a living.</b> A full set of plots kept going comes to roughly a sixth of what fighting the same zone pays &mdash; it is something that happens while you do something else, which is the whole point of it running while you are logged off.</p>
       <h3>The rest of the island</h3>
-      <p><b>Pedestals</b> put an item on display for visitors. The <b>pet pen</b> breeds two pets into a better one.</p>
+      <p><b>Pedestals</b> put an item on display for visitors. The <b>pet pen</b> breeds a pair of pets into a better one.</p>
       <p><b>Open or closed.</b> The island sign decides whether anyone can ferry over. Closing it sends any visitors home.</p>
       <p><b>Type /island in chat</b>, anywhere, to see how long everything on your island has left: crops, mushrooms, the breeding pen, a hatching egg and the livestock.</p>` },
+  /* (2026-09-30, the owner's "full wiki rundown") WORLD EVENTS: Shooting Stars, Wanted! and the Jackpot Thief, one each a day. Every number is
+     read from EVDAY, SSTAR, STAR_TENT, WANTED and JTHIEF; how they run is eastscape-worker/src/events.js. */
+  { id: "events", title: "World events", icon: "\u{1F320}", cat: "Going further",
+    body: (G, H) => {
+      const E = G.EVDAY, S = G.SSTAR, W = G.WANTED, J = G.JTHIEF, T = G.STAR_TENT, mins = (ms) => Math.round(ms / 60000);
+      const hr = (h) => (h % 24 === 0 ? "midnight" : h === 12 ? "noon" : `${h > 12 ? h - 12 : h} ${h >= 12 ? "PM" : "AM"}`);
+      const names = (list) => list.filter((k) => G.OPEN.has(k) && G.SCENES[k]).map((k) => areaL(G, H, k)).join(", ");
+      const tiers = []; for (let t = 9; t >= 1; t--) tiers.push(`<tr><td>${t}</td><td>${t * S.tierLvl}</td><td>${S.frags[t]}${S.wild ? ` (${S.frags[t] * S.wild.mul} in the Wilderness)` : ""}</td><td>${S.xp(t)}</td></tr>`);
+      const crates = []; let last = ""; for (let l = 1; l <= 99; l++) { const c = G.starCrate(l), sig = JSON.stringify(c); if (sig !== last) { last = sig; crates.push([l, c]); } }
+      const tent = T.stock.map((r) => G.tentRow(r)).map((R) => `<tr><td>${R.give ? itemL(G, H, R.give[0]) : `<b>${H.esc(R.name)}</b>`}</td><td>${num(R.frags)}</td><td>${H.esc(R.ex)}${R.store ? " Worn from the Store once it is yours." : ""}</td></tr>`).join("");
+      const bands = ["Low", "Middle", "High"], bandOf = (k) => W.bands.findIndex((b) => b.includes(k));
+      const targets = Object.entries(W.targets).filter(([k]) => G.OPEN.has(k) && G.SCENES[k]).flatMap(([k, list]) => list.filter(([t]) => G.MOBS[t]).map(([t, name]) => { const b = bandOf(k);
+        return `<tr><td><b>${H.esc(name)}</b></td><td>${mobL(G, H, t)}</td><td>${areaL(G, H, k)}</td><td>${bands[b] || "&mdash;"}</td><td>${num(Math.max(W.minHp[b] || 0, Math.round(G.MOBS[t].hp * W.hpX)))}</td><td>${num(W.bounty[b] || 0)}</td></tr>`; })).join("");
+      const hits = (n) => Math.min(J.hits.cap, J.hits.base + J.hits.per * n);
+      return `<p><b>Three things happen in the world every day, once each, at times nobody knows:</b> a Shooting Star falls, a Wanted poster goes up, and the Jackpot Thief robs the slots. CASINO says so in chat when each one starts, a card for it appears under the minimap (click it for the details), and the world map puts a pin on the area it is in. <b>Type /events</b> in chat to hear what is on now and what is still to come today.</p>
+      <p><b>When.</b> Between ${hr(E.from)} and ${hr(E.to)}, Chicago time. The ${E.to - E.from} hours are cut into three equal stretches, the three events are dealt into them in a random order, and each takes a minute at least ${E.margin} minutes in from either end of its stretch, so no two ever land within ${Math.round(E.margin * 2 / 60) === 1 ? "an hour" : `${E.margin * 2} minutes`} of each other. All three are open to everyone, and all three pay by what you put in.</p>
+
+      <h3>Shooting Stars</h3>
+      <p><b>A warning first.</b> ${mins(S.warnMs)} minutes before it lands, CASINO gives a hint of where: a direction, never the spot (${Object.values(S.scenes).slice(0, 3).map((h) => `"${H.esc(h)}"`).join(", ")}&hellip;). It can come down in ${names(Object.keys(S.scenes))}${S.wild ? `, or one time in ${Math.round(1 / S.wild.chance)} in the Wilderness, "${H.esc(S.wild.hint)}", where every fragment counts double` : ""}. <b>Never in the Yard</b>: it is crowded enough.</p>
+      <p><b>Mine it with a pickaxe.</b> A star lands at a tier from 1 to 9, set by the best miner online, and tier N needs <b>Mining ${S.tierLvl}&times;N</b>. Every swing chips a piece off; when a tier's worth is gone it cracks down a tier, and anybody with the lower level can join in. The more people are swinging, the bigger each tier is. It cools and is gone after ${mins(S.lasts)} minutes.</p>
+      <table class="tbl"><tr><th>Tier</th><th>Mining</th><th>Star Fragments a swing</th><th>Mining xp a swing</th></tr>${tiers.join("")}</table>
+      <p><b>A star gives each person at most ${num(S.cap)} fragments</b>${S.wild ? ` (${num(S.cap * S.wild.mul)} in the Wilderness)` : ""}; keep swinging past that and the Mining xp still counts. About one swing in ${num(Math.round(1 / S.starling))} turns up a ${itemL(G, H, "egg_starling")}, which hatches into a Starling.</p>
+      <h4>The Star Tent</h4>
+      <p>Star Fragments are spent at the Star Tent on ${areaL(G, H, T.scene)}'s road, and on nothing else.</p>
+      <table class="tbl"><tr><th>Buys</th><th>Fragments</th><th>What it is</th></tr>${tent}</table>
+      <p><b>What a Star crate holds</b> depends on your Mining level when you open it:</p>
+      <table class="tbl"><tr><th>Mining</th><th>Holds</th></tr>${crates.map(([l, c], i) => `<tr><td>${l}${crates[i + 1] ? `&ndash;${crates[i + 1][0] - 1}` : "+"}</td><td>${c.map(([k, n]) => `${n} ${itemL(G, H, k)}`).join(" and ")}</td></tr>`).join("")}</table>
+
+      <h3>Wanted!</h3>
+      <p><b>One poster a day on the Bounty Board in the Yard</b>, west of the north road. It names a monster that has been made a menace: a named copy of an ordinary one from that map, with <b>${W.hpX} times the health</b> (never less than a floor for its band), glowing red so it can be found. It has ${mins(W.lasts)} minutes before it gets away.</p>
+      <p><b>The band turns over every day</b>: low, middle, high. If nobody online could fight in that day's band when the poster goes up, it drops a band, so a quiet day still gets a poster somebody can take.</p>
+      <p><b>Everyone shares it.</b> Anybody can hit it, whoever hit first, and when it falls the bounty is split by damage: your share is your part of the damage, never less than ${Math.round(W.floor * 100)}% of the bounty. At a quarter of its health it turns <b>furious</b> and hits ${Math.round((W.enrage.mul - 1) * 100)}% harder. If it gets away, the poster is stamped ESCAPED and the next bounty is ${Math.round(W.up * 100)}% bigger, up to double.</p>
+      <p><b>Take ${W.title} posters</b> (be one of the hunters when it falls) and you earn the title <b>&laquo; Bounty Hunter &raquo;</b>, worn from the Store's Name tab. It is never sold.</p>
+      <table class="tbl" data-paged="25"><tr><th>Poster</th><th>Is really</th><th>Where</th><th>Band</th><th>Health</th><th>Bounty</th></tr>${targets}</table>
+
+      <h3>The Jackpot Thief</h3>
+      <p><b>A goblin grabs a sack of the slots' Jackpot and runs.</b> The sack is ${Math.round(J.sack.share * 100)}% of the Jackpot, never under ${num(J.sack.min)} or over ${num(J.sack.max)} tickets. He starts in the Yard.</p>
+      <p><b>He runs from people.</b> Get close and he makes for open ground; corner him and he vaults clear. He does not fight back, and he counts <b>hits, not damage</b>: when he lands he takes ${J.hits.base} hits, plus ${J.hits.per} for every person in the area, never more than ${J.hits.cap} (${hits(1)} for one of you, ${hits(5)} for five). Every ${J.dizzy.every} hits he sees stars for ${J.dizzy.ms / 1000} seconds and stands still.</p>
+      <p><b>Every hit spills ${Math.round(J.spill * 1000) / 10}% of the sack</b> onto the ground as tickets anybody can pick up, for a minute, until the sack is down to a fifth. <b>That last fifth goes to whoever lands the last hit.</b></p>
+      <p><b>He hops.</b> Every minute he dives down a hole and comes up on another map with people on it (${names(J.scenes)}), and CASINO says where. After ${J.hops} hops he is gone for good, and whatever is left in the sack goes back into the Jackpot: the Jackpot is only ever lent.</p>`;
+    } },
+  /* (2026-09-30) CHAT COMMANDS, drawn from G.COMMANDS: /help in the game and this page read the same list, so a command added there is
+     documented in both places at once. */
+  { id: "commands", title: "Chat commands", icon: "\u{1F4AC}", cat: "Starting out",
+    body: (G, H) => {
+      const cmds = G.COMMANDS.filter((c) => !c.season || G.hwOn());
+      return `<p><b>Type them in the chat box</b> (press <kbd>T</kbd> or <kbd>Enter</kbd> to open it) and press Enter. <b>Only you see the answer</b>, so they are safe to use in a crowded room; the one exception is /roll, which is for the people around you. <b>/help</b> lists them all in the game.</p>
+      <table class="tbl"><tr><th>Command</th><th>What it does</th><th>Try</th></tr>${cmds.map((c) => `<tr><td><b>${H.esc(c.c)}</b>${c.args ? ` <i>${H.esc(c.args)}</i>` : ""}${c.also?.length ? `<br><small>or ${c.also.map((a) => H.esc(a)).join(", ")}</small>` : ""}</td><td>${H.esc(c.ex)}</td><td>${(c.eg || [c.c]).map((e) => `<kbd>${H.esc(e)}</kbd>`).join(" ")}</td></tr>`).join("")}</table>
+      <h3>/find says where; the wiki says what</h3>
+      <p><b>/find</b> is for when you know what you want and not where it is. Give it an item, a monster, a place, a person, a station like a furnace, or a skill you want to train, and it tells you where in the world to go and <b>the way there from where you are standing</b>: which edge of each map to walk off, and every door, ladder, rowboat or cart on the way. Asked about an item, it lists the rocks, trees, water and monsters it comes from (nearest first), where it is made and who sells it; asked about a skill, where to train it, rung by rung. The wiki is the other half: what a thing is, what it drops, what it is worth. <b>/wiki</b> opens the page for whatever you type after it.</p>
+      <p>If more than one thing matches, it answers the best match and names the close seconds; if nothing does, it suggests what you might have meant. /where does the same.</p>`;
+    } },
+  /* (2026-09-30) THE STORE, read from STORE / STORE_TABS / STORE_LOOKS / priceOf. The Star Tent's (`frags`), the Long Night's (`corn`) and the
+     earned ones are not for sale here and are left out; the cards are held. */
+  { id: "store", title: "The Store", icon: "\u{1F6CD}️", cat: "Money",
+    body: (G, H) => {
+      const sale = (it) => !it.frags && !it.earned && !it.corn && !it.card && it.price != null && G.STORE_TABS[it.tab];
+      const all = Object.values(G.STORE).filter(sale), of = (tab, kind) => all.filter((it) => it.tab === tab && (!kind || it.kind === kind));
+      const price = (it) => { const p = G.priceOf(it); return p === it.price ? num(p) : `<s>${num(it.price)}</s> ${num(p)}`; };
+      const facts = (it) => (it.facts || []).map((f) => `${H.esc(f[0])}: ${f.length > 2 ? `${H.esc(f[1])} &rarr; <b>${H.esc(f[2])}</b>` : H.esc(f[1])}`).join("; ");
+      const rowT = (list, desc = (it) => H.esc(it.lead || it.ex)) => list.length ? `<table class="tbl"${list.length > 25 ? ' data-paged="25"' : ""}><tr><th>Item</th><th>Tickets</th><th>What it is</th></tr>${list.map((it) => `<tr><td><b>${H.esc(it.name)}</b></td><td>${price(it)}</td><td>${desc(it)}</td></tr>`).join("")}</table>` : "";
+      const withFacts = (it) => `${H.esc(it.lead || it.ex)}${it.facts ? `<br><small>${facts(it)}</small>` : ""}`;
+      const decorIn = (k) => of("decor", "decor").filter((it) => G.STORE_DECOR?.[it.dk]?.in === k);
+      const L = G.LOOK_GROUPS || {}, NG = [["title", "Titles"], ["col", "Name colours"], ["fx", "Name effects"], ["icon", "Badges"], ["frame", "Frames"]];
+      const R = G.RAID?.horn;
+      return `<p><b>The Store sells things with tickets that the Prize Counter does not</b>: boosts for the whole server, looks, decor, pet skins and eggs, and more room. Open it with the <b>Store</b> button at the top of the screen. Everything is bought once and is yours for good (the boosts and eggs are used up), and anything you can wear you switch on and off from the Store's own window, trying it on first.</p>
+      <p>Tickets only: nothing here takes ZCoins, and nothing here changes the odds at a table.</p>
+      <h3>Boosts</h3>
+      <p>The two 2X potions are for the whole server, for ${Math.round(G.DOUBLE.ms / 60000)} minutes, in your name; one of each can run at a time. The loupes change the Gem Sorter's odds (see ${H.wl("guides/gembag", "the gem bag and the Gem Sorter")}).</p>
+      ${rowT(of("boost"), withFacts)}
+      <h3>World</h3>
+      <p>Set off where you are standing, for everyone in that area; one show at a time in any one place. The <b>War Horn</b> calls ${H.wl("guides/raid", "the Yard raid")} in your name${R ? `: it needs ${R.minOnline} people online, and there are ${Math.round(R.gapMs / 3600000)} hours between raids` : ""}.</p>
+      ${rowT(of("world"), withFacts)}
+      <h3>Effects</h3>
+      <p>Worn one of each kind at a time, seen by everyone.</p>
+      ${Object.entries(L).map(([k, l]) => { const list = of("looks", k); return list.length ? `<h4>${H.esc(l)}</h4>${rowT(list)}` : ""; }).join("")}
+      <h3>Name</h3>
+      <p>How your name looks over your head and in chat. <b>Your own title</b> is any ${G.TITLE_MAX || 20} characters you like, checked for anything that should not be there.</p>
+      ${NG.map(([k, l]) => { const list = of("name", k); return list.length ? `<h4>${l}</h4>${rowT(list)}` : ""; }).join("")}
+      <h3>Decor</h3>
+      <p>For ${H.wl("guides/islands", "your island")}: put a piece down with <b>Decorate</b>. The cottage styles, walls and floors change the cottage itself, and everyone who visits sees them.</p>
+      ${[["cot", "Cottage styles"], ["wall", "Cottage walls"], ["floor", "Cottage floors"]].map(([k, l]) => { const list = of("decor", k); return list.length ? `<h4>${l}</h4>${rowT(list)}` : ""; }).join("")}
+      ${[["isle", "For your island"], ["home", "For your cottage"]].map(([k, l]) => { const list = decorIn(k); return list.length ? `<h4>${l}</h4>${rowT(list)}` : ""; }).join("")}
+      <h3>Pets</h3>
+      <p><b>A skin is only a look.</b> Your pet out wears it; its bonuses, its name and its rank stay exactly as they were, and a Greater or Legendary pet keeps its blue or orange glow. One skin at a time, switched any time. <b>An egg</b> is the real thing: hatch it in a hatchery on your island (see ${H.wl("guides/breeding", "Breeding")}).</p>
+      <h4>Skins</h4>${rowT(of("pets", "pskin"), (it) => H.esc(it.ex))}
+      <h4>Eggs</h4>${rowT(of("pets", "give"), withFacts)}
+      <h3>Upgrades</h3>
+      <p>Room. Each one bought again adds one more, up to its limit: bank pages (${G.STORE_UP.bank.slots} slots each, up to ${G.STORE_UP.bank.max} more), quick slots (up to ${G.STORE_UP.quick.max} more, on keys 5 to ${4 + G.STORE_UP.quick.max}) and bag slots (up to ${G.STORE_UP.bag?.max ?? 5} more, on top of Bom's).</p>
+      ${rowT(of("extra"), withFacts)}
+      <p><b>Not sold here:</b> the Star Tent's trail, glow and title cost Star Fragments (see ${H.wl("guides/events", "World events")}), and a few titles are earned, never sold.</p>`;
+    } },
+  /* (2026-09-30) THE YARD RAID, read from RAID and the raid's monsters; how it runs is eastscape-worker/src/raid.js. */
+  { id: "raid", title: "The Yard raid", icon: "\u{1F9CA}", cat: "Going further",
+    body: (G, H) => {
+      const R = G.RAID, M = G.MOBS, boss = M[R.boss.t], mins = (ms) => Math.round(ms / 60000), secs = (ms) => Math.round(ms / 100) / 10;
+      const kinds = [...new Set([...R.wave.kinds, ...R.last.kinds].map(([t]) => t))].filter((t) => M[t]).sort((a, b) => M[a].lvl - M[b].lvl);
+      const CLOSES = { counter: "Bom's Prize Counter", cashout: "the cashier", eggtrade: "Nestor's egg trade", ex: "Livia's Exchange", hw: "Hexa's Night Market" };
+      const F = R.freeze;
+      return `<p><b>${H.esc(boss.name)}, the Frost Jarl's war-chief, comes down from the north to sack the Yard</b>, with waves of raiders behind him. Everyone in the game can fight it, and everyone who does shares the spoils. Lose, and the Yard's stalls are boarded up for a while.</p>
+      <h3>How it starts</h3>
+      <p>An admin can call one, or anybody can blow <b>the War Horn</b> from ${H.wl("guides/store", "the Store")}: it needs at least ${R.horn.minOnline} people online, not while the Pumpkin King is up, another raid is on or the Yard is still sacked, and there are ${Math.round(R.horn.gapMs / 3600000)} hours between raids however they start.</p>
+      <p><b>A ${mins(R.warnMs)}-minute warning.</b> CASINO counts it down in chat every minute and again at 30 seconds, so there is time to come back from wherever you are and eat first.</p>
+      <h3>The fight</h3>
+      <p><b>It all happens on the west bank.</b> Nothing of the raid crosses the river into the Yard's court: no raider walks over it, chases anybody over it or hits anybody on the far side. The court, the casino door and the shops behind it are safe ground to step back to.</p>
+      <p><b>${H.esc(boss.name)}</b> comes through the north gate, level ${boss.lvl}, and his health is set when he arrives: ${num(R.hp.base)}, plus ${num(R.hp.per)} for every player online, never more than ${num(R.hp.cap)}. A busy server gets a bigger fight. Anyone who hurts him shares his drops, like any open boss.</p>
+      <p><b>Waves</b> come through the north and west gates every ${mins(R.waveEvery)} minutes: up to ${R.wave.base} raiders standing at once, plus one for every ${R.wave.perPlayers} players online, never more than ${R.wave.cap}. They are low enough that a new player has something to fight:</p>
+      <table class="tbl"><tr><th>Raider</th><th>Level</th><th>Health</th></tr>${kinds.map((t) => `<tr><td>${mobL(G, H, t)}</td><td>${M[t].lvl}</td><td>${num(M[t].hp)}</td></tr>`).join("")}<tr><td><b>${mobL(G, H, R.boss.t)}</b></td><td>${boss.lvl}</td><td>${num(R.hp.base)} and up</td></tr></table>
+      <p><b>The last wave.</b> When ${H.esc(boss.name.replace(/^The /, "the "))} is down to ${Math.round(R.last.at * 100)}% he roars for his huscarls, and ${R.last.count} come through the gates at once, over the ordinary cap. The end of the fight is the hardest part of it.</p>
+      <p><b>Deep Freeze.</b> Every ${F.every[0] / 1000} to ${F.every[1] / 1000} seconds he picks among the people who have hurt the raid and stand within ${F.range} tiles of him: one, plus one more for every ${F.perPlayers} of them, at most ${F.cap}. Each is locked in ice for ${secs(F.ms)} seconds (no walking, no acting, no swinging) and loses ${Math.round(F.hit * 100)}% of their health. Spread out, and keep your health up.</p>
+      <h3>Win or lose</h3>
+      <p><b>Put him down inside ${mins(R.lasts)} minutes and the Yard is saved.</b> Everybody who hurt anything of the raid is paid from a pool of ${num(R.pay.pool)} tickets plus ${num(R.pay.per)} for every one of them, split by share of the damage, never less than ${num(R.pay.floor)} each. On top of that, his own drops:</p>
+      ${chaseDrops(G, H, [R.boss.t, ...kinds])}
+      <p><b>Run out of time and the Yard is sacked</b> for ${mins(R.sackMs)} minutes: ${R.closes.map((k) => CLOSES[k] || k).join(", ")} are boarded up until it passes. Nobody loses anything they own.</p>`;
+    } },
+  /* (2026-09-30) THE FROZEN REACH: the mages' country. FROZEN_MAPS, BANDS, MAGE_BAND/MAGE_FLOOR, COLD, the wards, WYRM and the maps' own monsters. */
+  { id: "frozen", title: "The Frozen Reach", icon: "❄️", cat: "Going further",
+    body: (G, H) => {
+      const maps = (G.FROZEN_MAPS || []).filter((k) => G.SCENES[k] && G.OPEN.has(k)), Wy = G.WYRM, C = G.COLD;
+      if (!maps.length) return `<p>The Frozen Reach is not open yet.</p>`;
+      const mobs = [...new Set(maps.flatMap((k) => (G.SCENES[k].mobs || []).map(([t]) => t)))];
+      const wards = Object.entries(G.ITEMS).filter(([, it]) => it.ward === "frost" && !it.held).map(([k, it]) => {
+        const r = Object.values(G.RECIPES).find((x) => x.out[0] === k), shop = G.OUTFIT ? ["ranger", "mage"].map((s) => [s, G.outfitShelf(s).find((x) => x.k === k)]).filter(([, x]) => x) : [];
+        const how = r ? `${H.esc(G.SKILLS[r.skill]?.name || r.skill)} ${r.lvl} at the anvil: ${r.in.map(([x, n]) => `${n} ${itemL(G, H, x)}`).join(", ")}` : shop.length ? `${shop.map(([s]) => H.esc(G.OUTFIT.npc[s])).join(" or ")}, ${num(shop[0][1].price)} tickets` : "a drop: see below";
+        return `<tr><td>${itemL(G, H, k)}</td><td>${H.esc(it.slot)}</td><td>${it.req ? `${H.esc(G.SKILLS[it.req.skill]?.name || it.req.skill)} ${it.req.lvl}` : "anyone"}</td><td>${how}</td></tr>`; }).join("");
+      const b = maps.map((k) => G.BANDS[k]).filter(Boolean), jarl = G.MOBS.frostjarl, wyrm = G.MOBS.icewyrm;
+      const hr = (h) => (h % 24 === 0 ? "midnight" : h === 12 ? "noon" : `${h > 12 ? h - 12 : h} ${h >= 12 ? "PM" : "AM"}`);
+      return `<p><b>North of ${areaL(G, H, "cloud")}: ${maps.map((k) => areaL(G, H, k)).join(" and, north of it, ")}.</b> Ice, snow and the giants' country, levels ${b.length ? `${Math.min(...b.map((x) => x[0]))} to ${Math.max(...b.map((x) => x[1]))}` : "100 and up"}. It is a <b>mage's country</b>: Combat stops at 99, so what opens it is a wand and <b>Magic ${G.MAGE_BAND?.[maps[0]] ?? 60}</b>. Here a spell lands at least ${Math.round((G.MAGE_FLOOR?.[maps[0]] ?? 0.5) * 100)}% of the time whatever the monster's defence, almost everything takes more from spells and less or nothing from swords and arrows, and the ice creatures are weak to fire.</p>
+      <h3>The cold</h3>
+      <p><b>Without a frost ward the cold takes ${C.dmg} health every ${C.every / 1000 === 1 ? "second" : `${C.every / 1000} seconds`}</b> on every map of the Reach, and it does not stop. Any one piece with the frost on it does the whole job, so the price is the slot it takes.</p>
+      <table class="tbl"><tr><th>Ward</th><th>Slot</th><th>Wear at</th><th>How to get it</th></tr>${wards}</table>
+      <p>The two made wards want frost shards and yeti pelts, which ${H.wl("guides/raid", "the Yard raid")} drops, so the raid comes first and the north second; the plain charm is for anyone who has not got there yet.</p>
+      <h3>What lives there</h3>
+      ${mobTable(G, H, maps, G.MOBS.icewyrm ? [["icewyrm", Wy?.scene || maps[0]]] : [])}
+      <p><b>The Frost Jarl</b> holds the high ice shelf at the top of the Frostspire: level ${jarl?.lvl}, ${num(jarl?.hp || 0)} health, only a spell reaches him, and anyone who hurts him shares the kill.</p>
+      ${wyrm && Wy ? `<p><b>The Ice Wyrm</b> sleeps under the Frozen Reach's lake and comes up <b>once a day</b>, at a minute nobody knows between ${hr(Wy.fromHour)} and ${hr(Wy.toHour)} Chicago time, and stays ${Math.round(Wy.stays / 60000)} minutes. Level ${wyrm.lvl}, ${num(wyrm.hp)} health, spells only, and it breathes ice six tiles. <b>/bosses</b> in chat says whether it is up.</p>` : ""}
+      <h3>Gathering</h3>
+      ${gatherTable(G, H, maps)}
+      <h3>Drops worth knowing</h3>
+      ${chaseDrops(G, H, [...mobs, ...(wyrm ? ["icewyrm"] : [])])}`;
+    } },
+  /* (2026-09-30) THE PRIMEVAL VALLEY: the archers' country, three maps north of the Trailer Park. BANDS, ARCH_BAND/ARCH_FLOOR, MOB_GOLD. */
+  { id: "valley", title: "The Primeval Valley", icon: "\u{1F996}", cat: "Going further",
+    body: (G, H) => {
+      const maps = (G.VALLEY_MAPS || ["valley", "valley_ridge", "valley_lair"]).filter((k) => G.SCENES[k] && G.OPEN.has(k));
+      if (!maps.length) return `<p>The Primeval Valley is not open yet.</p>`;
+      const mobs = [...new Set(maps.flatMap((k) => (G.SCENES[k].mobs || []).map(([t]) => t)))], gold = Object.entries(G.MOB_GOLD || {});
+      const rex = G.MOBS.rex, mat = G.MOBS.matriarch;
+      return `<p><b>North of ${areaL(G, H, "trailer")}, three maps climb north: ${maps.map((k) => `${areaL(G, H, k)} (${gateText(G, k)})`).join(", then ")}.</b> Cavemen, sabretooths, mammoths, raptors and pterodactyls, and most of them up on ledges and plateaus that only an arrow reaches.</p>
+      <p><b>It is a bow's country.</b> A bow and <b>Archery ${G.ARCH_BAND?.[maps[0]] ?? 40}</b> opens all three whatever your Combat (and the last one starts past Combat's 99, so it is the only way in there). An arrow here lands at least ${Math.round((G.ARCH_FLOOR?.[maps[0]] ?? 0.5) * 100)}% of the time whatever the monster's defence, so an archer in the 40s can do real work; the flyers and the big beasts take far more from arrows and nothing at all from a sword.</p>
+      ${mobTable(G, H, maps, gold.map(([, g]) => [g.t, maps.find((k) => (G.SCENES[k].mobs || []).some(([t]) => G.MOB_GOLD[t]?.t === g.t)) || maps[0]]))}
+      ${mat ? `<p><b>The Mammoth Matriarch</b> stands on the great plateau of ${areaL(G, H, "valley")}: level ${mat.lvl}, ${num(mat.hp)} health, arrows only, and everyone who hurts her shares the kill.</p>` : ""}
+      ${rex ? `<p><b>Old Rex</b> sits on his throne on the high plateau of ${areaL(G, H, "valley_lair")}: level ${rex.lvl}, ${num(rex.hp)} health, and only arrows reach him.</p>` : ""}
+      ${gold.map(([b, g]) => `<p><b>The ${H.esc(G.MOBS[g.t]?.name || g.t)}.</b> One ${H.esc(G.MOBS[b]?.name.toLowerCase() || b)} in ${num(g.odds)} comes back gilded instead. Everything it drops is worth ten times the plain one, and it is the likeliest thing in the valley to drop a ${itemL(G, H, "raptor_ring")}.</p>`).join("")}
+      <h3>Gathering</h3>
+      ${gatherTable(G, H, maps)}
+      <p>Cycad is the best wood a fletcher can use, and pterodactyl sinew strings its bows: see ${H.wl("guides/fletching", "Fletching")}.</p>
+      <h3>Drops worth knowing</h3>
+      ${chaseDrops(G, H, [...mobs, ...gold.map(([, g]) => g.t)])}`;
+    } },
+  /* (2026-09-30) THE BOARDWALK and its isles, the rowboat chain, Captain Claw and his chest (CLAW_CHEST). */
+  { id: "boardwalk", title: "The Boardwalk", icon: "\u{1F980}", cat: "Going further",
+    body: (G, H) => {
+      const isles = (G.BW_ISLES || []).filter((k) => G.SCENES[k] && G.OPEN.has(k)), maps = ["boardwalk", ...isles].filter((k) => G.SCENES[k] && G.OPEN.has(k));
+      if (!maps.length) return `<p>The Boardwalk is not open yet.</p>`;
+      const mobs = [...new Set(maps.flatMap((k) => (G.SCENES[k].mobs || []).map(([t]) => t)))], K = G.CLAW_CHEST, claw = G.MOBS.captainclaw;
+      const rng = (n) => (Array.isArray(n) ? `${n[0]}&ndash;${n[1]}` : n);
+      return `<p><b>A drowned seaside market west of ${areaL(G, H, "carnival")}</b>: a beach with palms, the stalls on a stone plaza, piers out over the water, and a <b>rowboat</b> at the end of each island that goes to the next, or back to the last.</p>
+      <table class="tbl"><tr><th>Map</th><th>Monsters</th><th>To start a fight</th><th>To fish</th></tr>${maps.map((k) => { const b = G.BANDS[k]; return `<tr><td>${areaL(G, H, k)}</td><td>${b ? `${b[0]}&ndash;${b[1]}` : "&mdash;"}</td><td>${gateText(G, k) || "&mdash;"}</td><td>${G.FISH_BAND?.[k] != null ? `Fishing ${G.FISH_BAND[k]}` : b ? `Fishing ${b[0]}` : "&mdash;"}</td></tr>`; }).join("")}</table>
+      <p><b>Bring a bow or a wand.</b> The gulls take nothing from a sword and the Kraken Arms next to nothing, and they sit where only a shot reaches; the Clawhands and the captain shrug off most of an arrow.</p>
+      ${mobTable(G, H, maps)}
+      ${claw ? `<h3>Captain Claw</h3>
+      <p>He holds <b>Skull Isle</b>, the last island the rowboats reach: level ${claw.lvl}, ${num(claw.hp)} health, weak to storm, and arrows barely scratch the claw. Anyone who hurts him shares the kill. He drops a ${itemL(G, H, "singularity_core")} about ${oneIn((claw.drops.find(([k]) => k === "singularity_core") || [, , 0.02])[2]).replace(/^1/, "one")} kills, and he is the only thing that drops ${itemL(G, H, "clawgrip")}.</p>
+      ${K ? `<p><b>The chest he sits on</b> opens for everyone who put him down, once each per kill: ${num(K.tickets[0])} to ${num(K.tickets[1])} tickets, and ${K.items.map(([k, n, p]) => `${rng(n)} ${itemL(G, H, k)}${p != null && p < 1 ? ` (${Math.round(p * 100)}% of the time)` : ""}`).join(", ")}.</p>` : ""}` : ""}
+      <h3>Gathering</h3>
+      ${gatherTable(G, H, maps)}
+      <h3>Drops worth knowing</h3>
+      ${chaseDrops(G, H, mobs)}`;
+    } },
+  /* (2026-09-30) THE DEPTHS OF THE MOUNTAIN: the style guards (guardText), the Deepwarden and his heart. */
+  { id: "depths", title: "The Depths of the Mountain", icon: "⛰️", cat: "Going further",
+    body: (G, H) => {
+      if (!G.SCENES.depths || !G.OPEN.has("depths")) return `<p>The Depths of the Mountain are not open yet.</p>`;
+      const mobs = [...new Set((G.SCENES.depths.mobs || []).map(([t]) => t))], D = G.MOBS.deepwarden, gate = gateText(G, "depths"), lv = mobs.map((t) => G.MOBS[t].lvl);
+      const ex = G.SCENES.depths.exits || {}, SIDE = { n: "north", s: "south", e: "east", w: "west" };
+      return `<p><b>Ledges of mossy rock over a bottomless drop</b>, between ${Object.entries(ex).filter(([, k]) => G.SCENES[k]).map(([s, k]) => `${areaL(G, H, k)} (${SIDE[s] || s})`).join(" and ")}. Monsters ${Math.min(...lv)} to ${Math.max(...lv)}, and ${gate ? `you need ${gate} to start a fight` : "no level gate on starting a fight: nothing stops you, and nothing down there is gentle"}.</p>
+      <p><b>Most monsters here shrug off a whole fighting style</b>, and they hit 40 to 60% harder than the Vault's at the same level. Read the "Takes" column before you pick a fight, and come with the right weapon: a sword does nothing to a wisp over the drop, arrows shatter on the crystal ogres, and the iron ogre lets through Void magic and very little else.</p>
+      ${mobTable(G, H, ["depths"])}
+      ${D ? `<h3>The Deepwarden</h3>
+      <p>The mountain's keeper: level ${D.lvl}, ${num(D.hp)} health, and everyone who hurts him shares the kill. Below ${Math.round((D.enrage?.at || 0.35) * 100)}% he plants his greatsword and hits ${Math.round(((D.enrage?.mul || 1.4) - 1) * 100)}% harder. Bring friends.</p>
+      <p><b>The chase is ${itemL(G, H, "deepheart")}</b>, one Deepwarden in ${Math.round(1 / ((D.drops || []).find(([k]) => k === "deepheart")?.[2] || 0.01))}: a ring that doubles how often a jewel turns up in the rock. He also has ${itemL(G, H, "deep_sigil")} and, now and then, the ${G.PETS.potboy ? H.wl("pets/potboy", "Pot Boy") : "Pot Boy"} at his heel.</p>` : ""}
+      <h3>Mining</h3>
+      ${gatherTable(G, H, ["depths"])}
+      <p>The abyss crystal goes to the jewellers, and the veins are the richest gem rock in the game.</p>
+      <h3>Drops worth knowing</h3>
+      ${chaseDrops(G, H, mobs)}`;
+    } },
+  /* (2026-09-30) THE GREAT PYRAMID, from eastscape-pyramid-rules.js (H.PYR when the page hands it over, PYR_T otherwise; the wiki test holds
+     PYR_T to the file). The chest's Coilling chance is worked out from its own table, not typed. */
+  { id: "pyramid", title: "The Great Pyramid", icon: "\u{1F40D}", cat: "Going further",
+    body: (G, H) => {
+      const P = H.PYR?.PYRAMID || PYR_T, T = P.tiers[1], L = P.loot, c = P.coil, bu = P.burrow;
+      const mobs = H.PYR?.mobs ? Object.entries(H.PYR.mobs).map(([t, m]) => [t, m.lvl, m.name]) : P.mobs;
+      const petClear = coilChance(P);
+      const hp = (n) => Math.round((0.6 + 0.1 * n * n) * 100) / 100, venom = G.ITEMS.serpentvenom?.name || "Serpent venom";
+      const brew = Object.values(G.RECIPES).find((r) => r.in.some(([k]) => k === "serpentvenom"));
+      return `<p><b>The pyramid on the eastern skyline of ${areaL(G, H, "sands")} is a party dungeon</b>, like ${H.wl("guides/crypt", "the Crypt")} and built the other way up: ${word(P.party[0])} to ${word(P.party[1])} of you pay an ante, get a private copy of the tomb, and climb.</p>
+      <table class="tbl"><tr><th>Door opens at</th><th>The fight wants</th><th>Ante each</th><th>A clear pays each</th></tr><tr><td>Combat ${T.lvl}</td><td>about Combat ${T.rec}</td><td>${num(T.ante)}</td><td>${num(T.pay)}, in the chest</td></tr></table>
+      <p><b>The door and the fight are different numbers</b>, as in the Crypt: at Combat ${T.lvl} you land about one swing in ten on the boss, and around ${T.rec} about half. It pays fewer tickets than the Black Crypt on purpose: the Crypt is where you go for tickets, and this is where you go for things.</p>
+      <h3>Up through the chambers</h3>
+      <p>You come in at the base and work <b>up</b> through four chambers, each narrower than the last, to the burial chamber at the top. A chamber's stone door grinds open when it is clear. The burial chamber opens at a lever, once everybody still alive is in front of it, and a chest on the way up is your bank, to restock. <b>The first chambers are never quite the same twice</b>: a run's monsters there come out up to ${Math.round(P.jitter * 100)}% softer or harder. The burial chamber is never changed.</p>
+      <table class="tbl"><tr><th>Monster</th><th>Level</th></tr>${mobs.map(([t, lvl, name]) => `<tr><td>${t === "squeeze" ? `<b>${H.esc(name)}</b> (the boss)` : H.esc(name)}</td><td>${lvl}</td></tr>`).join("")}</table>
+      <h3>The Squeeze</h3>
+      <p>A giant serpent at the apex, behind four Risen Pharaohs at the chamber's mouth: you fight the pharaohs first, and it only reaches for you once you are within ${c.reach} tiles. Its health scales with the party: with ${P.party[0]} of you it has its plain ${num(G.MOBS.squeeze?.hp || H.PYR?.mobs?.squeeze?.hp || 4200)}, with 3 about ${hp(3)}&times;, with 4 about ${hp(4)}&times;.</p>
+      <p><b>The coil.</b> About every ${Math.round(c.everyMs / 1000)} seconds, after a ${Math.round(c.warnMs / 1000)}-second warning, it takes hold of one of you. That player cannot move and bleeds ${Math.round(c.hurt * 100)}% of their health a second, and cannot free themselves: the grip breaks when <b>the rest of the party</b> does ${Math.round(c.breakFrac * 100)}% of the Squeeze's health to it, or after ${Math.round(c.maxMs / 1000)} seconds. So when somebody is grabbed, everybody else drops what they are doing and hits the snake.</p>
+      <p><b>The burrow.</b> At ${bu.at.map((x) => `${Math.round(x * 100)}%`).join(" and ")} of its health it goes under the sand for ${Math.round(bu.downMs / 1000)} seconds and comes up somewhere else in the chamber. Nobody gets to park in a corner.</p>
+      <h3>The hoard</h3>
+      <p>When the Squeeze dies, everybody who earned the clear opens <b>their own</b> roll: the clear's tickets, <b>${L.venom[0]} to ${L.venom[1]} ${H.esc(venom.toLowerCase())}</b> every time, then ${L.rolls[0][0] - 1} to ${L.rolls.at(-1)[0] - 1} more things: scarab shells, cobra fangs, drinks, dinners, clovers, casino chips, a horseshoe, now and then a piece of buff gear, and rarely the ${G.PETS.coilling ? H.wl("pets/coilling", "Coilling") : "Coilling"}, a pet that comes from nowhere else (about one clear in ${Math.round(1 / petClear)}).</p>
+      ${brew ? `<p><b>The venom is the reason to come.</b> It exists nowhere else, and it is what ${itemL(G, H, brew.out[0])} is brewed from, at Alchemy ${brew.lvl}: one of the best potions in the game.</p>` : ""}
+      <p><b>${Word(P.runsPaid)} paid clears a Chicago day</b> each. After that a clear pays ${Math.round(P.lateShare * 100)}%, and its chest has ${L.lateRolls} rolls with no gear or pet in them. Anybody who did under ${Math.round(P.fullShare * 100)}% of the boss's damage gets half pay. Leaving the game does not leave the party: your place is held for three minutes.</p>`;
+    } },
+  /* (2026-09-30) THE CASINO'S BACK ROOMS: the Fight Pit (FIGHTS; the ticket side is eastscape-worker/src/pit.js), the Picture House
+     (eastscape-screen.js) and the Roulette Room (eastcoin.vip's own PvP table). */
+  { id: "rooms", title: "The casino's back rooms", icon: "\u{1F6AA}", cat: "Starting out",
+    body: (G, H) => {
+      const F = G.FIGHTS, C = G.CASINO, pool = F.pool.filter((t) => G.MOBS[t]).map((t) => G.MOBS[t]), lv = pool.map((m) => m.lvl);
+      return `<p><b>Three doors in the casino's back wall</b> lead to rooms that are not tables on the floor.</p>
+      <h3>The Fight Pit</h3>
+      <p><b>Through the door marked FIGHTING.</b> Two monsters in a sand pit, and everybody round the rail with money on them. One fight at a time for the whole room, on a clock: there is time to get your bet down, then they go at it, then the next pair comes out. It is <b>eastcoin.vip's own shared round</b>, so the people betting on the site are betting on the same fight.</p>
+      <p><b>The card</b> is two of ${pool.length} monsters, from a ${H.esc(pool[lv.indexOf(Math.min(...lv))].name.toLowerCase())} to a ${H.esc(pool[lv.indexOf(Math.max(...lv))].name.toLowerCase())}. Each one's chance comes from the two levels, kept between ${Math.round(F.minP * 100)}% and ${Math.round(F.maxP * 100)}%, so an upset is always possible, and each side is priced from its own chance. <b>Who wins is one random number and nothing else</b>: no stats, no gear, no streaks. The blows you watch are written afterwards to fit the result.</p>
+      <p><b>Bet ZCoins and you are paid in ZCoins</b>, by the site. <b>Bet tickets (${num(C.minBet)} to ${num(C.maxBet)}) and a win pays tickets</b>, held by the game and paid at exactly the price a ZCoin bet on the same fighter gets, with that round's own draw from the band.</p>
+      <h3>The Picture House</h3>
+      <p><b>A cinema.</b> Walk up to the screen and it opens eastcoin.vip's <b>Movies &amp; TV</b>: pick something and put it on, or join a room somebody else is hosting and <b>watch together</b>. The host's player sets the clock and everyone else follows it; drift more than a few seconds and your picture is put back in step. It is close enough for a film, not frame-locked. The jukebox goes quiet while the window is open and comes back when you close it.</p>
+      <p>Reel Rhonda runs it, and Andy sits in the back row, which is where Rhonda told everyone not to sit.</p>
+      <h3>The Roulette Room</h3>
+      <p><b>Russian Roulette, centre stage.</b> It is eastcoin.vip's own PvP table, the very same one: somebody on the website and somebody in EastScape sit in one lobby. <b>ZCoins only</b>, a fixed 20 a seat, up to six seats. The first person to sit starts a short lobby clock, and whoever is in when it runs out plays; the cylinder goes round until one is left, and <b>the winner takes every buy-in</b>. The house takes nothing. Sit alone and your 20 comes back.</p>
+      <p>Bino's bar cart is by the table: a shot, 1 ticket.</p>`;
+    } },
+  /* (2026-09-30) BRONNY'S ORDER, the server's daily, read from ORDER (and orderPick's own rule that nothing Bom sells is ever on it). */
+  { id: "order", title: "Bronny's order", icon: "\u{1F4E6}", cat: "Money",
+    body: (G, H) => {
+      const O = G.ORDER, sold = new Set(G.prizesOf().map((p) => p.give?.[0]).filter(Boolean)), ok = ([k]) => G.ITEMS[k] && !G.ITEMS[k].held && !sold.has(k);
+      const n = { early: O.mix.filter((t) => t === "early").length, mid: O.mix.filter((t) => t === "mid").length, late: O.mix.filter((t) => t === "late").length };
+      const cell = (list) => (list || []).filter(ok).map(([k, c]) => `${num(c)} ${itemL(G, H, k)}`).join(", ") || "&mdash;";
+      return `<p><b>${H.esc(O.npc)}</b> stands by the Yard's west gate, just off the road in from the Carnival, facing east. He is rebuilding the Yard one order at a time, and <b>it is one order for the whole server</b>: everybody hands in to the same bars.</p>
+      <h3>How it works</h3>
+      <p><b>${Word(O.lines)} lines</b>, each from a different kind of work, so whatever you like doing, you can help: ${word(n.early)} early-game lines, ${word(n.mid)} mid-game and ${word(n.late)} late, dealt out at random. A beginner always has lines they can do, and a veteran always has one worth their time.</p>
+      <p><b>Hand in from your bag</b> at Bronny, any time, in any amount. <b>Everything you hand in is gone</b>: an item on Bronny's order is an item nobody sold to Bom, which is the balance. Nothing Bom sells is ever on it, so nobody can buy from him and hand it straight back.</p>
+      <p><b>Filled, it is a 2X for the whole server</b>: ${Math.round(G.DOUBLE.ms / 60000)} minutes of 2X tickets and 2X crafting xp, held at Bronny until <b>somebody who helped</b> claims it (not while another 2X is running). It never expires unclaimed, and the next order only goes up once it has been claimed, so it never fires at an hour nobody is on.</p>
+      <p><b>An order that runs out</b> (it has ${Math.round(O.ms / 3600000)} hours; the clock is on his board) is replaced by a fresh one, and what was handed in stays handed in.</p>
+      <h3>What it can ask for</h3>
+      <table class="tbl" data-paged="25"><tr><th>Work</th><th>Early game</th><th>Mid game</th><th>Late game</th></tr>${Object.values(O.kinds).map((K) => `<tr><td><b>${H.esc(K.name)}</b></td><td>${cell(K.early)}</td><td>${cell(K.mid)}</td><td>${cell(K.late)}</td></tr>`).join("")}</table>
+      <p>Each line is one item from its kind and tier. The counts aim at about half an hour of one person's work a line, which is why they fall as the tier rises.</p>`;
+    } },
   { id: "saving", title: "Saving", icon: "\u{1F4BE}", cat: "Starting out",
     body: `<p><b>There is no save button and there is nothing to lose.</b> The server owns your character, not your browser &mdash; every level, item and ticket is written down as it happens.</p>
       <p><b>Closing the tab is safe.</b> So is losing your connection, and so is your battery dying mid-fight. You come back where you were.</p>
@@ -1147,6 +1512,23 @@ export const GUIDES = [
 ];
 
 export const UPDATES = [
+  {
+    date: "2026-09-30", title: "/find, the wiki rebuilt, and a balance pass",
+    items: [
+      "CHAT COMMANDS: /find anything (an item, a monster, a place, a person, a furnace, a skill) and it tells you WHERE, with the way there from where you stand. Also /help, /price, /count, /xp, /timers, /bosses, /wiki, /map, /online, /roll and /stuck. Only you see the answers (except /roll), and a mistyped /command is never said to everyone.",
+      "WHO'S ONLINE is rebuilt, with an Active or Idle beside everyone and a filter for each.",
+      "THE WIKI, REBUILT: every list is a table you can sort by clicking a heading (items grouped by kind, monsters by level, areas by band, people by what they do). Area pages show every way in and out, a monster table, a skilling table with levels and what you can use there. Item pages say what a thing does, what it grows or hatches into and who sells it. Ten new guides: Chat commands, the Store, the Yard raid, the Frozen Reach, the Primeval Valley, the Boardwalk, the Depths, the Great Pyramid, the casino's back rooms and Bronny's order. Stale numbers everywhere were corrected or now come straight from the game.",
+      "A BALANCE PASS, from the live hiscores and every skill's numbers side by side. Smithed gear now sells to Bom for its bars and a quarter again, not an eighth of the shelf (a one-bar dragonstone gladius was 825, now 136). Stardust and abyss crystal sell like their tier's ore (20 and 45). Monsters from level 30 up pay by how much health they have: a Cloudreach angel pays less, and everything past level 70 pays far more (a mammoth 1,746 a kill).",
+      "SALES TO BOM ARE NO LONGER DOUBLED by 2X Tickets (kills still are), so a hoard saved for the window isn't doubled on demand.",
+      "THE TOWER pays for the health on each floor now, half of what the same fighting earns outside: hundreds to thousands a floor, where it was a handful.",
+      "WIZARDRY AND MAGIC: a print makes 30 pages (was 10), an ink brew makes two and a half times the ink, and gems turn up in ore twice as often.",
+      "HARVESTING AND FUNGICULTURE: the higher crops and mushrooms give far more xp (starfruit 8,000, starcap 6,000), so every new one is worth planting.",
+      "THIEVING: the Guild permit is 15,000 (was 50,000), the signet and the ledger sell for more, and a ninth mark, the Grand Larcenist (Thieving 97), works the top room. AGILITY: a lap drops four marks worth 50 each. BREEDING: pet eggs drop one kill in 400 (was 1,500).",
+      "ARCHERY: shortbows hit harder from the yew up, and eclipse, nova and singularity arrowheads come 30, 45 and 45 a bar. LOGS: palm, skyash and rustpine logs sell for 38, 40 and 42, so they climb with the level.",
+      "A GRIMSTONE ROCK in Cloudreach, so onyx and starfall bars don't need the Wilderness. ALCHEMY: Bom sells small vials, cobras can drop serpent venom and revenants ectoplasm, so every potion can be brewed. The Frozen Reach, the Frostspire and Old Rex's Lair are Combat 95, 99 and 97 (they asked for levels past 99).",
+      "Pet eggs in the Store cost twice what they did. The two Alchemy 100 potions (Pharaoh's draught and the Coilbreaker draught) are Alchemy 99: levels stop at 99, so nobody could ever brew them."
+    ]
+  },
   {
     date: "2026-09-30", title: "The islands, rebuilt",
     items: [
@@ -2307,6 +2689,7 @@ export const SKILL_GUIDE = {
   tinkering: "Salvage what you don't need into parts at Sprocket Sal's Scrap Bench in the Yard, build gadgets out of them, and give parts to the World Projects the whole server builds together. Salvaging pays xp (up to 40 an item), building pays more the higher the gadget, and finishing a project's stage pays the most.",
   breeding: "Breed two pets in the pet pen on your island to make a better one, and hatch eggs in a hatchery. Starting a pair gives some xp and collecting the baby gives far more. Every pairing and every hatch trains it.",
   fungiculture: "Grow mushrooms in the cellar under your island, and pick the wild clusters on every map once a day. Compost from the bin in the cellar trains it from level 1 and feeds the beds.",
+  alchemy: "Dig sand in the Golden Sands, melt it into vials at the cauldron under the temple colonnade, and brew the vials with crops, mushrooms and monster drops into potions, salves and ink. A potion is a drink that buffs you outside; a salve heals on the spot. Every batch can spoil, less often as you climb.",
   cooking: "Cook raw fish and meat at a range, hearth or campfire. Each food needs a level to cook and stops burning at a higher one. Cooked food heals when you eat it.",
   melee: "Fight monsters with a weapon in hand. Every point of damage you deal gives Melee xp, and a little Hitpoints xp with it. (With a bow in hand it is <b>Archery</b> xp instead.) Your combat level is Melee, Archery and Hitpoints together. One skill does all three jobs \u2014 you land more swings, you hit harder and you get hit less \u2014 and it is what better weapons and armour ask for.",
   hp: "Goes up alongside the fighting skills as you deal damage: fully with a melee weapon, a third as fast with a bow or a wand. Your Hitpoints level is your maximum health.",
@@ -2315,7 +2698,7 @@ export const SKILL_GUIDE = {
   mining: "Hold a pickaxe and click a rock. Every rock holds two to twelve ore and you work it until it is empty; a vein is slower per ore but never runs dry, which makes it the one to stand at. Now and then an ore comes with a gem: rubies from copper, tin and emerald, sapphires from diamond and dragonstone, topaz from onyx and starfall, opals from eclipse, nova and singularity. Each gem's page says where those rocks are.",
   woodcutting: "Hold an axe and click a tree. A tree is good for about 25 logs before it falls and an oak for about 50; a felled one is back in fifteen seconds. Logs burn into the charcoal every smelt needs.",
   smithing: "Burn logs into charcoal at the furnace \u2014 the only thing you can do at level 1 \u2014 then smelt ore and charcoal into bars, and hammer bars into gear at the anvil. The anvil also reforges what you already own.",
-  thieving: "Pick pockets in the Thieves' Guild, south of the Yard. Nobody there fights back. Each room further in holds better marks, and what they carry either sells or goes to the anvil.",
+  thieving: "Pick pockets in the Thieves' Guild, in the far north-east of the Gloam; Vance the Fence, by its door, sells the permit that opens it. Nobody there fights back. Each room further in holds better marks, and what they carry either sells or goes to the anvil.",
   archery: "Fight with a bow. Every hit pays Archery the xp Combat would have had, a bow shoots from where you stand, and a loaded quiver keeps you shooting. Fletching makes the kit; Archery draws it.",
   magic: "Fight with a wand. A wand casts from five tiles; the spell page you load sets the damage and the element, and monsters weak to that element take far more.",
   wizardry: "Print spell pages and utility scrolls at the element altars around the world, from paper and ink. The Nexus, deep in the Wilderness, prints anything, twice.",

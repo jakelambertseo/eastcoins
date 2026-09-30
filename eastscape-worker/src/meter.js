@@ -111,7 +111,7 @@ export function installMeter(World, { G }) {
      at you); what you eat, the xp you earn and whether you die are counted while you are in the fight and in his map (bossNote, from
      meterAdd). When he dies or leaves, everybody who fought gets the same report as a dungeon run, kind "boss". Kept in memory only. */
   P.bossAdd = function (pl, m, key, n) {
-    if (!pl || !m || !(n > 0) || !G.MOBS[m.t]?.open) return;
+    if (!pl || !m || !(n > 0) || !(G.MOBS[m.t]?.open || m.open)) return;   /* (2026-09-30) m.open: a Wanted target */
     const now = Date.now(), fights = (this.bossFights ||= new Map());
     let F = fights.get(m.id); if (!F) { F = { id: m.id, t: m.t, scene: pl.C.scene, at: now, last: now, by: {}, log: [], kb: null }; fights.set(m.id, F); }
     tally(F, pl, key, n, null, now); F.last = now;
@@ -123,9 +123,9 @@ export function installMeter(World, { G }) {
   P.bossEnd = function (S, m, result, killer) {
     const F = this.bossFights?.get(m.id); if (!F) return; this.bossFights.delete(m.id);
     const B = G.MOBS[m.t], now = Date.now(), rows = Object.entries(F.by).map(([id, r]) => ({ id, ...blank(), ...r }));
-    const R = { at: now, kind: "boss", title: B.name, result, secs: Math.max(1, Math.round((now - F.at) / 1000)), boss: B.name, bossArt: B.art || m.t,
+    const R = { at: now, kind: "boss", title: m.nm || B.name, result, secs: Math.max(1, Math.round((now - F.at) / 1000)), boss: m.nm || B.name, bossArt: B.art || m.t,
       bossLeft: result === "escaped" && !m.dead ? Math.max(1, Math.round((100 * m.hp) / (m.maxHp || B.hp))) : null, best: null, pay: null, rows, log: F.log,
-      kb: killer && result === "clear" ? { id: killer.id, name: killer.name, boss: B.name } : null, bossAt: 0, tlMs: TL_MS };
+      kb: killer && result === "clear" ? { id: killer.id, name: killer.name, boss: m.nm || B.name } : null, bossAt: 0, tlMs: TL_MS };
     for (const id of Object.keys(F.by)) { const p = this.pls.get(id); if (p) { p.lastReport = R; p.out.push({ type: "runreport", r: R }); } }
     return R;
   };
