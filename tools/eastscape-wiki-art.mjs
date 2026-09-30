@@ -32,4 +32,5 @@ async function fit(k, id, out) {
 for (const [k, id] of Object.entries(AREAS)) await fit(`a_${k}`, id, `${UI}a_${k}.png`);
 for (const [k, id] of Object.entries(ITEM_ICONS)) await fit(k, id, `${ITEMS}${k}.png`);
 for (const [k, id] of Object.entries(GUIDES)) await fit(`g_${k}`, id, `${UI}g_${k}.png`);
+await fit("staff", "cf003a4a-f733-4900-a8d8-d26a0c1cfb0b", `${UI}staff.png`);   /* (2026-09-30, the owner) the staff badge beside a name in Who's online */
 console.log(`${got} pictures${missing.length ? ` · NOT READY: ${missing.join(", ")}` : ""}`);
