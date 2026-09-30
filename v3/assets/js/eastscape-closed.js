@@ -292,7 +292,7 @@ export function createClosedScenes(G, H) {
      footprint as w/h, which is what the page anchors the picture by. tools/eastscape-wild-check.mjs walks both maps:
      every open tile reachable from the exits, every monster and node on open ground, every piece on rock. */
   wild: {
-    name: "The Wilderness", pvp: true, killMul: 1.25, exits: { n: "deep" }, entry: { x: 3, y: 10 }, tint: "rgba(60,20,70,.2)", ground: "wild",
+    name: "The Wilderness", pvp: true, killMul: G.KILL_MUL.wild, exits: { n: "deep" }, entry: { x: 3, y: 10 }, tint: "rgba(60,20,70,.2)", ground: "wild",
     cage: [6, 3, 12, 6], cageOut: { x: 9, y: 9 },
     rows: [
       "############################################",
@@ -1337,7 +1337,7 @@ export function createClosedScenes(G, H) {
     bots: []
   },
   deep: {
-    name: "The Deep Wild", pvp: true, killMul: 1.5, exits: { s: "wild" }, tint: "rgba(50,10,45,.3)", ground: "deep", xpMul: 1.5, luck: 0.1, geode: 0.01,
+    name: "The Deep Wild", pvp: true, killMul: G.KILL_MUL.deep, exits: { s: "wild" }, tint: "rgba(50,10,45,.3)", ground: "deep", xpMul: 1.5, luck: 0.1, geode: 0.01,
     rows: [
       "############################################",
       "#.........##..................##############",

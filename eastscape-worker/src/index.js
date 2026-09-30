@@ -4016,7 +4016,7 @@ export class World {
              it, the act clears on the kill, the next one walks up. The three-minute cutoff in doAction stops a
              fight already running; this stops a new one being started for somebody who has not touched the game
              since. Together they mean an idle player simply gets hit, which is the point of a dangerous place. */
-          if (!foe.act && !foe.path.length && !foe.lingerUntil && now - foe.lastInput <= G.AFK_MS) foe.act = { kind: "mob", id: m.id, x: m.x, y: m.y, name: def.name, started: 0 };
+          if (!foe.act && !foe.path.length && !foe.lingerUntil && now - foe.lastInput <= G.RETALIATE_MS) foe.act = { kind: "mob", id: m.id, x: m.x, y: m.y, name: def.name, started: 0 };
           if (C.hp <= 0) this.die(foe, S, { mob: def.name, t: m.t });
         }
         continue;

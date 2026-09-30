@@ -432,7 +432,7 @@ scene objects
   if (!G.AFK_KINDS.mob) bad("fighting is not in AFK_KINDS", "a fight already running never times out");
   else console.log(`  ok  a fight stops after ${Math.round(G.AFK_MS / 60000)} idle minutes, like every skill`);
   if (!/foe\.act = \{ kind: "mob"/.test(worker)) console.log("   warn  the auto-retaliate line has moved; check the AFK guard moved with it");
-  else if (!/!foe\.lingerUntil && now - foe\.lastInput <= G\.AFK_MS/.test(worker))
+  else if (!/!foe\.lingerUntil && now - foe\.lastInput <= G\.(AFK_MS|RETALIATE_MS)/.test(worker) || !(G.RETALIATE_MS <= G.AFK_MS))   /* (2026-09-30) one minute now: RETALIATE_MS */
     bad("a mob still hands an idle player a free retaliate", "so the three-minute cutoff restarts on the next swing");
   else console.log("  ok  and no new fight is handed to somebody who has not touched the game since");
 }

@@ -15,7 +15,7 @@
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=405">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=406">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1960,7 +1960,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=405";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=406";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 const FROZEN = new Map();   /* (2026-09-30) player id -> when their Deep Freeze ends (performance.now) */
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
@@ -1970,7 +1970,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=229").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=230").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
@@ -2116,7 +2116,7 @@ let TWR = null; const towerRules = () => (towerRules.p ||= import("/v3/assets/js
 /* (2026-09-24) THE MIDWAY GAMES. Loaded the first time somebody walks up to a stall, never at login — the
    whole module is three screens nobody outside the Carnival will ever open. */
 let CARN = null; const carnLoad = () => (carnLoad.p ||= import("/v3/assets/js/eastscape-carnival.js?v=2").then((m) => (CARN = m.createCarnival({ G, SFX, send, esc, $ }))));
-const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String(k).startsWith("count") ? countRules() : String(k).startsWith("pyramid") ? pyramidRules() : String(k).startsWith("tower") ? towerRules() : (moreScenes.p ||= import("/v3/assets/js/eastscape-closed.js?v=31").then((m) => { Object.assign(G.SCENES, m.createClosedScenes(G, G._MAP)); })));
+const moreScenes = (k) => (String(k).startsWith("crypt") ? cryptRules() : String(k).startsWith("count") ? countRules() : String(k).startsWith("pyramid") ? pyramidRules() : String(k).startsWith("tower") ? towerRules() : (moreScenes.p ||= import("/v3/assets/js/eastscape-closed.js?v=32").then((m) => { Object.assign(G.SCENES, m.createClosedScenes(G, G._MAP)); })));
 /* PARTIES AND THE CRYPT (v103; the server side is eastscape-worker/src/crypt.js, the numbers eastscape-crypt-rules.js, the windows eastscape-crypt.js,
    fetched on the first invitation, click on the stairway or step into a crypt). The page keeps only: the click menu's "Invite to
    party", the red tiles of a slam (TILEFX), and handing the crypt's messages to the module. */
