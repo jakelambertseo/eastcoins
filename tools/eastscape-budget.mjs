@@ -84,7 +84,8 @@ const AREA_BUDGET = { deep: 135,   /* (2026-09-29) the Wild Bench, 2.6 KB (it wa
   /* (2026-09-27) the Foundry rebuilt as seven areas: each its own picture, trap strip and moving scenery; the Hall carries the Giant (five breaths,
      a slam and a rise, each 492x476) */ fd_grove: 200, fd_maze: 240, fd_isle: 300, fd_chain: 180, fd_gate: 140, fd_hall: 400,
   /* (2026-09-30) the Primeval Valley: the Lowlands carry the Matriarch (94 KB over ten frames) and the Lair Old Rex (82 KB); both already paletted, so they get a boss room's budget like the Hall */ valley: 280, valley_lair: 270,
-  /* (2026-09-30) the Yard raid: the Ice Man is drawn huge (246 px, ten frames) and the sheet loads only when a raid starts, never at login */ raid: 280 };   /* (the Foundry: its lava picture is 204 KB of the 260 and will not go smaller; the owner: "dont worry about any budgets") */
+  /* (2026-09-30) the Yard raid: the Ice Man is drawn huge (246 px, ten frames) and the sheet loads only when a raid starts, never at login */ raid: 280,
+  /* (2026-09-30) the Frozen Reach: the Ice Wyrm (~140 KB) rises on the first map and the Frost Jarl (~115 KB) stands on the second, like the Hall */ frozen: 360, frostspire: 370 };   /* (the Foundry: its lava picture is 204 KB of the 260 and will not go smaller; the owner: "dont worry about any budgets") */
 for (const [area, list] of Object.entries(AREA_ART)) line(`area art: ${area}`, kb([...new Set(list)].reduce((a, k) => a + size(k), 0)), AREA_BUDGET[area] || BUDGET.areaArtKB, "KB");
 
 // a picture named in an area list that the page never asks for is a typo, not a saving

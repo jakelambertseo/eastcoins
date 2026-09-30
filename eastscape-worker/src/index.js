@@ -2637,7 +2637,7 @@ export class World {
       const gates = S.def?.gates; if (!gates) continue;
       for (const gt of gates) { const open = G.gateOpenAt(now, gt) ? "i" : "#"; for (const [gx, gy] of G.gateTiles(gt)) S.g[gy][gx] = open; }
     }
-    if (this.tickN % 20 === 0) { this.wyrmTick(now);   /* (2026-09-30) the Ice Wyrm */ this.raidTick(now);   /* (2026-09-30) the Yard raid */ this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.hwTick(now); this.orderTick(now); this.projTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
+    if (this.tickN % 20 === 0) { this.wyrmTick(now);   /* (2026-09-30) the Ice Wyrm */ this.coldTick(now);   /* (2026-09-30) the Frozen Reach's cold */ this.raidTick(now);   /* (2026-09-30) the Yard raid */ this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.hwTick(now); this.orderTick(now); this.projTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
     if (this.tickN % 40 === 0) this.runsSave();   /* (2026-09-27) the dungeon runs, so a deploy does not end them */
     if (this.tickN % 20 === 0) for (const pl of this.pls.values()) {   /* once a second */
       /* (2026-09-28, the owner: "user is testing in the thieving guild but its buff isnt counting down") A BUFF'S CLOCK RUNS WHERE IT WORKS.
@@ -2784,6 +2784,23 @@ export class World {
     if (n) this.say(pl, `Group bonus: ${n} other${n > 1 ? "s" : ""} working this ${a.ob.name.toLowerCase()} with you. +${n}% to ${what}.`, "good", "group");
   }
 
+  /* (2026-09-30, the owner: "a player has to wear a 'Frost' item or else they take constant frozen/frost damage in this area") THE COLD. On a map in
+     G.COLD.maps, anyone without a ward (G.wardOf) is warned once on arrival and then loses G.COLD.share of their health every G.COLD.every until
+     they leave, put one on, or die of it. Nothing happens to a ghost between death and waking, or to an admin in god mode. */
+  coldTick(now) {
+    for (const pl of this.pls.values()) {
+      const C = pl.C, key = String(C.scene || "").split(":")[0];
+      if (!G.COLD.maps.has(key) || C.hp <= 0 || pl.god || pl.lingerUntil || G.wardOf(C)) { pl.coldAt = 0; continue; }
+      if (!pl.coldAt) { pl.coldAt = now + G.COLD.every; this.say(pl, "The cold up here goes straight through you. Without a Frost ward it will kill you: a Frost charm from Wren in Cloudreach or Morwenna on the Thunderhead, or a ward ring or amulet from the anvil.", "bad"); continue; }
+      if (now < pl.coldAt) continue;
+      pl.coldAt = now + G.COLD.every;
+      const S = this.scenes.get(C.scene), dmg = Math.max(1, Math.round(G.maxHpOf(C) * G.COLD.share));
+      C.hp -= dmg; this.touch(pl); pl.hurtAt = now;
+      if (S) S.events.push({ type: "splat", who: `p:${pl.id}`, n: dmg, kind: "hit", t: now });
+      this.say(pl, `The cold bites (${dmg}). You need a Frost ward.`, "bad");
+      if (C.hp <= 0 && S) this.die(pl, S, { mob: "the cold" });
+    }
+  }
   frozenSay(pl, now) { if (now - (pl.frozeSaid || 0) > 1500) { pl.frozeSaid = now; this.say(pl, `You're frozen solid for another ${Math.max(1, Math.ceil((pl.frozenUntil - now) / 1000))}s.`, "bad"); } }
   doAction(S, pl, now) {
     if (pl.frozenUntil > now) return;   /* (2026-09-30) frozen: no swing, no work, until the ice goes */
@@ -3500,12 +3517,14 @@ export class World {
         const k = G.HW.legend.items[Math.floor(Math.random() * G.HW.legend.items.length)], where = this.keepRare(pl, k, 1);
         if (where) { got.push([k, 1]); this.say(pl, `${G.ITEMS[k].name}. ${where === "bank" ? "No room in your bag: it went to your bank." : "It is yours."}`, "loot"); this.houseSay(`\u{1F383} ${pl.name} took ${G.ITEMS[k].name} off ${def.name}. A Long Night legendary.`); for (const q of this.pls.values()) if (q !== pl) q.out.push({ type: "casinonote", text: `\u{1F383} ${pl.name} found ${G.ITEMS[k].name}!` }); }
       }
-      if (def.pet && G.PETS[def.pet[0]] && Math.random() < def.pet[1] && !pl.C.pets.some((p) => p.k === def.pet[0])) {
-        const k = def.pet[0], pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k, name: "" };
-        pl.C.pets.push(pet); if (!pl.C.eq.pet) pl.C.eq.pet = pet.id; this.touch(pl); this.colGet(pl, `pet:${k}`, 1);
-        this.say(pl, `${G.PETS[k].name} steps out of the ${def.name.toLowerCase()}'s shadow and sits at your heel. A pet: name it in your Equipment tab.`, "loot");
-        for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `🐈‍⬛ ${pl.name} found a pet: ${G.PETS[k].name}, off ${def.name}!` });
-      }
+    }
+    /* (2026-09-30) A BOSS'S OWN PET ROLLS ON EVERY KILL. It sat inside the Long Night block above, so the Deepwarden's Pot Boy (and every boss pet
+       after it) could only ever drop while the Long Night was on, and would have stopped on November 2nd. */
+    if (def.pet && G.PETS[def.pet[0]] && Math.random() < def.pet[1] && !pl.C.pets.some((p) => p.k === def.pet[0])) {
+      const k = def.pet[0], pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k, name: "" };
+      pl.C.pets.push(pet); if (!pl.C.eq.pet) pl.C.eq.pet = pet.id; this.touch(pl); this.colGet(pl, `pet:${k}`, 1);
+      this.say(pl, `${G.PETS[k].name} steps out of the ${def.name.toLowerCase()}'s shadow and sits at your heel. A pet: name it in your Equipment tab.`, "loot");
+      for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `🐈‍⬛ ${pl.name} found a pet: ${G.PETS[k].name}, off ${def.name}!` });
     }
     /* (2026-09-28, the owner: "all egg drops should be announced in global chat too") EVERY EGG a kill turns up, the one-in-500 roll and a
        boss's own (Captain Claw's velvet, the Gardener's sparking, Old Bessemer's cindered), is said in chat for everyone, and is kept in

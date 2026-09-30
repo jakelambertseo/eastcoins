@@ -9442,3 +9442,66 @@ rmob("raidchief", { name: "The Ice Man", size: "xl", lvl: 60, hp: 4000, att: 60,
   ex: "The Frost Jarl's war-chief, come to sack the Yard. Everyone who fights the raid shares the spoils when he falls: drive him out before the time is up or the Yard's stalls are boarded up." }, 3000,
   [["tickets", [15000, 25000]], ["frost_shard", [2, 4]], ["yeti_pelt", [1, 2]], ["pot_frost", 1, 0.5], ["onyx_bar", [2, 4]], ["dragonstone_bar", [3, 6]], ["skyashlogs", [10, 20]]]);
 BOSSES.add("raidchief");
+
+/* ============================================================ THE COLD, AND WHAT THE RAID'S SPOILS MAKE (2026-09-30)
+   The owner: "a mechanic in this map too where a player has to wear a 'Frost' item or else they take constant frozen/frost damage in this area.
+   something that replaces their necklace or ring", then "Crafted from raid drops", "Harsh: 5% every 5 s", "Both: a ring and an amulet"; and "we
+   also need to wire up items dropped by the raid to late game craftable, rare chase items, etc".
+     THE COLD: on the Frozen Reach's maps, anyone not wearing a ward (`ward: "frost"` on a worn item) loses COLD.share of their health every
+     COLD.every (the worker's coldTick). Either ward does it, ring or amulet, so the price is the slot.
+     THE WARDS: the ring and the amulet are made at the anvil from the raid's frost shards and yeti pelts (the raid first, then north); a plain
+     Frost charm that does nothing else is sold by Wren in Cloudreach, so nobody is locked out.
+     THE RAID'S SPOILS also make Yeti-fur boots, Rimefang arrows and Frostmind draughts, and the Ice Man carries a chase axe, Rimecleaver. */
+export const COLD = { maps: new Set(FROZEN_MAPS), every: 5000, share: 0.05 };
+export const wardOf = (c) => SLOTS.some((s) => ITEMS[c?.eq?.[s]]?.ward === "frost");
+Object.assign(ITEMS, {
+  frostcharm:       { name: "Frost charm", short: "Charm", icon: "\u{1F9FF}", slot: "amulet", ward: "frost", ex: "A plain charm of warm stone on a cord. It does one thing: in the Frozen Reach the cold cannot touch you while you wear it. Wren sells them in Cloudreach." },
+  frostward_ring:   { name: "Frost ward ring", short: "Ring", icon: "\u{1F48D}", slot: "ring", acc: 6, str: 6, def: 6, ward: "frost", req: { skill: "hp", lvl: 60 },
+    ex: "Onyx set with a frost shard that burns warm against the skin. The Frozen Reach's cold cannot touch you while you wear it, and it is a decent ring besides." },
+  frostward_amulet: { name: "Frost ward amulet", short: "Amulet", icon: "\u{1F4FF}", slot: "amulet", acc: 8, str: 8, def: 8, ward: "frost", req: { skill: "hp", lvl: 70 },
+    ex: "Two frost shards in dragonstone on a yeti-fur cord. The Frozen Reach's cold cannot touch you while you wear it, and it is a good amulet besides." },
+  yeti_boots:       { name: "Yeti-fur boots", short: "Boots", icon: "\u{1F462}", slot: "boots", def: 11, req: { skill: "hp", lvl: 85 }, fx: { speed: 0.04 },
+    ex: "Yeti pelt over onyx plates, lined with frost shards that never let the feet go cold. More defence than any metal boot, and you walk 4% faster." },
+  rimefang_arrow:   { name: "Rimefang arrow", icon: "\u{1F3AF}", cap: 1000, ammo: { str: 40 }, req: { skill: "archery", lvl: 95 }, ex: "Tipped with a sliver of frost shard. Spends one per shot. Adds 40 to what lands, the most of any arrow." },
+  rimecleaver:      { name: "Rimecleaver", short: "Axe", icon: "\u{1FA93}", slot: "weapon", speed: 3000, acc: 34, str: 56, req: { skill: "melee", lvl: 95 }, fx: { leech: 0.05 }, chase: true,
+    ex: "The Ice Man's own axe, frost still spreading across the blade. Hits harder than any maul and gives back 5% of what it deals as health. Only the Ice Man drops it, and rarely." }
+});
+Object.assign(VALUE, { frostcharm: 900, frostward_ring: 7000, frostward_amulet: 11000, yeti_boots: 26000, rimefang_arrow: 60, rimecleaver: 120000 });
+recipe("smith_frostward_ring", { skill: "smithing", station: "anvil", lvl: 70, xp: 700, ms: 2400, in: [["frost_shard", 3], ["onyx_bar", 2], ["yeti_pelt", 1]], out: ["frostward_ring", 1] });
+recipe("smith_frostward_amulet", { skill: "smithing", station: "anvil", lvl: 72, xp: 900, ms: 2400, in: [["frost_shard", 4], ["dragonstone_bar", 3], ["yeti_pelt", 2]], out: ["frostward_amulet", 1] });
+recipe("smith_yeti_boots", { skill: "smithing", station: "anvil", lvl: 85, xp: 1400, ms: 2600, in: [["yeti_pelt", 4], ["frost_shard", 2], ["onyx_bar", 2]], out: ["yeti_boots", 1] });
+fl("fletch_rimefang_arrow", { lvl: 95, xp: 520, in: [["shaft", FLETCH.perLog], ["frost_shard", 1], ["feather", FLETCH.perLog]], out: ["rimefang_arrow", FLETCH.perLog] });
+recipe("brew_frostmind", { skill: "alchemy", station: "cauldron", lvl: 80, xp: 380, ms: 2200, in: [["small_vial", 1], ["frost_shard", 1], ["glacite", 1]], out: ["pot_frost", 2] });
+/* Wren sells the plain charm; Morwenna too, so a mage finds it on the Thunderhead */
+for (const shop of ["ranger", "mage"]) OUTFIT_SHELF[shop].unshift({ k: "frostcharm", price: 15000, kind: "trinket", lvl: 1 }), OUTFIT_BUYS[shop].add("frostcharm");
+/* the Ice Man's chase axe, and what the raiders and the Reach add to the drops */
+MOBS.raidchief.drops.push(["rimecleaver", 1, 0.01]);
+MOBS.raidhuscarl.drops.push(["yeti_pelt", 1, 0.15], ["frostward_ring", 1, 0.01]);
+MOBS.raidgiant.drops.push(["yeti_pelt", 1, 0.08]);
+
+/* ============================================================ THE LATE MAPS' PETS (2026-09-30). The owner: "these areas, the prehistoric area the frost
+   area and other maps going forward need to drop potential stronger, more unique pets and eggs". Two changes, the rule for every later map:
+     THE EGG PETS are raised above everything bred before them (the Raptor Hatchling was the Bonepup's speed 8), and their Legendaries to the top
+     of the Legendaries (Cerberpup's speed 14, the Tempest's bite 20, the Shellback's toughness 18);
+     EVERY BOSS carries its own pet (MOBS[boss].pet, the Deepwarden's Pot Boy mechanism): raid pets, out of the ordinary kill pool, rarer and
+     stronger than anything that hatches, each with a combination no other pet has. An open boss rolls it for every fighter who did their share. */
+Object.assign(PETS.raptorling, { fx: { speed: 10, tough: 4 }, ex: "It runs everywhere, so you do too, and it snaps at anything that gets close. You walk 10% faster and take 4% less damage." });
+Object.assign(PETS.pterochick, { fx: { tix: 8, speed: 3 }, ex: "It spots the shiny things from above and hurries you to them. You find 8% more tickets and walk 3% faster." });
+Object.assign(PETS.owlet, { fx: { bite: 10, tix: 4 }, ex: "It watches the water under the ice and the ground for anything worth having. Fish bite 10% more often and you find 4% more tickets." });
+Object.assign(PETS.yeticub, { fx: { tough: 8, hp: 10 }, ex: "Round, warm and in the way of whatever is coming. You take 8% less damage and have 10% more health." });
+Object.assign(PETS.tyrant, { fx: { speed: 16, tough: 10 }, ex: "The Raptor Hatchling grew teeth and an attitude. You walk 16% faster and take 10% less damage. Legendary." });
+Object.assign(PETS.skyking, { fx: { tix: 15, speed: 8 }, ex: "The chick grew into a wingspan. You find 15% more tickets and walk 8% faster. Legendary." });
+Object.assign(PETS.blizzardowl, { fx: { bite: 22, tix: 10 }, ex: "The owlet grew into a storm. Fish bite 22% more often and you find 10% more tickets. Legendary." });
+Object.assign(PETS.abominable, { fx: { tough: 18, hp: 25, speed: 6 }, ex: "The cub grew horns. You take 18% less damage, have 25% more health and walk 6% faster. Legendary." });
+Object.assign(PETS, {
+  rexling:    { name: "Rexling", art: "pet_rexling", raid: true, fx: { speed: 12, tough: 10, tix: 8 }, ex: "Old Rex's, a very small and very certain thing. You walk 12% faster, take 10% less damage and find 8% more tickets. Old Rex drops it, rarely." },
+  calf:       { name: "Matriarch's Calf", art: "pet_calf", raid: true, fx: { slots: 5, tough: 12, hp: 15 }, ex: "It follows you like it follows the herd, and it carries things. Five more bag slots, 12% less damage taken and 15% more health. The Matriarch's, rarely." },
+  jarlhound:  { name: "Jarl's Hound", art: "pet_jarlhound", raid: true, fx: { speed: 14, swing: 12, tough: 6 }, ex: "The Frost Jarl's wolf pup, in a crown it should not be wearing. You walk 14% faster, swing 12% faster and take 6% less damage. The Frost Jarl's, rarely." },
+  wyrmling:   { name: "Wyrmling", art: "pet_wyrmling", raid: true, fx: { reach: 1, swing: 15, tix: 10 }, ex: "A coil of ice that hisses at everything. You reach a tile further, swing 15% faster and find 10% more tickets. Only the Ice Wyrm drops it, and rarely." },
+  iceimp:     { name: "Ice Imp", art: "pet_iceimp", raid: true, fx: { hp: 20, tough: 12, speed: 8, tix: 6 }, ex: "The Ice Man's, and it still carries a little axe. 20% more health, 12% less damage taken, 8% faster on your feet and 6% more tickets. Only the Ice Man drops it." }
+});
+Object.assign(MOBS.rex, { pet: ["rexling", 1 / 50] });
+Object.assign(MOBS.matriarch, { pet: ["calf", 1 / 60] });
+Object.assign(MOBS.frostjarl, { pet: ["jarlhound", 1 / 50] });
+Object.assign(MOBS.icewyrm, { pet: ["wyrmling", 1 / 25] });
+Object.assign(MOBS.raidchief, { pet: ["iceimp", 1 / 30] });

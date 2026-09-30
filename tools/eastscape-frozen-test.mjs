@@ -72,11 +72,33 @@ for (const key of G.FROZEN_MAPS) {
   is([!S.mobs.some((q) => q.t === "icewyrm"), said.some((x) => /sinks back under the ice/.test(x)), !!w2], [true, true, true], "left alone past its half hour, it sinks back and says so");
   is(W.wyrmState().nextS > 0, true, "and /stats shows when the next one rises");
   for (const p of [...mages, admin]) W.pls.delete(p.id); }
+/* 4b. THE COLD (the owner: "a player has to wear a 'Frost' item or else they take constant frozen/frost damage in this area") */
+{ const S = W.scene("frozen"), bare = mage(S, 21, 20), warded = mage(S, 22, 20), charm = mage(S, 20, 20); warded.C.eq.ring = "frostward_ring"; charm.C.eq.amulet = "frostcharm";
+  for (const p of [bare, warded, charm]) { p.C.hp = G.maxHpOf(p.C); p.out = []; p.coldAt = 0; }
+  const t0 = Date.now(); W.coldTick(t0); const warned = bare.out.some((e) => /Frost ward/.test(e.text || ""));
+  const hp0 = bare.C.hp; W.coldTick(t0 + G.COLD.every + 1);
+  is([warned, hp0 - bare.C.hp, Math.max(1, Math.round(G.maxHpOf(bare.C) * G.COLD.share)), warded.C.hp === G.maxHpOf(warded.C), charm.C.hp === G.maxHpOf(charm.C)], [true, hp0 - bare.C.hp, hp0 - bare.C.hp, true, true], "without a ward: warned, then 5% every 5 s; a ward ring or Wren's charm stops it");
+  is(hp0 - bare.C.hp, Math.max(1, Math.round(G.maxHpOf(bare.C) * G.COLD.share)), "the bite is 5% of max health");
+  const cloud = mage(W.scene("cloud"), 20, 12); cloud.C.hp = G.maxHpOf(cloud.C); W.coldTick(t0); W.coldTick(t0 + 99999); is(cloud.C.hp, G.maxHpOf(cloud.C), "and nothing in Cloudreach");
+  is([G.outfitShelf("ranger")[0]?.k, G.outfitShelf("mage")[0]?.k, G.RECIPES.smith_frostward_ring.in.map(([k]) => k).includes("frost_shard"), G.RECIPES.smith_frostward_amulet.in.map(([k]) => k).includes("yeti_pelt")], ["frostcharm", "frostcharm", true, true], "Wren and Morwenna sell the charm; the wards are made from the raid's shards and pelts");
+  is([!!G.RECIPES.smith_yeti_boots, G.RECIPES.fletch_rimefang_arrow.out[0], G.RECIPES.brew_frostmind.out[0], G.MOBS.raidchief.drops.some(([k]) => k === "rimecleaver"), G.ITEMS.rimecleaver.chase], [true, "rimefang_arrow", "pot_frost", true, true], "the raid's spoils make boots, arrows and draughts; the Ice Man carries Rimecleaver");
+  for (const p of [bare, warded, charm, cloud]) W.pls.delete(p.id); }
 /* 5. the Frost Jarl */
 { const S = W.scene("frostspire"), m = S.mobs.find((q) => q.t === "frostjarl"), spots = openCells(S).filter((o) => G.cheb(o, m) <= 5).slice(0, 2), ms = spots.map((o) => mage(S, o.x, o.y));
   for (let i = 0; i < 30; i++) for (const p of ms) cast(S, p, m);
   for (const p of ms) m.by[p.id] = Math.max(m.by[p.id] || 0, Math.ceil(G.MOBS.frostjarl.hp * G.OPEN_SHARE) + 1);
   for (const p of ms) p.out = []; said.length = 0; m.hp = 1; for (let i = 0; i < 50 && !m.dead; i++) cast(S, ms[0], m);
   is([m.dead, ms.every((p) => p.out.some((e) => e.type === "runreport")), said.some((x) => /put The Frost Jarl down/.test(x))], [true, true, true], "the Frost Jarl: a shared kill, the report, CASINO's line"); }
+/* 6. THE BOSS PETS (the owner: "need to drop potential stronger, more unique pets and eggs"), and they drop outside the Long Night too */
+{ const S = W.scene("frostspire"); S.mobs = S.mobs.filter((m) => m.t !== "frostjarl");
+  const jarl = { id: "jtest", t: "frostjarl", x: 21, y: 7, hx: 21, hy: 7, hp: 1, maxHp: G.MOBS.frostjarl.hp, path: [], step: null, face: 1, dead: false, respawnAt: 0, hurtAt: 0, swingAt: 0, lastSwing: 0, perch: true, by: {} };
+  S.mobs.push(jarl); const p = mage(S, 16, 7); jarl.by[p.id] = 99999;
+  const hwWas = G.HW.live; G.HW.live = false; const r = Math.random; Math.random = () => 0; const hwDuring = G.hwOn();
+  try { for (let i = 0; i < 20 && S.mobs.includes(jarl) && !jarl.dead; i++) cast(S, p, jarl); } finally { Math.random = r; G.HW.live = hwWas; }
+  is([hwDuring, p.C.pets.some((x) => x.k === "jarlhound")], [false, true], "the Frost Jarl drops the Jarl's Hound, with the Long Night off");
+  const LATE = new Set(["raptorling", "pterochick", "owlet", "yeticub", "tyrant", "skyking", "blizzardowl", "abominable", "rexling", "calf", "jarlhound", "wyrmling", "iceimp"]);
+  const best = (key) => Math.max(...Object.entries(G.PETS).filter(([k]) => !LATE.has(k)).map(([, q]) => q.fx?.[key] || 0));
+  is([G.PETS.abominable.fx.tough >= best("tough"), G.PETS.blizzardowl.fx.bite >= best("bite"), G.PETS.tyrant.fx.speed >= best("speed"), ["rexling", "calf", "jarlhound", "wyrmling", "iceimp"].every((k) => G.PETS[k].raid && Object.values(G.MOBS).some((m) => m.pet?.[0] === k))], [true, true, true, true], "the late maps' Legendaries top every earlier one, and each boss carries its own pet");
+  W.pls.delete(p.id); }
 console.log(bad ? `\n${bad} problem(s)` : "\nThe Frozen Reach holds: the mages' map, its shelves and floes, the sure cast, the Ice Wyrm's day and the Frost Jarl");
 process.exitCode = bad ? 1 : 0;
