@@ -2068,3 +2068,12 @@ Shared 395, wiki 221. The player who reported the gem take-out can be told it's 
 - Boss pets on every late boss (Rexling, Calf, Jarl's Hound, Wyrmling, Ice Imp); stronger late egg pets; MIX (plain drops from the 2-3 maps before, 3%).
 - FIX live: boss pets only rolled during the Long Night (the Pot Boy).
 - Held for the all-up wiki pass: the Gems page (the sorter, the new gem drops). Parked for the owner: world-event ideas (combat raids + skilling events), EASTSCAPE-DRAFTS.md section 15.
+
+## BACKLOG (2026-09-30): buff stacking, analysed, not a primary focus (the owner: "add it to the backlog, its not a primary focus right now")
+- Full stack vs none (same kit): ~x2.1-2.6 DPS, ~x2 survivability (Rex solo ~21 min -> ~8). Most outcomes are capped on the TOTAL (OUT_CAP, swing 20%).
+- UNCAPPED lanes that compound: damage (tkDmg = gadget + style gem + outfit + adm/mdm, x(1+focus), then x(1+gemVs)); accuracy (scope + jade, x(1+focus));
+  Ward (x1.12 defence, cubed through mobHitChance, ~x0.71 hits) on top of the tough cap.
+- Bugs: fxOf.speed never reaches walking (food, drinks, the +3% achievement, yeti boots all promise it; stepMsOf only gets the admin value);
+  pet tix sits outside the 25% tix cap; bloodstone says "food and regeneration" but only food reads it.
+- Options: (1) measure real multipliers per fight into /stats first; (2) soft caps (full to ~+40%, half after) on damage and accuracy, Ward
+  inside one damage-reduction ceiling; (3) a Buffs panel showing each buff and how close to each cap; (4) fix the three bugs. Recommended 4 + 1, then decide 2.
