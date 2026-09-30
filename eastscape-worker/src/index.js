@@ -3379,6 +3379,7 @@ export class World {
        Sending the type lets the page pitch it by size. This is also the fragile-trigger fix the backlog asks for:
        reword that chat line now and the sound is unaffected. */
     pl.out.push({ type: "mobdie", t: m.t });
+    S.events?.push({ type: "mobgone", t: m.t, who: m.id, by: pl.id, at: now });   /* (2026-09-29) the whole map hears it fall, not only the killer (the combat pass) */
     if (S.def.count) return this.countKill(S, pl, m, now);
     if (S.def.crypt) return this.cryptKill(S, pl, m, now);
     if (S.def.pyramid) return this.pyramidKill(S, pl, m, now);
@@ -3493,6 +3494,9 @@ export class World {
   }
   // killer: the player who landed the last hit, or { mob: name }
   die(pl, S, killer) {
+    /* (2026-09-29) THE COMBAT PASS: the page is told it died, EVERY way: the Crypt, the Pyramid, the Tower and the Count Room return below
+       before the ordinary death's chat line, so a dungeon death used to be silent. `where` names the map, `pvp` whether a player did it. */
+    pl.out.push({ type: "died", where: S?.def?.name || null, pvp: !!killer?.C, by: killer?.C ? killer.name : (killer?.mob || (killer?.t && G.MOBS[killer.t]?.name) || null) });
     this.meterAdd(pl, "deaths", 1, null, killer?.mob || killer?.name || (killer?.t && G.MOBS[killer.t]?.name) || null);   /* a monster kills with { mob: name }, a player with themselves */   /* (2026-09-28) the party meter, and what did it, for the run report */
     if (S?.def.count) return this.countDeath(pl, S);
     if (S?.def.crypt) return this.cryptDeath(pl, S);

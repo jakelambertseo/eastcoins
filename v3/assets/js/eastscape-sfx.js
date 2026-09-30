@@ -126,6 +126,21 @@ export const SOUNDS = {
   hurt:       { vol: 0.45, files: takes("hurt", 3), layers: [tone(300, 0, 0.15, 0.3, "square", { f2: 120, lp: 1800 })] },
   mob_die:    { vol: 0.45, files: takes("mobdie", 1), layers: [tone(420, 0, 0.35, 0.28, "square", { f2: 60, lp: 2000 }), { w: "noise", d: 0.22, v: 0.25, lp: 1000 }] },
   die:        { vol: 0.5, layers: [tone(400, 0, 0.8, 0.3, "saw", { f2: 45, s: 0.2, lp: 1500 })] },
+  /* (2026-09-29, the owner's pre-launch list: "combat and fighting weight fixes (new sounds ... on death hit sounds)") THE COMBAT PASS. Nothing
+     new is downloaded: the recorded takes already here are reused where they fit, and the rest is synthesised, steady (one pitch) where it
+     repeats, per the owner's rule for anything heard over and over.
+     - mob_swing: a monster winding up at you, the swing takes pitched down and kept quiet, so a blow is heard coming.
+     - crit: the heavy CC0 impact the archery crit uses (Kenney impactSoft_heavy), for a melee crit too; it had been the plain hit, lowered.
+     - weak / resist / guard: what the WEAK, RESIST and GUARD words under a hit had never had: a bright ping, a dull thud, a metal clank.
+     - heartbeat: under a quarter of your health, while a fight is on: two soft low beats.
+     - died: your own death, every kind of it (a dungeon's too, which used to be silent): a slow falling tone over a low swell. */
+  mob_swing:  { vol: 0.22, jitter: 0.1, files: takes("swing", 3), layers: [{ w: "noise", a: 0.02, d: 0.14, v: 0.2, lp: 2600, hp: 600 }] },
+  crit:       { vol: 0.8, files: oggs("arrowcrit", 2), layers: [{ w: "noise", d: 0.12, v: 0.5, lp: 1200 }, tone(110, 0, 0.16, 0.4, "sine", { f2: 45 })] },
+  weak:       { vol: 0.28, steady: true, layers: [tone(1568, 0, 0.09, 0.2, "sine"), tone(2352, 0.05, 0.14, 0.14, "sine")] },
+  resist:     { vol: 0.34, steady: true, layers: [tone(130, 0, 0.12, 0.35, "sine", { f2: 90 }), { w: "noise", d: 0.06, v: 0.15, lp: 500 }] },
+  guard:      { vol: 0.3, steady: true, layers: [tone(880, 0, 0.12, 0.18, "square", { lp: 3000 }), tone(1320, 0, 0.18, 0.12, "tri"), { w: "noise", d: 0.04, v: 0.18, hp: 4000 }] },
+  heartbeat:  { vol: 0.3, steady: true, layers: [tone(62, 0, 0.09, 0.5, "sine", { f2: 48 }), tone(58, 0.22, 0.1, 0.4, "sine", { f2: 44 })] },
+  died:       { vol: 0.5, steady: true, layers: [tone(330, 0, 1.2, 0.28, "tri", { f2: 82 }), tone(165, 0.15, 1.4, 0.2, "sine", { f2: 41 }), { w: "noise", a: 0.02, d: 0.5, v: 0.18, lp: 700 }] },
   /* FOOTSTEPS (2026-09-23). New: the game had none. Three surfaces, picked from the tile you step onto — the
      interior scenes paint a room ("floor"), "," and "s" are path and sand ("dirt"), everything else outdoors is
      grass. Only YOUR character makes them; thirty players in the Yard all stepping would be a stampede.

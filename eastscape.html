@@ -15,8 +15,8 @@
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=393">
-<link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=17">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=394">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
      (eastscape-worker, a Cloudflare Durable Object), which also keeps your character: saving
@@ -958,6 +958,11 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
    canvas at the top centre, 30 to 82 px down, and the banner sat across it. */
 #dblBar{position:absolute;left:50%;top:94px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;background:linear-gradient(#ffd23f,#e8a01f);color:#2a1c08;font-weight:800;font-size:13px;letter-spacing:.04em;box-shadow:0 0 0 2px #7a5410,0 3px 10px rgba(0,0,0,.45);white-space:nowrap}
 #dblBar[hidden]{display:none}
+/* (2026-09-29) the death card: greys the view and fades out on its own; nothing to click */
+#diedCard{position:absolute;inset:0;z-index:7;display:none;place-items:center;align-content:center;gap:6px;pointer-events:none;background:radial-gradient(circle,rgba(20,20,24,.45),rgba(0,0,0,.82));backdrop-filter:grayscale(1)}
+#diedCard.show{display:grid;animation:diedFade 2.6s ease-out forwards}#diedCard b{font:800 40px Cinzel,serif;color:#e8d8c8;letter-spacing:.06em;text-shadow:0 3px 0 #2a0a0a,0 0 18px rgba(200,40,40,.6)}#diedCard small{font:600 15px Lora,serif;color:#d8c8b8}
+@keyframes diedFade{0%{opacity:0}12%{opacity:1}70%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){#diedCard.show{animation:diedFade 2.6s steps(1,end) forwards}}
 #dblBar b{font-size:14px}
 #dblBar .dblt{font-variant-numeric:tabular-nums;background:rgba(0,0,0,.18);border-radius:999px;padding:1px 7px}
 @media (prefers-reduced-motion: no-preference){#dblBar{animation:dblPulse 2.4s ease-in-out infinite}@keyframes dblPulse{0%,100%{box-shadow:0 0 0 2px #7a5410,0 3px 10px rgba(0,0,0,.45)}50%{box-shadow:0 0 0 2px #7a5410,0 0 16px 3px rgba(255,210,63,.55),0 3px 10px rgba(0,0,0,.45)}}}
@@ -1952,7 +1957,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=393";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=394";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
 /* (2026-09-25) THE WIKI PULLS THE CLOSED AREAS' RULES IN WITH IT. The Crypt, the Pyramid and the Tower merge
@@ -1961,10 +1966,10 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=218").then((m) => { WK = m; }),
+  import("/v3/assets/js/eastscape-wiki.js?v=219").then((m) => { WK = m; }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
-import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=17";
+import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -2003,6 +2008,7 @@ const DEV = ["localhost", "127.0.0.1"].includes(location.hostname);
 let ws = null, retry = 0, retryTimer = null, lastMsg = 0, everConnected = false, kicked = false, signedOut = false, restartHold = 0;
 function net(state, text) { $("net").className = `net ${state}`; $("netText").textContent = text; $("net").title = text; }   /* (2026-09-28) .net.ok hides the words: see THE SLIM BAR (top) */
 // what a swing sounds like, by what you're doing with it
+const OTHER_SFX = { t: 0 };   /* (2026-09-29) the last time somebody else's hit was heard */
 const SWING_SFX = { mob: "swing", pvp: "swing", tree: "chop", rock: "mine", vein: "mine", spot: "cast", cook: "cook", smelt: "smelt", smith: "anvil", olive: "pick", wheat: "pick" };
 let sfxSwing = 0;
 function send(m) {
@@ -2173,7 +2179,11 @@ function onMsg(m) {
     { const was = Z.mobs, now2 = performance.now();
       for (const o of was) { if (o.dead) continue; const n = m.mobs.find((q) => q.id === o.id); if (!n || !n.dead) continue;
         const p = posOf(o, Date.now()); GONE.set(o.id, { t: o.t, x: p.px, y: p.py, face: o.face, at: now2 });
-        const key = MOBS[o.t]?.art || o.t; bitsAt(p.px * T + 8, p.py * T + 6, 14, (IMG[key]?.cols) || ["#d8d0c0"], 1.7, 0.8); } }
+        const key = MOBS[o.t]?.art || o.t; bitsAt(p.px * T + 8, p.py * T + 6, 14, (IMG[key]?.cols) || ["#d8d0c0"], 1.7, 0.8); }
+      /* (2026-09-29, the combat pass) A MONSTER WINDING UP AT YOU IS HEARD: a new swing from anything within two tiles of you, pitched by size */
+      const meNow = you && was && Z.players.find((x) => x.id === you.id);
+      if (meNow) for (const n of m.mobs) { if (n.dead || !n.swingAt) continue; const o = was.find((q) => q.id === n.id); if (!o || o.swingAt === n.swingAt) continue;
+        if (Math.max(Math.abs(n.x - meNow.x), Math.abs(n.y - meNow.y)) > 2) continue; const z = MOBS[n.t]?.size; SFX.play("mob_swing", { rate: z === "s" ? 1.25 : z === "xl" ? 0.7 : z === "l" ? 0.82 : 1 }); } }
     Z.players = m.players.map(withWho); Z.mobs = m.mobs; Z.bots = m.bots.map(withWho); Z.ground = m.ground || [];
     if (m.isle) { const was = Z.isle?.theme; Z.isle = m.isle; if (was !== m.isle.theme) Z.bg = paintBg(); } else Z.isle = null;
     checkPred();
@@ -2188,6 +2198,7 @@ function onMsg(m) {
       sfxSwing = mine.swingAt;
     }
     for (const e of m.ev || []) {
+      if (e.type === "mobgone") { const z = MOBS[e.t]?.size; SFX.play("mob_die", { rate: z === "s" ? 1.42 : z === "m" ? 1.12 : z === "xl" ? 0.62 : 0.84, jitter: 0.14, vol: (z === "xl" || z === "l" ? 1.15 : 0.95) * (e.by === you?.id ? 1 : 0.45) }); continue; }   /* (2026-09-29) the whole map hears it; yours loudest */
       if (e.type === "slam") { TILEFX.push({ x: e.x, y: e.y, r: e.r, from: performance.now(), until: performance.now() + e.ms }); SFX.play("ui_error"); }
       if (e.type === "slammed") { shakeUntil = performance.now() + 260; SFX.play("hit", { rate: 0.5, vol: 1 }); }
       if (e.type === "splat") {
@@ -2206,7 +2217,8 @@ function onMsg(m) {
         splats.push({ who: e.who, n: e.n, kind: e.kind, crit: !!e.crit, kill: !!e.kill, at: performance.now() + (flies ? FLIGHT_MS : 0), vs: e.em > 0 ? "WEAK" : e.em < 0 ? "RESIST" : e.gs ? "GUARD" : null });
         if (e.em || e.gs) { const pp = PLATE.get(e.who), at = performance.now() + (flies ? FLIGHT_MS : 0); if (pp) { if (e.em && e.el) pp.pulse[e.el] = at; if (e.gs) pp.pulse[e.gs] = at; } }   /* (2026-09-29) the plate's icon pops as the hit lands */
         /* (v112) sparks off whatever was hit, in its own colours: more for a crit, and a kill's dust is thrown by the death below.
-           (v113: the sprite no longer FLINCHES with them, which was the part that read as noise.) */
+           (v113: the sprite no longer FLINCHES with them, which was the part that read as noise; 2026-09-29, the owner: flinches back on,
+           as a recoil and a white flash - see hurtF / flinchOf in the draw.) */
         /* (2026-09-25) THE LANDING. Everything a hit does to the ear and the eye - the thud, the sparks, the shake - happens
            where the arrow ARRIVES, FLIGHT_MS after it left, so a bow sounds like release ... thunk rather than both at once. */
         const pel = e.ranged && e.ak ? ITEMS[e.ak]?.ammo?.el : null;   /* (2026-09-26) a spell page's element: its own impact and sound */
@@ -2216,7 +2228,10 @@ function onMsg(m) {
             if (who) { const p = posOf(who, Date.now()), key = hitMob ? MOBS[hitMob.t]?.art || hitMob.t : null, cols = (key && IMG[key]?.cols) || ["#c42a2a", "#e8b0a0"];
               bitsAt(p.px * T + 8, p.py * T + (hitMob ? 6 : 8), e.crit ? 10 : 5, e.crit ? ["#ffd23f", "#fff0a0", ...cols] : cols, e.crit ? 1.5 : 1, 0.6); } }
           if (onMe) { SFX.play(e.n ? "hurt" : e.ranged ? "arrow_miss" : "miss"); if (e.n && me && e.n >= G.maxHpOf(me) / 4) shakeUntil = performance.now() + 220; }
-          else if (mine?.mob && e.who === mine.mob) { SFX.play(pel ? (e.n ? `spell_${pel}` : "arrow_miss") : e.ranged ? (e.n ? (e.crit ? "arrow_crit" : "arrow_hit") : "arrow_miss") : e.n ? "hit" : "miss", pel && e.crit ? { vol: 1.2 } : e.crit && !e.ranged ? { rate: 0.7, vol: 1 } : undefined); if (e.crit && mineHit) { shakeUntil = performance.now() + 160; SFX.play("coins", { vol: 0.35, rate: 1.4 }); } if (e.kill && mineHit) SFX.play("task_done", { vol: 0.4, rate: 1.3 }); }
+          else if (mine?.mob && e.who === mine.mob) { SFX.play(pel ? (e.n ? `spell_${pel}` : "arrow_miss") : e.ranged ? (e.n ? (e.crit ? "arrow_crit" : "arrow_hit") : "arrow_miss") : e.n ? (e.crit ? "crit" : "hit") : "miss", pel && e.crit ? { vol: 1.2 } : undefined);   /* (2026-09-29) a melee crit has its own heavy impact */
+            if (e.n && (e.em || e.gs)) setTimeout(() => SFX.play(e.em > 0 ? "weak" : e.em < 0 ? "resist" : "guard"), 45); if (e.crit && mineHit) { shakeUntil = performance.now() + 160; SFX.play("coins", { vol: 0.35, rate: 1.4 }); } if (e.kill && mineHit) SFX.play("task_done", { vol: 0.4, rate: 1.3 }); }
+          /* (2026-09-29) SOMEBODY ELSE'S FIGHT is heard too, quietly and at most four times a second, so a busy map sounds busy */
+          else if (!onMe && e.by && e.by !== you?.id && performance.now() - OTHER_SFX.t > 250) { OTHER_SFX.t = performance.now(); SFX.play(pel ? (e.n ? `spell_${pel}` : "arrow_miss") : e.ranged ? (e.n ? "arrow_hit" : "arrow_miss") : e.n ? "hit" : "miss", { vol: 0.3 }); }
           /* an arrow that lands throws splinters and a puff of fletching; a crit's go gold */
           if (e.ranged && e.n && !pel) { const tm = Z.mobs.find((q) => q.id === e.who) || (e.who.startsWith("p:") ? Z.players.find((q) => `p:${q.id}` === e.who) : null);
             if (tm) { const p = posOf(tm, Date.now()); bitsAt(p.px * T + 8, p.py * T + 6, e.crit ? 11 : 6, e.crit ? ["#ffd23f", "#fff6c0", "#ffffff", "#e0a010"] : ["#8a6a42", "#b89060", "#f4f0e6", "#ffffff"], e.crit ? 1.7 : 1.15, 0.9); } }
@@ -2363,7 +2378,8 @@ function onEvent(e) {
      That is variety that MEANS something, where random wobble on its own is just noise — and the jitter on top
      gives a different death within a size every time. Another take or two would widen it further; this is what the
      one we have can do. */
-  if (e.type === "mobdie") { const z = MOBS[e.t]?.size; return void SFX.play("mob_die", { rate: z === "s" ? 1.42 : z === "m" ? 1.12 : z === "xl" ? 0.62 : 0.84, jitter: 0.14, vol: z === "xl" || z === "l" ? 1.15 : 0.95 }); }
+  if (e.type === "died") return diedFx(e);   /* (2026-09-29) the combat pass: see diedFx */
+  if (e.type === "mobdie") return;   /* (2026-09-29) the sound moved to the scene's "mobgone", which the whole map hears; kept so an old server's event is harmless */
   if (e.type === "ach") { SFX.play("task_done"); if (!$("achWin").hidden) renderAch(); return; }
   if (e.type === "fell") return void SFX.play("tree_fall");
   if (e.type === "double") { dblSet(e.on); if (e.on) SFX.play("jackpot"); return; }
@@ -2562,7 +2578,7 @@ document.addEventListener("keydown", (e) => {
 
 /* ------------------------------------------------------------ messages */
 function say(text, cls = "sys") {
-  if (/^Oh dear, you are dead/.test(text)) SFX.play("die");
+  if (/^Oh dear, you are dead/.test(text)) { /* (2026-09-29) death's sound is the server's "died" event now (diedFx), which a dungeon death sends too; this line stays text only */ }
   else if (/^You stop .*idle/.test(text)) SFX.play("idle_stop");
   else if (/^💎/.test(text)) SFX.play("jackpot");   /* a REAL ZCoin, off a monster or a line: it had no sound at all */
   else if (/^Daily task done/.test(text)) SFX.play("task_done");
@@ -4590,6 +4606,26 @@ function bowBulge(k) {
   } catch (e) { BOW_BULGE.set(k, null); }
   return BOW_BULGE.get(k);
 }
+const TIER_COL = { bronze: "#e0a060", emerald: "#50e090", diamond: "#b8f0ff", dragonstone: "#ff6060", onyx: "#b8a8e0", starfall: "#ffe880", eclipse: "#c8a0ff", nova: "#ffb060", singularity: "#ff80e0", hallowed: "#ff9a30" };
+const EL_COL = { fire: "#ff8a30", frost: "#9ae0ff", storm: "#fff080", void: "#b070ff", sun: "#ffe060", arcane: "#d8a8ff" };
+function attackFx(it, x, y, ux, uy, t, S2, ammoK) {
+  const a = Math.atan2(uy, ux), k = Math.max(0, 1 - t), style = it?.launcher ? it.launcher.style || "archery" : "melee";
+  ctx.save(); ctx.lineCap = "round";
+  if (style === "melee") {   /* a crescent swept across the facing, bright at the leading edge */
+    const r = 13 * S2, from = a - 1.2, to = from + 2.4 * Math.min(1, t * 1.8), col = TIER_COL[it?.tier] || "#ffffff";
+    ctx.globalAlpha = 0.85 * k; ctx.strokeStyle = col; ctx.lineWidth = 3.2 * S2; ctx.beginPath(); ctx.arc(x + ux * 4 * S2, y + uy * 4 * S2, r, from, to); ctx.stroke();
+    ctx.globalAlpha = 0.9 * k; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.2 * S2; ctx.beginPath(); ctx.arc(x + ux * 4 * S2, y + uy * 4 * S2, r, Math.max(from, to - 0.5), to); ctx.stroke();
+  } else if (style === "archery") {   /* the string snapping back, and a streak down the line of the shot */
+    ctx.globalAlpha = 0.9 * k; ctx.strokeStyle = "#fff6d8"; ctx.lineWidth = 1.2 * S2; const px = -uy, py = ux, bx = x + ux * 5 * S2, by = y + uy * 5 * S2, pull = (1 - Math.min(1, t * 3)) * 4 * S2;
+    ctx.beginPath(); ctx.moveTo(bx + px * 7 * S2, by + py * 7 * S2); ctx.lineTo(bx - ux * pull, by - uy * pull); ctx.lineTo(bx - px * 7 * S2, by - py * 7 * S2); ctx.stroke();
+    ctx.globalAlpha = 0.5 * k; ctx.lineWidth = 1.6 * S2; ctx.beginPath(); ctx.moveTo(bx + ux * 4 * S2, by + uy * 4 * S2); ctx.lineTo(bx + ux * (6 + 26 * t) * S2, by + uy * (6 + 26 * t) * S2); ctx.stroke();
+  } else {   /* a ring opening at the wand's tip, in the loaded page's element */
+    const col = EL_COL[ITEMS[ammoK]?.ammo?.el] || EL_COL.arcane, cx = x + ux * 7 * S2, cy = y + uy * 7 * S2;
+    ctx.globalAlpha = 0.85 * k; ctx.strokeStyle = col; ctx.lineWidth = 2 * S2; ctx.beginPath(); ctx.arc(cx, cy, (3 + 11 * t) * S2, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 0.6 * k; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(cx, cy, 2.5 * S2 * k, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
 function heldIcon(icon, x, y, dir, S2) {
   if (dir === "north") return;
   const west = (dir || "south").includes("west");
@@ -4967,21 +5003,28 @@ function frame() {
 /** how far above its feet a drawn thing reaches, in world units (0 if its picture isn't here: the drawn fallbacks are about a tile) */
 const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; };   /* (a picture's own pixels are A to a world unit: spr() draws it at native size into the A-scaled canvas) */
   const hurtNow = (e) => !calm && now - (e.hurtAt || 0) < 200;
+  /* (2026-09-29, the owner: "can you put the flinches back on") THE FLINCH AND THE FLASH. v113 took the flinch off as noise; it is back as a
+     recoil rather than a jiggle: whatever is hit jolts a couple of pixels back from the way it faces (towards what hit it, so away from the
+     blow) and settles within 180 ms, and for the first 70 ms of the red it flashes white, the frame that says "that landed". Off under
+     reduced motion, like every other movement here. */
+  const WHITE = "brightness(2.6) saturate(.25)";
+  const hurtF = (e) => { if (calm) return ""; const t = now - (e.hurtAt || 0); return t >= 0 && t < 70 ? WHITE : t < 200 ? RED : ""; };
+  const flinchOf = (e) => { if (calm) return 0; const t = now - (e.hurtAt || 0); return t >= 0 && t < 180 ? Math.sin((t / 180) * Math.PI) * 2.5 : 0; };
   /* (v112) the dead, still falling: drawn where they stood, turned onto their side and fading out */
   for (const [id, g] of GONE) { const k = (pnow - g.at) / DIE_MS; if (k >= 1 || calm) { GONE.delete(id); continue; }
     sprites.push({ y: g.y * T + 14, draw: () => { const art = MOBS[g.t]?.art || g.t; lc.globalAlpha = Math.max(0, 1 - k * k);
       spr(art, g.x * T + 8, g.y * T + 14 + k * 3, g.face < 0, "brightness(0.75) saturate(0.6)", 1, (Math.PI / 2) * Math.min(1, k * 1.6)); lc.globalAlpha = 1; } }); }
   for (const m of Z.mobs) { if (m.dead) DEADSEEN.add(m.id); else if (DEADSEEN.has(m.id)) { DEADSEEN.delete(m.id); RISEN.set(m.id, now); } }   /* (2026-09-27) who has just come back */
   for (const m of Z.mobs) if (!m.dead) sprites.push({ y: posOf(m, now).py * T + 14, draw: () => {
-    const p = posOf(m, now), hurt = hurtNow(m), lunge = now - m.swingAt < 200 ? m.face * 2 : 0;
+    const p = posOf(m, now), hurt = hurtNow(m), lunge = (now - m.swingAt < 200 ? m.face * 2 : 0) - (m.face || 1) * flinchOf(m);   /* (the flinch rides the lunge's offset, backwards) */
     /* (v114/v115) the legs move if this one has frames, and it breathes when it stops */
     const art = MOBS[m.t].art || m.t, ph = walkPhase(m.id), walking = calm ? null : p.moving ? walkArt(art, ph, pnow) : idleArt(art, ph, pnow);
     /* (2026-09-27, the owner: "the boss and gifs from the pack") a monster with drawn attack frames plays them as it swings, and one with
        rise frames plays them when it comes back; both are drawn on the standing frame's anchor, so the feet stay where they were */
     const sw = now - (m.swingAt || 0), rs = RISEN.has(m.id) ? now - RISEN.get(m.id) : 1e9;
     const special = !calm && IMG[`${art}_r1`] && rs < 1800 ? (() => { let n = 1; while (IMG[`${art}_r${n + 1}`]) n++; return `${art}_r${1 + Math.min(n - 1, Math.floor(rs / (1800 / n)))}`; })() : !calm && IMG[`${art}_a1`] && sw < 480 ? `${art}_a${1 + Math.min(3, Math.floor(sw / 120))}` : null;
-    if (special) { sprAs(special, art, p.px * T + 8, p.py * T + 14, m.face < 0, hurt ? RED : ""); return; }
-    if (!spr(walking || art, p.px * T + 8 + lunge, p.py * T + 14 + (walking ? 0 : bobOf(p.moving, 110)), m.face < 0, hurt ? RED : "")) (DRAW[m.t] || drawBlob)(p.px * T + 8 + lunge, p.py * T + (MOBS[m.t].oy ?? 14) + bobOf(p.moving, 110), m.face, hurt);
+    if (special) { sprAs(special, art, p.px * T + 8 + lunge, p.py * T + 14, m.face < 0, hurtF(m)); return; }
+    if (!spr(walking || art, p.px * T + 8 + lunge, p.py * T + 14 + (walking ? 0 : bobOf(p.moving, 110)), m.face < 0, hurtF(m))) (DRAW[m.t] || drawBlob)(p.px * T + 8 + lunge, p.py * T + (MOBS[m.t].oy ?? 14) + bobOf(p.moving, 110), m.face, hurt);
   } });
   if (FIGHT && Z.def.pit) {
     const P = Z.def.pit, cx = (P.x + P.w / 2) * T, cy = (P.y + P.h / 2) * T + 6, el = FIGHT.phase === "fight" ? now - FIGHT.startedAt : -1, done = (FIGHT.script || []).filter((h) => h.at <= el), lastHit = done[done.length - 1];
@@ -5033,7 +5076,8 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
     const fit = "tiro"   /* (v104, the owner: "when a user walks outside of the casino, it shows the gear they're wearing. it should only remain the user's customized character". Armour changed the whole sprite outdoors (G.outfitOf); now the person you made is who you are everywhere, and gear shows in the equipment panel only.) */, mine = pl.id === you.id ? me?.look || pl.look : pl.look   /* your own look is always known here; the roster takes a moment to say it again after a door */, myVan = pl.id === you.id ? me?.van || pl.van : pl.van   /* as with the look: your own is known here before the roster repeats it */,
       own = fit === "tiro" && mine ? lookSprite(mine, d, myVan) : null, lk = fit !== "tiro" ? null : own !== null ? own : lookArt(G.lookFor(pl), d), fk = fit !== "tiro" ? facedArt(`hero_${fit}`, d) : null, hk = lk === "" || fk === "" ? "" : lk || fk || (fit === "tiro" && IMG[`hero_tiro_${d}`] ? `hero_tiro_${d}` : `hero_${d}`);
     const seat = rrSeatOf(pl), down = seat && RRS.out.has(seat.i) && !p.moving;   /* shot at the table: slumped beside the stool until the table clears */
-    spr(hk, p.px * T + 8 + ux * lunge * 0.7, p.py * T + 15 + uy * lunge * 0.7 + bobOf(p.moving), false, (down ? "grayscale(1) brightness(.7)" : hurtNow(pl) ? RED : "") + (pl.id === you.id || lk ? "" : " hue-rotate(200deg)"), 1, down ? Math.PI / 2 : 0);
+    const fl = down ? 0 : flinchOf(pl);   /* (2026-09-29) recoil against the way they face */
+    spr(hk, p.px * T + 8 + ux * (lunge * 0.7 - fl), p.py * T + 15 + uy * (lunge * 0.7 - fl) + bobOf(p.moving), false, (down ? "grayscale(1) brightness(.7)" : hurtF(pl)) + (pl.id === you.id || lk ? "" : " hue-rotate(200deg)"), 1, down ? Math.PI / 2 : 0);
   } });
   /* (2026-09-28, the owner: "pets need to not be attached to the characters at the hip, and need to move around, even if theres no
      animations, like mobs do. right now it looks like theyre sewn on the character") PETS FOLLOW. Each pet keeps its own spot, here in the
@@ -5096,6 +5140,12 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
 
   // what's in everyone's hand, until the art has tools (the sword is already in the sprite)
   for (const pl of Z.players) if (pl.weapon && pl.weapon !== "rudis") { const p = pos(pl); heldIcon(pl.weapon, sx(p.px * T + 8), sy(p.py * T + 15), pl.id === you.id && PRED.on ? PRED.dir : pl.dir, S2); }
+  /* (2026-09-29, the owner: drawn effects rather than new frames) THE ATTACK, DRAWN OVER THE SPRITE for a quarter of a second after a swing:
+     a sword's arc in its metal's colour, a bow's string snapping and a streak down the line of the shot, a wand's ring in the page's
+     element. Every body, hair and outfit gets it at once, because none of it is the sprite. Off under reduced motion. */
+  if (!calm) for (const pl of Z.players) { const sw = now - (pl.swingAt || 0); if (!(sw >= 0 && sw < 240) || !(pl.act === "mob" || pl.act === "pvp")) continue;
+    const p = pos(pl), d = (pl.id === you.id && PRED.on ? PRED.dir : pl.dir) || "south", key = Object.keys(DIRS).find((k) => DIRS[k] === d) || "0,1", [ux, uy] = key.split(",").map(Number);
+    attackFx(ITEMS[pl.weapon] || null, sx(p.px * T + 8), sy(p.py * T + 10), ux, uy, sw / 240, S2, pl.id === you.id ? G.ammoOf(me)?.k : null); }
   for (const b of Z.bots) if (b.work != null && !GAME_T.has(b.workT)) { const p = posOf(b, now), t = b.workT; heldIcon(t === "spot" ? "rod" : t === "rock" || t === "vein" ? "pickaxe" : t === "olive" ? "olives" : "axe", sx(p.px * T + 8), sy(p.py * T + 15), b.dir, S2); }
   // the Russian Roulette table: a name over every taken stool whose player isn't standing in the room (someone on the website, or out on the floor)
   if (String(Z.key).split(":")[0] === "roulette") { rrRoomTick(pnow);
@@ -7890,6 +7940,24 @@ document.addEventListener("keydown", (e) => {
    an event is on so a player who never sees one never pays for it. The server sends {type:"double", on} when it
    starts, when it ends, and on login if one is already running - so the banner cannot get stuck on after a
    refresh, which is the only way a countdown like this normally goes wrong. */
+/* (2026-09-29, the owner's list: "combat and fighting weight fixes") YOU DIED: the screen greys and a card says so, for two and a half seconds,
+   whatever killed you and wherever (the server's "died" event, sent before a dungeon's own death handling). The move to wherever you wake
+   happens underneath it, so the card covers the jump rather than following it. */
+function diedFx(e) {
+  SFX.play("died"); hurtBeatUntil = 0;
+  let el = document.getElementById("diedCard");
+  if (!el) { el = document.createElement("div"); el.id = "diedCard"; (document.querySelector(".game") || document.body).append(el); }
+  el.innerHTML = `<b>You died</b>${e.by ? `<small>${esc(e.pvp ? `${e.by} got you.` : `The ${String(e.by).toLowerCase()} got you.`)}</small>` : ""}`;
+  el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
+}
+/* THE HEARTBEAT: under a quarter of your health, while something has hurt you in the last ten seconds, two soft beats a second. It stops the
+   moment you heal past a quarter, leave the fight, die, or mute. */
+let hurtBeatUntil = 0;
+setInterval(() => {
+  if (!me || !you || SFX.muted?.()) return; const pl = Z.players?.find((x) => x.id === you.id); if (!pl) return;
+  if (pl.hurtAt && Date.now() - pl.hurtAt < 10000) hurtBeatUntil = Date.now() + 1500;
+  const max = G.maxHpOf(me), hp = me.hp ?? max; if (hp > 0 && hp < max * 0.25 && Date.now() < hurtBeatUntil) SFX.play("heartbeat");
+}, 1000);
 let DBL = null, dblEl = null, dblTimer = 0;
 /* (2026-09-29, the owner: "make sure 2x stays up when server refreshes") the SERVER's clock, not this computer's: `until` is server time,
    and a machine running a few minutes fast used to end the banner early, or never show it, while the server went on paying double */

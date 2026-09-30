@@ -1126,6 +1126,16 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-29", title: "Fights hit harder",
+    items: [
+      "EVERY BLOW LANDS: whatever you hit flinches back and flashes white before the red, and so do you when something hits you.",
+      "YOUR ATTACKS ARE DRAWN: a sword leaves an arc in its metal's colour, a bow's string snaps back with a streak down the line of the shot, and a wand throws a ring in its page's element.",
+      "NEW SOUNDS: you hear a monster wind up before it swings at you, a crit has its own heavy impact, and a hit that is WEAK, RESISTED or GUARDED rings, thuds or clanks. When your health drops below a quarter in a fight, you hear your heartbeat. Monsters falling, and other people's fights nearby, can be heard across the map.",
+      "DYING SAYS SO: the screen greys over with what got you, wherever it happened, dungeons included.",
+      "Wren and Morwenna's prices now match Bom's melee gear, tier for tier; their weapons cost ten times that.",
+    ],
+  },
+  {
     date: "2026-09-29", title: "Archers and mages get their own gear",
     items: [
       "TWO OUTFITTERS keep stalls out in the world: Wren the Ranger in Cloudreach and Morwenna the Mage on the Thunderhead. Each sells five-piece sets in five tiers (Archery or Magic 10, 30, 50, 70 and 90): half the defence of plate, but a whole set adds +10% damage for its style, and an archer's set makes you 6% faster on your feet. They also sell bows, quivers, wands and Magic Bags, expensively (make your own, it's far cheaper), and buy it all back at Bom's rate.",
