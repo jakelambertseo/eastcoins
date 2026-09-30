@@ -8278,7 +8278,9 @@ function renderAdmin(p) {
     .map(([k, it]) => [k, `${it.icon} ${it.name}`]));
   /* the teleport list has the same problem for the same reason — it was in whatever order the rules file
      declares scenes, which is roughly the order they were built. Forty-odd of them now. */
-  const scenes = Object.fromEntries(Object.entries({ ...SCENES, ...Object.fromEntries([["depths", "The Depths of the Mountain"], ["wild", "The Wilderness"], ["deep", "The Deep Wild"], ["valley", "The Primeval Valley"], ["valley_ridge", "The Primeval Ridge"], ["valley_lair", "Old Rex's Lair"], ["frozen", "The Frozen Reach"], ["frostspire", "The Frostspire"]].filter(([k]) => !SCENES[k]).map(([k, name]) => [k, { name }])) })   /* (2026-09-27) the closed file's maps, before the page has fetched it */
+  const scenes = Object.fromEntries(Object.entries({ ...SCENES, ...Object.fromEntries([["depths", "The Depths of the Mountain"], ["wild", "The Wilderness"], ["deep", "The Deep Wild"], ["valley", "The Primeval Valley"], ["valley_ridge", "The Primeval Ridge"], ["valley_lair", "Old Rex's Lair"], ["frozen", "The Frozen Reach"], ["frostspire", "The Frostspire"],
+    ...(G.HOLD.foundry ? [] : [["foundry", "The Foundry: The Works"], ["fd_grove", "The Foundry: The Blood Grove"], ["fd_maze", "The Foundry: The Lava Maze"], ["fd_isle", "The Foundry: The Floating Isle"], ["fd_chain", "The Foundry: The Chained Rock"], ["fd_gate", "The Foundry: The Boss Gate"], ["fd_hall", "The Foundry: The Giant's Hall"]]),
+    ...(G.HOLD.orchard ? [] : [["orchard", "The Orchard Wall"]])].filter(([k]) => !SCENES[k])   /* (2026-09-30) the held maps, when they are open (the dev server, ?open=1), so they can be jumped to */.map(([k, name]) => [k, { name }])) })   /* (2026-09-27) the closed file's maps, before the page has fetched it */
     .sort((a, b) => String(a[1].name).localeCompare(String(b[1].name), undefined, { sensitivity: "base" }))
     .map(([k, s]) => [k, s.name]));
   const quests = Object.fromEntries(Object.entries(QUESTS).map(([k, q]) => [k, `${q.name} (${G.qState(me, k)})`]));
