@@ -45,7 +45,7 @@ function plateau(w, h) {
   yardGreen(out);
   return sharp(out, { raw: { width: W, height: H, channels: 4 } }).png();
 }
-const CLIFFS = [[5, 7], [6, 7], [7, 7], [8, 7], [6, 8], [9, 7]];   /* only the sizes lt-wild/valley-gen.py places: an unplaced one would ride everyone's first load */
+const CLIFFS = [[5, 7], [6, 7], [7, 7], [8, 7], [6, 8], [9, 7], [10, 7]];   /* only the sizes lt-wild/valley-gen.py places: an unplaced one would ride everyone's first load */
 for (const [w, h] of CLIFFS) await (await plateau(w, h)).toFile(FLAT + `pv_cliff_${w}x${h}.png`);
 
 /* THE PROPS. [name, source, green recolour?] ; the volcano is its cone with the first frame of its lava laid in the crater */

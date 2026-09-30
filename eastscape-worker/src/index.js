@@ -212,6 +212,12 @@ export class World {
       if (env.DEV === "1" && env.HW_LIVE !== "0") G.HW.live = true;   /* (2026-09-27) a dev server runs the Long Night whatever the switch says, so it can be previewed before it opens (--var HW_LIVE:0 to see it dormant) */   /* (2026-09-27) the Long Night's clocks: the King's hour, and whether Nightfall has been called */
       this.radio = (await ctx.storage.get("radio")) || null;
       this.chatLog = (await ctx.storage.get("chatlog")) || [];   /* (2026-09-27) the last CHAT_KEEP lines of public chat: see chatKeep */
+      /* (2026-09-30, the owner: "will there be an announcement in chat via casino that the boss is up when the map launches?") ONCE: the first start
+         with the Primeval Valley open, CASINO says so; the flag keeps every later deploy quiet. */
+      if (G.OPEN.has("valley") && !(await ctx.storage.get("valleyLaunched"))) {
+        this.houseSay("\u{1F996} THE PRIMEVAL VALLEY IS OPEN, north of the Trailer Park: three maps, and most of what lives there is up on the ledges where only an arrow reaches. OLD REX is on his throne in the Lair, and THE MAMMOTH MATRIARCH is on the Lowlands' great plateau. Anyone who lands an arrow shares the kill.");
+        await ctx.storage.put("valleyLaunched", Date.now());
+      }
       { const sg = (await ctx.storage.get("songs")) || null; this.song = sg?.song || null; this.songQ = Array.isArray(sg?.q) ? sg.q : []; }
       if (!(this.jack.pot >= G.JACKPOT.seed)) { this.jack.pot = G.JACKPOT.seed; this.jackDirty = true; }   // (the v107 seed top-up was in restore() too)
       await this.pitLoad();   // (v109) ticket bets on a fight that hasn't been settled yet
@@ -3412,6 +3418,8 @@ export class World {
     }
     /* (2026-09-27) CAPTAIN CLAW'S CHEST: everyone who put him down (the killer and every shared fighter) may open it once, until he is back */
     if (m.t === "captainclaw") { S.treasure = { until: m.respawnAt, who: new Set([pl.id, ...shared.map((q) => q.id)]), got: new Set() }; for (const q of this.playersIn(S)) q.out.push({ type: "clawchest", up: true }); }
+    if (def.announce) { const who = shared.length ? `${pl.name} and ${shared.length} other${shared.length === 1 ? "" : "s"}` : pl.name;   /* (2026-09-30) a Valley boss falls: the whole server hears who, and when he is back */
+      this.houseSay(`${def.announce} ${who} put ${def.name} down in ${S.def.name}. Back in about ${Math.max(1, Math.round((m.respawnAt - now) / 60000))} minutes.`); }
     if (G.hwOn() && m.t === "pumpkinking") { m.respawnAt = Infinity; S.mobs = S.mobs.filter((x) => x !== m); S.whoSig = null; this.hwKingDown(pl, now, shared); }   /* the corpse goes: the ordinary respawn loop must never bring him back, the hour does */
     this.say(pl, `You defeat the ${def.name.toLowerCase()}.${got.length ? ` It drops ${got.map(([k, n]) => `${n > 1 ? n + " " : ""}${G.ITEMS[k].name.toLowerCase()}`).join(", ")}.` : ""}`, "loot");
     this.emit(pl, "kill", { mob: m.t, style: G.styleOf(pl.C) });   /* (2026-09-27) the style, for a quest that asks for a bow or a wand */
@@ -3761,7 +3769,7 @@ export class World {
         { const base = m.base || m.t, gold = G.MOB_GOLD?.[base]; m.base = base; m.t = gold && Math.random() < 1 / gold.odds ? gold.t : base;
           if (m.t !== base) this.houseSay(`\u2728 A ${G.MOBS[m.t].name} has appeared in ${S.def.name}. It is worth ten of the ordinary kind.`); }
         Object.assign(m, { dead: false, hp: G.MOBS[m.t].hp, maxHp: G.MOBS[m.t].hp, x: spot.x, y: spot.y, path: [], step: null, claim: null, target: null, graceFor: null });   /* a new life, so the walk-up grace is owed again */
-        if (G.MOBS[m.t]?.rise) this.houseSay(`\u{1F9A3} ${G.MOBS[m.t].name} has come back to ${S.def.name}. Anyone who hurts her shares the kill.`);
+        if (G.MOBS[m.t]?.rise) this.houseSay(`${G.MOBS[m.t].announce || "\u2728"} ${G.MOBS[m.t].name} is back in ${S.def.name}. Anyone who lands an arrow shares the kill.`);   /* (2026-09-30) Old Rex rises too */
         continue;
       }
       const def = G.MOBS[m.t];

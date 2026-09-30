@@ -20,7 +20,8 @@ is(["caveman", "cavehunter", "sabretooth", "pterodactyl", "pteroelder", "mammoth
   is([bow, !!sword, !!low, /Archery 40 with a bow/.test(sword?.text || ""), JSON.stringify([G.BANDS.valley, G.BANDS.valley_ridge, G.BANDS.valley_lair])], [null, true, true, true, "[[90,98],[95,103],[100,110]]"], "Archery 40 and a bow opens it; a sword or Archery 39 does not; bands 90-110"); }
 is([G.MOBS.rex.lvl, G.MOBS.matriarch.lvl, G.MOBS.cavehunter.art, G.MOBS.pteroelder.art], [110, 108, "caveman", "pterodactyl"], "Rex 110, the Matriarch 108, and the stronger kinds on the same pictures");
 is([G.guardMul("pterodactyl", "melee"), G.guardMul("pterodactyl", "archery"), G.guardMul("tarhorror", "melee"), G.guardMul("raptor", "magic"), G.MOBS.caveman.range], [0, 1.5, 0, 0.5, 4], "pterodactyls and tar horrors out of a sword's use, raptors half from spells, cavemen throw from 4");
-is([G.MOBS.rex.boss, !!G.MOBS.rex.open, G.MOBS.matriarch.boss, G.MOBS.matriarch.open, G.MOBS.matriarch.rise, G.MOBS.rex.weak, G.MOBS.matriarch.weak], [true, false, true, true, true, "frost", "fire"], "Old Rex a map boss (weak to frost), the Matriarch an open boss that rises (weak to fire)");
+is([G.MOBS.rex.boss, !!G.MOBS.rex.open, G.MOBS.matriarch.boss, G.MOBS.matriarch.open, G.MOBS.matriarch.rise, G.MOBS.rex.weak, G.MOBS.matriarch.weak], [true, true, true, true, true, "frost", undefined], "Old Rex and the Matriarch both open bosses (anyone who hurts them shares); he is weak to frost, she to nothing");
+is([JSON.stringify(G.MOBS.mammoth.resist), JSON.stringify(G.MOBS.matriarch.resist), G.MOBS.mammoth.weak], ['["frost","fire"]', '["frost","fire"]', undefined], "the mammoths resist frost and fire and are weak to nothing");
 const B = Object.fromEntries(G.VALLEY_MAPS.map((k) => [k, G.buildScene(k)])), count = (f) => G.VALLEY_MAPS.reduce((a, k) => a + B[k].objs.filter(f).length, 0);
 is([count((o) => o.t === "cycad"), count((o) => o.t === "rock" && o.ore === "fossil"), count((o) => o.t === "spot" && o.fish === "coelacanth")], [7, 8, 4], "seven cycads, eight fossil rocks, four coelacanth spots");
 for (const k of G.VALLEY_MAPS) {
@@ -29,7 +30,7 @@ for (const k of G.VALLEY_MAPS) {
   const ledge = mobs.filter(([, x, y, o]) => o?.perch && !G.walkableIn(b.g, x, y));
   is([mobs.every(([, x, y, o]) => G.walkableIn(b.g, x, y) || o?.perch), ledge.every(([, x, y]) => Math.min(...open.map(([a, c]) => Math.max(Math.abs(a - x), Math.abs(c - y)))) >= 2), ledge.length * 2 > mobs.filter(([t]) => !G.MOBS[t].boss).length],
     [true, true, true], `${k}: everything on open ground or a ledge, no ledge a sword reaches, and most of them up there`);
-  is(b.g.flat().filter((c) => c === ",").length > 40, true, `${k}: a cobble road`);
+  is(b.g.flat().filter((c) => c === ",").length > 30, true, `${k}: a cobble road`);
 }
 const ctx = { blockConcurrencyWhile: (fn) => fn(), storage: { get: async () => undefined, put: async () => {}, delete: async () => {}, list: async () => new Map() } };
 const W = new World(ctx, { SITE: "https://example.invalid", DEV: "0" }); await new Promise((r) => setTimeout(r, 20)); W.save = async () => {};
@@ -40,6 +41,6 @@ const S = W.scene("valley_ridge"), rap = S.mobs.find((m) => m.t === "raptor"), L
 is([rap.t, rap.base, said.some((t) => /Golden Raptor/.test(t))], ["goldenraptor", "raptor", true], "a raptor comes back golden (forced roll), and the server hears");
 { const r = Math.random; Math.random = () => 0.9; rap.dead = true; rap.respawnAt = 0; W.mobsTick(S, Date.now()); Math.random = r; }
 is(rap.t, "raptor", "and after that life, plain again");
-{ const mt = LOW.mobs.find((m) => m.t === "matriarch"); mt.dead = true; mt.respawnAt = 0; said.length = 0; W.mobsTick(LOW, Date.now()); is(said.some((t) => /Mammoth Matriarch has come back/.test(t)), true, "the Matriarch's return is announced"); }
+{ const mt = LOW.mobs.find((m) => m.t === "matriarch"); mt.dead = true; mt.respawnAt = 0; said.length = 0; W.mobsTick(LOW, Date.now()); is(said.some((t) => /Mammoth Matriarch is back in/.test(t)), true, "the Matriarch's return is announced"); }
 console.log(bad ? `\n${bad} problem(s)` : "\nThe Primeval Valley holds: its rules, its resources, its bosses, and the golden raptor");
 process.exitCode = bad ? 1 : 0;

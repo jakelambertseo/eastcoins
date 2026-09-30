@@ -4211,8 +4211,8 @@ export const FREEPLAY = 100, DEVIL = { ms: 120000, odds: 1 / 3, pays: 3, max: 10
    charcoal and do not know why. It also fills a hole that was already open - burnChance has a `range` multiplier
    worth 20%, and the only range in the game is in the CLOSED Cottage, so no player has ever had it. */
 export const COAL_STEADY_MIN = 0.10;
-export const OUT_CAP = { tix: 0.25, speed: 0.2, tough: 0.3, rare: 0.4, zdrop: 0.75, bite: 0.1, heal: 0.5, steal: 0.15, ammo: 0.5, leech: 0.25, double: 0.3, execute: 0.3, calm: 1, nobill: 1, gem: 1, smelt: 0.5, forge: 0.2 };
-const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal", "steal", "ammo", "leech", "double", "execute", "calm", "nobill", "gem", "smelt", "forge"];   /* (2026-09-27) gem: the Mountain's Heart */   /* (2026-09-27) the last six are the Long Night's pieces' effects; see fxText */
+export const OUT_CAP = { tix: 0.25, speed: 0.2, tough: 0.3, rare: 0.4, zdrop: 0.75, bite: 0.1, heal: 0.5, steal: 0.15, ammo: 0.5, leech: 0.25, double: 0.3, execute: 0.3, calm: 1, nobill: 1, gem: 1, smelt: 0.5, forge: 0.2, adm: 0.25 };   /* (2026-09-30) adm: arrows harder, at most a quarter (Skyripper 6 + Fang 8 + Ring 5 + a draught 6 = 25) */
+const OUT_KEYS = ["tix", "speed", "tough", "rare", "zdrop", "bite", "heal", "steal", "ammo", "leech", "double", "execute", "calm", "nobill", "gem", "smelt", "forge", "adm"];   /* (2026-09-30) adm: arrows hit harder (the Primeval Valley's drops) */   /* (2026-09-27) gem: the Mountain's Heart */   /* (2026-09-27) the last six are the Long Night's pieces' effects; see fxText */
 
 /* ============================================================ ACHIEVEMENTS (2026-09-23, the owner)
 
@@ -4445,7 +4445,7 @@ export const fxText = (f) => [f.tix && `${pct(f.tix)} more tickets from kills, a
   /* (2026-09-27) the Long Night's pieces */
   f.ammo && `${pct(f.ammo)} of your shots and casts spend no arrow or page`, f.leech && `${pct(f.leech)} of the damage you deal comes back as health`, f.double && `${pct(f.double)} of what you mine, cut or catch comes up double`,
   f.execute && `a monster under ${pct(f.execute)} health dies to your next hit (never a boss)`, f.calm && `nothing outside attacks you first`, f.nobill && `the hospital never bills you`, f.gem && `jewels turn up in the rock ${pct(f.gem)} more often`, f.smelt && `${pct(f.smelt)} of the bars you smelt come out double`, f.forge && `every reforge is ${pct(f.forge)} likelier to land`,
-  f.power && `your other worn buff gear is ${pct(f.power)} stronger`].filter(Boolean).join("; ");
+  f.power && `your other worn buff gear is ${pct(f.power)} stronger`, f.adm && `your arrows hit ${pct(f.adm)} harder`].filter(Boolean).join("; ");
 for (const it of Object.values(ITEMS)) {   // say what it does, once, from the numbers
   if (it.fx) it.ex = `Worn: ${fxText(it.fx)}. ${it.ex || ""}`.trim();
   if (it.meal) it.ex = `${it.ex || ""} Eat it: for ${it.meal.mins} minutes outside, ${fxText(it.meal.fx)}.`.trim();
@@ -5564,12 +5564,12 @@ recipe("make_seal", { skill: "smithing", station: "anvil", lvl: 60, ms: 2600, xp
 export const FLETCH = { live: true, perLog: 15, perBar: 15, station: "fletcher", quiverSlot: "shield",
   /* how many shafts a log gives, by wood: the reason to cut a better tree for fletching. The arrow is the same
      either way, you just get more of them per trip. */
-  shaftsPerLog: [15, 18, 21, 25, 28, 30, 34, 38, 45],
+  shaftsPerLog: [15, 18, 21, 25, 28, 30, 34, 38, 45, 50],
   /* how many arrows a quiver of each wood holds. (2026-09-29, the owner: "make the quivers larger across the board so users have to
      come to town less and refill so its less of a grind") THREE TIMES what they were (100 .. 1,000): a rough quiver is now a
      quarter of an hour of shortbow, a bogwood one well over an hour. Loading takes every stack of that arrow in the bag at once,
      so a 3,000 quiver is still one click. */
-  quiverCap: [300, 450, 600, 900, 1200, 1500, 2000, 2500, 3000],
+  quiverCap: [300, 450, 600, 900, 1200, 1500, 2000, 2500, 3000, 3500],
 };
 SKILLS.fletching = { name: "Fletching", icon: "🪶" };
 /* ARCHERY (2026-09-25, the owner: "we need an Archery combat skill, not just fletching ... Damage for XP is calculated in
@@ -5583,7 +5583,7 @@ export const ARCHERY = {
   bigBonus: 0.2,            // arrows do a fifth more to size l / xl monsters: a boss is hard to miss
   afkMs: 8 * 60 * 1000,     // the fight AFK timer for an archer with a LOADED quiver (melee stays at AFK_MS)
   retarget: true,           // "stand and shoot": when the target dies, draw on the next of the same kind inside reach
-  useLvl: { short: [1, 20, 30, 45, 54, 60, 72, 84, 92], long: [5, 25, 35, 50, 57, 64, 76, 88, 96], quiver: [1, 18, 28, 43, 52, 58, 70, 82, 90] },   // Archery to draw, by wood: the fletching gate, except rough is 1 / 5 / 1
+  useLvl: { short: [1, 20, 30, 45, 54, 60, 72, 84, 92, 95], long: [5, 25, 35, 50, 57, 64, 76, 88, 96, 98], quiver: [1, 18, 28, 43, 52, 58, 70, 82, 90, 94] },   // Archery to draw, by wood: the fletching gate, except rough is 1 / 5 / 1
 };
 /* the bulk source of feathers (the owner: "add in alchemy recipes for making bulk feathers. take a vial and mix it with
    feathers + one other thing (something magic) and it creates 15 feathers every time"). Net twelve a vial. */
@@ -5609,6 +5609,7 @@ const WOODS = [
   { log: "pinelogs",    name: "Rustpine",  wc: 65, shaft: 68, short: 72, long: 76, quiver: 70 },
   { log: "voidlogs",    name: "Vaultwood", wc: 75, shaft: 80, short: 84, long: 88, quiver: 82 },
   { log: "bogwoodlogs", name: "Bogwood",   wc: 80, shaft: 86, short: 92, long: 96, quiver: 90 },
+  { log: "cycadlogs",   name: "Cycad",     wc: 92, shaft: 93, short: 95, long: 98, quiver: 94 },   /* (2026-09-30) the Primeval Valley's: see the Valley block for its sinew and fossils */
 ];
 /* one arrow tier a bar tier. `head` is the SMITHING level to hammer heads (the tier's own gate); `arrow` is the
    FLETCHING level to finish them, and it sits AT the head's gate so a fletcher is never offered an arrow whose
@@ -6364,7 +6365,7 @@ for (const [k, C_] of Object.entries(CHARMS)) pr(`print_scroll_${k}`, { station:
 pr("print_scroll_homeward", { station: "altar_sun", lvl: 50, xp: 40, in: [["spellpaper", 2], ["ink_sun", 1]], out: ["scroll_homeward", 1] });
 for (const [k, Wy] of Object.entries(WAYSTONES)) pr(`print_${k}`, { station: "altar_storm", lvl: Wy.lvl, xp: 30 + Wy.lvl * 2, in: [["spellpaper", 1], ["ink_storm", 1], ["grimstone", 1]], out: [k, 1] });   /* (2026-09-27) a stone that remembers a place: grimstone, from the Wilderness, is what a Waystone is printed on */
 /* wands and bags are made at the Arcane altar */
-const WAND_INK = ["arcane", "arcane", "sun", "sun", "fire", "fire", "frost", "void", "void"], WAND_GEM = [null, null, "ruby", "ruby", "sapphire", "sapphire", "topaz", "opal", "opal"];
+const WAND_INK = ["arcane", "arcane", "sun", "sun", "fire", "fire", "frost", "void", "void", "storm"], WAND_GEM = [null, null, "ruby", "ruby", "sapphire", "sapphire", "topaz", "opal", "opal", "opal"];
 WOODS.forEach((w, i) => pr(`make_${w.log}_wand`, { station: "altar_arcane", lvl: ARCHERY.useLvl.short[i], xp: 30 + i * 45,
   in: [[w.log, 3], [`ink_${WAND_INK[i]}`, 2], ...(WAND_GEM[i] ? [[WAND_GEM[i], 1]] : [])], out: [`${w.log}_wand`, 1] }));
 pr("craft_lastword", { station: "altar_arcane", lvl: 99, xp: 6000, ms: 4000, in: [["bogwoodlogs", 5], ["singularity_core", 1], ["ink_storm", 5], ["ink_void", 5]], out: ["lastword", 1] });
@@ -8793,7 +8794,7 @@ for (const [id, g] of Object.entries(GADGETS)) if (g.item !== false)
 ITEMS.tk_banner ||= { name: "Party Banner", icon: "\u{1F6A9}", held: true };
 /** the gadgets running on a character right now */
 export const tkOn = (c) => Object.entries(c?.tk || {}).filter(([id, t]) => GADGETS[id] && (t?.left | 0) > 0).map(([id]) => GADGETS[id]);
-export const tkDmg = (c, style) => tkOn(c).reduce((a, g) => a + (g.dmg?.[style] || 0), 0) + gemFor(c, GEM_DMG[style]) + outfitDmg(c, style);   /* (2026-09-29) and the outfitters' armour for that style (OUTFIT) */   /* (2026-09-28) and a socketed gem */
+export const tkDmg = (c, style) => tkOn(c).reduce((a, g) => a + (g.dmg?.[style] || 0), 0) + gemFor(c, GEM_DMG[style]) + outfitDmg(c, style) + (style === "archery" ? fxOf(c).adm || 0 : 0);   /* (2026-09-29) and the outfitters' armour for that style (OUTFIT) */   /* (2026-09-28) and a socketed gem */   /* (2026-09-30) and adm, archery damage from gear and drinks */
 export const tkAcc = (c, style) => tkOn(c).reduce((a, g) => a + (g.acc?.[style] || 0), 0) + gemFor(c, "jade");
 export const tkCraft = (c, skill) => { let dbl = 0, noburn = false; for (const g of tkOn(c)) if (g.craft?.skill === skill) { dbl += g.craft.dbl || 0; noburn ||= !!g.craft.noburn; } const pc = projFx(c)?.craft?.[skill]; if (pc) { dbl += pc.dbl; noburn ||= pc.noburn; } dbl += gemFor(c, GEM_SKILL[skill]?.fx === "dbl" ? GEM_SKILL[skill].k : null); return { dbl: Math.max(0, dbl), noburn }; };   /* (2026-09-28) and the map's World Project */
 export const tkXp = (c, skill) => { const pf = projFx(c); return tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0) + (pf?.xp?.[skill] || 0) + (pf?.xpAll || 0) + gemFor(c, GEM_SKILL[skill]?.fx === "xp" ? GEM_SKILL[skill].k : null); };   /* (and a Grand Opening's +10% on everything) */
@@ -9219,8 +9220,8 @@ vmob("sabretooth", { name: "Sabretooth", size: "m", lvl: 93, hp: 450, att: 96, d
 vmob("pterodactyl", { name: "Pterodactyl", size: "m", lvl: 95, hp: 400, att: 94, def: 70, max: 24, speed: 2300, box: [34, 20], aggro: 3, range: 3, sky: true, guard: { melee: 0, archery: 1.5, magic: 0.75 }, weak: "storm",
   ex: "It never lands. Out of a sword's reach entirely, and it attacks from three tiles; an arrow brings it down half again as fast as anything else." }, 600,
   [["feather", [6, 12]], ["fossil", 1, 0.25], ["waystone_valley", 1, 0.006]], [["rex_tooth", 0.01]]);
-vmob("mammoth", { name: "Woolly Mammoth", size: "l", lvl: 98, hp: 580, att: 96, def: 81, max: 28, speed: 2800, box: [44, 34], aggro: 2, guard: { archery: 1.25, melee: 0.75 }, weak: "fire", resist: "frost",
-  ex: "A great slow target: arrows find it 25% more, and a sword up close does 25% less against that much fur. Built for the cold and frightened of fire." }, 640,
+vmob("mammoth", { name: "Woolly Mammoth", size: "l", lvl: 98, hp: 580, att: 96, def: 81, max: 28, speed: 2800, box: [44, 34], aggro: 2, range: 4, guard: { melee: 0, magic: 0, archery: 1.25 }, resist: ["frost", "fire"],
+  ex: "Up on the ledges where the grass is, out of reach of anything but an arrow: swords and spells do nothing to it. It kicks stones down from four tiles. That much fur shrugs off frost and fire alike." }, 640,
   [["mammoth_ivory", 1, 0.1], ["hide", [3, 6]], ["waystone_valley", 1, 0.006]], [["mammoth_ivory", 0.02]]);
 vmob("raptor", { name: "Raptor", size: "m", lvl: 100, hp: 480, att: 102, def: 78, max: 28, speed: 1800, box: [28, 22], aggro: 4, guard: { archery: 1.25, magic: 0.5 },
   ex: "Too quick to aim a spell at (half from magic), but it runs in straight lines: arrows hit it 25% harder. They hunt in threes." }, 660,
@@ -9231,13 +9232,13 @@ vmob("goldenraptor", { name: "Golden Raptor", size: "m", lvl: 100, hp: 480, att:
 vmob("tarhorror", { name: "Tar Pit Horror", size: "m", lvl: 105, hp: 580, att: 100, def: 84, max: 32, speed: 2700, box: [30, 26], aggro: 2, guard: { melee: 0, archery: 1.25, magic: 0.5 }, weak: "fire",
   ex: "Tar with bones in it. A sword sinks in and comes back out with nothing; an arrow finds the skull inside: 25% more from archery, half from spells." }, 700,
   [["fossil", [2, 4]], ["waystone_valley", 1, 0.008]], [["rex_tooth", 0.015]]);
-vmob("rex", { name: "Old Rex", size: "xl", lvl: 110, hp: 10500, att: 115, def: 94, max: 46, speed: 2800, box: [100, 70], aggro: 4, boss: true, respawn: 40 * 60000,   /* (2026-09-30) a boss's own timer: without it he came back on the ordinary clock, in seconds */ guard: { archery: 1.25, melee: 0.75, magic: 0.75 }, weak: "frost", resist: "fire",
-  ex: "The valley's end, and its oldest thing, on the fossil's throne. Stand off and shoot: 25% more from arrows, 25% less from swords and spells. He is cold-blooded, and frost slows the whole of him down." }, 2000,
-  [["tickets", [1200, 2400]], ["rex_tooth", [1, 2]], ["fossil", [4, 8]], ["waystone_valley", 1, 0.25], ["rex_necklace", 1, 0.02]], [["egg_raptor", 0.05]]);
-vmob("matriarch", { name: "The Mammoth Matriarch", size: "xl", lvl: 108, hp: 15500, att: 118, def: 91, max: 40, speed: 3000, box: [90, 70], aggro: 3, boss: true, open: true, rise: true, respawn: 45 * 60000,
-  guard: { archery: 1.25, melee: 0.75 }, weak: "fire", resist: "frost",
-  ex: "The oldest mammoth in the valley, and the herd follows her. The size of a hill, and arrows find her 25% more. She comes back every three quarters of an hour, and the whole server hears when she does. Anyone who hurts her shares the kill." }, 3000,
-  [["tickets", [1500, 3000]], ["mammoth_ivory", [2, 4]], ["hide", [8, 14]], ["waystone_valley", 1, 0.3]], [["egg_ptero", 0.05], ["rex_necklace", 0.03]]);
+vmob("rex", { name: "Old Rex", size: "xl", lvl: 110, hp: 10500, att: 115, def: 94, max: 46, speed: 2800, box: [100, 70], aggro: 4, boss: true, open: true, rise: true, announce: "\u{1F996}", range: 6, respawn: 40 * 60000,   /* (2026-09-30) a boss's own timer: without it he came back on the ordinary clock, in seconds. OPEN (the owner: "double check that multiple archers can tag/damage them at once"): nobody claims him, everyone who hurts him shares the kill and gets the report */ guard: { melee: 0, magic: 0, archery: 1.25 }, weak: "frost", resist: "fire",
+  ex: "The valley's end, and its oldest thing, on his throne up on the high plateau. Only an arrow reaches him (25% more from archery; swords and spells do nothing), and he roars stones down six tiles. Anyone who hurts him shares the kill." }, 2000,
+  [["tickets", [12000, 20000]],   /* (2026-09-30, the owner: "old rex needs to drop a ton of tickets for the time investment"): about twenty minutes alone, so about 1,200 a minute with everything else he drops, against 500-850 farming the valley */ ["rex_tooth", [1, 2]], ["fossil", [4, 8]], ["waystone_valley", 1, 0.25], ["rex_necklace", 1, 0.02]], [["egg_raptor", 0.05]]);
+vmob("matriarch", { name: "The Mammoth Matriarch", size: "xl", lvl: 108, hp: 15500, att: 118, def: 91, max: 40, speed: 3000, box: [90, 70], aggro: 3, boss: true, open: true, rise: true, announce: "\u{1F9A3}", range: 6, respawn: 45 * 60000,
+  guard: { melee: 0, magic: 0, archery: 1.25 }, resist: ["frost", "fire"],
+  ex: "The oldest mammoth in the valley, up on the Lowlands' great plateau with her herd. Only an arrow reaches her (25% more from archery), she stamps stones down six tiles, and she shrugs off frost and fire. She comes back every three quarters of an hour, and the whole server hears when she does. Anyone who hurts her shares the kill." }, 3000,
+  [["tickets", [8000, 14000]], ["mammoth_ivory", [2, 4]],   /* (2026-09-30) half an hour alone; shared, every fighter gets this */ ["hide", [8, 14]], ["waystone_valley", 1, 0.3]], [["egg_ptero", 0.05], ["rex_necklace", 0.03]]);
 /* (2026-09-30, the owner: "the band here should be higher", 90-110) the Ridge and the Lair's stronger kinds, drawn with the same pictures */
 vmob("cavehunter", { name: "Caveman Hunter", size: "m", lvl: 100, hp: 480, att: 100, def: 78, max: 27, speed: 2300, box: [24, 30], aggro: 3, range: 4, art: "caveman", guard: { archery: 1.25, magic: 0.75 }, weak: "storm", resist: "fire",
   ex: "A caveman who has lived long enough to stand on the highest ledge and throw straight. Rocks from four tiles; arrows 25% harder, spells 25% softer." }, 680,
@@ -9246,6 +9247,39 @@ vmob("pteroelder", { name: "Elder Pterodactyl", size: "m", lvl: 103, hp: 470, at
   ex: "Older, bigger and meaner, and it still never lands. No sword reaches it; an arrow brings it down half again as fast as anything." }, 720,
   [["feather", [10, 18]], ["fossil", 1, 0.3], ["waystone_valley", 1, 0.007]], [["rex_tooth", 0.012]]);
 BOSSES.add("rex"); BOSSES.add("matriarch");
+/* (2026-09-30, the owner: "this area needs to also drop unique archery gear, archery rings/necklaces, fletching mats, buffs, etc since this is an
+   archery area"). adm is archery damage (fxOf / tkDmg): it counts only while you shoot. */
+Object.assign(ITEMS, {
+  ptero_sinew: { name: "Pterodactyl sinew", icon: "\u{1F9F5}", ex: "Dried wing sinew, stronger than silk. It strings a cycad bow; only the Valley's pterodactyls carry it." },
+  skyripper: { name: "Skyripper", short: "Bow", icon: "\u{1F3F9}", slot: "weapon", speed: 2600, acc: 44, str: 42, launcher: { range: 6, ammo: "arrow" }, bow: true, req: { skill: "archery", lvl: 96 },
+    fx: { adm: 0.06 }, forgeWith: ["cycadlogs", 8], forgeReq: { skill: "fletching", lvl: 98 }, chase: true,
+    ex: "A longbow made of a pterodactyl's wing: bone limbs, the membrane still on them, a talon at each end. It draws faster than a longbow should, and its arrows hit 6% harder. Only Elder Pterodactyls and the Valley's two bosses drop it." },
+  raptor_ring: { name: "Raptor-claw ring", short: "Ring", icon: "\u{1F48D}", slot: "ring", acc: 8, str: 8, req: { skill: "archery", lvl: 85 }, fx: { adm: 0.05 },
+    ex: "Gold, set with one curved raptor claw. Your arrows hit 5% harder. Raptors drop it, and a Golden Raptor far more often." },
+  hunters_fang: { name: "Hunter's Fang", short: "Amulet", icon: "\u{1F4FF}", slot: "amulet", acc: 12, str: 10, req: { skill: "archery", lvl: 90 }, fx: { adm: 0.08 },
+    ex: "A sabretooth's fang on a cord with a green feather. Your arrows hit 8% harder. Sabretooths, Caveman Hunters and the Valley's bosses drop it." },
+  pot_hunter: { name: "Hunter's draught", short: "Draught", icon: "\u{1F9EA}", drink: { mins: 15, fx: { adm: 0.06 } }, ex: "Green-brown and bitter, with a feather tied to the neck. The cavemen brew it before a hunt." }
+});
+Object.assign(VALUE, { ptero_sinew: 260, skyripper: 90000, raptor_ring: 24000, hunters_fang: 40000, pot_hunter: 180 });
+/* the cycad pieces: pterodactyl sinew where the top woods take silk, and FOSSILS for weight (the fossil's use) */
+for (const [id, extra] of [["fletch_cycadlogs_shortbow", [["fossil", 4]]], ["fletch_cycadlogs_longbow", [["fossil", 6]]], ["fletch_cycadlogs_quiver", [["fossil", 3]]], ["make_cycadlogs_wand", [["fossil", 5]]]]) {
+  const r = RECIPES[id]; r.in = [...r.in.map(([k, n]) => [k === "silkstring" ? "ptero_sinew" : k, n]), ...extra];
+}
+ITEMS.cycadlogs_shortbow.ex = "Scaled, pale and older than trees, strung with pterodactyl sinew and weighted with fossil. The best a fletcher can make from wood.";
+ITEMS.cycadlogs_longbow.ex = "Cycad, sinew and fossil: the heaviest draw in the game, and it reaches two tiles further. Made, not found.";
+/* the drops: every Valley monster carries something for an archer */
+const vAdd = (t, drops) => { MOBS[t].drops.push(...drops); };
+vAdd("caveman", [["pot_hunter", 1, 0.04], ["bone_arrowhead", [10, 20], 0.2]]);
+vAdd("cavehunter", [["pot_hunter", 1, 0.05], ["nova_arrowhead", [5, 12], 0.12], ["hunters_fang", 1, 0.002]]);
+vAdd("pterodactyl", [["ptero_sinew", 1, 0.2]]);
+vAdd("pteroelder", [["ptero_sinew", [1, 2], 0.3], ["skyripper", 1, 0.002]]);
+vAdd("sabretooth", [["silkstring", [1, 2], 0.12], ["hunters_fang", 1, 0.003]]);
+vAdd("mammoth", [["feather", [8, 16], 0.3], ["pot_hunter", 1, 0.05]]);
+vAdd("raptor", [["silkstring", 1, 0.15], ["raptor_ring", 1, 0.004]]);
+vAdd("goldenraptor", [["raptor_ring", 1, 0.05], ["pot_hunter", [2, 4]]]);
+vAdd("tarhorror", [["eclipse_arrowhead", [8, 15], 0.15], ["pot_hunter", 1, 0.04]]);
+vAdd("rex", [["skyripper", 1, 0.03], ["hunters_fang", 1, 0.04], ["raptor_ring", 1, 0.04], ["ptero_sinew", [4, 8]], ["pot_hunter", [2, 4]]]);
+vAdd("matriarch", [["skyripper", 1, 0.02], ["hunters_fang", 1, 0.04], ["ptero_sinew", [3, 6]], ["pot_hunter", [2, 4]]]);
 /* (2026-09-30) THE LATE-MAP PASSES, which ran before these monsters existed (see "THE LATE MAPS MISSED attFor" and "A MONSTER'S AIM"):
    the accuracy of their level, then the aim rule and its rescaled max hit, exactly as every other open-world monster gets them. Without
    this they would swing at the old hand-set accuracy and hit a geared player for zeros, the Boardwalk's bug all over again. */

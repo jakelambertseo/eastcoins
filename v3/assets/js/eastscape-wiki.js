@@ -345,9 +345,9 @@ export const GUIDES = [
         fd_hall: "through the burning door: the wall of bodies, two towers with an eye on each, and Old Bessemer, the giant, up to his chest in it",
         depths: "ledges over a bottomless drop: monsters that shrug off a whole fighting style, abyss crystal, eclipse and nova ore, and the Deepwarden",   /* (2026-09-27) */
         trailer: "the best gathering in the game, and the meanest neighbours",
-        valley: "north of the Trailer Park, the first of the last maps and a bow's country: cavemen throwing rocks and pterodactyls diving from ledges a sword cannot reach, sabretooths and mammoths on the road, coelacanth in the lake (Fishing 92), cycads (Woodcutting 92), and the Mammoth Matriarch, an open-world boss the whole server shares",   /* (2026-09-30) held until the owner opens it */
-        valley_ridge: "north of the Lowlands: plateau after plateau, most of them with something on top only an arrow or a spell reaches, raptors on the ground, fossil rocks (Mining 92)",
-        valley_lair: "the end of the valley: the dragon fossil and Old Rex on his throne of bones, a volcano, tar horrors in the tar pits",
+        valley: "north of the Trailer Park, and a bow's country (Combat 90, or Archery 40 with a bow): cavemen and pterodactyls on ledges only an arrow reaches, sabretooths on the road, woolly mammoths on the plateaus, coelacanth in the lake (Fishing 92), cycads (Woodcutting 92), and the Mammoth Matriarch, an open-world boss up on the great plateau",   /* (2026-09-30) held until the owner opens it */
+        valley_ridge: "north of the Lowlands: plateau after plateau with Caveman Hunters and Elder Pterodactyls on top, raptors on the ground, fossil rocks (Mining 92)",
+        valley_lair: "the end of the valley: the dragon fossil, a volcano, tar horrors in the tar pits, and Old Rex on his throne up on the high plateau, an open-world boss only arrows reach",
         wild: "the road past the Yard's east gate: nodes far apart, most things attack first, and the first of three monsters found nowhere else",
         deep: "the far end of the Wilderness: the Black Pool (Fishing 92 and 97), the Gallows oak (Woodcutting 90), the Grim Liches, the Nexus",
       };
