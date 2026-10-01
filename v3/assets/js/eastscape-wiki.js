@@ -1529,6 +1529,15 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-30", title: "Bronny wants more",
+    items: [
+      "BRONNY'S ORDERS ARE BIGGER. Six lines instead of five (two early, two mid and two late-game), and every count is a quarter up. The order already on his board keeps its five; the next one is the new shape.",
+      "EVERY ORDER ENDS WITH A KEYSTONE: a few of something that takes luck, not hours. Rubies, sapphires or topaz from mining, or one of the rare drops off ordinary monsters (masks, Gambler's rings, Bookie's amulets and the like). They all trade, so the Exchange is the other way to one.",
+      "The keystone goes in on its own: Hand in everything leaves it in your bag, and only plain copies count, so a reforged ring is never taken.",
+      "EGGS ARE RARER: one kill in 1,000 (was one in 400).",
+    ],
+  },
+  {
     date: "2026-09-30", title: "Your screen, your way",
     items: [
       "SETTINGS HAS FIVE TABS NOW (the gear, top right). Layout, Players, Monsters, Features and Look.",
