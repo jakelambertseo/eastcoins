@@ -1430,7 +1430,7 @@ Object.assign(SCENES, {
       { name: "Vance the Fence", art: "vance", x: 38, y: 5, still: true, quests: ["boneidle"], opens: "permit", reach: 3,
         hair: "#3a2e1a", shirt: "#8a6a2a", pants: "#2e2a22",
         lines: ["Guild's through there. You'll not get past the door without a permit.",
-          "Fifty thousand tickets and it's yours. I don't haggle and I don't do credit.",
+          "Fifteen thousand tickets and it's yours. I don't haggle and I don't do credit.",
           "They turn up in the Crypt as well, now and then \u2014 in the Hoodie's hoard, if you're lucky. Rare, mind. I've sold plenty to people who got tired of waiting.",
           "It's a proper item, so you can buy one off another thief if they'd rather have the tickets. Usually cheaper than my price, and I'll not pretend otherwise.",
           "One permit, one door, once. After that it's yours for good and I never see you again."] },
@@ -3192,7 +3192,7 @@ Object.assign(SCENES, {
         { sign: "THE BACK ROOM. Apprentice Lifters. Everyone starts here.",
           props: [["crate", 2, 9], ["crate", 3, 8], ["sack", 6, 8], ["sack", 9, 15], ["bucket", 10, 9], ["cat", 5, 15],
                   ["crate", 8, 16], ["barrel", 2, 15], ["sack", 3, 16], ["crate", 10, 15], ["bucket", 6, 16], ["barrel", 9, 8], ["bench", 4, 12]] },
-        { sign: "THE CARD ROOM. Grifters work here. Thieving 25.",
+        { sign: "THE CARD ROOM. Grifters work here. Thieving 10.",
           props: [["table", 16, 15], ["chair", 15, 15], ["chair", 17, 15], ["bench", 19, 8], ["barrel", 14, 8], ["bucket", 21, 16],
                   ["sack", 20, 15], ["table", 19, 11], ["chair", 20, 11], ["chair", 18, 11], ["crate", 14, 16], ["barrel", 21, 8], ["bench", 16, 8]] },
         { sign: "THE STORE ROOM. The Fixers. Thieving 50.",
@@ -3487,6 +3487,7 @@ export function buildScene(key) {
   hwObjs(String(key).split(":")[0], b);   /* (2026-09-27) the Long Night's jack-o'-lanterns and ghost lanterns, while the event is on */
   projObjs(String(key), b);   /* (2026-09-28) World Projects: LAST, and append-only */
   if (!sc.noBanks) markBanks(b.g);   /* (2026-09-27) the Depths' abyss is its own edge: see its map */
+  worldThiefObjs(String(key), b);   /* (2026-10-01) shortcuts, ledges and lockboxes: after the projects, append-only, and AFTER the banks so a ledge's island stays ground (HOLD.thief2) */
   b.objs.forEach((o, i) => { o.id = i; o.w ??= 1; o.h ??= 1; });
   return b;
 }
@@ -6864,9 +6865,9 @@ Object.assign(QUESTS, {
   },
   runclock: {
     name: "Beat the Clock", giver: "Vince the Bouncer", where: "The Casino", icon: "⏱️", tier: "easy",
-    brief: "Vince says nobody's fast any more. Go and run The Run, the agility course down the rope ladder in the Gloam.",
+    brief: "Vince says nobody's fast any more. Go and run The Run, the agility course down the ladder in the Yard.",
     stages: [{ type: "visit", scene: "agility", what: "The Run" }],
-    talk: { offer: ["Nobody's quick any more. They walk up to a gate and wait for it like it's a bus.", "There's a course under the Gloam. Down the ladder by the north path. Go and run it, once, and come and tell me you did."], accept: "I'll run it.", decline: "I'll walk, thanks.",
+    talk: { offer: ["Nobody's quick any more. They walk up to a gate and wait for it like it's a bus.", "There's a course under the Yard. Down the ladder by the north wall. Go and run it, once, and come and tell me you did."], accept: "I'll run it.", decline: "I'll walk, thanks.",
       accepted: "The gates open on a clock. Watch them once, then go.", progress: "Have you run it? The ladder's by the Gloam's north door.", ready: "You ran it. Your knees say so.", hand: "I ran it.", done: "Good. Now do it again without me telling you to." },
     reward: { coins: 200, xp: { agility: 300 }, text: "200 tickets, 300 Agility xp" }
   },
@@ -7328,6 +7329,7 @@ export function normChar(c) {
   /* (2026-09-28) Tinkering's parts: a pouch of four counts, never items (they take no bag space, and Bom cannot buy them) */
   { const pp = out.parts && typeof out.parts === "object" ? out.parts : {}; out.parts = Object.fromEntries(Object.keys(TINK.parts).map((k) => [k, Math.max(0, Math.floor(Number(pp[k]) || 0))])); }
   /* (2026-10-01) ABILITIES: the order for each style, cleaned (unknown keys dropped, missing ones put back at the end) */
+  { const bx = out.boxes && typeof out.boxes === "object" ? out.boxes : {}; out.boxes = {}; for (const [k, v] of Object.entries(bx)) if (LOCKBOXES[k] && Number.isFinite(+v)) out.boxes[k] = +v; }   /* (2026-10-01) lockbox cooldowns, per map */
   { const ab = out.abil && typeof out.abil === "object" ? out.abil : {}; out.abil = {}; for (const st of ["melee", "archery", "magic"]) if (Array.isArray(ab[st])) out.abil[st] = cleanAbilOrder(st, ab[st]); }
   out.frags = Math.max(0, Math.floor(Number(out.frags) || 0)); out.takes = Math.max(0, Math.floor(Number(out.takes) || 0));   /* (2026-09-30) WORLD EVENTS: Star Fragments (spent at the Star Tent) and Wanted posters taken */
   out.gembag = bagOf(out); delete out.gemcase;   /* (2026-09-29) the gem bag, cleaned (the Gem Case of the first build is gone) */
@@ -10208,3 +10210,90 @@ export const cleanAbilOrder = (style, list) => { const own = (ABIL[style] || [])
    fleshed out yet, and we really need to hold it for when users reach 99 in any combat skill"). Off everywhere: no ability fires, the order
    message is ignored, the strip is hidden. Only a local test with ?open=1 (the dev server runs with __ES_OPEN_ALL) still has them. */
 HOLD.abil = !globalThis.__ES_OPEN_ALL;
+
+/* ============================================================ THIEVING IN THE WORLD, AND SHORTCUTS (2026-10-01, mockup 15: the owner, "lets build
+   this on dev and after testing bundle it with our next update"; settled the same day: "start at 10", "it should only stun", "lockpicks cost
+   1000", "1 extra gathering spot by ledges"). Three things, all HELD until the batch ships (HOLD.thief2; a local ?open=1 test has them):
+     POCKETS: people-shaped monsters can be picked from Thieving 10. The Guild's own pick (pickChance, THIEF.ms, the stun) pointed at a monster,
+       for about two thirds of a Guild mark's XP at that level and the goods a mark of that level carries, plus now and then one of the
+       monster's own plain drops or a skeleton key. A picked monster is turned out for a minute. A FAIL ONLY STUNS: nothing attacks, nothing
+       is lost. Never tickets (THIEF's rule: thieving pays instantly with no input cost).
+     LOCKBOXES: one per map, a lockpick a try (1,000 at Vance), yours once every 15 minutes (per player, so nobody camps one), three rolls and
+       a key one time in twenty. Keys open a second roll on a dungeon hoard.
+     SHORTCUTS: one per map, Agility 10 to 95. The Guild door's trick, on a map: click, the server checks your level and walks you over, and the
+       map is unchanged for everybody else. Cutters skip a long way round (measured: tools/thieving-mock/find-shortcuts.mjs); on the open
+       maps, where a hop saves a second, a LEDGE instead: a one-tile island in the map's own water with ONE extra gathering spot beside it,
+       reachable only over the shortcut. Coordinates from tools/thieving-mock/place.mjs over the real grids. */
+HOLD.thief2 = !globalThis.__ES_OPEN_ALL;
+/* a Guild mark's XP at any level, between the marks */
+export const guildXpAt = (l) => {
+  const P = Object.values(MARKS).map((m) => [m.lvl, m.xp]).sort((a, b) => a[0] - b[0]);
+  if (l <= P[0][0]) return P[0][1];
+  for (let i = 1; i < P.length; i++) if (l <= P[i][0]) { const [a, x] = P[i - 1], [b, y] = P[i]; return x + ((l - a) / (b - a)) * (y - x); }
+  return P[P.length - 1][1];
+};
+/* the Guild mark whose pockets a monster of this level carries */
+export const markAtLvl = (l) => Object.entries(MARKS).filter(([, m]) => m.lvl <= l).sort((a, b) => b[1].lvl - a[1].lvl)[0]?.[0] || "lifter";
+export const WT = { min: 10, xpShare: 0.65, outMs: 60000, ownDrop: 0.03, key: 1 / 250,
+  box: { ms: 5000, cdMs: 15 * 60000, rolls: 3, key: 1 / 20, xpMul: 1.5 }, lockpick: 1000,
+  cross: { ms: 1200, perTile: 400, xpMul: 2, slip: 0.1, slipGone: 10 } };
+/* monster type -> the Thieving level to pick it (the mockup's table) */
+export const POCKETS = { highwayman: 10, counter: 22, shark: 28, stagehand: 30, usher: 35, understudy: 40, mummy: 44, angel: 48, pinhead: 58,
+  fatlady: 64, strongman: 68, deckhand: 70, potboy: 73, dgoblin: 76, warden: 78, scrapper: 84, dealer: 88, caveman: 90, cavehunter: 96 };
+export const pocketXp = (t) => Math.round(guildXpAt(POCKETS[t] || 1) * WT.xpShare);
+/* what a pocket holds: the goods of a mark that level, sometimes a plain drop of the monster's own (never tickets), sometimes a key */
+export const pocketDrop = (t, r = Math.random) => {
+  const out = [markDrop(markAtLvl(POCKETS[t] || 1), r)];
+  if (r() < WT.ownDrop) { const own = (MOBS[t]?.drops || []).map((d) => d[0]).filter((k) => k !== "tickets" && ITEMS[k]); if (own.length) out.push(own[Math.floor(r() * own.length)]); }
+  if (r() < WT.key) out.push("skeleton_key");
+  return out;
+};
+export const LOCKBOXES = { gloam: [37, 2, 15], mire: [22, 15, 25], boneyard: [22, 12, 35], sands: [25, 5, 45], cloud: [30, 16, 48], thunderhead: [17, 12, 55],
+  carnival: [31, 21, 65], boardwalk: [2, 3, 72], depths: [21, 11, 78], trailer: [40, 4, 85], valley: [20, 12, 92], frozen: [41, 5, 97] };
+/* a: the near side, b: the far side (a ledge's island), at: where its prop stands (a free blocked tile on the hop), on: instead of a prop,
+   the existing fence or railing on the hop IS the shortcut. how: the prop's art and the word for crossing. A ledge's spot sits BELOW its
+   island where it can, so a tree's picture never stands in front of the crossing (the Gloam's willow hid its log until it moved). */
+export const WORLD_SC = {
+  gloam: { lvl: 10, name: "Fallen log", how: "log", a: [30, 18], b: [28, 20], at: [29, 19], ledge: { spot: [28, 21], type: "willow" } },
+  mire: { lvl: 20, name: "Stepping stones", how: "stones", a: [17, 17], b: [15, 19], at: [16, 18], ledge: { spot: [15, 20], type: "deadtree" } },
+  boneyard: { lvl: 30, name: "Loose railing", how: "duck", a: [3, 8], b: [1, 11], on: true },
+  sands: { lvl: 40, name: "Oasis stones", how: "stones", a: [5, 2], b: [3, 4], at: [4, 3], ledge: { spot: [3, 5], type: "datepalm" } },
+  cloud: { lvl: 45, name: "Cloud hop", how: "stones", a: [29, 17], b: [27, 19], at: [28, 18], ledge: { spot: [28, 19], type: "skyash" } },
+  thunderhead: { lvl: 50, name: "Rope swing", how: "rope", a: [5, 16], b: [3, 18], at: [4, 17], ledge: { spot: [3, 19], type: "rock" } },
+  carnival: { lvl: 60, name: "Bent cage bars", how: "squeeze", a: [3, 10], b: [1, 12], on: true },
+  boardwalk: { lvl: 66, name: "Swing under the pier", how: "rope", a: [14, 5], b: [15, 9], at: [14, 6] },
+  depths: { lvl: 75, name: "Gap in the fence", how: "fence", a: [36, 18], b: [40, 22], at: [37, 19] },
+  trailer: { lvl: 80, name: "Over the fence", how: "climb", a: [34, 23], b: [32, 24], on: true },
+  valley: { lvl: 90, name: "Vine swing", how: "rope", a: [5, 17], b: [3, 19], at: [4, 18], ledge: { spot: [3, 20], type: "cycad" } },
+  frozen: { lvl: 95, name: "Ice floes", how: "stones", a: [27, 3], b: [25, 4], at: [26, 4], ledge: { spot: [25, 5], type: "frostpine" } } };
+const SC_ART = { log: "o_sc_log", stones: "o_sc_stones", rope: "o_sc_rope", fence: "o_sc_fence" };
+export const SC_VERB = { log: "walk the log", stones: "hop across", rope: "swing over", fence: "squeeze through", duck: "duck under the railing", squeeze: "squeeze through the bars", climb: "climb over" };
+export const scLine = (s) => { const [ax, ay] = s.a, [bx, by] = s.b, hop = Math.max(Math.abs(bx - ax), Math.abs(by - ay)), r = []; for (let i = 1; i < hop; i++) r.push([ax + Math.round(((bx - ax) * i) / hop), ay + Math.round(((by - ay) * i) / hop)]); return r; };
+export const scHop = (s) => Math.max(Math.abs(s.b[0] - s.a[0]), Math.abs(s.b[1] - s.a[1]));
+export const slipChance = (c, lvl) => Math.max(0, WT.cross.slip * (1 - (lvlOf(c, "agility") - lvl) / WT.cross.slipGone));
+/* buildScene's step: append-only, after the projects, so no object that was there before moves id */
+function worldThiefObjs(key, b) {
+  if (HOLD.thief2) return;
+  const sc = WORLD_SC[key];
+  if (sc) {
+    const nm = `${sc.name} — Agility ${sc.lvl}`;
+    if (sc.ledge) {
+      const [lx, ly] = sc.b, [rx, ry] = sc.ledge.spot;
+      b.g[ly][lx] = ".";
+      const proto = b.objs.find((o) => o.t === sc.ledge.type && !o.edge);
+      if (proto) { const o = structuredClone(proto); delete o.id; o.x = rx; o.y = ry; o.ledge = true; b.objs.push(o); b.g[ry][rx] = "#"; }
+    }
+    if (sc.on) {
+      const tiles = scLine(sc), ob = b.objs.find((o) => tiles.some(([x, y]) => x >= o.x && x < o.x + (o.w || 1) && y >= o.y && y < o.y + (o.h || 1)));
+      if (ob) { ob.sc = key; ob.name = nm; }
+    } else {
+      const [x, y] = sc.at;
+      b.objs.push({ t: "shortcut", art: SC_ART[sc.how], x, y, sc: key, name: nm });
+      b.g[y][x] = "#";
+    }
+  }
+  const lb = LOCKBOXES[key];
+  if (lb) { const [x, y, lvl] = lb; b.objs.push({ t: "lockbox", art: "o_lockbox", x, y, lvl, name: `Lockbox — Thieving ${lvl}` }); b.g[y][x] = "#"; }
+}
+ITEMS.lockpick = { name: "Lockpick", icon: "\u{1FA9B}", ex: "A pick and a tension wrench. One go at a lockbox, whether it opens or not. Vance sells them." };
+ITEMS.skeleton_key = { name: "Skeleton key", icon: "\u{1F5DD}️", ex: "Hold one when you open a Crypt or Pyramid hoard and it rolls a second time. One key, one hoard." };

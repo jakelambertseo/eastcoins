@@ -192,9 +192,12 @@ export function installCrypt(World, { G, R, rint }) {
   P.cryptLootGive = function (pl, sent) {
     const C = pl.C, L = C.crypt?.loot; if (!L) return; delete C.crypt.loot; this.touch(pl);   // gone from the character BEFORE anything is handed over: it can be opened once
     const { items } = R.rollLoot(L), got = [];
+    /* (2026-10-01) A SKELETON KEY (lockboxes, thief.js): opened in person with one in the bag, the hoard rolls twice. Not for a hoard sent after you. */
+    let keyed = false;
+    if (!sent && !G.HOLD.thief2 && G.countItems({ inv: C.inv, bank: [] }, ["skeleton_key"]) > 0) { G.takeInv(C.inv, "skeleton_key", 1); items.push(...R.rollLoot(L).items.filter((x) => !String(x.k).startsWith("pet:"))); keyed = true; }   /* never a second pet */
     for (const it of items) { if (it.k === "tickets") { this.tixTo(pl, it.n, "dungeons"); got.push(it); continue; } if (!G.ITEMS[it.k]) continue; const where = this.keepRare(pl, it.k, it.n); if (where) got.push({ ...it, bank: where === "bank" || undefined }); }
     const T = C_.tiers[L.tier], names = got.filter((x) => x.k !== "tickets").map((x) => `${x.n > 1 ? x.n + " x " : ""}${G.ITEMS[x.k].name}`);
-    this.say(pl, `${sent ? "The chest you left in the Crypt was sent up after you" : "You open the hoard"}: ${G.fmtTix(got[0]?.k === "tickets" ? got[0].n : 0)}${names.length ? `, ${names.join(", ")}` : ""}.${got.some((x) => x.bank) ? " (No room in your bag for some of it: it's in your bank.)" : ""}`, "loot");
+    this.say(pl, `${sent ? "The chest you left in the Crypt was sent up after you" : keyed ? "Your skeleton key turns twice. You open the hoard" : "You open the hoard"}: ${G.fmtTix(got[0]?.k === "tickets" ? got[0].n : 0)}${names.length ? `, ${names.join(", ")}` : ""}.${got.some((x) => x.bank) ? " (No room in your bag for some of it: it's in your bank.)" : ""}`, "loot");
     pl.out.push({ type: "cryptloot", tier: L.tier, items: got, sent: !!sent });
     if (Math.random() < Math.min(0.5, G.ZDROP.kill(G.MOBS["hoodie" + T.sfx].lvl) * C_.zdropMul)) this.zcoinDrop(pl, "the Hoodie's hoard");
     const gear = got.find((x) => G.ITEMS[x.k]?.slot); if (gear) for (const q of this.pls.values()) if (q !== pl) q.out.push({ type: "casinonote", text: `🗝️ ${pl.name} pulled ${G.ITEMS[gear.k].name} out of the Hoodie's hoard.` });

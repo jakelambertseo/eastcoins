@@ -41,6 +41,7 @@ import { installCommands } from "./commands.js";   /* (2026-09-30) CHAT COMMANDS
 import { installWeekly } from "./weekly.js";
 import { installTrack } from "./track.js";   /* (2026-09-30) WHAT THE WORLD RECORDS: see track.js and tools/tracking-mock/ */   /* (2026-09-30) THE WEEKLY ISSUE */   
 import { installRaid } from "./raid.js";
+import { installThief } from "./thief.js";   /* (2026-10-01) thieving in the world, lockboxes and shortcuts (HOLD.thief2) */
 import { CHAT_PAGE } from "./chatpage.js";   /* (2026-09-30) the staff chat view: see /chat below */   /* (2026-09-30) the Yard raid */   /* (2026-09-30) the Frozen Reach's daily boss */
 import { installOutfit } from "./outfit.js";   /* (2026-09-29) the outfitters: Wren and Morwenna */   /* (2026-09-28) gems, sockets, the Gem Case and the Gem Sorter */   /* (2026-09-28) Tinkering: the sink */   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
@@ -954,6 +955,7 @@ export class World {
       /* (2026-09-23) BUYING A PERMIT FROM VANCE. Its own message rather than the shop's, because there is no
          shop NPC left in the game to open - the permit sat in SHOP.sells where nothing could reach it. He is
          `still`, so the proximity check is the same one the Forge used: be standing with him. */
+      case "lockpick": return this.wtBuyPick(S, pl, m);   /* (2026-10-01) Vance sells lockpicks (thief.js) */
       case "permit": {
         const V = S.npcs.find((x) => x.opens === "permit");
         if (!V || G.cheb(pl, V) > (V.reach || 3)) return this.say(pl, "You need to be standing with Vance.", "bad");
@@ -1075,7 +1077,9 @@ export class World {
   startAct(S, pl, m) {
     const C = pl.C, f = this.from(pl), now = Date.now();
     let act = null;
-    if (m.kind === "pvp") { if (!S.def.pvp) return; const T = this.pls.get(String(m.id)); if (!T || T === pl || T.C.scene !== S.key) return; act = { kind: "pvp", id: T.id, x: T.x, y: T.y, name: T.name }; }
+    const wtOb = m.kind == null || m.kind === "ob" ? S.objs[m.ob | 0] : null;   /* (2026-10-01) thieving in the world and shortcuts: thief.js */
+    if (m.kind === "pick" || (wtOb && (wtOb.sc || wtOb.t === "lockbox") && !G.HOLD.thief2)) { act = this.wtStart(S, pl, m, f); if (!act) return; }
+    else if (m.kind === "pvp") { if (!S.def.pvp) return; const T = this.pls.get(String(m.id)); if (!T || T === pl || T.C.scene !== S.key) return; act = { kind: "pvp", id: T.id, x: T.x, y: T.y, name: T.name }; }
     else if (m.kind === "ground") { const it = S.ground.find((x) => x.id === m.id); if (it) act = { kind: "ground", id: it.id, x: it.x, y: it.y, name: G.ITEMS[it.k].name }; }
     else if (m.kind === "mob") {
       const mob = S.mobs.find((x) => x.id === m.id && !x.dead); if (!mob) return;
@@ -1121,7 +1125,7 @@ export class World {
        The act still lands: you can keep swinging at whatever is already beside you, which is the whole point of
        being held next to something. Only the walking to it is refused. */
     const held = S.run && S.def.pyramid && S.run.coil && S.run.coil.id === pl.id;
-    const p = held ? [] : G.findPath(S.g, f, act, act.kind === "ground" ? 0 : act.reach || G.reachOf(act.kind) || 1);
+    const p = held ? [] : G.findPath(S.g, f, act, act.kind === "ground" || act.kind === "shortcut" ? 0 : act.reach || G.reachOf(act.kind) || 1);
     if (p === null) { this.say(pl, act.kind === "mob" && !G.launcherOf(C) ? "You can't get to that from here. It wants a bow." : "You can't reach that.", "bad"); pl.act = null; return; }
     if (held && G.cheb(pl, act) > (act.reach || G.reachOf(act.kind) || 1)) { this.say(pl, "It has you. You can only reach what is already beside you.", "bad"); pl.act = null; return; }
     /* SAME TARGET, SAME ACTION (2026-09-25, the re-click exploit). startAct builds a fresh act on every click and
@@ -3070,6 +3074,7 @@ export class World {
       return this.say(pl, `You stop ${G.AFK_KINDS[a.kind]}: you've been idle for ${Math.round(afkMs / 60000)} minutes. Click to carry on.`);
     }
     const faceIt = () => { pl.dir = G.DIRS[`${Math.sign(a.x - pl.x)},${Math.sign(a.y - pl.y)}`] || pl.dir; pl.face = a.x > pl.x ? 1 : a.x < pl.x ? -1 : pl.face; };
+    if (a.kind === "pick" || a.kind === "lockbox" || a.kind === "shortcut") return this.wtAct(S, pl, a, now, faceIt);   /* (2026-10-01) thief.js */
     if (a.kind === "mob") {
       const m = S.mobs.find((x) => x.id === a.id); if (!m || m.dead) { pl.act = null; return; }
       if (m.star) return this.starSwing(S, pl, m, a, now);   /* (2026-09-30) SHOOTING STARS */
@@ -5423,4 +5428,5 @@ installTrack(World, { G });   /* (2026-09-30) WHAT THE WORLD RECORDS */   /* (20
 installCommands(World, { G });
 installWeekly(World, { G });   /* (2026-09-30) THE WEEKLY ISSUE: a snapshot a week, and the numbers the wiki's issue shows */   /* (2026-09-30) CHAT COMMANDS: /find, /help, /price, /count, /xp, /timers, /bosses, /wiki, /map, /online, /roll, /stuck */
 installRaid(World, { G });
+installThief(World, { G });
 installCards(World, { G });

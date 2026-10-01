@@ -314,6 +314,9 @@ export function installPyramid(World, { G, R, rint }) {
     const C = pl.C, L = C.pyramid?.loot; if (!L) return;
     delete C.pyramid.loot; this.touch(pl);   // off the character BEFORE anything is handed over: it opens once
     const { items } = R.rollLoot(L), got = [];
+    /* (2026-10-01) A SKELETON KEY (thief.js): opened in person with one in the bag, the hoard rolls twice. The pet roll stays one: a second
+       Coilling from a key would make the key the way to get the pet. */
+    if (!sent && !G.HOLD.thief2 && G.countItems({ inv: C.inv, bank: [] }, ["skeleton_key"]) > 0) { G.takeInv(C.inv, "skeleton_key", 1); items.push(...R.rollLoot(L).items.filter((x) => !String(x.k).startsWith("pet:"))); this.say(pl, "Your skeleton key turns twice.", "loot"); }
     for (const it of items) {
       if (it.k === "tickets") { this.tixTo(pl, it.n, "dungeons"); got.push(it); continue; }
       /* THE PET IS AN INSTANCE, not a stack - the same shape killMob uses when one drops in the world. */

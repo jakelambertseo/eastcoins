@@ -1,0 +1,239 @@
+{
+ "cuts": {
+  "workyard": null,
+  "boneyard": null,
+  "carnival": null,
+  "boardwalk": {
+   "a": [
+    14,
+    5
+   ],
+   "b": [
+    15,
+    9
+   ],
+   "at": [
+    14,
+    6
+   ],
+   "saves": 26,
+   "hop": 4
+  },
+  "depths": {
+   "a": [
+    36,
+    18
+   ],
+   "b": [
+    40,
+    22
+   ],
+   "at": [
+    37,
+    19
+   ],
+   "saves": 31,
+   "hop": 4
+  },
+  "trailer": null
+ },
+ "ledges": {
+  "gloam": {
+   "shore": [
+    30,
+    18
+   ],
+   "ledge": [
+    28,
+    20
+   ],
+   "spot": [
+    29,
+    20
+   ],
+   "at": [
+    29,
+    19
+   ],
+   "hop": 2,
+   "water": "~",
+   "type": "willow"
+  },
+  "mire": {
+   "shore": [
+    17,
+    17
+   ],
+   "ledge": [
+    15,
+    19
+   ],
+   "spot": [
+    16,
+    19
+   ],
+   "at": [
+    16,
+    18
+   ],
+   "hop": 2,
+   "water": "~",
+   "type": "deadtree"
+  },
+  "sands": {
+   "shore": [
+    5,
+    2
+   ],
+   "ledge": [
+    3,
+    4
+   ],
+   "spot": [
+    4,
+    4
+   ],
+   "at": [
+    4,
+    3
+   ],
+   "hop": 2,
+   "water": "~",
+   "type": "tree"
+  },
+  "cloud": {
+   "shore": [
+    29,
+    17
+   ],
+   "ledge": [
+    27,
+    19
+   ],
+   "spot": [
+    28,
+    19
+   ],
+   "at": [
+    28,
+    18
+   ],
+   "hop": 2,
+   "water": "~",
+   "type": "skyash"
+  },
+  "thunderhead": {
+   "shore": [
+    5,
+    16
+   ],
+   "ledge": [
+    3,
+    18
+   ],
+   "spot": [
+    4,
+    18
+   ],
+   "at": [
+    4,
+    17
+   ],
+   "hop": 2,
+   "water": "b",
+   "type": "rock"
+  },
+  "valley": {
+   "shore": [
+    5,
+    17
+   ],
+   "ledge": [
+    3,
+    19
+   ],
+   "spot": [
+    4,
+    19
+   ],
+   "at": [
+    4,
+    18
+   ],
+   "hop": 2,
+   "water": "~",
+   "type": "cycad"
+  },
+  "frozen": {
+   "shore": [
+    27,
+    3
+   ],
+   "ledge": [
+    25,
+    4
+   ],
+   "spot": [
+    25,
+    5
+   ],
+   "at": [
+    26,
+    4
+   ],
+   "hop": 2,
+   "water": "~",
+   "type": "frostpine"
+  }
+ },
+ "boxes": {
+  "boneyard": [
+   22,
+   12
+  ],
+  "carnival": [
+   31,
+   21
+  ],
+  "boardwalk": [
+   2,
+   3
+  ],
+  "depths": [
+   21,
+   11
+  ],
+  "trailer": [
+   40,
+   4
+  ],
+  "gloam": [
+   37,
+   2
+  ],
+  "mire": [
+   22,
+   15
+  ],
+  "sands": [
+   25,
+   5
+  ],
+  "cloud": [
+   30,
+   16
+  ],
+  "thunderhead": [
+   17,
+   12
+  ],
+  "valley": [
+   20,
+   12
+  ],
+  "frozen": [
+   41,
+   5
+  ]
+ }
+}

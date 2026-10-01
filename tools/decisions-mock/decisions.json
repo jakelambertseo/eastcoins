@@ -2,6 +2,16 @@
  {
   "date": "2026-10-01",
   "area": "Skilling",
+  "decision": "Thieving in the world and shortcuts are built on dev and ship with the next update, after the owner tests them.",
+  "quote": "lets build this on dev and after testing bundle it with our next update",
+  "why": "",
+  "page": "thieving-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Skilling",
   "decision": "Thieving goes out into the world from Thieving 10: pockets on people-shaped monsters and a lockbox on every map. The Guild stays the training room, and no new thieving rooms are built.",
   "quote": "start at 10",
   "why": "Thieving lived in one building; the world hooks cost almost no art",
