@@ -1,0 +1,34 @@
+{
+ "th_hoop": {
+  "anim": "th_hoop_a",
+  "frames": 8,
+  "cols": 8,
+  "fw": 45,
+  "fh": 60,
+  "fps": 10
+ },
+ "th_firewall": {
+  "anim": "th_firewall_a",
+  "frames": 8,
+  "cols": 8,
+  "fw": 69,
+  "fh": 51,
+  "fps": 10
+ },
+ "th_firebarrels": {
+  "anim": "th_firebarrels_a",
+  "frames": 8,
+  "cols": 8,
+  "fw": 70,
+  "fh": 57,
+  "fps": 10
+ },
+ "th_flamebarrel": {
+  "anim": "th_flamebarrel_a",
+  "frames": 8,
+  "cols": 8,
+  "fw": 24,
+  "fh": 57,
+  "fps": 10
+ }
+}

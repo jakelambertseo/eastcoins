@@ -335,6 +335,7 @@ export function installEvents(World, { G }) {
        (and to the bar), up to `cap`. Kept on the monster, so a hop to a new map starts the count again. */
     m.hitBy ||= {}; if (!m.hitBy[pl.id]) { m.hitBy[pl.id] = 1; if (Object.keys(m.hitBy).length > 1) { const add = Math.max(0, Math.min(TH.hits.per, TH.hits.cap - (m.maxHp || 0))); m.hp += add; m.maxHp = (m.maxHp || 0) + add; } }
     H.hits++; H.by[pl.id] = (H.by[pl.id] || 0) + 1; H.hp = m.hp;
+    this.workRoll?.(pl, "getaway", 1 / 60);   /* (2026-10-01) the getaway silks, knocked loose */
     const spill = Math.max(1, Math.round(H.sack0 * TH.spill));
     if (H.sack - spill >= H.sack0 * 0.2) {
       H.sack -= spill; H.spilled += spill;
@@ -404,10 +405,12 @@ export function installEvents(World, { G }) {
     const R = G.tentRow(row), price = R.frags;
     if (R.store && C.store?.own?.includes(R.id)) return this.say(pl, "You own that already.", "bad");
     if ((C.frags | 0) < price) return this.say(pl, `That's ${price.toLocaleString()} Star Fragments. You have ${(C.frags | 0).toLocaleString()}: mine a Shooting Star for more.`, "bad");
+    if (R.work && !G.workMissing(C, R.work).length) return this.say(pl, "You have the whole set already.", "bad");   /* (2026-10-01) work clothes */
     if (R.give && !this.give(pl, R.give[0], R.give[1]) && !this.bankAdd(pl, R.give[0], R.give[1])) return this.say(pl, "Your bag and bank are both full. Make some room first.", "bad");
     if (R.crate) { const got = G.starCrate(G.lvlOf(C, "mining")); for (const [k, n] of got) if (!this.give(pl, k, n)) this.bankAdd(pl, k, n); this.say(pl, `The crate holds ${got.map(([k, n]) => `${n} ${G.ITEMS[k].name.toLowerCase()}`).join(" and ")}.`, "loot"); }
     if (R.store) { C.store ||= { own: [], name: {} }; C.store.own ||= []; C.store.name ||= {}; C.store.own.push(R.id); if (!C.store.name[R.store.slot]) C.store.name[R.store.slot] = R.id; S.whoSig = null; }
     C.frags = (C.frags | 0) - price; this.touch(pl);
+    if (R.work) { this.workFind(pl, R.work); pl.out.push({ type: "evwin", open: "tent", frags: C.frags, bought: R.id }); return; }
     this.say(pl, `${R.name}: ${price.toLocaleString()} Star Fragments.${R.store ? " It's yours to wear from the Store." : ""}`, "good");
     pl.out.push({ type: "evwin", open: "tent", frags: C.frags, bought: R.id });
   };

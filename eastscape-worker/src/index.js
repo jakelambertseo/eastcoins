@@ -43,6 +43,7 @@ import { installTrack } from "./track.js";   /* (2026-09-30) WHAT THE WORLD RECO
 import { installRaid } from "./raid.js";
 import { installThief } from "./thief.js";
 import { installThrill } from "./thrill.js";
+import { installWork, WORK_ODDS } from "./work.js";
 import { installAdmin } from "./admin.js";   /* (2026-10-01, v1.1) the admin window's state, player card and action log */   /* (2026-10-01) thieving in the world, lockboxes and shortcuts (HOLD.thief2) */
 import { installChatAct } from "./chatact.js";
 import { CHAT_PAGE } from "./chatpage.js";   /* (2026-09-30) the staff chat view: see /chat below */   /* (2026-09-30) the Yard raid */   /* (2026-09-30) the Frozen Reach's daily boss */
@@ -482,7 +483,7 @@ export class World {
     return { pay: owed, low, late };
   }
 
-  meOf(pl) { const C = pl.C; return { hatch: C.hatch || null,   /* (2026-09-27) the egg in the hatchery */ fung: C.fung || null,   /* (2026-09-27) which clusters you've picked today */ pen: C.pen || null,   /* (2026-09-27) Breeding */ store: C.store || null,   /* (2026-09-27) what the Store has sold you and what your name wears */ seen: C.seen || [],   /* (2026-09-27) the world map's fog */ hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null,   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
+  meOf(pl) { const C = pl.C; return { locker: C.locker || [], work: C.work || null,   /* (2026-10-01) work clothes */ hatch: C.hatch || null,   /* (2026-09-27) the egg in the hatchery */ fung: C.fung || null,   /* (2026-09-27) which clusters you've picked today */ pen: C.pen || null,   /* (2026-09-27) Breeding */ store: C.store || null,   /* (2026-09-27) what the Store has sold you and what your name wears */ seen: C.seen || [],   /* (2026-09-27) the world map's fog */ hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null,   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
@@ -974,7 +975,8 @@ export class World {
          shop NPC left in the game to open - the permit sat in SHOP.sells where nothing could reach it. He is
          `still`, so the proximity check is the same one the Forge used: be standing with him. */
       case "bookie": return this.bookieBuy(S, pl, m);
-      case "snack": return this.snackBuy(S, pl, m);   /* (2026-10-01) Thrill Hill's snack cart (thrill.js) */   /* (2026-10-01) Fast Eddie on Thrill Hill (thrill.js) */
+      case "snack": return this.snackBuy(S, pl, m);
+      case "work": return this.workWear(pl, m);   /* (2026-10-01) work clothes (work.js) */   /* (2026-10-01) Thrill Hill's snack cart (thrill.js) */   /* (2026-10-01) Fast Eddie on Thrill Hill (thrill.js) */
       case "lockpick": return this.wtBuyPick(S, pl, m);   /* (2026-10-01) Vance sells lockpicks (thief.js) */
       case "permit": {
         const V = S.npcs.find((x) => x.opens === "permit");
@@ -1795,7 +1797,7 @@ export class World {
     const n = rint(G.FUNG.wildN[0], G.FUNG.wildN[1]) * (G.truffleNose(C) ? G.FUNG.snoutShroom : 1);   /* (2026-09-27, the owner: "they should return triple shrooms when harvested as well") */
     if (!this.give(pl, k, n)) return;
     h.got.push(lid); if (h.got.length > 60) h.got.splice(0, h.got.length - 60); this.touch(pl);
-    this.gained(S, pl, k, n); this.grant(pl, "fungiculture", Math.max(10, Math.round(F.xp * G.FUNG.wildXp)));
+    this.gained(S, pl, k, n); this.grant(pl, "fungiculture", Math.max(10, Math.round(F.xp * G.FUNG.wildXp))); this.workRoll(pl, "apoth", WORK_ODDS.apoth);   /* (2026-10-01) the apothecary's smock */
     const nose = G.truffleNose(C), spawn = Math.random() < G.FUNG.wildSpawn && this.giveUpTo(pl, sk, nose ? G.FUNG.snoutSpawn : 1);   /* (2026-09-27) a truffle pet triples it */
     const truf = nose && Math.random() < G.FUNG.truffle.pick * nose && this.giveUpTo(pl, "truffle", 1), trufSp = nose && Math.random() < G.FUNG.truffle.spawn * nose && this.giveUpTo(pl, "spawn_truffle", 1);   /* the Baron's nose is TRUFFLE_BARON times the pig's */
     this.say(pl, `You pick ${n} ${G.ITEMS[k].name.toLowerCase()}${spawn ? ", and scrape up some spawn with it" : ""}.${truf ? " Your pig roots out a black truffle beside it!" : ""}${trufSp ? " The pig turns up truffle spawn, too." : ""}`, truf || trufSp ? "loot" : "good");
@@ -1811,7 +1813,7 @@ export class World {
     if (!p) return pl.out.push({ type: "fplant", i: ob.i });
     const F = G.FUNGI[p.k], yk = G.fungYield(p.k), left = p.at + (p.ms || F.ms) - now, nm = G.ITEMS[yk].name.toLowerCase();
     if (left > 0) return this.say(pl, `Your ${nm} will be ready in ${left > 90000 ? `about ${Math.round(left / 60000)} minutes` : `${Math.ceil(left / 1000)} seconds`}.`);
-    const n = Math.max(1, Math.round(rint(F.yield[0], F.yield[1]) * (G.truffleNose(pl.C) ? G.FUNG.snoutShroom : 1 + G.petFx(pl.C).grow / 100)));   /* (2026-09-27) a truffle pet triples a bed's shrooms (in place of its harvest bonus, not on top); any other grow pet adds its % */
+    const n = Math.max(1, Math.round(rint(F.yield[0], F.yield[1]) * (G.truffleNose(pl.C) ? G.FUNG.snoutShroom : 1 + G.petFx(pl.C).grow / 100))) * (Math.random() < G.workPerk(pl.C, "fungiculture", "bed2") ? 2 : 1);   /* (2026-10-01) the mycologist's mantle */   /* (2026-09-27) a truffle pet triples a bed's shrooms (in place of its harvest bonus, not on top); any other grow pet adds its % */
     if (!this.give(pl, yk, n)) return;
     const nose = G.truffleNose(pl.C), want = (G.SEED_BACK + (Math.random() < G.SEED_EXTRA ? 1 : 0)) * (nose ? G.FUNG.snoutSpawn : 1), back = this.giveUpTo(pl, p.k, want);   /* (2026-09-27) a truffle pet triples the spawn back */
     const trufSp = nose && p.k !== "spawn_truffle" && Math.random() < G.FUNG.truffle.bed * nose && this.giveUpTo(pl, "spawn_truffle", 1);
@@ -1974,6 +1976,7 @@ export class World {
       C.pets.push(...back, pet); this.colGet(pl, `pet:${pet.k}`, 1);
       const xp = P.kind === "egg" ? G.EGGS[P.egg].xp : G.BREED[P.kind].xpEnd;
       C.pen = null; this.grant(pl, "breeding", xp); this.touch(pl);
+      this.workRoll(pl, "whites", WORK_ODDS.whites);   /* (2026-10-01) the short-order whites, found in the pen */
       this.say(pl, `${P.kind === "egg" ? "The egg hatches" : "A new pet"}: ${G.petLabel(pet)}${pet.fx ? ` (${G.petFxText(pet.fx)})` : ""}. It's in your Equipment tab${back.length ? ", and both parents come back to you" : ""}.`, "loot");
       if (P.kind !== "greater") for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `${P.kind === "legend" ? "\u{1F451}" : "\u{1F95A}"} ${pl.name} ${P.kind === "legend" ? "bred a Legendary" : "hatched"}: ${G.PETS[pet.k].name}!` });
       return this.penView(S, pl);
@@ -2031,6 +2034,7 @@ export class World {
       const pet = { id: `pt${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`, k: H.child.k, name: "" };
       C.pets.push(pet); this.colGet(pl, `pet:${pet.k}`, 1); C.hatch = null; this.grant(pl, "breeding", G.EGGS[H.egg]?.xp || 0); this.touch(pl);
       this.say(pl, `The egg hatches: a ${G.PETS[pet.k].name}! It's in your Equipment tab.`, "loot");
+      this.workRoll(pl, "whites", WORK_ODDS.whites);   /* (2026-10-01) the short-order whites, found in the hatchery */
       for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `\u{1F95A} ${pl.name} hatched a ${G.PETS[pet.k].name}!` });
       return this.hatchView(S, pl);
     }
@@ -3337,6 +3341,7 @@ export class World {
       const ms = pl.runAt ? Date.now() - pl.runAt : 0;
       if (!ms) return this.say(pl, "Start at the other end.", "bad");
       pl.runAt = Date.now();                                    // straight into another run
+      this.workRoll(pl, "prospector", WORK_ODDS.prospector);   /* (2026-10-01) the Prospector's kit, lost on the climb */
       /* WHAT A CLEAN LAP IS WORTH. The finish pays its own xp plus the same again in proportion to how many gates
          were taken perfectly, so eight out of eight DOUBLES it. A share rather than an all-or-nothing bonus: one
          fumbled gate on the last shutter should cost you something, not everything. */
@@ -3470,7 +3475,8 @@ export class World {
         pl.pickRun = (pl.pickRun | 0) + 1;
         const every = G.THIEF.streakEvery, hot = pl.pickRun % every === 0;
         let extra = null;
-        if (hot) { extra = G.markDrop(ob.mark); if (!this.give(pl, extra)) extra = null; else this.gained(S, pl, extra); }
+        if (hot || Math.random() < G.workPerk(C, "thieving", "pick2")) { extra = G.markDrop(ob.mark); if (!this.give(pl, extra)) extra = null; else this.gained(S, pl, extra); }   /* (2026-10-01) the Ditched set's all-four: one pocket in ten twice */
+        this.workRoll(pl, "feller", WORK_ODDS.feller);   /* (2026-10-01) the Feller's flannels, lifted from a pocket */
         this.grant(pl, "thieving", gx(M.xp)); this.questCheck(pl);
         this.say(pl, hot
           ? `${pl.pickRun} clean in a row. You lift ${G.ITEMS[k].name.toLowerCase()}${extra ? ` AND ${G.ITEMS[extra].name.toLowerCase()}` : ""} off ${M.name.toLowerCase()}.`
@@ -3598,6 +3604,7 @@ export class World {
         if (!this.give(pl, r.out[0], outN)) { for (const [k, n] of r.in) this.give(pl, k, n); this.touch(pl); pl.act = null; return; }
         this.gained(S, pl, r.out[0], outN, r.skill === "cooking" ? "cook" : "craft");
         this.trkCraft(pl, ob.t, r.out[0], outN);   /* (2026-09-30) which station made it: the Nexus and the Wild Bench apart (track.js) */
+        if (r.skill === "cooking") this.workRoll(pl, "kennel", WORK_ODDS.kennel);   /* (2026-10-01) the kennel keeper's coat, cooked into a batch */
         /* (2026-09-27) Bessemer's Gauntlets: a smelted bar may come out double (fx.smelt). Only if the bag has the room: a lucky bar is never a "bag full" */
         if ((r.station === "furnace" || r.station === "blast") && String(r.out[0]).endsWith("_bar")) { const sm = G.fxOf(C).smelt; if (sm > 0 && Math.random() < sm && G.roomFor(C.inv, r.out[0], C) >= outN) { G.addInv(C.inv, r.out[0], outN, C); this.touch(pl); this.say(pl, `The gauntlets ring on the mould: ${outN > 1 ? `${outN} more` : "another"} ${G.ITEMS[r.out[0]].name.toLowerCase()}!`, "loot"); } }
         /* (2026-09-23, the owner: "lets make sure we have the group bonus (+1% etc) to the campfire when users are
@@ -3641,6 +3648,7 @@ export class World {
         const log = ob.log || "logs";
         if (!this.give(pl, log)) { pl.act = null; return; }
         this.gained(S, pl, log, 1, "gather", "woodcutting");
+        if (ob.t === "deadtree" || ob.t === "bogwood") this.workRoll(pl, "myco", WORK_ODDS.myco);   /* (2026-10-01) the mycologist's mantle, grown through a dead log */
         if (ob.extra) { const [ek, lo, hi] = ob.extra, en = lo + Math.floor(Math.random() * (hi - lo + 1)); if (this.give(pl, ek, en)) this.gained(S, pl, ek, en, "gather", "woodcutting"); }   /* (2026-10-01) Thrill Hill's featherwood shakes feathers loose */
         if (Math.random() < G.projGather(C, "tree") && this.give(pl, log)) { this.gained(S, pl, log, 1, "gather", "woodcutting"); this.say(pl, "Seasoned timber: two for one.", "good"); }   /* (2026-09-28) the Sawmill */
         this.grant(pl, "woodcutting", gx(ob.xp || 25)); this.say(pl, oak ? "You get some logs from the oak." : `You get some ${G.ITEMS[log].name.toLowerCase()}.`, "good"); this.questCheck(pl);
@@ -3689,7 +3697,8 @@ export class World {
       if (Math.random() < Math.min(0.97, G.FISHING.chance(lvl) + bonus + fx.bite + (ob.bite || 0)) * G.gatherMul(S.def)) {   /* (2026-09-28) ob.bite: the Fishing Dock's tackle shed */   /* half out in the Wilderness: see WILD_GATHER */
         if (!this.give(pl, fish)) { pl.act = null; return; }
         this.gained(S, pl, fish, 1, "gather", "fishing");
-        if (fx.tix > 0 && Math.random() < fx.tix && this.give(pl, fish)) this.say(pl, "Two on one line!", "good");   /* the ticket buffs, for a fisher: that chance of a second fish */
+        if (fx.tix > 0 && Math.random() < fx.tix && this.give(pl, fish)) this.say(pl, "Two on one line!", "good");
+        else if (Math.random() < G.workPerk(C, "fishing", "dbl") && this.give(pl, fish)) { this.gained(S, pl, fish, 1, "gather", "fishing"); this.say(pl, "Two on one line! (your oilskins)", "good"); }   /* (2026-10-01) work clothes */   /* the ticket buffs, for a fisher: that chance of a second fish */
         if (Math.random() < (G.ZDROP.fish[fish] || 0) * (1 + fx.zdrop)) this.zcoinDrop(pl, "the end of a fishing line");
         /* (2026-09-24) THE DITCHED SET COMES OUT OF THE WATER, and this is the first rare a fishing spot has ever
            dropped - until now a cast could only ever give a fish. `rare` gear helps, the same as it does on a
@@ -3697,7 +3706,8 @@ export class World {
            piece of thief's kit nobody in the guild sells, which is the point: Fishing feeds Thieving. */
         if (Math.random() < G.DITCHED_ODDS * (1 + fx.rare + (ob.rare || 0))) {   /* (2026-09-28) ob.rare: the dock's spots */
           const k = G.DITCHED[Math.floor(Math.random() * G.DITCHED.length)];
-          if (this.keepRare(pl, k, 1)) this.say(pl, `Your line goes heavy. You haul up ${G.ITEMS[k].name.toLowerCase()} — somebody went in the water rather than be caught holding them.`, "loot");
+          if (!G.HOLD.work) this.workFind(pl, "ditched");   /* (2026-10-01) work clothes: a piece you don't have, to the locker */
+          else if (this.keepRare(pl, k, 1)) this.say(pl, `Your line goes heavy. You haul up ${G.ITEMS[k].name.toLowerCase()} — somebody went in the water rather than be caught holding them.`, "loot");
         }
         if ((C.luck | 0) > 0) { C.luck--; this.touch(pl); }
         this.grant(pl, "fishing", gx(trout ? ob.xp2 || ob.xp || 50 : ob.xp || 20)); this.say(pl, `You catch a ${G.ITEMS[fish].name.replace(/^Raw /, "").toLowerCase()}.`, "good"); this.questCheck(pl);
@@ -3709,6 +3719,7 @@ export class World {
     this.meterAdd(pl, "kills", 1, m);   /* (2026-09-28) the party meter: and the toughest thing killed names the fight */
     this.gemOnKill(pl, m);   /* (2026-09-28) combat gems, and a boss's Voidheart bit */
     this.cardOnKill(pl, m);   /* (2026-09-29) Marked Cards: a card drops, or a kill tip is done */
+    this.workOnKill(pl, m);   /* (2026-10-01) work clothes: farm animals, birds, the junk */
     if (G.MOBS[m.t]?.open || m.open) this.bossEnd(S, m, "clear", pl);
     if (G.MOBS[m.t]?.open && G.MOBS[m.t]?.boss) this.weekCount("boss", m.t);   /* (2026-09-30) the weekly issue counts world bosses */   /* (2026-09-28) a world boss falls: everybody who fought gets the report */
     /* (2026-09-23) THE SOUND IS TOLD WHAT DIED. It used to be the page matching /^You defeat / on the chat line,
@@ -4056,7 +4067,7 @@ export class World {
     const crop = G.CROPS[p.k], yk = G.cropYield(p.k), left = p.at + (p.ms || crop.ms) - now, nm = G.ITEMS[yk].name.toLowerCase();   /* (2026-09-26) a seed grows its bloom */
     if (!mine) return this.say(pl, `${whose} ${nm} ${left > 0 ? "is growing" : "looks ready to pick"}.`);
     if (left > 0) return this.say(pl, `Your ${nm} will be ready in ${left > 90000 ? `about ${Math.round(left / 60000)} minutes` : `${Math.ceil(left / 1000)} seconds`}.`);
-    const n = Math.max(1, Math.round(rint(crop.yield[0], crop.yield[1]) * (1 + G.petFx(pl.C).grow / 100)));   /* (2026-09-27) the Truffle Pig */
+    const n = Math.max(1, Math.round(rint(crop.yield[0], crop.yield[1]) * (1 + G.petFx(pl.C).grow / 100))) + G.workPerk(pl.C, "farming", "crop");   /* (2026-09-27) the Truffle Pig; (2026-10-01) the groundskeeper's dungarees */
     if (!this.give(pl, yk, n)) return;
     /* (2026-09-27) a seed crop gives its seed back (G.SEED_RETURN, now always) and a second one G.SEED_EXTRA of the time: see the rules */
     /* (2026-09-27) G.SEED_BACK every time (two), one more G.SEED_EXTRA of the time (three) */
@@ -4064,7 +4075,7 @@ export class World {
     const back = want ? this.giveUpTo(pl, p.k, want) : 0;
     if (p.k !== "goldtomatoe" && Math.random() < G.GOLD_TOMATO_HARVEST && this.keepRare(pl, "goldtomatoe", 1)) { this.say(pl, "One of them is heavy, and warm, and gold. A Golden tomatoe: plant it.", "loot"); for (const q of this.pls.values()) if (q !== pl) q.out.push({ type: "casinonote", text: `\u{1F345} ${pl.name} pulled a Golden tomatoe out of a plot.` }); }   /* (2026-09-27) see G.GOLD_TOMATO_HARVEST */
     I.plots[ob.i] = null; this.touch(pl);
-    this.gained(S, pl, yk, n); this.grant(pl, "farming", crop.xp);
+    this.gained(S, pl, yk, n); this.grant(pl, "farming", crop.xp); this.workRoll(pl, "oilskins", WORK_ODDS.oilskins);   /* (2026-10-01) the scarecrow's coat */
     this.say(pl, `You harvest ${n} ${nm}${back > 1 ? `, and ${back === 2 ? "two" : back === 3 ? "three" : back} seeds come up with them` : back ? ", and a seed comes up with them" : ""}.`, "good");
   }
 
@@ -5315,6 +5326,7 @@ export class World {
       case "raid": return this.raidAdmin(S, pl, String(m.arg || ""), note);   /* (2026-09-30, the owner: "Admin-only") the Yard raid */
       case "wyrm": return this.wyrmAdmin(S, pl, String(m.arg || ""), note);
       case "ev": return this.evAdmin(S, pl, String(m.arg || ""), note);   /* (2026-09-30) WORLD EVENTS: "star", "wanted", "thief", each with "end"; "plan" */   /* (2026-09-30, the owner: "add an admin setting for me to be able to spawn it") */
+      case "workkit": return this.workKit(pl, String(m.arg || ""), note);   /* (2026-10-01) DEV: work clothes for testing (work.js) */
       case "hwking": { this.hw.kingAt = Date.now() - 1; this.hw.kingDue = false; this.hw.kingUp = null; this.hwSave(); return note("The Pumpkin King is due now: he rises the moment somebody is in the Mire."); }   /* (2026-09-27) dev/admin: call the King */
       case "quest": { const k = String(m.k), state = String(m.state); if (!G.QUESTS[k] || !["new", "active", "done"].includes(state)) return; if (state === "new") delete C.qs[k]; else C.qs[k] = { state, stage: 0, n: 0 }; this.touch(pl); return note(`${G.QUESTS[k].name} set to ${state}.`); }
       case "resetquests": C.qs = {}; this.touch(pl); return note("All quests reset.");
@@ -5458,6 +5470,7 @@ installWeekly(World, { G });   /* (2026-09-30) THE WEEKLY ISSUE: a snapshot a we
 installRaid(World, { G });
 installThief(World, { G });
 installThrill(World, { G });
+installWork(World, { G });
 installAdmin(World, { G });
 installChatAct(World, { G });
 installCards(World, { G });

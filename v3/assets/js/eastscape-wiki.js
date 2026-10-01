@@ -1003,6 +1003,16 @@ export const GUIDES = [
   /* (2026-09-29, the owner: "wiki needs updates for new gems and gem sorter etc as well") THE GEM BAG AND THE SORTER. Every number is read
      from GEMSET, gemOdds and GEM_BANDS, so a retune of the odds or the prices cannot leave this page behind. The page hides it while
      HOLD.gems is on (wikiPages in eastscape.html), like the other held systems. */
+  /* (2026-10-01, v1.1) WORK CLOTHES: every set, read from WORKSETS, so a new set or a new source cannot leave this page behind. Hidden while HOLD.work. */
+  { id: "workclothes", title: "Work clothes", icon: "\u{1F9E5}", cat: "Going further",
+    body: (G, H) => {
+      const sets = Object.values(G.WORKSETS || {});
+      return `<p><b>Every skill has a set of work clothes</b>: a hat, a coat, gloves and boots. Each piece you have of the outfit you're wearing gives <b>+3% XP</b> in that set's skill, and all four give <b>+3% more and a perk of their own</b>, so a whole set gets you to 99 about 15% faster.</p>
+        <p>They live in your <b>Locker</b> (Equipment, then Work clothes), never in your bag or bank: they take no room, they can't be traded, and a find is <b>always a piece you don't have yet</b>, so four finds is a set. One outfit on at a time; switch it in one click, anywhere. Work clothes never touch your combat numbers.</p>
+        <p><b>Every set is found somewhere else</b> than its own skill, so a miner wants a runner and a cook wants a breeder.</p>
+        <table class="tbl"><tr><th>Set</th><th>Skill</th><th>All four</th><th>Where it's found</th></tr>${sets.map((S) => `<tr><td>${S.pieces.map((k) => (H.ico ? H.ico(k) : "")).join("")}<br><b>${H.esc(S.name)}</b></td><td>${H.esc(G.SKILLS[S.skill]?.name || S.skill)}</td><td>${H.esc(S.full)}</td><td>${H.esc(S.from)}</td></tr>`).join("")}</table>
+        <p>The Ditched set came first: it used to be worn as armour. Every Ditched piece now lives in the Locker, and anyone who had two of a piece was paid for the spare.</p>`;
+    } },
   { id: "gembag", title: "The gem bag and the Gem Sorter", icon: "\u{1F48E}", cat: "Going further",
     body: (G, H) => {
       const S = G.GEMSET, nm = (k) => H.wl(`items/${k}`, `${H.ico(k)} ${H.esc(G.ITEMS[k]?.name || k)}`), tix = (n) => `${n.toLocaleString()} tickets`;

@@ -1113,7 +1113,7 @@ export const STEP_MS = 200 /* (v95, the owner: "make users default walk speed ab
    anywhere, so every level of it did precisely nothing — which is most of why The Run felt like a treadmill. It
    goes in with the meals and the boots rather than beside them, so it lands inside SPEED_FULL/SPEED_CAP's
    diminishing returns and cannot stack past a ceiling that was designed before the skill existed. */
-export function speedRaw(c, extra = 0) { let raw = extra + petFx(c).speed + agilBonus(c) + charmOf(c, "haste") + fxWalk(c);   /* (2026-09-30) fxWalk: food, drinks, gear and achievements that say "speed" now walk too (see the Store, round two) */ for (const k of Object.values(c.eq || {})) if (k && ITEMS[k]?.spd) raw += ITEMS[k].spd; return raw; }   /* eq.pet is an id, not an item key, so the loop below skips it and petFx adds it instead */
+export function speedRaw(c, extra = 0) { let raw = extra + workPerk(c, "agility", "walk") + petFx(c).speed + agilBonus(c) + charmOf(c, "haste") + fxWalk(c);   /* (2026-09-30) fxWalk: food, drinks, gear and achievements that say "speed" now walk too (see the Store, round two) */ for (const k of Object.values(c.eq || {})) if (k && ITEMS[k]?.spd) raw += ITEMS[k].spd; return raw; }   /* eq.pet is an id, not an item key, so the loop below skips it and petFx adds it instead */
 export function speedBonus(c, extra = 0) { const raw = speedRaw(c, extra); return Math.max(0, Math.min(SPEED_CAP, Math.min(SPEED_FULL, raw) + Math.max(0, raw - SPEED_FULL) * 0.5)); }
 export const stepMsOf = (c, extra = 0) => Math.round(STEP_MS / (1 + speedBonus(c, extra) / 100));
 /* (2026-09-22) THE NUMBER, FOR READING. Every speed source used to be a whole number, so the stat panel could print
@@ -3428,7 +3428,7 @@ export function projFx(c) {
   return out;
 }
 /** a gathering double from the map's project: "tree" for logs, "rock" for ore */
-export const projGather = (c, kind) => projFx(c)?.gather?.[kind] || 0;
+export const projGather = (c, kind) => (projFx(c)?.gather?.[kind] || 0) + workPerk(c, WORK_GATHER[kind], "gather");   /* (2026-10-01) work clothes: a second ore or log */
 /* THE CANNON: what a shot costs and does. Server-wide cooldown, so one person cannot hold the button down. */
 export const CANNON = { sparks: 25, cdMs: 60000, dmg: 260, range: 14, stunMs: 4000 };
 /* THE BOILER: a target from 1.1x to 100x; the boiler blows at 1 / (1 - r), so it holds past x exactly 1 time in x and a win
@@ -4446,7 +4446,8 @@ export function fxOf(c) {
   { const pf = petFx(c); out.tough += pf.tough / 100; out.bite += pf.bite / 100; out.steal += pf.steal / 100; }   /* (2026-09-27) the Breeding pets, inside the caps below */
   for (const g of tkOn(c)) if (g.fx) for (const k of OUT_KEYS) out[k] += g.fx[k] || 0;
   out.heal += gemFor(c, "bloodstone"); out.steal += gemFor(c, "obsidian"); out.tough += gemFor(c, "hematite");   /* (2026-09-28) gems, inside the caps below */   /* (2026-09-28) Tinkering's timed gadgets, inside the caps below */
-  out.rare += charmOf(c, "keeneye") / 100;   /* (2026-09-26) Keen Eye, before the caps below */   /* (2026-09-23) achievement milestones, before the caps below so they cannot escape them */
+  out.rare += charmOf(c, "keeneye") / 100;
+  if (c?.work === "ditched") out.steal += 0.025 * workOn(c, "thieving"); out.gem += workPerk(c, "mining", "gem");   /* (2026-10-01) work clothes: the Ditched pick, the Prospector's gems, inside the caps below */   /* (2026-09-26) Keen Eye, before the caps below */   /* (2026-09-23) achievement milestones, before the caps below so they cannot escape them */
   for (const k of OUT_KEYS) out[k] = Math.max(k === "tough" ? -0.5 : 0, Math.min(OUT_CAP[k], out[k]));
   return out;
 }
@@ -7496,7 +7497,7 @@ export function normChar(c) {
   for (const k of ["meal", "drink"]) if (!out[k] || !ITEMS[out[k].k]?.[k] || !((out[k].left | 0) > 0)) out[k] = null;
   out.stance = stanceOf(out);
   out.stats = normStats(out.stats);
-  return migrate(out);          // brings an older save up to SAVE_V and stamps out.v
+  return workNorm(migrate(out), c);          // brings an older save up to SAVE_V and stamps out.v; (2026-10-01) work clothes: the locker, and the Ditched move
 }
 export const lvlOf = (c, k) => levelOf(c.xp[k] || 0);
 export const maxHpOf = (c) => lvlOf(c, "hp") + petFx(c).hp;
@@ -8926,9 +8927,9 @@ ITEMS.tk_banner ||= { name: "Party Banner", icon: "\u{1F6A9}", held: true };
 export const tkOn = (c) => Object.entries(c?.tk || {}).filter(([id, t]) => GADGETS[id] && (t?.left | 0) > 0).map(([id]) => GADGETS[id]);
 export const tkDmg = (c, style) => tkOn(c).reduce((a, g) => a + (g.dmg?.[style] || 0), 0) + gemFor(c, GEM_DMG[style]) + outfitDmg(c, style) + (style === "archery" ? fxOf(c).adm || 0 : style === "magic" ? fxOf(c).mdm || 0 : 0);   /* (2026-09-29) and the outfitters' armour for that style (OUTFIT) */   /* (2026-09-28) and a socketed gem */   /* (2026-09-30) and adm, archery damage from gear and drinks */
 export const tkAcc = (c, style) => tkOn(c).reduce((a, g) => a + (g.acc?.[style] || 0), 0) + gemFor(c, "jade");
-export const tkCraft = (c, skill) => { let dbl = 0, noburn = false; for (const g of tkOn(c)) if (g.craft?.skill === skill) { dbl += g.craft.dbl || 0; noburn ||= !!g.craft.noburn; } const pc = projFx(c)?.craft?.[skill]; if (pc) { dbl += pc.dbl; noburn ||= pc.noburn; } dbl += gemFor(c, GEM_SKILL[skill]?.fx === "dbl" ? GEM_SKILL[skill].k : null); return { dbl: Math.max(0, dbl), noburn }; };   /* (2026-09-28) and the map's World Project */
-export const tkXp = (c, skill) => { const pf = projFx(c); return (skill === "agility" && sureFoot(c) ? 0.1 : 0) + tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0) + (pf?.xp?.[skill] || 0) + (pf?.xpAll || 0) + gemFor(c, GEM_SKILL[skill]?.fx === "xp" ? GEM_SKILL[skill].k : null); };   /* (and a Grand Opening's +10% on everything) */
-export const tkSalv = (c) => tkOn(c).reduce((a, g) => a + (g.salv || 0), 0) + (projFx(c)?.salv || 0) + gemFor(c, "quartz");
+export const tkCraft = (c, skill) => { let dbl = 0, noburn = false; for (const g of tkOn(c)) if (g.craft?.skill === skill) { dbl += g.craft.dbl || 0; noburn ||= !!g.craft.noburn; } const pc = projFx(c)?.craft?.[skill]; if (pc) { dbl += pc.dbl; noburn ||= pc.noburn; } dbl += gemFor(c, GEM_SKILL[skill]?.fx === "dbl" ? GEM_SKILL[skill].k : null); dbl += workPerk(c, skill, "dbl"); noburn ||= !!workPerk(c, skill, "noburn"); return { dbl: Math.max(0, dbl), noburn }; };   /* (2026-10-01) work clothes */   /* (2026-09-28) and the map's World Project */
+export const tkXp = (c, skill) => { const pf = projFx(c); return workXp(c, skill) + (skill === "agility" && sureFoot(c) ? 0.1 : 0) + tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0) + (pf?.xp?.[skill] || 0) + (pf?.xpAll || 0) + gemFor(c, GEM_SKILL[skill]?.fx === "xp" ? GEM_SKILL[skill].k : null); };   /* (and a Grand Opening's +10% on everything) */
+export const tkSalv = (c) => tkOn(c).reduce((a, g) => a + (g.salv || 0), 0) + (projFx(c)?.salv || 0) + gemFor(c, "quartz") + workPerk(c, "tinkering", "salv");   /* (2026-10-01) work clothes */
 /** is an automation tool running for this kind of work ("rock", "tree", "spot")? */
 export const tkAuto = (c, kind) => tkOn(c).some((g) => g.auto === kind || (g.auto === "rock" && kind === "vein"));
 TINK.autoRate = 0.75;
@@ -10425,7 +10426,7 @@ HOLD.gemcut = !globalThis.__ES_OPEN_ALL;
 export const GEM_CUT = 0.25;
 GEMSET.bossDrop = 0.2;
 /** may this item change hands between players (a trade, the Exchange)? */
-export const noTrade = (k) => !HOLD.gemcut && (isGem(k) || GEMS.some((g) => g.key === k));
+export const noTrade = (k) => (!HOLD.gemcut && (isGem(k) || GEMS.some((g) => g.key === k))) || (!HOLD.work && !!WORK_OF[k]);   /* (2026-10-01) work clothes live in the locker: never traded */
 if (!HOLD.gemcut) {
   GEMSET.drop *= GEM_CUT; GEMSET.bossDrop *= GEM_CUT;
   for (const list of Object.values(GEM_DROP)) for (const row of list) row[1] *= GEM_CUT;
@@ -10444,10 +10445,15 @@ if (!HOLD.gemcut) {
    Yard's own NPC style and size, standard-mode PixelLab at 48). Dale's "Let me in" and
    a click on the arch do the same thing. The pieces are `decor`, so their pictures are fetched only when they exist (wantArt), never in
    the Yard's first-load sheet while Thrill Hill is held. */
+/* (2026-10-01, the owner: "yes to animations") Thrill Hill's fire, flickering: the sheets tools/eastscape-thrill-anims.mjs makes (it rewrites this line).
+   A prop or stunt whose picture is named here plays the sheet in its place (pvBuild and thrillYardObjs attach it). */
+export const THRILL_ANIM = {"th_hoop":{"anim":"th_hoop_a","frames":8,"cols":8,"fw":45,"fh":60,"fps":10},"th_firewall":{"anim":"th_firewall_a","frames":8,"cols":8,"fw":69,"fh":51,"fps":10},"th_firebarrels":{"anim":"th_firebarrels_a","frames":8,"cols":8,"fw":70,"fh":57,"fps":10},"th_flamebarrel":{"anim":"th_flamebarrel_a","frames":8,"cols":8,"fw":24,"fh":57,"fps":10}};
+/** stand an animation where its still would stand: centred on the footprint, feet on its bottom edge (16 world units a tile, 2 pixels a unit) */
+export const thrillAnimOn = (o) => { const a = THRILL_ANIM[o.art]; if (a) Object.assign(o, a, { ox: ((o.w || 1) * 16) / 2 - a.fw / 4, oy: (o.h || 1) * 16 - a.fh / 2 }); return o; };
 export const THRILL_GATE = { door: [39, 22], counter: [35, 21, 2, 1], keeper: [35, 22], pad: [34, 19, 9, 4], barrels: [[42, 22], [33, 22]] };
 function thrillYardObjs(key, b) {
   if (HOLD.thrill !== false || key !== "workyard") return;
-  const T = THRILL_GATE, put = (o) => { b.objs.push({ edge: true, decor: true, ...o }); if (!o.flat) for (let j = 0; j < (o.h || 1); j++) for (let i = 0; i < (o.w || 1); i++) b.g[o.y + j][o.x + i] = "#"; };
+  const T = THRILL_GATE, put = (o) => { b.objs.push(thrillAnimOn({ edge: true, decor: true, w: 1, h: 1, ...o })); if (!o.flat) for (let j = 0; j < (o.h || 1); j++) for (let i = 0; i < (o.w || 1); i++) b.g[o.y + j][o.x + i] = "#"; };
   put({ t: "cliff", art: "th_dirtpad", x: T.pad[0], y: T.pad[1], w: T.pad[2], h: T.pad[3], flat: true, name: "Packed dirt, tyre marks all over it" });
   put({ t: "cliff", art: "th_counter", x: T.counter[0], y: T.counter[1], w: T.counter[2], h: T.counter[3], name: "The Thrill Hill ticket counter" });
   for (const [x, y] of T.barrels) put({ t: "cliff", art: "th_flamebarrel", x, y, name: "A barrel, on fire, on purpose" });
@@ -10464,3 +10470,95 @@ if (!HOLD.thrill) {
   SCENES.workyard.npcs.push({ name: "Dizzy Dale", art: "tickettaker", faceDir: "north", x: THRILL_GATE.keeper[0], y: THRILL_GATE.keeper[1], still: true, opens: "thrillgate", reach: 2,
     lines: ["Thrill Hill. Through the arch. No refunds.", "Rookie Run's for everybody. The cannon's for people with seventy Agility and no sense.", "The trucks are through the arch. All of them. Don't ask.", "I've been on the Pro Run once. Once."] });
 }
+
+/* ============================================================ WORK CLOTHES: THE SKILLING SETS (2026-10-01, v1.1). The owner: "lets build work clothes/skilling sets
+   now", after mockups 13 (the sets) and 13b (the slot), settled the same day: a separate Work clothes outfit beside the armour, shown by flipping
+   the paper doll (Armour | Work clothes), skill pips on the skill tiles, a full set 15% faster to 99, and the names in WORKSETS.
+     - Every skill has a set of four (hat, coat, gloves, boots). A piece is +3% XP in its skill; all four add +3% more (15% in all, so 15%
+       faster to 99) and a perk of their own (WORKSETS[].full). Only the outfit you have ON counts, and only for its own skill.
+     - Pieces live in the LOCKER (c.locker), never the bag or the bank: they take no room, can't be traded, and a drop always gives a piece
+       you don't have yet (workFind in the worker), so four drops is a set.
+     - One outfit on at a time (c.work, a set key), changed anywhere with one click ({t:"work", set}).
+     - Every set drops from SOMEWHERE ELSE than its own skill (WORKSETS[].from, rolled in the worker where that thing already happens).
+     - THE DITCHED SET joins them: on the update every Ditched piece anyone owns (worn, bag or bank) moves to the locker, spares are paid in
+       tickets, and it gains its all-four perk. Its +2.5% pickpocket a piece stays.
+   Held with the rest of v1.1 (HOLD.work). Nothing here runs on a timer: each bonus is read where its skill already reads a bonus. */
+HOLD.work = !globalThis.__ES_OPEN_ALL;
+export const WORK_SLOTS = ["helm", "body", "gloves", "boots"];   /* which square of the paper doll a piece shows in */
+export const WORK_XP = { piece: 0.03, full: 0.03 };
+/* [set, skill, name, colour, [hat, coat, gloves, boots] as [key, name], the all-four perk (words), its numbers, where it comes from (words)] */
+const WS = [
+  ["ditched", "thieving", "The Ditched set", "#7a4ab8", [["ditched_hood", "Ditched hood"], ["ditched_coat", "Ditched coat"], ["ditched_gloves", "Ditched gloves"], ["ditched_boots", "Ditched boots"]],
+    "one pocket in ten is picked twice", { pick2: 0.1 }, "Fished up: one catch in 2,500 at any fishing spot."],
+  ["prospector", "mining", "The Prospector's kit", "#c88a3a", [["pr_hat", "Lamp hat"], ["pr_vest", "Work vest"], ["pr_gloves", "Wrist guards"], ["pr_boots", "Steel-toe boots"]],
+    "a second ore one swing in eight, and gems 25% more often", { gather: 0.125, gem: 0.25 }, "Lost on the climb: finishing an agility lap, a shortcut or a back way, 1 in 150."],
+  ["feller", "woodcutting", "The Feller's flannels", "#5ad06a", [["fl_cap", "Knit cap"], ["fl_shirt", "Flannel shirt"], ["fl_gloves", "Splitting gloves"], ["fl_boots", "Caulk boots"]],
+    "a second log one chop in eight", { gather: 0.125 }, "Lifted from a pocket: any pickpocket, 1 in 400."],
+  ["oilskins", "fishing", "The Boardwalk oilskins", "#3a9ad8", [["oi_hat", "Sou'wester"], ["oi_coat", "Oilskin coat"], ["oi_mitts", "Fingerless mitts"], ["oi_waders", "Waders"]],
+    "one catch in eight is two", { dbl: 0.125 }, "The scarecrow's coat: harvesting a crop on your island, 1 in 300."],
+  ["whites", "cooking", "The short-order whites", "#e8e0c8", [["so_hat", "Paper hat"], ["so_whites", "Diner whites"], ["so_mitts", "Oven mitts"], ["so_clogs", "Kitchen clogs"]],
+    "nothing ever burns, and one dish in ten comes out double", { dbl: 0.1, noburn: true }, "Found in the pen: collecting a new pet from your pen or your hatchery, 1 in 4."],
+  ["kennel", "breeding", "The kennel keeper's coat", "#d8a060", [["kk_cap", "Whistle cap"], ["kk_coat", "Kibble coat"], ["kk_gloves", "Handling gloves"], ["kk_boots", "Yard boots"]],
+    "10% more Breeding XP on top", { xp: 0.1 }, "Cooked into a batch: cooking anything at a fire or a range, 1 in 600."],
+  ["bronny", "smithing", "Bronny's leathers", "#ff7a3a", [["br_cap", "Forge cap"], ["br_apron", "Leather apron"], ["br_gloves", "Tong gloves"], ["br_boots", "Ember boots"]],
+    "one bar or piece in ten comes out double", { dbl: 0.1 }, "Earned from Bronny's order: finishing an order, 1 in 6."],
+  ["grounds", "farming", "The groundskeeper's dungarees", "#7ed060", [["gk_hat", "Straw hat"], ["gk_dungarees", "Dungarees"], ["gk_gloves", "Garden gloves"], ["gk_wellies", "Wellies"]],
+    "every harvest one more crop", { crop: 1 }, "Off the farm animals: cows, boars and goats, 1 in 500 (and the Gardener, when the Orchard opens)."],
+  ["myco", "fungiculture", "The mycologist's mantle", "#a87ad0", [["my_hood", "Spore hood"], ["my_mantle", "Mossy mantle"], ["my_gloves", "Picking gloves"], ["my_boots", "Damp boots"]],
+    "one bed in five fruits twice", { bed2: 0.2 }, "Grown through a dead log: chopping deadwood or bogwood, 1 in 800."],
+  ["apoth", "alchemy", "The apothecary's smock", "#6ad0b0", [["ap_goggles", "Brass goggles"], ["ap_smock", "Stained smock"], ["ap_gloves", "Rubber gloves"], ["ap_boots", "Lab boots"]],
+    "one brew in eight makes an extra potion", { dbl: 0.125 }, "Picked with the wild ones: picking a wild mushroom cluster, 1 in 250."],
+  ["bowyer", "fletching", "The bowyer's greens", "#c8b060", [["bw_cap", "Feathered cap"], ["bw_jerkin", "Green jerkin"], ["bw_tabs", "Finger tabs"], ["bw_boots", "Soft boots"]],
+    "one batch in ten fletches double", { dbl: 0.1 }, "Plucked from a bird: Gulls, Thunder Geese, Pterodactyls, Snow Owls and Hail Drakes, 1 in 500."],
+  ["stargazer", "wizardry", "The stargazer's robes", "#b08aff", [["sg_hat", "Star hat"], ["sg_robe", "Night robe"], ["sg_gloves", "Inky gloves"], ["sg_slippers", "Velvet slippers"]],
+    "one batch in eight prints double", { dbl: 0.125 }, "Bought with Star Fragments at the Star Tent, 40 a piece."],
+  ["getaway", "agility", "The getaway silks", "#ff5a8a", [["gw_band", "Sweatband"], ["gw_jacket", "Track jacket"], ["gw_tape", "Grip tape"], ["gw_flats", "Racing flats"]],
+    "you walk 4% faster (inside the speed cap)", { walk: 4 }, "Knocked loose from the Jackpot Thief: one hit in 60."],
+  ["sal", "tinkering", "Sal's spare overalls", "#8a9aa8", [["sl_mask", "Welding mask"], ["sl_overalls", "Overalls"], ["sl_gloves", "Grease gloves"], ["sl_boots", "Work boots"]],
+    "one salvage in eight gives double parts", { salv: 0.125 }, "Off the junk: the Junk King 1 in 10, Junkyard Dogs and Rabid Possums 1 in 400."]];
+export const WORKSETS = Object.fromEntries(WS.map(([k, skill, name, col, pcs, full, fx, from]) => [k, { k, skill, name, col, pieces: pcs.map(([pk]) => pk), full, fx, from }]));
+export const WORK_OF = {};   /* piece -> set */
+for (const [k, skill, name, , pcs, , , from] of WS) pcs.forEach(([pk, pn], i) => {
+  WORK_OF[pk] = k;
+  const was = ITEMS[pk] || {};
+  if (k !== "ditched" || !HOLD.work) ITEMS[pk] = { name: pn, icon: was.icon || ["\u{1F9E2}", "\u{1F9E5}", "\u{1F9E4}", "\u{1F462}"][i], work: k, wslot: WORK_SLOTS[i],
+    ex: `${name}, the ${["hat", "coat", "gloves", "boots"][i]}. Work clothes for ${SKILLS[skill]?.name || skill}: +3% ${SKILLS[skill]?.name || skill} XP while you wear the set, and all four do more. ${from} It goes straight to your locker.`, ...(HOLD.work ? { held: true } : {}) };
+});
+if (!HOLD.work) for (const k of DITCHED) { ITEMS[k].ex = `${ITEMS[k].ex} Work clothes now: it lives in your locker, not your armour.`; }
+/** how many pieces of the outfit you have ON count for this skill (0..4), and whether that is all four */
+export function workOn(c, skill) {
+  if (HOLD.work || !c?.work) return 0;
+  const S = WORKSETS[c.work]; if (!S || (skill && S.skill !== skill)) return 0;
+  const own = new Set(Array.isArray(c.locker) ? c.locker : []);
+  return S.pieces.filter((p) => own.has(p)).length;
+}
+export const workFull = (c, skill) => workOn(c, skill) === 4;
+/** the outfit's XP bonus in a skill (a fraction): read by tkXp, so it lands everywhere XP does */
+export const workXp = (c, skill) => { const n = workOn(c, skill); return n ? n * WORK_XP.piece + (n === 4 ? WORK_XP.full + (WORKSETS[c.work].fx.xp || 0) : 0) : 0; };
+/** an all-four number for a skill (dbl, gather, gem, pick2, crop, bed2, walk, salv, noburn), or 0 */
+export const workPerk = (c, skill, key) => (workFull(c, skill) ? WORKSETS[c.work].fx[key] || 0 : 0);
+/** the set of a worn skill (for gather kinds) */
+export const WORK_GATHER = { rock: "mining", vein: "mining", tree: "woodcutting" };
+/** the pieces of a set you haven't found */
+export const workMissing = (c, set) => (WORKSETS[set]?.pieces || []).filter((p) => !(c?.locker || []).includes(p));
+/** (2026-10-01) THE ONE-TIME MOVE: a save from before work clothes gives its Ditched pieces to the locker. Worn ones leave their armour slot,
+    bag and bank copies go too, and a second copy of a piece is paid at its price in tickets (the locker holds one of each). */
+export const WORK_SPARE = 2500;
+function workNorm(c, src) {
+  if (!c || typeof c !== "object") return c;
+  try {
+    if (src && src !== c) { c.locker = src.locker; c.work = src.work; c.workMig = src.workMig; }   /* normChar builds a fresh character: carry these over */
+    c.work ??= null;
+    c.locker = Array.isArray(c.locker) ? [...new Set(c.locker.filter((k) => WORK_OF[k]))] : [];
+    if (c.work && !WORKSETS[c.work]) c.work = null;
+    if (HOLD.work || c.workMig) return c;
+    let spare = 0; const take = (k) => { if (c.locker.includes(k)) spare++; else c.locker.push(k); };
+    for (const [slot, k] of Object.entries(c.eq || {})) if (DITCHED.includes(k)) { take(k); c.eq[slot] = null; }
+    for (const list of [c.inv, c.bank]) if (Array.isArray(list)) for (let i = list.length - 1; i >= 0; i--) { const s = list[i]; if (s && DITCHED.includes(s.k)) { for (let n = 0; n < (s.n || 1); n++) take(s.k); list.splice(i, 1); } }
+    if (spare) { const t = (c.inv || []).find((s) => s.k === "tickets"); if (t) t.n += spare * WORK_SPARE; else (c.bank ||= []).push({ k: "tickets", n: spare * WORK_SPARE }); }
+    if (c.locker.some((k) => WORK_OF[k] === "ditched") && !c.work) c.work = "ditched";
+    c.workMig = 1;
+  } catch (e) { /* never let a save fail to load over this */ }
+  return c;
+}
+if (!HOLD.work) STAR_TENT.stock.push({ id: "work_stargazer", work: "stargazer", frags: 40, icon: "sg_hat", name: "A piece of the stargazer's robes", ex: "One piece of the stargazer's robes you don't have yet, straight to your locker: Wizardry work clothes (+3% Wizardry XP a piece, and all four print double one batch in eight)." });

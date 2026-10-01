@@ -63,6 +63,7 @@ export function installThrill(World, { G }) {
       const ms = now - pl.lap.t0; pl.lap = null;
       this.grant(pl, "agility", Math.round(R.lap * (S.def.xpMul || 1)));
       (C.laps ||= {})[ob.crs] = (C.laps[ob.crs] | 0) + 1;
+      this.workRoll(pl, "prospector", 1 / 150);   /* (2026-10-01) the Prospector's kit, lost on the climb */
       const best = (C.bestLap ||= {})[ob.crs], pb = !best || ms < best; if (pb) C.bestLap[ob.crs] = ms;
       let mark = false; if (Math.random() < R.mark) { if (this.give(pl, "agilmark")) { this.gained(S, pl, "agilmark", 1, "agility"); mark = true; } }
       this.touch(pl); this.questCheck(pl);

@@ -53,6 +53,7 @@ function pvBuild(G, def, L) {
   /* (2026-10-01) THRILL HILL'S STUNTS: each one carries its own course, place in the lap, sides and level, so the server needs nothing
      but the object (thrill.js); a `to` stunt (the cannon, the zip line) goes to another map instead of across */
   for (const st of L.stunts || []) { const w = st.w || 1, h = st.h || 1; objs.push({ t: "stunt", ...st, w, h }); for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[st.y + j][st.x + i] = "#"; }
+  if (L.stunts) for (const o of objs) if (G.THRILL_ANIM?.[o.art]) G.thrillAnimOn(o);   /* (2026-10-01) Thrill Hill's fire flickers (THRILL_ANIM in the rules) */
   return { g, objs, blobs: [] };
 }
 /* (2026-10-01) THRILL HILL'S GATHERING: featherwood in the Junk Mound (feathers with every log), chrome on the Peak, nitro eels in the Burnout Pit */

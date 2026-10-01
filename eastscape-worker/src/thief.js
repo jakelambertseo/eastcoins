@@ -62,6 +62,8 @@ export function installThief(World, { G }) {
       if (Math.random() < G.pickChance(C, lvl, G.fxOf(C).steal)) {
         const got = G.pocketDrop(m.t), names = [];
         for (const k of got) { if (!this.give(pl, k)) break; this.gained(S, pl, k, 1, "thieving"); names.push(G.ITEMS[k].name.toLowerCase()); }
+        if (Math.random() < G.workPerk(C, "thieving", "pick2")) for (const k of G.pocketDrop(m.t)) { if (!this.give(pl, k)) break; this.gained(S, pl, k, 1, "thieving"); names.push(G.ITEMS[k].name.toLowerCase()); }   /* (2026-10-01) the Ditched set: picked twice */
+        this.workRoll(pl, "feller", 1 / 400);   /* (2026-10-01) the Feller's flannels, lifted from a pocket */
         m.outUntil = now + G.WT.outMs;
         this.grant(pl, "thieving", Math.round(G.pocketXp(m.t) * (S.def.xpMul || 1))); this.questCheck(pl);
         S.events.push({ type: "picked", id: m.id, until: m.outUntil });
@@ -108,7 +110,7 @@ export function installThief(World, { G }) {
       if (now < a.next) return;
       pl.act = null;
       if (Math.random() < G.slipChance(C, bw.lvl)) return this.say(pl, "You lose your footing and end up back where you started.", "bad");
-      this.grant(pl, "agility", bw.lvl * G.WT.backway.xpMul);
+      this.grant(pl, "agility", bw.lvl * G.WT.backway.xpMul); this.workRoll(pl, "prospector", 1 / 150);   /* (2026-10-01) the Prospector's kit */
       this.moveToScene(pl, to.scene, null, { x: to.stand[0], y: to.stand[1] });
       return this.say(pl, `${bw.name} brings you out in ${G.sceneDef(to.scene).name.replace(/^The /, "the ")}.`, "good");
     }
@@ -132,7 +134,7 @@ export function installThief(World, { G }) {
       if (!G.walkableIn(S.g, a.far.x, a.far.y)) return this.say(pl, "Something's in the way on the other side. Try again in a moment.", "bad");
       pl.x = a.far.x; pl.y = a.far.y; pl.step = null; pl.path = [];
       this.placeSafely(S, pl); this.touch(pl);
-      this.grant(pl, "agility", sc.lvl * G.WT.cross.xpMul);
+      this.grant(pl, "agility", sc.lvl * G.WT.cross.xpMul); this.workRoll(pl, "prospector", 1 / 150);   /* (2026-10-01) the Prospector's kit */
       return this.say(pl, "You make it across.", "good");
     }
   };

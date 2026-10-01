@@ -1,0 +1,43 @@
+{
+ "base": "https://backblaze.pixellab.ai/file/pixellab-characters/objects/4e81aa0e-6201-484d-a0fb-c1ae89736d11/",
+ "mobs": {
+  "gremlin": {
+   "obj": "4928d02d-7e35-4a0c-bba4-a71a3d71f64a",
+   "walk": "384322d1-4659-4331-b0fd-2e8692bcef6c",
+   "attack": "e1aebcbe-ceb8-4a08-80c8-88c119a81356",
+   "scale": 1.1
+  },
+  "hellbiker": {
+   "obj": "16ac0e3f-8485-49f9-ade8-e5de57b03b7f",
+   "walk": "a3d4ef69-d9e1-4462-8639-d13ebf0c4d73",
+   "attack": "b624d63a-c67e-4597-8b56-932e80be91a9",
+   "scale": 1.6
+  },
+  "crusher": {
+   "obj": "488b280f-d677-495b-b4f0-c75408cf4965",
+   "walk": "7bb5b771-4670-42bf-96b2-fb5b2a9829b2",
+   "attack": "a675ca61-0809-4bdc-8f77-59fa0faec7df",
+   "scale": 2
+  }
+ },
+ "props": {
+  "th_hoop": {
+   "obj": "fc2e6770-d3fb-4fbf-953d-66574f370451",
+   "anim": "09e61782-eb9e-46a2-8602-2bfe2fd07a7f",
+   "frames": 8,
+   "scale": 1.5
+  },
+  "th_firewall": {
+   "obj": "11cb9a86-5371-4604-b5d4-051804c6cdc9",
+   "anim": "3fbe73c2-aafd-460c-9140-d984102993d1",
+   "frames": 8,
+   "scale": 1
+  },
+  "th_firebarrels": {
+   "obj": "f86999f6-1397-4ca7-82ee-45d6b7631804",
+   "anim": "f4d5bd77-4a12-4267-8b77-da31da1f9f1d",
+   "frames": 8,
+   "scale": 1
+  }
+ }
+}
