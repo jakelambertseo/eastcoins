@@ -1,6 +1,46 @@
 [
  {
   "date": "2026-10-01",
+  "area": "Skilling",
+  "decision": "Thieving goes out into the world from Thieving 10: pockets on people-shaped monsters and a lockbox on every map. The Guild stays the training room, and no new thieving rooms are built.",
+  "quote": "start at 10",
+  "why": "Thieving lived in one building; the world hooks cost almost no art",
+  "page": "thieving-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Skilling",
+  "decision": "A failed pick only stuns you; it never starts a fight.",
+  "quote": "it should only stun",
+  "why": "the relaxed tone: nothing attacks on sight",
+  "page": "thieving-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Economy",
+  "decision": "A lockpick costs 1,000 tickets, and each lockbox try uses one.",
+  "quote": "lockpicks cost 1000",
+  "why": "a steady ticket sink beside the new fence goods",
+  "page": "thieving-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "World & maps",
+  "decision": "Each open map's shortcut that leads to a ledge gets one extra gathering spot.",
+  "quote": "1 extra gathering spot by ledges",
+  "why": "open maps barely save steps, so the ledge has to lead somewhere",
+  "page": "thieving-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
   "area": "Combat",
   "decision": "Abilities are held: not in the next batch, switched off, and they wait until a player reaches 99 in a combat skill.",
   "quote": "lets hold on this for now (not put it into next planned batch). i dont think its very fleshed out yet, and we really need to hold it for when users reach 99 in any combat skill",
