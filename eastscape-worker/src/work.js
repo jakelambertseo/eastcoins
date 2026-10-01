@@ -40,11 +40,13 @@ export function installWork(World, { G }) {
     if (G.HOLD.work || !pl?.C || !(Math.random() < p)) return null;
     return this.workFind(pl, set);
   };
-  /* DEV SERVER ONLY: "workkit" fills the locker with every piece of every set; "workkit 3" with three of each; "workkit clear" empties it */
+  /* DEV SERVER ONLY: "workkit" fills the locker with every piece of every set; "workkit 3" with three of each; "workkit clear" empties it;
+     "workkit find <set>" finds one piece of that set exactly as a drop would (the chat line, the card, the announcement at four) */
   P.workKit = function (pl, arg, note) {
     if (this.env?.DEV !== "1") return note("That's for the dev server only.");
     const C = pl.C;
     if (arg === "clear") { C.locker = []; C.work = null; this.touch(pl); return note("Locker emptied."); }
+    if (/^find\b/.test(arg)) { const set = arg.split(/\s+/)[1] || "prospector"; if (!G.WORKSETS[set]) return note(`No set called ${set}.`); return this.workFind(pl, set) ? null : note("You have that whole set already."); }   /* one find, the real way */
     const n = Math.max(1, Math.min(4, Number(arg) || 4));
     C.locker = Object.values(G.WORKSETS).flatMap((S) => S.pieces.slice(0, n)); if (!C.work) C.work = "prospector"; this.touch(pl);
     return note(`Locker: ${n} of every set (${C.locker.length} pieces). Equipment, then Work clothes.`);

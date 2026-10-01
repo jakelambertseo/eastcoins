@@ -2442,7 +2442,8 @@ function onEvent(e) {
   if (e.type === "eggtrade") { SFX.play("coins"); setTimeout(() => PETUI?.renderTrader(), 250); return; }   /* (2026-09-28) Nestor: redraw the counts once the new bag has landed */
   /* (2026-09-27) THE COLLECTION LOG: a podium was clicked (its owner's log), or a slot just filled (a chime; the words come as a message) */
   if (e.type === "collog") { colUi().then((u) => u.open(e)); return; }
-  if (e.type === "colnew") { SFX.play("levelup", { vol: 0.7 }); return; }   /* (2026-09-27) the hatchery */   /* (2026-09-27) Breeding: the server says you are at your pen */
+  if (e.type === "colnew") { SFX.play("levelup", { vol: 0.7 }); return; }
+  if (e.type === "workfound") return workFound(e);   /* (2026-10-01) work clothes: a piece found */   /* (2026-09-27) the hatchery */   /* (2026-09-27) Breeding: the server says you are at your pen */
   if (e.type === "hiscores") { openHiscores(); return; }   /* (v96) the board on the casino wall */
   if (e.type === "dash") return dashDraw(e);
   if (e.type === "cinescreen") return openScreen();
@@ -7202,13 +7203,29 @@ function winFx(big, small, label) {
   if (!set("reducedMotion")) { bursts.push({ at: performance.now() }); for (let i = 0; i < (jack ? 40 : 22); i++) { const sp = document.createElement("i"), a = Math.random() * 6.283, v = 70 + Math.random() * (jack ? 210 : 140); sp.className = "winspark"; sp.style.cssText = `--dx:${Math.round(Math.cos(a) * v)}px;--dy:${Math.round(Math.sin(a) * v * 0.7 + 40)}px;--r:${Math.round(Math.random() * 720 - 360)}deg;background:${STAR_COLS[i % STAR_COLS.length]}`; b.append(sp); } }
   clearTimeout(levelUp.t); levelUp.t = setTimeout(() => { b.hidden = true; b.classList.remove("over"); }, jack ? 3400 : 2000);
 }
+/* (2026-10-01, the owner: "yes", to a card when work clothes drop) WORK CLOTHES FOUND: the level-up banner, with the piece's own icon, its set and
+   how many of four; a click opens the Locker. A whole set gets the level-up sound and the burst; a single piece a softer chime. The chat line
+   (from the server) says the same in words, so turning banners off in Features loses nothing. */
+function workFound(e) {
+  const S = G.WORKSETS?.[e.set], it = ITEMS[e.k]; if (!S || !it) return;
+  const whole = e.n === 4;
+  SFX.play(whole ? "levelup" : "task_done");
+  if (!$("lockerWin").hidden) renderLocker();
+  if (!set("banners")) return;
+  const b = $("lvlup"); b.classList.remove("over");
+  b.innerHTML = `<small>${whole ? "A whole set of work clothes!" : "Work clothes found!"}</small><b>${ico(e.k)} ${esc(it.name)}</b><small>${esc(S.name)} · ${e.n} of 4 · in your Locker</small>`;
+  b.style.cursor = "pointer"; b.style.pointerEvents = "auto"; b.onclick = () => { b.hidden = true; openWin("lockerWin"); renderLocker(); };
+  b.hidden = false; b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
+  clearTimeout(levelUp.t); levelUp.t = setTimeout(() => { b.hidden = true; b.onclick = null; b.style.cursor = ""; b.style.pointerEvents = ""; }, whole ? 4200 : 3200);
+  if (whole && !set("reducedMotion")) bursts.push({ at: performance.now() });
+}
 function levelUp(k, l) {
   SFX.play("levelup");
   const s = SKILLS[k]; if (!s) return;
   const log = $("chatLog"); log.querySelector(".empty")?.remove();
   const p = document.createElement("p"); p.className = "loot"; p.textContent = `🎉 Level up! Your ${s.name} is now level ${l}.`; log.append(p); log.scrollTop = log.scrollHeight;
   if (!set("banners")) return;   /* (2026-09-30) Features: the line stays, the banner goes */
-  const b = $("lvlup"); b.classList.remove("over"); b.innerHTML = `<small>Level up!</small><b>${sico(k)} ${esc(s.name)} ${l}</b>`;
+  const b = $("lvlup"); b.classList.remove("over"); b.onclick = null; b.style.cursor = ""; b.style.pointerEvents = "";   /* (2026-10-01) a work clothes card may have made it clickable */ b.innerHTML = `<small>Level up!</small><b>${sico(k)} ${esc(s.name)} ${l}</b>`;
   b.hidden = false; b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
   clearTimeout(levelUp.t); levelUp.t = setTimeout(() => { b.hidden = true; }, 2600);
   if (!set("reducedMotion")) bursts.push({ at: performance.now() });
