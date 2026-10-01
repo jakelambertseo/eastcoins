@@ -44,6 +44,7 @@ import { installRaid } from "./raid.js";
 import { installThief } from "./thief.js";
 import { installThrill } from "./thrill.js";
 import { installAdmin } from "./admin.js";   /* (2026-10-01, v1.1) the admin window's state, player card and action log */   /* (2026-10-01) thieving in the world, lockboxes and shortcuts (HOLD.thief2) */
+import { installChatAct } from "./chatact.js";
 import { CHAT_PAGE } from "./chatpage.js";   /* (2026-09-30) the staff chat view: see /chat below */   /* (2026-09-30) the Yard raid */   /* (2026-09-30) the Frozen Reach's daily boss */
 import { installOutfit } from "./outfit.js";   /* (2026-09-29) the outfitters: Wren and Morwenna */   /* (2026-09-28) gems, sockets, the Gem Case and the Gem Sorter */   /* (2026-09-28) Tinkering: the sink */   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
@@ -148,6 +149,16 @@ export default {
        /chat.json?k= its data. Its own secret (a Worker secret that opens nothing but this), so the link leaking can only ever show chat. It is not
        a player and never connects: it reads the chat the world already keeps (chatLog) and who is on, so nobody sees it and it costs a read of
        memory every 5 s. A wrong or missing key is a plain 404, as if there were nothing here. */
+    /* (2026-10-01, the owner: "what if we build it into the chat room im watching remotely?") STARTING EVENTS FROM THE CHAT VIEW. POST
+       /chat/act?k=<CHAT_KEY> with the header X-Act-Key: <ACT_KEY>, a second Worker secret typed once on the page, so the chat link alone
+       still only reads. Both compared in constant time; anything wrong is the same plain 404 as a bad chat key. chatact.js does the rest. */
+    if (url.pathname === "/chat/act") {
+      const eq = (want, got) => { want = String(want || "").trim(); got = String(got || "").trim(); if (!want || got.length !== want.length) return false; let d = 0; for (let i = 0; i < want.length; i++) d |= want.charCodeAt(i) ^ got.charCodeAt(i); return d === 0; };
+      const ok = env.DEV === "1" || (eq(env.CHAT_KEY, url.searchParams.get("k")) && eq(env.ACT_KEY, request.headers.get("X-Act-Key")));
+      if (!ok || request.method !== "POST") return new Response("EastScape game server", { status: 404 });
+      const r = await env.WORLD.get(env.WORLD.idFromName("world")).fetch("https://world/chatact", { method: "POST", body: await request.text() });
+      return new Response(r.body, { status: r.status, headers: { "content-type": "application/json", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" } });
+    }
     if (url.pathname === "/chat" || url.pathname === "/chat.json") {
       const want = String(env.CHAT_KEY || "").trim(), got = String(url.searchParams.get("k") || "").trim();
       let ok = env.DEV === "1";
@@ -247,6 +258,7 @@ export class World {
     ctx.blockConcurrencyWhile(async () => {
       this.ex = (await ctx.storage.get("exchange")) || { next: 1, orders: [], last: {}, tax: 0 };
       this.exGemSweep();   /* (2026-10-01, v1.1) gems no longer trade: any gem offer still up comes down (gems.js) */
+      this.chatPlan = (await ctx.storage.get("chatPlan")) || null;   /* (2026-10-01) something the chat view set for later (chatact.js) */
       this.jack = (await ctx.storage.get("jackpot")) || { pot: G.JACKPOT.seed, wins: [] };
       this.fame = (await ctx.storage.get("fame")) || null;   // the Winners' Wall
       /* (v109) THESE WERE NEVER READ BACK AT START. The Crypt's fastest clears, the jukebox's station and the song queue were each
@@ -295,12 +307,13 @@ export class World {
     }
     const path = new URL(request.url).pathname;
     if (path === "/stats") return Response.json({ ok: true, ...this.statsOf() });
+    if (path === "/chatact") { const body = await request.json().catch(() => ({})); return Response.json(await this.chatAct(body)); }   /* (2026-10-01) chatact.js */
     if (path === "/chatview") {   /* (2026-09-30) the staff chat view: the kept chat, who is on and where, and what is running */
       const staff = (r) => r === "admin" || r === "mod";
       return Response.json({ t: Date.now(), version: G.VERSION,
         lines: (this.chatLog || []).slice(-CHAT_KEEP).map((m) => ({ t: m.t, name: m.name, text: m.text, house: m.id === "house", staff: m.id !== "house" && staff(m.role) })),
         online: [...this.pls.values()].filter((p) => !p.lingerUntil).map((p) => ({ name: p.name, staff: staff(p.role), where: (G.sceneDef(p.C.scene)?.name || String(p.C.scene).split(":")[0]).replace(/^The /, "") })).sort((a, b) => a.name.localeCompare(b.name)),
-        events: { king: this.hwKingState(), wyrm: this.wyrmState?.() || null, raid: this.raidState?.() || null } });
+        events: { king: this.hwKingState(), wyrm: this.wyrmState?.() || null, raid: this.raidState?.() || null, world: this.evView?.() || null }, act: this.chatActView() });
     }
     if (path === "/hiscores") return Response.json(await this.hiscores());
     if (path === "/export") {
@@ -2907,7 +2920,7 @@ export class World {
       for (const gt of gates) { const open = G.gateOpenAt(now, gt) ? "i" : "#"; for (const [gx, gy] of G.gateTiles(gt)) S.g[gy][gx] = open; }
     }
     if (this.tickN % 20 === 0) this.trkSecond(now);   /* (2026-09-30) WHAT THE WORLD RECORDS: a second on this map doing this (track.js) */
-    if (this.tickN % 20 === 0) { this.evTick(now);   /* (2026-09-30) WORLD EVENTS */ this.weekTick(now);   /* (2026-09-30) THE WEEKLY ISSUE */ this.wyrmTick(now);   /* (2026-09-30) the Ice Wyrm */ this.coldTick(now);   /* (2026-09-30) the Frozen Reach's cold */ this.raidTick(now);   /* (2026-09-30) the Yard raid */ this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.skill2xTick(); this.hwTick(now); this.orderTick(now); this.projTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
+    if (this.tickN % 20 === 0) { try { this.chatPlanTick(now); } catch (e) { console.error("chatPlanTick", e); }   /* (2026-10-01) the chat view's waiting start */ this.evTick(now);   /* (2026-09-30) WORLD EVENTS */ this.weekTick(now);   /* (2026-09-30) THE WEEKLY ISSUE */ this.wyrmTick(now);   /* (2026-09-30) the Ice Wyrm */ this.coldTick(now);   /* (2026-09-30) the Frozen Reach's cold */ this.raidTick(now);   /* (2026-09-30) the Yard raid */ this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.skill2xTick(); this.hwTick(now); this.orderTick(now); this.projTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
     if (this.tickN % 40 === 0) this.runsSave();   /* (2026-09-27) the dungeon runs, so a deploy does not end them */
     if (this.tickN % 20 === 0) for (const pl of this.pls.values()) {   /* once a second */
       /* (2026-09-28, the owner: "user is testing in the thieving guild but its buff isnt counting down") A BUFF'S CLOCK RUNS WHERE IT WORKS.
@@ -5446,4 +5459,5 @@ installRaid(World, { G });
 installThief(World, { G });
 installThrill(World, { G });
 installAdmin(World, { G });
+installChatAct(World, { G });
 installCards(World, { G });
