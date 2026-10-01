@@ -7497,7 +7497,7 @@ export function normChar(c) {
   for (const k of ["meal", "drink"]) if (!out[k] || !ITEMS[out[k].k]?.[k] || !((out[k].left | 0) > 0)) out[k] = null;
   out.stance = stanceOf(out);
   out.stats = normStats(out.stats);
-  return workNorm(migrate(out), c);          // brings an older save up to SAVE_V and stamps out.v; (2026-10-01) work clothes: the locker, and the Ditched move
+  return diaryNorm(workNorm(migrate(out), c), c);          // brings an older save up to SAVE_V and stamps out.v; (2026-10-01) the area diaries carried across; (2026-10-01) work clothes: the locker, and the Ditched move
 }
 export const lvlOf = (c, k) => levelOf(c.xp[k] || 0);
 export const maxHpOf = (c) => lvlOf(c, "hp") + petFx(c).hp;
@@ -10426,7 +10426,7 @@ HOLD.gemcut = !globalThis.__ES_OPEN_ALL;
 export const GEM_CUT = 0.25;
 GEMSET.bossDrop = 0.2;
 /** may this item change hands between players (a trade, the Exchange)? */
-export const noTrade = (k) => (!HOLD.gemcut && (isGem(k) || GEMS.some((g) => g.key === k))) || (!HOLD.work && !!WORK_OF[k]);   /* (2026-10-01) work clothes live in the locker: never traded */
+export const noTrade = (k) => (!HOLD.gemcut && (isGem(k) || GEMS.some((g) => g.key === k))) || (!HOLD.work && !!WORK_OF[k]) || !!ITEMS[k]?.bound;   /* (2026-10-01) work clothes live in the locker: never traded */
 if (!HOLD.gemcut) {
   GEMSET.drop *= GEM_CUT; GEMSET.bossDrop *= GEM_CUT;
   for (const list of Object.values(GEM_DROP)) for (const row of list) row[1] *= GEM_CUT;
@@ -10562,3 +10562,75 @@ function workNorm(c, src) {
   return c;
 }
 if (!HOLD.work) STAR_TENT.stock.push({ id: "work_stargazer", work: "stargazer", frags: 40, icon: "sg_hat", name: "A piece of the stargazer's robes", ex: "One piece of the stargazer's robes you don't have yet, straight to your locker: Wizardry work clothes (+3% Wizardry XP a piece, and all four print double one batch in eight)." });
+
+/* ============================================================ AREA DIARIES (2026-10-01, v1.1: the owner, "put them in 1.1")
+   One diary per map, 21 of them, four tiers of three tasks. The tasks, their checks and the perks are DATA in eastscape-diary-rules.js
+   (written by tools/eastscape-diary-gen.mjs from the game plan's diary-mock, so the plan and the game say the same thing); it is its own file
+   so nobody downloads 252 tasks at login. What lives HERE is what both halves need on every load:
+     c.dia        { d: [task ids done], c: {counter: n}, cl: {map: tiers claimed}, p: [perks earned], tp: {scene: day}, ch: {boss: day}, at }
+                  written ONLY by the worker (diary.js); p is the earned perks, copied out of the data when a tier finishes, so the
+                  helpers below can read a perk without the 43 KB file
+     the perk helpers, each read where its one thing happens (gathering, a price, a hit, a death...)
+     the cape slot and the Grand Tour cape
+   A tier counts as FINISHED only when every tier under it is too: the medal is the best finished tier, and a perk is earned with its tier. */
+HOLD.diary = !globalThis.__ES_OPEN_ALL;
+export const DIARY = {
+  tiers: ["Easy", "Medium", "Hard", "Elite"], medals: ["bronze", "silver", "gold", "platinum"],
+  lamps: [1000, 5000, 20000, 75000],   /* the owner, 2026-10-01: "yes" to 1,000 / 5,000 / 20,000 / 75,000 */
+  cape: "cape_tour", title: "the Well-Travelled",
+  maps: 21,
+  /* which maps have one (the page's world map card links to it without fetching the tasks); tools/eastscape-diary-test.mjs checks it matches */
+  keys: ["workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "carnival", "boardwalk", "trailer", "vault", "depths", "valley", "valley_ridge", "valley_lair", "frozen", "frostspire", "wild", "deep", "thrill", "thrill_top"],
+};
+if (!HOLD.diary) {
+  SLOTS.push("cape");   /* the eleventh square: a sixth row of the paper doll, under your feet. No stats, ever: it's for what you've done */
+  Object.assign(ITEMS, {
+    cape_tour: { name: "The Grand Tour cape", slot: "cape", bound: true, icon: "\u{1F9E3}", ex: "Every Elite diary, all twenty-one maps, the two Wilds included. A free teleport to any map once a day (from the Diary tab), the title \"the Well-Travelled\", and everyone can see it on you. It can't be traded or sold." },
+  });
+}
+const diaryOn = (c) => !HOLD.diary && Array.isArray(c?.dia?.p);
+/** every perk this character has earned of one kind: [{ t, map, ... }] */
+export const diaryPerks = (c, t) => (diaryOn(c) ? c.dia.p.filter((p) => p.t === t) : []);
+const inScene = (p, scene) => !p.scene || !scene || String(scene).split(":")[0] === p.scene;
+/** gathering (and fishing bites) that much more often: 0.1 = 10% */
+export const diarySpeed = (c, item, scene) => diaryPerks(c, "speed").filter((p) => p.items.includes(item) && inScene(p, scene)).reduce((a, p) => a + p.m, 0);
+/** a price or fee that much lower (0.1 = 10% off) */
+export const diaryOff = (c, shop) => Math.max(0, ...diaryPerks(c, "price").filter((p) => p.shop === shop).map((p) => p.m));
+/** a buyer paying that much more */
+export const diarySell = (c, shop, item) => Math.max(0, ...diaryPerks(c, "sell").filter((p) => p.shop === shop && (!p.items || p.items.includes(item))).map((p) => p.m));
+/** a payout or an XP that much bigger */
+export const diaryPay = (c, what) => Math.max(0, ...diaryPerks(c, "pay").filter((p) => p.what === what).map((p) => p.m));
+export const diaryXp = (c, what) => Math.max(0, ...diaryPerks(c, "xp").filter((p) => p.what === what).map((p) => p.m));
+/** a monster hitting you that much less hard */
+export const diaryHitIn = (c, mob, scene) => Math.max(0, ...diaryPerks(c, "hitin").filter((p) => p.mobs.includes(mob) && inScene(p, scene)).map((p) => p.m));
+/** a monster noticing you a tile later */
+export const diaryAggro = (c, mob) => diaryPerks(c, "aggro").some((p) => p.mobs.includes(mob));
+/** a monster's drop table coming up that much more often */
+export const diaryDrop = (c, mob) => Math.max(0, ...diaryPerks(c, "drop").filter((p) => p.mobs.includes(mob)).map((p) => p.m));
+/** the one-of-a-kind perks: free / see / nofail / plus, by name */
+export const diaryHas = (c, t, what) => diaryPerks(c, t).some((p) => p.what === what);
+/** a death on that map costing that much less / your gear that much less likely to drop there */
+export const diaryDeath = (c, scene) => Math.max(0, ...diaryPerks(c, "death").filter((p) => p.map === String(scene).split(":")[0]).map((p) => p.m));
+export const diaryKeep = (c, scene) => Math.max(0, ...diaryPerks(c, "keep").filter((p) => p.map === String(scene).split(":")[0]).map((p) => p.m));   /* your gear that much less likely to drop */
+/** one more of an item from a gather (Featherwood's feather) */
+export const diaryExtra = (c, from) => diaryPerks(c, "extra").filter((p) => p.from === from);
+/** a gather coming up twice, that often */
+export const diaryDouble = (c, item, scene) => diaryPerks(c, "double").filter((p) => p.item === item && inScene(p, scene)).reduce((a, p) => a + p.p, 0);
+/** the boss chests and the teleports a diary gives, once a day each */
+export const diaryChest = (c, boss) => diaryPerks(c, "chest").some((p) => p.boss === boss) && c.dia.ch?.[boss] !== dayKeyCT();
+export const diaryTele = (c) => diaryPerks(c, "tele").map((p) => p.scene);
+/** the Grand Tour cape: worn or owned, it's a free teleport anywhere once a day */
+export const diaryTour = (c) => diaryOn(c) && (c.dia.cl?.__tour === 1);
+/** how many tiers of a map are FINISHED (each needing the one under it), from the ids done and the data */
+export const diaryLevelOf = (c, D) => { const done = new Set(c?.dia?.d || []); let n = 0; for (const list of D.t) { if (list.every((x) => done.has(x.id))) n++; else break; } return n; };
+/** normChar builds a fresh character: carry the diary across, and make sure it has the right shape */
+function diaryNorm(c, src) {
+  if (!c || typeof c !== "object") return c;
+  try {
+    const d = (src && src !== c ? src.dia : c.dia);
+    if (d && typeof d === "object") c.dia = { d: Array.isArray(d.d) ? d.d.filter((x) => typeof x === "string") : [], c: d.c && typeof d.c === "object" ? d.c : {}, cl: d.cl && typeof d.cl === "object" ? d.cl : {},
+      p: Array.isArray(d.p) ? d.p : [], tp: d.tp && typeof d.tp === "object" ? d.tp : {}, ch: d.ch && typeof d.ch === "object" ? d.ch : {}, lv: d.lv && typeof d.lv === "object" ? d.lv : {}, at: d.at || 0 };
+    else delete c.dia;   /* no diary yet: the first login with diaries open makes one, quietly (diary.js) */
+  } catch (e) { /* never let a save fail to load over this */ }
+  return c;
+}

@@ -109,11 +109,11 @@ export function installCrypt(World, { G, R, rint }) {
     for (const p of mem) {
       if (!p || p.C.scene !== S.key || G.cheb(p, C_.door) > 6) return bad(`${p ? p.name : "Somebody"} isn't at the stairs yet. Everybody goes down together.`);
       if (G.lvlOf(p.C, "melee") < T.lvl && !p.admin) return bad(`${T.name} wants Combat ${T.lvl}. ${p.name} isn't there yet.`);
-      if (G.tixIn(p.C) < T.ante) return bad(`The ante is ${G.fmtTix(T.ante)} each. ${p === pl ? "You have" : `${p.name} has`} ${G.fmtTix(G.tixIn(p.C))}.`);
+      if (G.tixIn(p.C) < Math.round(T.ante * (1 - G.diaryOff(p.C, "crypt")))) return bad(`The ante is ${G.fmtTix(Math.round(T.ante * (1 - G.diaryOff(p.C, "crypt"))))}${Math.round(T.ante * (1 - G.diaryOff(p.C, "crypt"))) < T.ante ? " for you" : " each"}. ${p === pl ? "You have" : `${p.name} has`} ${G.fmtTix(G.tixIn(p.C))}.`);
     }
     if ([...this.scenes.keys()].filter((k) => k.startsWith("crypt:")).length >= C_.maxRuns) return bad("The crypt is full of other parties. Give it a minute.");
     const key = `crypt:${Date.now().toString(36)}${rint(10, 99)}`;
-    for (const p of mem) { G.takeInv(p.C.inv, "tickets", T.ante); this.trkTix(p, -T.ante, "dungeons"); p.C.crypt = { ...(p.C.crypt && p.C.crypt.day === dayOf() ? p.C.crypt : { day: dayOf(), n: 0 }), run: key, ante: T.ante }; this.touch(p); }   // everybody could pay: now everybody pays (and the character remembers which run, for cryptRejoin)
+    for (const p of mem) { const ante = Math.round(T.ante * (1 - G.diaryOff(p.C, "crypt")));   /* (2026-10-01) the Boneyard's Medium diary: 10% off the ante */ G.takeInv(p.C.inv, "tickets", ante); this.trkTix(p, -ante, "dungeons"); p.C.crypt = { ...(p.C.crypt && p.C.crypt.day === dayOf() ? p.C.crypt : { day: dayOf(), n: 0 }), run: key, ante }; this.touch(p); }   // everybody could pay: now everybody pays (and the character remembers which run, for cryptRejoin)
     const run = this.scene(key);
     run.tier = tier; run.run = { tier, members: [...ids], started: Date.now(), bossAt: 0, dmg: {}, died: {}, gates: [false, false, false], paid: false, paidTo: {}, cleared: null, added: false, party: pt ? pt.id : null };
     for (const mob of run.mobs) { mob.t = mob.t + T.sfx; const d = G.MOBS[mob.t]; mob.hp = d.boss ? C_.bossHp(d.hp, ids.length) : d.hp; mob.maxHp = mob.hp; mob.respawnAt = Infinity; }
@@ -192,6 +192,7 @@ export function installCrypt(World, { G, R, rint }) {
   P.cryptLootGive = function (pl, sent) {
     const C = pl.C, L = C.crypt?.loot; if (!L) return; delete C.crypt.loot; this.touch(pl);   // gone from the character BEFORE anything is handed over: it can be opened once
     const { items } = R.rollLoot(L), got = [];
+    if (!sent && G.diaryChest(C, "crypt")) { C.dia.ch.crypt = G.dayKeyCT(); items.push(...R.rollLoot(L).items.filter((x) => !String(x.k).startsWith("pet:"))); this.say(pl, "Your Boneyard diary: the hoard rolls once more today.", "good"); }
     /* (2026-10-01) A SKELETON KEY (lockboxes, thief.js): opened in person with one in the bag, the hoard rolls twice. Not for a hoard sent after you. */
     let keyed = false;
     if (!sent && !G.HOLD.thief2 && G.countItems({ inv: C.inv, bank: [] }, ["skeleton_key"]) > 0) { G.takeInv(C.inv, "skeleton_key", 1); items.push(...R.rollLoot(L).items.filter((x) => !String(x.k).startsWith("pet:"))); keyed = true; }   /* never a second pet */

@@ -37,11 +37,11 @@ export function installThrill(World, { G }) {
     }
     if (now < a.next) return;
     pl.act = null;
-    if (ob.crs !== "rookie" && Math.random() < G.slipChance(C, lvl)) { if (pl.lap) pl.lap.at = now; return this.say(pl, ob.to ? "You lose your nerve at the last second. Try again." : "You come off and land in the foam. Back where you started.", "bad"); }
+    if (ob.crs !== "rookie" && !(ob.how === "cannon" && G.diaryHas(C, "nofail", "cannon")) && Math.random() < G.slipChance(C, lvl)) {   /* (2026-10-01) Thrill Hill's Elite diary: the cannon never misfires */ if (pl.lap) pl.lap.at = now; return this.say(pl, ob.to ? "You lose your nerve at the last second. Try again." : "You come off and land in the foam. Back where you started.", "bad"); }
 
     /* ---------- a cannon or a zip line: to the other map */
     if (ob.to) {
-      this.grant(pl, "agility", lvl * G.THRILL.gateXp);
+      this.grant(pl, "agility", lvl * G.THRILL.gateXp); this.diaryNote(pl, `st:${ob.how}`);   /* (2026-10-01) diaries: the cannon, the zip */
       this.moveToScene(pl, ob.to.scene, null, { x: ob.to.x, y: ob.to.y }); pl.dir = "south";
       return this.say(pl, ob.how === "cannon" ? `BOOM. You land in the net on ${G.sceneDef(ob.to.scene).name}.` : `You fly down the wire and drop off at ${G.sceneDef(ob.to.scene).name}.`, "good");
     }
@@ -51,7 +51,7 @@ export function installThrill(World, { G }) {
     pl.x = a.far.x; pl.y = a.far.y; pl.step = null; pl.path = [];
     this.placeSafely(S, pl); this.touch(pl);
     if (!a.fwd) { if (ob.crs) pl.lap = null; return this.say(pl, "You go back the way you came."); }
-    if (!ob.crs) { this.grant(pl, "agility", lvl * G.THRILL.gateXp); return this.say(pl, "You make it over.", "good"); }
+    if (!ob.crs) { this.grant(pl, "agility", lvl * G.THRILL.gateXp); this.diaryNote(pl, `st:${ob.how}`); return this.say(pl, "You make it over.", "good"); }
     const R = G.THRILL.courses[ob.crs];
     this.grant(pl, "agility", Math.round(R.xp * (S.def.xpMul || 1)));
     /* the lap: the first stunt starts one; each next one in order carries it; anything else ends it */
@@ -61,8 +61,8 @@ export function installThrill(World, { G }) {
     else pl.lap = null;
     if (pl.lap && pl.lap.next === ob.n) {
       const ms = now - pl.lap.t0; pl.lap = null;
-      this.grant(pl, "agility", Math.round(R.lap * (S.def.xpMul || 1)));
-      (C.laps ||= {})[ob.crs] = (C.laps[ob.crs] | 0) + 1;
+      this.grant(pl, "agility", Math.round(R.lap * (S.def.xpMul || 1) * (1 + G.diaryXp(C, `lap:${ob.crs}`))));   /* (2026-10-01) Thrill Hill's Hard diary: the Pro Run's laps */
+      (C.laps ||= {})[ob.crs] = (C.laps[ob.crs] | 0) + 1; this.diaryNote(pl, `lap:${ob.crs}`);   /* (2026-10-01) diaries (C.laps is read too) */
       this.workRoll(pl, "prospector", 1 / 150);   /* (2026-10-01) the Prospector's kit, lost on the climb */
       const best = (C.bestLap ||= {})[ob.crs], pb = !best || ms < best; if (pb) C.bestLap[ob.crs] = ms;
       let mark = false; if (Math.random() < R.mark) { if (this.give(pl, "agilmark")) { this.gained(S, pl, "agilmark", 1, "agility"); mark = true; } }
@@ -83,7 +83,7 @@ export function installThrill(World, { G }) {
     if (have < cost) return this.say(pl, `"${G.fmtTix(cost)}, pal. You've got ${G.fmtTix(have)}."`, "bad");
     if (G.roomFor(C.inv, k, C) < n) return this.say(pl, "Your bag is full.", "bad");
     G.takeInv(C.inv, "tickets", cost); this.trkTix(pl, -cost, "snacks");
-    this.give(pl, k, n); this.touch(pl);
+    this.give(pl, k, n); this.touch(pl); this.diaryNote(pl, `buy:${k}`);
     return this.say(pl, `${V.name} hands over ${n === 1 ? `a ${G.ITEMS[k].name.toLowerCase()}` : `${n} × ${G.ITEMS[k].name.toLowerCase()}`}. "Enjoy the show!"`, "loot");
   };
 
@@ -93,11 +93,11 @@ export function installThrill(World, { G }) {
     const C = pl.C, E = S.npcs.find((x) => x.opens === "bookie");
     if (!E || G.cheb(pl, E) > (E.reach || 3)) return this.say(pl, "You need to be standing with Fast Eddie.", "bad");
     const row = G.BOOKIE.find(([k]) => k === m.k); if (!row) return;
-    const [k, price] = row, have = G.countItems({ inv: C.inv, bank: [] }, ["agilmark"]);
+    const [k, price0] = row, price = Math.max(1, Math.round(price0 * (1 - G.diaryOff(C, "eddie")))), have = G.countItems({ inv: C.inv, bank: [] }, ["agilmark"]);   /* (2026-10-01) Thrill Hill's Easy diary: 10% fewer marks */
     if (have < price) return this.say(pl, `"${price} marks for that, kid. You've got ${have}."`, "bad");
     if (G.roomFor(C.inv, k, C) < 1) return this.say(pl, "Your bag is full.", "bad");
     G.takeInv(C.inv, "agilmark", price);
-    this.give(pl, k, 1); this.touch(pl);
+    this.give(pl, k, 1); this.touch(pl); this.diaryNote(pl, `buy:${k}`);
     return this.say(pl, `Fast Eddie counts the marks twice and hands over the ${G.ITEMS[k].name.toLowerCase()}. "Pleasure."`, "loot");
   };
 }

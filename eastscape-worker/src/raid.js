@@ -121,10 +121,11 @@ export function installRaid(World, { G }) {
     if (m.raid === "boss" && this.raid) this.raidWon(S, pl, now);
   };
   P.raidWon = function (S, pl, now) {
+    this.diaryNote(pl, "f:raidlast"); this.diaryEvAt(R.scene);   /* (2026-10-01) diaries: the last blow, and everyone in the Yard */
     const Rd = this.raid, flood = Rd.kind === "flood", PAY = flood ? F.pay : R.pay; this.raid = null; this.raidSave(now, true); clear(S); if (flood) this.floodClear(S); this.weekCount?.("raid", "won");   /* (2026-09-30) the weekly issue */
     const rows = Object.entries(Rd.by).filter(([, d]) => d > 0), total = rows.reduce((a, [, d]) => a + d, 0) || 1, pool = PAY.pool + PAY.per * rows.length, paid = [];
     for (const [id, d] of rows.sort((a, b) => b[1] - a[1])) {
-      const n = Math.max(PAY.floor, Math.round((pool * d) / total)), p = this.pls.get(id);
+      const p = this.pls.get(id), n = Math.round(Math.max(PAY.floor, Math.round((pool * d) / total)) * (1 + (p ? G.diaryPay(p.C, "raid") : 0)));   /* (2026-10-01) the Yard's Hard diary: 10% more */
       if (p) { this.tixTo(p, n, "raid"); this.say(p, flood ? `The Undertow goes back under, and the water goes with it. The Yard is dry. Your share: ${G.fmtTix(n)} (${Math.round((100 * d) / total)}% of the work, sandbags and fighting alike).` : `The ice cracks, and the Ice Man falls. The Yard is saved. Your share of the spoils: ${G.fmtTix(n)} (${Math.round((100 * d) / total)}% of the fighting).`, "loot"); }
       paid.push([p?.name || "someone", n]);
     }
@@ -134,6 +135,7 @@ export function installRaid(World, { G }) {
 /* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */
   };
   P.raidLost = function (S, now) {
+    this.diaryEvAt(R.scene);   /* (2026-10-01) diaries: an event ended in the Yard, won or lost */
     const boss = S.mobs.find((m) => m.id === this.raid.bossId);
     if (boss) this.bossEnd(S, boss, "escaped");
     if (this.raid.kind === "flood") {   /* (2026-09-30) THE FLOOD lost: see FLOOD.loss */
@@ -280,7 +282,7 @@ export function installRaid(World, { G }) {
     let left = sp.need - sp.got, took = 0;
     for (const k of keys) { if (left <= 0) break; const t = G.takeInv(C.inv, k, Math.min(left, G.countItems({ inv: C.inv, bank: [] }, [k]))); took += t; left -= t; }
     if (!took) return this.say(pl, `This spot wants ${M.name}: ${M.ex}. You've none in your bag${C.inv.some((x) => x && M.test(x.k)) ? " that isn't favourited" : ""}.`, "bad");
-    sp.got += took; Rd.by[pl.id] = (Rd.by[pl.id] || 0) + took * F.handValue; this.touch(pl);
+    sp.got += took; Rd.by[pl.id] = (Rd.by[pl.id] || 0) + took * F.handValue; this.touch(pl); this.diaryNote(pl, "f:sandbag");
     m.hp = sp.got + 1; m.hurtAt = now; m.nm = `${M.label} ${sp.got}/${sp.need}`; S.whoSig = null;   /* one over the count, so an empty spot is not a dead one (the page draws hp-1 of maxHp-1) */
     S.events.push({ type: "splat", who: m.id, n: took, kind: "hit", t: now });
     this.say(pl, `You pile ${took.toLocaleString()} ${M.name} on the sandbags (${sp.got.toLocaleString()} of ${sp.need.toLocaleString()}).`, "good");

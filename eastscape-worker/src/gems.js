@@ -52,10 +52,11 @@ export function installGems(World, { G }) {
     if (!atSorter(S, pl) && !(this.env?.DEV === "1" && pl.admin)) return bad("That's done at the Gem Sorter, in the Yard's north court.");
     if (op === "sort") {
       const i = m.i | 0, st = C.inv[i]; if (!st || !G.isGem(st.k)) return bad("Pick a gem from your bag.");
-      const cost = G.sortCost(); if (G.tixIn(C) < cost) return bad(`A roll costs ${G.fmtTix(cost)}. You have ${G.fmtTix(G.tixIn(C))}.`);
+      const cost = Math.round(G.sortCost() * (1 - G.diaryOff(C, "gemsorter")));   /* (2026-10-01) the Yard's Medium diary */ if (G.tixIn(C) < cost) return bad(`A roll costs ${G.fmtTix(cost)}. You have ${G.fmtTix(G.tixIn(C))}.`);
       const lk = G.loupeOf(C, "loupe2") ? "loupe2" : G.loupeOf(C, "loupe") ? "loupe" : null, was = G.rollOf(st), roll = lk ? G.gemRollLoupe(lk) : G.gemRoll();   /* (2026-09-30) the Store's loupes */
       G.takeInv(C.inv, "tickets", cost); this.trkTix(pl, -cost, "gems"); if (lk) C.store[lk] = G.loupeOf(C, lk) - 1;
       const at = C.inv.indexOf(st);   /* (the tickets may have emptied a slot before it) */
+      this.diaryNote(pl, "f:gemsort");   /* (2026-10-01) diaries */
       if (was == null) { if (st.n > 1) st.n -= 1; else C.inv.splice(at, 1); if (G.addInv(C.inv, st.k, 1, C, G.gemCode(roll)) > 0) this.bankAdd(pl, st.k, 1, G.gemCode(roll)); }
       else if (st.n > 1) { st.n -= 1; if (G.addInv(C.inv, st.k, 1, C, G.gemCode(roll)) > 0) this.bankAdd(pl, st.k, 1, G.gemCode(roll)); }   /* (2026-09-29) a re-roll is ONE gem, never the stack it sat in */
       else st.f = G.gemCode(roll);
@@ -85,7 +86,7 @@ export function installGems(World, { G }) {
   P.gemOnKill = function (pl, m) {
     if (G.HOLD.gems) return; const d = G.MOBS[m.t]; if (!d) return;
     const boss = d.boss && d.open, combat = G.GEMSET.list.filter((g) => g.where === "gear");
-    if ((d.lvl || 0) >= S_.dropLvl && Math.random() < (boss ? (S_.bossDrop ?? 0.2) : S_.drop * 10)) this.gemFind(pl, combat[Math.floor(Math.random() * combat.length)].k);
+    if ((d.lvl || 0) >= S_.dropLvl && Math.random() < (boss ? (S_.bossDrop ?? 0.2) : S_.drop * 10) * (String(pl.C.scene).split(":")[0] === "depths" && G.diaryHas(pl.C, "plus", "depthgems") ? 1.1 : 1))   /* (2026-10-01) the Depths' Hard diary */ this.gemFind(pl, combat[Math.floor(Math.random() * combat.length)].k);
   };
 
   /* (2026-10-01, v1.1) GEMS DON'T CHANGE HANDS (G.noTrade): any gem offer still up on the Exchange when that ships is taken down, once,

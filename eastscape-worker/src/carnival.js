@@ -96,6 +96,11 @@ export function installCarnival(World, { G, rint }) {
     return hits;
   };
 
+  /* (2026-10-01, v1.1) THE DIARIES' STALL TASKS: a round that pays back more than it cost is a prize won (row.won). A character from before
+     this was kept has it worked out once from their best round (carnivalBackfill, at the diary's login sweep). */
+  P.carnivalKeys = () => Object.keys(GAMES);
+  P.carnivalPrizes = (c) => Object.keys(GAMES).filter((k) => (c?.midway?.[k]?.won | 0) > 0);
+  P.carnivalBackfill = (c) => { for (const [k, row] of Object.entries(c?.midway || {})) if (GAMES[k] && !row.won && row.best && payFor(k, row.best) > GAMES[k].cost) row.won = 1; };
   P.carnivalOpen = function (S, pl, ob) {
     const key = String(ob?.t || "");
     const G0 = GAMES[key]; if (!G0) return;
@@ -114,9 +119,10 @@ export function installCarnival(World, { G, rint }) {
     /* STARTING A ROUND takes the stake and hands back the seed's board. Nothing is owed after this: a round
        abandoned half way through is a round paid for and not played, the same as walking away from a dart. */
     if (m.op === "start") {
+      const cost = Math.round(G0.cost * (1 - G.diaryOff(c, "carnival")));   /* (2026-10-01) the Carnival's Easy diary: the stalls 10% less */
       if (now < row.at + COOLDOWN_MS) return bad(`${G0.name} is being reset. ${Math.ceil((row.at + COOLDOWN_MS - now) / 1000)}s.`);
-      if (G.tixIn(c) < G0.cost) return bad(`${G0.name} is ${G.fmtTix(G0.cost)} a go. You have ${G.fmtTix(G.tixIn(c))}.`);
-      G.takeInv(c.inv, "tickets", G0.cost); this.trkTix(pl, -G0.cost, "carnival");
+      if (G.tixIn(c) < cost) return bad(`${G0.name} is ${G.fmtTix(cost)} a go. You have ${G.fmtTix(G.tixIn(c))}.`);
+      G.takeInv(c.inv, "tickets", cost); this.trkTix(pl, -cost, "carnival"); row.paid = cost;
       row.at = now; row.seed = `${now.toString(36)}${rint(1e5, 9e5)}`; row.started = now; row.runs++;
       this.touch(pl);
       pl.out.push({ type: "carnivalround", game: key, board: scheduleFor(key, row.seed).map((s) => ({ i: s.i, at: s.at, lane: s.lane, ms: s.ms })), tix: G.tixIn(c) });   /* (2026-09-24) `i` MUST be here. This map is a hand-picked subset, exactly like meOf, and dropping the index left the page asking for cg_undefined.png for every target: the board ran, the hits counted, and not one icon drew. The client keys the picture on WHICH TARGET this is rather than which lane, so a round runs through the whole set instead of the same face always appearing in the same hole. */
@@ -135,6 +141,7 @@ export function installCarnival(World, { G, rint }) {
     row.seed = null; row.started = 0;            // the round is spent before a ticket moves
     if (hits > row.best) row.best = hits;
     if (pay > 0) this.tixTo(pl, pay, "carnival");
+    if (pay > G0.cost) { row.won = (row.won | 0) + 1; this.diaryCheck?.(pl); }   /* (2026-10-01) a prize: the diaries' stall tasks */
     this.touch(pl);
     pl.out.push({ type: "carnivalwon", game: key, hits, of: G0.shots, pay, cost: G0.cost, best: row.best, seed, tix: G.tixIn(pl.C) });
     this.say(pl, `${G0.name}: ${hits} of ${G0.shots}. ${pay > G0.cost ? `You are up ${G.fmtTix(pay - G0.cost)}.` : pay ? `${G.fmtTix(pay)} back.` : "Nothing back."}`, pay > G0.cost ? "good" : undefined);

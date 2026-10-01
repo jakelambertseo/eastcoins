@@ -44,6 +44,7 @@ import { installRaid } from "./raid.js";
 import { installThief } from "./thief.js";
 import { installThrill } from "./thrill.js";
 import { installWork, WORK_ODDS } from "./work.js";
+import { installDiary } from "./diary.js";   /* (2026-10-01, v1.1) AREA DIARIES */
 import { installAdmin } from "./admin.js";   /* (2026-10-01, v1.1) the admin window's state, player card and action log */   /* (2026-10-01) thieving in the world, lockboxes and shortcuts (HOLD.thief2) */
 import { installChatAct } from "./chatact.js";
 import { CHAT_PAGE } from "./chatpage.js";   /* (2026-09-30) the staff chat view: see /chat below */   /* (2026-09-30) the Yard raid */   /* (2026-09-30) the Frozen Reach's daily boss */
@@ -404,6 +405,7 @@ export class World {
     this.pyramidHello(pl, S);
     this.repCatchUp(pl).catch(() => {});   /* (2026-09-28) news on their bug reports and ideas from while they were away */
     this.achSweep(pl);   /* (2026-09-23) everything they already qualify for, paid once and quietly */
+    this.diarySweep(pl);   /* (2026-10-01, v1.1) the diaries: the FIRST sweep is silent bar one line (diary.js) */
     S.whoSig = null;   // the next broadcast tells everyone else this player has arrived
     if (!stored) this.say(pl, "Welcome to EastScape. Play the tables. Broke? Go outside: hit something, or fish. Bom Trady, in the middle of the floor, turns what you find into tickets.");
     else this.say(pl, `Welcome back, ${pl.name}.`);
@@ -640,6 +642,7 @@ export class World {
   moveToScene(pl, key, side, at) {
     const S = this.scene(key);
     this.markSeen(pl, key);
+    this.diaryVisit(pl, key);   /* (2026-10-01) the diaries' "walk into" tasks */
     /* (2026-09-22) the tour's "go and see your own island" step. Keyed on the OWNER, not just on being on an island,
        so walking onto somebody else's does not tick it off — the point of the step is that you have one. */
     /* `island`, not `home` — `home` is The Cottage, the building INSIDE the island, so the step only completed if you
@@ -951,6 +954,7 @@ export class World {
       case "outfit": return this.outfitOp(S, pl, m);   /* (2026-09-29) Wren the Ranger and Morwenna the Mage */
       case "gems": return this.gemOp(S, pl, m);   /* (2026-09-28) the Gem Sorter and the Gem Case */   /* (2026-09-28) Tinkering: salvage at the Scrap Bench */
       case "meter": return this.meterOp(S, pl, m);   /* (2026-09-28) the party meter: reset, or ask for it now */
+      case "diary": return this.diaryOp(S, pl, m);   /* (2026-10-01, v1.1) the Diary tab */
       case "order": return this.orderOp(S, pl, m);   /* (2026-09-28) Bronny's order, the server's daily */
       case "eggtrade": return this.eggTrade(S, pl, m);   /* (2026-09-28) Nestor the Egg Man */
       case "fung": return this.fungOp(S, pl, m);   /* (2026-09-27) Fungiculture: planting a bed */   /* (2026-09-27) Breeding */   /* (2026-09-27) the Long Night: trick or treat, the Night Market, the corn-priced fits */
@@ -1196,14 +1200,14 @@ export class World {
     for (const k of C.isle?.shelf || []) if (k) put(k);
     C.colSeeded = 1;
   }
-  grant(pl, k, xp, track = true) {
+  grant(pl, k, xp, track = true, flat = false) {   /* (2026-10-01) flat: a diary lamp, exactly its number (no work clothes, no 2X, no gem roll) */
     // A skill that no longer exists (a stale quest reward, an old admin macro)
     // used to throw in here, and this runs inside the tick — one bad key would
     // stop the world for everybody. Ignore it instead.
     if (!G.SKILLS[k]) { console.warn(`grant: no such skill "${k}"`); return; }
-    { const bx = G.tkXp(pl.C, k); if (bx) xp = Math.max(0, Math.round(xp * (1 + bx))); }
-    if (xp > 0 && this.skill2xOn() && !G.SKILL2X.not.has(k)) xp = Math.round(xp * G.SKILL2X.mult);   /* (2026-09-30) the 2X Skilling XP Potion: every non-combat skill, gathering and crafting */   /* (a gem rolled below zero takes some off) */
-    this.gemOnXp(pl, k, xp);   /* (2026-09-28) every skill turns up its own gem, rarely */   /* (2026-09-28) a Tinkering gadget (the Humidifier, the Grappling Hook) */
+    if (!flat) { const bx = G.tkXp(pl.C, k); if (bx) xp = Math.max(0, Math.round(xp * (1 + bx))); }
+    if (!flat && xp > 0 && this.skill2xOn() && !G.SKILL2X.not.has(k)) xp = Math.round(xp * G.SKILL2X.mult);   /* (2026-09-30) the 2X Skilling XP Potion: every non-combat skill, gathering and crafting */   /* (a gem rolled below zero takes some off) */
+    if (!flat) this.gemOnXp(pl, k, xp);   /* (2026-09-28) every skill turns up its own gem, rarely */   /* (2026-09-28) a Tinkering gadget (the Humidifier, the Grappling Hook) */
     this.meterAdd(pl, "xp", xp, null, k);   /* (2026-09-28) xp by skill, for the run report */
     const C = pl.C, before = G.lvlOf(C, k);
     C.xp[k] = Math.max(0, (C.xp[k] || 0) + xp); const after = G.lvlOf(C, k);
@@ -1255,6 +1259,7 @@ export class World {
     this.dailyEvent(pl, type, d);
     this.tourEvent(pl, type, d);
     this.achEvent(pl, type);
+    this.diaryEvent(pl, type, d);   /* (2026-10-01, v1.1) area diaries: see diary.js */
     if (type === "gather") { this.luckDrop(pl, "clover", G.LUCK.gather); this.luckDrop(pl, "horseshoe", G.LUCK.shoe); }   // luck is skilling's alone
     else if (type === "kill") this.killFinds(pl, d);                                                                          // windfalls are fighting's
   }
@@ -2661,7 +2666,7 @@ export class World {
        in the QUICK list have their own; and a smithed piece sells back at a quarter of the counter's own shelf
        price (gearSell). Gear is last because it is the only one keyed on having a `slot`, and it is deliberately
        NOT isLoot, so "sell all" still cannot sweep the armour you are carrying. */
-    const priceOf = (k, f = 0) => (G.isLoot(k) ? G.valueOf(k) : G.quickSell(k) || G.gearSell(k, f));
+    const priceOf = (k, f = 0) => Math.round((G.isLoot(k) ? G.valueOf(k) : G.quickSell(k) || G.gearSell(k, f)) * (1 + G.diarySell(C, "bom", k)));   /* (2026-10-01) the Yard's Easy diary (5%), the Trailer Park's (converters, 10%) */
     if (m.op !== "all" && !keys.length && G.ITEMS[String(m.k)]?.slot) return this.say(pl, "The Cashier doesn't buy anything you could wear or hold. Brutus, at the Forge out front, buys what's been smithed.", "bad");
     /* (2026-09-24) A REFORGED PIECE, SOLD ON PURPOSE AND ON ITS OWN. Its own branch above the loop below rather
        than a condition threaded through it, because everything down there is keyed on the ITEM and a reforged
@@ -2927,6 +2932,7 @@ export class World {
     if (this.tickN % 20 === 0) this.trkSecond(now);   /* (2026-09-30) WHAT THE WORLD RECORDS: a second on this map doing this (track.js) */
     if (this.tickN % 20 === 0) { try { this.chatPlanTick(now); } catch (e) { console.error("chatPlanTick", e); }   /* (2026-10-01) the chat view's waiting start */ this.evTick(now);   /* (2026-09-30) WORLD EVENTS */ this.weekTick(now);   /* (2026-09-30) THE WEEKLY ISSUE */ this.wyrmTick(now);   /* (2026-09-30) the Ice Wyrm */ this.coldTick(now);   /* (2026-09-30) the Frozen Reach's cold */ this.raidTick(now);   /* (2026-09-30) the Yard raid */ this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.skill2xTick(); this.hwTick(now); this.orderTick(now); this.projTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
     if (this.tickN % 40 === 0) this.runsSave();   /* (2026-09-27) the dungeon runs, so a deploy does not end them */
+    if (this.tickN % 1200 === 600) for (const p of this.pls.values()) this.diaryCheck(p);   /* (2026-10-01) once a minute, the diaries' safety net: a pet, a Tower floor, a worn crown */
     if (this.tickN % 20 === 0) for (const pl of this.pls.values()) {   /* once a second */
       /* (2026-09-28, the owner: "user is testing in the thieving guild but its buff isnt counting down") A BUFF'S CLOCK RUNS WHERE IT WORKS.
          It counted only in maps with monsters, and the Thieves' Guild has none, so sleep dust (a thieving buff, and the Guild is the only
@@ -3082,7 +3088,7 @@ export class World {
       if (!pl.coldAt) { pl.coldAt = now + G.COLD.every; this.say(pl, "The cold up here goes straight through you. Without a Frost ward it will kill you: a Frost charm from Wren in Cloudreach or Morwenna on the Thunderhead, or a ward ring or amulet from the anvil.", "bad"); continue; }
       if (now < pl.coldAt) continue;
       pl.coldAt = now + G.COLD.every;
-      const S = this.scenes.get(C.scene), dmg = G.COLD.dmg;
+      const S = this.scenes.get(C.scene), dmg = Math.round(G.COLD.dmg * (G.diaryHas(C, "plus", "cold") ? 0.9 : 1));   /* (2026-10-01) the Frozen Reach's Easy diary */
       C.hp -= dmg; this.touch(pl); pl.hurtAt = now;
       if (S) S.events.push({ type: "splat", who: `p:${pl.id}`, n: dmg, kind: "hit", t: now });
       if (now - (pl.coldSaid || 0) >= G.COLD.tellEvery) { pl.coldSaid = now; this.say(pl, `The cold bites for ${dmg} a second. You need a Frost ward.`, "bad"); }
@@ -3209,6 +3215,7 @@ export class World {
     if (a.kind === "npc") {
       const n = S.npcs.find((x) => x.id === a.id); pl.act = null; if (!n) return;
       faceIt(); n.face = pl.x > n.x ? 1 : -1; n.holdUntil = now + 60000; n.path = [];
+      this.diaryNote(pl, `talk:${n.name}`);   /* (2026-10-01) a diary task that says "talk to" */
       /* (2026-09-27) look in the bag before the conversation opens: a gather stage that is already covered by what you carry moves on
          here, so the NPC answers the stage you are really at (the sheet goes out before this event in the same tick) */
       this.questCheck(pl);
@@ -3250,6 +3257,7 @@ export class World {
       const tix = rint(G.CLAW_CHEST.tickets[0], G.CLAW_CHEST.tickets[1]), got = [];
       this.tixTo(pl, tix, "bosses");
       for (const [k, n, p] of G.CLAW_CHEST.items) if (Math.random() < (p ?? 1)) { const q = Array.isArray(n) ? rint(n[0], n[1]) : n; if (this.give(pl, k, q) || this.bankAdd(pl, k, q)) got.push([k, q]); }
+      if (G.diaryChest(pl.C, "claw")) { pl.C.dia.ch.claw = G.dayKeyCT(); for (const [k, n, p] of G.CLAW_CHEST.items) if (Math.random() < (p ?? 1)) { const q = Array.isArray(n) ? rint(n[0], n[1]) : n; if (this.give(pl, k, q) || this.bankAdd(pl, k, q)) got.push([k, q]); } this.say(pl, "Your Boardwalk diary: the chest rolls once more today.", "good"); }   /* (2026-10-01) the Boardwalk's Elite diary */
       this.touch(pl); pl.out.push({ type: "clawchest", opened: true });
       if (got.some(([k]) => k === "clawgrip")) for (const q of this.pls.values()) q.out.push({ type: "casinonote", text: `\u{1F980} ${pl.name} found Captain Claw's grip in his chest!` });
       return this.say(pl, `You heave the lid up. Gold: ${G.fmtTix(tix)}${got.length ? `, and ${got.map(([k, n]) => `${n > 1 ? n + " " : ""}${G.ITEMS[k].name.toLowerCase()}`).join(", ")}` : ""}.`, "loot");
@@ -3396,7 +3404,7 @@ export class World {
       this.groupNote(S, pl, a);
       if (vein) {
         a.next = now + Math.round(6000 / tspd * this.tkSlow(pl, now, a.kind));
-        if (Math.random() < (0.55 + bonus) * G.gatherMul(S.def)) { if (!this.give(pl, ob.ore) && !this.oreConveyor(pl, ob.ore)) { pl.act = null; return; }   /* (2026-09-28) the Magnet Crane's conveyor */ this.gained(S, pl, ob.ore, 1, "gather", "mining"); this.grant(pl, "mining", gx(9)); this.questCheck(pl);
+        if (Math.random() < (0.55 + bonus) * G.gatherMul(S.def) * (1 + G.diarySpeed(C, ob.ore, S.key))) { if (!this.give(pl, ob.ore) && !this.oreConveyor(pl, ob.ore)) { pl.act = null; return; }   /* (2026-09-28) the Magnet Crane's conveyor */ this.gained(S, pl, ob.ore, 1, "gather", "mining"); this.grant(pl, "mining", gx(9)); this.questCheck(pl);
         /* (2026-09-25) A STONE, sometimes. GEM_DROP is keyed by ore, so the rock you are mining decides which gem,
            and the same rock decides which arrows that gem tips. keepRare, because a gem that vanished into a full
            bag would be the rarest thing this skill loses. */
@@ -3404,9 +3412,10 @@ export class World {
         }
       } else {
         a.next = now + Math.round(1800 / tspd * this.tkSlow(pl, now, a.kind));
-        if (Math.random() < (Math.min(0.9, 0.4 + G.lvlOf(C, "mining") * 0.02) + bonus) * G.gatherMul(S.def)) {   /* half out in the Wilderness: see WILD_GATHER */
+        if (Math.random() < (Math.min(0.9, 0.4 + G.lvlOf(C, "mining") * 0.02) + bonus) * G.gatherMul(S.def) * (1 + G.diarySpeed(C, ob.ore, S.key))) {   /* half out in the Wilderness: see WILD_GATHER */
           if (!this.give(pl, ob.ore) && !this.oreConveyor(pl, ob.ore)) { pl.act = null; return; }   /* (2026-09-28) the Magnet Crane's conveyor */
           this.gained(S, pl, ob.ore, 1, "gather", "mining");
+          if (Math.random() < G.diaryDouble(C, ob.ore, S.key) && this.give(pl, ob.ore)) { this.gained(S, pl, ob.ore, 1, "gather", "mining"); this.say(pl, "Two come up together.", "good"); }   /* (2026-10-01) Old Rex's Lair's Medium diary */
           if (Math.random() < G.projGather(C, "rock") && (this.give(pl, ob.ore) || this.oreConveyor(pl, ob.ore))) { this.gained(S, pl, ob.ore, 1, "gather", "mining"); this.say(pl, "The magnet pulls a second one loose.", "good"); }   /* (2026-09-28) the Magnet Crane */
         /* (2026-09-25) A STONE, sometimes. GEM_DROP is keyed by ore, so the rock you are mining decides which gem,
            and the same rock decides which arrows that gem tips. keepRare, because a gem that vanished into a full
@@ -3478,7 +3487,7 @@ export class World {
         let extra = null;
         if (hot || Math.random() < G.workPerk(C, "thieving", "pick2")) { extra = G.markDrop(ob.mark); if (!this.give(pl, extra)) extra = null; else this.gained(S, pl, extra); }   /* (2026-10-01) the Ditched set's all-four: one pocket in ten twice */
         this.workRoll(pl, "feller", WORK_ODDS.feller);   /* (2026-10-01) the Feller's flannels, lifted from a pocket */
-        this.grant(pl, "thieving", gx(M.xp)); this.questCheck(pl);
+        this.grant(pl, "thieving", Math.round(gx(M.xp) * (1 + G.diaryXp(C, "guildmarks")))); this.questCheck(pl);
         this.say(pl, hot
           ? `${pl.pickRun} clean in a row. You lift ${G.ITEMS[k].name.toLowerCase()}${extra ? ` AND ${G.ITEMS[extra].name.toLowerCase()}` : ""} off ${M.name.toLowerCase()}.`
           : `You lift ${G.ITEMS[k].name.toLowerCase()} off ${M.name.toLowerCase()}.${pl.pickRun % every === every - 1 ? " One more clean and the next one counts double." : ""}`, "good");
@@ -3645,12 +3654,12 @@ export class World {
       a.next = now + Math.round(chop * this.tkSlow(pl, now, "tree"));
       const oak = ob.t === "oak";
       this.groupNote(S, pl, a);
-      if (Math.random() < (Math.min(0.9, (oak ? 0.5 : 0.35) + G.lvlOf(C, "woodcutting") * 0.02) + bonus) * G.gatherMul(S.def)) {   /* half out in the Wilderness: see WILD_GATHER */
+      if (Math.random() < (Math.min(0.9, (oak ? 0.5 : 0.35) + G.lvlOf(C, "woodcutting") * 0.02) + bonus) * G.gatherMul(S.def) * (1 + G.diarySpeed(C, ob.log || "logs", S.key))) {   /* half out in the Wilderness: see WILD_GATHER */
         const log = ob.log || "logs";
         if (!this.give(pl, log)) { pl.act = null; return; }
         this.gained(S, pl, log, 1, "gather", "woodcutting");
         if (ob.t === "deadtree" || ob.t === "bogwood") this.workRoll(pl, "myco", WORK_ODDS.myco);   /* (2026-10-01) the mycologist's mantle, grown through a dead log */
-        if (ob.extra) { const [ek, lo, hi] = ob.extra, en = lo + Math.floor(Math.random() * (hi - lo + 1)); if (this.give(pl, ek, en)) this.gained(S, pl, ek, en, "gather", "woodcutting"); }   /* (2026-10-01) Thrill Hill's featherwood shakes feathers loose */
+        if (ob.extra) { const [ek, lo, hi] = ob.extra, en = lo + Math.floor(Math.random() * (hi - lo + 1)) + G.diaryExtra(C, log).filter((p) => p.item === ek).reduce((a, p) => a + p.n, 0); if (this.give(pl, ek, en)) this.gained(S, pl, ek, en, "gather", "woodcutting"); }   /* (2026-10-01) Thrill Hill's featherwood shakes feathers loose */
         if (Math.random() < G.projGather(C, "tree") && this.give(pl, log)) { this.gained(S, pl, log, 1, "gather", "woodcutting"); this.say(pl, "Seasoned timber: two for one.", "good"); }   /* (2026-09-28) the Sawmill */
         this.grant(pl, "woodcutting", gx(ob.xp || 25)); this.say(pl, oak ? "You get some logs from the oak." : `You get some ${G.ITEMS[log].name.toLowerCase()}.`, "good"); this.questCheck(pl);
         /* (2026-09-22, the owner: "the woodcutting trees need to stay up longer before they become out, like a lot
@@ -3695,7 +3704,7 @@ export class World {
       a.next = now + Math.round(G.FISHING.ms / ((1 + G.swingFx(C)) * G.toolSpeed(C, "fishing")) * this.tkSlow(pl, now, "spot"));
       const lvl = G.lvlOf(C, "fishing"), fish = G.fishAt(ob, lvl, Math.random()), trout = fish === ob.fish2;   /* v68: every spot names its fish, and a second one from fish2lvl (`trout` now just means "the second fish") */
       this.groupNote(S, pl, a);
-      if (Math.random() < Math.min(0.97, G.FISHING.chance(lvl) + bonus + fx.bite + (ob.bite || 0)) * G.gatherMul(S.def)) {   /* (2026-09-28) ob.bite: the Fishing Dock's tackle shed */   /* half out in the Wilderness: see WILD_GATHER */
+      if (Math.random() < Math.min(0.97, G.FISHING.chance(lvl) + bonus + fx.bite + (ob.bite || 0)) * G.gatherMul(S.def) * (1 + G.diarySpeed(C, fish, S.key))) {   /* (2026-09-28) ob.bite: the Fishing Dock's tackle shed */   /* half out in the Wilderness: see WILD_GATHER */
         if (!this.give(pl, fish)) { pl.act = null; return; }
         this.gained(S, pl, fish, 1, "gather", "fishing");
         if (fx.tix > 0 && Math.random() < fx.tix && this.give(pl, fish)) this.say(pl, "Two on one line!", "good");
@@ -3751,6 +3760,7 @@ export class World {
       if (next) pl.act = { kind: "mob", id: next.id, x: next.x, y: next.y, name: def.name, reach, started: now };
     }
     const got = this.killLoot(S, pl, m, def, now);
+    this.diaryKillBonus(S, pl, m, def);   /* (2026-10-01) the diaries: a table that rolls more often, a boss's twice-a-day roll */
     /* (2026-09-27) AN OPEN BOSS PAYS EVERYONE WHO FOUGHT HIM: each of them who is still here and took at least OPEN_SHARE of his
        health gets their own roll of the same table, their own kill for quests and finds, and their own line. The killer is
        counted once, above. */
@@ -3876,12 +3886,12 @@ export class World {
     if (pk && S?.def?.pvp && !G.inCage(S.def, pl.x, pl.y)) this.houseSay(`⚔️ ${pl.name} was just slain by ${pk.name} in ${S.def.name}.`);
     let lost = null, took = 0;
     if (S?.def.pvp) {
-      const worn = G.SLOTS.filter((s) => C.eq[s]);
-      if (worn.length && Math.random() < G.PVP.drop * (G.projFx(C)?.pvpDrop ?? 1)) {   /* (2026-09-28) the Forward Camp's field hospital */ const s = pick(worn); lost = C.eq[s]; C.eq[s] = null; this.dropGround(S, lost, 1, pl.x, pl.y, pk ? pk.id : null, now); }
+      const worn = G.SLOTS.filter((s) => C.eq[s] && !G.ITEMS[C.eq[s]]?.bound);   /* (2026-10-01) a bound piece (the Grand Tour cape) never drops */
+      if (worn.length && Math.random() < G.PVP.drop * (G.projFx(C)?.pvpDrop ?? 1) * (1 - G.diaryKeep(C, S.key))) {   /* (2026-09-28) the Forward Camp's field hospital */ const s = pick(worn); lost = C.eq[s]; C.eq[s] = null; this.dropGround(S, lost, 1, pl.x, pl.y, pk ? pk.id : null, now); }
       /* (2026-09-30, the Wilderness check: "dying there costs less than dying anywhere else") THE WILD TAKES YOUR POCKETS. A death out here
          costs the same share of the tickets you carry as a death anywhere (G.DEATH.wild / .deep: 10%, capped at 10,000), and nothing waives it:
          not the Witch's brew, not the Ferryman's Coin. Killed by a PLAYER, it is theirs; killed by a monster, it is a bill, like anywhere else. */
-      took = pl.god ? 0 : Math.min(G.deathBill(C, S.key), G.tixIn(C));
+      took = pl.god ? 0 : Math.min(Math.round(G.deathBill(C, S.key) * (1 - G.diaryDeath(C, S.key))), G.tixIn(C));   /* (2026-10-01) the Wilderness's Medium diary: a fifth less */
       if (took > 0) { G.takeInv(C.inv, "tickets", took); this.touch(pl); this.trkTix(pl, -took, pk ? "robbed" : "bill"); if (pk) { this.cashTo(pk, took); this.touch(pk); this.trkTix(pk, took, "pvp"); } }
       const nm = lost ? G.ITEMS[lost].name.toLowerCase() : null, tk = took > 0 ? G.fmtTix(took) : null;
       if (pk) this.say(pk, `You have defeated ${pl.name}.${tk ? ` You take ${tk} from their pockets.` : ""}${nm ? ` They dropped their ${nm}. It's yours for the next minute.` : ""}`, "loot");
@@ -4152,7 +4162,7 @@ export class World {
           && (!m.raid || !S.raidG || p.x <= G.RAID.zoneX);   /* (2026-09-30) the raid keeps to the west bank: nobody in the court is a target */
         const owner = this.claimOf(S, m, now);
         let tgt = owner || (m.target ? players.find((p) => p.id === m.target) : null);
-        if (!tgt || !ok(tgt)) { tgt = players.filter((p) => ok(p) && G.cheb(p, m) <= aggro).sort((a, b) => G.cheb(a, m) - G.cheb(b, m))[0] || null; m.target = tgt ? tgt.id : null; }
+        if (!tgt || !ok(tgt)) { tgt = players.filter((p) => ok(p) && G.cheb(p, m) <= aggro - (G.diaryAggro(p.C, m.t) ? 1 : 0)).sort((a, b) => G.cheb(a, m) - G.cheb(b, m))[0] || null; m.target = tgt ? tgt.id : null; }
         if (tgt) {
           if (inRange(tgt) && !tgt.step) foe = tgt;
           else if (m.perch) continue;   /* (2026-09-27) it does not leave its perch to chase */
@@ -4163,7 +4173,7 @@ export class World {
         m.face = foe.x > m.x ? 1 : -1;
         if (now - m.lastSwing >= G.MOBS[m.t].speed * (m.slowUntil > now ? G.MAGIC.slow.mult : 1) && !(m.stunUntil > now)) {   /* (2026-09-26) Frost slows the swing */   /* (2026-09-28) the King's Cannon's shock shell stuns */
           m.lastSwing = now; m.swingAt = now;
-          const C = foe.C, hit = Math.random() < (G.MOBS[m.t].outside ? G.mobHitChance : G.hitChance)(G.MOBS[m.t].att, G.defenceRollOf(C)),   /* (2026-09-28) an open-world monster aims by ratio: A MONSTER'S AIM in the rules file */ dmg = this.abilTaken(foe, hit ? Math.max(1, Math.round(rint(1, G.MOBS[m.t].max) * (m.enraged ? (m.enrMul || G.MOBS[m.t].enrage?.mul || CR.CRYPT.enrageMul) : 1) * (1 - G.fxOf(C).tough))) : 0, now);   /* (2026-10-01) Brace and Barrier */   /* (tough: the visor, the Safety Net; whiskey makes it worse) */
+          const C = foe.C, hit = Math.random() < (G.MOBS[m.t].outside ? G.mobHitChance : G.hitChance)(G.MOBS[m.t].att, G.defenceRollOf(C)),   /* (2026-09-28) an open-world monster aims by ratio: A MONSTER'S AIM in the rules file */ dmg = this.abilTaken(foe, hit ? Math.max(1, Math.round(rint(1, G.MOBS[m.t].max) * (m.enraged ? (m.enrMul || G.MOBS[m.t].enrage?.mul || CR.CRYPT.enrageMul) : 1) * (1 - G.fxOf(C).tough) * (1 - G.diaryHitIn(C, m.t, S.key)))) : 0, now);   /* (2026-10-01) Brace and Barrier */   /* (tough: the visor, the Safety Net; whiskey makes it worse) */
           if (!foe.god) { C.hp -= dmg; this.touch(foe); }
           if (dmg) { this.meterAdd(foe, "taken", dmg, m); this.bossAdd(foe, m, "taken", dmg); }   /* (2026-09-28) the party meter, and a world boss's report */
           if (dmg) foe.hurtAt = now;
@@ -4245,7 +4255,7 @@ export class World {
   npcsOf(S) { return (S.npcs || []).map((n) => ({ id: n.id, name: n.name, art: n.art, tag: n.tag, look: n.look, reach: n.reach, opens: n.opens, shop: n.shop })); }
   whoOf(S) {
     const out = [];
-    for (const p of this.playersIn(S)) out.push({ id: p.id, name: p.name, nfx: G.nameFxOf(p.C) || undefined, role: p.role !== "user" ? p.role : undefined, vip: G.vipOf(p.C).i || undefined, lvl: G.totalOf(p.C), weapon: p.C.eq.weapon, body: p.C.eq.body, maxHp: G.maxHpOf(p.C), look: p.C.look || undefined, van: G.wearsVanity(p.C.van) ? { on: p.C.van.on, col: p.C.van.col } : undefined, pet: G.activePet(p.C)?.k || undefined, pgr: G.activePet(p.C)?.tier ? 1 : undefined,   /* (2026-09-27) a Greater pet glows */ cos: p.cos || undefined, lk: G.looksOf(p.C) || undefined, ttl: G.titleOf(p.C) || undefined, pnm: G.looksOf(p.C)?.ptag && G.activePet(p.C) ? G.petLabel(G.activePet(p.C)) : undefined, psk: G.petSkinOf(p.C) || undefined });   /* (2026-09-30) the Store's looks, title and pet tag */
+    for (const p of this.playersIn(S)) out.push({ id: p.id, name: p.name, nfx: G.nameFxOf(p.C) || undefined, role: p.role !== "user" ? p.role : undefined, vip: G.vipOf(p.C).i || undefined, lvl: G.totalOf(p.C), weapon: p.C.eq.weapon, body: p.C.eq.body, cape: p.C.eq.cape || undefined,   /* (2026-10-01, v1.1) the cape, drawn on you */ maxHp: G.maxHpOf(p.C), look: p.C.look || undefined, van: G.wearsVanity(p.C.van) ? { on: p.C.van.on, col: p.C.van.col } : undefined, pet: G.activePet(p.C)?.k || undefined, pgr: G.activePet(p.C)?.tier ? 1 : undefined,   /* (2026-09-27) a Greater pet glows */ cos: p.cos || undefined, lk: G.looksOf(p.C) || undefined, ttl: G.titleOf(p.C) || undefined, pnm: G.looksOf(p.C)?.ptag && G.activePet(p.C) ? G.petLabel(G.activePet(p.C)) : undefined, psk: G.petSkinOf(p.C) || undefined });   /* (2026-09-30) the Store's looks, title and pet tag */
     for (const b of S.bots) out.push({ id: b.id, name: b.name, level: b.level, art: b.art, hue: b.hue });
     return out;
   }
@@ -5470,6 +5480,7 @@ installCommands(World, { G });
 installWeekly(World, { G });   /* (2026-09-30) THE WEEKLY ISSUE: a snapshot a week, and the numbers the wiki's issue shows */   /* (2026-09-30) CHAT COMMANDS: /find, /help, /price, /count, /xp, /timers, /bosses, /wiki, /map, /online, /roll, /stuck */
 installRaid(World, { G });
 installThief(World, { G });
+installDiary(World, { G, TW });   /* (2026-10-01, v1.1) area diaries */
 installThrill(World, { G });
 installWork(World, { G });
 installAdmin(World, { G });

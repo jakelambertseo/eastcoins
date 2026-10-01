@@ -57,6 +57,7 @@ export function installWyrm(World, { G }) {
   };
   /* from killMob: the corpse goes (the ordinary respawn loop must never bring it back), the room hears it, tomorrow is planned */
   P.wyrmDown = function (S, m, pl, now, helpers = []) {
+    this.diaryEvAt(S.key);   /* (2026-10-01) diaries: "be there when the Ice Wyrm dies" */
     m.respawnAt = Infinity; S.mobs = S.mobs.filter((x) => x !== m); S.whoSig = null;
     const who = helpers.length ? `${pl.name} and ${helpers.length} other${helpers.length === 1 ? "" : "s"}` : pl.name;
     this.houseSay(`❄️ ${who} brought the Ice Wyrm down in the Frozen Reach. It sleeps until tomorrow.`);

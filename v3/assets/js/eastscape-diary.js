@@ -1,0 +1,167 @@
+/* ============================================================ THE DIARY: the page's half (2026-10-01, v1.1). Fetched the first time the Diary tab
+   opens or a diary message arrives, never at login; the 43 KB of tasks (eastscape-diary-rules.js) only when something is drawn.
+   Two views of one thing:
+     the TAB (L, the fifth icon over the side panel): the map you're standing on, its current tier, three tasks, the reward. It's for while you
+       play: you can see the next thing without leaving the map. "Whole diary" opens the window
+     the WINDOW: all 21 maps down the left by level, the four tiers on the right
+   The server owns every tick (diary.js): this only draws what it was told (`diarystate`, `diary`) and sends three things back: view, claim,
+   tele. The toasts are QUEUED and MERGED (the owner: achievements, diaries and quests shouldn't get in each other's way): one at a time,
+   bottom left, never more than one on screen, and a burst of tasks is one toast that says how many. */
+export function createDiary({ G, $, esc, ico, sico, send, SFX, getMe, getScene, openWin }) {
+  const DATA_URL = "/v3/assets/js/eastscape-diary-rules.js?v=1", ART = "/v3/assets/img/glad/flat/diary/";
+  let D = null, loading = null;
+  const load = () => (D ? Promise.resolve(D) : (loading ||= import(DATA_URL).then((m) => (D = m.DIARIES))));
+  const st = { d: new Set(), cl: {}, lv: {}, tp: {}, p: [], today: "", prog: {}, see: {}, asked: false };
+  let pick = null, tierPick = {}, winK = null, tabEl = null;
+  const BYK = () => Object.fromEntries(D.map((x) => [x.k, x]));
+  /* the map you're standing on; the rooms go with the map they open from */
+  const ALIAS = { casino: "workyard", guild: "gloam", crypt: "boneyard", pyramid: "sands", tower: "thunderhead", bw_cabin: "boardwalk", bw_light: "boardwalk", bw_wreck: "boardwalk", bw_pier: "boardwalk", bw_skull: "boardwalk" };
+  const here = () => { const b = String(getScene() || "").split(":")[0]; const k = ALIAS[b] || b; return D && D.some((x) => x.k === k) ? k : null; };
+  const levelOf = (M) => { let n = 0; for (const list of M.t) { if (list.every((x) => st.d.has(x.id))) n++; else break; } return n; };
+  const TIERS = G.DIARY.tiers, MEDAL = ["#c8823a", "#c8ccd8", "#ffc83a", "#9ef0ff"];
+  const icon = (x) => (x.ic ? ico(x.ic) : x.sk ? sico(x.sk) : "");
+  const style = () => { if (document.getElementById("diaryCss")) return; const s = document.createElement("style"); s.id = "diaryCss"; s.textContent = CSS; document.head.append(s); };
+
+  /* ---------------------------------------------------------------- messages */
+  function onState(e) {
+    st.d = new Set(e.d || []); st.cl = e.cl || {}; st.lv = e.lv || {}; st.tp = e.tp || {}; st.p = e.p || st.p; st.today = e.today || st.today;
+    if (e.k) st.prog[e.k] = e.prog || {};
+    if (e.see) st.see = e.see;
+    redraw();
+  }
+  const Q = []; let showing = false;
+  function onDone(e) {
+    for (const id of e.done || []) st.d.add(id);
+    load().then(() => {
+      const M = BYK(), done = (e.done || []).map((id) => { const [k] = id.split("."); return { M: M[k], x: M[k]?.t.flat().find((t) => t.id === id) }; }).filter((o) => o.M && o.x);
+      if (e.tiers?.length) for (const t of e.tiers) Q.push({ big: true, M: M[t.k], i: t.i });
+      else if (done.length > 2) Q.push({ n: done.length, M: done[0].M });
+      else for (const o of done) Q.push(o);
+      if (Q.length > 4) Q.splice(0, Q.length - 4);   /* never a backlog: the newest four */
+      next(); redraw();
+    });
+  }
+  function next() {
+    if (showing || !Q.length) return;
+    const t = Q.shift(), el = document.getElementById("diaryToast") || Object.assign(document.createElement("button"), { id: "diaryToast", type: "button" });
+    if (!el.isConnected) { style(); document.body.append(el); el.addEventListener("click", () => { el.classList.remove("show"); open(el.dataset.k); }); }
+    el.dataset.k = t.M.k;
+    el.innerHTML = t.big
+      ? `<img src="${ART}${t.M.em}.png?v=1" alt=""><span><b>${esc(t.M.name)}: ${TIERS[t.i]} diary done!</b><small>${esc(t.M.perks[t.i].text)} · a ${G.DIARY.lamps[t.i].toLocaleString()} XP lamp to rub</small></span>`
+      : t.n ? `<img src="${ART}${t.M.em}.png?v=1" alt=""><span><b>${t.n} diary tasks done</b><small>Press L to see them</small></span>`
+      : `<span class="dt-i">${icon(t.x)}</span><span><b>Diary task done</b><small>${esc(t.x.text)} · ${esc(t.M.name)}</small></span>`;
+    el.classList.toggle("big", !!t.big); showing = true; SFX.play(t.big ? "levelup" : "task_done", t.big ? undefined : { vol: 0.6 });
+    el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
+    setTimeout(() => { el.classList.remove("show"); setTimeout(() => { showing = false; next(); }, 350); }, t.big ? 4200 : 2600);
+  }
+
+  /* ---------------------------------------------------------------- drawing */
+  const ask = (k) => send({ t: "diary", op: "view", k });
+  function taskRow(M, x) {
+    const done = st.d.has(x.id), pr = st.prog[M.k]?.[x.id], me = getMe();
+    const need = x.req && !done ? (() => { const [sk, l] = x.req, have = sk === "combat" ? G.combatOf(me) : G.lvlOf(me, sk); return `<em class="${have >= l ? "ok" : "no"}">${sk === "combat" ? "Combat" : (G.SKILLS[sk]?.name || sk)} ${l}</em>`; })() : "";
+    const tag = `${x.v11 ? '<em class="v11">v1.1</em>' : ""}${x.ev ? '<em class="ev">any event</em>' : ""}${x.pvp ? '<em class="pvp">PvP</em>' : ""}`;
+    return `<div class="dt${done ? " done" : ""}"><span class="ck">${done ? "✓" : ""}</span><span class="dt-i">${icon(x)}</span><span class="dt-t">${esc(x.text)}${pr && !done ? ` <small>${pr[0].toLocaleString()} / ${pr[1].toLocaleString()}</small>` : ""}</span><span class="dt-r">${tag}${need}</span></div>`;
+  }
+  function reward(M, i) {
+    const lvl = levelOf(M), fin = lvl > i, got = (st.cl[M.k] | 0) & (1 << i), me = getMe();
+    const skills = Object.keys(G.SKILLS).filter((s) => G.lvlOf(me, s) >= M.lo);
+    const lamp = !fin ? `A ${G.DIARY.lamps[i].toLocaleString()} XP lamp` : got ? `Lamp rubbed` : skills.length
+      ? `<select data-lampsk>${skills.map((s) => `<option value="${s}">${esc(G.SKILLS[s].name)} (${G.lvlOf(me, s)})</option>`).join("")}</select><button type="button" class="k-btn sm" data-lamp="${i}">Rub the ${G.DIARY.lamps[i].toLocaleString()} XP lamp</button>`
+      : `A lamp, for a skill at level ${M.lo} or above: you have none yet`;
+    return `<div class="dr${fin ? " fin" : ""}"><b>${TIERS[i]} reward${fin ? " ✓" : ""}:</b> ${esc(M.perks[i].text)}.<div class="dr-l">${lamp}<span class="medal" style="--m:${MEDAL[i]}">${G.DIARY.medals[i]} medal</span></div></div>`;
+  }
+  function extras(M) {
+    const me = getMe(), out = [], day = st.today;
+    const tele = st.p.some((p) => p.t === "tele" && p.scene === M.k), tour = st.cl.__tour && Object.values(me?.eq || {}).includes(G.DIARY.cape);
+    if (tele || tour) { const used = (tele ? st.tp[M.k] === day : true) && (!tour || st.tp.__tour === day); out.push(`<button type="button" class="k-btn sm" data-tele ${used ? "disabled" : ""}>${used ? "Teleport used today" : `Teleport to ${esc(M.name.replace(/^The /, "the "))}`}</button>`); }
+    if (M.k === "frozen" && st.see.wyrm) { const w = st.see.wyrm; out.push(`<span class="see">The Ice Wyrm: ${w.up ? `up now, ${Math.ceil((w.leftS || 0) / 60)} min left` : w.due ? "about to rise" : w.nextS != null ? `rises in ${w.nextS >= 3600 ? `${Math.floor(w.nextS / 3600)} h ${Math.round((w.nextS % 3600) / 60)} min` : `${Math.max(1, Math.round(w.nextS / 60))} min`}` : "asleep until tomorrow"}</span>`); }
+    if ((M.k === "wild" || M.k === "deep") && st.see[M.k] != null) out.push(`<span class="see">${st.see[M.k]} ${st.see[M.k] === 1 ? "person" : "people"} in ${esc(M.name.replace(/^The /, "the "))} right now</span>`);
+    return out.length ? `<div class="dx">${out.join("")}</div>` : "";
+  }
+  function detail(M, i, big) {
+    const lvl = levelOf(M), all = M.t.flat(), got = all.filter((x) => st.d.has(x.id)).length;
+    const tabs = TIERS.map((t, j) => { const g = M.t[j].filter((x) => st.d.has(x.id)).length; return `<button type="button" data-ti="${j}" class="${j === i ? "on" : ""}" style="--m:${MEDAL[j]}">${t}<small>${g}/${M.t[j].length}${lvl > j ? " ✓" : ""}</small></button>`; }).join("");
+    return `<div class="dh"><img class="em${lvl ? ` t${lvl - 1}` : ""}" src="${ART}${M.em}.png?v=1" alt=""><span><b>${esc(M.name)}</b><small>${M.sub ? esc(M.sub) + " · " : ""}levels ${esc(M.band)} · ${got} of ${all.length}${lvl ? ` · ${TIERS[lvl - 1]} done` : ""}</small></span>${big ? "" : `<button type="button" class="lnk" data-whole>Whole diary</button>`}</div>
+      <div class="dbar"><b style="width:${(got / all.length) * 100}%"></b></div>
+      <div class="dtabs">${tabs}</div>
+      <div class="dts">${M.t[i].map((x) => taskRow(M, x)).join("")}</div>${reward(M, i)}${extras(M)}`;
+  }
+  function wire(root, M) {
+    root.querySelectorAll("[data-ti]").forEach((b) => b.addEventListener("click", () => { tierPick[M.k] = +b.dataset.ti; SFX.play("ui_click"); redraw(); }));
+    root.querySelectorAll("[data-lamp]").forEach((b) => b.addEventListener("click", () => { const sk = root.querySelector("[data-lampsk]")?.value; if (sk) send({ t: "diary", op: "claim", k: M.k, i: +b.dataset.lamp, skill: sk }); }));
+    root.querySelector("[data-tele]")?.addEventListener("click", () => send({ t: "diary", op: "tele", k: M.k }));
+    root.querySelector("[data-whole]")?.addEventListener("click", () => open(M.k));
+  }
+  const tierOf = (M) => tierPick[M.k] ?? Math.min(3, levelOf(M));
+  let lastSig = "";
+  function renderTab(p) {
+    tabEl = p; style();
+    if (!D) { p.dataset.tab = "diary"; lastSig = ""; p.innerHTML = `<div class="ph">Diary</div><p class="note" style="padding:8px 10px">Opening the diary…</p>`; load().then(() => redraw(), (e) => { p.innerHTML = `<div class="ph">Diary</div><p class="note" style="padding:8px 10px">The diary didn't load. Try again in a moment.</p>`; loading = null; console.error(e); }); return; }
+    if (!st.asked) { st.asked = true; ask(here()); }
+    const k = pick && D.some((x) => x.k === pick) ? pick : here() || "workyard", M = BYK()[k], i = tierOf(M);
+    const sig = JSON.stringify([k, i, [...st.d].length, st.cl, st.prog[k], st.see, st.tp, getScene()]);
+    if (p.dataset.tab === "diary" && sig === lastSig) return; lastSig = sig; p.dataset.tab = "diary";
+    const idx = D.findIndex((x) => x.k === k);
+    p.innerHTML = `<div class="ph">Diary <small>${here() === k ? "where you are" : "<button type=\"button\" class=\"lnk\" data-here>back to where you are</button>"} · <button type="button" class="lnk" data-prev>‹</button> <button type="button" class="lnk" data-next>›</button></small></div><div class="dpane">${detail(M, i, false)}</div>`;
+    wire(p, M);
+    const go = (d) => { pick = D[(idx + d + D.length) % D.length].k; ask(pick); SFX.play("ui_click"); redraw(); };
+    p.querySelector("[data-prev]").addEventListener("click", () => go(-1)); p.querySelector("[data-next]").addEventListener("click", () => go(1));
+    p.querySelector("[data-here]")?.addEventListener("click", () => { pick = null; ask(here()); redraw(); });
+  }
+  /* the window */
+  const BANDS = [["New (1–29)", ["workyard", "gloam", "mire"]], ["Mid (30–60)", ["boneyard", "cloud", "sands", "thunderhead", "thrill"]], ["Late (60–92)", ["carnival", "boardwalk", "vault", "depths", "trailer", "thrill_top"]],
+    ["Past 90", ["valley", "valley_ridge", "valley_lair", "frozen", "frostspire"]], ["PvP", ["wild", "deep"]]];
+  function win() {
+    let w = document.getElementById("diaryWin"); if (w) return w;
+    w = document.createElement("section"); w.className = "win"; w.id = "diaryWin"; w.hidden = true; w.setAttribute("aria-label", "Area diaries"); w.style.width = "min(820px,calc(100% - 28px))";
+    w.innerHTML = `<div class="win-head"><b><img src="${ART}diary.png?v=1" alt="" class="topi">Area diaries</b><small id="diarySub"></small><button type="button" class="win-x" aria-label="Close">×</button></div><div class="win-body dwin"><div class="dmaps" id="diaryMaps"></div><div class="dright" id="diaryRight"></div></div>`;
+    (document.getElementById("lockerWin")?.parentElement || document.body).append(w);
+    w.querySelector(".win-x").addEventListener("click", () => { SFX.play("ui_close"); w.hidden = true; });
+    return w;
+  }
+  function renderWin() {
+    const w = document.getElementById("diaryWin"); if (!w || w.hidden || !D) return;
+    const M = BYK(), k = winK || here() || "workyard", all = D.flatMap((x) => x.t.flat());
+    $("diarySub").textContent = `${all.filter((x) => st.d.has(x.id)).length} of ${all.length} tasks · ${D.filter((x) => levelOf(x) === 4).length} of ${D.length} Elite`;
+    $("diaryMaps").innerHTML = BANDS.map(([h, ks]) => `<div class="dband">${h}</div>` + ks.filter((x) => M[x]).map((x) => { const d = M[x], lv = levelOf(d), g = d.t.flat().filter((t) => st.d.has(t.id)).length, claim = [0, 1, 2, 3].some((i) => lv > i && !((st.cl[x] | 0) & (1 << i)));
+      return `<button type="button" class="dm${x === k ? " on" : ""}" data-dk="${x}"><img class="em${lv ? ` t${lv - 1}` : ""}" src="${ART}${d.em}.png?v=1" alt=""><span><b>${esc(d.name)}</b><small>${esc(d.band)} · ${lv ? TIERS[lv - 1] + " done" : "none done"}</small></span><i>${g}</i>${claim ? '<em class="lampdot" title="A lamp to rub"></em>' : ""}</button>`; }).join("")).join("");
+    $("diaryMaps").querySelectorAll("[data-dk]").forEach((b) => b.addEventListener("click", () => { winK = b.dataset.dk; ask(winK); SFX.play("ui_click"); renderWin(); }));
+    const R = $("diaryRight"); R.innerHTML = detail(M[k], tierOf(M[k]), true); wire(R, M[k]);
+  }
+  function open(k) {
+    load().then(() => { style(); const w = win(); winK = k || winK || here(); ask(winK); if (openWin) openWin("diaryWin"); else w.hidden = false; w.hidden = false; renderWin(); });
+  }
+  function redraw() { if (tabEl && tabEl.dataset.tab === "diary" && tabEl.isConnected) { lastSig = ""; renderTab(tabEl); } renderWin(); }
+  /** is there a lamp waiting anywhere (for the tab's badge)? */
+  const lampWaiting = () => !!D && D.some((M) => { const lv = levelOf(M); return [0, 1, 2, 3].some((i) => lv > i && !((st.cl[M.k] | 0) & (1 << i))); });
+  return { onState, onDone, renderTab, open, redraw, lampWaiting, leave() { tabEl = null; } };
+}
+
+const CSS = `
+.dpane{padding:6px 8px 10px}
+.dh{display:flex;gap:8px;align-items:center}.dh b{display:block;font:800 14px Cinzel,serif;color:var(--k-ink,#2a1c0e)}.dh small{font:600 11.5px Lora,serif;opacity:.75}.dh .lnk{margin-left:auto}
+.em{width:36px;height:36px;image-rendering:pixelated;border-radius:8px;box-shadow:0 0 0 2px #8a7a5a;background:#2a2014}.em.t0{box-shadow:0 0 0 2px #c8823a}.em.t1{box-shadow:0 0 0 2px #c8ccd8}.em.t2{box-shadow:0 0 0 2px #ffc83a}.em.t3{box-shadow:0 0 0 2px #9ef0ff,0 0 8px #9ef0ff}
+.dbar{height:7px;border-radius:4px;background:#e6dcc4;margin:7px 0;overflow:hidden}.dbar b{display:block;height:100%;background:#3a8a3a}
+.dtabs{display:flex;gap:4px;margin-bottom:6px}.dtabs button{flex:1;padding:5px 2px;border:0;border-radius:7px;background:#efe6cf;box-shadow:inset 0 0 0 1.5px #cbbd9a;font:800 11.5px Lora,serif;color:#2a1c0e;cursor:pointer}
+.dtabs button.on{background:var(--m);box-shadow:inset 0 0 0 2px rgba(0,0,0,.25)}.dtabs small{display:block;font:700 10px Lora,serif;opacity:.75}
+.dts{display:grid;gap:4px}.dt{display:grid;grid-template-columns:16px 26px 1fr auto;gap:6px;align-items:center;padding:5px 6px;border-radius:7px;background:#f6efdc;font:600 12.5px Lora,serif;color:#2a1c0e}
+.dt .ck{width:16px;height:16px;border-radius:4px;box-shadow:inset 0 0 0 1.5px #a89a78;display:grid;place-items:center;font-size:11px;color:#fff}.dt.done .ck{background:#3a8a3a;box-shadow:none}.dt.done .dt-t{opacity:.6;text-decoration:line-through}
+.dt-i img,.dt-i .ico{width:24px;height:24px}.dt-t small{font-weight:800;color:#5a4a2a}.dt-r{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
+.dt-r em{font:800 10px Lora,serif;font-style:normal;padding:1px 5px;border-radius:6px;background:#e6dcc4;color:#4a3a1a}.dt-r em.ok{background:#d4ecd4;color:#1a5a1a}.dt-r em.no{background:#f4d4d0;color:#8a1a10}
+.dt-r em.v11{background:#efe0ff;color:#5a1a8a}.dt-r em.ev{background:#d8e4f8;color:#1a3a7a}.dt-r em.pvp{background:#f8d0d0;color:#8a1010}
+.dr{margin-top:8px;padding:8px;border-radius:8px;background:#f1e6c8;font:600 12.5px Lora,serif;color:#2a1c0e}.dr.fin{background:#e2f0d8}.dr-l{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.dr-l select{font:700 12px Lora,serif;padding:3px;border-radius:6px}.medal{margin-left:auto;font:800 11px Lora,serif;padding:2px 8px;border-radius:10px;background:var(--m);color:#1a1006}
+.dx{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}.dx .see{font:700 12px Lora,serif;color:#1a3a7a;background:#d8e4f8;padding:3px 8px;border-radius:8px}
+.dwin{display:grid;grid-template-columns:230px 1fr;gap:10px;max-height:min(70vh,640px)}.dmaps{overflow:auto;padding-right:4px}.dright{overflow:auto}
+.dband{font:800 11px Cinzel,serif;letter-spacing:.06em;text-transform:uppercase;opacity:.7;margin:8px 2px 3px}
+.dm{display:grid;grid-template-columns:32px 1fr auto;gap:7px;align-items:center;width:100%;padding:5px;border:0;border-radius:8px;background:#f6efdc;margin-bottom:4px;text-align:left;cursor:pointer;position:relative}
+.dm.on{background:#ffe9b0;box-shadow:inset 0 0 0 2px #c8963a}.dm .em{width:30px;height:30px}.dm b{display:block;font:800 12.5px Lora,serif;color:#2a1c0e}.dm small{font:600 10.5px Lora,serif;opacity:.7}.dm i{font:800 12px Lora,serif;font-style:normal;color:#3a8a3a}
+.lampdot{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:#ffb02a;box-shadow:0 0 6px #ffb02a}
+@media (max-width:640px){.dwin{grid-template-columns:1fr}.dmaps{max-height:200px}}
+#diaryToast{position:fixed;left:14px;bottom:92px;z-index:60;display:flex;gap:9px;align-items:center;max-width:min(360px,calc(100vw - 28px));padding:8px 12px;border:0;border-radius:10px;background:#1a1410;color:#f6e9cc;box-shadow:0 0 0 1.5px #c8963a,0 8px 22px rgba(0,0,0,.5);text-align:left;cursor:pointer;opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .25s,transform .25s}
+#diaryToast.show{opacity:1;transform:none;pointer-events:auto}#diaryToast.big{box-shadow:0 0 0 2px #ffc83a,0 0 18px rgba(255,200,58,.4)}
+#diaryToast img{width:34px;height:34px;image-rendering:pixelated}#diaryToast b{display:block;font:800 13px Lora,serif;color:#ffe7b0}#diaryToast small{font:600 12px Lora,serif;color:#cdbfa2}
+#diaryToast .dt-i img,#diaryToast .dt-i .ico{width:28px;height:28px}
+@media (prefers-reduced-motion:reduce){#diaryToast{transition:none}}
+`;

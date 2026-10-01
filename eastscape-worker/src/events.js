@@ -181,6 +181,7 @@ export function installEvents(World, { G }) {
     this.sstar = null; save(this, "sstar", null); this.evBroadcast(now, true);
   };
   P.starReport = function (H, how) {
+    this.diaryEvAt(H.scene);   /* (2026-10-01) diaries: a star ended here, spent or faded */
     for (const [id, n] of Object.entries(H.by || {})) { const p = this.pls.get(id); if (p) this.say(p, `${how === "spent" ? "The star is spent" : "The star has gone dark"}. You mined ${n.toLocaleString()} Star Fragment${n === 1 ? "" : "s"} from it (${(p.C.frags | 0).toLocaleString()} in all). The Star Tent is in Cloudreach.`, "loot"); }
   };
   P.starTick = function (now) {
@@ -237,6 +238,7 @@ export function installEvents(World, { G }) {
   };
   P.wantedDown = function (S, m, pl, now) {
     const H = this.wanted; if (!H || H.id !== m.id) return;
+    this.diaryEvAt(S.key);   /* (2026-10-01) diaries */
     m.respawnAt = Infinity; S.mobs = S.mobs.filter((x) => x !== m); S.whoSig = null;
     const rows = Object.entries(H.by).filter(([, d]) => d > 0).sort((a, b) => b[1] - a[1]), total = rows.reduce((a, [, d]) => a + d, 0) || 1, paid = [];
     for (const [id, d] of rows) {
@@ -255,7 +257,7 @@ export function installEvents(World, { G }) {
     this.wanted = null; save(this, "wanted", null); this.evBroadcast(now, true);
   };
   P.wantedEscape = function (S, m, now) {
-    const H = this.wanted;
+    const H = this.wanted; if (S) this.diaryEvAt(S.key);   /* (2026-10-01) diaries */
     if (S && m) { this.bossEnd(S, m, "escaped"); S.mobs = S.mobs.filter((x) => x !== m); S.whoSig = null; }
     const L = this.wantedLog; L.up = Math.min(WA.upMax - 1, (L.up || 0) + WA.up);
     this.wantedLogAdd({ at: now, name: H.name, t: H.t, scene: H.scene, where: whereOf(H.scene), result: "escaped", hunters: Object.keys(H.by).length, bounty: H.bounty });
@@ -376,6 +378,7 @@ export function installEvents(World, { G }) {
   P.thiefDown = function (S, m, pl, now) {
     const H = this.thief; m.respawnAt = Infinity; S.mobs = S.mobs.filter((x) => x !== m); S.whoSig = null;
     if (!H || H.id !== m.id) return;
+    this.diaryEvAt(S.key);   /* (2026-10-01) diaries */
     const n = H.sack; this.cashTo(pl, n); this.touch(pl);
     pl.out.push({ type: "jackpotkill", n });
     this.say(pl, `\u{1F4B0} You caught the Jackpot Thief! The sack bursts: ${G.fmtTix(n)} are yours.`, "loot");
@@ -384,7 +387,7 @@ export function installEvents(World, { G }) {
     this.thief = null; save(this, "thief", null); this.evBroadcast(now, true);
   };
   P.thiefEscape = function (S, m, now) {
-    const H = this.thief;
+    const H = this.thief; if (S) this.diaryEvAt(S.key);   /* (2026-10-01) diaries */
     if (S && m) { this.bossEnd(S, m, "escaped"); S.mobs = S.mobs.filter((x) => x !== m); S.whoSig = null; }
     const back = Math.max(0, Math.min(H.sack, H.fromPot ?? H.sack));   /* (2026-09-30) only what the Jackpot lent goes back; the house's part is simply gone */
     this.jack.pot += back; this.jackDirty = true;
@@ -402,7 +405,7 @@ export function installEvents(World, { G }) {
     const C = pl.C, T = G.STAR_TENT, row = T.stock.find((r) => r.id === String(m.id || "")); if (!row || m.op !== "buy") return;
     const dx = Math.max(T.at.x - pl.x, 0, pl.x - (T.at.x + 2)), dy = Math.max(T.at.y - pl.y, 0, pl.y - (T.at.y + 1));
     if (S.key !== T.scene || Math.max(dx, dy) > 3) return this.say(pl, "You need to be at the Star Tent, in Cloudreach.", "bad");
-    const R = G.tentRow(row), price = R.frags;
+    const R = G.tentRow(row), price = Math.max(1, Math.round(R.frags * (1 - G.diaryOff(C, "startent"))));   /* (2026-10-01) Cloudreach's Medium diary: 5% off */
     if (R.store && C.store?.own?.includes(R.id)) return this.say(pl, "You own that already.", "bad");
     if ((C.frags | 0) < price) return this.say(pl, `That's ${price.toLocaleString()} Star Fragments. You have ${(C.frags | 0).toLocaleString()}: mine a Shooting Star for more.`, "bad");
     if (R.work && !G.workMissing(C, R.work).length) return this.say(pl, "You have the whole set already.", "bad");   /* (2026-10-01) work clothes */

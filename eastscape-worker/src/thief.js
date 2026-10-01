@@ -65,6 +65,7 @@ export function installThief(World, { G }) {
         if (Math.random() < G.workPerk(C, "thieving", "pick2")) for (const k of G.pocketDrop(m.t)) { if (!this.give(pl, k)) break; this.gained(S, pl, k, 1, "thieving"); names.push(G.ITEMS[k].name.toLowerCase()); }   /* (2026-10-01) the Ditched set: picked twice */
         this.workRoll(pl, "feller", 1 / 400);   /* (2026-10-01) the Feller's flannels, lifted from a pocket */
         m.outUntil = now + G.WT.outMs;
+        this.diaryNote(pl, `pk:${m.t}`); this.diaryNote(pl, `pkm:${base(S)}`);   /* (2026-10-01) the diaries' pocket tasks */
         this.grant(pl, "thieving", Math.round(G.pocketXp(m.t) * (S.def.xpMul || 1))); this.questCheck(pl);
         S.events.push({ type: "picked", id: m.id, until: m.outUntil });
         return this.say(pl, names.length ? `You lift ${names.join(" and ")} off ${name.replace(/^The /, "the ")}.` : `Nothing in there you could carry.`, "good");
@@ -91,7 +92,7 @@ export function installThief(World, { G }) {
         const mark = G.markAtLvl(lvl), names = [];
         for (let i = 0; i < G.WT.box.rolls; i++) { const k = G.markDrop(mark); if (!this.give(pl, k)) break; this.gained(S, pl, k, 1, "thieving"); names.push(G.ITEMS[k].name.toLowerCase()); }
         if (Math.random() < G.WT.box.key && this.give(pl, "skeleton_key")) names.push("a skeleton key");
-        C.boxes[key] = now + G.WT.box.cdMs;
+        C.boxes[key] = now + G.WT.box.cdMs; this.diaryNote(pl, `lb:${key}`);   /* (2026-10-01) the diaries' lockbox tasks */
         this.grant(pl, "thieving", Math.round(G.guildXpAt(lvl) * G.WT.box.xpMul)); this.questCheck(pl);
         return this.say(pl, `The lockbox clicks open: ${names.join(", ") || "nothing you could carry"}. It's yours again in 15 min.`, "loot");
       }
@@ -105,12 +106,12 @@ export function installThief(World, { G }) {
       const bw = G.BACKWAYS[a.bw], to = bw?.ends[1 - a.end]; if (!to) { pl.act = null; return; }
       if (pl.x !== a.x || pl.y !== a.y) { pl.path = G.findPath(S.g, pl, a, 0) || []; if (!pl.path.length) pl.act = null; return; }
       const have = G.lvlOf(C, "agility");
-      if (have < bw.lvl && !pl.god) { pl.act = null; return this.say(pl, `${bw.name}: Agility ${bw.lvl}, and you're ${have}.`, "bad"); }
+      if (have < bw.lvl && !pl.god && !(a.bw === "stormdrain" && G.diaryHas(C, "plus", "drain"))) {   /* (2026-10-01) the Thunderhead's Elite diary: the Storm Drain needs no level */ pl.act = null; return this.say(pl, `${bw.name}: Agility ${bw.lvl}, and you're ${have}.`, "bad"); }
       if (!a.started) { a.started = now; a.next = now + G.WT.backway.ms; return this.say(pl, `You ${G.SC_VERB[bw.how] || "go through"}...`); }
       if (now < a.next) return;
       pl.act = null;
       if (Math.random() < G.slipChance(C, bw.lvl)) return this.say(pl, "You lose your footing and end up back where you started.", "bad");
-      this.grant(pl, "agility", bw.lvl * G.WT.backway.xpMul); this.workRoll(pl, "prospector", 1 / 150);   /* (2026-10-01) the Prospector's kit */
+      this.grant(pl, "agility", bw.lvl * G.WT.backway.xpMul); this.diaryNote(pl, `bw:${a.bw}`);   /* (2026-10-01) diaries */ this.workRoll(pl, "prospector", 1 / 150);   /* (2026-10-01) the Prospector's kit */
       this.moveToScene(pl, to.scene, null, { x: to.stand[0], y: to.stand[1] });
       return this.say(pl, `${bw.name} brings you out in ${G.sceneDef(to.scene).name.replace(/^The /, "the ")}.`, "good");
     }
@@ -134,7 +135,7 @@ export function installThief(World, { G }) {
       if (!G.walkableIn(S.g, a.far.x, a.far.y)) return this.say(pl, "Something's in the way on the other side. Try again in a moment.", "bad");
       pl.x = a.far.x; pl.y = a.far.y; pl.step = null; pl.path = [];
       this.placeSafely(S, pl); this.touch(pl);
-      this.grant(pl, "agility", sc.lvl * G.WT.cross.xpMul); this.workRoll(pl, "prospector", 1 / 150);   /* (2026-10-01) the Prospector's kit */
+      this.grant(pl, "agility", sc.lvl * G.WT.cross.xpMul); this.diaryNote(pl, `sc:${a.sc}`);   /* (2026-10-01) diaries */ this.workRoll(pl, "prospector", 1 / 150);   /* (2026-10-01) the Prospector's kit */
       return this.say(pl, "You make it across.", "good");
     }
   };
@@ -144,7 +145,7 @@ export function installThief(World, { G }) {
     if (G.HOLD.thief2) return;
     const C = pl.C, V = S.npcs.find((x) => x.opens === "permit");
     if (!V || G.cheb(pl, V) > (V.reach || 3)) return this.say(pl, "You need to be standing with Vance.", "bad");
-    const n = Math.max(1, Math.min(25, m.n | 0 || 1)), price = n * G.WT.lockpick, have = G.tixIn(C);
+    const n = Math.max(1, Math.min(25, m.n | 0 || 1)), price = n * Math.round(G.WT.lockpick * (1 - G.diaryOff(C, "lockpick"))), have = G.tixIn(C);
     if (have < price) return this.say(pl, `"${G.fmtTix(price)} for ${n}. You've got ${G.fmtTix(have)}."`, "bad");
     if (G.roomFor(C.inv, "lockpick", C) < n) return this.say(pl, "Your bag is full.", "bad");
     G.takeInv(C.inv, "tickets", price); this.trkTix(pl, -price, "lockpick");

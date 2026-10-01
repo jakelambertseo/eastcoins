@@ -34,6 +34,7 @@ export function installWork(World, { G }) {
     this.say(pl, `\u{1F9E5} Work clothes! You find the ${G.ITEMS[k].name.toLowerCase()} from ${S.name.replace(/^The /, "the ")} (${n} of 4). It's in your locker: Equipment, then Work clothes.`, "loot");
     if (n === 4) this.houseSay(`\u{1F9E5} ${pl.name} has the whole of ${S.name.replace(/^The /, "the ")}: ${S.full}.`);
     pl.out.push({ type: "workfound", k, set, n });
+    this.diaryCheck?.(pl);   /* (2026-10-01) diaries: the work clothes tasks */
     return k;
   };
   P.workRoll = function (pl, set, p) {

@@ -17,7 +17,7 @@
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;
 /* (2026-09-30) YOUR SCREEN: the chosen look, on <html> before anything paints (eastscape-ui.js keeps it in step) */
 try { const t = localStorage.getItem("es_ui_theme"); if (t) document.documentElement.dataset.uiTheme = t; } catch (e) { /* storage off: the default look */ }</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=432">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=433">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -1237,6 +1237,8 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 @keyframes skhot{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.skt.hot::before{animation:none}}
 .doll{grid-template-columns:62px minmax(96px,1fr) 62px;grid-template-rows:repeat(5,58px);gap:5px;justify-content:stretch;padding:10px 4px 6px;
   grid-template-areas:"helm fig weapon" "amulet fig shield" "body fig gloves" "legs fig ring" "boots fig pet"}
+.doll.has-cape{grid-template-rows:repeat(5,58px) 50px;grid-template-areas:"helm fig weapon" "amulet fig shield" "body fig gloves" "legs fig ring" "boots fig pet" ". cape ."}   /* (2026-10-01, v1.1) the cape: a sixth row, under your feet */
+.doll .eq[data-slot="cape"]{display:flex;align-items:center;justify-content:center;gap:6px}.doll .eq[data-slot="cape"] small{position:static;font:700 11px Lora,serif}
 .doll .eq{width:auto;height:auto}
 .doll-fig{position:relative;display:flex;align-items:flex-end;justify-content:center;border-radius:50% 50% 10px 10px / 30% 30% 10px 10px;background:radial-gradient(ellipse at 50% 88%,rgba(90,60,20,.28),transparent 60%),linear-gradient(#e8dcbc,#d9c9a2);box-shadow:inset 0 0 0 2px rgba(138,122,90,.5)}
 .doll-fig canvas{width:100%;max-width:150px;height:auto;image-rendering:pixelated;margin-bottom:8px}
@@ -2042,13 +2044,14 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
       <button type="button" data-tab="equip" aria-pressed="false" title="Equipment (U)"><img src="/v3/assets/img/glad/flat/ui/equip.png?v=1" alt="Equipment"></button>
       <button type="button" data-tab="skills" aria-pressed="false" title="Skills (K)"><img src="/v3/assets/img/glad/flat/ui/skills.png?v=1" alt="Skills"></button>
       <button type="button" data-tab="quests" aria-pressed="false" title="Quests and daily jobs (J)"><img src="/v3/assets/img/glad/flat/ui/quests.png?v=1" alt="Quests"></button>
+      <button type="button" data-tab="diary" aria-pressed="false" title="Area diaries (L)" hidden><img src="/v3/assets/img/glad/flat/diary/diary.png?v=1" alt="Diary"></button>
       <button type="button" data-tab="admin" aria-pressed="false" title="Admin" hidden><img src="/v3/assets/img/glad/flat/ui/admin.png?v=1" alt="Admin"></button>
     </nav>
     <div class="panel" id="panel"></div>
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=432";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=433";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 const FROZEN = new Map();   /* (2026-09-30) player id -> when their Deep Freeze ends (performance.now) */
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
@@ -2443,6 +2446,8 @@ function onEvent(e) {
   /* (2026-09-27) THE COLLECTION LOG: a podium was clicked (its owner's log), or a slot just filled (a chime; the words come as a message) */
   if (e.type === "collog") { colUi().then((u) => u.open(e)); return; }
   if (e.type === "colnew") { SFX.play("levelup", { vol: 0.7 }); return; }
+  if (e.type === "diarystate") { if (!G.HOLD.diary) diaryUi().then((u) => u.onState(e)); return; }   /* (2026-10-01, v1.1) area diaries */
+  if (e.type === "diary") { if (!G.HOLD.diary) diaryUi().then((u) => u.onDone(e)); return; }
   if (e.type === "workfound") return workFound(e);   /* (2026-10-01) work clothes: a piece found */   /* (2026-09-27) the hatchery */   /* (2026-09-27) Breeding: the server says you are at your pen */
   if (e.type === "hiscores") { openHiscores(); return; }   /* (v96) the board on the casino wall */
   if (e.type === "dash") return dashDraw(e);
@@ -3050,6 +3055,8 @@ function paintLook(look, bodyIm, hairIm, beardIm, van) {
   o.putImageData(px, 0, 0); return c;
 }
 const lookParts = (look, d) => { const L = G.LOOK, bb = `pb_${L.bodies[look[0]]}`, hb = look[1] > 0 ? `ph_${L.hairs[look[1]]}` : null; facedArt(bb, d); if (hb) facedArt(hb, d); if (look[7]) facedArt("ph_beard", d); const b = IMG[`${bb}_${d}`], h = hb ? IMG[`${hb}_${d}`] : null, br = look[7] ? IMG[`ph_beard_${d}`] : null; return b && (!hb || h) && (!look[7] || br) ? [b.im, h && h.im, br && br.im] : null; };
+/* (2026-10-01, v1.1) every cape, as [cloth, trim] for the world (see THE CAPE in the player loop) */
+const CAPE_PAINT = { cape_tour: ["#2c3f86", "#ffc83a"] };
 function lookSprite(look, d, van) {   // -> a sprite key; "" while its parts are on the way; null if they never came
   /* THE VANITY GOES IN THE KEY. The cache is shared by everyone, so two players with the same face and different
      helmets would otherwise be handed the same picture — and whoever painted first would decide what both wore. */
@@ -3084,7 +3091,7 @@ function spr(k, x, y, flip = false, filter = "", sc = 1, rot = 0) {
   lc.drawImage(a.im, -Math.round(a.cx), -a.foot); lc.restore(); return true;
 }
 // item and skill icons (PixelLab): art where it exists, the emoji where it doesn't
-const ITEM_ART = new Set(["starfrag", "egg_starling", "star_crate",   /* (2026-09-30) WORLD EVENTS */ "rimefang_arrow", "frostcharm", "frostward_amulet", "frostward_ring", "yeti_boots", "rimecleaver",   /* (2026-09-30, the wiki pass) the Frozen Reach's last six on an emoji */ "frostjarl_crown",   /* (2026-09-30) the Crown of the Frost Jarl */ "glacite", "frostpinelogs", "icefin", "cicefin", "wyrm_scale", "rimeheart", "frostbite_ring", "winters_heart", "frostpine_wand", "bag_glacier", "egg_owl", "egg_yeti", "waystone_frozen",   /* (2026-09-30) the Frozen Reach */ "frost_shard", "yeti_pelt", "pot_frost",   /* (2026-09-30) what the Yard raid drops */ "cycadlogs_shortbow", "cycadlogs_longbow", "cycadlogs_quiver", "cycadlogs_wand", "ptero_sinew", "skyripper", "raptor_ring", "hunters_fang", "pot_hunter",   /* (2026-09-30) the Valley's archery drops and the cycad tier */ "fossil", "sabretooth_fang", "mammoth_ivory", "rex_tooth", "rex_necklace", "waystone_valley", "coelacanth", "ccoelacanth", "egg_raptor", "egg_ptero", "cycadlogs",   /* (2026-09-30) the Primeval Valley */ "leather_helm", "leather_body", "leather_legs", "leather_gloves", "leather_boots", "studded_helm", "studded_body", "studded_legs", "studded_gloves", "studded_boots", "wyvern_helm", "wyvern_body", "wyvern_legs", "wyvern_gloves", "wyvern_boots", "stormhide_helm", "stormhide_body", "stormhide_legs", "stormhide_gloves", "stormhide_boots", "voidstalker_helm", "voidstalker_body", "voidstalker_legs", "voidstalker_gloves", "voidstalker_boots", "linen_helm", "linen_body", "linen_legs", "linen_gloves", "linen_boots", "silk_helm", "silk_body", "silk_legs", "silk_gloves", "silk_boots", "moonweave_helm", "moonweave_body", "moonweave_legs", "moonweave_gloves", "moonweave_boots", "stormweave_helm", "stormweave_body", "stormweave_legs", "stormweave_gloves", "stormweave_boots", "astral_helm", "astral_body", "astral_legs", "astral_gloves", "astral_boots",   /* (2026-09-29) the outfitters' armour */ "jade", "amethyst", "bloodstone", "amber", "obsidian", "moonstone", "citrine", "garnet", "peridot", "tigerseye", "lapis", "turquoise", "malachite", "quartz", "jasper", "hematite", "carnelian", "aquamarine", "sunstone", "tanzanite", "jet",    /* (2026-09-28) the gems, the punches, the Gem Case kits */ "pin_dock", "pin_cannon", "pin_table", "pin_sawmill", "pin_crusher", "pin_still", "pin_press", "pin_rod", "pin_crane", "pin_wheel", "pin_smoke", "pin_camp",   /* (2026-09-28) the Builder's Pins */ "tk_confetti", "tk_baitbox", "tk_medkit", "tk_whetstone", "tk_scope", "tk_arccoil", "tk_lockpick", "tk_cooker", "tk_bellows", "tk_distiller", "tk_featherjig", "tk_handpress", "tk_magnifier", "tk_humidifier", "tk_lantern", "tk_grapple", "tk_pettoy", "tk_banner", "tk_auger", "tk_chainsaw", "tk_autoreel", "tk_bomb",   /* (2026-09-28) Tinkering's gadgets */ "mackerel", "cmackerel", "smackerel", "bluefin", "cbluefin", "sbluefin", "swordfish", "cswordfish", "sswordfish", "clawpin", "clawgrip",   /* (2026-09-27) the Boardwalk's fish, the claw pin and Captain Claw's grip (PixelLab, on the art brief) */ "bronze_bead", "bronze_necklace", "glass_bead", "bead_necklace", "polished_diamond", "polished_dragonstone", "polished_onyx", "starfall_glass", "eclipse_pearl", "cut_abyss", "cut_ruby", "cut_sapphire", "cut_topaz", "cut_opal", "emerald_ring_ruby", "emerald_amulet_ruby", "dragonstone_ring_sapphire", "dragonstone_amulet_sapphire", "starfall_ring_topaz", "starfall_amulet_topaz", "nova_ring_opal", "nova_amulet_opal", "singularity_ring_abyss", "singularity_amulet_abyss",   /* (2026-09-27) Jewelcrafting */ "abyss_crystal", "deep_sigil", "deepheart", "slag", "emberglass", "tally", "pot_ember", "bessemergloves",   /* (2026-09-27) the Foundry's drops, its tonic and Old Bessemer's chase */   /* (2026-09-27) the Depths */ "buttoncap", "oyster", "puffball", "bluemould", "inkcap", "bleedtooth", "glowcap", "ghostpipe", "truffle", "lionsmane", "voidmorel", "starcap", "spawn_sporecap", "spawn_buttoncap", "spawn_oyster", "spawn_puffball", "spawn_bluemould", "spawn_inkcap", "spawn_bleedtooth", "spawn_glowcap", "spawn_ghostpipe", "spawn_truffle", "spawn_lionsmane", "spawn_voidmorel", "spawn_starcap", "compost", "mushroom_soup", "truffle_dinner", "starcap_feast", "pot_sleep", "pot_bleed", "pot_pipe", "pot_mane", "pot_star",   /* (2026-09-27) Fungiculture */ "egg_speckled", "egg_mossy", "egg_truffle", "egg_sparking", "egg_cindered", "egg_velvet", "egg_geode", "egg_gilded", "petfood_ordinary", "petfood_greater", "petfood_legend",   /* (2026-09-27) Breeding */ "candycorn", "pumpkin", "seed_pumpkin", "pumpkinpie", "ectoplasm", "pot_witch", "hallowed_helm", "hallowed_body", "hallowed_legs", "gallows_bow", "lantern_quiver", "skull_wand", "bag_shroud", "drowned_boots", "coffin_ring", "reaper_scythe", "king_crown", "ferry_coin",   /* (2026-09-27) the Long Night */ "caravan_parcel", "audit_ledger",   /* (2026-09-27) the two quest props */ "wildsilk", "marrow", "marrow_arrowhead", "marrow_arrow", "grimcore", "voidfin", "cvoidfin", "svoidfin", "grimscale", "cgrimscale", "sgrimscale", "gallowslogs", "glassgourd", "emberwheat", "starfruit",
+const ITEM_ART = new Set(["cape_tour",   /* (2026-10-01, v1.1) the Grand Tour cape */ "starfrag", "egg_starling", "star_crate",   /* (2026-09-30) WORLD EVENTS */ "rimefang_arrow", "frostcharm", "frostward_amulet", "frostward_ring", "yeti_boots", "rimecleaver",   /* (2026-09-30, the wiki pass) the Frozen Reach's last six on an emoji */ "frostjarl_crown",   /* (2026-09-30) the Crown of the Frost Jarl */ "glacite", "frostpinelogs", "icefin", "cicefin", "wyrm_scale", "rimeheart", "frostbite_ring", "winters_heart", "frostpine_wand", "bag_glacier", "egg_owl", "egg_yeti", "waystone_frozen",   /* (2026-09-30) the Frozen Reach */ "frost_shard", "yeti_pelt", "pot_frost",   /* (2026-09-30) what the Yard raid drops */ "cycadlogs_shortbow", "cycadlogs_longbow", "cycadlogs_quiver", "cycadlogs_wand", "ptero_sinew", "skyripper", "raptor_ring", "hunters_fang", "pot_hunter",   /* (2026-09-30) the Valley's archery drops and the cycad tier */ "fossil", "sabretooth_fang", "mammoth_ivory", "rex_tooth", "rex_necklace", "waystone_valley", "coelacanth", "ccoelacanth", "egg_raptor", "egg_ptero", "cycadlogs",   /* (2026-09-30) the Primeval Valley */ "leather_helm", "leather_body", "leather_legs", "leather_gloves", "leather_boots", "studded_helm", "studded_body", "studded_legs", "studded_gloves", "studded_boots", "wyvern_helm", "wyvern_body", "wyvern_legs", "wyvern_gloves", "wyvern_boots", "stormhide_helm", "stormhide_body", "stormhide_legs", "stormhide_gloves", "stormhide_boots", "voidstalker_helm", "voidstalker_body", "voidstalker_legs", "voidstalker_gloves", "voidstalker_boots", "linen_helm", "linen_body", "linen_legs", "linen_gloves", "linen_boots", "silk_helm", "silk_body", "silk_legs", "silk_gloves", "silk_boots", "moonweave_helm", "moonweave_body", "moonweave_legs", "moonweave_gloves", "moonweave_boots", "stormweave_helm", "stormweave_body", "stormweave_legs", "stormweave_gloves", "stormweave_boots", "astral_helm", "astral_body", "astral_legs", "astral_gloves", "astral_boots",   /* (2026-09-29) the outfitters' armour */ "jade", "amethyst", "bloodstone", "amber", "obsidian", "moonstone", "citrine", "garnet", "peridot", "tigerseye", "lapis", "turquoise", "malachite", "quartz", "jasper", "hematite", "carnelian", "aquamarine", "sunstone", "tanzanite", "jet",    /* (2026-09-28) the gems, the punches, the Gem Case kits */ "pin_dock", "pin_cannon", "pin_table", "pin_sawmill", "pin_crusher", "pin_still", "pin_press", "pin_rod", "pin_crane", "pin_wheel", "pin_smoke", "pin_camp",   /* (2026-09-28) the Builder's Pins */ "tk_confetti", "tk_baitbox", "tk_medkit", "tk_whetstone", "tk_scope", "tk_arccoil", "tk_lockpick", "tk_cooker", "tk_bellows", "tk_distiller", "tk_featherjig", "tk_handpress", "tk_magnifier", "tk_humidifier", "tk_lantern", "tk_grapple", "tk_pettoy", "tk_banner", "tk_auger", "tk_chainsaw", "tk_autoreel", "tk_bomb",   /* (2026-09-28) Tinkering's gadgets */ "mackerel", "cmackerel", "smackerel", "bluefin", "cbluefin", "sbluefin", "swordfish", "cswordfish", "sswordfish", "clawpin", "clawgrip",   /* (2026-09-27) the Boardwalk's fish, the claw pin and Captain Claw's grip (PixelLab, on the art brief) */ "bronze_bead", "bronze_necklace", "glass_bead", "bead_necklace", "polished_diamond", "polished_dragonstone", "polished_onyx", "starfall_glass", "eclipse_pearl", "cut_abyss", "cut_ruby", "cut_sapphire", "cut_topaz", "cut_opal", "emerald_ring_ruby", "emerald_amulet_ruby", "dragonstone_ring_sapphire", "dragonstone_amulet_sapphire", "starfall_ring_topaz", "starfall_amulet_topaz", "nova_ring_opal", "nova_amulet_opal", "singularity_ring_abyss", "singularity_amulet_abyss",   /* (2026-09-27) Jewelcrafting */ "abyss_crystal", "deep_sigil", "deepheart", "slag", "emberglass", "tally", "pot_ember", "bessemergloves",   /* (2026-09-27) the Foundry's drops, its tonic and Old Bessemer's chase */   /* (2026-09-27) the Depths */ "buttoncap", "oyster", "puffball", "bluemould", "inkcap", "bleedtooth", "glowcap", "ghostpipe", "truffle", "lionsmane", "voidmorel", "starcap", "spawn_sporecap", "spawn_buttoncap", "spawn_oyster", "spawn_puffball", "spawn_bluemould", "spawn_inkcap", "spawn_bleedtooth", "spawn_glowcap", "spawn_ghostpipe", "spawn_truffle", "spawn_lionsmane", "spawn_voidmorel", "spawn_starcap", "compost", "mushroom_soup", "truffle_dinner", "starcap_feast", "pot_sleep", "pot_bleed", "pot_pipe", "pot_mane", "pot_star",   /* (2026-09-27) Fungiculture */ "egg_speckled", "egg_mossy", "egg_truffle", "egg_sparking", "egg_cindered", "egg_velvet", "egg_geode", "egg_gilded", "petfood_ordinary", "petfood_greater", "petfood_legend",   /* (2026-09-27) Breeding */ "candycorn", "pumpkin", "seed_pumpkin", "pumpkinpie", "ectoplasm", "pot_witch", "hallowed_helm", "hallowed_body", "hallowed_legs", "gallows_bow", "lantern_quiver", "skull_wand", "bag_shroud", "drowned_boots", "coffin_ring", "reaper_scythe", "king_crown", "ferry_coin",   /* (2026-09-27) the Long Night */ "caravan_parcel", "audit_ledger",   /* (2026-09-27) the two quest props */ "wildsilk", "marrow", "marrow_arrowhead", "marrow_arrow", "grimcore", "voidfin", "cvoidfin", "svoidfin", "grimscale", "cgrimscale", "sgrimscale", "gallowslogs", "glassgourd", "emberwheat", "starfruit",
   /* (2026-09-24) ALCHEMY's own icons. ITEM_ART is an allowlist: an item NOT in it falls back to its emoji, which
      is why every fish and log in the game is a glyph and only the new concepts get drawn. The ten potions are
      deliberately left on the emoji - they are the same bottle in fifteen colours, and one drawn vial per SIZE
@@ -5291,7 +5298,23 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
       own = fit === "tiro" && mine ? lookSprite(mine, d, myVan) : null, lk = fit !== "tiro" ? null : own !== null ? own : lookArt(G.lookFor(pl), d), fk = fit !== "tiro" ? facedArt(`hero_${fit}`, d) : null, hk = lk === "" || fk === "" ? "" : lk || fk || (fit === "tiro" && IMG[`hero_tiro_${d}`] ? `hero_tiro_${d}` : `hero_${d}`);
     const seat = rrSeatOf(pl), down = seat && RRS.out.has(seat.i) && !p.moving;   /* shot at the table: slumped beside the stool until the table clears */
     const fl = down ? 0 : flinchOf(pl);   /* (2026-09-29) recoil against the way they face */
-    spr(hk, p.px * T + 8 + ux * (lunge * 0.7 - fl), p.py * T + 15 + uy * (lunge * 0.7 - fl) + bobOf(p.moving), false, (down ? "grayscale(1) brightness(.7)" : hurtF(pl)) + (pl.id === you.id || lk ? "" : " hue-rotate(200deg)"), 1, down ? Math.PI / 2 : 0);
+    /* (2026-10-01, v1.1) THE CAPE, painted round the sprite rather than drawn into every look: behind you facing south (its edges and hem show),
+       over your back facing north, a sliver behind facing east or west. Its colours are the cape's own (CAPE_PAINT). */
+    const capeK = pl.id === you.id ? me.eq?.cape : pl.cape, CP = capeK && CAPE_PAINT[capeK];
+    const capeAt = () => { if (!CP || down) return;   /* on lc, the world layer, at world coordinates times A: exactly where spr() puts the body */
+      const wx = p.px * T + 8 + ux * (lunge * 0.7 - fl), wy = p.py * T + 15 + uy * (lunge * 0.7 - fl) + bobOf(p.moving), side = d === "east" || d === "west";
+      /* a cape, not a box: narrow at the shoulders, flaring to a gold hem, the outer columns a shade darker for the fold. Row by row. */
+      const top = wy - 15, rows = 13, R = (v) => Math.round(v * A), dark = CP[2] || "rgba(0,0,0,.28)";
+      lc.save(); lc.setTransform(1, 0, 0, 1, 0, 0);
+      for (let r = 0; r < rows; r++) {
+        const half = side ? 2 + r * 0.12 : 5.5 + r * 0.35, cx = side ? wx + (d === "east" ? -4 - r * 0.15 : 4 + r * 0.15) : wx, xl = cx - half, xr = cx + half;
+        lc.fillStyle = r >= rows - 2 ? CP[1] : CP[0]; lc.fillRect(R(xl), R(top + r), R(xr) - R(xl), R(1));
+        if (r < rows - 2 && !side) { lc.fillStyle = dark; lc.fillRect(R(xl), R(top + r), R(1), R(1)); lc.fillRect(R(xr - 1), R(top + r), R(1), R(1)); }
+      }
+      if (d === "north") { lc.fillStyle = CP[1]; lc.fillRect(R(wx - 3), R(top), R(6), R(1)); lc.fillRect(R(wx - 1), R(top + 1), R(2), R(3)); }   /* the collar and its clasp, seen from behind */
+      lc.restore(); };
+    if (d !== "north") capeAt();
+    spr(hk, p.px * T + 8 + ux * (lunge * 0.7 - fl), p.py * T + 15 + uy * (lunge * 0.7 - fl) + bobOf(p.moving), false, (down ? "grayscale(1) brightness(.7)" : hurtF(pl)) + (pl.id === you.id || lk ? "" : " hue-rotate(200deg)"), 1, down ? Math.PI / 2 : 0); if (d === "north") capeAt();
   } });
   /* (2026-09-28, the owner: "pets need to not be attached to the characters at the hip, and need to move around, even if theres no
      animations, like mobs do. right now it looks like theyre sewn on the character") PETS FOLLOW. Each pet keeps its own spot, here in the
@@ -5961,6 +5984,10 @@ function renderLocker() {
     + '<p class="note">Work clothes live here, not in your bag or bank, so they take no room and can\u2019t be traded. A find is always a piece you don\u2019t have yet. Only the outfit you have on counts, and only for its own skill.</p>';
   body.querySelectorAll("[data-wear]").forEach((b) => b.addEventListener("click", () => send({ t: "work", set: b.dataset.wear || null })));
 }
+/* (2026-10-01, v1.1) AREA DIARIES: the Diary tab (L) and window, in eastscape-diary.js, fetched the first time either opens or the server sends
+   a diary message; the tasks themselves (eastscape-diary-rules.js) only when something is drawn. See diary.js in the worker. */
+let DIARY = null; const DIARY_URL = "/v3/assets/js/eastscape-diary.js?v=2";
+function diaryUi() { return DIARY ? Promise.resolve(DIARY) : import(DIARY_URL).then((m) => (DIARY = m.createDiary({ G, $, esc, ico, sico, send, SFX, getMe: () => me, getScene: () => Z.key || me?.scene, openWin }))); }
 function openWin(id) {
   SFX.play("ui_open");
   for (const w of ["bankWin", "exWin", "wikiWin", "achWin"]) if (w !== id && id !== "tradeWin") $(w).hidden = true;
@@ -8003,6 +8030,7 @@ function mapCard(k, el) {
     card.innerHTML = `<b>${esc(d.name)}</b>${band ? `<small>Combat ${band[0]}${band[1] < 99 ? ` to ${band[1]}` : " and up"}</small>` : ""}${WORLD.counts[k] ? `<small>${WORLD.counts[k]} here now</small>` : ""}
       ${mobs ? `<div><em>Monsters</em> ${mobs}</div>` : "<div><em>Monsters</em> none: it is safe here</div>"}${res ? `<div><em>Gather</em> ${res}</div>` : ""}${d.npcs?.length ? `<div><em>People</em> ${d.npcs.filter((n) => !n.event || G.hwOn()).map((n) => esc(n.name)).join(", ")}</div>` : ""}${qs ? `<div><em>Quests</em> ${qs}</div>` : ""}<small>Click for the wiki page.</small>`;
   }
+  if (!G.HOLD.diary && G.DIARY.keys.includes(k)) { const b = document.createElement("button"); b.type = "button"; b.className = "lnk"; b.textContent = "Open its diary"; b.style.marginTop = "6px"; b.addEventListener("click", () => diaryUi().then((u) => u.open(k))); card.append(b); }   /* (2026-10-01, v1.1) */
   const wrap = $("mapWrap"), r = el.getBoundingClientRect(), w = wrap.getBoundingClientRect();
   card.hidden = false; card.style.left = `${Math.min(w.width - 280, Math.max(0, r.left - w.left + wrap.scrollLeft))}px`; card.style.top = `${r.bottom - w.top + wrap.scrollTop + 4}px`;
 }
@@ -8301,6 +8329,8 @@ function renderPanel() {
   if (!me) return;
   renderStats(); renderBadges();
   const p = $("panel");
+  if (tab !== "diary" && p.dataset.tab === "diary") { delete p.dataset.tab; DIARY?.leave(); }   /* (2026-10-01) the diary draws only when something changed: forget it on the way out */
+  if (tab === "diary" && !G.HOLD.diary) { diaryUi().then((u) => { if (tab === "diary") u.renderTab(p); }); return; }
   if (tab === "inv") {
     const hint = hintSlot && hintSlot.until > performance.now() ? hintSlot.k : null;
     /* (2026-09-27, the owner: "the icons in my inventory seem to blink on every movement") DRAW THE BAG ONLY WHEN THE BAG CHANGED.
@@ -8344,7 +8374,7 @@ function renderPanel() {
     }));
   }
   if (tab === "equip") {
-    const EMPTY = { helm: "⛑️", amulet: "📿", weapon: "🗡️", body: "🥋", shield: "🛡️", legs: "👖", gloves: "🧤", boots: "🥾", ring: "💍", pet: "🐾" };
+    const EMPTY = { helm: "⛑️", amulet: "📿", weapon: "🗡️", body: "🥋", shield: "🛡️", legs: "👖", gloves: "🧤", boots: "🥾", ring: "💍", pet: "🐾", cape: "🧣" };
     /* THE PET SQUARE (2026-09-22). Its own branch because eq.pet holds an ID into me.pets, not an item key — the
        ordinary slot() would look it up in ITEMS, find nothing and draw an empty square over a pet you are wearing. */
     const petSlot = () => { const pet = G.activePet(me);
@@ -8358,7 +8388,7 @@ function renderPanel() {
       const k = wset.pieces[i], have = wown.has(k);
       return `<button type="button" class="eq wk${have ? "" : " miss"}" data-locker="1" style="grid-area:${area};--wk:${wset.col}" title="${esc(have ? `${ITEMS[k].name}: ${wset.name}` : `${ITEMS[k].name}, not found yet. ${wset.from}`)}">${have ? ico(k) : '<span class="wq">?</span>'}</button>`;
     };
-    const slot = (area) => { if (WK) return workSlot(area); if (area === "pet") return petSlot(); const k = me.eq[area], it = k && ITEMS[k], ef = G.fLevelOf(me, area); return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}"${it ? ` data-item="${k}"${ef ? ` data-f="${ef}"` : ""}` : ""} style="grid-area:${area}" title="${it ? `${esc(G.forgeNameAt(k, ef))}${it.event ? ` · ${G.EVENT_TAG}` : ""} — click to take off` : `${area}: empty`}"${it ? "" : " disabled"}>${it ? ico(k) : EQ_ART.has(area) ? artOf(`eq_${area}`) : EMPTY[area]}<small>${it ? esc(it.short || it.name) : ""}</small>${fgTag(ef)}</button>`; };
+    const slot = (area) => { if (WK) return workSlot(area); if (area === "pet") return petSlot(); const k = me.eq[area], it = k && ITEMS[k], ef = G.fLevelOf(me, area); return `<button type="button" class="eq${it ? "" : " empty"}" data-slot="${area}"${it ? ` data-item="${k}"${ef ? ` data-f="${ef}"` : ""}` : ""} style="grid-area:${area}" title="${it ? `${esc(G.forgeNameAt(k, ef))}${it.event ? ` · ${G.EVENT_TAG}` : ""} — click to take off` : `${area === "cape" ? "Cape: empty. Finish every Elite diary for the Grand Tour cape (Diary, L)" : `${area}: empty`}`}"${it ? "" : " disabled"}>${it ? ico(k) : EQ_ART.has(area) ? artOf(`eq_${area}`) : EMPTY[area]}<small>${it ? esc(it.short || it.name) : ""}</small>${fgTag(ef)}</button>`; };
     const b = G.styleBonusOf(me), tool = me.eq.weapon && ITEMS[me.eq.weapon].tool;   /* (2026-09-25) with a bow, the numbers the bow actually fights with */
     /* THE QUIVER ROW (2026-09-25): what is loaded, how much room, and - when it is empty - what in your bag could go in */
     const quiverRow = () => {
@@ -8387,7 +8417,7 @@ function renderPanel() {
     const workStrip = () => `<div class="bstrip">${cell(wset ? sico(wset.skill) : "\u{1F9E5}", `${wn}/4`, "pieces", "Pieces of this outfit you have found")}${cell(wset ? sico(wset.skill) : "", wset ? `+${Math.round(G.workXp(me, wset.skill) * 100)}%` : "0%", wsk ? `${wsk.name.slice(0, 7)} xp` : "xp", "Work clothes XP: +3% a piece, +3% more for all four")}<span class="${wn === 4 ? "" : "off"}" title="${esc(wset ? `All four: ${wset.full}` : "Put an outfit on in the Locker")}" style="grid-column:span 3"><i>${wn === 4 ? "\u2B50" : "\u{1F512}"}</i><b style="font-size:11.5px;white-space:normal;text-align:center">${esc(wset ? wset.full : "no outfit on")}</b><small>all four</small></span></div>
       <div class="bwield">${wset ? `${esc(wset.name)} · ${wsk.name} work clothes` : "No work clothes on"} · ${(me.locker || []).length} of ${Object.keys(G.WORKSETS).length * 4} pieces found</div>
       <div class="ms-entry ch-entry"><button type="button" class="k-btn sm" data-locker="1"><img src="/v3/assets/img/glad/flat/ui/equip.png?v=1" alt="">Locker</button><span class="k-note">every set, what it does and where it's found</span></div>`;
-    p.innerHTML = `<div class="ph">Equipment <small>combat ${G.combatOf(me)}</small></div>${G.HOLD.work ? "" : `<div class="wsw" role="tablist"><button type="button" class="${WK ? "" : "on"}" data-wview="0">Armour</button><button type="button" class="${WK ? "on" : ""}" data-wview="1">Work clothes</button></div>`}<div class="doll">${G.SLOTS.map(slot).join("")}${wset ? `<span class="wset-name">${esc(wset.name)}</span>` : ""}<div class="doll-fig" style="grid-area:fig"><canvas id="dollFig" width="96" height="120" aria-hidden="true"></canvas></div></div>
+    p.innerHTML = `<div class="ph">Equipment <small>combat ${G.combatOf(me)}</small></div>${G.HOLD.work ? "" : `<div class="wsw" role="tablist"><button type="button" class="${WK ? "" : "on"}" data-wview="0">Armour</button><button type="button" class="${WK ? "on" : ""}" data-wview="1">Work clothes</button></div>`}<div class="doll${G.SLOTS.includes("cape") ? " has-cape" : ""}">${G.SLOTS.map(slot).join("")}${wset ? `<span class="wset-name">${esc(wset.name)}</span>` : ""}<div class="doll-fig" style="grid-area:fig"><canvas id="dollFig" width="96" height="120" aria-hidden="true"></canvas></div></div>
       ${WK ? workStrip() : `<div class="bstrip">${cell(sico("attack"), `+${b.acc}`, "acc", "Accuracy: how often you land a hit")}${cell(sico("strength"), `+${b.str}`, "str", "Strength: how hard you hit")}${cell(sico("melee"), G.maxHitOf(me), "max", `Max hit: the most one blow can do${G.launcherOf(me) ? `, with +${G.ammoStrOf(me)} from your ammo` : ""}`)}${cell(sico("defence"), `+${b.def}`, "def", "Defence: how often they miss you")}${cell(ITEM_ART.has("sandals") ? artOf("sandals") : "👟", `+${G.speedText(me, me.speedTest || 0)}%`, "speed", "Speed: how fast you walk")}</div>
       <div class="bwield">${me.eq.weapon ? `${ico(me.eq.weapon)} ${esc(ITEMS[me.eq.weapon].name)}` : "✊ Unarmed"}${G.launcherOf(me) ? ` · fights with ${sico(G.styleOf(me))} ${SKILLS[G.styleOf(me)].name} ${G.lvlOf(me, G.styleOf(me))}` : ""}${tool ? ` · trains ${SKILLS[tool].name}` : ""}</div>
       <div class="ms-entry ch-entry"><button type="button" class="k-btn sm" data-charstats><img src="/v3/assets/img/glad/flat/ui/skills.png?v=1" alt="">Character</button><span class="k-note">every number, and where to get more</span></div>`}
@@ -8540,11 +8570,12 @@ document.addEventListener("click", (e) => {
   if (e.target.id === "hsBtn" || e.target.closest?.("#hsBtn")) { openHiscores(); return; }
   /* (2026-09-23) the [data-stance] handler went with the buttons; the server's own case for it has done nothing since 2026-09-19. */
 });
+if (!G.HOLD.diary) document.querySelector('.tabs [data-tab="diary"]').hidden = false;   /* (2026-10-01, v1.1) the Diary tab */
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tab; syncTabs(); renderPanel(); }));
 /* (2026-09-28) the tabs' keys: I inventory, U equipment ("gear Up"), K skills, J quests ("journal"). E is eat, Q the quest log, M mute, so
    these are the free letters nearest the hand already on WASD. On a phone the sheet opens with them. */
 document.addEventListener("keydown", (e) => {
-  const to = { i: "inv", u: "equip", k: "skills", j: "quests" }[e.key.toLowerCase()];
+  const to = { i: "inv", u: "equip", k: "skills", j: "quests", ...(G.HOLD.diary ? {} : { l: "diary" }) }[e.key.toLowerCase()];   /* (2026-10-01) L: the diary (D walks) */
   if (!to || e.repeat || e.ctrlKey || e.metaKey || e.altKey || !me) return;
   if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "") || document.activeElement?.isContentEditable) return;
   e.preventDefault(); tab = to; syncTabs(); renderPanel(); SFX.play("ui_click");
