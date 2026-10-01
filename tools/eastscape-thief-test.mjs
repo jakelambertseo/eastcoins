@@ -32,7 +32,7 @@ const count = (pl, k) => G.countItems({ inv: pl.C.inv, bank: [] }, [k]);
 function run(S, pl, m, { rolls = [], t0 = Date.now() } = {}) {
   pl.out = []; pl.stunUntil = 0;
   W.startAct(S, pl, m); if (!pl.act) return t0;
-  if (pl.act.kind === "shortcut") { pl.x = pl.act.x; pl.y = pl.act.y; } else { const tgt = pl.act.kind === "pick" ? S.mobs.find((x) => x.id === pl.act.id) : pl.act.ob; const c = G.nearestCell(tgt, pl); pl.x = c.x; pl.y = c.y; }
+  if (pl.act.kind === "shortcut" || pl.act.kind === "backway") { pl.x = pl.act.x; pl.y = pl.act.y; } else { const tgt = pl.act.kind === "pick" ? S.mobs.find((x) => x.id === pl.act.id) : pl.act.ob; const c = G.nearestCell(tgt, pl); pl.x = c.x; pl.y = c.y; }
   pl.path = []; pl.step = null; Q = rolls.slice();
   let now = t0; W.doAction(S, pl, now);   /* the opener */
   for (let i = 0; i < 20 && pl.act; i++) { now += 1000; W.doAction(S, pl, now); }
@@ -127,6 +127,25 @@ console.log("Shortcuts");
   run(S, p, { t: "act", kind: "ob", ob: ob.id }, { rolls: [0.01] });
   is([p.x, p.y], sc.a, "a slip at exactly the level leaves you where you were");
   const pro = player(S, ...sc.a, { agility: 20 }); is(G.slipChance(pro.C, 10), 0, "ten levels over, it never slips");
+}
+
+console.log("Back ways");
+{
+  for (const [id, bw] of Object.entries(G.BACKWAYS)) bw.ends.forEach((e, i) => {
+    const b = G.buildScene(e.scene);
+    ok(b.objs.some((o) => o.bw === id && o.end === i && o.x === e.at[0] && o.y === e.at[1]), `${id}: its ${e.scene} end is there`);
+    ok(G.walkableIn(b.g, ...e.stand) && !G.walkableIn(b.g, ...e.at), `${id}: you stand beside it, not on it`);
+    /* the stand tile is on the map's main ground: reachable from one of its exits */
+    const ex = []; for (let y = 0; y < b.g.length; y++) for (let x = 0; x < b.g[0].length; x++) if (b.g[y][x] === "e") ex.push({ x, y });
+    ok(ex.some((q) => G.findPath(b.g, { x: e.stand[0], y: e.stand[1] }, q, 1) !== null), `${id}: the ${e.scene} end can be walked to`);
+  });
+  const S = W.scene("workyard"), bw = G.BACKWAYS.stormdrain, ob = S.objs.find((o) => o.bw === "stormdrain");
+  const low = player(S, ...bw.ends[0].stand, { agility: 50 }); run(S, low, { t: "act", kind: "ob", ob: ob.id });
+  ok(/Agility 55/.test(said(low)) && low.C.scene === "workyard", "Agility 50: the Storm Drain refuses");
+  const p = player(S, ...bw.ends[0].stand, { agility: 55 }), xp0 = p.C.xp.agility;
+  run(S, p, { t: "act", kind: "ob", ob: ob.id }, { rolls: [0.99] });
+  is([p.C.scene, p.x, p.y], ["thunderhead", ...bw.ends[1].stand], "Agility 55: the Storm Drain comes out on the Thunderhead");
+  is(p.C.xp.agility - xp0, 55 * G.WT.backway.xpMul, "for four times the level in XP");
 }
 
 console.log("Held");

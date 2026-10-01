@@ -1078,7 +1078,7 @@ export class World {
     const C = pl.C, f = this.from(pl), now = Date.now();
     let act = null;
     const wtOb = m.kind == null || m.kind === "ob" ? S.objs[m.ob | 0] : null;   /* (2026-10-01) thieving in the world and shortcuts: thief.js */
-    if (m.kind === "pick" || (wtOb && (wtOb.sc || wtOb.t === "lockbox") && !G.HOLD.thief2)) { act = this.wtStart(S, pl, m, f); if (!act) return; }
+    if (m.kind === "pick" || (wtOb && (wtOb.sc || wtOb.bw || wtOb.t === "lockbox") && !G.HOLD.thief2)) { act = this.wtStart(S, pl, m, f); if (!act) return; }
     else if (m.kind === "pvp") { if (!S.def.pvp) return; const T = this.pls.get(String(m.id)); if (!T || T === pl || T.C.scene !== S.key) return; act = { kind: "pvp", id: T.id, x: T.x, y: T.y, name: T.name }; }
     else if (m.kind === "ground") { const it = S.ground.find((x) => x.id === m.id); if (it) act = { kind: "ground", id: it.id, x: it.x, y: it.y, name: G.ITEMS[it.k].name }; }
     else if (m.kind === "mob") {
@@ -1125,7 +1125,7 @@ export class World {
        The act still lands: you can keep swinging at whatever is already beside you, which is the whole point of
        being held next to something. Only the walking to it is refused. */
     const held = S.run && S.def.pyramid && S.run.coil && S.run.coil.id === pl.id;
-    const p = held ? [] : G.findPath(S.g, f, act, act.kind === "ground" || act.kind === "shortcut" ? 0 : act.reach || G.reachOf(act.kind) || 1);
+    const p = held ? [] : G.findPath(S.g, f, act, act.kind === "ground" || act.kind === "shortcut" || act.kind === "backway" ? 0 : act.reach || G.reachOf(act.kind) || 1);
     if (p === null) { this.say(pl, act.kind === "mob" && !G.launcherOf(C) ? "You can't get to that from here. It wants a bow." : "You can't reach that.", "bad"); pl.act = null; return; }
     if (held && G.cheb(pl, act) > (act.reach || G.reachOf(act.kind) || 1)) { this.say(pl, "It has you. You can only reach what is already beside you.", "bad"); pl.act = null; return; }
     /* SAME TARGET, SAME ACTION (2026-09-25, the re-click exploit). startAct builds a fresh act on every click and
@@ -3074,7 +3074,7 @@ export class World {
       return this.say(pl, `You stop ${G.AFK_KINDS[a.kind]}: you've been idle for ${Math.round(afkMs / 60000)} minutes. Click to carry on.`);
     }
     const faceIt = () => { pl.dir = G.DIRS[`${Math.sign(a.x - pl.x)},${Math.sign(a.y - pl.y)}`] || pl.dir; pl.face = a.x > pl.x ? 1 : a.x < pl.x ? -1 : pl.face; };
-    if (a.kind === "pick" || a.kind === "lockbox" || a.kind === "shortcut") return this.wtAct(S, pl, a, now, faceIt);   /* (2026-10-01) thief.js */
+    if (a.kind === "pick" || a.kind === "lockbox" || a.kind === "shortcut" || a.kind === "backway") return this.wtAct(S, pl, a, now, faceIt);   /* (2026-10-01) thief.js */
     if (a.kind === "mob") {
       const m = S.mobs.find((x) => x.id === a.id); if (!m || m.dead) { pl.act = null; return; }
       if (m.star) return this.starSwing(S, pl, m, a, now);   /* (2026-09-30) SHOOTING STARS */

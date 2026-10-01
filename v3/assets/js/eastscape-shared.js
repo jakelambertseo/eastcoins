@@ -10241,7 +10241,7 @@ export const guildXpAt = (l) => {
 export const markAtLvl = (l) => Object.entries(MARKS).filter(([, m]) => m.lvl <= l).sort((a, b) => b[1].lvl - a[1].lvl)[0]?.[0] || "lifter";
 export const WT = { min: 10, xpShare: 0.65, outMs: 60000, ownDrop: 0.03, key: 1 / 250,
   box: { ms: 5000, cdMs: 15 * 60000, rolls: 3, key: 1 / 20, xpMul: 1.5 }, lockpick: 1000,
-  cross: { ms: 1200, perTile: 400, xpMul: 2, slip: 0.1, slipGone: 10 } };
+  cross: { ms: 1200, perTile: 400, xpMul: 2, slip: 0.1, slipGone: 10 }, backway: { ms: 3000, xpMul: 4 } };
 /* monster type -> the Thieving level to pick it (the mockup's table) */
 export const POCKETS = { highwayman: 10, counter: 22, shark: 28, stagehand: 30, usher: 35, understudy: 40, mummy: 44, angel: 48, pinhead: 58,
   fatlady: 64, strongman: 68, deckhand: 70, potboy: 73, dgoblin: 76, warden: 78, scrapper: 84, dealer: 88, caveman: 90, cavehunter: 96 };
@@ -10294,7 +10294,17 @@ export const WORLD_SC = {
   frozen: {lvl: 95, name: "Ice steps", how: "stones", art: "o_sc_stones", a: [37, 19], b: [39, 19], at: [38, 19], walls: [[39, 20, "pocketwall", "o_fence_ew"], [40, 20, "pocketwall", "o_fence_ew"], [41, 20, "pocketwall", "o_fence_post"]],
     ledge: { spot: [40, 19], obj: { t: "frostpine", name: "Frostpine", log: "frostpinelogs", req: { skill: "woodcutting", lvl: 94 }, xp: 340 } } } };
 const SC_ART = { log: "o_sc_log", stones: "o_sc_stones", rope: "o_sc_rope", fence: "o_sc_fence" };
-export const SC_VERB = { log: "walk the log", stones: "hop across", rope: "swing over", fence: "squeeze through", duck: "duck under the railing", squeeze: "squeeze through the bars", climb: "climb over" };
+/* BACK WAYS (2026-10-01, the owner: "are there no whole map shortcuts? like the carnival to the trailer park", then "yes add them"). A gated
+   crossing at one map that comes out on a far map, free, both ways, every time: the Agility answer to a long walk, where a Waystone is the
+   Wizardry answer (a printed scroll, used up, one way, from anywhere). Each end is a prop on a tile nobody was standing on (a free blocked tile,
+   or for the Carnival a dead end of open ground) beside where you stand to use it: tools/thieving-mock/backways.mjs. You come out on the
+   other end's stand tile. The world map draws a back way once your Agility can use it. */
+export const BACKWAYS = {
+  scraprun: { name: "The Scrap Run", lvl: 70, how: "fence", art: "o_sc_fence", ends: [{ scene: "carnival", at: [11, 1], stand: [12, 1] }, { scene: "trailer", at: [10, 3], stand: [10, 2] }] },
+  iceledge: { name: "The Ice Ledge", lvl: 92, how: "rope", art: "o_sc_rope", ends: [{ scene: "frozen", at: [25, 8], stand: [25, 9] }, { scene: "valley", at: [2, 18], stand: [1, 18] }] },
+  stormdrain: { name: "The Storm Drain", lvl: 55, how: "drain", art: "o_drain", ends: [{ scene: "workyard", at: [22, 18], stand: [22, 17] }, { scene: "thunderhead", at: [29, 24], stand: [29, 23] }] } };
+
+export const SC_VERB = { drain: "climb down into the drain", log: "walk the log", stones: "hop across", rope: "swing over", fence: "squeeze through", duck: "duck under the railing", squeeze: "squeeze through the bars", climb: "climb over" };
 export const scLine = (s) => { const [ax, ay] = s.a, [bx, by] = s.b, hop = Math.max(Math.abs(bx - ax), Math.abs(by - ay)), r = []; for (let i = 1; i < hop; i++) r.push([ax + Math.round(((bx - ax) * i) / hop), ay + Math.round(((by - ay) * i) / hop)]); return r; };
 export const scHop = (s) => Math.max(Math.abs(s.b[0] - s.a[0]), Math.abs(s.b[1] - s.a[1]));
 export const slipChance = (c, lvl) => Math.max(0, WT.cross.slip * (1 - (lvlOf(c, "agility") - lvl) / WT.cross.slipGone));
@@ -10319,6 +10329,12 @@ function worldThiefObjs(key, b) {
       b.g[y][x] = "#";
     }
   }
+  for (const [id, bw] of Object.entries(BACKWAYS)) bw.ends.forEach((e, i) => {
+    if (e.scene !== key) return;
+    const other = sceneDef(bw.ends[1 - i].scene)?.name || bw.ends[1 - i].scene;
+    b.objs.push({ t: "backway", art: bw.art, x: e.at[0], y: e.at[1], bw: id, end: i, name: `${bw.name} to ${other.replace(/^The /, "the ")} — Agility ${bw.lvl}`, pocket: true });
+    b.g[e.at[1]][e.at[0]] = "#";
+  });
   const lb = LOCKBOXES[key];
   if (lb) { const [x, y, lvl] = lb; b.objs.push({ t: "lockbox", art: "o_lockbox", x, y, lvl, name: `Lockbox — Thieving ${lvl}` }); b.g[y][x] = "#"; }
 }

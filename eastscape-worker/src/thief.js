@@ -23,6 +23,10 @@ export function installThief(World, { G }) {
     }
     const ob = S.objs[m.ob | 0]; if (!ob) return null;
     if (ob.t === "lockbox") return { kind: "lockbox", ob, x: ob.x, y: ob.y, name: ob.name, reach: 1 };
+    if (ob.bw) {   /* a back way: walk to where you stand to use it */
+      const bw = G.BACKWAYS[ob.bw], e = bw?.ends[ob.end]; if (!e) return null;
+      return { kind: "backway", ob, bw: ob.bw, end: ob.end, x: e.stand[0], y: e.stand[1], name: bw.name, reach: 0 };
+    }
     if (ob.sc) {
       const sc = G.WORLD_SC[ob.sc]; if (!sc) return null;
       /* walk to whichever side you can reach, nearest first; the far side is where you come out */
@@ -92,6 +96,21 @@ export function installThief(World, { G }) {
       pl.stunUntil = now + rint(G.THIEF.stun[0], G.THIEF.stun[1]);
       pl.out.push({ type: "caught", until: pl.stunUntil });
       return this.say(pl, "The pick snaps and the lock bites back. You're stunned.", "bad");
+    }
+
+    /* ---------- a back way: across the world */
+    if (a.kind === "backway") {
+      const bw = G.BACKWAYS[a.bw], to = bw?.ends[1 - a.end]; if (!to) { pl.act = null; return; }
+      if (pl.x !== a.x || pl.y !== a.y) { pl.path = G.findPath(S.g, pl, a, 0) || []; if (!pl.path.length) pl.act = null; return; }
+      const have = G.lvlOf(C, "agility");
+      if (have < bw.lvl && !pl.god) { pl.act = null; return this.say(pl, `${bw.name}: Agility ${bw.lvl}, and you're ${have}.`, "bad"); }
+      if (!a.started) { a.started = now; a.next = now + G.WT.backway.ms; return this.say(pl, `You ${G.SC_VERB[bw.how] || "go through"}...`); }
+      if (now < a.next) return;
+      pl.act = null;
+      if (Math.random() < G.slipChance(C, bw.lvl)) return this.say(pl, "You lose your footing and end up back where you started.", "bad");
+      this.grant(pl, "agility", bw.lvl * G.WT.backway.xpMul);
+      this.moveToScene(pl, to.scene, null, { x: to.stand[0], y: to.stand[1] });
+      return this.say(pl, `${bw.name} brings you out in ${G.sceneDef(to.scene).name.replace(/^The /, "the ")}.`, "good");
     }
 
     /* ---------- a shortcut */
