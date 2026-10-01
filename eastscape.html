@@ -17,7 +17,7 @@
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;
 /* (2026-09-30) YOUR SCREEN: the chosen look, on <html> before anything paints (eastscape-ui.js keeps it in step) */
 try { const t = localStorage.getItem("es_ui_theme"); if (t) document.documentElement.dataset.uiTheme = t; } catch (e) { /* storage off: the default look */ }</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=424">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=425">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -875,6 +875,25 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
    hand-drawn button frame the chat tab wears. The picker opens above the row. */
 .chat-row{display:flex;gap:6px;order:3}
 .quickbar{display:flex;gap:4px}
+/* (2026-10-01) ABILITIES: the strip after the quick slots. Nothing to press: they go off on their own; a click opens the order. */
+.abilbar{display:flex;gap:3px;align-items:center;padding:0 4px 0 6px;margin-left:2px;border-left:2px solid rgba(255,226,122,.25)}
+.abslot{position:relative;width:40px;height:40px;padding:0;border:6px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 6px stretch;background:none;cursor:pointer;display:grid;place-items:center;image-rendering:pixelated}
+.abslot:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_on.png?v=1)}
+.abslot img{width:26px;height:26px;image-rendering:pixelated}
+.abslot i{position:absolute;inset:-2px;border-radius:3px;pointer-events:none;background:conic-gradient(rgba(0,0,0,.66) var(--cd,0%),transparent 0)}
+.abslot b{position:absolute;left:-5px;top:-7px;font:900 9.5px Lora,sans-serif;color:#1a1006;background:#ffe27a;border-radius:99px;min-width:13px;height:13px;line-height:13px;text-align:center;box-shadow:0 1px 0 #000}
+.abslot.lock img{filter:grayscale(1) brightness(.55)}.abslot.lock b{background:#8a7a64;color:#fff}
+.abslot.lock::after{content:attr(data-lv);position:absolute;bottom:-6px;right:-5px;font:800 9px Lora,sans-serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}
+.abslot.fired{animation:abFire .6s ease-out}
+@keyframes abFire{0%{filter:brightness(2.2) drop-shadow(0 0 8px #ffe27a)}100%{filter:none}}
+#abilWin{width:min(560px,calc(100% - 28px));z-index:90}
+.ab-row{display:grid;grid-template-columns:30px 44px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);margin-bottom:6px}
+.ab-row.lock{opacity:.6}.ab-row[draggable="true"]{cursor:grab}.ab-row.over{box-shadow:inset 0 0 0 2.5px var(--k-gold)}
+.ab-row .no{font:900 18px var(--k-disp);color:var(--k-gold-ink,#8a5a10);text-align:center}
+.ab-row img{width:40px;height:40px;image-rendering:pixelated}
+.ab-row b{display:block;font:800 15px var(--k-disp);color:var(--k-ink)}.ab-row small{display:block;font:600 12.5px/1.4 Lora,sans-serif;color:var(--k-ink2)}
+.ab-row .mv{display:grid;gap:3px}.ab-row .mv button{border:0;border-radius:5px;background:var(--k-head,#5a3220);color:#ffe7b0;font:800 11px Lora,sans-serif;padding:3px 9px;cursor:pointer}.ab-row .mv button:disabled{opacity:.3;cursor:default}
+@media (max-width:520px){.abslot{width:34px;height:34px}.abslot img{width:20px;height:20px}}
 .qslot{position:relative;padding:0;cursor:pointer;background:none;border:7px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png?v=1) 10 fill / 7px stretch;display:flex;align-items:center;justify-content:center;color:#f3e7cc;font:800 12px Lora,sans-serif}
 .qslot:hover{border-image-source:url(/v3/assets/img/glad/flat/ui/btn_on.png?v=1)}
 .qslot:active{transform:translateY(1px)}
@@ -1827,6 +1846,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
         <button type="button" class="chat-tab" id="chatTab" aria-expanded="false" aria-controls="chatBox"><img src="/v3/assets/img/glad/flat/ui/chat.png?v=1" alt="" class="cti"><span class="ct-l">Chat</span> <span class="chat-unread" id="chatUnread" hidden>0</span></button>
         <button type="button" class="chat-tab sidebtn" id="sideBtn" aria-expanded="false" title="Your bag, gear, skills and quests"><img src="/v3/assets/img/glad/flat/ui/bag.png?v=1" alt="" class="cti"><span class="ct-l">Menu</span></button>
         <div class="quickbar" id="quickBar" role="toolbar" aria-label="Quick slots, keys 1 to 4"></div>
+        <div class="abilbar" id="abilBar" role="toolbar" aria-label="Your abilities: they go off on their own, in your order. Click to change the order."></div>
         <button type="button" class="chat-tab bugbtn" id="bugBtn" title="Report a bug, or suggest a feature" aria-label="Report a bug, or suggest a feature"><img src="/v3/assets/img/glad/flat/ui/bug.png?v=1" alt=""></button>
       </div>
       <div class="qpick" id="qPick" hidden></div>
@@ -2006,7 +2026,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=424";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=425";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 const FROZEN = new Map();   /* (2026-09-30) player id -> when their Deep Freeze ends (performance.now) */
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
@@ -2253,6 +2273,7 @@ function onMsg(m) {
       if (e.type === "mobgone") { const z = MOBS[e.t]?.size; SFX.play("mob_die", { rate: z === "s" ? 1.42 : z === "m" ? 1.12 : z === "xl" ? 0.62 : 0.84, jitter: 0.14, vol: (z === "xl" || z === "l" ? 1.15 : 0.95) * (e.by === you?.id ? 1 : 0.45) }); continue; }   /* (2026-09-29) the whole map hears it; yours loudest */
       if (e.type === "slam") { TILEFX.push({ x: e.x, y: e.y, r: e.r, from: performance.now(), until: performance.now() + e.ms }); SFX.play("ui_error"); }
       if (e.type === "frozen") { FROZEN.set(e.who, performance.now() + e.ms); if (e.who === you?.id) { shakeUntil = performance.now() + 200; SFX.play("hit", { rate: 1.6, vol: 0.9 }); } }   /* (2026-09-30) the Ice Man's Deep Freeze */
+      if (e.type === "abil") { if (e.k === "brace" || e.k === "barrier") spellFx(e.who, "shield"); if (e.who === `p:${you?.id}`) SFX.play(e.k === "disengage" ? "swing" : "spell_buff", { vol: 0.6, rate: e.k === "disengage" ? 1.4 : 1 }); ABWORDS.push({ who: e.who, text: G.ABIL_BY[e.k]?.name || e.k, at: performance.now() }); }   /* (2026-10-01) ABILITIES */
       if (e.type === "slammed") { shakeUntil = performance.now() + 260; SFX.play("hit", { rate: 0.5, vol: 1 }); }
       /* (2026-09-30) WORLD EVENTS: a fragment pops over the miner like a gathered item; the star lands, cracks and is spent with a shake; the thief vaults and is caught */
       if (e.type === "frag") { gains.push({ who: e.who, k: "starfrag", n: e.n, at: performance.now() }); if (e.who === you?.id) SFX.play("gain", { vol: 0.6 }); }
@@ -2274,7 +2295,7 @@ function onMsg(m) {
         if (e.arc) { spellFx(e.who, "lightning"); if (e.by === you?.id || mine?.mob) SFX.play("spell_storm", { vol: 0.6 }); }   /* Storm's arc */
         const flies = e.ranged && e.by && !calmNow();   /* calmNow(), NOT calm: `calm` is a local of the draw loop, and reading it here threw on every bow hit - which dropped the splat AND the xp drop behind it in the same message (2026-09-25) */
         if (flies) arrows.push({ from: e.by, to: e.who, at: performance.now(), k: e.ak || null });
-        splats.push({ who: e.who, by: e.by, n: e.n, kind: e.kind, crit: !!e.crit, kill: !!e.kill, at: performance.now() + (flies ? FLIGHT_MS : 0), vs: e.em > 0 || e.gw ? "WEAK" : e.em < 0 ? "RESIST" : e.gs ? "GUARD" : null });   /* (2026-09-30) gw: weak to that style */
+        splats.push({ who: e.who, by: e.by, n: e.n, kind: e.kind, crit: !!e.crit, kill: !!e.kill, ab: e.ab && !e.splash ? G.ABIL_BY[e.ab]?.name : null,   /* (2026-10-01) the ability's name over the hit */ at: performance.now() + (flies ? FLIGHT_MS : 0), vs: e.em > 0 || e.gw ? "WEAK" : e.em < 0 ? "RESIST" : e.gs ? "GUARD" : null });   /* (2026-09-30) gw: weak to that style */
         if (e.em || e.gs) { const pp = PLATE.get(e.who), at = performance.now() + (flies ? FLIGHT_MS : 0); if (pp) { if (e.em && e.el) pp.pulse[e.el] = at; if (e.gs) pp.pulse[e.gs] = at; } }   /* (2026-09-29) the plate's icon pops as the hit lands */
         /* (v112) sparks off whatever was hit, in its own colours: more for a crit, and a kill's dust is thrown by the death below.
            (v113: the sprite no longer FLINCHES with them, which was the part that read as noise; 2026-09-29, the owner: flinches back on,
@@ -2311,7 +2332,7 @@ function onMsg(m) {
   }
   if (m.type === "me") { const prevCharm = me?.charm; me = m.me;
     if (me.charm && (me.charm.left | 0) > 0 && (!prevCharm || prevCharm.k !== me.charm.k || me.charm.left > (prevCharm.left | 0) + 5000)) { spellFx(`p:${you?.id}`, "shield"); SFX.play("spell_buff"); }   /* (2026-09-26) a page buff read */
-    DECO?.refresh(); ORDUI?.bag(); TINKUI?.bag(); GEMUI?.bag(); OUTFITUI?.render(); if (me.hand && !CARDUI) cardsUi().then((u) => u.sync()).catch(() => {}); else CARDUI?.sync(); renderQuick(); if (!me.look && !lookOffered) { lookOffered = true; setTimeout(() => { if (!me.look) welcomeOnce(true); }, 1500); } renderTour(); renderPanel(); if (!$("questWin").hidden) renderQuests(); if (!$("hwWin").hidden) renderMarket(); if (!$("mapWin").hidden) renderMap(); if (!$("storeWin").hidden) renderStore(); CZ.me(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); craftRefresh(); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("vanWin").hidden) renderVan(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
+    DECO?.refresh(); ORDUI?.bag(); TINKUI?.bag(); GEMUI?.bag(); OUTFITUI?.render(); if (me.hand && !CARDUI) cardsUi().then((u) => u.sync()).catch(() => {}); else CARDUI?.sync(); renderQuick(); renderAbil(); if (!me.look && !lookOffered) { lookOffered = true; setTimeout(() => { if (!me.look) welcomeOnce(true); }, 1500); } renderTour(); renderPanel(); if (!$("questWin").hidden) renderQuests(); if (!$("hwWin").hidden) renderMarket(); if (!$("mapWin").hidden) renderMap(); if (!$("storeWin").hidden) renderStore(); CZ.me(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); craftRefresh(); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("vanWin").hidden) renderVan(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
   if (m.type === "map") { WORLD.counts = m.counts || {}; if (!$("mapWin").hidden) renderMap(); return; }   /* (2026-09-27) who is where, for the world map */
   if (m.type === "exch") { EX = m; if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input:not(#mkQ)"))) renderEx(); return; }
   if (m.type === "trade") { if (m.closed) { TR = null; $("tradeWin").hidden = true; } else { TR = m; openWin("tradeWin"); } return; }
@@ -2331,6 +2352,7 @@ function onMsg(m) {
   if (m.type === "ev") for (const e of m.list) onEvent(e);
 }
 function onEvent(e) {
+  if (e.type === "abil") return abOn(e);   /* (2026-10-01) ABILITIES: one of yours went off (sent in the "ev" bundle) */
   if (e.type === "say") { if (e.tag === "group" && !set("groupNotes")) return; return say(e.text, e.cls); }
   if (e.type === "xp") {
     xpDrops.push({ k: e.k, xp: e.xp, at: performance.now() }); lootGain(e.k, e.xp);
@@ -5450,9 +5472,15 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
     ctx.strokeStyle = "#000"; ctx.lineWidth = s.crit ? 2.5 : 1.5; ctx.stroke(); }
     ctx.fillStyle = numCol; ctx.font = `800 ${s.crit ? 16 : 13}px "Lora", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(s.n), x, y - k * 10 + 1);
     if (s.crit) { ctx.font = `800 11px "Lora", system-ui, sans-serif`; ctx.fillStyle = "#ffd23f"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.strokeText("CRIT", x, y - k * 10 - 21); ctx.fillText("CRIT", x, y - k * 10 - 21); }
+    if (s.ab && s.n) { const ay = y - k * 10 - (s.crit ? 35 : 22); ctx.font = `800 12px "Lora", system-ui, sans-serif`; ctx.fillStyle = "#ffe7b0"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.strokeText(s.ab, x, ay); ctx.fillText(s.ab, x, ay); }   /* (2026-10-01) ABILITIES */
     if (s.vs && s.n) { ctx.font = `800 10px "Lora", system-ui, sans-serif`; ctx.fillStyle = s.vs === "WEAK" ? "#ffe27a" : "#c8c0b0"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.strokeText(s.vs, x, y - k * 10 + 21); ctx.fillText(s.vs, x, y - k * 10 + 21); }   /* (2026-09-29) what the hit met */
     ctx.globalAlpha = 1;
   }
+  /* (2026-10-01) ABILITIES: Brace, Barrier and Disengage say their name over the player who used them */
+  for (let i = ABWORDS.length - 1; i >= 0; i--) if (pnow - ABWORDS[i].at > 1100) ABWORDS.splice(i, 1);
+  for (const w of ABWORDS) { const pl = Z.players.find((q) => `p:${q.id}` === w.who); if (!pl) continue; const p = pos(pl), k = (pnow - w.at) / 1100;
+    ctx.save(); ctx.globalAlpha = Math.min(1, (1 - k) * 2.5); ctx.font = `800 13px "Lora", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineWidth = 3; ctx.strokeStyle = "#000"; ctx.fillStyle = "#9ad8ff";
+    const x = sx(p.px * T + 8), y = sy(p.py * T + 15) - 44 * S2 - k * 18; ctx.strokeText(w.text, x, y); ctx.fillText(w.text, x, y); ctx.restore(); }
   // what someone just gathered pops up over their head, a little bigger, then drifts up and fades
   for (let i = gains.length - 1; i >= 0; i--) if (pnow - gains[i].at > 1300) gains.splice(i, 1);
   if (set("gainPops")) for (const g of gains) {
@@ -6609,6 +6637,54 @@ function useQuick(n) {
   SFX.play("ui_click"); useBagItem(i);
 }
 let quickSig = "";
+/* ============================================================ ABILITIES (2026-10-01; the rules: ABIL in the rules file)
+   The strip shows your current style's three in your order: the number is its place in the order, the dark sweep its cooldown, a grey one
+   is not unlocked yet (its level in the corner). Nothing to press: a click opens the order window, where moving one up or down (or dragging
+   it) is the only choice there is. The server decides every ability; the page only draws what it was told (abOn) and sends an order. */
+let ABWORDS = [], ABCD = {}, abSig = "", abTick = 0, abTab = null;
+function renderAbil() {
+  if (!me) return;
+  const st = G.styleOf(me), order = G.abilOrderOf(me, st), sig = st + "|" + order.join(",") + "|" + order.map((k) => G.abilUnlocked(me, k) ? 1 : 0).join("");
+  if (sig !== abSig) { abSig = sig;
+    $("abilBar").innerHTML = order.map((k, i) => { const a = G.ABIL_BY[k], on = G.abilUnlocked(me, k);
+      return `<button type="button" class="abslot${on ? "" : " lock"}" data-ab="${k}" data-lv="${a.lvl}" title="${esc(`${i + 1}. ${a.name}${on ? "" : ` (${SKILLS[st].name} ${a.lvl})`} · every ${a.cd / 1000}s · ${a.does} Click to change the order.`)}"><img src="/v3/assets/img/glad/flat/ui/ab_${k}.png?v=1" alt=""><i></i><b>${i + 1}</b></button>`; }).join(""); }
+  abSweep();
+}
+function abSweep() {
+  const now = Date.now(); let busy = false;
+  $("abilBar").querySelectorAll("[data-ab]").forEach((b) => { const c = ABCD[b.dataset.ab], left = c ? c.at + c.cd - now : 0; if (left > 0) busy = true; b.querySelector("i").style.setProperty("--cd", `${left > 0 ? Math.round(left / c.cd * 100) : 0}%`); });
+  clearTimeout(abTick); if (busy) abTick = setTimeout(abSweep, 200);   /* only while something is cooling down */
+}
+function abOn(m) {
+  ABCD[m.k] = { at: Date.now(), cd: m.cd };
+  const b = $("abilBar").querySelector(`[data-ab="${m.k}"]`); if (b) { b.classList.remove("fired"); void b.offsetWidth; b.classList.add("fired"); }
+  abSweep();
+}
+function openAbilWin(st) {
+  if (!me) return; abTab = st || abTab || G.styleOf(me);
+  let w = $("abilWin"); if (!w) { w = document.createElement("section"); w.className = "win k-win"; w.id = "abilWin"; w.setAttribute("aria-label", "Abilities"); ($("msWin") || document.body).after(w); }
+  const order = G.abilOrderOf(me, abTab), styles = ["melee", "archery", "magic"];
+  w.innerHTML = `<div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/ab_${G.ABIL[abTab][0].k}.png?v=1" alt="" class="topi">Abilities</b><small>they go off on their own, in this order</small><button type="button" class="win-x" aria-label="Close">×</button></div>
+    <div class="win-body"><div class="k-tabs" role="tablist" style="margin:-10px -12px 10px;padding-left:12px">${styles.map((s) => `<button type="button" role="tab" data-st="${s}" aria-selected="${s === abTab}">${SKILLS[s].name}${s === G.styleOf(me) ? " ·  in hand" : ""}</button>`).join("")}</div>
+      <p class="note" style="margin:0 0 8px;padding:0">Every swing uses the first ability here that's ready and makes sense right now; if none is, it's a plain swing. Splashes wait until there's a second monster to hit, Brace and Barrier until something is hitting you. The order is the only thing you choose.</p>
+      ${order.map((k, i) => { const a = G.ABIL_BY[k], on = G.abilUnlocked(me, k);
+        return `<div class="ab-row${on ? "" : " lock"}" draggable="true" data-k="${k}"><span class="no">${i + 1}</span><img src="/v3/assets/img/glad/flat/ui/ab_${k}.png?v=1" alt=""><span><b>${esc(a.name)}</b><small>${esc(a.does)} Every ${a.cd / 1000} seconds.${on ? "" : ` Unlocks at ${SKILLS[abTab].name} ${a.lvl}.`}</small></span>
+          <span class="mv"><button type="button" data-mv="${i}" data-d="-1" ${i ? "" : "disabled"} aria-label="Earlier">▲</button><button type="button" data-mv="${i}" data-d="1" ${i < order.length - 1 ? "" : "disabled"} aria-label="Later">▼</button></span></div>`; }).join("")}
+    </div>`;
+  const save = (o) => { send({ t: "abil", style: abTab, order: o }); me.abil = { ...(me.abil || {}), [abTab]: o }; abSig = ""; renderAbil(); openAbilWin(abTab); SFX.play("ui_click"); };
+  w.querySelector(".win-x").onclick = () => { w.hidden = true; SFX.play("ui_close"); };
+  w.querySelectorAll("[data-st]").forEach((b) => b.onclick = () => { SFX.play("ui_click"); openAbilWin(b.dataset.st); });
+  w.querySelectorAll("[data-mv]").forEach((b) => b.onclick = () => { const i = +b.dataset.mv, j = i + +b.dataset.d, o = [...order]; [o[i], o[j]] = [o[j], o[i]]; save(o); });
+  let drag = null;
+  w.querySelectorAll(".ab-row").forEach((r) => {
+    r.addEventListener("dragstart", () => { drag = r.dataset.k; });
+    r.addEventListener("dragover", (e) => { e.preventDefault(); r.classList.add("over"); });
+    r.addEventListener("dragleave", () => r.classList.remove("over"));
+    r.addEventListener("drop", (e) => { e.preventDefault(); r.classList.remove("over"); if (!drag || drag === r.dataset.k) return; const o = order.filter((k) => k !== drag); o.splice(o.indexOf(r.dataset.k) + (order.indexOf(drag) < order.indexOf(r.dataset.k) ? 1 : 0), 0, drag); save(o); });
+  });
+  if (w.hidden !== false) SFX.play("ui_open"); w.hidden = false;
+}
+$("abilBar").addEventListener("click", (e) => { if (e.target.closest("[data-ab]")) openAbilWin(G.styleOf(me)); });
 function renderQuick() {
   if (!me) return;
   const wornOf = (k) => !!(k && ITEMS[k]?.slot && me.eq?.[ITEMS[k].slot] === k);

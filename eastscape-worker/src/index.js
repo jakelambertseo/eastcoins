@@ -468,7 +468,7 @@ export class World {
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
-    pets: C.pets, frags: C.frags || 0, takes: C.takes || 0,   /* (2026-09-30) WORLD EVENTS: Star Fragments, Wanted posters taken */ parts: C.parts || null, tk: C.tk || null, tkBomb: C.tkBomb || 0, gembag: G.bagOf(C),   /* (2026-09-29) the gem bag */ pins: C.pins || [], hand: G.handView(C),   /* (2026-09-29) the Marked Card hand in play, never its deck */   /* (2026-09-28) Tinkering's pouch, the gadgets running, an armed bomb */ buyback: (C.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms), bought: (C.bought || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms),   /* (2026-09-30) RETURNS: see counterOp */   /* (2026-09-28) Bom's buy-back */ isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
+    abil: C.abil || null,   /* (2026-10-01) ABILITIES: the order per style */ pets: C.pets, frags: C.frags || 0, takes: C.takes || 0,   /* (2026-09-30) WORLD EVENTS: Star Fragments, Wanted posters taken */ parts: C.parts || null, tk: C.tk || null, tkBomb: C.tkBomb || 0, gembag: G.bagOf(C),   /* (2026-09-29) the gem bag */ pins: C.pins || [], hand: G.handView(C),   /* (2026-09-29) the Marked Card hand in play, never its deck */   /* (2026-09-28) Tinkering's pouch, the gadgets running, an armed bomb */ buyback: (C.buyback || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms), bought: (C.bought || []).filter((x) => Date.now() - x.at < G.BUYBACK.ms),   /* (2026-09-30) RETURNS: see counterOp */   /* (2026-09-28) Bom's buy-back */ isle: { tier: C.isle.tier, themes: C.isle.themes, owned: C.isle.owned || {}, decor: C.isle.decor || [] }, speedTest: pl.speedTest || 0, hp: C.hp, inv: C.inv, bank: C.bank, fav: C.fav || [], eq: C.eq, xp: C.xp, qs: C.qs, tour: C.tour || null, hunger: G.needOf(C, "hunger"), thirst: G.needOf(C, "thirst"), found: C.found || {}, wagered: Number(C.wagered) || 0, earned: Number(C.earned) || 0, spinDay: C.spin?.day || null, streak: C.spin?.streak | 0, roller: C.roller | 0, free: C.free | 0, meal: C.meal || null, drink: C.drink || null, luck: C.luck | 0, daily: C.daily?.day === G.chicagoDay() ? C.daily.tasks : null, jack: Math.floor(this.jack?.pot || 0), settings: C.settings, stance: G.stanceOf(C), scene: C.scene, god: pl.god, saved: C.saved || 0, stats: C.stats, bagUp: C.bagUp | 0, tower: C.tower || null, eqf: C.eqf || {}, quiver: C.quiver || null,   /* (2026-09-25) what the offhand pouch holds; without it the page cannot draw the count and the bag shows arrows that fire from nowhere */ guild: C.guild || 0   /* (2026-09-23) meOf IS A HAND-PICKED SUBSET - a field left out of it does not exist as far as the page is concerned, which has now caught seven features. The guild door draws itself locked or open from this. */, ach: C.ach || [] }; }   /* (2026-09-23) ach MUST be here, for the FIFTH time in the same trap as pets, bagUp, tower and forge: meOf is a hand-picked subset, and the whole Achievements panel is drawn from me.ach — without it every achievement reads as unearned */   /* (2026-09-22) forge MUST be here, for the fourth time in the same trap as pets, bagUp and tower: meOf is hand-picked, and the page prints every gear stat through bonusOf, which now reads it */   /* (2026-09-22) tower MUST be here for the same reason pets and bagUp are: meOf is a hand-picked subset, and the page draws the climb HUD and the door's window from it */   /* (2026-09-22) bagUp MUST be here: meOf is a hand-picked subset, and G.bagMax(me) on the page reads it — without it a bought slot is invisible to the counter that sold it and to the bag itself, exactly as pets were */
 
   /* ------------------------------------------------------------ reforging (2026-09-22)
      Spend bars to push a piece you own further. The odds and what a level is worth live in G.FORGE; this only
@@ -1017,6 +1017,7 @@ export class World {
       }
       case "quick": { const i = m.i | 0, n = G.quickNOf(pl.C); if (i < 0 || i >= n) return; const k = m.k == null ? null : String(m.k);   /* (2026-09-30) the Store's extra slots */
         if (k && !G.ITEMS[k]) return; const q = (pl.C.quick ||= [null, null, null, null]); while (q.length < n) q.push(null); q[i] = k; return this.touch(pl); }
+      case "abil": { const st = String(m.style || ""), o = G.cleanAbilOrder(st, m.order); if (!o) return; pl.C.abil = { ...(pl.C.abil || {}), [st]: o }; this.touch(pl); return; }   /* (2026-10-01) ABILITIES: set a style's order, nothing else */
       case "quiver": return this.quiverOp(pl, m);   /* (2026-09-25) load / unload the offhand pouch */   /* (2026-09-25) the Count Room. One tier, so there is nothing to pick and nothing to read off the message. */
       case "pyramid": return m.op === "enter" ? this.pyramidEnter(S, pl) : undefined;
       case "tower": return m.op === "enter" ? this.towerEnter(S, pl, m) : undefined;   /* m carries an optional lower floor: the door’s "start again at floor 1" */
@@ -2321,6 +2322,58 @@ export class World {
      pouch are the same three rows with different pictures, and none of this changes to add them. */
   /** one round gone, from the offhand pouch (the only place a launcher fires from, see G.ammoOf). Nothing happens for a melee weapon. */
   /** (2026-09-26) what an element does after a spell lands: Fire may burn, Frost slows, Storm arcs, Sun heals the caster */
+  /* ------------------------------------------------------------ ABILITIES (2026-10-01): see ABIL in the rules file for the why */
+  /** the first ability in this player's order that is unlocked, off cooldown and makes sense against this monster now, or null */
+  abilPick(S, pl, m, now) {
+    if (S.def.pvp || m.star || m.bag || m.thief) return null;
+    const C = pl.C, st = G.styleOf(C), cd = (pl.abilAt ||= {});
+    for (const k of G.abilOrderOf(C, st)) {
+      const a = G.ABIL_BY[k]; if (!a || !G.abilUnlocked(C, k) || (cd[k] || 0) > now) continue;
+      if (a.kind === "hit") return a;
+      if (a.kind === "splash") { if (this.abilTargets(S, pl, m, a, now).length) return a; continue; }
+      if (a.kind === "guard" || a.kind === "ward") { if (now - (pl.hurtAt || 0) <= a.recent && !(pl.braceUntil > now) && !(pl.ward > 0 && pl.wardUntil > now)) return a; continue; }
+      if (a.kind === "step") { if (G.launcherOf(C) && G.cheb(pl, m) === 1 && this.abilStepPath(S, pl, m)) return a; continue; }
+    }
+    return null;
+  }
+  /** the other monsters a splash would reach: near you (Cleave, Volley) or around the target (Blast), that you could fight */
+  abilTargets(S, pl, m, a, now) {
+    const at = a.from === "target" ? m : pl, reach = a.reach || G.reachOfHeld(pl.C);
+    return S.mobs.filter((x) => x !== m && !x.dead && !x.thief && !x.star && !x.bag && x.hp > 0 && G.cheb(x, at) <= reach && this.mayFight(S, x, pl, now)).sort((x, y) => G.cheb(x, at) - G.cheb(y, at)).slice(0, a.n);
+  }
+  /** Disengage's two steps straight away from the monster, or null when there is no room */
+  abilStepPath(S, pl, m) {
+    const dx = Math.sign(pl.x - m.x), dy = Math.sign(pl.y - m.y); if (!dx && !dy) return null;
+    const p1 = { x: pl.x + dx, y: pl.y + dy }, p2 = { x: pl.x + 2 * dx, y: pl.y + 2 * dy }, ok = (from, p) => G.canStepIn(S.g, from.x, from.y, dx, dy) && S.g[p.y]?.[p.x] !== "e" && !this.occupied(S, p.x, p.y, pl);
+    return ok(pl, p1) && ok(p1, p2) ? [p1, p2] : null;
+  }
+  /** an ability goes off: its cooldown, then what it does */
+  abilFire(S, pl, m, a, raw, el, now) {
+    const C = pl.C, st = G.styleOf(C);
+    (pl.abilAt ||= {})[a.k] = now + a.cd; pl.out.push({ type: "abil", k: a.k, at: now, cd: a.cd });
+    if (a.kind === "splash") {
+      for (const o of this.abilTargets(S, pl, m, a, now)) {
+        if (a.arrows) { if (!G.ammoOf(C)) break; this.spendAmmo(pl); }
+        const gm = G.guardMul(o.t, st, el); if (gm <= 0) continue;
+        const d2 = Math.max(1, Math.round(raw * a.mul * (el ? G.elementMul(o.t, el) : 1) * gm));
+        o.hp -= d2; o.hurtAt = now;
+        S.events.push({ type: "splat", who: o.id, n: d2, kind: "hit", t: now, by: pl.id, ranged: G.launcherOf(C) ? true : undefined, ak: a.arrows ? G.ammoOf(C)?.k : undefined, ab: a.k, splash: true });
+        this.award(pl, d2); this.bossAdd(pl, o, "dmg", d2); if (S.def.crypt) this.cryptHit(S, pl, o, d2); else if (S.def.pyramid) this.pyramidHit(S, pl, o, d2);
+        if (G.MOBS[o.t]?.open || o.open) (o.by ||= {})[pl.id] = (o.by[pl.id] || 0) + d2;
+        else if (!S.def.pvp && !S.def.shared && !o.claim) o.claim = { id: pl.id, until: now + CLAIM_MS };
+        if (o.hp <= 0) { const keep = pl.act; this.killMob(S, pl, o, now); if (m.hp > 0) pl.act = keep; }
+      }
+    } else if (a.kind === "guard") { pl.braceUntil = now + a.ms; S.events.push({ type: "abil", who: `p:${pl.id}`, k: a.k, t: now, ms: a.ms }); }
+    else if (a.kind === "ward") { pl.ward = Math.max(1, Math.round(G.maxHpOf(C) * a.share)); pl.wardUntil = now + a.ms; S.events.push({ type: "abil", who: `p:${pl.id}`, k: a.k, t: now, ms: a.ms }); }
+    else if (a.kind === "step") { const p = this.abilStepPath(S, pl, m); if (p) pl.path = p; pl.abilNext = a.next; S.events.push({ type: "abil", who: `p:${pl.id}`, k: a.k, t: now }); }
+  }
+  /** what a monster's hit does to a player after Brace (a cut) and a Barrier (soaked first) */
+  abilTaken(p, dmg, now) {
+    if (!dmg) return dmg;
+    if (p.braceUntil > now) dmg = Math.max(1, Math.round(dmg * (1 - G.ABIL_BY.brace.cut)));
+    if (p.ward > 0 && p.wardUntil > now) { const s = Math.min(p.ward, dmg); p.ward -= s; dmg -= s; }
+    return dmg;
+  }
   elementAfter(S, pl, m, el, dmg, now) {
     const M = G.MAGIC;
     if (el === "fire" && Math.random() < M.burn.chance) m.dot = { at: now + M.burn.ms, dmg: Math.max(1, Math.round(dmg * M.burn.share)), by: pl.id };
@@ -3056,6 +3109,13 @@ export class World {
            defence, and after the hit Fire may burn, Frost slows, Storm arcs to a neighbour and Sun heals you (below). */
         const el = G.launcherOf(C) ? G.ammoElOf(C) : null;
         const def = G.MOBS[m.t], hit = Math.random() < Math.max(G.hitChance(G.attackRollOf(C), def.def * (el === "void" ? 1 - G.MAGIC.pierce : 1)), G.styleOf(C) === "archery" ? G.ARCH_FLOOR[String(S.key).split(":")[0]] || 0 : G.styleOf(C) === "magic" ? G.MAGE_FLOOR[String(S.key).split(":")[0]] || 0 : 0);   /* (2026-09-30) the sure shot (ARCH_FLOOR) and the sure cast (MAGE_FLOOR) */ let dmg = hit ? rint(1, G.maxHitOf(C) + G.ammoStrOf(C)) : 0;
+        /* (2026-10-01) ABILITIES: the first ready one in your order that makes sense now (abilPick). A bigger hit is only spent on a swing that
+           lands; Disengage's "next arrow" is spent here too. `abRaw` is the hit before this target's own element and guard: what a splash shares. */
+        const ab = this.abilPick(S, pl, m, now); let abUsed = null;
+        if (ab && ab.kind === "hit" && dmg > 0) { dmg = Math.max(1, Math.round(dmg * ab.mul)); abUsed = ab; }
+        if (dmg > 0 && pl.abilNext && G.launcherOf(C)) { dmg = Math.max(1, Math.round(dmg * (1 + pl.abilNext))); pl.abilNext = 0; }
+        if (ab && ((ab.kind === "splash" && dmg > 0) || ab.kind === "guard" || ab.kind === "ward" || ab.kind === "step")) abUsed = ab;
+        const abRaw = dmg;
         const emul = el ? G.elementMul(m.t, el) : 1;   /* (2026-09-29) kept for the splat: the page lights the weakness or resistance it met */
         if (dmg && el) dmg = Math.max(1, Math.round(dmg * emul));
         /* (2026-09-27) THE GUARD (the Depths of the Mountain): some monsters take a tenth, or nothing, from a style, and one only
@@ -3075,7 +3135,7 @@ export class World {
         if (m.thief && dmg) dmg = 1;   /* (2026-09-30) THE JACKPOT THIEF counts hits, not damage: a level 3 and a level 99 knock the same tickets loose */
         this.meterAdd(pl, "swing", 1, m); if (dmg) this.meterAdd(pl, "hit", 1, m);   /* (2026-09-28) accuracy, for the run report */
         this.bossAdd(pl, m, "swing", 1); if (dmg) { this.bossAdd(pl, m, "hit", 1); this.bossAdd(pl, m, "dmg", dmg); }   /* (2026-09-28) and a world boss's own report */
-        m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, ranged: G.launcherOf(C) ? true : undefined, ak: shotK || undefined,   /* (2026-09-25) the page flies an arrow from `by` to `who` before it shows the number; marked HERE so the page needs nothing about equipment, and a staff marks it the same way */ crit: (dmg >= 4 && dmg > G.maxHitOf(C) * 0.9) || undefined, kill: m.hp <= 0 || undefined,
+        m.hp -= dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: dmg, kind: dmg ? "hit" : "miss", t: now, by: pl.id, ranged: G.launcherOf(C) ? true : undefined, ak: shotK || undefined, ab: abUsed?.k,   /* (2026-09-25) the page flies an arrow from `by` to `who` before it shows the number; marked HERE so the page needs nothing about equipment, and a staff marks it the same way */ crit: (dmg >= 4 && dmg > G.maxHitOf(C) * 0.9) || undefined, kill: m.hp <= 0 || undefined,
           /* (2026-09-29) what the hit met, for the overhead plate: em 1 a weakness, -1 a resistance (with el, the element); gs the style a guard took from */
           el: emul !== 1 ? el : undefined, em: emul > 1 ? 1 : emul < 1 ? -1 : undefined, gs: gmul < 1 ? G.styleOf(C) : undefined, gw: gmul > 1 ? G.styleOf(C) : undefined });   /* (2026-09-30) gw: a style weakness */
         this.award(pl, dmg); if (S.def.crypt) this.cryptHit(S, pl, m, dmg); else if (S.def.pyramid) this.pyramidHit(S, pl, m, dmg);
@@ -3093,6 +3153,7 @@ export class World {
         }
         if (dmg && el && !m.thief) this.elementAfter(S, pl, m, el, dmg, now);
         if (m.thief && dmg) this.thiefHit(S, pl, m, now);   /* (2026-09-30) every hit spills tickets; every tenth leaves him dizzy */
+        if (abUsed) this.abilFire(S, pl, m, abUsed, abRaw, el, now);   /* (2026-10-01) ABILITIES */
         if (m.hp <= 0) this.killMob(S, pl, m, now);
       }
       return;
@@ -4062,7 +4123,7 @@ export class World {
         m.face = foe.x > m.x ? 1 : -1;
         if (now - m.lastSwing >= G.MOBS[m.t].speed * (m.slowUntil > now ? G.MAGIC.slow.mult : 1) && !(m.stunUntil > now)) {   /* (2026-09-26) Frost slows the swing */   /* (2026-09-28) the King's Cannon's shock shell stuns */
           m.lastSwing = now; m.swingAt = now;
-          const C = foe.C, hit = Math.random() < (G.MOBS[m.t].outside ? G.mobHitChance : G.hitChance)(G.MOBS[m.t].att, G.defenceRollOf(C)),   /* (2026-09-28) an open-world monster aims by ratio: A MONSTER'S AIM in the rules file */ dmg = hit ? Math.max(1, Math.round(rint(1, G.MOBS[m.t].max) * (m.enraged ? (m.enrMul || G.MOBS[m.t].enrage?.mul || CR.CRYPT.enrageMul) : 1) * (1 - G.fxOf(C).tough))) : 0;   /* (tough: the visor, the Safety Net; whiskey makes it worse) */
+          const C = foe.C, hit = Math.random() < (G.MOBS[m.t].outside ? G.mobHitChance : G.hitChance)(G.MOBS[m.t].att, G.defenceRollOf(C)),   /* (2026-09-28) an open-world monster aims by ratio: A MONSTER'S AIM in the rules file */ dmg = this.abilTaken(foe, hit ? Math.max(1, Math.round(rint(1, G.MOBS[m.t].max) * (m.enraged ? (m.enrMul || G.MOBS[m.t].enrage?.mul || CR.CRYPT.enrageMul) : 1) * (1 - G.fxOf(C).tough))) : 0, now);   /* (2026-10-01) Brace and Barrier */   /* (tough: the visor, the Safety Net; whiskey makes it worse) */
           if (!foe.god) { C.hp -= dmg; this.touch(foe); }
           if (dmg) { this.meterAdd(foe, "taken", dmg, m); this.bossAdd(foe, m, "taken", dmg); }   /* (2026-09-28) the party meter, and a world boss's report */
           if (dmg) foe.hurtAt = now;
