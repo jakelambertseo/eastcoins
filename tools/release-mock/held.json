@@ -25,11 +25,19 @@
  },
  {
   "name": "Thrill Hill",
-  "commit": "",
+  "commit": "47a2cb9d",
   "page": "thrillhill-mock",
   "bundle": "v1.1",
   "what": "Agility’s own map through the Yard’s old ladder (it retires The Run): the Rookie Run (1) and Pro Run (40) on Thrill Hill, the human cannonball (70) to Daredevil Peak and its Champion Run; the Junk Mound (50: Grease Gremlins, featherwood with feathers) and the Peak (90: Big Daddy Crusher and Lil’ Crusher, chrome for chrome-toe boots, a lockbox); Hellbikers and the nitro pool (a walk-speed fish); Fast Eddie takes runner’s marks for the Sure-foot tonic, stunt helmet and leathers.",
   "ships": "flip HOLD.thrill to false (with HOLD.thief2), VERSION bump; push and probe the 69 new pictures, 9 item icons and rebuilt sprite sheets first, then the page, rules, maps and wiki, then the worker (thrill.js, index.js)"
+ },
+ {
+  "name": "Gems: rarer, and yours",
+  "commit": "",
+  "page": "",
+  "bundle": "v1.1",
+  "what": "Every gem source cut to a quarter (gem bag drops 1 in 1,500 to 1 in 6,000 skilling, 1 in 150 to 1 in 600 kills, bosses 1 in 5 to 1 in 20; gems off ore 3% to 0.75%; the monsters and Captain Claw’s chest that drop them too). Gems can’t be traded between players or listed, bid for or bought on the Exchange; the Gem Sorter still buys them. Gem offers already up come down once at start, held for their owners. Bronny’s keystone stops asking for gems.",
+  "ships": "flip HOLD.gemcut to false with the rest of v1.1; the rules, the wiki and the page, then the worker (gems.js, index.js). One number to tune: GEM_CUT (0.25)."
  },
  {
   "name": "Abilities and the order (2a) · on hold",

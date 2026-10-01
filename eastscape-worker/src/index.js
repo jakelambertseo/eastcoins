@@ -245,6 +245,7 @@ export class World {
     // the Exchange: every offer from every player, online or not. Loaded before anything else runs.
     ctx.blockConcurrencyWhile(async () => {
       this.ex = (await ctx.storage.get("exchange")) || { next: 1, orders: [], last: {}, tax: 0 };
+      this.exGemSweep();   /* (2026-10-01, v1.1) gems no longer trade: any gem offer still up comes down (gems.js) */
       this.jack = (await ctx.storage.get("jackpot")) || { pot: G.JACKPOT.seed, wins: [] };
       this.fame = (await ctx.storage.get("fame")) || null;   // the Winners' Wall
       /* (v109) THESE WERE NEVER READ BACK AT START. The Crypt's fastest clears, the jukebox's station and the song queue were each
@@ -1542,7 +1543,7 @@ export class World {
     }
     // whatever is in memory is now stale: drop it so the next read comes off storage
     this.scenes.clear();
-    this.ex = (await this.ctx.storage.get("exchange")) || this.ex;
+    this.ex = (await this.ctx.storage.get("exchange")) || this.ex; this.exGemSweep();   /* (v1.1) a restored backup cannot bring gem offers back */
     this.jack = (await this.ctx.storage.get("jackpot")) || this.jack;
     if (!(this.jack.pot >= G.JACKPOT.seed)) { this.jack.pot = G.JACKPOT.seed; this.jackDirty = true; }   /* (v107: the seed grew with the ticket tables' limits; a pot saved under the old one starts from the new) */
     { const sg = (await this.ctx.storage.get("songs")) || null; this.song = sg?.song || null; this.songQ = Array.isArray(sg?.q) ? sg.q : []; }   /* (v96) the song queue outlives a restart too */
@@ -4452,6 +4453,7 @@ export class World {
       const f = G.codeOk(k, m.f) ? Math.floor(Number(m.f)) || 0 : 0;   /* (2026-09-28) a reforge level, a gem's roll or a piece's sockets, checked (codeOk) */
       let qty = Math.floor(Number(m.qty)); if (f) qty = 1;
       if (!G.ITEMS[k] || k === "tickets") return this.say(pl, "You can't trade that on the market.", "bad");
+      if (G.noTrade(k)) return this.say(pl, "Gems can't be bought or sold on the Exchange. The one you find is yours; the Gem Sorter will buy it.", "bad");   /* (2026-10-01, v1.1) */
       if (!(qty >= 1 && qty <= 1e9 && price >= 1 && price <= 1e9)) return this.say(pl, "Pick a quantity and a price of at least 1.", "bad");
       if (m.op === "place" && this.exOpen(pl).length >= G.EX_SLOTS) return this.say(pl, `You can have ${G.EX_SLOTS} offers up at once. Cancel one first.`, "bad");
       if (side === "sell") {
@@ -5150,6 +5152,7 @@ export class World {
     if (m.op === "decline") return this.tradeEnd(T, `${pl.name} declined the trade.`);
     if (T.stage === "offer" && (m.op === "add" || m.op === "remove" || m.op === "cash")) {
       if (m.op === "add") { const k = String(m.k); if (!G.ITEMS[k] || k === "tickets") return;
+        if (G.noTrade(k)) return this.say(pl, "Gems can't be traded. The one you find is yours.", "bad");   /* (2026-10-01, v1.1) */
         /* (2026-09-23) A FACE-TO-FACE TRADE OFFERS PLAIN PIECES ONLY, for now. An offer is items[key] = count,
            with nowhere to put a level, and the transfer below is takeInv/addInv by key — so offering your only
            axe when it happens to be a +3 would hand the other player a plain one and destroy the reforge without
@@ -5188,6 +5191,7 @@ export class World {
     // everything offered must still be there, and both bags must have room for what's coming
     const still = (p) => Object.entries(T.off[p.id].items).every(([k, n]) => G.countItems(p.C, [k]) >= n) && G.cashIn(p.C) >= T.off[p.id].cash && (T.off[p.id].pets || []).every((x) => G.petById(p.C, x.id));
     if (!still(A) || !still(B)) return this.tradeEnd(T, "Trade cancelled: something offered wasn't there any more.");
+    if ([A, B].some((p) => Object.keys(T.off[p.id].items).some((k) => G.noTrade(k)))) return this.tradeEnd(T, "Trade cancelled: gems can't be traded.");   /* (2026-10-01, v1.1) */
     const petsAfter = (p, give, get) => G.petsOf(p.C).length - (give.pets || []).length + (get.pets || []).length;
     if (petsAfter(A, T.off[A.id], T.off[B.id]) > G.PET_TRADE.own || petsAfter(B, T.off[B.id], T.off[A.id]) > G.PET_TRADE.own) return this.tradeEnd(T, `Trade cancelled: nobody can keep more than ${G.PET_TRADE.own} pets.`);
     const after = (p, give, get) => {

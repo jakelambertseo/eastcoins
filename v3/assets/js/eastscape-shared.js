@@ -10405,3 +10405,30 @@ if (!HOLD.thrill) {
   Object.assign(QUESTS.runclock.talk, { offer: ["Nobody's quick any more. They walk up to a ramp and look at it like it owes them money.", "There's a stunt park through the gate by the Yard's north wall. Thrill Hill. Go and run it, once, and come and tell me you did."],
     accepted: "Tyres first. Then everything else. Don't look down.", progress: "Have you been? The gate's by the Yard's north wall." });
 }
+
+/* ============================================================ GEMS IN v1.1: RARER, AND YOURS (2026-10-01). The owner: "lower gem drop rates by a lot,
+   and disallow trading via p2p AND in the market". HELD with the rest of v1.1 (HOLD.gemcut; a local ?open=1 test has it).
+     RARER: every way a gem turns up is cut to GEM_CUT of what it was (a quarter), in one place so it can be tuned in one place:
+       - the gem bag's drops: a skilling action at level 60+ was 1 in 1,500 (now 1 in 6,000), a kill of a level-60+ monster 1 in 150
+         (now 1 in 600), an open boss 1 in 5 (now 1 in 20) (GEMSET.drop and GEMSET.bossDrop, read by the worker's gems.js);
+       - the mining gems off ore (ruby, sapphire, topaz, opal, and the Depths' abyss crystal): 3% a swing becomes 0.75%;
+       - the twenty-odd monsters and bosses that drop one, and Captain Claw's chest: each chance cut the same way.
+     Bronny's order no longer asks for gems as its keystone: a gem can't be bought any more, so an order wanting eight rubies would be a
+     wall, not luck.
+     YOURS: a gem (any of GEMSET's 25, sorted or not, and the four mining gems, which are the same items) cannot be offered in a trade or
+       listed, bought or sold on the Exchange (noTrade). The Gem Sorter still buys them, and dropping one destroys it, so there is no
+       third way round. Offers already up on the Exchange when this ships are taken down once, at start, with the gems or the tickets
+       held for their owners as if they had cancelled (the worker's exGemSweep). */
+HOLD.gemcut = !globalThis.__ES_OPEN_ALL;
+export const GEM_CUT = 0.25;
+GEMSET.bossDrop = 0.2;
+/** may this item change hands between players (a trade, the Exchange)? */
+export const noTrade = (k) => !HOLD.gemcut && (isGem(k) || GEMS.some((g) => g.key === k));
+if (!HOLD.gemcut) {
+  GEMSET.drop *= GEM_CUT; GEMSET.bossDrop *= GEM_CUT;
+  for (const list of Object.values(GEM_DROP)) for (const row of list) row[1] *= GEM_CUT;
+  const gemKey = (k) => isGem(k) || GEMS.some((g) => g.key === k);
+  for (const m of Object.values(MOBS)) for (const row of m.drops || []) if (gemKey(row[0])) row[2] = (row[2] ?? 1) * GEM_CUT;
+  for (const row of CLAW_CHEST.items) if (gemKey(row[0])) row[2] = (row[2] ?? 1) * GEM_CUT;
+  ORDER.keystone.list = ORDER.keystone.list.filter(([k]) => !gemKey(k));
+}

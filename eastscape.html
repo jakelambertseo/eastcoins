@@ -17,7 +17,7 @@
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;
 /* (2026-09-30) YOUR SCREEN: the chosen look, on <html> before anything paints (eastscape-ui.js keeps it in step) */
 try { const t = localStorage.getItem("es_ui_theme"); if (t) document.documentElement.dataset.uiTheme = t; } catch (e) { /* storage off: the default look */ }</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=427">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=428">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -2028,7 +2028,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=427";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=428";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 const FROZEN = new Map();   /* (2026-09-30) player id -> when their Deep Freeze ends (performance.now) */
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
@@ -2038,7 +2038,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=240").then((m) => { WK = m; rmLiveNote(); }),
+  import("/v3/assets/js/eastscape-wiki.js?v=241").then((m) => { WK = m; rmLiveNote(); }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
@@ -6833,7 +6833,7 @@ function renderEx() {
   $("exWin").querySelectorAll("[data-ex]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ex === exTab)));
   if (exTab === "pets") { if (!$("exPets")) $("exBody").innerHTML = `<div id="exPets"></div>`; petUi().then((u) => u.exPets($("exPets"), EX)); return; }   /* (2026-09-27) pets for sale, in the lazy pets module */
   const body = $("exBody"), book = (k) => EX.book[k] || {}, last = (k) => EX.last[k]?.price;
-  const tradeable = Object.keys(ITEMS).filter((k) => k !== "coins").sort((a, b) => ITEMS[a].name.localeCompare(ITEMS[b].name));
+  const tradeable = Object.keys(ITEMS).filter((k) => k !== "coins" && !G.noTrade?.(k)).sort((a, b) => ITEMS[a].name.localeCompare(ITEMS[b].name));
   const keep = body.querySelector(".gx-scroll")?.scrollTop || 0;
   const slot = (k, f = 0, n = 0) => `<span class="k-slot" data-item="${k}"${f ? ` data-f="${f}"` : ""}>${ico(k)}${n > 1 ? `<u>${wlNum(n)}</u>` : ""}</span>`;
   const priceTag = (p, each = true) => `<span class="gx-price"><span>${tixPrice(p)}</span>${each ? "<small>each</small>" : ""}</span>`;
@@ -7091,7 +7091,7 @@ function renderTrade() {
   if (TR.stage === "offer") {
     $("tradeBody").innerHTML = `<div class="trade-cols"><div><h4>Your offer</h4><div class="trade-box${TR.ok.you ? " ok" : ""}">${offerHtml(TR.you, true)}</div></div>
       <div><h4>${esc(TR.themName)}'s offer</h4><div class="trade-box${TR.ok.them ? " ok" : ""}">${offerHtml(TR.them, false)}</div></div></div>
-      <h4 style="margin-top:12px">Your bag · click to offer (shift-click offers the whole stack)</h4><div class="grid8" id="tradeBag">${me.inv.filter((s) => s.k !== "coins" && s.k !== "tickets").map((s) => slotHtml(s, s.k, "data-k")).join("")}</div><div id="trPets"></div>`;
+      <h4 style="margin-top:12px">Your bag · click to offer (shift-click offers the whole stack)</h4><div class="grid8" id="tradeBag">${me.inv.filter((s) => s.k !== "coins" && s.k !== "tickets" && !G.noTrade?.(s.k)).map((s) => slotHtml(s, s.k, "data-k")).join("")}</div>${G.noTrade?.("ruby") ? '<p class="note">Gems can’t be traded: the one you find is yours.</p>' : ""}<div id="trPets"></div>`;
     petUi().then((u) => u.tradePets($("trPets"), TR));   /* (2026-09-27) pets trade too, drawn by the lazy pets module */
     /* (v96) tickets trade too: a number box, never more than you hold (the server clamps it again) */
     /* (2026-09-25, the owner: "the number selector field keeps deleting numbers/not letting users type"). This whole footer is

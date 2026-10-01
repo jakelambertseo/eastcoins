@@ -85,7 +85,20 @@ export function installGems(World, { G }) {
   P.gemOnKill = function (pl, m) {
     if (G.HOLD.gems) return; const d = G.MOBS[m.t]; if (!d) return;
     const boss = d.boss && d.open, combat = G.GEMSET.list.filter((g) => g.where === "gear");
-    if ((d.lvl || 0) >= S_.dropLvl && Math.random() < (boss ? 0.2 : S_.drop * 10)) this.gemFind(pl, combat[Math.floor(Math.random() * combat.length)].k);
+    if ((d.lvl || 0) >= S_.dropLvl && Math.random() < (boss ? (S_.bossDrop ?? 0.2) : S_.drop * 10)) this.gemFind(pl, combat[Math.floor(Math.random() * combat.length)].k);
+  };
+
+  /* (2026-10-01, v1.1) GEMS DON'T CHANGE HANDS (G.noTrade): any gem offer still up on the Exchange when that ships is taken down, once,
+     at start, as if its owner had cancelled it: a sell offer's gems and a buy offer's tickets wait in its box for them, delivered the next
+     time they open the Exchange. Returns how many it took down. */
+  P.exGemSweep = function () {
+    let n = 0; const now = Date.now();
+    for (const o of this.ex?.orders || []) if (o.open && G.noTrade(o.k)) {
+      o.open = false; o.closedAt = now; const left = o.qty - o.done;
+      if (o.side === "sell") o.box.items += left; else o.box.cash += left * o.price; n++;
+    }
+    if (n) this.ctx.storage.put("exchange", this.ex).catch(() => {});
+    return n;
   };
 
   /* /gemkit, DEV SERVER ONLY: everything the gem bag needs, on whoever types it. Skill levels for the drops, five million tickets for
