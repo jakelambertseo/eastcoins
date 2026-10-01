@@ -17,6 +17,7 @@ const OUT = join(ROOT, "eastscape-worker", "gameplan-site", "gameplan");
 /* the pages, in the nav's order: [folder, short label, title] */
 const PAGES = [
   ["gameplan-mock", "Plan", "The game plan"],
+  ["atlas-mock", "Atlas", "The atlas: maps and skilling to 120"],
   ["past99-mock", "1", "The Road Past 99"],
   ["ascend-mock", "2", "Ascendancies"],
   ["relic-mock", "3", "Relic gear"],

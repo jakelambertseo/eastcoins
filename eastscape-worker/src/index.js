@@ -170,7 +170,7 @@ export default {
       if (!(env.DEV === "1" || same(cookie && decodeURIComponent(cookie))) || !env.ASSETS) return new Response("EastScape game server", { status: 404 });
       if (url.pathname === "/gameplan" || url.pathname === "/gameplan/") return new Response(null, { status: 302, headers: { ...H, Location: "/gameplan/gameplan-mock/", "Cache-Control": "no-store" } });
       const r = await env.ASSETS.fetch(new Request(new URL(url.pathname, url.origin), request));
-      const out = new Response(r.body, r); for (const [k, v] of Object.entries(H)) out.headers.set(k, v); out.headers.set("Cache-Control", "private, max-age=300");
+      const out = new Response(r.body, r); for (const [k, v] of Object.entries(H)) out.headers.set(k, v); out.headers.set("Cache-Control", "private, no-cache");   /* revalidated every time: these pages are edited often, and an ETag makes the check cheap */
       return out;
     }
     if (url.pathname === "/stats") {
