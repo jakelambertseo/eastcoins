@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>The admin panel</title>
+<!-- (2026-10-01, the owner: "after we're completely done with agility and thieving for v1.1, can you work on the admin panel? the UI is a bit
+     overwhemling now with how much stuff we've added. take a look at it and consider how it can be organized, easy use of features, what can
+     be added/removed"). Mockup 17. inject.js ran inside the real page on the dev server: a window built from the game's own classes, drawn,
+     not wired. The inventory below is read from the panel's code (eastscape.html, the admin tab) and the server's canRun. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a0c;color:#e8e0cc;font-family:Lora,Georgia,serif}
+main{max-width:1200px;margin:0 auto;padding:28px 18px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:34px 0 6px;font:800 23px Cinzel,Georgia,serif;color:#ffd98a}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}.lede b{color:#f6e9cc}
+.shots{display:grid;gap:22px;margin-top:14px}.shot{display:grid;gap:8px}.shot img{width:100%;max-width:1000px;border-radius:10px;box-shadow:0 0 0 2px #5a3a1a,0 16px 40px rgba(0,0,0,.6)}
+.shot p{margin:0;font:600 13.5px/1.55 Lora,serif;color:#cdbfa2;max-width:980px}.shot p b{color:#f6e9cc}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(190px,100%),1fr));gap:8px;margin:12px 0}.tile{background:#1a120c;border-radius:10px;padding:10px 12px;box-shadow:0 0 0 1.5px #3a2616}.tile b{display:block;font:800 22px Cinzel,serif;color:#ffe7b0}.tile span{font:700 12px/1.35 Lora,serif;color:#a89070}
+.tbl{width:100%;border-collapse:collapse;font:600 12.5px Lora,serif;background:#16110c;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616;margin-top:10px}
+.tbl th{text-align:left;font:800 10px Lora,serif;letter-spacing:.07em;text-transform:uppercase;color:#a89070;padding:9px 8px 5px}.tbl td{padding:6px 8px;border-top:1px solid #2e2216;vertical-align:top;line-height:1.4}.tbl td:first-child{font-weight:800;color:#ffe7b0}
+.to{font:800 10.5px Lora,serif;padding:1px 8px;border-radius:999px;white-space:nowrap}.t-live{background:#1e4a24;color:#9ef0a0}.t-players{background:#1e2e4a;color:#9ec8ff}.t-test{background:#3a3010;color:#ffd98a}.t-gone{background:#4a1a14;color:#ff9a8a}
+.wrapx{overflow-x:auto}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:10px;margin:12px 0}.rules3>div{background:#1a120c;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.rules3 span b{color:#f6e9cc}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+ul.build{margin:6px 0 0;padding-left:18px;line-height:1.7;color:#cdbfa2;max-width:980px}ul.build b{color:#f6e9cc}
+</style>
+</head>
+<body>
+<main>
+  <h1>The admin panel</h1>
+  <p class="lede">Today it's one long column in the side panel, 342 pixels wide: ten boxes and about 45 controls, where running the live server, looking after a
+    player, and testing on your own character all sit together. "Start 2X for everyone" is a click away from "Give me a 2X potion". The
+    proposal: a proper window (the Character window's size), three tabs split by <b>who an action touches</b>: the whole server, one player,
+    or just you.</p>
+  <div class="tiles">
+    <div class="tile"><b>~45 controls</b><span>in ten boxes, one column, 342 px wide</span></div>
+    <div class="tile"><b>3 audiences</b><span>the live server, a player, your own character: all mixed today</span></div>
+    <div class="tile"><b>7 of 45</b><span>what a moderator can actually use; they see all 45, and the rest answer "admins only"</span></div>
+    <div class="tile"><b>0 confirms</b><span>on server-wide boosts and events (only the restart and the resets ask)</span></div>
+    <div class="tile"><b>0 status</b><span>nothing says whether 2X, a raid or a restart is already running, or who started it</span></div>
+  </div>
+
+  <h2>The window, in the game</h2>
+  <div class="shots">
+    <div class="shot"><img src="1-live.jpg" alt="The admin window's Live server tab: a status strip, boosts and world events as cards"><p><b>Live server.</b> A strip says what's going on right now (who's online, 2X and its time left, raids, the next event, a restart). Below, every server-wide thing is a card with its state and its buttons together: <b>start, add time, stop</b> on one card instead of a minutes box in one row and the stop button in another. Each asks "are you sure?" before it touches everyone.</p></div>
+    <div class="shot"><img src="2-live-server.jpg" alt="The bottom of the Live tab: save, restart, World data, and recent admin actions"><p><b>The server</b>: save everyone, the restart countdown (a choice of 2/5/10 minutes instead of typing seconds) and World data in one place. And a new <b>Recent admin actions</b> list: four admins share this server, and nothing today says who started the 2X or ended the Flood.</p></div>
+    <div class="shot"><img src="3-players.jpg" alt="The Players tab: online list, a player card with stats, moderation and refunds"><p><b>Players.</b> One name box and the list of who's online; pick someone and everything about them is on one card: where they are, hours, tickets, levels, and every action that takes a name (go to them, their stats, mute for a chosen time, unmute, kick, the Bom gear they could get back). Today those are four separate name boxes in three different boxes. Recent player kills sit here too.</p></div>
+    <div class="shot"><img src="4-testing.jpg" alt="The Testing tab: skills, items, go to, me, quests, danger, all for your own character"><p><b>Testing (just you).</b> Everything that only changes your own character, said at the top in a yellow box: skills, items (a search box instead of a 700-item dropdown), go to (a searchable map list, plus the shortcut and back-way pickers while those are held), heal, god mode, the speed test, quests, and the resets. <b>Moderators don't see this tab at all.</b></p></div>
+  </div>
+
+  <h2>Every control today, and where it goes</h2>
+  <div class="wrapx"><table class="tbl" id="inv"></table></div>
+
+  <h2>Added, and taken away</h2>
+  <div class="rules3">
+    <div><b>Added: what's running</b><span>The status strip and each card's state ("running · 18:42 left · started by you") come from what the server already knows (2X, skilling 2X, raid, events, restart). One small answer when the window opens; nothing polls faster than the World data window already does.</span></div>
+    <div><b>Added: are you sure?</b><span>Every action that touches every player asks first, with what it'll do in words ("double tickets for everyone for 30 minutes?"). Your-own-character actions don't, except the resets.</span></div>
+    <div><b>Added: the player card</b><span>One place per player, online or not, built from the stats the server already has. "Go to them" is a new button on the existing teleport.</span></div>
+    <div><b>Added: recent admin actions</b><span>A short list kept by the server (the last 50: who, what, when). Nothing else stores it today.</span></div>
+    <div><b>Taken away: "My stats"</b><span>It's already under the Skills tab and your name for every player; the admin copy is a duplicate.</span></div>
+    <div><b>Moved, not removed</b><span>The speed test, Store-upgrade reset, 2X potion, raw character JSON and the held-feature pickers move to Testing. Nothing an admin uses goes away.</span></div>
+    <div><b>Moderators see only what works</b><span>Live (save, restart, the strip) and Players (mute, unmute, kick, their stats, go to them). No buttons that answer "admins only".</span></div>
+    <div><b>Server-only commands get a home</b><span>A few commands have no button at all (give a pet, a project's tier, a new order, achievements, the Exchange's dex list). They go in a small "More" fold on Testing, so they stop living only in someone's memory.</span></div>
+  </div>
+
+  <h2>Building it</h2>
+  <ul class="build">
+    <li><b>The window</b>: the admin tab's button opens it (the panel keeps only a short "Open admin" and the online count). Built like the Character window: its own module, loaded on first open, so players never download it.</li>
+    <li><b>The state</b>: one "admin state" message answered from what the server holds (this.dbl, sx2, raid, events, restart) plus the action log; sent on open and when something changes.</li>
+    <li><b>The player card</b>: the existing "statsof" answer, shaped into the card, plus the Bom refund list it already returns.</li>
+    <li><b>The log</b>: every admin command records {who, what, when} into a 50-long list kept with the world's state.</li>
+    <li><b>Mods</b>: the tabs and cards are filtered by the same canRun list the server uses, so the two can't drift.</li>
+    <li>About <b>3 days</b>. It could ride in v1.1 or ship on its own: admins only, nothing players see.</li>
+  </ul>
+  <div class="callout"><b>Things to decide:</b> the three tabs (Live server / Players / Testing); the recent-actions log; "Go to them"; whether mods get kick; and whether it ships in v1.1 or straight away on its own.</div>
+</main>
+<script>
+const ROWS = [
+  ["Mute / Unmute (name, minutes)", "Moderation", "players", "on the player card, with a choice of times"],
+  ["Kick off", "Moderation", "players", "on the player card"],
+  ["Give xp / Set level / Clear skill / Clear ALL", "Skills", "test", ""],
+  ["Give item (700-item dropdown) / Clear inventory", "Items", "test", "a search box instead of the dropdown"],
+  ["Heal / God mode", "You", "test", ""],
+  ["Teleport (map list)", "You", "test", "a searchable map list"],
+  ["Go to shortcut / Go to back way", "You", "test", "only while held (dev)"],
+  ["Reset this area", "You", "test", ""],
+  ["Shooting Star / Wanted / Jackpot Thief: now, end", "You", "live", "one card each, with when it's next"],
+  ["Today's plan", "You", "live", ""],
+  ["Ice Wyrm: rise, send away", "You", "live", "a card"],
+  ["Yard raid: start, skip warning, end, reopen stalls", "You", "live", "a card"],
+  ["The Flood: start", "You", "live", "a card (its own skip and end)"],
+  ["Speed test", "Speed test", "test", ""],
+  ["Quest state / Reset all quests", "Quests", "test", ""],
+  ["My stats", "The world", "gone", "already under Skills and your name"],
+  ["Their stats", "The world", "players", "the player card"],
+  ["Refund Bom gear", "The world", "players", "the player card lists what they can get back"],
+  ["Save everyone", "The world", "live", ""],
+  ["Announce restart / Cancel", "The world", "live", "2 / 5 / 10 minutes instead of typing seconds"],
+  ["2X Tickets & Crafting: start, stop", "2X event", "live", "one card: start, add time, stop, time left"],
+  ["2X Skilling XP: start, stop", "2X event", "live", "one card"],
+  ["Reset my Store upgrades", "2X event", "test", "it was filed under 2X"],
+  ["Give me a 2X potion", "2X event", "test", ""],
+  ["Reset my character", "Danger", "test", "with its confirm"],
+  ["Raw character (JSON)", "bottom", "test", "folded"],
+  ["World data (a separate window)", "elsewhere", "live", "linked from the Live tab"]];
+const TO = { live: ["t-live", "Live server"], players: ["t-players", "Players"], test: ["t-test", "Testing"], gone: ["t-gone", "removed"] };
+document.getElementById("inv").innerHTML = `<tr><th>Control</th><th>Today, in</th><th>Goes to</th><th>Note</th></tr>` + ROWS.map(([c, b, t, n]) => `<tr><td>${c}</td><td>${b}</td><td><span class="to ${TO[t][0]}">${TO[t][1]}</span></td><td>${n}</td></tr>`).join("");
+</script>
+</body>
+</html>
