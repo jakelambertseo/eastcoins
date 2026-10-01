@@ -24,6 +24,14 @@
   "bundle": "v1.1"
  },
  {
+  "name": "Thrill Hill",
+  "commit": "",
+  "page": "thrillhill-mock",
+  "bundle": "v1.1",
+  "what": "Agility’s own map through the Yard’s old ladder (it retires The Run): the Rookie Run (1) and Pro Run (40) on Thrill Hill, the human cannonball (70) to Daredevil Peak and its Champion Run; the Junk Mound (50: Grease Gremlins, featherwood with feathers) and the Peak (90: Big Daddy Crusher and Lil’ Crusher, chrome for chrome-toe boots, a lockbox); Hellbikers and the nitro pool (a walk-speed fish); Fast Eddie takes runner’s marks for the Sure-foot tonic, stunt helmet and leathers.",
+  "ships": "flip HOLD.thrill to false (with HOLD.thief2), VERSION bump; push and probe the 69 new pictures, 9 item icons and rebuilt sprite sheets first, then the page, rules, maps and wiki, then the worker (thrill.js, index.js)"
+ },
+ {
   "name": "Abilities and the order (2a) · on hold",
   "commit": "cf4091c1",
   "page": "ascend-mock",

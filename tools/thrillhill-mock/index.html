@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Thrill Hill</title>
+<!-- (2026-10-01, the owner: "lets start on the agility map for v.1.1 as well called \"Thrill Hill\". lets make it have some character, ie: thrilling,
+     giant monster trucks, dirt bikes, flaming things, etc."). Built on dev, held for v1.1. Map pictures from tools/thrill/render-map.mjs. Local only; built into /gameplan. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a09;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#2a1a0a,transparent),radial-gradient(900px 600px at 100% 30%,#0a2a24,transparent),#0b0a09}
+main{max-width:1200px;margin:0 auto;padding:28px 18px 80px}
+h1{margin:0 0 4px;font:800 36px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 25px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:16px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}.lede b{color:#f6e9cc}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd98a}
+.sec{margin:44px 0 0;padding:22px 0 0;border-top:2px solid #3a2a1a}.sec>p{color:#b8a888;max-width:980px;line-height:1.55}.sec>p b{color:#f6e9cc}
+.hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start;margin-top:14px}@media (max-width:1000px){.hero{grid-template-columns:1fr}}
+.hero img{width:100%;image-rendering:pixelated;border-radius:12px;box-shadow:0 0 0 2px #5a3a1a,0 14px 40px rgba(0,0,0,.6)}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.tile{background:#14120e;border-radius:10px;padding:10px 12px;box-shadow:0 0 0 1.5px #3a2616}.tile b{display:block;font:800 22px Cinzel,serif;color:#ffe7b0}.tile span{font:700 12px/1.35 Lora,serif;color:#a89070}
+.tbl{width:100%;border-collapse:collapse;font:600 12.5px Lora,serif;background:#14120e;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616;margin-top:10px}
+.tbl th{text-align:left;font:800 10px Lora,serif;letter-spacing:.07em;text-transform:uppercase;color:#a89070;padding:9px 8px 5px}.tbl td{padding:6px 8px;border-top:1px solid #2e2216;vertical-align:top;line-height:1.45}
+.tbl td:first-child{font-weight:800;color:#ffe7b0}.tbl td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.wrapx{overflow-x:auto}
+.chart{background:#14120e;border-radius:12px;padding:12px;box-shadow:0 0 0 1.5px #3a2616;margin-top:12px;overflow:auto}.chart svg{display:block;width:100%;height:auto;min-width:640px}
+.refs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:10px;margin-top:12px}
+.ref{background:#14120e;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}.ref b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.ref span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.ref span i{color:#f6e9cc;font-style:normal;font-weight:800}
+.places{display:grid;gap:12px;margin-top:12px}
+.place{display:grid;grid-template-columns:120px 1fr;gap:6px 16px;padding:14px 16px;border-radius:12px;background:linear-gradient(180deg,var(--bg),#100c0a 85%);box-shadow:0 0 0 1.5px var(--ac)}
+.place .pics{grid-row:1/span 3;display:grid;gap:6px;justify-items:center}.place .pics img{width:96px;height:96px;image-rendering:pixelated;background:rgba(0,0,0,.3);border-radius:10px}
+.place header{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.place header b{font:800 20px Cinzel,serif;color:#ffe7b0}.lvl{font:800 11px Lora,serif;padding:2px 9px;border-radius:999px;background:rgba(0,0,0,.45);box-shadow:inset 0 0 0 1.5px var(--ac);color:var(--ac)}
+.place p{margin:2px 0 0;font:600 13.5px/1.6 Lora,serif;color:#d8ccb4}.place p b{color:#fff0c8}
+.place ul{margin:4px 0 0;padding-left:18px;font:600 13px/1.55 Lora,serif;color:#cdbfa2}.place ul b{color:#f6e9cc}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(270px,100%),1fr));gap:10px;margin:12px 0}.rules3>div{background:#14120e;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.rules3 span b{color:#f6e9cc}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+ul.build{margin:6px 0 0;padding-left:18px;line-height:1.7;color:#cdbfa2;max-width:980px}ul.build b{color:#f6e9cc}
+</style>
+<style>
+.maps{display:grid;gap:14px;margin-top:12px}.maps figure{margin:0;background:#14120e;border-radius:12px;padding:10px;box-shadow:0 0 0 1.5px #3a2616}
+.maps img{width:100%;height:auto;image-rendering:pixelated;border-radius:8px;display:block}.maps figcaption{font:600 13px/1.5 Lora,serif;color:#cdbfa2;margin-top:8px}.maps figcaption b{color:#ffe7b0}
+.strip{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.strip figure{margin:0;width:112px;text-align:center;background:#14120e;border-radius:10px;padding:8px 6px;box-shadow:0 0 0 1.5px #3a2616}
+.strip img{max-width:96px;max-height:96px;image-rendering:pixelated;display:block;margin:0 auto 6px}.strip figcaption{font:700 11.5px/1.3 Lora,serif;color:#cdbfa2}
+.strip.icons figure{width:92px}.strip.icons img{width:48px;height:48px}
+.badge{display:inline-block;font:800 11px Lora,serif;padding:3px 10px;border-radius:999px;background:rgba(126,208,96,.15);box-shadow:inset 0 0 0 1.5px #7ed060;color:#9ce07e;margin-left:8px;vertical-align:middle}
+code{font:600 12.5px ui-monospace,Consolas,monospace;background:#1c1812;padding:1px 6px;border-radius:5px;color:#ffd98a}
+</style>
+</head>
+<body>
+<main>
+  <h1>Thrill Hill <span class="badge">BUILT ON DEV · HELD FOR v1.1</span></h1>
+  <p class="lede">Agility's own map, the way the Guild is Thieving's own building: <b>a monster-truck stunt park</b> through a gate where the
+    Yard's ladder to The Run used to be. The courses are pens walled with crash barriers, and the only way from one pen to the next is the
+    stunt in the barrier between them, so <b>running the stunts in order is the lap</b>. Two maps: <b>Thrill Hill</b> (the Rookie and Pro Runs,
+    the Junk Mound, Fast Eddie) and, by human cannonball, <b>Daredevil Peak</b> (the Champion Run, the Burnout Pit, and Big Daddy Crusher on
+    the Peak). It retires The Run.</p>
+  <nav class="jump"><a href="#maps">The two maps</a><a href="#courses">The courses</a><a href="#places">Only by Agility</a><a href="#eddie">Fast Eddie</a><a href="#art">The art</a><a href="#balance">Balance</a><a href="#test">Try it on dev</a><a href="#ship">Shipping it</a></nav>
+
+  <div class="hero">
+    <img src="art/postcard.png" alt="Thrill Hill, a postcard: monster trucks, grandstands, flaming barrels and a ramp" onerror="this.style.display='none'">
+    <div class="tiles">
+      <div class="tile"><b>2 maps</b><span>Thrill Hill (from the Yard) and Daredevil Peak (by cannon, Agility 70; a zip line back)</span></div>
+      <div class="tile"><b>3 courses</b><span>Rookie from 1 (west), Pro from 40 (east), Champion from 70 (the Peak): five stunts each</span></div>
+      <div class="tile"><b>2 places</b><span>the Junk Mound (Agility 50) and the Peak (Agility 90): one gate in, nobody else gets near</span></div>
+      <div class="tile"><b>No damage</b><span>a slip lands you in the foam where you started: seconds lost, never health</span></div>
+      <div class="tile"><b>Runner's marks</b><span>a lap rolls for one; Fast Eddie at the start line takes them</span></div>
+      <div class="tile"><b>83 checks</b><span><code>node tools/eastscape-thrill-test.mjs</code>: the real server, every stunt, lap, gate, slip, cannon and the Bookie</span></div>
+    </div>
+  </div>
+
+  <section class="sec" id="maps">
+    <h2>The two maps</h2>
+    <p>Rendered from the real maps (<code>node tools/thrill/render-map.mjs</code>), with every stunt numbered in its course's colour:
+      <b style="color:#7ed060">Rookie</b>, <b style="color:#e8a03a">Pro</b>, <b style="color:#ff6a8a">Champion</b>, and the
+      <b style="color:#b08aff">gates</b> (50, 90) and the cannon and zip line (▲). The ground is the Yard's own sheet recoloured to packed red
+      dirt, the tracks are the game's cobble road, and the junk in the pens is placed so it can never pinch a passage shut
+      (<code>lt-wild/thrill-gen.py</code> checks every pen can only be entered through its stunt, and that each course runs pen to pen in order).</p>
+    <div class="maps">
+      <figure><img src="art/thrill-map.png" alt="Thrill Hill from above: the start line and Fast Eddie at the top, the Rookie Run's pens on the left, the Pro Run's on the right, the cannon in the middle, the Junk Mound bottom left with Grease Gremlins and featherwood, grandstands and trucks along the bottom">
+        <figcaption><b>Thrill Hill.</b> In from the Yard at the top. The Rookie Run climbs the tyre wall into the west pens: rope swing, balance
+          plank, dirt-bike ramp, and out through the flaming hoop. The Pro Run (40) goes over the crushed cars into the east pens: cargo net,
+          burning barrels, tyre swing, half-pipe. The human cannonball (70) stands in the middle; the Junk Mound (50) is bottom left.</figcaption></figure>
+      <figure><img src="art/thrill_top-map.png" alt="Daredevil Peak from above: the landing net and zip line at the bottom, the Champion Run's pens on the left and top, Hellbikers in the Burnout Pit, the green nitro pool on the right, and the Peak top right with Big Daddy Crusher, chrome seams and a lockbox">
+        <figcaption><b>Daredevil Peak.</b> The cannon drops you in the landing net at the bottom. The Champion Run (70) jumps the buses into the
+          west pens: through the fire, up the cargo net, the high wire, and the half-pipe drop back into the Burnout Pit. Hellbikers ride the pit;
+          the nitro pool is on the right. Up the crusher ramp (90) to the Peak: Big Daddy Crusher, three chrome seams and a lockbox.</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="sec" id="courses">
+    <h2>The courses</h2>
+    <p>Each stunt is a click: the server checks your Agility, walks you to the near side, and plays you across (2.2 seconds, the shortcut
+      code's crossing). XP for every stunt crossed forwards; the lap bonus when the last one closes a lap run in order from the first, and
+      a roll for a runner's mark. Going back over a stunt is free and pays nothing. A lap left alone for ten minutes starts again.</p>
+    <div class="wrapx"><table class="tbl">
+      <tr><th>Course</th><th>Agility</th><th>The stunts, in order</th><th class="num">Each</th><th class="num">Lap bonus</th><th class="num">A lap</th><th>Mark</th></tr>
+      <tr><td>The Rookie Run</td><td>1</td><td>tyre wall · rope swing · balance plank · dirt-bike ramp · flaming hoop</td><td class="num">25</td><td class="num">60</td><td class="num">185 XP</td><td>1 lap in 3</td></tr>
+      <tr><td>The Pro Run</td><td>40</td><td>crushed-car pile · cargo net · burning barrels · tyre swing · half-pipe</td><td class="num">70</td><td class="num">120</td><td class="num">470 XP</td><td>1 lap in 2</td></tr>
+      <tr><td>The Champion Run</td><td>70</td><td>jump the buses · through the fire · cargo net · high wire · half-pipe drop</td><td class="num">130</td><td class="num">250</td><td class="num">900 XP</td><td>9 laps in 10</td></tr>
+    </table></div>
+    <p class="note">Slips: the shortcut rule, 10% at exactly the level falling to nothing ten levels over it, and never on the Rookie Run. The
+      Sure-foot tonic stops slips for ten minutes. The Junk Mound's gate, the Peak's ramp, the cannon and the zip line pay their level × 3 like a shortcut.</p>
+  </section>
+
+  <section class="sec" id="places">
+    <h2>Only by Agility</h2>
+    <div class="rules3">
+      <div><b>The Junk Mound · Agility 50</b><span>Bottom left of Thrill Hill, over the scrap. <b>Grease Gremlins</b> (level 50, never start a
+        fight, pockets at Thieving 45): axle grease, feathers, now and then a runner's mark. <b>Featherwood</b> (Woodcutting 60): logs and 1–3
+        <b>feathers with every log</b>, the steady feather source fletchers lacked.</span></div>
+      <div><b>The Burnout Pit · Agility 70</b><span>Daredevil Peak, open to anyone the cannon took. <b>Hellbikers</b> (level 75, leave you alone,
+        pockets at Thieving 70): chrome, grease, nitro eel fillets, runner's marks. <b>The nitro pool</b> (Fishing 75): nitro eels, cooked at
+        Cooking 75 into a fillet that makes you <b>8% faster for ten minutes, feet included</b>, the only walk-speed fish.</span></div>
+      <div><b>The Peak · Agility 90</b><span>Up the crusher ramp. <b>Big Daddy Crusher</b> (a level-92 monster-truck boss, everyone who hurts it
+        shares the kill, back in ten minutes): 6,000–10,000 tickets, chrome, stunt leathers, chrome-toe boots, and <b>Lil' Crusher</b>, its pet
+        (1 in 50: walk 10% faster, take 6% less damage). Three <b>chrome seams</b> (Mining 85) for <b>chrome-toe boots</b> (Smithing 85: walk 4%
+        faster), and a <b>lockbox</b> (Thieving 90).</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="eddie">
+    <h2>Fast Eddie, the Bookie</h2>
+    <p>At the start line. He takes runner's marks and nothing else; marks still sell to Bom for 50 tickets, so nothing here mints tickets.</p>
+    <div class="wrapx"><table class="tbl">
+      <tr><th>Goods</th><th class="num">Marks</th><th>What it does</th></tr>
+      <tr><td>Sure-foot tonic</td><td class="num">8</td><td>a drink: ten minutes of no slips on stunts or shortcuts, and 10% more Agility XP</td></tr>
+      <tr><td>Stunt helmet</td><td class="num">100</td><td>a helm (Agility 40): walk 2% faster</td></tr>
+      <tr><td>Stunt leathers</td><td class="num">150</td><td>a body (Agility 60): walk 2% faster</td></tr>
+    </table></div>
+    <p class="note">Every walk-speed piece here (boots 4, helmet 2, leathers 2, the fillet 8, the pet 10) goes through the game's existing speed
+      cap (full to 20%, half above, 50% at most), so stacking them cannot break movement.</p>
+  </section>
+
+  <section class="sec" id="art">
+    <h2>The art</h2>
+    <p>All PixelLab, in the game's style brief. The monsters' walk and attack frames are made from each picture
+      (<code>tools/eastscape-thrill-art.mjs</code>: a squash-and-stretch bob and a lean into the swing). 94 KB for both maps.</p>
+    <div class="strip">
+      <figure><img src="art/crusher.png" alt=""><figcaption>Big Daddy Crusher</figcaption></figure>
+      <figure><img src="art/hellbiker.png" alt=""><figcaption>Hellbiker</figcaption></figure>
+      <figure><img src="art/gremlin.png" alt=""><figcaption>Grease Gremlin</figcaption></figure>
+      <figure><img src="art/fasteddie_south.png" alt=""><figcaption>Fast Eddie</figcaption></figure>
+      <figure><img src="art/pet_lilcrusher.png" alt=""><figcaption>Lil' Crusher</figcaption></figure>
+      <figure><img src="art/th_gate.png" alt=""><figcaption>The gate in the Yard</figcaption></figure>
+      <figure><img src="art/th_cannon.png" alt=""><figcaption>Human cannonball</figcaption></figure>
+      <figure><img src="art/th_zipline.png" alt=""><figcaption>Zip line</figcaption></figure>
+      <figure><img src="art/th_tyrewall.png" alt=""><figcaption>Tyre wall</figcaption></figure>
+      <figure><img src="art/th_ropeswing.png" alt=""><figcaption>Rope swing</figcaption></figure>
+      <figure><img src="art/th_plank.png" alt=""><figcaption>Balance plank</figcaption></figure>
+      <figure><img src="art/th_ramp.png" alt=""><figcaption>Dirt-bike ramp</figcaption></figure>
+      <figure><img src="art/th_hoop.png" alt=""><figcaption>Flaming hoop</figcaption></figure>
+      <figure><img src="art/th_cars.png" alt=""><figcaption>Crushed cars</figcaption></figure>
+      <figure><img src="art/th_net.png" alt=""><figcaption>Cargo net</figcaption></figure>
+      <figure><img src="art/th_firebarrels.png" alt=""><figcaption>Burning barrels</figcaption></figure>
+      <figure><img src="art/th_tyreswing.png" alt=""><figcaption>Tyre swing</figcaption></figure>
+      <figure><img src="art/th_halfpipe.png" alt=""><figcaption>Half-pipe</figcaption></figure>
+      <figure><img src="art/th_buses.png" alt=""><figcaption>Bus jump</figcaption></figure>
+      <figure><img src="art/th_firewall.png" alt=""><figcaption>Wall of fire</figcaption></figure>
+      <figure><img src="art/th_highwire.png" alt=""><figcaption>High wire</figcaption></figure>
+      <figure><img src="art/o_featherwood.png" alt=""><figcaption>Featherwood</figcaption></figure>
+      <figure><img src="art/o_chromeseam.png" alt=""><figcaption>Chrome seam</figcaption></figure>
+    </div>
+    <div class="strip icons">
+      <figure><img src="art/i_featherlogs.png" alt=""><figcaption>Featherwood logs</figcaption></figure>
+      <figure><img src="art/i_grease.png" alt=""><figcaption>Axle grease</figcaption></figure>
+      <figure><img src="art/i_nitroeel.png" alt=""><figcaption>Raw nitro eel</figcaption></figure>
+      <figure><img src="art/i_cnitroeel.png" alt=""><figcaption>Nitro eel fillet</figcaption></figure>
+      <figure><img src="art/i_chrome.png" alt=""><figcaption>Chrome scrap</figcaption></figure>
+      <figure><img src="art/i_chrome_boots.png" alt=""><figcaption>Chrome-toe boots</figcaption></figure>
+      <figure><img src="art/i_pot_surefoot.png" alt=""><figcaption>Sure-foot tonic</figcaption></figure>
+      <figure><img src="art/i_stunt_helmet.png" alt=""><figcaption>Stunt helmet</figcaption></figure>
+      <figure><img src="art/i_stunt_leathers.png" alt=""><figcaption>Stunt leathers</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="sec" id="balance">
+    <h2>Balance</h2>
+    <div class="rules3">
+      <div><b>Agility catches up</b><span>Laps run about 25–32 seconds: roughly <b>27k XP an hour</b> on the Rookie Run, <b>60k</b> on the Pro,
+        <b>100k</b> on the Champion, against The Run's flat ~22k. The mockup's curve: ~590 hours to 99 becomes ~115.</span></div>
+      <div><b>A small faucet</b><span>Only the Crusher drops tickets (6,000–10,000, a boss's share). Everything else is goods and gear; the
+        Bookie takes marks, not tickets; marks still sell for 50.</span></div>
+      <div><b>Never a trap</b><span>No damage anywhere on a course. The Gremlins and Hellbikers never start a fight; the Crusher only comes
+        for you once you are up the ramp.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="test">
+    <h2>Try it on dev</h2>
+    <ul class="build">
+      <li>The game server: <code>wrangler dev --port 8787 --var DEV:1 --define globalThis.__ES_OPEN_ALL:true</code>, and the page at
+        <code>http://localhost:4321/eastscape.html?open=1&amp;as=&lt;name&gt;</code>.</li>
+      <li>The gate is where The Run's ladder was, by the Yard's north wall (10, 2). An admin can also <code>tp thrill</code> or <code>tp thrill_top</code>.</li>
+      <li>To try everything at once, give the test character Agility 90 from the admin window's Testing tab.</li>
+    </ul>
+  </section>
+
+  <section class="sec" id="ship">
+    <h2>Shipping it (v1.1)</h2>
+    <ul class="build">
+      <li><b>Switch:</b> <code>HOLD.thrill</code> to false in the rules file. Until then The Run's ladder, quest and map are exactly as they were;
+        anyone somehow saved on either map is walked back to the Yard (the worker's HELD_MAPS).</li>
+      <li><b>Files:</b> the rules, the maps (<code>eastscape-closed.js</code>), the wiki, the page; 69 new pictures and 9 item icons, and the rebuilt
+        sprite sheets (push and probe these first); the worker's new <code>thrill.js</code>.</li>
+      <li><b>It retires The Run:</b> the Yard's door goes to Thrill Hill, and Beat the Clock sends you there. The Run's map stays in the
+        rules so nothing saved inside it breaks.</li>
+      <li><b>Not in this build:</b> a best-lap board (laps and best times are already saved per character, <code>C.laps</code> and
+        <code>C.bestLap</code>), a weekly race, and Getaway silks (they belong to the skilling sets).</li>
+    </ul>
+    <p class="note">The first design for this map, Daredevil Gorge, is in the Archive.</p>
+  </section>
+</main>
+</body>
+</html>

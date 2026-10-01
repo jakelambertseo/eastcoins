@@ -28,7 +28,7 @@ const CATS = [
   ["The world", [
     ["atlas-mock", "Atlas", "The atlas: maps and skilling to 120"],
     ["mapbook-mock", "Map book", "Every map today"],
-    ["agilitymap-mock", "Daredevil Gorge", "An agility map, for v1.1"],
+    ["thrillhill-mock", "Thrill Hill", "Agility's own map, built for v1.1"],
     ["wild-mock", "The Wilderness", "The Wilderness check"],
     ["events-mock", "World events", "World events"],
     ["raid-mock", "Yard raids", "Yard raids"]]],
@@ -55,6 +55,7 @@ const CATS = [
     ["ui-custom-mock", "Your screen", "Your screen, your way"],
     ["ui-kit", "UI kit", "The EastScape UI kit"]]],
   ["Archive", [
+    ["agilitymap-mock", "Daredevil Gorge", "The first plan for the agility map (became Thrill Hill)"],
     ["roadmap-mock", "Old roadmap", "The first roadmap mockup"]]]];
 const PAGES = CATS.flatMap(([, ps]) => ps);
 const SUPPORT = [];   /* folders the pages reach into but that are not pages of their own (the UI kit is a page now) */

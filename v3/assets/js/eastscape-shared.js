@@ -2428,7 +2428,7 @@ Object.assign(SCENES, {
       /* (2026-09-22, the owner) THE RUN's way in is a rope ladder now, up at 10,2 rather than a door at 6,5. It
          keeps the type `roomdoor` because that is what carries `enter` through to the scene change; only the
          picture and the tile move. Kept from wild(), or a bush grows over the entrance. */
-      objs.push({ t: "roomdoor", art: "o_wildladder", x: 10, y: 2, name: "The Run: an agility course", enter: "agility" }); g[2][10] = "#"; keep.push([10, 2]);
+      objs.push(HOLD.thrill === false ? { t: "roomdoor", art: "th_gate", x: 10, y: 2, name: "Thrill Hill: the stunt park (Agility)", enter: "thrill" } : { t: "roomdoor", art: "o_wildladder", x: 10, y: 2, name: "The Run: an agility course", enter: "agility" });   /* (2026-10-01) THRILL HILL retires The Run: same door, once it is open (HOLD.thrill, set at the end of this file, is still undefined if anything built the Yard first, which counts as held) */ g[2][10] = "#"; keep.push([10, 2]);
       /* (v122) where woodcutting starts: two ordinary trees by the Yard's edge, Woodcutting 1. */
       /* (2026-09-22, the owner: "this tree in the yard should look unique, it currently looks like all the other
          trees and doesnt stand out") THESE TWO ARE THE ONLY CHOPPABLE TREES IN THE YARD. The other 126 tree objects
@@ -8925,7 +8925,7 @@ export const tkOn = (c) => Object.entries(c?.tk || {}).filter(([id, t]) => GADGE
 export const tkDmg = (c, style) => tkOn(c).reduce((a, g) => a + (g.dmg?.[style] || 0), 0) + gemFor(c, GEM_DMG[style]) + outfitDmg(c, style) + (style === "archery" ? fxOf(c).adm || 0 : style === "magic" ? fxOf(c).mdm || 0 : 0);   /* (2026-09-29) and the outfitters' armour for that style (OUTFIT) */   /* (2026-09-28) and a socketed gem */   /* (2026-09-30) and adm, archery damage from gear and drinks */
 export const tkAcc = (c, style) => tkOn(c).reduce((a, g) => a + (g.acc?.[style] || 0), 0) + gemFor(c, "jade");
 export const tkCraft = (c, skill) => { let dbl = 0, noburn = false; for (const g of tkOn(c)) if (g.craft?.skill === skill) { dbl += g.craft.dbl || 0; noburn ||= !!g.craft.noburn; } const pc = projFx(c)?.craft?.[skill]; if (pc) { dbl += pc.dbl; noburn ||= pc.noburn; } dbl += gemFor(c, GEM_SKILL[skill]?.fx === "dbl" ? GEM_SKILL[skill].k : null); return { dbl: Math.max(0, dbl), noburn }; };   /* (2026-09-28) and the map's World Project */
-export const tkXp = (c, skill) => { const pf = projFx(c); return tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0) + (pf?.xp?.[skill] || 0) + (pf?.xpAll || 0) + gemFor(c, GEM_SKILL[skill]?.fx === "xp" ? GEM_SKILL[skill].k : null); };   /* (and a Grand Opening's +10% on everything) */
+export const tkXp = (c, skill) => { const pf = projFx(c); return (skill === "agility" && sureFoot(c) ? 0.1 : 0) + tkOn(c).reduce((a, g) => a + (g.xp?.skill === skill ? g.xp.mult : 0), 0) + (pf?.xp?.[skill] || 0) + (pf?.xpAll || 0) + gemFor(c, GEM_SKILL[skill]?.fx === "xp" ? GEM_SKILL[skill].k : null); };   /* (and a Grand Opening's +10% on everything) */
 export const tkSalv = (c) => tkOn(c).reduce((a, g) => a + (g.salv || 0), 0) + (projFx(c)?.salv || 0) + gemFor(c, "quartz");
 /** is an automation tool running for this kind of work ("rock", "tree", "spot")? */
 export const tkAuto = (c, kind) => tkOn(c).some((g) => g.auto === kind || (g.auto === "rock" && kind === "vein"));
@@ -10307,7 +10307,7 @@ export const BACKWAYS = {
 export const SC_VERB = { drain: "climb down into the drain", log: "walk the log", stones: "hop across", rope: "swing over", fence: "squeeze through", duck: "duck under the railing", squeeze: "squeeze through the bars", climb: "climb over" };
 export const scLine = (s) => { const [ax, ay] = s.a, [bx, by] = s.b, hop = Math.max(Math.abs(bx - ax), Math.abs(by - ay)), r = []; for (let i = 1; i < hop; i++) r.push([ax + Math.round(((bx - ax) * i) / hop), ay + Math.round(((by - ay) * i) / hop)]); return r; };
 export const scHop = (s) => Math.max(Math.abs(s.b[0] - s.a[0]), Math.abs(s.b[1] - s.a[1]));
-export const slipChance = (c, lvl) => Math.max(0, WT.cross.slip * (1 - (lvlOf(c, "agility") - lvl) / WT.cross.slipGone));
+export const slipChance = (c, lvl) => sureFoot(c) ? 0 : Math.max(0, WT.cross.slip * (1 - (lvlOf(c, "agility") - lvl) / WT.cross.slipGone));
 /* buildScene's step: append-only, after the projects, so no object that was there before moves id */
 function worldThiefObjs(key, b) {
   if (HOLD.thief2) return;
@@ -10340,3 +10340,68 @@ function worldThiefObjs(key, b) {
 }
 ITEMS.lockpick = { name: "Lockpick", icon: "\u{1FA9B}", ex: "A pick and a tension wrench. One go at a lockbox, whether it opens or not. Vance sells them." };
 ITEMS.skeleton_key = { name: "Skeleton key", icon: "\u{1F5DD}️", ex: "Hold one when you open a Crypt or Pyramid hoard and it rolls a second time. One key, one hoard." };
+
+/* ============================================================ THRILL HILL (2026-10-01, v1.1). The owner: "lets start on the agility map for v.1.1 as well
+   called "Thrill Hill". lets make it have some character, ie: thrilling, giant monster trucks, dirt bikes, flaming things, etc." Agility's own
+   map, the way the Guild is Thieving's own building, and it RETIRES THE RUN: the Yard's ladder goes here instead (only once this is open).
+     thrill      Thrill Hill. The Rookie Run (any Agility) and the Pro Run (40) are pens walled with crash barriers; the only way from one pen to
+                 the next is the stunt in the barrier between them, so running the stunts in order IS the lap. The Junk Mound (Agility 50)
+                 holds Grease Gremlins and featherwood; the human cannonball (Agility 70) fires you up to
+     thrill_top  Daredevil Peak. The Champion Run (70), the Burnout Pit's Hellbikers and nitro pool, and the Peak (Agility 90): Big Daddy
+                 Crusher, chrome and a lockbox. A zip line back down.
+   The maps are written by lt-wild/thrill-gen.py (eastscape-closed.js); each stunt object carries its course, its place in the lap, its sides
+   and its level, and the server's thrill.js runs it on the shortcut code (level check, the crossing, a slip under level+10).
+   NEVER A DAMAGE TRAP: a slip costs the seconds and puts you back where you were. A stunt is XP every time; a lap in order pays a bonus
+   and maybe a runner's mark, which FAST EDDIE at the start line takes for the Bookie's goods. Nothing here costs or pays tickets. HELD. */
+HOLD.thrill = !globalThis.__ES_OPEN_ALL;
+export const THRILL_MAPS = ["thrill", "thrill_top"];
+/* XP per stunt and per lap. Laps run ~25-32 s, so about 27k an hour on the Rookie Run, 60k on the Pro, 100k on the Champion (the mockup's
+   curve: Agility from ~590 hours to 99 on The Run to ~115) */
+export const THRILL = {
+  courses: { rookie: { name: "The Rookie Run", lvl: 1, xp: 25, lap: 60, mark: 1 / 3 }, pro: { name: "The Pro Run", lvl: 40, xp: 70, lap: 120, mark: 1 / 2 }, champ: { name: "The Champion Run", lvl: 70, xp: 130, lap: 250, mark: 0.9 } },
+  ms: 2200,             /* a stunt takes this long, whatever it is */
+  gateXp: 3,            /* a gate or a cannon: its level x this, like a shortcut */
+  lapGapMs: 10 * 60000  /* a lap left half-run for ten minutes starts again */ };
+export const THRILL_VERB = { climb: "climb the", rope: "swing across on the", log: "walk the", jump: "hit the", dive: "dive through the", leap: "leap the", swing: "swing on the", cannon: "climb into the cannon", zip: "clip onto the zip line" };
+export const stuntLvl = (o) => o.gate || (o.crs ? THRILL.courses[o.crs].lvl : 1);
+/* FAST EDDIE, the Bookie: runner's marks for goods. Marks still sell to Bom for 50; nothing here is sold for tickets */
+export const BOOKIE = [["pot_surefoot", 8], ["stunt_helmet", 100], ["stunt_leathers", 150]];
+Object.assign(ITEMS, {
+  featherlogs:    { name: "Featherwood logs", icon: "\u{1FAB5}", ex: "Light as a dry leaf. Every chop at the Junk Mound's featherwood shakes a few feathers loose as well." },
+  grease:         { name: "Axle grease", icon: "\u{1F6E2}️", ex: "A Grease Gremlin's whole personality, in a tin. It goes into chrome-toe boots." },
+  nitroeel:       { name: "Raw nitro eel", icon: "\u{1F40D}", raw: true, ex: "It fizzes. It is not supposed to fizz. From the Burnout Pit's nitro pool, Fishing 75." },
+  cnitroeel:      { name: "Nitro eel fillet", icon: "\u{1F40D}", heal: 40, meal: { mins: 10, fx: { speed: 0.08 } }, ex: "Eat it and everything gets quicker for ten minutes, your feet included: 8% faster. The only walk-speed fish." },
+  chrome:         { name: "Chrome scrap", icon: "\u{1FA99}", ex: "Bright as a bumper. Off the seams on top of Daredevil Peak, Mining 85. It makes chrome-toe boots." },
+  chrome_boots:   { name: "Chrome-toe boots", short: "Boots", icon: "\u{1F462}", slot: "boots", def: 10, spd: 4, req: { skill: "agility", lvl: 70 }, ex: "Steel toes, chrome caps and flames down the side. You walk 4% faster. Smithed from the Peak's chrome." },
+  pot_surefoot:   { name: "Sure-foot tonic", short: "Tonic", icon: "\u{1F9EA}", drink: { mins: 10, fx: {} }, sure: true, ex: "Fast Eddie's own. Ten minutes outside: you never slip on a stunt or a shortcut, and Agility XP comes 10% quicker." },
+  stunt_helmet:   { name: "Stunt helmet", short: "Helmet", icon: "⛑️", slot: "helm", def: 4, spd: 2, req: { skill: "agility", lvl: 40 }, ex: "Red, gold and dented. You walk 2% faster. Fast Eddie takes 100 runner's marks for one." },
+  stunt_leathers: { name: "Stunt leathers", short: "Leathers", icon: "\u{1F9E5}", slot: "body", def: 7, spd: 2, req: { skill: "agility", lvl: 60 }, ex: "A daredevil's one-piece, stars down the arms. You walk 2% faster. Fast Eddie takes 150 runner's marks for it." }
+});
+Object.assign(VALUE, { featherlogs: 60, grease: 90, nitroeel: 70, cnitroeel: 140, chrome: 160, chrome_boots: 18000, pot_surefoot: 400, stunt_helmet: 5000, stunt_leathers: 7500 });
+recipe("cook_nitroeel", { skill: "cooking", station: "fire", lvl: 75, xp: 300, ms: 1800, in: [["nitroeel", 1]], out: ["cnitroeel", 1], burnStop: 92 });
+recipe("smith_chrome_boots", { skill: "smithing", station: "anvil", lvl: 85, xp: 1300, ms: 2600, in: [["chrome", 8], ["onyx_bar", 2], ["grease", 2]], out: ["chrome_boots", 1] });
+/* the creatures: nothing here attacks on sight (the game's relaxed tone) except the Crusher, in his own pen on the Peak */
+vmob("gremlin", { name: "Grease Gremlin", size: "s", lvl: 50, hp: 92, att: 36, def: 32, max: 9, speed: 2000, box: [22, 26],
+  ex: "Lives in the Junk Mound, eats bolts, sets things on fire for fun. Never starts a fight. Pick its pockets at Thieving 45." }, 120,
+  [["grease", [1, 2], 0.5], ["agilmark", 1, 0.05], ["feather", [3, 8], 0.3]], [["sharps_gloves", 0.004]]);
+vmob("hellbiker", { name: "Hellbiker", size: "m", lvl: 75, hp: 170, att: 58, def: 52, max: 15, speed: 1900, box: [34, 26],
+  ex: "Laps the Burnout Pit on a bike that should not still be running. Leaves you alone unless you start it. Pick his pockets at Thieving 70." }, 260,
+  [["chrome", [1, 2], 0.25], ["grease", 1, 0.2], ["cnitroeel", 1, 0.06], ["agilmark", 1, 0.08]], [["stunt_helmet", 0.004]]);
+vmob("crusher", { name: "Big Daddy Crusher", size: "xl", lvl: 92, hp: 6500, att: 82, def: 72, max: 30, speed: 2600, box: [96, 72], aggro: 3, boss: true, open: true, announce: "\u{1F6FB}", range: 2,
+  ex: "Six tons of monster truck that has decided it is alive, on top of Daredevil Peak. It only comes for you if you come up the ramp. Everyone who hurts it shares the kill." }, 1800,
+  [["tickets", [6000, 10000]], ["chrome", [4, 8]], ["grease", [3, 6]], ["cnitroeel", [2, 4]], ["stunt_leathers", 1, 0.03], ["chrome_boots", 1, 0.02]], []);
+BOSSES.add("crusher");
+Object.assign(PETS, { lilcrusher: { name: "Lil' Crusher", art: "pet_lilcrusher", raid: true, fx: { speed: 10, tough: 6 }, ex: "Big Daddy Crusher's, about the size of a lunchbox and every bit as loud. You walk 10% faster and take 6% less damage. Only Big Daddy Crusher drops it." } });
+Object.assign(MOBS.crusher, { pet: ["lilcrusher", 1 / 50] });
+Object.assign(POCKETS, { gremlin: 45, hellbiker: 70 });
+LOCKBOXES.thrill_top = [29, 8, 90];
+/* the Sure-foot tonic: no slips while it lasts, and 10% more Agility XP (tkXp) */
+export function sureFoot(c) { return !!(c?.drink && (c.drink.left | 0) > 0 && ITEMS[c.drink.k]?.sure); }
+/* SCENES.thrill and SCENES.thrill_top are in eastscape-closed.js, written by lt-wild/thrill-gen.py */
+if (!HOLD.thrill) {
+  for (const k of THRILL_MAPS) { OPEN.add(k); PET_SCENES.add(k); }
+  Object.assign(QUESTS.runclock, { brief: "Vince says nobody's fast any more. Go and run Thrill Hill, the stunt park through the gate by the Yard's north wall.",
+    stages: [{ type: "visit", scene: "thrill", what: "Thrill Hill" }] });
+  Object.assign(QUESTS.runclock.talk, { offer: ["Nobody's quick any more. They walk up to a ramp and look at it like it owes them money.", "There's a stunt park through the gate by the Yard's north wall. Thrill Hill. Go and run it, once, and come and tell me you did."],
+    accepted: "Tyres first. Then everything else. Don't look down.", progress: "Have you been? The gate's by the Yard's north wall." });
+}

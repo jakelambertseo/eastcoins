@@ -46,15 +46,25 @@ function pvBuild(G, def, L) {
   for (const [w, h, x, y] of L.cliffs) { objs.push({ t: "cliff", art: `${K.cliff}${w}x${h}`, x, y, w, h, edge: true, flat: true, name: K.cliffName || "A ledge" }); shut(x, y, w, h); }
   for (const [art, x, y, w, h] of L.props) { objs.push({ t: "cliff", art, x, y, w, h, edge: true, name: nameOf(art) }); shut(x, y, w, h); }
   for (const [art, x, y, w = 1, h = 1] of L.decor) objs.push({ t: "cliff", art, x, y, w, h, edge: true, flat: true, name: nameOf(art) });
-  for (const [x, y] of L.cycads) { objs.push({ t: K.tree.t, x, y, log: K.tree.log, name: K.tree.name, req: { skill: "woodcutting", lvl: K.tree.lvl }, xp: K.tree.xp }); g[y][x] = "#"; }
-  for (const [x, y] of L.rocks) { objs.push({ t: "rock", x, y, ore: K.rock.ore, name: K.rock.name, req: { skill: "mining", lvl: K.rock.lvl }, xp: K.rock.xp }); g[y][x] = "#"; }
+  for (const [x, y] of L.cycads) { objs.push({ t: K.tree.t, x, y, log: K.tree.log, name: K.tree.name, req: { skill: "woodcutting", lvl: K.tree.lvl }, xp: K.tree.xp, ...(K.tree.art ? { art: K.tree.art } : {}), ...(K.tree.extra ? { extra: K.tree.extra } : {}) }); g[y][x] = "#"; }   /* (2026-10-01) Thrill Hill's featherwood: its own picture, and feathers with every log */
+  for (const [x, y] of L.rocks) { objs.push({ t: "rock", x, y, ore: K.rock.ore, name: K.rock.name, req: { skill: "mining", lvl: K.rock.lvl }, xp: K.rock.xp, ...(K.rock.art ? { art: K.rock.art } : {}) }); g[y][x] = "#"; }
   for (const [x, y] of L.spots) objs.push({ t: "spot", x, y, name: K.spot.name, req: { skill: "fishing", lvl: K.spot.lvl }, fish: K.spot.fish, xp: K.spot.xp, glow: K.spot.glow, tease: K.spot.tease });
   if (L.sign) { const [x, y, name] = L.sign; objs.push({ t: "sign", x, y, name }); g[y][x] = "#"; }
+  /* (2026-10-01) THRILL HILL'S STUNTS: each one carries its own course, place in the lap, sides and level, so the server needs nothing
+     but the object (thrill.js); a `to` stunt (the cannon, the zip line) goes to another map instead of across */
+  for (const st of L.stunts || []) { const w = st.w || 1, h = st.h || 1; objs.push({ t: "stunt", ...st, w, h }); for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[st.y + j][st.x + i] = "#"; }
   return { g, objs, blobs: [] };
 }
+/* (2026-10-01) THRILL HILL'S GATHERING: featherwood in the Junk Mound (feathers with every log), chrome on the Peak, nitro eels in the Burnout Pit */
+const THRILL_KIT = {
+  thrill: { tree: { t: "tree", art: "o_featherwood", log: "featherlogs", name: "Featherwood", lvl: 60, xp: 160, extra: ["feather", 1, 3] } },
+  thrill_top: { rock: { ore: "chrome", name: "Chrome seam", lvl: 85, xp: 210, art: "o_chromeseam" },
+    spot: { name: "The nitro pool", fish: "nitroeel", lvl: 75, xp: 260, glow: "#7affd0", tease: "Something in the green water fizzes when it moves." } } };
 const PV_NAMES = { pv_palm: "A cycad palm", pv_fern: "Giant ferns", pv_tent_red: "A hide tent", pv_tent_green: "A hide tent", pv_tusk_l: "A mammoth tusk", pv_tusk_r: "A mammoth tusk",
   pv_totem: "A bone totem", pv_skeleton: "The fossil of something enormous", pv_skull: "A skull bigger than a cart", pv_throne: "Old Rex's throne, of bones", pv_bone: "Old bones",
   pv_vent: "A steaming vent", pv_tarhole: "A tar pit, bubbling", pv_crystal: "Red crystal", pv_lavarock: "Cooled lava", pv_volcano: "The volcano",
+  th_barh: "A crash barrier", th_barv: "A crash barrier", th_truck: "A monster truck, parked", th_grandstand: "The grandstand. They're cheering for somebody.", th_scoreboard: "The scoreboard",
+  th_firebarrels: "Barrels, on fire, on purpose", th_flamebarrel: "A barrel, on fire", th_cars: "Crushed cars", o_barrel: "An oil drum", o_cones: "Traffic cones", th_tyres: "A stack of tyres", th_oil: "An oil slick", th_landing: "The landing net",   /* (2026-10-01) Thrill Hill */
   fz_statue: "A giant frozen where it stood", fz_rock: "Rocks under snow", fz_pine: "A pine under snow", fz_crystal: "Ice crystals", fz_floe: "An ice floe" };   /* (2026-09-30) the Frozen Reach */
 /* an animated piece on rock (a waterfall, a lava pool): the footprint stays blocked, its cells leave the wall set */
 function animPiece(g, objs, walls, spec) {
@@ -929,6 +939,76 @@ export function createClosedScenes(G, H) {
     npcs: [], bots: []
   },
   /* VALLEY-GEN END */
+  /* THRILL-GEN: Thrill Hill and Daredevil Peak, written by lt-wild/thrill-gen.py (edit that, not this) */
+  thrill: {
+    name: "Thrill Hill", ground: "thrill", entry: {"x": 22, "y": 2}, exitTo: {"scene": "workyard", "x": 10, "y": 3}, noBanks: true, held: "thrill", tint: "rgba(70,40,10,.07)",
+    rows: [
+      ".....................eee....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      "..,,,,,,,,,,,,,,,,...,,...,,,,,,,,,,,,,,,,,.",
+      "..,,,,,,,,,,,,,,,,...,,...,,,,,,,,,,,,,,,,,.",
+      "..,,.................,,..................,,.",
+      ".....................,,.....................",
+      "..,,,,,,,,...........,,............,,,,,,,..",
+      "..,,,,,,,,...........,,............,,,,,,,..",
+      "........,,,,,,,,,,...,,....,,,,,,,.,,.......",
+      "..........,,,,,,,,...,,....,,,,,,,..........",
+      "................,,...,,....,,...............",
+      ".....................,,.....................",
+      "................,,,..,,...,,................",
+      "................,,,..,,...,,................",
+      ".................,,..,,...,,................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      ".....................,,.....................",
+      "..............,,,,,,,,,,,,,,,,,,,,,.........",
+      "..............,,,,,,,,,,,,,,,,,,,,,.........",
+      "............................................",
+      "............................................",
+      "............................................",
+      "............................................"
+    ],
+    build() { return pvBuild(G, this, {"cliffs": [], "props": [["th_barh2", 0, 6, 2, 1], ["th_barh4", 0, 12, 4, 1], ["th_barh4", 0, 18, 4, 1], ["th_barh4", 3, 6, 4, 1], ["th_barh4", 4, 12, 4, 1], ["th_barh4", 4, 18, 4, 1], ["th_barh4", 7, 6, 4, 1], ["th_barh4", 8, 12, 4, 1], ["th_barh4", 8, 18, 4, 1], ["th_barv2", 9, 7, 1, 2], ["th_barv2", 9, 10, 1, 2], ["th_barh4", 11, 6, 4, 1], ["th_barh4", 12, 12, 4, 1], ["th_barh4", 12, 18, 4, 1], ["th_barv3", 13, 19, 1, 3], ["th_barv3", 13, 23, 1, 3], ["th_barh4", 15, 6, 4, 1], ["th_barh3", 16, 18, 3, 1], ["th_barh2", 17, 12, 2, 1], ["th_barv3", 18, 0, 1, 3], ["th_barv2", 18, 4, 1, 2], ["th_barv4", 18, 7, 1, 4], ["th_barv1", 18, 11, 1, 1], ["th_barv2", 18, 13, 1, 2], ["th_barv2", 18, 16, 1, 2], ["th_barv3", 25, 0, 1, 3], ["th_barv4", 25, 4, 1, 4], ["th_barv4", 25, 8, 1, 4], ["th_barh2", 25, 12, 2, 1], ["th_barv2", 25, 13, 1, 2], ["th_barv3", 25, 16, 1, 3], ["th_barh4", 26, 6, 4, 1], ["th_barh4", 26, 18, 4, 1], ["th_barh4", 28, 12, 4, 1], ["th_barh4", 30, 6, 4, 1], ["th_barh4", 30, 18, 4, 1], ["th_barh4", 32, 12, 4, 1], ["th_barh4", 34, 6, 4, 1], ["th_barv2", 34, 7, 1, 2], ["th_barv2", 34, 10, 1, 2], ["th_barh4", 34, 18, 4, 1], ["th_barh4", 36, 12, 4, 1], ["th_barh3", 38, 6, 3, 1], ["th_barh4", 38, 18, 4, 1], ["th_barh4", 40, 12, 4, 1], ["th_barh2", 42, 6, 2, 1], ["th_barh2", 42, 18, 2, 1], ["th_grandstand", 36, 20, 5, 3], ["th_truck", 15, 23, 3, 2], ["th_scoreboard", 28, 23, 3, 2], ["th_firebarrels", 42, 24, 2, 1], ["th_tyres", 24, 24, 1, 1], ["th_tyres", 33, 19, 1, 1], ["th_tyres", 43, 19, 1, 1], ["th_firebarrels", 19, 24, 2, 1], ["th_tyres", 5, 1, 1, 1], ["o_barrel", 10, 1, 1, 1], ["o_cones", 8, 1, 1, 1], ["th_tyres", 16, 1, 1, 1], ["th_cars", 1, 1, 2, 1], ["th_tyres", 1, 10, 1, 1], ["o_barrel", 4, 10, 1, 1], ["o_barrel", 5, 14, 1, 1], ["th_flamebarrel", 12, 16, 1, 1], ["o_cones", 7, 15, 1, 1], ["o_barrel", 4, 16, 1, 1], ["th_cars", 9, 14, 2, 1], ["th_tyres", 33, 1, 1, 1], ["th_flamebarrel", 36, 1, 1, 1], ["o_barrel", 42, 1, 1, 1], ["o_cones", 38, 1, 1, 1], ["th_tyres", 27, 1, 1, 1], ["th_firebarrels", 39, 10, 2, 1], ["th_flamebarrel", 42, 10, 1, 1], ["th_firebarrels", 31, 15, 2, 1], ["o_cones", 38, 16, 1, 1], ["th_flamebarrel", 29, 16, 1, 1], ["th_cars", 41, 15, 2, 1], ["o_barrel", 29, 14, 1, 1], ["th_cars", 34, 24, 2, 1], ["th_tyres", 38, 24, 1, 1], ["o_cones", 32, 23, 1, 1], ["th_flamebarrel", 40, 24, 1, 1], ["th_tyres", 26, 24, 1, 1], ["th_flamebarrel", 22, 23, 1, 1], ["th_tyres", 42, 21, 1, 1], ["th_cars", 7, 20, 2, 1], ["o_barrel", 5, 22, 1, 1]], "decor": [["th_oil1", 30, 20], ["th_oil2", 42, 22], ["th_oil1", 3, 2], ["th_oil2", 38, 15], ["th_oil1", 7, 15], ["th_oil2", 30, 9], ["th_oil2", 32, 24], ["th_oil2", 2, 15]], "cycads": [[1, 20], [11, 20], [6, 25]], "rocks": [], "spots": [], "sign": [24, 1, "THRILL HILL. The Rookie Run is through the tyres to the west, from any Agility. The Pro Run is over the cars to the east, from 40. Run the stunts in order and a lap pays a bonus, and sometimes a runner's mark: Fast Eddie at the start line takes marks. The Junk Mound (50) is south-west, over the scrap. The cannon (70) goes to Daredevil Peak."], "stunts": [{"crs": "rookie", "i": 0, "n": 5, "x": 18, "y": 3, "art": "th_tyrewall", "how": "climb", "name": "Tyre wall", "a": [19, 3], "b": [17, 3]}, {"crs": "rookie", "i": 1, "n": 5, "x": 2, "y": 6, "art": "th_ropeswing", "how": "rope", "name": "Rope swing", "a": [2, 5], "b": [2, 7]}, {"crs": "rookie", "i": 2, "n": 5, "x": 9, "y": 9, "art": "th_plank", "how": "log", "name": "Balance plank", "a": [8, 9], "b": [10, 9]}, {"crs": "rookie", "i": 3, "n": 5, "x": 16, "y": 12, "art": "th_ramp", "how": "jump", "name": "Dirt-bike ramp", "a": [16, 11], "b": [16, 13]}, {"crs": "rookie", "i": 4, "n": 5, "x": 18, "y": 15, "art": "th_hoop", "how": "dive", "name": "Flaming hoop", "a": [17, 15], "b": [19, 15]}, {"crs": "pro", "i": 0, "n": 5, "x": 25, "y": 3, "art": "th_cars", "how": "climb", "name": "Crushed-car pile", "a": [24, 3], "b": [26, 3]}, {"crs": "pro", "i": 1, "n": 5, "x": 41, "y": 6, "art": "th_net", "how": "climb", "name": "Cargo net", "a": [41, 5], "b": [41, 7]}, {"crs": "pro", "i": 2, "n": 5, "x": 34, "y": 9, "art": "th_firebarrels", "how": "leap", "name": "Burning barrels", "a": [35, 9], "b": [33, 9]}, {"crs": "pro", "i": 3, "n": 5, "x": 27, "y": 12, "art": "th_tyreswing", "how": "swing", "name": "Tyre swing", "a": [27, 11], "b": [27, 13]}, {"crs": "pro", "i": 4, "n": 5, "x": 25, "y": 15, "art": "th_halfpipe", "how": "jump", "name": "Half-pipe", "a": [26, 15], "b": [24, 15]}, {"crs": null, "i": 0, "n": 1, "x": 13, "y": 22, "art": "th_tyrewall", "how": "climb", "name": "Over the scrap", "a": [14, 22], "b": [12, 22], "gate": 50}, {"crs": null, "i": 0, "n": 1, "x": 23, "y": 9, "w": 2, "h": 2, "art": "th_cannon", "how": "cannon", "name": "The human cannonball", "a": [22, 9], "b": [22, 9], "gate": 70, "to": {"scene": "thrill_top", "x": 21, "y": 23}}], "kit": THRILL_KIT.thrill}); },
+    mobs: [["gremlin", 3, 22, { respawn: G.levelRespawn("gremlin") }], ["gremlin", 8, 22, { respawn: G.levelRespawn("gremlin") }], ["gremlin", 5, 24, { respawn: G.levelRespawn("gremlin") }]],
+    npcs: [{"name": "Fast Eddie", "art": "fasteddie", "x": 20, "y": 2, "opens": "bookie", "still": true, "hair": "#d8b048", "shirt": "#c83a2a", "pants": "#2a2a3a", "lines": ["Marks, kid. I take marks. Bring 'em to me.", "Rookie Run first. Nobody's ever been hurt on it. Much.", "The cannon? Seventy Agility and a strong neck.", "Run 'em in order or it's not a lap. That's the rule. I made it."]}], bots: []
+  },
+  thrill_top: {
+    name: "Daredevil Peak", ground: "thrill", entry: {"x": 21, "y": 23}, exitTo: { scene: "thrill", x: 21, y: 11 }, noBanks: true, held: "thrill", tint: "rgba(70,40,10,.07)",
+    rows: [
+      "............................................",
+      "............................................",
+      "............................................",
+      "............,,,,,,,,,,......................",
+      "............,,,,,,,,,,......................",
+      "............,,......,,......................",
+      "..,,,,,,,,,,,,......,,......................",
+      "..,,,,,,,,,,,...............................",
+      "..,,................,.......................",
+      "..,,................,.......................",
+      "..,,................,.......................",
+      "..,,................,..............,........",
+      "..,,................,,,,,,,,,,,,,,,,........",
+      "..,,,,,.............,.......................",
+      "..,,,,,.............,.......................",
+      "......,,............,.......................",
+      "......,,............,.......................",
+      "......,,............,...............~~~~~~..",
+      "......,,............,...............~~~~~~..",
+      "......,,............,...............~~~~~~..",
+      "......,,,,,,,.......,...............~~~~~~..",
+      "......,,,,,,,.......,...............~~~~~~..",
+      "....................,.......................",
+      "................,,,,,,,,,,,,,,,,,,..........",
+      "............................................",
+      "............................................"
+    ],
+    build() { return pvBuild(G, this, {"cliffs": [], "props": [["th_barh2", 0, 7, 2, 1], ["th_barh4", 0, 14, 4, 1], ["th_barh4", 3, 7, 4, 1], ["th_barh2", 4, 14, 2, 1], ["th_barh4", 7, 7, 4, 1], ["th_barh4", 7, 14, 4, 1], ["th_barh4", 11, 7, 4, 1], ["th_barh3", 11, 14, 3, 1], ["th_barv3", 13, 0, 1, 3], ["th_barv3", 13, 4, 1, 3], ["th_barv4", 13, 8, 1, 4], ["th_barv2", 13, 12, 1, 2], ["th_barv4", 13, 15, 1, 4], ["th_barv1", 13, 19, 1, 1], ["th_barv4", 13, 21, 1, 4], ["th_barv1", 13, 25, 1, 1], ["th_barh4", 15, 7, 4, 1], ["th_barv1", 19, 7, 1, 1], ["th_barh4", 21, 7, 4, 1], ["th_barh3", 25, 7, 3, 1], ["th_barv4", 27, 0, 1, 4], ["th_barv3", 27, 4, 1, 3], ["th_barv3", 27, 8, 1, 3], ["th_barh4", 28, 10, 4, 1], ["th_barh3", 32, 10, 3, 1], ["th_barh4", 36, 10, 4, 1], ["th_barh4", 40, 10, 4, 1], ["th_truck", 30, 14, 3, 2], ["th_firebarrels", 16, 24, 2, 1], ["th_tyres", 15, 9, 1, 1], ["th_tyres", 43, 13, 1, 1], ["th_firebarrels", 42, 24, 2, 1], ["th_tyres", 26, 9, 1, 1], ["th_tyres", 9, 18, 1, 1], ["th_tyres", 1, 18, 1, 1], ["th_flamebarrel", 2, 21, 1, 1], ["th_tyres", 4, 19, 1, 1], ["o_cones", 6, 23, 1, 1], ["th_tyres", 8, 11, 1, 1], ["o_barrel", 6, 9, 1, 1], ["th_tyres", 5, 11, 1, 1], ["th_tyres", 5, 1, 1, 1], ["th_flamebarrel", 7, 4, 1, 1], ["th_flamebarrel", 8, 1, 1, 1], ["th_firebarrels", 4, 3, 2, 1], ["th_firebarrels", 16, 1, 2, 1], ["th_flamebarrel", 23, 3, 1, 1], ["th_tyres", 23, 1, 1, 1], ["th_tyres", 19, 1, 1, 1], ["th_tyres", 32, 8, 1, 1], ["th_tyres", 22, 18, 1, 1], ["th_cars", 17, 15, 2, 1], ["th_flamebarrel", 24, 14, 1, 1], ["th_firebarrels", 38, 14, 2, 1], ["o_cones", 29, 20, 1, 1], ["th_cars", 35, 14, 2, 1], ["th_cars", 39, 24, 2, 1], ["o_barrel", 38, 8, 1, 1], ["th_tyres", 39, 4, 1, 1], ["o_cones", 32, 6, 1, 1], ["th_flamebarrel", 42, 5, 1, 1]], "decor": [["th_landing", 20, 22], ["th_oil1", 24, 15], ["th_oil2", 31, 19], ["th_oil1", 17, 17], ["th_oil2", 32, 5], ["th_oil1", 9, 20], ["th_oil2", 5, 3], ["th_oil2", 36, 24], ["th_oil1", 22, 9], ["th_oil2", 10, 12], ["th_oil1", 8, 4]], "cycads": [], "rocks": [[29, 1], [42, 2], [41, 8]], "spots": [[37, 18], [40, 20], [37, 21]], "sign": [19, 24, "DAREDEVIL PEAK. The Champion Run starts over the buses to the west. Hellbikers ride the Burnout Pit (pick them at Thieving 70); the nitro pool is east (Fishing 75). The Peak (Agility 90) is up the ramp north: Big Daddy Crusher, chrome, a lockbox. The zip line takes you back down."], "stunts": [{"crs": "champ", "i": 0, "n": 5, "x": 13, "y": 20, "art": "th_buses", "how": "jump", "name": "Jump the buses", "a": [14, 20], "b": [12, 20]}, {"crs": "champ", "i": 1, "n": 5, "x": 6, "y": 14, "art": "th_firewall", "how": "dive", "name": "Through the fire", "a": [6, 15], "b": [6, 13]}, {"crs": "champ", "i": 2, "n": 5, "x": 2, "y": 7, "art": "th_net", "how": "climb", "name": "Cargo net", "a": [2, 8], "b": [2, 6]}, {"crs": "champ", "i": 3, "n": 5, "x": 13, "y": 3, "art": "th_highwire", "how": "rope", "name": "High wire", "a": [12, 3], "b": [14, 3]}, {"crs": "champ", "i": 4, "n": 5, "x": 20, "y": 7, "art": "th_halfpipe", "how": "jump", "name": "Half-pipe drop", "a": [20, 6], "b": [20, 8]}, {"crs": null, "i": 0, "n": 1, "x": 35, "y": 10, "art": "th_ramp", "how": "jump", "name": "Up the crusher ramp", "a": [35, 11], "b": [35, 9], "gate": 90}, {"crs": null, "i": 0, "n": 1, "x": 25, "y": 22, "w": 2, "h": 3, "art": "th_zipline", "how": "zip", "name": "Zip line down to Thrill Hill", "a": [24, 23], "b": [24, 23], "gate": 70, "to": {"scene": "thrill", "x": 21, "y": 11}}], "kit": THRILL_KIT.thrill_top}); },
+    mobs: [["hellbiker", 18, 12, { respawn: G.levelRespawn("hellbiker") }], ["hellbiker", 30, 17, { respawn: G.levelRespawn("hellbiker") }], ["hellbiker", 24, 18, { respawn: G.levelRespawn("hellbiker") }], ["hellbiker", 33, 22, { respawn: G.levelRespawn("hellbiker") }], ["crusher", 35, 4, { respawn: 10 * 60000 }]],
+    npcs: [], bots: []
+  },
+  /* THRILL-GEN END */
   orchard: {
     name: "The Orchard Wall", exits: { n: "boneyard" }, arrive: { n: { x: 12, y: 1 } }, bgArt: ["orchard_bg1", "orchard_bg2"], noBanks: true, miniWater: "#3f8fd8", tint: "rgba(20,60,20,.10)",   /* (the door is on the grass between the canopies, not under SPAN) */
     rows: [

@@ -42,6 +42,7 @@ import { installWeekly } from "./weekly.js";
 import { installTrack } from "./track.js";   /* (2026-09-30) WHAT THE WORLD RECORDS: see track.js and tools/tracking-mock/ */   /* (2026-09-30) THE WEEKLY ISSUE */   
 import { installRaid } from "./raid.js";
 import { installThief } from "./thief.js";
+import { installThrill } from "./thrill.js";
 import { installAdmin } from "./admin.js";   /* (2026-10-01, v1.1) the admin window's state, player card and action log */   /* (2026-10-01) thieving in the world, lockboxes and shortcuts (HOLD.thief2) */
 import { CHAT_PAGE } from "./chatpage.js";   /* (2026-09-30) the staff chat view: see /chat below */   /* (2026-09-30) the Yard raid */   /* (2026-09-30) the Frozen Reach's daily boss */
 import { installOutfit } from "./outfit.js";   /* (2026-09-29) the outfitters: Wren and Morwenna */   /* (2026-09-28) gems, sockets, the Gem Case and the Gem Sorter */   /* (2026-09-28) Tinkering: the sink */   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
@@ -226,7 +227,7 @@ export default {
 
 /* (2026-09-27) where someone saved inside a held map comes back to: the door on the map next door (the Carnival's west edge, the
    Thunderhead's south, the Boneyard's corridor) */
-const HELD_MAPS = { boardwalk: { scene: "carnival", x: 1, y: 13 }, bw_cabin: { scene: "carnival", x: 1, y: 13 }, bw_light: { scene: "carnival", x: 1, y: 13 }, bw_wreck: { scene: "carnival", x: 1, y: 13 }, bw_pier: { scene: "carnival", x: 1, y: 13 }, bw_skull: { scene: "carnival", x: 1, y: 13 }, foundry: { scene: "thunderhead", x: 22, y: 21 }, ...Object.fromEntries(["fd_grove", "fd_maze", "fd_isle", "fd_chain", "fd_gate", "fd_hall"].map((k) => [k, { scene: "thunderhead", x: 22, y: 21 }])),   /* (2026-09-27) the Foundry's seven areas */ orchard: { scene: "boneyard", x: 14, y: 20 } };
+const HELD_MAPS = { boardwalk: { scene: "carnival", x: 1, y: 13 }, bw_cabin: { scene: "carnival", x: 1, y: 13 }, bw_light: { scene: "carnival", x: 1, y: 13 }, bw_wreck: { scene: "carnival", x: 1, y: 13 }, bw_pier: { scene: "carnival", x: 1, y: 13 }, bw_skull: { scene: "carnival", x: 1, y: 13 }, foundry: { scene: "thunderhead", x: 22, y: 21 }, ...Object.fromEntries(["fd_grove", "fd_maze", "fd_isle", "fd_chain", "fd_gate", "fd_hall"].map((k) => [k, { scene: "thunderhead", x: 22, y: 21 }])),   /* (2026-09-27) the Foundry's seven areas */ orchard: { scene: "boneyard", x: 14, y: 20 }, thrill: { scene: "workyard", x: 10, y: 3 }, thrill_top: { scene: "workyard", x: 10, y: 3 } };   /* (2026-10-01) Thrill Hill, held until v1.1 */
 const CHAT_KEEP = 50;   // (2026-09-27) lines of public chat a refresh or a restart opens on: see chatKeep
 
 export class World {
@@ -956,6 +957,7 @@ export class World {
       /* (2026-09-23) BUYING A PERMIT FROM VANCE. Its own message rather than the shop's, because there is no
          shop NPC left in the game to open - the permit sat in SHOP.sells where nothing could reach it. He is
          `still`, so the proximity check is the same one the Forge used: be standing with him. */
+      case "bookie": return this.bookieBuy(S, pl, m);   /* (2026-10-01) Fast Eddie on Thrill Hill (thrill.js) */
       case "lockpick": return this.wtBuyPick(S, pl, m);   /* (2026-10-01) Vance sells lockpicks (thief.js) */
       case "permit": {
         const V = S.npcs.find((x) => x.opens === "permit");
@@ -1079,7 +1081,8 @@ export class World {
     const C = pl.C, f = this.from(pl), now = Date.now();
     let act = null;
     const wtOb = m.kind == null || m.kind === "ob" ? S.objs[m.ob | 0] : null;   /* (2026-10-01) thieving in the world and shortcuts: thief.js */
-    if (m.kind === "pick" || (wtOb && (wtOb.sc || wtOb.bw || wtOb.t === "lockbox") && !G.HOLD.thief2)) { act = this.wtStart(S, pl, m, f); if (!act) return; }
+    if (wtOb && wtOb.t === "stunt") { act = this.stStart(S, pl, wtOb, f); if (!act) return; }   /* (2026-10-01) Thrill Hill: thrill.js */
+    else if (m.kind === "pick" || (wtOb && (wtOb.sc || wtOb.bw || wtOb.t === "lockbox") && !G.HOLD.thief2)) { act = this.wtStart(S, pl, m, f); if (!act) return; }
     else if (m.kind === "pvp") { if (!S.def.pvp) return; const T = this.pls.get(String(m.id)); if (!T || T === pl || T.C.scene !== S.key) return; act = { kind: "pvp", id: T.id, x: T.x, y: T.y, name: T.name }; }
     else if (m.kind === "ground") { const it = S.ground.find((x) => x.id === m.id); if (it) act = { kind: "ground", id: it.id, x: it.x, y: it.y, name: G.ITEMS[it.k].name }; }
     else if (m.kind === "mob") {
@@ -1126,7 +1129,7 @@ export class World {
        The act still lands: you can keep swinging at whatever is already beside you, which is the whole point of
        being held next to something. Only the walking to it is refused. */
     const held = S.run && S.def.pyramid && S.run.coil && S.run.coil.id === pl.id;
-    const p = held ? [] : G.findPath(S.g, f, act, act.kind === "ground" || act.kind === "shortcut" || act.kind === "backway" ? 0 : act.reach || G.reachOf(act.kind) || 1);
+    const p = held ? [] : G.findPath(S.g, f, act, act.kind === "ground" || act.kind === "shortcut" || act.kind === "backway" || act.kind === "stunt" ? 0 : act.reach || G.reachOf(act.kind) || 1);
     if (p === null) { this.say(pl, act.kind === "mob" && !G.launcherOf(C) ? "You can't get to that from here. It wants a bow." : "You can't reach that.", "bad"); pl.act = null; return; }
     if (held && G.cheb(pl, act) > (act.reach || G.reachOf(act.kind) || 1)) { this.say(pl, "It has you. You can only reach what is already beside you.", "bad"); pl.act = null; return; }
     /* SAME TARGET, SAME ACTION (2026-09-25, the re-click exploit). startAct builds a fresh act on every click and
@@ -3076,6 +3079,7 @@ export class World {
     }
     const faceIt = () => { pl.dir = G.DIRS[`${Math.sign(a.x - pl.x)},${Math.sign(a.y - pl.y)}`] || pl.dir; pl.face = a.x > pl.x ? 1 : a.x < pl.x ? -1 : pl.face; };
     if (a.kind === "pick" || a.kind === "lockbox" || a.kind === "shortcut" || a.kind === "backway") return this.wtAct(S, pl, a, now, faceIt);   /* (2026-10-01) thief.js */
+    if (a.kind === "stunt") return this.stAct(S, pl, a, now);   /* (2026-10-01) Thrill Hill: thrill.js */   /* (2026-10-01) thief.js */
     if (a.kind === "mob") {
       const m = S.mobs.find((x) => x.id === a.id); if (!m || m.dead) { pl.act = null; return; }
       if (m.star) return this.starSwing(S, pl, m, a, now);   /* (2026-09-30) SHOOTING STARS */
@@ -3620,6 +3624,7 @@ export class World {
         const log = ob.log || "logs";
         if (!this.give(pl, log)) { pl.act = null; return; }
         this.gained(S, pl, log, 1, "gather", "woodcutting");
+        if (ob.extra) { const [ek, lo, hi] = ob.extra, en = lo + Math.floor(Math.random() * (hi - lo + 1)); if (this.give(pl, ek, en)) this.gained(S, pl, ek, en, "gather", "woodcutting"); }   /* (2026-10-01) Thrill Hill's featherwood shakes feathers loose */
         if (Math.random() < G.projGather(C, "tree") && this.give(pl, log)) { this.gained(S, pl, log, 1, "gather", "woodcutting"); this.say(pl, "Seasoned timber: two for one.", "good"); }   /* (2026-09-28) the Sawmill */
         this.grant(pl, "woodcutting", gx(ob.xp || 25)); this.say(pl, oak ? "You get some logs from the oak." : `You get some ${G.ITEMS[log].name.toLowerCase()}.`, "good"); this.questCheck(pl);
         /* (2026-09-22, the owner: "the woodcutting trees need to stay up longer before they become out, like a lot
@@ -5432,5 +5437,6 @@ installCommands(World, { G });
 installWeekly(World, { G });   /* (2026-09-30) THE WEEKLY ISSUE: a snapshot a week, and the numbers the wiki's issue shows */   /* (2026-09-30) CHAT COMMANDS: /find, /help, /price, /count, /xp, /timers, /bosses, /wiki, /map, /online, /roll, /stuck */
 installRaid(World, { G });
 installThief(World, { G });
+installThrill(World, { G });
 installAdmin(World, { G });
 installCards(World, { G });

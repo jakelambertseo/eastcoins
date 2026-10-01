@@ -409,9 +409,11 @@ export const GUIDES = [
      the same levels and be a choice rather than a sequence. */
   { id: "road", title: "The road out", icon: "\u{1F5FA}️", cat: "Starting out",
     body: (G, H) => {
-      const ORDER = ["workyard", "gloam", "mire", "boneyard", "orchard", "cloud", "frozen", "frostspire", "sands", "thunderhead", "carnival", "boardwalk", "bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull", "foundry", "fd_grove", "fd_maze", "fd_isle", "fd_chain", "fd_gate", "fd_hall", "vault", "depths", "trailer", "valley", "valley_ridge", "valley_lair", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
+      const ORDER = ["workyard", "thrill", "thrill_top", "gloam", "mire", "boneyard", "orchard", "cloud", "frozen", "frostspire", "sands", "thunderhead", "carnival", "boardwalk", "bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull", "foundry", "fd_grove", "fd_maze", "fd_isle", "fd_chain", "fd_gate", "fd_hall", "vault", "depths", "trailer", "valley", "valley_ridge", "valley_lair", "wild", "deep"].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide);   /* (2026-09-27) the two wild maps, when they are open */
       const NOTE = {
         workyard: "the casino, the bank, the campfire, the furnace and anvil, the Tower, the Crypt stairs, the Bounty Board, Bronny's order, sardines",
+        thrill: "Agility's own map, through the gate by the Yard's north wall: the Rookie Run (any level) and the Pro Run (40), stunts in crash-barrier pens run in order for a lap bonus and runner's marks, Fast Eddie (he takes the marks), the Junk Mound (Agility 50: Grease Gremlins, featherwood that drops feathers), and the human cannonball (70)",   /* (2026-10-01) */
+        thrill_top: "where the cannon lands: the Champion Run (Agility 70), Hellbikers and the nitro pool (Fishing 75, a walk-speed fish) in the Burnout Pit, and the Peak (Agility 90): chrome (Mining 85, for chrome-toe boots), a lockbox, and Big Daddy Crusher",
         gloam: "emerald and diamond ore, gloomwillow, trout and catfish",
         mire: "lanternfish, mudskipper, the first real gear drops",
         boneyard: "bonefish and ghost carp in the flooded crypt &mdash; and <b>pets start dropping here</b>",
