@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Thieving and shortcuts</title>
+<!-- (2026-10-01, the owner: "i want to mockup (based on suggestions in the gameplan), how thieving overhaul would work. how would shortcut
+     works? how do we balance what we have (do we create new thieving rooms, allow open world mobs to be thieved, etc)?"). Mockup 15.
+     Today's numbers are read from the rules (marks, formula, the Run) and the skill sim; shortcuts.json is MEASURED by find-shortcuts.mjs
+     over every open map's real grid with the game's own walking rules. Art in art/ is PixelLab. Local only; built into /gameplan. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a09;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#1a102a,transparent),radial-gradient(900px 600px at 100% 30%,#102a1e,transparent),#0b0a09}
+main{max-width:1200px;margin:0 auto;padding:28px 18px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 25px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:18px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}.lede b{color:#f6e9cc}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd98a}
+.sec{margin:44px 0 0;padding:22px 0 0;border-top:2px solid #3a2a1a}.sec>p{color:#b8a888;max-width:980px;line-height:1.55}.sec>p b{color:#f6e9cc}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(175px,100%),1fr));gap:8px;margin:12px 0}
+.tile{background:#14120e;border-radius:10px;padding:10px 12px;box-shadow:0 0 0 1.5px #3a2616}.tile b{display:block;font:800 23px Cinzel,serif;color:#ffe7b0}.tile span{font:700 12px/1.35 Lora,serif;color:#a89070}
+.tbl{width:100%;border-collapse:collapse;font:600 12.5px Lora,serif;background:#14120e;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616;margin-top:10px}
+.tbl th{text-align:left;font:800 10px Lora,serif;letter-spacing:.07em;text-transform:uppercase;color:#a89070;padding:9px 8px 5px}.tbl td{padding:6px 8px;border-top:1px solid #2e2216;vertical-align:top;line-height:1.4}
+.tbl td:first-child{font-weight:800;color:#ffe7b0}.tbl td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.tbl img{width:22px;height:22px;image-rendering:pixelated;vertical-align:-6px;margin-right:5px}
+.wrapx{overflow-x:auto}
+.big{margin:14px 0 6px;padding:14px 18px;border-radius:12px;background:linear-gradient(90deg,#2a1a3a,#14120e);box-shadow:inset 4px 0 0 #c89aff,0 0 0 1.5px #4a2a5a;max-width:980px}
+.big b{display:block;font:800 19px Cinzel,serif;color:#f0dcff;margin-bottom:4px}.big span{font:600 14px/1.6 Lora,serif;color:#d8ccb4}.big span b{display:inline;font:inherit;color:#fff0c8;margin:0}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(270px,100%),1fr));gap:10px;margin:12px 0}.rules3>div{background:#14120e;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.rules3 span b{color:#f6e9cc}
+.opts{display:grid;gap:10px;margin-top:12px}
+.opt{display:grid;grid-template-columns:72px 1fr;gap:4px 14px;padding:13px 15px;border-radius:12px;background:linear-gradient(180deg,var(--bg),#100c0a 85%);box-shadow:0 0 0 1.5px var(--ac)}
+.opt>img,.opt>.ph{grid-row:1/span 3;width:64px;height:64px;image-rendering:pixelated;align-self:start}
+.opt header{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.opt header b{font:800 18px Cinzel,serif;color:#ffe7b0}
+.verdict{font:800 11px Lora,serif;padding:2px 9px;border-radius:999px}.v-yes{background:#1e4a24;color:#9ef0a0}.v-later{background:#3a3010;color:#ffd98a}.v-no{background:#4a1a14;color:#ff9a8a}
+.opt p{margin:2px 0 0;font:600 13.5px/1.55 Lora,serif;color:#d8ccb4}.opt p b{color:#fff0c8}
+.steps{counter-reset:s;list-style:none;padding:0;margin:10px 0;display:grid;gap:6px;max-width:980px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;font:600 13.5px/1.55 Lora,serif;color:#d8ccb4}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#2a1a3a;color:#e0c8ff;font:800 13px Cinzel,serif}.steps li b{color:#fff0c8}
+.minis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:10px;margin-top:12px}
+.mini{background:#14120e;border-radius:10px;padding:10px;box-shadow:0 0 0 1.5px #3a2616}.mini b{font:800 14px Cinzel,serif;color:#ffe7b0}.mini small{float:right;font:800 12px Lora,serif;color:var(--c)}
+.mini canvas{display:block;width:100%;image-rendering:pixelated;margin-top:6px;border-radius:4px}
+.mini p{margin:5px 0 0;font:600 12px/1.45 Lora,serif;color:#b8a888}
+.kind{font:800 10.5px Lora,serif;padding:1px 7px;border-radius:999px;margin-left:4px}.k-cut{background:#1e4a24;color:#9ef0a0}.k-ledge{background:#1e2e4a;color:#9ec8ff}.k-teach{background:#3a3010;color:#ffd98a}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+.artrow{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}.artrow figure{margin:0;display:grid;justify-items:center;gap:4px;font:700 11.5px Lora,serif;color:#a89070}.artrow img{width:96px;height:96px;image-rendering:pixelated;background:#1a140e;border-radius:10px;box-shadow:0 0 0 1.5px #3a2616}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+</style>
+</head>
+<body>
+<main>
+  <h1>Thieving and shortcuts</h1>
+  <p class="lede">The two "island" skills, taken out into the world. Thieving lives in one building today and Agility in one lane, and neither gives
+    anything to anyone else. Below: how they work now, the recommendation (and the options it was weighed against), how pickpocketing out in the
+    world and a lockbox on every map would work, how shortcuts work and where each one goes (measured on the real maps), and the balance.</p>
+  <nav class="jump"><a href="#today">Today</a><a href="#answer">The recommendation</a><a href="#pockets">Pockets in the world</a><a href="#boxes">Lockboxes and keys</a><a href="#shortcuts">Shortcuts</a><a href="#maps">Every map, measured</a><a href="#run">Agility's ladder</a><a href="#balance">Balance</a><a href="#build">Building it</a></nav>
+
+  <section class="sec" id="today">
+    <h2>Today</h2>
+    <div class="tiles">
+      <div class="tile"><b>1 building</b><span>every mark is in the Thieves' Guild, behind a 15,000-ticket permit and doors at Thieving 10 / 50 / 75</span></div>
+      <div class="tile"><b>9 marks</b><span>Apprentice Lifter at 1 up to the Grand Larcenist at 97; they drop goods to fence, never tickets</span></div>
+      <div class="tile"><b>~72 h</b><span>Thieving 1→99, ungeared (the skill sim)</span></div>
+      <div class="tile"><b>0</b><span>monsters you can pickpocket; no safes, stalls or chests anywhere</span></div>
+      <div class="tile"><b>1 lane</b><span>Agility's only course, The Run: 8 timed gates, no level gates, no failure</span></div>
+      <div class="tile"><b>~557 h</b><span>Agility 1→99 by the sim (its model is stale and too slow, but even halved it's the slowest skill)</span></div>
+      <div class="tile"><b>0</b><span>shortcuts; Agility's only reward is up to 10% walk speed at 99</span></div>
+      <div class="tile"><b>41 · 40</b><span>the best Thieving and Agility on the server</span></div>
+    </div>
+    <h3>The Guild's marks</h3>
+    <div class="wrapx"><table class="tbl" id="markTbl"></table></div>
+    <p class="note">A pick succeeds at <code>min(90%, 55% + 2% × (your level − the mark's) + steal)</code>, takes 2.4 s, and a fail stuns you 2-3.5 s and loses one stolen good from your bag. Every fifth clean lift in a row pays a second roll. The Ditched set, the Lockpick Set, potions and two pets add <code>steal</code>, capped at +15%.</p>
+  </section>
+
+  <section class="sec" id="answer">
+    <h2>The recommendation</h2>
+    <div class="big"><b>Keep the Guild as the gym. Take Thieving out into the world on two hooks: pockets and lockboxes.</b><span>The Guild stays the fastest way to train (indoor, safe, nine marks), so nothing anyone has done there is wasted. Out in the world, <b>people-shaped monsters get pockets</b> (the Highwayman, the Loan Shark, the Deckhand, the Caveman: 19 kinds across 13 maps, no new art) and <b>every map gets one lockbox</b> (one prop each). The world pays less XP an hour than the Guild but better loot: keys, set pieces and a pinch of the monster's own drops. That gives every map a reason for a thief, which was the atlas's complaint ("Thieving lives in one building"). <b>No new thieving rooms</b>: the Guild only gains two marks to fill its gaps. Note: the atlas picked "the Guild to 97, the maps past 100"; this page moves the maps earlier, because the world hooks cost almost nothing and the island problem is now, not at 100.</span></div>
+    <div class="opts" id="opts"></div>
+  </section>
+
+  <section class="sec" id="pockets">
+    <h2>Pockets in the world</h2>
+    <p>Any monster with a <code>pocket</code> line in its data can be picked: the people, never the animals. It's the same pick as the Guild's, on a monster that's just standing there (nothing here attacks on sight, so the thief always chooses the risk).</p>
+    <ol class="steps">
+      <li><span><b>Right-click → Pick pocket</b> on a monster that isn't fighting anyone. The menu shows your chance ("Pick pocket · 78%"), worked out exactly as in the Guild with the monster's thieving level.</span></li>
+      <li><span><b>Success:</b> Thieving XP (about two thirds of a Guild mark at the same level) and one roll on its pocket: the band's fence goods, a key now and then, and rarely one of that monster's own plain drops. The monster is <b>turned out</b> for a minute (a little "empty pockets" puff over it), so one monster can't be farmed faster than walking between them.</span></li>
+      <li><span><b>Fail:</b> it notices. You're stunned 2 s and <b>it fights you</b>. That's the risk, and it's yours: pick above your combat level and you'll have to run or win. Losing a stolen good, as in the Guild, doesn't apply out here: the fight is the cost.</span></li>
+      <li><span><b>Then kill it if you like.</b> Picking doesn't touch its drops. "Pick, then kill" is the thief's way to train combat, and it's why a fighter might want Thieving too.</span></li>
+    </ol>
+    <div class="wrapx"><table class="tbl" id="pocketTbl"></table></div>
+  </section>
+
+  <section class="sec" id="boxes">
+    <h2>Lockboxes and keys</h2>
+    <div class="rules3">
+      <div><b>One on every map</b><span>A strongbox in a corner of each map, at that map's level plus five: the Gloam's at 15 up to the Frozen Reach's at 97. One prop, the same art everywhere with the map's tint.</span></div>
+      <div><b>A lockpick a try</b><span>Each try uses a <b>lockpick</b>, 300 tickets at Vance (a small, steady ticket sink) or made at a Tinkering bench. A try takes 5 s and the same chance as a pick.</span></div>
+      <div><b>Yours, every 15 minutes</b><span>The cooldown is <b>per player</b>, so nobody camps a box or races anyone for it. Opened, it pays three pocket rolls at once and a key one time in twenty.</span></div>
+      <div><b>Keys open things</b><span>A <b>skeleton key</b> opens the locked chest at the end of a Crypt, Pyramid or Count run (a fourth roll), or the Guild's back vault. Thieving finally makes something other players want, and keys trade on the Exchange.</span></div>
+      <div><b>Two ways through</b><span>Some shortcuts below are a <b>locked gate</b>: climb it with Agility, or pick its lock with Thieving at the same level. Either skill gets you there.</span></div>
+      <div><b>The sets ride along</b><span>The Feller's flannels drop from pockets (1 in 400), as the Sets page planned; the Ditched set's all-four bonus picks a pocket twice one time in ten, out here too.</span></div>
+    </div>
+    <div class="artrow" id="artrow"></div>
+  </section>
+
+  <section class="sec" id="shortcuts">
+    <h2>How a shortcut works</h2>
+    <p>The Guild's level doors already do the hard part: click, the server checks your level, and steps you through a wall that stays a wall for everyone else. A shortcut is that, on a map, with a little crossing animation. Nothing on the map changes for anyone who can't use it.</p>
+    <ol class="steps">
+      <li><span><b>Hover it:</b> "Fallen log · Agility 10". Below your level it's greyed and the hover says what you need.</span></li>
+      <li><span><b>Click it:</b> you walk to it, then cross in 1-2.5 s (a hop, a crawl, a swing), and come out on the far side. The server does it, so it can't be cheated, and the walk is drawn like any walk.</span></li>
+      <li><span><b>XP each crossing</b> (twice the level: 20 at the log, 190 at the ice slide), and a crossing counts toward the Prospector's kit (1 in 150) from the Sets page.</span></li>
+      <li><span><b>A gentle slip:</b> at exactly the level, one crossing in ten slips and you land back where you started, 2 s lost, no damage. Ten levels over, it never slips. Nothing here hurts.</span></li>
+    </ol>
+    <div class="rules3">
+      <div><b>Cutters</b><span>Where the map already makes you walk the long way round. The measurement found five with real detours (the Boneyard saves 46 steps, the Trailer Park 33, the Carnival and the Depths 31, the Boardwalk 26). These are shortcuts in the plain sense.</span></div>
+      <div><b>Ledges</b><span>Most maps are open fields: the best hop on the Gloam, Sands, Cloudreach, Thunderhead and the Frozen Reach saves 4-6 steps, about a second. So their shortcut leads somewhere <b>you can't otherwise reach</b>: a raised ledge with two extra trees, a rock, a fishing spot or the map's lockbox. That's the atlas's "the shortcuts the gathering spots sit behind".</span></div>
+      <div><b>Back ways</b><span>Later, between maps: a gap in a fence from one map's corner to the next, skipping the long walk through the exits. Worth doing where people run the same two maps back and forth (bank runs).</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="maps">
+    <h2>Every map, measured</h2>
+    <p>For each open map: every pair of walkable tiles two to four apart with something in the way, walked properly with the game's own rules (eight directions, no cutting corners). Drawn: the best hop on each (gold line) and the long way round it saves. A step is 0.2 s at base speed.</p>
+    <div class="wrapx"><table class="tbl" id="scTbl"></table></div>
+    <div class="minis" id="minis"></div>
+  </section>
+
+  <section class="sec" id="run">
+    <h2>Agility's ladder</h2>
+    <p>Shortcuts give Agility a reason; they don't train it. The Run is the only course and has no levels, which is why 1→99 is the slowest of every skill. The fix keeps the same lane and gates:</p>
+    <div class="wrapx"><table class="tbl" id="runTbl"></table></div>
+    <p class="note">The aim is Agility 1→99 near Thieving's and the gathering skills' (a target to tune with the skill sim once its Agility model is fixed: it still assumes six gates and a 42-second lap and ignores the runner's marks and the finish bonus). The Getaway silks (+20% Agility XP) and the Grappling Hook (+25%) stack on top.</p>
+  </section>
+
+  <section class="sec" id="balance">
+    <h2>Balance</h2>
+    <div class="rules3">
+      <div><b>The Guild stays fastest</b><span>World pockets pay about two thirds of a Guild mark's XP at the same level, and walking between them costs more. Thieving 1→99 stays about <b>72 h</b> in the Guild; someone who only picks pockets in the world takes longer but leaves with keys and set pieces.</span></div>
+      <div><b>Can't be farmed faster than walking</b><span>A monster is turned out for a minute after a pick; a lockbox is yours once every 15 minutes. The Gloam's six Highwaymen are at most six picks a minute however fast you click.</span></div>
+      <div><b>Still no tickets from pockets</b><span>The rule stands: pockets pay goods you fence. Fence prices don't change. The new faucet is small (fence goods) and the new sinks (lockpicks at 300) sit right beside it.</span></div>
+      <div><b>A fail is a fight you chose</b><span>The tone holds: no monster attacks on sight. Only the monster you tried to rob fights you, and the level shown in its menu tells you before you try.</span></div>
+      <div><b>Shortcuts can't trap anyone</b><span>Every shortcut has a way back over it, and the long way round is never closed. A ledge's spots are extra, not moved: nobody loses a rock or a tree they used to reach.</span></div>
+      <div><b>Two skills, one door</b><span>Where a gate takes Agility or Thieving, the level is the same for both, so neither skill is the "real" key.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <ul class="note" style="font-size:14px;line-height:1.7;color:#cdbfa2;max-width:980px">
+      <li><b>Pockets</b>: a <code>pocket</code> field on 19 monsters (thieving level, table), one more option in the right-click menu, and the Guild's pick code (the same chance, XP and stun) pointed at a monster. The fail hands the monster a target the way a hit does. About 3 days.</li>
+      <li><b>Lockboxes</b>: one object type with a per-player cooldown (the pattern of the agility marks, which are already per-player), a lockpick item at Vance, and the keys and the locked chests in the three dungeons. About 3 days and one prop.</li>
+      <li><b>Shortcuts</b>: one object type on the Guild door's code (check a level, step through), a crossing animation per kind, and for ledges a few tiles of new ground and two or three gathering spots each. Cutters are a day for all five; ledges are the work, about a day a map with the art.</li>
+      <li><b>The Run's lanes</b>: two more lane settings on the existing course and XP multipliers. A day.</li>
+      <li><b>The Guild</b>: two marks in its gaps (the 30s and the 80s) and the stale words fixed: the first door says 25 but opens at 10, Vance still says "fifty thousand" for a 15,000 permit, and The Run's quest still says it's in the Gloam.</li>
+      <li><b>Nothing here changes a bet, the casino, or a ticket price.</b></li>
+    </ul>
+    <div class="callout"><b>Things to decide:</b> whether pockets and lockboxes go out from Thieving 10 (this page) or wait for 100 (the atlas); whether a failed pick should start a fight (this page) or only stun (gentler); the lockpick's price; whether ledges get new gathering spots (more to build, much better reason) or just the lockbox; and The Run's two new lanes.</div>
+  </section>
+</main>
+<script>
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const $ = (id) => document.getElementById(id);
+const IC = (k) => `/v3/assets/img/glad/flat/items/${k}.png`;
+
+/* the Guild today (rules: THIEF marks) */
+const MARKS = [["Apprentice Lifter", 1, 19, "brass button, whetgrit"], ["Cutpurse", 15, 36, "button, whetgrit, pocket watch"], ["Grifter", 25, 56, "watch, quench salts"], ["The Shill", 40, 95, "watch, salts, stolen signet"], ["The Fixer", 50, 138, "signet, seal wax, salts"], ["Housebreaker", 62, 182, "signet, wax, ledger"], ["Quartermaster", 75, 250, "ledger, starfall, eclipse, voidglass"], ["Ringleader", 90, 337, "ledger, starfall, eclipse, voidglass"], ["Grand Larcenist", 97, 400, "ledger, nova ore, eclipse, voidglass"]];
+$("markTbl").innerHTML = `<tr><th>Mark</th><th class="num">Thieving</th><th class="num">XP a pick</th><th>Pockets</th></tr>` + MARKS.map(([n, l, x, d]) => `<tr><td>${n}</td><td class="num">${l}</td><td class="num">${x}</td><td>${d}</td></tr>`).join("");
+const guildXp = (l) => { const P = MARKS.map(([, a, b]) => [a, b]); if (l <= 1) return 19; for (let i = 1; i < P.length; i++) if (l <= P[i][0]) { const [a, x] = P[i - 1], [b, y] = P[i]; return x + ((l - a) / (b - a)) * (y - x); } return 400; };
+
+/* the options weighed */
+const OPTS = [
+  ["Pockets on people-monsters", "yes", "art/th_pocket.png", "The Highwayman, the Card Counter, the Usher, the Strongman, the Deckhand, the Caveman. 19 kinds of monster on 13 maps already look like people with pockets. <b>No new art</b>, a reason to visit every map, and \"pick, then kill\" ties Thieving to combat. The fail is a fight you chose."],
+  ["A lockbox on every map", "yes", "art/th_lockbox.png", "One prop per map, per-player cooldown, a lockpick a try. Gives the open maps a thieving spot even where nobody human lives (the Thunderhead, the Frozen Reach), pays the keys that make Thieving useful to others, and adds a small ticket sink."],
+  ["New thieving rooms", "no", null, "More rooms like the Guild's: indoor, one more building, new marks and walls. It's what Thieving already has too much of: it keeps thieves in a box away from everyone. The Guild only needs two marks to fill its gaps."],
+  ["Pickpocketing other players", "no", null, "OSRS never did it for a reason: it's griefing with a level requirement. The Wilderness already has PvP for anyone who wants it."],
+  ["The Heist (a world event)", "later", null, "The thieving server event from the raids page: everyone, all levels, the CASINO line calling it. A good second step once pockets exist, and new events start once a day."],
+  ["Past 99: the atlas's eight", "later", null, "The Smuggler at 100 up to the House's own pocket at 120, on the new maps. Unchanged; this page just starts the world earlier."]];
+const VC = { yes: ["v-yes", "recommended"], no: ["v-no", "not recommended"], later: ["v-later", "later"] };
+const COL = { yes: "#7ed060", no: "#ff7a6a", later: "#e8c060" };
+$("opts").innerHTML = OPTS.map(([n, v, img, t]) => `<div class="opt" style="--ac:${COL[v]};--bg:${COL[v]}18">${img ? `<img src="${img}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'ph'}))">` : `<span class="ph"></span>`}<header><b>${n}</b><span class="verdict ${VC[v][0]}">${VC[v][1]}</span></header><p>${t}</p></div>`).join("");
+
+/* pockets: [map, monster, its combat level, thieving level, art key] */
+const POCKETS = [["The Gloam", "Highwayman", 12, 10, "highwayman"], ["The Lantern Mire", "Card Counter", 24, 22, "cardcounter"], ["The Lantern Mire", "Loan Shark", 26, 28, "loanshark"], ["The Boneyard", "The Stagehand", 32, 30, "stagehand"], ["The Boneyard", "One-Eyed Usher", 36, 35, "usher"], ["The Boneyard", "The Understudy", 38, 40, "understudy"], ["The Golden Sands", "Bandaged Debtor", 43, 44, "debtor"], ["Cloudreach", "Angel of Minor Inconvenience", 48, 48, "angel"], ["The Carnival", "Pinhead", 62, 58, "pinhead"], ["The Carnival", "The Fat Lady", 68, 64, "fatlady"], ["The Carnival", "The Strongman", 71, 68, "strongman"], ["The Boardwalk", "Deckhand", 69, 70, "deckhand"], ["The Depths", "Pot Boy", 73, 73, "potboy"], ["The Depths", "Goblin Cutter", 75, 76, "goblincutter"], ["The Vault", "Vault Warden", 74, 78, "vaultwarden"], ["The Trailer Park", "The Scrapper", 88, 84, "scrapper"], ["The Vault", "The Last Dealer", 92, 88, "lastdealer"], ["The Primeval Valley", "Caveman", 90, 90, "caveman"], ["The Valley ridge", "Caveman Hunter", 100, 96, "cavemanhunter"], ["The Wilderness", "Goblin Cutter", 75, 76, "goblincutter"], ["The Wilderness", "Pot Boy", 73, 73, "potboy"]];
+const goods = (l) => (l < 25 ? "buttons, pocket watches" : l < 50 ? "watches, signets" : l < 75 ? "signets, ledgers" : "ledgers, starfall, eclipse");
+$("pocketTbl").innerHTML = `<tr><th>Map</th><th>Monster</th><th class="num">Combat</th><th class="num">Thieving</th><th class="num">XP a pick</th><th class="num">vs the Guild</th><th>Pocket</th></tr>` + POCKETS.map(([m, n, c, t]) => { const g = guildXp(t), x = Math.round(g * 0.65); return `<tr><td>${esc(m)}</td><td>${esc(n)}</td><td class="num">${c}</td><td class="num">${t}</td><td class="num">${x}</td><td class="num">${Math.round(g)}</td><td>${goods(t)}; 3% of its own plain drops; a key 1 in 250</td></tr>`; }).join("");
+
+/* the art */
+const ART = [["art/th_pocket.png", "the pickpocket icon"], ["art/th_lockbox.png", "a lockbox"], ["art/sc_log.png", "the fallen log"], ["art/sc_stones.png", "stepping stones"], ["art/sc_fence.png", "a fence gap"], ["art/sc_rope.png", "a rope swing"]];
+$("artrow").innerHTML = ART.map(([s, l]) => `<figure><img src="${s}" alt="" onerror="this.parentNode.remove()"><figcaption>${l}</figcaption></figure>`).join("");
+
+/* shortcuts: what each map gets */
+const PLAN = { workyard: [1, "The stile", "teach", "the tour's first shortcut: over the fence to the field"], gloam: [10, "The fallen log", "ledge", "over the creek to a willow ledge: two willows and the map's lockbox"], mire: [20, "Stepping stones", "ledge", "out to a bog island with a lantern-fish spot"], boneyard: [30, "Under the stage", "cut", "a crawl through the orchestra pit"], sands: [40, "Rope down the dune", "ledge", "to a hollow with a sandstone rock"], cloud: [45, "Cloud hop", "ledge", "to a high cloud with a storm-touched tree"], thunderhead: [50, "The rock climb", "ledge", "up to the high seam: two rocks"], carnival: [60, "Under the big top's flap", "cut", "a duck under the tent"], boardwalk: [66, "Swing under the pier", "cut", "a rope swing between the pilings"], depths: [75, "The mine-cart tunnel", "cut", "a crawl along the old track"], trailer: [80, "Over the junk pile", "cut", "a fence gap and a climb over the cars (or pick the padlock)"], valley: [90, "The vine swing", "ledge", "over the tar to a fern ledge"], frozen: [95, "The ice slide", "ledge", "down to a frozen pool with an ice-fishing hole"], frostspire: [99, "The spire ledge", "ledge", "the last below 100; then the atlas's seven past it"] };
+const KC = { cut: ["k-cut", "cutter"], ledge: ["k-ledge", "ledge"], teach: ["k-teach", "teaches it"] };
+fetch("shortcuts.json").then((r) => r.json()).then((S) => {
+  const keys = Object.keys(PLAN).filter((k) => S[k]);
+  $("scTbl").innerHTML = `<tr><th>Map</th><th class="num">Agility</th><th>Shortcut</th><th>Kind</th><th class="num">Best hop saves</th><th>Where it goes</th></tr>` + keys.map((k) => { const [l, n, kind, w] = PLAN[k], t = S[k].top[0]; return `<tr><td>${esc(S[k].name)}</td><td class="num">${l}</td><td>${esc(n)}</td><td><span class="kind ${KC[kind][0]}">${KC[kind][1]}</span></td><td class="num">${t ? `${t.saves} steps · ${(t.saves * 0.2).toFixed(1)} s` : "-"}</td><td>${esc(w)}</td></tr>`; }).join("");
+  $("minis").innerHTML = keys.map((k) => { const t = S[k].top[0], kind = PLAN[k][2]; return `<div class="mini" style="--c:${kind === "cut" ? "#9ef0a0" : kind === "ledge" ? "#9ec8ff" : "#ffd98a"}"><b>${esc(S[k].name)}</b><small>${t ? `saves ${t.saves} steps` : ""}</small><canvas data-k="${k}"></canvas><p>${esc(PLAN[k][1])} · Agility ${PLAN[k][0]}</p></div>`; }).join("");
+  const WALK = new Set([..."., sepfi"].filter((c) => c !== " "));
+  document.querySelectorAll("#minis canvas").forEach((cv) => {
+    const m = S[cv.dataset.k], Z = 6, W = m.W, H = m.H; cv.width = W * Z; cv.height = H * Z; const c = cv.getContext("2d");
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const ch = m.grid[y][x]; c.fillStyle = WALK.has(ch) ? "#3a3428" : ch === "~" || ch === "b" ? "#1a3a5a" : "#14110c"; c.fillRect(x * Z, y * Z, Z, Z); }
+    const t = m.top[0]; if (!t) return;
+    /* the long way round: a BFS path, drawn faint */
+    const ok = (x, y) => x >= 0 && y >= 0 && x < W && y < H && WALK.has(m.grid[y][x]);
+    const prev = new Map(), q = [t.a], key = (p) => p[0] + "," + p[1]; prev.set(key(t.a), null);
+    for (let h = 0; h < q.length; h++) { const [x, y] = q[h]; if (x === t.b[0] && y === t.b[1]) break; for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) { if (!dx && !dy) continue; const nx = x + dx, ny = y + dy; if (!ok(nx, ny) || (dx && dy && (!ok(x + dx, y) || !ok(x, y + dy)))) continue; const kk = nx + "," + ny; if (!prev.has(kk)) { prev.set(kk, [x, y]); q.push([nx, ny]); } } }
+    let p = t.b; c.fillStyle = "rgba(255,120,90,.55)"; while (p) { c.fillRect(p[0] * Z + 1, p[1] * Z + 1, Z - 2, Z - 2); p = prev.get(key(p)); }
+    c.strokeStyle = "#ffd34a"; c.lineWidth = 3; c.beginPath(); c.moveTo(t.a[0] * Z + Z / 2, t.a[1] * Z + Z / 2); c.lineTo(t.b[0] * Z + Z / 2, t.b[1] * Z + Z / 2); c.stroke();
+    for (const e of [t.a, t.b]) { c.fillStyle = "#ffd34a"; c.beginPath(); c.arc(e[0] * Z + Z / 2, e[1] * Z + Z / 2, Z * 0.7, 0, 7); c.fill(); }
+  });
+});
+
+/* the Run's lanes */
+$("runTbl").innerHTML = `<tr><th>Lane</th><th class="num">Agility</th><th>What changes</th><th class="num">XP a lap</th></tr>` + [["Rookie (today's Run)", 1, "as now: 8 gates, cycles 2.4-1.2 s", "~250-560"], ["Pro", 40, "the same lane with the gates' open time cut to 35% and two runner's marks on the inner rows", "~×1.8"], ["Champion", 70, "open time 25%, a perfect crossing within 180 ms, a lap timer on the board", "~×2.6"]].map(([n, l, d, x]) => `<tr><td>${n}</td><td class="num">${l}</td><td>${d}</td><td class="num">${x}</td></tr>`).join("");
+</script>
+</body>
+</html>

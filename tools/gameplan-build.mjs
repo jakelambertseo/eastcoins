@@ -33,6 +33,7 @@ const CATS = [
     ["raid-mock", "Yard raids", "Yard raids"]]],
   ["Systems & economy", [
     ["sinks-mock", "Ticket sinks", "Ticket sinks"],
+    ["thieving-mock", "Thieving & shortcuts", "Thieving out in the world, and Agility shortcuts"],
     ["skillsets-mock", "Skilling sets", "Skilling gear and sets"],
     ["workclothes-mock", "Work clothes", "Work clothes, in the game"],
     ["balance-mock", "Balance", "The balance check"],
@@ -55,7 +56,7 @@ const CATS = [
     ["roadmap-mock", "Old roadmap", "The first roadmap mockup"]]]];
 const PAGES = CATS.flatMap(([, ps]) => ps);
 const SUPPORT = [];   /* folders the pages reach into but that are not pages of their own (the UI kit is a page now) */
-const SKIP = new Set(["inject.js", "inject2.js", "history"]);   /* the in-game mocks' scripts run only inside the dev page; the state page's per-day files are folded into history/index.json */
+const SKIP = new Set(["inject.js", "inject2.js", "history", "find-shortcuts.mjs"]);   /* the in-game mocks' scripts run only inside the dev page; the state page's per-day files are folded into history/index.json */
 const TEXT = new Set([".html", ".js", ".css", ".json", ".svg", ".mjs"]);
 const SITE = "https://eastcoin.vip";
 
