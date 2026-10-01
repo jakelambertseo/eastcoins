@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>EastScape roadmap</title>
+<!-- (2026-09-30, the owner: "users love the look and info in the weekly update, can we mockup like you did with the UI kit etc how a roadmap feature would look?
+     lets use imagery as well"). A player-facing roadmap, drawn the way the Weekly issue is drawn (its hero, cards and tiles), with the game's own art.
+     Local only: tools/ is never shipped. Open at http://localhost:4321/tools/roadmap-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0c0908;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1200px 600px at 20% -10%,#2a1a10,transparent),radial-gradient(900px 500px at 100% 30%,#1a1410,transparent),#0c0908}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 30px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:920px;line-height:1.55}
+.sec{margin:40px 0 0;padding:22px 0 0;border-top:1px solid #3a2a1a}
+.sec>h2{margin:0 0 4px;font:800 24px Cinzel,Georgia,serif;color:#ffd98a}
+.sec>p{margin:0 0 14px;color:#b8a888;max-width:920px;line-height:1.5}
+.pin{display:inline-block;margin:0 6px 6px 0;padding:4px 10px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;font:700 12.5px Lora,serif;color:#e8d8b0}
+img.px{image-rendering:pixelated}
+
+/* ---------- the wiki window (the page's own wiki frame, borrowed) ---------- */
+.wiki{max-width:980px;border:15px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/win.png?v=1) 12 fill / 15px stretch;image-rendering:pixelated;filter:drop-shadow(0 12px 22px rgba(0,0,0,.55))}
+.wiki-top{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#5a3220;color:#ffe7b0;font:800 16px Cinzel,serif;image-rendering:auto}
+.wiki-top img{width:24px;height:24px}.wiki-top small{margin-left:auto;font:700 12px Lora,serif;color:#e0c890}
+.wiki-crumbs{padding:6px 14px;background:#e6d4ad;font:700 12px Lora,serif;color:#6a5a40;image-rendering:auto}.wiki-crumbs b{color:#2a2016}
+.wiki-page{padding:14px 16px 20px;background-color:#efe2c4;background-image:radial-gradient(rgba(150,110,60,.07) 1px,transparent 1.5px),radial-gradient(rgba(150,110,60,.05) 1px,transparent 1.5px);background-size:7px 9px,11px 13px;color:#2a2016;image-rendering:auto}
+
+/* ---------- the roadmap page: the Weekly issue's pieces, plus lanes ---------- */
+.rm{--ink:#2a2016;--dim:#6a5a40;--gold:#c8963a}
+.rm-hero{position:relative;overflow:hidden;border-radius:10px;padding:20px 20px 16px;color:#f6e9cc;box-shadow:0 0 0 2px #c8963a,0 6px 18px rgba(40,20,5,.35);background:#2a1810}
+.rm-hero .bg{position:absolute;inset:0;background:url(/v3/assets/img/glad/flat/dp_bg1.png) center 30%/cover;image-rendering:pixelated;filter:saturate(.8) brightness(.45)}
+.rm-hero .shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(40,20,10,.95) 0%,rgba(40,20,10,.75) 55%,rgba(40,20,10,.35))}
+.rm-hero>*:not(.bg):not(.shade){position:relative}
+.rm-hero small{display:block;font:800 11px Lora,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#e0c890}
+.rm-hero h2{margin:4px 0 6px;font:800 28px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+.rm-hero p{margin:0;max-width:600px;color:#f0e2c0;font-size:14px;line-height:1.5}
+.rm-art{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;align-items:flex-end}.rm-art img{height:52px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))}
+.rm-share{position:absolute;right:12px;top:12px;padding:5px 10px;border:0;border-radius:999px;background:rgba(255,231,176,.15);color:#ffe7b0;font:800 12px Lora,sans-serif}
+.rm h3{margin:18px 0 8px;font:800 13px Lora,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.rm-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:12px}
+.rm-tile{padding:10px;border-radius:8px;background:#2a1a10;color:#f6e9cc;text-align:center;box-shadow:inset 0 0 0 1.5px #5a3a1a}
+.rm-tile b{display:block;font:900 22px/1.1 Cinzel,Georgia,serif;color:#ffd84a}.rm-tile small{display:block;margin-top:3px;font:700 11px Lora,sans-serif;color:#d8c8a8}
+
+/* just shipped */
+.rm-live{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.rm-lv{position:relative;display:grid;grid-template-columns:48px 1fr;gap:10px;align-items:center;padding:10px 12px;border-radius:8px;background:#dff0d4;box-shadow:inset 0 0 0 1.5px #7fb07a}
+.rm-lv img{width:44px;height:44px;object-fit:contain}
+.rm-lv b{display:block;font:800 14.5px/1.2 Cinzel,serif}.rm-lv span{display:block;font:600 12px Lora,serif;color:#4a5a40;margin-top:2px}
+.rm-lv i{position:absolute;right:8px;top:8px;font:900 10px Lora,serif;font-style:normal;letter-spacing:.08em;padding:2px 7px;border-radius:999px;background:#2f7a3a;color:#fff}
+
+/* the three lanes */
+.rm-lanes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.rm-lanes{grid-template-columns:1fr}}
+.rm-lane{background:#e6d4ad;border-radius:10px;padding:10px;box-shadow:inset 0 0 0 1.5px #c2a574}
+.rm-lane>header{display:flex;align-items:center;gap:8px;margin:0 2px 8px}
+.rm-lane>header b{font:800 16px Cinzel,serif}.rm-lane>header small{margin-left:auto;font:700 11.5px Lora,serif;color:var(--dim)}
+.rm-lane>header .dot{width:10px;height:10px;border-radius:50%}
+.rm-card{display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:start;padding:10px;margin-bottom:8px;border-radius:8px;background:#f6ecd3;box-shadow:0 1px 0 rgba(90,58,24,.25),inset 0 0 0 1px rgba(90,58,24,.15);cursor:pointer}
+.rm-card:hover{background:#fff6dc;box-shadow:inset 0 0 0 2px #c8963a}
+.rm-card .pic{width:52px;height:52px;border-radius:6px;background:#2a1a10;display:grid;place-items:center;overflow:hidden}
+.rm-card .pic img{max-width:48px;max-height:48px;object-fit:contain}
+.rm-card b{display:block;font:800 14.5px/1.2 Cinzel,serif;color:var(--ink)}
+.rm-card p{margin:3px 0 6px;font:600 12.5px/1.4 Lora,serif;color:var(--dim)}
+.rm-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font:800 10.5px Lora,serif;letter-spacing:.04em}
+.st-build{background:#f3d98a;color:#5a3a00}.st-test{background:#cfe0fb;color:#16407a}.st-plan{background:#e0d6c2;color:#5a4a30}.st-live{background:#2f7a3a;color:#fff}
+.want{margin-left:auto;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;border:0;background:#fff;box-shadow:inset 0 0 0 1.5px #c2a574;font:800 11.5px Lora,serif;color:#8a3a2a;cursor:pointer}
+.want.on{background:#c8963a;color:#fff;box-shadow:none}
+.bar{height:5px;border-radius:3px;background:rgba(90,58,24,.15);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#c8963a,#ffd84a)}
+
+/* teasers: the held maps, shown as a rumour */
+.rm-tease{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.tz{position:relative;overflow:hidden;border-radius:10px;min-height:150px;padding:14px;color:#f0e2c0;box-shadow:0 0 0 2px #4a2a5a}
+.tz .bg{position:absolute;inset:-10px;background-size:cover;background-position:center;filter:blur(5px) brightness(.35) saturate(.6);image-rendering:auto}
+.tz .glow{position:absolute;inset:0;background:radial-gradient(260px 140px at 75% 70%,rgba(255,120,40,.28),transparent 70%)}
+.tz.cold .glow{background:radial-gradient(260px 140px at 75% 70%,rgba(140,220,120,.22),transparent 70%)}
+.tz>*:not(.bg):not(.glow):not(.sil){position:relative}
+.tz small{font:800 10.5px Lora,serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b8ff}
+.tz b{display:block;margin:4px 0 6px;font:800 19px Cinzel,serif;color:#ffe7b0}
+.tz p{margin:0;max-width:62%;font:600 13px/1.45 Lora,serif}
+.tz img.sil{position:absolute;right:14px;bottom:10px;height:92px;filter:brightness(0) drop-shadow(0 0 8px rgba(255,140,60,.8))}
+.tz.cold img.sil{filter:brightness(0) drop-shadow(0 0 8px rgba(150,230,120,.7))}
+
+/* your idea */
+.rm-idea{display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;padding:12px;border-radius:10px;background:#2a1a10;color:#f6e9cc;box-shadow:inset 0 0 0 1.5px #5a3a1a}
+.rm-idea img{width:52px;height:52px}
+.rm-idea b{display:block;font:800 16px Cinzel,serif;color:#ffe7b0}.rm-idea span{font:600 12.5px Lora,serif;color:#d8c8a8}
+.rm-idea input{width:min(320px,60vw);padding:8px 10px;border-radius:6px;border:0;background:#f6ecd3;font:600 13px Lora,serif}
+.rm-idea button{margin-left:6px}
+@media (max-width:700px){.rm-idea{grid-template-columns:44px 1fr}.rm-idea form{grid-column:1/-1}}
+
+/* ---------- the other views ---------- */
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px;align-items:start}
+.cap{margin:8px 0 0;font:600 12.5px Lora,serif;color:#a89070}
+/* the wiki home's banner */
+.home{padding:14px;border-radius:10px;background-color:#efe2c4;color:#2a2016}
+.whw{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;padding:10px 12px;border-radius:8px;background:#e6d4ad;box-shadow:inset 0 0 0 1.5px #c2a574;margin-top:8px}
+.whw img{width:40px;height:40px}.whw b{display:block;font:800 14.5px Cinzel,serif}.whw small{display:block;font:600 12.5px Lora,serif;color:#6a5a40}
+/* the toast when something ships */
+.toast{display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:center;max-width:420px;padding:12px 14px;border-radius:10px;background:linear-gradient(135deg,#1f3a22,#2f5a32);color:#eaf6e2;box-shadow:0 0 0 2px #7fd08a,0 10px 24px rgba(0,0,0,.45)}
+.toast img{width:48px;height:48px}.toast small{font:800 10.5px Lora,serif;letter-spacing:.12em;text-transform:uppercase;color:#b8f0b0}.toast b{display:block;font:800 16px Cinzel,serif;color:#fff}.toast span{font:600 12.5px Lora,serif;color:#d0ecc8}
+/* an opened card */
+.detail{border-radius:12px;overflow:hidden;background:#efe2c4;color:#2a2016;box-shadow:0 0 0 2px #c8963a,0 10px 26px rgba(0,0,0,.5)}
+.detail .top{position:relative;height:150px;background:#2a1810;overflow:hidden}
+.detail .top .bg{position:absolute;inset:0;background:url(/v3/assets/img/glad/flat/boardwalk_bg1.png) center/cover;image-rendering:pixelated;filter:brightness(.5)}
+.detail .top img{position:absolute;left:18px;bottom:10px;height:96px;filter:drop-shadow(0 3px 5px rgba(0,0,0,.6))}
+.detail .top h4{position:absolute;left:130px;bottom:16px;margin:0;font:800 24px Cinzel,serif;color:#ffe7b0;text-shadow:0 2px 3px #000}
+.detail .body{padding:14px 16px}
+.detail p{margin:0 0 10px;font:600 13.5px/1.5 Lora,serif;color:#4a3a28}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:6px 0 12px}
+.steps div{padding:6px 4px;text-align:center;border-radius:6px;background:#e0d6c2;font:800 11px Lora,serif;color:#6a5a40}
+.steps div.done{background:#c8963a;color:#fff}.steps div.here{background:#fff6dc;box-shadow:inset 0 0 0 2px #c8963a;color:#2a2016}
+.detail ul{margin:0 0 10px;padding-left:18px;font:600 13px/1.5 Lora,serif;color:#4a3a28}
+/* the weekly issue's "coming next" block */
+.wkn{padding:12px;border-radius:10px;background:#efe2c4;color:#2a2016}
+.wkn h5{margin:0 0 8px;font:800 13px Lora,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#c8963a}
+.wkn-row{display:flex;gap:8px;overflow:auto}
+.wkn-row a{flex:0 0 150px;padding:8px;border-radius:8px;background:#e6d4ad;box-shadow:inset 0 0 0 1.5px #c2a574;text-align:center;font:800 12.5px Cinzel,serif;color:#2a2016;text-decoration:none}
+.wkn-row img{display:block;margin:0 auto 4px;height:40px}
+.how{background:#1a120c;border-radius:10px;padding:12px 16px;box-shadow:0 0 0 1.5px #3a2616}
+.how li{margin:4px 0;color:#cdbfa2;line-height:1.5}
+</style>
+</head>
+<body>
+<main>
+<h1>The Road Ahead</h1>
+<p class="lede">A roadmap page for players, built the way the Weekly issue is: a picture banner, the numbers as tiles, and cards with the game's own art that open the wiki. It lives in the wiki beside the Weekly issues, the wiki home points to it, and when something on it ships, the player gets a toast. Below: the page itself, the ways in, and a card opened up. Everything here is example content drawn from the backlog.</p>
+<span class="pin">Lives in the wiki: its own "Roadmap" group</span><span class="pin">Written like the Weekly issue: a list in eastscape-wiki.js</span><span class="pin">"Want this" votes need a small server count (optional)</span><span class="pin">Teasers for the held maps: a rumour, not a date</span>
+
+<section class="sec"><h2>The page, in the wiki</h2>
+<p>What a player sees at <b>Wiki → Roadmap</b>. Hover a card; click the heart.</p>
+<div class="wiki">
+  <div class="wiki-top"><img class="px" src="/v3/assets/img/glad/flat/ui/g_updates.png" alt="">EastScape Wiki<small>built from the game itself</small></div>
+  <div class="wiki-crumbs">Home › Roadmap › <b>The Road Ahead</b></div>
+  <div class="wiki-page"><div class="rm">
+    <div class="rm-hero"><div class="bg"></div><div class="shade"></div>
+      <small>Roadmap · updated Thu 1 Oct</small>
+      <h2>The Road Ahead</h2>
+      <p>What we're building, what's next, and what's rumoured. Nothing here has a date until it's in testing: when something ships it moves to the top and you'll get a note in game.</p>
+      <div class="rm-art"><img class="px" src="/v3/assets/img/glad/flat/jackthief.png" alt=""><img class="px" src="/v3/assets/img/glad/flat/o_fallenstar.png" alt=""><img class="px" src="/v3/assets/img/glad/flat/pet_supernova.png" alt=""><img class="px" src="/v3/assets/img/glad/flat/caveman.png" alt=""><img class="px" src="/v3/assets/img/glad/flat/pumpkinking.png" alt=""></div>
+      <button class="rm-share" type="button">Copy link</button>
+    </div>
+    <div class="rm-tiles">
+      <div class="rm-tile"><b>9</b><small>shipped this month</small></div>
+      <div class="rm-tile"><b>3</b><small>being built now</small></div>
+      <div class="rm-tile"><b>5</b><small>next up</small></div>
+      <div class="rm-tile"><b>2</b><small>came from your ideas</small></div>
+    </div>
+
+    <h3>Just shipped</h3>
+    <div class="rm-live">
+      <div class="rm-lv"><i>LIVE</i><img class="px" src="/v3/assets/img/glad/flat/o_fallenstar.png" alt=""><span><b>World events</b><span>Shooting Stars, Wanted! and the Jackpot Thief, one of each a day.</span></span></div>
+      <div class="rm-lv"><i>LIVE</i><img class="px" src="/v3/assets/img/glad/flat/sabretooth.png" alt=""><span><b>The Wild, rearmed</b><span>Late-map monsters, better pay, and dying there costs.</span></span></div>
+      <div class="rm-lv"><i>LIVE</i><img class="px" src="/v3/assets/img/glad/flat/ui/bom_face.png" alt=""><span><b>Returns at Bom</b><span>Bought the wrong gear? Back within the hour.</span></span></div>
+    </div>
+
+    <h3>On the road</h3>
+    <div class="rm-lanes">
+      <div class="rm-lane"><header><span class="dot" style="background:#e0a020"></span><b>Now</b><small>being built</small></header>
+        <div class="rm-card"><span class="pic"><img class="px" src="/v3/assets/img/glad/flat/ui/skills.png" alt=""></span><span><b>My stats</b><p>Your own dashboard: where your time goes, where your tickets come from, what keeps killing you.</p><span class="rm-meta"><span class="chip st-test">In testing</span><button class="want" type="button">♥ 41</button></span><span class="bar"><i style="width:85%"></i></span></span></div>
+        <div class="rm-card"><span class="pic"><img class="px" src="/v3/assets/img/glad/flat/ui/g_home.png" alt=""></span><span><b>Play on your phone</b><p>Every window and the tables, laid out for a phone, without chat in the way.</p><span class="rm-meta"><span class="chip st-build">Building</span><button class="want" type="button">♥ 58</button></span><span class="bar"><i style="width:35%"></i></span></span></div>
+        <div class="rm-card"><span class="pic"><img class="px" src="/v3/assets/img/glad/flat/o_roulette.png" alt=""></span><span><b>Straight to a table</b><p>Pick a table and go, from anywhere, and a two-minute lesson on how they work.</p><span class="rm-meta"><span class="chip st-build">Building</span><button class="want" type="button">♥ 23</button></span><span class="bar"><i style="width:20%"></i></span></span></div>
+      </div>
+      <div class="rm-lane"><header><span class="dot" style="background:#3a7ad0"></span><b>Next</b><small>up after that</small></header>
+        <div class="rm-card"><span class="pic"><img class="px" src="/v3/assets/img/glad/flat/ui/g_store.png" alt=""></span><span><b>The Store's Featured shelf</b><p>A different set of looks every week, and a Mystery Bag.</p><span class="rm-meta"><span class="chip st-plan">Planned</span><button class="want on" type="button">♥ 36</button></span></span></div>
+        <div class="rm-card"><span class="pic"><img class="px" src="/v3/assets/img/glad/flat/items/star_crate.png" alt=""></span><span><b>Gifting</b><p>Buy something in the Store for a friend, with a note.</p><span class="rm-meta"><span class="chip st-plan">Planned</span><button class="want" type="button">♥ 19</button></span></span></div>
+        <div class="rm-card"><span class="pic"><img class="px" src="/v3/assets/img/glad/flat/pumpkinking.png" alt=""></span><span><b>Call the world</b><p>Summon the Pumpkin King, start a Lucky Hour, or call Nightfall for everyone.</p><span class="rm-meta"><span class="chip st-plan">Planned</span><button class="want" type="button">♥ 47</button></span></span></div>
+        <div class="rm-card"><span class="pic"><img class="px" src="/v3/assets/img/glad/flat/items/waystone_valley.png" alt=""></span><span><b>A waystone home</b><p>One stone that always takes you to your island.</p><span class="rm-meta"><span class="chip st-plan">Planned</span><button class="want" type="button">♥ 30</button></span></span></div>
+      </div>
+      <div class="rm-lane"><header><span class="dot" style="background:#8a7a5a"></span><b>Later</b><small>on the list</small></header>
+        <div class="rm-card"><span class="pic"><img class="px" src="/v3/assets/img/glad/flat/ui/ev_poster.png" alt=""></span><span><b>A fourth world event</b><p>Something new for the whole server, once a day. Tell us what you'd want it to be.</p><span class="rm-meta"><span class="chip st-plan">Idea</span><button class="want" type="button">♥ 64</button></span></span></div>
+        <div class="rm-card"><span class="pic"><img class="px" src="/v3/assets/img/glad/flat/ui/g_updates.png" alt=""></span><span><b>Your ideas, in the game</b><p>Send an idea from the game and see it land here.</p><span class="rm-meta"><span class="chip st-plan">Idea</span><button class="want" type="button">♥ 12</button></span></span></div>
+      </div>
+    </div>
+
+    <h3>Rumours</h3>
+    <div class="rm-tease">
+      <div class="tz"><div class="bg" style="background-image:url(/v3/assets/img/glad/flat/foundry_bg1.png)"></div><div class="glow"></div>
+        <small>Heard in the Thunderhead</small><b>Something is burning underneath</b><p>Miners on the south ridge say the rock is warm to the touch, and something down there hammers all night.</p>
+        <img class="sil px" src="/v3/assets/img/glad/flat/slaggolem.png" alt=""></div>
+      <div class="tz cold"><div class="bg" style="background-image:url(/v3/assets/img/glad/flat/orchard_bg1.png)"></div><div class="glow"></div>
+        <small>Heard in the Boneyard</small><b>Past the wall, it's green</b><p>There's a wall at the bottom of the Boneyard nobody remembers building, and on the other side, somebody is tending an orchard.</p>
+        <img class="sil px" src="/v3/assets/img/glad/flat/gardener.png" alt=""></div>
+    </div>
+
+    <h3>Tell us what you want</h3>
+    <div class="rm-idea"><img class="px" src="/v3/assets/img/glad/flat/ui/bom_face.png" alt=""><span><b>Got an idea?</b><span>Bom passes the good ones on. The best of them end up on this page, with your name on the card.</span></span>
+      <form onsubmit="return false"><input placeholder="A world event where…"><button class="k-btn sm" type="button">Send</button></form></div>
+  </div></div>
+</div>
+</section>
+
+<section class="sec"><h2>The ways in</h2>
+<p>Three places a player meets the roadmap, so it doesn't depend on anyone finding the page.</p>
+<div class="two">
+  <div><div class="home">
+    <b style="font:800 18px Cinzel,serif">EastScape Wiki</b>
+    <div class="whw"><img class="px" src="/v3/assets/img/glad/flat/ui/g_updates.png" alt=""><span><b>This week: Week 1, Launch week</b><small>The big changes with pictures, and the week's numbers as they happen.</small></span></div>
+    <div class="whw"><img class="px" src="/v3/assets/img/glad/flat/ui/skills.png" alt=""><span><b>The Road Ahead: My stats is in testing</b><small>3 being built, 5 next, 2 rumours. See what's coming &rarr;</small></span></div>
+  </div><p class="cap">1. The wiki home: a second banner under the Weekly one, naming the item nearest to shipping.</p></div>
+  <div><div class="toast"><img class="px" src="/v3/assets/img/glad/flat/ui/skills.png" alt=""><span><small>From the roadmap · now live</small><b>My stats is here</b><span>Open your profile and press My stats. You wanted it: 41 of you ♥'d it.</span></span></div>
+    <p class="cap">2. A toast when a card moves to Just shipped, once per player, with a link to the thing itself.</p>
+    <div class="wkn" style="margin-top:14px"><h5>Coming next</h5><div class="wkn-row">
+      <a href="#"><img class="px" src="/v3/assets/img/glad/flat/ui/skills.png" alt="">My stats</a>
+      <a href="#"><img class="px" src="/v3/assets/img/glad/flat/ui/g_home.png" alt="">Phone play</a>
+      <a href="#"><img class="px" src="/v3/assets/img/glad/flat/o_roulette.png" alt="">Straight to a table</a>
+      <a href="#"><img class="px" src="/v3/assets/img/glad/flat/ui/g_store.png" alt="">Featured shelf</a></div></div>
+    <p class="cap">3. The Weekly issue ends with a "Coming next" strip from the same list, so every issue points forward.</p></div>
+</div>
+</section>
+
+<section class="sec"><h2>A card, opened</h2>
+<p>Clicking a card opens it: a bigger picture on a map background, where it's at, and what it'll do.</p>
+<div class="two">
+  <div class="detail"><div class="top"><div class="bg"></div><img class="px" src="/v3/assets/img/glad/flat/o_roulette.png" alt=""><h4>Straight to a table</h4></div>
+    <div class="body">
+      <div class="steps"><div class="done">Idea</div><div class="here">Building</div><div>Testing</div><div>Live</div></div>
+      <p>Right now, getting to a table means walking to the casino floor and finding it. This adds a table picker you can open from anywhere, and a short lesson the first time you sit down.</p>
+      <ul><li>Open the tables from the G menu, wherever you are</li><li>Your favourite tables at the top</li><li>A two-minute lesson on your first visit to each</li></ul>
+      <span class="rm-meta"><span class="chip st-build">Building</span><button class="want" type="button">♥ 23 want this</button></span>
+    </div></div>
+  <div class="how"><b style="font:800 16px Cinzel,serif;color:#ffd98a">How it would work</b><ul>
+    <li><b>Written like the Weekly issue.</b> A <code>ROADMAP</code> list in eastscape-wiki.js: each card has a title, a line, a picture key, a lane (now / next / later / rumour), a status and a wiki link. Moving a card is editing one line.</li>
+    <li><b>Pictures are the game's own art</b> (the same keys the Weekly issue uses), and each rumour gets a blurred map and a black silhouette, so it teases without showing the map.</li>
+    <li><b>"Want this" votes</b> would be one small server count: one heart per player per card, counted like the weekly tally, written once a minute. Optional: the page works without it.</li>
+    <li><b>The toast</b> rides the message the page already gets on login, so nothing polls.</li>
+    <li><b>Ideas from players</b> could go straight into the existing bug and idea inbox (the bug button's Inbox), so there's nothing new to read.</li>
+    <li><b>Kept honest:</b> no dates until something is in testing, and the rumours never name a map.</li>
+  </ul></div>
+</div>
+</section>
+</main>
+<script>
+document.querySelectorAll(".want").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); const on = b.classList.toggle("on"); b.textContent = b.textContent.replace(/\d+/, (n) => +n + (on ? 1 : -1)); }));
+</script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+[
+  {"name": "The Character window", "commit": "d71cc184", "page": "statsui-mock", "what": "Every number about you, and where to get more: a button in the Equipment tab.", "ships": "a new module (eastscape-char.js, probe it live first) and the page; no rules change"},
+  {"name": "Abilities and the order (2a)", "commit": "cf4091c1", "page": "ascend-mock", "what": "Three per fighting style at 1, 30 and 60, firing in the order you set.", "ships": "VERSION 387 (rules, worker, page); nine new icons ui/ab_*.png pushed and probed before the page"},
+  {"name": "Skilling sets art", "commit": "70059278", "page": "skillsets-mock", "what": "All 52 icons for the thirteen new sets, drawn; the code isn't written yet.", "ships": "nothing yet: the art waits for the feature"}
+]

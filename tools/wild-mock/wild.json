@@ -1,0 +1,2297 @@
+{
+ "at": "2026-09-30T18:03:43.565Z",
+ "backupAt": "2026-09-30T09:20:55.061Z",
+ "rulesAtBackup": 371,
+ "rulesNow": 375,
+ "rules": {
+  "pvpDrop": 0.25,
+  "wildGather": 0.5,
+  "deep": {
+   "xpMul": 1.5,
+   "luck": 0.1,
+   "geode": 0.01
+  },
+  "req": {
+   "skill": "melee",
+   "lvl": 10
+  },
+  "hitFloor": 0.18,
+  "nexus": {
+   "mult": 1.5,
+   "xp": 1.25
+  },
+  "lingerMs": 10000
+ },
+ "levels": [
+  91,
+  82,
+  80,
+  79,
+  75,
+  73,
+  71,
+  61,
+  54,
+  52,
+  51,
+  50,
+  49,
+  37,
+  31,
+  24,
+  19,
+  16,
+  16,
+  15,
+  14,
+  11,
+  10,
+  9,
+  8,
+  7,
+  6,
+  6
+ ],
+ "mobs": [
+  {
+   "t": "gnasher",
+   "name": "Bog Gnasher",
+   "lvl": 18,
+   "hp": 17,
+   "max": 7,
+   "speed": 2600,
+   "place": {
+    "wild": {
+     "n": 3,
+     "aggro": 0
+    }
+   },
+   "elsewhere": [
+    "The Gloam"
+   ],
+   "wildOnly": false,
+   "tix": 70,
+   "drops": [
+    {
+     "k": "tickets",
+     "name": "Tickets",
+     "p": 1
+    },
+    {
+     "k": "emerald_ore",
+     "name": "Emerald ore",
+     "p": 0.28
+    },
+    {
+     "k": "bones",
+     "name": "Bones",
+     "p": 0.42
+    }
+   ],
+   "vs": [
+    {
+     "L": 40,
+     "tier": "dragonstone",
+     "pHit": 0.95,
+     "ttk": 3.7,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 16.6,
+     "minsToDie": 2.4,
+     "takenPerKill": 1,
+     "hp": 40
+    },
+    {
+     "L": 60,
+     "tier": "starfall",
+     "pHit": 0.95,
+     "ttk": 2.5,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 16.6,
+     "minsToDie": 3.6,
+     "takenPerKill": 0.7,
+     "hp": 60
+    },
+    {
+     "L": 75,
+     "tier": "eclipse",
+     "pHit": 0.95,
+     "ttk": 2.1,
+     "swings": 1,
+     "mHit": 0.18,
+     "dpm": 16.6,
+     "minsToDie": 4.5,
+     "takenPerKill": 0.6,
+     "hp": 75
+    },
+    {
+     "L": 90,
+     "tier": "singularity",
+     "pHit": 0.95,
+     "ttk": 1.7,
+     "swings": 1,
+     "mHit": 0.18,
+     "dpm": 16.6,
+     "minsToDie": 5.4,
+     "takenPerKill": 0.5,
+     "hp": 90
+    }
+   ],
+   "xpH": {
+    "40": 36537,
+    "60": 44509,
+    "75": 48000,
+    "90": 52085
+   },
+   "tixH": {
+    "40": 37612,
+    "60": 45818,
+    "75": 49412,
+    "90": 53617
+   }
+  },
+  {
+   "t": "taxwraith",
+   "name": "Tax Wraith",
+   "lvl": 28,
+   "hp": 24,
+   "max": 7,
+   "speed": 2400,
+   "place": {
+    "wild": {
+     "n": 4,
+     "aggro": 1
+    },
+    "deep": {
+     "n": 3,
+     "aggro": 0
+    }
+   },
+   "elsewhere": [
+    "The Lantern Mire"
+   ],
+   "wildOnly": false,
+   "tix": 131,
+   "drops": [
+    {
+     "k": "tickets",
+     "name": "Tickets",
+     "p": 1
+    },
+    {
+     "k": "receipt",
+     "name": "Tax receipt",
+     "p": 0.38
+    },
+    {
+     "k": "seed_sun",
+     "name": "Sun seeds",
+     "p": 0.008
+    }
+   ],
+   "vs": [
+    {
+     "L": 40,
+     "tier": "dragonstone",
+     "pHit": 0.95,
+     "ttk": 5.3,
+     "swings": 3,
+     "mHit": 0.18,
+     "dpm": 18,
+     "minsToDie": 2.2,
+     "takenPerKill": 1.6,
+     "hp": 40
+    },
+    {
+     "L": 60,
+     "tier": "starfall",
+     "pHit": 0.95,
+     "ttk": 3.5,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 18,
+     "minsToDie": 3.3,
+     "takenPerKill": 1,
+     "hp": 60
+    },
+    {
+     "L": 75,
+     "tier": "eclipse",
+     "pHit": 0.95,
+     "ttk": 3,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 18,
+     "minsToDie": 4.2,
+     "takenPerKill": 0.9,
+     "hp": 75
+    },
+    {
+     "L": 90,
+     "tier": "singularity",
+     "pHit": 0.95,
+     "ttk": 2.3,
+     "swings": 1,
+     "mHit": 0.18,
+     "dpm": 18,
+     "minsToDie": 5,
+     "takenPerKill": 0.7,
+     "hp": 90
+    }
+   ],
+   "xpH": {
+    "40": 41639,
+    "60": 53169,
+    "75": 57600,
+    "90": 65208
+   },
+   "tixH": {
+    "40": 56819,
+    "60": 72554,
+    "75": 78600,
+    "90": 88981
+   }
+  },
+  {
+   "t": "ghoul",
+   "name": "Sorry Ghoul",
+   "lvl": 30,
+   "hp": 26,
+   "max": 6,
+   "speed": 2400,
+   "place": {
+    "wild": {
+     "n": 6,
+     "aggro": 1
+    }
+   },
+   "elsewhere": [
+    "The Boneyard"
+   ],
+   "wildOnly": false,
+   "tix": 96,
+   "drops": [
+    {
+     "k": "tickets",
+     "name": "Tickets",
+     "p": 1
+    },
+    {
+     "k": "diamond_ore",
+     "name": "Diamond ore",
+     "p": 0.27
+    },
+    {
+     "k": "bones",
+     "name": "Bones",
+     "p": 0.27
+    },
+    {
+     "k": "seed_sun",
+     "name": "Sun seeds",
+     "p": 0.008
+    }
+   ],
+   "vs": [
+    {
+     "L": 40,
+     "tier": "dragonstone",
+     "pHit": 0.95,
+     "ttk": 5.7,
+     "swings": 3,
+     "mHit": 0.19,
+     "dpm": 16.6,
+     "minsToDie": 2.4,
+     "takenPerKill": 1.6,
+     "hp": 40
+    },
+    {
+     "L": 60,
+     "tier": "starfall",
+     "pHit": 0.95,
+     "ttk": 3.8,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 15.8,
+     "minsToDie": 3.8,
+     "takenPerKill": 1,
+     "hp": 60
+    },
+    {
+     "L": 75,
+     "tier": "eclipse",
+     "pHit": 0.95,
+     "ttk": 3.2,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 15.8,
+     "minsToDie": 4.8,
+     "takenPerKill": 0.8,
+     "hp": 75
+    },
+    {
+     "L": 90,
+     "tier": "singularity",
+     "pHit": 0.95,
+     "ttk": 2.5,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 15.8,
+     "minsToDie": 5.7,
+     "takenPerKill": 0.7,
+     "hp": 90
+    }
+   ],
+   "xpH": {
+    "40": 43034,
+    "60": 55059,
+    "75": 60387,
+    "90": 68073
+   },
+   "tixH": {
+    "40": 39724,
+    "60": 50824,
+    "75": 55742,
+    "90": 62836
+   }
+  },
+  {
+   "t": "chandelier",
+   "name": "Chandelier Spider",
+   "lvl": 34,
+   "hp": 29,
+   "max": 7,
+   "speed": 2600,
+   "place": {
+    "deep": {
+     "n": 4,
+     "aggro": 4
+    }
+   },
+   "elsewhere": [
+    "The Boneyard"
+   ],
+   "wildOnly": false,
+   "tix": 109,
+   "drops": [
+    {
+     "k": "tickets",
+     "name": "Tickets",
+     "p": 1
+    },
+    {
+     "k": "cobweb",
+     "name": "Enormous cobweb",
+     "p": 0.26
+    },
+    {
+     "k": "bones",
+     "name": "Bones",
+     "p": 0.42
+    },
+    {
+     "k": "seed_ember",
+     "name": "Ember seeds",
+     "p": 0.008
+    }
+   ],
+   "vs": [
+    {
+     "L": 40,
+     "tier": "dragonstone",
+     "pHit": 0.95,
+     "ttk": 6.4,
+     "swings": 3,
+     "mHit": 0.22,
+     "dpm": 20.2,
+     "minsToDie": 2,
+     "takenPerKill": 2.1,
+     "hp": 40
+    },
+    {
+     "L": 60,
+     "tier": "starfall",
+     "pHit": 0.95,
+     "ttk": 4.2,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 16.6,
+     "minsToDie": 3.6,
+     "takenPerKill": 1.2,
+     "hp": 60
+    },
+    {
+     "L": 75,
+     "tier": "eclipse",
+     "pHit": 0.95,
+     "ttk": 3.6,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 16.6,
+     "minsToDie": 4.5,
+     "takenPerKill": 1,
+     "hp": 75
+    },
+    {
+     "L": 90,
+     "tier": "singularity",
+     "pHit": 0.95,
+     "ttk": 2.8,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 16.6,
+     "minsToDie": 5.4,
+     "takenPerKill": 0.8,
+     "hp": 90
+    }
+   ],
+   "xpH": {
+    "40": 44426,
+    "60": 58000,
+    "75": 63273,
+    "90": 72000
+   },
+   "tixH": {
+    "40": 41745,
+    "60": 54500,
+    "75": 59455,
+    "90": 67655
+   }
+  },
+  {
+   "t": "usher",
+   "name": "One-Eyed Usher",
+   "lvl": 36,
+   "hp": 32,
+   "max": 7,
+   "speed": 2400,
+   "place": {
+    "wild": {
+     "n": 3,
+     "aggro": 3
+    }
+   },
+   "elsewhere": [
+    "The Boneyard"
+   ],
+   "wildOnly": false,
+   "tix": 124,
+   "drops": [
+    {
+     "k": "tickets",
+     "name": "Tickets",
+     "p": 1
+    },
+    {
+     "k": "flashlight",
+     "name": "Usher's flashlight",
+     "p": 0.26
+    },
+    {
+     "k": "seed_sun",
+     "name": "Sun seeds",
+     "p": 0.008
+    }
+   ],
+   "vs": [
+    {
+     "L": 40,
+     "tier": "dragonstone",
+     "pHit": 0.95,
+     "ttk": 7,
+     "swings": 3,
+     "mHit": 0.23,
+     "dpm": 23.4,
+     "minsToDie": 1.7,
+     "takenPerKill": 2.7,
+     "hp": 40
+    },
+    {
+     "L": 60,
+     "tier": "starfall",
+     "pHit": 0.95,
+     "ttk": 4.6,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 18,
+     "minsToDie": 3.3,
+     "takenPerKill": 1.4,
+     "hp": 60
+    },
+    {
+     "L": 75,
+     "tier": "eclipse",
+     "pHit": 0.95,
+     "ttk": 3.9,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 18,
+     "minsToDie": 4.2,
+     "takenPerKill": 1.2,
+     "hp": 75
+    },
+    {
+     "L": 90,
+     "tier": "singularity",
+     "pHit": 0.95,
+     "ttk": 3.1,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 18,
+     "minsToDie": 5,
+     "takenPerKill": 0.9,
+     "hp": 90
+    }
+   ],
+   "xpH": {
+    "40": 46080,
+    "60": 60632,
+    "75": 66783,
+    "90": 75541
+   },
+   "tixH": {
+    "40": 44640,
+    "60": 58737,
+    "75": 64696,
+    "90": 73180
+   }
+  },
+  {
+   "t": "weaver",
+   "name": "Wild Weaver",
+   "lvl": 40,
+   "hp": 25,
+   "max": 7,
+   "speed": 2600,
+   "place": {
+    "wild": {
+     "n": 2,
+     "aggro": 2
+    }
+   },
+   "elsewhere": [],
+   "wildOnly": true,
+   "tix": 99,
+   "drops": [
+    {
+     "k": "tickets",
+     "name": "Tickets",
+     "p": 1
+    },
+    {
+     "k": "cobweb",
+     "name": "Enormous cobweb",
+     "p": 0.28
+    },
+    {
+     "k": "wildsilk",
+     "name": "Wild silk",
+     "p": 0.3
+    }
+   ],
+   "vs": [
+    {
+     "L": 40,
+     "tier": "dragonstone",
+     "pHit": 0.95,
+     "ttk": 5.5,
+     "swings": 3,
+     "mHit": 0.43,
+     "dpm": 39.4,
+     "minsToDie": 1,
+     "takenPerKill": 3.6,
+     "hp": 40
+    },
+    {
+     "L": 60,
+     "tier": "starfall",
+     "pHit": 0.95,
+     "ttk": 3.6,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 16.6,
+     "minsToDie": 3.6,
+     "takenPerKill": 1,
+     "hp": 60
+    },
+    {
+     "L": 75,
+     "tier": "eclipse",
+     "pHit": 0.95,
+     "ttk": 3.1,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 16.6,
+     "minsToDie": 4.5,
+     "takenPerKill": 0.9,
+     "hp": 75
+    },
+    {
+     "L": 90,
+     "tier": "singularity",
+     "pHit": 0.95,
+     "ttk": 2.4,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 16.6,
+     "minsToDie": 5.4,
+     "takenPerKill": 0.7,
+     "hp": 90
+    }
+   ],
+   "xpH": {
+    "40": 42353,
+    "60": 54545,
+    "75": 59016,
+    "90": 66667
+   },
+   "tixH": {
+    "40": 41929,
+    "60": 54000,
+    "75": 58426,
+    "90": 66000
+   }
+  },
+  {
+   "t": "revenant",
+   "name": "Sulking Revenant",
+   "lvl": 45,
+   "hp": 46,
+   "max": 9,
+   "speed": 2800,
+   "place": {
+    "wild": {
+     "n": 4,
+     "aggro": 4
+    },
+    "deep": {
+     "n": 6,
+     "aggro": 6
+    }
+   },
+   "elsewhere": [
+    "Cloudreach"
+   ],
+   "wildOnly": false,
+   "tix": 191,
+   "drops": [
+    {
+     "k": "tickets",
+     "name": "Tickets",
+     "p": 1
+    },
+    {
+     "k": "dragonstone_ore",
+     "name": "Dragonstone ore",
+     "p": 0.34
+    },
+    {
+     "k": "bones",
+     "name": "Bones",
+     "p": 0.27
+    },
+    {
+     "k": "seed_sun",
+     "name": "Sun seeds",
+     "p": 0.008
+    },
+    {
+     "k": "ectoplasm",
+     "name": "Ectoplasm",
+     "p": 0.03
+    }
+   ],
+   "vs": [
+    {
+     "L": 40,
+     "tier": "dragonstone",
+     "pHit": 0.95,
+     "ttk": 10.1,
+     "swings": 5,
+     "mHit": 0.47,
+     "dpm": 50.8,
+     "minsToDie": 0.8,
+     "takenPerKill": 8.6,
+     "hp": 40
+    },
+    {
+     "L": 60,
+     "tier": "starfall",
+     "pHit": 0.95,
+     "ttk": 6.6,
+     "swings": 3,
+     "mHit": 0.18,
+     "dpm": 19.3,
+     "minsToDie": 3.1,
+     "takenPerKill": 2.1,
+     "hp": 60
+    },
+    {
+     "L": 75,
+     "tier": "eclipse",
+     "pHit": 0.95,
+     "ttk": 5.7,
+     "swings": 3,
+     "mHit": 0.18,
+     "dpm": 19.3,
+     "minsToDie": 3.9,
+     "takenPerKill": 1.8,
+     "hp": 75
+    },
+    {
+     "L": 90,
+     "tier": "singularity",
+     "pHit": 0.95,
+     "ttk": 4.5,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 19.3,
+     "minsToDie": 4.7,
+     "takenPerKill": 1.4,
+     "hp": 90
+    }
+   ],
+   "xpH": {
+    "40": 50565,
+    "60": 69000,
+    "75": 76138,
+    "90": 88320
+   },
+   "tixH": {
+    "40": 52489,
+    "60": 71625,
+    "75": 79034,
+    "90": 91680
+   }
+  },
+  {
+   "t": "jackal",
+   "name": "Tomb Jackal",
+   "lvl": 47,
+   "hp": 24,
+   "max": 9,
+   "speed": 2600,
+   "place": {
+    "deep": {
+     "n": 1,
+     "aggro": 0
+    }
+   },
+   "elsewhere": [
+    "The Golden Sands"
+   ],
+   "wildOnly": false,
+   "tix": 101,
+   "drops": [
+    {
+     "k": "tickets",
+     "name": "Tickets",
+     "p": 1
+    },
+    {
+     "k": "dragonstone_ore",
+     "name": "Dragonstone ore",
+     "p": 0.38
+    },
+    {
+     "k": "seed_frost",
+     "name": "Frost seeds",
+     "p": 0.008
+    }
+   ],
+   "vs": [
+    {
+     "L": 40,
+     "tier": "dragonstone",
+     "pHit": 0.95,
+     "ttk": 5.3,
+     "swings": 3,
+     "mHit": 0.5,
+     "dpm": 57.7,
+     "minsToDie": 0.7,
+     "takenPerKill": 5.1,
+     "hp": 40
+    },
+    {
+     "L": 60,
+     "tier": "starfall",
+     "pHit": 0.95,
+     "ttk": 3.5,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 20.8,
+     "minsToDie": 2.9,
+     "takenPerKill": 1.2,
+     "hp": 60
+    },
+    {
+     "L": 75,
+     "tier": "eclipse",
+     "pHit": 0.95,
+     "ttk": 3,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 20.8,
+     "minsToDie": 3.6,
+     "takenPerKill": 1,
+     "hp": 75
+    },
+    {
+     "L": 90,
+     "tier": "singularity",
+     "pHit": 0.95,
+     "ttk": 2.3,
+     "swings": 1,
+     "mHit": 0.18,
+     "dpm": 20.8,
+     "minsToDie": 4.3,
+     "takenPerKill": 0.8,
+     "hp": 90
+    }
+   ],
+   "xpH": {
+    "40": 41639,
+    "60": 53169,
+    "75": 57600,
+    "90": 65208
+   },
+   "tixH": {
+    "40": 43807,
+    "60": 55938,
+    "75": 60600,
+    "90": 68604
+   }
+  },
+  {
+   "t": "marrowhound",
+   "name": "Marrow Hound",
+   "lvl": 50,
+   "hp": 33,
+   "max": 7,
+   "speed": 2200,
+   "place": {
+    "wild": {
+     "n": 2,
+     "aggro": 1
+    },
+    "deep": {
+     "n": 2,
+     "aggro": 1
+    }
+   },
+   "elsewhere": [],
+   "wildOnly": true,
+   "tix": 142,
+   "drops": [
+    {
+     "k": "tickets",
+     "name": "Tickets",
+     "p": 1
+    },
+    {
+     "k": "bones",
+     "name": "Bones",
+     "p": 0.29
+    },
+    {
+     "k": "marrow",
+     "name": "Marrow",
+     "p": 0.3
+    }
+   ],
+   "vs": [
+    {
+     "L": 40,
+     "tier": "dragonstone",
+     "pHit": 0.95,
+     "ttk": 7.2,
+     "swings": 4,
+     "mHit": 0.81,
+     "dpm": 87.9,
+     "minsToDie": 0.5,
+     "takenPerKill": 10.6,
+     "hp": 40
+    },
+    {
+     "L": 60,
+     "tier": "starfall",
+     "pHit": 0.95,
+     "ttk": 4.8,
+     "swings": 2,
+     "mHit": 0.24,
+     "dpm": 26.5,
+     "minsToDie": 2.3,
+     "takenPerKill": 2.1,
+     "hp": 60
+    },
+    {
+     "L": 75,
+     "tier": "eclipse",
+     "pHit": 0.95,
+     "ttk": 4.1,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 19.6,
+     "minsToDie": 3.8,
+     "takenPerKill": 1.3,
+     "hp": 75
+    },
+    {
+     "L": 90,
+     "tier": "singularity",
+     "pHit": 0.95,
+     "ttk": 3.2,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 19.6,
+     "minsToDie": 4.6,
+     "takenPerKill": 1,
+     "hp": 90
+    }
+   ],
+   "xpH": {
+    "40": 46588,
+    "60": 60923,
+    "75": 66930,
+    "90": 76645
+   },
+   "tixH": {
+    "40": 50118,
+    "60": 65538,
+    "75": 72000,
+    "90": 82452
+   }
+  },
+  {
+   "t": "golem",
+   "name": "Storm Golem",
+   "lvl": 52,
+   "hp": 57,
+   "max": 11,
+   "speed": 3000,
+   "place": {
+    "deep": {
+     "n": 5,
+     "aggro": 3
+    }
+   },
+   "elsewhere": [
+    "The Thunderhead"
+   ],
+   "wildOnly": false,
+   "tix": 251,
+   "drops": [
+    {
+     "k": "tickets",
+     "name": "Tickets",
+     "p": 1
+    },
+    {
+     "k": "onyx_ore",
+     "name": "Onyx ore",
+     "p": 0.35
+    },
+    {
+     "k": "seed_void",
+     "name": "Void seeds",
+     "p": 0.008
+    }
+   ],
+   "vs": [
+    {
+     "L": 40,
+     "tier": "dragonstone",
+     "pHit": 0.95,
+     "ttk": 12.5,
+     "swings": 6,
+     "mHit": 0.84,
+     "dpm": 101,
+     "minsToDie": 0.4,
+     "takenPerKill": 21.1,
+     "hp": 40
+    },
+    {
+     "L": 60,
+     "tier": "starfall",
+     "pHit": 0.95,
+     "ttk": 8.2,
+     "swings": 4,
+     "mHit": 0.25,
+     "dpm": 30.5,
+     "minsToDie": 2,
+     "takenPerKill": 4.2,
+     "hp": 60
+    },
+    {
+     "L": 75,
+     "tier": "eclipse",
+     "pHit": 0.95,
+     "ttk": 7,
+     "swings": 3,
+     "mHit": 0.18,
+     "dpm": 21.6,
+     "minsToDie": 3.5,
+     "takenPerKill": 2.5,
+     "hp": 75
+    },
+    {
+     "L": 90,
+     "tier": "singularity",
+     "pHit": 0.95,
+     "ttk": 5.5,
+     "swings": 3,
+     "mHit": 0.18,
+     "dpm": 21.6,
+     "minsToDie": 4.2,
+     "takenPerKill": 2,
+     "hp": 90
+    }
+   ],
+   "xpH": {
+    "40": 52955,
+    "60": 73286,
+    "75": 82080,
+    "90": 96565
+   },
+   "tixH": {
+    "40": 58297,
+    "60": 80679,
+    "75": 90360,
+    "90": 106306
+   }
+  },
+  {
+   "t": "goose",
+   "name": "Thunder Goose",
+   "lvl": 55,
+   "hp": 63,
+   "max": 11,
+   "speed": 2800,
+   "place": {
+    "deep": {
+     "n": 2,
+     "aggro": 1
+    }
+   },
+   "elsewhere": [
+    "The Thunderhead"
+   ],
+   "wildOnly": false,
+   "tix": 285,
+   "drops": [
+    {
+     "k": "tickets",
+     "name": "Tickets",
+     "p": 1
+    },
+    {
+     "k": "onyx_ore",
+     "name": "Onyx ore",
+     "p": 0.29
+    },
+    {
+     "k": "bones",
+     "name": "Bones",
+     "p": 0.35
+    },
+    {
+     "k": "feather",
+     "name": "Feather",
+     "p": 0.42
+    },
+    {
+     "k": "seed_frost",
+     "name": "Frost seeds",
+     "p": 0.008
+    }
+   ],
+   "vs": [
+    {
+     "L": 40,
+     "tier": "dragonstone",
+     "pHit": 0.95,
+     "ttk": 13.8,
+     "swings": 6,
+     "mHit": 0.88,
+     "dpm": 113,
+     "minsToDie": 0.4,
+     "takenPerKill": 26.1,
+     "hp": 40
+    },
+    {
+     "L": 60,
+     "tier": "starfall",
+     "pHit": 0.95,
+     "ttk": 9.1,
+     "swings": 4,
+     "mHit": 0.26,
+     "dpm": 34.1,
+     "minsToDie": 1.8,
+     "takenPerKill": 5.2,
+     "hp": 60
+    },
+    {
+     "L": 75,
+     "tier": "eclipse",
+     "pHit": 0.95,
+     "ttk": 7.8,
+     "swings": 4,
+     "mHit": 0.18,
+     "dpm": 23.1,
+     "minsToDie": 3.2,
+     "takenPerKill": 3,
+     "hp": 75
+    },
+    {
+     "L": 90,
+     "tier": "singularity",
+     "pHit": 0.95,
+     "ttk": 6.1,
+     "swings": 3,
+     "mHit": 0.18,
+     "dpm": 23.1,
+     "minsToDie": 3.9,
+     "takenPerKill": 2.4,
+     "hp": 90
+    }
+   ],
+   "xpH": {
+    "40": 54000,
+    "60": 74975,
+    "75": 84000,
+    "90": 99692
+   },
+   "tixH": {
+    "40": 61071,
+    "60": 84793,
+    "75": 95000,
+    "90": 112747
+   }
+  },
+  {
+   "t": "wolf",
+   "name": "Thunderwolf",
+   "lvl": 58,
+   "hp": 60,
+   "max": 11,
+   "speed": 2200,
+   "place": {
+    "wild": {
+     "n": 1,
+     "aggro": 1
+    },
+    "deep": {
+     "n": 5,
+     "aggro": 5
+    }
+   },
+   "elsewhere": [
+    "The Thunderhead"
+   ],
+   "wildOnly": false,
+   "tix": 277,
+   "drops": [
+    {
+     "k": "tickets",
+     "name": "Tickets",
+     "p": 1
+    },
+    {
+     "k": "staticfur",
+     "name": "Static pelt",
+     "p": 0.42
+    },
+    {
+     "k": "seed_frost",
+     "name": "Frost seeds",
+     "p": 0.008
+    }
+   ],
+   "vs": [
+    {
+     "L": 40,
+     "tier": "dragonstone",
+     "pHit": 0.95,
+     "ttk": 13.2,
+     "swings": 6,
+     "mHit": 0.95,
+     "dpm": 155.5,
+     "minsToDie": 0.3,
+     "takenPerKill": 34.2,
+     "hp": 40
+    },
+    {
+     "L": 60,
+     "tier": "starfall",
+     "pHit": 0.95,
+     "ttk": 8.7,
+     "swings": 4,
+     "mHit": 0.29,
+     "dpm": 47.2,
+     "minsToDie": 1.3,
+     "takenPerKill": 6.8,
+     "hp": 60
+    },
+    {
+     "L": 75,
+     "tier": "eclipse",
+     "pHit": 0.95,
+     "ttk": 7.4,
+     "swings": 4,
+     "mHit": 0.18,
+     "dpm": 29.5,
+     "minsToDie": 2.5,
+     "takenPerKill": 3.6,
+     "hp": 75
+    },
+    {
+     "L": 90,
+     "tier": "singularity",
+     "pHit": 0.95,
+     "ttk": 5.8,
+     "swings": 3,
+     "mHit": 0.18,
+     "dpm": 29.5,
+     "minsToDie": 3.1,
+     "takenPerKill": 2.9,
+     "hp": 90
+    }
+   ],
+   "xpH": {
+    "40": 53333,
+    "60": 73846,
+    "75": 83077,
+    "90": 98182
+   },
+   "tixH": {
+    "40": 61556,
+    "60": 85231,
+    "75": 95885,
+    "90": 113318
+   }
+  },
+  {
+   "t": "drake",
+   "name": "Hail Drake",
+   "lvl": 62,
+   "hp": 71,
+   "max": 12,
+   "speed": 2800,
+   "place": {
+    "deep": {
+     "n": 2,
+     "aggro": 2
+    }
+   },
+   "elsewhere": [
+    "The Thunderhead"
+   ],
+   "wildOnly": false,
+   "tix": 336,
+   "drops": [
+    {
+     "k": "tickets",
+     "name": "Tickets",
+     "p": 1
+    },
+    {
+     "k": "hailshard",
+     "name": "Hail shard",
+     "p": 0.38
+    },
+    {
+     "k": "seed_ember",
+     "name": "Ember seeds",
+     "p": 0.008
+    }
+   ],
+   "vs": [
+    {
+     "L": 40,
+     "tier": "dragonstone",
+     "pHit": 0.95,
+     "ttk": 15.6,
+     "swings": 7,
+     "mHit": 0.95,
+     "dpm": 132.3,
+     "minsToDie": 0.3,
+     "takenPerKill": 34.4,
+     "hp": 40
+    },
+    {
+     "L": 60,
+     "tier": "starfall",
+     "pHit": 0.95,
+     "ttk": 10.2,
+     "swings": 5,
+     "mHit": 0.44,
+     "dpm": 61.5,
+     "minsToDie": 1,
+     "takenPerKill": 10.5,
+     "hp": 60
+    },
+    {
+     "L": 75,
+     "tier": "eclipse",
+     "pHit": 0.95,
+     "ttk": 8.7,
+     "swings": 4,
+     "mHit": 0.26,
+     "dpm": 36.4,
+     "minsToDie": 2.1,
+     "takenPerKill": 5.3,
+     "hp": 75
+    },
+    {
+     "L": 90,
+     "tier": "singularity",
+     "pHit": 0.95,
+     "ttk": 6.9,
+     "swings": 3,
+     "mHit": 0.18,
+     "dpm": 25.1,
+     "minsToDie": 3.6,
+     "takenPerKill": 2.9,
+     "hp": 90
+    }
+   ],
+   "xpH": {
+    "40": 54968,
+    "60": 77455,
+    "75": 87385,
+    "90": 103273
+   },
+   "tixH": {
+    "40": 65032,
+    "60": 91636,
+    "75": 103385,
+    "90": 122182
+   }
+  },
+  {
+   "t": "grimlich",
+   "name": "Grim Lich",
+   "lvl": 66,
+   "hp": 48,
+   "max": 7,
+   "speed": 3000,
+   "place": {
+    "deep": {
+     "n": 2,
+     "aggro": 2
+    }
+   },
+   "elsewhere": [],
+   "wildOnly": true,
+   "tix": 234,
+   "drops": [
+    {
+     "k": "tickets",
+     "name": "Tickets",
+     "p": 1
+    },
+    {
+     "k": "grimstone",
+     "name": "Grimstone ore",
+     "p": 0.33
+    },
+    {
+     "k": "grimcore",
+     "name": "Grimcore",
+     "p": 0.04
+    },
+    {
+     "k": "seed_sun",
+     "name": "Sun seeds",
+     "p": 0.025
+    },
+    {
+     "k": "seed_ember",
+     "name": "Ember seeds",
+     "p": 0.025
+    },
+    {
+     "k": "seed_frost",
+     "name": "Frost seeds",
+     "p": 0.025
+    },
+    {
+     "k": "seed_void",
+     "name": "Void seeds",
+     "p": 0.025
+    }
+   ],
+   "vs": [
+    {
+     "L": 40,
+     "tier": "dragonstone",
+     "pHit": 0.95,
+     "ttk": 10.5,
+     "swings": 5,
+     "mHit": 0.95,
+     "dpm": 76,
+     "minsToDie": 0.5,
+     "takenPerKill": 13.4,
+     "hp": 40
+    },
+    {
+     "L": 60,
+     "tier": "starfall",
+     "pHit": 0.95,
+     "ttk": 6.9,
+     "swings": 3,
+     "mHit": 0.46,
+     "dpm": 36.6,
+     "minsToDie": 1.6,
+     "takenPerKill": 4.2,
+     "hp": 60
+    },
+    {
+     "L": 75,
+     "tier": "eclipse",
+     "pHit": 0.95,
+     "ttk": 5.9,
+     "swings": 3,
+     "mHit": 0.27,
+     "dpm": 21.7,
+     "minsToDie": 3.5,
+     "takenPerKill": 2.1,
+     "hp": 75
+    },
+    {
+     "L": 90,
+     "tier": "singularity",
+     "pHit": 0.95,
+     "ttk": 4.7,
+     "swings": 2,
+     "mHit": 0.18,
+     "dpm": 14.4,
+     "minsToDie": 6.3,
+     "takenPerKill": 1.1,
+     "hp": 90
+    }
+   ],
+   "xpH": {
+    "40": 51200,
+    "60": 69818,
+    "75": 77663,
+    "90": 89766
+   },
+   "tixH": {
+    "40": 62400,
+    "60": 85091,
+    "75": 94652,
+    "90": 109403
+   }
+  }
+ ],
+ "nodes": {
+  "wild": [
+   {
+    "t": "deadtree",
+    "name": "Deadwood tree",
+    "x": 35,
+    "y": 3,
+    "log": "ashlogs",
+    "req": {
+     "skill": "woodcutting",
+     "lvl": 20
+    },
+    "xp": 70,
+    "wildOnly": false,
+    "gathered": 3967,
+    "items": [
+     "ashlogs"
+    ]
+   },
+   {
+    "t": "deadtree",
+    "name": "Deadwood tree",
+    "x": 39,
+    "y": 2,
+    "log": "ashlogs",
+    "req": {
+     "skill": "woodcutting",
+     "lvl": 20
+    },
+    "xp": 70,
+    "wildOnly": false,
+    "gathered": 3967,
+    "items": [
+     "ashlogs"
+    ]
+   },
+   {
+    "t": "yew",
+    "name": "Ancient yew",
+    "x": 37,
+    "y": 5,
+    "log": "yewlogs",
+    "req": {
+     "skill": "woodcutting",
+     "lvl": 35
+    },
+    "xp": 170,
+    "wildOnly": false,
+    "gathered": 13801,
+    "items": [
+     "yewlogs"
+    ]
+   },
+   {
+    "t": "rock",
+    "name": "Grimstone rock",
+    "x": 36,
+    "y": 19,
+    "ore": "grimstone",
+    "req": {
+     "skill": "mining",
+     "lvl": 20
+    },
+    "xp": 60,
+    "wildOnly": false,
+    "gathered": 8898,
+    "items": [
+     "grimstone"
+    ]
+   },
+   {
+    "t": "rock",
+    "name": "Dragonstone rock",
+    "x": 40,
+    "y": 20,
+    "ore": "dragonstone_ore",
+    "req": {
+     "skill": "mining",
+     "lvl": 40
+    },
+    "xp": 95,
+    "wildOnly": false,
+    "gathered": 19043,
+    "items": [
+     "dragonstone_ore"
+    ]
+   },
+   {
+    "t": "rock",
+    "name": "Dragonstone rock",
+    "x": 38,
+    "y": 22,
+    "ore": "dragonstone_ore",
+    "req": {
+     "skill": "mining",
+     "lvl": 40
+    },
+    "xp": 95,
+    "wildOnly": false,
+    "gathered": 19043,
+    "items": [
+     "dragonstone_ore"
+    ]
+   },
+   {
+    "t": "spot",
+    "name": "Dead pool",
+    "x": 9,
+    "y": 20,
+    "fish": "gloomfin",
+    "fish2": "mooncarp",
+    "fish2lvl": 40,
+    "req": {
+     "skill": "fishing",
+     "lvl": 20
+    },
+    "xp": 80,
+    "xp2": 150,
+    "wildOnly": true,
+    "gathered": 848,
+    "items": [
+     "gloomfin",
+     "mooncarp"
+    ]
+   },
+   {
+    "t": "spot",
+    "name": "Dead pool",
+    "x": 11,
+    "y": 20,
+    "fish": "gloomfin",
+    "fish2": "mooncarp",
+    "fish2lvl": 40,
+    "req": {
+     "skill": "fishing",
+     "lvl": 20
+    },
+    "xp": 80,
+    "xp2": 150,
+    "wildOnly": true,
+    "gathered": 848,
+    "items": [
+     "gloomfin",
+     "mooncarp"
+    ]
+   }
+  ],
+  "deep": [
+   {
+    "t": "altar_nexus",
+    "name": "The Nexus: prints every page, twice over",
+    "x": 4,
+    "y": 2,
+    "wildOnly": true,
+    "gathered": 0,
+    "items": []
+   },
+   {
+    "t": "wildbench",
+    "name": "The Wild Bench: fletches everything, half as much again",
+    "x": 7,
+    "y": 3,
+    "wildOnly": true,
+    "gathered": 0,
+    "items": []
+   },
+   {
+    "t": "spot",
+    "name": "Black pool",
+    "x": 35,
+    "y": 6,
+    "fish": "voidfin",
+    "fish2": "grimscale",
+    "fish2lvl": 97,
+    "req": {
+     "skill": "fishing",
+     "lvl": 92
+    },
+    "xp": 400,
+    "xp2": 480,
+    "wildOnly": true,
+    "gathered": 0,
+    "items": [
+     "voidfin",
+     "grimscale"
+    ]
+   },
+   {
+    "t": "spot",
+    "name": "Black pool",
+    "x": 38,
+    "y": 6,
+    "fish": "voidfin",
+    "fish2": "grimscale",
+    "fish2lvl": 97,
+    "req": {
+     "skill": "fishing",
+     "lvl": 92
+    },
+    "xp": 400,
+    "xp2": 480,
+    "wildOnly": true,
+    "gathered": 0,
+    "items": [
+     "voidfin",
+     "grimscale"
+    ]
+   },
+   {
+    "t": "yew",
+    "name": "Gallows oak",
+    "x": 8,
+    "y": 18,
+    "log": "gallowslogs",
+    "req": {
+     "skill": "woodcutting",
+     "lvl": 90
+    },
+    "xp": 300,
+    "wildOnly": true,
+    "gathered": 0,
+    "items": [
+     "gallowslogs"
+    ]
+   },
+   {
+    "t": "rock",
+    "name": "Grimstone rock",
+    "x": 3,
+    "y": 19,
+    "ore": "grimstone",
+    "req": {
+     "skill": "mining",
+     "lvl": 20
+    },
+    "xp": 60,
+    "wildOnly": false,
+    "gathered": 8898,
+    "items": [
+     "grimstone"
+    ]
+   },
+   {
+    "t": "rock",
+    "name": "Onyx rock",
+    "x": 6,
+    "y": 20,
+    "ore": "onyx_ore",
+    "req": {
+     "skill": "mining",
+     "lvl": 50
+    },
+    "xp": 115,
+    "wildOnly": false,
+    "gathered": 9826,
+    "items": [
+     "onyx_ore"
+    ]
+   },
+   {
+    "t": "rock",
+    "name": "Starfall rock",
+    "x": 4,
+    "y": 22,
+    "ore": "starfall_ore",
+    "req": {
+     "skill": "mining",
+     "lvl": 60
+    },
+    "xp": 150,
+    "wildOnly": false,
+    "gathered": 2366,
+    "items": [
+     "starfall_ore"
+    ]
+   },
+   {
+    "t": "deadtree",
+    "name": "Deadwood tree",
+    "x": 37,
+    "y": 11,
+    "log": "ashlogs",
+    "req": {
+     "skill": "woodcutting",
+     "lvl": 20
+    },
+    "xp": 70,
+    "wildOnly": false,
+    "gathered": 3967,
+    "items": [
+     "ashlogs"
+    ]
+   },
+   {
+    "t": "skyash",
+    "name": "Skyash",
+    "x": 40,
+    "y": 13,
+    "log": "skyashlogs",
+    "req": {
+     "skill": "woodcutting",
+     "lvl": 50
+    },
+    "xp": 200,
+    "wildOnly": false,
+    "gathered": 9277,
+    "items": [
+     "skyashlogs"
+    ]
+   },
+   {
+    "t": "skyash",
+    "name": "Skyash",
+    "x": 36,
+    "y": 16,
+    "log": "skyashlogs",
+    "req": {
+     "skill": "woodcutting",
+     "lvl": 50
+    },
+    "xp": 200,
+    "wildOnly": false,
+    "gathered": 9277,
+    "items": [
+     "skyashlogs"
+    ]
+   }
+  ]
+ },
+ "people": [
+  {
+   "name": "Kellzifer",
+   "combat": 91,
+   "total": 946,
+   "wildKills": 16,
+   "sharedKills": 4537,
+   "killsAll": 8876,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 34353,
+   "deaths": 25,
+   "pvpKills": 5,
+   "pvpDeaths": 1,
+   "playH": 129
+  },
+  {
+   "name": "BeeEzRadio",
+   "combat": 82,
+   "total": 716,
+   "wildKills": 157,
+   "sharedKills": 6885,
+   "killsAll": 11657,
+   "wildGather": {
+    "gloomfin": 217
+   },
+   "wildGatherN": 217,
+   "gatherAll": 22488,
+   "deaths": 76,
+   "pvpKills": 0,
+   "pvpDeaths": 1,
+   "playH": 92
+  },
+  {
+   "name": "dookiebetts800",
+   "combat": 80,
+   "total": 817,
+   "wildKills": 31,
+   "sharedKills": 2858,
+   "killsAll": 5631,
+   "wildGather": {
+    "gloomfin": 99
+   },
+   "wildGatherN": 99,
+   "gatherAll": 31474,
+   "deaths": 26,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 106
+  },
+  {
+   "name": "Calvinthesneak",
+   "combat": 79,
+   "total": 899,
+   "wildKills": 94,
+   "sharedKills": 1663,
+   "killsAll": 4968,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 23272,
+   "deaths": 22,
+   "pvpKills": 0,
+   "pvpDeaths": 6,
+   "playH": 83
+  },
+  {
+   "name": "kunabafoona",
+   "combat": 75,
+   "total": 649,
+   "wildKills": 0,
+   "sharedKills": 1974,
+   "killsAll": 3869,
+   "wildGather": {
+    "gloomfin": 24
+   },
+   "wildGatherN": 24,
+   "gatherAll": 10405,
+   "deaths": 17,
+   "pvpKills": 0,
+   "pvpDeaths": 2,
+   "playH": 38
+  },
+  {
+   "name": "AndyReidisaPAWG",
+   "combat": 73,
+   "total": 738,
+   "wildKills": 40,
+   "sharedKills": 1663,
+   "killsAll": 5007,
+   "wildGather": {
+    "gloomfin": 505,
+    "mooncarp": 3
+   },
+   "wildGatherN": 508,
+   "gatherAll": 16675,
+   "deaths": 17,
+   "pvpKills": 2,
+   "pvpDeaths": 1,
+   "playH": 67
+  },
+  {
+   "name": "pantomim3",
+   "combat": 71,
+   "total": 757,
+   "wildKills": 3,
+   "sharedKills": 780,
+   "killsAll": 4724,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 44531,
+   "deaths": 3,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 85
+  },
+  {
+   "name": "Zwades",
+   "combat": 61,
+   "total": 211,
+   "wildKills": 0,
+   "sharedKills": 1053,
+   "killsAll": 1909,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 679,
+   "deaths": 0,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 7
+  },
+  {
+   "name": "jimmytomato",
+   "combat": 54,
+   "total": 336,
+   "wildKills": 0,
+   "sharedKills": 266,
+   "killsAll": 1202,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 20868,
+   "deaths": 11,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 89
+  },
+  {
+   "name": "Whosthatwolfguy90",
+   "combat": 52,
+   "total": 496,
+   "wildKills": 0,
+   "sharedKills": 322,
+   "killsAll": 1048,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 16444,
+   "deaths": 32,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 32
+  },
+  {
+   "name": "Gallixu",
+   "combat": 51,
+   "total": 487,
+   "wildKills": 1,
+   "sharedKills": 233,
+   "killsAll": 1409,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 4323,
+   "deaths": 13,
+   "pvpKills": 0,
+   "pvpDeaths": 4,
+   "playH": 35
+  },
+  {
+   "name": "BootyPaper",
+   "combat": 50,
+   "total": 196,
+   "wildKills": 0,
+   "sharedKills": 15,
+   "killsAll": 404,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 477,
+   "deaths": 5,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 31
+  },
+  {
+   "name": "ChildishArbino",
+   "combat": 49,
+   "total": 468,
+   "wildKills": 7,
+   "sharedKills": 665,
+   "killsAll": 1050,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 12296,
+   "deaths": 5,
+   "pvpKills": 0,
+   "pvpDeaths": 4,
+   "playH": 36
+  },
+  {
+   "name": "yahsmeena",
+   "combat": 37,
+   "total": 185,
+   "wildKills": 0,
+   "sharedKills": 211,
+   "killsAll": 483,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 1351,
+   "deaths": 2,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 22
+  },
+  {
+   "name": "cuurey",
+   "combat": 31,
+   "total": 121,
+   "wildKills": 0,
+   "sharedKills": 10,
+   "killsAll": 669,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 118,
+   "deaths": 1,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 3
+  },
+  {
+   "name": "cenozoicmegafauna",
+   "combat": 24,
+   "total": 151,
+   "wildKills": 0,
+   "sharedKills": 2,
+   "killsAll": 376,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 322,
+   "deaths": 1,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 4
+  },
+  {
+   "name": "cheee_eeese",
+   "combat": 19,
+   "total": 81,
+   "wildKills": 0,
+   "sharedKills": 0,
+   "killsAll": 187,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 177,
+   "deaths": 2,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 2
+  },
+  {
+   "name": "myIittlepwni",
+   "combat": 16,
+   "total": 82,
+   "wildKills": 0,
+   "sharedKills": 0,
+   "killsAll": 180,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 78,
+   "deaths": 2,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 2
+  },
+  {
+   "name": "HelloItsCare",
+   "combat": 16,
+   "total": 100,
+   "wildKills": 0,
+   "sharedKills": 0,
+   "killsAll": 106,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 199,
+   "deaths": 2,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 3
+  },
+  {
+   "name": "saturdaysfortheufcv2",
+   "combat": 15,
+   "total": 85,
+   "wildKills": 0,
+   "sharedKills": 0,
+   "killsAll": 95,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 122,
+   "deaths": 3,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 4
+  },
+  {
+   "name": "pumpkinismm",
+   "combat": 14,
+   "total": 51,
+   "wildKills": 0,
+   "sharedKills": 0,
+   "killsAll": 103,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 9,
+   "deaths": 3,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 2
+  },
+  {
+   "name": "drhealsgud",
+   "combat": 11,
+   "total": 36,
+   "wildKills": 0,
+   "sharedKills": 0,
+   "killsAll": 57,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 0,
+   "deaths": 0,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 3
+  },
+  {
+   "name": "KnownSpade",
+   "combat": 10,
+   "total": 40,
+   "wildKills": 0,
+   "sharedKills": 0,
+   "killsAll": 29,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 19,
+   "deaths": 0,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 2
+  },
+  {
+   "name": "is489",
+   "combat": 9,
+   "total": 44,
+   "wildKills": 0,
+   "sharedKills": 0,
+   "killsAll": 29,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 106,
+   "deaths": 0,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 1
+  },
+  {
+   "name": "charleskellybirdlaw",
+   "combat": 8,
+   "total": 60,
+   "wildKills": 0,
+   "sharedKills": 0,
+   "killsAll": 20,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 185,
+   "deaths": 2,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 9
+  },
+  {
+   "name": "THEMaccathiel",
+   "combat": 7,
+   "total": 28,
+   "wildKills": 0,
+   "sharedKills": 0,
+   "killsAll": 6,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 4,
+   "deaths": 0,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 0
+  },
+  {
+   "name": "Occors",
+   "combat": 6,
+   "total": 27,
+   "wildKills": 0,
+   "sharedKills": 0,
+   "killsAll": 1,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 0,
+   "deaths": 0,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 0
+  },
+  {
+   "name": "dannyfantomsdad",
+   "combat": 6,
+   "total": 27,
+   "wildKills": 0,
+   "sharedKills": 0,
+   "killsAll": 4,
+   "wildGather": {},
+   "wildGatherN": 0,
+   "gatherAll": 0,
+   "deaths": 0,
+   "pvpKills": 0,
+   "pvpDeaths": 0,
+   "playH": 1
+  }
+ ],
+ "bestElsewhere": {
+  "40": {
+   "t": "revenant",
+   "name": "Sulking Revenant",
+   "lvl": 45,
+   "scene": "cloud",
+   "xpH": 50545,
+   "tixH": 52467
+  },
+  "60": {
+   "t": "drake",
+   "name": "Hail Drake",
+   "lvl": 62,
+   "scene": "thunderhead",
+   "xpH": 77164,
+   "tixH": 91293
+  },
+  "75": {
+   "t": "diron",
+   "name": "Iron Ogre",
+   "lvl": 80,
+   "scene": "depths",
+   "xpH": 111096,
+   "tixH": 144070
+  },
+  "90": {
+   "t": "diron",
+   "name": "Iron Ogre",
+   "lvl": 80,
+   "scene": "depths",
+   "xpH": 139065,
+   "tixH": 180340
+  }
+ },
+ "gatheredWildOnly": {
+  "gloomfin": 845,
+  "mooncarp": 3,
+  "voidfin": 0,
+  "grimscale": 0,
+  "gallowslogs": 0
+ },
+ "totals": {
+  "wildKills": 349,
+  "killsAll": 54099,
+  "pvpKills": 7,
+  "pvpDeaths": 19,
+  "deaths": 270
+ }
+}

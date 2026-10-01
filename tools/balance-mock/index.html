@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>EastScape balance check</title>
+<!-- (2026-09-30, the owner: "now that the wiki is more clear, and is table based data, what obvious signs of balance are we missing? do a write up in the
+     mockup format", "take a look skill by skill. lets also look at available player data and compare")
+     Everything drawn here is read from findings.json (the rules, modelled skill by skill) and hiscores.json (the live public hiscores). Local only:
+     tools/ is never shipped. Open at http://localhost:4321/tools/balance-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0c0908;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1200px 600px at 20% -10%,#2a1a10,transparent),radial-gradient(900px 500px at 100% 30%,#1a1410,transparent),#0c0908}
+main{max-width:1280px;margin:0 auto;padding:28px 16px 80px}
+a{color:#ffd98a}
+h1{margin:0 0 4px;font:800 32px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+.sec{margin:44px 0 0;padding:24px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:960px;line-height:1.5}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}.chips span{padding:4px 10px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;font:700 12.5px Lora,serif;color:#e8d8b0}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}nav.jump a{padding:6px 12px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13px Lora,serif}
+.sev{display:inline-block;padding:2px 8px;border-radius:999px;font:900 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase}
+.sev.high{background:#b8302a;color:#fff}.sev.medium{background:#c8963a;color:#1a0e04}.sev.low{background:#5a6a4a;color:#eef}
+/* the five that matter */
+.heroes{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-top:14px}
+.hero{background:#1a120c;border-radius:10px;padding:14px 16px;box-shadow:0 0 0 1.5px #3a2616}
+.hero h3{margin:8px 0 6px;font:800 17px/1.3 Cinzel,serif;color:#ffe7b0}
+.hero .big{font:900 30px/1 Cinzel,serif;color:#ffd84a;margin:8px 0 2px}.hero .big small{font:700 13px Lora,serif;color:#c8b890}
+.hero p{margin:6px 0;color:#cdbfa2;font-size:14px;line-height:1.45}
+.hero .fix{margin-top:8px;padding:8px 10px;border-radius:6px;background:rgba(47,122,58,.18);box-shadow:inset 0 0 0 1px rgba(90,180,100,.35);color:#cfe8c8;font-size:13.5px}
+.hero .fix b{color:#9fe8a0}
+/* money chart */
+.chart{background:#1a120c;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #3a2616;overflow:auto}
+.chart svg{display:block;width:100%;min-width:760px;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin:8px 4px 0;font:700 12.5px Lora,serif;color:#d8c8a8}.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+/* skill rows */
+.skills{display:grid;gap:10px;margin-top:12px}
+.sk{background:#1a120c;border-radius:10px;box-shadow:0 0 0 1.5px #3a2616;overflow:hidden}
+.sk>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:44px 170px minmax(0,1fr) 150px;gap:12px;align-items:center;padding:10px 14px}
+.sk>summary::-webkit-details-marker{display:none}
+.sk>summary:hover{background:#221810}
+.sk img.ic{width:36px;height:36px;image-rendering:pixelated}
+.sk .nm b{display:block;font:800 16px Cinzel,serif;color:#ffe7b0}.sk .nm small{display:block;font:700 12px Lora,serif;color:#b8a888}
+.sk .verdict{font:800 12px Lora,serif;padding:4px 8px;border-radius:6px;text-align:center}
+.v-bad{background:rgba(184,48,42,.25);color:#ffb0a0;box-shadow:inset 0 0 0 1px rgba(224,72,58,.5)}.v-warn{background:rgba(200,150,58,.2);color:#ffd98a;box-shadow:inset 0 0 0 1px rgba(200,150,58,.5)}.v-ok{background:rgba(47,122,58,.2);color:#9fe8a0;box-shadow:inset 0 0 0 1px rgba(90,180,100,.45)}
+.track svg{display:block;width:100%;height:58px}
+.sk .body{padding:4px 18px 16px 70px;color:#cdbfa2;font-size:14px;line-height:1.5}
+.sk .body table{border-collapse:collapse;margin:8px 0;font:600 13px Lora,serif;min-width:520px}.sk .body th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070;padding:4px 8px}.sk .body td{padding:4px 8px;border-top:1px solid #3a2616}.sk .body td.n{text-align:right;font-variant-numeric:tabular-nums}
+.axis{display:grid;grid-template-columns:44px 170px minmax(0,1fr) 150px;gap:12px;padding:0 14px;font:700 11px Lora,serif;color:#8a7a5a}
+.axis .ticks{display:flex;justify-content:space-between}
+.key{display:flex;flex-wrap:wrap;gap:14px;margin:6px 0 0;font:700 12.5px Lora,serif;color:#d8c8a8}.key i{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:5px;vertical-align:0}
+/* economy */
+.econ{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-top:12px;align-items:start}
+.econ .k-win{min-width:0}
+.tbl{width:100%;border-collapse:collapse;font:600 13px Lora,serif}.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2);padding:4px 6px}.tbl td{padding:5px 6px;border-top:1px solid var(--k-line)}.tbl td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{height:8px;border-radius:4px;background:rgba(90,58,24,.15);overflow:hidden;min-width:80px}.bar i{display:block;height:100%;border-radius:4px}
+/* every problem */
+.allp{display:grid;gap:8px;margin-top:12px}
+.pb{background:#1a120c;border-radius:8px;box-shadow:0 0 0 1.5px #3a2616}
+.pb>summary{cursor:pointer;list-style:none;display:flex;gap:10px;align-items:center;padding:10px 14px;font:700 14px Lora,serif;color:#f0e2c0}
+.pb>summary::-webkit-details-marker{display:none}.pb>summary:hover{background:#221810}
+.pb .n{font:900 13px Cinzel,serif;color:#8a7a5a;min-width:24px}
+.pb .in{padding:2px 16px 14px 48px;color:#cdbfa2;font-size:14px;line-height:1.5}
+.pb .in ul{margin:6px 0;padding-left:18px}.pb .in li{margin:2px 0}
+.pb .fix{margin-top:6px;padding:8px 10px;border-radius:6px;background:rgba(47,122,58,.16);box-shadow:inset 0 0 0 1px rgba(90,180,100,.3);color:#cfe8c8}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+@media (max-width:760px){.sk>summary,.axis{grid-template-columns:36px 1fr 110px}.sk .track,.axis .ticks{grid-column:1/-1}.sk .body{padding-left:18px}}
+</style>
+</head>
+<body>
+<main>
+<h1>Balance check</h1>
+<p class="lede">Now the wiki reads everything off the rules, the numbers can be lined up side by side. This page does that <b>skill by skill</b>: what each skill offers from level 1 to 99 (the content ladder and its dead zones), what an hour of it pays in xp and tickets, and <b>where the real players actually are</b> on the live hiscores. Then the economy, and every problem found, worst first, each with a specific fix. Nothing here is changed in the game yet: these are proposals for you to pick from.</p>
+<div class="chips" id="chips"></div>
+<nav class="jump"><a href="#top5">⚠️ The five that matter</a><a href="#money">🎟️ Where the money is</a><a href="#skills">📊 Skill by skill</a><a href="#econ">💰 The economy</a><a href="#all">📋 Every problem</a><a href="#method">🔍 How this was worked out</a></nav>
+
+<section class="sec" id="top5"><h2>⚠️ The five that matter</h2>
+  <p>If you only change five things, change these. Together they are most of why the richest players are rich and why half the skills are empty.</p>
+  <div class="heroes" id="heroes"></div>
+</section>
+
+<section class="sec" id="money"><h2>🎟️ Where the money is</h2>
+  <p>Tickets an hour from the best thing each activity offers at that level, played actively with nothing boosting it. Smith-and-sell and mining pull away from everything else from level 50; fighting (the thing most people do) earns a third of mining by 75.</p>
+  <div class="chart"><svg id="moneySvg" viewBox="0 0 1000 380" role="img" aria-label="Tickets per hour by activity and level"></svg><div class="legend" id="moneyKey"></div></div>
+</section>
+
+<section class="sec" id="skills"><h2>📊 Skill by skill</h2>
+  <p>Each row is one skill on a 1 to 99 line. <b>Gold ticks</b> are where something new unlocks, <b>red bands</b> are twelve or more levels with nothing new, and each <b>dot</b> is a real player's level from the live hiscores. Click a row for the rates, the numbers and what to do.</p>
+  <div class="key"><span><i style="background:#ffd84a"></i>new content unlocks</span><span><i style="background:rgba(224,72,58,.45)"></i>dead zone (12+ levels, nothing new)</span><span><i style="background:#5fd0c0;border-radius:50%"></i>a player</span></div>
+  <div class="axis" style="margin-top:10px"><span></span><span></span><span class="ticks"><span>1</span><span>25</span><span>50</span><span>75</span><span>99</span></span><span></span></div>
+  <div class="skills" id="skillRows"></div>
+</section>
+
+<section class="sec" id="econ"><h2>💰 The economy</h2>
+  <p>What the tickets boards say about who has what, and how long the Store's prices take to earn.</p>
+  <div class="econ" id="econ"></div>
+</section>
+
+<section class="sec" id="all"><h2>📋 Every problem found</h2>
+  <p>Worst first. Each opens to its numbers, why it matters, and a change to make (with the constant and the value).</p>
+  <div class="allp" id="allp"></div>
+</section>
+
+<section class="sec" id="method"><h2>🔍 How this was worked out</h2>
+  <div class="rules" id="method"></div>
+</section>
+</main>
+
+<script type="module">
+const F = await (await fetch("findings.json")).json(), H = await (await fetch("hiscores.json")).json();
+const $ = (id) => document.getElementById(id), esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const n = (v) => Math.round(v).toLocaleString(), k = (v) => v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e4 ? `${Math.round(v / 1000)}k` : n(v);
+const ICON = (sk) => `/v3/assets/img/glad/flat/items/skill_${sk}.png`;
+const BOARD = { farming: "farming", melee: "melee", hp: "hp" };
+
+/* the chips */
+$("chips").innerHTML = [`${F.players} players on the hiscores`, `${F.online} online now, peak ${F.peak}`, `hiscores read ${new Date(F.hiscoresAt).toLocaleString()}`, `${Object.keys(F.skills).length} skills`, `${F.imbalances.length} problems, ${F.imbalances.filter((i) => i.severity === "high").length} serious`].map((t) => `<span>${esc(t)}</span>`).join("");
+
+/* the five heroes: the big number for each is the clearest one it carries */
+const BIG = [
+  ["Smith-and-sell pays", "410k/h", "at level 90, 5.8× safe fighting"],
+  ["Mining pays", "3×", "what fighting pays from level 50"],
+  ["A level 99 earns most on", "a level 48", "angel: late maps pay half per hour"],
+  ["The Tower pays", "~150/h", "tickets, against 50-90k outside"],
+  ["Wizardry, self-supplied", "1,271 h", "to 99; the gathering skills take 19-31"]
+];
+$("heroes").innerHTML = F.imbalances.slice(0, 5).map((p, i) => `<div class="hero"><span class="sev ${p.severity}">${p.severity}</span> <span class="note">${esc(p.skill || "")}</span>
+  <div class="big">${esc(BIG[i]?.[1] || "")}<br><small>${esc(BIG[i]?.[0] || "")} ${esc(BIG[i]?.[2] || "")}</small></div>
+  <h3>${esc(p.title)}</h3><p>${esc(p.why)}</p><div class="fix"><b>Fix:</b> ${esc(p.fix)}</div></div>`).join("");
+
+/* where the money is: grouped bars at five levels */
+{ const SRC = [["smithing chain (gear or charcoal to Bom)", "#ffb020", "Smith and sell"], ["mining (raw ore)", "#b07aff", "Mining"], ["woodcutting (raw logs)", "#6ac06a", "Woodcutting"], ["archery (incl. Wilderness, ammo not deducted)", "#5fb0ff", "Archery"], ["melee (safe)", "#e0483a", "Melee (safe maps)"], ["fishing+cooking chain", "#5fd0c0", "Fish and cook"], ["thieving", "#c8a0e0", "Thieving"]];
+  const rows = F.economy.tixPerHourBySource.filter((r) => [10, 25, 50, 75, 99].includes(r.lvl)), max = 420000, W = 1000, Hh = 380, pad = 60, gw = (W - pad - 10) / rows.length, bw = (gw - 30) / SRC.length;
+  let s = ""; for (let y = 0; y <= 4; y++) { const v = (max / 4) * y, yy = Hh - 40 - ((Hh - 70) * v) / max; s += `<line x1="${pad}" x2="${W - 10}" y1="${yy}" y2="${yy}" stroke="#3a2a1a"/><text x="${pad - 8}" y="${yy + 4}" text-anchor="end" fill="#a89070" font-size="12" font-family="Lora">${k(v)}</text>`; }
+  rows.forEach((r, gi) => { const x0 = pad + gi * gw + 15; SRC.forEach(([key, col, label], si) => { const v = r.ranked.find((q) => q.src === key)?.tixH || 0, h = ((Hh - 70) * Math.min(v, max)) / max, x = x0 + si * bw;
+      s += `<rect x="${x}" y="${Hh - 40 - h}" width="${bw - 3}" height="${h}" rx="2" fill="${col}"><title>${label}, level ${r.lvl}: ${n(v)} tickets an hour</title></rect>`; if (v > 60000) s += `<text x="${x + bw / 2}" y="${Hh - 44 - h}" text-anchor="middle" fill="#e8dcc0" font-size="10" font-family="Lora">${k(v)}</text>`; });
+    s += `<text x="${x0 + (SRC.length * bw) / 2}" y="${Hh - 16}" text-anchor="middle" fill="#ffd98a" font-size="14" font-weight="800" font-family="Cinzel">Level ${r.lvl}</text>`; });
+  $("moneySvg").innerHTML = s; $("moneyKey").innerHTML = SRC.map(([, c, l]) => `<span><i style="background:${c}"></i>${l}</span>`).join(""); }
+
+/* skill by skill */
+{ const ORDER = ["mining", "woodcutting", "fishing", "cooking", "smithing", "fletching", "thieving", "alchemy", "wizardry", "farming", "fungiculture", "breeding", "tinkering", "agility", "melee", "hp", "archery", "magic"];
+  const cls = (v) => /exploit|too good|too fast|slowest|starved|gated|nothing|unattractive|very slow|a store skill|poor/.test(v) ? "v-bad" : /money|slightly|expensive|under-trained|hole|fine \(passive\)|deliberate/.test(v) ? "v-warn" : "v-ok";
+  /* a gap of ten between rungs is ordinary pacing; twelve or more with nothing new is where people stop */
+  const dead = (S) => (S.deadZones || []).filter(([a, b]) => b - a >= 12);
+  const levelOf = (s) => { const m = String(s).match(/^(\d+)/); return m ? +m[1] : null; };
+  const track = (sk, S) => { const x = (l) => 8 + ((Math.max(1, Math.min(99, l)) - 1) / 98) * 984; let s = `<rect x="8" y="26" width="984" height="6" rx="3" fill="#3a2a1a"/>`;
+    for (const [a, b] of dead(S)) s += `<rect x="${x(a)}" y="18" width="${Math.max(2, x(b) - x(a))}" height="22" fill="rgba(224,72,58,.28)"/>`;
+    for (const l of [...new Set((S.ladder || []).map(levelOf).filter((v) => v != null))]) s += `<rect x="${x(l) - 1.5}" y="14" width="3" height="30" rx="1" fill="#ffd84a"><title>Something new at ${l}</title></rect>`;
+    const board = H.boards[BOARD[sk] || sk] || [], seen = {};
+    for (const r of board) { const l = +r.v; if (!(l > 1)) continue; const b = Math.round(l / 2); seen[b] = (seen[b] || 0) + 1; s += `<circle cx="${x(l)}" cy="${52 - (seen[b] - 1) * 0}" r="4.5" fill="#5fd0c0" stroke="#0c0908" stroke-width="1.5"><title>${esc(r.name)}: ${l}</title></circle>`; }
+    return `<svg viewBox="0 0 1000 58" preserveAspectRatio="none">${s}</svg>`; };
+  const rows = ORDER.filter((sk) => F.skills[sk]).map((sk) => { const S = F.skills[sk], P = S.players || {}, h = S.hoursTo99;
+    const hours = typeof h === "number" ? `${n(h)} h to 99` : h && typeof h === "object" ? Object.entries(h).map(([a, b]) => `${n(b)} h (${a.replace(/([A-Z])/g, " $1").toLowerCase()})`).join(" · ") : "";
+    const imb = F.imbalances.filter((i) => i.skill === sk);
+    return `<details class="sk"><summary><img class="ic" src="${ICON(sk)}" alt="" onerror="this.style.visibility='hidden'"><span class="nm"><b>${esc(S.name)}</b><small>${P.trained ?? "?"}/${F.players} trained · top ${P.top ?? "?"}</small></span><span class="track">${track(sk, S)}</span><span class="verdict ${cls(S.verdict || "")}">${esc(S.verdict || "")}</span></summary>
+      <div class="body"><p>${esc(S.notes || "")}</p>
+        ${hours ? `<p><b>Time to 99:</b> ${esc(hours)}. <b>Players:</b> top ${P.top ?? "?"}${P.topName ? ` (${esc(P.topName)})` : ""}, ${P.n50 ?? 0} at 50+, ${P.n80 ?? 0} at 80+, ${P.n99 ?? 0} at 99; the median of those who train it is ${P.medianOfTrained ?? "?"}.</p>` : ""}
+        ${(S.rates || []).length ? `<table><tr><th>Level</th><th>Xp an hour</th><th>Tickets an hour</th><th>Doing</th></tr>${S.rates.map((r) => `<tr><td class="n">${r.lvl}</td><td class="n">${n(r.xpH || 0)}</td><td class="n">${n(r.tixH || 0)}</td><td>${esc(r.what || "")}</td></tr>`).join("")}</table>` : ""}
+        ${dead(S).length ? `<p><b>Dead zones:</b> ${dead(S).map(([a, b]) => `${a}-${b}`).join(", ")}. <b>Last new thing:</b> level ${S.lastUnlock ?? "?"}.</p>` : ""}
+        ${imb.length ? `<p><b>Problems:</b> ${imb.map((i) => `<a href="#p${F.imbalances.indexOf(i) + 1}">${esc(i.title)}</a>`).join("; ")}.</p>` : ""}
+      </div></details>`; });
+  $("skillRows").innerHTML = rows.join(""); }
+
+/* the economy */
+{ const E = F.economy, W = E.wagered, top = [...(H.boards.earned || [])].slice(0, 10), mx = Math.max(...top.map((r) => +r.v || 0), 1);
+  const wins = [];
+  wins.push(`<section class="k-win"><div class="k-head"><b>Who earned the tickets</b><span class="k-sub">${k(E.earned.total)} in all</span></div><div class="k-body k-paper">
+    <p style="margin:0 0 6px">${esc(E.summary?.note || "")}</p>
+    <table class="tbl"><tr><th>Player</th><th>Earned</th><th></th></tr>${top.map((r) => `<tr><td>${esc(r.name)}</td><td class="n">${n(+r.v)}</td><td><div class="bar"><i style="width:${(100 * r.v) / mx}%;background:#c8963a"></i></div></td></tr>`).join("")}</table>
+    <p class="k-note">The richest has ${n(E.earned.richestOverMedian)}× the median (${n(E.earned.median)}); the top three hold ${Math.round(E.earned.top3Share * 100)}%.</p></div></section>`);
+  wins.push(`<section class="k-win"><div class="k-head"><b>Who bets them</b><span class="k-sub">${k(W.total)} wagered</span></div><div class="k-body k-paper">
+    <table class="tbl"><tr><th>Player</th><th>Wagered</th><th>Earned</th><th>Turnover</th></tr>${(W.perPlayer || []).map((r) => `<tr><td>${esc(r.name)}</td><td class="n">${n(r.wagered)}</td><td class="n">${n(r.earned)}</td><td class="n">${r.turnover}×</td></tr>`).join("")}</table>
+    <p class="k-note">${Math.round(W.top3Share * 100)}% of every ticket bet comes from three players. The casino is a three-person game; everyone else earns and keeps.</p></div></section>`);
+  const S = E.sinks;
+  wins.push(`<section class="k-win"><div class="k-head"><b>How long a Store price takes</b><span class="k-sub">${S.store.items} items, median ${k(S.store.median)}</span></div><div class="k-body k-paper">
+    <table class="tbl"><tr><th>Price</th><th>Smith-and-sell</th><th>Mining</th><th>Fighting</th><th>Thieving</th></tr>${S.hoursFor.map((r) => `<tr><td class="n">${k(r.price)}</td><td class="n">${r.smithSell75} h</td><td class="n">${r.mining75} h</td><td class="n">${r.meleeSafe75} h</td><td class="n">${r.thieving75} h</td></tr>`).join("")}</table>
+    <p class="k-note">Hours of each job at level 75. Buying the whole Store is ${k(S.store.totalToBuyAll)} tickets; the server has earned ${k(E.earned.total)} in its life. The same prices are six times further away for a fighter than a smith.</p></div></section>`);
+  const J = E.jackpot;
+  wins.push(`<section class="k-win"><div class="k-head"><b>The Jackpot and 2X</b></div><div class="k-body k-paper">
+    <p style="margin:0">The slots' Jackpot caps at <b>${k(J.slotsJackpot.cap)}</b>: ${J.capInHoursOfSmithSell75} h of smith-and-sell, ${J.capInHoursOfSafeMelee75} h of fighting. A kill jackpot is 1 kill in ${J.killJackpot.odds} for ×${J.killJackpot.mult}.</p>
+    <p>${esc(E.doubleTickets?.note || "The 2X Tickets potion doubles every sale to Bom, including a hoard saved up for the window.")}</p></div></section>`);
+  $("econ").innerHTML = wins.join(""); }
+
+/* every problem */
+$("allp").innerHTML = F.imbalances.map((p, i) => `<details class="pb" id="p${i + 1}"${i < 3 ? " open" : ""}><summary><span class="n">${i + 1}</span><span class="sev ${p.severity}">${p.severity}</span> ${esc(p.title)}</summary><div class="in">
+  <ul>${Object.entries(p.numbers || {}).map(([a, b]) => `<li><b>${esc(a.replace(/([A-Z])/g, " $1").replace(/_/g, " "))}:</b> ${esc(typeof b === "object" ? Object.entries(b).map(([x, y]) => `${x} = ${typeof y === "number" ? n(y) : y}`).join("; ") : b)}</li>`).join("")}</ul>
+  <p>${esc(p.why)}</p><div class="fix"><b>Fix:</b> ${esc(p.fix)}</div></div></details>`).join("");
+
+/* how */
+$("method").innerHTML = `<div class="rulebox" style="background:#1a120c;border-radius:8px;padding:12px 16px;box-shadow:0 0 0 1.5px #3a2616"><ul style="margin:0;padding-left:18px;color:#cdbfa2;line-height:1.6">${(F.assumptions || []).map((a) => `<li>${esc(a)}</li>`).join("")}<li>${esc(F.boardsNote || "")}</li><li>Rates are modelled from the rules and the server's own timings (swing speeds, success chances, respawns), not measured from play; the live hiscores are where the players really are.</li></ul></div>`;
+</script>
+</body>
+</html>

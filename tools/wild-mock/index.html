@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Wilderness check</title>
+<!-- (2026-09-30, the owner: "the same way that we did a balance analysis ... can we do one for the wilderness and the deep wilderness as well? i feel like
+     users are camping there now without fighting, the monsters might be too low level as well now that users have outleveled them over time")
+     Drawn from wild.json: the rules (every Wild and Deep Wild monster fought by a player at combat 40/60/75/90, in their tier's armour) and last night's
+     world backup (every character's kills, gathering, deaths and player kills). Local only: tools/ is never shipped. http://localhost:4321/tools/wild-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0c0908;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1200px 600px at 20% -10%,#2a1030,transparent),radial-gradient(900px 500px at 100% 30%,#1a1018,transparent),#0c0908}
+main{max-width:1280px;margin:0 auto;padding:28px 16px 80px}
+a{color:#ffd98a}
+h1{margin:0 0 4px;font:800 32px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+.sec{margin:44px 0 0;padding:24px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:960px;line-height:1.5}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}.chips span{padding:4px 10px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;font:700 12.5px Lora,serif;color:#e8d8b0}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}nav.jump a{padding:6px 12px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13px Lora,serif}
+.sev{display:inline-block;padding:2px 8px;border-radius:999px;font:900 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase}
+.sev.high{background:#b8302a;color:#fff}.sev.medium{background:#c8963a;color:#1a0e04}.sev.low{background:#5a6a4a;color:#eef}.sev.first{background:#3a7ad0;color:#fff}
+.heroes{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:14px}
+.hero{background:#1a120c;border-radius:10px;padding:14px 16px;box-shadow:0 0 0 1.5px #3a2616}
+.hero .big{font:900 32px/1 Cinzel,serif;color:#ffd84a;margin:4px 0 4px}.hero .big small{display:block;margin-top:4px;font:700 13px Lora,serif;color:#c8b890}
+.hero h3{margin:8px 0 6px;font:800 16px/1.3 Cinzel,serif;color:#ffe7b0}
+.hero p{margin:6px 0;color:#cdbfa2;font-size:14px;line-height:1.45}
+.chart{background:#1a120c;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #3a2616;overflow:auto}
+.chart svg{display:block;width:100%;min-width:760px;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin:8px 4px 0;font:700 12.5px Lora,serif;color:#d8c8a8}.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.wrap{overflow:auto;background:#1a120c;border-radius:10px;box-shadow:0 0 0 1.5px #3a2616;margin-top:12px}
+.tbl{width:100%;border-collapse:collapse;font:600 13px Lora,serif;min-width:860px}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070;padding:8px 8px 4px;position:sticky;top:0;background:#1a120c}
+.tbl td{padding:6px 8px;border-top:1px solid #3a2616;vertical-align:top}.tbl td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl small{color:#a89070;font-weight:600}
+.tag{display:inline-block;padding:1px 6px;border-radius:4px;font:800 10.5px Lora,serif;margin-right:3px}
+.t-wild{background:#4a2a5a;color:#e8c8ff}.t-deep{background:#5a1a2a;color:#ffc8d0}.t-aggro{background:#6a2a1a;color:#ffc0a0}.t-only{background:#2a4a3a;color:#bfe8cf}
+.cell-bad{color:#9fe8a0}.cell-mid{color:#ffd98a}.cell-hot{color:#ffb0a0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-top:12px;align-items:start}
+.k-win{min-width:0}
+.allp{display:grid;gap:8px;margin-top:12px}
+.pb{background:#1a120c;border-radius:8px;box-shadow:0 0 0 1.5px #3a2616}
+.pb>summary{cursor:pointer;list-style:none;display:flex;gap:10px;align-items:center;padding:10px 14px;font:700 14.5px Lora,serif;color:#f0e2c0}
+.pb>summary::-webkit-details-marker{display:none}.pb>summary:hover{background:#221810}
+.pb .n{font:900 13px Cinzel,serif;color:#8a7a5a;min-width:24px}
+.pb .in{padding:2px 16px 14px 48px;color:#cdbfa2;font-size:14px;line-height:1.55}
+.pb .in ul{margin:6px 0;padding-left:18px}.pb .in li{margin:3px 0}
+.pb .fix{margin-top:8px;padding:8px 10px;border-radius:6px;background:rgba(47,122,58,.16);box-shadow:inset 0 0 0 1px rgba(90,180,100,.3);color:#cfe8c8}
+.pb .alt{margin-top:6px;padding:8px 10px;border-radius:6px;background:rgba(200,150,58,.12);box-shadow:inset 0 0 0 1px rgba(200,150,58,.3);color:#f0dcae}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(58,122,208,.12);box-shadow:inset 0 0 0 1.5px rgba(90,150,230,.4);color:#d8e4ff;line-height:1.55;max-width:980px}
+.callout b{color:#fff}
+</style>
+</head>
+<body>
+<main>
+<h1>The Wilderness check</h1>
+<p class="lede">The Wilderness and the Deep Wild, lined up against the players who go there now. <b>Every monster in both maps</b> is fought here by a player at combat 40, 60, 75 and 90 in their tier's armour, using the server's own hit, damage and swing rules. Next to that is <b>what the players have actually done</b>, from last night's world backup: every character's kills, gathering, deaths and player kills. Then what draws people there, and a list of changes, worst first. Nothing here is changed in the game yet.</p>
+<div class="chips" id="chips"></div>
+<nav class="jump"><a href="#short">⚠️ The short version</a><a href="#ladder">📈 Monsters against players</a><a href="#mobs">🐺 Every monster</a><a href="#draw">⛏️ Why people go</a><a href="#people">🧍 Who goes</a><a href="#blind">👁️ What we can't see</a><a href="#fixes">🛠️ What to change</a><a href="../tracking-mock/">📡 Tracking proposal →</a></nav>
+
+<section class="sec" id="short"><h2>⚠️ The short version</h2>
+  <p>Your hunch holds on every number the game keeps. The Wild is a place people pass through or skill in, not a place they fight. Its monsters are no longer a threat to the top of the server, and dying there costs less than dying anywhere else.</p>
+  <div class="heroes" id="heroes"></div>
+</section>
+
+<section class="sec" id="ladder"><h2>📈 The monsters against the players</h2>
+  <p>Each monster in the Wild (purple) and the Deep (red) sits at its level; a ring round it means at least one of them attacks on sight. The dots underneath are every active character by combat level. The fighting in both maps is set for combat 20 to 65; the top of the server is 71 to 91.</p>
+  <div class="chart"><svg id="ladderSvg" viewBox="0 0 1000 262" role="img" aria-label="Wild monster levels against player combat levels"></svg>
+    <div class="legend"><span><i style="background:#b070e0"></i>Wilderness monster</span><span><i style="background:#e05060"></i>Deep Wild monster</span><span><i style="background:transparent;box-shadow:0 0 0 2px #ffb070;border-radius:50%"></i>attacks on sight</span><span><i style="background:#5fd0c0;border-radius:50%"></i>a player</span><span><i style="background:rgba(255,216,74,.2)"></i>top five players</span></div></div>
+</section>
+
+<section class="sec" id="mobs"><h2>🐺 Every monster, fought</h2>
+  <p>For each level: <b>swings</b> to kill it, the <b>seconds</b> that takes, the <b>health it takes off you</b> in that time, and how many <b>minutes it would need to kill you</b> if you stood there and ignored it with no food. Green means it can't hurt you, amber is a nuisance, red is a real fight. Every monster lands at least 18% of its swings (the game's hit floor), which is why even a Bog Gnasher can in theory kill a level 90 in five minutes. In practice it dies in one swing.</p>
+  <div class="wrap"><table class="tbl" id="mobTbl"></table></div>
+</section>
+
+<section class="sec" id="draw"><h2>⛏️ Why people go</h2>
+  <p>Everything worth clicking in both maps, and how much of it the whole server has gathered since launch. Two rules apply in both maps. <b>Gathering runs at half speed</b> (<code>WILD_GATHER</code> 0.5), and the Deep gives <b>1.5× xp for gathering only</b> (not for fighting), so a Deep node nets 0.75× the xp of the same node elsewhere. The Deep's two stations, the Nexus altar and the Wild Bench, are not slowed and print 1.5× for 1.25× xp.</p>
+  <div class="grid2" id="nodes"></div>
+</section>
+
+<section class="sec" id="people"><h2>🧍 Who goes, and what they did</h2>
+  <p>Every character with any activity. A <b>Wild-only kill</b> is a monster that lives nowhere else (Wild Weaver, Marrow Hound, Grim Lich). The rest (revenants, wolves, drakes, golems and so on) also live on safe maps, so their kills can't be split by where they happened. <b>Deaths in the Wild</b> count monsters and players together.</p>
+  <div class="wrap"><table class="tbl" id="peopleTbl"></table></div>
+</section>
+
+<section class="sec" id="blind"><h2>👁️ What the game can't tell us yet</h2>
+  <div class="callout" id="blindBox"></div>
+</section>
+
+<section class="sec" id="fixes"><h2>🛠️ What to change</h2>
+  <p>Worst first. Each opens to its numbers, the change (with the constant and the value), and an alternative where there is a real choice. Pick any mix; none of them depends on another, except that the first makes the others measurable.</p>
+  <div class="allp" id="fixList"></div>
+</section>
+
+<section class="sec" id="method"><h2>🔍 How this was worked out</h2>
+  <div style="background:#1a120c;border-radius:8px;padding:12px 16px;box-shadow:0 0 0 1.5px #3a2616"><ul style="margin:0;padding-left:18px;color:#cdbfa2;line-height:1.6" id="methodList"></ul></div>
+</section>
+</main>
+
+<script type="module">
+const W = await (await fetch("wild.json")).json();
+const $ = (id) => document.getElementById(id), esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const n = (v) => Math.round(v).toLocaleString(), k = (v) => v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e4 ? `${Math.round(v / 1000)}k` : n(v);
+const T = W.totals, P = W.people, top5 = [...W.levels].sort((a, b) => b - a).slice(0, 5);
+const wildDeaths = P.reduce((a, p) => a + p.pvpDeaths, 0), killers = P.filter((p) => p.pvpKills).map((p) => `${p.name} ${p.pvpKills}`);
+const at = (L) => W.mobs.map((m) => m.vs.find((v) => v.L === L));
+
+$("chips").innerHTML = [`${P.length} characters with any activity`, `${W.levels.filter((l) => l >= 70).length} at combat 70+`, `backup ${new Date(W.backupAt).toLocaleString()}`, `${W.mobs.length} monster kinds in the two maps`, `rules ${W.rulesNow}`].map((t) => `<span>${esc(t)}</span>`).join("");
+
+/* the short version */
+const at90 = at(90), maxSw90 = Math.max(...at90.map((v) => v.swings)), top = W.mobs.at(-1);
+const heroes = [
+  [`${(100 * T.wildKills / T.killsAll).toFixed(1)}%`, "of every kill in the game is a Wild-only monster", `${n(T.wildKills)} kills of Weavers, Marrow Hounds and Grim Liches out of ${n(T.killsAll)} kills server-wide since launch. The busiest Wild fighter has ${n(Math.max(...P.map((p) => p.wildKills)))}; the same player has ${n(P.find((p) => p.wildKills === Math.max(...P.map((q) => q.wildKills))).killsAll)} kills in all.`],
+  [`${T.pvpKills}`, "player kills, ever", `The Wilderness is the game's PvP map, and it has seen seven player kills in its life: ${esc(killers.join(", "))}. There have been ${wildDeaths} deaths there of any kind, ${Math.round(100 * wildDeaths / T.deaths)}% of the game's ${n(T.deaths)} deaths.`],
+  [`${maxSw90} swings`, "is the most any Wild or Deep monster takes a combat 90", `The strongest monster in either map is the ${esc(top.name)} at level ${top.lvl}. The top five players are combat ${top5.join(", ")}, so the ${esc(top.name)} sits ${top5.at(-1) - top.lvl} levels under the fifth of them. At 90 it hits 18% of the time (the floor) and dies in ${top.vs.find((v) => v.L === 90).ttk} seconds.`],
+  ["0 tickets", "is what dying in the Wild costs, three times in four", `A death anywhere else takes a hospital bill (10% of the tickets you carry, up to 6,000 on the Thunderhead and 10,000 in the Valley). A death in the Wild takes no bill and never touches the bag; a quarter of the time you drop one worn item. It is the cheapest place in the game to die.`],
+  [`${k(W.mobs.reduce((a, m) => Math.max(a, m.xpH[90]), 0))} xp/h`, "the best fight in the Deep at combat 90", `Against ${k(W.bestElsewhere[90].xpH)} xp and ${k(W.bestElsewhere[90].tixH)} tickets an hour on the ${esc(W.bestElsewhere[90].name)} in ${esc(W.bestElsewhere[90].scene === "depths" ? "the Depths" : W.bestElsewhere[90].scene)}, a safe map. The Deep's xp bonus applies to gathering only, so fighting there pays about a quarter less than a safe map, with PvP on top.`]
+];
+$("heroes").innerHTML = heroes.map(([big, sub, p]) => `<div class="hero"><div class="big">${esc(big)}<small>${esc(sub)}</small></div><p>${p}</p></div>`).join("");
+
+/* the ladder */
+{ const x = (l) => 40 + ((l - 1) / 98) * 930; let s = "";
+  s += `<rect x="${x(top5.at(-1))}" y="10" width="${x(99) - x(top5.at(-1))}" height="218" fill="rgba(255,216,74,.10)"/><text x="${x(top5.at(-1)) + 6}" y="26" fill="#ffd84a" font-size="12" font-weight="700" font-family="Lora">the top five</text>`;
+  for (let l = 10; l <= 90; l += 10) s += `<line x1="${x(l)}" x2="${x(l)}" y1="10" y2="228" stroke="#2a1e14"/><text x="${x(l)}" y="252" text-anchor="middle" fill="#a89070" font-size="12" font-family="Lora">${l}</text>`;
+  const lanes = { wild: 70, deep: 130 };
+  s += `<text x="34" y="${lanes.wild + 4}" text-anchor="end" fill="#e8c8ff" font-size="12" font-weight="800" font-family="Lora">Wild</text><text x="34" y="${lanes.deep + 4}" text-anchor="end" fill="#ffc8d0" font-size="12" font-weight="800" font-family="Lora">Deep</text><text x="34" y="216" text-anchor="end" fill="#5fd0c0" font-size="12" font-weight="800" font-family="Lora">You</text>`;
+  const used = {}, lab = {};
+  for (const m of W.mobs) for (const [sc, pl] of Object.entries(m.place)) { const key = `${sc}:${m.lvl}`, off = (used[key] = (used[key] || 0) + 1) - 1, cy = lanes[sc] + (off % 2 ? 16 : -16) * Math.ceil(off / 2);
+    s += `<circle cx="${x(m.lvl)}" cy="${cy}" r="${6 + pl.n}" fill="${sc === "wild" ? "#b070e0" : "#e05060"}" fill-opacity=".85" ${pl.aggro ? 'stroke="#ffb070" stroke-width="2.5"' : ""}><title>${esc(m.name)}, level ${m.lvl}: ${pl.n} in the ${sc === "wild" ? "Wilderness" : "Deep Wild"}${pl.aggro ? `, ${pl.aggro} aggressive` : ""}</title></circle>`;
+    const li = (lab[sc] = (lab[sc] || 0) + 1) - 1, ly = sc === "wild" ? lanes.wild - 24 - (li % 2) * 12 : lanes.deep + 30 + (li % 2) * 12;
+    s += `<text x="${x(m.lvl)}" y="${ly}" text-anchor="middle" fill="#cdbfa2" font-size="10" font-family="Lora">${esc(m.name.split(" ").pop())}</text>`; }
+  const seen = {}; for (const l of W.levels) { const b = Math.round(l); seen[b] = (seen[b] || 0) + 1; s += `<circle cx="${x(l)}" cy="${212 - (seen[b] - 1) * 9}" r="4.5" fill="#5fd0c0" stroke="#0c0908" stroke-width="1.5"><title>combat ${l}</title></circle>`; }
+  $("ladderSvg").innerHTML = s; }
+
+/* every monster */
+{ const cls = (v) => v.minsToDie >= 3 && v.swings <= 3 ? "cell-bad" : v.minsToDie >= 1.5 ? "cell-mid" : "cell-hot";
+  const L = [60, 75, 90];
+  $("mobTbl").innerHTML = `<tr><th>Monster</th><th>Where</th><th class="n">Level</th><th class="n">HP</th>${L.map((l) => `<th>At combat ${l}</th>`).join("")}<th class="n">Tickets a kill</th><th>Also lives in</th></tr>` + W.mobs.map((m) => `<tr>
+    <td><b>${esc(m.name)}</b>${m.wildOnly ? ' <span class="tag t-only">Wild only</span>' : ""}</td>
+    <td>${Object.entries(m.place).map(([sc, p]) => `<span class="tag t-${sc}">${sc === "wild" ? "Wild" : "Deep"} ×${p.n}</span>${p.aggro ? `<span class="tag t-aggro">${p.aggro} aggro</span>` : ""}`).join(" ")}</td>
+    <td class="n">${m.lvl}</td><td class="n">${m.hp}</td>
+    ${L.map((l) => { const v = m.vs.find((q) => q.L === l); return `<td class="${cls(v)}">${v.swings} swing${v.swings > 1 ? "s" : ""}, ${v.ttk}s<br><small>takes ${v.takenPerKill} HP · ${v.minsToDie} min to kill you</small></td>`; }).join("")}
+    <td class="n">${n(m.tix)}</td><td><small>${esc(m.elsewhere.join(", ") || "nowhere else")}</small></td></tr>`).join(""); }
+
+/* why people go */
+{ const box = (sc, title) => { const rows = W.nodes[sc] || [], seen = new Set();
+    const list = rows.filter((r) => { const key = `${r.name}`; if (seen.has(key)) return false; seen.add(key); return true; }).map((r) => ({ ...r, count: rows.filter((q) => q.name === r.name).length }));
+    return `<section class="k-win"><div class="k-head"><b>${title}</b><span class="k-sub">${list.length} kinds</span></div><div class="k-body k-paper"><table class="tbl" style="min-width:0"><tr><th>Node</th><th>Needs</th><th class="n">Gathered, all players</th></tr>${list.map((r) => `<tr><td>${esc(r.name.replace(/:.*/, ""))}${r.count > 1 ? ` ×${r.count}` : ""}${r.wildOnly ? ' <span class="tag t-only">only here</span>' : ""}</td><td>${r.req ? `${esc(r.req.skill)} ${r.req.lvl}` : /altar|bench/.test(r.t) ? "a station" : ""}</td><td class="n">${r.items.length ? `${n(r.gathered)}${r.wildOnly ? "" : "<br><small>incl. other maps</small>"}` : "<small>not recorded by station</small>"}</td></tr>`).join("")}</table></div></section>`; };
+  $("nodes").innerHTML = box("wild", "The Wilderness") + box("deep", "The Deep Wild") + `<section class="k-win"><div class="k-head"><b>What stands out</b></div><div class="k-body k-paper"><ul style="margin:0;padding-left:18px;line-height:1.55">
+    <li><b>The Deep's best nodes are ahead of everyone.</b> The Black pool needs Fishing 92 and the Gallows oak Woodcutting 90; the top fisher is 86 and the top woodcutter 83. Nothing has ever been gathered from either.</li>
+    <li><b>Almost everything else can be had on a safe map.</b> Onyx and grimstone are in Cloudreach, starfall is in four other places, skyash and yew too. Only the gloomfin pool (${n(W.gatheredWildOnly.gloomfin)} fish in all) is Wild-only and in use.</li>
+    <li><b>So the draw is the Nexus altar and the Wild Bench</b>, 1.5× output for 1.25× xp, beside monsters (drakes 62, golems 52) that a combat 80 kills in three swings. The game can't say how much they're used: <code>crafted</code> is counted by item, not by station.</li></ul></div></section>`; }
+
+/* who goes */
+$("peopleTbl").innerHTML = `<tr><th>Player</th><th class="n">Combat</th><th class="n">Hours played</th><th class="n">Wild-only kills</th><th class="n">All kills</th><th class="n">Wild-only gathering</th><th class="n">Deaths in the Wild</th><th class="n">Player kills</th></tr>` +
+  P.filter((p) => p.combat >= 30).map((p) => `<tr><td><b>${esc(p.name)}</b></td><td class="n">${p.combat}</td><td class="n">${p.playH}</td><td class="n">${n(p.wildKills)}</td><td class="n">${n(p.killsAll)}</td><td class="n">${n(p.wildGatherN)}</td><td class="n">${p.pvpDeaths} <small>of ${p.deaths}</small></td><td class="n">${p.pvpKills}</td></tr>`).join("") +
+  `<tr><td colspan="8" class="note">${P.filter((p) => p.combat < 30).length} more characters under combat 30 have never set foot in either map's fighting.</td></tr>`;
+
+/* blind spots */
+$("blindBox").innerHTML = `<b>"Are people camping there without fighting?" is the one question the saved data can't answer directly.</b> The game keeps no record of <b>time spent on a map</b>, <b>what anyone was doing there</b> (fighting, gathering, crafting, standing still) or <b>where a gather or craft happened</b>. A character's saved location is where they logged out, and nobody is ever saved inside the Wild. The numbers above prove the fighting isn't happening; they can't show how long people stand there doing something else. The <a href="../tracking-mock/">tracking proposal</a> fixes exactly this. A week of it would put a number on the camping before and after any change below.`;
+
+/* what to change */
+const FIX = [
+  ["high", "Measure it first: minutes per map, by what you're doing", `<ul><li>Today: none of it is recorded, only kills and gathers with no map attached.</li><li>Cost: a counter in memory each second, folded into the saves that already happen. No extra saves for a character, one extra write a minute for the world.</li></ul>`,
+    `Build the first item of the <a href="../tracking-mock/">tracking proposal</a> (time per map, split into fighting, gathering, crafting, walking and idle) before or with anything below, so the change can be judged in a week rather than guessed.`, ""],
+  ["high", "Raise the monsters to the players", `<ul><li>Wild monsters run 18–58 and Deep 28–66; ${W.levels.filter((l) => l >= 70).length} of the ${P.filter((p) => p.combat >= 30).length} players who could go are combat 70+.</li><li>At combat 90, every one of the ${W.mobs.length} kinds dies in ${maxSw90} swings or fewer.</li><li>The best Deep fight pays ${k(W.mobs.reduce((a, m) => Math.max(a, m.xpH[90]), 0))} xp/h against ${k(W.bestElsewhere[90].xpH)} on a safe map.</li></ul>`,
+    `Re-stock both maps from monsters that already have art. <b>The Wilderness 45–78</b>: keep the entry pocket (gnashers, ghouls, wraiths) for the level 20s, and put monsters from the open late maps in the pockets (Pot Boy 73, Clawhand 74, Vault Warden 74, Goblin Cutter 75, Crystal Ogre 78). <b>The Deep 75–95</b>: Iron Ogre 80, Junkyard Dog 80, Rabid Possum 84, The Scrapper 88, Caveman 90, Yard Gator 92, Sabretooth 93, with the Nexus door and the Black pool held by the top of that list. The Foundry's monsters are left out on purpose, because the Foundry is still held. It's a change to the <code>mobs:</code> lines in <code>eastscape-closed.js</code> only.`,
+    `Alternative: keep the monsters and scale them instead. A Wild monster's level (and so its attack, defence and HP) tracks the strongest player in the map. It's more code, but it never goes stale again.`],
+  ["high", "Make dying there cost something", `<ul><li>Every other map charges a hospital bill of 10% of the tickets you carry (up to 6,000–10,000). The Wild charges nothing.</li><li>The bag is never touched; 75% of Wild deaths lose nothing at all.</li><li>So the most dangerous map in the game is the safest place to carry a full bag of tickets.</li></ul>`,
+    `<b>A death to a player hands the killer part of your pocket</b>: 10% of the tickets you carry, capped at 10,000, paid to the player who killed you (a death to a monster pays the usual bill to nobody). That's one line beside <code>PVP.drop</code> in the death code. It gives people a reason to hunt, which is also what makes camping risky.`,
+    `Alternative, gentler: just charge the Valley's bill (10%, cap 10,000) in both maps and leave PvP loot as it is. Or OSRS-style: keep your three best items and drop the rest of what you wear.`],
+  ["medium", "Pay a danger premium for fighting there", `<ul><li><code>xpMul</code> (the Deep's 1.5×) is read only in the gathering code, so fighting in the Deep pays exactly what the same monster pays in Cloudreach.</li><li>The Deep's <code>luck</code> (+10%) also only helps gathering.</li></ul>`,
+    `Apply the map's <code>xpMul</code> to combat xp and add a ticket premium: <b>Wild kills ×1.25, Deep kills ×1.5</b> (xp and the ticket bounty), stated on the map's wiki page. Combined with the restock, the Deep becomes the best-paying fight in the game for the top players, with PvP as the price.`, ""],
+  ["medium", "Give the Wild a reason to gather together, and a reason to hunt", `<ul><li>${T.pvpKills} player kills ever: with 5–7 people online at peak, two people are rarely in the Wild at the same time.</li><li>There's nothing to find out about who is in there without walking in.</li></ul>`,
+    `<b>A Wild bounty.</b> Anyone who has been in the Deep for 10 minutes without leaving shows on the world map as a skull, and killing them pays a bounty from the house (say 2,000 tickets), announced like the existing PvP line. Campers become targets, and a hunter has somewhere to go.`,
+    `Don't add combat-level brackets (OSRS's "wilderness levels"). With this few players, a bracket would mean nobody is ever allowed to fight anybody.`],
+  ["low", "The Deep's top nodes are ahead of the server", `<ul><li>Black pool: Fishing 92 (top fisher 86). Gallows oak: Woodcutting 90 (top woodcutter 83). Nothing gathered from either.</li></ul>`,
+    `Nothing to do yet. Within two or three weeks the top fishers and woodcutters reach them, and they become the first Wild-only reason to go that isn't a station. Worth checking then that the half-speed rule still leaves them worth the trip.`, ""]
+];
+$("fixList").innerHTML = FIX.map(([sev, title, nums, fix, alt], i) => `<details class="pb"${i < 3 ? " open" : ""}><summary><span class="n">${i + 1}</span><span class="sev ${sev}">${sev}</span> ${esc(title)}</summary><div class="in">${nums}<div class="fix"><b>Change:</b> ${fix}</div>${alt ? `<div class="alt">${alt}</div>` : ""}</div></details>`).join("");
+
+$("methodList").innerHTML = [
+  `The players: last night's world backup (${new Date(W.backupAt).toLocaleString()}, rules ${W.rulesAtBackup}): every character's kills by monster, gathering by item, deaths, deaths in a PvP map and player kills. Names are the public ones the hiscores show.`,
+  `The fights: a player at combat 40, 60, 75 and 90 with melee and hp at that level, in the tier's full armour and sword, against each monster's own attack, defence, HP, max hit and swing speed, using the server's hit chance (the open-world "aim by ratio" for monsters, with the 18% floor) and the player's own swing time.`,
+  `"Minutes to kill you" is your health over what it takes off you a minute, standing still with no food and no regeneration items. Xp and tickets an hour assume 3 seconds between kills.`,
+  `A Wild-only monster or item lives only in the two Wild maps, so its count is certainly from there. Everything else can't be split by map from the saved data.`,
+  `The monster list and multipliers are today's rules (${W.rulesNow}); the gathering totals are lifetime, and grimstone was Wild-only until the balance pass added a rock in Cloudreach.`
+].map((t) => `<li>${esc(t)}</li>`).join("");
+</script>
+</body>
+</html>

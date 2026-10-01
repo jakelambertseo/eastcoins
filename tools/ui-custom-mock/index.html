@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Your screen, your way</title>
+<!-- (2026-09-30, the owner: "customizable UI for users ... users can drag and drop certain aspects on their screen the way they want to ... settings where users
+     can customize nameplates, turn certain features on and off, and ... 2 additional different user interfaces that users can apply ... lets mock this up like the
+     UX kit, the advanced stats, etc"). Everything on this page works: unlock the screen and drag, flip the switches, pick a look.
+     Local only: tools/ is never shipped. http://localhost:4321/tools/ui-custom-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0c0908;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1200px 600px at 20% -10%,#2a1a10,transparent),radial-gradient(900px 500px at 100% 30%,#1a1410,transparent),#0c0908}
+main{max-width:1280px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 30px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:940px;line-height:1.55}
+.sec{margin:40px 0 0;padding:22px 0 0;border-top:1px solid #3a2a1a}
+.sec>h2{margin:0 0 4px;font:800 24px Cinzel,Georgia,serif;color:#ffd98a}
+.sec>p{margin:0 0 14px;color:#b8a888;max-width:940px;line-height:1.5}
+.pin{display:inline-block;margin:0 6px 6px 0;padding:4px 10px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;font:700 12.5px Lora,serif;color:#e8d8b0}
+img.px{image-rendering:pixelated}
+.bar-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+.btn{border:0;border-radius:6px;padding:8px 14px;font:800 13px Lora,serif;cursor:pointer;background:#2a1a10;color:#ffe7b0;box-shadow:inset 0 0 0 1.5px #5a3a1a}
+.btn.gold{background:linear-gradient(#e0b050,#b8862a);color:#2a1606;box-shadow:0 2px 0 #6a4a14}
+.btn.on{background:#c8963a;color:#1a0e04}
+select.btn{appearance:none;padding-right:26px;background-image:linear-gradient(45deg,transparent 50%,#ffe7b0 50%),linear-gradient(135deg,#ffe7b0 50%,transparent 50%);background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+
+/* ================= THE SCREEN: the game's HUD over the world, in three looks ================= */
+.screen{position:relative;width:100%;aspect-ratio:16/9;max-width:1100px;border-radius:8px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.55),0 0 0 2px #3a2616;user-select:none;
+  --panel:rgba(40,26,14,.94);--panel2:#efe2c4;--ink:#2a2016;--ink2:#6a5a40;--edge:#8a5a24;--gold:#ffd24a;--accent:#c8963a;--hud-font:Lora,serif;--head-font:Cinzel,serif;--r:8px;--glow:none}
+.screen .world{position:absolute;inset:0;background:url(/v3/assets/img/glad/flat/dp_bg1.png) center 60%/cover;image-rendering:pixelated;filter:saturate(.9) brightness(.85)}
+.screen .me{position:absolute;left:47%;top:50%;height:13%;image-rendering:pixelated;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
+.hud{position:absolute;border-radius:var(--r);background:var(--panel);box-shadow:0 0 0 2px var(--edge),0 6px 14px rgba(0,0,0,.45),var(--glow);color:#f0e2c0;font:600 11px var(--hud-font);overflow:hidden}
+.hud .hd{display:flex;align-items:center;gap:6px;padding:4px 8px;background:rgba(0,0,0,.25);font:800 10.5px var(--head-font);letter-spacing:.04em;color:var(--gold)}
+.hud .hd img{width:14px;height:14px}
+/* the pieces */
+.h-hp{left:1.5%;top:2.5%;width:22%}
+.h-hp .row{display:flex;align-items:center;gap:6px;padding:6px 8px}.h-hp .row b{font:800 12px var(--head-font);color:#fff}
+.meter{flex:1;height:10px;border-radius:5px;background:rgba(0,0,0,.45);overflow:hidden}.meter i{display:block;height:100%}
+.h-map{right:1.5%;top:2.5%;width:17%;aspect-ratio:1.35}
+.h-map .mm{position:absolute;inset:22px 6px 6px;border-radius:4px;background:url(/v3/assets/img/glad/flat/dp_bg1.png) center/cover;image-rendering:pixelated;filter:saturate(.6) brightness(.8)}
+.h-map .mm::after{content:"";position:absolute;left:48%;top:48%;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px #2a78d6}
+.h-track{right:1.5%;top:28%;width:17%}
+.h-track .ev{display:flex;align-items:center;gap:6px;padding:5px 8px}.h-track .ev img{width:22px;height:22px}.h-track small{display:block;color:#c8b890;font-size:9.5px}
+.h-bag{left:1.5%;top:14%;width:22%}
+.h-bag .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:6px}
+.h-bag .grid i{aspect-ratio:1;border-radius:4px;background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 1px rgba(255,220,150,.18);display:grid;place-items:center}.h-bag .grid img{width:78%;image-rendering:pixelated}
+.h-chat{left:25%;bottom:12%;width:38%}
+.h-chat p{margin:0;padding:2px 8px;font-size:10.5px;line-height:1.35}.h-chat p b{color:var(--gold)}.h-chat p.cs b{color:#ff8ab0}.h-chat .in{margin:4px 6px 6px;padding:4px 6px;border-radius:4px;background:rgba(0,0,0,.35);color:#8a7a5a;font-size:10px}
+.h-slots{left:50%;bottom:2.5%;transform:translateX(-50%);display:flex;gap:4px;padding:5px;background:var(--panel)}
+.h-slots i{width:34px;height:34px;border-radius:5px;background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 1px rgba(255,220,150,.2);display:grid;place-items:center;position:relative}.h-slots i img{width:24px}.h-slots i em{position:absolute;left:3px;top:1px;font:800 8px var(--hud-font);font-style:normal;color:#c8b890}
+.h-dmg{right:1.5%;top:52%;width:17%}
+.h-dmg .r{display:grid;grid-template-columns:1fr auto;gap:4px;padding:3px 8px;font-size:10px}.h-dmg .r i{grid-column:1/-1;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--gold))}
+.h-xp{left:50%;top:3%;transform:translateX(-50%);display:flex;gap:6px;padding:4px 10px;align-items:center;font:800 11px var(--head-font);color:var(--gold)}
+.h-xp img{width:16px;height:16px}
+.plate{position:absolute;left:47%;top:44.5%;transform:translateX(-25%);text-align:center;white-space:nowrap;pointer-events:none}
+.plate b{font:800 11px Cinzel,serif;color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000}.plate small{display:block;font:700 9px Lora,serif;color:#ffd98a;text-shadow:0 1px 2px #000}
+.plate .hpb{width:46px;height:4px;margin:2px auto 0;border-radius:2px;background:rgba(0,0,0,.6);overflow:hidden}.plate .hpb i{display:block;width:80%;height:100%;background:#4ad060}
+
+/* edit mode: every piece shows its outline and a name, and drags */
+.screen.editing .hud{outline:2px dashed #ffd24a;outline-offset:2px;cursor:grab}
+.screen.editing .hud.dragging{cursor:grabbing;opacity:.9;z-index:5}
+.screen.editing .hud.hidden-piece{opacity:.35}
+.screen .tag{display:none}
+.screen.editing .tag{display:flex;position:absolute;right:4px;top:4px;gap:3px;z-index:3}
+.screen.editing .tag button{border:0;border-radius:4px;padding:2px 5px;background:#ffd24a;color:#2a1606;font:900 9px Lora,serif;cursor:pointer}
+.screen.editing::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,210,74,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,210,74,.07) 1px,transparent 1px);background-size:4% 7.1%;z-index:1;pointer-events:none}
+.editbar{display:none;position:absolute;left:50%;top:14%;transform:translateX(-50%);z-index:6;padding:8px 12px;border-radius:999px;background:rgba(20,14,10,.92);box-shadow:0 0 0 2px #ffd24a;font:800 12px Lora,serif;color:#ffe7b0;white-space:nowrap}
+.screen.editing .editbar{display:block}
+.snapline{position:absolute;z-index:4;background:#5fd0c0;display:none;pointer-events:none}
+
+/* ---------- the two other looks: same pieces, different skin ---------- */
+.screen.t-midnight{--panel:rgba(14,18,26,.82);--edge:rgba(160,190,255,.22);--gold:#e8d8a8;--accent:#7aa2ff;--r:12px;--hud-font:"Nunito",Lora,sans-serif;--head-font:Lora,serif;--glow:0 0 0 1px rgba(255,255,255,.04)}
+.screen.t-midnight .hud{backdrop-filter:blur(6px);box-shadow:0 0 0 1px var(--edge),0 10px 24px rgba(0,0,0,.5)}
+.screen.t-midnight .hud .hd{background:transparent;border-bottom:1px solid rgba(160,190,255,.15);letter-spacing:.12em;text-transform:uppercase;font-size:9px;color:#aebcdc}
+.screen.t-midnight .meter i{filter:saturate(.8)}
+.screen.t-neon{--panel:rgba(30,6,40,.9);--edge:#ff4fd8;--gold:#ffe05a;--accent:#ff4fd8;--r:6px;--glow:0 0 14px rgba(255,79,216,.55)}
+.screen.t-neon .hud .hd{background:linear-gradient(90deg,rgba(255,79,216,.35),rgba(80,40,255,.25));color:#fff;text-shadow:0 0 6px #ff4fd8}
+.screen.t-neon .world{filter:saturate(1.2) brightness(.7) hue-rotate(-20deg)}
+
+/* ================= SETTINGS ================= */
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,380px);gap:18px;align-items:start}
+@media (max-width:940px){.two{grid-template-columns:1fr}}
+.set{max-width:640px}
+.set .k-body{gap:8px}
+.tabs{display:flex;gap:2px;padding:6px 10px 0;background:var(--k-paper,#efe2c4)}
+.tabs button{border:0;border-radius:6px 6px 0 0;padding:7px 12px;background:#e0cfa6;color:#6a5a40;font:800 12.5px Lora,serif;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:#fbf3de;color:#2a2016;box-shadow:inset 0 -2px 0 #c8963a}
+.rowset{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;background:#f6ecd3;box-shadow:inset 0 0 0 1px rgba(90,58,24,.15);color:#2a2016}
+.rowset b{display:block;font:800 13.5px Lora,serif}.rowset small{display:block;font:600 12px Lora,serif;color:#6a5a40}
+.sw{position:relative;width:40px;height:22px;border-radius:999px;background:#c9b88f;border:0;cursor:pointer;flex:0 0 auto}
+.sw::after{content:"";position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:left .15s}
+.sw[aria-checked="true"]{background:#2f7a3a}.sw[aria-checked="true"]::after{left:21px}
+.seg{display:inline-flex;gap:2px;padding:2px;border-radius:6px;background:#e0cfa6}.seg button{border:0;border-radius:4px;padding:4px 9px;background:none;font:800 11.5px Lora,serif;color:#6a5a40;cursor:pointer}.seg button[aria-pressed="true"]{background:#5a3220;color:#ffe7b0}
+input[type=range]{accent-color:#c8963a;width:140px}
+.pane[hidden]{display:none}
+.grp{margin:6px 0 2px;font:800 11px Lora,serif;letter-spacing:.12em;text-transform:uppercase;color:#a0782a}
+/* the nameplate preview */
+.pv{position:relative;height:210px;border-radius:10px;overflow:hidden;background:url(/v3/assets/img/glad/flat/boardwalk_bg1.png) center 70%/cover;image-rendering:pixelated;box-shadow:0 0 0 2px #3a2616}
+.pv .who{position:absolute;bottom:34px;display:flex;flex-direction:column;align-items:center}
+.pv .who img{height:74px;image-rendering:pixelated;filter:drop-shadow(0 3px 3px rgba(0,0,0,.6))}
+.np{display:flex;flex-direction:column;align-items:center;margin-bottom:3px;white-space:nowrap}
+.np .t{font:700 9.5px Lora,serif;color:#e8c8ff;text-shadow:0 1px 2px #000}
+.np .n{font:800 12px Cinzel,serif;color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000}
+.np .n .crown{color:#ffd24a;margin-right:3px}.np .n .lv{font:700 9.5px Lora,serif;color:#ffd98a;margin-left:4px}
+.np .hpb{width:48px;height:5px;margin-top:2px;border-radius:3px;background:rgba(0,0,0,.6);overflow:hidden}.np .hpb i{display:block;height:100%;background:#4ad060}
+.np .pet{font:700 9px Lora,serif;color:#9fe8a0;text-shadow:0 1px 2px #000}
+.pv.big .np .n{font-size:15px}.pv.small .np .n{font-size:10px}.pv.small .np .t{display:none}
+/* themes */
+.themes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:900px){.themes{grid-template-columns:1fr}}
+.th{border-radius:10px;overflow:hidden;background:#1a120c;box-shadow:0 0 0 1.5px #3a2616;cursor:pointer}
+.th.on{box-shadow:0 0 0 3px #ffd24a}
+.th .frame{position:relative;overflow:hidden;aspect-ratio:16/9}
+.th .screen{position:absolute;left:0;top:0;width:1100px;max-width:none;border-radius:0;box-shadow:none;pointer-events:none;transform-origin:0 0}
+.th .cap{padding:10px 12px}.th .cap b{display:block;font:800 16px Cinzel,serif;color:#ffe7b0}.th .cap span{display:block;margin-top:3px;font:600 12.5px Lora,serif;color:#b8a888}
+.how{background:#1a120c;border-radius:10px;padding:12px 16px;box-shadow:0 0 0 1.5px #3a2616}
+.how li{margin:5px 0;color:#cdbfa2;line-height:1.5}.how b{color:#ffe7b0}
+</style>
+</head>
+<body>
+<main>
+<h1>Your screen, your way</h1>
+<p class="lede">Three things, all in one Settings window: <b>move your screen around</b> (unlock it and drag any piece, the way the party meter already moves), <b>nameplates and features you choose</b>, and <b>two new looks</b> on top of today's. Everything below works: try it.</p>
+<span class="pin">Layouts follow your account to any computer</span><span class="pin">Snaps to edges and to each other</span><span class="pin">One click back to default</span><span class="pin">Phones keep a fixed layout</span>
+
+<section class="sec" id="edit"><h2>1. Move things around</h2>
+<p>Press <b>Unlock screen</b> (or Settings → Layout). Every piece gets a gold outline and a name; drag it anywhere and it snaps to the edges and lines up with its neighbours. The eye hides a piece you don't want. Presets give a starting point.</p>
+<div class="bar-top">
+  <button class="btn gold" id="unlock">🔓 Unlock screen</button>
+  <select class="btn" id="preset" aria-label="Layout preset"><option value="default">Layout: Default</option><option value="streamer">Layout: Streamer (chat big, right side clear)</option><option value="compact">Layout: Compact (everything tucked in)</option><option value="fighter">Layout: Fighter (meter and HP centre)</option></select>
+  <button class="btn" id="reset">Reset to default</button>
+  <span class="note" id="saved"></span>
+</div>
+<div class="screen" id="stage">
+  <div class="world"></div>
+  <img class="me px" src="/v3/assets/img/glad/flat/hero_onyx_south.png" alt="">
+  <div class="plate" id="stagePlate"><small>« Final Boss »</small><b>👑 bootypaper</b><div class="hpb"><i></i></div></div>
+  <div class="editbar">🔓 Editing your screen · drag to move · 👁 to hide · <u>Done</u> saves</div>
+  <div class="snapline" id="snapV" style="top:0;bottom:0;width:1px"></div><div class="snapline" id="snapH" style="left:0;right:0;height:1px"></div>
+
+  <div class="hud h-xp" data-p="xp"><span class="tag"><button data-eye>👁</button></span><img class="px" src="/v3/assets/img/glad/flat/items/skill_mining.png" alt="">Mining +115 xp</div>
+  <div class="hud h-hp" data-p="hp"><span class="tag"><button data-eye>👁</button></span><div class="hd"><img class="px" src="/v3/assets/img/glad/flat/ui/skills.png" alt="">bootypaper · Combat 91</div>
+    <div class="row"><b>HP</b><span class="meter"><i style="width:72%;background:linear-gradient(90deg,#c83a2a,#ff6a4a)"></i></span><b>72</b></div>
+    <div class="row" style="padding-top:0"><img class="px" src="/v3/assets/img/glad/flat/ui/g_tickets.png" alt="" style="width:16px;height:16px"><span style="font:800 12px Cinzel,serif;color:#ffd24a">313,400</span></div></div>
+  <div class="hud h-bag" data-p="bag"><span class="tag"><button data-eye>👁</button></span><div class="hd">Inventory · 11/25</div>
+    <div class="grid"><i><img class="px" src="/v3/assets/img/glad/flat/items/star_crate.png" alt=""></i><i><img class="px" src="/v3/assets/img/glad/flat/items/starfrag.png" alt=""></i><i><img class="px" src="/v3/assets/img/glad/flat/items/angels_ring.png" alt=""></i><i><img class="px" src="/v3/assets/img/glad/flat/items/nova_core.png" alt=""></i><i><img class="px" src="/v3/assets/img/glad/flat/items/waystone_valley.png" alt=""></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="hud h-map" data-p="map"><span class="tag"><button data-eye>👁</button></span><div class="hd">The Depths</div><div class="mm"></div></div>
+  <div class="hud h-track" data-p="track"><span class="tag"><button data-eye>👁</button></span><div class="hd">Happening now</div>
+    <div class="ev"><img class="px" src="/v3/assets/img/glad/flat/o_fallenstar.png" alt=""><span>Shooting star<small>The Gloam · tier 4</small></span></div>
+    <div class="ev"><img class="px" src="/v3/assets/img/glad/flat/jackthief.png" alt=""><span>Jackpot Thief<small>31,400 in the sack · 3 hops</small></span></div></div>
+  <div class="hud h-dmg" data-p="dmg"><span class="tag"><button data-eye>👁</button></span><div class="hd">Party meter · damage</div>
+    <div class="r"><span>bootypaper</span><span>4,210</span><i style="width:100%"></i></div><div class="r"><span>Kellzifer</span><span>3,880</span><i style="width:92%"></i></div><div class="r"><span>dookiebetts800</span><span>2,105</span><i style="width:50%"></i></div></div>
+  <div class="hud h-chat" data-p="chat"><span class="tag"><button data-eye>👁</button></span><div class="hd">Chat</div>
+    <p class="cs"><b>CASINO:</b> 💰 There's a thief loose in The Gloam!</p><p><b>Kellzifer:</b> on my way</p><p><b>BeeEzRadio:</b> thx for the refund 🙏</p><div class="in">Say something…</div></div>
+  <div class="hud h-slots" data-p="slots"><span class="tag"><button data-eye>👁</button></span><i><em>1</em><img class="px" src="/v3/assets/img/glad/flat/items/waystone_valley.png" alt=""></i><i><em>2</em><img class="px" src="/v3/assets/img/glad/flat/items/nova_core.png" alt=""></i><i><em>3</em></i><i><em>4</em></i></div>
+</div>
+</section>
+
+<section class="sec" id="settings"><h2>2. Settings: nameplates and features</h2>
+<p>The Settings window (a cog in the top bar), in the game's kit. Nameplates change the preview beside it as you flip them.</p>
+<div class="two">
+  <section class="k-win set"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/skills.png" alt=""><b>Settings</b><span class="k-sub">saved to your character</span></div>
+    <div class="tabs" role="tablist"><button data-tab="layout" aria-pressed="false">Layout</button><button data-tab="plates" aria-pressed="true">Nameplates</button><button data-tab="features" aria-pressed="false">Features</button><button data-tab="look" aria-pressed="false">Look</button></div>
+    <div class="k-body k-paper">
+      <div class="pane" data-pane="layout" hidden>
+        <div class="rowset"><span><b>Unlock the screen</b><small>Drag the pieces where you want them.</small></span><button class="btn gold" onclick="document.getElementById('unlock').click();document.getElementById('edit').scrollIntoView({behavior:'smooth'})">Unlock</button></div>
+        <div class="rowset"><span><b>Interface size</b><small>Everything on the screen, bigger or smaller.</small></span><input type="range" min="80" max="130" value="100" aria-label="Interface size"></div>
+        <div class="rowset"><span><b>Window see-through</b><small>How much of the world shows through the panels.</small></span><input type="range" min="0" max="60" value="10" aria-label="Transparency"></div>
+        <div class="rowset"><span><b>Lock windows in place</b><small>Stops the Bank, Bom and the rest being dragged by accident.</small></span><button class="sw" role="switch" aria-checked="false"></button></div>
+        <div class="rowset"><span><b>Reset to default</b><small>Puts every piece back where it started.</small></span><button class="btn">Reset</button></div>
+      </div>
+      <div class="pane" data-pane="plates">
+        <div class="grp">Show nameplates for</div>
+        <div class="rowset"><span><b>Who</b><small>Everyone, just your party, or nobody (your own always shows).</small></span><span class="seg" data-np="who"><button aria-pressed="true" data-v="all">Everyone</button><button aria-pressed="false" data-v="party">Party</button><button aria-pressed="false" data-v="none">Just me</button></span></div>
+        <div class="grp">On each nameplate</div>
+        <div class="rowset"><span><b>Level</b><small>Combat level beside the name.</small></span><button class="sw" role="switch" aria-checked="true" data-np="lv"></button></div>
+        <div class="rowset"><span><b>Titles</b><small>« Final Boss » and the rest.</small></span><button class="sw" role="switch" aria-checked="true" data-np="t"></button></div>
+        <div class="rowset"><span><b>VIP crowns</b></span><button class="sw" role="switch" aria-checked="true" data-np="crown"></button></div>
+        <div class="rowset"><span><b>Health bars</b><small>Other people's health, over their heads.</small></span><button class="sw" role="switch" aria-checked="true" data-np="hp"></button></div>
+        <div class="rowset"><span><b>Pet names</b></span><button class="sw" role="switch" aria-checked="false" data-np="pet"></button></div>
+        <div class="rowset"><span><b>Size</b></span><span class="seg" data-np="size"><button aria-pressed="false" data-v="small">Small</button><button aria-pressed="true" data-v="">Normal</button><button aria-pressed="false" data-v="big">Big</button></span></div>
+        <div class="rowset"><span><b>Monster names</b><small>Always, only on hover, or only when fighting.</small></span><span class="seg"><button aria-pressed="true">Always</button><button aria-pressed="false">Hover</button><button aria-pressed="false">Fighting</button></span></div>
+      </div>
+      <div class="pane" data-pane="features" hidden>
+        <div class="grp">On screen</div>
+        <div class="rowset"><span><b>Damage numbers</b><small>The splats when you or anyone near hits.</small></span><button class="sw" role="switch" aria-checked="true"></button></div>
+        <div class="rowset"><span><b>Xp drops</b><small>"+115 xp" at the top when you train.</small></span><button class="sw" role="switch" aria-checked="true"></button></div>
+        <div class="rowset"><span><b>Chat bubbles</b><small>What people say, over their heads.</small></span><button class="sw" role="switch" aria-checked="true"></button></div>
+        <div class="rowset"><span><b>World event tracker</b><small>Stars, posters and the Thief, top right.</small></span><button class="sw" role="switch" aria-checked="true"></button></div>
+        <div class="rowset"><span><b>Other players' trails and glows</b><small>Your own always show.</small></span><button class="sw" role="switch" aria-checked="true"></button></div>
+        <div class="grp">Feel</div>
+        <div class="rowset"><span><b>Screen shake</b><small>On big hits and the King's slam.</small></span><button class="sw" role="switch" aria-checked="true"></button></div>
+        <div class="rowset"><span><b>Weather and ambience</b><small>Snow, fog, steam, fireflies.</small></span><button class="sw" role="switch" aria-checked="true"></button></div>
+        <div class="rowset"><span><b>Big announcements</b><small>The banners for raids, bosses and Jackpots.</small></span><button class="sw" role="switch" aria-checked="true"></button></div>
+        <div class="grp">Chat</div>
+        <div class="rowset"><span><b>CASINO's lines</b><small>World news in chat.</small></span><button class="sw" role="switch" aria-checked="true"></button></div>
+        <div class="rowset"><span><b>Level-up and milestone lines</b><small>Other people's, in chat.</small></span><button class="sw" role="switch" aria-checked="false"></button></div>
+        <div class="grp">Safety</div>
+        <div class="rowset"><span><b>Ask before big buys</b><small>A second click for anything over the amount you set.</small></span><span class="seg"><button aria-pressed="false">Off</button><button aria-pressed="true">10k</button><button aria-pressed="false">100k</button></span></div>
+      </div>
+      <div class="pane" data-pane="look" hidden>
+        <div class="rowset"><span><b>Your screen's look</b><small>Tavern, Midnight or Neon. Section 3 shows all three.</small></span><span class="seg" id="lookSeg"><button aria-pressed="true" data-v="">Tavern</button><button aria-pressed="false" data-v="t-midnight">Midnight</button><button aria-pressed="false" data-v="t-neon">Neon</button></span></div>
+      </div>
+    </div>
+    <div class="k-foot"><span class="k-note">Changes show at once and follow you to any computer.</span></div></section>
+  <div>
+    <div class="pv" id="pv">
+      <div class="who" style="left:18%"><div class="np"><span class="t">« Final Boss »</span><span class="n"><span class="crown">👑</span>bootypaper<span class="lv">(91)</span></span><span class="hpb"><i style="width:72%"></i></span><span class="pet">Supernova</span></div><img src="/v3/assets/img/glad/flat/hero_onyx_south.png" alt=""></div>
+      <div class="who" style="left:52%"><div class="np" data-party><span class="t">« Knows Freddie Freeman »</span><span class="n">Kellzifer<span class="lv">(91)</span></span><span class="hpb"><i style="width:95%"></i></span><span class="pet">Starling</span></div><img src="/v3/assets/img/glad/flat/hero_dragonstone_south.png" alt=""></div>
+      <div class="who" style="left:76%"><div class="np" data-other><span class="t">« Bag Secured »</span><span class="n"><span class="crown">👑</span>BeeEzRadio<span class="lv">(82)</span></span><span class="hpb"><i style="width:40%"></i></span><span class="pet">Coilling</span></div><img src="/v3/assets/img/glad/flat/hero_emerald_south.png" alt=""></div>
+    </div>
+    <p class="note" style="margin-top:8px">The preview: you on the left, a party member in the middle, a stranger on the right. Flip the Nameplates switches and watch.</p>
+  </div>
+</div>
+</section>
+
+<section class="sec" id="looks"><h2>3. Three looks</h2>
+<p>The same screen and the same pieces, in three skins. <b>Tavern</b> is today's. <b>Midnight</b> is dark glass with thin lines, for long sessions and streaming. <b>Neon</b> is the casino's own: magenta and gold with a glow. Click one to put it on the screen above.</p>
+<div class="themes" id="themes"></div>
+</section>
+
+<section class="sec"><h2>How it would work</h2>
+<div class="how"><ul>
+  <li><b>One layout engine for every piece.</b> The party meter already drags and remembers itself; the same code, taught about ten pieces (HP, bag, minimap, tracker, meter, chat, quick slots, xp drops, party frames, buffs), each stored as a corner and an offset, so a layout still fits when the window changes size.</li>
+  <li><b>Saved to your character, not the browser</b>, beside the settings the game already keeps, so it follows you to another computer. A layout is a few hundred bytes; it is saved when you press Done, not while you drag.</li>
+  <li><b>Snapping</b> to the screen edges and to the other pieces' edges, with the teal guide lines, so things line up without effort; pieces can never be dragged off screen or under the Twitch chat.</li>
+  <li><b>Phones keep a fixed layout</b> (there is no room to arrange), but the nameplate and feature settings and the looks work there too.</li>
+  <li><b>The looks are a skin, not a second game.</b> Each is a set of colours, frames and fonts over the same pieces (no pixel fonts), so a new window never has to be built three times. Tavern stays the default.</li>
+  <li><b>Features off means off</b>: turning off damage numbers, bubbles or weather also skips drawing them, so a slower computer gets faster. Nothing here costs the server anything.</li>
+</ul></div>
+</section>
+</main>
+
+<script>
+/* ---------- the screen: presets, drag with snapping, hide ---------- */
+const stage = document.getElementById("stage"), pieces = [...stage.querySelectorAll(".hud")];
+const PRE = {
+  default: {},
+  streamer: { chat: { left: "1.5%", top: "44%", bottom: "auto", width: "30%" }, bag: { left: "1.5%", top: "2.5%", width: "22%" }, hp: { left: "25%", top: "2.5%", width: "22%" }, dmg: { right: "1.5%", top: "28%" }, track: { right: "1.5%", top: "58%" } },
+  compact: { hp: { width: "17%" }, bag: { width: "17%", top: "13%" }, chat: { left: "1.5%", bottom: "2.5%", width: "30%" }, map: { width: "13%" }, track: { width: "13%", top: "24%" }, dmg: { width: "13%", top: "44%" } },
+  fighter: { hp: { left: "39%", top: "68%", width: "22%" }, dmg: { right: "auto", left: "63%", top: "66%", width: "17%" }, chat: { left: "1.5%", bottom: "2.5%", width: "30%" } }
+};
+const base = new Map(pieces.map((p) => [p, p.getAttribute("style") || ""]));
+function applyPreset(k) { for (const p of pieces) { p.setAttribute("style", base.get(p)); p.classList.remove("hidden-piece"); p.style.display = ""; Object.assign(p.style, PRE[k]?.[p.dataset.p] || {}); } }
+document.getElementById("preset").addEventListener("change", (e) => applyPreset(e.target.value));
+document.getElementById("reset").addEventListener("click", () => { document.getElementById("preset").value = "default"; applyPreset("default"); say("Back to default."); });
+const unlock = document.getElementById("unlock"), saved = document.getElementById("saved"), say = (t) => { saved.textContent = t; clearTimeout(say.t); say.t = setTimeout(() => (saved.textContent = ""), 2500); };
+function setEdit(on) { stage.classList.toggle("editing", on); unlock.textContent = on ? "✓ Done" : "🔓 Unlock screen"; unlock.classList.toggle("on", on);
+  for (const p of pieces) if (!on && p.classList.contains("hidden-piece")) p.style.display = "none"; else if (on) p.style.display = ""; if (!on) say("Layout saved."); }
+unlock.addEventListener("click", () => setEdit(!stage.classList.contains("editing")));
+stage.querySelector(".editbar u").addEventListener("click", () => setEdit(false));
+const snapV = document.getElementById("snapV"), snapH = document.getElementById("snapH"), SNAP = 8;
+stage.addEventListener("pointerdown", (e) => {
+  if (!stage.classList.contains("editing")) return;
+  if (e.target.closest("[data-eye]")) { const p = e.target.closest(".hud"); p.classList.toggle("hidden-piece"); return; }
+  const p = e.target.closest(".hud"); if (!p) return; e.preventDefault();
+  const S = stage.getBoundingClientRect(), R = p.getBoundingClientRect(), ox = e.clientX - R.left, oy = e.clientY - R.top;
+  p.style.transform = "none"; p.style.right = "auto"; p.style.bottom = "auto"; p.style.left = `${R.left - S.left}px`; p.style.top = `${R.top - S.top}px`; p.classList.add("dragging"); p.setPointerCapture(e.pointerId);
+  const others = pieces.filter((q) => q !== p && q.style.display !== "none").map((q) => q.getBoundingClientRect());
+  const move = (ev) => {
+    let x = ev.clientX - S.left - ox, y = ev.clientY - S.top - oy; const w = R.width, h = R.height;
+    x = Math.max(0, Math.min(S.width - w, x)); y = Math.max(0, Math.min(S.height - h, y));
+    let gx = null, gy = null;
+    const xs = [0, S.width - w, ...others.flatMap((o) => [o.left - S.left, o.right - S.left - w, o.right - S.left + 6, o.left - S.left - w - 6])];
+    const ys = [0, S.height - h, ...others.flatMap((o) => [o.top - S.top, o.bottom - S.top - h, o.bottom - S.top + 6, o.top - S.top - h - 6])];
+    for (const c of xs) if (Math.abs(x - c) < SNAP) { x = c; gx = c; break; }
+    for (const c of ys) if (Math.abs(y - c) < SNAP) { y = c; gy = c; break; }
+    p.style.left = `${x}px`; p.style.top = `${y}px`;
+    snapV.style.display = gx == null ? "none" : "block"; snapV.style.left = `${gx === x ? x : x + w}px`;
+    snapH.style.display = gy == null ? "none" : "block"; snapH.style.top = `${y}px`;
+  };
+  const up = () => { p.classList.remove("dragging"); snapV.style.display = snapH.style.display = "none"; p.removeEventListener("pointermove", move); p.removeEventListener("pointerup", up); };
+  p.addEventListener("pointermove", move); p.addEventListener("pointerup", up);
+});
+
+/* ---------- settings: tabs, switches, nameplates ---------- */
+document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => {
+  document.querySelectorAll(".tabs button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  document.querySelectorAll(".pane").forEach((p) => (p.hidden = p.dataset.pane !== b.dataset.tab)); }));
+document.querySelectorAll(".sw").forEach((s) => s.addEventListener("click", () => { s.setAttribute("aria-checked", String(s.getAttribute("aria-checked") !== "true")); plates(); }));
+document.querySelectorAll(".seg").forEach((g) => g.addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; g.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); plates(); if (g.id === "lookSeg") look(b.dataset.v); }));
+const on = (k) => document.querySelector(`.sw[data-np="${k}"]`)?.getAttribute("aria-checked") === "true", seg = (k) => document.querySelector(`.seg[data-np="${k}"] [aria-pressed="true"]`)?.dataset.v ?? "";
+function plates() {
+  const pv = document.getElementById("pv"), who = seg("who"), size = seg("size");
+  pv.classList.toggle("big", size === "big"); pv.classList.toggle("small", size === "small");
+  pv.querySelectorAll(".np").forEach((np) => {
+    const hidden = (who === "none" && (np.hasAttribute("data-party") || np.hasAttribute("data-other"))) || (who === "party" && np.hasAttribute("data-other"));
+    np.style.visibility = hidden ? "hidden" : "visible";
+    np.querySelector(".lv").style.display = on("lv") ? "" : "none"; np.querySelector(".t").style.display = on("t") ? "" : "none";
+    const c = np.querySelector(".crown"); if (c) c.style.display = on("crown") ? "" : "none";
+    np.querySelector(".hpb").style.display = on("hp") ? "" : "none"; np.querySelector(".pet").style.display = on("pet") ? "" : "none";
+  });
+}
+plates();
+
+/* ---------- the three looks ---------- */
+const LOOKS = [["", "Tavern", "Today's: wood, parchment and gold."], ["t-midnight", "Midnight", "Dark glass and thin lines. Quiet, for long sessions and streams."], ["t-neon", "Neon", "The casino's own: magenta and gold, with a glow."]];
+const themes = document.getElementById("themes");
+const pristine = stage.innerHTML.replace(/<div class="editbar">[\s\S]*?<\/div>/, "");   /* taken before anyone drags, so the thumbnails show the default layout */
+themes.innerHTML = LOOKS.map(([cls, name, text]) => `<div class="th${cls ? "" : " on"}" data-look="${cls}"><div class="frame"><div class="screen ${cls}">${pristine}</div></div><div class="cap"><b>${name}</b><span>${text}</span></div></div>`).join("");
+/* each thumbnail is the full-size screen, scaled down whole, so it looks like the real thing rather than a cramped copy */
+const fit = () => themes.querySelectorAll(".frame").forEach((f) => { f.firstElementChild.style.transform = `scale(${f.clientWidth / 1100})`; });
+fit(); addEventListener("resize", fit);
+function look(cls) { stage.classList.remove("t-midnight", "t-neon"); if (cls) stage.classList.add(cls); themes.querySelectorAll(".th").forEach((t) => t.classList.toggle("on", t.dataset.look === cls));
+  document.querySelectorAll("#lookSeg button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === cls))); }
+themes.addEventListener("click", (e) => { const t = e.target.closest(".th"); if (t) { look(t.dataset.look); document.getElementById("edit").scrollIntoView({ behavior: "smooth" }); } });
+</script>
+</body>
+</html>

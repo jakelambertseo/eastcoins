@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>EastScape events, in detail</title>
+<!-- (2026-09-30, the owner: "show me more in the events mock how jackpot, wanted and shooting star would look like? be as detailed as possible")
+     Three events told start to finish: a storyboard, a live scene, the world map, every window and tracker, the numbers, the edge cases.
+     Local only (tools/ is never shipped). Open at http://localhost:4321/tools/events-mock/detail.html -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0c0908;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1200px 600px at 20% -10%,#2a1a10,transparent),radial-gradient(900px 500px at 100% 30%,#1a1410,transparent),#0c0908}
+main{max-width:1280px;margin:0 auto;padding:28px 16px 80px}
+a{color:#ffd98a}
+h1{margin:0 0 4px;font:800 32px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:900px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}nav.jump a{padding:6px 12px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13px Lora,serif}
+.ev{margin:46px 0 0;padding:26px 0 0;border-top:2px solid #3a2a1a}
+.ev>h2{margin:0;font:800 30px Cinzel,Georgia,serif;color:#ffd98a}
+.ev .one{margin:6px 0 10px;font:600 17px/1.45 Lora,serif;color:#f0e2c0;max-width:980px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 18px}.chips span{padding:4px 10px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;font:700 12.5px Lora,serif;color:#e8d8b0}
+h3{margin:28px 0 8px;font:800 13px Lora,serif;letter-spacing:.14em;text-transform:uppercase;color:#e0b060}
+h3+p{margin:0 0 12px;color:#b8a888;max-width:900px;line-height:1.5;font-size:14.5px}
+/* the storyboard: six frames, each a little scene and a caption */
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:980px){.board{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:620px){.board{grid-template-columns:1fr}}
+.frame{background:#1a120c;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616}
+.frame canvas{display:block;width:100%;aspect-ratio:16/9;image-rendering:pixelated}
+.frame .cap{padding:8px 10px 10px}.frame .cap>b{display:block;font:800 13.5px Cinzel,serif;color:#ffd98a}.frame .cap>span{display:block;margin-top:3px;font:600 12.5px/1.4 Lora,serif;color:#cdbfa2}.frame .cap>span b{color:#ffe7b0}
+.frame .n{display:inline-block;width:20px;height:20px;border-radius:50%;background:#c8963a;color:#1a0e04;font:900 12px/20px Lora,serif;text-align:center;margin-right:6px}
+/* the live view */
+.live{display:grid;grid-template-columns:minmax(0,760px) minmax(0,1fr);gap:18px;align-items:start}@media (max-width:1120px){.live{grid-template-columns:1fr}}
+.world{position:relative;width:100%;aspect-ratio:16/9;border-radius:8px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 0 2px #3a2616}
+.world canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+.hud{position:absolute;top:8px;right:8px;display:grid;gap:6px;justify-items:end}
+.track{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 7px;border-radius:8px;background:rgba(20,14,10,.84);box-shadow:0 0 0 1.5px rgba(255,210,120,.35),0 4px 10px rgba(0,0,0,.4);font:700 12.5px/1.25 Lora,serif;color:#f6e9cc;max-width:300px}
+.track img{width:28px;height:28px;image-rendering:pixelated;object-fit:contain}.track b{display:block;font:800 13.5px Cinzel,serif;color:#ffd98a}.track small{display:block;color:#c8b890;font-size:11.5px}
+.track .bar{height:6px;border-radius:3px;background:#3a2a1a;margin-top:4px;overflow:hidden}.track .bar i{display:block;height:100%;background:linear-gradient(90deg,#ffd84a,#ffb020)}
+.track.red{box-shadow:0 0 0 1.5px rgba(224,72,58,.6),0 4px 10px rgba(0,0,0,.4)}.track.red b{color:#ffb0a0}.track.red .bar i{background:linear-gradient(90deg,#e0483a,#b8302a)}
+.track.dim{opacity:.72}
+.chat{position:absolute;left:8px;bottom:8px;width:60%;display:grid;gap:3px}
+.chat p,.log p{margin:0;padding:3px 8px;border-radius:5px;background:rgba(20,14,10,.8);font:600 12px/1.3 Lora,serif;color:#e8dcc0}
+.casino{color:#ffd24a!important}.casino b{color:#fff2a8}.you{color:#9fe8a0!important}.bad{color:#ff9a8a!important}
+.log{display:grid;gap:3px}
+.states{display:grid;gap:8px}.states .track{max-width:none}
+.state-l{font:800 10.5px Lora,serif;letter-spacing:.1em;text-transform:uppercase;color:#a89070;margin:4px 0 -2px}
+/* windows and the rest */
+.wins{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;align-items:start}
+.wins .k-win{min-width:0}
+.tbl{width:100%;border-collapse:collapse;font:600 13px Lora,serif}.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2);padding:4px 6px}.tbl td{padding:5px 6px;border-top:1px solid var(--k-line);vertical-align:top}
+.tbl td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.rulebox{background:#1a120c;border-radius:8px;padding:12px 14px;box-shadow:0 0 0 1.5px #3a2616}.rulebox b.h{display:block;font:800 13px Lora,serif;letter-spacing:.1em;text-transform:uppercase;color:#e0b060;margin-bottom:6px}
+.rulebox ul{margin:0;padding-left:18px;color:#cdbfa2;font-size:14px;line-height:1.5}.rulebox li{margin:3px 0}.rulebox li b{color:#ffe7b0}
+/* the world map */
+.map{position:relative;background:#1e2a3a;border-radius:8px;box-shadow:0 0 0 2px #3a2616;padding:14px;display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.map .a{position:relative;display:grid;justify-items:center;gap:3px;padding:8px 4px;border-radius:6px;background:#2a3a4a;font:700 11px Lora,serif;color:#dfe8f0;text-align:center}
+.map .a img{width:40px;height:40px;image-rendering:pixelated;border-radius:6px}
+.map .a.hot{background:#4a3a1a;box-shadow:0 0 0 2px #ffd84a,0 0 18px rgba(255,216,74,.5)}.map .a.red{background:#4a1e1e;box-shadow:0 0 0 2px #e0483a,0 0 18px rgba(224,72,58,.5)}
+.map .a .pin{position:absolute;top:-10px;right:-6px;font-size:22px;animation:pin 1.2s ease-in-out infinite}
+@keyframes pin{50%{transform:translateY(-4px)}}
+.map .a.far{opacity:.45}
+.map .legend{grid-column:1/-1;margin-top:4px;font:600 12px Lora,serif;color:#b8c8d8}
+/* the day plan */
+.day{position:relative;height:190px;border-radius:8px;background:#1a120c;box-shadow:0 0 0 1.5px #3a2616;margin-top:6px}
+.day .row{position:absolute;left:120px;right:14px;height:34px}
+.day .row>b{position:absolute;left:-110px;top:8px;font:800 12px Lora,serif;color:#ffd98a}
+.day .row i{position:absolute;top:4px;height:26px;border-radius:5px;font:800 10px/26px Lora,serif;color:#1a0e04;text-align:center;overflow:hidden;white-space:nowrap}
+.day .hours{position:absolute;left:120px;right:14px;bottom:4px;display:flex;justify-content:space-between;font:700 10px Lora,serif;color:#8a7a5a}
+.day .now{position:absolute;top:6px;bottom:20px;width:2px;background:#e0483a}
+.poster{position:relative;width:200px;flex:none}.poster img.p{width:200px;image-rendering:pixelated;display:block}.poster img.m{position:absolute;left:44px;top:66px;width:112px;height:100px;object-fit:contain;image-rendering:pixelated}
+.poster .t{position:absolute;left:20px;right:20px;top:172px;text-align:center;font:800 14px Cinzel,serif;color:#5a2010;line-height:1.15}
+.poster.stamp::after{content:"ESCAPED";position:absolute;left:30px;top:100px;transform:rotate(-18deg);padding:4px 10px;border:3px solid #b8302a;color:#b8302a;font:900 22px Cinzel,serif;border-radius:6px;background:rgba(255,240,220,.6)}
+.poster.taken::after{content:"TAKEN";position:absolute;left:44px;top:100px;transform:rotate(-14deg);padding:4px 10px;border:3px solid #2f7a3a;color:#2f7a3a;font:900 22px Cinzel,serif;border-radius:6px;background:rgba(240,255,230,.6)}
+.flex{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+.toast{display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:10px;background:linear-gradient(#3a2410,#241408);box-shadow:0 0 0 2px #c8963a,0 8px 20px rgba(0,0,0,.5);max-width:420px}
+.toast img{width:40px;height:40px;image-rendering:pixelated;object-fit:contain}.toast b{display:block;font:800 16px Cinzel,serif;color:#ffe7b0}.toast span{display:block;font:600 13px Lora,serif;color:#e8d8b0}
+.jpill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:#241408;box-shadow:0 0 0 2px #c8963a;font:800 15px Lora,serif;color:#ffd84a}
+.jpill.hit{box-shadow:0 0 0 2px #e0483a,0 0 16px rgba(224,72,58,.6);color:#ffb0a0}
+.jpill s{color:#a88a60;font-weight:700}
+</style>
+</head>
+<body>
+<main>
+<h1>Three events, in detail</h1>
+<p class="lede">Each one told start to finish: <b>how it plays out</b> (a storyboard), <b>what it looks like live</b> (an animated scene), <b>where CASINO sends people</b> (the world map), <b>every tracker and window</b> in the UI kit, <b>the exact rules and numbers</b>, and <b>what happens when things go wrong</b>. The day plan at the bottom shows how the three share a day with the Pumpkin King and the raids. The art is the game's own, plus new PixelLab pieces for the star, the tent, stardust, the Starling, the bounty board, the poster and the goblin. <a href="./">← back to all the events</a></p>
+<nav class="jump"><a href="#stars">🌠 Shooting Stars</a><a href="#wanted">📜 Wanted!</a><a href="#thief">💰 The Jackpot Thief</a><a href="#day">🗓️ A day of events</a></nav>
+
+<!-- =================================================================================== SHOOTING STARS -->
+<section class="ev" id="stars">
+  <h2>🌠 Shooting Stars</h2>
+  <p class="one">A star falls somewhere in the world every few hours. CASINO gives a warning and then the exact spot. Everyone who turns up <b>mines it down tier by tier</b>. The top tiers need high Mining, the bottom ones anyone, so the best miners start it and the whole server finishes it. Every swing pays <b>stardust</b>, which buys cosmetics and treats at the <b>Star Tent</b>.</p>
+  <div class="chips"><span>⏱ every 3-5 hours, at random</span><span>🗺 any open outdoor map</span><span>⛏ Mining 10 to 90</span><span>👥 better with a crowd, fine alone</span><span>⌛ ~15 min with a crowd, gone after 60</span><span>🛡 no risk</span></div>
+
+  <h3>How it plays out</h3>
+  <p>From the first warning to spending the dust. Six moments, each a frame of what a player sees.</p>
+  <div class="board">
+    <div class="frame"><canvas id="st1" width="480" height="270"></canvas><div class="cap"><b><span class="n">1</span>Ten minutes out: a streak in the sky</b><span>A bright streak crosses every outdoor map. CASINO: "A star is falling… it'll come down somewhere in the <b>north</b> in 10 minutes." Only a direction, so people start drifting that way.</span></div></div>
+    <div class="frame"><canvas id="st2" width="480" height="270"></canvas><div class="cap"><b><span class="n">2</span>Impact</b><span>It lands with a flash and a shake on that map. CASINO names the map and a landmark ("the Gloam, by the old well"), and a star appears on everyone's world map.</span></div></div>
+    <div class="frame"><canvas id="st3" width="480" height="270"></canvas><div class="cap"><b><span class="n">3</span>Tier 8: the first miners</b><span>It starts at tier 8, so only Mining 80+ can swing yet. Everyone else sees "Mining 80 needed · you'll be able to at tier 6" and waits nearby. The top miners get the best dust.</span></div></div>
+    <div class="frame"><canvas id="st4" width="480" height="270"></canvas><div class="cap"><b><span class="n">4</span>Tier 5: everybody in</b><span>Each tier breaks with a crack and a "TIER 5!" pop, the star shrinks a size, and more of the crowd can join. The more people swing, the faster it drops.</span></div></div>
+    <div class="frame"><canvas id="st5" width="480" height="270"></canvas><div class="cap"><b><span class="n">5</span>Tier 1: spent</b><span>The last tier crumbles into sparkles. Everyone who mined sees a summary ("You mined 212 stardust from tiers 6 to 1"), and one lucky swing all day turns up a <b>Starling</b>.</span></div></div>
+    <div class="frame"><canvas id="st6" width="480" height="270"></canvas><div class="cap"><b><span class="n">6</span>At the Star Tent</b><span>Back in the Yard, the Star Tent swaps stardust for a Stardust trail, Starry finishes, gem-roll tokens, star crates and, eventually, a Starling Egg.</span></div></div>
+  </div>
+
+  <h3>Live</h3>
+  <p>What it looks like with a crowd on it (animated): the star pulses, swings throw dust to the miners, and the tier ticks down.</p>
+  <div class="live">
+    <div class="world"><canvas id="stLive" width="760" height="428"></canvas>
+      <div class="hud"><div class="track"><img src="art/ev_star.png" alt=""><span><b id="stTier">Shooting star · Tier 6</b><small>The Gloam, by the old well · Mining 60 · 14 miners</small><div class="bar"><i id="stBar" style="width:62%"></i></div></span></div></div>
+      <div class="chat"><p class="casino"><b>CASINO:</b> 🌠 The star in <b>the Gloam</b> is down to <b>tier 6</b>. Anyone with Mining 60 can join in.</p><p class="you">You mine some stardust (×4). 🌠 <b>212</b> this star.</p></div>
+    </div>
+    <div>
+      <div class="states">
+        <span class="state-l">Tracker: while it's falling</span>
+        <div class="track"><img src="art/ev_star.png" alt=""><span><b>A star is falling</b><small>Somewhere in the north · lands in 7:42</small></span></div>
+        <span class="state-l">Tracker: landed, and your Mining is too low for this tier</span>
+        <div class="track dim"><img src="art/ev_star.png" alt=""><span><b>Shooting star · Tier 8</b><small>The Gloam · needs Mining 80 (you have 64): you can join at tier 6</small><div class="bar"><i style="width:88%"></i></div></span></div>
+        <span class="state-l">Tracker: mining</span>
+        <div class="track"><img src="art/ev_star.png" alt=""><span><b>Shooting star · Tier 6</b><small>You: 212 stardust · 14 miners</small><div class="bar"><i style="width:62%"></i></div></span></div>
+        <span class="state-l">Tracker: spent (fades after a minute)</span>
+        <div class="track"><img src="art/ev_dust.png" alt=""><span><b>The star is spent</b><small>You mined 212 stardust from tiers 6 to 1. Next star in a few hours.</small></span></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Where it lands</h3>
+  <p>The world map (M) gets a pulsing star on the map it hit. Before impact only the region lights up, so people move in the right direction without camping the exact tile.</p>
+  <div class="map" id="stMap"></div>
+
+  <h3>The windows</h3>
+  <div class="wins">
+    <section class="k-win"><div class="k-head"><img src="art/ev_star.png" alt=""><b>The star · tier 6</b><span class="k-sub">click it to see this</span></div>
+      <div class="k-body k-paper">
+        <div class="k-row" style="cursor:default"><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/pickaxe.png" alt=""></span><span><b>You can mine this tier</b><small class="good">Mining 64 · needs 60 · 4 dust a swing</small></span><span class="k-end"><button class="k-btn sm">Mine</button></span></div>
+        <table class="tbl"><tr><th>Tier</th><th>Mining</th><th>Dust a swing</th><th>Mining xp</th><th>Left</th></tr>
+          <tr><td>9</td><td>90</td><td>6</td><td class="num">210</td><td>—</td></tr><tr><td>8</td><td>80</td><td>5</td><td class="num">180</td><td>done</td></tr><tr><td>7</td><td>70</td><td>5</td><td class="num">150</td><td>done</td></tr>
+          <tr style="background:rgba(200,150,58,.15)"><td><b>6</b></td><td>60</td><td>4</td><td class="num">120</td><td><span class="k-chip gold">62%</span></td></tr><tr><td>5 → 1</td><td>50 → 10</td><td>4 → 1</td><td class="num">100 → 20</td><td>to come</td></tr></table>
+      </div><div class="k-foot"><span class="k-note">At most 400 stardust per star each, so nobody can keep one to themselves.</span></div></section>
+
+    <section class="k-win"><div class="k-head"><img src="art/ev_tent.png" alt=""><b>The Star Tent</b><span class="k-sub"><img src="art/ev_dust.png" alt="">1,840 stardust</span></div>
+      <div class="k-tabs"><button aria-selected="true">Looks</button><button>Useful</button><button>Pets</button></div>
+      <div class="k-body k-paper">
+        <div class="k-row" style="cursor:default"><span class="k-slot"><img src="art/ev_dust.png" alt=""></span><span><b>Stardust trail</b><small>Sparkles off your heels (the Store's Effects, only sold here)</small></span><span class="k-end"><button class="k-btn sm" disabled>2,000</button></span></div>
+        <div class="k-row" style="cursor:default"><span class="k-slot"><img src="art/ev_star.png" alt=""></span><span><b>Starry name</b><small>Your name glitters, and a tiny star badge</small></span><span class="k-end"><button class="k-btn sm">1,500</button></span></div>
+        <div class="k-row" style="cursor:default"><span class="k-slot"><img src="/v3/assets/img/glad/flat/items/st_title.png" alt=""></span><span><b>« Stargazer »</b><small>A title, for the patient</small></span><span class="k-end"><button class="k-btn sm" disabled>5,000</button></span></div>
+        <div class="k-row" style="cursor:default"><span class="k-slot"><img src="art/ev_starling.png" alt=""></span><span><b>Starling Egg</b><small>Hatches the Starling (walk +8%, find +6% tickets). Or find one mining: 1 in 6,000 swings</small></span><span class="k-end"><button class="k-btn sm" disabled>25,000</button></span></div>
+      </div><div class="k-foot"><span class="k-note">Useful tab: gem-roll tokens (400), star crates of ore (150), a 30-min Mining tonic (300).</span></div></section>
+
+    <div>
+      <div class="toast"><img src="art/ev_starling.png" alt=""><span><b>A Starling!</b><span>Something small and bright tumbled out of the star and decided it lives with you now.</span></span></div>
+      <div class="log" style="margin-top:12px">
+        <p class="casino"><b>CASINO:</b> 🌠 A star is falling! It'll come down somewhere in the <b>north</b> in about 10 minutes.</p>
+        <p class="casino"><b>CASINO:</b> 🌠 IMPACT. The star hit <b>the Gloam</b>, by the old well. Tier 8: Mining 80 to start.</p>
+        <p class="casino"><b>CASINO:</b> 🌠 Tier 5 in the Gloam. That's most of you now.</p>
+        <p class="casino"><b>CASINO:</b> 🌠 The star is spent. 31 miners, 6,120 stardust between them. <b>moxie</b> found a Starling!</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Rules and numbers</h3>
+  <div class="rules">
+    <div class="rulebox"><b class="h">When and where</b><ul><li><b>Every 3 to 5 hours</b>, at random, from the server's clock (the Ice Wyrm's scheduler).</li><li>Any open outdoor map. Never a dungeon, an island, the casino, or during a raid.</li><li>It starts at a tier set by who's online: the best Mining online, rounded down (so a quiet night still gets a star someone can open).</li></ul></div>
+    <div class="rulebox"><b class="h">Mining it</b><ul><li><b>Tier N needs Mining 10×N.</b> Each tier has 60 swings of "health" per miner on it (so it takes about as long with 5 people as with 30).</li><li>Dust a swing: 1 at tier 1 up to 6 at tier 9. Mining xp: about the best rock of that level, ×1.2.</li><li><b>400 stardust per star each</b>, at most. A swing from a pickaxe; the usual 3-minute idle rule applies.</li></ul></div>
+    <div class="rulebox"><b class="h">What it's worth</b><ul><li>A whole star from tier 6 down is ~200 dust. The Stardust trail is ~10 stars, the Starling Egg ~125.</li><li><b>Starling: 1 in 6,000 swings</b> (roughly one a day across the server).</li><li>Tickets never come out of it directly, so it's a new currency and never inflates the old one.</li></ul></div>
+    <div class="rulebox"><b class="h">When it goes wrong</b><ul><li><b>Nobody comes:</b> after 60 minutes it fades ("The star cools and goes dark").</li><li><b>A restart:</b> the star is saved like the Wyrm and comes back where it was.</li><li><b>Lands in the Wilderness</b> (1 time in 8): double dust, and the PvP risk that comes with it. CASINO says so loudly.</li></ul></div>
+  </div>
+</section>
+
+<!-- =================================================================================== WANTED -->
+<section class="ev" id="wanted">
+  <h2>📜 Wanted!</h2>
+  <p class="one">On the hour, a poster goes up on the <b>Bounty Board</b> in the Yard, and CASINO reads it out. The target is a <b>named, tougher version of a real monster</b> on a real map, marked with a red WANTED plate. Everyone who hurts it <b>splits the bounty by damage</b>, with the open bosses' after report. You have an hour; if it gets away, the next bounty is bigger.</p>
+  <div class="chips"><span>⏱ every hour, on the hour</span><span>🎯 one target at a time</span><span>⚔ any style, any level can chip in</span><span>💰 5,000 to 50,000, shared</span><span>⌛ 60 minutes to catch it</span><span>🔁 escaped → next bounty +25%</span></div>
+
+  <h3>How it plays out</h3>
+  <div class="board">
+    <div class="frame"><canvas id="wa1" width="480" height="270"></canvas><div class="cap"><b><span class="n">1</span>On the hour: a new poster</b><span>The Bounty Board in the Yard gets a fresh poster. CASINO reads it out: the name, the map, the bounty. The board itself is clickable any time.</span></div></div>
+    <div class="frame"><canvas id="wa2" width="480" height="270"></canvas><div class="cap"><b><span class="n">2</span>The hunt</b><span>It wanders its map like any monster, just bigger, with a red plate and a WANTED tag, and a red glow you can see from across the map. The world map marks the map, not the tile.</span></div></div>
+    <div class="frame"><canvas id="wa3" width="480" height="270"></canvas><div class="cap"><b><span class="n">3</span>The fight</b><span>Swords, bows and spells all count. It has several times the normal health, more with a crowd. At half health CASINO says so ("Old Tom is half dead. Six hunters on him").</span></div></div>
+    <div class="frame"><canvas id="wa4" width="480" height="270"></canvas><div class="cap"><b><span class="n">4</span>Enraged at 25%</b><span>One simple twist per target. Old Tom charges in a straight line, telegraphed with red tiles like the Foundry's slams. Get out of the way or get flattened.</span></div></div>
+    <div class="frame"><canvas id="wa5" width="480" height="270"></canvas><div class="cap"><b><span class="n">5</span>Taken</b><span>It drops, the poster in the Yard is stamped TAKEN, and everyone who hurt it gets the report and their share, plus a roll on its map's rare drops at five times the usual chance.</span></div></div>
+    <div class="frame"><canvas id="wa6" width="480" height="270"></canvas><div class="cap"><b><span class="n">6</span>…or it got away</b><span>At the hour it slinks off. The poster is stamped ESCAPED, and the next bounty is 25% bigger (it stacks, up to double). CASINO rubs it in.</span></div></div>
+  </div>
+
+  <h3>Live</h3>
+  <p>Old Tom Tusk walking his loop with hunters on him (animated): the red glow, the WANTED plate, hit numbers, the bar dropping.</p>
+  <div class="live">
+    <div class="world"><canvas id="waLive" width="760" height="428"></canvas>
+      <div class="hud"><div class="track red"><img src="art/ev_poster.png" alt=""><span><b>Wanted: Old Tom Tusk</b><small>The Boneyard · 40,000 shared · 38:12 left</small><div class="bar"><i id="waBar" style="width:47%"></i></div></span></div></div>
+      <div class="chat"><p class="casino"><b>CASINO:</b> 📜 Old Tom Tusk is <b>half dead</b>. Six hunters on him in the Boneyard.</p><p class="you">Your share so far: 6,400 (16% of the damage).</p></div>
+    </div>
+    <div class="states">
+      <span class="state-l">Tracker: a new bounty (anywhere in the world)</span>
+      <div class="track red"><img src="art/ev_poster.png" alt=""><span><b>Wanted: Old Tom Tusk</b><small>The Boneyard · 40,000 shared · 60:00</small></span></div>
+      <span class="state-l">Tracker: on his map, fighting</span>
+      <div class="track red"><img src="art/ev_poster.png" alt=""><span><b>Wanted: Old Tom Tusk · 47%</b><small>Your share: 6,400 · 6 hunters · 38:12</small><div class="bar"><i style="width:47%"></i></div></span></div>
+      <span class="state-l">Tracker: too high for you</span>
+      <div class="track red dim"><img src="art/ev_poster.png" alt=""><span><b>Wanted: The Grizzled Frostwolf</b><small>The Frozen Reach (level 100+) · 50,000 · the next one might suit you better</small></span></div>
+      <span class="state-l">Tracker: done</span>
+      <div class="track"><img src="art/ev_poster.png" alt=""><span><b>Old Tom Tusk: TAKEN</b><small>You got 6,900 and a Tusk. Next poster at 4:00.</small></span></div>
+    </div>
+  </div>
+
+  <h3>Where it is</h3>
+  <p>A red pin on the map it's on. Which band of maps gets the poster rotates every hour (low, mid, high), so every level gets one within three hours.</p>
+  <div class="map" id="waMap"></div>
+
+  <h3>The windows</h3>
+  <div class="wins">
+    <section class="k-win"><div class="k-head"><img src="art/ev_board.png" alt=""><b>The Bounty Board</b><span class="k-sub">in the Yard · or /wanted</span></div>
+      <div class="k-tabs"><button aria-selected="true">Now</button><button>Recent</button><button>Hunters</button></div>
+      <div class="k-body k-paper"><div class="flex">
+        <div class="poster"><img class="p" src="art/ev_poster.png" alt=""><img class="m" src="/v3/assets/img/glad/flat/boar.png" alt=""><div class="t">OLD TOM TUSK<br><small>40,000 · SHARED</small></div></div>
+        <div style="flex:1;min-width:180px"><p style="margin:0 0 8px">"A boar the size of a car. Knocked over Bronny's cart twice and ate the evidence."</p>
+          <table class="tbl"><tr><td>Where</td><td><b>The Boneyard</b></td></tr><tr><td>Level</td><td>40 (a Boneyard boar, ×6 health)</td></tr><tr><td>Bounty</td><td><b>40,000</b>, shared by damage</td></tr><tr><td>Twist</td><td>Charges in a line at 25%</td></tr><tr><td>Time left</td><td>38:12</td></tr><tr><td>Hunters</td><td>6 on him now</td></tr></table>
+          <div class="demo" style="margin-top:8px"><button class="k-btn sm">Show on the map</button><button class="k-btn sec sm">Charon's cart</button></div></div></div></div>
+      <div class="k-foot"><span class="k-note">Next poster at 4:00 · mid-level maps.</span></div></section>
+
+    <section class="k-win"><div class="k-head"><img src="art/ev_board.png" alt=""><b>Recent posters</b><span class="k-sub">the last day</span></div>
+      <div class="k-body k-paper"><div class="flex" style="gap:8px">
+        <div class="poster taken" style="width:120px"><img class="p" src="art/ev_poster.png" alt="" style="width:120px"><img class="m" src="/v3/assets/img/glad/flat/frostwolf.png" alt="" style="left:26px;top:40px;width:68px;height:60px"></div>
+        <div class="poster stamp" style="width:120px"><img class="p" src="art/ev_poster.png" alt="" style="width:120px"><img class="m" src="/v3/assets/img/glad/flat/chicken.png" alt="" style="left:26px;top:40px;width:68px;height:60px"></div>
+        <div class="poster taken" style="width:120px"><img class="p" src="art/ev_poster.png" alt="" style="width:120px"><img class="m" src="/v3/assets/img/glad/flat/yeti.png" alt="" style="left:26px;top:40px;width:68px;height:60px"></div></div>
+        <table class="tbl" style="margin-top:8px"><tr><th>When</th><th>Target</th><th>Result</th></tr><tr><td>3:00</td><td>The Grizzled Frostwolf</td><td><span class="k-chip good">taken · 9 hunters · 50,000</span></td></tr><tr><td>2:00</td><td>Sir Clucksalot</td><td><span class="k-chip bad">escaped · next +25%</span></td></tr><tr><td>1:00</td><td>The Abominable Bob</td><td><span class="k-chip good">taken · 4 hunters · 45,000</span></td></tr></table></div></section>
+
+    <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/g_fighting.png?v=1" alt=""><b>Old Tom Tusk is down</b><span class="k-sub">the report</span></div>
+      <div class="k-body k-paper"><table class="tbl"><tr><th>Hunter</th><th>Damage</th><th>Share</th></tr>
+        <tr><td>zwades</td><td class="num">4,210 · 38%</td><td class="num">15,200 + Tusk</td></tr><tr><td>bootypaper</td><td class="num">2,980 · 27%</td><td class="num">10,800</td></tr><tr><td>heartlarva</td><td class="num">1,880 · 17%</td><td class="num">6,800</td></tr><tr><td><b>you</b></td><td class="num">1,770 · 16%</td><td class="num"><b>6,900 + Tusk</b></td></tr><tr><td>a level 14</td><td class="num">60 · 1%</td><td class="num">1,200 (the floor)</td></tr></table>
+        <div class="demo" style="margin-top:8px"><span class="k-chip gold">Bounty Hunter: 7 of 10 takes</span><span class="k-chip rare">rare roll ×5</span></div></div>
+      <div class="k-foot"><span class="k-note">A small floor so anyone who helped gets something; the rest by damage.</span></div></section>
+  </div>
+
+  <h3>The targets</h3>
+  <p>One named version of a monster per map, with a line of flavour and one simple twist. The bounty follows the map's level.</p>
+  <section class="k-win"><div class="k-body k-paper"><table class="tbl"><tr><th></th><th>Target</th><th>Where</th><th>Level</th><th>Bounty</th><th>Twist at 25%</th></tr>
+    <tr><td><img src="/v3/assets/img/glad/flat/chicken.png" width="32" style="image-rendering:pixelated"></td><td>Sir Clucksalot</td><td>the Paddock</td><td>5</td><td class="num">5,000</td><td>lays eggs that hatch into chicks</td></tr>
+    <tr><td><img src="/v3/assets/img/glad/flat/boar.png" width="32" style="image-rendering:pixelated"></td><td>Old Tom Tusk</td><td>the Boneyard</td><td>40</td><td class="num">40,000</td><td>charges in a line</td></tr>
+    <tr><td><img src="/v3/assets/img/glad/flat/frostwolf.png" width="32" style="image-rendering:pixelated"></td><td>The Grizzled Frostwolf</td><td>the Frozen Reach</td><td>105</td><td class="num">50,000</td><td>howls: two wolves join</td></tr>
+    <tr><td><img src="/v3/assets/img/glad/flat/yeti.png" width="32" style="image-rendering:pixelated"></td><td>The Abominable Bob</td><td>the Frozen Reach</td><td>110</td><td class="num">45,000</td><td>throws snowballs that slow</td></tr>
+    <tr><td></td><td>…one for every map</td><td></td><td></td><td></td><td>about 20 in all, written once</td></tr></table></div></section>
+
+  <h3>Rules and numbers</h3>
+  <div class="rules">
+    <div class="rulebox"><b class="h">The poster</b><ul><li><b>On the hour, every hour.</b> The level band rotates (low, mid, high) so every level gets one within three hours.</li><li>Only maps somebody online can fight on. Never a dungeon or an island.</li><li>60 minutes to catch it. The poster, the tracker and the map pin all say where.</li></ul></div>
+    <div class="rulebox"><b class="h">The target</b><ul><li>That map's monster, named, <b>6× health</b> (+10% per hunter after five), hits a little harder, and red-glowing so it can be spotted.</li><li>One twist at 25%, telegraphed. It never leaves its map.</li><li>Same weaknesses as its kind, so the usual style advice holds.</li></ul></div>
+    <div class="rulebox"><b class="h">The pay</b><ul><li>Bounty by level band: <b>5,000 low, 20,000 mid, 50,000 high</b>. Escaped: next one +25% (up to double).</li><li>Shared by damage, with a <b>floor of 3%</b> of the bounty for anyone who landed a hit.</li><li>Every hunter rolls its map's rare drops at 5× chance. Ten takes: the <b>Bounty Hunter</b> title.</li></ul></div>
+    <div class="rulebox"><b class="h">When it goes wrong</b><ul><li><b>One person kites it forever:</b> it can't; it heals slowly if nobody's hit it for 30 seconds.</li><li><b>A restart mid-hunt:</b> the poster is saved; the target is put back with its health.</li><li><b>Nobody online at that level:</b> the band skips to one somebody can fight.</li></ul></div>
+  </div>
+</section>
+
+<!-- =================================================================================== THE JACKPOT THIEF -->
+<section class="ev" id="thief">
+  <h2>💰 The Jackpot Thief</h2>
+  <p class="one">Out of nowhere a goblin <b>grabs a sack of the Jackpot and bolts</b> out of the casino. He's quick and slippery, and <b>every hit knocks coins out of his sack</b> onto the ground for whoever grabs them first. Every minute he <b>dives down a hole to another map</b>, and CASINO shouts where. <b>The last hit takes what's left in the sack.</b> If he gets away after five hops, it all goes back to the Jackpot.</p>
+  <div class="chips"><span>⏱ 2-4 times a day, at random</span><span>🏃 a 5-minute chase across maps</span><span>🪙 every hit spills coins, anyone's</span><span>💰 last hit: the rest of the sack</span><span>🔁 escapes → back to the Jackpot</span><span>🛡 costs nobody anything</span></div>
+
+  <h3>How it plays out</h3>
+  <div class="board">
+    <div class="frame"><canvas id="th1" width="480" height="270"></canvas><div class="cap"><b><span class="n">1</span>The heist</b><span>The Jackpot pill on the casino floor flashes red and drops ("-8,400 STOLEN"). CASINO: "STOP, THIEF!" He's out the front doors and into the Yard.</span></div></div>
+    <div class="frame"><canvas id="th2" width="480" height="270"></canvas><div class="cap"><b><span class="n">2</span>The chase</b><span>He runs away from whoever's nearest, zig-zagging. He's a bit faster than you walk, so a crowd can box him in where one person can't.</span></div></div>
+    <div class="frame"><canvas id="th3" width="480" height="270"></canvas><div class="cap"><b><span class="n">3</span>Every hit spills coins</b><span>A hit knocks a spray of coins out of the sack onto the ground: tickets anyone can grab. Scramble for them or keep chasing? That's the choice.</span></div></div>
+    <div class="frame"><canvas id="th4" width="480" height="270"></canvas><div class="cap"><b><span class="n">4</span>Dizzy!</b><span>Every tenth hit he stumbles, seeing stars, for three seconds: the moment the crowd catches up and piles in.</span></div></div>
+    <div class="frame"><canvas id="th5" width="480" height="270"></canvas><div class="cap"><b><span class="n">5</span>The hop</b><span>Every minute he dives down a hole and pops up on another map. CASINO: "He's in the Boneyard!" The tracker and the world map follow him.</span></div></div>
+    <div class="frame"><canvas id="th6" width="480" height="270"></canvas><div class="cap"><b><span class="n">6</span>Caught!</b><span>The last hit bursts the sack: a fountain of coins for the one who landed it, and a big CASINO call. (Or, after five hops, he escapes and the sack goes home.)</span></div></div>
+  </div>
+
+  <h3>Live</h3>
+  <p>The chase (animated): the goblin weaving across the Yard, coins spilling behind him, the crowd on his heels.</p>
+  <div class="live">
+    <div class="world"><canvas id="thLive" width="760" height="428"></canvas>
+      <div class="hud"><div class="track"><img src="art/ev_thief.png" alt=""><span><b>Jackpot Thief · the Yard</b><small id="thSmall">Sack: 6,200 · hops to another map in 0:34</small><div class="bar"><i id="thBar" style="width:74%"></i></div></span></div></div>
+      <div class="chat"><p class="casino"><b>CASINO:</b> 💰 STOP, THIEF! A goblin just grabbed <b>8,400</b> from the Jackpot and ran into <b>the Yard</b>!</p><p class="you">You grab 140 tickets off the ground.</p></div>
+    </div>
+    <div class="states">
+      <span class="state-l">The casino's Jackpot, when he strikes</span>
+      <div><span class="jpill hit">JACKPOT 51,600 <s>60,000</s> · STOLEN!</span></div>
+      <span class="state-l">Tracker: the chase</span>
+      <div class="track"><img src="art/ev_thief.png" alt=""><span><b>Jackpot Thief · the Yard</b><small>Sack: 6,200 · hops in 0:34 · hop 1 of 5</small><div class="bar"><i style="width:74%"></i></div></span></div>
+      <span class="state-l">Tracker: he's hopped</span>
+      <div class="track"><img src="art/ev_thief.png" alt=""><span><b>He's in the Boneyard!</b><small>Sack: 3,900 · hop 3 of 5 · Charon's cart is quickest</small><div class="bar"><i style="width:46%"></i></div></span></div>
+      <span class="state-l">Caught / escaped</span>
+      <div class="track"><img src="art/ev_thief.png" alt=""><span><b>Caught by heartlarva!</b><small>2,700 to her, 5,700 spilled along the way.</small></span></div>
+      <div class="track dim"><img src="art/ev_thief.png" alt=""><span><b>He got away</b><small>1,900 goes back into the Jackpot. Next time.</small></span></div>
+    </div>
+  </div>
+
+  <h3>Where he's run</h3>
+  <p>His route so far, on the world map: where he started, every hop, and where he is now.</p>
+  <div class="map" id="thMap"></div>
+
+  <h3>The windows</h3>
+  <div class="wins">
+    <div>
+      <div class="toast"><img src="art/ev_thief.png" alt=""><span><b>You caught the Jackpot Thief!</b><span>The sack bursts: 2,700 tickets, and « Thief-Taker » for a week.</span></span></div>
+      <div class="log" style="margin-top:12px">
+        <p class="casino"><b>CASINO:</b> 💰 STOP, THIEF! A goblin just grabbed <b>8,400</b> from the Jackpot and ran into <b>the Yard</b>!</p>
+        <p class="casino"><b>CASINO:</b> 💰 He's gone down a hole… he's in <b>the Gloam</b>!</p>
+        <p class="casino"><b>CASINO:</b> 💰 He's seeing stars! <b>Get him!</b></p>
+        <p class="casino"><b>CASINO:</b> 💰 <b>heartlarva</b> caught the Jackpot Thief! 2,700 in the sack, and 5,700 spilled for everybody else.</p>
+        <p class="casino bad"><b>CASINO:</b> 💰 He got away. 1,900 back into the Jackpot. He'll be back.</p>
+      </div>
+    </div>
+    <section class="k-win"><div class="k-head"><img src="art/ev_thief.png" alt=""><b>The chase, in numbers</b><span class="k-sub">after it's over</span></div>
+      <div class="k-body k-paper"><table class="tbl"><tr><th></th><th>Tickets</th></tr>
+        <tr><td>Grabbed from the Jackpot</td><td class="num">8,400</td></tr><tr><td>Spilled on the ground (anyone's)</td><td class="num">5,700 · 41 hits</td></tr><tr><td>In the sack when caught (the catcher's)</td><td class="num">2,700</td></tr><tr><td>Back to the Jackpot</td><td class="num">0</td></tr></table>
+        <table class="tbl" style="margin-top:8px"><tr><th>Grabbers</th><th>Picked up</th></tr><tr><td>zwades</td><td class="num">1,420</td></tr><tr><td>bootypaper</td><td class="num">1,180</td></tr><tr><td>you</td><td class="num">940</td></tr></table></div></section>
+  </div>
+
+  <h3>Rules and numbers</h3>
+  <div class="rules">
+    <div class="rulebox"><b class="h">When</b><ul><li><b>2 to 4 times a day, at random</b>, only with 5+ people online. Never during a raid or the King.</li><li>He starts at the casino's front doors and runs into the Yard.</li></ul></div>
+    <div class="rulebox"><b class="h">The sack</b><ul><li><b>5% of the Jackpot</b>, between 2,000 and 15,000.</li><li>Each hit spills <b>1.5%</b> of the starting sack as a pile of ground tickets, first to click takes it (anyone, not just the hitter).</li><li><b>The last hit gets whatever's left.</b> Escaped: the rest goes back in the Jackpot. So the Jackpot is only ever lent.</li></ul></div>
+    <div class="rulebox"><b class="h">Him</b><ul><li>A small health pool that refills each hop, but big enough that it takes a crowd about a minute.</li><li><b>1.3× your walking speed</b>, runs from the nearest player, can't be cornered in a doorway forever (he vaults).</li><li><b>Dizzy for 3 s every 10 hits.</b> Hops every 60 s to a random open map with people on it; 5 hops and he's gone.</li></ul></div>
+    <div class="rulebox"><b class="h">When it goes wrong</b><ul><li><b>He hops into the Wilderness:</b> allowed, once per chase. Coins there are PvP loot like anything else.</li><li><b>A restart:</b> the chase ends and the sack goes back to the Jackpot.</li><li><b>Bots vacuuming coins:</b> a pile needs a click and you must be within 2 tiles.</li></ul></div>
+  </div>
+</section>
+
+<!-- =================================================================================== THE DAY -->
+<section class="ev" id="day">
+  <h2>🗓️ A day of events</h2>
+  <p class="one">How the three would share a day with what's already there. Wanted every hour is the heartbeat, stars and the thief are surprises, and nothing big ever lands on top of anything else.</p>
+  <div class="day" id="dayPlan"></div>
+  <p style="margin:6px 0 0;font:600 12.5px Lora,serif;color:#a89070">Red: a Wanted poster each hour. Gold: a star (lasts up to an hour). Purple: a thief chase (five minutes). Blue: what already runs (the open bosses' respawns and the Ice Wyrm). The red line is now. Stars and thieves are drawn at random each day, so this is one example day.</p>
+  <div class="rules" style="margin-top:14px">
+    <div class="rulebox"><b class="h">The rules between them</b><ul><li>Never two "come here now" events in the same 20 minutes: a star won't land within 20 min of the thief or the King.</li><li>Nothing during a Yard raid except Wanted (which carries on).</li><li>All of it through CASINO, so chat is where people hear about everything.</li></ul></div>
+    <div class="rulebox"><b class="h">What it costs to run</b><ul><li>No admin needed: the server's clock runs all three.</li><li>Admin buttons for each (start now, stop), like the raid and the Wyrm.</li><li>A <b>/events</b> command: what's on now and what's coming.</li></ul></div>
+  </div>
+</section>
+</main>
+
+<script type="module">
+import { F, UI, load, hr, ground, draw, spr, plate, label, hitNum, crowd, glow, coin, tree, loop, still, preload } from "./scene.js";
+const A = "art/";
+await preload([F + "g_grass.png", F + "g_flowers.png", F + "tree.png", F + "boar.png", A + "ev_star.png", A + "ev_thief.png", A + "ev_board.png", A + "ev_tent.png", A + "ev_starling.png", A + "ev_dust.png", A + "ev_poster.png", F + "t_brick.png", F + "d_throne.png"]);
+const $ = (id) => document.getElementById(id);
+
+/* ---------------------------------------------------------------- SHOOTING STARS: the storyboard */
+still($("st1"), async (c) => { await ground(c, "dark"); await tree(c, 60, 130); await tree(c, 430, 150);
+  c.fillStyle = "rgba(10,14,40,.45)"; c.fillRect(0, 0, 480, 270);
+  const g = c.createLinearGradient(80, 40, 360, 120); g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(1, "rgba(255,240,170,.95)"); c.strokeStyle = g; c.lineWidth = 5; c.beginPath(); c.moveTo(80, 40); c.lineTo(360, 110); c.stroke();
+  glow(c, 362, 110, 26, "rgba(255,240,170,.9)"); await crowd(c, [[180, 240, "zwades"], [300, 230, "moxie"]]);
+  label(c, 240, 30, "↗ north, in 10 minutes", "#fff2a8", 14); });
+still($("st2"), async (c) => { await ground(c, "dark"); await tree(c, 70, 150);
+  c.strokeStyle = "rgba(255,240,170,.6)"; c.lineWidth = 3; for (const r of [60, 90, 120]) { c.beginPath(); c.ellipse(250, 190, r, r * 0.5, 0, 0, 6.3); c.stroke(); }
+  glow(c, 250, 170, 110, "rgba(255,240,170,.55)"); draw(c, await load(A + "ev_star.png"), 250, 212, 130);
+  for (let i = 0; i < 30; i++) { c.fillStyle = i % 2 ? "#fff" : "#ffd84a"; const a = hr(i, 1, 2) * 6.3, r = 40 + hr(i, 3, 4) * 70; c.fillRect(250 + Math.cos(a) * r, 170 + Math.sin(a) * r * 0.6, 3, 3); }
+  label(c, 250, 40, "IMPACT · the Gloam", "#fff2a8", 16); });
+still($("st3"), async (c) => { await ground(c, "dark"); glow(c, 240, 160, 90, "rgba(255,240,170,.4)"); draw(c, await load(A + "ev_star.png"), 240, 190, 120); plate(c, 240, 86, "Star · tier 8 · Mining 80", 0.9, "#ffd84a");
+  await crowd(c, [[160, 230, "zwades"], [320, 230, "bootypaper"]]); await crowd(c, [[60, 250], [420, 250], [390, 196]]);
+  label(c, 60, 212, "needs 80", "#ff9a8a", 11); label(c, 420, 212, "needs 80", "#ff9a8a", 11); label(c, 390, 158, "needs 80", "#ff9a8a", 11); });
+still($("st4"), async (c) => { await ground(c, "dark"); glow(c, 240, 160, 90, "rgba(255,240,170,.4)"); draw(c, await load(A + "ev_star.png"), 240, 184, 96); plate(c, 240, 92, "Star · tier 5", 1, "#ffd84a");
+  await crowd(c, [[150, 214, "zwades"], [330, 214, "heartlarva"], [110, 262], [370, 262], [200, 262, "tater"], [290, 262], [60, 200], [420, 200]]);
+  c.font = "900 30px Cinzel, serif"; c.textAlign = "center"; c.lineWidth = 5; c.strokeStyle = "#2a1400"; c.strokeText("TIER 5!", 240, 60); c.fillStyle = "#ffd84a"; c.fillText("TIER 5!", 240, 60); });
+still($("st5"), async (c) => { await ground(c, "dark"); glow(c, 240, 170, 110, "rgba(255,240,170,.6)");
+  for (let i = 0; i < 60; i++) { const a = hr(i, 1, 5) * 6.3, r = 10 + hr(i, 2, 6) * 90; c.fillStyle = ["#fff", "#ffd84a", "#fff6c0"][i % 3]; c.fillRect(240 + Math.cos(a) * r, 170 + Math.sin(a) * r * 0.7, 3, 3); }
+  draw(c, await load(A + "ev_starling.png"), 330, 150, 56); label(c, 330, 90, "a Starling!", "#ffd84a", 13);
+  await crowd(c, [[150, 240, "moxie"], [300, 250, "zwades"]]); label(c, 240, 30, "The star is spent", "#fff2a8", 16); });
+still($("st6"), async (c) => { await ground(c, "grass"); const b = await load(F + "t_brick.png"); if (b) for (let y = 150; y < 270; y += 32) for (let x = 0; x < 480; x += 32) c.drawImage(b, x, y, 32, 32);
+  draw(c, await load(A + "ev_tent.png"), 240, 200, 150); plate(c, 240, 72, "The Star Tent", null); await crowd(c, [[140, 250, "moxie"], [340, 250, "tater"]]); });
+
+/* ---------------------------------------------------------------- SHOOTING STARS: live */
+{ const star = await load(A + "ev_star.png"); let pct = 0.62, tier = 6, pop = 0;
+  const miners = [[240, 270, "zwades"], [520, 270, "heartlarva"], [300, 334, "bootypaper"], [470, 334, "andyreid"], [180, 206], [580, 206], [620, 340, "moxie"]];
+  loop($("stLive"), async (c, t) => { await ground(c, "dark"); await tree(c, 80, 160); await tree(c, 700, 150);
+    glow(c, 380, 180, 150 + Math.sin(t / 400) * 10, "rgba(255,240,170,.42)"); draw(c, star, 380, 236, 150 - (6 - tier) * 4);
+    plate(c, 380, 92, `Shooting star · tier ${tier}`, pct, "#ffd84a");
+    for (let i = 0; i < 18; i++) { const k = ((t / 1400) + i / 18) % 1, m = miners[i % miners.length], x = 380 + (m[0] - 380) * k, y = 180 + (m[1] - 40 - 180) * k - Math.sin(k * Math.PI) * 40; c.globalAlpha = 1 - k; c.fillStyle = i % 2 ? "#fff6c0" : "#ffd84a"; c.fillRect(x, y, 3, 3); } c.globalAlpha = 1;
+    await crowd(c, miners, t);
+    pct -= 0.0009; if (pct <= 0) { tier = tier > 1 ? tier - 1 : 6; pct = 1; pop = t; }
+    if (t - pop < 900 && pop) { c.font = "900 34px Cinzel, serif"; c.textAlign = "center"; c.lineWidth = 5; c.strokeStyle = "#2a1400"; c.globalAlpha = 1 - (t - pop) / 900; c.strokeText(`TIER ${tier}!`, 380, 56); c.fillStyle = "#ffd84a"; c.fillText(`TIER ${tier}!`, 380, 56); c.globalAlpha = 1; }
+    $("stTier").textContent = `Shooting star · Tier ${tier}`; $("stBar").style.width = `${Math.round(pct * 100)}%`; }); }
+
+/* ---------------------------------------------------------------- the world map (shared by all three) */
+const AREAS = [["workyard", "The Yard"], ["casino", "The Casino"], ["gloam", "The Gloam"], ["mire", "Lantern Mire"], ["boneyard", "The Boneyard"], ["cloud", "Cloudreach"], ["thunderhead", "Thunderhead"], ["trailer", "Trailer Park"], ["sands", "Golden Sands"], ["carnival", "Carnival"], ["wild", "Wilderness"], ["deep", "Deep Wild"]];
+function worldMap(el, mark, legend) { el.innerHTML = AREAS.map(([k, n]) => { const m = mark[k] || {}; return `<div class="a ${m.cls || ""}"><img src="${UI}a_${k}.png?v=1" alt="">${n}${m.pin ? `<span class="pin">${m.pin}</span>` : ""}${m.note ? `<small style="color:#ffd98a">${m.note}</small>` : ""}</div>`; }).join("") + `<div class="legend">${legend}</div>`; }
+worldMap($("stMap"), { gloam: { cls: "hot", pin: "🌠", note: "tier 6 · 14 miners" }, mire: { cls: "" }, cloud: { cls: "far" }, sands: { cls: "far" }, wild: { cls: "far" }, deep: { cls: "far" } }, "🌠 the star is here. Before it lands, the whole northern row glows instead, so people head that way without knowing the exact spot.");
+worldMap($("waMap"), { boneyard: { cls: "red", pin: "📜", note: "Old Tom · 47%" } }, "📜 the target's map. It never leaves it. The band of maps the poster picks from rotates: low, mid, high.");
+worldMap($("thMap"), { casino: { note: "1 · the heist" }, workyard: { note: "2 · the Yard" }, gloam: { note: "3 · hop 1" }, boneyard: { cls: "hot", pin: "💰", note: "4 · NOW" }, trailer: { cls: "far", note: "next?" } }, "💰 his route: the casino → the Yard → the Gloam → the Boneyard. He hops every minute to a map with people on it; five hops and he's gone.");
+
+/* ---------------------------------------------------------------- WANTED: the storyboard */
+const boar = await load(F + "boar.png");
+still($("wa1"), async (c) => { await ground(c, "grass"); const b = await load(F + "t_brick.png"); if (b) for (let y = 170; y < 270; y += 32) for (let x = 0; x < 480; x += 32) c.drawImage(b, x, y, 32, 32);
+  draw(c, await load(A + "ev_board.png"), 240, 196, 130); plate(c, 240, 62, "The Bounty Board", null); await crowd(c, [[130, 250, "zwades"], [350, 250, "tater"], [300, 262]]);
+  label(c, 240, 230, "NEW: Old Tom Tusk · 40,000", "#ffb0a0", 13); });
+still($("wa2"), async (c) => { await ground(c, "grass"); await tree(c, 60, 120); await tree(c, 420, 110); glow(c, 260, 180, 80, "rgba(224,72,58,.3)");
+  draw(c, boar, 260, 210, 120); plate(c, 260, 110, "Old Tom Tusk", 1, "#e0483a", "WANTED"); await crowd(c, [[80, 250, "bootypaper"]]); label(c, 110, 212, "there he is!", "#fff2a8", 12); });
+still($("wa3"), async (c) => { await ground(c, "grass"); glow(c, 240, 180, 80, "rgba(224,72,58,.3)"); draw(c, boar, 240, 210, 120); plate(c, 240, 110, "Old Tom Tusk", 0.5, "#e0483a", "WANTED");
+  await crowd(c, [[130, 220, "zwades"], [350, 220, "heartlarva"], [170, 262], [310, 262, "tater"], [90, 180], [400, 170]]); hitNum(c, 210, 140, "312"); hitNum(c, 280, 150, "88"); hitNum(c, 250, 172, "140", "#ffd84a"); });
+still($("wa4"), async (c) => { await ground(c, "grass"); for (let i = 0; i < 7; i++) { c.fillStyle = `rgba(224,72,58,${0.28 + 0.1 * Math.sin(i)})`; c.fillRect(200 + i * 36, 180, 34, 34); c.strokeStyle = "#e0483a"; c.strokeRect(200 + i * 36, 180, 34, 34); }
+  draw(c, boar, 170, 216, 120); plate(c, 170, 116, "Old Tom Tusk · ENRAGED", 0.24, "#e0483a", "WANTED"); await crowd(c, [[330, 176, "zwades"], [420, 250, "heartlarva"], [380, 262]]); label(c, 330, 150, "move!", "#ff9a8a", 13); });
+still($("wa5"), async (c) => { await ground(c, "grass"); c.save(); c.globalAlpha = 0.55; c.translate(240, 205); c.rotate(Math.PI / 2); draw(c, boar, 0, 0, 110); c.restore();
+  for (let i = 0; i < 16; i++) { const a = hr(i, 2, 1) * 6.3, r = 20 + hr(i, 3, 1) * 50; c.fillStyle = "#ffd84a"; c.fillRect(240 + Math.cos(a) * r, 190 + Math.sin(a) * r * 0.5, 3, 3); }
+  await crowd(c, [[120, 240, "zwades"], [360, 240, "heartlarva"], [240, 262, "you"]]); label(c, 240, 40, "TAKEN · 6 hunters · 40,000", "#9fe8a0", 16); });
+still($("wa6"), async (c) => { await ground(c, "grass"); await tree(c, 400, 150); c.globalAlpha = 0.45; draw(c, boar, 420, 200, 90, true); c.globalAlpha = 1;
+  label(c, 420, 110, "…and he's gone", "#ffb0a0", 13); await crowd(c, [[140, 240, "tater"]]); label(c, 240, 40, "ESCAPED · next bounty +25%", "#ff9a8a", 16); });
+
+/* ---------------------------------------------------------------- WANTED: live (Old Tom walks his loop; the hunters hit him) */
+{ const walk = await Promise.all([1, 2, 3, 4].map((i) => load(F + `boar_w${i}.png`))); let pct = 0.47; const hits = [];
+  const hunters = [[210, 296, "zwades"], [560, 296, "bootypaper"], [300, 340, "heartlarva"], [640, 350, "you"], [150, 230], [620, 220]];
+  loop($("waLive"), async (c, t) => { await ground(c, "grass"); await tree(c, 70, 150); await tree(c, 700, 170);
+    const x = 380 + Math.sin(t / 1800) * 90, y = 262 + Math.cos(t / 2600) * 12, face = Math.cos(t / 1800) < 0;
+    glow(c, x, y - 40, 110 + Math.sin(t / 300) * 8, "rgba(224,72,58,.32)");
+    draw(c, walk[Math.floor(t / 140) % 4] || boar, x, y, 150, face);
+    plate(c, x, y - 150, "Old Tom Tusk", pct, "#e0483a", "WANTED");
+    if (Math.random() < 0.05) { hits.push({ at: t, x: x + (Math.random() - 0.5) * 80, y: y - 90 - Math.random() * 40, n: String(40 + Math.floor(Math.random() * 300)) }); pct = Math.max(0.05, pct - 0.004); }
+    for (let i = hits.length - 1; i >= 0; i--) { const h = hits[i], k = (t - h.at) / 900; if (k > 1) { hits.splice(i, 1); continue; } c.globalAlpha = 1 - k; hitNum(c, h.x, h.y - k * 20, h.n); c.globalAlpha = 1; }
+    await crowd(c, hunters, t); $("waBar").style.width = `${Math.round(pct * 100)}%`; if (pct <= 0.05) pct = 0.5; }); }
+
+/* ---------------------------------------------------------------- THE JACKPOT THIEF: the storyboard */
+const thief = await load(A + "ev_thief.png");
+still($("th1"), async (c) => { await ground(c, "casino"); for (let y = 0; y < 270; y += 24) for (let x = (y / 24) % 2 ? 12 : 0; x < 480; x += 24) { c.fillStyle = "#ffd84a22"; c.fillRect(x + 10, y + 10, 3, 3); }
+  c.fillStyle = "#241408"; c.beginPath(); c.roundRect(150, 30, 180, 36, 18); c.fill(); c.strokeStyle = "#e0483a"; c.lineWidth = 3; c.stroke(); c.font = "800 16px Lora, serif"; c.fillStyle = "#ffb0a0"; c.textAlign = "center"; c.fillText("8,400 STOLEN!", 240, 54);
+  draw(c, thief, 300, 220, 90); for (let i = 0; i < 6; i++) { coin(c, 250 - i * 16, 208 + Math.sin(i) * 6); } await crowd(c, [[120, 250, "zwades"]]); label(c, 120, 212, "HEY!", "#fff2a8", 14); });
+still($("th2"), async (c) => { await ground(c, "grass"); await tree(c, 60, 120); await tree(c, 440, 130);
+  draw(c, thief, 360, 200, 84); c.strokeStyle = "rgba(255,255,255,.4)"; c.setLineDash([6, 6]); c.lineWidth = 2; c.beginPath(); c.moveTo(80, 230); c.quadraticCurveTo(200, 150, 330, 190); c.stroke(); c.setLineDash([]);
+  await crowd(c, [[160, 240, "zwades"], [100, 262, "bootypaper"], [220, 262, "tater"]]); plate(c, 360, 104, "Jackpot Thief", 0.9, "#ffd84a"); });
+still($("th3"), async (c) => { await ground(c, "grass"); draw(c, thief, 300, 200, 84); plate(c, 300, 104, "Jackpot Thief", 0.7, "#ffd84a"); hitNum(c, 300, 130, "18");
+  for (let i = 0; i < 12; i++) coin(c, 230 + hr(i, 1, 1) * 150, 210 + hr(i, 2, 1) * 40); await crowd(c, [[180, 220, "zwades"], [150, 262, "moxie"]]); label(c, 150, 224, "+140", "#9fe8a0", 12); });
+still($("th4"), async (c) => { await ground(c, "grass"); c.save(); c.translate(260, 206); c.rotate(-0.25); draw(c, thief, 0, 0, 84); c.restore();
+  for (let i = 0; i < 5; i++) { const a = i / 5 * 6.3 + 0.3; label(c, 260 + Math.cos(a) * 26, 120 + Math.sin(a) * 8, "★", "#ffd84a", 16); }
+  label(c, 260, 96, "DIZZY!", "#fff2a8", 16); await crowd(c, [[160, 220, "zwades"], [360, 220, "heartlarva"], [200, 262, "tater"], [320, 262, "moxie"]]); });
+still($("th5"), async (c) => { await ground(c, "dark"); c.fillStyle = "#1a0e08"; c.beginPath(); c.ellipse(260, 212, 34, 14, 0, 0, 6.3); c.fill(); c.fillStyle = "#3a2410"; c.beginPath(); c.ellipse(260, 210, 30, 11, 0, 0, 6.3); c.fill();
+  c.save(); c.globalAlpha = 0.8; c.translate(260, 200); c.rotate(0.9); draw(c, thief, 0, 0, 70); c.restore(); label(c, 260, 60, "…he's in the Boneyard!", "#fff2a8", 16); await crowd(c, [[120, 250, "zwades"]]); });
+still($("th6"), async (c) => { await ground(c, "grass"); glow(c, 240, 170, 100, "rgba(255,216,74,.45)");
+  for (let i = 0; i < 34; i++) { const a = -Math.PI / 2 + (hr(i, 1, 9) - 0.5) * 2.2, r = 20 + hr(i, 2, 9) * 90; coin(c, 240 + Math.cos(a) * r, 190 + Math.sin(a) * r * 0.9, 5); }
+  await crowd(c, [[240, 250, "heartlarva"], [120, 240, "zwades"], [360, 240, "bootypaper"]]); label(c, 240, 36, "CAUGHT! 2,700 to heartlarva", "#ffd84a", 16); });
+
+/* ---------------------------------------------------------------- THE JACKPOT THIEF: live (a figure-eight chase round the Yard, coins spilling) */
+{ const coins = []; let sack = 6200, next = 34, last = 0;
+  loop($("thLive"), async (c, t) => { await ground(c, "grass"); const b = await load(F + "t_brick.png"); if (b) for (let y = 260; y < 428; y += 32) for (let x = 0; x < 760; x += 32) c.drawImage(b, x, y, 32, 32);
+    await tree(c, 90, 150); await tree(c, 690, 140);
+    const k = t / 2600, x = 380 + Math.sin(k) * 250, y = 226 + Math.sin(k * 2) * 48, dir = Math.cos(k) < 0;
+    if (t - last > 380) { last = t; coins.push({ x: x + (Math.random() - 0.5) * 20, y: y - 4, at: t }); if (coins.length > 26) coins.shift(); sack = Math.max(0, sack - 20); }
+    for (const q of coins) coin(c, q.x, q.y, 5);
+    draw(c, thief, x, y, 88, dir); plate(c, x, y - 96, "Jackpot Thief", sack / 8400, "#ffd84a");
+    const chase = [[-80, 26, "zwades"], [60, -34, "bootypaper"], [-40, 64, "heartlarva"], [90, 30], [-110, -40]];
+    for (const [i, [dx, dy, n]] of chase.entries()) { const kk = k - (0.34 + i * 0.13), px = 380 + Math.sin(kk) * 250 + dx * 0.35, py = 226 + Math.sin(kk * 2) * 48 + dy; draw(c, await load(`${F}${["hero_tiro_south", "dex_south", "cassia_south", "andy_south", "barker_south"][i]}.png`), px, py + 40, null, Math.cos(kk) < 0); if (n) label(c, px, py + 52, n); }
+    if (Math.floor(t / 1000) !== Math.floor((t - 16) / 1000)) { next = next > 0 ? next - 1 : 59; }
+    $("thSmall").textContent = `Sack: ${sack.toLocaleString()} · hops to another map in 0:${String(next).padStart(2, "0")}`; $("thBar").style.width = `${Math.round((sack / 8400) * 100)}%`; if (sack <= 0) sack = 6200; }); }
+
+/* ---------------------------------------------------------------- THE DAY */
+{ const el = $("dayPlan"), pct = (h) => `${(h / 24) * 100}%`, rows = [
+    ["Wanted!", "#e0483a", Array.from({ length: 24 }, (_, h) => [h, 1, ""])],
+    ["Stars", "#ffd84a", [[2.5, 0.4, "🌠"], [6.8, 0.4, "🌠"], [11.2, 0.4, "🌠"], [15.9, 0.4, "🌠"], [20.4, 0.4, "🌠"]]],
+    ["Jackpot Thief", "#b06aff", [[9.6, 0.15, "💰"], [17.3, 0.15, "💰"], [22.1, 0.15, "💰"]]],
+    ["Already there", "#6a9ad8", [...Array.from({ length: 24 }, (_, h) => [h + 0.5, 0.12, ""]), [19, 0.5, "Wyrm"]]] ];
+  el.innerHTML = rows.map(([name, col, items], i) => `<div class="row" style="top:${6 + i * 38}px"><b>${name}</b>${items.map(([h, w, t]) => `<i style="left:${pct(h)};width:calc(${pct(w)} - 2px);background:${col}">${t}</i>`).join("")}</div>`).join("")
+    + `<div class="hours">${Array.from({ length: 13 }, (_, i) => `<span>${i * 2}:00</span>`).join("")}</div><div class="now" style="left:calc(120px + (100% - 134px) * ${15.4 / 24})"></div>`; }
+</script>
+</body>
+</html>

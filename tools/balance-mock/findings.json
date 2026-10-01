@@ -1,0 +1,3867 @@
+{
+ "at": "2026-09-30T10:47:00.409Z",
+ "hiscoresAt": "2026-09-30T10:23:38.689Z",
+ "players": 36,
+ "online": 3,
+ "peak": 7,
+ "boardsNote": "Skill boards list all 36 characters (the worker keeps the top 100, and there are 36). Number boards list only non-zero rows: earned 28, wagered 18, kills 28, quests 23, zcoins 17, tower 8, runBest 16, crypt1/2/3 6/7/4 clears, pyr1 0.",
+ "assumptions": [
+  "A character equally levelled in every skill at L; rates are sustained active play with no potions, pets, Store boosts, group bonus or 2X.",
+  "Combat: mobs at most 5 levels above you; +3 s between kills; the fight band (BANDS) and ARCH_BAND/MAGE_BAND respected; world bosses excluded.",
+  "Tickets = what Bom actually pays (the worker's cashOut priceOf): loot at VALUE, quick-sell rares, anvil gear at min(2500, shelf x 0.125).",
+  "Chain rates price every input in active seconds by its cheapest open route (node, kill, mark, recipe, crop/bed throughput, or Bom's shelf at the player's safe combat ticket rate), outside the Wilderness.",
+  "Held maps (Foundry, Orchard) and held skills (Jewelcrafting) are excluded.",
+  "Dead zone = a span of 10+ levels with no new node/recipe/gear/area, as asked; spans of exactly 10 are mostly the gear-tier cadence (10, 20, 30...) and matter less than the longer ones."
+ ],
+ "skills": {
+  "mining": {
+   "name": "Mining",
+   "ladder": [
+    "1: copper (workyard/workyard)",
+    "1: tin (workyard)",
+    "20: emerald_ore (gloam/gloam)",
+    "20: sand (sands/sands/sands/sands/sands)",
+    "20: grimstone (wild)",
+    "20: grimstone (deep)",
+    "30: diamond_ore (mire/mire)",
+    "40: dragonstone_ore (boneyard/boneyard)",
+    "40: dragonstone_ore (wild/wild)",
+    "50: stardust (sands/sands)",
+    "50: onyx_ore (cloud/cloud)",
+    "50: onyx_ore (deep)",
+    "60: starfall_ore vein (vault/vault/vault/vault/vault)",
+    "60: starfall_ore (thunderhead/thunderhead/bw_cabin/bw_cabin/bw_light)",
+    "60: starfall_ore (deep)",
+    "65: catalytic (carnival/trailer/trailer/trailer/trailer/trailer/trailer/trailer/trailer)",
+    "70: eclipse_ore vein (vault/vault/vault/vault)",
+    "70: voidglass (vault/vault/thunderhead/thunderhead)",
+    "70: eclipse_ore (bw_light/bw_wreck/bw_wreck/depths/depths/depths)",
+    "75: abyss_crystal (depths/depths/depths/depths/depths)",
+    "80: nova_ore vein (vault/vault/vault)",
+    "80: nova_ore (bw_pier/bw_pier/bw_skull/bw_skull/depths)",
+    "85: slagstone (trailer/trailer/trailer/trailer)",
+    "90: singularity_ore (trailer/trailer/trailer)",
+    "92: fossil (valley_ridge/valley_ridge/valley_ridge/valley_ridge/valley_ridge/valley_lair/valley_lair/valley_lair)",
+    "94: glacite (frozen/frozen/frozen/frostspire/frostspire/frostspire/frostspire)"
+   ],
+   "deadZones": [
+    [
+     1,
+     20
+    ],
+    [
+     20,
+     30
+    ],
+    [
+     30,
+     40
+    ],
+    [
+     40,
+     50
+    ],
+    [
+     50,
+     60
+    ]
+   ],
+   "lastUnlock": 94,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": 12096,
+     "tixH": 3360,
+     "what": "copper @workyard",
+     "whatTix": "copper @workyard",
+     "safeTixH": 3360
+    },
+    {
+     "lvl": 10,
+     "xpH": 17280,
+     "tixH": 4800,
+     "what": "copper @workyard",
+     "whatTix": "copper @workyard",
+     "safeTixH": 4800
+    },
+    {
+     "lvl": 25,
+     "xpH": 77760,
+     "tixH": 19872,
+     "what": "grimstone @deep (PvP)",
+     "whatTix": "grimstone @deep (PvP)",
+     "safeTixH": 12442
+    },
+    {
+     "lvl": 50,
+     "xpH": 285120,
+     "tixH": 114048,
+     "what": "stardust @sands",
+     "whatTix": "stardust @sands",
+     "safeTixH": 114048
+    },
+    {
+     "lvl": 75,
+     "xpH": 490176,
+     "tixH": 191808,
+     "what": "abyss_crystal @depths",
+     "whatTix": "abyss_crystal @depths",
+     "safeTixH": 191808
+    },
+    {
+     "lvl": 90,
+     "xpH": 708480,
+     "tixH": 219629,
+     "what": "singularity_ore @trailer",
+     "whatTix": "singularity_ore @trailer",
+     "safeTixH": 219629
+    },
+    {
+     "lvl": 99,
+     "xpH": 802944,
+     "tixH": 236160,
+     "what": "glacite @frozen/frostspire",
+     "whatTix": "glacite @frozen/frostspire",
+     "safeTixH": 236160
+    }
+   ],
+   "hoursTo99": 21.7,
+   "players": {
+    "top": 75,
+    "topName": "BeeEzRadio",
+    "n50": 9,
+    "n80": 0,
+    "n99": 0,
+    "median": 1,
+    "listed": 36,
+    "trained": 14,
+    "medianOfTrained": 59,
+    "serverXp": 5439715,
+    "capped": []
+   },
+   "verdict": "too good for tickets",
+   "notes": "~22 h to 99. The ticket rate (raw ore to Bom) is 114k/h at 50 (stardust, a no-recipe vendor rock at 3x onyx ore), 192k/h at 75 (abyss crystal), 220-236k/h at 90-99, i.e. 2.4-3.3x safe combat. Dead zone 1-20 (copper/tin only). Every top-5 earner has Mining 55+. | best open rock by xp/h: swing 1800 ms / tool speed (best pickaxe your level can hold), success min(0.9, 0.4 + 0.02 x lvl), x0.8 for walking, empty rocks (2-12 ore, 8 s refill) and re-clicks; Wilderness x0.5 (WILD_GATHER); Deep x1.5 xp and +0.1 luck. Tickets = Bom's price (valueOf, ores are loot). Gems (1.4% per ore on most rocks) are not sellable and are excluded."
+  },
+  "woodcutting": {
+   "name": "Woodcutting",
+   "ladder": [
+    "1: logs (gloam/gloam/mire/mire/mire/mire/mire/mire/mire/mire/mire/mire/mire/sands/sands/sands/sands/sands/sands/carnival/carnival/carnival/carnival/carnival/carnival/carnival/carnival/carnival/carnival/carnival/boneyard/boneyard/boneyard/boneyard/boneyard/boneyard/boneyard/boneyard/boneyard/boneyard/boneyard/boneyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard/workyard)",
+    "15: willowlogs (gloam/gloam)",
+    "20: ashlogs (mire/mire)",
+    "20: ashlogs (wild/wild)",
+    "20: ashlogs (deep)",
+    "35: yewlogs (boneyard/boneyard)",
+    "35: yewlogs (wild)",
+    "45: palmlogs (sands/sands)",
+    "45: skyashlogs (cloud/cloud)",
+    "50: skyashlogs (thunderhead/thunderhead)",
+    "50: skyashlogs (deep/deep)",
+    "60: palmlogs (boardwalk/boardwalk/boardwalk/bw_cabin/bw_cabin/bw_cabin/bw_light/bw_wreck/bw_pier/bw_pier/bw_pier)",
+    "65: pinelogs (carnival/trailer/trailer/trailer/trailer)",
+    "75: voidlogs (vault/vault)",
+    "80: bogwoodlogs (trailer/trailer/trailer)",
+    "90: gallowslogs (deep)",
+    "92: cycadlogs (valley/valley/valley/valley/valley_ridge/valley_ridge/valley_ridge)",
+    "94: frostpinelogs (frozen/frozen/frozen/frozen/frozen/frostspire/frostspire)"
+   ],
+   "deadZones": [
+    [
+     1,
+     15
+    ],
+    [
+     20,
+     35
+    ],
+    [
+     35,
+     45
+    ],
+    [
+     50,
+     60
+    ],
+    [
+     65,
+     75
+    ],
+    [
+     80,
+     90
+    ]
+   ],
+   "lastUnlock": 94,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": 14985,
+     "tixH": 2997,
+     "what": "logs @gloam/mire/sands/carnival/boneyard/workyard",
+     "whatTix": "logs @gloam/mire/sands/carnival/boneyard/workyard",
+     "safeTixH": 2997
+    },
+    {
+     "lvl": 10,
+     "xpH": 22275,
+     "tixH": 4455,
+     "what": "logs @gloam/mire/sands/carnival/boneyard/workyard",
+     "whatTix": "logs @gloam/mire/sands/carnival/boneyard/workyard",
+     "safeTixH": 4455
+    },
+    {
+     "lvl": 25,
+     "xpH": 208202,
+     "tixH": 20820,
+     "what": "ashlogs @mire",
+     "whatTix": "ashlogs @mire",
+     "safeTixH": 20820
+    },
+    {
+     "lvl": 50,
+     "xpH": 384912,
+     "tixH": 67360,
+     "what": "skyashlogs @thunderhead",
+     "whatTix": "yewlogs @boneyard",
+     "safeTixH": 67360
+    },
+    {
+     "lvl": 75,
+     "xpH": 517882,
+     "tixH": 92787,
+     "what": "voidlogs @vault",
+     "whatTix": "voidlogs @vault",
+     "safeTixH": 92787
+    },
+    {
+     "lvl": 90,
+     "xpH": 693425,
+     "tixH": 114774,
+     "what": "bogwoodlogs @trailer",
+     "whatTix": "bogwoodlogs @trailer",
+     "safeTixH": 114774
+    },
+    {
+     "lvl": 99,
+     "xpH": 812981,
+     "tixH": 191290,
+     "what": "frostpinelogs @frozen/frostspire",
+     "whatTix": "frostpinelogs @frozen/frostspire",
+     "safeTixH": 191290
+    }
+   ],
+   "hoursTo99": 19.1,
+   "players": {
+    "top": 83,
+    "topName": "pantomim3",
+    "n50": 9,
+    "n80": 1,
+    "n99": 0,
+    "median": 1,
+    "listed": 36,
+    "trained": 12,
+    "medianOfTrained": 67,
+    "serverXp": 8379814,
+    "capped": []
+   },
+   "verdict": "good, but a mid-level money hole",
+   "notes": "~19 h to 99, well trained (top 83). Log values are inverted: yew (35) 35 tickets, palm/skyash (45-60) 14, pine (65) 20, void (75) 43, so logs pay less at 45-74 than at 35. Dead zones 1-15, 20-35, 50-60, 65-75, 80-90. | chop 2000 ms / axe speed, success min(0.9, 0.35 + 0.02 x lvl), x0.9 for felled trees (4% a log, 15 s stump) and walking."
+  },
+  "fishing": {
+   "name": "Fishing",
+   "ladder": [
+    "1: sardine (workyard/workyard/workyard/workyard/workyard)",
+    "5: perch (2nd fish, workyard/workyard/workyard/workyard/workyard)",
+    "10: trout (gloam/gloam/gloam/gloam/gloam)",
+    "15: catfish (2nd fish, gloam/gloam/gloam/gloam/gloam)",
+    "20: lanternfish (mire/mire/mire/mire/mire)",
+    "20: gloomfin (wild/wild)",
+    "25: mudskipper (2nd fish, mire/mire/mire/mire/mire)",
+    "30: bonefish (boneyard/boneyard/boneyard/boneyard/boneyard)",
+    "35: ghostcarp (2nd fish, boneyard/boneyard/boneyard/boneyard/boneyard)",
+    "40: oasisperch (sands/sands/sands/sands)",
+    "40: skyeel (cloud/cloud/cloud/cloud/cloud)",
+    "40: mooncarp (2nd fish, wild/wild)",
+    "45: cloudray (2nd fish, cloud/cloud/cloud/cloud/cloud)",
+    "48: nilecarp (2nd fish, sands/sands/sands/sands)",
+    "50: stormmarlin (thunderhead/thunderhead/thunderhead/thunderhead/thunderhead)",
+    "58: thundersquid (2nd fish, thunderhead/thunderhead/thunderhead/thunderhead/thunderhead)",
+    "60: cloudray (vault/vault)",
+    "60: mackerel (boardwalk/boardwalk/boardwalk/bw_cabin/bw_cabin)",
+    "62: goldfish (carnival)",
+    "68: koi (2nd fish, carnival)",
+    "70: thundersquid (2nd fish, vault/vault)",
+    "72: bluefin (bw_light/bw_light/bw_wreck/bw_pier/bw_pier)",
+    "72: bluefin (2nd fish, boardwalk/boardwalk/boardwalk/bw_cabin/bw_cabin)",
+    "72: bluefin (2nd fish, bw_wreck/bw_pier/bw_skull)",
+    "80: mudcat (trailer/trailer/trailer/trailer/trailer)",
+    "84: swordfish (bw_wreck/bw_pier/bw_skull)",
+    "84: swordfish (2nd fish, bw_light/bw_light/bw_wreck/bw_pier/bw_pier)",
+    "88: bowfin (2nd fish, trailer/trailer/trailer/trailer/trailer)",
+    "92: coelacanth (valley/valley/valley/valley)",
+    "92: voidfin (deep/deep)",
+    "94: icefin (frozen/frozen/frozen/frozen/frozen/frostspire/frostspire)",
+    "97: grimscale (2nd fish, deep/deep)"
+   ],
+   "deadZones": [],
+   "lastUnlock": 97,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": 7403,
+     "tixH": 0,
+     "what": "sardine @workyard",
+     "whatTix": "sardine @workyard",
+     "safeTixH": 0
+    },
+    {
+     "lvl": 10,
+     "xpH": 26439,
+     "tixH": 0,
+     "what": "trout @gloam",
+     "whatTix": "trout @gloam",
+     "safeTixH": 0
+    },
+    {
+     "lvl": 25,
+     "xpH": 73028,
+     "tixH": 0,
+     "what": "lanternfish/mudskipper @mire",
+     "whatTix": "trout/catfish @gloam",
+     "safeTixH": 0
+    },
+    {
+     "lvl": 50,
+     "xpH": 198929,
+     "tixH": 0,
+     "what": "stormmarlin @thunderhead",
+     "whatTix": "trout/catfish @gloam",
+     "safeTixH": 0
+    },
+    {
+     "lvl": 75,
+     "xpH": 340432,
+     "tixH": 0,
+     "what": "bluefin @bw_light/bw_wreck/bw_pier",
+     "whatTix": "trout/catfish @gloam",
+     "safeTixH": 0
+    },
+    {
+     "lvl": 90,
+     "xpH": 426666,
+     "tixH": 0,
+     "what": "mudcat/bowfin @trailer",
+     "whatTix": "trout/catfish @gloam",
+     "safeTixH": 0
+    },
+    {
+     "lvl": 99,
+     "xpH": 546340,
+     "tixH": 0,
+     "what": "coelacanth @valley",
+     "whatTix": "trout/catfish @gloam",
+     "safeTixH": 0
+    }
+   ],
+   "hoursTo99": 30.6,
+   "players": {
+    "top": 86,
+    "topName": "Kellzifer",
+    "n50": 10,
+    "n80": 2,
+    "n99": 0,
+    "median": 15,
+    "listed": 36,
+    "trained": 23,
+    "medianOfTrained": 41,
+    "serverXp": 13647526,
+    "capped": []
+   },
+   "verdict": "popular and fast; money only via Cooking",
+   "notes": "~31 h to 99; the second-most xp on the server (13.6M). Raw fish have no Bom price (isLoot excludes raw), so fishing's money only appears after cooking. The Wilderness spot's gloomfin/mooncarp have VALUE 0 raw and 7/13 cooked. | cast 2600 ms / rod speed, bite min(0.9, 0.4 + 0.02 lvl) x 0.67, second fish 35% from fish2lvl, x0.95. RAW FISH HAVE NO BOM PRICE (isLoot excludes raw), so fishing's tickets only exist after cooking: see cooking's chain rate. | Tickets per hour are 0 for raw fish by design; fishing money is realised in Cooking."
+  },
+  "thieving": {
+   "name": "Thieving",
+   "ladder": [
+    "1: lifter (guild/guild)",
+    "15: cutpurse (guild)",
+    "25: grifter (guild/guild)",
+    "40: shill (guild)",
+    "50: fixer (guild/guild)",
+    "62: housebreaker (guild)",
+    "75: quarter (guild/guild)",
+    "90: ringleader (guild)"
+   ],
+   "deadZones": [
+    [
+     1,
+     15
+    ],
+    [
+     15,
+     25
+    ],
+    [
+     25,
+     40
+    ],
+    [
+     40,
+     50
+    ],
+    [
+     50,
+     62
+    ],
+    [
+     62,
+     75
+    ],
+    [
+     75,
+     90
+    ]
+   ],
+   "lastUnlock": 90,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": 8878,
+     "tixH": 673,
+     "what": "lifter @guild",
+     "whatTix": "lifter @guild",
+     "safeTixH": 673
+    },
+    {
+     "lvl": 10,
+     "xpH": 13342,
+     "tixH": 3473,
+     "what": "lifter @guild",
+     "whatTix": "lifter @guild",
+     "safeTixH": 3473
+    },
+    {
+     "lvl": 25,
+     "xpH": 26359,
+     "tixH": 7266,
+     "what": "cutpurse @guild",
+     "whatTix": "lifter @guild",
+     "safeTixH": 7266
+    },
+    {
+     "lvl": 50,
+     "xpH": 69559,
+     "tixH": 17409,
+     "what": "shill @guild",
+     "whatTix": "grifter @guild",
+     "safeTixH": 17409
+    },
+    {
+     "lvl": 75,
+     "xpH": 150663,
+     "tixH": 37058,
+     "what": "housebreaker @guild",
+     "whatTix": "fixer @guild",
+     "safeTixH": 37058
+    },
+    {
+     "lvl": 90,
+     "xpH": 224176,
+     "tixH": 41113,
+     "what": "quarter @guild",
+     "whatTix": "quarter @guild",
+     "safeTixH": 41113
+    },
+    {
+     "lvl": 99,
+     "xpH": 247328,
+     "tixH": 49865,
+     "what": "quarter @guild",
+     "whatTix": "quarter @guild",
+     "safeTixH": 49865
+    }
+   ],
+   "hoursTo99": 65.3,
+   "players": {
+    "top": 41,
+    "topName": "Calvinthesneak",
+    "n50": 0,
+    "n80": 0,
+    "n99": 0,
+    "median": 1,
+    "listed": 36,
+    "trained": 7,
+    "medianOfTrained": 21,
+    "serverXp": 78740,
+    "capped": []
+   },
+   "verdict": "under-trained: entry cost, low pay",
+   "notes": "65 h to 99 but it needs a 50,000-ticket permit and pays 17k/h at 50, 37k at 75, 41-50k at 90-99 (goods only, by design). 8 marks, gaps of 10-15 levels, last unlock 90. 7 trained, top 41, server total 79k xp. | Thieves' Guild marks: an attempt every 2.4 s + 0.6 s to click the next mark (a success closes that pocket for 6 s), pickChance = min(0.9, 0.55 + 0.02 x (lvl - mark)), a catch stuns 2-3.5 s and drops one stolen good, every 5th clean lift doubles. Entry needs a 50,000-ticket permit (THIEF.permit)."
+  },
+  "cooking": {
+   "name": "Cooking",
+   "ladder": [
+    "1: cook_sardine",
+    "1: cook_chicken",
+    "5: cook_beef",
+    "5: cook_perch",
+    "5: cook_soup",
+    "10: cook_pork",
+    "15: cook_trout",
+    "18: cook_catfish",
+    "20: petfood_beef",
+    "20: petfood_chicken",
+    "20: petfood_pork",
+    "22: cook_mudskipper",
+    "25: cook_gloomfin",
+    "25: cook_pumpkin",
+    "30: cook_lanternfish",
+    "32: cook_bonefish",
+    "36: cook_ghostcarp",
+    "40: cook_mooncarp",
+    "40: smoke_ghostcarp",
+    "42: cook_oasisperch",
+    "45: cook_cloudray",
+    "48: cook_nilecarp",
+    "50: cook_skyeel",
+    "50: smoke_cloudray",
+    "50: petfood_tusk",
+    "50: petfood_scarab",
+    "50: petfood_fur",
+    "50: petfood_web",
+    "55: cook_stormmarlin",
+    "55: smoke_skyeel",
+    "60: cook_mudcat",
+    "60: cook_thundersquid",
+    "60: smoke_stormmarlin",
+    "62: cook_goldfish",
+    "62: cook_mackerel",
+    "65: smoke_mudcat",
+    "65: smoke_thundersquid",
+    "65: cook_truffle",
+    "66: smoke_mackerel",
+    "67: smoke_goldfish",
+    "68: cook_koi",
+    "70: cook_bowfin",
+    "73: smoke_koi",
+    "74: cook_bluefin",
+    "75: smoke_bowfin",
+    "78: smoke_bluefin",
+    "80: petfood_marrow",
+    "80: petfood_grimscale",
+    "80: petfood_catalytic",
+    "80: petfood_fang",
+    "82: cook_voidfin",
+    "86: smoke_voidfin",
+    "86: cook_swordfish",
+    "88: smoke_swordfish",
+    "90: cook_grimscale",
+    "90: cook_starfeast",
+    "92: cook_coelacanth",
+    "94: cook_icefin",
+    "95: smoke_grimscale"
+   ],
+   "deadZones": [],
+   "lastUnlock": 95,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": 4685,
+     "tixH": 1249,
+     "what": "cook_sardine",
+     "xpH_station": 30000,
+     "whatStation": "cook_sardine",
+     "whatTix": "cook_sardine"
+    },
+    {
+     "lvl": 10,
+     "xpH": 6484,
+     "tixH": 1729,
+     "what": "cook_sardine",
+     "xpH_station": 60000,
+     "whatStation": "cook_pork",
+     "whatTix": "cook_sardine"
+    },
+    {
+     "lvl": 25,
+     "xpH": 21342,
+     "tixH": 6574,
+     "what": "cook_trout",
+     "xpH_station": 105179,
+     "whatStation": "cook_mudskipper",
+     "whatTix": "petfood_chicken"
+    },
+    {
+     "lvl": 50,
+     "xpH": 50777,
+     "tixH": 18943,
+     "what": "cook_lanternfish",
+     "xpH_station": 270000,
+     "whatStation": "smoke_cloudray",
+     "whatTix": "smoke_cloudray"
+    },
+    {
+     "lvl": 75,
+     "xpH": 112135,
+     "tixH": 42889,
+     "what": "cook_bluefin",
+     "xpH_station": 405000,
+     "whatStation": "smoke_bowfin",
+     "whatTix": "smoke_mackerel"
+    },
+    {
+     "lvl": 90,
+     "xpH": 148841,
+     "tixH": 75830,
+     "what": "cook_bluefin",
+     "xpH_station": 600000,
+     "whatStation": "cook_starfeast",
+     "whatTix": "smoke_swordfish"
+    },
+    {
+     "lvl": 99,
+     "xpH": 331034,
+     "tixH": 75830,
+     "what": "cook_coelacanth",
+     "xpH_station": 880000,
+     "whatStation": "cook_icefin",
+     "whatTix": "smoke_swordfish"
+    }
+   ],
+   "hoursTo99": {
+    "selfSupplied": 77.2,
+    "stationOnly": 24.4
+   },
+   "players": {
+    "top": 85,
+    "topName": "Kellzifer",
+    "n50": 10,
+    "n80": 4,
+    "n99": 0,
+    "median": 14,
+    "listed": 36,
+    "trained": 22,
+    "medianOfTrained": 48,
+    "serverXp": 14730861,
+    "capped": []
+   },
+   "verdict": "too fast relative to everything else",
+   "notes": "1.8 s a cook for as much xp as the catch: 880k xp/h at the range with fish in hand, ~77 h self-supplied. The most xp on the server (14.7M) and the most 80+ players (4). Fishing + cooking = 44% of all skill xp on the boards. | station: best recipe by xp/h with fish in hand (1.8 s a cook, burn curve applied, xp only on success). chain: the fish (or meat) caught/killed by the same player plus the cook."
+  },
+  "smithing": {
+   "name": "Smithing",
+   "ladder": [
+    "1: burn_logs",
+    "1: burn_willowlogs",
+    "1: burn_ashlogs",
+    "1: burn_yewlogs",
+    "1: burn_palmlogs",
+    "1: burn_skyashlogs",
+    "1: burn_pinelogs",
+    "1: burn_voidlogs",
+    "1: burn_bogwoodlogs",
+    "1: burn_walnutlogs [NO SOURCE: walnutlogs]",
+    "10: smelt_bronze",
+    "10: smith_bronze_body",
+    "10: smith_bronze_legs",
+    "10: smith_bronze_shield",
+    "10: smith_bronze_helm",
+    "10: smith_bronze_boots",
+    "10: smith_bronze_gloves",
+    "10: smith_bronze_gladius",
+    "10: smith_bronze_sword",
+    "10: smith_bronze_maul",
+    "10: smith_bronze_ring",
+    "10: smith_bronze_amulet",
+    "10: smith_bronze_arrowhead",
+    "20: smelt_emerald",
+    "20: smith_emerald_body",
+    "20: smith_emerald_legs",
+    "20: smith_emerald_shield",
+    "20: smith_emerald_helm",
+    "20: smith_emerald_boots",
+    "20: smith_emerald_gloves",
+    "20: smith_emerald_gladius",
+    "20: smith_emerald_sword",
+    "20: smith_emerald_maul",
+    "20: smith_emerald_pickaxe",
+    "20: smith_emerald_axe",
+    "20: smith_emerald_rod",
+    "20: smith_emerald_ring",
+    "20: smith_emerald_amulet",
+    "20: make_temper",
+    "20: smith_emerald_arrowhead",
+    "30: smelt_diamond",
+    "30: smith_diamond_body",
+    "30: smith_diamond_legs",
+    "30: smith_diamond_shield",
+    "30: smith_diamond_helm",
+    "30: smith_diamond_boots",
+    "30: smith_diamond_gloves",
+    "30: smith_diamond_gladius",
+    "30: smith_diamond_sword",
+    "30: smith_diamond_maul",
+    "30: smith_diamond_pickaxe",
+    "30: smith_diamond_axe",
+    "30: smith_diamond_rod",
+    "30: smith_diamond_ring",
+    "30: smith_diamond_amulet",
+    "30: smith_diamond_arrowhead",
+    "40: smelt_dragonstone",
+    "40: smith_dragonstone_body",
+    "40: smith_dragonstone_legs",
+    "40: smith_dragonstone_shield",
+    "40: smith_dragonstone_helm",
+    "40: smith_dragonstone_boots",
+    "40: smith_dragonstone_gloves",
+    "40: smith_dragonstone_gladius",
+    "40: smith_dragonstone_sword",
+    "40: smith_dragonstone_maul",
+    "40: smith_dragonstone_pickaxe",
+    "40: smith_dragonstone_axe",
+    "40: smith_dragonstone_rod",
+    "40: smith_dragonstone_ring",
+    "40: smith_dragonstone_amulet",
+    "40: make_flux",
+    "40: smith_dragonstone_arrowhead",
+    "50: smelt_onyx",
+    "50: smith_onyx_body",
+    "50: smith_onyx_legs",
+    "50: smith_onyx_shield",
+    "50: smith_onyx_helm",
+    "50: smith_onyx_boots",
+    "50: smith_onyx_gloves",
+    "50: smith_onyx_gladius",
+    "50: smith_onyx_sword",
+    "50: smith_onyx_maul",
+    "50: smith_onyx_pickaxe",
+    "50: smith_onyx_axe",
+    "50: smith_onyx_rod",
+    "50: smith_onyx_ring",
+    "50: smith_onyx_amulet",
+    "50: smith_onyx_arrowhead",
+    "60: smelt_starfall",
+    "60: smith_starfall_body",
+    "60: smith_starfall_legs",
+    "60: smith_starfall_shield",
+    "60: smith_starfall_helm",
+    "60: smith_starfall_boots",
+    "60: smith_starfall_gloves",
+    "60: smith_starfall_gladius",
+    "60: smith_starfall_sword",
+    "60: smith_starfall_maul",
+    "60: smith_starfall_pickaxe",
+    "60: smith_starfall_axe",
+    "60: smith_starfall_rod",
+    "60: smith_starfall_ring",
+    "60: smith_starfall_amulet",
+    "60: make_seal",
+    "60: smith_starfall_arrowhead",
+    "70: smelt_eclipse",
+    "70: smith_eclipse_body",
+    "70: smith_eclipse_legs",
+    "70: smith_eclipse_shield",
+    "70: smith_eclipse_helm",
+    "70: smith_eclipse_boots",
+    "70: smith_eclipse_gloves",
+    "70: smith_eclipse_gladius",
+    "70: smith_eclipse_sword",
+    "70: smith_eclipse_maul",
+    "70: smith_eclipse_pickaxe",
+    "70: smith_eclipse_axe",
+    "70: smith_eclipse_rod",
+    "70: smith_eclipse_ring",
+    "70: smith_eclipse_amulet",
+    "70: smith_eclipse_arrowhead",
+    "70: blast_eclipse [NO SOURCE: slag]",
+    "70: smith_frostward_ring",
+    "72: smith_frostward_amulet",
+    "80: smelt_nova",
+    "80: craft_nova_core",
+    "80: smith_nova_body",
+    "80: smith_nova_legs",
+    "80: smith_nova_shield",
+    "80: smith_nova_helm",
+    "80: smith_nova_boots",
+    "80: smith_nova_gloves",
+    "80: smith_nova_gladius",
+    "80: smith_nova_sword",
+    "80: smith_nova_maul",
+    "80: smith_nova_pickaxe",
+    "80: smith_nova_axe",
+    "80: smith_nova_rod",
+    "80: smith_nova_ring",
+    "80: smith_nova_amulet",
+    "80: smith_nova_arrowhead",
+    "80: blast_nova [NO SOURCE: slag]",
+    "85: smith_yeti_boots",
+    "90: smelt_singularity",
+    "90: craft_singularity_core",
+    "90: smith_singularity_body",
+    "90: smith_singularity_legs",
+    "90: smith_singularity_shield",
+    "90: smith_singularity_helm",
+    "90: smith_singularity_boots",
+    "90: smith_singularity_gloves",
+    "90: smith_singularity_gladius",
+    "90: smith_singularity_sword",
+    "90: smith_singularity_maul",
+    "90: smith_singularity_pickaxe",
+    "90: smith_singularity_axe",
+    "90: smith_singularity_rod",
+    "90: smith_singularity_ring",
+    "90: smith_singularity_amulet",
+    "90: smith_singularity_arrowhead"
+   ],
+   "deadZones": [
+    [
+     10,
+     20
+    ],
+    [
+     20,
+     30
+    ],
+    [
+     30,
+     40
+    ],
+    [
+     40,
+     50
+    ],
+    [
+     50,
+     60
+    ],
+    [
+     60,
+     70
+    ]
+   ],
+   "lastUnlock": 90,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": 2237,
+     "tixH": 6263,
+     "what": "burn_logs",
+     "xpH_station": 67900,
+     "whatStation": "burn_bogwoodlogs",
+     "whatTix": "burn_logs"
+    },
+    {
+     "lvl": 10,
+     "xpH": 3558,
+     "tixH": 8547,
+     "what": "smith_bronze_body",
+     "xpH_station": 124615,
+     "whatStation": "smith_bronze_body",
+     "whatTix": "smelt_bronze"
+    },
+    {
+     "lvl": 25,
+     "xpH": 12058,
+     "tixH": 27783,
+     "what": "smith_emerald_body",
+     "xpH_station": 249231,
+     "whatStation": "smith_emerald_body",
+     "whatTix": "smith_emerald_gladius"
+    },
+    {
+     "lvl": 50,
+     "xpH": 27291,
+     "tixH": 230875,
+     "what": "smith_dragonstone_body",
+     "xpH_station": 623077,
+     "whatStation": "smith_onyx_body",
+     "whatTix": "smith_dragonstone_gladius"
+    },
+    {
+     "lvl": 75,
+     "xpH": 31362,
+     "tixH": 371132,
+     "what": "smith_dragonstone_body",
+     "xpH_station": 1350000,
+     "whatStation": "smith_frostward_amulet",
+     "whatTix": "smith_eclipse_boots"
+    },
+    {
+     "lvl": 90,
+     "xpH": 110743,
+     "tixH": 409989,
+     "what": "craft_singularity_core",
+     "xpH_station": 6075000,
+     "whatStation": "craft_singularity_core",
+     "whatTix": "smith_eclipse_boots"
+    },
+    {
+     "lvl": 99,
+     "xpH": 110743,
+     "tixH": 409989,
+     "what": "craft_singularity_core",
+     "xpH_station": 6075000,
+     "whatStation": "craft_singularity_core",
+     "whatTix": "smith_eclipse_boots"
+    }
+   ],
+   "hoursTo99": {
+    "selfSupplied": 230.8,
+    "stationOnly": 4
+   },
+   "players": {
+    "top": 71,
+    "topName": "Whosthatwolfguy90",
+    "n50": 9,
+    "n80": 0,
+    "n99": 0,
+    "median": 1,
+    "listed": 36,
+    "trained": 11,
+    "medianOfTrained": 55,
+    "serverXp": 2996895,
+    "capped": []
+   },
+   "verdict": "the money exploit",
+   "notes": "Bom buys anvil gear at min(2500, shelf x 0.125), not at its bar value: a dragonstone gladius is 1 bar (109) -> 825, an onyx gladius 207 -> 2,063, eclipse boots 381 -> 2,500. Mine-smelt-smith-sell pays 211k tickets/h at 40, 231k at 50, 371k at 75, 410k at 90, 4.8-5.8x safe combat. Its xp is slow self-supplied (~231 h) because 5 bars make one body. The 4 h station-only figure is craft_singularity_core (5,400 xp a make), which needs 15 catalytic + 10 slagstone + a master's seal + 2 nova bars and is supply-bound. | station: bars in hand; chain: mine the ore, burn logs to charcoal, smelt (10% fail), smith (10% fail). Chains are priced OUTSIDE the Wilderness, which removes onyx and starfall bars (both need grimstone, which only exists in the Wilderness / Deep Wild)."
+  },
+  "fletching": {
+   "name": "Fletching",
+   "ladder": [
+    "1: fletch_bone_arrowhead",
+    "1: fletch_bone_arrow",
+    "1: fletch_bowstring",
+    "1: fletch_shaft_logs",
+    "3: fletch_logs_quiver",
+    "5: fletch_logs_shortbow",
+    "10: fletch_logs_longbow",
+    "10: fletch_bronze_arrow",
+    "15: fletch_shaft_willowlogs",
+    "15: fletch_ruby_arrow",
+    "18: fletch_willowlogs_quiver",
+    "20: fletch_willowlogs_shortbow",
+    "20: fletch_emerald_arrow",
+    "25: fletch_willowlogs_longbow",
+    "25: fletch_shaft_ashlogs",
+    "28: fletch_ashlogs_quiver",
+    "30: fletch_ashlogs_shortbow",
+    "30: fletch_diamond_arrow",
+    "35: fletch_ashlogs_longbow",
+    "35: fletch_sapphire_arrow",
+    "40: fletch_shaft_yewlogs",
+    "40: fletch_dragonstone_arrow",
+    "43: fletch_yewlogs_quiver",
+    "45: fletch_marrow_arrowhead",
+    "45: fletch_yewlogs_shortbow",
+    "48: fletch_marrow_arrow",
+    "50: fletch_yewlogs_longbow",
+    "50: fletch_shaft_palmlogs",
+    "50: fletch_onyx_arrow",
+    "52: fletch_palmlogs_quiver",
+    "54: fletch_palmlogs_shortbow",
+    "55: fletch_silkstring",
+    "55: fletch_silkstring_wild",
+    "55: fletch_shaft_skyashlogs",
+    "55: fletch_topaz_arrow",
+    "57: fletch_palmlogs_longbow",
+    "58: fletch_skyashlogs_quiver",
+    "60: fletch_skyashlogs_shortbow",
+    "60: fletch_starfall_arrow",
+    "64: fletch_skyashlogs_longbow",
+    "68: fletch_shaft_pinelogs",
+    "70: fletch_pinelogs_quiver",
+    "70: fletch_eclipse_arrow",
+    "72: fletch_pinelogs_shortbow",
+    "75: fletch_opal_arrow",
+    "76: fletch_pinelogs_longbow",
+    "80: fletch_shaft_voidlogs",
+    "80: fletch_nova_arrow",
+    "82: fletch_voidlogs_quiver",
+    "84: fletch_voidlogs_shortbow",
+    "86: fletch_shaft_bogwoodlogs",
+    "88: fletch_voidlogs_longbow",
+    "90: fletch_bogwoodlogs_quiver",
+    "90: fletch_singularity_arrow",
+    "92: fletch_shaft_gallowslogs",
+    "92: fletch_bogwoodlogs_shortbow",
+    "93: fletch_shaft_cycadlogs",
+    "94: fletch_cycadlogs_quiver",
+    "95: fletch_cycadlogs_shortbow",
+    "95: fletch_rimefang_arrow",
+    "96: fletch_bogwoodlogs_longbow",
+    "98: fletch_cycadlogs_longbow",
+    "99: fletch_longcount"
+   ],
+   "deadZones": [],
+   "lastUnlock": 99,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": 2767,
+     "tixH": 0,
+     "what": "fletch_shaft_logs",
+     "xpH_station": 20000,
+     "whatStation": "fletch_bowstring",
+     "whatTix": "fletch_bone_arrowhead"
+    },
+    {
+     "lvl": 10,
+     "xpH": 3698,
+     "tixH": 3326,
+     "what": "fletch_shaft_logs",
+     "xpH_station": 60000,
+     "whatStation": "fletch_logs_longbow",
+     "whatTix": "fletch_logs_longbow"
+    },
+    {
+     "lvl": 25,
+     "xpH": 20470,
+     "tixH": 6067,
+     "what": "fletch_shaft_ashlogs",
+     "xpH_station": 136000,
+     "whatStation": "fletch_willowlogs_longbow",
+     "whatTix": "fletch_willowlogs_longbow"
+    },
+    {
+     "lvl": 50,
+     "xpH": 41193,
+     "tixH": 25217,
+     "what": "fletch_shaft_palmlogs",
+     "xpH_station": 288000,
+     "whatStation": "fletch_yewlogs_longbow",
+     "whatTix": "fletch_yewlogs_longbow"
+    },
+    {
+     "lvl": 75,
+     "xpH": 64074,
+     "tixH": 26827,
+     "what": "fletch_pinelogs_shortbow",
+     "xpH_station": 440000,
+     "whatStation": "fletch_skyashlogs_longbow",
+     "whatTix": "fletch_yewlogs_longbow"
+    },
+    {
+     "lvl": 90,
+     "xpH": 94926,
+     "tixH": 53877,
+     "what": "fletch_voidlogs_longbow",
+     "xpH_station": 592000,
+     "whatStation": "fletch_voidlogs_longbow",
+     "whatTix": "fletch_voidlogs_longbow"
+    },
+    {
+     "lvl": 99,
+     "xpH": 109748,
+     "tixH": 59844,
+     "what": "fletch_longcount",
+     "xpH_station": 5400000,
+     "whatStation": "fletch_longcount",
+     "whatTix": "fletch_bogwoodlogs_longbow"
+    }
+   ],
+   "hoursTo99": {
+    "selfSupplied": 152,
+    "stationOnly": 21
+   },
+   "players": {
+    "top": 52,
+    "topName": "AndyReidisaPAWG",
+    "n50": 1,
+    "n80": 0,
+    "n99": 0,
+    "median": 1,
+    "listed": 36,
+    "trained": 13,
+    "medianOfTrained": 9,
+    "serverXp": 226940,
+    "capped": []
+   },
+   "verdict": "fine",
+   "notes": "Station 288k-592k xp/h; self-supplied ~152 h (shafts and bows from your own logs, bowstrings from cow hides). Bows sell at 1.25x inputs (CRAFT_STEP), so it is not a money job (25-60k/h). Top 52, 13 trained. | station: 1.8 s a make with materials in hand; chain: logs chopped, hides from cows (bowstrings), feathers from chickens/gulls, gems from ore."
+  },
+  "wizardry": {
+   "name": "Wizardry",
+   "ladder": [
+    "1: press_paper",
+    "1: print_page_arcane",
+    "1: make_logs_wand",
+    "1: make_bag_scrap",
+    "10: print_page_sun_bolt",
+    "20: press_paper_willow",
+    "20: print_page_fire_bolt",
+    "20: make_willowlogs_wand",
+    "30: print_page_sun_blast",
+    "30: print_page_frost_bolt",
+    "30: make_ashlogs_wand",
+    "30: make_bag_hedge",
+    "40: print_page_fire_blast",
+    "40: print_page_void_bolt",
+    "45: make_yewlogs_wand",
+    "50: print_page_sun_surge",
+    "50: print_page_frost_blast",
+    "50: print_page_storm_bolt",
+    "50: print_scroll_haste",
+    "50: print_scroll_homeward",
+    "50: make_bag_conjurer",
+    "50: charm haste",
+    "52: print_waystone_boneyard",
+    "54: make_palmlogs_wand",
+    "55: print_scroll_steadyhands",
+    "55: charm steadyhands",
+    "60: print_page_fire_surge",
+    "60: print_page_void_blast",
+    "60: print_scroll_rainmaker",
+    "60: make_skyashlogs_wand",
+    "60: charm rainmaker",
+    "63: print_waystone_sands",
+    "66: print_scroll_focus",
+    "66: charm focus",
+    "70: print_page_frost_surge",
+    "70: print_page_storm_blast",
+    "70: make_bag_starweave",
+    "72: print_scroll_ward",
+    "72: make_pinelogs_wand",
+    "72: charm ward",
+    "75: print_waystone_thunderhead",
+    "78: print_scroll_stillness",
+    "78: charm stillness",
+    "80: print_page_void_surge",
+    "84: print_scroll_stonesense",
+    "84: make_voidlogs_wand",
+    "84: charm stonesense",
+    "87: print_waystone_trailer",
+    "90: press_paper_gallows",
+    "90: print_page_storm_surge",
+    "90: make_bag_bottomless",
+    "91: print_scroll_tailwind",
+    "91: charm tailwind",
+    "92: make_bogwoodlogs_wand",
+    "95: make_cycadlogs_wand",
+    "96: make_bag_glacier",
+    "97: make_frostpine_wand",
+    "99: print_scroll_keeneye",
+    "99: craft_lastword",
+    "99: charm keeneye"
+   ],
+   "deadZones": [
+    [
+     10,
+     20
+    ],
+    [
+     20,
+     30
+    ],
+    [
+     30,
+     40
+    ]
+   ],
+   "lastUnlock": 99,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": 1660,
+     "tixH": 340,
+     "what": "press_paper",
+     "xpH_station": 54000,
+     "whatStation": "make_bag_scrap",
+     "whatTix": "make_bag_scrap"
+    },
+    {
+     "lvl": 10,
+     "xpH": 2219,
+     "tixH": 1151,
+     "what": "press_paper",
+     "xpH_station": 54000,
+     "whatStation": "make_bag_scrap",
+     "whatTix": "make_bag_scrap"
+    },
+    {
+     "lvl": 25,
+     "xpH": 6667,
+     "tixH": 6045,
+     "what": "make_willowlogs_wand",
+     "xpH_station": 101250,
+     "whatStation": "make_willowlogs_wand",
+     "whatTix": "make_willowlogs_wand"
+    },
+    {
+     "lvl": 50,
+     "xpH": 9068,
+     "tixH": 8221,
+     "what": "make_willowlogs_wand",
+     "xpH_station": 864000,
+     "whatStation": "make_bag_conjurer",
+     "whatTix": "make_willowlogs_wand"
+    },
+    {
+     "lvl": 75,
+     "xpH": 9882,
+     "tixH": 8959,
+     "what": "make_willowlogs_wand",
+     "xpH_station": 1269000,
+     "whatStation": "make_bag_starweave",
+     "whatTix": "make_willowlogs_wand"
+    },
+    {
+     "lvl": 90,
+     "xpH": 10464,
+     "tixH": 9488,
+     "what": "make_willowlogs_wand",
+     "xpH_station": 1674000,
+     "whatStation": "make_bag_bottomless",
+     "whatTix": "make_willowlogs_wand"
+    },
+    {
+     "lvl": 99,
+     "xpH": 16939,
+     "tixH": 9508,
+     "what": "craft_lastword",
+     "xpH_station": 5400000,
+     "whatStation": "craft_lastword",
+     "whatTix": "make_willowlogs_wand"
+    }
+   ],
+   "hoursTo99": {
+    "selfSupplied": 1271.2,
+    "stationOnly": 8.6
+   },
+   "players": {
+    "top": 50,
+    "topName": "Calvinthesneak",
+    "n50": 1,
+    "n80": 0,
+    "n99": 0,
+    "median": 1,
+    "listed": 36,
+    "trained": 6,
+    "medianOfTrained": 38,
+    "serverXp": 200876,
+    "capped": []
+   },
+   "verdict": "supply-starved",
+   "notes": "Station rates are huge (bags 864k-1.67M xp/h) but the inputs are not there: elemental inks cost 104-165 s of plot time each and gems drop 1 ore in 70. Self-supplied ~1,271 h to 99, 40-60x the gathering skills. 6 players trained, top 50. | station: 1.8-2.4 s a make; chain: elemental inks come from crops (3 per brew, 20 plots) and gems from ore at 1.4%, so bags and elemental pages are supply-bound."
+  },
+  "alchemy": {
+   "name": "Alchemy",
+   "ladder": [
+    "1: blow_small_vial",
+    "1: brew_swift",
+    "1: brew_ink_arcane",
+    "3: brew_ink_button",
+    "5: brew_feathers",
+    "10: brew_hide",
+    "10: brew_ink_sun",
+    "12: brew_feathers_oyster",
+    "19: brew_keen",
+    "20: brew_ink_fire",
+    "20: brew_sleep",
+    "23: brew_salve1",
+    "28: brew_rattle",
+    "30: brew_ink_frost",
+    "30: brew_witch [NO SOURCE: ectoplasm]",
+    "34: blow_medium_vial",
+    "35: brew_ink_inkcap",
+    "36: brew_quick",
+    "40: brew_ink_void",
+    "42: brew_bleed",
+    "45: brew_gourd",
+    "50: brew_salve2",
+    "50: brew_ink_storm",
+    "54: brew_ghost",
+    "58: brew_pipe",
+    "60: brew_ink_grim",
+    "62: brew_purse",
+    "68: blow_large_vial",
+    "70: brew_prospect",
+    "72: brew_mane",
+    "78: brew_fang",
+    "80: brew_ink_morel",
+    "80: brew_frostmind",
+    "82: brew_ember [NO SOURCE: emberglass]",
+    "84: brew_salve3",
+    "90: brew_storm",
+    "90: brew_star",
+    "99: brew_pharaoh",
+    "99: brew_coilbreaker [NO SOURCE: serpentvenom]"
+   ],
+   "deadZones": [],
+   "lastUnlock": 99,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": null,
+     "tixH": null,
+     "xpH_station": 18000,
+     "whatStation": "brew_swift"
+    },
+    {
+     "lvl": 10,
+     "xpH": null,
+     "tixH": null,
+     "xpH_station": 29455,
+     "whatStation": "brew_ink_button"
+    },
+    {
+     "lvl": 25,
+     "xpH": 8403,
+     "tixH": 10084,
+     "what": "blow_small_vial",
+     "xpH_station": 72000,
+     "whatStation": "brew_sleep",
+     "whatTix": "blow_small_vial"
+    },
+    {
+     "lvl": 50,
+     "xpH": 14306,
+     "tixH": 12117,
+     "what": "blow_medium_vial",
+     "xpH_station": 133527,
+     "whatStation": "brew_quick",
+     "whatTix": "blow_small_vial"
+    },
+    {
+     "lvl": 75,
+     "xpH": 19679,
+     "tixH": 15743,
+     "what": "blow_medium_vial",
+     "xpH_station": 239545,
+     "whatStation": "brew_purse",
+     "whatTix": "blow_medium_vial"
+    },
+    {
+     "lvl": 90,
+     "xpH": 26076,
+     "tixH": 17881,
+     "what": "blow_large_vial",
+     "xpH_station": 621818,
+     "whatStation": "brew_frostmind",
+     "whatTix": "blow_large_vial"
+    },
+    {
+     "lvl": 99,
+     "xpH": 29062,
+     "tixH": 19929,
+     "what": "blow_large_vial",
+     "xpH_station": 621818,
+     "whatStation": "brew_frostmind",
+     "whatTix": "blow_large_vial"
+    }
+   ],
+   "hoursTo99": {
+    "selfSupplied_from20": 528.5,
+    "stationOnly": 27.1,
+    "note": "Chain hours are null because every level-1 recipe needs a vial and the only vial input is sand (Mining 20, the Golden Sands). A new player cannot train Alchemy at all until Mining 20."
+   },
+   "players": {
+    "top": 53,
+    "topName": "Calvinthesneak",
+    "n50": 1,
+    "n80": 0,
+    "n99": 0,
+    "median": 1,
+    "listed": 36,
+    "trained": 8,
+    "medianOfTrained": 39,
+    "serverXp": 319114,
+    "capped": []
+   },
+   "verdict": "gated and thin",
+   "notes": "Nothing can be made until Mining 20: every recipe needs a vial and sand is the only vial input (sandpit, Mining 20, the Golden Sands). From 20, ~529 h self-supplied (27 h with materials in hand). brew_coilbreaker (99) needs serpentvenom, which has no source; brew_witch needs event ectoplasm; brew_ember needs Foundry emberglass (held). | station: 2.2 s a brew with failStop curves; chain: sand mined, mushrooms/crops at full beds/plots. | Chain hours are null because every level-1 recipe needs a vial and the only vial input is sand (Mining 20, the Golden Sands). A new player cannot train Alchemy at all until Mining 20."
+  },
+  "fungiculture": {
+   "name": "Fungiculture",
+   "ladder": [
+    "1: rot_tomatoe",
+    "1: bed spawn_sporecap",
+    "5: bed spawn_buttoncap",
+    "8: rot_husk",
+    "12: bed spawn_oyster",
+    "18: rot_pit",
+    "20: bed spawn_puffball",
+    "28: bed spawn_bluemould",
+    "35: bed spawn_inkcap",
+    "42: bed spawn_bleedtooth",
+    "45: rot_gourd",
+    "50: bed spawn_glowcap",
+    "58: bed spawn_ghostpipe",
+    "65: bed spawn_truffle",
+    "72: bed spawn_lionsmane",
+    "80: bed spawn_voidmorel",
+    "90: bed spawn_starcap"
+   ],
+   "deadZones": [
+    [
+     80,
+     90
+    ]
+   ],
+   "lastUnlock": 90,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": 1875,
+     "tixH": 1800,
+     "what": "spawn_sporecap (10 beds, per REAL hour)"
+    },
+    {
+     "lvl": 10,
+     "xpH": 2080,
+     "tixH": 1280,
+     "what": "spawn_buttoncap (10 beds, per REAL hour)"
+    },
+    {
+     "lvl": 25,
+     "xpH": 2475,
+     "tixH": 1320,
+     "what": "spawn_puffball (10 beds, per REAL hour)"
+    },
+    {
+     "lvl": 50,
+     "xpH": 3720,
+     "tixH": 1440,
+     "what": "spawn_glowcap (10 beds, per REAL hour)"
+    },
+    {
+     "lvl": 75,
+     "xpH": 4063,
+     "tixH": 1300,
+     "what": "spawn_truffle (10 beds, per REAL hour)"
+    },
+    {
+     "lvl": 90,
+     "xpH": 4995,
+     "tixH": 1083,
+     "what": "spawn_starcap (10 beds, per REAL hour)"
+    },
+    {
+     "lvl": 99,
+     "xpH": 4995,
+     "tixH": 1083,
+     "what": "spawn_starcap (10 beds, per REAL hour)"
+    }
+   ],
+   "hoursTo99": 2817,
+   "players": {
+    "top": 49,
+    "topName": "Calvinthesneak",
+    "n50": 0,
+    "n80": 0,
+    "n99": 0,
+    "median": 1,
+    "listed": 36,
+    "trained": 8,
+    "medianOfTrained": 34,
+    "serverXp": 229841,
+    "capped": []
+   },
+   "verdict": "very slow, passive",
+   "notes": "10 beds: 1.9k-5k xp per real hour; ~2,817 real hours to 99. Compost is tiny xp. Last unlock 90 (starcap). | passive: 10 cellar beds replanted the moment each is ready; xp per REAL hour (harvest xp + a thirtieth for planting). Wild clusters (0.4x xp) and compost are extra and small."
+  },
+  "farming": {
+   "name": "Harvesting",
+   "ladder": [
+    "1: wheat (workyard/workyard/workyard)",
+    "1: crop wheat",
+    "5: crop tomatoe",
+    "10: crop rattlebean",
+    "15: crop seed_sun",
+    "20: crop lanternroot",
+    "25: crop seed_ember",
+    "30: crop bonegourd",
+    "35: crop seed_frost",
+    "40: crop stormcorn",
+    "45: crop seed_void",
+    "50: crop goldtomatoe",
+    "62: crop glassgourd",
+    "78: crop emberwheat",
+    "92: crop starfruit"
+   ],
+   "deadZones": [
+    [
+     50,
+     62
+    ],
+    [
+     62,
+     78
+    ],
+    [
+     78,
+     92
+    ]
+   ],
+   "lastUnlock": 92,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": 3720,
+     "tixH": 960,
+     "what": "wheat (20 plots, per REAL hour, replanted on time)"
+    },
+    {
+     "lvl": 10,
+     "xpH": 4320,
+     "tixH": 810,
+     "what": "tomatoe (20 plots, per REAL hour, replanted on time)"
+    },
+    {
+     "lvl": 25,
+     "xpH": 4650,
+     "tixH": 2430,
+     "what": "lanternroot (20 plots, per REAL hour, replanted on time)"
+    },
+    {
+     "lvl": 50,
+     "xpH": 8260,
+     "tixH": 4050,
+     "what": "bonegourd (20 plots, per REAL hour, replanted on time)"
+    },
+    {
+     "lvl": 75,
+     "xpH": 8260,
+     "tixH": 4050,
+     "what": "bonegourd (20 plots, per REAL hour, replanted on time)"
+    },
+    {
+     "lvl": 90,
+     "xpH": 8260,
+     "tixH": 4050,
+     "what": "bonegourd (20 plots, per REAL hour, replanted on time)"
+    },
+    {
+     "lvl": 99,
+     "xpH": 8268,
+     "tixH": 3000,
+     "what": "starfruit (20 plots, per REAL hour, replanted on time)"
+    }
+   ],
+   "hoursTo99": {
+    "plots8": 3947,
+    "plots20": 1579
+   },
+   "players": {
+    "top": 60,
+    "topName": "jimmytomato",
+    "n50": 6,
+    "n80": 0,
+    "n99": 0,
+    "median": 1,
+    "listed": 36,
+    "trained": 17,
+    "medianOfTrained": 29,
+    "serverXp": 1402413,
+    "capped": []
+   },
+   "verdict": "slowest skill in the game",
+   "notes": "Per REAL hour with 20 plots replanted on time: 3.7k xp/h at 1, 8.3k from 30 (bonegourd) and never higher: bonegourd's 400 xp per plot-hour is not beaten until starfruit (92) ties it. 99 is ~1,579 real hours at 20 plots (3,947 at 8). Dead zones 50-62, 62-78, 78-92. | passive: island plots (8 base, 12 at 5,000 tickets, 20 at 20,000), replanted the moment each crop is ready; xp per REAL hour. With three visits a day at the best long crop the real time is several times longer.",
+   "cropTable": [
+    {
+     "k": "wheat",
+     "lvl": 1,
+     "tixPerPlotH": 48,
+     "xpPerPlotH": 180
+    },
+    {
+     "k": "tomatoe",
+     "lvl": 5,
+     "tixPerPlotH": 41,
+     "xpPerPlotH": 210
+    },
+    {
+     "k": "rattlebean",
+     "lvl": 10,
+     "tixPerPlotH": 60,
+     "xpPerPlotH": 180
+    },
+    {
+     "k": "seed_sun",
+     "lvl": 15,
+     "tixPerPlotH": 0,
+     "xpPerPlotH": 120
+    },
+    {
+     "k": "lanternroot",
+     "lvl": 20,
+     "tixPerPlotH": 122,
+     "xpPerPlotH": 225
+    },
+    {
+     "k": "seed_ember",
+     "lvl": 25,
+     "tixPerPlotH": 0,
+     "xpPerPlotH": 147
+    },
+    {
+     "k": "bonegourd",
+     "lvl": 30,
+     "tixPerPlotH": 203,
+     "xpPerPlotH": 400
+    },
+    {
+     "k": "seed_frost",
+     "lvl": 35,
+     "tixPerPlotH": 0,
+     "xpPerPlotH": 190
+    },
+    {
+     "k": "stormcorn",
+     "lvl": 40,
+     "tixPerPlotH": 344,
+     "xpPerPlotH": 350
+    },
+    {
+     "k": "seed_void",
+     "lvl": 45,
+     "tixPerPlotH": 0,
+     "xpPerPlotH": 200
+    },
+    {
+     "k": "goldtomatoe",
+     "lvl": 50,
+     "tixPerPlotH": 15,
+     "xpPerPlotH": 150
+    },
+    {
+     "k": "glassgourd",
+     "lvl": 62,
+     "tixPerPlotH": 144,
+     "xpPerPlotH": 220
+    },
+    {
+     "k": "emberwheat",
+     "lvl": 78,
+     "tixPerPlotH": 173,
+     "xpPerPlotH": 317
+    },
+    {
+     "k": "starfruit",
+     "lvl": 92,
+     "tixPerPlotH": 150,
+     "xpPerPlotH": 400
+    }
+   ]
+  },
+  "melee": {
+   "name": "Melee",
+   "ladder": [
+    "1: area workyard (band 1-9)",
+    "10: wear bronze_body",
+    "10: wear bronze_shield",
+    "10: wear bronze_legs",
+    "10: wear bronze_helm",
+    "10: wear bronze_boots",
+    "10: wear bronze_gloves",
+    "10: wear bronze_gladius",
+    "10: wear bronze_sword",
+    "10: wear bronze_maul",
+    "10: area gloam (band 10-19)",
+    "20: wear emerald_body",
+    "20: wear emerald_shield",
+    "20: wear emerald_legs",
+    "20: wear emerald_helm",
+    "20: wear emerald_boots",
+    "20: wear emerald_gloves",
+    "20: wear emerald_gladius",
+    "20: wear emerald_sword",
+    "20: wear emerald_maul",
+    "20: area mire (band 20-29)",
+    "30: wear diamond_body",
+    "30: wear diamond_shield",
+    "30: wear diamond_legs",
+    "30: wear diamond_helm",
+    "30: wear diamond_boots",
+    "30: wear diamond_gloves",
+    "30: wear diamond_gladius",
+    "30: wear diamond_sword",
+    "30: wear diamond_maul",
+    "30: area boneyard (band 30-39)",
+    "40: wear dragonstone_body",
+    "40: wear dragonstone_shield",
+    "40: wear dragonstone_legs",
+    "40: wear dragonstone_helm",
+    "40: wear dragonstone_boots",
+    "40: wear dragonstone_gloves",
+    "40: wear dragonstone_gladius",
+    "40: wear dragonstone_sword",
+    "40: wear dragonstone_maul",
+    "40: area cloud (band 40-49)",
+    "40: area sands (band 40-49)",
+    "50: wear onyx_body",
+    "50: wear onyx_shield",
+    "50: wear onyx_legs",
+    "50: wear onyx_helm",
+    "50: wear onyx_boots",
+    "50: wear onyx_gloves",
+    "50: wear onyx_gladius",
+    "50: wear onyx_sword",
+    "50: wear onyx_maul",
+    "50: area thunderhead (band 50-99)",
+    "60: wear starfall_body",
+    "60: wear starfall_shield",
+    "60: wear starfall_legs",
+    "60: wear starfall_helm",
+    "60: wear starfall_boots",
+    "60: wear starfall_gloves",
+    "60: wear starfall_gladius",
+    "60: wear starfall_sword",
+    "60: wear starfall_maul",
+    "62: area carnival (band 62-72)",
+    "66: area boardwalk (band 66-78)",
+    "66: area bw_cabin (band 66-72)",
+    "70: wear eclipse_body",
+    "70: wear eclipse_shield",
+    "70: wear eclipse_legs",
+    "70: wear eclipse_helm",
+    "70: wear eclipse_boots",
+    "70: wear eclipse_gloves",
+    "70: wear eclipse_gladius",
+    "70: wear eclipse_sword",
+    "70: wear eclipse_maul",
+    "70: area bw_light (band 70-76)",
+    "72: area bw_wreck (band 72-80)",
+    "72: area bw_pier (band 72-80)",
+    "74: area bw_skull (band 74-82)",
+    "75: wear clawgrip",
+    "80: wear wrench",
+    "80: wear nova_body",
+    "80: wear nova_shield",
+    "80: wear nova_legs",
+    "80: wear nova_helm",
+    "80: wear nova_boots",
+    "80: wear nova_gloves",
+    "80: wear nova_gladius",
+    "80: wear nova_sword",
+    "80: wear nova_maul",
+    "80: area trailer (band 80-99)",
+    "90: wear singularity_body",
+    "90: wear singularity_shield",
+    "90: wear singularity_legs",
+    "90: wear singularity_helm",
+    "90: wear singularity_boots",
+    "90: wear singularity_gloves",
+    "90: wear singularity_gladius",
+    "90: wear singularity_sword",
+    "90: wear singularity_maul",
+    "90: wear rex_necklace",
+    "90: area valley (band 90-98)",
+    "95: area valley_ridge (band 95-103)",
+    "100: area valley_lair (band 100-110) UNREACHABLE for melee",
+    "100: area frozen (band 100-108) UNREACHABLE for melee",
+    "106: area frostspire (band 106-115) UNREACHABLE for melee"
+   ],
+   "deadZones": [
+    [
+     10,
+     20
+    ],
+    [
+     20,
+     30
+    ],
+    [
+     30,
+     40
+    ],
+    [
+     40,
+     50
+    ],
+    [
+     50,
+     60
+    ],
+    [
+     80,
+     90
+    ]
+   ],
+   "lastUnlock": 99,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": 2772,
+     "tixH": 2426,
+     "what": "cow @workyard",
+     "whatTix": "cow @workyard",
+     "safeTixH": 2426,
+     "whatSafe": "cow @workyard",
+     "dps": 0.23
+    },
+    {
+     "lvl": 10,
+     "xpH": 17024,
+     "tixH": 10282,
+     "what": "goat @gloam",
+     "whatTix": "boar @workyard",
+     "safeTixH": 10282,
+     "whatSafe": "boar @workyard",
+     "dps": 1.58,
+     "gear": "bronze_sword"
+    },
+    {
+     "lvl": 25,
+     "xpH": 30234,
+     "tixH": 22094,
+     "what": "ghoul @wild",
+     "whatTix": "ghoul @wild (PvP)",
+     "safeTixH": 20066,
+     "whatSafe": "taxwraith @mire",
+     "dps": 2.77,
+     "gear": "emerald_sword"
+    },
+    {
+     "lvl": 50,
+     "xpH": 64909,
+     "tixH": 54311,
+     "what": "goose @thunderhead",
+     "whatTix": "marrowhound @wild (PvP)",
+     "safeTixH": 47840,
+     "whatSafe": "angel @cloud",
+     "dps": 5.74,
+     "gear": "onyx_sword"
+    },
+    {
+     "lvl": 75,
+     "xpH": 111096,
+     "tixH": 75915,
+     "what": "diron @depths",
+     "whatTix": "grimlich @deep (PvP)",
+     "safeTixH": 60974,
+     "whatSafe": "angel @cloud",
+     "dps": 8.11,
+     "gear": "eclipse_sword"
+    },
+    {
+     "lvl": 90,
+     "xpH": 139065,
+     "tixH": 88309,
+     "what": "diron @depths",
+     "whatTix": "grimlich @deep (PvP)",
+     "safeTixH": 70929,
+     "whatSafe": "angel @cloud",
+     "dps": 10.29,
+     "gear": "singularity_sword"
+    },
+    {
+     "lvl": 99,
+     "xpH": 143276,
+     "tixH": 89335,
+     "what": "mammoth @valley",
+     "whatTix": "grimlich @deep (PvP)",
+     "safeTixH": 71753,
+     "whatSafe": "angel @cloud",
+     "dps": 10.49,
+     "gear": "singularity_sword"
+    }
+   ],
+   "hoursTo99": 102.8,
+   "players": {
+    "top": 85,
+    "topName": "BeeEzRadio",
+    "n50": 12,
+    "n80": 2,
+    "n99": 0,
+    "median": 16,
+    "listed": 36,
+    "trained": 26,
+    "medianOfTrained": 48,
+    "serverXp": 11023153,
+    "capped": []
+   },
+   "verdict": "fair on xp, poor on late-game tickets",
+   "notes": "About 103 h to 99 at 4 xp per damage. Tickets peak on level 40-66 monsters (Cloudreach angels, and the Wilderness' weaver, marrow hound and grim lich at 3-4 tickets per HP); every level-70+ monster pays 1.1-1.8 per HP, so a 99 earns most on a level-48 angel (71.8k/h) and the Primeval Valley pays 39-65k/h. Frozen Reach, Frostspire and Valley Lair have melee bands of 100+ that a 99 cap can never meet. Most-trained combat style (26 of 36 trained, 2 at 80+). | melee at level L in the full tier set its level allows, analytic dps = hitChance(attackRoll, def) x (1 + maxHit)/2 / swing; mobs up to L+5 in open scenes whose band allows the fight; +3 s between kills; xp = 4 per damage (COMBAT_XP); tickets = mobValue (tickets + items at Bom value + rares). No active-click shave, no potions, no pet."
+  },
+  "hp": {
+   "name": "Hitpoints",
+   "ladder": [
+    "10: wear bronze_amulet",
+    "10: wear bronze_ring",
+    "20: wear emerald_amulet",
+    "20: wear emerald_ring",
+    "30: wear diamond_amulet",
+    "30: wear diamond_ring",
+    "40: wear dragonstone_amulet",
+    "40: wear dragonstone_ring",
+    "50: wear onyx_amulet",
+    "50: wear onyx_ring",
+    "60: wear starfall_amulet",
+    "60: wear starfall_ring",
+    "60: wear frostward_ring",
+    "70: wear eclipse_amulet",
+    "70: wear eclipse_ring",
+    "70: wear frostward_amulet",
+    "75: wear deep_sigil",
+    "80: wear nova_amulet",
+    "80: wear nova_ring",
+    "84: wear deepheart",
+    "85: wear yeti_boots",
+    "90: wear singularity_amulet",
+    "90: wear singularity_ring"
+   ],
+   "deadZones": [
+    [
+     10,
+     20
+    ],
+    [
+     20,
+     30
+    ],
+    [
+     30,
+     40
+    ],
+    [
+     40,
+     50
+    ],
+    [
+     50,
+     60
+    ],
+    [
+     60,
+     70
+    ]
+   ],
+   "lastUnlock": 90,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": 924,
+     "tixH": null,
+     "what": "trained alongside melee (4/3 xp per damage vs 4)"
+    },
+    {
+     "lvl": 10,
+     "xpH": 5675,
+     "tixH": null,
+     "what": "trained alongside melee (4/3 xp per damage vs 4)"
+    },
+    {
+     "lvl": 25,
+     "xpH": 10078,
+     "tixH": null,
+     "what": "trained alongside melee (4/3 xp per damage vs 4)"
+    },
+    {
+     "lvl": 50,
+     "xpH": 21636,
+     "tixH": null,
+     "what": "trained alongside melee (4/3 xp per damage vs 4)"
+    },
+    {
+     "lvl": 75,
+     "xpH": 37032,
+     "tixH": null,
+     "what": "trained alongside melee (4/3 xp per damage vs 4)"
+    },
+    {
+     "lvl": 90,
+     "xpH": 46355,
+     "tixH": null,
+     "what": "trained alongside melee (4/3 xp per damage vs 4)"
+    },
+    {
+     "lvl": 99,
+     "xpH": 47759,
+     "tixH": null,
+     "what": "trained alongside melee (4/3 xp per damage vs 4)"
+    }
+   ],
+   "hoursTo99": 308.5,
+   "players": {
+    "top": 74,
+    "topName": "BeeEzRadio",
+    "n50": 8,
+    "n80": 0,
+    "n99": 0,
+    "median": 13,
+    "listed": 36,
+    "trained": 36,
+    "medianOfTrained": 13,
+    "serverXp": 3913473,
+    "capped": []
+   },
+   "verdict": "fine (passive)",
+   "notes": "A third of melee's xp; ~309 h of melee to 99, about the same order as the 13M-xp style skills. Nothing to unlock but gear that asks for HP. | Hitpoints is paid 4/3 per damage with melee and a third of that with a bow or wand: it trains alongside melee at a third of the rate. | No content of its own; its ladder is the gear that asks for HP (frost ward pieces, yeti boots)."
+  },
+  "archery": {
+   "name": "Archery",
+   "ladder": [
+    "1: bone_arrow",
+    "1: wear logs_shortbow",
+    "1: wear logs_quiver",
+    "5: wear logs_longbow",
+    "10: bronze_arrow",
+    "10: ruby_arrow",
+    "18: wear willowlogs_quiver",
+    "20: wear willowlogs_shortbow",
+    "20: emerald_arrow",
+    "25: wear willowlogs_longbow",
+    "28: wear ashlogs_quiver",
+    "30: wear ashlogs_shortbow",
+    "30: diamond_arrow",
+    "30: sapphire_arrow",
+    "35: wear ashlogs_longbow",
+    "40: dragonstone_arrow",
+    "40: area valley via ARCH_BAND",
+    "40: area valley_ridge via ARCH_BAND",
+    "40: area valley_lair via ARCH_BAND",
+    "43: wear yewlogs_quiver",
+    "45: marrow_arrow",
+    "45: wear yewlogs_shortbow",
+    "50: wear yewlogs_longbow",
+    "50: onyx_arrow",
+    "50: topaz_arrow",
+    "52: wear palmlogs_quiver",
+    "54: wear palmlogs_shortbow",
+    "57: wear palmlogs_longbow",
+    "58: wear skyashlogs_quiver",
+    "60: wear skyashlogs_shortbow",
+    "60: starfall_arrow",
+    "64: wear skyashlogs_longbow",
+    "70: wear pinelogs_quiver",
+    "70: eclipse_arrow",
+    "70: opal_arrow",
+    "72: wear pinelogs_shortbow",
+    "76: wear pinelogs_longbow",
+    "80: nova_arrow",
+    "82: wear voidlogs_quiver",
+    "84: wear voidlogs_shortbow",
+    "85: wear raptor_ring",
+    "88: wear voidlogs_longbow",
+    "90: wear bogwoodlogs_quiver",
+    "90: singularity_arrow",
+    "90: wear hunters_fang",
+    "92: wear bogwoodlogs_shortbow",
+    "94: wear cycadlogs_quiver",
+    "95: wear cycadlogs_shortbow",
+    "95: rimefang_arrow",
+    "96: wear bogwoodlogs_longbow",
+    "96: wear skyripper",
+    "98: wear cycadlogs_longbow",
+    "99: wear longcount"
+   ],
+   "deadZones": [],
+   "lastUnlock": 99,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": 6482,
+     "tixH": 5509,
+     "what": "rotten @workyard",
+     "whatTix": "rotten @workyard",
+     "safeTixH": 5509,
+     "whatSafe": "rotten @workyard",
+     "dps": 0.62,
+     "gear": "logs_shortbow+bone_arrow+logs_quiver"
+    },
+    {
+     "lvl": 10,
+     "xpH": 15714,
+     "tixH": 11224,
+     "what": "hornworm @workyard",
+     "whatTix": "boar @workyard",
+     "safeTixH": 11224,
+     "whatSafe": "boar @workyard",
+     "dps": 1.85,
+     "gear": "logs_shortbow+ruby_arrow+logs_quiver"
+    },
+    {
+     "lvl": 25,
+     "xpH": 29130,
+     "tixH": 21287,
+     "what": "ghoul @wild",
+     "whatTix": "ghoul @wild (PvP)",
+     "safeTixH": 13728,
+     "whatSafe": "boar @workyard",
+     "dps": 2.64,
+     "gear": "willowlogs_shortbow+ruby_arrow+willowlogs_quiver"
+    },
+    {
+     "lvl": 50,
+     "xpH": 72729,
+     "tixH": 56455,
+     "what": "goose @deep",
+     "whatTix": "weaver @wild (PvP)",
+     "safeTixH": 18634,
+     "whatSafe": "boar @workyard",
+     "dps": 6.65,
+     "gear": "yewlogs_shortbow+topaz_arrow+yewlogs_quiver"
+    },
+    {
+     "lvl": 75,
+     "xpH": 128979,
+     "tixH": 84047,
+     "what": "diron @depths",
+     "whatTix": "grimlich @deep (PvP)",
+     "safeTixH": 43934,
+     "whatSafe": "dogre @depths",
+     "dps": 9.5,
+     "gear": "logs_shortbow+opal_arrow+pinelogs_quiver"
+    },
+    {
+     "lvl": 90,
+     "xpH": 149055,
+     "tixH": 92322,
+     "what": "diron @depths",
+     "whatTix": "grimlich @deep (PvP)",
+     "safeTixH": 53563,
+     "whatSafe": "pterodactyl @valley",
+     "dps": 11.08,
+     "gear": "logs_shortbow+singularity_arrow+bogwoodlogs_quiver"
+    },
+    {
+     "lvl": 99,
+     "xpH": 180114,
+     "tixH": 102712,
+     "what": "mammoth @valley",
+     "whatTix": "grimlich @deep (PvP)",
+     "safeTixH": 68694,
+     "whatSafe": "pteroelder @valley_ridge",
+     "dps": 13.37,
+     "gear": "skyripper+rimefang_arrow+cycadlogs_quiver"
+    }
+   ],
+   "hoursTo99": 92.2,
+   "players": {
+    "top": 51,
+    "topName": "AndyReidisaPAWG",
+    "n50": 1,
+    "n80": 0,
+    "n99": 0,
+    "median": 1,
+    "listed": 36,
+    "trained": 9,
+    "medianOfTrained": 27,
+    "serverXp": 374164,
+    "capped": []
+   },
+   "verdict": "slightly strong on paper, expensive in practice",
+   "notes": "Best dps at 99 (13.4 vs melee 10.5) and the fastest combat 99 (~92 h), but it fires 2,000 arrows an hour at 1.8 s: a nova arrow costs ~66 tickets of bar and a singularity arrow ~141, so top arrows cost 132-282k tickets/h against 84-103k/h of income. Shortbows of every tier have str 0 and the same 1.8 s, so above the hit cap a logs shortbow does what a pine one does. Only 9 players trained it, top 51. | best bow/arrow/quiver by level (arrows at AMMO_SHARE 0.5), 20% vs large targets, ARCH_FLOOR 50% hit in the Valley. Ammo cost is NOT deducted (see economy.ammo)."
+  },
+  "magic": {
+   "name": "Magic",
+   "ladder": [
+    "1: page_arcane",
+    "1: wear logs_wand",
+    "1: wear bag_scrap",
+    "10: page_sun_bolt",
+    "20: page_fire_bolt",
+    "20: wear willowlogs_wand",
+    "30: page_sun_blast",
+    "30: page_frost_bolt",
+    "30: wear ashlogs_wand",
+    "30: wear bag_hedge",
+    "40: page_fire_blast",
+    "40: page_void_bolt",
+    "45: wear yewlogs_wand",
+    "50: page_sun_surge",
+    "50: page_frost_blast",
+    "50: page_storm_bolt",
+    "50: wear bag_conjurer",
+    "54: wear palmlogs_wand",
+    "60: page_fire_surge",
+    "60: page_void_blast",
+    "60: wear skyashlogs_wand",
+    "60: area frozen via MAGE_BAND",
+    "60: area frostspire via MAGE_BAND",
+    "70: page_frost_surge",
+    "70: page_storm_blast",
+    "70: wear bag_starweave",
+    "72: wear pinelogs_wand",
+    "80: page_void_surge",
+    "84: wear voidlogs_wand",
+    "85: wear frostbite_ring",
+    "90: page_storm_surge",
+    "90: wear bag_bottomless",
+    "90: wear winters_heart",
+    "92: wear bogwoodlogs_wand",
+    "95: wear cycadlogs_wand",
+    "95: wear frostjarl_crown",
+    "96: wear rimeheart",
+    "96: wear bag_glacier",
+    "97: wear frostpine_wand",
+    "99: wear lastword"
+   ],
+   "deadZones": [
+    [
+     10,
+     20
+    ],
+    [
+     20,
+     30
+    ],
+    [
+     30,
+     40
+    ],
+    [
+     60,
+     70
+    ]
+   ],
+   "lastUnlock": 99,
+   "rates": [
+    {
+     "lvl": 1,
+     "xpH": 5577,
+     "tixH": 4790,
+     "what": "rotten @workyard",
+     "whatTix": "cow @workyard",
+     "safeTixH": 4790,
+     "whatSafe": "cow @workyard",
+     "dps": 0.5,
+     "gear": "logs_wand+page_arcane+bag_scrap"
+    },
+    {
+     "lvl": 10,
+     "xpH": 11066,
+     "tixH": 8019,
+     "what": "hornworm @workyard",
+     "whatTix": "rotten @workyard",
+     "safeTixH": 8019,
+     "whatSafe": "rotten @workyard",
+     "dps": 1.08,
+     "gear": "logs_wand+page_sun_bolt+bag_scrap"
+    },
+    {
+     "lvl": 25,
+     "xpH": 26844,
+     "tixH": 19617,
+     "what": "ghoul @wild",
+     "whatTix": "ghoul @wild (PvP)",
+     "safeTixH": 13002,
+     "whatSafe": "boar @workyard",
+     "dps": 2.37,
+     "gear": "willowlogs_wand+page_fire_bolt+bag_scrap"
+    },
+    {
+     "lvl": 50,
+     "xpH": 64557,
+     "tixH": 51666,
+     "what": "goose @deep",
+     "whatTix": "weaver @wild (PvP)",
+     "safeTixH": 17676,
+     "whatSafe": "boar @workyard",
+     "dps": 5.7,
+     "gear": "yewlogs_wand+page_sun_surge+bag_conjurer"
+    },
+    {
+     "lvl": 75,
+     "xpH": 116749,
+     "tixH": 78569,
+     "what": "diron @depths",
+     "whatTix": "grimlich @deep (PvP)",
+     "safeTixH": 39788,
+     "whatSafe": "dogre @depths",
+     "dps": 8.55,
+     "gear": "pinelogs_wand+page_frost_surge+bag_starweave"
+    },
+    {
+     "lvl": 90,
+     "xpH": 139977,
+     "tixH": 88684,
+     "what": "diron @depths",
+     "whatTix": "grimlich @deep (PvP)",
+     "safeTixH": 47659,
+     "whatSafe": "dogre @depths",
+     "dps": 10.36,
+     "gear": "voidlogs_wand+page_storm_surge+bag_bottomless"
+    },
+    {
+     "lvl": 99,
+     "xpH": 177695,
+     "tixH": 102804,
+     "what": "diron @depths",
+     "whatTix": "grimlich @deep (PvP)",
+     "safeTixH": 60408,
+     "whatSafe": "dogre @depths",
+     "dps": 13.39,
+     "gear": "lastword+page_storm_surge+bag_glacier"
+    }
+   ],
+   "hoursTo99": 97,
+   "players": {
+    "top": 65,
+    "topName": "Calvinthesneak",
+    "n50": 2,
+    "n80": 0,
+    "n99": 0,
+    "median": 1,
+    "listed": 36,
+    "trained": 7,
+    "medianOfTrained": 21,
+    "serverXp": 878307,
+    "capped": []
+   },
+   "verdict": "page-starved",
+   "notes": "Wands match bows on dps (13.4 at 99) but elemental pages come from crop inks: a 99 on storm surge burns 1,800 pages/h = 810 stormcorn/h while 20 plots grow ~55/h (about 7% of an hour's casting). Practical magic is arcane pages (Bom sells them at 2) at about two-thirds of the damage. 7 players trained, top 65. | best wand/page/bag by level, neutral element (no weakness/resist), MAGE_FLOOR in the Frozen maps. Page supply is NOT modelled here (see imbalances)."
+  },
+  "agility": {
+   "name": "Agility",
+   "ladder": [],
+   "deadZones": [
+    [
+     1,
+     99
+    ]
+   ],
+   "lastUnlock": null,
+   "rates": [
+    {
+     "lvl": "any",
+     "xpH": 57882,
+     "tixH": 9176,
+     "what": "pessimistic: 15.3s lap, 246 xp"
+    },
+    {
+     "lvl": "any",
+     "xpH": 103968,
+     "tixH": 11232,
+     "what": "typical: 12.5s lap, 361 xp"
+    },
+    {
+     "lvl": "any",
+     "xpH": 192539,
+     "tixH": 15775,
+     "what": "optimistic (the board's best laps): 8.9s lap, 476 xp"
+    }
+   ],
+   "hoursTo99": 125,
+   "players": {
+    "top": 40,
+    "topName": "Kellzifer",
+    "n50": 0,
+    "n80": 0,
+    "n99": 0,
+    "median": 3,
+    "listed": 36,
+    "trained": 18,
+    "medianOfTrained": 23,
+    "serverXp": 158209,
+    "capped": []
+   },
+   "verdict": "unattractive (pays nothing), not slow",
+   "notes": "The Run pays ~58k-190k xp/h (lap 9-15 s) - ~125 h to 99 at a typical lap - but its only rewards are +10% walk speed at 99 (AGIL_SPEED) and 3 marks a lap at 13 tickets (~11k tickets/h). One course, no levelled content (dead zone 1-99). Server total 158k xp; top 40. | The Run: 8 gates x 12 + finish 150 x (1 + perfect share) + 10 a perfect gate; lap time from the runBest board (median best 9.55s, +20-50% for an ordinary lap, +1 s restart). Pays 3 marks a lap at 13 tickets."
+  },
+  "breeding": {
+   "name": "Breeding",
+   "ladder": [
+    "1: breed greater",
+    "50: breed legend"
+   ],
+   "deadZones": [
+    [
+     1,
+     50
+    ],
+    [
+     50,
+     99
+    ]
+   ],
+   "lastUnlock": 50,
+   "rates": [
+    {
+     "lvl": "any",
+     "xpH": null,
+     "tixH": null,
+     "what": "eggs: 1,500-32,000 xp each after a 12 h - 5 day hatch; Store eggs cost 30 tickets per xp"
+    }
+   ],
+   "hoursTo99": null,
+   "players": {
+    "top": 29,
+    "topName": "BeeEzRadio",
+    "n50": 0,
+    "n80": 0,
+    "n99": 0,
+    "median": 1,
+    "listed": 36,
+    "trained": 9,
+    "medianOfTrained": 15,
+    "serverXp": 37670,
+    "capped": []
+   },
+   "verdict": "a Store skill",
+   "notes": "Eggs cost a flat 30 tickets per xp (45k-960k); kill eggs are 1 in 1,500. 99 by eggs is ~391M tickets, 17x everything the server has ever earned. Ladder is two rungs (1 and 50). Top 29. | Breeding xp comes from hatching eggs (1,500-32,000 xp, 12 h to 5 days each), breeding pairs (12 h / 3 days) and pet food batches while you have no pet. Eggs drop 1 kill in 1,500 or are bought in the Store at a flat ~30 tickets per xp.",
+   "eggsFromStore": [
+    {
+     "egg": "egg_speckled",
+     "xp": 1500,
+     "hatchH": 12,
+     "storePrice": 45000,
+     "tixPerXp": 30
+    },
+    {
+     "egg": "egg_mossy",
+     "xp": 2200,
+     "hatchH": 18,
+     "storePrice": 66000,
+     "tixPerXp": 30
+    },
+    {
+     "egg": "egg_truffle",
+     "xp": 4000,
+     "hatchH": 24,
+     "storePrice": 120000,
+     "tixPerXp": 30
+    },
+    {
+     "egg": "egg_sparking",
+     "xp": 6000,
+     "hatchH": 24,
+     "storePrice": 180000,
+     "tixPerXp": 30
+    },
+    {
+     "egg": "egg_cindered",
+     "xp": 9000,
+     "hatchH": 48,
+     "storePrice": 270000,
+     "tixPerXp": 30
+    },
+    {
+     "egg": "egg_velvet",
+     "xp": 13000,
+     "hatchH": 48,
+     "storePrice": 390000,
+     "tixPerXp": 30
+    },
+    {
+     "egg": "egg_geode",
+     "xp": 20000,
+     "hatchH": 72,
+     "storePrice": 600000,
+     "tixPerXp": 30
+    },
+    {
+     "egg": "egg_gilded",
+     "xp": 32000,
+     "hatchH": 120,
+     "storePrice": 960000,
+     "tixPerXp": 30
+    },
+    {
+     "egg": "egg_raptor",
+     "xp": 16000,
+     "hatchH": 60,
+     "storePrice": 480000,
+     "tixPerXp": 30
+    },
+    {
+     "egg": "egg_ptero",
+     "xp": 19000,
+     "hatchH": 72,
+     "storePrice": 570000,
+     "tixPerXp": 30
+    },
+    {
+     "egg": "egg_owl",
+     "xp": 17000,
+     "hatchH": 60,
+     "storePrice": 510000,
+     "tixPerXp": 30
+    },
+    {
+     "egg": "egg_yeti",
+     "xp": 20000,
+     "hatchH": 72,
+     "storePrice": 600000,
+     "tixPerXp": 30
+    }
+   ]
+  },
+  "tinkering": {
+   "name": "Tinkering",
+   "ladder": [
+    "31: gadget confetti",
+    "34: gadget baitbox",
+    "38: gadget medkit",
+    "40: gadget whetstone",
+    "40: gadget scope",
+    "40: gadget arccoil",
+    "42: gadget lockpick",
+    "44: gadget cooker",
+    "46: gadget bellows",
+    "48: gadget distiller",
+    "49: gadget featherjig",
+    "51: gadget handpress",
+    "52: gadget magnifier",
+    "54: gadget humidifier",
+    "58: gadget lantern",
+    "62: gadget grapple",
+    "66: gadget pettoy",
+    "74: gadget banner",
+    "78: gadget auger",
+    "86: gadget chainsaw",
+    "90: gadget bomb",
+    "94: gadget autoreel"
+   ],
+   "deadZones": [
+    [
+     1,
+     31
+    ]
+   ],
+   "lastUnlock": 94,
+   "rates": [
+    {
+     "lvl": "any",
+     "xpH": null,
+     "tixH": null,
+     "what": "~6.6-7.8 tickets of loot + fees per xp at the top gadgets; bounded by loot inflow"
+    }
+   ],
+   "hoursTo99": null,
+   "players": {
+    "top": 56,
+    "topName": "BeeEzRadio",
+    "n50": 1,
+    "n80": 0,
+    "n99": 0,
+    "median": 1,
+    "listed": 36,
+    "trained": 7,
+    "medianOfTrained": 25,
+    "serverXp": 254583,
+    "capped": []
+   },
+   "verdict": "a deliberate sink, fine",
+   "notes": "~6.6-7.8 tickets of loot plus build fees per xp at the top gadgets; xp capped at 40 per salvaged item. First gadget at 31 (dead zone 1-31). Top 56, 7 trained. | xp = salvage (0.5 per part value, 40 max an item) + 15 x gadget level per build; parts come from salvaging loot at 0.7 part value per Bom ticket. Rate is bounded by loot inflow and build fees (500-20,000 tickets).",
+   "gadgets": [
+    {
+     "k": "confetti",
+     "lvl": 31,
+     "pv": 200,
+     "fee": 500,
+     "buildXp": 465,
+     "salvXpForParts": 100,
+     "ticketsPerXp": 1.4
+    },
+    {
+     "k": "baitbox",
+     "lvl": 34,
+     "pv": 400,
+     "fee": 1000,
+     "buildXp": 510,
+     "salvXpForParts": 200,
+     "ticketsPerXp": 2.2
+    },
+    {
+     "k": "medkit",
+     "lvl": 38,
+     "pv": 400,
+     "fee": 1500,
+     "buildXp": 570,
+     "salvXpForParts": 200,
+     "ticketsPerXp": 2.7
+    },
+    {
+     "k": "whetstone",
+     "lvl": 40,
+     "pv": 520,
+     "fee": 1800,
+     "buildXp": 600,
+     "salvXpForParts": 260,
+     "ticketsPerXp": 3
+    },
+    {
+     "k": "scope",
+     "lvl": 40,
+     "pv": 520,
+     "fee": 1800,
+     "buildXp": 600,
+     "salvXpForParts": 260,
+     "ticketsPerXp": 3
+    },
+    {
+     "k": "arccoil",
+     "lvl": 40,
+     "pv": 520,
+     "fee": 1800,
+     "buildXp": 600,
+     "salvXpForParts": 260,
+     "ticketsPerXp": 3
+    },
+    {
+     "k": "lockpick",
+     "lvl": 42,
+     "pv": 500,
+     "fee": 2000,
+     "buildXp": 630,
+     "salvXpForParts": 250,
+     "ticketsPerXp": 3.1
+    },
+    {
+     "k": "cooker",
+     "lvl": 44,
+     "pv": 680,
+     "fee": 2200,
+     "buildXp": 660,
+     "salvXpForParts": 340,
+     "ticketsPerXp": 3.2
+    },
+    {
+     "k": "bellows",
+     "lvl": 46,
+     "pv": 800,
+     "fee": 2500,
+     "buildXp": 690,
+     "salvXpForParts": 400,
+     "ticketsPerXp": 3.3
+    },
+    {
+     "k": "distiller",
+     "lvl": 48,
+     "pv": 820,
+     "fee": 2600,
+     "buildXp": 720,
+     "salvXpForParts": 410,
+     "ticketsPerXp": 3.3
+    },
+    {
+     "k": "featherjig",
+     "lvl": 49,
+     "pv": 740,
+     "fee": 2700,
+     "buildXp": 735,
+     "salvXpForParts": 370,
+     "ticketsPerXp": 3.4
+    },
+    {
+     "k": "handpress",
+     "lvl": 51,
+     "pv": 960,
+     "fee": 2800,
+     "buildXp": 765,
+     "salvXpForParts": 480,
+     "ticketsPerXp": 3.4
+    },
+    {
+     "k": "magnifier",
+     "lvl": 52,
+     "pv": 880,
+     "fee": 3000,
+     "buildXp": 780,
+     "salvXpForParts": 440,
+     "ticketsPerXp": 3.5
+    },
+    {
+     "k": "humidifier",
+     "lvl": 54,
+     "pv": 1000,
+     "fee": 3200,
+     "buildXp": 810,
+     "salvXpForParts": 500,
+     "ticketsPerXp": 3.5
+    },
+    {
+     "k": "lantern",
+     "lvl": 58,
+     "pv": 1050,
+     "fee": 5000,
+     "buildXp": 870,
+     "salvXpForParts": 525,
+     "ticketsPerXp": 4.7
+    },
+    {
+     "k": "grapple",
+     "lvl": 62,
+     "pv": 1500,
+     "fee": 6000,
+     "buildXp": 930,
+     "salvXpForParts": 750,
+     "ticketsPerXp": 4.8
+    },
+    {
+     "k": "pettoy",
+     "lvl": 66,
+     "pv": 1400,
+     "fee": 7000,
+     "buildXp": 990,
+     "salvXpForParts": 700,
+     "ticketsPerXp": 5.3
+    },
+    {
+     "k": "banner",
+     "lvl": 74,
+     "pv": 2100,
+     "fee": 10000,
+     "buildXp": 1110,
+     "salvXpForParts": 1050,
+     "ticketsPerXp": 6
+    },
+    {
+     "k": "auger",
+     "lvl": 78,
+     "pv": 3050,
+     "fee": 15000,
+     "buildXp": 1170,
+     "salvXpForParts": 1525,
+     "ticketsPerXp": 7.2
+    },
+    {
+     "k": "chainsaw",
+     "lvl": 86,
+     "pv": 3050,
+     "fee": 15000,
+     "buildXp": 1290,
+     "salvXpForParts": 1525,
+     "ticketsPerXp": 6.9
+    },
+    {
+     "k": "autoreel",
+     "lvl": 94,
+     "pv": 3050,
+     "fee": 15000,
+     "buildXp": 1410,
+     "salvXpForParts": 1525,
+     "ticketsPerXp": 6.6
+    },
+    {
+     "k": "bomb",
+     "lvl": 90,
+     "pv": 3800,
+     "fee": 20000,
+     "buildXp": 1350,
+     "salvXpForParts": 1900,
+     "ticketsPerXp": 7.8
+    }
+   ]
+  }
+ },
+ "economy": {
+  "population": {
+   "characters": 36,
+   "onlineNow": 3,
+   "peak": 7,
+   "trainedMeleeOver1": 26,
+   "earnedBoardRows": 28,
+   "wageredBoardRows": 18
+  },
+  "earned": {
+   "total": 22639041,
+   "top": {
+    "rank": 1,
+    "name": "dookiebetts800",
+    "v": 5153411,
+    "sub": ""
+   },
+   "median": 57588,
+   "top3Share": 0.59,
+   "richestOverMedian": 89
+  },
+  "wagered": {
+   "total": 46305528,
+   "top": {
+    "rank": 1,
+    "name": "dookiebetts800",
+    "v": 23538427,
+    "sub": ""
+   },
+   "top3Share": 0.97,
+   "wageredOverEarned": 2.05,
+   "perPlayer": [
+    {
+     "name": "dookiebetts800",
+     "wagered": 23538427,
+     "earned": 5153411,
+     "turnover": 4.6
+    },
+    {
+     "name": "BeeEzRadio",
+     "wagered": 15263155,
+     "earned": 4228643,
+     "turnover": 3.6
+    },
+    {
+     "name": "AndyReidisaPAWG",
+     "wagered": 6008902,
+     "earned": 1342764,
+     "turnover": 4.5
+    },
+    {
+     "name": "kunabafoona",
+     "wagered": 695100,
+     "earned": 830752,
+     "turnover": 0.8
+    },
+    {
+     "name": "Kellzifer",
+     "wagered": 488900,
+     "earned": 3957334,
+     "turnover": 0.1
+    },
+    {
+     "name": "Calvinthesneak",
+     "wagered": 141700,
+     "earned": 1037613,
+     "turnover": 0.1
+    }
+   ]
+  },
+  "tixPerHourBySource": [
+   {
+    "lvl": 1,
+    "ranked": [
+     {
+      "src": "smithing chain (gear or charcoal to Bom)",
+      "tixH": 6263
+     },
+     {
+      "src": "archery (incl. Wilderness, ammo not deducted)",
+      "tixH": 5509
+     },
+     {
+      "src": "mining (raw ore)",
+      "tixH": 3360
+     },
+     {
+      "src": "woodcutting (raw logs)",
+      "tixH": 2997
+     },
+     {
+      "src": "melee (safe)",
+      "tixH": 2426
+     },
+     {
+      "src": "melee (incl. Wilderness)",
+      "tixH": 2426
+     },
+     {
+      "src": "fishing+cooking chain",
+      "tixH": 1249
+     },
+     {
+      "src": "farming passive, 20 plots, per real hour",
+      "tixH": 960
+     },
+     {
+      "src": "thieving",
+      "tixH": 673
+     },
+     {
+      "src": "wizardry chain",
+      "tixH": 340
+     }
+    ],
+    "combatOverMining": 0.72
+   },
+   {
+    "lvl": 10,
+    "ranked": [
+     {
+      "src": "archery (incl. Wilderness, ammo not deducted)",
+      "tixH": 11224
+     },
+     {
+      "src": "melee (safe)",
+      "tixH": 10282
+     },
+     {
+      "src": "melee (incl. Wilderness)",
+      "tixH": 10282
+     },
+     {
+      "src": "smithing chain (gear or charcoal to Bom)",
+      "tixH": 8547
+     },
+     {
+      "src": "mining (raw ore)",
+      "tixH": 4800
+     },
+     {
+      "src": "woodcutting (raw logs)",
+      "tixH": 4455
+     },
+     {
+      "src": "thieving",
+      "tixH": 3473
+     },
+     {
+      "src": "fletch-and-sell chain",
+      "tixH": 3326
+     },
+     {
+      "src": "fishing+cooking chain",
+      "tixH": 1729
+     },
+     {
+      "src": "wizardry chain",
+      "tixH": 1151
+     },
+     {
+      "src": "farming passive, 20 plots, per real hour",
+      "tixH": 810
+     }
+    ],
+    "combatOverMining": 2.14
+   },
+   {
+    "lvl": 25,
+    "ranked": [
+     {
+      "src": "smithing chain (gear or charcoal to Bom)",
+      "tixH": 27783
+     },
+     {
+      "src": "melee (incl. Wilderness)",
+      "tixH": 22094
+     },
+     {
+      "src": "archery (incl. Wilderness, ammo not deducted)",
+      "tixH": 21287
+     },
+     {
+      "src": "woodcutting (raw logs)",
+      "tixH": 20820
+     },
+     {
+      "src": "melee (safe)",
+      "tixH": 20066
+     },
+     {
+      "src": "mining (raw ore)",
+      "tixH": 12442
+     },
+     {
+      "src": "alchemy chain",
+      "tixH": 10084
+     },
+     {
+      "src": "thieving",
+      "tixH": 7266
+     },
+     {
+      "src": "fishing+cooking chain",
+      "tixH": 6574
+     },
+     {
+      "src": "fletch-and-sell chain",
+      "tixH": 6067
+     },
+     {
+      "src": "wizardry chain",
+      "tixH": 6045
+     },
+     {
+      "src": "farming passive, 20 plots, per real hour",
+      "tixH": 2430
+     }
+    ],
+    "combatOverMining": 1.61
+   },
+   {
+    "lvl": 50,
+    "ranked": [
+     {
+      "src": "smithing chain (gear or charcoal to Bom)",
+      "tixH": 230875
+     },
+     {
+      "src": "mining (raw ore)",
+      "tixH": 114048
+     },
+     {
+      "src": "woodcutting (raw logs)",
+      "tixH": 67360
+     },
+     {
+      "src": "archery (incl. Wilderness, ammo not deducted)",
+      "tixH": 56455
+     },
+     {
+      "src": "melee (incl. Wilderness)",
+      "tixH": 54311
+     },
+     {
+      "src": "melee (safe)",
+      "tixH": 47840
+     },
+     {
+      "src": "fletch-and-sell chain",
+      "tixH": 25217
+     },
+     {
+      "src": "fishing+cooking chain",
+      "tixH": 18943
+     },
+     {
+      "src": "thieving",
+      "tixH": 17409
+     },
+     {
+      "src": "alchemy chain",
+      "tixH": 12117
+     },
+     {
+      "src": "wizardry chain",
+      "tixH": 8221
+     },
+     {
+      "src": "farming passive, 20 plots, per real hour",
+      "tixH": 4050
+     }
+    ],
+    "combatOverMining": 0.42
+   },
+   {
+    "lvl": 75,
+    "ranked": [
+     {
+      "src": "smithing chain (gear or charcoal to Bom)",
+      "tixH": 371132
+     },
+     {
+      "src": "mining (raw ore)",
+      "tixH": 191808
+     },
+     {
+      "src": "woodcutting (raw logs)",
+      "tixH": 92787
+     },
+     {
+      "src": "archery (incl. Wilderness, ammo not deducted)",
+      "tixH": 84047
+     },
+     {
+      "src": "melee (incl. Wilderness)",
+      "tixH": 75915
+     },
+     {
+      "src": "melee (safe)",
+      "tixH": 60974
+     },
+     {
+      "src": "fishing+cooking chain",
+      "tixH": 42889
+     },
+     {
+      "src": "thieving",
+      "tixH": 37058
+     },
+     {
+      "src": "fletch-and-sell chain",
+      "tixH": 26827
+     },
+     {
+      "src": "alchemy chain",
+      "tixH": 15743
+     },
+     {
+      "src": "wizardry chain",
+      "tixH": 8959
+     },
+     {
+      "src": "farming passive, 20 plots, per real hour",
+      "tixH": 4050
+     }
+    ],
+    "combatOverMining": 0.32
+   },
+   {
+    "lvl": 90,
+    "ranked": [
+     {
+      "src": "smithing chain (gear or charcoal to Bom)",
+      "tixH": 409989
+     },
+     {
+      "src": "mining (raw ore)",
+      "tixH": 219629
+     },
+     {
+      "src": "woodcutting (raw logs)",
+      "tixH": 114774
+     },
+     {
+      "src": "archery (incl. Wilderness, ammo not deducted)",
+      "tixH": 92322
+     },
+     {
+      "src": "melee (incl. Wilderness)",
+      "tixH": 88309
+     },
+     {
+      "src": "fishing+cooking chain",
+      "tixH": 75830
+     },
+     {
+      "src": "melee (safe)",
+      "tixH": 70929
+     },
+     {
+      "src": "fletch-and-sell chain",
+      "tixH": 53877
+     },
+     {
+      "src": "thieving",
+      "tixH": 41113
+     },
+     {
+      "src": "alchemy chain",
+      "tixH": 17881
+     },
+     {
+      "src": "wizardry chain",
+      "tixH": 9488
+     },
+     {
+      "src": "farming passive, 20 plots, per real hour",
+      "tixH": 4050
+     }
+    ],
+    "combatOverMining": 0.32
+   },
+   {
+    "lvl": 99,
+    "ranked": [
+     {
+      "src": "smithing chain (gear or charcoal to Bom)",
+      "tixH": 409989
+     },
+     {
+      "src": "mining (raw ore)",
+      "tixH": 236160
+     },
+     {
+      "src": "woodcutting (raw logs)",
+      "tixH": 191290
+     },
+     {
+      "src": "archery (incl. Wilderness, ammo not deducted)",
+      "tixH": 102712
+     },
+     {
+      "src": "melee (incl. Wilderness)",
+      "tixH": 89335
+     },
+     {
+      "src": "fishing+cooking chain",
+      "tixH": 75830
+     },
+     {
+      "src": "melee (safe)",
+      "tixH": 71753
+     },
+     {
+      "src": "fletch-and-sell chain",
+      "tixH": 59844
+     },
+     {
+      "src": "thieving",
+      "tixH": 49865
+     },
+     {
+      "src": "alchemy chain",
+      "tixH": 19929
+     },
+     {
+      "src": "wizardry chain",
+      "tixH": 9508
+     },
+     {
+      "src": "farming passive, 20 plots, per real hour",
+      "tixH": 3000
+     }
+    ],
+    "combatOverMining": 0.3
+   }
+  ],
+  "gearSale": {
+   "rule": "Bom buys anvil gear at min(GEAR_SELL_MAX 2500, shelf price x GEAR_SELL_RATE 0.125); archery/magic gear at 1.25x its inputs (CRAFT_STEP)",
+   "examples": [
+    {
+     "item": "dragonstone_gladius",
+     "bars": "1xdragonstone_bar",
+     "barValue": 109,
+     "sells": 825,
+     "multiple": 7.57
+    },
+    {
+     "item": "dragonstone_body",
+     "bars": "5xdragonstone_bar",
+     "barValue": 545,
+     "sells": 2250,
+     "multiple": 4.13
+    },
+    {
+     "item": "onyx_gladius",
+     "bars": "1xonyx_bar",
+     "barValue": 207,
+     "sells": 2063,
+     "multiple": 9.97
+    },
+    {
+     "item": "eclipse_boots",
+     "bars": "1xeclipse_bar",
+     "barValue": 381,
+     "sells": 2500,
+     "multiple": 6.56
+    },
+    {
+     "item": "starfall_boots",
+     "bars": "1xstarfall_bar",
+     "barValue": 495,
+     "sells": 2500,
+     "multiple": 5.05
+    },
+    {
+     "item": "singularity_body",
+     "bars": "5xsingularity_bar",
+     "barValue": 10585,
+     "sells": 2500,
+     "multiple": 0.24
+    }
+   ]
+  },
+  "ammo": [
+   {
+    "arrow": "dragonstone_arrow",
+    "ticketsPerArrow": 7.3,
+    "ticketsPerHourAt1800ms": 14533
+   },
+   {
+    "arrow": "onyx_arrow",
+    "ticketsPerArrow": 13.8,
+    "ticketsPerHourAt1800ms": 27600
+   },
+   {
+    "arrow": "eclipse_arrow",
+    "ticketsPerArrow": 25.4,
+    "ticketsPerHourAt1800ms": 50800
+   },
+   {
+    "arrow": "nova_arrow",
+    "ticketsPerArrow": 65.9,
+    "ticketsPerHourAt1800ms": 131733
+   },
+   {
+    "arrow": "singularity_arrow",
+    "ticketsPerArrow": 141.1,
+    "ticketsPerHourAt1800ms": 282267
+   }
+  ],
+  "tower": [
+   {
+    "floor": 1,
+    "lvl": 30,
+    "base": "ghoul",
+    "hp": 677,
+    "fightS": 270,
+    "tixPerFloor": 13,
+    "tixH": 170,
+    "xpH": 35463,
+    "outsideValuePerKill": 76,
+    "boss": false
+   },
+   {
+    "floor": 10,
+    "lvl": 36,
+    "base": "understudy",
+    "hp": 1490,
+    "fightS": 554,
+    "tixPerFloor": 18,
+    "tixH": 116,
+    "xpH": 38354,
+    "outsideValuePerKill": 108,
+    "boss": true
+   },
+   {
+    "floor": 20,
+    "lvl": 43,
+    "base": "critic",
+    "hp": 1841,
+    "fightS": 571,
+    "tixPerFloor": 25.5,
+    "tixH": 159,
+    "xpH": 46037,
+    "outsideValuePerKill": 294,
+    "boss": true
+   },
+   {
+    "floor": 30,
+    "lvl": 50,
+    "base": "golem",
+    "hp": 2209,
+    "fightS": 587,
+    "tixPerFloor": 24,
+    "tixH": 146,
+    "xpH": 53722,
+    "outsideValuePerKill": 143,
+    "boss": true
+   },
+   {
+    "floor": 31,
+    "lvl": 51,
+    "base": "angel",
+    "hp": 1107,
+    "fightS": 294,
+    "tixPerFloor": 25.5,
+    "tixH": 307,
+    "xpH": 53275,
+    "outsideValuePerKill": 151,
+    "boss": false
+   },
+   {
+    "floor": 40,
+    "lvl": 57,
+    "base": "grinner",
+    "hp": 2378,
+    "fightS": 603,
+    "tixPerFloor": 335,
+    "tixH": 1983,
+    "xpH": 56293,
+    "outsideValuePerKill": 1826,
+    "boss": true
+   },
+   {
+    "floor": 50,
+    "lvl": 65,
+    "base": "pitboss",
+    "hp": 2774,
+    "fightS": 619,
+    "tixPerFloor": 22,
+    "tixH": 127,
+    "xpH": 63983,
+    "outsideValuePerKill": 171,
+    "boss": true
+   },
+   {
+    "floor": 60,
+    "lvl": 72,
+    "base": "hoard",
+    "hp": 3302,
+    "fightS": 636,
+    "tixPerFloor": 24.5,
+    "tixH": 138,
+    "xpH": 74236,
+    "outsideValuePerKill": 159,
+    "boss": true
+   },
+   {
+    "floor": 70,
+    "lvl": 79,
+    "base": "scrapper",
+    "hp": 3503,
+    "fightS": 652,
+    "tixPerFloor": 24,
+    "tixH": 132,
+    "xpH": 76811,
+    "outsideValuePerKill": 167,
+    "boss": true
+   },
+   {
+    "floor": 80,
+    "lvl": 86,
+    "base": "dealer",
+    "hp": 3949,
+    "fightS": 668,
+    "tixPerFloor": 20.5,
+    "tixH": 110,
+    "xpH": 84507,
+    "outsideValuePerKill": 198,
+    "boss": true
+   },
+   {
+    "floor": 90,
+    "lvl": 93,
+    "base": "junkking",
+    "hp": 4413,
+    "fightS": 684,
+    "tixPerFloor": 29.5,
+    "tixH": 154,
+    "xpH": 92206,
+    "outsideValuePerKill": 401,
+    "boss": true
+   },
+   {
+    "floor": 99,
+    "lvl": 99,
+    "base": "house",
+    "hp": 4632,
+    "fightS": 699,
+    "tixPerFloor": 40,
+    "tixH": 205,
+    "xpH": 94782,
+    "outsideValuePerKill": 269,
+    "boss": true
+   }
+  ],
+  "sinks": {
+   "store": {
+    "items": 158,
+    "median": 40000,
+    "max": 960000,
+    "totalToBuyAll": 15379000
+   },
+   "hoursFor": [
+    {
+     "price": 100000,
+     "smithSell75": 0.3,
+     "mining75": 0.5,
+     "meleeSafe75": 1.6,
+     "thieving75": 2.7
+    },
+    {
+     "price": 500000,
+     "smithSell75": 1.3,
+     "mining75": 2.6,
+     "meleeSafe75": 8.2,
+     "thieving75": 13.5
+    },
+    {
+     "price": 960000,
+     "smithSell75": 2.6,
+     "mining75": 5,
+     "meleeSafe75": 15.7,
+     "thieving75": 25.9
+    }
+   ],
+   "bagUpgrades": [
+    50000,
+    100000,
+    200000,
+    300000,
+    400000
+   ],
+   "isleTiers": [
+    {
+     "name": "Island",
+     "price": 0
+    },
+    {
+     "name": "Bigger island",
+     "price": 5000
+    },
+    {
+     "name": "The Far Shore",
+     "price": 20000
+    }
+   ],
+   "thievesPermit": 50000,
+   "toolTopPrice": 25000
+  },
+  "jackpot": {
+   "slotsJackpot": {
+    "slice": 0.02,
+    "seed": 10000,
+    "cap": 250000
+   },
+   "killJackpot": {
+    "odds": 250,
+    "mult": 12
+   },
+   "capInHoursOfSmithSell75": 0.67,
+   "capInHoursOfSafeMelee75": 4.1
+  },
+  "doubleTickets": {
+   "potionPrice": 100000,
+   "mult": 2,
+   "minutes": 30,
+   "dropPerKill": 0.00016666666666666666,
+   "note": "cashOut pays through tixTo, which applies the 2X multiplier, so every Bom sale (stockpiled loot, smithed gear) is doubled while a potion runs; pet sales deliberately use cashTo and are not."
+  },
+  "summary": {
+   "earnedTotal": 22639041,
+   "earnedTop": "dookiebetts800 5153411",
+   "earnedMedian": 57588,
+   "richestOverMedian": 89,
+   "top3ShareOfEarned": 0.59,
+   "wageredTotal": 46305528,
+   "wageredOverEarned": 2.05,
+   "top3ShareOfWagered": 0.97,
+   "note": "Only 28 of 36 characters have earned anything and 18 have wagered; three players account for 97% of all wagers (dookiebetts800 wagered 4.6x what they earned)."
+  }
+ },
+ "imbalances": [
+  {
+   "title": "Smithed gear sells to Bom for 5-10x its bars: smith-and-sell is the best job in the game by 5x",
+   "severity": "high",
+   "skill": "smithing",
+   "numbers": {
+    "dragonstone_gladius": "1 bar (109) -> 825 (7.6x)",
+    "onyx_gladius": "1 bar (207) -> 2,063 (10x)",
+    "eclipse_boots": "1 bar (381) -> 2,500 (6.6x)",
+    "chainTixH": {
+     "40": 211436,
+     "50": 230875,
+     "75": 371132,
+     "90": 409989
+    },
+    "safeMeleeTixH": {
+     "50": 47840,
+     "75": 60974,
+     "90": 70929
+    },
+    "playerEvidence": "Whosthatwolfguy90: Smithing 71, Mining 69, only 1,109 kills, 2.42M earned (4th richest)"
+   },
+   "why": "gearSellRaw prices anvil gear off Bom's shelf (x0.125, capped 2,500), not off what it is made of, so a 1-bar gladius or boots sells for the cap. It outpays every other activity 2-6x, and GEAR_SELL_MAX flattens every tier from onyx up, so the best loop sits at level 40-70 and never improves.",
+   "fix": "Price anvil-made gear like archery gear already is: in gearSellRaw, for any item a smith_* recipe makes, use min(GEAR_SELL_MAX, shelf x GEAR_SELL_RATE, round(input bar value x CRAFT_STEP)). Dragonstone gladius 825 -> 136, eclipse boots 2,500 -> 476, dragonstone body 2,250 -> 681. (Blunter alternative: GEAR_SELL_RATE 0.125 -> 0.02.)"
+  },
+  {
+   "title": "Mining out-earns fighting 2.4-3.3x from level 50: the BOUNTY_BAND baseline is stale",
+   "severity": "high",
+   "skill": "mining",
+   "numbers": {
+    "miningTixH": {
+     "50": "114,048 (stardust)",
+     "75": "191,808 (abyss_crystal)",
+     "90": "219,629 (singularity_ore)",
+     "99": "236,160 (glacite)"
+    },
+    "safeMeleeTixH": {
+     "50": 47840,
+     "75": 60974,
+     "90": 70929,
+     "99": 71753
+    },
+    "combatOverMining": {
+     "25": 1.61,
+     "50": 0.42,
+     "75": 0.32,
+     "90": 0.32,
+     "99": 0.3
+    },
+    "balanceToolOres": "tools/eastscape-balance.mjs ORES stops at onyx (level 40, 20 tickets)"
+   },
+   "why": "BOUNTY_BAND = 0.87 was set so 'fighting pays what a miner's minute pays', but the tool that measures a miner's minute only knows ores up to onyx at 40. Stardust (50, 60 tickets, no recipe uses it) and abyss crystal (75, 90, only a held Jewelcrafting recipe uses it) are pure vendor rocks worth 3x and 1.4x the tier ore at their level. Every top-5 earner has Mining 55+.",
+   "fix": "Two parts. (1) The vendor rocks, which no recipe uses, drop to their tier's ore: VALUE.stardust 60 -> 20 (onyx) and VALUE.abyss_crystal 90 -> 45 (eclipse); mining at 50 then pays ~38k/h and at 75 ~96k/h instead of 114k and 192k. (2) Extend ORES in tools/eastscape-balance.mjs past onyx - [50,'onyx_ore'],[60,'starfall_ore'],[70,'eclipse_ore'],[80,'nova_ore'],[90,'singularity_ore'],[94,'glacite'] - and re-derive the bounties from it (with imbalance 3's per-HP curve), so 'fighting pays a miner's minute' is true above 40. Singularity ore (93) and glacite (100) feed recipes, so they stay; the combat side rises to meet them."
+  },
+  {
+   "title": "Late-game monsters pay half the tickets per hour of Cloudreach and the Wilderness",
+   "severity": "high",
+   "skill": "melee",
+   "numbers": {
+    "ticketsPerHp": {
+     "angel (48)": 3.15,
+     "seagoat (46)": 3.13,
+     "weaver (40, Wild)": 4.24,
+     "marrowhound (50, Wild)": 4,
+     "grimlich (66, Deep)": 3.92,
+     "junkdog (80)": 1.59,
+     "gator (92)": 1.39,
+     "dogre (78)": 1.37,
+     "caveman (90)": 1.26,
+     "mammoth (98)": 1.1,
+     "pteroelder (103)": 1.83
+    },
+    "at99melee": {
+     "grimlich (66)": 89335,
+     "angel (48)": 71753,
+     "drake (62)": 65229,
+     "pterodactyl (95)": 60302,
+     "gull (66)": 50130,
+     "dogre (78)": 48199,
+     "junkdog (80)": 44845,
+     "caveman (90)": 44247,
+     "gator (92)": 42123,
+     "mammoth (98)": 39339
+    }
+   },
+   "why": "Every point of damage is the same xp anywhere, so tickets per HP is what decides where a high-level player farms. Bounties were priced per kill; the level 70-110 monsters have 3-12x the HP for 1.5-5x the bounty. A 99 earns most on a level-48 angel (71.8k/h safe) or a level-66 grim lich in the Deep (89.3k/h), and the Valley pays 39-65k/h. New maps give no reason to move for money.",
+   "fix": "Re-derive every non-boss BOUNTY from HP with a curve that rises with level, e.g. BOUNTY[t] = round(hp x (1.5 + 0.02 x lvl) x BOUNTY_BAND): angel 153 -> 103, grimlich 192 -> 118, junkdog 148 -> 254, dgoblin 386 -> 652, caveman 520 -> 1,206, mammoth 640 -> 1,746. At melee 99 that moves a mammoth to ~108k/h and an angel to ~49k/h (today 39k and 72k). Apply it after fixing the mining baseline, so the band is measured against the right miner."
+  },
+  {
+   "title": "The Tower pays ~0.3% of open-world tickets; five of eight climbers stopped at the old top (30)",
+   "severity": "medium",
+   "skill": "melee",
+   "numbers": {
+    "towerTixH": {
+     "floor 1": 170,
+     "floor 10": 116,
+     "floor 20": 159,
+     "floor 30": 146,
+     "floor 31": 307,
+     "floor 40": 1983,
+     "floor 50": 127,
+     "floor 60": 138,
+     "floor 70": 132,
+     "floor 80": 110,
+     "floor 90": 154,
+     "floor 99": 205
+    },
+    "towerXpH": {
+     "floor 1": 35463,
+     "floor 10": 38354,
+     "floor 20": 46037,
+     "floor 30": 53722,
+     "floor 31": 53275,
+     "floor 40": 56293,
+     "floor 50": 63983,
+     "floor 60": 74236,
+     "floor 70": 76811,
+     "floor 80": 84507,
+     "floor 90": 92206,
+     "floor 99": 94782
+    },
+    "board": "dookiebetts800 40; Kellzifer, pantomim3, BeeEzRadio, AndyReidisaPAWG, Zwades 30; jimmytomato 29; Calvinthesneak 11"
+   },
+   "why": "Each floor is a 4.5-11 minute fight against 25-40 kills' worth of HP and pays TOWER.tixShare (0.2) of ONE base kill's tickets: 110-300 tickets/h (floor 40's Grinning Man 2k/h) against 50-90k/h outside. XP is the same as outside, so the only reason to climb is the board. Floors 31-99 were added on 2026-09-25 and nobody but one player has used them.",
+   "fix": "Pay a floor for the HP it holds, not for one kill: in createTowerRules replace the tixShare cut with tickets = round(floorHp x (base tickets / base HP) x 0.5), i.e. half of what the same damage earns outside (fair for a semi-AFK room). A flat tixShare does not work: floor 1 would need ~20 and floor 99 ~70 to reach half. Optionally a checkpoint bonus every TOWER.checkEvery floors."
+  },
+  {
+   "title": "Wizardry (and elemental magic) are starved of inks and gems",
+   "severity": "medium",
+   "skill": "wizardry",
+   "numbers": {
+    "stationXpH": {
+     "50": 864000,
+     "75": 1269000,
+     "90": 1674000
+    },
+    "selfSuppliedXpH": {
+     "50": 9068,
+     "75": 9882,
+     "90": 10464
+    },
+    "hoursTo99": {
+     "selfSupplied": 1271,
+     "stationOnly": 8.6,
+     "gatheringSkills": "19-31"
+    },
+    "secondsPerUnit": {
+     "ink_frost": 140,
+     "ink_storm": 104,
+     "ink_void": 115,
+     "gem": "109-135 (1.4% per ore)"
+    },
+    "mageAt99": "1,800 storm-surge pages/h need 810 stormcorn/h; 20 plots grow ~55/h (6.8%)",
+    "players": "6 trained, top 50"
+   },
+   "why": "Bags and wands (the xp) need gems and elemental inks; elemental inks need a crop that grows in hours; pages print 10 per ink. The station is 100x faster than the supply, so the skill is either unplayable self-supplied or trivial with a market, and elemental magic can only be cast a few minutes an hour.",
+   "fix": "Multiply the ink economy rather than the xp: print_page_* out 10 -> 30 pages per ink, brew_ink_* out 2 -> 5 inks per brew, and GEM_DROP p 0.014 -> 0.03 (or give Wizardry a gem recipe). Keep the station xp as it is."
+  },
+  {
+   "title": "Harvesting and Fungiculture take thousands of real hours; Harvesting's ladder is flat from 30 to 92",
+   "severity": "medium",
+   "skill": "farming",
+   "numbers": {
+    "xpPerPlotHour": {
+     "bonegourd 30": 400,
+     "stormcorn 40": 350,
+     "goldtomatoe 50": 150,
+     "glassgourd 62": 220,
+     "emberwheat 78": 317,
+     "starfruit 92": 400
+    },
+    "realHoursTo99": {
+     "harvesting, 20 plots": 1579,
+     "harvesting, 8 plots": 3947,
+     "fungiculture, 10 beds": 2817
+    },
+    "players": "Harvesting top 60 (17 trained); Fungiculture top 49 (8 trained)"
+   },
+   "why": "Even replanting every plot the minute it is ready, 99 is 66 days of real time at 20 plots, and nothing after bonegourd (30) pays more xp per plot-hour until starfruit ties it at 92 - so levels 30-92 have no reason to plant anything new for xp.",
+   "fix": "Make xp per plot-hour climb: CROPS.stormcorn.xp 700 -> 1,000, goldtomatoe.xp 600 -> 2,000, glassgourd.xp 1,100 -> 3,000, emberwheat.xp 1,900 -> 4,500, starfruit.xp 3,200 -> 8,000 (about 2.5x bonegourd at 92); and the same shape in FUNGI (starcap.xp 2,900 -> 6,000)."
+  },
+  {
+   "title": "Agility pays nothing, so nobody trains it (the rate is fine)",
+   "severity": "medium",
+   "skill": "agility",
+   "numbers": {
+    "xpH": "58k-193k (lap 8.9-15.3 s)",
+    "hoursTo99Typical": 125,
+    "marksTixH": 11232,
+    "reward": "AGIL_SPEED 10 => +10% walk speed at 99",
+    "serverTotalXp": 158209,
+    "top": 40
+   },
+   "why": "One course, no levelled content, and ~11k tickets/h (3 marks x 13) - the lowest-paying active skill - with a reward that is only felt at high levels. The old note that it takes 557 h to 99 no longer holds at the laps players actually run.",
+   "fix": "Pay for laps: VALUE.agilmark 13 -> 50 and AGIL_MARKS 3 -> 4 (~57k tickets/h at a typical lap, just under combat), and give it rungs (a second course at 40, a third at 70, with AGIL_XP scaled 1.5x/2x)."
+  },
+  {
+   "title": "Onyx and starfall smithing require the PvP Wilderness",
+   "severity": "medium",
+   "skill": "smithing",
+   "numbers": {
+    "smelt_onyx": "4 onyx ore + 2 grimstone + 6 charcoal",
+    "smelt_starfall": "needs 1 onyx bar",
+    "grimstoneSources": "1 rock in the Wilderness, 1 in the Deep Wild (both PvP, gathering x0.5), Grim Lich drops (Deep)"
+   },
+   "why": "The level-50 and level-60 bar tiers cannot be made without entering PvP maps; the safe chain model finds no route to an onyx bar at all.",
+   "fix": "Put a grimstone rock outside the Wilderness (Cloudreach or the Golden Sands), or change smelt_onyx to 4 onyx_ore + 1 voidglass + 6 charcoal."
+  },
+  {
+   "title": "The 2X Tickets potion doubles every Bom sale, including stockpiles",
+   "severity": "medium",
+   "skill": null,
+   "numbers": {
+    "potion": "100,000 tickets, 30 min, everyone",
+    "drop": "1 kill in 6,000",
+    "example": "1 h of smith-and-sell at 75 (371k) banked and sold in the window pays +371k for a 100k potion"
+   },
+   "why": "cashOut credits through tixTo, which applies DOUBLE.mult; the pet sale path deliberately uses cashTo so a sale is not doubled. Loot and gear sales should follow the pet rule, or a banked hoard doubles on demand.",
+   "fix": "In cashOut (both the reforged branch and the loop), credit with cashTo instead of tixTo, keeping `earned` updated as today."
+  },
+  {
+   "title": "Alchemy cannot be started before Mining 20; three recipes have no usable source",
+   "severity": "medium",
+   "skill": "alchemy",
+   "numbers": {
+    "gate": "every recipe needs a vial; the only vial input is sand (sandpit, Mining 20, the Golden Sands)",
+    "noSource": "brew_coilbreaker (99): serpentvenom has NO source; brew_witch (30): ectoplasm only from the Pumpkin King event; brew_ember (82): emberglass only in the held Foundry",
+    "selfSuppliedHoursFrom20": 528.5,
+    "players": "8 trained, top 53"
+   },
+   "why": "A level-1 skill whose first recipe needs another skill at 20 in a combat-40 region; and the level-99 capstone potion is uncraftable.",
+   "fix": "Add a sand pit at Mining 1 in the Yard (or SHOP.sells ['small_vial', 15]); give serpentvenom a drop (e.g. cobra 3%) and ectoplasm a non-event source (revenant 3%)."
+  },
+  {
+   "title": "Log prices are inverted between Woodcutting 35 and 75, and charcoal is worth more than the log",
+   "severity": "low",
+   "skill": "woodcutting",
+   "numbers": {
+    "yewlogs_35": 35,
+    "palmlogs_45_60": 14,
+    "skyashlogs_45_50": 14,
+    "pinelogs_65": 20,
+    "voidlogs_75": 43,
+    "bogwoodlogs_80": 48,
+    "charcoal": "14 each: burn_pinelogs turns a 20-ticket log into 5 charcoal = 70 (3.5x), burn_palmlogs 14 -> 56 (4x), 1.8 s a burn, 3% fail"
+   },
+   "why": "A woodcutter earns more per raw log at 35 than at any level up to 74, and anyone at a furnace earns 2.8-4x a log by burning it and selling the charcoal, so the log price barely matters.",
+   "fix": "VALUE.palmlogs 14 -> 38, VALUE.skyashlogs 14 -> 40, VALUE.pinelogs 20 -> 42, and VALUE.charcoal 14 -> 6 (burning then pays about 1.0-1.5x the log, which keeps charcoal a fuel rather than a product)."
+  },
+  {
+   "title": "Top-tier arrows cost more than archery earns",
+   "severity": "low",
+   "skill": "archery",
+   "numbers": {
+    "arrowsPerHour": 2000,
+    "ticketsPerHour": {
+     "dragonstone_arrow": 14533,
+     "onyx_arrow": 27600,
+     "eclipse_arrow": 50800,
+     "nova_arrow": 131733,
+     "singularity_arrow": 282267
+    },
+    "archeryIncome": "84-103k/h at 75-99"
+   },
+   "why": "A shot spends an arrow hit or miss; at 15 arrowheads per bar, nova and singularity arrows burn 132-282k tickets of bars an hour. Also every shortbow has str 0 and 1.8 s, so bow tier only adds accuracy.",
+   "fix": "smith_nova_arrowhead / smith_singularity_arrowhead out 15 -> 45 (and 30 for eclipse), and give shortbows str (e.g. +2 per tier from yew up)."
+  },
+  {
+   "title": "Thieving: 50k entry, low pay, 8 marks",
+   "severity": "low",
+   "skill": "thieving",
+   "numbers": {
+    "permit": 50000,
+    "tixH": {
+     "50": 17409,
+     "75": 37058,
+     "90": 41113,
+     "99": 49865
+    },
+    "xpH99": 247328,
+    "gaps": "1-15, 15-25, 25-40, 40-50, 50-62, 62-75, 75-90",
+    "lastUnlock": 90,
+    "players": "7 trained, top 41"
+   },
+   "why": "It is quick to level (65 h) but costs 50k to start and pays the least of the active skills after Agility and Alchemy, with big gaps and nothing after 90.",
+   "fix": "THIEF.permit 50,000 -> 15,000; VALUE.blackmarket_ledger 57 -> 110 and stolen_signet 51 -> 80; a ninth mark at 97."
+  },
+  {
+   "title": "Breeding is bought, not trained",
+   "severity": "low",
+   "skill": "breeding",
+   "numbers": {
+    "storeEggs": "30 tickets per xp at every egg",
+    "to99": "~391M tickets (server lifetime earnings: 22.6M)",
+    "killEgg": "1 in 1,500 kills",
+    "ladder": "unlocks at 1 and 50 only",
+    "top": 29
+   },
+   "why": "Every egg has the same tickets-per-xp, so there is no progression inside the skill; kill eggs are too rare to matter.",
+   "fix": "BREED.eggDrop 1/1500 -> 1/400, and a rung every ~15 levels (an egg tier the pen can only hatch at that Breeding level)."
+  },
+  {
+   "title": "Dead zones and early caps",
+   "severity": "low",
+   "skill": null,
+   "numbers": {
+    "mining": "1-20 (copper/tin only), last unlock 94",
+    "woodcutting": "20-35, last 94",
+    "smithing": "last unlock 90 (nothing 90-99)",
+    "thieving": "last 90",
+    "fungiculture": "80-90, last 90",
+    "farming": "50-62, 62-78, 78-92",
+    "tinkering": "1-31 (first gadget 31)",
+    "breeding": "1-50, 50-99",
+    "agility": "1-99",
+    "melee": "Frozen Reach / Frostspire / Valley Lair bands 100-106 are above the 99 cap: melee can never fight there (only ARCH_BAND 40 / MAGE_BAND 60 open them)"
+   },
+   "why": "Spans of 10+ levels with nothing new are where players stop; a band above the level cap is a door that can never open for that style.",
+   "fix": "Mining: a level-10 rock (e.g. an iron/lead vein at 10). Smithing: a 95 recipe (frost/fossil gear). If melee is meant to reach the ice maps: BANDS.frozen[0] 100 -> 95, BANDS.valley_lair[0] 100 -> 97, BANDS.frostspire[0] 106 -> 99."
+  },
+  {
+   "title": "Group content has stalled: no Pyramid clear ever, no Crypt clear since 24 Sep",
+   "severity": "low",
+   "skill": null,
+   "numbers": {
+    "pyr1": 0,
+    "crypt1": 6,
+    "crypt2": 7,
+    "crypt3": 4,
+    "dates": "every crypt clear is dated 2026-09-23 or 2026-09-24"
+   },
+   "why": "Participation signal only (reward vs time was not modelled here); worth a look alongside the Tower fix.",
+   "fix": "Check the Pyramid's ante and payout against the ~50-90k/h a party member earns outside, and consider a first-clear bonus."
+  }
+ ],
+ "noSourceRecipes": [
+  {
+   "id": "brew_coilbreaker",
+   "skill": "alchemy",
+   "lvl": 99,
+   "missing": [
+    "serpentvenom"
+   ]
+  },
+  {
+   "id": "brew_witch",
+   "skill": "alchemy",
+   "lvl": 30,
+   "missing": [
+    "ectoplasm"
+   ]
+  },
+  {
+   "id": "blast_eclipse",
+   "skill": "smithing",
+   "lvl": 70,
+   "missing": [
+    "slag"
+   ]
+  },
+  {
+   "id": "blast_nova",
+   "skill": "smithing",
+   "lvl": 80,
+   "missing": [
+    "slag"
+   ]
+  },
+  {
+   "id": "brew_ember",
+   "skill": "alchemy",
+   "lvl": 82,
+   "missing": [
+    "emberglass"
+   ]
+  },
+  {
+   "id": "burn_walnutlogs",
+   "skill": "smithing",
+   "lvl": 1,
+   "missing": [
+    "walnutlogs"
+   ]
+  }
+ ]
+}

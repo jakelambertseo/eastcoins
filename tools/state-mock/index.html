@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>State of the game</title>
+<!-- (2026-10-01, the owner: "go ahead with 1, 2, 3, and 5"; 1 = a front page rebuilt from each nightly backup). Draws state.json, which
+     tools/gameplan-state.mjs writes from the nightly R2 backup (read-only; nothing here touches the live game). One snapshot per day is kept in
+     history/, so the trends grow by a day every time the script runs. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a09;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#2a2410,transparent),radial-gradient(900px 600px at 100% 30%,#10222a,transparent),#0b0a09}
+main{max-width:1180px;margin:0 auto;padding:28px 18px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 23px Cinzel,Georgia,serif;color:#ffd98a}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}.lede b{color:#f6e9cc}
+.sec{margin:34px 0 0;padding:20px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:980px;line-height:1.55;margin:0 0 8px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:8px;margin:12px 0}
+.tile{background:#14120e;border-radius:10px;padding:10px 12px;box-shadow:0 0 0 1.5px #3a2616}.tile b{display:block;font:800 26px Cinzel,serif;color:#ffe7b0}
+.tile span{font:700 12px Lora,serif;color:#a89070}.tile em{font-style:normal;font:800 12px Lora,serif;margin-left:6px}.up{color:#9ef0a0}.down{color:#ff9a8a}.flat{color:#8a7a60}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(360px,100%),1fr));gap:12px;margin-top:10px}
+.chart{background:#14120e;border-radius:10px;padding:12px 14px;box-shadow:0 0 0 1.5px #3a2616}.chart h3{margin:0 0 6px;font:800 14px Cinzel,serif;color:#ffe7b0}.chart svg{display:block;width:100%;height:auto}
+.tbl{width:100%;border-collapse:collapse;font:600 12.5px Lora,serif;background:#14120e;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616;margin-top:10px}
+.tbl th{text-align:left;font:800 10px Lora,serif;letter-spacing:.07em;text-transform:uppercase;color:#a89070;padding:9px 8px 5px}.tbl td{padding:6px 8px;border-top:1px solid #2e2216}.tbl td:first-child{font-weight:800;color:#ffe7b0}.tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
+.wrapx{overflow-x:auto}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+.links{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.links a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13px Lora,serif;color:#ffd98a}
+.bars{display:grid;gap:4px}.bars div{display:grid;grid-template-columns:110px 1fr 40px;gap:8px;align-items:center;font:700 12px Lora,serif;color:#cdbfa2}
+.bars i{display:block;height:12px;border-radius:3px;background:#e8a03a}.bars u{text-decoration:none;text-align:right;color:#ffe7b0;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<main>
+  <h1>State of the game</h1>
+  <p class="lede" id="lede"></p>
+  <div class="tiles" id="tiles"></div>
+  <div class="links"><a href="../release-mock/">What's live and what's next →</a><a href="../decisions-mock/">Decisions →</a><a href="../gameplan-mock/">The plan →</a></div>
+
+  <section class="sec"><h2>The trend</h2><p>One point a day, from each night's backup. The first day kept is 22 September.</p><div class="grid2" id="trends"></div></section>
+
+  <section class="sec"><h2>Where people are</h2><div class="grid2"><div class="chart"><h3>Combat level, players seen this week</h3><div class="bars" id="combat"></div></div><div class="chart"><h3>The best in each skill</h3><div class="bars" id="skills"></div></div></div></section>
+
+  <section class="sec" id="daySec"><h2>Yesterday, tracked</h2><div id="day"></div></section>
+  <p class="note" id="foot" style="margin-top:30px"></p>
+</main>
+<script>
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const fmt = (n) => (Math.abs(n) >= 1e6 ? `${(n / 1e6).toFixed(Math.abs(n) >= 1e7 ? 1 : 2)}M` : Math.abs(n) >= 1e4 ? `${Math.round(n / 1e3)}k` : (Math.round(n * 10) / 10).toLocaleString());
+const $ = (id) => document.getElementById(id);
+const SK = { melee: "Melee", archery: "Archery", magic: "Magic", hp: "Hitpoints", fishing: "Fishing", cooking: "Cooking", farming: "Farming", mining: "Mining", woodcutting: "Woodcutting", smithing: "Smithing", agility: "Agility", thieving: "Thieving", alchemy: "Alchemy", fletching: "Fletching", wizardry: "Wizardry", breeding: "Breeding", fungiculture: "Fungiculture", tinkering: "Tinkering" };
+fetch("state.json").then((r) => r.json()).then(({ days, built }) => {
+  const L = days.at(-1), wk = days.find((d) => d.date >= addDays(L.date, -7)) || days[0];
+  function addDays(d, n) { const t = new Date(d + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); }
+  const delta = (a, b, money) => { const d = a - b; if (!b && !a) return ""; const c = d > 0 ? "up" : d < 0 ? "down" : "flat"; return `<em class="${c}">${d > 0 ? "▲" : d < 0 ? "▼" : "•"} ${fmt(Math.abs(d))}${money ? "" : ""}</em>`; };
+  $("lede").innerHTML = `As of the backup taken <b>${esc(new Date(L.takenAt).toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "medium", timeStyle: "short" }))} Chicago</b> (rules ${L.rules}). Arrows compare with <b>${esc(wk.date)}</b>. Everything here is read from backups; nothing polls the live game.`;
+  const T = [[L.players.total, wk.players.total, "players, ever"], [L.players.seen7, wk.players.seen7, "played this week"], [L.players.new7, wk.players.new7, "new this week"], [L.players.hoursAll, wk.players.hoursAll, "hours played, all time"], [L.levels.combatMax, wk.levels.combatMax, "the best combat level"], [L.levels.combatMedian, wk.levels.combatMedian, "median combat, this week's players"], [L.econ.held, wk.econ.held, "tickets held"], [L.econ.savers, wk.econ.savers, "savers (see Ticket sinks)"]];
+  $("tiles").innerHTML = T.map(([v, b, l]) => `<div class="tile"><b>${fmt(v)}${L === wk ? "" : delta(v, b)}</b><span>${l}</span></div>`).join("");
+  /* small multiples: one measure per chart, one axis each */
+  const spark = (title, get, col, unit = "") => {
+    const W = 520, H = 150, l = 44, b = 22, v = days.map(get), raw = Math.max(1, ...v) * 1.1, p10 = 10 ** Math.floor(Math.log10(raw)), mx = Math.ceil(raw / (p10 / 2)) * (p10 / 2);
+    const X = (i) => l + (i / Math.max(1, days.length - 1)) * (W - l - 12), Y = (y) => H - b - (y / mx) * (H - b - 10);
+    let s = ""; for (const t of [0, mx / 2, mx]) s += `<line x1="${l}" x2="${W - 8}" y1="${Y(t)}" y2="${Y(t)}" stroke="#2e2216"/><text x="${l - 6}" y="${Y(t) + 4}" fill="#a89070" font-size="11" text-anchor="end">${fmt(t)}</text>`;
+    s += `<path d="${v.map((y, i) => `${i ? "L" : "M"}${X(i)} ${Y(y)}`).join("")}" stroke="${col}" stroke-width="2" fill="none"/>`;
+    v.forEach((y, i) => { s += `<circle cx="${X(i)}" cy="${Y(y)}" r="5" fill="${col}" stroke="#14120e" stroke-width="2"><title>${days[i].date}: ${y.toLocaleString()}${unit}</title></circle>`; });
+    s += `<text x="${X(0)}" y="${H - 4}" fill="#a89070" font-size="11">${days[0].date.slice(5)}</text><text x="${X(days.length - 1)}" y="${H - 4}" fill="#a89070" font-size="11" text-anchor="end">${L.date.slice(5)}</text>`;
+    s += `<text x="${X(days.length - 1)}" y="${Y(v.at(-1)) - 10}" fill="#ffe7b0" font-size="12" font-weight="800" text-anchor="end">${fmt(v.at(-1))}${unit}</text>`;
+    return `<div class="chart"><h3>${title}</h3><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}">${s}</svg></div>`;
+  };
+  $("trends").innerHTML = spark("Players, ever", (d) => d.players.total, "#e8a03a") + spark("Hours played, all time", (d) => d.players.hoursAll, "#5ad06a", " h") + spark("The best combat level", (d) => d.levels.combatMax, "#ff7a5a") + spark("Tickets held, everyone", (d) => d.econ.held, "#ffd34a");
+  const mxB = Math.max(1, ...L.levels.buckets.map((x) => x.n));
+  $("combat").innerHTML = L.levels.buckets.map((x) => `<div><span>${x.from}-${x.to > 150 ? "+" : x.to}</span><i style="width:${(x.n / mxB) * 100}%"></i><u>${x.n}</u></div>`).join("");
+  const sk = Object.entries(L.levels.skillTop).filter(([k, v]) => SK[k] && v.players).sort((a, b) => b[1].max - a[1].max);
+  $("skills").innerHTML = sk.map(([k, v]) => `<div title="${v.players} players have trained it${v.n99 ? `, ${v.n99} at 99` : ""}"><span>${SK[k]}</span><i style="width:${v.max}%;background:${v.max >= 99 ? "#ffd34a" : v.max >= 80 ? "#e8a03a" : "#7a6a50"}"></i><u>${v.max}</u></div>`).join("");
+  const D = L.day;
+  if (!D) $("day").innerHTML = `<p class="note">The tracker (rules 376) went live on 30 September; the first backup holding a whole tracked day is today's (about 09:20 UTC). Run <code>node tools/gameplan-state.mjs</code> after it, then rebuild: this fills in with who played, the tickets in and out, every map's hours, kills and deaths, and the casino.</p>`;
+  else {
+    const tiles = [[D.people.unique, "played"], [D.people.fresh, "new"], [D.people.peak, "online at the peak"], [D.people.sessions, "sessions"], [`${D.people.avgMin} min`, "a session, on average"], [D.hours, "hours played"], [D.tixIn, "tickets in"], [D.tixOut, "tickets out"]];
+    const cas = Object.entries(D.casino || {}).sort((a, b) => b[1][0] - a[1][0]);
+    $("day").innerHTML = `<p>${esc(D.date)}, Chicago time.</p><div class="tiles">${tiles.map(([v, l]) => `<div class="tile"><b>${typeof v === "number" ? fmt(v) : v}</b><span>${l}</span></div>`).join("")}</div>
+      <div class="wrapx"><table class="tbl"><tr><th>Map</th><th class="num">Hours</th><th class="num">People</th><th class="num">Fighting</th><th class="num">Gathering</th><th class="num">Kills</th><th class="num">Deaths</th></tr>${D.maps.slice(0, 20).map((m) => `<tr><td>${esc(m.map)}</td><td class="num">${m.hours}</td><td class="num">${m.people}</td><td class="num">${m.fight}</td><td class="num">${m.gather}</td><td class="num">${m.kills.toLocaleString()}</td><td class="num">${m.deaths}</td></tr>`).join("")}</table></div>
+      ${cas.length ? `<div class="wrapx"><table class="tbl"><tr><th>Table</th><th class="num">Plays</th><th class="num">Players' net</th></tr>${cas.map(([g, [n, net]]) => `<tr><td>${esc(g)}</td><td class="num">${n}</td><td class="num">${Math.round(net).toLocaleString()}</td></tr>`).join("")}</table></div>` : ""}`;
+  }
+  $("foot").textContent = `Built ${built.slice(0, 16).replace("T", " ")} UTC from ${days.length} daily backups.`;
+});
+</script>
+</body>
+</html>

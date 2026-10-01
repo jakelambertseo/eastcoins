@@ -1,0 +1,1203 @@
+[
+ {
+  "date": "2026-10-01",
+  "area": "Skilling",
+  "decision": "Every non-combat skill gets a four-piece skilling set (hat, coat, gloves, boots) with a full-set bonus, each set dropping from a different skill or event, on the Ditched set's model.",
+  "quote": "a full set should provide bonuses to that skill, and we already have Ditched gear as a template",
+  "why": "wires the island skills into the rest",
+  "page": "skillsets-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Skilling",
+  "decision": "A full skilling set makes its skill about 15% faster to 99; the set names are left to Claude.",
+  "quote": "15% faster is the right size, come up with thematically relevant names youreself",
+  "why": "",
+  "page": "skillsets-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Art & UI",
+  "decision": "Skilling sets go in a separate work-clothes slot, shown by flipping the paper doll (Armour | Work clothes), with gold pips on each skill tile for set progress.",
+  "quote": "for work clothes go with A, and add the skill pips too",
+  "why": "the Equipment tab already carries a lot",
+  "page": "workclothes-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Economy",
+  "decision": "Ticket wealth is read against hours played, not raw holdings.",
+  "quote": "the top players hold 94% but also take consideration of their playtime. a lot have only played a few hours",
+  "why": "most of the gap is time; three savers are the real outliers",
+  "page": "sinks-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Tech & ops",
+  "decision": "The game plan stays on the dev server for now; nothing is deployed until the owner says to upload it.",
+  "quote": "this just on the dev server, dont deploy anything for now",
+  "why": "",
+  "page": "gameplan-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Tech & ops",
+  "decision": "The game plan is the core backend overview of the game: the state of the game, decisions, releases and the plan, with a categorized side nav.",
+  "quote": "its the most valuable piece of something we've made yet on the backend/ideas side",
+  "why": "",
+  "page": "gameplan-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Long game",
+  "decision": "Every skill goes to 120, and the atlas of where each tier lives (maps first) is the basis for all content from here on.",
+  "quote": "add one more mockup that fully covers maps, skilling to 120. that will be the basis for all content after that.",
+  "why": "the where has to be settled before the what",
+  "page": "atlas-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "World & maps",
+  "decision": "Endgame content past 110 is several separate maps with their own look and rule, not one map that goes deeper.",
+  "quote": "i would rather have multiple, seemingly unique maps instead of 'deeper' maps that are one theme/design",
+  "why": "",
+  "page": "endgame-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Direction",
+  "decision": "There is one server-wide guild/community, not competing guilds; founding, tags and guild leaderboards are out.",
+  "quote": "our community is small enough where we would only have 1 guild, and everyone would be working together.",
+  "why": "the server is about 36 players",
+  "page": "guild-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Combat",
+  "decision": "Players can slot several abilities, which fire in order on their own; the only control is changing the order.",
+  "quote": "we SHOULD allow users to have multiple skills, but they go off in order instead, the only thing users can do is change the order, to keep it simple",
+  "why": "to keep it simple; quick slots stay on 1-4",
+  "page": "ascend-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Combat",
+  "decision": "Abilities (phase 2a) are built: three per fighting style at levels 1, 30 and 60, decided by the server.",
+  "quote": "go ahead with the abilities",
+  "why": "",
+  "page": "ascend-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Art & UI",
+  "decision": "The Character stats window (a button in the Equipment tab) is approved and ships with the phase 0 batch, not on its own.",
+  "quote": "bundle it with the updates like youve suggested in your roadmap. mark it as done",
+  "why": "approved after testing it in the game",
+  "page": "statsui-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Tech & ops",
+  "decision": "The game plan is an internal roadmap only and never appears on The Road Ahead.",
+  "quote": "lets think deeply about these mockups and figure out what needs to change, what we should build first, any gaps we have with these ideas, and a roadmap for them (internal roadmap only)",
+  "why": "",
+  "page": "gameplan-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Events",
+  "decision": "Server-wide, all-levels world events narrated by CASINO, like the Yard raid, are the direction for new features.",
+  "quote": "that yard raid was the biggest hit of the game and very fun. lets try to use that mechanic and similar ones going forward.",
+  "why": "it pulled the whole server into one place at once",
+  "page": "raid-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Events",
+  "decision": "New recurring events start rare: once a day each, staggered between 12:00 and 24:00 Chicago time.",
+  "quote": "we already have the halloween event going on per hour, and these are new so want to take it slow on the live server",
+  "why": "too many events at once crowd chat and the live server",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Events",
+  "decision": "Event fixtures stay out of the Yard (the Star Tent went to Cloudreach; stars never land in the Yard).",
+  "quote": "the yard is too croweded",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Events",
+  "decision": "A raid lasts about 5 to 10 minutes.",
+  "quote": "the entire raid feels too long, i think it needs to be around 5-10 mins to provide a sense of urgency",
+  "why": "a sense of urgency",
+  "page": "raid-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Events",
+  "decision": "A raid is announced 5 minutes ahead, then every minute, then at 30 seconds.",
+  "quote": "a 5 minute warning too with a countdown every minute, then one at 30 seconds",
+  "why": "builds tension in chat",
+  "page": "raid-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Events",
+  "decision": "A lost Flood leaves the water up and the stalls shut for 2 hours; the casino itself stays open.",
+  "quote": "if they lose, the water stays for 2 hours, and the stalls are closed for 2 hours too",
+  "why": "a loss is a nuisance, not a loss of anything owned",
+  "page": "raid-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Events",
+  "decision": "The Jackpot Thief never spawns in the Yard, carries 30,000-50,000 tickets, and his health scales with how many fight him.",
+  "quote": "make it so he never spawns in the yard",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Direction",
+  "decision": "Major updates ship once a week, each with a weekly wiki issue (weeks start Thursday, from 1 October).",
+  "quote": "once a week major updates",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Pets",
+  "decision": "Every late map drops stronger, more unique egg pets than the maps before it, and each of its bosses has a unique boss pet.",
+  "quote": "these areas, the prehistoric area the frost area and other maps going forward need to drop potential stronger, more unique pets and eggs",
+  "why": "a new map's pets were no stronger than the Boneyard's",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Pets",
+  "decision": "Pet eggs drop at 1 in 1,000.",
+  "quote": "pet drops also need to be dropped slightly to 1/1000",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "World & maps",
+  "decision": "Each new map's ordinary monsters also drop a few plain drops from the 2-3 maps before it, at low rates.",
+  "quote": "we also need to start slightly (with lowish drop rates) mixing in 2-3 previous maps plain drops, so users still get a gelled sense of progress",
+  "why": "a new map's loot felt disconnected from the road to it",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "World & maps",
+  "decision": "New maps use the game's own Yard ground and a cobble road; pack art is only for props and plateaus, with few path-blocking props, and maps are larger.",
+  "quote": "use the road rules we built earlier. it needs a cobble road so it feels consistent, the ground tiles need to match our basic ones in the yard ... and not be from the tile packs",
+  "why": "consistency; the composed Valley had too many blocking props",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "World & maps",
+  "decision": "Islands get significantly better: bigger maps that keep everyone's placed decor, a look pass and cottage customization, built on dev in phases.",
+  "quote": "its a fan favorite of players",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Combat",
+  "decision": "On the Primeval Valley's cliff maps a bow at Archery 40 is enough to fight, with a 50% sure-shot floor.",
+  "quote": "lets allow archers starting at level 40 to damage the monsters on cliffs/etc.",
+  "why": "most players are around Archery 40; fun but not too easy",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Art & UI",
+  "decision": "Combat feel comes from drawn effects, not real attack animation frames.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Art & UI",
+  "decision": "Every Store item, tab, boost, upgrade and pet ships with its own PixelLab art, made in the same build; emoji placeholders are not acceptable.",
+  "quote": "need custom art/icons for all the items in the store",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Art & UI",
+  "decision": "No customization or phone-specific variants for phones; phones keep the fixed layout and only must not break.",
+  "quote": "not many people play on phones so its not worth the effort",
+  "why": "few people play on phones",
+  "page": "ui-custom-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Tech & ops",
+  "decision": "The known craft, fletch, gear, food and aggro check failures are intended tuning and are not reported as problems.",
+  "quote": "all of those are fine and custom tuned directions",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Direction",
+  "decision": "The Road Ahead shows the held maps, new chase items and monsters past level 99, and teases Ascendancy classes.",
+  "quote": "tease ascendency classes as well",
+  "why": "",
+  "page": "roadmap-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Long game",
+  "decision": "Long-game content is planned for players reaching levels 100-120 over many hours of play.",
+  "quote": "think long term - users getting into levels 100-120, which takes many many many hours",
+  "why": "",
+  "page": "past99-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Long game",
+  "decision": "No new or intertwined skills for the long game: masterwork quality, sockets and sets use existing skills, and sockets are done at the Gem Sorter.",
+  "quote": "",
+  "why": "",
+  "page": "relic-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Long game",
+  "decision": "The magic Ascendancy pair swaps the Elementalist for a healer, the Mender, and later dungeons are built to need healers.",
+  "quote": "",
+  "why": "",
+  "page": "ascend-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-30",
+  "area": "Combat",
+  "decision": "An ability bar where keys 1-3 fire style abilities and 4 fires the path's signature move.",
+  "quote": "",
+  "why": "",
+  "page": "ascend-mock",
+  "status": "superseded",
+  "replacedBy": "2026-10-01: abilities fire in order on their own; only the order is set"
+ },
+ {
+  "date": "2026-09-29",
+  "area": "Skilling",
+  "decision": "The gem bag, the Gem Sorter and Tinkering open on the live server.",
+  "quote": "open the gem bag and sorter live, and tinkering",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-28",
+  "area": "Skilling",
+  "decision": "Tinkering is the new skill, chosen over Brewing and Trapping because it is a ticket sink, with a ticket fee at the bench and Yard Projects.",
+  "quote": "tinkering makes the most sense since it provides something we desperately need: a sink",
+  "why": "the game needs a sink",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-28",
+  "area": "Skilling",
+  "decision": "Jewelcrafting is retired; gems go through the Gem Sorter (unsorted on pull, sorted gems trade with their roll, sockets on level-80+ gear).",
+  "quote": "replace jewelcrafting",
+  "why": "",
+  "page": "relic-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-28",
+  "area": "Combat",
+  "decision": "Only the best two gems of each kind count, so no stone can add more than +20%.",
+  "quote": "they shouldnt be able to use 8 10% melee gems as thats 80% extra damage which is game breaking",
+  "why": "stacking one gem was game breaking",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-28",
+  "area": "Art & UI",
+  "decision": "EastScape's fonts are Cinzel for titles and names and Lora for all other text; Nunito is gone.",
+  "quote": "",
+  "why": "fantasy-matching but readable",
+  "page": "ui-kit",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-27",
+  "area": "Tech & ops",
+  "decision": "The owner's live character bootypaper is an honest level-1 playthrough: no admin ops on it in production, and all testing uses a named local character on the dev server.",
+  "quote": "so i can really play the game now",
+  "why": "admin actions would spoil the playthrough",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-27",
+  "area": "Tech & ops",
+  "decision": "Big updates are built piece by piece on the local dev server and go to production only when the whole update is called.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-27",
+  "area": "Tech & ops",
+  "decision": "Finished content can ship built but shut (HOLD), as the Depths and Jewelcrafting did, and opens on the owner's word.",
+  "quote": "push it with depths and jewelcrafting held shut",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-27",
+  "area": "Skilling",
+  "decision": "Jewelcrafting is the third new skill, after Breeding and Fungiculture.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "superseded",
+  "replacedBy": "2026-09-28: Jewelcrafting retired for the Gem Sorter; Tinkering chosen as the new skill"
+ },
+ {
+  "date": "2026-09-27",
+  "area": "World & maps",
+  "decision": "Each new map gets its own unique tile set, found by the owner, and is asked about before it is built.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "superseded",
+  "replacedBy": "2026-09-30: new maps use the Yard's own ground and cobble road; pack art only for props"
+ },
+ {
+  "date": "2026-09-27",
+  "area": "Combat",
+  "decision": "Power creep must be felt on new maps: some monsters are bow-only or shrug off a style or element, hit hard and are tanky, and bosses hit harder than the Pumpkin King.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-27",
+  "area": "Combat",
+  "decision": "The Pumpkin King is an open boss: everyone who does a real share of damage gets the kill and their own drop.",
+  "quote": "only one person can attack the pumpkin king",
+  "why": "the first hit used to lock him to one player",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-27",
+  "area": "Pets",
+  "decision": "Pets can be traded between players or sold.",
+  "quote": "we need to make pets tradable between users or sellable ... so users can maximize breeding",
+  "why": "so players can maximize breeding",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-27",
+  "area": "Pets",
+  "decision": "A breeding pen's trough is filled once at the start; the clock then runs untouched, offline included.",
+  "quote": "every hour feels like micromanaging",
+  "why": "no hourly chores",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-27",
+  "area": "Pets",
+  "decision": "Eggs are rare but not that rare: about one kill in 3,000.",
+  "quote": "RARE but not that rare",
+  "why": "",
+  "page": "",
+  "status": "superseded",
+  "replacedBy": "2026-09-30: eggs drop at 1 in 1,000"
+ },
+ {
+  "date": "2026-09-27",
+  "area": "Skilling",
+  "decision": "A harvested seed crop returns a seed 25% of the time.",
+  "quote": "have the chance of seed return at 25%",
+  "why": "",
+  "page": "",
+  "status": "superseded",
+  "replacedBy": "Same evening: a crop always returns its seed, sometimes two"
+ },
+ {
+  "date": "2026-09-27",
+  "area": "Skilling",
+  "decision": "A harvested seed crop always gives its seed back, plus a second one some of the time.",
+  "quote": "we need to make sure users are self sufficient, but dont get too many seeds",
+  "why": "farmers stay self-sufficient without a seed glut",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-27",
+  "area": "Art & UI",
+  "decision": "Everyone gets 25 inventory slots and 5 bank pages to start.",
+  "quote": "with all the new items, lets give all users default of 25 inventory slots",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-27",
+  "area": "Economy",
+  "decision": "Ordinary monsters pay what skilling pays (1.0x a minute of mining, from 1.15x); bosses keep their numbers.",
+  "quote": "the drops from mobs across the board is too much",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-27",
+  "area": "Economy",
+  "decision": "Store prices launch high (double the first draft) and can be lowered later for events.",
+  "quote": "need it to be high at the start then we can lower for event, etc",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-26",
+  "area": "Combat",
+  "decision": "Magic is a combat skill (damage = xp) and Wizardry is the crafting skill that prints spell pages at element altars.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-26",
+  "area": "Combat",
+  "decision": "Mages use wands, not staffs, and hold pages in Magic Bags: only five, at levels 1, 30, 50, 70 and 90, all reforgeable.",
+  "quote": "",
+  "why": "so progression feels staggered",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-26",
+  "area": "Combat",
+  "decision": "Magic has five elements with monster weaknesses and resists; gem arrows carry no element.",
+  "quote": "",
+  "why": "keeps magic's identity",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-26",
+  "area": "Combat",
+  "decision": "Magic is open from level 1, with its content in mid and late areas.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-26",
+  "area": "Skilling",
+  "decision": "Wizardry also prints utility pages, starting with eight.",
+  "quote": "an AMAZING idea",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-26",
+  "area": "Combat",
+  "decision": "Some monsters are immune or mostly immune to a fighting style (e.g. ghosts take 90% less melee).",
+  "quote": "remember this immunity for later, its a great mechanism.",
+  "why": "it makes the three styles matter by forcing a switch",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-26",
+  "area": "Tech & ops",
+  "decision": "Backups and a written revert procedure are on the pre-launch checklist.",
+  "quote": "add this to pre launch checklist",
+  "why": "character state lives in one Durable Object",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-26",
+  "area": "Art & UI",
+  "decision": "The next day's focus is a mobile pass, alongside backups and a world map.",
+  "quote": "tomorrow lets focus on mobile pass and site backups",
+  "why": "",
+  "page": "",
+  "status": "superseded",
+  "replacedBy": "2026-09-30: no phone-specific work; phones only must not break"
+ },
+ {
+  "date": "2026-09-25",
+  "area": "Combat",
+  "decision": "The combat level is the culmination of the stronger style, the weaker style and health.",
+  "quote": "the culmination of melee, archery, and health",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-25",
+  "area": "Combat",
+  "decision": "Outdoor monster health comes down to 1.15x while their damage goes up: shorter fights, more danger.",
+  "quote": "lets go 1.15. lets also increase the mob danger even more",
+  "why": "time-to-kill complaints",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-24",
+  "area": "Pets",
+  "decision": "Pets differ by effect (speed, yield, luck, carry), never by skill, so nobody swaps pets per skill.",
+  "quote": "users having to switch between pets depending on which skill theyre using... this is supposed to be a fun, beer in hand type of game, and that seems like a lot of micromanaging",
+  "why": "beer-in-hand game, no micromanaging",
+  "page": "petgrow-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-23",
+  "area": "Skilling",
+  "decision": "Thieving is a new non-combat skill in a guild south of the Yard; its permit costs 50,000 tickets or comes as a rare Crypt drop, its marks cannot be fought, and it does not count toward the Crypt/Tower gates.",
+  "quote": "",
+  "why": "a real alternative path you cannot fight your way into",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-23",
+  "area": "Economy",
+  "decision": "A reforge belongs to the item and travels with it.",
+  "quote": "make the reforge travel with the item",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-23",
+  "area": "Casino",
+  "decision": "EastScape's ticket tables take a house edge: each play draws 93-99% (mean 96%); the website's ZCoin casino keeps its own 96-104%.",
+  "quote": "give the eastscape tables an edge when people bet with tickets",
+  "why": "the casino should be a ticket sink",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-22",
+  "area": "Combat",
+  "decision": "On higher-tier maps where the better ore, logs and fish are, some monsters attack when you get near; the early maps stay calm.",
+  "quote": "in higher tier maps, where higher tier ore/logs/fish exist, some mobs need to be aggressive when you get near them. this prevents people from just maining woodcutting and jumping straight to the highest tier trees.",
+  "why": "stops skillers walking straight to top-tier resources",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-22",
+  "area": "Economy",
+  "decision": "Gear must be sellable on the player market (instanced gear).",
+  "quote": "its crucual that the gear is sellable on the market, it gives people a feeling of grinding working out, upgrading and progression",
+  "why": "a feeling of progression",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-22",
+  "area": "Art & UI",
+  "decision": "Every PixelLab generation starts from the owner's one style brief (polished top-down pixel art, neon casino palette, strong outlines).",
+  "quote": "whatever you did styling wise lets do that going forward",
+  "why": "art made weeks apart did not look like one game",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-22",
+  "area": "Art & UI",
+  "decision": "The jukebox's radio plays on every map.",
+  "quote": "can we make the radio music from the jukebox play in every map",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-21",
+  "area": "Casino",
+  "decision": "The floor's eight tables can be played for tickets that pay tickets, on the game's own engine; ZCoin bets are unchanged.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-21",
+  "area": "Casino",
+  "decision": "Ticket tables return 96-104% per play, like the eastcoin casino.",
+  "quote": "all games should return between 96-104%, just like the current eastcoin casino",
+  "why": "",
+  "page": "",
+  "status": "superseded",
+  "replacedBy": "2026-09-23: ticket tables draw 93-99% (a 4% house edge)"
+ },
+ {
+  "date": "2026-09-21",
+  "area": "Economy",
+  "decision": "Cash-out is back: the Prize Counter trades 1,000 tickets for 1 ZCoin under the shared hourly allowance.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-21",
+  "area": "Direction",
+  "decision": "EastScape replaces the casino in the site nav; launch is Thursday 1 October, with Sunday 27 September as a dress rehearsal.",
+  "quote": "",
+  "why": "a quiet launch before the big NFL Sunday",
+  "page": "",
+  "status": "standing",
+  "replacedBy": "",
+  "check": "LAUNCH.md calls this the decision, but its confirm box is unticked"
+ },
+ {
+  "date": "2026-09-21",
+  "area": "World & maps",
+  "decision": "The Forum is closed; the Exchange, the Crypt's entrance and Charon's boat move to the Yard by the jukebox.",
+  "quote": "lets get rid of the forum area, and move the important npcs to the area by the jukebox. the market lady, the crypts entrance, and the boat guy ... no need to move the bank since there's a bank box",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-21",
+  "area": "Combat",
+  "decision": "Crits are rarer (about one landed hit in nine, none until a max hit of 5) and stay display-only.",
+  "quote": "it feels like users are criting too much",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-21",
+  "area": "Tone & copy",
+  "decision": "Sounds heard hundreds of times an hour are steady: one take, one pitch, quiet.",
+  "quote": "this is a semi-afk game, so it needs to be consistent and chill. just a few repeating sounds",
+  "why": "lively takes were tiring within a session",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-21",
+  "area": "Tech & ops",
+  "decision": "The first-load code budget is 200 KB (raised from 140).",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-21",
+  "area": "Long game",
+  "decision": "Players should eventually ascend into a class (archer, mage, healer, tank) that opens content only ascended characters can reach.",
+  "quote": "",
+  "why": "a boss that needs a tank and a healer is a reason to party",
+  "page": "ascend-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-20",
+  "area": "World & maps",
+  "decision": "Skilling, combat and crafting share one entrance from the casino into a line of scenes that pay better the further out you go.",
+  "quote": "one entrance for skilling/combat/crafting, all available in a few scenes",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-20",
+  "area": "Skilling",
+  "decision": "Outside is monsters and a fishing pond only; rocks, trees and crafting stations are removed.",
+  "quote": "",
+  "why": "keep it simple for a casino-first audience",
+  "page": "",
+  "status": "superseded",
+  "replacedBy": "Skilling came back from 2026-09-21 (cooking, then nine and more skills)"
+ },
+ {
+  "date": "2026-09-20",
+  "area": "Combat",
+  "decision": "Every monster drops the same three lines: tickets, its one item, and one rare roll.",
+  "quote": "1-3 items, with the third being a rare one",
+  "why": "nobody needs the wiki to know what a kill is",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-20",
+  "area": "Combat",
+  "decision": "Kills are fast (about 8-12 seconds at level) for an arcade-style feedback loop.",
+  "quote": "an arcade style feedback loop",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-20",
+  "area": "Economy",
+  "decision": "Real ZCoins drop rarely from fishing and monster kills and are banked at the Prize Counter.",
+  "quote": "rare drops for raw zcoins from fishing and mob killing",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-20",
+  "area": "Casino",
+  "decision": "The casino floor is laid out in roped-off sections, one kind of game per room, like a real casino.",
+  "quote": "put games together, as in sections, just like a real casino... rope them off",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-20",
+  "area": "Tone & copy",
+  "decision": "Bom Trady, a Tom Brady parody, runs the Prize Counter as the head honcho, drawn to make people laugh.",
+  "quote": "obvious... jersey on and looks like tom brady. giga jawline, people should immediately laugh",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-20",
+  "area": "Art & UI",
+  "decision": "Player looks are assigned by account and nobody picks.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "superseded",
+  "replacedBy": "Same day: make-your-own looks (mix and match)"
+ },
+ {
+  "date": "2026-09-20",
+  "area": "Art & UI",
+  "decision": "Players make their own look: a few recolourable bodies and hairstyles, team-coloured tees (NFL only for now), and a casino dress code.",
+  "quote": "a few hairstyles, a few bodies, and that's it",
+  "why": "these are sports-focused players",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Direction",
+  "decision": "EastScape is a casino mixed with OSRS for people watching a game with a drink in hand: fun, casino-y and digestible, with quick runs or long grinds.",
+  "quote": "a casino mixed with osrs",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Direction",
+  "decision": "zwades delegated all game decisions to the owner; no sign-off from zwades is needed.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Direction",
+  "decision": "The reset: very simple and intuitive, for gamblers and casual players who spend about 80% of their time in the casino.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-19",
+  "area": "World & maps",
+  "decision": "The world closes down to six scenes (casino, roulette, Forum, bathhouse, Workyard, Paddock).",
+  "quote": "",
+  "why": "start tiny",
+  "page": "",
+  "status": "superseded",
+  "replacedBy": "The world reopened map by map from 2026-09-19 (bands) onward"
+ },
+ {
+  "date": "2026-09-19",
+  "area": "World & maps",
+  "decision": "A cross-shaped world: casino in the middle, floors north, skilling west, combat east, crafting south.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "superseded",
+  "replacedBy": "2026-09-20: one entrance into a single line of scenes"
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Direction",
+  "decision": "The game is named GAMBA.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "superseded",
+  "replacedBy": "Same day: named EastScape again"
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Tone & copy",
+  "decision": "The game is EastScape again; 'GambaScape' is never written anywhere a player reads.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Economy",
+  "decision": "Tickets are the only currency; the old Cash item is gone and saved stacks were wiped.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Economy",
+  "decision": "1,000 tickets = 1 ZCoin only inside a casino bet; the straight cash-out is removed.",
+  "quote": "betting tickets is the conversion",
+  "why": "",
+  "page": "",
+  "status": "superseded",
+  "replacedBy": "2026-09-21: cash-out at the Prize Counter is back"
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Casino",
+  "decision": "Every table takes ZCoins or tickets and a win always pays real ZCoins, with a 50 ZC an hour backstop on ticket stakes.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "superseded",
+  "replacedBy": "2026-09-21: ticket bets pay tickets; ZCoin bets unchanged"
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Casino",
+  "decision": "Russian Roulette in EastScape is ZCoins only, in the same lobby as the website.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Economy",
+  "decision": "Buffs work only outside the arch and never touch a bet.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Combat",
+  "decision": "Level bands are a soft gate: walk anywhere, but Combat gates starting a fight and Fishing gates the water.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Combat",
+  "decision": "Death costs a hospital bill (a capped share of carried tickets) and nothing else.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Combat",
+  "decision": "No monster attacks on sight.",
+  "quote": "i dont want any monster to attack on site for now, its just too aggressive for a relaxed chill game like this",
+  "why": "a relaxed, chill game",
+  "page": "",
+  "status": "superseded",
+  "replacedBy": "2026-09-22: some monsters on higher-tier maps attack; early maps stay calm"
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Combat",
+  "decision": "Attack, Strength and Defence are one Melee skill, and stances are removed.",
+  "quote": "",
+  "why": "very simple and intuitive",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Tone & copy",
+  "decision": "Every in-game explainer is one short line; numbers go on buttons and pay tables, not in paragraphs.",
+  "quote": "gamer dads, hanging out with a beer in hand... reading is at the bottom of their list",
+  "why": "players don't want to read",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Art & UI",
+  "decision": "Game windows wear the parchment look, and new buttons are PixelLab-drawn art rather than CSS gradients.",
+  "quote": "restyle the other windows towards the parchment look",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-19",
+  "area": "Tech & ops",
+  "decision": "EastScape gets its own separate dashboard later; no EastScape lines go on the site's admin dashboard.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-18",
+  "area": "Direction",
+  "decision": "The flat MMO is called EastScape (it was 'Gladiator').",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-18",
+  "area": "Events",
+  "decision": "The game launches 1 October; the Halloween event 'The Moon Is Stuck' moves to mid-October.",
+  "quote": "",
+  "why": "takes gear-on-character off the launch path",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-18",
+  "area": "Tone & copy",
+  "decision": "New content moves beyond the Roman theme and is original and weird (NGU Idle / Dungeon Crawler Carl), while existing Roman names stay until a rename pass is chosen.",
+  "quote": "",
+  "why": "plain Roman realism reads too straight",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-18",
+  "area": "Art & UI",
+  "decision": "All art uses crisp, hard, aliased pixels: no smoothing and no fractional scaling.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-18",
+  "area": "Art & UI",
+  "decision": "Every character (players, NPCs, monsters) matches the original hero's style and size.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-18",
+  "area": "Art & UI",
+  "decision": "The owner is asked what size a new monster should be before it is added.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-18",
+  "area": "Art & UI",
+  "decision": "No pixel fonts, even in the pixel-art game.",
+  "quote": "",
+  "why": "",
+  "page": "ui-kit",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-18",
+  "area": "Tech & ops",
+  "decision": "Characters save automatically; there is no manual save.",
+  "quote": "",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-09-18",
+  "area": "Tech & ops",
+  "decision": "Every suggestion is weighed for performance, scaling and architecture, and the better approach is raised even when it differs from the literal ask.",
+  "quote": "",
+  "why": "a laggy server would give players a bad first impression at launch",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ }
+]

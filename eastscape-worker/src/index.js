@@ -164,11 +164,11 @@ export default {
       const cookie = (/(?:^|;\s*)gp=([^;]+)/.exec(request.headers.get("cookie") || "") || [])[1];
       const H = { "X-Robots-Tag": "noindex, nofollow", "Referrer-Policy": "no-referrer" };
       if (same(url.searchParams.get("k"))) {
-        const to = new URL(url); to.searchParams.delete("k"); if (to.pathname === "/gameplan" || to.pathname === "/gameplan/") to.pathname = "/gameplan/gameplan-mock/";
+        const to = new URL(url); to.searchParams.delete("k"); if (to.pathname === "/gameplan" || to.pathname === "/gameplan/") to.pathname = "/gameplan/state-mock/";
         return new Response(null, { status: 302, headers: { ...H, Location: to.pathname + to.search, "Set-Cookie": `gp=${encodeURIComponent(want)}; Path=/gameplan; Max-Age=31536000; HttpOnly; Secure; SameSite=Lax`, "Cache-Control": "no-store" } });
       }
       if (!(env.DEV === "1" || same(cookie && decodeURIComponent(cookie))) || !env.ASSETS) return new Response("EastScape game server", { status: 404 });
-      if (url.pathname === "/gameplan" || url.pathname === "/gameplan/") return new Response(null, { status: 302, headers: { ...H, Location: "/gameplan/gameplan-mock/", "Cache-Control": "no-store" } });
+      if (url.pathname === "/gameplan" || url.pathname === "/gameplan/") return new Response(null, { status: 302, headers: { ...H, Location: "/gameplan/state-mock/", "Cache-Control": "no-store" } });
       const r = await env.ASSETS.fetch(new Request(new URL(url.pathname, url.origin), request));
       const out = new Response(r.body, r); for (const [k, v] of Object.entries(H)) out.headers.set(k, v); out.headers.set("Cache-Control", "private, no-cache");   /* revalidated every time: these pages are edited often, and an ETag makes the check cheap */
       return out;

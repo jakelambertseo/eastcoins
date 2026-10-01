@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Stat tracking plan</title>
+<!-- (2026-09-30, the owner: "is there a way that we can add additional user data points that would give us better insight when doing these analysis? the amount of
+     data is fine i just dont want to incur lag ... a deep dive into customer stat tracking/world stat tracking ... that we could make decisions off of")
+     What the game server records today (read from eastscape-worker/src and the shared rules), what it can't answer, and a plan to record more without lag.
+     Local only: tools/ is never shipped. http://localhost:4321/tools/tracking-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0c0908;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1200px 600px at 20% -10%,#10202a,transparent),radial-gradient(900px 500px at 100% 30%,#101a18,transparent),#0c0908}
+main{max-width:1280px;margin:0 auto;padding:28px 16px 80px}
+a{color:#ffd98a}
+h1{margin:0 0 4px;font:800 32px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+.sec{margin:44px 0 0;padding:24px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:960px;line-height:1.5}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}.chips span{padding:4px 10px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;font:700 12.5px Lora,serif;color:#e8d8b0}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0}nav.jump a{padding:6px 12px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13px Lora,serif}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-top:12px;align-items:start}
+.k-win{min-width:0}
+.tbl{width:100%;border-collapse:collapse;font:600 13px Lora,serif}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2,#a89070);padding:4px 6px}
+.tbl td{padding:5px 6px;border-top:1px solid var(--k-line,#3a2616);vertical-align:top}.tbl td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.yes{color:#2f7a3a;font-weight:900}.part{color:#a8741a;font-weight:900}.no{color:#b8302a;font-weight:900}
+.qs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px;margin-top:12px}
+.q{background:#1a120c;border-radius:10px;padding:12px 14px;box-shadow:0 0 0 1.5px #3a2616}
+.q b{display:block;font:800 15px/1.3 Cinzel,serif;color:#ffe7b0;margin-bottom:4px}.q p{margin:0;color:#cdbfa2;font-size:13.5px;line-height:1.45}
+.q .why{margin-top:6px;font:700 12px Lora,serif;color:#ffb0a0}
+.plan{display:grid;gap:10px;margin-top:12px}
+.pl{background:#1a120c;border-radius:10px;box-shadow:0 0 0 1.5px #3a2616}
+.pl>summary{cursor:pointer;list-style:none;display:grid;grid-template-columns:34px minmax(0,1fr) 150px 150px;gap:12px;align-items:center;padding:12px 16px}
+.pl>summary::-webkit-details-marker{display:none}.pl>summary:hover{background:#221810}
+.pl .num{font:900 20px Cinzel,serif;color:#8a7a5a}
+.pl .t b{display:block;font:800 16px/1.3 Cinzel,serif;color:#ffe7b0}.pl .t small{display:block;margin-top:2px;font:700 12.5px Lora,serif;color:#b8a888}
+.cost{font:800 12px Lora,serif;padding:4px 8px;border-radius:6px;text-align:center}
+.c-free{background:rgba(47,122,58,.2);color:#9fe8a0;box-shadow:inset 0 0 0 1px rgba(90,180,100,.45)}.c-tiny{background:rgba(58,122,208,.18);color:#bcd4ff;box-shadow:inset 0 0 0 1px rgba(90,150,230,.45)}.c-low{background:rgba(200,150,58,.2);color:#ffd98a;box-shadow:inset 0 0 0 1px rgba(200,150,58,.5)}
+.pl .in{padding:0 18px 16px 62px;color:#cdbfa2;font-size:14px;line-height:1.55}
+.pl .in table{margin:8px 0}
+.pl .in .dec{margin-top:8px;padding:8px 10px;border-radius:6px;background:rgba(47,122,58,.16);box-shadow:inset 0 0 0 1px rgba(90,180,100,.3);color:#cfe8c8}
+code{font-size:12.5px;background:#2a1a10;padding:1px 5px;border-radius:4px;color:#ffd98a}
+.flow{background:#1a120c;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #3a2616;overflow:auto;margin-top:12px}
+.flow svg{display:block;width:100%;min-width:820px;height:auto}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+@media (max-width:760px){.pl>summary{grid-template-columns:28px 1fr}.pl .cost{grid-column:2}.pl .in{padding-left:18px}}
+</style>
+</head>
+<body>
+<main>
+<h1>Stat tracking plan</h1>
+<p class="lede">What the game records about players and the world today, the decisions it <b>can't</b> support yet, and a plan to record more <b>without adding lag</b>. The short version: the server already counts a lot per player (kills, gathers, crafts, xp per day, casino results) but almost nothing about <b>where</b> or <b>how long</b>, and nothing about <b>where tickets come from</b>. Nine additions cover the gaps. All of them are counters kept in memory and saved on the saves that already happen, plus one small world write a minute.</p>
+<div class="chips"><span>read from the server code, 30 Sep 2026</span><span>rules 375</span><span>no gameplay change</span><span>nothing new sent to players</span></div>
+<nav class="jump"><a href="#today">📦 What's kept today</a><a href="#cant">❓ What it can't answer</a><a href="#plan">📡 The nine additions</a><a href="#lag">⚡ Why it won't lag</a><a href="#read">📊 How you'd use it</a><a href="#order">🧭 Build order</a><a href="../wild-mock/">← Wilderness check</a></nav>
+
+<section class="sec" id="today"><h2>📦 What the game keeps today</h2>
+  <p>Per character, everything below is saved on the character itself and survives forever. World records are separate keys on the game server. All of it is copied to the nightly backup, which is where these analyses read it from.</p>
+  <div class="grid2">
+    <section class="k-win"><div class="k-head"><b>Per character</b><span class="k-sub">saved with the character</span></div><div class="k-body k-paper"><table class="tbl">
+      <tr><th>Record</th><th>What it counts</th><th>By</th></tr>
+      <tr><td>Kills</td><td>every monster killed</td><td>monster</td></tr>
+      <tr><td>Gathered, cooked, crafted</td><td>every item gathered, cooked or made</td><td>item</td></tr>
+      <tr><td>Looted, found</td><td>monster drops, rare finds, ZCoins found</td><td>item</td></tr>
+      <tr><td>Casino</td><td>plays per game, net, best and worst result</td><td>game</td></tr>
+      <tr><td>Xp</td><td>lifetime per skill, and a daily total (all skills together, last 60 days)</td><td>skill / day</td></tr>
+      <tr><td>Tickets earned, wagered</td><td>one lifetime number each, no source</td><td>total</td></tr>
+      <tr><td>Deaths, PvP deaths, PvP kills</td><td>counts only, no place or cause</td><td>total</td></tr>
+      <tr><td>Play time, sessions</td><td>lifetime totals, first and last seen</td><td>total</td></tr>
+      <tr><td>Dungeons, quests, achievements</td><td>clears per dungeon, quests done, the collection log, maps visited</td><td>thing</td></tr>
+    </table></div></section>
+    <section class="k-win"><div class="k-head"><b>The world</b><span class="k-sub">keys on the game server</span></div><div class="k-body k-paper"><table class="tbl">
+      <tr><th>Record</th><th>What</th><th>Kept</th></tr>
+      <tr><td>The weekly snapshot</td><td>every character's xp by skill, kills, tickets, quests, play time at the start of each week</td><td>forever</td></tr>
+      <tr><td>The weekly tally</td><td>peak online, world bosses, raids, dungeon clears, Jackpots</td><td>forever</td></tr>
+      <tr><td>Jackpot, Fame</td><td>last 10 Jackpot wins; today's top five wins</td><td>short</td></tr>
+      <tr><td>Crypt records</td><td>fastest clears per tier</td><td>top 20</td></tr>
+      <tr><td>The Exchange</td><td>open offers and each item's last price</td><td>last price only</td></tr>
+      <tr><td>Chat</td><td>the last 50 lines</td><td>50 lines</td></tr>
+      <tr><td>Live only (lost on restart)</td><td>who is on which map right now, server speed, the party damage meter, how long since each player last clicked</td><td>not saved</td></tr>
+    </table></div></section>
+  </div>
+</section>
+
+<section class="sec" id="cant"><h2>❓ Questions the game can't answer today</h2>
+  <p>Each of these came up in a real decision this month and had to be guessed or worked around.</p>
+  <div class="qs">
+    <div class="q"><b>Are people camping the Wild without fighting?</b><p>No record of time on a map, or what anyone was doing there.</p><div class="why">The Wilderness check had to infer it from kills</div></div>
+    <div class="q"><b>Where do tickets come from, and where do they go?</b><p>"Earned" is one lifetime number. Kills, selling to Bom, quests, dailies, events and the Tent all land in it together, and sinks (bills, the Store, fees) aren't counted at all.</p><div class="why">The balance pass modelled income instead of measuring it</div></div>
+    <div class="q"><b>Which maps are dead, and which are crowded?</b><p>Only a live count of who's where right now; nothing kept.</p><div class="why">The Yard crowding was judged by eye</div></div>
+    <div class="q"><b>What is killing people, and where?</b><p>A death count only. The server knows the killer and the map at the moment of death and throws both away.</p><div class="why">Can't tell a hard boss from a bad spawn</div></div>
+    <div class="q"><b>Is a skill being trained, this week?</b><p>Per-skill xp exists only as weekly snapshots; the daily xp is all skills added together.</p><div class="why">"Dead skill" calls were made from lifetime levels</div></div>
+    <div class="q"><b>Did that change work?</b><p>No before-and-after for anything that isn't a lifetime total: nothing per day by map, source or activity.</p><div class="why">Every balance change so far is unmeasured</div></div>
+    <div class="q"><b>Are players coming back?</b><p>Lifetime play time and a session count, but no days played, so no retention or daily actives.</p><div class="why">Launch week has no baseline</div></div>
+    <div class="q"><b>What sells, and what does the Exchange move?</b><p>No count of items sold to Bom; the Exchange keeps each item's last price but no volume.</p><div class="why">Item values are set without demand data</div></div>
+  </div>
+</section>
+
+<section class="sec" id="plan"><h2>📡 The nine additions</h2>
+  <p>Each one says what it stores, where on the server it hooks in, and what it costs. <b>"Free"</b> means it rides saves that already happen and adds no writes; <b>"tiny"</b> adds to the one world write a minute. Click one for the details and a decision it would have settled.</p>
+  <div class="plan" id="plan"></div>
+</section>
+
+<section class="sec" id="lag"><h2>⚡ Why none of this will lag</h2>
+  <p>Lag in this game comes from three places: the 50 ms tick running long, too much sent to players, and storage writes piling up. The plan avoids all three by design.</p>
+  <div class="flow"><svg viewBox="0 0 1000 230" role="img" aria-label="How a tracked number flows">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#c8963a"/></marker></defs>
+    <g font-family="Lora" font-size="13" fill="#e8dcc0">
+      <rect x="10" y="30" width="200" height="70" rx="8" fill="#241a10" stroke="#5a3a1a"/><text x="110" y="58" text-anchor="middle" font-weight="800" fill="#ffe7b0">Something happens</text><text x="110" y="80" text-anchor="middle" font-size="12">a kill, a sale, a death, a second passing</text>
+      <rect x="270" y="30" width="210" height="70" rx="8" fill="#241a10" stroke="#5a3a1a"/><text x="375" y="58" text-anchor="middle" font-weight="800" fill="#ffe7b0">+1 in memory</text><text x="375" y="80" text-anchor="middle" font-size="12">on the character, and the day's tally</text>
+      <rect x="540" y="10" width="220" height="62" rx="8" fill="#12241a" stroke="#3a7a4a"/><text x="650" y="36" text-anchor="middle" font-weight="800" fill="#bfe8cf">Character: saved as now</text><text x="650" y="56" text-anchor="middle" font-size="12">every ~4 s while active; 0 extra</text>
+      <rect x="540" y="92" width="220" height="62" rx="8" fill="#101c2a" stroke="#3a5a8a"/><text x="650" y="118" text-anchor="middle" font-weight="800" fill="#cfe0ff">Day's tally: once a minute</text><text x="650" y="138" text-anchor="middle" font-size="12">one write, only if it changed</text>
+      <rect x="820" y="50" width="170" height="70" rx="8" fill="#241a10" stroke="#5a3a1a"/><text x="905" y="78" text-anchor="middle" font-weight="800" fill="#ffe7b0">Nightly backup</text><text x="905" y="100" text-anchor="middle" font-size="12">already copies it all</text>
+      <path d="M210,65 H266" stroke="#c8963a" stroke-width="2" marker-end="url(#ar)"/><path d="M480,55 L536,42" stroke="#c8963a" stroke-width="2" marker-end="url(#ar)"/><path d="M480,75 L536,118" stroke="#c8963a" stroke-width="2" marker-end="url(#ar)"/><path d="M760,42 L816,72" stroke="#c8963a" stroke-width="2" marker-end="url(#ar)"/><path d="M760,122 L816,100" stroke="#c8963a" stroke-width="2" marker-end="url(#ar)"/>
+      <text x="500" y="200" text-anchor="middle" font-size="13" fill="#a89070">Nothing new is sent to any player. Nothing waits on storage. No new timers: the once-a-second loop over online players already exists.</text>
+    </g></svg></div>
+  <div class="grid2">
+    <section class="k-win"><div class="k-head"><b>The cost, in numbers</b></div><div class="k-body k-paper"><table class="tbl">
+      <tr><th>What</th><th>Today</th><th>After</th></tr>
+      <tr><td>Tick time (budget 50 ms)</td><td class="n">p99 0 ms</td><td class="n">+ ~30 additions a second at 30 online</td></tr>
+      <tr><td>Character saves</td><td class="n">~every 4 s when active</td><td class="n">unchanged</td></tr>
+      <tr><td>World writes</td><td class="n">weekly tally every 30 s</td><td class="n">+1 a minute (≤1,440 a day)</td></tr>
+      <tr><td>A character's size</td><td class="n">median 5 KB, largest 21 KB</td><td class="n">+2–4 KB, capped</td></tr>
+      <tr><td>A day's world tally</td><td class="n">—</td><td class="n">10–30 KB, split in 3 keys</td></tr>
+      <tr><td>Kept</td><td class="n">—</td><td class="n">120 days ≈ 3 MB</td></tr>
+      <tr><td>Sent to players</td><td class="n">—</td><td class="n">nothing</td></tr>
+    </table></div></section>
+    <section class="k-win"><div class="k-head"><b>The safety rules</b></div><div class="k-body k-paper"><ul style="margin:0;padding-left:18px;line-height:1.6">
+      <li><b>One module</b> (<code>track.js</code>), the way the weekly issue and world events are built. Every call into it is wrapped, so a bug in tracking can never break a kill, a sale or a save.</li>
+      <li><b>Counters only, no logs</b>, except one capped list of the last 200 player kills. A counter can't grow with play time; a log can.</li>
+      <li><b>Capped maps</b>: per character, only maps and items actually used get a key, and the daily ones keep 60 days like the xp-per-day record already does.</li>
+      <li><b>Nothing reads it during play.</b> The hiscores, the wiki and the Weekly issue keep their own reads; the new data is for analysis, and optionally a keyed admin page later.</li>
+      <li><b>Tested the same way as the weekly issue</b>: the real World on Node with the clock handed in, checking the counts and that nothing new is written per tick.</li>
+    </ul></div></section>
+  </div>
+</section>
+
+<section class="sec" id="read"><h2>📊 How you'd use it</h2>
+  <div class="grid2">
+    <section class="k-win"><div class="k-head"><b>Straight away</b></div><div class="k-body k-paper"><ul style="margin:0;padding-left:18px;line-height:1.6">
+      <li>Every balance or map write-up (like the Wilderness check) reads <b>measured</b> numbers from the nightly backup, the same way these two pages were built, with no new endpoint.</li>
+      <li><b>Before-and-after</b> on any change: the day's tally is split by day, so "what changed after the Wild restock" is two weeks side by side.</li>
+      <li>The <b>Weekly issue</b> gains real sections: where people spent the week, the week's ticket sources and sinks, the deadliest monster, the busiest map.</li>
+    </ul></div></section>
+    <section class="k-win"><div class="k-head"><b>Later, if you want it</b></div><div class="k-body k-paper"><ul style="margin:0;padding-left:18px;line-height:1.6">
+      <li>A <b>World dashboard</b> tab in the admin panel: daily actives, minutes by map, tickets in and out, in the kit's style.</li>
+      <li>Player-facing <b>"your week"</b> on the profile: hours played, favourite map, tickets by source. It's the same numbers.</li>
+      <li><b>Alerts</b>: a map nobody visited this week, a monster killing far more players than its level suggests, tickets minted jumping day over day.</li>
+    </ul></div></section>
+  </div>
+</section>
+
+<section class="sec" id="order"><h2>🧭 Build order</h2>
+  <p>One update. <b>1–4 first</b>: they answer the questions on the table now (the Wild, the economy, deaths, maps). 5–9 are small additions in the same module. It needs a week of live data before the first measured write-up; the Wilderness changes can go in the same update, so that week covers them.</p>
+  <div class="grid2" id="orderBox"></div>
+</section>
+</main>
+
+<script type="module">
+const $ = (id) => document.getElementById(id), esc = (s) => String(s ?? "");
+const PLAN = [
+  ["Minutes per map, by what you're doing", "the camping question, dead maps, crowded maps", "free", "tiny",
+    `<p><b>Stores:</b> on the character, seconds per map split five ways (fighting, gathering, crafting, walking, idle). On the day's tally, minutes per map by the same five, and how many different people were on each map.</p>
+     <p><b>Hooks:</b> the once-a-second loop over online players, which already runs. What you're doing is read from what the server already holds: a fight or gather in progress, a path being walked, or more than five minutes since the last click (the same idle rule Who's online uses).</p>
+     <p><b>Size:</b> about 15 maps × 5 numbers for a well-travelled character, ~1.5 KB.</p>`, "The Wild: minutes in the Deep by activity, before and after a restock. The Yard: whether moving the Star Tent actually thinned it out."],
+  ["Tickets by source, and by sink", "where the economy's money is made and spent", "free", "tiny",
+    `<p><b>Stores:</b> tickets in by source (kills, bounties, selling to Bom, quests, dailies, events, the Tent, casino net, the Exchange) and out by sink (hospital bills, the Store, fees, the Exchange tax, buy-backs), per character and per day.</p>
+     <p><b>Hooks:</b> the one function all earnings already go through (about fourteen callers, each given a label) and the few places tickets are taken.</p>`, "The balance pass said smith-and-sell out-earns fighting 5.8×. This would show whether players actually do it, and whether 2X Tickets was being saved for sales."],
+  ["Deaths, with the place and what did it", "hard bosses, bad spawns, whether the Wild is dangerous", "free", "tiny",
+    `<p><b>Stores:</b> per character, deaths by map and by killer (a monster type, or "a player"). Per day, deaths by map and cause. Plus the last 200 player kills: who, whom, their combat levels, the map, what dropped.</p>
+     <p><b>Hooks:</b> the death code, which already knows all of it at that moment.</p>`, "Whether a new map's monsters are overtuned in its first week, and whether PvP is real or seven kills a month."],
+  ["Kills and gathering, by map", "what each map is used for", "free", "tiny",
+    `<p><b>Stores:</b> on the day's tally only: kills per map per monster, and items gathered per map. Nothing new on the character (it already counts both, just without the map).</p>
+     <p><b>Hooks:</b> the kill and gather events, which already pass through one counter.</p>`, "Today a revenant kill can't be split between Cloudreach and the Deep. With this, the Wild's share of every shared monster is known."],
+  ["Xp by skill, by day", "which skills are alive this week", "free", "tiny",
+    `<p><b>Stores:</b> the day's xp per skill, and per skill per map, on the day's tally. The character's existing daily xp total stays as it is.</p>
+     <p><b>Hooks:</b> the one place xp is awarded.</p>`, "A \"dead skill\" call made from this week's xp rather than lifetime levels. Whether the Wizardry and Harvesting changes brought people in."],
+  ["Days played and session length", "retention and daily actives", "free", "tiny",
+    `<p><b>Stores:</b> per character, play time per day for 60 days (like the xp per day). Per day: unique players, new players, sessions and average session length.</p>
+     <p><b>Hooks:</b> sign-in, and the save that already adds up play time.</p>`, "Launch week gets a real baseline: day-1, day-7 return rates, and whether a weekly update brings people back."],
+  ["Sold to Bom, bought, and Exchange volume", "what items are worth to players", "free", "tiny",
+    `<p><b>Stores:</b> per character, items sold to Bom (count and tickets). Per day: sold per item, shop buys per item, and Exchange trades (count and volume per item, not just the last price).</p>
+     <p><b>Hooks:</b> the sell, buy and Exchange trade code.</p>`, "Setting an item's value from what players actually sell and pay, rather than from the rules alone."],
+  ["Which station made it", "the Nexus altar and Wild Bench question", "free", "tiny",
+    `<p><b>Stores:</b> on the day's tally, crafts per station (the Nexus altar and the Wild Bench counted apart from ordinary altars and benches).</p>
+     <p><b>Hooks:</b> recipe completion, which knows its station.</p>`, "Whether the Deep's stations are the reason people go there."],
+  ["A daily economy snapshot", "inflation and how the wealth is spread", "none during play", "one read a day",
+    `<p><b>Stores:</b> once a day, the total tickets held, the top 10's share, and the median, taken with the same read of every character the hiscores already do.</p>
+     <p><b>Hooks:</b> the weekly snapshot's first-tick-of-the-day moment.</p>`, "Whether tickets are inflating after a balance pass, and whether the rich-get-richer gap is closing."]
+];
+const CC = { free: "c-free", tiny: "c-tiny", "none during play": "c-free", "one read a day": "c-low" };
+$("plan").innerHTML = PLAN.map(([t, sub, a, b, body, dec], i) => `<details class="pl"${i < 1 ? " open" : ""}><summary><span class="num">${i + 1}</span><span class="t"><b>${t}</b><small>${sub}</small></span><span class="cost ${CC[a]}">Character: ${a}</span><span class="cost ${CC[b]}">World: ${b}</span></summary><div class="in">${body}<div class="dec"><b>A decision it settles:</b> ${dec}</div></div></details>`).join("");
+$("orderBox").innerHTML = [
+  ["1 · Build", "track.js with 1–4, then 5–9. Every hook wrapped so it can't throw. A test on the real World (Node storage, the clock handed in), like the weekly issue's."],
+  ["2 · Ship", "With the next update. No page change is needed; it's the game server only, so it goes with any deploy."],
+  ["3 · A week of data", "The first nightly backups with the day's tallies. Nothing to look at in the game."],
+  ["4 · The first measured write-up", "The Wilderness check again, this time with minutes in the Deep by activity, deaths there by cause, and its share of every shared monster's kills."]
+].map(([h, p]) => `<section class="k-win"><div class="k-head"><b>${h}</b></div><div class="k-body k-paper"><p style="margin:0">${p}</p></div></section>`).join("");
+</script>
+</body>
+</html>

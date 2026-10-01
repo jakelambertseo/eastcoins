@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Decisions</title>
+<!-- (2026-10-01, the owner: "go ahead with 1, 2, 3, and 5"; 2 = a decision log). decisions.json is every call the owner has made, with the date
+     and their words where they exist, collected from the memory notes, the project docs, the plan pages and the rules file's dated comments.
+     Add to it as decisions are made; a reversal is a new entry and the old one is marked superseded. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a09;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#2a1a24,transparent),radial-gradient(900px 600px at 100% 30%,#1a2a10,transparent),#0b0a09}
+main{max-width:1100px;margin:0 auto;padding:28px 18px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:900px;line-height:1.55}.lede b{color:#f6e9cc}
+.tools{position:sticky;top:0;z-index:5;display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 0;background:linear-gradient(#0b0a09 80%,transparent)}
+.tools input{flex:1 1 220px;min-width:0;padding:8px 12px;border-radius:999px;border:0;background:#1a140e;box-shadow:inset 0 0 0 1.5px #5a3a1a;color:#f6e9cc;font:600 13.5px Lora,serif}
+.chip{padding:6px 11px;border-radius:999px;border:0;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;color:#ffd98a;font:800 12px Lora,serif;cursor:pointer}
+.chip[aria-pressed="true"]{background:#ffd98a;color:#1a1006;box-shadow:none}
+.chip small{font-weight:600;opacity:.75;margin-left:4px}
+.day{margin:18px 0 0}.day>h2{margin:0 0 6px;font:800 14px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070}
+.dec{display:grid;grid-template-columns:118px 1fr;gap:4px 14px;padding:11px 14px;margin:6px 0;border-radius:10px;background:#14120e;box-shadow:0 0 0 1.5px #3a2616}
+.dec .area{font:800 11px Lora,serif;color:var(--ac);padding-top:3px;text-transform:uppercase;letter-spacing:.05em}
+.dec b{font:700 15px/1.45 Lora,serif;color:#f6e9cc}.dec q{display:block;margin-top:4px;font:italic 600 13.5px/1.5 Lora,serif;color:#e8c890}
+.dec small{display:block;margin-top:4px;font:600 12px Lora,serif;color:#a89070}.dec small a{color:#ffd98a;text-decoration:none;font-weight:800}
+.chk{font:800 10px Lora,serif;padding:1px 7px;border-radius:999px;background:#4a3010;color:#ffd98a;margin-left:8px;vertical-align:2px;cursor:help}
+.dec.sup{opacity:.55}.dec.sup b{text-decoration:line-through;text-decoration-color:#8a5a3a}
+.count{font:700 12.5px Lora,serif;color:#a89070;margin-left:auto}
+@media (max-width:640px){.dec{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Decisions</h1>
+  <p class="lede">Every call the owner has made about EastScape, newest first, with the date and the owner's own words where they were written down. <b>Settled is settled</b>: a new idea that crosses one of these should say so. A reversal is a new line, and the old one is struck through.</p>
+  <div class="tools"><input id="q" type="search" placeholder="Search decisions…" aria-label="Search decisions"><button class="chip" id="supBtn" aria-pressed="false">show superseded</button><span class="count" id="count"></span></div>
+  <div class="tools" id="areas" style="position:static;padding-top:0"></div>
+  <div id="list"></div>
+</main>
+<script>
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const $ = (id) => document.getElementById(id);
+const AC = { "Direction": "#ffd34a", "Economy": "#e8a03a", "Casino": "#ff7ab0", "Combat": "#ff6a5a", "Skilling": "#5ad06a", "World & maps": "#3a9ad8", "Events": "#b08aff", "Pets": "#d8a060", "Art & UI": "#6ad0b0", "Tone & copy": "#e8e0c8", "Tech & ops": "#8a9aa8", "Long game": "#c8b060" };
+const PAGES = { "gameplan-mock": "The plan", "atlas-mock": "Atlas", "mapbook-mock": "Map book", "skillsets-mock": "Skilling sets", "workclothes-mock": "Work clothes", "sinks-mock": "Ticket sinks", "past99-mock": "1 · Past 99", "ascend-mock": "2 · Ascendancies", "relic-mock": "3 · Relic gear", "endgame-mock": "4 · Past 110", "mythic-mock": "5 · Mythic", "diary-mock": "6 · Diaries", "petgrow-mock": "7 · Pets", "guild-mock": "8 · The guild", "stats-mock": "9 · Stats", "statsui-mock": "9 · In the game" };
+let D = [], area = null, sup = false;
+try { sup = localStorage.getItem("gpDecSup") === "1"; } catch {}
+function paint() {
+  const q = $("q").value.trim().toLowerCase();
+  const rows = D.filter((d) => (sup || d.status !== "superseded") && (!area || d.area === area) && (!q || `${d.decision} ${d.quote} ${d.why} ${d.area}`.toLowerCase().includes(q)));
+  $("count").textContent = `${rows.length} of ${D.length}`;
+  const by = {}; for (const d of rows) (by[d.date] ||= []).push(d);
+  $("list").innerHTML = Object.keys(by).sort().reverse().map((day) => `<div class="day"><h2>${new Date(day + "T12:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" })}</h2>${by[day].map((d) => `<div class="dec${d.status === "superseded" ? " sup" : ""}" style="--ac:${AC[d.area] || "#a89070"}"><span class="area">${esc(d.area)}</span><div><b>${esc(d.decision)}</b>${d.check ? `<span class="chk" title="${esc(d.check)}">to confirm</span>` : ""}${d.quote ? `<q>${esc(d.quote)}</q>` : ""}${d.why || d.page || d.replacedBy ? `<small>${d.why ? esc(d.why) : ""}${d.replacedBy ? `${d.why ? " · " : ""}replaced by: ${esc(d.replacedBy)}` : ""}${d.page && PAGES[d.page] ? `${d.why || d.replacedBy ? " · " : ""}<a href="../${d.page}/">${esc(PAGES[d.page])} →</a>` : ""}</small>` : ""}</div></div>`).join("")}</div>`).join("") || `<p class="lede">Nothing matches.</p>`;
+  $("supBtn").setAttribute("aria-pressed", sup);
+}
+fetch("decisions.json").then((r) => r.json()).then((rows) => {
+  D = rows.sort((a, b) => (a.date < b.date ? 1 : -1));
+  const n = {}; for (const d of D) n[d.area] = (n[d.area] || 0) + 1;
+  $("areas").innerHTML = `<button class="chip" data-a="" aria-pressed="true">All<small>${D.length}</small></button>` + Object.keys(AC).filter((a) => n[a]).map((a) => `<button class="chip" data-a="${esc(a)}" aria-pressed="false">${esc(a)}<small>${n[a]}</small></button>`).join("");
+  $("areas").querySelectorAll(".chip").forEach((b) => b.onclick = () => { area = b.dataset.a || null; $("areas").querySelectorAll(".chip").forEach((x) => x.setAttribute("aria-pressed", x === b)); paint(); });
+  $("q").oninput = paint;
+  $("supBtn").onclick = () => { sup = !sup; try { localStorage.setItem("gpDecSup", sup ? "1" : "0"); } catch {} paint(); };
+  paint();
+});
+</script>
+</body>
+</html>

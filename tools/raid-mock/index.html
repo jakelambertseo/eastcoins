@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Yard raids</title>
+<!-- (2026-09-30, the owner: "mock up the heist and siege engine, and the flood using the UI kit etc"). Three Yard raids beside the Ice Man, each with one
+     new thing to do: chase (the Heist), dodge (the Siege Engine), build (the Flood). The backdrop is the real Yard, captured from the local game's canvas
+     (yard.jpg); everything over it is HTML in the kit's classes. Local only: tools/ is never shipped. http://localhost:4321/tools/raid-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0c0908;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1200px 600px at 20% -10%,#1a2a3a,transparent),radial-gradient(900px 500px at 100% 30%,#2a1018,transparent),#0c0908}
+main{max-width:1280px;margin:0 auto;padding:28px 16px 80px}
+a{color:#ffd98a}
+h1{margin:0 0 4px;font:800 32px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0;font:800 28px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:18px 0 8px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif}
+.sec{margin:48px 0 0;padding:26px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:980px;line-height:1.55}
+.tagline{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}.tagline span{padding:4px 10px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;font:700 12.5px Lora,serif;color:#e8d8b0}
+.tagline span.new{background:#3a2a6a;box-shadow:0 0 0 1.5px #8a6ad0;color:#e8dcff}
+
+/* ---------- the screen: the real Yard, with the raid over it ---------- */
+.screen{position:relative;width:100%;max-width:1100px;aspect-ratio:960/753;margin-top:16px;border-radius:8px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.55),0 0 0 2px #3a2616;user-select:none}
+.screen .world{position:absolute;inset:0;background:url(yard.jpg) center/cover;image-rendering:pixelated}
+.screen.cold .world{filter:saturate(.6) brightness(.8) hue-rotate(-10deg)}
+.screen.dusk .world{filter:saturate(.85) brightness(.72)}
+.screen.wet .world{filter:saturate(.75) brightness(.78) hue-rotate(8deg)}
+.sp{position:absolute;transform:translate(-50%,-100%);image-rendering:pixelated;pointer-events:none}
+.sp img{display:block;width:100%;image-rendering:pixelated}
+.np{position:absolute;transform:translate(-50%,0);text-align:center;font:800 11px/1.2 Lora,serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000;white-space:nowrap;pointer-events:none}
+.np .lv{color:#ffd84a}.np small{display:block;font-size:10px;color:#ffd98a}
+.plate{position:absolute;transform:translate(-50%,0);width:120px;padding:3px 6px 5px;border-radius:5px;background:linear-gradient(#3a2414,#20140a);box-shadow:0 0 0 1.5px #c8963a,0 4px 10px rgba(0,0,0,.5)}
+.plate b{display:flex;justify-content:space-between;font:800 10.5px Lora,serif;color:#ffcf8a}.plate b span{color:#ffd84a}
+.plate i{display:block;height:7px;margin-top:3px;border-radius:3px;background:#3a0a0a;box-shadow:inset 0 0 0 1px #000;overflow:hidden}
+.plate i::after{content:"";display:block;height:100%;width:var(--p,60%);background:linear-gradient(#ff6a4a,#c8302a)}
+.plate.violet{box-shadow:0 0 0 1.5px #b08ae0,0 4px 10px rgba(0,0,0,.5)}.plate.violet i::after{background:linear-gradient(#ffd84a,#c8963a)}
+.plate.steel{box-shadow:0 0 0 1.5px #9ab8d8,0 4px 10px rgba(0,0,0,.5)}
+.splat{position:absolute;transform:translate(-50%,-50%);font:900 14px Lora,serif;color:#fff;text-shadow:0 0 0 #000,1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000}
+.splat.gold{color:#ffe27a}.splat.blue{color:#9ad8ff}
+.trail{position:absolute;height:0;border-top:3px dotted rgba(255,226,122,.75);transform-origin:0 0;pointer-events:none}
+.drop{position:absolute;width:22px;transform:translate(-50%,-50%);image-rendering:pixelated;filter:drop-shadow(0 0 4px #ffd84a)}
+.exit{position:absolute;transform:translate(-50%,-50%);padding:3px 8px;border-radius:6px;background:rgba(160,30,20,.85);box-shadow:0 0 0 1.5px #ff8a6a;font:900 10px Lora,serif;letter-spacing:.08em;color:#fff;text-transform:uppercase}
+.tele{position:absolute;border-radius:4px;background:rgba(220,40,30,.28);box-shadow:inset 0 0 0 2px rgba(255,90,70,.9);display:grid;place-items:center;font:900 18px Cinzel,serif;color:#fff;text-shadow:0 0 4px #000}
+.shadow{position:absolute;border-radius:50%;background:radial-gradient(rgba(0,0,0,.55),transparent 70%);transform:translate(-50%,-50%)}
+.water{position:absolute;background:repeating-linear-gradient(0deg,rgba(150,210,255,.18) 0 1px,transparent 1px 22px),repeating-linear-gradient(90deg,rgba(150,210,255,.18) 0 1px,transparent 1px 22px),rgba(46,110,170,.72);box-shadow:inset 0 0 0 1px rgba(150,210,255,.45),0 0 12px rgba(80,160,230,.35)}
+.bagspot{position:absolute;transform:translate(-50%,-50%);padding:4px 6px;border-radius:6px;border:2px dashed #ffd98a;background:rgba(40,26,10,.75);font:800 10.5px/1.25 Lora,serif;color:#ffe7b0;text-align:center;white-space:nowrap}
+.bagspot b{display:block;color:#fff}.bagspot.done{border-style:solid;border-color:#7ee07e;color:#cfe8c8}
+@media (prefers-reduced-motion:no-preference){
+  .tele{animation:telepulse 1s ease-in-out infinite}@keyframes telepulse{50%{background:rgba(220,40,30,.48)}}
+  .water.spread{animation:spread 3s ease-in-out infinite}@keyframes spread{0%{opacity:.45}50%{opacity:.95}100%{opacity:.45}}
+  .runner{animation:bob .5s ease-in-out infinite}@keyframes bob{50%{margin-top:-3px}}
+}
+/* the HUD: the kit's dark glass, as the game wears it */
+.hud{position:absolute;background:rgba(20,13,10,.88);box-shadow:0 0 0 2px #8a6428,0 0 0 3.5px rgba(0,0,0,.6),0 6px 18px rgba(0,0,0,.45);border-radius:10px;color:#f4ead0}
+.tracker{right:10px;top:10px;width:250px;padding:9px 11px}
+.tracker .t{display:flex;align-items:center;gap:7px;font:800 13px Cinzel,serif;color:#ffe27a}.tracker .t em{margin-left:auto;font:800 12px Lora,serif;font-style:normal;color:#fff;background:rgba(255,255,255,.1);padding:1px 7px;border-radius:999px;font-variant-numeric:tabular-nums}
+.tracker .r{display:flex;justify-content:space-between;margin-top:6px;font:700 12px Lora,serif;color:#e0d0b0}.tracker .r b{color:#fff;font-variant-numeric:tabular-nums}
+.tracker .bar{height:8px;margin-top:4px;border-radius:4px;background:#2a1a10;box-shadow:inset 0 0 0 1px #000;overflow:hidden}.tracker .bar i{display:block;height:100%}
+.tracker small{display:block;margin-top:6px;font:600 11px/1.35 Lora,serif;color:#b8a888}
+.feed{left:10px;bottom:10px;width:min(470px,60%);padding:7px 10px;display:grid;gap:3px;font:600 12px/1.35 Lora,serif}
+.feed p{margin:0}.feed .c{color:#ffd98a}.feed .c b{color:#ffe27a}.feed .g{color:#9fe8a0}.feed .bad{color:#ffb0a0}
+.banner{position:absolute;left:50%;top:13%;transform:translateX(-50%);padding:8px 22px;border-radius:8px;background:linear-gradient(#3a2a14,#1e160c);box-shadow:0 0 0 3px #e8bf35,0 0 30px rgba(232,191,53,.45);text-align:center;color:#fff;white-space:nowrap}
+.banner small{display:block;font:800 11px Lora,serif;letter-spacing:.14em;text-transform:uppercase;color:#ffd98a}.banner b{font:800 22px Cinzel,serif}
+.carry{position:absolute;transform:translate(-50%,0);display:flex;gap:2px;padding:2px 5px;border-radius:999px;background:rgba(20,13,10,.85);box-shadow:0 0 0 1px #8a6428;font:800 10px Lora,serif;color:#ffe7b0}.carry img{width:14px;height:14px;image-rendering:pixelated}
+
+/* ---------- the reading below each screen ---------- */
+.grid2{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;margin-top:16px;align-items:start}.grid2>.wide{grid-column:1/-1}
+.k-paper h3{color:var(--k-head);margin:14px 0 4px}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+.k-win{min-width:0}
+.k-paper p{margin:6px 0;font:600 13.5px/1.5 Lora,serif;color:var(--k-ink)}
+.phase{display:grid;grid-template-columns:70px 1fr;gap:4px 12px;padding:8px 10px;border-radius:6px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);margin-top:6px}
+.phase .w{font:800 11px Lora,serif;letter-spacing:.06em;text-transform:uppercase;color:var(--k-gold-ink)}
+.phase b{font:800 14px Lora,serif;color:var(--k-ink)}.phase span{grid-column:2;font:600 13px/1.45 Lora,serif;color:var(--k-ink2)}
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.role{padding:8px;border-radius:6px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);font:600 12.5px/1.4 Lora,serif;color:var(--k-ink2)}
+.role b{display:block;font:800 12px Lora,serif;color:var(--k-ink);margin-bottom:2px}
+.casino{margin-top:6px;padding:8px 10px;border-radius:6px;background:#1e140c;color:#ffd98a;font:600 13px/1.45 Lora,serif}
+.casino p{margin:4px 0;color:#ffd98a}.casino b{color:#ffe27a}
+.nums{width:100%;border-collapse:collapse;font:600 13px Lora,serif;color:var(--k-ink)}
+.nums td{padding:5px 6px;border-top:1px solid var(--k-line)}.nums td:last-child{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+.nums tr:first-child td{border-top:0}
+.build{margin:6px 0 0;padding-left:18px;font:600 13px/1.5 Lora,serif;color:var(--k-ink2)}.build li{margin:2px 0}.build b{color:var(--k-ink)}
+.cmp{width:100%;border-collapse:collapse;font:600 13.5px Lora,serif;margin-top:12px;background:#1a120c;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616}
+.cmp th{text-align:left;font:800 11px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070;padding:10px 12px 6px}
+.cmp td{padding:9px 12px;border-top:1px solid #3a2616;color:#e0d2b4;vertical-align:top}.cmp td:first-child{font:800 15px Cinzel,serif;color:#ffe7b0;white-space:nowrap}
+.pick{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(47,122,58,.14);box-shadow:inset 0 0 0 1.5px rgba(90,180,100,.4);color:#d8f0d0;line-height:1.55;max-width:980px}
+@media (max-width:700px){.roles{grid-template-columns:1fr}.tracker{width:190px}.feed{display:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Yard raids: three more</h1>
+  <p class="lede">The Ice Man worked because everybody could take part, CASINO told the story, and the whole crowd split one pot. These three keep all of that and each adds <b>one new thing to do</b>:
+    <b>chase</b> (the Heist), <b>dodge</b> (the Siege Engine) and <b>build</b> (the Flood). All three keep to the west bank, so the court stays open, and all three survive a restart the way the Ice Man now does.
+    The pictures are the real Yard; the raid is drawn over it in the kit.</p>
+  <nav class="jump"><a href="#heist">💰 The Heist</a><a href="#siege">💥 The Siege Engine</a><a href="#flood">🌊 The Flood</a><a href="#compare">Side by side</a></nav>
+
+  <!-- ===================================================================== THE HEIST -->
+  <section class="sec" id="heist">
+    <h2>💰 The Heist</h2>
+    <div class="tagline"><span class="new">New: chase</span><span>10 minutes</span><span>All levels</span><span>Reuses the Jackpot Thief</span></div>
+    <p>A crew cleans out the Casino's back room and comes out through the Yard with the sacks, splitting up for every way out at once. Nobody has to tank a boss: you pick a runner and run them down. Every runner carries sacks; every hit knocks tickets onto the grass for whoever is closest; a runner who is stopped drops the lot. The crew's boss, <b>Fat Tony</b>, waits at the bridge with the getaway cart and only comes out for the last two minutes.</p>
+    <div class="screen dusk">
+      <div class="world"></div>
+      <!-- exits -->
+      <span class="exit" style="left:4%;top:31%">⟵ west road</span>
+      <span class="exit" style="left:67%;top:3%">north road ⟶</span>
+      <span class="exit" style="left:93%;top:20%">bridge · getaway cart</span>
+      <!-- runners with trails -->
+      <span class="trail" style="left:46%;top:36%;width:28%;transform:rotate(180deg)"></span>
+      <div class="sp runner" style="left:22%;top:38%;width:92px"><img src="/v3/assets/img/glad/flat/jackthief_w2.png" alt=""></div>
+      <div class="plate violet" style="left:22%;top:24%;--p:55%"><b>Bagman <span>3 sacks</span></b><i></i></div>
+      <span class="trail" style="left:66%;top:32%;width:20%;transform:rotate(-90deg)"></span>
+      <div class="sp runner" style="left:67%;top:16%;width:92px"><img src="/v3/assets/img/glad/flat/jackthief_w3.png" alt=""></div>
+      <div class="plate violet" style="left:67%;top:2.5%;--p:80%"><b>Lookout <span>1 sack</span></b><i></i></div>
+      <div class="sp runner" style="left:80%;top:40%;width:92px"><img src="/v3/assets/img/glad/flat/highwayman.png" alt=""></div>
+      <div class="plate violet" style="left:80%;top:26%;--p:25%"><b>Cracksman <span>4 sacks</span></b><i></i></div>
+      <!-- the getaway -->
+      <div class="sp" style="left:93%;top:42%;width:70px"><img src="/v3/assets/img/glad/flat/o_sacks.png" alt=""></div>
+      <!-- chasers -->
+      <div class="sp" style="left:28%;top:40%;width:68px"><img src="/v3/assets/img/glad/flat/potboy.png" alt=""></div>
+      <div class="np" style="left:28%;top:41%">Kellzifer <span class="lv">(91)</span></div>
+      <div class="sp" style="left:76%;top:42%;width:68px"><img src="/v3/assets/img/glad/flat/dex_south.png" alt=""></div>
+      <div class="np" style="left:76%;top:43%">BeeEzRadio <span class="lv">(82)</span></div>
+      <div class="sp" style="left:50%;top:52%;width:68px"><img src="/v3/assets/img/glad/flat/mudge_south.png" alt=""></div>
+      <div class="np" style="left:50%;top:53%">calvin <span class="lv">(12)</span></div>
+      <!-- tickets on the ground and splats -->
+      <img class="drop" src="/v3/assets/img/glad/flat/items/tickets.png" alt="" style="left:25%;top:44%">
+      <img class="drop" src="/v3/assets/img/glad/flat/items/tickets.png" alt="" style="left:19%;top:41%">
+      <img class="drop" src="/v3/assets/img/glad/flat/items/tickets.png" alt="" style="left:48%;top:47%">
+      <span class="splat gold" style="left:22%;top:30%">−1 sack!</span>
+      <span class="splat" style="left:79%;top:33%">HIT</span>
+      <!-- HUD -->
+      <div class="hud tracker"><div class="t">💰 THE HEIST <em>6:12</em></div>
+        <div class="r"><span>Sacks taken back</span><b>14 / 24</b></div><div class="bar"><i style="width:58%;background:linear-gradient(#7ee07e,#3a9a4a)"></i></div>
+        <div class="r"><span>Got away</span><b>3 / 8</b></div><div class="bar"><i style="width:37%;background:linear-gradient(#ff8a6a,#c8302a)"></i></div>
+        <small>8 get away and they take a cut of the Jackpot. Fat Tony comes out at 2:00.</small></div>
+      <div class="hud feed"><p class="c">💰 <b>CASINO:</b> THE BACK ROOM IS EMPTY. Eight of them, every one with a sack, every one heading for a different gate. Stop them!</p>
+        <p class="g">You knock a sack loose: 2,400 tickets hit the grass.</p><p class="bad">The Lookout gets away up the north road with 1 sack.</p></div>
+    </div>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/items/tickets.png" alt=""><b>How it plays</b><span class="k-sub">10 minutes, three beats</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <div class="phase"><span class="w">Warning</span><b>3 minutes: alarm bells</b><span>CASINO: "Somebody's in the back room." Gives the Yard time to fill. Nobody knows which gates yet.</span></div>
+          <div class="phase"><span class="w">0:00</span><b>The break-out</b><span>Runners come out of the Casino door in threes, every 45 seconds, each picking a gate. They run from whoever is nearest (the Thief's flee code), never fight back, and are faster than walking, slower than running.</span></div>
+          <div class="phase"><span class="w">8:00</span><b>Fat Tony</b><span>The crew boss climbs off the cart at the bridge. Big health, swings back. Beat him and every sack that got away is brought back too.</span></div>
+          <h3>Who does what</h3>
+          <div class="roles"><div class="role"><b>Level 1-30</b>Picks up what falls. Every ticket on the grass is anyone's for 10 seconds, then whoever is standing on it.</div><div class="role"><b>Level 30-60</b>Runs down the small runners (1-2 sacks, low health).</div><div class="role"><b>60+</b>The Cracksmen (4 sacks, tanky) and Fat Tony.</div></div>
+        </div></section>
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/chat.png" alt=""><b>What CASINO says</b><span class="k-sub">and what's on the line</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <div class="casino"><p>💰 <b>HEIST!</b> The alarm in the back room is going and Dex is under the bar. Somebody's in the vault. Three minutes before they come out.</p>
+            <p>💰 THE BACK ROOM IS EMPTY. Eight of them, eight sacks of the house's money, eight different gates. Stop them!</p>
+            <p>💰 Fat Tony's off the cart at the bridge. He's not running. He's waiting for you.</p>
+            <p>💰 <b>WIN:</b> All but 2 sacks back. The house says thank you: 31 of you share 180,000.</p>
+            <p>💰 <b>LOSS:</b> 8 sacks got out. The crew took 5% of the Jackpot with them.</p></div>
+          <table class="nums" style="margin-top:8px"><tr><td>Sacks a run</td><td>24 (8 runners × 1-4)</td></tr><tr><td>Tickets on the grass per sack</td><td>~2,000 (scaled by crowd)</td></tr><tr><td>Win pool, shared by damage</td><td>100k + 5k a fighter</td></tr><tr><td>Loss</td><td>5% of the Jackpot, never paid back</td></tr><tr><td>Called by</td><td>admin, or a Store "Tip-off" item</td></tr></table>
+        </div></section>
+      <section class="k-win wide"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/settings.png" alt=""><b>What it takes to build</b><span class="k-sub">smallest of the three</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <ul class="build"><li><b>Runners</b> are the Jackpot Thief's flee-and-hit code, with sacks instead of a pot and a gate to aim for.</li><li><b>Fat Tony</b> is an ordinary boss with the raid's share-by-damage payout.</li><li><b>Art (PixelLab)</b>: three runner looks with a sack walk cycle, Fat Tony (idle, walk, attack), a getaway cart, a sack-carried icon.</li><li><b>Cost on the server</b>: about the Ice Man's. Eight fleeing monsters path less than a wave of attackers.</li></ul></div></section>
+    </div>
+  </section>
+
+  <!-- ===================================================================== THE SIEGE ENGINE -->
+  <section class="sec" id="siege">
+    <h2>💥 The Siege Engine</h2>
+    <div class="tagline"><span class="new">New: dodge</span><span>12 minutes</span><span>All levels</span><span>Telegraphed tiles</span></div>
+    <p>A war machine rolls up the north road and parks at the top of the Yard: <b>the Grinder</b>. Every few seconds it lobs a boulder, and the tiles where it will land glow red with a count-down first. Stand in them and you take a third of your health; step out and you take nothing. Its crew of <b>Sappers</b> keeps patching it, so somebody has to keep the crew off while somebody else breaks the engine. It is the first fight in the game where <b>where you stand</b> matters more than what you wear.</p>
+    <div class="screen dusk">
+      <div class="world"></div>
+      <!-- the engine, north -->
+      <div class="sp" style="left:17%;top:27%;width:200px"><img src="/v3/assets/img/glad/flat/o_cannon.png" alt=""></div>
+      <div class="plate steel" style="left:17%;top:3%;--p:64%;width:150px"><b>The Grinder <span>Lv 70</span></b><i></i></div>
+      <div class="sp" style="left:31%;top:27%;width:72px"><img src="/v3/assets/img/glad/flat/gnasher.png" alt=""></div><div class="np" style="left:31%;top:27.5%">Sapper <small>🔧 repairing +40</small></div>
+      <div class="sp" style="left:5%;top:27%;width:72px"><img src="/v3/assets/img/glad/flat/highwayman.png" alt=""></div><div class="np" style="left:5%;top:27.5%">Sapper</div>
+      <!-- incoming -->
+      <div class="tele" style="left:48%;top:30%;width:10%;height:12%">2</div>
+      <div class="tele" style="left:40%;top:44%;width:7.5%;height:9.5%">1</div>
+      <div class="tele" style="left:5%;top:52%;width:7.5%;height:9.5%">3</div>
+      <span class="shadow" style="left:43.7%;top:48.7%;width:60px;height:36px"></span>
+      <!-- barricades the players can stand behind -->
+      <div class="sp" style="left:34%;top:62%;width:116px"><img src="/v3/assets/img/glad/flat/o_barricade.png" alt=""></div>
+      <div class="np" style="left:34%;top:63%;color:#9fe8a0">cover</div>
+      <!-- players -->
+      <div class="sp" style="left:11%;top:40%;width:68px"><img src="/v3/assets/img/glad/flat/potboy.png" alt=""></div><div class="np" style="left:11%;top:41%">Kellzifer <span class="lv">(91)</span></div>
+      <div class="sp" style="left:24%;top:38%;width:68px"><img src="/v3/assets/img/glad/flat/dex_south.png" alt=""></div><div class="np" style="left:24%;top:39%">BeeEzRadio <span class="lv">(82)</span></div>
+      <div class="sp" style="left:44%;top:56%;width:68px"><img src="/v3/assets/img/glad/flat/mudge_south.png" alt=""></div><div class="np" style="left:44%;top:57%">calvin <span class="lv">(12)</span></div>
+      <span class="splat" style="left:15%;top:16%">87</span><span class="splat" style="left:30%;top:18%">HIT</span>
+      <div class="banner" style="left:56%;top:4%"><small>Incoming</small><b>BOULDER · move!</b></div>
+      <div class="hud tracker"><div class="t">💥 THE SIEGE <em>8:40</em></div>
+        <div class="r"><span>The Grinder</span><b>64%</b></div><div class="bar"><i style="width:64%;background:linear-gradient(#9ab8d8,#4a6a8a)"></i></div>
+        <div class="r"><span>Sappers up</span><b>2 / 6</b></div>
+        <div class="r"><span>Bronny's worksite</span><b>71%</b></div><div class="bar"><i style="width:71%;background:linear-gradient(#ffd84a,#c8963a)"></i></div>
+        <small>Every boulder that lands on the worksite chips it. If the worksite falls, Bronny's order stops for an hour.</small></div>
+      <div class="hud feed"><p class="c">💥 <b>CASINO:</b> IT'S FIRING. Watch the ground: when it glows red, MOVE.</p><p class="bad">A boulder lands on you: 34 damage. (The red tiles warned you.)</p><p class="g">The Sapper drops his wrench. The Grinder's repairs stop for 10 seconds.</p></div>
+    </div>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/o_cannon.png" alt=""><b>How it plays</b><span class="k-sub">12 minutes, three beats</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <div class="phase"><span class="w">Warning</span><b>3 minutes: the rumble</b><span>"Something heavy is coming up the north road." Then it parks; the crew sets up for 30 seconds while nobody can hurt it.</span></div>
+          <div class="phase"><span class="w">0:00</span><b>The barrage</b><span>One volley every 6 seconds: 2-5 boulders (more with a bigger crowd), each a 2×2 square that glows for 3 seconds first. A Sapper alive adds repairs every 10 seconds.</span></div>
+          <div class="phase"><span class="w">Under 30%</span><b>Overdrive</b><span>Volleys every 4 seconds and one big 4×4 "rolling stone" down the road. The worksite is its target now, not the players.</span></div>
+          <h3>Who does what</h3>
+          <div class="roles"><div class="role"><b>Level 1-30</b>Sappers (low health, they run when hit). Stopping repairs is half the fight.</div><div class="role"><b>Level 30-60</b>Sappers and the engine's wheels (a weak point: double damage, behind it).</div><div class="role"><b>60+</b>The engine itself, standing in its range and dancing out of the red.</div></div>
+        </div></section>
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/chat.png" alt=""><b>What CASINO says</b><span class="k-sub">and what's on the line</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <div class="casino"><p>💥 <b>SIEGE!</b> Something heavy is coming up the north road. You can hear the wheels from here. Three minutes.</p>
+            <p>💥 IT'S FIRING. Watch the ground: when it glows red, MOVE.</p>
+            <p>💥 The Grinder's in overdrive. It's aiming for the worksite now. Bronny's hiding behind a cement mixer.</p>
+            <p>💥 <b>WIN:</b> The Grinder's in pieces. 24 of you share 160,000, and Bronny says the scrap is his.</p>
+            <p>💥 <b>LOSS:</b> The worksite's rubble. No orders from Bronny for an hour.</p></div>
+          <table class="nums" style="margin-top:8px"><tr><td>A boulder on you</td><td>⅓ of your health</td></tr><tr><td>Warning before it lands</td><td>3 seconds (red tiles)</td></tr><tr><td>Engine health</td><td>base + per fighter, like the Ice Man</td></tr><tr><td>Win pool, shared by damage</td><td>90k + 5k a fighter</td></tr><tr><td>Loss</td><td>Bronny's order paused an hour</td></tr></table>
+        </div></section>
+      <section class="k-win wide"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/settings.png" alt=""><b>What it takes to build</b><span class="k-sub">one genuinely new piece</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <ul class="build"><li><b>Telegraphed tiles</b> already exist: the Ice Man's slam paints red tiles (TILEFX). The boulder is that, on a timer, landing 3 seconds later.</li><li><b>The engine</b> is a monster that never moves, with a weak point behind it and a repair tick from its crew.</li><li><b>The worksite's health</b> is a number on the raid, drawn on Bronny's board.</li><li><b>Art (PixelLab)</b>: the Grinder (idle, firing, broken), a Sapper with a wrench, a boulder and its impact.</li><li><b>Cost</b>: one volley every 6 seconds is a handful of tile checks. Cheaper than a wave.</li></ul></div></section>
+    </div>
+  </section>
+
+  <!-- ===================================================================== THE FLOOD -->
+  <section class="sec" id="flood">
+    <h2>🌊 The Flood</h2>
+    <div class="tagline"><span class="new">New: build</span><span>15 minutes</span><span>Skillers welcome</span><span>The water spreads</span></div>
+    <p>The river bursts its banks. Water creeps over the Yard a tile at a time, and <b>the Drowned</b> climb out of it. Fighting them only slows the flood; what stops it is <b>sandbags</b>: marked spots along the bank that take logs, stone and sand, handed in by anyone. It is the first raid a woodcutter or a miner can win as much as a fighter. Every sandbag spot finished pushes the water back off the tiles behind it.</p>
+    <div class="screen wet">
+      <div class="world"></div>
+      <!-- the water, spreading up from the pond -->
+      <div class="water" style="left:36%;top:56%;width:12%;height:7%"></div>
+      <div class="water spread" style="left:48%;top:55%;width:10%;height:8%"></div>
+      <div class="water" style="left:58%;top:52%;width:12%;height:11%"></div>
+      <div class="water spread" style="left:70%;top:50%;width:16%;height:13%"></div>
+      <div class="water spread" style="left:62%;top:44%;width:10%;height:8%"></div>
+      <!-- the Drowned -->
+      <div class="sp" style="left:46%;top:66%;width:88px"><img src="/v3/assets/img/glad/flat/clawhand_w1.png" alt=""></div><div class="np" style="left:46%;top:66.5%">Drowned <span class="lv">(34)</span></div>
+      <div class="sp" style="left:63%;top:80%;width:80px"><img src="/v3/assets/img/glad/flat/krakenarm.png" alt=""></div>
+      <div class="plate" style="left:63%;top:66%;--p:72%"><b>Undertow <span>Lv 66</span></b><i></i></div>
+      <div class="sp" style="left:80%;top:72%;width:104px"><img src="/v3/assets/img/glad/flat/shark.png" alt=""></div><div class="np" style="left:80%;top:72.5%">Bank Shark <span class="lv">(58)</span></div>
+      <!-- sandbag spots -->
+      <div class="bagspot done" style="left:30%;top:52%"><b>✓ Sandbags</b>held</div>
+      <div class="bagspot" style="left:53%;top:47%"><b>Sandbags 6 / 10</b>🪵 logs · 🪨 stone</div>
+      <div class="bagspot" style="left:76%;top:43%"><b>Sandbags 2 / 10</b>⏳ sand</div>
+      <!-- players hauling -->
+      <div class="sp" style="left:50%;top:41%;width:68px"><img src="/v3/assets/img/glad/flat/mudge_south.png" alt=""></div><div class="np" style="left:50%;top:42%">calvin <span class="lv">(12)</span></div>
+      <div class="carry" style="left:50%;top:26%"><img src="/v3/assets/img/glad/flat/items/logs.png" alt="">×40</div>
+      <div class="sp" style="left:41%;top:66%;width:68px"><img src="/v3/assets/img/glad/flat/potboy.png" alt=""></div><div class="np" style="left:41%;top:67%">Kellzifer <span class="lv">(91)</span></div>
+      <span class="splat blue" style="left:46%;top:57%">SPLASH</span>
+      <div class="hud tracker"><div class="t">🌊 THE FLOOD <em>11:05</em></div>
+        <div class="r"><span>Water over the Yard</span><b>23%</b></div><div class="bar"><i style="width:23%;background:linear-gradient(#6ab8ff,#2a6aa8)"></i></div>
+        <div class="r"><span>Sandbag spots held</span><b>1 / 5</b></div><div class="bar"><i style="width:20%;background:linear-gradient(#ffd84a,#c8963a)"></i></div>
+        <small>Water on a tile: you walk at half speed and can't gather there. Reach 60% and the Yard floods.</small></div>
+      <div class="hud feed"><p class="c">🌊 <b>CASINO:</b> THE RIVER'S OVER THE BANK. Logs, stone, sand: whatever you've got, bring it to the sandbag spots.</p><p class="g">calvin hands in 40 logs. The east spot is at 6 / 10.</p><p class="bad">The water reaches the north road.</p></div>
+    </div>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/items/logs.png" alt=""><b>How it plays</b><span class="k-sub">15 minutes, three beats</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <div class="phase"><span class="w">Warning</span><b>3 minutes: the rain</b><span>"The river's rising." Time to run to the bank and grab logs, stone or sand. The sandbag spots appear, each asking for one material.</span></div>
+          <div class="phase"><span class="w">0:00</span><b>The rise</b><span>Every 10 seconds the water takes one more tile next to water. The Drowned climb out of new water. A finished spot drains the tiles behind it and stops the water crossing there.</span></div>
+          <div class="phase"><span class="w">60% / 5 spots</span><b>The end</b><span>All five spots held: the river goes back, the Undertow (the boss in the pond) surfaces to be beaten. 60% of the Yard under water: lost.</span></div>
+          <h3>Who does what</h3>
+          <div class="roles"><div class="role"><b>Skillers</b>Bring the materials. A full spot is worth as much as a fight to the pay share.</div><div class="role"><b>Level 1-50</b>The Drowned (weak, many) that come for the people hauling.</div><div class="role"><b>50+</b>The Bank Sharks, then the Undertow at the end.</div></div>
+        </div></section>
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/chat.png" alt=""><b>What CASINO says</b><span class="k-sub">and what's on the line</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <div class="casino"><p>🌊 <b>FLOOD!</b> It hasn't stopped raining since the Pumpkin King went down and the river is right at the top of the bank. Three minutes.</p>
+            <p>🌊 THE RIVER'S OVER THE BANK. Logs, stone, sand: whatever you've got, bring it to the sandbag spots.</p>
+            <p>🌊 Four spots held. The water's going back down... and something big is coming up out of the pond.</p>
+            <p>🌊 <b>WIN:</b> The Undertow's gone and the Yard is dry. 38 of you share 200,000; the haulers counted as much as the fighters.</p>
+            <p>🌊 <b>LOSS:</b> The Yard's under water. Fishing spots move into the street for an hour, and nothing on the grass can be gathered.</p></div>
+          <table class="nums" style="margin-top:8px"><tr><td>Sandbag spots</td><td>5, each 10 handfuls of one material</td></tr><tr><td>A handful</td><td>40 logs, 20 stone or 30 sand (scaled to the crowd)</td></tr><tr><td>Water spreads</td><td>1 tile every 10 s</td></tr><tr><td>Share for a handed-in handful</td><td>counts like 400 damage</td></tr><tr><td>Win pool</td><td>120k + 5k a helper</td></tr></table>
+        </div></section>
+      <section class="k-win wide"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/settings.png" alt=""><b>What it takes to build</b><span class="k-sub">the biggest of the three</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <ul class="build"><li><b>Spreading water</b> is the new piece: a set of tiles that grows from the river, slows walking, blocks gathering and is drawn as an overlay. The map grid already changes on a clock (the agility gates do it every tick).</li><li><b>Sandbag spots</b> take hand-ins like Bronny's order does.</li><li><b>The Undertow</b> is a boss in the pond, hit from the bank.</li><li><b>Art (PixelLab)</b>: the Drowned (walk, attack), the Bank Shark on land, the Undertow, a sandbag pile at three stages, a water tile.</li><li><b>Cost</b>: the water re-checks the walkable tiles every 10 seconds, not every tick: cheap, but new.</li></ul></div></section>
+    </div>
+  </section>
+
+  <!-- ===================================================================== SIDE BY SIDE -->
+  <section class="sec" id="compare">
+    <h2>Side by side</h2>
+    <table class="cmp">
+      <tr><th>Raid</th><th>The new thing</th><th>Best for</th><th>If it's lost</th><th>Build size</th></tr>
+      <tr><td>❄️ The Ice Man</td><td>(live) waves and a boss</td><td>fighters</td><td>the stalls board up for 10 minutes</td><td>done</td></tr>
+      <tr><td>💰 The Heist</td><td>chasing runners; tickets on the grass</td><td>everyone, the low levels most of all</td><td>the crew takes 5% of the Jackpot</td><td>small: the Thief's code, new art</td></tr>
+      <tr><td>💥 The Siege Engine</td><td>dodging telegraphed tiles; a crew to stop</td><td>fighters who like to move</td><td>Bronny's order paused an hour</td><td>medium: timed red tiles, the engine</td></tr>
+      <tr><td>🌊 The Flood</td><td>building sandbags; water that spreads</td><td>skillers as much as fighters</td><td>fishing in the street, no gathering on the grass</td><td>large: the spreading water</td></tr>
+    </table>
+    <div class="pick"><b>Suggested order:</b> the Heist first (smallest, reuses the Thief, and the low levels finally get a raid they can carry), then the Siege Engine (dodging is the mechanic the game is missing), then the Flood once those two have shown how often people want a raid. Each one rotates with the Ice Man rather than adding a raid on top of him, so the Yard sees about the same number of raids a day.</div>
+  </section>
+</main>
+</body>
+</html>

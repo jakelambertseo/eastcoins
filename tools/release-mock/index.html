@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Releases</title>
+<!-- (2026-10-01, the owner: "go ahead with 1, 2, 3, and 5"; 3 = a release board). Draws release.json, which tools/gameplan-data.mjs rebuilds on
+     every plan build from: the deploy repo's VERSION (live), this repo's VERSION and its "was N:" history (dev), held.json (kept by hand from
+     the next-batch note), G.ROADMAP (what players are told) and the plan's phases. Nothing here is typed twice. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a09;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#102a1a,transparent),radial-gradient(900px 600px at 100% 30%,#2a1a10,transparent),#0b0a09}
+main{max-width:1180px;margin:0 auto;padding:28px 18px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 23px Cinzel,Georgia,serif;color:#ffd98a}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}.lede b{color:#f6e9cc}
+.sec{margin:34px 0 0;padding:20px 0 0;border-top:2px solid #3a2a1a}.sec>p{color:#b8a888;max-width:980px;line-height:1.55;margin:0 0 8px}
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));gap:10px;margin-top:14px}
+.col{background:#14120e;border-radius:12px;padding:12px;box-shadow:0 0 0 1.5px var(--ac)}.col>header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.col>header b{font:800 16px Cinzel,serif;color:var(--ac)}.col>header span{font:800 12px Lora,serif;color:#a89070}
+.card{padding:9px 10px;border-radius:9px;background:rgba(255,255,255,.04);box-shadow:inset 3px 0 0 var(--ac);margin:6px 0}
+.card b{display:block;font:800 13.5px Lora,serif;color:#f6e9cc}.card small{display:block;font:600 12px/1.45 Lora,serif;color:#b8a888;margin-top:2px}
+.card a{color:#ffd98a;font:800 11.5px Lora,serif;text-decoration:none}.card code{font:700 11px ui-monospace,Consolas,monospace;color:#ffd98a}
+.bar{height:5px;border-radius:3px;background:#2e2216;margin-top:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac)}
+.tbl{width:100%;border-collapse:collapse;font:600 12.5px Lora,serif;background:#14120e;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616;margin-top:10px}
+.tbl th{text-align:left;font:800 10px Lora,serif;letter-spacing:.07em;text-transform:uppercase;color:#a89070;padding:9px 8px 5px}.tbl td{padding:6px 8px;border-top:1px solid #2e2216;vertical-align:top}.tbl td:first-child{font-weight:800;color:#ffe7b0;white-space:nowrap}
+.tbl tr.live td{background:rgba(126,208,96,.08)}.tbl tr.dev td{background:rgba(232,160,58,.08)}
+.tag{font:800 10px Lora,serif;padding:1px 7px;border-radius:999px;margin-left:6px}.t-live{background:#1e4a24;color:#9ef0a0}.t-dev{background:#4a3010;color:#ffd98a}
+.vers{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.vers div{background:#14120e;border-radius:10px;padding:10px 14px;box-shadow:0 0 0 1.5px #3a2616}.vers b{display:block;font:800 26px Cinzel,serif;color:#ffe7b0}.vers span{font:700 12px Lora,serif;color:#a89070}
+.wrapx{overflow-x:auto}
+</style>
+</head>
+<body>
+<main>
+  <h1>Releases</h1>
+  <p class="lede">What's live, what's built and waiting on the dev server, what's being made and what's next, read from the repos every time the plan is built, so it can't drift from the game.</p>
+  <div class="vers" id="vers"></div>
+  <div class="board" id="board"></div>
+
+  <section class="sec"><h2>What players are told</h2><p>The Road Ahead in the wiki, as players see it, by lane. Hearts are counted in the game.</p><div class="board" id="public"></div></section>
+
+  <section class="sec"><h2>Shipped, by rules version</h2><p>Every rules version keeps its note on the VERSION line, so this is the game's own changelog.</p><div class="wrapx"><table class="tbl" id="hist"></table></div></section>
+</main>
+<script>
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const $ = (id) => document.getElementById(id);
+fetch("release.json").then((r) => r.json()).then((R) => {
+  $("vers").innerHTML = [[R.live ?? "?", "live on play.eastcoin.vip"], [R.dev, "on the dev server"], [R.held.length, "things held for the next batch"], [new Date(R.builtAt).toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "medium", timeStyle: "short" }), "read from the repos"]].map(([v, l]) => `<div><b>${esc(v)}</b><span>${l}</span></div>`).join("");
+  const live = R.history.filter((h) => R.live && h.v <= R.live).slice(0, 5);
+  const p0 = R.phases[0], p1 = R.phases[1];
+  const col = (title, ac, items, sub) => `<div class="col" style="--ac:${ac}"><header><b>${title}</b><span>${sub ?? items.length}</span></header>${items.join("") || `<div class="card"><small>Nothing here.</small></div>`}</div>`;
+  const pl = (p) => (p ? `<a href="../${p}/">the plan's page →</a>` : "");
+  $("board").innerHTML =
+    col("Live", "#7ed060", live.map((h) => `<div class="card"><b>Rules ${h.v}</b><small>${esc(h.date)} · ${esc(h.text)}</small></div>`), `rules ${R.live}`) +
+    col("Built · held", "#e8a03a", R.held.map((h) => `<div class="card"><b>${esc(h.name)}</b><small>${esc(h.what)}</small><small>Shipping needs: ${esc(h.ships)} · <code>${esc(h.commit)}</code></small>${pl(h.page)}</div>`)) +
+    col(`${esc(p0.title.split(":")[0])} · in progress`, "#5ab0ff", p0.items.filter((i) => !i.done && !i.dropped).map((i) => `<div class="card"><b>${esc(i.name)}</b><small>${esc(i.detail)}</small><small>${esc(i.effort)}</small></div>`), `${p0.items.filter((i) => i.done).length} of ${p0.items.filter((i) => !i.dropped).length} done`) +
+    col(`Next: ${esc(p1.title.split(":")[0])}`, "#b08aff", p1.items.map((i) => `<div class="card"><b>${esc(i.name)}</b><small>${esc(i.effort)} · ${esc(p1.when)}</small></div>`), "");
+  const lanes = [["live", "Live", "#7ed060"], ["now", "Now", "#5ab0ff"], ["next", "Next", "#b08aff"], ["later", "Later", "#a89070"], ["rumour", "Rumours", "#ff7ab0"]];
+  $("public").innerHTML = lanes.map(([k, t, ac]) => col(t, ac, R.roadmap.filter((c) => c.lane === k).map((c) => `<div class="card"><b>${esc(c.title)}</b><small>${esc(c.text)}</small>${c.pct ? `<div class="bar"><i style="width:${c.pct}%"></i></div>` : ""}</div>`))).join("");
+  $("hist").innerHTML = `<tr><th>Rules</th><th>Date</th><th>What changed</th></tr>` + R.history.map((h) => `<tr class="${h.v === R.live ? "live" : h.v > (R.live || 0) ? "dev" : ""}"><td>${h.v}${h.v === R.live ? '<span class="tag t-live">live</span>' : h.v > (R.live || 0) ? '<span class="tag t-dev">dev</span>' : ""}</td><td>${esc(h.date)}</td><td>${esc(h.text)}</td></tr>`).join("");
+});
+</script>
+</body>
+</html>
