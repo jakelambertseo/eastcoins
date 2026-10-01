@@ -7094,18 +7094,54 @@ ITEMS.caravan_parcel = { name: "Caravan parcel", icon: "\u{1F4E6}", ex: "Rashid'
 ITEMS.audit_ledger = { name: "The Auditor's ledger", icon: "\u{1F4D2}", ex: "Every ticket the Vault has ever taken, and one line waiting for Dex's name." };
 
 /* ------------------------------------------------------------ a character */
-export const DEFAULT_SETTINGS = { xpDrops: true, gainPops: true, skillRing: true, names: true, hoverTile: false /* (v93, the owner: "turn off the tile outline setting by default") */, groupNotes: true, debug: false, reducedMotion: false, confirmDrop: true };
+export const DEFAULT_SETTINGS = { xpDrops: true, gainPops: true, skillRing: true, names: true, hoverTile: false /* (v93, the owner: "turn off the tile outline setting by default") */, groupNotes: true, debug: false, reducedMotion: false, confirmDrop: true,
+  /* (2026-09-30) YOUR SCREEN: the switches the Features tab added. All on, so nobody's game changes until they choose. */
+  splats: true, bubbles: true, looks: true, shake: true, ambience: true, banners: true, casinoLines: true, milestoneLines: true };
 export const SETTING_INFO = {
   xpDrops: ["XP drops", "Show +xp over your head when you earn it."],
   gainPops: ["Item pops", "Show what you (and others) gather popping up over their heads."],
   skillRing: ["Skill ring", "Show the progress ring for the skill you're training."],
-  names: ["Names", "Show names and levels under players, NPCs and monsters."],
+  names: ["NPC names", "Names under the townsfolk. Players and monsters have their own tabs."],
   hoverTile: ["Tile outline", "Outline the tile under your mouse."],
   groupNotes: ["Group bonus messages", "Say so when others working the same thing give you a bonus."],
   confirmDrop: ["Confirm drops", "Ask before shift-click drops an item."],
   reducedMotion: ["Reduce motion", "No bobbing, flashing or drifting sparkles."],
-  debug: ["Debug info", "Show your tile, the mouse tile and your action in the corner."]
+  debug: ["Debug info", "Show your tile, the mouse tile and your action in the corner."],
+  splats: ["Damage numbers", "The splats when you or anyone near you hits."],
+  bubbles: ["Chat bubbles", "What other people say, over their heads. Yours always shows."],
+  looks: ["Other players' trails and glows", "The Store's auras, trails and hit looks on other people. Your own always show."],
+  shake: ["Screen shake", "On big hits, a star landing and the King's slam."],
+  ambience: ["Ambience", "The casino's wandering spotlights and lamps, fire embers, and the sparkles on special spots."],
+  banners: ["Big announcements", "The banners across the middle for big wins and level-ups."],
+  casinoLines: ["CASINO's lines", "World news from CASINO in chat."],
+  milestoneLines: ["Other people's milestones", "Their level-ups and big moments, in chat."]
 };
+/* (2026-09-30) YOUR SCREEN (the owner: "users can drag and drop certain aspects on their screen the way they want to ... customize
+   nameplates, turn certain features on and off ... 2 additional different user interfaces", then "make everything movable, and can you add
+   a minimal theme ... the monster name plates section should have options too"). One small object per character, C.ui, saved by the
+   {t:"ui"} message and sent back once, in hello, never in the constant "me" payload. Everything in it is cosmetic: the server only
+   checks its shape and its size. A position is a FRACTION of the free space (0 is flush left/top, 1 flush right/bottom), so a layout made
+   on a big monitor lands in the same corners on a laptop. */
+export const UI_THEMES = { tavern: "Tavern", midnight: "Midnight", neon: "Neon", minimal: "Minimal" };
+export const UI_DEFAULT = { theme: "tavern", scale: 100, alpha: 100, lock: false, float: false,
+  pn: { who: "all", lvl: true, title: true, hp: true, pets: true, size: 100 },
+  mn: { names: "always", value: true, plate: "hurt", lvl: true, size: 100 },
+  buy: 0 };
+export const UI_MAX_BYTES = 6000;
+export function cleanUi(v) {
+  const o = v && typeof v === "object" ? v : {}, D = UI_DEFAULT, num = (x, lo, hi, d) => (Number.isFinite(+x) ? Math.max(lo, Math.min(hi, Math.round(+x))) : d);
+  const one = (x, list, d) => (list.includes(x) ? x : d), bool = (x, d) => (typeof x === "boolean" ? x : d), frac = (x) => Math.max(0, Math.min(1, Math.round((+x || 0) * 1000) / 1000));
+  const pt = (a) => (Array.isArray(a) && a.length === 2 && a.every((n) => Number.isFinite(+n)) ? [frac(a[0]), frac(a[1])] : null);
+  const edge = (x) => (+x < 0 ? -Math.max(0.001, frac(-x)) : frac(x)), ppt = (a) => (Array.isArray(a) && a.length === 2 && a.every((n) => Number.isFinite(+n)) ? [edge(a[0]), edge(a[1])] : null);   /* a piece: below zero is measured from the right or bottom */
+  const ids = (m, n, val) => { const out = {}; let i = 0; for (const [k, x] of Object.entries(m && typeof m === "object" ? m : {})) { if (i >= n || !/^[A-Za-z][\w-]{0,23}$/.test(k)) continue; const y = val(x); if (y != null) { out[k] = y; i++; } } return out; };
+  const pn = o.pn || {}, mn = o.mn || {};
+  const out = { at: num(o.at, 0, 9e15, 0), theme: UI_THEMES[o.theme] ? o.theme : D.theme, scale: num(o.scale, 80, 130, 100), alpha: num(o.alpha, 55, 100, 100), lock: bool(o.lock, false), float: bool(o.float, false),
+    side: pt(o.side), pos: ids(o.pos, 24, ppt), hide: ids(o.hide, 24, (x) => (x ? 1 : null)), win: ids(o.win, 60, pt),
+    pn: { who: one(pn.who, ["all", "party", "me"], D.pn.who), lvl: bool(pn.lvl, true), title: bool(pn.title, true), hp: bool(pn.hp, true), pets: bool(pn.pets, true), size: num(pn.size, 80, 140, 100) },
+    mn: { names: one(mn.names, ["always", "hover", "fight", "off"], D.mn.names), value: bool(mn.value, true), plate: one(mn.plate, ["hurt", "always", "target"], D.mn.plate), lvl: bool(mn.lvl, true), size: num(mn.size, 80, 140, 100) },
+    buy: num(o.buy, 0, 1e9, 0) };
+  return JSON.stringify(out).length > UI_MAX_BYTES ? { ...out, pos: {}, win: {} } : out;
+}
 /* ------------------------------------------------------------ the save format
 
    Two things make a saved character safe to change:

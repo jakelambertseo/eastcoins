@@ -14,8 +14,10 @@
 <script>/* (2026-09-27) LOCAL ONLY: ?open=1 on localhost opens every held thing (the Depths, the Boardwalk, the Foundry, the Orchard Wall,
    Jewelcrafting) so they can be worked on. The rules read this flag when they load; the game server needs the same flag, which only the
    local start command sets (wrangler dev --define). On any other host this does nothing. */
-if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=413">
+if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;
+/* (2026-09-30) YOUR SCREEN: the chosen look, on <html> before anything paints (eastscape-ui.js keeps it in step) */
+try { const t = localStorage.getItem("es_ui_theme"); if (t) document.documentElement.dataset.uiTheme = t; } catch (e) { /* storage off: the default look */ }</script>
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=415">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -2004,7 +2006,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=413";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=415";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 const FROZEN = new Map();   /* (2026-09-30) player id -> when their Deep Freeze ends (performance.now) */
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
@@ -2018,6 +2020,8 @@ const loadWiki = () => (loadWiki.p ||= Promise.all([
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
+import { createUI } from "/v3/assets/js/eastscape-ui.js?v=6";   /* (2026-09-30) YOUR SCREEN: layout, looks, nameplates, the settings window */
+let UI = null;   /* made once the page below has its windows (see renderSettings) */
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
@@ -2198,7 +2202,7 @@ function onMsg(m) {
     return; }
   // the server is about to go down on purpose; the close that follows is not a fault
   if (m.type === "restarting") { restartHold = Number(m.holdMs) || 25000; return; }
-  if (m.type === "hello") { G.setProjects(m.proj || {}); G.setGrand(m.grand || {}); PBOARD = m.pboard || null;   /* (2026-09-28) World Projects: the tiers build the maps */ setTimeout(welcomeOnce, 4500);   /* (after the look window has had its turn; it does nothing until you have a face) */
+  if (m.type === "hello") { UI?.fromServer(m.ui, m.me);   /* (2026-09-30) YOUR SCREEN */ G.setProjects(m.proj || {}); G.setGrand(m.grand || {}); PBOARD = m.pboard || null;   /* (2026-09-28) World Projects: the tiers build the maps */ setTimeout(welcomeOnce, 4500);   /* (after the look window has had its turn; it does nothing until you have a face) */
     // the server runs newer rules than this page: fetch the new page (at most once a minute, so a half-finished deploy can't loop)
     if (m.version !== G.VERSION) {
       let last = 0; try { last = +sessionStorage.getItem("es_reload") || 0; } catch (e) { /* no storage */ }
@@ -2375,7 +2379,7 @@ function onEvent(e) {
   if (e.type === "meter") { meterUi().then((u) => u.got(e.m)).catch(() => {}); return; }
   /* the run report: a moment after the clear or the wipe, so the win banner and the chest have their say first */
   if (e.type === "runreport") { runRepUi().then((u) => setTimeout(() => { u.got(e.r, e.again); METER?.party?.(true); }, e.again ? 0 : 1800)).catch(() => {}); return; }   /* (2026-09-28) the party meter */
-  if (e.type === "party") METER?.party(e.party);   /* (and it goes when the party does) */
+  if (e.type === "party") { METER?.party(e.party); PARTY_IDS = new Set((e.party?.members || []).map((q) => q.id)); }   /* (and it goes when the party does) */
   if (["party", "partyask", "crypt", "cryptgates", "cryptwon", "cryptloot"].includes(e.type)) { cryptLoad().then((c) => c.on(e)).catch(() => {}); return; }
   if (["count", "countstate", "countloot", "countwon"].includes(e.type)) { countLoad().then((c) => c.on(e)).catch(() => {}); return; }   /* (2026-09-25) the Count Room. `party` and `partyask` stay with the crypt module, which owns the party box for both dungeons. */
   if (["carnival", "carnivalround", "carnivalwon"].includes(e.type)) { carnLoad().then((c) => c.on(e)).catch(() => {}); return; }   /* (2026-09-24) the Carnival’s three stalls, one window */
@@ -2422,15 +2426,15 @@ function onEvent(e) {
   if (e.type === "gemserr") { GEMUI?.oops(e.text); return; }
   if (e.type === "ordergave") { SFX.play("coins"); ORDUI?.gave(e.n); return; }
   if (e.type === "orderclaimed") { ORDUI?.claimed(); return; }   /* the window stays open: the next order arrives in it straight away */   /* (2026-09-28) Bom's buy-back */
-  if (e.type === "casinonote") { chatLine("Casino", e.text, "casinonote"); if (/JACKPOT/.test(e.text)) SFX.play("jackpot"); return; }
+  if (e.type === "casinonote") { if (!set("casinoLines")) return; chatLine("Casino", e.text, "casinonote"); if (/JACKPOT/.test(e.text)) SFX.play("jackpot"); return; }
   /* (2026-09-23, the owner) A LEVEL MILESTONE, to everyone online. It is a chat line rather than a banner on
      purpose: the point is that the room can reply to it. Your own gets a sound; other people's do not, or a
      busy evening turns into a slot machine. */
-  if (e.type === "milestone") { chatLine(e.name, e.text, "milestone"); if (e.name === you?.name) SFX.play("task_done"); return; }
+  if (e.type === "milestone") { if (e.name !== you?.name && !set("milestoneLines")) return; chatLine(e.name, e.text, "milestone"); if (e.name === you?.name) SFX.play("task_done"); return; }
   if (e.type === "daily") return renderDaily(e);
   /* (2026-09-23) CAUGHT. The server has already stunned you and taken the item; this is the shake that tells you
      so, because a failed pick otherwise reads as the game not having registered the click at all. */
-  if (e.type === "caught") { SFX.play("caught"); cv.classList.remove("shake"); void cv.offsetWidth; cv.classList.add("shake"); setTimeout(() => cv.classList.remove("shake"), 420); return; }
+  if (e.type === "caught") { SFX.play("caught"); cv.classList.remove("shake"); void cv.offsetWidth; if (set("shake")) cv.classList.add("shake"); setTimeout(() => cv.classList.remove("shake"), 420); return; }
   if (e.type === "roulopen") { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "gameWin", "dailyWin"]) $(w).hidden = true; $("roulWin").hidden = false; renderRoul(); return; }
   if (e.type === "roul") { roulSet(e); return; }
   if (e.type === "fight") { const was = FIGHT; FIGHT = { ...e, until: performance.now() + e.left }; if (e.phase === "fight" && was?.phase !== "fight") SFX.play("task_done"); if (e.open || CZ.game === "fight") CZ.fight(FIGHT, e.open); return; }
@@ -2459,6 +2463,7 @@ function onEvent(e) {
     /* (2026-09-27) THE RECENT CHAT the server hands over on hello (`old`): drawn quietly - no sound, no bubble over a head - and only the lines
        this tab has not already drawn, so a reconnect after a restart does not repeat the conversation it is still showing */
     if (e.old && (e.t || 0) <= chatSeenT) return; chatSeenT = Math.max(chatSeenT, e.t || 0);
+    if (e.id === "house" && e.name === "CASINO" && !set("casinoLines")) return;   /* (2026-09-30) Features: CASINO's lines */
     if (!e.old && e.id !== you?.id) SFX.play("chat", { vol: 0.6 }); if (!e.old && e.scene === Z.key) botBubbles.set(e.id, { text: e.text, at: performance.now() }); chatLine(e.name, e.text, e.id === you?.id ? "mine" : "", e.role, e.id === you?.id ? G.nameFxOf(me) : e.nfx); return; }
 }
 /** Admin or mod — the two that get the panel and the dashboard. A plain player is neither. */
@@ -2511,7 +2516,7 @@ function exitsOf() {
   });
 }
 const exitAt = (x, y) => (Z.exits || []).find((ex) => ex.tiles.some((t) => t.x === x && t.y === y) || (ex.sign && ex.sign.x === x && ex.sign.y === y));
-const botBubbles = new Map(), BURSTS = []; let shakeUntil = 0;
+const botBubbles = new Map(), BURSTS = []; let shakeUntil = 0, PARTY_IDS = new Set();   /* (2026-09-30) PARTY_IDS: the Players tab's "My party" */
 const BUSY_TAG = { slots: "🎰 Slots", cointable: "🪙 Coin Flip", dicetable: "🎲 Dice", wheel: "🎡 Wheel", hilo: "🃏 Higher or Lower", mines: "💣 Mines", plinko: "🔴 Plinko", scratch: "🎟 Scratch-Off", fightring: "🥊 Ringside", fightboard: "🥊 Picking a fighter", spot: "🎣 Fishing", rock: "⛏ Mining", vein: "⛏ Mining", tree: "🪓 Chopping", olive: "🫒 Picking olives", wheat: "🌾 Picking wheat" };
 const STORE_NAME = { "name-gold": "#ffd24a", "name-ice": "#a8dcff", "name-ember": "#ff8a3a", "name-diamond": "#e8f6ff", "name-sakura": "#ffa8cc", "name-slime": "#8aff5a", "name-mint": "#8affd0" };   // eastcoin.vip store name colours, as flat colours a canvas label can wear
 
@@ -4513,7 +4518,7 @@ function drawPlates(rects, t, calm) {
     if (r.tag) { ctx.font = "900 9.5px Lora"; const tw = ctx.measureText(r.tag).width + 14; ctx.fillStyle = "#c8302a"; ctx.beginPath(); ctx.roundRect(Math.round(r.x - tw / 2), Math.round(py), tw, 12, 3); ctx.fill(); ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(r.tag, r.x, py + 6.5); py += 13; }   /* (2026-09-30) WANTED */
     ctx.drawImage(plBoard(r.w, 34, plHash(r.name), r.sel), Math.round(r.x0), Math.round(py));
     const tx = (t, x, al, col, font) => { ctx.font = font; ctx.textAlign = al; ctx.textBaseline = "alphabetic"; ctx.lineJoin = "round"; ctx.lineWidth = 2.5; ctx.strokeStyle = "#140a04"; ctx.strokeText(t, x, py + 14); ctx.fillStyle = col; ctx.fillText(t, x, py + 14); };
-    ctx.font = "700 10px Lora"; const lv = `Lv ${r.lvl}`, room = r.w - 20 - ctx.measureText(lv).width; tx(lv, Math.round(r.x0 + r.w - 8), "right", "#ffd84a", "700 10px Lora");
+    ctx.font = "700 10px Lora"; const lv = r.lvl != null ? `Lv ${r.lvl}` : "", room = r.w - 20 - ctx.measureText(lv).width; tx(lv, Math.round(r.x0 + r.w - 8), "right", "#ffd84a", "700 10px Lora");
     ctx.font = "700 11px Lora"; let nm = r.name; while (ctx.measureText(nm).width > room && nm.length > 3) nm = nm.slice(0, -2) + "\u2026";
     tx(nm, Math.round(r.x0 + 8), "left", r.col, "700 11px Lora");
     plBar(r.x0 + 8, py + 19, r.w - 16, 10, r.P, r.max, `${Math.round(r.P.shown)} / ${r.max}`, 9.5);
@@ -4660,7 +4665,9 @@ function nameLabel(text, x, y, color, nfx, t) {
   ctx.globalAlpha = alpha; label(text, x + dx, y, c, size); ctx.globalAlpha = 1;
   if (nfx.icon && IMG[`nb_${nfx.icon}`]) ctx.drawImage(IMG[`nb_${nfx.icon}`].im, x - w / 2 - 20 + dx, y - 1, 16, 16);
 }
+let LBL_K = 1;   /* (2026-09-30) YOUR SCREEN: the name-size sliders, set around the player and monster name blocks only */
 function label(text, x, y, color, size = 13) {
+  if (LBL_K !== 1) size = Math.round(size * LBL_K * 10) / 10;
   ctx.font = `700 ${size}px "Lora", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "top";
   ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,.85)"; ctx.strokeText(text, x, y); ctx.fillStyle = color; ctx.fillText(text, x, y);
 }
@@ -4675,7 +4682,7 @@ function bubble(text, x, y) {
    All of it is a few dozen small rectangles a frame, only in a casino room, and none of it under reduced motion. */
 const GAME_T = new Set(["slots", "cointable", "dicetable", "wheel", "hilo", "mines", "plinko", "scratch"]);
 function casinoLife(sprites, pnow, calm) {
-  if (calm) return;
+  if (calm || !set("ambience")) return;
   const r = Z.def.room, Y0 = r ? r[1] * T : 0;
   lc.save(); lc.globalCompositeOperation = "lighter";
   if (r) for (let i = 0; i < 3; i++) {   // spotlights wandering over the carpet
@@ -4925,7 +4932,7 @@ function frame() {
       sprites.push({ y: ob.flat ? ob.y * T + 1 : (ob.y + ob.h) * T - 1, draw: () => spr(oa, (ob.x + ob.w / 2) * T, (ob.y + ob.h) * T + bob + (ob.dy || 0), ob.flip || flipOf(ob), tfx, sc) });
       // special ones keep their sparkles; a fire sends up embers
       const fire = ob.t === "fire";
-      if ((ob.special || fire) && !calm && !objBusy(ob, now)) sprites.push({ y: ob.y * T + 16, draw: () => { for (let i = 0; i < 6; i++) { const k = (pnow / (fire ? 1100 : 2600) + i / 6) % 1, mx = ob.x * T + 8 + Math.sin(i * 2.3 + pnow / 800) * (fire ? 3 : 9), my = ob.y * T + (fire ? 4 : 8) - k * (fire ? 18 : 30); lc.globalAlpha = Math.sin(k * Math.PI) * 0.9; px(mx, my, 1, 1, ob.glow || (fire ? (i % 2 ? "#ffb030" : "#ff6a1a") : "#ffe27a")); } lc.globalAlpha = 1; } });
+      if ((ob.special || fire) && !calm && set("ambience") && !objBusy(ob, now)) sprites.push({ y: ob.y * T + 16, draw: () => { for (let i = 0; i < 6; i++) { const k = (pnow / (fire ? 1100 : 2600) + i / 6) % 1, mx = ob.x * T + 8 + Math.sin(i * 2.3 + pnow / 800) * (fire ? 3 : 9), my = ob.y * T + (fire ? 4 : 8) - k * (fire ? 18 : 30); lc.globalAlpha = Math.sin(k * Math.PI) * 0.9; px(mx, my, 1, 1, ob.glow || (fire ? (i % 2 ? "#ffb030" : "#ff6a1a") : "#ffe27a")); } lc.globalAlpha = 1; } });
       continue;
     }
     const tall = { gravestone: 14, cagesign: 14, rope: 14, snag: 14 }[ob.t];
@@ -5257,7 +5264,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   }
   /* (2026-09-30) THE LOOKS, under everybody's feet: trails and glows (see THE LOOKS) */
   { const lkOf = (pl) => (pl.id === you.id ? G.looksOf(me) : pl.lk);
-    if (LOOKS) { LOOKS.frame(Z.players.map((pl) => { const L = lkOf(pl); if (!L) return null; const p = pos(pl); return { id: pl.id, lk: L, x: p.px * T + 8, y: p.py * T + 15, moving: p.moving, face: pl.face }; }).filter(Boolean)); LOOKS.ground(lc, pnow, calm); LOOKS.decor(lc, pnow, Z.objs, IMG, A, calm); }
+    if (LOOKS) { const lkAll = set("looks"); LOOKS.frame(Z.players.map((pl) => { const L = (lkAll || pl.id === you.id) && lkOf(pl); if (!L) return null; const p = pos(pl); return { id: pl.id, lk: L, x: p.px * T + 8, y: p.py * T + 15, moving: p.moving, face: pl.face }; }).filter(Boolean)); LOOKS.ground(lc, pnow, calm); LOOKS.decor(lc, pnow, Z.objs, IMG, A, calm); }
     else if (Z.players.some((pl) => lkOf(pl) || (pl.id === you.id ? G.petSkinOf(me) : pl.psk)) || Z.objs.some((o) => o.decor && G.STORE_DECOR[o.k]?.fx)) looksLoad().catch(() => {}); }
   sprites.sort((a, b) => a.y - b.y).forEach((s) => s.draw());
   drawMini();
@@ -5269,7 +5276,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
 
   // ---- up to screen size, crisp
   ctx.imageSmoothingEnabled = false;
-  const shk = !calm && pnow < shakeUntil ? (shakeUntil - pnow) / 40 : 0;   /* a crit, or a heavy hit on you: a few pixels for a fifth of a second */
+  const shk = !calm && set("shake") && pnow < shakeUntil ? (shakeUntil - pnow) / 40 : 0;   /* a crit, or a heavy hit on you: a few pixels for a fifth of a second */
   ctx.drawImage(low, view.ox + (shk ? Math.sin(pnow / 13) * shk : 0), view.oy + (shk ? Math.cos(pnow / 11) * shk : 0), W * view.s, H * view.s);
   if ((NIGHT_FORCE || G.hwDarkAt(Z.key)) && !Z.def?.interior && !Z.isle) { const cw = ctx.canvas.width, ch = ctx.canvas.height, g2 = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * 0.32, cw / 2, ch / 2, Math.max(cw, ch) * 0.72); g2.addColorStop(0, "rgba(0,0,0,0)"); g2.addColorStop(1, "rgba(0,0,0,.55)"); ctx.fillStyle = g2; ctx.fillRect(0, 0, cw, ch); }   /* (2026-09-27) Nightfall's vignette, on the screen so it follows the camera */
   const S2 = view.s, sx = (tx) => view.ox + tx * S2, sy = (ty) => view.oy + ty * S2;
@@ -5294,11 +5301,13 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
       if (!here) label(out ? `✕ ${st.name}` : st.name, x, y, out ? "#8a8a8a" : won ? "#ffe27a" : "#ffb0d0", 12);
       if (won) label(`+${RRS.show?.pot ?? ""} ZC`, x, y - 16, "#ffe27a", 13); else if (out && here) label("out", x, y - 16, "#ff7a6a", 12); } }
   // names under everyone
-  const names = set("names");
+  const names = set("names"), UIV = UI?.ui() || G.UI_DEFAULT, PN = UIV.pn, MN = UIV.mn;   /* (2026-09-30) YOUR SCREEN: names = NPCs and bots now; players and monsters have their own tabs */
   for (const pl of Z.players) {
     const p = pos(pl), x = sx(p.px * T + 8), y = sy(p.py * T + 15);
     /* (v81) a name colour and a title bought in eastcoin.vip's store show here too. A VIP colour is EARNED, so it wins. */
-    if (pl.id === you.id || names) { const tier = G.VIP[pl.id === you.id ? G.vipOf(me).i : pl.vip | 0], bought = STORE_NAME[pl.cos?.name], nfx = pl.id === you.id ? G.nameFxOf(me) : pl.nfx; nameLabel(tier?.at ? `◆ ${pl.name}` : pl.name, x, y + 4, tier?.at ? tier.col : bought || (pl.id === you.id ? "#fff" : pvp ? "#ff7a6a" : "#9fd0ff"), nfx, pnow); label(`level ${pl.lvl}`, x, y + 18, "#ffe45c", 12); { const tt = pl.id === you.id ? G.titleOf(me) : pl.ttl; if (tt) label(`« ${tt} »`, x, y + 31, "#e8d8a8", 11); } }   /* (2026-09-30) the Store's titles */
+    if (pl.id === you.id || PN.who === "all" || (PN.who === "party" && PARTY_IDS.has(pl.id))) { LBL_K = PN.size / 100; const k = LBL_K; let ly = y + 4 + 14 * k;
+      const tier = G.VIP[pl.id === you.id ? G.vipOf(me).i : pl.vip | 0], bought = STORE_NAME[pl.cos?.name], nfx = pl.id === you.id ? G.nameFxOf(me) : pl.nfx; nameLabel(tier?.at ? `◆ ${pl.name}` : pl.name, x, y + 4, tier?.at ? tier.col : bought || (pl.id === you.id ? "#fff" : pvp ? "#ff7a6a" : "#9fd0ff"), nfx, pnow);
+      if (PN.lvl) { label(`level ${pl.lvl}`, x, ly, "#ffe45c", 12); ly += 13 * k; } { const tt = PN.title && (pl.id === you.id ? G.titleOf(me) : pl.ttl); if (tt) label(`« ${tt} »`, x, ly, "#e8d8a8", 11); } LBL_K = 1; }   /* (2026-09-30) the Store's titles */
     /* (2026-09-29) a hurt player's bar is an overhead plate now (drawPlates, after the monsters) */
     /* BLEEDING (2026-09-24, the owner: "when a user is bleeding it needs to show an icon above their head
        (small)"). Over the head of whoever HELD names, so the three people who are meant to go and save them can
@@ -5315,7 +5324,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
       ctx.fillStyle = full ? "#ffd84a" : "#fff6dc"; ctx.strokeStyle = "#3a2410"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx, by, 11, 0, 6.283); ctx.fill(); ctx.stroke();
       ctx.fillStyle = "#3a2410"; ctx.font = `800 12px "Lora", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(full ? "!" : String(r), bx, by + 1); } }
   /* (2026-09-30) pet name tags, under the names so a person's own name always wins */
-  for (const t of PTAGS) { const col = G.STORE_LOOKS.ptag[t.tag]?.[1] || ["#e8d0a0", "#5a3220"], gx = sx(t.x), gy = sy(t.y - 17); ctx.save(); if (t.tag === "glow" && !calm) { ctx.shadowColor = col[0]; ctx.shadowBlur = 6 + Math.sin(pnow / 300) * 2; } label(t.nm, gx, gy, col[0], 10); ctx.restore(); }
+  if (PN.pets) for (const t of PTAGS) { const col = G.STORE_LOOKS.ptag[t.tag]?.[1] || ["#e8d0a0", "#5a3220"], gx = sx(t.x), gy = sy(t.y - 17); ctx.save(); if (t.tag === "glow" && !calm) { ctx.shadowColor = col[0]; ctx.shadowBlur = 6 + Math.sin(pnow / 300) * 2; } label(t.nm, gx, gy, col[0], 10); ctx.restore(); }
   // confetti over whoever just hit a big one (v81): 26 squares thrown up and out, falling, for 1.8 s. Only if they're in this room.
   for (let i = BURSTS.length - 1; i >= 0; i--) { const b = BURSTS[i], age = (pnow - b.at) / 1000; if (age > 1.8) { BURSTS.splice(i, 1); continue; } const pl = Z.players.find((q) => q.id === b.id); if (!pl || calm) continue;
     const p = pos(pl), cx = sx(p.px * T + 8), cy = sy(p.py * T - 6); for (let k = 0; k < 26; k++) { const a = hashRand(k, 7, 3) * 6.283, v = 60 + hashRand(k, 2, 9) * 110, x = cx + Math.cos(a) * v * age * S2 * 0.5, y = cy + (Math.sin(a) * v * age - 90 * age + 160 * age * age) * S2 * 0.5; ctx.globalAlpha = Math.max(0, 1 - age / 1.8); ctx.fillStyle = STAR_COLS[k % STAR_COLS.length]; ctx.fillRect(x, y, 3 * S2 * 0.5 + 1, 3 * S2 * 0.5 + 1); } ctx.globalAlpha = 1; }
@@ -5332,20 +5341,21 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   const plMe = Z.players.find((q) => q.id === you?.id), plTgt = plMe?.mob || null, plHov = hoverThing && (hoverThing.kind === "mob" || hoverThing.kind === "pvp") ? hoverThing.id : null;
   for (const m of Z.mobs) if (!m.dead) {
     const p = posOf(m, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15);
-    if (names) { if (m.id !== plTgt && m.id !== plHov) label(m.nm || MOBS[m.t].name, x, y + 2, m.w ? "#ff6b5a" : MOBS[m.t].event ? "#ffe27a" : "#ffb23f", 12); const mv = MOBS[m.t].event ? 0 : G.mobValue(m.t), gate = me && !MOBS[m.t].event ? G.bandBlock(me, Z.key, "fight") : null; if (gate) label(gate.text, x, y + 15, "#ff6b6b", 11); else if (mv) tixLabel(mv, x, y + 15, "#ff9aa8", 11, "~"); }   /* (LEVEL BANDS: what you need, where the pay would be) */
+    /* (2026-09-30) YOUR SCREEN's Monsters tab: names always, only as the hover plate, only while you're fighting, or never; the value line on or off */
+    if (MN.names === "always" || (MN.names === "fight" && plTgt)) { LBL_K = MN.size / 100; if (m.id !== plTgt && m.id !== plHov) label(m.nm || MOBS[m.t].name, x, y + 2, m.w ? "#ff6b5a" : MOBS[m.t].event ? "#ffe27a" : "#ffb23f", 12); const mv = MN.value && !MOBS[m.t].event ? G.mobValue(m.t) : 0, gate = MN.value && me && !MOBS[m.t].event ? G.bandBlock(me, Z.key, "fight") : null, vy = y + 2 + 13 * LBL_K; if (gate) label(gate.text, x, vy, "#ff6b6b", 11); else if (mv) tixLabel(mv, x, vy, "#ff9aa8", 11 * LBL_K, "~"); LBL_K = 1; }   /* (LEVEL BANDS: what you need, where the pay would be) */
   }
   /* (2026-09-29) THE PLATES: monsters, then players (yours when you're hurt; another's in the Wilderness), measured from the top of the
      picture as the old bar was (v110: clear of anything taller than a tile) */
   { const rects = [];
     for (const m of Z.mobs) { if (m.dead) continue; const max = m.mx || MOBS[m.t].hp, P_ = plateOf(m.id, m.hp); plateTick(P_, m.hp, pnow);
       const p = posOf(m, now), x = sx(p.px * T + 8), top = sy(p.py * T + 14 - artTop(MOBS[m.t].art || m.t)) - 4;
-      if (m.id === plTgt || m.id === plHov) rects.push({ full: true, x, top, name: m.nm || MOBS[m.t].name, lvl: m.lv || MOBS[m.t].lvl, max, P: P_, icons: m.tr ? [] : mobIcons(m.t), col: m.w ? "#ff8a78" : "#ffb23f", tag: m.w ? "WANTED" : null, sel: m.id === plTgt, prio: m.id === plTgt ? 0 : 1 });
-      else if (m.hp < max || P_.shown < max - 0.5) rects.push({ full: false, x, top, max, P: P_, prio: 3 }); }
+      if (m.id === plTgt || m.id === plHov) rects.push({ full: true, x, top, name: m.nm || MOBS[m.t].name, lvl: MN.lvl ? m.lv || MOBS[m.t].lvl : null, max, P: P_, icons: m.tr ? [] : mobIcons(m.t), col: m.w ? "#ff8a78" : "#ffb23f", tag: m.w ? "WANTED" : null, sel: m.id === plTgt, prio: m.id === plTgt ? 0 : 1 });
+      else if (MN.plate === "always" || (MN.plate === "hurt" && (m.hp < max || P_.shown < max - 0.5))) rects.push({ full: false, x, top, max, P: P_, prio: 3 }); }   /* (2026-09-30) Monsters tab: health plates */
     for (const pl of Z.players) { const own = pl.id === you?.id, hp = own ? me?.hp : pl.hp, max = own ? maxHp() : pl.maxHp; if (!(max > 0) || hp == null) continue;
       const P_ = plateOf(`p:${pl.id}`, hp); plateTick(P_, hp, pnow);
       const p = pos(pl), x = sx(p.px * T + 8), top = sy(p.py * T - 13);
       if (!own && pvp && pl.id === plHov) rects.push({ full: true, x, top, name: pl.name, lvl: pl.lvl, max, P: P_, icons: [], col: "#ff9a8a", sel: false, prio: 1 });
-      else if (hp < max && (own || pvp) || P_.shown < max - 0.5) rects.push({ full: false, x, top, max, P: P_, prio: own ? 2 : 3 }); }
+      else if ((own || PN.hp) && (hp < max && (own || pvp) || P_.shown < max - 0.5)) rects.push({ full: false, x, top, max, P: P_, prio: own ? 2 : 3 }); }   /* (2026-09-30) Players tab: other people's health */
     for (const id of PLATE.keys()) if (!Z.mobs.some((m) => m.id === id) && !Z.players.some((q) => `p:${q.id}` === id)) PLATE.delete(id);   /* gone from the room */
     drawPlates(rects, pnow, calm); }
   /* (2026-09-30) WORLD EVENTS: stars round a dizzy thief's head, and the big words off an event's moment */
@@ -5364,7 +5374,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
     }
     if (names) label(n.tag ? `${n.name} - ${n.tag}` : n.name, sx(p.px * T + 8), sy(p.py * T + 15) + 2, "#fff", 12);   /* (a tag: "Yahsmeena - NPC". She wears a player's look, so her name says she isn't one) */
   }
-  for (const pl of Z.players) { const bb = botBubbles.get(pl.id); if (bb && pnow - bb.at < 4500) { const p = pos(pl); bubble(bb.text, sx(p.px * T + 8), sy(p.py * T - 12)); } }
+  for (const pl of Z.players) { const bb = (pl.id === you.id || set("bubbles")) && botBubbles.get(pl.id); if (bb && pnow - bb.at < 4500) { const p = pos(pl); bubble(bb.text, sx(p.px * T + 8), sy(p.py * T - 12)); } }
   if (FIGHT && Z.def.pit) {   // names, odds and health over the two in the pit; the clock over the middle
     const P = Z.def.pit, cx = (P.x + P.w / 2) * T, cy = (P.y + P.h / 2) * T + 6, el = FIGHT.phase === "fight" ? now - FIGHT.startedAt : -1, done = (FIGHT.script || []).filter((h) => h.at <= el), lastHit = done[done.length - 1], hp = lastHit ? lastHit.hp : [100, 100];
     FIGHT.f.forEach((ft, i) => { const dir = i ? -1 : 1, x = sx(cx - dir * 30), y = sy(cy - 40); label(MOBS[ft.t].name, x, y, i ? "#ff9aa6" : "#ffe27a", 13); label(FIGHT.phase === "bet" ? `pays ${FIGHT.pays[i]}×` : `${Math.max(0, hp[i])}%`, x, y + 14, "#fff", 12);
@@ -5379,7 +5389,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   for (const ob of Z.objs) if (ob.t === "coinstatue") { label("BOM TRADY", sx((ob.x + (ob.w || 2) / 2) * T), sy((ob.y + (ob.h || 1)) * T - 86), "#ffe27a", 14); label("the Prize Counter", sx((ob.x + (ob.w || 2) / 2) * T), sy((ob.y + (ob.h || 1)) * T - 73), "#ff9aa8", 11); }   /* (just over his head: measured from the kiosk's FOOT, since the picture is taller than its footprint) */
   for (const ob of Z.objs) if (ob.t === "cryptdoor") { label("THE CRYPT", sx((ob.x + 0.5) * T), sy(ob.y * T - 30), "#9af0c0", 13); label("bring a party", sx((ob.x + 0.5) * T), sy(ob.y * T - 18), "#c8c0d8", 11); }
   for (const ob of Z.objs) if (ob.t === "furnace" || ob.t === "anvil" || ob.t === "range") label("pays 2×", sx((ob.x + 0.5) * T), sy(ob.y * T - 16), "#ffe27a", 12);
-  for (const b of Z.bots) { const p = posOf(b, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15); if (names) { label(b.name, x, y + 2, "#fff", 12); label(`level ${b.level}`, x, y + 15, "#ffe45c", 11); } const bb = botBubbles.get(b.id); if (bb && pnow - bb.at < 3500) bubble(bb.text, x, sy(p.py * T - 10));
+  for (const b of Z.bots) { const p = posOf(b, now), x = sx(p.px * T + 8), y = sy(p.py * T + 15); if (PN.who === "all") { LBL_K = PN.size / 100; label(b.name, x, y + 2, "#fff", 12); if (PN.lvl) label(`level ${b.level}`, x, y + 2 + 13 * LBL_K, "#ffe45c", 11); LBL_K = 1; }   /* (2026-09-30) the bots read as people, so the Players tab decides */ const bb = set("bubbles") && botBubbles.get(b.id); if (bb && pnow - bb.at < 3500) bubble(bb.text, x, sy(p.py * T - 10));
     /* WHAT THEY'RE UP TO (the owner, 2026-09-20: "makes world feel alive"): somebody busy at a table or a fishing spot wears a
        small tag over their head saying so. It bobs a little, hides while they're talking, and costs one label a person. */
     else if (b.work != null && !p.moving && BUSY_TAG[b.workT]) label(BUSY_TAG[b.workT], x, sy(p.py * T - 13) + (calm ? 0 : Math.sin(pnow / 420 + b.x) * 2 * S2 * 0.5), "#ffe9a8", 11); }
@@ -5408,7 +5418,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   if (LOOKS) LOOKS.over(ctx, pnow, sx, sy, S2, calm);   /* (2026-09-30) weapon hits, halos, and the world shows */
   // hit splats (a ranged one is stamped FLIGHT_MS ahead, so it waits here until its arrow has landed)
   splats = splats.filter((s) => pnow - s.at < 900);
-  for (const s of splats) {
+  for (const s of set("splats") ? splats : []) {   /* (2026-09-30) Features: damage numbers */
     if (pnow < s.at) continue;
     let x, y;
     if (s.who.startsWith("p:")) { const pl = Z.players.find((q) => `p:${q.id}` === s.who); if (!pl) continue; const p = pos(pl); x = sx(p.px * T + 8); y = sy(p.py * T + 15) - 18 * S2; }
@@ -6832,9 +6842,9 @@ function renderEx() {
 /* The game windows' code is 26 KB and nobody needs it until they click a table, so it is fetched then (and quietly a few
    seconds after you arrive, so that first click doesn't wait). CZ is a stand-in until it lands: calls that OPEN something
    wait for the module and then run, in order; calls that only UPDATE an open window are dropped, because nothing is open. */
-const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=61", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit", "boughtback"]);
+const CZ_URL = "/v3/assets/js/eastscape-casino.js?v=62", CZ_QUIET = new Set(["me", "closed", "blocked", "result", "run", "cashed", "dex", "stake", "pit", "boughtback"]);
 let czReal = null;
-const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c),
+const czLoad = () => (czLoad.p ||= import(CZ_URL).then((m) => (czReal = m.createCasino({ G, SFX, send, esc, $, ico, say: (t, c) => say(t, c), buyLimit: () => UI?.ui().buy || 0,   /* (2026-09-30) YOUR SCREEN: ask before big buys */
   /* a shared round's view, built from the site's state: fed to the very handlers the game server's own views used to reach */
   onFight: (v) => { const was = FIGHT; FIGHT = { ...v, until: performance.now() + v.left }; if (v.phase === "fight" && was?.phase !== "fight" && was) SFX.play("task_done"); if (CZ.game === "fight") CZ.fight(FIGHT, false); },
   onRoul: (v) => roulSet(v), winFx: (big, small, label) => winFx(big, small, label), bigWin: (w) => send({ t: "bigwin", game: w.game, mult: w.mult, jackpot: w.jackpot }), roomPeople: () => (String(Z.key).split(":")[0] === "roulette" ? Z.players.map((q) => ({ name: q.name, me: q.id === you?.id })) : []), rrChanged: () => { if (String(Z.key).split(":")[0] === "roulette") send({ t: "rr" }); }, me: () => me, room: () => Z.def, you: () => you, calm: () => set("reducedMotion"), now: () => snow() }))));
@@ -7031,7 +7041,7 @@ function confettiFx(mine) {
   }
 }
 function winFx(big, small, label) {
-  SFX.play("levelup", { vol: 0.55 }); const jack = big === "JACKPOT", b = $("lvlup");
+  SFX.play("levelup", { vol: 0.55 }); if (!set("banners")) return;   /* (2026-09-30) Features: big announcements */ const jack = big === "JACKPOT", b = $("lvlup");
   b.innerHTML = `<small>${label || (jack ? "Jackpot!" : "Winner!")}</small><b>${jack ? small : big}</b>`; b.classList.add("over");
   b.hidden = false; b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
   if (!set("reducedMotion")) { bursts.push({ at: performance.now() }); for (let i = 0; i < (jack ? 40 : 22); i++) { const sp = document.createElement("i"), a = Math.random() * 6.283, v = 70 + Math.random() * (jack ? 210 : 140); sp.className = "winspark"; sp.style.cssText = `--dx:${Math.round(Math.cos(a) * v)}px;--dy:${Math.round(Math.sin(a) * v * 0.7 + 40)}px;--r:${Math.round(Math.random() * 720 - 360)}deg;background:${STAR_COLS[i % STAR_COLS.length]}`; b.append(sp); } }
@@ -7042,6 +7052,7 @@ function levelUp(k, l) {
   const s = SKILLS[k]; if (!s) return;
   const log = $("chatLog"); log.querySelector(".empty")?.remove();
   const p = document.createElement("p"); p.className = "loot"; p.textContent = `🎉 Level up! Your ${s.name} is now level ${l}.`; log.append(p); log.scrollTop = log.scrollHeight;
+  if (!set("banners")) return;   /* (2026-09-30) Features: the line stays, the banner goes */
   const b = $("lvlup"); b.classList.remove("over"); b.innerHTML = `<small>Level up!</small><b>${sico(k)} ${esc(s.name)} ${l}</b>`;
   b.hidden = false; b.classList.remove("show"); void b.offsetWidth; b.classList.add("show");
   clearTimeout(levelUp.t); levelUp.t = setTimeout(() => { b.hidden = true; }, 2600);
@@ -8264,7 +8275,11 @@ const ADMIN_FIELDS = ["aSkill", "aXp", "aLvl", "aItem", "aQty", "aScene", "aQues
 /* (2026-09-28) SETTINGS BEHIND THE GEAR. It was one of six permanent tabs for something opened about once a month; now it is a window from the
    gear in the top bar (or Settings under your name). The same switches, the same saving. */
 function openSettings() { if (!$("setWin").hidden) { $("setWin").hidden = true; return; } openWin("setWin"); renderSettings(); }
-function renderSettings() {
+/* (2026-09-30) YOUR SCREEN: the window is drawn by eastscape-ui.js, in five tabs (Layout, Players, Monsters, Features, Look). The old
+   one-list version is kept below as renderSettingsOld in case the module ever fails to build. */
+UI = createUI({ G, SFX, send: (m) => send(m), esc, me: () => me, say: (t, c) => say(t, c), savedAt: () => savedAt });
+function renderSettings() { if (UI) return UI.render(); renderSettingsOld(); }
+function renderSettingsOld() {
   const p = $("setBody"); if (!me || $("setWin").hidden) return;
     p.innerHTML = `<div class="sets">${Object.entries(G.SETTING_INFO).map(([k, [name, about]]) =>
       `<label class="set" for="set-${k}"><span><b>${name}</b><small>${about}</small></span><span class="sw"><input type="checkbox" id="set-${k}" data-k="${k}"${set(k) ? " checked" : ""}><span></span></span></label>`).join("")}</div>

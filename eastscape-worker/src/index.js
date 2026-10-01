@@ -327,7 +327,7 @@ export class World {
     /* (2026-09-27) A LOAD WITH NOTHING TO HOLD IT: the pocket outlived its quiver somehow (an old save, a lost piece). It can no longer
        fire (G.ammoOf wants the pouch), so it is handed back to the bag here rather than left invisible. */
     if (C.quiver && !(G.pouchOf(C) && G.pouchOf(C).pouch.ammo === G.ammoKind(C.quiver.k))) this.pocketOut(pl);
-    this.send(pl, { type: "hello", version: G.VERSION, t: Date.now(), you: { id: pl.id, login: pl.login, name: pl.name, admin: pl.admin, role: pl.role }, me: this.meOf(pl), proj: this.projTiers(), grand: this.projGrand(), pboard: this.projBoard() });
+    this.send(pl, { type: "hello", version: G.VERSION, t: Date.now(), you: { id: pl.id, login: pl.login, name: pl.name, admin: pl.admin, role: pl.role }, me: this.meOf(pl), ui: pl.C.ui || null,   /* (2026-09-30) YOUR SCREEN: once, here, never in "me" */ proj: this.projTiers(), grand: this.projGrand(), pboard: this.projBoard() });
     this.projOwed(pl);   /* (2026-09-28) Builder's Pins earned while away */
     this.send(pl, { type: "who", scene: S.key, who: this.whoOf(S), npcs: this.npcsOf(S) });
     if (this.chatLog?.length) this.send(pl, { type: "ev", list: this.chatLog.map((x) => ({ ...x, old: true })) });   /* (2026-09-27) the recent chat: see chatKeep */
@@ -895,6 +895,7 @@ export class World {
         for (const [k, v] of Object.entries(m.patch || {})) if (k in G.DEFAULT_SETTINGS && typeof v === "boolean") C.settings[k] = v;
         this.touch(pl); return;
       }
+      case "ui": { const u = G.cleanUi(m.ui); if (JSON.stringify(u).length > G.UI_MAX_BYTES) return; pl.C.ui = u; this.touch(pl); return; }   /* (2026-09-30) YOUR SCREEN: shape and size checked, nothing else (it is all cosmetic) */
       case "bank": return this.bankOp(S, pl, m);
       case "ex": return this.exOp(S, pl, m);
       case "bet": return this.bet(S, pl, m, now);
@@ -5180,7 +5181,7 @@ export class World {
       case "quest": { const k = String(m.k), state = String(m.state); if (!G.QUESTS[k] || !["new", "active", "done"].includes(state)) return; if (state === "new") delete C.qs[k]; else C.qs[k] = { state, stage: 0, n: 0 }; this.touch(pl); return note(`${G.QUESTS[k].name} set to ${state}.`); }
       case "resetquests": C.qs = {}; this.touch(pl); return note("All quests reset.");
       case "resetscene": { this.scenes.delete(S.key); const S2 = this.scene(S.key); this.placeSafely(S2, pl); return note(`${S.def.name} reset: monsters, trees, rocks and bots are back.`); }
-      case "reset": { const settings = C.settings; pl.C = G.freshChar(); pl.C.settings = settings; pl.x = pl.C.x; pl.y = pl.C.y; this.moveToScene(pl, pl.C.scene, null, { x: pl.x, y: pl.y }); this.touch(pl); return note("Character reset to a brand-new one."); }
+      case "reset": { const settings = C.settings, ui = C.ui; pl.C = G.freshChar(); pl.C.settings = settings; if (ui) pl.C.ui = ui; pl.x = pl.C.x; pl.y = pl.C.y; this.moveToScene(pl, pl.C.scene, null, { x: pl.x, y: pl.y }); this.touch(pl); return note("Character reset to a brand-new one."); }
       case "save": pl.needSave = true; this.persist(pl); return note("Saved.");
       case "saveall": return void this.saveAll().then((r) => note(`Saved ${r.saved} character${r.saved === 1 ? "" : "s"} and the Exchange.`));
       case "restart": {

@@ -1233,7 +1233,13 @@ export function createCasino(env) {
       if (f > 0 && b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "Sure?"; b.classList.add("danger"); SFX.play("ui_click"); return; }
       SFX.play("coins"); mark(b, ""); send({ t: "cashout", k: b.dataset.gs, f });
     }));
-    w.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); mark(b, "Bought!"); send({ t: "counter", op: "buy", id: b.dataset.buy, n: 1 }); }));
+    w.querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => {
+      /* (2026-09-30) YOUR SCREEN's "Ask before big buys": over the amount you set, the first click only asks */
+      const x = P.find((q) => q.id === b.dataset.buy), lim = env.buyLimit?.() || 0, c = x ? cp(x) : 0;
+      if (lim && c > lim && b.dataset.armed !== "1") { b.dataset.armed = "1"; SFX.play("ui_click"); if (b.classList.contains("bom-tile")) b.insertAdjacentHTML("beforeend", `<em class="bom-sure">Click again to buy<br>${c.toLocaleString()} tickets</em>`); else { b.dataset.was = b.textContent; b.textContent = "Sure?"; }
+        clearTimeout(b._sure); b._sure = setTimeout(() => { b.dataset.armed = ""; b.querySelector(".bom-sure")?.remove(); if (b.dataset.was) b.textContent = b.dataset.was; }, 3500); return; }
+      clearTimeout(b._sure); b.dataset.armed = ""; b.querySelector(".bom-sure")?.remove();
+      SFX.play("chip", { vol: 0.5 }); mark(b, "Bought!"); send({ t: "counter", op: "buy", id: b.dataset.buy, n: 1 }); }));
     w.querySelector("[data-bagup]")?.addEventListener("click", (ev) => { SFX.play("chip", { vol: 0.5 }); mark(ev.currentTarget, "+1 pocket!"); send({ t: "counter", op: "bagup" }); });
     w.querySelectorAll("[data-ret]").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); mark(b, "Returned!"); send({ t: "counter", op: "return", id: b.dataset.ret }); }));   /* (2026-09-30) RETURNS */
     w.querySelectorAll("[data-bb]").forEach((b) => b.addEventListener("click", () => { SFX.play("chip", { vol: 0.5 }); mark(b, "Back in your bag!"); send({ t: "counter", op: "buyback", id: b.dataset.bb }); }));
