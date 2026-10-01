@@ -79,5 +79,23 @@ W.onMessage(shop, { t: "counter", op: "buy", k: "logs" });
 is([!!W.raidSack, S.mobs.some((m) => m.raid), said.some((x) => /SACKED THE YARD/.test(x)), shop.out.some((e) => /boarded up/.test(e.text || ""))], [true, false, true, true], "a loss: the Yard is sacked and the shopping is boarded up");
 W.raidSack.until = Date.now() - 1; W.raidTick(Date.now());
 is([W.raidSack, W.raidClosed("counter"), said.some((x) => /open again/.test(x))], [null, false, true], "and the stalls open again when the time is out");
+/* 5. (2026-09-30) A RESTART MID-RAID: the live world was restarted by Cloudflare with 8 people in a raid, and the raid vanished. Now it is saved
+   and comes back: the Ice Man at the health he had, the shares still theirs, the clock pushed on by the time it was down, CASINO says so. */
+{ const mem = new Map(), ctx2 = { blockConcurrencyWhile: (fn) => fn(), storage: { get: async (k) => mem.get(k), put: async (k, v) => { mem.set(k, structuredClone(v)); }, delete: async (k) => { mem.delete(k); }, list: async () => new Map() } };
+  const W1 = new World(ctx2, { SITE: "https://example.invalid", DEV: "0" }); await new Promise((r) => setTimeout(r, 20)); W1.save = async () => {}; clearInterval(W1.timer);
+  const S1 = W1.scene("workyard"), p1 = { id: "z1", login: "z1", name: "Zed", role: "admin", ws: { send() {} }, C: G.freshChar(), x: 10, y: 8, path: [], step: null, act: null, out: [], lastInput: Date.now(), joinedAt: Date.now(), msgWindow: 0, msgs: 0 };
+  W1.pls.set(p1.id, p1); W1.houseSay = () => {};
+  W1.raidAdmin(S1, p1, "", () => {}); W1.raidAdmin(S1, p1, "now", () => {});
+  const b1 = S1.mobs.find((m) => m.raid === "boss"); b1.hp = Math.round(b1.maxHp * 0.6); W1.raid.by[p1.id] = 1234;
+  const t1 = Date.now() + 6000; W1.raidTick(t1); const until1 = W1.raid.until, max1 = b1.maxHp;
+  const saved = mem.get("raid");
+  const said2 = [], W2 = new World(ctx2, { SITE: "https://example.invalid", DEV: "0" }); await new Promise((r) => setTimeout(r, 20)); W2.save = async () => {}; clearInterval(W2.timer); W2.houseSay = (x) => said2.push(x);
+  W2.pls.set(p1.id, { ...p1, out: [] }); const S2 = W2.scene("workyard"); W2.raidTick(Date.now() + 1000);
+  const b2 = S2.mobs.find((m) => m.raid === "boss");
+  is([!!saved, W2.raid?.phase, b2?.hp, b2?.maxHp, W2.raid?.by?.[p1.id], W2.raid?.until >= until1, S2.mobs.some((m) => m.raid === "wave"), said2.some((x) => /CARRIES ON/.test(x))],
+    [true, "on", Math.round(max1 * 0.6), max1, 1234, true, true, true], "a restart mid-raid: it comes back as it was (his health, his bar, the shares, the clock), a wave at once, and CASINO says so");
+  W2.raid.savedAt = Date.now() - 11 * 60000; mem.set("raid", { ...W2.raid }); const W3 = new World(ctx2, { SITE: "https://example.invalid", DEV: "0" }); await new Promise((r) => setTimeout(r, 20)); clearInterval(W3.timer);
+  is([W3.raid, mem.has("raid")], [null, false], "a raid saved more than ten minutes before the restart is dropped quietly");
+  W2.raidAdmin(S2, p1, "end", () => {}); is(mem.has("raid"), false, "ended: nothing left in storage"); }
 console.log(bad ? `\n${bad} problem(s)` : "\nThe Yard raid holds: the start, the west bank, a shared win, and a sacked Yard");
 process.exitCode = bad ? 1 : 0;

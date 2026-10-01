@@ -6,7 +6,14 @@
    THE WEST BANK: when the raid starts the Yard gets S.raidG, its grid with every cell east of RAID.zoneX walled off. The monster loop (index.js)
    paths raid monsters on that grid, never lets one pick a target over the river, and keeps its wander inside it; so nothing of the raid can
    cross into the court, and nobody in the court is chased or hit.
-   The sack is kept in storage (a restart must not reopen the stalls early); the raid itself is not: a restart mid-raid ends it quietly. */
+   The sack is kept in storage (a restart must not reopen the stalls early).
+   (2026-09-30, after Cloudflare restarted the world mid-raid with 8 people in it and the raid simply vanished) SO IS THE RAID. Storage key "raid"
+   holds this.raid as it was at most RAID_SAVE_MS ago (and at once when it starts, arrives or ends). On the way back up, raidResume puts it back:
+   the clocks are pushed on by however long the world was down (at most RAID_GRACE_MS, so nobody loses fighting time to a blink), the Ice Man
+   comes back at the health he had (raidTick already rebuilds him when he is missing: that was written for a rebuilt Yard), the next wave comes
+   at once, everybody's share of the damage is still theirs, and CASINO says it carried on. A raid saved more than RAID_STALE_MS ago is dropped
+   quietly: after that long down, nobody is standing on the west bank waiting for it. */
+const RAID_SAVE_MS = 5000, RAID_GRACE_MS = 2 * 60000, RAID_STALE_MS = 10 * 60000;
 export function installRaid(World, { G }) {
   const P = World.prototype, R = G.RAID;
   const scene = (w) => w.scenes.get(R.scene);
@@ -17,11 +24,35 @@ export function installRaid(World, { G }) {
   };
   const bm0 = (S, Rd) => { const m = S.mobs.find((x) => x.id === Rd.bossId); return m && !m.dead ? m : null; };
   const clear = (S) => { if (!S) return; S.mobs = S.mobs.filter((m) => !m.raid); S.whoSig = null; S.raidG = null; };
+  P.raidSave = function (now = Date.now(), force = false) {
+    const Rd = this.raid;
+    if (!Rd) { this.ctx.storage.delete("raid").catch(() => {}); return; }
+    if (!force && now - (Rd.savedAt || 0) < RAID_SAVE_MS) return;
+    { const b = scene(this)?.mobs.find((m) => m.id === Rd.bossId); if (b && !b.dead) Rd.bossHp = b.hp; }   /* his health as it is now, not as of the last tick */
+    Rd.savedAt = now; this.ctx.storage.put("raid", { ...Rd, resumed: false }).catch(() => {});
+  };
+  /** the constructor hands over what storage had; what comes back is this.raid (or null) */
+  P.raidResume = function (Rd, now = Date.now()) {
+    if (!Rd || !Rd.phase) return null;
+    const gap = Math.max(0, now - (Rd.savedAt || now));
+    if (gap > RAID_STALE_MS) { this.ctx.storage.delete("raid").catch(() => {}); return null; }
+    const shift = Math.min(gap, RAID_GRACE_MS);
+    if (Rd.phase === "warn") Rd.at += shift;
+    else { Rd.until += shift; Rd.nextWave = now; if (Rd.nextFreeze) Rd.nextFreeze += shift; Rd.bossId = null; }   /* no boss on the map yet: raidTick puts him back at bossHp */
+    Rd.by ||= {}; Rd.said ||= {}; Rd.resumed = true; Rd.savedAt = now;
+    return Rd;
+  };
   P.raidGrid = function (S) { S.raidG = S.g.map((row, y) => row.map((c, x) => (x > R.zoneX ? "#" : c))); };
   P.raidTick = function (now) {
     if (this.raidSack && now >= this.raidSack.until) { this.raidSack = null; this.ctx.storage.delete("raidSack").catch(() => {}); this.houseSay("\u2744\uFE0F The frost has melted off the Yard's shutters. The stalls are open again. He will be back."); }
     const Rd = this.raid; if (!Rd) return;
     const S = scene(this);
+    this.raidSave(now);
+    if (Rd.resumed && this.pls.size) {   /* back from a restart: say so once somebody is here to hear it */
+      Rd.resumed = false;
+      const left = Math.max(1, Math.round(((Rd.phase === "warn" ? Rd.at : Rd.until) - now) / 60000));
+      this.houseSay(Rd.phase === "warn" ? `\u2744\uFE0F The world blinked, but the north didn't: the Ice Man is still coming, about ${left} minute${left === 1 ? "" : "s"} out.` : `\u2744\uFE0F The world blinked, but the Ice Man didn't: THE RAID CARRIES ON, ${left} minute${left === 1 ? "" : "s"} left. Everything you've done to him still counts. Back to the west bank.`);
+    }
     if (Rd.phase === "warn") {
       /* THE COUNTDOWN: CASINO calls each mark in R.warnAt (seconds left) once */
       for (const mk of R.warnAt || []) if (!Rd.said?.[mk] && Rd.at - now <= mk * 1000 && Rd.at - now > 0) {
@@ -33,7 +64,7 @@ export function installRaid(World, { G }) {
       if (now < Rd.at || !S) return;
       Rd.phase = "on"; Rd.until = now + R.lasts; Rd.nextWave = now; this.raidGrid(S);
       const online = Math.max(1, this.pls.size), hp = Math.min(R.hp.cap, R.hp.base + R.hp.per * online);
-      Rd.bossId = put(S, R.boss.t, R.boss.at[0], R.boss.at[1], hp, "boss", now); Rd.bossHp = hp;
+      Rd.bossId = put(S, R.boss.t, R.boss.at[0], R.boss.at[1], hp, "boss", now); Rd.bossHp = hp; Rd.bossMax = hp; this.raidSave(now, true);
       this.houseSay(`\u2744\uFE0F THE ICE MAN IS IN THE YARD. The north gate is splinters and his war party is pouring through it. ${Math.round(R.lasts / 60000)} minutes to break him before he breaks the Yard. They will not cross the river: stand on the west bank. Everyone who fights shares the spoils.`);
       for (const p of this.playersIn(S)) this.say(p, "The north gate splinters. Something enormous ducks under the arch, and the frost comes in with it.", "bad");
       return;
@@ -41,7 +72,7 @@ export function installRaid(World, { G }) {
     if (!S) return;
     const boss = S.mobs.find((m) => m.id === Rd.bossId);
     if (boss && !boss.dead) Rd.bossHp = boss.hp;
-    else if (!boss && now < Rd.until) Rd.bossId = put(S, R.boss.t, R.boss.at[0], R.boss.at[1], Math.max(1, Rd.bossHp || R.hp.base), "boss", now), S.mobs.at(-1).maxHp = Math.max(Rd.bossHp || 1, Math.min(R.hp.cap, R.hp.base + R.hp.per * Math.max(1, this.pls.size)));   /* the Yard was rebuilt under him: put him back as he was */
+    else if (!boss && now < Rd.until) Rd.bossId = put(S, R.boss.t, R.boss.at[0], R.boss.at[1], Math.max(1, Rd.bossHp || R.hp.base), "boss", now), S.mobs.at(-1).maxHp = Math.max(Rd.bossHp || 1, Rd.bossMax || Math.min(R.hp.cap, R.hp.base + R.hp.per * Math.max(1, this.pls.size)));   /* (2026-09-30) bossMax: a resumed Ice Man's bar is out of what he started with */   /* the Yard was rebuilt under him: put him back as he was */
     if (!S.raidG) this.raidGrid(S);
     if (now >= Rd.until) return this.raidLost(S, now);
     /* DEEP FREEZE */
@@ -86,7 +117,7 @@ export function installRaid(World, { G }) {
     if (m.raid === "boss" && this.raid) this.raidWon(S, pl, now);
   };
   P.raidWon = function (S, pl, now) {
-    const Rd = this.raid; this.raid = null; clear(S); this.weekCount?.("raid", "won");   /* (2026-09-30) the weekly issue */
+    const Rd = this.raid; this.raid = null; this.raidSave(now, true); clear(S); this.weekCount?.("raid", "won");   /* (2026-09-30) the weekly issue */
     const rows = Object.entries(Rd.by).filter(([, d]) => d > 0), total = rows.reduce((a, [, d]) => a + d, 0) || 1, pool = R.pay.pool + R.pay.per * rows.length, paid = [];
     for (const [id, d] of rows.sort((a, b) => b[1] - a[1])) {
       const n = Math.max(R.pay.floor, Math.round((pool * d) / total)), p = this.pls.get(id);
@@ -100,7 +131,7 @@ export function installRaid(World, { G }) {
   P.raidLost = function (S, now) {
     const boss = S.mobs.find((m) => m.id === this.raid.bossId);
     if (boss) this.bossEnd(S, boss, "escaped");
-    this.raid = null; clear(S); this.weekCount?.("raid", "lost");   /* (2026-09-30) the weekly issue */
+    this.raid = null; this.raidSave(now, true); clear(S); this.weekCount?.("raid", "lost");   /* (2026-09-30) the weekly issue */
     this.raidSack = { until: now + R.sackMs }; this.ctx.storage.put("raidSack", this.raidSack).catch(() => {});
     this.houseSay(`\u2744\uFE0F THE ICE MAN'S WAR PARTY HAS SACKED THE YARD. They walked out with the frost behind them and nobody stopped them. Bom, Nestor, Livia and Hexa are boarded up for ${Math.round(R.sackMs / 60000)} minutes. He will remember how easy it was.`);
   };
@@ -112,7 +143,7 @@ export function installRaid(World, { G }) {
   };
   P.raidAdmin = function (S, pl, arg, note) {
     const now = Date.now();
-    if (arg === "end") { if (!this.raid) return note("There's no raid on."); const Sx = scene(this); this.raid = null; clear(Sx); this.houseSay("\u2744\uFE0F The war party melts back into the north. For now."); return note("Raid ended."); }
+    if (arg === "end") { if (!this.raid) return note("There's no raid on."); const Sx = scene(this); this.raid = null; this.raidSave(now, true); clear(Sx); this.houseSay("\u2744\uFE0F The war party melts back into the north. For now."); return note("Raid ended."); }
     if (arg === "unsack") { this.raidSack = null; this.ctx.storage.delete("raidSack").catch(() => {}); return note("The Yard's stalls are open again."); }
     if (arg === "now") { if (this.raid?.phase !== "warn") return note("Start a raid first; this skips its warning."); this.raid.at = now; this.raidTick(now); return note("The warning is skipped: the Ice Man is in the Yard."); }   /* for trying it on dev */
     if (this.raid) return note(`A raid is already ${this.raid.phase === "warn" ? "on its way" : "on"}.`);
@@ -123,7 +154,7 @@ export function installRaid(World, { G }) {
      hornWhy() waits out before the horn can be blown again, kept in storage so a restart does not reset it. */
   P.raidCall = function (horn, now = Date.now()) {
     if (this.raid) return false;
-    this.raid = { phase: "warn", at: now + R.warnMs, by: {}, said: {}, horn: horn || null };
+    this.raid = { phase: "warn", at: now + R.warnMs, by: {}, said: {}, horn: horn || null }; this.raidSave(now, true);
     this.raidLast = now; this.ctx.storage.put("raidLast", now).catch(() => {});
     const mins = Math.round(R.warnMs / 60000);
     if (horn) this.houseSay(`\u{1F4EF} ${horn} HAS BLOWN THE WAR HORN. The note rolls north over the hills, and something up there answers it.`);
@@ -131,7 +162,7 @@ export function installRaid(World, { G }) {
     for (const p of this.pls.values()) { p.out.push({ type: "casinonote", text: "\u2744\uFE0F RAID! Frost is creeping over the Yard. Something is coming." }); p.out.push({ type: "raid", on: true }); }
     return true;
   };
-  for (const k of ["raidTick", "raidKill", "raidWon", "raidLost", "raidState", "raidCall"]) {   /* nothing here may break the world's tick or a kill */
+  for (const k of ["raidTick", "raidKill", "raidWon", "raidLost", "raidState", "raidCall", "raidSave", "raidResume"]) {   /* nothing here may break the world's tick or a kill */
     const f = P[k]; P[k] = function (...a) { try { return f.apply(this, a); } catch (e) { console.error(k, e); return null; } };
   }
 }

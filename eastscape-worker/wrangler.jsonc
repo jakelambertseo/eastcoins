@@ -15,6 +15,8 @@
     "bindings": [{ "name": "WORLD", "class_name": "World" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["World"] }],
+  // (2026-09-30) Cloudflare keeps the server's logs, so a crash's error is still there to read afterwards (the game only logs errors)
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
   "vars": {
     "ALLOWED_ORIGINS": "https://eastcoin.vip,https://www.eastcoin.vip,https://eastcoins.pages.dev,http://localhost:4321,http://127.0.0.1:4321",
     // where tickets are checked: the site's /api/eastscape/verify

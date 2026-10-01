@@ -216,7 +216,8 @@ export class World {
       this.cryptTop = (await ctx.storage.get("cryptTop")) || {};
       this.hw = (await ctx.storage.get("hw")) || { kingAt: 0, kingDue: false, kingUp: null, night: false };
       this.wyrm = (await ctx.storage.get("wyrm")) || {};
-      this.raidSack = (await ctx.storage.get("raidSack")) || null;   /* (2026-09-30) a sacked Yard stays sacked across a restart */   /* (2026-09-30) the Ice Wyrm's day: see wyrm.js */
+      this.raidSack = (await ctx.storage.get("raidSack")) || null;
+      this.raid = this.raidResume?.((await ctx.storage.get("raid")) || null, Date.now()) || null;   /* (2026-09-30) a raid survives a restart: see raid.js */   /* (2026-09-30) a sacked Yard stays sacked across a restart */   /* (2026-09-30) the Ice Wyrm's day: see wyrm.js */
       if (env.DEV === "1" && env.HW_LIVE !== "0") G.HW.live = true;   /* (2026-09-27) a dev server runs the Long Night whatever the switch says, so it can be previewed before it opens (--var HW_LIVE:0 to see it dormant) */   /* (2026-09-27) the Long Night's clocks: the King's hour, and whether Nightfall has been called */
       this.radio = (await ctx.storage.get("radio")) || null;
       this.chatLog = (await ctx.storage.get("chatlog")) || [];   /* (2026-09-27) the last CHAT_KEEP lines of public chat: see chatKeep */
