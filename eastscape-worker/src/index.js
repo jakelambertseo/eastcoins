@@ -919,6 +919,7 @@ export class World {
            parts so the Finish button lights (it is the admin projtier command, so it answers to the same permission). */
         /* (2026-09-28) /gemkit and /sorter: the gem system, set up for testing on the dev server (see gemKit in gems.js) */
         { const ck = text.match(/^[\/!]cards\b\s*(red|blue|black)?/i); if (ck) { if (!this.canRun(pl, "projtier")) return this.say(pl, "That one is admins only.", "bad"); return this.cardKit(pl, String(ck[1] || "red").toLowerCase()); } }   /* (2026-09-29) /cards: Marked Cards to test with, dev server only */
+        if (/^[\/!]workkit\b/i.test(text)) { if (!this.canRun(pl, "projtier")) return this.say(pl, "That one is admins only.", "bad"); return this.workKit(pl, text.split(/\s+/)[1] || "", (t) => this.say(pl, `[admin] ${t}`, "admin")); }   /* (2026-10-01) /workkit [2|clear]: work clothes for testing, dev only */
         if (/^[\/!]gemkit\b/i.test(text)) { if (!this.canRun(pl, "projtier")) return this.say(pl, "That one is admins only.", "bad"); return this.gemKit(pl); }
         if (/^[\/!]sorter\b/i.test(text)) { if (!this.canRun(pl, "projtier") || this.env?.DEV !== "1") return this.say(pl, "The Gem Sorter is in the Yard's north court.", "bad"); return this.gemOp(S, pl, { op: "view", open: "sorter" }); }
         /* (2026-09-28) /parts 500: an admin's pouch topped up with that many of every part, for testing Tinkering */

@@ -88,6 +88,7 @@ export function createAdminWin(ctx) {
     item: () => itemK && A({ cmd: "item", k: itemK, n: Math.max(1, parseInt(v("aQty"), 10) || 1) }),
     clearinv: () => sure("Empty your bag?", "Everything in your own inventory is gone.", () => A({ cmd: "clearinv" })),
     pot2x: () => A({ cmd: "item", k: "pot_double", n: 1 }),
+    workAll: () => A({ cmd: "workkit", arg: "" }), workTwo: () => A({ cmd: "workkit", arg: "2" }), workClear: () => A({ cmd: "workkit", arg: "clear" }),   /* (2026-10-01) work clothes, dev only */
     storeup: () => A({ cmd: "storeup" }), respin: () => A({ cmd: "respin" }), achclear: () => A({ cmd: "ach", k: "clear" }),
     tp: () => { const k = v("aMap"); if (k) A({ cmd: "tp", scene: k }); },
     tpsc: () => { const id = v("aSc"), sc = G.WORLD_SC?.[id]; if (sc) A({ cmd: "tp", scene: sc.scene || id, x: sc.a[0], y: sc.a[1] }); },
@@ -195,7 +196,8 @@ export function createAdminWin(ctx) {
           <div class="adm-row"><input id="aItemQ" placeholder="Search items…" style="flex:1" value="${esc(itemQ)}"><input id="aQty" type="number" value="1" min="1" style="width:70px">${btn("Give", "item", "", itemK ? "" : "disabled")}</div>
           ${itemK ? `<div class="adm-row">${chip(G.ITEMS[itemK]?.name || itemK, "go")}</div>` : ""}
           ${hits.length ? `<div class="adm-hits">${hits.map(([k, it]) => `<button type="button" data-go="pickItem" data-k="${k}" aria-pressed="${k === itemK}"><img src="${IT(k)}" alt="" onerror="this.style.visibility='hidden'">${esc(it.name)}</button>`).join("")}</div>` : q ? `<div class="adm-empty">No item matches.</div>` : ""}
-          <div class="adm-row">${btn("Clear inventory", "clearinv", "warn")}${btn("A 2X potion", "pot2x", "sec")}${st?.dev ? btn("Reset Store upgrades", "storeup", "sec") : ""}</div></div>
+          <div class="adm-row">${btn("Clear inventory", "clearinv", "warn")}${btn("A 2X potion", "pot2x", "sec")}${st?.dev ? btn("Reset Store upgrades", "storeup", "sec") : ""}</div>
+          ${st?.dev && !G.HOLD?.work ? `<div class="adm-row"><span class="k-note">Work clothes:</span>${btn("Every piece", "workAll", "sec")}${btn("Two of each set", "workTwo", "sec")}${btn("Empty locker", "workClear", "sec")}</div>` : ""}</div>
         <div class="adm-box"><b><img src="${UI("map")}" alt="">Go to</b>
           <div class="adm-row"><input id="aMapQ" placeholder="Search maps…" style="flex:1" value="${esc(mapQ)}"></div>
           <div class="adm-row"><select id="aMap" style="flex:1">${mapOpts.map(([k, n]) => `<option value="${k}">${esc(n)}</option>`).join("")}</select>${btn("Teleport", "tp")}</div>
