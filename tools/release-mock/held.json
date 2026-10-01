@@ -8,6 +8,14 @@
   "bundle": "v1.1"
  },
  {
+  "name": "The admin window",
+  "commit": "c66cd338",
+  "page": "adminpanel-mock",
+  "bundle": "v1.1",
+  "what": "The admin tab's 45 controls become a window with Live server / Players / Testing tabs: what's running, confirms on server-wide actions, a player card, a recent-actions log; moderators see only what they can run.",
+  "ships": "a new page module (eastscape-admin.js: push and probe it before the page) and the worker (admin.js); no rules change"
+ },
+ {
   "name": "Thieving in the world, shortcuts and back ways",
   "commit": "9126a6b8",
   "page": "thieving-mock",

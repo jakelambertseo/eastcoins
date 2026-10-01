@@ -1,6 +1,36 @@
 [
  {
   "date": "2026-10-01",
+  "area": "Economy",
+  "decision": "For v1.1, gem drop rates come down a lot, and gems can't be traded between players or on the Exchange.",
+  "quote": "lower gem drop rates by a lot, and disallow trading via p2p AND in the market",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "World & maps",
+  "decision": "The agility map is called Thrill Hill and goes in v1.1, with real character: monster trucks, dirt bikes, flaming things.",
+  "quote": "lets start on the agility map for v.1.1 as well called \"Thrill Hill\". lets make it have some character, ie: thrilling, giant monster trucks, dirt bikes, flaming things, etc",
+  "why": "",
+  "page": "agilitymap-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Tech & ops",
+  "decision": "The admin window (Live server / Players / Testing) is built for v1.1.",
+  "quote": "yes lets build in the admin panel for v1.1",
+  "why": "",
+  "page": "adminpanel-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
   "area": "World & maps",
   "decision": "The Run's Pro and Champion lanes are dropped; instead a dedicated Agility map (mocked as Daredevil Gorge) goes into v1.1, with courses and places only Agility reaches.",
   "quote": "leave them out, instead i want to mockup a dedicated agility map, similiar to what runescape does ... this will be in v1.1 as well",
