@@ -98,7 +98,15 @@ console.log("Lockboxes and Vance");
 
 console.log("Shortcuts");
 {
-  for (const k of Object.keys(G.WORLD_SC)) { const b = G.buildScene(k), sc = G.WORLD_SC[k]; ok(b.objs.some((o) => o.sc === k), `a shortcut on ${k}`); ok(G.walkableIn(b.g, ...sc.a) && G.walkableIn(b.g, ...sc.b), `${k}: both sides stand-on-able`); if (sc.ledge) { is(G.findPath(b.g, { x: sc.a[0], y: sc.a[1] }, { x: sc.b[0], y: sc.b[1] }, 0), null, `${k}: the ledge can't be walked to`); ok(b.objs.some((o) => o.ledge && o.x === sc.ledge.spot[0] && o.y === sc.ledge.spot[1]), `${k}: its one extra spot is there`); } else ok((G.findPath(b.g, { x: sc.a[0], y: sc.a[1] }, { x: sc.b[0], y: sc.b[1] }, 0) || []).length > G.scHop(sc) + 4, `${k}: the long way round is longer than the hop`); }
+  for (const k of Object.keys(G.WORLD_SC)) { const b = G.buildScene(k), sc = G.WORLD_SC[k]; ok(b.objs.some((o) => o.sc === k), `a shortcut on ${k}`); ok(G.walkableIn(b.g, ...sc.a) && G.walkableIn(b.g, ...sc.b), `${k}: both sides stand-on-able`); if (sc.ledge) { is(G.findPath(b.g, { x: sc.a[0], y: sc.a[1] }, { x: sc.b[0], y: sc.b[1] }, 0), null, `${k}: the ledge can't be walked to`); ok(b.objs.some((o) => o.ledge && o.x === sc.ledge.spot[0] && o.y === sc.ledge.spot[1]), `${k}: its one extra spot is there`);
+    /* (2026-10-01, the owner: "the next tiers resource cannot be accessed by anyone on the map who doesnt have the proper agility") SEALED: no
+       tile anyone could stand on touches the spot except the island itself, and nothing walks onto the island. Trees and rocks are worked
+       from an adjacent tile and nobody swims, so this is the whole of "can't reach it". */
+    const [rx, ry] = sc.ledge.spot, touching = []; for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) if ((dx || dy) && G.walkableIn(b.g, rx + dx, ry + dy) && !(rx + dx === sc.b[0] && ry + dy === sc.b[1])) touching.push([rx + dx, ry + dy]);
+    is(touching, [], `${k}: the spot can only be worked from the island`);
+    const island = []; for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) if ((dx || dy) && G.walkableIn(b.g, sc.b[0] + dx, sc.b[1] + dy)) island.push([sc.b[0] + dx, sc.b[1] + dy]);
+    is(island, [], `${k}: the island touches no ground`);
+    ok((sc.ledge.obj.req?.lvl || 0) > 0, `${k}: its spot is ${sc.ledge.obj.req.skill} ${sc.ledge.obj.req.lvl}`); } else ok((G.findPath(b.g, { x: sc.a[0], y: sc.a[1] }, { x: sc.b[0], y: sc.b[1] }, 0) || []).length > G.scHop(sc) + 4, `${k}: the long way round is longer than the hop`); }
   const S = W.scene("gloam"), sc = G.WORLD_SC.gloam, ob = S.objs.find((o) => o.sc === "gloam");
   const low = player(S, ...sc.a, { agility: 5 }); run(S, low, { t: "act", kind: "ob", ob: ob.id });
   ok(/Agility 10/.test(said(low)) && low.x === sc.a[0] && low.y === sc.a[1], "Agility 5: refused, still on the bank");
