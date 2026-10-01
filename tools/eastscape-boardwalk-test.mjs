@@ -17,6 +17,8 @@ const CHAIN = ["boardwalk", "bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_s
 is(G.SCENES.carnival.exits.w, "boardwalk", "west of the Carnival is the Boardwalk"); is(G.SCENES.boardwalk.exits.e, "carnival", "and the Market's east edge is the Carnival");
 is(CHAIN.every((k) => G.OPEN.has(k)), true, "all six islands open (with the hold lifted)");
 const reach = (S, sx, sy) => { const walk = (x, y) => G.walkableIn(S.g, x, y), seen = new Set([sy * G.COLS + sx]), q = [[sx, sy]]; while (q.length) { const [x, y] = q.pop(); for (const [dx, dy] of G.D8) { const nx = x + dx, ny = y + dy, k = ny * G.COLS + nx; if (!seen.has(k) && nx >= 0 && ny >= 0 && nx < G.COLS && ny < G.ROWS && walk(nx, ny) && (!dx || !dy || (walk(x, ny) && walk(nx, y)))) { seen.add(k); q.push([nx, ny]); } } } return seen; };
+/* (2026-10-01, v1.1) a map's fenced nook is reached over its shortcut, not on foot: its one tile is not "cut off" */
+const nookTiles = (k) => Object.entries(G.WORLD_SC || {}).filter(([id, s]) => (s.scene || id) === k && s.walls && !G.HOLD.thief2).length;
 const nearWalk = (S, o, r) => { for (let y = 0; y < G.ROWS; y++) for (let x = 0; x < G.COLS; x++) if (G.walkableIn(S.g, x, y) && G.cheb({ x, y }, o) <= r) return true; return false; };
 /* where each island is entered: the Market from the Carnival's door, the rest where the rowboat from the previous island lands */
 const arrive = { boardwalk: { x: 43, y: 6 } };
@@ -26,7 +28,7 @@ for (const [i, k] of CHAIN.entries()) {
   let open = 0; for (let y = 0; y < G.ROWS; y++) for (let x = 0; x < G.COLS; x++) if (G.walkableIn(S.g, x, y)) open++;
   const seen = reach(S, a.x, a.y);
   if (!G.walkableIn(S.g, a.x, a.y)) fail(`${k}: you arrive at ${a.x},${a.y}, which is not ground`);
-  if (seen.size !== open) fail(`${k}: ${open - seen.size} of ${open} open tiles cannot be reached from where you arrive`);
+  if (seen.size !== open - nookTiles(k)) fail(`${k}: ${open - nookTiles(k) - seen.size} of ${open} open tiles cannot be reached from where you arrive`);
   const boats = S.objs.filter((o) => o.t === "rowboat");
   for (const b of boats) {
     if (S.g[b.y][b.x] !== "~") fail(`${k}: the rowboat at ${b.x},${b.y} is not on water`);

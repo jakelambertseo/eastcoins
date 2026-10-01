@@ -34,6 +34,11 @@ for (const k of MAPS) {
       const rl = [...ring.values()];
       if (rl.length < 2 || rl.length > 7) continue;
       if (rl.some(([tx, ty]) => occ.has(`${tx},${ty}`) || g[ty][tx] === "e")) continue;
+      /* (2026-10-01, the final v1.1 pass) NOTHING YOU WALK UP TO MAY END UP INSIDE OR AGAINST THE FENCE. occ only kept the pocket off an
+         object's own tiles, so a rowboat on the water (not walkable, so never in a ring) had the one tile you reach it from fenced in, and
+         the islands' boat back landed on the new tree: the Boardwalk. Every pocket, spot and fence tile now keeps a tile clear of every object. */
+      const byObj = ([tx, ty]) => { for (let ex = -1; ex <= 1; ex++) for (let ey = -1; ey <= 1; ey++) if (occ.has(`${tx + ex},${ty + ey}`)) return true; return false; };
+      if (byObj(L) || byObj(R) || rl.some(byObj)) continue;
       if (near(L[0], L[1], spawns, 2) || near(R[0], R[1], spawns, 2) || near(L[0], L[1], exits, 4) || near(L[0], L[1], [sc.a, sc.b], 4)) continue;
       /* the gate: a ring tile beside L (not diagonal) with ground straight on past it */
       const gates = rl.filter(([tx, ty]) => Math.abs(tx - L[0]) + Math.abs(ty - L[1]) === 1).map(([tx, ty]) => ({ at: [tx, ty], from: [2 * tx - L[0], 2 * ty - L[1]] })).filter((o) => walk(...o.from) && !ring.has(o.from.join()) && !occ.has(o.from.join()));

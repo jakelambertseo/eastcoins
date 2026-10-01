@@ -33,7 +33,8 @@ is(["frostwolf", "yeti", "snowowl", "frostwraith", "iceelemental", "frostgiant",
   c.xp.magic = G.XP_AT[59]; c.eq.weapon = "logs_wand"; const w59 = G.bandBlock(c, "frozen", "fight");
   is([w, !!w59, /Magic 60 with a wand/.test(s?.text || ""), JSON.stringify([G.BANDS.frozen, G.BANDS.frostspire])], [null, true, true, "[[95,108],[99,115]]"], "a wand at Magic 60 opens it, Magic 59 and a sword do not; bands 95-115");   /* (2026-09-30, the balance pass) 100/106 were past the level cap */ }
 const B = Object.fromEntries(G.FROZEN_MAPS.map((k) => [k, G.buildScene(k)])), count = (f) => G.FROZEN_MAPS.reduce((a, k) => a + B[k].objs.filter(f).length, 0);
-is([count((o) => o.t === "frostpine"), count((o) => o.t === "rock" && o.ore === "glacite"), count((o) => o.t === "spot" && o.fish === "icefin")], [7, 7, 7], "seven frostpines, seven glacite rocks, seven holes in the ice");
+const nookSpot = (o) => !G.HOLD.thief2 && Object.values(G.WORLD_SC || {}).some((s) => s.ledge && s.ledge.spot[0] === o.x && s.ledge.spot[1] === o.y);   /* (2026-10-01, v1.1) the nook's own frostpine, behind the ice steps */
+is([count((o) => o.t === "frostpine" && !nookSpot(o)), count((o) => o.t === "rock" && o.ore === "glacite"), count((o) => o.t === "spot" && o.fish === "icefin")], [7, 7, 7], "seven frostpines, seven glacite rocks, seven holes in the ice");
 /* 2. every shelf and floe creature: out of a sword's reach, inside a wand's, and a real cast lands */
 for (const key of G.FROZEN_MAPS) {
   const S = W.scene(key);

@@ -19,7 +19,10 @@ is(G.SCENES.thunderhead.exits.n, "depths", "north of the Thunderhead is the Dept
 is(G.OPEN.has("depths"), true, "it is open");
 const walk = (x, y) => G.walkableIn(S.g, x, y);
 const reach = (sx, sy) => { const seen = new Set([sy * G.COLS + sx]), q = [[sx, sy]]; while (q.length) { const [x, y] = q.pop(); for (const [dx, dy] of G.D8) { const nx = x + dx, ny = y + dy, k = ny * G.COLS + nx; if (!seen.has(k) && G.canStepIn(S.g, x, y, dx, dy)) { seen.add(k); q.push([nx, ny]); } } } return seen; };
+/* (2026-10-01, v1.1) a map's fenced nook is reached over its shortcut, not on foot: its one tile is not "cut off" */
+const nookTiles = (k) => Object.entries(G.WORLD_SC || {}).filter(([id, s]) => (s.scene || id) === k && s.walls && !G.HOLD.thief2).length;
 let open = 0; for (let y = 0; y < G.ROWS; y++) for (let x = 0; x < G.COLS; x++) if (walk(x, y)) open++;
+open -= nookTiles("depths");
 is(reach(21, 25).size, open, `every open tile is reachable from the south exit (${open})`); is(reach(43, 23).size, open, "and from the east exit, the sand bridge to the Trailer Park");
 is(S.g.flat().includes("b"), false, "no unwalkable bank round the drop");
 for (const m of S.mobs) if (!m.perch && !walk(m.hx, m.hy)) fail(`${m.t} at ${m.hx},${m.hy} stands on nothing`);

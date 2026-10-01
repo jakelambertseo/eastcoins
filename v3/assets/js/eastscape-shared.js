@@ -10284,8 +10284,8 @@ export const WORLD_SC = {
   carnival_p: {scene: "carnival", lvl: 60, name: "Bent bars", how: "squeeze", art: "o_sc_fence", a: [37, 2], b: [39, 2], at: [38, 2], walls: [[40, 2, "cagebarH", "o_cagebarV"]],
     ledge: { spot: [39, 1], obj: { t: "yew", art: "o_vaultwood", name: "Vaultwood behind the cages", log: "voidlogs", req: { skill: "woodcutting", lvl: 75 }, xp: 240 } } },
   boardwalk: { lvl: 66, name: "Swing under the pier", how: "rope", a: [14, 5], b: [15, 9], at: [14, 6] },
-  boardwalk_p: {scene: "boardwalk", lvl: 66, name: "Gap in the barricade", how: "fence", art: "o_sc_fence", a: [16, 20], b: [18, 20], at: [17, 20], walls: [[17, 19, "pocketwall", "o_barricade"], [18, 18, "pocketwall", "o_barricade"]],
-    ledge: { spot: [18, 19], obj: { t: "rustpine", name: "A rustpine behind the barricade", log: "pinelogs", req: { skill: "woodcutting", lvl: 65 }, xp: 190 } } },
+  boardwalk_p: {scene: "boardwalk", lvl: 66, name: "Gap in the barricade", how: "fence", art: "o_sc_fence", a: [3, 8], b: [5, 8], at: [4, 8], walls: [[4, 7, "pocketwall", "o_barricade"], [5, 7, "pocketwall", "o_barricade"], [6, 7, "pocketwall", "o_barricade"]],   /* (2026-10-01, the final v1.1 pass) moved from 16-18,20: it fenced in the tile the Cabin Coast rowboat is reached from, and the boat back landed on its tree */
+    ledge: { spot: [6, 8], obj: { t: "rustpine", name: "A rustpine behind the barricade", log: "pinelogs", req: { skill: "woodcutting", lvl: 65 }, xp: 190 } } },
   depths: { lvl: 75, name: "Gap in the fence", how: "fence", a: [36, 18], b: [40, 22], at: [37, 19] },
   depths_p: {scene: "depths", lvl: 75, name: "Rope up the rocks", how: "rope", art: "o_sc_rope", a: [31, 14], b: [31, 12], at: [31, 13], walls: [[32, 11, "pocketwall", "d_boulder2"], [32, 13, "pocketwall", "d_boulder1"]],
     ledge: { spot: [31, 11], obj: { t: "rock", name: "A slag bank in the rocks", ore: "slagstone", req: { skill: "mining", lvl: 85 }, xp: 210 } } },
@@ -10450,7 +10450,7 @@ if (!HOLD.gemcut) {
 export const THRILL_ANIM = {"th_hoop":{"anim":"th_hoop_a","frames":8,"cols":8,"fw":45,"fh":60,"fps":10},"th_firewall":{"anim":"th_firewall_a","frames":8,"cols":8,"fw":69,"fh":51,"fps":10},"th_firebarrels":{"anim":"th_firebarrels_a","frames":8,"cols":8,"fw":70,"fh":57,"fps":10},"th_flamebarrel":{"anim":"th_flamebarrel_a","frames":8,"cols":8,"fw":24,"fh":57,"fps":10}};
 /** stand an animation where its still would stand: centred on the footprint, feet on its bottom edge (16 world units a tile, 2 pixels a unit) */
 export const thrillAnimOn = (o) => { const a = THRILL_ANIM[o.art]; if (a) Object.assign(o, a, { ox: ((o.w || 1) * 16) / 2 - a.fw / 4, oy: (o.h || 1) * 16 - a.fh / 2 }); return o; };
-export const THRILL_GATE = { door: [39, 22], counter: [35, 21, 2, 1], keeper: [35, 22], pad: [34, 19, 9, 4], barrels: [[42, 22], [33, 22]] };
+export const THRILL_GATE = { door: [39, 22], counter: [35, 21, 2, 1], keeper: [35, 22], pad: [34, 19, 9, 4], barrels: [[41, 22], [33, 22]] };   /* (2026-10-01, the final v1.1 pass) 41, not 42: a barrel on 42,22 boxed in the Yard tree at 43,23 */
 function thrillYardObjs(key, b) {
   if (HOLD.thrill !== false || key !== "workyard") return;
   const T = THRILL_GATE, put = (o) => { b.objs.push(thrillAnimOn({ edge: true, decor: true, w: 1, h: 1, ...o })); if (!o.flat) for (let j = 0; j < (o.h || 1); j++) for (let i = 0; i < (o.w || 1); i++) b.g[o.y + j][o.x + i] = "#"; };
