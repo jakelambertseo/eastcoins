@@ -41,7 +41,8 @@ import { installCommands } from "./commands.js";   /* (2026-09-30) CHAT COMMANDS
 import { installWeekly } from "./weekly.js";
 import { installTrack } from "./track.js";   /* (2026-09-30) WHAT THE WORLD RECORDS: see track.js and tools/tracking-mock/ */   /* (2026-09-30) THE WEEKLY ISSUE */   
 import { installRaid } from "./raid.js";
-import { installThief } from "./thief.js";   /* (2026-10-01) thieving in the world, lockboxes and shortcuts (HOLD.thief2) */
+import { installThief } from "./thief.js";
+import { installAdmin } from "./admin.js";   /* (2026-10-01, v1.1) the admin window's state, player card and action log */   /* (2026-10-01) thieving in the world, lockboxes and shortcuts (HOLD.thief2) */
 import { CHAT_PAGE } from "./chatpage.js";   /* (2026-09-30) the staff chat view: see /chat below */   /* (2026-09-30) the Yard raid */   /* (2026-09-30) the Frozen Reach's daily boss */
 import { installOutfit } from "./outfit.js";   /* (2026-09-29) the outfitters: Wren and Morwenna */   /* (2026-09-28) gems, sockets, the Gem Case and the Gem Sorter */   /* (2026-09-28) Tinkering: the sink */   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
@@ -275,7 +276,7 @@ export class World {
          Bronny's order and the 2X event were each read back only in restore() below, so every deploy started with neither: the order was
          thrown away and a fresh one posted with a new 24-hour clock (the countdown "never moved" across a deploy, and everything handed in
          was lost), and a 2X running at a deploy simply ended. Anything saved with ctx.storage.put has to be read back HERE. */
-      this.dbl = (await ctx.storage.get("dbl")) || null;
+      this.dbl = (await ctx.storage.get("dbl")) || null; this.admLog = (await ctx.storage.get("admLog")) || [];   /* (2026-10-01) the admin action log */
       this.sx2 = (await ctx.storage.get("sx2")) || null; this.raidLast = (await ctx.storage.get("raidLast")) || 0;   /* (2026-09-30) the 2X Skilling XP clock and the War Horn's three hours */
       await this.orderLoad();
       await this.evLoad();   /* (2026-09-30) WORLD EVENTS: the day's plan, a star, a poster, a thief (see events.js) */
@@ -1065,7 +1066,7 @@ export class World {
       case "trade": return this.tradeOp(S, pl, m);
       /* A MOD GETS THE PANEL TOO, but only the tools MOD_TOOLS lists — the check is per COMMAND, not per panel, so a
          mod who guesses a command name still cannot run it. The list and the reasoning live in _tickets.js. */
-      case "admin": return this.canRun(pl, m.cmd) ? this.admin(S, pl, m) : void this.say(pl, "That one is admins only.", "bad");
+      case "admin": if (!this.canRun(pl, m.cmd)) return void this.say(pl, "That one is admins only.", "bad"); this.admLogAdd(pl, m); return this.admin(S, pl, m);   /* (2026-10-01) logged first: admin.js */
     }
   }
 
@@ -5230,7 +5231,7 @@ export class World {
   canRun(pl, cmd) {
     if (pl.role === "admin" || pl.admin) return true;
     if (pl.role !== "mod") return false;
-    return new Set(["stats", "saveall", "restart", "tp", "mute", "unmute", "kick"]).has(String(cmd || ""));
+    return new Set(["stats", "saveall", "restart", "tp", "mute", "unmute", "kick", "admstate", "admplayer"]).has(String(cmd || ""));   /* (2026-10-01) the admin window's two reads: keep in step with MOD_CAN in admin.js */
   }
 
   /* ------------------------------------------------------------ admin, and the part of it a mod may reach */
@@ -5406,6 +5407,8 @@ export class World {
         return note(`gathered: ${top(st.gathered)} | looted: ${top(st.looted)} | cooked: ${top(st.cooked)} (burnt ${st.burnt})`);
       }
       // try a speed bonus without any gear (this session only; it isn't saved)
+      case "admstate": return this.admState(pl);   /* (2026-10-01) admin.js */
+      case "admplayer": return void this.admPlayer(pl, m.name);
       case "speed": { pl.speedTest = Math.max(0, Math.min(200, Math.trunc(Number(m.n)) || 0)); this.touch(pl); return note(`Speed test: +${pl.speedTest}% raw, which gives +${G.speedText(C, pl.speedTest)}% (${G.stepMsOf(C, pl.speedTest)}ms a tile).`); }
     }
   }
@@ -5429,4 +5432,5 @@ installCommands(World, { G });
 installWeekly(World, { G });   /* (2026-09-30) THE WEEKLY ISSUE: a snapshot a week, and the numbers the wiki's issue shows */   /* (2026-09-30) CHAT COMMANDS: /find, /help, /price, /count, /xp, /timers, /bosses, /wiki, /map, /online, /roll, /stuck */
 installRaid(World, { G });
 installThief(World, { G });
+installAdmin(World, { G });
 installCards(World, { G });

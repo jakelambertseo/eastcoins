@@ -1439,6 +1439,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .info-b>b{display:block;margin:6px 0 2px;font:var(--k-f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2)}
 .info ul{margin:2px 0 4px;padding:0;list-style:none;display:grid;gap:2px}.info li{display:flex;align-items:center;gap:5px}.info li .ico{width:18px;height:18px}
 .info .ex{color:var(--k-ink2)}
+.adm-launch{display:grid;gap:8px;margin:8px 6px}.adm-launch .k-btn img{width:18px;height:18px;image-rendering:pixelated}.adm-launch-row{display:flex;gap:6px;flex-wrap:wrap}
 .info-pick{margin:8px 0 2px}.info-pick .k-btn{width:100%}
 .info-f{display:flex;justify-content:flex-end;padding:6px 8px;border-top:2px solid var(--k-line);background:rgba(90,58,24,.07)}
 /* ---------- every existing window title, the banners and the level-up take Cinzel now; their windows follow in later batches ---------- */
@@ -2353,7 +2354,10 @@ function onMsg(m) {
   if (m.type === "ev") for (const e of m.list) onEvent(e);
 }
 function onEvent(e) {
-  if (e.type === "abil") return abOn(e);   /* (2026-10-01) ABILITIES: one of yours went off (sent in the "ev" bundle) */
+  if (e.type === "abil") return abOn(e);
+  if (e.type === "admstate") return ADMUI?.onState(e);   /* (2026-10-01) the admin window */
+  if (e.type === "admplayer") return ADMUI?.onPlayer(e);   /* (2026-10-01) ABILITIES: one of yours went off (sent in the "ev" bundle) */
+  if (e.type === "say" && e.cls === "admin") ADMUI?.poke();   /* an admin command answered: what is running may have changed */
   if (e.type === "say") { if (e.tag === "group" && !set("groupNotes")) return; return say(e.text, e.cls); }
   if (e.type === "xp") {
     xpDrops.push({ k: e.k, xp: e.xp, at: performance.now() }); lootGain(e.k, e.xp);
@@ -8381,7 +8385,6 @@ function renderPanel() {
   /* (2026-09-28) the World map tab went: the minimap in the corner opens the same world map, so the tab was the second door to it */
   if (tab === "admin" && isStaff()) renderAdmin(p);
 }
-const ADMIN_FIELDS = ["aSkill", "aXp", "aLvl", "aItem", "aQty", "aScene", "aQuest", "aQState", "aSpeed", "aRestart", "aMod", "aMuteMin"];
 /* (2026-09-28) SETTINGS BEHIND THE GEAR. It was one of six permanent tabs for something opened about once a month; now it is a window from the
    gear in the top bar (or Settings under your name). The same switches, the same saving. */
 function openSettings() { if (!$("setWin").hidden) { $("setWin").hidden = true; return; } openWin("setWin"); renderSettings(); }
@@ -8410,21 +8413,9 @@ function drawDollFig(tries = 0) {
   const o = c.getContext("2d"), im = a.im, k = Math.min(c.width / im.width, c.height / im.height);
   o.imageSmoothingEnabled = false; o.clearRect(0, 0, c.width, c.height); o.drawImage(im, (c.width - im.width * k) / 2, c.height - im.height * k, im.width * k, im.height * k);
 }
-function renderAdmin(p) {
-  /* (2026-09-22, the owner: "the dropdowns open and then immediately close") DO NOT REDRAW UNDER AN OPEN DROPDOWN.
-     Every `me` message calls renderPanel(), and `me` arrives on any change to your character at all - hunger and
-     thirst tick on their own, so this fires on a timer whether you touch anything or not. This function then
-     replaces the panel's whole innerHTML, and a native <select> whose element is destroyed mid-click closes at
-     once. Carrying the VALUES across (below) was never enough: the element itself has to survive.
-
-     Focus is the proxy for "in use", the same test the Exchange window already makes before redrawing itself while
-     someone is typing an amount. Only INPUT and SELECT hold it off - a focused button must not, or the panel would
-     freeze on the last thing clicked and go on showing stale levels. */
-  const held = document.activeElement;
-  if (p.contains(held) && (held.tagName === "SELECT" || held.tagName === "INPUT")) return;
-  // the panel redraws whenever your character changes; keep whatever was picked or typed
-  const keep = ADMIN_FIELDS.map((id) => [id, $(id)?.value]).filter(([, v]) => v != null);
-  const opts = (o) => Object.entries(o).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("");
+/* (2026-10-01, v1.1) THE ADMIN WINDOW: the old tab was one long column of about 45 controls; it's a window now (v3/assets/js/eastscape-admin.js,
+   mockup 17), loaded the first time staff open it. The tab keeps a launcher. These are the lists the window's Testing tab needs from the page. */
+function admLists() {
   const skills = Object.fromEntries(Object.entries(SKILLS).map(([k, s]) => [k, `${s.icon} ${s.name} (${lvl(k)})`]));
   /* (2026-09-23) SORTED BY NAME. It was insertion order over 243 items, so finding one meant knowing roughly when
      it was added to the rules file — the four new crops sat at 19-22, between the starting kit and the ores.
@@ -8433,9 +8424,6 @@ function renderAdmin(p) {
      sort ran on the LABEL, which begins with the item's emoji, so 287 items came out ordered by emoji codepoint:
      a watch, a watch, an hourglass, a comet, a cog. Alphabetical in patches and useless overall, and exactly the
      sort of thing a comment can hide. Sort the NAME and build the label after. */
-  const items = Object.fromEntries(Object.entries(ITEMS)
-    .sort((a, b) => a[1].name.localeCompare(b[1].name, undefined, { sensitivity: "base" }))
-    .map(([k, it]) => [k, `${it.icon} ${it.name}`]));
   /* the teleport list has the same problem for the same reason — it was in whatever order the rules file
      declares scenes, which is roughly the order they were built. Forty-odd of them now. */
   const scenes = Object.fromEntries(Object.entries({ ...SCENES, ...Object.fromEntries([["depths", "The Depths of the Mountain"], ["wild", "The Wilderness"], ["deep", "The Deep Wild"], ["valley", "The Primeval Valley"], ["valley_ridge", "The Primeval Ridge"], ["valley_lair", "Old Rex's Lair"], ["frozen", "The Frozen Reach"], ["frostspire", "The Frostspire"],
@@ -8444,104 +8432,17 @@ function renderAdmin(p) {
     .sort((a, b) => String(a[1].name).localeCompare(String(b[1].name), undefined, { sensitivity: "base" }))
     .map(([k, s]) => [k, s.name]));
   const quests = Object.fromEntries(Object.entries(QUESTS).map(([k, q]) => [k, `${q.name} (${G.qState(me, k)})`]));
+  return { skills: Object.entries(skills), scenes: Object.entries(scenes), quests: Object.entries(quests) };
+}
+let ADMUI = null; const ADMUI_URL = "/v3/assets/js/eastscape-admin.js?v=1";
+function admUi() { return ADMUI ? Promise.resolve(ADMUI) : import(ADMUI_URL).then((m) => (ADMUI = m.createAdminWin({ G, $, esc, send, popup, SFX, getMe: () => me, getYou: () => you, lists: admLists, trkOpen }))); }
+function renderAdmin(p) {
   const isAdmin = you.role === "admin" || you.admin;
-  p.innerHTML = `<div class="ph">${isAdmin ? "Admin" : "Moderator"} <small>${esc(you.login)}</small></div><div class="adm">
-    <fieldset><legend>Moderation</legend>
-      <div class="row"><input id="aMod" placeholder="Player name" maxlength="30" style="width:130px"><input type="number" id="aMuteMin" value="10" min="1" max="240" style="width:64px" aria-label="Minutes"><button class="btn" data-a="mute">Mute</button><button class="btn plain" data-a="unmute">Unmute</button></div>
-      <div class="row"><button class="btn danger" data-a="kick">Kick off</button><span class="tag">they are saved first — a kick never costs anyone the loot they were carrying</span></div>
-    </fieldset>
-    <fieldset><legend>Skills</legend>
-      <div class="row"><select id="aSkill">${opts(skills)}</select></div>
-      <div class="row"><input type="number" id="aXp" value="1000" step="100" aria-label="XP amount"><button class="btn" data-a="xp">Give xp</button></div>
-      <div class="row"><input type="number" id="aLvl" value="10" min="1" max="99" aria-label="Level"><button class="btn" data-a="setlvl">Set level</button></div>
-      <div class="row"><button class="btn plain" data-a="clearxp">Clear this skill</button><button class="btn danger" data-a="clearall">Clear ALL xp</button></div>
-    </fieldset>
-    <fieldset><legend>Items</legend>
-      <div class="row"><select id="aItem">${opts(items)}</select></div>
-      <div class="row"><input type="number" id="aQty" value="1" min="1" aria-label="Quantity"><button class="btn" data-a="item">Give</button><button class="btn danger" data-a="clearinv">Clear inventory</button></div>
-    </fieldset>
-    <fieldset><legend>You</legend>
-      <div class="row"><button class="btn" data-a="heal">Heal</button><button class="btn plain" data-a="respin" title="Makes your Daily Prize Wheel spin free again, for testing">Free spin again</button><button class="btn plain" data-a="achclear" title="Forget every achievement so the next one can be watched landing. Tickets already paid stay paid.">Reset achievements</button><button class="btn ${me.god ? "" : "plain"}" data-a="god">God mode: ${me.god ? "on" : "off"}</button></div>
-      <div class="row"><select id="aScene">${opts(scenes)}</select><button class="btn" data-a="tp">Teleport</button></div>
-      ${G.HOLD.thief2 ? "" : `<div class="row"><select id="aSc">${Object.entries(G.WORLD_SC).map(([id, sc]) => `<option value="${id}">${esc(G.sceneDef(sc.scene || id)?.name || id)} · ${esc(sc.name)} · Agility ${sc.lvl}</option>`).join("")}</select><button class="btn" data-a="tpsc">Go to shortcut</button></div><div class="row"><select id="aBw">${Object.entries(G.BACKWAYS).flatMap(([id, bw]) => bw.ends.map((e, i) => `<option value="${id}:${i}">${esc(bw.name)} · ${esc(G.sceneDef(e.scene)?.name || e.scene)} end · Agility ${bw.lvl}</option>`)).join("")}</select><button class="btn" data-a="tpbw">Go to back way</button></div>`}
-      <div class="row"><button class="btn plain" data-a="resetscene">Reset this area</button><span class="tag">monsters, trees, rocks, bots</span></div>
-      <div class="row"><button class="btn" data-a="evstar">Shooting Star now</button><button class="btn" data-a="evwanted">Wanted poster now</button><button class="btn" data-a="evthief">Jackpot Thief now</button><button class="btn plain" data-a="evplan">Today's plan</button><span class="tag">here, if the map allows; else anywhere</span></div>
-      <div class="row"><button class="btn plain" data-a="evstarend">End the star</button><button class="btn plain" data-a="evwantedend">End the poster</button><button class="btn plain" data-a="evthiefend">End the chase</button><span class="tag">world events: one of each a day</span></div>
-      <div class="row"><button class="btn" data-a="wyrm">Ice Wyrm: rise now</button><button class="btn plain" data-a="wyrmdown">Send it away</button><span class="tag">the Frozen Reach's daily boss</span></div>
-      <div class="row"><button class="btn" data-a="raid">Start a Yard raid</button><button class="btn plain" data-a="raidnow">Skip the warning</button><button class="btn plain" data-a="raidend">End it</button><button class="btn plain" data-a="unsack">Reopen the stalls</button><span class="tag">Hrimgar's war party</span></div>
-      <div class="row"><button class="btn" data-a="flood">Start the Flood</button><span class="tag">the river over the bank: sandbags, the Drowned, the Undertow (Skip the warning and End it work for it too)</span></div>
-    </fieldset>
-    <fieldset><legend>Speed test</legend>
-      <div class="row"><input type="number" id="aSpeed" value="${me.speedTest || 0}" min="0" max="200" aria-label="Raw speed bonus percent"><button class="btn" data-a="speed">Set</button><span class="tag">raw %, before the taper and the +${G.SPEED_CAP}% cap; this session only</span></div>
-    </fieldset>
-    <fieldset><legend>Quests</legend>
-      <div class="row"><select id="aQuest">${opts(quests)}</select></div>
-      <div class="row"><select id="aQState"><option value="new">new</option><option value="active">active</option><option value="done">done</option></select><button class="btn" data-a="quest">Set</button><button class="btn plain" data-a="resetquests">Reset all</button></div>
-    </fieldset>
-    <fieldset><legend>The world</legend>
-      <div class="row"><button class="btn" data-a="stats">My stats</button><span class="tag">kills, gathers, xp, cash, time played</span></div>
-      <div class="row"><input id="aWho" placeholder="Twitch name" maxlength="30" style="width:130px"><button class="btn" data-a="statsof">Their stats</button><span class="tag">anyone's playtime, tickets, levels (online or not)</span></div>
-      <div class="row"><input id="aRefK" placeholder="item (blank: list)" maxlength="40" style="width:130px"><input id="aRefN" value="1" style="width:46px"><button class="btn" data-a="refund">Refund Bom gear</button><span class="tag">for the name above: blank lists what they hold from Bom; an item refunds that many at his price</span></div>
-      <div class="row"><button class="btn" data-a="saveall">Save everyone</button><span class="tag">every character and the Exchange, written now</span></div>
-      <div class="row"><input type="number" id="aRestart" value="120" min="0" max="3600" aria-label="Seconds until restart"><button class="btn" data-a="restart">Announce restart</button><button class="btn" data-a="restartoff">Cancel</button></div>
-      <div class="row"><span class="tag">Counts down, saves every character, then drops everyone with a "restarting" message instead of "connection lost". Deploy once it has run.</span></div>
-    </fieldset>
-    <fieldset><legend>2X event</legend>
-      <div class="row"><input type="number" id="a2xMins" value="30" min="0" max="180" aria-label="Minutes"><button class="btn" data-a="double">Start 2X Tickets &amp; Crafting XP</button><button class="btn" data-a="doubleoff">Stop</button><span class="tag">double tickets and crafting xp for EVERYONE on the server; 0 minutes stops it</span></div>
-      <div class="row"><button class="btn" data-a="skill2x">Start 2X Skilling XP</button><button class="btn" data-a="skill2xoff">Stop</button><button class="btn" data-a="storeup">Reset my Store upgrades</button><span class="tag">(2026-09-30) double xp in every non-combat skill, same minutes box; the reset is for testing bank pages, quick slots and loupes</span></div>
-      <div class="row"><button class="btn" data-a="give2x">Give me a 2X Potion</button><span class="tag">to test the drinking, the chat line and the timer as a player sees them</span></div>
-    </fieldset>
-    <fieldset><legend>Danger</legend>
-      <div class="row"><button class="btn danger" data-a="reset">Reset my character</button></div>
-    </fieldset>
-    <details><summary class="tag">Raw character (what the server has)</summary><pre>${esc(JSON.stringify(me, null, 1))}</pre></details>
-  </div>`;
-  const v = (id) => $(id).value;
-  const A2 = {
-    xp: () => ({ cmd: "xp", skill: v("aSkill"), n: +v("aXp") }),
-    setlvl: () => ({ cmd: "setlvl", skill: v("aSkill"), lvl: +v("aLvl") }),
-    clearxp: () => ({ cmd: "clearxp", skill: v("aSkill") }),
-    clearall: () => ({ cmd: "clearxp", skill: "all" }),
-    item: () => ({ cmd: "item", k: v("aItem"), n: +v("aQty") }),
-    clearinv: () => ({ cmd: "clearinv" }), heal: () => ({ cmd: "heal" }), god: () => ({ cmd: "god" }), respin: () => ({ cmd: "respin" }),
-    achclear: () => ({ cmd: "ach", k: "clear" }),   /* (2026-09-23) forget every achievement, so one can be watched landing */
-    tp: () => ({ cmd: "tp", scene: v("aScene") }), tpsc: () => { const id = v("aSc"), sc = G.WORLD_SC[id]; return { cmd: "tp", scene: sc.scene || id, x: sc.a[0], y: sc.a[1] }; }, tpbw: () => { const [id, i] = v("aBw").split(":"), e = G.BACKWAYS[id].ends[+i]; return { cmd: "tp", scene: e.scene, x: e.stand[0], y: e.stand[1] }; },   /* (2026-10-01) testing: stand at a shortcut's near side */ resetscene: () => ({ cmd: "resetscene" }), wyrm: () => ({ cmd: "wyrm" }), evstar: () => ({ cmd: "ev", arg: "star" }), evwanted: () => ({ cmd: "ev", arg: "wanted" }), evthief: () => ({ cmd: "ev", arg: "thief" }), evplan: () => ({ cmd: "ev", arg: "plan" }),
-    evstarend: () => ({ cmd: "ev", arg: "star end" }), evwantedend: () => ({ cmd: "ev", arg: "wanted end" }), evthiefend: () => ({ cmd: "ev", arg: "thief end" }),   /* (2026-09-30) WORLD EVENTS */ wyrmdown: () => ({ cmd: "wyrm", arg: "down" }), raid: () => ({ cmd: "raid" }), flood: () => ({ cmd: "raid", arg: "flood" }), raidnow: () => ({ cmd: "raid", arg: "now" }), raidend: () => ({ cmd: "raid", arg: "end" }), unsack: () => ({ cmd: "raid", arg: "unsack" }),   /* (2026-09-30) */
-    quest: () => ({ cmd: "quest", k: v("aQuest"), state: v("aQState") }), resetquests: () => ({ cmd: "resetquests" }),
-    reset: () => ({ cmd: "reset" }), speed: () => ({ cmd: "speed", n: +v("aSpeed") }),
-    stats: () => ({ cmd: "stats" }), statsof: () => ({ cmd: "stats", name: v("aWho") }), refund: () => ({ cmd: "refund", name: v("aWho"), k: v("aRefK"), n: +v("aRefN") }), saveall: () => ({ cmd: "saveall" }),
-    mute: () => ({ cmd: "mute", name: v("aMod"), n: +v("aMuteMin") }), unmute: () => ({ cmd: "unmute", name: v("aMod") }), kick: () => ({ cmd: "kick", name: v("aMod") }),
-    restart: () => ({ cmd: "restart", n: +v("aRestart") }), restartoff: () => ({ cmd: "restart", n: "cancel" }),
-    /* (2026-09-25) two different jobs: START one outright, or put a potion in your bag so the whole path gets
-       exercised the way a player meets it - the drink, the refusal if one is already up, the chat line, the timer. */
-    double: () => ({ cmd: "double", mins: +v("a2xMins") }), doubleoff: () => ({ cmd: "double", mins: 0 }), skill2x: () => ({ cmd: "skill2x", mins: +v("a2xMins") }), skill2xoff: () => ({ cmd: "skill2x", mins: 0 }), storeup: () => ({ cmd: "storeup" }),
-    give2x: () => ({ cmd: "item", k: "pot_double", n: 1 })
-  };
-  for (const [id, val] of keep) if ($(id)) $(id).value = val;
-  /* (v130) A MOD SEES ONLY WHAT A MOD MAY RUN. The sections are pruned after the markup rather than branched inside it —
-     the panel is one big template literal and nesting a conditional in it is how I broke this the first time. Removing
-     them outright beats disabling them: a greyed button invites "why can't I?", an absent one does not. The server checks
-     every command again anyway (canRun), so this is tidiness, not the security boundary. */
-  if (!isAdmin) {
-    const KEEP_ROW = new Set(["tp", "stats", "statsof", "saveall", "restart", "restartoff", "mute", "unmute", "kick"]);
-    for (const box of p.querySelectorAll("fieldset")) {
-      const legend = (box.querySelector("legend")?.textContent || "").trim();
-      // "You" survives for one row only: a mod needs to get to wherever the trouble is.
-      if (legend === "You") { box.querySelector("legend").textContent = "Get about"; }
-      else if (!/^(Moderation|The world)$/.test(legend)) { box.remove(); continue; }
-      // and inside whatever is left, only the rows holding a tool a mod may actually run
-      for (const row of box.querySelectorAll(".row")) {
-        const acts = [...row.querySelectorAll("[data-a]")].map((b) => b.dataset.a);
-        if (acts.length && !acts.some((a) => KEEP_ROW.has(a))) row.remove();
-      }
-    }
-  }
-  p.querySelectorAll("[data-a]").forEach((b) => b.addEventListener("click", () => {
-    const a = b.dataset.a, go = () => send({ t: "admin", ...A2[a]() });
-    // a restart drops EVERY player, so it asks first — the others here only affect you
-    if (a === "reset" || a === "clearall" || a === "clearinv" || a === "restart") return popup("Are you sure?", { reset: "Wipe your character back to a brand-new one?", clearall: "Clear the xp in every skill?", clearinv: "Empty your whole inventory?", restart: `Tell everyone the world restarts in ${v("aRestart")} seconds, then save and disconnect them all?` }[a], "⚠️", [["Yes, do it", go], ["Cancel", null]]);
-    go();
-  }));
+  p.innerHTML = `<div class="ph">${isAdmin ? "Admin" : "Moderator"} <small>${esc(you.login)}</small></div>
+    <div class="adm-launch"><button type="button" class="k-btn" data-admopen="live"><img src="/v3/assets/img/glad/flat/ui/settings.png?v=1" alt="">Open the admin window</button>
+      <div class="adm-launch-row"><button type="button" class="lk-btn plain" data-admopen="live">Live server</button><button type="button" class="lk-btn plain" data-admopen="players">Players</button>${isAdmin ? `<button type="button" class="lk-btn plain" data-admopen="test">Testing</button>` : ""}</div>
+      <p class="note">Boosts, events, restarts and saves; every player's card; and, for admins, the testing tools for your own character.</p></div>`;
+  p.querySelectorAll("[data-admopen]").forEach((b) => b.addEventListener("click", () => admUi().then((w) => w.open(b.dataset.admopen))));
 }
 document.addEventListener("click", (e) => {
   if (e.target.id === "xpReset") { xpSess = {}; renderPanel(); renderXph(); return; }
