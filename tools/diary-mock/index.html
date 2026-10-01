@@ -78,6 +78,18 @@ nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:
 .decided{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(126,208,96,.1);box-shadow:inset 0 0 0 1.5px rgba(126,208,96,.45);color:#e8f6dc;line-height:1.55;max-width:980px}.decided b{color:#b6f09a}
 .doll2{display:grid;grid-template-columns:52px 96px 52px;grid-template-rows:repeat(6,48px);gap:5px;padding:10px;border-radius:10px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);width:max-content;
   grid-template-areas:"helm fig weapon" "amulet fig shield" "body fig gloves" "legs fig ring" "boots fig pet" "cape cape cape"}
+.sidemock{width:340px;max-width:100%;margin:12px 0;background:#141010;border-radius:10px;box-shadow:0 0 0 1.5px #3a2a1a,0 8px 22px rgba(0,0,0,.4);overflow:hidden}
+.sidemock .tb{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:3px;padding:8px}
+.sidemock .tb span{height:40px;display:grid;place-items:center;border:8px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/tab.png?v=1) 24 fill / 8px stretch;image-rendering:pixelated;position:relative}
+.sidemock .tb span img{width:26px;height:26px;image-rendering:pixelated}.sidemock .tb span.on{filter:brightness(1.35);box-shadow:0 0 0 2px #ffc83a;border-radius:4px}
+.sidemock .tb span i{position:absolute;right:-6px;top:-6px;background:#c83a2a;color:#fff;font:800 10px Lora,serif;border-radius:8px;padding:1px 5px;font-style:normal}
+.sidemock .pn{background:var(--k-card);margin:0 8px 8px;border-radius:8px;padding:10px}
+.sidemock .pn h4{margin:0 0 2px;font:800 15px Cinzel,serif;color:var(--k-ink)}.sidemock .pn small{font:700 11.5px Lora,serif;color:var(--k-ink2)}
+.sidemock .bar{height:8px;border-radius:4px;background:#e6dcc4;margin:8px 0;overflow:hidden}.sidemock .bar b{display:block;height:100%;background:#3a8a3a}
+.sidemock .tk{display:flex;gap:7px;align-items:center;padding:5px 0;border-top:1px solid #e0d4b8;font:600 12.5px Lora,serif;color:var(--k-ink)}
+.sidemock .tk img{width:22px;height:22px;image-rendering:pixelated}.sidemock .tk.done{opacity:.55;text-decoration:line-through}
+.sidemock .ft{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font:700 11.5px Lora,serif;color:var(--k-ink2)}
+.sidemock .ft button{font:800 12px Lora,serif;padding:5px 10px;border-radius:7px;border:0;background:#c8963a;color:#1a1006}
 .doll2 span{display:grid;place-items:center;border-radius:7px;background:#e6dcc4;box-shadow:inset 0 0 0 1px #bfb193;font-size:20px}
 .doll2 .fig{grid-area:fig;background:radial-gradient(ellipse at 50% 85%,rgba(90,60,20,.25),transparent 60%);box-shadow:none}
 .doll2 .cp{grid-area:cape;background:linear-gradient(90deg,#1e3a6a,#3a2a6a);box-shadow:inset 0 0 0 2px #9ef0ff;color:#fff;font:800 12px Lora,serif;gap:6px;grid-template-columns:auto auto;justify-content:center}
@@ -100,10 +112,13 @@ nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:
 
   <section class="sec" id="window">
     <h2>The diary</h2>
-    <p><b>Where it lives:</b> a <b>Diaries</b> button at the top of the Quests tab (J), since a diary is a list of jobs like the quests are; clicking a
-      "Diary task done" toast opens it at that task; and on the world map each map wears its medal, with "Open its diary" in the map's card. A
-      map you walk into for the first time says once, in chat, that it has a diary. (The collection log is a podium on your island, so nothing sits
-      beside it.) Inside, down the left are the 21 maps by level, each with its emblem framed in the colour of the
+    <p><b>Where it lives: its own tab.</b> A fifth icon in the row over the side panel (Inventory, Equipment, Skills, Quests, <b>Diary</b>),
+      hotkey <b>L</b> (D walks). Not a button in the Inventory header: that row already holds the bag chip, Gems, Sort and the count, and a fourth
+      button would wrap. The tab row splits its width evenly, so a fifth tab makes each ~69px (~56px for admins, who have six) around a 26px icon.
+      The tab shows <b>the map you're standing on</b>, its current tier and three tasks, so it's there while you play; "Whole diary" opens the big
+      window below. Clicking a "Diary task done" toast opens the tab, and the world map's card for each map has "Open its diary".</p>
+    <div class="sidemock" id="sideMock"></div>
+    <p><b>The whole diary</b> is a window: down the left are the 21 maps by level, each with its emblem framed in the colour of the
       best tier you've finished; on the right, the map's four tiers and their tasks. Below is <b>calvin's</b> diary as an example: click a map and a tier.
       A task you can't do yet says what it needs in red, one you could do now in green; <span class="req ev">any event</span> marks an event task and
       <span class="req pvp">PvP</span> a task that needs another player, and <span class="req v11">v1.1</span> one that uses something v1.1 adds.</p>
@@ -167,7 +182,9 @@ nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:
 
   <section class="sec" id="cape">
     <h2>The cape slot</h2>
-    <p>A new square on the paper doll, under the figure: the eleventh. It's for <b>what you've done</b>, not for fighting: a cape carries no accuracy,
+    <p class="note"><b>Not in the game yet</b>: like the diaries, the cape slot is a plan here, and it goes in with them, so the Equipment tab on dev still has ten squares.</p>
+    <p>A new square on the paper doll, under the figure: the eleventh. The doll today is five rows, armour down the left, hands, jewellery and pet down
+      the right and you in the middle; the cape adds a sixth row under your feet, one wide square across the foot of the doll (room for the cape and its name), so nothing else moves. It's for <b>what you've done</b>, not for fighting: a cape carries no accuracy,
       strength or defence, so it never becomes the slot everyone fills with the best stats. It shows on your character in the world, over your look.</p>
     <div class="grid2">
       <div class="doll2"><span style="grid-area:helm">⛑️</span><span style="grid-area:amulet">📿</span><span style="grid-area:body">🥋</span><span style="grid-area:legs">👖</span><span style="grid-area:boots">🥾</span>
@@ -245,6 +262,17 @@ function body() {
   document.querySelectorAll(".ttabs button").forEach((b) => b.addEventListener("click", () => { tier = +b.dataset.i; body(); }));
 }
 function paint() { regList(); body(); }
+function sideMock() {
+  const r = R.find((x) => x.k === "thunderhead"), ti = Math.min(3, done(r)), list = r.t[ti], g = list.filter((x) => x[3]).length, all = r.t.flat();
+  const ui = (k) => `/v3/assets/img/glad/flat/ui/${k}.png?v=1`;
+  document.getElementById("sideMock").innerHTML = `<div class="tb"><span><img src="${ui("bag")}" alt=""></span><span><img src="${ui("equip")}" alt=""></span><span><img src="${ui("skills")}" alt=""></span><span><img src="${ui("quests")}" alt=""></span><span class="on" title="Diary (L)"><img src="diary.png" alt=""><i>1</i></span></div>
+    <div class="pn"><h4>${esc(r.name)}</h4><small>You're here · ${TIERS[ti]} ${g} of ${list.length} · ${all.filter((x) => x[3]).length} of ${all.length} in all</small>
+      <div class="bar"><b style="width:${(all.filter((x) => x[3]).length / all.length) * 100}%"></b></div>
+      ${list.map(([t, ic, q, ok]) => `<div class="tk ${ok ? "done" : ""}"><img src="${IC(ic)}" alt=""><span>${esc(t)}</span></div>`).join("")}
+      <div class="ft"><span>${TIERS[ti]} reward: ${esc(r.perks[ti])}</span></div>
+      <div class="ft"><span>Another map: the world map, or ‹ ›</span><button type="button">Whole diary</button></div></div>`;
+}
+sideMock();
 paint();
 document.getElementById("perkTbl").innerHTML = `<tr><th>Map</th><th>Easy</th><th>Medium</th><th>Hard</th><th>Elite</th></tr>` + R.map((r) => `<tr><td><img src="${r.em}" alt="">${esc(r.name)}</td>${r.perks.map((p, i) => `<td${i === 3 ? ' style="color:#9ef0ff;font-weight:800"' : ""}>${esc(p)}</td>`).join("")}</tr>`).join("");
 /* which events can end on each map (maps.json, from the rules) */
