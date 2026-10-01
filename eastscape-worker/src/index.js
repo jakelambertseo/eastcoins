@@ -154,6 +154,25 @@ export default {
       const r = await env.WORLD.get(env.WORLD.idFromName("world")).fetch("https://world/chatview");
       return new Response(r.body, { status: r.status, headers: { ...H, "content-type": "application/json" } });
     }
+    /* (2026-10-01, the owner: "add all of these mockups to a page at play.eastcoin.vip/gameplan with a nav so i can keep it bookmarked") THE
+       GAME PLAN: the long-game mockups, built by tools/gameplan-build.mjs into gameplan-site/ and served from the ASSETS binding. INTERNAL, so it
+       has its own secret (PLAN_KEY, a Worker secret that opens nothing but this). /gameplan?k=<PLAN_KEY> once sets a cookie for /gameplan and
+       drops the key from the address, so the bookmark works and every image and data file under it is let through without a key in its URL.
+       No key and no cookie is a plain 404, as /chat does. Static files only: it never touches the world. */
+    if (url.pathname === "/gameplan" || url.pathname.startsWith("/gameplan/")) {
+      const want = String(env.PLAN_KEY || "").trim(), same = (got) => { got = String(got || "").trim(); if (!want || got.length !== want.length) return false; let d = 0; for (let i = 0; i < want.length; i++) d |= want.charCodeAt(i) ^ got.charCodeAt(i); return d === 0; };
+      const cookie = (/(?:^|;\s*)gp=([^;]+)/.exec(request.headers.get("cookie") || "") || [])[1];
+      const H = { "X-Robots-Tag": "noindex, nofollow", "Referrer-Policy": "no-referrer" };
+      if (same(url.searchParams.get("k"))) {
+        const to = new URL(url); to.searchParams.delete("k"); if (to.pathname === "/gameplan" || to.pathname === "/gameplan/") to.pathname = "/gameplan/gameplan-mock/";
+        return new Response(null, { status: 302, headers: { ...H, Location: to.pathname + to.search, "Set-Cookie": `gp=${encodeURIComponent(want)}; Path=/gameplan; Max-Age=31536000; HttpOnly; Secure; SameSite=Lax`, "Cache-Control": "no-store" } });
+      }
+      if (!(env.DEV === "1" || same(cookie && decodeURIComponent(cookie))) || !env.ASSETS) return new Response("EastScape game server", { status: 404 });
+      if (url.pathname === "/gameplan" || url.pathname === "/gameplan/") return new Response(null, { status: 302, headers: { ...H, Location: "/gameplan/gameplan-mock/", "Cache-Control": "no-store" } });
+      const r = await env.ASSETS.fetch(new Request(new URL(url.pathname, url.origin), request));
+      const out = new Response(r.body, r); for (const [k, v] of Object.entries(H)) out.headers.set(k, v); out.headers.set("Cache-Control", "private, max-age=300");
+      return out;
+    }
     if (url.pathname === "/stats") {
       const r = await env.WORLD.get(env.WORLD.idFromName("world")).fetch("https://world/stats");
       return new Response(r.body, { status: r.status, headers: { "content-type": "application/json", "Cache-Control": "no-store" } });

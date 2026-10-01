@@ -15,6 +15,9 @@
     "bindings": [{ "name": "WORLD", "class_name": "World" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["World"] }],
+  // (2026-10-01) the internal game plan's pages (tools/gameplan-build.mjs makes the folder). run_worker_first: every request still reaches the
+  // worker, which hands /gameplan/* to ASSETS only behind PLAN_KEY; nothing in the folder is ever served on its own.
+  "assets": { "directory": "./gameplan-site", "binding": "ASSETS", "run_worker_first": true },
   // (2026-09-30) Cloudflare keeps the server's logs, so a crash's error is still there to read afterwards (the game only logs errors)
   "observability": { "enabled": true, "head_sampling_rate": 1 },
   "vars": {
