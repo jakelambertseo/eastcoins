@@ -19,6 +19,7 @@ const PAGES = [
   ["gameplan-mock", "Plan", "The game plan"],
   ["atlas-mock", "Atlas", "The atlas: maps and skilling to 120"],
   ["mapbook-mock", "Maps", "The map book: every map today"],
+  ["skillsets-mock", "Sets", "Skilling gear and sets"],
   ["past99-mock", "1", "The Road Past 99"],
   ["ascend-mock", "2", "Ascendancies"],
   ["relic-mock", "3", "Relic gear"],
