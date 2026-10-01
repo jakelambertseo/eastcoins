@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Daredevil Gorge</title>
+<!-- (2026-10-01, the owner: "leave them out, instead i want to mockup a dedicated agility map, similiar to what runescape does ... instead of a
+     room or guild it's a map. you walk across ropeswings, rocks, trees, etc. there needs to be additional benefits to going here, maybe a few
+     mobs only reachable by having X agility, that drop rare things, or a few ores/nodes that offer unique benefits ... this will be in v1.1 as
+     well"). Mockup 16. The XP numbers are worked out from the game's own XP table (XP_AT). Art in art/ is PixelLab. Local only; built into /gameplan. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a09;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#2a1a0a,transparent),radial-gradient(900px 600px at 100% 30%,#0a2a24,transparent),#0b0a09}
+main{max-width:1200px;margin:0 auto;padding:28px 18px 80px}
+h1{margin:0 0 4px;font:800 36px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 25px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:16px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}.lede b{color:#f6e9cc}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd98a}
+.sec{margin:44px 0 0;padding:22px 0 0;border-top:2px solid #3a2a1a}.sec>p{color:#b8a888;max-width:980px;line-height:1.55}.sec>p b{color:#f6e9cc}
+.hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start;margin-top:14px}@media (max-width:1000px){.hero{grid-template-columns:1fr}}
+.hero img{width:100%;image-rendering:pixelated;border-radius:12px;box-shadow:0 0 0 2px #5a3a1a,0 14px 40px rgba(0,0,0,.6)}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.tile{background:#14120e;border-radius:10px;padding:10px 12px;box-shadow:0 0 0 1.5px #3a2616}.tile b{display:block;font:800 22px Cinzel,serif;color:#ffe7b0}.tile span{font:700 12px/1.35 Lora,serif;color:#a89070}
+.tbl{width:100%;border-collapse:collapse;font:600 12.5px Lora,serif;background:#14120e;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616;margin-top:10px}
+.tbl th{text-align:left;font:800 10px Lora,serif;letter-spacing:.07em;text-transform:uppercase;color:#a89070;padding:9px 8px 5px}.tbl td{padding:6px 8px;border-top:1px solid #2e2216;vertical-align:top;line-height:1.45}
+.tbl td:first-child{font-weight:800;color:#ffe7b0}.tbl td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.wrapx{overflow-x:auto}
+.chart{background:#14120e;border-radius:12px;padding:12px;box-shadow:0 0 0 1.5px #3a2616;margin-top:12px;overflow:auto}.chart svg{display:block;width:100%;height:auto;min-width:640px}
+.refs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:10px;margin-top:12px}
+.ref{background:#14120e;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}.ref b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.ref span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.ref span i{color:#f6e9cc;font-style:normal;font-weight:800}
+.places{display:grid;gap:12px;margin-top:12px}
+.place{display:grid;grid-template-columns:120px 1fr;gap:6px 16px;padding:14px 16px;border-radius:12px;background:linear-gradient(180deg,var(--bg),#100c0a 85%);box-shadow:0 0 0 1.5px var(--ac)}
+.place .pics{grid-row:1/span 3;display:grid;gap:6px;justify-items:center}.place .pics img{width:96px;height:96px;image-rendering:pixelated;background:rgba(0,0,0,.3);border-radius:10px}
+.place header{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.place header b{font:800 20px Cinzel,serif;color:#ffe7b0}.lvl{font:800 11px Lora,serif;padding:2px 9px;border-radius:999px;background:rgba(0,0,0,.45);box-shadow:inset 0 0 0 1.5px var(--ac);color:var(--ac)}
+.place p{margin:2px 0 0;font:600 13.5px/1.6 Lora,serif;color:#d8ccb4}.place p b{color:#fff0c8}
+.place ul{margin:4px 0 0;padding-left:18px;font:600 13px/1.55 Lora,serif;color:#cdbfa2}.place ul b{color:#f6e9cc}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(270px,100%),1fr));gap:10px;margin:12px 0}.rules3>div{background:#14120e;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.rules3 span b{color:#f6e9cc}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+ul.build{margin:6px 0 0;padding-left:18px;line-height:1.7;color:#cdbfa2;max-width:980px}ul.build b{color:#f6e9cc}
+</style>
+</head>
+<body>
+<main>
+  <h1>Daredevil Gorge</h1>
+  <p class="lede">A whole map for Agility, the way the Guild is a whole building for Thieving: a carnival-painted stunt park in a river gorge
+    <b>south of the Yard</b>. Three courses run through it (rope swings, balance logs, stepping rocks, monkey bars, a canopy walkway, a high
+    wire, a zip line), and the courses are also the only way into three places nobody else can reach: a ledge, a canopy and a summit, each
+    with a monster or a node that pays you for getting there. It replaces The Run and its two unbuilt lanes.</p>
+  <nav class="jump"><a href="#runescape">What RuneScape does</a><a href="#courses">Three courses</a><a href="#map">The map</a><a href="#places">Only by Agility</a><a href="#marks">Runner's marks</a><a href="#balance">Balance</a><a href="#build">Building it</a></nav>
+
+  <div class="hero">
+    <img src="art/postcard.png" alt="Daredevil Gorge, a postcard: rope swings, logs over a river, a cliff ledge with goats, a canopy walkway, a summit spire" onerror="this.style.display='none'">
+    <div class="tiles">
+      <div class="tile"><b>~590 h → ~114 h</b><span>Agility 1→99 today (one flat lane) and with the three courses (the XP table, worked out)</span></div>
+      <div class="tile"><b>3 courses</b><span>Rookie from 1, Pro from 40, Champion from 70: one map, laps that loop</span></div>
+      <div class="tile"><b>3 places</b><span>the Goat Ledge (50), the Canopy (70), the Summit (90): reachable only from a course</span></div>
+      <div class="tile"><b>1 exit</b><span>the Yard's south edge, the one side it doesn't use: everybody passes it</span></div>
+      <div class="tile"><b>No damage</b><span>a fall drops you in the river or a net and costs seconds, never health: the game stays relaxed</span></div>
+      <div class="tile"><b>Runner's marks</b><span>picked up on the courses, spent at the Bookie at the finish line</span></div>
+    </div>
+  </div>
+
+  <section class="sec" id="runescape">
+    <h2>What RuneScape does, and what we take</h2>
+    <div class="refs">
+      <div class="ref"><b>Rooftop courses</b><span>A lap across a town's rooftops, a level each, with <i>Marks of Grace</i> dropping on the route and spent on the <i>Graceful</i> outfit. <b>Taken:</b> marks on the route, an outfit at the end (our Getaway silks).</span></div>
+      <div class="ref"><b>The Gnome Stronghold course</b><span>The first course anyone does: nets, logs, ropes, impossible to fail. <b>Taken:</b> the Rookie Run, nothing to fail below level 10.</span></div>
+      <div class="ref"><b>The Wilderness course and shortcuts</b><span>Courses as the way INTO places: the Wilderness course's pit, shortcuts that put resources in reach. <b>Taken:</b> three places only a course reaches.</span></div>
+      <div class="ref"><b>Brimhaven Agility Arena</b><span>A whole area of traps and a ticket economy. <b>Taken:</b> the area-sized idea; not the traps (no damage here).</span></div>
+      <div class="ref"><b>The Agility Pyramid / Prifddinas</b><span>A long climb with a prize at the top: a gold pyramid, crystal shards. <b>Taken:</b> the Summit and the Storm Eagle at the top of the Champion Run.</span></div>
+      <div class="ref"><b>Hallowed Sepulchre</b><span>Agility as a way to loot: obstacles that end at coffins. <b>Taken:</b> a lockbox at the Summit for thieves who climb.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="courses">
+    <h2>Three courses</h2>
+    <p>Each is a loop of obstacles you click one after another (the shortcut code: the server checks your level, walks you over, pays the XP). Finish a lap and you're back at the start. A fall below ten levels over the obstacle drops you in the river or a net beside it: a few seconds, no damage, the lap goes on.</p>
+    <div class="wrapx"><table class="tbl" id="courseTbl"></table></div>
+  </section>
+
+  <section class="sec" id="map">
+    <h2>The map</h2>
+    <p>One screen, 44 by 26, entered from the Yard's south edge. A plan, not the finished art: the river runs down the middle, the courses climb from the bank to the cliffs to the canopy, and the three places hang off them.</p>
+    <div class="chart"><svg id="mapSvg" viewBox="0 0 880 520" role="img" aria-label="A plan of Daredevil Gorge: the entrance, three course loops, and the three gated places"></svg></div>
+  </section>
+
+  <section class="sec" id="places">
+    <h2>Only by Agility</h2>
+    <p>Each place is a stop on a course, so getting there is the lap and getting back is the rest of it. Nothing in them attacks on sight; nobody can walk in.</p>
+    <div class="places" id="placeBox"></div>
+  </section>
+
+  <section class="sec" id="marks">
+    <h2>Runner's marks and the Bookie</h2>
+    <p>The game already has runner's marks (three a run on The Run, 30 XP each, sold for 50 tickets). In the Gorge they drop on the course routes (about one every three laps on the Rookie Run, one every two on the Pro, one a lap on the Champion) and the <b>Bookie at the finish line</b> takes them:</p>
+    <div class="wrapx"><table class="tbl" id="shopTbl"></table></div>
+    <p class="note">Marks still sell to Bom for 50 tickets, so the Gorge pays a little like any skill; nothing at the Bookie is sold for tickets, and nothing here touches a bet.</p>
+  </section>
+
+  <section class="sec" id="balance">
+    <h2>Balance</h2>
+    <div class="chart"><svg id="rateSvg" viewBox="0 0 880 300" role="img" aria-label="Agility XP an hour by level: today's flat lane against the three courses"></svg></div>
+    <div class="rules3">
+      <div><b>Into line with the other skills</b><span>Today Agility is the slowest skill by far (a flat ~22k an hour, ~590 hours to 99). The three courses climb from 22k to ~125k an hour, ~114 hours to 99: near Thieving's ~72 and the gathering skills.</span></div>
+      <div><b>The places pay, the laps train</b><span>The fastest XP is running the course; the money and the rares are in the places. Stopping at the Ledge or the Canopy costs you laps, so it's a choice.</span></div>
+      <div><b>Small new faucet</b><span>Marks sell for 50 like now, and the places' drops are goods and gear, not tickets. The Eagle's pet and the Skystone boots are the chase.</span></div>
+      <div><b>Never a damage trap</b><span>Falls cost time only. A monster in a place fights only if you start it. The tone of the game holds.</span></div>
+      <div><b>Walk speed stays capped</b><span>Skystone boots and the Quickfin add walk speed inside the game's existing speed cap (half above 20%, 50% at most), so stacking them can't break movement.</span></div>
+      <div><b>The shortcuts still count</b><span>The twelve nooks and three back ways stay: the Gorge trains Agility, the shortcuts are what Agility is for.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <ul class="build">
+      <li><b>The map</b>: the new-map pipeline (compose, walk grid, art, wire, test, pack) in the Yard's ground and cobble style, a river and cliffs from existing art, about 1.5 weeks with art.</li>
+      <li><b>The courses</b>: an ordered list of obstacles per course on the shortcut code (level check, crossing, XP), a lap counter, per-player marks on the route (The Run's marks already work per player), and the fall: back to a landing tile beside the obstacle. 3 days.</li>
+      <li><b>Obstacle art</b>: rope swing, balance log, stepping rocks, monkey bars, net, plank, zip line, high wire, pole: the four drawn for shortcuts plus five more. PixelLab.</li>
+      <li><b>The places</b>: three monsters (Ledge Goat, Canopy Bandit, Storm Eagle, drafts above; each needs its walk frames), three nodes (drafts above), the Eagle's pet, Skystone boots, the Quickfin fillet, the horseshoe. 1 week.</li>
+      <li><b>The Bookie</b>: an NPC with a shop window for marks (the Exchange's window pattern). 1 day.</li>
+      <li><b>The Run</b>: retired. The Yard's ladder goes, its quests ("Beat the Clock", "The Caravan Road") move to the Rookie Run, and best-lap boards move with them.</li>
+      <li><b>In v1.1</b> with the thieving and shortcuts work, held behind the same kind of switch until the bundle ships.</li>
+    </ul>
+    <div class="callout"><b>Things to decide:</b> the name (Daredevil Gorge; or the Stunt Park, the High Wire, Thrill Hill); south of the Yard; retiring The Run; the three places and their levels (50 / 70 / 90); the Bookie's list; and whether the Gorge also gets a Wanted-style weekly race (best lap of the week, CASINO calls it).</div>
+  </section>
+</main>
+<script>
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const $ = (id) => document.getElementById(id);
+/* the courses */
+const COURSES = [
+  ["The Rookie Run", 1, "#7ed060", "the riverbank", ["balance log over the river", "stepping rocks", "rope swing", "cargo net up the bank", "monkey bars", "plank walk", "zip line down", "the finish arch"], 45, "22k → 45k", "~1 every 3 laps"],
+  ["The Pro Run", 40, "#e8a03a", "up the scaffolds and the cliff", ["log roll", "scaffold leap", "cliff traverse (stop: the Goat Ledge)", "rope bridge", "tyre wall", "pole slide", "river leap", "net climb", "crate stack", "the finish arch"], 60, "62k → 88k", "~1 every 2 laps"],
+  ["The Champion Run", 70, "#ff6a8a", "across the canopy to the summit", ["vine swing", "canopy walkway (stop: the Canopy)", "branch hop", "high wire", "summit chimney", "the summit (stop: the Summit, from 90)", "pole vault", "zip line across the gorge", "waterfall rocks", "cliff drop into the pool", "rope net", "the finish arch"], 75, "100k → 125k", "~1 a lap"]];
+$("courseTbl").innerHTML = `<tr><th>Course</th><th class="num">Agility</th><th>Where</th><th>Obstacles, in order</th><th class="num">Lap</th><th class="num">XP an hour</th><th>Marks</th></tr>` + COURSES.map(([n, l, c, w, obs, lap, xp, mk]) => `<tr><td style="color:${c}">${n}</td><td class="num">${l}</td><td>${w}</td><td>${obs.map(esc).join(" · ")}</td><td class="num">${lap} s</td><td class="num">${xp}</td><td>${mk}</td></tr>`).join("");
+
+/* the places */
+const PLACES = [
+  ["The Goat Ledge", 50, "#e8a03a", ["art/goat.png", "art/featherwood.png"], "A shelf high on the gorge wall, a stop on the Pro Run's cliff traverse.",
+    ["<b>Ledge Goats</b> (combat 45, never aggressive): goat horn (an Alchemy ingredient for a <b>Sure-foot tonic</b>: no slips for 10 minutes, +10% Agility XP) and, rarely, a <b>Lucky horseshoe</b> (1 in 500; a ring: +5% Agility XP and your slips never happen).",
+     "<b>Featherwood</b> (Woodcutting 60): logs, and every chop also drops 1-3 <b>feathers</b>: the only steady source of feathers for fletchers outside the birds."]],
+  ["The Canopy", 70, "#ff6a8a", ["art/bandit.png", "art/quickfin.png"], "A walkway through the treetops, a stop on the Champion Run. The thieving tie-in lives here.",
+    ["<b>Canopy Bandits</b> (combat 70): monkeys in masks with chips stuffed down their vests. <b>Pick their pockets at Thieving 70</b> (the world-pockets code) or fight them: stolen goods for the fence, a rare <b>Bandit's mask</b> (a cosmetic hat).",
+     "<b>A Quickfin spot</b> (Fishing 75) in a waterfall pool: Quickfin cooks into a <b>Quickfin fillet</b>, food that adds +8% walk speed for 10 minutes. The only walk-speed food."]],
+  ["The Summit", 90, "#b08aff", ["art/eagle.png", "art/skystone.png"], "A wind-scoured spire at the top of the Champion Run, from Agility 90.",
+    ["<b>The Storm Eagle</b> (combat 92, back every 10 minutes): storm feathers and the Summit's unique pet, <b>Squall the eaglet</b> (1 in 400; +5% walk speed), the late-map pet rule.",
+     "<b>Skystone</b> (Mining 85): ore for <b>Skystone boots</b> at an anvil (Smithing 85): +4% walk speed, as boots, below the speed cap.",
+     "A <b>lockbox</b> (Thieving 90) for thieves who also climb."]]];
+$("placeBox").innerHTML = PLACES.map(([n, l, c, pics, w, items]) => `<div class="place" style="--ac:${c};--bg:${c}1a"><div class="pics">${pics.map((p) => `<img src="${p}" alt="" onerror="this.style.visibility='hidden'">`).join("")}</div><header><b>${n}</b><span class="lvl">Agility ${l}</span></header><p>${esc(w)}</p><ul>${items.map((i) => `<li>${i}</li>`).join("")}</ul></div>`).join("");
+
+/* the Bookie */
+const SHOP = [["The Getaway silks, a piece", "60 marks", "the Agility set from the Sets page (+2% walk speed a piece, all four +20% Agility XP); the Jackpot Thief still drops it too"], ["Sure-foot tonic", "8 marks", "no slips for 10 minutes and +10% Agility XP (also brewed from goat horn)"], ["A runner's tracksuit (cosmetic)", "120 marks", "a look for the vanity slots, red and gold"], ["Daredevil title", "200 marks", "a title for your name, for running laps"], ["Quickfin bait", "1 mark", "for the Canopy's pool"]];
+$("shopTbl").innerHTML = `<tr><th>At the Bookie</th><th class="num">Price</th><th>What it does</th></tr>` + SHOP.map(([n, p, d]) => `<tr><td>${esc(n)}</td><td class="num">${esc(p)}</td><td>${esc(d)}</td></tr>`).join("");
+
+/* the plan of the map (not to scale with the real grid) */
+{
+  const T = 20, W = 44, H = 26;
+  let s = `<rect width="880" height="520" fill="#1e3a24"/>`;
+  /* river, cliffs, canopy */
+  s += `<path d="M330 0 C 360 120, 300 220, 380 300 S 420 460, 400 520 L 470 520 C 480 460, 440 330, 450 300 S 410 120, 400 0 Z" fill="#2f6f9a"/>`;
+  s += `<path d="M560 0 L880 0 L880 260 C 800 240, 720 260, 640 220 C 600 200, 580 120, 560 0Z" fill="#5a4a3a"/>`;
+  s += `<path d="M600 300 C 700 260, 820 280, 880 300 L880 520 L620 520 C 600 450, 640 380, 600 300Z" fill="#2a5a2a"/>`;
+  s += `<rect x="360" y="0" width="160" height="34" fill="#c9a86c"/><text x="440" y="22" text-anchor="middle" fill="#1a1006" font-size="14" font-weight="800">to the Yard</text>`;
+  /* the hub */
+  s += `<rect x="250" y="40" width="380" height="70" rx="10" fill="#3a3020" stroke="#c9a86c" stroke-width="2"/><text x="440" y="70" text-anchor="middle" fill="#ffe7b0" font-size="15" font-weight="800">The Start · the Bookie · a bank chest · the best-lap board</text><text x="440" y="92" text-anchor="middle" fill="#cdbfa2" font-size="12">a campfire, Runner's marks in, the lap counter</text>`;
+  const route = (pts, c) => `<path d="${pts.map(([x, y], i) => `${i ? "L" : "M"}${x} ${y}`).join("")}" fill="none" stroke="${c}" stroke-width="5" stroke-dasharray="2 9" stroke-linecap="round"/>` + pts.map(([x, y], i) => i && i < pts.length ? `<circle cx="${x}" cy="${y}" r="6" fill="#14120e" stroke="${c}" stroke-width="3"/>` : "").join("");
+  s += route([[300, 110], [200, 160], [120, 240], [140, 340], [240, 400], [330, 360], [360, 260], [330, 160], [300, 110]], "#7ed060");
+  s += route([[440, 110], [470, 180], [560, 200], [640, 150], [720, 120], [800, 170], [760, 240], [640, 250], [520, 260], [470, 200], [440, 110]], "#e8a03a");
+  s += route([[580, 110], [640, 320], [740, 360], [830, 330], [850, 420], [760, 480], [660, 470], [560, 420], [480, 350], [460, 260], [580, 110]], "#ff6a8a");
+  /* the places */
+  const place = (x, y, w, h, c, t, sub) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="#14120e" fill-opacity=".85" stroke="${c}" stroke-width="3"/><text x="${x + w / 2}" y="${y + 22}" text-anchor="middle" fill="${c}" font-size="14" font-weight="800">${t}</text><text x="${x + w / 2}" y="${y + 40}" text-anchor="middle" fill="#cdbfa2" font-size="11">${sub}</text>`;
+  s += place(690, 18, 170, 52, "#e8a03a", "The Goat Ledge · 50", "goats · featherwood");
+  s += place(780, 280, 96, 52, "#ff6a8a", "The Canopy · 70", "bandits · quickfin");
+  s += place(600, 440, 150, 52, "#b08aff", "The Summit · 90", "eagle · skystone · lockbox");
+  s += `<line x1="760" y1="120" x2="775" y2="70" stroke="#e8a03a" stroke-width="2"/><line x1="830" y1="330" x2="828" y2="332" stroke="#ff6a8a" stroke-width="2"/><line x1="660" y1="470" x2="675" y2="490" stroke="#b08aff" stroke-width="2"/>`;
+  /* key */
+  s += `<rect x="16" y="430" width="240" height="78" rx="8" fill="#14120e" fill-opacity=".85"/><text x="28" y="452" fill="#7ed060" font-size="13" font-weight="800">• • • the Rookie Run (1)</text><text x="28" y="474" fill="#e8a03a" font-size="13" font-weight="800">• • • the Pro Run (40)</text><text x="28" y="496" fill="#ff6a8a" font-size="13" font-weight="800">• • • the Champion Run (70)</text>`;
+  $("mapSvg").innerHTML = s;
+}
+
+/* XP an hour by level */
+{
+  const rate = (L) => (L < 40 ? 22000 + (L - 1) * 600 : L < 70 ? 62000 + (L - 40) * 900 : 100000 + (L - 70) * 900);
+  const W = 880, H = 300, l = 60, b = 34, X = (L) => l + ((L - 1) / 98) * (W - l - 20), Y = (v) => H - b - (v / 140000) * (H - b - 16);
+  let s = ""; for (const v of [0, 35000, 70000, 105000, 140000]) s += `<line x1="${l}" x2="${W - 16}" y1="${Y(v)}" y2="${Y(v)}" stroke="#2e2216"/><text x="${l - 8}" y="${Y(v) + 4}" fill="#a89070" font-size="12" text-anchor="end">${v / 1000}k</text>`;
+  for (const L of [1, 20, 40, 60, 80, 99]) s += `<text x="${X(L)}" y="${H - 12}" fill="#a89070" font-size="12" text-anchor="middle">${L}</text>`;
+  let d = ""; for (let L = 1; L <= 99; L++) d += `${L === 1 ? "M" : "L"}${X(L)} ${Y(rate(L))}`;
+  s += `<path d="M${X(1)} ${Y(22000)}L${X(99)} ${Y(22000)}" stroke="#8a7a60" stroke-width="2.5" stroke-dasharray="6 5"/><text x="${X(99)}" y="${Y(22000) - 8}" fill="#a89070" font-size="12" text-anchor="end" font-weight="700">today: one lane, ~22k an hour</text>`;
+  s += `<path d="${d}" stroke="#e8a03a" stroke-width="3" fill="none"/><text x="${X(96)}" y="${Y(rate(96)) - 10}" fill="#ffd98a" font-size="12" text-anchor="end" font-weight="800">the three courses</text>`;
+  for (const [L, n] of [[40, "Pro"], [70, "Champion"]]) s += `<line x1="${X(L)}" x2="${X(L)}" y1="16" y2="${H - b}" stroke="#3a2a1a" stroke-dasharray="3 4"/><text x="${X(L) + 4}" y="28" fill="#a89070" font-size="11">${n} opens</text>`;
+  s += `<text x="${l}" y="14" fill="#a89070" font-size="12">Agility XP an hour, by level (laps run without stopping)</text>`;
+  $("rateSvg").innerHTML = s;
+}
+</script>
+</body>
+</html>

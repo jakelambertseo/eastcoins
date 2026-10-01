@@ -2,6 +2,16 @@
  {
   "date": "2026-10-01",
   "area": "World & maps",
+  "decision": "The Run's Pro and Champion lanes are dropped; instead a dedicated Agility map (mocked as Daredevil Gorge) goes into v1.1, with courses and places only Agility reaches.",
+  "quote": "leave them out, instead i want to mockup a dedicated agility map, similiar to what runescape does ... this will be in v1.1 as well",
+  "why": "",
+  "page": "agilitymap-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "World & maps",
   "decision": "The Storm Drain opens at Agility 61.",
   "quote": "storm strain needs to open at 61 agility",
   "why": "",
