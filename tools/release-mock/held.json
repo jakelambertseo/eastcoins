@@ -54,5 +54,37 @@
   "bundle": "v1.1",
   "what": "Every skill has a set of four work clothes in a Locker (never the bag or bank, never traded, a find is always a new piece): +3% XP a piece in the worn set’s skill, all four +3% more and a perk (15% faster to 99). Each set drops from somewhere else (a lap, a pocket, a harvest, the pen, the fire, Bronny’s order, farm animals, dead trees, wild mushrooms, birds, the Star Tent, the Jackpot Thief, the junk). The Ditched set moves to the Locker, spares paid. The Armour | Work clothes switch on the paper doll, the Locker, skill pips, a wiki guide.",
   "ships": "flip HOLD.work with the rest of v1.1; push the 52 icons and the packs first; the worker carries work.js"
+ },
+ {
+  "name": "Area diaries and the cape slot",
+  "commit": "0333b148",
+  "page": "diary-mock",
+  "bundle": "v1.1",
+  "what": "A diary for every map (21, 252 tasks, 84 perks), lamps and medals, the Diary tab (L) and window, and the cape slot with the Grand Tour cape. Old progress is ticked off silently on first login: one line, no toasts.",
+  "ships": "HOLD.diary off; two new page modules (eastscape-diary.js, eastscape-diary-rules.js: probe both before the page); art in flat/diary/ and items/cape_tour.png; the worker (diary.js and hooks in eleven modules)"
+ },
+ {
+  "name": "Give back a sorted gem",
+  "commit": "7b9dd393",
+  "page": "",
+  "bundle": "v1.1",
+  "what": "The admin window's player card: give anyone a gem at any sort (or unsorted), online or offline, for listings the gem change took off the Exchange.",
+  "ships": "eastscape-admin.js (?v=3) and the worker"
+ },
+ {
+  "name": "Jukebox volume in Settings",
+  "commit": "380aafff",
+  "page": "",
+  "bundle": "v1.1",
+  "what": "A Jukebox volume slider in Settings (Features), the same setting as the jukebox window's, for the radio and the Green Room.",
+  "ships": "eastscape-ui.js (?v=9) and the page"
+ },
+ {
+  "name": "The wiki for v1.1",
+  "commit": "482d6709",
+  "page": "",
+  "bundle": "v1.1",
+  "what": "Week 2 (Update 1.1) with a teaser and art strip per change, the Update 1.1 entry, guides for diaries, Thrill Hill, thieving in the world and the Character window, Agility and Gems updated, v1.1 on the Road Ahead. All held with v1.1.",
+  "ships": "eastscape-wiki.js (?v=243) with the page"
  }
 ]
