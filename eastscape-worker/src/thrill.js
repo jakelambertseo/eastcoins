@@ -72,6 +72,20 @@ export function installThrill(World, { G }) {
     return this.say(pl, pl.lap ? "Clean." : ob.i === 0 ? "Clean." : "Clean. (That one's out of order: a lap starts at the first stunt.)", "good");
   };
 
+  /* ---------------------------------------------------------------- the snack cart: popcorn, lemonade and corn dogs for tickets */
+  P.snackBuy = function (S, pl, m) {
+    if (G.HOLD.thrill && !pl.god) return;
+    const C = pl.C, V = S.npcs.find((x) => x.opens === "snacks");
+    if (!V || G.cheb(pl, V) > (V.reach || 3)) return this.say(pl, "You need to be at the snack cart.", "bad");
+    const row = G.SNACKS.find(([k]) => k === m.k); if (!row) return;
+    const [k, price] = row, n = Math.max(1, Math.min(28, m.n | 0 || 1)), cost = price * n, have = G.tixIn(C);
+    if (have < cost) return this.say(pl, `"${G.fmtTix(cost)}, pal. You've got ${G.fmtTix(have)}."`, "bad");
+    if (G.roomFor(C.inv, k, C) < n) return this.say(pl, "Your bag is full.", "bad");
+    G.takeInv(C.inv, "tickets", cost); this.trkTix(pl, -cost, "snacks");
+    this.give(pl, k, n); this.touch(pl);
+    return this.say(pl, `${V.name} hands over ${n === 1 ? `a ${G.ITEMS[k].name.toLowerCase()}` : `${n} × ${G.ITEMS[k].name.toLowerCase()}`}. "Enjoy the show!"`, "loot");
+  };
+
   /* ---------------------------------------------------------------- Fast Eddie */
   P.bookieBuy = function (S, pl, m) {
     if (G.HOLD.thrill && !pl.god) return;

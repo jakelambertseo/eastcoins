@@ -7,3 +7,6 @@ chrome_boots c45ed63b-4c7d-4a00-a2ce-6f178089563c
 pot_surefoot 92aa521b-3e80-4d42-b6d6-bbdffa1aff9a
 stunt_helmet b5a34565-7575-45e6-9e37-630a6befca49
 stunt_leathers bd6f873b-2553-446f-82a1-b9763e6c2b7e
+popcorn f7e8dcd4-0a56-4c87-8b27-57f316db6a2a
+lemonade 7152e33b-3344-4949-9247-49f696bbfc44
+corndog 15b893cf-21be-4b33-967c-59ad7bfc7f32

@@ -17,3 +17,8 @@ landing d963cb3f-2e67-45ab-8761-42950b37fd79
 grandstand 9a9b0b0b-3f97-49fb-ba59-9db5b03c9a18
 ropeswing 68701db4-529b-436d-abf9-3d6253ea7952
 highwire 4aec3b53-495d-4541-b130-9c7d2c4a7ebb
+booth 5e160a22-913e-4093-81d0-a040369a1c79
+showpiece beb6d609-8fb1-4372-bc2a-eecd0f407fc0
+trashcan c7d73c24-6455-4fe6-901e-49fd5a742bd2
+snackcart fc16e930-d174-49ae-b3fd-dda0980480ec
+counter 5d9db76d-fe8f-4039-b1ef-29fa441d6167

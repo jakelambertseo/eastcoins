@@ -2428,7 +2428,8 @@ Object.assign(SCENES, {
       /* (2026-09-22, the owner) THE RUN's way in is a rope ladder now, up at 10,2 rather than a door at 6,5. It
          keeps the type `roomdoor` because that is what carries `enter` through to the scene change; only the
          picture and the tile move. Kept from wild(), or a bush grows over the entrance. */
-      objs.push(HOLD.thrill === false ? { t: "roomdoor", art: "th_gate", x: 10, y: 2, name: "Thrill Hill: the stunt park (Agility)", enter: "thrill" } : { t: "roomdoor", art: "o_wildladder", x: 10, y: 2, name: "The Run: an agility course", enter: "agility" });   /* (2026-10-01) THRILL HILL retires The Run: same door, once it is open (HOLD.thrill, set at the end of this file, is still undefined if anything built the Yard first, which counts as held) */ g[2][10] = "#"; keep.push([10, 2]);
+      const thOpen = HOLD.thrill === false, [tdx, tdy] = thOpen ? THRILL_GATE.door : [10, 2];   /* (2026-10-01) open, the door moves to the south of the court (THRILL_GATE, the end of this file); same object, so no id moves */
+      objs.push(thOpen ? { t: "roomdoor", art: "th_gate", x: tdx, y: tdy, name: "Thrill Hill: the stunt park (Agility)", enter: "thrill" } : { t: "roomdoor", art: "o_wildladder", x: 10, y: 2, name: "The Run: an agility course", enter: "agility" });   /* (2026-10-01) THRILL HILL retires The Run: same door, once it is open (HOLD.thrill, set at the end of this file, is still undefined if anything built the Yard first, which counts as held) */ g[tdy][tdx] = "#"; keep.push([tdx, tdy]);
       /* (v122) where woodcutting starts: two ordinary trees by the Yard's edge, Woodcutting 1. */
       /* (2026-09-22, the owner: "this tree in the yard should look unique, it currently looks like all the other
          trees and doesnt stand out") THESE TWO ARE THE ONLY CHOPPABLE TREES IN THE YARD. The other 126 tree objects
@@ -3487,6 +3488,7 @@ export function buildScene(key) {
   hwObjs(String(key).split(":")[0], b);   /* (2026-09-27) the Long Night's jack-o'-lanterns and ghost lanterns, while the event is on */
   projObjs(String(key), b);   /* (2026-09-28) World Projects: LAST, and append-only */
   if (!sc.noBanks) markBanks(b.g);   /* (2026-09-27) the Depths' abyss is its own edge: see its map */
+  thrillYardObjs(String(key), b);   /* (2026-10-01) Thrill Hill's front door in the court: append-only (HOLD.thrill) */
   worldThiefObjs(String(key), b);   /* (2026-10-01) shortcuts, ledges and lockboxes: after the projects, append-only, and AFTER the banks so a ledge's island stays ground (HOLD.thief2) */
   b.objs.forEach((o, i) => { o.id = i; o.w ??= 1; o.h ??= 1; });
   return b;
@@ -10431,4 +10433,33 @@ if (!HOLD.gemcut) {
   for (const m of Object.values(MOBS)) for (const row of m.drops || []) if (gemKey(row[0])) row[2] = (row[2] ?? 1) * GEM_CUT;
   for (const row of CLAW_CHEST.items) if (gemKey(row[0])) row[2] = (row[2] ?? 1) * GEM_CUT;
   ORDER.keystone.list = ORDER.keystone.list.filter(([k]) => !gemKey(k));
+}
+
+/* (2026-10-01) THRILL HILL'S FRONT DOOR, in the Yard. The owner: "its nice looking but it seems randomly placed in the yard which is grassy ...
+   Maybe a guy behind a ticket counter, and something beside the ticket counter that is thrill hill themed", then "make the ticket booth
+   entrance in the further south area of the court". So once Thrill Hill is open the Yard's door (the same object The Run's ladder was, so
+   no object id moves) stands at the south end of the court against the market railing, on a patch of packed dirt: the arch, the ticket
+   counter just in front of it with Dizzy Dale behind it, and a monster truck parked on two crushed cars beside it. Dale's "Let me in" and
+   a click on the arch do the same thing. The pieces are `decor`, so their pictures are fetched only when they exist (wantArt), never in
+   the Yard's first-load sheet while Thrill Hill is held. */
+export const THRILL_GATE = { door: [39, 22], counter: [39, 20, 2, 1], keeper: [39, 19], show: [35, 21, 3, 2], pad: [34, 19, 9, 4], barrels: [[42, 22], [33, 22]] };
+function thrillYardObjs(key, b) {
+  if (HOLD.thrill !== false || key !== "workyard") return;
+  const T = THRILL_GATE, put = (o) => { b.objs.push({ edge: true, decor: true, ...o }); if (!o.flat) for (let j = 0; j < (o.h || 1); j++) for (let i = 0; i < (o.w || 1); i++) b.g[o.y + j][o.x + i] = "#"; };
+  put({ t: "cliff", art: "th_dirtpad", x: T.pad[0], y: T.pad[1], w: T.pad[2], h: T.pad[3], flat: true, name: "Packed dirt, tyre marks all over it" });
+  put({ t: "cliff", art: "th_counter", x: T.counter[0], y: T.counter[1], w: T.counter[2], h: T.counter[3], name: "The Thrill Hill ticket counter" });
+  put({ t: "cliff", art: "th_showpiece", x: T.show[0], y: T.show[1], w: T.show[2], h: T.show[3], name: "A monster truck, parked on two cars. Thrill Hill is through the arch." });
+  for (const [x, y] of T.barrels) put({ t: "cliff", art: "th_flamebarrel", x, y, name: "A barrel, on fire, on purpose" });
+}
+/* THE SNACK CART on Thrill Hill: Corndog Carl sells popcorn, lemonade and corn dogs for tickets (a small sink: they sell back for a third) */
+export const SNACKS = [["popcorn", 150], ["lemonade", 250], ["corndog", 300]];
+Object.assign(ITEMS, {
+  popcorn:  { name: "Popcorn", icon: "\u{1F37F}", heal: 18, ex: "A striped bucket of it, still warm. From the snack cart on Thrill Hill." },
+  lemonade: { name: "Pink lemonade", short: "Lemonade", icon: "\u{1F964}", drink: { mins: 10, fx: { speed: 0.03 } }, ex: "Sweet, cold and very pink. Ten minutes outside: everything a little quicker, your feet included (3%). From the snack cart on Thrill Hill." },
+  corndog:  { name: "Corn dog", icon: "\u{1F32D}", heal: 30, ex: "On a stick, with mustard. The best food at any stunt show. From the snack cart on Thrill Hill." }
+});
+Object.assign(VALUE, { popcorn: 50, lemonade: 80, corndog: 100 });
+if (!HOLD.thrill) {
+  SCENES.workyard.npcs.push({ name: "Dizzy Dale", art: "tickettaker", x: THRILL_GATE.keeper[0], y: THRILL_GATE.keeper[1], still: true, opens: "thrillgate", reach: 2,
+    lines: ["Thrill Hill. Through the arch. No refunds.", "Rookie Run's for everybody. The cannon's for people with seventy Agility and no sense.", "Mind the truck. It's parked. Probably.", "I've been on the Pro Run once. Once."] });
 }

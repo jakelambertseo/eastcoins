@@ -21,7 +21,7 @@ def rect(cells, x0, y0, x1, y1):
 
 MAPS = {}
 # ---------------------------------------------------------------- THRILL HILL
-m = MAPS["thrill"] = dict(name="Thrill Hill", entry=(22, 2), exitTo={"scene": "workyard", "x": 10, "y": 3}, edge=True, road=set(), water=set(), walls=set())
+m = MAPS["thrill"] = dict(name="Thrill Hill", entry=(22, 2), exitTo={"scene": "workyard", "x": 39, "y": 21}, edge=True, road=set(), water=set(), walls=set())
 rect(m["road"], 21, 0, 22, 21); rect(m["road"], 14, 20, 34, 21)
 w = m["walls"]
 rect(w, 18, 0, 18, 18); rect(w, 25, 0, 25, 18)
@@ -45,6 +45,7 @@ m["stunts"] = [
 m["gates"] = {(13, 22): 50}
 m["cannon"] = dict(x=23, y=9, w=2, h=2, art="th_cannon", a=(22, 9), lvl=70, to={"scene": "thrill_top", "x": 21, "y": 23}, name="The human cannonball")
 m["props"] = [("th_grandstand", 36, 20, 5, 3), ("th_truck", 15, 23, 3, 2), ("th_scoreboard", 28, 23, 3, 2), ("th_firebarrels", 42, 24, 2, 1),
+              ("th_snackcart", 31, 23, 3, 2), ("th_booth", 19, 1, 1, 1), ("th_trash", 34, 23, 1, 1), ("th_trash", 18, 19, 1, 1), ("th_trash", 26, 19, 1, 1), ("th_trash", 41, 19, 1, 1),
               ("th_tyres", 24, 24, 1, 1), ("th_tyres", 33, 19, 1, 1), ("th_tyres", 43, 19, 1, 1), ("th_firebarrels", 19, 24, 2, 1)]
 m["decor"] = [("th_oil1", 30, 20), ("th_oil2", 42, 22), ("th_oil1", 3, 2), ("th_oil2", 38, 15), ("th_oil1", 7, 15), ("th_oil2", 30, 9)]
 m["trees"] = [(1, 20), (11, 20), (6, 25)]          # featherwood, in the Junk Mound
@@ -53,7 +54,10 @@ m["spots"] = []
 m["mobs"] = [("gremlin", 3, 22), ("gremlin", 8, 22), ("gremlin", 5, 24)]
 m["sign"] = (24, 1, "THRILL HILL. The Rookie Run is through the tyres to the west, from any Agility. The Pro Run is over the cars to the east, from 40. Run the stunts in order and a lap pays a bonus, and sometimes a runner's mark: Fast Eddie at the start line takes marks. The Junk Mound (50) is south-west, over the scrap. The cannon (70) goes to Daredevil Peak.")
 m["npcs"] = [dict(name="Fast Eddie", art="fasteddie", x=20, y=2, opens="bookie", still=True, hair="#d8b048", shirt="#c83a2a", pants="#2a2a3a",
-                  lines=["Marks, kid. I take marks. Bring 'em to me.", "Rookie Run first. Nobody's ever been hurt on it. Much.", "The cannon? Seventy Agility and a strong neck.", "Run 'em in order or it's not a lap. That's the rule. I made it."])]
+                  lines=["Marks, kid. I take marks. Bring 'em to me.", "Rookie Run first. Nobody's ever been hurt on it. Much.", "The cannon? Seventy Agility and a strong neck.", "Run 'em in order or it's not a lap. That's the rule. I made it."]),
+             dict(name="Corndog Carl", art="vendor", x=32, y=22, opens="snacks", still=True,
+                  lines=["Popcorn! Lemonade! Corn dogs! Get 'em while the trucks are running!", "Lemonade's pink. Don't ask why. It's better that way.", "Eat it before the half-pipe, not after. Trust me.", "Thirty years at this cart. Seen a man jump eleven buses. Seen a man not."])]
+m["bots"] = [dict(name="RampRat", level=23, x=20, y=16), dict(name="SendItSteve", level=48, x=29, y=21), dict(name="NitroNan", level=66, x=23, y=12)]
 
 # ---------------------------------------------------------------- DAREDEVIL PEAK
 m = MAPS["thrill_top"] = dict(name="Daredevil Peak", entry=(21, 23), exitTo=None, edge=False, road=set(), water=set(), walls=set())
@@ -82,6 +86,7 @@ m["spots"] = [(37, 18), (40, 20), (37, 21)]        # the nitro pool
 m["mobs"] = [("hellbiker", 18, 12), ("hellbiker", 30, 17), ("hellbiker", 24, 18), ("hellbiker", 33, 22), ("crusher", 35, 4)]
 m["sign"] = (19, 24, "DAREDEVIL PEAK. The Champion Run starts over the buses to the west. Hellbikers ride the Burnout Pit (pick them at Thieving 70); the nitro pool is east (Fishing 75). The Peak (Agility 90) is up the ramp north: Big Daddy Crusher, chrome, a lockbox. The zip line takes you back down.")
 m["npcs"] = []
+m["bots"] = [dict(name="WheelieWendy", level=81, x=23, y=16), dict(name="CannonCarl", level=74, x=30, y=20)]
 
 # ---------------------------------------------------------------- THE TRACKS AND THE CLUTTER
 # A track (the cobble road, two wide) runs inside each pen from where one stunt lands to where the next is stood at, so a lap reads as a
@@ -98,7 +103,7 @@ for key, m in MAPS.items():
     for crs in sorted({s[0] for s in m["stunts"] if s[0]}):
         seq = sorted([s for s in m["stunts"] if s[0] == crs], key=lambda s: s[1])
         for p, q in zip(seq, seq[1:]): track(m, p[8], q[7])
-JUNK = [("th_tyres", 1, 1), ("th_tyres", 1, 1), ("th_firebarrels", 2, 1), ("th_cars", 2, 1), ("o_barrel", 1, 1), ("th_flamebarrel", 1, 1), ("o_cones", 1, 1)]
+JUNK = [("th_trash", 1, 1), ("th_tyres", 1, 1), ("th_tyres", 1, 1), ("th_firebarrels", 2, 1), ("th_cars", 2, 1), ("o_barrel", 1, 1), ("th_flamebarrel", 1, 1), ("o_cones", 1, 1)]
 SCATTER = {"thrill": [((0, 0, 17, 5), 5), ((0, 7, 8, 11), 2), ((10, 7, 17, 11), 2), ((0, 13, 17, 17), 5), ((26, 0, 43, 5), 5), ((35, 7, 43, 11), 3), ((26, 7, 33, 11), 3), ((26, 13, 43, 17), 5),
                       ((14, 19, 43, 25), 7), ((0, 19, 12, 25), 2)],
            "thrill_top": [((0, 15, 12, 25), 5), ((0, 8, 12, 13), 3), ((0, 0, 12, 6), 4), ((14, 0, 26, 6), 4), ((14, 8, 43, 25), 9), ((28, 0, 43, 9), 3)]}
@@ -113,7 +118,7 @@ for key, m in MAPS.items():
         for i in range(c["w"]): taken.add((c["x"] + i, c["y"] + j))
     keep = set()
     for s in m["stunts"]: keep |= {s[7], s[8]}
-    keep |= {c["a"], m["entry"]} | {(n["x"], n["y"]) for n in m["npcs"]} | {(x, y) for (_, x, y) in m["mobs"]} | set(m["trees"]) | set(m["rocks"]) | set(m["spots"])
+    keep |= {c["a"], m["entry"]} | {(n["x"], n["y"]) for n in m["npcs"]} | {(bt["x"], bt["y"]) for bt in m["bots"]} | {(x, y) for (_, x, y) in m["mobs"]} | set(m["trees"]) | set(m["rocks"]) | set(m["spots"])
     if m["sign"]: keep.add((m["sign"][0], m["sign"][1]))
     if key in ("thrill_top",): keep.add((29, 8))
     for (x0, y0, x1, y1), n in SCATTER[key]:
@@ -130,6 +135,9 @@ for key, m in MAPS.items():
     for _ in range(6):   # a few more oil slicks, walked over
         x, y = rnd.randint(1, 42), rnd.randint(1, 24)
         if (x, y) not in taken and (x, y) not in m["road"]: m["decor"].append((rnd.choice(["th_oil1", "th_oil2"]), x, y))
+    for _ in range(8):   # popcorn boxes and cups, walked over
+        x, y = rnd.randint(1, 42), rnd.randint(1, 24)
+        if (x, y) not in taken: m["decor"].append(("o_carnlitter", x, y))
 
 LOCKBOX = {"thrill_top": (29, 8)}       # LOCKBOXES in the rules file must agree
 PERCH = set()
@@ -209,6 +217,8 @@ for key, m in MAPS.items():
     for (gx, gy), lvl in m["gates"].items():
         s = next(s for s in m["stunts"] if (s[2], s[3]) == (gx, gy)); inside = region[s[8]]
         if sum(1 for (u, v, _) in edges if inside in (u, v)) != 1: fail(f"{key}: the Agility {lvl} place has more than one way in")
+    for bt in m["bots"]:
+        if blk[bt["y"]][bt["x"]] not in walk or region.get((bt["x"], bt["y"])) != pub: fail(f"{key}: bot {bt['name']} doesn't start in the open")
     for (t, x, y) in m["mobs"]:
         if blk[y][x] not in walk: fail(f"{key}: {t} at {x},{y} stands on '{blk[y][x]}'")
     for (x, y) in m["spots"]:
@@ -259,7 +269,7 @@ for key, m in MAPS.items():
     ],
     build() {{ return pvBuild(G, this, {body}); }},
     mobs: [{mobs}],
-    npcs: {npcs}, bots: []
+    npcs: {npcs}, bots: {js(m["bots"])}
   }},''')
 block = "  /* THRILL-GEN: Thrill Hill and Daredevil Peak, written by lt-wild/thrill-gen.py (edit that, not this) */\n" + "\n".join(parts) + "\n  /* THRILL-GEN END */\n"
 p = "C:/Users/jake/code/eastcoins/v3/assets/js/eastscape-closed.js"

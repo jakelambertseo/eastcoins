@@ -48,8 +48,14 @@ for (const S of [H, T]) for (const o of S.objs.filter((o) => o.t === "stunt" && 
   ok(G.walkableIn(S.g, ...o.a) && G.walkableIn(S.g, ...o.b), `${S.key} ${o.name}: both sides open`);
   is(G.findPath(S.g, { x: o.a[0], y: o.a[1] }, { x: o.b[0], y: o.b[1] }, 0), null, `${S.key} ${o.name}: no walking round it`);
 }
-const door = Y.objs.find((o) => o.t === "roomdoor" && o.x === 10 && o.y === 2);
-is(door?.enter, "thrill", "the Yard's old ladder is Thrill Hill's gate");
+const [gx, gy] = G.THRILL_GATE.door, door = Y.objs.find((o) => o.t === "roomdoor" && o.enter === "thrill");
+is(door && [door.x, door.y], [gx, gy], "The Run's door is Thrill Hill's arch, at the south of the court");
+ok(!Y.objs.some((o) => o.t === "roomdoor" && o.enter === "agility"), "and The Run's ladder is gone");
+ok(G.findPath(Y.g, { x: 38, y: 15 }, { x: gx, y: gy }, 1), "the arch can be walked to from the casino's front door");
+const dale = Y.npcs.find((n) => n.opens === "thrillgate");
+ok(dale && G.findPath(Y.g, { x: 38, y: 15 }, dale, 2), "Dizzy Dale is behind the counter, and you can get to him");
+ok(["th_counter", "th_showpiece", "th_dirtpad"].every((a) => Y.objs.some((o) => o.art === a && o.decor)), "the counter, the truck and the dirt are there, fetched only when they are");
+ok(Y.objs.findIndex((o) => o === door) === W.scene("workyard").objs.findIndex((o) => o.t === "roomdoor" && o.enter === "thrill"), "the door is still the same object");
 ok(G.walkableIn(Y.g, G.SCENES.thrill.exitTo.x, G.SCENES.thrill.exitTo.y), "Thrill Hill's way out lands on open ground in the Yard");
 ok(G.walkableIn(H.g, G.SCENES.thrill.entry.x, G.SCENES.thrill.entry.y), "and its way in lands on open ground");
 ok(G.OPEN.has("thrill") && G.OPEN.has("thrill_top"), "both open (with the bundle switched on)");
@@ -130,6 +136,18 @@ console.log("Fast Eddie");
   far.out = []; W.bookieBuy(H, far, { k: "pot_surefoot" });
   ok(count(far, "pot_surefoot") === 0, "not from across the map");
   for (const [k] of G.BOOKIE) ok(G.ITEMS[k], `he sells a real item: ${k}`);
+}
+
+console.log("The snack cart and the bots");
+{
+  const V = H.npcs.find((x) => x.opens === "snacks"), p = player(H, V.x + 1, V.y, { agility: 1 });
+  p.C.inv.push({ k: "tickets", n: 1000 });
+  p.out = []; W.snackBuy(H, p, { k: "corndog", n: 2 });
+  ok(count(p, "corndog") === 2 && count(p, "tickets") === 400, "two corn dogs for 600 tickets");
+  p.out = []; W.snackBuy(H, p, { k: "lemonade", n: 5 });
+  ok(count(p, "lemonade") === 0 && /250|1,250/.test(said(p)), "not five lemonades on 400");
+  ok(G.ITEMS.lemonade.drink && G.ITEMS.popcorn.heal > 0, "lemonade is a drink, popcorn is food");
+  for (const S of [H, T]) { ok(S.bots.length >= 2, `${S.key} has its regulars`); for (const b of S.bots) ok(G.walkableIn(S.g, b.x, b.y) && b.x === S.def.bots.find((d) => d.name === b.name).x, `${S.key}: ${b.name} starts where it was put, out of the pens`); }
 }
 
 console.log("The rest");

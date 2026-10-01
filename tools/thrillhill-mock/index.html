@@ -58,7 +58,7 @@ code{font:600 12.5px ui-monospace,Consolas,monospace;background:#1c1812;padding:
     stunt in the barrier between them, so <b>running the stunts in order is the lap</b>. Two maps: <b>Thrill Hill</b> (the Rookie and Pro Runs,
     the Junk Mound, Fast Eddie) and, by human cannonball, <b>Daredevil Peak</b> (the Champion Run, the Burnout Pit, and Big Daddy Crusher on
     the Peak). It retires The Run.</p>
-  <nav class="jump"><a href="#maps">The two maps</a><a href="#courses">The courses</a><a href="#places">Only by Agility</a><a href="#eddie">Fast Eddie</a><a href="#art">The art</a><a href="#balance">Balance</a><a href="#test">Try it on dev</a><a href="#ship">Shipping it</a></nav>
+  <nav class="jump"><a href="#maps">The two maps</a><a href="#courses">The courses</a><a href="#places">Only by Agility</a><a href="#eddie">Fast Eddie</a><a href="#door">The front door</a><a href="#art">The art</a><a href="#balance">Balance</a><a href="#test">Try it on dev</a><a href="#ship">Shipping it</a></nav>
 
   <div class="hero">
     <img src="art/postcard.png" alt="Thrill Hill, a postcard: monster trucks, grandstands, flaming barrels and a ramp" onerror="this.style.display='none'">
@@ -68,7 +68,7 @@ code{font:600 12.5px ui-monospace,Consolas,monospace;background:#1c1812;padding:
       <div class="tile"><b>2 places</b><span>the Junk Mound (Agility 50) and the Peak (Agility 90): one gate in, nobody else gets near</span></div>
       <div class="tile"><b>No damage</b><span>a slip lands you in the foam where you started: seconds lost, never health</span></div>
       <div class="tile"><b>Runner's marks</b><span>a lap rolls for one; Fast Eddie at the start line takes them</span></div>
-      <div class="tile"><b>83 checks</b><span><code>node tools/eastscape-thrill-test.mjs</code>: the real server, every stunt, lap, gate, slip, cannon and the Bookie</span></div>
+      <div class="tile"><b>98 checks</b><span><code>node tools/eastscape-thrill-test.mjs</code>: the real server, every stunt, lap, gate, slip, cannon and the Bookie</span></div>
     </div>
   </div>
 
@@ -135,6 +135,20 @@ code{font:600 12.5px ui-monospace,Consolas,monospace;background:#1c1812;padding:
       cap (full to 20%, half above, 50% at most), so stacking them cannot break movement.</p>
   </section>
 
+  <section class="sec" id="door">
+    <h2>The front door, and the crowd</h2>
+    <p>The way in is no longer a gate in the grass. Once Thrill Hill opens, The Run's door moves to <b>the south end of the court</b>
+      (the owner: "make the ticket booth entrance in the further south area of the court"): a patch of packed dirt against the market railing,
+      the arch, a ticket counter with <b>Dizzy Dale</b> behind it ("Let me in" works the same as clicking the arch), and a monster truck
+      parked on two crushed cars beside it. Thrill Hill's exit brings you back out in front of the arch. These pieces load as one 10 KB
+      sheet only once the door is there, never in the Yard's first load.</p>
+    <p>On the hill: <b>Corndog Carl</b> and his snack cart by the scoreboard sell <b>popcorn</b> (150 tickets, heals 18), <b>pink
+      lemonade</b> (250, a drink: 3% quicker for ten minutes) and <b>corn dogs</b> (300, heals 30), singly or by five; they sell back for a
+      third, so the cart is a small ticket sink. Bins and popcorn litter are scattered about, Fast Eddie has a betting window behind him,
+      and stunt-park regulars wander the arena and chat (RampRat, SendItSteve and NitroNan on the hill; WheelieWendy and CannonCarl
+      on the Peak), started outside the pens so they can't strand themselves.</p>
+  </section>
+
   <section class="sec" id="art">
     <h2>The art</h2>
     <p>All PixelLab, in the game's style brief. The monsters' walk and attack frames are made from each picture
@@ -145,7 +159,14 @@ code{font:600 12.5px ui-monospace,Consolas,monospace;background:#1c1812;padding:
       <figure><img src="art/gremlin.png" alt=""><figcaption>Grease Gremlin</figcaption></figure>
       <figure><img src="art/fasteddie_south.png" alt=""><figcaption>Fast Eddie</figcaption></figure>
       <figure><img src="art/pet_lilcrusher.png" alt=""><figcaption>Lil' Crusher</figcaption></figure>
-      <figure><img src="art/th_gate.png" alt=""><figcaption>The gate in the Yard</figcaption></figure>
+      <figure><img src="art/th_gate.png" alt=""><figcaption>The arch in the court</figcaption></figure>
+      <figure><img src="art/th_counter.png" alt=""><figcaption>The ticket counter</figcaption></figure>
+      <figure><img src="art/tickettaker_south.png" alt=""><figcaption>Dizzy Dale</figcaption></figure>
+      <figure><img src="art/th_showpiece.png" alt=""><figcaption>The truck by the door</figcaption></figure>
+      <figure><img src="art/vendor_south.png" alt=""><figcaption>Corndog Carl</figcaption></figure>
+      <figure><img src="art/th_snackcart.png" alt=""><figcaption>The snack cart</figcaption></figure>
+      <figure><img src="art/th_booth.png" alt=""><figcaption>Eddie's window</figcaption></figure>
+      <figure><img src="art/th_trash.png" alt=""><figcaption>A bin</figcaption></figure>
       <figure><img src="art/th_cannon.png" alt=""><figcaption>Human cannonball</figcaption></figure>
       <figure><img src="art/th_zipline.png" alt=""><figcaption>Zip line</figcaption></figure>
       <figure><img src="art/th_tyrewall.png" alt=""><figcaption>Tyre wall</figcaption></figure>
@@ -174,6 +195,9 @@ code{font:600 12.5px ui-monospace,Consolas,monospace;background:#1c1812;padding:
       <figure><img src="art/i_pot_surefoot.png" alt=""><figcaption>Sure-foot tonic</figcaption></figure>
       <figure><img src="art/i_stunt_helmet.png" alt=""><figcaption>Stunt helmet</figcaption></figure>
       <figure><img src="art/i_stunt_leathers.png" alt=""><figcaption>Stunt leathers</figcaption></figure>
+      <figure><img src="art/i_popcorn.png" alt=""><figcaption>Popcorn</figcaption></figure>
+      <figure><img src="art/i_lemonade.png" alt=""><figcaption>Pink lemonade</figcaption></figure>
+      <figure><img src="art/i_corndog.png" alt=""><figcaption>Corn dog</figcaption></figure>
     </div>
   </section>
 

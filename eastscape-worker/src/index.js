@@ -71,6 +71,7 @@ const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const CASINO_LINES = ["one more spin", "im due", "LETS GOOO", "two cherries again lol", "who took my machine", "this one's hot i can feel it", "down bad. back to the workyard", "heads never fails", "brb selling logs", "jackpot's getting big", "gg house", "roll under 5 u cowards", "never lucky", "ok last one for real"];
 const PIT_LINES = ["HIT HIM", "my rent is on the chicken", "fixed. it's all fixed", "that cow has HANDS", "who let the goose in", "never bet against the olive", "ref??? REF???", "i've seen this one before. he folds", "put it all on the little guy", "one more fight then i'm going home", "that's a dive if i ever saw one"];
+const THRILL_LINES = ["SEND IT", "did you see that backflip", "the tyre swing hates me", "eddie wont take my marks", "who left popcorn on the ramp", "i bit the foam again", "lap 40 lets go", "cannon or zip line?", "my helmet has a dent shaped like a bus", "that truck moved. i swear it moved", "corn dog break", "pro run is rigged"];   /* (2026-10-01) Thrill Hill's bots */
 const BOT_LINES = ["anyone know where the good fishing is?", "gz", "cows are free xp lol", "selling feathers", "this farm is peaceful", "wheat run anyone?", "brb", "that yew is taunting me", "who keeps feeding the olives"];
 const G_FAME_MIN = 500;   // a single win of this much goes on the Winners' Wall
 const RR_ASK_MS = 2500;   // the Roulette Room asks the site for the table's state at most this often, whoever is asking
@@ -571,6 +572,7 @@ export class World {
     S.npcs = def.npcs.filter((n) => !n.event || G.hwOn()).map((n, i) => ({ ...n, id: `${key}n${i}`, hx: n.x, hy: n.y, path: [], step: null, face: -1, nextWander: 0, holdUntil: 0 }));
     S.bots = def.bots.map((bt, i) => {
       let x, y, tries = 0;
+      if (bt.x != null && G.walkableIn(S.g, bt.x, bt.y)) { x = bt.x; y = bt.y; } else   /* (2026-10-01) a bot may name where it starts (Thrill Hill's, out of the pens) */
       do { x = rint(3, G.COLS - 4); y = rint(3, G.ROWS - 4); } while ((!G.walkableIn(S.g, x, y) || S.mobs.some((m) => m.x === x && m.y === y) || S.npcs.some((n) => n.x === x && n.y === y)) && ++tries < 300);
       return { ...bt, id: `${key}b${i}`, x, y, path: [], step: null, face: 1, dir: "south", nextWander: 0, hue: bt.level > 50 ? 150 : 0, working: null, goal: null };
     });
@@ -958,7 +960,8 @@ export class World {
       /* (2026-09-23) BUYING A PERMIT FROM VANCE. Its own message rather than the shop's, because there is no
          shop NPC left in the game to open - the permit sat in SHOP.sells where nothing could reach it. He is
          `still`, so the proximity check is the same one the Forge used: be standing with him. */
-      case "bookie": return this.bookieBuy(S, pl, m);   /* (2026-10-01) Fast Eddie on Thrill Hill (thrill.js) */
+      case "bookie": return this.bookieBuy(S, pl, m);
+      case "snack": return this.snackBuy(S, pl, m);   /* (2026-10-01) Thrill Hill's snack cart (thrill.js) */   /* (2026-10-01) Fast Eddie on Thrill Hill (thrill.js) */
       case "lockpick": return this.wtBuyPick(S, pl, m);   /* (2026-10-01) Vance sells lockpicks (thief.js) */
       case "permit": {
         const V = S.npcs.find((x) => x.opens === "permit");
@@ -2946,7 +2949,7 @@ export class World {
     // the simulated players chat now and then
     if (now > this.nextChatter) {
       this.nextChatter = now + 9000;
-      for (const key of live) { const S = this.scenes.get(key); if (S?.bots.length && Math.random() < 0.035) S.events.push({ type: "bubble", id: pick(S.bots).id, text: pick(S.key === "fightpit" ? PIT_LINES : S.def.floor === "casino" ? CASINO_LINES : BOT_LINES), t: now }); }
+      for (const key of live) { const S = this.scenes.get(key); if (S?.bots.length && Math.random() < 0.035) S.events.push({ type: "bubble", id: pick(S.bots).id, text: pick(S.key === "fightpit" ? PIT_LINES : S.def.floor === "casino" ? CASINO_LINES : G.THRILL_MAPS?.includes(S.key) ? THRILL_LINES : BOT_LINES), t: now }); }
     }
     for (const T of this.trades.values()) { const a = this.pls.get(T.a), b = this.pls.get(T.b); if (!a || !b || G.cheb(a, b) > G.TRADE_RANGE + 2) this.tradeEnd(T, "Trade cancelled: you walked too far apart."); }
     if (this.tickN % SNAP_EVERY === 0) this.broadcast(now); else this.sendPrivate();

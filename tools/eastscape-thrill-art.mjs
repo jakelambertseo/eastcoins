@@ -22,7 +22,8 @@ async function put(name, file, scale = 1, fn) {
 const P = {
   th_tyres: ["tyres", 1.4], th_tyrewall: ["tyres", 2.4], th_ropeswing: ["ropeswing", 1], th_highwire: ["highwire", 1], th_ramp: ["ramp", 1], th_hoop: ["hoop", 1.5], th_plank: ["plank", 1], th_cars: ["cars", 1], th_net: ["net", 1], th_firebarrels: ["firebarrels", 1],
   th_tyreswing: ["tyreswing", 1], th_halfpipe: ["halfpipe", 1], th_buses: ["buses", 1], th_firewall: ["firewall", 1], th_cannon: ["cannon", 1], th_zipline: ["zipline", 1.3],
-  th_grandstand: ["grandstand", 1.1], th_scoreboard: ["scoreboard", 1], th_truck: ["truck", 1.15], th_landing: ["landing", 1], th_gate: ["gate", 0.8], pet_lilcrusher: ["pet", 0.9] };
+  th_grandstand: ["grandstand", 1.1], th_scoreboard: ["scoreboard", 1], th_truck: ["truck", 1.15], th_landing: ["landing", 1], th_gate: ["gate", 0.8], pet_lilcrusher: ["pet", 0.9],
+  /* (2026-10-01) the front door in the court, and the hill's snack cart, bins and Eddie's window */ th_counter: ["counter", 1], th_showpiece: ["showpiece", 1], th_snackcart: ["snackcart", 1], th_trash: ["trashcan", 0.9], th_booth: ["booth", 0.85] };
 const have = [];
 for (const [name, [src, sc]] of Object.entries(P)) {
   if (!fs.existsSync(SRC + src + ".png")) { console.log(`  waiting on ${src}.png`); continue; }
@@ -53,6 +54,25 @@ const recol = async (from, to, dark, light, wdark, wlight) => {
 };
 await recol("t_dirt.png", "t_arena.png", [96, 60, 38], [198, 142, 92]);
 await recol("t_water.png", "t_nwater.png", [96, 60, 38], [198, 142, 92], [20, 60, 40], [120, 230, 140]);
+
+/* the court's dirt pad: an oval of the arena's own dirt with a ragged edge and tyre marks, laid flat under the front door (9 x 4 tiles) */
+{ const tile = await sharp(FLAT + "t_arena.png").extract({ left: 64, top: 32, width: 32, height: 32 }).ensureAlpha().raw().toBuffer();
+  const w = 9 * 32, h = 4 * 32, out = Buffer.alloc(w * h * 4), cx = w / 2, cy = h / 2;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const a = Math.atan2(y - cy, x - cx), r = Math.hypot((x - cx) / (w / 2 - 2), (y - cy) / (h / 2 - 2)) / (1 + 0.06 * Math.sin(a * 5) + 0.04 * Math.sin(a * 11 + 1));
+    if (r > 1) continue; const i = (y * w + x) * 4, t = ((y % 32) * 32 + (x % 32)) * 4, skid = (ax, ay, R) => { const d = Math.hypot(x - ax, (y - ay) * 1.6) - R; return Math.abs(d) < 1.3 || Math.abs(d - 7) < 1.3; },   /* a tyre pair: two lines 7 px apart on a wide arc */
+      mark = r < 0.88 && (skid(w * 0.32, h * 1.4, 150) || skid(w * 0.75, -h * 0.5, 160));
+    for (let c = 0; c < 3; c++) out[i + c] = Math.round(tile[t + c] * (mark ? 0.72 : 1));
+    out[i + 3] = r > 0.92 ? Math.round(255 * (1 - r) / 0.08) : 255;
+  }
+  await sharp(out, { raw: { width: w, height: h, channels: 4 } }).png({ palette: true, colours: 64 }).toFile(FLAT + "th_dirtpad.png"); have.push("th_dirtpad"); }
+
+/* the NPCs: south and east from PixelLab (tools/thrill/art/chars.txt), trimmed and brought down to the guild's size */
+for (const [name] of [["fasteddie"], ["tickettaker"], ["vendor"]]) for (const d of ["south", "east"]) {
+  const f = SRC + `${name === "fasteddie" ? "eddie" : name}_${d}.png`; if (!fs.existsSync(f)) { console.log(`  waiting on ${name} ${d}`); continue; }
+  const b = await sharp(f).trim({ threshold: 1 }).toBuffer(), m = await sharp(b).metadata();
+  await sharp(b).resize(Math.round(m.width * 0.88), Math.round(m.height * 0.88), { kernel: "nearest" }).png({ palette: true }).toFile(FLAT + `${name}_${d}.png`); have.push(`${name}_${d}`);
+}
 
 /* crash barriers: one tile is the draft at 32 wide; a run is tiles side by side; north-south is the same tile turned */
 const tile = await (await trimmed(SRC + "barrier.png")).resize(32, 20, { kernel: "nearest" }).png().toBuffer();
