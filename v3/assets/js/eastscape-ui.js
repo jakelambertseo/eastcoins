@@ -26,7 +26,9 @@ const PIECES = [
   { id: "map", sel: "#mini", name: "Minimap" },
   { id: "events", sel: "#evTrack", name: "World events", ghost: { x: "r", dx: 10, y: "t", dy: 98, w: 220, h: 54 } },
   { id: "feed", sel: "#log", name: "Game messages" },
-  { id: "chat", sel: "#chat", name: "Chat and Menu", keep: true },
+  { id: "chat", sel: "#chat", name: "Chat and Menu buttons", keep: true },
+  /* (the owner: "the chat window needs to be movable too and not just attached to the chat button") its own piece, and its header drags it any time */
+  { id: "chatwin", sel: "#chatBox", name: "Chat window", keep: true, ghost: { x: "l", dx: 10, y: "b", dy: 70, w: 380, h: 280 } },
   { id: "quick", sel: "#quickBar", name: "Quick slots" },
   { id: "dbl", sel: "#dblBar", name: "Double xp bar", ghost: { x: "c", dx: 0, y: "t", dy: 94, w: 230, h: 28 } },
   { id: "sx2", sel: "#sx2Bar", name: "Double skilling bar", ghost: { x: "c", dx: 0, y: "t", dy: 128, w: 230, h: 28 } },
@@ -38,6 +40,8 @@ export function createUI(E) {
   const { G, SFX, send, esc } = E, $ = (id) => document.getElementById(id), html = document.documentElement;
   const game = document.querySelector(".game"), side = document.querySelector(".side");
   const narrow = () => innerWidth <= 820;
+  /* OG: the original layout, whatever is saved. Positions are kept, so choosing another look brings them straight back. */
+  const fixed = () => narrow() || cur.theme === "og";
   let cur = load(), editing = false, tab = "layout", saveT = 0;
   const home = new Map();   // a piece that was moved out of its row (volume, buffs, map out of the top-right strip; the quick slots out of the chat row): where it goes back to
 
@@ -57,7 +61,7 @@ export function createUI(E) {
 
   /* ------------------------------------------------------------ placing */
   const pxS = (el, k, v) => el.style.setProperty(k, v, "important");
-  const scale = () => (narrow() ? 1 : cur.scale / 100);
+  const scale = () => (fixed() ? 1 : cur.scale / 100);
   function unplace(el) { for (const k of ["left", "top", "right", "bottom", "transform", "margin", "position", "inset"]) el.style.removeProperty(k); el.classList.remove("ui-placed"); }
   function placeAt(el, at) {
     const g = game.getBoundingClientRect(), r = el.getBoundingClientRect(), z = parseFloat(getComputedStyle(el).zoom) || 1;
@@ -72,21 +76,21 @@ export function createUI(E) {
   function placePiece(p) {
     const el = document.querySelector(p.sel); if (!el) return;
     el.classList.add("ui-p"); el.dataset.uiName = p.name;
-    el.classList.toggle("ui-off", !!cur.hide[p.id] && !p.keep);
-    const at = !narrow() && cur.pos[p.id];
+    el.classList.toggle("ui-off", !!cur.hide[p.id] && !p.keep && !fixed());   /* OG and phones: everything shows, as it always did */
+    const at = !fixed() && cur.pos[p.id];
     if (!at) { unplace(el); const h = home.get(p.id); if (h && el.parentElement !== h.parent) { h.parent.insertBefore(el, h.next && h.next.parentElement === h.parent ? h.next : null); } return; }
     if (el.parentElement !== game) { if (!home.has(p.id)) home.set(p.id, { parent: el.parentElement, next: el.nextElementSibling }); game.append(el); }
     placeAt(el, at);
   }
   function placeWin(w) {
-    if (!w.id) return; const at = !narrow() && cur.win[w.id];
+    if (!w.id) return; const at = !fixed() && cur.win[w.id];
     if (!at) { if (w.classList.contains("ui-wmoved")) { unplace(w); w.classList.remove("ui-wmoved"); } return; }
     const host = w.offsetParent || game, g = host.getBoundingClientRect(), r = w.getBoundingClientRect(), z = parseFloat(getComputedStyle(w).zoom) || 1;
     const x = Math.max(0, Math.min(g.width - r.width, at[0] * g.width)), y = Math.max(0, Math.min(g.height - r.height, at[1] * g.height));
     w.classList.add("ui-wmoved"); pxS(w, "inset", "auto"); pxS(w, "margin", "0"); pxS(w, "transform", "none"); pxS(w, "left", `${x / z}px`); pxS(w, "top", `${y / z}px`);
   }
   function placeSide() {
-    const on = cur.float && !narrow(); html.classList.toggle("ui-float", on);
+    const on = cur.float && !fixed(); html.classList.toggle("ui-float", on); html.classList.toggle("ui-fixed", fixed());
     let grip = side.querySelector(".ui-grip");
     if (!on) { grip?.remove(); for (const k of ["left", "top"]) side.style.removeProperty(k); return; }
     if (!grip) { grip = document.createElement("div"); grip.className = "ui-grip"; grip.innerHTML = `<span>Your panel</span><small>drag me</small><button type="button" data-ui-sidex title="Put the panel away. Menu, bottom left, brings it back." aria-label="Put the panel away">×</button>`; side.prepend(grip); }
@@ -96,7 +100,7 @@ export function createUI(E) {
   function apply() {
     html.dataset.uiTheme = cur.theme; try { localStorage.setItem("es_ui_theme", cur.theme); } catch (e) { /* fine */ }
     html.style.setProperty("--ui-scale", String(scale())); html.style.setProperty("--ui-alpha", String(cur.alpha / 100));
-    html.classList.toggle("ui-see", cur.alpha < 100);
+    html.classList.toggle("ui-see", cur.alpha < 100 && !fixed());
     for (const p of PIECES) placePiece(p);
     for (const w of document.querySelectorAll(".win[id], .k-win[id]")) placeWin(w);
     placeSide();
@@ -127,7 +131,7 @@ export function createUI(E) {
 
   /* windows: by the header, any time (not on a phone, not when locked) */
   document.addEventListener("pointerdown", (ev) => {
-    if (ev.button !== 0 || narrow() || cur.lock) return;
+    if (ev.button !== 0 || fixed() || cur.lock) return;
     const head = ev.target.closest(".win-head, .k-head"); if (!head || ev.target.closest("button, input, select, textarea, a, label, [role=tab]")) return;
     const w = head.closest(".win[id], .k-win[id]"); if (!w || w.closest(".pop")) return;
     const host = w.offsetParent || game, g = host.getBoundingClientRect(), r = w.getBoundingClientRect(), z = parseFloat(getComputedStyle(w).zoom) || 1;
@@ -137,7 +141,16 @@ export function createUI(E) {
       w.classList.add("ui-wmoved"); pxS(w, "inset", "auto"); pxS(w, "margin", "0"); pxS(w, "transform", "none"); pxS(w, "left", `${x / z}px`); pxS(w, "top", `${y / z}px`);
     }, () => { const q = w.getBoundingClientRect(); cur.win[w.id] = [(q.left - g.left) / g.width, (q.top - g.top) / g.height]; if (Object.keys(cur.win).length > 60) delete cur.win[Object.keys(cur.win)[0]]; save(); });
   });
+  document.addEventListener("pointerdown", (ev) => {
+    if (ev.button !== 0 || fixed() || cur.lock || editing) return;
+    const head = ev.target.closest("#chatBox .chat-head"); if (!head || ev.target.closest("button, input, a, [role=tab]")) return;
+    const p = PIECES.find((q) => q.id === "chatwin"), el = $("chatBox"), g = game.getBoundingClientRect(), r = el.getBoundingClientRect(), x0 = r.left - g.left, y0 = r.top - g.top;
+    let x = x0, y = y0;
+    dragger(ev, el, (dx, dy) => { x = snap(Math.max(0, Math.min(g.width - r.width, x0 + dx)), g.width - r.width); y = Math.max(0, Math.min(g.height - r.height, y0 + dy)); cur.pos.chatwin = anchor(x, y, r.width, r.height, g); placePiece(p); },
+      () => { cur.pos.chatwin = anchor(x, y, r.width, r.height, g); save(); });
+  });
   document.addEventListener("dblclick", (ev) => {
+    if (ev.target.closest("#chatBox .chat-head") && cur.pos.chatwin && !ev.target.closest("button, input, a")) { delete cur.pos.chatwin; save(); apply(); SFX.play("ui_click"); return; }
     const head = ev.target.closest(".win-head, .k-head"); if (!head || ev.target.closest("button, input, a")) return;
     const w = head.closest(".win[id], .k-win[id]"); if (!w || !cur.win[w.id]) return;
     delete cur.win[w.id]; unplace(w); w.classList.remove("ui-wmoved"); save(); SFX.play("ui_click");
@@ -155,7 +168,8 @@ export function createUI(E) {
   /* ------------------------------------------------------------ MOVE THINGS: the edit mode */
   let layer = null, raf = 0;
   function edit(on) {
-    if (narrow()) { E.say?.("Moving things is for a bigger screen: on a phone the layout stays put.", "bad"); return; }
+    if (on && narrow()) { E.say?.("Moving things is for a bigger screen: on a phone the layout stays put.", "bad"); return; }
+    if (on && cur.theme === "og") { E.say?.("The OG look keeps the original layout. Pick another look under Settings, Look, to move things.", "bad"); return; }
     editing = on; document.body.classList.toggle("ui-edit", on);
     if (!on) { cancelAnimationFrame(raf); layer?.remove(); layer = null; apply(); return; }
     $("setWin").hidden = true;
@@ -205,13 +219,13 @@ export function createUI(E) {
   const segRow = (name, about, ctl) => `<div class="set ui-segrow"><span><b>${name}</b><small>${about}</small></span>${ctl}</div>`;
   const range = (id, v, lo, hi, step = 5) => `<span class="ui-range"><input type="range" id="${id}" min="${lo}" max="${hi}" step="${step}" value="${v}"><output>${v}%</output></span>`;
   const TABS = [["layout", "Layout"], ["players", "Players"], ["monsters", "Monsters"], ["features", "Features"], ["look", "Look"]];
-  const LOOKS = { tavern: "Wood, parchment and gold. The game's own.", midnight: "Dark glass and thin lines. Quiet, for long sessions and streams.", neon: "The casino's: magenta and gold, with a glow.", minimal: "No frames, no wood. Flat, thin and out of the way." };
+  const LOOKS = { og: "The original, exactly as it was: nothing moves, the panel stays on the left, every window where it always was.", tavern: "Wood, parchment and gold, with your layout: move anything, float the panel.", midnight: "Dark glass and thin lines. Quiet, for long sessions.", neon: "The casino's: magenta and gold, with a glow.", minimal: "No frames, no wood. Flat, thin and out of the way." };
   function render() {
     const p = $("setBody"), me = E.me(); if (!p || !me || $("setWin").hidden) return;
     const set = (k) => me.settings?.[k] ?? G.DEFAULT_SETTINGS[k];
     let body = "";
-    if (tab === "layout") body = `<div class="sets">
-      <div class="set ui-segrow"><span><b>Move things on the screen</b><small>Drag the minimap, chat, buffs, quick slots and the rest wherever you like. Windows move by their title bars any time; double-click one to put it back.</small></span><button type="button" class="k-btn" data-ui-edit>${narrow() ? "Bigger screens only" : "Move things"}</button></div>
+    if (tab === "layout") body = `<div class="sets">${cur.theme === "og" ? `<p class="ui-ognote"><b>You're on the OG look:</b> the original layout, so nothing here moves anything. Choose another look under <a href="#" data-ui-golook>Look</a> and your layout comes straight back.</p>` : ""}
+      <div class="set ui-segrow"><span><b>Move things on the screen</b><small>Drag the minimap, chat, buffs, quick slots and the rest wherever you like. Windows move by their title bars any time; double-click one to put it back.</small></span><button type="button" class="k-btn" data-ui-edit${fixed() ? " disabled" : ""}>${narrow() ? "Bigger screens only" : cur.theme === "og" ? "Not on OG" : "Move things"}</button></div>
       ${row("ui-scale", "Interface size", "The pieces over the world and the windows, bigger or smaller.", range("ui-scale", cur.scale, 80, 120))}
       ${row("ui-alpha", "Window see-through", "How much of the world shows through a window you aren't pointing at.", range("ui-alpha", cur.alpha, 55, 100))}
       ${row("ui-lock", "Lock windows in place", "Stops the Bank, Bom and the rest being dragged by accident.", sw("ui-lock", cur.lock))}
@@ -255,6 +269,7 @@ export function createUI(E) {
     const tg = (id, key, fn) => p.querySelector(`#${id}`)?.addEventListener("change", (e) => { cur[key] = e.target.checked; if (key === "float") html.classList.remove("ui-side-off"); save(); apply(); fn?.(); });
     tg("ui-lock", "lock"); tg("ui-float", "float");
     p.querySelector("[data-ui-edit]")?.addEventListener("click", () => { SFX.play("ui_click"); edit(true); });
+    p.querySelector("[data-ui-golook]")?.addEventListener("click", (e) => { e.preventDefault(); tab = "look"; SFX.play("ui_click"); render(); });
     p.querySelectorAll("[data-ui-eye]").forEach((b) => b.addEventListener("click", () => { const id = b.dataset.uiEye; if (cur.hide[id]) delete cur.hide[id]; else cur.hide[id] = 1; save(); apply(); render(); }));
     p.querySelectorAll("[data-ui-back]").forEach((b) => b.addEventListener("click", () => { delete cur.pos[b.dataset.uiBack]; save(); apply(); render(); }));
     p.querySelector("[data-ui-resetall]")?.addEventListener("click", (e) => { const b = e.currentTarget; if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "Sure?"; return; } cur.pos = {}; cur.hide = {}; cur.win = {}; cur.side = null; save(); apply(); render(); });
@@ -276,10 +291,11 @@ html:not(.ui-narrow) .game .ui-p,html .game .win,html .game .k-win{zoom:var(--ui
 @media (max-width:820px){html .game .ui-p,html .game .win,html .game .k-win{zoom:1}}
 .game .win{max-height:calc((100% - 28px) / var(--ui-scale,1))}
 .ui-placed{z-index:5}
-.ui-placed#chat{z-index:6}
+.ui-placed#chat,.ui-placed#chatBox{z-index:6}
+html:not(.ui-fixed) #chatBox .chat-head{cursor:grab;touch-action:none}html:not(.ui-fixed) #chatBox .chat-head button{cursor:pointer}
 .ui-wmoved .win-head,.ui-wmoved .k-head{cursor:grab}
 .win-head,.k-head{touch-action:none}
-@media (min-width:821px){.win .win-head,.k-win .k-head{cursor:grab}.win-head button,.k-head button,.win-head input,.win-head a{cursor:pointer}}
+@media (min-width:821px){html:not(.ui-fixed) .win .win-head,html:not(.ui-fixed) .k-win .k-head{cursor:grab}.win-head button,.k-head button,.win-head input,.win-head a{cursor:pointer}}
 html.ui-lock-cursor .win-head{cursor:default}
 body.ui-dragging,body.ui-dragging *{cursor:grabbing!important;user-select:none!important}
 html.ui-see .game .win:not(:hover):not(:focus-within),html.ui-see .game .k-win:not(:hover):not(:focus-within),html.ui-see.ui-float .side:not(:hover):not(:focus-within){opacity:var(--ui-alpha)}
@@ -330,6 +346,8 @@ html.ui-see .game .win:not(:hover):not(:focus-within),html.ui-see .game .k-win:n
 .ui-look b{font:700 15px/1.1 var(--k-disp,serif)}.ui-look small{font-size:12px;line-height:1.3;color:#6a5a40}
 .ui-sw{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:4px;height:62px;padding:5px;border-radius:6px}
 .ui-sw i{border-radius:4px}.ui-sw i:first-child{grid-row:span 2}
+.ui-ognote{margin:0;padding:9px 10px;background:#fff6dc;border:1px solid #c8963a;border-radius:6px;font-size:13px;line-height:1.4}.ui-ognote a{color:#7a2a1a;font-weight:800}
+.ui-look-og .ui-sw{background:#2a2016}.ui-look-og .ui-sw i{background:#efe2c4;box-shadow:inset 0 0 0 2px #8a6428}.ui-look-og .ui-sw i:first-child{grid-column:1;background:linear-gradient(90deg,#141010 0 34%,#efe2c4 34%)}
 .ui-look-tavern .ui-sw{background:#2a2016}.ui-look-tavern .ui-sw i{background:#efe2c4;box-shadow:inset 0 0 0 2px #8a6428}.ui-look-tavern .ui-sw i:first-child{background:linear-gradient(#5a3220 0 12px,#efe2c4 12px)}
 .ui-look-midnight .ui-sw{background:#0b0e14}.ui-look-midnight .ui-sw i{background:rgba(30,38,56,.9);box-shadow:inset 0 0 0 1px rgba(160,190,255,.35)}.ui-look-midnight .ui-sw i:first-child{background:linear-gradient(#1b2233 0 12px,#e9edf4 12px)}
 .ui-look-neon .ui-sw{background:#12041a}.ui-look-neon .ui-sw i{background:#2a0a36;box-shadow:inset 0 0 0 1px #ff4fd8,0 0 8px rgba(255,79,216,.5)}.ui-look-neon .ui-sw i:first-child{background:linear-gradient(90deg,#5a1466,#2a1a7a) 0 0/100% 12px no-repeat,#f7eefa}

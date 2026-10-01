@@ -17,7 +17,7 @@
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;
 /* (2026-09-30) YOUR SCREEN: the chosen look, on <html> before anything paints (eastscape-ui.js keeps it in step) */
 try { const t = localStorage.getItem("es_ui_theme"); if (t) document.documentElement.dataset.uiTheme = t; } catch (e) { /* storage off: the default look */ }</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=415">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=416">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -2006,7 +2006,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=415";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=416";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 const FROZEN = new Map();   /* (2026-09-30) player id -> when their Deep Freeze ends (performance.now) */
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
@@ -2016,11 +2016,11 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=235").then((m) => { WK = m; rmLiveNote(); }),
+  import("/v3/assets/js/eastscape-wiki.js?v=236").then((m) => { WK = m; rmLiveNote(); }),
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
-import { createUI } from "/v3/assets/js/eastscape-ui.js?v=6";   /* (2026-09-30) YOUR SCREEN: layout, looks, nameplates, the settings window */
+import { createUI } from "/v3/assets/js/eastscape-ui.js?v=8";   /* (2026-09-30) YOUR SCREEN: layout, looks, nameplates, the settings window */
 let UI = null;   /* made once the page below has its windows (see renderSettings) */
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);

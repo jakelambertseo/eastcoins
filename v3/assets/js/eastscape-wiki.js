@@ -1526,6 +1526,17 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-30", title: "Your screen, your way",
+    items: [
+      "SETTINGS HAS FIVE TABS NOW (the gear, top right). Layout, Players, Monsters, Features and Look.",
+      "MOVE ANYTHING. Layout, then Move things: drag the minimap, chat, buffs, the quick slots, the messages, the world events and the rest wherever you want them, hide the ones you don't, and put any of it back with one click. Every window drags by its title bar; double-click the title to put it back. You can also float the side panel (your bag, gear and skills) as its own window and give the world the whole screen.",
+      "FIVE LOOKS. OG is the game exactly as it was, nothing moves. Tavern is the same wood and parchment with your layout. Midnight is dark glass, Neon is the casino's magenta and gold, and Minimal takes every frame away.",
+      "NAMEPLATES. Show everyone's names, just your party's, or only yours; levels, titles, pet tags and health bars each on or off; bigger or smaller names. Monsters get their own tab: names always, on hover, only while you fight, or never, and health plates when hurt, always, or only on your target.",
+      "SWITCH OFF THE BUSY BITS. Damage numbers, chat bubbles, other players' trails and glows, screen shake, the ambience, the big banners, CASINO's lines and other people's milestones, each on its own switch. And Ask before big buys puts a second click on anything at Bom over the amount you choose.",
+      "It's all saved to your character, so it follows you to any computer. Phones keep the usual layout.",
+    ],
+  },
+  {
     date: "2026-09-30", title: "The Wilderness, rearmed",
     items: [
       "THE WILDERNESS AND THE DEEP WILD HAVE NEW MONSTERS. The entrance and the halls of the Wilderness still hold the level 20s; its three pockets now hold Pot Boys, Goblin Cutters, Vault Wardens and Crystal Ogres (73-78). The Deep Wild is the top of the game: Sabretooths and a Caveman on the Nexus door, a Yard Gator at the Black pool, Scrappers, Possums and Junkyard Dogs between (73-93). Weavers, Marrow Hounds and Grim Liches stay where they were.",
@@ -2833,6 +2844,8 @@ export const ROADMAP_WORDS = {
   events: { title: "World events", text: "Shooting Stars, Wanted! and the Jackpot Thief, one of each a day.", img: "flat/o_fallenstar", wiki: "guides/events" },
   wildrearm: { title: "The Wild, rearmed", text: "Late-map monsters, better pay for a kill, and dying there costs.", img: "flat/sabretooth", wiki: "areas/wild" },
   returns: { title: "Returns at Bom", text: "Bought the wrong gear? It goes back within the hour for what you paid.", img: "ui/bom_face" },
+  screen: { title: "Your screen", text: "Move anything on the screen, pick a look, and choose which names and plates show. Settings, under the gear.", img: "ui/settings",
+    more: ["Drag the minimap, chat, buffs and the rest; windows move by their title bars", "Five looks: OG, Tavern, Midnight, Neon and Minimal", "Names, health plates and the busy effects, each on or off"] },
   mystats: { title: "My stats", text: "Your own dashboard: where your time goes, where your tickets come from, what keeps killing you.", img: "ui/skills",
     more: ["A button on your own profile, and only you can see it", "Your last 60 days, day by day", "Every map, and what you do there"] },
   phone: { title: "Play on your phone", text: "Every window and the tables, laid out for a phone, without chat in the way.", img: "ui/g_home",
