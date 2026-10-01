@@ -3181,7 +3181,7 @@ const objArt = (ob, now = 0) => {
   if (ob.open) return null;   /* (a crypt gate that has been raised) */
   if (ob.t === "spot" && ob.look && !ob.special && IMG["o_spot" + ob.look]) return "o_spot" + ob.look;   /* (v106) the five drawn kinds of fishing spot. v105 put this in a branch further down that a spot never reaches: everything with a picture is drawn, and skipped, up here. */
   if (ob.t === "rock" && ob.art && ob.emptyUntil > now && IMG.o_rock_empty) return "o_rock_empty";   /* (2026-09-27) a rock in its own picture (the Depths' crystals) still shows it is mined out */
-  if (ob.art) return IMG[ob.art] ? ob.art : ob.decor || ob.proj ? wantArt(ob.art) : null;   /* (2026-09-28) a World Project's built stages are not in any sheet: only the stage standing is ever needed, so it is fetched on its own */
+  if (ob.art) return IMG[ob.art] ? ob.art : ob.decor || ob.proj || ob.pocket || ob.ledge ? wantArt(ob.art) : null;   /* (2026-10-01) a nook's fence, gate and spot may use art from another map's sheet */   /* (2026-09-28) a World Project's built stages are not in any sheet: only the stage standing is ever needed, so it is fetched on its own */
   /* (2026-09-22) A TREE WITH ITS OWN ART GETS ITS OWN STUMP. This keyed the stump off ob.t alone, so the Yard's
      Old oak - which is type "tree" with an `art` override, because the type has to stay "tree" for the chop
      handler to work - fell into the generic o_tree_stump and left a small round stump under a big forked oak.
