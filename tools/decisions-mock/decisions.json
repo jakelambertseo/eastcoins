@@ -1,6 +1,46 @@
 [
  {
   "date": "2026-10-01",
+  "area": "Long game",
+  "decision": "Area diaries are one per map (21), not eight regions.",
+  "quote": "One per map",
+  "why": "",
+  "page": "diary-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Long game",
+  "decision": "The Wilderness and the Deep Wild get diaries with PvP tasks (Medium and up); their Easy tiers need no other player.",
+  "quote": "Yes, with PvP tasks",
+  "why": "",
+  "page": "diary-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Long game",
+  "decision": "A diary task that needs an event is done by any one of several events on that map; maps with only one kind of event get no event task.",
+  "quote": "Any one of several",
+  "why": "so people who play at odd hours are not shut out",
+  "page": "diary-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Long game",
+  "decision": "The cape slot is built with the diaries: an eleventh square on the paper doll, no combat stats; the Grand Tour cape (every Elite) is its first cape.",
+  "quote": "Build the cape slot too",
+  "why": "",
+  "page": "diary-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
   "area": "Economy",
   "decision": "For v1.1, gem drop rates come down a lot, and gems can't be traded between players or on the Exchange.",
   "quote": "lower gem drop rates by a lot, and disallow trading via p2p AND in the market",

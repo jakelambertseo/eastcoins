@@ -1,0 +1,2054 @@
+{
+ "workyard": {
+  "name": "The Yard",
+  "band": [
+   1,
+   9
+  ],
+  "mobs": {
+   "chicken": {
+    "name": "Chicken",
+    "lvl": 1,
+    "boss": false,
+    "n": 5
+   },
+   "cow": {
+    "name": "Cow",
+    "lvl": 2,
+    "boss": false,
+    "n": 4
+   },
+   "rotten": {
+    "name": "Rotten Tomatoe",
+    "lvl": 4,
+    "boss": false,
+    "n": 2
+   },
+   "olive": {
+    "name": "Angry Olive",
+    "lvl": 6,
+    "boss": false,
+    "n": 2
+   },
+   "hornworm": {
+    "name": "Tomatoe Hornworm",
+    "lvl": 7,
+    "boss": false,
+    "n": 2
+   },
+   "boar": {
+    "name": "Wild boar",
+    "lvl": 8,
+    "boss": false,
+    "n": 5
+   }
+  },
+  "gather": [
+   {
+    "skill": "mining",
+    "item": "copper",
+    "name": "Copper ore",
+    "lvl": 1,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "tin",
+    "name": "Tin ore",
+    "lvl": 1,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "logs",
+    "name": "Logs",
+    "lvl": 1,
+    "ledge": false
+   },
+   {
+    "skill": "fishing",
+    "item": "sardine",
+    "name": "Sardine",
+    "lvl": 1
+   }
+  ],
+  "quests": [
+   {
+    "k": "copperbell",
+    "name": "A Bell for the Broker",
+    "tier": "easy",
+    "giver": "Livia the Broker"
+   },
+   {
+    "k": "wheatrun",
+    "name": "The Standing Order",
+    "tier": "easy",
+    "giver": "Livia the Broker"
+   },
+   {
+    "k": "emeraldedge",
+    "name": "An Emerald Edge",
+    "tier": "easy",
+    "giver": "Livia the Broker"
+   },
+   {
+    "k": "sardines",
+    "name": "The Ferryman's Supper",
+    "tier": "easy",
+    "giver": "Charon the Ferryman"
+   },
+   {
+    "k": "ferry",
+    "name": "Charon's Ledger",
+    "tier": "easy",
+    "giver": "Charon the Ferryman"
+   },
+   {
+    "k": "hw_king",
+    "name": "The Pumpkin King",
+    "tier": "hard",
+    "giver": "Hexa the Candy Witch"
+   }
+  ],
+  "shortcuts": [],
+  "lockbox": null,
+  "backways": [
+   {
+    "name": "The Storm Drain",
+    "lvl": 61
+   }
+  ],
+  "stunts": 0,
+  "npcs": [
+   "Livia the Broker",
+   "Charon the Ferryman",
+   "Nestor the Egg Man",
+   "Bronny the Foreman",
+   "Hexa the Candy Witch",
+   "Sprocket Sal",
+   "Dizzy Dale"
+  ],
+  "pvp": false
+ },
+ "gloam": {
+  "name": "The Gloam",
+  "band": [
+   10,
+   19
+  ],
+  "mobs": {
+   "toadstool": {
+    "name": "Sulking Toadstool",
+    "lvl": 10,
+    "boss": false,
+    "n": 6
+   },
+   "highwayman": {
+    "name": "Highwayman",
+    "lvl": 12,
+    "boss": false,
+    "n": 6
+   },
+   "goat": {
+    "name": "Goat in a Toga",
+    "lvl": 12,
+    "boss": false,
+    "n": 4
+   },
+   "boneidle": {
+    "name": "Bone Idle",
+    "lvl": 16,
+    "boss": false,
+    "n": 4
+   },
+   "gnasher": {
+    "name": "Bog Gnasher",
+    "lvl": 18,
+    "boss": false,
+    "n": 4
+   }
+  },
+  "gather": [
+   {
+    "skill": "fishing",
+    "item": "trout",
+    "name": "Trout",
+    "lvl": 10,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "willowlogs",
+    "name": "Gloomwillow logs",
+    "lvl": 15,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "emerald_ore",
+    "name": "Emerald ore",
+    "lvl": 20,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "ashlogs",
+    "name": "Deadwood logs",
+    "lvl": 20,
+    "ledge": true
+   }
+  ],
+  "quests": [
+   {
+    "k": "firstbow",
+    "name": "Grimm's Bow",
+    "tier": "easy",
+    "giver": "Grimm the Hermit"
+   },
+   {
+    "k": "firstpage",
+    "name": "The First Page",
+    "tier": "easy",
+    "giver": "Grimm the Hermit"
+   },
+   {
+    "k": "weaver",
+    "name": "The Weaver's Coil",
+    "tier": "hard",
+    "giver": "Grimm the Hermit"
+   },
+   {
+    "k": "marrow",
+    "name": "Marrow and Bone",
+    "tier": "hard",
+    "giver": "Grimm the Hermit"
+   },
+   {
+    "k": "nexus",
+    "name": "The Nexus",
+    "tier": "hard",
+    "giver": "Grimm the Hermit"
+   },
+   {
+    "k": "boneidle",
+    "name": "Idle Hands",
+    "tier": "medium",
+    "giver": "Vance the Fence"
+   }
+  ],
+  "shortcuts": [
+   {
+    "name": "Fallen log",
+    "lvl": 10,
+    "ledge": "Deadwood behind the fence"
+   }
+  ],
+  "lockbox": 15,
+  "backways": [],
+  "stunts": 0,
+  "npcs": [
+   "Grimm the Hermit",
+   "Vance the Fence"
+  ],
+  "pvp": false
+ },
+ "mire": {
+  "name": "The Lantern Mire",
+  "band": [
+   20,
+   29
+  ],
+  "mobs": {
+   "twister": {
+    "name": "Paper Twister",
+    "lvl": 20,
+    "boss": false,
+    "n": 6
+   },
+   "moth": {
+    "name": "Lantern Moth",
+    "lvl": 22,
+    "boss": false,
+    "n": 6
+   },
+   "counter": {
+    "name": "Card Counter",
+    "lvl": 24,
+    "boss": false,
+    "n": 5
+   },
+   "taxwraith": {
+    "name": "Tax Wraith",
+    "lvl": 28,
+    "boss": false,
+    "n": 4
+   },
+   "shark": {
+    "name": "Loan Shark",
+    "lvl": 26,
+    "boss": false,
+    "n": 3
+   }
+  },
+  "gather": [
+   {
+    "skill": "fishing",
+    "item": "lanternfish",
+    "name": "Lanternfish",
+    "lvl": 20,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "ashlogs",
+    "name": "Deadwood logs",
+    "lvl": 20,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "diamond_ore",
+    "name": "Diamond ore",
+    "lvl": 30,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "yewlogs",
+    "name": "Ancient yew logs",
+    "lvl": 35,
+    "ledge": true
+   }
+  ],
+  "quests": [
+   {
+    "k": "lamps",
+    "name": "Lamps Out",
+    "tier": "easy",
+    "giver": "Mudge the Lamplighter"
+   },
+   {
+    "k": "vials",
+    "name": "Glass and Sand",
+    "tier": "easy",
+    "giver": "Mudge the Lamplighter"
+   },
+   {
+    "k": "lanterns",
+    "name": "Lights on the Mire",
+    "tier": "easy",
+    "giver": "Mudge the Lamplighter"
+   },
+   {
+    "k": "hw_lights",
+    "name": "Lights Out",
+    "tier": "easy",
+    "giver": "Mudge the Lamplighter"
+   }
+  ],
+  "shortcuts": [
+   {
+    "name": "Stepping stones between the graves",
+    "lvl": 20,
+    "ledge": "A yew among the graves"
+   }
+  ],
+  "lockbox": 25,
+  "backways": [],
+  "stunts": 0,
+  "npcs": [
+   "Mudge the Lamplighter"
+  ],
+  "pvp": false
+ },
+ "boneyard": {
+  "name": "The Boneyard",
+  "band": [
+   30,
+   39
+  ],
+  "mobs": {
+   "stagehand": {
+    "name": "The Stagehand",
+    "lvl": 32,
+    "boss": false,
+    "n": 5
+   },
+   "chandelier": {
+    "name": "Chandelier Spider",
+    "lvl": 34,
+    "boss": false,
+    "n": 4
+   },
+   "understudy": {
+    "name": "The Understudy",
+    "lvl": 38,
+    "boss": false,
+    "n": 4
+   },
+   "ghoul": {
+    "name": "Sorry Ghoul",
+    "lvl": 30,
+    "boss": false,
+    "n": 6
+   },
+   "usher": {
+    "name": "One-Eyed Usher",
+    "lvl": 36,
+    "boss": false,
+    "n": 6
+   },
+   "critic": {
+    "name": "The Critic",
+    "lvl": 42,
+    "boss": false,
+    "n": 1
+   }
+  },
+  "gather": [
+   {
+    "skill": "fishing",
+    "item": "bonefish",
+    "name": "Bonefish",
+    "lvl": 30,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "yewlogs",
+    "name": "Ancient yew logs",
+    "lvl": 35,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "dragonstone_ore",
+    "name": "Dragonstone ore",
+    "lvl": 40,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "onyx_ore",
+    "name": "Onyx ore",
+    "lvl": 50,
+    "ledge": true
+   }
+  ],
+  "quests": [
+   {
+    "k": "morrowbones",
+    "name": "Grave Duty",
+    "tier": "medium",
+    "giver": "Sister Morrow"
+   },
+   {
+    "k": "yewbow",
+    "name": "Yew for the Sister",
+    "tier": "medium",
+    "giver": "Sister Morrow"
+   },
+   {
+    "k": "spidersilk",
+    "name": "Silk from the Dark",
+    "tier": "medium",
+    "giver": "Sister Morrow"
+   },
+   {
+    "k": "dragonstone",
+    "name": "The Sister's Marker",
+    "tier": "medium",
+    "giver": "Sister Morrow"
+   },
+   {
+    "k": "hw_vigil",
+    "name": "The Sister's Vigil",
+    "tier": "medium",
+    "giver": "Sister Morrow"
+   }
+  ],
+  "shortcuts": [
+   {
+    "name": "Loose railing",
+    "lvl": 30,
+    "ledge": null
+   },
+   {
+    "name": "Loose rail",
+    "lvl": 30,
+    "ledge": "An onyx seam behind the rail"
+   }
+  ],
+  "lockbox": 35,
+  "backways": [],
+  "stunts": 0,
+  "npcs": [
+   "Sister Morrow"
+  ],
+  "pvp": false
+ },
+ "cloud": {
+  "name": "Cloudreach",
+  "band": [
+   40,
+   49
+  ],
+  "mobs": {
+   "ram": {
+    "name": "Cumulus Ram",
+    "lvl": 42,
+    "boss": false,
+    "n": 6
+   },
+   "brainstorm": {
+    "name": "Brainstorm",
+    "lvl": 40,
+    "boss": false,
+    "n": 6
+   },
+   "seagoat": {
+    "name": "Sea-Goat of the Upper Air",
+    "lvl": 46,
+    "boss": false,
+    "n": 3
+   },
+   "revenant": {
+    "name": "Sulking Revenant",
+    "lvl": 45,
+    "boss": false,
+    "n": 4
+   },
+   "angel": {
+    "name": "Angel of Minor Inconvenience",
+    "lvl": 48,
+    "boss": false,
+    "n": 4
+   }
+  },
+  "gather": [
+   {
+    "skill": "mining",
+    "item": "grimstone",
+    "name": "Grimstone ore",
+    "lvl": 20,
+    "ledge": false
+   },
+   {
+    "skill": "fishing",
+    "item": "skyeel",
+    "name": "Sky eel",
+    "lvl": 40,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "skyashlogs",
+    "name": "Skyash logs",
+    "lvl": 45,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "onyx_ore",
+    "name": "Onyx ore",
+    "lvl": 50,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "pinelogs",
+    "name": "Rustpine logs",
+    "lvl": 65,
+    "ledge": true
+   }
+  ],
+  "quests": [
+   {
+    "k": "skyeel",
+    "name": "Eels for Zephyr",
+    "tier": "medium",
+    "giver": "Zephyr"
+   },
+   {
+    "k": "frostink",
+    "name": "Frost on the Page",
+    "tier": "medium",
+    "giver": "Zephyr"
+   },
+   {
+    "k": "ramhorns",
+    "name": "Rams on the Ridge",
+    "tier": "medium",
+    "giver": "Zephyr"
+   },
+   {
+    "k": "homeward",
+    "name": "The Way Home",
+    "tier": "medium",
+    "giver": "Zephyr"
+   }
+  ],
+  "shortcuts": [
+   {
+    "name": "Cloud steps",
+    "lvl": 45,
+    "ledge": "A rustpine on a fenced cloud"
+   }
+  ],
+  "lockbox": 48,
+  "backways": [],
+  "stunts": 0,
+  "npcs": [
+   "Zephyr",
+   "Wren the Ranger"
+  ],
+  "pvp": false
+ },
+ "sands": {
+  "name": "The Golden Sands",
+  "band": [
+   40,
+   49
+  ],
+  "mobs": {
+   "cobra": {
+    "name": "Sand Cobra",
+    "lvl": 48,
+    "boss": false,
+    "n": 6
+   },
+   "scarab": {
+    "name": "Gilt Scarab",
+    "lvl": 52,
+    "boss": false,
+    "n": 5
+   },
+   "mummy": {
+    "name": "Bandaged Debtor",
+    "lvl": 43,
+    "boss": false,
+    "n": 6
+   },
+   "jackal": {
+    "name": "Tomb Jackal",
+    "lvl": 47,
+    "boss": false,
+    "n": 5
+   }
+  },
+  "gather": [
+   {
+    "skill": "mining",
+    "item": "sand",
+    "name": "Sand",
+    "lvl": 20,
+    "ledge": false
+   },
+   {
+    "skill": "fishing",
+    "item": "oasisperch",
+    "name": "Oasis perch",
+    "lvl": 40,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "palmlogs",
+    "name": "Palm logs",
+    "lvl": 45,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "stardust",
+    "name": "Stardust",
+    "lvl": 50,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "pinelogs",
+    "name": "Rustpine logs",
+    "lvl": 65,
+    "ledge": true
+   }
+  ],
+  "quests": [
+   {
+    "k": "stardust",
+    "name": "Rashid's Sample",
+    "tier": "medium",
+    "giver": "Rashid the Caravaneer"
+   },
+   {
+    "k": "caravan",
+    "name": "The Caravan Road",
+    "tier": "medium",
+    "giver": "Rashid the Caravaneer"
+   },
+   {
+    "k": "cobra",
+    "name": "Fangs",
+    "tier": "medium",
+    "giver": "Rashid the Caravaneer"
+   },
+   {
+    "k": "perchdinner",
+    "name": "Oasis Supper",
+    "tier": "medium",
+    "giver": "Rashid the Caravaneer"
+   }
+  ],
+  "shortcuts": [
+   {
+    "name": "Rope between the obelisks",
+    "lvl": 40,
+    "ledge": "A rustpine between the obelisks"
+   }
+  ],
+  "lockbox": 45,
+  "backways": [],
+  "stunts": 0,
+  "npcs": [
+   "Rashid the Caravaneer"
+  ],
+  "pvp": false
+ },
+ "thunderhead": {
+  "name": "The Thunderhead",
+  "band": [
+   50,
+   99
+  ],
+  "mobs": {
+   "goose": {
+    "name": "Thunder Goose",
+    "lvl": 55,
+    "boss": false,
+    "n": 9
+   },
+   "golem": {
+    "name": "Storm Golem",
+    "lvl": 52,
+    "boss": false,
+    "n": 6
+   },
+   "wolf": {
+    "name": "Thunderwolf",
+    "lvl": 58,
+    "boss": false,
+    "n": 5
+   },
+   "drake": {
+    "name": "Hail Drake",
+    "lvl": 62,
+    "boss": false,
+    "n": 4
+   },
+   "house": {
+    "name": "The House",
+    "lvl": 70,
+    "boss": false,
+    "n": 1
+   }
+  },
+  "gather": [
+   {
+    "skill": "fishing",
+    "item": "stormmarlin",
+    "name": "Storm marlin",
+    "lvl": 50,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "skyashlogs",
+    "name": "Skyash logs",
+    "lvl": 50,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "starfall_ore",
+    "name": "Starfall ore",
+    "lvl": 60,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "voidglass",
+    "name": "Voidglass",
+    "lvl": 70,
+    "ledge": false
+   }
+  ],
+  "quests": [
+   {
+    "k": "stormrod",
+    "name": "The Rod",
+    "tier": "hard",
+    "giver": "Volta"
+   },
+   {
+    "k": "goosechase",
+    "name": "Wild Goose",
+    "tier": "hard",
+    "giver": "Volta"
+   },
+   {
+    "k": "stormink",
+    "name": "Storm in a Bottle",
+    "tier": "hard",
+    "giver": "Volta"
+   },
+   {
+    "k": "drakehunt",
+    "name": "Hail Drakes",
+    "tier": "hard",
+    "giver": "Volta"
+   }
+  ],
+  "shortcuts": [
+   {
+    "name": "Climb the runestones",
+    "lvl": 50,
+    "ledge": "A voidglass seam in the stones"
+   }
+  ],
+  "lockbox": 55,
+  "backways": [
+   {
+    "name": "The Storm Drain",
+    "lvl": 61
+   }
+  ],
+  "stunts": 0,
+  "npcs": [
+   "Volta",
+   "Morwenna the Mage"
+  ],
+  "pvp": false
+ },
+ "carnival": {
+  "name": "The Carnival",
+  "band": [
+   62,
+   72
+  ],
+  "mobs": {
+   "pinhead": {
+    "name": "Pinhead",
+    "lvl": 62,
+    "boss": false,
+    "n": 6
+   },
+   "tripled": {
+    "name": "The Triple",
+    "lvl": 65,
+    "boss": false,
+    "n": 4
+   },
+   "fatlady": {
+    "name": "The Fat Lady",
+    "lvl": 68,
+    "boss": false,
+    "n": 5
+   },
+   "strongman": {
+    "name": "The Strongman",
+    "lvl": 71,
+    "boss": false,
+    "n": 5
+   },
+   "grinner": {
+    "name": "The Grinning Man",
+    "lvl": 72,
+    "boss": false,
+    "n": 1
+   }
+  },
+  "gather": [
+   {
+    "skill": "fishing",
+    "item": "goldfish",
+    "name": "Prize goldfish",
+    "lvl": 62,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "catalytic",
+    "name": "Catalytic converter",
+    "lvl": 65,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "pinelogs",
+    "name": "Rustpine logs",
+    "lvl": 65,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "voidlogs",
+    "name": "Vaultwood logs",
+    "lvl": 75,
+    "ledge": true
+   }
+  ],
+  "quests": [
+   {
+    "k": "kingslayer",
+    "name": "The Grinning Debt",
+    "tier": "hard",
+    "giver": "The Barker"
+   }
+  ],
+  "shortcuts": [
+   {
+    "name": "Bent cage bars",
+    "lvl": 60,
+    "ledge": null
+   },
+   {
+    "name": "Bent bars",
+    "lvl": 60,
+    "ledge": "Vaultwood behind the cages"
+   }
+  ],
+  "lockbox": 65,
+  "backways": [
+   {
+    "name": "The Scrap Run",
+    "lvl": 70
+   }
+  ],
+  "stunts": 0,
+  "npcs": [
+   "The Barker"
+  ],
+  "pvp": false
+ },
+ "boardwalk": {
+  "name": "The Boardwalk",
+  "band": [
+   66,
+   78
+  ],
+  "mobs": {
+   "gull": {
+    "name": "Gull",
+    "lvl": 66,
+    "boss": false,
+    "n": 4
+   },
+   "deckhand": {
+    "name": "Deckhand",
+    "lvl": 69,
+    "boss": false,
+    "n": 5
+   }
+  },
+  "gather": [
+   {
+    "skill": "fishing",
+    "item": "mackerel",
+    "name": "Raw mackerel",
+    "lvl": 60,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "palmlogs",
+    "name": "Palm logs",
+    "lvl": 60,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "pinelogs",
+    "name": "Rustpine logs",
+    "lvl": 65,
+    "ledge": true
+   }
+  ],
+  "quests": [
+   {
+    "k": "bwmackerel",
+    "name": "Mackerel Sky",
+    "tier": "medium",
+    "giver": "Salty Meg"
+   },
+   {
+    "k": "bwdeckhands",
+    "name": "Knives on the Plaza",
+    "tier": "hard",
+    "giver": "Salty Meg"
+   },
+   {
+    "k": "bwcaptain",
+    "name": "Captain Claw",
+    "tier": "hard",
+    "giver": "Salty Meg"
+   }
+  ],
+  "shortcuts": [
+   {
+    "name": "Swing under the pier",
+    "lvl": 66,
+    "ledge": null
+   },
+   {
+    "name": "Gap in the barricade",
+    "lvl": 66,
+    "ledge": "A rustpine behind the barricade"
+   }
+  ],
+  "lockbox": 72,
+  "backways": [],
+  "stunts": 0,
+  "npcs": [
+   "Salty Meg"
+  ],
+  "pvp": false
+ },
+ "trailer": {
+  "name": "The Trailer Park",
+  "band": [
+   80,
+   99
+  ],
+  "mobs": {
+   "junkdog": {
+    "name": "Junkyard Dog",
+    "lvl": 80,
+    "boss": false,
+    "n": 4
+   },
+   "possum": {
+    "name": "Rabid Possum",
+    "lvl": 84,
+    "boss": false,
+    "n": 4
+   },
+   "scrapper": {
+    "name": "The Scrapper",
+    "lvl": 88,
+    "boss": false,
+    "n": 3
+   },
+   "gator": {
+    "name": "Yard Gator",
+    "lvl": 92,
+    "boss": false,
+    "n": 3
+   },
+   "junkking": {
+    "name": "The Junk King",
+    "lvl": 98,
+    "boss": false,
+    "n": 1
+   }
+  },
+  "gather": [
+   {
+    "skill": "woodcutting",
+    "item": "pinelogs",
+    "name": "Rustpine logs",
+    "lvl": 65,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "catalytic",
+    "name": "Catalytic converter",
+    "lvl": 65,
+    "ledge": false
+   },
+   {
+    "skill": "fishing",
+    "item": "mudcat",
+    "name": "Raw mud cat",
+    "lvl": 80,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "bogwoodlogs",
+    "name": "Bogwood logs",
+    "lvl": 80,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "slagstone",
+    "name": "Slagstone",
+    "lvl": 85,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "singularity_ore",
+    "name": "Singularity ore",
+    "lvl": 90,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "fossil",
+    "name": "Fossil",
+    "lvl": 92,
+    "ledge": true
+   }
+  ],
+  "quests": [
+   {
+    "k": "scrapline",
+    "name": "The Scrap Line",
+    "tier": "easy",
+    "giver": "Darla"
+   },
+   {
+    "k": "theking",
+    "name": "The King of the Yard",
+    "tier": "easy",
+    "giver": "Darla"
+   },
+   {
+    "k": "darlaeel",
+    "name": "Mudcat Supper",
+    "tier": "hard",
+    "giver": "Darla"
+   }
+  ],
+  "shortcuts": [
+   {
+    "name": "Over the fence",
+    "lvl": 80,
+    "ledge": null
+   },
+   {
+    "name": "Hole in the fence",
+    "lvl": 80,
+    "ledge": "A fossil rock in the corner"
+   }
+  ],
+  "lockbox": 85,
+  "backways": [
+   {
+    "name": "The Scrap Run",
+    "lvl": 70
+   }
+  ],
+  "stunts": 0,
+  "npcs": [
+   "Darla"
+  ],
+  "pvp": false
+ },
+ "vault": {
+  "name": "The Vault",
+  "band": null,
+  "mobs": {
+   "warden": {
+    "name": "Vault Warden",
+    "lvl": 74,
+    "boss": false,
+    "n": 7
+   },
+   "pitboss": {
+    "name": "The Pit Boss",
+    "lvl": 80,
+    "boss": false,
+    "n": 5
+   },
+   "hoard": {
+    "name": "Coin Hoard",
+    "lvl": 86,
+    "boss": false,
+    "n": 6
+   },
+   "dealer": {
+    "name": "The Last Dealer",
+    "lvl": 92,
+    "boss": false,
+    "n": 3
+   }
+  },
+  "gather": [
+   {
+    "skill": "mining",
+    "item": "starfall_ore",
+    "name": "Starfall ore",
+    "lvl": 60,
+    "ledge": false
+   },
+   {
+    "skill": "fishing",
+    "item": "cloudray",
+    "name": "Cloud ray",
+    "lvl": 60,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "eclipse_ore",
+    "name": "Eclipse ore",
+    "lvl": 70,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "voidglass",
+    "name": "Voidglass",
+    "lvl": 70,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "voidlogs",
+    "name": "Vaultwood logs",
+    "lvl": 75,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "nova_ore",
+    "name": "Nova ore",
+    "lvl": 80,
+    "ledge": false
+   }
+  ],
+  "quests": [
+   {
+    "k": "audit",
+    "name": "The Audit",
+    "tier": "hard",
+    "giver": "The Auditor"
+   },
+   {
+    "k": "voidwood",
+    "name": "Vaultwood",
+    "tier": "hard",
+    "giver": "The Auditor"
+   },
+   {
+    "k": "hoard",
+    "name": "Count the Hoard",
+    "tier": "hard",
+    "giver": "The Auditor"
+   }
+  ],
+  "shortcuts": [],
+  "lockbox": null,
+  "backways": [],
+  "stunts": 0,
+  "npcs": [
+   "The Auditor"
+  ],
+  "pvp": false
+ },
+ "depths": {
+  "name": "The Depths of the Mountain",
+  "band": null,
+  "mobs": {
+   "potboy": {
+    "name": "Pot Boy",
+    "lvl": 73,
+    "boss": false,
+    "n": 4
+   },
+   "dgoblin": {
+    "name": "Goblin Cutter",
+    "lvl": 75,
+    "boss": false,
+    "n": 3
+   },
+   "dwisp": {
+    "name": "Abyss Wisp",
+    "lvl": 76,
+    "boss": false,
+    "n": 4
+   },
+   "dogre": {
+    "name": "Crystal Ogre",
+    "lvl": 78,
+    "boss": false,
+    "n": 3
+   },
+   "diron": {
+    "name": "Iron Ogre",
+    "lvl": 80,
+    "boss": false,
+    "n": 3
+   },
+   "deepwarden": {
+    "name": "The Deepwarden",
+    "lvl": 84,
+    "boss": true,
+    "n": 1
+   }
+  },
+  "gather": [
+   {
+    "skill": "mining",
+    "item": "eclipse_ore",
+    "name": "Eclipse ore",
+    "lvl": 70,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "abyss_crystal",
+    "name": "Abyss crystal",
+    "lvl": 75,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "nova_ore",
+    "name": "Nova ore",
+    "lvl": 80,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "slagstone",
+    "name": "Slagstone",
+    "lvl": 85,
+    "ledge": true
+   }
+  ],
+  "quests": [
+   {
+    "k": "deepcrystal",
+    "name": "Pink in the Dark",
+    "tier": "medium",
+    "giver": "Old Pickett"
+   },
+   {
+    "k": "deepgoblins",
+    "name": "Cutters",
+    "tier": "hard",
+    "giver": "Old Pickett"
+   },
+   {
+    "k": "deepkeeper",
+    "name": "The Keeper of the Mountain",
+    "tier": "hard",
+    "giver": "Old Pickett"
+   }
+  ],
+  "shortcuts": [
+   {
+    "name": "Gap in the fence",
+    "lvl": 75,
+    "ledge": null
+   },
+   {
+    "name": "Rope up the rocks",
+    "lvl": 75,
+    "ledge": "A slag bank in the rocks"
+   }
+  ],
+  "lockbox": 78,
+  "backways": [],
+  "stunts": 0,
+  "npcs": [
+   "Old Pickett"
+  ],
+  "pvp": false
+ },
+ "valley": {
+  "name": "The Primeval Valley",
+  "band": [
+   90,
+   98
+  ],
+  "mobs": {
+   "caveman": {
+    "name": "Caveman",
+    "lvl": 90,
+    "boss": false,
+    "n": 4
+   },
+   "pterodactyl": {
+    "name": "Pterodactyl",
+    "lvl": 95,
+    "boss": false,
+    "n": 3
+   },
+   "sabretooth": {
+    "name": "Sabretooth",
+    "lvl": 93,
+    "boss": false,
+    "n": 3
+   },
+   "mammoth": {
+    "name": "Woolly Mammoth",
+    "lvl": 98,
+    "boss": false,
+    "n": 2
+   },
+   "matriarch": {
+    "name": "The Mammoth Matriarch",
+    "lvl": 108,
+    "boss": true,
+    "n": 1
+   }
+  },
+  "gather": [
+   {
+    "skill": "woodcutting",
+    "item": "cycadlogs",
+    "name": "Cycad logs",
+    "lvl": 92,
+    "ledge": false
+   },
+   {
+    "skill": "fishing",
+    "item": "coelacanth",
+    "name": "Raw coelacanth",
+    "lvl": 92,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "frostpinelogs",
+    "name": "Frostpine logs",
+    "lvl": 94,
+    "ledge": true
+   }
+  ],
+  "quests": [],
+  "shortcuts": [
+   {
+    "name": "Vine over the fence",
+    "lvl": 90,
+    "ledge": "A frostpine behind the fence"
+   }
+  ],
+  "lockbox": 92,
+  "backways": [
+   {
+    "name": "The Ice Ledge",
+    "lvl": 92
+   }
+  ],
+  "stunts": 0,
+  "npcs": [],
+  "pvp": false
+ },
+ "valley_ridge": {
+  "name": "The Primeval Ridge",
+  "band": [
+   95,
+   103
+  ],
+  "mobs": {
+   "pteroelder": {
+    "name": "Elder Pterodactyl",
+    "lvl": 103,
+    "boss": false,
+    "n": 3
+   },
+   "cavehunter": {
+    "name": "Caveman Hunter",
+    "lvl": 100,
+    "boss": false,
+    "n": 6
+   },
+   "pterodactyl": {
+    "name": "Pterodactyl",
+    "lvl": 95,
+    "boss": false,
+    "n": 2
+   },
+   "raptor": {
+    "name": "Raptor",
+    "lvl": 100,
+    "boss": false,
+    "n": 4
+   }
+  },
+  "gather": [
+   {
+    "skill": "woodcutting",
+    "item": "cycadlogs",
+    "name": "Cycad logs",
+    "lvl": 92,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "fossil",
+    "name": "Fossil",
+    "lvl": 92,
+    "ledge": false
+   }
+  ],
+  "quests": [],
+  "shortcuts": [],
+  "lockbox": null,
+  "backways": [],
+  "stunts": 0,
+  "npcs": [],
+  "pvp": false
+ },
+ "valley_lair": {
+  "name": "Old Rex's Lair",
+  "band": [
+   97,
+   110
+  ],
+  "mobs": {
+   "cavehunter": {
+    "name": "Caveman Hunter",
+    "lvl": 100,
+    "boss": false,
+    "n": 3
+   },
+   "pteroelder": {
+    "name": "Elder Pterodactyl",
+    "lvl": 103,
+    "boss": false,
+    "n": 4
+   },
+   "tarhorror": {
+    "name": "Tar Pit Horror",
+    "lvl": 105,
+    "boss": false,
+    "n": 4
+   },
+   "raptor": {
+    "name": "Raptor",
+    "lvl": 100,
+    "boss": false,
+    "n": 3
+   },
+   "rex": {
+    "name": "Old Rex",
+    "lvl": 110,
+    "boss": true,
+    "n": 1
+   }
+  },
+  "gather": [
+   {
+    "skill": "mining",
+    "item": "fossil",
+    "name": "Fossil",
+    "lvl": 92,
+    "ledge": false
+   }
+  ],
+  "quests": [],
+  "shortcuts": [],
+  "lockbox": null,
+  "backways": [],
+  "stunts": 0,
+  "npcs": [],
+  "pvp": false
+ },
+ "frozen": {
+  "name": "The Frozen Reach",
+  "band": [
+   95,
+   108
+  ],
+  "mobs": {
+   "yeti": {
+    "name": "Yeti",
+    "lvl": 104,
+    "boss": false,
+    "n": 4
+   },
+   "snowowl": {
+    "name": "Snow Owl",
+    "lvl": 102,
+    "boss": false,
+    "n": 4
+   },
+   "frostwolf": {
+    "name": "Frost Wolf",
+    "lvl": 100,
+    "boss": false,
+    "n": 3
+   },
+   "frostwraith": {
+    "name": "Frost Wraith",
+    "lvl": 106,
+    "boss": false,
+    "n": 2
+   }
+  },
+  "gather": [
+   {
+    "skill": "woodcutting",
+    "item": "frostpinelogs",
+    "name": "Frostpine logs",
+    "lvl": 94,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "glacite",
+    "name": "Glacite",
+    "lvl": 94,
+    "ledge": false
+   },
+   {
+    "skill": "fishing",
+    "item": "icefin",
+    "name": "Raw icefin",
+    "lvl": 94,
+    "ledge": false
+   }
+  ],
+  "quests": [],
+  "shortcuts": [
+   {
+    "name": "Ice steps",
+    "lvl": 95,
+    "ledge": "Frostpine"
+   }
+  ],
+  "lockbox": 97,
+  "backways": [
+   {
+    "name": "The Ice Ledge",
+    "lvl": 92
+   }
+  ],
+  "stunts": 0,
+  "npcs": [],
+  "pvp": false
+ },
+ "frostspire": {
+  "name": "The Frostspire",
+  "band": [
+   99,
+   115
+  ],
+  "mobs": {
+   "iceelemental": {
+    "name": "Ice Elemental",
+    "lvl": 110,
+    "boss": false,
+    "n": 2
+   },
+   "frostgiant": {
+    "name": "Frost Giant",
+    "lvl": 112,
+    "boss": false,
+    "n": 3
+   },
+   "yeti": {
+    "name": "Yeti",
+    "lvl": 104,
+    "boss": false,
+    "n": 1
+   },
+   "frostwraith": {
+    "name": "Frost Wraith",
+    "lvl": 106,
+    "boss": false,
+    "n": 3
+   },
+   "frostjarl": {
+    "name": "The Frost Jarl",
+    "lvl": 113,
+    "boss": true,
+    "n": 1
+   }
+  },
+  "gather": [
+   {
+    "skill": "woodcutting",
+    "item": "frostpinelogs",
+    "name": "Frostpine logs",
+    "lvl": 94,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "glacite",
+    "name": "Glacite",
+    "lvl": 94,
+    "ledge": false
+   },
+   {
+    "skill": "fishing",
+    "item": "icefin",
+    "name": "Raw icefin",
+    "lvl": 94,
+    "ledge": false
+   }
+  ],
+  "quests": [],
+  "shortcuts": [],
+  "lockbox": null,
+  "backways": [],
+  "stunts": 0,
+  "npcs": [],
+  "pvp": false
+ },
+ "wild": {
+  "name": "The Wilderness",
+  "band": null,
+  "mobs": {
+   "gnasher": {
+    "name": "Bog Gnasher",
+    "lvl": 18,
+    "boss": false,
+    "n": 3
+   },
+   "ghoul": {
+    "name": "Sorry Ghoul",
+    "lvl": 30,
+    "boss": false,
+    "n": 6
+   },
+   "taxwraith": {
+    "name": "Tax Wraith",
+    "lvl": 28,
+    "boss": false,
+    "n": 4
+   },
+   "dgoblin": {
+    "name": "Goblin Cutter",
+    "lvl": 75,
+    "boss": false,
+    "n": 2
+   },
+   "potboy": {
+    "name": "Pot Boy",
+    "lvl": 73,
+    "boss": false,
+    "n": 2
+   },
+   "dogre": {
+    "name": "Crystal Ogre",
+    "lvl": 78,
+    "boss": false,
+    "n": 2
+   },
+   "warden": {
+    "name": "Vault Warden",
+    "lvl": 74,
+    "boss": false,
+    "n": 2
+   },
+   "weaver": {
+    "name": "Wild Weaver",
+    "lvl": 40,
+    "boss": false,
+    "n": 2
+   },
+   "marrowhound": {
+    "name": "Marrow Hound",
+    "lvl": 50,
+    "boss": false,
+    "n": 2
+   }
+  },
+  "gather": [
+   {
+    "skill": "woodcutting",
+    "item": "ashlogs",
+    "name": "Deadwood logs",
+    "lvl": 20,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "grimstone",
+    "name": "Grimstone ore",
+    "lvl": 20,
+    "ledge": false
+   },
+   {
+    "skill": "fishing",
+    "item": "gloomfin",
+    "name": "Raw gloomfin",
+    "lvl": 20,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "yewlogs",
+    "name": "Ancient yew logs",
+    "lvl": 35,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "dragonstone_ore",
+    "name": "Dragonstone ore",
+    "lvl": 40,
+    "ledge": false
+   }
+  ],
+  "quests": [],
+  "shortcuts": [],
+  "lockbox": null,
+  "backways": [],
+  "stunts": 0,
+  "npcs": [],
+  "pvp": true
+ },
+ "deep": {
+  "name": "The Deep Wild",
+  "band": null,
+  "mobs": {
+   "sabretooth": {
+    "name": "Sabretooth",
+    "lvl": 93,
+    "boss": false,
+    "n": 3
+   },
+   "caveman": {
+    "name": "Caveman",
+    "lvl": 90,
+    "boss": false,
+    "n": 2
+   },
+   "dogre": {
+    "name": "Crystal Ogre",
+    "lvl": 78,
+    "boss": false,
+    "n": 3
+   },
+   "dgoblin": {
+    "name": "Goblin Cutter",
+    "lvl": 75,
+    "boss": false,
+    "n": 3
+   },
+   "junkdog": {
+    "name": "Junkyard Dog",
+    "lvl": 80,
+    "boss": false,
+    "n": 3
+   },
+   "possum": {
+    "name": "Rabid Possum",
+    "lvl": 84,
+    "boss": false,
+    "n": 5
+   },
+   "scrapper": {
+    "name": "The Scrapper",
+    "lvl": 88,
+    "boss": false,
+    "n": 3
+   },
+   "gator": {
+    "name": "Yard Gator",
+    "lvl": 92,
+    "boss": false,
+    "n": 2
+   },
+   "potboy": {
+    "name": "Pot Boy",
+    "lvl": 73,
+    "boss": false,
+    "n": 3
+   },
+   "warden": {
+    "name": "Vault Warden",
+    "lvl": 74,
+    "boss": false,
+    "n": 1
+   },
+   "grimlich": {
+    "name": "Grim Lich",
+    "lvl": 66,
+    "boss": false,
+    "n": 2
+   },
+   "marrowhound": {
+    "name": "Marrow Hound",
+    "lvl": 50,
+    "boss": false,
+    "n": 2
+   }
+  },
+  "gather": [
+   {
+    "skill": "mining",
+    "item": "grimstone",
+    "name": "Grimstone ore",
+    "lvl": 20,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "ashlogs",
+    "name": "Deadwood logs",
+    "lvl": 20,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "onyx_ore",
+    "name": "Onyx ore",
+    "lvl": 50,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "skyashlogs",
+    "name": "Skyash logs",
+    "lvl": 50,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "starfall_ore",
+    "name": "Starfall ore",
+    "lvl": 60,
+    "ledge": false
+   },
+   {
+    "skill": "woodcutting",
+    "item": "gallowslogs",
+    "name": "Gallows logs",
+    "lvl": 90,
+    "ledge": false
+   },
+   {
+    "skill": "fishing",
+    "item": "voidfin",
+    "name": "Raw voidfin",
+    "lvl": 92,
+    "ledge": false
+   }
+  ],
+  "quests": [],
+  "shortcuts": [],
+  "lockbox": null,
+  "backways": [],
+  "stunts": 0,
+  "npcs": [],
+  "pvp": true
+ },
+ "thrill": {
+  "name": "Thrill Hill",
+  "band": null,
+  "mobs": {
+   "gremlin": {
+    "name": "Grease Gremlin",
+    "lvl": 50,
+    "boss": false,
+    "n": 3
+   }
+  },
+  "gather": [
+   {
+    "skill": "woodcutting",
+    "item": "featherlogs",
+    "name": "Featherwood logs",
+    "lvl": 60,
+    "ledge": false
+   }
+  ],
+  "quests": [],
+  "shortcuts": [],
+  "lockbox": null,
+  "backways": [],
+  "stunts": 12,
+  "npcs": [
+   "Fast Eddie",
+   "Corndog Carl"
+  ],
+  "pvp": false
+ },
+ "thrill_top": {
+  "name": "Daredevil Peak",
+  "band": null,
+  "mobs": {
+   "hellbiker": {
+    "name": "Hellbiker",
+    "lvl": 75,
+    "boss": false,
+    "n": 4
+   },
+   "crusher": {
+    "name": "Big Daddy Crusher",
+    "lvl": 92,
+    "boss": true,
+    "n": 1
+   }
+  },
+  "gather": [
+   {
+    "skill": "fishing",
+    "item": "nitroeel",
+    "name": "Raw nitro eel",
+    "lvl": 75,
+    "ledge": false
+   },
+   {
+    "skill": "mining",
+    "item": "chrome",
+    "name": "Chrome scrap",
+    "lvl": 85,
+    "ledge": false
+   }
+  ],
+  "quests": [],
+  "shortcuts": [],
+  "lockbox": 90,
+  "backways": [],
+  "stunts": 7,
+  "npcs": [],
+  "pvp": false
+ },
+ "_events": {
+  "star": [
+   "gloam",
+   "mire",
+   "boneyard",
+   "cloud",
+   "sands",
+   "thunderhead",
+   "trailer",
+   "boardwalk",
+   "valley",
+   "frozen"
+  ],
+  "wanted": [
+   "workyard",
+   "gloam",
+   "mire",
+   "boneyard",
+   "cloud",
+   "sands",
+   "thunderhead",
+   "trailer",
+   "carnival",
+   "vault",
+   "boardwalk",
+   "bw_wreck",
+   "depths",
+   "valley",
+   "valley_ridge",
+   "frozen"
+  ],
+  "thief": [],
+  "raid": [
+   "workyard"
+  ],
+  "flood": [
+   "workyard"
+  ],
+  "wyrm": [
+   "frozen"
+  ],
+  "king": [
+   "mire"
+  ]
+ }
+}
