@@ -23,7 +23,7 @@ const P = {
   th_tyres: ["tyres", 1.4], th_tyrewall: ["tyres", 2.4], th_ropeswing: ["ropeswing", 1], th_highwire: ["highwire", 1], th_ramp: ["ramp", 1], th_hoop: ["hoop", 1.5], th_plank: ["plank", 1], th_cars: ["cars", 1], th_net: ["net", 1], th_firebarrels: ["firebarrels", 1],
   th_tyreswing: ["tyreswing", 1], th_halfpipe: ["halfpipe", 1], th_buses: ["buses", 1], th_firewall: ["firewall", 1], th_cannon: ["cannon", 1], th_zipline: ["zipline", 1.3],
   th_grandstand: ["grandstand", 1.1], th_scoreboard: ["scoreboard", 1], th_truck: ["truck", 1.15], th_landing: ["landing", 1], th_gate: ["gate", 0.8], pet_lilcrusher: ["pet", 0.9],
-  /* (2026-10-01) the front door in the court, and the hill's snack cart, bins and Eddie's window */ th_counter: ["counter", 1], th_showpiece: ["showpiece", 1], th_snackcart: ["snackcart", 1], th_trash: ["trashcan", 0.9], th_booth: ["booth", 0.85] };
+  /* (2026-10-01) the front door in the court, and the hill's snack cart, bins and Eddie's window */ th_counter: ["counter", 1], th_snackcart: ["snackcart", 1], th_trash: ["trashcan", 0.9], th_booth: ["booth", 0.85] };
 const have = [];
 for (const [name, [src, sc]] of Object.entries(P)) {
   if (!fs.existsSync(SRC + src + ".png")) { console.log(`  waiting on ${src}.png`); continue; }
@@ -68,11 +68,14 @@ await recol("t_water.png", "t_nwater.png", [96, 60, 38], [198, 142, 92], [20, 60
   await sharp(out, { raw: { width: w, height: h, channels: 4 } }).png({ palette: true, colours: 64 }).toFile(FLAT + "th_dirtpad.png"); have.push("th_dirtpad"); }
 
 /* the NPCs: south and east from PixelLab (tools/thrill/art/chars.txt), trimmed and brought down to the guild's size */
-for (const [name] of [["fasteddie"], ["tickettaker"], ["vendor"]]) for (const d of ["south", "east"]) {
+for (const [name] of [["fasteddie"], ["vendor"]]) for (const d of ["south", "east"]) {
   const f = SRC + `${name === "fasteddie" ? "eddie" : name}_${d}.png`; if (!fs.existsSync(f)) { console.log(`  waiting on ${name} ${d}`); continue; }
   const b = await sharp(f).trim({ threshold: 1 }).toBuffer(), m = await sharp(b).metadata();
   await sharp(b).resize(Math.round(m.width * 0.88), Math.round(m.height * 0.88), { kernel: "nearest" }).png({ palette: true }).toFile(FLAT + `${name}_${d}.png`); have.push(`${name}_${d}`);
 }
+/* Dizzy Dale stands in the Yard, so he is drawn the Yard's way (the owner: "not in the same style as the other npcs in the yard, and not the
+   same size"): standard-mode PixelLab at 48, kept on its own 68 px canvas untouched like Livia, Nestor and Bronny, with a north facing */
+for (const d of ["south", "east", "north"]) { const f = SRC + `dale_${d}.png`; if (fs.existsSync(f)) { fs.copyFileSync(f, FLAT + `tickettaker_${d}.png`); have.push(`tickettaker_${d}`); } else console.log(`  waiting on dale ${d}`); }
 
 /* crash barriers: one tile is the draft at 32 wide; a run is tiles side by side; north-south is the same tile turned */
 const tile = await (await trimmed(SRC + "barrier.png")).resize(32, 20, { kernel: "nearest" }).png().toBuffer();

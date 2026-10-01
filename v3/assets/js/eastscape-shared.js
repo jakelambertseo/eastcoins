@@ -10438,17 +10438,18 @@ if (!HOLD.gemcut) {
 /* (2026-10-01) THRILL HILL'S FRONT DOOR, in the Yard. The owner: "its nice looking but it seems randomly placed in the yard which is grassy ...
    Maybe a guy behind a ticket counter, and something beside the ticket counter that is thrill hill themed", then "make the ticket booth
    entrance in the further south area of the court". So once Thrill Hill is open the Yard's door (the same object The Run's ladder was, so
-   no object id moves) stands at the south end of the court against the market railing, on a patch of packed dirt: the arch, the ticket
-   counter just in front of it with Dizzy Dale behind it, and a monster truck parked on two crushed cars beside it. Dale's "Let me in" and
+   no object id moves) stands at the south end of the court against the market railing, on a patch of packed dirt: the arch, and beside
+   it Dizzy Dale's ticket counter with Dale at it facing north, into the court (the owner, after a first try with a monster truck there:
+   "the monster truck in the yard is too much. make dizzy dale face north with his booth where the monster truck is"; he is drawn in the
+   Yard's own NPC style and size, standard-mode PixelLab at 48). Dale's "Let me in" and
    a click on the arch do the same thing. The pieces are `decor`, so their pictures are fetched only when they exist (wantArt), never in
    the Yard's first-load sheet while Thrill Hill is held. */
-export const THRILL_GATE = { door: [39, 22], counter: [39, 20, 2, 1], keeper: [39, 19], show: [35, 21, 3, 2], pad: [34, 19, 9, 4], barrels: [[42, 22], [33, 22]] };
+export const THRILL_GATE = { door: [39, 22], counter: [35, 21, 2, 1], keeper: [35, 22], pad: [34, 19, 9, 4], barrels: [[42, 22], [33, 22]] };
 function thrillYardObjs(key, b) {
   if (HOLD.thrill !== false || key !== "workyard") return;
   const T = THRILL_GATE, put = (o) => { b.objs.push({ edge: true, decor: true, ...o }); if (!o.flat) for (let j = 0; j < (o.h || 1); j++) for (let i = 0; i < (o.w || 1); i++) b.g[o.y + j][o.x + i] = "#"; };
   put({ t: "cliff", art: "th_dirtpad", x: T.pad[0], y: T.pad[1], w: T.pad[2], h: T.pad[3], flat: true, name: "Packed dirt, tyre marks all over it" });
   put({ t: "cliff", art: "th_counter", x: T.counter[0], y: T.counter[1], w: T.counter[2], h: T.counter[3], name: "The Thrill Hill ticket counter" });
-  put({ t: "cliff", art: "th_showpiece", x: T.show[0], y: T.show[1], w: T.show[2], h: T.show[3], name: "A monster truck, parked on two cars. Thrill Hill is through the arch." });
   for (const [x, y] of T.barrels) put({ t: "cliff", art: "th_flamebarrel", x, y, name: "A barrel, on fire, on purpose" });
 }
 /* THE SNACK CART on Thrill Hill: Corndog Carl sells popcorn, lemonade and corn dogs for tickets (a small sink: they sell back for a third) */
@@ -10460,6 +10461,6 @@ Object.assign(ITEMS, {
 });
 Object.assign(VALUE, { popcorn: 50, lemonade: 80, corndog: 100 });
 if (!HOLD.thrill) {
-  SCENES.workyard.npcs.push({ name: "Dizzy Dale", art: "tickettaker", x: THRILL_GATE.keeper[0], y: THRILL_GATE.keeper[1], still: true, opens: "thrillgate", reach: 2,
-    lines: ["Thrill Hill. Through the arch. No refunds.", "Rookie Run's for everybody. The cannon's for people with seventy Agility and no sense.", "Mind the truck. It's parked. Probably.", "I've been on the Pro Run once. Once."] });
+  SCENES.workyard.npcs.push({ name: "Dizzy Dale", art: "tickettaker", faceDir: "north", x: THRILL_GATE.keeper[0], y: THRILL_GATE.keeper[1], still: true, opens: "thrillgate", reach: 2,
+    lines: ["Thrill Hill. Through the arch. No refunds.", "Rookie Run's for everybody. The cannon's for people with seventy Agility and no sense.", "The trucks are through the arch. All of them. Don't ask.", "I've been on the Pro Run once. Once."] });
 }

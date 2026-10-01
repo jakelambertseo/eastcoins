@@ -54,7 +54,8 @@ ok(!Y.objs.some((o) => o.t === "roomdoor" && o.enter === "agility"), "and The Ru
 ok(G.findPath(Y.g, { x: 38, y: 15 }, { x: gx, y: gy }, 1), "the arch can be walked to from the casino's front door");
 const dale = Y.npcs.find((n) => n.opens === "thrillgate");
 ok(dale && G.findPath(Y.g, { x: 38, y: 15 }, dale, 2), "Dizzy Dale is behind the counter, and you can get to him");
-ok(["th_counter", "th_showpiece", "th_dirtpad"].every((a) => Y.objs.some((o) => o.art === a && o.decor)), "the counter, the truck and the dirt are there, fetched only when they are");
+ok(["th_counter", "th_dirtpad"].every((a) => Y.objs.some((o) => o.art === a && o.decor)) && !Y.objs.some((o) => o.art === "th_showpiece"), "the counter and the dirt are there (fetched only when they are), and no truck");
+ok(dale.faceDir === "north" && dale.y === G.THRILL_GATE.counter[1] + 1 && dale.x === G.THRILL_GATE.counter[0], "Dale stands at his counter, facing north into the court");
 ok(Y.objs.findIndex((o) => o === door) === W.scene("workyard").objs.findIndex((o) => o.t === "roomdoor" && o.enter === "thrill"), "the door is still the same object");
 ok(G.walkableIn(Y.g, G.SCENES.thrill.exitTo.x, G.SCENES.thrill.exitTo.y), "Thrill Hill's way out lands on open ground in the Yard");
 ok(G.walkableIn(H.g, G.SCENES.thrill.entry.x, G.SCENES.thrill.entry.y), "and its way in lands on open ground");
