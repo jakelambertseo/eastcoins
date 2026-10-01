@@ -18,6 +18,7 @@ const OUT = join(ROOT, "eastscape-worker", "gameplan-site", "gameplan");
 const PAGES = [
   ["gameplan-mock", "Plan", "The game plan"],
   ["atlas-mock", "Atlas", "The atlas: maps and skilling to 120"],
+  ["mapbook-mock", "Maps", "The map book: every map today"],
   ["past99-mock", "1", "The Road Past 99"],
   ["ascend-mock", "2", "Ascendancies"],
   ["relic-mock", "3", "Relic gear"],
@@ -40,7 +41,7 @@ const nav = (cur) => `<nav id="gpNav" aria-label="The game plan">
 #gpNav a i{font-style:normal;font-weight:600;color:#cdbfa2}
 #gpNav a:hover{background:#3a2616}#gpNav a[aria-current="page"]{background:#ffd98a;color:#1a1006;box-shadow:none}#gpNav a[aria-current="page"] i{color:#3a2a10}
 #gpNav small{flex:none;margin-left:auto;padding-left:10px;font:700 11.5px Lora,serif;color:#8a7a60}</style>
-<b>Game plan</b>${PAGES.map(([f, n, t]) => `<a href="/gameplan/${f}/"${f === cur ? ' aria-current="page"' : ""} title="${t}">${n}${n === "Plan" ? "" : ` <i>${t.replace(/^The /, "")}</i>`}</a>`).join("")}<small>internal · not linked anywhere</small></nav>`;
+<b>Game plan</b>${PAGES.map(([f, n, t]) => `<a href="../${f}/"${f === cur ? ' aria-current="page"' : ""} title="${t}">${n}${n === "Plan" ? "" : ` <i>${t.replace(/^The /, "")}</i>`}</a>`).join("")}<small>internal · not linked anywhere</small></nav>`;
 
 const rewrite = (s) => s.replaceAll('"/v3/assets/', `"${SITE}/v3/assets/`).replaceAll("'/v3/assets/", `'${SITE}/v3/assets/`).replaceAll("`/v3/assets/", "`" + SITE + "/v3/assets/").replaceAll("(/v3/assets/", `(${SITE}/v3/assets/`);
 
