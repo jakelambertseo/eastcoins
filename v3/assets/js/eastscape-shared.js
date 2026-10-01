@@ -10264,7 +10264,7 @@ export const LOCKBOXES = { gloam: [37, 2, 15], mire: [22, 15, 25], boneyard: [22
    Thunderhead's starfall becomes the Vault's voidglass, the Valley's cycad the Reach's frostpine. The Frozen Reach is already the top of
    every ladder (94), so its island is a second frostpine until a 100+ tree exists (the atlas's Tidepools). */
 export const WORLD_SC = {
-  gloam: {lvl: 10, name: "Fallen log", how: "log", art: "o_sc_log", a: [5, 4], b: [5, 2], at: [5, 3], walls: [[4, 2, "barricade", "o_fenceV"], [4, 3, "barricade", "o_fenceH"], [6, 1, "barricade", "o_fenceV"], [6, 2, "barricade", "o_fenceV"], [6, 3, "barricade", "o_fenceH"]],
+  gloam: {lvl: 10, name: "Fallen log", how: "log", art: "o_sc_log", a: [5, 4], b: [5, 2], at: [5, 3], walls: [[4, 2, "pocketwall", "o_fence_ns"], [4, 3, "pocketwall", "o_fence_post"], [6, 1, "pocketwall", "o_fence_ns"], [6, 2, "pocketwall", "o_fence_ns"], [6, 3, "pocketwall", "o_fence_post"]],
     ledge: { spot: [5, 1], obj: { t: "deadtree", name: "Deadwood behind the fence", log: "ashlogs", req: { skill: "woodcutting", lvl: 20 }, xp: 140 } } },
   mire: {lvl: 20, name: "Stepping stones between the graves", how: "stones", art: "o_sc_stones", a: [31, 2], b: [33, 2], at: [32, 2], walls: [[32, 3, "gravestone", null], [34, 1, "gravestone", null], [34, 2, "gravestone", null], [34, 3, "gravestone", null]],
     ledge: { spot: [33, 1], obj: { t: "yew", name: "A yew among the graves", log: "yewlogs", req: { skill: "woodcutting", lvl: 35 }, xp: 170 } } },
@@ -10273,7 +10273,7 @@ export const WORLD_SC = {
     ledge: { spot: [27, 18], obj: { t: "rock", name: "An onyx seam behind the rail", ore: "onyx_ore", req: { skill: "mining", lvl: 50 }, xp: 115 } } },
   sands: {lvl: 40, name: "Rope between the obelisks", how: "rope", art: "o_sc_rope", a: [15, 5], b: [13, 5], at: [14, 5], walls: [[14, 4, "obelisk", null], [14, 6, "obelisk", null], [13, 3, "obelisk", null], [14, 3, "obelisk", null]],
     ledge: { spot: [13, 4], obj: { t: "rustpine", name: "A rustpine between the obelisks", log: "pinelogs", req: { skill: "woodcutting", lvl: 65 }, xp: 190 } } },
-  cloud: {lvl: 45, name: "Cloud steps", how: "stones", art: "o_sc_stones", a: [37, 4], b: [39, 4], at: [38, 4], walls: [[39, 5, "barricade", "o_fenceH"], [40, 5, "barricade", "o_fenceH"]],
+  cloud: {lvl: 45, name: "Cloud steps", how: "stones", art: "o_sc_stones", a: [37, 4], b: [39, 4], at: [38, 4], walls: [[39, 5, "pocketwall", "o_fence_ew"], [40, 5, "pocketwall", "o_fence_ew"]],
     ledge: { spot: [40, 4], obj: { t: "rustpine", name: "A rustpine on a fenced cloud", log: "pinelogs", req: { skill: "woodcutting", lvl: 65 }, xp: 190 } } },
   thunderhead: {lvl: 50, name: "Climb the runestones", how: "rope", art: "o_sc_rope", a: [32, 3], b: [34, 3], at: [33, 3], walls: [[34, 4, "runestone", null], [35, 3, "runestone", null], [35, 4, "runestone", null]],
     ledge: { spot: [34, 2], obj: { t: "rock", name: "A voidglass seam in the stones", ore: "voidglass", req: { skill: "mining", lvl: 70 }, xp: 190 } } },
@@ -10287,11 +10287,11 @@ export const WORLD_SC = {
   depths_p: {scene: "depths", lvl: 75, name: "Rope up the rocks", how: "rope", art: "o_sc_rope", a: [31, 14], b: [31, 12], at: [31, 13], walls: [[32, 11, "pocketwall", "d_boulder2"], [32, 13, "pocketwall", "d_boulder1"]],
     ledge: { spot: [31, 11], obj: { t: "rock", name: "A slag bank in the rocks", ore: "slagstone", req: { skill: "mining", lvl: 85 }, xp: 210 } } },
   trailer: { lvl: 80, name: "Over the fence", how: "climb", a: [34, 23], b: [32, 24], on: true },
-  trailer_p: {scene: "trailer", lvl: 80, name: "Hole in the fence", how: "fence", art: "o_sc_fence", a: [4, 2], b: [2, 2], at: [3, 2], walls: [[3, 1, "fenceH", "o_fenceV"]],
+  trailer_p: {scene: "trailer", lvl: 80, name: "Hole in the fence", how: "fence", art: "o_sc_fence", a: [4, 2], b: [2, 2], at: [3, 2], walls: [[3, 1, "pocketwall", "o_fence_ns"]],
     ledge: { spot: [2, 1], obj: { t: "rock", name: "A fossil rock in the corner", ore: "fossil", req: { skill: "mining", lvl: 92 }, xp: 330 } } },
-  valley: {lvl: 90, name: "Vine over the fence", how: "rope", art: "o_sc_rope", a: [3, 9], b: [5, 9], at: [4, 9], walls: [[7, 9, "barricade", "o_fenceV"]],
+  valley: {lvl: 90, name: "Vine over the fence", how: "rope", art: "o_sc_rope", a: [3, 9], b: [5, 9], at: [4, 9], walls: [[7, 9, "pocketwall", "o_fence_ns"]],
     ledge: { spot: [6, 9], obj: { t: "frostpine", name: "A frostpine behind the fence", log: "frostpinelogs", req: { skill: "woodcutting", lvl: 94 }, xp: 340 } } },
-  frozen: {lvl: 95, name: "Ice steps", how: "stones", art: "o_sc_stones", a: [37, 19], b: [39, 19], at: [38, 19], walls: [[39, 20, "barricade", "o_fenceH"], [40, 20, "barricade", "o_fenceH"], [41, 20, "barricade", "o_fenceH"]],
+  frozen: {lvl: 95, name: "Ice steps", how: "stones", art: "o_sc_stones", a: [37, 19], b: [39, 19], at: [38, 19], walls: [[39, 20, "pocketwall", "o_fence_ew"], [40, 20, "pocketwall", "o_fence_ew"], [41, 20, "pocketwall", "o_fence_post"]],
     ledge: { spot: [40, 19], obj: { t: "frostpine", name: "Frostpine", log: "frostpinelogs", req: { skill: "woodcutting", lvl: 94 }, xp: 340 } } } };
 const SC_ART = { log: "o_sc_log", stones: "o_sc_stones", rope: "o_sc_rope", fence: "o_sc_fence" };
 export const SC_VERB = { log: "walk the log", stones: "hop across", rope: "swing over", fence: "squeeze through", duck: "duck under the railing", squeeze: "squeeze through the bars", climb: "climb over" };
