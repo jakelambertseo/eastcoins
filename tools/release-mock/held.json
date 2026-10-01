@@ -28,7 +28,7 @@
   "commit": "47a2cb9d",
   "page": "thrillhill-mock",
   "bundle": "v1.1",
-  "what": "Agility’s own map through the Yard’s old ladder (it retires The Run): the Rookie Run (1) and Pro Run (40) on Thrill Hill, the human cannonball (70) to Daredevil Peak and its Champion Run; the Junk Mound (50: Grease Gremlins, featherwood with feathers) and the Peak (90: Big Daddy Crusher and Lil’ Crusher, chrome for chrome-toe boots, a lockbox); Hellbikers and the nitro pool (a walk-speed fish); Fast Eddie takes runner’s marks for the Sure-foot tonic, stunt helmet and leathers.",
+  "what": "Agility’s own map through the Yard’s old ladder (it retires The Run): the Rookie Run (1) and Pro Run (40) on Thrill Hill, the human cannonball (70) to Daredevil Peak and its Champion Run; the Junk Mound (50: Grease Gremlins, featherwood with feathers) and the Peak (90: Big Daddy Crusher and Lil’ Crusher, chrome for chrome-toe boots, a lockbox); Hellbikers and the nitro pool (a walk-speed fish); Fast Eddie takes runner’s marks for the Sure-foot tonic, stunt helmet and leathers. Animated: real walk/attack cycles for its three monsters, flickering fire.",
   "ships": "flip HOLD.thrill to false (with HOLD.thief2), VERSION bump; push and probe the 69 new pictures, 9 item icons and rebuilt sprite sheets first, then the page, rules, maps and wiki, then the worker (thrill.js, index.js)"
  },
  {
@@ -48,11 +48,11 @@
   "bundle": "hold"
  },
  {
-  "name": "Skilling sets art",
-  "commit": "70059278",
-  "page": "skillsets-mock",
-  "what": "All 52 icons for the thirteen new sets, drawn; the code isn't written yet.",
-  "ships": "nothing yet: the art waits for the feature",
-  "bundle": "none"
+  "name": "Work clothes: the skilling sets",
+  "commit": "bedf0e56",
+  "page": "workclothes-mock",
+  "bundle": "v1.1",
+  "what": "Every skill has a set of four work clothes in a Locker (never the bag or bank, never traded, a find is always a new piece): +3% XP a piece in the worn set’s skill, all four +3% more and a perk (15% faster to 99). Each set drops from somewhere else (a lap, a pocket, a harvest, the pen, the fire, Bronny’s order, farm animals, dead trees, wild mushrooms, birds, the Star Tent, the Jackpot Thief, the junk). The Ditched set moves to the Locker, spares paid. The Armour | Work clothes switch on the paper doll, the Locker, skill pips, a wiki guide.",
+  "ships": "flip HOLD.work with the rest of v1.1; push the 52 icons and the packs first; the worker carries work.js"
  }
 ]
