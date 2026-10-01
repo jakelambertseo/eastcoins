@@ -1529,6 +1529,16 @@ export const GUIDES = [
 
 export const UPDATES = [
   {
+    date: "2026-09-30", title: "The Flood",
+    items: [
+      "A SECOND YARD RAID: THE FLOOD. The river comes over the bank and the water spreads across the west bank tile by tile. Wading through it is slow, and the Drowned and the Bank Sharks climb out of it.",
+      "SANDBAGS HOLD IT. Five spots along the water ask for Logs, Ores or Sand: click one to hand in what you're carrying. A full spot drains the water around it and keeps it dry, and everything you hand in counts towards your share of the spoils, just like damage. Skillers win this one as much as fighters.",
+      "HOLD ALL FIVE and the water goes down, and THE UNDERTOW climbs out of the pond. It hits hard, slams everyone close to it, and drags more of the Drowned out of the water as it weakens. Beat it before the time's up and everybody who helped is paid.",
+      "LOSE, and the Yard and half the court stay under water for 20 minutes, and Bom, Nestor, Livia, Hexa and Bronny put their shutters up until it goes.",
+      "Big moments (the King, the Ice Wyrm, Bronny's order, the raids) no longer show up twice in chat.",
+    ],
+  },
+  {
     date: "2026-09-30", title: "Bronny wants more",
     items: [
       "BRONNY'S ORDERS ARE BIGGER. Six lines instead of five (two early, two mid and two late-game), and every count is a quarter up. The order already on his board keeps its five; the next one is the new shape.",
