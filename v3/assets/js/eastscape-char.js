@@ -1,0 +1,159 @@
+/* ============================================================
+   EastScape: THE CHARACTER WINDOW (2026-10-01, the owner, after testing the mockup in the game: "i want to bundle it with the updates
+   like youve suggested in your roadmap. mark it as done"). Mockup 9 of the long-game set (tools/stats-mock, tools/statsui-mock).
+
+   One window with every number the game uses about you: what you hit for and how often, how hard you are to hurt, how fast you work,
+   what you find, and what is buffing you; each capped stat with a bar to its cap, and a click on any row says where the number comes
+   from and where to get more. Opened by the Character button in the Equipment tab.
+
+   EVERY NUMBER IS THE RULES FILE'S OWN: bonusOf, styleBonusOf, attackRollOf, defenceRollOf, maxHitOf, swingMsOf, maxHpOf, stepMsOf,
+   fxOf with OUT_CAP, petFx, gemBonus/gemRolls, charmOf, tkDmg/tkAcc, buffsOf, hitChance. The "where it comes from" lists read the same
+   inputs those functions read, so they cannot disagree with the total. Nothing is sent to the server: the page already has the
+   character, so the window costs nothing but drawing. Fetched the first time it is opened, never at login.
+
+   NOT HERE YET, ON PURPOSE: the mockup's resistances, critical hits and block. They are proposals that do not exist in the game, and a
+   window that shows a stat nobody can raise is a promise. Each gets its row the week its stat lands (mockups 2, 3 and 4).
+
+   createCharWin({ G, $, esc, flatArt, SFX, getMe, getYou, wikiGo }) -> { open() }
+   ============================================================ */
+export function createCharWin(E) {
+  const { G, $, esc, SFX } = E;
+  const IC = (k) => `/v3/assets/img/glad/flat/items/${k}.png`, UI = (k) => `/v3/assets/img/glad/flat/ui/${k}.png?v=1`, PET = (art) => `/v3/assets/img/glad/flat/${art}.png`;
+  const pct = (v, d = 0) => `${(v * 100).toFixed(d).replace(/\.0$/, "")}%`;
+  const ITEMS = G.ITEMS, SK = G.SKILLS;
+  let tab = "Damage", sel = 0, win = null;
+
+  function css() {
+    if ($("charCss")) return; const st = document.createElement("style"); st.id = "charCss"; st.textContent = `
+#charWin{width:min(860px,calc(100% - 28px));height:min(700px,calc(100% - 28px));z-index:90}
+#charWin .win-body{display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.ch-top{display:grid;grid-template-columns:minmax(0,1fr) 118px minmax(0,1fr);gap:10px;align-items:stretch}
+.ch-id b.nm{display:block;font:800 20px/1.1 var(--k-disp);color:var(--k-ink)}
+.ch-id .k-label{display:block;margin:2px 0 6px}
+.ch-sk{display:grid;grid-template-columns:22px 1fr auto;gap:6px;align-items:center;padding:3px 0;font:700 13.5px var(--k-disp);color:var(--k-ink)}.ch-sk img{width:20px;height:20px;image-rendering:pixelated}.ch-sk b{font:800 15px Lora,sans-serif}
+.ch-fig{display:grid;place-items:center;align-content:center;gap:2px;border:10px solid transparent;border-image:url(${UI("frame")}) 12 fill / 10px stretch;image-rendering:pixelated;position:relative}
+.ch-fig img{width:96px;height:120px;image-rendering:pixelated}.ch-fig .k-chip{position:absolute;top:-16px;left:50%;transform:translateX(-50%)}
+.ch-vit{display:grid;grid-template-columns:1fr auto;gap:3px 10px;align-content:center;font:800 11.5px Lora,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--k-ink2)}.ch-vit b{font:800 15px Lora,sans-serif;color:var(--k-ink);text-align:right;letter-spacing:0;text-transform:none}
+.ch-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
+.ch-strip span{display:grid;justify-items:center;gap:1px;padding:5px 2px 4px;border-radius:6px;background:#e6dcc4;border:1px solid #bfb193;min-width:0;cursor:help}
+.ch-strip img{width:22px;height:22px;image-rendering:pixelated}.ch-strip b{font-size:15px;line-height:1.15;color:#2a2016}.ch-strip small{font-size:9.5px;color:#6a5a40;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.ch-main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;min-height:0;flex:1;overflow:auto;align-items:start}
+.ch-rows{display:grid;gap:3px;align-content:start}
+.ch-row{display:grid;grid-template-columns:1fr auto 64px;gap:8px;align-items:center;padding:5px 9px;border:0;border-radius:6px;background:rgba(0,0,0,.06);font:600 13px Lora,sans-serif;color:var(--k-ink);text-align:left;cursor:pointer;width:100%}
+.ch-row:hover{background:rgba(0,0,0,.1)}.ch-row[aria-pressed="true"]{background:var(--k-paper-hi);box-shadow:inset 0 0 0 2px var(--k-gold)}
+.ch-row b{font:800 13.5px Lora,sans-serif;text-align:right;font-variant-numeric:tabular-nums}
+.ch-row .cap{height:6px;border-radius:3px;background:rgba(0,0,0,.12);overflow:hidden}.ch-row .cap::after{content:"";display:block;height:100%;width:var(--f,0%);background:var(--k-gold)}.ch-row .cap.full::after{background:var(--k-good)}.ch-row .cap.none{background:none}
+.ch-det{align-self:start;display:grid;gap:6px;position:sticky;top:0}
+.ch-det h4{margin:0}.ch-det p{margin:0;font:600 12.5px/1.45 Lora,sans-serif;color:var(--k-ink2)}
+.ch-src{display:grid;gap:3px}.ch-src div{display:grid;grid-template-columns:20px 1fr auto;gap:7px;align-items:center;padding:4px 7px;border-radius:6px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);font:600 12.5px Lora,sans-serif;color:var(--k-ink)}
+.ch-src img{width:18px;height:18px;image-rendering:pixelated}.ch-src b{font-weight:800}.ch-src div.more{background:#e3f1d6;box-shadow:inset 0 0 0 1.5px #9fcf8c}
+.ch-capbar{height:10px;border-radius:5px;background:rgba(0,0,0,.12);overflow:hidden}.ch-capbar::after{content:"";display:block;height:100%;width:var(--f,0%);background:linear-gradient(90deg,#c8963a,#e8c070)}
+.ch-foot{flex:none;display:flex;justify-content:space-between;align-items:center;gap:10px;font:700 12px Lora,sans-serif;color:var(--k-ink2);padding-top:4px;border-top:2px solid var(--k-line)}
+#charWin .k-tabs{margin:0 -12px;padding-left:12px}
+.ms-entry.ch-entry{padding:2px 8px 6px;margin:0}`; document.head.append(st); }
+
+  /* every row, worked out fresh each time the window is drawn: [label, value, fraction of its cap or null, { p, src, more, cap }] */
+  function rows(me) {
+    const b = G.bonusOf(me), sb = G.styleBonusOf(me), style = G.styleOf(me), styleLvl = G.styleLvlOf(me), fx = G.fxOf(me), cap = G.OUT_CAP, pet = G.petFx(me), gems = G.gemBonus(me);
+    const atk = G.attackRollOf(me), def = G.defenceRollOf(me), maxHit = G.maxHitOf(me), swing = G.swingMsOf(me), hp = G.maxHpOf(me), step = G.stepMsOf(me), speedUp = G.STEP_MS / step - 1;
+    const focus = G.charmOf(me, "focus"), ward = G.wardOf(me), tkD = G.tkDmg(me, style), tkA = G.tkAcc(me, style), petOn = G.activePet(me);
+    const weapon = me.eq.weapon && ITEMS[me.eq.weapon], tool = weapon && weapon.tool;
+    const worn = G.SLOTS.filter((s) => s !== "pet" && me.eq[s] && ITEMS[me.eq[s]]).map((s) => ({ k: me.eq[s], it: ITEMS[me.eq[s]], acc: G.statOf(me, me.eq[s], "acc"), str: G.statOf(me, me.eq[s], "str"), def: G.statOf(me, me.eq[s], "def") }));
+    const petRow = (v) => (petOn ? [[PET(G.PETS[petOn.k].art), G.petLabel(petOn), v]] : []);
+    /* the monsters of the band you are standing in, low to high, for the hit chances both ways */
+    const band = G.BANDS[String(me.scene || "").split(":")[0]] || [1, 9];
+    const near = Object.entries(G.MOBS).filter(([, m]) => !m.boss && !m.event && !m.raid && !m.bag && m.lvl >= band[0] && m.lvl <= band[1] + 30).sort((x, y) => x[1].lvl - y[1].lvl);
+    const picks = [...new Set([near[0], near[Math.floor(near.length / 2)], near[near.length - 1]].filter(Boolean))];
+    const capRow = (k, label, p, src, more, neg) => [label, `${neg ? "−" : "+"}${pct(fx[k], 1)}`, fx[k] / cap[k], { p, src, more, cap: `${pct(cap[k])} cap` }];
+    return {
+      Damage: [
+        ["Style", SK[style].name, null, { p: `Taken from what is in your hand: ${weapon ? weapon.name : "nothing"}.${tool ? ` A tool trains ${SK[tool].name}; in a fight you swing it as Melee.` : ""}`, src: weapon ? [[IC(me.eq.weapon), weapon.name, SK[style].name]] : [], more: [] }],
+        ["Accuracy from gear", `+${sb.acc}`, null, { p: "Added up across everything worn. With a bow or a wand, only the weapon and the quiver or bag count.", src: worn.filter((w) => w.acc).map((w) => [IC(w.k), w.it.name, `+${w.acc}`]), more: [] }],
+        ["Strength from gear", `+${sb.str}`, null, { p: "Every 2 points of gear strength is +1 max hit.", src: worn.filter((w) => w.str).map((w) => [IC(w.k), w.it.name, `+${w.str}`]), more: [] }],
+        ["Attack roll", atk.toFixed(1), null, { p: `${SK[style].name} ${styleLvl} + 1 + gear accuracy${focus ? `, then +${focus}% from Focus` : ""}${tkA ? `, then +${pct(tkA)} from jade and gadgets` : ""}. Against a monster's defence it decides how often you land.`,
+          src: [[IC("skill_" + style), `${SK[style].name} ${styleLvl} + 1`, String(styleLvl + 1)], ...(sb.acc ? [[IC(me.eq.weapon || "skill_attack"), "Gear accuracy", `+${sb.acc}`]] : []), ...(focus ? [[IC("scroll_focus"), "Focus charm", `+${focus}%`]] : []), ...(gems.jade ? [[IC("jade"), "Jade", `+${gems.jade}%`]] : [])],
+          more: gems.jade ? [] : [[IC("jade"), "A jade in the gem bag", "up to +20%"]] }],
+        ["Max hit", String(maxHit), null, { p: `1 + ${SK[style].name} level ÷ 6 + gear strength ÷ 2${focus ? ", then Focus" : ""}${tkD ? `, then your +${pct(tkD, 1)} damage bonus` : ""}.`,
+          src: [[IC("skill_" + style), `1 + ${styleLvl} ÷ 6`, String(1 + Math.floor(styleLvl / 6))], [IC(me.eq.weapon || "skill_strength"), `${sb.str} strength ÷ 2`, String(Math.floor(sb.str / 2))], ...(gems.ruby && style === "melee" ? [[IC("ruby"), "Rubies", `+${gems.ruby}%`]] : [])],
+          more: style === "melee" ? [[IC("ruby"), gems.ruby ? "A better-rolled ruby" : "A ruby in the gem bag", "up to +20%"]] : style === "archery" ? [[IC("jasper"), "Jasper in the gem bag", "up to +20%"]] : [[IC("amethyst"), "Amethyst in the gem bag", "up to +20%"]] }],
+        ["Swing time", `${(swing / 1000).toFixed(2)} s`, null, { p: `The weapon's own speed (${((weapon?.speed || G.SWING_MS) / 1000).toFixed(1)} s) made faster by work speed, +${pct(G.swingFx(me), 1)} (at most ${pct(cap.speed)}).`,
+          src: [...(weapon ? [[IC(me.eq.weapon), weapon.name, `${((weapon.speed || G.SWING_MS) / 1000).toFixed(1)} s`]] : []), ...worn.filter((w) => w.it.fx?.speed).map((w) => [IC(w.k), w.it.name, `+${pct(w.it.fx.speed)}`]), ...(pet.swing ? petRow(`+${pet.swing}%`) : [])], more: [] }],
+        ["Damage bonus", `+${pct(tkD, 1)}`, null, { p: "Everything that makes this style's hits bigger: rubies for Melee, jasper for arrows, amethyst for spells, Tinkering gadgets, outfits, arrow and spell damage gear.", src: [...(gems.ruby && style === "melee" ? [[IC("ruby"), "Rubies", `+${gems.ruby}%`]] : []), ...(gems.jasper && style === "archery" ? [[IC("jasper"), "Jasper", `+${gems.jasper}%`]] : []), ...(gems.amethyst && style === "magic" ? [[IC("amethyst"), "Amethyst", `+${gems.amethyst}%`]] : [])], more: [] }],
+        capRow("adm", "Arrow damage", "Only with a bow.", [], [[IC("skyripper"), "Skyripper", "+6%"], [IC("hunters_fang"), "Hunter's Fang", "+8%"]]),
+        capRow("mdm", "Spell damage", "Only with a wand.", [], [[IC("winters_heart"), "Winter's Heart", "+8%"], [IC("rimeheart"), "Rimeheart", "+6%"]]),
+        capRow("execute", "Execute", "A monster under this much health dies to your next hit. Never a boss.", [], [[IC("reaper_scythe"), "The Reaper's scythe", "+10%"]]),
+        ...picks.map(([, m]) => [`Hit chance: ${m.name} (${m.lvl})`, pct(G.hitChance(atk, m.def)), G.hitChance(atk, m.def) / 0.95, { p: `Your attack roll (${atk.toFixed(0)}) against its defence (${m.def}). 95% is the most anyone lands.`, src: [], more: [], cap: "95% cap" }])],
+      Defence: [
+        ["Defence from gear", `+${b.def}`, null, { p: "Every worn piece, whatever is in your hand.", src: worn.filter((w) => w.def).map((w) => [IC(w.k), w.it.name, `+${w.def}`]), more: [] }],
+        ["Defence roll", def.toFixed(1), null, { p: `(${SK[style].name} ${styleLvl} + gear defence ${b.def}) ÷ 2. Against a monster's attack it decides how often you're hit.`, src: [[IC("skill_" + style), `${SK[style].name} ${styleLvl}`, String(styleLvl)], [IC(me.eq.body || "skill_defence"), "Gear defence", `+${b.def}`]], more: [] }],
+        ...picks.map(([, m]) => [`Hit by: ${m.name} (${m.lvl})`, pct(G.hitChance(m.att, def)), null, { p: `Its attack (${m.att}) against your defence roll (${def.toFixed(0)}). It hits for up to ${m.max}.`, src: [], more: [] }]),
+        capRow("tough", "Damage taken", "Less damage from every hit: pets, hematite, some gear.", [...worn.filter((w) => w.it.fx?.tough).map((w) => [IC(w.k), w.it.name, `−${pct(w.it.fx.tough)}`]), ...(pet.tough ? petRow(`−${pet.tough}%`) : []), ...(gems.hematite ? [[IC("hematite"), "Hematite", `−${gems.hematite}%`]] : [])],
+          [[IC("hematite"), "Hematite in the gem bag", "up to −20%"], [PET("pet_mossback"), "A Mossback Tortoise", "−10%"]], true),
+        ["Health", String(hp), null, { p: `Hitpoints ${G.lvlOf(me, "hp")}${pet.hp ? ` + ${pet.hp} from your pet` : ""}.`, src: [[IC("skill_hp"), `Hitpoints ${G.lvlOf(me, "hp")}`, String(G.lvlOf(me, "hp"))], ...(pet.hp ? petRow(`+${pet.hp}`) : [])], more: [[PET("pet_lanternmoth"), "A Lantern Moth", "+15"]] }],
+        capRow("leech", "Life leech", "That share of the damage you deal comes back as health.", [], []),
+        capRow("heal", "Food heals", "Food heals this much more.", gems.bloodstone ? [[IC("bloodstone"), "Bloodstone", `+${gems.bloodstone}%`]] : [], [[IC("bloodstone"), "Bloodstone in the gem bag", "up to +20%"]]),
+        ["Frost ward", ward ? "worn" : "none", null, { p: "In the Frozen Reach, anyone without a ward loses 25 health a second.", src: worn.filter((w) => w.it.ward === "frost").map((w) => [IC(w.k), w.it.name, "ward"]), more: ward ? [] : [[IC("frostcharm"), "A Frost charm from Wren", "ward"]] }]],
+      Skilling: [
+        capRow("speed", "Work speed", "Swings, chops, mining and fishing, all faster.", [...worn.filter((w) => w.it.fx?.speed).map((w) => [IC(w.k), w.it.name, `+${pct(w.it.fx.speed)}`]), ...(pet.swing ? petRow(`+${pet.swing}%`) : [])], [[PET("pet_coilling"), "The Coilling", "+10%"]]),
+        ["Walking speed", `+${Math.round(speedUp * 100)}%`, speedUp / (G.SPEED_CAP / 100), { p: `Agility and pets. A step takes ${step} ms instead of ${G.STEP_MS}.`, src: [[IC("skill_agility"), `Agility ${G.lvlOf(me, "agility")}`, ""], ...(pet.speed ? petRow(`+${pet.speed}%`) : [])], more: [[PET("pet_bonepup"), "A Bonepup", "+8%"]], cap: `${G.SPEED_CAP}% cap` }],
+        capRow("double", "Double gathers", "That share of what you mine, cut or catch comes up twice.", [], []),
+        capRow("gem", "Gem finds", "Jewels turn up in the rock more often.", worn.filter((w) => w.it.fx?.gem).map((w) => [IC(w.k), w.it.name, `+${pct(w.it.fx.gem)}`]), []),
+        ...[["opal", "Mining"], ["sapphire", "Fishing"], ["topaz", "Chopping"]].map(([g, n]) => [`${n} speed (${g})`, `+${gems[g] || 0}%`, null, { p: "Skilling gems in the case side of your gem bag. The best two of each kind count.", src: gems[g] ? [[IC(g), g[0].toUpperCase() + g.slice(1), `+${gems[g]}%`]] : [], more: [[IC(g), `A ${g} from the Gem Sorter`, "up to +20%"]] }]),
+        capRow("bite", "Fish bite", "Fish bite more often.", [], [[PET("pet_stormling"), "A Stormling", "+10%"]]),
+        capRow("smelt", "Free smelts", "That share of smelts cost no ore.", [], [[IC("bessemergloves"), "Bessemer's Gauntlets", "+15%"]]),
+        capRow("forge", "Reforge success", "Reforges at the anvil land more often.", [], [[IC("bessemergloves"), "Bessemer's Gauntlets", "+10%"]]),
+        capRow("steal", "Pickpocket success", "Thieving succeeds more often.", [], [[PET("pet_ferret"), "A Fortune Ferret", "+10%"]])],
+      "Loot and luck": [
+        ["Tickets from kills", `+${pct(fx.tix + pet.tix / 100)}`, Math.min(1, (fx.tix + pet.tix / 100) / cap.tix), { p: "More tickets from every kill.", src: [...(pet.tix ? petRow(`+${pet.tix}%`) : []), ...worn.filter((w) => w.it.fx?.tix).map((w) => [IC(w.k), w.it.name, `+${pct(w.it.fx.tix)}`])], more: [[PET("pet_cointoad"), "A Coin Toad", "+15%"]], cap: `${pct(cap.tix)} cap` }],
+        capRow("rare", "Rare drops", "Rare drops come up more often.", [], [[IC("scroll_keeneye"), "Keen Eye charm", "+10%"]]),
+        capRow("zdrop", "Real ZCoin drops", "A real ZCoin is more likely to drop. Clovers, one used per kill.", (me.luck | 0) > 0 ? [[IC("clover"), `${me.luck} clovers`, `+${pct(G.LUCK.zdrop)}`]] : [], [[IC("clover"), "A clover, from fishing", `+${pct(G.LUCK.zdrop)}`]]),
+        capRow("ammo", "Ammo saved", "Shots and casts that spend no arrow or page.", [], []),
+        ["Total level", G.totalOf(me).toLocaleString(), null, { p: "Every skill added up.", src: [], more: [] }]],
+      Buffs: [
+        ...(petOn ? [[`Pet: ${G.petLabel(petOn)}`, G.petFxText(petOn.fx || G.PETS[petOn.k].fx), null, { p: "The pet at your heel.", src: [[PET(G.PETS[petOn.k].art), G.PETS[petOn.k].name, G.RANKS[G.rankOf(petOn)].name]], more: [] }]] : [["Pet", "none", null, { p: "Nothing at your heel. Pets turn up past the Lantern Mire.", src: [], more: [] }]]),
+        ["Gem bag", `${Object.keys(gems).length} kinds`, null, { p: "Only the best two of each kind count.", src: Object.entries(G.gemRolls(me)).map(([k, r]) => [IC(k), k[0].toUpperCase() + k.slice(1), r.slice(0, 2).map((x) => (x >= 0 ? "+" : "") + x).join(" / ")]), more: [] }],
+        ...G.buffsOf(me).map((bf) => [bf.name, bf.left == null ? "worn" : `${bf.left} ${bf.unit}`, null, { p: bf.ex, src: [[IC(bf.icon), bf.name, ""]], more: [] }])] };
+  }
+
+  function paint() {
+    const me = E.getMe(); if (!me || !win) return;
+    const R = rows(me), list = R[tab]; if (sel >= list.length) sel = 0;
+    const cur = list[sel], d = cur[3], style = G.styleOf(me), weapon = me.eq.weapon && ITEMS[me.eq.weapon], b = G.bonusOf(me), fx = G.fxOf(me), combat = G.combatOf(me);
+    const fig = $("dollFig"), figImg = fig && fig.width ? `<img src="${fig.toDataURL()}" alt="">` : "";
+    const strip = [[UI("equip"), `+${b.def}`, "armour", "Defence from everything worn"], [IC("skill_defence"), G.defenceRollOf(me).toFixed(0), "def roll", "How hard you are to hit"], [IC("hematite"), `−${pct(fx.tough)}`, "dmg taken", `Less damage from every hit, at most ${pct(G.OUT_CAP.tough)}`], [IC("skill_hp"), String(G.maxHpOf(me)), "health", "Your Hitpoints level and any pet"], [IC(G.wardOf(me) ? "frostward_amulet" : "frostcharm"), G.wardOf(me) ? "yes" : "no", "frost ward", "The Frozen Reach's cold cannot touch you while you wear one"]];
+    const maxed = Object.values(R).flat().filter((r) => r[2] != null && r[2] >= 0.999).length, capped = Object.values(R).flat().filter((r) => r[2] != null).length;
+    win.innerHTML = `<div class="win-head"><b><img src="${UI("skills")}" alt="" class="topi">Character</b><small>every number the game uses about you, and where to get more</small><button type="button" class="win-x" aria-label="Close">×</button></div>
+    <div class="win-body">
+      <div class="ch-top">
+        <div class="ch-id"><b class="nm">${esc(E.getYou()?.name || "You")}</b><span class="k-label">${SK[style].name} · combat ${combat}</span>
+          ${["melee", "archery", "magic", "hp"].map((k) => `<div class="ch-sk"><img src="${IC("skill_" + k)}" alt=""><span>${SK[k].name}</span><b>${G.lvlOf(me, k)}</b></div>`).join("")}
+          <div class="ch-sk" style="color:var(--k-ink2)"><span></span><span>Total level</span><b>${G.totalOf(me).toLocaleString()}</b></div></div>
+        <div class="ch-fig"><span class="k-chip gold">Combat ${combat}</span>${figImg}<small class="k-note">${weapon ? esc(weapon.name) : "Unarmed"}</small></div>
+        <div class="ch-vit"><span>Health</span><b>${G.maxHpOf(me)}</b><span>Max hit</span><b>${G.maxHitOf(me)}</b><span>Swing</span><b>${(G.swingMsOf(me) / 1000).toFixed(2)} s</b><span>Attack roll</span><b>${G.attackRollOf(me).toFixed(0)}</b><span>Defence roll</span><b>${G.defenceRollOf(me).toFixed(0)}</b><span>Walking</span><b>+${Math.round((G.STEP_MS / G.stepMsOf(me) - 1) * 100)}%</b></div>
+      </div>
+      <div class="k-sect"><span class="k-label">Armour</span></div>
+      <div class="ch-strip">${strip.map(([ic, v, l, t]) => `<span title="${esc(t)}"><img src="${ic}" alt=""><b>${v}</b><small>${l}</small></span>`).join("")}</div>
+      <div class="k-tabs" role="tablist">${Object.keys(R).map((t) => `<button type="button" role="tab" data-t="${t}" aria-selected="${t === tab}">${t}</button>`).join("")}</div>
+      <div class="ch-main">
+        <div class="ch-rows">${list.map(([l, v, f], i) => `<button type="button" class="ch-row" data-i="${i}" aria-pressed="${i === sel}"><span>${esc(l)}</span><b>${esc(v)}</b><span class="cap ${f == null ? "none" : f >= 0.999 ? "full" : ""}" style="--f:${f == null ? 0 : Math.min(100, f * 100)}%"></span></button>`).join("")}</div>
+        <div class="ch-det"><h4>${esc(cur[0])} <span style="float:right">${esc(cur[1])}</span></h4><p>${esc(d.p)}</p>
+          ${cur[2] != null && d.cap ? `<div style="display:flex;justify-content:space-between" class="k-note"><span>${esc(cur[1])}</span><span>${esc(d.cap)}</span></div><div class="ch-capbar" style="--f:${Math.min(100, cur[2] * 100)}%"></div>` : ""}
+          ${d.src.length ? `<span class="k-label">Where it comes from</span><div class="ch-src">${d.src.map(([i, n, v]) => `<div><img src="${i}" alt="" onerror="this.style.visibility='hidden'"><span>${esc(n)}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
+          ${d.more.length ? `<span class="k-label" style="color:var(--k-good)">Where to get more</span><div class="ch-src">${d.more.map(([i, n, v]) => `<div class="more"><img src="${i}" alt="" onerror="this.style.visibility='hidden'"><span>${esc(n)}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}</div>
+      </div>
+      <div class="ch-foot"><span>Click a stat for where it comes from.</span><span class="k-chip gold">${maxed} of ${capped} caps maxed</span></div>
+    </div>`;
+    win.querySelectorAll(".k-tabs button").forEach((t) => t.addEventListener("click", () => { SFX?.play?.("ui_click"); tab = t.dataset.t; sel = 0; paint(); }));
+    win.querySelectorAll(".ch-row").forEach((r) => r.addEventListener("click", () => { SFX?.play?.("ui_click"); sel = +r.dataset.i; paint(); }));
+    win.querySelector(".win-x").addEventListener("click", () => { win.hidden = true; SFX?.play?.("ui_close"); });
+  }
+
+  function open() {
+    css();
+    if (!win) { win = document.createElement("section"); win.className = "win k-win"; win.id = "charWin"; win.setAttribute("aria-label", "Character"); ($("msWin") || document.body).after(win); }
+    paint(); win.hidden = false; SFX?.play?.("ui_open");
+  }
+  /* redraw while open, so swapping a ring shows at once (the page calls this from its own redraw of the panel) */
+  const refresh = () => { if (win && !win.hidden) paint(); };
+  return { open, refresh };
+}

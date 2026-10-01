@@ -6236,7 +6236,7 @@ $("dashWin").addEventListener("click", (e) => { if (e.target.closest("#dashTrk")
 /* (2026-09-30, the owner: "it says my stats is shipped on the roadmap but it isnt showing in players profiles") it is on your OWN profile only (private), and
    nobody could find their own profile: your name in the top bar opens it now, and the Skills tab leads with My stats */
 $("topName").addEventListener("click", () => { if (you) { SFX.play("ui_click"); openProfile(you.name); } });
-document.addEventListener("click", (e) => { if (e.target.closest("[data-mystats]")) { SFX.play("ui_click"); msOpen(); } else if (e.target.closest("[data-myprof]") && you) { SFX.play("ui_click"); openProfile(you.name); } });   /* (2026-09-30) the World data window */
+document.addEventListener("click", (e) => { if (e.target.closest("[data-charstats]")) { chUi().then((w) => w.open()); return; } if (e.target.closest("[data-mystats]")) { SFX.play("ui_click"); msOpen(); } else if (e.target.closest("[data-myprof]") && you) { SFX.play("ui_click"); openProfile(you.name); } });   /* (2026-09-30) the World data window */
 addEventListener("keydown", (e) => { if ((e.key === "`" || e.key === "~") && !e.repeat && !e.ctrlKey && !e.metaKey && isStaff() && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) { e.preventDefault(); dashOpen(); } });
 
 /* THE PICTURE HOUSE (v119). eastcoin.vip's Movies & TV, on the screen in the theatre — the module's header has how a room
@@ -6515,6 +6515,10 @@ let PETUI = null; const PETUI_URL = "/v3/assets/js/eastscape-pets.js?v=5";
 function petUi() { return PETUI ? Promise.resolve(PETUI) : import(PETUI_URL).then((m) => (PETUI = m.createPetUi({ G, $, esc, ico, sico, lvl, send, SFX, openWin, say, rankTag, petPic, ITEMS, get me() { return me; } }))); }
 function openPen(e) { petUi().then((u) => u.openPen(e)); }
 function openHatch(e) { petUi().then((u) => u.openHatch(e)); }
+/* (2026-10-01) THE CHARACTER WINDOW (mockup 9, approved after testing in the game): every number the game uses about you, from the Character
+   button in the Equipment tab. Fetched the first time it is opened, never at login; nothing is sent to the server. See eastscape-char.js. */
+let CHUI = null; const CHUI_URL = "/v3/assets/js/eastscape-char.js?v=1";
+function chUi() { return CHUI ? Promise.resolve(CHUI) : import(CHUI_URL).then((m) => (CHUI = m.createCharWin({ G, $, esc, flatArt, SFX, getMe: () => me, getYou: () => you }))); }
 let COLUI = null; const COLUI_URL = "/v3/assets/js/eastscape-collog.js?v=2";   /* (2026-09-27) the collection log's window, fetched the first time a podium is clicked */
 function colUi() { return COLUI ? Promise.resolve(COLUI) : import(COLUI_URL).then((m) => (COLUI = m.createColLog({ G, $, esc, ico, flatArt, SFX, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); } }))); }
 function openMarket() { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin", "gameWin", "lookWin", "jukeWin", "vanWin"]) $(w).hidden = true; $("hwWin").hidden = false; SFX.play("ui_open"); renderMarket(); }
@@ -8204,10 +8208,11 @@ function renderPanel() {
     p.innerHTML = `<div class="ph">Equipment <small>combat ${G.combatOf(me)}</small></div><div class="doll">${G.SLOTS.map(slot).join("")}<div class="doll-fig" style="grid-area:fig"><canvas id="dollFig" width="96" height="120" aria-hidden="true"></canvas></div></div>
       <div class="bstrip">${cell(sico("attack"), `+${b.acc}`, "acc", "Accuracy: how often you land a hit")}${cell(sico("strength"), `+${b.str}`, "str", "Strength: how hard you hit")}${cell(sico("melee"), G.maxHitOf(me), "max", `Max hit: the most one blow can do${G.launcherOf(me) ? `, with +${G.ammoStrOf(me)} from your ammo` : ""}`)}${cell(sico("defence"), `+${b.def}`, "def", "Defence: how often they miss you")}${cell(ITEM_ART.has("sandals") ? artOf("sandals") : "👟", `+${G.speedText(me, me.speedTest || 0)}%`, "speed", "Speed: how fast you walk")}</div>
       <div class="bwield">${me.eq.weapon ? `${ico(me.eq.weapon)} ${esc(ITEMS[me.eq.weapon].name)}` : "✊ Unarmed"}${G.launcherOf(me) ? ` · fights with ${sico(G.styleOf(me))} ${SKILLS[G.styleOf(me)].name} ${G.lvlOf(me, G.styleOf(me))}` : ""}${tool ? ` · trains ${SKILLS[tool].name}` : ""}</div>
+      <div class="ms-entry ch-entry"><button type="button" class="k-btn sm" data-charstats><img src="/v3/assets/img/glad/flat/ui/skills.png?v=1" alt="">Character</button><span class="k-note">every number, and where to get more</span></div>
       ${quiverRow()}
       <div class="ph phsep">Pets</div>${petRows}
       <p class="note">Click a piece to take it off; right-click any item for its wiki page. Tools go in your weapon hand.</p>`;
-    drawDollFig();
+    drawDollFig(); CHUI?.refresh();   /* (2026-10-01) the Character window, if it is open */
     p.querySelectorAll(".eq[data-slot]").forEach((el) => el.addEventListener("click", () => send({ t: "unequip", slot: el.dataset.slot })));
     p.querySelectorAll("[data-qunload]").forEach((b) => b.addEventListener("click", () => send({ t: "quiver", op: "unload" })));
     p.querySelectorAll("[data-qload]").forEach((b) => b.addEventListener("click", () => send({ t: "quiver", op: "load", i: +b.dataset.qload })));
