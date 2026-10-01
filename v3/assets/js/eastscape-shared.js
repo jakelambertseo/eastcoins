@@ -10204,3 +10204,7 @@ export const abilOrderOf = (c, style) => { const own = (ABIL[style] || []).map((
 export const abilUnlocked = (c, k) => { const a = ABIL_BY[k], st = a && Object.keys(ABIL).find((s) => ABIL[s].includes(a)); return !!(a && st && lvlOf(c, st) >= a.lvl); };
 /** an order the page sent, made safe: only that style's keys, each once, all three present */
 export const cleanAbilOrder = (style, list) => { const own = (ABIL[style] || []).map((a) => a.k); if (!own.length) return null; const got = (Array.isArray(list) ? list : []).map(String).filter((k) => own.includes(k)); return [...new Set([...got, ...own])]; };
+/* (2026-10-01) HELD, and NOT in the next batch (the owner: "lets hold on this for now (not put it into next planned batch). i dont think its very
+   fleshed out yet, and we really need to hold it for when users reach 99 in any combat skill"). Off everywhere: no ability fires, the order
+   message is ignored, the strip is hidden. Only a local test with ?open=1 (the dev server runs with __ES_OPEN_ALL) still has them. */
+HOLD.abil = !globalThis.__ES_OPEN_ALL;

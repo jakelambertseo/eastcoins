@@ -1,6 +1,16 @@
 [
  {
   "date": "2026-10-01",
+  "area": "Combat",
+  "decision": "Abilities are held: not in the next batch, switched off, and they wait until a player reaches 99 in a combat skill.",
+  "quote": "lets hold on this for now (not put it into next planned batch). i dont think its very fleshed out yet, and we really need to hold it for when users reach 99 in any combat skill",
+  "why": "not fleshed out yet",
+  "page": "ascend-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
   "area": "Skilling",
   "decision": "Every non-combat skill gets a four-piece skilling set (hat, coat, gloves, boots) with a full-set bonus, each set dropping from a different skill or event, on the Ditched set's model.",
   "quote": "a full set should provide bonuses to that skill, and we already have Ditched gear as a template",
@@ -106,8 +116,8 @@
   "quote": "go ahead with the abilities",
   "why": "",
   "page": "ascend-mock",
-  "status": "standing",
-  "replacedBy": ""
+  "status": "superseded",
+  "replacedBy": "held until the first combat 99, not in the next batch"
  },
  {
   "date": "2026-10-01",

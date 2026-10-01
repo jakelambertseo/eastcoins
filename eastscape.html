@@ -6644,6 +6644,8 @@ let quickSig = "";
 let ABWORDS = [], ABCD = {}, abSig = "", abTick = 0, abTab = null;
 function renderAbil() {
   if (!me) return;
+  $("abilBar").style.display = G.HOLD.abil ? "none" : "";   /* (2026-10-01) held: see HOLD.abil */
+  if (G.HOLD.abil) return;
   const st = G.styleOf(me), order = G.abilOrderOf(me, st), sig = st + "|" + order.join(",") + "|" + order.map((k) => G.abilUnlocked(me, k) ? 1 : 0).join("");
   if (sig !== abSig) { abSig = sig;
     $("abilBar").innerHTML = order.map((k, i) => { const a = G.ABIL_BY[k], on = G.abilUnlocked(me, k);

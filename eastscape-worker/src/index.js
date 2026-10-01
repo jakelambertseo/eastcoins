@@ -1017,7 +1017,7 @@ export class World {
       }
       case "quick": { const i = m.i | 0, n = G.quickNOf(pl.C); if (i < 0 || i >= n) return; const k = m.k == null ? null : String(m.k);   /* (2026-09-30) the Store's extra slots */
         if (k && !G.ITEMS[k]) return; const q = (pl.C.quick ||= [null, null, null, null]); while (q.length < n) q.push(null); q[i] = k; return this.touch(pl); }
-      case "abil": { const st = String(m.style || ""), o = G.cleanAbilOrder(st, m.order); if (!o) return; pl.C.abil = { ...(pl.C.abil || {}), [st]: o }; this.touch(pl); return; }   /* (2026-10-01) ABILITIES: set a style's order, nothing else */
+      case "abil": { if (G.HOLD.abil) return; const st = String(m.style || ""), o = G.cleanAbilOrder(st, m.order); if (!o) return; pl.C.abil = { ...(pl.C.abil || {}), [st]: o }; this.touch(pl); return; }   /* (2026-10-01) ABILITIES: set a style's order, nothing else */
       case "quiver": return this.quiverOp(pl, m);   /* (2026-09-25) load / unload the offhand pouch */   /* (2026-09-25) the Count Room. One tier, so there is nothing to pick and nothing to read off the message. */
       case "pyramid": return m.op === "enter" ? this.pyramidEnter(S, pl) : undefined;
       case "tower": return m.op === "enter" ? this.towerEnter(S, pl, m) : undefined;   /* m carries an optional lower floor: the door’s "start again at floor 1" */
@@ -2325,7 +2325,7 @@ export class World {
   /* ------------------------------------------------------------ ABILITIES (2026-10-01): see ABIL in the rules file for the why */
   /** the first ability in this player's order that is unlocked, off cooldown and makes sense against this monster now, or null */
   abilPick(S, pl, m, now) {
-    if (S.def.pvp || m.star || m.bag || m.thief) return null;
+    if (G.HOLD.abil || S.def.pvp || m.star || m.bag || m.thief) return null;   /* (2026-10-01) HOLD.abil: held until the first combat 99 */
     const C = pl.C, st = G.styleOf(C), cd = (pl.abilAt ||= {});
     for (const k of G.abilOrderOf(C, st)) {
       const a = G.ABIL_BY[k]; if (!a || !G.abilUnlocked(C, k) || (cd[k] || 0) > now) continue;
