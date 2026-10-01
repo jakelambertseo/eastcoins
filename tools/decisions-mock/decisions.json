@@ -1,6 +1,26 @@
 [
  {
   "date": "2026-10-01",
+  "area": "World & maps",
+  "decision": "A ledge's gathering spot is one tier above what its map already has, so reaching it is worth the shortcut.",
+  "quote": "the gathering spot that the logs can access needs to be 1 tier higher, so that it is lucrative to access that spot/ore/fish/etc",
+  "why": "",
+  "page": "thieving-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Tech & ops",
+  "decision": "Launch was v1.0; the next bundle (the Character window, thieving in the world and shortcuts) is called v1.1.",
+  "quote": "since launch was v1.0, this bundle will be v1.1, just for easier reference",
+  "why": "easier reference",
+  "page": "release-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
   "area": "Skilling",
   "decision": "Thieving in the world and shortcuts are built on dev and ship with the next update, after the owner tests them.",
   "quote": "lets build this on dev and after testing bundle it with our next update",
@@ -42,7 +62,7 @@
  {
   "date": "2026-10-01",
   "area": "World & maps",
-  "decision": "Each open map's shortcut that leads to a ledge gets one extra gathering spot.",
+  "decision": "Each open map's shortcut that leads to a ledge gets one extra gathering spot. (one tier higher, decided the same day)",
   "quote": "1 extra gathering spot by ledges",
   "why": "open maps barely save steps, so the ledge has to lead somewhere",
   "page": "thieving-mock",

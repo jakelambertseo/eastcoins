@@ -10252,20 +10252,25 @@ export const LOCKBOXES = { gloam: [37, 2, 15], mire: [22, 15, 25], boneyard: [22
   carnival: [31, 21, 65], boardwalk: [2, 3, 72], depths: [21, 11, 78], trailer: [40, 4, 85], valley: [20, 12, 92], frozen: [41, 5, 97] };
 /* a: the near side, b: the far side (a ledge's island), at: where its prop stands (a free blocked tile on the hop), on: instead of a prop,
    the existing fence or railing on the hop IS the shortcut. how: the prop's art and the word for crossing. A ledge's spot sits BELOW its
-   island where it can, so a tree's picture never stands in front of the crossing (the Gloam's willow hid its log until it moved). */
+   island where it can, so a tree's picture never stands in front of the crossing (the Gloam's willow hid its log until it moved).
+   (2026-10-01, the owner: "the gathering spot that the logs can access needs to be 1 tier higher, so that it is lucrative to access") A
+   LEDGE'S SPOT IS THE NEXT TIER UP from what the map has, copied from the map that has it: the Gloam's willow island holds the Mire's
+   deadwood, the Mire's the Boneyard's yew, the Sands' and Cloudreach's the Carnival's rustpine (nothing sits between 45 and 65), the
+   Thunderhead's starfall becomes the Vault's voidglass, the Valley's cycad the Reach's frostpine. The Frozen Reach is already the top of
+   every ladder (94), so its island is a second frostpine until a 100+ tree exists (the atlas's Tidepools). */
 export const WORLD_SC = {
-  gloam: { lvl: 10, name: "Fallen log", how: "log", a: [30, 18], b: [28, 20], at: [29, 19], ledge: { spot: [28, 21], type: "willow" } },
-  mire: { lvl: 20, name: "Stepping stones", how: "stones", a: [17, 17], b: [15, 19], at: [16, 18], ledge: { spot: [15, 20], type: "deadtree" } },
+  gloam: { lvl: 10, name: "Fallen log", how: "log", a: [30, 18], b: [28, 20], at: [29, 19], ledge: { spot: [28, 21], obj: { t: "deadtree", name: "Deadwood on the island", log: "ashlogs", req: { skill: "woodcutting", lvl: 20 }, xp: 140 } } },
+  mire: { lvl: 20, name: "Stepping stones", how: "stones", a: [17, 17], b: [15, 19], at: [16, 18], ledge: { spot: [15, 20], obj: { t: "yew", name: "A yew on the island", log: "yewlogs", req: { skill: "woodcutting", lvl: 35 }, xp: 170 } } },
   boneyard: { lvl: 30, name: "Loose railing", how: "duck", a: [3, 8], b: [1, 11], on: true },
-  sands: { lvl: 40, name: "Oasis stones", how: "stones", a: [5, 2], b: [3, 4], at: [4, 3], ledge: { spot: [3, 5], type: "datepalm" } },
-  cloud: { lvl: 45, name: "Cloud hop", how: "stones", a: [29, 17], b: [27, 19], at: [28, 18], ledge: { spot: [28, 19], type: "skyash" } },
-  thunderhead: { lvl: 50, name: "Rope swing", how: "rope", a: [5, 16], b: [3, 18], at: [4, 17], ledge: { spot: [3, 19], type: "rock" } },
+  sands: { lvl: 40, name: "Oasis stones", how: "stones", a: [5, 2], b: [3, 4], at: [4, 3], ledge: { spot: [3, 5], obj: { t: "rustpine", name: "A rustpine in the oasis", log: "pinelogs", req: { skill: "woodcutting", lvl: 65 }, xp: 190 } } },
+  cloud: { lvl: 45, name: "Cloud hop", how: "stones", a: [29, 17], b: [27, 19], at: [28, 18], ledge: { spot: [28, 19], obj: { t: "rustpine", name: "A rustpine on a high cloud", log: "pinelogs", req: { skill: "woodcutting", lvl: 65 }, xp: 190 } } },
+  thunderhead: { lvl: 50, name: "Rope swing", how: "rope", a: [5, 16], b: [3, 18], at: [4, 17], ledge: { spot: [3, 19], obj: { t: "rock", name: "A voidglass seam", ore: "voidglass", req: { skill: "mining", lvl: 70 }, xp: 190 } } },
   carnival: { lvl: 60, name: "Bent cage bars", how: "squeeze", a: [3, 10], b: [1, 12], on: true },
   boardwalk: { lvl: 66, name: "Swing under the pier", how: "rope", a: [14, 5], b: [15, 9], at: [14, 6] },
   depths: { lvl: 75, name: "Gap in the fence", how: "fence", a: [36, 18], b: [40, 22], at: [37, 19] },
   trailer: { lvl: 80, name: "Over the fence", how: "climb", a: [34, 23], b: [32, 24], on: true },
-  valley: { lvl: 90, name: "Vine swing", how: "rope", a: [5, 17], b: [3, 19], at: [4, 18], ledge: { spot: [3, 20], type: "cycad" } },
-  frozen: { lvl: 95, name: "Ice floes", how: "stones", a: [27, 3], b: [25, 4], at: [26, 4], ledge: { spot: [25, 5], type: "frostpine" } } };
+  valley: { lvl: 90, name: "Vine swing", how: "rope", a: [5, 17], b: [3, 19], at: [4, 18], ledge: { spot: [3, 20], obj: { t: "frostpine", name: "A frostpine over the tar", log: "frostpinelogs", req: { skill: "woodcutting", lvl: 94 }, xp: 340 } } },
+  frozen: { lvl: 95, name: "Ice floes", how: "stones", a: [27, 3], b: [25, 4], at: [26, 4], ledge: { spot: [25, 5], obj: { t: "frostpine", name: "Frostpine", log: "frostpinelogs", req: { skill: "woodcutting", lvl: 94 }, xp: 340 } } } };
 const SC_ART = { log: "o_sc_log", stones: "o_sc_stones", rope: "o_sc_rope", fence: "o_sc_fence" };
 export const SC_VERB = { log: "walk the log", stones: "hop across", rope: "swing over", fence: "squeeze through", duck: "duck under the railing", squeeze: "squeeze through the bars", climb: "climb over" };
 export const scLine = (s) => { const [ax, ay] = s.a, [bx, by] = s.b, hop = Math.max(Math.abs(bx - ax), Math.abs(by - ay)), r = []; for (let i = 1; i < hop; i++) r.push([ax + Math.round(((bx - ax) * i) / hop), ay + Math.round(((by - ay) * i) / hop)]); return r; };
@@ -10280,8 +10285,7 @@ function worldThiefObjs(key, b) {
     if (sc.ledge) {
       const [lx, ly] = sc.b, [rx, ry] = sc.ledge.spot;
       b.g[ly][lx] = ".";
-      const proto = b.objs.find((o) => o.t === sc.ledge.type && !o.edge);
-      if (proto) { const o = structuredClone(proto); delete o.id; o.x = rx; o.y = ry; o.ledge = true; b.objs.push(o); b.g[ry][rx] = "#"; }
+      b.objs.push({ ...structuredClone(sc.ledge.obj), x: rx, y: ry, ledge: true }); b.g[ry][rx] = "#";
     }
     if (sc.on) {
       const tiles = scLine(sc), ob = b.objs.find((o) => tiles.some(([x, y]) => x >= o.x && x < o.x + (o.w || 1) && y >= o.y && y < o.y + (o.h || 1)));

@@ -4,27 +4,31 @@
   "commit": "d71cc184",
   "page": "statsui-mock",
   "what": "Every number about you, and where to get more: a button in the Equipment tab.",
-  "ships": "a new module (eastscape-char.js, probe it live first) and the page; no rules change"
+  "ships": "a new module (eastscape-char.js, probe it live first) and the page; no rules change",
+  "bundle": "v1.1"
  },
  {
   "name": "Thieving in the world and shortcuts",
   "commit": "08adcd21",
   "page": "thieving-mock",
-  "what": "Pockets on 19 kinds of people-monster from Thieving 10 (a fail only stuns), a lockbox on 12 maps (lockpicks 1,000 at Vance, keys roll a Crypt or Pyramid hoard twice), a shortcut on 12 maps with 7 ledges each holding one extra gathering spot, and the Guild's stale words fixed. 70+ checks in tools/eastscape-thief-test.mjs.",
-  "ships": "flip HOLD.thief2 to false, VERSION bump (shared ?v bump in eastscape.html), push and probe the new art first (o_sc_log, o_sc_stones, o_sc_rope, o_sc_fence, o_lockbox, items/lockpick, items/skeleton_key), then the worker (new thief.js, crypt.js, pyramid.js)"
+  "what": "Pockets on 19 kinds of people-monster from Thieving 10 (a fail only stuns), a lockbox on 12 maps (lockpicks 1,000 at Vance, keys roll a Crypt or Pyramid hoard twice), a shortcut on 12 maps with 7 ledges each holding one extra gathering spot, one tier above the map's own, and the Guild's stale words fixed. 70+ checks in tools/eastscape-thief-test.mjs.",
+  "ships": "flip HOLD.thief2 to false, VERSION bump (shared ?v bump in eastscape.html), push and probe the new art first (o_sc_log, o_sc_stones, o_sc_rope, o_sc_fence, o_lockbox, items/lockpick, items/skeleton_key), then the worker (new thief.js, crypt.js, pyramid.js)",
+  "bundle": "v1.1"
  },
  {
   "name": "Abilities and the order (2a) · on hold",
   "commit": "cf4091c1",
   "page": "ascend-mock",
   "what": "Built and tested, then held by the owner on 1 October: not fleshed out yet, and it waits for the first player to reach 99 in a combat skill. Not in the next batch.",
-  "ships": "switched off by HOLD.abil (on only for a local ?open=1 test); turning it on later is the switch plus the nine ui/ab_*.png icons pushed and probed first"
+  "ships": "switched off by HOLD.abil (on only for a local ?open=1 test); turning it on later is the switch plus the nine ui/ab_*.png icons pushed and probed first",
+  "bundle": "hold"
  },
  {
   "name": "Skilling sets art",
   "commit": "70059278",
   "page": "skillsets-mock",
   "what": "All 52 icons for the thirteen new sets, drawn; the code isn't written yet.",
-  "ships": "nothing yet: the art waits for the feature"
+  "ships": "nothing yet: the art waits for the feature",
+  "bundle": "none"
  }
 ]

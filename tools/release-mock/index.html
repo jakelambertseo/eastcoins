@@ -48,14 +48,15 @@ h2{margin:0 0 6px;font:800 23px Cinzel,Georgia,serif;color:#ffd98a}
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const $ = (id) => document.getElementById(id);
 fetch("release.json").then((r) => r.json()).then((R) => {
-  $("vers").innerHTML = [[R.live ?? "?", "live on play.eastcoin.vip"], [R.dev, "on the dev server"], [R.held.length, "things held for the next batch"], [new Date(R.builtAt).toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "medium", timeStyle: "short" }), "read from the repos"]].map(([v, l]) => `<div><b>${esc(v)}</b><span>${l}</span></div>`).join("");
+  $("vers").innerHTML = [[R.live ?? "?", "live on play.eastcoin.vip"], [R.dev, "on the dev server"], [R.held.filter((h) => h.bundle === "v1.1").length, "built and held for v1.1"], ["v1.0", "launch (1 October)"], [new Date(R.builtAt).toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "medium", timeStyle: "short" }), "read from the repos"]].map(([v, l]) => `<div><b>${esc(v)}</b><span>${l}</span></div>`).join("");
   const live = R.history.filter((h) => R.live && h.v <= R.live).slice(0, 5);
   const p0 = R.phases[0], p1 = R.phases[1];
   const col = (title, ac, items, sub) => `<div class="col" style="--ac:${ac}"><header><b>${title}</b><span>${sub ?? items.length}</span></header>${items.join("") || `<div class="card"><small>Nothing here.</small></div>`}</div>`;
   const pl = (p) => (p ? `<a href="../${p}/">the plan's page →</a>` : "");
   $("board").innerHTML =
     col("Live", "#7ed060", live.map((h) => `<div class="card"><b>Rules ${h.v}</b><small>${esc(h.date)} · ${esc(h.text)}</small></div>`), `rules ${R.live}`) +
-    col("Built · held", "#e8a03a", R.held.map((h) => `<div class="card"><b>${esc(h.name)}</b><small>${esc(h.what)}</small><small>Shipping needs: ${esc(h.ships)} · <code>${esc(h.commit)}</code></small>${pl(h.page)}</div>`)) +
+    col("Next: v1.1 · built, held", "#e8a03a", R.held.filter((h) => h.bundle === "v1.1").map((h) => `<div class="card"><b>${esc(h.name)}</b><small>${esc(h.what)}</small><small>Shipping needs: ${esc(h.ships)} · <code>${esc(h.commit)}</code></small>${pl(h.page)}</div>`)) +
+    col("On hold · not in v1.1", "#a89070", R.held.filter((h) => h.bundle !== "v1.1").map((h) => `<div class="card"><b>${esc(h.name)}</b><small>${esc(h.what)}</small><small>${esc(h.ships)} · <code>${esc(h.commit)}</code></small>${pl(h.page)}</div>`)) +
     col(`${esc(p0.title.split(":")[0])} · in progress`, "#5ab0ff", p0.items.filter((i) => !i.done && !i.dropped).map((i) => `<div class="card"><b>${esc(i.name)}</b><small>${esc(i.detail)}</small><small>${esc(i.effort)}</small></div>`), `${p0.items.filter((i) => i.done).length} of ${p0.items.filter((i) => !i.dropped).length} done`) +
     col(`Next: ${esc(p1.title.split(":")[0])}`, "#b08aff", p1.items.map((i) => `<div class="card"><b>${esc(i.name)}</b><small>${esc(i.effort)} · ${esc(p1.when)}</small></div>`), "");
   const lanes = [["live", "Live", "#7ed060"], ["now", "Now", "#5ab0ff"], ["next", "Next", "#b08aff"], ["later", "Later", "#a89070"], ["rumour", "Rumours", "#ff7ab0"]];

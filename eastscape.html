@@ -3188,7 +3188,7 @@ const objArt = (ob, now = 0) => {
      `${ob.art}_stump` is tried first and falls through exactly as before when there is no such picture. */
   const k = ob.stumpUntil > now ? (ob.art && IMG[`${ob.art}_stump`] ? `${ob.art}_stump` : IMG[`o_${ob.t}_stump`] ? `o_${ob.t}_stump` : "o_tree_stump") : ob.emptyUntil > now ? "o_rock_empty" : ob.bareUntil > now ? `o_${ob.t}_bare`
     : ob.t === "rock" || ob.t === "vein" ? `o_${ob.t}_${ob.ore}` : ob.t === "vine" && ob.special ? "o_vine_gold" : ob.t === "boatback" ? "o_ferry" : `o_${ob.t}`;
-  return IMG[k] ? k : null;
+  return IMG[k] ? k : ob.ledge ? wantArt(k) : null;   /* (2026-10-01) a ledge's spot is the NEXT map's tree or rock, whose picture may only be in that map's sheet: fetch it on its own */
 };
 // the back wall's decor, centred where the drawn versions were
 const WALL_CX = { banner: 5, lamp: 4, vault: 0, herbs: 1, shelf: 1, window: 0 };
