@@ -78,6 +78,10 @@ export function createAdminWin(ctx) {
     mute: () => card && A({ cmd: "mute", name: card.login, n: parseInt(v("aMuteM"), 10) || 10 }),
     unmute: () => card && A({ cmd: "unmute", name: card.login }),
     kick: () => card && sure(`Kick ${card.name}?`, "They're saved first, so they lose nothing they were carrying. They can log straight back in.", () => A({ cmd: "kick", name: card.login })),
+    /* (2026-10-01, the owner: "since users have sorted gems in the market and we're making them not marketable... select a gem and a sort% so i
+       can refund them") GIVE BACK A SORTED GEM: any gem, at any roll (or unsorted), into their bag, or their bank if the bag is full; offline too */
+    gemgift: () => { if (!card) return; const k = v("aGemK"), r = v("aGemR"), n = Math.max(1, Math.min(50, parseInt(v("aGemN"), 10) || 1)), what = G.gemText(k, r === "" ? null : +r);
+      sure(`Give ${card.name} ${n > 1 ? n + " × " : "a "}${what}?`, "Into their bag, or their bank if the bag is full. It's written in the admin log.", () => A({ cmd: "gemgift", name: card.login, k, roll: r === "" ? null : +r, n })); },
     refund: (b) => { if (!card) return; const k = b.dataset.k, n = +b.dataset.n, row = card.bom.find((r) => r.k === k); sure(`Refund ${card.name}?`, `${n} × ${row?.name || k} back to Bom, ${((row?.price || 0) * n).toLocaleString()} tickets to them.`, () => { A({ cmd: "refund", name: card.login, k, n }); setTimeout(() => A({ cmd: "admplayer", name: card.login }), 800); }); },
     /* testing: just you */
     setlvl: () => A({ cmd: "setlvl", skill: v("aSk"), lvl: parseInt(v("aLvl"), 10) || 1 }),
@@ -116,6 +120,7 @@ export function createAdminWin(ctx) {
       case "mute": return `muted ${r.name} for ${a || 10} min`;
       case "unmute": return `unmuted ${r.name}`;
       case "kick": return `kicked ${r.name}`;
+      case "gemgift": return `gave ${r.name} ${r.k}`;
       case "refund": return r.k ? `refunded ${r.name}: ${r.k}` : `looked at ${r.name}'s Bom gear`;
       case "neworder": return "put up a new Bronny order";
       case "projtier": return "changed a project's tier";
@@ -177,6 +182,7 @@ export function createAdminWin(ctx) {
         <div class="adm-h">Look after them</div><div class="adm-row">${can("tp") ? btn("Go to their map", "goto", "sec") : ""}${btn("Their stats in chat", "theirStats", "sec")}</div>
         ${C.role === "admin" ? `<div class="adm-empty">An admin: nobody can mute or kick them.</div>` : `<div class="adm-h">Moderate</div><div class="adm-row"><select id="aMuteM" aria-label="How long"><option value="10">10 min</option><option value="30">30 min</option><option value="60">1 hour</option><option value="240">4 hours</option></select>${btn("Mute", "mute")}${btn("Unmute", "unmute", "sec")}${C.online ? btn("Kick off", "kick", "warn") : ""}<span class="k-note">a kick saves them first: nobody loses what they carried</span></div>`}
         ${st?.admin ? `<div class="adm-h">Bom gear a refund could take back</div><div class="adm-log">${C.bom.length ? C.bom.map((r) => `<div><b>${r.n}×</b><span>${esc(r.name)}</span><span>${r.price.toLocaleString()} each</span><span>${btn("Refund 1", "refund", "sec", `data-k="${esc(r.k)}" data-n="1"`)}${r.n > 1 ? btn(`All ${r.n}`, "refund", "sec", `data-k="${esc(r.k)}" data-n="${r.n}"`) : ""}</span></div>`).join("") : `<div class="adm-empty">Nothing Bom sells.</div>`}</div>` : ""}
+        ${st?.admin && G.GEMSET ? `<div class="adm-h">Give back a sorted gem <small>for a gem that came off the market</small></div><div class="adm-row"><select id="aGemK">${G.GEMSET.list.map((g) => `<option value="${g.k}">${esc(G.ITEMS[g.k]?.name || g.k)}</option>`).join("")}</select><select id="aGemR"><option value="">unsorted</option>${Array.from({ length: G.GEMSET.roll[1] - G.GEMSET.roll[0] + 1 }, (_, i) => G.GEMSET.roll[1] - i).map((r) => `<option value="${r}"${r === 0 ? " selected" : ""}>${r > 0 ? "+" : ""}${r}%</option>`).join("")}</select><input id="aGemN" type="number" min="1" max="50" value="1" style="width:64px" aria-label="How many">${btn("Give", "gemgift")}</div>` : ""}
         <div class="adm-h">What they do</div><div class="adm-empty">kills: ${C.kills.map(([k, n]) => `${esc(G.MOBS[k]?.name || k)} ${n}`).join(", ") || "none"} · gathered: ${C.gathered.map(([k, n]) => `${esc(G.ITEMS[k]?.name || k)} ${n}`).join(", ") || "none"} · deaths ${C.deaths}</div></div>`;
     }
     return s + "</div>";

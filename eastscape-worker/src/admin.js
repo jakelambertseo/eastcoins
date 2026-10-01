@@ -8,7 +8,7 @@
      admLogAdd  every server-wide or about-somebody command an admin or mod runs: who, what, when. The last 50, kept in storage ("admLog"),
                 so four admins can see who started the 2X or ended the Flood.
    One small message on open and after an action; no poll faster than the window's own refresh (the page asks every 15 s while it is open). */
-const LOGGED = new Set(["double", "skill2x", "raid", "wyrm", "ev", "restart", "saveall", "mute", "unmute", "kick", "refund", "neworder", "projtier", "hwking"]);
+const LOGGED = new Set(["double", "skill2x", "raid", "wyrm", "ev", "restart", "saveall", "mute", "unmute", "kick", "refund", "gemgift", "neworder", "projtier", "hwking"]);
 const MOD_CAN = ["stats", "saveall", "restart", "tp", "mute", "unmute", "kick", "admstate", "admplayer"];   /* keep in step with canRun in index.js */
 export function installAdmin(World, { G }) {
   const P = World.prototype;

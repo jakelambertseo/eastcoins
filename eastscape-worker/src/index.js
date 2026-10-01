@@ -5386,6 +5386,22 @@ export class World {
          lists what the named player holds that Bom sells (bag and bank, plain pieces only) and what he charges them for each. With an item and a count:
          takes up to that many plain pieces from their bag, then their bank, and pays back Bom's price for each (their VIP discount included). Online or
          not; an offline character is written back at once. Admins only. */
+      case "gemgift": {   /* (2026-10-01) the admin window: a sorted gem given back to someone whose market listing came down (gems can't be traded in v1.1) */
+        const login = String(m.name || "").trim().toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 30), k = String(m.k || ""), n = Math.max(1, Math.min(50, m.n | 0 || 1));
+        const roll = m.roll == null || m.roll === "" ? null : Math.round(Number(m.roll));
+        if (!login || !G.isGem(k)) return note("Pick a player and a gem.");
+        if (roll != null && !(roll >= G.GEMSET.roll[0] && roll <= G.GEMSET.roll[1])) return note(`A sort is ${G.GEMSET.roll[0]}% to +${G.GEMSET.roll[1]}%.`);
+        const code = roll == null ? 0 : G.gemCode(roll), what = G.gemText(k, roll);
+        return void this.ctx.storage.get(`who:${login}`).then(async (w) => {
+          if (!w) return note(`Nobody called ${login} has played.`);
+          const on = this.pls.get(w.id), C2 = on ? on.C : G.normChar(await this.ctx.storage.get(`char:${w.id}`));
+          let bank = 0;
+          for (let i = 0; i < n; i++) if (G.addInv(C2.inv, k, 1, C2, code) > 0) { bank++; const b = (C2.bank ||= []).find((x) => x.k === k && (G.fCode(x) | 0) === code); if (b) b.n += 1; else C2.bank.push(code ? { k, n: 1, f: code } : { k, n: 1 }); }
+          if (on) { this.touch(on); this.say(on, `Staff gave you back ${n > 1 ? n + " × " : "a "}${what}${bank ? ` (${bank} in your bank: your bag was full)` : ""}.`, "good"); }
+          else await this.ctx.storage.put(`char:${w.id}`, C2);
+          note(`Gave ${w.name} ${n > 1 ? n + " × " : ""}${what}${bank ? `, ${bank} to the bank` : ""}${on ? "" : " (offline: saved to their character)"}.`);
+        }).catch((e) => note(`Gem gift failed: ${e.message}`));
+      }
       case "refund": {
         const login = String(m.name || "").trim().toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 30); if (!login) return note("Put their name in the name box.");
         return void this.ctx.storage.get(`who:${login}`).then(async (w) => {

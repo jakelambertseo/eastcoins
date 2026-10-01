@@ -8555,7 +8555,7 @@ function admLists() {
   const quests = Object.fromEntries(Object.entries(QUESTS).map(([k, q]) => [k, `${q.name} (${G.qState(me, k)})`]));
   return { skills: Object.entries(skills), scenes: Object.entries(scenes), quests: Object.entries(quests) };
 }
-let ADMUI = null; const ADMUI_URL = "/v3/assets/js/eastscape-admin.js?v=2";
+let ADMUI = null; const ADMUI_URL = "/v3/assets/js/eastscape-admin.js?v=3";
 function admUi() { return ADMUI ? Promise.resolve(ADMUI) : import(ADMUI_URL).then((m) => (ADMUI = m.createAdminWin({ G, $, esc, send, popup, SFX, getMe: () => me, getYou: () => you, lists: admLists, trkOpen }))); }
 function renderAdmin(p) {
   const isAdmin = you.role === "admin" || you.admin;
