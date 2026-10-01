@@ -1514,7 +1514,10 @@ export const GUIDES = [
       <p><b>An order that runs out</b> (it has ${Math.round(O.ms / 3600000)} hours; the clock is on his board) is replaced by a fresh one, and what was handed in stays handed in.</p>
       <h3>What it can ask for</h3>
       <table class="tbl" data-paged="25"><tr><th>Work</th><th>Early game</th><th>Mid game</th><th>Late game</th></tr>${Object.values(O.kinds).map((K) => `<tr><td><b>${H.esc(K.name)}</b></td><td>${cell(K.early)}</td><td>${cell(K.mid)}</td><td>${cell(K.late)}</td></tr>`).join("")}</table>
-      <p>Each line is one item from its kind and tier. The counts aim at about half an hour of one person's work a line, which is why they fall as the tier rises.</p>`;
+      <p>Each line is one item from its kind and tier. The counts aim at about half an hour of one person's work a line, which is why they fall as the tier rises.</p>
+      ${O.keystone ? `<h3>The keystone</h3>
+      <p>Every order ends with <b>a keystone</b>: a few of something that takes luck rather than hours. It is one of these: ${O.keystone.list.filter(ok).map(([k, c]) => `${num(c)} ${itemL(G, H, k)}`).join(", ")}. Gems turn up while mining their ores; the rest drop, now and then, off ordinary monsters. They all trade, so the Exchange is the other way to one.</p>
+      <p>The keystone is <b>handed in on its own</b>: "Hand in everything" leaves it in your bag, and only <b>plain</b> copies count, so a reforged ring is never taken.</p>` : ""}`;
     } },
   { id: "saving", title: "Saving", icon: "\u{1F4BE}", cat: "Starting out",
     body: `<p><b>There is no save button and there is nothing to lose.</b> The server owns your character, not your browser &mdash; every level, item and ticket is written down as it happens.</p>

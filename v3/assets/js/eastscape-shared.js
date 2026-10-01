@@ -7895,6 +7895,19 @@ Object.assign(ORDER.kinds, {
     early: [["tk_confetti", 9], ["tk_baitbox", 3], ["tk_medkit", 6]],
     mid: [["tk_whetstone", 3], ["tk_scope", 3], ["tk_arccoil", 3], ["tk_lockpick", 3], ["tk_cooker", 3]], }
 });
+/* (2026-09-30, the owner: "we need to make bronny require more mats and also require something thats semi-hard to get", then "do one and two
+   but no star fragments and no boss drops/pets") SIX LINES, A QUARTER MORE OF EVERYTHING, AND A KEYSTONE. Six of the nine kinds now, two early,
+   two mid and two late; every count above is a quarter up (to a whole five, or rounded up when it is under twenty: three gadgets becomes four).
+   And a seventh line, the KEYSTONE: a few of something that is luck rather than grind, dealt from ORDER.keystone. Gems turn up 1.4% of swings at
+   their ores; the rest are the rare drops off ordinary monsters (0.6-10%). Every one is tradeable, so a keystone day is a day the Exchange wants
+   them, and every one is gone once handed in. Never Star Fragments, a boss's drop or a pet (the owner). Only PLAIN copies count for it: a
+   reforged ring is never taken, and "Hand in everything" leaves the keystone alone, so a ring nobody meant to give stays in the bag. */
+ORDER.lines = 6; ORDER.mix = ["early", "early", "mid", "mid", "late", "late"];
+for (const K of Object.values(ORDER.kinds)) for (const t of ["early", "mid", "late"]) for (const row of K[t] || []) row[1] = row[1] >= 20 ? Math.round((row[1] * 1.25) / 5) * 5 : Math.ceil(row[1] * 1.25);
+ORDER.tiers.keystone = "Keystone";
+ORDER.keystone = { name: "Something rare",
+  list: [["ruby", 8], ["sapphire", 5], ["topaz", 3],   /* 1.4% a swing at copper/tin/emerald, diamond/dragonstone, onyx/starfall */
+    ["mask", 8], ["bogplate", 4], ["gamblers_ring", 3], ["bookies_amulet", 3], ["adjusters_visor", 3], ["angels_ring", 2], ["sharps_gloves", 2]] };   /* 10%, 3%, 0.6-1%, 0.8-1%, 1%, 0.6%, 0.6% */
 /** a fresh order's lines: one from each kind, with ORDER.mix's tiers dealt out at random. Anything held, or anything Bom sells (so it
     could be bought and handed straight back), is never picked. `r` is the random source (Math.random, or a test's). */
 export function orderPick(r = Math.random) {
@@ -7904,12 +7917,15 @@ export function orderPick(r = Math.random) {
   /* (2026-09-29) four kinds have no late tier, so the late slot goes to a kind that has one (swapped with its tier): every order still asks
      two early, two mid and ONE late. Five of nine kinds always include at least one of the five that have a late tier. */
   const hasLate = (kind) => (ORDER.kinds[kind].late || []).some(ok);
-  for (let i = 0; i < tiers.length; i++) if (tiers[i] === "late" && !hasLate(kinds[i])) { const j = kinds.findIndex((k2, jj) => jj !== i && hasLate(k2)); if (j >= 0) [tiers[i], tiers[j]] = [tiers[j], tiers[i]]; }
-  return kinds.map((kind, i) => {
+  for (let i = 0; i < tiers.length; i++) if (tiers[i] === "late" && !hasLate(kinds[i])) { const j = kinds.findIndex((k2, jj) => jj !== i && tiers[jj] !== "late" && hasLate(k2)); if (j >= 0) [tiers[i], tiers[j]] = [tiers[j], tiers[i]]; }
+  const lines = kinds.map((kind, i) => {
     const K = ORDER.kinds[kind], order = [tiers[i], "mid", "early", "late"];   /* if a tier has nothing usable, fall back rather than leave a hole */
     const tier = order.find((t) => (K[t] || []).some(ok)), list = K[tier].filter(ok), [k, n] = list[Math.floor(r() * list.length)];
     return { kind, tier, k, n, got: 0 };
   });
+  const ks = (ORDER.keystone?.list || []).filter(ok);   /* (2026-09-30) the keystone, always last */
+  if (ks.length) { const [k, n] = ks[Math.floor(r() * ks.length)]; lines.push({ kind: "keystone", tier: "keystone", k, n, got: 0 }); }
+  return lines;
 }
 /** how far along an order is, 0..1: each line counts the same, however big it is, so a line of 200 feathers does not drown out 25 bars */
 export const orderPct = (o) => (o?.lines?.length ? o.lines.reduce((a, l) => a + Math.min(1, l.got / l.n), 0) / o.lines.length : 0);
@@ -10018,7 +10034,7 @@ if (HOLD.events) { ITEMS.egg_starling.held = true; PETS.starling.held = true; PE
   MARKS.larcenist = { name: "The Grand Larcenist", lvl: 97, xp: 400, room: 3, look: { hair: "#f0f0f0", shirt: "#6a1a2a", pants: "#1a1020" },
     drop: [["blackmarket_ledger", 0.55], ["nova_ore", 0.15], ["eclipse_ore", 0.12], ["voidglass", 0.1], ["seal_wax", 0.08]] };
   /* 14. BREEDING: an egg dropped one kill in 1,500, so the skill was bought, not trained. One in 400 */
-  BREED.eggDrop = 1 / 400;
+  BREED.eggDrop = 1 / 1000;   /* (2026-09-30, the owner: "pet drops also need to be dropped slightly to 1/1000") was 1 in 400 */
   /* 10. ALCHEMY: every recipe needs a vial and sand was the only way to one (Mining 20, the Golden Sands). Bom sells small vials; and the two
         ingredients with no source (the Coilbreaker's venom, the Witch's brew's ectoplasm) drop from a cobra and a revenant */
   if (!SHOP.sells.some(([k]) => k === "small_vial")) SHOP.sells.push(["small_vial", 15]);

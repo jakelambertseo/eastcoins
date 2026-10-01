@@ -100,7 +100,7 @@ C.pets.push({ id: "st", k: "stormling", name: "" }); C.eq.pet = "st"; is(G.fxOf(
 C.pets.push({ id: "gk", k: "bonepup", name: "", tier: 1, fx: { speed: 10, slots: 1 } }); const back = G.normChar(JSON.parse(JSON.stringify(C))).pets.find((p) => p.id === "gk"); is(!!back?.tier && Object.keys(back.fx || {}).length > 0, true, "a Greater pet keeps its tier and effects through a save");
 is(Object.keys(G.EGGS).every((k) => G.ITEMS[k] && G.PETS[G.EGGS[k].pet] && !G.EGGS[k].gem), true, "every egg is an item, hatches a real pet, and wants no gem");
 is(G.PET_DROP_KEYS.some((k) => G.PETS[k].bred), false, "no bred pet is in the ordinary drop pool");
-is(G.BREED.eggDrop, 1 / 400, "eggs drop one kill in four hundred");   /* (2026-09-30, the balance pass: 1/1500 -> 1/400, so Breeding is trained, not bought) */   /* (2026-09-28, the owner: 1/500, then "reduce egg drop rates again") */
+is(G.BREED.eggDrop, 1 / 1000, "eggs drop one kill in a thousand");   /* (2026-09-30, the owner: "pet drops also need to be dropped slightly to 1/1000") */   /* (2026-09-30, the balance pass: 1/1500 -> 1/400, so Breeding is trained, not bought) */   /* (2026-09-28, the owner: 1/500, then "reduce egg drop rates again") */
 is(!!G.SKILLS.breeding && G.HISCORES.some(([k]) => k === "breeding"), true, "Breeding is a skill with a hiscore board");
 for (const k of ["pup_kibble", "feather_nest", "grim_broth"]) if (G.ITEMS[k]) fail(`${k} should be gone`);
 

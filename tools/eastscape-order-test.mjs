@@ -20,9 +20,9 @@ const last = (pl, type) => [...pl.out].reverse().find((e) => e.type === type);
 /* 1. the first order */
 W.order = null; W.orderTick(Date.now());
 const o1 = W.order;
-is([o1.lines.length, new Set(o1.lines.map((l) => l.kind)).size, !!said.at(-1)?.includes("REBUILDING THE YARD")], [5, 5, true], "the first order: five lines, five different kinds, announced");
+is([o1.lines.length, new Set(o1.lines.map((l) => l.kind)).size, !!said.at(-1)?.includes("REBUILDING THE YARD")], [7, 7, true], "the first order: six lines and a keystone, seven different kinds, announced");
 is(o1.lines.every((l) => !G.prizesOf().some((p) => p.give?.[0] === l.k)), true, "nothing on it is anything Bom sells");
-{ let ok = true; for (let i = 0; i < 300; i++) { const L = G.orderPick(), t = L.map((l) => l.tier).sort().join(","); if (t !== "early,early,late,mid,mid" || new Set(L.map((l) => l.kind)).size !== 5) ok = false; } is(ok, true, "300 fresh orders: every one two early, two mid, one late, five kinds"); }
+{ let ok = true; for (let i = 0; i < 300; i++) { const L = G.orderPick(), t = L.map((l) => l.tier).sort().join(","); if (t !== "early,early,keystone,late,late,mid,mid" || new Set(L.map((l) => l.kind)).size !== 7 || L.at(-1).kind !== "keystone") ok = false; }   /* (2026-09-30) six lines and a keystone */ is(ok, true, "300 fresh orders: every one two early, two mid, one late, five kinds"); }
 
 /* 2. handing in: partial, then a favourite, then the lot */
 const [L0, L1] = o1.lines;
@@ -35,6 +35,11 @@ is([L0.got, cnt(a, L0.k)], [4, 6], "a favourited stack is never handed over");
 a.C.fav = [];
 for (const l of o1.lines) G.addInv(b.C.inv, l.k, l.n + 5, b.C);
 W.orderOp(S, b, { op: "give" });
+{ const K = o1.lines.at(-1); is([K.kind, K.got, !o1.doneAt], ["keystone", 0, true], "Hand in everything leaves the keystone in the bag");
+  const mine = b.C.inv.filter((x) => x.k === K.k); for (const x of mine) x.f = 2;   /* every copy reforged: none of them counts */
+  W.orderOp(S, b, { op: "give", k: K.k }); is(K.got, 0, "the keystone never takes a reforged copy");
+  for (const x of mine) delete x.f;
+  W.orderOp(S, b, { op: "give", k: K.k }); }
 is([o1.lines.every((l) => l.got >= l.n), o1.lines.map((l) => cnt(b, l.k) >= 5).every(Boolean), !!o1.doneAt, said.some((t) => t.includes("IS FILLED"))], [true, true, true, true], "Bob fills the lot: every bar full, only what was needed taken, filled and announced");
 is(said.filter((t) => /\d+% there/.test(t)).length <= 3, true, "the 25/50/75 lines at most once each");
 
@@ -62,7 +67,7 @@ W.orderOp(S, c, { op: "give" }); is([W.order.lines[0].got, cnt(c, W.order.lines[
 
 /* 7. the view */
 c.x = foreman.x; c.y = foreman.y + 1; W.orderOp(S, c, { op: "view" }); const v = last(c, "order").view;
-is([v.lines.length, v.lines[0].have, typeof v.until, v.canClaim], [5, 5, "number", false], "the window's view: lines, what's in your bag, the clock, whether you can claim");
+is([v.lines.length, v.lines[0].have, typeof v.until, v.canClaim], [7, 5, "number", false], "the window's view: lines, what's in your bag, the clock, whether you can claim");
 /* 8. A RESTART (2026-09-28: every deploy threw the order away and posted a new one). Two worlds on the same storage. */
 {
   const store = new Map(), sctx = { blockConcurrencyWhile: (fn) => fn(), storage: { get: async (k) => store.get(k), put: async (k, v) => { if (typeof k === "object") for (const [a2, b2] of Object.entries(k)) store.set(a2, structuredClone(b2)); else store.set(k, structuredClone(v)); }, delete: async (k) => store.delete(k), list: async () => new Map() } };

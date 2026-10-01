@@ -13,7 +13,7 @@ export function createOrderUi(E) {
   const nameOf = (k) => G.ITEMS[k]?.name || k;
   /* what's in YOUR bag is read here, not from the server's view, so it is right the moment the bag changes (a catch, a bank trip) */
   const have = (k) => (E.me?.inv ? G.countItems({ inv: E.me.inv, bank: [] }, [k]) : 0);
-  const KIND = (k) => G.ORDER.kinds[k]?.name || k, TIER = (t) => G.ORDER.tiers?.[t] || "";
+  const KIND = (k) => (G.ORDER.kinds[k] || (k === "keystone" ? G.ORDER.keystone : null))?.name || k, TIER = (t) => G.ORDER.tiers?.[t] || "";
   const SAYS = ["We're rebuilding the Yard. Everybody chips in.", "Fill the order and the whole server gets doubled.", "What you hand me goes into the Yard. The 2X is the pay.", "Rebuilding season. Every good team has one."];
 
   function open() { openWin("ordWin"); send({ t: "order", op: "view" }); render(); clearInterval(timer); timer = setInterval(tick, 1000); }
@@ -30,11 +30,11 @@ export function createOrderUi(E) {
   function render() {
     const box = $("ordBody"); if (!box || $("ordWin").hidden) return;
     if (!v) { box.innerHTML = `<p class="note" style="padding:14px">Bronny is finding his clipboard…</p>`; return; }
-    for (const l of v.lines) l.have = have(l.k);
-    const pct = Math.round(v.pct * 100), done = !!v.doneAt, anyHave = v.lines.some((l) => l.have > 0 && l.got < l.n);
+    for (const l of v.lines) l.have = l.kind === "keystone" ? (E.me?.inv || []).reduce((a, s) => a + (s.k === l.k && !G.fCode(s) ? s.n : 0), 0) : have(l.k);   /* the keystone: plain copies only */
+    const pct = Math.round(v.pct * 100), done = !!v.doneAt, anyHave = v.lines.some((l) => l.kind !== "keystone" && l.have > 0 && l.got < l.n);
     const line = (l, i) => {
       const full = l.got >= l.n, p = Math.min(100, Math.round((l.got / l.n) * 100)), give = Math.min(l.have, l.n - l.got);
-      return `<div class="k-row od-line${full ? " full" : ""}"><span class="k-slot" data-item="${l.k}">${ico(l.k)}</span>
+      return `${l.kind === "keystone" ? `<div class="k-sect"><span class="k-label">The keystone · something rare, handed in on its own (plain ones only, never a reforge)</span></div>` : ""}<div class="k-row od-line${full ? " full" : ""}${l.kind === "keystone" ? " keystone" : ""}"><span class="k-slot" data-item="${l.k}">${ico(l.k)}</span>
         <span class="od-mid"><span class="od-name"><b>${esc(nameOf(l.k))}</b><small>${esc(KIND(l.kind))}</small>${l.tier ? `<em class="od-tier ${l.tier}">${esc(TIER(l.tier))}</em>` : ""}</span>
           <span class="od-bar"><i style="width:${p}%"></i><em>${l.got.toLocaleString()} / ${l.n.toLocaleString()}</em></span></span>
         <span class="k-end">${full ? `<span class="k-chip good">Done ✓</span>` : `<small class="od-have${l.have ? "" : " none"}">You have ${l.have.toLocaleString()}</small><button type="button" class="k-btn sm od-give" data-give="${l.k}"${give > 0 && !done ? "" : " disabled"}>Hand in${give > 0 ? ` ${give.toLocaleString()}` : ""}</button>`}</span></div>`;
@@ -55,7 +55,7 @@ export function createOrderUi(E) {
           <span>30 minutes of double tickets and double crafting xp for everyone online. Somebody who helped claims it.</span></span>
         <span class="od-pbadge">${done ? "READY" : "2X"}</span></div>
       <div class="od-pane k-paper">
-        <div class="k-sect"><span class="k-label">What the Yard needs · two early, two mid and one late-game line</span></div>
+        <div class="k-sect"><span class="k-label">What the Yard needs · two early, two mid and two late-game lines</span></div>
         ${v.lines.map(line).join("")}
         <div class="k-sect"><span class="k-label">Helping${v.helpersN ? ` · ${v.helpersN}` : ""}</span></div>
         ${v.helpersN ? `<div class="od-helpers">${v.helpers.map((h) => `<span class="k-chip${h.name === E.me?.name ? " gold" : ""}">${esc(h.name)} <b>${h.n.toLocaleString()}</b></span>`).join("")}</div>${v.mine ? `<p class="od-mine">You've handed in <b>${v.mine.toLocaleString()}</b> on this order.</p>` : ""}`
@@ -95,6 +95,7 @@ export const CSS = `
 .od-ptxt{display:grid;gap:1px;min-width:0}.od-ptxt small{font:800 10.5px Lora,serif;letter-spacing:.1em;text-transform:uppercase;color:#7a4e0e}.od-ptxt b{font:900 17px var(--k-disp);color:#2a1600}.od-ptxt span{font:600 12.5px/1.35 Lora,serif;color:#5a3a08}
 .od-pbadge{font:900 20px var(--k-disp);color:#fff;background:linear-gradient(#e8543a,#a82a1a);padding:6px 10px;border-radius:8px;box-shadow:0 2px 0 #5a1208,inset 0 1px 0 rgba(255,255,255,.35);text-shadow:0 1px 0 rgba(0,0,0,.4)}
 .od-prize.ready{background:linear-gradient(90deg,#e4f8d8,#b8eaa0 55%,#6dcf6a);border-bottom-color:#2f7a3a}.od-prize.ready .od-pbadge{background:linear-gradient(#4fc463,#2e9a44);box-shadow:0 2px 0 #1e5a2a,inset 0 1px 0 rgba(255,255,255,.35);font-size:15px;animation:odGlow 1.6s ease-in-out infinite}
+.od-tier.keystone{background:#efe0ff;color:#6a3aa8}.od-line.keystone:not(.full){box-shadow:inset 0 0 0 1.5px #b08ae0;background:#f4ecfb}
 .od-tier{font:800 10px/1 Lora,serif;font-style:normal;letter-spacing:.06em;text-transform:uppercase;padding:3px 6px;border-radius:99px;background:#d6ecd0;color:#2f7a3a;white-space:nowrap}.od-tier.mid{background:#d8e2f6;color:#2a4a8a}.od-tier.late{background:#f6e2a8;color:#7a4e0e;box-shadow:inset 0 0 0 1px #c8963a}
 .od-pane{flex:1;min-height:0;overflow:auto;display:grid;gap:6px;align-content:start;padding:10px 12px}
 .od-line{grid-template-columns:auto minmax(0,1fr) auto;cursor:default}.od-line.full{box-shadow:inset 0 0 0 1.5px #3fa556;background:#dcebcf}

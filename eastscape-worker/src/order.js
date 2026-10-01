@@ -14,6 +14,8 @@
 export function installOrder(World, { G }) {
   const P = World.prototype, O = G.ORDER, WATCH_MS = 15 * 60000, NAME = "BRONNY THE FOREMAN";
   const bag = (pl, k) => G.countItems({ inv: pl.C.inv, bank: [] }, [k]);
+  const plain = (pl, k) => pl.C.inv.reduce((a, s) => a + (s.k === k && !G.fCode(s) ? s.n : 0), 0);   /* (2026-09-30) the keystone takes plain copies only: never a reforge */
+  const avail = (pl, l) => (l.kind === "keystone" ? plain(pl, l.k) : bag(pl, l.k));
   const nameOf = (k) => G.ITEMS[k]?.name || k;
   const listText = (o) => o.lines.map((l) => `${l.n.toLocaleString()} ${nameOf(l.k).toLowerCase()}`).join(", ");
 
@@ -43,7 +45,7 @@ export function installOrder(World, { G }) {
     const mine = o.by[pl.id]?.n || 0, helpers = Object.values(o.by).sort((a, b) => b.n - a.n);
     return {
       id: o.id, at: o.at, until: o.until, now: Date.now(), doneAt: o.doneAt, pct: G.orderPct(o),
-      lines: o.lines.map((l) => ({ ...l, have: bag(pl, l.k) })),
+      lines: o.lines.map((l) => ({ ...l, have: avail(pl, l) })),
       helpers: helpers.slice(0, 12).map((h) => ({ name: h.name, n: h.n })), helpersN: helpers.length,
       mine, canClaim: !!(o.doneAt && mine), dbl: this.doubleView()
     };
@@ -70,9 +72,10 @@ export function installOrder(World, { G }) {
       let total = 0;
       for (const l of o.lines) {
         if (only && l.k !== only) continue;
+        if (!only && l.kind === "keystone") continue;   /* (2026-09-30) "Hand in everything" leaves the keystone in the bag: it's handed in on its own */
         const left = l.n - l.got; if (left <= 0) continue;
         if (G.isFav?.(pl.C, l.k)) { if (bag(pl, l.k)) faved.push(nameOf(l.k).toLowerCase()); continue; }   /* a favourited stack is never handed over by accident */
-        const n = Math.min(left, bag(pl, l.k), cap); if (n <= 0) continue;
+        const n = Math.min(left, avail(pl, l), cap); if (n <= 0) continue;
         const took = G.takeInv(pl.C.inv, l.k, n); if (!took) continue;
         l.got += took; total += took; parts.push(`${took.toLocaleString()} ${nameOf(l.k).toLowerCase()}`);
       }
