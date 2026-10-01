@@ -2065,7 +2065,7 @@ const loadWiki = () => (loadWiki.p ||= Promise.all([
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
-import { createUI } from "/v3/assets/js/eastscape-ui.js?v=8";   /* (2026-09-30) YOUR SCREEN: layout, looks, nameplates, the settings window */
+import { createUI } from "/v3/assets/js/eastscape-ui.js?v=9";   /* (2026-09-30) YOUR SCREEN: layout, looks, nameplates, the settings window */
 let UI = null;   /* made once the page below has its windows (see renderSettings) */
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
 const $ = (id) => document.getElementById(id);
@@ -6143,6 +6143,8 @@ async function rrBoard() {
    clicked something, so a refused play() is retried on your next click. Searching talks to the directory straight from here;
    choosing sends only the station's id to the game server, which looks the station up itself before telling the room. */
 const RADIO_EL = new Audio(); RADIO_EL.preload = "none"; let RADIO_NOW = null, radioHost = 0;
+/* (2026-10-01) the jukebox's volume from anywhere (Settings has a slider for it): the radio now, the Green Room on its next sync */
+function setJukeVol(v) { v = Math.max(0, Math.min(1, v)); try { localStorage.setItem("es_radio_vol", String(v)); } catch (x) { /* fine */ } RADIO_EL.volume = v * SFX.allVolume(); const j = $("jukeVol"); if (j) j.value = Math.round(v * 100); }
 const radioVol = () => { try { const raw = localStorage.getItem("es_radio_vol"), v = Number(raw); return raw !== null && Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0.35; } catch (x) { return 0.35; } };
 const radioOff = () => { try { return localStorage.getItem("es_radio_off") === "1"; } catch (x) { return false; } };
 const onFloor = () => G.RADIO.everywhere || G.RADIO.heard.includes(String(Z.key || "").split(":")[0]);   // (v88) where the jukebox is heard; everywhere since 2026-09-22
@@ -8510,7 +8512,7 @@ function renderPanel() {
 function openSettings() { if (!$("setWin").hidden) { $("setWin").hidden = true; return; } openWin("setWin"); renderSettings(); }
 /* (2026-09-30) YOUR SCREEN: the window is drawn by eastscape-ui.js, in five tabs (Layout, Players, Monsters, Features, Look). The old
    one-list version is kept below as renderSettingsOld in case the module ever fails to build. */
-UI = createUI({ G, SFX, send: (m) => send(m), esc, me: () => me, say: (t, c) => say(t, c), savedAt: () => savedAt });
+UI = createUI({ G, SFX, send: (m) => send(m), esc, me: () => me, say: (t, c) => say(t, c), savedAt: () => savedAt, jukeVol: () => radioVol(), setJukeVol });
 function renderSettings() { if (UI) return UI.render(); renderSettingsOld(); }
 function renderSettingsOld() {
   const p = $("setBody"); if (!me || $("setWin").hidden) return;

@@ -249,6 +249,7 @@ export function createUI(E) {
     else if (tab === "features") body = `<div class="sets">
       <label class="set" for="set-sfx"><span><b>Sound effects</b><small>This browser only. Made in the game, so they cost nothing to load.</small></span>${sw("set-sfx", SFX.enabled())}</label>
       <label class="set" for="set-vol"><span><b>Volume</b><small>${Math.round(SFX.volume() * 100)}%</small></span><input type="range" id="set-vol" min="0" max="100" value="${Math.round(SFX.volume() * 100)}" style="width:120px"></label>
+      ${E.jukeVol ? `<label class="set" for="set-jvol"><span><b>Jukebox volume</b><small>${Math.round(E.jukeVol() * 100)}%</small></span><input type="range" id="set-jvol" min="0" max="100" value="${Math.round(E.jukeVol() * 100)}" aria-label="Jukebox volume"></label>` : ""}
       ${Object.entries(G.SETTING_INFO).filter(([k]) => k !== "names").map(([k, [name, about]]) => row(`set-${k}`, name, about, sw(`set-${k}`, set(k), `data-k="${k}"`))).join("")}
       ${segRow("Ask before big buys", "At Bom's counter: anything over this takes a second click.", seg("buy", cur.buy, BUYS))}</div>`;
     else body = `<div class="ui-looks">${Object.entries(G.UI_THEMES).map(([k, n]) => `<button type="button" class="ui-look ui-look-${k}" data-ui-theme="${k}" aria-pressed="${cur.theme === k}"><span class="ui-sw"><i></i><i></i><i></i></span><b>${n}</b><small>${LOOKS[k]}</small></button>`).join("")}</div>
@@ -274,6 +275,9 @@ export function createUI(E) {
     p.querySelectorAll("[data-ui-back]").forEach((b) => b.addEventListener("click", () => { delete cur.pos[b.dataset.uiBack]; save(); apply(); render(); }));
     p.querySelector("[data-ui-resetall]")?.addEventListener("click", (e) => { const b = e.currentTarget; if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "Sure?"; return; } cur.pos = {}; cur.hide = {}; cur.win = {}; cur.side = null; save(); apply(); render(); });
     p.querySelector("#set-sfx")?.addEventListener("change", (e) => { SFX.setEnabled(e.target.checked); if (e.target.checked) SFX.play("levelup"); });
+    /* (2026-10-01, the owner: "add jukebox specific volume control to the settings menu") the radio and the Green Room, the same number as the
+       jukebox window's own slider (es_radio_vol), under the game's Volume */
+    p.querySelector("#set-jvol")?.addEventListener("input", (e) => { E.setJukeVol?.(+e.target.value / 100); e.target.previousElementSibling.querySelector("small").textContent = `${e.target.value}%`; });
     p.querySelector("#set-vol")?.addEventListener("input", (e) => { SFX.setVolume(+e.target.value / 100); e.target.previousElementSibling.querySelector("small").textContent = `${e.target.value}%`; });
     p.querySelector("#set-vol")?.addEventListener("change", () => SFX.play("coins"));
   }
