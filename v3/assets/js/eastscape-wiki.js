@@ -990,7 +990,8 @@ export const GUIDES = [
         g.where === "gear" ? `monsters of level ${S.dropLvl}+ (1 kill in ${num(1 / (S.drop * 10))}, open bosses 1 in 5)` : `${H.esc(H.SKILLS?.[g.skill]?.name || g.skill)} from level ${S.dropLvl} (1 action in ${num(1 / S.drop)})`,
         oreOf[g.k] ? `mined out of ${oreOf[g.k].ores.map(nm).join(", ")} (${pct(oreOf[g.k].drop)} ores)` : null].filter(Boolean).join("; also ");
       const table = (w) => `<table class="tbl"><tr><th>Gem</th><th>In the bag it</th><th>Where it comes from</th></tr>${S.list.filter((g) => g.where === w).map((g) => `<tr><td>${nm(g.k)}</td><td>${H.esc(g.does)}</td><td>${from(g)}</td></tr>`).join("")}</table>`;
-      return `<p><b>${S.list.length} gems.</b> Every one is a small permanent bonus once the ${H.wl("guides/gembag", "Gem Sorter")} has rolled it and it sits in your ${H.wl("guides/gembag", "gem bag")}: ${S.list.filter((g) => g.where === "gear").length} <b>combat</b> gems, found on monsters, and ${S.list.filter((g) => g.where === "case").length} <b>skilling</b> gems, each tied to one skill and found while you train it. Four of them (${G.GEMS.map((g) => nm(g.key)).join(", ")}) also come out of ore, at any Mining level, and are fletched into arrow tips.</p>
+      const v11 = G.HOLD.gemcut ? "" : `<p class="note"><b>Since v1.1, gems are rarer and stay with whoever finds them</b>: a quarter as many drop from every source, and gems can't be traded or put on the Exchange. A gem you find is yours to sort and set.</p>`;
+      return v11 + `<p><b>${S.list.length} gems.</b> Every one is a small permanent bonus once the ${H.wl("guides/gembag", "Gem Sorter")} has rolled it and it sits in your ${H.wl("guides/gembag", "gem bag")}: ${S.list.filter((g) => g.where === "gear").length} <b>combat</b> gems, found on monsters, and ${S.list.filter((g) => g.where === "case").length} <b>skilling</b> gems, each tied to one skill and found while you train it. Four of them (${G.GEMS.map((g) => nm(g.key)).join(", ")}) also come out of ore, at any Mining level, and are fletched into arrow tips.</p>
         <p><b>Finding one:</b> from level <b>${S.dropLvl}</b> in a skill, every action in it has a 1 in ${num(1 / S.drop)} chance of that skill's gem. Any monster of level ${S.dropLvl} or more drops a combat gem (one of the ${S.list.filter((g) => g.where === "gear").length}, at random) about once in ${num(1 / (S.drop * 10))} kills, and an open-world boss one time in five. Only the best ${S.perType} of any one gem count in the bag, so different stones beat copies.</p>
         <h3>Combat gems</h3>${table("gear")}
         <h3>Skilling gems</h3>${table("case")}
@@ -1111,7 +1112,7 @@ export const GUIDES = [
       <p><b>The Long Count</b> at 99 wants a singularity core &mdash; the same one-in-two-thousand drop the top melee weapons want &mdash; so the two ladders end on the same chase.</p>`;
     } },
   { id: "agility", title: "Agility", icon: "\u{1F3C3}", cat: "Skills",
-    body: `<p><b>The Run is an obstacle course</b>, up a rope ladder in the north of the Yard. You go round it: each obstacle pays, and finishing a full lap pays far more than the parts do.</p>
+    body: (G, H) => !G.HOLD.thrill ? agilityV11(G, H) : `<p><b>The Run is an obstacle course</b>, up a rope ladder in the north of the Yard. You go round it: each obstacle pays, and finishing a full lap pays far more than the parts do.</p>
       <table class="tbl"><tr><th>What</th><th>Gives</th></tr>
         <tr><td>Each obstacle cleared</td><td>12 xp</td></tr>
         <tr><td>Clearing one perfectly</td><td>+10 xp on top</td></tr>
@@ -1539,7 +1540,85 @@ export const GUIDES = [
       <p><b>The whole world is backed up nightly</b>, every character and every offer.</p>` }
 ];
 
+/* ============================================================ v1.1 GUIDES (2026-10-01). Each carries `hold`: the HOLD flag it comes out with,
+   so the page leaves a guide out while its part of v1.1 is held (see the guide loop in eastscape.html). Built from the rules where they can be,
+   so a level or a price changed in the rules changes here too. */
+const v11num = (n) => Math.round(n).toLocaleString();
+GUIDES.push(
+  { id: "thrill", title: "Thrill Hill and Daredevil Peak", icon: "\u{1F3AA}", cat: "Going further", hold: "thrill",
+    body: (G, H) => {
+      const C = G.THRILL.courses, nm = (k) => H.esc(G.ITEMS[k]?.name || k), mob = (k) => H.esc(G.MOBS[k]?.name || k), ic = (k) => (H.ico ? H.ico(k) : "");
+      return `<p><b>Agility's home.</b> Ask <b>Dizzy Dale</b> at the ticket counter in the south of the Yard's court to let you in (it's free), and you're on Thrill Hill: three stunt runs round a junkyard fairground, a snack cart, a bookie who pays in runner's marks, and, up the cannon, <b>Daredevil Peak</b>.</p>
+      <h3>The three runs</h3>
+      <table class="tbl"><tr><th>Run</th><th>Agility</th><th>xp a stunt</th><th>A full lap</th><th>Runner's mark</th></tr>${Object.values(C).map((c) => `<tr><td><b>${H.esc(c.name)}</b></td><td>${c.lvl}</td><td>${c.xp}</td><td>+${c.lap} xp</td><td>${Math.round(c.mark * 100)}% of laps</td></tr>`).join("")}</table>
+      <p><b>A lap is every stunt in order.</b> Start at the first; take one out of order and it still pays, but the lap starts again. Your best time on each run is kept. <b>Only the Rookie Run never slips</b>: on the others you can come off and land back where you started, and a Surefoot potion from Fast Eddie stops most of that.</p>
+      <p>The Champion Run is on Daredevil Peak. Get up there by <b>the human cannonball</b> (Agility 70); the <b>zip line</b> brings you back down. The <b>crusher ramp</b> on the Peak wants Agility 90.</p>
+      <h3>Fast Eddie and Corndog Carl</h3>
+      <table class="tbl"><tr><th>Fast Eddie sells</th><th>Runner's marks</th></tr>${G.BOOKIE.map(([k, p]) => `<tr><td>${ic(k)} ${nm(k)}</td><td>${p}</td></tr>`).join("")}</table>
+      <table class="tbl"><tr><th>Corndog Carl sells</th><th>Tickets</th></tr>${G.SNACKS.map(([k, p]) => `<tr><td>${ic(k)} ${nm(k)}</td><td>${v11num(p)}</td></tr>`).join("")}</table>
+      <h3>Everything else up there</h3>
+      <ul><li><b>${mob("gremlin")}s</b> on the hill and <b>${mob("hellbiker")}s</b> on the Peak, both with pockets worth picking (Thieving ${G.POCKETS.gremlin} and ${G.POCKETS.hellbiker}). <b>${mob("crusher")}</b> is the Peak's boss, and drops Lil' Crusher.</li>
+        <li><b>Featherwood</b> (Woodcutting 60) shakes feathers loose with every log. <b>Nitro eels</b> (Fishing 75) cook into the only fish that makes you walk faster. <b>Chrome</b> (Mining 85) smiths into <b>chrome-toe boots</b> (Smithing 85).</li>
+        <li>A <b>lockbox</b> on the Peak, Thieving ${G.LOCKBOXES.thrill_top?.[2] ?? 90}.</li></ul>
+      <p>The old obstacle course in the Yard, The Run, is closed: Thrill Hill replaces it.</p>`;
+    } },
+  { id: "worldthief", title: "Thieving in the world", icon: "\u{1F90F}", cat: "Skills", hold: "thief2",
+    body: (G, H) => {
+      const mob = (k) => H.esc(G.MOBS[k]?.name || k), scn = (k) => H.esc(G.SCENES[k]?.name || k);
+      const pockets = Object.entries(G.POCKETS).sort((a, b) => a[1] - b[1]);
+      const boxes = Object.entries(G.LOCKBOXES).sort((a, b) => a[1][2] - b[1][2]);
+      const scs = Object.entries(G.WORLD_SC).sort((a, b) => a[1].lvl - b[1].lvl);
+      return `<p><b>Thieving isn't only the Guild any more.</b> Monsters out in the world have pockets, most maps have a lockbox, and every map has a fenced-off corner your Agility can get you into.</p>
+      <h3>Pockets</h3>
+      <p>Click a monster and choose <b>Pick pocket</b>. Nobody can be picked while they're in a fight. Get caught and you're stunned for a moment; get away with it and that one's pockets are turned out for a minute.</p>
+      <table class="tbl"><tr><th>Monster</th><th>Thieving</th></tr>${pockets.map(([k, l]) => `<tr><td>${mob(k)}</td><td>${l}</td></tr>`).join("")}</table>
+      <h3>Lockboxes</h3>
+      <p>One on each of ${boxes.length} maps. Every try uses a <b>lockpick</b> (${H.wl("npcs/Vance the Fence", "Vance the Fence")} sells them, ${v11num(G.WT.lockpick)} tickets each). An open box gives ${G.WT.box.rolls} rolls of the guild's loot for its level, and is yours again in ${Math.round(G.WT.box.cdMs / 60000)} minutes. About one box in ${Math.round(1 / G.WT.box.key)} holds a <b>skeleton key</b>: open a Crypt or Pyramid hoard with one in your bag and it rolls twice.</p>
+      <table class="tbl"><tr><th>Map</th><th>Thieving</th></tr>${boxes.map(([k, b]) => `<tr><td>${scn(k)}</td><td>${b[2]}</td></tr>`).join("")}</table>
+      <h3>Shortcuts and nooks (Agility)</h3>
+      <p>A log, some stones, a rope, a gap in a fence: each gets you over a barrier, usually to a tree or a rock a tier above the map's own. You can slip and end up where you started; that gets rarer as your Agility climbs past the shortcut's level.</p>
+      <table class="tbl"><tr><th>Shortcut</th><th>Map</th><th>Agility</th><th>Behind it</th></tr>${scs.map(([id, s]) => `<tr><td>${H.esc(s.name)}</td><td>${scn(s.scene || id)}</td><td>${s.lvl}</td><td>${H.esc(s.ledge?.obj?.name || "a quicker way round")}</td></tr>`).join("")}</table>
+      <h3>Back ways</h3>
+      <p>Three long ways between two maps, drawn on the world map once your Agility can use them.</p>
+      <table class="tbl"><tr><th>Back way</th><th>Between</th><th>Agility</th></tr>${Object.values(G.BACKWAYS).map((b) => `<tr><td>${H.esc(b.name)}</td><td>${b.ends.map((e) => scn(e.scene)).join(" and ")}</td><td>${b.lvl}</td></tr>`).join("")}</table>`;
+    } },
+  { id: "diaries", title: "Area diaries and the cape", icon: "\u{1F4D6}", cat: "Going further", hold: "diary",
+    body: (G, H) => `<p><b>Every map has a diary</b>: ${G.DIARY.keys.length} of them, from the Yard to the Deep Wild, each with four tiers (${G.DIARY.tiers.join(", ")}) of three tasks. Open yours with <b>L</b>, or the book at the end of the row of icons above your inventory: it opens on <b>the map you're standing on</b>, so the next thing to do is always one key away. "Whole diary" shows all of them.</p>
+      <p><b>A tier is finished when every task in it is done, and every tier under it.</b> Finishing one gives you three things:</p>
+      <ul><li><b>A perk on that map</b>: faster gathering, a price cut, a monster that hits softer, a free teleport there once a day, a boss's table rolling twice on your first kill of the day. Each diary lists its four.</li>
+        <li><b>An XP lamp</b>: ${G.DIARY.lamps.map((n) => v11num(n)).join(", ")} XP for ${G.DIARY.tiers.join(", ").toLowerCase()}. Rub it on any skill at or above the map's own starting level.</li>
+        <li><b>A medal</b> (${G.DIARY.medals.join(", ")}): the frame round that map's emblem in your diary.</li></ul>
+      <p><b>What you'd already done counts.</b> When diaries opened, everything your character had already done was ticked off quietly: quests, kills, catches, laps, the maps you've walked onto.</p>
+      <p><b>An event task</b> is done by whichever world event ends on that map while you're there. <b>The Wilderness and the Deep Wild</b> have PvP tasks from Medium up; their Easy tiers never need another player.</p>
+      <h3>The cape slot and the Grand Tour</h3>
+      <p>Your paper doll has an <b>eleventh square, under your feet</b>, for a cape. A cape carries no stats: it's for what you've done, and everyone can see it on you. The first is the <b>Grand Tour cape</b>, for <b>every Elite diary</b>, the Wilds included. Wearing it: a free teleport to any map once a day from the Diary, and the title <b>${H.esc(G.DIARY.title)}</b>. It can't be traded, sold or dropped.</p>` },
+  { id: "character", title: "The Character window", icon: "\u{1F9CD}", cat: "Going further",
+    body: `<p><b>Every number the game uses about you, in one place.</b> Open it from the <b>Character</b> button under your paper doll (Equipment, U).</p>
+      <p>It shows your accuracy, strength and defence for the style you're using, your max hit and swing speed, your walking speed, your bonuses from gear, gems, pets, work clothes and food, and for each one <b>where to get more</b>. Nothing in it is sent anywhere: it's worked out on your screen from what you're wearing.</p>` },
+);
+/* the v1.1 Agility guide: Thrill Hill instead of The Run, and the shortcuts */
+function agilityV11(G, H) {
+  const C = Object.values(G.THRILL.courses);
+  return `<p><b>Agility is trained on ${H.wl("guides/thrill", "Thrill Hill")}</b>: in at Dizzy Dale's counter, south of the Yard's court. Three stunt runs, ${C.map((c) => `<b>${H.esc(c.name)}</b> (Agility ${c.lvl})`).join(", ")}; each stunt pays, a full lap pays far more, and laps drop the runner's marks Fast Eddie takes.</p>
+      <p><b>What it buys is movement speed, everywhere</b>: about <b>+5% at 50</b> and <b>+10% at 99</b>, on every step you take for the rest of the game.</p>
+      <p><b>And it opens the world up.</b> Every map has a shortcut or a fenced-off nook with something a tier above the map behind it, and three back ways run between maps. ${H.wl("guides/worldthief", "Thieving in the world")} lists them all.</p>`;
+}
+
 export const UPDATES = [
+  {
+    date: "2026-10-08", title: "Update 1.1", hold: "diary",
+    items: [
+      "AREA DIARIES. Every map has a diary: 21 of them, four tiers of three tasks. A tier gives a perk on that map, an XP lamp (1,000 to 75,000) and a medal. Press L, or the book at the end of the icons over your inventory: it opens on the map you're on. Everything you'd already done is ticked off.",
+      "THE CAPE SLOT. An eleventh square on your paper doll, under your feet. The Grand Tour cape, for every Elite diary, is the first: a free teleport anywhere once a day and the title the Well-Travelled.",
+      "THRILL HILL. Agility's new home, through Dizzy Dale's counter in the south of the Yard's court: the Rookie, Pro and Champion Runs, Daredevil Peak up the human cannonball, Fast Eddie's runner's-mark shop, Corndog Carl's snacks, Grease Gremlins, Hellbikers and Big Daddy Crusher. The Run in the Yard is closed.",
+      "THIEVING IN THE WORLD. Monsters out in the world have pockets (Pick pocket on the monster), most maps have a lockbox (Vance sells lockpicks, 1,000 tickets), and a skeleton key from a lockbox makes a Crypt or Pyramid hoard roll twice.",
+      "SHORTCUTS AND BACK WAYS. Every map has a fenced nook or a shortcut your Agility gets you over, with something a tier above the map behind it; three back ways run between maps and show on the world map.",
+      "WORK CLOTHES. A set for every skill, +3% XP a piece and a perk for all four, kept in the Locker (Equipment, Work clothes).",
+      "THE CHARACTER WINDOW. Every number about you and where to get more, from the Character button under your paper doll.",
+      "GEMS are a quarter as common and can no longer be traded or put on the Exchange. Gems still on the Exchange were taken down and sent back to their sellers' collection boxes; if a sorted gem lost its sort on the way, staff can put it right.",
+      "SETTINGS: a Jukebox volume slider, separate from the game's sound.",
+    ],
+  },
   {
     date: "2026-09-30", title: "The Flood",
     items: [
@@ -2751,6 +2830,11 @@ export const SKILL_EXTRA = {
       <table class="tbl"><tr><th>Level</th><th>Shroom</th><th>Bed grows in</th><th>xp a harvest</th><th>xp a wild pick</th></tr>${rows}</table>`;
   },
 };
+/* (2026-10-01) the skill pages' one-liners once v1.1 is out (the page swaps them in when the HOLD it names is off) */
+export const SKILL_GUIDE_V11 = {
+  agility: ["thrill", "Run the stunt courses on Thrill Hill, through Dizzy Dale's counter in the south of the Yard's court. Each stunt pays, a lap pays far more, and it buys movement speed everywhere, plus every map's shortcuts and nooks."],
+  thieving: ["thief2", "Pick pockets in the Thieves' Guild in the far north-east of the Gloam, or out in the world: monsters' pockets and a lockbox on most maps. Vance the Fence sells the Guild's permit and the lockpicks."],
+};
 export const SKILL_GUIDE = {
   tinkering: "Salvage what you don't need into parts at Sprocket Sal's Scrap Bench in the Yard, build gadgets out of them, and give parts to the World Projects the whole server builds together. Salvaging pays xp (up to 40 an item), building pays more the higher the gadget, and finishing a project's stage pays the most.",
   breeding: "Breed two pets in the pet pen on your island to make a better one, and hatch eggs in a hatchery. Starting a pair gives some xp and collecting the baby gives far more. Every pairing and every hatch trains it.",
@@ -2780,6 +2864,34 @@ export const SKILL_GUIDE = {
    are not written: the page asks the server for the week's ({t:"weekly", n}; eastscape-worker/src/weekly.js) and weeklyPage draws them, live while the
    week runs. A picture is "ui/<k>", "items/<k>", "mob/<k>" or "flat/<k>". Add next week's issue at the TOP. */
 export const WEEKLY = [
+  {
+    n: 2, title: "Update 1.1", from: "2026-10-08", to: "2026-10-14", hold: "diary",
+    lede: "The first big update since launch. A diary for every map and a cape for finishing them all, Thrill Hill for Agility, thieving and shortcuts out in the world, and work clothes for every skill.",
+    hero: ["diary/diary", "flat/th_cannon", "items/lockpick", "items/pr_hat", "diary/cape_tour"],
+    big: [
+      { img: "diary/diary", title: "Area diaries", tease: "252 tasks, 21 medals, one cape. What you've already done counts.", peek: ["diary/r_yard", "diary/r_gloam", "diary/r_carn", "diary/r_north", "diary/r_wild"],
+        text: "A diary for every map, four tiers each. A tier gives a perk on that map, an XP lamp and a medal. Press L: it opens on the map you're standing on.", wiki: "guides/diaries" },
+      { img: "diary/cape_tour", title: "The cape slot", tease: "Every Elite diary. One cape. Everyone sees it.", peek: ["items/cape_tour", "diary/r_wild", "diary/r_north"],
+        text: "An eleventh square on your paper doll, under your feet. The Grand Tour cape is the first: a free teleport anywhere once a day, and the title the Well-Travelled.", wiki: "guides/diaries" },
+      { img: "flat/th_cannon", title: "Thrill Hill", tease: "Fire yourself out of a cannon. For the XP.", peek: ["flat/th_hoop", "flat/th_halfpipe", "flat/fasteddie_south", "flat/th_snackcart", "mob/crusher"],
+        text: "Agility's new home, through Dizzy Dale's counter in the Yard: three stunt runs, Daredevil Peak up the cannon, Fast Eddie's runner's marks, Corndog Carl, and Big Daddy Crusher.", wiki: "guides/thrill" },
+      { img: "items/lockpick", title: "Thieving in the world", tease: "Every monster has pockets. Some of them are worth it.", peek: ["mob/highwayman", "flat/o_lockbox", "items/skeleton_key", "flat/o_sc_rope", "flat/o_drain"],
+        text: "Pick pockets out in the world, open a lockbox on most maps, and use your Agility on a shortcut or nook on every map, plus three back ways between them.", wiki: "guides/worldthief" },
+      { img: "items/pr_hat", title: "Work clothes", tease: "Four pieces. Fifteen percent. Every skill.", peek: ["items/pr_hat", "items/br_apron", "items/sg_hat", "items/sl_overalls"],
+        text: "A set for every skill: +3% XP a piece, a perk for all four, and each one found somewhere else than its own skill. They live in your Locker.", wiki: "guides/workclothes" },
+      { img: "ui/skills", title: "The Character window", tease: "Every number about you, and where to get more.", peek: ["ui/skills", "ui/equip"],
+        text: "From the Character button under your paper doll: your accuracy, strength, defence, speeds and every bonus, each with where to get more.", wiki: "guides/character" },
+      { img: "items/ruby", title: "Gems: rarer, and yours", tease: "Found one? Keep it.", peek: ["items/ruby", "items/sapphire"],
+        text: "A quarter as many gems drop, and they can't be traded or put on the Exchange any more. Any gem still on the Exchange was taken down and sent back to its seller's collection box.", wiki: "guides/gems" },
+    ],
+    worth: [
+      "Press L for your diary. Old players: check it first, your history is already ticked off and there may be lamps waiting.",
+      "The Run in the Yard is closed: Agility is Thrill Hill now, and the shortcuts on every map.",
+      "Settings has a Jukebox volume now, separate from the game's sound.",
+      "Lockpicks are 1,000 tickets at Vance the Fence in the Gloam.",
+    ],
+    links: [["guides/diaries", "Area diaries"], ["guides/thrill", "Thrill Hill"], ["guides/worldthief", "Thieving in the world"], ["guides/workclothes", "Work clothes"], ["updates", "Every update"]]
+  },
   {
     n: 1, title: "Launch week", from: "2026-10-01", to: "2026-10-07",
     lede: "EastScape is open to everyone. Here's what's in the world on day one, the changes that landed in the last week before launch, and the numbers as the first week happens.",
@@ -2818,6 +2930,7 @@ export const WEEKLY_CSS = `
 .wk-card,.wk-card *,.wk-list a,.wk-list a *{text-decoration:none!important}
 .wk-card img{width:40px;height:40px;image-rendering:pixelated;object-fit:contain}
 .wk-card b{display:block;font:800 15px/1.2 "Cinzel",Georgia,serif;color:var(--wk-ink)}.wk-card span{display:block;margin-top:3px;font:600 12.5px/1.4 Lora,sans-serif;color:var(--wk-dim)}
+.wk-tease{display:block;margin-top:3px;font:italic 700 12.5px/1.35 Lora,sans-serif;color:#8a3a14}.wk-peek{display:flex!important;gap:6px;margin-top:7px!important;padding:6px 8px;border-radius:7px;background:#2a1a10;align-items:flex-end;flex-wrap:wrap}.wk-peek img{width:30px!important;height:30px!important;image-rendering:pixelated;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
 .wk-card i{display:block;margin-top:4px;font:800 11.5px Lora,sans-serif;font-style:normal;color:#8a5a14}
 .wk-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
 .wk-tile{padding:10px;border-radius:8px;background:#2a1a10;color:#f6e9cc;text-align:center;box-shadow:inset 0 0 0 1.5px #5a3a1a}
@@ -2839,7 +2952,7 @@ const wkDays = (a, b) => { const f = (s) => new Date(`${s}T12:00:00Z`).toLocaleD
 /** one issue's page. H: { esc, wl, img(key) -> <img>, sico(skill) -> icon html, SKILLS, BOSS(t) -> name, TIER(t) -> dungeon name } and S, the server's numbers (or null while they come) */
 export function weeklyPage(G, H, W, S) {
   const n = (v) => Math.round(v || 0).toLocaleString(), k = (v) => v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e4 ? `${Math.round(v / 1e3)}k` : n(v);
-  const cards = W.big.map((c) => `<a class="wk-card" data-wiki="${H.esc(c.wiki)}">${H.img(c.img)}<span><b>${H.esc(c.title)}</b><span>${H.esc(c.text)}</span><i>Read more &rarr;</i></span></a>`).join("");
+  const cards = W.big.map((c) => `<a class="wk-card" data-wiki="${H.esc(c.wiki)}">${H.img(c.img)}<span><b>${H.esc(c.title)}</b>${c.tease ? `<em class="wk-tease">${H.esc(c.tease)}</em>` : ""}<span>${H.esc(c.text)}</span>${(c.peek || []).length ? `<span class="wk-peek">${c.peek.map(H.img).join("")}</span>` : ""}<i>Read more &rarr;</i></span></a>`).join("");   /* (2026-10-01) tease and peek: a line that sells it and a strip of its art */
   let nums = "";
   if (!S) nums = `<p class="wk-note">Asking the server for the week's numbers&hellip;</p>`;
   else if (!S.have) nums = `<p class="wk-note">The numbers start when the week does, on ${H.esc(wkDays(W.from, W.from).split(" to ")[0])}.</p>`;
@@ -2867,7 +2980,7 @@ export function weeklyPage(G, H, W, S) {
 }
 /** the list of issues, newest first */
 export function weeklyList(H) {
-  return `<style>${WEEKLY_CSS}</style><p class="lede">A new issue every week: the big changes with pictures, and the week's numbers.</p><div class="wk-list">${WEEKLY.map((W) => `<a data-wiki="weekly/${W.n}"><i>WEEK<br>${W.n}</i><span><b>${H.esc(W.title)}</b><small>${H.esc(wkDays(W.from, W.to))} &middot; ${H.esc(W.lede.slice(0, 110))}${W.lede.length > 110 ? "&hellip;" : ""}</small></span></a>`).join("")}</div>`;
+  return `<style>${WEEKLY_CSS}</style><p class="lede">A new issue every week: the big changes with pictures, and the week's numbers.</p><div class="wk-list">${WEEKLY.filter((W) => !H.held?.(W)).map((W) => `<a data-wiki="weekly/${W.n}"><i>WEEK<br>${W.n}</i><span><b>${H.esc(W.title)}</b><small>${H.esc(wkDays(W.from, W.to))} &middot; ${H.esc(W.lede.slice(0, 110))}${W.lede.length > 110 ? "&hellip;" : ""}</small></span></a>`).join("")}</div>`;
 }
 
 /* ============================================================ THE ROAD AHEAD (2026-09-30): the words and pictures for each card in G.ROADMAP, and the page.
@@ -2875,6 +2988,13 @@ export function weeklyList(H) {
    dark, with its `sil` monster drawn as a black silhouette, so it teases without showing the map. `more` is the list in the opened card. Moving a card is
    editing its line in G.ROADMAP; changing what it says is editing it here. No dates until something is in testing. */
 export const ROADMAP_WORDS = {
+  v11_diaries: { title: "Area diaries and the cape", text: "A diary for every map, and the Grand Tour cape for finishing them all.", img: "diary/diary", wiki: "guides/diaries" },
+  v11_thrill: { title: "Thrill Hill", text: "Agility's new home: three stunt runs, a cannon and Daredevil Peak.", img: "flat/th_cannon", wiki: "guides/thrill" },
+  v11_thief: { title: "Thieving and shortcuts in the world", text: "Pockets, lockboxes, a nook on every map and three back ways.", img: "items/lockpick", wiki: "guides/worldthief" },
+  v11_work: { title: "Work clothes", text: "A set for every skill, kept in your Locker.", img: "items/pr_hat", wiki: "guides/workclothes" },
+  abilities: { title: "Abilities", text: "Three for each fighting style, firing in the order you set. Built, and waiting for the first player to reach 99 in a combat skill.", img: "ui/skills",
+    more: ["Heavy Blow, Cleave and Brace for melee", "Power Shot, Volley and Disengage for a bow", "Bolt, Blast and Barrier for magic", "Nothing to press: you only choose the order"] },
+  capes99: { title: "Capes for 99", text: "A cape for every skill at 99, for the new cape slot.", img: "items/cape_tour" },
   events: { title: "World events", text: "Shooting Stars, Wanted! and the Jackpot Thief, one of each a day.", img: "flat/o_fallenstar", wiki: "guides/events" },
   wildrearm: { title: "The Wild, rearmed", text: "Late-map monsters, better pay for a kill, and dying there costs.", img: "flat/sabretooth", wiki: "areas/wild" },
   returns: { title: "Returns at Bom", text: "Bought the wrong gear? It goes back within the hour for what you paid.", img: "ui/bom_face" },

@@ -9796,7 +9796,7 @@ const wornIn = (c, slot) => { const id = c?.store?.name?.[slot], it = id && STOR
 export const looksOf = (c) => { let out = null; for (const s of LOOK_SLOTS) { const it = wornIn(c, s); if (it) (out ||= {})[s] = it.val; } return out; };
 export const looksSig = (l) => (l ? LOOK_SLOTS.map((s) => l[s] || "").join(".") : "");
 /** the title under a character's name, or "" */
-export const titleOf = (c) => { const it = wornIn(c, "title"); return !it ? "" : it.val === "custom" ? cleanTitle(c.store.ttext) : it.val; };
+export const titleOf = (c) => { const it = wornIn(c, "title"); return !it ? (!HOLD.diary && c?.eq?.cape === "cape_tour" ? DIARY.title : "") : it.val === "custom" ? cleanTitle(c.store.ttext) : it.val; };   /* (2026-10-01, v1.1) the Grand Tour cape is a title of its own when no Store title is on */
 /** (2026-09-30) THE WALKING FIX (see speedRaw): the fxOf speed lever, as whole percent of walking */
 export const fxWalk = (c) => Math.round(fxOf(c).speed * 1000) / 10;
 /* THE STORE'S DECOR (2026-09-30). The owner: "lets also add some crazy cool house decor and island items", then "take a look at other games
@@ -10633,4 +10633,11 @@ function diaryNorm(c, src) {
     else delete c.dia;   /* no diary yet: the first login with diaries open makes one, quietly (diary.js) */
   } catch (e) { /* never let a save fail to load over this */ }
   return c;
+}
+/* (2026-10-01) THE ROAD AHEAD, once v1.1 is out: its four parts go LIVE at the front, abilities wait for the first combat 99, and capes for 99
+   (the cape slot's next use) go up as an idea. The words are ROADMAP_WORDS in the wiki. */
+if (!HOLD.diary) {
+  ROADMAP.cards.unshift({ id: "v11_diaries", lane: "live" }, { id: "v11_thrill", lane: "live" }, { id: "v11_thief", lane: "live" }, { id: "v11_work", lane: "live" });
+  ROADMAP.cards.push({ id: "abilities", lane: "next", status: "testing" }, { id: "capes99", lane: "later", status: "idea" });
+  ROADMAP.updated = "2026-10-08";
 }

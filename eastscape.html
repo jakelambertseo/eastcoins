@@ -17,7 +17,7 @@
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;
 /* (2026-09-30) YOUR SCREEN: the chosen look, on <html> before anything paints (eastscape-ui.js keeps it in step) */
 try { const t = localStorage.getItem("es_ui_theme"); if (t) document.documentElement.dataset.uiTheme = t; } catch (e) { /* storage off: the default look */ }</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=433">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=434">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -2051,7 +2051,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=433";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=434";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 const FROZEN = new Map();   /* (2026-09-30) player id -> when their Deep Freeze ends (performance.now) */
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
@@ -2061,7 +2061,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=242").then((m) => { WK = m; rmLiveNote(); }),
+  import("/v3/assets/js/eastscape-wiki.js?v=243").then((m) => { WK = m; for (const [k, [hold, text]] of Object.entries(m.SKILL_GUIDE_V11 || {})) if (!G.HOLD[hold]) m.SKILL_GUIDE[k] = text; rmLiveNote(); }),   /* (2026-10-01) v1.1's skill one-liners */
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
@@ -7377,11 +7377,11 @@ const nico = (name) => { const a = WIKI.npcs[name]?.art || NPC_ART[name]; return
 function wikiPages() {
   const pages = [{ route: "home", title: "Home", icon: uico("g_home"), group: "" }, { route: "updates", title: "Updates", icon: uico("g_updates"), group: "" }];
   if (!G.HOLD.roadmap && WK.roadmapPage) pages.push({ route: "roadmap", title: "The Road Ahead", icon: uico("g_updates"), group: "" });   /* (2026-09-30) THE ROAD AHEAD */
-  for (const g of WK.GUIDES) { if (g.id === "thieving" && !G.THIEF.live) continue; if (g.id === "longnight" && !G.hwOn()) continue; if (g.id === "events" && G.HOLD.events) continue;   /* (2026-09-30) the world events' guide comes out with them */ if (g.id === "jewelcrafting" && G.HOLD.jewel) continue; if (g.id === "gembag" && G.HOLD.gems) continue; if (g.id === "workclothes" && G.HOLD.work) continue;   /* (2026-10-01) work clothes: with v1.1 */ if (g.id === "tinkering" && G.HOLD.tinker) continue;   /* (2026-09-29) the gem bag's guide opens with gems */   /* (2026-09-27) the Long Night's guide appears with the season */ pages.push({ route: `guides/${g.id}`, title: g.title, icon: uico(`g_${g.id}`), group: "Guides", cat: g.cat || "More" }); }   /* (2026-09-23) the Thieving guide rides THIEF.live with the rest of the skill; it is written and ready, it just must not be readable before the guild opens */
+  for (const g of WK.GUIDES) { if (g.hold && G.HOLD[g.hold]) continue;   /* (2026-10-01) v1.1's guides come out with their part */ if (g.id === "thieving" && !G.THIEF.live) continue; if (g.id === "longnight" && !G.hwOn()) continue; if (g.id === "events" && G.HOLD.events) continue;   /* (2026-09-30) the world events' guide comes out with them */ if (g.id === "jewelcrafting" && G.HOLD.jewel) continue; if (g.id === "gembag" && G.HOLD.gems) continue; if (g.id === "workclothes" && G.HOLD.work) continue;   /* (2026-10-01) work clothes: with v1.1 */ if (g.id === "tinkering" && G.HOLD.tinker) continue;   /* (2026-09-29) the gem bag's guide opens with gems */   /* (2026-09-27) the Long Night's guide appears with the season */ pages.push({ route: `guides/${g.id}`, title: g.title, icon: uico(`g_${g.id}`), group: "Guides", cat: g.cat || "More" }); }   /* (2026-09-23) the Thieving guide rides THIEF.live with the rest of the skill; it is written and ready, it just must not be readable before the guild opens */
   /* (2026-09-22) PETS ARE THEIR OWN CATEGORY, not a line in Guides: five things with stats, a drop rate and a
      picture each is a category, and the guide alone made them look like a footnote. Built from G.PETS, so a sixth
      pet appears here without anyone remembering to add it. */
-  for (const W of WK.WEEKLY || []) pages.push({ route: `weekly/${W.n}`, title: `Week ${W.n}: ${W.title}`, icon: uico("g_updates"), group: "Weekly" });   /* (2026-09-30) THE WEEKLY ISSUE */
+  for (const W of WEEKS()) pages.push({ route: `weekly/${W.n}`, title: `Week ${W.n}: ${W.title}`, icon: uico("g_updates"), group: "Weekly" });   /* (2026-09-30) THE WEEKLY ISSUE */
   for (const [k, pt] of Object.entries(G.PETS)) if (!pt.held) pages.push({ route: `pets/${k}`, title: pt.name, icon: `<img class="ico" src="${IART.replace("items/", "")}${pt.art}.png?v=${ART_V}" alt="">`, group: "Pets" });
   for (const [k, s] of Object.entries(SKILLS)) { if ((k === "thieving" && !G.THIEF.live) || s.held) continue; pages.push({ route: `skills/${k}`, title: s.name, icon: sico(k), group: "Skills" }); }   /* (2026-09-23) a skill that ships dark has no wiki page yet, so it must not be offered one */
   for (const [k, q] of Object.entries(QUESTS)) if ((!q.event || G.hwOn()) && !q.held) pages.push({ route: `quests/${k}`, title: q.name, icon: uico(`q_${q.tier || "easy"}`), group: "Quests" });
@@ -7489,17 +7489,17 @@ function wikiGo(route, setNav = true) {
     return inC.length ? `<h4 class="gcat">${esc(c)}</h4>${cards(inC)}` : "";
   }).join("");
   let html = "";
-  if (kind === "home") html = `<h2><i><img class="ico wico" src="${UIA}g_updates.png?v=1" alt=""></i>EastScape Wiki</h2>${G.hwOn() ? `<a class="whw" data-wiki="guides/longnight"><span class="whw-i">\u{1F383}</span><span><b>The Long Night is on</b><small>${G.hwDaysLeft()} day${G.hwDaysLeft() === 1 ? "" : "s"} left &middot; candy corn, the Night Market, the Pumpkin King and nine event pieces. Read the event guide &rarr;</small></span></a>` : ""}` + `<p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>${(WK.WEEKLY || [])[0] ? `<a class="whw wkhome" data-wiki="weekly/${WK.WEEKLY[0].n}"><span class="whw-i">${uico("g_updates")}</span><span><b>This week: Week ${WK.WEEKLY[0].n}, ${esc(WK.WEEKLY[0].title)}</b><small>The big changes with pictures, and the week's numbers as they happen. Read the issue &rarr;</small></span></a>` : ""}${!G.HOLD.roadmap && WK.ROADMAP_WORDS ? (() => { const c = (G.ROADMAP.cards || []).filter((x) => x.lane === "now").sort((a, b) => (b.pct || 0) - (a.pct || 0))[0], w = c && WK.ROADMAP_WORDS[c.id], n = (l) => G.ROADMAP.cards.filter((x) => x.lane === l).length;
+  if (kind === "home") html = `<h2><i><img class="ico wico" src="${UIA}g_updates.png?v=1" alt=""></i>EastScape Wiki</h2>${G.hwOn() ? `<a class="whw" data-wiki="guides/longnight"><span class="whw-i">\u{1F383}</span><span><b>The Long Night is on</b><small>${G.hwDaysLeft()} day${G.hwDaysLeft() === 1 ? "" : "s"} left &middot; candy corn, the Night Market, the Pumpkin King and nine event pieces. Read the event guide &rarr;</small></span></a>` : ""}` + `<p class="lede">Everything in the game, written from the game itself: every item, monster, drop, skill, quest and place on these pages comes from the same rules the server plays by.</p>${WEEKS()[0] ? `<a class="whw wkhome" data-wiki="weekly/${WEEKS()[0].n}"><span class="whw-i">${uico("g_updates")}</span><span><b>This week: Week ${WEEKS()[0].n}, ${esc(WEEKS()[0].title)}</b><small>The big changes with pictures, and the week's numbers as they happen. Read the issue &rarr;</small></span></a>` : ""}${!G.HOLD.roadmap && WK.ROADMAP_WORDS ? (() => { const c = (G.ROADMAP.cards || []).filter((x) => x.lane === "now").sort((a, b) => (b.pct || 0) - (a.pct || 0))[0], w = c && WK.ROADMAP_WORDS[c.id], n = (l) => G.ROADMAP.cards.filter((x) => x.lane === l).length;
     return `<a class="whw wkhome" data-wiki="roadmap"><span class="whw-i">${uico("g_updates")}</span><span><b>The Road Ahead${w ? `: ${esc(w.title)} is ${c.status === "testing" ? "in testing" : "being built"}` : ""}</b><small>${n("now")} being built, ${n("next")} next, ${n("rumour")} rumours. See what's coming, and heart what you want &rarr;</small></span></a>`; })() : ""}
     <h3>Guides</h3>${byCat(wikiPages().filter((p) => p.group === "Guides"))}<h3>Browse</h3>${cards(["Skills", "Quests", "Monsters", "Areas", "People", "Items", "Pets"].map((g) => ({ route: `list/${g}`, title: g, icon: GROUP_ICO[g] })))}
-    <h3>Latest update</h3>${wikiUpdate(WK.UPDATES[0])}`;
-  else if (kind === "updates") html = `<h2><i>📰</i>Updates</h2><p class="lede">The three latest updates, newest first.</p>${WK.UPDATES.slice(0, 3).map(wikiUpdate).join("")}`;   /* (2026-09-27, the owner: "lets only show the most 3 recent updates on the wiki ... its getting super long now and bulky") */
+    <h3>Latest update</h3>${wikiUpdate(UPDS()[0])}`;
+  else if (kind === "updates") html = `<h2><i>📰</i>Updates</h2><p class="lede">The three latest updates, newest first.</p>${UPDS().slice(0, 3).map(wikiUpdate).join("")}`;   /* (2026-09-27, the owner: "lets only show the most 3 recent updates on the wiki ... its getting super long now and bulky") */
   else if (kind === "list") { const inG = wikiPages().filter((p) => p.group === id); html = `<h2><i>${GROUP_ICO[id] || "📚"}</i>${esc(id)}</h2>${id === "Guides" ? byCat(inG) : id === "Weekly" && WK.weeklyList ? WK.weeklyList(weekH()) : wikiTables(id, inG) || cards(inG)}`; }
   else if (kind === "roadmap" && WK.roadmapPage && !G.HOLD.roadmap) {   /* (2026-09-30) THE ROAD AHEAD: the words from the wiki module, the hearts from the server (asked for here, redrawn when they land) */
     html = WK.roadmapPage(G, weekH(), RMV, id || null); if (!RMV || Date.now() - RMV.got > 30000) send({ t: "roadmap" });
   }
   else if (kind === "weekly" && WK.weeklyPage) {   /* (2026-09-30) THE WEEKLY ISSUE: the words from the wiki module, the numbers from the server (asked for here, redrawn when they land) */
-    const W = (WK.WEEKLY || []).find((x) => String(x.n) === id), S = WSTATS[id];
+    const W = WEEKS().find((x) => String(x.n) === id), S = WSTATS[id];
     if (W) { html = WK.weeklyPage(G, weekH(), W, S || null); if (!S || Date.now() - S.got > 60000) send({ t: "weekly", n: W.n }); }
   }
   else if (kind === "search") { const q = id.toLowerCase(); const hits = wikiPages().filter((p) => p.title.toLowerCase().includes(q)); html = `<h2><i>🔎</i>“${esc(id)}”</h2>${hits.length ? cards(hits) : '<p class="lede">Nothing by that name.</p>'}`; }
@@ -7802,10 +7802,13 @@ function rmLiveNote() {
   try { localStorage.setItem("es_rm_seen", JSON.stringify(live)); } catch (e) { /* fine */ }
   for (const id of fresh.slice(0, 2)) setTimeout(() => say(`🗺️ From the Road Ahead: ${WK.ROADMAP_WORDS[id]?.title || id} is live! The wiki's Road Ahead has what's next.`, "good"), 4000);
 }
+/* (2026-10-01) the weekly issues and the updates that aren't held: a v1.1 issue comes out with v1.1 */
+const WEEKS = () => (WK.WEEKLY || []).filter((W) => !W.hold || !G.HOLD[W.hold]);
+const UPDS = () => (WK.UPDATES || []).filter((u) => !u.hold || !G.HOLD[u.hold]);
 function weekH() {
-  const img = (key) => { const [kind, k] = String(key).split("/"), src = kind === "ui" ? `${UIA}${k}.png?v=${UI_V[k] || 1}` : kind === "items" ? `${IART}${k}.png?v=${IART_V}` : kind === "mob" ? `${ART}${MOBS[k]?.art || k}.png?v=${ART_V}` : `${ART}${k}.png?v=${ART_VER[k] || ART_V}`; return `<img src="${src}" alt="">`; };
+  const img = (key) => { const [kind, k] = String(key).split("/"), src = kind === "ui" ? `${UIA}${k}.png?v=${UI_V[k] || 1}` : kind === "items" ? `${IART}${k}.png?v=${IART_V}` : kind === "mob" ? `${ART}${MOBS[k]?.art || k}.png?v=${ART_V}` : kind === "diary" ? `${ART}diary/${k}.png?v=1` : `${ART}${k}.png?v=${ART_VER[k] || ART_V}`; return `<img src="${src}" alt="">`; };
   const src = (key) => (img(key).match(/src="([^"]+)"/) || [])[1] || "";   /* (2026-09-30) the same address, for a CSS background (the Road Ahead's banners) */
-  return { esc, wl, img, src, sico: (k) => `<span class="ico">${sico(k)}</span>`, SKILLS, BOSS: (t) => MOBS[t]?.name || t, TIER: (t) => ({ 1: "Crypt I", 2: "Crypt II", 3: "Crypt III", p1: "the Great Pyramid" })[t] || t };
+  return { esc, wl, img, src, held: (W) => !!W.hold && !!G.HOLD[W.hold], sico: (k) => `<span class="ico">${sico(k)}</span>`, SKILLS, BOSS: (t) => MOBS[t]?.name || t, TIER: (t) => ({ 1: "Crypt I", 2: "Crypt II", 3: "Crypt III", p1: "the Great Pyramid" })[t] || t };
 }
 $("wikiWin").addEventListener("click", (e) => { const b = e.target.closest("[data-wkshare]"); if (!b) return; const url = `${location.origin}/eastscape#wiki/weekly/${b.dataset.wkshare}`;
   (navigator.clipboard?.writeText(url) || Promise.reject()).then(() => { b.textContent = "Link copied"; }).catch(() => { b.textContent = url; }); SFX.play("ui_click"); });
