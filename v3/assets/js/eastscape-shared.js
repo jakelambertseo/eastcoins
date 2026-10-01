@@ -9556,6 +9556,47 @@ rmob("raidchief", { name: "The Ice Man", size: "xl", lvl: 60, hp: 4000, att: 60,
   [["tickets", [15000, 25000]], ["frost_shard", [2, 4]], ["yeti_pelt", [1, 2]], ["pot_frost", 1, 0.5], ["onyx_bar", [2, 4]], ["dragonstone_bar", [3, 6]], ["skyashlogs", [10, 20]]]);
 BOSSES.add("raidchief");
 
+/* ============================================================ THE FLOOD (2026-09-30). The owner, from tools/raid-mock: "lets build the flood on dev. we
+   need to be careful because the server has already built the fishing dock in the tinkerer projects, so take that into consideration".
+   A second kind of Yard raid (this.raid.kind === "flood", raid.js), with the Ice Man's machinery under it: the warning, the save across a restart,
+   everybody's share, the pot, the sack. What is new is the WATER and the SANDBAGS.
+     THE WATER is an overlay, a set of tiles the server keeps (S.flood) and sends; THE MAP ITSELF IS NEVER EDITED. It starts at the pond's and the
+       river's banks and spreads over the grass and the roads of the west bank (x <= RAID.zoneX, the same line the Ice Man keeps to), FLOOD.rise
+       tiles every FLOOD.riseMs, onto ground only ("." and ","). Planks and paving ("p") never flood: THE FISHING DOCK (the Tinkerer's project, its
+       planks at 16-17 x 18-21) stays dry and fishable the whole time, and so does the bridge. Standing in water slows walking (FLOOD.slow), on the
+       server and in the page's own prediction alike. Nothing is blocked: a flooded tile is still ground.
+     THE SANDBAGS are five spots on dry land by the water (none on the dock, its shed, its lamp or its board), each a monster that never moves and
+       can never be hurt (`bag`), which you click to hand in WOOD, ORE or SAND from your bag. Every item counts FLOOD.handValue towards your share,
+       like damage, so a woodcutter is paid like a fighter. A full spot is HELD: the water within FLOOD.protect of it drains and never comes back.
+     ALL FIVE HELD: the water starts going down and THE UNDERTOW climbs out onto the grass north of the pond. Beat him before the time is up and
+       the Yard is dry and everybody is paid; let the water reach FLOOD.lose of the west bank, or the time run out, and the Yard is flooded: the
+       stalls board up for RAID.sackMs as after the Ice Man, and the water stays until they open. */
+export const FLOOD = { scene: "workyard", warnMs: 3 * 60000, warnAt: [120, 60, 30], lasts: 15 * 60000,
+  riseMs: 4000, rise: 2, drain: 6, slow: 1.7, lose: 0.5, protect: 5,
+  spots: [{ at: [13, 20], mat: "wood" }, { at: [23, 17], mat: "ore" }, { at: [24, 15], mat: "sand" }, { at: [24, 8], mat: "wood" }, { at: [24, 4], mat: "ore" }],
+  need: { base: 250, per: 30, cap: 900, sand: 0.4 }, handValue: 3,
+  wave: { every: 40000, base: 3, perPlayers: 2, cap: 10, kinds: [["drowned", 6], ["bankshark", 2]] },
+  boss: { t: "undertow", at: [20, 15] }, hp: { base: 5000, per: 1400, cap: 42000 }, pay: { pool: 25000, per: 3500, floor: 400 } };
+export const FLOOD_MATS = {
+  wood: { name: "wood", ex: "any logs", test: (k) => /^[a-z]*logs$/.test(k) },
+  ore: { name: "ore", ex: "any ore, copper or tin", test: (k) => /_ore$/.test(k) || k === "copper" || k === "tin" || k === "glacite" },
+  sand: { name: "sand", ex: "sand", test: (k) => k === "sand" } };
+/** the ground the water may take: the west bank's walkable ground, never planks or paving (so never the dock or the bridge) */
+export const floodLand = (g) => { const out = []; for (let y = 0; y < ROWS; y++) for (let x = 0; x <= RAID.zoneX; x++) if (g[y][x] === "." || g[y][x] === ",") out.push(y * COLS + x); return out; };
+export const floodWetAt = (g, x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && (g[y][x] === "~" || g[y][x] === "b");
+rmob("drowned", { name: "The Drowned", size: "m", lvl: 22, hp: 110, att: 22, def: 18, max: 7, speed: 2400, box: [30, 26], aggro: 5, art: "clawhand", raid: true, weak: "fire",
+  ex: "Something that went into the river a long time ago, coming back out of it. It goes for whoever is carrying the sandbags." }, 60,
+  [["tickets", [30, 70]], ["logs", [4, 10], 0.4], ["willowlogs", [3, 8], 0.35], ["copper", [4, 10], 0.35], ["emerald_ore", [2, 6], 0.3], ["sand", [3, 8], 0.4], ["sardine", [3, 8], 0.35], ["perch", [2, 6], 0.3], ["bones", [2, 5], 0.4]]);
+rmob("bankshark", { name: "Bank Shark", size: "m", lvl: 44, hp: 420, att: 44, def: 38, max: 12, speed: 2600, box: [16, 30], aggro: 6, art: "shark", raid: true, weak: "storm",
+  ex: "A shark in a suit, washed up the bank with the flood and still trying to collect. The river's late fees." }, 220,
+  [["tickets", [120, 260]], ["ashlogs", [3, 7], 0.4], ["yewlogs", [2, 5], 0.35], ["diamond_ore", [2, 6], 0.4], ["dragonstone_ore", [2, 5], 0.35], ["sand", [6, 14], 0.4], ["lanternfish", [2, 5], 0.35], ["bonefish", [1, 3], 0.25], ["sapphire", 1, 0.03]]);
+rmob("undertow", { name: "The Undertow", size: "xl", lvl: 62, hp: 5000, att: 62, def: 50, max: 14, speed: 2800, box: [60, 90], aggro: 6, art: "krakenarm", boss: true, open: true, raid: true, weak: "storm",
+  ex: "Whatever lives at the bottom of the Yard's pond, pushed out by its own flood. Everyone who held the water back shares the spoils when it falls." }, 3000,
+  [["tickets", [15000, 25000]], ["skyashlogs", [10, 20]], ["onyx_ore", [6, 12]], ["dragonstone_bar", [3, 6]], ["ghostcarp", [3, 6]], ["pot_double", 1, 0.25], ["topaz", 1, 0.2], ["opal", 1, 0.08]]);
+BOSSES.add("undertow");
+rmob("sandbag", { name: "Sandbags", size: "m", lvl: 1, hp: 1, att: 0, def: 0, max: 0, speed: 99999, box: [30, 26], aggro: 0, art: "o_sacks", raid: true, bag: true,
+  ex: "A sandbag spot. Hand in what it asks for, and when it's full the water behind it drains and stays out." }, 0, []);
+
 /* ============================================================ THE COLD, AND WHAT THE RAID'S SPOILS MAKE (2026-09-30)
    The owner: "a mechanic in this map too where a player has to wear a 'Frost' item or else they take constant frozen/frost damage in this area.
    something that replaces their necklace or ring", then "Crafted from raid drops", "Harsh: 5% every 5 s", "Both: a ring and an amulet"; and "we

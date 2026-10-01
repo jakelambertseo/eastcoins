@@ -599,6 +599,7 @@ export class World {
     this.touch(pl);
     pl.out.push({ type: "scene", key });
     if (S.wfx && Date.now() < S.wfx.until) pl.out.push({ type: "wfx", ...S.wfx, late: true });   /* (2026-09-30) a show already on here */
+    if (S.flood?.size) pl.out.push({ type: "flood", scene: S.key, tiles: [...S.flood] });   /* (2026-09-30) THE FLOOD: the water already over the grass */
     this.send(pl, JSON.parse(this.snapOf(S, Date.now(), false)));
     if (S.run) pl.out.push(S.def.pyramid ? this.pyramidGates(S) : this.cryptGates(S));   /* (v103) a run: which gates are open, and the boss's health */
     if (S.tower) pl.out.push({ type: "tower", ...this.towerView(S) });   /* which floor, and whether the stairs are open */
@@ -1035,6 +1036,7 @@ export class World {
     else if (m.kind === "ground") { const it = S.ground.find((x) => x.id === m.id); if (it) act = { kind: "ground", id: it.id, x: it.x, y: it.y, name: G.ITEMS[it.k].name }; }
     else if (m.kind === "mob") {
       const mob = S.mobs.find((x) => x.id === m.id && !x.dead); if (!mob) return;
+      if (mob.bag) { pl.act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: mob.nm || "Sandbags", reach: 1, started: 0 }; pl.path = G.findPath(S.g, f, mob, 1) || []; return this.kick(S, pl, now); }   /* (2026-09-30) THE FLOOD: a sandbag spot is handed in to, never fought */
       if (mob.star) { pl.act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: mob.nm || "Shooting star", reach: 1, started: 0 }; pl.path = G.findPath(S.g, f, mob, 1) || []; return this.kick(S, pl, now); }   /* (2026-09-30) a SHOOTING STAR: see events.js starSwing */
       if (!this.mayFight(S, mob, pl, now)) return this.say(pl, `${this.claimOf(S, mob, now).name} is already fighting that.`, "bad");
       { const gate = mob.target === pl.id || pl.god || mob.thief ? null : G.bandBlock(C, S.key, "fight");   /* (2026-09-30) anyone may chase the Jackpot Thief, wherever he runs */   /* LEVEL BANDS: a soft gate. Something already attacking you can always be fought back */
@@ -2283,7 +2285,7 @@ export class World {
     else if (el === "frost") m.slowUntil = now + M.slow.ms;
     else if (el === "sun") { pl.C.hp = Math.min(G.maxHpOf(pl.C), pl.C.hp + Math.max(1, Math.round(dmg * M.sunHeal))); this.touch(pl); }
     else if (el === "storm") {
-      const o = S.mobs.find((x) => x !== m && !x.dead && !x.thief && !x.star && G.cheb(x, m) <= 1 && this.mayFight(S, x, pl, now)); if (!o) return;   /* (2026-09-30) never onto a star or the Jackpot Thief */
+      const o = S.mobs.find((x) => x !== m && !x.dead && !x.thief && !x.star && !x.bag && G.cheb(x, m) <= 1 && this.mayFight(S, x, pl, now)); if (!o) return;   /* (2026-09-30) never onto a star or the Jackpot Thief */
       const d2 = Math.max(1, Math.round(dmg * M.arc.share * G.elementMul(o.t, "storm")));
       o.hp -= d2; o.hurtAt = now; S.events.push({ type: "splat", who: o.id, n: d2, kind: "hit", t: now, arc: true }); this.award(pl, d2); this.bossAdd(pl, o, "dmg", d2);
       if (o.hp <= 0) { const keep = pl.act; this.killMob(S, pl, o, now); if (m.hp > 0) pl.act = keep; }
@@ -2863,7 +2865,7 @@ export class World {
     if (Math.max(Math.abs(dx), Math.abs(dy)) !== 1 || !G.canStepIn(S.g, e.x, e.y, dx, dy)) { e.path = []; return false; }
     // everyone but players waits rather than stepping onto someone
     if (!isPlayer && this.occupied(S, n.x, n.y, e)) { e.path = []; return false; }
-    const base = isPlayer ? G.stepMsOf(e.C, e.speedTest || 0) : e.stepMs || STEP;   /* (2026-09-30) the Jackpot Thief is a little quicker than you */
+    const base = (isPlayer ? G.stepMsOf(e.C, e.speedTest || 0) : e.stepMs || STEP) * (isPlayer && S.flood?.has(n.y * G.COLS + n.x) ? G.FLOOD.slow : 1);   /* (2026-09-30) the Jackpot Thief is a little quicker than you; THE FLOOD: wading is slower (the page predicts the same) */
     e.step = { fx: e.x, fy: e.y, tx: n.x, ty: n.y, t0: now, ms: Math.round(dx && dy ? base * 1.4 : base) };
     if (dx) e.face = dx > 0 ? 1 : -1;
     e.dir = G.DIRS[`${dx},${dy}`];
@@ -2976,6 +2978,7 @@ export class World {
     if (a.kind === "mob") {
       const m = S.mobs.find((x) => x.id === a.id); if (!m || m.dead) { pl.act = null; return; }
       if (m.star) return this.starSwing(S, pl, m, a, now);   /* (2026-09-30) SHOOTING STARS */
+      if (m.bag) return this.floodBag(S, pl, m, a, now);   /* (2026-09-30) THE FLOOD's sandbags (raid.js) */
       if (!this.mayFight(S, m, pl, now)) { pl.act = null; return this.say(pl, `${this.claimOf(S, m, now).name} is already fighting that.`, "bad"); }
       /* (2026-09-25) A BOW WITH NOTHING TO FIRE IS NOT A WEAPON. Checked before the walk, so you are told at the
          click rather than after crossing the room. */
@@ -3985,7 +3988,7 @@ export class World {
         continue;
       }
       const def = G.MOBS[m.t];
-      if (m.star) continue;   /* (2026-09-30) a SHOOTING STAR never moves or swings: it is mined (events.js starSwing) */
+      if (m.star || m.bag) continue;   /* (2026-09-30) a SHOOTING STAR never moves or swings: it is mined (events.js starSwing); nor does a sandbag spot */
       if (m.thief) { this.thiefMove(S, m, now, players); continue; }   /* (2026-09-30) THE JACKPOT THIEF runs from people and never swings */
       const R = G.MOBS[m.t]?.range || 1, inRange = (p) => { const d = G.cheb(p, m); return d >= 1 && d <= R; };   /* (2026-09-27) a ranged monster */
       let foe = players.find((p) => p.act?.kind === "mob" && p.act.id === m.id && inRange(p) && !p.step);

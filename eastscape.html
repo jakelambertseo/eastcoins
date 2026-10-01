@@ -17,7 +17,7 @@
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;
 /* (2026-09-30) YOUR SCREEN: the chosen look, on <html> before anything paints (eastscape-ui.js keeps it in step) */
 try { const t = localStorage.getItem("es_ui_theme"); if (t) document.documentElement.dataset.uiTheme = t; } catch (e) { /* storage off: the default look */ }</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=419">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=421">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -2006,7 +2006,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=419";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=421";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 const FROZEN = new Map();   /* (2026-09-30) player id -> when their Deep Freeze ends (performance.now) */
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
@@ -2345,7 +2345,7 @@ function onEvent(e) {
   if (e.type === "clawchest") { CLAWCHEST = e.opened ? { key: Z.key, at: performance.now() } : null; if (e.opened) SFX.play("mob_die"); return; }   /* (2026-09-27) Captain Claw's chest: opened by you, or a new one after a new kill */
   if (e.type === "popup") return popup(e.title, e.text, e.icon, [["Okay", null]]);
   if (e.type === "questdone") { const q = QUESTS[e.k]; if (q) questBanner(q); return; }
-  if (e.type === "scene") { if (DLG) closeTalk(); if (!String(e.key).startsWith("tower")) towerHudOff();   /* the bar goes with the room: a stale "floor 6" over the Yard is worse than no bar */
+  if (e.type === "scene") { FLOOD_W = null; if (DLG) closeTalk(); if (!String(e.key).startsWith("tower")) towerHudOff();   /* the bar goes with the room: a stale "floor 6" over the Yard is worse than no bar */
     setTimeout(() => { greenHere(); radioSync(); }, 600); return; }   /* (v116) so arriving is immediate rather than up to three seconds late; the tick above is what guarantees it */
   if (e.type === "saved") { savedAt = e.t; return; }
   if (e.type === "bank") return openWin("bankWin");
@@ -2426,6 +2426,7 @@ function onEvent(e) {
   if (e.type === "gemserr") { GEMUI?.oops(e.text); return; }
   if (e.type === "ordergave") { SFX.play("coins"); ORDUI?.gave(e.n); return; }
   if (e.type === "orderclaimed") { ORDUI?.claimed(); return; }   /* the window stays open: the next order arrives in it straight away */   /* (2026-09-28) Bom's buy-back */
+  if (e.type === "flood") { FLOOD_W = e.tiles?.length ? { scene: e.scene, set: new Set(e.tiles) } : null; return; }   /* (2026-09-30) THE FLOOD */
   if (e.type === "casinonote") { if (!set("casinoLines")) return; chatLine("Casino", e.text, "casinonote"); if (/JACKPOT/.test(e.text)) SFX.play("jackpot"); return; }
   /* (2026-09-23, the owner) A LEVEL MILESTONE, to everyone online. It is a chat line rather than a banner on
      purpose: the point is that the room can reply to it. Your own gets a sound; other people's do not, or a
@@ -2516,7 +2517,11 @@ function exitsOf() {
   });
 }
 const exitAt = (x, y) => (Z.exits || []).find((ex) => ex.tiles.some((t) => t.x === x && t.y === y) || (ex.sign && ex.sign.x === x && ex.sign.y === y));
-const botBubbles = new Map(), BURSTS = []; let shakeUntil = 0, PARTY_IDS = new Set();   /* (2026-09-30) PARTY_IDS: the Players tab's "My party" */
+const botBubbles = new Map(), BURSTS = []; let shakeUntil = 0, PARTY_IDS = new Set();
+/* (2026-09-30) THE FLOOD: the water the server says is over the grass, by tile (y * COLS + x), for one scene. Drawn under everybody, and wading
+   is predicted at the same speed the server walks you (G.FLOOD.slow), so nobody rubber-bands in it. */
+let FLOOD_W = null;
+const floodAt = (x, y) => !!FLOOD_W && FLOOD_W.scene === Z.key && FLOOD_W.set.has(y * COLS + x);   /* (2026-09-30) PARTY_IDS: the Players tab's "My party" */
 const BUSY_TAG = { slots: "🎰 Slots", cointable: "🪙 Coin Flip", dicetable: "🎲 Dice", wheel: "🎡 Wheel", hilo: "🃏 Higher or Lower", mines: "💣 Mines", plinko: "🔴 Plinko", scratch: "🎟 Scratch-Off", fightring: "🥊 Ringside", fightboard: "🥊 Picking a fighter", spot: "🎣 Fishing", rock: "⛏ Mining", vein: "⛏ Mining", tree: "🪓 Chopping", olive: "🫒 Picking olives", wheat: "🌾 Picking wheat" };
 const STORE_NAME = { "name-gold": "#ffd24a", "name-ice": "#a8dcff", "name-ember": "#ff8a3a", "name-diamond": "#e8f6ff", "name-sakura": "#ffa8cc", "name-slime": "#8aff5a", "name-mint": "#8affd0" };   // eastcoin.vip store name colours, as flat colours a canvas label can wear
 
@@ -2755,7 +2760,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 161;
+const PACKS_V = 162;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {
@@ -2805,7 +2810,9 @@ const AREA_ART = {
   bw_skull: ["bw_skull_bg1", "bw_skull_bg2", "bw_rowboat", "bw_boata", "bw_palm1", "bw_palm2", "bw_palm3", "bw_palm1a", "bw_palm2a", "bw_palm3a", "bw_rock_starfall", "bw_rock_eclipse", "bw_rock_nova", "bw_water", "captainclaw", "captainclaw_i2", "captainclaw_w1", "captainclaw_w2", "captainclaw_w3", "captainclaw_w4", "captainclaw_a1", "captainclaw_a2", "captainclaw_a3", "captainclaw_a4", "clawhand", "clawhand_i2", "clawhand_w1", "clawhand_w2", "clawhand_w3", "clawhand_w4", "clawhand_a1", "clawhand_a2", "clawhand_a3", "clawhand_a4", "bw_d_barrel", "bw_d_barrel2", "bw_d_fishbarrel", "bw_d_skelbarrel", "bw_d_sandbarrel", "bw_d_crate", "bw_d_bigcrate", "bw_d_fishcrate", "bw_d_sandcrate", "bw_d_basket", "bw_d_fishbasket", "bw_d_barricade", "bw_d_chest", "bw_d_bones", "bw_d_skeleton", "bw_d_shells1", "bw_d_shells2", "bw_d_rope", "bw_d_coconut", "bw_d_fish", "bw_d_stranded", "bw_flag", "bw_banner", "bw_banner2", "bw_chesta", "bw_none"],   /* (2026-09-27) the Boardwalk's islands: the picture, the pack's props and animations, the island's monsters */
   frozen: ["yeti", "yeti_i2", "yeti_w1", "yeti_w2", "yeti_w3", "yeti_w4", "yeti_a1", "yeti_a2", "yeti_a3", "yeti_a4", "snowowl", "snowowl_i2", "snowowl_w1", "snowowl_w2", "snowowl_w3", "snowowl_w4", "snowowl_a1", "snowowl_a2", "snowowl_a3", "snowowl_a4", "frostwolf", "frostwolf_i2", "frostwolf_w1", "frostwolf_w2", "frostwolf_w3", "frostwolf_w4", "frostwolf_a1", "frostwolf_a2", "frostwolf_a3", "frostwolf_a4", "frostwraith", "frostwraith_i2", "frostwraith_w1", "frostwraith_w2", "frostwraith_w3", "frostwraith_w4", "frostwraith_a1", "frostwraith_a2", "frostwraith_a3", "frostwraith_a4", "icewyrm", "icewyrm_i2", "icewyrm_w1", "icewyrm_w2", "icewyrm_w3", "icewyrm_w4", "icewyrm_a1", "icewyrm_a2", "icewyrm_a3", "icewyrm_a4", "o_frostpine", "o_frostpine_stump", "o_rock_glacite", "fz_cliff_5x7", "fz_cliff_6x8", "fz_cliff_7x7", "fz_cliff_8x7", "fz_crystal1", "fz_crystal2", "fz_crystal3", "fz_floe1", "fz_floe2", "fz_floe3", "fz_floe4", "fz_pine1", "fz_pine2", "fz_rock1", "fz_statue", "t_snow", "t_iwater"],   /* (2026-09-30) the Frozen Reach (held); its creatures join when drawn */
   frostspire: ["iceelemental", "iceelemental_i2", "iceelemental_w1", "iceelemental_w2", "iceelemental_w3", "iceelemental_w4", "iceelemental_a1", "iceelemental_a2", "iceelemental_a3", "iceelemental_a4", "frostgiant", "frostgiant_i2", "frostgiant_w1", "frostgiant_w2", "frostgiant_w3", "frostgiant_w4", "frostgiant_a1", "frostgiant_a2", "frostgiant_a3", "frostgiant_a4", "yeti", "yeti_i2", "yeti_w1", "yeti_w2", "yeti_w3", "yeti_w4", "yeti_a1", "yeti_a2", "yeti_a3", "yeti_a4", "frostwraith", "frostwraith_i2", "frostwraith_w1", "frostwraith_w2", "frostwraith_w3", "frostwraith_w4", "frostwraith_a1", "frostwraith_a2", "frostwraith_a3", "frostwraith_a4", "frostjarl", "frostjarl_i2", "frostjarl_w1", "frostjarl_w2", "frostjarl_w3", "frostjarl_w4", "frostjarl_a1", "frostjarl_a2", "frostjarl_a3", "frostjarl_a4", "o_frostpine", "o_frostpine_stump", "o_rock_glacite", "fz_cliff_10x7", "fz_cliff_6x8", "fz_cliff_7x7", "fz_cliff_8x7", "fz_crystal1", "fz_crystal2", "fz_crystal3", "fz_floe2", "fz_pine1", "fz_pine2", "fz_rock1", "fz_rock2", "fz_statue", "t_snow", "t_iwater"],   /* (2026-09-30) the Frozen Reach (held); its creatures join when drawn */
-  raid: ["raidchief", "raidchief_i2", "raidchief_w1", "raidchief_w2", "raidchief_w3", "raidchief_w4", "raidchief_a1", "raidchief_a2", "raidchief_a3", "raidchief_a4", "frostwolf", "frostwolf_i2", "frostwolf_w1", "frostwolf_w2", "frostwolf_w3", "frostwolf_w4", "frostwolf_a1", "frostwolf_a2", "frostwolf_a3", "frostwolf_a4", "yeti", "yeti_i2", "yeti_w1", "yeti_w2", "yeti_w3", "yeti_w4", "yeti_a1", "yeti_a2", "yeti_a3", "yeti_a4", "frostgiant", "frostgiant_i2", "frostgiant_w1", "frostgiant_w2", "frostgiant_w3", "frostgiant_w4", "frostgiant_a1", "frostgiant_a2", "frostgiant_a3", "frostgiant_a4"],   /* (2026-09-30) the Yard raid: loaded the first time a raider is drawn (loadAreaArt("raid")), never at login */
+  raid: ["raidchief", "raidchief_i2", "raidchief_w1", "raidchief_w2", "raidchief_w3", "raidchief_w4", "raidchief_a1", "raidchief_a2", "raidchief_a3", "raidchief_a4", "frostwolf", "frostwolf_i2", "frostwolf_w1", "frostwolf_w2", "frostwolf_w3", "frostwolf_w4", "frostwolf_a1", "frostwolf_a2", "frostwolf_a3", "frostwolf_a4", "yeti", "yeti_i2", "yeti_w1", "yeti_w2", "yeti_w3", "yeti_w4", "yeti_a1", "yeti_a2", "yeti_a3", "yeti_a4", "frostgiant", "frostgiant_i2", "frostgiant_w1", "frostgiant_w2", "frostgiant_w3", "frostgiant_w4", "frostgiant_a1", "frostgiant_a2", "frostgiant_a3", "frostgiant_a4",
+    /* (2026-09-30) THE FLOOD: the Drowned, the Bank Shark, the Undertow and the sandbag spots, on borrowed art for now */
+    ...["clawhand", "krakenarm"].flatMap((k) => [k, `${k}_i2`, `${k}_w1`, `${k}_w2`, `${k}_w3`, `${k}_w4`, `${k}_a1`, `${k}_a2`, `${k}_a3`, `${k}_a4`]), "shark", "o_sacks"],   /* (2026-09-30) the Yard raid: loaded the first time a raider is drawn (loadAreaArt("raid")), never at login */
   /* (2026-09-30) the Primeval Valley's three maps (held): each its own monsters, ledges and props (lt-wild/valley-gen.py places them) */
   valley: ["caveman", "caveman_i2", "caveman_w1", "caveman_w2", "caveman_w3", "caveman_w4", "caveman_a1", "caveman_a2", "caveman_a3", "caveman_a4", "pterodactyl", "pterodactyl_i2", "pterodactyl_w1", "pterodactyl_w2", "pterodactyl_w3", "pterodactyl_w4", "pterodactyl_a1", "pterodactyl_a2", "pterodactyl_a3", "pterodactyl_a4", "sabretooth", "sabretooth_i2", "sabretooth_w1", "sabretooth_w2", "sabretooth_w3", "sabretooth_w4", "sabretooth_a1", "sabretooth_a2", "sabretooth_a3", "sabretooth_a4", "mammoth", "mammoth_i2", "mammoth_w1", "mammoth_w2", "mammoth_w3", "mammoth_w4", "mammoth_a1", "mammoth_a2", "mammoth_a3", "mammoth_a4", "matriarch", "matriarch_i2", "matriarch_w1", "matriarch_w2", "matriarch_w3", "matriarch_w4", "matriarch_a1", "matriarch_a2", "matriarch_a3", "matriarch_a4", "o_cycad", "o_cycad_stump", "o_rock_fossil", "pv_bone1", "pv_bone2", "pv_cliff_10x7", "pv_cliff_5x7", "pv_cliff_6x7", "pv_cliff_6x8", "pv_cliff_7x7", "pv_cliff_8x7", "pv_fern1", "pv_fern2", "pv_fern3", "pv_palm1", "pv_palm2", "pv_tent_green", "pv_tent_red", "pv_totem"],
   valley_ridge: ["caveman", "caveman_i2", "caveman_w1", "caveman_w2", "caveman_w3", "caveman_w4", "caveman_a1", "caveman_a2", "caveman_a3", "caveman_a4", "pterodactyl", "pterodactyl_i2", "pterodactyl_w1", "pterodactyl_w2", "pterodactyl_w3", "pterodactyl_w4", "pterodactyl_a1", "pterodactyl_a2", "pterodactyl_a3", "pterodactyl_a4", "raptor", "raptor_i2", "raptor_w1", "raptor_w2", "raptor_w3", "raptor_w4", "raptor_a1", "raptor_a2", "raptor_a3", "raptor_a4", "o_cycad", "o_cycad_stump", "o_rock_fossil", "pv_bone1", "pv_bone2", "pv_cliff_5x7", "pv_cliff_6x8", "pv_cliff_7x7", "pv_cliff_8x7", "pv_cliff_9x7", "pv_crystal", "pv_fern1", "pv_fern2", "pv_fern3", "pv_lavarock", "pv_palm1", "pv_palm2", "pv_skull"],
@@ -3897,7 +3904,7 @@ function predTick(pnow) {
   if (n) {
     const dx = n.x - PRED.x, dy = n.y - PRED.y;
     if (Math.max(Math.abs(dx), Math.abs(dy)) !== 1 || !G.canStepIn(Z.g, PRED.x, PRED.y, dx, dy)) { PRED.path = []; return; }
-    const base = me ? G.stepMsOf(me, me.speedTest || 0) : STEP;
+    const base = (me ? G.stepMsOf(me, me.speedTest || 0) : STEP) * (floodAt(n.x, n.y) ? G.FLOOD.slow : 1);   /* (2026-09-30) THE FLOOD: wading, as the server has it */
     PRED.step = { fx: PRED.x, fy: PRED.y, tx: n.x, ty: n.y, t0: pnow, ms: Math.round(dx && dy ? base * 1.4 : base) };
     SFX.play(stepSound(n.x, n.y));   /* (2026-09-23) one step per tile, yours only: predTick is the single place a step begins and it never runs for anybody else */
     PRED.dir = DIRS[`${dx},${dy}`]; if (dx) PRED.face = dx > 0 ? 1 : -1;
@@ -4501,13 +4508,13 @@ function plSlim(x, y, w, h, P_, max, text, fs) {
 function drawPlates(rects, t, calm) {
   /* the most important first; each later one pushed up until it touches none already placed */
   rects.sort((a, b) => a.prio - b.prio); const placed = [];
-  for (const r of rects) { r.w = r.full ? 130 : 46; r.h = r.full ? 34 + (r.icons.length ? 19 : 0) + (r.tag ? 13 : 0) : 11; r.x0 = r.x - r.w / 2; r.y = r.top - r.h; r.y0 = r.y;
+  for (const r of rects) { r.w = r.full ? 130 : r.w || 46; r.h = r.full ? 34 + (r.icons.length ? 19 : 0) + (r.tag ? 13 : 0) : 11; r.x0 = r.x - r.w / 2; r.y = r.top - r.h; r.y0 = r.y;
     for (let n = 0, moved = true; moved && n < 40; n++) { moved = false; for (const q of placed) if (r.x0 < q.x0 + q.w + 2 && r.x0 + r.w + 2 > q.x0 && r.y < q.y + q.h + 2 && r.y + r.h + 2 > q.y) { r.y = q.y - r.h - 3; moved = true; } }
     r.y = Math.max(r.y, 4);   /* never off the top of the view: a monster at the map's top edge keeps its plate on screen, over its own head */
     placed.push(r); }
   for (const r of placed.reverse()) {
     if (r.y < r.y0 - 1) { ctx.strokeStyle = "rgba(232,191,53,.55)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(r.x, r.y + r.h); ctx.lineTo(r.x, r.y0 + r.h); ctx.stroke(); }
-    if (!r.full) { plSlim(r.x0 + 3, r.y + 3, r.w - 6, 8, r.P, r.max, `${Math.round(r.P.shown)}`, 8.5); continue; }
+    if (!r.full) { plSlim(r.x0 + 3, r.y + 3, r.w - 6, 8, r.P, r.max, r.lab ?? `${Math.round(r.P.shown)}`, 8.5); continue; }
     let py = r.y;
     if (r.icons.length) { let ix = r.x - (r.icons.reduce((a, i) => a + 16 + (i.pct ? 24 : 0) + 3, -3)) / 2;
       for (const i of r.icons) { const age = t - (r.P.pulse[i.k] || -1e9), p = age < 900 ? 1 - age / 900 : 0;
@@ -5266,6 +5273,12 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   { const lkOf = (pl) => (pl.id === you.id ? G.looksOf(me) : pl.lk);
     if (LOOKS) { const lkAll = set("looks"); LOOKS.frame(Z.players.map((pl) => { const L = (lkAll || pl.id === you.id) && lkOf(pl); if (!L) return null; const p = pos(pl); return { id: pl.id, lk: L, x: p.px * T + 8, y: p.py * T + 15, moving: p.moving, face: pl.face }; }).filter(Boolean)); LOOKS.ground(lc, pnow, calm); LOOKS.decor(lc, pnow, Z.objs, IMG, A, calm); }
     else if (Z.players.some((pl) => lkOf(pl) || (pl.id === you.id ? G.petSkinOf(me) : pl.psk)) || Z.objs.some((o) => o.decor && G.STORE_DECOR[o.k]?.fx)) looksLoad().catch(() => {}); }
+  /* (2026-09-30) THE FLOOD: the water over the grass, under everybody standing in it; a slow ripple unless motion is reduced */
+  if (FLOOD_W && FLOOD_W.scene === Z.key) { lc.save();
+    for (const i of FLOOD_W.set) { const x = (i % COLS) * T, y = Math.floor(i / COLS) * T, k = calm ? 0 : Math.sin(pnow / 700 + (i % 7)) * 0.06;
+      lc.fillStyle = `rgba(46,110,170,${(0.62 + k).toFixed(3)})`; lc.fillRect(x, y, T, T);
+      lc.fillStyle = "rgba(170,220,255,.22)"; if (!calm && ((pnow / 900 + i * 0.37) % 1) < 0.5) lc.fillRect(x + 3, y + 5 + ((i % 3) * 3), 6, 1); }
+    lc.restore(); }
   sprites.sort((a, b) => a.y - b.y).forEach((s) => s.draw());
   drawMini();
   /* (v112) sparks and dust, over the scene: a little gravity, fading as they go */
@@ -5350,6 +5363,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
     for (const m of Z.mobs) { if (m.dead) continue; const max = m.mx || MOBS[m.t].hp, P_ = plateOf(m.id, m.hp); plateTick(P_, m.hp, pnow);
       const p = posOf(m, now), x = sx(p.px * T + 8), top = sy(p.py * T + 14 - artTop(MOBS[m.t].art || m.t)) - 4;
       if (m.id === plTgt || m.id === plHov) rects.push({ full: true, x, top, name: m.nm || MOBS[m.t].name, lvl: MN.lvl ? m.lv || MOBS[m.t].lvl : null, max, P: P_, icons: m.tr ? [] : mobIcons(m.t), col: m.w ? "#ff8a78" : "#ffb23f", tag: m.w ? "WANTED" : null, sel: m.id === plTgt, prio: m.id === plTgt ? 0 : 1 });
+      else if (MOBS[m.t].bag) rects.push({ full: false, x, top, max, P: P_, prio: 2, lab: m.hp >= max ? "held" : `${Math.max(0, m.hp - 1)}/${max - 1}`, w: 64 });   /* (2026-09-30) THE FLOOD: a sandbag spot's bar is what's handed in, always shown */
       else if (MN.plate === "always" || (MN.plate === "hurt" && (m.hp < max || P_.shown < max - 0.5))) rects.push({ full: false, x, top, max, P: P_, prio: 3 }); }   /* (2026-09-30) Monsters tab: health plates */
     for (const pl of Z.players) { const own = pl.id === you?.id, hp = own ? me?.hp : pl.hp, max = own ? maxHp() : pl.maxHp; if (!(max > 0) || hp == null) continue;
       const P_ = plateOf(`p:${pl.id}`, hp); plateTick(P_, hp, pnow);
@@ -8358,6 +8372,7 @@ function renderAdmin(p) {
       <div class="row"><button class="btn plain" data-a="evstarend">End the star</button><button class="btn plain" data-a="evwantedend">End the poster</button><button class="btn plain" data-a="evthiefend">End the chase</button><span class="tag">world events: one of each a day</span></div>
       <div class="row"><button class="btn" data-a="wyrm">Ice Wyrm: rise now</button><button class="btn plain" data-a="wyrmdown">Send it away</button><span class="tag">the Frozen Reach's daily boss</span></div>
       <div class="row"><button class="btn" data-a="raid">Start a Yard raid</button><button class="btn plain" data-a="raidnow">Skip the warning</button><button class="btn plain" data-a="raidend">End it</button><button class="btn plain" data-a="unsack">Reopen the stalls</button><span class="tag">Hrimgar's war party</span></div>
+      <div class="row"><button class="btn" data-a="flood">Start the Flood</button><span class="tag">the river over the bank: sandbags, the Drowned, the Undertow (Skip the warning and End it work for it too)</span></div>
     </fieldset>
     <fieldset><legend>Speed test</legend>
       <div class="row"><input type="number" id="aSpeed" value="${me.speedTest || 0}" min="0" max="200" aria-label="Raw speed bonus percent"><button class="btn" data-a="speed">Set</button><span class="tag">raw %, before the taper and the +${G.SPEED_CAP}% cap; this session only</span></div>
@@ -8394,7 +8409,7 @@ function renderAdmin(p) {
     clearinv: () => ({ cmd: "clearinv" }), heal: () => ({ cmd: "heal" }), god: () => ({ cmd: "god" }), respin: () => ({ cmd: "respin" }),
     achclear: () => ({ cmd: "ach", k: "clear" }),   /* (2026-09-23) forget every achievement, so one can be watched landing */
     tp: () => ({ cmd: "tp", scene: v("aScene") }), resetscene: () => ({ cmd: "resetscene" }), wyrm: () => ({ cmd: "wyrm" }), evstar: () => ({ cmd: "ev", arg: "star" }), evwanted: () => ({ cmd: "ev", arg: "wanted" }), evthief: () => ({ cmd: "ev", arg: "thief" }), evplan: () => ({ cmd: "ev", arg: "plan" }),
-    evstarend: () => ({ cmd: "ev", arg: "star end" }), evwantedend: () => ({ cmd: "ev", arg: "wanted end" }), evthiefend: () => ({ cmd: "ev", arg: "thief end" }),   /* (2026-09-30) WORLD EVENTS */ wyrmdown: () => ({ cmd: "wyrm", arg: "down" }), raid: () => ({ cmd: "raid" }), raidnow: () => ({ cmd: "raid", arg: "now" }), raidend: () => ({ cmd: "raid", arg: "end" }), unsack: () => ({ cmd: "raid", arg: "unsack" }),   /* (2026-09-30) */
+    evstarend: () => ({ cmd: "ev", arg: "star end" }), evwantedend: () => ({ cmd: "ev", arg: "wanted end" }), evthiefend: () => ({ cmd: "ev", arg: "thief end" }),   /* (2026-09-30) WORLD EVENTS */ wyrmdown: () => ({ cmd: "wyrm", arg: "down" }), raid: () => ({ cmd: "raid" }), flood: () => ({ cmd: "raid", arg: "flood" }), raidnow: () => ({ cmd: "raid", arg: "now" }), raidend: () => ({ cmd: "raid", arg: "end" }), unsack: () => ({ cmd: "raid", arg: "unsack" }),   /* (2026-09-30) */
     quest: () => ({ cmd: "quest", k: v("aQuest"), state: v("aQState") }), resetquests: () => ({ cmd: "resetquests" }),
     reset: () => ({ cmd: "reset" }), speed: () => ({ cmd: "speed", n: +v("aSpeed") }),
     stats: () => ({ cmd: "stats" }), statsof: () => ({ cmd: "stats", name: v("aWho") }), refund: () => ({ cmd: "refund", name: v("aWho"), k: v("aRefK"), n: +v("aRefN") }), saveall: () => ({ cmd: "saveall" }),
