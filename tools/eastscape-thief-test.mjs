@@ -140,12 +140,12 @@ console.log("Back ways");
     ok(ex.some((q) => G.findPath(b.g, { x: e.stand[0], y: e.stand[1] }, q, 1) !== null), `${id}: the ${e.scene} end can be walked to`);
   });
   const S = W.scene("workyard"), bw = G.BACKWAYS.stormdrain, ob = S.objs.find((o) => o.bw === "stormdrain");
-  const low = player(S, ...bw.ends[0].stand, { agility: 50 }); run(S, low, { t: "act", kind: "ob", ob: ob.id });
-  ok(/Agility 55/.test(said(low)) && low.C.scene === "workyard", "Agility 50: the Storm Drain refuses");
-  const p = player(S, ...bw.ends[0].stand, { agility: 55 }), xp0 = p.C.xp.agility;
+  const low = player(S, ...bw.ends[0].stand, { agility: 60 }); run(S, low, { t: "act", kind: "ob", ob: ob.id });
+  ok(/Agility 61/.test(said(low)) && low.C.scene === "workyard", "Agility 60: the Storm Drain refuses");
+  const p = player(S, ...bw.ends[0].stand, { agility: 61 }), xp0 = p.C.xp.agility;
   run(S, p, { t: "act", kind: "ob", ob: ob.id }, { rolls: [0.99] });
-  is([p.C.scene, p.x, p.y], ["thunderhead", ...bw.ends[1].stand], "Agility 55: the Storm Drain comes out on the Thunderhead");
-  is(p.C.xp.agility - xp0, 55 * G.WT.backway.xpMul, "for four times the level in XP");
+  is([p.C.scene, p.x, p.y], ["thunderhead", ...bw.ends[1].stand], "Agility 61: the Storm Drain comes out on the Thunderhead");
+  is(p.C.xp.agility - xp0, 61 * G.WT.backway.xpMul, "for four times the level in XP");
 }
 
 console.log("Held");

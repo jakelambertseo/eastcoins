@@ -10302,7 +10302,7 @@ const SC_ART = { log: "o_sc_log", stones: "o_sc_stones", rope: "o_sc_rope", fenc
 export const BACKWAYS = {
   scraprun: { name: "The Scrap Run", lvl: 70, how: "fence", art: "o_sc_fence", ends: [{ scene: "carnival", at: [11, 1], stand: [12, 1] }, { scene: "trailer", at: [10, 3], stand: [10, 2] }] },
   iceledge: { name: "The Ice Ledge", lvl: 92, how: "rope", art: "o_sc_rope", ends: [{ scene: "frozen", at: [25, 8], stand: [25, 9] }, { scene: "valley", at: [2, 18], stand: [1, 18] }] },
-  stormdrain: { name: "The Storm Drain", lvl: 55, how: "drain", art: "o_drain", ends: [{ scene: "workyard", at: [22, 18], stand: [22, 17] }, { scene: "thunderhead", at: [29, 24], stand: [29, 23] }] } };
+  stormdrain: { name: "The Storm Drain", lvl: 61, how: "drain", art: "o_drain", ends: [{ scene: "workyard", at: [22, 18], stand: [22, 17] }, { scene: "thunderhead", at: [29, 24], stand: [29, 23] }] } };
 
 export const SC_VERB = { drain: "climb down into the drain", log: "walk the log", stones: "hop across", rope: "swing over", fence: "squeeze through", duck: "duck under the railing", squeeze: "squeeze through the bars", climb: "climb over" };
 export const scLine = (s) => { const [ax, ay] = s.a, [bx, by] = s.b, hop = Math.max(Math.abs(bx - ax), Math.abs(by - ay)), r = []; for (let i = 1; i < hop; i++) r.push([ax + Math.round(((bx - ax) * i) / hop), ay + Math.round(((by - ay) * i) / hop)]); return r; };

@@ -1,6 +1,16 @@
 [
  {
   "date": "2026-10-01",
+  "area": "World & maps",
+  "decision": "The Storm Drain opens at Agility 61.",
+  "quote": "storm strain needs to open at 61 agility",
+  "why": "",
+  "page": "thieving-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
   "area": "Art & UI",
   "decision": "The admin panel gets a reorganisation after v1.1's agility and thieving work is finished: it has grown overwhelming.",
   "quote": "after we're completely done with agility and thieving for v1.1, can you work on the admin panel? the UI is a bit overwhemling now with how much stuff we've added",
@@ -12,7 +22,7 @@
  {
   "date": "2026-10-01",
   "area": "World & maps",
-  "decision": "Three back ways join far maps for Agility: the Scrap Run (Carnival and Trailer Park, 70), the Ice Ledge (Frozen Reach and Primeval Valley, 92), the Storm Drain (the Yard and the Thunderhead, 55). Free, both ways, every time.",
+  "decision": "Three back ways join far maps for Agility: the Scrap Run (Carnival and Trailer Park, 70), the Ice Ledge (Frozen Reach and Primeval Valley, 92), the Storm Drain (the Yard and the Thunderhead, 61). Free, both ways, every time.",
   "quote": "yes add them",
   "why": "the Carnival to the Trailer Park was eight map crossings",
   "page": "thieving-mock",
