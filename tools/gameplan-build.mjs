@@ -7,8 +7,8 @@
      - every page gets the same side nav (categories, the current page lit), so the whole set is one bookmark.
 
    Run:  node tools/gameplan-build.mjs   then deploy the worker (cd eastscape-worker && npx wrangler deploy).
-   ON THE DEV SERVER: wrangler dev reads the asset folder list when it starts, so a build that adds a NEW folder (a new page, local-art/)
-   needs the dev server restarted before those paths stop 404ing; files in folders it already knew update on their own.
+   ON THE DEV SERVER: wrangler dev reads the asset list when it starts, so a build that adds ANY new file or folder (a page, a data file)
+   needs the dev server restarted before those paths stop 404ing; files it already knew update on their own.
    The output folder is ignored by git; rebuild after editing any mockup. */
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, rmSync, existsSync } from "node:fs";
 import { join, extname, dirname } from "node:path";
