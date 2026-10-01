@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 387;   /* (2026-10-01) ABILITIES (dev, held for the phase 0 batch) */   /* was 386: */   /* (2026-09-30) THE FLOOD (a second Yard raid), no doubled CASINO lines */   /* was 385: */   /* (2026-09-30) the Casino scroll is 3,000 at Dex (was 300) */   /* was 384: */   /* (2026-09-30) Bronny: six lines, a quarter more, a keystone; eggs 1 in 1,000 */   /* was 383: */   /* (2026-09-30) YOUR SCREEN: move everything, four looks and OG, nameplate options, feature switches */   /* was 382: */   /* (2026-09-30) My stats easy to find (your name, the Skills tab) and without casino figures */   /* was 381: */   /* (2026-09-30) THE ROAD AHEAD (a roadmap in the wiki, with hearts), MY STATS (a private dashboard), the held maps in the admin Teleport list */   /* was 380: */   /* (2026-09-30) Returns at Bom, a staff refund for Bom gear, tier names on the counter */   /* was 379: */   /* (2026-09-30) the World data window (admins): track.js's numbers over 1/7/14/30 days */   /* was 378: */   /* (2026-09-30) WORLD EVENTS LAUNCHED: Shooting Stars, Wanted! and the Jackpot Thief (a run cycle, never the Yard, a 30-50k sack, health by fighters) */   /* was 377: */   /* (2026-09-30) the Wild's new monsters drawn (their frames in the Wild and Deep art packs) */   /* was 376: */   /* (2026-09-30) STAT TRACKING (track.js); THE WILDERNESS REARMED (new monsters, 1.25x/1.5x, a death costs 10%); fighting back needs a click in the last minute; every gem on the Gems page */   /* was 375: */   /* (2026-09-30) a staff badge beside staff names in Who's online (mods too) */   /* was 374: */   /* (2026-09-30) THE WEEKLY ISSUE (the wiki's Week pages, a snapshot a week) */   /* was 373: */   /* (2026-09-30) THE BALANCE PASS, /find and the chat commands, the wiki rebuilt; world events built and HELD */   /* was 372: */   /* (2026-09-30) WORLD EVENTS: Shooting Stars, Wanted! and the Jackpot Thief, one each a day; Who's online in the kit */   /* was 371: */   /* (2026-09-30) THE ISLANDS: bigger, better-looking, eight themes, cottage styles, livestock */   /* was 370: */   /* (2026-09-30) the Store: pet skins, eggs, bag slots, art for everything; the wiki pages its long tables */   /* was 369: */   /* (2026-09-30) THE STORE, REBUILT: effects, titles, decor, the War Horn, 2X Skilling XP, the loupes, bank pages, quick slots; and "speed" walks */   /* (2026-09-30) the Frost charm is 50,000 and the outfitters show it */   /* (2026-09-30) THE FROZEN REACH OPENS */   /* (2026-09-30) THE YARD RAID: the Ice Man (the Frozen Reach stays held) */   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 388;   /* (2026-10-01) v1.1: AREA DIARIES and the cape slot, THRILL HILL, THIEVING IN THE WORLD with shortcuts and back ways, WORK CLOTHES, gems rarer and untradeable, the Character and admin windows */   /* was 387: */   /* (2026-10-01) ABILITIES (dev, held for the phase 0 batch) */   /* was 386: */   /* (2026-09-30) THE FLOOD (a second Yard raid), no doubled CASINO lines */   /* was 385: */   /* (2026-09-30) the Casino scroll is 3,000 at Dex (was 300) */   /* was 384: */   /* (2026-09-30) Bronny: six lines, a quarter more, a keystone; eggs 1 in 1,000 */   /* was 383: */   /* (2026-09-30) YOUR SCREEN: move everything, four looks and OG, nameplate options, feature switches */   /* was 382: */   /* (2026-09-30) My stats easy to find (your name, the Skills tab) and without casino figures */   /* was 381: */   /* (2026-09-30) THE ROAD AHEAD (a roadmap in the wiki, with hearts), MY STATS (a private dashboard), the held maps in the admin Teleport list */   /* was 380: */   /* (2026-09-30) Returns at Bom, a staff refund for Bom gear, tier names on the counter */   /* was 379: */   /* (2026-09-30) the World data window (admins): track.js's numbers over 1/7/14/30 days */   /* was 378: */   /* (2026-09-30) WORLD EVENTS LAUNCHED: Shooting Stars, Wanted! and the Jackpot Thief (a run cycle, never the Yard, a 30-50k sack, health by fighters) */   /* was 377: */   /* (2026-09-30) the Wild's new monsters drawn (their frames in the Wild and Deep art packs) */   /* was 376: */   /* (2026-09-30) STAT TRACKING (track.js); THE WILDERNESS REARMED (new monsters, 1.25x/1.5x, a death costs 10%); fighting back needs a click in the last minute; every gem on the Gems page */   /* was 375: */   /* (2026-09-30) a staff badge beside staff names in Who's online (mods too) */   /* was 374: */   /* (2026-09-30) THE WEEKLY ISSUE (the wiki's Week pages, a snapshot a week) */   /* was 373: */   /* (2026-09-30) THE BALANCE PASS, /find and the chat commands, the wiki rebuilt; world events built and HELD */   /* was 372: */   /* (2026-09-30) WORLD EVENTS: Shooting Stars, Wanted! and the Jackpot Thief, one each a day; Who's online in the kit */   /* was 371: */   /* (2026-09-30) THE ISLANDS: bigger, better-looking, eight themes, cottage styles, livestock */   /* was 370: */   /* (2026-09-30) the Store: pet skins, eggs, bag slots, art for everything; the wiki pages its long tables */   /* was 369: */   /* (2026-09-30) THE STORE, REBUILT: effects, titles, decor, the War Horn, 2X Skilling XP, the loupes, bank pages, quick slots; and "speed" walks */   /* (2026-09-30) the Frost charm is 50,000 and the outfitters show it */   /* (2026-09-30) THE FROZEN REACH OPENS */   /* (2026-09-30) THE YARD RAID: the Ice Man (the Frozen Reach stays held) */   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -10232,7 +10232,7 @@ HOLD.abil = !globalThis.__ES_OPEN_ALL;
        (2026-10-01, the first build put the nooks on one-tile islands in each map's water: the owner, testing it, "the character is hidden
        behind trees, theres no island ground and the overall experience of this is quite bad", so every nook is on land now.)
        Coordinates from tools/thieving-mock/pockets.mjs (nooks) and place.mjs (walk-savers) over the real grids. */
-HOLD.thief2 = !globalThis.__ES_OPEN_ALL;
+HOLD.thief2 = false;   /* (2026-10-01) LAUNCHED in v1.1 (the owner: "then launch") */
 /* a Guild mark's XP at any level, between the marks */
 export const guildXpAt = (l) => {
   const P = Object.values(MARKS).map((m) => [m.lvl, m.xp]).sort((a, b) => a[0] - b[0]);
@@ -10356,7 +10356,7 @@ ITEMS.skeleton_key = { name: "Skeleton key", icon: "\u{1F5DD}️", ex: "Hold one
    and its level, and the server's thrill.js runs it on the shortcut code (level check, the crossing, a slip under level+10).
    NEVER A DAMAGE TRAP: a slip costs the seconds and puts you back where you were. A stunt is XP every time; a lap in order pays a bonus
    and maybe a runner's mark, which FAST EDDIE at the start line takes for the Bookie's goods. Nothing here costs or pays tickets. HELD. */
-HOLD.thrill = !globalThis.__ES_OPEN_ALL;
+HOLD.thrill = false;   /* (2026-10-01) LAUNCHED in v1.1 (the owner: "then launch") */
 export const THRILL_MAPS = ["thrill", "thrill_top"];
 /* XP per stunt and per lap. Laps run ~25-32 s, so about 27k an hour on the Rookie Run, 60k on the Pro, 100k on the Champion (the mockup's
    curve: Agility from ~590 hours to 99 on The Run to ~115) */
@@ -10422,7 +10422,7 @@ if (!HOLD.thrill) {
        listed, bought or sold on the Exchange (noTrade). The Gem Sorter still buys them, and dropping one destroys it, so there is no
        third way round. Offers already up on the Exchange when this ships are taken down once, at start, with the gems or the tickets
        held for their owners as if they had cancelled (the worker's exGemSweep). */
-HOLD.gemcut = !globalThis.__ES_OPEN_ALL;
+HOLD.gemcut = false;   /* (2026-10-01) LAUNCHED in v1.1 (the owner: "then launch") */
 export const GEM_CUT = 0.25;
 GEMSET.bossDrop = 0.2;
 /** may this item change hands between players (a trade, the Exchange)? */
@@ -10483,7 +10483,7 @@ if (!HOLD.thrill) {
      - THE DITCHED SET joins them: on the update every Ditched piece anyone owns (worn, bag or bank) moves to the locker, spares are paid in
        tickets, and it gains its all-four perk. Its +2.5% pickpocket a piece stays.
    Held with the rest of v1.1 (HOLD.work). Nothing here runs on a timer: each bonus is read where its skill already reads a bonus. */
-HOLD.work = !globalThis.__ES_OPEN_ALL;
+HOLD.work = false;   /* (2026-10-01) LAUNCHED in v1.1 (the owner: "then launch") */
 export const WORK_SLOTS = ["helm", "body", "gloves", "boots"];   /* which square of the paper doll a piece shows in */
 export const WORK_XP = { piece: 0.03, full: 0.03 };
 /* [set, skill, name, colour, [hat, coat, gloves, boots] as [key, name], the all-four perk (words), its numbers, where it comes from (words)] */
@@ -10573,7 +10573,7 @@ if (!HOLD.work) STAR_TENT.stock.push({ id: "work_stargazer", work: "stargazer", 
      the perk helpers, each read where its one thing happens (gathering, a price, a hit, a death...)
      the cape slot and the Grand Tour cape
    A tier counts as FINISHED only when every tier under it is too: the medal is the best finished tier, and a perk is earned with its tier. */
-HOLD.diary = !globalThis.__ES_OPEN_ALL;
+HOLD.diary = false;   /* (2026-10-01) LAUNCHED in v1.1 (the owner: "then launch") */
 export const DIARY = {
   tiers: ["Easy", "Medium", "Hard", "Elite"], medals: ["bronze", "silver", "gold", "platinum"],
   lamps: [1000, 5000, 20000, 75000],   /* the owner, 2026-10-01: "yes" to 1,000 / 5,000 / 20,000 / 75,000 */
