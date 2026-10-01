@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Guilds</title>
+<!-- (2026-10-01, the owner: "onto mock 8"). Mockup 8 of the long-game set: guilds and a weekly guild boss. Sized for a server of about 36
+     players: small guilds, nothing in combat that needs one, a hall built with Sal's project shape, and a boss whose health lasts the week so
+     a guild that plays at different hours can still beat it. Bosses, the hall and the charter are PixelLab drafts. Local only.
+     http://localhost:4321/tools/guild-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0c0a0a;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#3a1414,transparent),radial-gradient(900px 600px at 100% 30%,#2a2210,transparent),#0c0a0a}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffb8a0}
+h3{margin:16px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1414;box-shadow:0 0 0 1.5px #5a2a24;text-decoration:none;font:800 13.5px Lora,serif;color:#ffb8a0}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #3a2020}
+.sec>p{color:#b8a898;max-width:980px;line-height:1.55}
+.chart{background:#181010;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #3a2020;margin-top:12px;overflow:auto}
+.chart svg{display:block;width:100%;height:auto;min-width:600px}
+.tbl{width:100%;border-collapse:collapse;font:600 13.5px Lora,serif;margin-top:12px;background:#181010;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2020}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89080;padding:10px 12px 6px}.tbl td{padding:8px 12px;border-top:1px solid #3a2020;vertical-align:middle}.tbl td.n{text-align:right;font-variant-numeric:tabular-nums}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-top:14px;align-items:start}
+.k-win{min-width:0}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin:12px 0}.rules3>div{background:#181010;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2020}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.rules3 span b{color:#f6e9cc}
+/* banner */
+.bn{position:relative;width:78px;height:104px;clip-path:polygon(0 0,100% 0,100% 82%,50% 100%,0 82%);background:var(--b1);display:grid;place-items:center;box-shadow:inset 0 0 0 4px var(--b2)}
+.bn::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 50%,var(--b2) 50% 100%);opacity:var(--split,0)}
+.bn img{width:46px;height:46px;image-rendering:pixelated;position:relative;z-index:1;margin-bottom:12px;filter:drop-shadow(0 2px 0 rgba(0,0,0,.35))}
+.bn.sm{width:30px;height:40px;box-shadow:inset 0 0 0 2px var(--b2)}.bn.sm img{width:20px;height:20px;margin-bottom:5px}
+.found{display:grid;grid-template-columns:110px 1fr;gap:14px;align-items:start}
+.field{display:grid;gap:3px;margin-bottom:8px}.field label{font:800 11px Lora,serif;letter-spacing:.06em;text-transform:uppercase;color:var(--k-ink2)}
+.field input{font:700 14px Lora,serif;padding:6px 9px;border-radius:7px;border:0;box-shadow:inset 0 0 0 1.5px var(--k-card-line);background:#fffaf0;color:var(--k-ink)}
+.sw{display:flex;gap:5px;flex-wrap:wrap}.sw button{width:26px;height:26px;border-radius:6px;border:0;cursor:pointer;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.25)}.sw button[aria-pressed="true"]{box-shadow:0 0 0 2.5px #2a1a04}
+.emj{display:flex;gap:4px;flex-wrap:wrap}.emj button{width:34px;height:34px;border-radius:7px;border:0;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);cursor:pointer;display:grid;place-items:center}.emj button img{width:26px;height:26px;image-rendering:pixelated}.emj button[aria-pressed="true"]{background:#f4d37a;box-shadow:inset 0 0 0 2px #a8740f}
+.nameplate{font:800 13px Lora,serif;color:var(--k-ink)}.nameplate .tg{color:var(--tgc,#8a2a2a);margin-right:4px}
+/* roster */
+.gtabs{display:flex;gap:4px;margin:0 0 8px}.gtabs span{padding:5px 11px;border-radius:7px;font:800 12.5px Lora,serif;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);color:var(--k-ink)}.gtabs span.on{background:#f4d37a;box-shadow:inset 0 0 0 2px #a8740f}
+.motd{padding:8px 10px;border-radius:7px;background:#fff6dc;box-shadow:inset 0 0 0 1px #d8c48a;font:600 12.5px/1.45 Lora,serif;color:#4a3410;margin-bottom:8px}.motd b{color:#2a1a04}
+.ros{display:grid;gap:4px}.ro{display:grid;grid-template-columns:12px 1fr auto auto 90px;gap:8px;align-items:center;padding:6px 9px;border-radius:7px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);font:700 12.5px Lora,serif;color:var(--k-ink)}
+.dot{width:9px;height:9px;border-radius:50%;background:#b8b0a0}.dot.on{background:#3aa83a;box-shadow:0 0 0 2px #cfe8c4}.dot.isle{background:#3a7ad8}
+.rk{font:800 10.5px Lora,serif;padding:2px 7px;border-radius:999px;background:#d8d0b8;color:#4a3a20}.rk.lead{background:#a8740f;color:#fff}.rk.off{background:#6a4a8a;color:#fff}
+.cbar{height:8px;border-radius:4px;background:rgba(0,0,0,.1);overflow:hidden}.cbar i{display:block;height:100%;background:#c84a2a}
+.ro small{color:var(--k-ink2);font-weight:600}
+/* hall */
+.pc{border-radius:10px;overflow:hidden;box-shadow:0 0 0 2px #6a3a24,0 10px 30px rgba(0,0,0,.6);aspect-ratio:16/9}.pc img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated;display:block}
+.proj{display:grid;gap:7px}
+.pj{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:9px 11px;border-radius:9px;background:#181010;box-shadow:0 0 0 1.5px #3a2020}
+.pj b{font:800 14.5px Cinzel,serif;color:#ffe7b0}.pj span{font:600 12.5px/1.45 Lora,serif;color:#cdbfa2;grid-column:1/-1}.pj em{font-style:normal;font:800 11.5px Lora,serif;color:#ffb8a0;white-space:nowrap}
+.tiers{display:flex;gap:4px;grid-column:1/-1}.tiers i{flex:1;height:7px;border-radius:4px;background:#3a2a24}.tiers i.done{background:#e8a028}.tiers i.half{background:linear-gradient(90deg,#e8a028 55%,#3a2a24 55%)}
+/* boss */
+.bosses{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:12px}
+.bc{display:grid;grid-template-columns:96px 1fr;gap:10px;padding:11px;border-radius:10px;background:#181010;box-shadow:0 0 0 1.5px #3a2020}.bc.now{box-shadow:0 0 0 2px #ff8a5a,0 0 18px rgba(255,138,90,.25)}
+.bc .pic{width:96px;height:96px;border-radius:8px;background:radial-gradient(circle at 50% 62%,rgba(255,138,90,.25),transparent 72%),#221414;display:grid;place-items:center}.bc .pic img{width:90px;height:90px;image-rendering:pixelated}
+.bc b{font:800 15px Cinzel,serif;color:#ffe7b0}.bc small{display:block;font:800 11px Lora,serif;color:#ff9a7a;margin:1px 0 4px}.bc span{font:600 12.5px/1.45 Lora,serif;color:#cdbfa2}
+.whb{margin-top:6px}.whb .bar{position:relative;height:26px;border-radius:7px;background:#2a1818;overflow:hidden;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.25)}
+.whb .bar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#d8302a,#ff7a4a)}.whb .bar em{position:absolute;top:0;bottom:0;left:25%;width:2px;background:#ffe27a}.whb .bar span{position:absolute;inset:0;display:grid;place-items:center;font:800 12.5px Lora,serif;color:#fff;text-shadow:0 1px 2px #000}
+.whb .lab{display:flex;justify-content:space-between;font:700 11.5px Lora,serif;color:var(--k-ink2);margin-top:4px}
+.finish{margin-top:10px;padding:9px 11px;border-radius:8px;background:#fde8d8;box-shadow:inset 0 0 0 1.5px #d8603a;font:600 12.5px/1.5 Lora,serif;color:#5a1a0a}.finish b{color:#3a0a04}
+.chat{margin-top:10px;padding:10px 14px;border-radius:10px;background:#0c0808;box-shadow:0 0 0 1.5px #3a2020;font:600 13.5px/1.7 Lora,serif;max-width:760px}
+.chat .c{color:#ff5a8a;font-weight:800}.chat .g{color:#7ad0ff;font-weight:800}.chat .t{color:#7a6a58;font-size:12px;margin-right:6px}
+.ctabs{display:flex;gap:4px;margin-bottom:6px}.ctabs span{padding:3px 10px;border-radius:6px;font:800 11.5px Lora,serif;background:#2a1a1a;color:#cdbfa2}.ctabs span.on{background:#7ad0ff;color:#0a1a2a}
+.build{margin:6px 0 0;padding-left:18px;line-height:1.6;color:#cdbfa2;max-width:980px}.build b{color:#f6e9cc}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+.note{font:600 12.5px Lora,serif;color:#a89080}
+@media (max-width:700px){.found{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Guilds</h1>
+  <p class="lede">Small groups of friends with a name, a banner, a hall they build together and <b>a boss of their own every week</b>. Sized for this server:
+    about 36 regular players, so guilds are small (3 to 15), easy to start, and <b>optional</b>. Nothing in combat or skilling needs one, and nobody
+    outside a guild is worse off. What a guild gives you is people to play with, a place to put things and a reason to log in on the same evening.</p>
+  <nav class="jump"><a href="#found">Starting one</a><a href="#window">The guild window</a><a href="#hall">The hall</a><a href="#boss">The weekly boss</a><a href="#board">The guild board</a><a href="#alone">Without a guild</a><a href="#build">Building it</a></nav>
+
+  <section class="sec" id="found">
+    <h2>Starting one</h2>
+    <p>Bom sells a <b>guild charter</b>. Three players sign it, and it becomes a guild: a name, a three-letter tag by every member's name, and a banner
+      from two colours and an emblem. Try it:</p>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="charter.png" alt="" style="image-rendering:pixelated"><b>A guild charter</b><span class="k-sub">25,000 tickets · 3 signatures</span></div>
+        <div class="k-body"><div class="found">
+          <div style="display:grid;justify-items:center;gap:8px"><div class="bn" id="bnBig"></div><span class="nameplate" id="npPrev"></span></div>
+          <div>
+            <div class="field"><label>Name</label><input id="gName" value="Late Night Degens" maxlength="24"></div>
+            <div class="field"><label>Tag (3 letters)</label><input id="gTag" value="LND" maxlength="3" style="width:80px;text-transform:uppercase"></div>
+            <div class="field"><label>Colours</label><div class="sw" id="sw1"></div><div class="sw" id="sw2" style="margin-top:4px"></div></div>
+            <div class="field"><label>Emblem</label><div class="emj" id="emj"></div></div>
+            <div class="field"><label>Signed</label><span style="font:700 12.5px Lora,serif;color:var(--k-ink)">calvin ✓ · BeeEzRadio ✓ · Kellzifer <span style="color:#a8740f">(asked)</span></span></div>
+          </div></div></div></section>
+      <div class="rules3" style="margin-top:0;grid-template-columns:1fr">
+        <div><b>3 to 15 members</b><span>Three to found, so a guild is always a group; fifteen at most, so the server holds a few guilds rather than one that everybody has to join.</span></div>
+        <div><b>Leader, officers, members</b><span>The leader and officers invite, promote and kick; members do everything else. If the leader is away 30 days, the longest-standing officer takes over.</span></div>
+        <div><b>One at a time, easy to leave</b><span>You can be in one guild. Leaving is instant; joining another waits a day, so nobody hops guilds to collect bosses.</span></div>
+        <div><b>A name everyone sees</b><span>The tag sits before your name in the world and in chat, in the banner's colour. The banner hangs on your island's flagpole and over the hall door.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="window">
+    <h2>The guild window</h2>
+    <p>One window, five tabs: Roster, Hall, Boss, Bank and Log. The roster shows who's on and where, and how much each member did to this week's boss.</p>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><span class="bn sm" id="bnSm"></span><b id="gwName">Late Night Degens</b><span class="k-sub">7 members · hall tier 4</span></div>
+        <div class="k-body">
+          <div class="gtabs"><span class="on">Roster</span><span>Hall</span><span>Boss</span><span>Bank</span><span>Log</span></div>
+          <div class="motd"><b>Message of the day (calvin):</b> Whale's at 31%. Finish is Thursday 9pm, need 3 in the arena. Don't eat the chips.</div>
+          <div class="ros" id="rosBox"></div>
+          <p class="note" style="color:var(--k-ink2);margin:6px 0 0">Green: online. Blue: on their island. The bar is this week's share of the boss.</p></div></section>
+      <div>
+        <div class="ctabs"><span>All</span><span class="on">Guild</span><span>Trade</span></div>
+        <div class="chat" style="margin-top:0" id="gchat"></div>
+        <div class="rules3" style="grid-template-columns:1fr">
+          <div><b>Guild chat</b><span>A tab beside the main chat, for members only. It's sent only to members who are online, so it costs nothing while nobody's talking.</span></div>
+          <div><b>The bank</b><span>A shared stash in the hall, 20 slots to start (more as the hall grows). Officers choose who can take; every deposit and withdrawal is in the Log, by name.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="hall">
+    <h2>The hall</h2>
+    <p>Every guild gets a hall: a private map, like an island, with a portal in the Yard to reach it. It starts as an empty room with a bank chest and the boss's
+      arena door, and the guild builds it up with <b>projects</b>, the same shape as Sal's: everyone chips in materials and tickets, tier by tier. Perks stay
+      inside the hall, so a guild is a nicer place to be, never a stronger character.</p>
+    <div class="grid2">
+      <div class="pc"><img src="hall.png" alt="" onerror="this.style.opacity=0"></div>
+      <div class="proj" id="projBox"></div>
+    </div>
+  </section>
+
+  <section class="sec" id="boss">
+    <h2>The weekly boss</h2>
+    <p>Every Thursday a boss moves into each guild's arena, one of four on a rotation. <b>Its health lasts the whole week</b>: damage stays when you leave, so a
+      guild whose members play at different hours still gets there together. Its health scales with how many members played last week. The first three
+      quarters can be chipped away alone, whenever you like. The last quarter is <b>the finish</b>: the boss locks the arena until <b>three members are in
+      it together</b>, and then it has to die within 15 minutes or it heals back to 25%.</p>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="whale.png" alt="" style="image-rendering:pixelated"><b>This week: The Whale</b><span class="k-sub">Late Night Degens · resets Thursday</span></div>
+        <div class="k-body">
+          <div class="whb"><div class="bar"><i style="width:31%"></i><em></em><span>130,200 of 420,000 left · 31%</span></div><div class="lab"><span>7 active members × 60,000, ×1.0</span><span>the finish at 25%</span></div></div>
+          <div class="chart" style="background:transparent;box-shadow:none;padding:6px 0 0"><svg id="contribSvg" viewBox="0 0 520 210" role="img" aria-label="Each member's share of this week's damage" style="min-width:0"></svg></div>
+          <div class="finish"><b>The finish opens at 25%.</b> From there the arena door stays shut until three members are inside together; then it's 15 minutes to kill it. Guests from outside the guild can make up the three (see below).</div>
+        </div></section>
+      <div class="rules3" style="margin-top:0;grid-template-columns:1fr">
+        <div><b>What everyone gets</b><span>Anyone who did 1% or more opens the boss's chest: tickets, Relic shards from mockup 3 at combat 100+, a boss trophy for the hall the first time, and a 1 in 200 chance of the boss's pet. 5% and 15% each add a roll.</span></div>
+        <div><b>A level for everyone</b><span>The boss's level matches the guild: it fights at the average combat level of whoever is in the arena, so a guild of level-50s and one of level-110s both have a fair week.</span></div>
+        <div><b>Never a chore</b><span>Missing a week loses nothing. There's no streak, no penalty, and the boss leaves quietly at the reset.</span></div>
+      </div>
+    </div>
+    <h3>The four on rotation</h3>
+    <div class="bosses" id="bossBox"></div>
+  </section>
+
+  <section class="sec" id="board">
+    <h2>The guild board</h2>
+    <p>On the hiscores page, a tab of its own: the guilds that beat this week's boss, fastest first. CASINO announces a guild's kill in chat; nothing else about a
+      guild goes to chat.</p>
+    <div class="grid2">
+      <table class="tbl" id="boardTbl" style="margin-top:0"></table>
+      <div><div class="chat" style="margin-top:0"><div><span class="t">Sat 21:48</span><span class="c">CASINO</span> [LND] Late Night Degens have harpooned the Whale. Two days, nineteen hours. He'll be back in a month, richer.</div></div>
+        <p class="note">Names are examples.</p></div>
+    </div>
+  </section>
+
+  <section class="sec" id="alone">
+    <h2>Without a guild</h2>
+    <div class="rules3">
+      <div><b>Nothing is locked</b><span>Every map, skill, item, raid, dungeon and event works the same outside a guild. The hall's perks only work in the hall; the boss is the only thing a guild has that you don't, and it's a weekly extra, not a source of gear.</span></div>
+      <div><b>Guests</b><span>A guild can invite anybody to help with its finish. A guest counts towards the three, gets a small guest's chest (tickets and a shard), and can be a guest in more than one guild a week. A good way for a guild to meet people.</span></div>
+      <div><b>Finding one</b><span>A "Looking for a guild" switch on your profile, and a list of guilds that are recruiting on the guild board, with their tag, banner, size and the hours they play.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <ul class="build">
+      <li><b>A guild is one record</b> in the game server's storage: name, tag, banner, members and ranks, the bank, the hall's project tiers and this week's boss health. A player carries only their guild's id.</li>
+      <li><b>The hall is an instanced map</b> the way an island is, made when someone walks in and thrown away when it's empty. Its projects are Sal's project code pointed at the guild instead of the world.</li>
+      <li><b>The boss</b> is one monster whose health is saved to the guild record on every hit's tick (as the raid saves itself since the restart fix), so it survives leaving, logging out and a server restart. The finish's three-together lock is the Crypt's "everyone in the antechamber" lever.</li>
+      <li><b>Guild chat</b> is sent only to online members. The roster's online dots are read from the players already in memory when the window opens: no poll.</li>
+      <li><b>Art</b>: the four bosses (with walk, attack and death), the hall's ground and furniture, the charter, banners as drawn shapes with emblems from the game's own icons.</li>
+    </ul>
+    <div class="callout"><b>Things to decide:</b> the size (3 to 15; with 36 players, should the cap be 10?); whether the boss is the same level for every guild or matched to the members, as here; guests in the finish; whether a guild hall should have any perk that works outside it (my pick: no); and the charter's price.</div>
+  </section>
+</main>
+<script>
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const IC = (k) => `/v3/assets/img/glad/flat/items/${k}.png`;
+/* the charter */
+const COLS = ["#8a1a1a", "#1a3a8a", "#1a6a3a", "#5a1a7a", "#c88a1a", "#1a1a1a", "#d8d0c0", "#d84a8a"];
+const EMB = ["skill_melee", "skill_fishing", "skill_mining", "skill_magic", "skill_thieving", "skill_archery", "skill_woodcutting", "skill_cooking", "skill_breeding", "skill_agility"];
+let b1 = "#5a1a7a", b2 = "#c88a1a", em = "skill_thieving";
+const banner = (el) => { el.style.setProperty("--b1", b1); el.style.setProperty("--b2", b2); el.innerHTML = `<img src="${IC(em)}" alt="">`; };
+function charter() {
+  document.getElementById("sw1").innerHTML = COLS.map((c) => `<button style="background:${c}" data-c="${c}" aria-pressed="${c === b1}" aria-label="main colour"></button>`).join("");
+  document.getElementById("sw2").innerHTML = COLS.map((c) => `<button style="background:${c}" data-c="${c}" aria-pressed="${c === b2}" aria-label="trim colour"></button>`).join("");
+  document.getElementById("emj").innerHTML = EMB.map((k) => `<button data-e="${k}" aria-pressed="${k === em}"><img src="${IC(k)}" alt=""></button>`).join("");
+  document.querySelectorAll("#sw1 button").forEach((b) => b.onclick = () => { b1 = b.dataset.c; charter(); });
+  document.querySelectorAll("#sw2 button").forEach((b) => b.onclick = () => { b2 = b.dataset.c; charter(); });
+  document.querySelectorAll("#emj button").forEach((b) => b.onclick = () => { em = b.dataset.e; charter(); });
+  banner(document.getElementById("bnBig")); banner(document.getElementById("bnSm"));
+  const tag = (document.getElementById("gTag").value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
+  document.getElementById("npPrev").innerHTML = `<span class="tg" style="color:${b1 === "#1a1a1a" ? b2 : b1}">[${esc(tag)}]</span>calvin`;
+  document.getElementById("gwName").textContent = document.getElementById("gName").value || "A guild";
+}
+document.getElementById("gName").addEventListener("input", charter); document.getElementById("gTag").addEventListener("input", charter);
+charter();
+
+/* the roster */
+const ROS = [["calvin", "lead", "on", 82, 31, "the Yard"], ["BeeEzRadio", "off", "on", 74, 22, "the Boardwalk"], ["Kellzifer", "", "isle", 88, 18, "their island"], ["heartlarva", "off", "", 61, 12, "2 h ago"], ["andyreidisapawg", "", "", 55, 9, "yesterday"], ["zwades", "", "on", 43, 6, "the Casino"], ["bootypaper", "", "", 12, 2, "3 days ago"]];
+document.getElementById("rosBox").innerHTML = ROS.map(([n, r, st, lv, c, wh]) => `<div class="ro"><span class="dot ${st}"></span><span>${esc(n)} <small>lvl ${lv} · ${esc(wh)}</small></span>${r ? `<span class="rk ${r === "lead" ? "lead" : "off"}">${r === "lead" ? "Leader" : "Officer"}</span>` : '<span class="rk">Member</span>'}<span style="font:800 11.5px Lora,serif;color:var(--k-ink2)">${c}%</span><span class="cbar"><i style="width:${c * 3}%"></i></span></div>`).join("");
+document.getElementById("gchat").innerHTML = [["21:02", "calvin", "whale at 31, who's on thursday 9"], ["21:03", "BeeEzRadio", "me. bringing the frost wand"], ["21:05", "Kellzifer", "same, ill bring food for the chip rain"], ["21:05", "calvin", "thats 3 👍"]]
+  .map(([t, n, m]) => `<div><span class="t">${t}</span><span class="g">[LND] ${esc(n)}</span> ${esc(m)}</div>`).join("");
+
+/* the hall's projects */
+document.getElementById("projBox").innerHTML = [
+  ["The Vault", "The guild bank: 20 slots, then 40, then 80.", 3, 2, "2 of 3"],
+  ["The Forge", "A furnace and an anvil in the hall, then a 10% chance of a second bar while you smith there.", 2, 2, "done"],
+  ["The Portal", "Teleports from the hall to the Yard, then to three maps the guild chooses, then six.", 3, 1.5, "tier 2 half way"],
+  ["The Trophy Wall", "Every boss the guild has beaten, mounted, with the date and who was there. Looks only.", 1, 1, "done"],
+  ["The Pond", "A fishing spot of the guild's choosing in the hall, then one that never moves.", 2, 0, "not started"],
+  ["The Long Table", "A cooking range, then a feast once a week that gives everyone who eats a 30-minute buff (inside the hall only).", 2, 0, "not started"]]
+  .map(([n, d, t, done, st]) => `<div class="pj"><b>${n}</b><em>${st}</em><span>${esc(d)}</span><div class="tiers">${Array.from({ length: t }, (_, i) => `<i class="${i < Math.floor(done) ? "done" : i < done ? "half" : ""}"></i>`).join("")}</div></div>`).join("")
+  + `<p class="note">Each tier asks for materials from across the game and some tickets, like Sal's projects, and anyone in the guild can add to it.</p>`;
+
+/* contribution chart */
+{
+  const W = 520, H = 210, L = 110, R = 40, T = 6, rh = 27, max = 35;
+  let s = ""; ROS.forEach(([n, , , , c], i) => { const y = T + i * rh, w = (W - L - R) * c / max;
+    s += `<text x="${L - 8}" y="${y + 15}" fill="#d8c8b0" font-size="12" font-weight="700" text-anchor="end">${esc(n.length > 14 ? n.slice(0, 13) + "…" : n)}</text><rect x="${L}" y="${y + 3}" width="${w}" height="${rh - 9}" rx="4" fill="${c >= 15 ? "#ff7a4a" : c >= 5 ? "#d8603a" : "#8a4a3a"}"/><text x="${L + w + 6}" y="${y + 15}" fill="#cdbfa2" font-size="11.5">${c}%${c >= 15 ? " · 3 rolls" : c >= 5 ? " · 2 rolls" : " · 1 roll"}</text>`; });
+  document.getElementById("contribSvg").innerHTML = s;
+}
+
+/* the four bosses */
+document.getElementById("bossBox").innerHTML = [
+  ["whale", "The Whale", "this week", "A high roller in a tuxedo, floating. Every so often it <b>makes it rain</b>: chips fall across the arena, and picking one up heals you but the Whale heals too, so a guild decides who eats.", 1],
+  ["hydra", "The Jackpot Hydra", "next week", "A slot machine with three heads. Each head is a reel: kill all three within 10 seconds of each other, or the dead ones respin and come back. A week of practice for spreading damage.", 0],
+  ["repoman", "The Repo Man", "in two weeks", "Repossesses things. His hook takes your weapon for 10 seconds, so bring a second one of a different style: the rule of the week is switching.", 0],
+  ["queen", "The Croupier Queen", "in three weeks", "Deals everyone in the arena a card every 30 seconds. Red: you hit twice as hard. Black: you take twice as much. Players can swap cards by standing together.", 0]]
+  .map(([a, n, w, d, now]) => `<div class="bc ${now ? "now" : ""}"><div class="pic"><img src="${a}.png" alt=""></div><div><b>${n}</b><small>${w}</small><span>${d}</span></div></div>`).join("");
+
+/* the board */
+document.getElementById("boardTbl").innerHTML = `<tr><th>#</th><th>Guild</th><th style="text-align:right">Members</th><th style="text-align:right">Beat the Whale in</th></tr>` + [
+  ["1", "#5a1a7a", "#c88a1a", "skill_thieving", "LND", "Late Night Degens", 7, "2 d 19 h"], ["2", "#1a3a8a", "#d8d0c0", "skill_fishing", "BAIT", "Bait & Switch", 5, "4 d 2 h"], ["3", "#1a6a3a", "#c88a1a", "skill_mining", "ORE", "Ore Else", 11, "5 d 8 h"], ["–", "#8a1a1a", "#1a1a1a", "skill_melee", "PIT", "The Pit Crew", 4, "still at 46%"]]
+  .map(([r, c1, c2, e, t, n, m, time]) => `<tr><td><b>${r}</b></td><td><span style="display:inline-flex;gap:8px;align-items:center"><span class="bn sm" style="--b1:${c1};--b2:${c2}"><img src="${IC(e)}" alt=""></span><span><b style="color:${c1 === "#1a1a1a" ? c2 : "#ffe7b0"}">[${t}]</b> ${esc(n)}</span></span></td><td class="n">${m}</td><td class="n">${time}</td></tr>`).join("");
+</script>
+</body>
+</html>

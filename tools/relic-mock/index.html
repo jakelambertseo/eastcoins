@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Relic gear</title>
+<!-- (2026-09-30, the owner: "onto mockup 3"). Mockup 3 of the long-game set: Relic gear and masterwork crafting. Built on mockup 1 (the 110 resources)
+     and mockup 2 (the sets boost the Ascendancy moves). The tier numbers are the game's own (tiers.json, from TIERS in the rules file); Relic continues
+     the line. Icons are PixelLab drafts. Local only: tools/ is never shipped. http://localhost:4321/tools/relic-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0c0908;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1200px 600px at 20% -10%,#3a2408,transparent),radial-gradient(900px 500px at 100% 40%,#2a1018,transparent),#0c0908}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:14px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd98a}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:980px;line-height:1.55}
+.chart{background:#1a120c;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #3a2616;margin-top:12px;overflow:auto}
+.chart svg{display:block;width:100%;height:auto;min-width:700px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:8px 4px 0;font:700 12.5px Lora,serif;color:#d8c8a8}.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.tbl{width:100%;border-collapse:collapse;font:600 13.5px Lora,serif;margin-top:12px;background:#1a120c;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070;padding:10px 12px 6px}.tbl td{padding:8px 12px;border-top:1px solid #3a2616;vertical-align:top}.tbl td.n{text-align:right;font-variant-numeric:tabular-nums}
+.tbl tr.new td{background:rgba(232,160,40,.09)}.tbl tr.new td:first-child{box-shadow:inset 3px 0 0 #e8a028}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-top:14px;align-items:start}
+.k-win{min-width:0}
+.ic{width:32px;height:32px;image-rendering:pixelated;flex:none}.ic.big{width:48px;height:48px}
+/* the chains */
+.chain{background:#1a120c;border-radius:10px;box-shadow:0 0 0 1.5px #3a2616;padding:14px;margin-top:12px}
+.chain h4{margin:0 0 10px;font:800 16px Cinzel,serif;color:#ffe7b0;display:flex;gap:10px;align-items:center}
+.flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+.step{display:grid;gap:4px;justify-items:center;text-align:center;padding:10px;border-radius:8px;background:#241810;box-shadow:inset 0 0 0 1px #3a2616;min-width:118px;max-width:150px}
+.step b{font:800 13px Lora,serif;color:#ffe7b0}.step small{font:600 11.5px/1.35 Lora,serif;color:#b8a888}.step .sk{font:800 10.5px Lora,serif;padding:1px 7px;border-radius:999px;background:#3a2616;color:#ffd98a}
+.step.out{box-shadow:inset 0 0 0 2px #e8a028,0 0 14px rgba(232,160,40,.3)}
+.arrow{align-self:center;padding:0 6px;color:#8a6a40;font:900 20px Lora,serif}
+.plus{align-self:center;padding:0 4px;color:#8a6a40;font:900 18px Lora,serif}
+/* item cards */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:12px}
+.card{border-radius:8px;padding:12px;background:linear-gradient(#2a1c12,#1a120c);box-shadow:0 0 0 2px var(--q),0 8px 20px rgba(0,0,0,.45)}
+.card header{display:flex;gap:10px;align-items:center}.card header b{display:block;font:800 16px Cinzel,serif;color:var(--q)}.card header small{font:700 11px Lora,serif;color:#a89070;letter-spacing:.06em;text-transform:uppercase}
+.card .st{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin-top:8px;font:600 13px Lora,serif;color:#d8c8a8}.card .st b{color:#fff;text-align:right;font-variant-numeric:tabular-nums}.card .st em{font-style:normal;color:#7ee07e;font-size:11.5px;margin-left:4px}
+.card .sockets{display:flex;gap:6px;margin-top:8px;align-items:center;font:600 12px Lora,serif;color:#a89070}
+.sock{width:22px;height:22px;border-radius:50%;background:#0c0806;box-shadow:inset 0 0 0 2px #6a4a28;display:grid;place-items:center}.sock img{width:18px;height:18px;image-rendering:pixelated}
+.card .mk{margin-top:8px;font:600 12px Lora,serif;font-style:italic;color:#b8a888}.card .set{margin-top:6px;font:700 12px Lora,serif;color:#e8c070}
+.q-normal{--q:#c8c0b0}.q-fine{--q:#7ee07e}.q-superior{--q:#7ab8ff}.q-masterwork{--q:#ffb43a}
+/* the crafting window */
+.craft{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start}
+.inp{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.slot{position:relative;width:46px;height:46px;border-radius:6px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);display:grid;place-items:center}
+.slot img{width:32px;height:32px;image-rendering:pixelated}.slot i{position:absolute;right:2px;bottom:0;font:800 11px Lora,serif;font-style:normal;color:var(--k-ink)}
+.slot.miss{opacity:.45}.slot.miss i{color:#b8302a}
+.odds{display:flex;height:22px;border-radius:5px;overflow:hidden;margin-top:6px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.odds span{display:grid;place-items:center;font:800 11px Lora,serif;color:#1a0e04;white-space:nowrap;overflow:hidden}
+.oddleg{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;font:700 12px Lora,serif;color:var(--k-ink2)}.oddleg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.slider{display:flex;gap:10px;align-items:center;margin-top:8px;font:700 12.5px Lora,serif;color:var(--k-ink)}
+/* sets */
+.setp{padding:7px 10px;border-radius:6px;margin-top:6px;font:600 13px/1.45 Lora,serif;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);color:var(--k-ink2)}
+.setp b{color:var(--k-ink)}.setp.on{box-shadow:inset 0 0 0 1.5px #c8963a;background:#fbe6a8;color:#5a3a10}.setp.on b{color:#3a2208}
+.pieces{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.pieces .slot.on{box-shadow:inset 0 0 0 2px #c8963a}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin:12px 0}.rules3>div{background:#1a120c;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}
+.rules3 b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}
+.build{margin:6px 0 0;padding-left:18px;line-height:1.6;color:#cdbfa2;max-width:980px}.build b{color:#f6e9cc}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+</style>
+</head>
+<body>
+<main>
+  <h1>Relic gear</h1>
+  <p class="lede">The top of the gear ladder for the road past 99. <b>Relic</b> is one more tier above Singularity, made only by players, out of the
+    new resources every skill unlocks at 110 (mockup 1), shards that only monsters past level 100 drop, and a piece of a boss. Under it, every crafted
+    item in the game gains a <b>quality</b> (normal, fine, superior, masterwork), <b>gem sockets</b> by quality, and the Relic sets carry bonuses that
+    feed straight into the Ascendancy moves (mockup 2). The point of all of it: the best gear in the game is made by somebody on the server, and you can
+    see who.</p>
+  <nav class="jump"><a href="#ladder">The ladder</a><a href="#chains">Where it comes from</a><a href="#quality">Masterwork</a><a href="#sockets">Sockets</a><a href="#sets">Sets</a><a href="#reforge">Reforging</a><a href="#time">Time and money</a><a href="#build">Building it</a></nav>
+
+  <section class="sec" id="ladder">
+    <h2>The ladder</h2>
+    <p>Every tier today is the same step: +4 accuracy, +4 strength and +14 armour per ten levels, Bronze at 10 to Singularity at 90. Relic carries on at
+      <b>110</b> with a step and a half (it should feel like the reward it is) and <b>Awakened</b> Relic is the same item taken one step further at
+      120. Quality and sockets come on top of these, which is why the best Relic in the game is a masterwork one.</p>
+    <div class="chart"><svg id="ladder-svg" viewBox="0 0 900 360" role="img" aria-label="Weapon accuracy and strength by tier, Bronze to Awakened Relic"></svg>
+      <div class="legend"><span><i style="background:#c8963a"></i>weapon accuracy</span><span><i style="background:#7ab8ff"></i>weapon strength</span><span><i style="background:#e8a028;opacity:.5"></i>the new tiers</span></div></div>
+    <table class="tbl" id="ladderTbl"></table>
+  </section>
+
+  <section class="sec" id="chains">
+    <h2>Where it comes from</h2>
+    <p>Nobody makes a Relic alone. Each one needs three or four skills at 110, shards off the monsters on the endgame map (mockup 4), and one piece of
+      a boss, so a finished Relic has a gatherer, a crafter and a fighter in it, and the Exchange carries every step.</p>
+    <div id="chainBox"></div>
+  </section>
+
+  <section class="sec" id="quality">
+    <h2>Masterwork</h2>
+    <p>Everything a player makes (not just Relics: a bronze sword too) rolls a quality when it's made. The further your skill is past the item's
+      requirement, the better the odds, and Smithing 115 (mockup 1) doubles the chance of masterwork. Quality is part of the item: it shows in the name,
+      on the Exchange, and a masterwork carries its maker's name for good.</p>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/items/skill_smithing.png" alt=""><b>The Ancient Forge</b><span class="k-sub">Smithing 110 · the endgame map</span></div>
+        <div class="k-paper" style="padding:12px"><div class="craft"><img class="ic big" src="relic_sword.png" alt=""><div>
+          <b style="font:800 17px Cinzel,serif;color:var(--k-ink)">Relic greatsword</b><div style="font:600 12.5px Lora,serif;color:var(--k-ink2)">Melee 110 to wield · Smithing 110 to make</div>
+          <div class="inp"><span class="slot"><img src="primordial_bar.png" alt=""><i>12</i></span><span class="slot"><img src="relic_shard.png" alt=""><i>40</i></span><span class="slot miss"><img src="/v3/assets/img/glad/flat/items/frost_shard.png" alt=""><i>0/1</i></span><span class="slot"><img src="/v3/assets/img/glad/flat/items/singularity_sword.png" alt=""><i>1</i></span></div>
+          <div class="note" style="color:var(--k-ink2)">12 Primordial bars · 40 Relic shards · 1 Undertow's heart (a boss piece) · your old Singularity blade, melted down.</div></div></div>
+          <div class="slider"><span>Your Smithing</span><input type="range" id="smLvl" min="110" max="120" value="112"><b id="smOut">112</b><label style="margin-left:auto;display:flex;gap:5px;align-items:center"><input type="checkbox" id="sm115">Smithing 115 perk</label></div>
+          <div class="odds" id="odds"></div>
+          <div class="oddleg"><span><i style="background:#c8c0b0"></i>normal</span><span><i style="background:#7ee07e"></i>fine +5%</span><span><i style="background:#7ab8ff"></i>superior +10%</span><span><i style="background:#ffb43a"></i>masterwork +15%</span></div>
+          <button class="k-btn" style="margin-top:10px" disabled>Forge it (needs the Undertow's heart)</button>
+        </div></section>
+      <div><div class="cards" id="qcards" style="margin-top:0"></div>
+        <div class="card q-masterwork" style="margin-top:12px"><header><img class="ic big" src="/v3/assets/img/glad/flat/items/singularity_pickaxe.png" alt=""><span><small>Masterwork · a tool</small><b>Masterwork Singularity pickaxe</b></span></header>
+          <div class="st"><span>Mining speed</span><b>+15%<em>masterwork</em></b><span>Needs</span><b>Mining 90</b></div>
+          <div class="sockets"><span class="sock"><img src="/v3/assets/img/glad/flat/items/opal.png" alt=""></span><span class="sock"><img src="/v3/assets/img/glad/flat/items/opal.png" alt=""></span><span class="sock"></span> skilling gems: two opals count, a third does nothing</div>
+          <div class="mk">Made by calvin, 2 Nov. Old tiers matter again: every made item rolls a quality.</div></div></div>
+    </div>
+    <table class="tbl"><tr><th>Quality</th><th>Stats</th><th>Sockets</th><th>Name</th><th>Odds at the requirement</th><th>… 10 levels past it</th></tr>
+      <tr><td style="color:#c8c0b0">Normal</td><td>as listed</td><td>0</td><td>Relic greatsword</td><td class="n">70%</td><td class="n">45%</td></tr>
+      <tr><td style="color:#7ee07e">Fine</td><td>+5%</td><td>1</td><td>Fine Relic greatsword</td><td class="n">22%</td><td class="n">32%</td></tr>
+      <tr><td style="color:#7ab8ff">Superior</td><td>+10%</td><td>2</td><td>Superior Relic greatsword</td><td class="n">7%</td><td class="n">17%</td></tr>
+      <tr><td style="color:#ffb43a">Masterwork</td><td>+15%</td><td>3</td><td>Masterwork Relic greatsword, made by …</td><td class="n">1%</td><td class="n">6% (12% with Smithing 115)</td></tr></table>
+  </section>
+
+  <section class="sec" id="sockets">
+    <h2>Sockets</h2>
+    <p><b>No new skill.</b> Sockets are one more thing <b>the Gem Sorter</b> in the Yard does, next to rolling: you bring the item and a sorted gem,
+      pay a fee, and it's set. A fine item has one socket, a superior two, a masterwork three. The gems are the ones the game already has, with the rolls
+      they already carry:</p>
+    <div class="rules3">
+      <div><b>Weapons and armour take combat gems</b><span>Ruby, jasper, amethyst (damage by style), jade (accuracy), bloodstone (healing), hematite (toughness), and the five elemental ones.</span></div>
+      <div><b>Tools take skilling gems</b><span>A masterwork pickaxe with three opals mines faster wherever you are; sapphire in a rod, topaz in an axe, and so on.</span></div>
+      <div><b>The two-per-kind rule still holds</b><span>Your bag and your sockets count together, so only the best two of each kind ever count. Sockets don't stack one stone higher; they let you carry <i>more kinds</i> at once (accuracy, toughness and a fire stone as well as your damage).</span></div>
+      <div><b>Taking a gem out</b><span>Works the way the bag does today: it comes back unsorted, so changing your mind costs a roll. The socketing fee is 25,000 tickets a gem.</span></div>
+      <div><b>The Primordial gem</b><span>A new 26th gem, dropped by bosses past level 100. Rolled at the Sorter like any other, but its roll runs 0 to +15%, and you choose which combat kind it counts as when it's rolled.</span></div>
+      <div><b>Nobody needs a skill for any of it</b><span>Everything here is tickets and gems, so every player can use sockets, crafter or not.</span></div>
+    </div>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/g_gems.png" alt="" onerror="this.src='/v3/assets/img/glad/flat/items/ruby.png'"><b>The Gem Sorter</b><span class="k-sub">roll · sell · socket</span></div>
+        <div class="k-paper" style="padding:12px">
+          <div style="display:flex;gap:12px;align-items:center"><img class="ic big" src="relic_sword.png" alt=""><div><b style="font:800 15px Cinzel,serif;color:#a85a08">Masterwork Relic greatsword</b><div class="sockets" style="color:var(--k-ink2)"><span class="sock"><img src="/v3/assets/img/glad/flat/items/ruby.png" alt=""></span><span class="sock"><img src="/v3/assets/img/glad/flat/items/jade.png" alt=""></span><span class="sock"></span> one free</div></div></div>
+          <div class="k-tabs" style="margin:10px -12px 0;padding:6px 12px 0"><button>Roll</button><button>Sell</button><button aria-selected="true">Socket</button></div>
+          <div class="inp" style="margin-top:10px">${GEMS}</div>
+          <p class="note" style="color:var(--k-ink2)">Your sorted combat gems, with their rolls. Pick one for the empty socket: 25,000 tickets. Ruby +9% and jade +6% are already in; a third ruby would do nothing (two per kind), so the hematite is the better pick.</p>
+          <button class="k-btn" style="margin-top:6px">Set Hematite +7% · 25,000</button></div></section>
+      <table class="tbl" style="margin-top:0" id="gemTbl"></table>
+    </div>
+  </section>
+
+  <section class="sec" id="sets">
+    <h2>Sets</h2>
+    <p>Three Relic sets, one for each way to fight, six pieces each (helm, body, legs, gloves, boots and the weapon). Two and four pieces give the plain
+      bonuses; <b>all six change your Ascendancy's signature move</b>, so a set is chosen for a build, not just worn. A mixed set gives nothing past two.</p>
+    <div class="grid2" id="setBox"></div>
+  </section>
+
+  <section class="sec" id="reforge">
+    <h2>Reforging past +3</h2>
+    <p>The forge stops at +3 today (with a chance of breaking as it climbs). A Relic can go to <b>+5</b>, paying Relic shards on top, and a break at +4
+      or +5 drops it back a level instead of wrecking it, because nobody should lose a Relic to one bad click.</p>
+    <table class="tbl"><tr><th>Step</th><th>Cost</th><th>Success</th><th>On a failure</th></tr>
+      <tr><td>+1 to +3</td><td>as today</td><td class="n">as today</td><td>as today</td></tr>
+      <tr><td>+3 to +4</td><td>3 Primordial bars, 60 Relic shards</td><td class="n">30%</td><td>back to +3, nothing lost but the cost</td></tr>
+      <tr><td>+4 to +5</td><td>6 Primordial bars, 150 Relic shards</td><td class="n">15%</td><td>back to +4</td></tr></table>
+  </section>
+
+  <section class="sec" id="time">
+    <h2>Time and money</h2>
+    <p>Rough hours for one player doing everything themselves (with the Exchange it's faster, and that's the point). Shards come from monsters past
+      level 100 on the endgame map, about one a kill and five off a boss.</p>
+    <table class="tbl"><tr><th>To make</th><th>What it takes</th><th>Hours, alone</th></tr>
+      <tr><td>One Relic weapon</td><td>12 Primordial bars (36 ore), 40 shards, a boss piece</td><td class="n">≈ 12</td></tr>
+      <tr><td>The full six-piece set</td><td>≈ 60 bars, 240 shards, 6 boss pieces</td><td class="n">≈ 70</td></tr>
+      <tr><td>A masterwork set</td><td>the same, made again until it rolls (or bought)</td><td class="n">≈ 300+</td></tr>
+      <tr><td>Awakening (120)</td><td>200 shards and a second boss piece, per item</td><td class="n">≈ 20 each</td></tr></table>
+    <div class="callout"><b>Where the tickets go:</b> the Ancient Forge charges a fee per craft, reforging past +3 costs shards that are worth tickets on
+      the Exchange, and every melted-down Singularity item leaves the game. Relic is a sink as much as a reward.</div>
+  </section>
+
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <ul class="build">
+      <li><b>Needs mockup 1 first</b> (the 110 resources) and is best with mockup 4 (the endgame map, where the shards and the Ancient Forge are).</li>
+      <li><b>Relic</b> is one more row in the tier table and its items: weapons for every style, armour and jewellery, each with PixelLab art.</li>
+      <li><b>Quality</b> is a number on each made item, like the reforge level already is: it travels with the item through the bag, the bank, trades and the Exchange, which already handle a reforge level the same way.</li>
+      <li><b>Sockets</b> are up to three gem slots on that same item record. The bonus code that reads the gem bag reads them too, with the two-per-kind cap applied to bag and sockets together. Socketing is a new tab on the Gem Sorter, not a skill.</li>
+      <li><b>Sets</b> are a count of pieces worn, read where damage is worked out, and the six-piece bonuses are switches on the Ascendancy moves.</li>
+      <li><b>Cost on the server</b>: nothing worth measuring.</li>
+    </ul>
+    <div class="callout"><b>No new skills anywhere here.</b> Everything is made with skills the game already has (Mining, Smithing, Woodcutting, Fletching, Wizardry) and sockets are the Gem Sorter's. <b>Things to decide:</b> whether quality should apply to everything made (my pick, so old crafting matters again) or only to Relics; whether a Relic should be tradeable once made (my pick: yes, so a crafter can sell, but a masterwork keeps its maker's name); and the six-piece set bonuses.</div>
+  </section>
+</main>
+<script>
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const IT = (k) => `/v3/assets/img/glad/flat/items/${k}.png`;
+fetch("tiers.json").then((r) => r.json()).then((T) => {
+  const L = T.at(-1), step = { acc: 4, str: 4, set: 14, jewel: 2 };
+  const all = [...T.map((t) => ({ ...t })), { k: "relic", name: "Relic", gate: 110, acc: L.acc + 6, str: L.str + 6, set: L.set + 21, jewel: L.jewel + 3, isNew: true }, { k: "awakened", name: "Awakened Relic", gate: 120, acc: L.acc + 10, str: L.str + 10, set: L.set + 35, jewel: L.jewel + 5, isNew: true }];
+  const W = 900, H = 360, Lp = 50, R = 20, Tp = 20, B = 50, max = 56, n = all.length, bw = (W - Lp - R) / n, y = (v) => Tp + (H - Tp - B) * (1 - v / max);
+  let s = ""; for (const v of [0, 10, 20, 30, 40, 50]) s += `<line x1="${Lp}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#2a1c12"/><text x="${Lp - 8}" y="${y(v) + 4}" fill="#a89070" font-size="12" text-anchor="end">${v}</text>`;
+  all.forEach((t, i) => { const x = Lp + i * bw + 6, w = (bw - 14) / 2;
+    if (t.isNew) s += `<rect x="${Lp + i * bw + 1}" y="${Tp - 6}" width="${bw - 2}" height="${H - Tp - B + 6}" fill="#e8a028" opacity=".08" rx="6"/>`;
+    s += `<rect x="${x}" y="${y(t.acc)}" width="${w}" height="${y(0) - y(t.acc)}" fill="#c8963a" rx="3"/><rect x="${x + w + 2}" y="${y(t.str)}" width="${w}" height="${y(0) - y(t.str)}" fill="#7ab8ff" rx="3"/>`;
+    s += `<text x="${x + w}" y="${y(t.acc) - 6}" fill="#f6e9cc" font-size="11.5" text-anchor="middle" font-weight="700">${t.acc}/${t.str}</text>`;
+    s += `<text x="${x + w}" y="${H - B + 16}" fill="${t.isNew ? "#ffb43a" : "#d8c8a8"}" font-size="12" text-anchor="middle" font-weight="${t.isNew ? 800 : 600}">${t.name.replace(" Relic", "")}</text><text x="${x + w}" y="${H - B + 31}" fill="#a89070" font-size="11" text-anchor="middle">${t.gate}</text>`; });
+  document.getElementById("ladder-svg").innerHTML = s;
+  document.getElementById("ladderTbl").innerHTML = `<tr><th>Tier</th><th style="text-align:right">Level</th><th style="text-align:right">Weapon accuracy</th><th style="text-align:right">Weapon strength</th><th style="text-align:right">Armour set</th><th style="text-align:right">Jewellery</th></tr>`
+    + all.slice(-4).map((t) => `<tr class="${t.isNew ? "new" : ""}"><td>${t.name}${t.isNew ? ' <span style="color:#ffb43a;font-weight:800">new</span>' : ""}</td><td class="n">${t.gate}</td><td class="n">${t.acc}</td><td class="n">${t.str}</td><td class="n">${t.set}</td><td class="n">${t.jewel}</td></tr>`).join("");
+});
+/* the chains */
+const S = (img, name, note, skill, cls = "") => `<div class="step ${cls}"><img class="ic" src="${img}" alt=""><b>${esc(name)}</b>${skill ? `<span class="sk">${skill}</span>` : ""}<small>${esc(note)}</small></div>`;
+const A = '<span class="arrow">→</span>', P = '<span class="plus">+</span>';
+document.getElementById("chainBox").innerHTML = [
+  ["Melee: the Relic greatsword (and the armour)", S("primordial_ore.png", "Primordial ore", "the new rock on the endgame map", "Mining 110") + A + S("primordial_bar.png", "Primordial bar", "3 ore and a Starfall bar", "Smithing 105") + P + S("relic_shard.png", "Relic shards", "monsters past 100", "fighting") + P + S(IT("frost_shard"), "A boss piece", "the Undertow's heart, the Ice Man's crown…", "a boss") + A + S("relic_sword.png", "Relic greatsword", "quality rolled at the Ancient Forge", "Smithing 110", "out")],
+  ["Archery: the Relic longbow", S("elder_heartwood.png", "Elder heartwood", "the new tree", "Woodcutting 110") + A + S(IT("bowstring"), "Primal string", "dropped by bosses past 100", "a boss") + P + S("relic_shard.png", "Relic shards", "monsters past 100", "fighting") + A + S("relic_bow.png", "Relic longbow", "strung and carved", "Fletching 110", "out")],
+  ["Magic: the Relic wand", S("elder_heartwood.png", "Elder heartwood", "the same tree", "Woodcutting 110") + P + S(IT("page_sun_surge"), "Primal pages", "the new spell paper", "Wizardry 110") + P + S("primordial_bar.png", "A Primordial bar", "for the cap", "Smithing 105") + A + S("relic_wand.png", "Relic wand", "bound and charged", "Wizardry 110", "out")],
+  ["Every Relic: Awakening, at 120", S("relic_sword.png", "Any Relic item", "already made", "") + P + S("relic_shard.png", "200 shards", "and a second boss piece", "") + A + S("relic_body.png", "Awakened", "one more step of stats, and it glows", "the skill at 120", "out")]
+].map(([t, f]) => `<div class="chain"><h4>${esc(t)}</h4><div class="flow">${f}</div></div>`).join("");
+/* quality cards */
+const Q = [["normal", "Normal", 0, 0], ["fine", "Fine", 5, 1], ["superior", "Superior", 10, 2], ["masterwork", "Masterwork", 15, 3]];
+const base = { acc: 46, str: 44 }, gems = ["topaz", "opal", "sapphire"];
+document.getElementById("qcards").innerHTML = Q.map(([k, n, pct, so]) => `<div class="card q-${k}"><header><img class="ic big" src="relic_sword.png" alt=""><span><small>${n}</small><b>${k === "normal" ? "" : n + " "}Relic greatsword</b></span></header>
+  <div class="st"><span>Accuracy</span><b>${Math.round(base.acc * (1 + pct / 100))}${pct ? `<em>+${pct}%</em>` : ""}</b><span>Strength</span><b>${Math.round(base.str * (1 + pct / 100))}${pct ? `<em>+${pct}%</em>` : ""}</b><span>Speed</span><b>2.4 s</b><span>Needs</span><b>Melee 110</b></div>
+  <div class="sockets">${so ? Array.from({ length: so }, (_, i) => `<span class="sock">${i < so - 1 ? `<img src="${IT(gems[i])}" alt="">` : ""}</span>`).join("") + ` ${so} socket${so > 1 ? "s" : ""}` : "no sockets"}</div>
+  <div class="set">Relic of the Titan (1/6)</div>${k === "masterwork" ? `<div class="mk">Made by Kellzifer at the Ancient Forge, 14 Oct.</div>` : ""}</div>`).join("");
+/* the odds */
+const oddsAt = (over, perk) => { const t = Math.min(1, over / 10); let m = 1 + 5 * t; if (perk) m *= 2; const su = 7 + 10 * t, fi = 22 + 10 * t; return [100 - fi - su - m, fi, su, m]; };
+function paintOdds() { const lv = +document.getElementById("smLvl").value, perk = document.getElementById("sm115").checked && lv >= 115; document.getElementById("smOut").textContent = lv; const o = oddsAt(lv - 110, perk), col = ["#c8c0b0", "#7ee07e", "#7ab8ff", "#ffb43a"];
+  document.getElementById("odds").innerHTML = o.map((v, i) => `<span style="width:${v}%;background:${col[i]}">${v >= 6 ? `${Math.round(v)}%` : ""}</span>`).join(""); }
+document.getElementById("smLvl").addEventListener("input", paintOdds); document.getElementById("sm115").addEventListener("change", paintOdds); paintOdds();
+/* gems */
+/* the game's own gems (GEMSET.list): what each does in a socket is exactly what it does in the bag */
+const GEMROWS = [["ruby", "Ruby", "melee hits harder", "gear"], ["jasper", "Jasper", "arrows hit harder", "gear"], ["amethyst", "Amethyst", "spells hit harder", "gear"], ["jade", "Jade", "more accurate, every style", "gear"], ["bloodstone", "Bloodstone", "food and regeneration heal more", "gear"], ["hematite", "Hematite", "take less damage", "gear"], ["carnelian", "Carnelian", "harder against anything weak to fire (and the other four elements)", "gear"], ["opal", "Opal", "mine faster (pickaxe)", "tool"], ["sapphire", "Sapphire", "fish faster (rod)", "tool"], ["topaz", "Topaz", "chop faster (axe)", "tool"], ["primordial", "Primordial (new)", "0 to +15%, counts as a combat kind you choose", "gear"]];
+document.getElementById("gemTbl").innerHTML = `<tr><th>Gem</th><th>What it does (bag or socket)</th><th>Goes in</th></tr>` + GEMROWS.map(([k, n, w, wh]) => `<tr><td><img class="ic" style="width:22px;height:22px;vertical-align:-6px;margin-right:6px" src="${k === "primordial" ? "relic_shard.png" : IT(k)}" alt="" onerror="this.style.visibility='hidden'">${n}</td><td>${esc(w)}</td><td>${wh === "tool" ? "tools" : "weapons and armour"}</td></tr>`).join("");
+document.querySelector("#sockets .inp").innerHTML = [["ruby", "+9"], ["ruby", "+4"], ["jade", "+6"], ["hematite", "+7"], ["bloodstone", "+3"], ["carnelian", "+8"]].map(([k, r]) => `<span class="slot" title="${k} ${r}%"><img src="${IT(k)}" alt="" onerror="this.style.visibility='hidden'"><i>${r}</i></span>`).join("");
+/* sets */
+const SETS = [["Relic of the Titan", "Melee", "relic_sword.png", [["2", "+3% melee damage"], ["4", "Take 5% less damage"], ["6", "Juggernaut: Earthshaker leaves the ground cracked for 4 s (monsters on it take 20% more). Duelist: Riposte can't miss and heals you for the hit."]], 4],
+  ["Relic of the Hunt", "Archery", "relic_bow.png", [["2", "+3% archery damage"], ["4", "+1 tile of range"], ["6", "Deadeye: Mark lasts until the target dies. Trickshot: every Ricochet bounce can crit."]], 2],
+  ["Relic of the Archmage", "Magic", "relic_wand.png", [["2", "+3% magic damage, +5% healing"], ["4", "10% chance a spell costs nothing"], ["6", "Mender: Sanctuary also cleanses. Hexer: Siphon spreads to everything cursed."]], 6]];
+document.getElementById("setBox").innerHTML = SETS.map(([n, st, img, bon, worn]) => `<section class="k-win"><div class="k-head"><img src="${img}" alt=""><b>${n}</b><span class="k-sub">${st} · ${worn}/6 worn</span></div><div class="k-paper" style="padding:10px 12px">
+  <div class="pieces">${["relic_body.png", "relic_body.png", "relic_body.png", "relic_body.png", "relic_body.png", img].map((p, i) => `<span class="slot ${i < worn ? "on" : "miss"}"><img src="${p}" alt=""></span>`).join("")}</div>
+  ${bon.map(([k, t]) => `<div class="setp ${+k <= worn ? "on" : ""}"><b>${k} pieces:</b> ${esc(t)}</div>`).join("")}</div></section>`).join("");
+</script>
+</body>
+</html>

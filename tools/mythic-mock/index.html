@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Mythic runs</title>
+<!-- (2026-10-01, the owner: "after move onto 5"). Mockup 5 of the long-game set: Mythic runs. The Crypt and the Great Pyramid get endless
+     difficulty levels with a timer and weekly twists; the Tower gets a solo Mythic climb. Built for mockup 2's roles (the Mender, the
+     Juggernaut) and paying in mockup 3's things. The dungeon art is the game's own; the key and the twist icons are PixelLab drafts.
+     Local only: tools/ is never shipped. http://localhost:4321/tools/mythic-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0810;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 15% -10%,#2a1848,transparent),radial-gradient(900px 500px at 100% 30%,#3a1030,transparent),#0b0810}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ead8ff}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#d8b8ff}
+h3{margin:16px 0 6px;font:800 17px Cinzel,serif;color:#ead8ff}
+.lede{margin:0 0 10px;color:#cdbfd8;max-width:980px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#1e1430;box-shadow:0 0 0 1.5px #4a2e7a;text-decoration:none;font:800 13.5px Lora,serif;color:#d8b8ff}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #2a1e3e}
+.sec>p{color:#b8acc8;max-width:980px;line-height:1.55}
+.chart{background:#140e1e;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #2e2244;margin-top:12px;overflow:auto}
+.chart svg{display:block;width:100%;height:auto;min-width:720px}
+.tbl{width:100%;border-collapse:collapse;font:600 13.5px Lora,serif;margin-top:12px;background:#140e1e;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #2e2244}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a090b8;padding:10px 12px 6px}.tbl td{padding:8px 12px;border-top:1px solid #2e2244;vertical-align:middle}.tbl td.n{text-align:right;font-variant-numeric:tabular-nums}
+.tbl tr.mk td{background:rgba(176,138,255,.08)}.tbl tr.mk td:first-child{box-shadow:inset 3px 0 0 #b08aff}
+.tbl img{width:22px;height:22px;image-rendering:pixelated;vertical-align:-6px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-top:14px;align-items:start}
+.k-win{min-width:0}
+.steps{display:flex;gap:0;flex-wrap:wrap;margin-top:14px;align-items:stretch}
+.step{flex:1 1 170px;padding:12px 14px;border-radius:10px;background:#160f22;box-shadow:inset 0 0 0 1.5px #2e2244;display:grid;gap:4px;align-content:start}
+.step b{font:800 15px Cinzel,serif;color:#ead8ff}.step span{font:600 13px/1.45 Lora,serif;color:#c8bcd8}.step img{width:40px;height:40px;image-rendering:pixelated}
+.arrow{align-self:center;padding:0 8px;color:#6a4a9a;font:900 22px Lora,serif}
+/* the door window */
+.door{display:grid;grid-template-columns:132px minmax(0,1fr);gap:14px;align-items:start}
+.door .art{width:132px;height:132px;border-radius:10px;background:radial-gradient(circle at 50% 62%,rgba(176,138,255,.35),transparent 72%),#1a1424;display:grid;place-items:center;box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.door .art img{width:118px;height:118px;image-rendering:pixelated;object-fit:contain}
+.keyrow{display:flex;gap:10px;align-items:center;margin:2px 0 8px}
+.keyrow img{width:40px;height:40px;image-rendering:pixelated}
+.keyrow b{font:800 22px Cinzel,serif;color:var(--k-ink)}.keyrow small{font:700 12px Lora,serif;color:var(--k-ink2)}
+.lvlpick{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 8px}
+.lvlpick button{border:0;border-radius:6px;padding:4px 9px;font:800 12px Lora,serif;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);color:var(--k-ink);cursor:pointer}
+.lvlpick button[aria-pressed="true"]{background:#5a2e9a;color:#fff;box-shadow:none}
+.lvlpick button:disabled{opacity:.35;cursor:default}
+.twrow{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
+.tw{display:flex;gap:6px;align-items:center;padding:4px 9px 4px 4px;border-radius:999px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);font:800 12px Lora,serif;color:var(--k-ink)}
+.tw img{width:26px;height:26px;image-rendering:pixelated}.tw.off{opacity:.35}
+.party{display:grid;gap:5px;margin:4px 0 8px}
+.prow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:6px 9px;border-radius:7px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);font:700 12.5px Lora,serif;color:var(--k-ink)}
+.prow small{color:var(--k-ink2);font-weight:600}.role{font:800 10.5px Lora,serif;padding:2px 8px;border-radius:999px;color:#fff}.role.tank{background:#7a5a2a}.role.heal{background:#2a8a5a}.role.dps{background:#8a2a3a}
+.ok{color:#2a8a3a;font:800 12px Lora,serif}.no{color:#b8302a;font:800 12px Lora,serif}
+.need{padding:7px 10px;border-radius:7px;font:700 12.5px Lora,serif}.need.good{background:#dff3df;color:#1a5a2a}.need.bad{background:#f8dcd8;color:#8a2016}
+/* the run HUD */
+.hud{background:#0e0a14;border-radius:12px;padding:14px;box-shadow:0 0 0 1.5px #3a2a5a}
+.clock{display:flex;justify-content:space-between;align-items:baseline;font:800 13px Lora,serif;color:#c8bcd8}.clock b{font:800 28px Cinzel,serif;color:#fff}
+.tbar{position:relative;height:16px;border-radius:6px;background:#2a2238;margin:8px 0 18px;overflow:visible}
+.tbar i{position:absolute;inset:0 auto 0 0;border-radius:6px;background:linear-gradient(90deg,#7ee07e,#e8d040)}
+.tbar em{position:absolute;top:-4px;bottom:-4px;width:2px;background:#fff;opacity:.7}.tbar em span{position:absolute;top:22px;left:50%;transform:translateX(-50%);font:800 10.5px Lora,serif;font-style:normal;color:#c8bcd8;white-space:nowrap}
+.rooms{display:flex;gap:6px;margin:6px 0}.rooms span{flex:1;padding:6px;border-radius:6px;text-align:center;font:800 11.5px Lora,serif;background:#2a2238;color:#a090b8}.rooms span.done{background:#3a2a5a;color:#ead8ff}.rooms span.now{box-shadow:inset 0 0 0 2px #b08aff;color:#fff}
+.hudline{display:flex;gap:14px;flex-wrap:wrap;font:700 12.5px Lora,serif;color:#c8bcd8;margin-top:8px}.hudline b{color:#fff}
+.endcard{margin-top:12px;padding:12px 14px;border-radius:10px;background:linear-gradient(90deg,#2a1848,#16102a);box-shadow:inset 0 0 0 1.5px #b08aff;display:flex;gap:12px;align-items:center}
+.endcard img{width:44px;height:44px;image-rendering:pixelated}.endcard b{font:800 18px Cinzel,serif;color:#fff;display:block}.endcard span{font:600 13px Lora,serif;color:#d8c8f0}
+/* twists */
+.twists{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:10px;margin-top:12px}
+.twc{display:grid;grid-template-columns:52px 1fr;gap:10px;padding:11px;border-radius:10px;background:#160f22;box-shadow:inset 0 0 0 1.5px #2e2244}
+.twc img{width:48px;height:48px;image-rendering:pixelated}.twc b{font:800 15px Cinzel,serif;color:#ead8ff}.twc .hard{font:800 10px Lora,serif;padding:1px 7px;border-radius:999px;background:#8a2a3a;color:#fff;margin-left:6px;vertical-align:2px}
+.twc p{margin:3px 0 4px;font:600 12.5px/1.45 Lora,serif;color:#c8bcd8}.twc small{font:700 11.5px Lora,serif;color:#9ad8a8}
+.weeks{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:12px}
+.wk{padding:10px 12px;border-radius:10px;background:#160f22;box-shadow:inset 0 0 0 1.5px #2e2244}.wk.now{box-shadow:inset 0 0 0 2px #b08aff,0 0 16px rgba(176,138,255,.3)}
+.wk b{font:800 13px Lora,serif;color:#ead8ff}.wk small{display:block;font:600 11.5px Lora,serif;color:#a090b8;margin-bottom:6px}.wk div{display:flex;gap:6px}.wk img{width:34px;height:34px;image-rendering:pixelated}
+/* vault */
+.vault{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:8px}
+.vpick{display:grid;justify-items:center;gap:4px;text-align:center;padding:12px 8px;border-radius:10px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);cursor:pointer}
+.vpick img{width:44px;height:44px;image-rendering:pixelated}.vpick b{font:800 13px Lora,serif;color:var(--k-ink)}.vpick small{font:600 11.5px Lora,serif;color:var(--k-ink2)}
+.vpick.sel{box-shadow:inset 0 0 0 2.5px #b08aff,0 0 14px rgba(176,138,255,.4)}
+.hall td:nth-child(1){font:800 14px Cinzel,serif;color:#ead8ff;width:36px}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin:12px 0}.rules3>div{background:#160f22;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #2e2244}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#ead8ff;margin-bottom:3px}.rules3 span b{color:#f2e8ff}.rules3 span{font:600 13px/1.5 Lora,serif;color:#c8bcd8}
+.build{margin:6px 0 0;padding-left:18px;line-height:1.6;color:#c8bcd8;max-width:980px}.build b{color:#f2e8ff}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+.note{font:600 12.5px Lora,serif;color:#a090b8}
+</style>
+</head>
+<body>
+<main>
+  <h1>Mythic runs</h1>
+  <p class="lede">The Crypt and the Great Pyramid get <b>Mythic levels</b>: the same maps and the same bosses, a little harder every level with no ceiling,
+    a clock to beat, and a set of <b>twists</b> that change every Thursday. Beat the clock and your key goes up; miss it and it goes down. Somewhere past
+    Mythic 15 the monsters are level 100-plus and the runs need a healer and a tank, which is what mockup 2's Mender and Juggernaut were for. The
+    Tower gets its own solo version, and everything pays out in the things mockup 3 needs.</p>
+  <nav class="jump"><a href="#how">How it works</a><a href="#door">The door</a><a href="#scale">Each level</a><a href="#twists">Twists</a><a href="#run">In a run</a><a href="#pay">What it pays</a><a href="#hall">The Hall of Mythics</a><a href="#tower">The Tower's climb</a><a href="#build">Building it</a></nav>
+
+  <section class="sec" id="how">
+    <h2>How it works</h2>
+    <p>Small rules, and one number to chase: your <b>key</b> for each dungeon.</p>
+    <div class="steps">
+      <div class="step"><img src="/v3/assets/img/glad/flat/hoodie.png" alt=""><b>Clear the top tier</b><span>Beat the Black Crypt or the Great Pyramid once and you're handed a Mythic 1 key for it.</span></div><span class="arrow">→</span>
+      <div class="step"><img src="keystone.png" alt=""><b>Run your key</b><span>The party runs one member's key. Any level up to the key works, so you can run lower with a friend.</span></div><span class="arrow">→</span>
+      <div class="step"><img src="t_bolstered.png" alt=""><b>Beat the clock</b><span>In time: the key goes <b>+1</b>, under 80% of the time <b>+2</b>, under 60% <b>+3</b>. Everyone in the party gets theirs raised to match.</span></div><span class="arrow">→</span>
+      <div class="step"><img src="t_starving.png" alt=""><b>Or don't</b><span>Over time, the run still finishes and the chest still opens, smaller. Only the key's owner drops 1. Nobody else loses anything for helping.</span></div>
+    </div>
+    <h3>One player's key over a week</h3>
+    <div class="chart"><svg id="keySvg" viewBox="0 0 900 250" role="img" aria-label="A sample Black Crypt key over seven days of runs: mostly up, one run over time"></svg></div>
+  </section>
+
+  <section class="sec" id="door">
+    <h2>The door</h2>
+    <p>The dungeon doors get a Mythic tab. It shows your key, lets you pick a level, says the week's twists, and checks the party before anybody pays.
+      Try the level buttons: the twists and the role check change with them.</p>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/o_cryptdoor.png" alt=""><b>The Black Crypt</b><span class="k-sub">Normal · <u>Mythic</u></span></div>
+        <div class="k-body"><div class="door"><div class="art"><img src="/v3/assets/img/glad/flat/hoodie.png" alt=""></div><div>
+          <div class="keyrow"><img src="keystone.png" alt=""><span><b>Your key: Mythic 16</b><br><small>best this week: Mythic 15 in 9:41 · the Hall: #3</small></span></div>
+          <div class="k-label">Run at</div><div class="lvlpick" id="lvlPick"></div>
+          <div class="k-label">This week</div><div class="twrow" id="twRow"></div>
+          <div class="k-label">Party</div>
+          <div class="party">
+            <div class="prow"><span><img src="../ascend-mock/juggernaut.png" alt="" style="width:20px;height:20px;vertical-align:-5px;margin-right:4px">Kellzifer <small>level 118 · key 16</small></span><span class="role tank">Tank</span><span class="ok">✓</span></div>
+            <div class="prow"><span><img src="../ascend-mock/mender.png" alt="" style="width:20px;height:20px;vertical-align:-5px;margin-right:4px">BeeEzRadio <small>level 112 · key 13</small></span><span class="role heal">Healer</span><span class="ok">✓</span></div>
+            <div class="prow"><span><img src="../ascend-mock/trickshot.png" alt="" style="width:20px;height:20px;vertical-align:-5px;margin-right:4px">calvin <small>level 104 · key 9</small></span><span class="role dps">Damage</span><span class="ok">✓</span></div>
+            <div class="prow"><span><img src="../ascend-mock/hexer.png" alt="" style="width:20px;height:20px;vertical-align:-5px;margin-right:4px">andyreidisapawg <small>level 101 · no key</small></span><span class="role dps">Damage</span><span class="ok">✓</span></div>
+          </div>
+          <div class="need good" id="needBox"></div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;margin-top:10px"><button class="k-btn" id="goBtn">Open the door · 1,250 each</button><span class="note" id="clockNote" style="color:var(--k-ink2)"></span></div>
+        </div></div></div></section>
+      <div class="rules3" style="margin-top:0;grid-template-columns:1fr">
+        <div><b>A key each, per dungeon</b><span>Your Crypt key and your Pyramid key are separate. A party runs one member's key; nobody has to own a high one to come along, which is how a new 100 gets dragged into Mythic 12 by friends.</span></div>
+        <div><b>Roles, only where they matter</b><span>Anyone, any party, up to Mythic 9. From <b>Mythic 10</b> the door needs a healer in the party; from <b>Mythic 15</b> a tank too. The role comes from the Ascendancy you have on (mockup 2), so it can't be faked by swapping a hat.</span></div>
+        <div><b>Same map, same boss</b><span>No new maps to build. The Crypt's four chambers and the Pyramid's rooms, the Hoodie and the Squeeze; what changes is their numbers, the twists and the clock.</span></div>
+        <div><b>2 to 4 players</b><span>The same party size as now. The boss's health already scales with the party (0.7× alone up to 2.2× for four), and that stays.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="scale">
+    <h2>Each level</h2>
+    <p>Every level adds two monster levels, 10% health and 5% damage, on top of the Black Crypt's numbers (its boss is level 65). So Mythic 10 is
+      a level-85 Hoodie, Mythic 20 is a level-105 one, and Mythic 30 is level 125, the top of the game. There's no cap: the Hall of Mythics decides
+      how far it goes.</p>
+    <table class="tbl" id="scaleTbl"></table>
+  </section>
+
+  <section class="sec" id="twists">
+    <h2>Twists</h2>
+    <p>Eight, and a new set every Thursday, announced in the weekly issue on The Road Ahead. One twist from Mythic 4, two from Mythic 7, and from
+      Mythic 10 a third from the hard list. Every twist has an answer somebody can bring, so the week's twists decide who you want in the party.</p>
+    <div class="twists" id="twBox"></div>
+    <h3>The next four weeks</h3>
+    <div class="weeks" id="wkBox"></div>
+  </section>
+
+  <section class="sec" id="run">
+    <h2>In a run</h2>
+    <p>One more strip on screen during a Mythic run: the clock, the marks for +2 and +3, the rooms done, deaths and the twists. A death costs ten
+      seconds off the clock, which is the whole penalty: no gear lost, no run ended.</p>
+    <div class="grid2">
+      <div class="hud">
+        <div class="clock"><span><b>7:42</b> / 12:00</span><span>The Black Crypt · Mythic 16</span></div>
+        <div class="tbar"><i style="width:64%"></i><em style="left:60%"><span>+3 by 7:12</span></em><em style="left:80%"><span>+2 by 9:36</span></em></div>
+        <div class="rooms"><span class="done">Ossuary ✓</span><span class="done">Haunted Hall ✓</span><span class="now">Antechamber</span><span>Sanctum</span></div>
+        <div class="hudline"><span>Deaths <b>2</b> (−20 s)</span><span>Party <b>4/4</b></span><span><img src="t_bolstered.png" alt="" style="width:20px;height:20px;vertical-align:-5px;image-rendering:pixelated"> Bolstered <b>×2</b> on the next pack</span><span><img src="t_cursed.png" alt="" style="width:20px;height:20px;vertical-align:-5px;image-rendering:pixelated"> calvin is <b>Cursed</b></span></div>
+      </div>
+      <div>
+        <div class="endcard"><img src="keystone.png" alt=""><span><b>In time: 9:22 of 12:00</b>Under 80%, so +2. Your key is now <b>Mythic 18</b>; BeeEzRadio's and calvin's went up to 18 too. Chest: 7 rolls.</span></div>
+        <div class="endcard" style="background:linear-gradient(90deg,#2a1414,#16102a);box-shadow:inset 0 0 0 1.5px #8a3a3a"><img src="t_starving.png" alt=""><span><b>Over time: 13:05</b>The Hoodie is still dead and the chest still opens (4 rolls). Kellzifer's key drops to Mythic 15. Nobody else's moves.</span></div>
+        <p class="note">CASINO calls a new top-three time in chat, the way it calls a raid's end. Nothing else about a run goes to chat.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="pay">
+    <h2>What it pays</h2>
+    <p>Mythic pays in <b>things</b>, not tickets, the way the Pyramid already does. The three paid clears a day stay three, at the normal ticket rate, so
+      Mythic can never become the only sensible way to earn. What climbs with the level is the chest.</p>
+    <div class="grid2">
+      <table class="tbl" id="payTbl" style="margin-top:0"></table>
+      <section class="k-win"><div class="k-head"><img src="keystone.png" alt=""><b>The Mythic Vault</b><span class="k-sub">once a week, Thursday</span></div>
+        <div class="k-body"><p style="margin:0 0 6px;font:600 13px Lora,serif;color:var(--k-ink2)">Your best run in time last week was <b style="color:var(--k-ink)">Mythic 16</b>. Pick one:</p>
+          <div class="vault" id="vaultBox"></div>
+          <p class="note" style="color:var(--k-ink2);margin:8px 0 0">The three choices are rolled when the vault opens and scale with your best level: shards at 5, a boss piece at 10, a Primordial gem at 15, a chase roll at 20. One run in time is enough to fill it, so nobody has to grind every day.</p></div></section>
+    </div>
+  </section>
+
+  <section class="sec" id="hall">
+    <h2>The Hall of Mythics</h2>
+    <p>A board per dungeon, reset every Thursday: the highest level beaten in time, then the fastest. It sits on the hiscores page beside the skills.
+      The week's top party gets a line from CASINO, and anybody who finishes a season in the top ten keeps a title for it.</p>
+    <div class="grid2">
+      <table class="tbl hall" id="hallTbl" style="margin-top:0"></table>
+      <div class="rules3" style="margin-top:0;grid-template-columns:1fr">
+        <div><b>Titles</b><span>"Keyholder" for a Mythic 10 in time, "Mythic" at 15, "Mythic Legend" at 25, and "Season's Best" for the top party each season.</span></div>
+        <div><b>A look</b><span>From Mythic 20 your dungeon gear gets a faint violet edge for the season; the Juggernaut's and Mender's auras from mockup 2 get the same edge.</span></div>
+        <div><b>Seasons</b><span>Twelve weeks. Keys go back to 1 at the start of each, the Hall keeps last season's top ten on a second tab.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="tower">
+    <h2>The Tower's climb</h2>
+    <p>The Tower is solo, so it gets a solo version. The <b>Mythic climb</b> is floors 100 and up, past the House: the Tower already works out every floor
+      from a level, so those floors cost nothing to build. The week's twists apply, there's no key and no clock, and a death ends the climb. The board is the
+      highest floor reached this week.</p>
+    <div class="grid2">
+      <table class="tbl" id="towerTbl" style="margin-top:0"></table>
+      <div class="rules3" style="margin-top:0;grid-template-columns:1fr">
+        <div><b>Why no clock</b><span>The Tower was built to be the calm one: long fights, semi-AFK. Its Mythic keeps that and asks a different question, "how far before you slip?", instead of "how fast?".</span></div>
+        <div><b>What it pays</b><span>A shard every five floors and a Vault pick of its own on Thursday, by your best floor. Tickets as the Tower pays now.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <ul class="build">
+      <li><b>A key</b> is two numbers per player (Crypt, Pyramid) and a best floor for the Tower. The run's level multiplies the existing tier numbers when the private copy is made; the dungeons' monsters are already made per tier, so this is one more tier made on the fly.</li>
+      <li><b>The clock</b> is a start time on the run and a check at the boss's death. The page draws the strip from the start time it's told once, so there's no new poll.</li>
+      <li><b>Twists</b> are hooks the combat code mostly has: a rise on death (the Pyramid's burrow), an enrage below a fraction (the Tower's), fire patches (the Ice Man's slam marks), heal multipliers. Cursed needs the Mender's Cleanse from mockup 2. The week's set is picked by the date, so the server and the page agree without a message.</li>
+      <li><b>The Vault and the Hall</b> are one row per player a week, written at the run's end and read only when someone opens them.</li>
+      <li><b>Mythic 1-9 needs nothing else</b>, so it can ship before Ascendancies, with the role checks switched on when healers exist.</li>
+    </ul>
+    <div class="callout"><b>Things to decide:</b> the clock (12 minutes for the Crypt, 15 for the Pyramid, from today's clears); whether roles start at Mythic 10 and 15 or later (36 players is a small pool for four-person parties with set roles); twelve-week seasons with keys reset, or never reset; and whether The House's Cut is funny or annoying.</div>
+  </section>
+</main>
+<script>
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const IT = (k) => `/v3/assets/img/glad/flat/items/${k}.png`;
+const TW = {
+  restless: ["t_restless", "Restless", "The first time a monster dies it gets back up on half health. Not bosses.", "Answer: splash damage (a Juggernaut's Cleave, a Hexer's curse spreading).", 0],
+  frenzied: ["t_frenzied", "Frenzied", "Monsters under 30% health swing 40% faster.", "Answer: burst to finish them; Executioner-style skills.", 0],
+  volcanic: ["t_volcanic", "Volcanic", "Every 15 seconds the floor cracks under someone and erupts two seconds later.", "Answer: move. A tank who holds still takes it.", 0],
+  bolstered: ["t_bolstered", "Bolstered", "When a monster dies, the others within three tiles gain 15% health and damage.", "Answer: kill packs evenly, not one at a time.", 0],
+  sharp: ["t_sharp", "Sharpshooters", "Every room gets two skeleton archers who stand back and shoot the healer.", "Answer: someone ranged, a Deadeye or a Trickshot, to deal with them.", 0],
+  cursed: ["t_cursed", "Cursed", "Every 30 seconds a curse lands on someone: they deal half damage until it's lifted.", "Answer: only a Mender's Cleanse (or a holy water, one a run) lifts it.", 1],
+  starving: ["t_starving", "Starving", "Food heals half as much. Healing from players is untouched.", "Answer: a healer, and the best food you have.", 1],
+  cut: ["t_cut", "The House's Cut", "Every two minutes a dealer appears in the room. Kill him in 20 seconds or he takes 5% of the chest.", "Answer: someone with the damage to turn and burst him.", 1] };
+
+/* ---- one key over a week ---- */
+{
+  const runs = [[1, 11, "+1"], [1, 12, "+1"], [2, 14, "+2"], [3, 15, "+1"], [3, 14, "−1"], [4, 15, "+1"], [5, 16, "+1"], [6, 16, "−1 (over time)"], [6, 15, ""], [7, 16, "+1"], [7, 18, "+2"]];
+  const W = 900, H = 250, L = 50, R = 30, T = 24, B = 40, n = runs.length, x = (i) => L + (W - L - R) * i / (n), y = (v) => T + (H - T - B) * (1 - (v - 8) / 12);
+  let s = "", prev = 10;
+  for (const v of [8, 12, 16, 20]) s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#241a34"/><text x="${L - 8}" y="${y(v) + 4}" fill="#a090b8" font-size="11.5" text-anchor="end">M${v}</text>`;
+  let d = `M${x(0)} ${y(prev)}`;
+  runs.forEach(([day, v], i) => { d += ` H${x(i + 1)} V${y(v)}`; });
+  s += `<path d="${d}" stroke="#b08aff" stroke-width="2.5" fill="none"/>`;
+  runs.forEach(([day, v, t], i) => { const down = t.startsWith("−"); s += `<circle cx="${x(i + 1)}" cy="${y(v)}" r="5" fill="${down ? "#e8604a" : "#b08aff"}" stroke="#140e1e" stroke-width="2"/>`; if (t && (i % 2 === 0 || down || t === "+2")) s += `<text x="${x(i + 1)}" y="${y(v) - 10}" fill="${down ? "#ff9a8a" : "#ead8ff"}" font-size="11.5" font-weight="700" text-anchor="middle">${t}</text>`; });
+  ["Thu", "Fri", "Sat", "Sun", "Mon", "Tue", "Wed"].forEach((dname, k) => { const i = runs.findIndex((r) => r[0] === k + 1); if (i >= 0) s += `<text x="${x(i + 1)}" y="${H - B + 20}" fill="#a090b8" font-size="11.5" text-anchor="middle">${dname}</text>`; });
+  document.getElementById("keySvg").innerHTML = s;
+}
+
+/* ---- the door: pick a level ---- */
+const WEEK = ["bolstered", "sharp", "cursed"];
+let pick = 16;
+function door() {
+  document.getElementById("lvlPick").innerHTML = [4, 7, 9, 10, 12, 14, 15, 16, 17].map((l) => `<button data-l="${l}" aria-pressed="${l === pick}" ${l > 16 ? "disabled" : ""}>${l}</button>`).join("");
+  const on = pick >= 10 ? 3 : pick >= 7 ? 2 : pick >= 4 ? 1 : 0;
+  document.getElementById("twRow").innerHTML = WEEK.map((k, i) => `<span class="tw ${i < on ? "" : "off"}" title="${esc(TW[k][2])}"><img src="${TW[k][0]}.png" alt="">${TW[k][1]}${i === 2 ? " (Mythic 10+)" : i === 1 ? " (7+)" : " (4+)"}</span>`).join("");
+  const nb = document.getElementById("needBox");
+  nb.textContent = pick >= 15 ? "Mythic 15+: needs a healer and a tank. You have both." : pick >= 10 ? "Mythic 10+: needs a healer. You have BeeEzRadio." : "Any party of 2 to 4 at this level.";
+  const lvl = 65 + 2 * pick;
+  document.getElementById("clockNote").textContent = `12:00 on the clock · the Hoodie is level ${lvl}`;
+  document.querySelectorAll("#lvlPick button").forEach((b) => b.addEventListener("click", () => { pick = +b.dataset.l; door(); }));
+}
+door();
+
+/* ---- the scale table ---- */
+document.getElementById("scaleTbl").innerHTML = `<tr><th>Mythic</th><th style="text-align:right">Monster level</th><th style="text-align:right">Health</th><th style="text-align:right">Damage</th><th>Twists</th><th>Needs</th><th>Chest</th></tr>`
+  + [[1, "", ""], [4, "1", ""], [7, "2", ""], [10, "3", "a healer"], [15, "3", "a healer and a tank"], [20, "3", "a healer and a tank"], [25, "3", "a healer and a tank"], [30, "3", "a healer and a tank"]]
+    .map(([m, t, need]) => `<tr class="${[10, 15, 30].includes(m) ? "mk" : ""}"><td><b>Mythic ${m}</b></td><td class="n">${65 + 2 * m}</td><td class="n">×${(1 + 0.1 * m).toFixed(1)}</td><td class="n">×${(1 + 0.05 * m).toFixed(2)}</td><td>${t ? Array.from({ length: +t }, (_, i) => `<img src="${TW[["bolstered", "sharp", "cursed"][i]][0]}.png" alt="">`).join(" ") : "none"}</td><td>${need || "anyone"}</td><td>${Math.min(10, 3 + Math.floor(m / 3))}–${Math.min(12, 7 + Math.floor(m / 3))} rolls${m >= 5 ? `, ${m} shards` : ""}${m >= 10 ? ", a Primordial gem chance" : ""}</td></tr>`).join("");
+
+/* ---- twists ---- */
+document.getElementById("twBox").innerHTML = Object.values(TW).map(([a, n, d, ans, hard]) => `<div class="twc"><img src="${a}.png" alt=""><div><b>${n}</b>${hard ? '<span class="hard">hard list</span>' : ""}<p>${esc(d)}</p><small>${esc(ans)}</small></div></div>`).join("");
+document.getElementById("wkBox").innerHTML = [["This week", "from Thu 1 Oct", ["bolstered", "sharp", "cursed"], 1], ["Next week", "from Thu 8 Oct", ["restless", "volcanic", "starving"]], ["Week 3", "from Thu 15 Oct", ["frenzied", "bolstered", "cut"]], ["Week 4", "from Thu 22 Oct", ["sharp", "restless", "cursed"]]]
+  .map(([n, d, ks, now]) => `<div class="wk ${now ? "now" : ""}"><b>${n}</b><small>${d}</small><div>${ks.map((k) => `<img src="${TW[k][0]}.png" alt="" title="${TW[k][1]}">`).join("")}</div></div>`).join("");
+
+/* ---- pay ---- */
+document.getElementById("payTbl").innerHTML = `<tr><th>From</th><th>Added to the chest</th></tr>` + [
+  ["Mythic 1", "an extra roll for every 3 levels, on top of today's 3 to 7"], ["Mythic 5", "Relic shards: as many as the level (mockup 3)"], ["Mythic 10", "a chance of the Primordial gem: 1 in 40, better by a little each level"],
+  ["Mythic 15", "a boss piece for a Relic (the tongs, the sinew, the quill…) at 1 in 20"], ["Mythic 20", "the Hoodie's and the Squeeze's pets in a violet Mythic skin, 1 in 500"], ["Every level", "the normal clear's tickets, only for the day's three paid runs, unchanged"]]
+  .map(([a, b]) => `<tr><td><b>${a}</b></td><td>${esc(b)}</td></tr>`).join("");
+document.getElementById("vaultBox").innerHTML = [["../relic-mock/relic_shard.png", "40 Relic shards", "enough for a reforge"], [IT("carnelian"), "A Primordial gem", "unsorted"], ["../endgame-mock/forgemaster.png", "The Forgemaster's tongs", "a boss piece"]]
+  .map(([i, n, s], k) => `<div class="vpick ${k === 1 ? "sel" : ""}"><img src="${i}" alt=""><b>${esc(n)}</b><small>${esc(s)}</small></div>`).join("");
+document.querySelectorAll(".vpick").forEach((v) => v.addEventListener("click", () => { document.querySelectorAll(".vpick").forEach((x) => x.classList.toggle("sel", x === v)); }));
+
+/* ---- the hall ---- */
+document.getElementById("hallTbl").innerHTML = `<tr><th>#</th><th>Party</th><th style="text-align:right">Mythic</th><th style="text-align:right">Time</th></tr>` + [
+  ["1", "Kellzifer, BeeEzRadio, heartlarva, zwades", 19, "10:12"], ["2", "heartlarva, zwades, calvin", 18, "8:55"], ["3", "Kellzifer, BeeEzRadio, calvin, andyreidisapawg", 15, "9:41"], ["4", "bootypaper, calvin", 12, "11:20"], ["5", "andyreidisapawg, heartlarva, BeeEzRadio", 12, "11:48"]]
+  .map(([r, p, m, t]) => `<tr><td>${r}</td><td>${esc(p)}</td><td class="n"><b>${m}</b></td><td class="n">${t}</td></tr>`).join("") + `<tr><td colspan="4" class="note" style="padding:8px 12px">The Black Crypt, this week. Names are examples.</td></tr>`;
+
+/* ---- the tower ---- */
+document.getElementById("towerTbl").innerHTML = `<tr><th>Floor</th><th style="text-align:right">Monster level</th><th>What's there</th></tr>` + [
+  ["100", "100", "the first floor past the House; the week's twists start here"], ["110", "106", "a boss: the week's twists all at once"], ["125", "115", "a checkpoint for the board, not for the climb"], ["150", "130", "past anything outside: the top of the board, so far"]]
+  .map(([f, l, w]) => `<tr><td><b>Floor ${f}</b></td><td class="n">${l}</td><td>${esc(w)}</td></tr>`).join("");
+</script>
+</body>
+</html>

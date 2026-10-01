@@ -1,0 +1,31 @@
+{
+  "sinks": [
+    {"name": "The casino tables (tickets)", "price": "10 to 20,000 a bet; each play's return drawn from 93-99%, about 4% kept", "tags": ["rep", "pct"], "note": "Ten plays a game an hour, +400k won an hour at most. Slots and the Boiler feed 2% of each bet to their jackpots. The biggest repeatable drain, and optional."},
+    {"name": "Tickets into ZCoins (Dex)", "price": "1,000 tickets a ZCoin; stakes 1-20 ZC, 50 ZC an hour; cashing 1-100 ZC, 100 a day", "tags": ["rep", "rich"], "note": "Leaves the game for good (up to 100k tickets a day a player). Not in the tracker."},
+    {"name": "Hospital bill", "price": "10% of tickets carried, capped by area: 250 in the Yard, 1,000-9,000 outside, 10k in the Wild", "tags": ["rep", "pct", "new"], "note": "The cap never moves, so the richer you are the smaller a share it takes. PvP deaths pay the killer, not the game."},
+    {"name": "Counter gear and tools", "price": "the piece's price × its tier: up to ~1.44M for a Singularity cuirass", "tags": ["once"], "note": "Refundable in full within an hour, and sells back for up to 2,500 later."},
+    {"name": "The Store: boosts and world effects", "price": "2X Tickets 100k · 2X Skilling 75k · War Horn 350k · fireworks 20k · lanterns 15k · clovers 8k", "tags": ["rep", "rich"], "note": "The War Horn starts the Yard raid in your name: proof that people pay for an audience."},
+    {"name": "The Store: cosmetics and space", "price": "name colours 16k-120k · custom title 150k · bank pages 60k · bag slots 75k · pets 200-500k · decor 15-250k · cottage 80-250k", "tags": ["once"], "note": "Each bought once."},
+    {"name": "Bag pockets · Thieves' permit · gem-bag slots", "price": "50k-400k · 50k · 25k-250k", "tags": ["once"]},
+    {"name": "Vanity outfits", "price": "4,000 / 3,500 / 3,000 / 2,500 a piece, nine sets", "tags": ["once"]},
+    {"name": "Gem Sorter", "price": "10,000 a roll", "tags": ["rep"]},
+    {"name": "Dungeon antes", "price": "Crypt 250 / 750 / 1,250 · Pyramid 1,250 · Count 750", "tags": ["rep"], "note": "Small next to the clear's pay."},
+    {"name": "Tinker benches and Sal's projects", "price": "50-2,000 a build; projects 150k-2.5M a tier", "tags": ["rep", "once"], "note": "Projects are finite: three tiers, then done. Only the dock has taken tickets (71,295)."},
+    {"name": "Dex's bar and dinners", "price": "beer 400 · cocktail 900 · whiskey 1,000 · champagne 2,000 · dinners 800-3,000 · a round for the room 3,000", "tags": ["rep"], "note": "Not in the tracker."},
+    {"name": "Island tiers and themes", "price": "5,000 and 20,000 · 2,500-10,000", "tags": ["once"], "note": "Not in the tracker."},
+    {"name": "Exchange tax", "price": "1% of each sale", "tags": ["rep", "pct"], "note": "2,721 tickets in its whole life. Direct trades pay nothing."},
+    {"name": "Radio · Carnival · Devil's dice · buy-back", "price": "50 a song · 100 a go · break-even dice · Bom's buy-back at what he paid", "tags": ["rep"], "note": "Small, or not really sinks."}
+  ],
+  "taps": [
+    {"name": "Monster drops", "amount": "about 0.88 × the monster's bounty, times ticket buffs (≤25%), pets, the Wild (1.25×/1.5×) and 2X", "note": "The main faucet."},
+    {"name": "The Jackpot Kill", "amount": "1 kill in 250 pays 12 × the bounty"},
+    {"name": "Selling to Bom and Brutus", "amount": "half of value; gear 2,500 at most; rares 25%", "note": "Never doubled."},
+    {"name": "Dailies", "amount": "six jobs a day, 400-3,500 each"},
+    {"name": "Dungeons", "amount": "Crypt 2,500 / 7,000 / 11,000 · Pyramid 6,500 · Count 6,000 a clear; full pay three runs a day"},
+    {"name": "Raids and world events", "amount": "Raid 20k + 3k a player · Flood 25k + 3.5k · Wanted 5k / 20k / 50k · the Jackpot Thief's sack 30-50k"},
+    {"name": "Quests · achievements · the tour", "amount": "~438k across 62 quests · 60 to 25,000 by tier · 10k once", "note": "All one-time."},
+    {"name": "The Prize Wheel · Marked Cards · selling pets and gems", "amount": "50-1,000 (+70% streak) · tips and hands · pets 1k-25k, gems 1,500", "note": "Not in the tracker."},
+    {"name": "Casino winnings", "amount": "whatever the tables pay back", "note": "Counted as the casino's net, not as a faucet."}
+  ],
+  "gap": "<b>Almost everything a rich player can buy, they buy once.</b><span>The only things that come back are small (bar, antes, gem rolls, radio), capped (the bill), or optional and edged (the casino, cashing into ZCoins). Gear isn't a lasting sink either: it refunds within the hour and sells back later. And the tracker misses a few flows both ways (the bar, island tiers, cashing to ZCoins; the Jackpot Thief, the Prize Wheel, Marked Cards, pet and gem sales), so the daily in-and-out won't add up to the change in what's held until those are tagged. <b>That's a small fix and the first thing to build.</b></span>"
+}

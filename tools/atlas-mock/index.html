@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>The atlas</title>
+<!-- (2026-10-01, the owner: "add one more mockup that fully covers maps, skilling to 120. that will be the basis for all content after that.
+     that is the what the what and the why, but we need the where, first"). Mockup 11 of the long-game set: where everything happens.
+     today.json is MEASURED from the game: every gathering spot on every map (by building each scene, closed ones included), every
+     recipe, the Guild's marks, Sal's gadgets, crops, fungi, eggs, monster levels, and how many recipes each skill feeds into another
+     (scratchpad/skillmap.mjs and feeds.mjs, 1 October). The plan to 120 is the proposal. Postcards are PixelLab drafts.
+     Local only; built into /gameplan by tools/gameplan-build.mjs. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0a0b0c;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#183020,transparent),radial-gradient(900px 600px at 100% 20%,#2a2010,transparent),#0a0b0c}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:18px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd98a}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:980px;line-height:1.55}
+.chart{background:#14120e;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #3a2616;margin-top:12px;overflow:auto}
+.chart svg{display:block;width:100%;height:auto;min-width:760px}
+.tbl{width:100%;border-collapse:collapse;font:600 13px Lora,serif;margin-top:12px;background:#14120e;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070;padding:10px 10px 6px}.tbl td{padding:7px 10px;border-top:1px solid #3a2616;vertical-align:top;line-height:1.4}
+.tbl td:first-child{white-space:nowrap;font-weight:800;color:#ffe7b0}
+.tbl img{width:22px;height:22px;image-rendering:pixelated;vertical-align:-6px;margin-right:5px}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:10px;margin:12px 0}.rules3>div{background:#14120e;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.rules3 span b{color:#f6e9cc}
+.big{margin:14px 0 6px;padding:14px 18px;border-radius:12px;background:linear-gradient(90deg,#1e3a20,#14120e);box-shadow:inset 4px 0 0 #9ef0a0,0 0 0 1.5px #2a4a24;max-width:980px}
+.big b{display:block;font:800 19px Cinzel,serif;color:#e8ffd8;margin-bottom:4px}.big span{font:600 14px/1.55 Lora,serif;color:#d8d4b8}
+/* the grid */
+.seg{display:inline-flex;gap:2px;padding:2px;border-radius:8px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;margin-top:10px}
+.seg button{border:0;border-radius:6px;padding:6px 14px;background:none;color:#d8b888;font:800 13px Lora,serif;cursor:pointer}.seg button[aria-pressed="true"]{background:#ffd98a;color:#1a1006}
+.grid{display:grid;grid-template-columns:150px repeat(14,minmax(44px,1fr));gap:3px;margin-top:10px;min-width:820px}
+.grid .h{font:800 10.5px Lora,serif;color:#a89070;text-align:center;align-self:end;padding-bottom:3px}.grid .h.top{color:#9ef0a0}
+.grid .sk{display:flex;align-items:center;gap:6px;font:800 12.5px Lora,serif;color:#f6e9cc;white-space:nowrap}.grid .sk img{width:20px;height:20px;image-rendering:pixelated}
+.grid .c{height:28px;border-radius:5px;display:grid;place-items:center;font:800 11px Lora,serif;color:#fff;cursor:help;position:relative}
+.grid .c.z{background:#2a1414;box-shadow:inset 0 0 0 1.5px #5a2424;color:#ff8a7a}.grid .c.new{box-shadow:inset 0 0 0 2px #9ef0a0}
+.gwrap{overflow-x:auto}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:8px 4px 0;font:700 12.5px Lora,serif;color:#d8c8a8}.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;margin-right:6px;vertical-align:-2px}
+/* map cards */
+.maps{display:grid;gap:14px;margin-top:14px}
+.mc{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:16px;padding:14px;border-radius:14px;background:linear-gradient(180deg,var(--bg),#0e0c0a 85%);box-shadow:0 0 0 2px var(--ac)}
+.mc .pc{border-radius:9px;overflow:hidden;aspect-ratio:16/9;box-shadow:0 0 0 1.5px var(--ac)}.mc .pc img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated;display:block}
+.mc .pc.none{display:grid;place-items:center;background:#1a1410;font:800 12px Lora,serif;color:#8a7a60}
+.mc h4{margin:0;font:800 21px Cinzel,serif;color:var(--tx)}.mc .tags{display:flex;gap:5px;flex-wrap:wrap;margin:5px 0 7px}
+.tag{font:800 11px Lora,serif;padding:2px 9px;border-radius:999px;background:rgba(0,0,0,.4);box-shadow:inset 0 0 0 1.5px var(--ac);color:var(--tx)}.tag.held{box-shadow:inset 0 0 0 1.5px #d8b888;color:#ffd98a}.tag.ph{background:var(--ac);color:#0a0806;box-shadow:none}
+.mc p{margin:0 0 8px;font:600 13px/1.5 Lora,serif;color:#d8ccb4}
+.sks{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:4px}
+.sks span{display:grid;grid-template-columns:20px 1fr auto;gap:6px;align-items:center;padding:4px 7px;border-radius:6px;background:rgba(0,0,0,.35);font:600 12px Lora,serif;color:#e8dcc0}
+.sks img{width:18px;height:18px;image-rendering:pixelated}.sks b{font:800 11.5px Lora,serif;color:var(--tx)}
+.mfoot{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font:700 12px Lora,serif;color:#a89070}.mfoot b{color:#f6e9cc}
+/* ladders */
+.lad{display:grid;gap:8px;margin-top:12px}
+.lr{display:grid;grid-template-columns:150px repeat(6,minmax(0,1fr));gap:4px;align-items:stretch}
+.lr .sk{display:flex;align-items:center;gap:6px;font:800 13px Lora,serif;color:#f6e9cc}.lr .sk img{width:22px;height:22px;image-rendering:pixelated}
+.lr .t{padding:5px 7px;border-radius:7px;background:#14120e;box-shadow:inset 0 0 0 1.5px #3a2616;font:600 11.5px/1.35 Lora,serif;color:#e8dcc0;min-width:0}
+.lr .t b{display:block;font:800 12px Lora,serif;color:#fff}.lr .t small{display:block;color:var(--mc,#a89070);font-weight:800}.lr .t.today{background:#1a1612;box-shadow:inset 0 0 0 1.5px #4a3a24;color:#b8a888}
+.lr .t.gap{background:#2a1414;box-shadow:inset 0 0 0 1.5px #5a2424;color:#ff9a8a}
+.lr.head .t{background:none;box-shadow:none;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070;padding:0 4px}
+/* chains */
+.chain{margin-top:10px;padding:12px 14px;border-radius:10px;background:#14120e;box-shadow:0 0 0 1.5px #3a2616}
+.chain h4{margin:0 0 8px;font:800 15px Cinzel,serif;color:#ffe7b0}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:0}
+.st{display:grid;gap:2px;justify-items:center;text-align:center;padding:8px 9px;border-radius:8px;background:#1e1812;box-shadow:inset 0 0 0 1px #3a2616;min-width:104px;max-width:150px}
+.st img{width:28px;height:28px;image-rendering:pixelated}.st b{font:800 12px Lora,serif;color:#fff}.st small{font:700 10.5px Lora,serif;color:var(--mc,#a89070)}.st i{font-style:normal;font:800 10px Lora,serif;padding:1px 6px;border-radius:999px;background:#3a2616;color:#ffd98a}
+.st.out{box-shadow:inset 0 0 0 2px #e8a028}
+.ar{align-self:center;padding:0 5px;color:#8a6a40;font:900 18px Lora,serif}
+.build{margin:6px 0 0;padding-left:18px;line-height:1.6;color:#cdbfa2;max-width:980px}.build b{color:#f6e9cc}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+.phase{margin-top:10px;border-radius:12px;background:#14120e;box-shadow:0 0 0 1.5px var(--pc);overflow:hidden}
+.phase header{display:flex;justify-content:space-between;gap:12px;padding:9px 16px;background:linear-gradient(90deg,var(--pc),transparent);color:#fff}.phase header b{font:800 17px Cinzel,serif}.phase header span{font:800 12.5px Lora,serif}
+.phase ul{margin:0;padding:8px 16px 12px;list-style:none;display:grid;gap:4px}.phase li{font:600 13px/1.45 Lora,serif;color:#e8dcc0}.phase li b{color:#ffe7b0}
+@media (max-width:800px){.mc{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <h1>The atlas: every skill to 120, and where</h1>
+  <p class="lede">The other mockups say <i>what</i> comes next and <i>why</i>. Almost all of it needs <b>somewhere to happen</b>: a level past 99 is nothing
+    without a rock, a tree, a fishing spot, a mark or a course to spend it on, and those live on maps. This page measures where every skill's content
+    is today, finds the holes, and lays out <b>where every skill goes from here to 120</b>: seven new maps (the four drawn in mockup 4, reshaped, plus
+    three more), two built-and-held maps opened, and which skill feeds which. It's the base the rest of the content gets built on.</p>
+  <nav class="jump"><a href="#today">Today, measured</a><a href="#clock">The skillers' clock</a><a href="#grid">The grid to 120</a><a href="#atlas">The atlas</a><a href="#maps">The maps</a><a href="#ladders">Every skill to 120</a><a href="#feeds">How it fits together</a><a href="#rules">Rules for a map</a><a href="#order">Build order</a></nav>
+
+  <section class="sec" id="today">
+    <h2>Today, measured</h2>
+    <p>Every gathering spot on every map (built and held), every recipe, every mark, gadget, crop, mushroom and egg, from the rules file on 1 October.</p>
+    <div class="rules3" id="todayBox"></div>
+  </section>
+
+  <section class="sec" id="clock">
+    <h2>The skillers' clock</h2>
+    <p>The combat clock said the first 99 is November. <b>The skillers get there first.</b> The best level in each skill on the server, and the hours to 99
+      at the best pace ever measured here (35,750 XP an hour into one skill):</p>
+    <div class="chart"><svg id="clockSvg" viewBox="0 0 900 420" role="img" aria-label="The best level in each skill today and the hours to 99"></svg></div>
+    <div class="big" id="clockSay"></div>
+  </section>
+
+  <section class="sec" id="grid">
+    <h2>The grid to 120</h2>
+    <p>Each skill against each level band: how many things there are to do (a spot, a recipe, a mark, a monster). Red is nothing at all. Switch between today and
+      the plan; green-ringed cells are what this atlas adds. <b>Hover a cell</b> for what and where.</p>
+    <div class="seg" id="gridSeg"><button data-v="today" aria-pressed="true">Today</button><button data-v="plan" aria-pressed="false">The plan</button></div>
+    <div class="gwrap"><div class="grid" id="gridBox"></div></div>
+    <p class="note" style="margin:8px 0 0">The red left in the plan is below 99, and real: Breeding has nothing level-gated except the Legendary pairing at 50 (pets that grow give it levels to spend); Tinkering starts at 31; the Guild has no mark in the 30s or 80s; Farming has no crop in the 80s; Mining and Fishing start at 20 and 10. Small fixes, listed in phase 1.</p>
+    <div class="legend"><span><i style="background:#2a1414;box-shadow:inset 0 0 0 1.5px #5a2424"></i>nothing in this band</span><span><i style="background:#2a5a3a"></i>a little</span><span><i style="background:#3a9a5a"></i>plenty</span><span><i style="background:#2a5a3a;box-shadow:inset 0 0 0 2px #9ef0a0"></i>added by the atlas</span></div>
+  </section>
+
+  <section class="sec" id="atlas">
+    <h2>The atlas</h2>
+    <p>Where each new place hangs off the world. Grey is open today, gold is built and held, green is new. The two <b>gateways</b> are the doors past 99:
+      skilling-first maps at 98-106, each the way into an endgame map behind it, so a level-99 skiller has somewhere to go the week the curve opens.</p>
+    <div class="chart"><svg id="atlasSvg" viewBox="0 0 900 470" role="img" aria-label="The world's roads, with the held maps and the seven new places"></svg></div>
+    <div class="chart"><svg id="bandSvg" viewBox="0 0 900 380" role="img" aria-label="Combat bands from 60 up: today's maps, the held ones and the new ones"></svg></div>
+  </section>
+
+  <section class="sec" id="maps">
+    <h2>The maps</h2>
+    <p>Seven new places and two to open. Each one is a combat band <i>and</i> a set of skilling tiers, because the game's rule is that a fighter and a skiller
+      stand in the same field. Levels on the skill chips are what a spot needs, not the monsters.</p>
+    <div class="maps" id="mapBox"></div>
+  </section>
+
+  <section class="sec" id="ladders">
+    <h2>Every skill to 120</h2>
+    <p>The top of each skill today, then one step every five levels to 120, each with its place. Gathering skills get a new resource; making skills get the
+      recipes those resources open; the rest get places of their own. Red is a hole that exists today.</p>
+    <div class="lad" id="ladBox"></div>
+  </section>
+
+  <section class="sec" id="feeds">
+    <h2>How it fits together</h2>
+    <p>Measured from every recipe: how many recipes in the column skill take something the row skill produces. The big lines are Woodcutting into Fletching
+      (42), Alchemy into Wizardry (47), Fishing into Cooking (40), and monsters' drops into almost everything.</p>
+    <div class="chart"><table class="tbl" id="feedTbl" style="margin:0;box-shadow:none"></table></div>
+    <div class="big"><b>Four skills are islands.</b><span>Agility, Thieving, Breeding and Tinkering make almost nothing another skill needs, so nobody needs a thief, a runner or a breeder. Past 100 each gets a job: Thieving lifts the keys and charts that open places (the Vault Ghost's key, the Archive's catalogue), Agility opens the shortcuts the gathering spots sit behind, Breeding's pets carry the gatherers' bonuses (mockup 7), and Tinkering builds every map's projects.</span></div>
+    <h3>Six chains past 110</h3>
+    <p class="note">Every 100+ resource is used by at least two other skills, so no high level is made alone.</p>
+    <div id="chainBox"></div>
+  </section>
+
+  <section class="sec" id="rules">
+    <h2>Rules for a map</h2>
+    <div class="rules3">
+      <div><b>A tier every five levels</b><span>From 100 to 120 every gathering skill has a new resource at roughly 100, 105, 110, 115 and 118-120, so XP an hour keeps rising and there's always a next spot.</span></div>
+      <div><b>Two places per ten levels</b><span>No band hangs on one map: a crowded rock in one place is a queue, two places is a choice. Each map has at least two spots of each resource it holds.</span></div>
+      <div><b>Fighters and skillers in one field</b><span>As the game already does: every new map has its monsters and its rocks, trees and water, with the gathering on the quieter side and the aggressive monsters on the far one.</span></div>
+      <div><b>A bank within a map</b><span>The late maps have no banks today. Each gateway has a camp chest, and the High Strip is a full town, so no 100+ resource is more than one map from a bank.</span></div>
+      <div><b>A waystone each</b><span>Like the Frozen Reach's: every new map is one scroll away once you've been there.</span></div>
+      <div><b>Every resource feeds two skills</b><span>A 110 log, ore or fish is wanted by at least two other skills, so high levels trade with each other on the Exchange.</span></div>
+      <div><b>Its own art, staged</b><span>Each map ships with its ground, its props, three monsters and its resources first; the rest of its monsters and its boss follow.</span></div>
+      <div><b>No new skills</b><span>Eighteen is the count, and every one of them has a ladder to 120 below.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="order">
+    <h2>Build order: the where first</h2>
+    <p>This replaces the map lines of the game plan's roadmap: maps first, because everything else lands on them.</p>
+    <div id="orderBox"></div>
+    <div class="callout"><b>Things to decide:</b> the seven names; whether the gateways have bosses (my pick: no, a gateway is for working, and the Mountain Rumbles event lands in the Ashlands); whether skillers can reach their spots in the 110+ maps without fighting (my pick: yes, each map's quiet side); whether the High Strip is a full town with every station (my pick: yes, it is the endgame's Yard); and whether Thieving stays in the Guild below 97 or also spreads to the maps (my pick: the Guild to 97, the maps past 100).</div>
+  </section>
+</main>
+<script>
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const IC = (k) => `/v3/assets/img/glad/flat/items/${k}.png`;
+const SKILLS = [["combat", "Combat", "skill_melee"], ["mining", "Mining", "skill_mining"], ["woodcutting", "Woodcutting", "skill_woodcutting"], ["fishing", "Fishing", "skill_fishing"], ["farming", "Farming", "skill_farming"], ["fungiculture", "Fungiculture", "skill_fungiculture"],
+  ["thieving", "Thieving", "skill_thieving"], ["agility", "Agility", "skill_agility"], ["breeding", "Breeding", "skill_breeding"], ["smithing", "Smithing", "skill_smithing"], ["cooking", "Cooking", "skill_cooking"], ["fletching", "Fletching", "skill_fletching"], ["wizardry", "Wizardry", "skill_wizardry"], ["alchemy", "Alchemy", "skill_alchemy"], ["tinkering", "Tinkering", "skill_tinkering"]];
+const SKN = { ...Object.fromEntries(SKILLS.map(([k, n]) => [k, n])), melee: "Melee", archery: "Archery", magic: "Magic", hp: "Hitpoints" };
+const BANDS = [[1, 9], [10, 19], [20, 29], [30, 39], [40, 49], [50, 59], [60, 69], [70, 79], [80, 89], [90, 99], [100, 104], [105, 109], [110, 114], [115, 120]];
+
+/* ===== the new places (and the two held ones) ===== */
+const MAPS = {
+  orchard: { name: "The Orchard Wall", band: [58, 70], kind: "held", ac: "#7ed060", bg: "#18240e", tx: "#c8f0a8", pc: null, off: "the Boneyard's south wall", phase: "Phase 1",
+    say: "Built on 27 September and held. A walled orchard and a stove, the green behind the Boneyard's rumour. Opening it fills Woodcutting's 50s and 60s on a second map.",
+    sk: [["woodcutting", 52, "Pine"], ["woodcutting", 66, "Walnut"], ["cooking", 60, "Pomona's stove"], ["combat", 58, "Orcs, the Hedge Thing, the Gardener"]], bank: "no", stations: "Pomona's stove" },
+  foundry: { name: "The Foundry", band: [76, 90], kind: "held", ac: "#ff9a5a", bg: "#2a1406", tx: "#ffc898", pc: null, off: "the Thunderhead's south side", phase: "Phase 1",
+    say: "Built and held: seven rooms of smelter, lava maze and Giant's Hall. Opening it puts Mining 70-90 and Smithing's best furnace on the road that later leads down to the Underforge.",
+    sk: [["mining", 70, "Eclipse"], ["mining", 80, "Nova"], ["mining", 90, "Singularity"], ["smithing", 80, "The blast furnace"], ["combat", 76, "Slag Golems to Old Bessemer"]], bank: "no", stations: "blast furnace" },
+  tide: { name: "The Tidepools", band: [98, 106], kind: "gate", ac: "#3ad0d8", bg: "#0a1e24", tx: "#a8f0f4", pc: "pc_tide.png", off: "the end of the Boardwalk's long pier", phase: "Phase 2",
+    say: "A gateway: black rock and turquoise pools at the end of the Boardwalk, the diving bell to the Deep End moored at its pier. Skilling-first, gentle monsters, a camp chest. Its pools rise and fall on the same tide clock as the Deep End.",
+    sk: [["fishing", 100, "Brinefin"], ["fishing", 104, "Rock lobster"], ["mining", 102, "Abyssal iron"], ["woodcutting", 100, "Mangrove"], ["fungiculture", 100, "Brinecap (wild)"], ["farming", 100, "Kelp bulb seeds"], ["thieving", 100, "The Smuggler"], ["agility", 100, "The Rock-hop"], ["breeding", 1, "Hermit egg"], ["tinkering", 100, "The diving bell (a project)"], ["combat", 98, "Tide crawlers, Reef eels"]], bank: "a camp chest", stations: "a range, a furnace" },
+  ash: { name: "The Ashlands", band: [100, 108], kind: "gate", ac: "#ff7a3a", bg: "#241008", tx: "#ffc0a0", pc: "pc_ash.png", off: "the Thunderhead's south ridge (the rumour)", phase: "Phase 2",
+    say: "A gateway: the crater rim the rumour talks about, ash fields and smoking vents, a miners' camp, and the lift down into the Underforge. The Mountain Rumbles event lands here. Ash Wraiths and Cinder Hounds from mockup 4 live on the rim.",
+    sk: [["mining", 100, "Cinderite"], ["woodcutting", 104, "Ashwood"], ["fungiculture", 104, "Emberfrill (wild)"], ["farming", 102, "Emberroot seeds"], ["thieving", 104, "The Quarry Boss"], ["agility", 105, "The Vent jumps"], ["breeding", 1, "Cinder Pup egg"], ["tinkering", 104, "The lift (a project)"], ["combat", 100, "Ash Wraiths, Cinder Hounds"]], bank: "the camp chest", stations: "a furnace, an anvil" },
+  elder: { name: "The Elderwood", band: [104, 112], kind: "end", ac: "#7ed060", bg: "#14240e", tx: "#c8f0a8", pc: "pc_elder.png", off: "the Primeval Ridge's west edge", phase: "Phase 3",
+    say: "Mockup 4's forest, moved down a band so it's the first endgame map. The paths move daily. Elder heartwood is here, and the forest's floor is the 110 farmer's and mushroom-grower's.",
+    sk: [["woodcutting", 106, "Ironbark"], ["woodcutting", 110, "Elder heartwood"], ["fishing", 106, "Ghost eel"], ["mining", 108, "Amber (root caves)"], ["farming", 106, "Mossberry seeds"], ["farming", 110, "Starbloom seeds"], ["fungiculture", 107, "Ironcap"], ["fungiculture", 110, "Ghostcap"], ["thieving", 108, "The Poacher"], ["agility", 106, "The Canopy run"], ["breeding", 1, "Mossling egg"], ["tinkering", 108, "The treehouse"], ["combat", 104, "Boars, Spore Lords, Stags; the Rootmother"]], bank: "the ranger's hut", stations: "a range" },
+  deep: { name: "The Deep End", band: [110, 118], kind: "end", ac: "#3ad0d8", bg: "#0a1e2a", tx: "#a8f0f4", pc: "pc_deep.png", off: "the diving bell at the Tidepools", phase: "Phase 5",
+    say: "Mockup 4's sunken casino strip. The tide decides what's open. Fishing's 110, and the first place Thieving gets past the Guild: the old Strip's vault still has a ghost in it.",
+    sk: [["fishing", 110, "Leviathan eel"], ["mining", 114, "Black pearl"], ["farming", 115, "Pearlmelon seeds"], ["fungiculture", 114, "Abyss morel"], ["thieving", 110, "The Vault Ghost"], ["thieving", 116, "The Drowned Dealer's till"], ["agility", 112, "The Tide run"], ["breeding", 1, "Lantern Fry egg"], ["tinkering", 112, "The air pumps"], ["combat", 110, "Croupiers, Anglers, Coral Golems; the Leviathan"]], bank: "no (the Tidepools' chest)", stations: "none" },
+  forge: { name: "The Underforge", band: [112, 120], kind: "end", ac: "#ff6a3a", bg: "#2a1006", tx: "#ffc898", pc: "pc_forge.png", off: "the lift down from the Ashlands", phase: "Phase 4",
+    say: "Mockup 4's forge under the mountain, through the Ashlands rather than the held Foundry. Mining and Smithing's 110 and the Ancient Forge, where every Relic is made. Heat is fire damage, cut by resistance.",
+    sk: [["mining", 110, "Primordial ore"], ["mining", 116, "Heartstone"], ["woodcutting", 116, "Emberheart"], ["fishing", 115, "Magma ray (lava)"], ["smithing", 110, "The Ancient Forge"], ["cooking", 110, "The lava vents"], ["agility", 115, "The Lava steps"], ["breeding", 1, "Ember Moth egg"], ["tinkering", 116, "The great bellows"], ["combat", 112, "Crawlers, Forgebound, Djinn; the Forgemaster"]], bank: "no (the Ashlands' chest)", stations: "the Ancient Forge, the lava vents" },
+  strip: { name: "The High Strip", band: [115, 120], kind: "town", ac: "#ffd84a", bg: "#241e08", tx: "#ffe8a0", pc: "pc_strip.png", off: "the stair from the Frostspire's summit", phase: "Phase 5",
+    say: "New: the endgame's town. Gold rooftops on a cloud plateau where the House's best customers live. A bank, every station, an Exchange stall, the Kennel Club. Light combat on the rooftops at night. Thieving's and Agility's top, and the Star Archive's front door.",
+    sk: [["thieving", 112, "The Whale's valet"], ["thieving", 118, "The Pit Boss's safe"], ["thieving", 120, "The House's own pocket (once a day)"], ["agility", 110, "The High Wire (rooftops)"], ["breeding", 110, "The Kennel Club: Mythic eggs"], ["alchemy", 110, "The alchemist's hall"], ["tinkering", 115, "The skyline (town projects)"], ["combat", 115, "Rooftop thugs, at night"]], bank: "yes, a full bank", stations: "every one, and the Nexus" },
+  arch: { name: "The Star Archive", band: [118, 125], kind: "end", ac: "#b08aff", bg: "#1a1236", tx: "#dccaff", pc: "pc_arch.png", off: "the star-bridge from the High Strip", phase: "Phase 6",
+    say: "Mockup 4's floating library, now entered from the High Strip. The 118-120 of almost everything, and the paper every Primal page is printed on. Its bridges of light run on a timer.",
+    sk: [["wizardry", 110, "Star vellum (the shelves)"], ["mining", 118, "Starsteel"], ["woodcutting", 120, "Starwood"], ["fishing", 120, "Star carp"], ["farming", 120, "Moonseed"], ["fungiculture", 118, "Nebula morel"], ["agility", 120, "The Spire run"], ["breeding", 1, "Star Moth egg"], ["tinkering", 120, "The orrery"], ["combat", 118, "Tomes, Star Moths, Sentinels; the Archivist"]], bank: "no (the High Strip)", stations: "none" } };
+
+/* ===== every skill's plan past its top: [level, what, map, kind] (map keys above, or "@" for a recipe at a station, "isle" for the island) ===== */
+const PLAN = {
+  combat: [[98, "Tide crawlers", "tide"], [100, "Ash Wraiths, Cinder Hounds", "ash"], [104, "The Elderwood", "elder"], [110, "The Deep End", "deep"], [112, "The Underforge", "forge"], [115, "The High Strip's rooftops", "strip"], [118, "The Star Archive", "arch"]],
+  mining: [[100, "Cinderite", "ash"], [102, "Abyssal iron", "tide"], [108, "Amber", "elder"], [110, "Primordial ore", "forge"], [114, "Black pearl", "deep"], [116, "Heartstone", "forge"], [118, "Starsteel", "arch"]],
+  woodcutting: [[100, "Mangrove", "tide"], [104, "Ashwood", "ash"], [106, "Ironbark", "elder"], [110, "Elder heartwood", "elder"], [116, "Emberheart", "forge"], [120, "Starwood", "arch"]],
+  fishing: [[100, "Brinefin", "tide"], [104, "Rock lobster", "tide"], [106, "Ghost eel", "elder"], [110, "Leviathan eel", "deep"], [115, "Magma ray", "forge"], [120, "Star carp", "arch"]],
+  farming: [[100, "Kelp bulb", "tide"], [102, "Emberroot", "ash"], [106, "Mossberry", "elder"], [110, "Starbloom", "elder"], [115, "Pearlmelon", "deep"], [120, "Moonseed", "arch"]],
+  fungiculture: [[100, "Brinecap", "tide"], [104, "Emberfrill", "ash"], [107, "Ironcap", "elder"], [110, "Ghostcap", "elder"], [114, "Abyss morel", "deep"], [118, "Nebula morel", "arch"]],
+  thieving: [[100, "The Smuggler", "tide"], [104, "The Quarry Boss", "ash"], [108, "The Poacher", "elder"], [110, "The Vault Ghost", "deep"], [112, "The Whale's valet", "strip"], [116, "The Drowned Dealer's till", "deep"], [118, "The Pit Boss's safe", "strip"], [120, "The House's own pocket", "strip"]],
+  agility: [[10, "A shortcut on every map, 10 to 95 (see the build order)", "today"], [100, "The Rock-hop", "tide"], [105, "The Vent jumps", "ash"], [106, "The Canopy run", "elder"], [110, "The High Wire", "strip"], [112, "The Tide run", "deep"], [115, "The Lava steps", "forge"], [120, "The Spire run", "arch"]],
+  breeding: [[60, "Elder pets (mockup 7)", "isle"], [100, "Hermit, Cinder Pup eggs", "tide"], [105, "Mossling, Lantern Fry eggs", "elder"], [110, "Mythic eggs at the Kennel Club", "strip"], [115, "Ember Moth egg", "forge"], [120, "Star Moth egg", "arch"]],
+  smithing: [[100, "Abyssal tools (iron + cinderite)", "ash"], [105, "Primordial bars", "forge"], [110, "Relic weapons and armour", "forge"], [115, "Heartstone jewellery", "forge"], [118, "Starsteel tools", "strip"], [120, "Awakened Relic", "forge"]],
+  cooking: [[100, "Brinefin", "tide"], [104, "Rock lobster", "tide"], [106, "Ghost eel", "elder"], [110, "Leviathan stew", "forge"], [115, "Magma ray (lava vents only)", "forge"], [120, "Star carp feast", "strip"]],
+  fletching: [[100, "Mangrove bows", "tide"], [104, "Ashwood arrows (fire)", "ash"], [106, "Ironbark longbow", "elder"], [110, "Relic bows and arrows", "elder"], [116, "Emberheart arrows", "forge"], [120, "Starwood bow", "strip"]],
+  wizardry: [[102, "Ashwood wand", "ash"], [106, "Ironbark wand", "elder"], [110, "Primal pages (star vellum)", "arch"], [115, "Heartstone focus", "strip"], [120, "Starwood wand", "strip"]],
+  alchemy: [[100, "Brine tonic", "tide"], [104, "Rimeward tonic (heat)", "ash"], [107, "Canopy tonic (Mossberry)", "elder"], [110, "The Overload draught", "strip"], [115, "Heartfire elixir", "strip"], [120, "Draught of Ages", "strip"]],
+  tinkering: [[100, "The diving bell", "tide"], [104, "The lift", "ash"], [108, "The treehouse", "elder"], [110, "The Overclocker (gadget)", "strip"], [112, "The air pumps", "deep"], [116, "The great bellows", "forge"], [120, "The orrery", "arch"]] };
+
+fetch("today.json").then((r) => r.json()).then((D) => {
+  const L = D.ladder, top = D.top, best = D.pace.best, rs = D.rs;
+  const topOf = (k) => k === "combat" ? Math.max(...D.mobs) : Math.max(0, ...(L[k] || []).map((x) => x[0]));
+  /* ---- today ---- */
+  const tops = SKILLS.filter(([k]) => k !== "combat").map(([k, n]) => [n, topOf(k)]);
+  document.getElementById("todayBox").innerHTML = [
+    ["Nothing past 99, anywhere", `The highest thing to do in each skill today: ${tops.map(([n, t]) => `${n} ${t}`).join(", ")}. Gathering stops at 94 (glacite, frostpine, icefin in the Frozen Reach) and 97 (the Deep Wild's fish, the Grand Larcenist).`],
+    ["Agility has no ladder", "The Run's timed gates are the whole skill, the same course at level 1 as at 99. There is not one agility spot with a level on it, so levels past 40 buy nothing but speed."],
+    ["Thieving lives in one building", "All nine marks, 1 to 97, are in the Thieves' Guild. A thief never needs to go anywhere, and no map has a reason for one."],
+    ["Farming and Fungiculture live on the island", "Crops (to Starfruit at 92) and mushroom beds (to Starcap at 90) grow on your island; maps only give seeds and wild mushrooms."],
+    ["Smithing stops at 90", "Singularity is the top bar and the top gear. 91 to 99 has nothing new to smith; past that, Relic is the next thing (mockup 3)."],
+    ["Breeding stops at 50", "The Legendary pairing at 50 is the last thing the skill unlocks. Eggs are found by map up to the Frozen Reach."],
+    ["Two maps are built and held", "The Orchard Wall (Woodcutting 52-66, combat 58-70) and the Foundry's seven rooms (Mining 70-90, combat 76-90) are finished and shut. They're the cheapest content we have."],
+    ["Combat goes to 115", "Monsters reach 115 (the Ice Wyrm) on maps that top out at the Frostspire, and stop rising at attack 126 past 100 (the game plan's correction)."]]
+    .map(([t, d]) => `<div><b>${esc(t)}</b><span>${esc(d)}</span></div>`).join("");
+
+  /* ---- the skillers' clock ---- */
+  {
+    const rows = Object.entries(top).filter(([k]) => k !== "jewelcrafting" && k !== "hp").map(([k, s]) => [k, s.lvl, s.xp, Math.max(0, (rs[99] - s.xp) / best)]).sort((a, b) => b[1] - a[1]);
+    const W = 900, H = 420, Lp = 130, R = 30, T = 20, rh = 22, x = (l) => Lp + (W - Lp - R) * l / 99;
+    let s = ""; for (const l of [0, 25, 50, 75, 99]) s += `<line x1="${x(l)}" x2="${x(l)}" y1="${T - 6}" y2="${T + rows.length * rh}" stroke="#2a1c12"/><text x="${x(l)}" y="${T + rows.length * rh + 16}" fill="#a89070" font-size="11.5" text-anchor="middle">${l}</text>`;
+    rows.forEach(([k, l, xp, h], i) => { const y = T + i * rh, n = SKN[k] || k[0].toUpperCase() + k.slice(1), c = l >= 80 ? "#ffd84a" : l >= 60 ? "#9ad8ff" : "#8a6a48";
+      s += `<text x="${Lp - 8}" y="${y + 14}" fill="#f6e9cc" font-size="12.5" font-weight="700" text-anchor="end">${esc(n)}</text><rect x="${x(0)}" y="${y + 3}" width="${x(l) - x(0)}" height="${rh - 7}" rx="3" fill="${c}"/><text x="${x(l) + 6}" y="${y + 14}" fill="#e8dcc0" font-size="11.5">${l}${l >= 80 ? ` · 99 in ~${Math.round(h)} h` : ""}</text>`; });
+    document.getElementById("clockSvg").innerHTML = s;
+    const hit = rows.filter(([, l]) => l >= 80).map(([k, l, , h]) => `${SKN[k] || k} (${l}, ~${Math.round(h)} h)`).join(", ");
+    document.getElementById("clockSay").innerHTML = `<b>Four skills are within reach of 99: ${hit}.</b><span>Fishing and Cooking are ahead of Melee, and both run out of content at 94-97 before they run out of levels. The road past 99 has to arrive with somewhere to fish, cook, chop and mine, not only somewhere to fight: that's why the gateways are in the same phase as the curve.</span>`;
+  }
+
+  /* ---- the grid ---- */
+  const cellsFor = (mode) => SKILLS.map(([k]) => BANDS.map(([a, b]) => {
+    const todayItems = k === "combat" ? D.mobs.filter((l) => l >= a && l <= b).map((l) => [l, "a monster"]) : (L[k] || []).filter((x) => x[0] >= a && x[0] <= b).map((x) => [x[0], `${x[1]}${x[3] ? ` · ${x[3]}` : ""}`]);
+    const add = mode === "plan" ? (PLAN[k] || []).filter((x) => x[0] >= a && x[0] <= b && x[2] !== "today").map((x) => [x[0], `${x[1]} · ${MAPS[x[2]]?.name || (x[2] === "isle" ? "your island" : x[2])}`]) : [];
+    const agil = mode === "plan" && k === "agility" && a >= 10 && b <= 99 ? [[a, "a shortcut on a map in this band"]] : [];
+    const held = mode === "plan" ? Object.entries(MAPS).filter(([, m]) => m.kind === "held").flatMap(([, m]) => m.sk.filter(([s, l]) => s === k && l >= a && l <= b).map(([, l, w]) => [l, `${w} · ${m.name} (opened)`])) : [];
+    return { n: todayItems.length + add.length + agil.length + held.length, isNew: add.length + agil.length + held.length > 0, list: [...todayItems, ...held, ...add, ...agil] };
+  }));
+  const gridDraw = (mode) => {
+    const C = cellsFor(mode), col = (n) => n === 0 ? null : n < 3 ? "#2a5a3a" : n < 8 ? "#2f7a46" : "#3a9a5a";
+    document.getElementById("gridBox").innerHTML = `<span></span>${BANDS.map(([a, b]) => `<span class="h ${a >= 100 ? "top" : ""}">${a}-${b}</span>`).join("")}`
+      + SKILLS.map(([k, n, ic], i) => `<span class="sk"><img src="${IC(ic)}" alt="">${n}</span>${C[i].map((c, j) => { const t = c.list.slice(0, 12).map(([l, w]) => `${l}: ${w}`).join("\n") + (c.list.length > 12 ? `\n… and ${c.list.length - 12} more` : ""); return `<span class="c ${c.n ? "" : "z"} ${c.isNew ? "new" : ""}" style="${c.n ? `background:${col(c.n)}` : ""}" title="${esc(`${n}, ${BANDS[j][0]}-${BANDS[j][1]}:\n${t || "nothing"}`)}">${c.n || "·"}</span>`; }).join("")}`).join("");
+  };
+  gridDraw("today");
+  document.querySelectorAll("#gridSeg button").forEach((b) => b.onclick = () => { document.querySelectorAll("#gridSeg button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); gridDraw(b.dataset.v); });
+
+  /* ---- the feeds table ---- */
+  {
+    const SK = ["mining", "woodcutting", "fishing", "farming", "fungiculture", "combat", "smithing", "alchemy"], TO = ["smithing", "cooking", "fletching", "wizardry", "alchemy", "fungiculture"];
+    const M = D.feeds.M, mx = Math.max(...SK.flatMap((r) => TO.map((c) => M[r]?.[c] || 0)));
+    document.getElementById("feedTbl").innerHTML = `<tr><th>From \\ into</th>${TO.map((c) => `<th style="text-align:center">${SKN[c]}</th>`).join("")}</tr>` + SK.map((r) => `<tr><td><img src="${IC(r === "combat" ? "skill_melee" : "skill_" + r)}" alt="">${r === "combat" ? "Monster drops" : SKN[r]}</td>${TO.map((c) => { const v = M[r]?.[c] || 0; return `<td style="text-align:center;font-weight:800;color:${v ? "#fff" : "#4a3a28"};background:${v ? `rgba(58,154,90,${0.15 + 0.75 * v / mx})` : "transparent"}">${v || "·"}</td>`; }).join("")}</tr>`).join("")
+      + `<tr><td><img src="${IC("skill_thieving")}" alt="">Thieving, Agility, Breeding, Tinkering</td><td colspan="6" style="color:#ff9a8a">almost nothing: three seal and grit items from the Guild into Smithing. The four islands.</td></tr>`;
+  }
+
+  /* ---- the ladders ---- */
+  {
+    const mcol = (m) => MAPS[m]?.tx || "#a89070";
+    const head = `<div class="lr head"><span></span><span class="t">today's top</span><span class="t">100</span><span class="t">105</span><span class="t">110</span><span class="t">115</span><span class="t">118-120</span></div>`;
+    const slots = [[100, 104], [105, 109], [110, 114], [115, 117], [118, 120]];
+    document.getElementById("ladBox").innerHTML = head + SKILLS.map(([k, n, ic]) => {
+      const t = topOf(k), lastToday = k === "combat" ? "monsters to 115" : (() => { const x = (L[k] || []).filter((y) => y[0] === t)[0]; return x ? `${x[1]}${x[3] ? ` · ${x[3]}` : ""}` : "—"; })();
+      const gapToday = k === "agility" || k === "breeding" || k === "smithing";
+      return `<div class="lr"><span class="sk"><img src="${IC(ic)}" alt="">${n}</span><span class="t ${gapToday ? "gap" : "today"}"><b>${t}</b>${esc(lastToday)}${k === "agility" ? " · no levels on anything" : ""}</span>${slots.map(([a, b]) => { const it = (PLAN[k] || []).filter((x) => x[0] >= a && x[0] <= b); return it.length ? `<span class="t">${it.map((x) => `<b>${x[0]} ${esc(x[1])}</b><small style="--mc:${mcol(x[2])};color:${mcol(x[2])}">${esc(MAPS[x[2]]?.name || (x[2] === "isle" ? "your island" : ""))}</small>`).join("")}</span>` : `<span class="t" style="opacity:.4">—</span>`; }).join("")}</div>`;
+    }).join("");
+  }
+
+  /* ---- the atlas ---- */
+  {
+    const N = { yard: [470, 400, "The Yard"], carnival: [350, 400, "Carnival"], boardwalk: [230, 400, "Boardwalk"], gloam: [470, 340, "Gloam"], mire: [560, 340, "Mire"], boneyard: [560, 280, "Boneyard"], sands: [660, 280, "Sands"],
+      cloud: [560, 210, "Cloudreach"], thunder: [450, 210, "Thunderhead"], vault: [350, 230, "Vault"], depths: [450, 150, "Depths"], trailer: [350, 150, "Trailer Park"], valley: [250, 150, "Valley"], ridge: [160, 150, "Ridge"], lair: [160, 90, "Rex's Lair"],
+      frozen: [670, 210, "Frozen Reach"], spire: [780, 210, "Frostspire"] };
+    const E = [["yard", "carnival"], ["carnival", "boardwalk"], ["yard", "gloam"], ["gloam", "mire"], ["mire", "boneyard"], ["boneyard", "sands"], ["boneyard", "cloud"], ["cloud", "thunder"], ["thunder", "vault"], ["thunder", "depths"], ["depths", "trailer"], ["trailer", "valley"], ["valley", "ridge"], ["ridge", "lair"], ["cloud", "frozen"], ["frozen", "spire"]];
+    const NEW = [["boneyard", 650, 345, "orchard", "held"], ["thunder", 410, 280, "foundry", "held"], ["boardwalk", 110, 420, "tide"], ["tide", 60, 330, "deep"], ["thunder", 520, 130, "ash"], ["ash", 560, 60, "forge"], ["ridge", 60, 200, "elder"], ["spire", 830, 130, "strip"], ["strip", 760, 50, "arch"]];
+    const P = { ...Object.fromEntries(Object.entries(N).map(([k, v]) => [k, v])) }; for (const [, x, y, k] of NEW) P[k] = [x, y, MAPS[k].name];
+    let s = `<rect width="900" height="470" fill="#100c0a"/>`;
+    for (const [a, b] of E) s += `<line x1="${P[a][0]}" y1="${P[a][1]}" x2="${P[b][0]}" y2="${P[b][1]}" stroke="#4a3a28" stroke-width="3"/>`;
+    for (const [from, x, y, k, h] of NEW) s += `<line x1="${P[from][0]}" y1="${P[from][1]}" x2="${x}" y2="${y}" stroke="${h ? "#d8b888" : MAPS[k].ac}" stroke-width="3" stroke-dasharray="${h ? "" : "6 5"}"/>`;
+    for (const [x, y, n] of Object.values(N)) s += `<circle cx="${x}" cy="${y}" r="6" fill="#7a6a58" stroke="#100c0a" stroke-width="2"/><text x="${x}" y="${y + 19}" fill="#b8a888" font-size="11" font-weight="700" text-anchor="middle" stroke="#100c0a" stroke-width="3" paint-order="stroke">${n}</text>`;
+    for (const [, x, y, k, h] of NEW) { const m = MAPS[k], c = h ? "#d8b888" : m.ac, r = m.kind === "town" ? 11 : 9; s += `<circle cx="${x}" cy="${y}" r="${r + 5}" fill="${c}" opacity=".22"/>${m.kind === "town" ? `<rect x="${x - r}" y="${y - r}" width="${2 * r}" height="${2 * r}" rx="3" fill="${c}" stroke="#100c0a" stroke-width="2"/>` : `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" stroke="#100c0a" stroke-width="2"/>`}<text x="${x}" y="${y + 27}" fill="${c}" font-size="12.5" font-weight="800" text-anchor="middle" font-family="Cinzel,serif" stroke="#100c0a" stroke-width="4" paint-order="stroke">${m.name.replace("The ", "")}</text><text x="${x}" y="${y + 41}" fill="#a89070" font-size="10.5" text-anchor="middle" stroke="#100c0a" stroke-width="3" paint-order="stroke">${m.band[0]}-${m.band[1]}${m.kind === "gate" ? " · gateway" : m.kind === "town" ? " · town" : m.kind === "held" ? " · held" : ""}</text>`; }
+    s += `<text x="16" y="22" fill="#a89070" font-size="12">A sketch of the roads, not the real map's shape. Square: a town.</text>`;
+    document.getElementById("atlasSvg").innerHTML = s;
+  }
+  /* ---- the bands ---- */
+  {
+    const R = [["The Thunderhead", 50, 99], ["The Trailer Park", 80, 99], ["The Primeval Valley", 90, 98], ["Old Rex's Lair", 100, 110], ["The Frozen Reach", 100, 108], ["The Frostspire", 106, 115],
+      ...["orchard", "foundry", "tide", "ash", "elder", "deep", "forge", "strip", "arch"].map((k) => [MAPS[k].name, MAPS[k].band[0], MAPS[k].band[1], MAPS[k].kind === "held" ? "#d8b888" : MAPS[k].ac])].sort((a, b) => a[1] - b[1]);
+    const W = 900, L = 170, Rt = 60, T = 26, rh = 22, x = (v) => L + (W - L - Rt) * (v - 50) / 75;
+    let s = ""; for (let v = 50; v <= 125; v += 5) s += `<line x1="${x(v)}" x2="${x(v)}" y1="${T - 6}" y2="${T + R.length * rh}" stroke="#20160e"/><text x="${x(v)}" y="${T - 10}" fill="#a89070" font-size="11" text-anchor="middle">${v}</text>`;
+    s += `<rect x="${x(99)}" y="${T - 4}" width="${x(125) - x(99)}" height="${R.length * rh + 4}" fill="#9ef0a0" opacity=".05"/>`;
+    R.forEach(([n, a, b, c], i) => { const y = T + i * rh; s += `<text x="${L - 8}" y="${y + 14}" fill="${c || "#d8c8a8"}" font-size="12" font-weight="${c ? 800 : 600}" text-anchor="end">${esc(n)}</text><rect x="${x(a)}" y="${y + 3}" width="${x(b) - x(a)}" height="${rh - 8}" rx="3" fill="${c || "#7a6a58"}"/><text x="${x(b) + 5}" y="${y + 14}" fill="#a89070" font-size="11">${a}-${b}</text>`; });
+    document.getElementById("bandSvg").innerHTML = s;
+  }
+});
+
+/* ---- the map cards ---- */
+document.getElementById("mapBox").innerHTML = ["orchard", "foundry", "tide", "ash", "elder", "forge", "deep", "strip", "arch"].map((k) => { const m = MAPS[k];
+  return `<div class="mc" style="--ac:${m.ac};--bg:${m.bg};--tx:${m.tx}"><div>${m.pc ? `<div class="pc"><img src="${m.pc}" alt=""></div>` : `<div class="pc none">built and held: its art exists</div>`}</div>
+    <div><h4>${m.name}</h4><div class="tags"><span class="tag">combat ${m.band[0]}-${m.band[1]}</span><span class="tag ${m.kind === "held" ? "held" : ""}">${{ held: "built and held", gate: "gateway", end: "endgame map", town: "town" }[m.kind]}</span><span class="tag ph">${m.phase}</span></div>
+      <p>${esc(m.say)}</p><div class="sks">${m.sk.map(([s, l, w]) => `<span><img src="${IC(SKILLS.find(([x]) => x === s)[2])}" alt=""><span>${esc(w)}</span><b>${s === "breeding" && l === 1 ? "egg" : `${SKN[s]} ${l}`}</b></span>`).join("")}</div>
+      <div class="mfoot"><span>Way in: <b>${esc(m.off)}</b></span><span>Bank: <b>${esc(m.bank)}</b></span><span>Stations: <b>${esc(m.stations)}</b></span></div></div></div>`; }).join("");
+
+/* ---- six chains ---- */
+const S = (ic, n, sk, map, cls = "") => `<div class="st ${cls}"><img src="${ic}" alt="" onerror="this.style.visibility='hidden'"><b>${esc(n)}</b><i>${esc(sk)}</i><small style="color:${MAPS[map]?.tx || "#a89070"}">${esc(MAPS[map]?.name || map)}</small></div>`, A = '<span class="ar">→</span>', Pl = '<span class="ar">+</span>';
+document.getElementById("chainBox").innerHTML = [
+  ["A Relic greatsword", S("../relic-mock/primordial_ore.png", "Primordial ore", "Mining 110", "forge") + Pl + S(IC("skill_mining"), "Cinderite", "Mining 100", "ash") + A + S("../relic-mock/primordial_bar.png", "Primordial bar", "Smithing 105", "forge") + Pl + S("../relic-mock/relic_shard.png", "Relic shards", "combat", "anywhere 100+") + Pl + S("../endgame-mock/forgemaster.png", "The tongs", "the Forgemaster", "forge") + A + S("../relic-mock/relic_sword.png", "Relic greatsword", "Smithing 110", "forge", "out")],
+  ["A Relic longbow", S("../relic-mock/elder_heartwood.png", "Elder heartwood", "Woodcutting 110", "elder") + Pl + S("../endgame-mock/leviathan.png", "Leviathan sinew", "the Leviathan", "deep") + Pl + S("../relic-mock/relic_shard.png", "Relic shards", "combat", "anywhere 100+") + A + S("../relic-mock/relic_bow.png", "Relic longbow", "Fletching 110", "strip", "out")],
+  ["Primal pages", S(IC("page_void_bolt"), "Star vellum", "Wizardry 110", "arch") + Pl + S(IC("skill_farming"), "Starbloom", "Farming 110", "elder") + A + S(IC("ink_void"), "Starbloom ink", "Alchemy 108", "strip") + A + S(IC("page_arcane"), "Primal pages", "Wizardry 110", "strip", "out")],
+  ["Leviathan stew", S(IC("skill_fishing"), "Leviathan eel", "Fishing 110", "deep") + Pl + S(IC("skill_farming"), "Starbloom", "Farming 110", "elder") + Pl + S(IC("skill_fungiculture"), "Ghostcap", "Fungiculture 110", "elder") + A + S(IC("skill_cooking"), "Leviathan stew", "Cooking 110, the lava vents", "forge", "out")],
+  ["The Overload draught", S(IC("skill_fungiculture"), "Ghostcap", "Fungiculture 110", "elder") + Pl + S(IC("skill_mining"), "Heartstone dust", "Mining 116", "forge") + Pl + S(IC("skill_thieving"), "The Vault Ghost's key", "Thieving 110", "deep") + A + S(IC("pot_double"), "Overload draught", "Alchemy 110", "strip", "out")],
+  ["A Mythic egg", S("/v3/assets/img/glad/flat/pet_cerberpup.png", "Two Elder Legendaries", "Breeding (mockup 7)", "isle") + Pl + S(IC("petfood_legend"), "Leviathan pet food", "Cooking 110", "forge") + Pl + S(IC("skill_agility"), "The Kennel Club's door", "Agility 110 (the High Wire)", "strip") + A + S(IC("egg_gilded"), "A Mythic egg", "Breeding 110", "strip", "out")]]
+  .map(([t, f]) => `<div class="chain"><h4>${t}</h4><div class="flow">${f}</div></div>`).join("");
+
+/* ---- build order ---- */
+document.getElementById("orderBox").innerHTML = [
+  ["p1", "#3ad0d8", "Phase 1 · November", "Open what's built, and give Agility a ladder", [["Open the Orchard Wall and the Foundry", "Built and held. Woodcutting 52-66 and Mining 70-90 on second maps, Smithing's best furnace, two more combat bands. Their art exists."], ["A shortcut on every map, 10 to 95", "One level-gated agility shortcut per map (the Gloam's log at 10 up to the Frozen Reach's ice slide at 95): Agility's first ladder, and every one saves a walk."], ["The small holes below 99", "A Guild mark in the 30s and the 80s, a crop in the 80s, an early Tinkering gadget or two below 31, and level-gated Breeding pairings between 1 and 50. A few lines of data each."], ["(Pets that grow and the diaries, as planned)", ""]]],
+  ["p2", "#ffd84a", "Phase 2 · December, with levels to 120", "The two gateways, so 99 has somewhere to go", [["The Tidepools", "Fishing 100/104, Mining 102, Woodcutting 100, Brinecap, Kelp bulb, the Smuggler, the Rock-hop, a camp chest. Off the Boardwalk."], ["The Ashlands", "Mining 100, Woodcutting 104, Emberfrill, Emberroot, the Quarry Boss, the Vent jumps, the camp. Off the Thunderhead's south ridge; the Mountain Rumbles event moves here."], ["Every recipe at 100-105", "Cooking, Fletching, Wizardry, Alchemy and Smithing's first steps past 99, from the gateways' resources."]]],
+  ["p3", "#7ed060", "Phase 3 · January to February", "The first endgame map", [["The Elderwood", "Woodcutting 106/110, Fishing 106, Mining 108, Starbloom, Ghostcap, the Poacher, the Canopy run; the Rootmother."], ["Recipes at 106-110 from it", "Ironbark bows and wands, Ghost eel; Relic bows wait for Leviathan sinew."]]],
+  ["p4", "#ff6a3a", "Phase 4 · March to April", "Under the mountain", [["The Underforge", "Mining 110/116, Woodcutting 116, Fishing 115 (lava), the Ancient Forge, the vents, the Lava steps; the Forgemaster. Through the Ashlands' lift."], ["Relic weapons and armour", "The first Relics, forged there."]]],
+  ["p5", "#ffd84a", "Phase 5 · May to July", "The sea and the town", [["The Deep End", "Fishing 110, Mining 114, Thieving 110/116, Pearlmelon, Abyss morel, the Tide run; the Leviathan."], ["The High Strip", "The endgame's town: a bank, every station, the Exchange, Thieving 112-120, the High Wire, the Kennel Club's Mythic eggs, the alchemists' hall."]]],
+  ["p6", "#b08aff", "Phase 6 · August on", "The top of everything", [["The Star Archive", "The 118-120 of Mining, Woodcutting, Fishing, Farming, Fungiculture and Agility; star vellum for Primal pages; the Archivist."]]]]
+  .map(([, c, t, why, items]) => `<div class="phase" style="--pc:${c}"><header><b>${t}</b><span>${esc(why)}</span></header><ul>${items.map(([n, d]) => `<li><b>${esc(n)}</b>${d ? `: ${esc(d)}` : ""}</li>`).join("")}</ul></div>`).join("");
+</script>
+</body>
+</html>

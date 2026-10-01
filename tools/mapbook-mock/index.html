@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>The map book</title>
+<!-- (2026-10-01, the owner: "do the same type of analysis for our current maps so i can get a detailed insight into the map, layout, mobs, mob counts,
+     mob drops resources/bosses, etc. shrooms that spawn there, events that may happen, etc. then add it to the gameplan"). Mockup 12: the atlas's
+     companion for the maps that exist. maps.json is MEASURED from the rules file (scratchpad/maps.mjs, 1 October): every scene built (closed ones
+     included), its grid, every object, every monster spawn with the monster's stats and drops, resources, stations, NPCs and their quests, Sal's
+     projects, wild mushrooms, eggs, pets, waystones and the world events that can happen there. Local only; built into /gameplan. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a0a;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#2a2010,transparent),radial-gradient(900px 600px at 100% 30%,#10243a,transparent),#0b0a0a}
+main{max-width:1280px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:16px 0 6px;font:800 16px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:1000px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd98a}
+.sec{margin:42px 0 0;padding:22px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:1000px;line-height:1.55}
+.tbl{width:100%;border-collapse:collapse;font:600 12.5px Lora,serif;background:#14120e;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616}
+.tbl th{text-align:left;font:800 10px Lora,serif;letter-spacing:.07em;text-transform:uppercase;color:#a89070;padding:9px 8px 5px;white-space:nowrap;cursor:pointer;user-select:none}.tbl th:hover{color:#ffd98a}
+.tbl td{padding:6px 8px;border-top:1px solid #2e2216;vertical-align:top;line-height:1.35}.tbl td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl tr.row{cursor:pointer}.tbl tr.row:hover td{background:rgba(255,217,138,.06)}.tbl tr.sel td{background:rgba(255,217,138,.12)}
+.tbl td.nm{font-weight:800;color:#ffe7b0;white-space:nowrap}.tbl .held{color:#d8b888;font-size:10.5px;font-weight:800}
+.tbl img{width:24px;height:24px;object-fit:contain;image-rendering:pixelated;vertical-align:-7px;margin-right:5px}
+.wrapx{overflow-x:auto;margin-top:10px}
+.chips{display:flex;gap:3px;flex-wrap:wrap}.chip{font:800 10.5px Lora,serif;padding:1px 6px;border-radius:999px;background:#2a1c12;color:#e8d0a8;white-space:nowrap}
+.chip.mi{background:#3a2a1a;color:#ffb070}.chip.wc{background:#1a3a1a;color:#9ef0a0}.chip.fi{background:#10304a;color:#9ad8ff}.chip.th{background:#2a1a3a;color:#d0b8ff}.chip.fa{background:#3a3a10;color:#f0e080}.chip.ev{background:#4a1a2a;color:#ffb0c8}.chip.boss{background:#5a1a10;color:#ffc0a0}
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px;margin-top:12px}
+.fd{background:#14120e;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}.fd b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.fd span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.fd span b{display:inline;font:800 13px Lora,serif;color:#f6e9cc}
+.fd.warn{box-shadow:0 0 0 1.5px #8a4a24}.fd.warn b:first-child{color:#ffb080}
+/* map view */
+.picker{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+.picker button{border:0;border-radius:999px;padding:5px 11px;background:#22180f;box-shadow:inset 0 0 0 1.5px #4a3418;color:#e8d0a8;font:800 12px Lora,serif;cursor:pointer}
+.picker button[aria-pressed="true"]{background:#ffd98a;color:#1a1006;box-shadow:none}.picker button.held{box-shadow:inset 0 0 0 1.5px #d8b888;color:#d8b888}.picker small{display:block;font:700 10px Lora,serif;opacity:.75}
+.picker .grp{width:100%;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070;margin:6px 0 0}
+.mv{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;margin-top:14px;align-items:start}
+.mapbox{background:#14120e;border-radius:12px;padding:12px;box-shadow:0 0 0 1.5px #3a2616}
+.mapbox h3{margin:0;font:800 24px Cinzel,serif;color:#ffe7b0}.mapbox .sub{font:700 12.5px Lora,serif;color:#a89070;margin:2px 0 8px}
+canvas#mm{width:100%;height:auto;image-rendering:pixelated;border-radius:8px;display:block;background:#000;cursor:crosshair}
+.toggles{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;font:700 12px Lora,serif;color:#d8c8a8}.toggles label{display:inline-flex;gap:5px;align-items:center;cursor:pointer}
+.mlegend{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;font:700 11.5px Lora,serif;color:#a89070}.mlegend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.hover{min-height:20px;margin-top:6px;font:700 12.5px Lora,serif;color:#ffe7b0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.stats span{display:grid;justify-items:center;padding:6px 4px;border-radius:7px;background:#1e1812;box-shadow:inset 0 0 0 1px #3a2616;font:700 10.5px Lora,serif;color:#a89070;text-transform:uppercase;letter-spacing:.04em;text-align:center}.stats b{font:800 17px Lora,serif;color:#fff;text-transform:none;letter-spacing:0}
+.side h4{margin:12px 0 5px;font:800 11px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070}.side h4:first-child{margin-top:0}
+.mob{display:grid;grid-template-columns:44px 1fr;gap:9px;padding:7px 8px;border-radius:8px;background:#14120e;box-shadow:inset 0 0 0 1px #2e2216;margin-bottom:5px}
+.mob .pic{width:44px;height:44px;border-radius:6px;background:#1e1812;display:grid;place-items:center}.mob .pic img{max-width:42px;max-height:42px;image-rendering:pixelated}
+.mob b{font:800 13.5px Lora,serif;color:#fff}.mob .ln{font:700 11.5px Lora,serif;color:#a89070}.mob .ln em{font-style:normal;color:#ffb080}
+.drops{display:flex;gap:3px;flex-wrap:wrap;margin-top:3px}.drops span{font:700 10.5px Lora,serif;padding:1px 6px;border-radius:5px;background:#22180f;color:#d8c8a8}.drops span.r{background:#2a1a3a;color:#d8b8ff}.drops span.g{background:#3a2a10;color:#ffd98a}
+.kv{display:grid;gap:4px}.kv div{display:grid;grid-template-columns:auto 1fr;gap:8px;padding:5px 8px;border-radius:7px;background:#14120e;box-shadow:inset 0 0 0 1px #2e2216;font:600 12.5px/1.4 Lora,serif;color:#e8dcc0}.kv b{color:#ffe7b0;white-space:nowrap}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:1000px}.callout b{color:#ffe27a}
+@media (max-width:900px){.mv{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<main>
+  <h1>The map book</h1>
+  <p class="lede">Every map in the game today, measured from the rules file: its layout, every monster and how many, what they drop and how often, every rock,
+    tree and fishing spot, the wild mushrooms, the eggs and pets, the NPCs and their quests, Sal's projects, the stations, and the world events that can
+    happen there. It's the atlas's other half: the atlas says where things go next, this says what is where now. <span id="stamp"></span></p>
+  <nav class="jump"><a href="#findings">What stands out</a><a href="#all">Every map</a><a href="#map">Map by map</a><a href="#monsters">Every monster</a><a href="#rest">Interiors and old maps</a></nav>
+
+  <section class="sec" id="findings">
+    <h2>What stands out</h2>
+    <p>Worked out from the numbers below, not from memory.</p>
+    <div class="findings" id="fdBox"></div>
+  </section>
+
+  <section class="sec" id="all">
+    <h2>Every map</h2>
+    <p>The outdoor maps players can reach, plus the two built and held (gold). <b>Click a row</b> to open it below; click a heading to sort.</p>
+    <div class="wrapx"><table class="tbl" id="allTbl"></table></div>
+  </section>
+
+  <section class="sec" id="map">
+    <h2>Map by map</h2>
+    <div class="picker" id="picker"></div>
+    <div class="mv">
+      <div class="mapbox"><h3 id="mName"></h3><div class="sub" id="mSub"></div>
+        <canvas id="mm" width="880" height="520"></canvas>
+        <div class="toggles"><label><input type="checkbox" id="tMob" checked> monsters</label><label><input type="checkbox" id="tRes" checked> resources</label><label><input type="checkbox" id="tNpc" checked> NPCs and stations</label><label><input type="checkbox" id="tDec"> scenery</label></div>
+        <div class="mlegend"><span><i style="background:#ff4a3a"></i>monster</span><span><i style="background:#ff4a3a;box-shadow:0 0 0 2px #ffd84a"></i>aggressive</span><span><i style="background:#ffb070"></i>rock</span><span><i style="background:#5ad06a"></i>tree</span><span><i style="background:#5ad8ff"></i>fishing</span><span><i style="background:#fff"></i>NPC</span><span><i style="background:#c890ff"></i>station</span><span><i style="background:#ffd84a"></i>exit</span></div>
+        <div class="hover" id="mHover">Hover the map for what's there.</div>
+        <div class="stats" id="mStats"></div>
+      </div>
+      <div class="side" id="mSide"></div>
+    </div>
+  </section>
+
+  <section class="sec" id="monsters">
+    <h2>Every monster</h2>
+    <p>Every monster that spawns on an open map: where, how many, its numbers, and its drops. Click a heading to sort.</p>
+    <div class="wrapx"><table class="tbl" id="mobTbl"></table></div>
+  </section>
+
+  <section class="sec" id="rest">
+    <h2>Interiors and old maps</h2>
+    <div class="findings" id="restBox"></div>
+  </section>
+</main>
+<script>
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const ART = (k) => `/v3/assets/img/glad/flat/${k}.png`, IC = (k) => `/v3/assets/img/glad/flat/items/${k}.png`;
+const pct = (p) => p >= 1 ? "always" : p >= 0.1 ? `${Math.round(p * 100)}%` : `1 in ${Math.round(1 / p).toLocaleString()}`;
+const nRange = (n) => Array.isArray(n) ? `${n[0]}-${n[1]}` : (n ?? 1);
+/* what is open, held, inside or old (the map list on 1 October) */
+const OPEN = ["workyard", "gloam", "mire", "boneyard", "sands", "cloud", "thunderhead", "vault", "depths", "trailer", "valley", "valley_ridge", "valley_lair", "frozen", "frostspire", "carnival", "boardwalk", "bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull", "wild", "deep"];
+const HELD = ["orchard", "foundry", "fd_grove", "fd_maze", "fd_isle", "fd_chain", "fd_gate", "fd_hall"];
+const INSIDE = ["casino", "roulette", "highroller", "theatre", "bathhouse", "fightpit", "guild", "agility", "home", "cellar", "isle", "isle2", "isle3", "shore", "farmhouse"];
+const OLD = ["forum", "farm", "river", "grove", "tomato", "appia", "paddock", "rough"];
+const GROUPS = [["Early", ["workyard", "gloam", "mire", "boneyard"]], ["Middle", ["sands", "cloud", "thunderhead", "carnival", "boardwalk", "bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull"]], ["Late", ["vault", "depths", "trailer", "valley", "valley_ridge", "valley_lair", "frozen", "frostspire"]], ["The Wilderness", ["wild", "deep"]], ["Built and held", HELD]];
+const SKC = { mining: "mi", woodcutting: "wc", fishing: "fi", thieving: "th", farming: "fa" };
+const GROUND = { gloam: "#1e3a2a", desert: "#6a5a2a", cloud: "#4a5a6a", storm: "#2a2a44", carnival: "#3a2030", sea: "#1a3a4a", wild: "#2a2030", frozen: "#5a6a7a", lava: "#3a1a10" };
+
+fetch("maps.json").then((r) => r.json()).then((D) => {
+  const M = D.maps, MOB = D.mobs;
+  document.getElementById("stamp").textContent = `Measured ${D.at}.`;
+  const live = [...OPEN, ...HELD].filter((k) => M[k]);
+  const bandOf = (m) => { const lv = Object.keys(m.mobCount).map((t) => MOB[t]?.lvl).filter(Boolean); return m.band || (lv.length ? [Math.min(...lv), Math.max(...lv)] : null); };
+  const resN = (m, sk) => m.res.filter((r) => !sk || r.skill === sk).reduce((a, r) => a + r.n, 0);
+  const aggro = (m) => m.spawns.filter(([t, , , a]) => (a ?? MOB[t]?.aggro) > 0).length;
+  const bosses = (m) => Object.keys(m.mobCount).filter((t) => MOB[t]?.boss);
+
+  /* ---- what stands out (computed) ---- */
+  {
+    const open = OPEN.filter((k) => M[k]).map((k) => M[k]);
+    const dens = open.filter((m) => m.spawns.length).map((m) => [m, m.spawns.length / Math.max(1, m.tiles.walk) * 100]).sort((a, b) => b[1] - a[1]);
+    const noBank = open.filter((m) => !Object.keys(m.stations).some((s) => /bank|chest|deposit/i.test(s)));
+    const fewRes = open.filter((m) => resN(m) <= 5).sort((a, b) => resN(a) - resN(b));
+    const noEv = open.filter((m) => !m.ev.length);
+    /* gathering spots within 4 tiles of an aggressive spawn */
+    const risky = open.map((m) => { const ag = m.spawns.filter(([t, , , a]) => (a ?? MOB[t]?.aggro) > 0); const spots = m.objs.filter((o) => o[5] && ["mining", "woodcutting", "fishing"].includes(o[5])); const n = spots.filter((o) => ag.some(([, x, y]) => Math.max(Math.abs(x - o[1]), Math.abs(y - o[2])) <= 4)).length; return [m, n, spots.length]; }).filter(([, n]) => n).sort((a, b) => b[1] / b[2] - a[1] / a[2]);
+    const fd = HELD.filter((k) => k.startsWith("fd") || k === "foundry").map((k) => M[k]);
+    const allSpawns = open.reduce((a, m) => a + m.spawns.length, 0), allRes = open.reduce((a, m) => a + resN(m), 0);
+    const skillTop = {}; for (const m of open) for (const r of m.res) skillTop[r.skill] = Math.max(skillTop[r.skill] || 0, r.lvl2 || r.lvl);
+    const F = [
+      ["The world in numbers", `<b>${open.length}</b> open outdoor maps, <b>${allSpawns}</b> monster spawns of <b>${new Set(open.flatMap((m) => Object.keys(m.mobCount))).size}</b> kinds, <b>${allRes}</b> gathering spots, <b>${open.reduce((a, m) => a + m.npcs.length, 0)}</b> NPCs, <b>${open.reduce((a, m) => a + m.proj.length, 0)}</b> of Sal's projects. Gathering tops out at Mining ${skillTop.mining}, Woodcutting ${skillTop.woodcutting}, Fishing ${skillTop.fishing}.`],
+      ["Most crowded with monsters", `${dens.slice(0, 4).map(([m, d]) => `<b>${m.name}</b> (${m.spawns.length} spawns, ${d.toFixed(1)} per 100 tiles)`).join(", ")}. The emptiest that have any: ${dens.slice(-3).map(([m, d]) => `${m.name} (${m.spawns.length})`).join(", ")}.`],
+      ["Few things to gather", `${fewRes.map((m) => `<b>${m.name}</b> (${resN(m)})`).join(", ")}. A skiller has little reason to stand on these.`, "warn"],
+      ["Gathering inside the danger", `Spots within 4 tiles of an aggressive monster: ${risky.slice(0, 5).map(([m, n, t]) => `<b>${m.name}</b> ${n} of ${t}`).join(", ")}. The atlas's rule is gathering on the quiet side; these are where it isn't.`, "warn"],
+      ["No bank on the map", `${noBank.length} of ${open.length} open maps have no bank or chest: every late map past the Thunderhead, so a full bag means a walk or a scroll.`],
+      ["No world event can happen", `${noEv.map((m) => m.name).join(", ")}. Stars, the Thief and Wanted posters never visit them.`],
+      ["The Foundry is thin", `Built and held: ${fd.map((m) => `${m.name} ${m.spawns.length}`).join(", ")} monsters. Seven rooms with ${fd.reduce((a, m) => a + m.spawns.length, 0)} spawns between them: it needs filling in before it opens, more than its art does.`, "warn"],
+      ["Bosses out in the open", `${open.flatMap((m) => bosses(m).map((t) => `${MOB[t].name} (${m.name}, ${MOB[t].lvl})`)).join(", ") || "none"}. Plus the event bosses: the Pumpkin King (the Mire, October), the Ice Wyrm (the Frozen Reach, daily) and the raids in the Yard.`]];
+    document.getElementById("fdBox").innerHTML = F.map(([t, d, c]) => `<div class="fd ${c || ""}"><b>${esc(t)}</b><span>${d}</span></div>`).join("");
+  }
+
+  /* ---- every map (sortable) ---- */
+  const COLS = [["Map", (m) => m.name], ["Band", (m) => bandOf(m)?.[0] ?? 0, (m) => bandOf(m) ? `${bandOf(m)[0]}-${bandOf(m)[1]}` : "—"], ["Size", (m) => m.W * m.H, (m) => `${m.W}×${m.H}`], ["Walk %", (m) => m.tiles.walk / (m.W * m.H), (m) => `${Math.round(m.tiles.walk / (m.W * m.H) * 100)}%`],
+    ["Water", (m) => m.tiles.water, (m) => m.tiles.water || "—"], ["Spawns", (m) => m.spawns.length], ["Kinds", (m) => Object.keys(m.mobCount).length], ["Aggro", (m) => aggro(m)], ["Bosses", (m) => bosses(m).length, (m) => bosses(m).map((t) => MOB[t].name).join(", ") || "—"],
+    ["Mining", (m) => resN(m, "mining"), (m) => chipsFor(m, "mining")], ["Woodcut", (m) => resN(m, "woodcutting"), (m) => chipsFor(m, "woodcutting")], ["Fishing", (m) => resN(m, "fishing"), (m) => chipsFor(m, "fishing")],
+    ["Shrooms", (m) => m.shrooms.length, (m) => [...new Set(m.shrooms)].join(", ") || "—"], ["Eggs", (m) => m.eggs.length, (m) => m.eggs.map((e) => e.pet).join(", ") || "—"], ["NPCs", (m) => m.npcs.length], ["Events", (m) => m.ev.length, (m) => m.ev.map((e) => e[0]).join(", ") || "—"]];
+  function chipsFor(m, sk) { const r = m.res.filter((x) => x.skill === sk); return r.length ? `<div class="chips">${r.map((x) => `<span class="chip ${SKC[sk]}">${x.lvl}${x.lvl2 ? `/${x.lvl2}` : ""} ×${x.n}</span>`).join("")}</div>` : "—"; }
+  let sortI = 1, sortDir = 1, curMap = "mire";
+  function allTable() {
+    const rows = live.map((k) => M[k]).sort((a, b) => { const f = COLS[sortI][1]; const x = f(a), y = f(b); return (typeof x === "string" ? x.localeCompare(y) : x - y) * sortDir; });
+    document.getElementById("allTbl").innerHTML = `<tr>${COLS.map(([n], i) => `<th data-i="${i}">${n}${i === sortI ? (sortDir > 0 ? " ▲" : " ▼") : ""}</th>`).join("")}</tr>` + rows.map((m) => `<tr class="row ${m.k === curMap ? "sel" : ""}" data-k="${m.k}">${COLS.map(([, f, show], i) => `<td class="${i === 0 ? "nm" : typeof f(m) === "number" && !show ? "n" : ""}">${i === 0 ? `${esc(m.name)}${HELD.includes(m.k) ? ' <span class="held">held</span>' : ""}` : show ? show(m) : f(m)}</td>`).join("")}</tr>`).join("");
+    document.querySelectorAll("#allTbl th").forEach((th) => th.onclick = () => { const i = +th.dataset.i; sortDir = i === sortI ? -sortDir : 1; sortI = i; allTable(); });
+    document.querySelectorAll("#allTbl tr.row").forEach((tr) => tr.onclick = () => { show(tr.dataset.k); document.getElementById("map").scrollIntoView({ behavior: "smooth" }); });
+  }
+  allTable();
+
+  /* ---- the picker ---- */
+  document.getElementById("picker").innerHTML = GROUPS.map(([g, ks]) => `<span class="grp">${g}</span>${ks.filter((k) => M[k]).map((k) => `<button data-k="${k}" class="${HELD.includes(k) ? "held" : ""}" aria-pressed="false">${esc(M[k].name.replace(/^The /, ""))}<small>${bandOf(M[k]) ? `${bandOf(M[k])[0]}-${bandOf(M[k])[1]}` : ""}</small></button>`).join("")}`).join("");
+  document.querySelectorAll("#picker button").forEach((b) => b.onclick = () => show(b.dataset.k));
+
+  /* ---- the minimap ---- */
+  const cv = document.getElementById("mm"), cx = cv.getContext("2d");
+  let hit = [];
+  function draw() {
+    const m = M[curMap], T = Math.floor(Math.min(880 / m.W, 560 / m.H)); cv.width = m.W * T; cv.height = m.H * T; hit = [];
+    const base = GROUND[m.ground] || "#2a3a22";
+    for (let y = 0; y < m.H; y++) for (let x = 0; x < m.W; x++) { const c = m.grid[y][x];
+      cx.fillStyle = c === "#" ? "#0e0c0a" : c === "~" ? "#1e5a8a" : c === "e" ? "#ffd84a" : c === "b" ? "#7a5a34" : c === "," ? "#6a5a40" : base; cx.fillRect(x * T, y * T, T, T); }
+    cx.strokeStyle = "rgba(0,0,0,.18)"; cx.lineWidth = 1; for (let x = 0; x <= m.W; x++) { cx.beginPath(); cx.moveTo(x * T + .5, 0); cx.lineTo(x * T + .5, m.H * T); cx.stroke(); } for (let y = 0; y <= m.H; y++) { cx.beginPath(); cx.moveTo(0, y * T + .5); cx.lineTo(m.W * T, y * T + .5); cx.stroke(); }
+    const on = (id) => document.getElementById(id).checked;
+    for (const o of m.objs) { const [t, x, y, w, h, sk, lv, what, w2, l2, name] = o; const isRes = ["mining", "woodcutting", "fishing"].includes(sk); const isSt = m.stations[t];
+      if (isRes && !on("tRes")) continue; if (isSt && !on("tNpc")) continue; if (!isRes && !isSt && !on("tDec")) continue;
+      cx.fillStyle = sk === "mining" ? "#ffb070" : sk === "woodcutting" ? "#5ad06a" : sk === "fishing" ? "#5ad8ff" : isSt ? "#c890ff" : sk ? "#f0e080" : "rgba(255,255,255,.16)";
+      const pad = isRes || isSt ? T * 0.15 : T * 0.3; cx.fillRect(x * T + pad, y * T + pad, w * T - 2 * pad, h * T - 2 * pad);
+      if (isRes || isSt || sk) hit.push([x, y, w, h, isRes ? `${name || what} · ${sk} ${lv}${w2 ? ` (${w2} at ${l2})` : ""}` : isSt ? `${t} (a station)` : `${name || t}${sk ? ` · ${sk} ${lv}` : ""}`]); }
+    if (on("tNpc")) for (const n of m.npcs) { cx.fillStyle = "#fff"; cx.beginPath(); cx.arc((n.x + .5) * T, (n.y + .5) * T, T * .38, 0, 7); cx.fill(); cx.strokeStyle = "#000"; cx.lineWidth = 1.5; cx.stroke(); hit.push([n.x, n.y, 1, 1, `${n.name}${n.quests.length ? ` · quests: ${n.quests.join(", ")}` : ""}`]); }
+    if (on("tMob")) for (const [t, x, y, a] of m.spawns) { const mb = MOB[t]; if (!mb) continue; const ag = (a ?? mb.aggro) > 0, r = mb.boss ? T * .62 : T * .34;
+      cx.fillStyle = mb.boss ? "#ff2a1a" : "#ff4a3a"; cx.beginPath(); cx.arc((x + .5) * T, (y + .5) * T, r, 0, 7); cx.fill(); if (ag) { cx.strokeStyle = "#ffd84a"; cx.lineWidth = 2; cx.stroke(); }
+      hit.push([x, y, 1, 1, `${mb.name} · level ${mb.lvl}${mb.boss ? " · BOSS" : ""}${ag ? ` · attacks on sight` : ""}`]); }
+    for (const [dir, to] of Object.entries(m.exits || {})) { const nm = M[to]?.name || to, p = { n: [m.W / 2, 0.9], s: [m.W / 2, m.H - 0.6], e: [m.W - 0.6, m.H / 2], w: [0.6, m.H / 2] }[dir]; if (!p) continue; cx.font = `800 ${Math.max(11, T * .55)}px Lora,serif`; cx.textAlign = dir === "e" ? "right" : dir === "w" ? "left" : "center"; cx.fillStyle = "#000"; cx.fillText(`→ ${nm}`, p[0] * T + 1, p[1] * T + 1 + (dir === "n" ? T * .2 : 0)); cx.fillStyle = "#ffe27a"; cx.fillText(`→ ${nm}`, p[0] * T, p[1] * T + (dir === "n" ? T * .2 : 0)); }
+    cv.dataset.t = T;
+  }
+  cv.addEventListener("mousemove", (e) => { const r = cv.getBoundingClientRect(), T = +cv.dataset.t, x = Math.floor((e.clientX - r.left) / r.width * cv.width / T), y = Math.floor((e.clientY - r.top) / r.height * cv.height / T);
+    const h = [...hit].reverse().find(([hx, hy, w, hh]) => x >= hx && x < hx + w && y >= hy && y < hy + hh); const c = M[curMap].grid[y]?.[x];
+    document.getElementById("mHover").textContent = h ? h[4] : `(${x}, ${y}) ${({ "#": "wall", "~": "water", e: "exit", b: "bridge", ",": "path", ".": "ground" })[c] || ""}`; });
+  for (const id of ["tMob", "tRes", "tNpc", "tDec"]) document.getElementById(id).onchange = draw;
+
+  function show(k) {
+    curMap = k; const m = M[k], band = bandOf(m);
+    document.querySelectorAll("#picker button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.k === k)));
+    document.querySelectorAll("#allTbl tr.row").forEach((tr) => tr.classList.toggle("sel", tr.dataset.k === k));
+    document.getElementById("mName").textContent = m.name;
+    document.getElementById("mSub").textContent = `${band ? `Combat ${band[0]}-${band[1]}` : "No combat band"} · ${m.W}×${m.H} tiles · exits: ${Object.entries(m.exits || {}).map(([d, to]) => `${({ n: "north", s: "south", e: "east", w: "west" })[d]} to ${M[to]?.name || to}`).join(", ") || "none (reached another way)"}${HELD.includes(k) ? " · BUILT AND HELD" : ""}${m.pvp ? " · PvP" : ""}`;
+    draw();
+    const area = m.W * m.H;
+    document.getElementById("mStats").innerHTML = [["walkable", `${Math.round(m.tiles.walk / area * 100)}%`], ["water tiles", m.tiles.water], ["monster spawns", m.spawns.length], ["attack on sight", aggro(m)], ["gathering spots", resN(m)], ["NPCs", m.npcs.length], ["stations", Object.values(m.stations).reduce((a, n) => a + n, 0)], ["events", m.ev.length]].map(([l, v]) => `<span><b>${v}</b>${l}</span>`).join("");
+    const mobs = Object.entries(m.mobCount).map(([t, n]) => [MOB[t], n]).filter(([mb]) => mb).sort((a, b) => a[0].lvl - b[0].lvl);
+    const guard = (g) => g ? Object.entries(g).map(([s, v]) => v < 1 ? `${s} −${Math.round((1 - v) * 100)}%` : v > 1 ? `${s} +${Math.round((v - 1) * 100)}%` : "").filter(Boolean).join(", ") : "";
+    document.getElementById("mSide").innerHTML = `
+      <h4>Monsters (${m.spawns.length} spawns, ${mobs.length} kinds)</h4>${mobs.map(([mb, n]) => `<div class="mob"><div class="pic"><img src="${ART(mb.art)}" alt="" onerror="this.style.visibility='hidden'"></div><div><b>${esc(mb.name)}</b> <span class="ln">×${n} · level ${mb.lvl}${mb.boss ? " · <em>boss</em>" : ""}</span>
+        <div class="ln">${mb.hp} health · attack ${mb.att} · defence ${mb.def} · hits up to ${mb.max}${mb.aggro ? ` · <em>attacks within ${mb.aggro}</em>` : ""}${mb.respawn ? ` · back in ${Math.round(mb.respawn / 60000)} min` : ""}</div>
+        <div class="ln">${[mb.weak && `weak: ${[].concat(mb.weak).join("/")}`, mb.resist && `resists: ${[].concat(mb.resist).join("/")}`, guard(mb.guard)].filter(Boolean).join(" · ")}</div>
+        <div class="drops">${mb.drops.map((d) => `<span class="${d.k === "tickets" ? "g" : ""}">${esc(d.name)} ${nRange(d.n)}${d.p < 1 ? ` · ${pct(d.p)}` : ""}</span>`).join("")}${mb.rare.map((d) => `<span class="r">${esc(d.name)} · ${pct(d.p)}</span>`).join("")}</div></div></div>`).join("") || '<p class="note">None.</p>'}
+      <h4>Gathering</h4><div class="kv">${m.res.map((r) => `<div><b>${esc(r.skill[0].toUpperCase() + r.skill.slice(1))} ${r.lvl}${r.lvl2 ? `/${r.lvl2}` : ""}</b><span>${esc(r.what)}${r.what2 ? ` and ${esc(r.what2)}` : ""} · ${r.n} ${r.t === "spot" ? "spot" : r.t}${r.n > 1 ? "s" : ""}${r.xp ? ` · ${r.xp} xp` : ""}</span></div>`).join("") || '<p class="note">Nothing.</p>'}</div>
+      <h4>Wild mushrooms, eggs and pets</h4><div class="kv">${[["Mushrooms", [...new Set(m.shrooms)].join(", ") || "none"], ["Eggs", m.eggs.map((e) => `${e.egg} (${e.pet})`).join(", ") || "none"], ["Pets", m.pets ? "every kill here has a 1 in 1,000 pet roll" : "no pet drops"]].map(([a, b]) => `<div><b>${a}</b><span>${esc(b)}</span></div>`).join("")}</div>
+      <h4>NPCs and quests</h4><div class="kv">${m.npcs.map((n) => `<div><b>${esc(n.name)}</b><span>${esc(n.quests.join(", ") || "no quests")}</span></div>`).join("") || '<p class="note">Nobody lives here.</p>'}</div>
+      <h4>Stations</h4><div class="kv"><div><b>Here</b><span>${esc(Object.entries(m.stations).map(([s, n]) => `${s}${n > 1 ? ` ×${n}` : ""}`).join(", ") || "none")}${m.noBanks ? " · no banks on this map" : ""}${m.waystone ? ` · waystone: ${esc(m.waystone.replace("waystone_", ""))}` : ""}</span></div></div>
+      <h4>Sal's projects</h4><div class="kv">${m.proj.map((p) => `<div><b>${esc(p.name)}</b><span>${esc(p.tiers.map((t) => `${t.name}: ${t.does}`).join(" → "))}</span></div>`).join("") || '<p class="note">None here.</p>'}</div>
+      <h4>Events that can happen here</h4><div class="kv">${m.ev.map(([a, b]) => `<div><b>${esc(a)}</b><span>${esc(b)}</span></div>`).join("") || '<p class="note">None.</p>'}${OPEN.includes(k) && !["wild", "deep"].includes(k) ? `<div><b>The Long Night</b><span>October nights: corn from kills and gathering, lanterns to light</span></div>` : ""}</div>`;
+  }
+  show("mire");
+
+  /* ---- every monster ---- */
+  {
+    const where = {}; for (const k of [...OPEN, ...HELD]) { const m = M[k]; if (!m) continue; for (const [t, n] of Object.entries(m.mobCount)) (where[t] ||= []).push([m.name, n, HELD.includes(k)]); }
+    const rows = Object.entries(where).map(([t, w]) => [MOB[t], w]).filter(([mb]) => mb);
+    const C = [["Monster", (r) => r[0].name], ["Level", (r) => r[0].lvl], ["Health", (r) => r[0].hp], ["Attack", (r) => r[0].att], ["Defence", (r) => r[0].def], ["Max hit", (r) => r[0].max], ["Spawns", (r) => r[1].reduce((a, x) => a + x[1], 0)], ["Where", (r) => r[1].map((x) => x[0]).join(", ")], ["Drops", (r) => r[0].drops.length + r[0].rare.length]];
+    let si = 1, sd = 1;
+    const paint = () => { rows.sort((a, b) => { const x = C[si][1](a), y = C[si][1](b); return (typeof x === "string" ? x.localeCompare(y) : x - y) * sd; });
+      document.getElementById("mobTbl").innerHTML = `<tr>${C.map(([n], i) => `<th data-i="${i}">${n}${i === si ? (sd > 0 ? " ▲" : " ▼") : ""}</th>`).join("")}</tr>` + rows.map(([mb, w]) => `<tr><td class="nm"><img src="${ART(mb.art)}" alt="" onerror="this.style.visibility='hidden'">${esc(mb.name)}${mb.boss ? ' <span class="chip boss">boss</span>' : ""}</td><td class="n">${mb.lvl}</td><td class="n">${mb.hp.toLocaleString()}</td><td class="n">${mb.att}</td><td class="n">${mb.def}</td><td class="n">${mb.max}</td><td class="n">${w.reduce((a, x) => a + x[1], 0)}</td><td>${w.map(([n, c, h]) => `${esc(n)} ×${c}${h ? " (held)" : ""}`).join(", ")}</td><td><div class="drops">${mb.drops.map((d) => `<span class="${d.k === "tickets" ? "g" : ""}">${esc(d.name)}${d.p < 1 ? ` ${pct(d.p)}` : ""}</span>`).join("")}${mb.rare.map((d) => `<span class="r">${esc(d.name)} ${pct(d.p)}</span>`).join("")}</div></td></tr>`).join("");
+      document.querySelectorAll("#mobTbl th").forEach((th) => th.onclick = () => { const i = +th.dataset.i; sd = i === si ? -sd : 1; si = i; paint(); }); };
+    paint();
+  }
+
+  /* ---- interiors and old maps ---- */
+  const brief = (k) => { const m = M[k]; if (!m) return null; return `<b>${esc(m.name)}</b> ${m.W}×${m.H}${m.npcs.length ? ` · ${m.npcs.map((n) => n.name).join(", ")}` : ""}${m.spawns.length ? ` · ${m.spawns.length} monsters` : ""}${resN(m) ? ` · ${resN(m)} spots` : ""}`; };
+  document.getElementById("restBox").innerHTML = `<div class="fd"><b>Inside (rooms, islands, the casino)</b><span>${INSIDE.map(brief).filter(Boolean).join("<br>")}</span></div><div class="fd warn"><b>Old maps still in the code, closed since the 19 September reset</b><span>${OLD.map(brief).filter(Boolean).join("<br>")}<br><br>The Roman start (the Forum, Ludus Farm, the Olive Grove, Tomatoe Hill, Via Appia, River Bend) and the Paddock and the Rough. Built, unreachable, and not in the atlas: candidates to reuse or retire.</span></div>`;
+});
+</script>
+</body>
+</html>

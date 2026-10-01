@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Area diaries</title>
+<!-- (2026-10-01, the owner: "onto mockup 6"). Mockup 6 of the long-game set: area diaries. Eight diaries, one per region, four tiers each,
+     written from the game's real quests, monsters, fishing spots, bosses and events. Rewards are perks that only work in that region, so they
+     pull people back to old maps. The emblems, the book and the cape are PixelLab drafts. Local only: tools/ is never shipped.
+     http://localhost:4321/tools/diary-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0d0a07;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#3a2a10,transparent),radial-gradient(900px 600px at 100% 30%,#10283a,transparent),#0d0a07}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:16px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd98a}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:980px;line-height:1.55}
+.chart{background:#1a120c;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #3a2616;margin-top:12px;overflow:auto}
+.chart svg{display:block;width:100%;height:auto;min-width:640px}
+.tbl{width:100%;border-collapse:collapse;font:600 13.5px Lora,serif;margin-top:12px;background:#1a120c;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070;padding:10px 12px 6px}.tbl td{padding:8px 12px;border-top:1px solid #3a2616;vertical-align:top}
+.tbl td:first-child{white-space:nowrap;font-weight:800;color:#ffe7b0}.tbl td img{width:24px;height:24px;image-rendering:pixelated;vertical-align:-7px;margin-right:6px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-top:14px;align-items:start}
+.k-win{min-width:0}
+/* tier colours: bronze, silver, gold, platinum */
+.t0{--t:#c8823a}.t1{--t:#c8ccd8}.t2{--t:#ffc83a}.t3{--t:#9ef0ff}
+/* the diary window */
+#dwin{max-width:1100px;margin-top:14px}
+.dw{display:grid;grid-template-columns:270px minmax(0,1fr);gap:14px}
+.regions{display:grid;gap:6px;align-content:start}
+.reg{display:grid;grid-template-columns:44px 1fr auto;gap:9px;align-items:center;padding:6px 8px;border:0;border-radius:8px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);cursor:pointer;text-align:left;font:inherit;color:var(--k-ink)}
+.reg[aria-pressed="true"]{background:#f4d37a;box-shadow:inset 0 0 0 2px #a8740f}
+.emb{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;box-shadow:0 0 0 3px var(--t,#6a5a48),0 0 0 4px rgba(0,0,0,.35)}
+.emb img{width:40px;height:40px;image-rendering:pixelated}
+.emb.none{box-shadow:0 0 0 3px #8a7a64,0 0 0 4px rgba(0,0,0,.25);filter:grayscale(.5)}
+.reg b{display:block;font:800 13px Lora,serif}.reg small{font:700 11px Lora,serif;color:var(--k-ink2)}
+.ring{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:800 10px Lora,serif;color:var(--k-ink)}
+.dright h3{margin:0;font:800 19px Cinzel,serif;color:var(--k-ink)}
+.ttabs{display:flex;gap:5px;margin:8px 0}
+.ttabs button{flex:1;padding:7px 6px;border:0;border-radius:7px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);font:800 12.5px Lora,serif;color:var(--k-ink);cursor:pointer}
+.ttabs button[aria-pressed="true"]{background:var(--t);box-shadow:inset 0 0 0 2px rgba(0,0,0,.25);color:#1a1006}
+.ttabs button small{display:block;font:700 10.5px Lora,serif;opacity:.75}
+.tasks{display:grid;gap:5px}
+.task{display:grid;grid-template-columns:22px 28px 1fr auto;gap:8px;align-items:center;padding:7px 9px;border-radius:7px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);font:600 13px/1.35 Lora,serif;color:var(--k-ink)}
+.task img{width:26px;height:26px;image-rendering:pixelated}
+.task .ck{width:20px;height:20px;border-radius:5px;display:grid;place-items:center;font:900 13px Lora,serif;box-shadow:inset 0 0 0 1.5px var(--k-card-line);background:#fff8}
+.task.done{background:#e3f1d6}.task.done .ck{background:#3a8a3a;color:#fff;box-shadow:none}.task.done span.t{text-decoration:line-through;text-decoration-color:#3a8a3a80;color:#3a5a2a}
+.req{font:800 10.5px Lora,serif;padding:2px 7px;border-radius:999px;white-space:nowrap}.req.ok{background:#cfe8c4;color:#1a5a1a}.req.no{background:#f4d0c8;color:#8a2016}.req.na{background:transparent;color:var(--k-ink2)}
+.reward{margin-top:10px;padding:10px 12px;border-radius:8px;background:linear-gradient(90deg,#fff1c8,#f6e2a8);box-shadow:inset 0 0 0 1.5px #c8963a;font:600 13px/1.5 Lora,serif;color:#3a2808}
+.reward b{color:#2a1a04}.reward .rr{display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}.reward .rr span{display:inline-flex;gap:6px;align-items:center}.reward img{width:24px;height:24px;image-rendering:pixelated}
+/* profile medals */
+.medals{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.medal{display:grid;justify-items:center;gap:5px;font:700 11px Lora,serif;color:var(--k-ink2);width:66px;text-align:center}
+.medal .emb{width:52px;height:52px}.medal .emb img{width:46px;height:46px}
+.cape{display:grid;grid-template-columns:64px 1fr;gap:12px;align-items:center;padding:10px 12px;border-radius:10px;background:linear-gradient(90deg,#16243a,#1a120c);box-shadow:0 0 0 1.5px #3a5a8a;margin-top:12px}
+.cape img{width:60px;height:60px;image-rendering:pixelated}.cape b{font:800 16px Cinzel,serif;color:#ffe7b0;display:block}.cape span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}
+.toast{display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:10px;background:#1a1410;box-shadow:0 0 0 1.5px #c8963a,0 8px 24px rgba(0,0,0,.5);max-width:520px;margin-top:10px}
+.toast img{width:36px;height:36px;image-rendering:pixelated}.toast b{color:#ffe7b0;font:800 14px Lora,serif;display:block}.toast span{font:600 12.5px Lora,serif;color:#cdbfa2}
+.chat{margin-top:10px;padding:10px 14px;border-radius:10px;background:#100a08;box-shadow:0 0 0 1.5px #3a1e10;font:600 13.5px/1.7 Lora,serif;max-width:720px}
+.chat .c{color:#ff5a8a;font-weight:800}.chat .t{color:#7a6a58;font-size:12px;margin-right:6px}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin:12px 0}.rules3>div{background:#1a120c;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.rules3 span b{color:#f6e9cc}
+.build{margin:6px 0 0;padding-left:18px;line-height:1.6;color:#cdbfa2;max-width:980px}.build b{color:#f6e9cc}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+@media (max-width:800px){.dw{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Area diaries</h1>
+  <p class="lede">Eight diaries, one for each region of the world, each with four tiers: <b>Easy, Medium, Hard and Elite</b>. A diary is a list of things worth
+    doing in that region, from catching its fish and finishing its quests to killing its boss and being there for its events, and finishing a tier
+    gives a <b>perk that only works there</b>. That's the point: the long road past 99 shouldn't only happen on the newest map. Diaries send a
+    level-110 player back to the Gloam with a reason, and they give a new player a to-do list for every map they reach.</p>
+  <nav class="jump"><a href="#window">The diary</a><a href="#rewards">What a tier gives</a><a href="#perks">Every Elite perk</a><a href="#levels">Something at every level</a><a href="#show">Showing it off</a><a href="#build">Building it</a></nav>
+
+  <section class="sec" id="window">
+    <h2>The diary</h2>
+    <p>It opens from a new button beside the collection log. Down the left are the eight regions, each with its emblem framed in the colour of the best
+      tier you've finished; on the right, the region's four tiers and their tasks. Below is <b>calvin's</b> diary as an example: click a region and a tier.
+      A task you can't do yet says what it needs, in red; one you could do now, in green.</p>
+    <section class="k-win" id="dwin"><div class="k-head"><img src="diary.png" alt="" style="image-rendering:pixelated"><b>Area diaries</b><span class="k-sub" id="dsum"></span></div>
+      <div class="k-body"><div class="dw"><div class="regions" id="regList"></div><div class="dright" id="regBody"></div></div></div></section>
+  </section>
+
+  <section class="sec" id="rewards">
+    <h2>What a tier gives</h2>
+    <p>Three things every time, so finishing a tier always feels like something even when the perk is small.</p>
+    <div class="rules3">
+      <div><b>A perk in that region</b><span>Small and local: a cheaper ferry, a fish that bites more often, a shop discount, a free teleport home. They're <b>permanent</b> and take no inventory space or equipment slot.</span></div>
+      <div><b>An XP lamp</b><span>Rub it on any skill at or above the tier's level: 30 for Easy, 50 Medium, 70 Hard, 90 Elite. Easy is 2,500 XP, Medium 15,000, Hard 60,000 and Elite 200,000.</span></div>
+      <div><b>Its medal</b><span>The region's emblem on your profile, framed bronze, silver, gold, then platinum. Finish all eight Elites and you get the <b>Grand Tour cape</b> for mockup 1's cape slot.</span></div>
+    </div>
+    <div class="toast"><img src="r_cloud.png" alt=""><span><b>Diary task done: Catch a storm marlin from the sea below</b>Cloudreach & the Thunderhead · Hard · 4 of 6</span></div>
+    <div class="toast" style="box-shadow:0 0 0 1.5px #9ef0ff,0 8px 24px rgba(0,0,0,.5)"><img src="r_yard.png" alt=""><span><b>The Yard diary: Elite, finished</b>Platinum medal, a 200,000 XP lamp, and the Yard's Elite perk: raids pay 10% more.</span></div>
+    <div class="chat"><div><span class="t">20:41</span><span class="c">CASINO</span> BeeEzRadio has finished the Yard diary. Every task. Even the one with the chickens.</div></div>
+    <p class="note">Only Elite finishes go to chat. Every other task is a toast for you alone.</p>
+  </section>
+
+  <section class="sec" id="perks">
+    <h2>Every Elite perk</h2>
+    <p>The top of each diary, and the reason to finish. Each one makes that region better to work in, never the whole game.</p>
+    <table class="tbl" id="perkTbl"></table>
+  </section>
+
+  <section class="sec" id="levels">
+    <h2>Something at every level</h2>
+    <p>Tasks are counted by the highest level they need. Easy tiers are for new players, Elite tiers for the road past 99, and every band from 1 to 120 has
+      something, which is the difference between a diary and a list of endgame chores.</p>
+    <div class="chart"><svg id="lvlSvg" viewBox="0 0 900 270" role="img" aria-label="How many diary tasks need each level band, from 1 to 120"></svg></div>
+  </section>
+
+  <section class="sec" id="show">
+    <h2>Showing it off</h2>
+    <p>A row on the profile, under the trading card. The cape is the one thing that shows in the world.</p>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="diary.png" alt="" style="image-rendering:pixelated"><b>calvin's diaries</b><span class="k-sub">on the profile</span></div>
+        <div class="k-body"><div class="medals" id="medalRow"></div>
+          <p style="margin:10px 0 0;font:600 12.5px Lora,serif;color:var(--k-ink2)">Bronze for Easy, silver Medium, gold Hard, platinum Elite. A grey ring means none yet. Hover a medal for the tiers done.</p></div></section>
+      <div>
+        <div class="cape"><img src="cape.png" alt=""><span><b>The Grand Tour cape</b>All eight Elites. Worn in mockup 1's cape slot, and it carries every region's Elite perk with it, so a wearer can teleport home from any region once a day. Title: "the Well-Travelled".</span></div>
+        <div class="rules3" style="grid-template-columns:1fr">
+          <div><b>A hiscore of its own</b><span>"Diary tasks done" goes on the hiscores beside total level, so a skiller who has been everywhere ranks the way a fighter does on combat.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <ul class="build">
+      <li><b>A task is a check on something the server already sees</b>: a kill, a gather, a craft, a quest handed in, a boss kill, being in an event when it ends, standing somewhere. Most are a line each ("catch a stormmarlin in the thunderhead"), and the server already does the work the check reads.</li>
+      <li><b>Progress is one number per region</b> (a bit for each task), saved with the character. Counted tasks ("kill 50 Bog Gnashers") use the kill counts the tracking keys already keep.</li>
+      <li><b>On launch day, what you've already done counts</b>: quests finished, levels, the collection log, boss kill counts. Nobody starts from zero on things they've already done.</li>
+      <li><b>Perks are flags read where the game already reads a buff</b>: a shop price, a catch chance, a ferry fee, a raid payout. The Grand Tour cape is one item whose effect is "all of them".</li>
+      <li><b>Performance</b>: a task check is a few comparisons on events that are happening anyway. The window is fetched when it's opened, never at login, the way the collection log is.</li>
+      <li><b>Art</b>: eight region emblems, the book, the cape and four lamps, each with PixelLab art. The four ring colours are drawn, not images.</li>
+    </ul>
+    <div class="callout"><b>Things to decide:</b> eight regions or one diary per map (eight keeps each one meaty; per map is about twenty diaries); whether the Wilderness gets a diary at all, since it pushes people into PvP; whether "be there for the event" tasks are fair to people who play at odd hours; and the lamp sizes.</div>
+  </section>
+</main>
+<script>
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const IC = (k) => `/v3/assets/img/glad/flat/items/${k}.png`;
+const TIERS = ["Easy", "Medium", "Hard", "Elite"];
+/* calvin, for the example: levels he has, so a task can say whether he could do it now */
+const LV = { melee: 82, archery: 76, magic: 55, fishing: 71, cooking: 74, mining: 66, smithing: 60, woodcutting: 68, agility: 40, thieving: 41, alchemy: 53, fletching: 62, wizardry: 50, farming: 55, fungiculture: 49, combat: 82, tinkering: 30, breeding: 28 };
+/* task: [text, icon (item key or skill), requirement [skill, level] or null, done] */
+const R = [
+  { k: "yard", name: "The Yard", sub: "and the Casino", em: "r_yard.png", done: 3,
+    perks: ["Bom's shop is 5% cheaper", "The Gem Sorter's roll costs 10% less", "A free teleport to the Yard once a day, from anywhere", "Raids in the Yard pay 10% more"],
+    t: [[["Hand Darla the Scrap Line", "skill_mining", ["mining", 15], 1], ["Sort a gem at the Gem Sorter", "skill_alchemy", null, 1], ["Win a hand of anything in the Casino", "skill_thieving", null, 1], ["Kill a chicken without hitting it twice", "skill_melee", null, 1]],
+      [["Finish Bronny's order", "skill_smithing", null, 1], ["Hand Sal a part for any Tinkerer project", "skill_tinkering", null, 1], ["Be in the Yard when a raid is won", "skill_hp", null, 1], ["Fill your gem bag", "skill_mining", null, 1]],
+      [["Beat the King of the Yard", "skill_melee", ["combat", 60], 1], ["Plug a sandbag in the Flood", "skill_strength", null, 1], ["Finish Bronny's order 10 times", "skill_smithing", null, 1], ["Roll a Perfect gem", "skill_mining", null, 1]],
+      [["Deal the last hit on a raid boss", "skill_melee", ["combat", 80], 1], ["Finish a Tinkerer project tier you started", "skill_tinkering", ["tinkering", 50], 0], ["Win the Flood without a single bag lost", "skill_strength", null, 0], ["Sort 100 gems", "skill_alchemy", null, 0]]] },
+  { k: "gloam", name: "The Gloam", sub: "and the Lantern Mire", em: "r_gloam.png", done: 2,
+    perks: ["Lantern Moths drop a little more light", "Lantern lake bites 10% more often", "Mudge sells vials at half price", "Mushrooms in the Gloam's beds grow 20% faster"],
+    t: [[["Finish Lamps Out for Mudge", "skill_alchemy", null, 1], ["Catch a lanternfish", "lanternfish", ["fishing", 20], 1], ["Kill a Sulking Toadstool", "skill_melee", null, 1], ["Light every lamp on the Mire road", "skill_agility", null, 1]],
+      [["Finish Lights on the Mire", "skill_melee", null, 1], ["Kill 50 Bog Gnashers", "skill_melee", ["combat", 18], 1], ["Pick a Gloam mushroom", "skill_fungiculture", ["fungiculture", 10], 1], ["Brew anything from the Mire's herbs", "skill_alchemy", ["alchemy", 20], 1]],
+      [["Catch a mudskipper", "skill_fishing", ["fishing", 25], 1], ["Kill a Paper Twister with a spell", "skill_magic", ["magic", 20], 0], ["Grow a full bed of Gloam mushrooms", "skill_fungiculture", ["fungiculture", 40], 1], ["Find the thing that moves in the Black pond", "skill_fishing", ["fishing", 60], 0]],
+      [["Catch 500 fish on the Mire", "skill_fishing", ["fishing", 80], 0], ["Kill the Drowned without eating", "skill_hp", ["combat", 60], 0], ["Grow every mushroom the Gloam has", "skill_fungiculture", ["fungiculture", 70], 0], ["Walk the Mire road at night without a lantern", "skill_agility", ["agility", 50], 0]]] },
+  { k: "bone", name: "The Boneyard", sub: "and the Golden Sands", em: "r_bone.png", done: 2,
+    perks: ["Charon's ferry is free", "The Crypt's ante is 10% less", "The Pyramid's chest has one more roll, once a day", "The oasis never runs dry, and the Sands' heat never slows you"],
+    t: [[["Finish Grave Duty for Sister Morrow", "skill_melee", null, 1], ["Ride Charon's ferry", "skill_agility", null, 1], ["Catch a bonefish in the flooded crypt", "bonefish", ["fishing", 30], 1], ["Kill a Sorry Ghoul", "skill_melee", null, 1]],
+      [["Clear the Crypt", "skill_melee", ["combat", 22], 1], ["Finish the Caravan Road for Rashid", "skill_agility", null, 1], ["Catch an oasis perch", "oasisperch", ["fishing", 40], 1], ["Kill a Sand Cobra", "skill_archery", ["combat", 40], 1]],
+      [["Clear the Black Crypt", "skill_melee", ["combat", 76], 1], ["Clear the Great Pyramid", "skill_melee", ["combat", 76], 0], ["Mine the Fallen Star in the Boneyard", "starfall_ore", ["mining", 50], 1], ["Finish The Sister's Marker", "skill_smithing", ["smithing", 60], 1]],
+      [["Clear the Black Crypt in under ten minutes", "skill_melee", ["combat", 85], 0], ["Get the Squeeze's pet", "skill_breeding", null, 0], ["Brew the potion only Pyramid venom makes", "skill_alchemy", ["alchemy", 80], 0], ["Catch a nile carp", "skill_fishing", ["fishing", 48], 1]]] },
+  { k: "cloud", name: "Cloudreach", sub: "and the Thunderhead", em: "r_cloud.png", done: 1,
+    perks: ["Cloudreach's waystone holds one more charge", "Storm marlin bite 10% more often", "Starfall rock mines 10% faster", "The Lightning Rod's charged air gives a Spark every 45 s, not 60"],
+    t: [[["Finish Eels for Zephyr", "skyeel", ["fishing", 40], 1], ["Kill a Cumulus Ram", "skill_melee", null, 1], ["Buy something from Wren's stall", "skill_thieving", null, 1], ["Stand on the Thunderhead in a storm", "skill_agility", null, 1]],
+      [["Finish The Way Home for Zephyr", "skill_wizardry", ["wizardry", 40], 1], ["Kill a Hail Drake", "skill_magic", ["combat", 62], 1], ["Mine voidglass", "voidglass", ["mining", 70], 0], ["Catch a cloud ray", "skill_fishing", ["fishing", 45], 1]],
+      [["Finish all four of Volta's jobs", "skill_smithing", null, 0], ["Catch a storm marlin from the sea below", "cstormmarlin", ["fishing", 50], 1], ["Kill the House", "skill_melee", ["combat", 70], 1], ["Give the Lightning Rod a part", "skill_tinkering", null, 1], ["Smith at the storm forge", "skill_smithing", ["smithing", 50], 1], ["Kill a Thunder Goose with an arrow", "skill_archery", ["archery", 55], 0]],
+      [["Catch a thunder squid", "skill_fishing", ["fishing", 58], 0], ["Mine 200 starfall", "starfall_ore", ["mining", 60], 0], ["Kill the Pumpkin King", "skill_melee", ["combat", 60], 0], ["Collect a star fragment during Starfall", "stardust", null, 0]]] },
+  { k: "carn", name: "The Carnival", sub: "and the Boardwalk", em: "r_carn.png", done: 1,
+    perks: ["Carnival games pay 5% more tickets", "The rowboats are free", "Captain Claw drops his table 10% more often", "Cooking on the Boardwalk can make two at once"],
+    t: [[["Win a Carnival game", "skill_thieving", null, 1], ["Kill a Pinhead", "skill_melee", ["combat", 62], 1], ["Walk the Boardwalk end to end", "skill_agility", null, 1], ["Eat something from the fish-and-chip shop", "skill_cooking", null, 1]],
+      [["Take the rowboat to every island", "skill_agility", null, 1], ["Kill the Strongman", "skill_strength", ["combat", 71], 1], ["Kill a Kraken Arm", "skill_melee", ["combat", 78], 0], ["Cook in the slow smoke", "skill_cooking", ["cooking", 60], 1]],
+      [["Kill Captain Claw", "skill_melee", ["combat", 80], 1], ["Kill the Fat Lady", "skill_magic", ["combat", 68], 0], ["Fish off the end of the long pier", "skill_fishing", ["fishing", 70], 1], ["Win 10 Carnival games in a day", "skill_thieving", null, 0]],
+      [["Kill Captain Claw 25 times", "skill_melee", ["combat", 85], 0], ["Get Captain Claw's pet", "skill_breeding", null, 0], ["Kill the Grinning Man with no food", "skill_hp", ["combat", 85], 0], ["Find what lives in the lighthouse", "skill_agility", ["agility", 60], 0]]] },
+  { k: "vault", name: "The Vault", sub: "the Depths and the Trailer Park", em: "r_vault.png", done: 0,
+    perks: ["Vault Wardens notice you a tile later", "Black water bites 10% more often", "A free teleport to the Junk King's yard once a day", "Eclipse and nova ore mine 10% faster"],
+    t: [[["Finish The Audit", "skill_thieving", ["thieving", 40], 1], ["Kill a Vault Warden", "skill_melee", ["combat", 70], 1], ["Walk into the Trailer Park", "skill_agility", null, 1], ["Kill a Junkyard Dog", "skill_melee", ["combat", 80], 0]],
+      [["Finish Count the Hoard", "skill_melee", ["combat", 75], 0], ["Mine eclipse ore", "eclipse_ore", ["mining", 70], 0], ["Catch a mudcat in the black water", "mudcat", ["fishing", 80], 0], ["Kill the Deepwarden", "skill_melee", ["combat", 84], 0]],
+      [["Kill the Junk King", "skill_melee", ["combat", 90], 0], ["Mine nova ore", "nova_ore", ["mining", 80], 0], ["Finish Vaultwood", "skill_woodcutting", ["woodcutting", 75], 0], ["Kill the Pit Boss and the Last Dealer", "skill_melee", ["combat", 92], 0]],
+      [["Catch a bowfin", "skill_fishing", ["fishing", 88], 0], ["Kill the Junk King 25 times", "skill_melee", ["combat", 95], 0], ["Pick the Vault Ghost's pocket (mockup 1)", "skill_thieving", ["thieving", 110], 0], ["Mine singularity", "skill_mining", ["mining", 90], 0]]] },
+  { k: "wild", name: "The Wilderness", sub: "and the Deep Wild", em: "r_wild.png", done: 0,
+    perks: ["Lose one fewer item if you die in the Wild", "The skull fades a minute sooner", "See how many people are in the Wild from the gate", "Keep one more item on death in the Wild"],
+    t: [[["Walk into the Wilderness", "skill_agility", null, 1], ["Kill anything in the Wild", "skill_melee", null, 1], ["Leave the Wild alive with loot", "skill_thieving", null, 0], ["Chop a tree in the Wild", "skill_woodcutting", null, 1]],
+      [["Reach the Deep Wild", "skill_agility", ["combat", 50], 0], ["Kill a player in the Wild", "skill_melee", null, 0], ["Mine in the Deep Wild", "skill_mining", ["mining", 60], 0], ["Survive ten minutes skulled", "skill_hp", null, 0]],
+      [["Kill five players in one trip", "skill_melee", ["combat", 70], 0], ["Kill a Deep Wild monster over level 80", "skill_melee", ["combat", 80], 0], ["Fish in the Deep Wild", "skill_fishing", ["fishing", 75], 0], ["Escape a fight at under 10% health", "skill_agility", null, 0]],
+      [["Kill a player 20 levels above you", "skill_melee", null, 0], ["Bank 1,000,000 tickets' worth from the Wild", "skill_thieving", null, 0], ["Clear the Deep Wild's camp alone", "skill_melee", ["combat", 95], 0], ["Spend an hour skulled", "skill_hp", null, 0]]] },
+  { k: "north", name: "The Valley", sub: "and the Frozen Reach", em: "r_north.png", done: 0,
+    perks: ["The Valley's and the Reach's waystones hold one more charge", "Frostpine chops 10% faster", "Old Rex's chest has one more roll, once a day", "See when Old Rex and the Ice Wyrm will next wake"],
+    t: [[["Walk into the Primeval Valley", "skill_agility", null, 0], ["Kill a Raptor", "skill_melee", ["combat", 90], 0], ["Walk into the Frozen Reach", "skill_agility", null, 0], ["Catch an icefin", "icefin", ["fishing", 90], 0]],
+      [["Kill a Woolly Mammoth", "skill_melee", ["combat", 95], 0], ["Chop frostpine", "skill_woodcutting", ["woodcutting", 94], 0], ["Mine glacite", "glacite", ["mining", 95], 0], ["Kill a Frost Wolf with a spell", "skill_magic", ["magic", 90], 0]],
+      [["Kill Old Rex", "skill_melee", ["combat", 100], 0], ["Kill the Mammoth Matriarch", "skill_melee", ["combat", 100], 0], ["Kill the Frost Jarl", "skill_magic", ["combat", 106], 0], ["Make a Frostpine wand", "skill_wizardry", ["wizardry", 97], 0]],
+      [["Be there when the Ice Wyrm dies", "skill_melee", ["combat", 110], 0], ["Get the Golden Raptor's drop", "skill_melee", ["combat", 100], 0], ["Make the Rimeheart", "skill_wizardry", ["wizardry", 98], 0], ["Get the Abominable or the Blizzard Owl", "skill_breeding", null, 0]]] }];
+
+const tierDone = (r, i) => r.t[i].every((x) => x[3]);
+const done = (r) => { let n = 0; for (let i = 0; i < 4 && tierDone(r, i); i++) n = i + 1; return n; };
+let cur = R[3], tier = 2;
+function regList() {
+  document.getElementById("regList").innerHTML = R.map((r) => { const d = done(r), all = r.t.flat(), got = all.filter((x) => x[3]).length, f = got / all.length;
+    return `<button class="reg" data-k="${r.k}" aria-pressed="${r === cur}"><span class="emb ${d ? `t${d - 1}` : "none"}"><img src="${r.em}" alt=""></span><span><b>${r.name}</b><small>${r.sub} · ${d ? TIERS[d - 1] + " done" : "none done"}</small></span><span class="ring" style="background:conic-gradient(#3a8a3a ${f * 100}%,rgba(0,0,0,.12) 0)"><span style="background:var(--k-card);border-radius:50%;width:26px;height:26px;display:grid;place-items:center">${Math.round(f * 100)}%</span></span></button>`; }).join("");
+  document.querySelectorAll(".reg").forEach((b) => b.addEventListener("click", () => { cur = R.find((r) => r.k === b.dataset.k); tier = Math.min(3, done(cur)); paint(); }));
+  const all = R.flatMap((r) => r.t.flat()); document.getElementById("dsum").textContent = `${all.filter((x) => x[3]).length} of ${all.length} tasks · ${R.filter((r) => done(r) === 4).length} of 8 Elite`;
+}
+function reqChip(q, d) {
+  if (!q) return '<span class="req na">no level</span>';
+  const [sk, l] = q, have = LV[sk] ?? 1, nm = sk[0].toUpperCase() + sk.slice(1);
+  return d ? `<span class="req na">${nm} ${l}</span>` : `<span class="req ${have >= l ? "ok" : "no"}">${nm} ${l}</span>`;
+}
+function body() {
+  const r = cur, list = r.t[tier], d = done(r);
+  const lamp = [2500, 15000, 60000, 200000][tier], need = [30, 50, 70, 90][tier];
+  document.getElementById("regBody").innerHTML = `<h3>${r.name} <small style="font:700 13px Lora,serif;color:var(--k-ink2)">${r.sub}</small></h3>
+    <div class="ttabs">${TIERS.map((t, i) => { const g = r.t[i].filter((x) => x[3]).length; return `<button class="t${i}" data-i="${i}" aria-pressed="${i === tier}">${t}<small>${g}/${r.t[i].length}${tierDone(r, i) ? " ✓" : ""}</small></button>`; }).join("")}</div>
+    <div class="tasks">${list.map(([t, ic, q, ok]) => `<div class="task ${ok ? "done" : ""}"><span class="ck">${ok ? "✓" : ""}</span><img src="${IC(ic)}" alt=""><span class="t">${esc(t)}</span>${reqChip(q, ok)}</div>`).join("")}</div>
+    <div class="reward"><b>${TIERS[tier]} reward${tierDone(r, tier) ? " (claimed)" : ""}:</b> ${esc(r.perks[tier])}.
+      <div class="rr"><span><img src="${IC("pot_double")}" alt="">A ${lamp.toLocaleString()} XP lamp (any skill at ${need}+)</span><span><span class="emb t${tier}" style="width:24px;height:24px"><img src="${r.em}" alt="" style="width:22px;height:22px"></span>${["bronze", "silver", "gold", "platinum"][tier]} medal</span></div></div>`;
+  document.querySelectorAll(".ttabs button").forEach((b) => b.addEventListener("click", () => { tier = +b.dataset.i; body(); }));
+}
+function paint() { regList(); body(); }
+paint();
+
+/* every elite perk */
+document.getElementById("perkTbl").innerHTML = `<tr><th>Region</th><th>Easy</th><th>Medium</th><th>Hard</th><th>Elite</th></tr>` + R.map((r) => `<tr><td><img src="${r.em}" alt="">${r.name}</td>${r.perks.map((p, i) => `<td${i === 3 ? ' style="color:#9ef0ff;font-weight:800"' : ""}>${esc(p)}</td>`).join("")}</tr>`).join("");
+
+/* tasks by level band */
+{
+  const B = [[1, 20], [21, 40], [41, 60], [61, 80], [81, 99], [100, 120]], cnt = B.map(() => [0, 0, 0, 0]);
+  for (const r of R) r.t.forEach((list, ti) => list.forEach(([, , q]) => { const l = q ? q[1] : 1; const bi = B.findIndex(([a, b]) => l >= a && l <= b); cnt[bi][ti]++; }));
+  const COL = ["#c8823a", "#c8ccd8", "#ffc83a", "#9ef0ff"], W = 900, H = 270, L = 50, Rr = 20, T = 20, Bm = 46, max = Math.max(...cnt.map((c) => c.reduce((a, b) => a + b, 0))) + 4;
+  const bw = (W - L - Rr) / B.length, y = (v) => T + (H - T - Bm) * (1 - v / max);
+  let s = ""; for (let v = 0; v <= max; v += 10) s += `<line x1="${L}" x2="${W - Rr}" y1="${y(v)}" y2="${y(v)}" stroke="#2a1c12"/><text x="${L - 8}" y="${y(v) + 4}" fill="#a89070" font-size="11.5" text-anchor="end">${v}</text>`;
+  cnt.forEach((c, i) => { let acc = 0; const x = L + i * bw + bw * 0.2, w = bw * 0.6;
+    c.forEach((n, ti) => { if (!n) return; const y0 = y(acc), y1 = y(acc + n); s += `<rect x="${x}" y="${y1 + 1}" width="${w}" height="${y0 - y1 - 2}" rx="${acc + n === c.reduce((a, b) => a + b, 0) ? 4 : 0}" fill="${COL[ti]}"><title>${TIERS[ti]}: ${n}</title></rect>`; acc += n; });
+    s += `<text x="${x + w / 2}" y="${y(acc) - 6}" fill="#f6e9cc" font-size="12" font-weight="700" text-anchor="middle">${acc}</text><text x="${x + w / 2}" y="${H - Bm + 18}" fill="#d8c8a8" font-size="12" text-anchor="middle">level ${B[i][0]}–${B[i][1]}</text>`; });
+  s += TIERS.map((t, i) => `<rect x="${L + i * 110}" y="${H - 16}" width="12" height="12" rx="3" fill="${COL[i]}"/><text x="${L + i * 110 + 18}" y="${H - 6}" fill="#d8c8a8" font-size="12">${t}</text>`).join("");
+  document.getElementById("lvlSvg").innerHTML = s;
+}
+
+/* medals */
+document.getElementById("medalRow").innerHTML = R.map((r) => { const d = done(r); return `<div class="medal" title="${r.name}: ${d ? TIERS.slice(0, d).join(", ") : "nothing yet"}"><span class="emb ${d ? `t${d - 1}` : "none"}"><img src="${r.em}" alt=""></span>${r.name.replace("The ", "")}</div>`; }).join("");
+</script>
+</body>
+</html>

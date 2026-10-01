@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>The Road Past 99</title>
+<!-- (2026-09-30, the owner: "think long term - users getting into levels 100-120, which takes many many many hours", "mock up, starting with number one").
+     Mockup 1 of the long-game set: every skill on to 120. Drawn from data.json, which is last night's world backup (where everyone actually is, and how
+     much XP an hour they really put in) and the three curves. Local only: tools/ is never shipped. http://localhost:4321/tools/past99-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0c0908;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1200px 600px at 15% -10%,#2a1a40,transparent),radial-gradient(900px 500px at 100% 30%,#2a1810,transparent),#0c0908}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+a{color:#ffd98a}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:16px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:980px;line-height:1.55}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}
+.callout b{color:#ffe27a}
+.heroes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px}
+.hero{background:#1a120c;border-radius:10px;padding:14px 16px;box-shadow:0 0 0 1.5px #3a2616}
+.hero .big{font:900 30px/1 Cinzel,serif;color:#ffd84a;margin:4px 0}.hero small{display:block;color:#c8b890;font-size:13px;line-height:1.4}
+.chart{background:#1a120c;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #3a2616;margin-top:12px;overflow:auto}
+.chart svg{display:block;width:100%;height:auto;min-width:640px}
+.chart text{font-family:Lora,serif}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:8px 4px 0;font:700 12.5px Lora,serif;color:#d8c8a8}.legend i{display:inline-block;width:14px;height:3px;margin-right:6px;vertical-align:middle}
+.tbl{width:100%;border-collapse:collapse;font:600 13.5px Lora,serif;margin-top:12px;background:#1a120c;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070;padding:10px 12px 6px}
+.tbl td{padding:8px 12px;border-top:1px solid #3a2616}.tbl td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl tr.pick td{background:rgba(232,191,53,.08)}.tbl tr.pick td:first-child{box-shadow:inset 3px 0 0 #e8bf35}
+.tag{display:inline-block;padding:1px 7px;border-radius:999px;font:800 10.5px Lora,serif;background:#e8bf35;color:#2a1a08;margin-left:6px}
+/* the game, mocked in the kit */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-top:14px;align-items:start}
+.k-win{min-width:0}
+.sk{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;padding:6px 8px;border-radius:6px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);margin-top:5px}
+.sk img{width:30px;height:30px;image-rendering:pixelated}
+.sk b{font:800 14px Lora,serif;color:var(--k-ink)}.sk small{display:block;font:600 11.5px Lora,serif;color:var(--k-ink2)}
+.sk .bar{height:6px;border-radius:3px;background:rgba(0,0,0,.15);margin-top:3px;overflow:hidden}.sk .bar i{display:block;height:100%;background:linear-gradient(90deg,#4a9a3a,#7ee07e)}
+.sk .lv{font:900 20px Cinzel,serif;color:var(--k-ink);text-align:right;min-width:62px}.sk .lv small{display:inline;font:700 11px Lora,serif;color:var(--k-ink3)}
+.sk.m{background:linear-gradient(90deg,#3a2a6a 0,#5a3a8a 100%);box-shadow:inset 0 0 0 1px #b08ae0}.sk.m b,.sk.m .lv{color:#ffe27a}.sk.m small{color:#e0d0ff}.sk.m .lv small{color:#d8c8ff}
+.sk.m .bar i{background:linear-gradient(90deg,#c8963a,#ffd84a)}
+.tierchip{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;background:#ffd84a;color:#3a1a08;font:900 9.5px Lora,serif;letter-spacing:.06em;text-transform:uppercase;vertical-align:1px}
+.banner{margin:6px auto;padding:10px 22px;border-radius:8px;background:linear-gradient(#3a2a14,#1e160c);box-shadow:0 0 0 3px #e8bf35,0 0 30px rgba(232,191,53,.45);text-align:center;color:#fff;width:fit-content;max-width:100%}
+.banner small{display:block;font:800 11px Lora,serif;letter-spacing:.14em;text-transform:uppercase;color:#ffd98a}.banner b{font:800 24px Cinzel,serif}.banner em{display:block;font:600 13px Lora,serif;font-style:normal;color:#e8dcff;margin-top:3px}
+.capebox{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center}
+.cape{position:relative;width:128px;height:128px}.cape img.c{width:128px;height:128px;image-rendering:pixelated}
+.cape img.s{position:absolute;left:50%;top:22%;width:30px;height:30px;transform:translateX(-50%);image-rendering:pixelated;filter:drop-shadow(0 0 2px #000)}
+.capes{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.capes .cape{width:64px;height:64px}.capes .cape img.c{width:64px;height:64px}.capes .cape img.s{width:16px;height:16px;top:21%}
+.perk{display:grid;grid-template-columns:52px 1fr;gap:4px 10px;padding:7px 10px;border-radius:6px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);margin-top:6px}
+.perk .w{font:900 16px Cinzel,serif;color:var(--k-gold-ink)}.perk b{font:800 13.5px Lora,serif;color:var(--k-ink)}.perk span{grid-column:2;font:600 12.5px/1.4 Lora,serif;color:var(--k-ink2)}
+/* the nineteen skills */
+.skills{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-top:14px}
+.sc{background:#1a120c;border-radius:10px;box-shadow:0 0 0 1.5px #3a2616;padding:12px 14px}
+.sc h4{display:flex;align-items:center;gap:8px;margin:0 0 6px;font:800 16px Cinzel,serif;color:#ffe7b0}.sc h4 img{width:28px;height:28px;image-rendering:pixelated}.sc h4 small{margin-left:auto;font:700 11.5px Lora,serif;color:#a89070}
+.sc ol{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.sc li{display:grid;grid-template-columns:38px 1fr;gap:8px;font:600 13px/1.4 Lora,serif;color:#d8c8a8}
+.sc li b{font:900 13px Cinzel,serif;color:#ffd84a}
+.sc li.big{color:#fff}.sc li.big b{color:#ffe27a}
+.sc li .new{display:inline-block;padding:0 6px;margin-left:4px;border-radius:999px;background:#5a3a8a;color:#e8dcff;font:800 10px Lora,serif}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+.pick{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(47,122,58,.14);box-shadow:inset 0 0 0 1.5px rgba(90,180,100,.4);color:#d8f0d0;line-height:1.55;max-width:980px}
+.build{margin:6px 0 0;padding-left:18px;line-height:1.6;color:#cdbfa2;max-width:980px}.build b{color:#f6e9cc}
+</style>
+</head>
+<body>
+<main>
+  <h1>The Road Past 99</h1>
+  <p class="lede">Every skill goes on to <b>120</b>. Ninety-nine stays the badge it is today; the twenty-one levels after it are the long game: months for the
+    most dedicated, a reason to keep training a skill you have already "finished", and something worth showing on a profile. Every fifth level unlocks
+    something real for that skill, so the climb is never twenty-one empty levels. This is mockup 1 of the long-game set: Ascendancies (2) and endgame gear
+    and crafting (3) hang off it.</p>
+  <nav class="jump"><a href="#now">Where the server is</a><a href="#curve">The curve</a><a href="#look">How it looks</a><a href="#skills">All 18 skills</a><a href="#cape">The Mastery Cape</a><a href="#build">Building it</a></nav>
+
+  <section class="sec" id="now">
+    <h2>Where the server is</h2>
+    <p id="nowP">Last night's backup.</p>
+    <div class="heroes" id="heroes"></div>
+    <div class="chart"><svg id="topChart" viewBox="0 0 900 470" role="img" aria-label="The highest level anyone has, in each skill"></svg></div>
+  </section>
+
+  <section class="sec" id="curve">
+    <h2>The curve: how long is 120?</h2>
+    <p>Level 99 is 13.0M XP today, on RuneScape's own curve (each level about 10% more than the last). There are three sensible ways on to 120, and the gentlest is already twice the whole road to 99: even if every level past 99 cost no more than 99 itself did, that is twenty-one of them. The hours
+      use what players actually put in: the most active put <b id="paceA"></b> XP an hour into their main skill across all their time online (median of
+      the regulars <b id="paceM"></b>), and a "focused" pace of 100k an hour, which is a guess at someone grinding the best spot at 100+.</p>
+    <div class="chart"><svg id="curveChart" viewBox="0 0 900 400" role="img" aria-label="Total XP needed for each level from 90 to 120, three curves"></svg>
+      <div class="legend"><span><i style="background:#ffd84a"></i>RuneScape's curve, continued</span><span><i style="background:#7ab8ff"></i>Three times again</span><span><i style="background:#b8a888"></i>Flat: every level costs what 99 did</span></div></div>
+    <table class="tbl" id="curveTbl"></table>
+    <div class="callout"><b>Recommendation: RuneScape's curve, continued.</b> It is the honest extension of the curve players already know, and 120 becomes a real
+      achievement: at today's top pace it is a year of play; focused, about a thousand hours. What keeps that from feeling hopeless is everything below:
+      a real unlock every five levels, a gold number from the first level past 99, and better resources at 110 that raise the XP an hour. If that is too
+      far, the "three times" curve gets to 120 in well under half the time with the same unlocks, and the dial can be moved later without anyone losing a level
+      (levels are read from XP, so a gentler curve only ever moves people up).</div>
+  </section>
+
+  <section class="sec" id="look">
+    <h2>How it looks in the game</h2>
+    <p>Past 99 a skill turns gold-on-violet in the Skills tab, its number keeps going, and the bar fills toward the next level as now. Every fifth level
+      gets the big banner with what it unlocked. The first person to 120 in any skill gets a CASINO line and a permanent plaque on the hiscores.</p>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/skills.png" alt=""><b>Skills</b><span class="k-sub">Total level 1,694 / 2,160</span></div>
+        <div class="k-paper" style="padding:10px 12px" id="skTab"></div></section>
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/settings.png" alt=""><b>The moments</b><span class="k-sub">banners and lines</span></div>
+        <div class="k-paper" style="padding:12px">
+          <div class="banner"><small>Level up</small><b>Mining 100</b><em>Mastery: 10% chance of a second ore</em></div>
+          <div class="banner"><small>Mastery milestone</small><b>Fishing 110</b><em>New: the Leviathan eel, off the Deep End</em></div>
+          <div class="casino" style="margin-top:10px;padding:8px 10px;border-radius:6px;background:#1e140c;color:#ffd98a;font:600 13px/1.45 Lora,serif">
+            <p style="margin:4px 0">★ <b>CASINO:</b> 🏆 Kellzifer is the FIRST in EastScape to reach FISHING 120. Their name goes on the plaque.</p>
+            <p style="margin:4px 0">★ <b>CASINO:</b> Calvinthesneak just reached Woodcutting 105.</p></div>
+          <p style="margin-top:10px;font:600 12.5px Lora,serif;color:var(--k-ink2)">Milestone lines (100, 105, 110, 115, 120) go to everyone, as 99 does now; other levels past 99 tell only you.</p>
+        </div></section>
+    </div>
+  </section>
+
+  <section class="sec" id="skills">
+    <h2>All 18 skills, 100 to 120</h2>
+    <p>One unlock at 100, 105, 110, 115 and 120. The pattern holds across skills, so a player learns it once: <b>100</b> is a small boost you feel at once,
+      <b>105</b> a convenience, <b>110</b> is the big one (a new top resource or recipe, and the materials for the Relic gear in mockup 3), <b>115</b> a
+      second boost, and <b>120</b> the cape. The combat skills are different: their levels past 100 are points for the Ascendancy tree (mockup 2).</p>
+    <div class="skills" id="skillCards"></div>
+  </section>
+
+  <section class="sec" id="cape">
+    <h2>The Mastery Cape</h2>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/items/skill_fishing.png" alt=""><b>Fishing Mastery Cape</b><span class="k-sub">cape slot · untradeable</span></div>
+        <div class="k-paper" style="padding:12px">
+          <div class="capebox"><span class="cape"><img class="c" src="cape.png" alt=""><img class="s" src="/v3/assets/img/glad/flat/items/skill_fishing.png" alt=""></span>
+            <div><p style="margin:0;font:600 13.5px/1.5 Lora,serif;color:var(--k-ink)">Only for Fishing 120. Worn in a new <b>cape slot</b>, so it never costs you a stat. One cape per skill, the skill's emblem in the middle, and the trim glows.</p></div></div>
+          <div class="perk"><span class="w">Perk</span><b>+5% in its own skill</b><span>Fishing XP and catch speed, while worn.</span></div>
+          <div class="perk"><span class="w">Travel</span><b>Home, once an hour</b><span>Teleports you to the skill's best spot: the Deep End for Fishing.</span></div>
+          <div class="perk"><span class="w">Name</span><b>A trim on your name</b><span>A thin gold underline on your name and a « Master Angler » title to wear.</span></div>
+          <div class="perk"><span class="w">All 18</span><b>The Max Cape</b><span>Every skill at 120: one cape with every emblem, every perk at once, and the rarest title in the game.</span></div>
+        </div></section>
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/skills.png" alt=""><b>All eighteen</b><span class="k-sub">one cape each</span></div>
+        <div class="k-paper" style="padding:12px"><div class="capes" id="capes"></div>
+          <p style="margin-top:10px;font:600 12.5px Lora,serif;color:var(--k-ink2)">The cape art is a PixelLab draft for this mockup; shipped, each skill's cape would be drawn in its own colours.</p></div></section>
+    </div>
+  </section>
+
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <ul class="build">
+      <li><b>The curve</b> is a longer XP table (21 more numbers) and every place that stops at 99 learning to stop at 120: the level function, the Skills tab, the hiscores, the profile and the wiki. Levels come from XP, so nobody's saved character changes.</li>
+      <li><b>Requirements below 100 are untouched</b>: everything that needs 90 still needs 90. Only the new 110 resources need 110.</li>
+      <li><b>The 90 unlocks</b> are mostly numbers on systems that already exist (double gathers, speed, rare-find, reforge success). The five 110 resources and recipes are new items, each with PixelLab art, and they are the inputs for mockup 3.</li>
+      <li><b>The cape slot</b> is new: one more equipment slot, eighteen capes and a Max Cape, each with art.</li>
+      <li><b>Cost on the server</b>: none worth mentioning. A level is a lookup in a slightly longer table.</li>
+      <li><b>Order</b>: the curve and the Skills tab first (so nobody is ever stuck at a 99 that should have kept going), then the unlocks a skill at a time, then the capes.</li>
+    </ul>
+    <div class="pick"><b>Next mockups:</b> 2, Ascendancies, which the combat skills' levels past 100 pay into; then 3, Relic gear and masterwork crafting, which the 110 resources feed. Then the endgame map, Mythic runs, diaries, pets that grow, and guilds.</div>
+  </section>
+</main>
+<script>
+const SK = {
+  melee: { a: [["100", "The Ascendancy trial opens (combat 100: see mockup 2)"], ["101-120", "Every level is one Ascendancy point"], ["110", "Relic weapons can be wielded", 1], ["115", "+5% damage against bosses"], ["120", "Melee Mastery Cape", 1]] },
+  archery: { a: [["100", "The Ascendancy trial opens"], ["101-120", "Every level is one Ascendancy point"], ["110", "Relic bows can be drawn", 1], ["115", "+1 tile of range with any bow"], ["120", "Archery Mastery Cape", 1]] },
+  magic: { a: [["100", "The Ascendancy trial opens"], ["101-120", "Every level is one Ascendancy point"], ["110", "Relic wands and the Primal spells", 1], ["115", "10% chance a spell costs no page"], ["120", "Magic Mastery Cape", 1]] },
+  hp: { a: [["100", "+1 health for every level past 99 (+21 at 120)"], ["105", "Health comes back 25% faster out of a fight"], ["110", "Last Stand: once every 10 minutes, a killing blow leaves you on 1", 1], ["115", "Food heals 10% more"], ["120", "Hitpoints Mastery Cape", 1]] },
+  fishing: { a: [["100", "10% chance to catch two"], ["105", "Fish go straight to the bank when your bag is full, once a minute"], ["110", "The Leviathan eel, off the Deep End", 1], ["115", "Rare finds twice as often at every spot"], ["120", "Fishing Mastery Cape", 1]] },
+  cooking: { a: [["100", "You never burn anything again"], ["105", "Cook two at a time"], ["110", "Leviathan stew: the best heal, and +5% damage for 10 minutes", 1], ["115", "Meal buffs last 50% longer"], ["120", "Cooking Mastery Cape", 1]] },
+  farming: { a: [["100", "+1 crop from every harvest"], ["105", "Everything grows 15% faster"], ["110", "Starbloom seeds: a Relic ingredient", 1], ["115", "Crops can't wither"], ["120", "Farming Mastery Cape", 1]] },
+  mining: { a: [["100", "10% chance of a second ore"], ["105", "Gems turn up 50% more often"], ["110", "Primordial ore: the Relic tier's metal", 1], ["115", "15% faster swings"], ["120", "Mining Mastery Cape", 1]] },
+  woodcutting: { a: [["100", "10% chance of a second log"], ["105", "15% faster chopping"], ["110", "Elder heartwood: Relic bows, wands and arrows", 1], ["115", "Birds' nests: seeds, eggs and the odd ring"], ["120", "Woodcutting Mastery Cape", 1]] },
+  smithing: { a: [["100", "10% chance to save a bar"], ["105", "Reforges succeed 10% more often"], ["110", "Smith the Relic gear (mockup 3)", 1], ["115", "A chance of masterwork on anything you make"], ["120", "Smithing Mastery Cape", 1]] },
+  agility: { a: [["100", "+2% walking speed everywhere"], ["105", "New shortcuts on four maps"], ["110", "The High Wire: a new top course", 1], ["115", "Another +3% walking speed"], ["120", "Agility Mastery Cape", 1]] },
+  thieving: { a: [["100", "10% chance of double loot"], ["105", "Caught 25% less often"], ["110", "A new mark: the Vault Ghost", 1], ["115", "Pick two pockets at once"], ["120", "Thieving Mastery Cape", 1]] },
+  alchemy: { a: [["100", "10% chance of two potions from one brew"], ["105", "Potions last 25% longer"], ["110", "The Overload draught: every combat stat at once", 1], ["115", "Brews never fail"], ["120", "Alchemy Mastery Cape", 1]] },
+  fletching: { a: [["100", "+2 arrows in every set"], ["105", "10% faster"], ["110", "Relic arrows, from Elder heartwood", 1], ["115", "Bows need no bowstring 20% of the time"], ["120", "Fletching Mastery Cape", 1]] },
+  wizardry: { a: [["100", "+1 page in every batch"], ["105", "10% chance to save the paper"], ["110", "Primal pages: the Relic spells", 1], ["115", "Enchanting succeeds 10% more often"], ["120", "Wizardry Mastery Cape", 1]] },
+  breeding: { a: [["100", "+10% chance of a Greater pet"], ["105", "Eggs hatch 20% faster"], ["110", "Mythic eggs: a pet tier above Legendary", 1], ["115", "A chance of twins"], ["120", "Breeding Mastery Cape", 1]] },
+  fungiculture: { a: [["100", "+1 cluster from every bed"], ["105", "Beds grow 15% faster"], ["110", "The Ghostcap: a Relic ingredient", 1], ["115", "Truffles twice as often"], ["120", "Fungiculture Mastery Cape", 1]] },
+  tinkering: { a: [["100", "Gadgets 10% stronger"], ["105", "+1 part from every salvage"], ["110", "The Overclocker: a Relic gadget", 1], ["115", "Gadgets break half as often"], ["120", "Tinkering Mastery Cape", 1]] }
+};
+const IC = (k) => `/v3/assets/img/glad/flat/items/skill_${k}.png`;
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const fmtM = (x) => (x >= 1e6 ? `${(x / 1e6).toFixed(1)}M` : x >= 1e3 ? `${Math.round(x / 1e3)}k` : String(x));
+fetch("data.json").then((r) => r.json()).then((D) => {
+  const names = D.skills, keys = Object.keys(SK);
+  /* where the server is */
+  const tops = Object.entries(D.top).sort((a, b) => b[1].lvl - a[1].lvl), best = tops[0];
+  document.getElementById("nowP").innerHTML = `Last night's backup: ${D.players} characters, the oldest about two weeks old. <b>Nobody has a 99 yet.</b> The highest is ${best[1].lvl} ${esc(names[best[0]])}. The road past 99 is for when they get there, and it needs to be ready before the first one does, so that 99 is a milestone and not a wall.`;
+  document.getElementById("heroes").innerHTML = [
+    [`${best[1].lvl}`, `the highest level in any skill (${esc(names[best[0]])}), out of 99 today and 120 after this`],
+    [`0`, "characters with a 99 in anything, so there is time to build this first"],
+    [`${fmtM(D.pace.best)}/h`, "the best XP an hour into one skill, across all of that player's time online"],
+    [`${Math.round(13034431 / D.pace.best)}h`, "how long a 99 is from scratch at that pace; 120 is the subject of the next chart"]
+  ].map(([b, s]) => `<div class="hero"><div class="big">${b}</div><small>${s}</small></div>`).join("");
+  { const W = 900, H = 470, L = 150, R = 30, T = 18, row = 23, x = (lv) => L + ((W - L - R) * lv) / 120; let s = "";
+    for (const v of [0, 30, 60, 90, 99, 120]) s += `<line x1="${x(v)}" x2="${x(v)}" y1="${T - 6}" y2="${T + row * tops.length}" stroke="${v === 99 ? "#ffd84a" : v === 120 ? "#b08ae0" : "#3a2616"}" stroke-width="${v >= 99 ? 1.5 : 1}" ${v >= 99 ? 'stroke-dasharray="4 3"' : ""}/><text x="${x(v)}" y="${T + row * tops.length + 16}" fill="${v === 99 ? "#ffd84a" : v === 120 ? "#d8c8ff" : "#a89070"}" font-size="12" text-anchor="middle">${v}</text>`;
+    tops.forEach(([k, v], i) => { const y = T + i * row; s += `<image href="${IC(k)}" x="${L - 146}" y="${y}" width="18" height="18" style="image-rendering:pixelated"/><text x="${L - 122}" y="${y + 14}" fill="#e8dcc4" font-size="13">${esc(names[k])}</text><rect x="${L}" y="${y + 3}" width="${Math.max(2, x(v.lvl) - L)}" height="14" rx="3" fill="#c8963a"/><text x="${x(v.lvl) + 6}" y="${y + 15}" fill="#f6e9cc" font-size="12" font-weight="700">${v.lvl}</text>`; });
+    s += `<text x="${x(99) + 4}" y="${T - 8}" fill="#ffd84a" font-size="11">99 today</text><text x="${x(120) - 4}" y="${T - 8}" fill="#d8c8ff" font-size="11" text-anchor="end">120</text>`;
+    document.getElementById("topChart").innerHTML = s; }
+  /* the curve */
+  document.getElementById("paceA").textContent = `${Math.round(D.pace.best / 1000)}k`; document.getElementById("paceM").textContent = `${Math.round(D.pace.median / 1000)}k`;
+  { const C = D.curves, W = 900, H = 400, L = 70, R = 140, T = 20, B = 40, lx = (l) => L + ((W - L - R) * (l - 90)) / 30, maxY = C.rs[120], ly = (v) => T + (H - T - B) * (1 - v / maxY); let s = "";
+    for (const v of [0, 25e6, 50e6, 75e6, 100e6]) s += `<line x1="${L}" x2="${W - R}" y1="${ly(v)}" y2="${ly(v)}" stroke="#2a1c12"/><text x="${L - 8}" y="${ly(v) + 4}" fill="#a89070" font-size="12" text-anchor="end">${v / 1e6}M</text>`;
+    for (const l of [90, 95, 99, 105, 110, 115, 120]) s += `<text x="${lx(l)}" y="${H - B + 18}" fill="${l === 99 ? "#ffd84a" : "#a89070"}" font-size="12" text-anchor="middle">${l}</text>`;
+    s += `<line x1="${lx(99)}" x2="${lx(99)}" y1="${T}" y2="${H - B}" stroke="#ffd84a" stroke-dasharray="4 3" opacity=".6"/>`;
+    const line = (c, col, lab) => { const pts = Object.entries(c).map(([l, v]) => [+l, v]).filter(([l]) => l >= 90).sort((a, b) => a[0] - b[0]); s += `<polyline fill="none" stroke="${col}" stroke-width="2.5" points="${pts.map(([l, v]) => `${lx(l).toFixed(1)},${ly(v).toFixed(1)}`).join(" ")}"/>`; const [l, v] = pts.at(-1); s += `<circle cx="${lx(l)}" cy="${ly(v)}" r="4" fill="${col}"/><text x="${lx(l) + 8}" y="${ly(v) + 4}" fill="${col}" font-size="13" font-weight="700">${lab} ${fmtM(v)}</text>`; };
+    line(C.x2, "#b8a888", "Flat"); line(C.x4, "#7ab8ff", "Three times"); line(C.rs, "#ffd84a", "RuneScape's");
+    s += `<text x="${lx(99) + 6}" y="${T + 12}" fill="#ffd84a" font-size="11">99: 13.0M</text>`;
+    document.getElementById("curveChart").innerHTML = s;
+    const hrs = (xp, rate) => `${Math.round(xp / rate).toLocaleString()}h`;
+    const rows = [["RuneScape's curve, continued", C.rs, true], ["Three times again", C.x4], ["Flat: every level costs what 99 did", C.x2]];
+    document.getElementById("curveTbl").innerHTML = `<tr><th>Curve</th><th style="text-align:right">XP at 110</th><th style="text-align:right">XP at 120</th><th style="text-align:right">99 → 120 vs 1 → 99</th><th style="text-align:right">99 → 120 at ${Math.round(D.pace.best / 1000)}k/h</th><th style="text-align:right">… focused, 100k/h</th></tr>`
+      + rows.map(([n, c, pick]) => `<tr${pick ? ' class="pick"' : ""}><td>${n}${pick ? '<span class="tag">pick</span>' : ""}</td><td class="n">${fmtM(c[110])}</td><td class="n">${fmtM(c[120])}</td><td class="n">${((c[120] - 13034431) / 13034431).toFixed(1)}×</td><td class="n">${hrs(c[120] - 13034431, D.pace.best)}</td><td class="n">${hrs(c[120] - 13034431, 100000)}</td></tr>`).join("");
+  }
+  /* the skills tab */
+  const show = [["fishing", 110, 0.42, "Grandmaster"], ["cooking", 104, 0.7, "Master"], ["woodcutting", 99, 0.15], ["melee", 102, 0.3, "Master"], ["mining", 96, 0.62], ["smithing", 88, 0.4]];
+  document.getElementById("skTab").innerHTML = show.map(([k, lv, p, tier]) => `<div class="sk${lv >= 100 ? " m" : ""}"><img src="${IC(k)}" alt=""><span><b>${esc(names[k])}${tier ? `<span class="tierchip">${tier}</span>` : ""}</b><small>${lv >= 100 ? (lv >= 110 ? "next: 115, rare finds twice as often" : "next: 105 unlocks a convenience") : lv === 99 ? "99: the road goes on to 120" : "next level"}</small><span class="bar"><i style="width:${Math.round(p * 100)}%"></i></span></span><span class="lv">${lv}<small>${lv >= 99 ? " /120" : ""}</small></span></div>`).join("")
+    + `<p style="margin:10px 2px 0;font:600 12.5px Lora,serif;color:var(--k-ink2)">Tiers past 99 (the chip): <b>Master</b> 100, <b>Grandmaster</b> 110, <b>Legend</b> 120.</p>`;
+  /* the nineteen */
+  document.getElementById("skillCards").innerHTML = keys.map((k) => `<div class="sc"><h4><img src="${IC(k)}" alt="">${esc(names[k])}<small>top today: ${D.top[k]?.lvl ?? "?"}</small></h4><ol>${SK[k].a.map(([l, t, big]) => `<li class="${big ? "big" : ""}"><b>${l}</b><span>${esc(t)}${big && l === "110" ? '<span class="new">NEW</span>' : ""}</span></li>`).join("")}</ol></div>`).join("");
+  document.getElementById("capes").innerHTML = keys.map((k) => `<span class="cape" title="${esc(names[k])} Mastery Cape"><img class="c" src="cape.png" alt=""><img class="s" src="${IC(k)}" alt=""></span>`).join("");
+});
+</script>
+</body>
+</html>

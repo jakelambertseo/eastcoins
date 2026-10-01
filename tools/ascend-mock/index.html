@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Ascendancies</title>
+<!-- (2026-09-30, the owner: "now onto ascendencies"). Mockup 2 of the long-game set (see tools/past99-mock for 1). Six paths, two for each way to
+     fight, unlocked by a combat skill at 100 and paid for by its levels past 100. The planner below is a real one: click nodes to spend points.
+     The emblems are PixelLab drafts. Local only: tools/ is never shipped. http://localhost:4321/tools/ascend-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0c0908;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1200px 600px at 20% -10%,#2a1440,transparent),radial-gradient(900px 500px at 100% 40%,#3a1810,transparent),#0c0908}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:14px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd98a}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:980px;line-height:1.55}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:14px}
+.rule{background:#1a120c;border-radius:10px;padding:12px 14px;box-shadow:0 0 0 1.5px #3a2616}
+.rule b{display:block;font:800 15px Cinzel,serif;color:#ffe7b0;margin-bottom:4px}.rule span{font:600 13.5px/1.5 Lora,serif;color:#cdbfa2}
+.emb{width:56px;height:56px;image-rendering:pixelated;flex:none}
+/* the choosing screen */
+.choose{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pc{position:relative;display:grid;gap:6px;padding:12px;border-radius:8px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);color:var(--k-ink);cursor:pointer}
+.pc:hover{box-shadow:inset 0 0 0 2px var(--c)}
+.pc header{display:flex;gap:10px;align-items:center}.pc header b{font:800 19px Cinzel,serif;color:var(--k-ink)}.pc header small{display:block;font:600 12.5px Lora,serif;color:var(--k-ink2);font-style:italic}
+.pc .sig{padding:7px 9px;border-radius:6px;background:rgba(0,0,0,.06);font:600 12.5px/1.45 Lora,serif;color:var(--k-ink2)}.pc .sig b{color:var(--k-ink)}
+.pc ul{margin:0;padding-left:16px;font:600 12.5px/1.5 Lora,serif;color:var(--k-ink2)}
+.pc .stripe{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:8px 0 0 8px;background:var(--c)}
+/* the six */
+.six{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px;margin-top:14px}
+.pcard{background:#1a120c;border-radius:10px;box-shadow:0 0 0 1.5px #3a2616;padding:14px;border-top:3px solid var(--c)}
+.pcard header{display:flex;gap:12px;align-items:center}.pcard header b{font:800 20px Cinzel,serif;color:#ffe7b0}.pcard header small{display:block;font:700 11px Lora,serif;letter-spacing:.1em;text-transform:uppercase;color:var(--c)}
+.pcard .tag{font:600 13.5px Lora,serif;font-style:italic;color:#cdbfa2;margin:6px 0}
+.pcard .sig{padding:8px 10px;border-radius:6px;background:#241810;font:600 13px/1.45 Lora,serif;color:#d8c8a8}.pcard .sig b{color:#ffe7b0}
+.abl{display:grid;gap:5px;margin-top:6px}.abl>div{display:grid;grid-template-columns:20px 28px 1fr;gap:8px;align-items:center;padding:6px 8px;border-radius:6px;background:#241810;font:600 12.5px/1.4 Lora,serif;color:#d8c8a8}.abl b{color:#ffe7b0}
+.abl kbd{display:grid;place-items:center;width:20px;height:20px;border-radius:4px;background:#3a2616;color:#ffe7b0;font:800 11px Lora,serif}.abl img{width:28px;height:28px;image-rendering:pixelated}.abl .sigrow{box-shadow:inset 0 0 0 1.5px var(--c)}
+.pcard .ks{margin-top:8px;display:grid;gap:4px;font:600 12.5px/1.45 Lora,serif;color:#cdbfa2}.pcard .ks b{color:#ffd84a}
+/* the planner */
+.planner{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;margin-top:14px;align-items:start}
+.ptabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.ptabs button{display:flex;align-items:center;gap:6px;padding:5px 12px 5px 6px;border:0;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;color:#e8dcc4;font:800 13px Lora,serif;cursor:pointer}
+.ptabs button img{width:24px;height:24px;image-rendering:pixelated}
+.ptabs button[aria-pressed="true"]{background:#3a2616;box-shadow:0 0 0 2px var(--c);color:#fff}
+.treebox{background:radial-gradient(600px 400px at 50% 100%,rgba(255,255,255,.04),transparent),#140e0a;border-radius:10px;box-shadow:0 0 0 1.5px #3a2616;padding:10px}
+.treebox svg{display:block;width:100%;height:auto}
+.node{cursor:pointer}.node .r{transition:fill .15s}.node:hover .r{stroke-width:3}
+.side{background:#1a120c;border-radius:10px;box-shadow:0 0 0 1.5px #3a2616;padding:14px;position:sticky;top:12px}
+.pts{display:flex;align-items:baseline;gap:6px;font:900 34px Cinzel,serif;color:#ffd84a}.pts small{font:700 13px Lora,serif;color:#a89070}
+.side h4{margin:10px 0 4px;font:800 15px Cinzel,serif;color:#ffe7b0}
+.side p{margin:4px 0;font:600 13px/1.5 Lora,serif;color:#cdbfa2}
+.side .how{margin-top:10px;font:600 12px/1.5 Lora,serif;color:#a89070}
+.side button{margin-top:10px;padding:6px 12px;border:0;border-radius:6px;background:#3a2616;color:#ffe7b0;font:800 13px Lora,serif;cursor:pointer}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font:700 12px Lora,serif;color:#cdbfa2}.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+/* trials and looks */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;margin-top:14px;align-items:start}
+.k-win{min-width:0}
+.trial{display:grid;grid-template-columns:60px 1fr;gap:4px 12px;padding:9px 10px;border-radius:6px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);margin-top:6px}
+.trial .w{font:900 18px Cinzel,serif;color:var(--k-gold-ink)}.trial b{font:800 14px Lora,serif;color:var(--k-ink)}.trial span{grid-column:2;font:600 12.5px/1.45 Lora,serif;color:var(--k-ink2)}
+.np{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 4px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:800 13px Lora,serif;text-shadow:0 1px 0 #000}.np img{width:20px;height:20px;image-rendering:pixelated}.np .lv{color:#ffd84a}
+.qb{display:flex;gap:6px;margin-top:10px}
+.qs{position:relative;width:50px;height:50px;border-radius:6px;background:#2a1c12;box-shadow:inset 0 0 0 2px #6a4a28;display:grid;place-items:center}
+.qs img{width:34px;height:34px;image-rendering:pixelated}.qs kbd{position:absolute;left:3px;top:1px;font:800 10px Lora,serif;color:#ffe7b0}
+.qs.cd::after{content:"";position:absolute;inset:0;border-radius:6px;background:conic-gradient(rgba(0,0,0,.65) 0 62%,transparent 62%)}
+.qs.cd span{position:absolute;z-index:1;font:900 15px Cinzel,serif;color:#fff;text-shadow:0 0 3px #000}
+.qs.sig{box-shadow:inset 0 0 0 2px #ffd84a,0 0 10px rgba(255,216,74,.5)}
+.aura{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px}
+.aura span{width:70px;height:70px;border-radius:50%;display:grid;place-items:center;box-shadow:0 0 18px 4px var(--c),inset 0 0 14px var(--c);background:radial-gradient(circle,rgba(255,255,255,.05),transparent 70%)}
+.aura img{width:40px;height:40px;image-rendering:pixelated}
+.demo{background:#1a120c;border-radius:10px;box-shadow:0 0 0 1.5px #3a2616;padding:14px;margin-top:12px}
+.stage{position:relative;height:190px;border-radius:8px;background:linear-gradient(#1f3a22,#162a18);box-shadow:inset 0 0 0 1px #2a4a2a;overflow:hidden;margin:10px 0}
+.dummy{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;justify-items:center;gap:4px;font:800 12px Lora,serif;color:#fff}
+.dummy .body{width:56px;height:76px;border-radius:12px 12px 6px 6px;background:linear-gradient(#a8784a,#6a4a2a);box-shadow:inset 0 0 0 3px #3a2410}
+.hpbar{width:150px;height:10px;border-radius:5px;background:#3a0a0a;box-shadow:inset 0 0 0 1px #000;overflow:hidden}.hpbar i{display:block;height:100%;background:linear-gradient(#7ee07e,#3a9a4a);transition:width .25s}
+.fly{position:absolute;font:900 18px Cinzel,serif;color:#ffe27a;text-shadow:1px 1px 0 #000,-1px -1px 0 #000;pointer-events:none;animation:fly 1.1s ease-out forwards}.fly.heal{color:#7ee0a0}
+@keyframes fly{from{transform:translate(-50%,0);opacity:1}to{transform:translate(-50%,-48px);opacity:0}}
+.allies{position:absolute;inset:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:center}
+.ally{display:grid;gap:4px;justify-items:center;font:800 12.5px Lora,serif;color:#fff}.ally .hpbar{width:100%}.ally.low .hpbar i{background:linear-gradient(#ff8a6a,#c8302a)}
+.ally .pip{width:34px;height:34px;border-radius:50%;background:#3a2a1a;box-shadow:inset 0 0 0 2px #8a6428;display:grid;place-items:center;font-size:18px}
+.ally .shield{font:800 10.5px Lora,serif;color:#9ad8ff;min-height:13px}
+.dbar{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.ds{position:relative;width:64px;height:64px;border:0;border-radius:8px;background:#2a1c12;box-shadow:inset 0 0 0 2px #6a4a28;display:grid;place-items:center;cursor:pointer;padding:0}
+.ds img{width:40px;height:40px;image-rendering:pixelated}.ds kbd{position:absolute;left:4px;top:2px;font:800 11px Lora,serif;color:#ffe7b0;z-index:2}
+.ds .cdm{position:absolute;inset:0;border-radius:8px;pointer-events:none}.ds .cdn{position:absolute;z-index:2;font:900 17px Cinzel,serif;color:#fff;text-shadow:0 0 3px #000}
+.ds.sig{box-shadow:inset 0 0 0 2px #ffd84a,0 0 10px rgba(255,216,74,.45)}.ds.item{width:52px;height:52px;opacity:.85}.ds.item img{width:30px;height:30px}
+.oslot{display:grid;gap:22px;justify-items:center}.then{align-self:center;margin-bottom:34px;font:700 11.5px Lora,serif;color:#8a6a40}
+.mv{display:flex;gap:4px}.mv button{border:0;border-radius:5px;background:#3a2616;color:#ffe7b0;font:800 11px Lora,serif;padding:3px 8px;cursor:pointer}.mv button:disabled{opacity:.3;cursor:default}
+.ds{cursor:grab}.ds.fired{box-shadow:inset 0 0 0 2px #7ee07e,0 0 14px rgba(126,224,126,.6)}.ds.sig.fired{box-shadow:inset 0 0 0 2px #ffd84a,0 0 18px rgba(255,216,74,.9)}
+.ds .nm{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);white-space:nowrap;font:700 10.5px Lora,serif;color:#cdbfa2}
+.gap{width:18px}
+.basegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-top:8px}
+.bcard{background:#1a120c;border-radius:10px;box-shadow:0 0 0 1.5px #3a2616;padding:12px}.bcard h4{margin:0 0 6px;font:800 15px Cinzel,serif;color:#ffe7b0}
+.prow{display:grid;grid-template-columns:28px 1fr 150px 70px;gap:10px;align-items:center;padding:6px 8px;border-radius:6px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);margin-top:5px;font:700 13.5px Lora,serif;color:var(--k-ink)}
+.prow img{width:26px;height:26px;image-rendering:pixelated}.prow .role{font:800 11px Lora,serif;padding:2px 8px;border-radius:999px;text-align:center}
+.role.tank{background:#e8d6b8;color:#6a4a20}.role.heal{background:#d6f0dc;color:#2f7a3a}.role.dps{background:#f5d8d0;color:#a8302a}.role.need{background:transparent;box-shadow:inset 0 0 0 1.5px #c8302a;color:#c8302a}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+.build{margin:6px 0 0;padding-left:18px;line-height:1.6;color:#cdbfa2;max-width:980px}.build b{color:#f6e9cc}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+.tbl{width:100%;border-collapse:collapse;font:600 13.5px Lora,serif;margin-top:12px;background:#1a120c;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070;padding:10px 12px 6px}.tbl td{padding:8px 12px;border-top:1px solid #3a2616;vertical-align:top}
+@media (max-width:900px){.planner{grid-template-columns:1fr}.choose{grid-template-columns:1fr}.side{position:static}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Ascendancies</h1>
+  <p class="lede">The Road Ahead's rumour, made real: <i>"Past the top, you choose what you become."</i> When one of your fighting skills (Melee, Archery or
+    Magic) reaches <b>100</b>, its Ascendancy trial opens. Pass it and you choose one of two paths for that way of fighting. Every level from 101 to 120 in
+    that skill is a point in the path's tree, so the long road past 99 (mockup 1) is also the road to your build. Each path has three abilities and a signature move that go off on their own, in an order you set, a look, and a choice near the top that
+    changes how it plays. One of the six is a healer, because the hardest dungeons will need one.</p>
+  <nav class="jump"><a href="#rules">How it works</a><a href="#choose">Choosing</a><a href="#six">The six paths</a><a href="#bar">The ability bar</a><a href="#healers">Healers</a><a href="#plan">The planner</a><a href="#trial">The trials</a><a href="#look">How it looks</a><a href="#balance">Balance</a><a href="#build">Building it</a></nav>
+
+  <section class="sec" id="rules">
+    <h2>How it works</h2>
+    <div class="rules">
+      <div class="rule"><b>Unlock</b><span>A fighting skill at 100 opens that style's trial. Melee 100 opens the Melee trial, and so on.</span></div>
+      <div class="rule"><b>One path per style</b><span>Pass it and choose one of its two paths. You can ascend in all three styles over time, one path each; the one that counts is the style of the weapon in your hand.</span></div>
+      <div class="rule"><b>24 points</b><span>One at 100, one for every level from 101 to 120 (21 in all), and one more for each harder trial at 110 and 120. The tree costs 31, so nobody takes everything.</span></div>
+      <div class="rule"><b>An ability order</b><span>Three attacks and the signature move, each on its own cooldown, go off by themselves: every swing uses the first one in your order that is ready. The only thing you do is set the order. Everyone gets the plain three as their style levels (1, 30, 60); an Ascendancy turns them into its own.</span></div>
+      <div class="rule"><b>No new keys</b><span>Nothing to press, so food and potions stay on 1-4 where they are. A fight plays the same with one hand on the mouse.</span></div>
+      <div class="rule"><b>Respec</b><span>Moving points inside your path is free once a week, then tickets. Changing to the other path means taking the trial again.</span></div>
+      <div class="rule"><b>A look</b><span>An aura in the path's colour, its emblem by your name and on your profile, and a title.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="choose">
+    <h2>Choosing</h2>
+    <p>After the trial, one window and one decision. This is the Melee one; Archery and Magic look the same with their own two.</p>
+    <section class="k-win" style="max-width:860px;margin-top:12px"><div class="k-head"><img src="juggernaut.png" alt=""><b>The Melee Ascendancy</b><span class="k-sub">Choose one. You can change later, but it means the trial again.</span></div>
+      <div class="k-paper" style="padding:12px"><div class="choose" id="chooseBox"></div>
+        <p style="margin:10px 2px 0;font:600 12.5px Lora,serif;color:var(--k-ink2)">Choosing costs nothing. Your first point (from reaching 100) is ready to spend in the tree straight away.</p></div></section>
+  </section>
+
+  <section class="sec" id="six">
+    <h2>The six paths</h2>
+    <p>Two ways to fight for each style, and they really are different: one for a single big target, one for a crowd; one that stays standing, one that hits
+      first. Every path also has a choice of two keystones at the top of its tree, so two players on the same path can still play it differently.</p>
+    <div class="six" id="sixBox"></div>
+  </section>
+
+  <section class="sec" id="bar">
+    <h2>The ability order</h2>
+    <p>Kept simple on purpose. Fights are already a swing on a timer; now each swing looks along your <b>order</b> and uses the first ability that's off
+      cooldown, or a plain swing if none is. There's nothing to press and nothing to miss, so a player on a laptop trackpad hits as hard as one with a
+      keyboard; the skill is in the order. Put the big hit first and it goes off whenever it's back; put a cheap one first and it eats the swings
+      the big one could have had. The server runs the order, so it's the same for everyone, and an order is four small numbers per player.
+      <b>Try it below: pick a path and watch it fight, then drag the slots (or use the arrows) to change the order.</b></p>
+    <div class="demo">
+      <div class="ptabs" id="dtabs"></div>
+      <div class="stage" id="stage"></div>
+      <div class="dbar" id="dbar"></div>
+      <p class="note" id="dnote"></p>
+    </div>
+    <h3>Everyone gets three; an Ascendancy changes them</h3>
+    <p class="note" style="max-width:980px">The numbers below are the order they start in. Moving things round is free, any time, out of a fight.</p>
+    <div class="basegrid" id="baseBox"></div>
+  </section>
+
+  <section class="sec" id="healers">
+    <h2>Healers are needed</h2>
+    <p>A healer is only worth being if a group can't win without one. Today a party heals itself with food, so the hard dungeons (the Mythic runs, mockup
+      5) are built so that food alone can't keep up, and a Mender can:</p>
+    <div class="rules">
+      <div class="rule"><b>Damage on everyone</b><span>Bosses pulse the whole room every few seconds. Nobody can eat fast enough to outheal it for long; Mend, Chain Mend and Sanctuary can.</span></div>
+      <div class="rule"><b>Food has a cooldown</b><span>In a Mythic run you can eat once every 6 seconds, not every tick. Potions too.</span></div>
+      <div class="rule"><b>Curses only Cleanse removes</b><span>Bleeds, poisons and the Ice Man's freeze stack on a party and only wear off, unless a Mender washes them off.</span></div>
+      <div class="rule"><b>A tank and a healer</b><span>The top Mythic levels ask for a party of four with a Juggernaut to hold the boss (Iron Will) and a Mender to keep everyone up. The party window shows the roles before you go in.</span></div>
+      <div class="rule"><b>Healing is counted</b><span>The party meter gets a Healing tab, the run report a "kept everyone alive" line, and the hiscores a Healing board, so the healer is seen.</span></div>
+      <div class="rule"><b>No clicking on people</b><span>Heals go to whoever is most hurt within reach, so there's nothing to target and no mis-clicks in a crowd. Ward and Mend never pick a full-health ally.</span></div>
+    </div>
+    <section class="k-win" style="max-width:640px;margin-top:14px"><div class="k-head"><img src="mender.png" alt=""><b>Party</b><span class="k-sub">The Deep Vault · Mythic 8 · needs a tank and a healer</span></div>
+      <div class="k-paper" style="padding:10px 12px" id="partyBox"></div></section>
+  </section>
+
+  <section class="sec" id="plan">
+    <h2>The planner</h2>
+    <p>The real tree for each path. Click a node to spend a point on it, click again to take it back. A row opens when enough points are spent below it,
+      and only one keystone can be taken. This is how the in-game tree would work too.</p>
+    <div class="planner">
+      <div><div class="ptabs" id="ptabs"></div><div class="treebox"><svg id="tree" viewBox="0 0 760 560" role="img" aria-label="The Ascendancy tree"></svg></div>
+        <div class="legend"><span><i style="background:#6a5a40"></i>small, 1 point</span><span><i style="background:#3a7ab0"></i>notable, 3</span><span><i style="background:#8a4ab0"></i>major notable, 4</span><span><i style="background:#c8963a"></i>keystone, 5, pick one</span></div></div>
+      <aside class="side" id="side"></aside>
+    </div>
+  </section>
+
+  <section class="sec" id="trial">
+    <h2>The trials</h2>
+    <p>The Hall of Ascension stands at the top of the Tower, above the House. Each trial is solo, about five minutes, and tests the thing the style is
+      about. Fail and you walk out: no death, no bill, try again in ten minutes.</p>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="juggernaut.png" alt=""><b>The Melee trial</b><span class="k-sub">the Iron Examiner</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <div class="trial"><span class="w">I</span><b>At Melee 100: hold the line</b><span>Three waves of the Examiner's sparring dummies, then the Examiner himself, who hits hard and telegraphs it. Survive and land the last blow.</span></div>
+          <div class="trial"><span class="w">II</span><b>At 110: the gauntlet</b><span>The same, faster, with the floor slamming under you. +1 point and the aura's second glow.</span></div>
+          <div class="trial"><span class="w">III</span><b>At 120: the Examiner's own</b><span>The Examiner with your own path's signature move. +1 point, the full aura and the title.</span></div></div></section>
+      <section class="k-win"><div class="k-head"><img src="trickshot.png" alt=""><b>Archery and Magic</b><span class="k-sub">the other two</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <div class="trial"><span class="w">🎯</span><b>The Gallery (Archery)</b><span>A shooting gallery of moving targets and a few that shoot back. Score enough before the clock runs out; the Examiner's archer at the end.</span></div>
+          <div class="trial"><span class="w">✨</span><b>The Resonance (Magic)</b><span>Elemental wards that only break to the right element in the right order, then a construct that changes its weakness every ten seconds.</span></div>
+          <p style="margin:8px 2px 0;font:600 12.5px Lora,serif;color:var(--k-ink2)">Same three tiers each: 100, 110 and 120.</p></div></section>
+    </div>
+  </section>
+
+  <section class="sec" id="look">
+    <h2>How it looks</h2>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/skills.png" alt=""><b>By your name, and on your bar</b><span class="k-sub">in the world</span></div>
+        <div class="k-paper" style="padding:12px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="np"><img src="juggernaut.png" alt="">Kellzifer <span class="lv">level 104</span></span><span class="np"><img src="hexer.png" alt="">BeeEzRadio <span class="lv">level 112</span></span><span class="np"><img src="trickshot.png" alt="">calvin <span class="lv">level 101</span></span></div>
+          <div class="qb"><span class="qs sig cd"><kbd>1st</kbd><img src="juggernaut.png" alt=""><span>12</span></span><span class="qs"><kbd>2nd</kbd><img src="/v3/assets/img/glad/flat/items/skill_strength.png" alt=""></span><span class="qs cd"><kbd>3rd</kbd><img src="/v3/assets/img/glad/flat/items/skill_attack.png" alt=""><span>7</span></span><span class="qs"><kbd>4th</kbd><img src="/v3/assets/img/glad/flat/items/skill_defence.png" alt=""></span></div>
+          <p style="margin:8px 2px 0;font:600 12.5px Lora,serif;color:var(--k-ink2)">Kellzifer's order: the signature move first (gold frame), then the three attacks. The dark sweep is a cooldown: Earthshaker is back in 12 seconds and Wide Arc in 7, so the next swing goes to Crushing Blow, second in line and ready.</p></div></section>
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/skills.png" alt=""><b>Auras</b><span class="k-sub">dim at 100, brighter at 110, full at 120</span></div>
+        <div class="k-paper" style="padding:12px"><div class="aura" id="auras"></div>
+          <p style="margin:8px 2px 0;font:600 12.5px Lora,serif;color:var(--k-ink2)">Drawn under the feet like the Store's auras, in the path's colour. Settings' "Other players' trails and glows" hides other people's, as it does now.</p></div></section>
+    </div>
+  </section>
+
+  <section class="sec" id="balance">
+    <h2>Balance</h2>
+    <table class="tbl">
+      <tr><th>Question</th><th>The answer in this design</th></tr>
+      <tr><td>How much stronger is an ascended player?</td><td>A full 24 points is worth about <b>+20%</b> in the style's own fights, about the step from one weapon tier to the next. Enough to feel, not enough that a level 100 without a path can't keep up in a party.</td></tr>
+      <tr><td>The keystones</td><td>Each one changes how the path plays and pays for it (Unbreakable deals 10% less; Glass Edge takes 15% more). None is simply "more damage".</td></tr>
+      <tr><td>The Wilderness</td><td>Signature moves work, but stuns last half as long on players, and keystones' damage parts count half. Nobody ascends into being unkillable in PvP.</td></tr>
+      <tr><td>Abilities</td><td>The plain three are worth about a weapon tier, and everyone gets them without doing anything. A good order is worth a few percent over a bad one: enough to matter at the top, never enough to lock anyone out. Ascended versions are stronger and on the same cooldowns, and there are never more than four in the order.</td></tr>
+      <tr><td>The healer</td><td>A Mender's damage is about two-thirds of the other paths', and it never heals more than a party loses: heals can't overheal, and Ward can't stack. In everyday fights a Mender is welcome but not needed; in the Mythic runs, needed.</td></tr>
+      <tr><td>Bosses</td><td>Effects that work off a monster's health (Siphon, Executioner) are capped on bosses, so raids stay a group fight.</td></tr>
+      <tr><td>Respec cost</td><td>Free once a week inside a path; after that 25,000 tickets, doubling each time in the same week. Switching path: the trial again.</td></tr>
+    </table>
+  </section>
+
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <ul class="build">
+      <li><b>Needs mockup 1 first</b>: points come from levels 101 to 120, so the road past 99 is the foundation.</li>
+      <li><b>The tree</b> is data: nodes, costs and effects in the rules file, and the effects are mostly hooks the combat code already has (damage, accuracy, crit, damage taken, healing, cooldowns).</li>
+      <li><b>The ability order</b>: one more message ("my order is 3, 1, 2, 4", only sent when it changes), a cooldown per ability per player, and each swing picking the first ready one. Cheaper than keys: no message per use at all. The plain three for every style come first and work at every level, so the bar is in everybody's hands long before 100.</li>
+      <li><b>The six paths' abilities and signature moves</b> one at a time: most are a bigger hit, a splash (the Cleave code), a timed effect on a monster or a player (Mark, Ward, Dread), or a heal. Earthshaker reuses the Ice Man's slam. Healing is new to the game's combat and needs "most-hurt ally within reach" and a no-overheal rule.</li>
+      <li><b>The trials</b> are three small solo rooms on the Tower's roof, built like the crypt rooms with a scripted Examiner.</li>
+      <li><b>Art</b> (PixelLab): six emblems (drafts here), six auras, the Examiner in three styles, the Hall, and a little animation for each signature move.</li>
+      <li><b>Cost on the server</b>: small. A few more numbers in each hit and one more cooldown per player.</li>
+    </ul>
+    <div class="callout"><b>Things to decide:</b> the six names (Juggernaut, Duelist, Deadeye, Trickshot, Mender, Hexer); the keys (abilities on 1-4 and food on Q/E/R/F); whether a player may ascend in all three styles or only one; and where the Hall goes (the Tower's roof here).</div>
+  </section>
+</main>
+<script>
+/* the six paths: [cost 1 smalls x6], [cost 3 notables x4], [cost 4 majors x2], [cost 5 keystones x2, pick one] */
+const PATHS = [
+  { k: "juggernaut", style: "Melee", name: "Juggernaut", c: "#c8965a", tag: "Stand in the middle of it, and stay there.",
+    sig: ["Earthshaker", "20 s", "Slam the ground: everything within 2 tiles takes 150% damage and is stunned for 1.5 s (bosses half a second)."],
+    ab: [["Crushing Blow", "8 s", "Your next swing hits for +60% and the monster deals 15% less for 6 s.", "skill_strength"], ["Wide Arc", "12 s", "Hit the target and everything next to it for 80%.", "skill_attack"], ["Iron Will", "20 s", "Every monster within 3 tiles turns on you, and you take 40% less for 5 s.", "skill_defence"]],
+    s: [["Thick Skin", "Take 3% less damage."], ["Big Lungs", "+5% maximum health."], ["Heavy Hands", "+3% melee damage."], ["Steady", "+5% accuracy."], ["Second Wind", "Heal 2% of your health on every kill."], ["Stubborn", "Freezes and stuns on you are 25% shorter."]],
+    n: [["Bodyguard", "Monsters within 3 tiles go for you before your party."], ["Shield Wall", "Every 10 s, the next hit on you is halved."], ["Aftershock", "Earthshaker hits twice."], ["Iron Belly", "Food heals 25% more."]],
+    m: [["Avalanche", "Earthshaker reaches 3 tiles, every 15 s."], ["Last One Standing", "Below 30% health, take 20% less damage."]],
+    ks: [["Unbreakable", "You can't be stunned or frozen, ever. You deal 10% less damage."], ["Rampage", "Every kill in the last 10 s is +4% damage, up to +20%. You take 10% more damage."]] },
+  { k: "duelist", style: "Melee", name: "Duelist", c: "#e05a5a", tag: "Faster, sharper, and always first.",
+    sig: ["Riposte", "15 s", "For 3 s, the next hit on you misses, and you answer it with a guaranteed critical hit."],
+    ab: [["Lunge", "8 s", "Dash up to 3 tiles to the target and strike for +40%.", "onyx_sword"], ["Flurry of Blades", "12 s", "Three quick hits at 60% each.", "skill_attack"], ["Feint", "16 s", "Your next two hits are critical hits.", "pot_keen"]],
+    s: [["Keen Edge", "+3% critical chance."], ["Quick Hands", "+4% attack speed."], ["Precision", "+5% accuracy."], ["Sharpened", "+3% melee damage."], ["Open Wound", "5% chance a hit makes the monster bleed for 3 s."], ["Light Feet", "+3% walking speed."]],
+    n: [["Flurry", "Every 4th swing is instant."], ["Footwork", "10% chance to dodge a hit."], ["Executioner", "+25% damage to monsters under 20% health."], ["Showboat", "A critical hit gives +10% damage for 4 s."]],
+    m: [["Twin Riposte", "Riposte every 10 s, and it answers twice."], ["Bloodletting", "Bleeds last 6 s and stack three times."]],
+    ks: [["Flow", "Every hit on the same target is +2% damage, up to +20%. Switch target and it's gone."], ["Glass Edge", "+20% damage. You take 15% more."]] },
+  { k: "deadeye", style: "Archery", name: "Deadeye", c: "#6ac05a", tag: "One target. One arrow. Next.",
+    sig: ["Mark", "20 s", "Mark a monster: it takes 25% more damage from you for 10 s."],
+    ab: [["Aimed Shot", "10 s", "Stand still for a moment, then +90%.", "diamond_arrow"], ["Piercing Arrow", "12 s", "Hits everything in a line, 6 tiles long.", "onyx_arrow"], ["Hunter's Focus", "18 s", "+15% critical chance for 6 s.", "pot_hunter"]],
+    s: [["Steady Draw", "+3% archery damage."], ["Hawk's Eye", "+5% accuracy."], ["Keen Shot", "+3% critical chance."], ["Patience", "Standing still for 2 s: +5% damage until you move."], ["Thrift", "10% chance not to use an arrow."], ["Long Shot", "+1 tile of range."]],
+    n: [["Headhunter", "When a marked monster dies, the mark jumps to the nearest one."], ["Far Sight", "+15% damage to anything 5 or more tiles away."], ["Pin Down", "Marked monsters are slowed."], ["Fletcher's Eye", "25% chance not to use an arrow."]],
+    m: [["Kill Shot", "+40% damage to monsters under 25% health."], ["Calm", "Mark every 12 s."]],
+    ks: [["One Shot", "Your first arrow at any monster you haven't hit yet is always a critical hit."], ["Sniper", "+2 tiles of range and +15% damage. You can't shoot anything within 2 tiles."]] },
+  { k: "trickshot", style: "Archery", name: "Trickshot", c: "#e8c040", tag: "Why hit one when you can hit four?",
+    sig: ["Ricochet", "15 s", "Your next arrow bounces to 3 more monsters, 60% damage each."],
+    ab: [["Double Tap", "8 s", "Two arrows at 70% each.", "dragonstone_arrow"], ["Bouncing Volley", "12 s", "Three arrows at three monsters, and each bounces once.", "marrow_arrow"], ["Smoke Arrow", "18 s", "A cloud 2 tiles wide: monsters in it miss 25% more and walk slower.", "pot_ghost"]],
+    s: [["Quick Nock", "+5% attack speed."], ["Sharp Tips", "+3% archery damage."], ["Bouncy", "+10% Ricochet damage."], ["Split", "5% chance an arrow splits in two."], ["On the Move", "+5% walking speed."], ["Thrift", "5% chance not to use an arrow."]],
+    n: [["Split Shot", "15% chance an arrow splits in two."], ["Hot Potato", "Ricochets go for monsters you haven't hit yet."], ["Quickdraw", "+10% attack speed."], ["Lucky Bounce", "Ricochets can be critical hits."]],
+    m: [["Bank Shot", "Ricochet bounces 5 times."], ["Scatter", "Every 5th arrow hits everything in a cone in front of you."]],
+    ks: [["Fan of Arrows", "Every arrow also hits up to 2 monsters near the target for 40%. 10% less damage to the target itself."], ["House Edge", "One shot in ten does double damage. The other nine do 5% less."]] },
+  { k: "mender", style: "Magic", name: "Mender", c: "#7ee0a0", tag: "Nobody dies on your watch.", healer: true,
+    sig: ["Sanctuary", "30 s", "A circle of light 2 tiles wide for 6 s: everyone in it heals 3% of their health a second and takes 15% less damage."],
+    ab: [["Mend", "6 s", "Heal the most-hurt ally within 6 tiles (you included) for 20% of their health.", "skill_hp"], ["Ward", "12 s", "Shield the most-hurt ally: it soaks up 15% of their health in damage for 8 s.", "pot_hide"], ["Cleanse", "18 s", "Wash bleeds, poison and freezes off everyone within 3 tiles, and heal them 5%.", "pot_coilbreaker"]],
+    s: [["Gentle Hands", "+5% healing."], ["Deep Wells", "10% chance a heal costs no page."], ["Steady Light", "+4% maximum health."], ["Quick Prayer", "Mend every 5 s."], ["Sun Touched", "+5% sun damage."], ["Reach", "Heals reach 2 tiles further."]],
+    n: [["Triage", "Heals on allies under 40% health are 30% stronger."], ["Chain Mend", "Mend jumps to 2 more allies for half."], ["Bulwark", "Ward soaks up 25% instead."], ["Smite", "Your sun spells heal the most-hurt ally for 30% of the damage."]],
+    m: [["Guardian Angel", "Once every 2 minutes, an ally who would die is saved on 20% health."], ["Lightwell", "Sanctuary lasts 10 s and follows you."]],
+    ks: [["Martyr", "Your heals are 30% stronger, and each one costs you 3% of your own health."], ["Battle Priest", "Everything you deal heals the most-hurt ally for 25% of it. Your heals are 15% weaker."]] },
+  { k: "hexer", style: "Magic", name: "Hexer", c: "#a86ae0", tag: "Take what's theirs. Keep it.",
+    sig: ["Siphon", "20 s", "Drain 6% of a monster's health over 5 s and heal yourself by as much (1% on bosses)."],
+    ab: [["Drain Bolt", "6 s", "A void bolt that heals you for 30% of what it deals.", "page_void_bolt"], ["Plague", "12 s", "A curse that eats 5% a second for 4 s and jumps to 2 more.", "page_void_blast"], ["Dread Aura", "18 s", "Monsters within 3 tiles deal 15% less for 6 s.", "page_void_surge"]],
+    s: [["Focus", "+3% magic damage."], ["Leech", "Heal 1% of the damage you deal."], ["Void Touched", "+5% void damage."], ["Long Curse", "Your curses last 20% longer."], ["Hardy", "+4% maximum health."], ["Thrift", "10% chance not to use a page."]],
+    n: [["Wither", "Every hit lowers the target's defence 2%, up to 10%."], ["Drink Deep", "Heal 3% of the damage you deal."], ["Dread", "Monsters near you deal 5% less damage."], ["Soul Jar", "Kills fill a jar; at 10, your next spell does double damage."]],
+    m: [["Hungry Dark", "Siphon also drains 2 monsters next to the target."], ["Death's Door", "Below 25% health, spells do 25% more."]],
+    ks: [["Blood Pact", "Spells cost 2% of your health instead of a page, and do 15% more."], ["Curse of the House", "Every monster you hit takes 1% more damage from everyone, up to 10%."]] }
+];
+/* everyone's three, by style, before an Ascendancy: unlocked at that style's 1, 30 and 60 */
+const BASE = { Melee: [["Heavy Blow", "8 s", "Your next swing hits for +50%.", "skill_strength"], ["Cleave", "12 s", "Hit the target and up to 2 next to it for 70%.", "skill_attack"], ["Brace", "20 s", "Take 30% less for 4 s.", "skill_defence"]],
+  Archery: [["Power Shot", "8 s", "Your next arrow hits for +60%.", "diamond_arrow"], ["Volley", "12 s", "Three arrows at three monsters, 50% each.", "dragonstone_arrow"], ["Disengage", "15 s", "Step back 2 tiles; the next arrow is +25%.", "skill_agility"]],
+  Magic: [["Bolt", "6 s", "A quick bolt of your element for +50%.", "page_fire_bolt"], ["Blast", "12 s", "Your element over 2 tiles, 70% to everything in it.", "page_fire_blast"], ["Barrier", "20 s", "A barrier that soaks 10% of your health for 6 s.", "page_arcane"]] };
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const EM = (k) => `${k}.png`, IC = (k) => `/v3/assets/img/glad/flat/items/${k}.png`;
+/* the choosing window: Melee's two */
+document.getElementById("chooseBox").innerHTML = PATHS.filter((p) => p.style === "Melee").map((p) => `<div class="pc" style="--c:${p.c}"><span class="stripe"></span><header><img class="emb" src="${EM(p.k)}" alt=""><span><b>${p.name}</b><small>${esc(p.tag)}</small></span></header><div class="sig"><b>${p.sig[0]}</b> (every ${p.sig[1]}): ${esc(p.sig[2])}</div><ul><li>Keystone: ${esc(p.ks[0][0])} or ${esc(p.ks[1][0])}</li><li>${esc(p.n[0][0])}, ${esc(p.n[1][0])} and more</li></ul><button class="k-btn" style="justify-self:start">Become a ${p.name}</button></div>`).join("");
+document.getElementById("sixBox").innerHTML = PATHS.map((p) => `<div class="pcard" style="--c:${p.c}"><header><img class="emb" src="${EM(p.k)}" alt=""><span><small>${p.style}</small><b>${p.name}</b></span></header><div class="tag">${esc(p.tag)}</div><div class="abl">${p.ab.map(([n, cd, t, ic], i) => `<div><kbd>${i + 1}</kbd><img src="${IC(ic)}" alt=""><span><b>${esc(n)}</b> · ${cd}<br>${esc(t)}</span></div>`).join("")}<div class="sigrow"><kbd>4</kbd><img src="${EM(p.k)}" alt=""><span><b>${p.sig[0]}</b> · every ${p.sig[1]}<br>${esc(p.sig[2])}</span></div></div><div class="ks"><span><b>${esc(p.ks[0][0])}</b>: ${esc(p.ks[0][1])}</span><span><b>${esc(p.ks[1][0])}</b>: ${esc(p.ks[1][1])}</span></div></div>`).join("");
+document.getElementById("auras").innerHTML = PATHS.map((p) => `<span style="--c:${p.c}" title="${p.name}"><img src="${EM(p.k)}" alt=""></span>`).join("");
+/* the planner */
+const BUDGET = 24, ROWS = [{ key: "s", cost: 1, need: 0, col: "#6a5a40", y: 470 }, { key: "n", cost: 3, need: 3, col: "#3a7ab0", y: 350 }, { key: "m", cost: 4, need: 9, col: "#8a4ab0", y: 230 }, { key: "ks", cost: 5, need: 15, col: "#c8963a", y: 110 }];
+let cur = PATHS[0], taken = new Set();
+const spent = () => [...taken].reduce((a, id) => a + ROWS.find((r) => r.key === id.split(":")[0]).cost, 0);
+const below = (ri) => [...taken].filter((id) => ROWS.findIndex((r) => r.key === id.split(":")[0]) < ri).reduce((a, id) => a + ROWS.find((r) => r.key === id.split(":")[0]).cost, 0);
+let hover = null;
+function draw() {
+  const W = 760, svg = document.getElementById("tree"); let s = `<defs><radialGradient id="glow"><stop offset="0" stop-color="${cur.c}" stop-opacity=".35"/><stop offset="1" stop-color="${cur.c}" stop-opacity="0"/></radialGradient></defs><circle cx="${W / 2}" cy="540" r="120" fill="url(#glow)"/>`;
+  const pos = (ri, i, n) => [W / 2 + (i - (n - 1) / 2) * (ri === 0 ? 112 : ri === 1 ? 160 : ri === 2 ? 220 : 260), ROWS[ri].y];
+  /* edges: every node to every node of the row below, faint; taken ones lit */
+  ROWS.forEach((r, ri) => { if (!ri) return; const up = cur[r.key], dn = cur[ROWS[ri - 1].key]; up.forEach((_, i) => dn.forEach((__, j) => { const [x1, y1] = pos(ri, i, up.length), [x2, y2] = pos(ri - 1, j, dn.length), lit = taken.has(`${r.key}:${i}`) && taken.has(`${ROWS[ri - 1].key}:${j}`); s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${lit ? cur.c : "#3a2616"}" stroke-width="${lit ? 2.5 : 1}" opacity="${lit ? 0.9 : 0.6}"/>`; })); });
+  cur.s.forEach((_, j) => { const [x, y] = pos(0, j, cur.s.length); s += `<line x1="${x}" y1="${y}" x2="${W / 2}" y2="540" stroke="${taken.has(`s:${j}`) ? cur.c : "#3a2616"}" stroke-width="${taken.has(`s:${j}`) ? 2.5 : 1}" opacity=".7"/>`; });
+  s += `<image href="${EM(cur.k)}" x="${W / 2 - 28}" y="512" width="56" height="56" style="image-rendering:pixelated"/>`;
+  ROWS.forEach((r, ri) => { const list = cur[r.key], open = below(ri) >= r.need; list.forEach(([name], i) => { const id = `${r.key}:${i}`, on = taken.has(id), [x, y] = pos(ri, i, list.length), rad = r.key === "s" ? 20 : r.key === "ks" ? 34 : 27, ksBlocked = r.key === "ks" && !on && [...taken].some((t) => t.startsWith("ks:"));
+    s += `<g class="node" data-id="${id}"><circle class="r" cx="${x}" cy="${y}" r="${rad}" fill="${on ? r.col : open && !ksBlocked ? "#241810" : "#140e0a"}" stroke="${on ? "#fff" : open && !ksBlocked ? r.col : "#3a2616"}" stroke-width="2"/>${r.key === "ks" ? `<path d="M${x} ${y - 14} l14 14 l-14 14 l-14 -14 z" fill="${on ? "#fff3c8" : "#5a4020"}" opacity=".85"/>` : ""}<text x="${x}" y="${y + rad + 15}" fill="${on ? "#fff" : open ? "#d8c8a8" : "#6a5a40"}" font-size="12.5" font-weight="700" text-anchor="middle">${esc(name)}</text><text x="${x}" y="${y + 4}" fill="${on ? "#1a0e04" : "#a89070"}" font-size="12" font-weight="800" text-anchor="middle">${r.key === "ks" ? "" : r.cost}</text></g>`; }); });
+  ROWS.forEach((r, ri) => { if (r.need) s += `<text x="12" y="${r.y + 4}" fill="${below(ri) >= r.need ? cur.c : "#6a5a40"}" font-size="11.5" font-weight="700">${below(ri) >= r.need ? "open" : `opens at ${r.need} spent`}</text>`; });
+  svg.innerHTML = s;
+  svg.querySelectorAll(".node").forEach((g) => { g.addEventListener("click", () => toggle(g.dataset.id)); g.addEventListener("mouseenter", () => { hover = g.dataset.id; side(); }); });
+  side();
+}
+function toggle(id) {
+  const [k] = id.split(":"), ri = ROWS.findIndex((r) => r.key === k), r = ROWS[ri];
+  if (taken.has(id)) { taken.delete(id); /* anything above that no longer qualifies comes off too */ for (let up = ri + 1; up < ROWS.length; up++) if (below(up) < ROWS[up].need) for (const t of [...taken]) if (t.startsWith(`${ROWS[up].key}:`)) taken.delete(t); draw(); return; }
+  if (below(ri) < r.need || spent() + r.cost > BUDGET || (k === "ks" && [...taken].some((t) => t.startsWith("ks:")))) { flash(); return; }
+  taken.add(id); draw();
+}
+let fl = 0; function flash() { fl = Date.now(); side(); }
+function side() {
+  const el = document.getElementById("side"), h = hover && (() => { const [k, i] = hover.split(":"); const r = ROWS.find((x) => x.key === k); return { r, n: cur[k][+i] }; })();
+  el.innerHTML = `<div style="display:flex;gap:10px;align-items:center"><img class="emb" src="${EM(cur.k)}" alt=""><div><b style="font:800 20px Cinzel,serif;color:#ffe7b0">${cur.name}</b><div style="font:700 11px Lora,serif;letter-spacing:.1em;text-transform:uppercase;color:${cur.c}">${cur.style}</div></div></div>
+    <div class="pts" style="margin-top:8px">${BUDGET - spent()}<small>of ${BUDGET} points left</small></div>
+    ${Date.now() - fl < 1500 ? `<p style="color:#ff9a8a">That row isn't open yet, you're out of points, or you already have a keystone.</p>` : ""}
+    <h4>${h ? esc(h.n[0]) : cur.sig[0]}</h4><p>${h ? esc(h.n[1]) : `Signature, every ${cur.sig[1]}: ${esc(cur.sig[2])}`}</p>${h ? `<p style="color:#a89070">${h.r.key === "ks" ? "Keystone, 5 points: you can only have one." : `${h.r.cost} point${h.r.cost > 1 ? "s" : ""}`}</p>` : ""}
+    <h4>Taken</h4><p>${taken.size ? [...taken].map((id) => { const [k, i] = id.split(":"); return esc(cur[k][+i][0]); }).join(", ") : "Nothing yet. Start at the bottom."}</p>
+    <button id="resetT">Take everything back</button>
+    <p class="how">Points: 1 at 100, 1 for each level 101 to 120, 1 for each of the trials at 110 and 120. Rows open at 3, 9 and 15 points spent below them.</p>`;
+  document.getElementById("resetT").onclick = () => { taken.clear(); draw(); };
+}
+document.getElementById("ptabs").innerHTML = PATHS.map((p, i) => `<button style="--c:${p.c}" data-i="${i}" aria-pressed="${!i}"><img src="${EM(p.k)}" alt="">${p.name}</button>`).join("");
+document.getElementById("ptabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; cur = PATHS[+b.dataset.i]; taken = new Set(); hover = null; document.querySelectorAll("#ptabs button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); draw(); });
+draw();
+/* ---------------- THE ABILITY ORDER DEMO: every swing uses the first ready ability in the order (2026-10-01, the owner: "they go off in order
+   instead, the only thing users can do is change the order") */
+let dp = PATHS[0], dum = { hp: 1, max: 1 }, cds = {}, allies = null, raf = 0, order = [3, 0, 1, 2], nextSwing = 0, lastUsed = -1;
+const SWING = 1200;   /* a 2.4 s swing, run at double speed */
+const CDMS = (t) => (parseFloat(t) || 6) * 1000;
+const stage = document.getElementById("stage");
+function resetStage() {
+  cds = {};
+  if (dp.healer) { allies = [["Kellzifer", "🛡️", 0.55], ["BeeEzRadio", "🗡️", 0.8], ["calvin", "🏹", 0.35], ["you", "✨", 0.9]].map(([n, i, h]) => ({ n, i, hp: h, ward: 0 }));
+    stage.innerHTML = `<div class="allies">${allies.map((a, k) => `<div class="ally" data-k="${k}"><span class="pip">${a.i}</span><span>${a.n}</span><span class="hpbar"><i></i></span><span class="shield"></span></div>`).join("")}</div>`; }
+  else { dum = { hp: 6000, max: 6000 }; stage.innerHTML = `<div class="dummy"><span class="body"></span><span>Training dummy</span><span class="hpbar"><i></i></span></div>`; }
+  paintStage();
+}
+function paintStage() {
+  if (dp.healer) allies.forEach((a, k) => { const el = stage.querySelector(`.ally[data-k="${k}"]`); el.querySelector("i").style.width = `${Math.round(a.hp * 100)}%`; el.classList.toggle("low", a.hp < 0.4); el.querySelector(".shield").textContent = a.ward > 0 ? `🛡 ${Math.round(a.ward * 100)}%` : ""; });
+  else stage.querySelector(".hpbar i").style.width = `${Math.round((dum.hp / dum.max) * 100)}%`;
+}
+function fly(text, x, y, heal) { const f = document.createElement("span"); f.className = `fly${heal ? " heal" : ""}`; f.textContent = text; f.style.left = `${x}%`; f.style.top = `${y}%`; stage.append(f); setTimeout(() => f.remove(), 1100); }
+function use(i) {
+  const ab = i < 3 ? dp.ab[i] : [dp.sig[0], dp.sig[1], dp.sig[2]], now = performance.now();
+  cds[i] = now + CDMS(ab[1]); lastUsed = i; document.getElementById("dnote").textContent = `Swing: ${ab[0]} (${order.indexOf(i) + 1}${["st", "nd", "rd", "th"][order.indexOf(i)]} in your order). ${ab[2]}`;
+  if (dp.healer) {
+    const order = [...allies].sort((a, b) => a.hp - b.hp);
+    if (i === 0) { const a = order[0]; a.hp = Math.min(1, a.hp + 0.2); fly("+20%", 12 + allies.indexOf(a) * 25, 30, true); }
+    else if (i === 1) { const a = order[0]; a.ward = 0.15; fly("Ward", 12 + allies.indexOf(a) * 25, 30, true); }
+    else if (i === 2) { allies.forEach((a, k) => { a.hp = Math.min(1, a.hp + 0.05); fly("+5%", 12 + k * 25, 30, true); }); }
+    else { allies.forEach((a, k) => { a.hp = Math.min(1, a.hp + 0.18); fly("+18%", 12 + k * 25, 30, true); }); }
+  } else {
+    const hits = { 0: [Math.round(260 * 1.6)], 1: [190, 190, 190], 2: [140], 3: [Math.round(260 * 2.2)] }[i] || [200];
+    hits.forEach((n, k) => setTimeout(() => { dum.hp = Math.max(0, dum.hp - n); if (!dum.hp) dum.hp = dum.max; fly(String(n), 50 + (k - 1) * 10, 20, false); paintStage(); }, k * 180));
+  }
+  paintStage();
+}
+function plain() {   /* nothing in the order is ready: an ordinary swing */
+  lastUsed = -1; document.getElementById("dnote").textContent = "Swing: nothing in your order is ready, so a plain swing.";
+  if (dp.healer) { const a = [...allies].sort((x, y) => x.hp - y.hp)[0]; a.hp = Math.min(1, a.hp + 0.03); fly("+3%", 12 + allies.indexOf(a) * 25, 30, true); }
+  else { dum.hp = Math.max(0, dum.hp - 260); if (!dum.hp) dum.hp = dum.max; fly("260", 50, 26, false); }
+  paintStage();
+}
+function bar() {
+  const d = document.getElementById("dbar"), AB = (i) => i < 3 ? [dp.ab[i][0], dp.ab[i][2], IC(dp.ab[i][3])] : [dp.sig[0], dp.sig[2], EM(dp.k)];
+  d.innerHTML = order.map((i, pos) => { const [n, t, img] = AB(i); return `<span class="oslot"><button class="ds ${i === 3 ? "sig" : ""}" data-i="${i}" draggable="true" title="${esc(n)}: ${esc(t)}"><kbd>${pos + 1}</kbd><img src="${img}" alt=""><span class="cdm"></span><span class="cdn"></span><span class="nm">${esc(n)}</span></button><span class="mv"><button data-p="${pos}" data-d="-1" ${pos ? "" : "disabled"} aria-label="Move earlier">◀</button><button data-p="${pos}" data-d="1" ${pos < 3 ? "" : "disabled"} aria-label="Move later">▶</button></span></span>`; }).join('<span class="then">then</span>');
+  d.querySelectorAll(".mv button").forEach((b) => b.addEventListener("click", () => { const p = +b.dataset.p, q = p + +b.dataset.d; [order[p], order[q]] = [order[q], order[p]]; bar(); }));
+  d.querySelectorAll("button.ds").forEach((b) => {
+    b.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", b.dataset.i));
+    b.addEventListener("dragover", (e) => e.preventDefault());
+    b.addEventListener("drop", (e) => { e.preventDefault(); const from = order.indexOf(+e.dataTransfer.getData("text/plain")), to = order.indexOf(+b.dataset.i); if (from < 0 || from === to) return; order.splice(to, 0, order.splice(from, 1)[0]); bar(); });
+  });
+}
+function tick() {
+  const now = performance.now();
+  if (now >= nextSwing) { nextSwing = now + SWING; const i = order.find((k) => (cds[k] || 0) <= now); if (i === undefined) plain(); else use(i); }
+  document.querySelectorAll("#dbar button.ds").forEach((b) => { b.classList.toggle("fired", +b.dataset.i === lastUsed && now < nextSwing - SWING + 500); const i = +b.dataset.i, end = cds[i] || 0, ab = i < 3 ? dp.ab[i] : dp.sig, total = CDMS(ab[1]), left = Math.max(0, end - now), f = left / total;
+    b.querySelector(".cdm").style.background = left ? `conic-gradient(rgba(0,0,0,.68) 0 ${f * 100}%, transparent ${f * 100}%)` : "none"; b.querySelector(".cdn").textContent = left ? Math.ceil(left / 1000) : ""; });
+  if (dp.healer && allies && Math.random() < 0.05) { const a = allies[Math.floor(Math.random() * allies.length)], hit = 0.04 + Math.random() * 0.06; if (a.ward > 0) { const s = Math.min(a.ward, hit); a.ward -= s; a.hp = Math.max(0.05, a.hp - (hit - s)); } else a.hp = Math.max(0.05, a.hp - hit); paintStage(); }
+  raf = requestAnimationFrame(tick);
+}
+document.getElementById("dtabs").innerHTML = PATHS.map((p, i) => `<button style="--c:${p.c}" data-i="${i}" aria-pressed="${!i}"><img src="${EM(p.k)}" alt="">${p.name}</button>`).join("");
+document.getElementById("dtabs").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; dp = PATHS[+b.dataset.i]; document.querySelectorAll("#dtabs button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); bar(); resetStage(); document.getElementById("dnote").textContent = dp.healer ? "The party is taking damage. Every swing heals or shields whoever is most hurt, in your order." : "Fighting the dummy."; });
+bar(); resetStage(); tick();
+document.getElementById("baseBox").innerHTML = Object.entries(BASE).map(([st, list]) => `<div class="bcard"><h4>${st}: everyone</h4><div class="abl">${list.map(([n, cd, t, ic], i) => `<div><kbd>${i + 1}</kbd><img src="${IC(ic)}" alt=""><span><b>${esc(n)}</b> · ${cd} · at ${st} ${[1, 30, 60][i]}<br>${esc(t)}</span></div>`).join("")}</div><p class="note" style="margin:6px 0 0">Ascended: ${PATHS.filter((p) => p.style === st).map((p) => `${p.name} turns these into ${p.ab.map((a) => a[0]).join(", ")}`).join("; ")}.</p></div>`).join("");
+/* the party window with roles */
+document.getElementById("partyBox").innerHTML = [["juggernaut", "Kellzifer", "level 118", "tank", "Tank"], ["mender", "BeeEzRadio", "level 112", "heal", "Healer"], ["trickshot", "calvin", "level 104", "dps", "Damage"], ["", "Looking for one more", "", "need", "Damage"]].map(([e, n, l, r, t]) => `<div class="prow">${e ? `<img src="${EM(e)}" alt="">` : "<span></span>"}<span>${esc(n)} <small style="color:var(--k-ink2)">${l}</small></span><span class="role ${r}">${t}</span><span style="font:700 11.5px Lora,serif;color:${r === "need" ? "#c8302a" : "var(--k-ink2)"}">${r === "need" ? "open" : "ready"}</span></div>`).join("") + `<p style="margin:8px 2px 0;font:600 12.5px Lora,serif;color:var(--k-ink2)">The role comes from the path you have on (a Juggernaut is a tank, a Mender a healer). A Mythic 8 door won't open without both.</p>`;
+</script>
+</body>
+</html>

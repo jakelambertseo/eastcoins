@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Ticket sinks</title>
+<!-- (2026-10-01, the owner: "a deep dive into current ticket sinks, and provide ideas that other mmos/rpgs/arps use for currency sinks/ticket
+     sinks and/or things that would go great with our game. add it to the gameplan"). Mockup 14. held.json is MEASURED from the nightly
+     backup (who holds what, lifetime totals, the Exchange's tax, the projects); today.json is the code's every faucet and sink with its
+     price; flows.json, when present, is one tracked day (tickets in by source, out by sink). Local only; built into /gameplan. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a09;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#2a1a10,transparent),radial-gradient(900px 600px at 100% 30%,#1a102a,transparent),#0b0a09}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:18px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}.lede b{color:#f6e9cc}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd98a}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:980px;line-height:1.55}.sec>p b{color:#f6e9cc}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:8px;margin:12px 0}
+.tile{background:#14120e;border-radius:10px;padding:10px 12px;box-shadow:0 0 0 1.5px #3a2616}.tile b{display:block;font:800 24px Cinzel,serif;color:#ffe7b0}.tile span{font:700 12px Lora,serif;color:#a89070}
+.tbl{width:100%;border-collapse:collapse;font:600 12.5px Lora,serif;background:#14120e;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616;margin-top:10px}
+.tbl th{text-align:left;font:800 10px Lora,serif;letter-spacing:.07em;text-transform:uppercase;color:#a89070;padding:9px 8px 5px}.tbl td{padding:6px 8px;border-top:1px solid #2e2216;vertical-align:top;line-height:1.4}
+.tbl td:first-child{font-weight:800;color:#ffe7b0}.tbl td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.wrapx{overflow-x:auto}
+.pill{display:inline-block;font:800 10.5px Lora,serif;padding:1px 7px;border-radius:999px;margin:1px 2px 1px 0;white-space:nowrap}
+.p-once{background:#3a2a10;color:#ffd98a}.p-rep{background:#1e4a24;color:#9ef0a0}.p-pct{background:#1e2e4a;color:#9ec8ff}.p-new{background:#4a1a14;color:#ff9a8a}.p-rich{background:#3a1a4a;color:#e0a8ff}
+.chart{background:#14120e;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #3a2616;margin-top:12px;overflow:auto}.chart svg{display:block;width:100%;height:auto;max-width:900px}
+.big{margin:14px 0 6px;padding:14px 18px;border-radius:12px;background:linear-gradient(90deg,#3a2a10,#14120e);box-shadow:inset 4px 0 0 #ffd98a,0 0 0 1.5px #5a3a1a;max-width:980px}
+.big b{display:block;font:800 19px Cinzel,serif;color:#ffe7b0;margin-bottom:4px}.big span{font:600 14px/1.55 Lora,serif;color:#d8ccb4}.big span b{display:inline;font:inherit;color:#fff0c8;margin:0}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(270px,100%),1fr));gap:10px;margin:12px 0}.rules3>div{background:#14120e;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.rules3 span b{color:#f6e9cc}
+.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(330px,100%),1fr));gap:10px;margin-top:12px}
+.game{background:#14120e;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}.game b{font:800 15px Cinzel,serif;color:#ffe7b0}.game small{font:700 11px Lora,serif;color:#a89070;margin-left:6px}
+.game ul{margin:6px 0 0;padding-left:16px;font:600 12.5px/1.5 Lora,serif;color:#cdbfa2}.game li b{font:800 12.5px Lora,serif;color:#f6e9cc}
+.ideas{display:grid;gap:12px;margin-top:12px}
+.idea{display:grid;grid-template-columns:56px 1fr;gap:4px 14px;padding:14px 16px;border-radius:12px;background:linear-gradient(180deg,var(--bg),#100c0a 85%);box-shadow:0 0 0 1.5px var(--ac)}
+.idea .rank{grid-row:1/span 3;font:800 34px Cinzel,serif;color:var(--ac);text-align:center;line-height:1}
+.idea header{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.idea header b{font:800 19px Cinzel,serif;color:#ffe7b0}.idea header small{font:700 12px Lora,serif;color:#a89070}
+.idea p{margin:2px 0 0;font:600 13.5px/1.55 Lora,serif;color:#d8ccb4;max-width:900px}.idea p b{color:#fff0c8}
+.idea .facts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.idea .facts span{font:700 11.5px Lora,serif;padding:3px 9px;border-radius:999px;background:rgba(0,0,0,.4);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:#e8dcc0}.idea .facts span b{color:var(--ac)}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+#flowSec[hidden]{display:none}
+</style>
+</head>
+<body>
+<main>
+  <h1>Ticket sinks</h1>
+  <p class="lede">Where tickets leave the game today, who they leave from, and what other games do about it. Tickets are the one currency: they come
+    in from every kill, catch and daily, and they leave through the Prize Counter, the casino tables, hospital bills and a few fees. The measured
+    part comes from the nightly backup; nothing on this page polls the live game.</p>
+  <nav class="jump"><a href="#held">Who holds them</a><a href="#today">Every faucet and sink</a><a href="#flows">One day, measured</a><a href="#rules">What makes a good sink</a><a href="#games">What other games do</a><a href="#ideas">Ideas for us, ranked</a><a href="#build">Building it</a></nav>
+
+  <section class="sec" id="held">
+    <h2>Who holds the tickets</h2>
+    <p id="heldLede"></p>
+    <div class="tiles" id="heldTiles"></div>
+    <div class="chart"><svg id="heldSvg" viewBox="0 0 900 320" role="img" aria-label="Tickets held by each player against the hours they have played"></svg></div>
+    <div class="big" id="heldBig"></div>
+  </section>
+
+  <section class="sec" id="today">
+    <h2>Every faucet and sink in the code</h2>
+    <p>Read from the rules and the server, with each one's price. A sink is <span class="pill p-once">once</span> if you buy it and you're done,
+      <span class="pill p-rep">again</span> if it comes back, and <span class="pill p-pct">scales</span> if it takes a share rather than a flat price,
+      which is the only kind a millionaire notices. <span class="pill p-new">new players</span> and <span class="pill p-rich">the rich</span> mark who it actually reaches.</p>
+    <h3>Sinks: where tickets leave</h3>
+    <div class="wrapx"><table class="tbl" id="sinkTbl"></table></div>
+    <h3>Faucets: where tickets come from</h3>
+    <div class="wrapx"><table class="tbl" id="tapTbl"></table></div>
+    <div class="big" id="gapBig"></div>
+  </section>
+
+  <section class="sec" id="flows">
+    <h2>One day, measured</h2>
+    <div id="flowBox"><p class="note">The tracker (rules 376) records tickets in by source and out by sink per Chicago day. The first full day lands in the next nightly backup; this section fills itself from <code>flows.json</code> when that's read.</p></div>
+  </section>
+
+  <section class="sec" id="rules">
+    <h2>What makes a good sink</h2>
+    <div class="rules3">
+      <div><b>Wanted, not taken</b><span>The sinks players love are things they want: a luxury, a gamble, a trophy, a convenience. Taxes and decay take the same tickets and make people play less. Every idea below is something you'd choose to buy.</span></div>
+      <div><b>Priced by the hour</b><span>A regular earns about 17k tickets an hour. A flat 500-ticket fee is half an hour for someone on day one and nothing to a saver on 1.8M. Price sinks in <b>hours of play</b> for the middle, and let the top ones <b>scale</b>: a price that rises each time, an auction, or a top shelf priced in millions.</span></div>
+      <div><b>Again, not once</b><span>Most of today's sinks are bought once (gear, vanity, projects). A rich player runs out of things to buy and the tickets just sit. Rerolls, consumables, upkeep and weekly auctions come back.</span></div>
+      <div><b>Seen by others</b><span>What makes the rich spend is other people seeing it: a name in the CASINO line, a statue, a title, a trophy, a gold thing in the Yard. Prestige is the cheapest thing a game can sell.</span></div>
+      <div><b>Never touching a bet</b><span>The house rule stands: nothing here changes odds or a ZCoin payout. Ticket bets already convert tickets into ZCoin chances under their own hourly cap; sinks sit beside that, not inside it.</span></div>
+      <div><b>Measured</b><span>Tickets in vs out per day, the total held, the median and the top-10 share are already tracked. A sink is working if the total held stops climbing while the median doesn't fall.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="games">
+    <h2>What other games do</h2>
+    <p>The sinks that worked elsewhere, grouped by game, with the ones that would suit a casino MMO in bold.</p>
+    <div class="games" id="gameBox"></div>
+  </section>
+
+  <section class="sec" id="ideas">
+    <h2>Ideas for EastScape, ranked</h2>
+    <p>Ranked by whether they give <b>the regulars something to want</b> and <b>the savers something worth a million</b>, whether they come back, how well they fit a casino, and the cost to build.</p>
+    <div class="ideas" id="ideaBox"></div>
+  </section>
+
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <ul class="note" style="font-size:14px;line-height:1.7;color:#cdbfa2;max-width:980px" id="buildList"></ul>
+    <div class="callout" id="decide"></div>
+  </section>
+</main>
+<script src="ideas.js"></script>
+</body>
+</html>

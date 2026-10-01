@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Skilling sets</title>
+<!-- (2026-10-01, the owner: "add one more analysis to the gameplan, skilling gear AND sets with their bonuses and creative ways we can introduce
+     dropping them. a full set should provide bonuses to that skill, and we already have Ditched gear as a template. its for theiving and you get
+     it from fishing"). Mockup 13. today.json is MEASURED: every worn item that helps a skill, from the rules file. The fourteen sets are the
+     proposal. All 52 new icons are PixelLab drafts in art/ (2026-10-01). Local only; built into /gameplan. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a09;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#2a2410,transparent),radial-gradient(900px 600px at 100% 30%,#102a24,transparent),#0b0a09}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:16px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd98a}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:980px;line-height:1.55}
+.tbl{width:100%;border-collapse:collapse;font:600 12.5px Lora,serif;background:#14120e;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616;margin-top:10px}
+.tbl th{text-align:left;font:800 10px Lora,serif;letter-spacing:.07em;text-transform:uppercase;color:#a89070;padding:9px 8px 5px}.tbl td{padding:6px 8px;border-top:1px solid #2e2216;vertical-align:top;line-height:1.4}
+.tbl td:first-child{font-weight:800;color:#ffe7b0;white-space:nowrap}.tbl img{width:24px;height:24px;image-rendering:pixelated;vertical-align:-7px;margin-right:6px}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(270px,100%),1fr));gap:10px;margin:12px 0}.rules3>div{background:#14120e;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.rules3 span b{color:#f6e9cc}
+.big{margin:14px 0 6px;padding:14px 18px;border-radius:12px;background:linear-gradient(90deg,#3a2a10,#14120e);box-shadow:inset 4px 0 0 #ffd98a,0 0 0 1.5px #5a3a1a;max-width:980px}
+.big b{display:block;font:800 19px Cinzel,serif;color:#ffe7b0;margin-bottom:4px}.big span{font:600 14px/1.55 Lora,serif;color:#d8ccb4}
+.cov{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px;margin-top:10px}
+.cov span{display:grid;grid-template-columns:24px 1fr auto;gap:6px;align-items:center;padding:6px 9px;border-radius:8px;background:#14120e;box-shadow:inset 0 0 0 1.5px #3a2616;font:700 12.5px Lora,serif;color:#e8dcc0}
+.cov img{width:22px;height:22px;image-rendering:pixelated}.cov b{font:800 11px Lora,serif;padding:1px 7px;border-radius:999px}.cov .y{background:#1e4a24;color:#9ef0a0}.cov .n{background:#4a1a14;color:#ff9a8a}.cov .g{background:#3a3010;color:#ffd98a}
+/* the wheel */
+.chart{background:#14120e;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #3a2616;margin-top:12px;overflow:auto}.chart svg{display:block;width:100%;height:auto;max-width:760px;margin:0 auto}
+/* set cards */
+.sets{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(370px,100%),1fr));gap:12px;margin-top:12px}
+.set{padding:13px 14px;border-radius:12px;background:linear-gradient(180deg,var(--bg),#100c0a 80%);box-shadow:0 0 0 1.5px var(--ac)}
+.set header{display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center}.set header img{width:34px;height:34px;image-rendering:pixelated}
+.set header b{font:800 17px Cinzel,serif;color:var(--tx)}.set header small{display:block;font:800 11px Lora,serif;color:#a89070;letter-spacing:.05em;text-transform:uppercase}
+.set .from{font:800 11px Lora,serif;padding:3px 9px;border-radius:999px;background:rgba(0,0,0,.4);box-shadow:inset 0 0 0 1.5px var(--ac);color:var(--tx);white-space:nowrap}
+.pcs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:10px 0 8px}
+.pc{display:grid;justify-items:center;gap:2px;text-align:center;padding:7px 4px;border-radius:8px;background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);font:700 11px/1.25 Lora,serif;color:#e8dcc0}
+.pc img{width:30px;height:30px;image-rendering:pixelated}.pc .slot{font:800 9.5px Lora,serif;color:#a89070;text-transform:uppercase;letter-spacing:.06em}
+.pc .ph{width:30px;height:30px;border-radius:6px;background:repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 4px,transparent 4px 8px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.bon{display:grid;gap:4px}.bon div{display:grid;grid-template-columns:86px 1fr;gap:8px;font:600 12.5px/1.45 Lora,serif;color:#d8ccb4}.bon div b{font:800 11px Lora,serif;color:var(--tx);text-transform:uppercase;letter-spacing:.05em;padding-top:2px}
+.how{margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(0,0,0,.4);font:600 12.5px/1.5 Lora,serif;color:#e8dcc0;box-shadow:inset 3px 0 0 var(--ac)}.how b{color:var(--tx)}
+.tagnew{font:800 10px Lora,serif;padding:1px 7px;border-radius:999px;background:#1e4a24;color:#9ef0a0;margin-left:6px;vertical-align:2px}.tagex{background:#3a3010;color:#ffd98a}
+.build{margin:6px 0 0;padding-left:18px;line-height:1.6;color:#cdbfa2;max-width:980px}.build b{color:#f6e9cc}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+.wrapx{overflow-x:auto}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+</style>
+</head>
+<body>
+<main>
+  <h1>Skilling sets</h1>
+  <p class="lede">Every skill gets a set: four pieces (a hat, a coat, gloves and boots), each piece a small bonus to that one skill, and <b>the full set a
+    bigger one</b>. The template is the <b>Ditched set</b>: a thief's kit somebody threw in the river, fished back up, so Fishing feeds Thieving. Every new
+    set drops the same way, <b>from a different skill or event than the one it helps</b>, which is how the four skills the atlas found are islands (Agility,
+    Thieving, Breeding, Tinkering) get wired into the rest. Below: what exists today, the rules, all fourteen sets, how they drop, and the master tier on
+    the atlas's maps.</p>
+  <nav class="jump"><a href="#today">Today</a><a href="#rules">The rules</a><a href="#wheel">Who feeds whom</a><a href="#sets">The fourteen</a><a href="#drops">Ways to drop them</a><a href="#master">The master tier</a><a href="#build">Building it</a></nav>
+
+  <section class="sec" id="today">
+    <h2>Today</h2>
+    <p>Every piece of gear that helps a non-combat skill, from the rules file. Most help <i>everything</i> a little ("work speed", "rare drops"); very few
+      help one skill, and only the Ditched pieces were made to be worn together.</p>
+    <div class="cov" id="covBox"></div>
+    <div class="wrapx"><table class="tbl" id="todayTbl"></table></div>
+    <div class="big"><b>The Ditched set has no set bonus.</b><span>Its four pieces simply add up (+10% pickpocket and +12% speed for all four), and a drop picks a piece at random, so a set can take more than four drops. Both change below: every set, the Ditched one included, gets a <b>full-set bonus</b>, and a drop always gives a piece you don't have yet.</span></div>
+  </section>
+
+  <section class="sec" id="rules">
+    <h2>The rules for a set</h2>
+    <div class="rules3">
+      <div><b>Their own four squares</b><span>Hat, coat, gloves, boots, in a <a href="../workclothes-mock/" style="color:#ffd98a">Work clothes</a> row beside your armour (settled 2026-10-01): one outfit on at a time, swapped in one click, pieces kept in a locker rather than your bag.</span></div>
+      <div><b>Small per piece, big for all four</b><span>Each piece is about +3% at its skill. The full set adds a bonus of its own that changes how the skill plays (a second ore, nothing burnt, a free pickpocket), not just "more". All four together come to about <b>15% faster to 99</b>, the size of the Ditched set's 90 hours down to 76.</span></div>
+      <div><b>One skill only</b><span>A set's bonuses apply to its own skill. They sit inside the caps the game already has, so a set plus a pet plus jewellery can't run away.</span></div>
+      <div><b>From somewhere else</b><span>Every set drops from a different skill, an event or a boss. Nobody gets their own set by grinding their own skill: a miner wants a runner, a cook wants a breeder.</span></div>
+      <div><b>Never a duplicate</b><span>A drop always gives a piece of the set you don't own yet, so four drops is a set. Found pieces go to your locker, so there are no spares to trade.</span></div>
+      <div><b>About an evening each</b><span>The odds are set so a set takes a few hours of the source activity, as Ditched's one-in-2,500 catches does (a piece every two hours of steady fishing).</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="wheel">
+    <h2>Who feeds whom</h2>
+    <p>Each arrow runs from where a set drops to the skill it helps. Every skill sends one and gets one, so nobody's skill stands alone, and the four islands each
+      get a feed in and out.</p>
+    <div class="chart"><svg id="wheelSvg" viewBox="0 0 760 640" role="img" aria-label="A wheel of skills with arrows from the source of each set to the skill it helps"></svg></div>
+  </section>
+
+  <section class="sec" id="sets">
+    <h2>The fourteen</h2>
+    <div class="sets" id="setBox"></div>
+  </section>
+
+  <section class="sec" id="drops">
+    <h2>Ways to drop them</h2>
+    <p>Eleven different ways, so getting sets doesn't feel like one grind fourteen times. Each uses something the game already does.</p>
+    <div class="wrapx"><table class="tbl" id="dropTbl"></table></div>
+  </section>
+
+  <section class="sec" id="master">
+    <h2>The master tier, on the atlas's maps</h2>
+    <p>For the road past 99: a second set per skill, about twice the bonus, from the new places. Same rules, same feeds where they fit; they're why a level-110
+      skiller still visits a map with a boss on it.</p>
+    <div class="wrapx"><table class="tbl" id="masterTbl"></table></div>
+  </section>
+
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <ul class="build">
+      <li><b>The per-skill effects already exist.</b> Sal's projects carry <code>craft: {smithing: {dbl}}</code>, <code>xp: {wizardry}</code> and <code>gather</code>, read by the crafting, XP and gathering code. A set is the same shape from worn items: a <code>setFx(c)</code> beside <code>fxOf</code> that adds each piece's bonus and, at four pieces, the set's own.</li>
+      <li><b>The drops</b> are a line each in code that already runs: the catch roll (Ditched's), the course finish, the pocket table, the harvest, the pet's present, the chop, the pick, the Jackpot Thief's hit, the Star Tent, Bronny's order, a monster's drop table. "Never a duplicate" is a filter on what the roll picks.</li>
+      <li><b>The Ditched set</b> keeps its pieces and gains its full-set bonus and the no-duplicate rule. Nobody's set gets weaker.</li>
+      <li><b>On screen</b>: the character window (mockup 9) gets a "Sets" row (Prospector 3 of 4), the collection log a Skilling sets page, and the diaries (mockup 6) a task per set.</li>
+      <li><b>Art</b>: four icons a set, 52 new pieces of PixelLab art for the thirteen new sets (all drawn, in art/). They don't change how you look in the world, as Ditched doesn't.</li>
+      <li><b>Performance</b>: nothing new runs on a timer. Each bonus is read where its skill already reads a bonus.</li>
+    </ul>
+    <div class="callout"><b>Settled 2026-10-01:</b> a separate Work clothes slot (see its mockup), 15% faster to 99 for a full set, and the names above. <b>Still open:</b> whether the master tier waits for the atlas's maps or a few come early.</div>
+  </section>
+</main>
+<script>
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const IC = (k) => `/v3/assets/img/glad/flat/items/${k}.png`;
+const SK = { mining: "Mining", woodcutting: "Woodcutting", fishing: "Fishing", cooking: "Cooking", farming: "Farming", fungiculture: "Fungiculture", smithing: "Smithing", fletching: "Fletching", wizardry: "Wizardry", alchemy: "Alchemy", thieving: "Thieving", agility: "Agility", breeding: "Breeding", tinkering: "Tinkering", combat: "Combat", events: "Events", orders: "Bronny's orders" };
+const SKIC = (k) => IC(k === "events" ? "stardust" : k === "orders" ? "skill_smithing" : k === "combat" ? "skill_melee" : `skill_${k}`);
+/* [skill, set name, pieces [hat, coat, gloves, boots], per piece, full set, source skill, how it drops, odds, colour] */
+const SETS = [
+  ["thieving", "The Ditched set", ["Ditched hood", "Ditched coat", "Ditched gloves", "Ditched boots"], "+2.5% pickpocket, +3% speed (as now)", "NEW: one pocket in ten is picked twice, for one go", "fishing", "Fished up: one catch in 2,500 at any spot turns up a piece someone threw in the water rather than be caught with it. Exists today.", "1 in 2,500 catches", "#7a4ab8", ["ditched_hood", "ditched_coat", "ditched_gloves", "ditched_boots"], true],
+  ["mining", "The Prospector's kit", ["Lamp hat", "Work vest", "Wrist guards", "Steel-toe boots"], "+3% mining speed", "a second ore one swing in eight, and gems 25% more often", "agility", "Lost on the cliff routes: finishing any agility course or shortcut has a 1 in 150 chance of finding a piece some prospector dropped on the climb.", "1 in 150 course finishes", "#c88a3a", ["pr_hat", "pr_vest", "pr_gloves", "pr_boots"]],
+  ["woodcutting", "The Feller's flannels", ["Knit cap", "Flannel shirt", "Splitting gloves", "Caulk boots"], "+3% chopping speed", "a second log one chop in eight, and birds' nests twice as often", "thieving", "Lifted from a pocket: the Guild's marks carry them home from the lumber yards. Any mark's pocket, 1 in 400.", "1 in 400 pockets", "#5ad06a", ["fl_cap", "fl_shirt", "fl_gloves", "fl_boots"]],
+  ["fishing", "The Boardwalk oilskins", ["Sou'wester", "Oilskin coat", "Fingerless mitts", "Waders"], "+2% bite, +2% fishing speed", "fish never get away on a rare catch, and +10% rare fish", "farming", "The scarecrow's coat: every scarecrow on every island wears a piece. A harvest has a 1 in 300 chance of the wind blowing one loose.", "1 in 300 harvests", "#3a9ad8", ["oi_hat", "oi_coat", "oi_mitts", "oi_waders"]],
+  ["cooking", "The short-order whites", ["Paper hat", "Diner whites", "Oven mitts", "Kitchen clogs"], "+3% cooking speed, 5% fewer burns", "nothing ever burns, and one dish in ten comes out double", "breeding", "A pet's present: a pet at your heel already brings home a gift once a day; one gift in 25 is a piece of a chef's kit it found somewhere.", "1 in 25 pet presents", "#e8e0c8", ["so_hat", "so_whites", "so_mitts", "so_clogs"]],
+  ["breeding", "The kennel keeper's coat", ["Whistle cap", "Kibble coat", "Handling gloves", "Yard boots"], "+3% breeding XP, eggs hatch 3% faster", "a pen pairing takes a third less time, and one egg in ten hatches a Greater", "cooking", "Cooked into a batch: cooking pet food has a 1 in 200 chance of a piece turning up in the pot, smelling of kibble forever.", "1 in 200 pet food batches", "#d8a060", ["kk_cap", "kk_coat", "kk_gloves", "kk_boots"]],
+  ["smithing", "Bronny's leathers", ["Forge cap", "Leather apron", "Tong gloves", "Ember boots"], "+3% smithing speed", "one bar in ten saved, reforges 10% likelier (with Bessemer's Gauntlets it all stacks to the cap)", "orders", "Earned from Bronny's order: finishing an order has a 1 in 6 chance of Bronny handing over a piece of her old kit. The order already feeds mining, woodcutting and fishing.", "1 in 6 orders", "#ff7a3a", ["br_cap", "br_apron", "br_gloves", "br_boots"]],
+  ["farming", "The groundskeeper's dungarees", ["Straw hat", "Dungarees", "Garden gloves", "Wellies"], "+3% harvest", "every harvest +1 crop, and crops never wither", "combat", "Off the Orchard Wall: the Gardener (the held map's boss) and his Orchard Keepers drop it, which is one more reason to open the Orchard in phase 1.", "Gardener 1 in 8; Keepers 1 in 400", "#7ed060", ["gk_hat", "gk_dungarees", "gk_gloves", "gk_wellies"]],
+  ["fungiculture", "The mycologist's mantle", ["Spore hood", "Mossy mantle", "Picking gloves", "Damp boots"], "+3% mushroom yield", "one bed in five fruits twice, and truffles twice as often", "woodcutting", "Grown through a dead log: chopping deadwood, gallows wood or bogwood has a 1 in 800 chance of a piece grown right through with mycelium.", "1 in 800 dead-tree chops", "#a87ad0", ["my_hood", "my_mantle", "my_gloves", "my_boots"]],
+  ["alchemy", "The apothecary's smock", ["Brass goggles", "Stained smock", "Rubber gloves", "Lab boots"], "+3% brewing speed", "one brew in eight makes an extra potion, and potions last 15% longer", "fungiculture", "Picked with the wild ones: picking a wild mushroom cluster on any map has a 1 in 250 chance of a piece left under it by a careless apothecary.", "1 in 250 wild picks", "#6ad0b0", ["ap_goggles", "ap_smock", "ap_gloves", "ap_boots"]],
+  ["fletching", "The bowyer's greens", ["Feathered cap", "Green jerkin", "Finger tabs", "Soft boots"], "+3% fletching speed", "+2 arrows in every set, and one bow in ten made at a better reforge", "combat", "Plucked from a bird: anything with feathers (the Thunder Goose, Gulls, Pterodactyls, Snow Owls, Hail Drakes) drops a piece, 1 in 500.", "1 in 500 bird kills", "#c8b060", ["bw_cap", "bw_jerkin", "bw_tabs", "bw_boots"]],
+  ["wizardry", "The stargazer's robes", ["Star hat", "Night robe", "Inky gloves", "Velvet slippers"], "+3% printing speed", "one batch in eight prints double, and enchanting 10% likelier", "events", "Bought with Star Fragments: the Star Tent sells them, one piece at a time, for the fragments mined from Shooting Stars. The event gets a reason to keep its currency.", "Star Tent: 40 fragments a piece", "#b08aff", ["sg_hat", "sg_robe", "sg_gloves", "sg_slippers"]],
+  ["agility", "The getaway silks", ["Sweatband", "Track jacket", "Grip tape", "Racing flats"], "+2% walking speed (to the cap)", "+20% agility XP, and courses' timed gates open a beat longer", "events", "Knocked loose from the Jackpot Thief: every hit on him already spills tickets; one hit in 60 knocks a piece of his running kit loose instead.", "1 in 60 hits on the Thief", "#ff5a8a", ["gw_band", "gw_jacket", "gw_tape", "gw_flats"]],
+  ["tinkering", "Sal's spare overalls", ["Welding mask", "Overalls", "Grease gloves", "Work boots"], "+3% parts from salvage", "one salvage in eight gives double parts, and gadgets last 20% longer", "combat", "Off the junk: the Trailer Park's Junkyard Dogs, Rabid Possums and the Junk King drop them, the way Sal's crane drags scrap up.", "Junk King 1 in 10; the rest 1 in 400", "#8a9aa8", ["sl_mask", "sl_overalls", "sl_gloves", "sl_boots"]]];
+
+fetch("today.json").then((r) => r.json()).then((D) => {
+  /* coverage: which skills have any gear that helps only them */
+  const only = { thieving: ["steal"], fishing: ["bite"], smithing: ["smelt", "forge"], mining: ["gem"] };
+  const cov = Object.keys(SK).filter((k) => !["combat", "events", "orders"].includes(k)).map((k) => { const n = D.rows.filter((r) => (only[k] || []).some((f) => r.fx[f])).length; return [k, n, k === "thieving" ? "set" : n ? `${n} piece${n > 1 ? "s" : ""}` : "none"]; });
+  document.getElementById("covBox").innerHTML = cov.map(([k, n, t]) => `<span><img src="${SKIC(k)}" alt="">${SK[k]}<b class="${t === "set" ? "g" : n ? "y" : "n"}">${t}</b></span>`).join("");
+  const fxw = (fx) => Object.entries(fx).map(([k, v]) => ({ speed: `+${v * 100}% work speed`, double: `${v * 100}% double`, gem: `+${v * 100}% gems`, smelt: `${v * 100}% free smelts`, forge: `+${v * 100}% reforge`, bite: `+${v * 100}% bites`, steal: `+${v * 100}% pickpocket`, heal: `+${v * 100}% food heals`, rare: `+${v * 100}% rare drops`, tix: `+${v * 100}% tickets`, zdrop: `+${v * 100}% ZCoin`, ammo: `${v * 100}% ammo saved`, tough: `−${v * 100}% damage`, execute: `execute ${v * 100}%`, nobill: "no hospital bill" })[k] || `${k} ${v}`).join(", ");
+  document.getElementById("todayTbl").innerHTML = `<tr><th>Item</th><th>Slot</th><th>Does</th><th>Needs</th><th>Where from</th></tr>` + D.rows.map((r) => `<tr><td><img src="${IC(r.k)}" alt="" onerror="this.style.visibility='hidden'">${esc(r.name)}</td><td>${r.slot}</td><td>${esc(fxw(r.fx))}</td><td>${esc(r.req || "—")}</td><td>${esc(r.ex)}</td></tr>`).join("");
+});
+
+/* ---- the wheel ---- */
+{
+  const nodes = ["fishing", "thieving", "mining", "agility", "woodcutting", "fungiculture", "alchemy", "cooking", "breeding", "smithing", "farming", "fletching", "wizardry", "tinkering"];
+  const ext = { combat: [380, 320, "Monsters"], events: [380, 360, "Events"], orders: [380, 400, "Bronny's orders"] };
+  const cx = 380, cy = 330, R = 250, P = {}; nodes.forEach((k, i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / nodes.length; P[k] = [cx + R * Math.cos(a), cy + R * Math.sin(a)]; });
+  P.combat = [cx - 70, cy - 20]; P.events = [cx + 70, cy - 20]; P.orders = [cx, cy + 60];
+  let s = `<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker></defs>`;
+  for (const [to, , , , , from, , , col] of SETS) { const [x1, y1] = P[from], [x2, y2] = P[to], dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, mx = (x1 + x2) / 2 - uy * 30, my = (y1 + y2) / 2 + ux * 30;
+    s += `<path d="M${x1 + ux * 30} ${y1 + uy * 30} Q${mx} ${my} ${x2 - ux * 32} ${y2 - uy * 32}" stroke="${col}" stroke-width="2.5" fill="none" marker-end="url(#ar)" opacity=".9"/>`; }
+  for (const k of [...nodes, "combat", "events", "orders"]) { const [x, y] = P[k], hub = !nodes.includes(k), isl = ["agility", "thieving", "breeding", "tinkering"].includes(k);
+    s += `<circle cx="${x}" cy="${y}" r="${hub ? 24 : 27}" fill="#1e1812" stroke="${isl ? "#ff9a5a" : hub ? "#8a7a64" : "#5a4a34"}" stroke-width="2.5"/><image href="${SKIC(k)}" x="${x - 14}" y="${y - 14}" width="28" height="28" style="image-rendering:pixelated"/><text x="${x}" y="${y + (hub ? 38 : 42)}" fill="${isl ? "#ffb080" : "#e8dcc0"}" font-size="12" font-weight="800" text-anchor="middle" stroke="#14120e" stroke-width="3" paint-order="stroke">${hub ? ext[k][2] : SK[k]}</text>`; }
+  s += `<text x="16" y="22" fill="#a89070" font-size="12">Orange rings: the four islands the atlas found. Each arrow: where a set drops → the skill it helps.</text>`;
+  document.getElementById("wheelSvg").innerHTML = s;
+}
+
+/* ---- the sets ---- */
+document.getElementById("setBox").innerHTML = SETS.map(([sk, name, pcs, per, full, from, how, odds, col, icons, exists]) => {
+  const art = icons && icons.map((k) => k.startsWith("ditched") ? IC(k) : `art/${k}.png`);
+  return `<div class="set" style="--ac:${col};--bg:${col}22;--tx:${col}"><header><img src="${SKIC(sk)}" alt=""><span><small>${SK[sk]}</small><b>${esc(name)}</b>${exists ? '<span class="tagnew tagex">exists</span>' : '<span class="tagnew">new</span>'}</span><span class="from">from ${SK[from]}</span></header>
+    <div class="pcs">${pcs.map((p, i) => `<div class="pc">${art ? `<img src="${art[i]}" alt="">` : '<span class="ph"></span>'}<span class="slot">${["hat", "coat", "gloves", "boots"][i]}</span>${esc(p)}</div>`).join("")}</div>
+    <div class="bon"><div><b>Each piece</b><span>${esc(per)}</span></div><div><b>All four</b><span>${esc(full)}</span></div></div>
+    <div class="how"><b>How it drops (${esc(odds)}).</b> ${esc(how)}</div></div>`; }).join("");
+
+/* ---- the ways ---- */
+document.getElementById("dropTbl").innerHTML = `<tr><th>The way</th><th>Already in the game</th><th>Set</th><th>Why it's good</th></tr>` + [
+  ["Fished up", "the catch roll (Ditched)", "Ditched (Thieving)", "The model: a rare thing in a common activity, a story in the item's name."],
+  ["Found on a course", "an agility finish", "Prospector (Mining)", "Gives Agility a reason to exist for non-runners."],
+  ["Lifted from a pocket", "the marks' pocket tables", "Feller (Woodcutting)", "Thieving's loot becomes something other skills want."],
+  ["The scarecrow's coat", "harvests", "Oilskins (Fishing)", "A farmer has a reason to plant; a fisher has a reason to visit a farmer."],
+  ["A pet's present", "the pets' daily gift", "Short-order whites (Cooking)", "Breeding finally gives something to another skill."],
+  ["Cooked into a batch", "pet food at the fire", "Kennel coat (Breeding)", "The way back: cooks feed breeders."],
+  ["Earned from an order", "Bronny's order", "Bronny's leathers (Smithing)", "Orders already pull three gathering skills; this makes them pay a smith."],
+  ["A boss's table", "drops", "Dungarees (Farming), Overalls (Tinkering)", "Opens the held Orchard and gives the Trailer Park's bosses a skiller's reason."],
+  ["Grown through a log", "chopping dead trees", "Mantle (Fungiculture)", "The dead trees nobody chops become a target."],
+  ["Picked with the wild ones", "wild mushroom picks", "Smock (Alchemy)", "Wild mushrooms already feed alchemy; this makes it official."],
+  ["Plucked from a bird", "monster drops", "Greens (Fletching)", "Feathers, bows: archers have a monster to hunt."],
+  ["Bought with an event's currency", "the Star Tent", "Stargazer (Wizardry)", "Star Fragments get a lasting use."],
+  ["Knocked loose in a chase", "hits on the Jackpot Thief", "Getaway silks (Agility)", "The daily event gets a prize besides tickets."]]
+  .map(([a, b, c, d]) => `<tr><td>${esc(a)}</td><td>${esc(b)}</td><td>${esc(c)}</td><td>${esc(d)}</td></tr>`).join("");
+
+/* ---- the master tier ---- */
+document.getElementById("masterTbl").innerHTML = `<tr><th>Skill</th><th>Master set</th><th>Where (atlas)</th><th>How</th><th>All four</th></tr>` + [
+  ["mining", "The Deepdelver's", "the Ashlands / the Underforge", "found in the lift shaft on the Underforge's Lava steps", "a third ore one swing in twenty; Primordial ore 15% faster"],
+  ["woodcutting", "The Elderwarden's", "the Elderwood", "lifted from the Poacher's pockets (Thieving 108)", "Elder heartwood never stumps on the first chop"],
+  ["fishing", "The Leviathan-hunter's", "the Deep End", "the Kelp-bulb scarecrow at the Tidepools' camp", "fish through the tide: the lower spots stay open a minute longer"],
+  ["cooking", "The vent cook's", "the Underforge", "a pet's present while on the lava vents", "Leviathan stew and Magma ray cook twice as fast at the vents"],
+  ["breeding", "The Kennel Club's", "the High Strip", "a Mythic egg hatching (1 in 5)", "Mythic pairings a third faster"],
+  ["smithing", "The Ancient Forge's", "the Underforge", "the Forgemaster's tongs drop, a set's worth over a season", "masterwork odds +5% at the Ancient Forge (mockup 3)"],
+  ["farming", "The Rootmother's", "the Elderwood", "the Rootmother's own drop table", "Starbloom and Moonseed never wither, +2 crops"],
+  ["fungiculture", "The Ghostcap grower's", "the Elderwood", "dead Ironbark logs", "Ghostcap beds fruit twice"],
+  ["alchemy", "The Overload brewer's", "the High Strip", "wild Brinecap and Emberfrill picks", "the Overload draught lasts twice as long"],
+  ["fletching", "The Relic bowyer's", "the High Strip", "Star Moths and Gulls of the Tidepools", "Relic arrows +3 a set"],
+  ["wizardry", "The Archivist's", "the Star Archive", "Star Fragments from the Archive's own stars", "Primal pages print double one in five"],
+  ["thieving", "The Vault Ghost's", "the Deep End", "fished up from the sunken Strip (Fishing 110)", "the High Strip's marks pick twice one in five"],
+  ["agility", "The rooftop runner's", "the High Strip", "the Jackpot Thief when he flees across the rooftops", "the High Wire's gates hold twice as long"],
+  ["tinkering", "The orrery-maker's", "the Star Archive", "the Clockwork Sentinels", "gadgets can be built two at once"]]
+  .map(([k, n, w, h, f]) => `<tr><td><img src="${SKIC(k)}" alt="">${SK[k]}</td><td>${esc(n)}</td><td>${esc(w)}</td><td>${esc(h)}</td><td>${esc(f)}</td></tr>`).join("");
+</script>
+</body>
+</html>

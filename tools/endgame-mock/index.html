@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Past 110</title>
+<!-- Mockup 4 of the long-game set, take two (2026-10-01). The owner: "i would rather have multiple, seemingly unique maps instead of
+     'deeper' maps that are one theme/design". The first take was one fire map three floors deep (the Underforge); it is now one of FOUR
+     separate maps, each off a different corner of the world with its own look, rule, monsters, boss and drops. Monster art and the
+     postcards are PixelLab drafts. Local only: tools/ is never shipped. http://localhost:4321/tools/endgame-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0c0908;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#2a3a18,transparent),radial-gradient(900px 600px at 95% 10%,#2a1848,transparent),radial-gradient(900px 600px at 50% 110%,#3a1408,transparent),#0c0908}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:16px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd98a}
+nav.jump a.m{background:var(--bg);box-shadow:0 0 0 1.5px var(--ac);color:var(--tx)}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:980px;line-height:1.55}
+.chart{background:#16100c;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #3a2616;margin-top:12px;overflow:auto}
+.chart svg{display:block;width:100%;height:auto;min-width:720px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:8px 4px 0;font:700 12.5px Lora,serif;color:#d8c8a8}.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.tbl{width:100%;border-collapse:collapse;font:600 13.5px Lora,serif;margin-top:12px;background:#16100c;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070;padding:10px 12px 6px}.tbl td{padding:8px 12px;border-top:1px solid #3a2616;vertical-align:top}
+.tbl img{width:24px;height:24px;image-rendering:pixelated;vertical-align:-7px;margin-right:6px}
+.tbl td.mp{font-weight:800;color:var(--tx)}
+.k-win{min-width:0}
+/* the four maps: each section wears its own palette */
+.e-elder{--ac:#7ed060;--bg:#14240e;--tx:#c8f0a8;--glow:rgba(126,208,96,.25)}
+.e-deep{--ac:#3ad0d8;--bg:#0a1e2a;--tx:#a8f0f4;--glow:rgba(58,208,216,.25)}
+.e-forge{--ac:#ff7a2a;--bg:#2a1006;--tx:#ffc898;--glow:rgba(255,122,42,.25)}
+.e-arch{--ac:#b08aff;--bg:#1a1236;--tx:#dccaff;--glow:rgba(176,138,255,.28)}
+.map{margin:46px 0 0;padding:22px;border-radius:16px;background:linear-gradient(180deg,var(--bg),#0e0a08 85%);box-shadow:0 0 0 2px var(--ac),0 0 40px var(--glow)}
+.map>header{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:20px;align-items:start}
+.pc{position:relative;border-radius:10px;overflow:hidden;box-shadow:0 0 0 2px var(--ac),0 10px 30px rgba(0,0,0,.6);aspect-ratio:16/9;background:#000}
+.pc img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated;display:block}
+.pc span{position:absolute;left:10px;bottom:8px;font:800 11px Lora,serif;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:rgba(0,0,0,.6);color:var(--tx)}
+.map h2{margin:0;color:var(--tx);font-size:30px}
+.band{display:inline-block;margin:6px 0 8px;font:800 12.5px Lora,serif;padding:3px 11px;border-radius:999px;background:rgba(0,0,0,.4);box-shadow:inset 0 0 0 1.5px var(--ac);color:var(--tx)}
+.map header p{margin:0 0 10px;font:600 14px/1.55 Lora,serif;color:#d8ccb4}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font:600 13px/1.45 Lora,serif;color:#d8ccb4}.facts b{font:800 11px Lora,serif;letter-spacing:.07em;text-transform:uppercase;color:var(--ac);padding-top:2px}
+.rule{margin-top:14px;padding:12px 14px;border-radius:10px;background:rgba(0,0,0,.35);box-shadow:inset 3px 0 0 var(--ac)}
+.rule b{display:block;font:800 16px Cinzel,serif;color:var(--tx);margin-bottom:3px}.rule span{font:600 13.5px/1.55 Lora,serif;color:#d8ccb4}
+.mrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:14px}
+.mob{display:grid;grid-template-columns:72px 1fr;gap:10px;padding:10px;border-radius:10px;background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+.mob .pic{width:72px;height:72px;border-radius:8px;background:radial-gradient(circle at 50% 70%,var(--glow),transparent 75%),rgba(0,0,0,.3);display:grid;place-items:center}
+.mob .pic img{width:64px;height:64px;image-rendering:pixelated}
+.mob b{font:800 14.5px Cinzel,serif;color:#fff}.mob .lv{display:block;font:800 11px Lora,serif;color:var(--ac)}
+.mob p{margin:3px 0 5px;font:600 12.5px/1.4 Lora,serif;color:#cdbfa2}
+.tags{display:flex;gap:4px;flex-wrap:wrap}.tag{font:800 10px Lora,serif;padding:2px 7px;border-radius:999px;background:#2a1c12;color:#d8c0a0;box-shadow:inset 0 0 0 1px #4a2a18}
+.tag.g{background:#3a1010;color:#ff9a8a;box-shadow:inset 0 0 0 1px #6a2020}.tag.w{background:#10283a;color:#9ad8ff;box-shadow:inset 0 0 0 1px #1e4a6a}
+.lower{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;margin-top:16px;align-items:start}
+.boss{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:start}
+.boss .pic{width:120px;height:120px;border-radius:10px;background:radial-gradient(circle at 50% 62%,var(--glow),transparent 72%),#1a120c;display:grid;place-items:center;box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.boss .pic img{width:110px;height:110px;image-rendering:pixelated}
+.phase{display:grid;grid-template-columns:54px 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--k-card-line);font:600 12.5px/1.45 Lora,serif;color:var(--k-ink2)}
+.phase:first-of-type{border-top:0}.phase b{font:800 12px Lora,serif;color:#a8401a}.phase span b{color:var(--k-ink)}
+.statrow{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 6px}.statrow span{font:800 11px Lora,serif;padding:2px 7px;border-radius:5px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);color:var(--k-ink)}
+.loot{display:grid;gap:7px}
+.lt{display:grid;grid-template-columns:40px 1fr;gap:10px;align-items:center;padding:8px 10px;border-radius:9px;background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+.lt img{width:36px;height:36px;image-rendering:pixelated}
+.lt b{font:800 13.5px Lora,serif;color:#fff}.lt small{display:block;font:600 12px/1.4 Lora,serif;color:#cdbfa2}
+.lt i{font-style:normal;font:800 10px Lora,serif;padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:1px}
+.lt i.chase{background:#ffd84a;color:#2a1a04}.lt i.pet{background:#7ee0a0;color:#0a2a14}.lt i.piece{background:var(--ac);color:#100a04}.lt i.res{background:#3a2a1a;color:#ffe7b0}
+.compare td:first-child{font-weight:800;color:#ffe7b0;white-space:nowrap}
+.chat{margin-top:12px;padding:12px 14px;border-radius:10px;background:#100a08;box-shadow:0 0 0 1.5px #3a1e10;font:600 13.5px/1.7 Lora,serif;max-width:820px}
+.chat .c{color:#ff5a8a;font-weight:800}.chat .t{color:#7a6a58;font-size:12px;margin-right:6px}
+.cast{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.cast div{display:grid;justify-items:center;gap:2px;padding:8px 10px;border-radius:9px;background:#1a0e08;box-shadow:0 0 0 1.5px #3a1e10;font:700 12px Lora,serif;color:#e8d0b0;min-width:96px}
+.cast img{width:56px;height:56px;image-rendering:pixelated}.cast small{color:#a88a68;font-size:11px}
+.build{margin:6px 0 0;padding-left:18px;line-height:1.6;color:#cdbfa2;max-width:980px}.build b{color:#f6e9cc}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+@media (max-width:820px){.map>header,.lower{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Past 110: four places, not one</h1>
+  <p class="lede">The endgame isn't one map going deeper. It's <b>four separate places</b>, each off a different corner of the world, each with its own
+    look, its own rule, its own monsters, its own boss and its own things to chase. Their bands overlap, so at any level from 110 up there are
+    two or three to choose from, and a group that's bored of one has somewhere else to go. Between them they hold every 110 resource from mockup 1,
+    the Relic shards and boss pieces for mockup 3, and the hardest fights the Ascendancies of mockup 2 are built for.</p>
+  <nav class="jump"><a href="#where">Where they are</a><a class="m e-elder" href="#elder">The Elderwood</a><a class="m e-deep" href="#deep">The Deep End</a><a class="m e-forge" href="#forge">The Underforge</a><a class="m e-arch" href="#arch">The Star Archive</a><a href="#compare">Side by side</a><a href="#event">The Mountain Rumbles</a><a href="#time">How long</a><a href="#build">Building it</a></nav>
+
+  <section class="sec" id="where">
+    <h2>Where they are</h2>
+    <p>Each one hangs off the end of a road that already exists, so all four are a walk from somewhere people already go: the forest past the
+      Primeval Ridge, a diving bell off the Boardwalk's long pier, the stair under the Thunderhead, and the star-bridge at the top of the Frostspire.
+      The world map gets four new corners instead of one longer road.</p>
+    <div class="chart"><svg id="worldSvg" viewBox="0 0 900 360" role="img" aria-label="A sketch of the world's roads with the four new maps at the ends"></svg></div>
+    <div class="chart"><svg id="bandSvg" viewBox="0 0 900 340" role="img" aria-label="Level bands from 90 up: the maps open today and the four new ones"></svg>
+      <div class="legend"><span><i style="background:#8a6a48"></i>open today</span><span><i style="background:#7ed060"></i>Elderwood</span><span><i style="background:#3ad0d8"></i>Deep End</span><span><i style="background:#ff7a2a"></i>Underforge</span><span><i style="background:#b08aff"></i>Star Archive</span></div></div>
+  </section>
+
+  <div id="maps"></div>
+
+  <section class="sec" id="compare">
+    <h2>Side by side</h2>
+    <p>The four are built to pull in different directions, so no one weapon, element or skill does everything. Each is weak to a different element,
+      which gives every one of the elemental gems from the Gem Sorter a map where it's the best stone you own.</p>
+    <table class="tbl compare" id="cmpTbl"></table>
+  </section>
+
+  <section class="sec" id="event">
+    <h2>The Mountain Rumbles</h2>
+    <p>Kept from the first draft, because it's the part everybody can join. Once a day at a random hour the Thunderhead's south ridge splits, and the
+      things that live under it come up: Ash Wraiths, Obsidian Golems and Molten Titans, scaled to whoever is standing there (combat 50 and up). Plug
+      the crack with ore, the Flood's sandbags in reverse, and at the end <b>the Heart of the Mountain</b> pushes up through it for one last fight.
+      Everybody who helped gets a few Relic shards, which is how a level-70 player first holds something from past 110.</p>
+    <div class="cast" id="castBox"></div>
+    <div class="chat" id="chatBox"></div>
+    <p class="note">Like every new event: once a day, never in the Yard, on the Flood's raid code (which already survives a restart).</p>
+  </section>
+
+  <section class="sec" id="time">
+    <h2>How long</h2>
+    <p>On mockup 1's curve, 110 is 38.7 million XP and 120 is 104 million. The best melee on the server is at 3.3 million today, so the first of these
+      maps is roughly twelve times as far away as everything they've done so far. Four places to spend those hours, instead of one, is the point of
+      this take.</p>
+    <div class="chart"><svg id="xpSvg" viewBox="0 0 900 250" role="img" aria-label="XP needed from level 85 to 120, with the four maps' bands marked"></svg></div>
+  </section>
+
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <ul class="build">
+      <li><b>Four maps</b> on the map pipeline, each on its own ground and props (moss and ruin; sunken streets and coral; basalt and lava; marble and starlight). About the work of the Frozen Reach each, so they can ship <b>one at a time</b> in band order, Elderwood first, with The Road Ahead teasing the rest.</li>
+      <li><b>Twelve monsters and four bosses</b>, each with four facings and walk, attack and death, plus the Mountain Rumbles' three and the Heart.</li>
+      <li><b>The four rules are deliberately small</b>, and each reuses something: the Elderwood's daily layout is three walk grids picked by the date; the Deep End's tide is the Flood's water overlay on a clock; the Underforge's heat is one number per player on the existing tick; the Star Archive's bridges are tiles switching walkable on a timer, the same way the Flood's water slows people.</li>
+      <li><b>The Leviathan</b> is the Ice Wyrm's schedule (once a day, random hour, never 12 am to 2 pm) with raid parts; the other three are hourly bosses in the Captain Claw shape.</li>
+      <li><b>Performance</b>: nothing here adds a poll or a new message. The tide and the bridges are clocks both sides already know, so the page draws them without asking; heat rides the state the page already gets.</li>
+    </ul>
+    <div class="callout"><b>Things to decide:</b> the four (keep, swap or add one: a desert tomb past the Golden Sands was the fifth idea); the Underforge's way in (through the held Foundry or a lift off the Thunderhead); whether the Leviathan is the one boss that needs a healer, or the Archivist too; and the names.</div>
+  </section>
+</main>
+<script>
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const IT = (k) => `/v3/assets/img/glad/flat/items/${k}.png`;
+
+/* ================= the four maps ================= */
+const MAPS = [
+  { id: "elder", cls: "e-elder", name: "The Elderwood", band: "Combat 110–116", pc: "pc_elder.png", where: "Past the Primeval Ridge's west edge, where the dinosaurs stop and the trees get old.",
+    pitch: "A forest older than the Valley it grows out of: trees the size of the Casino, ruins in their roots, and something tending the clearings. The quiet one of the four, until it isn't.",
+    facts: [["Look", "deep greens and gold, blossom canopies, glowing heartwood"], ["Weak to", "fire (and the Hollow Stags to sun)"], ["Skills", "Woodcutting 110 (elder heartwood), Farming 110 (starbloom seeds), Fungiculture 110 (ghostcap)"], ["Way in", "a root-tunnel on the Primeval Ridge"]],
+    rule: ["The forest moves", "The paths between the clearings grow differently every day: one of three layouts, picked by the date, so the best groves and the Rootmother's glade are somewhere new each morning. Spore clouds hang where Spore Lords die and poison anyone standing in them."],
+    mobs: [["thornboar", "Thornback Boar", 110, 640, "Charges three tiles in a straight line and doesn't stop for you. Step aside.", [["", "charges"], ["w", "weak: fire"]]],
+      ["sporelord", "Spore Lord", 112, 700, "Leaves a poison cloud where it dies, for 10 seconds. Spells barely touch it.", [["g", "magic −70%"], ["w", "weak: fire"]]],
+      ["hollowstag", "Hollow Stag", 114, 760, "A ghost of branches. A sword goes through it; it leads you off the path if you chase it.", [["g", "melee −90%"], ["w", "weak: sun"]]]],
+    boss: ["rootmother", "The Rootmother", "Level 116 · 15,000 health · every hour", ["max hit 44", "archery −40%", "weak: fire", "1–3 players"],
+      [["100%", "<b>Tending.</b> Calm until you touch her glade. Long, slow sweeps of her arms."], ["70%", "<b>Roots.</b> Roots burst under whoever hit her last: held in place for 2 seconds."], ["40%", "<b>Saplings.</b> Four saplings sprout round the glade and heal her 1% a second each until cut down."], ["15%", "<b>Bloom.</b> Petals fall; everyone in the glade is poisoned until she dies."]]],
+    loot: [["../relic-mock/elder_heartwood.png", "Elder heartwood", "the groves · Woodcutting 110 · Relic bows, wands, arrows", "res"], ["rootmother.png", "Rootheart", "the Rootmother, every kill · the boss piece for a Relic bow or wand", "piece"],
+      ["thornboar.png", "Thornlash", "1 in 1,000, anything here · a longbow whose arrows hold the target in place for a second", "chase"], ["thornboar.png", "Mossling (egg)", "Thornback Boars · a piglet that finds 10% more seeds and logs", "pet"], ["rootmother.png", "Sapling", "the Rootmother, 1 in 500 · +5% damage against anything weak to fire", "pet"]] },
+
+  { id: "deep", cls: "e-deep", name: "The Deep End", band: "Combat 112–118", pc: "pc_deep.png", where: "A diving bell at the end of the Boardwalk's long pier, down to where the old Strip went under.",
+    pitch: "The first casino strip, the one the House doesn't talk about, a long way under the sea. The neon still works. So do the dealers, sort of.",
+    facts: [["Look", "dark blue water, pink and teal neon, coral over slot machines"], ["Weak to", "storm"], ["Skills", "Fishing 110 (the Leviathan eel), Cooking 110 (Leviathan stew)"], ["Way in", "the diving bell off the Boardwalk's pier"]],
+    rule: ["The tide", "Every ten minutes the water goes out for four, and the lower streets open: the Leviathan eel's spot, the best monsters, and the way to the Leviathan. When it comes back, anyone still down there is washed up to the bell, unhurt. The page and the server both know the clock, so it costs nothing to run."],
+    mobs: [["croupier", "Drowned Croupier", 112, 680, "Deals you a card when it hits: a random small curse from a deck of six. Still in uniform.", [["g", "magic −60%"], ["w", "weak: storm"]]],
+      ["angler", "Lantern Angler", 114, 720, "Its lure pulls you two tiles towards it. Don't look at the light.", [["", "pulls"], ["w", "weak: storm"]]],
+      ["coralgolem", "Coral Golem", 116, 900, "A slot machine in its chest and crabs on its shoulders. Arrows stick in the coral and do nothing.", [["g", "archery −80%"], ["w", "weak: storm"]]]],
+    boss: ["leviathan", "The Leviathan", "Level 122 · 50,000 health · once a day, at a random hour", ["max hit 52", "no style guard", "weak: storm", "built for 6–10"],
+      [["start", "<b>It surfaces</b> when the tide goes out on its hour, and the whole lower Strip becomes its arena. The tide stays out for the fight."], ["75%", "<b>Undertow.</b> Every 20 seconds a wave hits <b>everyone</b> for 15% of their health. Food alone falls behind: this is the fight a Mender is for."], ["50%", "<b>Coils.</b> It wraps one player (the furthest away) and squeezes until the others deal 5% of its health. Leave nobody alone at the edge."], ["25%", "<b>The tide turns.</b> Water starts creeping back in from the edges. Finish it before it reaches the middle."]]],
+    loot: [[IT("skill_fishing"), "Leviathan eel", "the lower Strip, tide out · Fishing 110 · the best food in the game", "res"], ["leviathan.png", "Leviathan sinew", "the Leviathan, everyone who helped · Primal string for the Relic longbow", "piece"],
+      ["croupier.png", "The Drowned Deck", "1 in 1,000, anything here · a ring: one hit in ten deals a card, double damage", "chase"], ["angler.png", "Lantern Fry (egg)", "Lantern Anglers · a little fish with a light; 10% more rare fish", "pet"], ["leviathan.png", "Baby Leviathan", "the Leviathan, 1 in 300 · +5% damage against anything weak to storm", "pet"]] },
+
+  { id: "forge", cls: "e-forge", name: "The Underforge", band: "Combat 114–120", pc: "pc_forge.png", where: "Under the Thunderhead. The rumour already on The Road Ahead is about this one.",
+    pitch: "Where the House struck its first coins, on a forge that was never put out. Something down there still hammers all night. Every Relic in the game is made here.",
+    facts: [["Look", "black basalt, lava channels, iron smiths' statues, embers"], ["Weak to", "frost (so the Frozen Reach's wands earn their keep)"], ["Skills", "Mining 110 (primordial ore), Smithing 110 (the Ancient Forge: every Relic, mockup 3)"], ["Way in", "through the Foundry past Old Bessemer, or a lift off the Thunderhead"]],
+    rule: ["Heat", "A bar fills while you're down here; full, you're Burning and lose health every 2 seconds. Cooling pools, a Rimeward tonic (Alchemy 100: a frost shard and an icefin), a Wyrmscale lining on your armour and a Mender's Cleanse all take it down, so the ice map feeds the fire one."],
+    mobs: [["cinderhound", "Cinder Hound", 114, 620, "Always three of them, and one howl brings the others.", [["", "packs of 3"], ["w", "weak: frost"]]],
+      ["magmacrawler", "Magma Crawler", 116, 800, "Basalt plates over something molten. Arrows skip off.", [["g", "archery −80%"], ["w", "weak: frost"]]],
+      ["forgebound", "Forgebound", 117, 840, "An empty suit of a smith's armour that never stopped working. Spells soak into the plate.", [["g", "magic −75%"], ["w", "weak: frost"]]],
+      ["emberdjinn", "Ember Djinn", 118, 720, "Casts from four tiles and every hit adds heat. Wears the House's chip in one ear.", [["g", "melee −50%"], ["", "+10 heat"]]]],
+    boss: ["forgemaster", "The Forgemaster", "Level 120 · 16,000 health · every hour", ["max hit 46", "melee −40%", "weak: frost", "1–3 players"],
+      [["100%", "<b>Working.</b> He doesn't notice you until you hit him or touch the anvil."], ["70%", "<b>Quench.</b> The floor round the forge turns to lava for 8 seconds. Get off it."], ["40%", "<b>The bellows.</b> Two Forgebound come to work the bellows; while both stand, his hits are 50% heavier."], ["15%", "<b>Last shift.</b> Faster swings, and every hit adds 15 heat."]]],
+    loot: [["../relic-mock/primordial_ore.png", "Primordial ore", "the seams · Mining 110 · the Relic metal", "res"], ["forgemaster.png", "The Forgemaster's tongs", "the Forgemaster, every kill · the boss piece for Relic weapons and armour", "piece"],
+      ["forgemaster.png", "The Forgemaster's Hammer", "1 in 1,000, the Forgemaster only · a two-handed hammer, +8% against bosses", "chase"], ["cinderhound.png", "Cinder Pup (egg)", "Cinder Hounds · 20% of your bars smelt free", "pet"], ["forgemaster.png", "Little Forgemaster", "the Forgemaster, 1 in 500 · reforges 10% likelier to land", "pet"]] },
+
+  { id: "arch", cls: "e-arch", name: "The Star Archive", band: "Combat 118–125", pc: "pc_arch.png", where: "At the very top of the Frostspire, a bridge of starlight up into the night.",
+    pitch: "A library that floats above the clouds and keeps a copy of everything ever written, including some things that haven't been yet. The last map, and the strangest.",
+    facts: [["Look", "violet marble islands, towering shelves, brass telescopes, the night sky below"], ["Weak to", "void"], ["Skills", "Wizardry 110 (star vellum for Primal pages), Agility 110 (the High Wire), Alchemy 110 (stardust ink for the Overload)"], ["Way in", "the star-bridge on the Frostspire's summit"]],
+    rule: ["Bridges of light", "The islands are joined by bridges that light up and go out on a slow cycle you can see coming. Caught on one when it goes out and you drop back to the landing, unhurt, and walk round again. A puzzle of timing, never a way to die."],
+    mobs: [["tome", "Living Tome", 118, 700, "Reads you: it copies the last ability you used and uses it back on you once.", [["", "copies you"], ["w", "weak: void"]]],
+      ["starmoth", "Star Moth", 120, 640, "Flies over the gaps the bridges leave. Its dust blinds: −20% accuracy for 6 seconds.", [["g", "melee −60%"], ["w", "weak: void"]]],
+      ["sentinel", "Clockwork Sentinel", 122, 1100, "A telescope for a head and a lot of brass. Spells and arrows do fine; a sword dents it.", [["g", "melee −70%"], ["w", "weak: void"]]]],
+    boss: ["archivist", "The Archivist", "Level 125 · 22,000 health · every two hours", ["max hit 50", "no style guard", "weak: void", "2–5 players"],
+      [["100%", "<b>Cataloguing.</b> Four arms, four books: each arm casts a different element, so no one stone covers it."], ["70%", "<b>Overdue.</b> Marks one player: they take double damage until somebody else stands next to them."], ["40%", "<b>Rewrite.</b> The bridges on its island go out for 10 seconds. Anyone not on marble falls to the landing."], ["15%", "<b>The last page.</b> It copies the strongest ability anyone used in the fight, and uses it on all of you."]]],
+    loot: [[IT("page_void_bolt"), "Star vellum", "the shelves · Wizardry 110 · the paper for Primal pages", "res"], ["archivist.png", "The Archivist's quill", "the Archivist, every kill · the boss piece for a Relic wand", "piece"],
+      ["tome.png", "The Last Page", "1 in 1,000, anything here · an amulet: spells hit 8% harder and every tenth costs no page", "chase"], ["starmoth.png", "Star Moth (egg)", "Star Moths · a little moth; +2% walking speed everywhere", "pet"], ["archivist.png", "Little Archivist", "the Archivist, 1 in 500 · a floating book; +5% XP from spells", "pet"]] }];
+
+document.getElementById("maps").innerHTML = MAPS.map((m) => `<section class="map ${m.cls}" id="${m.id}">
+  <header><div class="pc"><img src="${m.pc}" alt="" onerror="this.style.opacity=0"><span>PixelLab sketch of the look</span></div>
+    <div><h2>${m.name}</h2><span class="band">${m.band}</span><p>${esc(m.pitch)}</p><p style="font-size:13px;color:#b8a888">${esc(m.where)}</p><div class="facts">${m.facts.map(([k, v]) => `<b>${k}</b><span>${esc(v)}</span>`).join("")}</div></div></header>
+  <div class="rule"><b>Its rule: ${m.rule[0]}</b><span>${esc(m.rule[1])}</span></div>
+  <div class="mrow">${m.mobs.map(([a, n, l, hp, p, T]) => `<div class="mob"><div class="pic"><img src="${a}.png" alt=""></div><div><b>${n}</b><span class="lv">level ${l} · ${hp} health</span><p>${esc(p)}</p><div class="tags">${T.map(([c, t]) => `<span class="tag ${c}">${esc(t)}</span>`).join("")}</div></div></div>`).join("")}</div>
+  <div class="lower">
+    <section class="k-win"><div class="k-head"><img src="${m.boss[0]}.png" alt="" style="image-rendering:pixelated"><b>${m.boss[1]}</b><span class="k-sub">${m.boss[2]}</span></div>
+      <div class="k-body"><div class="boss"><div class="pic"><img src="${m.boss[0]}.png" alt=""></div><div><div class="statrow">${m.boss[3].map((x) => `<span>${x}</span>`).join("")}</div>${m.boss[4].map(([h, t]) => `<div class="phase"><b>${h}</b><span>${t}</span></div>`).join("")}</div></div></div></section>
+    <div class="loot">${m.loot.map(([i, n, s, k]) => `<div class="lt"><img src="${i}" alt=""><span><b>${esc(n)}</b><i class="${k}">${{ res: "resource", piece: "boss piece", chase: "chase", pet: "pet" }[k]}</i><small>${esc(s)}</small></span></div>`).join("")}
+      <p class="note" style="margin:2px 2px 0">Every monster here also drops Relic shards (1 a kill, 5–10 off the boss), the boss drops the Primordial gem (1 in 40), and each carries four plain drops from the maps before it at 3%.</p></div>
+  </div></section>`).join("");
+
+/* ================= side by side ================= */
+document.getElementById("cmpTbl").innerHTML = `<tr><th></th>${MAPS.map((m) => `<th class="${m.cls}" style="color:var(--ac)">${m.name}</th>`).join("")}</tr>` + [
+  ["Band", ["110–116", "112–118", "114–120", "118–125"]],
+  ["Off", ["the Primeval Ridge", "the Boardwalk's pier", "the Thunderhead", "the Frostspire's summit"]],
+  ["Weak to", ["fire", "storm", "frost", "void"]],
+  ["The best stone", ["carnelian", "tanzanite", "aquamarine", "jet"]],
+  ["Its rule", ["the layout moves daily", "the tide", "heat", "bridges of light"]],
+  ["Hardest style", ["magic and melee", "archery and magic", "everything a little", "melee"]],
+  ["Skilling", ["Woodcutting, Farming, Fungiculture", "Fishing, Cooking", "Mining, Smithing", "Wizardry, Agility, Alchemy"]],
+  ["Boss", ["hourly, 1–3", "daily, 6–10, a healer", "hourly, 1–3", "every 2 h, 2–5"]],
+  ["Relic piece", ["Rootheart (bow, wand)", "Leviathan sinew (bow)", "the tongs (weapons, armour)", "the quill (wand)"]]]
+  .map(([k, v]) => `<tr><td>${k}</td>${v.map((x, i) => `<td class="mp ${MAPS[i].cls}">${esc(x)}</td>`).join("")}</tr>`).join("");
+
+/* ================= where they are: a sketch of the roads ================= */
+{
+  const N = { yard: [450, 300, "The Yard"], carnival: [330, 300, "Carnival"], boardwalk: [210, 300, "Boardwalk"], gloam: [450, 240, "Gloam"], mire: [540, 240, "Mire"], boneyard: [540, 180, "Boneyard"],
+    cloud: [540, 120, "Cloudreach"], thunder: [430, 120, "Thunderhead"], depths: [430, 70, "Depths"], trailer: [330, 70, "Trailer Park"], valley: [230, 70, "Valley"], ridge: [140, 70, "Ridge"],
+    frozen: [650, 120, "Frozen Reach"], spire: [760, 120, "Frostspire"] };
+  const E = [["yard", "carnival"], ["carnival", "boardwalk"], ["yard", "gloam"], ["gloam", "mire"], ["mire", "boneyard"], ["boneyard", "cloud"], ["cloud", "thunder"], ["thunder", "depths"], ["depths", "trailer"], ["trailer", "valley"], ["valley", "ridge"], ["cloud", "frozen"], ["frozen", "spire"]];
+  const NEW = [["ridge", 50, 140, "#7ed060", "The Elderwood"], ["boardwalk", 90, 300, "#3ad0d8", "The Deep End"], ["thunder", 430, 200, "#ff7a2a", "The Underforge"], ["spire", 840, 50, "#b08aff", "The Star Archive"]];
+  let s = `<rect width="900" height="360" fill="#120c08"/>`;
+  for (const [a, b] of E) s += `<line x1="${N[a][0]}" y1="${N[a][1]}" x2="${N[b][0]}" y2="${N[b][1]}" stroke="#5a4028" stroke-width="3"/>`;
+  for (const [from, x, y, c] of NEW) s += `<line x1="${N[from][0]}" y1="${N[from][1]}" x2="${x}" y2="${y}" stroke="${c}" stroke-width="3" stroke-dasharray="6 5"/>`;
+  for (const [x, y, n] of Object.values(N)) s += `<circle cx="${x}" cy="${y}" r="7" fill="#8a6a48" stroke="#120c08" stroke-width="2"/><text x="${x}" y="${y + 22}" fill="#cdbfa2" font-size="11.5" font-weight="700" text-anchor="middle" stroke="#120c08" stroke-width="3" paint-order="stroke">${n}</text>`;
+  for (const [, x, y, c, n] of NEW) s += `<circle cx="${x}" cy="${y}" r="14" fill="${c}" opacity=".25"/><circle cx="${x}" cy="${y}" r="9" fill="${c}" stroke="#120c08" stroke-width="2"/><text x="${x}" y="${y + 27}" fill="${c}" font-size="13.5" font-weight="800" text-anchor="middle" font-family="Cinzel,serif" stroke="#120c08" stroke-width="4" paint-order="stroke">${n}</text>`;
+  s += `<text x="16" y="24" fill="#a89070" font-size="12">A sketch of the roads, not the real map's shape.</text>`;
+  document.getElementById("worldSvg").innerHTML = s;
+}
+
+/* ================= bands from 90 ================= */
+{
+  const R = [["The Trailer Park", 80, 99], ["The Primeval Valley", 90, 98], ["The Primeval Ridge", 95, 103], ["Old Rex's Lair", 100, 110], ["The Frozen Reach", 100, 108], ["The Frostspire", 106, 115],
+    ["The Elderwood", 110, 116, "#7ed060"], ["The Deep End", 112, 118, "#3ad0d8"], ["The Underforge", 114, 120, "#ff7a2a"], ["The Star Archive", 118, 125, "#b08aff"]];
+  const W = 900, L = 170, Rt = 60, T = 30, rh = 28, x = (v) => L + (W - L - Rt) * (v - 80) / 45;
+  let s = "";
+  for (let v = 80; v <= 125; v += 5) s += `<line x1="${x(v)}" x2="${x(v)}" y1="${T - 8}" y2="${T + R.length * rh}" stroke="#22160e"/><text x="${x(v)}" y="${T - 12}" fill="#a89070" font-size="11.5" text-anchor="middle">${v}</text>`;
+  s += `<rect x="4" y="${T + 6 * rh}" width="${W - 8}" height="${4 * rh + 2}" rx="8" fill="#ffffff" opacity=".035"/>`;
+  R.forEach(([n, a, b, c], i) => { const y = T + i * rh + 4;
+    s += `<text x="${L - 10}" y="${y + 14}" fill="${c || "#d8c8a8"}" font-size="13" font-weight="${c ? 800 : 600}" text-anchor="end">${esc(n)}</text><rect x="${x(a)}" y="${y + 2}" width="${x(b) - x(a)}" height="${rh - 10}" rx="4" fill="${c || "#8a6a48"}"/><text x="${x(b) + 6}" y="${y + 15}" fill="#a89070" font-size="11.5">${a}–${b}</text>`; });
+  const yb = T + R.length * rh;
+  s += `<line x1="${x(110)}" x2="${x(110)}" y1="${T - 6}" y2="${yb + 4}" stroke="#ffe27a" stroke-width="1.5" stroke-dasharray="3 4" opacity=".7"/><text x="${x(110)}" y="${yb + 20}" fill="#ffe27a" font-size="12" font-weight="700" text-anchor="middle">at 110 you can choose between two maps; at 118, all four</text>`;
+  document.getElementById("bandSvg").innerHTML = s;
+}
+
+/* ================= the event ================= */
+document.getElementById("castBox").innerHTML = [["ashwraith", "Ash Wraith", "scaled"], ["obsidiangolem", "Obsidian Golem", "splits in three"], ["moltentitan", "Molten Titan", "never more than two"], ["heart", "The Heart of the Mountain", "the finish"]]
+  .map(([a, n, s]) => `<div><img src="${a}.png" alt=""><span>${n}</span><small>${s}</small></div>`).join("");
+document.getElementById("chatBox").innerHTML = [["21:14", "The ground on the Thunderhead's south ridge is cracking. Something underneath has had enough of being underneath."], ["21:15", "THE MOUNTAIN RUMBLES. The crack needs 400 ore in it before it closes. Five minutes."], ["21:18", "Sealed, nearly. Oh. Oh no. Something big is coming up through what's left."], ["21:20", "The Heart is down. 23 of you held the mountain shut; shards for everyone who helped. The House is impressed, briefly."]]
+  .map(([t, m]) => `<div><span class="t">${t}</span><span class="c">CASINO</span> ${esc(m)}</div>`).join("");
+
+/* ================= how long ================= */
+{
+  const X = [0, 0]; let p = 0; for (let l = 1; l <= 126; l++) { p += Math.floor(l + 300 * 2 ** (l / 7)); X[l + 1] = Math.floor(p / 4); }
+  const W = 900, H = 250, L = 70, R = 20, T = 20, Bm = 40, x = (l) => L + (W - L - R) * (l - 85) / 40, y = (v) => T + (H - T - Bm) * (1 - v / 175e6);
+  let s = "";
+  for (const v of [0, 50e6, 100e6, 150e6]) s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#22160e"/><text x="${L - 8}" y="${y(v) + 4}" fill="#a89070" font-size="11.5" text-anchor="end">${v / 1e6}M</text>`;
+  MAPS.forEach((m, i) => { const [a, b] = [[110, 116], [112, 118], [114, 120], [118, 125]][i], c = ["#7ed060", "#3ad0d8", "#ff7a2a", "#b08aff"][i]; s += `<rect x="${x(a)}" y="${H - Bm - 6 - i * 7}" width="${x(b) - x(a)}" height="5" rx="2" fill="${c}"/>`; });
+  let d = ""; for (let l = 85; l <= 125; l++) d += `${l === 85 ? "M" : "L"}${x(l).toFixed(1)} ${y(X[l]).toFixed(1)}`;
+  s += `<path d="${d}" stroke="#ffd98a" stroke-width="2.5" fill="none"/>`;
+  for (const [l, t] of [[85, "best melee today, 3.3M"], [99, "99: 13M"], [110, "110: 38.7M"], [120, "120: 104M"]]) s += `<circle cx="${x(l)}" cy="${y(X[l])}" r="5" fill="#ffd98a" stroke="#16100c" stroke-width="2"/><text x="${x(l) + (l === 85 ? 8 : -8)}" y="${y(X[l]) - 8}" fill="#f6e9cc" font-size="12" font-weight="700" text-anchor="${l === 85 ? "start" : "end"}">${t}</text>`;
+  for (let l = 85; l <= 125; l += 5) s += `<text x="${x(l)}" y="${H - Bm + 18}" fill="#a89070" font-size="11.5" text-anchor="middle">${l}</text>`;
+  document.getElementById("xpSvg").innerHTML = s;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+{
+ "combat": 97,
+ "style": "melee",
+ "styleLvl": 82,
+ "bonus": {
+  "acc": 64,
+  "str": 62,
+  "def": 147
+ },
+ "styleBonus": {
+  "acc": 64,
+  "str": 62,
+  "def": 147
+ },
+ "attackRoll": 163.611,
+ "defenceRoll": 114.5,
+ "maxHit": 53,
+ "swingMs": 2243,
+ "weaponMs": 2400,
+ "maxHp": 74,
+ "stepMs": 180,
+ "baseStep": 200,
+ "fx": {
+  "tix": 0,
+  "speed": 0.07,
+  "tough": 0.08,
+  "rare": 0,
+  "zdrop": 0,
+  "bite": 0,
+  "heal": 0,
+  "steal": 0,
+  "ammo": 0,
+  "leech": 0,
+  "double": 0,
+  "execute": 0,
+  "calm": 0,
+  "nobill": 0,
+  "gem": 1,
+  "smelt": 0,
+  "forge": 0,
+  "adm": 0,
+  "mdm": 0
+ },
+ "cap": {
+  "tix": 0.25,
+  "speed": 0.2,
+  "tough": 0.3,
+  "rare": 0.4,
+  "zdrop": 0.75,
+  "bite": 0.1,
+  "heal": 0.5,
+  "steal": 0.15,
+  "ammo": 0.5,
+  "leech": 0.25,
+  "double": 0.3,
+  "execute": 0.3,
+  "calm": 1,
+  "nobill": 1,
+  "gem": 1,
+  "smelt": 0.5,
+  "forge": 0.2,
+  "adm": 0.25,
+  "mdm": 0.25
+ },
+ "pet": {
+  "speed": 0,
+  "slots": 0,
+  "hp": 0,
+  "tix": 15,
+  "swing": 0,
+  "reach": 0,
+  "tough": 0,
+  "grow": 0,
+  "bite": 0,
+  "noburn": 0,
+  "freesmelt": 0,
+  "steal": 0,
+  "gem": 0,
+  "gift": 0
+ },
+ "gems": {
+  "ruby": 13,
+  "jade": 6,
+  "opal": 7,
+  "sapphire": 3
+ },
+ "charmFocus": 5,
+ "ward": true,
+ "total": 1034,
+ "tkDmg": 0.13,
+ "tkAcc": 0.06,
+ "wornFx": {
+  "clawgrip": {
+   "speed": 0.03,
+   "tough": 0.03
+  },
+  "yeti_boots": {
+   "speed": 0.04
+  },
+  "deepheart": {
+   "gem": 1,
+   "tough": 0.05
+  }
+ },
+ "vs": {
+  "frostgiant": {
+   "name": "Frost Giant",
+   "lvl": 112,
+   "def": 88,
+   "att": 126,
+   "max": 21,
+   "hp": 680,
+   "youHit": 0.95,
+   "itHits": 0.95,
+   "weak": "fire",
+   "resist": "frost",
+   "guard": {
+    "melee": 0,
+    "archery": 0.75,
+    "magic": 1.4
+   }
+  },
+  "rex": {
+   "name": "Old Rex",
+   "lvl": 110,
+   "def": 94,
+   "att": 126,
+   "max": 29,
+   "hp": 10500,
+   "youHit": 0.95,
+   "itHits": 0.95,
+   "weak": "frost",
+   "resist": "fire",
+   "guard": {
+    "melee": 0,
+    "magic": 0,
+    "archery": 1.4
+   }
+  },
+  "icewyrm": {
+   "name": "The Ice Wyrm",
+   "lvl": 115,
+   "def": 96,
+   "att": 126,
+   "max": 30,
+   "hp": 22000,
+   "youHit": 0.95,
+   "itHits": 0.95,
+   "weak": "fire",
+   "resist": "frost",
+   "guard": {
+    "melee": 0,
+    "archery": 0,
+    "magic": 1.4
+   }
+  },
+  "junkking": {
+   "name": "The Junk King",
+   "lvl": 98,
+   "def": 72,
+   "att": 125,
+   "max": 26,
+   "hp": 299,
+   "youHit": 0.95,
+   "itHits": 0.9199999999999999,
+   "weak": "storm",
+   "resist": "fire",
+   "guard": null
+  },
+  "sabretooth": {
+   "name": "Sabretooth",
+   "lvl": 93,
+   "def": 73,
+   "att": 123,
+   "max": 16,
+   "hp": 450,
+   "youHit": 0.95,
+   "itHits": 0.8400000000000001,
+   "weak": "fire",
+   "resist": null,
+   "guard": {
+    "archery": 1.4,
+    "magic": 0.75
+   }
+  }
+ },
+ "items": {
+  "weapon": {
+   "k": "nova_sword",
+   "name": "Nova halberd",
+   "acc": 36,
+   "str": 34,
+   "def": 0
+  },
+  "helm": {
+   "k": "nova_helm",
+   "name": "Nova helm",
+   "acc": 0,
+   "str": 0,
+   "def": 18
+  },
+  "body": {
+   "k": "nova_body",
+   "name": "Nova cuirass",
+   "acc": 0,
+   "str": 0,
+   "def": 35
+  },
+  "legs": {
+   "k": "nova_legs",
+   "name": "Nova greaves",
+   "acc": 0,
+   "str": 0,
+   "def": 21
+  },
+  "shield": {
+   "k": "nova_shield",
+   "name": "Nova shield",
+   "acc": 0,
+   "str": 0,
+   "def": 30
+  },
+  "gloves": {
+   "k": "clawgrip",
+   "name": "Captain Claw's grip",
+   "acc": 4,
+   "str": 4,
+   "def": 8
+  },
+  "boots": {
+   "k": "yeti_boots",
+   "name": "Yeti-fur boots",
+   "acc": 0,
+   "str": 0,
+   "def": 11
+  },
+  "amulet": {
+   "k": "frostward_amulet",
+   "name": "Frost ward amulet",
+   "acc": 8,
+   "str": 8,
+   "def": 8
+  },
+  "ring": {
+   "k": "deepheart",
+   "name": "The Mountain's Heart",
+   "acc": 16,
+   "str": 16,
+   "def": 16
+  }
+ },
+ "cold": {
+  "maps": {},
+  "every": 1000,
+  "dmg": 25,
+  "tellEvery": 5000
+ },
+ "speedCap": 50,
+ "hitFloor": 0.18
+}

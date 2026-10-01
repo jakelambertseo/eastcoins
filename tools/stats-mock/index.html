@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Character stats</title>
+<!-- (2026-10-01, the owner: "onto the stats panel"). Mockup 9 of the long-game set: the advanced character stats window, inspired by the
+     Last Epoch / Diablo / Path of Exile sheets the owner sent. Every "today" number is calvin's example character computed with the game's own
+     rules file (stats.json, made by scratchpad/stats.mjs from bonusOf, attackRollOf, maxHitOf, fxOf, petFx, gemBonus, hitChance...). The
+     stats marked NEW (resistances, crit, block) are proposals and say where they would come from. Local only. http://localhost:4321/tools/stats-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a0c;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 15% -10%,#3a2410,transparent),radial-gradient(900px 600px at 100% 30%,#241a3a,transparent),#0b0a0c}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:16px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd98a}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:980px;line-height:1.55}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin:12px 0}.rules3>div{background:#1a120c;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.rules3 span b{color:#f6e9cc}
+.tbl{width:100%;border-collapse:collapse;font:600 13.5px Lora,serif;margin-top:12px;background:#1a120c;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070;padding:10px 12px 6px}.tbl td{padding:8px 12px;border-top:1px solid #3a2616;vertical-align:top}.tbl td:first-child{font-weight:800;color:#ffe7b0;white-space:nowrap}
+.tbl img{width:22px;height:22px;image-rendering:pixelated;vertical-align:-6px;margin-right:5px}
+/* ===== the character window: dark, ornate, Last Epoch-ish but in the kit's bones ===== */
+.cw{max-width:1000px;margin:16px auto 0;border-radius:12px;background:linear-gradient(#1c1612,#120e0b);box-shadow:0 0 0 2px #6a4a24,0 0 0 5px #1a120a,0 0 0 6.5px #8a6a34,0 24px 60px rgba(0,0,0,.6);color:#e8dcc0;position:relative}
+.cw-head{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 16px;border-bottom:1.5px solid #4a3418;background:linear-gradient(#2a1e14,#1c1612);border-radius:12px 12px 0 0}
+.cw-head b{font:800 20px Cinzel,serif;letter-spacing:.14em;color:#f2d89a;text-transform:uppercase}
+.cw-x{position:absolute;right:12px;top:9px;width:28px;height:28px;border-radius:6px;background:#3a2414;box-shadow:inset 0 0 0 1.5px #8a6a34;color:#f2d89a;font:800 15px Lora,serif;display:grid;place-items:center}
+.cw-body{padding:14px 16px 16px}
+.top{display:grid;grid-template-columns:1fr 150px 1fr;gap:14px;align-items:stretch}
+.ident b{display:block;font:800 22px Cinzel,serif;color:#fff2cc}.ident small{font:800 12px Lora,serif;letter-spacing:.12em;text-transform:uppercase;color:#c8a060}
+.box{border-radius:9px;background:rgba(0,0,0,.28);box-shadow:inset 0 0 0 1.5px #3a2a18;padding:8px 11px}
+.attr{display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:center;font:700 14px Cinzel,serif;color:#e8dcc0;padding:3px 0}.attr img{width:22px;height:22px;image-rendering:pixelated}.attr b{font:800 16px Lora,serif;color:#fff}
+.attr.sub{font:600 12.5px Lora,serif;color:#b8a888}.attr.sub b{font-size:13px;color:#e8dcc0}
+.portrait{border-radius:10px;background:radial-gradient(circle at 50% 60%,#5a2a18,#1a0e08 70%);box-shadow:inset 0 0 0 2px #8a6a34,0 0 0 3px #1a120a;display:grid;justify-items:center;align-content:center;position:relative}
+.portrait img{width:84px;height:120px;object-fit:contain;image-rendering:pixelated}.portrait .lvl{position:absolute;top:-10px;left:50%;transform:translateX(-50%);padding:2px 12px;border-radius:999px;background:#2a1e14;box-shadow:0 0 0 1.5px #8a6a34;font:800 13px Cinzel,serif;color:#f2d89a;white-space:nowrap}
+.portrait small{font:700 11px Lora,serif;color:#c8a060;margin-top:2px}
+.vit{display:grid;grid-template-columns:1fr auto;gap:3px 10px;font:700 12.5px Lora,serif;color:#cdbfa2;letter-spacing:.04em}.vit b{font:800 14px Lora,serif;color:#fff;text-align:right}
+.band{margin-top:12px}
+.band h4{margin:0 auto -9px;width:max-content;padding:1px 16px;position:relative;z-index:1;font:800 12.5px Cinzel,serif;letter-spacing:.14em;text-transform:uppercase;color:#d8b878;background:#1c1612;box-shadow:0 0 0 1.5px #4a3418;border-radius:6px}
+.res{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:16px 10px 10px;border-radius:9px;background:rgba(0,0,0,.28);box-shadow:inset 0 0 0 1.5px #3a2a18}
+.re{display:grid;justify-items:center;gap:1px;text-align:center;font:800 11.5px Cinzel,serif;color:var(--c);letter-spacing:.05em}
+.re img{width:26px;height:26px;image-rendering:pixelated}.re b{font:800 15px Lora,serif;color:#fff}.re small{font:700 11px Lora,serif;color:#a89070}
+.re .rb{width:56px;height:5px;border-radius:3px;background:#2a2018;overflow:hidden}.re .rb i{display:block;height:100%;background:var(--c)}
+.re.new{position:relative}.re.new::after{content:"new";position:absolute;top:-4px;right:2px;font:800 8.5px Lora,serif;padding:0 4px;border-radius:999px;background:#5a3aa8;color:#fff;letter-spacing:0}
+.addl{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 14px;padding:16px 14px 10px;border-radius:9px;background:rgba(0,0,0,.28);box-shadow:inset 0 0 0 1.5px #3a2a18}
+.ad{text-align:center;font:700 12.5px Lora,serif;color:#cdbfa2}.ad b{display:block;font:800 16px Lora,serif;color:#fff}.ad small{display:block;font:600 11px Lora,serif;color:#8a7a60}.ad.new b{color:#c8b0ff}
+.tabs{display:flex;gap:4px;margin:14px 0 0;padding:0 4px}
+.tabs button{flex:1;padding:7px 6px;border:0;border-radius:8px 8px 0 0;background:#2a1e14;box-shadow:inset 0 0 0 1.5px #4a3418;font:800 12px Cinzel,serif;letter-spacing:.06em;text-transform:uppercase;color:#a89070;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:#3a2a18;color:#f2d89a;box-shadow:inset 0 0 0 1.5px #8a6a34}
+.panel{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:0;border-radius:0 0 9px 9px;background:rgba(0,0,0,.28);box-shadow:inset 0 0 0 1.5px #4a3418;min-height:330px}
+.rows{padding:6px 0;border-right:1.5px solid #3a2a18}
+.row{display:grid;grid-template-columns:1fr auto 70px;gap:10px;align-items:center;padding:5px 12px;font:600 13px Lora,serif;color:#d8c8a8;cursor:pointer;border:0;background:transparent;width:100%;text-align:left}
+.row:nth-child(odd){background:rgba(255,255,255,.025)}.row:hover,.row.sel{background:rgba(242,216,154,.1)}.row.sel{box-shadow:inset 3px 0 0 #f2d89a}
+.row b{font:800 13.5px Lora,serif;color:#fff;text-align:right;font-variant-numeric:tabular-nums}
+.row .cap{height:6px;border-radius:3px;background:#2a2018;overflow:hidden;position:relative}.row .cap i{display:block;height:100%;background:#c8963a}.row .cap.full i{background:#7ee07e}.row .cap.none{background:transparent}
+.row.new span::after{content:"new";margin-left:6px;font:800 9px Lora,serif;padding:1px 5px;border-radius:999px;background:#5a3aa8;color:#fff;vertical-align:1px}.row.new b{color:#c8b0ff}
+.detail{padding:12px 14px}
+.detail h5{margin:0;font:800 16px Cinzel,serif;color:#f2d89a}.detail p{margin:4px 0 8px;font:600 12.5px/1.5 Lora,serif;color:#b8a888}
+.src{display:grid;gap:4px;margin-top:4px}.src div{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;font:600 12.5px Lora,serif;color:#d8c8a8;padding:4px 7px;border-radius:6px;background:rgba(0,0,0,.25)}
+.src img{width:20px;height:20px;image-rendering:pixelated}.src b{color:#fff}.src .more{color:#7ee07e}.src .more b{color:#7ee07e}
+.capline{display:flex;justify-content:space-between;font:700 11.5px Lora,serif;color:#a89070;margin-top:8px}.capbar{height:10px;border-radius:5px;background:#2a2018;overflow:hidden;margin-top:3px}.capbar i{display:block;height:100%;background:linear-gradient(90deg,#c8963a,#f2d89a)}
+.how{margin-top:10px;font:700 11px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#7ee07e}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font:700 12px Lora,serif;color:#a89070}.foot b{color:#f2d89a}
+/* the chase grid */
+.chase{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:12px}
+.ch{padding:9px 11px;border-radius:9px;background:#1a120c;box-shadow:0 0 0 1.5px #3a2616}.ch b{font:800 13px Lora,serif;color:#ffe7b0}.ch span{float:right;font:800 12.5px Lora,serif;color:#fff}
+.ch .capbar{margin-top:6px}.ch.full{box-shadow:0 0 0 1.5px #3a8a3a}.ch.full .capbar i{background:#7ee07e}.ch.new{box-shadow:0 0 0 1.5px #5a3aa8}.ch.new .capbar i{background:#8a6ae8}
+/* inventory mock */
+.inv{display:inline-grid;grid-template-columns:repeat(4,40px);gap:4px;padding:10px;border-radius:10px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line)}
+.inv span{width:40px;height:40px;border-radius:6px;background:#efe5cf;box-shadow:inset 0 0 0 1.5px #b8a67e;display:grid;place-items:center}.inv img{width:30px;height:30px;image-rendering:pixelated}
+.charbtn{display:inline-flex;gap:6px;align-items:center;margin-top:8px;padding:6px 12px;border-radius:7px;background:#2a1a10;box-shadow:0 0 0 1.5px #c8963a;font:800 13px Cinzel,serif;color:#f2d89a}
+.build{margin:6px 0 0;padding-left:18px;line-height:1.6;color:#cdbfa2;max-width:980px}.build b{color:#f6e9cc}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+@media (max-width:820px){.top{grid-template-columns:1fr}.panel{grid-template-columns:1fr}.rows{border-right:0}.res{grid-template-columns:repeat(3,1fr)}.addl{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Character stats</h1>
+  <p class="lede">A <b>Character</b> button on the Equipment tab opens one window with every number the game uses about you: what you hit for and how often,
+    how hard you are to hurt, how fast you work, what you find, and what's buffing you right now. Each stat shows how close it is to its <b>cap</b>, and
+    clicking one shows <b>where it comes from and where to get more</b>, which is what turns a sheet of numbers into something to chase. Everything marked
+    <b style="color:#c8b0ff">new</b> is a stat the game doesn't have yet (resistances, critical hits, blocking) and says where it would come from; every other
+    number below is real, worked out by the game's own rules for the example character.</p>
+  <nav class="jump"><a href="#window">The window</a><a href="#chase">The chase</a><a href="#new">The new stats</a><a href="#open">Where it opens</a><a href="#build">Building it</a></nav>
+
+  <section class="sec" id="window">
+    <h2>The window</h2>
+    <p>calvin, combat 97, melee 82 in Nova armour with Captain Claw's grip, Yeti-fur boots, the Deepheart ring and a Frost ward amulet; a Coin Toad out;
+      two rubies, a jade, an opal and a sapphire in the gem bag; a Focus charm running. <b>Click the tabs and the rows.</b></p>
+    <div class="cw" id="cw"></div>
+  </section>
+
+  <section class="sec" id="chase">
+    <h2>The chase</h2>
+    <p>The bottom of the window can fold out into this: every capped stat in the game, how far along you are, green when it's maxed. This is the Diablo
+      part, the reason to keep farming after the levels are done: "capped resistances", "max work speed", "30% damage taken". The game already caps
+      eighteen of these; the new ones join the same list.</p>
+    <div class="chase" id="chaseBox"></div>
+  </section>
+
+  <section class="sec" id="new">
+    <h2>The new stats</h2>
+    <p>Three things the sheets you sent have that the game doesn't. <b>Corrected 1 October:</b> the first version of this page said monsters past 90
+      hit calvin 95% of the time whatever he wears, but that compared a level-82 player with level-110 monsters. Measured at level, defence works up to 99
+      (at-level players are hit 20-30%). What is true is that monster attack stops rising at 126 past level 100, so a 99 in Singularity is hit about 20% by
+      everything from 92 to 115, and more armour after that changes nothing. Resistances give the top of the game a second kind of defence to chase.</p>
+    <table class="tbl" id="newTbl"></table>
+    <div class="rules3">
+      <div><b>Resistances use what exists</b><span>The Frozen Reach's cold already hurts anyone without a ward, 25 a second. That becomes <b>frost resistance</b>: a ward is 75%, the cap. The Underforge's heat, the Deep End's storm and the Star Archive's void (mockup 4) each get the same, and so do monsters' elemental hits from level 100 up.</span></div>
+      <div><b>The Gem Sorter feeds them</b><span>An element gem in a <b>weapon</b> socket hits that element harder, as it does in the bag today; in an <b>armour</b> socket (mockup 3) it resists it. Same gems, same rolls, a choice of where to put them.</span></div>
+      <div><b>Nothing old changes</b><span>Every number that exists keeps its formula and its cap. The new ones start at zero for everybody (crit at a base 5%) and only matter on the maps built to need them.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="open">
+    <h2>Where it opens</h2>
+    <div style="display:flex;gap:30px;flex-wrap:wrap;align-items:flex-start;margin-top:10px">
+      <div><div class="inv" id="invBox"></div><br><span class="charbtn"><img src="/v3/assets/img/glad/flat/items/skill_melee.png" alt="" style="width:20px;height:20px;image-rendering:pixelated">Character  ▸</span></div>
+      <div class="rules3" style="flex:1;min-width:300px;margin:0">
+        <div><b>From the Equipment tab</b><span>One button under your worn gear. The window pops out beside the bag and stays open while you swap gear, so you can watch a number move when you put a ring on.</span></div>
+        <div><b>Compare before you equip</b><span>Hovering an item in the bag shows a small green/red line on every row it would change. "+4 max hit, −3% damage taken" before you commit.</span></div>
+        <div><b>Anyone's, from their profile</b><span>A read-only copy on the profile page, so people can compare builds. The owner can hide it.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <ul class="build">
+      <li><b>Every "today" number is already a function in the rules file</b> the page loads: bonusOf, attackRollOf, defenceRollOf, maxHitOf, swingMsOf, maxHpOf, stepMsOf, fxOf with OUT_CAP, petFx, gemBonus, charmOf, tkOn, hitChance. The window calls them on the character the page already has. <b>No server work and no new message</b> at all.</li>
+      <li><b>The "where it comes from" lists</b> are the same functions' inputs read one at a time (each worn item's fx, the pet, the gem bag, the meal, the drink, the charm, the gadgets, the achievement milestones), so they can never disagree with the total.</li>
+      <li><b>"Where to get more"</b> is a lookup over the item, pet, gem and gadget tables for anything that adds to that stat, filtered to what the player could use, with a link to its wiki page.</li>
+      <li><b>The new stats</b> are bigger work, and each belongs to a mockup: resistances with the endgame maps (4) and sockets (3), crit with Ascendancies (2) and masterwork (3), block with the Juggernaut (2). The window can ship first with the row hidden until the stat exists.</li>
+    </ul>
+    <div class="callout"><b>Things to decide:</b> whether the window shows monster hit chances (honest, and it shows defence stops mattering past 90, which may be the thing to fix first); the resistance cap (75%, as Path of Exile); whether crit is worth adding at all or the game stays crit-free; and whether other players' sheets are visible by default.</div>
+  </section>
+</main>
+<script>
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const IC = (k) => `/v3/assets/img/glad/flat/items/${k}.png`;
+const pct = (v, d = 0) => `${(v * 100).toFixed(d).replace(/\.0$/, "")}%`;
+fetch("stats.json").then((r) => r.json()).then((S) => {
+  const cap = S.cap, fx = S.fx;
+  /* ---- the stats, by tab: [label, value text, fraction of cap (null = no cap), detail {p, src:[[icon,name,val]], more:[[icon,name,val]], cap}] ---- */
+  const capped = (k, label, explain, src, more, opt = {}) => [label, `${opt.neg ? "−" : "+"}${pct(fx[k])}`, cap[k] ? fx[k] / cap[k] : null, { p: explain, src, more, cap: `${pct(cap[k])} cap`, key: k }, opt.newRow];
+  const TABS = {
+    Damage: [
+      ["Style", "Melee", null, { p: "Taken from what's in your hand: a sword is Melee, a bow Archery, a wand Magic. Every roll below uses that style's level.", src: [[IC("skill_melee"), "Nova halberd", "Melee"]], more: [] }],
+      ["Accuracy from gear", `+${S.styleBonus.acc}`, null, { p: "Added up across everything you wear (with a bow or a wand, only the weapon and the quiver or bag count).", src: Object.values(S.items).filter((i) => i.acc).map((i) => [IC(i.k), i.name, `+${i.acc}`]), more: [[IC("singularity_sword"), "Singularity halberd (Melee 90)", "+40"]] }],
+      ["Strength from gear", `+${S.styleBonus.str}`, null, { p: "Every 2 points of gear strength is +1 max hit.", src: Object.values(S.items).filter((i) => i.str).map((i) => [IC(i.k), i.name, `+${i.str}`]), more: [[IC("singularity_maul"), "Singularity maul (Melee 90)", "+53"]] }],
+      ["Attack roll", S.attackRoll.toFixed(1), null, { p: "Melee level + 1 + gear accuracy, then +5% from the Focus charm and +6% from the jade in your gem bag. Against a monster's defence it decides how often you land.", src: [[IC("skill_melee"), "Melee level + 1", "83"], [IC("nova_sword"), "Gear accuracy", `+${S.styleBonus.acc}`], [IC("scroll_focus"), "Focus charm I", "×1.05"], [IC("jade"), "Jade +6%", "×1.06"]], more: [[IC("jade"), "A second jade (the two best count)", "up to +10%"]] }],
+      ["Max hit", String(S.maxHit), null, { p: "1 + melee level ÷ 6 + gear strength ÷ 2, then Focus and your damage bonuses (+13% from two rubies).", src: [[IC("skill_melee"), "1 + 82 ÷ 6", "14"], [IC("nova_sword"), "62 strength ÷ 2", "31"], [IC("ruby"), "Rubies +9% and +4%", "×1.13"], [IC("scroll_focus"), "Focus I", "×1.05"]], more: [[IC("ruby"), "Re-roll the +4 ruby (best is +10)", "up to +7%"]] }],
+      ["Swing time", `${(S.swingMs / 1000).toFixed(2)} s`, null, { p: `The weapon's speed (${(S.weaponMs / 1000).toFixed(1)} s for a halberd) made faster by work speed (+7%, capped at 20%).`, src: [[IC("nova_sword"), "Nova halberd", "2.4 s"], [IC("clawgrip"), "Captain Claw's grip", "+3%"], [IC("yeti_boots"), "Yeti-fur boots", "+4%"]], more: [[IC("nova_gladius"), "A gladius swings at 1.8 s", "−25%"]] }],
+      ["Damage bonus", `+${pct(S.tkDmg)}`, null, { p: "Everything that makes your hits bigger for this style: rubies for Melee (jasper for arrows, amethyst for spells), Tinkering gadgets, outfits, and arrow or spell damage gear.", src: [[IC("ruby"), "Rubies", "+13%"]], more: [[IC("tk_banner"), "A Whetstone gadget", "+5%"]] }],
+      capped("adm", "Arrow damage", "Only with a bow: Skyripper, Hunter's Fang, the Raptor ring and a draught.", [], [[IC("skyripper"), "Skyripper", "+6%"], [IC("hunters_fang"), "Hunter's Fang", "+8%"]]),
+      capped("mdm", "Spell damage", "Only with a wand: the Frost Giants' and Frost Jarl's jewellery, the Rimeheart and a Frostmind draught.", [], [[IC("winters_heart"), "Winter's Heart", "+8%"], [IC("rimeheart"), "Rimeheart", "+6%"]]),
+      capped("execute", "Execute", "A monster under this much health dies to your next hit. Never a boss.", [], [[IC("reaper_scythe"), "The Reaper's scythe", "+10%"]]),
+      ["Hit chance vs a Frost Giant", pct(S.vs.frostgiant.youHit), 1, { p: "Your attack roll against its defence (88). 95% is the most anyone lands: you're there.", src: [], more: [], cap: "95% cap" }],
+      ["Critical chance", "5%", 0.1, { p: "NEW. A hit that crits does ×1.5. Everyone has 5%; more would come from the Duelist and Deadeye Ascendancies (mockup 2) and masterwork weapons (mockup 3).", src: [[IC("skill_melee"), "Everyone", "5%"]], more: [[IC("skill_strength"), "Duelist: Precise Cuts", "+8%"], [IC("nova_sword"), "A masterwork weapon", "+3%"]], cap: "50% cap" }, true],
+      ["Critical damage", "×1.5", null, { p: "NEW. How hard a crit lands. Raised by the Duelist's keystone and Relic weapons.", src: [], more: [[IC("skill_strength"), "Duelist: Glass Edge", "×2.0"]] }, true]],
+    Defence: [
+      ["Defence from gear", `+${S.bonus.def}`, null, { p: "Every worn piece, whatever is in your hand.", src: Object.values(S.items).filter((i) => i.def).map((i) => [IC(i.k), i.name, `+${i.def}`]), more: [[IC("singularity_body"), "Singularity cuirass (Melee 90)", "+5 over Nova"]] }],
+      ["Defence roll", S.defenceRoll.toFixed(1), null, { p: "(Melee level + gear defence) ÷ 2. Against a monster's attack it decides how often you're hit.", src: [[IC("skill_melee"), "Melee 82", "82"], [IC("nova_body"), "Gear defence", "+147"]], more: [] }],
+      ...Object.values(S.vs).map((m) => [`Hit by: ${m.name} (${m.lvl})`, pct(m.itHits), null, { p: `Its attack (${m.att}) against your defence roll (${S.defenceRoll.toFixed(1)}). ${m.itHits >= 0.95 ? "95% is the most a monster lands, and it's there: past level 90, armour stops mattering." : ""} It hits for up to ${m.max}.`, src: [], more: [] }]),
+      capped("tough", "Damage taken", "Less damage from every hit. Pets, gems and some gear.", [[IC("clawgrip"), "Captain Claw's grip", "−3%"], [IC("deepheart"), "Deepheart", "−5%"]], [[IC("hematite"), "Hematite in the gem bag", "up to −20%"], ["/v3/assets/img/glad/flat/pet_mossback.png", "A Mossback Tortoise", "−10%"]], { neg: true }),
+      ["Health", String(S.maxHp), null, { p: "Your Hitpoints level, plus any pet that adds health.", src: [[IC("skill_hp"), "Hitpoints 74", "74"]], more: [["/v3/assets/img/glad/flat/pet_lanternmoth.png", "A Lantern Moth", "+15"]] }],
+      capped("leech", "Life leech", "That share of the damage you deal comes back as health. The Long Night's pieces.", [], [[IC("skill_hp"), "The Long Night's pieces", "up to +25%"]]),
+      capped("heal", "Food heals", "Food heals this much more. Bloodstone in the gem bag.", [], [[IC("bloodstone"), "Bloodstone", "up to +20%"]]),
+      ["Frost ward", S.ward ? "worn" : "none", null, { p: "Today: in the Frozen Reach, anyone without a ward loses 25 health every second. Your Frost ward amulet stops it. With resistances it becomes Frost resistance 75%.", src: [[IC("frostward_amulet"), "Frost ward amulet", "ward"]], more: [] }],
+      ["Block chance", "0%", 0, { p: "NEW. With a shield in Melee: a blocked hit does 70% less. 1% for every 4 points of shield defence (your Nova shield would be 7%), more from the Juggernaut (mockup 2).", src: [], more: [[IC("nova_shield"), "Nova shield", "7%"], [IC("skill_defence"), "Juggernaut: Bulwark", "+10%"]], cap: "40% cap" }, true],
+      ["Ward", "0", null, { p: "NEW with mockup 2. A shield of health a Mender puts on you; it's spent before your own.", src: [], more: [["../ascend-mock/mender.png", "A Mender's Ward", "15% of health"]] }, true]],
+    Skilling: [
+      capped("speed", "Work speed", "Swings, chops, mining and fishing, all faster. Gear and the Coilling's line of pets.", [[IC("clawgrip"), "Captain Claw's grip", "+3%"], [IC("yeti_boots"), "Yeti-fur boots", "+4%"]], [["/v3/assets/img/glad/flat/pet_coilling.png", "The Coilling", "+10%"]]),
+      ["Walking speed", `+${Math.round((S.baseStep / S.stepMs - 1) * 100)}%`, S.speedCap ? (S.baseStep / S.stepMs - 1) / (S.speedCap / 100) : null, { p: "Agility and pets. A step takes 180 ms instead of 200.", src: [[IC("skill_agility"), "Agility 40", "+11%"]], more: [["/v3/assets/img/glad/flat/pet_bonepup.png", "A Bonepup", "+8%"]], cap: `${S.speedCap}% cap` }],
+      capped("double", "Double gathers", "That share of what you mine, cut or catch comes up twice.", [], [[IC("skill_mining"), "The Long Night's pieces", "up to +30%"]]),
+      capped("gem", "Gem finds", "Jewels turn up in the rock more often. Already at the cap from the Deepheart.", [[IC("deepheart"), "Deepheart", "+100%"]], []),
+      ["Mining speed (opal)", `+${S.gems.opal}%`, null, { p: "Skilling gems in the case side of your gem bag.", src: [[IC("opal"), "Opal +7%", "+7%"]], more: [[IC("opal"), "A second opal", "up to +10%"]] }],
+      ["Fishing speed (sapphire)", `+${S.gems.sapphire}%`, null, { p: "Skilling gems in the case side of your gem bag.", src: [[IC("sapphire"), "Sapphire +3%", "+3%"]], more: [] }],
+      capped("bite", "Fish bite", "Fish bite more often.", [], [["/v3/assets/img/glad/flat/pet_stormling.png", "A Stormling", "+10%"]]),
+      capped("smelt", "Free smelts", "That share of smelts cost no ore.", [], [[IC("bessemergloves"), "Bessemer's Gauntlets", "+15%"]]),
+      capped("forge", "Reforge success", "Reforges at the anvil land more often.", [], [[IC("bessemergloves"), "Bessemer's Gauntlets", "+10%"]]),
+      capped("steal", "Pickpocket success", "Thieving succeeds more often.", [], [["/v3/assets/img/glad/flat/pet_ferret.png", "A Fortune Ferret", "+10%"]])],
+    "Loot and luck": [
+      ["Tickets from kills", "+15%", 15 / 25, { p: "The Coin Toad keeps 15% more tickets. Gear and meals add more, up to 25%.", src: [["/v3/assets/img/glad/flat/pet_cointoad.png", "Coin Toad", "+15%"]], more: [["/v3/assets/img/glad/flat/pet_goldentoad.png", "The Golden Toad (its Legendary)", "+25%"]], cap: "25% cap" }],
+      capped("rare", "Rare drops", "Rare drops come up more often. The Keen Eye charm and some gear.", [], [[IC("scroll_keeneye"), "Keen Eye charm", "+10%"]]),
+      capped("zdrop", "Real ZCoin drops", "A real ZCoin is more likely to drop. Clovers (one per kill) and some gear.", [], [[IC("clover"), "A clover, from fishing", "+50%"]]),
+      capped("ammo", "Ammo saved", "Shots and casts that spend no arrow or page.", [], [[IC("skill_archery"), "The Long Night's pieces", "up to +50%"]]),
+      ["Total level", String(S.total), null, { p: "Every skill added up.", src: [], more: [] }]],
+    Buffs: [
+      ["Focus charm I", "+5%", null, { p: "Accuracy and max hit, for 10 more minutes outside.", src: [[IC("scroll_focus"), "Focus I", "10 min"]], more: [[IC("scroll_focus"), "Focus II and III", "+8%, +12%"]] }],
+      ["Pet: Coin Toad", "+15% tickets", null, { p: "The pet at your heel. Mockup 7 would add its level and traits here.", src: [["/v3/assets/img/glad/flat/pet_cointoad.png", "Coin Toad", "Ordinary"]], more: [] }],
+      ["Gem bag", "5 of 6", null, { p: "Combat side: ruby +9, ruby +4, jade +6. Case side: opal +7, sapphire +3. Only the best two of each kind count.", src: [[IC("ruby"), "Ruby", "+9 / +4"], [IC("jade"), "Jade", "+6"], [IC("opal"), "Opal", "+7"], [IC("sapphire"), "Sapphire", "+3"]], more: [[IC("hematite"), "An empty slot: hematite?", "−dmg taken"]] }],
+      ["Meal", "none", null, { p: "A meal's effect lasts while you're outside.", src: [], more: [[IC("cstormmarlin"), "Storm marlin", "a meal"]] }],
+      ["Drink", "none", null, { p: "A draught's effect lasts while you're outside.", src: [], more: [[IC("pot_frost"), "Frostmind draught", "+6% spells"]] }]] };
+  /* resistances: fire, frost, storm, sun, void (new), armour first */
+  const RES = [["Armour", IC("skill_defence"), "#d8c8a8", `${S.bonus.def}`, `roll ${S.defenceRoll.toFixed(0)}`, null], ["Fire", IC("page_fire_bolt"), "#ff7a3a", "0%", "the Underforge", 0], ["Frost", IC("page_frost_bolt"), "#9ad8ff", "75%", "your ward", 1], ["Storm", IC("page_storm_bolt"), "#ffe24a", "0%", "the Deep End", 0], ["Sun", IC("page_sun_bolt"), "#ffd84a", "0%", "no map needs it yet", 0], ["Void", IC("page_void_bolt"), "#b070ff", "0%", "the Star Archive", 0]];
+  const ADD = [["Damage taken", `−${pct(fx.tough)}`, `of 30%`], ["Work speed", `+${pct(fx.speed)}`, "of 20%"], ["Tickets", "+15%", "of 25%"], ["Block chance", "0%", "new · shields", 1], ["Critical chance", "5%", "new · ×1.5", 1], ["Hit by a level-112 monster", "95%", "30 levels above calvin"]];
+  const NAMES = { tix: "Tickets", speed: "Work speed", tough: "Damage taken", rare: "Rare drops", zdrop: "ZCoin drops", bite: "Fish bite", heal: "Food heals", steal: "Pickpocket", ammo: "Ammo saved", leech: "Life leech", double: "Double gathers", execute: "Execute", gem: "Gem finds", smelt: "Free smelts", forge: "Reforge success", adm: "Arrow damage", mdm: "Spell damage" };
+  const have = { ...fx, tix: 0.15 };
+  const cells = Object.keys(NAMES).map((k) => [NAMES[k], have[k] || 0, cap[k], 0])
+    .concat([["Hit chance", S.vs.frostgiant.youHit, 0.95, 0], ["Frost resistance", 0.75, 0.75, 1], ["Fire resistance", 0, 0.75, 1], ["Storm resistance", 0, 0.75, 1], ["Void resistance", 0, 0.75, 1], ["Critical chance", 0.05, 0.5, 1], ["Block chance", 0, 0.4, 1]]);
+  const capsFull = cells.filter(([, v, c]) => v >= c - 1e-9).length;
+  let tab = "Damage", sel = 0;
+  function paint() {
+    const rows = TABS[tab], cur = rows[sel], d = cur[3];
+    document.getElementById("cw").innerHTML = `<div class="cw-head"><b>Character</b><span class="cw-x">✕</span></div><div class="cw-body">
+      <div class="top">
+        <div class="box"><div class="ident"><b>calvin</b><small>Melee · no Ascendancy yet (at 100)</small></div>
+          ${[["Melee", "skill_melee", 82], ["Archery", "skill_archery", 76], ["Magic", "skill_magic", 55], ["Hitpoints", "skill_hp", 74]].map(([n, i, l]) => `<div class="attr"><img src="${IC(i)}" alt=""><span>${n}</span><b>${l}</b></div>`).join("")}
+          <div class="attr sub"><span></span><span>Total level</span><b>${S.total.toLocaleString()}</b></div></div>
+        <div class="portrait"><span class="lvl">Combat ${S.combat}</span><img src="/v3/assets/img/glad/flat/hero_bronze_south.png" alt=""><small>wearing Nova</small></div>
+        <div class="box"><div class="vit">
+          <span>HEALTH</span><b>${S.maxHp}</b><span>MAX HIT</span><b>${S.maxHit}</b><span>SWING</span><b>${(S.swingMs / 1000).toFixed(2)} s</b><span>ATTACK ROLL</span><b>${S.attackRoll.toFixed(0)}</b><span>DEFENCE ROLL</span><b>${S.defenceRoll.toFixed(0)}</b><span>WALKING SPEED</span><b>+${Math.round((S.baseStep / S.stepMs - 1) * 100)}%</b></div></div>
+      </div>
+      <div class="band"><h4>Armour and resistances</h4><div class="res">${RES.map(([n, ic, c, v, s, f]) => `<div class="re ${f !== null ? "new" : ""}" style="--c:${c}"><img src="${ic}" alt="">${n}<b>${v}</b><small>${s}</small>${f !== null ? `<span class="rb"><i style="width:${f * 100}%"></i></span>` : ""}</div>`).join("")}</div></div>
+      <div class="band"><h4>Additional defences</h4><div class="addl">${ADD.map(([n, v, s, nw]) => `<div class="ad ${nw ? "new" : ""}">${n}<b>${v}</b><small>${s}</small></div>`).join("")}</div></div>
+      <div class="tabs">${Object.keys(TABS).map((t) => `<button data-t="${t}" aria-pressed="${t === tab}">${t}</button>`).join("")}</div>
+      <div class="panel"><div class="rows">${rows.map(([l, v, f, , nw], i) => `<button class="row ${i === sel ? "sel" : ""} ${nw ? "new" : ""}" data-i="${i}"><span>${esc(l)}</span><b>${esc(v)}</b><span class="cap ${f === null ? "none" : f >= 0.999 ? "full" : ""}">${f === null ? "" : `<i style="width:${Math.min(100, f * 100)}%"></i>`}</span></button>`).join("")}</div>
+        <div class="detail"><h5>${esc(cur[0])} <span style="float:right;color:#fff">${esc(cur[1])}</span></h5><p>${esc(d.p)}</p>
+          ${cur[2] !== null && d.cap ? `<div class="capline"><span>${esc(cur[1])}</span><span>${esc(d.cap)}</span></div><div class="capbar"><i style="width:${Math.min(100, cur[2] * 100)}%"></i></div>` : ""}
+          ${d.src.length ? `<div class="how" style="color:#c8a060">Where it comes from</div><div class="src">${d.src.map(([i, n, v]) => `<div><img src="${i}" alt="" onerror="this.style.visibility='hidden'"><span>${esc(n)}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
+          ${d.more.length ? `<div class="how">Where to get more</div><div class="src">${d.more.map(([i, n, v]) => `<div class="more"><img src="${i}" alt="" onerror="this.style.visibility='hidden'"><span>${esc(n)}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}</div></div>
+      <div class="foot"><span>Click a stat for where it comes from. Hover an item in your bag to see what it would change.</span><span><b>${capsFull}</b> of ${cells.length} caps maxed</span></div></div>`;
+    document.querySelectorAll(".tabs button").forEach((b) => b.onclick = () => { tab = b.dataset.t; sel = 0; paint(); });
+    document.querySelectorAll(".row").forEach((b) => b.onclick = () => { sel = +b.dataset.i; paint(); });
+  }
+  paint();
+  /* the chase grid: every capped stat */
+  document.getElementById("chaseBox").innerHTML = cells.map(([n, v, c, nw]) => { const full = v >= c - 1e-9; return `<div class="ch ${full ? "full" : ""} ${nw && !full ? "new" : ""}"><b>${n}${nw ? ' <small style="color:#c8b0ff">new</small>' : ""}</b><span>${pct(v)} / ${pct(c)}</span><div class="capbar"><i style="width:${Math.min(100, (v / c) * 100)}%"></i></div></div>`; }).join("");
+  /* the new stats table */
+  document.getElementById("newTbl").innerHTML = `<tr><th>Stat</th><th>What it does</th><th>Cap</th><th>Where it would come from</th><th>Why the game needs it</th></tr>` + [
+    [IC("page_fire_bolt"), "Resistances: fire, frost, storm, sun, void", "Cuts area damage on the maps that have it (the cold, the heat…) and a monster's elemental hits, by that much", "75%", "Element gems in armour sockets; wards (a ward is 75%); Relic armour sets; Elder pets (an Elder Salamander resists fire); Elite diaries raise the cap by 5%", "The chase the sheets you sent are built around: \"cap your resists\" before the hardest maps"],
+    [IC("skill_strength"), "Critical chance and damage", "A crit hits for ×1.5 (more with gear and paths). Everyone starts at 5%", "50%", "Duelist and Deadeye trees (mockup 2), masterwork weapons +1/2/3% (mockup 3), Relic weapons", "Gives damage a second thing to chase besides max hit, and makes a fight feel spiky in a good way"],
+    [IC("nova_shield"), "Block chance", "With a shield in Melee, a blocked hit does 70% less", "40%", "Shield defence (1% per 4), the Juggernaut (mockup 2), Relic shields", "Gives the shield slot a reason past its defence, and gives tanks for Mythic runs (mockup 5) a stat of their own"],
+    [IC("skill_hp"), "Ward", "Absorbs damage before your health", "none", "A Mender (mockup 2)", "Healers need something to cast"]].map(([i, n, w, c, src, why]) => `<tr><td><img src="${i}" alt="">${esc(n)}</td><td>${esc(w)}</td><td>${c}</td><td>${esc(src)}</td><td>${esc(why)}</td></tr>`).join("");
+  /* inventory mock */
+  document.getElementById("invBox").innerHTML = ["nova_sword", "nova_helm", "nova_body", "nova_legs", "nova_shield", "clawgrip", "yeti_boots", "deepheart", "frostward_amulet", "cstormmarlin", "cstormmarlin", "pot_frost"].map((k) => `<span><img src="${IC(k)}" alt="" onerror="this.style.visibility='hidden'"></span>`).join("");
+});
+</script>
+</body>
+</html>

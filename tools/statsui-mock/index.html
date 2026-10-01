@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Character window, in the game</title>
+<!-- (2026-10-01, the owner: "mockup with our current UI exactly how the users character stats would popout and the button for clicking it").
+     The in-game version of mockup 9: inject.js runs inside the real page on the dev server, adds the Character button to the Equipment tab
+     and the window, built only from the game's own classes and art, filled with the live character's numbers through the rules functions.
+     The screenshots are from that. Open it yourself: http://localhost:4321/eastscape.html?as=devtest&charmock=1 then the Equipment tab (U).
+     Local only. http://localhost:4321/tools/statsui-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a0c;color:#e8e0cc;font-family:Lora,Georgia,serif}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 22px Cinzel,Georgia,serif;color:#ffd98a}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+.shots{display:grid;gap:26px;margin-top:18px}
+.shot{display:grid;gap:8px}.shot img{width:100%;max-width:1000px;border-radius:10px;box-shadow:0 0 0 2px #5a3a1a,0 16px 40px rgba(0,0,0,.6);image-rendering:auto}
+.shot p{margin:0;font:600 13.5px/1.5 Lora,serif;color:#cdbfa2;max-width:980px}.shot p b{color:#f6e9cc}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin:12px 0}.rules3>div{background:#1a120c;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}
+code{font:700 12.5px ui-monospace,Consolas,monospace;background:#2a1a10;padding:1px 6px;border-radius:5px;color:#ffd98a}
+</style>
+</head>
+<body>
+<main>
+  <h1>The Character window, in the game</h1>
+  <p class="lede">Mockup 9 as a player would see it: the real page on the dev server, with the <b>Character</b> button added to the Equipment tab under the
+    combat strip, and the window built from nothing but the game's own window, tab, strip and button styles. The numbers are the dev character's,
+    worked out by the game's rules functions, so what you see is what the real thing would say. Try it yourself at
+    <code>http://localhost:4321/eastscape.html?as=devtest&amp;charmock=1</code>, then press <b>U</b> for Equipment.</p>
+  <div class="shots">
+    <div class="shot"><img src="1-equipment-tab-button.jpg" alt="The Equipment tab with the Character button under the combat strip"><p><b>1 · The button.</b> In the Equipment tab, right under the five combat numbers and the "what you're holding" line, the same small gold button the Skills tab uses for My stats.</p></div>
+    <div class="shot"><img src="2-window-damage.jpg" alt="The Character window open on the Damage tab with Max hit selected"><p><b>2 · The window, Damage tab.</b> Identity and levels on the left, the paper doll in the middle (the game's own frame), vitals on the right; then the armour-and-resistances strip (the resistances marked <b>new</b>, as proposed); then five tabs. Clicking a row shows where the number comes from and where to get more: here Max hit 37 is 1 + 99 ÷ 6 plus 41 strength ÷ 2, and a ruby would add up to 20%.</p></div>
+    <div class="shot"><img src="3-window-defence.jpg" alt="The Character window open on the Defence tab with a Hit by row selected"><p><b>3 · Defence tab.</b> Gear defence and the roll it makes, then how often the monsters around you land on you (this character is in the Gloam, so a Sulking Toadstool: 18%, the floor), then damage taken with its cap bar, health, leech, the ward, and block chance marked new.</p></div>
+  </div>
+  <h2>What this is made of</h2>
+  <div class="rules3">
+    <div><b>The game's own pieces</b><span><code>.win</code>, <code>.win-head</code>, <code>.win-body</code>, <code>.k-tabs</code>, <code>.k-sect</code>, <code>.k-chip</code>, <code>.k-btn.sm</code>, the frame and tab art, and the paper doll's canvas. About 40 lines of new CSS for the cap bars and the resistance strip.</span></div>
+    <div><b>The game's own numbers</b><span><code>bonusOf</code>, <code>styleBonusOf</code>, <code>attackRollOf</code>, <code>defenceRollOf</code>, <code>maxHitOf</code>, <code>swingMsOf</code>, <code>maxHpOf</code>, <code>stepMsOf</code>, <code>fxOf</code> with <code>OUT_CAP</code>, <code>petFx</code>, <code>gemBonus</code>, <code>charmOf</code>, <code>buffsOf</code>, <code>hitChance</code> against the monsters of the band you're standing in. Nothing is sent to the server.</span></div>
+    <div><b>To build it for real</b><span>The script is the feature: it would move into the page beside the My stats window, the button into the Equipment tab's renderer, and the "new" rows stay hidden until their stats exist. A day's work, no server change.</span></div>
+  </div>
+</main>
+</body>
+</html>

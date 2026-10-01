@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Work clothes</title>
+<!-- (2026-10-01, the owner: "can you mock up how work clothes slot would look and work?"). Mockup 13b, the slot for the skilling sets
+     (mockup 13). inject.js ran inside the real page on the dev server, adding the row and the Locker from the game's own classes; the
+     screenshots are from that. Pretend pieces: the Prospector's kit 3 of 4, the Ditched set 2 of 4. Local only; built into /gameplan. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a0c;color:#e8e0cc;font-family:Lora,Georgia,serif}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:34px 0 6px;font:800 22px Cinzel,Georgia,serif;color:#ffd98a}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}.lede b{color:#f6e9cc}
+.shots{display:grid;gap:26px;margin-top:18px}
+.shot{display:grid;gap:8px}.shot img{width:100%;max-width:1000px;border-radius:10px;box-shadow:0 0 0 2px #5a3a1a,0 16px 40px rgba(0,0,0,.6)}
+.shot p{margin:0;font:600 13.5px/1.5 Lora,serif;color:#cdbfa2;max-width:980px}.shot p b{color:#f6e9cc}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:10px;margin:12px 0}.rules3>div{background:#1a120c;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.rules3 span b{color:#f6e9cc}
+.rec{font:800 11px Lora,serif;padding:2px 9px;border-radius:999px;background:#1e4a24;color:#9ef0a0;vertical-align:4px;margin-left:6px}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13px Lora,serif;color:#ffd98a}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+ul{margin:6px 0 0;padding-left:18px;line-height:1.6;color:#cdbfa2;max-width:980px}ul b{color:#f6e9cc}
+</style>
+</head>
+<body>
+<main>
+  <h1>Work clothes</h1>
+  <p class="lede">Where the slot goes, and how it looks. All of these are the real game on the dev server with the mockup laid over it,
+    built only from the game's own styles; the pieces are pretend (the Prospector's kit 3 of 4, the Ditched set 2 of 4). The owner's note on the
+    first try: the Equipment tab already carries a lot, and a whole Work clothes section added about 230px to it, pushing Pets below the fold.
+    <b>Chosen 1 October: A, the doll switch (one row), with the skill pips from B.</b> B and the first try are kept below for comparison.</p>
+  <nav class="jump"><a href="#a">A · Flip the doll</a><a href="#b">B · A line and skill pips</a><a href="#locker">The Locker</a><a href="#first">The first try</a><a href="#others">Other places</a><a href="#how">How it works</a></nav>
+
+  <h2 id="a">A · Flip the paper doll <span class="rec">chosen</span></h2>
+  <p class="lede">An <b>Armour | Work clothes</b> switch under the Equipment heading. Work turns the doll's own hat, coat, gloves and boots squares
+    into the outfit and dims the other six, and the five-number combat strip becomes the outfit's numbers: pieces, speed, and the all-four bonuses
+    (greyed until you have all four). The Character button becomes <b>Locker</b>. Nothing new to learn: the squares are where players already
+    look for clothes. Hovering an empty square says where the piece comes from.</p>
+  <div class="shots">
+    <div class="shot"><img src="5-doll-armour.jpg" alt="The Equipment tab with an Armour / Work clothes switch above the paper doll, Armour selected">
+      <p><b>A1. Armour (as now).</b> The only change is the switch: one row, about 30px. Everything else is today's tab.</p></div>
+    <div class="shot"><img src="4-doll-work.jpg" alt="The same tab with Work clothes selected: the hat, coat and gloves squares show the Prospector's pieces, the rest are dimmed">
+      <p><b>A2. Work clothes.</b> The Prospector's kit in the doll's own squares, the boots square empty, the strip reading 3/4 · +9% speed ·
+        gems and 2nd ore greyed until all four · 2 sets started. The set's name sits over the figure.</p></div>
+  </div>
+
+  <h2 id="b">B · One line, and pips on the skills <span class="rec">the pips: chosen</span></h2>
+  <p class="lede">The Equipment tab gets a single line (the four pieces small, the set and its count) that opens the Locker. And because a set
+    belongs to a skill, each skill's tile in the Skills tab gets four small pips, gold for each piece found, so "how far along is my mining
+    set" is answered where you look at mining. <b>The pips work with A as well</b>; I'd add them either way.</p>
+  <div class="shots">
+    <div class="shot"><img src="6-chip.jpg" alt="The Equipment tab with one compact line for work clothes under the Character button">
+      <p><b>B1. One line</b>, about 50px, between the Character button and Pets.</p></div>
+    <div class="shot"><img src="7-skills.jpg" alt="The Skills tab with four small pips in the corner of each skilling tile">
+      <p><b>B2. The pips.</b> Mining shows three gold, Thieving two; the rest empty. Hover says which set and how many.</p></div>
+  </div>
+
+  <h2 id="locker">The Locker (both options)</h2>
+  <div class="shots">
+    <div class="shot"><img src="2-locker.jpg" alt="The Locker window listing every set, owned ones first, with Wear buttons">
+      <p><b>Every set in the game, the ones you've started first:</b> the pieces found, a ? for each you haven't, what each piece and all four
+        do, and where the set is found, so the locker doubles as the "go and get it" list. The outfit on is outlined in blue, like a worn pet.
+        <b>Wear</b> swaps all four at once.</p></div>
+  </div>
+
+  <h2 id="first">The first try: a section of its own</h2>
+  <p class="lede">Kept for comparison. Clear, but it is the tallest thing in the tab after the doll.</p>
+  <div class="shots">
+    <div class="shot"><img src="1-equipment.jpg" alt="The Equipment tab with a Work clothes section of four squares under the Character button">
+      <p><b>A heading, four squares, the set's name, a bonus line and a Locker button</b>: about 230px.</p></div>
+    <div class="shot"><img src="3-swap.jpg" alt="After pressing Wear on the Ditched set, the row shows the Ditched pieces">
+      <p><b>Changing jobs</b>: Wear on the Ditched set and the row reads Thieving. Same in A and B.</p></div>
+  </div>
+
+  <h2 id="others">Other places, considered</h2>
+  <ul>
+    <li><b>A tab of its own</b> (a coat hanger beside Equipment): the most room, but a sixth tab for something you change a few times a session.</li>
+    <li><b>A Sets tab in the Character window</b>: a good second place for the full list, too far from where you change outfits to be the only one.</li>
+    <li><b>Dressing automatically</b> for whatever skill you start: no slot at all, but then owning a piece is the whole thing and there's no choice left to show anywhere.</li>
+  </ul>
+
+<h2 id="how">How it works</h2>
+  <div class="rules3">
+    <div><b>Beside your armour</b><span>A second outfit of four pieces (hat, coat, gloves, boots) that only skilling sets fit in. In A it's the doll's own squares with the switch on Work. They never touch accuracy, strength, defence or speed in a fight, and armour never goes in them.</span></div>
+    <div><b>One outfit on at a time</b><span>That's the choice left: what job you're dressed for today. Change it anywhere, any time, in one click; there's no reason to make it a walk to a bank.</span></div>
+    <div><b>Pieces live in the locker</b><span>A piece you find goes straight to the locker, never into your bag or bank, so 56 pieces cost no space. Hence no duplicates, and nothing to trade.</span></div>
+    <div><b>Only its own skill</b><span>The Prospector's kit does nothing at a fishing spot. Mixing sets is allowed (each piece still gives its own bonus); the all-four bonus needs one whole set.</span></div>
+    <div><b>15% faster to 99</b><span>A full set, all bonuses together, makes its skill about 15% quicker: the size agreed on 2026-10-01.</span></div>
+    <div><b>Not drawn on you, for now</b><span>Like Ditched today, work clothes don't change how you look. Drawing 56 pieces onto the character is its own art job; the vanity layer is where it would go later.</span></div>
+  </div>
+
+  <h2>What changes for the Ditched set</h2>
+  <ul>
+    <li>Today its pieces go in the <b>armour</b> slots. On the update, every Ditched piece anyone owns (worn, bag or bank) moves to their locker, and the armour slot it was in is left empty.</li>
+    <li>It gains its all-four bonus (one pocket in ten picked twice), and its drop stops giving a piece you already have.</li>
+    <li>Anyone holding a <b>spare</b> Ditched piece gets its value in tickets, since the locker holds one of each.</li>
+  </ul>
+
+  <h2>Building it</h2>
+  <ul>
+    <li><b>Data</b>: <code>C.work</code> (which set is on) and <code>C.locker</code> (the pieces found) on the character, cleaned in <code>normChar</code>. No new squares in <code>SLOTS</code>, so nothing that walks the armour can pick them up by accident.</li>
+    <li><b>Effects</b>: a <code>setFx(C, skill)</code> read only where that skill already reads a bonus. It's a lookup, not a timer.</li>
+    <li><b>Messages</b>: one, <code>{t:"work", set}</code>. The locker is in <code>meOf</code>, so the page needs nothing else.</li>
+    <li><b>On screen</b>: the switch (A) or the line (B), the Locker, the skill pips, the Character window's Sets line, and a Skilling sets page in the collection log.</li>
+  </ul>
+  <div class="callout"><b>Settled 2026-10-01:</b> the work clothes slot (rather than armour slots), <b>shown by flipping the paper doll (A), with the pips on the skill tiles from B</b>; 15% faster to 99 for a full set; the set names on the Sets page. All 52 icons are drawn.</div>
+</main>
+</body>
+</html>

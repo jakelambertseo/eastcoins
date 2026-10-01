@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Pets that grow</title>
+<!-- (2026-10-01, the owner: "onto mockup 7"). Mockup 7 of the long-game set: pets level up alongside you and evolve at milestones. Built on
+     the pets, ranks, eggs and breeding the game already has (PETS, RANKS, BREED in the rules file). The pet art is the game's own; the three
+     Elders are PixelLab drafts grown from it. Local only: tools/ is never shipped. http://localhost:4321/tools/petgrow-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0a0c08;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#1e3a14,transparent),radial-gradient(900px 600px at 100% 20%,#3a2a0a,transparent),#0a0c08}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#f0f8d8}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#c8f0a0}
+h3{margin:16px 0 6px;font:800 17px Cinzel,serif;color:#f0f8d8}
+.lede{margin:0 0 10px;color:#cdc8a8;max-width:980px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#1a2a12;box-shadow:0 0 0 1.5px #3a5a24;text-decoration:none;font:800 13.5px Lora,serif;color:#c8f0a0}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #24341a}
+.sec>p{color:#b8b498;max-width:980px;line-height:1.55}
+.chart{background:#121810;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #2a3a20;margin-top:12px;overflow:auto}
+.chart svg{display:block;width:100%;height:auto;min-width:640px}
+.tbl{width:100%;border-collapse:collapse;font:600 13.5px Lora,serif;margin-top:12px;background:#121810;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #2a3a20}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#98a880;padding:10px 12px 6px}.tbl td{padding:7px 12px;border-top:1px solid #24341a;vertical-align:middle}
+.tbl td img{width:30px;height:30px;image-rendering:pixelated;vertical-align:middle;margin-right:6px}.tbl td b{color:#f0f8d8}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:16px;margin-top:14px;align-items:start}
+.k-win{min-width:0}
+/* the road */
+.road{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:16px;position:relative}
+.road::before{content:"";position:absolute;left:12%;right:12%;top:86px;height:4px;border-radius:2px;background:linear-gradient(90deg,#5a7a3a,#c8f070,#ffd84a)}
+.stage{display:grid;justify-items:center;text-align:center;gap:6px;position:relative;padding:0 8px}
+.stage .pic{height:150px;display:grid;place-items:end center;position:relative;z-index:1}
+.stage .pic img{image-rendering:pixelated;display:block}
+.stage .lvl{font:800 11px Lora,serif;padding:2px 9px;border-radius:999px;background:#24341a;color:#c8f0a0;position:relative;z-index:1}
+.stage b{font:800 16px Cinzel,serif;color:#f0f8d8}.stage span{font:600 12.5px/1.45 Lora,serif;color:#c8c4a8;max-width:240px}
+.stage.elder .pic::before{content:"";position:absolute;inset:auto -10px 0 -10px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(255,216,74,.35),transparent 70%)}
+.stage .trait{font:800 11px Lora,serif;padding:3px 9px;border-radius:6px;background:#3a2a0a;color:#ffd84a}
+/* the pet window */
+.pw{display:grid;grid-template-columns:200px minmax(0,1fr);gap:14px}
+.ppick{display:flex;gap:6px;margin-bottom:8px}.ppick button{flex:1;display:grid;justify-items:center;gap:2px;padding:6px 4px;border:0;border-radius:8px;background:var(--k-card);box-shadow:inset 0 0 0 1.5px var(--k-card-line);font:800 11.5px Lora,serif;color:var(--k-ink);cursor:pointer}
+.ppick button img{width:32px;height:32px;image-rendering:pixelated}.ppick button[aria-pressed="true"]{background:#f4d37a;box-shadow:inset 0 0 0 2px #a8740f}
+.pstage{height:190px;border-radius:10px;background:radial-gradient(circle at 50% 80%,var(--aura,rgba(0,0,0,0)),transparent 65%),linear-gradient(#cfe0b0,#a8c088);box-shadow:inset 0 0 0 1.5px var(--k-card-line);display:grid;place-items:end center;padding-bottom:18px;position:relative;overflow:hidden}
+.pstage img{image-rendering:pixelated;transition:width .25s,height .25s}
+.pstage .tagline{position:absolute;top:10px;left:0;right:0;text-align:center;font:800 12.5px Lora,serif;color:#1a2a0a;text-shadow:0 1px 0 #fff8}
+.pstage .tagline i{font-style:normal;color:#8a5a08}
+.lvbar{height:14px;border-radius:7px;background:rgba(0,0,0,.12);overflow:hidden;margin:4px 0 2px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}.lvbar i{display:block;height:100%;background:linear-gradient(90deg,#7ad04a,#c8f070)}
+.slider{display:flex;gap:10px;align-items:center;margin:8px 0;font:800 12.5px Lora,serif;color:var(--k-ink)}.slider input{flex:1}
+.fx{display:grid;grid-template-columns:1fr auto auto;gap:4px 12px;font:600 13px Lora,serif;color:var(--k-ink2);margin:6px 0}.fx b{color:var(--k-ink);text-align:right;font-variant-numeric:tabular-nums}.fx em{font-style:normal;color:#2a8a2a;font-weight:800}
+.tslots{display:grid;gap:6px;margin-top:8px}
+.ts{display:grid;grid-template-columns:52px 1fr;gap:8px;align-items:center;padding:7px 9px;border-radius:8px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);font:600 12.5px/1.4 Lora,serif;color:var(--k-ink2)}
+.ts b{color:var(--k-ink)}.ts .at{font:800 11px Lora,serif;padding:2px 7px;border-radius:999px;background:#d8d0b8;color:#5a4a2a;text-align:center}
+.ts.on .at{background:#3a8a3a;color:#fff}.ts.elder.on .at{background:#d4a017;color:#2a1a04}.ts.lock{opacity:.5}
+.pick2{display:flex;gap:6px;margin-top:4px}.pick2 span{flex:1;padding:4px 7px;border-radius:6px;background:#fff8;box-shadow:inset 0 0 0 1px var(--k-card-line);font:700 11.5px Lora,serif;color:var(--k-ink)}.pick2 span.sel{background:#e3f1d6;box-shadow:inset 0 0 0 1.5px #3a8a3a}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin:12px 0}.rules3>div{background:#121810;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #2a3a20}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#f0f8d8;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#c8c4a8}.rules3 span b{color:#f0f8d8}
+.traits{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px;margin-top:12px}
+.tr{padding:11px 13px;border-radius:10px;background:#121810;box-shadow:0 0 0 1.5px #2a3a20}.tr b{font:800 15px Cinzel,serif;color:#f0f8d8}.tr span{display:block;font:600 13px/1.45 Lora,serif;color:#c8c4a8;margin-top:3px}.tr small{font:800 10.5px Lora,serif;color:#98a880;letter-spacing:.06em;text-transform:uppercase}
+.chat{margin-top:10px;padding:10px 14px;border-radius:10px;background:#0c0a08;box-shadow:0 0 0 1.5px #2a3a20;font:600 13.5px/1.7 Lora,serif;max-width:760px}
+.chat .c{color:#ff5a8a;font-weight:800}.chat .t{color:#7a6a58;font-size:12px;margin-right:6px}
+.world{display:flex;gap:40px;align-items:flex-end;justify-content:center;padding:22px 16px 16px;border-radius:10px;background:linear-gradient(#3a5a2a,#2a4a1e);box-shadow:inset 0 0 0 1.5px #4a6a34;margin-top:12px;flex-wrap:wrap}
+.who{display:grid;justify-items:center;gap:3px}.who .nm{font:800 11.5px Lora,serif;color:#fff;text-shadow:0 1px 2px #000;white-space:nowrap}.who .nm i{font-style:normal;color:#ffd84a}
+.who .duo{display:flex;align-items:flex-end;gap:2px}.who img{image-rendering:pixelated}
+.build{margin:6px 0 0;padding-left:18px;line-height:1.6;color:#c8c4a8;max-width:980px}.build b{color:#f0f8d8}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+.note{font:600 12.5px Lora,serif;color:#98a880}
+.big-rule{margin:14px 0 6px;padding:14px 18px;border-radius:12px;background:linear-gradient(90deg,#2a3a14,#121810);box-shadow:inset 4px 0 0 #c8f070,0 0 0 1.5px #3a5a24;max-width:980px}
+.big-rule b{display:block;font:800 19px Cinzel,serif;color:#f0f8d8;margin-bottom:4px}.big-rule span{font:600 14px/1.55 Lora,serif;color:#d8d4b8}
+.pen2{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:start}.plus{align-self:center;font:900 22px Lora,serif;color:var(--k-ink2)}
+.par{display:grid;justify-items:center;text-align:center;gap:2px;padding:9px;border-radius:8px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line)}
+.par img{width:56px;height:56px;image-rendering:pixelated}.par b{font:800 13px Lora,serif;color:var(--k-ink)}.par small{font:700 11px Lora,serif;color:var(--k-ink2)}.par .eld{color:#a8740f}
+.pk{margin-top:4px;padding:4px 7px;border-radius:6px;font:700 11.5px Lora,serif;color:var(--k-ink);background:#e3f1d6;box-shadow:inset 0 0 0 1.5px #3a8a3a}.pk i{display:block;font-style:normal;font-weight:600;color:var(--k-ink2);font-size:10.5px}
+.child{display:grid;grid-template-columns:56px 1fr;gap:10px;align-items:center;margin-top:10px;padding:10px;border-radius:8px;background:linear-gradient(90deg,#fff1c8,#f6e2a8);box-shadow:inset 0 0 0 1.5px #c8963a;font:600 12.5px/1.55 Lora,serif;color:#3a2808}
+.child img{width:52px;height:52px;image-rendering:pixelated}.child b{color:#2a1a04}.ped{font:800 11.5px Lora,serif;padding:1px 8px;border-radius:999px;background:#2a1a04;color:#ffd84a}
+.tl{display:grid;gap:6px}.tl div{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:7px 10px;border-radius:8px;background:#121810;box-shadow:0 0 0 1.5px #2a3a20;font:600 12.5px/1.4 Lora,serif;color:#c8c4a8}
+.tl img{width:40px;height:40px;image-rendering:pixelated}.tl b{color:#f0f8d8}.tl em{font-style:normal;font:800 12px Lora,serif;color:#c8f070;white-space:nowrap}.tl div.pen{background:#1a1408;box-shadow:0 0 0 1.5px #4a3a14}.tl div.pen em{color:#ffd84a}
+@media (max-width:800px){.pw{grid-template-columns:1fr}.road{grid-template-columns:repeat(2,1fr)}.road::before{display:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Pets that grow</h1>
+  <p class="lede">Every pet gets a <b>level, 1 to 50</b>, and earns it by being out with you. It grows fastest doing the thing it's good at: a Stormling
+    learns from your fishing, a Crystal Crab from your mining. At <b>15, 35 and 50</b> it changes: bigger, a trait you choose, and at 50 it becomes an
+    <b>Elder</b>, with its own look and one thing no other pet does. Its bonus climbs the whole way. That gives eggs and breeding a goal that lasts months:
+    not just owning the pet, but raising it.</p>
+  <nav class="jump"><a href="#road">One pet's road</a><a href="#window">The pet window</a><a href="#xp">How it grows</a><a href="#traits">Traits</a><a href="#elders">Every Elder</a><a href="#breed">Growing and breeding</a><a href="#show">Showing it off</a><a href="#build">Building it</a></nav>
+
+  <section class="sec" id="road">
+    <h2>One pet's road</h2>
+    <p>A Bonepup, from the day it drops to the day it's an Elder. The first three stages are the same picture getting bigger, so every pet in the game grows
+      without new art; the Elder is new art, one per kind.</p>
+    <div class="road" id="roadBox"></div>
+  </section>
+
+  <section class="sec" id="window">
+    <h2>The pet window</h2>
+    <p>The pet tab gains a level bar, the bonus now and at 50, and its trait slots. <b>Pick a pet and drag the level</b> to see it grow.</p>
+    <section class="k-win" style="max-width:900px;margin-top:12px"><div class="k-head"><img src="/v3/assets/img/glad/flat/items/skill_breeding.png" alt=""><b>Your pet</b><span class="k-sub" id="pwSub"></span></div>
+      <div class="k-body"><div class="pw">
+        <div><div class="ppick" id="ppick"></div><div class="pstage" id="pstage"><span class="tagline" id="ptag"></span><img id="pimg" alt=""></div></div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font:800 13px Lora,serif;color:var(--k-ink)"><span id="plv"></span><span id="pnext" style="color:var(--k-ink2);font-weight:700"></span></div>
+          <div class="lvbar"><i id="pbar"></i></div>
+          <div class="slider"><span>Level</span><input type="range" min="1" max="50" value="27" id="plev"><b id="plevn">27</b></div>
+          <div class="fx" id="pfx"></div>
+          <div class="note" id="pfav" style="color:var(--k-ink2)"></div><div class="note" id="pped" style="color:var(--k-ink2);margin-top:3px"></div>
+          <div class="tslots" id="pts"></div>
+        </div></div></div></section>
+  </section>
+
+  <section class="sec" id="xp">
+    <h2>How it grows</h2>
+    <div class="rules3">
+      <div><b>Out with you</b><span>The pet at your heel gets 5% of every XP you earn, in any skill. Pets in the bank, the pen or the hatchery don't grow.</span></div>
+      <div><b>Its favourite, three times as fast</b><span>Each kind has a favourite: the skill its bonus helps. XP there counts 15%. Raising a Stormling means fishing with it out; raising a Coin Toad means fighting.</span></div>
+      <div><b>A treat speeds it up</b><span>The pet food the game already cooks becomes a treat: feed one for +50% pet XP for 30 minutes. A pet never goes hungry and never loses anything if you forget. No guilt.</span></div>
+      <div><b>Nothing gets weaker</b><span>A level-1 pet does exactly what it does today, Ordinary, Greater or Legendary. Growing only adds: up to 40% more of its own bonus at 50, plus two traits and the Elder's own. Everyone's pets start at level 1 on launch day, so nobody is ahead.</span></div>
+      <div><b>Faster for some</b><span>Your Breeding level (+0.5% a level), a pet hatched from an egg (+25% until Grown) and its parents' Pedigree (up to +100%) all speed it up. Breeding explains below.</span></div>
+    </div>
+    <h3>Hours of play to raise one, by level</h3>
+    <div class="chart"><svg id="xpSvg" viewBox="0 0 900 290" role="img" aria-label="Hours to reach each pet level, doing its favourite skill or anything else"></svg></div>
+    <p class="note">About 100 hours of its favourite to raise one to Elder, or 300 doing anything else, before treats, Breeding level and Pedigree, which together can bring a favourite-skill Elder under 40 hours.</p>
+  </section>
+
+  <section class="sec" id="traits">
+    <h2>Traits</h2>
+    <p>At 15 and at 35 you pick one of two. Every pet chooses from the same six, so the choice is about how you play, not which pet you happened to find. A pet
+      keeps its traits forever, and they can be swapped at Bom for tickets.</p>
+    <div class="traits" id="trBox"></div>
+  </section>
+
+  <section class="sec" id="elders">
+    <h2>Every Elder</h2>
+    <p>Level 50: new art, a gold ring under its feet, "Elder" on its tag, and its own trait. One per kind, so every pet in the game is worth raising for
+      something only it can do. Greaters and Legendaries become Elders too, with their kind's trait and their own glow.</p>
+    <table class="tbl" id="elderTbl"></table>
+  </section>
+
+  <section class="sec" id="breed">
+    <h2>Growing and breeding</h2>
+    <p>This is the part that has to fit exactly, because the game already has a whole system for making better pets: drops and eggs make Ordinary pets,
+      the hatchery turns an egg into one, the pen breeds two Ordinaries into a Greater (12 hours, 18 Greater food) with <b>one stat picked from each parent,
+      a quarter stronger</b>, two Greaters of a kind into its Legendary (72 hours, 36 Legendary food, Breeding 50) which keeps its own powers and adds the
+      two picks, and <b>both parents come back</b>. Growth sits on top of all of that without changing any of it. The one rule that makes it safe:</p>
+    <div class="big-rule"><b>A pet passes on what it was born with, not what it has learned.</b><span>A pick in the pen reads the parent's <i>own</i> stat, the
+      one on its card at level 1. Growth never goes into the child's numbers. A child always starts at level 1 and grows on its own. What raising a parent
+      does pass on is how fast the child grows (Pedigree) and which traits it can choose.</span></div>
+    <h3>Why: if growth were passed down, every generation would stack</h3>
+    <p>The Bonepup's walking speed, down the line from an Ordinary to its Legendary, each one raised to Elder before it's bred.</p>
+    <div class="chart"><svg id="stackSvg" viewBox="0 0 900 300" role="img" aria-label="A Bonepup line's walking speed across three generations: with growth inherited it climbs past the cap, with the rule it tops out at 19.6"></svg></div>
+    <p class="note">The rule keeps a raised Legendary where breeding already puts it, times 1.4: a Cerberpup tops out at +19.6% walking speed, under the game's cap of 50. Inherited, the same Cerberpup would be +27.4%, nearly twice what a Legendary gives today, and a Greater bred from an unraised pet would be a mistake nobody could undo, so every pet would have to be raised before it could be bred at all.</p>
+
+    <h3>What raising a parent does pass on</h3>
+    <div class="rules3">
+      <div><b>Pedigree: the child grows faster</b><span>Each parent at <b>Prime (35+)</b> adds +25% to the child's growth; each <b>Elder</b> parent +50%. Two Elders: the child raises twice as fast. It shows as stars on the tag. Speed, never power, so nothing compounds.</span></div>
+      <div><b>Traits can be inherited</b><span>At 15 and 35 the child chooses from its usual two, <b>plus</b> any trait a parent picked. Breed a Fetch Bonepup with a Guard Pack Rat and the child can have both. The Elder traits belong to the kind and are never passed on.</span></div>
+      <div><b>Parents come back unchanged</b><span>Same level, same traits, same pedigree. The only cost of pairing your raised pet is the pen's 12 or 72 hours in which it isn't out with you, and so isn't growing.</span></div>
+      <div><b>Hand-raised</b><span>A pet hatched from an egg, rather than dropped, grows 25% faster until it's Grown. The hatchery's food and wait now buy something a drop doesn't have.</span></div>
+      <div><b>Breeding speeds raising</b><span>Every Breeding level is +0.5% pet growth (+49.5% at 99), and every level a pet gains pays Breeding XP: 150 × the level, and 25,000 for an Elder. About 210,000 Breeding XP an Elder. The skill now grows with you every hour you play, not only at the pen.</span></div>
+      <div><b>Rank and growth multiply</b><span>A pet's bonus is its own stats (Ordinary, Greater or Legendary, as breeding made them) × its growth. The game's caps still hold: a Coil Wyrm's 15% work speed would be 21% at 50, and stops at the cap of 20.</span></div>
+    </div>
+
+    <h3>The pen, with growth in it</h3>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/items/skill_breeding.png" alt=""><b>The pen</b><span class="k-sub">Greater · 12 hours · 18 Greater pet food</span></div>
+        <div class="k-body">
+          <div class="pen2">
+            <div class="par"><img src="elder_bonepup.png" alt=""><b>Old Bonehound</b><small>Ordinary · <span class="eld">Elder</span> · lvl 50</small><small>Traits: Fetch, Guard</small><div class="pk sel">Pick: walk speed <b>+8%</b> <i>(its own; +11.2% now is growth)</i></div></div>
+            <div class="plus">+</div>
+            <div class="par"><img src="/v3/assets/img/glad/flat/pet_packrat.png" alt=""><b>Pack Rat</b><small>Ordinary · Prime · lvl 38</small><small>Traits: Forager, Lucky</small><div class="pk sel">Pick: bag slots <b>+4</b> <i>(its own)</i></div></div>
+          </div>
+          <div class="child"><img src="/v3/assets/img/glad/flat/pet_bonepup.png" alt=""><span><b>A Greater Bonepup</b> (Bonepup's look)<br>
+            Starts at <b>level 1</b> with walk speed +10% and bag slots +5 (the picks, a quarter stronger, as today).<br>
+            <span class="ped">Pedigree ★★★</span> grows 75% faster (Elder +50%, Prime +25%).<br>
+            Can inherit: <b>Fetch, Guard, Forager, Lucky</b> as extra choices at 15 and 35.</span></div>
+          <p class="note" style="color:var(--k-ink2);margin:8px 0 0">Old Bonehound and the Pack Rat come back in 12 hours exactly as they went in.</p>
+        </div></section>
+      <div>
+        <h3 style="margin-top:0">The perfect pet, from scratch</h3>
+        <div class="tl" id="tlBox"></div>
+        <p class="note">About 400 hours, most of it raising, with the pen's clocks running while you play. A goal measured in months, built entirely from the system the game already has.</p>
+      </div>
+    </div>
+
+    <h3>Every other case</h3>
+    <table class="tbl" id="caseTbl"></table>
+  </section>
+
+  <section class="sec" id="show">
+    <h2>Showing it off</h2>
+    <p>The pet's level is on its tag in the world, and an Elder stands out at a glance. Only an Elder goes to chat.</p>
+    <div class="world" id="worldBox"></div>
+    <div class="chat"><div><span class="t">19:02</span><span class="c">CASINO</span> calvin's Bonepup is an Elder now. Old Bonehound. It still won't say what it buried.</div></div>
+    <div class="rules3">
+      <div><b>An Elders page in the collection log</b><span>Every kind, as a silhouette until you've raised one. The long-term collector's goal.</span></div>
+      <div><b>A hiscore</b><span>"Pet levels": the total of every pet you own. A kennel raised properly ranks the way a total level does.</span></div>
+      <div><b>On the profile</b><span>Your highest-level pet sits next to the trading card, with its level.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <ul class="build">
+      <li><b>Four small fields per pet</b>: its pet XP, its two traits, its pedigree (0-4 stars) and who raised it, on the record that already carries its id, kind, name, rank and its own stats. They travel through the bank, trades, the Exchange and the pen the way the rank does.</li>
+      <li><b>The pen changes in one place</b>: the picks already read <code>petStats</code>, the pet's own stats, and growth is applied later in <code>petFx</code>, so the rule "born with, not learned" is what the code does if it's left alone. Collect adds the pedigree and the inheritable traits to the child.</li>
+      <li><b>XP goes in where the player's XP goes in</b>: the same function adds a share to the pet out. No new loop, no poll; the page hears a level-up only when one happens.</li>
+      <li><b>The bonus</b> is petFx's number times (1 + 0.4 × (level − 1) / 49), so every existing effect grows with one line. The caps already in the game (walking speed's 50, swing's 0.2) still hold.</li>
+      <li><b>The stages</b> are a draw size (75%, 100%, 115%) plus the Elder art. The first three need no new pictures; the Elders need one each, about fifteen PixelLab pieces for the base kinds.</li>
+      <li><b>Traits</b> are hooks that mostly exist: Fetch is picking up a drop, Forager is the Mimic's gift on a timer, Guard is damage taken, Cheer is XP, Lucky is the rare-drop roll. The Elders' own traits are one each and can ship one at a time.</li>
+    </ul>
+    <div class="callout"><b>Things to decide:</b> whether pets start at level 1 on launch day (my pick, fair to everyone) or somewhere by how long they've been owned; the 40% at 50; Pedigree's size (+25% Prime, +50% Elder); whether Hand-raised is worth having; whether Bom should pay more for a raised pet (my pick: +2% a level, so an Elder sells for double, never enough to farm); and whether Legendaries keep their own art as Elders (my pick: yes, with the gold ring, since a Legendary already is the evolved look).</div>
+  </section>
+</main>
+<script>
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const PA = (k) => `/v3/assets/img/glad/flat/pet_${k}.png`, IC = (k) => `/v3/assets/img/glad/flat/items/${k}.png`;
+const STAGES = [[1, "Hatchling", 0.75], [15, "Grown", 1], [35, "Prime", 1.15], [50, "Elder", 1.3]];
+const stageOf = (l) => STAGES.filter((s) => l >= s[0]).at(-1);
+const mul = (l) => 1 + 0.4 * (l - 1) / 49;
+const TRAITS = { fetch: ["Fetch", "Picks up your drops within two tiles, so you never stop to loot."], forager: ["Forager", "Every 10 minutes out, finds something small from wherever you are: a seed, a gem, a few tickets."],
+  guard: ["Guard", "Takes 3% of every hit meant for you."], cheer: ["Cheer", "+2% XP in its favourite skill."], lucky: ["Lucky", "+3% chance at a monster's rare drop."], homebody: ["Homebody", "On your island, your pens, beds and hatchery run 10% faster."] };
+const PETS = {
+  bonepup: { name: "Bonepup", elder: "Old Bonehound", art: "elder_bonepup.png", fav: "Agility, and walking anywhere", fx: [["Walking speed", 8, "%"]], picks: [["fetch", "forager"], ["guard", "lucky"]], sel: [0, 1], ped: "Dropped in the Boneyard · no pedigree · raised by calvin", sig: "Dig: once an hour it digs up something from the region you're in." },
+  stormling: { name: "Stormling", elder: "Elder Stormling", art: "elder_stormling.png", fav: "Fishing", fx: [["Fish bite more often", 10, "%"]], picks: [["cheer", "forager"], ["lucky", "homebody"]], sel: [0, 0], ped: "Hatched from a sparking egg: <b>hand-raised</b>, +25% until Grown · raised by BeeEzRadio", sig: "Rainmaker: the fishing spot you're at never moves while you fish it." },
+  cointoad: { name: "Coin Toad", rank: "Greater", elder: "Old Money", art: "elder_cointoad.png", fav: "Melee, Archery and Magic", fx: [["More tickets from kills", 15, "%"]], picks: [["fetch", "lucky"], ["guard", "cheer"]], sel: [1, 0], ped: "Greater, bred from two Elders: <b>Pedigree ★★★★</b>, grows twice as fast · raised by Kellzifer", sig: "Old Money: once a day, a free roll at the Gem Sorter." } };
+
+/* the road */
+document.getElementById("roadBox").innerHTML = STAGES.map(([l, n, sc], i) => { const el = i === 3, w = Math.round(64 * sc * (el ? 1.15 : 1));
+  return `<div class="stage ${el ? "elder" : ""}"><div class="pic"><img src="${el ? "elder_bonepup.png" : PA("bonepup")}" alt="" style="width:${w}px;height:${w}px"></div><span class="lvl">level ${l}</span><b>${el ? "Old Bonehound" : n}</b>
+    <span>${["Fresh from the drop or the egg. Small, and exactly as good as a Bonepup is today.", "Full size. Pick its first trait.", "A little bigger than you'd expect, and its second trait.", "New art, a gold ring underfoot, \"Elder\" on its tag, and a trait only Bonehounds have."][i]}</span>
+    ${i === 1 ? '<span class="trait">Trait: Fetch or Forager</span>' : i === 2 ? '<span class="trait">Trait: Guard or Lucky</span>' : i === 3 ? '<span class="trait">Dig</span>' : ""}</div>`; }).join("");
+
+/* the pet window */
+let cur = "bonepup";
+document.getElementById("ppick").innerHTML = Object.entries(PETS).map(([k, p]) => `<button data-k="${k}" aria-pressed="${k === cur}"><img src="${PA(k)}" alt="">${p.name}</button>`).join("");
+document.querySelectorAll("#ppick button").forEach((b) => b.addEventListener("click", () => { cur = b.dataset.k; document.querySelectorAll("#ppick button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); pw(); }));
+document.getElementById("plev").addEventListener("input", pw);
+const hoursAt = (l) => 100 * ((l - 1) / 49) ** 2;
+function pw() {
+  const p = PETS[cur], l = +document.getElementById("plev").value, [, sn, sc] = stageOf(l), elder = l === 50, w = Math.round(80 * sc);
+  document.getElementById("plevn").textContent = l;
+  const img = document.getElementById("pimg"); img.src = elder ? p.art : PA(cur); img.style.width = img.style.height = `${w}px`;
+  document.getElementById("pstage").style.setProperty("--aura", elder ? "rgba(255,216,74,.55)" : l >= 35 ? "rgba(122,208,74,.35)" : "rgba(0,0,0,0)");
+  document.getElementById("ptag").innerHTML = `${esc(elder ? p.elder : p.name)} <i>· ${sn} · lvl ${l}</i>`;
+  document.getElementById("pwSub").textContent = `${p.name} · ${p.rank || "Ordinary"} · favourite: ${p.fav}`;
+  document.getElementById("plv").textContent = `Level ${l} · ${sn}`;
+  const into = l < 50 ? 0.37 : 1; document.getElementById("pbar").style.width = `${Math.round(into * 100)}%`;
+  document.getElementById("pnext").textContent = l < 50 ? `about ${Math.max(1, Math.round((hoursAt(l + 1) - hoursAt(l)) * 60))} min of ${p.fav.split(",")[0].toLowerCase()} to ${l + 1}` : "Elder: done growing";
+  document.getElementById("pfx").innerHTML = `<span></span><b style="font:800 10.5px Lora,serif;color:var(--k-ink2)">NOW</b><b style="font:800 10.5px Lora,serif;color:var(--k-ink2)">AT 50</b>` + p.fx.map(([n, v, u]) => `<span>${n}</span><b>+${(v * mul(l)).toFixed(1).replace(".0", "")}${u}${l > 1 ? ` <em>(+${Math.round((mul(l) - 1) * 100)}%)</em>` : ""}</b><b>+${(v * 1.4).toFixed(1).replace(".0", "")}${u}</b>`).join("");
+  document.getElementById("pfav").textContent = `Gets 15% of your ${p.fav} XP, and 5% of everything else. A treat makes it +50% for 30 minutes.`;
+  document.getElementById("pped").innerHTML = p.ped;
+  const slot = (at, pair, s) => { const on = l >= at; return `<div class="ts ${on ? "on" : "lock"}"><span class="at">lvl ${at}</span><span><b>${on ? TRAITS[pair[s]][0] : "Choose at " + at}</b>${on ? ": " + esc(TRAITS[pair[s]][1]) : ""}<div class="pick2">${pair.map((t, i) => `<span class="${on && i === s ? "sel" : ""}">${TRAITS[t][0]}</span>`).join("")}</div></span></div>`; };
+  document.getElementById("pts").innerHTML = slot(15, p.picks[0], p.sel[0]) + slot(35, p.picks[1], p.sel[1]) + `<div class="ts elder ${elder ? "on" : "lock"}"><span class="at">lvl 50</span><span><b>${esc(p.sig.split(":")[0])}</b>: ${esc(p.sig.split(":").slice(1).join(":").trim())}</span></div>`;
+}
+pw();
+
+/* xp chart */
+{
+  const W = 900, H = 290, L = 60, R = 140, T = 20, B = 40, x = (l) => L + (W - L - R) * (l - 1) / 49, y = (h) => T + (H - T - B) * (1 - h / 320);
+  let s = ""; for (const h of [0, 100, 200, 300]) s += `<line x1="${L}" x2="${W - R}" y1="${y(h)}" y2="${y(h)}" stroke="#20301a"/><text x="${L - 8}" y="${y(h) + 4}" fill="#98a880" font-size="11.5" text-anchor="end">${h} h</text>`;
+  for (const [l, n] of [[15, "Grown"], [35, "Prime"], [50, "Elder"]]) s += `<line x1="${x(l)}" x2="${x(l)}" y1="${T}" y2="${H - B}" stroke="#3a4a28" stroke-dasharray="3 4"/><text x="${x(l)}" y="${T + 10}" fill="#c8f0a0" font-size="11.5" font-weight="700" text-anchor="${l === 50 ? "end" : "middle"}">${n}</text>`;
+  for (const [m, c, n] of [[1, "#c8f070", "its favourite skill"], [3, "#d8a858", "anything else"]]) { let d = ""; for (let l = 1; l <= 50; l++) d += `${l === 1 ? "M" : "L"}${x(l).toFixed(1)} ${y(hoursAt(l) * m).toFixed(1)}`; s += `<path d="${d}" stroke="${c}" stroke-width="2.5" fill="none"/><text x="${x(50) + 8}" y="${y(hoursAt(50) * m) + 4}" fill="${c}" font-size="12.5" font-weight="700">${n}</text>`; }
+  for (let l = 1; l <= 50; l += 7) s += `<text x="${x(l)}" y="${H - B + 18}" fill="#98a880" font-size="11.5" text-anchor="middle">${l}</text>`;
+  s += `<text x="${(L + W - R) / 2}" y="${H - 4}" fill="#98a880" font-size="11.5" text-anchor="middle">pet level</text>`;
+  document.getElementById("xpSvg").innerHTML = s;
+}
+
+/* traits */
+document.getElementById("trBox").innerHTML = Object.values(TRAITS).map(([n, d], i) => `<div class="tr"><small>${["looting", "finding", "fighting", "skilling", "drops", "your island"][i]}</small><br><b>${n}</b><span>${esc(d)}</span></div>`).join("");
+
+/* every elder */
+const ELD = [["bonepup", "Old Bonehound", "Agility, walking", "Dig: once an hour, something from the region you're in"], ["packrat", "Old Packrat", "Mining, Woodcutting, Fishing", "Runner: sends one full stack to your bank every 10 minutes"],
+  ["cointoad", "Old Money", "Melee, Archery, Magic", "a free Gem Sorter roll once a day"], ["lanternmoth", "Elder Lantern", "Hitpoints", "Night-light: out of a fight you heal 1% every 5 seconds"],
+  ["housecat", "The Floor Manager", "everything (×1.5)", "Comps: a free drink buff every hour"], ["coilling", "Elder Coil", "dungeon clears", "Coiled: your whole party does 5% more in a dungeon"],
+  ["pocketowl", "Old Hoot", "Archery", "Spotter: points at the nearest rare monster on the map"], ["mossback", "Grandfather Mossback", "Hitpoints", "Shell: once a fight, a killing blow leaves you on 1"],
+  ["trufflepig", "Old Snout", "Farming, Fungiculture", "black truffle twice as often"], ["stormling", "Elder Stormling", "Fishing", "Rainmaker: your fishing spot never moves while you fish it"],
+  ["salamander", "Hearthkeeper", "Cooking, Smithing", "fires and furnaces near you work 10% faster for everyone"], ["ferret", "Old Whiskers", "Thieving", "two pockets at once, once a minute"],
+  ["crystalcrab", "Geode Elder", "Mining", "one gem in ten comes up already sorted"], ["mimic", "Old Chest", "everything (×1.5)", "its present comes twice a day"]];
+document.getElementById("elderTbl").innerHTML = `<tr><th>Pet</th><th>Elder</th><th>Favourite</th><th>The Elder's own trait</th></tr>` + ELD.map(([k, n, f, t]) => { const art = PETS[k]?.art; return `<tr><td><img src="${PA(k)}" alt=""><b>${esc(k === "cointoad" ? "Coin Toad" : k === "stormling" ? "Stormling" : k === "bonepup" ? "Bonepup" : k.replace(/^./, (c) => c.toUpperCase()))}</b></td><td>${art ? `<img src="${art}" alt="">` : ""}<b>${esc(n)}</b>${art ? "" : ' <span class="note">art to come</span>'}</td><td>${esc(f)}</td><td>${esc(t)}</td></tr>`; }).join("");
+
+/* growth inherited vs the rule: a Bonepup line's walking speed */
+{
+  const gens = [["Bonepup", "Ordinary", 8], ["Greater Bonepup", "Greater", null], ["Cerberpup", "Legendary", null]];
+  /* the rule: picks read the born-with stat. Greater = 8 x 1.25 = 10; the Legendary keeps its own 14 (a pick of 10 is smaller). Each x1.4 at 50. */
+  const rule = [[8, 11.2], [10, 14], [14, 19.6]];
+  /* inherited: the pick reads the grown 11.2 -> 14 x... Greater born 11.2*1.25 = 14, grown 19.6; Legendary keeps max(14, 19.6) = 19.6, grown 27.4; and the next pairing goes on */
+  const inh = [[8, 11.2], [14, 19.6], [19.6, 27.4]];
+  const W = 900, H = 300, L = 70, Rr = 30, T = 30, B = 52, max = 32, gw = (W - L - Rr) / 3, y = (v) => T + (H - T - B) * (1 - v / max);
+  let s = ""; for (const v of [0, 10, 20, 30]) s += `<line x1="${L}" x2="${W - Rr}" y1="${y(v)}" y2="${y(v)}" stroke="#20301a"/><text x="${L - 8}" y="${y(v) + 4}" fill="#98a880" font-size="11.5" text-anchor="end">+${v}%</text>`;
+  gens.forEach(([n, r], g) => { const cx = L + g * gw + gw / 2, bw = 46;
+    for (const [k, arr, col, dx] of [[0, rule, "#c8f070", -bw - 4], [1, inh, "#e8604a", 4]]) { const [b0, top] = arr[g], x = cx + dx;
+      s += `<rect x="${x}" y="${y(b0)}" width="${bw}" height="${y(0) - y(b0)}" rx="4" fill="${col}" opacity=".45"/><rect x="${x}" y="${y(top)}" width="${bw}" height="${y(b0) - y(top) - 2}" rx="4" fill="${col}"/>`;
+      s += `<text x="${x + bw / 2}" y="${y(top) - 6}" fill="#f6e9cc" font-size="12" font-weight="700" text-anchor="middle">+${top}%</text>`; }
+    s += `<text x="${cx}" y="${H - B + 20}" fill="#f0f8d8" font-size="13" font-weight="800" text-anchor="middle">${n}</text><text x="${cx}" y="${H - B + 36}" fill="#98a880" font-size="11.5" text-anchor="middle">${r} · at Elder</text>`; });
+  s += `<rect x="${L}" y="8" width="12" height="12" rx="3" fill="#c8f070"/><text x="${L + 18}" y="18" fill="#d8d4b8" font-size="12">the rule: picks read what it was born with</text><rect x="${L + 330}" y="8" width="12" height="12" rx="3" fill="#e8604a"/><text x="${L + 348}" y="18" fill="#d8d4b8" font-size="12">if growth were inherited</text><text x="${W - Rr}" y="18" fill="#98a880" font-size="11.5" text-anchor="end">pale: born with · solid: added by growth</text>`;
+  document.getElementById("stackSvg").innerHTML = s;
+}
+/* the perfect pet, from scratch */
+document.getElementById("tlBox").innerHTML = [["egg_speckled", "", "Two Bonepups: one drop, one from the hatchery", "hand-raised", "luck + 12 h"], ["pet_bonepup", "", "Raise one to Elder, one to Prime", "favourite skill", "~150 h"],
+  ["skill_breeding", "pen", "The pen: a Greater, Pedigree ★★★", "18 food", "12 h"], ["pet_bonepup", "", "Do it twice, raise both Greaters to Prime or better", "75% faster", "~60 h"],
+  ["skill_breeding", "pen", "The pen: Cerberpup, Breeding 50, Pedigree ★★", "36 food", "72 h"], ["pet_cerberpup", "", "Raise the Cerberpup to Elder", "50% faster, with treats", "~55 h"]]
+  .map(([ic, c, t, sub, h]) => `<div class="${c}"><img src="${ic.startsWith("pet_") ? `/v3/assets/img/glad/flat/${ic}.png` : `/v3/assets/img/glad/flat/items/${ic}.png`}" alt=""><span><b>${esc(t)}</b><br>${esc(sub)}</span><em>${h}</em></div>`).join("");
+/* every other case */
+document.getElementById("caseTbl").innerHTML = `<tr><th>Case</th><th>What happens</th></tr>` + [
+  ["A pet in the pen or the hatchery", "Doesn't grow: only the pet out with you does. A 72-hour Legendary pairing is 72 hours your best pet isn't learning, which is a real choice, and a small one."],
+  ["Releasing or selling a raised pet", "A warning above level 15: \"You've raised this one to Prime. Let it go?\" Bom pays +2% a level, so an Elder sells for twice an Ordinary's 1,000 (and a Legendary Elder twice 25,000): a thank-you, never a farm."],
+  ["Trading on the Exchange", "Level, traits, pedigree and \"raised by\" go with it, like a masterwork's maker in mockup 3. A raised pet is worth more to a buyer, and that's the market's business."],
+  ["Event pets (the House Cat, the Black Cat)", "Grow like any pet. Still can't breed, as today."],
+  ["Raid and boss pets (the Coilling, the Rexling, the Ice Imp…)", "Grow like any pet, and can still be a parent of a Greater, as today. Their many stats grow together, which is why the caps matter: the Ice Imp's +6% tickets becomes +8.4%."],
+  ["A Greater's look", "It wears its look-parent's art, and at Elder that kind's Elder art with the blue Greater frame. A Greater Bonepup becomes an Old Bonehound with a star."],
+  ["Legendaries", "Their art is already the evolved look, so an Elder Legendary keeps it, with the gold ring and a crown over the tag."],
+  ["Pet skins from the Store", "Still change only the look. The skin grows with the stages, and an Elder in a skin still gets its ring."],
+  ["The 50-pet limit", "Unchanged. Raising is one pet at a time, so a kennel of Elders is a very long goal, which is what the collection log's Elders page is for."],
+  ["Pet food", "Still cooked the same way and still the pen's and the hatchery's cost. A treat is any pet food: Ordinary +50% for 30 minutes, Greater for 60, Legendary for 120."],
+  ["Cooking pet food for Breeding XP", "The trickle for people with no pet stays exactly as it is; it stops once you have one, as now. Raising takes over from there."]]
+  .map(([a, b]) => `<tr><td><b>${esc(a)}</b></td><td>${esc(b)}</td></tr>`).join("");
+
+/* the world */
+document.getElementById("worldBox").innerHTML = [["calvin", "elder_bonepup.png", 74, "Old Bonehound", "Elder"], ["BeeEzRadio", PA("stormling"), 46, "Stormling", "lvl 31"], ["Kellzifer", PA("cointoad"), 36, "Coin Toad", "lvl 9"], ["heartlarva", "elder_cointoad.png", 74, "Old Money", "Elder"]]
+  .map(([who, a, w, n, l]) => `<div class="who"><span class="nm">${esc(n)} <i>${l}</i></span><div class="duo"><img src="/v3/assets/img/glad/flat/hero_onyx_south.png" alt="" style="width:56px;height:80px;object-fit:contain" onerror="this.style.display='none'"><img src="${a}" alt="" style="width:${w}px;height:${w}px;${l === "Elder" ? "filter:drop-shadow(0 0 6px rgba(255,216,74,.8))" : ""}"></div><span class="nm">${esc(who)}</span></div>`).join("");
+</script>
+</body>
+</html>

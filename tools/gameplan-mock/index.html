@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>The game plan</title>
+<!-- (2026-10-01, the owner: "lets think deeply about these mockups and figure out what needs to change, what we should build first, any gaps
+     we have with these ideas, and a roadmap for them (internal roadmap only)"). The tenth page of the long-game set: a plan over the other nine.
+     The clock is computed from ../past99-mock/data.json (the 2026-09-30 snapshot: top levels, the XP curves, and the measured pace of the best
+     player and the median regular). INTERNAL: never shipped, never linked from The Road Ahead. http://localhost:4321/tools/gameplan-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a0a;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#2a2010,transparent),radial-gradient(900px 600px at 100% 30%,#1a2430,transparent),#0b0a0a}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:16px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd98a}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #3a2a1a}
+.sec>p{color:#b8a888;max-width:980px;line-height:1.55}
+.chart{background:#16120e;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #3a2616;margin-top:12px;overflow:auto}
+.chart svg{display:block;width:100%;height:auto;min-width:720px}
+.tbl{width:100%;border-collapse:collapse;font:600 13px Lora,serif;margin-top:12px;background:#16120e;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2616}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a89070;padding:10px 10px 6px}.tbl td{padding:8px 10px;border-top:1px solid #3a2616;vertical-align:top;line-height:1.4}
+.tbl td:first-child{white-space:nowrap;font-weight:800;color:#ffe7b0}.tbl td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.v{font:800 10.5px Lora,serif;padding:2px 8px;border-radius:999px;white-space:nowrap}.v.build{background:#1e4a24;color:#9ef0a0}.v.change{background:#4a3a10;color:#ffd98a}.v.fold{background:#3a2a4a;color:#d0b8ff}.v.hold{background:#3a2020;color:#ff9a8a}
+.v.now{background:#1e4a24;color:#9ef0a0}.v.soon{background:#2a3a4a;color:#9ad8ff}.v.later{background:#3a2a1a;color:#d8b888}
+.rules3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin:12px 0}.rules3>div{background:#16120e;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a2616}
+.rules3>div>b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.rules3 span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.rules3 span b{color:#f6e9cc}
+.big{margin:14px 0 6px;padding:14px 18px;border-radius:12px;background:linear-gradient(90deg,#3a2a10,#16120e);box-shadow:inset 4px 0 0 #ffd98a,0 0 0 1.5px #5a3a1a;max-width:980px}
+.big b{display:block;font:800 19px Cinzel,serif;color:#ffe7b0;margin-bottom:4px}.big span{font:600 14px/1.55 Lora,serif;color:#d8ccb4}
+.changes{display:grid;gap:10px;margin-top:12px}
+.chg{display:grid;grid-template-columns:52px 1fr;gap:12px;padding:12px 14px;border-radius:10px;background:#16120e;box-shadow:0 0 0 1.5px #3a2616}
+.chg .no{font:800 26px Cinzel,serif;color:#ffd98a;text-align:center;line-height:1}.chg .no small{display:block;font:800 9.5px Lora,serif;letter-spacing:.06em;color:#a89070;text-transform:uppercase;margin-top:2px}
+.chg b{font:800 15px Cinzel,serif;color:#ffe7b0}.chg p{margin:3px 0 0;font:600 13px/1.5 Lora,serif;color:#cdbfa2}.chg p b{font:800 13px Lora,serif;color:#f6e9cc}
+.chg .was{display:inline-block;font:800 10.5px Lora,serif;padding:1px 7px;border-radius:999px;background:#2a1a10;color:#d8b888;margin-left:6px;vertical-align:2px}
+.phase{margin-top:14px;border-radius:12px;background:#16120e;box-shadow:0 0 0 1.5px var(--pc);overflow:hidden}
+.phase header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:10px 16px;background:linear-gradient(90deg,var(--pc) 0,transparent 100%);color:#fff}
+.phase header b{font:800 18px Cinzel,serif}.phase header span{font:800 12.5px Lora,serif;color:#fff;opacity:.9;white-space:nowrap}
+.phase .why{padding:8px 16px 0;font:600 13px/1.5 Lora,serif;color:#cdbfa2}
+.phase ul{margin:6px 0 0;padding:0 16px 12px;list-style:none;display:grid;gap:5px}
+.phase li{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;padding:7px 10px;border-radius:7px;background:rgba(0,0,0,.3);font:600 13px/1.45 Lora,serif;color:#e8dcc0}
+.phase li b{color:#ffe7b0}.phase li.dropped{opacity:.55}.phase li.dropped b{text-decoration:line-through}.phase li.done{background:rgba(126,208,96,.12);box-shadow:inset 3px 0 0 #7ed060}.phase li.done b{color:#9ef0a0}.phase li.done em{color:#9ef0a0}.phase li small{display:block;color:#a89070;font-size:12px}.phase li em{font-style:normal;font:800 11.5px Lora,serif;color:var(--pc);white-space:nowrap;padding-top:2px}
+.p0{--pc:#7ed060}.p1{--pc:#3ad0d8}.p2{--pc:#ffd84a}.p3{--pc:#ff9a5a}.p4{--pc:#ff6a4a}.p5{--pc:#b08aff}.p6{--pc:#d8d0c0}
+.dec{display:grid;gap:6px;margin-top:12px}
+.dq{display:grid;grid-template-columns:30px 1fr;gap:10px;padding:9px 12px;border-radius:9px;background:#16120e;box-shadow:0 0 0 1.5px #3a2616;font:600 13px/1.5 Lora,serif;color:#cdbfa2}
+.dq i{font-style:normal;font:800 16px Cinzel,serif;color:#ffd98a}.dq b{color:#ffe7b0}.dq .pick{color:#9ef0a0;font-weight:800}
+.build{margin:6px 0 0;padding-left:18px;line-height:1.6;color:#cdbfa2;max-width:980px}.build b{color:#f6e9cc}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+.ic{width:22px;height:22px;image-rendering:pixelated;vertical-align:-6px;margin-right:5px}
+</style>
+</head>
+<body>
+<main>
+  <h1>The game plan</h1>
+  <p class="lede">Nine mockups, read together. This page says what the numbers say about them, what has to change before any of it is built, what
+    none of them cover, and the order to build them in. <b>Internal only.</b> Everything here is measured against the server as it is on 1 October 2026:
+    36 regular players, twelve days since the reset, the best fighter at Melee 85, and the best XP pace ever measured here, 35,750 an hour.</p>
+  <nav class="jump"><a href="#board">The nine on one board</a><a href="#clock">The clock</a><a href="#change">What has to change</a><a href="#gaps">The gaps</a><a href="#order">Build order</a><a href="#roadmap">The roadmap</a><a href="#decide">Decisions that block building</a><a href="#rules">Principles</a></nav>
+
+  <section class="sec" id="board">
+    <h2>The nine on one board</h2>
+    <p>Each one in a line: what it needs first, who it's for today, what it costs, and the verdict. "Works at" is the level a player has to be for the
+      thing to matter at all, and it is the column that decides the order.</p>
+    <table class="tbl" id="boardTbl"></table>
+    <div class="chart"><svg id="depSvg" viewBox="0 0 900 300" role="img" aria-label="What depends on what: arrows from each mockup to the ones it needs"></svg></div>
+  </section>
+
+  <section class="sec" id="clock">
+    <h2>The clock</h2>
+    <p>The one fact that orders everything: <b>how far away 99, 110 and 120 actually are</b>. Hours of play at the best pace ever measured on this
+      server (35,750 XP an hour into one skill), at the median regular's pace, and at a "focused" 100,000 an hour that the 110 resources are supposed
+      to make possible. The calendar assumes six hours a day, which is what the top player has done since the reset.</p>
+    <div class="chart"><svg id="clockSvg" viewBox="0 0 900 420" role="img" aria-label="Hours and dates to reach 90, 99, 110 and 120 at three paces"></svg></div>
+    <div class="big" id="clockSay"></div>
+    <div class="rules3">
+      <div><b>The top three hit 99 in about six weeks</b><span>Then the game stops: <code>levelOf</code> caps at 99 today. Mockup 1 isn't a nice-to-have for December, it's the wall the best players walk into. It has to be the first big thing built.</span></div>
+      <div><b>110 is March, 120 is 2028</b><span>On the RuneScape curve to 120 the best player needs ~2,800 more hours. The Relic tier (3) and the four maps (4) are built for players who won't exist for five months, and for most of the server not inside the year.</span></div>
+      <div><b>So most of what we build next is for levels 1 to 99</b><span>Diaries, pets, Mythic 1-9, the stats window, the abilities, a weekly boss: everything in the nine that works for everyone goes first. The 110+ content goes in the order the top players will reach it, and not before.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="change">
+    <h2>What has to change</h2>
+    <p>Twelve things, most important first. Each says what the mockup said, what the numbers or the rest of the game say back, and the change.</p>
+    <div class="changes" id="chgBox"></div>
+  </section>
+
+  <section class="sec" id="gaps">
+    <h2>The gaps</h2>
+    <p>What none of the nine cover, and what each of them quietly assumes.</p>
+    <div class="rules3" id="gapBox"></div>
+  </section>
+
+  <section class="sec" id="order">
+    <h2>Build order</h2>
+    <div class="big" style="margin-top:6px"><b>Maps first: see the atlas.</b><span>The atlas (the next page in the nav) measured every skill's content and lays out where each one goes to 120. These phases now carry its maps: the held Orchard Wall and Foundry open in phase 1, the two gateways land with levels to 120 in phase 2, then the Elderwood, the Underforge, the Deep End with the High Strip, and the Star Archive.</span></div>
+    <p>Seven phases, each a thing people can feel the week it lands. The rule for the order: <b>value to the whole server now, divided by cost, and
+      nothing before the players who'd use it exist.</b> Effort is working weeks of the two of us; art is the PixelLab bill in pieces that need animating
+      (a monster is four facings plus walk, attack and death, and it's the cost that dominates everything else).</p>
+    <div id="phaseBox"></div>
+  </section>
+
+  <section class="sec" id="roadmap">
+    <h2>The roadmap</h2>
+    <p>October 2026 to September 2027, with the clock's projections marked so each phase lands before the players it's for. Internal only: The Road
+      Ahead keeps teasing one thing at a time, as it does now.</p>
+    <div class="chart"><svg id="ganttSvg" viewBox="0 0 900 440" role="img" aria-label="The seven phases on a calendar from October 2026 to September 2027"></svg></div>
+    <p class="note">The dates past December are honest guesses with one person building and one person deciding; the ORDER is the part to hold onto. A phase that slips pushes the ones after it; nothing jumps the queue except a balance fix.</p>
+  </section>
+
+  <section class="sec" id="decide">
+    <h2>Decisions that block building</h2>
+    <p>The forty-odd "things to decide" across the nine, cut down to the ones that change what gets built. Each has my pick.</p>
+    <div class="dec" id="decBox"></div>
+  </section>
+
+  <section class="sec" id="rules">
+    <h2>Principles</h2>
+    <div class="rules3">
+      <div><b>Build for 36, not for 3</b><span>Every phase has to give the median player something that week. The top three get the road past 99 on time, and that's their share.</span></div>
+      <div><b>One community</b><span>No guilds, no tags, no factions. Anything "social" is the whole server doing one thing together, the way the raids already are.</span></div>
+      <div><b>Events are the hit</b><span>Each phase ends with something CASINO can narrate: a weekly boss, a first Elder, a first Mythic 10, a first 100.</span></div>
+      <div><b>No new skills</b><span>Eighteen is the count. Everything new is a use for a skill that exists, which is how sockets went to the Gem Sorter.</span></div>
+      <div><b>Custom art, staged</b><span>Everything ships with its own PixelLab art, but an Elder without its art yet keeps its Prime picture and the gold ring, and a map ships with its first three monsters before its seventh.</span></div>
+      <div><b>Say the request count out loud</b><span>Before anything new polls or saves, its requests a day × players is written down. Nothing in the nine needs a new poll; two things (pet XP, diaries) ride events that already happen.</span></div>
+      <div><b>Tested on Node's SQLite first</b><span>Every path that moves XP, tickets or an item gets a test like the Flood's and the crate's before it meets a player.</span></div>
+      <div><b>A wiki page and a weekly issue</b><span>Each release gets its pages the same day, and the Thursday issue on The Road Ahead tells it.</span></div>
+    </div>
+  </section>
+</main>
+<script>
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const V = (k) => ({ build: "build", change: "build, changed", fold: "fold in", hold: "hold" }[k]);
+/* ---- the board ---- */
+const M = [
+  ["1", "The Road Past 99", "Levels to 120, an unlock every 5, Mastery capes", "nothing", "99+", "medium", "19 capes", "change", "The curve has to be re-picked against the clock. Due by December, when the first players reach 99."],
+  ["2", "Ascendancies", "Six paths, trials at 100, an ability order", "1", "100+ (abilities: 1+)", "big", "6 emblems, ~24 moves", "change", "Split: the three plain abilities and the order ship now; the paths come with mockup 1."],
+  ["3", "Relic gear", "A tier at 110, masterwork quality, sockets, sets", "1, 4", "110+ (quality and sockets: any crafter)", "big", "~20 items", "change", "Decouple from the maps: shards from bosses that exist, the forge on the Thunderhead, so quality and sockets go early."],
+  ["4", "Past 110: four places", "Four endgame maps, 110-125", "1 (resources), 9 (resistances)", "110+", "very big", "16 monsters, 4 maps", "change", "One map at a time, Underforge first, and its rules run on resistances rather than four bespoke systems."],
+  ["5", "Mythic runs", "Keys, a clock, weekly twists, roles", "2 (for roles)", "any Black Crypt party", "medium", "8 icons (done)", "change", "Roles become recommended, not required. Mythic 1-9 needs nothing and goes early."],
+  ["6", "Area diaries", "8 regions × 4 tiers, perks that only work there", "nothing (the cape needs 1)", "1+", "medium", "8 emblems (done), lamps", "build", "The one thing in the nine for every level at once. Tasks become counters the server already keeps."],
+  ["7", "Pets that grow", "Levels 1-50, traits, Elders, pedigree", "nothing", "anyone with a pet", "medium", "14+ Elders", "build", "The best value for the cost in the set. Elder art is staged."],
+  ["8", "Guilds", "Charters, halls, a weekly guild boss", "nothing", "any", "big", "4 bosses (done)", "fold", "One community: keep the weekly boss and the trophy wall as server events; drop the rest."],
+  ["9", "Character stats", "The stats window; resistances, crit, block proposed", "nothing (new stats: 2, 3, 4)", "1+", "small (window), medium (new stats)", "none", "build", "DONE 1 Oct: the window is approved and built, held to ship with phase 0. Measuring with it showed monster attack flattens past 100 (fixed in phase 2). The new stats wait for their mockups."]];
+document.getElementById("boardTbl").innerHTML = `<tr><th>#</th><th>Mockup</th><th>In a line</th><th>Needs first</th><th>Works at</th><th>Server work</th><th>Art</th><th>Verdict</th><th>Why</th></tr>` + M.map(([n, nm, l, dep, at, sv, art, v, why]) => `<tr><td>${n}</td><td style="font-weight:800;color:#f6e9cc">${nm}</td><td>${esc(l)}</td><td>${esc(dep)}</td><td>${esc(at)}</td><td>${esc(sv)}</td><td>${esc(art)}</td><td><span class="v ${v}">${V(v)}</span></td><td>${esc(why)}</td></tr>`).join("");
+/* dependency sketch */
+{
+  const N = { 9: [90, 70, "9 Stats"], 6: [90, 160, "6 Diaries"], 7: [90, 250, "7 Pets"], 8: [250, 250, "8 Weekly boss"], 5: [250, 160, "5 Mythic"], ab: [250, 70, "2a Abilities"], 1: [430, 110, "1 Past 99"], 2: [610, 70, "2b Ascendancies"], res: [430, 230, "9b Resistances"], 3: [610, 230, "3 Relic"], 4: [790, 150, "4 The maps"] };
+  const E = [["1", "2"], ["ab", "2"], ["1", "3"], ["res", "3"], ["res", "4"], ["1", "4"], ["3", "4"], ["2", "5"]];
+  let s = `<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8a6a40"/></marker></defs>`;
+  for (const [a, b] of E) s += `<line x1="${N[a][0] + 52}" y1="${N[a][1]}" x2="${N[b][0] - 52}" y2="${N[b][1]}" stroke="#8a6a40" stroke-width="2" marker-end="url(#ar)" stroke-dasharray="${a === "2" ? "5 4" : ""}"/>`;
+  for (const [k, [x, y, n]] of Object.entries(N)) { const now = ["9", "6", "7", "8", "5", "ab"].includes(k); s += `<rect x="${x - 52}" y="${y - 16}" width="104" height="32" rx="8" fill="${now ? "#1e4a24" : k === "4" || k === "3" ? "#3a2a1a" : "#2a3a4a"}" stroke="${now ? "#7ed060" : k === "4" || k === "3" ? "#d8b888" : "#9ad8ff"}" stroke-width="1.5"/><text x="${x}" y="${y + 5}" fill="#fff" font-size="12.5" font-weight="700" text-anchor="middle">${n}</text>`; }
+  s += `<text x="16" y="22" fill="#a89070" font-size="12">Green needs nothing and can start now. Blue waits for the first 99s. Brown waits for the first 110s. Dashed: Mythic's roles only.</text>`;
+  document.getElementById("depSvg").innerHTML = s;
+}
+
+/* ---- the clock, from the data snapshot ---- */
+fetch("../past99-mock/data.json").then((r) => r.json()).then((D) => {
+  const rs = D.curves.rs, x4 = D.curves.x4, top = D.top.melee.xp, best = D.pace.best, med = D.pace.median, foc = 100000, HOURS_DAY = 6, t0 = new Date("2026-10-01");
+  const hybrid = (l) => (l <= 110 ? rs[l] : rs[110] + (x4[l] - x4[110]));   /* RS to 110, then the x4 curve's steps */
+  const marks = [[90, rs[90]], [99, rs[99]], [110, rs[110]], [120, rs[120]], [120, hybrid(120), "120, re-picked curve"]];
+  const row = (pace) => marks.map(([l, xp, lab]) => { const h = Math.max(0, (xp - top) / pace), d = new Date(t0.getTime() + (h / HOURS_DAY) * 864e5); return { l, lab: lab || String(l), h, d }; });
+  const R = [["best player today", best, "#ffd84a"], ["median pace", med, "#9ad8ff"], ["focused, 100k an hour", foc, "#7ed060"]].map(([n, p, c]) => ({ n, p, c, m: row(p) }));
+  const fmtD = (d) => d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+  const W = 900, H = 420, L = 170, Rt = 30, T = 70, rh = 112, maxH = 3200, x = (h) => L + (W - L - Rt) * Math.min(h, maxH) / maxH;
+  let s = ""; for (const h of [0, 500, 1000, 1500, 2000, 2500, 3000]) s += `<line x1="${x(h)}" x2="${x(h)}" y1="${T - 30}" y2="${T + 3 * rh - 20}" stroke="#2a1c12"/><text x="${x(h)}" y="${T + 3 * rh - 4}" fill="#a89070" font-size="11.5" text-anchor="middle">${h.toLocaleString()} h of play</text>`;
+  R.forEach((r, i) => { const y = T + i * rh;
+    s += `<text x="${L - 10}" y="${y + 14}" fill="${r.c}" font-size="13" font-weight="800" text-anchor="end">${r.n}</text><text x="${L - 10}" y="${y + 30}" fill="#a89070" font-size="11.5" text-anchor="end">${r.p.toLocaleString()} xp/h</text>`;
+    s += `<line x1="${L}" x2="${x(maxH)}" y1="${y + 10}" y2="${y + 10}" stroke="#3a2a1a" stroke-width="3"/>`;
+    /* labels alternate below and above the line whenever two marks sit close, so nothing overlaps */
+    const ms = r.m.map((m, k) => ({ ...m, cx: x(m.h), alt: k === 4 })).sort((a, b) => a.cx - b.cx); const last = [-999, -999, -999], LV = [[34, 48], [-26, -12], [62, 76]];
+    for (const m of ms) { const lv = last.findIndex((lx) => m.cx - lx >= 95); const L2 = lv < 0 ? 2 : lv; last[L2] = m.cx; const an = m.h >= maxH ? "end" : "middle", y1 = y + LV[L2][0], y2 = y + LV[L2][1];
+      s += `<circle cx="${m.cx}" cy="${y + 10}" r="${m.alt ? 5 : 7}" fill="${m.alt ? "#16120e" : r.c}" stroke="${r.c}" stroke-width="2"/><text x="${m.cx}" y="${y1}" fill="${m.alt ? "#9ef0a0" : "#f6e9cc"}" font-size="11.5" font-weight="700" text-anchor="${an}">${m.lab}${m.h >= maxH ? " →" : ""}</text><text x="${m.cx}" y="${y2}" fill="#a89070" font-size="11" text-anchor="${an}">${m.h < 1 ? "now" : `${Math.round(m.h).toLocaleString()} h · ${fmtD(m.d)}`}</text>`; } });
+  document.getElementById("clockSvg").innerHTML = s;
+  const b = R[0].m;
+  document.getElementById("clockSay").innerHTML = `<b>At the best pace on the server, 99 is ${Math.round(b[1].h)} hours away (${fmtD(b[1].d)}), 110 is ${Math.round(b[2].h).toLocaleString()} (${fmtD(b[2].d)}), and 120 on the RuneScape curve is ${Math.round(b[3].h).toLocaleString()} (${fmtD(b[3].d)}).</b><span>Re-picking the curve as RuneScape's to 110 and then half-steps brings 120 to ${Math.round(b[4].h).toLocaleString()} hours (${fmtD(b[4].d)}) without touching the road to 110. Someone at the median pace, starting from where the top is now, would take ${Math.round(R[1].m[1].h)} hours to 99 and ${Math.round(R[1].m[2].h).toLocaleString()} to 110, so most of the server does not see 110 inside the year; the "focused" pace, which is what the 110 resources exist to create, is the only one that makes 120 a goal rather than a legend.</span>`;
+});
+
+/* ---- what has to change ---- */
+const CH = [
+  ["1", "Re-pick the XP curve against the clock", "RuneScape's curve continued, 104M at 120", "At the best pace ever measured here that's 2,800 hours after 99: 120 is a 2028 event for one person and a myth for everyone else. <b>Change:</b> RuneScape's curve to 110 (38.7M, the road the first mockup drew) and then half-steps, so 120 is ~61M: still a year of focused play, not three. The unlocks stay where they are."],
+  ["9", "Monster attack has to keep rising past 100", "was: \"fix defence past 90\", corrected 1 Oct", "Measured properly (every monster against a player AT its level, in that level's gear), defence works up to 99: at-level players are hit 20-30% from level 60 on, and ten levels under triples it. The first finding compared a level-82 player with level-110 monsters, so it was wrong. What IS true: monster attack stops rising at 126 from level 100 to 115, so a 99 in Singularity is hit 18-20% by everything up there, and once levels past 99 and Relic armour raise defence further, every 100+ monster sits on the floor. Accuracy is pinned too: at-level players land 95% on everything. <b>Change:</b> monster attack and defence keep their slope past 100, tuned with mockup 1's levels and mockup 3's Relic tier, in phase 2; the stats window shows the hit chances so it can be checked. Nothing changes in phase 0."],
+  ["4", "One resistance system, not four map rules", "heat, the tide, bridges, a daily layout", "Mockup 9 proposes resistances and mockup 4 invents heat as its own mechanic, with the Reach's cold already a third thing. <b>Change:</b> cold and heat become frost and fire damage over time, cut by resistance; wards become 75% of one element; the gems and sockets feed it. The tide, the bridges and the moving forest stay, because they're movement and puzzle, not damage."],
+  ["3", "Decouple Relic from the maps", "needs 1, 4 and the Ancient Forge", "A triple dependency means quality, sockets and masterwork wait a year. <b>Change:</b> Relic shards drop from the Ice Wyrm, Old Rex and the Frost Jarl today (5-10 a kill), the forge is the Lightning Rod's storm forge on the Thunderhead until the Underforge opens, and the quality roll goes on every craft at once. The Relic tier itself still waits for 110."],
+  ["2", "Ship the abilities now, the paths later", "one mockup", "The three plain abilities per style at 1, 30 and 60 and the order that fires them need nothing from levels past 99. Every player feels it the week it lands. <b>Change:</b> two releases: 2a (abilities and the order, with mockup 9's window showing them) now; 2b (trials, paths, the Mender) with the road past 99."],
+  ["8", "One community, not guilds", "charters, halls, tags, a guild board", "Your call, and the numbers agree: 36 players is one guild. The hall's projects are Sal's Tinkerer projects with a different sign, and guild chat is chat. <b>Change:</b> keep the two things that are new: a <b>weekly community boss</b> with a week-long health bar and a three-together finish (an event, like the raids), and a <b>trophy wall</b> as a Tinkerer project in the Yard. Drop everything else."],
+  ["5", "Roles recommended, not required", "a healer from Mythic 10, a tank from 15", "Four-person parties with set roles out of 36 players, most of whom won't have an Ascendancy for a year, would lock Mythic 10+ for everyone. <b>Change:</b> a healer or a tank in the party adds a chest roll; nothing is required. The only fights that need a Mender are the two daily raid bosses of mockup 4 (the Leviathan, the Heart), and those say so at the door."],
+  ["6", "Tasks are counters, and nobody is punished for their hours", "\"be there when a raid is won\"", "Every task has to be a check on a number the server already keeps, indexed by the event it rides on (a kill checks only kill tasks), or 130 tasks become a cost on every event. <b>Change:</b> \"be there\" becomes \"do your 1%\", the same credit the raids pay; the Wilderness diary shrinks to one tier; the Grand Tour cape waits for the cape slot and is a title and an island banner until then."],
+  ["7", "Stage the Elders", "14 Elder arts at launch", "Fourteen animated Elders is the biggest art bill in the nine after the maps. <b>Change:</b> launch with growth, stages, traits and pedigree for every pet, and Elder art for the six drop pets; a kind without its Elder art keeps its Prime picture, grows the ring and gets its trait. The rest follow a few a month, each one a CASINO line."],
+  ["1", "Dedupe the overlapping perks", "the same effect in three places", "Last Stand (Hitpoints 110), the Mossback Elder's Shell and the Juggernaut's keystone are one idea; walking speed is on Agility 100 and 115, two pets and a trait; execute is on gear and a path. <b>Change:</b> one owner per effect, written in a table before mockups 1, 2 and 7 are built, and every one under its existing cap."],
+  ["9", "The window ships before the new stats", "resistances, crit, block", "The window needs no server work; the three new stats each need one of mockups 2-4 to mean anything. <b>Change:</b> ship the window with today's stats and the chase grid; add a row the week its stat lands; crit stays a question until Ascendancies."],
+  ["4", "One map a quarter, Underforge first", "four maps in one mockup", "The rumour is already placed, the Foundry is built and held, and smithing is the skill with the most players near its top. <b>Change:</b> Underforge, then the Elderwood, the Deep End, the Star Archive, each a quarter apart and each shipping with three monsters and its boss before its full roster."]];
+document.getElementById("chgBox").innerHTML = CH.map(([n, t, was, p]) => `<div class="chg"><div class="no">${n}<small>mockup</small></div><div><b>${esc(t)}</b><span class="was">was: ${esc(was)}</span><p>${p}</p></div></div>`).join("");
+
+/* ---- the gaps ---- */
+document.getElementById("gapBox").innerHTML = [
+  ["The wall at 99 is six weeks away", "Nothing in the nine is small enough to land before the first 99 except the window and the abilities, and mockup 1 is the only cure. It is why the road past 99 is in phase 2 and not phase 5, where its dependencies would put it."],
+  ["The middle of the server", "Half the players are nowhere near 85, and seven of the nine are written for the top. Diaries' Easy and Medium tiers, pets, Mythic 1-9 and the weekly boss are what the middle gets; the daily events stay the glue. If a phase has nothing for a level-40 player, it's the wrong phase."],
+  ["New players", "None of the nine helps someone's first evening. Not a gap to fix here, but a reason not to let the nine eat every week: the Yard, the tour and the first quests still need the odd pass."],
+  ["Tickets in and out", "The nine add sinks (socketing, trait swaps, reforging in shards, the Mythic Vault's second pick) and sources (diary lamps are 2.2M XP a player, chests, pedigree). Each phase gets a before-and-after from the tracking keys in the backup; nothing ships that moves the day's ticket flow more than a tenth without a decision."],
+  ["Backups before progress", "Pets that take 100 hours to raise and diaries that take months are the first things in the game that would hurt to lose. The backup to-do in EASTSCAPE-LAUNCH.md goes in phase 0, before any of it."],
+  ["The art bill, in one number", "Across the nine: ~60 animated monsters and bosses, ~20 Elders, 19 capes, ~40 items and icons. The monsters are the cost; everything else is an evening. Staging (three monsters a map, six Elders first) is how the roadmap stays honest."],
+  ["Tests the nine need", "Pet XP and pedigree (the pen), diary credit and lamps, Mythic keys and the Vault, the weekly boss's week-long health across a restart, Relic shards and the quality roll, the resistance maths. Six harnesses on Node's SQLite, each a morning, each before its phase ships."],
+  ["What the nine don't touch", "Death and risk outside the Wilderness; the Exchange and trade (every new item is tradeable or not, decided per mockup); mobile (skipped on purpose); the music, the casino floor and the daily events (unchanged, and still what most people log in for)."]]
+  .map(([t, d]) => `<div><b>${esc(t)}</b><span>${esc(d)}</span></div>`).join("");
+
+/* ---- the phases ---- */
+const PH = [
+  ["p0", "Phase 0: sharpen what exists", "October 2026 · 3 weeks", "Four small things that everyone feels, and the two fixes that have to come before anything taller.",
+    [["✓ The character stats window", "Mockup 9, today's stats only. No server work. Approved 1 October after testing it in the game; built and held, it ships with the rest of phase 0.", "done · held for the batch"], ["✗ Defence past 90 (dropped)", "Measured properly, defence works up to 99. The real fix is monster attack past 100, which moves to phase 2.", "corrected 1 Oct"], ["✓ Abilities and the order (2a)", "Built 1 October: three per style at 1/30/60, firing in the order you set, server-decided, a strip after the quick slots and an order window. 22 checks on the real server. Held for the batch.", "done · held for the batch"], ["Backups", "The to-do in EASTSCAPE-LAUNCH.md. Before pets and diaries exist.", "2 days"], ["The weekly community boss (from 8)", "One boss a week for the whole server, week-long health, a three-together finish, on the raid code. The Whale first.", "1 week · 4 bosses, one at a time"]]],
+  ["p1", "Phase 1: things to do at every level", "November 2026 · 4 weeks", "The two mockups that work for the whole server at once, and the ones with the best value for their cost.",
+    [["Open the Orchard Wall and the Foundry (atlas)", "Both built and held. Woodcutting 52-66 and Mining 70-90 on second maps, two more combat bands, art that already exists.", "1 week"], ["A shortcut on every map, 10 to 95 (atlas)", "Agility's first level ladder: one gated shortcut per map.", "1 week · props"], ["Pets that grow (7)", "Levels, stages, traits, pedigree, hand-raised, treats. Elder art for the six drop pets; the rest staged.", "2 weeks · 6 Elders"], ["Area diaries (6)", "Eight regions, four tiers, every task a counter. Perks, lamps, medals, the hiscore. The cape waits for the slot.", "2 weeks · lamps"], ["A trophy wall in the Yard (from 8)", "A Tinkerer project that mounts every boss the server has beaten, with who was there.", "2 days · 1 prop"], ["Skilling sets and work clothes (Sets)", "14 four-piece sets, each dropping from another skill; the Ditched set gains its all-four bonus. Work clothes on the paper doll (option A, chosen 1 October) and the pips on the skill tiles. All 52 icons are drawn.", "1 week · art done"], ["Ticket sinks, the first four (Sinks)", "Tag the flows the tracker misses, then the weekly auction, buy-a-round 2X (the War Horn's pattern), the Back Room gamble and the rising reforge. For the regulars something to want, for the three savers something worth a million.", "2 weeks · box art"]]],
+  ["p2", "Phase 2: the road past 99", "December 2026 · 4 weeks", "Lands the month the first players reach 99. The re-picked curve, the first two unlocks, and Mythic so the Black Crypt has somewhere to go.",
+    [["The Tidepools and the Ashlands (atlas)", "The two gateways at 98-106: every gathering skill's 100-105 tier, camp chests, the Rumbles event moves to the Ashlands. So 99 has somewhere to go.", "4 weeks · 2 maps, ~6 monsters"], ["Levels 100-120 (1)", "The hybrid curve, unlocks at 100 and 105 for every skill, the cape slot, the first Mastery capes (the combat skills' and the four biggest skilling ones), the Max Cape rule.", "2 weeks · 8 capes first"], ["Mythic 1-9 and the Tower climb (5)", "Keys, the clock, the twists, the Vault, the Hall. No roles. The twist icons are drawn.", "2 weeks"], ["The 110 and 115 unlocks", "Data only, switched on as players arrive; the new resources wait for their maps.", "folded in"], ["Monster attack and defence past 100", "The slope keeps going above 100 so the Valley and the Frozen Reach stay dangerous for players with levels past 99; checked with the stats window's hit chances.", "3 days"]]],
+  ["p3", "Phase 3: who you become", "January to February 2027 · 6 weeks", "The first 100s are picking a path by now. Resistances land here because sockets and the first map both want them.",
+    [["The Elderwood (atlas, 4)", "The first endgame map, moved down to 104-112: Woodcutting 106/110, Fishing 106, Mining 108, Farming and Fungiculture 106-110; the Rootmother.", "5 weeks"], ["Ascendancies (2b)", "The trials in the Hall of Ascension, the six paths with their trees, the Mender first (Mythic's recommended healer), signature moves.", "4 weeks · 6 emblems done, ~24 moves"], ["Resistances and sockets (9b, 3)", "Frost and fire as damage types, wards as 75%, element gems in armour sockets resist, the socket tab at the Gem Sorter, the Primordial gem from the bosses that exist.", "1 week"], ["Quality on every craft (3)", "Normal / fine / superior / masterwork on everything made, with the maker's name. Relic shards from the Wyrm, Rex and the Jarl.", "1 week"]]],
+  ["p4", "Phase 4: under the mountain", "March to April 2027 · 8 weeks", "The first endgame map, where the rumour already points, timed for the first players near 110.",
+    [["The Underforge (4)", "One map, heat as fire damage, four monsters and the Forgemaster at launch, the Heart of the Mountain as the daily boss a month later. The Mountain Rumbles event for everyone over 50.", "6 weeks · 5 monsters, 2 bosses, 1 map"], ["Mining and Smithing 110 (1)", "Primordial ore and bars, the Ancient Forge moves down from the Thunderhead.", "folded in"], ["Relic weapons and armour (3)", "The tier at 110, forged at the Ancient Forge from the shards, the bars and the Forgemaster's tongs.", "2 weeks · ~10 items"], ["Mythic 10+ (5)", "With roles recommended, now that healers exist.", "3 days"]]],
+  ["p5", "Phase 5: two more places", "May to July 2027 · 12 weeks", "The maps that bring the rest of the 110 resources and the sets, one a quarter.",
+    [["The High Strip (atlas)", "The endgame's town: a bank, every station, the Exchange, Thieving 112-120, the High Wire, the Kennel Club.", "5 weeks"], ["The Deep End (4)", "Fishing and Cooking 110; the Leviathan as the first fight that needs a Mender.", "6 weeks"], ["Relic sets and reforging past +3 (3)", "", "1 week"], ["The remaining Elders (7)", "A few a month, each a CASINO line.", "ongoing"]]],
+  ["p6", "Phase 6: the top of the game", "August 2027 on", "For the first 120s, who the clock says exist by then only on the re-picked curve.",
+    [["The Star Archive (4)", "Wizardry, Agility and Alchemy 110; the Archivist.", "6 weeks"], ["Awakened Relic at 120 and the Max Cape (1, 3)", "", "2 weeks"], ["Mythic seasons, the second season's twists (5)", "", "1 week"]]]];
+document.getElementById("phaseBox").innerHTML = PH.map(([c, t, when, why, items]) => `<div class="phase ${c}"><header><b>${t}</b><span>${when}${items.some(([n]) => n.startsWith("✓")) ? ` · ${items.filter(([n]) => n.startsWith("✓")).length} of ${items.filter(([n]) => !n.startsWith("✗")).length} done` : ""}</span></header><div class="why">${esc(why)}</div><ul>${items.map(([n, d, e]) => `<li class="${n.startsWith("✓") ? "done" : n.startsWith("✗") ? "dropped" : ""}"><span><b>${esc(n)}</b>${d ? `<small>${esc(d)}</small>` : ""}</span><em>${esc(e)}</em></li>`).join("")}</ul></div>`).join("");
+
+/* ---- the gantt ---- */
+{
+  const months = ["Oct", "Nov", "Dec", "Jan 27", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"];
+  const W = 900, L = 200, R = 20, T = 30, mw = (W - L - R) / 12, x = (m) => L + mw * m;
+  const bars = [["0 · sharpen", 0, 0.75, "#7ed060"], ["1 · every level", 1, 2, "#3ad0d8"], ["2 · past 99", 2, 3, "#ffd84a"], ["3 · who you become", 3, 4.5, "#ff9a5a"], ["4 · the Underforge", 5, 7, "#ff6a4a"], ["5 · two more places", 7, 10, "#b08aff"], ["6 · the top", 10, 12, "#d8d0c0"]];
+  const marks = [[2.3, "first 99s", "#ffd84a"], [4.0, "first 100s on a path", "#ff9a5a"], [5.5, "first 110s (best pace)", "#ff6a4a"], [12, "120 →", "#d8d0c0"]];
+  let s = ""; months.forEach((m, i) => { s += `<rect x="${x(i)}" y="${T}" width="${mw}" height="${bars.length * 40 + 10}" fill="${i % 2 ? "#1a140e" : "transparent"}"/><text x="${x(i) + mw / 2}" y="${T - 10}" fill="#a89070" font-size="12" text-anchor="middle">${m}</text>`; });
+  bars.forEach(([n, a, b, c], i) => { const y = T + 10 + i * 40; s += `<text x="${L - 10}" y="${y + 17}" fill="${c}" font-size="13" font-weight="800" text-anchor="end">Phase ${n}</text><rect x="${x(a) + 2}" y="${y}" width="${x(b) - x(a) - 4}" height="26" rx="6" fill="${c}" opacity=".85"/>`; });
+  const yb = T + 10 + bars.length * 40;
+  marks.forEach(([m, t, c], k) => { const yl = yb + 22 + (k % 2) * 16; s += `<line x1="${x(m)}" x2="${x(m)}" y1="${T}" y2="${yl - 10}" stroke="${c}" stroke-width="1.5" stroke-dasharray="4 4"/><text x="${x(m) + (k === 3 ? -4 : 5)}" y="${yl}" fill="${c}" font-size="11.5" font-weight="700" text-anchor="${k === 3 ? "end" : "start"}">${t}</text>`; });
+  s += `<text x="${L}" y="${yb + 64}" fill="#a89070" font-size="11.5">Dashed lines are the clock's projections for the best player. Each phase is meant to be standing when its line arrives.</text>`;
+  document.getElementById("ganttSvg").innerHTML = s;
+}
+
+/* ---- decisions ---- */
+document.getElementById("decBox").innerHTML = [
+  ["The XP curve past 99", "RuneScape's to 120 (104M), or RuneScape's to 110 then half-steps (~61M)?", "the hybrid; the clock says 104M is a curve nobody finishes"],
+  ["Monsters past 100", "Keep monster attack and defence rising past level 100 with the road past 99, or let levels past 99 make the 100-115 maps easier on purpose?", "keep them rising; past 100 is where the hardest fights should be"],
+  ["Crit", "Add critical hits with Ascendancies, or keep the game crit-free and let the paths change hits in other ways?", "wait: decide when 2b is built, with the window showing what hits look like"],
+  ["Mythic roles", "Recommended with a bonus, or required at 10 and 15?", "recommended; only the Leviathan and the Heart require a Mender"],
+  ["The weekly boss", "Every week, or every other week so it stays an event?", "every week, Thursday, one boss on a four-week rotation"],
+  ["Pets at launch", "Everyone's pets at level 1, or a head start by days owned?", "level 1 for everyone; it's the fair start and the clean test"],
+  ["Diary regions", "Eight regions, or one diary per map (about twenty)?", "eight; each stays meaty and the medals fit on a profile"],
+  ["Which map first", "The Underforge (rumour placed, Foundry built) or the Elderwood (the lowest band)?", "the Underforge, through the Foundry, which means opening the Foundry in phase 4"],
+  ["Mastery capes", "All eighteen at once, or the combat skills and the four biggest skilling capes first?", "eight first; the rest as skills reach 120 in the wild"],
+  ["Ascendancy names", "The six as drawn (Juggernaut, Duelist, Deadeye, Trickshot, Mender, Hexer), or re-named to the casino?", "re-name before 2b; the emblems are drafts and can follow"]]
+  .map(([t, q, pick], i) => `<div class="dq"><i>${i + 1}</i><span><b>${esc(t)}.</b> ${esc(q)} <span class="pick">My pick: ${esc(pick)}.</span></span></div>`).join("");
+</script>
+</body>
+</html>
