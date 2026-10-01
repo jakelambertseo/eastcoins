@@ -1,6 +1,26 @@
 [
  {
   "date": "2026-10-01",
+  "area": "Art & UI",
+  "decision": "The admin panel gets a reorganisation after v1.1's agility and thieving work is finished: it has grown overwhelming.",
+  "quote": "after we're completely done with agility and thieving for v1.1, can you work on the admin panel? the UI is a bit overwhemling now with how much stuff we've added",
+  "why": "",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "World & maps",
+  "decision": "Three back ways join far maps for Agility: the Scrap Run (Carnival and Trailer Park, 70), the Ice Ledge (Frozen Reach and Primeval Valley, 92), the Storm Drain (the Yard and the Thunderhead, 55). Free, both ways, every time.",
+  "quote": "yes add them",
+  "why": "the Carnival to the Trailer Park was eight map crossings",
+  "page": "thieving-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
   "area": "World & maps",
   "decision": "The next-tier spot must be unreachable without the Agility level: nobody else on the map can stand next to it.",
   "quote": "the next tiers resource cannot be accessed by anyone on the map who doesnt have the proper agility. so they cant reach the tree, the ore, etc. put some behind rocks, fences, etc if you have to",

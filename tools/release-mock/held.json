@@ -8,11 +8,11 @@
   "bundle": "v1.1"
  },
  {
-  "name": "Thieving in the world and shortcuts",
-  "commit": "08adcd21",
+  "name": "Thieving in the world, shortcuts and back ways",
+  "commit": "9126a6b8",
   "page": "thieving-mock",
-  "what": "Pockets on 19 kinds of people-monster from Thieving 10 (a fail only stuns), a lockbox on 12 maps (lockpicks 1,000 at Vance, keys roll a Crypt or Pyramid hoard twice), a shortcut on 12 maps with 7 ledges each holding one extra gathering spot, one tier above the map's own, and the Guild's stale words fixed. 70+ checks in tools/eastscape-thief-test.mjs.",
-  "ships": "flip HOLD.thief2 to false, VERSION bump (shared ?v bump in eastscape.html), push and probe the new art first (o_sc_log, o_sc_stones, o_sc_rope, o_sc_fence, o_lockbox, items/lockpick, items/skeleton_key), then the worker (new thief.js, crypt.js, pyramid.js)",
+  "what": "Pockets on 19 kinds of people-monster from Thieving 10 (a fail only stuns); a lockbox on 12 maps (lockpicks 1,000 at Vance; keys roll a Crypt or Pyramid hoard twice); a fenced Agility nook on all 12 maps with a spot one tier above the map's own; 5 walk-saving shortcuts; 3 back ways between far maps (the Scrap Run, the Ice Ledge, the Storm Drain); the Guild's stale words fixed.",
+  "ships": "flip HOLD.thief2 to false, VERSION bump (shared ?v in eastscape.html), push and probe the new art and the rebuilt sprite sheets first, then the worker (thief.js, crypt.js, pyramid.js)",
   "bundle": "v1.1"
  },
  {
