@@ -173,7 +173,7 @@ export function installRaid(World, { G }) {
     if (kind === "flood") {   /* (2026-09-30) THE FLOOD */
       this.raid = { kind: "flood", phase: "warn", at: now + F.warnMs, by: {}, said: {} }; this.raidSave(now, true);
       this.raidLast = now; this.ctx.storage.put("raidLast", now).catch(() => {});
-      this.houseSay(`\u{1F30A} FLOOD! It hasn't stopped raining since the King went down, and the Yard's river is right at the top of its bank. ${Math.round(F.warnMs / 60000)} minutes. Bring logs, ores and sand: when it comes over, sandbags are the only thing that will hold it.`);
+      this.houseSay(`\u{1F30A} FLOOD! It hasn't stopped raining since the King went down, and the Yard's river is right at the top of its bank. ${Math.round(F.warnMs / 60000) === 1 ? "One minute" : `${Math.round(F.warnMs / 60000)} minutes`}. Bring logs, ores and sand: when it comes over, sandbags are the only thing that will hold it.`);
       for (const p of this.pls.values()) p.out.push({ type: "raid", on: true });   /* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */
       return true;
     }

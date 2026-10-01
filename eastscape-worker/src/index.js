@@ -40,7 +40,8 @@ import { installEvents } from "./events.js";   /* (2026-09-30) WORLD EVENTS */
 import { installCommands } from "./commands.js";   /* (2026-09-30) CHAT COMMANDS */
 import { installWeekly } from "./weekly.js";
 import { installTrack } from "./track.js";   /* (2026-09-30) WHAT THE WORLD RECORDS: see track.js and tools/tracking-mock/ */   /* (2026-09-30) THE WEEKLY ISSUE */   
-import { installRaid } from "./raid.js";   /* (2026-09-30) the Yard raid */   /* (2026-09-30) the Frozen Reach's daily boss */
+import { installRaid } from "./raid.js";
+import { CHAT_PAGE } from "./chatpage.js";   /* (2026-09-30) the staff chat view: see /chat below */   /* (2026-09-30) the Yard raid */   /* (2026-09-30) the Frozen Reach's daily boss */
 import { installOutfit } from "./outfit.js";   /* (2026-09-29) the outfitters: Wren and Morwenna */   /* (2026-09-28) gems, sockets, the Gem Case and the Gem Sorter */   /* (2026-09-28) Tinkering: the sink */   /* (2026-09-28) the party meter */   /* (2026-09-28) Bronny's order, the server's daily */
 import { installTower } from "./tower.js";   // (v109) ticket bets on the Fight Pit, settled against the site's round
 const CR = createCryptRules(G, G._MAP); Object.assign(G.SCENES, CR.scenes); Object.assign(G.MOBS, CR.mobs);
@@ -137,6 +138,21 @@ export default {
     if (url.pathname === "/hiscores") {
       const r = await env.WORLD.get(env.WORLD.idFromName("world")).fetch("https://world/hiscores");
       return new Response(r.body, { status: r.status, headers: { "content-type": "application/json", "Cache-Control": "public, max-age=30", "Access-Control-Allow-Origin": "*" } });   /* (v96) the page is on eastcoin.vip and this is play.eastcoin.vip: without the header the browser threw every answer away, and the window said "unreachable" to everybody. Public numbers, so any origin. */
+    }
+    /* (2026-09-30, the owner: "is there a way i can view the chat on eastscape without having to log in? ... i dont really want to be in the game
+       but would like to see the chat in case im needed", "and dont want it to show me online") THE STAFF CHAT VIEW. /chat?k=<CHAT_KEY> is a page,
+       /chat.json?k= its data. Its own secret (a Worker secret that opens nothing but this), so the link leaking can only ever show chat. It is not
+       a player and never connects: it reads the chat the world already keeps (chatLog) and who is on, so nobody sees it and it costs a read of
+       memory every 5 s. A wrong or missing key is a plain 404, as if there were nothing here. */
+    if (url.pathname === "/chat" || url.pathname === "/chat.json") {
+      const want = String(env.CHAT_KEY || "").trim(), got = String(url.searchParams.get("k") || "").trim();
+      let ok = env.DEV === "1";
+      if (!ok && want && got.length === want.length) { let d = 0; for (let i = 0; i < want.length; i++) d |= want.charCodeAt(i) ^ got.charCodeAt(i); ok = d === 0; }
+      if (!ok) return new Response("EastScape game server", { status: 404 });
+      const H = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow", "Referrer-Policy": "no-referrer" };
+      if (url.pathname === "/chat") return new Response(CHAT_PAGE, { headers: { ...H, "content-type": "text/html; charset=utf-8" } });
+      const r = await env.WORLD.get(env.WORLD.idFromName("world")).fetch("https://world/chatview");
+      return new Response(r.body, { status: r.status, headers: { ...H, "content-type": "application/json" } });
     }
     if (url.pathname === "/stats") {
       const r = await env.WORLD.get(env.WORLD.idFromName("world")).fetch("https://world/stats");
@@ -255,6 +271,13 @@ export class World {
     }
     const path = new URL(request.url).pathname;
     if (path === "/stats") return Response.json({ ok: true, ...this.statsOf() });
+    if (path === "/chatview") {   /* (2026-09-30) the staff chat view: the kept chat, who is on and where, and what is running */
+      const staff = (r) => r === "admin" || r === "mod";
+      return Response.json({ t: Date.now(), version: G.VERSION,
+        lines: (this.chatLog || []).slice(-CHAT_KEEP).map((m) => ({ t: m.t, name: m.name, text: m.text, house: m.id === "house", staff: m.id !== "house" && staff(m.role) })),
+        online: [...this.pls.values()].filter((p) => !p.lingerUntil).map((p) => ({ name: p.name, staff: staff(p.role), where: (G.sceneDef(p.C.scene)?.name || String(p.C.scene).split(":")[0]).replace(/^The /, "") })).sort((a, b) => a.name.localeCompare(b.name)),
+        events: { king: this.hwKingState(), wyrm: this.wyrmState?.() || null, raid: this.raidState?.() || null } });
+    }
     if (path === "/hiscores") return Response.json(await this.hiscores());
     if (path === "/export") {
       await this.saveAll();                       // back up what is true now, not what was true four seconds ago
