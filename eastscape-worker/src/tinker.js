@@ -178,7 +178,7 @@ export function installTinker(World, { G }) {
     this.grant(pl, "tinkering", Math.round(G.projPv(tier.need) * 0.2));
     G.setProjects(this.projTiers()); G.setGrand(this.projGrand()); this.projRebuild(Pd.scene);
     this.houseSay(`\u{1F3D7}\u{FE0F} ${pl.name} finished ${tier.name.toLowerCase()} on ${Pd.name}: ${tier.does}. GRAND OPENING for the next hour in ${Pd.where}: its bonuses are doubled and every skill pays ${G.GRAND.xp * 100}% more xp there. ${Object.keys(builders).length} builders get the pin.`, "BRONNY");
-    for (const p of this.pls.values()) { p.out.push({ type: "projects", tiers: this.projTiers(), grand: this.projGrand(), id, tier: st.tier }); p.out.push({ type: "casinonote", text: `\u{1F3D7}\u{FE0F} ${Pd.name}: ${tier.name} is built! Grand Opening in ${Pd.where}.` }); if (p.C.scene === Pd.scene || Pd.also?.includes(p.C.scene)) p.out.push({ type: "confetti", id: pl.id, name: pl.name }); }
+    for (const p of this.pls.values()) { p.out.push({ type: "projects", tiers: this.projTiers(), grand: this.projGrand(), id, tier: st.tier }); if (p.C.scene === Pd.scene || Pd.also?.includes(p.C.scene)) p.out.push({ type: "confetti", id: pl.id, name: pl.name }); }
     /* the pins: now for anyone online, on their next login for the rest */
     for (const [login, name] of Object.entries(builders)) { const on = [...this.pls.values()].find((p) => (p.login || p.name) === login); if (on) this.projPin(on, id); else { ((this.proj._owed ||= {})[login] ||= []).includes(id) || this.proj._owed[login].push(id); } }
     this.projSave(); this.projDirty = true;

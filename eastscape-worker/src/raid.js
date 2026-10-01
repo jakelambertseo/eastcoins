@@ -129,9 +129,9 @@ export function installRaid(World, { G }) {
       paid.push([p?.name || "someone", n]);
     }
     const top = paid.slice(0, 3).map(([nm, n]) => `${nm} (${n.toLocaleString()})`).join(", ");
-    if (flood) { this.houseSay(`\u{1F30A} ${pl.name} landed the last blow: THE UNDERTOW IS BEATEN, and the river goes back where it belongs. ${rows.length} of you held the water back, sandbags and swords alike, and every one shares the spoils. Top: ${top}.`); for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: "\u{1F30A} The flood is beaten. The Yard is dry." }); return; }
+    if (flood) { this.houseSay(`\u{1F30A} ${pl.name} landed the last blow: THE UNDERTOW IS BEATEN, and the river goes back where it belongs. ${rows.length} of you held the water back, sandbags and swords alike, and every one shares the spoils. Top: ${top}.`); return; }
     this.houseSay(`\u2744\uFE0F ${pl.name} landed the last blow: THE ICE MAN IS DOWN, and the frost lifts off the Yard. ${rows.length} stood against him and every one of them shares the spoils. Top: ${top}.`);
-    for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: "\u2744\uFE0F The Ice Man is down. The Yard stands." });
+/* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */
   };
   P.raidLost = function (S, now) {
     const boss = S.mobs.find((m) => m.id === this.raid.bossId);
@@ -171,7 +171,7 @@ export function installRaid(World, { G }) {
       this.raid = { kind: "flood", phase: "warn", at: now + F.warnMs, by: {}, said: {} }; this.raidSave(now, true);
       this.raidLast = now; this.ctx.storage.put("raidLast", now).catch(() => {});
       this.houseSay(`\u{1F30A} FLOOD! It hasn't stopped raining since the King went down, and the Yard's river is right at the top of its bank. ${Math.round(F.warnMs / 60000)} minutes. Bring wood, ore and sand: when it comes over, sandbags are the only thing that will hold it.`);
-      for (const p of this.pls.values()) { p.out.push({ type: "casinonote", text: "\u{1F30A} FLOOD! The Yard's river is about to come over the bank." }); p.out.push({ type: "raid", on: true }); }
+      for (const p of this.pls.values()) p.out.push({ type: "raid", on: true });   /* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */
       return true;
     }
     this.raid = { phase: "warn", at: now + R.warnMs, by: {}, said: {}, horn: horn || null }; this.raidSave(now, true);
@@ -179,7 +179,7 @@ export function installRaid(World, { G }) {
     const mins = Math.round(R.warnMs / 60000);
     if (horn) this.houseSay(`\u{1F4EF} ${horn} HAS BLOWN THE WAR HORN. The note rolls north over the hills, and something up there answers it.`);
     this.houseSay(`\u2744\uFE0F RAID! The air over the Yard has turned cold, and the pumpkins are frosting over. Something is coming down from the north: the Ice Man and his war party, ${mins} minutes out. Take up arms on the west bank. Everyone who bleeds for the Yard shares the spoils. If it falls, its stalls are ransacked.`);
-    for (const p of this.pls.values()) { p.out.push({ type: "casinonote", text: "\u2744\uFE0F RAID! Frost is creeping over the Yard. Something is coming." }); p.out.push({ type: "raid", on: true }); }
+    for (const p of this.pls.values()) p.out.push({ type: "raid", on: true });   /* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */
     return true;
   };
   /* ================================================================ THE FLOOD (2026-09-30): see FLOOD in the rules file first */

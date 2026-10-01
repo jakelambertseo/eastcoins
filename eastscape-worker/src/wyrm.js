@@ -31,7 +31,7 @@ export function installWyrm(World, { G }) {
     if (!H.due && !H.up && now >= H.at) {
       H.due = true; this.wyrmSave();
       this.houseSay("❄️ THE ICE WYRM IS RISING out of the Frozen Reach's lake, north of Cloudreach. It stays half an hour and only spells reach it. Bring fire, and bring friends: everyone who hurts it shares the kill.");
-      for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: "❄️ The Ice Wyrm is rising in the Frozen Reach." });
+/* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */
     }
     if (H.due) { const S = this.scenes.get(W.scene); if (S && this.playersIn(S).length) this.wyrmSpawn(S, now); }
     if (H.up) {
@@ -60,7 +60,7 @@ export function installWyrm(World, { G }) {
     m.respawnAt = Infinity; S.mobs = S.mobs.filter((x) => x !== m); S.whoSig = null;
     const who = helpers.length ? `${pl.name} and ${helpers.length} other${helpers.length === 1 ? "" : "s"}` : pl.name;
     this.houseSay(`❄️ ${who} brought the Ice Wyrm down in the Frozen Reach. It sleeps until tomorrow.`);
-    for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: `❄️ ${who} killed the Ice Wyrm!` });
+/* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */
     this.wyrmPlan(now, true);
   };
   /** for /stats: up (time left, health), due, or seconds until it rises */

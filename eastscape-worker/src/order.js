@@ -89,7 +89,7 @@ export function installOrder(World, { G }) {
         o.doneAt = now;
         const top = Object.values(o.by).sort((a, b) => b.n - a.n).slice(0, 3).map((x) => x.name).join(", ");
         this.houseSay(`✅ BRONNY'S ORDER IS FILLED! ${Object.keys(o.by).length} helped (top: ${top}). A 2X Potion is waiting at Bronny: anyone who helped can claim it for the whole server.`, NAME);
-        for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: "✅ Bronny's order is filled: a 2X is waiting in the Yard." });
+/* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */
       } else for (const q of [25, 50, 75]) if (pct * 100 >= q && !o.said.includes(q)) { o.said.push(q); this.houseSay(`\u{1F4E6} Bronny's order is ${q}% there. ${pl.name} just brought in ${parts.join(", ")}.`, NAME); }
       this.orderSave(); this.orderPush();
       return;

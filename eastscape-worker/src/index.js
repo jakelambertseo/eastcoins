@@ -2136,13 +2136,13 @@ export class World {
     if (!H.opened && now - this.startedAt > 60000) {
       H.opened = true; this.hwSave();
       this.houseSay(`\u{1F383} THE LONG NIGHT HAS BEGUN. Candy corn falls off everything you kill and gather. Hexa's Night Market is open in the Yard, the Pumpkin King rises every hour in the Lantern Mire, and it all ends on November 2nd. The wiki has the full guide.`);
-      for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: "\u{1F383} The Long Night has begun. Hexa's Night Market is open in the Yard." });
+/* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */
     }
     if (!H.kingAt) { H.kingAt = now + 5 * 60000; this.hwSave(); }   /* a fresh event: the first King five minutes after the first boot */
     if (!H.kingDue && !H.kingUp && now >= H.kingAt) {
       H.kingDue = true; this.hwSave();
       this.houseSay("🎃 THE PUMPKIN KING RISES in the Lantern Mire. He stands twenty minutes. Bring fire, and bring friends.");
-      for (const p of this.pls.values()) { p.out.push({ type: "casinonote", text: "🎃 The Pumpkin King rises in the Lantern Mire." }); p.out.push({ type: "hw", king: true }); }
+      for (const p of this.pls.values()) p.out.push({ type: "hw", king: true });   /* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */
     }
     if (H.kingDue) { const S = this.scenes.get(G.HW.king.scene); if (S && this.playersIn(S).length) this.hwSpawnKing(S, now); }
     if (H.kingUp) {
@@ -2175,7 +2175,7 @@ export class World {
     H.kingUp = null; H.kingAt = now + G.HW.king.every; this.hwSave();
     const who = helpers.length ? `${pl.name} and ${helpers.length} other${helpers.length === 1 ? "" : "s"}` : pl.name;   /* (2026-09-27) an open boss is a crowd's kill */
     this.houseSay(`🎃 ${who} put the Pumpkin King down. He'll be back on the hour.`);
-    for (const p of this.pls.values()) p.out.push({ type: "casinonote", text: `🎃 ${who} killed the Pumpkin King!` });
+/* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */
   }
   /** (2026-09-27) /pumpkin: where the King is in his hour, in one line */
   hwKingLine(now = Date.now()) {
