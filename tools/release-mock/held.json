@@ -33,7 +33,7 @@
  },
  {
   "name": "Gems: rarer, and yours",
-  "commit": "",
+  "commit": "cf8ee020",
   "page": "",
   "bundle": "v1.1",
   "what": "Every gem source cut to a quarter (gem bag drops 1 in 1,500 to 1 in 6,000 skilling, 1 in 150 to 1 in 600 kills, bosses 1 in 5 to 1 in 20; gems off ore 3% to 0.75%; the monsters and Captain Claw’s chest that drop them too). Gems can’t be traded between players or listed, bid for or bought on the Exchange; the Gem Sorter still buys them. Gem offers already up come down once at start, held for their owners. Bronny’s keystone stops asking for gems.",
