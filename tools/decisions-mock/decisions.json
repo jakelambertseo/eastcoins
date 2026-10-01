@@ -2,6 +2,26 @@
  {
   "date": "2026-10-01",
   "area": "Long game",
+  "decision": "The Grand Tour cape needs every Elite, including the two Wilderness PvP Elites; a pure skiller cannot get it.",
+  "quote": "yes",
+  "why": "",
+  "page": "diary-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Long game",
+  "decision": "Diary XP lamps are 1,000 (Easy), 5,000 (Medium), 20,000 (Hard) and 75,000 (Elite).",
+  "quote": "yes",
+  "why": "",
+  "page": "diary-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "Long game",
   "decision": "Area diaries are one per map (21), not eight regions.",
   "quote": "One per map",
   "why": "",
