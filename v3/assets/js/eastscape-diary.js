@@ -19,6 +19,7 @@ export function createDiary({ G, $, esc, ico, sico, send, SFX, getMe, getScene, 
   const here = () => { const b = String(getScene() || "").split(":")[0]; const k = ALIAS[b] || b; return D && D.some((x) => x.k === k) ? k : null; };
   const levelOf = (M) => { let n = 0; for (const list of M.t) { if (list.every((x) => st.d.has(x.id))) n++; else break; } return n; };
   const TIERS = G.DIARY.tiers, MEDAL = ["#c8823a", "#c8ccd8", "#ffc83a", "#9ef0ff"];
+  const medal = (i, cls = "") => `<img class="dmedal ${cls}" src="${ART}medal_${G.DIARY.medals[i]}.png?v=1" alt="${G.DIARY.medals[i]} medal" title="${TIERS[i]}: the ${G.DIARY.medals[i]} medal">`;   /* (2026-10-01) the owner: "add icons for bronze, silver, gold medals" */
   const icon = (x) => (x.ic ? ico(x.ic) : x.sk ? sico(x.sk) : "");
   const style = () => { if (document.getElementById("diaryCss")) return; const s = document.createElement("style"); s.id = "diaryCss"; s.textContent = CSS; document.head.append(s); };
 
@@ -47,7 +48,7 @@ export function createDiary({ G, $, esc, ico, sico, send, SFX, getMe, getScene, 
     if (!el.isConnected) { style(); document.body.append(el); el.addEventListener("click", () => { el.classList.remove("show"); open(el.dataset.k); }); }
     el.dataset.k = t.M.k;
     el.innerHTML = t.big
-      ? `<img src="${ART}${t.M.em}.png?v=1" alt=""><span><b>${esc(t.M.name)}: ${TIERS[t.i]} diary done!</b><small>${esc(t.M.perks[t.i].text)} · a ${G.DIARY.lamps[t.i].toLocaleString()} XP lamp to rub</small></span>`
+      ? `${medal(t.i)}<span><b>${esc(t.M.name)}: ${TIERS[t.i]} diary done!</b><small>${esc(t.M.perks[t.i].text)} · a ${G.DIARY.lamps[t.i].toLocaleString()} XP lamp to rub</small></span>`
       : t.n ? `<img src="${ART}${t.M.em}.png?v=1" alt=""><span><b>${t.n} diary tasks done</b><small>Press L to see them</small></span>`
       : `<span class="dt-i">${icon(t.x)}</span><span><b>Diary task done</b><small>${esc(t.x.text)} · ${esc(t.M.name)}</small></span>`;
     el.classList.toggle("big", !!t.big); showing = true; SFX.play(t.big ? "levelup" : "task_done", t.big ? undefined : { vol: 0.6 });
@@ -69,7 +70,7 @@ export function createDiary({ G, $, esc, ico, sico, send, SFX, getMe, getScene, 
     const lamp = !fin ? `A ${G.DIARY.lamps[i].toLocaleString()} XP lamp` : got ? `Lamp rubbed` : skills.length
       ? `<select data-lampsk>${skills.map((s) => `<option value="${s}">${esc(G.SKILLS[s].name)} (${G.lvlOf(me, s)})</option>`).join("")}</select><button type="button" class="k-btn sm" data-lamp="${i}">Rub the ${G.DIARY.lamps[i].toLocaleString()} XP lamp</button>`
       : `A lamp, for a skill at level ${M.lo} or above: you have none yet`;
-    return `<div class="dr${fin ? " fin" : ""}"><b>${TIERS[i]} reward${fin ? " ✓" : ""}:</b> ${esc(M.perks[i].text)}.<div class="dr-l">${lamp}<span class="medal" style="--m:${MEDAL[i]}">${G.DIARY.medals[i]} medal</span></div></div>`;
+    return `<div class="dr${fin ? " fin" : ""}"><b>${TIERS[i]} reward${fin ? " ✓" : ""}:</b> ${esc(M.perks[i].text)}.<div class="dr-l">${lamp}<span class="medal${fin ? " got" : ""}">${medal(i)}${G.DIARY.medals[i][0].toUpperCase() + G.DIARY.medals[i].slice(1)} medal</span></div></div>`;
   }
   function extras(M) {
     const me = getMe(), out = [], day = st.today;
@@ -81,8 +82,8 @@ export function createDiary({ G, $, esc, ico, sico, send, SFX, getMe, getScene, 
   }
   function detail(M, i, big) {
     const lvl = levelOf(M), all = M.t.flat(), got = all.filter((x) => st.d.has(x.id)).length;
-    const tabs = TIERS.map((t, j) => { const g = M.t[j].filter((x) => st.d.has(x.id)).length; return `<button type="button" data-ti="${j}" class="${j === i ? "on" : ""}" style="--m:${MEDAL[j]}">${t}<small>${g}/${M.t[j].length}${lvl > j ? " ✓" : ""}</small></button>`; }).join("");
-    return `<div class="dh"><img class="em${lvl ? ` t${lvl - 1}` : ""}" src="${ART}${M.em}.png?v=1" alt=""><span><b>${esc(M.name)}</b><small>${M.sub ? esc(M.sub) + " · " : ""}levels ${esc(M.band)} · ${got} of ${all.length}${lvl ? ` · ${TIERS[lvl - 1]} done` : ""}</small></span>${big ? "" : `<button type="button" class="lnk" data-whole>Whole diary</button>`}</div>
+    const tabs = TIERS.map((t, j) => { const g = M.t[j].filter((x) => st.d.has(x.id)).length; return `<button type="button" data-ti="${j}" class="${j === i ? "on" : ""}${lvl > j ? " won" : ""}" style="--m:${MEDAL[j]}">${medal(j, "tm")}${t}<small>${g}/${M.t[j].length}${lvl > j ? " ✓" : ""}</small></button>`; }).join("");
+    return `<div class="dh"><img class="em${lvl ? ` t${lvl - 1}` : ""}" src="${ART}${M.em}.png?v=1" alt=""><span><b>${esc(M.name)}${lvl ? " " + medal(lvl - 1, "hm") : ""}</b><small>${M.sub ? esc(M.sub) + " · " : ""}levels ${esc(M.band)} · ${got} of ${all.length}${lvl ? ` · ${TIERS[lvl - 1]} done` : ""}</small></span>${big ? "" : `<button type="button" class="k-btn sm dwhole" data-whole>Whole diary</button>`}</div>
       <div class="dbar"><b style="width:${(got / all.length) * 100}%"></b></div>
       <div class="dtabs">${tabs}</div>
       <div class="dts">${M.t[i].map((x) => taskRow(M, x)).join("")}</div>${reward(M, i)}${extras(M)}`;
@@ -125,7 +126,7 @@ export function createDiary({ G, $, esc, ico, sico, send, SFX, getMe, getScene, 
     const M = BYK(), k = winK || here() || "workyard", all = D.flatMap((x) => x.t.flat());
     $("diarySub").textContent = `${all.filter((x) => st.d.has(x.id)).length} of ${all.length} tasks · ${D.filter((x) => levelOf(x) === 4).length} of ${D.length} Elite`;
     $("diaryMaps").innerHTML = BANDS.map(([h, ks]) => `<div class="dband">${h}</div>` + ks.filter((x) => M[x]).map((x) => { const d = M[x], lv = levelOf(d), g = d.t.flat().filter((t) => st.d.has(t.id)).length, claim = [0, 1, 2, 3].some((i) => lv > i && !((st.cl[x] | 0) & (1 << i)));
-      return `<button type="button" class="dm${x === k ? " on" : ""}" data-dk="${x}"><img class="em${lv ? ` t${lv - 1}` : ""}" src="${ART}${d.em}.png?v=1" alt=""><span><b>${esc(d.name)}</b><small>${esc(d.band)} · ${lv ? TIERS[lv - 1] + " done" : "none done"}</small></span><i>${g}</i>${claim ? '<em class="lampdot" title="A lamp to rub"></em>' : ""}</button>`; }).join("")).join("");
+      return `<button type="button" class="dm${x === k ? " on" : ""}" data-dk="${x}"><img class="em${lv ? ` t${lv - 1}` : ""}" src="${ART}${d.em}.png?v=1" alt=""><span><b>${esc(d.name)}</b><small>${esc(d.band)} · ${lv ? TIERS[lv - 1] + " done" : "none done"}</small></span><i>${lv ? medal(lv - 1, "lm") : ""}${g}</i>${claim ? '<em class="lampdot" title="A lamp to rub"></em>' : ""}</button>`; }).join("")).join("");
     $("diaryMaps").querySelectorAll("[data-dk]").forEach((b) => b.addEventListener("click", () => { winK = b.dataset.dk; ask(winK); SFX.play("ui_click"); renderWin(); }));
     const R = $("diaryRight"); R.innerHTML = detail(M[k], tierOf(M[k]), true); wire(R, M[k]);
   }
@@ -145,13 +146,18 @@ const CSS = `
 .dbar{height:7px;border-radius:4px;background:#e6dcc4;margin:7px 0;overflow:hidden}.dbar b{display:block;height:100%;background:#3a8a3a}
 .dtabs{display:flex;gap:4px;margin-bottom:6px}.dtabs button{flex:1;padding:5px 2px;border:0;border-radius:7px;background:#efe6cf;box-shadow:inset 0 0 0 1.5px #cbbd9a;font:800 11.5px Lora,serif;color:#2a1c0e;cursor:pointer}
 .dtabs button.on{background:var(--m);box-shadow:inset 0 0 0 2px rgba(0,0,0,.25)}.dtabs small{display:block;font:700 10px Lora,serif;opacity:.75}
+.dmedal{image-rendering:pixelated;vertical-align:middle}.dtabs .tm{width:24px;height:24px;display:block;margin:0 auto 1px;filter:grayscale(1) opacity(.45)}.dtabs .won .tm{filter:none}
+.dh .hm{width:24px;height:24px;margin-left:3px}.dm i .lm{width:24px;height:24px;margin-right:2px}.dm i{display:flex;align-items:center}
+.medal{display:inline-flex;align-items:center;gap:4px;margin-left:auto;font:800 11.5px Lora,serif;color:#6a5a40}.medal .dmedal{width:24px;height:24px;filter:grayscale(1) opacity(.5)}.medal.got{color:#2a1c0e}.medal.got .dmedal{filter:none}
+.dwhole{margin-left:auto;white-space:nowrap}
+#diaryToast .dmedal{width:40px;height:40px}
 .dts{display:grid;gap:4px}.dt{display:grid;grid-template-columns:16px 26px 1fr auto;gap:6px;align-items:center;padding:5px 6px;border-radius:7px;background:#f6efdc;font:600 12.5px Lora,serif;color:#2a1c0e}
 .dt .ck{width:16px;height:16px;border-radius:4px;box-shadow:inset 0 0 0 1.5px #a89a78;display:grid;place-items:center;font-size:11px;color:#fff}.dt.done .ck{background:#3a8a3a;box-shadow:none}.dt.done .dt-t{opacity:.6;text-decoration:line-through}
 .dt-i img,.dt-i .ico{width:24px;height:24px}.dt-t small{font-weight:800;color:#5a4a2a}.dt-r{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
 .dt-r em{font:800 10px Lora,serif;font-style:normal;padding:1px 5px;border-radius:6px;background:#e6dcc4;color:#4a3a1a}.dt-r em.ok{background:#d4ecd4;color:#1a5a1a}.dt-r em.no{background:#f4d4d0;color:#8a1a10}
 .dt-r em.v11{background:#efe0ff;color:#5a1a8a}.dt-r em.ev{background:#d8e4f8;color:#1a3a7a}.dt-r em.pvp{background:#f8d0d0;color:#8a1010}
 .dr{margin-top:8px;padding:8px;border-radius:8px;background:#f1e6c8;font:600 12.5px Lora,serif;color:#2a1c0e}.dr.fin{background:#e2f0d8}.dr-l{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
-.dr-l select{font:700 12px Lora,serif;padding:3px;border-radius:6px}.medal{margin-left:auto;font:800 11px Lora,serif;padding:2px 8px;border-radius:10px;background:var(--m);color:#1a1006}
+.dr-l select{font:700 12px Lora,serif;padding:3px;border-radius:6px}
 .dx{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}.dx .see{font:700 12px Lora,serif;color:#1a3a7a;background:#d8e4f8;padding:3px 8px;border-radius:8px}
 .dwin{display:grid;grid-template-columns:230px 1fr;gap:10px;max-height:min(70vh,640px)}.dmaps{overflow:auto;padding-right:4px}.dright{overflow:auto}
 .dband{font:800 11px Cinzel,serif;letter-spacing:.06em;text-transform:uppercase;opacity:.7;margin:8px 2px 3px}

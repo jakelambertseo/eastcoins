@@ -32,7 +32,7 @@ ok(JSON.stringify(G.DIARY.keys) === JSON.stringify(DIARIES.map((d) => d.k)), "G.
 ok(tasks.filter((x) => x.v11).length >= 70, `${tasks.filter((x) => x.v11).length} tasks use v1.1`);
 ok(G.ITEMS.cape_tour?.slot === "cape" && G.ITEMS.cape_tour.bound && G.noTrade("cape_tour") && G.SLOTS.includes("cape"), "the cape: a cape-slot item, bound, untradeable");
 ok(!G.ITEMS.cape_tour.acc && !G.ITEMS.cape_tour.str && !G.ITEMS.cape_tour.def, "the cape carries no stats");
-for (const f of ["diary", "cape_tour", ...new Set(DIARIES.map((d) => d.em))]) ok(fs.existsSync(`v3/assets/img/glad/flat/diary/${f}.png`), `art: diary/${f}.png`);
+for (const f of ["diary", "cape_tour", "medal_bronze", "medal_silver", "medal_gold", "medal_platinum", ...new Set(DIARIES.map((d) => d.em))]) ok(fs.existsSync(`v3/assets/img/glad/flat/diary/${f}.png`), `art: diary/${f}.png`);
 
 const store = new Map();
 const ctx = { blockConcurrencyWhile: (fn) => fn(), storage: { get: async (k) => store.get(k), put: async (k, v) => { store.set(k, v); }, delete: async () => {}, list: async () => new Map() } };

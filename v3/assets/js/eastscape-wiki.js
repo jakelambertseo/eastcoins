@@ -354,6 +354,9 @@ export const GUIDES = [
       <tr><td><kbd>E</kbd></td><td>Eat the best <b>cooked</b> food in your bag, whatever heals most. It never touches potions, drinks, buff meals or smoked fish, and does nothing at full health.</td></tr>
       </table>
       <h3>Windows</h3><table class="tbl"><tr><th>Key</th><th>Does</th></tr>
+      <tr><td><kbd>I</kbd> <kbd>U</kbd> <kbd>K</kbd> <kbd>J</kbd>${G.HOLD.diary ? "" : " <kbd>L</kbd>"}</td><td>The tabs over your inventory: Inventory, Equipment, Skills, Quests${G.HOLD.diary ? "" : ", and your Diary (it opens on the map you're standing on)"}.</td></tr>
+      <tr><td><kbd>C</kbd></td><td>Your Character window: every number about you, and where to get more.</td></tr>
+      <tr><td><kbd>Q</kbd></td><td>The quest log.</td></tr>
       <tr><td><kbd>T</kbd></td><td>Open or close the chat.</td></tr>
       <tr><td><kbd>Enter</kbd></td><td>Open the chat with the cursor in the box; Enter again sends.</td></tr>
       <tr><td><kbd>G</kbd></td><td>The games: every table in the casino, in one list.</td></tr>

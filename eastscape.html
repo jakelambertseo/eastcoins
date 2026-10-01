@@ -2061,7 +2061,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=243").then((m) => { WK = m; for (const [k, [hold, text]] of Object.entries(m.SKILL_GUIDE_V11 || {})) if (!G.HOLD[hold]) m.SKILL_GUIDE[k] = text; rmLiveNote(); }),   /* (2026-10-01) v1.1's skill one-liners */
+  import("/v3/assets/js/eastscape-wiki.js?v=244").then((m) => { WK = m; for (const [k, [hold, text]] of Object.entries(m.SKILL_GUIDE_V11 || {})) if (!G.HOLD[hold]) m.SKILL_GUIDE[k] = text; rmLiveNote(); }),   /* (2026-10-01) v1.1's skill one-liners */
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
@@ -5986,7 +5986,7 @@ function renderLocker() {
 }
 /* (2026-10-01, v1.1) AREA DIARIES: the Diary tab (L) and window, in eastscape-diary.js, fetched the first time either opens or the server sends
    a diary message; the tasks themselves (eastscape-diary-rules.js) only when something is drawn. See diary.js in the worker. */
-let DIARY = null; const DIARY_URL = "/v3/assets/js/eastscape-diary.js?v=2";
+let DIARY = null; const DIARY_URL = "/v3/assets/js/eastscape-diary.js?v=3";
 function diaryUi() { return DIARY ? Promise.resolve(DIARY) : import(DIARY_URL).then((m) => (DIARY = m.createDiary({ G, $, esc, ico, sico, send, SFX, getMe: () => me, getScene: () => Z.key || me?.scene, openWin }))); }
 function openWin(id) {
   SFX.play("ui_open");
@@ -8157,6 +8157,14 @@ document.addEventListener("keydown", (e) => {
   if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) return;
   e.preventDefault(); openAch();
 });
+/* (2026-10-01, the owner: "give the character stats window and diary keybinds") C: THE CHARACTER WINDOW, open or shut. (L is the diary: the tab keys.) */
+document.addEventListener("keydown", (e) => {
+  if ((e.key !== "c" && e.key !== "C") || e.repeat || e.ctrlKey || e.metaKey || e.altKey || !me) return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "") || document.activeElement?.isContentEditable) return;
+  e.preventDefault(); const w = $("charWin");
+  if (w && !w.hidden) { w.hidden = true; SFX.play("ui_close"); return; }
+  chUi().then((u) => u.open());
+});
 /* (2026-09-23, the owner) H OPENS THE WIKI, and "?" does too because that is the one key everybody already tries.
    NOT "n": that is the Network panel, and the letters are getting crowded — d (staff dashboard), g (Game Room),
    m (mute), n (net). It goes through the button's own click so the toggle, the sound and the route restore all
@@ -8425,7 +8433,7 @@ function renderPanel() {
     p.innerHTML = `<div class="ph">Equipment <small>combat ${G.combatOf(me)}</small></div>${G.HOLD.work ? "" : `<div class="wsw" role="tablist"><button type="button" class="${WK ? "" : "on"}" data-wview="0">Armour</button><button type="button" class="${WK ? "on" : ""}" data-wview="1">Work clothes</button></div>`}<div class="doll${G.SLOTS.includes("cape") ? " has-cape" : ""}">${G.SLOTS.map(slot).join("")}${wset ? `<span class="wset-name">${esc(wset.name)}</span>` : ""}<div class="doll-fig" style="grid-area:fig"><canvas id="dollFig" width="96" height="120" aria-hidden="true"></canvas></div></div>
       ${WK ? workStrip() : `<div class="bstrip">${cell(sico("attack"), `+${b.acc}`, "acc", "Accuracy: how often you land a hit")}${cell(sico("strength"), `+${b.str}`, "str", "Strength: how hard you hit")}${cell(sico("melee"), G.maxHitOf(me), "max", `Max hit: the most one blow can do${G.launcherOf(me) ? `, with +${G.ammoStrOf(me)} from your ammo` : ""}`)}${cell(sico("defence"), `+${b.def}`, "def", "Defence: how often they miss you")}${cell(ITEM_ART.has("sandals") ? artOf("sandals") : "👟", `+${G.speedText(me, me.speedTest || 0)}%`, "speed", "Speed: how fast you walk")}</div>
       <div class="bwield">${me.eq.weapon ? `${ico(me.eq.weapon)} ${esc(ITEMS[me.eq.weapon].name)}` : "✊ Unarmed"}${G.launcherOf(me) ? ` · fights with ${sico(G.styleOf(me))} ${SKILLS[G.styleOf(me)].name} ${G.lvlOf(me, G.styleOf(me))}` : ""}${tool ? ` · trains ${SKILLS[tool].name}` : ""}</div>
-      <div class="ms-entry ch-entry"><button type="button" class="k-btn sm" data-charstats><img src="/v3/assets/img/glad/flat/ui/skills.png?v=1" alt="">Character</button><span class="k-note">every number, and where to get more</span></div>`}
+      <div class="ms-entry ch-entry"><button type="button" class="k-btn sm" data-charstats title="Every number about you (C)"><img src="/v3/assets/img/glad/flat/ui/skills.png?v=1" alt="">Character</button><span class="k-note">every number, and where to get more</span></div>`}
       ${quiverRow()}
       <div class="ph phsep">Pets</div>${petRows}
       <p class="note">Click a piece to take it off; right-click any item for its wiki page. Tools go in your weapon hand.</p>`;
