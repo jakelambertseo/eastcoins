@@ -2,6 +2,26 @@
  {
   "date": "2026-10-01",
   "area": "World & maps",
+  "decision": "The next-tier spot must be unreachable without the Agility level: nobody else on the map can stand next to it.",
+  "quote": "the next tiers resource cannot be accessed by anyone on the map who doesnt have the proper agility. so they cant reach the tree, the ore, etc. put some behind rocks, fences, etc if you have to",
+  "why": "",
+  "page": "thieving-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "World & maps",
+  "decision": "Every shortcut guards a fenced nook on land (the map's own fence or stones, an Agility gate) with a next-tier spot behind or beside you; the water islands were dropped.",
+  "quote": "some of the islands the character is hidden behind trees, theres no \"island ground\" and the overall experience of this is quite bad",
+  "why": "the islands had no ground and hid the character",
+  "page": "thieving-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-01",
+  "area": "World & maps",
   "decision": "A ledge's gathering spot is one tier above what its map already has, so reaching it is worth the shortcut.",
   "quote": "the gathering spot that the logs can access needs to be 1 tier higher, so that it is lucrative to access that spot/ore/fish/etc",
   "why": "",
@@ -66,8 +86,8 @@
   "quote": "1 extra gathering spot by ledges",
   "why": "open maps barely save steps, so the ledge has to lead somewhere",
   "page": "thieving-mock",
-  "status": "standing",
-  "replacedBy": ""
+  "status": "superseded",
+  "replacedBy": "every shortcut guards a fenced nook on land with a next-tier spot"
  },
  {
   "date": "2026-10-01",
