@@ -9571,30 +9571,40 @@ BOSSES.add("raidchief");
      ALL FIVE HELD: the water starts going down and THE UNDERTOW climbs out onto the grass north of the pond. Beat him before the time is up and
        the Yard is dry and everybody is paid; let the water reach FLOOD.lose of the west bank, or the time run out, and the Yard is flooded: the
        stalls board up for RAID.sackMs as after the Ice Man, and the water stays until they open. */
-export const FLOOD = { scene: "workyard", warnMs: 3 * 60000, warnAt: [120, 60, 30], lasts: 15 * 60000,
-  riseMs: 4000, rise: 2, drain: 6, slow: 1.7, lose: 0.5, protect: 5,
+/* (2026-09-30, the owner: "the entire raid feels too long, i think it needs to be around 5-10 mins to provide a sense of urgency") a minute's
+   warning and seven of flood, everything else quickened to match: unheld, the water takes half the west bank in about four minutes */
+export const FLOOD = { scene: "workyard", warnMs: 60000, warnAt: [30], lasts: 7 * 60000,
+  riseMs: 3000, rise: 3, drain: 6, slow: 1.7, lose: 0.5, protect: 5,
   spots: [{ at: [13, 20], mat: "wood" }, { at: [23, 17], mat: "ore" }, { at: [24, 15], mat: "sand" }, { at: [24, 8], mat: "wood" }, { at: [24, 4], mat: "ore" }],
-  need: { base: 250, per: 30, cap: 900, sand: 0.4 }, handValue: 3,
-  wave: { every: 40000, base: 3, perPlayers: 2, cap: 10, kinds: [["drowned", 6], ["bankshark", 2]] },
-  boss: { t: "undertow", at: [20, 15] }, hp: { base: 5000, per: 1400, cap: 42000 }, pay: { pool: 25000, per: 3500, floor: 400 } };
+  need: { base: 150, per: 20, cap: 600, sand: 0.4 }, handValue: 3,
+  wave: { every: 30000, base: 3, perPlayers: 2, cap: 10, first: 2, kinds: [["drowned", 6], ["bankshark", 2]] },   /* first: the wave the moment the river comes over is twice the size (the owner: "a few more mobs need to come up from the water initially") */
+  boss: { t: "undertow", at: [20, 15] }, hp: { base: 9000, per: 1800, cap: 60000 }, pay: { pool: 25000, per: 3500, floor: 400 },
+  /* (2026-09-30, the owner: "the final boss in the flood needs to be a hard fight, dont let it be too easy") THE UNDERTOW'S TIDAL SLAM: every 9-13 s
+     everyone within `range` of him takes `hit` of their health; and at each share of his health in `calls` he drags a fresh wave out of the pond */
+  slam: { every: [9000, 13000], first: 6000, range: 3, hit: 0.14 }, calls: [0.6, 0.3],
+  /* (2026-09-30, the owner: "keep the water up for 2 hours", "if they lose make it flood some of the court too", then "if they lose, the water stays
+     for 2 hours, and the stalls are closed for 2 hours too" and "just Bom is closed like you had it": the casino itself stays open) A LOST FLOOD:
+     the water stays, and takes the court's west half (courtX), and Bom, Nestor, Livia, Hexa and Bronny are shut, for `stallsMs`
+     (then "sorry, 2 hours is hard for closure. close everything ... for 20 minutes") */
+  loss: { stallsMs: 20 * 60000, closes: ["counter", "cashout", "eggtrade", "ex", "hw", "order"], courtX: [29, 35] } };
 export const FLOOD_MATS = {
-  wood: { name: "wood", ex: "any logs", test: (k) => /^[a-z]*logs$/.test(k) },
-  ore: { name: "ore", ex: "any ore, copper or tin", test: (k) => /_ore$/.test(k) || k === "copper" || k === "tin" || k === "glacite" },
-  sand: { name: "sand", ex: "sand", test: (k) => k === "sand" } };
+  wood: { name: "logs", label: "Logs", ex: "any logs", test: (k) => /^[a-z]*logs$/.test(k) },
+  ore: { name: "ore", label: "Ores", ex: "any ore, copper or tin", test: (k) => /_ore$/.test(k) || k === "copper" || k === "tin" || k === "glacite" },
+  sand: { name: "sand", label: "Sand", ex: "sand", test: (k) => k === "sand" } };
 /** the ground the water may take: the west bank's walkable ground, never planks or paving (so never the dock or the bridge) */
 export const floodLand = (g) => { const out = []; for (let y = 0; y < ROWS; y++) for (let x = 0; x <= RAID.zoneX; x++) if (g[y][x] === "." || g[y][x] === ",") out.push(y * COLS + x); return out; };
 export const floodWetAt = (g, x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && (g[y][x] === "~" || g[y][x] === "b");
-rmob("drowned", { name: "The Drowned", size: "m", lvl: 22, hp: 110, att: 22, def: 18, max: 7, speed: 2400, box: [30, 26], aggro: 5, art: "clawhand", raid: true, weak: "fire",
+rmob("drowned", { name: "The Drowned", size: "m", lvl: 22, hp: 110, att: 22, def: 18, max: 7, speed: 2400, box: [30, 26], aggro: 5, raid: true, weak: "fire",
   ex: "Something that went into the river a long time ago, coming back out of it. It goes for whoever is carrying the sandbags." }, 60,
   [["tickets", [30, 70]], ["logs", [4, 10], 0.4], ["willowlogs", [3, 8], 0.35], ["copper", [4, 10], 0.35], ["emerald_ore", [2, 6], 0.3], ["sand", [3, 8], 0.4], ["sardine", [3, 8], 0.35], ["perch", [2, 6], 0.3], ["bones", [2, 5], 0.4]]);
-rmob("bankshark", { name: "Bank Shark", size: "m", lvl: 44, hp: 420, att: 44, def: 38, max: 12, speed: 2600, box: [16, 30], aggro: 6, art: "shark", raid: true, weak: "storm",
+rmob("bankshark", { name: "Bank Shark", size: "m", lvl: 44, hp: 420, att: 44, def: 38, max: 12, speed: 2600, box: [16, 30], aggro: 6, raid: true, weak: "storm",
   ex: "A shark in a suit, washed up the bank with the flood and still trying to collect. The river's late fees." }, 220,
   [["tickets", [120, 260]], ["ashlogs", [3, 7], 0.4], ["yewlogs", [2, 5], 0.35], ["diamond_ore", [2, 6], 0.4], ["dragonstone_ore", [2, 5], 0.35], ["sand", [6, 14], 0.4], ["lanternfish", [2, 5], 0.35], ["bonefish", [1, 3], 0.25], ["sapphire", 1, 0.03]]);
-rmob("undertow", { name: "The Undertow", size: "xl", lvl: 62, hp: 5000, att: 62, def: 50, max: 14, speed: 2800, box: [60, 90], aggro: 6, art: "krakenarm", boss: true, open: true, raid: true, weak: "storm",
+rmob("undertow", { name: "The Undertow", size: "xl", lvl: 72, hp: 9000, att: 74, def: 62, max: 20, speed: 2800, box: [60, 90], aggro: 6, boss: true, open: true, raid: true, weak: "storm",
   ex: "Whatever lives at the bottom of the Yard's pond, pushed out by its own flood. Everyone who held the water back shares the spoils when it falls." }, 3000,
   [["tickets", [15000, 25000]], ["skyashlogs", [10, 20]], ["onyx_ore", [6, 12]], ["dragonstone_bar", [3, 6]], ["ghostcarp", [3, 6]], ["pot_double", 1, 0.25], ["topaz", 1, 0.2], ["opal", 1, 0.08]]);
 BOSSES.add("undertow");
-rmob("sandbag", { name: "Sandbags", size: "m", lvl: 1, hp: 1, att: 0, def: 0, max: 0, speed: 99999, box: [30, 26], aggro: 0, art: "o_sacks", raid: true, bag: true,
+rmob("sandbag", { name: "Sandbags", size: "m", lvl: 1, hp: 1, att: 0, def: 0, max: 0, speed: 99999, box: [30, 26], aggro: 0, art: "o_sandbags", raid: true, bag: true,
   ex: "A sandbag spot. Hand in what it asks for, and when it's full the water behind it drains and stays out." }, 0, []);
 
 /* ============================================================ THE COLD, AND WHAT THE RAID'S SPOILS MAKE (2026-09-30)

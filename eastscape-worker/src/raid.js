@@ -46,7 +46,7 @@ export function installRaid(World, { G }) {
   };
   P.raidGrid = function (S) { S.raidG = S.g.map((row, y) => row.map((c, x) => (x > R.zoneX ? "#" : c))); };
   P.raidTick = function (now) {
-    if (this.raidSack && now >= this.raidSack.until) { const wet = this.raidSack.kind === "flood"; this.raidSack = null; this.ctx.storage.delete("raidSack").catch(() => {}); if (wet) this.floodClear(scene(this)); this.houseSay(wet ? "\u{1F30A} The water's gone back down the river. The Yard's stalls are open again, if a bit damp." : "\u2744\uFE0F The frost has melted off the Yard's shutters. The stalls are open again. He will be back."); }
+    if (this.raidSack && now >= this.raidSack.until) { const wet = this.raidSack.kind === "flood"; this.raidSack = null; this.ctx.storage.delete("raidSack").catch(() => {}); if (wet) this.floodClear(scene(this)); this.houseSay(wet ? "\u{1F30A} The water is receding, finally... The Yard's dry again, and Bom, Nestor, Livia, Hexa and Bronny have their shutters up." : "\u2744\uFE0F The frost has melted off the Yard's shutters. The stalls are open again. He will be back."); }
     if (this.raidSack?.kind === "flood" && this.raidSack.water && !this.raid) { const S0 = scene(this); if (S0 && !S0.flood) { S0.flood = new Set(this.raidSack.water); this.floodSend(S0); } }   /* a flooded Yard stays flooded across a restart */
     const Rd = this.raid; if (!Rd) return;
     const S = scene(this);
@@ -136,10 +136,13 @@ export function installRaid(World, { G }) {
   P.raidLost = function (S, now) {
     const boss = S.mobs.find((m) => m.id === this.raid.bossId);
     if (boss) this.bossEnd(S, boss, "escaped");
-    if (this.raid.kind === "flood") {   /* (2026-09-30) THE FLOOD lost: the water stays while the stalls are shut, then goes */
-      this.raid = null; this.raidSave(now, true); clear(S); this.weekCount?.("raid", "lost");
-      this.raidSack = { until: now + R.sackMs, kind: "flood", water: [...(S.flood || [])] }; this.ctx.storage.put("raidSack", this.raidSack).catch(() => {});
-      this.houseSay(`\u{1F30A} THE YARD IS UNDER WATER. The river came over the bank and nobody held it. Bom, Nestor, Livia and Hexa have put the shutters up for ${Math.round(R.sackMs / 60000)} minutes, and you'll be wading till they open.`);
+    if (this.raid.kind === "flood") {   /* (2026-09-30) THE FLOOD lost: see FLOOD.loss */
+      const L = F.loss; this.raid = null; this.raidSave(now, true); clear(S); this.weekCount?.("raid", "lost");
+      S.flood ||= new Set();
+      for (let y = 0; y < G.ROWS; y++) for (let x = L.courtX[0]; x <= L.courtX[1]; x++) if ("pP".includes(S.g[y]?.[x])) S.flood.add(y * G.COLS + x);   /* the court's west half goes under too */
+      this.floodSend(S);
+      this.raidSack = { until: now + L.stallsMs, kind: "flood", water: [...S.flood], closes: L.closes }; this.ctx.storage.put("raidSack", this.raidSack).catch(() => {});
+      this.houseSay(`\u{1F30A} THE YARD IS UNDER WATER. The river came over the bank, nobody held it, and it's halfway across the court. Bom, Nestor, Livia, Hexa and Bronny have put the shutters up for ${Math.round(L.stallsMs / 60000)} minutes, and you'll be wading till the water goes.`);
       return;
     }
     this.raid = null; this.raidSave(now, true); clear(S); this.weekCount?.("raid", "lost");   /* (2026-09-30) the weekly issue */
@@ -147,7 +150,7 @@ export function installRaid(World, { G }) {
     this.houseSay(`\u2744\uFE0F THE ICE MAN'S WAR PARTY HAS SACKED THE YARD. They walked out with the frost behind them and nobody stopped them. Bom, Nestor, Livia and Hexa are boarded up for ${Math.round(R.sackMs / 60000)} minutes. He will remember how easy it was.`);
   };
   /* the dispatcher asks: is this op closed because the Yard is sacked? */
-  P.raidClosed = function (op) { return !!this.raidSack && Date.now() < this.raidSack.until && R.closes.includes(op); };
+  P.raidClosed = function (op) { return !!this.raidSack && Date.now() < this.raidSack.until && (this.raidSack.closes || R.closes).includes(op); };
   P.raidState = function (now = Date.now()) {
     if (this.raid?.kind === "flood") { const S = scene(this), land = S?.floodLandN || 1; return { kind: "flood", phase: this.raid.phase, leftS: Math.max(0, Math.round(((this.raid.phase === "warn" ? this.raid.at : this.raid.until) - now) / 1000)), water: Math.round((100 * (S?.flood?.size || 0)) / land), held: (this.raid.spots || []).filter((x) => x.held).length, hp: this.raid.bossHp || null, fighters: Object.keys(this.raid.by).length }; }
     if (this.raid) return { phase: this.raid.phase, leftS: Math.max(0, Math.round(((this.raid.phase === "warn" ? this.raid.at : this.raid.until) - now) / 1000)), hp: this.raid.bossHp, fighters: Object.keys(this.raid.by).length };
@@ -156,7 +159,7 @@ export function installRaid(World, { G }) {
   P.raidAdmin = function (S, pl, arg, note) {
     const now = Date.now();
     if (arg === "end") { if (!this.raid) return note("There's no raid on."); const Sx = scene(this), flood = this.raid.kind === "flood"; this.raid = null; this.raidSave(now, true); clear(Sx); if (flood) this.floodClear(Sx); this.houseSay(flood ? "\u{1F30A} The river drops back below the bank. Nobody knows why." : "\u2744\uFE0F The war party melts back into the north. For now."); return note("Raid ended."); }
-    if (arg === "unsack") { const wet = this.raidSack?.kind === "flood"; this.raidSack = null; this.ctx.storage.delete("raidSack").catch(() => {}); if (wet) this.floodClear(scene(this)); return note("The Yard's stalls are open again."); }
+    if (arg === "unsack") { const wet = this.raidSack?.kind === "flood"; this.raidSack = null; this.ctx.storage.delete("raidSack").catch(() => {}); if (wet) this.floodClear(scene(this)); return note("The Yard's stalls are open again, and any water's gone."); }
     if (arg === "flood") { if (this.raid) return note(`A raid is already ${this.raid.phase === "warn" ? "on its way" : "on"}.`); this.raidCall(null, now, "flood"); return note(`The Flood started: the river comes over in ${Math.round(F.warnMs / 60000)} minutes.`); }   /* (2026-09-30) THE FLOOD */
     if (arg === "now") { if (this.raid?.phase !== "warn") return note("Start a raid first; this skips its warning."); this.raid.at = now; this.raidTick(now); return note("The warning is skipped: the Ice Man is in the Yard."); }   /* for trying it on dev */
     if (this.raid) return note(`A raid is already ${this.raid.phase === "warn" ? "on its way" : "on"}.`);
@@ -170,7 +173,7 @@ export function installRaid(World, { G }) {
     if (kind === "flood") {   /* (2026-09-30) THE FLOOD */
       this.raid = { kind: "flood", phase: "warn", at: now + F.warnMs, by: {}, said: {} }; this.raidSave(now, true);
       this.raidLast = now; this.ctx.storage.put("raidLast", now).catch(() => {});
-      this.houseSay(`\u{1F30A} FLOOD! It hasn't stopped raining since the King went down, and the Yard's river is right at the top of its bank. ${Math.round(F.warnMs / 60000)} minutes. Bring wood, ore and sand: when it comes over, sandbags are the only thing that will hold it.`);
+      this.houseSay(`\u{1F30A} FLOOD! It hasn't stopped raining since the King went down, and the Yard's river is right at the top of its bank. ${Math.round(F.warnMs / 60000)} minutes. Bring logs, ores and sand: when it comes over, sandbags are the only thing that will hold it.`);
       for (const p of this.pls.values()) p.out.push({ type: "raid", on: true });   /* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */
       return true;
     }
@@ -189,7 +192,7 @@ export function installRaid(World, { G }) {
   const putBag = (S, Rd, i, now) => {
     const sp = Rd.spots[i], [x, y] = F.spots[i].at, M = G.FLOOD_MATS[sp.mat];
     const id = put(S, "sandbag", x, y, 1, "bag", now), m = S.mobs.at(-1);
-    Object.assign(m, { bag: true, spot: i, maxHp: sp.need + 1, hp: sp.got + 1, nm: sp.held ? "Sandbags · held" : `Sandbags · ${M.name} ${sp.got}/${sp.need}`, aggro: 0, perch: true });
+    Object.assign(m, { bag: true, spot: i, maxHp: sp.need + 1, hp: sp.got + 1, nm: sp.held ? `${M.label} · held` : `${M.label} ${sp.got}/${sp.need}`, aggro: 0, perch: true });   /* (the owner: the plates say Sand / Logs / Ores) */
     sp.id = id;
   };
   /* the tiles a held spot keeps dry */
@@ -198,11 +201,11 @@ export function installRaid(World, { G }) {
     if (Rd.phase === "warn") {
       for (const mk of F.warnAt) if (!Rd.said?.[mk] && Rd.at - now <= mk * 1000 && Rd.at - now > 0) {
         (Rd.said ||= {})[mk] = true;
-        this.houseSay(`\u{1F30A} FLOOD: ${{ 120: "The river's lapping at the top of the bank. Two minutes. Get your wood, ore and sand out of the bank.", 60: "Water's coming through the reeds. One minute.", 30: "30 SECONDS. The bank's going." }[mk] || `${mk} seconds.`}`);
+        this.houseSay(`\u{1F30A} FLOOD: ${{ 120: "The river's lapping at the top of the bank. Two minutes. Get your wood, ore and sand out of the bank.", 60: "Water's coming through the reeds. One minute.", 30: "30 SECONDS. The bank's going. Logs, ores, sand: get them out of the bank now." }[mk] || `${mk} seconds.`}`);
       }
       if (now < Rd.at || !S) return;
       const online = Math.max(1, this.pls.size), need = Math.min(F.need.cap, F.need.base + F.need.per * online);
-      Object.assign(Rd, { phase: "on", until: now + F.lasts, nextRise: now, nextWave: now + 15000, drain: false,
+      Object.assign(Rd, { phase: "on", until: now + F.lasts, nextRise: now, nextWave: now, firstWave: true, drain: false,
         spots: F.spots.map((sp, i) => ({ i, mat: sp.mat, need: sp.mat === "sand" ? Math.max(20, Math.round(need * F.need.sand)) : need, got: 0, held: false, id: null })) });
       S.flood = new Set(); S.floodLand = G.floodLand(S.g); S.floodLandN = S.floodLand.length; this.raidGrid(S);
       Rd.spots.forEach((_, i) => putBag(S, Rd, i, now));
@@ -221,6 +224,26 @@ export function installRaid(World, { G }) {
     if (boss && !boss.dead) Rd.bossHp = boss.hp;
     else if (Rd.drain && !boss && now < Rd.until) { const [bx, by] = F.boss.at; Rd.bossId = put(S, F.boss.t, bx, by, Math.max(1, Rd.bossHp || F.hp.base), "boss", now); S.mobs.at(-1).maxHp = Math.max(Rd.bossHp || 1, Rd.bossMax || F.hp.base); }
     if (now >= Rd.until) return this.raidLost(S, now);
+    /* (2026-09-30) THE UNDERTOW FIGHTS BACK: the Tidal Slam, and a fresh wave at each share in F.calls */
+    const ub = Rd.drain ? S.mobs.find((m) => m.id === Rd.bossId && !m.dead) : null;
+    if (ub) {
+      if (now >= (Rd.nextSlam ??= now + F.slam.first)) {
+        Rd.nextSlam = now + F.slam.every[0] + Math.random() * (F.slam.every[1] - F.slam.every[0]);
+        const hit = this.playersIn(S).filter((p) => p.C.hp > 0 && G.cheb(p, ub) <= F.slam.range);
+        for (const p of hit) { const dmg = Math.max(1, Math.round(G.maxHpOf(p.C) * F.slam.hit)); if (!p.god) { p.C.hp -= dmg; this.touch(p); }
+          S.events.push({ type: "splat", who: `p:${p.id}`, n: dmg, kind: "hit", t: now }); if (p.C.hp <= 0) this.die(p, S, { mob: G.MOBS[ub.t].name }); }
+        S.events.push({ type: "slammed", t: now });
+        if (hit.length) for (const p of this.playersIn(S)) this.say(p, `The Undertow brings both fists down: TIDAL SLAM.${hit.includes(p) ? " The water knocks the wind out of you." : ""}`, hit.includes(p) ? "bad" : undefined);
+      }
+      const share = ub.hp / (ub.maxHp || 1);
+      for (const at of F.calls) if (share <= at && !(Rd.called ||= []).includes(at)) {
+        Rd.called.push(at);
+        const n = F.wave.base + Math.floor(this.pls.size / F.wave.perPlayers), bag = F.wave.kinds.flatMap(([t, w]) => Array(w).fill(t));
+        const pool = S.floodLand.filter((i) => { const [x, y] = xy(i); return (G.floodWetAt(S.g, x + 1, y) || G.floodWetAt(S.g, x - 1, y) || G.floodWetAt(S.g, x, y + 1) || G.floodWetAt(S.g, x, y - 1)) && !this.occupied(S, x, y); });
+        for (let k = 0; k < n && pool.length; k++) { const [x, y] = xy(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]), t = bag[Math.floor(Math.random() * bag.length)]; put(S, t, x, y, G.MOBS[t].hp, "wave", now); }
+        this.houseSay(`\u{1F30A} The Undertow ${at > 0.4 ? "is hurting. It roars down into the pond" : "is nearly beaten. It screams at the river"}, and the Drowned come up out of the water to answer it.`);
+      }
+    }
     /* THE WATER: up while any spot is open, down once all five are held */
     if (now >= (Rd.nextRise || 0)) {
       Rd.nextRise = now + F.riseMs;
@@ -238,7 +261,8 @@ export function installRaid(World, { G }) {
     /* THE DROWNED climb out of the water, never over the river */
     if (!Rd.drain && now >= Rd.nextWave) {
       Rd.nextWave = now + F.wave.every;
-      const alive = S.mobs.filter((m) => m.raid === "wave" && !m.dead).length, want = Math.min(F.wave.cap, F.wave.base + Math.floor(this.pls.size / F.wave.perPlayers)) - alive;
+      const first = Rd.firstWave ? F.wave.first || 1 : 1; Rd.firstWave = false;
+      const alive = S.mobs.filter((m) => m.raid === "wave" && !m.dead).length, want = Math.min(F.wave.cap * first, (F.wave.base + Math.floor(this.pls.size / F.wave.perPlayers)) * first) - alive;
       const from = [...S.flood].filter((i) => { const [x, y] = xy(i); return !this.occupied(S, x, y); }), bag = F.wave.kinds.flatMap(([t, w]) => Array(w).fill(t));
       const pool = from.length ? from : S.floodLand.filter((i) => { const [x, y] = xy(i); return (G.floodWetAt(S.g, x + 1, y) || G.floodWetAt(S.g, x - 1, y) || G.floodWetAt(S.g, x, y + 1) || G.floodWetAt(S.g, x, y - 1)) && !this.occupied(S, x, y); });
       for (let k = 0; k < want && pool.length; k++) { const [x, y] = xy(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]), t = bag[Math.floor(Math.random() * bag.length)]; put(S, t, x, y, G.MOBS[t].hp, "wave", now); }
@@ -257,11 +281,11 @@ export function installRaid(World, { G }) {
     for (const k of keys) { if (left <= 0) break; const t = G.takeInv(C.inv, k, Math.min(left, G.countItems({ inv: C.inv, bank: [] }, [k]))); took += t; left -= t; }
     if (!took) return this.say(pl, `This spot wants ${M.name}: ${M.ex}. You've none in your bag${C.inv.some((x) => x && M.test(x.k)) ? " that isn't favourited" : ""}.`, "bad");
     sp.got += took; Rd.by[pl.id] = (Rd.by[pl.id] || 0) + took * F.handValue; this.touch(pl);
-    m.hp = sp.got + 1; m.hurtAt = now; m.nm = `Sandbags · ${M.name} ${sp.got}/${sp.need}`; S.whoSig = null;   /* one over the count, so an empty spot is not a dead one (the page draws hp-1 of maxHp-1) */
+    m.hp = sp.got + 1; m.hurtAt = now; m.nm = `${M.label} ${sp.got}/${sp.need}`; S.whoSig = null;   /* one over the count, so an empty spot is not a dead one (the page draws hp-1 of maxHp-1) */
     S.events.push({ type: "splat", who: m.id, n: took, kind: "hit", t: now });
     this.say(pl, `You pile ${took.toLocaleString()} ${M.name} on the sandbags (${sp.got.toLocaleString()} of ${sp.need.toLocaleString()}).`, "good");
     if (sp.got >= sp.need) {
-      sp.held = true; m.hp = m.maxHp = sp.need + 1; m.nm = "Sandbags · held";
+      sp.held = true; m.hp = m.maxHp = sp.need + 1; m.nm = `${M.label} · held`;
       const held = Rd.spots.filter((x) => x.held).length;
       for (const i of [...(S.flood || [])]) if (dryOf(Rd).has(i)) S.flood.delete(i);
       this.floodSend(S);

@@ -79,8 +79,10 @@ is([W.raid, S2.mobs.some((m) => m.raid), G.tixIn(a.C) > tix0.a, G.tixIn(fighter.
 ({ W, said } = await make());
 const S3 = W.scene("workyard"); const z = player(W, 12, 20); W.raidAdmin(S3, z, "flood", () => {}); let t3 = W.raid.at; W.raidTick(t3);
 for (let i = 0; i < 2000 && W.raid; i++) { t3 += F.riseMs; W.raid.until = t3 + 60000; W.raidTick(t3); }
-is([W.raid, !!W.raidSack, W.raidSack?.kind, S3.flood?.size > 0, said.some((x) => /UNDER WATER/.test(x)), W.raidClosed("counter")], [null, true, "flood", true, true, true], "a loss: half the west bank under water, the stalls shut, the water stays");
+const L = F.loss, court = [...S3.flood].filter((i) => i % COLS >= L.courtX[0] && i % COLS <= L.courtX[1] && "pP".includes(S3.g[Math.floor(i / COLS)][i % COLS]));
+is([W.raid, W.raidSack?.kind, Math.round((W.raidSack.until - t3) / 60000), S3.flood?.size > 0, court.length > 0, said.some((x) => /UNDER WATER/.test(x))], [null, "flood", 20, true, true, true], "a loss: the water stays twenty minutes, and takes the west half of the court too");
+is([["counter", "eggtrade", "ex", "hw", "order"].map((op) => W.raidClosed(op))], [[true, true, true, true, true]], "Bom, Nestor, Livia, Hexa and Bronny are shut for those twenty minutes");
 W.raidSack.until = Date.now() - 1; W.raidTick(Date.now());
-is([W.raidSack, S3.flood, said.some((x) => /gone back down/.test(x))], [null, null, true], "and when the time's out the stalls open and the water goes");
+is([W.raidSack, S3.flood, said.some((x) => /receding, finally/.test(x))], [null, null, true], "twenty minutes on: the water is receding, finally, and the stalls open");
 console.log(bad ? `\n${bad} problem(s)` : "\nThe Flood holds: the water keeps off the dock, wading is slower, sandbags fill and drain, a restart keeps it, a win pays the haulers, a loss floods the Yard");
 process.exitCode = bad ? 1 : 0;
