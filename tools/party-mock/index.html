@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Party Games</title>
+<!-- (2026-10-02, the owner: "using the framework we have for EastScape, I want to ideate using the UI mockup, gameplan mockup, etc styling some party
+     games for EastCoin.VIP ... fun, mostly short, easy to get into". Answers to the questions: there is never a stream (only the chat rail); they are played
+     for ZCoins; not only text games, Mario Party and Fall Guys type things too; site only; "just fun game mix. think browser games, but customized to our
+     users and audience. highscores, rankings, lobbies"; full EastScape kit; into /gameplan; maybe standalone "flash game" style embeds on eastcoin.vip).
+     Two games are PLAYABLE against bots (party.js). The four game icons are PixelLab drafts; the players are the game's own hero sprites.
+     Local only; built into /gameplan. http://localhost:4321/tools/party-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0912;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 8% -10%,#3a1030,transparent),radial-gradient(900px 600px at 100% 30%,#102a3a,transparent),#0b0912}
+main{max-width:1280px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 38px/1.1 Cinzel,Georgia,serif;color:#ffd27a}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffcf6a}
+h3{margin:16px 0 6px;font:800 17px Cinzel,serif;color:#ffe8b0}
+.lede{margin:0 0 10px;color:#cdc2a8;max-width:1000px;line-height:1.6}.lede b,.sec>p b{color:#fff0cc}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#24142a;box-shadow:0 0 0 1.5px #5a2a5a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd27a}
+.sec{margin:44px 0 0;padding:22px 0 0;border-top:2px solid #2e1e34}.sec>p{color:#bdb39c;max-width:1000px;line-height:1.6}
+.callout{margin-top:14px;padding:13px 16px;border-radius:10px;background:rgba(255,190,70,.08);box-shadow:inset 0 0 0 1.5px rgba(255,190,70,.45);color:#f6e9cc;line-height:1.6;max-width:1000px}.callout b{color:#ffd27a}
+.callout.red{background:rgba(255,90,70,.08);box-shadow:inset 0 0 0 1.5px rgba(255,110,90,.5)}
+/* the hall */
+.hall{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;margin-top:14px;align-items:start}@media (max-width:1000px){.hall{grid-template-columns:1fr}}
+.hall .k-win{max-height:none}
+.quick{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seats{display:inline-flex;gap:3px}.seats i{width:9px;height:9px;border-radius:50%;background:rgba(90,58,24,.22);box-shadow:inset 0 0 0 1px rgba(90,58,24,.35)}.seats i.on{background:var(--k-gold);box-shadow:none}
+.k-row .k-slot img{width:28px;height:28px}
+.k-row .when{font:800 12.5px Lora,serif;color:var(--k-ink2);min-width:46px;text-align:right}
+.k-row .when.hot{color:var(--k-bad)}
+.lb{width:100%;border-collapse:collapse;font:700 13px Lora,serif}.lb th{text-align:left;font:var(--k-f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--k-ink2);padding:4px 6px}.lb td{padding:5px 6px;border-top:1px solid var(--k-line)}
+.lb td:first-child{width:24px;color:var(--k-ink2)}.lb tr.me td{background:rgba(200,150,58,.16)}.lb .ttl{font:800 11px Lora,serif;color:var(--k-rare)}
+/* stages */
+.play{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;margin-top:14px;align-items:start}@media (max-width:1050px){.play{grid-template-columns:1fr}}
+.stage{position:relative;border-radius:12px;overflow:hidden;box-shadow:0 0 0 2px #5a3a1a,0 14px 40px rgba(0,0,0,.6);background:#0c0814}
+.stage canvas{display:block;width:100%;height:auto;image-rendering:pixelated;outline:none;touch-action:none}
+.stage canvas:focus-visible{box-shadow:inset 0 0 0 3px #ffd27a}
+.over{position:absolute;inset:0;display:grid;place-items:center;background:rgba(10,6,14,.62);text-align:center;padding:16px}
+.over[hidden]{display:none}.over .box{max-width:480px;display:grid;gap:10px;justify-items:center}
+.over b{font:800 28px Cinzel,serif;color:#ffd27a}.over p{margin:0;font:600 14px/1.55 Lora,serif;color:#f0e6cc}.over p b{font:inherit;color:#fff0cc}
+.over table{font:700 13px Lora,serif;border-collapse:collapse;min-width:260px}.over td{padding:3px 10px;text-align:left}.over tr.me td{color:#ffd27a}
+.modes{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center}
+.modes button{font:800 13px Lora,serif;color:#e8e0cc;background:#24142a;border:0;border-radius:999px;padding:7px 14px;box-shadow:0 0 0 1.5px #5a2a5a;cursor:pointer}
+.modes button[aria-pressed="true"]{background:#5a2a14;box-shadow:0 0 0 2px #ffd27a}
+.modes span{font:700 12.5px Lora,serif;color:#a89070;margin-left:6px}
+.keys{font:600 12.5px/1.6 Lora,serif;color:#b8a888;margin-top:8px}.keys kbd{font:800 11.5px Lora,serif;padding:1px 6px;border-radius:4px;background:#24142a;box-shadow:0 0 0 1px #5a2a5a;color:#ffe8b0}
+.pad{display:none;gap:8px;margin-top:8px;justify-content:space-between}
+.pad button{font:800 18px Lora,serif;width:58px;height:52px;border:0;border-radius:12px;background:#24142a;color:#ffd27a;box-shadow:0 0 0 1.5px #5a2a5a;touch-action:none;user-select:none}
+.pad .grp{display:flex;gap:6px}@media (pointer:coarse){.pad{display:flex}}
+.side{display:grid;gap:12px}
+.log{font:600 12.5px/1.5 Lora,serif;max-height:190px;overflow:auto}.log p{margin:0}.log .bad{color:var(--k-bad)}.log .good{color:var(--k-good)}
+.hp-score{display:grid;gap:4px}.hp-s{display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:center;padding:4px 8px;border-radius:6px;font:700 13px Lora,serif}
+.hp-s i{width:10px;height:10px;border-radius:50%}.hp-s.me b{color:var(--k-gold-ink)}.hp-s.hold{background:rgba(184,48,42,.14);box-shadow:inset 0 0 0 1.5px rgba(184,48,42,.5)}.hp-s em{font-style:normal;color:var(--k-bad)}
+.seal{font:600 12px/1.5 Lora,serif;color:var(--k-ink2);word-break:break-all}.seal code{font:700 11.5px ui-monospace,monospace;color:var(--k-ink)}.seal .ok{color:var(--k-good);font-weight:800}
+/* the lineup */
+.ideas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(370px,100%),1fr));gap:14px;margin-top:14px}
+.idea{background:linear-gradient(180deg,#1e1426,#120e18);border-radius:14px;padding:14px;box-shadow:0 0 0 1.5px #3e2a4a;display:grid;gap:8px;align-content:start}
+.idea.pick{box-shadow:0 0 0 2px #ffc24a,0 10px 30px rgba(255,180,60,.12)}
+.idea .top{display:flex;gap:12px;align-items:center}
+.idea .pic{width:76px;height:76px;flex:none;border-radius:10px;background:radial-gradient(circle at 50% 60%,rgba(255,120,200,.16),transparent 70%),#0e0a14;display:grid;place-items:center;overflow:hidden}
+.idea .pic img{max-width:64px;max-height:64px;image-rendering:pixelated}
+.idea b.n{font:800 20px/1.15 Cinzel,serif;color:#ffe8b0;display:block}
+.idea .like{font:700 11.5px Lora,serif;color:#a898b8}
+.tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.tag{font:800 10px Lora,serif;letter-spacing:.07em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:#3a2a0a;color:#ffd27a}
+.tag.coin{background:#5a4210;color:#ffe27a}.tag.skill{background:#10304a;color:#8ad0ff}.tag.free{background:#203a20;color:#9ae08a}.tag.play{background:#ffd27a;color:#1a1006}
+.idea dl{display:grid;grid-template-columns:86px 1fr;gap:5px 10px;margin:0;font:600 13px/1.5 Lora,serif}.idea dt{color:#a898b8;font-weight:800}.idea dd{margin:0;color:#ddd2b8}.idea dd b{color:#fff0cc}
+.tbl{width:100%;border-collapse:collapse;font:600 13.5px/1.45 Lora,serif;margin-top:12px;background:#15101c;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #2e2238}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a898b8;padding:10px 12px 6px}.tbl td{padding:8px 12px;border-top:1px solid #2a1e30;vertical-align:top}
+.tbl td:first-child{font-weight:800;color:#ffe8b0}.tbl td b{color:#fff0cc}.wrapx{overflow-x:auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(270px,100%),1fr));gap:10px;margin-top:12px}.card{background:#15101c;border-radius:10px;padding:12px 14px;box-shadow:0 0 0 1.5px #2e2238}
+.card b{display:block;font:800 15px Cinzel,serif;color:#ffd27a;margin-bottom:4px}.card span{font:600 13.5px/1.55 Lora,serif;color:#cdc2a8}.card span b{display:inline;font:inherit;color:#fff0cc}
+/* board night */
+.board{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;margin-top:14px;align-items:start}@media (max-width:1000px){.board{grid-template-columns:1fr}}
+.board svg{width:100%;height:auto;display:block;border-radius:12px;box-shadow:0 0 0 2px #5a3a1a;background:#1a0e22}
+/* embed */
+.embed{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:14px}@media (max-width:900px){.embed{grid-template-columns:1fr}}
+.frame{border-radius:10px;box-shadow:0 0 0 1.5px #3e2a4a;background:#0e0a14;padding:10px}
+.frame .bar{display:flex;gap:5px;align-items:center;margin-bottom:8px;font:700 11.5px ui-monospace,monospace;color:#8a7a9a}.frame .bar i{width:9px;height:9px;border-radius:50%;background:#3a2a4a}
+.frame .scr{display:grid;grid-template-columns:1fr 92px;gap:8px;min-height:170px}
+.frame .g{border-radius:6px;background:linear-gradient(135deg,#3a1030,#10203a);display:grid;place-items:center;font:800 16px Cinzel,serif;color:#ffd27a;text-align:center;padding:8px}
+.frame .rail{border-radius:6px;background:#18141e;font:600 10.5px/1.6 Lora,serif;color:#7a6a8a;padding:6px}
+pre.code{margin:10px 0 0;padding:10px 12px;border-radius:8px;background:#0e0a14;box-shadow:inset 0 0 0 1px #3e2a4a;font:12px/1.55 ui-monospace,monospace;color:#d8c8e8;overflow-x:auto}
+.note{font:600 12.5px/1.5 Lora,serif;color:#a89070}
+</style>
+</head>
+<body>
+<main>
+  <h1>Party Games</h1>
+  <p class="lede">Small multiplayer games on eastcoin.vip, played for ZCoins, in the EastScape look. A quick lobby, a game that takes about a minute or two, a pot,
+    and a ladder to climb. Some are <b>Fall Guys / Mario Party</b> (shove, hop, race and survive). Some are <b>table games</b> (bluff, bank and gamble on a sealed
+    fuse). A few are <b>solo arcade cabinets</b> with daily high scores. <b>Two of them are playable below</b> against bots: Pushover and Hot Potato.</p>
+  <nav class="jump"><a href="#hall">The Party Hall</a><a href="#pushover">Play: Pushover</a><a href="#potato">Play: Hot Potato</a><a href="#lineup">The lineup</a><a href="#boardnight">Board Night</a><a href="#money">ZCoins and bots</a><a href="#ranks">Rankings and high scores</a><a href="#embed">Standalone and embeds</a><a href="#server">How it runs</a><a href="#first">What to build first</a><a href="#open">Your calls</a></nav>
+
+  <!-- ===================================================================== THE HALL -->
+  <section class="sec" id="hall">
+    <h2>The Party Hall</h2>
+    <p>One page, <code>/?view=party</code>, built from the kit's windows. <b>Quick play</b> drops you in the next table that is filling. Below that is every open
+      table with its seats, its buy-in and its countdown. A table starts <b>when its clock runs out with at least two seated</b>, the same way the PvP tables
+      start, so nobody waits for a full room. A <b>private room</b> gets a four-letter code to paste in chat. <b>Watching</b> is free, and the players and the
+      people watching share one room, so the hall never looks empty.</p>
+    <div class="hall">
+      <div class="k-win k-paper">
+        <div class="k-head"><img src="/v3/assets/img/glad/flat/ui/nav_games.png" alt=""><b>The Party Hall</b><span class="k-sub"><img src="/v3/assets/img/glad/flat/ui/g_zcoins.png" alt="">412 ZC · 9 here</span></div>
+        <div class="k-tabs" role="tablist"><button role="tab" aria-selected="true">Tables</button><button role="tab" aria-selected="false">Arcade</button><button role="tab" aria-selected="false">Rankings</button><button role="tab" aria-selected="false">My games</button></div>
+        <div class="k-body">
+          <div class="quick"><button class="k-btn" type="button">Quick play · 20 ZC</button><button class="k-btn sec" type="button">Private room</button>
+            <div class="k-seg" style="margin-left:auto"><button aria-pressed="true">All</button><button aria-pressed="false">Action</button><button aria-pressed="false">Table</button><button aria-pressed="false">Free</button></div></div>
+          <div class="k-sect"><span class="k-label">Filling now</span></div>
+          <button class="k-row on" type="button"><span class="k-slot"><img src="pushover.png" alt=""></span><span><b>Pushover</b><small>4 of 8 seated · heartlarva, zwades, dookie, bronny</small></span><span class="k-end"><span class="seats"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></span><span class="k-chip gold">20 ZC</span><span class="when hot">0:12</span></span></button>
+          <button class="k-row" type="button"><span class="k-slot"><img src="potato.png" alt=""></span><span><b>Hot Potato</b><small>2 of 6 · bootypaper, fasteddie</small></span><span class="k-end"><span class="seats"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></span><span class="k-chip gold">20 ZC</span><span class="when">0:41</span></span></button>
+          <button class="k-row" type="button"><span class="k-slot"><img src="dice.png" alt=""></span><span><b>Liar's Dice</b><small>3 of 5 · CASINO is dealing</small></span><span class="k-end"><span class="seats"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span><span class="k-chip gold">20 ZC</span><span class="when">0:55</span></span></button>
+          <div class="k-sect"><span class="k-label">Playing</span></div>
+          <button class="k-row off" type="button"><span class="k-slot"><img src="gauntlet.png" alt=""></span><span><b>Tumble Gauntlet</b><small>Round 2 of 3 · 6 still in · 2 watching</small></span><span class="k-end"><span class="k-chip">Watch</span></span></button>
+          <button class="k-row off" type="button"><span class="k-slot"><img src="/v3/assets/img/glad/flat/casino/bomb.png" alt=""></span><span><b>Light Cycles</b><small>Best of 5, 2–1 · andyreidisapawg leads</small></span><span class="k-end"><span class="k-chip">Watch</span></span></button>
+        </div>
+        <div class="k-foot"><span class="k-note">Buy-ins are fixed. Every pot goes to the players and the house takes nothing.</span><button class="k-btn sm" type="button">Rules</button></div>
+      </div>
+      <div class="k-win k-paper">
+        <div class="k-head"><img src="/v3/assets/img/glad/flat/d_trophies.png" alt=""><b>Party ladder</b><span class="k-sub">October season</span></div>
+        <div class="k-body">
+          <div class="k-seg"><button aria-pressed="true">Overall</button><button aria-pressed="false">Pushover</button><button aria-pressed="false">Potato</button><button aria-pressed="false">Today</button></div>
+          <table class="lb"><thead><tr><th></th><th>Player</th><th>Rating</th><th>Won</th><th>Net</th></tr></thead><tbody>
+            <tr><td>1</td><td>heartlarva <span class="ttl">Party Animal</span></td><td>1,412</td><td>31</td><td>+388</td></tr>
+            <tr><td>2</td><td>andyreidisapawg</td><td>1,366</td><td>24</td><td>+212</td></tr>
+            <tr class="me"><td>3</td><td>bootypaper</td><td>1,290</td><td>19</td><td>+96</td></tr>
+            <tr><td>4</td><td>zwades <span class="ttl">Unshoveable</span></td><td>1,251</td><td>17</td><td>+40</td></tr>
+            <tr><td>5</td><td>fasteddie</td><td>1,188</td><td>12</td><td>−64</td></tr>
+          </tbody></table>
+          <div class="k-sect"><span class="k-label">Today's arcade records</span></div>
+          <div class="k-row off"><span class="k-slot sm"><img src="/v3/assets/img/glad/flat/d_arcade.png" alt=""></span><span><b>Chip Stack · 41 high</b><small>dookie, 2:14 PM · a new daily record</small></span><span class="k-end"><span class="k-chip gold">👑</span></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== PUSHOVER -->
+  <section class="sec" id="pushover">
+    <h2>Play: Pushover</h2>
+    <p><b>Sumo meets Jump Showdown.</b> Everyone starts on a velvet ring in the dark. <b>Shove</b> to send people flying, and <b>hop</b> to dodge a shove or the sweeper.
+      Every 8 seconds the outer band flashes red and drops away. At 18 seconds a striped sweeper comes out of the middle and speeds up. The last one on the ring takes
+      the pot. A round is about a minute, and if you're knocked off early you watch the rest, so it is never dead time. The bots go for whoever is nearest the edge,
+      and that includes you.</p>
+    <div class="play">
+      <div>
+        <div class="modes" id="poSize"><button type="button" data-n="4" aria-pressed="false">4 players</button><button type="button" data-n="6" aria-pressed="true">6 players</button><button type="button" data-n="8" aria-pressed="false">8 players</button><span>Your record here: <b id="poRec"></b></span></div>
+        <div class="stage"><canvas id="poCv" width="960" height="560" tabindex="0" aria-label="The Pushover ring. Arrow keys or WASD to move, Space to shove, Shift or X to hop."></canvas>
+          <div class="over" id="poOver"><div class="box"><b id="poT">Pushover</b><p id="poP">20 ZC a seat (pretend chips here). Last one on the ring takes every seat's buy-in.</p><div id="poX"></div><button type="button" class="k-btn" id="poGo">Step onto the ring</button></div></div></div>
+        <div class="pad" id="poPad"><div class="grp"><button type="button" data-k="ArrowLeft" aria-label="Left">◀</button><button type="button" data-k="ArrowUp" aria-label="Up">▲</button><button type="button" data-k="ArrowDown" aria-label="Down">▼</button><button type="button" data-k="ArrowRight" aria-label="Right">▶</button></div><div class="grp"><button type="button" data-k="KeyX" aria-label="Hop">⤒</button><button type="button" data-k="Space" aria-label="Shove">✊</button></div></div>
+        <p class="keys"><kbd>WASD</kbd>/<kbd>arrows</kbd> move · <kbd>Space</kbd> shove (1.5 s cooldown) · <kbd>Shift</kbd>/<kbd>X</kbd> hop (over people and the sweeper) · <kbd>Esc</kbd> jump off.</p>
+      </div>
+      <div class="side">
+        <div class="k-win k-paper"><div class="k-head"><img src="pushover.png" alt=""><b>Ring log</b></div>
+          <div class="k-body"><div class="log" id="poLog"><p class="note">Nothing yet.</p></div></div></div>
+        <div class="k-win k-paper"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/help.png" alt=""><b>Why it works</b></div>
+          <div class="k-body"><p class="k-note" style="margin:0">Two buttons, and you get it in five seconds. Chaos makes it funny: being shoved off by the sweeper while you're
+            busy shoving someone else is the joke. The shrinking ring means nobody can hide, and the cooldowns mean nobody can spam.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== HOT POTATO -->
+  <section class="sec" id="potato">
+    <h2>Play: Hot Potato</h2>
+    <p><b>A greed game on a sealed fuse.</b> Holding the potato earns <b>10 points a second</b>, but they only count once you <b>pass it</b>. Passing banks
+      them. When it blows, whoever is holding it (or about to catch it) loses everything unbanked and <b>25 from the bank</b>. Nobody knows the fuse: it is
+      drawn from a seed whose hash is shown <b>before</b> the round and revealed after it, like every casino game here. A catch takes 0.8 s before you can throw,
+      and you can't throw straight back. So passing late is an attack, and the bots will do it to whoever is leading. Five rounds, and the highest bank takes the pot.</p>
+    <div class="play">
+      <div>
+        <div class="stage"><canvas id="hpCv" width="960" height="500" tabindex="0" aria-label="The Hot Potato table. When you hold it, click a player or press 2 to 6 to pass."></canvas>
+          <div class="over" id="hpOver"><div class="box"><b id="hpT">Hot Potato</b><p id="hpP">Six at the table, 20 ZC each (pretend chips). Highest bank after five rounds takes the pot.</p><div id="hpX"></div><button type="button" class="k-btn" id="hpGo">Sit down</button></div></div></div>
+        <p class="keys">When it's in your hands: <b>click a player</b> or press <kbd>2</kbd>–<kbd>6</kbd> to pass. Nobody is shown a fuse clock, because nobody has one.</p>
+      </div>
+      <div class="side">
+        <div class="k-win k-paper"><div class="k-head"><img src="potato.png" alt=""><b>Banks</b></div>
+          <div class="k-body"><div class="hp-score" id="hpScore"></div><p class="seal" id="hpSeal" style="margin:6px 0 0"></p></div></div>
+        <div class="k-win k-paper"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/scroll.png" alt=""><b>Table log</b></div>
+          <div class="k-body"><div class="log" id="hpLog"></div></div></div>
+      </div>
+    </div>
+    <div class="callout"><b>Why this one is safe for real ZCoins:</b> a script knows exactly what you know. The fuse is sealed, and the 0.8 s catch swamps
+      any reaction-time edge. What wins is reading the table: how greedy to be, and who to hand it to when it's getting late. That is the shape every
+      coin table needs (see <a href="#money" style="color:#ffd27a">ZCoins and bots</a>).</div>
+  </section>
+
+  <!-- ===================================================================== LINEUP -->
+  <section class="sec" id="lineup">
+    <h2>The lineup</h2>
+    <p>Twelve ideas, mixed on purpose: action, table, knowledge and solo. Each card says what it's like, how long it runs, how many play, and which stake rule it
+      falls under. <span class="tag coin">coin table</span> is safe for real buy-ins as it stands. <span class="tag skill">skill table</span> needs the bot rules
+      below. <span class="tag free">free / titles</span> pays titles and rating, never coins.</p>
+    <div class="ideas">
+      <div class="idea pick"><div class="top"><div class="pic"><img src="pushover.png" alt=""></div><div><b class="n">Pushover</b><span class="like">like Fall Guys' Jump Showdown + Mario Party's Bumper Balls</span><div class="tags"><span class="tag play">playable above</span><span class="tag skill">skill table</span></div></div></div>
+        <dl><dt>Players</dt><dd>2–8 · about 60 s</dd><dt>Hook</dt><dd>Shove, hop, the ring shrinks, the sweeper spins. <b>Last one on wins.</b></dd><dt>Ours</dt><dd>A Yard boss can turn up as a hazard ("the Grin wants a go"), and the ring skins are EastScape maps.</dd></dl></div>
+      <div class="idea pick"><div class="top"><div class="pic"><img src="potato.png" alt=""></div><div><b class="n">Hot Potato</b><span class="like">push-your-luck, with a sealed fuse</span><div class="tags"><span class="tag play">playable above</span><span class="tag coin">coin table</span></div></div></div>
+        <dl><dt>Players</dt><dd>3–6 · about 2 min</dd><dt>Hook</dt><dd>Hold for points, bank by passing, and don't be holding it at the boom.</dd><dt>Ours</dt><dd>The fuse is checkable on <code>/?view=verify</code>, the same as every casino seed.</dd></dl></div>
+      <div class="idea pick"><div class="top"><div class="pic"><img src="gauntlet.png" alt=""></div><div><b class="n">Tumble Gauntlet</b><span class="like">like Fall Guys: a race, then survival, then a final</span><div class="tags"><span class="tag skill">skill table</span></div></div></div>
+        <dl><dt>Players</dt><dd>4–12 · 3 rounds, about 4 min</dd><dt>Hook</dt><dd>A top-down obstacle course: carousels, swinging bars, a <b>door dash</b> where half the doors are fake, conveyors and slime. The top 60% go through each round.</dd><dt>Ours</dt><dd><b>Ghosts</b>: with only 3 real people on, the other seats are <b>replays of real players' best runs</b>, so it's never you against nobody.</dd></dl></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="dice.png" alt=""></div><div><b class="n">Liar's Dice</b><span class="like">CASINO deals; perudo rules</span><div class="tags"><span class="tag coin">coin table</span></div></div></div>
+        <dl><dt>Players</dt><dd>2–6 · about 5 min</dd><dt>Hook</dt><dd>Five dice each under a cup. Bid "four 5s", raise it or call liar. Losers lose a die, and the last cup with dice wins.</dd><dt>Ours</dt><dd>CASINO narrates the calls in that terse ominous voice. The dice are committed from a seed, just like a deck.</dd></dl></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/casino/bomb.png" alt=""></div><div><b class="n">Light Cycles</b><span class="like">Tron / Snake</span><div class="tags"><span class="tag skill">skill table</span></div></div></div>
+        <dl><dt>Players</dt><dd>2–6 · 20 s rounds, best of 5</dd><dt>Hook</dt><dd>Leave a trail, box people in, don't hit anything. Two keys. Rounds are short enough that losing is funny rather than painful.</dd><dt>Ours</dt><dd>Trails in each player's store colour, and a Prism name gets a rainbow trail.</dd></dl></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/ui/music.png" alt=""></div><div><b class="n">Musical Chairs</b><span class="like">in the Green Room</span><div class="tags"><span class="tag skill">skill table</span></div></div></div>
+        <dl><dt>Players</dt><dd>3–8 · about 90 s</dd><dt>Hook</dt><dd>Walk round the chairs while <b>a real Green Room song</b> plays. When it stops, grab one. One fewer chair each round.</dd><dt>Ours</dt><dd>The stop is sealed server-side, so nobody can read the waveform. Hop and shove from Pushover work here too.</dd></dl></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/casino/die.png" alt=""></div><div><b class="n">Board Night</b><span class="like">Mario Party, short</span><div class="tags"><span class="tag coin">coin table</span></div></div></div>
+        <dl><dt>Players</dt><dd>4 · 8 turns, about 12 min (the long one)</dd><dt>Hook</dt><dd>Roll, move and buy crowns. Every two turns <b>everyone plays one of the other games</b> for board coins. <a href="#boardnight" style="color:#ffd27a">Drawn below.</a></dd><dt>Ours</dt><dd>The board is an EastScape map, and the spaces are its landmarks.</dd></dl></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/ui/g_casino.png" alt=""></div><div><b class="n">Over / Under</b><span class="like">The Price is Right, NFL edition</span><div class="tags"><span class="tag coin">coin table*</span></div></div></div>
+        <dl><dt>Players</dt><dd>2–10 · 6 questions, about 2 min</dd><dt>Hook</dt><dd>"Mahomes' passing yards on Sunday?" Closest without going over takes the round.</dd><dt>Ours</dt><dd>Questions built from the Picks markets and Odds API scores we already store. *A 10 s answer clock keeps lookups out mostly, not entirely.</dd></dl></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/ui/scroll3.png" alt=""></div><div><b class="n">Sketchy</b><span class="like">draw and guess</span><div class="tags"><span class="tag free">free / titles</span></div></div></div>
+        <dl><dt>Players</dt><dd>3–8 · about 6 min</dd><dt>Hook</dt><dd>One draws an EastScape thing (a goat in a toga, a ticket, the Grin) while the rest guess.</dd><dt>Ours</dt><dd>Drawings go nowhere public, and an admin can hide one. It plays for titles only, because judging a drawing is not a ZCoin decision.</dd></dl></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/d_arcade.png" alt=""></div><div><b class="n">The Arcade</b><span class="like">"flash game" cabinets, solo</span><div class="tags"><span class="tag free">free / titles</span><span class="tag coin">weekly cup</span></div></div></div>
+        <dl><dt>Players</dt><dd>1 · 30–90 s a go</dd><dt>Hook</dt><dd>Chip Stack (stack falling chips), Flappy Coin, Slot Runner. A daily seed, so everyone gets the same level and <b>daily high scores</b>.</dd><dt>Ours</dt><dd>The best of each week gets a house prize like the Daily Pot, with no buy-in, so there's nothing for a bot to farm.</dd></dl></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/ui/rlchip_20.png" alt=""></div><div><b class="n">Red Light, Green Light</b><span class="like">already built, still paused</span><div class="tags"><span class="tag coin">coin table</span></div></div></div>
+        <dl><dt>Players</dt><dd>2–6 · about 2 min</dd><dt>Hook</dt><dd>Pick your sprint each light, then watch. It's the template for a coin-safe party game, and it moves into the Hall.</dd><dt>Ours</dt><dd>Needs its shell route, a card and the <code>paused</code> flag flipped. The engine and 40 tests are done.</dd></dl></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/d_slotstatue.png" alt=""></div><div><b class="n">Heist Split</b><span class="like">split or steal, for a crew</span><div class="tags"><span class="tag coin">coin table</span></div></div></div>
+        <dl><dt>Players</dt><dd>4–6 · about 3 min</dd><dt>Hook</dt><dd>Crack the vault together (a short co-op puzzle), then everyone secretly picks Split or Grab. Grab alone and you take it all; grab with others and the alarm takes it.</dd><dt>Ours</dt><dd>The drama is chat: <b>the rail is right there</b>, and that's where the deals and betrayals happen.</dd></dl></div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== BOARD NIGHT -->
+  <section class="sec" id="boardnight">
+    <h2>Board Night</h2>
+    <p>The Mario Party one, cut to a lunch break: <b>4 players, 8 turns</b>. Roll a die (sealed like every seed), walk the loop, and land on coins, a trap, a shop or a
+      <b>chance</b> space. CASINO sells a <b>crown</b> for 20 board coins somewhere on the loop, then moves it. After every second turn the board stops and everyone
+      plays <b>one of the other games</b> (a 40-second Pushover, a three-pass Potato, one Light Cycles round) for board coins. Most crowns wins, and coins break a
+      tie. It is the one game here that takes longer than five minutes, so it gets its own <b>scheduled</b> table ("Board Night, 8 PM") rather than quick play.</p>
+    <div class="board">
+      <svg viewBox="0 0 760 360" role="img" aria-label="A Board Night board: a loop of spaces with four players and a crown.">
+        <defs><pattern id="crp" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="#2a1030"/><rect x="3" y="4" width="2" height="2" fill="#ffd84a"/><rect x="14" y="12" width="2" height="2" fill="#ff6ad0"/><rect x="8" y="18" width="2" height="2" fill="#6ad0ff"/></pattern></defs>
+        <rect width="760" height="360" fill="url(#crp)"/>
+        <g id="spaces"></g>
+        <text x="380" y="170" text-anchor="middle" font-family="Cinzel,serif" font-weight="800" font-size="26" fill="#ffd27a">BOARD NIGHT</text>
+        <text x="380" y="196" text-anchor="middle" font-family="Lora,serif" font-weight="700" font-size="14" fill="#cdbfa2">turn 5 of 8 · the minigame is next</text>
+      </svg>
+      <div class="k-win k-paper"><div class="k-head"><img src="/v3/assets/img/glad/flat/casino/die.png" alt=""><b>Turn 5</b><span class="k-sub">heartlarva to roll</span></div>
+        <div class="k-body">
+          <div class="k-row on"><span class="k-slot sm"><img src="/v3/assets/img/glad/flat/hero_emerald_south.png" alt=""></span><span><b>heartlarva</b><small>2 crowns · 14 coins</small></span><span class="k-end"><span class="k-chip gold">👑👑</span></span></div>
+          <div class="k-row"><span class="k-slot sm"><img src="/v3/assets/img/glad/flat/hero_south.png" alt=""></span><span><b>bootypaper</b><small>1 crown · 31 coins</small></span><span class="k-end"><span class="k-chip gold">👑</span></span></div>
+          <div class="k-row"><span class="k-slot sm"><img src="/v3/assets/img/glad/flat/hero_onyx_south.png" alt=""></span><span><b>zwades</b><small>1 crown · 6 coins</small></span><span class="k-end"><span class="k-chip gold">👑</span></span></div>
+          <div class="k-row"><span class="k-slot sm"><img src="/v3/assets/img/glad/flat/hero_diamond_south.png" alt=""></span><span><b>fasteddie</b><small>0 crowns · 22 coins</small></span><span class="k-end"></span></div>
+        </div>
+        <div class="k-foot"><span class="k-note">Next minigame: Pushover, 40 s</span><button class="k-btn sm" type="button">Roll</button></div></div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== MONEY -->
+  <section class="sec" id="money">
+    <h2>ZCoins and bots</h2>
+    <p>This is the hard part, and Red Light already worked it out: <b>when real ZCoins ride on a game, anything a script does better than a person is a leak.</b>
+      A script never misses a shove window and never steers Light Cycles into a wall. So the games split into three kinds, each with its own money rule.</p>
+    <div class="wrapx"><table class="tbl">
+      <thead><tr><th>Kind</th><th>What decides it</th><th>Money</th><th>Games</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag coin">coin table</span></td><td><b>Choices plus sealed chance.</b> The server holds every secret (fuse, dice, doors) behind a committed hash, and timing is padded so reaction speed can't matter.</td><td>Fixed <b>20 ZC</b> buy-in, winner takes all (or top two split 70/30 at 6+). <b>The house takes nothing</b>, the same as the PvP tables. Counts toward <code>hourlyNet</code> and <code>HOUR_WIN_CAP</code>.</td><td>Hot Potato, Liar's Dice, Board Night, Heist Split, Red Light, Over/Under</td></tr>
+        <tr><td><span class="tag skill">skill table</span></td><td><b>Hands.</b> The server runs the physics and the page only sends inputs, which stops cheating. But <b>it can't stop a good bot.</b></td><td>Recommended: a <b>smaller buy-in (5 ZC)</b>, rating brackets so people play people near their level, an hourly cap on skill-table winnings, and <b>input checks</b> (a person's timing is noisy; a script's is not). Or: titles only, plus a weekly house-funded cup. <b>Your call.</b></td><td>Pushover, Tumble Gauntlet, Light Cycles, Musical Chairs</td></tr>
+        <tr><td><span class="tag free">free / titles</span></td><td>Anything, including drawing and solo arcade runs.</td><td>No buy-in. Rating, titles and badges, plus the <b>weekly arcade cup</b> paid by the house like the Daily Pot (a fixed amount, so a bot can win it once but can't farm it).</td><td>Sketchy, the Arcade, any table set to "Free"</td></tr>
+      </tbody></table></div>
+    <div class="cards">
+      <div class="card"><b>Bots never hold money</b><span>The bots in the mock are for practice. In a coin room an empty seat stays empty. Ghosts and bots fill <b>free</b> tables only, so the Hall still feels busy with three people on.</span></div>
+      <div class="card"><b>Leavers forfeit, crashes don't</b><span>Leave a coin table mid-game and your buy-in stays in the pot. A dropped connection gets 15 s to come back, and your character idles (or the potato auto-passes after 3 s).</span></div>
+      <div class="card"><b>Every seed is checkable</b><span>Fuses, dice, door layouts and Board Night rolls all go through <code>/api/casino/verify</code>, the same page that checks Mines and Plinko today.</span></div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== RANKS -->
+  <section class="sec" id="ranks">
+    <h2>Rankings and high scores</h2>
+    <p>The part that turns a game into a habit. Everything here uses machinery the site already has: badges, the bell, the activity feed and profile tabs.</p>
+    <div class="cards">
+      <div class="card"><b>A rating per game</b><span>Elo-style, seeded at 1,200. Multiplayer results count as a set of head-to-heads, so finishing 2nd of 8 still gains. <b>Quick play matches by rating</b> once the hall is busy enough.</span></div>
+      <div class="card"><b>A monthly season</b><span>An overall party ladder on the hall (as drawn above), reset each month. The top three get a title in the store's title slot ("Party Animal", "Unshoveable", "Potato Lord") until next season.</span></div>
+      <div class="card"><b>Daily high scores</b><span>The arcade plays a <b>daily seed</b>, so everyone has the same run. A new daily record goes to the ticker. The record for the week, month and all time stays on each game's own page.</span></div>
+      <div class="card"><b>Badges</b><span>New ones in <code>_badges.js</code>: 🥊 most Pushover wins this week, 🥔 never blown up in 20 games, 🎲 called liar right five times running. Drawn next to names like the others.</span></div>
+      <div class="card"><b>A Party tab on profiles</b><span>Next to Picks, Casino and Music: rating per game, record, net, best finish and a favourite game, built from the results table.</span></div>
+      <div class="card"><b>Feed, not chat</b><span>Wins and records go to the activity feed and the ticker (type <code>party</code>). The bell only pings when <b>your</b> record falls or a table you queued for starts. Nothing goes to Twitch chat.</span></div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== EMBED -->
+  <section class="sec" id="embed">
+    <h2>Standalone and embeds</h2>
+    <p>Each game is one self-contained module, so it can live in three places without being written three times. The flash-game feel comes from the second one:
+      a game is <b>a page of its own</b> you can link straight to, and it fills the space beside the chat rail.</p>
+    <div class="embed">
+      <div class="frame"><div class="bar"><i></i><i></i><i></i>&nbsp;eastcoin.vip/?view=party</div><div class="scr"><div class="g">The Party Hall<br><small style="font:600 12px Lora;color:#cdbfa2">lobby · tables · ladder</small></div><div class="rail">twitch chat<br>rail stays<br>where it is</div></div><p class="note">1. Inside the shell: the Hall, members only, on the shell's nav.</p></div>
+      <div class="frame"><div class="bar"><i></i><i></i><i></i>&nbsp;eastcoin.vip/play/pushover</div><div class="scr"><div class="g">PUSHOVER<br><small style="font:600 12px Lora;color:#cdbfa2">full-width stage, one table</small></div><div class="rail">chat</div></div><p class="note">2. A game's own page, like <code>/g/</code> and <code>/u/</code>, with a real title and a preview card for a link pasted in chat.</p></div>
+    </div>
+    <pre class="code">&lt;!-- 3. anywhere on the site: a cabinet in the Game Room, a Potato table on the Sports page during a game --&gt;
+&lt;div data-party="hotpotato" data-room="auto"&gt;&lt;/div&gt;
+ECParty.mount(el, { game: "hotpotato", room: "auto" | "ABCD", stake: 20 | 0 })</pre>
+    <p class="note">Outside eastcoin.vip (an iframe on another site) there is no session cookie, so an embed plays the free version only. ZCoins only ever move on the site itself.</p>
+  </section>
+
+  <!-- ===================================================================== SERVER -->
+  <section class="sec" id="server">
+    <h2>How it runs</h2>
+    <p>Not on D1 polling. A Pushover round is 8 people sending inputs 20 times a second, and a 1.5 s poll would make it unplayable and spend reads by the million
+      (see the D1 note in the handoff). The shape is the one EastScape already uses: <b>one Durable Object per room, over a WebSocket.</b></p>
+    <div class="wrapx"><table class="tbl">
+      <thead><tr><th>Piece</th><th>What</th><th>Cost, said out loud</th></tr></thead>
+      <tbody>
+        <tr><td>Room</td><td>A <code>PartyRoom</code> Durable Object in a new <code>eastcoin-party</code> worker (or a class in the EastScape worker). It runs the lobby clock, the seed and the simulation, then settles.</td><td>One object per live table. It sleeps (WebSocket hibernation) between messages, so an empty lobby costs almost nothing.</td></tr>
+        <tr><td>Action games</td><td>An authoritative sim at 20 Hz. The page sends inputs (move, shove, hop) and draws 10 Hz snapshots with interpolation. <b>The same rules file</b> runs in the page for prediction, the Red Light pattern.</td><td>8 players × 20 inputs/s × 60 s ≈ <b>9,600 messages in</b> a round, which Cloudflare bills at 20:1 as ~480 requests. 10 snapshots/s out to 8 + watchers is free. 100 rounds a day is about 50k requests, which is nothing.</td></tr>
+        <tr><td>Table games</td><td>Event-driven: a pass, a bid, a pick. No tick at all.</td><td>A few hundred messages a game.</td></tr>
+        <tr><td>Money</td><td>At settle, the room calls a Pages function with the cron-key pattern. Buy-ins are <code>WAGER_DEBIT</code> keyed <code>PARTY:BUY:&lt;room&gt;:&lt;user&gt;</code>, and payouts <code>PAYOUT_CREDIT</code> keyed <code>PARTY:PAY:&lt;entry&gt;</code>. That's the PvP path, idempotent per entry.</td><td><b>D1 is touched only at join and at settle</b>: 2–3 writes per player per game, and one results row.</td></tr>
+        <tr><td>Hall</td><td>The lobby list is pushed over one socket to a <code>PartyHall</code> object, not polled.</td><td>One connection per open Hall tab, with hibernation. No reads.</td></tr>
+        <tr><td>Rail</td><td>Every stage sits left of the chat rail. Nothing floats over it (Twitch's obscured check), and below 980 px the stage takes the strip the drawer leaves, the same rule as the Gold Button.</td><td>—</td></tr>
+      </tbody></table></div>
+  </section>
+
+  <!-- ===================================================================== FIRST -->
+  <section class="sec" id="first">
+    <h2>What to build first</h2>
+    <div class="cards">
+      <div class="card"><b>1 · The room and the Hall</b><span>The <code>PartyRoom</code> object, the lobby clock, buy-in and settle, and the Hall page. <b>Ship it with Hot Potato</b>: a coin table, event-driven, no physics, and a good test of the money path.</span></div>
+      <div class="card"><b>2 · Red Light moves in</b><span>It is already built and tested. Re-homing it in the Hall gives the hall two coin tables on day one.</span></div>
+      <div class="card"><b>3 · Pushover</b><span>The first action game: the 20 Hz sim, prediction and snapshots. Start it as a <b>free / titles</b> table while you decide the skill-table rule.</span></div>
+      <div class="card"><b>4 · Ladder, badges, Party tab</b><span>Once there are results to rank.</span></div>
+      <div class="card"><b>5 · Then the lineup</b><span>Liar's Dice and Light Cycles next (both cheap once the room exists), then the Arcade, then Board Night, which needs three minigames before it's worth playing.</span></div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== OPEN -->
+  <section class="sec" id="open">
+    <h2>Your calls</h2>
+    <div class="wrapx"><table class="tbl">
+      <thead><tr><th>Question</th><th>My suggestion</th></tr></thead>
+      <tbody>
+        <tr><td>Skill tables and ZCoins</td><td>5 ZC buy-in, rating brackets, an hourly skill cap and input checks. Or titles only plus a weekly house cup. I'd start at <b>titles only</b> and open coins once there's a month of real play to measure.</td></tr>
+        <tr><td>Buy-in</td><td>Fixed 20 on coin tables, like PvP. One number, so nobody picks a table by stake.</td></tr>
+        <tr><td>Winner takes all?</td><td>Yes up to 5 players. At 6+, 70/30 to the top two, so a big table isn't one winner and seven losers.</td></tr>
+        <tr><td>Where it lives</td><td>Its own nav item, "Party", as a members-only route, plus <code>/play/&lt;game&gt;</code> pages. The Game Room stays titles-only.</td></tr>
+        <tr><td>EastScape tie-in</td><td>Cosmetics only: your EastScape outfit is your party character, and a party title can show in-game. No tickets or game items move either way.</td></tr>
+        <tr><td>Which four first</td><td>Hot Potato, Red Light, Pushover and Liar's Dice.</td></tr>
+        <tr><td>The art</td><td>The four game icons here are PixelLab drafts. The real ones get the full brief, and every game needs its own floor card art, as the casino cards do.</td></tr>
+      </tbody></table></div>
+  </section>
+</main>
+<script>
+/* Board Night: a loop of spaces drawn in, four tokens and a crown */
+(() => {
+  const g = document.getElementById("spaces"); if (!g) return;
+  const N = 26, cx = 380, cy = 180, rx = 320, ry = 140, K = { c: ["#3a6ad8", "+3"], t: ["#c8302a", "−3"], s: ["#c8963a", "🛒"], q: ["#8a3ad8", "?"], m: ["#2a8a4a", "🎮"] };
+  const kinds = "ccqctcsccmqtcccqtcmccsqctc";
+  let h = "";
+  for (let i = 0; i < N; i++) {
+    const a = (i / N) * Math.PI * 2 - Math.PI / 2, x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry, [col, lab] = K[kinds[i]];
+    h += `<g transform="translate(${x.toFixed(1)},${y.toFixed(1)})"><rect x="-17" y="-13" width="34" height="26" rx="6" fill="${col}" stroke="#1a0a10" stroke-width="3"/><text y="5" text-anchor="middle" font-family="Lora,serif" font-weight="800" font-size="12" fill="#fff">${lab}</text></g>`;
+  }
+  const tok = [[3, "hero_emerald_south"], [9, "hero_south"], [9, "hero_onyx_south"], [17, "hero_diamond_south"]];
+  tok.forEach(([i, s], k) => { const a = (i / N) * Math.PI * 2 - Math.PI / 2, x = cx + Math.cos(a) * rx + (k === 2 ? 14 : 0), y = cy + Math.sin(a) * ry; h += `<image href="/v3/assets/img/glad/flat/${s}.png" x="${(x - 14).toFixed(0)}" y="${(y - 44).toFixed(0)}" width="28" height="38" style="image-rendering:pixelated"/>`; });
+  const ca = (21 / N) * Math.PI * 2 - Math.PI / 2; h += `<text x="${(cx + Math.cos(ca) * rx).toFixed(0)}" y="${(cy + Math.sin(ca) * ry - 20).toFixed(0)}" text-anchor="middle" font-size="24">👑</text>`;
+  g.innerHTML = h;
+})();
+</script>
+<script src="party.js?v=1"></script>
+</body>
+</html>

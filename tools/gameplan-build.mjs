@@ -53,6 +53,8 @@ const CATS = [
     ["guild-mock", "8 · The guild", "Guilds"],
     ["stats-mock", "9 · Character stats", "Character stats"],
     ["statsui-mock", "9 · In the game", "The Character window, in the game"]]],
+  ["EastCoin.VIP", [
+    ["party-mock", "Party games", "Party games for the site: a Hall, ZCoin tables, two playable (Pushover, Hot Potato)"]]],
   ["Look & feel", [
     ["adminpanel-mock", "Admin panel", "The admin panel, reorganised"],
     ["ui-custom-mock", "Your screen", "Your screen, your way"],
