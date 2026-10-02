@@ -1,0 +1,2144 @@
+{
+ "made": "2026-10-02, measured from the rules file by scratchpad gear.mjs",
+ "tiers": [
+  {
+   "key": "bronze",
+   "name": "Bronze",
+   "lvl": 10,
+   "setDef": 20,
+   "pieces": 6,
+   "weapons": [
+    {
+     "k": "bronze_gladius",
+     "name": "Bronze gladius",
+     "lvl": 10,
+     "skill": "melee",
+     "acc": 10,
+     "str": 4,
+     "def": 0,
+     "speed": 1800
+    },
+    {
+     "k": "bronze_sword",
+     "name": "Bronze longsword",
+     "lvl": 10,
+     "skill": "melee",
+     "acc": 8,
+     "str": 6,
+     "def": 0,
+     "speed": 2400
+    },
+    {
+     "k": "bronze_maul",
+     "name": "Bronze maul",
+     "lvl": 10,
+     "skill": "melee",
+     "acc": 6,
+     "str": 8,
+     "def": 0,
+     "speed": 3000
+    }
+   ]
+  },
+  {
+   "key": "emerald",
+   "name": "Emerald",
+   "lvl": 20,
+   "setDef": 34,
+   "pieces": 6,
+   "weapons": [
+    {
+     "k": "emerald_gladius",
+     "name": "Emerald gladius",
+     "lvl": 20,
+     "skill": "melee",
+     "acc": 16,
+     "str": 6,
+     "def": 0,
+     "speed": 1800
+    },
+    {
+     "k": "emerald_sword",
+     "name": "Emerald longsword",
+     "lvl": 20,
+     "skill": "melee",
+     "acc": 12,
+     "str": 10,
+     "def": 0,
+     "speed": 2400
+    },
+    {
+     "k": "emerald_maul",
+     "name": "Emerald maul",
+     "lvl": 20,
+     "skill": "melee",
+     "acc": 8,
+     "str": 14,
+     "def": 0,
+     "speed": 3000
+    }
+   ]
+  },
+  {
+   "key": "diamond",
+   "name": "Diamond",
+   "lvl": 30,
+   "setDef": 48,
+   "pieces": 6,
+   "weapons": [
+    {
+     "k": "diamond_gladius",
+     "name": "Diamond gladius",
+     "lvl": 30,
+     "skill": "melee",
+     "acc": 21,
+     "str": 8,
+     "def": 0,
+     "speed": 1800
+    },
+    {
+     "k": "diamond_sword",
+     "name": "Diamond longsword",
+     "lvl": 30,
+     "skill": "melee",
+     "acc": 16,
+     "str": 14,
+     "def": 0,
+     "speed": 2400
+    },
+    {
+     "k": "diamond_maul",
+     "name": "Diamond maul",
+     "lvl": 30,
+     "skill": "melee",
+     "acc": 11,
+     "str": 20,
+     "def": 0,
+     "speed": 3000
+    }
+   ]
+  },
+  {
+   "key": "dragonstone",
+   "name": "Dragonstone",
+   "lvl": 40,
+   "setDef": 63,
+   "pieces": 6,
+   "weapons": [
+    {
+     "k": "dragonstone_gladius",
+     "name": "Dragonstone gladius",
+     "lvl": 40,
+     "skill": "melee",
+     "acc": 26,
+     "str": 11,
+     "def": 0,
+     "speed": 1800
+    },
+    {
+     "k": "dragonstone_sword",
+     "name": "Dragonstone longsword",
+     "lvl": 40,
+     "skill": "melee",
+     "acc": 20,
+     "str": 18,
+     "def": 0,
+     "speed": 2400
+    },
+    {
+     "k": "dragonstone_maul",
+     "name": "Dragonstone maul",
+     "lvl": 40,
+     "skill": "melee",
+     "acc": 14,
+     "str": 25,
+     "def": 0,
+     "speed": 3000
+    }
+   ]
+  },
+  {
+   "key": "onyx",
+   "name": "Onyx",
+   "lvl": 50,
+   "setDef": 77,
+   "pieces": 6,
+   "weapons": [
+    {
+     "k": "onyx_gladius",
+     "name": "Onyx gladius",
+     "lvl": 50,
+     "skill": "melee",
+     "acc": 31,
+     "str": 13,
+     "def": 0,
+     "speed": 1800
+    },
+    {
+     "k": "onyx_sword",
+     "name": "Onyx longsword",
+     "lvl": 50,
+     "skill": "melee",
+     "acc": 24,
+     "str": 22,
+     "def": 0,
+     "speed": 2400
+    },
+    {
+     "k": "onyx_maul",
+     "name": "Onyx maul",
+     "lvl": 50,
+     "skill": "melee",
+     "acc": 17,
+     "str": 31,
+     "def": 0,
+     "speed": 3000
+    }
+   ]
+  },
+  {
+   "key": "starfall",
+   "name": "Starfall",
+   "lvl": 60,
+   "setDef": 92,
+   "pieces": 6,
+   "weapons": [
+    {
+     "k": "starfall_gladius",
+     "name": "Starfall gladius",
+     "lvl": 60,
+     "skill": "melee",
+     "acc": 36,
+     "str": 16,
+     "def": 0,
+     "speed": 1800
+    },
+    {
+     "k": "starfall_sword",
+     "name": "Starfall longsword",
+     "lvl": 60,
+     "skill": "melee",
+     "acc": 28,
+     "str": 26,
+     "def": 0,
+     "speed": 2400
+    },
+    {
+     "k": "starfall_maul",
+     "name": "Starfall maul",
+     "lvl": 60,
+     "skill": "melee",
+     "acc": 20,
+     "str": 36,
+     "def": 0,
+     "speed": 3000
+    }
+   ]
+  },
+  {
+   "key": "eclipse",
+   "name": "Eclipse",
+   "lvl": 70,
+   "setDef": 106,
+   "pieces": 6,
+   "weapons": [
+    {
+     "k": "eclipse_gladius",
+     "name": "Eclipse gladius",
+     "lvl": 70,
+     "skill": "melee",
+     "acc": 42,
+     "str": 18,
+     "def": 0,
+     "speed": 1800
+    },
+    {
+     "k": "eclipse_sword",
+     "name": "Eclipse longsword",
+     "lvl": 70,
+     "skill": "melee",
+     "acc": 32,
+     "str": 30,
+     "def": 0,
+     "speed": 2400
+    },
+    {
+     "k": "eclipse_maul",
+     "name": "Eclipse maul",
+     "lvl": 70,
+     "skill": "melee",
+     "acc": 22,
+     "str": 42,
+     "def": 0,
+     "speed": 3000
+    }
+   ]
+  },
+  {
+   "key": "nova",
+   "name": "Nova",
+   "lvl": 80,
+   "setDef": 120,
+   "pieces": 6,
+   "weapons": [
+    {
+     "k": "nova_gladius",
+     "name": "Nova flare knife",
+     "lvl": 80,
+     "skill": "melee",
+     "acc": 47,
+     "str": 20,
+     "def": 0,
+     "speed": 1800
+    },
+    {
+     "k": "nova_sword",
+     "name": "Nova halberd",
+     "lvl": 80,
+     "skill": "melee",
+     "acc": 36,
+     "str": 34,
+     "def": 0,
+     "speed": 2400
+    },
+    {
+     "k": "nova_maul",
+     "name": "Nova starbreaker",
+     "lvl": 80,
+     "skill": "melee",
+     "acc": 25,
+     "str": 48,
+     "def": 0,
+     "speed": 3000
+    }
+   ]
+  },
+  {
+   "key": "singularity",
+   "name": "Singularity",
+   "lvl": 90,
+   "setDef": 135,
+   "pieces": 6,
+   "weapons": [
+    {
+     "k": "singularity_gladius",
+     "name": "Singularity event blade",
+     "lvl": 90,
+     "skill": "melee",
+     "acc": 52,
+     "str": 23,
+     "def": 0,
+     "speed": 1800
+    },
+    {
+     "k": "singularity_sword",
+     "name": "Singularity voidglaive",
+     "lvl": 90,
+     "skill": "melee",
+     "acc": 40,
+     "str": 38,
+     "def": 0,
+     "speed": 2400
+    },
+    {
+     "k": "singularity_maul",
+     "name": "Singularity collapser",
+     "lvl": 90,
+     "skill": "melee",
+     "acc": 28,
+     "str": 53,
+     "def": 0,
+     "speed": 3000
+    }
+   ]
+  }
+ ],
+ "fxWorn": [
+  {
+   "k": "gamblers_ring",
+   "name": "Gambler's ring",
+   "slot": "ring",
+   "lvl": 1,
+   "fx": {
+    "heal": 0.5
+   }
+  },
+  {
+   "k": "bookies_amulet",
+   "name": "Bookie's amulet",
+   "slot": "amulet",
+   "lvl": 1,
+   "fx": {
+    "tix": 0.05
+   }
+  },
+  {
+   "k": "adjusters_visor",
+   "name": "Loss adjuster's visor",
+   "slot": "helm",
+   "lvl": 1,
+   "fx": {
+    "tough": 0.1
+   }
+  },
+  {
+   "k": "stake_loafers",
+   "name": "Stakeholder's loafers",
+   "slot": "boots",
+   "lvl": 1,
+   "fx": {
+    "power": 0.5
+   }
+  },
+  {
+   "k": "sharps_gloves",
+   "name": "Card sharp's gloves",
+   "slot": "gloves",
+   "lvl": 1,
+   "fx": {
+    "speed": 0.05
+   }
+  },
+  {
+   "k": "angels_ring",
+   "name": "Angel's ring",
+   "slot": "ring",
+   "lvl": 1,
+   "fx": {
+    "rare": 0.15
+   }
+  },
+  {
+   "k": "hallowed_helm",
+   "name": "Hallowed helm",
+   "slot": "helm",
+   "lvl": 40,
+   "fx": {
+    "tix": 0.04
+   }
+  },
+  {
+   "k": "hallowed_body",
+   "name": "Hallowed cuirass",
+   "slot": "body",
+   "lvl": 40,
+   "fx": {
+    "tix": 0.04
+   }
+  },
+  {
+   "k": "hallowed_legs",
+   "name": "Hallowed greaves",
+   "slot": "legs",
+   "lvl": 40,
+   "fx": {
+    "tix": 0.04
+   }
+  },
+  {
+   "k": "gallows_bow",
+   "name": "Gallows Bow",
+   "slot": "weapon",
+   "lvl": 50,
+   "fx": {
+    "tix": 0.06,
+    "rare": 0.1
+   }
+  },
+  {
+   "k": "lantern_quiver",
+   "name": "Lantern Quiver",
+   "slot": "shield",
+   "lvl": 50,
+   "fx": {
+    "ammo": 0.25
+   }
+  },
+  {
+   "k": "skull_wand",
+   "name": "Skull Wand",
+   "slot": "weapon",
+   "lvl": 50,
+   "fx": {
+    "leech": 0.1
+   }
+  },
+  {
+   "k": "bag_shroud",
+   "name": "Shroud Satchel",
+   "slot": "shield",
+   "lvl": 50,
+   "fx": {
+    "ammo": 0.25
+   }
+  },
+  {
+   "k": "drowned_boots",
+   "name": "Drowned Boots",
+   "slot": "boots",
+   "lvl": 50,
+   "fx": {
+    "speed": 0.08,
+    "tix": 0.03
+   }
+  },
+  {
+   "k": "coffin_ring",
+   "name": "Coffin Ring",
+   "slot": "ring",
+   "lvl": 50,
+   "fx": {
+    "double": 0.1
+   }
+  },
+  {
+   "k": "reaper_scythe",
+   "name": "The Reaper's Scythe",
+   "slot": "weapon",
+   "lvl": 90,
+   "fx": {
+    "execute": 0.2,
+    "tix": 0.08
+   }
+  },
+  {
+   "k": "king_crown",
+   "name": "The Pumpkin King's Crown",
+   "slot": "helm",
+   "lvl": 90,
+   "fx": {
+    "calm": 1,
+    "tough": 0.1
+   }
+  },
+  {
+   "k": "ferry_coin",
+   "name": "The Ferryman's Coin",
+   "slot": "amulet",
+   "lvl": 90,
+   "fx": {
+    "nobill": 1,
+    "zdrop": 0.15
+   }
+  },
+  {
+   "k": "clawgrip",
+   "name": "Captain Claw's grip",
+   "slot": "gloves",
+   "lvl": 75,
+   "fx": {
+    "speed": 0.03,
+    "tough": 0.03
+   }
+  },
+  {
+   "k": "bessemergloves",
+   "name": "Bessemer's Gauntlets",
+   "slot": "gloves",
+   "lvl": 85,
+   "fx": {
+    "smelt": 0.15,
+    "forge": 0.1
+   }
+  },
+  {
+   "k": "deep_sigil",
+   "name": "Deepwarden's sigil",
+   "slot": "amulet",
+   "lvl": 75,
+   "fx": {
+    "tix": 0.07,
+    "tough": 0.04
+   }
+  },
+  {
+   "k": "deepheart",
+   "name": "The Mountain's Heart",
+   "slot": "ring",
+   "lvl": 84,
+   "fx": {
+    "gem": 1,
+    "tough": 0.05
+   }
+  },
+  {
+   "k": "emerald_ring_ruby",
+   "name": "Ruby-set emerald ring",
+   "slot": "ring",
+   "lvl": 20,
+   "fx": {
+    "tough": 0.03
+   }
+  },
+  {
+   "k": "emerald_amulet_ruby",
+   "name": "Ruby-set emerald amulet",
+   "slot": "amulet",
+   "lvl": 20,
+   "fx": {
+    "tough": 0.06
+   }
+  },
+  {
+   "k": "dragonstone_ring_sapphire",
+   "name": "Sapphire-set dragonstone ring",
+   "slot": "ring",
+   "lvl": 40,
+   "fx": {
+    "bite": 0.04
+   }
+  },
+  {
+   "k": "dragonstone_amulet_sapphire",
+   "name": "Sapphire-set dragonstone amulet",
+   "slot": "amulet",
+   "lvl": 40,
+   "fx": {
+    "bite": 0.08
+   }
+  },
+  {
+   "k": "starfall_ring_topaz",
+   "name": "Topaz-set starfall ring",
+   "slot": "ring",
+   "lvl": 60,
+   "fx": {
+    "speed": 0.04
+   }
+  },
+  {
+   "k": "starfall_amulet_topaz",
+   "name": "Topaz-set starfall amulet",
+   "slot": "amulet",
+   "lvl": 60,
+   "fx": {
+    "speed": 0.08
+   }
+  },
+  {
+   "k": "nova_ring_opal",
+   "name": "Opal-set nova ring",
+   "slot": "ring",
+   "lvl": 80,
+   "fx": {
+    "rare": 0.06
+   }
+  },
+  {
+   "k": "nova_amulet_opal",
+   "name": "Opal-set nova amulet",
+   "slot": "amulet",
+   "lvl": 80,
+   "fx": {
+    "rare": 0.12
+   }
+  },
+  {
+   "k": "singularity_ring_abyss",
+   "name": "Abyss-set singularity ring",
+   "slot": "ring",
+   "lvl": 90,
+   "fx": {
+    "tix": 0.05,
+    "tough": 0.03
+   }
+  },
+  {
+   "k": "singularity_amulet_abyss",
+   "name": "Abyss-set singularity amulet",
+   "slot": "amulet",
+   "lvl": 90,
+   "fx": {
+    "tix": 0.1,
+    "tough": 0.06
+   }
+  },
+  {
+   "k": "rex_necklace",
+   "name": "Rex-tooth necklace",
+   "slot": "amulet",
+   "lvl": 90,
+   "fx": {
+    "rare": 0.05
+   }
+  },
+  {
+   "k": "skyripper",
+   "name": "Skyripper",
+   "slot": "weapon",
+   "lvl": 96,
+   "fx": {
+    "adm": 0.06
+   }
+  },
+  {
+   "k": "raptor_ring",
+   "name": "Raptor-claw ring",
+   "slot": "ring",
+   "lvl": 85,
+   "fx": {
+    "adm": 0.05
+   }
+  },
+  {
+   "k": "hunters_fang",
+   "name": "Hunter's Fang",
+   "slot": "amulet",
+   "lvl": 90,
+   "fx": {
+    "adm": 0.08
+   }
+  },
+  {
+   "k": "rimeheart",
+   "name": "Rimeheart",
+   "slot": "weapon",
+   "lvl": 96,
+   "fx": {
+    "mdm": 0.06
+   }
+  },
+  {
+   "k": "frostbite_ring",
+   "name": "Frostbite ring",
+   "slot": "ring",
+   "lvl": 85,
+   "fx": {
+    "mdm": 0.05
+   }
+  },
+  {
+   "k": "winters_heart",
+   "name": "Winter's Heart",
+   "slot": "amulet",
+   "lvl": 90,
+   "fx": {
+    "mdm": 0.08
+   }
+  },
+  {
+   "k": "yeti_boots",
+   "name": "Yeti-fur boots",
+   "slot": "boots",
+   "lvl": 85,
+   "fx": {
+    "speed": 0.04
+   }
+  },
+  {
+   "k": "rimecleaver",
+   "name": "Rimecleaver",
+   "slot": "weapon",
+   "lvl": 95,
+   "fx": {
+    "leech": 0.05
+   }
+  },
+  {
+   "k": "frostjarl_crown",
+   "name": "Crown of the Frost Jarl",
+   "slot": "helm",
+   "lvl": 95,
+   "fx": {
+    "mdm": 0.06
+   }
+  }
+ ],
+ "fxKeys": {
+  "heal": [
+   0.5
+  ],
+  "tix": [
+   0.05,
+   0.04,
+   0.04,
+   0.04,
+   0.06,
+   0.03,
+   0.08,
+   0.07,
+   0.05,
+   0.1
+  ],
+  "tough": [
+   0.1,
+   0.1,
+   0.03,
+   0.04,
+   0.05,
+   0.03,
+   0.06,
+   0.03,
+   0.06
+  ],
+  "power": [
+   0.5
+  ],
+  "speed": [
+   0.05,
+   0.08,
+   0.03,
+   0.04,
+   0.08,
+   0.04
+  ],
+  "rare": [
+   0.15,
+   0.1,
+   0.06,
+   0.12,
+   0.05
+  ],
+  "ammo": [
+   0.25,
+   0.25
+  ],
+  "leech": [
+   0.1,
+   0.05
+  ],
+  "double": [
+   0.1
+  ],
+  "execute": [
+   0.2
+  ],
+  "calm": [
+   1
+  ],
+  "nobill": [
+   1
+  ],
+  "zdrop": [
+   0.15
+  ],
+  "smelt": [
+   0.15
+  ],
+  "forge": [
+   0.1
+  ],
+  "gem": [
+   1
+  ],
+  "bite": [
+   0.04,
+   0.08
+  ],
+  "adm": [
+   0.06,
+   0.05,
+   0.08
+  ],
+  "mdm": [
+   0.06,
+   0.05,
+   0.08,
+   0.06
+  ]
+ },
+ "OUT_CAP": {
+  "tix": 0.25,
+  "speed": 0.2,
+  "tough": 0.3,
+  "rare": 0.4,
+  "zdrop": 0.75,
+  "bite": 0.1,
+  "heal": 0.5,
+  "steal": 0.15,
+  "ammo": 0.5,
+  "leech": 0.25,
+  "double": 0.3,
+  "execute": 0.3,
+  "calm": 1,
+  "nobill": 1,
+  "gem": 1,
+  "smelt": 0.5,
+  "forge": 0.2,
+  "adm": 0.25,
+  "mdm": 0.25
+ },
+ "FORGE": {
+  "max": 3,
+  "odds": [
+   1,
+   0.8,
+   0.55,
+   0.35
+  ],
+  "brk": [
+   0,
+   0.08,
+   0.15,
+   0.3
+  ]
+ },
+ "GEMSET": {
+  "roll": [
+   -5,
+   10
+  ],
+  "cost": 10000,
+  "perType": 2
+ },
+ "sources": {
+  "slotItems": 291,
+  "dropped": 43,
+  "made": 188,
+  "droppedList": [
+   "gamblers_ring",
+   "mask",
+   "bookies_amulet",
+   "sharps_gloves",
+   "bogplate",
+   "wraithhood",
+   "menace",
+   "adjusters_visor",
+   "angels_ring",
+   "spiderboots",
+   "lantern",
+   "grudge",
+   "stake_loafers",
+   "kingcap",
+   "wrench",
+   "toga",
+   "hallowed_helm",
+   "hallowed_body",
+   "hallowed_legs",
+   "lantern_quiver",
+   "skull_wand",
+   "bag_shroud",
+   "reaper_scythe",
+   "king_crown",
+   "ferry_coin",
+   "clawgrip",
+   "bessemergloves",
+   "deep_sigil",
+   "deepheart",
+   "hunters_fang",
+   "raptor_ring",
+   "rex_necklace",
+   "skyripper",
+   "winters_heart",
+   "frostjarl_crown",
+   "frostbite_ring",
+   "rimeheart",
+   "bag_glacier",
+   "frostward_ring",
+   "rimecleaver",
+   "stunt_helmet",
+   "stunt_leathers",
+   "chrome_boots"
+  ]
+ },
+ "launchers": [
+  {
+   "k": "logs_shortbow",
+   "name": "Rough shortbow",
+   "lvl": 1,
+   "skill": "archery",
+   "acc": 6,
+   "str": 0,
+   "def": 0,
+   "speed": 1800
+  },
+  {
+   "k": "logs_longbow",
+   "name": "Rough longbow",
+   "lvl": 5,
+   "skill": "archery",
+   "acc": 4,
+   "str": 4,
+   "def": 0,
+   "speed": 2800
+  },
+  {
+   "k": "willowlogs_shortbow",
+   "name": "Willow shortbow",
+   "lvl": 20,
+   "skill": "archery",
+   "acc": 10,
+   "str": 0,
+   "def": 0,
+   "speed": 1800
+  },
+  {
+   "k": "willowlogs_longbow",
+   "name": "Willow longbow",
+   "lvl": 25,
+   "skill": "archery",
+   "acc": 8,
+   "str": 8,
+   "def": 0,
+   "speed": 2800
+  },
+  {
+   "k": "ashlogs_shortbow",
+   "name": "Deadwood shortbow",
+   "lvl": 30,
+   "skill": "archery",
+   "acc": 14,
+   "str": 0,
+   "def": 0,
+   "speed": 1800
+  },
+  {
+   "k": "ashlogs_longbow",
+   "name": "Deadwood longbow",
+   "lvl": 35,
+   "skill": "archery",
+   "acc": 12,
+   "str": 12,
+   "def": 0,
+   "speed": 2800
+  },
+  {
+   "k": "yewlogs_shortbow",
+   "name": "Yew shortbow",
+   "lvl": 45,
+   "skill": "archery",
+   "acc": 18,
+   "str": 2,
+   "def": 0,
+   "speed": 1800
+  },
+  {
+   "k": "yewlogs_longbow",
+   "name": "Yew longbow",
+   "lvl": 50,
+   "skill": "archery",
+   "acc": 16,
+   "str": 16,
+   "def": 0,
+   "speed": 2800
+  },
+  {
+   "k": "palmlogs_shortbow",
+   "name": "Palm shortbow",
+   "lvl": 54,
+   "skill": "archery",
+   "acc": 22,
+   "str": 4,
+   "def": 0,
+   "speed": 1800
+  },
+  {
+   "k": "palmlogs_longbow",
+   "name": "Palm longbow",
+   "lvl": 57,
+   "skill": "archery",
+   "acc": 20,
+   "str": 20,
+   "def": 0,
+   "speed": 2800
+  },
+  {
+   "k": "skyashlogs_shortbow",
+   "name": "Skyash shortbow",
+   "lvl": 60,
+   "skill": "archery",
+   "acc": 26,
+   "str": 6,
+   "def": 0,
+   "speed": 1800
+  },
+  {
+   "k": "skyashlogs_longbow",
+   "name": "Skyash longbow",
+   "lvl": 64,
+   "skill": "archery",
+   "acc": 24,
+   "str": 24,
+   "def": 0,
+   "speed": 2800
+  },
+  {
+   "k": "pinelogs_shortbow",
+   "name": "Rustpine shortbow",
+   "lvl": 72,
+   "skill": "archery",
+   "acc": 30,
+   "str": 8,
+   "def": 0,
+   "speed": 1800
+  },
+  {
+   "k": "pinelogs_longbow",
+   "name": "Rustpine longbow",
+   "lvl": 76,
+   "skill": "archery",
+   "acc": 28,
+   "str": 28,
+   "def": 0,
+   "speed": 2800
+  },
+  {
+   "k": "voidlogs_shortbow",
+   "name": "Vaultwood shortbow",
+   "lvl": 84,
+   "skill": "archery",
+   "acc": 34,
+   "str": 10,
+   "def": 0,
+   "speed": 1800
+  },
+  {
+   "k": "voidlogs_longbow",
+   "name": "Vaultwood longbow",
+   "lvl": 88,
+   "skill": "archery",
+   "acc": 32,
+   "str": 32,
+   "def": 0,
+   "speed": 2800
+  },
+  {
+   "k": "bogwoodlogs_shortbow",
+   "name": "Bogwood shortbow",
+   "lvl": 92,
+   "skill": "archery",
+   "acc": 38,
+   "str": 12,
+   "def": 0,
+   "speed": 1800
+  },
+  {
+   "k": "bogwoodlogs_longbow",
+   "name": "Bogwood longbow",
+   "lvl": 96,
+   "skill": "archery",
+   "acc": 36,
+   "str": 36,
+   "def": 0,
+   "speed": 2800
+  },
+  {
+   "k": "cycadlogs_shortbow",
+   "name": "Cycad shortbow",
+   "lvl": 95,
+   "skill": "archery",
+   "acc": 42,
+   "str": 14,
+   "def": 0,
+   "speed": 1800
+  },
+  {
+   "k": "cycadlogs_longbow",
+   "name": "Cycad longbow",
+   "lvl": 98,
+   "skill": "archery",
+   "acc": 40,
+   "str": 40,
+   "def": 0,
+   "speed": 2800
+  },
+  {
+   "k": "longcount",
+   "name": "The Long Count",
+   "lvl": 99,
+   "skill": "archery",
+   "acc": 44,
+   "str": 26,
+   "def": 0,
+   "speed": 2600
+  },
+  {
+   "k": "logs_wand",
+   "name": "Rough wand",
+   "lvl": 1,
+   "skill": "magic",
+   "acc": 6,
+   "str": 1,
+   "def": 0,
+   "speed": 2200
+  },
+  {
+   "k": "willowlogs_wand",
+   "name": "Willow wand",
+   "lvl": 20,
+   "skill": "magic",
+   "acc": 10,
+   "str": 3,
+   "def": 0,
+   "speed": 2200
+  },
+  {
+   "k": "ashlogs_wand",
+   "name": "Deadwood wand",
+   "lvl": 30,
+   "skill": "magic",
+   "acc": 14,
+   "str": 5,
+   "def": 0,
+   "speed": 2200
+  },
+  {
+   "k": "yewlogs_wand",
+   "name": "Yew wand",
+   "lvl": 45,
+   "skill": "magic",
+   "acc": 18,
+   "str": 7,
+   "def": 0,
+   "speed": 2200
+  },
+  {
+   "k": "palmlogs_wand",
+   "name": "Palm wand",
+   "lvl": 54,
+   "skill": "magic",
+   "acc": 22,
+   "str": 9,
+   "def": 0,
+   "speed": 2200
+  },
+  {
+   "k": "skyashlogs_wand",
+   "name": "Skyash wand",
+   "lvl": 60,
+   "skill": "magic",
+   "acc": 26,
+   "str": 11,
+   "def": 0,
+   "speed": 2200
+  },
+  {
+   "k": "pinelogs_wand",
+   "name": "Rustpine wand",
+   "lvl": 72,
+   "skill": "magic",
+   "acc": 30,
+   "str": 13,
+   "def": 0,
+   "speed": 2200
+  },
+  {
+   "k": "voidlogs_wand",
+   "name": "Vaultwood wand",
+   "lvl": 84,
+   "skill": "magic",
+   "acc": 34,
+   "str": 15,
+   "def": 0,
+   "speed": 2200
+  },
+  {
+   "k": "bogwoodlogs_wand",
+   "name": "Bogwood wand",
+   "lvl": 92,
+   "skill": "magic",
+   "acc": 38,
+   "str": 17,
+   "def": 0,
+   "speed": 2200
+  },
+  {
+   "k": "cycadlogs_wand",
+   "name": "Cycad wand",
+   "lvl": 95,
+   "skill": "magic",
+   "acc": 42,
+   "str": 19,
+   "def": 0,
+   "speed": 2200
+  },
+  {
+   "k": "lastword",
+   "name": "The Last Word",
+   "lvl": 99,
+   "skill": "magic",
+   "acc": 52,
+   "str": 26,
+   "def": 0,
+   "speed": 2000
+  },
+  {
+   "k": "gallows_bow",
+   "name": "Gallows Bow",
+   "lvl": 50,
+   "skill": "archery",
+   "acc": 17,
+   "str": 9,
+   "def": 0,
+   "speed": 0
+  },
+  {
+   "k": "skull_wand",
+   "name": "Skull Wand",
+   "lvl": 50,
+   "skill": "magic",
+   "acc": 20,
+   "str": 8,
+   "def": 0,
+   "speed": 0
+  },
+  {
+   "k": "skyripper",
+   "name": "Skyripper",
+   "lvl": 96,
+   "skill": "archery",
+   "acc": 44,
+   "str": 42,
+   "def": 0,
+   "speed": 2600
+  },
+  {
+   "k": "rimeheart",
+   "name": "Rimeheart",
+   "lvl": 96,
+   "skill": "magic",
+   "acc": 48,
+   "str": 22,
+   "def": 0,
+   "speed": 2000
+  },
+  {
+   "k": "frostpine_wand",
+   "name": "Frostpine wand",
+   "lvl": 97,
+   "skill": "magic",
+   "acc": 46,
+   "str": 21,
+   "def": 0,
+   "speed": 2200
+  }
+ ],
+ "samples": [
+  {
+   "lvl": 10,
+   "from": "bronze",
+   "to": "emerald",
+   "plain": {
+    "maxHit": 5,
+    "atk": 19,
+    "def": 15,
+    "hp": 10
+   },
+   "next": {
+    "maxHit": 7,
+    "atk": 23,
+    "def": 22,
+    "hp": 10
+   }
+  },
+  {
+   "lvl": 20,
+   "from": "emerald",
+   "to": "diamond",
+   "plain": {
+    "maxHit": 9,
+    "atk": 33,
+    "def": 27,
+    "hp": 20
+   },
+   "next": {
+    "maxHit": 11,
+    "atk": 37,
+    "def": 34,
+    "hp": 20
+   }
+  },
+  {
+   "lvl": 30,
+   "from": "diamond",
+   "to": "dragonstone",
+   "plain": {
+    "maxHit": 13,
+    "atk": 47,
+    "def": 39,
+    "hp": 30
+   },
+   "next": {
+    "maxHit": 15,
+    "atk": 51,
+    "def": 47,
+    "hp": 30
+   }
+  },
+  {
+   "lvl": 40,
+   "from": "dragonstone",
+   "to": "onyx",
+   "plain": {
+    "maxHit": 16,
+    "atk": 61,
+    "def": 52,
+    "hp": 40
+   },
+   "next": {
+    "maxHit": 18,
+    "atk": 65,
+    "def": 59,
+    "hp": 40
+   }
+  },
+  {
+   "lvl": 50,
+   "from": "onyx",
+   "to": "starfall",
+   "plain": {
+    "maxHit": 20,
+    "atk": 75,
+    "def": 64,
+    "hp": 50
+   },
+   "next": {
+    "maxHit": 22,
+    "atk": 79,
+    "def": 71,
+    "hp": 50
+   }
+  },
+  {
+   "lvl": 60,
+   "from": "starfall",
+   "to": "eclipse",
+   "plain": {
+    "maxHit": 24,
+    "atk": 89,
+    "def": 76,
+    "hp": 60
+   },
+   "next": {
+    "maxHit": 26,
+    "atk": 93,
+    "def": 83,
+    "hp": 60
+   }
+  },
+  {
+   "lvl": 70,
+   "from": "eclipse",
+   "to": "nova",
+   "plain": {
+    "maxHit": 27,
+    "atk": 103,
+    "def": 88,
+    "hp": 70
+   },
+   "next": {
+    "maxHit": 29,
+    "atk": 107,
+    "def": 95,
+    "hp": 70
+   }
+  },
+  {
+   "lvl": 80,
+   "from": "nova",
+   "to": "singularity",
+   "plain": {
+    "maxHit": 31,
+    "atk": 117,
+    "def": 100,
+    "hp": 80
+   },
+   "next": {
+    "maxHit": 33,
+    "atk": 121,
+    "def": 108,
+    "hp": 80
+   }
+  }
+ ],
+ "balance": [
+  {
+   "lvl": 30,
+   "tier": "diamond",
+   "next": "dragonstone",
+   "plain": {
+    "maxHit": 13,
+    "atk": 47,
+    "def": 39
+   },
+   "nextTier": {
+    "maxHit": 15,
+    "atk": 51,
+    "def": 47
+   },
+   "reforged": {
+    "maxHit": 14,
+    "atk": 50,
+    "def": 48
+   },
+   "typicalRoll": {
+    "maxHit": 13,
+    "atk": 49,
+    "def": 41
+   },
+   "perfectRoll": {
+    "maxHit": 14,
+    "atk": 50,
+    "def": 45
+   },
+   "reforgedPerfect": {
+    "maxHit": 15,
+    "atk": 53,
+    "def": 54
+   }
+  },
+  {
+   "lvl": 50,
+   "tier": "onyx",
+   "next": "starfall",
+   "plain": {
+    "maxHit": 20,
+    "atk": 75,
+    "def": 64
+   },
+   "nextTier": {
+    "maxHit": 22,
+    "atk": 79,
+    "def": 71
+   },
+   "reforged": {
+    "maxHit": 22,
+    "atk": 79,
+    "def": 73
+   },
+   "typicalRoll": {
+    "maxHit": 20,
+    "atk": 77,
+    "def": 65
+   },
+   "perfectRoll": {
+    "maxHit": 21,
+    "atk": 78,
+    "def": 70
+   },
+   "reforgedPerfect": {
+    "maxHit": 23,
+    "atk": 82,
+    "def": 79
+   }
+  },
+  {
+   "lvl": 70,
+   "tier": "eclipse",
+   "next": "nova",
+   "plain": {
+    "maxHit": 27,
+    "atk": 103,
+    "def": 88
+   },
+   "nextTier": {
+    "maxHit": 29,
+    "atk": 107,
+    "def": 95
+   },
+   "reforged": {
+    "maxHit": 29,
+    "atk": 108,
+    "def": 99
+   },
+   "typicalRoll": {
+    "maxHit": 27,
+    "atk": 105,
+    "def": 90
+   },
+   "perfectRoll": {
+    "maxHit": 28,
+    "atk": 106,
+    "def": 94
+   },
+   "reforgedPerfect": {
+    "maxHit": 30,
+    "atk": 112,
+    "def": 105
+   }
+  },
+  {
+   "lvl": 90,
+   "tier": "singularity",
+   "next": null,
+   "plain": {
+    "maxHit": 35,
+    "atk": 131,
+    "def": 113
+   },
+   "nextTier": null,
+   "reforged": {
+    "maxHit": 38,
+    "atk": 138,
+    "def": 125
+   },
+   "typicalRoll": {
+    "maxHit": 35,
+    "atk": 133,
+    "def": 114
+   },
+   "perfectRoll": {
+    "maxHit": 36,
+    "atk": 134,
+    "def": 119
+   },
+   "reforgedPerfect": {
+    "maxHit": 39,
+    "atk": 141,
+    "def": 132
+   }
+  }
+ ],
+ "bases": [
+  {
+   "k": "diamond_sword",
+   "name": "Diamond longsword",
+   "slot": "weapon",
+   "lvl": 30,
+   "skill": "melee",
+   "acc": 16,
+   "str": 14,
+   "def": 0,
+   "style": "",
+   "fx": null,
+   "icon": true
+  },
+  {
+   "k": "eclipse_body",
+   "name": "Eclipse cuirass",
+   "slot": "body",
+   "lvl": 70,
+   "skill": "melee",
+   "acc": 0,
+   "str": 0,
+   "def": 31,
+   "style": "",
+   "fx": null,
+   "icon": true
+  },
+  {
+   "k": "eclipse_shield",
+   "name": "Eclipse shield",
+   "slot": "shield",
+   "lvl": 70,
+   "skill": "melee",
+   "acc": 0,
+   "str": 0,
+   "def": 26,
+   "style": "",
+   "fx": null,
+   "icon": true
+  },
+  {
+   "k": "eclipse_legs",
+   "name": "Eclipse greaves",
+   "slot": "legs",
+   "lvl": 70,
+   "skill": "melee",
+   "acc": 0,
+   "str": 0,
+   "def": 19,
+   "style": "",
+   "fx": null,
+   "icon": true
+  },
+  {
+   "k": "eclipse_helm",
+   "name": "Eclipse helm",
+   "slot": "helm",
+   "lvl": 70,
+   "skill": "melee",
+   "acc": 0,
+   "str": 0,
+   "def": 16,
+   "style": "",
+   "fx": null,
+   "icon": true
+  },
+  {
+   "k": "eclipse_boots",
+   "name": "Eclipse boots",
+   "slot": "boots",
+   "lvl": 70,
+   "skill": "melee",
+   "acc": 0,
+   "str": 0,
+   "def": 7,
+   "style": "",
+   "fx": null,
+   "icon": true
+  },
+  {
+   "k": "eclipse_gloves",
+   "name": "Eclipse gloves",
+   "slot": "gloves",
+   "lvl": 70,
+   "skill": "melee",
+   "acc": 0,
+   "str": 0,
+   "def": 7,
+   "style": "",
+   "fx": null,
+   "icon": true
+  },
+  {
+   "k": "eclipse_sword",
+   "name": "Eclipse longsword",
+   "slot": "weapon",
+   "lvl": 70,
+   "skill": "melee",
+   "acc": 32,
+   "str": 30,
+   "def": 0,
+   "style": "",
+   "fx": null,
+   "icon": true
+  },
+  {
+   "k": "eclipse_amulet",
+   "name": "Eclipse amulet",
+   "slot": "amulet",
+   "lvl": 70,
+   "skill": "hp",
+   "acc": 13,
+   "str": 13,
+   "def": 13,
+   "style": "",
+   "fx": null,
+   "icon": true
+  },
+  {
+   "k": "eclipse_ring",
+   "name": "Eclipse ring",
+   "slot": "ring",
+   "lvl": 70,
+   "skill": "hp",
+   "acc": 12,
+   "str": 12,
+   "def": 12,
+   "style": "",
+   "fx": null,
+   "icon": true
+  },
+  {
+   "k": "singularity_sword",
+   "name": "Singularity voidglaive",
+   "slot": "weapon",
+   "lvl": 90,
+   "skill": "melee",
+   "acc": 40,
+   "str": 38,
+   "def": 0,
+   "style": "",
+   "fx": null,
+   "icon": true
+  },
+  {
+   "k": "skyashlogs_shortbow",
+   "name": "Skyash shortbow",
+   "slot": "weapon",
+   "lvl": 60,
+   "skill": "archery",
+   "acc": 26,
+   "str": 6,
+   "def": 0,
+   "style": "archery",
+   "fx": null,
+   "icon": true
+  },
+  {
+   "k": "skyashlogs_wand",
+   "name": "Skyash wand",
+   "slot": "weapon",
+   "lvl": 60,
+   "skill": "magic",
+   "acc": 26,
+   "str": 11,
+   "def": 0,
+   "style": "magic",
+   "fx": null,
+   "icon": true
+  }
+ ],
+ "uniques": [
+  {
+   "k": "gamblers_ring",
+   "name": "Gambler's ring",
+   "slot": "ring",
+   "lvl": 1,
+   "fx": {
+    "heal": 0.5
+   }
+  },
+  {
+   "k": "bookies_amulet",
+   "name": "Bookie's amulet",
+   "slot": "amulet",
+   "lvl": 1,
+   "fx": {
+    "tix": 0.05
+   }
+  },
+  {
+   "k": "adjusters_visor",
+   "name": "Loss adjuster's visor",
+   "slot": "helm",
+   "lvl": 1,
+   "fx": {
+    "tough": 0.1
+   }
+  },
+  {
+   "k": "stake_loafers",
+   "name": "Stakeholder's loafers",
+   "slot": "boots",
+   "lvl": 1,
+   "fx": {
+    "power": 0.5
+   }
+  },
+  {
+   "k": "sharps_gloves",
+   "name": "Card sharp's gloves",
+   "slot": "gloves",
+   "lvl": 1,
+   "fx": {
+    "speed": 0.05
+   }
+  },
+  {
+   "k": "angels_ring",
+   "name": "Angel's ring",
+   "slot": "ring",
+   "lvl": 1,
+   "fx": {
+    "rare": 0.15
+   }
+  },
+  {
+   "k": "hallowed_helm",
+   "name": "Hallowed helm",
+   "slot": "helm",
+   "lvl": 40,
+   "fx": {
+    "tix": 0.04
+   }
+  },
+  {
+   "k": "hallowed_body",
+   "name": "Hallowed cuirass",
+   "slot": "body",
+   "lvl": 40,
+   "fx": {
+    "tix": 0.04
+   }
+  },
+  {
+   "k": "hallowed_legs",
+   "name": "Hallowed greaves",
+   "slot": "legs",
+   "lvl": 40,
+   "fx": {
+    "tix": 0.04
+   }
+  },
+  {
+   "k": "gallows_bow",
+   "name": "Gallows Bow",
+   "slot": "weapon",
+   "lvl": 50,
+   "fx": {
+    "tix": 0.06,
+    "rare": 0.1
+   }
+  },
+  {
+   "k": "lantern_quiver",
+   "name": "Lantern Quiver",
+   "slot": "shield",
+   "lvl": 50,
+   "fx": {
+    "ammo": 0.25
+   }
+  },
+  {
+   "k": "skull_wand",
+   "name": "Skull Wand",
+   "slot": "weapon",
+   "lvl": 50,
+   "fx": {
+    "leech": 0.1
+   }
+  },
+  {
+   "k": "bag_shroud",
+   "name": "Shroud Satchel",
+   "slot": "shield",
+   "lvl": 50,
+   "fx": {
+    "ammo": 0.25
+   }
+  },
+  {
+   "k": "drowned_boots",
+   "name": "Drowned Boots",
+   "slot": "boots",
+   "lvl": 50,
+   "fx": {
+    "speed": 0.08,
+    "tix": 0.03
+   }
+  },
+  {
+   "k": "coffin_ring",
+   "name": "Coffin Ring",
+   "slot": "ring",
+   "lvl": 50,
+   "fx": {
+    "double": 0.1
+   }
+  },
+  {
+   "k": "reaper_scythe",
+   "name": "The Reaper's Scythe",
+   "slot": "weapon",
+   "lvl": 90,
+   "fx": {
+    "execute": 0.2,
+    "tix": 0.08
+   }
+  },
+  {
+   "k": "king_crown",
+   "name": "The Pumpkin King's Crown",
+   "slot": "helm",
+   "lvl": 90,
+   "fx": {
+    "calm": 1,
+    "tough": 0.1
+   }
+  },
+  {
+   "k": "ferry_coin",
+   "name": "The Ferryman's Coin",
+   "slot": "amulet",
+   "lvl": 90,
+   "fx": {
+    "nobill": 1,
+    "zdrop": 0.15
+   }
+  },
+  {
+   "k": "clawgrip",
+   "name": "Captain Claw's grip",
+   "slot": "gloves",
+   "lvl": 75,
+   "fx": {
+    "speed": 0.03,
+    "tough": 0.03
+   }
+  },
+  {
+   "k": "bessemergloves",
+   "name": "Bessemer's Gauntlets",
+   "slot": "gloves",
+   "lvl": 85,
+   "fx": {
+    "smelt": 0.15,
+    "forge": 0.1
+   }
+  },
+  {
+   "k": "deep_sigil",
+   "name": "Deepwarden's sigil",
+   "slot": "amulet",
+   "lvl": 75,
+   "fx": {
+    "tix": 0.07,
+    "tough": 0.04
+   }
+  },
+  {
+   "k": "deepheart",
+   "name": "The Mountain's Heart",
+   "slot": "ring",
+   "lvl": 84,
+   "fx": {
+    "gem": 1,
+    "tough": 0.05
+   }
+  },
+  {
+   "k": "emerald_ring_ruby",
+   "name": "Ruby-set emerald ring",
+   "slot": "ring",
+   "lvl": 20,
+   "fx": {
+    "tough": 0.03
+   }
+  },
+  {
+   "k": "emerald_amulet_ruby",
+   "name": "Ruby-set emerald amulet",
+   "slot": "amulet",
+   "lvl": 20,
+   "fx": {
+    "tough": 0.06
+   }
+  },
+  {
+   "k": "dragonstone_ring_sapphire",
+   "name": "Sapphire-set dragonstone ring",
+   "slot": "ring",
+   "lvl": 40,
+   "fx": {
+    "bite": 0.04
+   }
+  },
+  {
+   "k": "dragonstone_amulet_sapphire",
+   "name": "Sapphire-set dragonstone amulet",
+   "slot": "amulet",
+   "lvl": 40,
+   "fx": {
+    "bite": 0.08
+   }
+  },
+  {
+   "k": "starfall_ring_topaz",
+   "name": "Topaz-set starfall ring",
+   "slot": "ring",
+   "lvl": 60,
+   "fx": {
+    "speed": 0.04
+   }
+  },
+  {
+   "k": "starfall_amulet_topaz",
+   "name": "Topaz-set starfall amulet",
+   "slot": "amulet",
+   "lvl": 60,
+   "fx": {
+    "speed": 0.08
+   }
+  },
+  {
+   "k": "nova_ring_opal",
+   "name": "Opal-set nova ring",
+   "slot": "ring",
+   "lvl": 80,
+   "fx": {
+    "rare": 0.06
+   }
+  },
+  {
+   "k": "nova_amulet_opal",
+   "name": "Opal-set nova amulet",
+   "slot": "amulet",
+   "lvl": 80,
+   "fx": {
+    "rare": 0.12
+   }
+  },
+  {
+   "k": "singularity_ring_abyss",
+   "name": "Abyss-set singularity ring",
+   "slot": "ring",
+   "lvl": 90,
+   "fx": {
+    "tix": 0.05,
+    "tough": 0.03
+   }
+  },
+  {
+   "k": "singularity_amulet_abyss",
+   "name": "Abyss-set singularity amulet",
+   "slot": "amulet",
+   "lvl": 90,
+   "fx": {
+    "tix": 0.1,
+    "tough": 0.06
+   }
+  },
+  {
+   "k": "rex_necklace",
+   "name": "Rex-tooth necklace",
+   "slot": "amulet",
+   "lvl": 90,
+   "fx": {
+    "rare": 0.05
+   }
+  },
+  {
+   "k": "skyripper",
+   "name": "Skyripper",
+   "slot": "weapon",
+   "lvl": 96,
+   "fx": {
+    "adm": 0.06
+   }
+  },
+  {
+   "k": "raptor_ring",
+   "name": "Raptor-claw ring",
+   "slot": "ring",
+   "lvl": 85,
+   "fx": {
+    "adm": 0.05
+   }
+  },
+  {
+   "k": "hunters_fang",
+   "name": "Hunter's Fang",
+   "slot": "amulet",
+   "lvl": 90,
+   "fx": {
+    "adm": 0.08
+   }
+  },
+  {
+   "k": "rimeheart",
+   "name": "Rimeheart",
+   "slot": "weapon",
+   "lvl": 96,
+   "fx": {
+    "mdm": 0.06
+   }
+  },
+  {
+   "k": "frostbite_ring",
+   "name": "Frostbite ring",
+   "slot": "ring",
+   "lvl": 85,
+   "fx": {
+    "mdm": 0.05
+   }
+  },
+  {
+   "k": "winters_heart",
+   "name": "Winter's Heart",
+   "slot": "amulet",
+   "lvl": 90,
+   "fx": {
+    "mdm": 0.08
+   }
+  },
+  {
+   "k": "yeti_boots",
+   "name": "Yeti-fur boots",
+   "slot": "boots",
+   "lvl": 85,
+   "fx": {
+    "speed": 0.04
+   }
+  },
+  {
+   "k": "rimecleaver",
+   "name": "Rimecleaver",
+   "slot": "weapon",
+   "lvl": 95,
+   "fx": {
+    "leech": 0.05
+   }
+  },
+  {
+   "k": "frostjarl_crown",
+   "name": "Crown of the Frost Jarl",
+   "slot": "helm",
+   "lvl": 95,
+   "fx": {
+    "mdm": 0.06
+   }
+  }
+ ]
+}

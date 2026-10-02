@@ -175,6 +175,37 @@ The owner and players: slight rubber banding on long click-to-walk paths and whe
    on phones). MOCK BUILT 2026-10-02: tools/zoommap-mock (open localhost:4321/tools/zoommap-mock/index.html; how to rebuild is in build.mjs): 23 live maps, 6,112 x 12,160 px, 1,548 PNG tiles, 12.5 MB. 206 props drew nothing (things the page draws in code, not from a picture) - the real build must use the page's own sprite drawing.
 4. **Later:** ~31 KB/s and ~12 messages/s per player (whole-scene snapshots): measure by message type, then send deltas. The /stats tick metric always reads 0 (the clock is frozen inside a Worker request): measure tick lateness (the gap between tick starts) instead.
 
+6. **THE QoL PACK (owner, 2026-10-02: "add these the backlog for v1.2").** Mockup of the first item: tools/buffbag-mock (/gameplan, "The Buff Bag").
+   Nothing here adds power; each one takes out a chore. Every one runs only when a player acts (nothing ticks).
+   - **The Buff Bag** (owner: "i want it in the store for now, but will make it cheap"). One inventory item, one slot per buff kind,
+     99 each: meal, drink, potion, scroll, gadget, field kit (locked until kits ship). Click or B uses all; right-click opens the
+     window. A running buff is SKIPPED (under 1 min counts as run out). Contents live on the character like the quiver.
+     Open from the mock: split drinks from potions (today they share C.drink) - my pick yes; the Store price (owner: cheap). ~1 day,
+     +0.5 day if potions split. Needs its PixelLab icon (drafted: tools/buffbag-mock/buffbag.png).
+   - **Gear loadouts** (my top pick): save up to 4 outfits (melee/archery/magic/skilling), swap with one click or Shift+1-4; missing
+     pieces skipped and named. ~1 day.
+   - **Bank loadouts**: save a withdraw list, one button at any bank tops the bag up to it (pairs with Buff Bag refills). ~1 day.
+   - **Buff-ending warning**: icon pulses + a soft chime at 1 min left; "B to top up" if you own a Buff Bag. ~2 hours.
+   - **Auto-refill ammo**: an empty quiver / Magic Bag reloads from matching ammo in the bag mid-fight. ~0.5 day.
+   - **The Lunchbox**: the Buff Bag for healing food, 3 slots x 99; E eats from it first. Reuses the Buff Bag code. ~0.5 day.
+   - **Waystone case**: one item holding the 6 waystones + Casino and Homeward scrolls; click for a destination list. ~0.5 day.
+   - **Junk list**: right-click "Always junk"; Bom gets "Sell all junk". ~0.5 day.
+   - **Loot highlighting** (Path of Exile / Diablo): rares get a coloured beam and a sound, junk dims. Matters more now rares are 5x rarer.
+   - **Idle notifier** (RuneLite's favourite): chime when gathering stops, a fight ends or health is low.
+   - **Event calendar** (Lost Ark / GW2 meta timers): today's world events and raids with countdowns.
+   - **Bank placeholders + bank tags/search** (OSRS / RuneLite): an emptied stack keeps its square; tag items and filter by tag.
+   - **The junk-selling pet** (Torchlight): send your pet to Bom with the junk list, back in 2 min with tickets.
+   - **Rested XP** (WoW): time offline banks a capped bonus that doubles XP until spent. Catches casual players up; the plan's
+     "middle of the server" gap. Balance call for the owner (it is XP, after the 2X split).
+   - Smaller: favourite waystones, join-a-party-member teleport (cooldown), item mail via Bom to offline players, prices on hover,
+     boss respawn timers, auto-pickup tickets, a rename token, a cosmetics wardrobe, Bom's cart (Store: summon the shop/bank for
+     5 min, 1 h cooldown).
+   - **Held on purpose (they are power, not QoL):** gathering sacks (log basket / ore sack: fewer bank trips speed the economy up,
+     against the 2X split), a materials bag that stations read from, anything that eats or drinks for you, offline gathering.
+   - My suggested first cut: the Buff Bag + gear loadouts + the buff warning + auto-refill ammo (~2.5 days).
+   - **Small bug found while building the mock:** fxText has no line for `steal`, so pot_ghost's description ends
+     "For 15 minutes outside: ." (pot_sleep reads oddly too), and pot_surefoot's effect isn't in its fx at all. One-line fix.
+
 ## Next up
 
 - **BUG (low, owner: "not that big of a deal"): +250 tickets to each player at the Crypt boss kill.** `tools/eastscape-crypt-test.mjs`

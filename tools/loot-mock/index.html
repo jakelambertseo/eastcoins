@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Rolled Loot</title>
+<!-- (2026-10-02, the owner: "one thing im very curious about is RNG based loot, and many players have shown interest. the thing is i dont want to
+     overwhelm players at the start, many are casual gamers who havent played ARPGs, etc. but i do want to explore how this could work (random stats
+     on gear, currency / items that can reroll or upgrade them - think poe, poe2, diablo). can you mock up how this would look, what could roll, how
+     they could be rerolled, etc? and where does this fit into balance?"). Every number on this page that describes TODAY is MEASURED from the rules
+     file (measured.json, by scratchpad gear.mjs / bal.mjs / bases.mjs: the tier ladder, the 19 worn effects and their caps, where gear comes from,
+     and plain / next tier / reforged / rolled characters through maxHitOf, attackRollOf and defenceRollOf). The six chips are PixelLab drafts.
+     Local only; built into /gameplan. http://localhost:4321/tools/loot-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark;--plain:#d8d0c0;--lucky:#5ad06a;--hot:#4aa8ff;--jack:#ffc83a}
+html,body{margin:0;background:#0b0a10;color:#e6e0ec;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#1a2a48,transparent),radial-gradient(900px 600px at 100% 20%,#3a1430,transparent),#0b0a10}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 36px/1.1 Cinzel,Georgia,serif;color:#ffd98a;display:flex;align-items:center;gap:12px}
+h1 .chips img{width:40px;height:40px;image-rendering:pixelated;margin-left:-10px}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#f0c870}
+h3{margin:20px 0 6px;font:800 17px Cinzel,serif;color:#f6e2b8}
+.lede{margin:0 0 10px;color:#d0c8dc;max-width:1000px;line-height:1.6}.lede b,.sec>p b,.sec li b,.callout b{color:#fff2d0}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#1c1a2c;box-shadow:0 0 0 1.5px #3c3a5c;text-decoration:none;font:800 13.5px Lora,serif;color:#f0c870}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #24223a}.sec>p,.sec li{color:#c8c0d4;max-width:1000px;line-height:1.6}
+.callout{margin-top:14px;padding:13px 16px;border-radius:10px;background:rgba(240,200,112,.07);box-shadow:inset 0 0 0 1.5px rgba(240,200,112,.4);color:#f6ecd8;line-height:1.6;max-width:1000px}
+.callout.warn{background:rgba(255,120,90,.07);box-shadow:inset 0 0 0 1.5px rgba(255,120,90,.45)}
+.tbl{width:100%;border-collapse:collapse;font:600 13.5px/1.45 Lora,serif;margin-top:12px;background:#13121c;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #2c2a40}
+.tbl th{text-align:left;padding:9px 12px;background:#1c1a2c;color:#f0c870;font:800 12px Lora,serif;letter-spacing:.06em;text-transform:uppercase}
+.tbl td{padding:8px 12px;border-top:1px solid #23213a;color:#d8d0e2;vertical-align:top}.tbl td b{color:#fff2d0}
+.tbl img{width:24px;height:24px;image-rendering:pixelated;vertical-align:middle;margin-right:6px}
+.pick{color:#9fe08a;font-weight:800}.mute{color:#9890a8}
+.r-plain{color:var(--plain)}.r-lucky{color:var(--lucky)}.r-hot{color:var(--hot)}.r-jack{color:var(--jack)}
+
+/* four item cards in a row */
+.four{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px}
+@media (max-width:900px){.four{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* the item tooltip, in the game's dark-glass style (it floats over the map) */
+.card{position:relative;padding:12px 14px;border-radius:10px;background:rgba(14,12,22,.94);box-shadow:inset 0 0 0 1.5px var(--rc,#6a6070),0 6px 18px rgba(0,0,0,.5);font:600 13.5px/1.45 Lora,sans-serif}
+.card .top{display:flex;gap:10px;align-items:center}.card .top img{width:40px;height:40px;image-rendering:pixelated;flex:none;padding:4px;border-radius:8px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1.5px var(--rc)}
+.card .nm{font:800 16px/1.2 Lora,sans-serif;color:var(--rc)}.card .rar{font:800 11px Lora;letter-spacing:.08em;text-transform:uppercase;color:var(--rc);opacity:.9}
+.card .base{margin-top:8px;color:#d8d0e2}.card .base span{margin-right:10px}.card .base b{color:#fff}.card .base em{font-style:normal;color:var(--lucky)}
+.card .aff{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.1);display:grid;gap:3px}
+.card .aff div{display:flex;align-items:center;gap:6px;color:#b8e8ff}.card .aff div.up{color:#b8ffbf}
+.card .aff div .star{color:var(--jack)}.card .aff div.held{outline:1.5px dashed #ffd84a;outline-offset:2px;border-radius:4px}
+.card .aff div .rng{margin-left:auto;font:700 11px Lora;color:#8a84a0}
+.card .aff button{margin-left:6px;border:0;border-radius:5px;padding:2px 7px;background:rgba(255,216,74,.18);color:#ffd84a;font:800 11px Lora;cursor:pointer}
+.card .aff button:hover{background:rgba(255,216,74,.35)}
+.card .foot{margin-top:8px;font:600 12px Lora;color:#9890a8}
+.card .none{color:#8a84a0;font-style:italic}
+.card.r0{--rc:var(--plain)}.card.r1{--rc:var(--lucky)}.card.r2{--rc:var(--hot)}.card.r3{--rc:var(--jack)}
+.card.r3{box-shadow:inset 0 0 0 1.5px var(--jack),0 0 22px rgba(255,200,58,.25),0 6px 18px rgba(0,0,0,.5)}
+.card.flash{animation:flash .5s}@keyframes flash{0%{transform:scale(.97);filter:brightness(1.6)}100%{transform:none;filter:none}}
+
+/* the lab */
+.lab{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:16px;margin-top:14px}
+@media (max-width:1000px){.lab{grid-template-columns:1fr}}
+.panel{padding:14px 16px;border-radius:12px;background:#13121c;box-shadow:inset 0 0 0 1.5px #2c2a40}
+.panel h4{margin:0 0 8px;font:800 14px Lora;color:#f0c870;letter-spacing:.04em;text-transform:uppercase}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+select{font:700 13.5px Lora;padding:6px 8px;border-radius:6px;background:#efe2c4;color:#2a2016;border:0}
+.chipbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.chipbtn{display:flex;align-items:center;gap:8px;padding:7px 9px;border:0;border-radius:8px;background:#1c1a2c;box-shadow:inset 0 0 0 1.5px #3c3a5c;color:#eee;font:800 13px Lora;text-align:left;cursor:pointer}
+.chipbtn img{width:30px;height:30px;image-rendering:pixelated;flex:none}.chipbtn small{display:block;font:600 11px/1.3 Lora;color:#a8a0b8}
+.chipbtn:hover:not(:disabled){box-shadow:inset 0 0 0 2px #ffd84a;background:#26233a}
+.chipbtn:disabled{opacity:.42;cursor:default}.chipbtn.armed{box-shadow:inset 0 0 0 2px #ffd84a;background:#3a3218}
+.chipbtn .n{margin-left:auto;font:800 11px Lora;color:#ffd84a}
+.vs{display:grid;grid-template-columns:auto repeat(3,1fr);gap:4px 10px;margin-top:10px;font:700 13px Lora;color:#c8c0d4}
+.vs b{color:#fff}.vs .g{color:var(--lucky)}.vs .h{grid-column:1/-1;margin-top:4px;font:800 11px Lora;letter-spacing:.06em;text-transform:uppercase;color:#f0c870}
+.meter{height:10px;border-radius:5px;background:#24223a;overflow:hidden;margin-top:4px}.meter i{display:block;height:100%;background:linear-gradient(90deg,#5ad06a,#ffc83a)}
+.log{margin-top:10px;max-height:180px;overflow:auto;display:grid;gap:3px;font:600 12.5px/1.4 Lora;color:#c8c0d4}.log p{margin:0}.log p b{color:#fff}
+.k-seg{background:rgba(240,226,196,.92)}
+
+/* balance bars */
+.bars{display:grid;gap:14px;margin-top:12px}
+.barset{padding:12px 16px;border-radius:12px;background:#13121c;box-shadow:inset 0 0 0 1.5px #2c2a40}
+.barset h4{margin:0 0 6px;font:800 14px Lora;color:#fff2d0}
+.brow{display:grid;grid-template-columns:200px 1fr 120px;gap:10px;align-items:center;font:600 12.5px Lora;color:#c8c0d4;margin:3px 0}
+.brow .bar{height:14px;border-radius:4px;background:#1e1c2e;position:relative;overflow:hidden}.brow .bar i{position:absolute;inset:0 auto 0 0;border-radius:4px}
+.brow .bar .tick{position:absolute;top:-2px;bottom:-2px;width:2px;background:#ff8a7a}
+.brow b{color:#fff}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:12px}
+.grid2>div{padding:12px 16px;border-radius:12px;background:#13121c;box-shadow:inset 0 0 0 1.5px #2c2a40}
+.grid2 h4{margin:0 0 4px;font:800 15px Lora;color:#fff2d0}.grid2 p{margin:4px 0 0;color:#c8c0d4;line-height:1.55;font-size:14px}
+.phase{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+@media (max-width:900px){.phase{grid-template-columns:1fr}}
+.phase>div{padding:14px 16px;border-radius:12px;background:#13121c;box-shadow:inset 0 0 0 1.5px #2c2a40}
+.phase h4{margin:0;font:800 17px Cinzel;color:var(--pc)}.phase .when{font:700 12px Lora;color:#9890a8}.phase ul{margin:8px 0 0;padding-left:18px}.phase li{font-size:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<main>
+  <h1>Rolled Loot <span class="chips"><img src="chip_lucky.png" alt=""><img src="chip_raise.png" alt=""><img src="chip_shuffle.png" alt=""><img src="chip_redeal.png" alt=""></span></h1>
+  <p class="lede">Gear that can come out <b>better than plain</b>: a few extra lines in plain words, like <b>"+3% more tickets"</b> or <b>"+2 defence"</b>, and <b>casino chips</b> that change those lines. It's Path of Exile and Diablo's idea, sized for EastScape. <b>Today's gear never stops being good</b>: everything in the game stays beatable in plain, reforged gear, and rolls are a bonus on top that grows into a long chase.</p>
+  <nav class="jump"><a href="#look">How it looks</a><a href="#lab">Try it</a><a href="#roll">What can roll</a><a href="#chips">The chips</a><a href="#from">Where it comes from</a><a href="#casual">For casual players</a><a href="#balance">Balance</a><a href="#others">Other games</a><a href="#decide">Decisions</a><a href="#build">Building it</a></nav>
+
+  <section class="sec" id="look">
+    <h2>How it looks</h2>
+    <p>Four grades, named for the casino and coloured so you can read them across the screen. The same Eclipse sword at each grade:</p>
+    <div class="four" id="four"></div>
+    <p><b>Plain</b> is every item in the game today, unchanged. <b class="r-lucky">Lucky</b> has one extra line, <b class="r-hot">Hot</b> two, <b class="r-jack">Jackpot</b> three. A gold <span class="r-jack">★</span> marks a line that rolled the best it can for that item. There are no hidden numbers, no "prefix" or "item level" words, and the most lines an item can have is <b>three</b>, against six in Path of Exile.</p>
+  </section>
+
+  <section class="sec" id="lab">
+    <h2>Try it</h2>
+    <p>Pick a real item, get one (from a monster or by making it), then spend chips on it. The phase switch shows how the system opens up over time. Phase 1 is where casual players start: one line at most, and the Dealer re-deals a line for tickets. The right-hand panel shows what the rolls are worth to a level-70 fighter, using the game's own combat formulas.</p>
+    <div class="lab">
+      <div class="panel">
+        <div class="ctl">
+          <select id="base"></select>
+          <button type="button" class="k-btn sm" id="drop">Monster drop</button>
+          <button type="button" class="k-btn sm sec" id="craft">Make it (10 levels over)</button>
+          <button type="button" class="k-btn sm sec" id="plainB">Plain</button>
+        </div>
+        <div class="ctl"><span class="mute" style="font:700 12.5px Lora">Phase:</span>
+          <div class="k-seg" id="phase"><button type="button" data-p="1" aria-pressed="false">1 · Lucky</button><button type="button" data-p="2" aria-pressed="false">2 · Hot</button><button type="button" data-p="3" aria-pressed="true">3 · Jackpot</button></div></div>
+        <div id="item"></div>
+        <h4 style="margin-top:14px">Chips</h4>
+        <div class="chipbar" id="chipbar"></div>
+        <div class="log" id="log"></div>
+      </div>
+      <div class="panel">
+        <h4>What it's worth</h4>
+        <div id="worth"></div>
+        <h4 style="margin-top:14px">Spent on this item</h4>
+        <div id="spent" class="mute" style="font:600 13px Lora"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="roll">
+    <h2>What can roll</h2>
+    <p>Two kinds of line. <b>Up</b> lines add accuracy, strength or defence; they are small on purpose, because those are what the game's balance is built on. <b>Sideways</b> lines are the effects worn gear already has today (19 of them, measured), each under <b>the cap the game already enforces</b>. So no line is a new stat, the Character window can show every one, and no amount of stacking passes a cap. Values grow with the item's tier: the range on a Bronze piece and on a Singularity piece are both shown.</p>
+    <table class="tbl" id="affTbl"></table>
+    <div class="callout warn"><b>Never rolls:</b> <b>ZCoin drop chance</b> (real ZCoins: not a random line, ever). The effects that make a <b>named item</b> what it is also never roll: execute, "nothing attacks you first", no hospital bill, gem find, the Bookie's "other worn gear stronger" and forge odds. Those stay the chase on uniques like the Gambler's Ring and the Coffin Ring.</div>
+  </section>
+
+  <section class="sec" id="chips">
+    <h2>The chips</h2>
+    <p>Six casino chips, each doing one clear thing. The names are table words, so the casino explains them: you <b>raise</b>, you <b>fold</b>, you <b>hold</b>. They stack to 99 and sit in the bank like anything else.</p>
+    <table class="tbl" id="chipTbl"></table>
+    <div class="callout"><b>The Dealer</b>, a new NPC by the Gem Sorter, is where chips are used and where phase 1 starts. Before any chips exist, he <b>re-deals one line</b> of an item for tickets: 5,000, then double each time on the same item (Diablo 4's enchanting). That is the whole system for a casual player: "don't like that line? pay to change it." And it's a <b>ticket sink</b> that the richest players will feed for a perfect roll.</div>
+  </section>
+
+  <section class="sec" id="from">
+    <h2>Where rolled gear comes from</h2>
+    <p><b>Measured: <span id="srcLine"></span>.</b> In EastScape, gear is made, not found, so rolls have to come <b>with crafting</b>, not only from drops (Diablo's model would leave Smithing out of the best part of the game).</p>
+    <table class="tbl" id="oddsTbl"></table>
+    <p>Making an item at its requirement level is mostly Plain; making it well above your level is how a smith gets Jackpots. That gives every high Smithing, Fletching and Wizardry level a new reason to exist, and replaces the "masterwork" quality idea from the Relic mockup with one system instead of two (see Decisions).</p>
+  </section>
+
+  <section class="sec" id="casual">
+    <h2>For casual players</h2>
+    <p>The worry is a wall of numbers on day one. Seven rules keep it away:</p>
+    <div class="grid2">
+      <div><h4>1. Nothing rolls below level 30</h4><p>Bronze and Emerald gear is always Plain. A new player's first month is exactly today's game. Rolls start on Diamond gear and Diamond-tier drops.</p></div>
+      <div><h4>2. Plain is always enough</h4><p>Every monster, boss and dungeon is tuned to Plain gear reforged to +3. Rolled gear makes things faster and comfier; it never becomes the price of entry. Say it in the Dealer's first line.</p></div>
+      <div><h4>3. Plain words, three lines at most</h4><p>"+3% more tickets", "+2 defence". No affix tiers or item levels shown. A ★ for the best possible roll is the only extra symbol.</p></div>
+      <div><h4>4. Compare at a glance</h4><p>Hovering an item shows green ▲ and red ▼ against what you're wearing, the way the Character window already reads gear. The game does the maths.</p></div>
+      <div><h4>5. One new verb at a time</h4><p>Phase 1 has no chips, only "re-deal this line" for tickets. Chips arrive later, one or two at a time, each introduced by the Dealer with a free one.</p></div>
+      <div><h4>6. Nothing is ever lost</h4><p>No chip breaks an item (reforging already has that risk, and that's enough). The worst a chip can do is roll a line you like less.</p></div>
+      <div><h4>7. It is a bonus, so it can wait</h4><p>Someone who ignores the whole system loses about a quarter of a tier of power (a typical roll), not a reason to quit.</p></div>
+    </div>
+    <h3>Rolled out in three phases</h3>
+    <div class="phase">
+      <div style="--pc:var(--lucky)"><h4>Phase 1 · Lucky</h4><div class="when">first, about 4 days</div><ul>
+        <li>Gear from Diamond up can come out <b class="r-lucky">Lucky</b> (one line).</li><li>The Dealer re-deals a line for tickets (5k, doubling).</li><li>No chips yet. Loot highlighting (the QoL pack) makes a Lucky drop glow.</li></ul></div>
+      <div style="--pc:var(--hot)"><h4>Phase 2 · Hot</h4><div class="when">2-4 weeks later</div><ul>
+        <li><b class="r-hot">Hot</b> items (two lines).</li><li>Chips: <b>Lucky</b>, <b>Shuffle</b>, <b>Raise</b> drop from monsters, raids and Bronny's order; the Dealer sells Lucky and Shuffle.</li><li>Salvage (Tinkering) turns unwanted rolled gear into chips.</li></ul></div>
+      <div style="--pc:var(--jack)"><h4>Phase 3 · Jackpot</h4><div class="when">with the road past 99</div><ul>
+        <li><b class="r-jack">Jackpot</b> items (three lines).</li><li><b>Re-deal</b>, <b>Fold</b> and <b>Hold</b> chips from bosses and Elite diaries.</li><li>A CASINO line in chat for a perfect ★★★ Jackpot. Relic gear (mockup 3) rolls too.</li></ul></div>
+    </div>
+  </section>
+
+  <section class="sec" id="balance">
+    <h2>Where it fits in balance</h2>
+    <p>Measured with the game's own combat formulas, for a melee fighter in a full set of their level's tier with that tier's sword. The bars start near the plain value so the differences show. The red line is the <b>next tier</b>. Reforging to +3 already reaches it, which is today's ceiling over plain gear. Rolls are sized so a <b>perfect</b> set adds most of a tier (+6 of the +7 defence roll a tier gives at 70, +3 of the +4 attack roll), and a <b>typical</b> set about a quarter. Perfect means the best roll on every one of seven pieces, a long chase.</p>
+    <div class="bars" id="bars"></div>
+    <div class="grid2">
+      <div><h4>Up lines are small; sideways lines carry the fun</h4><p>A tier step is about +4 attack roll, +2 max hit and +7 defence roll. A perfect Up line is worth a fraction of that. Most lines go sideways (tickets, rare find, speed, less damage), so a Jackpot changes how you play more than how hard you hit.</p></div>
+      <div><h4>The caps are the guard rails</h4><p>Every sideways line counts toward the cap that already exists (tickets 25%, speed 20%, less damage 30%, rare find 40% and so on). Stacking rolls can reach a cap sooner; it can never pass it. The Character window already shows those bars.</p></div>
+      <div><h4>Stacking order: base, reforge, rolls, gems</h4><p>One budget: reforge levels (about one tier), then rolls (most of a tier when perfect, a quarter when typical), then socketed gems as today. The defence fix in the game plan must land first, or extra defence past 90 means very little.</p></div>
+      <div><h4>The economy</h4><p>The Dealer's re-deal and chip prices are a <b>ticket sink</b> for the richest players, one the sinks mockup found missing. Chips never cost ZCoins and never touch the casino's odds. Rolled gear can be traded, so the best rolls get a price, and the bank and trades carry the roll with the item.</p></div>
+      <div><h4>Content stays tuned to plain</h4><p>Monsters are not re-balanced for rolled gear. If rolls ever become required, they've been sized wrong; the fix is the roll ranges, not the monsters.</p></div>
+      <div><h4>What it does to XP</h4><p>Up lines speed up kills by a few percent at most; ticket and rare-find lines speed up income under the existing caps. Neither touches XP, so it doesn't fight the 2X split.</p></div>
+    </div>
+  </section>
+
+  <section class="sec" id="others">
+    <h2>What other games do, and what we take</h2>
+    <table class="tbl">
+      <tr><th style="width:150px">Game</th><th>How it works</th><th style="width:330px">For EastScape</th></tr>
+      <tr><td><b>Path of Exile</b></td><td>Up to 6 lines, about 20 kinds of orb (Chaos rerolls all, Exalted adds one, Divine rerolls numbers, Annul removes one), plus a crafting bench to lock lines.</td><td>The verbs, cut to six chips and three lines. The depth is too much for this community.</td></tr>
+      <tr><td><b>Path of Exile 2</b></td><td>Fewer, simpler currencies; Essences guarantee one line; items drop less but each matters more.</td><td>Fewer drops that matter: rolls start at 30 and most gear is still Plain.</td></tr>
+      <tr><td><b>Diablo 4</b></td><td>Enchant at the Occultist: reroll ONE line, and the gold cost climbs each time. Later: Tempering adds lines, Masterworking upgrades numbers.</td><td><b>The Dealer's re-deal is this</b>: the friendliest reroll there is, and a sink.</td></tr>
+      <tr><td><b>Diablo 2</b></td><td>No rerolling at all; you find it or you don't. Gambling at vendors for unknown items.</td><td>A "gamble" at Bom (buy a mystery rolled item) could be fun later; the casino would love it.</td></tr>
+      <tr><td><b>Last Epoch</b></td><td>Each item has Forging Potential; every craft spends some, crafts are chosen, not random, so you never feel cheated.</td><td>Optional: a "deals left" counter per item if pure random feels bad.</td></tr>
+      <tr><td><b>Lost Ark</b></td><td>Ability stones: each click's success odds shift with results; very gambly.</td><td>Avoid. Our casino already is the gambling; gear crafting should feel fair.</td></tr>
+    </table>
+  </section>
+
+  <section class="sec" id="decide">
+    <h2>Decisions</h2>
+    <div class="grid2">
+      <div><h4>1. Rolls on crafted gear too? <span class="pick">My pick: yes.</span></h4><p>188 of 291 wearable items are made. Rolls only on drops would leave Smithing, Fletching and Wizardry out of the best part.</p></div>
+      <div><h4>2. Rolls instead of masterwork quality? <span class="pick">My pick: yes, one system.</span></h4><p>The Relic mockup proposed Fine/Superior/Masterwork quality. Rarity does the same job and is easier to read. Masterwork becomes "Jackpot, made by a named smith".</p></div>
+      <div><h4>3. Start with the Dealer only? <span class="pick">My pick: yes, phase 1.</span></h4><p>One line, re-deal for tickets, no chips. Learn what players do with it before adding chips.</p></div>
+      <div><h4>4. Up lines on weapons and armour at all? <span class="pick">My pick: small ones.</span></h4><p>Sideways-only is the safest for balance, but "+2 defence" is the line casual players understand best.</p></div>
+      <div><h4>5. Tradeable? <span class="pick">My pick: yes.</span></h4><p>Rolled items are the best thing to trade in an ARPG. With 36 players it's a small market, but a real one.</p></div>
+      <div><h4>6. Named effects stay unique? <span class="pick">My pick: yes.</span></h4><p>Execute, calm, no hospital bill and the rest never roll, so named items keep their place.</p></div>
+      <div><h4>7. Tools and work clothes? <span class="pick">My pick: not yet.</span></h4><p>Tools reforge on their skill and work clothes have sets; rolls there would be a second, separate design.</p></div>
+      <div><h4>8. Names</h4><p>Lucky / Hot / Jackpot and the six chips are placeholders that fit the casino. Open to better ones.</p></div>
+    </div>
+  </section>
+
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <ul>
+      <li><b>Data:</b> an item in the bag or bank already carries <code>f</code> (its reforge level and gem code) and a reforged piece never stacks. A rolled piece adds <code>r</code>: up to three short codes like <code>"tix:3"</code>. Rolled pieces never stack either. Worn gear keeps its code the way <code>eqf</code> does today.</li>
+      <li><b>Rules:</b> <code>statOf</code> adds Up lines; <code>fxOf</code> adds sideways lines under <code>OUT_CAP</code>. Every number in the game already reads through those two, so combat, the Character window and the buff bar pick rolls up with no other change. <code>ROLLS</code> holds the line table, and <code>rollFor(item, seed)</code> is one function the server uses for drops, crafts and chips.</li>
+      <li><b>Server:</b> a roll at drop or craft time. A <code>{t:"deal", op, i, chip}</code> message at the Dealer. Trades and the bank carry <code>r</code>. Everything checked server-side; the page only draws.</li>
+      <li><b>Page:</b> the coloured name and lines on every item tooltip, green ▲ / red ▼ compare against worn, the Dealer's window, loot highlighting.</li>
+      <li><b>Cost to run:</b> nothing ticks. A save grows by a few bytes per rolled item.</li>
+      <li><b>Size:</b> phase 1 about 4 days (rolls, the Dealer, tooltips, a test that drops, crafts, re-deals and checks the caps). Phase 2 about 3 days plus art for the chips (drafted above). Phase 3 about 2 days.</li>
+    </ul>
+  </section>
+</main>
+<script type="module">
+const M = await fetch("measured.json").then((r) => r.json());
+const IC = (k) => `/v3/assets/img/glad/flat/items/${k}.png`;
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const $ = (id) => document.getElementById(id);
+const RAR = [["Plain", "plain"], ["Lucky", "lucky"], ["Hot", "hot"], ["Jackpot", "jack"]];
+const pct = (v) => `${+(v * 100).toFixed(1)}%`;
+
+/* ---------- the line table. lo = a Bronze item's range, hi = a Singularity's; t (0..1) is the item's level along the ladder ---------- */
+const ARMOUR = ["helm", "body", "legs", "gloves", "boots", "shield"], JEWEL = ["ring", "amulet"];
+const AFF = [
+  { id: "acc", kind: "up", say: (v) => `+${v} accuracy`, slots: ["weapon", "gloves", ...JEWEL], lo: [1, 1], hi: [1, 3] },
+  { id: "str", kind: "up", say: (v) => `+${v} strength`, slots: ["weapon", ...JEWEL], lo: [1, 1], hi: [1, 2] },
+  { id: "def", kind: "up", say: (v) => `+${v} defence`, slots: [...ARMOUR, ...JEWEL], lo: [1, 1], hi: [1, 2] },
+  { id: "tix", kind: "fx", say: (v) => `+${pct(v)} more tickets`, slots: [...ARMOUR, ...JEWEL], lo: [0.01, 0.02], hi: [0.02, 0.04] },
+  { id: "speed", kind: "fx", say: (v) => `${pct(v)} faster swings and fishing`, slots: ["boots", "gloves", "ring", "weapon"], lo: [0.01, 0.02], hi: [0.02, 0.03] },
+  { id: "tough", kind: "fx", say: (v) => `${pct(v)} less damage taken`, slots: ["helm", "body", "legs", "shield"], lo: [0.01, 0.02], hi: [0.02, 0.03] },
+  { id: "rare", kind: "fx", say: (v) => `rare drops ${pct(v)} more often`, slots: ["helm", ...JEWEL], lo: [0.02, 0.03], hi: [0.03, 0.05] },
+  { id: "bite", kind: "fx", say: (v) => `fish bite ${pct(v)} more often`, slots: ["gloves", "ring"], lo: [0.01, 0.01], hi: [0.01, 0.02] },
+  { id: "leech", kind: "fx", say: (v) => `${pct(v)} of damage dealt heals you`, slots: ["weapon", "amulet"], lo: [0.01, 0.02], hi: [0.02, 0.03] },
+  { id: "heal", kind: "fx", say: (v) => `fish heal ${pct(v)} more`, slots: ["body", "amulet"], lo: [0.03, 0.05], hi: [0.05, 0.1] },
+  { id: "double", kind: "fx", say: (v) => `${pct(v)} of what you gather comes up double`, slots: ["gloves", "boots"], lo: [0.01, 0.02], hi: [0.02, 0.03] },
+  { id: "ammo", kind: "fx", say: (v) => `${pct(v)} of shots and casts are free`, slots: ["weapon"], style: ["archery", "magic"], lo: [0.03, 0.05], hi: [0.05, 0.08] },
+  { id: "adm", kind: "fx", say: (v) => `arrows hit ${pct(v)} harder`, slots: ["weapon", "gloves"], style: ["archery"], lo: [0.01, 0.02], hi: [0.02, 0.03] },
+  { id: "mdm", kind: "fx", say: (v) => `spells hit ${pct(v)} harder`, slots: ["weapon", "amulet"], style: ["magic"], lo: [0.01, 0.02], hi: [0.02, 0.03] },
+];
+const AF = Object.fromEntries(AFF.map((a) => [a.id, a]));
+const tOf = (lvl) => Math.max(0, Math.min(1, (lvl - 10) / 80));
+const range = (a, it) => { const t = tOf(it.lvl), lo = a.lo[0] + (a.hi[0] - a.lo[0]) * t, hi = a.lo[1] + (a.hi[1] - a.lo[1]) * t; return a.kind === "up" ? [Math.round(lo), Math.round(hi)] : [Math.round(lo * 200) / 200, Math.round(hi * 200) / 200]; };
+const fits = (a, it) => a.slots.includes(it.slot) && (!a.style || a.style.includes(it.style || "melee")) && !(a.style && it.slot === "weapon" && !it.style);
+const rollVal = (a, it) => { const [lo, hi] = range(a, it); if (a.kind === "up") return lo + Math.floor(Math.random() * (hi - lo + 1)); const steps = Math.round((hi - lo) / 0.005); return Math.round((lo + 0.005 * Math.floor(Math.random() * (steps + 1))) * 1000) / 1000; };
+const isMax = (l, it) => l.v >= range(AF[l.id], it)[1];
+const pool = (it, have) => AFF.filter((a) => fits(a, it) && !have.some((l) => l.id === a.id));
+const newLine = (it, have) => { const p = pool(it, have); if (!p.length) return null; const a = p[Math.floor(Math.random() * p.length)]; return { id: a.id, v: rollVal(a, it) }; };
+
+/* ---------- item cards ---------- */
+function card(it, lines, opts = {}) {
+  const r = lines.length, up = { acc: 0, str: 0, def: 0 }; for (const l of lines) if (AF[l.id].kind === "up") up[l.id] += l.v;
+  const st = ["acc", "str", "def"].filter((q) => it[q] || up[q]).map((q) => `<span>${{ acc: "Accuracy", str: "Strength", def: "Defence" }[q]} <b>${it[q] + up[q]}</b>${up[q] ? ` <em>(+${up[q]})</em>` : ""}</span>`).join("");
+  const aff = lines.length ? `<div class="aff">${lines.map((l, i) => { const a = AF[l.id]; return `<div class="${a.kind === "up" ? "up" : ""}${opts.held === i ? " held" : ""}">${isMax(l, it) ? '<span class="star">★</span>' : "•"} ${esc(a.say(l.v))}<span class="rng">${opts.ranges ? `(${range(a, it).map((x) => a.kind === "up" ? x : pct(x)).join("–")})` : ""}</span>${opts.dealer ? `<button type="button" data-redeal="${i}">${opts.hold ? "Hold" : "Re-deal"}</button>` : ""}</div>`; }).join("")}</div>` : `<div class="aff"><span class="none">No extra lines</span></div>`;
+  return `<div class="card r${r}${opts.flash ? " flash" : ""}"><div class="top"><img src="${IC(it.k)}" alt=""><div><div class="rar">${RAR[r][0]}</div><div class="nm">${r ? RAR[r][0] + " " : ""}${esc(it.name)}</div></div></div>
+    <div class="base">${st}</div>${aff}<div class="foot">Level ${it.lvl} ${esc(it.skill || "")}${r ? " · rolled" : ""}</div></div>`;
+}
+const SWORD = M.bases.find((b) => b.k === "eclipse_sword");
+$("four").innerHTML = [[], [{ id: "speed", v: 0.02 }], [{ id: "acc", v: 3 }, { id: "leech", v: 0.02 }], [{ id: "str", v: 2 }, { id: "leech", v: 0.03 }, { id: "speed", v: 0.025 }]].map((l) => card(SWORD, l)).join("");
+
+/* ---------- the lab ---------- */
+const CHIPS = [
+  { id: "lucky", name: "Lucky Chip", does: "Plain → Lucky: adds one line", ok: (L) => L.length === 0 ? "" : "only on a Plain item", ph: 2 },
+  { id: "raise", name: "Raise Chip", does: "adds one more line", ok: (L, max) => !L.length ? "make it Lucky first" : L.length >= max ? "already at the most lines" : "", ph: 2 },
+  { id: "shuffle", name: "Shuffle Chip", does: "rerolls every line (keeps how many)", ok: (L) => L.length ? "" : "nothing to shuffle", ph: 2 },
+  { id: "redeal", name: "Re-deal Chip", does: "rerolls the numbers, keeps the lines", ok: (L) => L.length ? "" : "nothing to re-deal", ph: 3 },
+  { id: "fold", name: "Fold Chip", does: "removes one random line", ok: (L) => L.length ? "" : "nothing to fold", ph: 3 },
+  { id: "hold", name: "Hold Chip", does: "click a line: it survives the next chip", ok: (L) => L.length >= 2 ? "" : "needs two lines or more", ph: 3 },
+];
+const CH = Object.fromEntries(CHIPS.map((c) => [c.id, c]));
+let it = SWORD, lines = [], phase = 3, held = null, holdArm = false, spent = {}, dealerCost = 5000, dealerSpent = 0;
+const maxLines = () => phase;
+const log = (h) => { const p = document.createElement("p"); p.innerHTML = h; $("log").prepend(p); };
+function setItem(newLines, how) { lines = newLines; held = null; holdArm = false; draw(true); if (how) log(how); }
+function rarityRoll(table) { const x = Math.random() * 100; let a = 0; for (let r = 3; r >= 1; r--) { a += table[r]; if (x < a) return Math.min(r, maxLines()); } return 0; }
+function fresh(r) { const L = []; for (let i = 0; i < r; i++) { const l = newLine(it, L); if (l) L.push(l); } return L; }
+$("base").innerHTML = M.bases.map((b) => `<option value="${b.k}">${esc(b.name)} (level ${b.lvl})</option>`).join("");
+$("base").value = "eclipse_sword";
+$("base").onchange = () => { it = M.bases.find((b) => b.k === $("base").value); spent = {}; dealerCost = 5000; dealerSpent = 0; setItem([], `<b>${esc(it.name)}</b>, Plain.`); };
+const DROP = { 1: 30, 2: 8.5, 3: 1.5 }, CRAFT = { 1: 15, 2: 4, 3: 0.5 };
+$("drop").onclick = () => { if (it.lvl < 30) return log("Below level 30 everything is Plain."); const r = rarityRoll(DROP); spent = {}; dealerCost = 5000; dealerSpent = 0; setItem(fresh(r), `A monster drops a <b class="r-${RAR[r][1]}">${RAR[r][0]}</b> ${esc(it.name)}.`); };
+$("craft").onclick = () => { if (it.lvl < 30) return log("Below level 30 everything is Plain."); const r = rarityRoll(CRAFT); spent = {}; dealerCost = 5000; dealerSpent = 0; setItem(fresh(r), `You make a <b class="r-${RAR[r][1]}">${RAR[r][0]}</b> ${esc(it.name)}.`); };
+$("plainB").onclick = () => { spent = {}; dealerCost = 5000; dealerSpent = 0; setItem([], "Back to Plain."); };
+$("phase").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; phase = +b.dataset.p; for (const x of $("phase").children) x.setAttribute("aria-pressed", x === b); if (lines.length > phase) lines = lines.slice(0, phase); log(`Phase ${phase}: ${["", "one line at most, no chips; the Dealer re-deals a line for tickets", "two lines; Lucky, Raise and Shuffle chips", "three lines; every chip"][phase]}.`); draw(); };
+
+function useChip(id) {
+  const c = CH[id]; spent[id] = (spent[id] || 0) + 1;
+  const keep = held != null ? lines[held] : null; held = null;
+  if (id === "lucky") { const L = [newLine(it, [])]; return setItem(L, `<b>Lucky Chip</b>: Lucky, with <b>${esc(AF[L[0].id].say(L[0].v))}</b>.`); }
+  if (id === "raise") { const L = [...lines, newLine(it, lines)].filter(Boolean); return setItem(L, `<b>Raise Chip</b>: a new line, <b>${esc(AF[L.at(-1).id].say(L.at(-1).v))}</b>.`); }
+  if (id === "shuffle") { const L = keep ? [keep] : []; while (L.length < lines.length) { const l = newLine(it, L); if (!l) break; L.push(l); } return setItem(L, `<b>Shuffle Chip</b>: every line rerolled${keep ? ", the held one kept" : ""}.`); }
+  if (id === "redeal") { const L = lines.map((l) => (keep && l === keep ? l : { id: l.id, v: rollVal(AF[l.id], it) })); return setItem(L, `<b>Re-deal Chip</b>: the numbers rerolled${keep ? ", the held one kept" : ""}.`); }
+  if (id === "fold") { const can = lines.filter((l) => l !== keep); if (!can.length) return; const out = can[Math.floor(Math.random() * can.length)]; return setItem(lines.filter((l) => l !== out), `<b>Fold Chip</b>: <s>${esc(AF[out.id].say(out.v))}</s> removed.`); }
+  if (id === "hold") { spent.hold--; holdArm = true; draw(); return log("Click the line to hold."); }
+}
+function draw(flash = false) {
+  $("item").innerHTML = card(it, lines, { ranges: true, dealer: lines.length > 0, held, hold: holdArm, flash });
+  $("chipbar").innerHTML = (phase === 1 ? [] : CHIPS).map((c) => { const why = c.ph > phase ? `phase ${c.ph}` : c.ok(lines, maxLines()); return `<button type="button" class="chipbtn${holdArm && c.id === "hold" ? " armed" : ""}" data-chip="${c.id}" ${why ? "disabled" : ""} title="${esc(why || c.does)}"><img src="chip_${c.id}.png" alt=""><span>${c.name}<small>${esc(why || c.does)}</small></span>${spent[c.id] ? `<span class="n">×${spent[c.id]}</span>` : ""}</button>`; }).join("") || `<div class="mute" style="grid-column:1/-1;font:600 13px Lora">Phase 1 has no chips. Click <b>Re-deal</b> on a line: the Dealer rerolls it for tickets.</div>`;
+  /* worth: Up lines through the same formulas, against one tier step measured at level 70 */
+  const up = { acc: 0, str: 0, def: 0 }; for (const l of lines) if (AF[l.id].kind === "up") up[l.id] += l.v;
+  const b70 = M.balance.find((b) => b.lvl === 70), step = { atk: b70.nextTier.atk - b70.plain.atk, hit: b70.nextTier.maxHit - b70.plain.maxHit, def: b70.nextTier.def - b70.plain.def };
+  const dHit = Math.floor((it.str + up.str) / 2) - Math.floor(it.str / 2), dAtk = up.acc, dDef = up.def / 2;
+  const side = lines.filter((l) => AF[l.id].kind === "fx").map((l) => { const cap = M.OUT_CAP[l.id]; return `<div>${esc(AF[l.id].say(l.v))}<div class="meter" title="share of the cap"><i style="width:${Math.min(100, (l.v / cap) * 100)}%"></i></div><small class="mute">${Math.round((l.v / cap) * 100)}% of the ${pct(cap)} cap</small></div>`; }).join("");
+  $("worth").innerHTML = `<div class="vs"><span class="h">Up lines, for a level-70 fighter</span><span></span><span>max hit</span><span>attack roll</span><span>defence roll</span>
+    <span>This item</span><b class="${dHit ? "g" : ""}">+${dHit}</b><b class="${dAtk ? "g" : ""}">+${dAtk}</b><b class="${dDef ? "g" : ""}">+${dDef}</b>
+    <span class="mute">One tier step</span><span class="mute">+${step.hit}</span><span class="mute">+${step.atk}</span><span class="mute">+${step.def}</span></div>
+    <div class="vs" style="grid-template-columns:1fr"><span class="h">Sideways lines, against their caps</span>${side || '<span class="mute">none</span>'}</div>`;
+  const tot = Object.entries(spent).filter(([, n]) => n > 0);
+  $("spent").innerHTML = (tot.length ? tot.map(([k, n]) => `${CH[k].name} ×${n}`).join(" · ") : "No chips yet.") + (dealerSpent ? `<br>Dealer: <b style="color:#ffd84a">${dealerSpent.toLocaleString()} tickets</b> (next re-deal ${dealerCost.toLocaleString()})` : "");
+}
+$("chipbar").onclick = (e) => { const b = e.target.closest("[data-chip]"); if (b && !b.disabled) useChip(b.dataset.chip); };
+$("item").onclick = (e) => { const b = e.target.closest("[data-redeal]"); if (!b) return; const i = +b.dataset.redeal;
+  if (holdArm) { holdArm = false; held = i; spent.hold = (spent.hold || 0) + 1; draw(); return log(`Held: <b>${esc(AF[lines[i].id].say(lines[i].v))}</b>. The next chip leaves it alone.`); }
+  const old = lines[i], nv = { id: old.id, v: rollVal(AF[old.id], it) }; dealerSpent += dealerCost; log(`The Dealer re-deals <b>${esc(AF[old.id].say(old.v))}</b> → <b>${esc(AF[old.id].say(nv.v))}</b> for ${dealerCost.toLocaleString()} tickets.`); dealerCost *= 2; lines = lines.map((l, j) => (j === i ? nv : l)); held = null; draw(true); };
+draw(); log("Pick an item, then <b>Monster drop</b> or <b>Make it</b>. Or spend a Lucky Chip on a Plain one.");
+
+/* ---------- tables ---------- */
+const lo = { lvl: 10 }, hi = { lvl: 90 }, slotWords = (s) => s.map((x) => x).join(", ");
+$("affTbl").innerHTML = `<tr><th>Line</th><th style="width:70px">Kind</th><th>Rolls on</th><th style="width:130px">Bronze item</th><th style="width:150px">Singularity item</th><th style="width:110px">Today's cap</th><th>Today on worn gear</th></tr>` +
+  AFF.map((a) => { const r1 = range(a, lo), r2 = range(a, hi), f = (r) => r.map((x) => (a.kind === "up" ? x : pct(x))).join("–"), today = M.fxKeys[a.id];
+    return `<tr><td><b>${esc(a.say(a.kind === "up" ? "x" : 0).replace(/\+?0%/, "x%"))}</b></td><td>${a.kind === "up" ? "Up" : "Sideways"}</td><td>${slotWords(a.slots)}${a.style ? ` <span class="mute">(${a.style.join("/")} only)</span>` : ""}</td><td>${f(r1)}</td><td>${f(r2)}</td><td>${a.kind === "up" ? '<span class="mute">tier step</span>' : pct(M.OUT_CAP[a.id])}</td><td>${today ? `${today.length} item${today.length > 1 ? "s" : ""}, ${today.map(pct).filter((v, i, x) => x.indexOf(v) === i).join(" / ")}` : '<span class="mute">—</span>'}</td></tr>`; }).join("");
+$("chipTbl").innerHTML = `<tr><th style="width:170px">Chip</th><th>What it does</th><th style="width:160px">Like</th><th>Where it comes from</th><th style="width:70px">Phase</th></tr>` + [
+  ["lucky", "Turns a Plain item Lucky: one random line.", "PoE's Transmutation", "Monsters level 30+ (rare), salvaging Lucky gear, the Dealer (2,000 tickets)"],
+  ["raise", "Adds one more line (Lucky → Hot → Jackpot).", "PoE's Exalted / Regal", "Bosses, Bronny's order, world events"],
+  ["shuffle", "Rerolls every line, keeps how many.", "PoE's Chaos Orb", "Monsters level 50+, raids, the Dealer (8,000 tickets)"],
+  ["redeal", "Rerolls the numbers, keeps which lines.", "PoE's Divine Orb", "Bosses, dungeon chests (Crypt, Pyramid)"],
+  ["fold", "Removes one random line.", "PoE's Orb of Annulment", "Salvaging Hot and Jackpot gear (Tinkering)"],
+  ["hold", "Protects one line from the next chip.", "PoE's crafting-bench lock", "Raid bosses, Elite diaries"],
+].map(([k, d, l, w]) => `<tr><td><img src="chip_${k}.png" alt=""><b>${CH[k].name}</b></td><td>${d}</td><td class="mute">${l}</td><td>${w}</td><td>${CH[k].ph}</td></tr>`).join("") +
+  `<tr><td><b>The Dealer</b></td><td>Re-deals ONE line for tickets: 5,000, then double each time on that item.</td><td class="mute">Diablo 4's enchanting</td><td>Always open, from phase 1</td><td>1</td></tr>`;
+$("srcLine").textContent = `${M.sources.made} of ${M.sources.slotItems} wearable items are made at a station, and ${M.sources.dropped} drop from monsters`;
+$("oddsTbl").innerHTML = `<tr><th>How you got it</th><th>Plain</th><th class="r-lucky">Lucky</th><th class="r-hot">Hot</th><th class="r-jack">Jackpot</th></tr>` + [
+  ["Monster drop (level 30+ item)", DROP], ["Made at your requirement level", { 1: 10, 2: 2, 3: 0.2 }], ["Made 10 levels over", CRAFT], ["Made 30 levels over", { 1: 25, 2: 8, 3: 1.1 }],
+].map(([n, t]) => `<tr><td><b>${n}</b></td><td>${(100 - t[1] - t[2] - t[3]).toFixed(1)}%</td><td>${t[1]}%</td><td>${t[2]}%</td><td>${t[3]}%</td></tr>`).join("") + `<tr><td class="mute" colspan="5">Below level 30, everything is Plain.</td></tr>`;
+
+/* ---------- balance bars ---------- */
+$("bars").innerHTML = M.balance.map((b) => { const P = b.plain, N = b.nextTier, rows = [["Plain", P, "#8a84a0"], ["Reforged +3", b.reforged, "#c8963a"], ["Typical roll", b.typicalRoll, "#5ad06a"], ["Perfect rolls", b.perfectRoll, "#4aa8ff"], ["Reforged +3 and perfect", b.reforgedPerfect, "#ffc83a"]];
+  const lo = { def: P.def * 0.85, atk: P.atk * 0.9 }, mx = { def: Math.max(...rows.map((r) => r[1].def)) * 1.02 - lo.def, atk: Math.max(...rows.map((r) => r[1].atk)) * 1.02 - lo.atk };
+  const one = (q, lab) => `<div class="brow" style="margin-top:6px"><span style="font-weight:800;color:#f0c870">${lab[0].toUpperCase() + lab.slice(1)}</span><span></span><span></span></div>` + rows.map(([n, v, c]) => `<div class="brow"><span>${n}</span><div class="bar"><i style="width:${((v[q] - lo[q]) / mx[q]) * 100}%;background:${c}"></i>${N ? `<span class="tick" style="left:${((N[q] - lo[q]) / mx[q]) * 100}%" title="next tier"></span>` : ""}</div><span><b>${v[q]}</b> ${lab}${v[q] !== P[q] ? ` <span style="color:#9fe08a">+${v[q] - P[q]}</span>` : ""}</span></div>`).join("");
+  return `<div class="barset"><h4>Level ${b.lvl}, ${b.tier}${N ? ` · next tier (${b.next}) is the red line: defence roll ${N.def}, attack roll ${N.atk}, max hit ${N.maxHit}` : " · the top tier"}</h4>${one("def", "defence roll")}${one("atk", "attack roll")}</div>`; }).join("");
+</script>
+</body>
+</html>
