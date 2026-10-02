@@ -87,7 +87,7 @@ export function installOrder(World, { G }) {
       const pct = G.orderPct(o);
       if (o.lines.every((l) => l.got >= l.n)) {
         o.doneAt = now;
-        for (const id of Object.keys(o.by)) { const q = this.pls.get(id); if (q) this.workRoll?.(q, "bronny", 1 / 3);   /* (2026-10-02, the owner: the work clothes pass): was 1/6 */ }   /* (2026-10-01) Bronny's leathers, for anyone who helped fill it */
+        for (const id of Object.keys(o.by)) { const q = this.pls.get(id); if (q) this.workRoll?.(q, "bronny", G.WORKPASS ? 1 / 3 : 1 / 6);   /* (2026-10-02, the owner: the work clothes pass): was 1/6 */ }   /* (2026-10-01) Bronny's leathers, for anyone who helped fill it */
         const top = Object.values(o.by).sort((a, b) => b.n - a.n).slice(0, 3).map((x) => x.name).join(", ");
         this.houseSay(`✅ BRONNY'S ORDER IS FILLED! ${Object.keys(o.by).length} helped (top: ${top}). A 2X Potion is waiting at Bronny: anyone who helped can claim it for the whole server.`, NAME);
 /* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */

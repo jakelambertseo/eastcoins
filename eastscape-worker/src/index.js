@@ -3172,7 +3172,7 @@ export class World {
            whose max hit is 2: every hit that was not a 1 flashed CRIT. Now it is the top TENTH, and never under 4 damage, so it is
            about one landed hit in nine and nobody sees one until their max hit reaches 5, around Combat 10.) */
         if (dmg > 0) { const ev = G.gemVs(C, m.t); if (ev) dmg = Math.max(1, Math.round(dmg * (1 + ev))); }   /* (2026-09-28) an elemental gem against a monster weak to it */
-        if (m.immune && dmg) { dmg = 0; if (!m.immTold?.has(pl.id)) { m.immTold?.add(pl.id); this.say(pl, `${def.name} doesn't even notice. His head is off somewhere in the grass: find the real one.`, "bad"); } }   /* (2026-10-02) THE GRIN: nothing counts while his head is off */
+        if (m.immune && dmg) { dmg = 0; if (!m.immTold?.has(pl.id)) { m.immTold?.add(pl.id); this.say(pl, "Nothing. It's like hitting the dark.", "bad"); } }   /* (2026-10-02) THE GRIN: nothing counts while his head is off */
         if (m.thief && dmg) dmg = 1;   /* (2026-09-30) THE JACKPOT THIEF counts hits, not damage: a level 3 and a level 99 knock the same tickets loose */
         this.meterAdd(pl, "swing", 1, m); if (dmg) this.meterAdd(pl, "hit", 1, m);   /* (2026-09-28) accuracy, for the run report */
         this.bossAdd(pl, m, "swing", 1); if (dmg) { this.bossAdd(pl, m, "hit", 1); this.bossAdd(pl, m, "dmg", dmg); }   /* (2026-09-28) and a world boss's own report */

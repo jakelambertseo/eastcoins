@@ -48,7 +48,7 @@ export function installRaid(World, { G }) {
   };
   P.raidGrid = function (S) { S.raidG = S.g.map((row, y) => row.map((c, x) => (x > R.zoneX ? "#" : c))); };
   P.raidTick = function (now) {
-    if (this.raidSack?.kind === "grin" && now >= this.raidSack.until) { this.raidSack = null; this.ctx.storage.delete("raidSack").catch(() => {}); this.houseSay("\u{1F383} The lamps in the Yard come back on, one at a time. Nobody saw who lit them."); }   /* (2026-10-02) THE GRIN: the dark lifts */
+    if (this.raidSack?.kind === "grin" && now >= this.raidSack.until) { this.raidSack = null; this.ctx.storage.delete("raidSack").catch(() => {}); this.houseSay("\u{1F383} The lamps come back on, one at a time. Nobody lit them."); }   /* (2026-10-02) THE GRIN: the dark lifts */
     if (G.GRIN) this.grinSync(now);   /* (2026-10-02) THE GRIN: the page's darkness, told once a change */
     if (this.raidSack && now >= this.raidSack.until) { const wet = this.raidSack.kind === "flood"; this.raidSack = null; this.ctx.storage.delete("raidSack").catch(() => {}); if (wet) this.floodClear(scene(this)); this.houseSay(wet ? "\u{1F30A} The water is receding, finally... The Yard's dry again, and Bom, Nestor, Livia, Hexa and Bronny have their shutters up." : "\u2744\uFE0F The frost has melted off the Yard's shutters. The stalls are open again. He will be back."); }
     if (this.raidSack?.kind === "flood" && this.raidSack.water && !this.raid) { const S0 = scene(this); if (S0 && !S0.flood) { S0.flood = new Set(this.raidSack.water); this.floodSend(S0); } }   /* a flooded Yard stays flooded across a restart */
@@ -132,13 +132,13 @@ export function installRaid(World, { G }) {
     const rows = Object.entries(Rd.by).filter(([, d]) => d > 0), total = rows.reduce((a, [, d]) => a + d, 0) || 1, pool = PAY.pool + PAY.per * rows.length, paid = [];
     for (const [id, d] of rows.sort((a, b) => b[1] - a[1])) {
       const p = this.pls.get(id), n = Math.round(Math.max(PAY.floor, Math.round((pool * d) / total)) * (1 + (p ? G.diaryPay(p.C, "raid") : 0)));   /* (2026-10-01) the Yard's Hard diary: 10% more */
-      if (p && grin) { this.tixTo(p, n, "raid"); this.say(p, `The Grin comes apart like a rotten pumpkin, and the lamps come back on. Your share: ${G.fmtTix(n)} (${Math.round((100 * d) / total)}% of the fighting).`, "loot");
+      if (p && grin) { this.tixTo(p, n, "raid"); this.say(p, `He comes apart like something rotten, and the lamps remember how to burn. Your share: ${G.fmtTix(n)} (${Math.round((100 * d) / total)}% of the fighting).`, "loot");
         if (d >= (Rd.bossMax || G.GRIN.hp) * G.OPEN_SHARE) { const list = G.GEMSET.list, k = G.GRIN.gems; for (let i = 0, n2 = k[0] + Math.floor(Math.random() * (k[1] - k[0] + 1)); i < n2; i++) this.gemFind(p, list[Math.floor(Math.random() * list.length)].k); } }   /* (2026-10-02) the owner: "he drops ... a few gems": 2-3 for everyone who did their share (the pet rolls in killLoot) */
       else if (p) { this.tixTo(p, n, "raid"); this.say(p, flood ? `The Undertow goes back under, and the water goes with it. The Yard is dry. Your share: ${G.fmtTix(n)} (${Math.round((100 * d) / total)}% of the work, sandbags and fighting alike).` : `The ice cracks, and the Ice Man falls. The Yard is saved. Your share of the spoils: ${G.fmtTix(n)} (${Math.round((100 * d) / total)}% of the fighting).`, "loot"); }
       paid.push([p?.name || "someone", n]);
     }
     const top = paid.slice(0, 3).map(([nm, n]) => `${nm} (${n.toLocaleString()})`).join(", ");
-    if (grin) { this.houseSay(`\u{1F383} ${pl.name} landed the last blow: THE GRIN IS DOWN. His head stopped laughing, and the lamps are coming back on. ${rows.length} of you went looking in the dark and every one shares the spoils. Top: ${top}.`); return; }
+    if (grin) { this.houseSay(`\u{1F383} ${pl.name} landed the last blow. He comes apart in the dark, and the lamps remember how to burn. ${rows.length} of you. Top: ${top}.`); return; }
     if (flood) { this.houseSay(`\u{1F30A} ${pl.name} landed the last blow: THE UNDERTOW IS BEATEN, and the river goes back where it belongs. ${rows.length} of you held the water back, sandbags and swords alike, and every one shares the spoils. Top: ${top}.`); return; }
     this.houseSay(`\u2744\uFE0F ${pl.name} landed the last blow: THE ICE MAN IS DOWN, and the frost lifts off the Yard. ${rows.length} stood against him and every one of them shares the spoils. Top: ${top}.`);
 /* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */
@@ -150,7 +150,7 @@ export function installRaid(World, { G }) {
     if (this.raid.kind === "grin") {   /* (2026-10-02) THE GRIN lost: the Yard stays dark for GRIN.darkMs, and the stalls stay open */
       this.raid = null; this.raidSave(now, true); clear(S); this.weekCount?.("raid", "lost");
       this.raidSack = { until: now + G.GRIN.darkMs, kind: "grin", closes: [] }; this.ctx.storage.put("raidSack", this.raidSack).catch(() => {});
-      this.houseSay(`\u{1F311} Nobody stopped him. The Grin walked out of the north gate with his head under his arm, laughing, and he took the light with him. The Yard stays dark for ${Math.round(G.GRIN.darkMs / 60000)} minutes.`);
+      this.houseSay(`\u{1F311} He left laughing, and he took the light with him. ${Math.round(G.GRIN.darkMs / 60000)} minutes of dark.`);
       return;
     }
     if (this.raid.kind === "flood") {   /* (2026-09-30) THE FLOOD lost: see FLOOD.loss */
@@ -177,7 +177,7 @@ export function installRaid(World, { G }) {
   };
   P.raidAdmin = function (S, pl, arg, note) {
     const now = Date.now();
-    if (arg === "end") { if (!this.raid) return note("There's no raid on."); if (this.raid.kind === "grin") { this.raid = null; this.raidSave(now, true); clear(scene(this)); this.houseSay("\u{1F383} The Grin steps back into the dark past the north gate, and the lamps come back on. For now."); return note("Raid ended."); }   /* (2026-10-02) THE GRIN */ const Sx = scene(this), flood = this.raid.kind === "flood"; this.raid = null; this.raidSave(now, true); clear(Sx); if (flood) this.floodClear(Sx); this.houseSay(flood ? "\u{1F30A} The river drops back below the bank. Nobody knows why." : "\u2744\uFE0F The war party melts back into the north. For now."); return note("Raid ended."); }
+    if (arg === "end") { if (!this.raid) return note("There's no raid on."); if (this.raid.kind === "grin") { this.raid = null; this.raidSave(now, true); clear(scene(this)); this.houseSay("\u{1F383} He steps back into the dark. For now."); return note("Raid ended."); }   /* (2026-10-02) THE GRIN */ const Sx = scene(this), flood = this.raid.kind === "flood"; this.raid = null; this.raidSave(now, true); clear(Sx); if (flood) this.floodClear(Sx); this.houseSay(flood ? "\u{1F30A} The river drops back below the bank. Nobody knows why." : "\u2744\uFE0F The war party melts back into the north. For now."); return note("Raid ended."); }
     if (arg === "unsack") { const wet = this.raidSack?.kind === "flood"; this.raidSack = null; this.ctx.storage.delete("raidSack").catch(() => {}); if (wet) this.floodClear(scene(this)); return note("The Yard's stalls are open again, and any water's gone."); }
     if (arg === "grin") { if (G.HOLD.grin || !G.GRIN || !G.MOBS.grin) return note("The Grin isn't open on this server yet."); if (this.raid) return note(`A raid is already ${this.raid.phase === "warn" ? "on its way" : "on"}.`); this.raidCall(null, now, "grin"); return note(`The Grin started: he reaches the Yard in ${Math.round(G.GRIN.warnMs / 60000)} minutes.`); }   /* (2026-10-02) THE GRIN: an admin's only, never the horn */
     if (arg === "flood") { if (this.raid) return note(`A raid is already ${this.raid.phase === "warn" ? "on its way" : "on"}.`); this.raidCall(null, now, "flood"); return note(`The Flood started: the river comes over in ${Math.round(F.warnMs / 60000)} minutes.`); }   /* (2026-09-30) THE FLOOD */
@@ -193,7 +193,7 @@ export function installRaid(World, { G }) {
     if (kind === "grin") {   /* (2026-10-02) THE GRIN: only ever an admin's call (raidAdmin) */
       this.raid = { kind: "grin", phase: "warn", at: now + G.GRIN.warnMs, by: {}, said: {} }; this.raidSave(now, true);
       this.raidLast = now; this.ctx.storage.put("raidLast", now).catch(() => {});
-      this.houseSay(`\u{1F383} The lamps in the Yard just flickered. All of them, at once. Something past the north gate is laughing, and it is coming closer. ${Math.round(G.GRIN.warnMs / 60000)} minutes. Stay on the west bank, and stay together.`);
+      this.houseSay(`\u{1F383} The lamps in the Yard just flickered. All of them, at once. Something past the north gate is laughing: THE GRIN, ${Math.round(G.GRIN.warnMs / 60000)} minutes out. Fight him on the west bank. When he takes his head off, nothing you do to him counts until somebody finds the real one among the pumpkins in the grass: it's the one that watches you, and the others are full of crows. Find it and he kneels; leave it ${Math.round(G.GRIN.head.lasts / 1000)} seconds and it rolls home and mends him. Everyone who fights shares the spoils.`);
       for (const p of this.pls.values()) p.out.push({ type: "raid", on: true });
       return true;
     }

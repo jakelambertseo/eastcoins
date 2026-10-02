@@ -15,6 +15,7 @@ const KILL = {
    forth made a set in ~20 minutes: laps only now), feller 1/400, kennel 1/600, bronny 1/6, apoth 1/250 (~42 clusters a day: a month); the Junk King 1/10. */
 export const WORK_ODDS = { prospector: 1 / 150, feller: 1 / 1000, oilskins: 1 / 300, whites: 1 / 4, kennel: 1 / 1500, bronny: 1 / 3, myco: 1 / 800, apoth: 1 / 40, getaway: 1 / 60 };
 export function installWork(World, { G }) {
+  if (!G.WORKPASS) { Object.assign(WORK_ODDS, { feller: 1 / 400, kennel: 1 / 600, bronny: 1 / 6, apoth: 1 / 250 }); KILL.junkking[1] = 1 / 10; }   /* (2026-10-02) the work clothes pass is DEV ONLY until the owner says (WORKPASS): live keeps the launch odds */
   const P = World.prototype;
   P.workWear = function (pl, m) {
     if (G.HOLD.work) return;

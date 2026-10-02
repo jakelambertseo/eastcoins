@@ -32,10 +32,10 @@ const a = player(W, 18, 6), b = player(W, 30, 20);
 W.raidCall("Somebody", Date.now());
 is(W.raid?.kind ?? "ice", "ice", "the War Horn's call is the Ice Man, never The Grin");
 W.raid = null; W.raidSave(Date.now(), true);
-G.HOLD.grin = true; let msg = ""; W.raidAdmin(S, a, "grin", (t) => (msg = t)); G.HOLD.grin = false;
+const held0 = G.HOLD.grin; G.HOLD.grin = true; let msg = ""; W.raidAdmin(S, a, "grin", (t) => (msg = t)); G.HOLD.grin = held0;
 is([W.raid, /isn't open/.test(msg)], [null, true], "held, nobody can start him");
 W.raidAdmin(S, a, "grin", (t) => (msg = t));
-is([W.raid?.kind, W.raid?.phase, said.some((x) => /lamps in the Yard just flickered/.test(x))], ["grin", "warn", true], "an admin starts him: two minutes' warning in CASINO's voice");
+is([W.raid?.kind, W.raid?.phase, said.some((x) => /lamps in the Yard just flickered/.test(x) && /real one/.test(x))], ["grin", "warn", true], "an admin starts him: two minutes' warning in CASINO's voice");
 W.raidTick(Date.now());
 is([darkSeen(a), darkSeen(b)], [["warn"], ["warn"]], "every player is told the Yard is darkening, wherever they stand");
 /* 2. he arrives, alone */
@@ -50,9 +50,9 @@ is(boss.hp < hp0, true, "his head on, a swing hurts him");
 /* 4. HEADS WILL ROLL */
 t = W.raid.nextHead; W.raidTick(t);
 const heads = S.mobs.filter((m) => m.raid === "head"), fakes = heads.filter((m) => !m.real);
-is([heads.length >= Q.head.fakes[0] + 1, heads.filter((m) => m.real).length, heads.every((m) => m.x <= R.zoneX && G.walkableIn(S.g, m.x, m.y)), boss.immune, darkSeen(a).at(-1), said.some((x) => /TEARS HIS HEAD OFF/.test(x))], [true, 1, true, true, "out", true], `he throws it: ${heads.length} heads, exactly one real, all on the west bank; he can't be hurt; the Yard goes deeper dark`);
+is([heads.length >= Q.head.fakes[0] + 1, heads.filter((m) => m.real).length, heads.every((m) => m.x <= R.zoneX && G.walkableIn(S.g, m.x, m.y)), boss.immune, darkSeen(a).at(-1), said.some((x) => /takes his head off/.test(x))], [true, 1, true, true, "out", true], `he throws it: ${heads.length} heads, exactly one real, all on the west bank; he can't be hurt; the Yard goes deeper dark`);
 const hp1 = boss.hp; for (let i = 0; i < 6; i++) swing(S, a, boss, t + i * 3000);
-is([boss.hp, a.out.some((o) => /find the real one/.test(o.text || ""))], [hp1, true], "headless, six real swings do nothing, and he says why");
+is([boss.hp, a.out.some((o) => /hitting the dark/.test(o.text || ""))], [hp1, true], "headless, six real swings do nothing, and he says why");
 /* the real one watches whoever is nearest; a fake never turns */
 const real = heads.find((m) => m.real), f0 = fakes[0], faces = fakes.map((m) => m.face);
 b.x = real.x + 1; b.y = real.y; a.x = 0; a.y = 0; W.raidTick(t + 1000);
@@ -63,7 +63,7 @@ const c = player(W, f0.x - 1, f0.y), hpC = c.C.hp; W.killMob(S, c, f0, t + 3000)
 is([c.C.hp < hpC, S.mobs.includes(f0), S.mobs.filter((m) => m.raid === "head").length, boss.immune], [true, false, heads.length - 1, true], "a fake bursts into crows on whoever hit it; the rest are still there and he's still headless");
 /* the real one: he drops */
 W.killMob(S, c, real, t + 4000);
-is([S.mobs.filter((m) => m.raid === "head").length, boss.immune, boss.dizzyUntil > t + 4000, W.raid.head, said.some((x) => /FOUND THE REAL HEAD/.test(x)), W.grinDark(t + 4000)], [0, false, true, null, true, "dark"], "the real one: the fakes go, he's on his knees and can be hurt again");
+is([S.mobs.filter((m) => m.raid === "head").length, boss.immune, boss.dizzyUntil > t + 4000, W.raid.head, said.some((x) => /found it\. Everything/.test(x)), W.grinDark(t + 4000)], [0, false, true, null, true, "dark"], "the real one: the fakes go, he's on his knees and can be hurt again");
 const at0 = [boss.x, boss.y], sw0 = boss.lastSwing; boss.target = c.id; c.x = boss.x - 1; c.y = boss.y;
 W.mobsTick?.(S, t + 6000);
 is([[boss.x, boss.y].join(), boss.lastSwing], [at0.join(), sw0], "stunned: he neither walks nor swings");
@@ -71,7 +71,7 @@ is([[boss.x, boss.y].join(), boss.lastSwing], [at0.join(), sw0], "stunned: he ne
 boss.dizzyUntil = 0; boss.stunUntil = 0; boss.hp = 5000; t = W.raid.nextHead; W.raidTick(t);
 is(!!W.raid.head, true, "the next throw comes");
 t = W.raid.head.until; W.raidTick(t);
-is([S.mobs.filter((m) => m.raid === "head").length, boss.immune, boss.hp, said.some((x) => /Nobody found it/.test(x))], [0, false, 5000 + Math.round(7800 * Q.head.heal), true], "nobody found it in time: it rolls back, and he heals 4%");
+is([S.mobs.filter((m) => m.raid === "head").length, boss.immune, boss.hp, said.some((x) => /Too slow/.test(x))], [0, false, 5000 + Math.round(7800 * Q.head.heal), true], "nobody found it in time: it rolls back, and he heals 4%");
 /* 5. rage */
 boss.hp = Math.floor(7800 * Q.rage); W.raidTick(t + 1000);
 is([W.raid.rage, W.grinDark(t + 1000), said.some((x) => /stopped smiling/.test(x))], [true, "rage", true], "at 30% he rages, and the dark goes red");
@@ -80,13 +80,13 @@ W.raidSave(Date.now(), true); const hpSaved = boss.hp;
 ({ W, said } = await make());
 const S2 = W.scene("workyard"); W.pls.set(a.id, a); W.pls.set(b.id, b); W.raidTick(Date.now());
 const boss2 = S2.mobs.find((m) => m.t === "grin");
-is([W.raid?.kind, boss2?.hp, boss2?.maxHp, W.raid.head, S2.mobs.filter((m) => m.raid === "head").length, said.some((x) => /STILL IN THE YARD/.test(x))], ["grin", hpSaved, 7800, null, 0, true], "a restart: he's back at his health with his head on, and CASINO says so");
+is([W.raid?.kind, boss2?.hp, boss2?.maxHp, W.raid.head, S2.mobs.filter((m) => m.raid === "head").length, said.some((x) => /He never left/.test(x))], ["grin", hpSaved, 7800, null, 0, true], "a restart: he's back at his health with his head on, and CASINO says so");
 /* 7. a win */
 const tix0 = { a: G.tixIn(a.C), b: G.tixIn(b.C) }, gems0 = JSON.stringify(a.C.inv) + JSON.stringify(a.C.gems || null);
 W.raid.by[a.id] = 6000; W.raid.by[b.id] = 10;   /* b barely touched him: paid, but no gems */
 const gemSay = (p) => p.out.filter((o) => /Something glints/.test(o.text || "")).length;
 boss2.hp = 1; boss2.immune = false; for (let i = 0; i < 40 && S2.mobs.includes(boss2); i++) swing(S2, a, boss2, Date.now() + i * 3000);
-is([W.raid, S2.mobs.some((m) => m.raid), G.tixIn(a.C) > tix0.a, G.tixIn(b.C) > tix0.b, gemSay(a) >= 2 && gemSay(a) <= 3, gemSay(b), said.some((x) => /THE GRIN IS DOWN/.test(x))], [null, false, true, true, true, 0, true], "a win: everybody who fought is paid, 2-3 gems for whoever did their share, none for a token hit");
+is([W.raid, S2.mobs.some((m) => m.raid), G.tixIn(a.C) > tix0.a, G.tixIn(b.C) > tix0.b, gemSay(a) >= 2 && gemSay(a) <= 3, gemSay(b), said.some((x) => /comes apart in the dark/.test(x))], [null, false, true, true, true, 0, true], "a win: everybody who fought is paid, 2-3 gems for whoever did their share, none for a token hit");
 W.raidTick(Date.now());
 is(darkSeen(a).at(-1), null, "and the lamps come back on");
 /* 8. a loss */
@@ -96,7 +96,7 @@ t3 = W.raid.until; W.raidTick(t3);
 is([W.raid, W.raidSack?.kind, Math.round((W.raidSack.until - t3) / 60000), W.grinDark(t3), S3.mobs.some((m) => m.raid), said.some((x) => /took the light with him/.test(x))], [null, "grin", 20, "lost", false, true], "a loss: he walks off with the light, and the Yard stays dark twenty minutes");
 is(["counter", "cashout", "eggtrade", "ex", "hw", "order"].map((op) => W.raidClosed(op)), [false, false, false, false, false, false], "and every stall stays open");
 W.raidSack.until = Date.now() - 1; W.raidTick(Date.now());
-is([W.raidSack, W.grinDark(), darkSeen(z).at(-1), said.some((x) => /lamps in the Yard come back on/.test(x))], [null, null, null, true], "twenty minutes on, the lamps come back");
+is([W.raidSack, W.grinDark(), darkSeen(z).at(-1), said.some((x) => /Nobody lit them/.test(x))], [null, null, null, true], "twenty minutes on, the lamps come back");
 /* 9. end, from the admin window */
 W.raidAdmin(S3, z, "grin", () => {}); W.raidAdmin(S3, z, "end", () => {});
 is([W.raid, said.some((x) => /steps back into the dark/.test(x))], [null, true], "an admin can end him early");
