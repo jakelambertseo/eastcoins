@@ -1609,6 +1609,17 @@ function agilityV11(G, H) {
 
 export const UPDATES = [
   {
+    date: "2026-10-02", title: "Update 1.2",
+    items: [
+      "THE BUFF BAG. One bag with a pocket each for a meal, a drink, a potion, a scroll, a timed gadget and a field kit, 99 of each. Click it or press B: one of everything is used, and anything still running is skipped. Right-click it to load, swap or take out. 35,000 in the Store (the new Featured Item, and under Upgrades). One per character; it can't be traded or dropped.",
+      "A POTION IS ITS OWN BUFF. An alchemy potion no longer replaces your bar drink: the two run side by side. Every effect still stops at its cap.",
+      "FIELD KITS. Seven kits for archers, made at the fletching table: Hunter's camo, Flare, Hunter's Mark, Eagle-eye drops, Quickdraw wax, Fleetfoot salve and the Arrow retriever. Your Fletching sets the tier; each needs an Archery level, and the combat ones a bow in hand.",
+      "GRAPPLE ARROWS, SNARES AND FISHING ARROWS. Grapple across twelve crossings; set snares on any map with monsters and check them an hour later; fish a spot from your bow's reach.",
+      "EVERY ARROW LANDS. A visible draw, a streak behind each arrow, gem arrows with their own trails and bursts, knock-back, arrows that stay in the target, Bullseye crits, misses in the dirt, and impacts that sound like what you hit.",
+      "THE WIKI. Issues are per version now (this is Version 1.2). Every guide and area has its picture.",
+    ],
+  },
+  {
     date: "2026-10-08", title: "Update 1.1", hold: "diary",
     items: [
       "AREA DIARIES. Every map has a diary: 21 of them, four tiers of three tasks. A tier gives a perk on that map, an XP lamp (1,000 to 75,000) and a medal. Press L, or the book at the end of the icons over your inventory: it opens on the map you're on. Everything you'd already done is ticked off.",
@@ -2868,6 +2879,30 @@ export const SKILL_GUIDE = {
    week runs. A picture is "ui/<k>", "items/<k>", "mob/<k>" or "flat/<k>". Add next week's issue at the TOP. */
 export const WEEKLY = [
   {
+    n: 3, v: "1.2", title: "Update 1.2",
+    lede: "The archer's update: field kits, grapple arrows, snares and bowfishing, and every arrow now looks and sounds like it lands. Plus the Buff Bag, so a whole session's buffs are one key.",
+    hero: ["items/buffbag", "items/kit_quickdraw", "items/grapple_arrow", "items/opal_arrow", "items/kit_eagle"],
+    big: [
+      { img: "items/buffbag", title: "The Buff Bag", tease: "Six buffs, one key.", peek: ["items/smackerel", "items/champagne", "items/pot_star", "items/scroll_haste", "items/tk_lantern"],
+        text: "A pocket each for a meal, a drink, a potion, a scroll, a gadget and a field kit, 99 of each. Click it or press B and the lot is used; anything still running is skipped. Right-click it to change what's in it. In the Store, 35,000.", wiki: "guides/buffbag" },
+      { img: "items/kit_quickdraw", title: "Field kits", tease: "Archery's answer to the mages' pages.", peek: ["items/kit_camo", "items/kit_mark", "items/kit_eagle", "items/kit_fleet", "items/kit_retriever"],
+        text: "Seven kits made at the fletching table: faster shots, a longer reach, a mark on a kind of monster, camouflage, a flare for rare things, a speed salve and an arrow retriever. Your Fletching sets the tier.", wiki: "guides/fieldkits" },
+      { img: "items/grapple_arrow", title: "Grapples, snares and bowfishing", tease: "Twelve crossings. A ring of snares. Fish from range.", peek: ["items/grapple_arrow", "items/snare", "items/fishing_arrow"],
+        text: "Grapple arrows swing you over twelve crossings from the Gloam to the Trailer Park. Snares set where you stand pay feathers, hides and meat an hour later. Fishing arrows fish a spot from your bow's reach.", wiki: "guides/fieldkits" },
+      { img: "items/opal_arrow", title: "Every arrow lands", tease: "A draw, a streak, and the arrow stays in.", peek: ["items/ruby_arrow", "items/sapphire_arrow", "items/topaz_arrow", "items/opal_arrow"],
+        text: "You draw the bow before you shoot, arrows leave a streak, gem arrows burn, freeze, spark or shimmer, hits knock monsters back and stay stuck in them, crits are a Bullseye, misses land in the dirt, and every hit sounds like what it hit." },
+      { img: "items/st_2xtix", title: "Three 2X potions", tease: "Tickets, crafting and skilling, each on its own clock.", peek: ["items/st_2xtix", "items/st_2xcraft", "items/st_2xskill"],
+        text: "Since 1.1: 2X Tickets (400,000), 2X Crafting XP (200,000) and 2X Skilling XP (100,000) are separate. Bronny's order gives 2X Tickets. Monsters' own rare drops are a fifth as common." },
+    ],
+    worth: [
+      "A potion is its own buff now: a bar drink and an alchemy potion run side by side instead of replacing each other.",
+      "The Character window shows Melee, Archery and Magic side by side, as if you held your best weapon for each, and a bow's max hit now counts the arrow.",
+      "The wiki's issues are per version now, not per week, and every guide and area has its picture.",
+      "Field kits need their Archery level to use and a bow in your hands for the combat ones. The wiki guide has every recipe.",
+    ],
+    links: [["guides/buffbag", "The Buff Bag"], ["guides/fieldkits", "Field kits"], ["roadmap", "The Road Ahead"]],
+  },
+  {
     n: 2, v: "1.1", title: "Update 1.1", hold: "diary",
     lede: "The first big update since launch. A diary for every map and a cape for finishing them all, Thrill Hill for Agility, thieving and shortcuts out in the world, and work clothes for every skill.",
     hero: ["diary/diary", "flat/th_cannon", "items/lockpick", "items/pr_hat", "diary/cape_tour"],
@@ -2993,6 +3028,9 @@ export function weeklyList(H, G) {
    dark, with its `sil` monster drawn as a black silhouette, so it teases without showing the map. `more` is the list in the opened card. Moving a card is
    editing its line in G.ROADMAP; changing what it says is editing it here. No dates until something is in testing. */
 export const ROADMAP_WORDS = {
+  v12_bbag: { title: "The Buff Bag", text: "Every buff you use, in one bag, used with one key.", img: "items/buffbag", wiki: "guides/buffbag" },
+  v12_kits: { title: "Field kits", text: "Archery's utility: seven kits, grapple crossings, snares and fishing arrows.", img: "items/kit_quickdraw", wiki: "guides/fieldkits" },
+  v12_archfx: { title: "Archery feel", text: "Every arrow lands: a draw, a streak, stuck arrows and Bullseye crits.", img: "items/opal_arrow" },
   v11_diaries: { title: "Area diaries and the cape", text: "A diary for every map, and the Grand Tour cape for finishing them all.", img: "diary/diary", wiki: "guides/diaries" },
   v11_thrill: { title: "Thrill Hill", text: "Agility's new home: three stunt runs, a cannon and Daredevil Peak.", img: "flat/th_cannon", wiki: "guides/thrill" },
   v11_thief: { title: "Thieving and shortcuts in the world", text: "Pockets, lockboxes, a nook on every map and three back ways.", img: "items/lockpick", wiki: "guides/worldthief" },
