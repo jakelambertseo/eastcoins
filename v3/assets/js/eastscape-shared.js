@@ -13,7 +13,7 @@
    ============================================================ */
 
 // bump with every change to this file: the server says which version it runs, and a page on another version reloads
-export const VERSION = 393;   /* (2026-10-02) DEV: v1.2 rubber banding fixes 1 and 2 (steps chain on the server; one shared arrival rule) */   /* was 392: */   /* (2026-10-02, the owner: "push it live") THE GRIN, the third Yard raid (admin-only), and the work clothes pass with it */   /* was 391: */   /* (2026-10-02) the work clothes pass (DEV until the owner says): Prospector laps only, Feller 1/1000, Kennel 1/1500, Sal 1/40, Bronny 1/3, Apothecary 1/40 */   /* was 390: */   /* (2026-10-02) the stargazer's robes are 650 Star Fragments a piece (were 40) */   /* was 389: */   /* (2026-10-02) a refresh for the page fix: the tile you click wins, so the Lantern Mire's stepping stones (and seven more shortcuts) can be clicked */   /* was 388: */   /* (2026-10-01) v1.1: AREA DIARIES and the cape slot, THRILL HILL, THIEVING IN THE WORLD with shortcuts and back ways, WORK CLOTHES, gems rarer and untradeable, the Character and admin windows */   /* was 387: */   /* (2026-10-01) ABILITIES (dev, held for the phase 0 batch) */   /* was 386: */   /* (2026-09-30) THE FLOOD (a second Yard raid), no doubled CASINO lines */   /* was 385: */   /* (2026-09-30) the Casino scroll is 3,000 at Dex (was 300) */   /* was 384: */   /* (2026-09-30) Bronny: six lines, a quarter more, a keystone; eggs 1 in 1,000 */   /* was 383: */   /* (2026-09-30) YOUR SCREEN: move everything, four looks and OG, nameplate options, feature switches */   /* was 382: */   /* (2026-09-30) My stats easy to find (your name, the Skills tab) and without casino figures */   /* was 381: */   /* (2026-09-30) THE ROAD AHEAD (a roadmap in the wiki, with hearts), MY STATS (a private dashboard), the held maps in the admin Teleport list */   /* was 380: */   /* (2026-09-30) Returns at Bom, a staff refund for Bom gear, tier names on the counter */   /* was 379: */   /* (2026-09-30) the World data window (admins): track.js's numbers over 1/7/14/30 days */   /* was 378: */   /* (2026-09-30) WORLD EVENTS LAUNCHED: Shooting Stars, Wanted! and the Jackpot Thief (a run cycle, never the Yard, a 30-50k sack, health by fighters) */   /* was 377: */   /* (2026-09-30) the Wild's new monsters drawn (their frames in the Wild and Deep art packs) */   /* was 376: */   /* (2026-09-30) STAT TRACKING (track.js); THE WILDERNESS REARMED (new monsters, 1.25x/1.5x, a death costs 10%); fighting back needs a click in the last minute; every gem on the Gems page */   /* was 375: */   /* (2026-09-30) a staff badge beside staff names in Who's online (mods too) */   /* was 374: */   /* (2026-09-30) THE WEEKLY ISSUE (the wiki's Week pages, a snapshot a week) */   /* was 373: */   /* (2026-09-30) THE BALANCE PASS, /find and the chat commands, the wiki rebuilt; world events built and HELD */   /* was 372: */   /* (2026-09-30) WORLD EVENTS: Shooting Stars, Wanted! and the Jackpot Thief, one each a day; Who's online in the kit */   /* was 371: */   /* (2026-09-30) THE ISLANDS: bigger, better-looking, eight themes, cottage styles, livestock */   /* was 370: */   /* (2026-09-30) the Store: pet skins, eggs, bag slots, art for everything; the wiki pages its long tables */   /* was 369: */   /* (2026-09-30) THE STORE, REBUILT: effects, titles, decor, the War Horn, 2X Skilling XP, the loupes, bank pages, quick slots; and "speed" walks */   /* (2026-09-30) the Frost charm is 50,000 and the outfitters show it */   /* (2026-09-30) THE FROZEN REACH OPENS */   /* (2026-09-30) THE YARD RAID: the Ice Man (the Frozen Reach stays held) */   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
+export const VERSION = 394;   /* (2026-10-02) DEV: v1.2 field kits (HOLD.kits) */   /* was 393: */   /* (2026-10-02) DEV: v1.2 rubber banding fixes 1 and 2 (steps chain on the server; one shared arrival rule) */   /* was 392: */   /* (2026-10-02, the owner: "push it live") THE GRIN, the third Yard raid (admin-only), and the work clothes pass with it */   /* was 391: */   /* (2026-10-02) the work clothes pass (DEV until the owner says): Prospector laps only, Feller 1/1000, Kennel 1/1500, Sal 1/40, Bronny 1/3, Apothecary 1/40 */   /* was 390: */   /* (2026-10-02) the stargazer's robes are 650 Star Fragments a piece (were 40) */   /* was 389: */   /* (2026-10-02) a refresh for the page fix: the tile you click wins, so the Lantern Mire's stepping stones (and seven more shortcuts) can be clicked */   /* was 388: */   /* (2026-10-01) v1.1: AREA DIARIES and the cape slot, THRILL HILL, THIEVING IN THE WORLD with shortcuts and back ways, WORK CLOTHES, gems rarer and untradeable, the Character and admin windows */   /* was 387: */   /* (2026-10-01) ABILITIES (dev, held for the phase 0 batch) */   /* was 386: */   /* (2026-09-30) THE FLOOD (a second Yard raid), no doubled CASINO lines */   /* was 385: */   /* (2026-09-30) the Casino scroll is 3,000 at Dex (was 300) */   /* was 384: */   /* (2026-09-30) Bronny: six lines, a quarter more, a keystone; eggs 1 in 1,000 */   /* was 383: */   /* (2026-09-30) YOUR SCREEN: move everything, four looks and OG, nameplate options, feature switches */   /* was 382: */   /* (2026-09-30) My stats easy to find (your name, the Skills tab) and without casino figures */   /* was 381: */   /* (2026-09-30) THE ROAD AHEAD (a roadmap in the wiki, with hearts), MY STATS (a private dashboard), the held maps in the admin Teleport list */   /* was 380: */   /* (2026-09-30) Returns at Bom, a staff refund for Bom gear, tier names on the counter */   /* was 379: */   /* (2026-09-30) the World data window (admins): track.js's numbers over 1/7/14/30 days */   /* was 378: */   /* (2026-09-30) WORLD EVENTS LAUNCHED: Shooting Stars, Wanted! and the Jackpot Thief (a run cycle, never the Yard, a 30-50k sack, health by fighters) */   /* was 377: */   /* (2026-09-30) the Wild's new monsters drawn (their frames in the Wild and Deep art packs) */   /* was 376: */   /* (2026-09-30) STAT TRACKING (track.js); THE WILDERNESS REARMED (new monsters, 1.25x/1.5x, a death costs 10%); fighting back needs a click in the last minute; every gem on the Gems page */   /* was 375: */   /* (2026-09-30) a staff badge beside staff names in Who's online (mods too) */   /* was 374: */   /* (2026-09-30) THE WEEKLY ISSUE (the wiki's Week pages, a snapshot a week) */   /* was 373: */   /* (2026-09-30) THE BALANCE PASS, /find and the chat commands, the wiki rebuilt; world events built and HELD */   /* was 372: */   /* (2026-09-30) WORLD EVENTS: Shooting Stars, Wanted! and the Jackpot Thief, one each a day; Who's online in the kit */   /* was 371: */   /* (2026-09-30) THE ISLANDS: bigger, better-looking, eight themes, cottage styles, livestock */   /* was 370: */   /* (2026-09-30) the Store: pet skins, eggs, bag slots, art for everything; the wiki pages its long tables */   /* was 369: */   /* (2026-09-30) THE STORE, REBUILT: effects, titles, decor, the War Horn, 2X Skilling XP, the loupes, bank pages, quick slots; and "speed" walks */   /* (2026-09-30) the Frost charm is 50,000 and the outfitters show it */   /* (2026-09-30) THE FROZEN REACH OPENS */   /* (2026-09-30) THE YARD RAID: the Ice Man (the Frozen Reach stays held) */   /* (2026-09-30) THE PRIMEVAL VALLEY opens; archer and mage armour reforges; gear is never doubled */   /* (2026-09-30) cobbled roads on every map */   /* (2026-09-28) run reports, the King's report, eggs 1/1500; the order and the 2X survive a restart */
 // Maps are 44 x 26 tiles (twice the old 22 x 13 each way, 2026-09-19). The screen shows a 22 x 13 window that follows
 // you (ZOOM in the page), so characters look the size they always did and there's four times the room.
 export const COLS = 44, ROWS = 26;
@@ -819,7 +819,7 @@ export const swingShave = (step) => SWING_STACK[Math.min(step | 0, SWING_STACK.l
    (Which does mean a player already at the cap gains nothing from it, exactly as a second speed potion would.)
    Percent on a pet, fraction in fxOf, hence the /100 — the two scales are a trap and this is the only crossing. */
 export const swingFx = (c) => Math.min(OUT_CAP.speed, fxOf(c).speed + petFx(c).swing / 100);
-export const swingMsOf = (c) => Math.round((ITEMS[c?.eq?.weapon]?.speed || SWING_MS) / (1 + swingFx(c)));   /* (fxOf and OUT_CAP are further down; these are functions, so the order in this file does not matter) */
+export const swingMsOf = (c) => Math.round((ITEMS[c?.eq?.weapon]?.speed || SWING_MS) / (1 + swingFx(c) + (ITEMS[c?.eq?.weapon]?.bow ? kitOf(c, "quickdraw") / 100 : 0)));   /* (2026-10-02, v1.2) Quickdraw wax */   /* (fxOf and OUT_CAP are further down; these are functions, so the order in this file does not matter) */
 export const TOOL_OF = { mining: "pickaxe", woodcutting: "axe", fishing: "rod" };
 export const INV_MAX = 25;   // (2026-09-27, the owner: "with all the new items, lets give all users default of 25 inventory slots") 20 from 2026-09-20 to 2026-09-27; (was 30 until 2026-09-20: a casino game wants a small bag that fills, so you walk back past the tables to the Cashier.
                              //  normChar re-packs an old 30-slot bag on load and sends what no longer fits to the bank, so nothing is lost.)
@@ -1113,7 +1113,7 @@ export const STEP_MS = 200 /* (v95, the owner: "make users default walk speed ab
    anywhere, so every level of it did precisely nothing — which is most of why The Run felt like a treadmill. It
    goes in with the meals and the boots rather than beside them, so it lands inside SPEED_FULL/SPEED_CAP's
    diminishing returns and cannot stack past a ceiling that was designed before the skill existed. */
-export function speedRaw(c, extra = 0) { let raw = extra + workPerk(c, "agility", "walk") + petFx(c).speed + agilBonus(c) + charmOf(c, "haste") + fxWalk(c);   /* (2026-09-30) fxWalk: food, drinks, gear and achievements that say "speed" now walk too (see the Store, round two) */ for (const k of Object.values(c.eq || {})) if (k && ITEMS[k]?.spd) raw += ITEMS[k].spd; return raw; }   /* eq.pet is an id, not an item key, so the loop below skips it and petFx adds it instead */
+export function speedRaw(c, extra = 0) { let raw = extra + workPerk(c, "agility", "walk") + petFx(c).speed + agilBonus(c) + charmOf(c, "haste") + kitOf(c, "fleet") + fxWalk(c);   /* (2026-09-30) fxWalk: food, drinks, gear and achievements that say "speed" now walk too (see the Store, round two) */ for (const k of Object.values(c.eq || {})) if (k && ITEMS[k]?.spd) raw += ITEMS[k].spd; return raw; }   /* eq.pet is an id, not an item key, so the loop below skips it and petFx adds it instead */
 export function speedBonus(c, extra = 0) { const raw = speedRaw(c, extra); return Math.max(0, Math.min(SPEED_CAP, Math.min(SPEED_FULL, raw) + Math.max(0, raw - SPEED_FULL) * 0.5)); }
 export const stepMsOf = (c, extra = 0) => Math.round(STEP_MS / (1 + speedBonus(c, extra) / 100));
 /* (2026-09-22) THE NUMBER, FOR READING. Every speed source used to be a whole number, so the stat panel could print
@@ -3509,7 +3509,7 @@ export function buildScene(key) {
   projObjs(String(key), b);   /* (2026-09-28) World Projects: LAST, and append-only */
   if (!sc.noBanks) markBanks(b.g);   /* (2026-09-27) the Depths' abyss is its own edge: see its map */
   thrillYardObjs(String(key), b);   /* (2026-10-01) Thrill Hill's front door in the court: append-only (HOLD.thrill) */
-  worldThiefObjs(String(key), b);   /* (2026-10-01) shortcuts, ledges and lockboxes: after the projects, append-only, and AFTER the banks so a ledge's island stays ground (HOLD.thief2) */
+  worldThiefObjs(String(key), b); kitObjs(String(key), b);   /* (2026-10-02, v1.2) field kits: the grapple posts (HOLD.kits) */   /* (2026-10-01) shortcuts, ledges and lockboxes: after the projects, append-only, and AFTER the banks so a ledge's island stays ground (HOLD.thief2) */
   b.objs.forEach((o, i) => { o.id = i; o.w ??= 1; o.h ??= 1; });
   return b;
 }
@@ -4529,6 +4529,7 @@ export const buffsOf = (c) => {
   for (const k0 of SLOTS) { const k = c?.eq?.[k0], it = k && ITEMS[k]; if (it?.fx) one(`worn:${k}`, it.short || it.name, k, `${it.name} (worn): ${fxText(it.fx)}.`); }
   { const gid = projFx(c)?.grand, P = gid && PROJECTS[gid]; if (P) one("grand", "Grand Opening", `pin_${gid}`, `${P.name} just opened in ${P.where}: its bonuses are doubled and every skill pays ${GRAND.xp * 100}% more xp here, for the hour.`, Math.max(1, Math.ceil(grandLeft(gid) / 60000)), "minute"); }   /* (2026-09-28) */
   for (const [id, t] of Object.entries(c?.tk || {})) { const g = GADGETS[id]; if (g && (t.left | 0) > 0) one(`tk:${id}`, g.name, g.item === false ? "tk_banner" : `tk_${id}`, `${g.name}: ${g.does}. The clock only runs while you're outside.`, Math.max(1, Math.ceil((t.left | 0) / 60000)), "minute"); }   /* (2026-09-28) Tinkering's gadgets */
+  if (c?.kit && (c.kit.left | 0) > 0 && !HOLD.kits && FIELD_KITS[c.kit.k]) { const K = FIELD_KITS[c.kit.k], t = c.kit.tier || 1; one("kit", `${K.name} ${"I".repeat(t)}`, `kit_${c.kit.k}`, `${K.name} (tier ${"I".repeat(t)}): ${K.what(K.vals[t - 1])}${c.kit.k === "mark" && c.kit.t ? ` (${MOBS[c.kit.t]?.name || c.kit.t})` : ""}. The clock only runs while you're outside.`, Math.ceil(c.kit.left / 60000), "minute"); }   /* (2026-10-02, v1.2) a field kit */
   if (c?.charm && (c.charm.left | 0) > 0 && CHARMS[c.charm.k]) { const C_ = CHARMS[c.charm.k], t = c.charm.tier || 1; one("charm", `${C_.name} ${"I".repeat(t)}`, `scroll_${c.charm.k}`, `${C_.name} (tier ${"I".repeat(t)}): ${C_.what(C_.vals[t - 1])}. The clock only runs while you're outside.`, Math.ceil(c.charm.left / 60000), "minute"); }   /* (2026-09-26) the page buff */
   return out;
 };
@@ -5807,7 +5808,7 @@ export const noAmmoWhy = (c) => {
   return `Your ${w.pouch} is empty. Load it with ${w.many} from your bag (click them, or the Load button in your Equipment tab).`;
 };
 /** how far the held launcher reaches, or 1 for anything else */
-export const reachOfHeld = (c) => { const L = launcherOf(c); return L ? L.launcher.range + (charmOf(c, "tailwind") ? 1 : 0) + Math.min(2, petFx(c).reach) : 1; };   /* (2026-09-27) the Pocket Owl */   /* (2026-09-26) Tailwind: one tile further */
+export const reachOfHeld = (c) => { const L = launcherOf(c); return L ? L.launcher.range + (charmOf(c, "tailwind") ? 1 : 0) + (kitOf(c, "eagle") && L.bow ? 1 : 0) + Math.min(2, petFx(c).reach) : 1; };   /* (2026-09-27) the Pocket Owl */   /* (2026-09-26) Tailwind: one tile further */
 /** what kind of ammunition an item is: "arrow" (every arrow, which predates the field), "page", or null */
 export const ammoKind = (k) => (ITEMS[k]?.ammo ? ITEMS[k].ammo.kind || "arrow" : null);
 /** the words for a kind of ammunition and the thing that holds it, so no message says "arrows" to a wizard */
@@ -10700,4 +10701,80 @@ if (!HOLD.grin) {
     ex: "One of these is his. The others are full of crows." }, 0, []);
   Object.assign(PETS, { grinling: { name: "Grinling", art: "pet_grinling", raid: true, fx: { tough: 10, swing: 12, tix: 8 }, ex: "The Grin's, a little suit with nobody in it, carrying a lantern that smiles at you. You take 10% less damage, swing 12% faster and find 8% more tickets. Only The Grin drops it." } });
   Object.assign(MOBS.grin, { pet: ["grinling", 1 / 20] });
+}
+
+/* ============================================================ FIELD FIELD_KITS (2026-10-02, v1.2). The owner, from tools/archery-mock: "mages are extremely
+   more OP in most aspects compared to melee and archery ... build out your original field kits listed in the mock up on the dev server for v1.2",
+   then "add a speed buff field kit as well". Measured (tools/eastscape-style-dps.mjs): archery already out-damages magic on a plain monster; what
+   magic has and archery hasn't is UTILITY, fifteen pages. These are archery's answer, made at the fletching table (so Fletching gains customers
+   the way Wizardry has), usable only by archers (an Archery level, and the combat ones only with a bow in hand).
+     TIMED (one kit at a time, its own slot beside the page buff; the clock runs only outside, like pages; the tier is your FLETCHING when you
+       use it: I below 70, II from 70, III from 90): Hunter's camo, Flare, Hunter's Mark, Eagle-eye drops, Quickdraw wax, Fleetfoot salve,
+       Arrow retriever.
+     USED UP: Grapple arrows (one a crossing at a GRAPPLE point: archery's own shortcuts, twelve of them, found by tools/eastscape-grapple-find.mjs),
+       Snares (set on your tile, up to SNARE.perMap a map, come back in an hour), Fishing arrows (bowfishing: a fishing spot from your bow's
+       reach, no rod, one arrow a catch, a chance of two fish and some Archery xp).
+   HELD on the live server (HOLD.kits) until v1.2. */
+HOLD.kits = !globalThis.__ES_OPEN_ALL;
+export const FIELD_KITS = {
+  camo:      { name: "Hunter's camo",   lvl: 50, use: 40, mins: [15, 20, 30], vals: [1, 1, 1],    what: () => "aggressive monsters don't notice you until you attack something" },
+  flare:     { name: "Flare",           lvl: 60, use: 50, mins: [10, 15, 20], vals: [1, 1, 1],    what: () => "your minimap marks the Jackpot Thief, shooting stars, bosses and rare monsters on the map you're on" },
+  mark:      { name: "Hunter's Mark",   lvl: 55, use: 45, mins: [20, 20, 20], vals: [6, 8, 10],   what: (v) => `+${v}% accuracy and damage with a bow against the kind of monster you marked` },
+  eagle:     { name: "Eagle-eye drops", lvl: 70, use: 60, mins: [15, 20, 25], vals: [1, 1, 1],    what: () => "your bow reaches one tile further" },
+  quickdraw: { name: "Quickdraw wax",   lvl: 65, use: 55, mins: [15, 15, 15], vals: [8, 12, 16],  what: (v) => `your bow fires ${v}% faster` },
+  fleet:     { name: "Fleetfoot salve", lvl: 48, use: 38, mins: [20, 20, 20], vals: [8, 12, 16],  what: (v) => `+${v}% movement speed` },   /* (2026-10-02, the owner: "add a speed buff field kit as well") Haste's numbers */
+  retriever: { name: "Arrow retriever", lvl: 80, use: 70, mins: [30, 30, 30], vals: [30, 40, 50], what: (v) => `${v}% of the arrows that land come back to your quiver` } };
+/** the tier a kit is used at: your Fletching, at the moment you use it */
+export const kitTier = (c) => { const l = lvlOf(c, "fletching"); return l >= 90 ? 3 : l >= 70 ? 2 : 1; };
+/** the value of a running kit, or 0 */
+export const kitOf = (c, k) => (!HOLD.kits && c?.kit && c.kit.k === k && (c.kit.left | 0) > 0 && FIELD_KITS[k] ? FIELD_KITS[k].vals[(c.kit.tier || 1) - 1] : 0);
+export const holdsBow = (c) => !!ITEMS[c?.eq?.weapon]?.bow;
+export const SNARE = { ms: 60 * 60000, perMap: 4, max: 12, use: 25 };
+export const BOWFISH = { use: 40, double: 0.2, xpShare: 0.3 };
+/* twelve grapple crossings: a: the stand tile on one side, b: the other, pa / pb: the post beside each (a free blocked tile). lvl is Archery. */
+export const GRAPPLES = {
+  gloam:      { scene: "gloam",     lvl: 10, name: "Grapple over the thicket",           a: [31, 18], b: [37, 24], pa: [32, 19], pb: [36, 23] },
+  sands:      { scene: "sands",     lvl: 35, name: "Grapple over the dunes",              a: [3, 2],   b: [10, 9],  pa: [4, 3],   pb: [9, 8] },
+  boardwalk:  { scene: "boardwalk", lvl: 60, name: "Grapple across the boards",           a: [9, 5],   b: [15, 11], pa: [10, 6],  pb: [14, 10] },
+  boardwalk2: { scene: "boardwalk", lvl: 60, name: "Grapple over the stalls",             a: [17, 9],  b: [20, 6],  pa: [18, 8],  pb: [19, 7] },
+  bw_cabin:   { scene: "bw_cabin",  lvl: 62, name: "Grapple over the cove",               a: [20, 15], b: [25, 10], pa: [21, 14], pb: [24, 11] },
+  bw_pier:    { scene: "bw_pier",   lvl: 64, name: "Grapple across the water",            a: [21, 12], b: [24, 9],  pa: [22, 11], pb: [23, 10] },
+  bw_pier2:   { scene: "bw_pier",   lvl: 64, name: "Grapple over the pilings",            a: [14, 8],  b: [21, 15], pa: [15, 9],  pb: [20, 14] },
+  bw_skull:   { scene: "bw_skull",  lvl: 68, name: "Grapple over the lagoon",             a: [32, 11], b: [32, 16], pa: [32, 12], pb: [32, 15] },
+  bw_skull2:  { scene: "bw_skull",  lvl: 68, name: "Grapple over the rocks",              a: [25, 15], b: [30, 10], pa: [26, 14], pb: [29, 11] },
+  depths:     { scene: "depths",    lvl: 74, name: "Grapple over the underground river", a: [37, 16], b: [37, 22], pa: [38, 16], pb: [37, 21] },
+  depths2:    { scene: "depths",    lvl: 76, name: "Grapple across the chasm",            a: [29, 6],  b: [35, 12], pa: [30, 7],  pb: [34, 11] },
+  trailer:    { scene: "trailer",   lvl: 82, name: "Grapple over the hedge",              a: [9, 10],  b: [16, 3],  pa: [10, 9],  pb: [15, 4] } };
+export const grappleMs = (gp) => 1100 + Math.max(Math.abs(gp.b[0] - gp.a[0]), Math.abs(gp.b[1] - gp.a[1])) * 140;
+/** an hour's snare, by how hard the map is: feathers always, hides, meat and bones often */
+export const snareLoot = (scene, r = Math.random) => {
+  const ms = (SCENES[String(scene).split(":")[0]]?.mobs || []).map(([t]) => MOBS[t]?.lvl || 1), tier = ms.length ? ms.reduce((a, b) => a + b, 0) / ms.length : 5;
+  const n = (a, b) => a + Math.floor(r() * (b - a + 1)), out = [["feather", n(5 + Math.floor(tier / 6), 14 + Math.floor(tier / 3))]];
+  if (r() < 0.6) out.push(["hide", n(1, 2 + Math.floor(tier / 40))]);
+  if (r() < 0.5) out.push([r() < 0.5 ? "beef" : "chicken", n(1, 3)]);
+  if (r() < 0.4) out.push(["bones", n(1, 3)]);
+  return { items: out, xp: Math.round(15 + tier * 1.5) };
+};
+if (!HOLD.kits) {
+  const reqA = (lvl) => ({ skill: "archery", lvl });
+  for (const [k, K] of Object.entries(FIELD_KITS)) ITEMS[`kit_${k}`] = { name: K.name, icon: "\u{1F3F9}", use: "kit", kit: k, useReq: reqA(K.use),
+    ex: `A field kit. Use it for ${K.mins[0]} minutes of: ${K.what(K.vals[0])} (tier I), up to ${K.what(K.vals[2])}, ${K.mins[2]} minutes (tier III). Your Fletching sets the tier; Archery ${K.use} to use. One kit at a time; the clock runs only outside.` };
+  ITEMS.grapple_arrow = { name: "Grapple arrow", icon: "\u{1FA9D}", ex: "A hooked arrow on a coil of rope. Fire one at a grapple post to cross to the other side: archery's own shortcuts. One arrow a crossing." };
+  ITEMS.snare = { name: "Snare", icon: "\u{1FAA4}", use: "snare", useReq: reqA(SNARE.use), ex: `Set it where you stand, out where monsters live (up to ${SNARE.perMap} on a map). Come back in an hour for feathers, hides, meat and bones. Archery ${SNARE.use}.` };
+  ITEMS.fishing_arrow = { name: "Fishing arrows", icon: "\u{1F3A3}", ex: `Bowfishing: with a bow in hand and these in your bag, fish any spot from your bow's reach, no rod needed. One arrow a catch, a ${BOWFISH.double * 100}% chance of two fish, and some Archery xp. Archery ${BOWFISH.use}.` };
+  fl("fletch_grapple", { lvl: 40, xp: 60, in: [["shaft", 3], ["bowstring", 1], ["emerald_bar", 1]], out: ["grapple_arrow", 3] });
+  fl("fletch_snare", { lvl: 30, xp: 40, in: [["willowlogs", 1], ["bowstring", 1]], out: ["snare", 2] });
+  fl("fletch_fishing_arrow", { lvl: 45, xp: 50, in: [["shaft", 10], ["feather", 10], ["diamond_bar", 1]], out: ["fishing_arrow", 10] });
+  const KIT_IN = { camo: [["hide", 2], ["sporecap", 2]], flare: [["shaft", 2], ["ink_fire", 1]], mark: [["feather", 15], ["bones", 5]], eagle: [["small_vial", 1], ["sporecap", 3], ["feather", 5]],
+    quickdraw: [["palmlogs", 2], ["small_vial", 1]], fleet: [["small_vial", 1], ["sporecap", 2], ["feather", 5]], retriever: [["hide", 3], ["bowstring", 2], ["feather", 20]] };
+  for (const [k, K] of Object.entries(FIELD_KITS)) fl(`fletch_kit_${k}`, { lvl: K.lvl, xp: 30 + K.lvl * 2, in: KIT_IN[k], out: [`kit_${k}`, k === "flare" ? 2 : 1] });
+  EXAMINE.grapple = ["A post with a grappling hook and a coil of rope. An archer with a grapple arrow can cross from here."];
+}
+/* buildScene's step: a post at each end of every grapple crossing (append-only, after the thieving pass) */
+function kitObjs(key, b) {
+  if (HOLD.kits) return;
+  for (const [id, gp] of Object.entries(GRAPPLES)) {
+    if (gp.scene !== key) continue;
+    [gp.pa, gp.pb].forEach(([x, y], end) => { b.objs.push({ t: "grapple", art: "o_grapple", x, y, gp: id, end, name: `${gp.name} — Archery ${gp.lvl}`, pocket: true }); b.g[y][x] = "#"; });
+  }
 }

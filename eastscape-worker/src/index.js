@@ -41,7 +41,8 @@ import { installCommands } from "./commands.js";   /* (2026-09-30) CHAT COMMANDS
 import { installWeekly } from "./weekly.js";
 import { installTrack } from "./track.js";   /* (2026-09-30) WHAT THE WORLD RECORDS: see track.js and tools/tracking-mock/ */   /* (2026-09-30) THE WEEKLY ISSUE */   
 import { installRaid } from "./raid.js";
-import { installGrin } from "./grin.js";   /* (2026-10-02) THE GRIN, the third Yard raid */
+import { installGrin } from "./grin.js";
+import { installKits } from "./kits.js";   /* (2026-10-02, v1.2) FIELD KITS: kits.js */   /* (2026-10-02) THE GRIN, the third Yard raid */
 import { installThief } from "./thief.js";
 import { installThrill } from "./thrill.js";
 import { installWork, WORK_ODDS } from "./work.js";
@@ -487,7 +488,7 @@ export class World {
     return { pay: owed, low, late };
   }
 
-  meOf(pl) { const C = pl.C; return { locker: C.locker || [], work: C.work || null,   /* (2026-10-01) work clothes */ hatch: C.hatch || null,   /* (2026-09-27) the egg in the hatchery */ fung: C.fung || null,   /* (2026-09-27) which clusters you've picked today */ pen: C.pen || null,   /* (2026-09-27) Breeding */ store: C.store || null,   /* (2026-09-27) what the Store has sold you and what your name wears */ seen: C.seen || [],   /* (2026-09-27) the world map's fog */ hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null,   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
+  meOf(pl) { const C = pl.C; return { locker: C.locker || [], work: C.work || null,   /* (2026-10-01) work clothes */ hatch: C.hatch || null,   /* (2026-09-27) the egg in the hatchery */ fung: C.fung || null,   /* (2026-09-27) which clusters you've picked today */ pen: C.pen || null,   /* (2026-09-27) Breeding */ store: C.store || null,   /* (2026-09-27) what the Store has sold you and what your name wears */ seen: C.seen || [],   /* (2026-09-27) the world map's fog */ hw: C.hw || null, ward: !!C.ward,   /* (2026-09-27) the Long Night: today's trick, the lanterns taken; the brew's ward */ charm: C.charm || null, kit: C.kit || null, snares: G.HOLD.kits ? undefined : C.snares || undefined, snareMs: G.HOLD.kits ? undefined : this.env?.DEV === "1" ? 60000 : G.SNARE.ms,   /* (2026-10-02, v1.2) FIELD KITS: kits.js */   /* (2026-09-26) the running page buff */ quick: C.quick || null,   /* (2026-09-25) the four quick slots: item KEYS, so they survive the bag being sorted */ look: C.look || null, van: C.van,
     /* (2026-09-22) PETS MUST BE HERE. meOf is a hand-picked subset, and eq.pet holds an ID into c.pets — so without
        the list the page resolves the worn pet to null, computes no speed bonus, and predicts 200ms a tile while the
        server moves you at 185. That gap is rubberbanding, and it also left the Equipment tab's pet list empty. */
@@ -1105,6 +1106,8 @@ export class World {
     let act = null;
     const wtOb = m.kind == null || m.kind === "ob" ? S.objs[m.ob | 0] : null;   /* (2026-10-01) thieving in the world and shortcuts: thief.js */
     if (wtOb && wtOb.t === "stunt") { act = this.stStart(S, pl, wtOb, f); if (!act) return; }   /* (2026-10-01) Thrill Hill: thrill.js */
+    else if (wtOb && wtOb.gp && !G.HOLD.kits) { act = this.kitGrappleStart(S, pl, wtOb); if (!act) return; }   /* (2026-10-02, v1.2) FIELD KITS: kits.js */
+    else if (m.kind === "snare" && !G.HOLD.kits) { act = this.kitSnareStart(S, pl, m); if (!act) return; }
     else if (m.kind === "pick" || (wtOb && (wtOb.sc || wtOb.bw || wtOb.t === "lockbox") && !G.HOLD.thief2)) { act = this.wtStart(S, pl, m, f); if (!act) return; }
     else if (m.kind === "pvp") { if (!S.def.pvp) return; const T = this.pls.get(String(m.id)); if (!T || T === pl || T.C.scene !== S.key) return; act = { kind: "pvp", id: T.id, x: T.x, y: T.y, name: T.name }; }
     else if (m.kind === "ground") { const it = S.ground.find((x) => x.id === m.id); if (it) act = { kind: "ground", id: it.id, x: it.x, y: it.y, name: G.ITEMS[it.k].name }; }
@@ -1115,7 +1118,8 @@ export class World {
       if (!this.mayFight(S, mob, pl, now)) return this.say(pl, `${this.claimOf(S, mob, now).name} is already fighting that.`, "bad");
       { const gate = mob.target === pl.id || pl.god || mob.thief ? null : G.bandBlock(C, S.key, "fight");   /* (2026-09-30) anyone may chase the Jackpot Thief, wherever he runs */   /* LEVEL BANDS: a soft gate. Something already attacking you can always be fought back */
         if (gate) return this.say(pl, `${S.def.name} is for Combat ${gate.need} and up${gate.arch ? `, or Archery ${gate.arch} with a bow` : ""}${gate.mage ? `, or Magic ${gate.mage} with a wand` : ""}. You're ${gate.have}. ${gate.need <= 10 ? "The Yard will get you there." : "Work the scene before this one a while longer."}`, "bad"); }
-      act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: mob.nm || G.MOBS[mob.t].name, reach: G.reachOfHeld(C) };   /* (2026-09-25) SHOOT FROM WHERE YOU STAND: the walk below stops at the bow's reach, not next to the thing (the owner: "it runs up to them, which feels very much like melee") */
+      act = { kind: "mob", id: mob.id, x: mob.x, y: mob.y, name: mob.nm || G.MOBS[mob.t].name, reach: G.reachOfHeld(C) };
+      if (C.kit?.k === "camo") this.kitBreakCamo(pl);   /* (2026-10-02, v1.2) FIELD KITS: kits.js */   /* (2026-09-25) SHOOT FROM WHERE YOU STAND: the walk below stops at the bow's reach, not next to the thing (the owner: "it runs up to them, which feels very much like melee") */
     }
     else if (m.kind === "npc") { const n = S.npcs.find((x) => x.id === m.id); if (n) act = { kind: "npc", id: n.id, x: n.x, y: n.y, name: n.name, reach: n.reach || 1 }; }
     else {
@@ -1144,6 +1148,7 @@ export class World {
     }
     if (!act) return;
     act.started = 0;
+    if (act.kind === "spot" && this.kitBowfishOk(C)) { act.bow = true; act.reach = Math.max(G.reachOf("spot"), G.reachOfHeld(C)); }   /* (2026-10-02, v1.2) FIELD KITS: kits.js: bowfishing, from the bow's reach */
     /* (2026-09-24, the owner, a SECOND time: "when it said it grabbed me i could still moove arounnd")
        AND THIS IS THE HOLE THE WALK GUARD LEFT. Refusing `walk` covers clicking the FLOOR. It does not cover
        clicking a monster — which, in a boss fight, is most of what anybody clicks — because an act paths you to
@@ -1152,7 +1157,7 @@ export class World {
        The act still lands: you can keep swinging at whatever is already beside you, which is the whole point of
        being held next to something. Only the walking to it is refused. */
     const held = S.run && S.def.pyramid && S.run.coil && S.run.coil.id === pl.id;
-    const p = held ? [] : G.findPath(S.g, f, act, act.kind === "ground" || act.kind === "shortcut" || act.kind === "backway" || act.kind === "stunt" ? 0 : act.reach || G.reachOf(act.kind) || 1);
+    const p = held ? [] : G.findPath(S.g, f, act, act.kind === "ground" || act.kind === "shortcut" || act.kind === "backway" || act.kind === "grapple" || act.kind === "stunt" ? 0 : act.reach || G.reachOf(act.kind) || 1);
     if (p === null) { this.say(pl, act.kind === "mob" && !G.launcherOf(C) ? "You can't get to that from here. It wants a bow." : "You can't reach that.", "bad"); pl.act = null; return; }
     if (held && G.cheb(pl, act) > (act.reach || G.reachOf(act.kind) || 1)) { this.say(pl, "It has you. You can only reach what is already beside you.", "bad"); pl.act = null; return; }
     /* SAME TARGET, SAME ACTION (2026-09-25, the re-click exploit). startAct builds a fresh act on every click and
@@ -2455,6 +2460,7 @@ export class World {
 
   useSpecial(pl, i, st, it) {
     const C = pl.C, now = Date.now(), take = () => { st.n--; if (!st.n) C.inv.splice(C.inv.indexOf(st), 1); this.touch(pl); };
+    if ((it.use === "kit" || it.use === "snare") && !G.HOLD.kits) return this.kitUse(pl, st, it, take);   /* (2026-10-02, v1.2) FIELD KITS: kits.js */
     if (it.use === "gadget") return this.tinkerUse(pl, st, it, take);   /* (2026-09-28) Tinkering */
     if (it.use === "cards") return this.cardUse(pl, st, it, take);   /* (2026-09-29) Marked Cards: flip one */
     if (it.use === "cardlook") return this.cardLook(pl, st, it, take);   /* (2026-09-29) a Marked Card name look */
@@ -2937,9 +2943,10 @@ export class World {
       /* (2026-09-28, the owner: "user is testing in the thieving guild but its buff isnt counting down") A BUFF'S CLOCK RUNS WHERE IT WORKS.
          It counted only in maps with monsters, and the Thieves' Guild has none, so sleep dust (a thieving buff, and the Guild is the only
          place to steal) never wore off there. A map with pickpocket marks counts too; the answer is cached on the scene. */
-      const C = pl.C, dt = Math.min(5000, now - (pl.fxAt || now)); pl.fxAt = now; if (!(C.meal || C.drink || C.charm || (C.tk && Object.keys(C.tk).length))) continue;
+      const C = pl.C, dt = Math.min(5000, now - (pl.fxAt || now)); pl.fxAt = now; if (!(C.meal || C.drink || C.charm || C.kit || (C.tk && Object.keys(C.tk).length))) continue;
       { const Sx = this.scenes.get(C.scene); if (Sx && Sx.buffClock === undefined) Sx.buffClock = !!(G.SCENES[String(C.scene).split(":")[0]]?.mobs?.length || Sx.objs?.some((o) => o.t === "mark"));
         if (!(Sx ? Sx.buffClock : G.SCENES[String(C.scene).split(":")[0]]?.mobs?.length)) continue; }
+      if (C.kit) this.kitTickBuff(pl, dt);   /* (2026-10-02, v1.2) FIELD KITS: kits.js */
       if (C.charm) { C.charm.left = (C.charm.left | 0) - dt; if (C.charm.left <= 0) { this.say(pl, `Your ${G.CHARMS[C.charm.k]?.name || "page"} has worn off.`); C.charm = null; } this.touch(pl); }   /* (2026-09-26) the page buff */
       for (const k of ["meal", "drink"]) if (C[k]) { C[k].left = (C[k].left | 0) - dt; if (C[k].left <= 0) { this.say(pl, `Your ${G.ITEMS[C[k].k]?.name.toLowerCase() || k} has worn off.`); C[k] = null; } this.touch(pl); }
       /* (2026-09-28) TINKERING'S GADGETS: the same clock. The Field Medkit heals every five seconds while it runs; a gadget that runs out
@@ -3114,6 +3121,7 @@ export class World {
       return this.say(pl, `You stop ${G.AFK_KINDS[a.kind]}: you've been idle for ${Math.round(afkMs / 60000)} minutes. Click to carry on.`);
     }
     const faceIt = () => { pl.dir = G.DIRS[`${Math.sign(a.x - pl.x)},${Math.sign(a.y - pl.y)}`] || pl.dir; pl.face = a.x > pl.x ? 1 : a.x < pl.x ? -1 : pl.face; };
+    if (a.kind === "grapple" || a.kind === "snare") return this.kitAct(S, pl, a, now);   /* (2026-10-02, v1.2) FIELD KITS: kits.js */
     if (a.kind === "pick" || a.kind === "lockbox" || a.kind === "shortcut" || a.kind === "backway") return this.wtAct(S, pl, a, now, faceIt);   /* (2026-10-01) thief.js */
     if (a.kind === "stunt") return this.stAct(S, pl, a, now);   /* (2026-10-01) Thrill Hill: thrill.js */   /* (2026-10-01) thief.js */
     if (a.kind === "mob") {
@@ -3154,7 +3162,7 @@ export class World {
         /* (2026-09-26) THE ELEMENT. The loaded page's element meets the monster's weakness or resistance, Void pierces part of its
            defence, and after the hit Fire may burn, Frost slows, Storm arcs to a neighbour and Sun heals you (below). */
         const el = G.launcherOf(C) ? G.ammoElOf(C) : null;
-        const def = G.MOBS[m.t], hit = Math.random() < Math.max(G.hitChance(G.attackRollOf(C), def.def * (el === "void" ? 1 - G.MAGIC.pierce : 1)), G.styleOf(C) === "archery" ? G.ARCH_FLOOR[String(S.key).split(":")[0]] || 0 : G.styleOf(C) === "magic" ? G.MAGE_FLOOR[String(S.key).split(":")[0]] || 0 : 0);   /* (2026-09-30) the sure shot (ARCH_FLOOR) and the sure cast (MAGE_FLOOR) */ let dmg = hit ? rint(1, G.maxHitOf(C) + G.ammoStrOf(C)) : 0;
+        const def = G.MOBS[m.t], hit = Math.random() < Math.max(G.hitChance(G.attackRollOf(C) * this.kitMarkMul(C, m), def.def * (el === "void" ? 1 - G.MAGIC.pierce : 1)), G.styleOf(C) === "archery" ? G.ARCH_FLOOR[String(S.key).split(":")[0]] || 0 : G.styleOf(C) === "magic" ? G.MAGE_FLOOR[String(S.key).split(":")[0]] || 0 : 0);   /* (2026-09-30) the sure shot (ARCH_FLOOR) and the sure cast (MAGE_FLOOR) */ let dmg = hit ? rint(1, G.maxHitOf(C) + G.ammoStrOf(C)) : 0; if (dmg) dmg = Math.max(1, Math.round(dmg * this.kitMarkMul(C, m)));   /* (2026-10-02, v1.2) FIELD KITS: kits.js: Hunter's Mark */
         /* (2026-10-01) ABILITIES: the first ready one in your order that makes sense now (abilPick). A bigger hit is only spent on a swing that
            lands; Disengage's "next arrow" is spent here too. `abRaw` is the hit before this target's own element and guard: what a splash shares. */
         const ab = this.abilPick(S, pl, m, now); let abUsed = null;
@@ -3179,6 +3187,7 @@ export class World {
            about one landed hit in nine and nobody sees one until their max hit reaches 5, around Combat 10.) */
         if (dmg > 0) { const ev = G.gemVs(C, m.t); if (ev) dmg = Math.max(1, Math.round(dmg * (1 + ev))); }   /* (2026-09-28) an elemental gem against a monster weak to it */
         if (m.immune && dmg) { dmg = 0; if (!m.immTold?.has(pl.id)) { m.immTold?.add(pl.id); this.say(pl, "Nothing. It's like hitting the dark.", "bad"); } }   /* (2026-10-02) THE GRIN: nothing counts while his head is off */
+        this.kitRetrieve(pl, dmg);   /* (2026-10-02, v1.2) FIELD KITS: kits.js: the Arrow retriever */
         if (m.thief && dmg) dmg = 1;   /* (2026-09-30) THE JACKPOT THIEF counts hits, not damage: a level 3 and a level 99 knock the same tickets loose */
         this.meterAdd(pl, "swing", 1, m); if (dmg) this.meterAdd(pl, "hit", 1, m);   /* (2026-09-28) accuracy, for the run report */
         this.bossAdd(pl, m, "swing", 1); if (dmg) { this.bossAdd(pl, m, "hit", 1); this.bossAdd(pl, m, "dmg", dmg); }   /* (2026-09-28) and a world boss's own report */
@@ -3699,7 +3708,7 @@ export class World {
       return;
     }
     if (a.kind === "spot") {
-      if (!this.hasTool(pl, "fishing", ob.req?.lvl)) { pl.act = null; return; }
+      if (a.bow ? G.lvlOf(C, "fishing") < (ob.req?.lvl || 1) && !this.say(pl, `This spot needs Fishing ${ob.req.lvl}.`, "bad") : !this.hasTool(pl, "fishing", ob.req?.lvl)) { pl.act = null; return; }   /* (2026-10-02, v1.2) FIELD KITS: kits.js: bowfishing needs no rod */
       { const gate = pl.god ? null : G.bandBlock(C, S.key, "fish"); if (gate) { pl.act = null; return this.say(pl, `This water is for Fishing ${gate.need} and up. You're ${gate.have}.`, "bad"); } }   /* LEVEL BANDS */
       if (!a.started) { a.started = now; a.next = now + Math.round(G.FISHING.ms / G.toolSpeed(C, "fishing")); this.say(pl, "You cast out your line…"); return; }
       if (now < a.next) return;
@@ -3729,7 +3738,7 @@ export class World {
           else if (this.keepRare(pl, k, 1)) this.say(pl, `Your line goes heavy. You haul up ${G.ITEMS[k].name.toLowerCase()} — somebody went in the water rather than be caught holding them.`, "loot");
         }
         if ((C.luck | 0) > 0) { C.luck--; this.touch(pl); }
-        this.grant(pl, "fishing", gx(trout ? ob.xp2 || ob.xp || 50 : ob.xp || 20)); this.say(pl, `You catch a ${G.ITEMS[fish].name.replace(/^Raw /, "").toLowerCase()}.`, "good"); this.questCheck(pl);
+        this.grant(pl, "fishing", gx(trout ? ob.xp2 || ob.xp || 50 : ob.xp || 20)); if (a.bow) this.kitBowfish(pl, fish, trout ? ob.xp2 || ob.xp || 50 : ob.xp || 20);   /* (2026-10-02, v1.2) FIELD KITS: kits.js: bowfishing */ this.say(pl, `You catch a ${G.ITEMS[fish].name.replace(/^Raw /, "").toLowerCase()}.`, "good"); this.questCheck(pl);
       }
     }
   }
@@ -4167,7 +4176,7 @@ export class World {
            with a door on the centre line - so a Scarab Swarm homed one tile from the gate could see straight
            through it the moment it opened and follow you down. Comparing chambers instead of distance is what
            makes a cleared room stay cleared. */
-        const ok = (p) => p.C.scene === S.key && !(G.fxOf(p.C).calm > 0) && !G.inCage(S.def, p.x, p.y) && !(p.act?.kind === "pick" && p.act.id === m.id)   /* (2026-10-02) a thief working this one's pockets isn't noticed (thief.js) */   /* (2026-09-27) the Pumpkin King's Crown: nothing attacks its wearer first */ && G.cheb(p, { x: m.hx, y: m.hy }) <= aggro + 5
+        const ok = (p) => p.C.scene === S.key && !(G.fxOf(p.C).calm > 0) && !G.inCage(S.def, p.x, p.y) && !(p.act?.kind === "pick" && p.act.id === m.id) && !G.kitOf(p.C, "camo")   /* (2026-10-02) a thief working this one's pockets isn't noticed (thief.js) */   /* (2026-09-27) the Pumpkin King's Crown: nothing attacks its wearer first */ && G.cheb(p, { x: m.hx, y: m.hy }) <= aggro + 5
           && (!S.def.pyramid || PR.roomOf(p.x, p.y) === PR.roomOf(m.hx, m.hy))
           && (!m.raid || !S.raidG || p.x <= G.RAID.zoneX);   /* (2026-09-30) the raid keeps to the west bank: nobody in the court is a target */
         const owner = this.claimOf(S, m, now);
@@ -5506,6 +5515,7 @@ installCommands(World, { G });
 installWeekly(World, { G });   /* (2026-09-30) THE WEEKLY ISSUE: a snapshot a week, and the numbers the wiki's issue shows */   /* (2026-09-30) CHAT COMMANDS: /find, /help, /price, /count, /xp, /timers, /bosses, /wiki, /map, /online, /roll, /stuck */
 installRaid(World, { G });
 installGrin(World, { G });
+installKits(World, { G });
 installThief(World, { G });
 installDiary(World, { G, TW });   /* (2026-10-01, v1.1) area diaries */
 installThrill(World, { G });
