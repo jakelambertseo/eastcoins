@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Slow Side Games</title>
+<!-- (2026-10-02, the owner: "are there any micro progression type of 'mini games' we could add into eastscape? like pet racing, where you train your pet
+     on speed, feed it certain food to make it faster, find items? or what about racing, and give me some other ideas? things where you slowly over time
+     find or train or give items to something, and it levels up very slowly over time ... tomagachi style ... what do other arpgs/MMOs/rpgs do? lets
+     put it in a mockup"). Pet art is the game's own; the giant pumpkin, the soapbox kart and the Big Beast are PixelLab drafts. Local only; built
+     into /gameplan. http://localhost:4321/tools/sidegames-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a10;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#2a1a3a,transparent),radial-gradient(900px 600px at 100% 25%,#3a2a0a,transparent),#0b0a10}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 36px/1.1 Cinzel,Georgia,serif;color:#ffe8b0}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffd27a}
+h3{margin:18px 0 6px;font:800 17px Cinzel,serif;color:#ffe8b0}
+.lede{margin:0 0 10px;color:#cdc2a8;max-width:980px;line-height:1.6}.lede b,.sec>p b{color:#fff0cc}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#211a2a;box-shadow:0 0 0 1.5px #4a3a5a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd27a}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #2a2234}
+.sec>p{color:#bdb39c;max-width:980px;line-height:1.6}
+.callout{margin-top:14px;padding:13px 16px;border-radius:10px;background:rgba(255,190,70,.08);box-shadow:inset 0 0 0 1.5px rgba(255,190,70,.45);color:#f6e9cc;line-height:1.6;max-width:1000px}.callout b{color:#ffd27a}
+.tbl{width:100%;border-collapse:collapse;font:600 13.5px/1.45 Lora,serif;margin-top:12px;background:#15121c;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #2e2638}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#a898b8;padding:10px 12px 6px}.tbl td{padding:8px 12px;border-top:1px solid #2a2234;vertical-align:top}
+.tbl td:first-child{font-weight:800;color:#ffe8b0;white-space:nowrap}.tbl td b{color:#fff0cc}.wrapx{overflow-x:auto}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:10px;margin-top:12px}
+.rule{background:#15121c;border-radius:10px;padding:12px 14px;box-shadow:0 0 0 1.5px #2e2638}.rule b{display:block;font:800 15px Cinzel,serif;color:#ffd27a;margin-bottom:4px}.rule span{font:600 13.5px/1.55 Lora,serif;color:#cdc2a8}
+/* the idea cards */
+.ideas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(360px,100%),1fr));gap:14px;margin-top:14px}
+.idea{background:linear-gradient(180deg,#1b1624,#121018);border-radius:14px;padding:14px;box-shadow:0 0 0 1.5px #3a2e48;display:grid;gap:8px;align-content:start}
+.idea.pick{box-shadow:0 0 0 2px #ffc24a,0 10px 30px rgba(255,180,60,.12)}
+.idea .top{display:flex;gap:12px;align-items:center}
+.idea .pic{width:84px;height:84px;flex:none;border-radius:10px;background:radial-gradient(circle at 50% 65%,rgba(255,210,120,.18),transparent 70%),#0e0c14;display:grid;place-items:center;overflow:hidden}
+.idea .pic img{max-width:76px;max-height:76px;image-rendering:pixelated}
+.idea .pic.row{display:flex;gap:2px;align-items:center;justify-content:center}.idea .pic.row img{max-width:38px;max-height:38px}
+.idea b.n{font:800 20px/1.15 Cinzel,serif;color:#ffe8b0;display:block}
+.idea .like{font:700 11.5px Lora,serif;color:#a898b8}
+.idea .tag{display:inline-block;font:800 10.5px Lora,serif;letter-spacing:.07em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:#3a2a0a;color:#ffd27a;margin-top:3px}
+.idea dl{display:grid;grid-template-columns:92px 1fr;gap:5px 10px;margin:0;font:600 13px/1.5 Lora,serif}.idea dt{color:#a898b8;font-weight:800}.idea dd{margin:0;color:#ddd2b8}.idea dd b{color:#fff0cc}
+/* derby */
+.derby{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;margin-top:14px;align-items:start}@media (max-width:1000px){.derby{grid-template-columns:1fr}}
+.pets{display:flex;gap:8px;flex-wrap:wrap}.pets button{display:grid;justify-items:center;gap:2px;width:86px;padding:8px 4px;border:0;border-radius:10px;background:#15121c;box-shadow:0 0 0 1.5px #3a2e48;color:#e8e0cc;cursor:pointer;font:800 11.5px Lora,serif}
+.pets button img{width:40px;height:40px;image-rendering:pixelated}.pets button[aria-pressed="true"]{background:#2e2010;box-shadow:0 0 0 2px #ffc24a}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:10px}@media (max-width:700px){.week{grid-template-columns:repeat(2,1fr)}}
+.day{background:#15121c;border-radius:9px;padding:7px;box-shadow:0 0 0 1px #2e2638;display:grid;gap:5px}.day b{font:800 12px Cinzel,serif;color:#ffd27a}
+.day select{width:100%;font:700 12px Lora,serif;background:#0e0c14;color:#e8e0cc;border:1px solid #3a2e48;border-radius:6px;padding:4px}
+.bars{display:grid;gap:7px;margin-top:6px}.bar{display:grid;grid-template-columns:70px 1fr 40px;gap:8px;align-items:center;font:800 12.5px Lora,serif}
+.bar .t{height:12px;border-radius:6px;background:#0e0c14;box-shadow:inset 0 0 0 1px #3a2e48;overflow:hidden}.bar .t i{display:block;height:100%;border-radius:6px;transition:width .4s}
+.bar .spd i{background:linear-gradient(90deg,#ff7a3a,#ffc24a)}.bar .sta i{background:linear-gradient(90deg,#3aa0ff,#7ad8ff)}.bar .nrv i{background:linear-gradient(90deg,#9a5aff,#e07aff)}
+.track{position:relative;margin-top:12px;border-radius:12px;overflow:hidden;background:repeating-linear-gradient(90deg,#3a6a2a 0 36px,#356226 36px 72px);box-shadow:0 0 0 2px #5a4a2a;padding:6px 0}
+.lane{position:relative;height:46px;border-bottom:2px dashed rgba(255,255,255,.18)}.lane:last-child{border-bottom:0}
+.lane .runner{position:absolute;left:0;top:3px;height:40px;display:flex;align-items:center;gap:6px;transform:translateX(0)}
+.lane .runner img{width:38px;height:38px;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(0,0,0,.4))}
+.lane .runner span{font:800 11px Lora,serif;color:#fff;text-shadow:0 1px 2px #000;white-space:nowrap}
+.lane.mine{background:rgba(255,200,80,.12)}
+.track::after{content:"";position:absolute;top:0;bottom:0;right:44px;width:6px;background:repeating-linear-gradient(0deg,#fff 0 8px,#111 8px 16px)}
+.res{margin-top:10px;font:700 13.5px/1.7 Lora,serif}.res .me{color:#ffd27a}
+.k-win{min-width:0}
+/* pumpkin */
+.pump{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;margin-top:14px;align-items:start}@media (max-width:1000px){.pump{grid-template-columns:1fr}}
+.chart{background:#15121c;border-radius:10px;padding:12px;box-shadow:0 0 0 1.5px #2e2638}.chart svg{display:block;width:100%;height:auto}
+.ctl{display:grid;gap:10px;background:#15121c;border-radius:10px;padding:12px 14px;box-shadow:0 0 0 1.5px #2e2638;font:700 13.5px Lora,serif}.ctl input[type=range]{width:100%}
+.ctl .big{font:800 30px Cinzel,serif;color:#ffd27a}
+.note{font:600 12.5px/1.5 Lora,serif;color:#a898b8}
+/* voyages */
+.ships{display:grid;gap:8px}.ship{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;background:rgba(90,58,24,.08);box-shadow:inset 0 0 0 1px var(--k-line)}
+.ship img{width:44px;height:44px;image-rendering:pixelated}.ship .tm{font:800 12px Lora,serif;color:var(--k-ink2)}.ship .crew{font:600 12px Lora,serif;color:var(--k-ink2)}
+.prog{height:8px;border-radius:4px;background:rgba(0,0,0,.15);overflow:hidden;margin-top:4px}.prog i{display:block;height:100%;background:#5a9a3a}
+@media (prefers-reduced-motion:reduce){.bar .t i{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Slow Side Games</h1>
+  <p class="lede">"Tamagotchi style" makes complete sense. Designers call it a <b>nurture loop</b> or <b>virtual pet</b> system, and more broadly <b>slow side progression</b>:
+    something you <b>feed, train or hand things to</b> a little at a time, which grows <b>far more slowly than your character</b>, and which you
+    <b>show off</b>. They work because they give a short reason to log in every day and a long reason to stay for months. Almost every long-running
+    MMO has two or three. Below: what other games do, eight ideas built on what EastScape already has, two working demos, and my picks.</p>
+  <nav class="jump"><a href="#others">What other games do</a><a href="#rules">What makes them work</a><a href="#ideas">Eight ideas</a><a href="#derby">The Pet Derby (demo)</a><a href="#pumpkin">The Giant Pumpkin (demo)</a><a href="#voyages">Crew voyages</a><a href="#pick">My picks</a></nav>
+  <div class="callout"><b>My picks:</b> the <b>Pet Derby</b> first (you asked for it, and it uses the pets everyone already has and Mockup 7's growth), then the
+    <b>Giant Pumpkin</b> for the Long Night (cheap, seasonal, every island gets one), then <b>Crew voyages</b> for the people who only have five minutes a day.
+    The <b>Big Beast</b> is the one to build if you want another all-server moment like the raids.</div>
+
+  <section class="sec" id="others">
+    <h2>What other games do</h2>
+    <p>The same handful of shapes turns up everywhere: <b>train and race</b>, <b>grow and weigh</b>, <b>send out and wait</b>, <b>befriend</b>, and <b>fill a collection</b>.</p>
+    <div class="wrapx"><table class="tbl">
+      <thead><tr><th>Game</th><th>The system</th><th>The loop</th><th>What keeps it slow</th></tr></thead>
+      <tbody>
+        <tr><td>Final Fantasy VII / XIV</td><td><b>Chocobo racing and breeding</b></td><td>Feed greens to raise speed and stamina, race at the Gold Saucer, breed better birds</td><td>Feeding limits, ranks, a bird's lineage</td></tr>
+        <tr><td>Uma Musume</td><td><b>Horse training</b></td><td>Pick a drill each "week", races at milestones</td><td>A fixed number of training turns, fatigue</td></tr>
+        <tr><td>Pokémon</td><td><b>Stat training, vitamins, the daycare</b></td><td>Feed items that each raise one hidden stat; breed for better ones</td><td>Caps per stat and in total</td></tr>
+        <tr><td>Old School RuneScape</td><td><b>Kingdom of Miscellania, birdhouse runs</b></td><td>Pay in to keep approval up, it gathers for you; put birdhouses out, collect hours later</td><td>Approval drains daily; real-time timers</td></tr>
+        <tr><td>RuneScape 3</td><td><b>Player-owned ports, the farm</b></td><td>Send crewed ships on voyages for hours; raise animals to adult and breed them</td><td>Voyage length, crew levels, growth stages</td></tr>
+        <tr><td>World of Warcraft</td><td><b>Mission table, battle pets</b></td><td>Send followers on timed missions; level and battle pets</td><td>Timers; one mission slot each</td></tr>
+        <tr><td>Lost Ark</td><td><b>Rapport, the Stronghold</b></td><td>Give NPCs gifts and songs for trust levels; dispatch crew, research upgrades</td><td>Daily gift limits; research timers</td></tr>
+        <tr><td>Stardew Valley</td><td><b>Giant crops, hearts, fish ponds, the museum</b></td><td>Water daily, gift villagers, stock ponds, donate one of each</td><td>Seasons, one gift a day, rare finds</td></tr>
+        <tr><td>Animal Crossing</td><td><b>The museum, flower breeding</b></td><td>Donate every bug, fish and fossil; breed flower colours</td><td>Real-time days, rare spawns</td></tr>
+        <tr><td>Black Desert</td><td><b>Horse training and breeding</b></td><td>Ride to level a horse, it learns skills, breed up a tier</td><td>Huge XP curves, random skills</td></tr>
+        <tr><td>Monster Hunter Rise</td><td><b>The Argosy, buddy expeditions</b></td><td>Send traders and cat helpers out, they come back levelled with loot</td><td>Expeditions last a number of hunts</td></tr>
+        <tr><td>Neopets</td><td><b>The original virtual pet</b></td><td>Feed, train stats at a school, battle</td><td>Course timers, rising costs</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="sec" id="rules">
+    <h2>What makes them work</h2>
+    <p>Five rules, from the ones that last and the ones that people quit:</p>
+    <div class="rules">
+      <div class="rule"><b>1. Time is worked out when you look</b><span>Growth is a sum over timestamps, done when somebody opens the window, never a server timer ticking for every pet in the world. <b>Costs the server nothing between visits</b>, so a thousand players' pumpkins are as cheap as one.</span></div>
+      <div class="rule"><b>2. Being away never punishes</b><span>Nothing dies, starves or rots. A missed day only means it grew less. (Mockup 7 decided the same: "pets never go hungry".) Punishment is what turns a hobby into a chore.</span></div>
+      <div class="rule"><b>3. A daily cap</b><span>One training a day per pet, one tending a day per pumpkin. Ten minutes a day keeps up with ten hours a day, so nobody can grind it flat, and it stays a reason to come back tomorrow.</span></div>
+      <div class="rule"><b>4. A stage to show it off</b><span>A race, a weigh-in, a leaderboard, a title. A Tamagotchi nobody else can see is a chore; one everybody saw win on Sunday is a story.</span></div>
+      <div class="rule"><b>5. It eats what you already make</b><span>Feeds from Cooking and Fungiculture, polish from Smithing, parts from Tinkering. It pays in <b>tickets, titles and cosmetics</b>, not raw power, so it never becomes required.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="ideas">
+    <h2>Eight ideas for EastScape</h2>
+    <p>Each is built on systems already in the game. "Size" is my rough guess at building it on dev.</p>
+    <div class="ideas">
+      <div class="idea pick"><div class="top"><div class="pic row"><img src="/v3/assets/img/glad/flat/pet_lilcrusher.png" alt=""><img src="/v3/assets/img/glad/flat/pet_raptor.png" alt=""></div><div><b class="n">The Pet Derby</b><span class="like">like Chocobo racing, Uma Musume</span><br><span class="tag">My first pick</span></div></div>
+        <dl><dt>The loop</dt><dd>Every pet gets three race stats: <b>Speed, Stamina, Nerve</b>. Once a day, a drill at the Derby track raises one; a feed you cook makes it count for more.</dd>
+          <dt>The stage</dt><dd>A race <b>every hour</b> on a track at the Carnival: six lanes, empty lanes filled with house runners. Races go by <b>class</b> (Novice, Open, Champion, by a pet's total stats), so you always race pets near yours. Entry in tickets, prizes in tickets and rosettes.</dd>
+          <dt>Slow because</dt><dd>One drill a day; gains shrink as a stat climbs. A top runner is <b>two or three months</b> of dailies.</dd>
+          <dt>Uses</dt><dd>Pets, breeding (a fast mum and dad), Cooking (feeds), Mockup 7's pet levels (racing gives pet XP).</dd>
+          <dt>Size</dt><dd>About 4 days. Demo below.</dd></dl></div>
+      <div class="idea pick"><div class="top"><div class="pic"><img id="artPumpkin" src="giantpumpkin.png" alt=""></div><div><b class="n">The Giant Pumpkin</b><span class="like">like Stardew's giant crops, real county fairs</span><br><span class="tag">Second</span></div></div>
+        <dl><dt>The loop</dt><dd>Plant one giant seed on your island. Each day: <b>water it, feed it compost, pick the bugs off</b>. It grows on a curve; how well you tend it sets how big it can get.</dd>
+          <dt>The stage</dt><dd>A <b>weigh-in every Sunday</b> in the Yard during the Long Night. The heaviest three win titles and a trophy for the island.</dd>
+          <dt>Slow because</dt><dd>One tending a day; a month to full size.</dd>
+          <dt>Uses</dt><dd>Islands, Farming, Fungiculture (compost), the Long Night.</dd>
+          <dt>Size</dt><dd>About 2 days. Demo below.</dd></dl></div>
+      <div class="idea pick"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/bw_boata.png" alt=""></div><div><b class="n">Crew voyages</b><span class="like">like RS3's ports, WoW's mission table</span><br><span class="tag">Third</span></div></div>
+        <dl><dt>The loop</dt><dd>Hire crew at Captain Claw's dock. Send a ship out for <b>2, 6 or 12 real hours</b>; it comes back with loot from earlier maps. Crew level a little each voyage and pick up traits ("Lucky", "Navigator").</dd>
+          <dt>The stage</dt><dd>A treasure board: the best haul of the week.</dd>
+          <dt>Slow because</dt><dd>Real-time voyages; three ships at most.</dd>
+          <dt>Uses</dt><dd>The Boardwalk, its ships, MIX drops.</dd>
+          <dt>Size</dt><dd>About 3 days.</dd></dl></div>
+      <div class="idea"><div class="top"><div class="pic"><img id="artKart" src="soapbox.png" alt=""></div><div><b class="n">Soapbox kart</b><span class="like">like Trackmania ghost races</span></div></div>
+        <dl><dt>The loop</dt><dd>Build a kart from <b>Tinkering parts</b>: wheels, frame, steering. Upgrades take parts you salvage over weeks.</dd>
+          <dt>The stage</dt><dd>A <b>weekly time trial</b> down Thrill Hill against everyone's ghosts; a leaderboard with a title for first.</dd>
+          <dt>Slow because</dt><dd>Parts are rare; one upgrade a day.</dd>
+          <dt>Uses</dt><dd>Tinkering, Thrill Hill.</dd>
+          <dt>Size</dt><dd>About 5 days (it needs steering on the page).</dd></dl></div>
+      <div class="idea"><div class="top"><div class="pic"><img id="artBeast" src="bigbeast.png" alt=""></div><div><b class="n">The Yard's Big Beast</b><span class="like">a communal Tamagotchi</span></div></div>
+        <dl><dt>The loop</dt><dd>One enormous creature lives in the Yard and <b>the whole server feeds it</b>. Every meal fills its bar; it grows a stage each week.</dd>
+          <dt>The stage</dt><dd>At each stage the whole server gets something: a 2X hour, a Beast Parade event, a hat for everyone who fed it.</dd>
+          <dt>Slow because</dt><dd>Weekly stages; it gets hungrier as it grows.</dd>
+          <dt>Uses</dt><dd>World events, CASINO's voice, every skill's output.</dd>
+          <dt>Size</dt><dd>About 2 days.</dd></dl></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/items/pumpkinpie.png" alt=""></div><div><b class="n">Friends in the Yard</b><span class="like">like Lost Ark's rapport, Stardew's hearts</span></div></div>
+        <dl><dt>The loop</dt><dd>Bom, Nestor, Livia, Hexa, Bronny, Sal and Dale each <b>like certain gifts</b>. One gift a day each; hearts from 0 to 10.</dd>
+          <dt>The stage</dt><dd>Every heart is a line of their story; 5 hearts is a small discount, 10 a title and a cosmetic only they give.</dd>
+          <dt>Slow because</dt><dd>One gift a day per NPC; liked gifts are a puzzle to find.</dd>
+          <dt>Uses</dt><dd>NPCs, every skill's output, the diaries.</dd>
+          <dt>Size</dt><dd>About 3 days, mostly writing.</dd></dl></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/items/trout.png" alt="" onerror="this.src='/v3/assets/img/glad/flat/items/sardine.png'"></div><div><b class="n">The aquarium</b><span class="like">like Stardew's fish ponds</span></div></div>
+        <dl><dt>The loop</dt><dd>Put a <b>live catch</b> in a tank in your cottage. Feed it; it grows from Tiddler to Whopper and sometimes breeds.</dd>
+          <dt>The stage</dt><dd>Visitors see your tank; a Whopper of every kind is a collection log page.</dd>
+          <dt>Slow because</dt><dd>A size step every few days of feeding.</dd>
+          <dt>Uses</dt><dd>Fishing, islands, the collection log.</dd>
+          <dt>Size</dt><dd>About 3 days.</dd></dl></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/pet_owlet.png" alt=""></div><div><b class="n">Feeders out</b><span class="like">like OSRS birdhouse runs</span></div></div>
+        <dl><dt>The loop</dt><dd>Hang seed feeders on four maps. Come back <b>hours later</b>: feathers, eggs, sometimes a rare bird's nest.</dd>
+          <dt>The stage</dt><dd>A "run" around four maps a couple of times a day: the lightest idea here.</dd>
+          <dt>Slow because</dt><dd>Real-time filling; better feeders need Woodcutting and Fletching.</dd>
+          <dt>Uses</dt><dd>Woodcutting, Fletching, Breeding (eggs).</dd>
+          <dt>Size</dt><dd>About 1.5 days.</dd></dl></div>
+    </div>
+  </section>
+
+  <section class="sec" id="derby">
+    <h2>The Pet Derby: try a week</h2>
+    <p>Pick a pet, plan seven days of drills and feeds, then race it against five house runners. The numbers are a first pass; the shape is the point.
+      <b>Speed</b> sets the pace, <b>Stamina</b> holds it in the last third, <b>Nerve</b> stops it stumbling at the crowd. A pet's own bonus gives it a
+      head start (Lil' Crusher walks 10% faster, so it starts quick). Gains shrink as a stat climbs: a stat near 100 is about three months of dailies. The house runners here are about two weeks in, so a pet one week in is mid-pack. In the game, races go by class, so a pet always meets pets near its own level.</p>
+    <div class="derby">
+      <div>
+        <div class="pets" id="pets"></div>
+        <h3>This week</h3>
+        <div class="week" id="week"></div>
+        <h3>The race</h3>
+        <div class="track" id="track"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button type="button" class="k-btn" id="race">Run the race</button><button type="button" class="k-btn" id="again">Same week, another race</button></div>
+        <div class="res" id="res"></div>
+      </div>
+      <div class="k-win k-paper"><div class="k-head"><img src="/v3/assets/img/glad/flat/items/skill_breeding.png" alt=""><b>The Derby</b><span class="k-sub">Carnival track</span></div>
+        <div class="k-body">
+          <div style="display:flex;gap:10px;align-items:center"><img id="wPic" alt="" style="width:56px;height:56px;image-rendering:pixelated"><div><b id="wName" style="font:800 17px Cinzel,serif"></b><div class="k-note" id="wRank"></div></div></div>
+          <div class="bars" id="bars"></div>
+          <div class="k-label" style="margin-top:6px">Today</div>
+          <div class="k-note">Drill done ✓ · next drill in 14h 20m<br>Next race: <b>8:00 PM</b> · entry 100 🎟 · 4 of 6 lanes taken</div>
+          <div class="k-label" style="margin-top:6px">This season</div>
+          <div class="k-note">3 races · 1st once, 3rd twice · 9 points · <b>#12</b> of 41</div>
+        </div>
+        <div class="k-foot"><span class="k-note">Feeds come from Cooking</span><button type="button" class="k-btn">Enter tonight</button></div>
+      </div>
+    </div>
+    <div class="callout">How it would really work: <b>the result is decided the moment the race starts</b>, from a seed and the six pets' stats, exactly the way the PvP tables
+      settle, and the page only plays it back. One row a race, one timestamp a pet for the daily drill: <b>no ticking, no polling</b> beyond what a race already costs.
+      Open questions for you: should spectators be able to put <b>tickets</b> on a race (never ZCoins), and should racing give pet XP toward Mockup 7's levels?</div>
+  </section>
+
+  <section class="sec" id="pumpkin">
+    <h2>The Giant Pumpkin: how care shapes the curve</h2>
+    <p>The pumpkin always grows, but how often you tend it sets <b>how big it can get</b>: the curve flattens at a ceiling that care raises. Missing a day never shrinks it.
+      A month of daily care with compost is a champion; a pumpkin planted and forgotten is still a respectable pumpkin.</p>
+    <div class="pump">
+      <div class="chart"><svg id="pchart" viewBox="0 0 640 300" role="img" aria-label="Pumpkin weight over 28 days"></svg></div>
+      <div class="ctl">
+        <img id="artPumpkin2" src="giantpumpkin.png" alt="" style="width:96px;height:96px;image-rendering:pixelated;justify-self:center">
+        <label>Days a week you tend it: <b id="dv">5</b><input type="range" id="days" min="0" max="7" value="5"></label>
+        <label><input type="checkbox" id="comp" checked> Feed it compost (Fungiculture)</label>
+        <div>After 28 days<div class="big" id="kg">0 lb</div><span class="note" id="place"></span></div>
+        <span class="note">Tending is one click a day at the patch: water, compost, pick the bugs. The weigh-in reads the weight at that moment.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="voyages">
+    <h2>Crew voyages, in the game</h2>
+    <p>The lightest touch of the three picks: send a ship out, come back later. A voyage's haul is decided when it sails (so a timer is the only thing stored), and crew earn
+      a level every few voyages.</p>
+    <div class="k-win k-paper" style="max-width:640px;margin-top:12px"><div class="k-head"><img src="/v3/assets/img/glad/flat/bw_boata.png" alt=""><b>Captain Claw's dock</b><span class="k-sub">3 of 3 ships</span></div>
+      <div class="k-body"><div class="ships">
+        <div class="ship"><img src="/v3/assets/img/glad/flat/bw_boata.png" alt=""><div><b>The Lucky Gull</b> · to the Frozen Reach<div class="crew">Crew: Moss (lv 4, Navigator), Pip (lv 2)</div><div class="prog"><i style="width:72%"></i></div></div><span class="tm">1h 40m</span></div>
+        <div class="ship"><img src="/v3/assets/img/glad/flat/bw_rowboat.png" alt=""><div><b>Old Soggy</b> · to the Sands<div class="crew">Crew: Ada (lv 6, Lucky)</div><div class="prog"><i style="width:100%"></i></div></div><button type="button" class="k-btn">Unload</button></div>
+        <div class="ship"><img src="/v3/assets/img/glad/flat/bw_boata.png" alt=""><div><b>Second Chance</b> · in port<div class="crew">Crew: none hired</div></div><button type="button" class="k-btn">Sail…</button></div>
+      </div></div>
+      <div class="k-foot"><span class="k-note">Voyages of 2, 6 or 12 hours · best haul this week: 14,200 🎟</span></div></div>
+  </section>
+
+  <section class="sec" id="pick">
+    <h2>My picks, and the order</h2>
+    <div class="wrapx"><table class="tbl">
+      <thead><tr><th>#</th><th>Idea</th><th>Why</th><th>Size</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><b>The Pet Derby</b></td><td>Your idea, and the strongest: everyone has a pet, races are a show every hour, and it gives breeding a reason (fast parents).</td><td>~4 days</td></tr>
+        <tr><td>2</td><td><b>The Giant Pumpkin</b></td><td>Cheap, seasonal, gives islands a daily reason; the Sunday weigh-in is a Yard event.</td><td>~2 days</td></tr>
+        <tr><td>3</td><td><b>Crew voyages</b></td><td>For people with five minutes a day; uses the Boardwalk's ships and the MIX drops.</td><td>~3 days</td></tr>
+        <tr><td>—</td><td>The Big Beast</td><td>If you want another all-server moment like the raids (they were the biggest hit).</td><td>~2 days</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note" style="margin-top:12px">Nothing here is built. Concept art: the giant pumpkin, the soapbox kart and the Big Beast are PixelLab first drafts; everything else is the game's own art.</p>
+  </section>
+</main>
+<script>
+/* THE DERBY DEMO: the numbers are a first pass. A stat gains (drill base) x (feed) x (1 - stat/110); a race runs a fixed number of ticks, seeded so
+   "another race" changes only the luck. */
+const IMG = (k) => `/v3/assets/img/glad/flat/${k}.png`;
+const PETS = [
+  { k: "pet_lilcrusher", name: "Lil' Crusher", s: [30, 18, 20], why: "walks 10% faster: a quick starter" },
+  { k: "pet_raptor", name: "Raptor", s: [26, 20, 14], why: "built to run" },
+  { k: "pet_jarlhound", name: "Jarl's Hound", s: [24, 22, 20], why: "walks 14% faster" },
+  { k: "pet_owlet", name: "Owlet", s: [16, 20, 26], why: "calm in a crowd" },
+  { k: "pet_cointoad", name: "Coin Toad", s: [12, 28, 22], why: "slow, but never tires" },
+  { k: "pet_grinling", name: "Grinling", s: [18, 18, 30], why: "afraid of nothing" }];
+const DRILLS = { sprint: ["Sprints", [4, 0, 1]], laps: ["Laps", [0, 4, 1]], crowd: ["Crowd work", [1, 0, 4]], rest: ["Rest day", [1, 1, 1]] };
+const FEEDS = { none: ["No feed", [1, 1, 1]], carrot: ["Sprint carrots", [1.5, 1, 1]], tonic: ["Bog tonic", [1, 1.5, 1]], biscuit: ["Lucky biscuit", [1, 1, 1.5]], stew: ["Derby stew", [1.2, 1.2, 1.2]] };
+/* a field of pets about two weeks in: a pet one week in should be mid-pack, winning now and then */
+const RIVALS = [{ name: "Wet Paint", k: "pet_ferret", s: [40, 34, 32] }, { name: "Lucky Lou", k: "pet_starling", s: [34, 32, 42] }, { name: "Big Chungo", k: "pet_rexling", s: [46, 28, 34] },
+  { name: "Brenda", k: "pet_calf", s: [32, 44, 36] }, { name: "The Accountant", k: "pet_goldentoad", s: [38, 38, 38] }];
+let pet = 0, seed = 1;
+const plan = Array.from({ length: 7 }, (_, i) => ({ d: ["sprint", "laps", "sprint", "crowd", "sprint", "laps", "rest"][i], f: ["carrot", "tonic", "carrot", "biscuit", "stew", "none", "none"][i] }));
+const statsOf = () => { const s = [...PETS[pet].s]; for (const p of plan) { const g = DRILLS[p.d][1], f = FEEDS[p.f][1]; for (let i = 0; i < 3; i++) s[i] = Math.min(100, s[i] + g[i] * f[i] * (1 - s[i] / 110)); } return s.map((v) => Math.round(v)); };
+const petsEl = document.getElementById("pets");
+PETS.forEach((p, i) => { const b = document.createElement("button"); b.type = "button"; b.innerHTML = `<img src="${IMG(p.k)}" alt="">${p.name}`; b.title = p.why; b.onclick = () => { pet = i; draw(); }; petsEl.append(b); });
+const weekEl = document.getElementById("week");
+plan.forEach((p, i) => { const d = document.createElement("div"); d.className = "day";
+  d.innerHTML = `<b>Day ${i + 1}</b><select aria-label="Day ${i + 1} drill">${Object.entries(DRILLS).map(([k, [n]]) => `<option value="${k}"${k === p.d ? " selected" : ""}>${n}</option>`).join("")}</select>
+    <select aria-label="Day ${i + 1} feed">${Object.entries(FEEDS).map(([k, [n]]) => `<option value="${k}"${k === p.f ? " selected" : ""}>${n}</option>`).join("")}</select>`;
+  const [s1, s2] = d.querySelectorAll("select"); s1.onchange = () => { p.d = s1.value; draw(); }; s2.onchange = () => { p.f = s2.value; draw(); }; weekEl.append(d); });
+function draw() {
+  [...petsEl.children].forEach((b, i) => b.setAttribute("aria-pressed", i === pet));
+  const s = statsOf(), p = PETS[pet];
+  document.getElementById("wPic").src = IMG(p.k); document.getElementById("wName").textContent = p.name; document.getElementById("wRank").textContent = `${p.why} · after this week`;
+  document.getElementById("bars").innerHTML = [["Speed", "spd"], ["Stamina", "sta"], ["Nerve", "nrv"]].map(([n, c], i) => `<div class="bar"><span>${n}</span><span class="t ${c}"><i style="width:${s[i]}%"></i></span><b>${s[i]}</b></div>`).join("");
+  lanes();
+}
+function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+function field() { return [{ name: PETS[pet].name, k: PETS[pet].k, s: statsOf(), me: true }, ...RIVALS]; }
+function lanes() { document.getElementById("track").innerHTML = field().map((r) => `<div class="lane${r.me ? " mine" : ""}"><div class="runner"><img src="${IMG(r.k)}" alt=""><span>${r.name}</span></div></div>`).join(""); }
+function race() {
+  const F = field(), LEN = 1000, out = F.map(() => ({ x: 0, t: null, trips: 0, form: 0.93 + rnd() * 0.14 })), frames = [];   /* form: every runner has a good or a bad day */
+  for (let tick = 0; tick < 400 && out.some((o) => o.t == null); tick++) {
+    F.forEach((r, i) => { const o = out[i]; if (o.t != null) return;
+      let pace = (4 + r.s[0] * 0.05 + rnd() * 1.2) * o.form;
+      if (o.x > LEN * 0.66) pace *= 0.6 + r.s[1] / 100 * 0.4;   /* the last third: stamina holds the pace */
+      if (rnd() < (1 - r.s[2] / 100) * 0.05) { pace = 0; o.trips++; }   /* a stumble at the crowd: nerve */
+      o.x += pace; if (o.x >= LEN) { o.x = LEN; o.t = tick; } });
+    frames.push(out.map((o) => o.x));
+  }
+  return { F, out, frames, LEN };
+}
+function run() {
+  const R = race(), runners = [...document.querySelectorAll("#track .runner")], track = document.getElementById("track"), w = track.clientWidth - 140;
+  const order = R.F.map((r, i) => ({ r, o: R.out[i] })).sort((a, b) => a.o.t - b.o.t || b.o.x - a.o.x);
+  const show = () => { const pos = order.findIndex((e) => e.r.me) + 1, prize = [2000, 800, 400][pos - 1];
+    document.getElementById("res").innerHTML = order.map((e, i) => `<span class="${e.r.me ? "me" : ""}">${i + 1}. ${e.r.name}${e.o.trips ? ` (stumbled ${e.o.trips}×)` : ""}</span>`).join(" &nbsp; ")
+      + `<br><b class="me">${pos === 1 ? "🏆 First! " : ""}${PETS[pet].name} finished ${["1st", "2nd", "3rd", "4th", "5th", "6th"][pos - 1]}${prize ? `: ${prize.toLocaleString()} 🎟 and a rosette` : ""}.</b>`; };
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { runners.forEach((el, i) => (el.style.transform = `translateX(${w}px)`)); return show(); }
+  let f = 0; const step = () => { const fr = R.frames[Math.min(f, R.frames.length - 1)]; runners.forEach((el, i) => (el.style.transform = `translateX(${(fr[i] / R.LEN) * w}px)`)); f += 1; if (f < R.frames.length + 2) requestAnimationFrame(step); else show(); };
+  document.getElementById("res").textContent = "And they're off…"; requestAnimationFrame(step);
+}
+document.getElementById("race").onclick = () => { seed = 7 + pet * 13 + plan.map((p) => p.d + p.f).join("").length; lanes(); run(); };
+document.getElementById("again").onclick = () => { seed = Math.floor(Math.random() * 1e9) + 1; lanes(); run(); };
+draw();
+
+/* THE PUMPKIN DEMO: logistic growth toward a ceiling set by care; a tended day adds, an untended one only slows */
+const svg = document.getElementById("pchart");
+function grow(days, compost) { const K = 180 + days * (compost ? 200 : 120), w = [8]; for (let d = 1; d <= 28; d++) { const tended = ((d * days) % 7) < days; const r = tended ? 0.28 : 0.12; const prev = w[d - 1]; w.push(prev + r * prev * (1 - prev / K)); } return w; }
+function chart() {
+  const days = +document.getElementById("days").value, comp = document.getElementById("comp").checked; document.getElementById("dv").textContent = days;
+  const lines = [[7, true, "#ffc24a", 2.5, "Every day, compost"], [2, false, "#7a6a8a", 1.5, "Twice a week"], [days, comp, "#ff7a3a", 3.5, "Yours"]];
+  const X = (d) => 50 + d * 20, Y = (w) => 270 - (w / 1700) * 250;
+  let s = `<g stroke="#2e2638" stroke-width="1">${[0, 400, 800, 1200, 1600].map((v) => `<line x1="50" x2="610" y1="${Y(v)}" y2="${Y(v)}"/>`).join("")}</g>`;
+  s += [0, 400, 800, 1200, 1600].map((v) => `<text x="44" y="${Y(v) + 4}" fill="#a898b8" font-size="11" text-anchor="end" font-family="Lora">${v} lb</text>`).join("");
+  s += [0, 7, 14, 21, 28].map((d) => `<text x="${X(d)}" y="290" fill="#a898b8" font-size="11" text-anchor="middle" font-family="Lora">day ${d}</text>`).join("");
+  for (const [dd, cc, col, sw, lbl] of lines) { const w = grow(dd, cc); s += `<polyline fill="none" stroke="${col}" stroke-width="${sw}" stroke-linejoin="round" points="${w.map((v, d) => `${X(d)},${Y(v)}`).join(" ")}"/><text x="${X(28) + 4}" y="${Y(w[28]) + 4}" fill="${col}" font-size="11" font-family="Lora" font-weight="700">${lbl}</text>`; }
+  svg.innerHTML = s;
+  const kg = Math.round(grow(days, comp)[28]); document.getElementById("kg").textContent = `${kg.toLocaleString()} lb`;
+  document.getElementById("place").textContent = kg > 1400 ? "A champion: top three at the weigh-in." : kg > 900 ? "A ribbon pumpkin: the top ten." : kg > 400 ? "A good, honest pumpkin." : "Still a respectable pumpkin.";
+}
+document.getElementById("days").oninput = chart; document.getElementById("comp").onchange = chart; chart();
+</script>
+</body>
+</html>

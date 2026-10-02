@@ -35,6 +35,7 @@ const CATS = [
     ["raid-mock", "Yard raids", "Yard raids"]]],
   ["Systems & economy", [
     ["sinks-mock", "Ticket sinks", "Ticket sinks"],
+    ["sidegames-mock", "Slow side games", "Slow side games: the Pet Derby, the Giant Pumpkin and more"],
     ["thieving-mock", "Thieving & shortcuts", "Thieving out in the world, and Agility shortcuts"],
     ["skillsets-mock", "Skilling sets", "Skilling gear and sets"],
     ["workclothes-mock", "Work clothes", "Work clothes, in the game"],
