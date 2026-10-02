@@ -4359,13 +4359,17 @@ function thingAt(wx, wy) {
      walking, so a carpeted room read as unwalkable. Rugs no longer carry an EXAMINE line, so the loop below skips
      them on `kind` alone and a click on carpet falls through to movement. The jukebox still wins its own click
      because it is a real object with its own kind, which was always the part that mattered. */
-  for (const ob of Z.objs) {
+  /* (2026-10-02, the owner: "we cant figure out how to access" the Lantern Mire's shortcut) THE TILE YOU CLICKED WINS. A tall thing can be clicked
+     on its top half too, which reaches up into the tile above it: the gravestone fencing the Mire's nook stood right under the stepping stones,
+     was checked first, and answered every click on them, so the stones could only ever be examined as a headstone. Seven shortcuts and back
+     ways had something tall below them. So two passes: first only what stands ON the tile, then the overhangs (a canopy, a top half). */
+  for (const loose of [false, true]) for (const ob of Z.objs) {
     const kind = (ob.sc ? "shortcut" : ob.bw ? "backway" : ob.t === "lockbox" ? "lockbox" : ob.t === "stunt" ? "stunt" : null) || KIND_OF[ob.t] || (G.EXAMINE[ob.t] ? ob.t : null); if (!kind) continue;   /* (2026-10-01) a shortcut can be a fence that was already there: `sc` makes it one */
     let hit;
-    if (ob.t === "house") hit = tx === ob.door.x && (ty === ob.door.y || ty === ob.door.y - 1);
-    else if (ob.t === "oak" || ob.t === "yew") hit = Math.abs(tx - ob.x) <= 1 && (ty === ob.y || ty === ob.y - 1) && (tx === ob.x || ty === ob.y - 1);
+    if (ob.t === "house") hit = tx === ob.door.x && (ty === ob.door.y || (loose && ty === ob.door.y - 1));
+    else if (ob.t === "oak" || ob.t === "yew") hit = loose ? Math.abs(tx - ob.x) <= 1 && (ty === ob.y || ty === ob.y - 1) && (tx === ob.x || ty === ob.y - 1) : tx === ob.x && ty === ob.y;
     else if (ob.t === "spot" || ob.t === "wheat") hit = tx === ob.x && ty === ob.y;
-    else hit = tx >= ob.x && tx < ob.x + ob.w && ty >= ob.y - (ob.t === "vein" || ob.t === "well" ? 0 : 1) && ty < ob.y + ob.h;   // tall things can be clicked on their top half too
+    else hit = tx >= ob.x && tx < ob.x + ob.w && ty >= ob.y - (loose && ob.t !== "vein" && ob.t !== "well" ? 1 : 0) && ty < ob.y + ob.h;   // tall things can be clicked on their top half too (the second pass)
     if (hit) return { kind: ob.t === "house" && ob.enter ? "enter" : kind, ob, x: ob.x, y: ob.y, name: ob.t === "spot" && !ob.special ? "Fishing spot" : ob.name };
   }
   return null;
