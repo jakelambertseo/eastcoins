@@ -7,8 +7,8 @@ function createOrderUi(E){const{G,$,esc,send,SFX,openWin,ico}=E,UIA="/v3/assets/
           <span class="od-row">${done?`<span class="od-clock ok">✅ <b>Filled</b> waiting for a claim</span>`:`<span class="od-clock">⏱ <b>${hms(v.until-now())}</b> left</span>`}
             <span class="od-total"><span class="od-bar big"><i style="width:${pct}%"></i><em>${pct}%</em></span></span></span></span></div>
       <div class="od-prize${done?" ready":""}"><span class="od-pot">${ico("pot_double")}</span>
-        <span class="od-ptxt"><small>${done?"Filled! The reward is waiting":"The reward when it's filled"}</small><b>A 2X Potion for the whole server</b>
-          <span>30 minutes of double tickets and double crafting xp for everyone online. Somebody who helped claims it.</span></span>
+        <span class="od-ptxt"><small>${done?"Filled! The reward is waiting":"The reward when it's filled"}</small><b>A 2X Tickets Potion for the whole server</b>
+          <span>30 minutes of double tickets for everyone online. Somebody who helped claims it.</span></span>
         <span class="od-pbadge">${done?"READY":"2X"}</span></div>
       <div class="od-pane k-paper">
         <div class="k-sect"><span class="k-label">What the Yard needs · two early, two mid and two late-game lines</span></div>
