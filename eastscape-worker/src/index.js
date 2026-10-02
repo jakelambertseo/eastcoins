@@ -66,6 +66,7 @@ const CLAIM_MS = 10000;       // a claimed monster is freed 10s after its claime
 const SNAP_EVERY = 2;        // the world's state goes out ten times a second; your own news (xp, messages, dialogue) every tick
 const SAVE_MS = 4000;        // a changed character is written at most this long after the change
 const STEP = 240;            // one tile of walking
+const CHAIN_MS = 120;   /* (2026-10-02, v1.2 rubber banding) a step that ended less than this ago still hands its end to the next one (a late tick); longer, and you had stopped */
 const SCENE_IDLE_MS = 120000;
 // a planned restart: when each warning is given, and how long the client is told to wait
 const RESTART_WARN_S = [600, 300, 120, 60, 30, 10];
@@ -627,10 +628,7 @@ export class World {
        island") THE NEAREST OPEN TILE TO WHERE YOU WERE MEANT TO LAND, not to the middle of the map. On an island the middle of the map is
        open water, so the nearest dry tile to it was the island's far side: a cellar ladder with a flower bed below it, or an arrival on
        the wrong row of the Far Shore's bridge, put you across the island. Only a spot off the map falls back to the middle. */
-    const on = pl.x >= 0 && pl.y >= 0 && pl.x < G.COLS && pl.y < G.ROWS, ax = on ? pl.x : G.COLS / 2, ay = on ? pl.y : G.ROWS / 2;
-    let best = null;
-    for (let y = 1; y < G.ROWS - 1; y++) for (let x = 1; x < G.COLS - 1; x++) if (G.walkableIn(S.g, x, y) && S.g[y][x] !== "e") { const d = Math.hypot(x - ax, y - ay); if (!best || d < best.d) best = { x, y, d }; }
-    if (S.key === G.START.scene && G.walkableIn(S.g, G.START.x, G.START.y)) best = G.START;
+    const best = G.safeSpot(S.key, S.g, pl.x, pl.y);   /* (2026-10-02) the search moved to the rules, where the page's prediction uses it too */
     pl.x = best.x; pl.y = best.y; this.touch(pl);
   }
   /* (2026-09-27) THE MAPS YOU HAVE SET FOOT ON, for the world map's fog: a base scene key once, capped, never an island */
@@ -2987,10 +2985,18 @@ export class World {
   }
 
   stepEntity(S, e, now, isPlayer) {
+    /* (2026-10-02, v1.2: the rubber banding, fix 1) A PLAYER'S STEPS CHAIN FROM WHEN THE LAST ONE WAS DUE TO END, not from the tick that
+       noticed it ended. Ticks are 50 ms, so every step used to round UP to the next tick: a 182 ms step (+10% speed) walked as 200, a
+       280 ms diagonal as 300, and a speed bonus under about a quarter did almost nothing. The page walks the true speed, so it drew you
+       ahead of the server (about 3 tiles over 30 at +10%) until checkPred gave up and snapped you back. Now the next step starts at the
+       last one's planned end, which is never later than now and at most one tick earlier, so a walk takes what the page thinks it does.
+       Only when the next step follows straight on: a fresh click starts from now. Monsters keep the old timing. */
+    let chain = null;
     if (e.step) {
       if (now < e.step.t0 + e.step.ms) return true;
+      const end = e.step.t0 + e.step.ms;
       e.x = e.step.tx; e.y = e.step.ty; e.step = null;
-      if (isPlayer) this.touch(e);
+      if (isPlayer) { this.touch(e); if (now - end < CHAIN_MS) chain = end; }
     }
     const n = e.path.shift();
     if (!n) return false;
@@ -2999,7 +3005,7 @@ export class World {
     // everyone but players waits rather than stepping onto someone
     if (!isPlayer && this.occupied(S, n.x, n.y, e)) { e.path = []; return false; }
     const base = (isPlayer ? G.stepMsOf(e.C, e.speedTest || 0) : e.stepMs || STEP) * (isPlayer && S.flood?.has(n.y * G.COLS + n.x) ? G.FLOOD.slow : 1);   /* (2026-09-30) the Jackpot Thief is a little quicker than you; THE FLOOD: wading is slower (the page predicts the same) */
-    e.step = { fx: e.x, fy: e.y, tx: n.x, ty: n.y, t0: now, ms: Math.round(dx && dy ? base * 1.4 : base) };
+    e.step = { fx: e.x, fy: e.y, tx: n.x, ty: n.y, t0: chain ?? now, ms: Math.round(dx && dy ? base * 1.4 : base) };
     if (dx) e.face = dx > 0 ? 1 : -1;
     e.dir = G.DIRS[`${dx},${dy}`];
     return true;
@@ -3044,7 +3050,7 @@ export class World {
       const d = side; let to = S.def.exits?.[d];
       if (to && S.owner) to = `${to}:${S.owner}`;   // an island's far shore is that owner's far shore
       /* (v84) you arrive at whichever edge of the next scene LEADS BACK here, not blindly the opposite one: the Yard's way on is north, but the Gloam's way back is still its east edge */
-      if (to) { const back = Object.entries(G.sceneDef(to).exits || {}).find(([, v]) => v === String(S.key).split(":")[0])?.[0]; this.moveToScene(pl, to, back || G.OPP[d]); this.say(pl, `You travel to ${G.sceneDef(to).name}.`); return; }
+      if (to) { const A = G.arrivalOf(S.key, to, d, this.scene(to).g); this.moveToScene(pl, to, A.side, { x: A.x, y: A.y });   /* (2026-10-02, v1.2 rubber banding) the page predicts with the same G.arrivalOf */ this.say(pl, `You travel to ${G.sceneDef(to).name}.`); return; }
     }
     if (!moving) this.doAction(S, pl, now);
     // a hitpoint back every 20 seconds out of a fight
