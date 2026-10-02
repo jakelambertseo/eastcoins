@@ -2857,7 +2857,7 @@ function registerArt(k, im) {   // `im` is a loaded Image, or a canvas the page 
    fetches the sheet ONCE, cuts every picture in it into its own small canvas and registers them all, so the rest of the page
    never knows. A picture in no sheet, or whose sheet won't load, is fetched by itself exactly as before (loadOne), so new art
    works before it is packed. PACKS_V is packs.json's ?v= and is bumped by the pack tool, never by hand. */
-const PACKS_V = 174;
+const PACKS_V = 175;
 const PACK_DIR = "/v3/assets/img/glad/packs/", packOf = new Map(), packJobs = new Map(); let PACKS = null;
 const packsReady = fetch(`${PACK_DIR}packs.json?v=${PACKS_V}`).then((r) => (r.ok ? r.json() : null)).then((j) => { if (!j || typeof j !== "object") return; PACKS = j; for (const [name, p] of Object.entries(j)) for (const k of Object.keys(p.keys || {})) if (!packOf.has(k)) packOf.set(k, name); }).catch(() => { /* no sheets: every picture comes on its own */ });
 const loadPack = (name) => packJobs.get(name) || packJobs.set(name, new Promise((res) => {

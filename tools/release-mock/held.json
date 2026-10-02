@@ -5,7 +5,7 @@
   "page": "archery-mock",
   "bundle": "v1.2",
   "what": "Seven timed kits made at the fletching table (Hunter's camo, Flare, Mark, Eagle eye, Quickdraw wax, Fleet, Retriever), tiered by Fletching, used with a bow in hand, in their own slot beside a page buff; grapple arrows across 12 crossings; snares; fishing arrows (bowfishing).",
-  "ships": "flip HOLD.kits to false, VERSION bump; replace the stand-in icons first (kit_camo, kit_fleet, kit_retriever, fishing_arrow, o_grapple: rerun tools/eastscape-kits-art.mjs, then pack), push and probe the art, then rules, page and wiki, then the worker (kits.js)."
+  "ships": "flip HOLD.kits to false, VERSION bump; ALL ART IS IN (the five stand-ins replaced 2026-10-02, core.png repacked): push and probe the kit icons, grapple_arrow, snare, fishing_arrow and the repacked core sheet first, then rules, page and wiki (the full guide, ?v=248), then the worker (kits.js)."
  },
  {
   "name": "Archery feel",
