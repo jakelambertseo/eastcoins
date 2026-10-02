@@ -213,7 +213,7 @@ export function installDiary(World, { G, TW }) {
       const i = m.i | 0, have = D.cl[M.k] | 0;
       if (i < 0 || i > 3 || G.diaryLevelOf(C, M) <= i) return this.say(pl, "That tier isn't finished yet.", "bad");
       if (have & (1 << i)) return this.say(pl, "You've had that lamp.", "bad");
-      const sk = String(m.skill || ""); if (!G.SKILLS[sk]) return;
+      const sk = String(m.skill || ""); if (!G.SKILLS[sk] || G.SKILLS[sk].held) return;   /* (2026-10-02) never a retired or held skill (Jewelcrafting) */
       if (G.lvlOf(C, sk) < M.lo) return this.say(pl, `${M.name}'s lamps go on a skill at level ${M.lo} or above. Your ${G.SKILLS[sk].name} is ${G.lvlOf(C, sk)}.`, "bad");
       D.cl[M.k] = have | (1 << i); this.touch(pl);
       this.grant(pl, sk, G.DIARY.lamps[i], true, true);

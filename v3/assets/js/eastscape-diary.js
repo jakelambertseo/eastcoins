@@ -66,9 +66,9 @@ export function createDiary({ G, $, esc, ico, sico, send, SFX, getMe, getScene, 
   }
   function reward(M, i) {
     const lvl = levelOf(M), fin = lvl > i, got = (st.cl[M.k] | 0) & (1 << i), me = getMe();
-    const skills = Object.keys(G.SKILLS).filter((s) => G.lvlOf(me, s) >= M.lo);
+    const skills = Object.keys(G.SKILLS).filter((s) => !G.SKILLS[s].held && G.lvlOf(me, s) >= M.lo);   /* (2026-10-02, the owner: "jewelcrafting is a selectable skill for the xp lamp") a retired or held skill is never offered */
     const lamp = !fin ? `A ${G.DIARY.lamps[i].toLocaleString()} XP lamp` : got ? `Lamp rubbed` : skills.length
-      ? `<select data-lampsk>${skills.map((s) => `<option value="${s}">${esc(G.SKILLS[s].name)} (${G.lvlOf(me, s)})</option>`).join("")}</select><button type="button" class="k-btn sm" data-lamp="${i}">Rub the ${G.DIARY.lamps[i].toLocaleString()} XP lamp</button>`
+      ? `<select data-lampsk>${skills.map((s) => `<option value="${s}">${esc(G.SKILLS[s].name)} (${G.lvlOf(me, s)})</option>`).join("")}</select><button type="button" class="k-btn sm" data-lamp="${i}">Rub the ${G.DIARY.lamps[i].toLocaleString()} XP lamp</button><small class="k-note" style="display:block">${esc(M.name)}'s lamps go on skills at level ${M.lo}+, so the list changes from map to map.</small>`
       : `A lamp, for a skill at level ${M.lo} or above: you have none yet`;
     return `<div class="dr${fin ? " fin" : ""}"><b>${TIERS[i]} reward${fin ? " ✓" : ""}:</b> ${esc(M.perks[i].text)}.<div class="dr-l">${lamp}<span class="medal${fin ? " got" : ""}">${medal(i)}${G.DIARY.medals[i][0].toUpperCase() + G.DIARY.medals[i].slice(1)} medal</span></div></div>`;
   }
