@@ -172,7 +172,7 @@ The owner and players: slight rubber banding on long click-to-walk paths and whe
    OpenSeadragon (~100 KB gz) loads only when the map opens; pins, fog, who's here and quest arrows become its overlays. About
    14,000 x 7,000 px at full detail, 5-15 MB of tiles on the server, a few hundred KB per view. Rebuild when a map changes; held
    maps must never be rendered into it. Plan B: our own zoom painting maps live with the game's painter (no build step, heavier
-   on phones). Offered: a standalone dev mock before anything goes in the game.
+   on phones). MOCK BUILT 2026-10-02: tools/zoommap-mock (open localhost:4321/tools/zoommap-mock/index.html; how to rebuild is in build.mjs): 23 live maps, 6,112 x 12,160 px, 1,548 PNG tiles, 12.5 MB. 206 props drew nothing (things the page draws in code, not from a picture) - the real build must use the page's own sprite drawing.
 4. **Later:** ~31 KB/s and ~12 messages/s per player (whole-scene snapshots): measure by message type, then send deltas. The /stats tick metric always reads 0 (the clock is frozen inside a Worker request): measure tick lateness (the gap between tick starts) instead.
 
 ## Next up
