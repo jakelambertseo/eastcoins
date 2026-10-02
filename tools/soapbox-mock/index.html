@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Soapbox Racing</title>
+<!-- (2026-10-02, the owner: "i like the soapbox cart idea (car racing/improve car, train it, find parts, parts break, car improvement sim etc). can you mock
+     this up. its crucial users can actually race their cars, bumper car style"). A PLAYABLE race (game.js): your kart against five, real bumper-car
+     collisions, parts that wear and break, fitted from a garage. The kart and the five part icons are PixelLab drafts; the props are the game's own art.
+     Local only; built into /gameplan. http://localhost:4321/tools/soapbox-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0c0b08;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#3a1a0a,transparent),radial-gradient(900px 600px at 100% 30%,#1a2a3a,transparent),#0c0b08}
+main{max-width:1280px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 38px/1.1 Cinzel,Georgia,serif;color:#ffd27a}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffcf6a}
+h3{margin:16px 0 6px;font:800 17px Cinzel,serif;color:#ffe8b0}
+.lede{margin:0 0 10px;color:#cdc2a8;max-width:1000px;line-height:1.6}.lede b,.sec>p b{color:#fff0cc}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a0e;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd27a}
+.sec{margin:44px 0 0;padding:22px 0 0;border-top:2px solid #3a2a14}.sec>p{color:#bdb39c;max-width:1000px;line-height:1.6}
+.callout{margin-top:14px;padding:13px 16px;border-radius:10px;background:rgba(255,190,70,.08);box-shadow:inset 0 0 0 1.5px rgba(255,190,70,.45);color:#f6e9cc;line-height:1.6;max-width:1000px}.callout b{color:#ffd27a}
+/* the race */
+.racewrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;margin-top:14px;align-items:start}@media (max-width:1050px){.racewrap{grid-template-columns:1fr}}
+.stage{position:relative;border-radius:12px;overflow:hidden;box-shadow:0 0 0 2px #5a3a1a,0 14px 40px rgba(0,0,0,.6);background:#2a4a20}
+.stage canvas{display:block;width:100%;height:auto;image-rendering:pixelated;outline:none;touch-action:none}
+.stage canvas:focus-visible{box-shadow:inset 0 0 0 3px #ffd27a}
+.over{position:absolute;inset:0;display:grid;place-items:center;background:rgba(10,8,4,.55);text-align:center;padding:16px}
+.over[hidden]{display:none}.over .box{max-width:460px;display:grid;gap:10px;justify-items:center}
+.over b{font:800 28px Cinzel,serif;color:#ffd27a}.over p{margin:0;font:600 14px/1.55 Lora,serif;color:#f0e6cc}
+.over table{font:700 13px Lora,serif;border-collapse:collapse;min-width:280px}.over td{padding:3px 10px;text-align:left}.over tr.me td{color:#ffd27a}
+.modes{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.modes button{font:800 13px Lora,serif;color:#e8e0cc;background:#2a1a0e;border:0;border-radius:999px;padding:7px 14px;box-shadow:0 0 0 1.5px #5a3a1a;cursor:pointer}
+.modes button[aria-pressed="true"]{background:#5a3a14;box-shadow:0 0 0 2px #ffd27a}
+.pad{display:none;gap:8px;margin-top:8px;justify-content:space-between}
+.pad button{font:800 20px Lora,serif;width:64px;height:56px;border:0;border-radius:12px;background:#2a1a0e;color:#ffd27a;box-shadow:0 0 0 1.5px #5a3a1a;touch-action:none;user-select:none}
+.pad .grp{display:flex;gap:8px}
+@media (pointer:coarse){.pad{display:flex}}
+.keys{font:600 12.5px/1.6 Lora,serif;color:#b8a888;margin-top:8px}.keys kbd{font:800 11.5px Lora,serif;padding:1px 6px;border-radius:4px;background:#2a1a0e;box-shadow:0 0 0 1px #5a3a1a;color:#ffe8b0}
+.side{display:grid;gap:12px}
+.cond{display:grid;gap:6px}.cond .r{display:grid;grid-template-columns:28px 1fr 42px;gap:8px;align-items:center;font:700 12.5px Lora,serif}
+.cond img{width:26px;height:26px;image-rendering:pixelated}.cond .t{height:10px;border-radius:5px;background:rgba(0,0,0,.18);overflow:hidden}.cond .t i{display:block;height:100%;background:#5a9a3a;transition:width .2s}
+.cond .t i.low{background:#d0902a}.cond .t i.dead{background:#c03a2a}
+.log{font:600 12.5px/1.5 Lora,serif;max-height:150px;overflow:auto}.log p{margin:0}.log .bad{color:#b0402a}.log .good{color:#3a7a2a}
+/* garage */
+.garage{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px;margin-top:14px;align-items:start}@media (max-width:1050px){.garage{grid-template-columns:1fr}}
+.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.slot{display:grid;grid-template-columns:44px 1fr;gap:8px;align-items:center;padding:8px;border-radius:8px;background:rgba(90,58,24,.08);box-shadow:inset 0 0 0 1px var(--k-line)}
+.slot img{width:44px;height:44px;image-rendering:pixelated}.slot b{display:block;font:800 13.5px Lora,serif}.slot small{display:block;font:600 11.5px Lora,serif;color:var(--k-ink2)}
+.slot .t{height:7px;border-radius:4px;background:rgba(0,0,0,.15);overflow:hidden;margin-top:3px}.slot .t i{display:block;height:100%;background:#5a9a3a}
+.slot .t i.low{background:#d0902a}.slot .t i.dead{background:#c03a2a}
+.slot .acts{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.mini{font:800 11.5px Lora,serif;padding:4px 9px;border-radius:6px;border:0;background:#5a3a1a;color:#fff0cc;cursor:pointer}.mini:disabled{opacity:.45;cursor:default}
+.rar{display:inline-block;font:800 9.5px Lora,serif;letter-spacing:.07em;text-transform:uppercase;padding:1px 6px;border-radius:999px;margin-left:4px;vertical-align:1px}
+.rar.junk{background:#6a6a6a;color:#fff}.rar.tuned{background:#3a7a3a;color:#fff}.rar.racing{background:#2a5aa8;color:#fff}.rar.legend{background:#c88a1a;color:#fff}
+.stash{display:grid;gap:6px;max-height:420px;overflow:auto}
+.stats{display:grid;gap:5px;margin-top:4px}.stats .r{display:grid;grid-template-columns:96px 1fr 40px;gap:8px;align-items:center;font:700 12.5px Lora,serif}
+.stats .t{height:9px;border-radius:5px;background:rgba(0,0,0,.15);overflow:hidden}.stats .t i{display:block;height:100%;background:linear-gradient(90deg,#c86a2a,#ffc24a)}
+.wallet{display:flex;gap:14px;font:800 13px Lora,serif}.wallet img{width:20px;height:20px;image-rendering:pixelated;vertical-align:-5px;margin-right:3px}
+.tbl{width:100%;border-collapse:collapse;font:600 13.5px/1.45 Lora,serif;margin-top:12px;background:#17120c;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a2a14}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#b89a70;padding:10px 12px 6px}.tbl td{padding:8px 12px;border-top:1px solid #2e2214;vertical-align:top}
+.tbl td:first-child{font-weight:800;color:#ffe8b0}.tbl td b{color:#fff0cc}.wrapx{overflow-x:auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(270px,100%),1fr));gap:10px;margin-top:12px}.card{background:#17120c;border-radius:10px;padding:12px 14px;box-shadow:0 0 0 1.5px #3a2a14}
+.card b{display:block;font:800 15px Cinzel,serif;color:#ffd27a;margin-bottom:4px}.card span{font:600 13.5px/1.55 Lora,serif;color:#cdc2a8}.card span b{display:inline;font:inherit;color:#fff0cc}
+.loop{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px;font:800 14px Cinzel,serif}.loop span{padding:8px 12px;border-radius:9px;background:#17120c;box-shadow:0 0 0 1.5px #5a3a1a;color:#ffe8b0}.loop i{color:#ffd27a;font-style:normal}
+.note{font:600 12.5px/1.5 Lora,serif;color:#a89070}
+</style>
+</head>
+<body>
+<main>
+  <h1>Soapbox Racing</h1>
+  <p class="lede">Build a kart out of junk, race it, smash it into everyone else's, and keep it running. <b>The race below is playable</b>: your kart against five, bumper-car
+    physics, three laps. Every bump wears your parts and theirs; a part worn to nothing <b>breaks</b> (the wheels go, the steering pulls, the engine coughs), and you
+    fix it in the garage with the Tinkering parts you already salvage. Better parts turn up from the Junk King, Thrill Hill's stunt crates and the races themselves.</p>
+  <nav class="jump"><a href="#race">Race it</a><a href="#garage">The garage</a><a href="#loop">The loop</a><a href="#parts">Parts, wear and breaking</a><a href="#modes">Race modes</a><a href="#server">Real multiplayer</a><a href="#open">Your calls</a></nav>
+
+  <section class="sec" id="race">
+    <h2>Race it</h2>
+    <p>Click the track and drive. <b>Bump</b> people: a hard hit knocks them sideways and wears their parts; your bumper takes the first of it. Your kart is whatever is fitted
+      in the garage below, worn parts and all, so change a part and race again to feel the difference.</p>
+    <div class="racewrap">
+      <div>
+        <div class="modes" id="modes"><button type="button" data-m="circuit" aria-pressed="true">Circuit · 3 laps</button><button type="button" data-m="bash" aria-pressed="false">Bumper Bash · 60 s arena</button></div>
+        <div class="stage"><canvas id="cv" width="960" height="560" tabindex="0" aria-label="The race track. Arrow keys or WASD to drive."></canvas>
+          <div class="over" id="over"><div class="box"><b id="ovT">Soapbox Circuit</b><p id="ovP">Three laps, six karts, bumping allowed. Arrow keys or WASD to drive, Space to slide.</p><div id="ovX"></div><button type="button" class="k-btn" id="go">Start the race</button></div></div></div>
+        <div class="pad" id="pad"><div class="grp"><button type="button" data-k="left" aria-label="Steer left">◀</button><button type="button" data-k="right" aria-label="Steer right">▶</button></div><div class="grp"><button type="button" data-k="slide" aria-label="Slide">⤳</button><button type="button" data-k="down" aria-label="Brake">■</button><button type="button" data-k="up" aria-label="Accelerate">▲</button></div></div>
+        <p class="keys"><kbd>↑</kbd>/<kbd>W</kbd> go · <kbd>↓</kbd>/<kbd>S</kbd> brake and reverse · <kbd>←</kbd><kbd>→</kbd>/<kbd>A</kbd><kbd>D</kbd> steer · <kbd>Space</kbd> slide · <kbd>Esc</kbd> stop.
+          Dark patches are <b>oil</b> (no grip); yellow chevrons are a <b>boost</b>.</p>
+      </div>
+      <div class="side">
+        <div class="k-win k-paper"><div class="k-head"><img src="kart.png" alt=""><b>Your kart</b><span class="k-sub" id="kSub">in the garage</span></div>
+          <div class="k-body"><div class="cond" id="cond"></div></div></div>
+        <div class="k-win k-paper"><div class="k-head"><img src="/v3/assets/img/glad/flat/o_cones.png" alt=""><b>Race log</b></div>
+          <div class="k-body"><div class="log" id="log"><p class="note">Nothing yet. Start a race.</p></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="garage">
+    <h2>The garage</h2>
+    <p>Five slots. Each part has <b>stats</b>, a <b>rarity</b> and a <b>condition</b>. Fit a part from your stash, repair one with scrap and gears (the Tinkering parts you
+      already salvage), and tune the gearing. Everything here changes the kart you race above.</p>
+    <div class="garage">
+      <div class="k-win k-paper"><div class="k-head"><img src="kart.png" alt=""><b>Sal's garage</b><span class="k-sub wallet" id="wallet"></span></div>
+        <div class="k-body">
+          <div class="slots" id="slots"></div>
+          <div class="k-label" style="margin-top:8px">Gearing</div>
+          <label style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font:700 12.5px Lora,serif">Quick off the line<input type="range" id="gear" min="-1" max="1" step="0.1" value="0">Higher top speed</label>
+          <div class="k-label" style="margin-top:8px">What it adds up to</div>
+          <div class="stats" id="stats"></div>
+        </div>
+        <div class="k-foot"><span class="k-note" id="gNote">A broken part still sits in its slot, doing a fraction of its job, until you repair or replace it.</span></div></div>
+      <div class="k-win k-paper"><div class="k-head"><img src="/v3/assets/img/glad/flat/items/part_scrap.png" alt="" onerror="this.src='kart.png'"><b>Your stash</b><span class="k-sub" id="stashN"></span></div>
+        <div class="k-body"><div class="stash" id="stash"></div></div>
+        <div class="k-foot"><span class="k-note">Races drop parts. So do the Junk King and stunt crates.</span></div></div>
+    </div>
+  </section>
+
+  <section class="sec" id="loop">
+    <h2>The loop</h2>
+    <p>A day's soapbox is a race or three, a few minutes in the garage, and the occasional lucky find. The kart improves slowly because <b>good parts are rare and every one wears out</b>.</p>
+    <div class="loop"><span>Find parts</span><i>→</i><span>Fit and tune</span><i>→</i><span>Race and bump</span><i>→</i><span>Parts wear</span><i>→</i><span>Repair, or it breaks</span><i>→</i><span>Win better parts</span><i>↺</i></div>
+    <div class="cards">
+      <div class="card"><b>Find</b><span>Parts drop from <b>race prizes</b> (one a race, better for a podium), the <b>Junk King</b> and his yard, <b>Thrill Hill's stunt crates</b> and <b>salvage</b> at Sal's bench. Sal sells Junk parts for tickets so nobody is ever stuck.</span></div>
+      <div class="card"><b>Break in</b><span>A new part reaches its full stats after <b>its first 20 laps</b> (it starts at 90%), so a Legendary is a project, not a switch. That is the "train it" part: a kart gets better the more you drive it.</span></div>
+      <div class="card"><b>Wear</b><span>Every bump takes condition, the bumper first. A race also costs a little condition on every part. <b>At 0 a part breaks</b> and does a fraction of its job until fixed.</span></div>
+      <div class="card"><b>Repair</b><span>At Sal's bench for <b>scrap and gears</b>, Tinkering's own parts. A part loses <b>2% of its top condition</b> with every repair, so even a Legendary is eventually scrapped for a few relics.</span></div>
+      <div class="card"><b>Show</b><span>A paint job and a number (cosmetics, from the Store), your kart parked outside your cottage, a <b>weekly cup</b> with a leaderboard and a title.</span></div>
+      <div class="card"><b>Never required</b><span>It pays in <b>tickets, parts, titles and paint</b>. Nothing from racing makes your character stronger, so it stays a hobby.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="parts">
+    <h2>Parts, wear and breaking</h2>
+    <div class="wrapx"><table class="tbl">
+      <thead><tr><th>Slot</th><th>What it does</th><th>Junk</th><th>Tuned</th><th>Racing</th><th>Legendary</th><th>When it breaks</th></tr></thead>
+      <tbody id="ptable"></tbody>
+    </table></div>
+    <p class="note" style="margin-top:8px">Rarity also sets toughness: Junk parts lose condition 40% faster than Tuned, Racing 15% slower, Legendary 30% slower. The numbers are a first pass; the race above uses exactly these.</p>
+  </section>
+
+  <section class="sec" id="modes">
+    <h2>Race modes</h2>
+    <div class="cards">
+      <div class="card"><b>Circuit (playable above)</b><span>Three laps, six karts, bumping allowed. A race <b>every 15 minutes</b> on the track at the Carnival; empty seats are filled with house karts. Prizes: tickets and a part.</span></div>
+      <div class="card"><b>Bumper Bash (playable above)</b><span>Sixty seconds in an arena. Points for every hit, more for breaking someone's part. Pure bumper cars: the mode for people who don't care about lines.</span></div>
+      <div class="card"><b>Downhill time trial</b><span>Thrill Hill's road, against everyone's <b>ghosts</b> (a recording of their best run, so nothing to sync live). A weekly leaderboard with a title for first.</span></div>
+      <div class="card"><b>The Soapbox Cup</b><span>A Sunday-night event, CASINO calling it: heats, a final, a trophy for the island. The all-server moment.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="server">
+    <h2>Real multiplayer, bumper cars and all</h2>
+    <p>You asked for people to actually race each other, so this is the part that matters. The world server ticks every 50 ms and every map shares it: <b>a race does not
+      belong there</b>. Each race gets <b>its own small room</b> (a separate Durable Object, one per race, like the game's maps but just for six karts):</p>
+    <div class="cards">
+      <div class="card"><b>The room runs the physics</b><span>The same code as this page's race, on the server, <b>30 times a second</b>. Players send only their keys; the room decides every position and every bump, so nobody can drive through walls or say they hit harder.</span></div>
+      <div class="card"><b>Your own kart feels instant</b><span>Your page runs your kart straight away from your keys and nudges it to the server's word when they disagree; the others are drawn a tenth of a second behind, smoothed. That's how every online racing game hides the delay.</span></div>
+      <div class="card"><b>What it costs</b><span>Six karts × 30 updates a second is about <b>4 KB a second</b> to each racer, and the inputs coming back are a few bytes. A race lasts a minute or two, then the room is gone. <b>The world's tick never notices.</b></span></div>
+      <div class="card"><b>Bumps are fair</b><span>A collision is resolved once, in the room, with both karts' real stats, then both players see the same bounce. On a bad connection you may see a bump a moment late; you never see one that didn't happen.</span></div>
+    </div>
+    <div class="callout">The honest risk: bumper-car racing <b>over the internet</b> is the hardest thing on this page to make feel good, harder than anything the game does today.
+      The plan to keep it safe: build the race room first and test it with two of us on <b>dev</b> before anything else, and keep the downhill time trial (ghosts, no live sync) as the
+      fallback that works on any connection. About <b>8-10 days</b> for the room and the race; the garage and parts are about 3 more.</div>
+  </section>
+
+  <section class="sec" id="open">
+    <h2>Your calls</h2>
+    <div class="cards">
+      <div class="card"><b>Where the track goes</b><span>A dirt track at the Carnival (the crowd is already there), a new map off the Yard, or Thrill Hill for everything.</span></div>
+      <div class="card"><b>How hard parts break</b><span>As drafted: a broken part does a fraction of its job until repaired. Harsher: a broken part is <b>gone</b> unless you repair it within a day.</span></div>
+      <div class="card"><b>Entry fees and bets</b><span>A ticket entry fee and a prize pot? Spectators betting tickets on a race (never ZCoins)?</span></div>
+      <div class="card"><b>A skill or not</b><span>No new skill (you said no new or intertwined skills): it uses Tinkering's parts and the kart is the progression.</span></div>
+    </div>
+    <p class="note" style="margin-top:12px">Nothing here is built in the game. The race on this page is a prototype of the feel, physics and wear, not the server's code.</p>
+  </section>
+</main>
+<script src="game.js"></script>
+</body>
+</html>
