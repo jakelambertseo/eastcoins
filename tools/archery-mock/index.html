@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Archery's Fair Share</title>
+<!-- (2026-10-02, the owner: "mages are extremely more OP in most aspects compared to melee and archery. archery specifically im worried about ... mages
+     have different spell types, assistant spells (teleport, reduce farming time, etc). can you mock up ideas we can implement to make it feel more fair
+     for archers? this could be anything from special gear, new maps or archer areas only, 'spells' they get, we could give them the skill bar to use,
+     etc"). The numbers are MEASURED from the rules file (data.json, by scratchpad styles.mjs: each style at the same level in the best kit it can
+     wear, damage per second against a monster of defence level/2, through the server's own hit formula). Hawk, hood and grapple arrow are
+     PixelLab drafts. Local only; built into /gameplan. http://localhost:4321/tools/archery-mock/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#080b08;color:#e4e8d4;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#183a1a,transparent),radial-gradient(900px 600px at 100% 25%,#2a2a0a,transparent),#080b08}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 36px/1.1 Cinzel,Georgia,serif;color:#d8f0a8}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#b8e078}
+h3{margin:18px 0 6px;font:800 17px Cinzel,serif;color:#e0f0c0}
+.lede{margin:0 0 10px;color:#c4c8a8;max-width:1000px;line-height:1.6}.lede b,.sec>p b{color:#f4ffd8}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#14240f;box-shadow:0 0 0 1.5px #3a5a24;text-decoration:none;font:800 13.5px Lora,serif;color:#b8e078}
+.sec{margin:46px 0 0;padding:24px 0 0;border-top:2px solid #1e2e16}.sec>p{color:#b4b898;max-width:1000px;line-height:1.6}
+.callout{margin-top:14px;padding:13px 16px;border-radius:10px;background:rgba(160,220,90,.07);box-shadow:inset 0 0 0 1.5px rgba(160,220,90,.4);color:#eef6d8;line-height:1.6;max-width:1000px}.callout b{color:#c8f088}
+.tbl{width:100%;border-collapse:collapse;font:600 13.5px/1.45 Lora,serif;margin-top:12px;background:#10160d;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #24341a}
+.tbl th{text-align:left;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#98a880;padding:10px 12px 6px}.tbl td{padding:8px 12px;border-top:1px solid #1e2a16;vertical-align:top}
+.tbl td:first-child{font-weight:800;color:#e0f0c0}.tbl td b{color:#f4ffd8}.tbl img{width:28px;height:28px;image-rendering:pixelated;vertical-align:middle;margin-right:6px}.wrapx{overflow-x:auto}
+.good{color:#8ad86a}.bad{color:#f08a6a}.mid{color:#e8c860}
+.gaps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:10px;margin-top:12px}
+.gap{background:#10160d;border-radius:10px;padding:12px 14px;box-shadow:0 0 0 1.5px #24341a}.gap b{display:block;font:800 15px Cinzel,serif;color:#f0a878;margin-bottom:4px}.gap.ok b{color:#8ad86a}.gap span{font:600 13.5px/1.55 Lora,serif;color:#c4c8a8}.gap span b{display:inline;font:inherit;color:#f4ffd8}
+.chart{background:#10160d;border-radius:10px;padding:12px;box-shadow:0 0 0 1.5px #24341a;margin-top:12px}.chart svg{display:block;width:100%;height:auto}
+/* ideas */
+.ideas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(370px,100%),1fr));gap:14px;margin-top:14px}
+.idea{background:linear-gradient(180deg,#141d10,#0d120a);border-radius:14px;padding:14px;box-shadow:0 0 0 1.5px #2e4420;display:grid;gap:8px;align-content:start}
+.idea.pick{box-shadow:0 0 0 2px #b8e078,0 10px 30px rgba(160,220,90,.1)}
+.idea .top{display:flex;gap:12px;align-items:center}
+.idea .pic{width:64px;height:64px;flex:none;border-radius:10px;background:radial-gradient(circle at 50% 65%,rgba(180,230,120,.16),transparent 70%),#0a0e08;display:grid;place-items:center}
+.idea .pic img{max-width:52px;max-height:52px;image-rendering:pixelated}
+.idea b.n{font:800 19px/1.15 Cinzel,serif;color:#e0f0c0;display:block}
+.idea .fix{font:700 11.5px Lora,serif;color:#98a880}
+.idea .tag{display:inline-block;font:800 10.5px Lora,serif;letter-spacing:.07em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:#2a3a10;color:#c8f088;margin-top:3px}
+.idea p{margin:0;font:600 13.5px/1.55 Lora,serif;color:#d0d4b8}.idea p b{color:#f4ffd8}
+.idea ul{margin:0;padding-left:18px;font:600 13px/1.55 Lora,serif;color:#d0d4b8}.idea li b{color:#f4ffd8}
+.idea .size{font:700 12px Lora,serif;color:#98a880}
+/* kits */
+.kits{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));gap:8px;margin-top:6px}
+.kit{display:grid;grid-template-columns:36px 1fr;gap:8px;align-items:start;padding:8px;border-radius:8px;background:rgba(90,58,24,.08);box-shadow:inset 0 0 0 1px var(--k-line)}
+.kit img{width:34px;height:34px;image-rendering:pixelated}.kit b{display:block;font:800 13.5px Lora,serif}.kit small{display:block;font:600 12px/1.45 Lora,serif;color:var(--k-ink2)}
+/* calculator */
+.calc{display:grid;grid-template-columns:320px minmax(0,1fr);gap:16px;margin-top:14px;align-items:start}@media (max-width:900px){.calc{grid-template-columns:1fr}}
+.ctl{display:grid;gap:10px;background:#10160d;border-radius:10px;padding:12px 14px;box-shadow:0 0 0 1.5px #24341a;font:700 13.5px Lora,serif}.ctl input[type=range]{width:100%}
+.ctl select{font:700 13px Lora,serif;background:#0a0e08;color:#e4e8d4;border:1px solid #3a5a24;border-radius:6px;padding:5px;width:100%}
+.ctl label.t{display:flex;gap:8px;align-items:flex-start;font-weight:600;font-size:13px}.ctl label.t small{display:block;color:#98a880}
+.bars{display:grid;gap:12px;background:#10160d;border-radius:10px;padding:14px;box-shadow:0 0 0 1.5px #24341a}
+.bar{display:grid;grid-template-columns:90px 1fr 70px;gap:10px;align-items:center;font:800 13.5px Lora,serif}
+.bar .t{height:22px;border-radius:6px;background:#0a0e08;box-shadow:inset 0 0 0 1px #24341a;overflow:hidden;position:relative}.bar .t i{display:block;height:100%;border-radius:6px;transition:width .35s}
+.bar .t u{position:absolute;top:0;bottom:0;border-right:2px dashed rgba(255,255,255,.5)}
+.bar.melee i{background:linear-gradient(90deg,#a85a3a,#e08a5a)}.bar.archery i{background:linear-gradient(90deg,#4a8a2a,#a8e05a)}.bar.magic i{background:linear-gradient(90deg,#6a3aa8,#c07aff)}
+.why{font:600 12.5px/1.55 Lora,serif;color:#a8b090}
+/* kiting */
+.kite{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;margin-top:14px;align-items:start}@media (max-width:900px){.kite{grid-template-columns:1fr}}
+.kite canvas{width:100%;height:auto;border-radius:10px;box-shadow:0 0 0 2px #3a5a24;background:#3d6a2f;image-rendering:pixelated;cursor:crosshair}
+.kite .k-btn{margin-right:6px}
+.note{font:600 12.5px/1.5 Lora,serif;color:#98a880}
+@media (prefers-reduced-motion:reduce){.bar .t i{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Archery's Fair Share</h1>
+  <p class="lede">You're right that mages feel stronger, but the numbers say it isn't the damage: <b>an archer already out-damages a mage</b> on a plain monster at nearly every level past 40
+    (11.9 a second to 9.5 at 99). Magic wins on <b>everything around the damage</b>: an element that <b class="pW">most</b> monsters are weak to, fifteen utility pages that make it the travel,
+    farming and gem class, a crafting skill everyone buys from, and whole areas archers can't touch. So the fix is to give archers <b>an identity of their own</b>, not more damage.
+    Below: what's measured, what other games do, ten ideas, a calculator to try them, and a demo of the one I'd build first.</p>
+  <nav class="jump"><a href="#gaps">What's actually unfair</a><a href="#others">What other games do</a><a href="#ideas">Ten ideas</a><a href="#kits">Field kits</a><a href="#calc">Try the numbers</a><a href="#kite">Shoot on the move (demo)</a><a href="#pick">My order</a></nav>
+
+  <section class="sec" id="gaps">
+    <h2>What's actually unfair</h2>
+    <p>Measured from the rules: each style at the same level in the best kit it can wear, damage per second against a monster of defence level ÷ 2, through the server's own hit formula.
+      This is the <b>plain</b> number, before elements, sizes and guards.</p>
+    <div class="chart"><svg id="dps" viewBox="0 0 900 300" role="img" aria-label="Damage per second by level for each style"></svg></div>
+    <div class="gaps">
+      <div class="gap ok"><b>Not the problem: plain damage</b><span>Archery is <b>top</b> at every level from 45 except 65, where magic edges it (6.3 vs magic 5.2 at 55, 11.9 vs 9.5 at 99), and reaches furthest (a longbow is 6 tiles, a wand 5).</span></div>
+      <div class="gap"><b>1. Elements</b><span><b id="gWeak">86</b> of <b id="gTot">109</b> monsters are weak to an element: magic hits them ×1.35, and Fire burns (+20% on average), Storm arcs to a second monster, Void ignores 30% of defence, Sun heals. Archery's only bonus is +20% on the <b id="gBig">41</b> big monsters.</span></div>
+      <div class="gap"><b>2. Utility</b><span>Mages read <b>fifteen pages</b>: Haste, Focus, Ward, Rainmaker, Steady Hands, Stone Sense, Keen Eye, Tailwind, Stillness, Homeward and four Waystones. Archers have <b>none</b>. This is the big one: it makes Magic the class you want even when you aren't fighting.</span></div>
+      <div class="gap"><b>3. Places archers can't fight</b><span>The Frozen Reach: the Frost Wraith, the Frost Jarl and the Ice Wyrm take <b>0%</b> from arrows; the Crystal and Iron Ogres 10%. Magic gets a "sure cast" there. Archery's own sure shot is only the Primeval Valley, and only <b>7</b> monsters in the game are out of a sword's reach.</span></div>
+      <div class="gap"><b>4. Gear</b><span>A <b>quiver adds nothing</b> but room (every tier rolls the same); the bow is the archer's only stat. There's no archer jewellery or armour line, so the Store and Bom's gear never feel like archery upgrades.</span></div>
+      <div class="gap"><b>5. A craft people need</b><span>Wizardry prints pages that <b>every style</b> buys (Focus works for anyone). Fletching makes bows and arrows that only archers use.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="others">
+    <h2>What other games do for archers</h2>
+    <p>The archer classes people love are rarely the biggest hitters. They're the ones that <b>move while they fight</b>, <b>track and trap</b>, and own <b>a kind of target</b> nobody else can reach.</p>
+    <div class="wrapx"><table class="tbl">
+      <thead><tr><th>Game</th><th>What makes its archer feel special</th><th>What we'd take</th></tr></thead>
+      <tbody>
+        <tr><td>Old School RuneScape</td><td>Ava's device (picks up your arrows), "rapid" style, chinchompas (thrown AoE), safespots only ranged can use</td><td>Arrow recovery, safespots</td></tr>
+        <tr><td>RuneScape 3</td><td>Abilities (Snipe, Rapid Fire, Bombardment), Surge/Escape for mobility</td><td>The ability bar, archers first</td></tr>
+        <tr><td>World of Warcraft (Hunter)</td><td>A pet, traps, tracking monsters on the minimap, Camouflage, Feign Death, shooting while moving</td><td>Tracking, traps, camouflage, a pet</td></tr>
+        <tr><td>Diablo / Path of Exile</td><td>Kiting: fire while backing off, traps and mines, a dodge roll</td><td>Shoot on the move</td></tr>
+        <tr><td>Monster Hunter (Bow)</td><td>Coatings: dip arrows for poison, paralysis, close range, power, none of them elements</td><td>Coatings (not elements: your rule)</td></tr>
+        <tr><td>Guild Wars 2 (Ranger)</td><td>A pet that fights beside you, long-range sniping</td><td>The hawk</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="sec" id="ideas">
+    <h2>Ten ideas</h2>
+    <p>Each says which gap it closes and roughly how big a job it is on dev. None gives arrows an element: you decided magic keeps those.</p>
+    <div class="ideas">
+      <div class="idea pick"><div class="top"><div class="pic"><img src="grapple.png" alt=""></div><div><b class="n">1. Field kits</b><span class="fix">closes gap 2 (utility) and 5 (craft)</span><br><span class="tag">My first pick</span></div></div>
+        <p>Archery's answer to utility pages: <b>nine kits made at the fletching table</b>, tiered by your Fletching the way pages tier by Wizardry. Travel, gathering and hunting that only an archer can do: <b>grapple shortcuts, camouflage, snares, bowfishing, flares</b>. <a href="#kits">The list ↓</a></p>
+        <p class="size">About 4 days (pages already have the plumbing: a scroll item, a timed buff, a tier).</p></div>
+      <div class="idea pick"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/items/cycadlogs_shortbow.png" alt=""></div><div><b class="n">2. Shoot on the move</b><span class="fix">a signature nobody else has</span><br><span class="tag">Second</span></div></div>
+        <p>Archers <b>keep firing while they walk</b>, at 70% of their usual rate. Walk away from a monster that only hits up close and you take nothing; a mage has to stand still to cast. This is the thing that makes archers feel like archers in every game that gets it right. <a href="#kite">Try it ↓</a></p>
+        <p class="size">About 2 days: the server already lets a launcher fight from range; it would just not cancel the fight when you move.</p></div>
+      <div class="idea pick"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/items/skill_archery.png" alt=""></div><div><b class="n">3. Hunter's Lore</b><span class="fix">closes gap 1 (elements)</span><br><span class="tag">Third</span></div></div>
+        <p>Archery's version of elements. Monsters get a <b>family</b> (Beasts, Birds, Undead, Giants, Constructs, Spirits, Critters, Brutes). Every kill with a bow adds lore; <b>five ranks</b> per family, each +5% damage and accuracy against it, up to +25%. Shown in the Character window as eight bars.</p>
+        <ul><li>Mages pick the right element; archers <b>earn</b> theirs by hunting, a long-term progression on every map.</li><li>A <b>Hunter's Mark</b> kit (below) lends +10% against one family for 20 minutes, for a family you haven't hunted much.</li></ul>
+        <p class="size">About 2 days, plus tagging all 109 monsters (none have a family today).</p></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="hood.png" alt=""></div><div><b class="n">4. Ranger gear that counts</b><span class="fix">closes gap 4 (gear)</span></div></div>
+        <ul><li><b>Quivers add stats</b> by wood (+2 to +18 accuracy, +1 to +9 strength), so a quiver is an upgrade, not just a bag.</li>
+          <li>A <b>Ranger set</b> (hood, jerkin, bracers, boots) whose pieces add archery accuracy (today no armour adds attack for anyone). Set bonuses: <b>2: +1 reach · 4: shoot on the move at full rate</b>.</li>
+          <li>An <b>archer's ring and amulet</b> line at Bom's, so the jewellery question has an answer.</li></ul>
+        <p class="size">About 2 days, mostly art.</p></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/items/rimefang_arrow.png" alt=""></div><div><b class="n">5. Coatings</b><span class="fix">closes gap 1, without elements</span></div></div>
+        <p>Dip a stack of arrows in an oil from the cauldron (Alchemy): <b>Barbed</b> (bleeds 30% over 3 s), <b>Blunt</b> (knocks back a tile, 10% to stun), <b>Broadhead</b> (+25% on big monsters), <b>Serrated</b> (shreds 2 defence a hit, stacks to 10), <b>Whistling</b> (pulls the monster to you). Like Monster Hunter's coatings: effects, never elements.</p>
+        <p class="size">About 3 days.</p></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/items/yewlogs_longbow.png" alt=""></div><div><b class="n">6. The ability bar, archers first</b><span class="fix">feel</span></div></div>
+        <p>Abilities are built and held. Launch them with archery's three (Power Shot, Volley, Disengage) and add two archery-only ones: <b>Pinning Shot</b> (roots a monster 3 s: it can't chase you) and <b>Rain of Arrows</b> (a 3×3 patch takes hits for 4 s). Ties straight into shoot on the move.</p>
+        <p class="size">About 2 days for the two new ones; the bar exists.</p></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/pterodactyl.png" alt=""></div><div><b class="n">7. The Roost</b><span class="fix">closes gap 3 (places)</span></div></div>
+        <p>A cliff map where most monsters <b>fly or perch on ledges</b>: only arrows (and a wand's shorter reach, from the right spots) can hit them, and the ledges are joined by <b>grapple points</b>. Its boss circles overhead. Archery's sure shot here, the way the Frozen Reach is magic's.</p>
+        <p class="size">About 5 days through the map pipeline.</p></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/th_grandstand.png" alt="" style="max-width:60px"></div><div><b class="n">8. Hold the Wall</b><span class="fix">places, and a server moment</span></div></div>
+        <p>A world event: raiders come at the Yard's wall from the river, and the wall has <b>battlements only ranged can use</b>. Melee holds the gate below. CASINO calls it; everyone who fought shares the pot. The Yard raids were the biggest hit, so this is one in the same mould where archers are the stars.</p>
+        <p class="size">About 3 days on the raid template.</p></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="hawk.png" alt=""></div><div><b class="n">9. The hawk</b><span class="fix">a companion that's an archer's</span></div></div>
+        <p>A pet only an archer can raise, from an egg found at the Roost. While you shoot it <b>fetches arrows</b> (25% come back) and <b>marks</b> the target (+5%). It's the WoW Hunter's pet in EastScape's pet system.</p>
+        <p class="size">About 1 day plus art.</p></div>
+      <div class="idea"><div class="top"><div class="pic"><img src="/v3/assets/img/glad/flat/frostjarl.png" alt=""></div><div><b class="n">10. Quick fixes</b><span class="fix">closes gap 3 now</span></div></div>
+        <ul><li>The Frozen Reach's three at <b>0%</b> to arrows go to <b>40%</b> (still magic's map, no longer a wall).</li><li>Big-monster bonus <b>+20% → +30%</b>.</li><li>A <b>quiver that retrieves</b> 20% of arrows at the top tier.</li></ul>
+        <p class="size">Under a day: three numbers and a field.</p></div>
+    </div>
+  </section>
+
+  <section class="sec" id="kits">
+    <h2>Field kits: archery's pages</h2>
+    <p>Made at the fletching table from things Fletching already uses (feathers, shafts, string) plus a little from other skills, so Fletching gains customers the way Wizardry has.
+      Archery-only to use; a tier from your Fletching when you make it; one kit buff at a time, like pages.</p>
+    <div class="k-win k-paper" style="margin-top:12px"><div class="k-head"><img src="/v3/assets/img/glad/flat/items/skill_fletching.png" alt=""><b>Fletching table · Field kits</b><span class="k-sub">archers only</span></div>
+      <div class="k-body"><div class="kits">
+        <div class="kit"><img src="grapple.png" alt=""><div><b>Grapple arrows · Fletching 40</b><small>Fire at a grapple point to cross a gap or a river: <b>archer-only shortcuts</b>, about a dozen across the world. Archery's travel.</small></div></div>
+        <div class="kit"><img src="/v3/assets/img/glad/flat/items/scroll_ward.png" alt=""><div><b>Hunter's camo · Fletching 50</b><small>For 15/20/30 min, aggressive monsters <b>don't notice you</b> until you attack: skill and thieve in dangerous places.</small></div></div>
+        <div class="kit"><img src="/v3/assets/img/glad/flat/rope.png" alt=""><div><b>Snares · Fletching 30</b><small>Set up to four on a map; come back in an hour for <b>feathers, hides, eggs and meat</b>. Passive gathering only archers have.</small></div></div>
+        <div class="kit"><img src="/v3/assets/img/glad/flat/items/onyx_arrow.png" alt=""><div><b>Fishing arrows · Fletching 45</b><small><b>Bowfishing</b>: shoot fish in deep pools a rod can't reach, with a rarer catch. Fishing XP plus a little Archery.</small></div></div>
+        <div class="kit"><img src="/v3/assets/img/glad/flat/items/scroll_keeneye.png" alt=""><div><b>Flare arrows · Fletching 60</b><small>Shot into the sky: for 10 min the minimap shows the <b>Jackpot Thief, a shooting star or a rare spawn</b> on this map.</small></div></div>
+        <div class="kit"><img src="/v3/assets/img/glad/flat/items/skill_archery.png" alt=""><div><b>Hunter's Mark · Fletching 55</b><small>+6/8/10% against <b>one monster family</b> for 20 min (Hunter's Lore for a family you haven't hunted).</small></div></div>
+        <div class="kit"><img src="/v3/assets/img/glad/flat/items/scroll_tailwind.png" alt=""><div><b>Eagle-eye drops · Fletching 70</b><small>+1 reach for 15 min, and the camera pulls back to show more of the map.</small></div></div>
+        <div class="kit"><img src="/v3/assets/img/glad/flat/items/feather.png" alt=""><div><b>Quickdraw wax · Fletching 65</b><small>Your bow fires 8/12/16% faster for 15 min.</small></div></div>
+        <div class="kit"><img src="/v3/assets/img/glad/flat/items/logs_quiver.png" alt=""><div><b>Arrow retriever · Fletching 80</b><small>For 30 min, 30/40/50% of arrows that land are recovered. Archery's running cost, cut.</small></div></div>
+      </div></div>
+      <div class="k-foot"><span class="k-note">Nine kits against magic's nine charms; Grapple arrows stand where Waystones do. Tiers: I below Fletching 70, II from 70, III from 90, as pages.</span></div></div>
+  </section>
+
+  <section class="sec" id="calc">
+    <h2>Try the numbers</h2>
+    <p>The bars are measured damage per second at the level you pick, against the kind of target you pick, with any of the proposals switched on. The dashed line on the archery bar is where it is today.</p>
+    <div class="calc">
+      <div class="ctl">
+        <label>Level: <b id="lvV">80</b><input type="range" id="lv" min="10" max="99" step="1" value="80"></label>
+        <label>Target<select id="tg">
+          <option value="plain">A plain monster</option>
+          <option value="weak" selected>Weak to the mage's element (<span class="pW"></span> of monsters)</option>
+          <option value="resist">Resists the mage's element</option>
+          <option value="big">Large or XL (<span class="pB"></span> of monsters)</option>
+          <option value="frozen">Frozen Reach boss (0% to arrows)</option>
+        </select></label>
+        <div class="k-label" style="color:#98a880">Proposals for archery</div>
+        <label class="t"><input type="checkbox" data-p="lore" checked><span>Hunter's Lore, rank 3 of 5<small>+15% damage, +15% accuracy against the family</small></span></label>
+        <label class="t"><input type="checkbox" data-p="quiver" checked><span>Quivers with stats<small>+8% at the top tier</small></span></label>
+        <label class="t"><input type="checkbox" data-p="coat"><span>A coating<small>Barbed: +15% over a fight on average</small></span></label>
+        <label class="t"><input type="checkbox" data-p="big"><span>Big-monster bonus +30%<small>only matters on large targets</small></span></label>
+        <label class="t"><input type="checkbox" data-p="frozen"><span>Frozen Reach to 40%<small>only matters on those bosses</small></span></label>
+      </div>
+      <div class="bars" id="bars"></div>
+    </div>
+  </section>
+
+  <section class="sec" id="kite">
+    <h2>Shoot on the move</h2>
+    <p>Two runs against the same two Junkyard Dogs (they only bite up close). <b>Click to walk.</b> In <b>Today</b> walking cancels your shot, the way every style works now; in
+      <b>Proposed</b> you keep firing at 70% of the rate while you walk. Kite them in a circle and watch the health bar.</p>
+    <div class="kite">
+      <canvas id="kc" width="720" height="420" aria-label="Kiting demo: click to walk"></canvas>
+      <div class="ctl">
+        <div><button type="button" class="k-btn" data-km="today">Today</button><button type="button" class="k-btn" data-km="new">Proposed</button></div>
+        <div id="kStat" style="font:700 13.5px/1.7 Lora,serif"></div>
+        <span class="note">Your archer fires at whatever is nearest in reach (4 tiles). The dogs are slower than you; you are slower than an arrow.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="pick">
+    <h2>My order</h2>
+    <div class="wrapx"><table class="tbl">
+      <thead><tr><th>#</th><th>Idea</th><th>Why first</th><th>Size</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><b>Field kits</b></td><td>The biggest gap is utility, not damage. This gives archers travel, safety and gathering of their own, and gives Fletching customers.</td><td>~4 days</td></tr>
+        <tr><td>2</td><td><b>Shoot on the move</b></td><td>The single change that makes archery <i>feel</i> different from magic in every fight.</td><td>~2 days</td></tr>
+        <tr><td>3</td><td><b>Hunter's Lore</b></td><td>Archery's elements, earned by hunting: long-term progression that matches magic's +35% on most monsters.</td><td>~2 days + tagging</td></tr>
+        <tr><td>4</td><td><b>Quick fixes</b></td><td>Free fairness now: the Frozen Reach no longer a wall to archers.</td><td>&lt;1 day</td></tr>
+        <tr><td>5</td><td>Ranger gear, the hawk, coatings, the ability bar, the Roost, Hold the Wall</td><td>The fuller identity, as content passes.</td><td>2-5 days each</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout">What I'd <b>not</b> do: raise archery's damage. It's already top on plain targets, and more damage wouldn't fix the feeling: magic would still be the class with
+      the pages. One thing to watch while doing this: <b>melee is now the weakest</b> on paper (7.7 a second at 99). Worth its own pass after archery.</div>
+    <p class="note" style="margin-top:12px">Nothing here is built. The calculator's proposal multipliers are first-pass numbers; the base bars are measured from the rules.</p>
+  </section>
+</main>
+<script>
+(async () => {
+  const D = await fetch("data.json").then((r) => r.json());
+  const $ = (id) => document.getElementById(id);
+  $("gWeak").textContent = D.mobs.weak; document.querySelectorAll(".pW").forEach((e) => (e.textContent = Math.round((100 * D.mobs.weak) / D.mobs.total) + "%")); document.querySelectorAll(".pB").forEach((e) => (e.textContent = Math.round((100 * D.mobs.big) / D.mobs.total) + "%")); $("gTot").textContent = D.mobs.total; $("gBig").textContent = D.mobs.big;
+  /* the chart */
+  const X = (l) => 60 + ((l - 10) / 89) * 800, Y = (v) => 270 - (v / 13) * 245, cols = { melee: "#e08a5a", archery: "#a8e05a", magic: "#c07aff" };
+  let s = [0, 3, 6, 9, 12].map((v) => `<line x1="60" x2="860" y1="${Y(v)}" y2="${Y(v)}" stroke="#1e2a16"/><text x="52" y="${Y(v) + 4}" fill="#98a880" font-size="11" text-anchor="end" font-family="Lora">${v}</text>`).join("");
+  s += [10, 30, 50, 70, 90, 99].map((l) => `<text x="${X(l)}" y="292" fill="#98a880" font-size="11" text-anchor="middle" font-family="Lora">lv ${l}</text>`).join("");
+  for (const st of ["melee", "archery", "magic"]) { s += `<polyline fill="none" stroke="${cols[st]}" stroke-width="3" stroke-linejoin="round" points="${D.lv.map((l, i) => `${X(l)},${Y(D[st][i])}`).join(" ")}"/>`; s += `<text x="${X(99) + 6}" y="${Y(D[st].at(-1)) + 4}" fill="${cols[st]}" font-size="12" font-weight="800" font-family="Lora">${st[0].toUpperCase() + st.slice(1)}</text>`; }
+  s += `<text x="60" y="16" fill="#98a880" font-size="11" font-family="Lora">damage a second, plain monster</text>`;
+  $("dps").innerHTML = s;
+  /* the calculator */
+  const at = (st, l) => { const i = D.lv.findIndex((x) => x >= l); if (i <= 0) return D[st][0]; const a = D.lv[i - 1], b = D.lv[i]; return D[st][i - 1] + ((l - a) / (b - a)) * (D[st][i] - D[st][i - 1]); };
+  function calc() {
+    const l = +$("lv").value, tg = $("tg").value, P = Object.fromEntries([...document.querySelectorAll("[data-p]")].map((x) => [x.dataset.p, x.checked])); $("lvV").textContent = l;
+    const base = { melee: at("melee", l), archery: at("archery", l), magic: at("magic", l) }, why = { melee: [], archery: [], magic: [] };
+    const now = { ...base }, nu = { ...base };
+    if (tg === "weak") { now.magic *= D.wk * 1.08; why.magic.push(`×${D.wk} weak, plus its element's extra (Fire's burn, Storm's arc…)`); }
+    if (tg === "resist") { now.magic *= D.rs; why.magic.push(`×${D.rs} resisted`); }
+    if (tg === "big") { now.archery *= 1 + D.big; why.archery.push(`+${D.big * 100}% big target`); }
+    if (tg === "frozen") { now.archery = 0; now.melee *= 0.5; why.archery.push("0% to arrows"); why.melee.push("guarded"); }
+    Object.assign(nu, now);
+    if (tg === "frozen" && P.frozen) { nu.archery = base.archery * 0.4; why.archery.push("→ 40% with the quick fix"); }
+    if (tg === "big" && P.big) { nu.archery = base.archery * 1.3; why.archery.push("→ +30%"); }
+    let m = 1; if (P.lore && tg !== "frozen") { m *= 1.15 * 1.06; why.archery.push("Hunter's Lore +15%"); } if (P.quiver) { m *= 1.08; why.archery.push("quiver +8%"); } if (P.coat) { m *= 1.15; why.archery.push("Barbed +15%"); }
+    nu.archery *= m;
+    const top = Math.max(nu.melee, nu.archery, nu.magic, now.archery, 1);
+    $("bars").innerHTML = ["melee", "archery", "magic"].map((st) => `<div class="bar ${st}"><span>${st[0].toUpperCase() + st.slice(1)}</span><span class="t"><i style="width:${(nu[st] / top) * 100}%"></i>${st === "archery" ? `<u style="left:${(now.archery / top) * 100}%"></u>` : ""}</span><b>${nu[st].toFixed(1)}/s</b></div><div class="why">${why[st].join(" · ") || "plain"}</div>`).join("")
+      + `<div class="why" style="margin-top:4px">Archery today: <b>${now.archery.toFixed(1)}/s</b> · with these: <b>${nu.archery.toFixed(1)}/s</b> (${now.archery ? `${nu.archery >= now.archery ? "+" : ""}${Math.round((nu.archery / now.archery - 1) * 100)}%` : "from nothing"}) · magic: <b>${nu.magic.toFixed(1)}/s</b></div>`;
+  }
+  $("lv").oninput = calc; $("tg").onchange = calc; document.querySelectorAll("[data-p]").forEach((x) => (x.onchange = calc)); calc();
+})();
+
+/* THE KITING DEMO: an archer, two dogs that bite up close, click to walk */
+(() => {
+  const cv = document.getElementById("kc"), c = cv.getContext("2d"), W = 720, H = 420, T = 30;
+  const IM = (s) => { const i = new Image(); i.src = s; return i; }, dogIm = IM("/v3/assets/img/glad/flat/junkdog.png"), meIm = IM("/v3/assets/img/glad/flat/items/cycadlogs_shortbow.png");
+  let mode = "new", S;
+  const reset = () => { S = { me: { x: 360, y: 210, hp: 100, tx: 360, ty: 210, cd: 0 }, dogs: [{ x: 120, y: 90, hp: 60, cd: 0 }, { x: 600, y: 330, hp: 60, cd: 0 }], arrows: [], t: 0, taken: 0, shots: 0, over: null }; };
+  reset();
+  document.querySelectorAll("[data-km]").forEach((b) => (b.onclick = () => { mode = b.dataset.km; document.querySelectorAll("[data-km]").forEach((x) => x.setAttribute("aria-pressed", x === b)); reset(); }));
+  document.querySelector('[data-km="new"]').setAttribute("aria-pressed", "true");
+  cv.addEventListener("pointerdown", (e) => { const r = cv.getBoundingClientRect(); S.me.tx = ((e.clientX - r.left) / r.width) * W; S.me.ty = ((e.clientY - r.top) / r.height) * H; if (S.over) reset(); });
+  let last = 0;
+  function step(dt) {
+    if (S.over) return; S.t += dt; const me = S.me;
+    const dx = me.tx - me.x, dy = me.ty - me.y, d = Math.hypot(dx, dy), moving = d > 4, sp = 150;
+    if (moving) { me.x += (dx / d) * Math.min(d, sp * dt); me.y += (dy / d) * Math.min(d, sp * dt); }
+    me.cd -= dt;
+    const live = S.dogs.filter((g) => g.hp > 0), tgt = live.map((g) => ({ g, d: Math.hypot(g.x - me.x, g.y - me.y) })).filter((o) => o.d < 4 * T).sort((a, b) => a.d - b.d)[0];
+    const canShoot = mode === "new" || !moving;
+    if (tgt && canShoot && me.cd <= 0) { me.cd = mode === "new" && moving ? 1.8 / 0.7 : 1.8; S.arrows.push({ x: me.x, y: me.y, g: tgt.g }); S.shots++; }
+    if (moving && mode === "today") me.cd = Math.max(me.cd, 0.6);   /* walking cancels the draw: you start again when you stop */
+    for (const a of S.arrows) { const ax = a.g.x - a.x, ay = a.g.y - a.y, ad = Math.hypot(ax, ay); if (ad < 8) { a.done = true; if (a.g.hp > 0) a.g.hp -= 9 + Math.floor(Math.random() * 6); } else { a.x += (ax / ad) * 600 * dt; a.y += (ay / ad) * 600 * dt; } }
+    S.arrows = S.arrows.filter((a) => !a.done);
+    for (const g of live) { const gx = me.x - g.x, gy = me.y - g.y, gd = Math.hypot(gx, gy); g.cd -= dt; if (gd > T) { g.x += (gx / gd) * 105 * dt; g.y += (gy / gd) * 105 * dt; } else if (g.cd <= 0) { g.cd = 1.4; const hit = 6 + Math.floor(Math.random() * 5); me.hp -= hit; S.taken += hit; } }
+    if (!S.dogs.some((g) => g.hp > 0)) S.over = "win"; else if (me.hp <= 0) S.over = "lose";
+  }
+  function draw() {
+    c.fillStyle = "#3d6a2f"; c.fillRect(0, 0, W, H); c.fillStyle = "#356224"; for (let x = 0; x < W; x += T) for (let y = 0; y < H; y += T) if ((x + y) / T % 2 === 0) c.fillRect(x, y, T, T);
+    const me = S.me; c.strokeStyle = "rgba(255,255,255,.18)"; c.setLineDash([4, 4]); c.beginPath(); c.arc(me.x, me.y, 4 * T, 0, 7); c.stroke(); c.setLineDash([]);
+    if (Math.hypot(me.tx - me.x, me.ty - me.y) > 4) { c.strokeStyle = "rgba(255,230,120,.7)"; c.beginPath(); c.arc(me.tx, me.ty, 6, 0, 7); c.stroke(); }
+    c.imageSmoothingEnabled = false;
+    for (const g of S.dogs) { if (g.hp <= 0) { c.globalAlpha = 0.3; } if (dogIm.complete && dogIm.naturalWidth) c.drawImage(dogIm, g.x - 20, g.y - 26, 40, 40); else { c.fillStyle = "#7a5a3a"; c.fillRect(g.x - 12, g.y - 10, 24, 20); } c.globalAlpha = 1; if (g.hp > 0) { c.fillStyle = "#300"; c.fillRect(g.x - 16, g.y - 32, 32, 4); c.fillStyle = "#e04a3a"; c.fillRect(g.x - 16, g.y - 32, 32 * g.hp / 60, 4); } }
+    c.fillStyle = "#e8c070"; c.beginPath(); c.arc(me.x, me.y, 11, 0, 7); c.fill(); c.strokeStyle = "#2a1a08"; c.lineWidth = 2; c.stroke(); if (meIm.complete && meIm.naturalWidth) c.drawImage(meIm, me.x - 4, me.y - 22, 22, 22);
+    c.fillStyle = "#300"; c.fillRect(me.x - 18, me.y + 15, 36, 5); c.fillStyle = "#6ae04a"; c.fillRect(me.x - 18, me.y + 15, 36 * Math.max(0, me.hp) / 100, 5);
+    c.strokeStyle = "#f4e6c0"; c.lineWidth = 2; for (const a of S.arrows) { const ax = a.g.x - a.x, ay = a.g.y - a.y, ad = Math.hypot(ax, ay) || 1; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(a.x - (ax / ad) * 12, a.y - (ay / ad) * 12); c.stroke(); }
+    if (S.over) { c.fillStyle = "rgba(0,0,0,.55)"; c.fillRect(0, 0, W, H); c.fillStyle = S.over === "win" ? "#a8e05a" : "#f08a6a"; c.font = "800 34px Cinzel, serif"; c.textAlign = "center"; c.fillText(S.over === "win" ? "Both dogs down" : "You went down", W / 2, H / 2); c.font = "700 15px Lora, serif"; c.fillStyle = "#fff"; c.fillText(`${S.taken} damage taken in ${S.t.toFixed(1)} s · click to go again`, W / 2, H / 2 + 30); }
+    document.getElementById("kStat").innerHTML = `Mode: <b>${mode === "new" ? "Proposed: fire while walking" : "Today: walking cancels the shot"}</b><br>Your health: <b>${Math.max(0, S.me.hp)}</b> / 100<br>Damage taken: <b>${S.taken}</b> · arrows fired: <b>${S.shots}</b><br>Time: ${S.t.toFixed(1)} s`;
+  }
+  function frame(now) { const dt = Math.min(0.05, (now - (last || now)) / 1000); last = now; step(dt); draw(); requestAnimationFrame(frame); }
+  requestAnimationFrame(frame);
+  window.KITE = { step, reset, get S() { return S; }, setMode: (m) => (mode = m) };
+})();
+</script>
+</body>
+</html>
