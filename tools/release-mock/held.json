@@ -1,29 +1,5 @@
 [
  {
-  "name": "Field kits (archery's utility)",
-  "commit": "9561116d",
-  "page": "archery-mock",
-  "bundle": "v1.2",
-  "what": "Seven timed kits made at the fletching table (Hunter's camo, Flare, Mark, Eagle eye, Quickdraw wax, Fleet, Retriever), tiered by Fletching, used with a bow in hand, in their own slot beside a page buff; grapple arrows across 12 crossings; snares; fishing arrows (bowfishing).",
-  "ships": "flip HOLD.kits to false, VERSION bump; ALL ART IS IN (the five stand-ins replaced 2026-10-02, core.png repacked): push and probe the kit icons, grapple_arrow, snare, fishing_arrow and the repacked core sheet first, then rules, page and wiki (the full guide, ?v=248), then the worker (kits.js)."
- },
- {
-  "name": "Archery feel",
-  "commit": "(this commit)",
-  "page": "archeryfx-mock",
-  "bundle": "v1.2",
-  "what": "Every arrow lands: a visible draw, the release pitched by the bow, a streak, gem arrows (ember/frost/spark/shimmer), knock-back with a hit-stop, sparks along the line of flight in the colours of what was hit, up to 3 arrows stuck in a target, Bullseye crits, misses that land in the dirt, impacts by material, the dead dropping their arrows, and the kits on the archer (wax gleam, Mark crosshair, retriever arrows flying home, Eagle-eye reach).",
-  "ships": "flip HOLD.archfx to false with the rest of v1.2; page + shared + eastscape-sfx.js (?v=19, new synthesized stand-in sounds). Page only: no worker change. Source real recordings for the stand-ins later."
- },
- {
-  "name": "The Buff Bag",
-  "commit": "(this commit)",
-  "page": "buffbag-mock",
-  "bundle": "v1.2",
-  "what": "One bag, six pockets (meal, drink, potion, scroll, timed gadget, field kit), 99 each. Click it or press B: one of everything is used, anything still running is skipped. Right-click: the window to load, swap, top up and take out. 35,000 in the Store, the Featured Item on the front page and in Upgrades; bound, one per character. A potion is its own buff (C.pot) beside a bar drink. Wiki guide \"The Buff Bag\".",
-  "ships": "flip HOLD.bbag with the rest of v1.2; page (store ?v=5, wiki ?v=249, the new eastscape-bbag.js ?v=1), shared, worker (bbag.js, index.js). New pictures: items/buffbag.png, items/st_buffbag.png, ui/g_buffbag.png: push and probe them first. Test: node tools/eastscape-bbag-test.mjs."
- },
- {
   "name": "Abilities and the order (2a) · on hold",
   "commit": "cf4091c1",
   "page": "ascend-mock",
