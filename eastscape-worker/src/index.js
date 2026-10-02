@@ -4157,7 +4157,7 @@ export class World {
            with a door on the centre line - so a Scarab Swarm homed one tile from the gate could see straight
            through it the moment it opened and follow you down. Comparing chambers instead of distance is what
            makes a cleared room stay cleared. */
-        const ok = (p) => p.C.scene === S.key && !(G.fxOf(p.C).calm > 0) && !G.inCage(S.def, p.x, p.y)   /* (2026-09-27) the Pumpkin King's Crown: nothing attacks its wearer first */ && G.cheb(p, { x: m.hx, y: m.hy }) <= aggro + 5
+        const ok = (p) => p.C.scene === S.key && !(G.fxOf(p.C).calm > 0) && !G.inCage(S.def, p.x, p.y) && !(p.act?.kind === "pick" && p.act.id === m.id)   /* (2026-10-02) a thief working this one's pockets isn't noticed (thief.js) */   /* (2026-09-27) the Pumpkin King's Crown: nothing attacks its wearer first */ && G.cheb(p, { x: m.hx, y: m.hy }) <= aggro + 5
           && (!S.def.pyramid || PR.roomOf(p.x, p.y) === PR.roomOf(m.hx, m.hy))
           && (!m.raid || !S.raidG || p.x <= G.RAID.zoneX);   /* (2026-09-30) the raid keeps to the west bank: nobody in the court is a target */
         const owner = this.claimOf(S, m, now);

@@ -52,7 +52,13 @@ export function installThief(World, { G }) {
       if (G.cheb(pl, m) > 1) { a.x = m.x; a.y = m.y; pl.path = G.findPath(S.g, pl, m, 1) || []; if (!pl.path.length) pl.act = null; return; }   /* it wandered: follow */
       const lvl = G.POCKETS[m.t], have = G.lvlOf(C, "thieving"), name = G.MOBS[m.t].name;
       if (have < lvl && !pl.god) { pl.act = null; return this.say(pl, `You'd never get near ${name.replace(/^The /, "the ")}'s pockets: Thieving ${lvl}, and you're ${have}.`, "bad"); }
-      if (m.target) { pl.act = null; return this.say(pl, `${name} is in a fight. Not now.`, "bad"); }
+      /* (2026-10-02, a player: "you can't pickpocket aggro mobs ... the one eyed ushers in boneyard") A THIEF ISN'T NOTICED. An aggressive monster
+         that had spotted you counted as "in a fight" with you, so 14 of the 21 pocketed monsters could never be picked. Now only a REAL fight
+         stops you: it is after somebody else, or it has swung at you (its claim) or been hit (hurtAt) in the last few seconds. One that had
+         merely spotted you is calmed by the pick, and the aggro check leaves you alone while you work it (index.js). Caught, and it comes for you. */
+      const fighting = (m.target && m.target !== pl.id) || (m.claim && m.claim.until > now) || now - (m.hurtAt || 0) < 5000;
+      if (fighting) { pl.act = null; return this.say(pl, `${name} is in a fight. Not now.`, "bad"); }
+      if (m.target === pl.id) { m.target = null; m.path = []; m.step = null; }
       if (m.outUntil > now) { pl.act = null; return this.say(pl, `${name}'s pockets are already turned out. Give it a minute.`); }
       faceIt();
       const ms = Math.round(G.THIEF.ms / (1 + G.swingFx(C)));
@@ -72,6 +78,7 @@ export function installThief(World, { G }) {
       }
       pl.stunUntil = now + rint(G.THIEF.stun[0], G.THIEF.stun[1]);
       pl.out.push({ type: "caught", until: pl.stunUntil });
+      if (m.aggro ?? G.MOBS[m.t]?.aggro) m.target = pl.id;   /* (2026-10-02) caught by an aggressive one: now it comes for you */
       return this.say(pl, `${name} feels a hand in a pocket and shoves you off. You're stunned.`, "bad");
     }
 
