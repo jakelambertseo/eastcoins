@@ -159,6 +159,22 @@ Not Roman: the user wants new content original and imaginative (NGU / Dungeon Cr
 - **Critical path:** gear shown on characters (heads/suits/hats ARE the event). PixelLab ~35–45 generations.
 - Possible separate pass: original names for the Roman-named world (Ludus Farm, Forum, Via Appia, Gaius, rudis, parma) — user to decide.
 
+## v1.2 (held by the owner, 2026-10-02): rubber banding
+
+The owner and players: slight rubber banding on long click-to-walk paths and when switching maps. Investigated 2026-10-02, nothing built yet.
+
+1. **Server steps lose time (the main cause).** `stepEntity` (worker index.js) starts each step at the tick that notices the last one ended (`t0: now`), so every step rounds UP to the 50 ms tick. Base step is 200 ms (fits), diagonals 280 -> 300, and any speed bonus under ~25% is lost on straight steps (182 ms at +10% walks as 200). The page predicts the true speed, drifts ahead (~3 tiles over 30 at +10%, ~6 at +20%), passes `checkPred`'s allowance and snaps back. Also a gameplay bug: speed bonuses mostly do nothing on the server. Fix: chain each step from the previous step's planned end, and allow catching up a step after a late tick (players first; mobs unchanged).
+2. **Map switch: the page guesses the arrival wrong.** `predictExit` (page) uses `G.OPP[side]` and the edge middle; the server's `moveToScene` uses the side that leads back plus `def.arrive` spots. 10 links land on the wrong edge (Yard<->Gloam, Mire<->Boneyard, Boneyard<->Cloud, Trailer<->Depths, fd_chain/fd_gate) and ~20 use an arrive spot the page ignores. Fix: one shared `arrivalOf(from, to, side)` in the rules, called by both.
+3. **Softer correction (page).** When the page is ahead on the same route, wait for the server instead of snapping; snap only on a real disagreement.
+5. **IDEA ONLY, not to build yet (owner, 2026-10-02: "bundle this idea (idea only)"): a deep-zoom world map, OpenSeadragon-style.**
+   Plan A (recommended): a build step renders every OPEN map with its real ground and props (the offline scene renderer already
+   exists), stitches them on the layout `worldLayout()` computes, and sharp cuts a Deep Zoom pyramid (`.tile({ layout: "dz" })`).
+   OpenSeadragon (~100 KB gz) loads only when the map opens; pins, fog, who's here and quest arrows become its overlays. About
+   14,000 x 7,000 px at full detail, 5-15 MB of tiles on the server, a few hundred KB per view. Rebuild when a map changes; held
+   maps must never be rendered into it. Plan B: our own zoom painting maps live with the game's painter (no build step, heavier
+   on phones). Offered: a standalone dev mock before anything goes in the game.
+4. **Later:** ~31 KB/s and ~12 messages/s per player (whole-scene snapshots): measure by message type, then send deltas. The /stats tick metric always reads 0 (the clock is frozen inside a Worker request): measure tick lateness (the gap between tick starts) instead.
+
 ## Next up
 
 - **BUG (low, owner: "not that big of a deal"): +250 tickets to each player at the Crypt boss kill.** `tools/eastscape-crypt-test.mjs`

@@ -1,0 +1,384 @@
+{
+ "w": 6112,
+ "h": 12160,
+ "mw": 1408,
+ "mh": 832,
+ "maps": [
+  {
+   "k": "workyard",
+   "name": "The Yard",
+   "x": 4608,
+   "y": 6592,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "gloam",
+   "name": "The Gloam",
+   "x": 4608,
+   "y": 5664,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "carnival",
+   "name": "The Carnival",
+   "x": 3104,
+   "y": 6592,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "mire",
+   "name": "The Lantern Mire",
+   "x": 3104,
+   "y": 5664,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "boardwalk",
+   "name": "The Boardwalk",
+   "x": 1600,
+   "y": 6592,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "boneyard",
+   "name": "The Boneyard",
+   "x": 3104,
+   "y": 4736,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "bw_cabin",
+   "name": "Cabin Coast",
+   "x": 1600,
+   "y": 7520,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "cloud",
+   "name": "Cloudreach",
+   "x": 3104,
+   "y": 3808,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "sands",
+   "name": "The Golden Sands",
+   "x": 1600,
+   "y": 4736,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "bw_light",
+   "name": "The Lighthouse",
+   "x": 1600,
+   "y": 8448,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "thunderhead",
+   "name": "The Thunderhead",
+   "x": 1600,
+   "y": 3808,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "frozen",
+   "name": "The Frozen Reach",
+   "x": 3104,
+   "y": 2880,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "bw_wreck",
+   "name": "Shipwreck Isle",
+   "x": 1600,
+   "y": 9376,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "depths",
+   "name": "The Depths of the Mountain",
+   "x": 1600,
+   "y": 2880,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "wild",
+   "name": "The Wilderness",
+   "x": 96,
+   "y": 3808,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "frostspire",
+   "name": "The Frostspire",
+   "x": 3104,
+   "y": 1952,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "bw_pier",
+   "name": "Pirate's Pier",
+   "x": 1600,
+   "y": 10304,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "trailer",
+   "name": "The Trailer Park",
+   "x": 4608,
+   "y": 2880,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "deep",
+   "name": "The Deep Wild",
+   "x": 96,
+   "y": 2880,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "bw_skull",
+   "name": "Skull Isle",
+   "x": 1600,
+   "y": 11232,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "valley",
+   "name": "The Primeval Valley",
+   "x": 4608,
+   "y": 1952,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "valley_ridge",
+   "name": "The Primeval Ridge",
+   "x": 4608,
+   "y": 1024,
+   "w": 1408,
+   "h": 832
+  },
+  {
+   "k": "valley_lair",
+   "name": "Old Rex's Lair",
+   "x": 4608,
+   "y": 96,
+   "w": 1408,
+   "h": 832
+  }
+ ],
+ "links": [
+  [
+   "workyard",
+   "gloam",
+   "road"
+  ],
+  [
+   "workyard",
+   "carnival",
+   "road"
+  ],
+  [
+   "gloam",
+   "workyard",
+   "road"
+  ],
+  [
+   "gloam",
+   "mire",
+   "road"
+  ],
+  [
+   "carnival",
+   "workyard",
+   "road"
+  ],
+  [
+   "carnival",
+   "boardwalk",
+   "road"
+  ],
+  [
+   "mire",
+   "gloam",
+   "road"
+  ],
+  [
+   "mire",
+   "boneyard",
+   "road"
+  ],
+  [
+   "boardwalk",
+   "carnival",
+   "road"
+  ],
+  [
+   "boardwalk",
+   "bw_cabin",
+   "boat"
+  ],
+  [
+   "boneyard",
+   "mire",
+   "road"
+  ],
+  [
+   "boneyard",
+   "cloud",
+   "road"
+  ],
+  [
+   "boneyard",
+   "sands",
+   "road"
+  ],
+  [
+   "bw_cabin",
+   "bw_light",
+   "boat"
+  ],
+  [
+   "cloud",
+   "boneyard",
+   "road"
+  ],
+  [
+   "cloud",
+   "thunderhead",
+   "road"
+  ],
+  [
+   "cloud",
+   "frozen",
+   "road"
+  ],
+  [
+   "sands",
+   "boneyard",
+   "road"
+  ],
+  [
+   "bw_light",
+   "bw_wreck",
+   "boat"
+  ],
+  [
+   "thunderhead",
+   "cloud",
+   "road"
+  ],
+  [
+   "thunderhead",
+   "depths",
+   "road"
+  ],
+  [
+   "thunderhead",
+   "wild",
+   "ladder"
+  ],
+  [
+   "frozen",
+   "cloud",
+   "road"
+  ],
+  [
+   "frozen",
+   "frostspire",
+   "road"
+  ],
+  [
+   "bw_wreck",
+   "bw_pier",
+   "boat"
+  ],
+  [
+   "depths",
+   "thunderhead",
+   "road"
+  ],
+  [
+   "depths",
+   "trailer",
+   "road"
+  ],
+  [
+   "wild",
+   "deep",
+   "road"
+  ],
+  [
+   "frostspire",
+   "frozen",
+   "road"
+  ],
+  [
+   "bw_pier",
+   "bw_skull",
+   "boat"
+  ],
+  [
+   "trailer",
+   "depths",
+   "road"
+  ],
+  [
+   "trailer",
+   "valley",
+   "road"
+  ],
+  [
+   "deep",
+   "wild",
+   "road"
+  ],
+  [
+   "valley",
+   "trailer",
+   "road"
+  ],
+  [
+   "valley",
+   "valley_ridge",
+   "road"
+  ],
+  [
+   "valley_ridge",
+   "valley",
+   "road"
+  ],
+  [
+   "valley_ridge",
+   "valley_lair",
+   "road"
+  ],
+  [
+   "valley_lair",
+   "valley_ridge",
+   "road"
+  ]
+ ]
+}
