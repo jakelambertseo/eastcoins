@@ -42,6 +42,7 @@ const CATS = [
     ["loot-mock", "Rolled loot", "Rolled loot: random lines on gear, six casino chips, the Dealer, and where it fits in balance"],
     ["soapbox-mock", "Soapbox racing", "Soapbox racing: a playable bumper-car race, the garage, parts that break"],
     ["thieving-mock", "Thieving & shortcuts", "Thieving out in the world, and Agility shortcuts"],
+    ["heist-mock", "The Heist", "The Heist: a daily crew job in the Casino and the Vault, for every level, Thieving first"],
     ["skillsets-mock", "Skilling sets", "Skilling gear and sets"],
     ["workclothes-mock", "Work clothes", "Work clothes, in the game"],
     ["balance-mock", "Balance", "The balance check"],

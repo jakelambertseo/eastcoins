@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>The Heist</title>
+<!-- (2026-10-02, the owner: "from the gameplan, under the theiving mock, can you mockup how The Heist (a world event) would look"). The thieving
+     mock's "later" world event, built out: a crew job in the Casino and the Vault, once a day, every level, Thieving first. It replaces the Yard
+     chase on the raids page (the Jackpot Thief already is that chase). The three floors are the real Guild, Casino and Vault, drawn by the dev
+     page's own renderer (__es.bgOf) and cropped to their rooms; everything over them is HTML in the kit's classes, sprites at the game's size.
+     Names, levels and marks are read from the rules (the Vault's Warden 74 / Pit Boss 80 / Coin Hoard 86 / Last Dealer 92, the Guild's four,
+     MARKS, EVDAY, JTHIEF). Stand-in sprites are existing NPCs; the art list says what PixelLab makes. Local only; built into /gameplan. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0a09;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 10% -10%,#2a1030,transparent),radial-gradient(900px 600px at 100% 30%,#2a1a08,transparent),#0b0a09}
+main{max-width:1240px;margin:0 auto;padding:28px 16px 80px}
+a{color:#ffd98a}
+h1{margin:0 0 4px;font:800 34px/1.1 Cinzel,Georgia,serif;color:#ffe7b0}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffd98a}
+h3{margin:18px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}.lede b{color:#f6e9cc}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffd98a}
+.sec{margin:44px 0 0;padding:22px 0 0;border-top:2px solid #3a2a1a}.sec>p{color:#b8a888;max-width:980px;line-height:1.55}.sec>p b{color:#f6e9cc}
+.tagline{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}.tagline span{padding:4px 10px;border-radius:999px;background:#2a1a10;box-shadow:0 0 0 1.5px #5a3a1a;font:700 12.5px Lora,serif;color:#e8d8b0}
+.tagline span.new{background:#3a1a4a;box-shadow:0 0 0 1.5px #b07ae0;color:#f0dcff}
+.big{margin:14px 0 6px;padding:14px 18px;border-radius:12px;background:linear-gradient(90deg,#2a1a3a,#14120e);box-shadow:inset 4px 0 0 #c89aff,0 0 0 1.5px #4a2a5a;max-width:980px}
+.big b{display:block;font:800 19px Cinzel,serif;color:#f0dcff;margin-bottom:4px}.big span{font:600 14px/1.6 Lora,serif;color:#d8ccb4}.big span b{display:inline;font:inherit;color:#fff0c8;margin:0}
+.beats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 0}
+.beat{position:relative;padding:11px 13px 12px;border-radius:10px;background:#14120e;box-shadow:0 0 0 1.5px #3a2616}
+.beat i{display:block;font:800 10.5px Lora,serif;font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:#c89aff}
+.beat b{display:block;font:800 16px Cinzel,serif;color:#ffe7b0;margin:2px 0 3px}.beat span{font:600 12.5px/1.45 Lora,serif;color:#b8a888}
+.beat small{display:block;margin-top:5px;font:800 11px Lora,serif;color:#ffd98a}
+@media (max-width:860px){.beats{grid-template-columns:1fr 1fr}}
+
+/* ---------- the screens: a real floor, the event drawn over it. Sprites are sized from their own pixels against the floor's (--n / --W) ---------- */
+.screen{position:relative;width:100%;margin-top:16px;border-radius:8px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.55),0 0 0 2px #3a2616;user-select:none;container-type:inline-size}
+.screen .world{position:absolute;inset:0;background:var(--bg) center/100% 100% no-repeat;image-rendering:pixelated}
+.screen.night .world{filter:saturate(.85) brightness(.62)}
+.screen.alarm .world{filter:saturate(.8) brightness(.55)}
+.screen.alarm::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 90px rgba(220,30,20,.45)}
+.sp{position:absolute;transform:translate(-50%,-100%);width:calc(var(--n) / var(--W) * 100cqw);pointer-events:none}
+.sp img{display:block;width:100%;image-rendering:pixelated}
+.np{position:absolute;transform:translate(-50%,0);text-align:center;font:800 clamp(9px,1cqw,11.5px)/1.2 Lora,serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000;white-space:nowrap;pointer-events:none}
+.np .lv{color:#ffd84a}.np small{display:block;font-size:.9em;color:#ffd98a}.np.foe{color:#ffb0a0}
+.plate{position:absolute;transform:translate(-50%,0);width:clamp(96px,11cqw,140px);padding:3px 6px 5px;border-radius:5px;background:linear-gradient(#3a2414,#20140a);box-shadow:0 0 0 1.5px #c8963a,0 4px 10px rgba(0,0,0,.5)}
+.plate b{display:flex;justify-content:space-between;gap:6px;font:800 clamp(8.5px,.9cqw,10.5px) Lora,serif;color:#ffcf8a;white-space:nowrap}.plate b span{color:#ffd84a}
+.plate i{display:block;height:6px;margin-top:3px;border-radius:3px;background:#1a1028;box-shadow:inset 0 0 0 1px #000;overflow:hidden}
+.plate i::after{content:"";display:block;height:100%;width:var(--p,60%);background:linear-gradient(#e0b0ff,#8a4ad0)}
+.plate.gold{box-shadow:0 0 0 1.5px #ffd84a,0 0 18px rgba(255,216,74,.35)}.plate.gold i::after{background:linear-gradient(#ffe27a,#c8963a)}
+.splat{position:absolute;transform:translate(-50%,-50%);font:900 clamp(10px,1.2cqw,14px) Lora,serif;color:#fff;white-space:nowrap;text-shadow:1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000}
+.splat.gold{color:#ffe27a}.splat.vi{color:#e8c8ff}.splat.bad{color:#ff9a8a}.splat.blue{color:#9ad8ff}
+.trail{position:absolute;height:0;border-top:3px dotted rgba(255,226,122,.75);transform-origin:0 0;pointer-events:none}
+.mark{position:absolute;transform:translate(-50%,-50%);padding:3px 8px;border-radius:6px;font:900 clamp(8px,.85cqw,10px) Lora,serif;letter-spacing:.08em;color:#fff;text-transform:uppercase;white-space:nowrap}
+.mark.exit{background:rgba(160,30,20,.88);box-shadow:0 0 0 1.5px #ff8a6a}
+.mark.hatch{background:rgba(30,90,60,.9);box-shadow:0 0 0 1.5px #7ee0a0}
+.mark.row{background:rgba(26,16,40,.88);box-shadow:0 0 0 1.5px var(--c,#b07ae0);color:var(--c,#e8dcff)}
+.mark.row.shut{opacity:.6;filter:grayscale(.6)}
+.box{position:absolute;transform:translate(-50%,-100%);width:calc(25 / var(--W) * 100cqw);image-rendering:pixelated}
+.box.open{opacity:.45;filter:grayscale(.7)}
+.box.work{filter:drop-shadow(0 0 5px #c89aff)}
+.cone{position:absolute;width:calc(var(--len) * 1cqw);height:calc(var(--len) * .62cqw);transform-origin:0 50%;transform:translate(0,-50%) rotate(var(--a,180deg));background:linear-gradient(90deg,rgba(255,226,122,.42),rgba(255,226,122,0));clip-path:polygon(0 50%,100% 0,100% 100%);pointer-events:none}
+.cone.hot{background:linear-gradient(90deg,rgba(255,80,60,.55),rgba(255,80,60,0))}
+.chip{position:absolute;transform:translate(-50%,0);display:flex;align-items:center;gap:3px;padding:2px 6px;border-radius:999px;background:rgba(20,13,10,.88);box-shadow:0 0 0 1px #8a6428;font:800 clamp(8px,.85cqw,10px) Lora,serif;color:#ffe7b0;white-space:nowrap}
+.chip img{width:13px;height:13px;image-rendering:pixelated}.chip.slow{color:#ffb0a0}.chip.card{box-shadow:0 0 0 1px var(--c)}
+.bubble{position:absolute;transform:translate(-50%,-100%);max-width:min(300px,30cqw);padding:7px 10px;border-radius:10px;background:#f4ead0;color:#2a1a10;font:700 clamp(10px,1.05cqw,12.5px)/1.4 Lora,serif;box-shadow:0 0 0 2px #5a3a1a,0 6px 16px rgba(0,0,0,.5)}
+.bubble::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-7px;border:7px solid transparent;border-bottom:0;border-top-color:#f4ead0}
+.bubble b{color:#6a2a8a}
+@media (prefers-reduced-motion:no-preference){
+  .cone{animation:sweep 3.2s ease-in-out infinite alternate}@keyframes sweep{from{transform:translate(0,-50%) rotate(calc(var(--a,180deg) - 12deg))}to{transform:translate(0,-50%) rotate(calc(var(--a,180deg) + 12deg))}}
+  .box.work{animation:jig .35s steps(2) infinite}@keyframes jig{50%{margin-left:1px}}
+  .carry{animation:bob .55s ease-in-out infinite}@keyframes bob{50%{margin-top:-2px}}
+  .screen.alarm::after{animation:siren 1.6s ease-in-out infinite}@keyframes siren{50%{box-shadow:inset 0 0 140px rgba(220,30,20,.7)}}
+}
+/* the HUD: the kit's dark glass, as the game wears it (the same as the raids page) */
+.hud{position:absolute;background:rgba(20,13,10,.9);box-shadow:0 0 0 2px #8a6428,0 0 0 3.5px rgba(0,0,0,.6),0 6px 18px rgba(0,0,0,.45);border-radius:10px;color:#f4ead0}
+.tracker{right:10px;top:10px;width:clamp(180px,22cqw,260px);padding:9px 11px}
+.tracker .t{display:flex;align-items:center;gap:7px;font:800 13px Cinzel,serif;color:#e8c8ff}.tracker .t img{width:18px;height:18px;image-rendering:pixelated}
+.tracker .t em{margin-left:auto;font:800 12px Lora,serif;font-style:normal;color:#fff;background:rgba(255,255,255,.1);padding:1px 7px;border-radius:999px;font-variant-numeric:tabular-nums}
+.tracker .ph{margin-top:3px;font:800 10.5px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#ffd98a}
+.tracker .r{display:flex;justify-content:space-between;gap:8px;margin-top:6px;font:700 12px Lora,serif;color:#e0d0b0}.tracker .r b{color:#fff;font-variant-numeric:tabular-nums}
+.tracker .bar{height:8px;margin-top:4px;border-radius:4px;background:#2a1a10;box-shadow:inset 0 0 0 1px #000;overflow:hidden}.tracker .bar i{display:block;height:100%}
+.tracker .bar.alarm{position:relative}.tracker .bar.alarm::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(255,255,255,.55)}
+.tracker small{display:block;margin-top:6px;font:600 11px/1.35 Lora,serif;color:#b8a888}
+.tracker .cards{display:grid;gap:3px;margin-top:5px}.tracker .cards div{display:grid;grid-template-columns:12px 1fr auto;gap:6px;align-items:center;font:700 11.5px Lora,serif;color:#e0d0b0}
+.tracker .cards s{display:block;width:12px;height:8px;border-radius:2px;background:var(--c);text-decoration:none;box-shadow:0 0 0 1px #000}.tracker .cards b{color:#fff}.tracker .cards .ok{color:#9fe8a0}
+.feed{left:10px;bottom:10px;width:min(470px,56%);padding:7px 10px;display:grid;gap:3px;font:600 clamp(10.5px,1.05cqw,12px)/1.35 Lora,serif}
+.feed p{margin:0}.feed .c{color:#ffd98a}.feed .c b{color:#ffe27a}.feed .g{color:#9fe8a0}.feed .bad{color:#ffb0a0}.feed .v{color:#e8c8ff}
+.banner{position:absolute;left:50%;top:5%;transform:translateX(-50%);padding:7px 22px;border-radius:8px;background:linear-gradient(#2a1a3a,#160e20);box-shadow:0 0 0 3px #c89aff,0 0 30px rgba(200,154,255,.4);text-align:center;color:#fff;white-space:nowrap}
+.banner small{display:block;font:800 11px Lora,serif;letter-spacing:.14em;text-transform:uppercase;color:#e8c8ff}.banner b{font:800 clamp(15px,2cqw,22px) Cinzel,serif}
+.banner.red{background:linear-gradient(#4a1410,#200a08);box-shadow:0 0 0 3px #ff6a4a,0 0 30px rgba(255,90,60,.5)}.banner.red small{color:#ffb0a0}
+@media (max-width:700px){.feed{display:none}.tracker{transform:scale(.85);transform-origin:top right}}
+
+/* ---------- the reading under each screen ---------- */
+.grid2{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;margin-top:16px;align-items:start}.grid2>.wide{grid-column:1/-1}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+.k-win{min-width:0}
+.k-paper h3{color:var(--k-head);margin:14px 0 4px}
+.k-paper p{margin:6px 0;font:600 13.5px/1.5 Lora,serif;color:var(--k-ink)}
+.phase{display:grid;grid-template-columns:76px 1fr;gap:4px 12px;padding:8px 10px;border-radius:6px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);margin-top:6px}
+.phase .w{font:800 11px Lora,serif;letter-spacing:.06em;text-transform:uppercase;color:var(--k-gold-ink)}
+.phase b{font:800 14px Lora,serif;color:var(--k-ink)}.phase span{grid-column:2;font:600 13px/1.45 Lora,serif;color:var(--k-ink2)}
+.roles{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.role{padding:8px;border-radius:6px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line);font:600 12.5px/1.4 Lora,serif;color:var(--k-ink2)}
+.role b{display:block;font:800 12px Lora,serif;color:var(--k-ink);margin-bottom:2px}.role em{display:block;font-style:normal;font:800 10.5px Lora,serif;color:var(--k-gold-ink);margin-bottom:3px}
+@media (max-width:760px){.roles{grid-template-columns:1fr 1fr}}
+.casino{margin-top:6px;padding:8px 10px;border-radius:6px;background:#1e140c;color:#ffd98a;font:600 13px/1.45 Lora,serif}
+.casino p{margin:4px 0;color:#ffd98a}.casino b{color:#ffe27a}
+.nums{width:100%;border-collapse:collapse;font:600 13px Lora,serif;color:var(--k-ink)}
+.nums td,.nums th{padding:5px 6px;border-top:1px solid var(--k-line);text-align:left}.nums td.n,.nums th.n{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.nums th{font:800 10px Lora,serif;letter-spacing:.07em;text-transform:uppercase;color:var(--k-ink3);border-top:0}
+.nums tr:first-child td{border-top:0}
+.nums img{width:20px;height:20px;image-rendering:pixelated;vertical-align:-5px;margin-right:5px}
+.build{margin:6px 0 0;padding-left:18px;font:600 13px/1.5 Lora,serif;color:var(--k-ink2)}.build li{margin:3px 0}.build b{color:var(--k-ink)}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(232,191,53,.1);box-shadow:inset 0 0 0 1.5px rgba(232,191,53,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffe27a}
+
+/* ---------- the deposit box window ---------- */
+.boxwin{max-width:440px}
+.boxwin .tum{display:flex;gap:6px;justify-content:center;margin:8px 0 4px}
+.boxwin .tum span{width:26px;height:46px;border-radius:5px;background:linear-gradient(#5a4a3a,#2a2018);box-shadow:inset 0 0 0 2px #1a120c;position:relative}
+.boxwin .tum span::after{content:"";position:absolute;left:7px;right:7px;top:var(--y,28px);height:12px;border-radius:3px;background:linear-gradient(#ffe27a,#c8963a)}
+.boxwin .tum span.set::after{background:linear-gradient(#9ef0a0,#3a9a4a)}
+.boxwin .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.boxwin .acts button{display:grid;gap:2px;justify-items:start;padding:8px 10px;text-align:left;cursor:default}
+.boxwin .acts button small{font:600 11.5px/1.35 Lora,serif;opacity:.85}
+.odds{display:flex;justify-content:space-between;margin-top:6px;font:700 12.5px Lora,serif;color:var(--k-ink2)}.odds b{color:var(--k-ink)}
+
+/* ---------- the count ---------- */
+.count{max-width:520px}
+.count .tot{display:flex;align-items:baseline;justify-content:space-between;padding:8px 10px;border-radius:6px;background:var(--k-card);box-shadow:inset 0 0 0 1px var(--k-card-line)}
+.count .tot b{font:800 24px Cinzel,serif;color:var(--k-gold-ink)}.count .tot span{font:700 12.5px Lora,serif;color:var(--k-ink2)}
+.count .you{margin-top:8px;padding:9px 11px;border-radius:6px;background:linear-gradient(90deg,rgba(200,154,255,.18),transparent);box-shadow:inset 3px 0 0 #8a4ad0}
+.count .you b{font:800 14px Lora,serif;color:var(--k-ink)}.count .you span{display:block;font:600 12.5px/1.5 Lora,serif;color:var(--k-ink2)}
+
+.opts{display:grid;gap:10px;margin-top:12px}
+.opt{display:grid;grid-template-columns:30px 1fr;gap:4px 12px;padding:12px 15px;border-radius:12px;background:#14120e;box-shadow:0 0 0 1.5px #3a2616}
+.opt>i{grid-row:1/span 2;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#2a1a3a;color:#e0c8ff;font:800 13px Cinzel,serif;font-style:normal}
+.opt header{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.opt header b{font:800 16px Cinzel,serif;color:#ffe7b0}
+.rec{font:800 11px Lora,serif;padding:2px 9px;border-radius:999px;background:#1e4a24;color:#9ef0a0}
+.opt p{margin:2px 0 0;font:600 13.5px/1.55 Lora,serif;color:#d8ccb4}.opt p b{color:#fff0c8}
+.artrow{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+.artrow figure{margin:0;width:150px;padding:9px;border-radius:10px;background:#14120e;box-shadow:0 0 0 1.5px #3a2616;font:600 11.5px/1.4 Lora,serif;color:#a89070}
+.artrow figure b{display:block;font:800 12.5px Lora,serif;color:#ffe7b0;margin-bottom:2px}
+.artrow figure img{display:block;height:44px;margin:0 0 6px;image-rendering:pixelated;opacity:.75}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+</style>
+</head>
+<body>
+<main>
+  <h1>🗝️ The Heist</h1>
+  <p class="lede">The thieving world event from the thieving mock, built out. The Jackpot Thief already gives the world a chase, so this
+    one is a <b>job</b>: once a day the House moves the takings into the Vault, Marla Nine-Fingers puts a crew together, and for ten
+    minutes anyone who turns up is on it. <b>Thieves crack the boxes, low levels lift the keycards, fighters hold off the guards, and
+    whoever is quick on their feet carries the sacks out.</b> It happens in the Casino and the Vault, never in the Yard, and nobody dies.</p>
+  <div class="tagline"><span class="new">New: a crew job</span><span>World event · once a day</span><span>10 min warning + 10 min job</span><span>All levels</span><span>Thieving first, every role paid</span><span>The Casino and the Vault</span><span>Nobody dies</span></div>
+  <nav class="jump"><a href="#shape">The shape</a><a href="#tip">1 · The tip-off</a><a href="#case">2 · Case the joint</a><a href="#vault">3 · The Vault</a><a href="#lockdown">4 · Lockdown</a><a href="#count">The count</a><a href="#numbers">Numbers &amp; balance</a><a href="#build">Building it</a><a href="#decide">Decisions</a></nav>
+
+  <section class="sec" id="shape">
+    <h2>The shape</h2>
+    <div class="big"><b>A fourth daily event, and the first one where Thieving is the main skill.</b><span>Shooting Stars is for miners, Wanted! and the
+      Jackpot Thief are for fighters. The Heist is the one thieves have been missing, and it still has <b>a paid job for every level and every
+      build</b>: a level-3 can lift a Copper keycard, a pure fighter can hold a guard, an Agility main can run sacks out through the service hatch. It
+      goes in the day planner as a <b>fourth window</b> (EVDAY's 12:00 to midnight is cut into four instead of three, with the same 30-minute margin),
+      so it is still once a day and never closer than an hour to another event.</span></div>
+    <div class="beats">
+      <div class="beat"><i>−10:00</i><b>The tip-off</b><span>CASINO and Marla at the Thieves' Guild. You join by turning up: anyone in the Casino or the Vault when the job starts is crew.</span><small>Guild · Casino</small></div>
+      <div class="beat"><i>0:00 – 3:00</i><b>Case the joint</b><span>House staff on the Casino floor carry keycards. Lift them. Every card opens more of the Vault, so the low levels decide how big the job is.</span><small>Casino floor</small></div>
+      <div class="beat"><i>3:00 – 10:00</i><b>The Vault</b><span>Three rows of deposit boxes by Thieving level, and the House Box at the back. Crack, carry the sack out, come back. Guards patrol; fighters hold them.</span><small>The Vault</small></div>
+      <div class="beat"><i>When the alarm fills</i><b>Lockdown</b><span>Every failed crack raises the alarm. At 100% the doors start to close and the Pit Boss walks the rows. 60 seconds to get out.</span><small>The Vault</small></div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== 1 · THE TIP-OFF -->
+  <section class="sec" id="tip">
+    <h2>1 · The tip-off</h2>
+    <p>Ten minutes' warning, like the Shooting Stars. CASINO says it to everyone; Marla says it to anyone who walks into the Guild, along with
+      the plan and who is already in. There is <b>nothing to sign</b> and <b>no permit</b> for the night: the Guild's 15,000-ticket permit is for its
+      marks, and the Heist is meant to bring people who have never been in. Turning up is joining.</p>
+    <div class="screen night" style="--bg:url(guild.jpg);--W:1296;aspect-ratio:1296/488">
+      <div class="world"></div>
+      <div class="banner"><small>The Heist · tonight</small><b>The Vault opens in 6:40</b></div>
+      <!-- Marla and her plan -->
+      <div class="bubble" style="left:40%;top:44%">The House moves the week's take into the Vault at nine. <b>I need hands.</b> Little ones for the keycards, big ones for the guards, and anyone who can carry.</div>
+      <div class="sp" style="--n:25;left:40%;top:62%"><img src="/v3/assets/img/glad/flat/marla_south.png" alt=""></div>
+      <div class="np" style="left:40%;top:62.5%">Marla Nine-Fingers <small>the plan</small></div>
+      <div class="sp" style="--n:25;left:64%;top:52%"><img src="/v3/assets/img/glad/flat/odile_south.png" alt=""></div>
+      <div class="np" style="left:64%;top:52.5%">Odile the Clerk <small>counts the take after</small></div>
+      <div class="sp" style="--n:27;left:14%;top:50%"><img src="/v3/assets/img/glad/flat/quietman_south.png" alt=""></div>
+      <div class="np" style="left:14%;top:50.5%">The Quiet Man <small>"Mm."</small></div>
+      <!-- the crew turning up -->
+      <div class="sp" style="--n:56;left:47%;top:84%"><img src="/v3/assets/img/glad/flat/mudge_south.png" alt=""></div><div class="np" style="left:47%;top:84.5%">calvin <span class="lv">(12)</span></div>
+      <div class="sp" style="--n:68;left:57%;top:88%"><img src="/v3/assets/img/glad/flat/kellz_south.png" alt=""></div><div class="np" style="left:57%;top:88.5%">AndyReidisaPAWG <span class="lv">(88)</span></div>
+      <div class="sp" style="--n:27;left:68%;top:80%"><img src="/v3/assets/img/glad/flat/pete_south.png" alt=""></div><div class="np" style="left:68%;top:80.5%">jimmytomato <span class="lv">(41)</span></div>
+      <div class="sp" style="--n:68;left:80%;top:86%"><img src="/v3/assets/img/glad/flat/dex_south.png" alt=""></div><div class="np" style="left:80%;top:86.5%">BeeEzRadio <span class="lv">(64)</span></div>
+
+      <div class="hud tracker"><div class="t"><img src="/v3/assets/img/glad/flat/items/skeleton_key.png" alt="">THE HEIST <em>6:40</em></div><div class="ph">Tip-off</div>
+        <div class="r"><span>Crew so far</span><b>14</b></div>
+        <div class="r"><span>Thieves (Thv 30+)</span><b>5</b></div>
+        <div class="r"><span>Guards tonight</span><b>4</b></div>
+        <small>Be in the Casino or the Vault at 0:00 and you're crew. Guards scale with the crew: 2, and one more for every six of you.</small></div>
+      <div class="hud feed"><p class="c">🗝️ <b>CASINO:</b> Word is the week's take goes down to the Vault in ten minutes. I didn't tell you that. Marla's at the Guild.</p>
+        <p class="v">Marla: "Bring a lockpick if you've got one. Bring your legs if you haven't."</p></div>
+    </div>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/chat.png" alt=""><b>What CASINO says</b><span class="k-sub">one line a beat, never spam</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <div class="casino"><p>🗝️ <b>HEIST.</b> Word is the week's take goes down to the Vault in ten minutes. I didn't tell you that. Marla's at the Guild.</p>
+            <p>🗝️ Five minutes. The House has doubled the guard. I'm told they're very nice men.</p>
+            <p>🗝️ <b>IT'S ON.</b> The staff on the floor have the keycards. Lift them and the Vault opens row by row.</p>
+            <p>🗝️ Three rows open. Go. Go. Go.</p>
+            <p>🗝️ The alarm's at half. Somebody's being loud down there.</p>
+            <p>🗝️ <b>LOCKDOWN.</b> The doors are closing and the Pit Boss is walking the rows. Sixty seconds.</p>
+            <p>🗝️ <b>CLEAN:</b> 27 of you got out with 34 sacks and the House Box. Odile's counting. The House would like a word with nobody, apparently.</p>
+            <p>🗝️ <b>CAUGHT:</b> The doors shut on 6 of you. The House kept 9 sacks. Everyone else, Odile's counting.</p></div>
+        </div></section>
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/g_thieving.png" alt=""><b>Who does what</b><span class="k-sub">every level has a paid job</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <div class="roles" style="grid-template-columns:1fr 1fr">
+            <div class="role"><em>Any level</em><b>The lift</b>Pick a keycard off the House staff on the Casino floor. The Copper card is a level-1 mark.</div>
+            <div class="role"><em>Thieving 1 / 30 / 60 / 90</em><b>The crack</b>Copper, Silver and Gold rows of boxes, and the House Box with everyone at Thv 90+ on it at once.</div>
+            <div class="role"><em>Combat 40+</em><b>The muscle</b>Guards can't be killed. A hit holds one for 8 seconds, and a held guard sees nobody.</div>
+            <div class="role"><em>Any level, Agility helps</em><b>The runner</b>Carry sacks out to Odile's cart. Agility 30 opens the service hatch, the short way out.</div>
+          </div>
+          <p class="note" style="margin-top:8px">One person can do all four. The count pays every job, so the level-3 with one keycard is paid the same crew share as the level-99 on the House Box (see <a href="#count">the count</a>).</p>
+        </div></section>
+    </div>
+  </section>
+
+  <!-- ===================================================================== 2 · CASE THE JOINT -->
+  <section class="sec" id="case">
+    <h2>2 · Case the joint</h2>
+    <p>For three minutes the Vault stays shut and the House's staff walk the Casino floor with keycards on their belts. They are <b>marks</b>, using
+      the Guild's own formula, so nothing new has to be balanced: Copper is the Apprentice Lifter's level, Silver the Grifter's, Gold The Fixer's.
+      A lift puts the card in the <b>crew's</b> pool, not your bag, so a level-3's Copper card opens boxes for everyone.
+      <b>Every card opens more boxes</b>: the rows open at 3 cards, and each card after that adds two boxes to its row, up to 12. A crew that cases well
+      gets a bigger Vault.</p>
+    <div class="screen night" style="--bg:url(casino.jpg);--W:1360;aspect-ratio:1360/654">
+      <div class="world"></div>
+      <!-- house staff, with the card each carries -->
+      <div class="sp" style="--n:68;left:30%;top:70%"><img src="/v3/assets/img/glad/flat/vince_south.png" alt=""></div>
+      <div class="np foe" style="left:30%;top:70.5%">Floor clerk</div><div class="chip card" style="--c:#c87a3a;left:30%;top:75.5%"><img src="/v3/assets/img/glad/flat/items/skeleton_key.png" alt="">Copper card · Thv 1</div>
+      <div class="sp" style="--n:68;left:62%;top:62%"><img src="/v3/assets/img/glad/flat/nana_south.png" alt=""></div>
+      <div class="np foe" style="left:62%;top:62.5%">Cage cashier</div><div class="chip card" style="--c:#c8c8d8;left:62%;top:67.5%"><img src="/v3/assets/img/glad/flat/items/skeleton_key.png" alt="">Silver card · Thv 30</div>
+      <div class="sp" style="--n:68;left:85%;top:80%"><img src="/v3/assets/img/glad/flat/vince_south.png" alt=""></div>
+      <div class="np foe" style="left:85%;top:80.5%">Night manager</div><div class="chip card" style="--c:#ffd84a;left:85%;top:85.5%"><img src="/v3/assets/img/glad/flat/items/skeleton_key.png" alt="">Gold card · Thv 60</div>
+      <span class="trail" style="left:62%;top:60%;width:14%;transform:rotate(15deg)"></span>
+      <!-- the crew -->
+      <div class="sp" style="--n:56;left:24%;top:72%"><img src="/v3/assets/img/glad/flat/mudge_south.png" alt=""></div><div class="np" style="left:24%;top:72.5%">calvin <span class="lv">(12)</span></div>
+      <span class="splat gold" style="left:27%;top:52%">+ Copper keycard!</span>
+      <div class="sp" style="--n:27;left:56%;top:64%"><img src="/v3/assets/img/glad/flat/pete_south.png" alt=""></div><div class="np" style="left:56%;top:64.5%">jimmytomato <span class="lv">(41)</span></div>
+      <span class="splat bad" style="left:56%;top:44%">Stunned! She felt that.</span>
+      <div class="sp" style="--n:27;left:75%;top:80%"><img src="/v3/assets/img/glad/flat/quietman_south.png" alt=""></div><div class="np" style="left:75%;top:80.5%">Kellzifer <span class="lv">(91)</span></div>
+      <!-- the stairs down -->
+      <span class="mark exit" style="left:57%;top:95%">Back stairs to the Vault · opens at 3:00</span>
+      <div class="hud tracker"><div class="t"><img src="/v3/assets/img/glad/flat/items/skeleton_key.png" alt="">THE HEIST <em>1:42</em></div><div class="ph">Case the joint</div>
+        <div class="cards">
+          <div style="--c:#c87a3a"><s></s><span>Copper row</span><b class="ok">5 cards · 7 boxes</b></div>
+          <div style="--c:#c8c8d8"><s></s><span>Silver row</span><b>4 cards · 5 boxes</b></div>
+          <div style="--c:#ffd84a"><s></s><span>Gold row</span><b>2 of 3 to open</b></div>
+        </div>
+        <small>Rows open at 3 cards; every card after that is two more boxes, up to 12 a row. The House Box needs one card of each.</small></div>
+      <div class="hud feed"><p class="c">🗝️ <b>CASINO:</b> IT'S ON. The staff on the floor have the keycards. Lift them and the Vault opens row by row.</p>
+        <p class="g">You lift a Copper keycard. The crew has 5. (+76 Thieving)</p><p class="bad">jimmytomato fumbles the cashier's pocket and is stunned.</p></div>
+    </div>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/items/skeleton_key.png" alt=""><b>The keycards</b><span class="k-sub">marks you already know how to work</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <table class="nums"><tr><th>Card</th><th>Carried by</th><th class="n">Mark level</th><th class="n">Chance at that level</th><th>Opens</th></tr>
+            <tr><td>🟫 Copper</td><td>Floor clerks (3)</td><td class="n">1</td><td class="n">55% → 90%</td><td>the Copper row</td></tr>
+            <tr><td>⬜ Silver</td><td>Cage cashiers (2)</td><td class="n">30</td><td class="n">55% → 90%</td><td>the Silver row</td></tr>
+            <tr><td>🟨 Gold</td><td>The night manager (1)</td><td class="n">60</td><td class="n">55% → 90%</td><td>the Gold row</td></tr></table>
+          <p class="note" style="margin-top:6px">The Guild's own formula: <code>min(90%, 55% + 2% × (you − the mark) + steal)</code>, 2.4 s a try, a fail stuns you. Each member of staff carries <b>4 cards</b>, refilled every 20 s, so a crowd cannot strip the floor in ten seconds. A lift pays 4 picks of that mark's Guild XP.</p>
+        </div></section>
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/settings.png" alt=""><b>Why cards, not a door with health</b></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <p>The first draft (EASTSCAPE-DRAFTS: "vault doors with health, guard waves") made it a fight, and a fight is what Wanted! and the raids already are.
+            Cards make the first three minutes <b>a thieving job a level-1 can do</b>, and they make the size of the Vault the crowd's own doing: a quiet night opens
+            one row, a busy one all three and the House Box.</p>
+          <p>They also give the high levels a reason to wait for the low ones. Kellzifer can't open the Gold row alone fast enough; he needs the clerks' Copper cards
+            lifted first to get anything to carry.</p>
+        </div></section>
+    </div>
+  </section>
+
+  <!-- ===================================================================== 3 · THE VAULT -->
+  <section class="sec" id="vault">
+    <h2>3 · The Vault</h2>
+    <p>At 3:00 the back stairs open. For the length of the job <b>the Vault's own monsters step out</b> (the Wardens, Pit Bosses, Coin Hoards and the
+      Last Dealer: nobody farming there loses a fight they didn't choose, and they get the ten-minute warning too) and the room becomes three box walls and a
+      door. Each walkway is lined with a wall of boxes; click one to crack it. a crack is a timed action like a pick, and a success hands you a <b>sack</b>. You carry one sack at a time, slowly,
+      up the stairs to Odile's cart, and come back for another. <b>House Security</b> walks the rows with a lamp. If a guard's light finds you carrying, he
+      walks you up to the Casino floor, and the sack stays on the Vault floor for anyone to pick up.</p>
+    <div class="screen night" style="--bg:url(vault.jpg);--W:1360;aspect-ratio:1360/740">
+      <div class="world"></div>
+      <!-- the rows: a wall of boxes along each walkway -->
+      <span class="mark row" style="--c:#e8a868;left:8%;top:26.5%">Copper row · Thv 1</span>
+      <span class="mark row" style="--c:#d8d8e8;left:8%;top:54.6%">Silver row · Thv 30</span>
+      <span class="mark row" style="--c:#ffd84a;left:8%;top:77%">Gold row · Thv 60</span>
+      <img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:19%;top:21%"><img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:24%;top:21%"><img class="box work" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:29%;top:21%"><img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:41%;top:21%"><img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:58%;top:21%"><img class="box" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:69%;top:21%"><img class="box" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:74%;top:21%">
+      <img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:24%;top:50%"><img class="box" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:29%;top:50%"><img class="box" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:44%;top:50%"><img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:56%;top:50%"><img class="box" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:70%;top:50%">
+      <img class="box" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:44%;top:78%"><img class="box work" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:56%;top:78%"><img class="box" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:70%;top:78%">
+      <!-- the House Box, at the back -->
+      <div class="sp" style="--n:112;left:50%;top:19%"><img src="/v3/assets/img/glad/flat/o_bigvault.png" alt=""></div>
+      <div class="plate gold" style="left:50%;top:20.5%;--p:41%"><b>The House Box <span>41%</span></b><i></i></div>
+      <div class="np" style="left:50%;top:26%"><small>Thv 90 · 3 on it</small></div>
+      <div class="sp" style="--n:25;left:41%;top:20%"><img src="/v3/assets/img/glad/flat/marla_south.png" alt=""></div><div class="np" style="left:41%;top:20.5%">Marla</div>
+      <!-- the crew at work -->
+      <div class="sp" style="--n:56;left:29%;top:31%"><img src="/v3/assets/img/glad/flat/mudge_south.png" alt=""></div><div class="np" style="left:29%;top:31.5%">calvin <span class="lv">(12)</span></div>
+      <div class="plate" style="left:29%;top:35%;--p:66%"><b>Cracking <span>66%</span></b><i></i></div>
+      <div class="sp" style="--n:27;left:56%;top:60%"><img src="/v3/assets/img/glad/flat/pete_south.png" alt=""></div><div class="np" style="left:56%;top:60.5%">jimmytomato <span class="lv">(41)</span></div>
+      <span class="splat vi" style="left:56%;top:44%">+ Silver sack (3,000)</span>
+      <div class="sp" style="--n:27;left:56%;top:88%"><img src="/v3/assets/img/glad/flat/quietman_south.png" alt=""></div><div class="np" style="left:56%;top:88.5%">Kellzifer <span class="lv">(91)</span></div>
+      <!-- security, with their lamps -->
+      <span class="cone" style="--len:12;--a:-90deg;left:36%;top:41%"></span>
+      <div class="sp" style="--n:68;left:36%;top:48%"><img src="/v3/assets/img/glad/flat/vince_south.png" alt=""></div><div class="np foe" style="left:36%;top:48.5%">House Security</div>
+      <div class="sp" style="--n:68;left:40.5%;top:51%"><img src="/v3/assets/img/glad/flat/kellz_south.png" alt=""></div><div class="np" style="left:40.5%;top:51.5%">AndyReidisaPAWG <span class="lv">(88)</span></div>
+      <span class="splat blue" style="left:36%;top:31%">HELD · 6s</span>
+      <span class="cone" style="--len:13;--a:20deg;left:64%;top:66%"></span>
+      <div class="sp" style="--n:68;left:64%;top:73%"><img src="/v3/assets/img/glad/flat/vince_south.png" alt=""></div><div class="np foe" style="left:64%;top:73.5%">House Security</div>
+      <!-- a runner on the way out -->
+      <span class="trail" style="left:76%;top:58%;width:15%;transform:rotate(-2deg)"></span>
+      <div class="carry sp" style="--n:68;left:78%;top:61%"><img src="/v3/assets/img/glad/flat/dex_south.png" alt=""></div><div class="np" style="left:78%;top:61.5%">BeeEzRadio <span class="lv">(64)</span></div>
+      <div class="chip slow" style="left:78%;top:47%"><img src="/v3/assets/img/glad/flat/o_sack.png" alt="">Silver sack · −22% walk</div>
+      <!-- the ways out -->
+      <span class="mark exit" style="left:50%;top:96.5%">Stairs up · Odile's cart ⟶</span>
+      <span class="mark hatch" style="left:93%;top:66%">Service hatch · Agility 30</span>
+      <div class="hud tracker"><div class="t"><img src="/v3/assets/img/glad/flat/items/skeleton_key.png" alt="">THE HEIST <em>4:38</em></div><div class="ph">The Vault</div>
+        <div class="r"><span>Alarm</span><b>62%</b></div><div class="bar alarm"><i style="width:62%;background:linear-gradient(#ffb06a,#c8302a)"></i></div>
+        <div class="r"><span>Sacks at the cart</span><b>3</b></div>
+        <div class="r"><span>The take so far</span><b>3,600</b></div>
+        <div class="r"><span>Boxes left</span><b>9 + the House Box</b></div>
+        <small>A failed crack is +3% (forced, +6%). Seen carrying, +5%. It cools 1% every 10 s nobody slips. At 100%: lockdown.</small></div>
+      <div class="hud feed"><p class="c">🗝️ <b>CASINO:</b> The alarm's at half. Somebody's being loud down there.</p>
+        <p class="g">jimmytomato cracks a Silver box, quietly. (+240 Thieving)</p><p class="bad">A guard's lamp finds Rony: walked upstairs, the Copper sack left on the floor.</p></div>
+    </div>
+    <div class="grid2">
+      <section class="k-win boxwin"><div class="k-head"><img src="/v3/assets/img/glad/flat/o_lockbox.png" alt=""><b>Silver deposit box</b><span class="k-sub">box 14 · Thieving 30</span><button type="button" class="k-x" aria-label="Close">×</button></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <div class="tum"><span class="set" style="--y:6px"></span><span class="set" style="--y:6px"></span><span style="--y:28px"></span><span style="--y:20px"></span></div>
+          <div class="odds"><span>Your chance</span><b>77%</b></div>
+          <div class="odds"><span>Inside</span><b>a Silver sack · 3,000 to the take</b></div>
+          <div class="odds"><span>Thieving XP</span><b>240</b></div>
+          <div class="acts">
+            <button type="button" class="k-btn sec">Work it quietly<small>7.2 s · a fail adds 1% to the alarm</small></button>
+            <button type="button" class="k-btn">Force it<small>3.6 s · a fail adds 6% to the alarm</small></button>
+          </div>
+          <p class="note" style="margin-top:8px">The one choice in the job: <b>quiet or quick</b>. A crew of careful thieves never sees lockdown and empties less; a greedy one fills the alarm by minute seven. Your steal bonus (the Ditched set, the Lockpick Set, potions, pets) counts here as it does in the Guild.</p>
+        </div></section>
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/o_sack.png" alt=""><b>Carrying, guards and the ways out</b></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <div class="phase"><span class="w">A sack</span><b>One at a time, and heavy</b><span>−30% walk speed at Agility 1, easing to −10% at 99. No teleports, no bank and no trading while you hold one. Drop it (or get walked out) and it sits on the floor for anyone.</span></div>
+          <div class="phase"><span class="w">Guards</span><b>Can't be killed, can be held</b><span>2, plus one for every six crew, up to 8. They walk the rows with a lamp; light on someone carrying means caught. Any hit stuns one for 3 s; Combat 40+ holds it for 8 s, and a held guard sees nobody.</span></div>
+          <div class="phase"><span class="w">Caught</span><b>Walked upstairs, nothing lost</b><span>No damage, no death, no hospital bill. You lose the sack you were carrying (it stays down there) and ten seconds' walk. That is the whole punishment, so a level-3 can be a runner.</span></div>
+          <div class="phase"><span class="w">The hatch</span><b>The short way out</b><span>Agility 30 opens the service hatch on the Vault's east side, straight into the alley beside Odile's cart: about a third of the walk, and no guard on it. It is the first <a href="../thieving-mock/#shortcuts">shortcut</a> that pays someone else's skill.</span></div>
+        </div></section>
+    </div>
+  </section>
+
+  <!-- ===================================================================== 4 · LOCKDOWN -->
+  <section class="sec" id="lockdown">
+    <h2>4 · Lockdown</h2>
+    <p>If the alarm reaches 100%, the job is over early. The doors start closing (<b>60 seconds</b>), the guards turn to the doors, and <b>the Pit Boss</b>
+      walks out of the back and down the rows. Anyone still inside when the doors shut is caught: walked upstairs, the sack left behind. Sacks already
+      at the cart are safe; the House only keeps what is still in the room. If the alarm never fills, the job runs to 10:00 and the doors close the same
+      way, without the Pit Boss.</p>
+    <div class="screen alarm" style="--bg:url(vault.jpg);--W:1360;aspect-ratio:1360/740">
+      <div class="world"></div>
+      <div class="banner red" style="left:24%"><small>Lockdown</small><b>The doors close in 0:41</b></div>
+      <img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:19%;top:21%"><img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:24%;top:21%"><img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:29%;top:21%"><img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:41%;top:21%"><img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:58%;top:21%"><img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:69%;top:21%"><img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:74%;top:21%">
+      <img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:24%;top:50%"><img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:29%;top:50%"><img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:44%;top:50%"><img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:56%;top:50%"><img class="box" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:70%;top:50%">
+      <img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:44%;top:78%"><img class="box open" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:56%;top:78%"><img class="box" src="/v3/assets/img/glad/flat/o_lockbox.png" alt="" style="left:70%;top:78%">
+      <div class="sp" style="--n:112;left:50%;top:19%"><img src="/v3/assets/img/glad/flat/o_bigvault.png" alt=""></div>
+      <div class="plate gold" style="left:50%;top:20.5%;--p:88%"><b>The House Box <span>88%</span></b><i></i></div>
+      <div class="sp" style="--n:25;left:41%;top:20%"><img src="/v3/assets/img/glad/flat/marla_south.png" alt=""></div><div class="np" style="left:41%;top:20.5%">Marla <small>"Leave it!"</small></div>
+      <div class="sp" style="--n:27;left:59.5%;top:21%"><img src="/v3/assets/img/glad/flat/quietman_south.png" alt=""></div><div class="np" style="left:59.5%;top:21.5%">Kellzifer <span class="lv">(91)</span></div>
+      <span class="splat bad" style="left:59.5%;top:6%">12% to go…</span>
+      <!-- the Pit Boss walking the middle row -->
+      <span class="cone hot" style="--len:16;--a:180deg;left:62%;top:52%"></span>
+      <div class="sp" style="--n:18;left:63%;top:60%"><img src="/v3/assets/img/glad/flat/pitboss.png" alt=""></div>
+      <div class="plate" style="left:63%;top:61%;--p:100%"><b>The Pit Boss <span>Lv 80</span></b><i></i></div>
+      <!-- the crew running for it -->
+      <div class="carry sp" style="--n:27;left:30%;top:60%"><img src="/v3/assets/img/glad/flat/pete_south.png" alt=""></div><div class="np" style="left:30%;top:60.5%">jimmytomato <span class="lv">(41)</span></div>
+      <span class="trail" style="left:31%;top:64%;width:22%;transform:rotate(58deg)"></span>
+      <div class="carry sp" style="--n:68;left:88%;top:60%"><img src="/v3/assets/img/glad/flat/dex_south.png" alt=""></div><div class="np" style="left:88%;top:60.5%">BeeEzRadio <span class="lv">(64)</span></div>
+      <span class="splat gold" style="left:88%;top:44%">into the hatch!</span>
+      <span class="mark exit" style="left:50%;top:96.5%">Stairs up · closing</span>
+      <span class="mark hatch" style="left:93%;top:66%">Service hatch · closing</span>
+      <div class="hud tracker"><div class="t"><img src="/v3/assets/img/glad/flat/items/skeleton_key.png" alt="">THE HEIST <em>0:41</em></div><div class="ph" style="color:#ff9a8a">Lockdown</div>
+        <div class="r"><span>Alarm</span><b>100%</b></div><div class="bar alarm"><i style="width:100%;background:linear-gradient(#ff6a4a,#a01810)"></i></div>
+        <div class="r"><span>Sacks at the cart</span><b>34</b></div>
+        <div class="r"><span>Still inside</span><b>9 of you</b></div>
+        <small>Get out with what you're holding. Anyone inside when the doors shut is walked upstairs and the House keeps their sack.</small></div>
+      <div class="hud feed"><p class="c">🗝️ <b>CASINO:</b> LOCKDOWN. The doors are closing and the Pit Boss is walking the rows. Sixty seconds.</p>
+        <p class="bad">Kellzifer is still on the House Box. 12% to go.</p></div>
+    </div>
+    <div class="callout"><b>Why the House Box makes the ending.</b> It is the slowest thing in the room (Thieving 90, shared work like the star's health, 60,000
+      to the take) and it sits at the back, furthest from both ways out. So the last minute always has the same question: <b>do the 90s stay on the House Box while
+      the alarm climbs, or take what they've got and run?</b> That is the moment people will talk about in chat.</div>
+  </section>
+
+  <!-- ===================================================================== THE COUNT -->
+  <section class="sec" id="count">
+    <h2>The count</h2>
+    <p>When the doors shut, Odile counts what reached the cart. <b>Half of every sack goes to whoever carried it in</b>; <b>the other half, and the House Box,
+      goes in one crew pot split evenly</b> between everyone who did a job (a lift, a crack, a guard held, a sack carried). Even, not by level, because the
+      Heist is the one event where a low level's job is as needed as a high level's: no Copper cards, no Vault. It is the House's money, like every event
+      pot: <b>nothing comes out of the Jackpot</b> and no bet or ZCoin table is touched.</p>
+    <div class="grid2">
+      <section class="k-win count"><div class="k-head"><img src="/v3/assets/img/glad/flat/odile_south.png" alt="" style="object-fit:contain"><b>Odile's count</b><span class="k-sub">the Heist, Thursday</span><button type="button" class="k-x" aria-label="Close">×</button></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <div class="tot"><span>The take</span><b>152,100</b></div>
+          <table class="nums" style="margin-top:6px">
+            <tr><td><img src="/v3/assets/img/glad/flat/o_sack.png" alt="">18 Copper sacks × 1,200</td><td class="n">21,600</td></tr>
+            <tr><td><img src="/v3/assets/img/glad/flat/o_sack.png" alt="">11 Silver sacks × 3,000</td><td class="n">33,000</td></tr>
+            <tr><td><img src="/v3/assets/img/glad/flat/o_sack.png" alt="">5 Gold sacks × 7,500</td><td class="n">37,500</td></tr>
+            <tr><td><img src="/v3/assets/img/glad/flat/o_bigvault.png" alt="">The House Box</td><td class="n">60,000</td></tr>
+            <tr><td>Left on the Vault floor (the House keeps it)</td><td class="n" style="color:#a03020">−4 sacks</td></tr>
+            <tr><td><b>Carriers' half</b> · paid as they landed</td><td class="n">46,050</td></tr>
+            <tr><td><b>Crew pot</b> · 27 of you, even</td><td class="n">106,050 · 3,928 each</td></tr></table>
+          <div class="you"><b>You: 6,028 tickets · 1,352 Thieving XP</b><span>Crew share 3,928 · your half of the Silver sack you carried in (1,500) and of a Copper one you picked up off the floor (600).<br>Jobs: 2 Copper keycards, 6 Silver cracks (5 clean), 2 sacks out.</span></div>
+        </div></section>
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/items/mask.png" alt=""><b>What else it gives</b></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <div class="phase"><span class="w">XP</span><b>Thieving, mostly</b><span>Cards pay 4 picks of that mark; cracks pay by row (below). Over a 10-minute job a thief gets about 15 minutes of their best Guild mark. Runners through the hatch get Agility; guard-holders get combat XP as normal hits.</span></div>
+          <div class="phase"><span class="w">Goods</span><b>A pinch in every box</b><span>One stolen good from the Guild's tables per crack (the row's own marks), for Brutus to fence. The same goods the Guild's marks give, so their prices hold.</span></div>
+          <div class="phase"><span class="w">Cosmetic</span><b>The Crew Mask</b><span>Given the first time you are on a crew that cracks the House Box. A one-time thing, like the raid titles. New PixelLab art.</span></div>
+          <div class="phase"><span class="w">Diary</span><b>Two tasks</b><span>The Guild's diary gets "Lift a Gold keycard" (medium) and "Be on a clean Heist that cracks the House Box" (elite).</span></div>
+        </div></section>
+    </div>
+  </section>
+
+  <!-- ===================================================================== NUMBERS & BALANCE -->
+  <section class="sec" id="numbers">
+    <h2>Numbers &amp; balance</h2>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/o_lockbox.png" alt=""><b>The boxes</b><span class="k-sub">all starting values, to tune on dev</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <table class="nums"><tr><th>Row</th><th class="n">Thv</th><th class="n">Crack</th><th class="n">Chance</th><th class="n">Sack</th><th class="n">XP</th><th class="n">Boxes</th></tr>
+            <tr><td>🟫 Copper</td><td class="n">1</td><td class="n">2.4 s</td><td class="n">55-90%</td><td class="n">1,200</td><td class="n">80</td><td class="n">3-12</td></tr>
+            <tr><td>⬜ Silver</td><td class="n">30</td><td class="n">3.6 s</td><td class="n">55-90%</td><td class="n">3,000</td><td class="n">240</td><td class="n">3-12</td></tr>
+            <tr><td>🟨 Gold</td><td class="n">60</td><td class="n">4.8 s</td><td class="n">55-90%</td><td class="n">7,500</td><td class="n">720</td><td class="n">3-12</td></tr>
+            <tr><td>🏦 House Box</td><td class="n">90</td><td class="n">shared</td><td class="n">—</td><td class="n">60,000</td><td class="n">30 a turn</td><td class="n">1</td></tr></table>
+          <p class="note" style="margin-top:6px">Times are the forced speed; working quietly doubles them. Chance is the Guild's formula with the row's level as the mark's. The House Box has 600 turns of work, scaled like the Jackpot Thief's hits by how many are on it; each Thv 90 crack is one turn.</p>
+        </div></section>
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/items/tickets.png" alt=""><b>Tickets into the world</b><span class="k-sub">against what's live</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <table class="nums"><tr><th>Event</th><th class="n">Pays out</th><th>How often</th></tr>
+            <tr><td>The Jackpot Thief</td><td class="n">30,000-50,000</td><td>once a day</td></tr>
+            <tr><td>Wanted!</td><td class="n">by the target's drops</td><td>once a day</td></tr>
+            <tr><td>Shooting Stars</td><td class="n">fragments, not tickets</td><td>once a day</td></tr>
+            <tr><td><b>The Heist</b>, a quiet night (8 crew, 2 rows)</td><td class="n">~40,000</td><td>once a day</td></tr>
+            <tr><td><b>The Heist</b>, a busy night (25+, the House Box)</td><td class="n">~150,000</td><td>once a day</td></tr>
+            <tr><td><b>The Heist</b>, the most it can be</td><td class="n">250,000 cap</td><td></td></tr></table>
+          <p class="note" style="margin-top:6px"><b>The cap:</b> 12 boxes × 3 rows at full is 140,400 plus the House Box, so a perfect run is 200,400; the 250,000 cap is there in case the numbers move on dev, never as a target. Per person a busy night is ~4,000-8,000: a good half hour in the Yard, once a day. It is a ticket faucet the size of a raid, so it wants watching in the tracking data (<code>trk:&lt;day&gt;</code>) its first week.</p>
+        </div></section>
+    </div>
+    <div class="callout"><b>Why the alarm and not a timer alone:</b> a plain 10 minutes would be "everyone forces everything," which is the same click-fast game as the Guild.
+      The alarm makes speed cost something, and it is <b>shared</b>: one greedy forcer fills it for everyone, which is the kind of thing a crowd shouts about in
+      chat, in the good way. The cooling (1% every 10 s nobody slips) means a crew that settles down can win a loud start back.</div>
+  </section>
+
+  <!-- ===================================================================== BUILDING IT -->
+  <section class="sec" id="build">
+    <h2>Building it</h2>
+    <div class="grid2">
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/settings.png" alt=""><b>What it reuses</b><span class="k-sub">medium: about the Jackpot Thief plus the stars</span></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <ul class="build">
+            <li><b>The planner</b>: EVDAY deals four events into four windows instead of three. Saved per day like today, so a deploy neither loses nor repeats it.</li>
+            <li><b>Keycard staff</b> are monsters with pockets: the "pockets in the world" piece from the thieving mock (the Guild's pick formula on a monster). The Heist is the first thing to use it, so it lands with it.</li>
+            <li><b>Boxes</b> are objects you work like a mark, which is the lockbox piece from the same mock, scaled to one room.</li>
+            <li><b>The House Box</b> is the shooting star's shared-health object: many people, one bar, scaled by how many are on it.</li>
+            <li><b>Guards</b> walk a fixed loop of tiles and turn to look; the lamp is a cone check each tick against carriers only. They take hits like the Jackpot Thief (counted, never killed).</li>
+            <li><b>The sack</b> is one field on the player (C.sack = row), read by the walk speed and refused by the bank, trades and teleports. Dropped sacks are ground items with a 10-s owner window, as drops are now.</li>
+            <li><b>The Vault's monsters</b> are hidden with a scene flag for the length of the job and come back at the end; the scene's own respawn handles the rest.</li>
+            <li><b>The count</b> uses the raid's share code, with an even split instead of by damage, and logs a line in the new item log for every sack paid.</li>
+          </ul>
+        </div></section>
+      <section class="k-win"><div class="k-head"><img src="/v3/assets/img/glad/flat/ui/chat.png" alt=""><b>Server cost and tests</b></div>
+        <div class="k-paper" style="padding:10px 12px">
+          <ul class="build">
+            <li><b>Cost</b>: up to 8 guards walking fixed loops (cheaper than fleeing monsters, which path), up to 37 objects, one alarm number. Less than a raid wave. Nothing runs when it isn't on.</li>
+            <li><b>Restarts</b>: the alarm, the cards, which boxes are open and the take are saved on the event like the Ice Man's state, so a deploy mid-job picks up where it was.</li>
+            <li><b>Tests</b> (a tools/eastscape-heist-test.mjs on the real World, storage stubbed): a sack can't be banked, traded or teleported; caught drops it on the floor; the count pays every job evenly and never more than the cap; lockdown at 100%; the House Box pays once; a hidden Vault mob never attacks during the job; nothing touches the Jackpot.</li>
+            <li><b>Dev first</b>, started from the admin panel. Then once a day, spread out, per the rule for new events.</li>
+          </ul>
+        </div></section>
+    </div>
+    <h3>Art (PixelLab)</h3>
+    <div class="artrow">
+      <figure><img src="/v3/assets/img/glad/flat/vince_south.png" alt=""><b>House Security</b>walk ×4, look-around, the lamp; and the floor staff (clerk, cashier, night manager) with a card on the belt</figure>
+      <figure><img src="/v3/assets/img/glad/flat/items/skeleton_key.png" alt=""><b>Three keycards</b>Copper, Silver, Gold icons for the HUD and the feed</figure>
+      <figure><img src="/v3/assets/img/glad/flat/o_lockbox.png" alt=""><b>Deposit box wall</b>a 1×2 prop, shut and open; tinted per row</figure>
+      <figure><img src="/v3/assets/img/glad/flat/o_bigvault.png" alt=""><b>The House Box</b>an open state for the existing vault door, and a spill of gold</figure>
+      <figure><img src="/v3/assets/img/glad/flat/o_sack.png" alt=""><b>A carried sack</b>over-the-shoulder overlay on the player, one per row colour</figure>
+      <figure><img src="/v3/assets/img/glad/flat/o_sacks.png" alt=""><b>Odile's cart</b>and the service hatch, open and shut</figure>
+      <figure><img src="/v3/assets/img/glad/flat/items/mask.png" alt=""><b>The Crew Mask</b>a cosmetic and its icon</figure>
+      <figure><img src="/v3/assets/img/glad/flat/ui/g_thieving.png" alt=""><b>g_heist</b>the event's own icon for the tracker, the wiki and the schedule</figure>
+    </div>
+  </section>
+
+  <!-- ===================================================================== DECISIONS -->
+  <section class="sec" id="decide">
+    <h2>Decisions</h2>
+    <div class="opts">
+      <div class="opt"><i>1</i><header><b>Where: the Vault, or a new room?</b><span class="rec">The Vault</span></header><p>The Vault already reads as the House's money and is one floor under the Casino. Its monsters step out for ten minutes and come back. A new room means a new map to draw for something that runs ten minutes a day.</p></div>
+      <div class="opt"><i>2</i><header><b>Can you die?</b><span class="rec">No</span></header><p>Caught means walked upstairs and the sack left behind. That is what lets every level carry, and it keeps the hospital out of an event that's meant to bring new people into Thieving.</p></div>
+      <div class="opt"><i>3</i><header><b>The split: carrier half + an even crew pot?</b><span class="rec">Yes</span></header><p>The alternative is by contribution, like the raids by damage, which pays the 90s on the House Box most and the card-lifters least. Even makes the low levels' job worth turning up for. Worth watching whether people "do one job" to collect.</p></div>
+      <div class="opt"><i>4</i><header><b>The Guild permit: needed?</b><span class="rec">Not for the Heist</span></header><p>Marla vouches for you for the night. It's an advert for the Guild; the permit stays for the marks.</p></div>
+      <div class="opt"><i>5</i><header><b>Quiet or force: keep the choice?</b><span class="rec">Keep it</span></header><p>It's the one decision in the job and it's what makes the shared alarm matter. Without it the box window is a progress bar.</p></div>
+      <div class="opt"><i>6</i><header><b>The Yard-chase Heist on the raids page</b><span class="rec">Retire it</span></header><p>The Jackpot Thief is that chase, live since 30 Sep. This version keeps the name and gives thieves their event. The raids page keeps the Siege Engine and the Flood.</p></div>
+      <div class="opt"><i>7</i><header><b>Its order in the build</b><span class="rec">After pockets &amp; lockboxes</span></header><p>The thieving mock's two world hooks are most of its parts. Build those, then the Heist is mostly the planner slot, the guards, the sack and the count.</p></div>
+    </div>
+  </section>
+</main>
+</body>
+</html>
