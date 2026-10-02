@@ -206,6 +206,12 @@ The owner and players: slight rubber banding on long click-to-walk paths and whe
    - **Small bug found while building the mock:** fxText has no line for `steal`, so pot_ghost's description ends
      "For 15 minutes outside: ." (pot_sleep reads oddly too), and pot_surefoot's effect isn't in its fx at all. One-line fix.
 
+7. **ARCHERY FEEL: BUILT ON DEV (owner, 2026-10-02: "lets build that for v1.2 as well. all in your mockup").** All twelve ideas of tools/archeryfx-mock, page-only, held with HOLD.archfx (see with &open=1).
+   The release is the recorded take pitched by the bow (no synthesized twang: the owner disliked it on 2026-09-25). New sounds in eastscape-sfx.js (?v=19) are
+   synthesized STAND-INS: bow_creak, mat_flesh/bone/stone/spirit/scale, arrow_ping, arrow_thud, gem_ember/frost/spark/shimmer, quiver_tick. TODO before ship: source
+   recordings for them (the way the spell takes were), and look at it in a real (visible) browser: the automation pane is hidden, so it was checked by state, not by eye.
+   Material per monster is a name regex (afxMat); check odd ones as new monsters land.
+
 ## Next up
 
 - **BUG (low, owner: "not that big of a deal"): +250 tickets to each player at the Crypt boss kill.** `tools/eastscape-crypt-test.mjs`

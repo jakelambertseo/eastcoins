@@ -105,6 +105,22 @@ export const SOUNDS = {
   arrow_hit:   { vol: 0.6, files: oggs("arrowhit", 4), layers: [{ w: "noise", d: 0.06, v: 0.4, lp: 1400 }, tone(170, 0, 0.07, 0.3, "sine", { f2: 80 })] },
   arrow_crit:  { vol: 0.75, files: oggs("arrowcrit", 2), layers: [{ w: "noise", d: 0.12, v: 0.5, lp: 1200 }, tone(130, 0, 0.14, 0.35, "sine", { f2: 55 })] },
   arrow_miss:  { vol: 0.3, layers: [{ w: "noise", a: 0.05, d: 0.16, v: 0.22, lp: 7000, hp: 2400 }] },
+  /* (2026-10-02, v1.2) ARCHERY FEEL (tools/archeryfx-mock). Synthesized STAND-INS, quiet on purpose, until recordings are sourced: none of
+     these plays on every shot except the creak, which is a breath of string under the recorded release. No synthesized twang: the owner
+     called that "very annoying and repetitive" (2026-09-25); a bow's own pitch is the release take played faster or slower. */
+  bow_creak:   { vol: 0.1, jitter: 0.1, layers: [{ w: "noise", a: 0.08, d: 0.2, v: 0.25, lp: 900, hp: 250 }] },
+  mat_flesh:   { vol: 0.4, jitter: 0.1, layers: [tone(120, 0, 0.12, 0.4, "sine", { f2: 60 })] },
+  mat_bone:    { vol: 0.3, jitter: 0.1, layers: [tone(900, 0, 0.05, 0.25, "square", { f2: 500 }), { w: "noise", d: 0.05, v: 0.25, lp: 3000, hp: 800 }] },
+  mat_stone:   { vol: 0.28, jitter: 0.1, layers: [tone(1600, 0, 0.09, 0.2, "triangle", { f2: 1200 }), { w: "noise", d: 0.06, v: 0.3, lp: 2000, hp: 600 }] },
+  mat_spirit:  { vol: 0.28, jitter: 0.1, layers: [{ w: "noise", a: 0.03, d: 0.32, v: 0.3, lp: 1200, hp: 200 }] },
+  mat_scale:   { vol: 0.35, jitter: 0.1, layers: [{ w: "noise", d: 0.07, v: 0.4, lp: 1500 }, tone(200, 0, 0.08, 0.3, "sine", { f2: 120 })] },
+  arrow_ping:  { vol: 0.22, layers: [tone(1800, 0, 0.25, 0.3, "sine", { f2: 2400 })] },
+  arrow_thud:  { vol: 0.28, jitter: 0.1, layers: [{ w: "noise", d: 0.08, v: 0.35, lp: 500 }, tone(80, 0, 0.08, 0.3, "sine", { f2: 50 })] },
+  gem_ember:   { vol: 0.2, layers: [{ w: "noise", d: 0.25, v: 0.3, lp: 4000, hp: 1500 }] },
+  gem_frost:   { vol: 0.16, layers: [tone(2400, 0, 0.3, 0.3, "sine"), tone(3100, 0.05, 0.3, 0.25, "sine")] },
+  gem_spark:   { vol: 0.16, layers: [tone(1200, 0, 0.04, 0.3, "square"), tone(1600, 0.03, 0.04, 0.3, "square"), tone(2000, 0.06, 0.04, 0.3, "square")] },
+  gem_shimmer: { vol: 0.14, layers: [tone(1320, 0, 0.25, 0.3, "sine"), tone(1660, 0.05, 0.25, 0.3, "sine"), tone(1980, 0.1, 0.25, 0.3, "sine")] },
+  quiver_tick: { vol: 0.2, layers: [tone(2600, 0, 0.03, 0.25, "square")] },
   /* MAGIC (2026-09-26). Kenney's "Sci-fi Sounds" (CC0, kenney.nl/assets/sci-fi-sounds): laserSmall 001-003 as the cast, laserSmall_000
      for Arcane, explosionCrunch_000 for Fire, laserRetro 000/003 for Storm, lowFrequency_explosion_001 for Void, forceField_000 for Sun and
      forceField_004 for a buff; Frost is bart's CC0 "Ice spells" (opengameart.org/content/ice-spells), cut by eastscape-sfx-import.mjs.

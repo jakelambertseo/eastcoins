@@ -8,6 +8,14 @@
   "ships": "flip HOLD.kits to false, VERSION bump; replace the stand-in icons first (kit_camo, kit_fleet, kit_retriever, fishing_arrow, o_grapple: rerun tools/eastscape-kits-art.mjs, then pack), push and probe the art, then rules, page and wiki, then the worker (kits.js)."
  },
  {
+  "name": "Archery feel",
+  "commit": "(this commit)",
+  "page": "archeryfx-mock",
+  "bundle": "v1.2",
+  "what": "Every arrow lands: a visible draw, the release pitched by the bow, a streak, gem arrows (ember/frost/spark/shimmer), knock-back with a hit-stop, sparks along the line of flight in the colours of what was hit, up to 3 arrows stuck in a target, Bullseye crits, misses that land in the dirt, impacts by material, the dead dropping their arrows, and the kits on the archer (wax gleam, Mark crosshair, retriever arrows flying home, Eagle-eye reach).",
+  "ships": "flip HOLD.archfx to false with the rest of v1.2; page + shared + eastscape-sfx.js (?v=19, new synthesized stand-in sounds). Page only: no worker change. Source real recordings for the stand-ins later."
+ },
+ {
   "name": "Abilities and the order (2a) · on hold",
   "commit": "cf4091c1",
   "page": "ascend-mock",

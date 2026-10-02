@@ -18,7 +18,7 @@ if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(
 /* (2026-09-30) YOUR SCREEN: the chosen look, on <html> before anything paints (eastscape-ui.js keeps it in step) */
 try { const t = localStorage.getItem("es_ui_theme"); if (t) document.documentElement.dataset.uiTheme = t; } catch (e) { /* storage off: the default look */ }</script>
 <link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=455">
-<link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=19">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
      (eastscape-worker, a Cloudflare Durable Object), which also keeps your character: saving
@@ -2065,7 +2065,7 @@ const loadWiki = () => (loadWiki.p ||= Promise.all([
   import("/v3/assets/js/eastscape-wiki.js?v=248").then((m) => { WK = m; for (const [k, [hold, text]] of Object.entries(m.SKILL_GUIDE_V11 || {})) if (!G.HOLD[hold]) m.SKILL_GUIDE[k] = text; rmLiveNote(); }),   /* (2026-10-01) v1.1's skill one-liners */
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
-import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
+import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=19";
 import { createUI } from "/v3/assets/js/eastscape-ui.js?v=9";   /* (2026-09-30) YOUR SCREEN: layout, looks, nameplates, the settings window */
 let UI = null;   /* made once the page below has its windows (see renderSettings) */
 const { ITEMS, SKILLS, QUESTS, MOBS, SCENES, XP_AT, DIRS, COLS, ROWS } = G;
@@ -2276,7 +2276,7 @@ function onMsg(m) {
        all (a crypt run's copy, a scene change) is not a death and is not kept. */
     { const was = Z.mobs, now2 = performance.now();
       for (const o of was) { if (o.dead) continue; const n = m.mobs.find((q) => q.id === o.id); if (!n || !n.dead) continue;
-        const p = posOf(o, Date.now()); GONE.set(o.id, { t: o.t, x: p.px, y: p.py, face: o.face, at: now2 });
+        const p = posOf(o, Date.now()); GONE.set(o.id, { t: o.t, x: p.px, y: p.py, face: o.face, at: now2 }); afxDied(o.id, p);
         const key = MOBS[o.t]?.art || o.t; bitsAt(p.px * T + 8, p.py * T + 6, 14, (IMG[key]?.cols) || ["#d8d0c0"], 1.7, 0.8); }
       /* (2026-09-29, the combat pass) A MONSTER WINDING UP AT YOU IS HEARD: a new swing from anything within two tiles of you, pitched by size */
       const meNow = you && was && Z.players.find((x) => x.id === you.id);
@@ -2292,7 +2292,7 @@ function onMsg(m) {
     for (const o of Z.objs) if (o.t === "wheat") Z.g[o.y][o.x] = o.grownAt > m.t ? "f" : "#";
     const mine = you && Z.players.find((x) => x.id === you.id);
     if (mine && mine.swingAt && mine.swingAt !== sfxSwing) {
-      if (sfxSwing) SFX.play((!mine.act || mine.act === "mob" || mine.act === "pvp") && G.launcherOf(me) ? (G.launcherOf(me).launcher.style === "magic" ? "spell_cast" : "bow_release") : SWING_SFX[mine.act] || "swing");   /* (2026-09-25) a bow twangs where a sword whooshes. `!mine.act` too: the KILLING shot arrives with the act already cleared, and fell through to the sword's whoosh */
+      if (sfxSwing) afxPlaySwing((!mine.act || mine.act === "mob" || mine.act === "pvp") && G.launcherOf(me) ? (G.launcherOf(me).launcher.style === "magic" ? "spell_cast" : "bow_release") : SWING_SFX[mine.act] || "swing");   /* (2026-09-25) a bow twangs where a sword whooshes. `!mine.act` too: the KILLING shot arrives with the act already cleared, and fell through to the sword's whoosh */
       sfxSwing = mine.swingAt;
     }
     for (const e of m.ev || []) {
@@ -2320,8 +2320,9 @@ function onMsg(m) {
         if (e.burn) { spellFx(e.who, "firewall"); if (mine?.mob === e.who) SFX.play("spell_fire", { vol: 0.5, rate: 1.3 }); }   /* (2026-09-26) Fire's burn ticking */
         if (e.arc) { spellFx(e.who, "lightning"); if (e.by === you?.id || mine?.mob) SFX.play("spell_storm", { vol: 0.6 }); }   /* Storm's arc */
         const flies = e.ranged && e.by && !calmNow();   /* calmNow(), NOT calm: `calm` is a local of the draw loop, and reading it here threw on every bow hit - which dropped the splat AND the xp drop behind it in the same message (2026-09-25) */
-        if (flies) arrows.push({ from: e.by, to: e.who, at: performance.now(), k: e.ak || null });
-        splats.push({ who: e.who, by: e.by, n: e.n, kind: e.kind, crit: !!e.crit, kill: !!e.kill, ab: e.ab && !e.splash ? G.ABIL_BY[e.ab]?.name : null,   /* (2026-10-01) the ability's name over the hit */ at: performance.now() + (flies ? FLIGHT_MS : 0), vs: e.em > 0 || e.gw ? "WEAK" : e.em < 0 ? "RESIST" : e.gs ? "GUARD" : null });   /* (2026-09-30) gw: weak to that style */
+        if (flies) arrows.push({ from: e.by, to: e.who, at: performance.now(), k: e.ak || null, crit: !!e.crit, miss: !e.n });   /* (2026-10-02, v1.2) archery feel: a crit's reticle, a miss's overshoot */
+        afxSaw(e);
+        splats.push({ who: e.who, by: e.by, n: e.n, kind: e.kind, crit: !!e.crit, kill: !!e.kill, ab: e.ab && !e.splash ? G.ABIL_BY[e.ab]?.name : e.crit && e.ranged && !ITEMS[e.ak]?.ammo?.el && AFX() ? "BULLSEYE" : null,   /* (2026-10-01) the ability's name over the hit */ at: performance.now() + (flies ? FLIGHT_MS : 0), vs: e.em > 0 || e.gw ? "WEAK" : e.em < 0 ? "RESIST" : e.gs ? "GUARD" : null });   /* (2026-09-30) gw: weak to that style */
         if (e.em || e.gs) { const pp = PLATE.get(e.who), at = performance.now() + (flies ? FLIGHT_MS : 0); if (pp) { if (e.em && e.el) pp.pulse[e.el] = at; if (e.gs) pp.pulse[e.gs] = at; } }   /* (2026-09-29) the plate's icon pops as the hit lands */
         /* (v112) sparks off whatever was hit, in its own colours: more for a crit, and a kill's dust is thrown by the death below.
            (v113: the sprite no longer FLINCHES with them, which was the part that read as noise; 2026-09-29, the owner: flinches back on,
@@ -2330,6 +2331,7 @@ function onMsg(m) {
            where the arrow ARRIVES, FLIGHT_MS after it left, so a bow sounds like release ... thunk rather than both at once. */
         const pel = e.ranged && e.ak ? ITEMS[e.ak]?.ammo?.el : null;   /* (2026-09-26) a spell page's element: its own impact and sound */
         const land = () => {
+          const afx = afxLand(e, mineHit || onMe || (mine?.mob && e.who === mine.mob));   /* (2026-10-02, v1.2) archery feel */
           if (pel && e.n) spellFx(e.who, EL_FX[pel]?.hit, !!e.crit);
           { const lk = e.by && e.n ? (e.by === you?.id ? G.looksOf(me) : Z.players.find((q) => q.id === e.by)?.lk) : null;   /* (2026-09-30) the Store's weapon hits */
             if (lk?.hit) { const hm = Z.mobs.find((q) => q.id === e.who), hp = hm || (e.who.startsWith("p:") ? Z.players.find((q) => `p:${q.id}` === e.who) : null); if (hp) { const p = posOf(hp, Date.now()); looksLoad().then((L) => L.hit(p.px * T + 8, p.py * T + (hm ? 6 : 4), lk.hit)).catch(() => {}); } } }
@@ -2342,7 +2344,7 @@ function onMsg(m) {
           /* (2026-09-29) SOMEBODY ELSE'S FIGHT is heard too, quietly and at most four times a second, so a busy map sounds busy */
           else if (!onMe && e.by && e.by !== you?.id && performance.now() - OTHER_SFX.t > 250) { OTHER_SFX.t = performance.now(); SFX.play(pel ? (e.n ? `spell_${pel}` : "arrow_miss") : e.ranged ? (e.n ? "arrow_hit" : "arrow_miss") : e.n ? "hit" : "miss", { vol: 0.3 }); }
           /* an arrow that lands throws splinters and a puff of fletching; a crit's go gold */
-          if (e.ranged && e.n && !pel) { const tm = Z.mobs.find((q) => q.id === e.who) || (e.who.startsWith("p:") ? Z.players.find((q) => `p:${q.id}` === e.who) : null);
+          if (e.ranged && e.n && !pel && !afx) { const tm = Z.mobs.find((q) => q.id === e.who) || (e.who.startsWith("p:") ? Z.players.find((q) => `p:${q.id}` === e.who) : null);
             if (tm) { const p = posOf(tm, Date.now()); bitsAt(p.px * T + 8, p.py * T + 6, e.crit ? 11 : 6, e.crit ? ["#ffd23f", "#fff6c0", "#ffffff", "#e0a010"] : ["#8a6a42", "#b89060", "#f4f0e6", "#ffffff"], e.crit ? 1.7 : 1.15, 0.9); } }
         };
         if (flies) setTimeout(land, FLIGHT_MS); else land();
@@ -2356,7 +2358,7 @@ function onMsg(m) {
     $("online").textContent = `${m.online} online`;
     return;
   }
-  if (m.type === "me") { const prevCharm = me?.charm; me = m.me; if (!$("lockerWin").hidden) renderLocker();   /* (2026-10-01) work clothes: a find or a swap shows at once */
+  if (m.type === "me") { const prevCharm = me?.charm, prevQ = me?.quiver ? { ...me.quiver } : null; me = m.me; afxRetrieve(prevQ); if (!$("lockerWin").hidden) renderLocker();   /* (2026-10-01) work clothes: a find or a swap shows at once */
     if (me.charm && (me.charm.left | 0) > 0 && (!prevCharm || prevCharm.k !== me.charm.k || me.charm.left > (prevCharm.left | 0) + 5000)) { spellFx(`p:${you?.id}`, "shield"); SFX.play("spell_buff"); }   /* (2026-09-26) a page buff read */
     DECO?.refresh(); ORDUI?.bag(); TINKUI?.bag(); GEMUI?.bag(); OUTFITUI?.render(); if (me.hand && !CARDUI) cardsUi().then((u) => u.sync()).catch(() => {}); else CARDUI?.sync(); renderQuick(); renderAbil(); if (!me.look && !lookOffered) { lookOffered = true; setTimeout(() => { if (!me.look) welcomeOnce(true); }, 1500); } renderTour(); renderPanel(); if (!$("questWin").hidden) renderQuests(); if (!$("hwWin").hidden) renderMarket(); if (!$("mapWin").hidden) renderMap(); if (!$("storeWin").hidden) renderStore(); CZ.me(); if (!$("shopWin").hidden) renderShop(); if (!$("smithWin").hidden && smithAt) openSmith(smithAt); craftRefresh(); if (!$("bankWin").hidden) renderBank(); if (!$("tradeWin").hidden) renderTrade(); if (!$("vanWin").hidden) renderVan(); if (!$("exWin").hidden && !$("exWin").contains(document.activeElement?.closest?.("input"))) renderEx(); return; }
   if (m.type === "map") { WORLD.counts = m.counts || {}; if (!$("mapWin").hidden) renderMap(); return; }   /* (2026-09-27) who is where, for the world map */
@@ -4738,6 +4740,129 @@ const BITS = [], GONE = new Map(), DIE_MS = 620;
 const bitsAt = (x, y, n, cols, spread, up) => { if (calmNow()) return; for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, s = spread * (0.35 + Math.random() * 0.65);
   BITS.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s * 0.55 - up * (0.4 + Math.random()), at: performance.now(), life: 320 + Math.random() * 380, c: cols[(Math.random() * cols.length) | 0], s: Math.random() < 0.35 ? 2 : 1 }); } };
 const calmNow = () => !!set("reducedMotion");
+/* (2026-10-02, v1.2, the owner: "lets build that for v1.2 as well. all in your mockup") ARCHERY FEEL, the twelve ideas of
+   tools/archeryfx-mock: a visible draw, the bow's own pitch, a streak, gem arrows, hit-stop and knock-back, a spray along the
+   line of flight in the colours of what was hit, arrows that stay in, Bullseye crits, misses that land in the dirt, impacts
+   that sound like what you hit, the dead keeping their arrows as they fall, and the kits showing on the archer.
+   PAGE ONLY: the server has decided every hit before any of this draws, as with the arrow itself. Held with HOLD.archfx, and
+   nothing here runs under "calm" (reduced motion). The release is today's recorded take, pitched by the bow, NOT a synthesized
+   twang: the owner called the synth one "very annoying and repetitive" (2026-09-25). The new sounds in eastscape-sfx.js are
+   synthesized stand-ins until recordings are sourced. */
+const AFX = () => !G.HOLD.archfx && !calmNow();
+const AFX_TIER = { bone: "#e8e0cc", marrow: "#f0d8c0", bronze: "#c8873a", emerald: "#3ac87a", diamond: "#9ad8ff", dragonstone: "#b05ad8", onyx: "#8a8aaa", starfall: "#ffe08a",
+  eclipse: "#ff8a5a", nova: "#8affff", singularity: "#c8a0ff", rimefang: "#bfe8ff", ruby: "#ff5a3a", sapphire: "#6ac8ff", topaz: "#ffd84a", opal: "#ffffff" };
+const afxCol = (k) => AFX_TIER[String(k || "").split("_")[0]] || "#e8dcc0";
+const AFX_GEM = { ruby_arrow: "ember", sapphire_arrow: "frost", topaz_arrow: "spark", opal_arrow: "shimmer" };
+const AFX_GEMCOL = { ember: ["#ff6a2a", "#ffd84a", "#ff3a1a"], frost: ["#e0f6ff", "#9ad8ff", "#ffffff"], spark: ["#fff6a0", "#ffd84a", "#ffffff"], shimmer: ["#ff9ad8", "#9affd8", "#d8a0ff", "#ffffff"] };
+/* what a monster is made of, from its key and name, so a new monster is covered the day it's added (flesh when nothing matches) */
+const AFX_MATRX = [["bone", /bone|skel|lich|marrow|grim|mummy|skull|ghoul|bandaged/i], ["stone", /golem|stone|rock|statue|slag|crystal|iron ogre|junk king|scrapper|chandelier|vault warden|furnace/i],
+  ["spirit", /wraith|revenant|spirit|ghost|wisp|phantom|spectre|shade|angel|twister|brainstorm|elemental|grin|pumpkin king|shooting star|jackpot thief/i],
+  ["scale", /drake|dragon|wyrm|gator|croc|cobra|snake|serpent|shark|\beel\b|kraken|crab|claw|scarab|beetle|turtle|\btoad\b|frog|raptor|\brex\b|lizard/i]];
+const AFX_MATCOL = { flesh: ["#c42a2a", "#e86a5a", "#7a1a1a"], bone: ["#f4efe0", "#d8d0b8", "#ffffff"], stone: ["#8a8a8a", "#b0aca4", "#5a5a5a"], spirit: ["#9ad8ff", "#e0f4ff", "#6a8aff"], scale: ["#5aa04a", "#8ad06a", "#2a5a2a"] };
+const AFX_MAT = new Map();
+const afxMat = (t) => { if (!AFX_MAT.has(t)) { const s = `${t} ${MOBS[t]?.name || ""}`; AFX_MAT.set(t, (AFX_MATRX.find(([, re]) => re.test(s)) || ["flesh"])[0]); } return AFX_MAT.get(t); };
+const STUCK = new Map(), GROUNDED = [], RETS = [], KNOCK = new Map(), SWINGS = new Map(), AFXC = { creakFor: 0, lastHit: null };
+/* sparks thrown FORWARD, along the way the arrow was going, where bitsAt throws them all round */
+const bitsDir = (x, y, n, cols, ang, spread, sp, up = 0.4) => { for (let i = 0; i < n; i++) { const a = ang + (Math.random() - 0.5) * spread, s = sp * (0.4 + Math.random() * 0.6);
+  BITS.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s * 0.55 - up * (0.4 + Math.random()), at: performance.now(), life: 300 + Math.random() * 320, c: cols[(Math.random() * cols.length) | 0], s: Math.random() < 0.35 ? 2 : 1 }); } };
+const ringAt = (x, y, n, col, sp) => { for (let i = 0; i < n; i++) { const a = (i / n) * 6.283; BITS.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp * 0.55, at: performance.now(), life: 260, c: col, s: 2 }); } };
+/* a longbow pulls deeper: str close to acc is a longbow's shape (longcount and the rest of the named bows fall out of it too) */
+const afxLong = (k) => { const it = ITEMS[k]; return !!it && (it.str || 0) >= (it.acc || 0) * 0.6; };
+function afxPlaySwing(name) { SFX.play(name, name === "bow_release" && AFX() ? { rate: afxLong(me?.eq?.weapon) ? 0.84 : 1.14 } : undefined); }
+/** the knock-back, in world pixels along x: up, a short hold (the hit-stop), and back */
+function afxKnock(id) { const k = KNOCK.get(id); if (!k) return 0; const t = performance.now() - k.at; if (t > 170) { KNOCK.delete(id); return 0; }
+  const amp = (k.big ? 3.5 : 2.2) * Math.sign(k.dx || 1), f = t < 40 ? t / 40 : t < 90 ? 1 : 1 - (t - 90) / 80; return amp * Math.max(0, f); }
+/** an arrow landing (the splat handler's land()): true when it drew the hit here, so the old splinters are skipped */
+function afxLand(e, loud) {
+  if (!AFX() || !e.ranged || !e.by || ITEMS[e.ak]?.ammo?.el) return false;   /* spell pages are magic's */
+  const sh = Z.players.find((q) => q.id === e.by), tm = Z.mobs.find((q) => q.id === e.who) || (e.who.startsWith("p:") ? Z.players.find((q) => `p:${q.id}` === e.who) : null);
+  if (!sh || !tm) return false;
+  const t2 = Date.now(), sp = posOf(sh, t2), tp = posOf(tm, t2), ang = Math.atan2(tp.py - sp.py, tp.px - sp.px), wx = tp.px * T + 8, wy = tp.py * T + 6, k = e.ak || "bone_arrow";
+  if (!e.n) {   /* a miss: on past the target and into the dirt */
+    const gx = wx + Math.cos(ang) * 14, gy = tp.py * T + 14 + Math.max(0, Math.sin(ang)) * 6;
+    GROUNDED.push({ k, x: gx, y: gy, ang: Math.cos(ang) >= 0 ? 0.5 : Math.PI - 0.5, at: performance.now(), life: 1100 });
+    bitsAt(gx, gy, 4, ["#6a5a3a", "#8a7a52"], 0.8, 0.3);
+    if (loud) setTimeout(() => SFX.play("arrow_thud"), 140);
+    return true;
+  }
+  const mat = tm.t ? afxMat(tm.t) : "flesh", gem = AFX_GEM[k];
+  bitsDir(wx, wy, e.crit ? 14 : 8, [...AFX_MATCOL[mat], "#f4f0e6"], ang, 1.1, e.crit ? 2.1 : 1.5);
+  bitsDir(wx, wy, 3, ["#b89060", "#f4f0e6"], ang, 0.8, 1.2);   /* and a little of the shaft's own fletching */
+  if (gem) { bitsAt(wx, wy, 12, AFX_GEMCOL[gem], 1.6, 0.5); if (loud) SFX.play(`gem_${gem}`); }
+  if (loud) SFX.play(`mat_${mat}`);
+  KNOCK.set(e.who, { at: performance.now(), dx: Math.cos(ang), big: !!(e.crit || e.kill) });
+  const L = STUCK.get(e.who) || []; L.push({ k, dx: (Math.random() - 0.5) * 6, dy: (Math.random() - 0.5) * 7, ang: ang + (Math.random() - 0.5) * 0.5, at: performance.now() }); while (L.length > 3) L.shift(); STUCK.set(e.who, L);
+  if (e.crit) { ringAt(wx, wy, 16, "#ffd84a", 2.4); if (loud) SFX.play("arrow_ping"); }
+  if (e.kill) bitsAt(tp.px * T + 8, tp.py * T + 14, 10, ["#6a5a3a", "#8a7a52", "#b0a080"], 1.4, 0.3);
+  if (e.by === you?.id) AFXC.lastHit = { x: wx, y: wy, at: performance.now() };
+  return true;
+}
+/** a monster that died keeps its arrows: they drop beside it as it falls */
+function afxDied(id, p) { const L = STUCK.get(id); if (!L) return; STUCK.delete(id); if (!AFX()) return;
+  for (const s of L) GROUNDED.push({ k: s.k, x: p.px * T + 8 + s.dx * 1.6, y: p.py * T + 14 + Math.random() * 2, ang: (Math.random() < 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 0.6, at: performance.now(), life: 1400 }); }
+/** a shot noticed for somebody else: how often they fire, so their draw can start before the next one */
+function afxSaw(e) { if (!e.ranged || !e.by || e.by === you?.id || ITEMS[e.ak]?.ammo?.el) return; const t = performance.now(), s = SWINGS.get(e.by);
+  SWINGS.set(e.by, { seen: t, gap: s && t - s.seen > 400 && t - s.seen < 4000 ? t - s.seen : s?.gap || 0 }); }
+/** the Arrow retriever: an arrow come back to the quiver (the server put it there) flies back from where the last one landed */
+function afxRetrieve(prevQ) {
+  if (!AFX() || !me?.quiver || !prevQ || me.quiver.k !== prevQ.k || !G.kitOf(me, "retriever") || !G.holdsBow(me)) return;
+  const got = Math.floor(me.quiver.n) - Math.floor(prevQ.n), h = AFXC.lastHit; if (got < 1 || got > 3 || !h || performance.now() - h.at > 2000) return;
+  RETS.push({ k: me.quiver.k, x: h.x, y: h.y, at: performance.now() });
+}
+/* the bow in an archer's hands: the string comes back before the shot (yours from your own swing time; anyone else's from how often
+   they have been firing) and shivers after it. Quickdraw wax gleams on the limbs. */
+function afxBows(sprites, now, pos) {
+  if (!AFX()) return;
+  for (const pl of Z.players) { if (!pl.swingAt) continue; const isMe = pl.id === you?.id; let period = 0, k;
+    if (isMe) { if (!me || !G.holdsBow(me) || !(pl.act === "mob" || pl.act === "pvp")) continue; period = G.swingMsOf(me); k = me.eq.weapon; }
+    else { const s = SWINGS.get(pl.id); if (!s || performance.now() - s.seen > 4000) continue; period = s.gap; k = null; }
+    sprites.push({ y: pos(pl).py * T + 14.6, draw: () => afxBow(pl, pos(pl), now, period, isMe, k) });
+  }
+}
+function afxBow(pl, p, now, period, isMe, wk) {
+  const d = pl.dir || "south", [ux, uy] = (Object.keys(DIRS).find((q) => DIRS[q] === d) || "1,0").split(",").map(Number), long = wk ? afxLong(wk) : false;
+  const sw = now - pl.swingAt, drawMs = period ? Math.min(long ? 330 : 200, period * 0.5) : 0;
+  let pull = 0; if (period && sw > period - drawMs && sw < period + 150) pull = Math.min(1, (sw - (period - drawMs)) / drawMs);
+  if (isMe && pull > 0 && AFXC.creakFor !== pl.swingAt) { AFXC.creakFor = pl.swingAt; SFX.play("bow_creak", { rate: long ? 0.8 : 1.15 }); }
+  const shiv = sw >= 0 && sw < 160 ? Math.sin(sw / 9) * 0.8 * (1 - sw / 160) : 0, h = long ? 6.5 : 5, X = p.px * T + 8 + ux * 4, Y = p.py * T + 15 - 9 + uy * 2;
+  lc.save(); lc.setTransform(A, 0, 0, A, 0, 0); lc.translate(X, Y); lc.rotate(Math.atan2(uy, ux || (uy ? 0 : 1)));
+  lc.strokeStyle = "#6a4422"; lc.lineWidth = 1.2; lc.beginPath(); lc.moveTo(0, -h); lc.quadraticCurveTo(3.4 - pull * 0.8, 0, 0, h); lc.stroke();
+  if (isMe && G.kitOf(me, "quickdraw")) { lc.strokeStyle = `rgba(255,236,150,${0.35 + 0.35 * Math.sin(now / 140)})`; lc.lineWidth = 0.6; lc.beginPath(); lc.moveTo(0.4, -h + 1); lc.quadraticCurveTo(3 - pull * 0.8, 0, 0.4, h - 1); lc.stroke(); }
+  lc.strokeStyle = "#efe6cc"; lc.lineWidth = 0.45; lc.beginPath(); lc.moveTo(0, -h); lc.lineTo(-pull * 4 + shiv, 0); lc.lineTo(0, h); lc.stroke();
+  if (pull > 0) { lc.strokeStyle = afxCol(isMe ? me?.quiver?.k : null); lc.lineWidth = 0.7; lc.beginPath(); lc.moveTo(-pull * 4, 0); lc.lineTo(5, 0); lc.stroke(); }
+  lc.restore();
+}
+/** one arrow, drawn at screen x,y pointing along ang; `half` keeps only the shaft's back half (an arrow that has gone in) */
+function afxArrow(k, x, y, ang, S2, half, alpha = 1) {
+  ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.rotate(ang);
+  if (half) { ctx.beginPath(); ctx.rect(-12 * S2, -4 * S2, 12 * S2, 8 * S2); ctx.clip(); }
+  ctx.strokeStyle = "#e8dcc0"; ctx.lineWidth = 1.6 * S2; ctx.beginPath(); ctx.moveTo(-7 * S2, 0); ctx.lineTo(6 * S2, 0); ctx.stroke();
+  ctx.fillStyle = afxCol(k); ctx.beginPath(); ctx.moveTo(8 * S2, 0); ctx.lineTo(4 * S2, -2 * S2); ctx.lineTo(4 * S2, 2 * S2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.fillRect(-8 * S2, -1.5 * S2, 3 * S2, 3 * S2);
+  ctx.restore();
+}
+/* the screen layer: arrows that stay in, arrows in the dirt, arrows flying home, the Mark's crosshair, Eagle-eye's reach */
+function afxOverlay(pnow, now, sx, sy, S2, pos) {
+  if (!AFX()) { STUCK.clear(); GROUNDED.length = 0; RETS.length = 0; KNOCK.clear(); return; }
+  for (const [id, k] of KNOCK) if (pnow - k.at > 200) KNOCK.delete(id);   /* a monster that left (a scene change, a death) never asks for its own again */
+  for (const [id, L] of STUCK) {
+    const m = Z.mobs.find((q) => q.id === id && !q.dead) || (id.startsWith("p:") ? Z.players.find((q) => `p:${q.id}` === id) : null);
+    const live = L.filter((s) => pnow - s.at < 2600); if (!m || !live.length) { STUCK.delete(id); continue; } STUCK.set(id, live);
+    const p = m.t ? posOf(m, now) : pos(m), kx = m.t ? afxKnock(m.id) : 0;
+    for (const s of live) afxArrow(s.k, sx(p.px * T + 8 + kx + s.dx), sy(p.py * T + 6 + s.dy), s.ang, S2, true, Math.min(1, (2600 - (pnow - s.at)) / 400));
+  }
+  for (let i = GROUNDED.length - 1; i >= 0; i--) { const g = GROUNDED[i], t = pnow - g.at; if (t > g.life) { GROUNDED.splice(i, 1); continue; } afxArrow(g.k, sx(g.x), sy(g.y), g.ang, S2, true, Math.min(1, (g.life - t) / 300)); }
+  const P = Z.players.find((q) => q.id === you?.id);
+  for (let i = RETS.length - 1; i >= 0; i--) { const r = RETS[i], k = (pnow - r.at) / 450; if (!P || k > 1.6) { RETS.splice(i, 1); continue; } if (k < 0) continue;
+    const pp = pos(P), toX = pp.px * T + 6, toY = pp.py * T + 4;
+    if (k >= 1) { if (!r.ticked) { r.ticked = true; SFX.play("quiver_tick"); } ctx.font = `900 ${Math.round(5 * S2)}px Lora`; ctx.fillStyle = "#9fe08a"; ctx.globalAlpha = Math.max(0, 1.6 - k) / 0.6; ctx.fillText("+1", sx(toX) + 4 * S2, sy(toY) - (k - 1) * 10 * S2); ctx.globalAlpha = 1; continue; }
+    const x = r.x + (toX - r.x) * k, y = r.y + (toY - r.y) * k - Math.sin(k * Math.PI) * 14; afxArrow(r.k, sx(x), sy(y), k * 9, S2, false); }
+  if (me?.kit?.k === "mark" && (me.kit.left | 0) > 0 && me.kit.t) for (const m of Z.mobs) { if (m.dead || m.t !== me.kit.t) continue;
+    const p = posOf(m, now), x = sx(p.px * T + 8), y = sy(p.py * T - 6), r = 3.2 * S2; ctx.strokeStyle = "#ff4a3a"; ctx.lineWidth = Math.max(1.5, 0.7 * S2);
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.moveTo(x - r * 1.6, y); ctx.lineTo(x + r * 1.6, y); ctx.moveTo(x, y - r * 1.6); ctx.lineTo(x, y + r * 1.6); ctx.stroke(); }
+  if (P && me && G.kitOf(me, "eagle") && G.holdsBow(me) && (P.act === "mob" || P.act === "pvp")) { const pp = pos(P), R = G.reachOfHeld(me) * T * S2;
+    ctx.save(); ctx.strokeStyle = "rgba(154,216,255,.35)"; ctx.setLineDash([4 * S2, 4 * S2]); ctx.lineWidth = Math.max(1, 0.5 * S2); ctx.beginPath(); ctx.ellipse(sx(pp.px * T + 8), sy(pp.py * T + 14), R, R * 0.7, 0, 0, 6.283); ctx.stroke(); ctx.restore(); }
+}
 
 /* (v114/v115) WHAT A MONSTER IS DRAWN ON (the owner: "sprites slide at the moment", then "i cant really tell"). A monster with
    art may carry `<art>_w1`..`_w4`, a walk, and `<art>_i2`, the second half of a breath. There is no `_i1` on purpose: the first
@@ -5279,7 +5404,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
       spr(art, g.x * T + 8, g.y * T + 14 + k * 3, g.face < 0, "brightness(0.75) saturate(0.6)", 1, (Math.PI / 2) * Math.min(1, k * 1.6)); lc.globalAlpha = 1; } }); }
   for (const m of Z.mobs) { if (m.dead) DEADSEEN.add(m.id); else if (DEADSEEN.has(m.id)) { DEADSEEN.delete(m.id); RISEN.set(m.id, now); } }   /* (2026-09-27) who has just come back */
   for (const m of Z.mobs) if (!m.dead) sprites.push({ y: posOf(m, now).py * T + 14, draw: () => {
-    const p = posOf(m, now), hurt = hurtNow(m), lunge = (now - m.swingAt < 200 ? m.face * 2 : 0) - (m.face || 1) * flinchOf(m), gild = MOBS[m.t]?.gild ? "sepia(1) saturate(4) hue-rotate(8deg) brightness(1.25) drop-shadow(0 0 3px #ffd84a)" : "";   /* (2026-09-30) a gilded one, the Golden Raptor */   /* (the flinch rides the lunge's offset, backwards) */
+    const p = posOf(m, now), hurt = hurtNow(m), lunge = (now - m.swingAt < 200 ? m.face * 2 : 0) - (m.face || 1) * flinchOf(m) + afxKnock(m.id), gild = MOBS[m.t]?.gild ? "sepia(1) saturate(4) hue-rotate(8deg) brightness(1.25) drop-shadow(0 0 3px #ffd84a)" : "";   /* (2026-09-30) a gilded one, the Golden Raptor */   /* (the flinch rides the lunge's offset, backwards) */
     /* (v114/v115) the legs move if this one has frames, and it breathes when it stops */
     if (MOBS[m.t].raid && !IMG[MOBS[m.t].art || m.t]) loadAreaArt("raid");   /* (2026-09-30) the raiders' pictures come the first time one is drawn */
     /* (2026-09-30) WORLD EVENTS: a Shooting Star glows and shrinks a size with every tier it loses; a Wanted target glows red */
@@ -5318,6 +5443,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   } });
   // players (you among them): 8 facings, a lunge when swinging, red when hit
   const pos = (pl) => (pl.id === you.id ? ownPos(pl, now) : posOf(pl, now));
+  afxBows(sprites, now, pos);   /* (2026-10-02, v1.2) archery feel: the draw */
   /* (2026-09-30) DEEP FREEZE: a block of ice over anyone the Ice Man has frozen, drawn in front of them, fading in its last half second */
   for (const pl of Z.players) { const until = FROZEN.get(pl.id) || 0, left = until - performance.now(); if (left > 0) sprites.push({ y: pos(pl).py * T + 15, draw: () => {
     const p = pos(pl), X = p.px * T + 8, Y = p.py * T + 15, a = Math.min(1, left / 500);
@@ -5560,11 +5686,16 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
   arrows = arrows.filter((a) => pnow - a.at < FLIGHT_MS);
   for (const a of arrows) {
     const from = Z.players.find((q) => q.id === a.from); if (!from) continue;
-    let tx, ty;
+    let tx, ty;   /* (let: a v1.2 miss moves them on past the target) */
     if (a.to.startsWith("p:")) { const pl = Z.players.find((q) => `p:${q.id}` === a.to); if (!pl) continue; const p = pos(pl); tx = sx(p.px * T + 8); ty = sy(p.py * T + 8); }
     else { const m = Z.mobs.find((q) => q.id === a.to); if (!m) continue; const p = posOf(m, now); tx = sx(p.px * T + 8); ty = sy(p.py * T + 8); }
-    const fp = pos(from), fx = sx(fp.px * T + 8), fy = sy(fp.py * T + 4), k = Math.min(1, (pnow - a.at) / FLIGHT_MS);
+    const fp = pos(from), fx = sx(fp.px * T + 8), fy = sy(fp.py * T + 4), k0 = Math.min(1, (pnow - a.at) / FLIGHT_MS);
+    const afx = AFX() && !ITEMS[a.k]?.ammo?.el, k = afx && a.crit ? 1 - Math.pow(1 - k0, 1.7) : k0;   /* (2026-10-02, v1.2) a Bullseye slows into the target */
+    if (afx && a.miss) { const ma = Math.atan2(ty - fy, tx - fx); tx += Math.cos(ma) * 14 * S2; ty += 6 * S2; }   /* a miss carries on past */
     const x = fx + (tx - fx) * k, y = fy + (ty - fy) * k - Math.sin(k * Math.PI) * 6 * S2, ang = Math.atan2(ty - fy, tx - fx);
+    if (afx) { const col = afxCol(a.k); for (let i = 1; i <= 5; i++) { const kk = Math.max(0, k - i * 0.035), xx = fx + (tx - fx) * kk, yy = fy + (ty - fy) * kk - Math.sin(kk * Math.PI) * 6 * S2; ctx.globalAlpha = 0.32 * (1 - i / 6); ctx.fillStyle = col; ctx.fillRect(xx - 1.5 * S2, yy - 0.6 * S2, 3 * S2, 1.2 * S2); } ctx.globalAlpha = 1;
+      const gem = AFX_GEM[a.k]; if (gem && Math.random() < 0.6) bitsAt((x - view.ox) / S2, (y - view.oy) / S2, 1, AFX_GEMCOL[gem], 0.6, gem === "ember" ? 0.6 : 0.1);
+      if (a.crit && k > 0.45) { const r = (26 * (1 - (k - 0.45) / 0.55) + 6) * S2 * 0.4; ctx.strokeStyle = "#ffd84a"; ctx.lineWidth = Math.max(1.5, 0.6 * S2); ctx.beginPath(); ctx.arc(tx, ty, r, 0, 6.283); ctx.moveTo(tx - r - 3 * S2, ty); ctx.lineTo(tx - r + 2 * S2, ty); ctx.moveTo(tx + r - 2 * S2, ty); ctx.lineTo(tx + r + 3 * S2, ty); ctx.stroke(); } }
     let aim = null;
     { const el = ITEMS[a.k]?.ammo?.el; if (el) { drawSpellFlight(el, x, y, ang, pnow); continue; } }   /* (2026-09-26) spell pages fly as spells */
     if (a.k && ITEM_ART.has(a.k)) { let im = ICO_IMG[a.k]; if (!im) { im = new Image(); im.src = `${IART}${a.k}.png?v=${IART_V}`; ICO_IMG[a.k] = im; } if (im.complete && im.naturalWidth) aim = im; }
@@ -5575,6 +5706,7 @@ const artTop = (k) => { const a = IMG[k]; return a ? (a.foot - a.top) / A : 16; 
     ctx.fillStyle = "#fff"; ctx.fillRect(-8 * S2, -1.5 * S2, 3 * S2, 3 * S2);
     ctx.restore();
   }
+  afxOverlay(pnow, now, sx, sy, S2, pos);   /* (2026-10-02, v1.2) archery feel: stuck arrows, arrows in the dirt, the retriever, the Mark, Eagle-eye */
   drawSpellFx(pnow, now);   /* (2026-09-26) spell impacts, under the numbers */
   if (LOOKS) LOOKS.over(ctx, pnow, sx, sy, S2, calm);   /* (2026-09-30) weapon hits, halos, and the world shows */
   // hit splats (a ranged one is stamped FLIGHT_MS ahead, so it waits here until its arrow has landed)
@@ -8739,7 +8871,7 @@ function dblSet(on) {
   dblRender();
   if (DBL && !dblTimer) dblTimer = setInterval(dblRender, 1000);
 }
-window.__es = { get EVS() { return EVS; }, get EVUI() { return EVUI; }, whoAllOpen, wikiPages, get WIKI() { return WIKI; },   /* (2026-09-30) WORLD EVENTS and Who's online, for checking */ get PETF() { return PETF; }, get LOOKS() { return LOOKS; },   /* (2026-09-30) the Store's looks, for checking what they draw */ FROZEN,   /* (2026-09-30) the Ice Man's Deep Freeze, for checking its ice block */ get GRIN_W() { return GRIN_W; }, frame,
+window.__es = { get AFXS() { return { STUCK, GROUNDED, RETS, KNOCK, SWINGS, on: AFX(), mat: afxMat }; },   /* (2026-10-02, v1.2) archery feel, for checking */ get EVS() { return EVS; }, get EVUI() { return EVUI; }, whoAllOpen, wikiPages, get WIKI() { return WIKI; },   /* (2026-09-30) WORLD EVENTS and Who's online, for checking */ get PETF() { return PETF; }, get LOOKS() { return LOOKS; },   /* (2026-09-30) the Store's looks, for checking what they draw */ FROZEN,   /* (2026-09-30) the Ice Man's Deep Freeze, for checking its ice block */ get GRIN_W() { return GRIN_W; }, frame,
   /* (2026-10-02) THE DEEP-ZOOM MAP MOCK (tools/zoommap-mock): the world map's layout, and any open map's ground painted by the game's own painter */
   worldCells: () => { const L = worldLayout(); return { cells: [...L.cells].map(([k, c]) => ({ k, x: c.x, y: c.y, name: SCENES[k]?.name || k })), links: L.links }; },
   async bgOf(key) { const base = String(key).split(":")[0]; loadAreaArt(key); for (let i = 0; i < 100 && (AREA_ART[base] || []).some((k) => !IMG[k]); i++) await new Promise((r) => setTimeout(r, 100));
