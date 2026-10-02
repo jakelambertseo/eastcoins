@@ -10836,3 +10836,27 @@ if (!HOLD.bbag) st("buffbag", { tab: "extra", kind: "give", give: ["buffbag", 1]
   why: "Why it matters: buffs are most of what makes a long session pay, and keeping six of them going means finding six stacks in a full bag every ten or twenty minutes, often mid-fight. The Buff Bag turns that into one key, gives you back five bag slots, and never throws a running buff away.",
   facts: [["Holds", "a meal, a drink, a potion, a scroll, a gadget and a field kit, up to 99 of each"], ["Use", "click it, or press B anywhere"], ["Change", "right-click it to load, swap or take out"],
     ["Never wastes", "a buff still running is skipped, not replaced"], ["Saves", "five bag slots and five clicks every time your buffs run out"], ["Also", "a potion becomes its own buff, so it runs beside a bar drink"], ["Limit", "one per character, can't be traded"]] });
+
+/* ============================================================ THE ITEM LOG (2026-10-02). The owner: "yes build that in admin. also add a log to the chat for users
+   beside the Chat/XP Drops buttons with a 'Log' button". The server keeps C.ilog (eastscape-worker/src/ilog.js): [time, kind, item, n, note], the last
+   ILOG.max lines. ilogText writes one in plain words; the page's Log tab and the admin card both use it, so they never disagree. */
+export const ILOG = { max: 80 };
+export const ilogText = (e, you = true) => {
+  const [, kind, k, n, note0] = e, note = String(note0 || "").replace(/^The /, "the "), it = ITEMS[k], nm = it?.name || k, many = n > 1 ? `${n.toLocaleString()} × ${nm}` : nm, Your = you ? "Your" : "Their", your = you ? "your" : "their";
+  switch (kind) {
+    case "drop": return `Dropped ${many} on the ground.`;
+    case "lost": return `Died${note ? ` in ${note}` : ""} and dropped ${your} ${nm}.`;
+    case "bill": return `Hospital bill${note ? ` (${note})` : ""}: ${n.toLocaleString()} tickets.`;
+    case "robbed": return `${note || "A player"} killed you and took ${n.toLocaleString()} tickets.`;
+    case "sold": return `Sold ${many}${note ? ` for ${note}` : ""}.`;
+    case "sorter": return `Sold ${many} to the Gem Sorter${note ? ` for ${note}` : ""}.`;
+    case "outfit": return `Sold ${many} to ${note || "an outfitter"}.`;
+    case "traded": return `Traded ${many} to ${note || "someone"}.`;
+    case "received": return `Got ${many} from ${note || "someone"} in a trade.`;
+    case "listed": return `Put ${many} up for sale on the Exchange.`;
+    case "broke": return `${Your} ${nm} broke while reforging.`;
+    case "banked": return `Put ${many} in the bank.`;
+    case "withdrew": return `Took ${many} out of the bank.`;
+    default: return `${kind}: ${many}${note ? ` (${note})` : ""}`;
+  }
+};

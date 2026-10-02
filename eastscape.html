@@ -279,6 +279,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 .hsr.me .who{text-decoration-color:rgba(42,32,22,.5)}
 .hsr.me .who:hover{color:#5a3406;text-decoration-color:rgba(90,52,6,.8)}
 .chat-log[hidden],.chat-form[hidden]{display:none}.chat-views{display:inline-flex;gap:3px}.chat-views button{padding:1px 8px;border-radius:4px;font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+#itemLog p.il .ico,#itemLog p.il img{width:16px;height:16px;vertical-align:-3px}#itemLog p.il small{color:#8a8278;font-weight:700;margin-right:6px}#itemLog p.il.bad{color:#ff9a8a}   /* (2026-10-02) THE ITEM LOG */
 #lootLog p.loot{color:#ffd23f}#lootLog p.xp{color:#9ad0ff}#lootLog p small{color:#8a8278;font-weight:700;margin-right:6px}
 .chat-head small{flex:1}
 .chat-log{height:170px;overflow-y:auto;padding:6px 10px;font-size:14px;line-height:1.35;display:flex;flex-direction:column;gap:2px}
@@ -1858,9 +1859,10 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
     <div class="qdone" id="qdone" hidden></div>
     <div class="chat" id="chat">
       <div class="chat-box" id="chatBox" hidden>
-        <div class="chat-head"><img src="/v3/assets/img/glad/flat/ui/chat.png?v=1" alt="" class="cti"><b>Chat</b><small id="chatWhere">everyone in EastScape</small><span class="chat-views" role="tablist"><button type="button" role="tab" id="cvChat" aria-selected="true">Chat</button><button type="button" role="tab" id="cvLoot" aria-selected="false" title="What you've found and the xp you've earned this session">Drops / XP</button></span></div>
+        <div class="chat-head"><img src="/v3/assets/img/glad/flat/ui/chat.png?v=1" alt="" class="cti"><b>Chat</b><small id="chatWhere">everyone in EastScape</small><span class="chat-views" role="tablist"><button type="button" role="tab" id="cvChat" aria-selected="true">Chat</button><button type="button" role="tab" id="cvLoot" aria-selected="false" title="What you've found and the xp you've earned this session">Drops / XP</button><button type="button" role="tab" id="cvLog" aria-selected="false" title="What left your bag, and why: dropped, sold, traded, banked, lost">Log</button></span></div>
         <div class="chat-log" id="chatLog" aria-live="polite"><p class="empty">Nobody has said anything here yet.</p></div>
         <div class="chat-log" id="lootLog" hidden><p class="empty">Nothing yet. Drops and xp show up here as you earn them.</p></div>
+        <div class="chat-log" id="itemLog" hidden><p class="empty">Loading your log…</p></div>
         <form class="chat-form" id="chatForm" autocomplete="off"><input id="chatIn" maxlength="120" placeholder="Say something… (Enter)" aria-label="Chat message"><button type="submit">Send</button></form>
       </div>
       <div class="chat-row">
@@ -2483,6 +2485,8 @@ function onEvent(e) {
   if (e.type === "ordergave") { SFX.play("coins"); ORDUI?.gave(e.n); return; }
   if (e.type === "orderclaimed") { ORDUI?.claimed(); return; }   /* the window stays open: the next order arrives in it straight away */   /* (2026-09-28) Bom's buy-back */
   if (e.type === "flood") { FLOOD_W = e.tiles?.length ? { scene: e.scene, set: new Set(e.tiles) } : null; return; }
+  if (e.type === "ilog") { ILOG = e.list || []; renderIlog(); return; }   /* (2026-10-02) THE ITEM LOG: the whole thing, when the Log tab opens (it comes in the event list) */
+  if (e.type === "ilog1") { if (ILOG) { ILOG.push(e.e); if (ILOG.length > G.ILOG.max) ILOG.shift(); renderIlog(); } return; }   /* one new line, while you play */
   if (e.type === "kitfx") { spellFx(`p:${you?.id}`, "shield"); SFX.play("spell_buff"); return; }   /* (2026-10-02, v1.2) FIELD KITS */
   if (e.type === "grin") { GRIN_W = e.dark ? { dark: e.dark, scene: e.scene, at: performance.now() } : null; return; }   /* (2026-10-02) THE GRIN: kept across scenes, drawn only in the Yard */   /* (2026-09-30) THE FLOOD */
   if (e.type === "casinonote") { if (!set("casinoLines")) return; chatLine("Casino", e.text, "casinonote"); if (/JACKPOT/.test(e.text)) SFX.play("jackpot"); return; }
@@ -2719,8 +2723,21 @@ function lootGain(k, xp) {
   if (lootXp && lootXp.k === k && now - lootXp.at < 10000 && lootXp.el.isConnected) { lootXp.xp += xp; lootXp.n++; lootXp.at = now; } else lootXp = { k, xp, n: 1, at: now, el: lootRow("xp", "") };
   lootXp.el.textContent = `+${Math.round(lootXp.xp).toLocaleString()} ${name} xp${lootXp.n > 1 ? ` (${lootXp.n} gains)` : ""}`;
 }
-function chatView(loot) { $("chatLog").hidden = loot; $("lootLog").hidden = !loot; $("chatForm").hidden = loot; $("cvChat").setAttribute("aria-selected", String(!loot)); $("cvLoot").setAttribute("aria-selected", String(loot)); const l = $(loot ? "lootLog" : "chatLog"); l.scrollTop = l.scrollHeight; }
-$("cvChat").addEventListener("click", () => chatView(false)); $("cvLoot").addEventListener("click", () => chatView(true));
+/* (2026-10-02) THREE VIEWS: chat, drops and xp, and THE ITEM LOG (the owner: "add a log to the chat for users beside the Chat/XP Drops buttons with a
+   'Log' button"). The log is asked for when it opens (once a second at most) and kept current by the server's ilog1 while you play. */
+let ILOG = null;
+function chatView(v) { const view = v === true ? "loot" : v === "log" ? "log" : "chat";
+  $("chatLog").hidden = view !== "chat"; $("lootLog").hidden = view !== "loot"; $("itemLog").hidden = view !== "log"; $("chatForm").hidden = view !== "chat";
+  $("cvChat").setAttribute("aria-selected", String(view === "chat")); $("cvLoot").setAttribute("aria-selected", String(view === "loot")); $("cvLog").setAttribute("aria-selected", String(view === "log"));
+  if (view === "log") send({ t: "ilog" });
+  const l = $(view === "loot" ? "lootLog" : view === "log" ? "itemLog" : "chatLog"); l.scrollTop = l.scrollHeight; }
+$("cvChat").addEventListener("click", () => chatView(false)); $("cvLoot").addEventListener("click", () => chatView(true)); $("cvLog").addEventListener("click", () => chatView("log"));
+const ILOG_BAD = new Set(["lost", "broke", "bill", "robbed", "drop"]);
+function ilogWhen(t) { const d = new Date(t), today = new Date().toDateString() === d.toDateString(); return (today ? "" : d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " ") + d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }); }
+function ilogRow(e) { return `<p class="il${ILOG_BAD.has(e[1]) ? " bad" : ""}"><small>${esc(ilogWhen(e[0]))}</small>${ico(e[2]) || ""} ${esc(G.ilogText(e))}</p>`; }
+function renderIlog() { const box = $("itemLog"); if (!box || !ILOG) return;
+  box.innerHTML = ILOG.length ? ILOG.map(ilogRow).join("") : '<p class="empty">Nothing has left your bag since the log began (2 October). Drops, sales, trades, the bank and deaths show up here.</p>';
+  if (!box.hidden) box.scrollTop = box.scrollHeight; }
 { let water = null; setInterval(() => { const fishing = !!you && Z.players.find((x) => x.id === you.id)?.act === "spot" && !document.hidden; if (fishing && !water) water = SFX.play("fish_water"); else if (!fishing && water) { water.stop(); water = null; } }, 500); }
 function setChat(open, focus = true) {
   chatOpen = open; $("chatBox").hidden = !open; $("chatTab").setAttribute("aria-expanded", String(open));

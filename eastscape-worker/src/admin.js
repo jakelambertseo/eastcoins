@@ -50,7 +50,10 @@ export function installAdmin(World, { G }) {
         mins: Math.round((st.playMs || 0) / 60000), sessions: st.sessions || 0, firstSeen: st.firstSeen || 0, lastSeen: st.lastSeen || 0,
         tix: G.tixIn(C), earned: Math.round(Number(C.earned) || 0), wagered: Math.round(Number(C.wagered) || 0),
         combat: G.combatOf(C), total, deaths: st.deaths || 0, kills: top(st.kills), gathered: top(st.gathered),
-        muted: (C.mutedUntil || 0) > Date.now() ? C.mutedUntil : 0, bom });
+        muted: (C.mutedUntil || 0) > Date.now() ? C.mutedUntil : 0, bom,
+        /* (2026-10-02, the owner: "yes build that in admin") what they carry, wear and bank, and the item log (THE ITEM LOG, ilog.js) */
+        inv: (C.inv || []).map((s) => [s.k, s.n, G.fCode(s) || 0]), bank: (C.bank || []).filter(Boolean).map((s) => [s.k, s.n, G.fCode(s) || 0]),
+        eq: Object.fromEntries(G.SLOTS.filter((s) => C.eq?.[s]).map((s) => [s, C.eq[s]])), quiver: C.quiver || null, ilog: (C.ilog || []).slice(-40) });
     }).catch((e) => this.say(pl, `That player could not be read: ${e.message}`, "bad"));
   };
 }

@@ -26,7 +26,7 @@ export function installOutfit(World, { G }) {
       const i = m.i | 0, st = C.inv[i]; if (!st) return;
       if (!G.outfitBuys(shop, st.k)) return bad(`${who} doesn't buy that.`);
       const f = G.fCode(st), pay = G.gearSell(st.k, f); if (!(pay > 0)) return bad(`${who} doesn't buy that.`);
-      const name = G.forgeNameAt(st.k, f); G.takeAt(C.inv, i); this.cashTo(pl, pay); this.touch(pl);
+      const name = G.forgeNameAt(st.k, f); G.takeAt(C.inv, i); this.cashTo(pl, pay); this.ilog?.(pl, "outfit", st.k, 1, who); this.touch(pl);   /* (2026-10-02) THE ITEM LOG */
       this.say(pl, `${who} takes your ${name.toLowerCase()} for ${G.fmtTix(pay)}.`, "good");
       return pl.out.push({ type: "outfit", sold: pay });
     }

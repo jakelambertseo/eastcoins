@@ -43,7 +43,8 @@ import { installTrack } from "./track.js";   /* (2026-09-30) WHAT THE WORLD RECO
 import { installRaid } from "./raid.js";
 import { installGrin } from "./grin.js";
 import { installKits } from "./kits.js";
-import { installBbag } from "./bbag.js";   /* (2026-10-02, v1.2) THE BUFF BAG: bbag.js */   /* (2026-10-02, v1.2) FIELD KITS: kits.js */   /* (2026-10-02) THE GRIN, the third Yard raid */
+import { installBbag } from "./bbag.js";   /* (2026-10-02, v1.2) THE BUFF BAG */
+import { installIlog } from "./ilog.js";   /* (2026-10-02) THE ITEM LOG: ilog.js. Installed last: it wraps bankAdd, trkSold and trkDeath */   /* (2026-10-02, v1.2) THE BUFF BAG: bbag.js */   /* (2026-10-02, v1.2) FIELD KITS: kits.js */   /* (2026-10-02) THE GRIN, the third Yard raid */
 import { installThief } from "./thief.js";
 import { installThrill } from "./thrill.js";
 import { installWork, WORK_ODDS } from "./work.js";
@@ -555,7 +556,7 @@ export class World {
     /* (2026-09-23) Written back to THE PIECE that was worked on, which is why the target was resolved up front:
        a break must destroy that exact one, not whichever copy comes first in the bag. */
     if (broke) {
-      (C.stats ||= G.freshStats()).forgeBroke = (C.stats.forgeBroke | 0) + 1;   /* (2026-09-23) what the "Easy Come" achievement counts; nothing else recorded a break */
+      (C.stats ||= G.freshStats()).forgeBroke = (C.stats.forgeBroke | 0) + 1; this.ilog(pl, "broke", key, 1);   /* (2026-10-02) THE ITEM LOG */   /* (2026-09-23) what the "Easy Come" achievement counts; nothing else recorded a break */
       if (wornSlot) { C.eq[wornSlot] = null; delete C.eqf[wornSlot]; }
       else G.takeAt(C.inv, bagI);
     } else if (wornSlot) { const keep = G.eqCode(C, wornSlot) - G.fLevelOf(C, wornSlot), nc = keep + nowLvl; if (nc > 0) C.eqf[wornSlot] = nc; else delete C.eqf[wornSlot]; }   /* (2026-09-28) the level changes; the gem sockets stay */
@@ -898,7 +899,7 @@ export class World {
         const i = m.i | 0, st = C.inv[i]; if (!st) return;
         if (st.k === "tickets") return this.say(pl, "You'd rather not drop your tickets.");
         if (G.ITEMS[st.k]?.bound) return this.say(pl, `You'd rather keep your ${G.ITEMS[st.k].name.toLowerCase()}.`);   /* (2026-10-02) a bound thing (the Buff Bag) is never dropped */
-        C.inv.splice(i, 1); this.say(pl, `You drop the ${G.ITEMS[st.k].name.toLowerCase()}.`); this.touch(pl); return;
+        C.inv.splice(i, 1); this.ilog(pl, "drop", st.k, st.n); this.say(pl, `You drop the ${G.ITEMS[st.k].name.toLowerCase()}.`); this.touch(pl); return;
       }
       case "chat": {
         // public chat is game-wide: everyone online sees it; it floats over the speaker's head for those in the same area
@@ -1092,7 +1093,8 @@ export class World {
         return;
       }
       case "use": return this.useItem(pl, m.i | 0);
-      case "bbag": return m.op === "use" ? this.bbagUse(pl) : this.bbagOp(pl, m);   /* (2026-10-02, v1.2) THE BUFF BAG: B, and the window */
+      case "bbag": return m.op === "use" ? this.bbagUse(pl) : this.bbagOp(pl, m);
+      case "ilog": { if (now - (pl.ilogAt || 0) < 1000) return; pl.ilogAt = now; return this.ilogSend(pl); }   /* (2026-10-02) THE ITEM LOG: the chat's Log tab */   /* (2026-10-02, v1.2) THE BUFF BAG: B, and the window */
       case "trade": return this.tradeOp(S, pl, m);
       /* A MOD GETS THE PANEL TOO, but only the tools MOD_TOOLS lists — the check is per COMMAND, not per panel, so a
          mod who guesses a command name still cannot run it. The list and the reasoning live in _tickets.js. */
@@ -3946,7 +3948,7 @@ export class World {
     this.trkDeath(pl, S, killer, pk && S?.def?.pvp ? pk : null, lost, took);   /* (2026-09-30) where, and what did it (track.js) */
     if (C.ward && !S?.def.pvp) { C.ward = false; this.touch(pl); this.say(pl, "The Witch's brew takes the fall for you: no hospital bill this time.", "good"); }   /* (2026-09-27) the ward is spent by the death it saves you from */
     else if (G.fxOf(C).nobill > 0 && !S?.def.pvp) this.say(pl, "The Ferryman's Coin pays the hospital. No bill.", "good");   /* (2026-09-27) the Long Night's amulet */
-    else { const bill = pl.god || S?.def.pvp ? 0 : G.deathBill(C, S?.key); if (bill > 0) { G.takeInv(C.inv, "tickets", bill); this.trkTix(pl, -bill, "bill"); this.touch(pl); this.say(pl, `THE HOSPITAL BILL: ${G.fmtTix(bill)}. They patched you up and went through your pockets.`, "bad"); } }   /* v68: the only thing a death costs */
+    else { const bill = pl.god || S?.def.pvp ? 0 : G.deathBill(C, S?.key); if (bill > 0) { G.takeInv(C.inv, "tickets", bill); this.trkTix(pl, -bill, "bill"); this.ilog(pl, "bill", "tickets", bill, S?.def?.name || ""); this.touch(pl); this.say(pl, `THE HOSPITAL BILL: ${G.fmtTix(bill)}. They patched you up and went through your pockets.`, "bad"); } }   /* v68: the only thing a death costs */
     this.say(pl, "Oh dear, you are dead! You wake up on the casino floor. Nobody looks surprised.", "bad");
     C.hp = G.maxHpOf(C);
     this.moveToScene(pl, G.START.scene, null, { x: G.START.x, y: G.START.y });
@@ -4444,8 +4446,8 @@ export class World {
     else if (m.op === "wd") { const st = C.bank[m.i | 0]; if (!st) return;
       pl.noCol = true;   /* (2026-09-27) your own things coming out of the bank are not new to your collection log */
       try {
-        if (G.fCode(st)) { if (!this.give(pl, st.k, 1, G.fCode(st))) return; C.bank.splice(m.i | 0, 1); this.touch(pl); return pl.out.push({ type: "bank" }); }
-        const q = this.giveUpTo(pl, st.k, qty(m.n, st.n)); if (!q) return; st.n -= q; if (!st.n) C.bank.splice(C.bank.indexOf(st), 1);
+        if (G.fCode(st)) { if (!this.give(pl, st.k, 1, G.fCode(st))) return; C.bank.splice(m.i | 0, 1); if (G.ITEMS[st.k]?.slot) this.ilog(pl, "withdrew", st.k, 1); this.touch(pl); return pl.out.push({ type: "bank" }); }
+        const q = this.giveUpTo(pl, st.k, qty(m.n, st.n)); if (!q) return; st.n -= q; if (!st.n) C.bank.splice(C.bank.indexOf(st), 1); if (G.ITEMS[st.k]?.slot) this.ilog(pl, "withdrew", st.k, q);
       } finally { pl.noCol = false; } }
     else return;
     this.touch(pl);
@@ -4514,6 +4516,7 @@ export class World {
     const matches = (x, k, f) => x.k === k && G.fCode(x) === (f | 0);   /* (2026-09-28) the whole code: a +10% ruby is not a -5% one */
     const haveAll = (k, f = 0) => C.inv.filter((x) => matches(x, k, f)).reduce((n, x) => n + x.n, 0) + C.bank.filter((x) => matches(x, k, f)).reduce((n, x) => n + x.n, 0);
     const takeItems = (k, n, f = 0) => {
+      this.ilog(pl, "listed", k, n);   /* (2026-10-02) THE ITEM LOG */
       let left = n;
       if (!f) { left -= G.takeInv(C.inv, k, n); }
       else for (let i = C.inv.length - 1; i >= 0 && left > 0; i--) if (matches(C.inv[i], k, f)) { G.takeAt(C.inv, i); left -= 1; }
@@ -5293,6 +5296,7 @@ export class World {
     apply(A, newA); apply(B, newB);
     this.petsMove(A, B, T.off[A.id].pets); this.petsMove(B, A, T.off[B.id].pets);
     this.exCommit(A, B);
+    for (const [p, q] of [[A, B], [B, A]]) { for (const [k, n] of Object.entries(T.off[p.id].items)) { this.ilog(p, "traded", k, n, q.name); this.ilog(q, "received", k, n, p.name); } }   /* (2026-10-02) THE ITEM LOG */
     this.tradeEnd(T, null);
     this.say(A, `Trade with ${B.name} complete.`, "good"); this.say(B, `Trade with ${A.name} complete.`, "good");
   }
@@ -5549,6 +5553,7 @@ installRaid(World, { G });
 installGrin(World, { G });
 installKits(World, { G });
 installBbag(World, { G });
+installIlog(World, { G });   /* LAST: see ilog.js */
 installThief(World, { G });
 installDiary(World, { G, TW });   /* (2026-10-01, v1.1) area diaries */
 installThrill(World, { G });

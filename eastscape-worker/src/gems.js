@@ -67,7 +67,7 @@ export function installGems(World, { G }) {
     }
     if (op === "sell") {
       const i = m.i | 0, st = C.inv[i]; if (!st || !G.isGem(st.k)) return;
-      const name = G.forgeNameAt(st.k, G.fCode(st)); G.takeAt(C.inv, i); this.cashTo(pl, S_.sell); this.touch(pl);
+      const name = G.forgeNameAt(st.k, G.fCode(st)); G.takeAt(C.inv, i); this.cashTo(pl, S_.sell); this.ilog?.(pl, "sorter", st.k, 1, G.fmtTix(S_.sell)); this.touch(pl);   /* (2026-10-02) THE ITEM LOG */
       this.say(pl, `The sorter takes your ${name.toLowerCase()} for ${G.fmtTix(S_.sell)}.`, "good");
       return this.gemPush(pl, { sold: S_.sell });
     }
