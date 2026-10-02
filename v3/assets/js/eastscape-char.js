@@ -21,7 +21,53 @@ export function createCharWin(E) {
   const IC = (k) => `/v3/assets/img/glad/flat/items/${k}.png`, UI = (k) => `/v3/assets/img/glad/flat/ui/${k}.png?v=1`, PET = (art) => `/v3/assets/img/glad/flat/${art}.png`;
   const pct = (v, d = 0) => `${(v * 100).toFixed(d).replace(/\.0$/, "")}%`;
   const ITEMS = G.ITEMS, SK = G.SKILLS;
-  let tab = "Damage", sel = 0, win = null;
+  let tab = "Damage", sel = 0, win = null, figTries = 0;
+
+  /* (2026-10-02, the owner: "max hit etc are calced on there from melee only, can we add some rows for archery/magic as well")
+     THE THREE STYLES SIDE BY SIDE. The numbers at the top read whatever is in your hand, so a melee player never saw what their bow
+     would do. Each other style is worked out as if you held your BEST weapon for it from your bag or bank (one you can wear), with
+     the matching quiver or Magic Bag and your best arrows or pages: the same rules functions on a copy of you, so the column says
+     exactly what switching would give. A style you own nothing for shows a dash. Ranged max hits include the loaded ammo
+     (ammoStrOf), which is what a real shot adds; the old single number left it out. */
+  const STYLES = ["melee", "archery", "magic"];
+  function styleSim(me, style) {
+    if (G.styleOf(me) === style) return { C: me, held: true, wpn: me.eq.weapon && ITEMS[me.eq.weapon] };
+    const owned = [...(me.inv || []), ...(me.bank || [])].filter((s) => s && ITEMS[s.k] && !G.missingReq(me, ITEMS[s.k]));
+    const isStyle = (it) => it.slot === "weapon" && (style === "melee" ? !it.launcher : !!it.launcher && (it.launcher.style || "archery") === style);
+    const score = (C) => [G.maxHitOf(C) + G.ammoStrOf(C), G.attackRollOf(C)];
+    let best = null;
+    for (const s of owned) {
+      const it = ITEMS[s.k]; if (!isStyle(it)) continue;
+      const C = { ...me, eq: { ...me.eq, weapon: s.k }, eqf: { ...(me.eqf || {}), weapon: G.fCode(s) } };
+      if (style === "melee") { if (ITEMS[me.eq.shield]?.pouch) C.eq.shield = null; }
+      else {
+        const kind = it.launcher.ammo || "arrow";
+        if (ITEMS[me.eq.shield]?.pouch?.ammo !== kind) {
+          const P = owned.filter((p) => ITEMS[p.k].pouch?.ammo === kind).sort((a, b) => (ITEMS[b.k].acc || 0) + (ITEMS[b.k].str || 0) - (ITEMS[a.k].acc || 0) - (ITEMS[a.k].str || 0))[0];
+          C.eq.shield = P ? P.k : null; C.eqf.shield = P ? G.fCode(P) : 0;
+        }
+        if (!me.quiver || G.ammoKind(me.quiver.k) !== kind || Math.floor(me.quiver.n) < 1) {
+          const A = owned.filter((a) => G.ammoKind(a.k) === kind).sort((a, b) => ITEMS[b.k].ammo.str - ITEMS[a.k].ammo.str)[0];
+          C.quiver = A ? { k: A.k, n: 1 } : null;
+        }
+      }
+      const sc = score(C); if (!best || sc[0] > best.sc[0] || (sc[0] === best.sc[0] && sc[1] > best.sc[1])) best = { C, sc, wpn: it };
+    }
+    return best ? { C: best.C, held: false, wpn: best.wpn } : null;
+  }
+  function vitals(me) {
+    const sims = STYLES.map((s) => [s, styleSim(me, s)]);
+    const cell = (fn) => sims.map(([s, x]) => x ? `<b class="${x.held ? "on" : ""}" title="${esc(x.held ? `${SK[s].name}: what you hold now` : `${SK[s].name}, holding your ${x.wpn.name.toLowerCase()}`)}">${fn(x.C)}</b>` : `<b class="off" title="${esc(`No ${s === "melee" ? "weapon" : s === "archery" ? "bow" : "wand"} for ${SK[s].name} in your bag or bank that you can use`)}">—</b>`).join("");
+    const held = sims.find(([, x]) => x?.held)?.[0];
+    return `<div class="ch-vit st3"><span></span>${sims.map(([s]) => `<span class="sth${s === held ? " on" : ""}"><img src="${IC("skill_" + s)}" alt="">${esc(SK[s].name)}</span>`).join("")}
+      <span>Max hit</span>${cell((C) => G.maxHitOf(C) + G.ammoStrOf(C))}
+      <span>Swing</span>${cell((C) => `${(G.swingMsOf(C) / 1000).toFixed(2)} s`)}
+      <span>Attack roll</span>${cell((C) => G.attackRollOf(C).toFixed(0))}
+      <span>Defence roll</span>${cell((C) => G.defenceRollOf(C).toFixed(0))}
+      <span>Health</span><b class="wide">${G.maxHpOf(me)}</b>
+      <span>Walking</span><b class="wide">+${Math.round((G.STEP_MS / G.stepMsOf(me) - 1) * 100)}%</b>
+      <span class="stn">Gold is what you hold. The others: your best weapon for that style from your bag or bank.</span></div>`;
+  }
 
   function css() {
     if ($("charCss")) return; const st = document.createElement("style"); st.id = "charCss"; st.textContent = `
@@ -34,6 +80,10 @@ export function createCharWin(E) {
 .ch-fig{display:grid;place-items:center;align-content:center;gap:2px;border:10px solid transparent;border-image:url(${UI("frame")}) 12 fill / 10px stretch;image-rendering:pixelated;position:relative}
 .ch-fig img{width:96px;height:120px;image-rendering:pixelated}.ch-fig .k-chip{position:absolute;top:-16px;left:50%;transform:translateX(-50%)}
 .ch-vit{display:grid;grid-template-columns:1fr auto;gap:3px 10px;align-content:center;font:800 11.5px Lora,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--k-ink2)}.ch-vit b{font:800 15px Lora,sans-serif;color:var(--k-ink);text-align:right;letter-spacing:0;text-transform:none}
+.ch-vit.st3{grid-template-columns:minmax(0,1fr) repeat(3,auto);gap:3px 9px}.ch-vit.st3 b{min-width:46px}.ch-vit .wide{grid-column:2/-1}
+.ch-vit .sth{display:flex;flex-direction:column;align-items:flex-end;gap:1px;font:800 10.5px Lora,sans-serif;letter-spacing:.04em;padding:2px 4px;border-radius:5px}.ch-vit .sth img{width:18px;height:18px;image-rendering:pixelated}
+.ch-vit .sth.on{background:rgba(232,193,90,.28);box-shadow:inset 0 0 0 1.5px rgba(176,128,36,.55);color:var(--k-ink)}.ch-vit b.on{color:#7a4f00}.ch-vit b.off{color:var(--k-ink2);opacity:.55;font-weight:700}
+.ch-vit .stn{grid-column:1/-1;font:600 11px Lora,sans-serif;letter-spacing:0;text-transform:none;color:var(--k-ink2);margin-top:2px}
 .ch-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
 .ch-strip span{display:grid;justify-items:center;gap:1px;padding:5px 2px 4px;border-radius:6px;background:#e6dcc4;border:1px solid #bfb193;min-width:0;cursor:help}
 .ch-strip img{width:22px;height:22px;image-rendering:pixelated}.ch-strip b{font-size:15px;line-height:1.15;color:#2a2016}.ch-strip small{font-size:9.5px;color:#6a5a40;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -73,8 +123,9 @@ export function createCharWin(E) {
         ["Attack roll", atk.toFixed(1), null, { p: `${SK[style].name} ${styleLvl} + 1 + gear accuracy${focus ? `, then +${focus}% from Focus` : ""}${tkA ? `, then +${pct(tkA)} from jade and gadgets` : ""}. Against a monster's defence it decides how often you land.`,
           src: [[IC("skill_" + style), `${SK[style].name} ${styleLvl} + 1`, String(styleLvl + 1)], ...(sb.acc ? [[IC(me.eq.weapon || "skill_attack"), "Gear accuracy", `+${sb.acc}`]] : []), ...(focus ? [[IC("scroll_focus"), "Focus charm", `+${focus}%`]] : []), ...(gems.jade ? [[IC("jade"), "Jade", `+${gems.jade}%`]] : [])],
           more: gems.jade ? [] : [[IC("jade"), "A jade in the gem bag", "up to +20%"]] }],
-        ["Max hit", String(maxHit), null, { p: `1 + ${SK[style].name} level ÷ 6 + gear strength ÷ 2${focus ? ", then Focus" : ""}${tkD ? `, then your +${pct(tkD, 1)} damage bonus` : ""}.`,
-          src: [[IC("skill_" + style), `1 + ${styleLvl} ÷ 6`, String(1 + Math.floor(styleLvl / 6))], [IC(me.eq.weapon || "skill_strength"), `${sb.str} strength ÷ 2`, String(Math.floor(sb.str / 2))], ...(gems.ruby && style === "melee" ? [[IC("ruby"), "Rubies", `+${gems.ruby}%`]] : [])],
+        /* (2026-10-02) the loaded arrow or page counts, as it does in a real shot (ammoStrOf), so this agrees with the three columns at the top */
+        ["Max hit", String(maxHit + G.ammoStrOf(me)), null, { p: `1 + ${SK[style].name} level ÷ 6 + gear strength ÷ 2${focus ? ", then Focus" : ""}${tkD ? `, then your +${pct(tkD, 1)} damage bonus` : ""}${G.launcherOf(me) ? `, then half the loaded ${G.ammoWords(G.launcherOf(me).launcher.ammo || "arrow").one}'s strength` : ""}.`,
+          src: [[IC("skill_" + style), `1 + ${styleLvl} ÷ 6`, String(1 + Math.floor(styleLvl / 6))], [IC(me.eq.weapon || "skill_strength"), `${sb.str} strength ÷ 2`, String(Math.floor(sb.str / 2))], ...(G.ammoStrOf(me) ? [[IC(G.ammoOf(me).k), `${ITEMS[G.ammoOf(me).k].name}, loaded`, `+${G.ammoStrOf(me)}`]] : []), ...(gems.ruby && style === "melee" ? [[IC("ruby"), "Rubies", `+${gems.ruby}%`]] : [])],
           more: style === "melee" ? [[IC("ruby"), gems.ruby ? "A better-rolled ruby" : "A ruby in the gem bag", "up to +20%"]] : style === "archery" ? [[IC("jasper"), "Jasper in the gem bag", "up to +20%"]] : [[IC("amethyst"), "Amethyst in the gem bag", "up to +20%"]] }],
         ["Swing time", `${(swing / 1000).toFixed(2)} s`, null, { p: `The weapon's own speed (${((weapon?.speed || G.SWING_MS) / 1000).toFixed(1)} s) made faster by work speed, +${pct(G.swingFx(me), 1)} (at most ${pct(cap.speed)}).`,
           src: [...(weapon ? [[IC(me.eq.weapon), weapon.name, `${((weapon.speed || G.SWING_MS) / 1000).toFixed(1)} s`]] : []), ...worn.filter((w) => w.it.fx?.speed).map((w) => [IC(w.k), w.it.name, `+${pct(w.it.fx.speed)}`]), ...(pet.swing ? petRow(`+${pet.swing}%`) : [])], more: [] }],
@@ -119,7 +170,8 @@ export function createCharWin(E) {
     const me = E.getMe(); if (!me || !win) return;
     const R = rows(me), list = R[tab]; if (sel >= list.length) sel = 0;
     const cur = list[sel], d = cur[3], style = G.styleOf(me), weapon = me.eq.weapon && ITEMS[me.eq.weapon], b = G.bonusOf(me), fx = G.fxOf(me), combat = G.combatOf(me);
-    const fig = $("dollFig"), figImg = fig && fig.width ? `<img src="${fig.toDataURL()}" alt="">` : "";
+    const fig = $("dollFig"), figUrl = E.figure ? E.figure() : fig && fig.width ? fig.toDataURL() : null, figImg = figUrl ? `<img src="${figUrl}" alt="">` : "";
+    if (figUrl === "" && figTries++ < 20) setTimeout(refresh, 250); else if (figUrl) figTries = 0;   /* a part of your look still loading: ask again shortly */
     const strip = [[UI("equip"), `+${b.def}`, "armour", "Defence from everything worn"], [IC("skill_defence"), G.defenceRollOf(me).toFixed(0), "def roll", "How hard you are to hit"], [IC("hematite"), `−${pct(fx.tough)}`, "dmg taken", `Less damage from every hit, at most ${pct(G.OUT_CAP.tough)}`], [IC("skill_hp"), String(G.maxHpOf(me)), "health", "Your Hitpoints level and any pet"], [IC(G.wardOf(me) ? "frostward_amulet" : "frostcharm"), G.wardOf(me) ? "yes" : "no", "frost ward", "The Frozen Reach's cold cannot touch you while you wear one"]];
     const maxed = Object.values(R).flat().filter((r) => r[2] != null && r[2] >= 0.999).length, capped = Object.values(R).flat().filter((r) => r[2] != null).length;
     win.innerHTML = `<div class="win-head"><b><img src="${UI("skills")}" alt="" class="topi">Character</b><small>every number the game uses about you, and where to get more</small><button type="button" class="win-x" aria-label="Close">×</button></div>
@@ -129,7 +181,7 @@ export function createCharWin(E) {
           ${["melee", "archery", "magic", "hp"].map((k) => `<div class="ch-sk"><img src="${IC("skill_" + k)}" alt=""><span>${SK[k].name}</span><b>${G.lvlOf(me, k)}</b></div>`).join("")}
           <div class="ch-sk" style="color:var(--k-ink2)"><span></span><span>Total level</span><b>${G.totalOf(me).toLocaleString()}</b></div></div>
         <div class="ch-fig"><span class="k-chip gold">Combat ${combat}</span>${figImg}<small class="k-note">${weapon ? esc(weapon.name) : "Unarmed"}</small></div>
-        <div class="ch-vit"><span>Health</span><b>${G.maxHpOf(me)}</b><span>Max hit</span><b>${G.maxHitOf(me)}</b><span>Swing</span><b>${(G.swingMsOf(me) / 1000).toFixed(2)} s</b><span>Attack roll</span><b>${G.attackRollOf(me).toFixed(0)}</b><span>Defence roll</span><b>${G.defenceRollOf(me).toFixed(0)}</b><span>Walking</span><b>+${Math.round((G.STEP_MS / G.stepMsOf(me) - 1) * 100)}%</b></div>
+        ${vitals(me)}
       </div>
       <div class="k-sect"><span class="k-label">Armour</span></div>
       <div class="ch-strip">${strip.map(([ic, v, l, t]) => `<span title="${esc(t)}"><img src="${ic}" alt=""><b>${v}</b><small>${l}</small></span>`).join("")}</div>

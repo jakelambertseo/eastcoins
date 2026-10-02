@@ -8,7 +8,7 @@
      admLogAdd  every server-wide or about-somebody command an admin or mod runs: who, what, when. The last 50, kept in storage ("admLog"),
                 so four admins can see who started the 2X or ended the Flood.
    One small message on open and after an action; no poll faster than the window's own refresh (the page asks every 15 s while it is open). */
-const LOGGED = new Set(["double", "skill2x", "raid", "wyrm", "ev", "restart", "saveall", "mute", "unmute", "kick", "refund", "gemgift", "neworder", "projtier", "hwking"]);
+const LOGGED = new Set(["double", "skill2x", "craft2x", "raid", "wyrm", "ev", "restart", "saveall", "mute", "unmute", "kick", "refund", "gemgift", "neworder", "projtier", "hwking"]);
 const MOD_CAN = ["stats", "saveall", "restart", "tp", "mute", "unmute", "kick", "admstate", "admplayer"];   /* keep in step with canRun in index.js */
 export function installAdmin(World, { G }) {
   const P = World.prototype;
@@ -28,7 +28,7 @@ export function installAdmin(World, { G }) {
       mins: Math.round((now - (p.joinedAt || now)) / 60000) })).sort((a, b) => a.name.localeCompare(b.name));
     const W = this.wyrm, E = this.ev;
     pl.out.push({ type: "admstate", now, admin: !!isAdmin, can: isAdmin ? null : MOD_CAN, dev: this.env?.DEV === "1",
-      online, dbl: this.doubleView(), sx2: this.skill2xView(), raid: this.raidState ? this.raidState(now) : null,
+      online, dbl: this.doubleView(), sx2: this.skill2xView(), cx2: this.craft2xView(), raid: this.raidState ? this.raidState(now) : null,
       wyrm: W ? { up: !!W.up, until: W.up?.until || 0, at: W.at || 0 } : null,
       ev: E ? { day: E.day, plan: E.plan, done: E.done } : null,
       restartAt: this.restartAt || 0, log: (this.admLog || []).slice(-30).reverse() });

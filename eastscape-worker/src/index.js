@@ -297,7 +297,7 @@ export class World {
          thrown away and a fresh one posted with a new 24-hour clock (the countdown "never moved" across a deploy, and everything handed in
          was lost), and a 2X running at a deploy simply ended. Anything saved with ctx.storage.put has to be read back HERE. */
       this.dbl = (await ctx.storage.get("dbl")) || null; this.admLog = (await ctx.storage.get("admLog")) || [];   /* (2026-10-01) the admin action log */
-      this.sx2 = (await ctx.storage.get("sx2")) || null; this.raidLast = (await ctx.storage.get("raidLast")) || 0;   /* (2026-09-30) the 2X Skilling XP clock and the War Horn's three hours */
+      this.sx2 = (await ctx.storage.get("sx2")) || null; this.cx2 = (await ctx.storage.get("cx2")) || null;   /* (2026-10-02, the owner: "split tickets from crafting XP (tickets is 400k, 200k for crafting, 100k for skilling)") */ this.raidLast = (await ctx.storage.get("raidLast")) || 0;   /* (2026-09-30) the 2X Skilling XP clock and the War Horn's three hours */
       await this.orderLoad();
       await this.evLoad();   /* (2026-09-30) WORLD EVENTS: the day's plan, a star, a poster, a thief (see events.js) */
       await this.projLoad();   /* (2026-09-28) World Projects: the tiers build the maps, so they are read before any scene is */
@@ -404,7 +404,8 @@ export class World {
     this.cryptHello(pl, S); if (S.def.count) this.countHello(pl, S);
     if (this.doubleOn()) pl.out.push({ type: "double", on: this.doubleView() });
     pl.out.push({ type: "wev", ...this.evView() });   /* (2026-09-30) WORLD EVENTS: what is on right now */
-    if (this.skill2xOn()) pl.out.push({ type: "skill2x", on: this.skill2xView() });   /* (2026-09-30) */   /* (2026-09-25) walk in mid-event and the timer is already there */
+    if (this.skill2xOn()) pl.out.push({ type: "skill2x", on: this.skill2xView() });
+    if (this.craft2xOn()) pl.out.push({ type: "craft2x", on: this.craft2xView() });   /* (2026-10-02, the owner: "split tickets from crafting XP (tickets is 400k, 200k for crafting, 100k for skilling)") */   /* (2026-09-30) */   /* (2026-09-25) walk in mid-event and the timer is already there */
     this.pyramidHello(pl, S);
     this.repCatchUp(pl).catch(() => {});   /* (2026-09-28) news on their bug reports and ideas from while they were away */
     this.achSweep(pl);   /* (2026-09-23) everything they already qualify for, paid once and quietly */
@@ -1578,7 +1579,7 @@ export class World {
     this.cryptTop = (await this.ctx.storage.get("cryptTop")) || {};   /* (v103) the crypt's fastest clears */
     this.radio = (await this.ctx.storage.get("radio")) || null;
     this.chatLog = (await this.ctx.storage.get("chatlog")) || [];
-    this.dbl = (await this.ctx.storage.get("dbl")) || null; this.sx2 = (await this.ctx.storage.get("sx2")) || null; this.raidLast = (await this.ctx.storage.get("raidLast")) || 0; await this.orderLoad(); await this.projLoad(); for (const k of G.projScenes()) this.projRebuild(k);   /* (2026-09-28) Bronny's order outlives a restart too */   /* (2026-09-25) a 2X event outlives a restart: it is the server's clock, not a player's */   /* (v86) the jukebox's station outlives a restart */
+    this.dbl = (await this.ctx.storage.get("dbl")) || null; this.sx2 = (await this.ctx.storage.get("sx2")) || null; this.cx2 = (await this.ctx.storage.get("cx2")) || null; this.raidLast = (await this.ctx.storage.get("raidLast")) || 0; await this.orderLoad(); await this.projLoad(); for (const k of G.projScenes()) this.projRebuild(k);   /* (2026-09-28) Bronny's order outlives a restart too */   /* (2026-09-25) a 2X event outlives a restart: it is the server's clock, not a player's */   /* (v86) the jukebox's station outlives a restart */
     this.fame = (await this.ctx.storage.get("fame")) || this.fame || null;
     return Response.json({ ok: true, restored: written, from: body.takenAt || null });
   }
@@ -1769,10 +1770,10 @@ export class World {
     const mins = Math.round(ms / 60000), view = this.doubleView();
     for (const p of this.pls.values()) {
       p.out.push({ type: "double", on: view });
-      p.out.push({ type: "casinonote", text: `✨ ${this.dbl.by} popped 2X TICKETS & CRAFTING XP for EVERYONE for ${mins} minutes.` });
-      this.say(p, `✨ 2X TICKETS & CRAFTING XP: ${this.dbl.by} cracked the potion. For the next ${mins} minutes every ticket and all crafting xp is doubled, for everyone on the server. (Gathering and combat xp are not.)`, "loot");
+      p.out.push({ type: "casinonote", text: `✨ ${this.dbl.by} popped 2X TICKETS for EVERYONE for ${mins} minutes.` });
+      this.say(p, `✨ 2X TICKETS: ${this.dbl.by} cracked the potion. For the next ${mins} minutes every ticket is doubled, for everyone on the server. (XP is not.)`, "loot");
     }
-    this.houseSay(`✨ 2X TICKETS & CRAFTING XP — ${this.dbl.by} popped the potion. Double tickets and double crafting xp for everyone for ${mins} minutes.`);
+    this.houseSay(`✨ 2X TICKETS — ${this.dbl.by} popped the potion. Double tickets for everyone for ${mins} minutes.`);
   }
 
 
@@ -2091,7 +2092,8 @@ export class World {
     if (it.earned) return this.say(pl, "That one is earned, never sold.", "bad");   /* (2026-09-27) a Long Night cosmetic has no ticket price */
     const have = G.tixIn(C), price = G.priceOf(it), now = Date.now(), paid = () => `${it.name} - ${G.fmtTix(price)}.`;
     /* EVERY REFUSAL COMES BEFORE THE CHARGE: nothing below takes a ticket and then says no */
-    if (it.kind === "double" && this.dbl && now < this.dbl.until) { const left = Math.ceil((this.dbl.until - now) / 60000); return this.say(pl, `2X Tickets & Crafting XP is already running - ${left} minute${left === 1 ? "" : "s"} left. It's yours to buy when it ends.`, "bad"); }
+    if (it.kind === "craft2x" && this.craft2xOn()) { const left = Math.ceil((this.cx2.until - now) / 60000); return this.say(pl, `2X Crafting XP is already running - ${left} minute${left === 1 ? "" : "s"} left. It's yours to buy when it ends.`, "bad"); }   /* (2026-10-02, the owner: "split tickets from crafting XP (tickets is 400k, 200k for crafting, 100k for skilling)") */
+    if (it.kind === "double" && this.dbl && now < this.dbl.until) { const left = Math.ceil((this.dbl.until - now) / 60000); return this.say(pl, `2X Tickets is already running - ${left} minute${left === 1 ? "" : "s"} left. It's yours to buy when it ends.`, "bad"); }
     if (it.kind === "skill2x" && this.skill2xOn()) { const left = Math.ceil((this.sx2.until - now) / 60000); return this.say(pl, `2X Skilling XP is already running - ${left} minute${left === 1 ? "" : "s"} left. It's yours to buy when it ends.`, "bad"); }
     if (it.slot && C.store.own.includes(id)) return this.say(pl, "You own that already.", "bad");
     if (it.kind === "loupe" && G.loupeOf(C, id) + G.LOUPES[id].rolls > G.LOUPE_MAX) return this.say(pl, `You're holding ${G.loupeOf(C, id)} rolls of that already. Use some at the Gem Sorter first (${G.LOUPE_MAX} at most).`, "bad");
@@ -2116,6 +2118,7 @@ export class World {
     if (it.kind === "give") { if (!G.roomFor(C.inv, it.give[0], C)) return this.say(pl, "Your bag is full.", "bad"); }
     G.takeInv(C.inv, "tickets", price); this.trkTix(pl, -price, "store"); this.trkBought(pl, `store:${id}`, 1, price);   /* (2026-09-30) track.js */
     if (it.kind === "double") { this.touch(pl); this.doubleStart(pl.name, G.DOUBLE.ms); this.say(pl, `${paid()} The room is yours for half an hour.`, "loot"); return; }
+    if (it.kind === "craft2x") { this.touch(pl); this.craft2xStart(pl.name, G.CRAFT2X.ms); return this.say(pl, `${paid()} 2X Crafting XP for everyone, for half an hour, in your name.`, "good"); }   /* (2026-10-02, the owner: "split tickets from crafting XP (tickets is 400k, 200k for crafting, 100k for skilling)") */
     if (it.kind === "skill2x") { this.touch(pl); this.skill2xStart(pl.name, G.SKILL2X.ms); this.say(pl, `${paid()} 2X Skilling XP for everyone, for half an hour, in your name.`, "loot"); return; }
     if (it.kind === "give") { if (!this.give(pl, it.give[0], it.give[1])) { G.addInv(C.inv, "tickets", price, C); this.touch(pl); return; } this.touch(pl); return this.say(pl, paid(), "loot"); }
     if (it.kind === "loupe") { C.store[id] = G.loupeOf(C, id) + G.LOUPES[id].rolls; this.touch(pl); return this.say(pl, `${paid()} You hold ${C.store[id]} lifted rolls: the Gem Sorter uses one every roll.`, "loot"); }
@@ -2184,6 +2187,25 @@ export class World {
     return null;
   }
   /* (2026-09-30) THE 2X SKILLING XP POTION's clock: the 2X Tickets potion's shape, its own key, its own bar */
+  /* (2026-10-02, the owner: "split tickets from crafting XP (tickets is 400k, 200k for crafting, 100k for skilling)"): 2X CRAFTING XP, its own clock beside the other two (cx2, kept in storage) */
+  craft2xOn() { return !!(this.cx2 && Date.now() < this.cx2.until); }
+  craft2xView() { return this.craft2xOn() ? { until: this.cx2.until, by: this.cx2.by, mult: G.CRAFT2X.mult } : null; }
+  craft2xStart(by, ms) {
+    this.cx2 = { until: Date.now() + ms, by: String(by || "somebody"), told: false };
+    this.ctx.storage.put("cx2", this.cx2).catch(() => {});
+    const mins = Math.round(ms / 60000), view = this.craft2xView();
+    for (const p of this.pls.values()) {
+      p.out.push({ type: "craft2x", on: view });
+      p.out.push({ type: "casinonote", text: `\u{1F528} ${this.cx2.by} popped 2X CRAFTING XP for EVERYONE for ${mins} minutes.` });
+      this.say(p, `\u{1F528} 2X CRAFTING XP: ${this.cx2.by} cracked the potion. For the next ${mins} minutes everything made at a station earns double xp, for everyone on the server. (Tickets and gathering xp are not doubled.)`, "loot");
+    }
+    this.houseSay(`\u{1F528} 2X CRAFTING XP \u2014 ${this.cx2.by} popped the potion. Double crafting xp for everyone for ${mins} minutes.`);
+  }
+  craft2xTick() {
+    if (!this.cx2 || this.cx2.told || Date.now() < this.cx2.until) return;
+    this.cx2.told = true; this.ctx.storage.put("cx2", this.cx2).catch(() => {});
+    for (const p of this.pls.values()) { p.out.push({ type: "craft2x", on: null }); this.say(p, "2X Crafting XP is over. Back to normal rates."); }
+  }
   skill2xOn() { return !!(this.sx2 && Date.now() < this.sx2.until); }
   skill2xView() { return this.skill2xOn() ? { until: this.sx2.until, by: this.sx2.by, mult: G.SKILL2X.mult } : null; }
   skill2xStart(by, ms) {
@@ -2352,8 +2374,8 @@ export class World {
     if (Date.now() < this.dbl.until) return;
     this.dbl.told = true;
     this.ctx.storage.put("dbl", this.dbl).catch(() => {});
-    for (const p of this.pls.values()) { p.out.push({ type: "double", on: null }); this.say(p, "2X Tickets & Crafting XP is over. Back to normal rates."); }
-    this.houseSay("2X Tickets & Crafting XP has ended. Back to normal rates.");
+    for (const p of this.pls.values()) { p.out.push({ type: "double", on: null }); this.say(p, "2X Tickets is over. Back to normal rates."); }
+    this.houseSay("2X Tickets has ended. Back to normal rates.");
   }
 
   /* ------------------------------------------------------------ ranged: ammo and the pouch (2026-09-25)
@@ -2479,7 +2501,7 @@ export class World {
       const now2 = Date.now();
       if (this.dbl && now2 < this.dbl.until) {
         const left = Math.ceil((this.dbl.until - now2) / 60000);
-        return this.say(pl, `2X Tickets & Crafting XP is already running - ${left} minute${left === 1 ? "" : "s"} left. Keep it for after.`, "bad");
+        return this.say(pl, `2X Tickets is already running - ${left} minute${left === 1 ? "" : "s"} left. Keep it for after.`, "bad");
       }
       take();
       this.doubleStart(pl.name, G.DOUBLE.ms);
@@ -2936,7 +2958,7 @@ export class World {
       for (const gt of gates) { const open = G.gateOpenAt(now, gt) ? "i" : "#"; for (const [gx, gy] of G.gateTiles(gt)) S.g[gy][gx] = open; }
     }
     if (this.tickN % 20 === 0) this.trkSecond(now);   /* (2026-09-30) WHAT THE WORLD RECORDS: a second on this map doing this (track.js) */
-    if (this.tickN % 20 === 0) { try { this.chatPlanTick(now); } catch (e) { console.error("chatPlanTick", e); }   /* (2026-10-01) the chat view's waiting start */ this.evTick(now);   /* (2026-09-30) WORLD EVENTS */ this.weekTick(now);   /* (2026-09-30) THE WEEKLY ISSUE */ this.wyrmTick(now);   /* (2026-09-30) the Ice Wyrm */ this.coldTick(now);   /* (2026-09-30) the Frozen Reach's cold */ this.raidTick(now);   /* (2026-09-30) the Yard raid */ this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.skill2xTick(); this.hwTick(now); this.orderTick(now); this.projTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
+    if (this.tickN % 20 === 0) { try { this.chatPlanTick(now); } catch (e) { console.error("chatPlanTick", e); }   /* (2026-10-01) the chat view's waiting start */ this.evTick(now);   /* (2026-09-30) WORLD EVENTS */ this.weekTick(now);   /* (2026-09-30) THE WEEKLY ISSUE */ this.wyrmTick(now);   /* (2026-09-30) the Ice Wyrm */ this.coldTick(now);   /* (2026-09-30) the Frozen Reach's cold */ this.raidTick(now);   /* (2026-09-30) the Yard raid */ this.songTick(now); this.cryptTick(now); this.pyramidTick(now); this.countTick(now); this.doubleTick(); this.skill2xTick(); this.craft2xTick(); this.hwTick(now); this.orderTick(now); this.projTick(now); this.meterTick(now); if (this.tickN % 1200 === 0) this.petDaily(); this.pitTick(now).catch(() => {}); }
     if (this.tickN % 40 === 0) this.runsSave();   /* (2026-09-27) the dungeon runs, so a deploy does not end them */
     if (this.tickN % 1200 === 600) for (const p of this.pls.values()) this.diaryCheck(p);   /* (2026-10-01) once a minute, the diaries' safety net: a pet, a Tower floor, a worn crown */
     if (this.tickN % 20 === 0) for (const pl of this.pls.values()) {   /* once a second */
@@ -3649,7 +3671,7 @@ export class World {
         /* (2026-09-25) "2X tickets and crafting experience". CRAFTING is this loop - the fire, the range, the
            furnace, the anvil and the cauldron - and nothing else. Doubling inside grant() would have caught
            combat, gathering and quest rewards too, which is not what was asked and would be a far bigger lever. */
-        this.grant(pl, r.skill, Math.round(r.xp * (1 + group) * (this.doubleOn() && !this.skill2xOn() ? G.DOUBLE.mult : 1) * (nx ? nx.xp : 1)));
+        this.grant(pl, r.skill, Math.round(r.xp * (1 + group) * (this.craft2xOn() && !this.skill2xOn() ? G.CRAFT2X.mult : 1) * (nx ? nx.xp : 1)));
         /* (2026-09-27) the way into Breeding: a batch of pet food trains it a little while you have no pet and no egg (G.BREED.foodXp, foodXpWhile) */
         if (G.BREED.foodXp?.[r.out[0]] && G.foodXpWhile(pl.C)) this.grant(pl, "breeding", G.BREED.foodXp[r.out[0]]);
         if (r.skill !== "cooking") this.say(pl, `You ${st.verb === "print" ? "print" : "make"} ${outN > 1 ? `${outN} × ` : "a "}${outName}.${nx && outN > r.out[1] ? ` ${st.name[0].toUpperCase()}${st.name.slice(1)} made extra.` : ""}`, "good");   /* (2026-09-29) it is 1.5 now, not double, and the Wild Bench says it too */
@@ -5323,6 +5345,11 @@ export class World {
       /* (2026-09-25, the owner: "allow me to spawn it in admin menu") Two ways, because they are different
          jobs: `item pot_double` puts one in your bag to test the drinking, and this STARTS one outright without
          spending anything. `mins` is optional so a test can run for two minutes instead of thirty. */
+      case "craft2x": {   /* (2026-10-02, the owner: "split tickets from crafting XP (tickets is 400k, 200k for crafting, 100k for skilling)"): the 2X Crafting XP Potion's clock */
+        const mins = Math.max(0, Math.min(180, m.mins == null ? Math.round(G.CRAFT2X.ms / 60000) : m.mins | 0));
+        if (!mins) { if (this.cx2) { this.cx2.until = 0; this.craft2xTick(); } return note("2X Crafting XP stopped."); }
+        this.craft2xStart(m.by ? String(m.by).slice(0, 24) : pl.name, mins * 60000); return note(`2X Crafting XP started for ${mins} minutes.`);
+      }
       case "skill2x": {   /* (2026-09-30) the 2X Skilling XP Potion's clock, like "double" below: minutes, or 0 to stop */
         const mins = Math.max(0, Math.min(180, m.mins == null ? Math.round(G.SKILL2X.ms / 60000) : m.mins | 0));
         if (!mins) { if (this.sx2) { this.sx2.until = 0; this.skill2xTick(); } return note("2X Skilling XP stopped."); }
@@ -5332,7 +5359,7 @@ export class World {
       case "storeup": { if (this.env?.DEV !== "1") return note("That one is for the dev server only."); C.store ||= { own: [], name: {} }; C.store.bankx = 0; C.store.qx = 0; C.store.loupe = 0; C.store.loupe2 = 0; this.touch(pl); return note("Your Store upgrades and loupes are reset (dev testing)."); }
       case "double": {
         const mins = Math.max(0, Math.min(180, m.mins == null ? Math.round(G.DOUBLE.ms / 60000) : m.mins | 0));
-        if (!mins) { if (this.dbl) { this.dbl.until = 0; this.doubleTick(); } return note("2X event stopped."); }
+        if (!mins) { if (this.dbl) { this.dbl.until = 0; this.doubleTick(); } return note("2X Tickets stopped."); }
         this.doubleStart(m.by ? String(m.by).slice(0, 24) : pl.name, mins * 60000);
         return note(`2X event started for ${mins} minutes.`);
       }

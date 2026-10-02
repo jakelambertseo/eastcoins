@@ -17,7 +17,7 @@
 if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && new URLSearchParams(location.search).get("open") === "1") globalThis.__ES_OPEN_ALL = true;
 /* (2026-09-30) YOUR SCREEN: the chosen look, on <html> before anything paints (eastscape-ui.js keeps it in step) */
 try { const t = localStorage.getItem("es_ui_theme"); if (t) document.documentElement.dataset.uiTheme = t; } catch (e) { /* storage off: the default look */ }</script>
-<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=451">
+<link rel="modulepreload" href="/v3/assets/js/eastscape-shared.js?v=453">
 <link rel="modulepreload" href="/v3/assets/js/eastscape-sfx.js?v=18">
 <link rel="preconnect" href="https://play.eastcoin.vip">
 <!-- EastScape: the page only draws. Everything that happens is decided by the game server
@@ -976,6 +976,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
 #dblBar[hidden]{display:none}
 .wpager{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 14px}.wpager button{padding:4px 10px;border-radius:5px;border:1.5px solid #c2a574;background:#e6d4ad;color:#2a2016;font:800 12.5px Lora,sans-serif;cursor:pointer}.wpager button:disabled{opacity:.45;cursor:default}.wpager span{font:700 13px Lora,sans-serif;margin:0 4px}.wpager small{opacity:.7}.wpager label{margin-left:auto;font:700 12.5px Lora,sans-serif}.wpager input{width:58px;margin-left:4px;padding:3px 6px;border-radius:5px;border:1.5px solid #c2a574;font:700 12.5px Lora,sans-serif}
 .tbl th.srt{cursor:pointer;user-select:none;white-space:nowrap}.tbl th.srt:hover{text-decoration:underline}.tbl th.srt::after{content:" 95";opacity:.35;font-size:.9em}.tbl th.srt[data-dir="asc"]::after{content:" B2";opacity:.9}.tbl th.srt[data-dir="desc"]::after{content:" BC";opacity:.9}   /* (2026-09-30) every wiki table sorts: see wikiSortable */
+#cx2Bar{position:absolute;left:50%;top:94px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;background:linear-gradient(#ffb066,#d0662a);color:#2a1406;font-weight:800;font-size:13px;letter-spacing:.04em;box-shadow:0 0 0 2px #7a3a10,0 3px 10px rgba(0,0,0,.45);white-space:nowrap}#cx2Bar[hidden]{display:none}#cx2Bar .dblt{font-variant-numeric:tabular-nums}   /* (2026-10-02) 2X Crafting XP */
 #sx2Bar{position:absolute;left:50%;top:94px;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;padding:4px 12px;border-radius:999px;background:linear-gradient(#7ae07a,#3aa048);color:#0a2a10;font-weight:800;font-size:13px;letter-spacing:.04em;box-shadow:0 0 0 2px #1a5a24,0 3px 10px rgba(0,0,0,.45);white-space:nowrap}
 #sx2Bar.low{top:124px}#sx2Bar[hidden]{display:none}#sx2Bar b{font-size:14px}#sx2Bar .dblt{font-variant-numeric:tabular-nums;background:rgba(0,0,0,.18);border-radius:999px;padding:1px 7px}
 /* (2026-09-29) the death card: greys the view and fades out on its own; nothing to click */
@@ -2051,7 +2052,7 @@ b.who{cursor:pointer;text-decoration:underline dotted rgba(42,32,22,.45);text-un
   </aside>
 </main>
 <script type="module">
-import * as G from "/v3/assets/js/eastscape-shared.js?v=451";
+import * as G from "/v3/assets/js/eastscape-shared.js?v=453";
 // the wiki's words (guides, the update log) are 13 KB nobody needs until they open the wiki: fetched on first open
 const FROZEN = new Map();   /* (2026-09-30) player id -> when their Deep Freeze ends (performance.now) */
 let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], SKILL_GUIDE: {}, stub: true };
@@ -2061,7 +2062,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=245").then((m) => { WK = m; for (const [k, [hold, text]] of Object.entries(m.SKILL_GUIDE_V11 || {})) if (!G.HOLD[hold]) m.SKILL_GUIDE[k] = text; rmLiveNote(); }),   /* (2026-10-01) v1.1's skill one-liners */
+  import("/v3/assets/js/eastscape-wiki.js?v=247").then((m) => { WK = m; for (const [k, [hold, text]] of Object.entries(m.SKILL_GUIDE_V11 || {})) if (!G.HOLD[hold]) m.SKILL_GUIDE[k] = text; rmLiveNote(); }),   /* (2026-10-01) v1.1's skill one-liners */
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
@@ -2505,7 +2506,8 @@ function onEvent(e) {
   if (e.type === "ach") { SFX.play("task_done"); if (!$("achWin").hidden) renderAch(); return; }
   if (e.type === "fell") return void SFX.play("tree_fall");
   if (e.type === "double") { dblSet(e.on); if (e.on) SFX.play("jackpot"); return; }
-  if (e.type === "skill2x") { sx2Set(e.on); if (e.on) SFX.play("jackpot"); return; }   /* (2026-09-30) 2X Skilling XP */
+  if (e.type === "skill2x") { sx2Set(e.on); if (e.on) SFX.play("jackpot"); return; }
+  if (e.type === "craft2x") { cx2Set(e.on); if (e.on) SFX.play("jackpot"); return; }   /* (2026-10-02, the owner: "split tickets from crafting XP (tickets is 400k, 200k for crafting, 100k for skilling)") */   /* (2026-09-30) 2X Skilling XP */
   if (e.type === "wev") { EVS = e; if (EVUI || e.star || e.wanted || e.thief) evUi().then((u) => u.state(e)).catch(() => {}); if (!$("mapWin").hidden) renderMap(); return; }   /* (2026-09-30) WORLD EVENTS */
   if (e.type === "evwin") { evUi().then((u) => u.win(e)).catch(() => say("That didn't load. Try again in a moment.", "bad")); return; }
   if (e.type === "thiefheist") { SFX.play("jackpot"); return; }
@@ -6678,7 +6680,7 @@ let CARDP = null;   /* one load, however many callers ask at once: two racing im
 function cardsUi() { return CARDUI ? Promise.resolve(CARDUI) : CARDP ||= import(CARDUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (CARDUI = m.createCards({ G, $, esc, send, SFX, ico, openWin, get me() { return me; } })); }); }
 function gemsUi() { return GEMUI ? Promise.resolve(GEMUI) : import(GEMUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (GEMUI = m.createGems({ G, $, esc, send, SFX, ico, openWin, winFx, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
 function tinkUi() { return TINKUI ? Promise.resolve(TINKUI) : import(TINKUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (TINKUI = m.createTinker({ G, $, esc, send, SFX, ico, openWin, winFx, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
-let ORDUI = null; const ORDUI_URL = "/v3/assets/js/eastscape-order.js?v=7";
+let ORDUI = null; const ORDUI_URL = "/v3/assets/js/eastscape-order.js?v=9";
 function ordUi() { return ORDUI ? Promise.resolve(ORDUI) : import(ORDUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (ORDUI = m.createOrderUi({ G, $, esc, send, SFX, openWin, ico, calm: () => set("reducedMotion"), get me() { return me; } })); }); }
 function repUi() { return REPUI ? Promise.resolve(REPUI) : import(REPUI_URL).then((m) => { const st = document.createElement("style"); st.textContent = m.CSS; document.head.append(st); return (REPUI = m.createReportUi({ G, $, esc, send, SFX, openWin, get me() { return me; } })); }); }
 $("bugBtn").addEventListener("click", () => { SFX.play("ui_open"); if (!$("bugWin").hidden) { $("bugWin").hidden = true; return; } repUi().then((u) => u.open()); });
@@ -6688,8 +6690,8 @@ function openPen(e) { petUi().then((u) => u.openPen(e)); }
 function openHatch(e) { petUi().then((u) => u.openHatch(e)); }
 /* (2026-10-01) THE CHARACTER WINDOW (mockup 9, approved after testing in the game): every number the game uses about you, from the Character
    button in the Equipment tab. Fetched the first time it is opened, never at login; nothing is sent to the server. See eastscape-char.js. */
-let CHUI = null; const CHUI_URL = "/v3/assets/js/eastscape-char.js?v=1";
-function chUi() { return CHUI ? Promise.resolve(CHUI) : import(CHUI_URL).then((m) => (CHUI = m.createCharWin({ G, $, esc, flatArt, SFX, getMe: () => me, getYou: () => you }))); }
+let CHUI = null; const CHUI_URL = "/v3/assets/js/eastscape-char.js?v=2";
+function chUi() { return CHUI ? Promise.resolve(CHUI) : import(CHUI_URL).then((m) => (CHUI = m.createCharWin({ G, $, esc, flatArt, SFX, getMe: () => me, getYou: () => you, figure: dollFigUrl }))); }
 let COLUI = null; const COLUI_URL = "/v3/assets/js/eastscape-collog.js?v=2";   /* (2026-09-27) the collection log's window, fetched the first time a podium is clicked */
 function colUi() { return COLUI ? Promise.resolve(COLUI) : import(COLUI_URL).then((m) => (COLUI = m.createColLog({ G, $, esc, ico, flatArt, SFX, wikiGo: (r) => { wikiRoute = r; openWin("wikiWin"); } }))); }
 function openMarket() { for (const w of ["bankWin", "exWin", "shopWin", "smithWin", "dailyWin", "roulWin", "gameWin", "lookWin", "jukeWin", "vanWin"]) $(w).hidden = true; $("hwWin").hidden = false; SFX.play("ui_open"); renderMarket(); }
@@ -8593,12 +8595,28 @@ function renderSettingsOld() {
 }
 /* the doll's middle: your own look, facing you, twice size. lookSprite paints it from the parts the world already loaded; "" means a part
    is still on the way, so it asks again shortly */
+/* (2026-10-02) A CHARACTER THAT NEVER CHOSE A LOOK HAS NONE: me.look is null and the world draws them from the numbered looks
+   (lookArt(G.lookFor(pl)), see the players layer). The doll only knew a chosen look, so for them it, and the Character window
+   that copied it, stayed blank. Both ask here now, which answers the way the world does. */
+const myFigKey = () => me?.look ? lookSprite(me.look, "south", me.van) : you ? lookArt(G.lookFor(you), "south") : null;
 function drawDollFig(tries = 0) {
-  const c = $("dollFig"); if (!c || !me?.look) return;
-  const key = lookSprite(me.look, "south", me.van), a = key && IMG[key];
+  const c = $("dollFig"); if (!c || !me) return;
+  const key = myFigKey(), a = key && IMG[key];
   if (!a) { if (key === "" && tries < 20) setTimeout(() => drawDollFig(tries + 1), 250); return; }
-  const o = c.getContext("2d"), im = a.im, k = Math.min(c.width / im.width, c.height / im.height);
+  paintFig(c, a.im);
+}
+function paintFig(c, im) {
+  const o = c.getContext("2d"), k = Math.min(c.width / im.width, c.height / im.height);
   o.imageSmoothingEnabled = false; o.clearRect(0, 0, c.width, c.height); o.drawImage(im, (c.width - im.width * k) / 2, c.height - im.height * k, im.width * k, im.height * k);
+}
+/* (2026-10-02, the owner: "in character menu users profile avatar isnt showing in the middle") THE CHARACTER WINDOW DRAWS ITS OWN FIGURE.
+   It copied #dollFig, which is only painted when the Equipment tab has drawn with every part of your look loaded, so the window
+   could open on a blank canvas with just the weapon's name in it. Now it asks for a fresh one: a data URL, "" while a part of the look
+   is still on the way (the window asks again), or null when there is nothing to draw. */
+function dollFigUrl() {
+  if (!me) return null;
+  const key = myFigKey(), a = key && IMG[key]; if (!a) return key === "" ? "" : null;
+  const c = document.createElement("canvas"); c.width = 96; c.height = 120; paintFig(c, a.im); return c.toDataURL();
 }
 /* (2026-10-01, v1.1) THE ADMIN WINDOW: the old tab was one long column of about 45 controls; it's a window now (v3/assets/js/eastscape-admin.js,
    mockup 17), loaded the first time staff open it. The tab keeps a launcher. These are the lists the window's Testing tab needs from the page. */
@@ -8622,7 +8640,7 @@ function admLists() {
   const quests = Object.fromEntries(Object.entries(QUESTS).map(([k, q]) => [k, `${q.name} (${G.qState(me, k)})`]));
   return { skills: Object.entries(skills), scenes: Object.entries(scenes), quests: Object.entries(quests) };
 }
-let ADMUI = null; const ADMUI_URL = "/v3/assets/js/eastscape-admin.js?v=5";
+let ADMUI = null; const ADMUI_URL = "/v3/assets/js/eastscape-admin.js?v=7";
 function admUi() { return ADMUI ? Promise.resolve(ADMUI) : import(ADMUI_URL).then((m) => (ADMUI = m.createAdminWin({ G, $, esc, send, popup, SFX, getMe: () => me, getYou: () => you, lists: admLists, trkOpen }))); }
 function renderAdmin(p) {
   const isAdmin = you.role === "admin" || you.admin;
@@ -8686,12 +8704,12 @@ function dblRender() {
   }
   if (!dblEl) {
     dblEl = document.createElement("div"); dblEl.id = "dblBar";
-    dblEl.innerHTML = '<b>✨ 2X TICKETS + CRAFTING XP</b><span class="dblt"></span>';
+    dblEl.innerHTML = '<b>✨ 2X TICKETS</b><span class="dblt"></span>';
     (document.querySelector(".game") || document.body).append(dblEl);
   }
   const s = Math.ceil(left / 1000);
   dblEl.querySelector(".dblt").textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
-  dblEl.title = DBL.by ? DBL.by + " popped 2X Tickets & Crafting XP: double tickets and double crafting xp for everyone. Gathering and combat xp are not doubled." : "";
+  dblEl.title = DBL.by ? DBL.by + " popped 2X Tickets: double tickets for everyone. XP is not doubled." : "";
   dblEl.hidden = false;
 }
 /* (2026-09-30) 2X SKILLING XP's bar, under the 2X Tickets one when both run */
@@ -8705,6 +8723,17 @@ function sx2Render() {
   sx2El.classList.toggle("low", !!(DBL && DBL.until > dblNow())); sx2El.hidden = false;
 }
 function sx2Set(on) { SX2 = on && on.until > dblNow() ? on : null; sx2Render(); if (SX2 && !sx2Timer) sx2Timer = setInterval(sx2Render, 1000); }
+/* (2026-10-02, the owner: "split tickets from crafting XP (tickets is 400k, 200k for crafting, 100k for skilling)"): 2X CRAFTING XP's bar, under the other two */
+let CX2 = null, cx2El = null, cx2Timer = 0;
+function cx2Render() {
+  const left = CX2 ? CX2.until - dblNow() : 0;
+  if (!CX2 || left <= 0) { CX2 = null; if (cx2El) cx2El.hidden = true; if (cx2Timer) { clearInterval(cx2Timer); cx2Timer = 0; } return; }
+  if (!cx2El) { cx2El = document.createElement("div"); cx2El.id = "cx2Bar"; cx2El.innerHTML = '<b>\u{1F528} 2X CRAFTING XP</b><span class="dblt"></span>'; (document.querySelector(".game") || document.body).append(cx2El); }
+  const s = Math.ceil(left / 1000); cx2El.querySelector(".dblt").textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  cx2El.title = CX2.by ? CX2.by + " popped 2X Crafting XP: double xp for anything made at a station, for everyone. Tickets and gathering xp are not doubled." : "";
+  cx2El.style.top = (94 + (SX2 && SX2.until > dblNow() ? 30 : 0)) + "px"; cx2El.hidden = false;
+}
+function cx2Set(on) { CX2 = on && on.until > dblNow() ? on : null; cx2Render(); if (CX2 && !cx2Timer) cx2Timer = setInterval(cx2Render, 1000); }
 function dblSet(on) {
   DBL = on && on.until > dblNow() ? on : null;
   dblRender();

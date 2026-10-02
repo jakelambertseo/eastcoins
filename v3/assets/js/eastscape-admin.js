@@ -58,9 +58,11 @@ export function createAdminWin(ctx) {
   const v = (id) => win.querySelector(`#${id}`)?.value ?? "";
   const mins = (id) => Math.max(1, Math.min(180, parseInt(v(id), 10) || 30));
   const GO = {
-    dblStart: () => { const add = mins("aDblM"), on = st?.dbl, cur = on ? Math.ceil((on.until - Date.now()) / 60000) : 0; sure(on ? "Add time to 2X?" : "Start 2X for everyone?", `${on ? `${add} more minutes of` : `${add} minutes of`} double tickets and crafting XP for every player on the server.`, () => A({ cmd: "double", mins: cur + add })); },
-    dblStop: () => sure("Stop 2X?", "Double tickets and crafting XP end now, for everyone.", () => A({ cmd: "double", mins: 0 })),
+    dblStart: () => { const add = mins("aDblM"), on = st?.dbl, cur = on ? Math.ceil((on.until - Date.now()) / 60000) : 0; sure(on ? "Add time to 2X?" : "Start 2X for everyone?", `${on ? `${add} more minutes of` : `${add} minutes of`} double tickets (not XP) for every player on the server.`, () => A({ cmd: "double", mins: cur + add })); },
+    dblStop: () => sure("Stop 2X Tickets?", "Double tickets end now, for everyone.", () => A({ cmd: "double", mins: 0 })),
     sxStart: () => { const add = mins("aSxM"), on = st?.sx2, cur = on ? Math.ceil((on.until - Date.now()) / 60000) : 0; sure(on ? "Add time to 2X Skilling?" : "Start 2X Skilling for everyone?", `${add} minutes of double XP in every non-combat skill, for everyone.`, () => A({ cmd: "skill2x", mins: cur + add })); },
+    cxStart: () => { const add = mins("aCxM"), on = st?.cx2, cur = on ? Math.ceil((on.until - Date.now()) / 60000) : 0; sure(on ? "Add time to 2X Crafting?" : "Start 2X Crafting for everyone?", `${add} ${on ? "more " : ""}minutes of double crafting XP, for everyone.`, () => A({ cmd: "craft2x", mins: cur + add })); },   /* (2026-10-02, the owner: "split tickets from crafting XP (tickets is 400k, 200k for crafting, 100k for skilling)") */
+    cxStop: () => sure("Stop 2X Crafting?", "Double crafting XP ends now, for everyone.", () => A({ cmd: "craft2x", mins: 0 })),
     sxStop: () => sure("Stop 2X Skilling?", "Double skilling XP ends now, for everyone.", () => A({ cmd: "skill2x", mins: 0 })),
     ev: (b) => { const [what, end] = b.dataset.ev.split(":"), N = { star: "a Shooting Star", wanted: "a Wanted poster", thief: "the Jackpot Thief" }[what]; sure(end ? `End ${N}?` : `Start ${N} now?`, end ? "It ends for everybody now." : "It starts for the whole server now, here if this map allows it, otherwise where it can.", () => A({ cmd: "ev", arg: end ? `${what} end` : what })); },
     plan: () => A({ cmd: "ev", arg: "plan" }),
@@ -110,7 +112,8 @@ export function createAdminWin(ctx) {
   const said = (r) => {
     const a = r.arg;
     switch (r.cmd) {
-      case "double": return +a > 0 ? `2X Tickets & Crafting: set to ${a} min` : "stopped 2X Tickets & Crafting";
+      case "double": return +a > 0 ? `2X Tickets: set to ${a} min` : "stopped 2X Tickets";
+      case "craft2x": return +a > 0 ? `2X Crafting: set to ${a} min` : "stopped 2X Crafting";
       case "skill2x": return +a > 0 ? `2X Skilling: set to ${a} min` : "stopped 2X Skilling";
       case "raid": return { "": "started a Yard raid", flood: "started the Flood", grin: "started The Grin", now: "skipped the raid warning", end: "ended the raid", unsack: "reopened the stalls" }[a] ?? `raid ${a}`;
       case "wyrm": return a === "down" ? "sent the Ice Wyrm away" : "raised the Ice Wyrm";
@@ -144,13 +147,15 @@ export function createAdminWin(ctx) {
       <span><b>${st.online.length}</b>online now</span>
       <span class="${st.dbl ? "on" : ""}"><b>${st.dbl ? `2X · ${left(st.dbl.until)}` : "off"}</b>tickets & crafting</span>
       <span class="${st.sx2 ? "on" : ""}"><b>${st.sx2 ? `2X · ${left(st.sx2.until)}` : "off"}</b>2X skilling</span>
+      <span class="${st.cx2 ? "on" : ""}"><b>${st.cx2 ? `2X · ${left(st.cx2.until)}` : "off"}</b>2X crafting</span>
       <span class="${R && !R.sacked && !R.dark ? "on" : ""}"><b>${esc(raidTxt)}</b>raid / flood</span>
       <span><b>${next ? clock(next[1]) : "none"}</b>${next ? `next: ${next[0]}` : "events today"}</span>
       <span class="${st.restartAt ? "on" : ""}"><b>${st.restartAt ? left(st.restartAt) : "none"}</b>restart</span></div>`;
     if (st.admin) {
       s += `<div class="adm-h">Boosts <small>for everyone on the server · each asks first</small></div><div class="adm-grid">
-        ${cardH(UI("g_vip"), "2X Tickets & Crafting", st.dbl ? `${left(st.dbl.until)} left · started by ${esc(st.dbl.by || "?")}` : "double tickets and crafting XP", `${st.dbl ? chip("running", "go") : chip("off")}${minSel("aDblM")}${btn(st.dbl ? "Add time" : "Start", "dblStart", st.dbl ? "sec" : "")}${st.dbl ? btn("Stop", "dblStop", "warn") : ""}`, st.dbl)}
-        ${cardH(UI("g_updates"), "2X Skilling XP", st.sx2 ? `${left(st.sx2.until)} left · started by ${esc(st.sx2.by || "?")}` : "every non-combat skill", `${st.sx2 ? chip("running", "go") : chip("off")}${minSel("aSxM")}${btn(st.sx2 ? "Add time" : "Start", "sxStart", st.sx2 ? "sec" : "")}${st.sx2 ? btn("Stop", "sxStop", "warn") : ""}`, st.sx2)}</div>`;
+        ${cardH(IT("st_2xtix"), "2X Tickets", st.dbl ? `${left(st.dbl.until)} left · started by ${esc(st.dbl.by || "?")}` : "double tickets, no XP", `${st.dbl ? chip("running", "go") : chip("off")}${minSel("aDblM")}${btn(st.dbl ? "Add time" : "Start", "dblStart", st.dbl ? "sec" : "")}${st.dbl ? btn("Stop", "dblStop", "warn") : ""}`, st.dbl)}
+        ${cardH(IT("st_2xskill"), "2X Skilling XP", st.sx2 ? `${left(st.sx2.until)} left · started by ${esc(st.sx2.by || "?")}` : "every non-combat skill", `${st.sx2 ? chip("running", "go") : chip("off")}${minSel("aSxM")}${btn(st.sx2 ? "Add time" : "Start", "sxStart", st.sx2 ? "sec" : "")}${st.sx2 ? btn("Stop", "sxStop", "warn") : ""}`, st.sx2)}
+        ${cardH("/v3/assets/img/glad/flat/items/st_2xcraft.png", "2X Crafting XP", st.cx2 ? `${left(st.cx2.until)} left · started by ${esc(st.cx2.by || "?")}` : "anything made at a station", `${st.cx2 ? chip("running", "go") : chip("off")}${minSel("aCxM")}${btn(st.cx2 ? "Add time" : "Start", "cxStart", st.cx2 ? "sec" : "")}${st.cx2 ? btn("Stop", "cxStop", "warn") : ""}`, st.cx2)}</div>`;
       const evc = (k, name, img) => { const t = ev?.plan?.[k], done = ev?.done?.[k]; return cardH(img, name, !ev ? "no plan yet today" : done ? `today's: done` : t ? `today at ${clock(t)}` : "not today", `${btn("Now", "ev", "", `data-ev="${k}"`)}${btn("End", "ev", "sec", `data-ev="${k}:end"`)}`); };
       s += `<div class="adm-h">World events <small>one of each a day on their own; start one now if the server's quiet</small></div><div class="adm-grid">
         ${evc("star", "Shooting Star", IT("stardust"))}${evc("wanted", "Wanted!", UI("g_events"))}${evc("thief", "The Jackpot Thief", IT("tickets"))}
@@ -249,7 +254,7 @@ export function createAdminWin(ctx) {
   /* a strip that counts down between the server's answers, without asking it again */
   /* never redraw under somebody typing or choosing: an input or a select with the focus keeps its value until they're done */
   const typing = () => { const el = document.activeElement; return !!(el && win.contains(el) && (el.tagName === "INPUT" || el.tagName === "SELECT")); };
-  setInterval(() => { if (!win.hidden && st && tab === "live" && (st.dbl || st.sx2 || st.restartAt || st.wyrm?.up) && !typing()) paint(); }, 1000);
+  setInterval(() => { if (!win.hidden && st && tab === "live" && (st.dbl || st.sx2 || st.cx2 || st.restartAt || st.wyrm?.up) && !typing()) paint(); }, 1000);
   return {
     open, close,
     onState(m) { st = m; if (!win.hidden && !typing()) paint(); },

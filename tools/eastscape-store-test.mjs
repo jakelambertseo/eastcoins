@@ -56,6 +56,14 @@ const told = (pl) => pl.out.map((e) => e.text || "").join(" | ");
   is([plain, on, said.some((x) => /2X SKILLING XP/.test(x))], [[100, 100], [200, 100, 200], true], "2X Skilling XP: mining and smithing double, melee does not, CASINO says so");
   const q = player(); is([buy(q, "skill2x"), /already running/.test(told(q))], [0, true], "a second while one runs: refused, nothing taken");
   W.sx2.until = Date.now() - 1; W.skill2xTick(); is([W.skill2xOn(), said.some((x) => /2X Skilling XP has ended/.test(x))], [false, true], "it ends, and says so"); }
+/* 4b. (2026-10-02) the split: 2X Tickets 400k (tickets only), 2X Crafting XP 200k (its own clock), 2X Skilling 100k */
+{ W.sx2 = null; W.dbl = null; W.cx2 = null; const p = player();
+  is([buy(p, "double"), buy(p, "craft2x"), buy(player(), "skill2x")], [400000, 200000, 100000], "the three 2X prices");
+  is([W.doubleOn(), W.craft2xOn(), W.skill2xOn(), said.some((x) => /2X CRAFTING XP/i.test(x))], [true, true, true, true], "each starts its own clock, and CASINO says so");
+  const q = player(); is([buy(q, "craft2x"), /already running/.test(told(q))], [0, true], "a second 2X Crafting while one runs: refused, nothing taken");
+  W.sx2 = null; W.dbl = null; is([W.craft2xOn(), W.doubleOn()], [true, false], "2X Crafting does not need 2X Tickets");
+  p.out = []; W.cx2.until = Date.now() - 1; W.craft2xTick(); is([W.craft2xOn(), /2X Crafting XP is over/.test(told(p)), p.out.some((e) => e.type === "craft2x" && e.on === null)], [false, true, true], "it ends, tells everyone, and takes the bar down");
+  is([G.STORE.double.art, G.STORE.craft2x.art, G.STORE.skill2x.art, G.RARE_RATE], ["st_2xtix", "st_2xcraft", "st_2xskill", 0.002], "a bottle each, and monsters' rares at 1 in 500"); }
 /* 5. the loupes at the Sorter */
 { const p = player(); buy(p, "loupe"); buy(p, "loupe2"); G.addInv(p.C.inv, "ruby", 3, p.C);
   const Sy = W.scene("workyard"); p.x = 31; p.y = 10; W.env = { DEV: "1" }; p.admin = true;

@@ -25,7 +25,7 @@ export function installOrder(World, { G }) {
   P.orderNew = function (now, quiet) {
     this.order = { id: `${now.toString(36)}${Math.random().toString(36).slice(2, 6)}`, at: now, until: now + O.ms, lines: G.orderPick(), by: {}, said: [], doneAt: 0, claimedBy: null };
     this.orderSave();
-    if (!quiet) this.houseSay(`\u{1F6A7} BRONNY IS REBUILDING THE YARD and needs: ${listText(this.order)}. Fill his order together and the whole server gets a 2X.`, NAME);
+    if (!quiet) this.houseSay(`\u{1F6A7} BRONNY IS REBUILDING THE YARD and needs: ${listText(this.order)}. Fill his order together and the whole server gets 2X Tickets.`, NAME);
     this.orderPush();
   };
   /* once a second from the world's tick: the first order ever, and an unfilled order running out. A FILLED one never runs out. */
@@ -36,7 +36,7 @@ export function installOrder(World, { G }) {
       const pct = Math.round(G.orderPct(o) * 100);
       this.houseSay(`⌛ Bronny's order ran out at ${pct}%. He's put a fresh one up.`, NAME);
       this.orderNew(now, true);
-      this.houseSay(`\u{1F6A7} BRONNY IS REBUILDING THE YARD and needs: ${listText(this.order)}. Fill his order together and the whole server gets a 2X.`, NAME);
+      this.houseSay(`\u{1F6A7} BRONNY IS REBUILDING THE YARD and needs: ${listText(this.order)}. Fill his order together and the whole server gets 2X Tickets.`, NAME);
     }
   };
 
@@ -89,7 +89,7 @@ export function installOrder(World, { G }) {
         o.doneAt = now;
         for (const id of Object.keys(o.by)) { const q = this.pls.get(id); if (q) this.workRoll?.(q, "bronny", G.WORKPASS ? 1 / 3 : 1 / 6);   /* (2026-10-02, the owner: the work clothes pass): was 1/6 */ }   /* (2026-10-01) Bronny's leathers, for anyone who helped fill it */
         const top = Object.values(o.by).sort((a, b) => b.n - a.n).slice(0, 3).map((x) => x.name).join(", ");
-        this.houseSay(`✅ BRONNY'S ORDER IS FILLED! ${Object.keys(o.by).length} helped (top: ${top}). A 2X Potion is waiting at Bronny: anyone who helped can claim it for the whole server.`, NAME);
+        this.houseSay(`✅ BRONNY'S ORDER IS FILLED! ${Object.keys(o.by).length} helped (top: ${top}). A 2X Tickets potion is waiting at Bronny: anyone who helped can claim it for the whole server.`, NAME);
 /* (2026-09-30, the owner: "the casino message are duplicating again") CASINO's chat line above already says this to everyone: no second note */
       } else for (const q of [25, 50, 75]) if (pct * 100 >= q && !o.said.includes(q)) { o.said.push(q); this.houseSay(`\u{1F4E6} Bronny's order is ${q}% there. ${pl.name} just brought in ${parts.join(", ")}.`, NAME); }
       this.orderSave(); this.orderPush();
@@ -102,7 +102,7 @@ export function installOrder(World, { G }) {
       if (this.doubleOn()) { const left = Math.ceil((this.dbl.until - now) / 60000); return bad(`A 2X is already running: ${left} minute${left === 1 ? "" : "s"} left. Claim this one after it.`); }
       o.claimedBy = pl.name; this.orderSave();
       this.doubleStart(pl.name, G.DOUBLE.ms);
-      this.houseSay(`\u{1F389} ${pl.name} claimed the 2X from Bronny's order! Thanks to everyone who pitched in.`, NAME);
+      this.houseSay(`\u{1F389} ${pl.name} claimed 2X Tickets from Bronny's order! Thanks to everyone who pitched in.`, NAME);
       pl.out.push({ type: "orderclaimed" });
       this.orderNew(now);
       return;

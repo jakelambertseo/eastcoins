@@ -57,7 +57,8 @@ export function installCommands(World, { G }) {
         if (C.charm?.left > 0) L.push(`\u{1F4DC} ${G.CHARMS?.[C.charm.k]?.name || "Your page"}: ${left(C.charm.left)} left.`);
         for (const [id, t] of Object.entries(C.tk || {})) if (t.left > 0) L.push(`\u{1F527} ${G.GADGETS?.[id]?.name || id}: ${left(t.left)} left.`);
         if (C.luck > 0) L.push(`\u{1F340} Lucky for your next ${C.luck} kills or catches.`);
-        if (this.doubleOn?.()) L.push(`✨ 2X Tickets & Crafting XP (the server's): ${left(this.dbl.until - now)} left.`);
+        if (this.craft2xOn?.()) L.push(`\u{1F528} 2X Crafting XP (the server's): ${left(this.cx2.until - now)} left.`);
+        if (this.doubleOn?.()) L.push(`✨ 2X Tickets (the server's): ${left(this.dbl.until - now)} left.`);
         if (this.skill2xOn?.()) L.push(`⚒️ 2X Skilling XP (the server's): ${left(this.sx2.until - now)} left.`);
         L.push("Your island's timers: /island. Today's world events: /events.");
         return popup(pl, "Your timers", "⏱️", L.length > 1 ? L : ["Nothing of yours is on a clock right now.", ...L]), true;
