@@ -76,9 +76,10 @@ console.log("Where they drop");
   Q = [0]; W.workOnKill(p, { t: "gull" }); ok(p.C.locker.some((k) => G.WORK_OF[k] === "bowyer"), "a gull: the bowyer's greens");
   Q = [0]; W.workOnKill(p, { t: "junkking" }); ok(p.C.locker.some((k) => G.WORK_OF[k] === "sal"), "the Junk King: Sal's overalls");
   Q = [0.99]; const before = p.C.locker.length; W.workOnKill(p, { t: "cow" }); ok(p.C.locker.length === before, "a bad roll finds nothing");
-  ok(G.STAR_TENT.stock.some((r) => r.work === "stargazer" && r.frags === 40), "the Star Tent sells the stargazer's robes, 40 fragments");
-  const S = W.scene("cloud"); p.C.scene = "cloud"; p.x = G.STAR_TENT.at.x; p.y = G.STAR_TENT.at.y + 1; p.C.frags = 100; p.out = [];
-  W.tentOp(S, p, { op: "buy", id: "work_stargazer" }); ok(p.C.frags === 60 && p.C.locker.some((k) => G.WORK_OF[k] === "stargazer"), "40 fragments buys a piece", said(p)); }
+  const SGP = G.STAR_TENT.stock.find((r) => r.work === "stargazer")?.frags;   /* (2026-10-02) the price is the rules', not this file's (650 since then) */
+  ok(SGP === 650, `the Star Tent sells the stargazer's robes, ${SGP} fragments`);
+  const S = W.scene("cloud"); p.C.scene = "cloud"; p.x = G.STAR_TENT.at.x; p.y = G.STAR_TENT.at.y + 1; p.C.frags = SGP + 60; p.out = [];
+  W.tentOp(S, p, { op: "buy", id: "work_stargazer" }); ok(p.C.frags === 60 && p.C.locker.some((k) => G.WORK_OF[k] === "stargazer"), `${SGP} fragments buys a piece`, said(p)); }
 
 console.log("The Ditched move");
 { const old = G.normChar({}); old.eq.helm = "ditched_hood"; old.inv.push({ k: "ditched_coat", n: 1 }, { k: "ditched_hood", n: 1 }); old.bank = [{ k: "ditched_boots", n: 2 }]; delete old.workMig;
