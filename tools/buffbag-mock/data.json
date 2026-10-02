@@ -1,0 +1,619 @@
+{
+ "made": "2026-10-02, from the rules file (scratchpad buffbag data)",
+ "types": {
+  "meal": [
+   {
+    "k": "chickendinner",
+    "name": "Winner's chicken dinner",
+    "mins": 20,
+    "does": "10% more tickets from kills, and that chance of a second fish on a catch",
+    "icon": true
+   },
+   {
+    "k": "steakdinner",
+    "name": "Steak dinner",
+    "mins": 20,
+    "does": "you swing and fish 10% faster",
+    "icon": true
+   },
+   {
+    "k": "porkchops",
+    "name": "High roller's chops",
+    "mins": 20,
+    "does": "rare drops come up 25% more often",
+    "icon": true
+   },
+   {
+    "k": "fishplatter",
+    "name": "Fisherman's platter",
+    "mins": 20,
+    "does": "10% more tickets from kills, and that chance of a second fish on a catch; fish bite 10% more often",
+    "icon": true
+   },
+   {
+    "k": "sghostcarp",
+    "name": "Smoked ghost carp",
+    "mins": 20,
+    "does": "rare drops come up 8% more often",
+    "icon": true
+   },
+   {
+    "k": "scloudray",
+    "name": "Smoked cloud ray",
+    "mins": 20,
+    "does": "you take 8% less damage",
+    "icon": true
+   },
+   {
+    "k": "sskyeel",
+    "name": "Smoked sky eel",
+    "mins": 20,
+    "does": "you swing and fish 8% faster",
+    "icon": true
+   },
+   {
+    "k": "sstormmarlin",
+    "name": "Smoked storm marlin",
+    "mins": 20,
+    "does": "10% more tickets from kills, and that chance of a second fish on a catch",
+    "icon": true
+   },
+   {
+    "k": "smudcat",
+    "name": "Smoked mud cat",
+    "mins": 20,
+    "does": "rare drops come up 15% more often",
+    "icon": true
+   },
+   {
+    "k": "sthundersquid",
+    "name": "Smoked thunder squid",
+    "mins": 20,
+    "does": "you take 15% less damage",
+    "icon": true
+   },
+   {
+    "k": "sbowfin",
+    "name": "Smoked bowfin",
+    "mins": 20,
+    "does": "you take 10% less damage; rare drops come up 15% more often",
+    "icon": true
+   },
+   {
+    "k": "svoidfin",
+    "name": "Smoked voidfin",
+    "mins": 20,
+    "does": "you take 12% less damage; rare drops come up 18% more often",
+    "icon": true
+   },
+   {
+    "k": "sgrimscale",
+    "name": "Smoked grimscale",
+    "mins": 20,
+    "does": "5% more tickets from kills, and that chance of a second fish on a catch; you take 15% less damage; rare drops come up 20% more often",
+    "icon": true
+   },
+   {
+    "k": "sgoldfish",
+    "name": "Smoked prize goldfish",
+    "mins": 20,
+    "does": "a real ZCoin is 12% more likely to drop",
+    "icon": true
+   },
+   {
+    "k": "skoi",
+    "name": "Smoked fairground koi",
+    "mins": 20,
+    "does": "fish bite 10% more often",
+    "icon": true
+   },
+   {
+    "k": "pumpkinpie",
+    "name": "Pumpkin pie",
+    "mins": 30,
+    "does": "10% more tickets from kills, and that chance of a second fish on a catch; rare drops come up 15% more often",
+    "icon": true
+   },
+   {
+    "k": "truffle_dinner",
+    "name": "Truffle dinner",
+    "mins": 20,
+    "does": "5% more tickets from kills, and that chance of a second fish on a catch; rare drops come up 20% more often",
+    "icon": true
+   },
+   {
+    "k": "starcap_feast",
+    "name": "Starcap feast",
+    "mins": 20,
+    "does": "8% more tickets from kills, and that chance of a second fish on a catch; you take 15% less damage; rare drops come up 20% more often",
+    "icon": true
+   },
+   {
+    "k": "smackerel",
+    "name": "Smoked mackerel",
+    "mins": 20,
+    "does": "you swing and fish 5% faster; fish bite 4% more often",
+    "icon": true
+   },
+   {
+    "k": "sbluefin",
+    "name": "Smoked bluefin",
+    "mins": 20,
+    "does": "6% more tickets from kills, and that chance of a second fish on a catch; rare drops come up 6% more often",
+    "icon": true
+   },
+   {
+    "k": "sswordfish",
+    "name": "Smoked swordfish",
+    "mins": 20,
+    "does": "you take 12% less damage; fish bite 6% more often",
+    "icon": true
+   },
+   {
+    "k": "cnitroeel",
+    "name": "Nitro eel fillet",
+    "mins": 10,
+    "does": "you swing and fish 8% faster",
+    "icon": true
+   }
+  ],
+  "drink": [
+   {
+    "k": "beer",
+    "name": "House lager",
+    "mins": 10,
+    "does": "5% more tickets from kills, and that chance of a second fish on a catch",
+    "icon": true
+   },
+   {
+    "k": "whiskey",
+    "name": "Top-shelf whiskey",
+    "mins": 10,
+    "does": "you swing and fish 15% faster; you take 10% MORE damage",
+    "icon": true
+   },
+   {
+    "k": "cocktail",
+    "name": "The Safety Net",
+    "mins": 10,
+    "does": "you take 20% less damage",
+    "icon": true
+   },
+   {
+    "k": "champagne",
+    "name": "Champagne",
+    "mins": 10,
+    "does": "a real ZCoin is 50% more likely to drop",
+    "icon": true
+   },
+   {
+    "k": "lemonade",
+    "name": "Pink lemonade",
+    "mins": 10,
+    "does": "you swing and fish 3% faster",
+    "icon": true
+   }
+  ],
+  "potion": [
+   {
+    "k": "pot_swift",
+    "name": "Swift draught",
+    "mins": 10,
+    "does": "you swing and fish 4% faster",
+    "icon": true
+   },
+   {
+    "k": "pot_hide",
+    "name": "Hide tonic",
+    "mins": 10,
+    "does": "you take 5% less damage",
+    "icon": true
+   },
+   {
+    "k": "pot_keen",
+    "name": "Keen-eye water",
+    "mins": 10,
+    "does": "rare drops come up 6% more often",
+    "icon": true
+   },
+   {
+    "k": "pot_rattle",
+    "name": "Rattle brew",
+    "mins": 10,
+    "does": "fish bite 2% more often",
+    "icon": true
+   },
+   {
+    "k": "pot_quick",
+    "name": "Quickhand philtre",
+    "mins": 15,
+    "does": "you swing and fish 7% faster",
+    "icon": true
+   },
+   {
+    "k": "pot_gourd",
+    "name": "Gourd draught",
+    "mins": 15,
+    "does": "you take 9% less damage",
+    "icon": true
+   },
+   {
+    "k": "pot_ghost",
+    "name": "Ghost grease",
+    "mins": 15,
+    "does": "lighter fingers: 5% better at picking pockets",
+    "icon": true
+   },
+   {
+    "k": "pot_purse",
+    "name": "Tax-dodger's tincture",
+    "mins": 15,
+    "does": "9% more tickets from kills, and that chance of a second fish on a catch",
+    "icon": true
+   },
+   {
+    "k": "pot_prospect",
+    "name": "Prospector's flask",
+    "mins": 20,
+    "does": "rare drops come up 14% more often",
+    "icon": true
+   },
+   {
+    "k": "pot_fang",
+    "name": "Fang flask",
+    "mins": 20,
+    "does": "fish bite 4.5% more often",
+    "icon": true
+   },
+   {
+    "k": "pot_storm",
+    "name": "Storm flask",
+    "mins": 20,
+    "does": "you swing and fish 12% faster",
+    "icon": true
+   },
+   {
+    "k": "pot_coilbreaker",
+    "name": "Coilbreaker draught",
+    "mins": 25,
+    "does": "you swing and fish 8% faster; you take 24% less damage",
+    "icon": true
+   },
+   {
+    "k": "pot_pharaoh",
+    "name": "Pharaoh's draught",
+    "mins": 20,
+    "does": "you take 18% less damage; fish bite 3% more often",
+    "icon": true
+   },
+   {
+    "k": "pot_sleep",
+    "name": "Puffball sleep-dust",
+    "mins": 15,
+    "does": "marks get drowsy: 6% better at picking pockets",
+    "icon": true
+   },
+   {
+    "k": "pot_bleed",
+    "name": "Bleeding-tooth draught",
+    "mins": 20,
+    "does": "you take 12% less damage",
+    "icon": true
+   },
+   {
+    "k": "pot_pipe",
+    "name": "Ghost-pipe tincture",
+    "mins": 20,
+    "does": "rare drops come up 16% more often",
+    "icon": true
+   },
+   {
+    "k": "pot_mane",
+    "name": "Lion's-mane focus",
+    "mins": 25,
+    "does": "you swing and fish 10% faster; fish bite 3% more often",
+    "icon": true
+   },
+   {
+    "k": "pot_star",
+    "name": "Starcap elixir",
+    "mins": 30,
+    "does": "you swing and fish 10% faster; you take 22% less damage; rare drops come up 8% more often",
+    "icon": true
+   },
+   {
+    "k": "pot_ember",
+    "name": "Emberglass tonic",
+    "mins": 25,
+    "does": "you take 12% less damage; fish heal 20% more",
+    "icon": true
+   },
+   {
+    "k": "pot_hunter",
+    "name": "Hunter's draught",
+    "mins": 15,
+    "does": "your arrows hit 6% harder",
+    "icon": true
+   },
+   {
+    "k": "pot_frost",
+    "name": "Frostmind draught",
+    "mins": 15,
+    "does": "your spells hit 6% harder",
+    "icon": true
+   },
+   {
+    "k": "pot_surefoot",
+    "name": "Sure-foot tonic",
+    "mins": 10,
+    "does": "you never slip on a stunt or a shortcut, and Agility XP comes 10% quicker",
+    "icon": true
+   }
+  ],
+  "scroll": [
+   {
+    "k": "scroll_haste",
+    "name": "Haste scroll",
+    "mins": 20,
+    "does": "+8% movement speed (tier I) up to +16% movement speed (tier III)",
+    "icon": true,
+    "lvl": 50
+   },
+   {
+    "k": "scroll_focus",
+    "name": "Focus scroll",
+    "mins": 15,
+    "does": "+5% accuracy and damage, in any style (tier I) up to +12% accuracy and damage, in any style (tier III)",
+    "icon": true,
+    "lvl": 66
+   },
+   {
+    "k": "scroll_ward",
+    "name": "Ward scroll",
+    "mins": 15,
+    "does": "+5% defence (tier I) up to +12% defence (tier III)",
+    "icon": true,
+    "lvl": 72
+   },
+   {
+    "k": "scroll_rainmaker",
+    "name": "Rainmaker scroll",
+    "mins": 120,
+    "does": "crops you plant grow 25% faster (tier I) up to crops you plant grow 50% faster (tier III)",
+    "icon": true,
+    "lvl": 60
+   },
+   {
+    "k": "scroll_steadyhands",
+    "name": "Steady Hands scroll",
+    "mins": 15,
+    "does": "30% less chance to burn food (tier I) up to 50% less chance to burn food (tier III)",
+    "icon": true,
+    "lvl": 55
+   },
+   {
+    "k": "scroll_stonesense",
+    "name": "Stone Sense scroll",
+    "mins": 20,
+    "does": "gems turn up 25% more often in ore (tier I) up to gems turn up 50% more often in ore (tier III)",
+    "icon": true,
+    "lvl": 84
+   },
+   {
+    "k": "scroll_keeneye",
+    "name": "Keen Eye scroll",
+    "mins": 15,
+    "does": "+5% chance of a rare drop (tier I) up to +10% chance of a rare drop (tier III)",
+    "icon": true,
+    "lvl": 99
+   },
+   {
+    "k": "scroll_tailwind",
+    "name": "Tailwind scroll",
+    "mins": 15,
+    "does": "your bow and wand reach one tile further (tier I) up to your bow and wand reach one tile further (tier III)",
+    "icon": true,
+    "lvl": 91
+   },
+   {
+    "k": "scroll_stillness",
+    "name": "Stillness scroll",
+    "mins": 30,
+    "does": "fishing and woodcutting keep going 3 minutes longer before the idle stop (tier I) up to fishing and woodcutting keep going 5 minutes longer before the idle stop (tier III)",
+    "icon": true,
+    "lvl": 78
+   }
+  ],
+  "gadget": [
+   {
+    "k": "tk_baitbox",
+    "name": "Bait Box",
+    "mins": 20,
+    "does": "fish bite 10% more often and rare catches come up 5% more",
+    "icon": true
+   },
+   {
+    "k": "tk_medkit",
+    "name": "Field Medkit",
+    "mins": 2,
+    "does": "3% of your health back every five seconds for two minutes",
+    "icon": true
+   },
+   {
+    "k": "tk_whetstone",
+    "name": "Whetstone",
+    "mins": 20,
+    "does": "8% harder hits with a melee weapon",
+    "icon": true
+   },
+   {
+    "k": "tk_scope",
+    "name": "Scope",
+    "mins": 20,
+    "does": "12% more accurate with a bow",
+    "icon": true
+   },
+   {
+    "k": "tk_arccoil",
+    "name": "Arc Coil",
+    "mins": 20,
+    "does": "8% harder hits with magic",
+    "icon": true
+   },
+   {
+    "k": "tk_lockpick",
+    "name": "Lockpick Set",
+    "mins": 20,
+    "does": "5% better at picking pockets",
+    "icon": true
+   },
+   {
+    "k": "tk_cooker",
+    "name": "Pressure Cooker",
+    "mins": 20,
+    "does": "nothing burns, and one cook in ten comes out double",
+    "icon": true
+   },
+   {
+    "k": "tk_bellows",
+    "name": "Bellows",
+    "mins": 20,
+    "does": "a 20% chance to save the charcoal, and one make in twenty comes out double",
+    "icon": true
+   },
+   {
+    "k": "tk_distiller",
+    "name": "Distiller",
+    "mins": 20,
+    "does": "15% of brews come out double",
+    "icon": true
+   },
+   {
+    "k": "tk_featherjig",
+    "name": "Feather Jig",
+    "mins": 20,
+    "does": "15% of fletches come out double",
+    "icon": true
+   },
+   {
+    "k": "tk_handpress",
+    "name": "Hand Press",
+    "mins": 20,
+    "does": "15% of prints come out double",
+    "icon": true
+   },
+   {
+    "k": "tk_magnifier",
+    "name": "Magnifier",
+    "mins": 20,
+    "does": "15% more parts from everything you salvage",
+    "icon": true
+   },
+   {
+    "k": "tk_humidifier",
+    "name": "Humidifier",
+    "mins": 20,
+    "does": "25% more Fungiculture xp",
+    "icon": true
+   },
+   {
+    "k": "tk_lantern",
+    "name": "Lantern",
+    "mins": 30,
+    "does": "rare drops come up 10% more often",
+    "icon": true
+   },
+   {
+    "k": "tk_grapple",
+    "name": "Grappling Hook",
+    "mins": 20,
+    "does": "25% more Agility xp",
+    "icon": true
+   },
+   {
+    "k": "tk_auger",
+    "name": "Auger",
+    "mins": 15,
+    "does": "keeps you mining with no clicks: no idle cutoff, and the next rock of the same ore when one runs out (75% speed while you're away)",
+    "icon": true
+   },
+   {
+    "k": "tk_chainsaw",
+    "name": "Chainsaw",
+    "mins": 15,
+    "does": "keeps you chopping with no clicks: no idle cutoff, and the next tree of the same kind when one falls (75% speed while you're away)",
+    "icon": true
+   },
+   {
+    "k": "tk_autoreel",
+    "name": "Auto-Reel",
+    "mins": 15,
+    "does": "keeps you fishing with no clicks: no idle cutoff (75% speed while you're away)",
+    "icon": true
+   }
+  ],
+  "kit": [
+   {
+    "k": "kit_camo",
+    "name": "Hunter's camo",
+    "mins": 15,
+    "does": "aggressive monsters don't notice you until you attack something (tier I) up to aggressive monsters don't notice you until you attack something (tier III)",
+    "icon": true
+   },
+   {
+    "k": "kit_flare",
+    "name": "Flare",
+    "mins": 10,
+    "does": "your minimap marks the Jackpot Thief, shooting stars, bosses and rare monsters on the map you're on (tier I) up to your minimap marks the Jackpot Thief, shooting stars, bosses and rare monsters on the map you're on (tier III)",
+    "icon": true
+   },
+   {
+    "k": "kit_mark",
+    "name": "Hunter's Mark",
+    "mins": 20,
+    "does": "+6% accuracy and damage with a bow against the kind of monster you marked (tier I) up to +10% accuracy and damage with a bow against the kind of monster you marked (tier III)",
+    "icon": true
+   },
+   {
+    "k": "kit_eagle",
+    "name": "Eagle-eye drops",
+    "mins": 15,
+    "does": "your bow reaches one tile further (tier I) up to your bow reaches one tile further (tier III)",
+    "icon": true
+   },
+   {
+    "k": "kit_quickdraw",
+    "name": "Quickdraw wax",
+    "mins": 15,
+    "does": "your bow fires 8% faster (tier I) up to your bow fires 16% faster (tier III)",
+    "icon": true
+   },
+   {
+    "k": "kit_fleet",
+    "name": "Fleetfoot salve",
+    "mins": 20,
+    "does": "+8% movement speed (tier I) up to +16% movement speed (tier III)",
+    "icon": true
+   },
+   {
+    "k": "kit_retriever",
+    "name": "Arrow retriever",
+    "mins": 30,
+    "does": "30% of the arrows that land come back to your quiver (tier I) up to 50% of the arrows that land come back to your quiver (tier III)",
+    "icon": true
+   }
+  ]
+ },
+ "leftOut": {
+  "ward": [
+   "pot_witch"
+  ],
+  "clover": [
+   "clover",
+   "horseshoe"
+  ],
+  "world": [
+   "pot_double"
+  ]
+ }
+}

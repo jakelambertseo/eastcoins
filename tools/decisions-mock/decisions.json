@@ -1429,5 +1429,35 @@
   "page": "",
   "status": "standing",
   "replacedBy": ""
+ },
+ {
+  "date": "2026-10-02",
+  "area": "Skilling",
+  "decision": "A Buff Bag: one inventory item with one slot per kind of buff (up to 99 each); click it or press B to use them all, right-click it to change what is loaded.",
+  "quote": "users can load up their preferred buffs of each type into the bag, 1 slot for each type up to 99 (so 99 drinks, 99 potions, etc), and then keep it in their inventory and either click on it to consume all (right click to change out buffs), or press B hotkey to consume all",
+  "why": "six clicks every time buffs run out, and six bag slots, for something every regular does all session",
+  "page": "buffbag-mock",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-02",
+  "area": "Economy",
+  "decision": "The 2X potion is split three ways with separate clocks: 2X Tickets 400,000, 2X Crafting XP 200,000, 2X Skilling XP 100,000; Bronny gives 2X Tickets only.",
+  "quote": "split tickets from crafting XP (tickets is 400k, 200k for crafting, 100k for skilling)",
+  "why": "players were chaining 2X 8-10 hours a day and losing their weight in the game",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
+ },
+ {
+  "date": "2026-10-02",
+  "area": "Combat",
+  "decision": "Monsters' own rare drops are 5x rarer (RARE_RATE 0.01 to 0.002).",
+  "quote": "across the board users are dropped items listed in the mobs \"rare\" category significantly too much, reduce it by 5x",
+  "why": "rares were dropping far too often",
+  "page": "",
+  "status": "standing",
+  "replacedBy": ""
  }
 ]
