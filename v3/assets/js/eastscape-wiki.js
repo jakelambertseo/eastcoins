@@ -3138,15 +3138,50 @@ export function roadmapNext(G, H) {
   return cards.length ? `<style>${ROADMAP_CSS}</style><h3>Coming next</h3><div class="rm-next">${cards.map((c) => `<a data-wiki="roadmap">${H.img(ROADMAP_WORDS[c.id].img)}${H.esc(ROADMAP_WORDS[c.id].title)}</a>`).join("")}</div>` : "";
 }
 
-/* (2026-10-02, v1.2) FIELD KITS: archery's utility, the archer's answer to the mages' pages. Held with HOLD.kits. */
+/* (2026-10-02, v1.2) FIELD KITS: archery's utility, the archer's answer to the mages' pages. Held with HOLD.kits.
+   (2026-10-02, the owner: "start building a detailed guide on the wiki of field notes") THE FULL GUIDE. Every number, recipe, level and
+   crossing below is read from the rules (FIELD_KITS, RECIPES, GRAPPLES, SNARE, BOWFISH), so it can't drift from the game. */
 GUIDES.push({ id: "fieldkits", title: "Field kits (archery)", icon: "\u{1F3F9}", cat: "Going further", hold: "kits",
-  body: (G, H) => `<p><b>Field kits are an archer's pages.</b> Mages read scrolls for travel and buffs; archers make kits at the <b>fletching table</b> and use them from the bag. Each needs an <b>Archery</b> level to use, and the combat ones only work with a <b>bow</b> in your hands.</p>
-    <p><b>One kit at a time</b>, in its own slot beside a page buff, so an archer can run a page and a kit together. Like pages, a kit's clock only runs <b>outside</b>. Its tier is your <b>Fletching</b> when you use it: I below 70, II from 70, III from 90.</p>
-    <table class="tbl"><tr><th>Kit</th><th>Fletching</th><th>Archery</th><th>Does</th></tr>${Object.entries(G.FIELD_KITS).map(([k, K]) => `<tr><td>${H.img ? H.img("kit_" + k) : ""}<b>${H.esc(K.name)}</b></td><td>${K.lvl}</td><td>${K.use}</td><td>${H.esc(K.what(K.vals[0]))} (tier I, ${K.mins[0]} min) up to ${H.esc(K.what(K.vals[2]))} (tier III, ${K.mins[2]} min)</td></tr>`).join("")}</table>
+  body: (G, H) => {
+    const rec = (k) => Object.values(G.RECIPES).find((r) => r.out[0] === k);
+    const ing = (r) => (r?.in || []).map(([k, n]) => `${n} ${itemL(G, H, k)}`).join(", ");
+    const made = (k) => { const r = rec(k); return r ? `Fletching ${r.lvl}: ${ing(r)}${r.out[1] > 1 ? `, makes ${r.out[1]}` : ""}` : ""; };
+    const pct = (v) => Math.round(v * 100);
+    const BOW = new Set(["mark", "quickdraw", "eagle", "retriever"]);
+    const K = G.FIELD_KITS, line = (k, t) => `<li><b>${H.esc(K[k].name)}</b>: ${t}</li>`;
+    return `<p><b>Field kits are an archer's pages.</b> A mage reads scrolls for speed, focus and travel; an archer makes kits at the <a data-wiki="guides/fletching">fletching table</a> (in the Yard, the north court) and uses them from the bag. Seven kits for a fight or a trip, plus grapple arrows, snares and fishing arrows for getting about and living off the land.</p>
+    <h3>How they work</h3>
+    <ul>
+      <li><b>Make it, then use it.</b> Every kit is a <b>Fletching</b> recipe; using one needs an <b>Archery</b> level (both in the table). Nothing is usable until it's been made. Click it in your bag.</li>
+      <li><b>One kit at a time</b>, in its own slot. A kit runs <b>alongside</b> a page buff, so an archer can have Haste and a kit together. Using a second kit replaces the first, and the message says so.</li>
+      <li><b>Your Fletching sets its strength</b> when you use it: <b>tier I</b> below 70, <b>tier II</b> from 70, <b>tier III</b> from 90.</li>
+      <li><b>The clock only runs outside</b>, like a page or a drink. Step into the casino and it waits.</li>
+      <li><b>Four kits need a bow in your hands</b> (marked below). With a sword or a wand they do nothing, but they keep ticking.</li>
+    </ul>
+    <h3>Every kit</h3>
+    <table class="tbl"><tr><th>Kit</th><th>Make it</th><th>Use it</th><th>Tier I</th><th>Tier II <small>(Fletching 70)</small></th><th>Tier III <small>(Fletching 90)</small></th></tr>${Object.entries(K).map(([k, F]) => `<tr><td>${itemL(G, H, "kit_" + k)}${BOW.has(k) ? "<br><small>needs a bow</small>" : ""}</td><td><small>${made("kit_" + k)}</small></td><td>Archery ${F.use}</td>${new Set(F.vals.map((v) => F.what(v))).size === 1 ? `<td colspan="3">${H.esc(F.what(F.vals[0]))}<br><small>${F.mins.join(" / ")} min (it only lasts longer)</small></td>` : [0, 1, 2].map((i) => `<td>${H.esc(F.what(F.vals[i]))}<br><small>${F.mins[i]} min</small></td>`).join("")}</tr>`).join("")}</table>
+    <h3>Each kit, in a line</h3>
+    <ul>
+      ${line("fleet", "you walk faster, whatever you're holding. The cheapest kit and the first you can make.")}
+      ${line("camo", "monsters that attack on sight leave you alone. It comes off the moment you attack anything (\"You throw off your camo and draw\"), so it's for walking through a dangerous map, or choosing your first target.")}
+      ${line("mark", "use it while fighting, or with a monster in sight, and that <b>kind</b> of monster is marked (every one of them, not just that one): your bow hits them more often and harder. Bring it to a boss or a task.")}
+      ${line("flare", "your minimap shows the Jackpot Thief, shooting stars, bosses and rare monsters on the map you're on. For hunting, not fighting.")}
+      ${line("quickdraw", "your bow fires faster. The biggest damage kit.")}
+      ${line("eagle", "your bow reaches one tile further, so you can hit from further out than a monster can answer.")}
+      ${line("retriever", "some of the arrows that hit come back to your quiver. With good arrows it pays for itself.")}
+    </ul>
     <h3>Grapple arrows</h3>
-    <p>Made at Fletching 40, three at a time. Twelve <b>grapple posts</b> stand across the world, in pairs: walk to one with a bow in hand and a grapple arrow in your bag, and you swing to the other side. One arrow a crossing. They are archery's shortcuts, the way back ways are agility's.</p>
-    <table class="tbl"><tr><th>Crossing</th><th>Where</th><th>Archery</th></tr>${Object.values(G.GRAPPLES).map((g) => `<tr><td>${H.esc(g.name)}</td><td>${H.esc(G.sceneDef(g.scene)?.name || g.scene)}</td><td>${g.lvl}</td></tr>`).join("")}</table>
+    <p>${itemL(G, H, "grapple_arrow")}: ${made("grapple_arrow")}. Grapple posts stand in pairs across the world. Walk to one with a <b>bow in your hands</b> and a grapple arrow in your bag: you fire, the hook bites, and you swing across. <b>One arrow a crossing.</b> They're archery's shortcuts, the way back ways are Agility's.</p>
+    <table class="tbl"><tr><th>Crossing</th><th>Where</th><th>Archery</th></tr>${Object.values(G.GRAPPLES).sort((a, b) => a.lvl - b.lvl).map((g) => `<tr><td>${H.esc(g.name)}</td><td>${areaL(G, H, g.scene)}</td><td>${g.lvl}</td></tr>`).join("")}</table>
     <h3>Snares</h3>
-    <p>Fletching 30, two at a time; Archery ${G.SNARE.use} to set. Use one and it goes down <b>where you're standing</b>, on any map with monsters (up to ${G.SNARE.perMap} on a map, ${G.SNARE.max} in all). Come back in an hour and click it: <b>feathers</b> every time, and often hides, meat and bones, more on harder maps. Only you can see your snares.</p>
+    <p>${itemL(G, H, "snare")}: ${made("snare")}. Archery ${G.SNARE.use} to set. Use one and it goes down <b>where you're standing</b>, on any outdoor map with monsters (not in a dungeon, the Tower or on your island). Up to <b>${G.SNARE.perMap} on a map</b> and <b>${G.SNARE.max} in all</b>. Only you can see yours.</p>
+    <p>Come back in <b>${Math.round(G.SNARE.ms / 60000)} minutes</b> and click it. You always get <b>feathers</b>, more on harder maps; often <b>hides</b> (6 in 10), <b>beef or chicken</b> (1 in 2) and <b>bones</b> (2 in 5), plus some Archery xp. Checking a snare uses it up. Feathers are what arrows need, so a ring of snares on your favourite map keeps an archer in arrows.</p>
     <h3>Fishing arrows</h3>
-    <p>Fletching 45, ten at a time; Archery ${G.BOWFISH.use}. With a bow in hand and fishing arrows in your bag, click a fishing spot and you fish it <b>from your bow's reach</b>, no rod needed. Each catch uses an arrow, has a ${G.BOWFISH.double * 100}% chance of landing two fish, and gives some Archery xp as well as the Fishing xp.</p>` });
+    <p>${itemL(G, H, "fishing_arrow")}: ${made("fishing_arrow")}. Archery ${G.BOWFISH.use}. With a <b>bow in your hands</b> and fishing arrows in your bag, click a fishing spot and you fish it <b>from your bow's reach</b>, with no rod. You still need the Fishing level the spot asks for. Each catch uses an arrow, <b>${pct(G.BOWFISH.double)}%</b> of catches land two fish, and you get <b>${pct(G.BOWFISH.xpShare)}%</b> of the Fishing xp again as Archery xp.</p>
+    <h3>Tips</h3>
+    <ul>
+      <li>Your kit shows on the buff bar with its minutes left, and in the <b>Buffs</b> tab of your Character window (C).</li>
+      <li>The tier comes from <b>your</b> Fletching when you use the kit, not from whoever made it.</li>
+      <li>Most kits want feathers, bowstrings, small vials or sporecaps: snares and fishing arrows feed the rest.</li>
+    </ul>`;
+  } });

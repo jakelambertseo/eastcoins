@@ -37,6 +37,7 @@ const CATS = [
     ["sinks-mock", "Ticket sinks", "Ticket sinks"],
     ["sidegames-mock", "Slow side games", "Slow side games: the Pet Derby, the Giant Pumpkin and more"],
     ["archery-mock", "Archery's fair share", "Archery's fair share: what makes magic stronger, and ten ideas for archers"],
+    ["archeryfx-mock", "Archery feel", "Archery feel: a side-by-side range, today vs a dozen ways to make every arrow land"],
     ["buffbag-mock", "The Buff Bag", "The Buff Bag: every buff in one bag, one key to use them all"],
     ["loot-mock", "Rolled loot", "Rolled loot: random lines on gear, six casino chips, the Dealer, and where it fits in balance"],
     ["soapbox-mock", "Soapbox racing", "Soapbox racing: a playable bumper-car race, the garage, parts that break"],

@@ -2062,7 +2062,7 @@ let WK = { GUIDES: [], UPDATES: [{ date: "", title: "Loading…", items: [] }], 
    A reference book that is only correct once you have already been everywhere is not much of a reference.
    Failures are swallowed: an unreachable dungeon file should cost the reader a line, not the whole wiki. */
 const loadWiki = () => (loadWiki.p ||= Promise.all([
-  import("/v3/assets/js/eastscape-wiki.js?v=247").then((m) => { WK = m; for (const [k, [hold, text]] of Object.entries(m.SKILL_GUIDE_V11 || {})) if (!G.HOLD[hold]) m.SKILL_GUIDE[k] = text; rmLiveNote(); }),   /* (2026-10-01) v1.1's skill one-liners */
+  import("/v3/assets/js/eastscape-wiki.js?v=248").then((m) => { WK = m; for (const [k, [hold, text]] of Object.entries(m.SKILL_GUIDE_V11 || {})) if (!G.HOLD[hold]) m.SKILL_GUIDE[k] = text; rmLiveNote(); }),   /* (2026-10-01) v1.1's skill one-liners */
   cryptRules().catch(() => {}), pyramidRules().catch(() => {}), towerRules().catch(() => {}), countRules().catch(() => {}),
 ]).then(() => {}));
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=18";
