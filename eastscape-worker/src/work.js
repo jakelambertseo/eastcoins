@@ -10,8 +10,10 @@
 const KILL = {
   cow: ["grounds", 1 / 500], boar: ["grounds", 1 / 500], goat: ["grounds", 1 / 500], gardener: ["grounds", 1 / 8], orchardkeeper: ["grounds", 1 / 400],
   gull: ["bowyer", 1 / 500], goose: ["bowyer", 1 / 500], pterodactyl: ["bowyer", 1 / 500], pteroelder: ["bowyer", 1 / 500], snowowl: ["bowyer", 1 / 500], drake: ["bowyer", 1 / 500],
-  junkking: ["sal", 1 / 10], junkdog: ["sal", 1 / 400], possum: ["sal", 1 / 400] };
-export const WORK_ODDS = { prospector: 1 / 150, feller: 1 / 400, oilskins: 1 / 300, whites: 1 / 4, kennel: 1 / 600, bronny: 1 / 6, myco: 1 / 800, apoth: 1 / 250, getaway: 1 / 60 };
+  junkking: ["sal", 1 / 40], junkdog: ["sal", 1 / 400], possum: ["sal", 1 / 400] };
+/* (2026-10-02, the owner: the work clothes pass): the quick ones slower, the month-long ones quicker. Was prospector 1/150 on any lap, shortcut or back way (a shortcut hopped back and
+   forth made a set in ~20 minutes: laps only now), feller 1/400, kennel 1/600, bronny 1/6, apoth 1/250 (~42 clusters a day: a month); the Junk King 1/10. */
+export const WORK_ODDS = { prospector: 1 / 150, feller: 1 / 1000, oilskins: 1 / 300, whites: 1 / 4, kennel: 1 / 1500, bronny: 1 / 3, myco: 1 / 800, apoth: 1 / 40, getaway: 1 / 60 };
 export function installWork(World, { G }) {
   const P = World.prototype;
   P.workWear = function (pl, m) {
