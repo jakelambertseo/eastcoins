@@ -41,6 +41,7 @@ import { installCommands } from "./commands.js";   /* (2026-09-30) CHAT COMMANDS
 import { installWeekly } from "./weekly.js";
 import { installTrack } from "./track.js";   /* (2026-09-30) WHAT THE WORLD RECORDS: see track.js and tools/tracking-mock/ */   /* (2026-09-30) THE WEEKLY ISSUE */   
 import { installRaid } from "./raid.js";
+import { installGrin } from "./grin.js";   /* (2026-10-02) THE GRIN, the third Yard raid */
 import { installThief } from "./thief.js";
 import { installThrill } from "./thrill.js";
 import { installWork, WORK_ODDS } from "./work.js";
@@ -2389,6 +2390,7 @@ export class World {
     if (a.kind === "splash") {
       for (const o of this.abilTargets(S, pl, m, a, now)) {
         if (a.arrows) { if (!G.ammoOf(C)) break; this.spendAmmo(pl); }
+        if (o.immune || G.MOBS[o.t]?.head) continue;   /* (2026-10-02) THE GRIN: a splash neither hurts him headless nor sweeps up his heads */
         const gm = G.guardMul(o.t, st, el); if (gm <= 0) continue;
         const d2 = Math.max(1, Math.round(raw * a.mul * (el ? G.elementMul(o.t, el) : 1) * gm));
         o.hp -= d2; o.hurtAt = now;
@@ -2415,7 +2417,7 @@ export class World {
     else if (el === "frost") m.slowUntil = now + M.slow.ms;
     else if (el === "sun") { pl.C.hp = Math.min(G.maxHpOf(pl.C), pl.C.hp + Math.max(1, Math.round(dmg * M.sunHeal))); this.touch(pl); }
     else if (el === "storm") {
-      const o = S.mobs.find((x) => x !== m && !x.dead && !x.thief && !x.star && !x.bag && G.cheb(x, m) <= 1 && this.mayFight(S, x, pl, now)); if (!o) return;   /* (2026-09-30) never onto a star or the Jackpot Thief */
+      const o = S.mobs.find((x) => x !== m && !x.dead && !x.thief && !x.star && !x.bag && !x.immune && !G.MOBS[x.t]?.head && G.cheb(x, m) <= 1 && this.mayFight(S, x, pl, now)); if (!o) return;   /* (2026-09-30) never onto a star or the Jackpot Thief */
       const d2 = Math.max(1, Math.round(dmg * M.arc.share * G.elementMul(o.t, "storm")));
       o.hp -= d2; o.hurtAt = now; S.events.push({ type: "splat", who: o.id, n: d2, kind: "hit", t: now, arc: true }); this.award(pl, d2); this.bossAdd(pl, o, "dmg", d2);
       if (o.hp <= 0) { const keep = pl.act; this.killMob(S, pl, o, now); if (m.hp > 0) pl.act = keep; }
@@ -3170,6 +3172,7 @@ export class World {
            whose max hit is 2: every hit that was not a 1 flashed CRIT. Now it is the top TENTH, and never under 4 damage, so it is
            about one landed hit in nine and nobody sees one until their max hit reaches 5, around Combat 10.) */
         if (dmg > 0) { const ev = G.gemVs(C, m.t); if (ev) dmg = Math.max(1, Math.round(dmg * (1 + ev))); }   /* (2026-09-28) an elemental gem against a monster weak to it */
+        if (m.immune && dmg) { dmg = 0; if (!m.immTold?.has(pl.id)) { m.immTold?.add(pl.id); this.say(pl, `${def.name} doesn't even notice. His head is off somewhere in the grass: find the real one.`, "bad"); } }   /* (2026-10-02) THE GRIN: nothing counts while his head is off */
         if (m.thief && dmg) dmg = 1;   /* (2026-09-30) THE JACKPOT THIEF counts hits, not damage: a level 3 and a level 99 knock the same tickets loose */
         this.meterAdd(pl, "swing", 1, m); if (dmg) this.meterAdd(pl, "hit", 1, m);   /* (2026-09-28) accuracy, for the run report */
         this.bossAdd(pl, m, "swing", 1); if (dmg) { this.bossAdd(pl, m, "hit", 1); this.bossAdd(pl, m, "dmg", dmg); }   /* (2026-09-28) and a world boss's own report */
@@ -4096,7 +4099,7 @@ export class World {
     const c = m.claim; if (!c || S.def.pvp || now > c.until) return null;
     const p = this.pls.get(c.id); return p && p.C.scene === S.key && !p.dead ? p : null;
   }
-  mayFight(S, m, pl, now) { if (S.def.shared || G.MOBS[m.t]?.open || m.open) return true;   /* (2026-09-27) an open boss (the Pumpkin King) belongs to nobody */ const c = this.claimOf(S, m, now); return !c || c === pl; }   /* (shared: the crypt, where a party hits the same monster) */
+  mayFight(S, m, pl, now) { if (S.def.shared || G.MOBS[m.t]?.open || m.open || G.MOBS[m.t]?.head) return true;   /* (2026-10-02) THE GRIN's heads are everybody's to find */   /* (2026-09-27) an open boss (the Pumpkin King) belongs to nobody */ const c = this.claimOf(S, m, now); return !c || c === pl; }   /* (shared: the crypt, where a party hits the same monster) */
   /* (2026-09-27) THE FOUNDRY'S TRAPS (G.TRAPS): every trap's phase is the wall clock's, so nothing is stored but who has been hit this strike.
      Anyone standing on one of its tiles while it strikes loses G.TRAP_HIT of their health (less by their own toughness), once a strike, and
      is told what hit them; a trap can finish somebody already low, as a monster's hit can, and never takes a god. */
@@ -4122,7 +4125,7 @@ export class World {
     for (const m of S.mobs) {
       /* (2026-09-26) FIRE'S BURN lands here, on its own clock, credited to whoever lit it - if they are still in the scene */
       if (m.dot && !m.dead && now >= m.dot.at) { const d = m.dot, by = this.pls.get(d.by); m.dot = null;
-        if (by && by.C.scene === S.key) { m.hp -= d.dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: d.dmg, kind: "hit", t: now, burn: true }); this.award(by, d.dmg); this.bossAdd(by, m, "dmg", d.dmg); if (G.MOBS[m.t]?.open) (m.by ||= {})[by.id] = (m.by[by.id] || 0) + d.dmg; if (m.hp <= 0) { const keep = by.act; this.killMob(S, by, m, now); if (keep && keep.id !== m.id) by.act = keep; } } }
+        if (by && by.C.scene === S.key && !m.immune) { m.hp -= d.dmg; m.hurtAt = now; S.events.push({ type: "splat", who: m.id, n: d.dmg, kind: "hit", t: now, burn: true }); this.award(by, d.dmg); this.bossAdd(by, m, "dmg", d.dmg); if (G.MOBS[m.t]?.open) (m.by ||= {})[by.id] = (m.by[by.id] || 0) + d.dmg; if (m.hp <= 0) { const keep = by.act; this.killMob(S, by, m, now); if (keep && keep.id !== m.id) by.act = keep; } } }
       if (m.dead) {
         if (S.def.crypt || S.def.pyramid || now < m.respawnAt) continue;   /* (nothing comes back in a crypt or pyramid run) */   /* (2026-09-24) the pyramid relied on pyramidKill setting respawnAt to Infinity; saying it here too means a monster killed some other way cannot quietly come back and re-lock a cleared chamber */
         // back at home, or the nearest free tile to it: never on top of someone
@@ -4141,7 +4144,8 @@ export class World {
         continue;
       }
       const def = G.MOBS[m.t];
-      if (m.star || m.bag) continue;   /* (2026-09-30) a SHOOTING STAR never moves or swings: it is mined (events.js starSwing); nor does a sandbag spot */
+      if (m.star || m.bag || def.head) continue;   /* (2026-10-02) THE GRIN's heads lie where they land: the server turns the real one (grin.js) */
+      if (m.raid && m.dizzyUntil > now) { m.path = []; if (m.step) this.stepEntity(S, m, now, false); continue; }   /* (2026-10-02) THE GRIN, stunned on his knees: no walking, no swinging */   /* (2026-09-30) a SHOOTING STAR never moves or swings: it is mined (events.js starSwing); nor does a sandbag spot */
       if (m.thief) { this.thiefMove(S, m, now, players); continue; }   /* (2026-09-30) THE JACKPOT THIEF runs from people and never swings */
       const R = G.MOBS[m.t]?.range || 1, inRange = (p) => { const d = G.cheb(p, m); return d >= 1 && d <= R; };   /* (2026-09-27) a ranged monster */
       let foe = players.find((p) => p.act?.kind === "mob" && p.act.id === m.id && inRange(p) && !p.step);
@@ -5495,6 +5499,7 @@ installTrack(World, { G });   /* (2026-09-30) WHAT THE WORLD RECORDS */   /* (20
 installCommands(World, { G });
 installWeekly(World, { G });   /* (2026-09-30) THE WEEKLY ISSUE: a snapshot a week, and the numbers the wiki's issue shows */   /* (2026-09-30) CHAT COMMANDS: /find, /help, /price, /count, /xp, /timers, /bosses, /wiki, /map, /online, /roll, /stuck */
 installRaid(World, { G });
+installGrin(World, { G });
 installThief(World, { G });
 installDiary(World, { G, TW });   /* (2026-10-01, v1.1) area diaries */
 installThrill(World, { G });

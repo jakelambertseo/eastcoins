@@ -64,7 +64,7 @@ export function createAdminWin(ctx) {
     sxStop: () => sure("Stop 2X Skilling?", "Double skilling XP ends now, for everyone.", () => A({ cmd: "skill2x", mins: 0 })),
     ev: (b) => { const [what, end] = b.dataset.ev.split(":"), N = { star: "a Shooting Star", wanted: "a Wanted poster", thief: "the Jackpot Thief" }[what]; sure(end ? `End ${N}?` : `Start ${N} now?`, end ? "It ends for everybody now." : "It starts for the whole server now, here if this map allows it, otherwise where it can.", () => A({ cmd: "ev", arg: end ? `${what} end` : what })); },
     plan: () => A({ cmd: "ev", arg: "plan" }),
-    raid: (b) => { const a = b.dataset.r, T = { "": ["Start a Yard raid?", "Hrimgar's war party comes for the Yard after the warning."], flood: ["Start the Flood?", "The river comes over the Yard's bank after the warning."], now: ["Skip the warning?", "It starts now."], end: ["End it now?", "The raid or the Flood ends for everyone."], unsack: ["Reopen the stalls?", "The Yard's shops open again."] }[a]; sure(T[0], T[1], () => A({ cmd: "raid", ...(a ? { arg: a } : {}) })); },
+    raid: (b) => { const a = b.dataset.r, T = { "": ["Start a Yard raid?", "Hrimgar's war party comes for the Yard after the warning."], flood: ["Start the Flood?", "The river comes over the Yard's bank after the warning."], grin: ["Start The Grin?", "The Yard goes dark and The Grin comes for it after a 2 minute warning. Only you can start him."], now: ["Skip the warning?", "It starts now."], end: ["End it now?", "The raid or the Flood ends for everyone."], unsack: ["Reopen the stalls?", "The Yard's shops open again."] }[a]; sure(T[0], T[1], () => A({ cmd: "raid", ...(a ? { arg: a } : {}) })); },
     wyrm: (b) => sure(b.dataset.w ? "Send the Ice Wyrm away?" : "Raise the Ice Wyrm now?", "The Frozen Reach's daily boss, for everyone.", () => A({ cmd: "wyrm", ...(b.dataset.w ? { arg: "down" } : {}) })),
     saveall: () => A({ cmd: "saveall" }),
     restart: () => { const s = parseInt(v("aRst"), 10) || 120; sure("Announce a restart?", `Everyone is told the world restarts in ${Math.round(s / 60)} min; every character is saved, then everyone is dropped with a "restarting" message. Deploy after it has run.`, () => A({ cmd: "restart", n: s })); },
@@ -112,7 +112,7 @@ export function createAdminWin(ctx) {
     switch (r.cmd) {
       case "double": return +a > 0 ? `2X Tickets & Crafting: set to ${a} min` : "stopped 2X Tickets & Crafting";
       case "skill2x": return +a > 0 ? `2X Skilling: set to ${a} min` : "stopped 2X Skilling";
-      case "raid": return { "": "started a Yard raid", flood: "started the Flood", now: "skipped the raid warning", end: "ended the raid", unsack: "reopened the stalls" }[a] ?? `raid ${a}`;
+      case "raid": return { "": "started a Yard raid", flood: "started the Flood", grin: "started The Grin", now: "skipped the raid warning", end: "ended the raid", unsack: "reopened the stalls" }[a] ?? `raid ${a}`;
       case "wyrm": return a === "down" ? "sent the Ice Wyrm away" : "raised the Ice Wyrm";
       case "ev": return a === "plan" ? null : a.endsWith(" end") ? `ended ${a.replace(" end", "")}` : `started ${a} now`;
       case "restart": return a === "cancel" ? "cancelled the restart" : `announced a restart in ${Math.round(+a / 60) || a} min`;
@@ -139,12 +139,12 @@ export function createAdminWin(ctx) {
     if (!st) return `<div class="adm-empty">Asking the server what's running…</div>`;
     const R = st.raid, ev = st.ev, now = Date.now();
     const next = ev ? Object.entries(ev.plan || {}).filter(([k, t]) => !ev.done?.[k] && t > now).sort((a, b) => a[1] - b[1])[0] : null;
-    const raidTxt = !R ? "none" : R.sacked ? `sacked · ${Math.ceil(R.leftS / 60)}m` : `${R.kind === "flood" ? "Flood" : "raid"} · ${R.phase}`;
+    const raidTxt = !R ? "none" : R.sacked ? `sacked · ${Math.ceil(R.leftS / 60)}m` : R.dark ? `dark · ${Math.ceil(R.leftS / 60)}m` : `${R.kind === "flood" ? "Flood" : R.kind === "grin" ? "The Grin" : "raid"} · ${R.phase}`;
     let s = `<div class="adm-strip">
       <span><b>${st.online.length}</b>online now</span>
       <span class="${st.dbl ? "on" : ""}"><b>${st.dbl ? `2X · ${left(st.dbl.until)}` : "off"}</b>tickets & crafting</span>
       <span class="${st.sx2 ? "on" : ""}"><b>${st.sx2 ? `2X · ${left(st.sx2.until)}` : "off"}</b>2X skilling</span>
-      <span class="${R && !R.sacked ? "on" : ""}"><b>${esc(raidTxt)}</b>raid / flood</span>
+      <span class="${R && !R.sacked && !R.dark ? "on" : ""}"><b>${esc(raidTxt)}</b>raid / flood</span>
       <span><b>${next ? clock(next[1]) : "none"}</b>${next ? `next: ${next[0]}` : "events today"}</span>
       <span class="${st.restartAt ? "on" : ""}"><b>${st.restartAt ? left(st.restartAt) : "none"}</b>restart</span></div>`;
     if (st.admin) {
@@ -154,7 +154,8 @@ export function createAdminWin(ctx) {
       const evc = (k, name, img) => { const t = ev?.plan?.[k], done = ev?.done?.[k]; return cardH(img, name, !ev ? "no plan yet today" : done ? `today's: done` : t ? `today at ${clock(t)}` : "not today", `${btn("Now", "ev", "", `data-ev="${k}"`)}${btn("End", "ev", "sec", `data-ev="${k}:end"`)}`); };
       s += `<div class="adm-h">World events <small>one of each a day on their own; start one now if the server's quiet</small></div><div class="adm-grid">
         ${evc("star", "Shooting Star", IT("stardust"))}${evc("wanted", "Wanted!", UI("g_events"))}${evc("thief", "The Jackpot Thief", IT("tickets"))}
-        ${cardH(UI("g_raid"), "Yard raid", R && R.kind !== "flood" && !R.sacked ? `${R.phase} · ${Math.ceil(R.leftS / 60)} min${R.fighters != null ? ` · ${R.fighters} fighting` : ""}` : R?.sacked ? `the Yard is sacked: ${Math.ceil(R.leftS / 60)} min` : "Hrimgar's war party · 5 online needed", `${btn("Start", "raid", "", 'data-r=""')}${btn("Skip warning", "raid", "sec", 'data-r="now"')}${btn("End", "raid", "sec", 'data-r="end"')}${btn("Reopen stalls", "raid", "sec", 'data-r="unsack"')}`, R && R.kind !== "flood" && !R.sacked)}
+        ${cardH(UI("g_raid"), "Yard raid", R && !R.kind && !R.sacked && !R.dark ? `${R.phase} · ${Math.ceil(R.leftS / 60)} min${R.fighters != null ? ` · ${R.fighters} fighting` : ""}` : R?.sacked ? `the Yard is sacked: ${Math.ceil(R.leftS / 60)} min` : "Hrimgar's war party · 5 online needed", `${btn("Start", "raid", "", 'data-r=""')}${btn("Skip warning", "raid", "sec", 'data-r="now"')}${btn("End", "raid", "sec", 'data-r="end"')}${btn("Reopen stalls", "raid", "sec", 'data-r="unsack"')}`, R && !R.kind && !R.sacked && !R.dark)}
+        ${G.HOLD?.grin === false ? cardH("/v3/assets/img/glad/flat/o_grinhead.png", "The Grin", R?.kind === "grin" ? `${R.phase} · ${Math.ceil(R.leftS / 60)} min${R.phase === "on" ? ` · ${R.hp ?? "?"} hp${R.head ? " · head off" : ""}${R.rage ? " · raging" : ""}` : ""} · ${R.fighters} fighting` : R?.dark ? `the Yard is dark: ${Math.ceil(R.leftS / 60)} min` : "only you can start him · the Yard goes dark", `${btn("Start", "raid", "", 'data-r="grin"')}${btn("Skip warning", "raid", "sec", 'data-r="now"')}${btn("End", "raid", "sec", 'data-r="end"')}${R?.dark ? btn("Lift the dark", "raid", "sec", 'data-r="unsack"') : ""}`, R?.kind === "grin") : ""}
         ${cardH(UI("g_fishing"), "The Flood", R?.kind === "flood" ? `${R.phase} · ${Math.ceil(R.leftS / 60)} min · water ${R.water ?? 0}%` : "the river over the Yard's bank", `${btn("Start", "raid", "", 'data-r="flood"')}${btn("Skip warning", "raid", "sec", 'data-r="now"')}${btn("End", "raid", "sec", 'data-r="end"')}`, R?.kind === "flood")}
         ${cardH(UI("g_magic"), "Ice Wyrm", st.wyrm?.up ? `up · ${left(st.wyrm.until)} left` : "the Frozen Reach's daily boss", `${btn("Rise now", "wyrm")}${btn("Send away", "wyrm", "sec", 'data-w="1"')}`, st.wyrm?.up)}
       </div><div class="adm-row" style="margin-top:6px">${btn("Today's plan", "plan", "sec")}<span class="k-note">every event's time today, in chat</span></div>`;

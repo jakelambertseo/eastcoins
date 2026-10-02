@@ -10641,3 +10641,34 @@ if (!HOLD.diary) {
   ROADMAP.cards.push({ id: "abilities", lane: "next", status: "testing" }, { id: "capes99", lane: "later", status: "idea" });
   ROADMAP.updated = "2026-10-08";
 }
+
+/* ============================================================ THE GRIN (2026-10-02), a third Yard raid. The owner, from tools/hollow-mock: "build another yard
+   raid event like the ice man ... an even scarier, horror filled, weird version of the pumpkin king ... the yard gets really dark and spooky", then
+   "boss c, his health is 1.5X that of the pumpkin king, he drops a pet, a few gems, and hes only spawnable by me (admin option)", and
+   "i only want this raid to have a boss, no minions".
+   this.raid.kind === "grin" (raid.js, grin.js). The Ice Man's machinery under it (the warning, the west bank, the save across a restart, everybody's
+   share, the pool) with three differences:
+     NO WAVES. Nothing comes through the gates: it is him, alone, and the Yard going dark around him.
+     HEADS WILL ROLL. Every head.every (head.rage once he is down to `rage` of his health) he throws his head onto the west bank, where it lands among
+       a crop of identical ones (fakes, one more per perPlayers people, at most the top of the range). While it is off HE CANNOT BE HURT. The real one
+       turns to look at whoever is nearest (the server turns it; a fake never moves): hit it and he drops, stunned, for stunMs, every fake goes
+       with it, and his body takes damage again. A fake bursts into crows on whoever hits it, for `crow` of their health. Nobody finds it in
+       `lasts` and it rolls back to him laughing, and he heals `heal` of his health.
+     THE DARK. The page darkens the Yard (eastscape.html GRIN_W): a red flicker during the warning, night while he is in, deeper while his head is
+       off, red once he is raging. Lose, and it STAYS dark for darkMs; the stalls stay open (the owner chose the dark as the price, not the shutters).
+   He is ONLY EVER STARTED BY AN ADMIN (raid grin, or the admin window's button): the War Horn never calls him.
+   HELD on the live server (HOLD.grin) until the owner says. */
+HOLD.grin = !globalThis.__ES_OPEN_ALL;
+export const GRIN = { scene: "workyard", warnMs: 2 * 60000, warnAt: [60, 30], lasts: 10 * 60000, hp: 7800,   /* 1.5x the Pumpkin King's 5,200, whoever is online */
+  boss: { t: "grin", at: [22, 4] },
+  head: { first: 20000, every: 45000, rage: 30000, lasts: 25000, fakes: [4, 10], perPlayers: 3, near: [3, 9], stunMs: 10000, crow: 0.06, heal: 0.04 },
+  rage: 0.3, gems: [2, 3], darkMs: 20 * 60000, pay: { pool: 20000, per: 3000, floor: 400 } };
+if (!HOLD.grin) {
+  rmob("grin", { name: "The Grin", size: "xl", lvl: 70, hp: GRIN.hp, att: 72, def: 52, max: 15, speed: 2300, box: [70, 260],   /* drawn huge (276 px, as tall as the Ice Man) and thin: the click box matches */ aggro: 6, boss: true, open: true, raid: true, weak: "sun",
+    ex: "Tall, thin, and smiling far too wide. He carries his head on a chain and throws it when he's bored. While it's off, nothing you do to him counts: find the real one." }, 3000, []);
+  BOSSES.add("grin");
+  rmob("grinhead", { name: "Grinning head", size: "m", lvl: 1, hp: 1, att: 0, def: 0, max: 0, speed: 99999, box: [30, 30], aggro: 0, art: "o_grinhead", raid: true, head: true,
+    ex: "One of these is his. The others are full of crows." }, 0, []);
+  Object.assign(PETS, { grinling: { name: "Grinling", art: "pet_grinling", raid: true, fx: { tough: 10, swing: 12, tix: 8 }, ex: "The Grin's, a little suit with nobody in it, carrying a lantern that smiles at you. You take 10% less damage, swing 12% faster and find 8% more tickets. Only The Grin drops it." } });
+  Object.assign(MOBS.grin, { pet: ["grinling", 1 / 20] });
+}
