@@ -418,6 +418,16 @@ scene objects
     else if (/Any monster/.test(row)) bad(`the wiki's pets page says ${G.PETS[k].name} drops from any monster`, "it is a raid pet");
   }
   if (raid.length) console.log("  ok  the wiki's pets page lists them, and not as kill drops");
+  /* (2026-10-02, the owner: "some newer stuff in wiki isnt showing images/icons") EVERY GUIDE AND AREA HAS ITS PICTURE. The wiki asks for ui/g_<guide> and
+     ui/a_<area> whether or not the file exists, and a missing one is cached at the edge as the page itself: v1.1 shipped five guides that way. A guide held
+     shut (its HOLD) isn't asked for yet, so it isn't checked yet. */
+  { const UI = join(ROOT, "v3/assets/img/glad/flat/ui"), want = [
+      ...GUIDES.filter((g) => !(g.hold && G.HOLD[g.hold])).map((g) => (g.id === "jewelcrafting" ? "g_gems" : `g_${g.id}`)),
+      /* the wiki's Areas list is the open maps plus the four dungeons it pulls in itself (read off the running wiki, 2026-10-02) */
+      ...[...G.OPEN].filter((k) => G.SCENES[k] && !G.SCENES[k].wikiHide).concat(["crypt", "pyramid", "tower", "count"]).map((k) => `a_${k}`)];
+    const missing = want.filter((k) => !existsSync(join(UI, `${k}.png`)));
+    for (const k of missing) bad("no wiki picture", `ui/${k}.png (add it, and give it UI_V 2 in eastscape.html if the wiki ever asked for it without one)`);
+    if (!missing.length) console.log(`  ok  every guide and area in the wiki has its picture (${want.length})`); }
 }
 
 /* ---------------------------------------------------------------- YOU CANNOT FARM KILLS WHILE AFK

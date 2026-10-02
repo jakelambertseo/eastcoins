@@ -7555,10 +7555,15 @@ const mico = (k, px = 26) => `<img class="mico" style="height:${px}px" src="${AR
    and Fungiculture guides went live without their g_ icons, the Guides list requested g_breeding.png?v=1 and the edge now holds the
    site's HTML under that URL for a year. A picture added after its page shipped starts at 2 here. */
 const UI_V = { g_breeding: 2, g_fungiculture: 2,
+  /* (2026-10-02, the owner: "some newer stuff in wiki isnt showing images/icons") v1.1 shipped five guides and the Cellar with no picture; the wiki has asked for them at ?v=1 since, so the edge holds the page there: theirs start at 2 */
+  g_workclothes: 2, g_thrill: 2, g_worldthief: 2, g_diaries: 2, g_character: 2, a_cellar: 2,
+  /* and six areas the wiki had always asked for without a picture: Thrill Hill and its peak, and the four dungeons the wiki pulls in itself */
+  a_thrill: 2, a_thrill_top: 2, a_crypt: 2, a_pyramid: 2, a_tower: 2, a_count: 2,
   /* (2026-09-30, the wiki pass) twelve areas had no picture and the wiki asked for them at ?v=1 all the same: that URL now holds the page, so theirs start at 2 */
   ...Object.fromEntries(["boardwalk", "bw_cabin", "bw_light", "bw_wreck", "bw_pier", "bw_skull", "frozen", "frostspire", "valley", "valley_ridge", "valley_lair", "depths"].map((k) => [`a_${k}`, 2])) };
 const uico = (k) => { if (k === "g_jewelcrafting") k = "g_gems";   /* (2026-09-28) the skill has no guide picture of its own: it borrows the gems */   /* (2026-09-30, the wiki pass) the gem bag and the outfitters have their own now */
-  return `<img class="ico wico" src="${UIA}${k}.png?v=${UI_V[k] || 1}" alt="" loading="lazy" decoding="async">`; };
+  /* (2026-10-02) A MISSING PICTURE SHOWS THE WIKI'S OWN BOOK, not a broken image (tools/eastscape-content-check.mjs now fails a guide or area with no picture) */
+  return `<img class="ico wico" src="${UIA}${k}.png?v=${UI_V[k] || 1}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${UIA}g_updates.png?v=1'">`; };
 /* (2026-09-30, the wiki pass) what a person DOES, by what talking to them opens: the People pages, the area pages and the People list */
 const NPC_DOES = { exchange: "runs the Exchange", ferry: "rows you out to the islands", permit: "sells the Thieves' Guild permit", outfit: "sells gear for your fighting style", bank: "keeps your bank", eggtrade: "trades pet eggs for what you gather", order: "posts the Yard's big order", market: "runs the Night Market", tinker: "runs the Scrap Bench", decor: "sells island decor" };
 const nico = (name) => { const a = WIKI.npcs[name]?.art || NPC_ART[name]; return a ? `<img class="ico nico" src="${ART}${a}_south.png?v=${ART_V}" alt="" loading="lazy" decoding="async">` : "🧑"; };
