@@ -10167,7 +10167,18 @@ function G_isWalk(g, x, y) { return g[y] && ".,".includes(g[y][x]); }
    inside the wiki … updates: week 1 (post launch) … major changes with pictures, links to relevant wiki information, stats of the week". Week 1 starts on
    launch day (Thursday 1 October 2026, Chicago time) and every seven days is the next. The server keeps a snapshot a week (eastscape-worker/src/weekly.js);
    the issues themselves (the words and pictures) are WEEKLY in eastscape-wiki.js. */
-export const WEEKLY = { start: "2026-10-01" };
+/* (2026-10-02, the owner: "we're also going to change the 'Weekly' editions to 'Version' editions since we're not following a weekly schedule anymore")
+   ONE ISSUE A VERSION, not a week. Each edition runs from the moment its version went live to the moment the next one did (the last one runs to now),
+   so its numbers are what the world did while that version was the live game. Times, not days: 1.0 and 1.1 both went out on 1 October (1.1 at
+   19:02 Central). The server's snapshots are keyed by edition (wk:<n>), the wiki's issues carry the same n. ADD AN EDITION HERE WHEN A VERSION SHIPS. */
+export const WEEKLY = { start: "2026-10-01", eds: [
+  { n: 1, v: "1.0", from: "2026-10-01T05:00:00Z" },   /* launch: midnight Central, 1 October */
+  { n: 2, v: "1.1", from: "2026-10-02T00:02:00Z" },   /* v1.1 (rules 388), 7:02 PM Central, 1 October */
+] };
+/** the edition live at time t: the last one that had started (0 before launch) */
+export const editionOf = (t = Date.now()) => { let n = 0; for (const e of WEEKLY.eds) if (t >= Date.parse(e.from)) n = e.n; return n; };
+/** an edition's window: { from, to (null while it is the live one), v } */
+export const editionSpan = (n) => { const i = WEEKLY.eds.findIndex((e) => e.n === n), e = WEEKLY.eds[i]; return e ? { v: e.v, from: Date.parse(e.from), to: WEEKLY.eds[i + 1] ? Date.parse(WEEKLY.eds[i + 1].from) : null } : null; };
 /* ============================================================ THE WILDERNESS CHECK (2026-09-30). The owner: "i feel like users are camping there now without fighting,
    the monsters might be too low level as well now that users have outleveled them", then "build ... the wild changes" (tools/wild-mock/). The data: 0.6% of
    all kills were Wild-only monsters, seven player kills ever, every monster there dead in three swings to a combat 90, and a death there costing nothing.

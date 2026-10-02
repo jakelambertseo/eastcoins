@@ -14,7 +14,9 @@
 export function installWeekly(World, { G }) {
   const P = World.prototype, W = G.WEEKLY;
   const dayN = (t) => Math.floor(Date.parse(G.chicagoDay(t)) / 864e5);
-  const weekOf = (t) => Math.floor((dayN(t) - Math.floor(Date.parse(W.start) / 864e5)) / 7) + 1;
+  /* (2026-10-02) EDITIONS, NOT WEEKS: a version's issue counts from the moment it went live (G.WEEKLY.eds, G.editionOf). The storage keys keep their
+     names (wk:<n>, wkacc:<n>); n is the edition now. wk:1 was taken at launch, so it is still right. */
+  const weekOf = (t) => G.editionOf(t);
   P.weekOf = function (t = Date.now()) { return weekOf(t); };
   /* the world right now, in the snapshot's shape */
   P.weekNow = async function () {

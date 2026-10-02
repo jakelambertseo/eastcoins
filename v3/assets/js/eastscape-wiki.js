@@ -2868,7 +2868,7 @@ export const SKILL_GUIDE = {
    week runs. A picture is "ui/<k>", "items/<k>", "mob/<k>" or "flat/<k>". Add next week's issue at the TOP. */
 export const WEEKLY = [
   {
-    n: 2, title: "Update 1.1", from: "2026-10-08", to: "2026-10-14", hold: "diary",
+    n: 2, v: "1.1", title: "Update 1.1", hold: "diary",
     lede: "The first big update since launch. A diary for every map and a cape for finishing them all, Thrill Hill for Agility, thieving and shortcuts out in the world, and work clothes for every skill.",
     hero: ["diary/diary", "flat/th_cannon", "items/lockpick", "items/pr_hat", "diary/cape_tour"],
     big: [
@@ -2896,8 +2896,8 @@ export const WEEKLY = [
     links: [["guides/diaries", "Area diaries"], ["guides/thrill", "Thrill Hill"], ["guides/worldthief", "Thieving in the world"], ["guides/workclothes", "Work clothes"], ["updates", "Every update"]]
   },
   {
-    n: 1, title: "Launch week", from: "2026-10-01", to: "2026-10-07",
-    lede: "EastScape is open to everyone. Here's what's in the world on day one, the changes that landed in the last week before launch, and the numbers as the first week happens.",
+    n: 1, v: "1.0", title: "Launch",
+    lede: "EastScape is open to everyone. Here's what's in the world on day one, the changes that landed in the last week before launch, and the numbers from launch until 1.1 arrived the same evening.",
     hero: ["mob/icewyrm", "mob/raidchief", "flat/pet_wyrmling", "ui/g_islands", "mob/rex"],
     big: [
       { img: "ui/g_islands", title: "Islands, rebuilt", text: "Much bigger, with beaches and paths, eight themes, cottage styles and interiors, and livestock that fill up while you're away. Type /island for every timer.", wiki: "guides/islands" },
@@ -2951,14 +2951,16 @@ export const WEEKLY_CSS = `
 @media (max-width:620px){.wk-bar{grid-template-columns:22px 80px 1fr 70px}.wk-hero h2{font-size:21px!important}}
 `;
 /** a week's dates, in words: "Thu 1 Oct to Wed 7 Oct" */
-const wkDays = (a, b) => { const f = (s) => new Date(`${s}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }); return `${f(a)} to ${f(b)}`; };
+/* (2026-10-02) an edition's dates, from the rules' list of versions: "Thu 1 Oct to Thu 1 Oct", or "Fri 2 Oct to now" for the live one */
+const edDay = (t) => new Date(t).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "America/Chicago" });
+const edSpanText = (G, W) => { const s = G.editionSpan?.(W.n); return s ? `${edDay(s.from)} to ${s.to ? edDay(s.to) : "now"}` : ""; };
 /** one issue's page. H: { esc, wl, img(key) -> <img>, sico(skill) -> icon html, SKILLS, BOSS(t) -> name, TIER(t) -> dungeon name } and S, the server's numbers (or null while they come) */
 export function weeklyPage(G, H, W, S) {
   const n = (v) => Math.round(v || 0).toLocaleString(), k = (v) => v >= 1e9 ? `${(v / 1e9).toFixed(1)}B` : v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e4 ? `${Math.round(v / 1e3)}k` : n(v);
   const cards = W.big.map((c) => `<a class="wk-card" data-wiki="${H.esc(c.wiki)}">${H.img(c.img)}<span><b>${H.esc(c.title)}</b>${c.tease ? `<em class="wk-tease">${H.esc(c.tease)}</em>` : ""}<span>${H.esc(c.text)}</span>${(c.peek || []).length ? `<span class="wk-peek">${c.peek.map(H.img).join("")}</span>` : ""}<i>Read more &rarr;</i></span></a>`).join("");   /* (2026-10-01) tease and peek: a line that sells it and a strip of its art */
   let nums = "";
-  if (!S) nums = `<p class="wk-note">Asking the server for the week's numbers&hellip;</p>`;
-  else if (!S.have) nums = `<p class="wk-note">The numbers start when the week does, on ${H.esc(wkDays(W.from, W.from).split(" to ")[0])}.</p>`;
+  if (!S) nums = `<p class="wk-note">Asking the server for this version's numbers&hellip;</p>`;
+  else if (!S.have) { const s = G.editionSpan?.(W.n); nums = `<p class="wk-note">${s && Date.now() < s.from ? `The numbers start when Version ${H.esc(W.v)} goes live${s ? `, on ${H.esc(edDay(s.from))}` : ""}.` : `The server didn't keep numbers for Version ${H.esc(W.v)}.`}</p>`; }
   else {
     const T = S.totals || {}, A = S.acc || {}, clears = Object.values(S.clears || {}).reduce((a, b) => a + b, 0), bosses = Object.values(A.bosses || {}).reduce((a, b) => a + b, 0);
     const tiles = [[k(T.earned), "tickets earned"], [k(T.wagered), "tickets wagered"], [k(T.xp), "xp gained"], [n(T.kills), "monsters killed"], [n(T.quests), "quests finished"], [n(clears), "dungeon clears"], [n(bosses), "world bosses down"], [n(T.floors), "Tower floors climbed"], [n(S.jackpots), "Jackpots hit"], [n(T.zcoins), "ZCoins found"], [n(A.raids?.won || 0), "raids beaten"], [n(A.peak), "most online at once"], [n(S.active), "people played"], ...(S.sofar ? [] : [[n(S.fresh), "new players"]]), [n(T.hours), "hours played"]];
@@ -2967,12 +2969,12 @@ export function weeklyPage(G, H, W, S) {
       .map(([key, label]) => `<div class="wk-top"><b>${label}</b><ol>${S.top[key].map((r) => `<li>${H.esc(r.name)} <span>${k(r.v)}</span></li>`).join("")}</ol></div>`).join("");
     const bossList = Object.entries(A.bosses || {}).map(([t, c]) => `${H.esc(H.BOSS(t))} &times;${c}`).join(", "), clearList = Object.entries(S.clears || {}).map(([t, c]) => `${H.esc(H.TIER(t))} &times;${c}`).join(", ");
     nums = `<div class="wk-tiles">${tiles.map(([v, l]) => `<div class="wk-tile"><b>${v}</b><small>${l}</small></div>`).join("")}</div>
-      <p class="wk-note">${S.sofar ? `Before launch: everything the world has done so far. The week's own numbers start on ${H.esc(wkDays(W.from, W.from).split(" to ")[0])}.` : S.live ? "Live: the week isn't over yet, so these climb as it goes." : "The whole week."}${bossList ? ` World bosses: ${bossList}.` : ""}${clearList ? ` Clears: ${clearList}.` : ""}</p>
+      <p class="wk-note">${S.sofar ? `Before launch: everything the world has done so far. This version's own numbers start at launch.` : S.live ? `Live: ${H.esc(W.v)} is the version you're playing, so these climb as it goes.` : `Everything while ${H.esc(W.v)} was the live version.`}${bossList ? ` World bosses: ${bossList}.` : ""}${clearList ? ` Clears: ${clearList}.` : ""}</p>
       ${sk.length ? `<h3>Where the xp went</h3><div class="wk-bars">${sk.slice(0, 12).map(([s, v]) => `<div class="wk-bar">${H.sico(s)}<span>${H.esc(H.SKILLS[s]?.name || s)}</span><em style="width:${Math.max(2, (100 * v) / mx)}%"></em><u>${k(v)} xp</u></div>`).join("")}</div>` : ""}
-      ${tops ? `<h3>Top of the week</h3><div class="wk-tops">${tops}</div>` : ""}`;
+      ${tops ? `<h3>Top players this version</h3><div class="wk-tops">${tops}</div>` : ""}`;
   }
   return `<style>${WEEKLY_CSS}</style><div class="wk">
-    <div class="wk-hero"><small>Week ${W.n} &middot; ${H.esc(wkDays(W.from, W.to))}</small><h2>${H.esc(W.title)}</h2><p>${H.esc(W.lede)}</p>
+    <div class="wk-hero"><small>Version ${H.esc(W.v)} &middot; ${H.esc(edSpanText(G, W))}</small><h2>${H.esc(W.title)}</h2><p>${H.esc(W.lede)}</p>
       <div class="wk-art">${(W.hero || []).map(H.img).join("")}</div><button type="button" class="wk-share" data-wkshare="${W.n}">Copy link</button></div>
     <h3>The big ones</h3><div class="wk-big">${cards}</div>
     <h3>By the numbers</h3>${nums}
@@ -2982,8 +2984,8 @@ export function weeklyPage(G, H, W, S) {
   </div>`;
 }
 /** the list of issues, newest first */
-export function weeklyList(H) {
-  return `<style>${WEEKLY_CSS}</style><p class="lede">A new issue every week: the big changes with pictures, and the week's numbers.</p><div class="wk-list">${WEEKLY.filter((W) => !H.held?.(W)).map((W) => `<a data-wiki="weekly/${W.n}"><i>WEEK<br>${W.n}</i><span><b>${H.esc(W.title)}</b><small>${H.esc(wkDays(W.from, W.to))} &middot; ${H.esc(W.lede.slice(0, 110))}${W.lede.length > 110 ? "&hellip;" : ""}</small></span></a>`).join("")}</div>`;
+export function weeklyList(H, G) {
+  return `<style>${WEEKLY_CSS}</style><p class="lede">An issue for every version of EastScape: the big changes with pictures, and the numbers while it was the live game.</p><div class="wk-list">${WEEKLY.filter((W) => !H.held?.(W)).map((W) => `<a data-wiki="weekly/${W.n}"><i>VER<br>${H.esc(W.v)}</i><span><b>${H.esc(W.title)}</b><small>${H.esc(G ? edSpanText(G, W) : "")} &middot; ${H.esc(W.lede.slice(0, 110))}${W.lede.length > 110 ? "&hellip;" : ""}</small></span></a>`).join("")}</div>`;
 }
 
 /* ============================================================ THE ROAD AHEAD (2026-09-30): the words and pictures for each card in G.ROADMAP, and the page.
