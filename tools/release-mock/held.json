@@ -1,43 +1,11 @@
 [
  {
-  "name": "The Character window",
-  "commit": "d71cc184",
-  "page": "statsui-mock",
-  "what": "Every number about you, and where to get more: a button in the Equipment tab.",
-  "ships": "a new module (eastscape-char.js, probe it live first) and the page; no rules change",
-  "bundle": "v1.1"
- },
- {
-  "name": "The admin window",
-  "commit": "c66cd338",
-  "page": "adminpanel-mock",
-  "bundle": "v1.1",
-  "what": "The admin tab's 45 controls become a window with Live server / Players / Testing tabs: what's running, confirms on server-wide actions, a player card, a recent-actions log; moderators see only what they can run.",
-  "ships": "a new page module (eastscape-admin.js: push and probe it before the page) and the worker (admin.js); no rules change"
- },
- {
-  "name": "Thieving in the world, shortcuts and back ways",
-  "commit": "9126a6b8",
-  "page": "thieving-mock",
-  "what": "Pockets on 19 kinds of people-monster from Thieving 10 (a fail only stuns); a lockbox on 12 maps (lockpicks 1,000 at Vance; keys roll a Crypt or Pyramid hoard twice); a fenced Agility nook on all 12 maps with a spot one tier above the map's own; 5 walk-saving shortcuts; 3 back ways between far maps (the Scrap Run, the Ice Ledge, the Storm Drain); the Guild's stale words fixed.",
-  "ships": "flip HOLD.thief2 to false, VERSION bump (shared ?v in eastscape.html), push and probe the new art and the rebuilt sprite sheets first, then the worker (thief.js, crypt.js, pyramid.js)",
-  "bundle": "v1.1"
- },
- {
-  "name": "Thrill Hill",
-  "commit": "47a2cb9d",
-  "page": "thrillhill-mock",
-  "bundle": "v1.1",
-  "what": "Agility’s own map through the Yard’s old ladder (it retires The Run): the Rookie Run (1) and Pro Run (40) on Thrill Hill, the human cannonball (70) to Daredevil Peak and its Champion Run; the Junk Mound (50: Grease Gremlins, featherwood with feathers) and the Peak (90: Big Daddy Crusher and Lil’ Crusher, chrome for chrome-toe boots, a lockbox); Hellbikers and the nitro pool (a walk-speed fish); Fast Eddie takes runner’s marks for the Sure-foot tonic, stunt helmet and leathers. Animated: real walk/attack cycles for its three monsters, flickering fire.",
-  "ships": "flip HOLD.thrill to false (with HOLD.thief2), VERSION bump; push and probe the 69 new pictures, 9 item icons and rebuilt sprite sheets first, then the page, rules, maps and wiki, then the worker (thrill.js, index.js)"
- },
- {
-  "name": "Gems: rarer, and yours",
-  "commit": "cf8ee020",
-  "page": "",
-  "bundle": "v1.1",
-  "what": "Every gem source cut to a quarter (gem bag drops 1 in 1,500 to 1 in 6,000 skilling, 1 in 150 to 1 in 600 kills, bosses 1 in 5 to 1 in 20; gems off ore 3% to 0.75%; the monsters and Captain Claw’s chest that drop them too). Gems can’t be traded between players or listed, bid for or bought on the Exchange; the Gem Sorter still buys them. Gem offers already up come down once at start, held for their owners. Bronny’s keystone stops asking for gems.",
-  "ships": "flip HOLD.gemcut to false with the rest of v1.1; the rules, the wiki and the page, then the worker (gems.js, index.js). One number to tune: GEM_CUT (0.25)."
+  "name": "Field kits (archery's utility)",
+  "commit": "9561116d",
+  "page": "archery-mock",
+  "bundle": "v1.2",
+  "what": "Seven timed kits made at the fletching table (Hunter's camo, Flare, Mark, Eagle eye, Quickdraw wax, Fleet, Retriever), tiered by Fletching, used with a bow in hand, in their own slot beside a page buff; grapple arrows across 12 crossings; snares; fishing arrows (bowfishing).",
+  "ships": "flip HOLD.kits to false, VERSION bump; replace the stand-in icons first (kit_camo, kit_fleet, kit_retriever, fishing_arrow, o_grapple: rerun tools/eastscape-kits-art.mjs, then pack), push and probe the art, then rules, page and wiki, then the worker (kits.js)."
  },
  {
   "name": "Abilities and the order (2a) · on hold",
@@ -46,45 +14,5 @@
   "what": "Built and tested, then held by the owner on 1 October: not fleshed out yet, and it waits for the first player to reach 99 in a combat skill. Not in the next batch.",
   "ships": "switched off by HOLD.abil (on only for a local ?open=1 test); turning it on later is the switch plus the nine ui/ab_*.png icons pushed and probed first",
   "bundle": "hold"
- },
- {
-  "name": "Work clothes: the skilling sets",
-  "commit": "bedf0e56",
-  "page": "workclothes-mock",
-  "bundle": "v1.1",
-  "what": "Every skill has a set of four work clothes in a Locker (never the bag or bank, never traded, a find is always a new piece): +3% XP a piece in the worn set’s skill, all four +3% more and a perk (15% faster to 99). Each set drops from somewhere else (a lap, a pocket, a harvest, the pen, the fire, Bronny’s order, farm animals, dead trees, wild mushrooms, birds, the Star Tent, the Jackpot Thief, the junk). The Ditched set moves to the Locker, spares paid. The Armour | Work clothes switch on the paper doll, the Locker, skill pips, a wiki guide.",
-  "ships": "flip HOLD.work with the rest of v1.1; push the 52 icons and the packs first; the worker carries work.js"
- },
- {
-  "name": "Area diaries and the cape slot",
-  "commit": "0333b148",
-  "page": "diary-mock",
-  "bundle": "v1.1",
-  "what": "A diary for every map (21, 252 tasks, 84 perks), lamps and medals, the Diary tab (L) and window, and the cape slot with the Grand Tour cape. Old progress is ticked off silently on first login: one line, no toasts.",
-  "ships": "HOLD.diary off; two new page modules (eastscape-diary.js, eastscape-diary-rules.js: probe both before the page); art in flat/diary/ and items/cape_tour.png; the worker (diary.js and hooks in eleven modules)"
- },
- {
-  "name": "Give back a sorted gem",
-  "commit": "7b9dd393",
-  "page": "",
-  "bundle": "v1.1",
-  "what": "The admin window's player card: give anyone a gem at any sort (or unsorted), online or offline, for listings the gem change took off the Exchange.",
-  "ships": "eastscape-admin.js (?v=3) and the worker"
- },
- {
-  "name": "Jukebox volume in Settings",
-  "commit": "380aafff",
-  "page": "",
-  "bundle": "v1.1",
-  "what": "A Jukebox volume slider in Settings (Features), the same setting as the jukebox window's, for the radio and the Green Room.",
-  "ships": "eastscape-ui.js (?v=9) and the page"
- },
- {
-  "name": "The wiki for v1.1",
-  "commit": "482d6709",
-  "page": "",
-  "bundle": "v1.1",
-  "what": "Week 2 (Update 1.1) with a teaser and art strip per change, the Update 1.1 entry, guides for diaries, Thrill Hill, thieving in the world and the Character window, Agility and Gems updated, v1.1 on the Road Ahead. All held with v1.1.",
-  "ships": "eastscape-wiki.js (?v=243) with the page"
  }
 ]
