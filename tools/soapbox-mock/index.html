@@ -78,13 +78,13 @@ nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:
 
   <section class="sec" id="race">
     <h2>Race it</h2>
-    <p>Click the track and drive. <b>Bump</b> people: a hard hit knocks them sideways and wears their parts; your bumper takes the first of it. Your kart is whatever is fitted
+    <p>Three tracks. The two circuits are <b>far bigger than the screen</b>: the camera follows you and looks ahead the way you are going, and the <b>minimap</b> shows the rest. The <b>Junkyard Run</b> goes through a <b>tunnel</b> under the scrap heap where nobody can see you (or what you do to them); the <b>Figure Eight</b> crosses itself on a <b>bridge</b>, and karts on the deck and karts underneath never touch. Leave the road and the <b>gravel</b> slows you; past it is a fence. Click the track and drive. <b>Bump</b> people: a hard hit knocks them sideways and wears their parts; your bumper takes the first of it. Your kart is whatever is fitted
       in the garage below, worn parts and all, so change a part and race again to feel the difference.</p>
     <div class="racewrap">
       <div>
-        <div class="modes" id="modes"><button type="button" data-m="circuit" aria-pressed="true">Circuit · 3 laps</button><button type="button" data-m="bash" aria-pressed="false">Bumper Bash · 60 s arena</button></div>
+        <div class="modes" id="modes"><button type="button" data-m="junkyard" aria-pressed="true">The Junkyard Run · 2 laps · tunnel</button><button type="button" data-m="eight" aria-pressed="false">The Figure Eight · 3 laps · bridge</button><button type="button" data-m="bowl" aria-pressed="false">The Bumper Bowl · 60 s arena</button></div>
         <div class="stage"><canvas id="cv" width="960" height="560" tabindex="0" aria-label="The race track. Arrow keys or WASD to drive."></canvas>
-          <div class="over" id="over"><div class="box"><b id="ovT">Soapbox Circuit</b><p id="ovP">Three laps, six karts, bumping allowed. Arrow keys or WASD to drive, Space to slide.</p><div id="ovX"></div><button type="button" class="k-btn" id="go">Start the race</button></div></div></div>
+          <div class="over" id="over"><div class="box"><b id="ovT">The Junkyard Run</b><p id="ovP"></p><div id="ovX"></div><button type="button" class="k-btn" id="go">Start the race</button></div></div></div>
         <div class="pad" id="pad"><div class="grp"><button type="button" data-k="left" aria-label="Steer left">◀</button><button type="button" data-k="right" aria-label="Steer right">▶</button></div><div class="grp"><button type="button" data-k="slide" aria-label="Slide">⤳</button><button type="button" data-k="down" aria-label="Brake">■</button><button type="button" data-k="up" aria-label="Accelerate">▲</button></div></div>
         <p class="keys"><kbd>↑</kbd>/<kbd>W</kbd> go · <kbd>↓</kbd>/<kbd>S</kbd> brake and reverse · <kbd>←</kbd><kbd>→</kbd>/<kbd>A</kbd><kbd>D</kbd> steer · <kbd>Space</kbd> slide · <kbd>Esc</kbd> stop.
           Dark patches are <b>oil</b> (no grip); yellow chevrons are a <b>boost</b>.</p>
@@ -144,7 +144,7 @@ nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:
   <section class="sec" id="modes">
     <h2>Race modes</h2>
     <div class="cards">
-      <div class="card"><b>Circuit (playable above)</b><span>Three laps, six karts, bumping allowed. A race <b>every 15 minutes</b> on the track at the Carnival; empty seats are filled with house karts. Prizes: tickets and a part.</span></div>
+      <div class="card"><b>Circuits (two playable above)</b><span>Long tracks with hairpins, chicanes, a tunnel or a bridge, two or three laps, six karts, bumping allowed. A new track every season. A race <b>every 15 minutes</b> on the track at the Carnival; empty seats are filled with house karts. Prizes: tickets and a part.</span></div>
       <div class="card"><b>Bumper Bash (playable above)</b><span>Sixty seconds in an arena. Points for every hit, more for breaking someone's part. Pure bumper cars: the mode for people who don't care about lines.</span></div>
       <div class="card"><b>Downhill time trial</b><span>Thrill Hill's road, against everyone's <b>ghosts</b> (a recording of their best run, so nothing to sync live). A weekly leaderboard with a title for first.</span></div>
       <div class="card"><b>The Soapbox Cup</b><span>A Sunday-night event, CASINO calling it: heats, a final, a trophy for the island. The all-server moment.</span></div>
