@@ -16,6 +16,14 @@
   "ships": "flip HOLD.archfx to false with the rest of v1.2; page + shared + eastscape-sfx.js (?v=19, new synthesized stand-in sounds). Page only: no worker change. Source real recordings for the stand-ins later."
  },
  {
+  "name": "The Buff Bag",
+  "commit": "(this commit)",
+  "page": "buffbag-mock",
+  "bundle": "v1.2",
+  "what": "One bag, six pockets (meal, drink, potion, scroll, timed gadget, field kit), 99 each. Click it or press B: one of everything is used, anything still running is skipped. Right-click: the window to load, swap, top up and take out. 35,000 in the Store, the Featured Item on the front page and in Upgrades; bound, one per character. A potion is its own buff (C.pot) beside a bar drink. Wiki guide \"The Buff Bag\".",
+  "ships": "flip HOLD.bbag with the rest of v1.2; page (store ?v=5, wiki ?v=249, the new eastscape-bbag.js ?v=1), shared, worker (bbag.js, index.js). New pictures: items/buffbag.png, items/st_buffbag.png, ui/g_buffbag.png: push and probe them first. Test: node tools/eastscape-bbag-test.mjs."
+ },
+ {
   "name": "Abilities and the order (2a) · on hold",
   "commit": "cf4091c1",
   "page": "ascend-mock",

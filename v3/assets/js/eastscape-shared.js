@@ -4460,7 +4460,7 @@ export const achDue = (c, type) => {
 export function fxOf(c) {
   const worn = SLOTS.map((k) => ITEMS[c?.eq?.[k]]?.fx).filter(Boolean), power = 1 + worn.reduce((a, f) => a + (f.power || 0), 0), out = Object.fromEntries(OUT_KEYS.map((k) => [k, 0]));
   for (const f of worn) for (const k of OUT_KEYS) out[k] += (f[k] || 0) * power;
-  for (const st of [c?.meal, c?.drink]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k], f = it && (it.meal || it.drink)?.fx; if (f) for (const k of OUT_KEYS) out[k] += f[k] || 0; }
+  for (const st of [c?.meal, c?.drink, c?.pot]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k], f = it && (it.meal || it.drink)?.fx;   /* (2026-10-02, v1.2) c.pot: a potion beside a drink (THE BUFF BAG) */ if (f) for (const k of OUT_KEYS) out[k] += f[k] || 0; }
   if ((c?.luck | 0) > 0) out.zdrop += LUCK.zdrop;
   { const a = achFx(c); for (const k of OUT_KEYS) out[k] += a[k] || 0; }
   { const pf = petFx(c); out.tough += pf.tough / 100; out.bite += pf.bite / 100; out.steal += pf.steal / 100; }   /* (2026-09-27) the Breeding pets, inside the caps below */
@@ -4525,7 +4525,7 @@ for (const it of Object.values(ITEMS)) {   // say what it does, once, from the n
 export const buffsOf = (c) => {
   const out = [], one = (id, name, icon, ex, left = null, unit = "kill or catch") => out.push({ id, name, icon, ex, left, unit });
   if ((c?.luck | 0) > 0) one("luck", "Lucky", "clover", `A real ZCoin is ${LUCK.zdrop * 100}% more likely to drop. One is used up per kill or catch. Only fishing finds clovers.`, c.luck | 0);
-  for (const st of [c?.meal, c?.drink]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k]; if (it) one(it.meal ? "meal" : "drink", it.short || it.name, st.k, `${it.name}: ${fxText((it.meal || it.drink).fx)}. The clock only runs while you're outside.`, Math.max(1, Math.ceil((st.left | 0) / 60000)), "minute"); }
+  for (const st of [c?.meal, c?.drink, c?.pot]) { const it = st && (st.left | 0) > 0 && ITEMS[st.k]; if (it) one(it.meal ? "meal" : st === c?.pot ? "potion" : "drink", it.short || it.name, st.k, `${it.name}: ${fxText((it.meal || it.drink).fx)}. The clock only runs while you're outside.`, Math.max(1, Math.ceil((st.left | 0) / 60000)), "minute"); }
   for (const k0 of SLOTS) { const k = c?.eq?.[k0], it = k && ITEMS[k]; if (it?.fx) one(`worn:${k}`, it.short || it.name, k, `${it.name} (worn): ${fxText(it.fx)}.`); }
   { const gid = projFx(c)?.grand, P = gid && PROJECTS[gid]; if (P) one("grand", "Grand Opening", `pin_${gid}`, `${P.name} just opened in ${P.where}: its bonuses are doubled and every skill pays ${GRAND.xp * 100}% more xp here, for the hour.`, Math.max(1, Math.ceil(grandLeft(gid) / 60000)), "minute"); }   /* (2026-09-28) */
   for (const [id, t] of Object.entries(c?.tk || {})) { const g = GADGETS[id]; if (g && (t.left | 0) > 0) one(`tk:${id}`, g.name, g.item === false ? "tk_banner" : `tk_${id}`, `${g.name}: ${g.does}. The clock only runs while you're outside.`, Math.max(1, Math.ceil((t.left | 0) / 60000)), "minute"); }   /* (2026-09-28) Tinkering's gadgets */
@@ -4579,7 +4579,7 @@ export const bandBlock = (c, scene, kind) => { const b = bandOf(scene); if (!b) 
    Yard and the skill joins the panel, the hiscores and the wiki. Held, everything stays in the rules (a save that somehow carries
    the items or the xp still loads) but nobody can reach it and the wiki does not list it. The tests open both with
    globalThis.__ES_OPEN_ALL before they import this file. */
-export const HOLD = { archfx: !globalThis.__ES_OPEN_ALL,   /* (2026-10-02, v1.2) ARCHERY FEEL: the page's draw, streak, impacts, stuck arrows and Bullseye (tools/archeryfx-mock). Page-only, held with the rest of v1.2 */ tinker: false, gems: false,   /* (2026-09-29, the owner: "open the gem bag and sorter live, and tinkering") OPEN */   /* (2026-09-28) the Gem Sorter, the sockets and the Gem Case */   /* (2026-09-28) Tinkering: built on the dev server, shut until the owner opens it */ depths: false,   /* (2026-09-27) OPEN: the owner, "lets push it live" */ jewel: true,   /* (2026-09-28) retired: the Gem Sorter replaced it */ boardwalk: false,   /* (2026-09-27) OPEN: the owner, "the boardwalk is ready to launch" */ foundry: !globalThis.__ES_OPEN_ALL, orchard: !globalThis.__ES_OPEN_ALL };   /* (2026-09-27) the Boardwalk, the Foundry and the Orchard Wall: launched the same morning and held shut again at the owner's word ("close them for now and dont allow access until i reiterate them"). Held: no door to them, not in the wiki, and anyone saved inside is walked back out on login (the worker's HELD_MAPS) */
+export const HOLD = { bbag: !globalThis.__ES_OPEN_ALL,   /* (2026-10-02, v1.2) THE BUFF BAG: the item, the Store's Featured Item, and a potion as its own buff (see THE BUFF BAG) */ archfx: !globalThis.__ES_OPEN_ALL,   /* (2026-10-02, v1.2) ARCHERY FEEL: the page's draw, streak, impacts, stuck arrows and Bullseye (tools/archeryfx-mock). Page-only, held with the rest of v1.2 */ tinker: false, gems: false,   /* (2026-09-29, the owner: "open the gem bag and sorter live, and tinkering") OPEN */   /* (2026-09-28) the Gem Sorter, the sockets and the Gem Case */   /* (2026-09-28) Tinkering: built on the dev server, shut until the owner opens it */ depths: false,   /* (2026-09-27) OPEN: the owner, "lets push it live" */ jewel: true,   /* (2026-09-28) retired: the Gem Sorter replaced it */ boardwalk: false,   /* (2026-09-27) OPEN: the owner, "the boardwalk is ready to launch" */ foundry: !globalThis.__ES_OPEN_ALL, orchard: !globalThis.__ES_OPEN_ALL };   /* (2026-09-27) the Boardwalk, the Foundry and the Orchard Wall: launched the same morning and held shut again at the owner's word ("close them for now and dont allow access until i reiterate them"). Held: no door to them, not in the wiki, and anyone saved inside is walked back out on login (the worker's HELD_MAPS) */
 export const OPEN = new Set(["carnival",   /* (2026-09-24) OPEN AT LAST. Built 2026-09-24 and held shut at the owner’s word until he said "launch the publish the carnival so its openn to peoople now". */ "casino", "roulette", "theatre", "fightpit", "vault", "wild", "deep", "agility",   /* (2026-09-22) The Run. Built with the Agility skill but never added here, so its door in the Yard answered with the bouncer's "Room's shut" — a scene is not enterable until it is in this set. */   /* (2026-09-22) the Wilderness reopened, down the rope ladder on the Gloam */ /* "highroller": closed for now (the owner, 2026-09-19) */ /* "forum", "bathhouse": closed in v108, what mattered there is in the Yard */ "workyard", "gloam", "mire", "boneyard", "cloud", "sands", "thunderhead", "trailer",
   ]);   /* (2026-09-23) the Thieves' Guild. Deliberately NOT in BANDS: its rooms gate on Thieving through each mark's own `req`, and a combat band here would undo the whole point of a skill you cannot fight your way into. */   // (paddock, rough, boneyard closed 2026-09-20: their monsters live in the three scenes of the one line out)
 export const OPEN_DAILY = new Set([
@@ -10436,7 +10436,7 @@ Object.assign(MOBS.crusher, { pet: ["lilcrusher", 1 / 50] });
 Object.assign(POCKETS, { gremlin: 45, hellbiker: 70 });
 LOCKBOXES.thrill_top = [29, 8, 90];
 /* the Sure-foot tonic: no slips while it lasts, and 10% more Agility XP (tkXp) */
-export function sureFoot(c) { return !!(c?.drink && (c.drink.left | 0) > 0 && ITEMS[c.drink.k]?.sure); }
+export function sureFoot(c) { return [c?.drink, c?.pot].some((d) => d && (d.left | 0) > 0 && ITEMS[d.k]?.sure); }   /* (2026-10-02, v1.2) a potion may sit in c.pot */
 /* SCENES.thrill and SCENES.thrill_top are in eastscape-closed.js, written by lt-wild/thrill-gen.py */
 if (!HOLD.thrill) {
   for (const k of THRILL_MAPS) { OPEN.add(k); PET_SCENES.add(k); }
@@ -10794,3 +10794,43 @@ function kitObjs(key, b) {
     [gp.pa, gp.pb].forEach(([x, y], end) => { b.objs.push({ t: "grapple", art: "o_grapple", x, y, gp: id, end, name: `${gp.name} — Archery ${gp.lvl}`, pocket: true }); b.g[y][x] = "#"; });
   }
 }
+
+/* ============================================================ THE BUFF BAG (2026-10-02, v1.2). The owner: "what it is users can load up their preferred buffs of
+   each type into the bag, 1 slot for each type up to 99 (so 99 drinks, 99 potions, etc), and then keep it in their inventory and either click on it to
+   consume all (right click to change out buffs), or press B hotkey to consume all"; then "i want it in the store for now, but will make it cheap", and
+   "put it in a new 'Featured Item' section in the store on the front page, and also on its relevant category. The price is 35K." Mockup:
+   tools/buffbag-mock. Held with HOLD.bbag.
+   - ONE ITEM, SIX SLOTS: meal, drink, potion, scroll, gadget (the timed ones), field kit. Each holds one kind of item, up to 99 (their stack size).
+   - CLICK IT OR PRESS B: one of everything loaded is used, through the same code a click on each would run. A buff that is still running (more than
+     BBAG.skipMs left) is SKIPPED, never replaced: a second drink today throws the first one's minutes away, and the bag never does.
+   - RIGHT-CLICK: the Buff Bag window, to load, swap, top up and take out.
+   - THE CONTENTS LIVE ON THE CHARACTER (C.bbag, like the quiver's arrows): the bag is the handle, and it is BOUND (no trade, no Exchange, no drop),
+     one per character.
+   - A POTION IS ITS OWN BUFF NOW (C.pot): a drink and a potion shared one buff, so a bag with both slots could only ever use one of them. Bar drinks
+     run beside a potion; every effect still stops at its OUT_CAP. */
+export const BBAG = { max: 99, skipMs: 60000, price: 35000, slots: ["meal", "drink", "potion", "scroll", "gadget", "kit"],
+  names: { meal: "Meal", drink: "Drink", potion: "Potion", scroll: "Scroll", gadget: "Gadget", kit: "Field kit" },
+  subs: { meal: "dinners, platters, smoked fish", drink: "Dex's bar", potion: "Alchemy", scroll: "Wizardry's pages", gadget: "Tinkering's timed gadgets", kit: "Fletching's field kits" } };
+/** a potion (Alchemy's), as against a bar drink: a drink whose key is pot_ */
+export const isPotion = (k) => !!ITEMS[k]?.drink && String(k).startsWith("pot_");
+/** where a potion's clock lives: its own buff once the bag is open, the drink's before */
+export const potKey = (k) => (!HOLD.bbag && isPotion(k) ? "pot" : "drink");
+/** which of the bag's slots an item goes in, or null */
+export const bbagSlotOf = (k) => { const it = ITEMS[k]; if (!it) return null;
+  if (it.meal) return "meal"; if (it.drink) return isPotion(k) ? "potion" : "drink"; if (it.use === "charm") return "scroll";
+  if (it.use === "gadget" && GADGETS[it.gadget]?.mins) return "gadget"; if (it.use === "kit") return "kit"; return null; };
+/** how long the buff a slot feeds has left on this character, in ms (0 when it isn't running) */
+export const bbagLeft = (c, slot, k) => { const L = (s) => Math.max(0, (s?.left | 0));
+  if (slot === "meal") return L(c?.meal); if (slot === "drink") return L(c?.drink); if (slot === "potion") return L(HOLD.bbag ? c?.drink : c?.pot);
+  if (slot === "scroll") return L(c?.charm); if (slot === "kit") return L(c?.kit); if (slot === "gadget") return L(c?.tk?.[ITEMS[k]?.gadget]); return 0; };
+/** does this character have the bag (in the bag or the bank)? */
+export const hasBbag = (c) => (c?.inv || []).some((s) => s.k === "buffbag") || (c?.bank || []).some((s) => s?.k === "buffbag");
+ITEMS.buffbag = { name: "Buff Bag", short: "Buff Bag", icon: "\u{1F45C}", use: "bbag", bound: true,
+  ex: "A bag with a pocket for each kind of buff: a meal, a drink, a potion, a scroll, a gadget and a field kit, up to 99 of each. Click it (or press B) and everything in it is used at once; anything already running is skipped, so nothing is wasted. Right-click it to choose what goes in each pocket. One per character; it can't be traded or dropped." };
+export const STORE_FEATURED = HOLD.bbag ? null : "buffbag";
+if (!HOLD.bbag) st("buffbag", { tab: "extra", kind: "give", give: ["buffbag", 1], one: true, name: "Buff Bag", price: BBAG.price, fresh: true, art: "st_buffbag",
+  ex: "Every buff you use, in one bag: click it or press B and you eat, drink, read and set up the lot at once.",
+  lead: "Every buff you use, in one bag, used with one key.",
+  why: "Why it matters: buffs are most of what makes a long session pay, and keeping six of them going means finding six stacks in a full bag every ten or twenty minutes, often mid-fight. The Buff Bag turns that into one key, gives you back five bag slots, and never throws a running buff away.",
+  facts: [["Holds", "a meal, a drink, a potion, a scroll, a gadget and a field kit, up to 99 of each"], ["Use", "click it, or press B anywhere"], ["Change", "right-click it to load, swap or take out"],
+    ["Never wastes", "a buff still running is skipped, not replaced"], ["Saves", "five bag slots and five clicks every time your buffs run out"], ["Also", "a potion becomes its own buff, so it runs beside a bar drink"], ["Limit", "one per character, can't be traded"]] });

@@ -177,7 +177,8 @@ The owner and players: slight rubber banding on long click-to-walk paths and whe
 
 6. **THE QoL PACK (owner, 2026-10-02: "add these the backlog for v1.2").** Mockup of the first item: tools/buffbag-mock (/gameplan, "The Buff Bag").
    Nothing here adds power; each one takes out a chore. Every one runs only when a player acts (nothing ticks).
-   - **The Buff Bag** (owner: "i want it in the store for now, but will make it cheap"). One inventory item, one slot per buff kind,
+   - **The Buff Bag: BUILT ON DEV 2026-10-02 (HOLD.bbag), 35,000, the Store's Featured Item and under Upgrades, wiki guide "The Buff Bag".** Potions split from drinks (C.pot). Test: tools/eastscape-bbag-test.mjs.
+     (Original note:) (owner: "i want it in the store for now, but will make it cheap"). One inventory item, one slot per buff kind,
      99 each: meal, drink, potion, scroll, gadget, field kit (locked until kits ship). Click or B uses all; right-click opens the
      window. A running buff is SKIPPED (under 1 min counts as run out). Contents live on the character like the quiver.
      Open from the mock: split drinks from potions (today they share C.drink) - my pick yes; the Store price (owner: cheap). ~1 day,

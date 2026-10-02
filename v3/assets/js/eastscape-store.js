@@ -64,6 +64,7 @@ export function createStore(E) {
     if (it.kind === "bank" || it.kind === "quick" || it.kind === "bag") { const n = G.upOf(me, it.kind), m = G.STORE_UP[it.kind].max; return `<em class="k-chip${n >= m ? " good" : ""}">${n} of ${m}${n >= m ? " · all bought" : ""}</em>`; }
     if (it.kind === "decor") { const n = me.isle?.owned?.[it.dk] | 0; return n ? `<em class="k-chip good">you own ${n}</em>` : ""; }
     if (it.kind === "pskin" && !G.activePet(me)) return owns(it.id) ? `<em class="k-chip">${worn(it) ? "Worn" : "Owned"} · bring a pet out to see it</em>` : "";
+    if (it.one && it.give && G.hasBbag?.(me)) return `<em class="k-chip good">Owned · in your bag</em>`;   /* (2026-10-02, v1.2) one per character: the Buff Bag */
     if (worn(it)) return `<em class="k-chip gold">Worn</em>`; if (owns(it.id)) return `<em class="k-chip good">Owned</em>`;
     return "";
   }
@@ -77,6 +78,7 @@ export function createStore(E) {
     }
     if (it.slot && owns(it.id)) return worn(it) ? `${tryB}<button type="button" class="k-btn sec sm" data-op="off" data-slot="${it.slot}">Take off</button>` : `${tryB}<button type="button" class="k-btn sm" data-op="wear" data-slot="${it.slot}" data-id="${it.id}">Wear</button>`;
     if ((it.kind === "bank" || it.kind === "quick" || it.kind === "bag") && G.upOf(E.me || {}, it.kind) >= G.STORE_UP[it.kind].max) return "";
+    if (it.one && it.give && G.hasBbag?.(E.me || {})) return "";
     return `${tryB}${buy(it.kind === "wfx" ? "Set it off" : it.kind === "horn" ? "Blow it" : "Buy")}`;
   }
   /* (2026-09-30, the owner: "format how the boosts descriptions read better, either rows or something thats easier to understand") A BOOST,
@@ -86,7 +88,7 @@ export function createStore(E) {
   const rowCard = (it) => `<div class="st2-card st2-rowc${worn(it) ? " worn" : owns(it.id) ? " owned" : ""}">
       ${it.sale ? `<span class="st2-rib sale">-${Math.round(it.sale * 100)}%</span>` : it.fresh ? `<span class="st2-rib">NEW</span>` : ""}
       <div class="st2-pic">${pic(it)}</div>
-      <div class="st2-txt"><b>${esc(it.name)}</b>${status(it)}<small class="st2-lead2">${esc(it.lead)}</small>${factsHtml(it)}</div>
+      <div class="st2-txt"><b>${esc(it.name)}</b>${status(it)}<small class="st2-lead2">${esc(it.lead)}</small>${factsHtml(it)}${it.why ? `<small class="st2-why">${esc(it.why)}</small>` : ""}</div>
       <div class="st2-buy">${priceHtml(it)}<span class="st2-acts">${act(it)}</span></div></div>`;
   const card = (it) => it.facts ? rowCard(it) : `<div class="st2-card${worn(it) ? " worn" : owns(it.id) ? " owned" : ""}${it.kind === "decor" || it.kind === "horn" ? " wide" : ""}">
       ${it.sale ? `<span class="st2-rib sale">-${Math.round(it.sale * 100)}%</span>` : it.fresh ? `<span class="st2-rib">NEW</span>` : ""}
@@ -114,6 +116,8 @@ export function createStore(E) {
     let body = "";
     if (tab === "looks" || tab === "pets") body += `<div class="st2-stage"><canvas class="st2-stagecv" width="560" height="150"></canvas><small>${Object.values(trial).some(Boolean) ? "Trying on: press Try again to stop. Nobody else sees this until you buy it and wear it." : "You, in what you wear now. Press Try on anything below to see it on you."}</small></div>`;
     if (tab === "name") body += nameStage();
+    /* (2026-10-02, the owner: "put it in a new 'Featured Item' section in the store on the front page, and also on its relevant category") */
+    { const FI = G.STORE_FEATURED && G.STORE[G.STORE_FEATURED]; if (tab === "boost" && FI) body += `<div class="st2-featured"><div class="k-label st2-gl">Featured Item</div>${card(FI)}</div>`; }
     if (tab === "boost") body += `<p class="k-note st2-lead">The two 2X potions are for the whole server, for 30 minutes, in your name. The loupes change the Gem Sorter's odds, and show exactly how.</p>`;
     if (tab === "world") body += `<p class="k-note st2-lead">Set off where you're standing, for everyone in that area. One show at a time in any one place.</p>`;
     if (GROUPS[tab]) for (const [k, l, sub] of GROUPS[tab]) { const list = R.filter((it) => (tab === "decor" && it.kind === "decor" ? G.STORE_DECOR[it.dk]?.in === k : it.kind === k)); if (list.length) body += `<div class="k-label st2-gl">${l}${sub ? ` <small>${sub}</small>` : ""}</div>${grid(list)}`; }
@@ -132,6 +136,10 @@ export function createStore(E) {
 }
 
 export const CSS = `
+/* (2026-10-02, v1.2) the Featured Item, at the top of the front page */
+.st2-featured{margin-bottom:10px;padding:8px;border-radius:10px;background:linear-gradient(135deg,rgba(255,216,74,.22),rgba(200,150,58,.08));box-shadow:inset 0 0 0 2px var(--k-gold),0 0 14px rgba(255,200,60,.25)}
+.st2-featured .k-label{color:var(--k-gold-ink)}
+.st2-why{display:block;margin-top:6px;font:600 12.5px/1.45 Lora,sans-serif;color:var(--k-ink2)}
 /* ---------- (2026-09-30) THE STORE, in the kit ---------- */
 #storeWin.st-win{width:min(820px,calc(100% - 24px));height:calc(100% - 50px)}
 .st2-tix{font-weight:800}.st2-tix img{width:18px;height:18px;image-rendering:pixelated}

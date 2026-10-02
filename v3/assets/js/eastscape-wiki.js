@@ -3187,3 +3187,44 @@ GUIDES.push({ id: "fieldkits", title: "Field kits (archery)", icon: "\u{1F3F9}",
       <li>Most kits want feathers, bowstrings, small vials or sporecaps: snares and fishing arrows feed the rest.</li>
     </ul>`;
   } });
+
+/* (2026-10-02, v1.2, the owner: "make sure buff bag has wiki entry, and how to use it, what can go in/cant, etc") THE BUFF BAG's guide. Held with
+   HOLD.bbag. What goes in each pocket is read from the rules (bbagSlotOf over every item), so a new meal, potion or gadget is listed the day it lands. */
+GUIDES.push({ id: "buffbag", title: "The Buff Bag", icon: "\u{1F45C}", cat: "Going further", hold: "bbag",
+  body: (G, H) => {
+    const B = G.BBAG, list = (slot) => Object.keys(G.ITEMS).filter((k) => !G.ITEMS[k].held && G.bbagSlotOf(k) === slot);
+    const untimed = Object.entries(G.GADGETS).filter(([, g]) => !g.mins && g.item !== false).map(([id]) => `tk_${id}`).filter((k) => G.ITEMS[k]);
+    const links = (ks) => ks.map((k) => itemL(G, H, k)).join(", ");
+    return `<p><b>The Buff Bag holds every buff you use and uses them all with one key.</b> One item in your bag with a pocket for each kind of buff: a meal, a drink, a potion, a scroll, a gadget and a field kit, up to ${B.max} of each. It sits in one bag slot where six stacks used to.</p>
+    <h3>Getting one</h3>
+    <p>The <b>Store</b> sells it for <b>${G.fmtTix(B.price)}</b>: it's the Featured Item on the front page, and it's under <b>Upgrades</b>. One per character. It can't be traded, sold on the Exchange or dropped, and it's safe when you die, like everything else.</p>
+    <h3>Using it</h3>
+    <ul>
+      <li><b>Click it</b> in your bag, or press <b>B</b> anywhere (no need to open the bag): one of everything loaded is used, the same as clicking each item yourself. The scroll reads at your Wizardry's tier, the kit at your Fletching's, the meal heals you as well as buffing you.</li>
+      <li><b>Anything still running is skipped</b>, never replaced, so nothing is wasted. A buff with under a minute left counts as run out and gets topped up. One line in chat says what was used and what was still running.</li>
+      <li><b>Right-click it</b> to open the Buff Bag window. Each pocket shows what's in it, how many (of ${B.max}), how long it lasts and what it does, and whether it's running.</li>
+      <li><b>Load</b> a pocket from your bag: pick the item and as many as fit go in. Picking the one already in there tops it up. Picking a different one swaps it, and the old stack goes back in your bag (if there's no room, the swap waits until there is).</li>
+      <li><b>Take out</b> empties a pocket back into your bag. A pocket you've used up shows "empty, refill?" so you know what to restock.</li>
+      <li>The bag has to be <b>in your bag</b> to use, not in the bank. What's in its pockets stays with you either way.</li>
+    </ul>
+    <h3>A potion is its own buff now</h3>
+    <p>A bar drink and an alchemy potion used to share one buff, so drinking one replaced the other. With the Buff Bag, <b>a potion has its own buff</b>: a Champagne and a Starcap elixir run side by side. Every effect still stops at its cap (the Character window shows them).</p>
+    <h3>What goes in each pocket</h3>
+    <table class="tbl"><tr><th style="width:110px">Pocket</th><th>Takes</th></tr>${B.slots.map((s) => { const ks = list(s); return `<tr><td><b>${B.names[s]}</b><br><small>${ks.length} item${ks.length === 1 ? "" : "s"}</small></td><td>${ks.length ? links(ks) : `<small>${H.esc(B.subs[s])}</small>`}</td></tr>`; }).join("")}</table>
+    <h3>What can't go in</h3>
+    <ul>
+      <li><b>${itemL(G, H, "pot_double")}</b>: it starts 2X Tickets for the whole server, so it stays a deliberate click.</li>
+      <li><b>${itemL(G, H, "pot_witch")}</b>: it waits for a death, not a clock.</li>
+      <li><b>Clovers and lucky charms</b>: they're spent a kill at a time, not timed.</li>
+      <li><b>Healing food and salves</b>: that's what <b>E</b> is for (it eats your best cooked food).</li>
+      <li><b>Gadgets that aren't timed</b>${untimed.length ? `: ${links(untimed)}` : ""}. Only the ones that run for minutes go in.</li>
+      <li><b>Snares, grapple arrows and fishing arrows</b>: they're used where you stand, not as buffs.</li>
+      <li><b>Teleports and waystones</b>, and anything reforged.</li>
+    </ul>
+    <h3>Tips</h3>
+    <ul>
+      <li>Fill it before a long session: ${B.max} of a 10-minute drink is over sixteen hours of it.</li>
+      <li>Your buffs are on the buff bar with their minutes, and in the <b>Buffs</b> tab of your Character window (C).</li>
+      <li>Only one gadget pocket: Tinkering lets you run several gadgets at once, so you can still click a second one yourself.</li>
+    </ul>`;
+  } });
