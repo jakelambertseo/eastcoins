@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>The Hollow Harvest</title>
+<!-- (2026-10-02, the owner: "due to high demand, i want to build another yard raid event like the ice man, and we can template most of the event. the only
+     difference is the character design (an even scarier, horror filled, weird version of the pumpkin king), the effects that change (the yard gets really
+     dark and spooky), and his special effect. come up with some ideas and mock them up"). Boss and monster concepts are PixelLab drafts; yard.jpg is a
+     real frame of the Yard from the dev game. Local only; built into /gameplan. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#07060a;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1000px 520px at 15% -10%,#2a0f0a,transparent),radial-gradient(900px 600px at 100% 30%,#140a22,transparent),#07060a}
+main{max-width:1200px;margin:0 auto;padding:28px 18px 80px}
+h1{margin:0 0 4px;font:800 38px/1.1 Cinzel,Georgia,serif;color:#ffb36a;text-shadow:0 0 18px rgba(255,120,30,.35)}
+h2{margin:0 0 6px;font:800 25px Cinzel,Georgia,serif;color:#ffcf8a}
+h3{margin:16px 0 6px;font:800 17px Cinzel,serif;color:#ffe7b0}
+.lede{margin:0 0 10px;color:#cdbfa2;max-width:980px;line-height:1.55}.lede b{color:#f6e9cc}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}nav.jump a{padding:7px 14px;border-radius:999px;background:#1e1010;box-shadow:0 0 0 1.5px #5a2a1a;text-decoration:none;font:800 13.5px Lora,serif;color:#ffcf8a}
+.sec{margin:44px 0 0;padding:22px 0 0;border-top:2px solid #3a1a14}.sec>p{color:#b8a888;max-width:980px;line-height:1.55}.sec>p b{color:#f6e9cc}
+.bosses{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(330px,100%),1fr));gap:14px;margin-top:12px}
+.boss{border-radius:14px;padding:14px;background:linear-gradient(180deg,#1a0d0d,#0e0a0c);box-shadow:0 0 0 1.5px #5a2618;display:grid;gap:8px}
+.boss .pic{height:220px;display:grid;place-items:center;border-radius:10px;background:radial-gradient(circle at 50% 70%,rgba(255,110,30,.25),transparent 60%),#0a0708;position:relative;overflow:hidden}
+.boss .pic img{height:200px;image-rendering:pixelated;filter:drop-shadow(0 0 10px rgba(255,120,40,.35));animation:bob 3.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-4px)}}@media (prefers-reduced-motion:reduce){.boss .pic img{animation:none}}
+.boss b.n{font:800 21px Cinzel,serif;color:#ffcf8a}.boss .tag{font:800 11px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#d0806a}
+.boss p{margin:0;font:600 13.5px/1.55 Lora,serif;color:#d8ccb4}.boss p b{color:#fff0c8}
+.boss .sp{padding:9px 11px;border-radius:9px;background:rgba(160,40,20,.14);box-shadow:inset 0 0 0 1.5px rgba(200,80,40,.4)}.boss .sp b.h{display:block;font:800 14px Cinzel,serif;color:#ffb070;margin-bottom:2px}
+.minis{display:flex;gap:10px;flex-wrap:wrap}.mini{display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:9px;background:#120c0c;box-shadow:0 0 0 1px #3a1a14;font:700 12.5px Lora,serif;color:#cdbfa2}.mini img{width:44px;height:44px;image-rendering:pixelated}
+.demo{margin-top:14px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}@media (max-width:980px){.demo{grid-template-columns:1fr}}
+.stage{position:relative;border-radius:12px;overflow:hidden;box-shadow:0 0 0 2px #5a2618,0 14px 40px rgba(0,0,0,.7);background:#000}
+.stage canvas{display:block;width:100%;height:auto;image-rendering:pixelated}
+.cast{position:absolute;left:10px;right:10px;bottom:10px;padding:8px 12px;border-radius:8px;background:rgba(10,4,4,.82);box-shadow:inset 0 0 0 1.5px #7a2a18;font:700 13px Lora,serif;color:#ffcf8a;min-height:20px}
+.ctl{display:grid;gap:8px}.ctl button{display:block;width:100%;text-align:left;padding:10px 12px;border:0;border-radius:10px;background:#160c0c;box-shadow:0 0 0 1.5px #4a2016;color:#e8e0cc;font:800 13.5px Cinzel,serif;cursor:pointer}
+.ctl button small{display:block;font:600 12px Lora,serif;color:#b8a080;margin-top:2px}.ctl button[aria-pressed="true"]{background:#3a140c;box-shadow:0 0 0 2px #ff8a3a}
+.ctl .row{display:flex;gap:6px}.ctl .row button{text-align:center;padding:8px 6px;font-size:12px}
+.tbl{width:100%;border-collapse:collapse;font:600 12.5px Lora,serif;background:#120c0c;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1.5px #3a1a14;margin-top:10px}
+.tbl th{text-align:left;font:800 10px Lora,serif;letter-spacing:.07em;text-transform:uppercase;color:#b08070;padding:9px 8px 5px}.tbl td{padding:6px 8px;border-top:1px solid #2a1612;vertical-align:top;line-height:1.45}
+.tbl td:first-child{font-weight:800;color:#ffe7b0}.wrapx{overflow-x:auto}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(270px,100%),1fr));gap:10px;margin-top:12px}.card{background:#120c0c;border-radius:10px;padding:11px 13px;box-shadow:0 0 0 1.5px #3a1a14}
+.card b{display:block;font:800 14.5px Cinzel,serif;color:#ffe7b0;margin-bottom:3px}.card span{font:600 13px/1.5 Lora,serif;color:#cdbfa2}.card span b{display:inline;font:inherit;color:#f6e9cc}
+.chat{margin-top:12px;padding:12px 14px;border-radius:10px;background:#0c0a0a;box-shadow:0 0 0 1.5px #3a1a14;font:600 13px/1.7 Lora,serif}.chat p{margin:0}.chat .c{color:#ffd166}.chat .c::before{content:"\2605 CASINO: ";font-weight:800}
+.callout{margin-top:14px;padding:12px 16px;border-radius:10px;background:rgba(255,120,40,.08);box-shadow:inset 0 0 0 1.5px rgba(255,140,60,.45);color:#f6e9cc;line-height:1.55;max-width:980px}.callout b{color:#ffb070}
+.note{font:600 12.5px Lora,serif;color:#a89070}
+</style>
+</head>
+<body>
+<main>
+  <h1>The Hollow Harvest</h1>
+  <p class="lede">A third Yard raid, on the Ice Man's template: the same horn, warning, waves, last stand, pay and Yard lock-down. What's new is <b>who comes</b> (something
+    far worse than the Pumpkin King), <b>what the Yard turns into</b> (dark, rotting, with things watching from the trees) and <b>his one special move</b>. Three bosses below,
+    each with its own special; pick one, or mix a body from one with a move from another.</p>
+  <nav class="jump"><a href="#bosses">The three bosses</a><a href="#dark">The Yard goes dark (live demo)</a><a href="#minions">His harvest</a><a href="#same">What's templated</a><a href="#casino">CASINO's lines</a><a href="#decide">To decide</a></nav>
+
+  <section class="sec" id="bosses">
+    <h2>The three bosses</h2>
+    <p>All three are what the Pumpkin King becomes when the harvest goes wrong. Concept art is PixelLab, first drafts: the chosen one gets proper frames (walk,
+      attack, special) and his own boss pet, like every boss.</p>
+    <div class="bosses">
+      <div class="boss"><div class="pic"><img src="hollowking.png" alt=""></div>
+        <span class="tag">A · the scariest</span><b class="n">The Hollow King</b>
+        <p>A gaunt scarecrow in a rotting coat and a crown of thorns, his pumpkin head <b>split open like a jaw</b>, full of needle teeth, a sick green candle inside.
+          Root-arms, long claws. He doesn't walk so much as get closer every time you look away.</p>
+        <div class="sp"><b class="h">Special: Lights Out</b><p>Every 20 to 30 s he <b>snuffs the Yard</b>: everything goes black except the four <b>braziers</b>
+          round the court and a small glow round each player. In the dark you build <b>Dread</b>, and full Dread <b>Hollows</b> you for 3 s (you freeze, like the Ice Man's
+          frost). He only takes full damage <b>standing in light</b>, so the job is to keep the braziers burning (hand in logs, like the Flood's sandbags) and drag him into them.</p></div>
+      </div>
+      <div class="boss"><div class="pic"><img src="mothergourd.png" alt=""></div>
+        <span class="tag">B · the weirdest</span><b class="n">Mother Gourd</b>
+        <p>A bloated, rotting gourd the size of a cottage, covered in <b>a dozen carved faces that all look different ways</b>, carried on a nest of black vines. One long
+          pale arm holds a lantern out in front of her, the way you'd hold out food.</p>
+        <div class="sp"><b class="h">Special: The Harvest</b><p>She <b>plants a seed in someone</b>: a pumpkin starts growing on their head, with a 8 s countdown over it.
+          If nobody <b>carves it off</b> (click the player), it bursts into <b>Gourdlings</b> all round them. Everyone else has to save each other, and it gets faster as she weakens.
+          Every face on her that's still lit is a part to break: smash them all and she's open to a big hit.</p></div>
+      </div>
+      <div class="boss"><div class="pic"><img src="thegrin.png" alt="" onerror="this.src='hollowking.png';this.style.opacity=.25"></div>
+        <span class="tag">C · the creepiest moment</span><b class="n">The Grin</b><span class="note">Draft: he still has a little head of his own here; the real frames would leave the collar empty.</span>
+        <p>Tall, thin and <b>headless</b>, smoke curling out of an empty collar. He carries his own head <b>on a chain</b>, and it is smiling far too wide. It laughs when
+          he's hit. Sometimes it laughs when he isn't.</p>
+        <div class="sp"><b class="h">Special: Heads Will Roll</b><p>He <b>throws his head</b> into the Yard and it hides among <b>a crop of identical jack-o'-lanterns</b>.
+          While the head's off, his body can't be hurt and keeps walking. Find the real one (<b>its eyes follow you</b>; the fakes burst into crows when hit) and he drops,
+          stunned, for a free 10 s. A hunt for the whole server every 45 s.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="dark">
+    <h2>The Yard goes dark (live demo)</h2>
+    <p>This is a real frame of the Yard from the dev game, with the raid's look painted over it the way the game would: a night layer, light only where something
+      burns, fog rolling in off the river, eyes in the trees, the grass rotting. Click through the phases.</p>
+    <div class="demo">
+      <div class="stage"><canvas id="cv" width="880" height="652"></canvas><div class="cast" id="cast"></div></div>
+      <div class="ctl" id="ctl">
+        <button data-p="calm"><b>An ordinary evening</b><small>The Yard as it is.</small></button>
+        <button data-p="warn"><b>The warning (5 min)</b><small>The sky goes red, lamps flicker and fail one by one, crows land.</small></button>
+        <button data-p="dark"><b>The raid</b><small>Night. Fog. Only the lamps, the forge and you give light. Things watch from the trees.</small></button>
+        <button data-p="out"><b>Lights Out (boss A)</b><small>Everything snuffed but the four braziers and a glow round each player.</small></button>
+        <button data-p="rage"><b>The last stand</b><small>Under 30%: the dark pulses with his heartbeat, the ground splits.</small></button>
+        <button data-p="lost"><b>Lost</b><small>The Yard stays dark and overgrown for 20 min; the stalls are shut.</small></button>
+        <div class="row"><button data-b="hollowking">A</button><button data-b="mothergourd">B</button><button data-b="thegrin">C</button></div>
+        <p class="note">Bottom row: which boss stands in the court. Motion stops for anyone with reduced motion on.</p>
+      </div>
+    </div>
+    <div class="cards">
+      <div class="card"><b>Drawn over the world, not new art</b><span>Darkness, light pools, fog and the red sky are <b>one overlay</b> the page paints over the map,
+        the same way the Flood draws its water. No map needs redrawing, and it switches off the moment the raid ends.</span></div>
+      <div class="card"><b>Your own little light</b><span>Every player carries a <b>small glow</b>, so a crowd lights the court and a lone player is a pinprick.
+        Standing together is literally how you see.</span></div>
+      <div class="card"><b>Rot</b><span>While he's up the grass greys, <b>pumpkins sprout</b> on empty tiles and burst into Gourdlings if left alone; when he dies they all wither at once.</span></div>
+      <div class="card"><b>Sound</b><span>The jukebox dies during the warning. A low drone, crows, and his laugh when the lights go; all made in the game's sound engine, nothing to download.</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="minions">
+    <h2>His harvest: the waves</h2>
+    <p>In place of the Ice Man's wolves, yetis and raiders. Same wave sizes and timing (every 2 minutes, more with more people).</p>
+    <div class="minis">
+      <span class="mini"><img src="gourdling.png" alt="">Gourdling: small, fast, comes in swarms</span>
+      <span class="mini"><img src="scarecrow.png" alt="">Hollow Scarecrow: the middle weight; crows peck whoever it's fighting</span>
+      <span class="mini"><img src="waxwraith.png" alt="">Wax Wraith: floats through fences; snuffs your glow on hit (first draft, too cute: redraw)</span>
+    </div>
+  </section>
+
+  <section class="sec" id="same">
+    <h2>What's templated from the Ice Man</h2>
+    <p>Everything below is the Ice Man's own numbers today; the new raid would start from them.</p>
+    <div class="wrapx"><table class="tbl" id="tplTbl"><tr><th>Part</th><th>The Ice Man</th><th>The Hollow Harvest</th></tr>
+      <tr><td>Called by</td><td>the War Horn (Store), 5+ online, 3 h between raids</td><td>the same horn, a choice on it, or its own horn; shares the 3 h gap</td></tr>
+      <tr><td>Warning</td><td>5 min, CASINO counts down at 4, 3, 2, 1 min and 30 s</td><td>the same, with the Yard darkening at each count</td></tr>
+      <tr><td>Lasts</td><td>20 min</td><td>20 min</td></tr>
+      <tr><td>Waves</td><td>every 2 min: 4 + 2 per player (cap 12), wolves, yetis, raiders</td><td>the same sizes: Gourdlings, Scarecrows, Wax Wraiths</td></tr>
+      <tr><td>Boss health</td><td>4,000 + 1,200 a player (cap 40,000)</td><td>the same</td></tr>
+      <tr><td>Last stand</td><td>at 30%: 10 elites</td><td>at 30%: the last stand look, faster special</td></tr>
+      <tr><td>Special</td><td>Freeze: every 10 to 15 s, players in range frozen 3.5 s</td><td>A, B or C above</td></tr>
+      <tr><td>Pay</td><td>20,000 + 3,000 a player, shared by damage, 400 floor</td><td>the same, plus the boss pet roll</td></tr>
+      <tr><td>Shuts</td><td>Bom's counter, the cash-out, the egg trade, the Exchange, the Long Night shop</td><td>the same</td></tr>
+      <tr><td>Lost</td><td>the Yard frozen over, stalls shut 20 min</td><td>the Yard dark and overgrown 20 min, stalls shut</td></tr>
+    </table></div>
+  </section>
+
+  <section class="sec" id="casino">
+    <h2>CASINO's lines</h2>
+    <p>Narrated like the Ice Man and the Flood, the way the raids that worked best were.</p>
+    <div class="chat">
+      <p class="c">🎃 The lamps in the Yard just flickered. All of them. At once. Five minutes.</p>
+      <p class="c">🕯️ The forge has gone cold. Somebody check on Bronny. Four minutes.</p>
+      <p class="c">🌑 There's no moon tonight. There was one a minute ago. Two minutes.</p>
+      <p class="c">👁️ Something in the trees is smiling. Thirty seconds.</p>
+      <p class="c">🎃 THE HOLLOW KING HAS COME FOR THE HARVEST. Keep the braziers lit. Stay together. Stay in the light.</p>
+      <p class="c">🌑 The lights are out. He's closer than he was.</p>
+      <p class="c">🔥 thrilltest landed the last blow: THE HOLLOW KING IS ASHES, and the lamps come back on, one by one. 9 of you held the dark back.</p>
+    </div>
+  </section>
+
+  <section class="sec" id="decide">
+    <h2>To decide</h2>
+    <div class="cards">
+      <div class="card"><b>1. Which boss</b><span>A, B or C, or one's look with another's special. My pick: <b>A, the Hollow King, with Lights Out</b>: it uses the dark Yard
+        as the mechanic rather than decoration, and the brazier hand-in is the Flood's sandbag loop that players already know.</span></div>
+      <div class="card"><b>2. How it's called</b><span>The same War Horn with a choice, its own horn in the Store, or only on a schedule (a Friday-night raid).</span></div>
+      <div class="card"><b>3. Its prize</b><span>The usual shared pool, plus <b>his pet</b>, and maybe one wearable only he drops (a split-pumpkin hood?).</span></div>
+      <div class="card"><b>4. Season</b><span>All year, or only through the Long Night (it's Halloween-flavoured). All year keeps it in the rotation.</span></div>
+    </div>
+    <p class="note">Nothing here is built. Next step after your pick: the boss and monster sprites with their frames, the overlay in the game, the special on the server (raid.js), a test like the Flood's, then dev.</p>
+  </section>
+</main>
+<script>
+/* THE DEMO: a real frame of the Yard (yard.jpg) with the raid's look painted on top: a night layer with light cut out of it, fog, eyes, rot, the boss. */
+const cv = document.getElementById("cv"), x = cv.getContext("2d"), W = cv.width, H = cv.height, cast = document.getElementById("cast");
+const yard = new Image(); yard.src = "yard.jpg";
+const IMG = {}; for (const k of ["hollowking", "mothergourd", "thegrin", "gourdling", "scarecrow", "waxwraith"]) { IMG[k] = new Image(); IMG[k].src = k + ".png"; }
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+/* where something burns in this frame (lamps, the forge, the table candle) and where the four braziers would stand */
+const LAMPS = [[100, 112], [140, 405], [262, 566], [822, 455], [460, 325], [538, 262], [356, 326]];
+const BRAZ = [[400, 300], [690, 300], [400, 470], [690, 470]];
+const EYES = [[180, 40], [420, 60], [640, 120], [850, 300], [40, 520], [860, 560], [300, 20]];
+let phase = "calm", boss = "hollowking", t0 = performance.now();
+const LINES = { calm: "", warn: "🎃 The lamps in the Yard just flickered. All of them. At once. Five minutes.", dark: "🎃 THE HOLLOW KING HAS COME FOR THE HARVEST. Stay together. Stay in the light.",
+  out: "🌑 The lights are out. He's closer than he was.", rage: "🩸 He's hurt, and the dark is breathing. Hold the braziers.", lost: "🌑 Nobody held the dark back. The Yard stays like this for 20 minutes." };
+function light(cx, cy, r, a = 1) { const g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, `rgba(0,0,0,${a})`); g.addColorStop(0.6, `rgba(0,0,0,${a * 0.6})`); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); }
+function glow(cx, cy, r, col) { const g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, col); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); }
+const night = document.createElement("canvas"); night.width = W; night.height = H; const n = night.getContext("2d");
+function frame(now) {
+  const s = calm ? 0 : (now - t0) / 1000, p = phase;
+  x.save();
+  x.filter = p === "calm" ? "none" : p === "warn" ? "saturate(.7) brightness(.82) sepia(.25) hue-rotate(-15deg)" : p === "lost" ? "saturate(.15) brightness(.6) sepia(.35)" : "saturate(.35) brightness(.7)";
+  if (yard.complete) x.drawImage(yard, 0, 0, W, H); x.restore();
+  if (p === "warn") { x.fillStyle = "rgba(120,20,10,.22)"; x.fillRect(0, 0, W, H); }
+  /* the night: paint it on its own canvas, cut the lights out of it, lay it over */
+  if (p !== "calm") {
+    const dark = { warn: 0.35, dark: 0.82, out: 0.95, rage: 0.88, lost: 0.78 }[p];
+    n.globalCompositeOperation = "source-over"; n.clearRect(0, 0, W, H);
+    n.fillStyle = p === "rage" ? `rgba(30,0,4,${dark - 0.06 + 0.06 * Math.sin(s * 3.2)})` : `rgba(4,3,12,${dark})`; n.fillRect(0, 0, W, H);
+    n.globalCompositeOperation = "destination-out";
+    const cut = (cx, cy, r, a) => { const g = n.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, `rgba(0,0,0,${a})`); g.addColorStop(0.55, `rgba(0,0,0,${a * 0.55})`); g.addColorStop(1, "rgba(0,0,0,0)"); n.fillStyle = g; n.beginPath(); n.arc(cx, cy, r, 0, 7); n.fill(); };
+    if (p === "out") for (const [bx, by] of BRAZ) cut(bx, by, 95 + 6 * Math.sin(s * 9 + bx), 1);
+    else LAMPS.forEach(([lx, ly], i) => { const on = p !== "warn" || Math.sin(s * 7 + i * 3) > -0.6; if (on) cut(lx, ly, (p === "lost" ? 55 : 80) + 5 * Math.sin(s * 11 + i), p === "lost" ? 0.6 : 1); });
+    cut(460, 262, p === "out" ? 42 : 60, 0.9);   /* you, and your little light */
+    x.drawImage(night, 0, 0);
+    /* warm colour back into the pools */
+    x.globalCompositeOperation = "lighter";
+    if (p === "out") for (const [bx, by] of BRAZ) glow(bx, by, 70, "rgba(255,120,30,.35)");
+    else if (p !== "warn") LAMPS.forEach(([lx, ly]) => glow(lx, ly, 46, p === "lost" ? "rgba(120,160,90,.18)" : "rgba(255,170,70,.25)"));
+    x.globalCompositeOperation = "source-over";
+    if (p === "out") for (const [bx, by] of BRAZ) { x.fillStyle = "#2a1a10"; x.fillRect(bx - 9, by - 4, 18, 14); x.fillStyle = `rgba(255,${150 + 60 * Math.sin(s * 13 + bx) | 0},40,.95)`; x.beginPath(); x.ellipse(bx, by - 8, 7, 12 + 2 * Math.sin(s * 15 + by), 0, 0, 7); x.fill(); }
+    /* fog off the river */
+    if (p !== "warn") for (let i = 0; i < 6; i++) { const fx = ((s * (14 + i * 4) + i * 170) % (W + 400)) - 200, fy = 120 + i * 90; x.save(); x.translate(fx, fy); x.scale(1, 0.45); const g = x.createRadialGradient(0, 0, 0, 0, 0, 230); g.addColorStop(0, "rgba(150,150,170,.14)"); g.addColorStop(1, "rgba(150,150,170,0)"); x.fillStyle = g; x.beginPath(); x.arc(0, 0, 230, 0, 7); x.fill(); x.restore(); }   /* a squashed circle, so the fog fades to nothing on every side */
+    /* eyes in the trees */
+    if (p !== "warn") EYES.forEach(([ex, ey], i) => { const open = Math.sin(s * 0.9 + i * 2.1) > 0.3; if (!open) return; x.fillStyle = p === "rage" ? "#ff4030" : "#ffd040"; x.fillRect(ex, ey, 3, 3); x.fillRect(ex + 7, ey, 3, 3); });
+    /* the crop of pumpkins, and what crawls out */
+    if (p === "dark" || p === "rage" || p === "lost") { [[330, 520], [520, 560], [760, 400], [610, 500]].forEach(([gx, gy], i) => { const im = IMG.gourdling; if (im.complete) x.drawImage(im, gx + 8 * Math.sin(s * 2 + i), gy, 40, 40); }); }
+    if (p === "dark" || p === "rage") { const sc = IMG.scarecrow; if (sc.complete) x.drawImage(sc, 300, 400, 60, 60); const ww = IMG.waxwraith; if (ww.complete) x.drawImage(ww, 720, 330 + 6 * Math.sin(s * 1.6), 56, 56); }
+    /* the boss */
+    if (p !== "warn" && p !== "lost") { const b = IMG[boss]; if (b.complete && b.naturalWidth) { const sz = p === "rage" ? 190 : 170, bx = 545 - sz / 2 + (calm ? 0 : 3 * Math.sin(s * 1.3)), by = 470 - sz; glow(545, 430, 110, p === "rage" ? "rgba(255,40,20,.22)" : "rgba(120,255,120,.10)"); x.drawImage(b, bx, by, sz, sz); } }
+    if (p === "rage") { const pts = [[330, 640], [372, 606], [360, 588], [410, 570], [404, 552], [452, 540], [470, 516], [500, 500]]; x.save(); x.lineJoin = "miter"; x.shadowColor = "rgba(255,80,20,.9)"; x.shadowBlur = 14; for (const [w, c] of [[7, "rgba(60,6,2,.9)"], [3, `rgba(255,${120 + 60 * Math.sin(s * 6) | 0},40,.95)`]]) { x.lineWidth = w; x.strokeStyle = c; x.beginPath(); pts.forEach(([a, b], i) => (i ? x.lineTo(a, b) : x.moveTo(a, b))); x.stroke(); } x.restore(); }   /* the ground splits under his feet */
+    /* the edge of the world closing in */
+    const v = x.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.85); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, p === "rage" ? "rgba(40,0,0,.75)" : "rgba(0,0,0,.6)"); x.fillStyle = v; x.fillRect(0, 0, W, H);
+  }
+  if (!calm || frame.once !== phase + boss) requestAnimationFrame(frame); frame.once = phase + boss;
+}
+document.getElementById("ctl").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.p) { phase = b.dataset.p; document.querySelectorAll("[data-p]").forEach((q) => q.setAttribute("aria-pressed", q === b)); cast.textContent = LINES[phase] || ""; cast.style.visibility = LINES[phase] ? "visible" : "hidden"; }
+  if (b.dataset.b) { boss = b.dataset.b; document.querySelectorAll("[data-b]").forEach((q) => q.setAttribute("aria-pressed", q === b)); }
+  if (calm) requestAnimationFrame(frame);
+});
+document.querySelector('[data-p="dark"]').click(); document.querySelector('[data-b="hollowking"]').click();
+yard.onload = () => requestAnimationFrame(frame); requestAnimationFrame(frame);
+</script>
+</body>
+</html>

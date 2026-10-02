@@ -29,6 +29,7 @@ const CATS = [
     ["atlas-mock", "Atlas", "The atlas: maps and skilling to 120"],
     ["mapbook-mock", "Map book", "Every map today"],
     ["thrillhill-mock", "Thrill Hill", "Agility's own map, built for v1.1"],
+    ["hollow-mock", "The Hollow Harvest", "A third Yard raid: a horror Pumpkin King, the Yard gone dark"],
     ["wild-mock", "The Wilderness", "The Wilderness check"],
     ["events-mock", "World events", "World events"],
     ["raid-mock", "Yard raids", "Yard raids"]]],
