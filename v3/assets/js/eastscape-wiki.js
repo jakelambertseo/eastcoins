@@ -950,6 +950,7 @@ const SEEDED_BY={wheat:"grows wild in the Yard",tomatoe:"rotten tomatoes, in the
     <h3>How they work</h3>
     <ul>
       <li><b>Make it, then use it.</b> Every kit is a <b>Fletching</b> recipe; using one needs an <b>Archery</b> level (both in the table). Nothing is usable until it's been made. Click it in your bag.</li>
+      <li><b>Make your own.</b> Kits, grapple arrows, snares and fishing arrows <b>can't be traded or sold on the Exchange</b>: an archer fletches what they use.</li>
       <li><b>One kit at a time</b>, in its own slot. A kit runs <b>alongside</b> a page buff, so an archer can have Haste and a kit together. Using a second kit replaces the first, and the message says so.</li>
       <li><b>Your Fletching sets its strength</b> when you use it: <b>tier I</b> below 70, <b>tier II</b> from 70, <b>tier III</b> from 90.</li>
       <li><b>The clock only runs outside</b>, like a page or a drink. Step into the casino and it waits.</li>
