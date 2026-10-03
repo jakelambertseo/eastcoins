@@ -4540,7 +4540,7 @@ export class World {
       const f = G.codeOk(k, m.f) ? Math.floor(Number(m.f)) || 0 : 0;   /* (2026-09-28) a reforge level, a gem's roll or a piece's sockets, checked (codeOk) */
       let qty = Math.floor(Number(m.qty)); if (f) qty = 1;
       if (!G.ITEMS[k] || k === "tickets") return this.say(pl, "You can't trade that on the market.", "bad");
-      if (G.noTrade(k)) return this.say(pl, "Gems can't be bought or sold on the Exchange. The one you find is yours; the Gem Sorter will buy it.", "bad");   /* (2026-10-01, v1.1) */
+      if (G.noTrade(k)) return this.say(pl, G.isFieldKit(k) ? G.noTradeWhy(k) : "Gems can't be bought or sold on the Exchange. The one you find is yours; the Gem Sorter will buy it.", "bad");   /* (2026-10-01, v1.1) */
       if (!(qty >= 1 && qty <= 1e9 && price >= 1 && price <= 1e9)) return this.say(pl, "Pick a quantity and a price of at least 1.", "bad");
       if (m.op === "place" && this.exOpen(pl).length >= G.EX_SLOTS) return this.say(pl, `You can have ${G.EX_SLOTS} offers up at once. Cancel one first.`, "bad");
       if (side === "sell") {
@@ -5239,7 +5239,7 @@ export class World {
     if (m.op === "decline") return this.tradeEnd(T, `${pl.name} declined the trade.`);
     if (T.stage === "offer" && (m.op === "add" || m.op === "remove" || m.op === "cash")) {
       if (m.op === "add") { const k = String(m.k); if (!G.ITEMS[k] || k === "tickets") return;
-        if (G.noTrade(k)) return this.say(pl, "Gems can't be traded. The one you find is yours.", "bad");   /* (2026-10-01, v1.1) */
+        if (G.noTrade(k)) return this.say(pl, G.noTradeWhy(k), "bad");   /* (2026-10-01, v1.1) */
         /* (2026-09-23) A FACE-TO-FACE TRADE OFFERS PLAIN PIECES ONLY, for now. An offer is items[key] = count,
            with nowhere to put a level, and the transfer below is takeInv/addInv by key — so offering your only
            axe when it happens to be a +3 would hand the other player a plain one and destroy the reforge without
@@ -5278,7 +5278,7 @@ export class World {
     // everything offered must still be there, and both bags must have room for what's coming
     const still = (p) => Object.entries(T.off[p.id].items).every(([k, n]) => G.countItems(p.C, [k]) >= n) && G.cashIn(p.C) >= T.off[p.id].cash && (T.off[p.id].pets || []).every((x) => G.petById(p.C, x.id));
     if (!still(A) || !still(B)) return this.tradeEnd(T, "Trade cancelled: something offered wasn't there any more.");
-    if ([A, B].some((p) => Object.keys(T.off[p.id].items).some((k) => G.noTrade(k)))) return this.tradeEnd(T, "Trade cancelled: gems can't be traded.");   /* (2026-10-01, v1.1) */
+    if ([A, B].some((p) => Object.keys(T.off[p.id].items).some((k) => G.noTrade(k)))) return this.tradeEnd(T, `Trade cancelled: ${G.noTradeWhy([A, B].flatMap((p) => Object.keys(T.off[p.id].items)).find((k) => G.noTrade(k)))}`);   /* (2026-10-01, v1.1) */
     const petsAfter = (p, give, get) => G.petsOf(p.C).length - (give.pets || []).length + (get.pets || []).length;
     if (petsAfter(A, T.off[A.id], T.off[B.id]) > G.PET_TRADE.own || petsAfter(B, T.off[B.id], T.off[A.id]) > G.PET_TRADE.own) return this.tradeEnd(T, `Trade cancelled: nobody can keep more than ${G.PET_TRADE.own} pets.`);
     const after = (p, give, get) => {
