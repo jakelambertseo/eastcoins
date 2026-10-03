@@ -27,10 +27,15 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 .top .net{font:800 11px Lora,serif;padding:2px 8px;border-radius:999px;background:#2a1a10;color:#a89070}.top .net.ok{color:#9ef0a0}.top .net.bad{color:#ff9a8a}
 .top .tb{padding:4px 10px;border:0;border-radius:7px;background:#2a1a10;box-shadow:inset 0 0 0 1.5px #8a6428;font:800 12px Lora,serif;color:#ffe7b0;cursor:pointer}.top .tb[hidden]{display:none}
 .stage{position:fixed;inset:40px 0 0 0;background:#0e0c12;overflow:hidden;user-select:none}
-.stage canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;cursor:crosshair}
+.stage #cv{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;cursor:crosshair}
 .hud{position:absolute;left:12px;top:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;font:800 13px Lora,serif;color:#fff;text-shadow:0 1px 0 #000,0 0 4px #000}
 .hud .bar{width:220px;height:13px;border-radius:6px;background:#2a1a10;box-shadow:0 0 0 2px #000;overflow:hidden;margin-top:3px}.hud .bar i{display:block;height:100%;background:linear-gradient(#ff6a4a,#c8302a)}
 .hud .r{text-align:right}.hud .r b{display:block;font:900 22px Cinzel,serif;color:#ffd84a}
+/* THE MINIMAP (the owner: "the same as one on eastscape"): EastScape's drawMini and its look. One pixel a tile at the room's own 44x26,
+   blown up by CSS (pixelated), so it costs one small fill a frame at any zoom. Under the room's name, top right. */
+.mini{display:block;margin:6px 0 0 auto;width:132px;height:78px;image-rendering:pixelated;background:rgba(10,8,12,.82);box-shadow:0 0 0 2px #8a6428,0 0 0 3.5px rgba(0,0,0,.6),0 6px 18px rgba(0,0,0,.45);border-radius:8px}
+.mini[hidden]{display:none}
+@media (max-width:760px){.mini{width:96px;height:57px}}
 .hud .rooms{display:flex;gap:4px;justify-content:flex-end;margin-top:4px}.hud .rooms i{width:22px;height:8px;border-radius:3px;background:#2a1a10;box-shadow:0 0 0 1.5px #000}.hud .rooms i.done{background:#ffd84a}.hud .rooms i.now{background:#ff9a6a}
 /* THE BOTTOM BAR: the orbs and the skills (the owner: "the classic diablo/poe circular health and mana bars ... in eastscapes unique UI/colors") */
 .orbbar{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);display:flex;align-items:flex-end;pointer-events:none;z-index:2}.orbbar[hidden]{display:none}
@@ -101,6 +106,36 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 .invhead{display:flex;justify-content:space-between;padding:4px 12px 0;font:800 11px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#c8963a}
 .invfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 12px 8px;font:700 12px Lora,serif;color:#b8a888;border-top:1px solid rgba(255,226,122,.15)}.invfoot b{color:#ffd84a}.invfoot img{width:16px;height:16px;vertical-align:-3px;image-rendering:pixelated}
 /* stats: EastScape's Character window, the arena's numbers */
+/* the chip pouch (crafting currency) and crafting: pick a chip, then click an item */
+.pouch{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:2px 10px 4px}
+.pouch .cell{cursor:pointer}.pouch .cell.none{opacity:.3;filter:grayscale(1);cursor:default}.pouch .cell.sel{box-shadow:0 0 0 2px #5ad6c0,0 0 12px rgba(90,214,192,.8)}
+.pouch .cell b{position:absolute;right:1px;bottom:-2px;font:900 11px Lora,serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}
+#invWin.crafting .invgrid .cell:not(.blank),#invWin.crafting .doll .cell:not(.empty){cursor:copy;outline:1px dashed rgba(90,214,192,.6);outline-offset:-3px}
+.craftbar{margin:0 10px 4px;padding:4px 8px;border-radius:6px;background:rgba(90,214,192,.12);box-shadow:inset 0 0 0 1px rgba(90,214,192,.5);font:700 12px Lora,serif;color:#bff3e8}.craftbar[hidden]{display:none}
+/* Dex's shop */
+#shopWin{left:50%;top:50%;transform:translate(-50%,-55%);width:min(460px,calc(100% - 40px))}
+.shop{display:grid;gap:6px;padding:10px 12px 12px}
+.shop .row{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;padding:6px 8px;border-radius:8px;background:linear-gradient(#20160e,#16100a);box-shadow:inset 0 0 0 1.5px #3a2616}
+.shop .row img{width:36px;height:36px;image-rendering:pixelated}.shop .row b{display:block;font:800 14px Cinzel,serif;color:#ffe7b0}.shop .row small{display:block;font:600 12px Lora,serif;color:#b8a888}
+.shop .row .buy{display:flex;gap:4px}.shop .row .buy button{padding:2px 9px;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png) 10 fill / 5px stretch;background:none;font:800 12px Lora,serif;color:#ffe27a;cursor:pointer;white-space:nowrap}
+.shop .row .buy button:disabled{opacity:.4;cursor:default}
+.shop .foot{display:flex;justify-content:space-between;font:700 12.5px Lora,serif;color:#b8a888;padding:2px 4px}.shop .foot b{color:#ffd84a}
+/* the campaign door: pick an area */
+#campWin{left:50%;top:50%;transform:translate(-50%,-55%);width:min(520px,calc(100% - 40px))}
+.camplist{display:grid;gap:6px;padding:10px 12px}.camplist .row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;background:linear-gradient(#20160e,#16100a);box-shadow:inset 0 0 0 1.5px #3a2616}
+.camplist .row b{display:block;font:800 15px Cinzel,serif;color:#ffe7b0}.camplist .row small{display:block;font:600 12px Lora,serif;color:#b8a888}.camplist .row.lock{opacity:.5}.camplist .row.next{box-shadow:inset 0 0 0 1.5px #c8963a}
+.camplist .row button{padding:3px 12px;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png) 10 fill / 5px stretch;background:none;font:800 13px Lora,serif;color:#ffe27a;cursor:pointer}
+.campnote{padding:0 14px 12px;font:600 12.5px Lora,serif;color:#b8a888}
+/* the party panel, under your name */
+.partyp{position:absolute;left:12px;top:64px;z-index:2;display:grid;gap:4px;min-width:190px}.partyp[hidden]{display:none}
+.partyp .pm{display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:4px 8px;border-radius:8px;background:rgba(14,10,8,.82);box-shadow:inset 0 0 0 1px #5a3a1a;font:700 12px Lora,serif;color:#e8e0cc;text-shadow:0 1px 0 #000}
+.partyp .pm b{font:800 12.5px Lora,serif;color:#ffe7b0}.partyp .pm small{color:#a89070}.partyp .pm.off{opacity:.55}.partyp .pm.dead b{color:#ff8a7a;text-decoration:line-through}
+.partyp .pm i{grid-column:1/-1;display:block;height:5px;border-radius:3px;background:#2a0a0a;overflow:hidden}.partyp .pm i::after{content:"";display:block;height:100%;width:var(--p,100%);background:linear-gradient(#ff7a5a,#c8302a)}
+.partyp .pm button{padding:0 6px;border:0;border-radius:5px;background:#2a1a10;box-shadow:inset 0 0 0 1px #8a6428;font:800 10.5px Lora,serif;color:#ffe7b0;cursor:pointer}
+/* an invitation, and the menu a click on another player opens */
+.invite{position:absolute;left:50%;top:70px;transform:translateX(-50%);z-index:7;display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:10px;background:rgba(14,10,8,.95);box-shadow:0 0 0 2px #c8963a,0 10px 24px rgba(0,0,0,.6);font:700 13.5px Lora,serif;color:#ffe7b0}.invite[hidden]{display:none}
+.invite button,.pmenu button{padding:2px 10px;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png) 10 fill / 5px stretch;background:none;font:800 12.5px Lora,serif;color:#ffe27a;cursor:pointer}
+.pmenu{position:absolute;z-index:7;display:grid;gap:4px;padding:8px;border-radius:10px;background:rgba(14,10,8,.95);box-shadow:0 0 0 1.5px #8a6428,0 10px 24px rgba(0,0,0,.6);font:800 13px Cinzel,serif;color:#ffe7b0}.pmenu[hidden]{display:none}.pmenu small{font:700 11.5px Lora,serif;color:#a89070}
 #statWin{left:50%;top:12px;transform:translateX(-50%);width:min(880px,calc(100% - 40px));bottom:132px}
 .stbody{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;overflow:auto;min-height:0;align-content:start}
 @media (max-width:760px){.stbody{grid-template-columns:1fr}}
@@ -158,7 +193,10 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 <div class="stage" id="stage">
   <canvas id="cv"></canvas>
   <div class="hud"><div><span id="hName"></span></div>
-    <div class="r"><b id="hWave">The Lounge</b><span id="hKills"></span><div class="rooms" id="hRooms"></div></div></div>
+    <div class="r"><b id="hWave">The Lounge</b><span id="hKills"></span><div class="rooms" id="hRooms"></div><canvas id="mini" class="mini" width="132" height="78" aria-label="Map of this room" hidden></canvas></div></div>
+  <div class="partyp" id="partyP" hidden></div>
+  <div class="invite" id="invite" hidden><span id="inviteTxt"></span><button type="button" id="invYes">Join</button><button type="button" id="invNo">No thanks</button></div>
+  <div class="pmenu" id="pmenu" hidden></div>
   <div class="boss" id="bossBar" hidden><span id="bossName"></span><i id="bossHp"></i></div>
   <div class="tip" id="tip" hidden></div>
   <div class="orbbar lounge" id="orbbar" hidden>
@@ -184,40 +222,47 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
   </div>
   <!-- inventory: a paper doll over a grid, on the right -->
   <section class="win" id="invWin" hidden aria-label="Inventory"><div class="win-head"><img src="/v3/assets/img/glad/flat/ui/bag.png" alt=""><b>Inventory</b><small id="invSub"></small><button type="button" data-close="invWin" title="Close (I)">×</button></div>
-    <div class="doll" id="doll"></div><div class="invhead"><span>Bag</span><span id="invCount"></span></div><div class="invgrid" id="invGrid"></div>
+    <div class="doll" id="doll"></div><div class="invhead"><span>Pouch</span><span>pick one, then click an item</span></div><div class="pouch" id="pouch"></div><div class="craftbar" id="craftBar" hidden></div><div class="invhead"><span>Bag</span><span id="invCount"></span></div><div class="invgrid" id="invGrid"></div>
     <div class="invfoot"><span>Click to wear · Shift-click to salvage</span><span><img src="/v3/assets/img/glad/flat/items/coins.png" alt=""> <b id="invCrowns">0</b> Crowns</span></div></section>
+  <!-- the campaign door -->
+  <section class="win" id="campWin" hidden aria-label="The campaign"><div class="win-head"><img src="/v3/assets/img/glad/flat/ui/g_fighting.png" alt=""><b>The campaign</b><small id="campSub"></small><button type="button" data-close="campWin" title="Close (Esc)">×</button></div><div class="camplist" id="campList"></div><div class="campnote" id="campNote"></div></section>
+  <!-- Dex's shop -->
+  <section class="win" id="shopWin" hidden aria-label="Dex's chips"><div class="win-head"><img src="/v3/assets/img/glad/flat/items/chip_free.png" alt=""><b>Dex's chips</b><small>Crowns for crafting chips</small><button type="button" data-close="shopWin" title="Close (Esc)">×</button></div><div class="shop" id="shop"></div></section>
   <!-- stats -->
   <section class="win" id="statWin" hidden aria-label="Stats"><div class="win-head"><img src="/v3/assets/img/glad/flat/ui/g_character.png" alt=""><b>Stats</b><small id="statSub"></small><button type="button" data-close="statWin" title="Close (C)">×</button></div><div class="stbody" id="statBody"></div></section>
   <!-- the skill tree -->
   <div class="treewin" id="treeWin" hidden><div class="win-head"><img src="/v3/assets/img/glad/flat/items/skill_wizardry.png" alt=""><b>Skill tree</b><span class="pts" id="treeHead"></span><small></small><button type="button" id="treeReset">Refund all</button><button type="button" id="treeClose">Close (T)</button></div>
     <div class="tbody" id="treeBody"><svg id="treeSvg"></svg><div class="info" id="treeInfo"></div><div class="legend"><span><b style="color:#ffd84a">Gold</b>: taken</span><span><b style="color:#9ad8ff">Blue rim</b>: you can take it</span><span>Click to take, click again to refund</span></div></div></div>
   <div class="ov" id="ovClass" hidden><div style="max-width:820px"><h2 style="margin:0;font:900 34px Cinzel,serif;color:#ffe7b0">Choose your class</h2><p class="note" style="font-size:14px;margin:6px 0 0;color:#cdbfa2">One character for the season. Your class decides your starting skill and where you begin on the skill tree. Its two ascendancies open later in the campaign.</p><div class="classes" id="classes"></div></div></div>
-  <div class="ov" id="ovStart" hidden><div class="card"><h2 id="startTitle">East Arena</h2><p id="startWho"></p><p>This is <b>the Lounge</b>. The door on the east wall leads into the campaign: <b>Act 1 · The Cellars</b>, three areas of four rooms each, packs in every room and the Hoodie at the end of the third. Walk to the door and press <b>E</b>.</p>
+  <div class="ov" id="ovStart" hidden><div class="card"><h2 id="startTitle">East Arena</h2><p id="startWho"></p><p>This is <b>the Lounge</b>, where everyone in the arena hangs out. The door on the east wall leads into the campaign: <b>Act 1 · The Cellars</b>, three areas of four rooms each, packs in every room and the Hoodie at the end of the third. Walk to the door and press <b>E</b>. Click another player to invite them to a party (up to four).</p>
     <div class="keys" id="startKeys"></div>
-    <p class="note">Loot lies on the ground with its name over it: walk over it or click the name. It goes to your inventory when the area ends. A first clear gives one perk, kept all season. Each level gives a skill point.</p><button type="button" class="btn" id="startBtn">Into the Lounge</button></div></div>
+    <p class="note">Your loot is yours alone: walk over it or click its name. It goes to your inventory when you leave the area, but if you die there, what you found there is lost. A first clear gives one perk, kept all season. Each level gives a skill point.</p><button type="button" class="btn" id="startBtn">Into the Lounge</button></div></div>
   <div class="ov" id="ovEnd" hidden><div class="card"><h3 id="endTitle"></h3><div id="endBody"></div><div class="pick" id="perkPick"></div><button type="button" class="btn" id="backBtn">Back to the Lounge</button></div></div>
 </div>
 <div class="tipbox" id="tipBox" hidden></div>
 <div class="veil" id="veil"><span>Connecting to the server…</span></div>
 <script type="module">
-import * as R from "/v3/assets/js/arena-rules.js?v=4";   /* the arena's own rules: items, monsters, levels, classes, skills, the tree (shared with the Worker) */
-const COLS = R.GRID.cols, ROWS = R.GRID.rows, T = 16, A = 2, W = COLS * T, H = ROWS * T;
+import * as R from "/v3/assets/js/arena-rules.js?v=5";   /* the arena's own rules: items, monsters, levels, classes, skills, the tree (shared with the Worker) */
+import { createSim } from "/v3/assets/js/arena-sim.js?v=2";   /* the fight itself, the same code the server runs (handed the rules, so they load once) */
+const SIM = createSim(R), { T, COLS, ROWS, W, H, SLOT_KEYS } = SIM, A = 2;
 const $ = (id) => document.getElementById(id), esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const DEV = location.hostname === "localhost" || location.hostname === "127.0.0.1";
 document.fonts?.load("900 30px Cinzel"); document.fonts?.load("800 13px Lora");   /* the canvas draws numbers and labels in them */
 
 /* ============================================================ the connection: the arena's OWN game server (arena-worker, the eastcoin-arena Worker), with
-   EastScape's login (the site's one-use ticket), which is the only thing the two games share. Dev: the arena server on :8788. */
-const ARENA_WS = "wss://arena.eastcoin.vip/ws", DEV_PORT = 8788;
-let ws = null, retry = 0, ME = null, resetting = false, pingT = 0;
+   EastScape's login (the site's one-use ticket), which is the only thing the two games share. Dev: the arena server on :8788.
+   Two sockets: the Lounge (always: your character, chat, parties, who is where) and, during a run, the run's own server. */
+const HOST = DEV ? `${location.hostname}:8788` : "arena.eastcoin.vip", PROTO = DEV ? "ws" : "wss";
+let ws = null, retry = 0, ME = null, resetting = false, pingT = 0, PARTY = null, INVITE = null;
+const OTHERS = new Map();   /* everyone else in the Lounge: id -> { name, x, y (drawn), tx, ty (latest), d, style, level, party } */
 const send = (m) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); };
 const net = (cls, t) => { const n = $("net"); n.className = `net ${cls}`; n.textContent = t; };
 async function connect() {
   if (ws && ws.readyState <= 1) return; let url;
-  try { if (DEV) { const q = new URLSearchParams(location.search); url = `ws://${location.hostname}:${DEV_PORT}/ws?dev=1&login=${encodeURIComponent(q.get("as") || "bootypaper")}${q.get("role") ? `&role=${encodeURIComponent(q.get("role"))}` : ""}`; }
+  try { if (DEV) { const q = new URLSearchParams(location.search); url = `ws://${HOST}/ws?dev=1&login=${encodeURIComponent(q.get("as") || "bootypaper")}${q.get("role") ? `&role=${encodeURIComponent(q.get("role"))}` : ""}`; }
     else { const r = await fetch("/api/eastscape/ticket", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: "{}" });
       if (r.status === 401) { $("veil").innerHTML = `<span>Log in to EastCoin first, then come back.</span>`; net("bad", "Not logged in"); return; }
-      const j = await r.json(); if (!j.ok) throw new Error(j.message || "no ticket"); url = `${ARENA_WS}?ticket=${j.ticket}`; } }
+      const j = await r.json(); if (!j.ok) throw new Error(j.message || "no ticket"); url = `${PROTO}://${HOST}/ws?ticket=${j.ticket}`; } }
   catch (e) { return later(); }
   ws = new WebSocket(url);
   ws.onmessage = (e) => { try { onMsg(JSON.parse(e.data)); } catch (err) { console.error(err); } };
@@ -226,9 +271,13 @@ async function connect() {
 }
 function later() { net("bad", "Reconnecting…"); setTimeout(connect, Math.min(10000, 1000 * 2 ** retry++)); }
 function onMsg(m) {
-  if (m.type === "hello") { net("ok", "Connected"); send({ op: "enter" }); return; }
+  if (m.type === "hello") { net("ok", "Connected"); send({ op: "enter" }); if (S?.kind === "lounge") S.sentMove = null; if (RUN && !RUN.ended) send({ op: "inrun", runId: RUN.runId }); return; }   /* a reconnect (a restart) says again where you stand, or that you're in a run */
   if (m.type === "pong" || m.type === "kicked") return;
   if (m.type === "arenachat") { if (m.old) { $("chatLog").innerHTML = ""; for (const l of m.list || []) chatLine(l, true); if (!m.list?.length) $("chatLog").innerHTML = `<p class="empty">Nobody has said anything here yet.</p>`; } else chatLine(m); return; }   /* the arena's own channel; a reconnect hands the recent lines over again, so the log is rebuilt rather than added to */
+  if (m.type === "who") return gotWho(m.list);
+  if (m.type === "party") { PARTY = m.party; renderParty(); if (!$("campWin").hidden) renderCamp(); return; }
+  if (m.type === "invite") return showInvite(m);
+  if (m.type === "run") return joinRun(m);
   if (m.type !== "arena") return;
   const first = !ME; ME = { ...(ME || {}), ...m };
   ME.look = R.lookFor({ id: ME.id, name: ME.name });   /* the sprite only */
@@ -238,14 +287,20 @@ function onMsg(m) {
   $("newBtn").hidden = !DEV || !ME.style;
   const spare = ME.style ? ME.points - (ME.tree || []).length : 0; $("mPts").hidden = spare <= 0; $("mPts").textContent = spare;
   if (m.op === "create" && !m.refused) { $("ovClass").hidden = true; showStart(); }
-  else if (first) { if (!ME.style) showClasses(); else showStart(); }
+  else if (first) { if (!ME.style) showClasses(); else { const saved = savedRun(); if (saved) { send({ op: "inrun", runId: saved.runId }); joinRun(saved, true); } else showStart(); } }
   if (m.op === "tree") { if (m.refused) tip(m.refused, 3); treeLocal = null; if (!$("treeWin").hidden) renderTree(); regear(); }
-  if (m.op === "stash") regear();
-  if (!$("invWin").hidden) renderInv(); if (!$("statWin").hidden) renderStats();
-  if (m.op === "report") reportBack(m);
+  if (m.op === "stash") { regear(); if (S?.kind === "dungeon") tip("Gear you change now counts from your next run.", 2); }
+  if (!$("invWin").hidden) renderInv(); if (!$("statWin").hidden) renderStats(); if (!$("shopWin").hidden) renderShop(); if (!$("campWin").hidden) renderCamp();
+  if (m.op === "craft" || m.op === "buy") { if (m.refused) tip(m.refused, 3); else if (m.crafted) { tip(`${R.CHIPS[m.crafted.chip].name} used.`, 1.5); regear(); } else if (m.bought) tip(`Bought ${m.bought.n} ${R.CHIPS[m.bought.chip].name}${m.bought.n > 1 ? "s" : ""} for ${m.bought.paid} ${R.CURRENCY.name}.`, 2); }
+  if (m.op === "tree" && m.paid) tip(`Refunded: ${m.paid} ${R.CURRENCY.name}.`, 2);
+  if (m.op === "run" && m.refused) tip(m.refused, 3);
+  if (m.op === "report" && m.refused) tip(m.refused, 3);
+  if (m.op === "runEnd") runSaved(m);
+  if (m.op === "perk") { tip(`Perk taken: ${PERKS[m.took]?.[0] || m.took}.`, 2); regear(); }
 }
-/* the tree or what you wear changed: the numbers in play follow at once, and a bigger health pool fills by what it grew */
-function regear() { if (!S || S.over) return; const was = S.g; S.g = build(S.lvl); S.p.hp = Math.min(S.g.maxHp, S.p.hp + Math.max(0, S.g.maxHp - was.maxHp)); S.p.mp = Math.min(S.g.maxMp, S.p.mp); renderTray(); }
+/* the tree or what you wear changed: in the Lounge the numbers follow at once (a run keeps the character it started with) */
+function regear() { if (!S || S.kind !== "lounge") return; S.g = myStats(); S.p.hp = S.g.maxHp; S.p.mp = S.g.maxMp; renderTray(); }
+const myStats = (level = ME.level || 1) => SIM.statsFor({ style: ME.style, level, tree: ME.tree, worn: ME.worn, perks: ME.perks });
 
 /* ============================================================ THE CHAT: EastScape's chat module (its markup, look and keys), the arena's own channel */
 let chatOpen = false, unread = 0;
@@ -274,14 +329,16 @@ const BOOM = img(`${FX}spell_explosion.png`), ARROW = img(`${F}items/bronze_arro
 for (const S_ of Object.values(R.SKILLS)) { if (S_.fx) img(F.replace("flat/", "") + S_.fx); img(F + S_.icon); }
 const SLOT_ICON = { weapon: "items/logs_wand.png", offhand: "items/bronze_shield.png", helm: "items/bronze_helm.png", body: "items/bronze_body.png", gloves: "items/bronze_gloves.png", boots: "items/bronze_boots.png", ring: "items/bronze_ring.png", amulet: "items/bronze_amulet.png" };
 for (const v of Object.values(SLOT_ICON)) img(F + v);
+for (const c of Object.values(R.CHIPS)) img(F + c.icon); img(`${F}dex_south.png`);
 for (const m of Object.values(R.MONSTERS)) img(`${F}${m.art}.png`);
 const CROWN = img(F + R.CURRENCY.icon), PERKS = R.PERKS, RAR = R.RARITY, SK = R.SKILLS;
 /* rarity colours on the ground and in the bag: Plain white, Lucky green, Hot orange, Jackpot a hot violet (the reference's unique colour) */
 const RCOL = ["#e8e0cc", "#7ee07e", "#ff9a4a", "#e070ff"];
 const fxImg = (path) => img(F.replace("flat/", "") + path);
-const AREAS = R.CAMPAIGN.flatMap((a) => a.areas.map((x) => ({ ...x, act: a.act, actName: a.name })));
+const AREAS = SIM.AREAS;
 const openArea = () => Math.min(AREAS.length, Math.max(0, ...(ME.progress?.cleared || [])) + 1);
 const hexA = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${Math.max(0, Math.min(1, a))})`; };
+const lookOf = (id, name) => R.lookFor({ id, name });
 
 /* ============================================================ CHOOSE YOUR CLASS */
 function showClasses(reset = false) {
@@ -295,42 +352,13 @@ function showClasses(reset = false) {
   $("ovClass").hidden = false; $("ovStart").hidden = true;
 }
 $("classes").addEventListener("click", (e) => { const b = e.target.closest("[data-cls]"); if (b) send({ op: "create", style: b.dataset.cls, reset: resetting || undefined }); });
-$("newBtn").addEventListener("click", () => { if (S) { S.over = true; cancelAnimationFrame(raf); } closeAll(); showClasses(true); });
+$("newBtn").addEventListener("click", () => { if (RUN) leaveRun(); if (S) { S.over = true; cancelAnimationFrame(raf); } closeAll(); showClasses(true); });
 function showStart() {
   const C = R.STYLES[ME.style]; $("startTitle").textContent = `${C.name} · East Arena`;
   $("startWho").innerHTML = `You're <b>${esc(ME.name)}</b>, a <b>level ${ME.level} ${C.name.toLowerCase()}</b> character for ${R.SEASON.name}. This character is the arena's alone: its own gear, ${R.CURRENCY.name} and tree, and nothing it does touches EastScape.`;
-  const g = build(); $("startKeys").innerHTML = `<kbd>W A S D</kbd><span>move (with momentum; walls block, nothing else does)</span><kbd>Mouse</kbd><span>aim · hold the button: <b>${SK[g.slots[0]].name}</b></span>` +
-    g.slots.slice(1).map((k, i) => `<kbd>${SLOT_KEYS[i + 1].toUpperCase()}</kbd><span>${SK[k].name}</span>`).join("") + `<kbd>Space</kbd><span>dodge: 0.3 s of no hitbox</span><kbd>I · T · C</kbd><span>inventory · skill tree · stats</span><kbd>Enter</kbd><span>chat</span><kbd>E</kbd><span>use a door</span>`;
+  const g = myStats(); $("startKeys").innerHTML = `<kbd>W A S D</kbd><span>move (with momentum; walls block, nothing else does)</span><kbd>Mouse</kbd><span>aim · hold the button: <b>${SK[g.slots[0]].name}</b></span>` +
+    g.slots.slice(1).map((k, i) => `<kbd>${SLOT_KEYS[i + 1].toUpperCase()}</kbd><span>${SK[k].name}</span>`).join("") + `<kbd>Space</kbd><span>dodge: 0.3 s of no hitbox</span><kbd>I · T · C</kbd><span>inventory · skill tree · stats</span><kbd>Enter</kbd><span>chat</span><kbd>E</kbd><span>use a door, talk to Dex</span>`;
   $("ovStart").hidden = false;
-}
-
-/* ============================================================ rooms: EastScape's grid (44 x 26 at T = 16), the Crypt's stone */
-let seed = 1; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-const walk = (g, x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && g[y][x] === ".";
-function makeRoom(kind, i) {
-  const g = Array.from({ length: ROWS }, (_, y) => Array.from({ length: COLS }, (_, x) => (x === 0 || x === COLS - 1 || y <= 1 || y === ROWS - 1 ? "v" : ".")));
-  const objs = [], packs = [];
-  if (kind === "lounge") {
-    for (let x = 6; x < COLS - 6; x += 9) objs.push({ k: "torch", x, y: 1 });
-    objs.push({ k: "chest", x: 4, y: 6, name: "Your stash" }); objs.push({ k: "sarc", x: 22, y: 5 });
-    const ar = AREAS[openArea() - 1]; g[13][COLS - 1] = "e"; objs.push({ k: "door", x: COLS - 1, y: 13, to: "dungeon", name: `Act ${ar.act} · ${ar.name} (area level ${ar.alvl})` });
-    return { g, objs, packs, kind };
-  }
-  const nWalls = 2 + (i % 2), xs = [];
-  for (let k = 0; k < nWalls; k++) { const x = 8 + Math.floor(((k + 0.5) / nWalls) * (COLS - 16)) + Math.floor(rnd() * 4) - 2; xs.push(x); const gap = 5 + Math.floor(rnd() * (ROWS - 12)), gh = 4 + Math.floor(rnd() * 3); for (let y = 2; y < ROWS - 1; y++) if (y < gap || y >= gap + gh) g[y][x] = "v"; }
-  for (let k = 0; k < 4; k++) { const x = 4 + Math.floor(rnd() * (COLS - 9)), y = 4 + Math.floor(rnd() * (ROWS - 9)); if (xs.some((wx) => Math.abs(wx - x) < 3) || Math.abs(y - 13) < 2) continue; g[y][x] = g[y][x + 1] = g[y + 1][x] = g[y + 1][x + 1] = "v"; }
-  for (let k = 0; k < 6; k++) { const x = 3 + Math.floor(rnd() * (COLS - 6)), y = 3 + Math.floor(rnd() * (ROWS - 5)); if (g[y][x] === "." && Math.abs(y - 13) > 1) { g[y][x] = "#"; objs.push({ k: rnd() < 0.3 ? "sarc" : "bones", x, y }); } }
-  for (let x = 5; x < COLS - 5; x += 7 + Math.floor(rnd() * 3)) objs.push({ k: "torch", x, y: 1 });
-  for (let y = 11; y <= 15; y++) { g[y][1] = "."; g[y][COLS - 2] = "."; }
-  g[13][0] = "e"; objs.push({ k: "door", x: 0, y: 13, to: "back", name: i === 0 ? "The stairs up to the Lounge" : "Back a room" });
-  const AR = S.area, lastRoom = i === AR.rooms - 1;
-  if (!lastRoom) { g[13][COLS - 1] = "e"; objs.push({ k: "door", x: COLS - 1, y: 13, to: "next", name: "Deeper" }); }
-  const n = lastRoom && AR.boss ? 2 : 3;
-  for (let k = 0; k < n; k++) { let x, y, tries = 0; do { x = 10 + Math.floor(rnd() * (COLS - 14)); y = 3 + Math.floor(rnd() * (ROWS - 6)); tries++; } while (tries < 50 && !(walk(g, x, y) && walk(g, x + 1, y) && walk(g, x, y + 1) && walk(g, x - 1, y)));
-    const kinds = i === 0 ? AR.pool.filter((q) => q !== "golem") : AR.pool, size = 3 + Math.floor(rnd() * 3), mobs = []; for (let j = 0; j < size; j++) mobs.push(kinds[Math.floor(rnd() * kinds.length)]);
-    packs.push({ x, y, mobs }); }
-  if (lastRoom && AR.boss) packs.push({ x: COLS - 8, y: 13, mobs: [AR.boss], boss: true });
-  return { g, objs, packs, kind };
 }
 
 /* ============================================================ the view: EastScape's camera (its fit() and aimCamera(), copied) */
@@ -352,95 +380,237 @@ function aimCamera() {
 }
 const sx = (x) => view.ox + x * view.s, sy = (y) => view.oy + y * view.s;
 
-/* ============================================================ the character's numbers: level, class, tree, gear, perks. Nothing from EastScape. */
+/* ============================================================ the state of what's on screen */
 let trayEls = null;
 let S = null, raf = 0, last = 0, keys = new Set(), mouse = { x: W / 2, y: H / 2, sx: 0, sy: 0, down: false };
 let floorCache = null;
-const SLOT_KEYS = ["lmb", "q", "1", "2", "3"];
-function build(level = ME.level || 1) {
-  const B = R.LEVEL.base(level), C = R.STYLES[ME.style] || R.STYLES.magic, TG = R.treeGrants(ME.style || "magic", ME.tree || []);
-  const g = { dmg: B.dmg, pdmg: TG.dmg, speed: TG.speed, spd: 1 + TG.move + (C.mods.move || 0), def: C.mods.def + TG.def, leech: TG.leech, find: 0, crownsPct: 0, pierce: TG.pierce, bolts: 1 + TG.bolts,
-    dodgeCd: 1.2, maxHp: B.hp * C.mods.hp * (1 + TG.hp), maxMp: B.mp * C.mods.mp * (1 + TG.mp), mpRegen: 7 * (1 + TG.mpRegen), rules: new Set(TG.rules), ring: 16, ringCd: 0, crit: 0.06, critX: 1.5,
-    src: { dmg: B.dmg, hp: Math.round(B.hp * C.mods.hp), mp: Math.round(B.mp * C.mods.mp), gearDmg: 0, gearHp: 0, gearDef: 0, tree: TG } };
-  for (const it of Object.values(ME.worn || {})) {
-    for (const [k, v] of Object.entries(it.implicit || {})) { if (k === "dmg") { g.dmg += v; g.src.gearDmg += v; } if (k === "def") { g.def += v; g.src.gearDef += v; } if (k === "hp") { g.maxHp += v; g.src.gearHp += v; } if (k === "mp") g.maxMp += v; }
-    for (const l of it.lines || []) { const v = l.v; if (l.id === "dmg") { g.dmg += v; g.src.gearDmg += v; } if (l.id === "pdmg") g.pdmg += v / 100; if (l.id === "speed") g.speed += v / 100; if (l.id === "hp") { g.maxHp += v; g.src.gearHp += v; } if (l.id === "mp") g.maxMp += v;
-      if (l.id === "mpRegen") g.mpRegen *= 1 + v / 100; if (l.id === "def") { g.def += v; g.src.gearDef += v; } if (l.id === "move") g.spd += v / 100; if (l.id === "leech") g.leech += v / 100; if (l.id === "find") g.find += v / 100; if (l.id === "crowns") g.crownsPct += v / 100; }
-  }
-  for (const p of ME.perks || []) { if (p === "bolt") g.bolts++; if (p === "dmg") g.pdmg += 0.15; if (p === "speed") g.spd += 0.1; if (p === "dodge") g.dodgeCd *= 0.75; if (p === "hp") g.maxHp += 25; if (p === "leech") g.leech += 0.03; if (p === "blast") { g.ring = 24; g.ringCd = 1; } if (p === "rare") g.find += 0.2; }
-  if (g.rules.has("iron_will")) g.maxHp *= 1.3; if (g.rules.has("blood_magic")) g.maxHp *= 1.4;
-  g.payHp = g.rules.has("iron_will") || g.rules.has("blood_magic");
-  g.maxHp = Math.round(g.maxHp); g.maxMp = Math.round(g.maxMp); g.tough = Math.min(0.6, g.def / (g.def + 60)); g.flatDmg = g.dmg; g.dmg = Math.round(g.dmg * (1 + g.pdmg));
-  /* the skill bar: your class's start on the mouse, then every other skill the tree gives, in tree order */
-  const own = TG.skills.filter((k) => SK[k]), start = C.start; g.slots = [start, ...own.filter((k) => k !== start)].slice(0, SLOT_KEYS.length);
-  return g;
-}
-const cdBase = (k, g) => Math.max(0.08, SK[k].cd * (1 - Math.min(0.5, g.speed)) - (k === "nova" ? g.ringCd : 0));
-const cdOf = (k) => cdBase(k, S.g);
+function newS(kind) { return { kind, t: 0, over: false, dying: false, room: null, roomI: 0, mobs: [], mobMap: new Map(), pb: [], zones: [], eb: [], fx: [], nums: [], drops: [], others: new Map(), cd: {}, kills: 0,
+  p: { id: ME.id, x: 3 * T, y: 13.5 * T, vx: 0, vy: 0, dir: 6, dodgeCd: 0, dodging: 0, inv: 0, hurt: 0, cry: 0, dash: null, hp: 0, mp: 0 } }; }
 function renderTray() {
-  const g = S ? S.g : build();
+  const g = S ? S.g : myStats();
   $("tray").innerHTML = SLOT_KEYS.map((key, i) => { const k = g.slots[i]; return k ? `<div data-k="${key.toUpperCase()}" data-sk="${k}" title="${SK[k].name}: ${SK[k].does}"><img src="${F}${SK[k].icon}" alt=""><i></i></div>` : `<div class="empty" data-k="${key.toUpperCase()}" title="A skill from the tree goes here"></div>`; }).join("") +
     `<div data-k="SPC" data-sk="dodge" title="Dodge: 0.3 s with no hitbox"><img src="${F}${SK.dodge.icon}" alt=""><i></i></div>`;
   trayEls = null;
 }
+function startLoop() { last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); }
 
-/* ============================================================ runs */
-function enterRoom(kind, i) {
-  seed = kind === "lounge" ? 11 : S.seed + i * 977;
-  const RM = makeRoom(kind, i); S.room = RM; S.roomI = i; floorCache = null; S.mobs = []; S.pb = []; S.eb = []; S.drops = []; S.fx = []; S.zones = []; S.nums = [];
-  for (const pk of RM.packs) for (let j = 0; j < pk.mobs.length; j++) { const d = R.monsterAt(pk.mobs[j], S.area.alvl); d.melee = d.type === "melee"; const a = (j / pk.mobs.length) * Math.PI * 2, rr = d.boss ? 0 : 10 + j * 3;
-    S.mobs.push({ k: pk.mobs[j], d, hp: d.hp, maxHp: d.hp, x: (pk.x + 0.5) * T + Math.cos(a) * rr, y: (pk.y + 0.5) * T + Math.sin(a) * rr, vx: 0, vy: 0, t: rnd() * 3, pat: 1 + rnd(), awake: false, pack: pk, slow: 0, root: 0, stun: 0, flash: 0, numK: 0 }); }
-  const RN = kind === "lounge" ? 0 : S.area.rooms; S.outOpen = false;
-  $("hWave").textContent = kind === "lounge" ? "The Lounge" : `Room ${i + 1} of ${RN}`; $("where").textContent = kind === "lounge" ? "The Lounge" : `Act ${S.area.act} · ${S.area.name} · room ${i + 1}`;
-  $("hRooms").innerHTML = kind === "lounge" ? "" : [...Array(RN).keys()].map((k) => `<i class="${k < i ? "done" : k === i ? "now" : ""}"></i>`).join("");
-  $("orbbar").classList.toggle("lounge", kind === "lounge"); $("bossBar").hidden = true;
-  S.p.vx = S.p.vy = 0; S.p.inv = 0.6;
-}
+/* ============================================================ THE LOUNGE: everyone in it, walking about (the owner: yes) */
 function startLounge() {
-  S = { kind: "lounge", seed: 1, t: 0, kills: 0, found: [], over: false, paused: false, lvl: ME.level, xp: ME.xp, xpGain: 0, crowns: 0, cd: {}, g: build(),
-    p: { x: 3 * T, y: 13.5 * T, vx: 0, vy: 0, hp: 0, mp: 0, dir: 6, dodgeCd: 0, dodging: 0, inv: 0, hurt: 0, cry: 0, dash: null } };
-  S.p.hp = S.g.maxHp; S.p.mp = S.g.maxMp; enterRoom("lounge", 0); renderTray(); $("orbbar").hidden = false; $("menu").hidden = false;
-  $("ovStart").hidden = true; $("ovEnd").hidden = true; hudName(); last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
+  if (RUN) leaveRun();
+  S = newS("lounge"); S.lvl = ME.level; S.xp = ME.xp; S.g = myStats(); S.room = SIM.makeLounge(); floorCache = null;
+  S.p.hp = S.g.maxHp; S.p.mp = S.g.maxMp; S.sentMove = null; S.p.x = (3 + Math.random() * 4) * T; S.p.y = (11.5 + Math.random() * 4) * T;   /* arrivals spread out, so two people back at once don't stand on each other */
+  $("hWave").textContent = "The Lounge"; $("where").textContent = "The Lounge"; $("hRooms").innerHTML = ""; $("hKills").textContent = "";
+  renderTray(); $("orbbar").hidden = false; $("orbbar").classList.add("lounge"); $("menu").hidden = false; $("bossBar").hidden = true;
+  $("ovStart").hidden = true; $("ovEnd").hidden = true; hudName(); renderParty();
+  if (ME.offer?.perks?.length) showPerkOffer();
+  startLoop();
 }
-function startDungeon() { S.kind = "dungeon"; S.area = AREAS[openArea() - 1]; S.seed = Math.floor(Math.random() * 1e6) + 7; S.t = 0; S.kills = 0; S.found = []; S.lvl = ME.level; S.xp = ME.xp; S.xpGain = 0; S.crowns = 0; S.cd = {}; S.g = build(S.lvl); S.p.hp = S.g.maxHp; S.p.mp = S.g.maxMp; enterRoom("dungeon", 0); S.p.x = 2.5 * T; S.p.y = 13.5 * T; lootLine(`Into ${S.area.name} (area level ${S.area.alvl}).`, "sys"); }
+function gotWho(list) {
+  const seen = new Set();
+  for (const [id, name, x, y, d, style, level, party] of list) { if (id === ME?.id) continue; seen.add(id); const o = OTHERS.get(id);
+    if (o) Object.assign(o, { tx: x, ty: y, d, style, level, party, name }); else OTHERS.set(id, { id, name, x, y, tx: x, ty: y, d, style, level, party, look: lookOf(id, name) }); }
+  for (const id of [...OTHERS.keys()]) if (!seen.has(id)) OTHERS.delete(id);
+}
+/* parties: the panel under your name, invitations, and the menu a click on another player opens */
+function renderParty() {
+  const el = $("partyP"); if (!PARTY) { el.hidden = true; el.innerHTML = ""; return; }
+  el.hidden = false;
+  el.innerHTML = PARTY.members.map((m) => { const me = m.id === ME.id, lead = m.id === PARTY.leader;
+    return `<div class="pm ${m.online ? "" : "off"}" data-id="${m.id}"><b>${esc(m.name)}${lead ? " <small>· leads</small>" : ""}</b><small>${m.level ? `Lv ${m.level} ` : ""}${m.style ? R.STYLES[m.style].name : ""}${m.inRun && S?.kind !== "dungeon" ? " · in a run" : ""}</small>${me ? `<button type="button" data-party="leave">Leave</button>` : PARTY.leader === ME.id ? `<button type="button" data-party="kick" data-id="${m.id}" title="Remove from the party">×</button>` : "<span></span>"}<i></i></div>`; }).join("");
+  partyBars();
+}
+function partyBars() {
+  for (const el of $("partyP").querySelectorAll(".pm")) { const i = el.querySelector("i"); if (S?.kind !== "dungeon") { i.style.display = "none"; continue; }
+    const id = el.dataset.id; let hp, mx, alive = true;
+    if (id === ME.id) { hp = S.p.hp; mx = S.g.maxHp; } else { const o = S.others.get(id); if (!o) { i.style.display = "none"; continue; } hp = o.hp; mx = o.maxHp; alive = o.alive; }
+    i.style.display = ""; i.style.setProperty("--p", `${Math.max(0, Math.min(100, (hp / mx) * 100))}%`); el.classList.toggle("dead", !alive); }
+}
+$("partyP").addEventListener("click", (e) => { const b = e.target.closest("[data-party]"); if (!b) return; if (b.dataset.party === "leave") send({ op: "leave" }); else send({ op: "kick", id: b.dataset.id }); });
+let inviteT = 0;
+function showInvite(m) { INVITE = m; $("inviteTxt").textContent = `${m.from.name} invited you to their party.`; $("invite").hidden = false; clearTimeout(inviteT); inviteT = setTimeout(() => { $("invite").hidden = true; }, 30000); }
+$("invYes").addEventListener("click", () => { if (INVITE) send({ op: "accept", party: INVITE.party }); $("invite").hidden = true; });
+$("invNo").addEventListener("click", () => { if (INVITE) send({ op: "decline", party: INVITE.party }); $("invite").hidden = true; });
+function openPlayerMenu(o, e) {
+  const mine = PARTY?.members.some((m) => m.id === o.id), lead = !PARTY || PARTY.leader === ME.id, r = $("stage").getBoundingClientRect(), btn = [];
+  if (!mine && lead && !o.party) btn.push(`<button type="button" data-pm="invite" data-id="${o.id}">Invite to party</button>`);
+  if (mine && PARTY.leader === ME.id) btn.push(`<button type="button" data-pm="kick" data-id="${o.id}">Remove from party</button>`);
+  const note = !btn.length ? (mine ? "In your party" : o.party ? "In another party" : "Only your party's leader can invite") : "";
+  $("pmenu").innerHTML = `<div>${esc(o.name)}</div><small>Level ${o.level} ${R.STYLES[o.style]?.name || ""}</small>${btn.join("")}${note ? `<small>${note}</small>` : ""}`;
+  $("pmenu").style.left = `${Math.min(r.width - 200, e.clientX - r.left + 10)}px`; $("pmenu").style.top = `${Math.max(8, e.clientY - r.top - 20)}px`; $("pmenu").hidden = false;
+}
+$("pmenu").addEventListener("click", (e) => { const b = e.target.closest("[data-pm]"); if (!b) return; send({ op: b.dataset.pm, id: b.dataset.id }); $("pmenu").hidden = true; });
+document.addEventListener("pointerdown", (e) => { if (!e.target.closest("#pmenu") && e.target !== cv) $("pmenu").hidden = true; });
+
+/* ---------- the campaign door: pick an area (the party's leader picks for everyone) */
+function renderCamp() {
+  const done = new Set(ME.progress?.cleared || []), open = openArea(), lead = !PARTY || PARTY.leader === ME.id;
+  $("campSub").textContent = PARTY ? `a party of ${PARTY.members.length}` : "on your own";
+  $("campList").innerHTML = AREAS.map((a) => { const can = a.n <= open;
+    return `<div class="row ${!can ? "lock" : done.has(a.n) ? "" : "next"}"><div><b>Act ${a.act} · ${esc(a.name)}</b><small>Area level ${a.alvl} · ${a.rooms} rooms${a.boss ? ` · ${R.MONSTERS[a.boss].name} at the end` : ""}</small><small>${done.has(a.n) ? "Cleared" : can ? "Not cleared yet: a first clear gives a perk" : "Clear the one before it first"}</small></div>${can && lead ? `<button type="button" data-area="${a.n}">Enter</button>` : ""}</div>`; }).join("") +
+    R.CAMPAIGN.filter((a) => a.todo).map((a) => `<div class="row lock"><div><b>Act ${a.act} · ${esc(a.name.replace(/ \(.*/, ""))}</b><small>Later this season</small></div></div>`).join("");
+  $("campNote").textContent = !lead ? "Your party's leader starts the runs; you'll go in with them." : PARTY ? "Everyone in your party who is in the Lounge comes with you. Monsters get tougher for each extra player; your drops are your own." : "Click someone in the Lounge to invite them: a party is up to four.";
+}
+$("campList").addEventListener("click", (e) => { const b = e.target.closest("[data-area]"); if (!b) return; send({ op: "run", area: +b.dataset.area }); toggleWin("campWin", false); tip("Opening the way down…", 2); });
+
+/* ============================================================ A RUN: its own server decides the fight; this page moves you, dodges for you and draws it all.
+   Your health and mana are the server's; what's shown is the server's figure less the hits and casts it hasn't confirmed yet, so a hit
+   shows the moment it lands. Monsters are drawn 0.1 s behind the server, between its last two updates, so they move smoothly. */
+let RUN = null;
+const RUN_KEY = "ea_run";
+const savedRun = () => { try { const v = JSON.parse(sessionStorage.getItem(RUN_KEY) || "null"); return v && Date.now() - v.at < 3 * 3600e3 ? v : null; } catch (e) { return null; } };
+function joinRun(m, rejoin = false) {
+  closeAll(); $("ovStart").hidden = true; $("pmenu").hidden = true;
+  RUN = { runId: m.runId, token: m.token, area: m.area, name: m.name, ws: null, offs: [], off: 0, castSeq: 0, hurtSeq: 0, pendC: [], pendH: [], srvHp: 0, srvMp: 0, posAt: 0, sent: null, ended: false };
+  try { sessionStorage.setItem(RUN_KEY, JSON.stringify({ runId: m.runId, token: m.token, area: m.area, name: m.name, at: Date.now() })); } catch (e) { /* private mode */ }
+  if (!rejoin) lootLine(`Into ${m.name}${m.party > 1 ? ` with a party of ${m.party}` : ""}.`, "sys");
+  connectRun();
+}
+function connectRun() {
+  const r = RUN; if (!r || r.ended) return;
+  const w = new WebSocket(`${PROTO}://${HOST}/run?id=${r.runId}&token=${r.token}`); r.ws = w;
+  w.onmessage = (e) => { if (RUN !== r) return; try { onRun(JSON.parse(e.data)); } catch (err) { console.error(err); } };
+  w.onclose = (e) => { if (RUN !== r || r.ended) return; if (e.code === 4011 || e.code === 4010 || e.code === 1008) { forgetRun(); if (!S || S.kind !== "dungeon") startLounge(); return; } setTimeout(() => { if (RUN === r && !r.ended) connectRun(); }, 1500); };
+}
+const rsend = (m) => { const w = RUN?.ws; if (w && w.readyState === 1) w.send(JSON.stringify(m)); };
+function forgetRun() { try { sessionStorage.removeItem(RUN_KEY); } catch (e) { /* private mode */ } }
+function leaveRun() { if (!RUN) return; const r = RUN; RUN = null; r.ended = true; forgetRun(); try { r.ws?.close(); } catch (e) { /* gone */ } send({ op: "home" }); }
+const srvNow = () => performance.now() / 1000 + (RUN?.off || 0);
+function clockSample(t) { const now = performance.now() / 1000; RUN.offs.push([now, t - now]); while (RUN.offs.length && now - RUN.offs[0][0] > 2) RUN.offs.shift(); RUN.off = Math.max(...RUN.offs.map((x) => x[1])); }
+function onRun(m) {
+  if (m.t != null && m.type !== "hello") clockSample(m.t);
+  switch (m.type) {
+    case "hello": clockSample(m.t); return runHello(m);
+    case "room": return runRoom(m);
+    case "snap": return runSnap(m);
+    case "ev": for (const e of m.ev) runEv(e); return;
+    case "cast": return otherCast(m);
+    case "drop": S.drops.push({ ...m.d, t: 0 }); return;
+    case "got": return gotDrop(m);
+    case "lvl": return levelUp(m);
+    case "pos": S.p.x = m.x; S.p.y = m.y; S.p.vx = S.p.vy = 0; return;
+    case "say": return tip(m.text, 2);
+    case "down": { const o = S.others.get(m.id); if (o) { o.alive = false; lootLine(`${o.name} went down.`, "bad"); } partyBars(); return; }
+    case "gone": { const o = S.others.get(m.id); if (o && m.how !== "died") lootLine(`${o.name} left the run.`, "sys"); S.others.delete(m.id); partyBars(); return; }
+    case "end": return runOver(m);
+  }
+}
+const mkMob = ([id, k, x, y, hp, maxHp, awake]) => { const d = R.monsterAt(k, S.area.alvl); d.melee = d.type === "melee"; return { id, k, d, x, y, hp, maxHp, awake: !!awake, buf: [[srvNow(), x, y]], flash: 0, numK: 0, t: Math.random() * 3, vx: 0, vy: 0, slow: 0, stun: 0, root: 0 }; };
+const mkOther = (q) => ({ id: q.id, name: q.name, style: q.style, x: q.x, y: q.y, d: 6, hp: q.hp, maxHp: q.maxHp, alive: q.alive !== false, buf: [[srvNow(), q.x, q.y]], look: lookOf(q.id, q.name), g: SIM.statsFor({ style: q.style, level: 1 }) });
+function setRunRoom(rv, exit) {
+  S.roomI = rv.i; S.room = SIM.makeRoom(S.seed, S.area.n, rv.i); if (exit) SIM.openExit(S.room); floorCache = null;
+  S.mobs = rv.mobs.map(mkMob); S.mobMap = new Map(S.mobs.map((m) => [m.id, m])); S.pb = []; S.zones = []; S.eb = []; S.fx = []; S.nums = []; S.drops = [];
+  $("hWave").textContent = `Room ${rv.i + 1} of ${S.area.rooms}`; $("where").textContent = `Act ${S.area.act} · ${S.area.name} · room ${rv.i + 1}`;
+  $("hRooms").innerHTML = [...Array(S.area.rooms).keys()].map((k) => `<i class="${k < rv.i ? "done" : k === rv.i ? "now" : ""}"></i>`).join("");
+  $("bossBar").hidden = true;
+}
+function runHello(h) {
+  const fresh = !S || S.kind !== "dungeon" || S.runId !== h.runId;
+  if (fresh) { S = newS("dungeon"); S.runId = h.runId; S.area = SIM.areaOf(h.area); S.seed = h.seed; }
+  const me = h.me; S.lvl = me.lvl; S.xp = me.xp; S.xpGain = me.xpGain; S.crowns = me.crowns; S.foundN = me.found; S.chipsN = me.chips || {}; S.kills = S.kills || 0; S.g = myStats(S.lvl);
+  RUN.srvHp = me.hp; RUN.srvMp = me.mp; RUN.pendC = []; RUN.pendH = []; S.over = false; S.dying = false;
+  setRunRoom(h.room, h.exit);
+  S.p.x = me.x; S.p.y = me.y; S.p.vx = S.p.vy = 0; S.p.hp = me.hp; S.p.mp = me.mp; S.p.inv = 0.6;
+  S.others = new Map(); for (const q of h.players) if (q.id !== ME.id) S.others.set(q.id, mkOther(q));
+  S.drops = (h.drops || []).map((d) => ({ ...d, t: 0 }));
+  renderTray(); $("orbbar").hidden = false; $("orbbar").classList.remove("lounge"); $("menu").hidden = false; $("ovStart").hidden = true; $("ovEnd").hidden = true;
+  hudName(); renderParty(); startLoop();
+}
+function runRoom(m) {
+  setRunRoom(m.room, false); S.p.x = m.at.x; S.p.y = m.at.y; S.p.vx = S.p.vy = 0; S.p.inv = 0.6; S.p.dash = null;
+  for (const q of m.players) { const o = S.others.get(q.id); if (o) { o.x = q.x; o.y = q.y; o.buf = [[srvNow(), q.x, q.y]]; } }
+  S.drops = (m.drops || []).map((d) => ({ ...d, t: 0 }));
+}
+/* an update for one thing's position: a second update for the same moment replaces the first rather than sitting beside it */
+const pushBuf = (b, ts, x, y) => { const l = b[b.length - 1]; if (l && ts <= l[0]) { if (ts === l[0]) { l[1] = x; l[2] = y; } return; } b.push([ts, x, y]); };
+function runSnap(m) {
+  const ts = m.t;
+  for (const [id, x, y, hp, fl] of m.m) { const mob = S.mobMap.get(id); if (!mob) continue; pushBuf(mob.buf, ts, x, y); if (mob.buf.length > 8) mob.buf.shift(); mob.hp = hp; mob.awake = !!(fl & 1); mob.slow = fl & 2 ? 1 : 0; mob.stun = fl & 4 ? 1 : 0; }
+  for (const [id, x, y, d, hp, maxHp, alive] of m.p) { if (id === ME.id) continue; const o = S.others.get(id); if (!o) continue; pushBuf(o.buf, ts, x, y); if (o.buf.length > 8) o.buf.shift(); o.d = d; o.hp = hp; o.maxHp = maxHp; o.alive = !!alive; }
+  RUN.srvHp = m.me.hp; RUN.srvMp = m.me.mp; RUN.pendH = RUN.pendH.filter((x) => x.s > m.me.hs); RUN.pendC = RUN.pendC.filter((x) => x.s > m.me.cs);
+  if (S.dying && RUN.srvHp > 0 && !RUN.pendH.length) S.dying = false;   /* the server didn't agree you died: carry on */
+  partyBars();
+}
+function runEv(e) {
+  const m = e.m != null ? S.mobMap.get(e.m) : null;
+  if (e.t === "shot") { S.eb.push({ x: e.x, y: e.y, vx: e.vx, vy: e.vy, r: e.r, dmg: e.dmg, delay: e.delay, boss: e.boss, t: 6 }); if (S.eb.length > 400) S.eb.splice(0, S.eb.length - 400); }
+  else if (e.t === "wake") { if (m && !m.seen) { m.seen = true; m.awake = true; S.fx.push({ kind: "num", x: m.x, y: m.y - 24, text: "!", t: 0.6, red: true }); if (m.d.boss) $("bossBar").hidden = false; } }
+  else if (e.t === "tele") { if (m) S.fx.push(e.ring ? { kind: "tele", x: m.x, y: m.y, t: 0.3, big: true } : { kind: "line", x: m.x, y: m.y, a: e.a, t: 0.35 }); }
+  else if (e.t === "hit") { if (m) { m.hp = Math.max(0, m.hp - e.n); m.flash = 0.09; addNum(m, e.n, !!e.c, e.el); } }
+  else if (e.t === "kill") { if (m) { S.kills++; S.fx.push({ kind: "boom", x: m.x, y: m.y - 5, t: 0.45, big: m.d.boss }); m.hp = 0; S.mobs = S.mobs.filter((x) => x !== m); S.mobMap.delete(m.id); if (m.d.boss) { $("bossBar").hidden = true; tip(`${m.d.name} is down.`, 3); } } }
+  else if (e.t === "exit") { SIM.openExit(S.room); floorCache = null; tip("The last room is clear. The way out is open on the east wall.", 4); }
+}
+function otherCast(m) { const o = S.others.get(m.id); if (!o) return; const vis = { id: o.id, x: m.x, y: m.y, g: o.g }; SIM.castOn(S, vis, m.k, m.a, m.ax, m.ay, [], true); }
+function gotDrop(m) {
+  const d = S.drops.find((x) => x.id === m.d); S.drops = S.drops.filter((x) => x.id !== m.d);
+  S.crowns = m.me.crowns; S.foundN = m.me.found; S.chipsN = m.me.chips || {};
+  if (d?.item) { if (d.item.r) S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 26, text: RAR[d.item.r].name.toUpperCase() + "!", t: 1, gold: true }); lootLine(`Found ${d.item.r ? RAR[d.item.r].name + " " : ""}${d.item.base} (item level ${d.item.ilvl}).`, d.item.r >= 2 ? "loot" : "sys"); if (!$("invWin").hidden) renderInv(); }
+  else if (d?.chip) { S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 24, text: R.CHIPS[d.chip].name, t: 1, gold: true }); lootLine(`Found a ${R.CHIPS[d.chip].name}.`, "loot"); }
+  else if (d?.crowns) S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 22, text: `+${d.crowns}`, t: 0.7, gold: true });
+  hudName();
+}
+function levelUp(m) { S.lvl = m.lvl; S.xp = m.me.xp; S.g = myStats(S.lvl); RUN.srvHp = m.me.hp; RUN.srvMp = m.me.mp; S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 36, text: `LEVEL ${S.lvl} · +1 skill point`, t: 1.8, gold: true }); lootLine(`Level ${S.lvl}! A skill point waits (T).`, "good"); hudName(); }
+function runOver(m) {
+  if (!RUN) return; RUN.ended = true; forgetRun(); const r = m.result || {}, chips = Object.values(S.chipsN || {}).reduce((a, n) => a + n, 0);
+  S.over = true; mouse.down = false; keys.clear();
+  $("endTitle").textContent = { died: `You died in room ${S.roomI + 1}`, cleared: `${S.area.name}, cleared`, left: "Back up the stairs", interrupted: "The run was cut short", done: "This run is over" }[m.how] || "The run is over";
+  $("endBody").innerHTML = m.how === "died" ? `<p><b>+${(r.xp || 0).toLocaleString()} XP</b> (the XP stays).</p><p>What you found in ${esc(S.area.name)} is lost: ${S.foundN || 0} piece${S.foundN === 1 ? "" : "s"} of gear, ${S.crowns || 0} ${R.CURRENCY.name}${chips ? ` and ${chips} chip${chips === 1 ? "" : "s"}` : ""}.</p>`
+    : m.how === "interrupted" ? `<p>${esc(m.note || "The server restarted. What you had found was kept.")}</p>`
+    : `<p><b>${r.kills || 0} kills</b> in ${clock(r.secs || 0)} · <b>+${(r.xp || 0).toLocaleString()} XP</b> · <b>+${r.crowns || 0} ${R.CURRENCY.name}</b> · <b>${r.items || 0}</b> piece${r.items === 1 ? "" : "s"} to your inventory${r.chips ? ` · <b>${r.chips}</b> chip${r.chips === 1 ? "" : "s"} to your pouch` : ""}.</p>`;
+  $("perkPick").innerHTML = m.how === "cleared" ? `<p class="note">Checking for a perk…</p>` : ""; $("backBtn").hidden = false; $("ovEnd").hidden = false;
+  lootLine(m.how === "died" ? `You died in ${S.area.name}. What you found there is lost.` : m.how === "cleared" ? `${S.area.name} cleared.` : "Back to the Lounge.", m.how === "died" ? "bad" : m.how === "cleared" ? "good" : "sys");
+  try { RUN.ws?.close(); } catch (e) { /* gone */ }
+  draw();
+}
+/* the Lounge has paid the run: say what landed, and offer the perk if this was a first clear */
+function runSaved(m) {
+  const g = m.gained || {};
+  tip(g.died ? `Saved: +${(g.xp || 0).toLocaleString()} XP. Nothing else came back.` : `Saved: +${(g.xp || 0).toLocaleString()} XP, +${g.crowns || 0} ${R.CURRENCY.name}, ${g.items || 0} item${g.items === 1 ? "" : "s"}${g.chips ? `, ${g.chips} chip${g.chips === 1 ? "" : "s"}` : ""}.`, 4);
+  if (g.lost) lootLine(`${g.lost} item${g.lost === 1 ? "" : "s"} didn't fit in your inventory (60) and ${g.lost === 1 ? "was" : "were"} lost.`, "bad");
+  if (!$("ovEnd").hidden) offerInto();
+}
+function offerInto() {
+  if (ME.offer?.perks?.length) { $("perkPick").innerHTML = `<p><b>First clear: pick one perk.</b> It's yours for the season, in every area and map.</p>` + ME.offer.perks.map((k) => `<button type="button" data-p="${k}">${PERKS[k][0]}<small>${PERKS[k][1]}</small></button>`).join(""); $("backBtn").hidden = true; }
+  else if (/Checking/.test($("perkPick").textContent)) $("perkPick").innerHTML = `<p class="note">Cleared before: no perk this time (one per area).</p>`;
+}
+function showPerkOffer() { $("endTitle").textContent = "A perk is waiting"; $("endBody").innerHTML = `<p>From your first clear. Pick one: it lasts the season.</p>`; offerInto(); $("ovEnd").hidden = false; }
+$("perkPick").addEventListener("click", (e) => { const b = e.target.closest("[data-p]"); if (!b) return; send({ op: "perk", k: b.dataset.p }); $("perkPick").innerHTML = `<p class="note">Perk taken: ${PERKS[b.dataset.p][0]}.</p>`; $("backBtn").hidden = false; });
+$("backBtn").addEventListener("click", () => { $("ovEnd").hidden = true; startLounge(); }); $("startBtn").addEventListener("click", () => startLounge());
+
 function useDoor(d) {
-  if (S.kind === "lounge") { if (d.to === "dungeon") startDungeon(); return; }
-  if (d.to === "next") { if (S.mobs.some((m) => m.awake && Math.hypot(m.x - (d.x + 0.5) * T, m.y - (d.y + 0.5) * T) < T * 12)) return tip("Something is still awake near the door.", 1.2); enterRoom("dungeon", S.roomI + 1); S.p.x = 2.5 * T; S.p.y = 13.5 * T; return; }
-  if (d.to === "back") { if (S.roomI === 0) return endRun(false, true); enterRoom("dungeon", S.roomI - 1); S.p.x = (COLS - 3.5) * T; S.p.y = 13.5 * T; return; }
-  if (d.to === "out") return endRun(true);
+  if (S.kind === "lounge") { if (d.to === "campaign") toggleWin("campWin", true); return; }
+  rsend({ op: "door", to: d.to });
 }
 let tipT = 0; function tip(t, secs = 0.1) { $("tip").textContent = t; $("tip").hidden = false; tipT = Math.max(tipT, secs); }
 
-/* ============================================================ the skills (kinds from the rules: bolt, ring, lance, chain, arrow, fan, rain, trap, arc, dash, slam, cry) */
-const wake = (m) => { if (m.awake) return; for (const o of S.mobs) if (o.pack === m.pack) o.awake = true; if (m.d.boss) $("bossBar").hidden = false; };
-function hit(m, base, opt = {}) {
-  if (m.hp <= 0) return; wake(m);
-  const crit = Math.random() < S.g.crit, n = Math.max(1, Math.round(base * (crit ? S.g.critX : 1)));
-  m.hp -= n; m.flash = 0.09; S.p.hp = Math.min(S.g.maxHp, S.p.hp + n * S.g.leech);
-  addNum(m, n, crit, opt.el);
-  if (opt.slow) m.slow = Math.max(m.slow, opt.slow); if (opt.stun) m.stun = Math.max(m.stun, opt.stun); if (opt.root) m.root = Math.max(m.root, opt.root);
-  if (m.hp <= 0) kill(m);
-}
-function cast(k, ang) {
-  const p = S.p, g = S.g, s = SK[k]; if (!s || (S.cd[k] || 0) > 0) return false;
+/* your skills: checked here (cooldown, mana) so nothing waits on the network, drawn at once, and sent; the server decides what they hit */
+function tryCast(k, ang) {
+  const p = S.p, g = S.g, s = SK[k]; if (!s || (S.cd[k] || 0) > 0 || !RUN) return false;
   const cost = s.mp; if (g.payHp ? p.hp <= cost + 1 : p.mp < cost) return false;
-  if (g.payHp) p.hp -= cost; else p.mp -= cost; S.cd[k] = cdOf(k);
-  const dmg = g.dmg * s.mult, ox = p.x, oy = p.y - 7, shot = (a, o) => S.pb.push({ x: ox, y: oy, vx: Math.cos(a) * o.speed, vy: Math.sin(a) * o.speed, t: o.life || 1.4, f: 0, dmg, ox, oy, hits: new Set(), ...o });
-  const n = g.bolts;
-  if (s.kind === "bolt") for (let i = 0; i < n; i++) shot(ang + (i - (n - 1) / 2) * 0.14, { speed: s.speed, art: s.fx, pierce: g.pierce, el: "arcane" });
-  else if (s.kind === "ring") { for (let i = 0; i < g.ring; i++) shot((i / g.ring) * Math.PI * 2, { speed: s.speed, art: s.fx, big: true, life: 1.1, pierce: g.pierce, el: "fire" }); S.fx.push({ kind: "boom", x: p.x, y: p.y - 5, t: 0.5, big: true }); }
-  else if (s.kind === "lance") for (let i = 0; i < n; i++) shot(ang + (i - (n - 1) / 2) * 0.14, { speed: s.speed, art: s.fx, pierce: s.pierce + g.pierce, slow: s.slow, lance: true, el: "frost" });
-  else if (s.kind === "chain") shot(ang, { speed: s.speed, art: s.fx, jumps: s.jumps, range: s.range * T, chain: true, el: "storm" });
-  else if (s.kind === "arrow") for (let i = 0; i < n; i++) shot(ang + (i - (n - 1) / 2) * 0.1, { speed: s.speed, arrow: true, pierce: g.pierce, life: 1.1 });
-  else if (s.kind === "fan") { const c = s.count + n - 1; for (let i = 0; i < c; i++) shot(ang + (i - (c - 1) / 2) * s.spread, { speed: s.speed, arrow: true, pierce: g.pierce, life: 0.9 }); }
-  else if (s.kind === "rain" || s.kind === "trap") { const dx = mouse.x - p.x, dy = mouse.y - p.y, d = Math.hypot(dx, dy) || 1, r = Math.min(d, s.range * T);
-    S.zones.push({ kind: s.kind, x: p.x + (dx / d) * r, y: p.y + (dy / d) * r, r: s.radius * T, t: 0, dmg, next: 0.35, ticks: s.ticks || 0, every: s.every || 0, life: s.life || 2, root: s.root || 0, art: s.fx }); }
-  else if (s.kind === "arc" || s.kind === "slam") { const reach = s.reach * T, half = s.width / 2;
-    for (const m of S.mobs) { const dx = m.x - p.x, dy = m.y - 6 - p.y, d = Math.hypot(dx, dy); if (d > reach + m.d.r) continue; let da = Math.atan2(dy, dx) - ang; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) <= half || d < m.d.r + 4) hit(m, dmg, { stun: s.stun }); }
-    S.fx.push({ kind: "slash", x: p.x, y: p.y - 6, a: ang, half, r: reach, t: 0.16, max: 0.16, big: s.kind === "slam" }); if (s.kind === "slam") S.fx.push({ kind: "boom", x: p.x + Math.cos(ang) * reach * 0.6, y: p.y - 6 + Math.sin(ang) * reach * 0.6, t: 0.45, big: true }); }
-  else if (s.kind === "dash") { const t = 0.18, sp = (s.dist * T) / t; p.dash = { t, hits: new Set(), dmg }; p.vx = Math.cos(ang) * sp; p.vy = Math.sin(ang) * sp; p.inv = Math.max(p.inv, t + 0.05); }
-  else if (s.kind === "cry") { p.cry = s.dur; for (const m of S.mobs) if (Math.hypot(m.x - p.x, m.y - p.y) < s.range * T) { wake(m); m.taunt = s.dur; } S.fx.push({ kind: "cry", x: p.x, y: p.y - 8, t: 0.6, r: s.range * T }); }
+  S.cd[k] = SIM.cdOf(k, g); const sq = ++RUN.castSeq; RUN.pendC.push({ s: sq, cost });
+  p.g = g; SIM.castOn(S, p, k, ang, mouse.x, mouse.y, [], true);   /* the shared cast reads the caster's numbers from p.g; a dash or a cry also sets p.dash / p.cry here */
+  rsend({ op: "cast", k, a: Math.round(ang * 1000) / 1000, ax: Math.round(mouse.x), ay: Math.round(mouse.y), s: sq });
   return true;
+}
+/* a hit on you: this page decides it (so a dodge you saw counts); the server checks it and owns your health */
+function hurtMe(raw) {
+  if (!RUN || S.dying) return;
+  const p = S.p, cut = p.cry > 0 ? SK.war_cry.cut : 0, took = Math.max(1, Math.round(raw * (1 - S.g.tough) * (1 - cut))), sq = ++RUN.hurtSeq;
+  RUN.pendH.push({ s: sq, took }); p.inv = 0.5; p.hurt = 0.25;
+  if (S.nums.length >= 70) S.nums.shift(); S.nums.push({ m: null, x: p.x, y: p.y - 30, n: took, crit: false, me: true, jx: 0, jy: 0, at: S.t, life: 0.8 });
+  rsend({ op: "hurt", raw: Math.round(raw), s: sq });
+}
+function requestPick(d) { const now = performance.now(); if (d.asked && now - d.asked < 800) return; d.asked = now; rsend({ op: "pick", d: d.id }); }
+/* how far behind the server things are drawn: 0.13 s. Measured on dev (2026-10-03) at 17 updates a second, an update was up to ~55 ms late
+   against the estimated clock; 0.1 s left a quarter of frames past the newest update, 0.13 s absorbs nearly all of it. */
+const INTERP_DELAY = 0.13;
+/* where something is drawn: between the server's last two positions, INTERP_DELAY behind it. If the next update is late, it carries on the way it
+   was going for up to 0.12 s instead of stopping dead and jumping, which read as lag. */
+function interp(o, rt) {
+  const b = o.buf; if (!b.length) return; let i = b.length - 1;
+  if (rt >= b[i][0] || i === 0) { const over = i === 0 ? 0 : Math.min(0.12, rt - b[i][0]); o.x = b[i][1] + (o.vx || 0) * over; o.y = b[i][2] + (o.vy || 0) * over; return; }
+  while (i > 1 && b[i - 1][0] > rt) i--;
+  const [t0, x0, y0] = b[i - 1], [t1, x1, y1] = b[i], span = t1 - t0 || 0.1, k = Math.max(0, Math.min(1, (rt - t0) / span));
+  o.x = x0 + (x1 - x0) * k; o.y = y0 + (y1 - y0) * k; o.vx = (x1 - x0) / span; o.vy = (y1 - y0) / span;
 }
 
 /* ============================================================ DAMAGE NUMBERS (the owner: "make damage numbers look more impactful", with an ARPG screenshot):
@@ -477,15 +647,16 @@ function drawNums() {
 /* ============================================================ LOOT ON THE GROUND (the owner: "gear needs to have better on ground rarity effects", with an ARPG screenshot):
    every drop has its name over it, in its rarity's colour, on a dark plate; Lucky and better also throw a beam of light up from where it lies
    (taller, wider and brighter the rarer it is) with a pool of light under it, and a Jackpot sends sparks up the beam. Crowns say how many.
-   Labels push each other up so they never overlap; walk over a drop or click its name to pick it up. The beams are a few gradient rects with
-   additive blending: cheap on any PC. */
+   Labels push each other up so they never overlap; walk over a drop or click its name to pick it up. Only your own drops are ever here: the
+   server sends nobody anyone else's. The beams are a few gradient rects with additive blending: cheap on any PC. */
 let labelRects = [];
+const CHIPCOL = "#5ad6c0";   /* crafting chips: teal, so they never read as gear */
 const BEAM = [null, { h: 100, w: 4, a: 1 }, { h: 160, w: 6, a: 1.15 }, { h: 250, w: 9, a: 1.3 }];
 function drawLoot(now) {
   labelRects = []; if (!S.drops.length) return;
   const list = S.drops.map((d) => ({ d, x: sx(d.x), y: sy(d.y) })).sort((a, b) => b.y - a.y);
   cx.save(); cx.globalCompositeOperation = "lighter";
-  for (const { d, x, y } of list) { const r = d.item?.r; if (!r) continue; const col = RCOL[r], B = BEAM[r], pulse = 0.7 + 0.3 * Math.sin(now / 260 + d.x);
+  for (const { d, x, y } of list) { const r = d.chip ? 1 : d.item?.r; if (!r) continue; const col = d.chip ? CHIPCOL : RCOL[r], B = BEAM[r], pulse = 0.7 + 0.3 * Math.sin(now / 260 + d.x);
     const gr = cx.createLinearGradient(0, y - B.h, 0, y); gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(0.5, hexA(col, 0.4 * B.a * pulse)); gr.addColorStop(1, hexA(col, B.a * pulse));
     cx.fillStyle = gr; cx.fillRect(x - B.w / 2, y - B.h, B.w, B.h);
     const gr2 = cx.createLinearGradient(0, y - B.h * 0.75, 0, y); gr2.addColorStop(0, "rgba(0,0,0,0)"); gr2.addColorStop(1, hexA(col, 0.3 * B.a * pulse)); cx.fillStyle = gr2; cx.fillRect(x - B.w * 2.5, y - B.h * 0.75, B.w * 5, B.h * 0.75);
@@ -495,138 +666,90 @@ function drawLoot(now) {
   cx.font = "800 13px Lora, Georgia, serif"; cx.textAlign = "center"; cx.textBaseline = "middle";
   const hov = labelRects;   /* filled as we go: each new label steps up past the ones already placed */
   for (const { d, x, y } of list) {
-    const text = d.item ? `${d.item.r ? RAR[d.item.r].name + " " : ""}${d.item.base}` : `${Math.round(d.crowns * (1 + S.g.crownsPct))} ${R.CURRENCY.name}`, w = Math.ceil(cx.measureText(text).width) + 14, h = 20;
+    const text = d.item ? `${d.item.r ? RAR[d.item.r].name + " " : ""}${d.item.base}` : d.chip ? R.CHIPS[d.chip].name : `${d.crowns} ${R.CURRENCY.name}`, w = Math.ceil(cx.measureText(text).width) + 14, h = 20;
     let ly = y - (d.item ? 30 : 24);
     for (let tries = 0; tries < 12 && hov.some((r) => Math.abs(r.x - x) < (r.w + w) / 2 + 2 && Math.abs(r.y - ly) < h + 2); tries++) ly -= h + 2;
     const over = Math.abs(mouse.sx - x) < w / 2 && Math.abs(mouse.sy - ly) < h / 2;
     hov.push({ x, y: ly, w, h, d });
-    const col = d.item ? RCOL[d.item.r] : "#ffd84a", L = Math.round(x - w / 2), T0 = Math.round(ly - h / 2);
+    const col = d.item ? RCOL[d.item.r] : d.chip ? CHIPCOL : "#ffd84a", L = Math.round(x - w / 2), T0 = Math.round(ly - h / 2);
     cx.fillStyle = over ? "rgba(40,28,14,.92)" : "rgba(8,6,4,.8)"; cx.fillRect(L, T0, w, h);
-    cx.strokeStyle = hexA(col, d.item?.r || over ? 0.95 : 0.35); cx.lineWidth = 1; cx.strokeRect(L + 0.5, T0 + 0.5, w - 1, h - 1);
+    cx.strokeStyle = hexA(col, d.item?.r || d.chip || over ? 0.95 : 0.35); cx.lineWidth = 1; cx.strokeRect(L + 0.5, T0 + 0.5, w - 1, h - 1);
     cx.fillStyle = col; cx.fillText(text, x, ly + 1);
   }
   cx.textBaseline = "alphabetic";
 }
-function pickUp(d) {
-  if (d.got) return; d.got = true;
-  if (d.item) { S.found.push(d.item); if (d.item.r) S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 26, text: RAR[d.item.r].name.toUpperCase() + "!", t: 1, gold: true }); lootLine(`Found ${d.item.r ? RAR[d.item.r].name + " " : ""}${d.item.base} (item level ${d.item.ilvl}).`, d.item.r >= 2 ? "loot" : "sys"); if (!$("invWin").hidden) renderInv(); }
-  else if (d.crowns) { const n = Math.round(d.crowns * (1 + S.g.crownsPct)); S.crowns += n; S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 22, text: `+${n}`, t: 0.7, gold: true }); hudName(); }
-}
 
-/* ============================================================ the step: momentum, walls, aim, skills, packs that wake, bullets */
-function moveCircle(e, r, dt) {
-  const g = S.room.g, ok = (x, y) => { for (const [ox, oy] of [[-r, -r * 0.6], [r, -r * 0.6], [-r, r * 0.6], [r, r * 0.6]]) { const tx = Math.floor((x + ox) / T), ty = Math.floor((y + oy) / T); if (!(walk(g, tx, ty) || g[ty]?.[tx] === "e")) return false; } return true; };
-  const nx = e.x + e.vx * dt; if (ok(nx, e.y)) e.x = nx; else e.vx = 0;
-  const ny = e.y + e.vy * dt; if (ok(e.x, ny)) e.y = ny; else e.vy = 0;
-}
+/* ============================================================ the step: you move and dodge here, at full speed, whatever the network is doing */
 function step(dt) {
-  const p = S.p, g = S.g; S.t += dt; if (tipT > 0) { tipT -= dt; if (tipT <= 0) $("tip").hidden = true; }
-  let ix = (keys.has("d") || keys.has("arrowright")) - (keys.has("a") || keys.has("arrowleft")), iy = (keys.has("s") || keys.has("arrowdown")) - (keys.has("w") || keys.has("arrowup"));
+  const p = S.p, g = S.g, dungeon = S.kind === "dungeon", frozen = S.dying || S.over; S.t += dt; if (tipT > 0) { tipT -= dt; if (tipT <= 0) $("tip").hidden = true; }
+  let ix = frozen ? 0 : (keys.has("d") || keys.has("arrowright")) - (keys.has("a") || keys.has("arrowleft")), iy = frozen ? 0 : (keys.has("s") || keys.has("arrowdown")) - (keys.has("w") || keys.has("arrowup"));
   if (ix && iy) { ix *= 0.7071; iy *= 0.7071; }
-  const acc = 620 * g.spd, top = 92 * g.spd;
-  if (p.dash) { p.dash.t -= dt; for (const m of S.mobs) if (!p.dash.hits.has(m) && Math.hypot(m.x - p.x, m.y - 6 - p.y) < m.d.r + 8) { p.dash.hits.add(m); hit(m, p.dash.dmg); } if (p.dash.t <= 0) { p.dash = null; p.vx *= 0.2; p.vy *= 0.2; } }
+  const acc = 620 * g.spd, top = SIM.topSpeed(g);
+  if (p.dash) { p.dash.t -= dt; if (p.dash.t <= 0) { p.dash = null; p.vx *= 0.2; p.vy *= 0.2; } }
   else if (p.dodging > 0) p.dodging -= dt; else { p.vx += ix * acc * dt; p.vy += iy * acc * dt; }
   if (!p.dash) { p.vx *= Math.pow(0.84, dt * 60); p.vy *= Math.pow(0.84, dt * 60); const sp = Math.hypot(p.vx, p.vy), cap = p.dodging > 0 ? top * 2.6 : top; if (sp > cap) { p.vx *= cap / sp; p.vy *= cap / sp; } }
-  moveCircle(p, 5, dt);
-  const ang = Math.atan2(mouse.y - (p.y - 7), mouse.x - p.x), aiming = mouse.down || SLOT_KEYS.slice(1).some((k) => keys.has(k));
+  SIM.moveCircle(S.room.g, p, 5, dt);
+  const ang = Math.atan2(mouse.y - (p.y - 7), mouse.x - p.x), aiming = !frozen && (mouse.down || SLOT_KEYS.slice(1).some((k) => keys.has(k)));
   if (ix || iy || aiming) p.dir = ((Math.round(-(aiming ? ang : Math.atan2(iy, ix)) / (Math.PI / 4)) % 8) + 8) % 8;   /* screen y points down: W is -1, which is north */
-  for (const k in S.cd) S.cd[k] -= dt; p.dodgeCd -= dt; p.inv -= dt; p.hurt -= dt; p.cry -= dt; if (!g.payHp) p.mp = Math.min(g.maxMp, p.mp + g.mpRegen * dt);
-  const door = S.room.objs.find((o) => o.k === "door" && Math.hypot((o.x + 0.5) * T - p.x, (o.y + 0.5) * T - p.y) < T * 2.2);
-  if (door) { tip(`${door.name} · E`); if (keys.has("e")) { keys.delete("e"); useDoor(door); return; } }
-  orbs(); if (S.kind === "lounge") { for (const f of S.fx) f.t -= dt; S.fx = S.fx.filter((f) => f.t > 0); return; }
-  /* the bar: the mouse holds your first skill; Q, 1, 2, 3 the others */
-  if (mouse.down && g.slots[0]) cast(g.slots[0], ang);
-  for (let i = 1; i < SLOT_KEYS.length; i++) if (g.slots[i] && keys.has(SLOT_KEYS[i])) cast(g.slots[i], ang);
-  if (keys.has(" ") && p.dodgeCd <= 0 && p.dodging <= 0 && !p.dash) { p.dodgeCd = g.dodgeCd; p.dodging = 0.3; p.inv = 0.3; const dx = ix || Math.cos(ang), dy = iy || Math.sin(ang), l = Math.hypot(dx, dy) || 1; p.vx = (dx / l) * top * 2.6; p.vy = (dy / l) * top * 2.6; }
-  for (const m of S.mobs) {
-    const d = m.d, dx = p.x - m.x, dy = p.y - m.y, dist = Math.hypot(dx, dy) || 1;
-    m.flash -= dt; m.slow -= dt; m.root -= dt; m.stun -= dt; if (m.taunt) m.taunt -= dt;
-    if (!m.awake) { if (dist < T * 7 || d.boss && dist < T * 12) { wake(m); S.fx.push({ kind: "num", x: m.x, y: m.y - 24, text: "!", t: 0.6, red: true }); } else { m.t += dt; continue; } }
-    if (m.stun > 0) { m.vx = m.vy = 0; m.t += dt; continue; }
-    let ax = (dx / dist) * d.acc, ay = (dy / dist) * d.acc;
-    if (d.keep && dist < d.keep && !(m.taunt > 0)) { ax = -ax; ay = -ay; }
-    if (d.boss && dist < 80) { ax *= -0.4; ay *= -0.4; }
-    for (const o of S.mobs) if (o !== m && o.awake) { const ox = m.x - o.x, oy = m.y - o.y, od = Math.hypot(ox, oy); if (od < m.d.r + o.d.r + 4 && od > 0) { ax += (ox / od) * 500; ay += (oy / od) * 500; } }
-    m.vx += ax * dt; m.vy += ay * dt; m.vx *= Math.pow(0.88, dt * 60); m.vy *= Math.pow(0.88, dt * 60);
-    const top2 = d.spd * (m.slow > 0 ? 0.5 : 1), ms = Math.hypot(m.vx, m.vy); if (ms > top2) { m.vx *= top2 / ms; m.vy *= top2 / ms; }
-    if (m.root > 0) { m.vx = m.vy = 0; } else moveCircle(m, Math.min(7, d.r), dt); m.t += dt;
-    if (d.pat) { m.pat -= dt; if (m.pat <= 0 && dist < T * 14) { m.pat = d.every; const a = Math.atan2(dy, dx); if (d.pat === "aim") shoot(m, a, 110, 1, 0); else { S.fx.push({ kind: "line", x: m.x, y: m.y, a, t: 0.35 }); shoot(m, a, 95, 5, 0.22); } } }
-    if (d.boss) { m.pat -= dt; if (m.pat <= 0) { m.pat = 2.1; const which = Math.floor(m.t / 2.1) % 3, a0 = Math.atan2(dy, dx);
-      if (which === 0) { S.fx.push({ kind: "tele", x: m.x, y: m.y, t: 0.3, big: true }); for (let i = 0; i < 24; i++) shoot(m, (i / 24) * Math.PI * 2, 85, 1, 0, 0.3); }
-      else if (which === 1) { S.fx.push({ kind: "line", x: m.x, y: m.y, a: a0, t: 0.35 }); for (let k = 0; k < 3; k++) setTimeout(() => S && S.kind === "dungeon" && m.hp > 0 && shoot(m, Math.atan2(S.p.y - m.y, S.p.x - m.x), 125, 7, 0.16), k * 220); }
-      else for (let i = 0; i < 30; i++) shoot(m, m.t * 2 + i * 0.4, 70 + i * 1.5, 1, 0, i * 0.05); } }
-    if (d.melee && dist < d.r + 7 && p.inv <= 0) hurt(d.max * 0.6);
+  for (const k in S.cd) S.cd[k] -= dt; p.dodgeCd -= dt; p.inv -= dt; p.hurt -= dt; p.cry -= dt;
+  if (!frozen) {
+    const npc = S.room.objs.find((o) => o.k === "npc" && Math.hypot((o.x + 0.5) * T - p.x, (o.y + 0.5) * T - p.y) < T * 2.2);
+    if (npc) { tip(`${npc.name} · E`); if (keys.has("e")) { keys.delete("e"); if (npc.talk === "shop") toggleWin("shopWin", true); } }
+    const door = S.room.objs.find((o) => o.k === "door" && Math.hypot((o.x + 0.5) * T - p.x, (o.y + 0.5) * T - p.y) < T * 2.2);
+    if (door) { tip(`${door.name} · E`); if (keys.has("e")) { keys.delete("e"); useDoor(door); } }
   }
-  /* your projectiles: pierce, chain, slow; Point Blank changes arrows by distance */
-  for (const b of S.pb) { b.x += b.vx * dt; b.y += b.vy * dt; b.t -= dt; b.f += dt * 24; if (!walk(S.room.g, Math.floor(b.x / T), Math.floor(b.y / T))) { b.t = 0; continue; }
-    for (const m of S.mobs) if (m.hp > 0 && !b.hits.has(m) && Math.hypot(m.x - b.x, m.y - 6 - b.y) < m.d.r + (b.big ? 6 : 4)) {
-      b.hits.add(m); let dm = b.dmg; if (b.arrow && g.rules.has("point_blank")) { const fl = Math.hypot(b.x - b.ox, b.y - b.oy); dm *= fl < 3 * T ? 1.5 : fl > 7 * T ? 0.7 : 1; }
-      hit(m, dm, { slow: b.slow, el: b.el });
-      if (b.chain && b.jumps > 0) { let best = null, bd = b.range; for (const o of S.mobs) if (o.hp > 0 && !b.hits.has(o)) { const dd = Math.hypot(o.x - m.x, o.y - m.y); if (dd < bd) { bd = dd; best = o; } }
-        if (best) { b.jumps--; const a = Math.atan2(best.y - 6 - (m.y - 6), best.x - m.x), sp = Math.hypot(b.vx, b.vy); S.fx.push({ kind: "zap", x: m.x, y: m.y - 6, x2: best.x, y2: best.y - 6, t: 0.15 }); b.x = m.x; b.y = m.y - 6; b.vx = Math.cos(a) * sp; b.vy = Math.sin(a) * sp; b.t = 0.6; break; } }
-      if ((b.pierce || 0) > 0) { b.pierce--; continue; } b.t = 0; break; } }
-  /* the ground: rain ticks, traps wait */
-  for (const z of S.zones) { z.t += dt;
-    if (z.kind === "rain") { if (z.t >= z.next && z.ticks > 0) { z.ticks--; z.next += z.every; for (const m of S.mobs) if (Math.hypot(m.x - z.x, m.y - z.y) < z.r + m.d.r * 0.5) hit(m, z.dmg); } if (z.ticks <= 0 && z.t > z.next) z.done = true; }
-    else if (z.kind === "trap" && z.t > 0.4) { if (S.mobs.some((m) => Math.hypot(m.x - z.x, m.y - z.y) < z.r + m.d.r * 0.5)) { for (const m of S.mobs) if (Math.hypot(m.x - z.x, m.y - z.y) < z.r * 1.6) hit(m, z.dmg, { root: z.root }); S.fx.push({ kind: "boom", x: z.x, y: z.y, t: 0.45 }); z.done = true; } else if (z.t > z.life) z.done = true; } }
-  for (const b of S.eb) { if (b.delay > 0) { b.delay -= dt; continue; } b.x += b.vx * dt; b.y += b.vy * dt; b.t -= dt; if (!walk(S.room.g, Math.floor(b.x / T), Math.floor(b.y / T))) { b.t = 0; continue; } if (p.inv <= 0 && Math.hypot(p.x - b.x, p.y - 1 - b.y) < 3.5 + b.r) { hurt(b.dmg); b.t = 0; } }
-  S.pb = S.pb.filter((b) => b.t > 0); S.eb = S.eb.filter((b) => b.t > 0); S.zones = S.zones.filter((z) => !z.done);
-  S.mobs = S.mobs.filter((m) => m.hp > 0);
-  if (!S.outOpen && S.roomI === S.area.rooms - 1 && (S.area.boss ? !S.mobs.some((m) => m.d.boss) : !S.mobs.length)) { S.outOpen = true; S.room.g[13][COLS - 1] = "e"; S.room.objs.push({ k: "door", x: COLS - 1, y: 13, to: "out", name: "The way out" }); floorCache = null; if (!S.area.boss) tip("The last room is clear. The way out is open on the east wall.", 4); }
-  for (const d of S.drops) { d.t += dt; if (Math.hypot(p.x - d.x, p.y - d.y) < 12) pickUp(d); }
-  S.drops = S.drops.filter((d) => !d.got);
   for (const f of S.fx) f.t -= dt; S.fx = S.fx.filter((f) => f.t > 0);
   S.nums = S.nums.filter((s) => S.t - s.at < s.life);
-  const boss = S.mobs.find((m) => m.d.boss && m.awake); if (boss) { $("bossHp").style.setProperty("--p", `${(boss.hp / boss.maxHp) * 100}%`); $("bossName").textContent = boss.d.name; }
-  $("hKills").textContent = `${S.kills} kills · ${clock(S.t)} · ${S.found.length} found · ${S.crowns} ${R.CURRENCY.name}`;
-  trayTick();
+  if (!dungeon) {
+    p.hp = g.maxHp; p.mp = g.maxMp;
+    const now = performance.now(), sm = S.sentMove;
+    if (!sm || (now - sm.at >= 100 && (Math.abs(sm.x - p.x) > 0.5 || Math.abs(sm.y - p.y) > 0.5 || sm.d !== p.dir))) { S.sentMove = { x: p.x, y: p.y, d: p.dir, at: now }; send({ op: "move", x: Math.round(p.x * 10) / 10, y: Math.round(p.y * 10) / 10, d: p.dir }); }
+    for (const o of OTHERS.values()) { const k = Math.min(1, dt * 12); o.x += (o.tx - o.x) * k; o.y += (o.ty - o.y) * k; }
+    orbs(); return;
+  }
+  /* what's shown of your health and mana: the server's, less what it hasn't confirmed yet, plus regeneration since its last word */
+  const pendH = RUN ? RUN.pendH.reduce((a, x) => a + x.took, 0) : 0, pendC = RUN ? RUN.pendC.reduce((a, x) => a + x.cost, 0) : 0;
+  if (RUN) { p.hp = Math.min(g.maxHp, RUN.srvHp - pendH - (g.payHp ? pendC : 0)); p.mp = g.payHp ? 0 : Math.max(0, Math.min(g.maxMp, RUN.srvMp - pendC)); }
+  if (!frozen) {
+    if (mouse.down && g.slots[0]) tryCast(g.slots[0], ang);
+    for (let i = 1; i < SLOT_KEYS.length; i++) if (g.slots[i] && keys.has(SLOT_KEYS[i])) tryCast(g.slots[i], ang);
+    if (keys.has(" ") && p.dodgeCd <= 0 && p.dodging <= 0 && !p.dash) { p.dodgeCd = g.dodgeCd; p.dodging = 0.3; p.inv = 0.3; const dx = ix || Math.cos(ang), dy = iy || Math.sin(ang), l = Math.hypot(dx, dy) || 1; p.vx = (dx / l) * top * 2.6; p.vy = (dy / l) * top * 2.6; rsend({ op: "cast", k: "dodge" }); }
+  }
+  /* tell the run where you are, 20 times a second while you move */
+  if (RUN) { const now = performance.now(), sp = RUN.sent; if (now - RUN.posAt >= 50 && (!sp || Math.abs(sp.x - p.x) > 0.3 || Math.abs(sp.y - p.y) > 0.3 || sp.d !== p.dir)) { RUN.posAt = now; RUN.sent = { x: p.x, y: p.y, d: p.dir }; rsend({ op: "pos", r: S.roomI, x: Math.round(p.x * 10) / 10, y: Math.round(p.y * 10) / 10, d: p.dir }); } }
+  /* monsters and the party, drawn between the server's updates */
+  const rt = srvNow() - INTERP_DELAY;
+  for (const m of S.mobs) { interp(m, rt); m.flash -= dt; m.t += dt; if (!frozen && m.awake && m.d.melee && m.hp > 0 && p.inv <= 0 && Math.hypot(p.x - m.x, p.y - m.y) < m.d.r + 7) hurtMe(Math.round(m.d.max * 0.6)); }
+  for (const o of S.others.values()) interp(o, rt);
+  /* your skills fly here for the look of it; the server says what they hit */
+  SIM.projStep(S, dt, []); SIM.zoneStep(S, dt, []);
+  for (const b of S.eb) { if (b.delay > 0) { b.delay -= dt; continue; } b.x += b.vx * dt; b.y += b.vy * dt; b.t -= dt; if (!SIM.walk(S.room.g, Math.floor(b.x / T), Math.floor(b.y / T))) { b.t = 0; continue; } if (!frozen && p.inv <= 0 && Math.hypot(p.x - b.x, p.y - 1 - b.y) < 3.5 + b.r) { hurtMe(b.dmg); b.t = 0; } }
+  S.eb = S.eb.filter((b) => b.t > 0);
+  for (const d of S.drops) { d.t += dt; if (!frozen && Math.hypot(p.x - d.x, p.y - d.y) < 12) requestPick(d); }
+  if (!frozen && p.hp <= 0 && RUN) { S.dying = true; tip("…", 1); }
+  const boss = S.mobs.find((m) => m.d.boss && m.awake); if (boss) { $("bossBar").hidden = false; $("bossHp").style.setProperty("--p", `${(boss.hp / boss.maxHp) * 100}%`); $("bossName").textContent = boss.d.name; }
+  $("hKills").textContent = `${S.kills} kills · ${clock(S.t)} · ${S.foundN || 0} found · ${S.crowns || 0} ${R.CURRENCY.name}`;
+  trayTick(); orbs(); if (PARTY) partyBars();
 }
 function trayTick() {
   trayEls ||= [...$("tray").querySelectorAll("[data-sk]")];
-  for (const el of trayEls) { const k = el.dataset.sk, cd = k === "dodge" ? Math.max(0, S.p.dodgeCd / S.g.dodgeCd) : Math.max(0, (S.cd[k] || 0) / cdOf(k)); el.lastElementChild.style.setProperty("--cd", `${Math.min(1, cd) * 100}%`);
+  for (const el of trayEls) { const k = el.dataset.sk, cd = k === "dodge" ? Math.max(0, S.p.dodgeCd / S.g.dodgeCd) : Math.max(0, (S.cd[k] || 0) / SIM.cdOf(k, S.g)); el.lastElementChild.style.setProperty("--cd", `${Math.min(1, cd) * 100}%`);
     const cost = SK[k].mp; el.classList.toggle("dry", cost > 0 && (S.g.payHp ? S.p.hp <= cost + 1 : S.p.mp < cost)); }
 }
 function orbs() { const p = S.p, g = S.g; $("oHp").style.setProperty("--p", `${Math.max(0, Math.min(100, (p.hp / g.maxHp) * 100))}%`); $("oHpN").textContent = Math.max(0, Math.ceil(p.hp)); $("oMp").style.setProperty("--p", `${g.payHp ? 0 : Math.max(0, Math.min(100, (p.mp / g.maxMp) * 100))}%`); $("oMpN").textContent = g.payHp ? "—" : Math.floor(p.mp); }
 const clock = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
-function shoot(m, a, v, n, spread, delay = 0) { for (let i = 0; i < n; i++) { const aa = a + (i - (n - 1) / 2) * spread; S.eb.push({ x: m.x, y: m.y - 6, vx: Math.cos(aa) * v, vy: Math.sin(aa) * v, t: 6, r: m.d.boss ? 3.5 : 3, dmg: m.d.max * 0.6, delay, boss: !!m.d.boss }); } }
-function hurt(dmg) { const p = S.p, cut = p.cry > 0 ? SK.war_cry.cut : 0, took = Math.max(1, Math.round(dmg * (1 - S.g.tough) * (1 - cut))); p.hp -= took; p.inv = 0.5; p.hurt = 0.25;
-  if (S.nums.length >= 70) S.nums.shift(); S.nums.push({ m: null, x: p.x, y: p.y - 30, n: took, crit: false, me: true, jx: 0, jy: 0, at: S.t, life: 0.8 }); if (p.hp <= 0) endRun(false); }
-function kill(m) {
-  S.kills++; const d = m.d; S.fx.push({ kind: "boom", x: m.x, y: m.y - 5, t: 0.45, big: d.boss });
-  const xp = R.LEVEL.killXp(d.lvl, S.lvl); S.xpGain += xp; S.xp += xp;
-  while (S.lvl < R.LEVEL.cap && S.xp >= R.LEVEL.xpFor(S.lvl)) { S.xp -= R.LEVEL.xpFor(S.lvl); S.lvl++; const was = S.g; S.g = build(S.lvl); S.p.hp += S.g.maxHp - was.maxHp; S.p.mp += S.g.maxMp - was.maxMp; S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 36, text: `LEVEL ${S.lvl} · +1 skill point`, t: 1.8, gold: true }); lootLine(`Level ${S.lvl}! A skill point waits (T).`, "good"); hudName(); }
-  if (d.boss || Math.random() < R.CURRENCY.pileChance) S.drops.push({ x: m.x + (Math.random() - 0.5) * 16, y: m.y + 6, t: 0, crowns: R.CURRENCY.drop(d.lvl) * (d.boss ? 10 : 1) });
-  const ilvl = Math.min(S.area.alvl + (d.boss ? 2 : 0), d.lvl);
-  if (d.boss || Math.random() < 0.12 * (1 + S.g.find)) S.drops.push({ x: m.x + (Math.random() - 0.5) * 14, y: m.y + 4, t: 0, item: R.rollItem(ilvl, { style: ME.style, boss: d.boss }) });
-  if (d.boss) { S.drops.push({ x: m.x + 14, y: m.y - 2, t: 0, item: R.rollItem(ilvl, { style: ME.style, boss: true }) }); $("bossBar").hidden = true; tip(`${d.name} is down. The way out is open on the east wall.`, 4); }
-}
-function hudName() { if (!S) return; $("hName").innerHTML = `${esc(ME.name)} · <b>Level ${S.lvl}</b> <span style="font-weight:700;color:#ffd98a">· ${(ME.crowns + (S.crowns || 0)).toLocaleString()} ${R.CURRENCY.name}</span><div class="bar" style="height:6px;width:220px;margin-top:4px"><i style="width:${Math.min(100, (S.xp / R.LEVEL.xpFor(S.lvl)) * 100)}%;background:linear-gradient(#ffe27a,#c8963a)"></i></div>`; }
-function endRun(won, left = false) {
-  S.over = true; cancelAnimationFrame(raf);
-  const firstClear = won && !(ME.progress?.cleared || []).includes(S.area.n);
-  $("endTitle").textContent = won ? `${S.area.name}, cleared` : left ? "Back up the stairs" : `Down in room ${S.roomI + 1}`;
-  $("endBody").innerHTML = `<p><b>${S.kills} kills</b> in ${clock(S.t)} · <b>+${S.xpGain.toLocaleString()} XP</b>${S.lvl > ME.level ? ` (level ${S.lvl}! a skill point waits: press T)` : ""} · <b>+${S.crowns} ${R.CURRENCY.name}</b> · <b>${S.found.length}</b> piece${S.found.length === 1 ? "" : "s"} to your inventory.</p>${firstClear ? "<p><b>First clear: pick one perk.</b> It's yours for the season, in every area and map.</p>" : won ? "<p class='note'>Cleared before: no perk this time (one per area). The XP, Crowns and gear count.</p>" : "<p class='note'>What you found still goes to your inventory. Perks come only from a first clear.</p>"}`;
-  $("perkPick").innerHTML = ""; $("backBtn").hidden = firstClear; $("ovEnd").hidden = false;
-  if (won) lootLine(`${S.area.name} cleared.`, "good");
-  const report = (perk) => { send({ op: "report", area: S.area.n, cleared: won, kills: S.kills, secs: Math.round(S.t), xp: S.xpGain, crowns: S.crowns, found: S.found, perk }); };
-  if (firstClear) { const have = new Set(ME.perks || []), pool = Object.keys(PERKS).filter((k) => !have.has(k)).sort(() => Math.random() - 0.5).slice(0, 3);
-    if (!pool.length) { report(null); $("backBtn").hidden = false; return; }
-    $("perkPick").innerHTML = pool.map((k) => `<button type="button" data-p="${k}">${PERKS[k][0]}<small>${PERKS[k][1]}</small></button>`).join("");
-    $("perkPick").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { report(b.dataset.p); $("perkPick").innerHTML = `<p class="note">Perk taken: ${PERKS[b.dataset.p][0]}.</p>`; $("backBtn").hidden = false; })); }
-  else report(null);
-}
-function reportBack(m) { if (m.refused) return tip(m.refused, 3); const g = m.gained || {}; tip(`Saved: +${(g.xp || 0).toLocaleString()} XP, +${g.crowns || 0} ${R.CURRENCY.name}, ${g.items || 0} item${g.items === 1 ? "" : "s"}${g.perk ? `, ${PERKS[g.perk][0]}` : ""}.`, 4); }
-$("backBtn").addEventListener("click", () => startLounge()); $("startBtn").addEventListener("click", () => startLounge());
+function hudName() { if (!S) return; const lvl = S.lvl || ME.level, xp = S.xp ?? ME.xp; $("hName").innerHTML = `${esc(ME.name)} · <b>Level ${lvl}</b> <span style="font-weight:700;color:#ffd98a">· ${(ME.crowns + (S.kind === "dungeon" ? S.crowns || 0 : 0)).toLocaleString()} ${R.CURRENCY.name}</span><div class="bar" style="height:6px;width:220px;margin-top:4px"><i style="width:${Math.min(100, (xp / R.LEVEL.xpFor(lvl)) * 100)}%;background:linear-gradient(#ffe27a,#c8963a)"></i></div>`; }
 
 /* ============================================================ THE MENU: Inventory (I), Skills (T), Stats (C). The game keeps running behind them, as ARPGs do. */
-const WINS = ["invWin", "statWin", "treeWin"];
+const WINS = ["invWin", "statWin", "treeWin", "shopWin", "campWin"];
 function syncMenu() { $("mInv").setAttribute("aria-pressed", String(!$("invWin").hidden)); $("mSkills").setAttribute("aria-pressed", String(!$("treeWin").hidden)); $("mStats").setAttribute("aria-pressed", String(!$("statWin").hidden)); }
 function closeAll() { for (const id of WINS) $(id).hidden = true; syncMenu(); hideTip(); }
-/* the inventory sits on the right and can stay open beside the others; Skills and Stats are big windows, so one at a time */
+/* the inventory sits on the right and can stay open beside the others; the rest are big windows, so one at a time */
 function toggleWin(id, open = $(id).hidden) {
   if (!ME?.style) return;
-  if (open && id !== "invWin") for (const o of ["statWin", "treeWin"]) if (o !== id) $(o).hidden = true;
-  $(id).hidden = !open; if (open) { if (id === "invWin") renderInv(); if (id === "statWin") renderStats(); if (id === "treeWin") renderTree(); }
+  if (open && id !== "invWin") for (const o of ["statWin", "treeWin", "shopWin", "campWin"]) if (o !== id) $(o).hidden = true;
+  $(id).hidden = !open; if (open) { if (id === "invWin") renderInv(); if (id === "statWin") renderStats(); if (id === "treeWin") renderTree(); if (id === "shopWin") renderShop(); if (id === "campWin") renderCamp(); }
+  if (id === "invWin" && !open) setCraft(null);
   syncMenu(); hideTip();
 }
 const toggleTree = (open) => toggleWin("treeWin", open);
@@ -642,37 +765,57 @@ function itemTip(it, act) {
 }
 const salvageOf = (it) => Math.max(1, Math.round((2 + (it.ilvl | 0) / 2) * (1 + (it.r | 0))));   /* the Worker's salvageValue */
 const BAG_CELLS = 64;
+/* CRAFTING: pick a chip in the pouch, then click an item (in the bag or on the doll). The chip stays picked while you have more, PoE-style;
+   click it again, right-click, or Esc to put it down. The server decides what the chip does (R.craft) and spends it. */
+let craftChip = null;
+function setCraft(k) { craftChip = k && (ME.chips?.[k] || 0) > 0 ? k : null; $("invWin").classList.toggle("crafting", !!craftChip); $("craftBar").hidden = !craftChip; if (craftChip) $("craftBar").textContent = `${R.CHIPS[craftChip].name}: ${R.CHIPS[craftChip].does}. Click an item. (Esc to stop)`; if (!$("invWin").hidden) renderPouch(); }
+function renderPouch() { const have = ME.chips || {}; $("pouch").innerHTML = Object.entries(R.CHIPS).map(([k, c]) => `<button type="button" class="cell ${have[k] ? "" : "none"} ${craftChip === k ? "sel" : ""}" data-chip="${k}" aria-label="${c.name}"><img src="${F}${c.icon}" alt="">${have[k] ? `<b>${have[k]}</b>` : ""}</button>`).join(""); }
 function renderInv() {
   if (!ME?.style) return; const worn = ME.worn || {}, st = ME.stash || [], C = R.STYLES[ME.style];
+  if (craftChip && !(ME.chips?.[craftChip] > 0)) { craftChip = null; $("invWin").classList.remove("crafting"); $("craftBar").hidden = true; }
+  renderPouch();
   $("invSub").textContent = `${C.name} · level ${ME.level}`;
   $("doll").innerHTML = `<div class="doll-fig"><img src="${F}look${ME.look}_south.png" alt=""><span>${esc(ME.name)}</span></div>` + R.SLOTS.map((s) => { const it = worn[s];
     return `<button type="button" class="cell ${it ? `r${it.r}` : "empty"}" style="grid-area:${s}" data-worn="${s}" aria-label="${it ? esc(it.base) : s}"><img src="${F}${it ? it.icon : SLOT_ICON[s]}" alt="">${it ? "" : `<small>${s}</small>`}</button>`; }).join("");
   $("invGrid").innerHTML = Array.from({ length: Math.max(BAG_CELLS, st.length) }, (_, i) => { const it = st[i]; return it ? `<button type="button" class="cell r${it.r}" data-inv="${i}" aria-label="${esc(it.base)}"><img src="${F}${it.icon}" alt=""></button>` : `<div class="cell blank"></div>`; }).join("");
-  const carrying = S && !S.over && S.kind === "dungeon" ? S.found.length : 0;
-  $("invCount").textContent = `${st.length} / 60${carrying ? ` · ${carrying} more when this area ends` : ""}`; $("invCrowns").textContent = ME.crowns.toLocaleString();
+  const carrying = S && !S.over && S.kind === "dungeon" ? S.foundN || 0 : 0;
+  $("invCount").textContent = `${st.length} / 60${carrying ? ` · ${carrying} more when you leave this area` : ""}`; $("invCrowns").textContent = ME.crowns.toLocaleString();
 }
+$("invWin").addEventListener("contextmenu", (e) => { if (craftChip) { e.preventDefault(); setCraft(null); } });
 $("invWin").addEventListener("click", (e) => {
+  const ch = e.target.closest("[data-chip]"); if (ch) { setCraft(craftChip === ch.dataset.chip ? null : ch.dataset.chip); hideTip(); return; }
   const w = e.target.closest("[data-worn]"), c = e.target.closest("[data-inv]");
+  if (craftChip) { if (w && ME.worn?.[w.dataset.worn]) send({ op: "craft", chip: craftChip, from: "worn", slot: w.dataset.worn }); else if (c && ME.stash[+c.dataset.inv]) send({ op: "craft", chip: craftChip, from: "stash", i: +c.dataset.inv }); hideTip(); return; }
   if (w && ME.worn?.[w.dataset.worn]) { send({ op: "unequip", slot: w.dataset.worn }); hideTip(); }
   if (c) { const i = +c.dataset.inv, it = ME.stash[i]; if (!it) return;
     if (e.shiftKey) { if (it.r >= 2 && !confirm(`Salvage ${RAR[it.r].name} ${it.base} for ${salvageOf(it)} ${R.CURRENCY.name}?`)) return; send({ op: "salvage", i }); }
     else send({ op: "equip", i });
     hideTip(); }
 });
-$("invWin").addEventListener("pointermove", (e) => { const w = e.target.closest("[data-worn]"), c = e.target.closest("[data-inv]");
-  if (w && ME.worn?.[w.dataset.worn]) showTip(itemTip(ME.worn[w.dataset.worn], "Click to take it off"), e);
+$("invWin").addEventListener("pointermove", (e) => { const w = e.target.closest("[data-worn]"), c = e.target.closest("[data-inv]"), ch = e.target.closest("[data-chip]");
+  if (ch) { const C2 = R.CHIPS[ch.dataset.chip], n = ME.chips?.[ch.dataset.chip] || 0; showTip(`<b style="color:${CHIPCOL}">${C2.name}</b><div class="imp">${C2.does}</div><div class="base">You have ${n}.${R.SHOP[ch.dataset.chip] ? ` Dex sells them for ${R.SHOP[ch.dataset.chip]} ${R.CURRENCY.name}.` : " Only found, never sold."}</div>${n ? `<div class="act">Click to pick it up, then click an item</div>` : ""}`, e); }
+  else if (craftChip && w && ME.worn?.[w.dataset.worn]) showTip(itemTip(ME.worn[w.dataset.worn], `Click: use the ${R.CHIPS[craftChip].name} on it`), e);
+  else if (craftChip && c && ME.stash[+c.dataset.inv]) showTip(itemTip(ME.stash[+c.dataset.inv], `Click: use the ${R.CHIPS[craftChip].name} on it`), e);
+  else if (w && ME.worn?.[w.dataset.worn]) showTip(itemTip(ME.worn[w.dataset.worn], "Click to take it off"), e);
   else if (c && ME.stash[+c.dataset.inv]) { const it = ME.stash[+c.dataset.inv], cur = ME.worn?.[it.slot]; showTip(itemTip(it, `Click to wear${cur ? ` (swaps your ${esc(cur.base)})` : ""}<br>Shift-click: salvage for ${salvageOf(it)} ${R.CURRENCY.name}`), e); }
   else hideTip(); });
 $("invWin").addEventListener("pointerleave", hideTip);
 function showTip(html, e) { const t = $("tipBox"); if (t.dataset.html !== html) { t.innerHTML = html; t.dataset.html = html; } t.hidden = false; const r = t.getBoundingClientRect(); t.style.left = `${Math.max(8, e.clientX - r.width - 18)}px`; t.style.top = `${Math.max(8, Math.min(innerHeight - r.height - 8, e.clientY - 12))}px`; }
 function hideTip() { $("tipBox").hidden = true; }
 
+/* ---------- DEX'S SHOP: Crowns for the common chips (R.SHOP) */
+function renderShop() {
+  $("shop").innerHTML = Object.entries(R.SHOP).map(([k, price]) => { const c = R.CHIPS[k]; return `<div class="row"><img src="${F}${c.icon}" alt=""><div><b>${c.name}</b><small>${c.does}</small><small>You have ${ME.chips?.[k] || 0}</small></div><div class="buy"><button type="button" data-buy="${k}" data-n="1" ${ME.crowns < price ? "disabled" : ""}>${price} · Buy</button><button type="button" data-buy="${k}" data-n="5" ${ME.crowns < price * 5 ? "disabled" : ""}>×5</button></div></div>`; }).join("") +
+    `<div class="foot"><span>The rarer chips are only found.</span><span><b>${ME.crowns.toLocaleString()}</b> ${R.CURRENCY.name}</span></div>`;
+}
+$("shop").addEventListener("click", (e) => { const b = e.target.closest("[data-buy]"); if (b && !b.disabled) send({ op: "buy", chip: b.dataset.buy, n: +b.dataset.n }); });
+
 /* ---------- STATS: an advanced view of the character (EastScape's Character window, the arena's numbers) */
 function renderStats() {
-  if (!ME?.style) return; const g = S ? S.g : build(), C = R.STYLES[ME.style], lvl = S ? S.lvl : ME.level, xp = S ? S.xp : ME.xp, need = R.LEVEL.xpFor(lvl), TG = g.src.tree;
+  if (!ME?.style) return; const lvl = S?.lvl || ME.level, g = S?.g || myStats(lvl), C = R.STYLES[ME.style], xp = S?.xp ?? ME.xp, need = R.LEVEL.xpFor(lvl), TG = g.src.tree;
   const row = (k, v, note = "", sub = false) => `<div class="strow${sub ? " sub" : ""}"><span>${k}${note ? ` <small>${note}</small>` : ""}</span><b>${v}</b></div>`, pc = (v) => `${Math.round(v * 100)}%`;
   const keyst = [...g.rules].map((r) => Object.values(R.TREE.nodes).find((n) => n.grants?.rule === r)?.grants.name).filter(Boolean);
-  const skills = g.slots.map((k, i) => { const s = SK[k], per = Math.round(g.dmg * s.mult), cd = cdBase(k, g), hits = s.kind === "fan" ? s.count + g.bolts - 1 : s.kind === "ring" ? g.ring : s.kind === "rain" ? s.ticks : ["bolt", "lance", "arrow"].includes(s.kind) ? g.bolts : 1;
+  const skills = g.slots.map((k, i) => { const s = SK[k], per = Math.round(g.dmg * s.mult), cd = SIM.cdOf(k, g), hits = s.kind === "fan" ? s.count + g.bolts - 1 : s.kind === "ring" ? g.ring : s.kind === "rain" ? s.ticks : ["bolt", "lance", "arrow"].includes(s.kind) ? g.bolts : 1;
     return `<tr><td><img src="${F}${s.icon}" alt="">${s.name} <small style="color:#8a7a60">${SLOT_KEYS[i] === "lmb" ? "mouse" : SLOT_KEYS[i].toUpperCase()}</small></td><td class="n">${s.mult ? per : "—"}</td><td class="n">${s.mult && hits > 1 ? `×${hits}` : s.mult ? "1" : "—"}</td><td class="n">${s.mp ? `${s.mp}${g.payHp ? " hp" : ""}` : "free"}</td><td class="n">${cd.toFixed(2)} s</td><td class="n">${s.mult ? Math.round((per * hits * (1 + g.crit * (g.critX - 1))) / cd).toLocaleString() : "—"}</td></tr>`; }).join("");
   const done = new Set(ME.progress?.cleared || []), open = openArea();
   $("statSub").textContent = `${esc(ME.name)} · ${C.name} · ${R.SEASON.name}`;
@@ -702,7 +845,7 @@ function treeState() { const alloc = new Set(treeLocal || ME.tree || []), start 
   return { alloc, on, can, spare: ME.points - alloc.size, start }; }
 function renderTree() {
   const { on, can, spare, start } = treeState(), C = R.STYLES[ME.style];
-  $("treeHead").innerHTML = `${C.name} · level ${ME.level} · <b>${spare}</b> point${spare === 1 ? "" : "s"} to spend (of ${ME.points})`;
+  $("treeHead").innerHTML = `${C.name} · level ${ME.level} · <b>${spare}</b> point${spare === 1 ? "" : "s"} to spend (of ${ME.points})${S?.kind === "dungeon" ? " · changes count from your next run" : ""}`;
   const box = $("treeBody").getBoundingClientRect(), xs = Object.values(NODES).map((n) => n.x), ys = Object.values(NODES).map((n) => n.y);
   const minX = Math.min(...xs) - 1, maxX = Math.max(...xs) + 1, minY = Math.min(...ys) - 1, maxY = Math.max(...ys) + 1;
   const sc = Math.min(box.width / (maxX - minX), box.height / (maxY - minY)), offX = (box.width - (maxX - minX) * sc) / 2, offY = (box.height - (maxY - minY) * sc) / 2;
@@ -718,7 +861,7 @@ function renderTree() {
 }
 let hoverNode = null;
 function showNode(k) { const n = NODES[k], { on, can, spare, start } = treeState();
-  const what = k === start ? "Your class's start: free" : on.has(k) ? "Taken · click to refund" : can.has(k) ? (spare > 0 ? "Click to take (1 point)" : "No points left") : "Not connected yet";
+  const rc = R.respecCost(ME.level, 1), what = k === start ? "Your class's start: free" : on.has(k) ? `Taken · click to refund${rc ? ` (${rc} ${R.CURRENCY.name})` : " (free below level 10)"}` : can.has(k) ? (spare > 0 ? "Click to take (1 point)" : "No points left") : "Not connected yet";
   $("treeInfo").innerHTML = `<span class="k">${n.style ? R.STYLES[n.style].name : "Shared"} · ${n.kind}</span><b>${nodeName(k)}</b>${nodeSays(k).map((t) => `<div>${t}</div>`).join("")}<span class="act">${what}</span>`; }
 $("treeSvg").addEventListener("pointerover", (e) => { const g = e.target.closest("[data-n]"); if (g) { hoverNode = g.dataset.n; showNode(hoverNode); } });
 $("treeSvg").addEventListener("click", (e) => { const g = e.target.closest("[data-n]"); if (!g) return; const k = g.dataset.n, st = treeState(); if (k === st.start) return;
@@ -749,6 +892,7 @@ function paintFloor() {
   return c;
 }
 const strip = (im, frame, x, y, size, rot = 0) => { if (!im.complete || !im.naturalWidth) return false; const n = Math.max(1, Math.round(im.naturalWidth / 72)), f = Math.floor(frame) % n; cx.save(); cx.translate(x, y); if (rot) cx.rotate(rot); cx.drawImage(im, f * 72, 0, 72, 72, -size / 2, -size / 2, size, size); cx.restore(); return true; };
+const othersNow = () => (S.kind === "dungeon" ? [...S.others.values()].filter((o) => o.alive) : [...OTHERS.values()]);
 function draw(now = performance.now()) {
   const { w, h } = fitView(); aimCamera(); cx.fillStyle = "#0e0c12"; cx.fillRect(0, 0, w, h);
   if (!S) return;
@@ -758,9 +902,12 @@ function draw(now = performance.now()) {
   for (const f of S.fx) if (f.kind === "tele") { cx.strokeStyle = `rgba(255,80,60,${f.t * 3})`; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(f.x, f.y - 5, f.big ? 34 : 16, 0, Math.PI * 2); cx.stroke(); } else if (f.kind === "line") { cx.strokeStyle = `rgba(255,120,80,${f.t * 2.5})`; cx.lineWidth = 1.5; cx.setLineDash([4, 4]); cx.beginPath(); cx.moveTo(f.x, f.y - 5); cx.lineTo(f.x + Math.cos(f.a) * 240, f.y - 5 + Math.sin(f.a) * 240); cx.stroke(); cx.setLineDash([]); }
   for (const z of S.zones) { if (z.kind === "rain") { cx.strokeStyle = "rgba(255,226,122,.55)"; cx.lineWidth = 1; cx.beginPath(); cx.arc(z.x, z.y, z.r, 0, Math.PI * 2); cx.stroke(); for (let i = 0; i < 3; i++) { const a = hashRand(i, Math.floor(z.t * 8), 3) * Math.PI * 2, rr = hashRand(i, Math.floor(z.t * 8), 7) * z.r; strip(fxImg(z.art), z.t * 20 + i * 3, z.x + Math.cos(a) * rr, z.y + Math.sin(a) * rr - 4, 18); } }
     else { const armed = z.t > 0.4; cx.strokeStyle = armed ? "rgba(158,240,160,.8)" : "rgba(158,240,160,.35)"; cx.lineWidth = 1.2; cx.setLineDash([2, 2]); cx.beginPath(); cx.arc(z.x, z.y, z.r, 0, Math.PI * 2); cx.stroke(); cx.setLineDash([]); strip(fxImg(z.art), 2, z.x, z.y - 3, 12); } }
-  for (const d of S.drops) { const bob = Math.sin(d.t * 6) * 1.2; if (d.crowns) { if (CROWN.complete) cx.drawImage(CROWN, d.x - 6, d.y - 11 + bob, 12, 12); continue; } const im = img(F + d.item.icon); if (im.complete) cx.drawImage(im, d.x - 7, d.y - 14 + bob, 14, 14); }
-  const all = [...S.mobs.map((m) => ({ y: m.y, m })), { y: S.p.y, p: true }].sort((a, b) => a.y - b.y);
+  for (const d of S.drops) { const bob = Math.sin(d.t * 6) * 1.2; if (d.chip) { const im = img(F + R.CHIPS[d.chip].icon); if (im.complete) cx.drawImage(im, d.x - 6, d.y - 12 + bob, 12, 12); continue; } if (d.crowns) { if (CROWN.complete) cx.drawImage(CROWN, d.x - 6, d.y - 11 + bob, 12, 12); continue; } const im = img(F + d.item.icon); if (im.complete) cx.drawImage(im, d.x - 7, d.y - 14 + bob, 14, 14); }
+  const others = othersNow();
+  const all = [...S.mobs.map((m) => ({ y: m.y, m })), ...S.room.objs.filter((o) => o.k === "npc").map((o) => ({ y: (o.y + 1) * T, npc: o })), ...others.map((o) => ({ y: o.y, o })), { y: S.p.y, p: true }].sort((a, b) => a.y - b.y);
   for (const o of all) {
+    if (o.npc) { const im = img(`${F}${o.npc.art}_south.png`); if (im.complete && im.naturalWidth) cx.drawImage(im, (o.npc.x + 0.5) * T - 17, (o.npc.y + 1) * T - 31, 34, 34); continue; }
+    if (o.o) { const q = o.o, im = img(`${F}look${q.look}_${DIRS[q.d] || "south"}.png`); if (im.complete && im.naturalWidth) cx.drawImage(im, q.x - 17, q.y - 31, 34, 34); continue; }
     if (o.p) { const p = S.p, im = img(`${F}look${ME.look}_${DIRS[p.dir]}.png`); if (p.dodging > 0 || p.dash) cx.globalAlpha = 0.55; if (p.hurt > 0) cx.filter = "brightness(2) sepia(1) saturate(6) hue-rotate(-40deg)";
       if (p.cry > 0) { cx.strokeStyle = `rgba(255,216,74,${0.35 + 0.2 * Math.sin(S.t * 10)})`; cx.lineWidth = 1.5; cx.beginPath(); cx.ellipse(p.x, p.y - 1, 9, 4, 0, 0, Math.PI * 2); cx.stroke(); }
       if (im.complete && im.naturalWidth) cx.drawImage(im, p.x - 17, p.y - 31, 34, 34); cx.filter = "none"; cx.globalAlpha = 1;
@@ -783,31 +930,49 @@ function draw(now = performance.now()) {
     else if (f.kind === "cry") { const k = 1 - f.t / 0.6; cx.strokeStyle = `rgba(255,216,74,${1 - k})`; cx.lineWidth = 2; cx.beginPath(); cx.arc(f.x, f.y, f.r * k, 0, Math.PI * 2); cx.stroke(); }
   }
   cx.restore();
-  /* screen-space text: loot labels and beams, the small callouts ("!", LEVEL, +Crowns), then the damage numbers on top */
+  /* screen-space text: other players' names, loot labels and beams, the small callouts ("!", LEVEL, +Crowns), then the damage numbers on top */
+  cx.font = "800 11.5px Lora, Georgia, serif"; cx.textAlign = "center"; cx.textBaseline = "middle";
+  for (const q of others) { const mine = PARTY?.members.some((m) => m.id === q.id), x = sx(q.x), y = sy(q.y - 34), w2 = Math.ceil(cx.measureText(q.name).width) + 10;
+    cx.fillStyle = "rgba(8,6,4,.7)"; cx.fillRect(Math.round(x - w2 / 2), Math.round(y - 8), w2, 16); cx.fillStyle = mine ? "#ffd84a" : "#e8e0cc"; cx.fillText(q.name, x, y + 0.5); }
+  cx.textBaseline = "alphabetic";
   drawLoot(now);
   cx.textAlign = "center"; cx.lineJoin = "round";
+  drawMini();
   for (const f of S.fx) if (f.kind === "num" && f.text) { const big = f.gold && f.text.length > 6, y = sy(f.y) - (0.7 - f.t) * 40, x = sx(f.x); cx.font = `800 ${big ? 18 : 15}px Lora, Georgia, serif`; cx.lineWidth = 4; cx.strokeStyle = "#140804"; cx.strokeText(f.text, x, y); cx.fillStyle = f.red ? "#ff8a7a" : f.gold ? "#ffe27a" : "#fff"; cx.fillText(f.text, x, y); }
   drawNums();
 }
-function loop(now) { if (!S || S.over) return; const dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now; if (!S.paused) step(dt); draw(now); raf = requestAnimationFrame(loop); }
+/* EastScape's minimap (drawMini), the arena's names: floor, blocked, the way out; monsters a dim red, everyone else gold, you white a pixel
+   bigger with a dark edge. Not clickable: it's a map. */
+function drawMini() {
+  const mc = $("mini"); if (!S?.room) { mc.hidden = true; return; } mc.hidden = false;
+  const c = mc.getContext("2d"), g = S.room.g; c.clearRect(0, 0, mc.width, mc.height);
+  c.save(); c.setTransform(mc.width / COLS, 0, 0, mc.height / ROWS, 0, 0);
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { const t = g[y]?.[x], col = t === "v" ? null : t === "#" || t === "b" ? "#4a4038" : t === "e" ? "#c8963a" : "#3b4a35"; if (!col) continue; c.fillStyle = col; c.fillRect(x, y, 1, 1); }
+  if (S.kind === "dungeon") for (const m of S.mobs) { if (m.hp <= 0) continue; c.fillStyle = "rgba(190,60,50,.85)"; c.fillRect(m.x / T, m.y / T, 1, 1); }
+  for (const q of othersNow()) { c.fillStyle = "#ffd24a"; c.fillRect(q.x / T - 0.5, q.y / T - 0.5, 2, 2); }
+  const px = S.p.x / T, py = S.p.y / T; c.fillStyle = "#1a1a1a"; c.fillRect(px - 1, py - 1, 3, 3); c.fillStyle = "#fff"; c.fillRect(px - 0.5, py - 0.5, 2, 2);
+  c.restore();
+}
+function loop(now) { if (!S || S.over) return; const dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now; step(dt); draw(now); raf = requestAnimationFrame(loop); }
 
 /* ============================================================ input */
 const toWorld = (e) => { const r = cv.getBoundingClientRect(); mouse.sx = e.clientX - r.left; mouse.sy = e.clientY - r.top; mouse.x = (mouse.sx - view.ox) / view.s; mouse.y = (mouse.sy - view.oy) / view.s; };
 $("stage").addEventListener("pointermove", toWorld);
-$("stage").addEventListener("pointerdown", (e) => { if (e.target !== cv) return; toWorld(e);
-  /* a click on a loot label picks it up when it's within reach; anywhere else the click is your skill */
+$("stage").addEventListener("pointerdown", (e) => { if (e.target !== cv || !S) return; toWorld(e); $("pmenu").hidden = true;
+  /* a click on a loot label picks it up when it's within reach; on another player in the Lounge, their menu; anywhere else, your skill */
   const l = labelRects.find((r) => Math.abs(r.x - mouse.sx) < r.w / 2 && Math.abs(r.y - mouse.sy) < r.h / 2);
-  if (l && S && !S.over) { if (Math.hypot(l.d.x - S.p.x, l.d.y - S.p.y) < T * 4) pickUp(l.d); else tip("Walk closer to pick that up.", 1.2); return; }
+  if (l && !S.over) { if (Math.hypot(l.d.x - S.p.x, l.d.y - S.p.y) < T * 4) requestPick(l.d); else tip("Walk closer to pick that up.", 1.2); return; }
+  if (S.kind === "lounge") { const o = [...OTHERS.values()].find((q) => Math.abs(mouse.x - q.x) < 10 && mouse.y > q.y - 32 && mouse.y < q.y + 2); if (o) { openPlayerMenu(o, e); return; } }
   mouse.down = true; });
 addEventListener("pointerup", () => (mouse.down = false));
 addEventListener("keydown", (e) => { if (/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName || "")) return; const k = e.key.toLowerCase();
   if (k === "enter") { e.preventDefault(); setChat(true); chatView(false); $("chatIn").focus(); return; }
   if (!e.repeat && k === "i") return toggleWin("invWin"); if (!e.repeat && k === "t") return toggleWin("treeWin"); if (!e.repeat && k === "c") return toggleWin("statWin");
-  if (k === "escape") { if (WINS.some((id) => !$(id).hidden)) closeAll(); else if (chatOpen) setChat(false); return; }
+  if (k === "escape") { if (craftChip) setCraft(null); else if (!$("pmenu").hidden) $("pmenu").hidden = true; else if (WINS.some((id) => !$(id).hidden)) closeAll(); else if (chatOpen) setChat(false); return; }
   if (["w", "a", "s", "d", " ", "q", "e", "1", "2", "3", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) { e.preventDefault(); keys.add(k); } });
 addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase())); addEventListener("blur", () => { keys.clear(); mouse.down = false; });
 draw();
-window.__ar = { get S() { return S; }, get ME() { return ME; }, get view() { return view; }, get labels() { return labelRects; }, step, draw, startLounge, startDungeon, useDoor, cast, pickUp, toggleTree, toggleWin, setChat, keys, mouse, send, T, COLS, ROWS, R };
+window.__ar = { get S() { return S; }, get ME() { return ME; }, get RUN() { return RUN; }, get PARTY() { return PARTY; }, get view() { return view; }, get labels() { return labelRects; }, OTHERS, step, draw, startLounge, useDoor, tryCast, requestPick, toggleTree, toggleWin, setChat, keys, mouse, send, rsend, T, COLS, ROWS, R, SIM };
 </script>
 </body>
 </html>
