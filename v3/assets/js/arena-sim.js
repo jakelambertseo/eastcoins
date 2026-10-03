@@ -53,7 +53,12 @@ export function createSim(R) {
       const kinds = i === 0 ? AR.pool.filter((q) => q !== "golem") : AR.pool, size = 3 + Math.floor(rnd() * 3), mobs = []; for (let j = 0; j < size; j++) mobs.push(kinds[Math.floor(rnd() * kinds.length)]);
       packs.push({ x, y, mobs }); }
     if (last && AR.boss) packs.push({ x: COLS - 8, y: 13, mobs: [AR.boss], boss: true });
-    return { g, objs, packs, kind: "dungeon", last, n, i };
+    /* the room's event, if it has one: a shrine or a cursed chest on a free tile, or a goblin as a pack of one */
+    let event = null;
+    if (!last && rnd() < R.EVENTS.chance) { const kind = R.EVENTS.kinds[Math.floor(rnd() * R.EVENTS.kinds.length)];
+      let x, y, tries = 0; do { x = 8 + Math.floor(rnd() * (COLS - 12)); y = 4 + Math.floor(rnd() * (ROWS - 8)); tries++; } while (tries < 60 && !(walk(g, x, y) && walk(g, x + 1, y) && walk(g, x - 1, y) && walk(g, x, y + 1) && walk(g, x, y - 1) && !packs.some((pk) => Math.abs(pk.x - x) < 4 && Math.abs(pk.y - y) < 4)));
+      if (tries < 60) { event = kind; if (kind === "goblin") packs.push({ x, y, mobs: ["goblin"], goblin: true }); else { g[y][x] = "#"; objs.push({ k: kind, x, y, name: kind === "shrine" ? "A shrine" : "A cursed chest" }); } } }
+    return { g, objs, packs, kind: "dungeon", last, n, i, event };
   }
   /** the exit a cleared last room opens (the same tile on both sides) */
   const openExit = (room) => { if (room.objs.some((o) => o.to === "out")) return; room.g[13][COLS - 1] = "e"; room.objs.push({ k: "door", x: COLS - 1, y: 13, to: "out", name: "The way out" }); };
@@ -70,13 +75,14 @@ export function createSim(R) {
     const level = C.level || 1, B = R.LEVEL.base(level), St = R.STYLES[C.style] || R.STYLES.magic, TG = R.treeGrants(C.style || "magic", C.tree || []);
     const g = { level, dmg: B.dmg, pdmg: TG.dmg, speed: TG.speed, spd: 1 + TG.move + (St.mods.move || 0), def: St.mods.def + TG.def, leech: TG.leech, find: 0, crownsPct: 0, pierce: TG.pierce, bolts: 1 + TG.bolts,
       dodgeCd: 1.2, maxHp: B.hp * St.mods.hp * (1 + TG.hp), maxMp: B.mp * St.mods.mp * (1 + TG.mp), mpRegen: 7 * (1 + TG.mpRegen), rules: new Set(TG.rules), ring: 16, ringCd: 0, crit: 0.06, critX: 1.5,
-      hpPct: 0, mpPct: 0, toughPlus: 0, double: 0, lifeKill: 0, lifeKillPct: 0, manaKill: 0, manaKillPct: 0, dodgePct: 0, mpRegenPct: 0,   /* the grants (R.applyGrant): legendary powers and set bonuses */
+      hpPct: 0, mpPct: 0, toughPlus: 0, double: 0, lifeKill: 0, lifeKillPct: 0, manaKill: 0, manaKillPct: 0, dodgePct: 0, mpRegenPct: 0, cdr: 0, lifeHit: 0, elem: { fire: 0, frost: 0, storm: 0 },   /* the grants (R.applyGrant): legendary powers and set bonuses */
       src: { dmg: B.dmg, hp: Math.round(B.hp * St.mods.hp), mp: Math.round(B.mp * St.mods.mp), gearDmg: 0, gearHp: 0, gearDef: 0, tree: TG } };
     for (const it of Object.values(C.worn || {})) {
-      for (const [k, v] of Object.entries(it.implicit || {})) { if (k === "dmg") { g.dmg += v; g.src.gearDmg += v; } if (k === "def") { g.def += v; g.src.gearDef += v; } if (k === "hp") { g.maxHp += v; g.src.gearHp += v; } if (k === "mp") g.maxMp += v; }
+      for (const [k, v] of Object.entries(it.implicit || {})) { if (k === "dmg") { g.dmg += v; g.src.gearDmg += v; } if (k === "def") { g.def += v; g.src.gearDef += v; } if (k === "hp") { g.maxHp += v; g.src.gearHp += v; } if (k === "mp") g.maxMp += v; if (k === "speed") g.speed += v / 100; if (k === "move") g.spd += v / 100; }
       for (const l of it.lines || []) { const v = l.v; if (l.id === "dmg") { g.dmg += v; g.src.gearDmg += v; } if (l.id === "pdmg") g.pdmg += v / 100; if (l.id === "speed") g.speed += v / 100; if (l.id === "hp") { g.maxHp += v; g.src.gearHp += v; } if (l.id === "mp") g.maxMp += v;
         if (l.id === "mpRegen") g.mpRegen *= 1 + v / 100; if (l.id === "def") { g.def += v; g.src.gearDef += v; } if (l.id === "move") g.spd += v / 100; if (l.id === "leech") g.leech += v / 100; if (l.id === "find") g.find += v / 100; if (l.id === "crowns") g.crownsPct += v / 100;
-        if (l.id === "crit") g.crit += v / 100; if (l.id === "critX") g.critX += v / 100; if (l.id === "lifeKill") g.lifeKill += v; if (l.id === "manaKill") g.manaKill += v; if (l.id === "dodge") g.dodgePct += v / 100; }
+        if (l.id === "crit") g.crit += v / 100; if (l.id === "critX") g.critX += v / 100; if (l.id === "lifeKill") g.lifeKill += v; if (l.id === "manaKill") g.manaKill += v; if (l.id === "dodge") g.dodgePct += v / 100;
+        if (l.id === "cdr") g.cdr += v / 100; if (l.id === "lifeHit") g.lifeHit += v; if (g.elem[l.id] != null) g.elem[l.id] += v; }
     }
     for (const p of C.perks || []) { if (p === "bolt") g.bolts++; if (p === "dmg") g.pdmg += 0.15; if (p === "speed") g.spd += 0.1; if (p === "dodge") g.dodgeCd *= 0.75; if (p === "hp") g.maxHp += 25; if (p === "leech") g.leech += 0.03; if (p === "blast") { g.ring = 24; g.ringCd = 1; } if (p === "rare") g.find += 0.2; }
     /* legendaries' powers and set bonuses (R.gearPowers) */
@@ -88,21 +94,23 @@ export function createSim(R) {
     const own = TG.skills.filter((k) => SK[k]), start = St.start; g.slots = [start, ...own.filter((k) => k !== start)].slice(0, SLOT_KEYS.length);
     return g;
   }
-  const cdOf = (k, g) => Math.max(0.08, SK[k].cd * (1 - Math.min(0.5, g.speed)) - (k === "nova" ? g.ringCd : 0));
+  const cdOf = (k, g) => Math.max(0.08, SK[k].cd * (1 - Math.min(0.5, g.speed)) * (1 - Math.min(0.4, g.cdr || 0)) - (k === "nova" ? g.ringCd : 0));
   /** the fastest a character can legitimately move, px/s (dodge and dash are short bursts on top of this) */
   const topSpeed = (g) => 92 * g.spd;
 
   /* ------------------------------------------------------------ monsters for a room. Party size makes them tougher (each extra player +75% health),
      never more numerous: the room looks the same however many come. Positions use trig, so the server decides them and sends them. */
   const PARTY_HP = 0.75;
-  function spawnMobs(room, alvl, partySize, seq0 = 1, mods = [], tier = 0) {
+  function spawnMobs(room, alvl, partySize, seq0 = 1, mods = [], tier = 0, btier = 0) {
     const rnd = rng((room.n || 1) * 7919 + room.i * 104729 + 17), mobs = []; let id = seq0;
-    room.packs.forEach((pk, pi) => pk.mobs.forEach((k, j) => {
-      const d = R.mobDef(k, alvl, mods, tier); d.melee = d.type === "melee";   /* a Rift's tier and modifiers baked in */
+    room.packs.forEach((pk, pi) => { const eliteAt = !pk.boss && !pk.goblin && rnd() < R.ELITE.chance(tier) ? 0 : -1, emods = eliteAt >= 0 ? R.rollElite(tier, rnd) : null;   /* one elite per pack, now and then */
+      pk.mobs.forEach((k, j) => {
+      const d = R.mobDef(k, alvl, mods, tier, btier); d.melee = d.type === "melee";   /* a Rift's tier and modifiers, and the boss's tier, baked in */
+      if (j === eliteAt) R.eliteDef(d, emods);
       const hp = Math.round(d.hp * (1 + PARTY_HP * Math.max(0, partySize - 1)));
       const a = (j / pk.mobs.length) * Math.PI * 2, rr = d.boss ? 0 : 10 + j * 3;
-      mobs.push({ id: id++, k, d, hp, maxHp: hp, x: (pk.x + 0.5) * T + Math.cos(a) * rr, y: (pk.y + 0.5) * T + Math.sin(a) * rr, vx: 0, vy: 0, t: rnd() * 3, pat: 1 + rnd(), awake: false, pack: pi, slow: 0, root: 0, stun: 0, taunt: 0, tauntBy: null });
-    }));
+      mobs.push({ id: id++, k, d, hp, maxHp: hp, x: (pk.x + 0.5) * T + Math.cos(a) * rr, y: (pk.y + 0.5) * T + Math.sin(a) * rr, vx: 0, vy: 0, t: rnd() * 3, pat: 1 + rnd(), awake: false, pack: pi, slow: 0, root: 0, stun: 0, taunt: 0, tauntBy: null, shield: d.shield || 0, elite: d.elite || null });
+    }); });
     return mobs;
   }
   const wake = (st, m) => { if (m.awake) return; for (const o of st.mobs) if (o.pack === m.pack) o.awake = true; };
@@ -165,13 +173,16 @@ export function createSim(R) {
       if (tgt) dist = Math.hypot(tgt.x - m.x, tgt.y - m.y) || 1;
       else if (!m.awake) { for (const p of alive) { const dd = Math.hypot(p.x - m.x, p.y - m.y); if (dd < dist) { dist = dd; tgt = p; } } }   /* waking is by distance (they hear you through a wall) */
       else { let best = 1e9; for (const p of alive) { const wd = walkDist(st, m, p); if (wd < best) { best = wd; tgt = p; } } if (tgt) dist = Math.hypot(tgt.x - m.x, tgt.y - m.y) || 1; }
-      if (!m.awake) { if (tgt && (dist < T * 7 || (d.boss && dist < T * 12))) { wake(st, m); ev.push({ t: "wake", m: m.id }); } else { m.t += dt; continue; } }
+      if (!m.awake) { if (tgt && (dist < T * 7 || (d.boss && dist < T * 12))) { wake(st, m); ev.push({ t: "wake", m: m.id }); if (d.summon && !m.summoned) { m.summoned = true; ev.push({ t: "summon", m: m.id, n: d.summon }); } } else { m.t += dt; continue; } }
       if (!tgt) { m.vx *= 0.8; m.vy *= 0.8; continue; }
+      /* the goblin: runs from whoever is nearest and is gone after its time */
+      if (d.flee) { m.fled = (m.fled || 0) + dt; if (m.fled > d.fleeFor) { m.hp = 0; ev.push({ t: "flee", m: m.id }); continue; } }
       if (m.stun > 0) { m.vx = m.vy = 0; m.t += dt; continue; }
       const dx = tgt.x - m.x, dy = tgt.y - m.y; dist = dist || 1;
       const go = nextStep(st, m, tgt), gx = go.x - m.x, gy = go.y - m.y, gl = Math.hypot(gx, gy) || 1; m.sees = go.seen;
       let ax = (gx / gl) * d.acc, ay = (gy / gl) * d.acc;
       if (d.keep && dist < d.keep && go.seen && !(m.taunt > 0)) { ax = -(dx / dist) * d.acc; ay = -(dy / dist) * d.acc; }
+      if (d.flee) { ax = -(dx / dist) * d.acc + Math.sin(m.t * 3) * 120; ay = -(dy / dist) * d.acc + Math.cos(m.t * 3) * 120; }
       if (d.boss && dist < 80 && go.seen) { ax *= -0.4; ay *= -0.4; }
       for (const o of st.mobs) if (o !== m && o.awake && o.hp > 0) { const ox = m.x - o.x, oy = m.y - o.y, od = Math.hypot(ox, oy); if (od < m.d.r + o.d.r + 4 && od > 0) { ax += (ox / od) * 500; ay += (oy / od) * 500; } }
       m.vx += ax * dt; m.vy += ay * dt; m.vx *= Math.pow(0.88, dt * 60); m.vy *= Math.pow(0.88, dt * 60);
@@ -179,8 +190,12 @@ export function createSim(R) {
       if (m.root > 0) { m.vx = m.vy = 0; } else moveCircle(st.room.g, m, Math.min(7, d.r), dt);
       m.t += dt;
       if (d.pat) { m.pat -= dt; if (m.pat <= 0 && dist < T * 14 && m.sees) { m.pat = d.every; const a = Math.atan2(dy, dx); if (d.pat === "aim") shoot(st, m, a, 110, 1, 0, 0, ev); else { ev.push({ t: "tele", m: m.id, a }); shoot(st, m, a, 95, 5, 0.22, 0, ev); } } }
-      if (d.boss) { const be = d.bossEvery || 2.1; m.pat -= dt; if (m.pat <= 0) { m.pat = be; const which = Math.floor(m.t / be) % 3, a0 = Math.atan2(dy, dx);
-        if (which === 0) { ev.push({ t: "tele", m: m.id, ring: true }); for (let i = 0; i < 24; i++) shoot(st, m, (i / 24) * Math.PI * 2, 85, 1, 0, 0.3, ev); }
+      if (d.boss) { const be = d.bossEvery || 2.1; m.pat -= dt;
+        if (d.enrage && !m.enraged && m.hp < m.maxHp * d.enrage) { m.enraged = true; d.bossEvery = be * R.ENRAGE.every; d.max = Math.round(d.max * R.ENRAGE.dmg); ev.push({ t: "enrage", m: m.id }); }   /* Torment and up: a wounded boss comes at you harder */
+        if (m.pat <= 0) { m.pat = d.bossEvery || be; const which = Math.floor(m.t / be) % 3, a0 = Math.atan2(dy, dx);
+        if (which === 0) { ev.push({ t: "tele", m: m.id, ring: true }); for (let i = 0; i < 24; i++) shoot(st, m, (i / 24) * Math.PI * 2, 85, 1, 0, 0.3, ev);
+          if (d.second) for (let i = 0; i < 24; i++) shoot(st, m, ((i + 0.5) / 24) * Math.PI * 2, 85, 1, 0, 0.75, ev);   /* Ascended: a second ring between the first's gaps */
+          if (d.adds) ev.push({ t: "summon", m: m.id, n: d.adds }); }   /* Nightmare and up: the ring calls guards */
         else if (which === 1) { ev.push({ t: "tele", m: m.id, a: a0 }); for (let k = 0; k < 3; k++) st.pend.push({ at: st.t + k * 0.22, m: m.id }); }
         else for (let i = 0; i < 30; i++) shoot(st, m, m.t * 2 + i * 0.4, 70 + i * 1.5, 1, 0, i * 0.05, ev); } }
     }
@@ -228,11 +243,17 @@ export function createSim(R) {
   /** a hit on a monster (the server only): crit, damage, statuses, the kill. st.hooks.dealt / killed let the run pay leech, XP and drops. */
   function hit(st, m, base, opt, by, ev) {
     if (m.hp <= 0) return 0;
-    if (!m.awake) { wake(st, m); ev.push({ t: "wake", m: m.id }); }
+    if (!m.awake) { wake(st, m); ev.push({ t: "wake", m: m.id }); if (m.d.summon && !m.summoned) { m.summoned = true; ev.push({ t: "summon", m: m.id, n: m.d.summon }); } }
+    if (m.shield > 0) { m.shield--; ev.push({ t: "block", m: m.id, left: m.shield }); return 0; }   /* a Shielded elite: the first hits bounce */
     const p = st.byId?.(by), g = p?.g || { crit: 0.06, critX: 1.5 }, rnd = st.rand || Math.random, crit = rnd() < g.crit, twice = g.double > 0 && rnd() < g.double;
-    const n = Math.max(1, Math.round(base * (crit ? g.critX : 1) * (twice ? 2 : 1)));   /* "lands twice" (a unique's power) is one hit for double */
-    m.hp -= n; ev.push({ t: "hit", m: m.id, n, c: crit ? 1 : 0, ...(twice ? { d: 1 } : {}), el: opt.el || null, by });
+    /* elemental lines add to every hit in proportion to the skill (a 1.6x skill carries 1.6x the fire), and the biggest element colours the hit */
+    let extra = 0, top = null, tv = 0; for (const [k, v] of Object.entries(g.elem || {})) if (v > 0) { extra += v; if (v > tv) { tv = v; top = k; } }
+    if (extra) extra *= g.dmg ? base / g.dmg : 1;
+    const n = Math.max(1, Math.round((base + extra) * (crit ? g.critX : 1) * (twice ? 2 : 1) * (1 - (m.d.armor || 0))));   /* "lands twice" (a legendary's power) is one hit for double; an Armored elite takes less */
+    m.hp -= n; ev.push({ t: "hit", m: m.id, n, c: crit ? 1 : 0, ...(twice ? { d: 1 } : {}), el: opt.el || top || null, by });
     if (opt.slow) m.slow = Math.max(m.slow, opt.slow); if (opt.stun) m.stun = Math.max(m.stun, opt.stun); if (opt.root) m.root = Math.max(m.root, opt.root);
+    if (g.elem?.frost > 0 && rnd() < R.ELEMENT.frost.slow) m.slow = Math.max(m.slow, R.ELEMENT.frost.slowFor);
+    if (g.elem?.storm > 0 && !m.d.boss && rnd() < R.ELEMENT.storm.stun) m.stun = Math.max(m.stun, R.ELEMENT.storm.stunFor);
     st.hooks?.dealt?.(by, n);
     if (m.hp <= 0) { m.hp = 0; ev.push({ t: "kill", m: m.id, by }); st.hooks?.killed?.(m, by); }
     return n;
@@ -263,5 +284,5 @@ export function createSim(R) {
   const roomClear = (room, mobs) => (room.packs.some((p) => p.boss) ? !mobs.some((m) => m.d.boss && m.hp > 0) : !mobs.some((m) => m.hp > 0));
 
   return { T, COLS, ROWS, W, H, SLOT_KEYS, AREAS, areaOf, rng, walk, passable, makeLounge, makeRoom, openExit, moveCircle, standable, statsFor, cdOf, topSpeed,
-    spawnMobs, PARTY_HP, mobStep, flowField, clearLine, maxHitIn, castOn, hit, projStep, zoneStep, roomClear, segDist };
+    spawnMobs, PARTY_HP, mobStep, flowField, clearLine, maxHitIn, castOn, hit, projStep, zoneStep, roomClear, segDist, shoot };
 }

@@ -143,7 +143,8 @@ export function baseFor(slot, ilvl, style = "magic") {
   }
   if (slot === "offhand") return { slot, style: null, tier: t.k, name: `${TITLE(t.k)} Shield`, icon: `items/${SHIELD[t.k] || "bronze"}_shield.png`, implicit: { def: 2 + i * 2 } };
   const word = { helm: "Helm", body: "Plate", gloves: "Gloves", boots: "Boots", ring: "Ring", amulet: "Amulet" }[slot];
-  const implicit = slot === "ring" ? { mp: 5 + i * 3 } : slot === "amulet" ? { hp: 6 + i * 4 } : { def: 1 + i * (slot === "body" ? 3 : 1.5) };
+  /* gloves and boots carry something you feel (2026-10-03: they used to be a little armour, like a helm): speed in the hands, pace on the feet */
+  const implicit = slot === "ring" ? { mp: 5 + i * 3 } : slot === "amulet" ? { hp: 6 + i * 4 } : slot === "gloves" ? { speed: 2 + i } : slot === "boots" ? { move: 3 + i } : { def: 1 + i * (slot === "body" ? 3 : 1.5) };
   return { slot, style: null, tier: t.k, name: `${TITLE(t.k)} ${word}`, icon: `items/${t.k}_${slot}.png`, implicit: Object.fromEntries(Object.entries(implicit).map(([k, v]) => [k, Math.round(v)])) };
 }
 /* not every tier has every picture: these fall back to the nearest tier that does (the test checks every icon) */
@@ -158,32 +159,43 @@ export const RARITY = [
   { k: "rare",      name: "Rare",      lines: [3, 5], weight: 8,  col: "#ff9a4a" },
   { k: "legendary", name: "Legendary", lines: [2, 3], weight: 0,  col: "#ffcf3a" },
   { k: "set",       name: "Set",       lines: [2, 2], weight: 0,  col: "#5ab4ff" }];
-/* affixes: each has tiers by item level; a roll picks the best tier the item level allows, then a value in its range */
+/* affixes: each has tiers by item level; a roll picks the best tier the item level allows, then a value in its range. `pre` and `suf` are
+   the words an item takes its NAME from (itemName): its first line's prefix and its second line's suffix, "Keen Bronze Ring of Haste". */
 export const AFFIXES = {
-  dmg:     { say: (v) => `+${v} damage`,                  slots: ["weapon", "ring", "amulet", "gloves"], tiers: [[1, 1, 2], [12, 3, 4], [25, 5, 7], [40, 8, 11], [55, 12, 15]] },
-  pdmg:    { say: (v) => `+${v}% damage`,                 slots: ["weapon", "amulet"],                   tiers: [[1, 4, 7], [15, 8, 12], [30, 13, 18], [45, 19, 25]], pct: true },
-  speed:   { say: (v) => `${v}% faster attacks and casts`, slots: ["weapon", "gloves", "ring"],          tiers: [[1, 2, 4], [20, 5, 7], [40, 8, 11]], pct: true },
-  hp:      { say: (v) => `+${v} health`,                  slots: ["helm", "body", "gloves", "boots", "ring", "amulet", "offhand"], tiers: [[1, 5, 10], [10, 11, 20], [22, 21, 35], [36, 36, 55], [50, 56, 80]] },
-  mp:      { say: (v) => `+${v} mana`,                    slots: ["helm", "ring", "amulet", "offhand"],  tiers: [[1, 5, 10], [15, 11, 20], [30, 21, 35], [48, 36, 50]] },
-  mpRegen: { say: (v) => `+${v}% mana regeneration`,       slots: ["ring", "amulet", "helm"],            tiers: [[1, 10, 20], [25, 21, 35], [45, 36, 50]], pct: true },
-  def:     { say: (v) => `+${v} armour`,                  slots: ["helm", "body", "gloves", "boots", "offhand"], tiers: [[1, 1, 3], [12, 4, 7], [25, 8, 12], [40, 13, 18], [55, 19, 25]] },
-  move:    { say: (v) => `${v}% faster movement`,          slots: ["boots"],                             tiers: [[1, 5, 8], [20, 9, 12], [40, 13, 16]], pct: true },
-  leech:   { say: (v) => `${v}% of damage dealt heals you`, slots: ["weapon", "amulet", "ring"],          tiers: [[10, 1, 1], [30, 2, 2], [50, 3, 3]], pct: true },
-  find:    { say: (v) => `${v}% more drops`,               slots: ["helm", "ring", "amulet", "boots"],   tiers: [[1, 4, 8], [20, 9, 14], [40, 15, 20]], pct: true },
-  crowns:  { say: (v) => `${v}% more Gold`,              slots: ["gloves", "ring", "amulet"],          tiers: [[1, 5, 10], [25, 11, 18], [45, 19, 25]], pct: true },
+  dmg:     { say: (v) => `+${v} damage`,                  pre: "Keen",     suf: "of Striking",  slots: ["weapon", "ring", "amulet", "gloves"], tiers: [[1, 1, 2], [12, 3, 4], [25, 5, 7], [40, 8, 11], [55, 12, 15]] },
+  pdmg:    { say: (v) => `+${v}% damage`,                 pre: "Savage",   suf: "of Ruin",      slots: ["weapon", "amulet"],                   tiers: [[1, 4, 7], [15, 8, 12], [30, 13, 18], [45, 19, 25]], pct: true },
+  speed:   { say: (v) => `${v}% faster attacks and casts`, pre: "Quick",    suf: "of Haste",     slots: ["weapon", "gloves", "ring"],          tiers: [[1, 2, 4], [20, 5, 7], [40, 8, 11]], pct: true },
+  hp:      { say: (v) => `+${v} health`,                  pre: "Stout",    suf: "of the Bear",  slots: ["helm", "body", "gloves", "boots", "ring", "amulet", "offhand"], tiers: [[1, 5, 10], [10, 11, 20], [22, 21, 35], [36, 36, 55], [50, 56, 80]] },
+  mp:      { say: (v) => `+${v} mana`,                    pre: "Clear",    suf: "of the Owl",   slots: ["helm", "ring", "amulet", "offhand"],  tiers: [[1, 5, 10], [15, 11, 20], [30, 21, 35], [48, 36, 50]] },
+  mpRegen: { say: (v) => `+${v}% mana regeneration`,       pre: "Flowing",  suf: "of the Tide",  slots: ["ring", "amulet", "helm"],            tiers: [[1, 10, 20], [25, 21, 35], [45, 36, 50]], pct: true },
+  def:     { say: (v) => `+${v} armour`,                  pre: "Iron",     suf: "of the Wall",  slots: ["helm", "body", "gloves", "boots", "offhand"], tiers: [[1, 1, 3], [12, 4, 7], [25, 8, 12], [40, 13, 18], [55, 19, 25]] },
+  move:    { say: (v) => `${v}% faster movement`,          pre: "Fleet",    suf: "of the Wind",  slots: ["boots"],                             tiers: [[1, 5, 8], [20, 9, 12], [40, 13, 16]], pct: true },
+  leech:   { say: (v) => `${v}% of damage dealt heals you`, pre: "Vampiric", suf: "of Blood",     slots: ["weapon", "amulet", "ring"],          tiers: [[10, 1, 1], [30, 2, 2], [50, 3, 3]], pct: true },
+  find:    { say: (v) => `${v}% more drops`,               pre: "Lucky",    suf: "of Plenty",    slots: ["helm", "ring", "amulet", "boots"],   tiers: [[1, 4, 8], [20, 9, 14], [40, 15, 20]], pct: true },
+  crowns:  { say: (v) => `${v}% more Gold`,              pre: "Gilded",   suf: "of Fortune",   slots: ["gloves", "ring", "amulet"],          tiers: [[1, 5, 10], [25, 11, 18], [45, 19, 25]], pct: true },
   /* (2026-10-03, gear and loot) */
-  crit:     { say: (v) => `+${v}% critical strike chance`, slots: ["gloves", "ring", "amulet", "helm"],  tiers: [[1, 1, 2], [20, 3, 4], [40, 5, 6]], pct: true },
-  critX:    { say: (v) => `+${v}% critical strike damage`, slots: ["weapon", "amulet", "gloves"],        tiers: [[5, 10, 15], [25, 16, 25], [45, 26, 35]], pct: true },
-  lifeKill: { say: (v) => `+${v} health on kill`,          slots: ["weapon", "body", "ring", "amulet"],  tiers: [[1, 2, 4], [20, 5, 9], [40, 10, 16]] },
-  manaKill: { say: (v) => `+${v} mana on kill`,            slots: ["weapon", "helm", "ring"],            tiers: [[1, 1, 3], [20, 4, 6], [40, 7, 10]] },
-  dodge:    { say: (v) => `${v}% faster dodge recovery`,   slots: ["boots", "gloves"],                   tiers: [[8, 5, 8], [30, 9, 12], [50, 13, 16]], pct: true } };
+  crit:     { say: (v) => `+${v}% critical strike chance`, pre: "Precise",  suf: "of the Eye",   slots: ["gloves", "ring", "amulet", "helm"],  tiers: [[1, 1, 2], [20, 3, 4], [40, 5, 6]], pct: true },
+  critX:    { say: (v) => `+${v}% critical strike damage`, pre: "Brutal",   suf: "of Cruelty",   slots: ["weapon", "amulet", "gloves"],        tiers: [[5, 10, 15], [25, 16, 25], [45, 26, 35]], pct: true },
+  lifeKill: { say: (v) => `+${v} health on kill`,          pre: "Hungry",   suf: "of the Hunt",  slots: ["weapon", "body", "ring", "amulet"],  tiers: [[1, 2, 4], [20, 5, 9], [40, 10, 16]] },
+  manaKill: { say: (v) => `+${v} mana on kill`,            pre: "Thirsty",  suf: "of the Well",  slots: ["weapon", "helm", "ring"],            tiers: [[1, 1, 3], [20, 4, 6], [40, 7, 10]] },
+  dodge:    { say: (v) => `${v}% faster dodge recovery`,   pre: "Nimble",   suf: "of the Cat",   slots: ["boots", "gloves"],                   tiers: [[8, 5, 8], [30, 9, 12], [50, 13, 16]], pct: true },
+  /* (2026-10-03, the owner: "the loot feels very bland right now ... how can we spice it up?") Lines that DO something you can see, on
+     starting gear too: elemental damage (fire burns big, frost can slow, storm can stun; the hit's number and sparks take the colour),
+     health on every hit, and cooldown reduction. The brief's own list: Elemental Damage, Status Chance, Life on Hit, Cooldown Reduction. */
+  fire:    { say: (v) => `+${v} fire damage`,                      pre: "Burning",  suf: "of Flame",     slots: ["weapon", "ring", "gloves"],          tiers: [[1, 2, 3], [15, 4, 6], [30, 7, 10], [45, 11, 15]] },
+  frost:   { say: (v) => `+${v} frost damage, and a chance to slow`, pre: "Frozen",   suf: "of Frost",     slots: ["weapon", "ring", "amulet"],          tiers: [[1, 1, 2], [15, 3, 4], [30, 5, 7], [45, 8, 11]] },
+  storm:   { say: (v) => `+${v} storm damage, and a chance to stun`, pre: "Charged",  suf: "of Storms",    slots: ["weapon", "amulet", "gloves"],        tiers: [[1, 1, 2], [15, 3, 4], [30, 5, 7], [45, 8, 11]] },
+  lifeHit: { say: (v) => `+${v} health on every hit`,              pre: "Mending",  suf: "of Mending",   slots: ["weapon", "amulet", "gloves"],        tiers: [[1, 1, 1], [20, 2, 2], [40, 3, 4]] },
+  cdr:     { say: (v) => `${v}% cooldown reduction`,               pre: "Hasty",    suf: "of Readiness", slots: ["weapon", "helm", "ring", "amulet"],  tiers: [[5, 3, 5], [25, 6, 9], [45, 10, 14]], pct: true } };
+/* what frost and storm do on top of their damage, per hit (the server's hit) */
+export const ELEMENT = { fire: { name: "fire" }, frost: { name: "frost", slow: 0.25, slowFor: 1.5 }, storm: { name: "storm", stun: 0.1, stunFor: 0.45 } };
 /** the tier of an affix an item level can roll (the best one it reaches), or null */
 export const affixTier = (id, ilvl) => { const A = AFFIXES[id]; if (!A) return null; let t = null; for (const x of A.tiers) if (ilvl >= x[0]) t = x; return t; };
 /** roll one item: a base, a rarity, lines. rnd is injectable so the server can roll from a seed later. */
-export function rollItem(ilvl, { style = "magic", boss = false, rnd = Math.random, slot = null } = {}) {
+export function rollItem(ilvl, { style = "magic", boss = false, elite = false, rnd = Math.random, slot = null } = {}) {
   const s = slot || SLOTS[Math.floor(rnd() * SLOTS.length)], base = baseFor(s, ilvl, style);
   let r = 0, x = rnd() * RARITY.reduce((a, q) => a + q.weight, 0); for (let i = 0; i < RARITY.length; i++) { x -= RARITY[i].weight; if (x < 0) { r = i; break; } }
-  if (boss) r = Math.max(r, 2);
+  if (boss) r = Math.max(r, 2); else if (elite) r = Math.max(r, 1);
   const [lo, hi] = RARITY[r].lines, n = lo + Math.floor(rnd() * (hi - lo + 1));
   const pool = Object.keys(AFFIXES).filter((id) => AFFIXES[id].slots.includes(s) && affixTier(id, ilvl)), lines = [];
   for (let i = 0; i < n && pool.length; i++) { const id = pool.splice(Math.floor(rnd() * pool.length), 1)[0], [, a, b] = affixTier(id, ilvl); lines.push({ id, v: a + Math.floor(rnd() * (b - a + 1)) }); }
@@ -213,9 +225,68 @@ export const MONSTERS = {
   guard:  { name: "Skeleton Guard", art: "cryptguard", type: "melee",  hp: 1.0, dmg: 1.0, spd: 46, r: 9,  acc: 420 },
   ghost:  { name: "Crypt Ghost",    art: "cryptghost", type: "ranged", hp: 0.6, dmg: 0.8, spd: 34, r: 9,  acc: 300, keep: 90, pat: "aim", every: 2.4 },
   golem:  { name: "Bone Golem",     art: "cryptgolem", type: "caster", hp: 3.0, dmg: 1.4, spd: 24, r: 14, acc: 220, pat: "fan", every: 3.2 },
-  hoodie: { name: "THE HOODIE",     art: "hoodie",     type: "boss",   hp: 35,  dmg: 1.3, spd: 22, r: 22, acc: 160, boss: true } };
+  hoodie: { name: "THE HOODIE",     art: "hoodie",     type: "boss",   hp: 35,  dmg: 1.3, spd: 22, r: 22, acc: 160, boss: true },
+  /* (2026-10-03, the brief's "Treasure Goblin") runs from you, never fights, gone in GOBLIN.flees seconds; a kill pays like a chest */
+  goblin: { name: "Treasure Goblin", art: "dgoblin",    type: "flee",   hp: 1.4, dmg: 0,   spd: 62, r: 8,  acc: 520, flee: true, fleeFor: 14 } };
 /** a monster's numbers at an area level */
 export const monsterAt = (k, alvl) => { const M = MONSTERS[k], hp = Math.round((14 + alvl * 6) * M.hp), dmg = Math.round((3 + alvl * 0.9) * M.dmg); return { ...M, k, lvl: alvl, hp, maxHp: hp, max: dmg }; };
+
+/* ------------------------------------------------------------ ELITES (2026-10-03, the brief: "Elites ... Fast, Armored, Vampiric, Explosive, ... Storm, Summoner,
+   Shielded. Limit stacking. Early: 1 modifier. Mid: 2. Deep endgame: maximum 3."). A pack may carry one elite: a bigger, named monster with
+   2.6x health and 1.3x damage and one to three of these, rolled from the room's seed so every browser sees the same one. It pays 4x the
+   XP, 3x the Gold, always drops gear (Magic or better) and finds legendaries more often. Drawn larger with an aura in its first modifier's colour. */
+export const ELITES = {
+  fast:      { name: "Fast",      says: "moves 45% faster",                       col: "#9ef0a0", mob: { spd: 1.45 } },
+  armored:   { name: "Armored",   says: "takes 35% less damage",                  col: "#c8c8d0", armor: 0.35 },
+  explosive: { name: "Explosive", says: "bursts into shots when it dies",         col: "#ff9a4a", burst: 12 },
+  storm:     { name: "Storm",     says: "fires aimed bolts",                      col: "#d8ecff", pat: "aim", every: 2.6 },
+  summoner:  { name: "Summoner",  says: "calls two guards when it wakes",         col: "#d8b4ff", summon: 2 },
+  shielded:  { name: "Shielded",  says: "a shield takes its first three hits",    col: "#ffe27a", shield: 3 } };
+export const ELITE = { chance: (tier) => Math.min(0.6, 0.15 + 0.015 * tier), modsAt: (tier) => (tier >= 30 ? 3 : tier >= 10 ? 2 : 1), hp: 2.6, dmg: 1.3, xp: 4, crowns: 3, scale: 1.25 };
+/** a monster definition made elite: name, numbers, what its modifiers do */
+export function eliteDef(d, mods = []) {
+  const ms = mods.filter((k) => ELITES[k]); if (!ms.length) return d;
+  d.elite = ms; d.name = `${ms.map((k) => ELITES[k].name).join(" ")} ${d.name}`; d.hp = d.maxHp = Math.round(d.hp * ELITE.hp); d.max = Math.round(d.max * ELITE.dmg); d.r = Math.round(d.r * 1.2);
+  for (const k of ms) { const E = ELITES[k]; if (E.mob?.spd) d.spd *= E.mob.spd; if (E.armor) d.armor = (d.armor || 0) + E.armor; if (E.pat) { d.pat = E.pat; d.every = E.every; d.keep = 0; } if (E.shield) d.shield = E.shield; if (E.summon) d.summon = E.summon; if (E.burst) d.burst = E.burst; }
+  return d;
+}
+/** which elite modifiers a pack's elite gets, from the room's rng (distinct) */
+export function rollElite(tier, rnd) { const pool = Object.keys(ELITES), out = []; for (let i = 0; i < ELITE.modsAt(tier) && pool.length; i++) out.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]); return out; }
+/* ROOM EVENTS (the brief: "Random dungeon events ... Treasure Goblin, Cursed Chest, Shrine ..."): about one room in three, never the last.
+   A shrine heals you and gives +25% damage for the rest of the room (press E). A cursed chest opens for gear and Gold, and an ambush (E).
+   The goblin is a monster (MONSTERS.goblin) that runs and vanishes; a kill pays three pieces of gear. Which one is the room's seed. */
+export const EVENTS = { chance: 0.32, kinds: ["shrine", "chest", "goblin"], shrine: { dmg: 0.25 }, chest: { items: 2, ambush: 4, crowns: 6 }, goblin: { items: 3, crowns: 10 } };
+
+/* ------------------------------------------------------------ BOSS TIERS (2026-10-03, the brief: "Normal, Veteran, Nightmare, Torment, Ascended ... stronger
+   enemies, additional mechanics, better loot, exclusive drops ... Boss tier selection should happen in The Lounge before the party enters").
+   Picked at the campaign door for an area with a boss; a tier opens when the one below is cleared (`progress.bosses[boss]` is how many are).
+   Each tier multiplies the boss's health and damage and quickens his patterns; from Nightmare his ring calls guards, from Torment he
+   ENRAGES under a share of his health (faster, harder), Ascended fires a second ring and always drops a Legendary. A clear pays BOSS SHARDS,
+   the third currency: Hexa rerolls a Legendary's or a Set piece's line for them ("Modify Legendary properties later", now). */
+export const BOSS_TIERS = [
+  { k: "normal",    name: "Normal",    hp: 1,   dmg: 1,    every: 1,    shards: 1, says: "the boss as he is" },
+  { k: "veteran",   name: "Veteran",   hp: 1.6, dmg: 1.25, every: 0.85, shards: 2, says: "tougher, and his patterns come sooner" },
+  { k: "nightmare", name: "Nightmare", hp: 2.5, dmg: 1.5,  every: 0.75, shards: 3, adds: 2, says: "his ring calls two guards" },
+  { k: "torment",   name: "Torment",   hp: 4,   dmg: 1.8,  every: 0.7,  shards: 5, adds: 2, enrage: 0.3, says: "and he enrages under 30% health" },
+  { k: "ascended",  name: "Ascended",  hp: 6.5, dmg: 2.2,  every: 0.6,  shards: 8, adds: 3, enrage: 0.4, second: true, legendary: true, says: "a second ring, enraged under 40%, and a Legendary every time" } ];
+export const SHARDS = { key: "shards", name: "Boss Shards", one: "Boss Shard", icon: "items/abyss_crystal.png", ex: "What a boss leaves behind. Hexa reworks a Legendary's line for them.",
+  enchant: (it) => (it?.r === 3 ? 3 : 2) };
+export const ENRAGE = { every: 0.7, dmg: 1.3 };
+/** the boss at a tier: health, damage, the pace of his patterns, what the tier adds */
+export function bossTierDef(d, btier = 0) {
+  const B = BOSS_TIERS[btier | 0]; if (!B || !d.boss || !(btier | 0)) return d;
+  d.btier = btier | 0; d.name = `${B.name} ${d.name}`; d.hp = d.maxHp = Math.round(d.hp * B.hp); d.max = Math.round(d.max * B.dmg); d.bossEvery = (d.bossEvery || 2.1) * B.every;
+  if (B.adds) d.adds = B.adds; if (B.enrage) d.enrage = B.enrage; if (B.second) d.second = true; return d;
+}
+/** the number of a boss's tiers a character has cleared (0: none; Normal is always open) */
+export const bossTop = (A, boss) => (A?.progress?.bosses?.[boss] | 0);
+/** a Legendary's or a Set piece's line, rerolled in its own range (Hexa, for Boss Shards) */
+export function rework(it, i, rnd = Math.random) {
+  if (!validItem(it) || !(it.r === 3 || it.r === 4)) return { err: "Only a Legendary or a Set piece is reworked for Boss Shards." };
+  i |= 0; const l = it.lines[i]; if (!l) return { err: "Pick one of the item's lines." };
+  const [lo, hi] = rollRange(it, l.id), lines = it.lines.map((x) => ({ ...x })); lines[i] = { id: l.id, v: lo + Math.floor(rnd() * (hi - lo + 1)) };
+  return { item: { ...it, lines } };
+}
 
 /* ------------------------------------------------------------ the campaign and maps (the owner: "a campaign to get users through the basics, and then maps") */
 export const CAMPAIGN = [
@@ -256,11 +327,11 @@ export const riftArea = (t) => ({ n: RIFTS.base + t, name: `Rift ${t}`, act: 0, 
 /** any area by number: a campaign area (1, 2, 3, ...) or a Rift (101, 102, ...) */
 export function areaOf(n) { if (isRift(n)) return riftArea(riftOf(n)); for (const a of CAMPAIGN) for (const x of a.areas) if (x.n === n) return { ...x, act: a.act, actName: a.name }; return null; }
 /** a monster at an area level, with a run's modifiers and Rift tier baked in (the server and the page both use this, so a hit is judged on the same numbers) */
-export function mobDef(k, alvl, mods = [], tier = 0) {
+export function mobDef(k, alvl, mods = [], tier = 0, btier = 0) {
   const d = monsterAt(k, alvl), sc = tier > 0 ? RIFTS.scale(tier) : { hp: 1, dmg: 1 }; let hp = sc.hp, dmg = sc.dmg, spd = 1, every = 1, bossEvery = 1;
   for (const key of mods) { const M = MAP_MODS[key]; if (!M) continue; if (M.mob) { hp *= M.mob.hp || 1; dmg *= M.mob.dmg || 1; spd *= M.mob.spd || 1; every *= M.mob.every || 1; } if (d.boss && M.boss) { hp *= M.boss.hp || 1; bossEvery *= M.boss.every || 1; } }
   d.hp = d.maxHp = Math.round(d.hp * hp); d.max = Math.round(d.max * dmg); d.spd = d.spd * spd; if (d.every) d.every = d.every * every; d.bossEvery = 2.1 * bossEvery;
-  return d;
+  return d.boss ? bossTierDef(d, btier) : d;
 }
 /** a character's numbers in a run with these modifiers (only Draining touches the player) */
 export function applyPlayerMods(g, mods = []) { for (const k of mods) { const P = MAP_MODS[k]?.player; if (P?.mpRegen) g.mpRegen *= P.mpRegen; } return g; }
@@ -321,7 +392,7 @@ export const SETS = {
     bonus: [[2, "12% faster movement and 20% more drops", { move: 0.12, find: 0.2 }], [4, "+1 projectile and +15% damage", { bolts: 1, pdmg: 0.15 }]],
     pieces: { body: ["Dealer's Toga", "items/toga.png", [["hp", 1.1], ["def", 1.1]]], gloves: ["Dealer's Gloves", "items/bessemergloves.png", [["dmg", 1.1], ["speed", 1.1]]],
       ring: ["Dealer's Ring", "items/raptor_ring.png", [["dmg", 1.1], ["find", 1.1]]], offhand: ["Dealer's Shield", null, [["hp", 1.1], ["mp", 1.1]]] } } };
-export const SPECIAL_DROP = { legendary: 0.02, set: 0.02, bossLegendary: 0.08, bossSet: 0.08 };
+export const SPECIAL_DROP = { legendary: 0.02, set: 0.02, bossLegendary: 0.08, bossSet: 0.08, eliteLegendary: 0.05, eliteSet: 0.05 };
 /** a legendary's or set piece's fixed shape: { name, slot, style, icon, lines: [[affix, multiplier]] }, or null for an ordinary item */
 export function specFor(it) {
   if (it?.r === 3 && LEGENDARIES[it.lg]) { const U = LEGENDARIES[it.lg]; return { name: U.name, slot: U.slot, style: U.style || null, icon: U.icon, lines: U.lines }; }
@@ -352,13 +423,18 @@ export function rollSetPiece(ilvl, { rnd = Math.random, key = null, slot = null 
   return special(4, s, specFor({ r: 4, s, slot: sl }), ilvl, rnd);
 }
 /** what an item drop is: now and then a legendary or a set piece, otherwise an ordinary roll */
-export function rollDrop(ilvl, { style = "magic", boss = false, rnd = Math.random } = {}) {
-  const x = rnd(), u = boss ? SPECIAL_DROP.bossLegendary : SPECIAL_DROP.legendary, s = boss ? SPECIAL_DROP.bossSet : SPECIAL_DROP.set;
+export function rollDrop(ilvl, { style = "magic", boss = false, elite = false, rnd = Math.random } = {}) {
+  const x = rnd(), u = boss ? SPECIAL_DROP.bossLegendary : elite ? SPECIAL_DROP.eliteLegendary : SPECIAL_DROP.legendary, s = boss ? SPECIAL_DROP.bossSet : elite ? SPECIAL_DROP.eliteSet : SPECIAL_DROP.set;
   if (x < u) return rollLegendary(ilvl, { style, rnd }); if (x < u + s) return rollSetPiece(ilvl, { rnd });
-  return rollItem(ilvl, { style, boss, rnd });
+  return rollItem(ilvl, { style, boss, elite, rnd });
 }
-/** what an item is called: "Rare Diamond Helm", "Diamond Helm", "The King's Wrench" */
-export const itemName = (it) => (it?.r >= 3 ? it.base : it?.r ? `${RARITY[it.r].name} ${it.base}` : it?.base || "");
+/** what an item is called: a Common is its base ("Diamond Helm"); a Magic or Rare takes its first line's prefix and its second line's suffix
+    ("Keen Diamond Helm of the Bear"); a Legendary or Set piece has its own name. The colour says the rarity. */
+export function itemName(it) {
+  if (!it) return ""; if (it.r >= 3 || !it.r || !it.lines?.length) return it.base || "";
+  const pre = AFFIXES[it.lines[0]?.id]?.pre, suf = it.lines[1] ? AFFIXES[it.lines[1].id]?.suf : null;
+  return `${pre ? `${pre} ` : ""}${it.base}${suf ? ` ${suf}` : ""}`;
+}
 /* A GRANT is the one shape every power and set bonus is written in. Keys: pdmg, speed, crit, critX, hpPct, mpPct, def, move, leech, find,
    crownsPct, bolts, pierce, double (chance a hit lands twice), lifeKill / manaKill (flat on a kill), lifeKillPct / manaKillPct (of the
    maximum, on a kill), dodgePct (faster dodge recovery), mpRegenPct, tough (damage taken, -0.1 = 10% MORE). arena-sim's statsFor adds them. */
