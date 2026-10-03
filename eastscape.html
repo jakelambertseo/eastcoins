@@ -4455,7 +4455,10 @@ cv.addEventListener("pointerdown", (e) => {
   if (t && t.kind === "player" && !/^(crypt|pyramid):/.test(String(Z.key))) { clickMark = { x: t.x, y: t.y, at: performance.now() }; popup(t.name, "", "🙂", [["📜 Profile", () => openProfile({ id: t.id, name: t.name })], ["🤝 Trade", () => send({ t: "trade", op: "req", to: t.id })], ["🗝️ Invite to party", () => send({ t: "party", op: "invite", to: t.id })], ["Never mind", null]]); return; }   /* (v103: parties; v107: profiles) */
   if (t && (t.kind === "pvp" || t.kind === "ground")) {
     send({ t: "act", kind: t.kind, id: t.id });
-    if (from) predGo(G.findPath(Z.g, from, { x: t.x, y: t.y }, t.kind === "ground" ? 0 : 1));
+    /* (2026-10-03, the owner, with a bow in the Wild: "it seems like its walking me in close") The page predicted a walk to ARM'S LENGTH for
+       every player attack, whatever was in hand; the server only wants you within your weapon's reach (pvpSwing), so an archer or mage saw
+       themselves walk right up and then get pulled back. The prediction now uses the same reach a monster click does. */
+    if (from) predGo(G.findPath(Z.g, from, { x: t.x, y: t.y }, t.kind === "ground" ? 0 : G.reachOfHeld(me)));
     clickMark = { x: t.x, y: t.y, at: performance.now(), red: t.kind === "pvp" }; return;
   }
   if (t) {
