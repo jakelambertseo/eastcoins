@@ -55,8 +55,15 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 .tray div i{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);height:var(--cd,0%)}
 .tray div.dry{box-shadow:inset 0 0 0 2px #2a6ad0,inset 0 0 12px rgba(0,0,0,.8)}
 .orbbar.lounge .tray div{opacity:.45}
-/* THE MENU PLAQUE, bottom right (the owner: "a drawn background with icons for buttons Inventory, Skills, Stats"): the tray's wood and gold */
-.menu{position:absolute;right:12px;bottom:12px;z-index:3;display:flex;gap:6px;padding:9px 10px 8px;border-radius:14px;background:linear-gradient(#5a3220,#3a2414 30%,#20140a);box-shadow:0 0 0 2px #c8963a,0 0 0 4px #20140a,inset 0 1px 0 rgba(255,226,122,.4),0 8px 18px rgba(0,0,0,.6)}
+/* the level bar, between the orbs over the tray (the owner, 2026-10-03: "with a big Level Number in the middle") */
+.mid{display:flex;flex-direction:column;align-items:stretch}
+.lvl{position:relative;height:24px;margin:0 -4px 8px;border-radius:8px;background:#1a110a;box-shadow:0 0 0 2px #c8963a,0 0 0 4px #20140a,inset 0 0 10px rgba(0,0,0,.8);overflow:hidden;z-index:2}
+.lvl i{position:absolute;left:0;top:0;bottom:0;width:var(--p,0%);background:linear-gradient(#ffe27a,#c8963a);transition:width .3s}
+.lvl b{position:absolute;inset:0;display:grid;place-items:center;font:900 15px Cinzel,serif;letter-spacing:.1em;text-transform:uppercase;color:#fff8e0;text-shadow:0 1px 0 #000,0 0 5px #000,0 0 2px #000}
+.lvl small{position:absolute;right:8px;top:0;bottom:0;display:grid;place-items:center;font:800 10px Lora,serif;color:#ffe7b0;text-shadow:0 1px 0 #000}
+/* THE MENU PLAQUE (the owner: "a drawn background with icons for buttons Inventory, Skills, Stats"), to the LEFT of the health orb since
+   2026-10-03 (it sat bottom right): the tray's wood and gold. It lives inside the orb bar, so it moves with it. */
+.menu{position:absolute;right:calc(100% + 10px);bottom:6px;z-index:3;pointer-events:auto;display:flex;gap:6px;padding:9px 10px 8px;border-radius:14px;background:linear-gradient(#5a3220,#3a2414 30%,#20140a);box-shadow:0 0 0 2px #c8963a,0 0 0 4px #20140a,inset 0 1px 0 rgba(255,226,122,.4),0 8px 18px rgba(0,0,0,.6)}
 .menu[hidden]{display:none}
 .menu::before{content:"";position:absolute;inset:3px;border-radius:11px;box-shadow:inset 0 0 0 1px rgba(255,226,122,.18);pointer-events:none}
 .menu button{position:relative;display:grid;justify-items:center;gap:2px;width:66px;padding:5px 0 3px;border:6px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png) 10 fill / 6px stretch;background:none;font:800 11px Lora,serif;color:#ffe27a;text-shadow:0 1px 0 #000;cursor:pointer}
@@ -65,7 +72,7 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 .menu button img{width:30px;height:30px;image-rendering:pixelated;filter:drop-shadow(0 2px 1px rgba(0,0,0,.6))}
 .menu button .lb{display:block}
 /* narrower than the bar plus a full plaque: the plaque stands on end, icons only, beside the mana orb */
-@media (max-width:1100px){.menu{flex-direction:column;padding:7px 6px}.menu button{width:50px;padding:4px 0 2px}.menu button .lb{display:none}}
+@media (max-width:1500px){.menu{flex-direction:column;padding:7px 6px}.menu button{width:50px;padding:4px 0 2px}.menu button .lb{display:none}}   /* on end below 1500px: beside the orb it would otherwise reach the chat tab */
 .menu button kbd{position:absolute;right:0;top:-3px;font:900 9px Lora,serif;color:#c8a878}
 .menu .pts{position:absolute;left:-6px;top:-10px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#ffd84a;color:#2a1a10;font:900 10px/16px Lora,serif;box-shadow:0 0 0 1.5px #20140a,0 0 8px rgba(255,216,74,.7)}.menu .pts[hidden]{display:none}
 /* THE CHAT, bottom left: EastScape's chat module (the Tavern look: its painted frame, pill header, buttons, the unread badge), its own channel */
@@ -95,9 +102,9 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 .win-head button{padding:1px 10px;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png) 10 fill / 5px stretch;background:none;font:800 12.5px Lora,serif;color:#ffe27a;text-shadow:0 1px 0 #000;cursor:pointer}
 /* the inventory, on the right: a paper doll over a grid (EastScape's doll layout and slot frames) */
 #invWin{right:10px;top:10px;bottom:118px;width:356px;max-width:calc(100% - 20px)}
-.doll{display:grid;grid-template-columns:58px 1fr 58px;grid-template-rows:repeat(4,58px);gap:6px;padding:12px 10px 8px;grid-template-areas:"helm fig weapon" "amulet fig offhand" "body fig gloves" "ring fig boots"}
+.doll{display:grid;grid-template-columns:46px 1fr 46px;grid-template-rows:repeat(4,46px);gap:3px;padding:8px 8px 4px;grid-template-areas:"helm fig weapon" "amulet fig offhand" "body fig gloves" "ring fig boots"}
 .doll-fig{grid-area:fig;border-radius:50% 50% 10px 10px / 30% 30% 10px 10px;background:radial-gradient(ellipse at 50% 85%,rgba(200,150,58,.22),transparent 62%),linear-gradient(#2a1c12,#140e0a);box-shadow:inset 0 0 0 2px #5a3a1a;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;overflow:hidden}
-.doll-fig img{width:150px;height:150px;image-rendering:pixelated;margin-bottom:-6px}
+.doll-fig img{width:104px;height:104px;image-rendering:pixelated;margin-bottom:-4px}
 .doll-fig span{font:800 11px Lora,serif;color:#c8a878;padding-bottom:6px;text-shadow:0 1px 0 #000}
 .cell{position:relative;aspect-ratio:1;display:grid;place-items:center;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png) 7 fill / 5px stretch;background:none;padding:0;cursor:pointer;min-width:0}
 .cell img{width:76%;height:76%;image-rendering:pixelated}.cell.empty img{opacity:.22;filter:grayscale(1)}
@@ -105,7 +112,7 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 .cell.r3{box-shadow:0 0 0 2px #ffcf3a,0 0 16px rgba(255,207,58,.85)}.cell.r4{box-shadow:0 0 0 2px #5ab4ff,0 0 14px rgba(90,180,255,.75)}
 .cell:hover{filter:brightness(1.25)}.cell.blank{cursor:default;opacity:.55}.cell.blank:hover{filter:none}
 .cell small{position:absolute;left:0;right:0;bottom:-2px;text-align:center;font:800 9px Lora,serif;color:#a89070;text-transform:capitalize}
-.invgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;padding:4px 10px 6px;overflow-y:auto;min-height:0;flex:1;align-content:start}
+.invgrid{display:grid;grid-template-columns:repeat(10,1fr);gap:0;padding:2px 8px 4px;overflow-y:auto;min-height:0;flex:1;align-content:start}   /* (the owner, 2026-10-03: "no padding, actually") */
 .invhead{display:flex;justify-content:space-between;padding:4px 12px 0;font:800 11px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#c8963a}
 .invfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 12px 8px;font:700 12px Lora,serif;color:#b8a888;border-top:1px solid rgba(255,226,122,.15)}.invfoot b{color:#ffd84a}.invfoot img{width:16px;height:16px;vertical-align:-3px;image-rendering:pixelated}
 /* stats: EastScape's Character window, the arena's numbers */
@@ -239,8 +246,14 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
   <div class="boss" id="bossBar" hidden><span id="bossName"></span><i id="bossHp"></i></div>
   <div class="tip" id="tip" hidden></div>
   <div class="orbbar lounge" id="orbbar" hidden>
+    <div class="menu" id="menu" hidden>
+      <button type="button" id="mInv" aria-pressed="false" title="Inventory (I)"><kbd>I</kbd><img src="/v3/assets/img/glad/flat/ui/bag.png" alt=""><span class="lb">Inventory</span></button>
+      <button type="button" id="mSkills" aria-pressed="false" title="Skills (T)"><kbd>T</kbd><span class="pts" id="mPts" hidden></span><img src="/v3/assets/img/glad/flat/items/skill_wizardry.png" alt=""><span class="lb">Skills</span></button>
+      <button type="button" id="mAdmin" aria-pressed="false" title="Admin" hidden><img src="/v3/assets/img/glad/flat/ui/scroll.png" alt=""><span class="lb">Admin</span></button>
+      <button type="button" id="mStats" aria-pressed="false" title="Stats (C)"><kbd>C</kbd><img src="/v3/assets/img/glad/flat/ui/g_character.png" alt=""><span class="lb">Stats</span></button>
+    </div>
     <div class="orb hp"><div class="liq" id="oHp"></div><div class="gloss"></div><b id="oHpN">-</b><small>Health</small></div>
-    <div class="tray" id="tray"></div>
+    <div class="mid"><div class="lvl" id="lvl"><i></i><b id="lvlN">Level 1</b><small id="lvlXp"></small></div><div class="tray" id="tray"></div></div>
     <div class="orb mp"><div class="liq" id="oMp"></div><div class="gloss"></div><b id="oMpN">-</b><small>Mana</small></div>
   </div>
   <!-- the chat: EastScape's chat module, the arena's own channel -->
@@ -252,13 +265,6 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
       <form class="chat-form" id="chatForm" autocomplete="off"><input id="chatIn" maxlength="120" placeholder="Say something… (Enter)" aria-label="Chat message"><button type="submit">Send</button></form>
     </div>
     <button type="button" class="chat-tab" id="chatTab" aria-expanded="false" aria-controls="chatBox"><img src="/v3/assets/img/glad/flat/ui/chat.png" alt=""><span>Chat</span> <span class="chat-unread" id="chatUnread" hidden>0</span></button>
-  </div>
-  <!-- the menu plaque -->
-  <div class="menu" id="menu" hidden>
-    <button type="button" id="mInv" aria-pressed="false" title="Inventory (I)"><kbd>I</kbd><img src="/v3/assets/img/glad/flat/ui/bag.png" alt=""><span class="lb">Inventory</span></button>
-    <button type="button" id="mSkills" aria-pressed="false" title="Skills (T)"><kbd>T</kbd><span class="pts" id="mPts" hidden></span><img src="/v3/assets/img/glad/flat/items/skill_wizardry.png" alt=""><span class="lb">Skills</span></button>
-    <button type="button" id="mAdmin" aria-pressed="false" title="Admin" hidden><img src="/v3/assets/img/glad/flat/ui/scroll.png" alt=""><span class="lb">Admin</span></button>
-    <button type="button" id="mStats" aria-pressed="false" title="Stats (C)"><kbd>C</kbd><img src="/v3/assets/img/glad/flat/ui/g_character.png" alt=""><span class="lb">Stats</span></button>
   </div>
   <!-- inventory: a paper doll over a grid, on the right -->
   <section class="win" id="invWin" hidden aria-label="Inventory"><div class="win-head"><img src="/v3/assets/img/glad/flat/ui/bag.png" alt=""><b>Inventory</b><small id="invSub"></small><button type="button" data-close="invWin" title="Close (I)">×</button></div>
@@ -298,7 +304,10 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 <div class="veil" id="veil"><span>Connecting to the server…</span></div>
 <script type="module">
 import * as R from "/v3/assets/js/arena-rules.js?v=8";   /* the arena's own rules: items, monsters, levels, classes, skills, the tree (shared with the Worker) */
-import { createSim } from "/v3/assets/js/arena-sim.js?v=5";   /* the fight itself, the same code the server runs (handed the rules, so they load once) */
+import { createSim } from "/v3/assets/js/arena-sim.js?v=5";
+import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=20";   /* EastScape's sounds, by name (the owner, 2026-10-03: "they all exist on eastscape already"); on/off and volume are the browser's, shared with EastScape */
+const snd = (name, o) => { try { SFX.play(name, o); } catch (e) { /* no audio here */ } };
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;   /* the fight itself, the same code the server runs (handed the rules, so they load once) */
 const SIM = createSim(R), { T, COLS, ROWS, W, H, SLOT_KEYS } = SIM, A = 2;
 const $ = (id) => document.getElementById(id), esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const DEV = location.hostname === "localhost" || location.hostname === "127.0.0.1";
@@ -349,6 +358,11 @@ function onMsg(m) {
   if (m.op === "stash") { regear(); if (S?.kind === "dungeon") tip("Gear you change now counts from your next run.", 2); }
   if (!$("invWin").hidden) renderInv(); if (!$("statWin").hidden) renderStats(); if (!$("shopWin").hidden) renderShop(); if (!$("enchWin").hidden) renderEnch(); if (!$("salvWin").hidden) renderSalv(); if (!$("riftWin").hidden) renderRifts(); if (!$("campWin").hidden) renderCamp();
   if (S?.kind === "lounge") renderTray();
+  if (m.refused) snd("ui_error");
+  if (m.op === "stash" && m.found) { snd(m.found.slot === "weapon" ? "gain_weapon" : "gain_gear"); if (m.found.r >= 3) snd("win_small", { vol: 0.5 }); else if (m.found.r === 2) snd("gem_shimmer", { vol: 0.5 }); }
+  if (m.op === "stash" && m.sold) snd("coins");
+  if (m.op === "buy" && m.bought) snd(m.bought.slot ? "equip" : "coins");
+  if (m.op === "enchant" && m.enchanted) snd("spell_buff");
   if (m.op === "stash" && m.salvaged) tip(`Salvaged ${m.salvaged.n} piece${m.salvaged.n === 1 ? "" : "s"}: +${m.salvaged.essence} ${R.ESSENCE.name}.`, 2);
   if (m.op === "stash" && m.sold) tip(`Sold for ${m.sold.paid} ${R.CURRENCY.name}.`, 2);
   if (m.op === "enchant") { if (m.refused) tip(m.refused, 3.5); else { tip(`Enchanted (${m.enchanted.paid} ${R.ESSENCE.name}).`, 2); regear(); } }
@@ -371,6 +385,7 @@ function chatLine(e, quiet = false) {
   if (e.sys) { p.className = "sys"; p.textContent = e.text; }
   else { p.className = e.id === ME?.id ? "mine" : ""; p.innerHTML = `<b class="${e.role ? `is-${e.role}` : ""}">${esc(e.name)}:</b> ${esc(e.text)}`; }
   L.append(p); while (L.children.length > 80) L.firstChild.remove(); if (at || e.id === ME?.id) L.scrollTop = L.scrollHeight;
+  if (!quiet && !e.sys && e.id !== ME?.id) snd("chat", { vol: 0.6 });
   if (!chatOpen && !quiet && !e.sys) { unread++; $("chatUnread").textContent = unread > 9 ? "9+" : unread; $("chatUnread").hidden = false; }
 }
 function lootLine(text, cls = "loot") { const L = $("lootLog"); L.querySelector(".empty")?.remove(); const p = document.createElement("p"); p.className = cls; p.textContent = text; L.append(p); while (L.children.length > 80) L.firstChild.remove(); L.scrollTop = L.scrollHeight; }
@@ -564,9 +579,10 @@ function onRun(m) {
     case "snap": return runSnap(m);
     case "ev": for (const e of m.ev) runEv(e); return;
     case "cast": return otherCast(m);
-    case "drop": S.drops.push({ ...m.d, t: 0 }); return;
+    case "drop": S.drops.push({ ...m.d, t: 0 }); if (m.d.item?.r >= 3) snd("jackpot", { vol: 0.35 }); else if (m.d.item?.r === 2) snd("gem", { vol: 0.5 }); return;
+    case "landed": if (!m.ok && m.full) lootLine("Your bag is full: that piece comes home when you leave, if there's room by then.", "bad"); S.foundN = m.me.found; return;
     case "got": return gotDrop(m);
-    case "quaffed": { S.belt = m.me.belt || {}; RUN.srvHp = m.me.hp; RUN.srvMp = m.me.mp; const P0 = R.POTIONS[m.k]; S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 30, text: P0.heal ? `+${Math.round(P0.heal * 100)}% health` : `+${Math.round(P0.mana * 100)}% mana`, t: 0.9, gold: !P0.heal }); renderTray(); return; }
+    case "quaffed": { snd("eat"); S.belt = m.me.belt || {}; RUN.srvHp = m.me.hp; RUN.srvMp = m.me.mp; const P0 = R.POTIONS[m.k]; S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 30, text: P0.heal ? `+${Math.round(P0.heal * 100)}% health` : `+${Math.round(P0.mana * 100)}% mana`, t: 0.9, gold: !P0.heal }); renderTray(); return; }
     case "lvl": return levelUp(m);
     case "pos": S.p.x = m.x; S.p.y = m.y; S.p.vx = S.p.vy = 0; return;
     case "say": return tip(m.text, 2);
@@ -619,20 +635,36 @@ function runEv(e) {
   if (e.t === "shot") { S.eb.push({ x: e.x, y: e.y, vx: e.vx, vy: e.vy, r: e.r, dmg: e.dmg, delay: e.delay, boss: e.boss, t: 6 }); if (S.eb.length > 400) S.eb.splice(0, S.eb.length - 400); }
   else if (e.t === "wake") { if (m && !m.seen) { m.seen = true; m.awake = true; S.fx.push({ kind: "num", x: m.x, y: m.y - 24, text: "!", t: 0.6, red: true }); if (m.d.boss) $("bossBar").hidden = false; } }
   else if (e.t === "tele") { if (m) S.fx.push(e.ring ? { kind: "tele", x: m.x, y: m.y, t: 0.3, big: true } : { kind: "line", x: m.x, y: m.y, a: e.a, t: 0.35 }); }
-  else if (e.t === "hit") { if (m) { m.hp = Math.max(0, m.hp - e.n); m.flash = 0.09; addNum(m, e.n, !!e.c, e.el); } }
-  else if (e.t === "kill") { if (m) { S.kills++; S.fx.push({ kind: "boom", x: m.x, y: m.y - 5, t: 0.45, big: m.d.boss }); m.hp = 0; S.mobs = S.mobs.filter((x) => x !== m); S.mobMap.delete(m.id); if (m.d.boss) { $("bossBar").hidden = true; tip(`${m.d.name} is down.`, 3); } } }
-  else if (e.t === "exit") { SIM.openExit(S.room); floorCache = null; tip("The last room is clear. The way out is open on the east wall.", 4); }
+  else if (e.t === "hit") { if (m) { m.hp = Math.max(0, m.hp - e.n); m.flash = 0.09; addNum(m, e.n, !!e.c, e.el); hitFeel(m, e); } }
+  else if (e.t === "kill") { if (m) { S.kills++; S.fx.push({ kind: "boom", x: m.x, y: m.y - 5, t: 0.45, big: m.d.boss }); m.hp = 0; snd("mob_die", { rate: m.d.boss ? 0.6 : 1, vol: e.by === ME.id ? 1 : 0.5 }); if (m.d.boss) shake(0.4); S.mobs = S.mobs.filter((x) => x !== m); S.mobMap.delete(m.id); if (m.d.boss) { $("bossBar").hidden = true; tip(`${m.d.name} is down.`, 3); } } }
+  else if (e.t === "exit") { SIM.openExit(S.room); floorCache = null; tip("The last room is clear. The way out is open on the east wall.", 4); snd("task_done"); }
 }
+/* THE LANDING (EastScape's combat pass, here): a hit is heard by what it was, the monster flinches away from whoever hit it, sparks fly,
+   a crit thumps and shakes a touch. Other people's hits are quieter. */
+const SPARK = { fire: "#ff9a4a", frost: "#bfe6ff", storm: "#d8ecff", arcane: "#d8b4ff" };
+function hitFeel(m, e) {
+  const mine = e.by === ME.id, from = mine ? S.p : S.others.get(e.by), a = from ? Math.atan2(m.y - from.y, m.x - from.x) : Math.random() * Math.PI * 2;
+  m.knock = { t: 0.14, max: 0.14, a };
+  const col = e.c ? "#ffe27a" : SPARK[e.el] || "#fff6e0", n = e.c ? 9 : 5, bits = [];
+  for (let i = 0; i < n; i++) { const b = a + (Math.random() - 0.5) * 2.4, v = 26 + Math.random() * 30; bits.push({ vx: Math.cos(b) * v, vy: Math.sin(b) * v - 18 }); }
+  S.fx.push({ kind: "sparks", x: m.x, y: m.y - 9, t: 0.32, max: 0.32, col, bits });
+  const style = mine ? ME.style : S.others.get(e.by)?.style, vol = mine ? 1 : 0.35;
+  if (e.c) { snd("crit", { vol }); if (mine) shake(0.14); }
+  else if (e.el) snd("hit", { vol: vol * 0.7, rate: e.el === "frost" ? 1.4 : e.el === "storm" ? 1.25 : 1.15 });
+  else snd(style === "archery" ? "arrow_hit" : "hit", { vol });
+}
+let shakeUntil = 0, shakeAmp = 0;
+function shake(secs, amp = 3) { if (REDUCED) return; shakeUntil = Math.max(shakeUntil, performance.now() + secs * 1000); shakeAmp = Math.max(shakeAmp, amp); }
 function otherCast(m) { const o = S.others.get(m.id); if (!o) return; const vis = { id: o.id, x: m.x, y: m.y, g: o.g }; SIM.castOn(S, vis, m.k, m.a, m.ax, m.ay, [], true); }
 function gotDrop(m) {
   const d = S.drops.find((x) => x.id === m.d); S.drops = S.drops.filter((x) => x.id !== m.d);
   S.crowns = m.me.crowns; S.foundN = m.me.found; S.belt = m.me.belt || {};
-  if (d?.item) { if (d.item.r) S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 26, text: RAR[d.item.r].name.toUpperCase() + "!", t: 1, gold: true }); lootLine(`Found ${NAME(d.item)} (item level ${d.item.ilvl}).`, d.item.r >= 2 ? "loot" : "sys"); if (!$("invWin").hidden) renderInv(); }
-  else if (d?.pot) { S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 24, text: R.POTIONS[d.pot].name, t: 0.9 }); lootLine(`Found a ${R.POTIONS[d.pot].name}.`, "sys"); renderTray(); }
-  else if (d?.crowns) S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 22, text: `+${d.crowns}`, t: 0.7, gold: true });
+  if (d?.item) { if (d.item.r) S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 26, text: RAR[d.item.r].name.toUpperCase() + "!", t: 1, gold: true }); lootLine(`Found ${NAME(d.item)} (item level ${d.item.ilvl}).`, d.item.r >= 2 ? "loot" : "sys"); if (!$("invWin").hidden) renderInv(); }   /* the Lounge's "stash" message brings it into the bag and plays the sound */
+  else if (d?.pot) { S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 24, text: R.POTIONS[d.pot].name, t: 0.9 }); lootLine(`Found a ${R.POTIONS[d.pot].name}.`, "sys"); renderTray(); snd("gain"); }
+  else if (d?.crowns) { S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 22, text: `+${d.crowns}`, t: 0.7, gold: true }); snd("coins", { vol: 0.45 }); }
   hudName();
 }
-function levelUp(m) { S.lvl = m.lvl; S.xp = m.me.xp; S.g = R.applyPlayerMods(myStats(S.lvl), S.mods || []); RUN.srvHp = m.me.hp; RUN.srvMp = m.me.mp; S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 36, text: `LEVEL ${S.lvl} · +1 skill point`, t: 1.8, gold: true }); lootLine(`Level ${S.lvl}! A skill point waits (T).`, "good"); hudName(); }
+function levelUp(m) { S.lvl = m.lvl; S.xp = m.me.xp; S.g = R.applyPlayerMods(myStats(S.lvl), S.mods || []); RUN.srvHp = m.me.hp; RUN.srvMp = m.me.mp; S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 36, text: `LEVEL ${S.lvl} · +1 skill point`, t: 1.8, gold: true }); lootLine(`Level ${S.lvl}! A skill point waits (T).`, "good"); snd("levelup"); hudName(); }
 function runOver(m) {
   if (!RUN) return; RUN.ended = true; forgetRun(); const r = m.result || {};
   S.over = true; mouse.down = false; keys.clear();
@@ -642,6 +674,7 @@ function runOver(m) {
     : m.how === "interrupted" ? `<p>${esc(m.note || "The server restarted. What you had found was kept.")}</p>`
     : `<p>${haul}</p>`;
   $("perkPick").innerHTML = m.how === "cleared" ? `<p class="note">Checking for a perk…</p>` : ""; $("backBtn").hidden = false; $("ovEnd").hidden = false;
+  snd(m.how === "died" ? "died" : m.how === "cleared" ? "levelup" : "ui_close");
   lootLine(m.how === "died" ? `You died in ${S.area.name}. What you found is kept.` : m.how === "cleared" ? `${S.area.name} cleared.` : "Back to the Lounge.", m.how === "died" ? "bad" : m.how === "cleared" ? "good" : "sys");
   try { RUN.ws?.close(); } catch (e) { /* gone */ }
   draw();
@@ -663,7 +696,7 @@ $("backBtn").addEventListener("click", () => { $("ovEnd").hidden = true; startLo
 
 function useDoor(d) {
   if (S.kind === "lounge") { if (d.to === "campaign") toggleWin("campWin", true); return; }
-  rsend({ op: "door", to: d.to });
+  snd("door"); rsend({ op: "door", to: d.to });
 }
 let tipT = 0; function tip(t, secs = 0.1) { $("tip").textContent = t; $("tip").hidden = false; tipT = Math.max(tipT, secs); }
 
@@ -673,14 +706,25 @@ function tryCast(k, ang) {
   const cost = s.mp; if (g.payHp ? p.hp <= cost + 1 : p.mp < cost) return false;
   S.cd[k] = SIM.cdOf(k, g); const sq = ++RUN.castSeq; RUN.pendC.push({ s: sq, cost });
   p.g = g; SIM.castOn(S, p, k, ang, mouse.x, mouse.y, [], true);   /* the shared cast reads the caster's numbers from p.g; a dash or a cry also sets p.dash / p.cry here */
+  castFeel(p, s, ang);
   rsend({ op: "cast", k, a: Math.round(ang * 1000) / 1000, ax: Math.round(mouse.x), ay: Math.round(mouse.y), s: sq });
   return true;
+}
+/* what a cast looks and sounds like: a swing lunges, a bow steps back on the draw, a spell glows; EastScape's sounds by kind */
+function castFeel(p, s, ang) {
+  const k = s.kind;
+  if (k === "arc" || k === "slam") { p.lunge = { t: 0.24, max: 0.24, a: ang, d: k === "slam" ? 6 : 4 }; snd("swing", { rate: k === "slam" ? 0.8 : 1 }); if (k === "slam") shake(0.12, 2); }
+  else if (k === "dash") snd("swing", { rate: 1.4, vol: 0.6 });
+  else if (k === "cry") snd("spell_buff");
+  else if (k === "arrow" || k === "fan" || k === "rain") { p.lunge = { t: 0.18, max: 0.18, a: ang, d: -2 }; snd("bow_release", { rate: k === "rain" ? 0.85 : 1.1 }); }
+  else if (k === "trap") snd("cast");
+  else { p.glow = 0.16; snd("spell_cast", { vol: 0.8 }); const el = { bolt: "spell_arcane", ring: "spell_fire", lance: "spell_frost", chain: "spell_storm" }[k]; if (el) snd(el, { vol: 0.55 }); }
 }
 /* a hit on you: this page decides it (so a dodge you saw counts); the server checks it and owns your health */
 function hurtMe(raw) {
   if (!RUN || S.dying) return;
   const p = S.p, cut = p.cry > 0 ? SK.war_cry.cut : 0, took = Math.max(1, Math.round(raw * (1 - S.g.tough) * (1 - cut))), sq = ++RUN.hurtSeq;
-  RUN.pendH.push({ s: sq, took }); p.inv = 0.5; p.hurt = 0.25;
+  RUN.pendH.push({ s: sq, took }); p.inv = 0.5; p.hurt = 0.25; snd("hurt"); if (took >= S.g.maxHp / 4) shake(0.22, 4);
   if (S.nums.length >= 70) S.nums.shift(); S.nums.push({ m: null, x: p.x, y: p.y - 30, n: took, crit: false, me: true, jx: 0, jy: 0, at: S.t, life: 0.8 });
   rsend({ op: "hurt", raw: Math.round(raw), s: sq });
 }
@@ -775,7 +819,9 @@ function step(dt) {
   SIM.moveCircle(S.room.g, p, 5, dt);
   const ang = Math.atan2(mouse.y - (p.y - 7), mouse.x - p.x), aiming = !frozen && (mouse.down || SLOT_KEYS.slice(1).some((k) => keys.has(k)));
   if (ix || iy || aiming) p.dir = ((Math.round(-(aiming ? ang : Math.atan2(iy, ix)) / (Math.PI / 4)) % 8) + 8) % 8;   /* screen y points down: W is -1, which is north */
-  for (const k in S.cd) S.cd[k] -= dt; p.dodgeCd -= dt; p.inv -= dt; p.hurt -= dt; p.cry -= dt;
+  for (const k in S.cd) S.cd[k] -= dt; p.dodgeCd -= dt; p.inv -= dt; p.hurt -= dt; p.cry -= dt; if (p.lunge) { p.lunge.t -= dt; if (p.lunge.t <= 0) p.lunge = null; } if (p.glow > 0) p.glow -= dt;
+  /* footsteps: one per tile you step onto, yours only (EastScape's rule) */
+  { const tx = Math.floor(p.x / T), ty = Math.floor(p.y / T); if (S.lastTile && (S.lastTile.x !== tx || S.lastTile.y !== ty) && !p.dash && p.dodging <= 0) snd("step_floor"); S.lastTile = { x: tx, y: ty }; }
   if (!frozen) {
     const npc = S.room.objs.find((o) => o.k === "npc" && Math.hypot((o.x + 0.5) * T - p.x, (o.y + 0.5) * T - p.y) < T * 2.2);
     if (npc) { tip(`${npc.name} · E`); if (keys.has("e")) { keys.delete("e"); toggleWin({ shop: "shopWin", salvage: "salvWin", enchant: "enchWin", rifts: "riftWin" }[npc.talk], true); } }
@@ -803,7 +849,12 @@ function step(dt) {
   if (RUN) { const now = performance.now(), sp = RUN.sent; if (now - RUN.posAt >= 50 && (!sp || Math.abs(sp.x - p.x) > 0.3 || Math.abs(sp.y - p.y) > 0.3 || sp.d !== p.dir)) { RUN.posAt = now; RUN.sent = { x: p.x, y: p.y, d: p.dir }; rsend({ op: "pos", r: S.roomI, x: Math.round(p.x * 10) / 10, y: Math.round(p.y * 10) / 10, d: p.dir }); } }
   /* monsters and the party, drawn between the server's updates */
   const rt = srvNow() - INTERP_DELAY;
-  for (const m of S.mobs) { interp(m, rt); m.flash -= dt; m.t += dt; if (!frozen && m.awake && m.d.melee && m.hp > 0 && p.inv <= 0 && Math.hypot(p.x - m.x, p.y - m.y) < m.d.r + 7) hurtMe(Math.round(m.d.max * 0.6)); }
+  /* THE WIND-UP (2026-10-03, the owner: "attack animations, hit effects, wind ups"): a melee monster in reach draws back for 0.3 s, heard
+     coming (EastScape's mob_swing), then lunges; the blow lands only if you're still in reach, so a dodge you saw counts. It used to land the
+     instant a monster touched you. A knocked monster's flinch counts down here too. */
+  for (const m of S.mobs) { interp(m, rt); m.flash -= dt; m.t += dt; if (m.knock) { m.knock.t -= dt; if (m.knock.t <= 0) m.knock = null; }
+    if (m.wind > 0) { m.wind -= dt; if (m.wind <= 0) { m.windCd = 0.5; if (!frozen && m.hp > 0 && m.stun <= 0 && p.inv <= 0 && Math.hypot(p.x - m.x, p.y - m.y) < m.d.r + 10) hurtMe(Math.round(m.d.max * 0.6)); } }
+    else { m.windCd = (m.windCd || 0) - dt; if (!frozen && m.awake && m.d.melee && m.hp > 0 && m.stun <= 0 && m.windCd <= 0 && Math.hypot(p.x - m.x, p.y - m.y) < m.d.r + 7) { m.wind = m.windMax = 0.3; snd("mob_swing", { rate: m.d.boss ? 0.7 : 1 }); } } }
   for (const o of S.others.values()) interp(o, rt);
   /* your skills fly here for the look of it; the server says what they hit */
   SIM.projStep(S, dt, []); SIM.zoneStep(S, dt, []);
@@ -822,22 +873,28 @@ function trayTick() {
 }
 function orbs() { const p = S.p, g = S.g; $("oHp").style.setProperty("--p", `${Math.max(0, Math.min(100, (p.hp / g.maxHp) * 100))}%`); $("oHpN").textContent = Math.max(0, Math.ceil(p.hp)); $("oMp").style.setProperty("--p", `${g.payHp ? 0 : Math.max(0, Math.min(100, (p.mp / g.maxMp) * 100))}%`); $("oMpN").textContent = g.payHp ? "—" : Math.floor(p.mp); }
 const clock = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
-function hudName() { if (!S) return; const lvl = S.lvl || ME.level, xp = S.xp ?? ME.xp; $("hName").innerHTML = `${esc(ME.name)} · <b>Level ${lvl}</b> <span style="font-weight:700;color:#ffd98a">· ${(ME.crowns + (S.kind === "dungeon" ? S.crowns || 0 : 0)).toLocaleString()} ${R.CURRENCY.name}</span><div class="bar" style="height:6px;width:220px;margin-top:4px"><i style="width:${Math.min(100, (xp / R.LEVEL.xpFor(lvl)) * 100)}%;background:linear-gradient(#ffe27a,#c8963a)"></i></div>`; }
+function hudName() { if (!S) return; const lvl = S.lvl || ME.level, xp = S.xp ?? ME.xp, need = R.LEVEL.xpFor(lvl);
+  $("hName").innerHTML = `${esc(ME.name)} <span style="font-weight:700;color:#ffd98a">· ${(ME.crowns + (S.kind === "dungeon" ? S.crowns || 0 : 0)).toLocaleString()} ${R.CURRENCY.name}</span>`;
+  $("lvlN").textContent = `Level ${lvl}`; $("lvlXp").textContent = lvl >= R.LEVEL.cap ? "max" : `${Math.floor(Math.min(100, (xp / need) * 100))}%`; $("lvl").style.setProperty("--p", `${Math.min(100, (xp / need) * 100)}%`); }
 
 /* ============================================================ THE MENU: Inventory (I), Skills (T), Stats (C). The game keeps running behind them, as ARPGs do. */
 const WINS = ["invWin", "statWin", "treeWin", "shopWin", "enchWin", "salvWin", "riftWin", "campWin", "admWin"];
 function syncMenu() { $("mAdmin").setAttribute("aria-pressed", String(!$("admWin").hidden)); $("mInv").setAttribute("aria-pressed", String(!$("invWin").hidden)); $("mSkills").setAttribute("aria-pressed", String(!$("treeWin").hidden)); $("mStats").setAttribute("aria-pressed", String(!$("statWin").hidden)); }
-function closeAll() { for (const id of WINS) $(id).hidden = true; syncMenu(); hideTip(); }
+function closeAll() { if (WINS.some((id) => !$(id).hidden)) snd("ui_close"); for (const id of WINS) $(id).hidden = true; syncMenu(); hideTip(); }
 /* the inventory sits on the right and can stay open beside the others; the rest are big windows, so one at a time */
 function toggleWin(id, open = $(id).hidden) {
   if (!ME?.style) return;
   if (open && id !== "invWin") for (const o of WINS) if (o !== id && o !== "invWin") $(o).hidden = true;
+  if (!!$(id).hidden === !!open) snd(open ? "ui_open" : "ui_close");
   $(id).hidden = !open; if (open) { if (id === "invWin") renderInv(); if (id === "statWin") renderStats(); if (id === "treeWin") renderTree(); if (id === "shopWin") renderShop(); if (id === "enchWin") renderEnch(); if (id === "salvWin") renderSalv(); if (id === "riftWin") renderRifts(); if (id === "campWin") renderCamp(); if (id === "admWin") admTab(ADM.tab); }
   syncMenu(); hideTip();
 }
 const toggleTree = (open) => toggleWin("treeWin", open);
 $("mInv").addEventListener("click", () => toggleWin("invWin")); $("mAdmin").addEventListener("click", () => toggleWin("admWin")); $("mSkills").addEventListener("click", () => toggleWin("treeWin")); $("mStats").addEventListener("click", () => toggleWin("statWin"));
 document.addEventListener("click", (e) => { const c = e.target.closest("[data-close]"); if (c) toggleWin(c.dataset.close, false); });
+/* every button clicks; moving over a cell or a button whispers (EastScape's bag sound, quiet) */
+document.addEventListener("click", (e) => { if (e.target.closest("button:not([data-close])")) snd("ui_click"); }, true);
+let hovEl = null; document.addEventListener("pointerover", (e) => { const c = e.target.closest(".cell:not(.blank), .tray div, .menu button, .camplist .row, .shop .row, .nd"); if (c && c !== hovEl) { hovEl = c; snd("inv", { vol: 0.45 }); } });
 
 /* ---------- INVENTORY: a paper doll at the top, a grid below it (the owner: "paperdoll style that opens in the right hand side") */
 const IMPL = { def: "armour", dmg: "damage", hp: "health", mp: "mana" };
@@ -868,10 +925,10 @@ function renderInv() {
 $("invWin").addEventListener("click", (e) => {
   const pt = e.target.closest("[data-pot]"); if (pt) { tip("Potions come into every run with you: 4 for health, 5 for mana.", 2.5); hideTip(); return; }
   const w = e.target.closest("[data-worn]"), c = e.target.closest("[data-inv]");
-  if (w && ME.worn?.[w.dataset.worn]) { send({ op: "unequip", slot: w.dataset.worn }); hideTip(); }
+  if (w && ME.worn?.[w.dataset.worn]) { send({ op: "unequip", slot: w.dataset.worn }); snd("drop"); hideTip(); }
   if (c) { const i = +c.dataset.inv, it = ME.stash[i]; if (!it) return;
-    if (e.shiftKey) { if (it.r >= 2 && !confirm(`Salvage ${NAME(it)} for ${R.salvageEssence(it)} ${R.ESSENCE.name}?`)) return; send({ op: "salvage", i }); }
-    else send({ op: "equip", i });
+    if (e.shiftKey) { if (it.r >= 2 && !confirm(`Salvage ${NAME(it)} for ${R.salvageEssence(it)} ${R.ESSENCE.name}?`)) return; send({ op: "salvage", i }); snd("anvil"); }
+    else { send({ op: "equip", i }); snd(it.slot === "weapon" ? "equip_weapon" : "equip"); }
     hideTip(); }
 });
 $("invWin").addEventListener("pointermove", (e) => { const w = e.target.closest("[data-worn]"), c = e.target.closest("[data-inv]"), pt = e.target.closest("[data-pot]");
@@ -918,8 +975,8 @@ function renderSalv() {
       <div class="acts" style="margin-top:8px"><button type="button" class="a" data-salvall="0" ${n(0) ? "" : "disabled"}>All Common (${n(0)} → ${tot(0)})</button><button type="button" class="a" data-salvall="1" ${n(1) ? "" : "disabled"}>Common and Magic (${n(1)} → ${tot(1)})</button></div>
       <p class="note" style="margin:8px 0 0">Dex buys for ${R.CURRENCY.name} instead, if you'd rather.</p></div>` + wallet();
 }
-$("salv").addEventListener("click", (e) => { const c = e.target.closest("[data-salv]"); if (c) { const i = ME.stash.findIndex((x) => x.id === c.dataset.salv), it = ME.stash[i]; if (it && (it.r < 2 || confirm(`Salvage ${NAME(it)} for ${R.salvageEssence(it)} ${R.ESSENCE.name}?`))) send({ op: "salvage", i }); hideTip(); return; }
-  const a = e.target.closest("[data-salvall]"); if (a && !a.disabled) send({ op: "salvage", all: +a.dataset.salvall }); });
+$("salv").addEventListener("click", (e) => { const c = e.target.closest("[data-salv]"); if (c) { const i = ME.stash.findIndex((x) => x.id === c.dataset.salv), it = ME.stash[i]; if (it && (it.r < 2 || confirm(`Salvage ${NAME(it)} for ${R.salvageEssence(it)} ${R.ESSENCE.name}?`))) { send({ op: "salvage", i }); snd("anvil"); } hideTip(); return; }
+  const a = e.target.closest("[data-salvall]"); if (a && !a.disabled) { send({ op: "salvage", all: +a.dataset.salvall }); snd("anvil"); } });
 $("salv").addEventListener("pointermove", (e) => { const c = e.target.closest("[data-salv]"); if (c) { const it = ME.stash.find((x) => x.id === c.dataset.salv); if (it) return showTip(itemTip(it, `Click to salvage for ${R.salvageEssence(it)} ${R.ESSENCE.name}`), e); } hideTip(); });
 $("salv").addEventListener("pointerleave", hideTip);
 
@@ -1114,7 +1171,8 @@ function draw(now = performance.now()) {
   const { w, h } = fitView(); aimCamera(); cx.fillStyle = "#0e0c12"; cx.fillRect(0, 0, w, h);
   if (!S) return;
   if (!floorCache) floorCache = paintFloor();
-  cx.save(); cx.translate(view.ox, view.oy); cx.scale(view.s, view.s); cx.drawImage(floorCache, 0, 0, W, H);
+  const shk = shakeUntil > now ? shakeAmp : 0; if (shk === 0) shakeAmp = 0;
+  cx.save(); cx.translate(view.ox + (shk ? (Math.random() - 0.5) * 2 * shk : 0), view.oy + (shk ? (Math.random() - 0.5) * 2 * shk : 0)); cx.scale(view.s, view.s); cx.drawImage(floorCache, 0, 0, W, H);
   /* telegraphs and ground effects, under everything */
   for (const f of S.fx) if (f.kind === "tele") { cx.strokeStyle = `rgba(255,80,60,${f.t * 3})`; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(f.x, f.y - 5, f.big ? 34 : 16, 0, Math.PI * 2); cx.stroke(); } else if (f.kind === "line") { cx.strokeStyle = `rgba(255,120,80,${f.t * 2.5})`; cx.lineWidth = 1.5; cx.setLineDash([4, 4]); cx.beginPath(); cx.moveTo(f.x, f.y - 5); cx.lineTo(f.x + Math.cos(f.a) * 240, f.y - 5 + Math.sin(f.a) * 240); cx.stroke(); cx.setLineDash([]); }
   for (const z of S.zones) { if (z.kind === "rain") { cx.strokeStyle = "rgba(255,226,122,.55)"; cx.lineWidth = 1; cx.beginPath(); cx.arc(z.x, z.y, z.r, 0, Math.PI * 2); cx.stroke(); for (let i = 0; i < 3; i++) { const a = hashRand(i, Math.floor(z.t * 8), 3) * Math.PI * 2, rr = hashRand(i, Math.floor(z.t * 8), 7) * z.r; strip(fxImg(z.art), z.t * 20 + i * 3, z.x + Math.cos(a) * rr, z.y + Math.sin(a) * rr - 4, 18); } }
@@ -1125,12 +1183,16 @@ function draw(now = performance.now()) {
   for (const o of all) {
     if (o.npc) { const im = img(`${F}${o.npc.art}_south.png`); if (im.complete && im.naturalWidth) cx.drawImage(im, (o.npc.x + 0.5) * T - 17, (o.npc.y + 1) * T - 31, 34, 34); continue; }
     if (o.o) { const q = o.o, im = img(`${F}look${q.look}_${DIRS[q.d] || "south"}.png`); if (im.complete && im.naturalWidth) cx.drawImage(im, q.x - 17, q.y - 31, 34, 34); continue; }
-    if (o.p) { const p = S.p, im = img(`${F}look${ME.look}_${DIRS[p.dir]}.png`); if (p.dodging > 0 || p.dash) cx.globalAlpha = 0.55; if (p.hurt > 0) cx.filter = "brightness(2) sepia(1) saturate(6) hue-rotate(-40deg)";
+    if (o.p) { const p = S.p, im = img(`${F}look${ME.look}_${DIRS[p.dir]}.png`); if (p.dodging > 0 || p.dash) cx.globalAlpha = 0.55; if (p.hurt > 0) cx.filter = "brightness(2) sepia(1) saturate(6) hue-rotate(-40deg)"; else if (p.glow > 0) cx.filter = "brightness(1.5)";
       if (p.cry > 0) { cx.strokeStyle = `rgba(255,216,74,${0.35 + 0.2 * Math.sin(S.t * 10)})`; cx.lineWidth = 1.5; cx.beginPath(); cx.ellipse(p.x, p.y - 1, 9, 4, 0, 0, Math.PI * 2); cx.stroke(); }
-      if (im.complete && im.naturalWidth) cx.drawImage(im, p.x - 17, p.y - 31, 34, 34); cx.filter = "none"; cx.globalAlpha = 1;
+      const L = p.lunge, lk = L ? Math.sin((1 - L.t / L.max) * Math.PI) * L.d : 0, lx = L ? Math.cos(L.a) * lk : 0, ly = L ? Math.sin(L.a) * lk : 0;   /* a swing lunges, a bow steps back on the draw */
+      if (im.complete && im.naturalWidth) cx.drawImage(im, p.x - 17 + lx, p.y - 31 + ly, 34, 34); cx.filter = "none"; cx.globalAlpha = 1;
       if (S.kind === "dungeon") { cx.fillStyle = "#fff"; cx.beginPath(); cx.arc(p.x, p.y - 1, 1.6, 0, Math.PI * 2); cx.fill(); } continue; }
     const m = o.m, d = m.d, im = img(`${F}${d.art}.png`), s = im.naturalWidth / 2 || 34, bob = m.awake && m.stun <= 0 && Math.hypot(m.vx, m.vy) > 4 ? Math.sin(m.t * 14) * 1.5 : 0;
-    cx.save(); cx.translate(m.x, m.y + bob); if (m.vx < 0) cx.scale(-1, 1); if (!m.awake) cx.globalAlpha = 0.85;
+    let ox = 0, oy = 0;   /* a flinch away from the hit; a wind-up: back, then the lunge */
+    if (m.knock) { const k = m.knock.t / m.knock.max; ox += Math.cos(m.knock.a) * 5 * k; oy += Math.sin(m.knock.a) * 5 * k; }
+    if (m.wind > 0) { const k = 1 - m.wind / m.windMax, l = k < 0.7 ? -3 * (k / 0.7) : -3 + 11 * ((k - 0.7) / 0.3), dx = S.p.x - m.x, dy = S.p.y - m.y, dd = Math.hypot(dx, dy) || 1; ox += (dx / dd) * l; oy += (dy / dd) * l; }
+    cx.save(); cx.translate(m.x + ox, m.y + bob + oy); if (m.vx < 0) cx.scale(-1, 1); if (!m.awake) cx.globalAlpha = 0.85;
     if (m.flash > 0) cx.filter = "brightness(2.2)"; else if (m.slow > 0) cx.filter = "hue-rotate(160deg) saturate(1.6)";
     if (im.complete && im.naturalWidth) cx.drawImage(im, -s / 2, -s + 4, s, s); else { cx.fillStyle = "#a04030"; cx.fillRect(-d.r, -d.r * 2, d.r * 2, d.r * 2); }
     cx.filter = "none"; cx.restore(); cx.globalAlpha = 1;
@@ -1145,6 +1207,7 @@ function draw(now = performance.now()) {
     else if (f.kind === "slash") { const k = 1 - f.t / f.max; cx.strokeStyle = f.big ? `rgba(255,190,120,${1 - k})` : `rgba(255,248,224,${1 - k})`; cx.lineWidth = f.big ? 4 : 3; cx.beginPath(); cx.arc(f.x, f.y, f.r * (0.65 + k * 0.35), f.a - f.half, f.a + f.half); cx.stroke(); }
     else if (f.kind === "zap") { cx.strokeStyle = `rgba(200,230,255,${f.t * 6})`; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(f.x, f.y); const mx = (f.x + f.x2) / 2 + (Math.random() - 0.5) * 8, my = (f.y + f.y2) / 2 + (Math.random() - 0.5) * 8; cx.lineTo(mx, my); cx.lineTo(f.x2, f.y2); cx.stroke(); }
     else if (f.kind === "cry") { const k = 1 - f.t / 0.6; cx.strokeStyle = `rgba(255,216,74,${1 - k})`; cx.lineWidth = 2; cx.beginPath(); cx.arc(f.x, f.y, f.r * k, 0, Math.PI * 2); cx.stroke(); }
+    else if (f.kind === "sparks") { const k = 1 - f.t / f.max; cx.fillStyle = f.col; cx.globalAlpha = 1 - k; for (const b of f.bits) cx.fillRect(Math.round(f.x + b.vx * k * f.max * 2.2) - 1, Math.round(f.y + (b.vy * k + 60 * k * k) * f.max * 2.2) - 1, 2, 2); cx.globalAlpha = 1; }
   }
   cx.restore();
   /* screen-space text: other players' names, loot labels and beams, the small callouts ("!", LEVEL, +Crowns), then the damage numbers on top */
