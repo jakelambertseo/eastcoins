@@ -16,7 +16,7 @@ export function createSim(R) {
   const T = 16, COLS = R.GRID.cols, ROWS = R.GRID.rows, W = COLS * T, H = ROWS * T, SK = R.SKILLS;
   const SLOT_KEYS = ["lmb", "q", "1", "2", "3"];
   const AREAS = R.CAMPAIGN.flatMap((a) => a.areas.map((x) => ({ ...x, act: a.act, actName: a.name })));
-  const areaOf = (n) => AREAS.find((a) => a.n === n) || null;
+  const areaOf = (n) => R.areaOf(n);   /* a campaign area or a map tier (101-110) */
   /** a seeded generator (Park-Miller): the same seed gives the same numbers in every browser and on the server */
   const rng = (seed) => { let s = (Math.abs(Math.floor(seed)) % 2147483646) + 1; return () => (s = (s * 16807) % 2147483647) / 2147483647; };
   const walk = (g, x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && g[y][x] === ".";
@@ -24,16 +24,20 @@ export function createSim(R) {
 
   /* ------------------------------------------------------------ rooms: EastScape's grid (44 x 26 at 16 px), the Crypt's stone */
   const blankGrid = () => Array.from({ length: ROWS }, (_, y) => Array.from({ length: COLS }, (_, x) => (x === 0 || x === COLS - 1 || y <= 1 || y === ROWS - 1 ? "v" : ".")));
-  /** the Lounge: the stash, Dex, the campaign door on the east wall */
+  /** the Lounge (the brief's layout, compact): the stash, the campaign door east, and the four NPCs: Dex the Merchant, Brutus the Blacksmith at his
+      anvil, Hexa the Enchanter, Charon the Rift Keeper by the sarcophagus (his portal, for now) */
   function makeLounge() {
     const g = blankGrid(), objs = [];
     for (let x = 6; x < COLS - 6; x += 9) objs.push({ k: "torch", x, y: 1 });
-    objs.push({ k: "chest", x: 4, y: 6, name: "Your stash" }, { k: "sarc", x: 22, y: 5 }, { k: "npc", art: "dex", x: 9, y: 7, name: "Dex, the cashier", talk: "shop" });
+    objs.push({ k: "chest", x: 4, y: 6, name: "Your stash" }, { k: "sarc", x: 22, y: 5 }, { k: "npc", art: "dex", x: 9, y: 7, name: "Dex, the Merchant", talk: "shop" },
+      { k: "anvil", x: 16, y: 7 }, { k: "npc", art: "brutus", x: 15, y: 7, name: "Brutus, the Blacksmith", talk: "salvage" },
+      { k: "npc", art: "hexa", x: 9, y: 17, name: "Hexa, the Enchanter", talk: "enchant" },
+      { k: "npc", art: "charon", x: 24, y: 7, name: "Charon, the Rift Keeper", talk: "rifts" });
     g[13][COLS - 1] = "e"; objs.push({ k: "door", x: COLS - 1, y: 13, to: "campaign", name: "The campaign" });
     return { g, objs, packs: [], kind: "lounge" };
   }
   /** room i of a run: walls with gaps, pillars, bones, packs. Pure function of (seed, area, i). */
-  function makeRoom(seed, n, i) {
+  function makeRoom(seed, n, i, mods = []) {
     const AR = areaOf(n), rnd = rng(seed + i * 977), g = blankGrid(), objs = [], packs = [];
     const nWalls = 2 + (i % 2), xs = [];
     for (let k = 0; k < nWalls; k++) { const x = 8 + Math.floor(((k + 0.5) / nWalls) * (COLS - 16)) + Math.floor(rnd() * 4) - 2; xs.push(x); const gap = 5 + Math.floor(rnd() * (ROWS - 12)), gh = 4 + Math.floor(rnd() * 3); for (let y = 2; y < ROWS - 1; y++) if (y < gap || y >= gap + gh) g[y][x] = "v"; }
@@ -44,7 +48,7 @@ export function createSim(R) {
     g[13][0] = "e"; objs.push({ k: "door", x: 0, y: 13, to: "back", name: i === 0 ? "The stairs up to the Lounge" : "Back a room" });
     const last = i === AR.rooms - 1;
     if (!last) { g[13][COLS - 1] = "e"; objs.push({ k: "door", x: COLS - 1, y: 13, to: "next", name: "Deeper" }); }
-    const np = last && AR.boss ? 2 : 3;
+    const np = (last && AR.boss ? 2 : 3) + R.extraPacks(mods);   /* a map's Crowded modifier adds a pack */
     for (let k = 0; k < np; k++) { let x, y, tries = 0; do { x = 10 + Math.floor(rnd() * (COLS - 14)); y = 3 + Math.floor(rnd() * (ROWS - 6)); tries++; } while (tries < 50 && !(walk(g, x, y) && walk(g, x + 1, y) && walk(g, x, y + 1) && walk(g, x - 1, y)));
       const kinds = i === 0 ? AR.pool.filter((q) => q !== "golem") : AR.pool, size = 3 + Math.floor(rnd() * 3), mobs = []; for (let j = 0; j < size; j++) mobs.push(kinds[Math.floor(rnd() * kinds.length)]);
       packs.push({ x, y, mobs }); }
@@ -66,16 +70,21 @@ export function createSim(R) {
     const level = C.level || 1, B = R.LEVEL.base(level), St = R.STYLES[C.style] || R.STYLES.magic, TG = R.treeGrants(C.style || "magic", C.tree || []);
     const g = { level, dmg: B.dmg, pdmg: TG.dmg, speed: TG.speed, spd: 1 + TG.move + (St.mods.move || 0), def: St.mods.def + TG.def, leech: TG.leech, find: 0, crownsPct: 0, pierce: TG.pierce, bolts: 1 + TG.bolts,
       dodgeCd: 1.2, maxHp: B.hp * St.mods.hp * (1 + TG.hp), maxMp: B.mp * St.mods.mp * (1 + TG.mp), mpRegen: 7 * (1 + TG.mpRegen), rules: new Set(TG.rules), ring: 16, ringCd: 0, crit: 0.06, critX: 1.5,
+      hpPct: 0, mpPct: 0, toughPlus: 0, double: 0, lifeKill: 0, lifeKillPct: 0, manaKill: 0, manaKillPct: 0, dodgePct: 0, mpRegenPct: 0,   /* the grants (R.applyGrant): legendary powers and set bonuses */
       src: { dmg: B.dmg, hp: Math.round(B.hp * St.mods.hp), mp: Math.round(B.mp * St.mods.mp), gearDmg: 0, gearHp: 0, gearDef: 0, tree: TG } };
     for (const it of Object.values(C.worn || {})) {
       for (const [k, v] of Object.entries(it.implicit || {})) { if (k === "dmg") { g.dmg += v; g.src.gearDmg += v; } if (k === "def") { g.def += v; g.src.gearDef += v; } if (k === "hp") { g.maxHp += v; g.src.gearHp += v; } if (k === "mp") g.maxMp += v; }
       for (const l of it.lines || []) { const v = l.v; if (l.id === "dmg") { g.dmg += v; g.src.gearDmg += v; } if (l.id === "pdmg") g.pdmg += v / 100; if (l.id === "speed") g.speed += v / 100; if (l.id === "hp") { g.maxHp += v; g.src.gearHp += v; } if (l.id === "mp") g.maxMp += v;
-        if (l.id === "mpRegen") g.mpRegen *= 1 + v / 100; if (l.id === "def") { g.def += v; g.src.gearDef += v; } if (l.id === "move") g.spd += v / 100; if (l.id === "leech") g.leech += v / 100; if (l.id === "find") g.find += v / 100; if (l.id === "crowns") g.crownsPct += v / 100; }
+        if (l.id === "mpRegen") g.mpRegen *= 1 + v / 100; if (l.id === "def") { g.def += v; g.src.gearDef += v; } if (l.id === "move") g.spd += v / 100; if (l.id === "leech") g.leech += v / 100; if (l.id === "find") g.find += v / 100; if (l.id === "crowns") g.crownsPct += v / 100;
+        if (l.id === "crit") g.crit += v / 100; if (l.id === "critX") g.critX += v / 100; if (l.id === "lifeKill") g.lifeKill += v; if (l.id === "manaKill") g.manaKill += v; if (l.id === "dodge") g.dodgePct += v / 100; }
     }
     for (const p of C.perks || []) { if (p === "bolt") g.bolts++; if (p === "dmg") g.pdmg += 0.15; if (p === "speed") g.spd += 0.1; if (p === "dodge") g.dodgeCd *= 0.75; if (p === "hp") g.maxHp += 25; if (p === "leech") g.leech += 0.03; if (p === "blast") { g.ring = 24; g.ringCd = 1; } if (p === "rare") g.find += 0.2; }
+    /* legendaries' powers and set bonuses (R.gearPowers) */
+    g.powers = R.gearPowers(C.worn).list; for (const pw of g.powers) R.applyGrant(g, pw.g);
+    g.maxHp *= 1 + g.hpPct; g.maxMp *= 1 + g.mpPct; g.mpRegen *= 1 + g.mpRegenPct; g.dodgeCd *= Math.max(0.4, 1 - g.dodgePct); g.crit = Math.min(0.75, g.crit);
     if (g.rules.has("iron_will")) g.maxHp *= 1.3; if (g.rules.has("blood_magic")) g.maxHp *= 1.4;
     g.payHp = g.rules.has("iron_will") || g.rules.has("blood_magic");
-    g.maxHp = Math.round(g.maxHp); g.maxMp = Math.round(g.maxMp); g.tough = Math.min(0.6, g.def / (g.def + 60)); g.flatDmg = g.dmg; g.dmg = Math.round(g.dmg * (1 + g.pdmg));
+    g.maxHp = Math.round(g.maxHp); g.maxMp = Math.round(g.maxMp); g.tough = Math.max(-0.5, Math.min(0.75, Math.min(0.6, g.def / (g.def + 60)) + g.toughPlus)); g.flatDmg = g.dmg; g.dmg = Math.round(g.dmg * (1 + g.pdmg));
     const own = TG.skills.filter((k) => SK[k]), start = St.start; g.slots = [start, ...own.filter((k) => k !== start)].slice(0, SLOT_KEYS.length);
     return g;
   }
@@ -86,10 +95,10 @@ export function createSim(R) {
   /* ------------------------------------------------------------ monsters for a room. Party size makes them tougher (each extra player +75% health),
      never more numerous: the room looks the same however many come. Positions use trig, so the server decides them and sends them. */
   const PARTY_HP = 0.75;
-  function spawnMobs(room, alvl, partySize, seq0 = 1) {
+  function spawnMobs(room, alvl, partySize, seq0 = 1, mods = [], tier = 0) {
     const rnd = rng((room.n || 1) * 7919 + room.i * 104729 + 17), mobs = []; let id = seq0;
     room.packs.forEach((pk, pi) => pk.mobs.forEach((k, j) => {
-      const d = R.monsterAt(k, alvl); d.melee = d.type === "melee";
+      const d = R.mobDef(k, alvl, mods, tier); d.melee = d.type === "melee";   /* a Rift's tier and modifiers baked in */
       const hp = Math.round(d.hp * (1 + PARTY_HP * Math.max(0, partySize - 1)));
       const a = (j / pk.mobs.length) * Math.PI * 2, rr = d.boss ? 0 : 10 + j * 3;
       mobs.push({ id: id++, k, d, hp, maxHp: hp, x: (pk.x + 0.5) * T + Math.cos(a) * rr, y: (pk.y + 0.5) * T + Math.sin(a) * rr, vx: 0, vy: 0, t: rnd() * 3, pat: 1 + rnd(), awake: false, pack: pi, slow: 0, root: 0, stun: 0, taunt: 0, tauntBy: null });
@@ -170,7 +179,7 @@ export function createSim(R) {
       if (m.root > 0) { m.vx = m.vy = 0; } else moveCircle(st.room.g, m, Math.min(7, d.r), dt);
       m.t += dt;
       if (d.pat) { m.pat -= dt; if (m.pat <= 0 && dist < T * 14 && m.sees) { m.pat = d.every; const a = Math.atan2(dy, dx); if (d.pat === "aim") shoot(st, m, a, 110, 1, 0, 0, ev); else { ev.push({ t: "tele", m: m.id, a }); shoot(st, m, a, 95, 5, 0.22, 0, ev); } } }
-      if (d.boss) { m.pat -= dt; if (m.pat <= 0) { m.pat = 2.1; const which = Math.floor(m.t / 2.1) % 3, a0 = Math.atan2(dy, dx);
+      if (d.boss) { const be = d.bossEvery || 2.1; m.pat -= dt; if (m.pat <= 0) { m.pat = be; const which = Math.floor(m.t / be) % 3, a0 = Math.atan2(dy, dx);
         if (which === 0) { ev.push({ t: "tele", m: m.id, ring: true }); for (let i = 0; i < 24; i++) shoot(st, m, (i / 24) * Math.PI * 2, 85, 1, 0, 0.3, ev); }
         else if (which === 1) { ev.push({ t: "tele", m: m.id, a: a0 }); for (let k = 0; k < 3; k++) st.pend.push({ at: st.t + k * 0.22, m: m.id }); }
         else for (let i = 0; i < 30; i++) shoot(st, m, m.t * 2 + i * 0.4, 70 + i * 1.5, 1, 0, i * 0.05, ev); } }
@@ -220,8 +229,9 @@ export function createSim(R) {
   function hit(st, m, base, opt, by, ev) {
     if (m.hp <= 0) return 0;
     if (!m.awake) { wake(st, m); ev.push({ t: "wake", m: m.id }); }
-    const p = st.byId?.(by), g = p?.g || { crit: 0.06, critX: 1.5 }, crit = (st.rand || Math.random)() < g.crit, n = Math.max(1, Math.round(base * (crit ? g.critX : 1)));
-    m.hp -= n; ev.push({ t: "hit", m: m.id, n, c: crit ? 1 : 0, el: opt.el || null, by });
+    const p = st.byId?.(by), g = p?.g || { crit: 0.06, critX: 1.5 }, rnd = st.rand || Math.random, crit = rnd() < g.crit, twice = g.double > 0 && rnd() < g.double;
+    const n = Math.max(1, Math.round(base * (crit ? g.critX : 1) * (twice ? 2 : 1)));   /* "lands twice" (a unique's power) is one hit for double */
+    m.hp -= n; ev.push({ t: "hit", m: m.id, n, c: crit ? 1 : 0, ...(twice ? { d: 1 } : {}), el: opt.el || null, by });
     if (opt.slow) m.slow = Math.max(m.slow, opt.slow); if (opt.stun) m.stun = Math.max(m.stun, opt.stun); if (opt.root) m.root = Math.max(m.root, opt.root);
     st.hooks?.dealt?.(by, n);
     if (m.hp <= 0) { m.hp = 0; ev.push({ t: "kill", m: m.id, by }); st.hooks?.killed?.(m, by); }

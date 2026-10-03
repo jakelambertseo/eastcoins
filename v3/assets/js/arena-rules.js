@@ -21,13 +21,16 @@ export const lookFor = (p) => LOOK_PICKS[String(p?.name || "").toLowerCase()] ||
 /* ------------------------------------------------------------ the season (the owner: "1 month season length"; a ~30-player community) */
 export const SEASON = { id: "S1", name: "Season 1", days: 28, offDays: 3, levelCap: 60,
   /* one ladder (no "standard" league: thirty people split two ways is two empty leagues), a weekly event, a race, a Hall of Fame */
-  weekly: ["Campaign race: first to finish Act 1, Act 2, Act 3", "Boss rush: fastest Hoodie kill", "Deep maps: highest map tier cleared", "Party week: clears by a party of 2+ count double"],
-  ladder: "highest map tier cleared, then character level, then who got there first" };
+  weekly: ["Campaign race: first to finish Act 1, Act 2, Act 3", "Boss rush: fastest Hoodie kill", "Deep Rifts: highest Rift cleared", "Party week: clears by a party of 2+ count double"],
+  ladder: "highest Rift cleared, then character level, then who got there first" };
 
-/* ------------------------------------------------------------ currency: one, unique to the arena, tradeable (the owner: "unique currency and trade is encouraged") */
-export const CURRENCY = { key: "crowns", name: "Crowns", one: "Crown", icon: "items/coins.png",
+/* ------------------------------------------------------------ currencies (the brief, EAST-ARENA-GDD.md: "a small currency set"). GOLD for services, from kills and
+   selling; ESSENCE from salvaging gear, spent at the Enchanter; Boss Shards come later with boss tiers. The Gold field on a character is still
+   called `crowns` (its first name, 2026-10-03): every save, op and tally uses it, so the NAME changed and the field did not. */
+export const CURRENCY = { key: "crowns", name: "Gold", one: "Gold", icon: "items/coins.png",
   drop: (mlvl) => Math.max(1, Math.round(1 + mlvl * 0.35)),   /* a pile: about a third of the monster's level */
   pileChance: 0.35 };
+export const ESSENCE = { key: "essence", name: "Essence", icon: "items/stardust.png", ex: "What's left of a salvaged piece. The Enchanter works in it." };
 
 /* ------------------------------------------------------------ the character: its own level, its own numbers. NOTHING from EastScape. */
 export const LEVEL = { cap: 60,
@@ -147,12 +150,14 @@ export function baseFor(slot, ilvl, style = "magic") {
 const GLADIUS = { bronze: "bronze", emerald: "emerald", diamond: "diamond", dragonstone: "dragonstone", onyx: "dragonstone", starfall: "eclipse", eclipse: "eclipse", nova: "nova", singularity: "nova" };
 const SHIELD = { bronze: "bronze", emerald: "emerald", diamond: "diamond", dragonstone: "dragonstone", onyx: "onyx", starfall: "starfall", eclipse: "eclipse", nova: "nova", singularity: "singularity" };
 
-/* rarity: the loot mock's names (EastScape's casino flavour), ARPG counts */
+/* rarity: the brief's ladder, "Common, Magic, Rare, Legendary, Set" (the casino names Plain/Lucky/Hot/Jackpot went on 2026-10-03: a new
+   player knows these). Common, Magic and Rare are rolled (weights); a Legendary or a Set piece is made by rollDrop from the tables below. */
 export const RARITY = [
-  { k: "plain",   name: "Plain",   lines: [0, 0], weight: 70, col: "#e8e0cc" },
-  { k: "lucky",   name: "Lucky",   lines: [1, 2], weight: 22, col: "#7ee07e" },
-  { k: "hot",     name: "Hot",     lines: [3, 4], weight: 7.5, col: "#ff9a4a" },
-  { k: "jackpot", name: "Jackpot", lines: [4, 5], weight: 0.5, col: "#c89aff" }];
+  { k: "common",    name: "Common",    lines: [0, 0], weight: 70, col: "#e8e0cc" },
+  { k: "magic",     name: "Magic",     lines: [1, 2], weight: 22, col: "#7ee07e" },
+  { k: "rare",      name: "Rare",      lines: [3, 5], weight: 8,  col: "#ff9a4a" },
+  { k: "legendary", name: "Legendary", lines: [2, 3], weight: 0,  col: "#ffcf3a" },
+  { k: "set",       name: "Set",       lines: [2, 2], weight: 0,  col: "#5ab4ff" }];
 /* affixes: each has tiers by item level; a roll picks the best tier the item level allows, then a value in its range */
 export const AFFIXES = {
   dmg:     { say: (v) => `+${v} damage`,                  slots: ["weapon", "ring", "amulet", "gloves"], tiers: [[1, 1, 2], [12, 3, 4], [25, 5, 7], [40, 8, 11], [55, 12, 15]] },
@@ -165,7 +170,13 @@ export const AFFIXES = {
   move:    { say: (v) => `${v}% faster movement`,          slots: ["boots"],                             tiers: [[1, 5, 8], [20, 9, 12], [40, 13, 16]], pct: true },
   leech:   { say: (v) => `${v}% of damage dealt heals you`, slots: ["weapon", "amulet", "ring"],          tiers: [[10, 1, 1], [30, 2, 2], [50, 3, 3]], pct: true },
   find:    { say: (v) => `${v}% more drops`,               slots: ["helm", "ring", "amulet", "boots"],   tiers: [[1, 4, 8], [20, 9, 14], [40, 15, 20]], pct: true },
-  crowns:  { say: (v) => `${v}% more Crowns`,              slots: ["gloves", "ring", "amulet"],          tiers: [[1, 5, 10], [25, 11, 18], [45, 19, 25]], pct: true } };
+  crowns:  { say: (v) => `${v}% more Gold`,              slots: ["gloves", "ring", "amulet"],          tiers: [[1, 5, 10], [25, 11, 18], [45, 19, 25]], pct: true },
+  /* (2026-10-03, gear and loot) */
+  crit:     { say: (v) => `+${v}% critical strike chance`, slots: ["gloves", "ring", "amulet", "helm"],  tiers: [[1, 1, 2], [20, 3, 4], [40, 5, 6]], pct: true },
+  critX:    { say: (v) => `+${v}% critical strike damage`, slots: ["weapon", "amulet", "gloves"],        tiers: [[5, 10, 15], [25, 16, 25], [45, 26, 35]], pct: true },
+  lifeKill: { say: (v) => `+${v} health on kill`,          slots: ["weapon", "body", "ring", "amulet"],  tiers: [[1, 2, 4], [20, 5, 9], [40, 10, 16]] },
+  manaKill: { say: (v) => `+${v} mana on kill`,            slots: ["weapon", "helm", "ring"],            tiers: [[1, 1, 3], [20, 4, 6], [40, 7, 10]] },
+  dodge:    { say: (v) => `${v}% faster dodge recovery`,   slots: ["boots", "gloves"],                   tiers: [[8, 5, 8], [30, 9, 12], [50, 13, 16]], pct: true } };
 /** the tier of an affix an item level can roll (the best one it reaches), or null */
 export const affixTier = (id, ilvl) => { const A = AFFIXES[id]; if (!A) return null; let t = null; for (const x of A.tiers) if (ilvl >= x[0]) t = x; return t; };
 /** roll one item: a base, a rarity, lines. rnd is injectable so the server can roll from a seed later. */
@@ -185,6 +196,12 @@ export function validItem(it) {
   if (!it || typeof it !== "object" || !SLOTS.includes(it.slot)) return false;
   const ilvl = it.ilvl | 0; if (ilvl < 1 || ilvl > 100) return false;
   if (!Array.isArray(it.lines) || it.lines.length > 5) return false;
+  if (it.r === 3 || it.r === 4) {   /* a legendary or a set piece: exactly its own lines, each inside its range at this item level */
+    const sp = specFor(it); if (!sp || sp.slot !== it.slot || it.lines.length !== sp.lines.length) return false;
+    return it.lines.every((l, i) => l?.id === sp.lines[i][0] && Number.isInteger(l.v) && l.v >= 1 && l.v <= rollRange(it, l.id)[1]);
+  }
+  if ((it.r | 0) > 2 || it.lg != null || it.s != null) return false;   /* only a legendary or a set piece carries lg or s */
+  if (it.rr != null && !(Number.isInteger(it.rr) && it.rr >= 0 && it.rr < it.lines.length)) return false;   /* the Enchanter's chosen line */
   const seen = new Set();
   for (const l of it.lines) { const t = affixTier(l?.id, ilvl); if (!t || seen.has(l.id) || !AFFIXES[l.id].slots.includes(it.slot)) return false; seen.add(l.id); if (!(l.v >= AFFIXES[l.id].tiers[0][1] && l.v <= t[2])) return false; }
   return true;
@@ -207,7 +224,48 @@ export const CAMPAIGN = [
     { n: 3, name: "The Hoodie's Sanctum", alvl: 7, rooms: 4, pool: ["guard", "ghost", "golem"], boss: "hoodie", trial: true }] },
   { act: 2, name: "The Wild Woods (art from the Gloam and the Mire)", areas: [], todo: true },
   { act: 3, name: "The Frozen Reach (art from the Reach)", areas: [], todo: true }];
-export const MAPS = { tiers: 10, alvlAt: (tier) => 20 + tier * 4, note: "generated rooms, a random modifier or two, a boss; a map drops maps" };
+/* ------------------------------------------------------------ THE RIFTS (2026-10-03, the brief: "an endlessly scaling dungeon mode ... Rift 1, Rift 2 ... Rift 100+").
+   Opened one at a time from Charon, the Rift Keeper, in the Lounge, once the campaign's last area (RIFTS.unlock) is cleared: clearing Rift t
+   opens t + 1, and any cleared tier can be run again. A Rift is an area like any other (four generated rooms, the boss at the end) with the
+   monsters' numbers scaled by the tier on top of the area level (which stops at the level cap), so Rift 60 is still harder than Rift 59.
+   From Rift 5 a run rolls MODIFIERS (1 at 5-14, 2 at 15-29, 3 from 30), each adding to the rewards. The season's ladder is the highest Rift
+   cleared. Perks stay rare: only the first clears of RIFTS.perkTiers offer one. Areas are numbered RIFTS.base + tier. */
+export const RIFTS = { base: 100, unlock: 3, rooms: 4, pool: ["guard", "ghost", "golem"], boss: "hoodie", perkTiers: [5, 15, 30, 50],
+  alvlAt: (t) => Math.min(LEVEL.cap, 8 + t * 2),
+  scale: (t) => ({ hp: 1 + 0.05 * t, dmg: 1 + 0.03 * t }),
+  reward: (t) => Math.min(1, 0.02 * t),   /* 2% more XP, drops and Gold per tier, up to double */
+  note: "endless: clear one to open the next; modifiers from Rift 5" };
+export const MAP_MODS = {
+  tough:   { name: "Tough",    says: "Monsters have 40% more health",         reward: 0.15, mob: { hp: 1.4 } },
+  fierce:  { name: "Fierce",   says: "Monsters hit 30% harder",               reward: 0.2,  mob: { dmg: 1.3 } },
+  swift:   { name: "Swift",    says: "Monsters move 20% faster",              reward: 0.15, mob: { spd: 1.2 } },
+  crowded: { name: "Crowded",  says: "An extra pack in every room",           reward: 0.15, packs: 1 },
+  volley:  { name: "Volley",   says: "Ranged monsters fire 30% more often",    reward: 0.15, mob: { every: 0.7 } },
+  drain:   { name: "Draining", says: "You regenerate 40% less mana",           reward: 0.1,  player: { mpRegen: 0.6 } },
+  elite:   { name: "Elite",    says: "The boss has 60% more health",           reward: 0.1,  boss: { hp: 1.6 } },
+  barrage: { name: "Barrage",  says: "The boss's patterns come 25% faster",    reward: 0.15, boss: { every: 0.75 } } };
+export const modsFor = (tier) => (tier >= 30 ? 3 : tier >= 15 ? 2 : tier >= 5 ? 1 : 0);
+/** the modifiers for a run of a tier: distinct, from rnd */
+export function rollMods(tier, rnd = Math.random) { const pool = Object.keys(MAP_MODS), out = []; for (let i = 0; i < modsFor(tier) && pool.length; i++) out.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]); return out; }
+/** how much more a run gives for its modifiers (0.15 = 15% more XP, item chance and Gold) */
+export const modReward = (mods = []) => mods.reduce((a, k) => a + (MAP_MODS[k]?.reward || 0), 0);
+export const isRift = (n) => n > RIFTS.base;
+export const riftOf = (n) => (isRift(n) ? n - RIFTS.base : 0);
+/** a Rift tier as an area (the same shape as a campaign area) */
+export const riftArea = (t) => ({ n: RIFTS.base + t, name: `Rift ${t}`, act: 0, actName: "The Rifts", alvl: RIFTS.alvlAt(t), rooms: RIFTS.rooms, pool: RIFTS.pool, boss: RIFTS.boss, rift: true, tier: t });
+/** any area by number: a campaign area (1, 2, 3, ...) or a Rift (101, 102, ...) */
+export function areaOf(n) { if (isRift(n)) return riftArea(riftOf(n)); for (const a of CAMPAIGN) for (const x of a.areas) if (x.n === n) return { ...x, act: a.act, actName: a.name }; return null; }
+/** a monster at an area level, with a run's modifiers and Rift tier baked in (the server and the page both use this, so a hit is judged on the same numbers) */
+export function mobDef(k, alvl, mods = [], tier = 0) {
+  const d = monsterAt(k, alvl), sc = tier > 0 ? RIFTS.scale(tier) : { hp: 1, dmg: 1 }; let hp = sc.hp, dmg = sc.dmg, spd = 1, every = 1, bossEvery = 1;
+  for (const key of mods) { const M = MAP_MODS[key]; if (!M) continue; if (M.mob) { hp *= M.mob.hp || 1; dmg *= M.mob.dmg || 1; spd *= M.mob.spd || 1; every *= M.mob.every || 1; } if (d.boss && M.boss) { hp *= M.boss.hp || 1; bossEvery *= M.boss.every || 1; } }
+  d.hp = d.maxHp = Math.round(d.hp * hp); d.max = Math.round(d.max * dmg); d.spd = d.spd * spd; if (d.every) d.every = d.every * every; d.bossEvery = 2.1 * bossEvery;
+  return d;
+}
+/** a character's numbers in a run with these modifiers (only Draining touches the player) */
+export function applyPlayerMods(g, mods = []) { for (const k of mods) { const P = MAP_MODS[k]?.player; if (P?.mpRegen) g.mpRegen *= P.mpRegen; } return g; }
+/** extra packs a room gets from the modifiers */
+export const extraPacks = (mods = []) => mods.reduce((a, k) => a + (MAP_MODS[k]?.packs || 0), 0);
 
 /* ------------------------------------------------------------ perks: rare, kept for the season (the owner: "the perks should appear way less/slower, and only persist through maps") */
 export const PERKS = { bolt: ["One more projectile", "every shot fires one more in a spread"], dmg: ["+15% damage", "everything you do"], speed: ["+10% move speed", "you and your dodge"], dodge: ["Quicker dodge", "the roll comes back 25% sooner"],
@@ -217,54 +275,129 @@ export const PERKS_MAX = 8;
 /* ------------------------------------------------------------ THE SAVE (2026-10-03). The arena is live, so real characters exist. Every saved character
    carries `v`, the SAVE_V it was last written at; the server upgrades an older one step by step when it loads (arena-worker/src/arena.js
    `migrate`), so the season's data can change without breaking anyone mid-month. Bump SAVE_V and add a step there for any change to the shape. */
-export const SAVE_V = 2;
+export const SAVE_V = 4;   /* 4 (2026-10-03, the reshape to the brief): the rarity ladder renumbered, chips became Essence, supplies became potions, buffs gone, legendaries keyed `lg` */
 
-/* ------------------------------------------------------------ CRAFTING CURRENCY (the owner, 2026-10-03: "crowns and crafting items/currency, just like
-   diablo/poe/last epoch/chronicon"). Crowns are money; these are the orbs. Each does ONE thing to one item, they stack in their own pouch
-   (not the bag), they drop for each player separately, and they trade. EastScape's casino art: chips, dice, a marked card, a horseshoe.
-   weight: how often each is the one that drops (out of the total). Dex sells the common three for Crowns: the economy's main sink. */
-export const CHIPS = {
-  lucky:     { name: "Lucky Chip",   icon: "items/chip_free.png",   weight: 40, does: "makes a Plain item Lucky: one or two lines" },
-  dice:      { name: "Devil's Dice", icon: "items/devils_dice.png", weight: 24, does: "rerolls every line on a Lucky, Hot or Jackpot item" },
-  hot:       { name: "Hot Chip",     icon: "items/chip_red.png",    weight: 14, does: "makes a Lucky item Hot: three or four lines" },
-  black:     { name: "Black Chip",   icon: "items/chip_black.png",  weight: 10, does: "takes every line off an item: back to Plain" },
-  card:      { name: "Marked Card",  icon: "items/markedcard.png",  weight: 7,  does: "rerolls the numbers on an item's lines, keeping the lines" },
-  horseshoe: { name: "Horseshoe",    icon: "items/horseshoe.png",   weight: 4,  does: "adds one line to an item that has room for another" },
-  jackpot:   { name: "Jackpot Chip", icon: "items/chip_gold.png",   weight: 1,  does: "makes a Hot item a Jackpot: four or five lines" } };
-export const CHIP_CHANCE = 0.05;   // per kill, per player (bosses always drop two)
-/** which chip drops (or null), for one kill and one player */
-export function chipDrop(rnd = Math.random, { boss = false, find = 0 } = {}) {
-  if (!boss && rnd() >= CHIP_CHANCE * (1 + find)) return null;
-  let x = rnd() * Object.values(CHIPS).reduce((a, c) => a + c.weight, 0);
-  for (const [k, c] of Object.entries(CHIPS)) { x -= c.weight; if (x < 0) return k; }
-  return "lucky";
-}
-/* Dex, the Lounge's cashier: Crowns for the common chips (prices in Crowns). The economy's sink: Crowns come in from every kill and salvage. */
-export const SHOP = { lucky: 20, black: 40, dice: 60 };
-/* refunding tree points costs Crowns after level 10 (adding is always free): the second sink, and it makes a build a decision */
-export const RESPEC = { freeUntil: 10, perPoint: (level) => 5 + level * 2 };
-export const respecCost = (level, refunded) => (level < RESPEC.freeUntil ? 0 : Math.max(0, refunded) * RESPEC.perPoint(level));
+/* ------------------------------------------------------------ SALVAGE AND SELL (the brief: "Unwanted loot should become useful"). Two doors out of the bag:
+   Brutus, the Blacksmith, SALVAGES a piece into ESSENCE (more for rarer); Dex, the Merchant, BUYS it for GOLD. Both from the Lounge. */
+export const salvageEssence = (it) => [1, 2, 5, 15, 10][it.r | 0] + Math.floor((it.ilvl | 0) / 12);
+export const sellValue = (it) => Math.max(1, Math.round((2 + (it.ilvl | 0) / 2) * (1 + Math.min(2, it.r | 0)) * (it.r >= 3 ? 3 : 1)));
+/* respecs are FREE (the brief: "Respec should be inexpensive or free"). The function stays so nothing that calls it changes. */
+export const respecCost = () => 0;
 
-/* fresh lines for an item: n affixes its slot can roll at its level, never one it already has */
-function rollLines(slot, ilvl, n, have, rnd) {
-  const pool = Object.keys(AFFIXES).filter((id) => AFFIXES[id].slots.includes(slot) && affixTier(id, ilvl) && !have.some((l) => l.id === id)), out = [];
-  for (let i = 0; i < n && pool.length; i++) { const id = pool.splice(Math.floor(rnd() * pool.length), 1)[0], [, a, b] = affixTier(id, ilvl); out.push({ id, v: a + Math.floor(rnd() * (b - a + 1)) }); }
-  return out;
+/* ============================================================ LEGENDARIES AND SETS (2026-10-03, the brief: "Legendary items should alter gameplay ... build-defining
+   effects are more important than simply increasing numbers"; "Prefer 50 meaningful Legendaries over 500 generic ones").
+
+   LEGENDARY (gold, rarity 3): a fixed name, slot and art (EastScape's own named gear), fixed lines whose numbers scale with the item level
+   (each line rolls in its affix's range at that level, times the legendary's multiplier), and one POWER. A weapon legendary is for one class
+   and drops only for it. SET PIECE (blue, rarity 4): the same shape with no power; wearing 2 and 4 of a set turns its bonuses on.
+   Both drop rarely from anything (SPECIAL_DROP) and trade like any item. The Enchanter doesn't touch them yet (the brief: "Modify Legendary
+   properties later"). Twelve and three sets to start; the plan is to grow them by boss (bosses drop their own). */
+function rollIn([lo, hi], rnd = Math.random) { return lo + Math.floor(rnd() * (hi - lo + 1)); }
+const tierOrFirst = (id, ilvl) => affixTier(id, ilvl) || AFFIXES[id].tiers[0];
+export const LEGENDARIES = {
+  wrench:      { name: "The King's Wrench",        slot: "weapon",  style: "melee",   icon: "items/wrench.png",         lines: [["dmg", 1.3], ["critX", 1.2], ["lifeKill", 1]], power: ["Hits have a 15% chance to land twice", { double: 0.15 }], ex: "Four feet of rusted pipe. It has settled a great many arguments." },
+  skyripper:   { name: "Skyripper",                slot: "weapon",  style: "archery", icon: "items/skyripper.png",      lines: [["dmg", 1.3], ["speed", 1.2]], power: ["Arrows pierce two more enemies", { pierce: 2 }], ex: "Strung with something that hums when the wind gets up." },
+  rimeheart:   { name: "Rimeheart",                slot: "weapon",  style: "magic",   icon: "items/rimeheart.png",      lines: [["dmg", 1.3], ["manaKill", 1.3]], power: ["+1 projectile, and 25% more mana regeneration", { bolts: 1, mpRegenPct: 0.25 }], ex: "Cold to hold. Colder to be hit by." },
+  grudge:      { name: "The Grudge Knife",         slot: "offhand",                   icon: "items/grudge.png",         lines: [["hp", 1.2], ["crit", 1.2]], power: ["Kills restore 3% of your health", { lifeKillPct: 0.03 }], ex: "It remembers everyone it has ever cut." },
+  kingcrown:   { name: "The Pumpkin King's Crown", slot: "helm",                      icon: "items/king_crown.png",     lines: [["hp", 1.3], ["find", 1.2]], power: ["You take 10% less damage", { tough: 0.1 }], ex: "Still warm. It is October, after all." },
+  bogplate:    { name: "Bog-Hound Hide",           slot: "body",                      icon: "items/bogplate.png",       lines: [["hp", 1.3], ["def", 1.2]], power: ["+25% maximum health", { hpPct: 0.25 }], ex: "Still damp. It will always be damp." },
+  sharps:      { name: "Card Sharp's Gloves",      slot: "gloves",                    icon: "items/sharps_gloves.png",  lines: [["speed", 1.2], ["crit", 1.3]], power: ["Critical strikes deal ×2.25 instead of ×1.5", { critX: 0.75 }], ex: "There's still a card up one sleeve." },
+  eightleague: { name: "Eight-League Boots",       slot: "boots",                     icon: "items/spiderboots.png",    lines: [["move", 1.3], ["hp", 1.1]], power: ["Your dodge comes back 40% sooner", { dodgePct: 0.4 }], ex: "Four boots, sewn into two. Nobody asks about the spider." },
+  gambler:     { name: "The Gambler's Ring",       slot: "ring",                      icon: "items/gamblers_ring.png",  lines: [["dmg", 1.2], ["crowns", 1.3]], power: ["+30% more Gold and 15% more drops", { crownsPct: 0.3, find: 0.15 }], ex: "Never lucky twice. Always lucky once." },
+  coffin:      { name: "The Coffin Ring",          slot: "ring",                      icon: "items/coffin_ring.png",    lines: [["dmg", 1.3], ["leech", 1]], power: ["Hits have a 10% chance to land twice", { double: 0.1 }], ex: "Coffin iron, with a coffin on it." },
+  ferryman:    { name: "The Ferryman's Coin",      slot: "amulet",                    icon: "items/ferry_coin.png",     lines: [["hp", 1.2], ["mpRegen", 1.2]], power: ["Kills restore 5% of your mana and 2% of your health", { manaKillPct: 0.05, lifeKillPct: 0.02 }], ex: "Charon's own fare. He'll want it back." },
+  hunter:      { name: "Hunter's Fang",            slot: "amulet",                    icon: "items/hunters_fang.png",   lines: [["pdmg", 1.2], ["critX", 1.2]], power: ["+1 projectile", { bolts: 1 }], ex: "A tooth from something that hunted back." } };
+/* SETS: bonus = [[pieces worn, what it says, what it grants], ...]; pieces = { slot: [name, icon (null = the slot's base art), [[affix, multiplier], ...]] } */
+export const SETS = {
+  roller: { name: "High Roller", ex: "Dressed for the big table.",
+    bonus: [[2, "+6% critical strike chance", { crit: 0.06 }], [4, "+60% critical strike damage and 10% faster skills", { critX: 0.6, speed: 0.1 }]],
+    pieces: { helm: ["High Roller's Cap", "items/kingcap.png", [["hp", 1.1], ["crit", 1.1]]], gloves: ["High Roller's Grip", "items/clawgrip.png", [["speed", 1.1], ["critX", 1.1]]],
+      ring: ["High Roller's Band", "items/deepheart.png", [["dmg", 1.1], ["crit", 1.1]]], amulet: ["High Roller's Tooth", "items/rex_necklace.png", [["pdmg", 1.1], ["critX", 1.1]]] } },
+  night: { name: "The Night Shift", ex: "For the ones still standing at closing.",
+    bonus: [[2, "+20% maximum health", { hpPct: 0.2 }], [4, "You take 12% less damage, and kills restore 3% of your health", { tough: 0.12, lifeKillPct: 0.03 }]],
+    pieces: { helm: ["Night Shift Hood", "items/wraithhood.png", [["hp", 1.1], ["def", 1.1]]], body: ["Night Shift Coat", "items/ditched_coat.png", [["hp", 1.1], ["def", 1.1]]],
+      boots: ["Night Shift Loafers", "items/stake_loafers.png", [["move", 1.1], ["hp", 1.1]]], amulet: ["Night Shift Sigil", "items/deep_sigil.png", [["hp", 1.1], ["lifeKill", 1.1]]] } },
+  dealer: { name: "Dealer's Choice", ex: "The house dresses well.",
+    bonus: [[2, "12% faster movement and 20% more drops", { move: 0.12, find: 0.2 }], [4, "+1 projectile and +15% damage", { bolts: 1, pdmg: 0.15 }]],
+    pieces: { body: ["Dealer's Toga", "items/toga.png", [["hp", 1.1], ["def", 1.1]]], gloves: ["Dealer's Gloves", "items/bessemergloves.png", [["dmg", 1.1], ["speed", 1.1]]],
+      ring: ["Dealer's Ring", "items/raptor_ring.png", [["dmg", 1.1], ["find", 1.1]]], offhand: ["Dealer's Shield", null, [["hp", 1.1], ["mp", 1.1]]] } } };
+export const SPECIAL_DROP = { legendary: 0.02, set: 0.02, bossLegendary: 0.08, bossSet: 0.08 };
+/** a legendary's or set piece's fixed shape: { name, slot, style, icon, lines: [[affix, multiplier]] }, or null for an ordinary item */
+export function specFor(it) {
+  if (it?.r === 3 && LEGENDARIES[it.lg]) { const U = LEGENDARIES[it.lg]; return { name: U.name, slot: U.slot, style: U.style || null, icon: U.icon, lines: U.lines }; }
+  if (it?.r === 4 && SETS[it.s]?.pieces[it.slot]) { const [name, icon, lines] = SETS[it.s].pieces[it.slot]; return { name, slot: it.slot, style: null, icon, lines }; }
+  return null;
 }
-const countIn = ([lo, hi], rnd) => lo + Math.floor(rnd() * (hi - lo + 1));
-/** use a chip on an item. Returns { item } (a new object; id and history are the server's business) or { err } saying why not. */
-export function craft(it, k, rnd = Math.random) {
-  if (!CHIPS[k]) return { err: "That isn't a crafting item." };
-  if (!validItem(it)) return { err: "That item can't be crafted." };
-  const r = it.r | 0, lines = it.lines.map((l) => ({ ...l })), out = (nr, nl) => ({ item: { ...it, r: nl.length ? nr : 0, lines: nl } });
-  const name = RARITY[r].name;
-  if (k === "lucky") return r === 0 ? out(1, rollLines(it.slot, it.ilvl, countIn(RARITY[1].lines, rnd), [], rnd)) : { err: "A Lucky Chip only works on a Plain item." };
-  if (k === "hot") { if (r !== 1) return { err: "A Hot Chip only works on a Lucky item." }; const want = countIn(RARITY[2].lines, rnd); return out(2, lines.concat(rollLines(it.slot, it.ilvl, Math.max(0, want - lines.length), lines, rnd))); }
-  if (k === "jackpot") { if (r !== 2) return { err: "A Jackpot Chip only works on a Hot item." }; const want = countIn(RARITY[3].lines, rnd); return out(3, lines.concat(rollLines(it.slot, it.ilvl, Math.max(1, want - lines.length), lines, rnd))); }
-  if (r === 0) return { err: `A ${CHIPS[k].name} needs an item with lines: use a Lucky Chip first.` };
-  if (k === "black") return out(0, []);
-  if (k === "dice") return out(r, rollLines(it.slot, it.ilvl, countIn(RARITY[r].lines, rnd), [], rnd));
-  if (k === "card") return out(r, lines.map((l) => { const [, a, b] = affixTier(l.id, it.ilvl); return { id: l.id, v: a + Math.floor(rnd() * (b - a + 1)) }; }));
-  if (k === "horseshoe") { if (lines.length >= RARITY[r].lines[1]) return { err: `A ${name} item can't hold another line.` }; const add = rollLines(it.slot, it.ilvl, 1, lines, rnd); if (!add.length) return { err: "There's no line left this item can roll." }; return out(r, lines.concat(add)); }
-  return { err: "That does nothing." };
+/** the range a line ROLLS in on this item at its item level: the affix's tier there (times the multiplier for a legendary or set piece) */
+export function rollRange(it, id) {
+  const t = tierOrFirst(id, it.ilvl | 0), sp = specFor(it); if (!sp) return [t[1], t[2]];
+  const m = (sp.lines.find((x) => x[0] === id) || [id, 1])[1]; return [Math.max(1, Math.round(t[1] * m)), Math.max(1, Math.round(t[2] * m))];
 }
+function special(r, key, sp, ilvl, rnd) {
+  const base = baseFor(sp.slot, ilvl, sp.style || "magic");
+  const it = { slot: sp.slot, ilvl, r, base: sp.name, tier: base.tier, style: sp.slot === "weapon" ? base.style : null, icon: sp.icon || base.icon, implicit: base.implicit, lines: [] };
+  if (r === 3) it.lg = key; else it.s = key;
+  it.lines = sp.lines.map(([id]) => ({ id, v: rollIn(rollRange(it, id), rnd) }));
+  return it;
+}
+/** a legendary: any (for this class), or `key` */
+export function rollLegendary(ilvl, { style = "magic", rnd = Math.random, key = null } = {}) {
+  const keys = key ? [key] : Object.keys(LEGENDARIES).filter((k) => !LEGENDARIES[k].style || LEGENDARIES[k].style === style), k = keys[Math.floor(rnd() * keys.length)];
+  return special(3, k, specFor({ r: 3, lg: k }), ilvl, rnd);
+}
+/** a set piece: any, or one of set `key`, or for `slot` */
+export function rollSetPiece(ilvl, { rnd = Math.random, key = null, slot = null } = {}) {
+  const all = Object.entries(SETS).flatMap(([s, S]) => Object.keys(S.pieces).map((sl) => [s, sl])).filter(([s, sl]) => (!key || s === key) && (!slot || sl === slot));
+  if (!all.length) return null; const [s, sl] = all[Math.floor(rnd() * all.length)];
+  return special(4, s, specFor({ r: 4, s, slot: sl }), ilvl, rnd);
+}
+/** what an item drop is: now and then a legendary or a set piece, otherwise an ordinary roll */
+export function rollDrop(ilvl, { style = "magic", boss = false, rnd = Math.random } = {}) {
+  const x = rnd(), u = boss ? SPECIAL_DROP.bossLegendary : SPECIAL_DROP.legendary, s = boss ? SPECIAL_DROP.bossSet : SPECIAL_DROP.set;
+  if (x < u) return rollLegendary(ilvl, { style, rnd }); if (x < u + s) return rollSetPiece(ilvl, { rnd });
+  return rollItem(ilvl, { style, boss, rnd });
+}
+/** what an item is called: "Rare Diamond Helm", "Diamond Helm", "The King's Wrench" */
+export const itemName = (it) => (it?.r >= 3 ? it.base : it?.r ? `${RARITY[it.r].name} ${it.base}` : it?.base || "");
+/* A GRANT is the one shape every power and set bonus is written in. Keys: pdmg, speed, crit, critX, hpPct, mpPct, def, move, leech, find,
+   crownsPct, bolts, pierce, double (chance a hit lands twice), lifeKill / manaKill (flat on a kill), lifeKillPct / manaKillPct (of the
+   maximum, on a kill), dodgePct (faster dodge recovery), mpRegenPct, tough (damage taken, -0.1 = 10% MORE). arena-sim's statsFor adds them. */
+const GKEY = { move: "spd", tough: "toughPlus" };
+export function applyGrant(g, G) { for (const [k, v] of Object.entries(G || {})) { const key = GKEY[k] || k; g[key] = (g[key] || 0) + v; } return g; }
+/** what a worn set turns on: { list: [{ from, says, g, kind }], sets: { setKey: pieces worn } } */
+export function gearPowers(worn = {}) {
+  const list = [], sets = {};
+  for (const it of Object.values(worn || {})) { if (it?.r === 3 && LEGENDARIES[it.lg]) list.push({ from: LEGENDARIES[it.lg].name, says: LEGENDARIES[it.lg].power[0], g: LEGENDARIES[it.lg].power[1], kind: "legendary" }); if (it?.r === 4 && SETS[it.s]) sets[it.s] = (sets[it.s] || 0) + 1; }
+  for (const [s, n] of Object.entries(sets)) for (const [need, says, g] of SETS[s].bonus) if (n >= need) list.push({ from: `${SETS[s].name} (${need} pieces)`, says, g, kind: "set" });
+  return { list, sets };
+}
+
+/* ------------------------------------------------------------ THE ENCHANTER (Hexa, in the Lounge). The brief's one rule for rerolling: "Players should be
+   able to alter one unwanted affix ... Once selected, that affix slot remains the rerollable slot." Pick a line on a Magic or Rare item, pay
+   Essence, and it becomes a different line (one the slot can roll at this level, that the item doesn't have) with a fresh number; from then
+   on only that line can be rerolled (`rr`). Legendaries and sets keep their lines for now ("Modify Legendary properties later"). */
+export const ENCHANT = { cost: (it) => Math.round((it.r === 2 ? 12 : 6) + (it.ilvl | 0) / 2) };
+export function enchant(it, i, rnd = Math.random) {
+  if (!validItem(it)) return { err: "That item can't be enchanted." };
+  if (!(it.r === 1 || it.r === 2)) return { err: it.r ? "Legendaries and set pieces keep their lines, for now." : "A Common item has no line to change." };
+  i |= 0; if (!it.lines[i]) return { err: "Pick one of the item's lines." };
+  if (it.rr != null && it.rr !== i) return { err: `This item's rerollable line is "${sayLine(it.lines[it.rr])}": once chosen, it stays.` };
+  const pool = Object.keys(AFFIXES).filter((id) => AFFIXES[id].slots.includes(it.slot) && affixTier(id, it.ilvl) && !it.lines.some((l) => l.id === id));
+  if (!pool.length) return { err: "There's no other line this item can take." };
+  const id = pool[Math.floor(rnd() * pool.length)], lines = it.lines.map((x) => ({ ...x })); lines[i] = { id, v: rollIn(rollRange(it, id), rnd) };
+  const out = { ...it, rr: i, lines }; return validItem(out) ? { item: out } : { err: "That line doesn't fit." };
+}
+
+/* ------------------------------------------------------------ POTIONS (the brief: "health potion or equivalent simple recovery mechanic"). Two, and
+   nothing else to carry: a Health Potion on 4, a Mana Potion on 5, one of each every POTION_CD seconds, never at full. They drop (each
+   player their own), Dex sells them, and only the ones you drink are used up. EastScape's bottle art. */
+export const POTIONS = {
+  health: { name: "Health Potion", icon: "items/pot_salve1.png", heal: 0.5, key: "4", ex: "Half your health back. Salt, mostly." },
+  mana:   { name: "Mana Potion",   icon: "items/pot_star.png",   mana: 0.5, key: "5", ex: "Half your mana back. Bottled on a clear night." } };
+export const POTION_CD = 6, POTION_MAX = 20, POTION_CHANCE = 0.06;   /* per kill, per player (a boss always drops one) */
+export const POTION_SHOP = { health: 10, mana: 10 };   /* Gold each, at Dex */
+export function potionDrop(rnd = Math.random, { boss = false, find = 0 } = {}) { if (!boss && rnd() >= POTION_CHANCE * (1 + find)) return null; return rnd() < 0.65 ? "health" : "mana"; }
+
+/* ------------------------------------------------------------ DEX'S STOCK (the brief's Merchant: "Buy basic equipment"). A Common base for any slot at your
+   level, for Gold, so a new player has something to spend on and no slot stays empty. The Gambler (random gear for Gold) comes later. */
+export const gearPrice = (ilvl) => 8 + (ilvl | 0) * 2;
