@@ -36,6 +36,8 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 .mini{display:block;margin:6px 0 0 auto;width:132px;height:78px;image-rendering:pixelated;background:rgba(10,8,12,.82);box-shadow:0 0 0 2px #8a6428,0 0 0 3.5px rgba(0,0,0,.6),0 6px 18px rgba(0,0,0,.45);border-radius:8px}
 .mini[hidden]{display:none}
 @media (max-width:760px){.mini{width:96px;height:57px}}
+.hud .r .mods{display:block;margin-top:2px;font:800 11.5px Lora,serif;color:#ff9a6a}.hud .r .mods:empty{display:none}
+.camplist .lad{margin-top:6px;padding:4px 2px 0;font:800 12px Cinzel,serif;letter-spacing:.06em;color:#c8963a;border-top:1px solid rgba(255,226,122,.15)}
 .hud .rooms{display:flex;gap:4px;justify-content:flex-end;margin-top:4px}.hud .rooms i{width:22px;height:8px;border-radius:3px;background:#2a1a10;box-shadow:0 0 0 1.5px #000}.hud .rooms i.done{background:#ffd84a}.hud .rooms i.now{background:#ff9a6a}
 /* THE BOTTOM BAR: the orbs and the skills (the owner: "the classic diablo/poe circular health and mana bars ... in eastscapes unique UI/colors") */
 .orbbar{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);display:flex;align-items:flex-end;pointer-events:none;z-index:2}.orbbar[hidden]{display:none}
@@ -99,30 +101,43 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 .doll-fig span{font:800 11px Lora,serif;color:#c8a878;padding-bottom:6px;text-shadow:0 1px 0 #000}
 .cell{position:relative;aspect-ratio:1;display:grid;place-items:center;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/slot.png) 7 fill / 5px stretch;background:none;padding:0;cursor:pointer;min-width:0}
 .cell img{width:76%;height:76%;image-rendering:pixelated}.cell.empty img{opacity:.22;filter:grayscale(1)}
-.cell.r1{box-shadow:0 0 0 2px #7ee07e,0 0 8px rgba(126,224,126,.5)}.cell.r2{box-shadow:0 0 0 2px #ff9a4a,0 0 10px rgba(255,154,74,.6)}.cell.r3{box-shadow:0 0 0 2px #e070ff,0 0 14px rgba(224,112,255,.7)}
+.cell.r1{box-shadow:0 0 0 2px #7ee07e,0 0 8px rgba(126,224,126,.5)}.cell.r2{box-shadow:0 0 0 2px #ff9a4a,0 0 10px rgba(255,154,74,.6)}
+.cell.r3{box-shadow:0 0 0 2px #ffcf3a,0 0 16px rgba(255,207,58,.85)}.cell.r4{box-shadow:0 0 0 2px #5ab4ff,0 0 14px rgba(90,180,255,.75)}
 .cell:hover{filter:brightness(1.25)}.cell.blank{cursor:default;opacity:.55}.cell.blank:hover{filter:none}
 .cell small{position:absolute;left:0;right:0;bottom:-2px;text-align:center;font:800 9px Lora,serif;color:#a89070;text-transform:capitalize}
 .invgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;padding:4px 10px 6px;overflow-y:auto;min-height:0;flex:1;align-content:start}
 .invhead{display:flex;justify-content:space-between;padding:4px 12px 0;font:800 11px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#c8963a}
 .invfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 12px 8px;font:700 12px Lora,serif;color:#b8a888;border-top:1px solid rgba(255,226,122,.15)}.invfoot b{color:#ffd84a}.invfoot img{width:16px;height:16px;vertical-align:-3px;image-rendering:pixelated}
 /* stats: EastScape's Character window, the arena's numbers */
-/* the chip pouch (crafting currency) and crafting: pick a chip, then click an item */
-.pouch{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:2px 10px 4px}
-.pouch .cell{cursor:pointer}.pouch .cell.none{opacity:.3;filter:grayscale(1);cursor:default}.pouch .cell.sel{box-shadow:0 0 0 2px #5ad6c0,0 0 12px rgba(90,214,192,.8)}
-.pouch .cell b{position:absolute;right:1px;bottom:-2px;font:900 11px Lora,serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}
-#invWin.crafting .invgrid .cell:not(.blank),#invWin.crafting .doll .cell:not(.empty){cursor:copy;outline:1px dashed rgba(90,214,192,.6);outline-offset:-3px}
-.craftbar{margin:0 10px 4px;padding:4px 8px;border-radius:6px;background:rgba(90,214,192,.12);box-shadow:inset 0 0 0 1px rgba(90,214,192,.5);font:700 12px Lora,serif;color:#bff3e8}.craftbar[hidden]{display:none}
+/* the potions row in the inventory, and the belt in the tray */
+.pots{display:flex;align-items:center;gap:6px;padding:2px 10px 4px}.pots .cell{width:44px;flex:none}.pots .cell.none{opacity:.35;filter:grayscale(1)}
+.pots .cell b{position:absolute;right:1px;bottom:-2px;font:900 11px Lora,serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}.pots .potnote{font:600 11.5px Lora,serif;color:#8a7a60}
+.tipbox .pw{margin-top:4px;color:#ffcf3a;font-weight:800}.tipbox .setn{margin-top:4px;color:#5ab4ff;font-weight:800}.tipbox .setl{color:#5ab4ff}.tipbox .setl.off{color:#56657a}.tipbox .lore{margin-top:4px;font-style:italic;color:#8a7a60}
+.tipbox .ln.rr{color:#d8b4ff}.tipbox .ln.rr small{color:#9a7ac0}
+.tray div[data-pot] b{position:absolute;right:2px;bottom:0;font:900 11px Lora,serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}.tray div[data-pot].none img{opacity:.3;filter:grayscale(1)}
+/* the NPC windows: an item picker on the left, the work on the right (Hexa, Brutus, Dex's Sell tab) */
+#enchWin,#salvWin,#riftWin{left:50%;top:12px;transform:translateX(-50%);width:min(760px,calc(100% - 40px));max-height:calc(100% - 144px)}
+.npcw{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:10px;padding:10px 12px 12px;min-height:0;overflow:hidden}.npcw.one{grid-template-columns:1fr}
+.npcw .pick{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;align-content:start;overflow-y:auto;max-height:420px}.npcw .pick .cell.sel{outline:2px solid #ffe27a;outline-offset:-2px}
+.npcw .pick h5{grid-column:1/-1;margin:4px 0 0;font:800 11px Lora,serif;letter-spacing:.08em;text-transform:uppercase;color:#c8963a}
+.npcw .work{padding:10px;border-radius:10px;background:linear-gradient(#20160e,#16100a);box-shadow:inset 0 0 0 1.5px #3a2616;font:600 12.5px/1.45 Lora,serif;color:#cdbfa2;overflow-y:auto}
+.npcw .work .ln2{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;padding:4px 0;border-top:1px solid rgba(255,226,122,.1)}.npcw .work .ln2.rr span:first-child{color:#d8b4ff}
+.npcw button.a,.shop button.a{padding:2px 9px;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png) 10 fill / 5px stretch;background:none;font:800 12px Lora,serif;color:#ffe27a;cursor:pointer;white-space:nowrap}
+.npcw button.a:disabled,.shop button.a:disabled{opacity:.4;cursor:default}.npcw .acts{display:flex;gap:4px;flex-wrap:wrap}
+.npcw .note2{grid-column:1/-1;display:flex;justify-content:space-between;gap:10px;font:600 12px Lora,serif;color:#a89070}.npcw .note2 b{color:#ffd84a}.npcw .note2 img{width:16px;height:16px;vertical-align:-3px;image-rendering:pixelated}
+.riftl{display:grid;gap:6px;padding:10px 12px;overflow-y:auto;min-height:0;flex:1 1 auto;align-content:start}
 /* Dex's shop */
-#shopWin{left:50%;top:50%;transform:translate(-50%,-55%);width:min(460px,calc(100% - 40px))}
-.shop{display:grid;gap:6px;padding:10px 12px 12px}
+#shopWin{left:50%;top:12px;transform:translateX(-50%);width:min(620px,calc(100% - 40px));max-height:calc(100% - 144px)}
+.shop{display:grid;gap:6px;padding:10px 12px 12px;overflow-y:auto;min-height:0}
 .shop .row{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;padding:6px 8px;border-radius:8px;background:linear-gradient(#20160e,#16100a);box-shadow:inset 0 0 0 1.5px #3a2616}
 .shop .row img{width:36px;height:36px;image-rendering:pixelated}.shop .row b{display:block;font:800 14px Cinzel,serif;color:#ffe7b0}.shop .row small{display:block;font:600 12px Lora,serif;color:#b8a888}
 .shop .row .buy{display:flex;gap:4px}.shop .row .buy button{padding:2px 9px;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png) 10 fill / 5px stretch;background:none;font:800 12px Lora,serif;color:#ffe27a;cursor:pointer;white-space:nowrap}
 .shop .row .buy button:disabled{opacity:.4;cursor:default}
 .shop .foot{display:flex;justify-content:space-between;font:700 12.5px Lora,serif;color:#b8a888;padding:2px 4px}.shop .foot b{color:#ffd84a}
 /* the campaign door: pick an area */
-#campWin{left:50%;top:50%;transform:translate(-50%,-55%);width:min(520px,calc(100% - 40px))}
-.camplist{display:grid;gap:6px;padding:10px 12px}.camplist .row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;background:linear-gradient(#20160e,#16100a);box-shadow:inset 0 0 0 1.5px #3a2616}
+/* never taller than the screen above the bottom bar: the list scrolls inside it (the ladder made it ten rows longer) */
+#campWin{left:50%;top:12px;transform:translateX(-50%);width:min(560px,calc(100% - 40px));max-height:calc(100% - 144px)}
+.camplist{display:grid;gap:6px;padding:10px 12px;overflow-y:auto;min-height:0;flex:1 1 auto;align-content:start}.camplist .row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;background:linear-gradient(#20160e,#16100a);box-shadow:inset 0 0 0 1.5px #3a2616}
 .camplist .row b{display:block;font:800 15px Cinzel,serif;color:#ffe7b0}.camplist .row small{display:block;font:600 12px Lora,serif;color:#b8a888}.camplist .row.lock{opacity:.5}.camplist .row.next{box-shadow:inset 0 0 0 1.5px #c8963a}
 .camplist .row button{padding:3px 12px;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png) 10 fill / 5px stretch;background:none;font:800 13px Lora,serif;color:#ffe27a;cursor:pointer}
 .campnote{padding:0 14px 12px;font:600 12.5px Lora,serif;color:#b8a888}
@@ -136,6 +151,29 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 .invite{position:absolute;left:50%;top:70px;transform:translateX(-50%);z-index:7;display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:10px;background:rgba(14,10,8,.95);box-shadow:0 0 0 2px #c8963a,0 10px 24px rgba(0,0,0,.6);font:700 13.5px Lora,serif;color:#ffe7b0}.invite[hidden]{display:none}
 .invite button,.pmenu button{padding:2px 10px;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png) 10 fill / 5px stretch;background:none;font:800 12.5px Lora,serif;color:#ffe27a;cursor:pointer}
 .pmenu{position:absolute;z-index:7;display:grid;gap:4px;padding:8px;border-radius:10px;background:rgba(14,10,8,.95);box-shadow:0 0 0 1.5px #8a6428,0 10px 24px rgba(0,0,0,.6);font:800 13px Cinzel,serif;color:#ffe7b0}.pmenu[hidden]{display:none}.pmenu small{font:700 11.5px Lora,serif;color:#a89070}
+/* the admin window (admins only) */
+#admWin{left:50%;top:12px;transform:translateX(-50%);width:min(940px,calc(100% - 40px));bottom:132px}
+.admtabs{display:flex;gap:4px;padding:8px 12px 0}.admtabs button{padding:3px 12px;border-radius:6px 6px 0 0;border:0;background:#20160e;box-shadow:inset 0 0 0 1px #3a2616;font:800 12.5px Lora,serif;color:#cdbfa2;cursor:pointer}.admtabs button[aria-selected="true"]{background:#3a2414;color:#ffe7b0;box-shadow:inset 0 0 0 1px #c8963a}
+.admbody{padding:10px 12px;overflow:auto;min-height:0;font:600 13px Lora,serif;color:#cdbfa2}
+.admbody input,.admbody select{padding:4px 6px;border:1px solid #6a4a2a;border-radius:5px;background:rgba(0,0,0,.45);font:600 13px Lora,serif;color:#fff}
+.admbody button.a{padding:2px 9px;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png) 10 fill / 5px stretch;background:none;font:800 12px Lora,serif;color:#ffe27a;cursor:pointer}
+.admcard{margin:8px 0;padding:10px 12px;border-radius:10px;background:linear-gradient(#20160e,#16100a);box-shadow:inset 0 0 0 1.5px #3a2616}
+.admcard h5{margin:0 0 4px;font:800 15px Cinzel,serif;color:#ffe7b0}.admcard .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:5px 0}
+.admitems{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px;margin-top:6px}.admitems div{display:flex;gap:6px;align-items:center;padding:3px 6px;border-radius:6px;background:#1a140e;font:700 12px Lora,serif}.admitems img{width:20px;height:20px;image-rendering:pixelated}.admitems div span{flex:1}
+.admtbl{border-collapse:collapse;font:600 12.5px Lora,serif;color:#cdbfa2;width:100%}.admtbl th,.admtbl td{padding:3px 6px;border-top:1px solid rgba(255,226,122,.08);text-align:right;white-space:nowrap}.admtbl th:first-child,.admtbl td:first-child{text-align:left}.admtbl th{font:800 11px Lora,serif;color:#8a7a60}.admtbl tr.h td{font:800 11px Cinzel,serif;color:#c8963a;padding-top:8px}
+.admmsg{margin-top:6px;font:700 12.5px Lora,serif;color:#9ef0a0}.admmsg.bad{color:#ff9a8a}
+/* the trade window (face to face) */
+#tradeWin{left:50%;top:12px;transform:translateX(-50%);width:min(880px,calc(100% - 40px));bottom:132px}
+.trbody{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px 12px;min-height:0;overflow:auto}
+@media (max-width:760px){.trbody{grid-template-columns:1fr}}
+.trside{padding:10px;border-radius:10px;background:linear-gradient(#20160e,#16100a);box-shadow:inset 0 0 0 1.5px #3a2616}.trside.ok{box-shadow:inset 0 0 0 2px #7ee07e}
+.trside h5{margin:0 0 6px;font:800 14px Cinzel,serif;color:#ffe7b0;display:flex;justify-content:space-between}.trside h5 small{font:800 11px Lora,serif;color:#7ee07e}
+.trbag{display:grid;grid-template-columns:repeat(8,1fr);gap:3px}.trbag .cell.on{outline:2px solid #ffd84a;outline-offset:-2px;filter:brightness(1.25)}
+.trchips{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:6px}.trchips .cell b{position:absolute;right:1px;bottom:-2px;font:900 11px Lora,serif;color:#fff;text-shadow:0 1px 0 #000,0 0 3px #000}.trchips .cell.on{outline:2px solid #5ad6c0;outline-offset:-2px}.trchips .cell.none{opacity:.3;filter:grayscale(1);cursor:default}
+.trrow{display:flex;gap:8px;align-items:center;margin-top:8px;font:700 12.5px Lora,serif}.trrow input{width:110px;padding:4px 6px;border:1px solid #6a4a2a;border-radius:5px;background:rgba(0,0,0,.45);font:600 13px Lora,serif;color:#fff}
+.trlist{display:grid;gap:4px}.trlist div{display:flex;gap:6px;align-items:center;padding:3px 6px;border-radius:6px;background:#1a140e;font:700 12.5px Lora,serif}.trlist img{width:22px;height:22px;image-rendering:pixelated}
+.trfoot{display:flex;gap:8px;align-items:center;justify-content:flex-end;padding:8px 12px 10px;border-top:1px solid rgba(255,226,122,.15);font:700 12.5px Lora,serif;color:#cdbfa2}.trfoot span{flex:1}
+.trfoot button{padding:3px 14px;border:5px solid transparent;border-image:url(/v3/assets/img/glad/flat/ui/btn.png) 10 fill / 5px stretch;background:none;font:800 13px Lora,serif;color:#ffe27a;cursor:pointer}.trfoot button:disabled{opacity:.4;cursor:default}
 #statWin{left:50%;top:12px;transform:translateX(-50%);width:min(880px,calc(100% - 40px));bottom:132px}
 .stbody{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;overflow:auto;min-height:0;align-content:start}
 @media (max-width:760px){.stbody{grid-template-columns:1fr}}
@@ -193,10 +231,11 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 <div class="stage" id="stage">
   <canvas id="cv"></canvas>
   <div class="hud"><div><span id="hName"></span></div>
-    <div class="r"><b id="hWave">The Lounge</b><span id="hKills"></span><div class="rooms" id="hRooms"></div><canvas id="mini" class="mini" width="132" height="78" aria-label="Map of this room" hidden></canvas></div></div>
+    <div class="r"><b id="hWave">The Lounge</b><span id="hKills"></span><span class="mods" id="hMods"></span><div class="rooms" id="hRooms"></div><canvas id="mini" class="mini" width="132" height="78" aria-label="Map of this room" hidden></canvas></div></div>
   <div class="partyp" id="partyP" hidden></div>
   <div class="invite" id="invite" hidden><span id="inviteTxt"></span><button type="button" id="invYes">Join</button><button type="button" id="invNo">No thanks</button></div>
   <div class="pmenu" id="pmenu" hidden></div>
+  <div class="invite" id="tradeAsk" hidden style="top:118px"><span id="tradeAskTxt"></span><button type="button" id="trYes">Trade</button><button type="button" id="trNo">No thanks</button></div>
   <div class="boss" id="bossBar" hidden><span id="bossName"></span><i id="bossHp"></i></div>
   <div class="tip" id="tip" hidden></div>
   <div class="orbbar lounge" id="orbbar" hidden>
@@ -218,16 +257,32 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
   <div class="menu" id="menu" hidden>
     <button type="button" id="mInv" aria-pressed="false" title="Inventory (I)"><kbd>I</kbd><img src="/v3/assets/img/glad/flat/ui/bag.png" alt=""><span class="lb">Inventory</span></button>
     <button type="button" id="mSkills" aria-pressed="false" title="Skills (T)"><kbd>T</kbd><span class="pts" id="mPts" hidden></span><img src="/v3/assets/img/glad/flat/items/skill_wizardry.png" alt=""><span class="lb">Skills</span></button>
+    <button type="button" id="mAdmin" aria-pressed="false" title="Admin" hidden><img src="/v3/assets/img/glad/flat/ui/scroll.png" alt=""><span class="lb">Admin</span></button>
     <button type="button" id="mStats" aria-pressed="false" title="Stats (C)"><kbd>C</kbd><img src="/v3/assets/img/glad/flat/ui/g_character.png" alt=""><span class="lb">Stats</span></button>
   </div>
   <!-- inventory: a paper doll over a grid, on the right -->
   <section class="win" id="invWin" hidden aria-label="Inventory"><div class="win-head"><img src="/v3/assets/img/glad/flat/ui/bag.png" alt=""><b>Inventory</b><small id="invSub"></small><button type="button" data-close="invWin" title="Close (I)">×</button></div>
-    <div class="doll" id="doll"></div><div class="invhead"><span>Pouch</span><span>pick one, then click an item</span></div><div class="pouch" id="pouch"></div><div class="craftbar" id="craftBar" hidden></div><div class="invhead"><span>Bag</span><span id="invCount"></span></div><div class="invgrid" id="invGrid"></div>
-    <div class="invfoot"><span>Click to wear · Shift-click to salvage</span><span><img src="/v3/assets/img/glad/flat/items/coins.png" alt=""> <b id="invCrowns">0</b> Crowns</span></div></section>
+    <div class="doll" id="doll"></div><div class="invhead"><span>Potions</span><span>4 health · 5 mana, in a run</span></div><div class="pots" id="pots"></div><div class="invhead"><span>Bag</span><span id="invCount"></span></div><div class="invgrid" id="invGrid"></div>
+    <div class="invfoot"><span>Click to wear · Shift-click to salvage</span><span><img src="/v3/assets/img/glad/flat/items/stardust.png" alt=""> <b id="invEss">0</b> Essence · <img src="/v3/assets/img/glad/flat/items/coins.png" alt=""> <b id="invCrowns">0</b> Gold</span></div></section>
   <!-- the campaign door -->
   <section class="win" id="campWin" hidden aria-label="The campaign"><div class="win-head"><img src="/v3/assets/img/glad/flat/ui/g_fighting.png" alt=""><b>The campaign</b><small id="campSub"></small><button type="button" data-close="campWin" title="Close (Esc)">×</button></div><div class="camplist" id="campList"></div><div class="campnote" id="campNote"></div></section>
-  <!-- Dex's shop -->
-  <section class="win" id="shopWin" hidden aria-label="Dex's chips"><div class="win-head"><img src="/v3/assets/img/glad/flat/items/chip_free.png" alt=""><b>Dex's chips</b><small>Crowns for crafting chips</small><button type="button" data-close="shopWin" title="Close (Esc)">×</button></div><div class="shop" id="shop"></div></section>
+  <!-- Dex, the Merchant: potions and basic gear for Gold; buys what you don't want -->
+  <section class="win" id="shopWin" hidden aria-label="Dex, the Merchant"><div class="win-head"><img src="/v3/assets/img/glad/flat/items/coins.png" alt=""><b>Dex, the Merchant</b><small>potions and basic gear · buys what you don't want</small><button type="button" data-close="shopWin" title="Close (Esc)">×</button></div>
+    <div class="admtabs" id="dexTabs" role="tablist"><button type="button" data-dt="buy" aria-selected="true">Buy</button><button type="button" data-dt="sell" aria-selected="false">Sell</button></div><div class="shop" id="shop"></div></section>
+  <!-- Hexa, the Enchanter: reroll one line for Essence -->
+  <section class="win" id="enchWin" hidden aria-label="Hexa, the Enchanter"><div class="win-head"><img src="/v3/assets/img/glad/flat/items/stardust.png" alt=""><b>Hexa, the Enchanter</b><small>reroll one line of an item for Essence</small><button type="button" data-close="enchWin" title="Close (Esc)">×</button></div><div class="npcw" id="ench"></div></section>
+  <!-- Brutus, the Blacksmith: salvage gear into Essence -->
+  <section class="win" id="salvWin" hidden aria-label="Brutus, the Blacksmith"><div class="win-head"><img src="/v3/assets/img/glad/flat/o_anvil.png" alt=""><b>Brutus, the Blacksmith</b><small>salvage gear into Essence</small><button type="button" data-close="salvWin" title="Close (Esc)">×</button></div><div class="npcw" id="salv"></div></section>
+  <!-- Charon, the Rift Keeper: the endless Rifts -->
+  <section class="win" id="riftWin" hidden aria-label="Charon, the Rift Keeper"><div class="win-head"><img src="/v3/assets/img/glad/flat/ui/g_fighting.png" alt=""><b>The Rifts</b><small id="riftSub"></small><button type="button" data-close="riftWin" title="Close (Esc)">×</button></div><div class="riftl camplist" id="riftList"></div><div class="campnote" id="riftNote"></div></section>
+  <!-- admin (admins only): find a character, grant or take, the days' tallies, the log -->
+  <section class="win" id="admWin" hidden aria-label="Admin"><div class="win-head"><img src="/v3/assets/img/glad/flat/ui/scroll.png" alt=""><b>Admin</b><small>East Arena · every change is logged</small><button type="button" data-close="admWin" title="Close (Esc)">×</button></div>
+    <div class="admtabs" role="tablist"><button type="button" data-at="players" aria-selected="true">Players</button><button type="button" data-at="days" aria-selected="false">Days</button><button type="button" data-at="log" aria-selected="false">Log</button></div>
+    <div class="admbody" id="admBody"></div></section>
+  <!-- trade, face to face -->
+  <section class="win" id="tradeWin" hidden aria-label="Trade"><div class="win-head"><img src="/v3/assets/img/glad/flat/items/coins.png" alt=""><b>Trade</b><small id="trWith"></small><button type="button" id="trX" title="Cancel the trade">×</button></div>
+    <div class="trbody"><div class="trside" id="trMine"></div><div class="trside" id="trTheirs"></div></div>
+    <div class="trfoot"><span id="trSays"></span><button type="button" id="trCancel">Cancel</button><button type="button" id="trReady">Accept</button><button type="button" id="trConfirm" hidden>Confirm</button></div></section>
   <!-- stats -->
   <section class="win" id="statWin" hidden aria-label="Stats"><div class="win-head"><img src="/v3/assets/img/glad/flat/ui/g_character.png" alt=""><b>Stats</b><small id="statSub"></small><button type="button" data-close="statWin" title="Close (C)">×</button></div><div class="stbody" id="statBody"></div></section>
   <!-- the skill tree -->
@@ -242,8 +297,8 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 <div class="tipbox" id="tipBox" hidden></div>
 <div class="veil" id="veil"><span>Connecting to the server…</span></div>
 <script type="module">
-import * as R from "/v3/assets/js/arena-rules.js?v=5";   /* the arena's own rules: items, monsters, levels, classes, skills, the tree (shared with the Worker) */
-import { createSim } from "/v3/assets/js/arena-sim.js?v=2";   /* the fight itself, the same code the server runs (handed the rules, so they load once) */
+import * as R from "/v3/assets/js/arena-rules.js?v=8";   /* the arena's own rules: items, monsters, levels, classes, skills, the tree (shared with the Worker) */
+import { createSim } from "/v3/assets/js/arena-sim.js?v=5";   /* the fight itself, the same code the server runs (handed the rules, so they load once) */
 const SIM = createSim(R), { T, COLS, ROWS, W, H, SLOT_KEYS } = SIM, A = 2;
 const $ = (id) => document.getElementById(id), esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const DEV = location.hostname === "localhost" || location.hostname === "127.0.0.1";
@@ -253,7 +308,7 @@ document.fonts?.load("900 30px Cinzel"); document.fonts?.load("800 13px Lora"); 
    EastScape's login (the site's one-use ticket), which is the only thing the two games share. Dev: the arena server on :8788.
    Two sockets: the Lounge (always: your character, chat, parties, who is where) and, during a run, the run's own server. */
 const HOST = DEV ? `${location.hostname}:8788` : "arena.eastcoin.vip", PROTO = DEV ? "ws" : "wss";
-let ws = null, retry = 0, ME = null, resetting = false, pingT = 0, PARTY = null, INVITE = null;
+let ws = null, retry = 0, ME = null, resetting = false, pingT = 0, PARTY = null, INVITE = null, ROLE = "user";
 const OTHERS = new Map();   /* everyone else in the Lounge: id -> { name, x, y (drawn), tx, ty (latest), d, style, level, party } */
 const send = (m) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); };
 const net = (cls, t) => { const n = $("net"); n.className = `net ${cls}`; n.textContent = t; };
@@ -271,13 +326,15 @@ async function connect() {
 }
 function later() { net("bad", "Reconnecting…"); setTimeout(connect, Math.min(10000, 1000 * 2 ** retry++)); }
 function onMsg(m) {
-  if (m.type === "hello") { net("ok", "Connected"); send({ op: "enter" }); if (S?.kind === "lounge") S.sentMove = null; if (RUN && !RUN.ended) send({ op: "inrun", runId: RUN.runId }); return; }   /* a reconnect (a restart) says again where you stand, or that you're in a run */
+  if (m.type === "hello") { ROLE = m.role || "user"; $("mAdmin").hidden = ROLE !== "admin"; net("ok", "Connected"); send({ op: "enter" }); if (S?.kind === "lounge") S.sentMove = null; if (RUN && !RUN.ended) send({ op: "inrun", runId: RUN.runId }); return; }   /* a reconnect (a restart) says again where you stand, or that you're in a run */
   if (m.type === "pong" || m.type === "kicked") return;
   if (m.type === "arenachat") { if (m.old) { $("chatLog").innerHTML = ""; for (const l of m.list || []) chatLine(l, true); if (!m.list?.length) $("chatLog").innerHTML = `<p class="empty">Nobody has said anything here yet.</p>`; } else chatLine(m); return; }   /* the arena's own channel; a reconnect hands the recent lines over again, so the log is rebuilt rather than added to */
   if (m.type === "who") return gotWho(m.list);
   if (m.type === "party") { PARTY = m.party; renderParty(); if (!$("campWin").hidden) renderCamp(); return; }
   if (m.type === "invite") return showInvite(m);
   if (m.type === "run") return joinRun(m);
+  if (m.type === "admin") return gotAdmin(m);
+  if (m.type === "trade") return gotTrade(m);
   if (m.type !== "arena") return;
   const first = !ME; ME = { ...(ME || {}), ...m };
   ME.look = R.lookFor({ id: ME.id, name: ME.name });   /* the sprite only */
@@ -290,8 +347,12 @@ function onMsg(m) {
   else if (first) { if (!ME.style) showClasses(); else { const saved = savedRun(); if (saved) { send({ op: "inrun", runId: saved.runId }); joinRun(saved, true); } else showStart(); } }
   if (m.op === "tree") { if (m.refused) tip(m.refused, 3); treeLocal = null; if (!$("treeWin").hidden) renderTree(); regear(); }
   if (m.op === "stash") { regear(); if (S?.kind === "dungeon") tip("Gear you change now counts from your next run.", 2); }
-  if (!$("invWin").hidden) renderInv(); if (!$("statWin").hidden) renderStats(); if (!$("shopWin").hidden) renderShop(); if (!$("campWin").hidden) renderCamp();
-  if (m.op === "craft" || m.op === "buy") { if (m.refused) tip(m.refused, 3); else if (m.crafted) { tip(`${R.CHIPS[m.crafted.chip].name} used.`, 1.5); regear(); } else if (m.bought) tip(`Bought ${m.bought.n} ${R.CHIPS[m.bought.chip].name}${m.bought.n > 1 ? "s" : ""} for ${m.bought.paid} ${R.CURRENCY.name}.`, 2); }
+  if (!$("invWin").hidden) renderInv(); if (!$("statWin").hidden) renderStats(); if (!$("shopWin").hidden) renderShop(); if (!$("enchWin").hidden) renderEnch(); if (!$("salvWin").hidden) renderSalv(); if (!$("riftWin").hidden) renderRifts(); if (!$("campWin").hidden) renderCamp();
+  if (S?.kind === "lounge") renderTray();
+  if (m.op === "stash" && m.salvaged) tip(`Salvaged ${m.salvaged.n} piece${m.salvaged.n === 1 ? "" : "s"}: +${m.salvaged.essence} ${R.ESSENCE.name}.`, 2);
+  if (m.op === "stash" && m.sold) tip(`Sold for ${m.sold.paid} ${R.CURRENCY.name}.`, 2);
+  if (m.op === "enchant") { if (m.refused) tip(m.refused, 3.5); else { tip(`Enchanted (${m.enchanted.paid} ${R.ESSENCE.name}).`, 2); regear(); } }
+  if (m.op === "buy") { if (m.refused) tip(m.refused, 3); else if (m.bought?.slot) tip(`Bought a ${m.bought.slot} for ${m.bought.paid} ${R.CURRENCY.name}.`, 2); else if (m.bought) tip(`Bought ${m.bought.n} × ${R.POTIONS[m.bought.potion].name} for ${m.bought.paid} ${R.CURRENCY.name}.`, 2); }
   if (m.op === "tree" && m.paid) tip(`Refunded: ${m.paid} ${R.CURRENCY.name}.`, 2);
   if (m.op === "run" && m.refused) tip(m.refused, 3);
   if (m.op === "report" && m.refused) tip(m.refused, 3);
@@ -324,16 +385,17 @@ connect();
 const F = "/v3/assets/img/glad/flat/", FX = "/v3/assets/img/glad/fx/";
 const IMG = {}; const img = (p) => IMG[p] || (IMG[p] = Object.assign(new Image(), { src: p }));
 const DIRS = ["east", "north-east", "north", "north-west", "west", "south-west", "south", "south-east"];
-const FLOOR = img(`${F}t_crypt.png`), WALL = img(`${F}t_cryptwall.png`), TORCH = img(`${F}o_crypttorch.png`), SARC = img(`${F}o_sarcophagus.png`), BONES = img(`${F}o_bonepile.png`), GATE = img(`${F}o_cryptgate.png`), CHEST = img(`${F}o_chest.png`);
+const ANVIL = img(`${F}o_anvil.png`), FLOOR = img(`${F}t_crypt.png`), WALL = img(`${F}t_cryptwall.png`), TORCH = img(`${F}o_crypttorch.png`), SARC = img(`${F}o_sarcophagus.png`), BONES = img(`${F}o_bonepile.png`), GATE = img(`${F}o_cryptgate.png`), CHEST = img(`${F}o_chest.png`);
 const BOOM = img(`${FX}spell_explosion.png`), ARROW = img(`${F}items/bronze_arrow.png`);
 for (const S_ of Object.values(R.SKILLS)) { if (S_.fx) img(F.replace("flat/", "") + S_.fx); img(F + S_.icon); }
 const SLOT_ICON = { weapon: "items/logs_wand.png", offhand: "items/bronze_shield.png", helm: "items/bronze_helm.png", body: "items/bronze_body.png", gloves: "items/bronze_gloves.png", boots: "items/bronze_boots.png", ring: "items/bronze_ring.png", amulet: "items/bronze_amulet.png" };
 for (const v of Object.values(SLOT_ICON)) img(F + v);
-for (const c of Object.values(R.CHIPS)) img(F + c.icon); img(`${F}dex_south.png`);
+for (const c of Object.values(R.POTIONS)) img(F + c.icon); for (const n of ["dex", "brutus", "hexa", "charon"]) img(`${F}${n}_south.png`);
 for (const m of Object.values(R.MONSTERS)) img(`${F}${m.art}.png`);
 const CROWN = img(F + R.CURRENCY.icon), PERKS = R.PERKS, RAR = R.RARITY, SK = R.SKILLS;
 /* rarity colours on the ground and in the bag: Plain white, Lucky green, Hot orange, Jackpot a hot violet (the reference's unique colour) */
-const RCOL = ["#e8e0cc", "#7ee07e", "#ff9a4a", "#e070ff"];
+const RCOL = ["#e8e0cc", "#7ee07e", "#ff9a4a", "#ffcf3a", "#5ab4ff"];   /* Common, Magic, Rare, Legendary (gold), Set (blue) */
+const POTCOL = "#e8c890", NAME = R.itemName;
 const fxImg = (path) => img(F.replace("flat/", "") + path);
 const AREAS = SIM.AREAS;
 const openArea = () => Math.min(AREAS.length, Math.max(0, ...(ME.progress?.cleared || [])) + 1);
@@ -357,7 +419,7 @@ function showStart() {
   const C = R.STYLES[ME.style]; $("startTitle").textContent = `${C.name} · East Arena`;
   $("startWho").innerHTML = `You're <b>${esc(ME.name)}</b>, a <b>level ${ME.level} ${C.name.toLowerCase()}</b> character for ${R.SEASON.name}. This character is the arena's alone: its own gear, ${R.CURRENCY.name} and tree, and nothing it does touches EastScape.`;
   const g = myStats(); $("startKeys").innerHTML = `<kbd>W A S D</kbd><span>move (with momentum; walls block, nothing else does)</span><kbd>Mouse</kbd><span>aim · hold the button: <b>${SK[g.slots[0]].name}</b></span>` +
-    g.slots.slice(1).map((k, i) => `<kbd>${SLOT_KEYS[i + 1].toUpperCase()}</kbd><span>${SK[k].name}</span>`).join("") + `<kbd>Space</kbd><span>dodge: 0.3 s of no hitbox</span><kbd>I · T · C</kbd><span>inventory · skill tree · stats</span><kbd>Enter</kbd><span>chat</span><kbd>E</kbd><span>use a door, talk to Dex</span>`;
+    g.slots.slice(1).map((k, i) => `<kbd>${SLOT_KEYS[i + 1].toUpperCase()}</kbd><span>${SK[k].name}</span>`).join("") + `<kbd>Space</kbd><span>dodge: 0.3 s of no hitbox</span><kbd>I · T · C</kbd><span>inventory · skill tree · stats</span><kbd>Enter</kbd><span>chat</span><kbd>E</kbd><span>use a door, talk to someone</span><kbd>4 · 5</kbd><span>health potion · mana potion (in a run)</span>`;
   $("ovStart").hidden = false;
 }
 
@@ -386,10 +448,14 @@ let S = null, raf = 0, last = 0, keys = new Set(), mouse = { x: W / 2, y: H / 2,
 let floorCache = null;
 function newS(kind) { return { kind, t: 0, over: false, dying: false, room: null, roomI: 0, mobs: [], mobMap: new Map(), pb: [], zones: [], eb: [], fx: [], nums: [], drops: [], others: new Map(), cd: {}, kills: 0,
   p: { id: ME.id, x: 3 * T, y: 13.5 * T, vx: 0, vy: 0, dir: 6, dodgeCd: 0, dodging: 0, inv: 0, hurt: 0, cry: 0, dash: null, hp: 0, mp: 0 } }; }
+/* the potion belt: 4 health, 5 mana. In a run it counts what you carry; in the Lounge, your pouch. */
+function beltCells() { const have = S?.kind === "dungeon" ? S.belt || {} : ME?.potions || {};
+  return Object.entries(R.POTIONS).map(([k, P0]) => `<div data-k="${P0.key}" data-pot="${k}" class="${have[k] ? "" : "none"}" title="${P0.name} (${P0.key}): ${have[k] || 0}"><img src="${F}${P0.icon}" alt=""><b>${have[k] || 0}</b></div>`).join(""); }
+function quaff(k) { if (S?.kind !== "dungeon" || !RUN || S.over) return tip("Potions are for runs.", 1.2); rsend({ op: "quaff", k }); }
 function renderTray() {
   const g = S ? S.g : myStats();
   $("tray").innerHTML = SLOT_KEYS.map((key, i) => { const k = g.slots[i]; return k ? `<div data-k="${key.toUpperCase()}" data-sk="${k}" title="${SK[k].name}: ${SK[k].does}"><img src="${F}${SK[k].icon}" alt=""><i></i></div>` : `<div class="empty" data-k="${key.toUpperCase()}" title="A skill from the tree goes here"></div>`; }).join("") +
-    `<div data-k="SPC" data-sk="dodge" title="Dodge: 0.3 s with no hitbox"><img src="${F}${SK.dodge.icon}" alt=""><i></i></div>`;
+    `<div data-k="SPC" data-sk="dodge" title="Dodge: 0.3 s with no hitbox"><img src="${F}${SK.dodge.icon}" alt=""><i></i></div>` + beltCells();
   trayEls = null;
 }
 function startLoop() { last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); }
@@ -399,7 +465,7 @@ function startLounge() {
   if (RUN) leaveRun();
   S = newS("lounge"); S.lvl = ME.level; S.xp = ME.xp; S.g = myStats(); S.room = SIM.makeLounge(); floorCache = null;
   S.p.hp = S.g.maxHp; S.p.mp = S.g.maxMp; S.sentMove = null; S.p.x = (3 + Math.random() * 4) * T; S.p.y = (11.5 + Math.random() * 4) * T;   /* arrivals spread out, so two people back at once don't stand on each other */
-  $("hWave").textContent = "The Lounge"; $("where").textContent = "The Lounge"; $("hRooms").innerHTML = ""; $("hKills").textContent = "";
+  $("hWave").textContent = "The Lounge"; $("where").textContent = "The Lounge"; $("hRooms").innerHTML = ""; $("hKills").textContent = ""; $("hMods").textContent = "";
   renderTray(); $("orbbar").hidden = false; $("orbbar").classList.add("lounge"); $("menu").hidden = false; $("bossBar").hidden = true;
   $("ovStart").hidden = true; $("ovEnd").hidden = true; hudName(); renderParty();
   if (ME.offer?.perks?.length) showPerkOffer();
@@ -434,20 +500,34 @@ function openPlayerMenu(o, e) {
   const mine = PARTY?.members.some((m) => m.id === o.id), lead = !PARTY || PARTY.leader === ME.id, r = $("stage").getBoundingClientRect(), btn = [];
   if (!mine && lead && !o.party) btn.push(`<button type="button" data-pm="invite" data-id="${o.id}">Invite to party</button>`);
   if (mine && PARTY.leader === ME.id) btn.push(`<button type="button" data-pm="kick" data-id="${o.id}">Remove from party</button>`);
+  if (!TRADE) btn.push(`<button type="button" data-pm="trade" data-id="${o.id}">Trade</button>`);
   const note = !btn.length ? (mine ? "In your party" : o.party ? "In another party" : "Only your party's leader can invite") : "";
   $("pmenu").innerHTML = `<div>${esc(o.name)}</div><small>Level ${o.level} ${R.STYLES[o.style]?.name || ""}</small>${btn.join("")}${note ? `<small>${note}</small>` : ""}`;
   $("pmenu").style.left = `${Math.min(r.width - 200, e.clientX - r.left + 10)}px`; $("pmenu").style.top = `${Math.max(8, e.clientY - r.top - 20)}px`; $("pmenu").hidden = false;
 }
-$("pmenu").addEventListener("click", (e) => { const b = e.target.closest("[data-pm]"); if (!b) return; send({ op: b.dataset.pm, id: b.dataset.id }); $("pmenu").hidden = true; });
+$("pmenu").addEventListener("click", (e) => { const b = e.target.closest("[data-pm]"); if (!b) return; if (b.dataset.pm === "trade") send({ op: "trade", what: "ask", id: b.dataset.id }); else send({ op: b.dataset.pm, id: b.dataset.id }); $("pmenu").hidden = true; });
 document.addEventListener("pointerdown", (e) => { if (!e.target.closest("#pmenu") && e.target !== cv) $("pmenu").hidden = true; });
 
 /* ---------- the campaign door: pick an area (the party's leader picks for everyone) */
+/* THE RIFTS (Charon): endless, one tier at a time. The list shows the few around where you are: every cleared one can be run again. */
+function renderRifts() {
+  const top = ME.progress?.rift || 0, opened = (ME.progress?.cleared || []).includes(R.RIFTS.unlock), lead = !PARTY || PARTY.leader === ME.id;
+  $("riftSub").textContent = top ? `highest cleared: Rift ${top}` : opened ? "open" : "after the campaign";
+  const from = Math.max(1, top - 3), to = Math.max(top + 1, 3), rows = [];
+  for (let t = to; t >= from; t--) { const a = R.riftArea(t), can = opened && t <= top + 1, done = t <= top, nm = R.modsFor(t), sc = R.RIFTS.scale(t);
+    rows.push(`<div class="row ${!can ? "lock" : done ? "" : "next"}"><div><b>${esc(a.name)}</b><small>Area level ${a.alvl} · monsters +${Math.round((sc.hp - 1) * 100)}% health, +${Math.round((sc.dmg - 1) * 100)}% damage · ${nm ? `${nm} random modifier${nm > 1 ? "s" : ""}` : "no modifiers"} · +${Math.round(R.RIFTS.reward(t) * 100)}% XP, drops and ${R.CURRENCY.name}${R.RIFTS.perkTiers.includes(t) ? " · a perk the first time" : ""}</small><small>${done ? "Cleared: run it again any time" : can ? "Open: clear it to open the next" : opened ? "Clear the Rift below first" : "The Rifts open when you've cleared the campaign"}</small></div>${can && lead ? `<button type="button" data-area="${a.n}">Enter</button>` : ""}</div>`); }
+  $("riftList").innerHTML = rows.join("") + (from > 1 ? `<div class="row"><div><small>…and Rifts 1 to ${from - 1}, all cleared.</small></div></div>` : "");
+  $("riftNote").textContent = !lead ? "Your party's leader starts the runs; you'll go in with them." : "Every Rift is harder than the last and pays more. The season's ladder is the highest one cleared.";
+}
+$("riftList").addEventListener("click", (e) => { const b = e.target.closest("[data-area]"); if (!b) return; send({ op: "run", area: +b.dataset.area }); toggleWin("riftWin", false); tip("Charon opens the Rift…", 2); });
 function renderCamp() {
   const done = new Set(ME.progress?.cleared || []), open = openArea(), lead = !PARTY || PARTY.leader === ME.id;
   $("campSub").textContent = PARTY ? `a party of ${PARTY.members.length}` : "on your own";
   $("campList").innerHTML = AREAS.map((a) => { const can = a.n <= open;
     return `<div class="row ${!can ? "lock" : done.has(a.n) ? "" : "next"}"><div><b>Act ${a.act} · ${esc(a.name)}</b><small>Area level ${a.alvl} · ${a.rooms} rooms${a.boss ? ` · ${R.MONSTERS[a.boss].name} at the end` : ""}</small><small>${done.has(a.n) ? "Cleared" : can ? "Not cleared yet: a first clear gives a perk" : "Clear the one before it first"}</small></div>${can && lead ? `<button type="button" data-area="${a.n}">Enter</button>` : ""}</div>`; }).join("") +
-    R.CAMPAIGN.filter((a) => a.todo).map((a) => `<div class="row lock"><div><b>Act ${a.act} · ${esc(a.name.replace(/ \(.*/, ""))}</b><small>Later this season</small></div></div>`).join("");
+    R.CAMPAIGN.filter((a) => a.todo).map((a) => `<div class="row lock"><div><b>Act ${a.act} · ${esc(a.name.replace(/ \(.*/, ""))}</b><small>Later this season</small></div></div>`).join("") +
+    ((ME.progress?.cleared || []).includes(R.RIFTS.unlock) ? `<div class="row"><div><small>The Rifts are open: see Charon, by the sarcophagus.</small></div></div>` : "");
+  setTimeout(() => { const L = $("campList"), nx = L.querySelector(".row.next"); if (nx) L.scrollTop = Math.max(0, nx.offsetTop - L.offsetTop - 40); });   /* the next one you can enter, in view */
   $("campNote").textContent = !lead ? "Your party's leader starts the runs; you'll go in with them." : PARTY ? "Everyone in your party who is in the Lounge comes with you. Monsters get tougher for each extra player; your drops are your own." : "Click someone in the Lounge to invite them: a party is up to four.";
 }
 $("campList").addEventListener("click", (e) => { const b = e.target.closest("[data-area]"); if (!b) return; send({ op: "run", area: +b.dataset.area }); toggleWin("campWin", false); tip("Opening the way down…", 2); });
@@ -462,7 +542,7 @@ function joinRun(m, rejoin = false) {
   closeAll(); $("ovStart").hidden = true; $("pmenu").hidden = true;
   RUN = { runId: m.runId, token: m.token, area: m.area, name: m.name, ws: null, offs: [], off: 0, castSeq: 0, hurtSeq: 0, pendC: [], pendH: [], srvHp: 0, srvMp: 0, posAt: 0, sent: null, ended: false };
   try { sessionStorage.setItem(RUN_KEY, JSON.stringify({ runId: m.runId, token: m.token, area: m.area, name: m.name, at: Date.now() })); } catch (e) { /* private mode */ }
-  if (!rejoin) lootLine(`Into ${m.name}${m.party > 1 ? ` with a party of ${m.party}` : ""}.`, "sys");
+  if (!rejoin) { lootLine(`Into ${m.name}${m.party > 1 ? ` with a party of ${m.party}` : ""}.`, "sys"); if (m.mods?.length) lootLine(`Modifiers: ${m.mods.map((k) => `${R.MAP_MODS[k].name} (${R.MAP_MODS[k].says.toLowerCase()})`).join("; ")}. ${Math.round(R.modReward(m.mods) * 100)}% more XP, drops and ${R.CURRENCY.name}.`, "loot"); }
   connectRun();
 }
 function connectRun() {
@@ -486,6 +566,7 @@ function onRun(m) {
     case "cast": return otherCast(m);
     case "drop": S.drops.push({ ...m.d, t: 0 }); return;
     case "got": return gotDrop(m);
+    case "quaffed": { S.belt = m.me.belt || {}; RUN.srvHp = m.me.hp; RUN.srvMp = m.me.mp; const P0 = R.POTIONS[m.k]; S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 30, text: P0.heal ? `+${Math.round(P0.heal * 100)}% health` : `+${Math.round(P0.mana * 100)}% mana`, t: 0.9, gold: !P0.heal }); renderTray(); return; }
     case "lvl": return levelUp(m);
     case "pos": S.p.x = m.x; S.p.y = m.y; S.p.vx = S.p.vy = 0; return;
     case "say": return tip(m.text, 2);
@@ -494,19 +575,22 @@ function onRun(m) {
     case "end": return runOver(m);
   }
 }
-const mkMob = ([id, k, x, y, hp, maxHp, awake]) => { const d = R.monsterAt(k, S.area.alvl); d.melee = d.type === "melee"; return { id, k, d, x, y, hp, maxHp, awake: !!awake, buf: [[srvNow(), x, y]], flash: 0, numK: 0, t: Math.random() * 3, vx: 0, vy: 0, slow: 0, stun: 0, root: 0 }; };
+const mkMob = ([id, k, x, y, hp, maxHp, awake]) => { const d = R.mobDef(k, S.area.alvl, S.mods || [], S.area.tier || 0); d.melee = d.type === "melee"; return { id, k, d, x, y, hp, maxHp, awake: !!awake, buf: [[srvNow(), x, y]], flash: 0, numK: 0, t: Math.random() * 3, vx: 0, vy: 0, slow: 0, stun: 0, root: 0 }; };
 const mkOther = (q) => ({ id: q.id, name: q.name, style: q.style, x: q.x, y: q.y, d: 6, hp: q.hp, maxHp: q.maxHp, alive: q.alive !== false, buf: [[srvNow(), q.x, q.y]], look: lookOf(q.id, q.name), g: SIM.statsFor({ style: q.style, level: 1 }) });
 function setRunRoom(rv, exit) {
-  S.roomI = rv.i; S.room = SIM.makeRoom(S.seed, S.area.n, rv.i); if (exit) SIM.openExit(S.room); floorCache = null;
+  S.roomI = rv.i; S.room = SIM.makeRoom(S.seed, S.area.n, rv.i, S.mods || []); if (exit) SIM.openExit(S.room); floorCache = null;
   S.mobs = rv.mobs.map(mkMob); S.mobMap = new Map(S.mobs.map((m) => [m.id, m])); S.pb = []; S.zones = []; S.eb = []; S.fx = []; S.nums = []; S.drops = [];
-  $("hWave").textContent = `Room ${rv.i + 1} of ${S.area.rooms}`; $("where").textContent = `Act ${S.area.act} · ${S.area.name} · room ${rv.i + 1}`;
+  $("hWave").textContent = `Room ${rv.i + 1} of ${S.area.rooms}`; $("where").textContent = `${S.area.rift ? "The Rifts" : `Act ${S.area.act}`} · ${S.area.name} · room ${rv.i + 1}`;
+  $("hMods").textContent = (S.mods || []).map((k) => R.MAP_MODS[k].name).join(" · ");
   $("hRooms").innerHTML = [...Array(S.area.rooms).keys()].map((k) => `<i class="${k < rv.i ? "done" : k === rv.i ? "now" : ""}"></i>`).join("");
   $("bossBar").hidden = true;
 }
 function runHello(h) {
   const fresh = !S || S.kind !== "dungeon" || S.runId !== h.runId;
   if (fresh) { S = newS("dungeon"); S.runId = h.runId; S.area = SIM.areaOf(h.area); S.seed = h.seed; }
-  const me = h.me; S.lvl = me.lvl; S.xp = me.xp; S.xpGain = me.xpGain; S.crowns = me.crowns; S.foundN = me.found; S.chipsN = me.chips || {}; S.kills = S.kills || 0; S.g = myStats(S.lvl);
+  S.mods = h.mods || [];
+  S.belt = h.me.belt || {};
+  const me = h.me; S.lvl = me.lvl; S.xp = me.xp; S.xpGain = me.xpGain; S.crowns = me.crowns; S.foundN = me.found; S.kills = S.kills || 0; S.g = R.applyPlayerMods(myStats(S.lvl), S.mods);
   RUN.srvHp = me.hp; RUN.srvMp = me.mp; RUN.pendC = []; RUN.pendH = []; S.over = false; S.dying = false;
   setRunRoom(h.room, h.exit);
   S.p.x = me.x; S.p.y = me.y; S.p.vx = S.p.vy = 0; S.p.hp = me.hp; S.p.mp = me.mp; S.p.inv = 0.6;
@@ -542,34 +626,35 @@ function runEv(e) {
 function otherCast(m) { const o = S.others.get(m.id); if (!o) return; const vis = { id: o.id, x: m.x, y: m.y, g: o.g }; SIM.castOn(S, vis, m.k, m.a, m.ax, m.ay, [], true); }
 function gotDrop(m) {
   const d = S.drops.find((x) => x.id === m.d); S.drops = S.drops.filter((x) => x.id !== m.d);
-  S.crowns = m.me.crowns; S.foundN = m.me.found; S.chipsN = m.me.chips || {};
-  if (d?.item) { if (d.item.r) S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 26, text: RAR[d.item.r].name.toUpperCase() + "!", t: 1, gold: true }); lootLine(`Found ${d.item.r ? RAR[d.item.r].name + " " : ""}${d.item.base} (item level ${d.item.ilvl}).`, d.item.r >= 2 ? "loot" : "sys"); if (!$("invWin").hidden) renderInv(); }
-  else if (d?.chip) { S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 24, text: R.CHIPS[d.chip].name, t: 1, gold: true }); lootLine(`Found a ${R.CHIPS[d.chip].name}.`, "loot"); }
+  S.crowns = m.me.crowns; S.foundN = m.me.found; S.belt = m.me.belt || {};
+  if (d?.item) { if (d.item.r) S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 26, text: RAR[d.item.r].name.toUpperCase() + "!", t: 1, gold: true }); lootLine(`Found ${NAME(d.item)} (item level ${d.item.ilvl}).`, d.item.r >= 2 ? "loot" : "sys"); if (!$("invWin").hidden) renderInv(); }
+  else if (d?.pot) { S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 24, text: R.POTIONS[d.pot].name, t: 0.9 }); lootLine(`Found a ${R.POTIONS[d.pot].name}.`, "sys"); renderTray(); }
   else if (d?.crowns) S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 22, text: `+${d.crowns}`, t: 0.7, gold: true });
   hudName();
 }
-function levelUp(m) { S.lvl = m.lvl; S.xp = m.me.xp; S.g = myStats(S.lvl); RUN.srvHp = m.me.hp; RUN.srvMp = m.me.mp; S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 36, text: `LEVEL ${S.lvl} · +1 skill point`, t: 1.8, gold: true }); lootLine(`Level ${S.lvl}! A skill point waits (T).`, "good"); hudName(); }
+function levelUp(m) { S.lvl = m.lvl; S.xp = m.me.xp; S.g = R.applyPlayerMods(myStats(S.lvl), S.mods || []); RUN.srvHp = m.me.hp; RUN.srvMp = m.me.mp; S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 36, text: `LEVEL ${S.lvl} · +1 skill point`, t: 1.8, gold: true }); lootLine(`Level ${S.lvl}! A skill point waits (T).`, "good"); hudName(); }
 function runOver(m) {
-  if (!RUN) return; RUN.ended = true; forgetRun(); const r = m.result || {}, chips = Object.values(S.chipsN || {}).reduce((a, n) => a + n, 0);
+  if (!RUN) return; RUN.ended = true; forgetRun(); const r = m.result || {};
   S.over = true; mouse.down = false; keys.clear();
   $("endTitle").textContent = { died: `You died in room ${S.roomI + 1}`, cleared: `${S.area.name}, cleared`, left: "Back up the stairs", interrupted: "The run was cut short", done: "This run is over" }[m.how] || "The run is over";
-  $("endBody").innerHTML = m.how === "died" ? `<p><b>+${(r.xp || 0).toLocaleString()} XP</b> (the XP stays).</p><p>What you found in ${esc(S.area.name)} is lost: ${S.foundN || 0} piece${S.foundN === 1 ? "" : "s"} of gear, ${S.crowns || 0} ${R.CURRENCY.name}${chips ? ` and ${chips} chip${chips === 1 ? "" : "s"}` : ""}.</p>`
+  const haul = `<b>${r.kills || 0} kills</b> in ${clock(r.secs || 0)} · <b>+${(r.xp || 0).toLocaleString()} XP</b> · <b>+${r.crowns || 0} ${R.CURRENCY.name}</b> · <b>${r.items || 0}</b> piece${r.items === 1 ? "" : "s"} to your inventory${r.potions ? ` · <b>${r.potions}</b> potion${r.potions === 1 ? "" : "s"}` : ""}.`;
+  $("endBody").innerHTML = m.how === "died" ? `<p>You keep everything you found; the run is over. Back to the Lounge.</p><p>${haul}</p>`
     : m.how === "interrupted" ? `<p>${esc(m.note || "The server restarted. What you had found was kept.")}</p>`
-    : `<p><b>${r.kills || 0} kills</b> in ${clock(r.secs || 0)} · <b>+${(r.xp || 0).toLocaleString()} XP</b> · <b>+${r.crowns || 0} ${R.CURRENCY.name}</b> · <b>${r.items || 0}</b> piece${r.items === 1 ? "" : "s"} to your inventory${r.chips ? ` · <b>${r.chips}</b> chip${r.chips === 1 ? "" : "s"} to your pouch` : ""}.</p>`;
+    : `<p>${haul}</p>`;
   $("perkPick").innerHTML = m.how === "cleared" ? `<p class="note">Checking for a perk…</p>` : ""; $("backBtn").hidden = false; $("ovEnd").hidden = false;
-  lootLine(m.how === "died" ? `You died in ${S.area.name}. What you found there is lost.` : m.how === "cleared" ? `${S.area.name} cleared.` : "Back to the Lounge.", m.how === "died" ? "bad" : m.how === "cleared" ? "good" : "sys");
+  lootLine(m.how === "died" ? `You died in ${S.area.name}. What you found is kept.` : m.how === "cleared" ? `${S.area.name} cleared.` : "Back to the Lounge.", m.how === "died" ? "bad" : m.how === "cleared" ? "good" : "sys");
   try { RUN.ws?.close(); } catch (e) { /* gone */ }
   draw();
 }
 /* the Lounge has paid the run: say what landed, and offer the perk if this was a first clear */
 function runSaved(m) {
   const g = m.gained || {};
-  tip(g.died ? `Saved: +${(g.xp || 0).toLocaleString()} XP. Nothing else came back.` : `Saved: +${(g.xp || 0).toLocaleString()} XP, +${g.crowns || 0} ${R.CURRENCY.name}, ${g.items || 0} item${g.items === 1 ? "" : "s"}${g.chips ? `, ${g.chips} chip${g.chips === 1 ? "" : "s"}` : ""}.`, 4);
+  tip(`Saved: +${(g.xp || 0).toLocaleString()} XP, +${g.crowns || 0} ${R.CURRENCY.name}, ${g.items || 0} item${g.items === 1 ? "" : "s"}${g.potions ? `, ${g.potions} potion${g.potions === 1 ? "" : "s"}` : ""}.`, 4);
   if (g.lost) lootLine(`${g.lost} item${g.lost === 1 ? "" : "s"} didn't fit in your inventory (60) and ${g.lost === 1 ? "was" : "were"} lost.`, "bad");
   if (!$("ovEnd").hidden) offerInto();
 }
 function offerInto() {
-  if (ME.offer?.perks?.length) { $("perkPick").innerHTML = `<p><b>First clear: pick one perk.</b> It's yours for the season, in every area and map.</p>` + ME.offer.perks.map((k) => `<button type="button" data-p="${k}">${PERKS[k][0]}<small>${PERKS[k][1]}</small></button>`).join(""); $("backBtn").hidden = true; }
+  if (ME.offer?.perks?.length) { $("perkPick").innerHTML = `<p><b>First clear: pick one perk.</b> It's yours for the season, in every area and Rift.</p>` + ME.offer.perks.map((k) => `<button type="button" data-p="${k}">${PERKS[k][0]}<small>${PERKS[k][1]}</small></button>`).join(""); $("backBtn").hidden = true; }
   else if (/Checking/.test($("perkPick").textContent)) $("perkPick").innerHTML = `<p class="note">Cleared before: no perk this time (one per area).</p>`;
 }
 function showPerkOffer() { $("endTitle").textContent = "A perk is waiting"; $("endBody").innerHTML = `<p>From your first clear. Pick one: it lasts the season.</p>`; offerInto(); $("ovEnd").hidden = false; }
@@ -650,30 +735,29 @@ function drawNums() {
    Labels push each other up so they never overlap; walk over a drop or click its name to pick it up. Only your own drops are ever here: the
    server sends nobody anyone else's. The beams are a few gradient rects with additive blending: cheap on any PC. */
 let labelRects = [];
-const CHIPCOL = "#5ad6c0";   /* crafting chips: teal, so they never read as gear */
-const BEAM = [null, { h: 100, w: 4, a: 1 }, { h: 160, w: 6, a: 1.15 }, { h: 250, w: 9, a: 1.3 }];
+const BEAM = [null, { h: 100, w: 4, a: 1 }, { h: 170, w: 6, a: 1.15 }, { h: 320, w: 11, a: 1.45 }, { h: 230, w: 8, a: 1.3 }];   /* Magic, Rare, Legendary, Set */
 function drawLoot(now) {
   labelRects = []; if (!S.drops.length) return;
   const list = S.drops.map((d) => ({ d, x: sx(d.x), y: sy(d.y) })).sort((a, b) => b.y - a.y);
   cx.save(); cx.globalCompositeOperation = "lighter";
-  for (const { d, x, y } of list) { const r = d.chip ? 1 : d.item?.r; if (!r) continue; const col = d.chip ? CHIPCOL : RCOL[r], B = BEAM[r], pulse = 0.7 + 0.3 * Math.sin(now / 260 + d.x);
+  for (const { d, x, y } of list) { const r = d.item?.r; if (!r) continue; const col = RCOL[r], B = BEAM[r], pulse = 0.7 + 0.3 * Math.sin(now / 260 + d.x);
     const gr = cx.createLinearGradient(0, y - B.h, 0, y); gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(0.5, hexA(col, 0.4 * B.a * pulse)); gr.addColorStop(1, hexA(col, B.a * pulse));
     cx.fillStyle = gr; cx.fillRect(x - B.w / 2, y - B.h, B.w, B.h);
     const gr2 = cx.createLinearGradient(0, y - B.h * 0.75, 0, y); gr2.addColorStop(0, "rgba(0,0,0,0)"); gr2.addColorStop(1, hexA(col, 0.3 * B.a * pulse)); cx.fillStyle = gr2; cx.fillRect(x - B.w * 2.5, y - B.h * 0.75, B.w * 5, B.h * 0.75);
     const pool = cx.createRadialGradient(x, y, 0, x, y, 16 + r * 7); pool.addColorStop(0, hexA(col, 0.6 * pulse)); pool.addColorStop(1, "rgba(0,0,0,0)"); cx.fillStyle = pool; cx.fillRect(x - 40, y - 40, 80, 80);
-    if (r === 3) for (let i = 0; i < 6; i++) { const t = (now / 1000 + i / 6) % 1, px = x + Math.sin(i * 2.3 + now / 380) * 9, py = y - t * B.h * 0.85; cx.fillStyle = hexA("#fff0ff", (1 - t) * 0.95); cx.fillRect(Math.round(px) - 1, Math.round(py) - 1, 3, 3); } }
+    if (r >= 3) { const sp = r === 3 ? 10 : 6, c2 = r === 3 ? "#fff6c0" : "#d8ecff"; for (let i = 0; i < sp; i++) { const t = (now / 1000 + i / sp) % 1, px = x + Math.sin(i * 2.3 + now / 380) * (r === 4 ? 12 : 9), py = y - t * B.h * 0.85; cx.fillStyle = hexA(c2, (1 - t) * 0.95); cx.fillRect(Math.round(px) - 1, Math.round(py) - 1, 3, 3); } } }
   cx.restore();
   cx.font = "800 13px Lora, Georgia, serif"; cx.textAlign = "center"; cx.textBaseline = "middle";
   const hov = labelRects;   /* filled as we go: each new label steps up past the ones already placed */
   for (const { d, x, y } of list) {
-    const text = d.item ? `${d.item.r ? RAR[d.item.r].name + " " : ""}${d.item.base}` : d.chip ? R.CHIPS[d.chip].name : `${d.crowns} ${R.CURRENCY.name}`, w = Math.ceil(cx.measureText(text).width) + 14, h = 20;
+    const text = d.item ? NAME(d.item) : d.pot ? R.POTIONS[d.pot].name : `${d.crowns} ${R.CURRENCY.name}`, w = Math.ceil(cx.measureText(text).width) + 14, h = 20;
     let ly = y - (d.item ? 30 : 24);
     for (let tries = 0; tries < 12 && hov.some((r) => Math.abs(r.x - x) < (r.w + w) / 2 + 2 && Math.abs(r.y - ly) < h + 2); tries++) ly -= h + 2;
     const over = Math.abs(mouse.sx - x) < w / 2 && Math.abs(mouse.sy - ly) < h / 2;
     hov.push({ x, y: ly, w, h, d });
-    const col = d.item ? RCOL[d.item.r] : d.chip ? CHIPCOL : "#ffd84a", L = Math.round(x - w / 2), T0 = Math.round(ly - h / 2);
+    const col = d.item ? RCOL[d.item.r] : d.pot ? POTCOL : "#ffd84a", L = Math.round(x - w / 2), T0 = Math.round(ly - h / 2);
     cx.fillStyle = over ? "rgba(40,28,14,.92)" : "rgba(8,6,4,.8)"; cx.fillRect(L, T0, w, h);
-    cx.strokeStyle = hexA(col, d.item?.r || d.chip || over ? 0.95 : 0.35); cx.lineWidth = 1; cx.strokeRect(L + 0.5, T0 + 0.5, w - 1, h - 1);
+    cx.strokeStyle = hexA(col, d.item?.r || d.pot || over ? 0.95 : 0.35); cx.lineWidth = 1; cx.strokeRect(L + 0.5, T0 + 0.5, w - 1, h - 1);
     cx.fillStyle = col; cx.fillText(text, x, ly + 1);
   }
   cx.textBaseline = "alphabetic";
@@ -694,7 +778,7 @@ function step(dt) {
   for (const k in S.cd) S.cd[k] -= dt; p.dodgeCd -= dt; p.inv -= dt; p.hurt -= dt; p.cry -= dt;
   if (!frozen) {
     const npc = S.room.objs.find((o) => o.k === "npc" && Math.hypot((o.x + 0.5) * T - p.x, (o.y + 0.5) * T - p.y) < T * 2.2);
-    if (npc) { tip(`${npc.name} · E`); if (keys.has("e")) { keys.delete("e"); if (npc.talk === "shop") toggleWin("shopWin", true); } }
+    if (npc) { tip(`${npc.name} · E`); if (keys.has("e")) { keys.delete("e"); toggleWin({ shop: "shopWin", salvage: "salvWin", enchant: "enchWin", rifts: "riftWin" }[npc.talk], true); } }
     const door = S.room.objs.find((o) => o.k === "door" && Math.hypot((o.x + 0.5) * T - p.x, (o.y + 0.5) * T - p.y) < T * 2.2);
     if (door) { tip(`${door.name} · E`); if (keys.has("e")) { keys.delete("e"); useDoor(door); } }
   }
@@ -741,74 +825,203 @@ const clock = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStar
 function hudName() { if (!S) return; const lvl = S.lvl || ME.level, xp = S.xp ?? ME.xp; $("hName").innerHTML = `${esc(ME.name)} · <b>Level ${lvl}</b> <span style="font-weight:700;color:#ffd98a">· ${(ME.crowns + (S.kind === "dungeon" ? S.crowns || 0 : 0)).toLocaleString()} ${R.CURRENCY.name}</span><div class="bar" style="height:6px;width:220px;margin-top:4px"><i style="width:${Math.min(100, (xp / R.LEVEL.xpFor(lvl)) * 100)}%;background:linear-gradient(#ffe27a,#c8963a)"></i></div>`; }
 
 /* ============================================================ THE MENU: Inventory (I), Skills (T), Stats (C). The game keeps running behind them, as ARPGs do. */
-const WINS = ["invWin", "statWin", "treeWin", "shopWin", "campWin"];
-function syncMenu() { $("mInv").setAttribute("aria-pressed", String(!$("invWin").hidden)); $("mSkills").setAttribute("aria-pressed", String(!$("treeWin").hidden)); $("mStats").setAttribute("aria-pressed", String(!$("statWin").hidden)); }
+const WINS = ["invWin", "statWin", "treeWin", "shopWin", "enchWin", "salvWin", "riftWin", "campWin", "admWin"];
+function syncMenu() { $("mAdmin").setAttribute("aria-pressed", String(!$("admWin").hidden)); $("mInv").setAttribute("aria-pressed", String(!$("invWin").hidden)); $("mSkills").setAttribute("aria-pressed", String(!$("treeWin").hidden)); $("mStats").setAttribute("aria-pressed", String(!$("statWin").hidden)); }
 function closeAll() { for (const id of WINS) $(id).hidden = true; syncMenu(); hideTip(); }
 /* the inventory sits on the right and can stay open beside the others; the rest are big windows, so one at a time */
 function toggleWin(id, open = $(id).hidden) {
   if (!ME?.style) return;
-  if (open && id !== "invWin") for (const o of ["statWin", "treeWin", "shopWin", "campWin"]) if (o !== id) $(o).hidden = true;
-  $(id).hidden = !open; if (open) { if (id === "invWin") renderInv(); if (id === "statWin") renderStats(); if (id === "treeWin") renderTree(); if (id === "shopWin") renderShop(); if (id === "campWin") renderCamp(); }
-  if (id === "invWin" && !open) setCraft(null);
+  if (open && id !== "invWin") for (const o of WINS) if (o !== id && o !== "invWin") $(o).hidden = true;
+  $(id).hidden = !open; if (open) { if (id === "invWin") renderInv(); if (id === "statWin") renderStats(); if (id === "treeWin") renderTree(); if (id === "shopWin") renderShop(); if (id === "enchWin") renderEnch(); if (id === "salvWin") renderSalv(); if (id === "riftWin") renderRifts(); if (id === "campWin") renderCamp(); if (id === "admWin") admTab(ADM.tab); }
   syncMenu(); hideTip();
 }
 const toggleTree = (open) => toggleWin("treeWin", open);
-$("mInv").addEventListener("click", () => toggleWin("invWin")); $("mSkills").addEventListener("click", () => toggleWin("treeWin")); $("mStats").addEventListener("click", () => toggleWin("statWin"));
+$("mInv").addEventListener("click", () => toggleWin("invWin")); $("mAdmin").addEventListener("click", () => toggleWin("admWin")); $("mSkills").addEventListener("click", () => toggleWin("treeWin")); $("mStats").addEventListener("click", () => toggleWin("statWin"));
 document.addEventListener("click", (e) => { const c = e.target.closest("[data-close]"); if (c) toggleWin(c.dataset.close, false); });
 
 /* ---------- INVENTORY: a paper doll at the top, a grid below it (the owner: "paperdoll style that opens in the right hand side") */
 const IMPL = { def: "armour", dmg: "damage", hp: "health", mp: "mana" };
 function itemTip(it, act) {
-  const imp = Object.entries(it.implicit || {}).map(([k, v]) => `+${v} ${IMPL[k] || k}`);
-  return `<b style="color:${RCOL[it.r]}">${it.r ? RAR[it.r].name + " " : ""}${esc(it.base)}</b><div class="base">${it.slot}${it.style ? ` · ${R.STYLES[it.style]?.name || it.style}` : ""} · item level ${it.ilvl}</div>` +
-    (imp.length ? `<div class="imp">${imp.join("<br>")}</div>` : "") + it.lines.map((l) => `<div class="ln">${R.sayLine(l)}</div>`).join("") + (!imp.length && !it.lines.length ? `<div class="base">No lines (Plain)</div>` : "") + (act ? `<div class="act">${act}</div>` : "");
+  const imp = Object.entries(it.implicit || {}).map(([k, v]) => `+${v} ${IMPL[k] || k}`), LG = it.r === 3 ? R.LEGENDARIES[it.lg] : null, ST = it.r === 4 ? R.SETS[it.s] : null;
+  let extra = "";
+  if (LG) extra = `<div class="pw">${esc(LG.power[0])}</div><div class="lore">${esc(LG.ex)}</div>`;
+  if (ST) { const have = Object.values(ME.worn || {}).filter((x) => x?.r === 4 && x.s === it.s).length;
+    extra = `<div class="setn">${esc(ST.name)} · ${have} of ${Object.keys(ST.pieces).length} worn</div>` + Object.entries(ST.pieces).map(([sl, pc]) => `<div class="setl ${Object.values(ME.worn || {}).some((x) => x?.r === 4 && x.s === it.s && x.slot === sl) ? "" : "off"}">${esc(pc[0])}</div>`).join("") +
+      ST.bonus.map(([n, says]) => `<div class="setl ${have >= n ? "" : "off"}">(${n}) ${esc(says)}</div>`).join("") + `<div class="lore">${esc(ST.ex)}</div>`; }
+  return `<b style="color:${RCOL[it.r]}">${esc(NAME(it))}</b><div class="base">${it.r >= 3 ? `${RAR[it.r].name} · ` : ""}${it.slot}${it.style ? ` · ${R.STYLES[it.style]?.name || it.style}` : ""} · item level ${it.ilvl}</div>` +
+    (imp.length ? `<div class="imp">${imp.join("<br>")}</div>` : "") + it.lines.map((l, i) => `<div class="ln${it.rr === i ? " rr" : ""}">${R.sayLine(l)}${it.rr === i ? ` <small>enchanted</small>` : ""}</div>`).join("") + (!imp.length && !it.lines.length ? `<div class="base">No lines (Common)</div>` : "") + extra + (act ? `<div class="act">${act}</div>` : "");
 }
-const salvageOf = (it) => Math.max(1, Math.round((2 + (it.ilvl | 0) / 2) * (1 + (it.r | 0))));   /* the Worker's salvageValue */
+function potTip(k, act) { const P0 = R.POTIONS[k], n = ME.potions?.[k] || 0;
+  return `<b style="color:${POTCOL}">${esc(P0.name)}</b><div class="base">You have ${n} of ${R.POTION_MAX}</div><div class="imp">Restores ${Math.round((P0.heal || P0.mana) * 100)}% of your ${P0.heal ? "health" : "mana"}. Key ${P0.key} in a run; one every ${R.POTION_CD} s.</div><div class="lore">${esc(P0.ex)}</div>${act ? `<div class="act">${act}</div>` : ""}`; }
+function renderPots() { $("pots").innerHTML = Object.entries(R.POTIONS).map(([k, P0]) => `<button type="button" class="cell ${ME.potions?.[k] ? "" : "none"}" data-pot="${k}" aria-label="${esc(P0.name)}"><img src="${F}${P0.icon}" alt=""><b>${ME.potions?.[k] || 0}</b></button>`).join("") + `<span class="potnote">They drop in runs; Dex sells them.</span>`; }
 const BAG_CELLS = 64;
-/* CRAFTING: pick a chip in the pouch, then click an item (in the bag or on the doll). The chip stays picked while you have more, PoE-style;
-   click it again, right-click, or Esc to put it down. The server decides what the chip does (R.craft) and spends it. */
-let craftChip = null;
-function setCraft(k) { craftChip = k && (ME.chips?.[k] || 0) > 0 ? k : null; $("invWin").classList.toggle("crafting", !!craftChip); $("craftBar").hidden = !craftChip; if (craftChip) $("craftBar").textContent = `${R.CHIPS[craftChip].name}: ${R.CHIPS[craftChip].does}. Click an item. (Esc to stop)`; if (!$("invWin").hidden) renderPouch(); }
-function renderPouch() { const have = ME.chips || {}; $("pouch").innerHTML = Object.entries(R.CHIPS).map(([k, c]) => `<button type="button" class="cell ${have[k] ? "" : "none"} ${craftChip === k ? "sel" : ""}" data-chip="${k}" aria-label="${c.name}"><img src="${F}${c.icon}" alt="">${have[k] ? `<b>${have[k]}</b>` : ""}</button>`).join(""); }
 function renderInv() {
   if (!ME?.style) return; const worn = ME.worn || {}, st = ME.stash || [], C = R.STYLES[ME.style];
-  if (craftChip && !(ME.chips?.[craftChip] > 0)) { craftChip = null; $("invWin").classList.remove("crafting"); $("craftBar").hidden = true; }
-  renderPouch();
+  renderPots();
   $("invSub").textContent = `${C.name} · level ${ME.level}`;
   $("doll").innerHTML = `<div class="doll-fig"><img src="${F}look${ME.look}_south.png" alt=""><span>${esc(ME.name)}</span></div>` + R.SLOTS.map((s) => { const it = worn[s];
     return `<button type="button" class="cell ${it ? `r${it.r}` : "empty"}" style="grid-area:${s}" data-worn="${s}" aria-label="${it ? esc(it.base) : s}"><img src="${F}${it ? it.icon : SLOT_ICON[s]}" alt="">${it ? "" : `<small>${s}</small>`}</button>`; }).join("");
   $("invGrid").innerHTML = Array.from({ length: Math.max(BAG_CELLS, st.length) }, (_, i) => { const it = st[i]; return it ? `<button type="button" class="cell r${it.r}" data-inv="${i}" aria-label="${esc(it.base)}"><img src="${F}${it.icon}" alt=""></button>` : `<div class="cell blank"></div>`; }).join("");
   const carrying = S && !S.over && S.kind === "dungeon" ? S.foundN || 0 : 0;
-  $("invCount").textContent = `${st.length} / 60${carrying ? ` · ${carrying} more when you leave this area` : ""}`; $("invCrowns").textContent = ME.crowns.toLocaleString();
+  $("invCount").textContent = `${st.length} / 60${carrying ? ` · ${carrying} more when you leave this area` : ""}`; $("invCrowns").textContent = ME.crowns.toLocaleString(); $("invEss").textContent = (ME.essence || 0).toLocaleString();
 }
-$("invWin").addEventListener("contextmenu", (e) => { if (craftChip) { e.preventDefault(); setCraft(null); } });
 $("invWin").addEventListener("click", (e) => {
-  const ch = e.target.closest("[data-chip]"); if (ch) { setCraft(craftChip === ch.dataset.chip ? null : ch.dataset.chip); hideTip(); return; }
+  const pt = e.target.closest("[data-pot]"); if (pt) { tip("Potions come into every run with you: 4 for health, 5 for mana.", 2.5); hideTip(); return; }
   const w = e.target.closest("[data-worn]"), c = e.target.closest("[data-inv]");
-  if (craftChip) { if (w && ME.worn?.[w.dataset.worn]) send({ op: "craft", chip: craftChip, from: "worn", slot: w.dataset.worn }); else if (c && ME.stash[+c.dataset.inv]) send({ op: "craft", chip: craftChip, from: "stash", i: +c.dataset.inv }); hideTip(); return; }
   if (w && ME.worn?.[w.dataset.worn]) { send({ op: "unequip", slot: w.dataset.worn }); hideTip(); }
   if (c) { const i = +c.dataset.inv, it = ME.stash[i]; if (!it) return;
-    if (e.shiftKey) { if (it.r >= 2 && !confirm(`Salvage ${RAR[it.r].name} ${it.base} for ${salvageOf(it)} ${R.CURRENCY.name}?`)) return; send({ op: "salvage", i }); }
+    if (e.shiftKey) { if (it.r >= 2 && !confirm(`Salvage ${NAME(it)} for ${R.salvageEssence(it)} ${R.ESSENCE.name}?`)) return; send({ op: "salvage", i }); }
     else send({ op: "equip", i });
     hideTip(); }
 });
-$("invWin").addEventListener("pointermove", (e) => { const w = e.target.closest("[data-worn]"), c = e.target.closest("[data-inv]"), ch = e.target.closest("[data-chip]");
-  if (ch) { const C2 = R.CHIPS[ch.dataset.chip], n = ME.chips?.[ch.dataset.chip] || 0; showTip(`<b style="color:${CHIPCOL}">${C2.name}</b><div class="imp">${C2.does}</div><div class="base">You have ${n}.${R.SHOP[ch.dataset.chip] ? ` Dex sells them for ${R.SHOP[ch.dataset.chip]} ${R.CURRENCY.name}.` : " Only found, never sold."}</div>${n ? `<div class="act">Click to pick it up, then click an item</div>` : ""}`, e); }
-  else if (craftChip && w && ME.worn?.[w.dataset.worn]) showTip(itemTip(ME.worn[w.dataset.worn], `Click: use the ${R.CHIPS[craftChip].name} on it`), e);
-  else if (craftChip && c && ME.stash[+c.dataset.inv]) showTip(itemTip(ME.stash[+c.dataset.inv], `Click: use the ${R.CHIPS[craftChip].name} on it`), e);
+$("invWin").addEventListener("pointermove", (e) => { const w = e.target.closest("[data-worn]"), c = e.target.closest("[data-inv]"), pt = e.target.closest("[data-pot]");
+  if (pt) showTip(potTip(pt.dataset.pot), e);
   else if (w && ME.worn?.[w.dataset.worn]) showTip(itemTip(ME.worn[w.dataset.worn], "Click to take it off"), e);
-  else if (c && ME.stash[+c.dataset.inv]) { const it = ME.stash[+c.dataset.inv], cur = ME.worn?.[it.slot]; showTip(itemTip(it, `Click to wear${cur ? ` (swaps your ${esc(cur.base)})` : ""}<br>Shift-click: salvage for ${salvageOf(it)} ${R.CURRENCY.name}`), e); }
+  else if (c && ME.stash[+c.dataset.inv]) { const it = ME.stash[+c.dataset.inv], cur = ME.worn?.[it.slot]; showTip(itemTip(it, `Click to wear${cur ? ` (swaps your ${esc(cur.base)})` : ""}<br>Shift-click: salvage for ${R.salvageEssence(it)} ${R.ESSENCE.name}`), e); }
   else hideTip(); });
 $("invWin").addEventListener("pointerleave", hideTip);
 function showTip(html, e) { const t = $("tipBox"); if (t.dataset.html !== html) { t.innerHTML = html; t.dataset.html = html; } t.hidden = false; const r = t.getBoundingClientRect(); t.style.left = `${Math.max(8, e.clientX - r.width - 18)}px`; t.style.top = `${Math.max(8, Math.min(innerHeight - r.height - 8, e.clientY - 12))}px`; }
 function hideTip() { $("tipBox").hidden = true; }
+/* the item pickers the NPC windows share: what you wear, then the bag */
+const allMine = (bagOnly = false) => [...(bagOnly ? [] : R.SLOTS.filter((s) => ME.worn?.[s]).map((s) => ME.worn[s])), ...(ME.stash || [])];
+const pickCells = (items, sel, attr, extra = () => "") => items.map((it) => `<button type="button" class="cell r${it.r} ${it.id === sel ? "sel" : ""}" ${attr}="${it.id}" aria-label="${esc(NAME(it))}"><img src="${F}${it.icon}" alt="">${extra(it)}</button>`).join("");
+const pickerTips = (el, attr) => { el.addEventListener("pointermove", (e) => { const c = e.target.closest(`[${attr}]`); if (c) { const it = allMine().find((x) => x.id === c.getAttribute(attr)); if (it) return showTip(itemTip(it, c.dataset.act || ""), e); } hideTip(); }); el.addEventListener("pointerleave", hideTip); };
+const wallet = () => `<div class="note2"><span><img src="${F}${R.ESSENCE.icon}" alt=""> <b>${(ME.essence || 0).toLocaleString()}</b> ${R.ESSENCE.name}</span><span><img src="${F}${R.CURRENCY.icon}" alt=""> <b>${ME.crowns.toLocaleString()}</b> ${R.CURRENCY.name}</span></div>`;
 
-/* ---------- DEX'S SHOP: Crowns for the common chips (R.SHOP) */
+/* ---------- DEX, THE MERCHANT: Buy (potions, a Common base for any slot at your level) / Sell (the bag, for Gold) */
+let DEX_TAB = "buy";
 function renderShop() {
-  $("shop").innerHTML = Object.entries(R.SHOP).map(([k, price]) => { const c = R.CHIPS[k]; return `<div class="row"><img src="${F}${c.icon}" alt=""><div><b>${c.name}</b><small>${c.does}</small><small>You have ${ME.chips?.[k] || 0}</small></div><div class="buy"><button type="button" data-buy="${k}" data-n="1" ${ME.crowns < price ? "disabled" : ""}>${price} · Buy</button><button type="button" data-buy="${k}" data-n="5" ${ME.crowns < price * 5 ? "disabled" : ""}>×5</button></div></div>`; }).join("") +
-    `<div class="foot"><span>The rarer chips are only found.</span><span><b>${ME.crowns.toLocaleString()}</b> ${R.CURRENCY.name}</span></div>`;
+  for (const b of $("dexTabs").children) b.setAttribute("aria-selected", String(b.dataset.dt === DEX_TAB));
+  const foot = (t) => `<div class="foot"><span>${t}</span><span><b>${ME.crowns.toLocaleString()}</b> ${R.CURRENCY.name}</span></div>`;
+  if (DEX_TAB === "buy") { const price = R.gearPrice(ME.level);
+    $("shop").innerHTML = Object.entries(R.POTION_SHOP).map(([k, p]) => { const c = R.POTIONS[k]; return `<div class="row"><img src="${F}${c.icon}" alt=""><div><b>${c.name}</b><small>Restores ${Math.round((c.heal || c.mana) * 100)}% of your ${c.heal ? "health" : "mana"} · key ${c.key} in a run</small><small>You have ${ME.potions?.[k] || 0} of ${R.POTION_MAX}</small></div><div class="buy"><button type="button" data-bpot="${k}" data-n="1" ${ME.crowns < p ? "disabled" : ""}>${p} · Buy</button><button type="button" data-bpot="${k}" data-n="5" ${ME.crowns < p * 5 ? "disabled" : ""}>×5</button></div></div>`; }).join("") +
+      `<div class="row" style="grid-template-columns:1fr"><div><b>Basic gear</b><small>A Common piece at your level (${ME.level}), ${price} ${R.CURRENCY.name} each. No lines; the Enchanter can't work on it, but it fills a slot.</small><div class="buy" style="flex-wrap:wrap;margin-top:4px">${R.SLOTS.map((sl) => `<button type="button" data-bgear="${sl}" ${ME.crowns < price ? "disabled" : ""}>${sl}</button>`).join("")}</div></div></div>` + foot("Everything else drops.");
+  } else { const st = ME.stash || [];
+    $("shop").innerHTML = `<div class="npcw one" style="padding:0"><div class="pick" style="grid-template-columns:repeat(10,1fr)">${pickCells(st, null, "data-sell") || `<span class="note" style="grid-column:1/-1">Nothing in the bag.</span>`}</div></div>` +
+      `<div class="foot"><span>Click a piece to sell it. <button type="button" class="a" data-sellall="0" ${st.some((x) => !x.r) ? "" : "disabled"}>Sell every Common</button></span><span><b>${ME.crowns.toLocaleString()}</b> ${R.CURRENCY.name}</span></div>`;
+  }
 }
-$("shop").addEventListener("click", (e) => { const b = e.target.closest("[data-buy]"); if (b && !b.disabled) send({ op: "buy", chip: b.dataset.buy, n: +b.dataset.n }); });
+$("shop").addEventListener("click", (e) => { const b = e.target.closest("[data-bpot]"); if (b && !b.disabled) send({ op: "buy", potion: b.dataset.bpot, n: +b.dataset.n });
+  const g2 = e.target.closest("[data-bgear]"); if (g2 && !g2.disabled) send({ op: "buy", slot: g2.dataset.bgear });
+  const sl = e.target.closest("[data-sell]"); if (sl) { const i = ME.stash.findIndex((x) => x.id === sl.dataset.sell), it = ME.stash[i]; if (it && (it.r < 2 || confirm(`Sell ${NAME(it)} for ${R.sellValue(it)} ${R.CURRENCY.name}?`))) send({ op: "sell", i }); hideTip(); }
+  const sa = e.target.closest("[data-sellall]"); if (sa && !sa.disabled) sellCommons(); });
+async function sellCommons() { const ids = (ME.stash || []).filter((x) => !x.r).map((x) => x.id); for (const id of ids) { const i = ME.stash.findIndex((x) => x.id === id); if (i >= 0) { send({ op: "sell", i }); await new Promise((r) => setTimeout(r, 140)); } } }
+$("shop").addEventListener("pointermove", (e) => { const c = e.target.closest("[data-sell]"); if (c) { const it = ME.stash.find((x) => x.id === c.dataset.sell); if (it) return showTip(itemTip(it, `Click to sell for ${R.sellValue(it)} ${R.CURRENCY.name}`), e); } hideTip(); });
+$("shop").addEventListener("pointerleave", hideTip);
+$("dexTabs").addEventListener("click", (e) => { const b = e.target.closest("[data-dt]"); if (b) { DEX_TAB = b.dataset.dt; renderShop(); } });
+
+/* ---------- BRUTUS, THE BLACKSMITH: salvage the bag into Essence, a piece at a time or everything at or below a rarity */
+function renderSalv() {
+  const st = ME.stash || [], tot = (r) => st.filter((x) => (x.r | 0) <= r).reduce((a, x) => a + R.salvageEssence(x), 0), n = (r) => st.filter((x) => (x.r | 0) <= r).length;
+  $("salv").innerHTML = `<div class="pick">${pickCells(st, null, "data-salv", (it) => "") || `<span class="note" style="grid-column:1/-1">Nothing in the bag.</span>`}</div>
+    <div class="work"><b style="font:800 14px Cinzel,serif;color:#ffe7b0">Salvage</b><p style="margin:6px 0 0">Click a piece and Brutus breaks it down into ${R.ESSENCE.name}: Common 1, Magic 2, Rare 5, Set 10, Legendary 15, and a little more for a high item level. The Enchanter works in it.</p>
+      <div class="acts" style="margin-top:8px"><button type="button" class="a" data-salvall="0" ${n(0) ? "" : "disabled"}>All Common (${n(0)} → ${tot(0)})</button><button type="button" class="a" data-salvall="1" ${n(1) ? "" : "disabled"}>Common and Magic (${n(1)} → ${tot(1)})</button></div>
+      <p class="note" style="margin:8px 0 0">Dex buys for ${R.CURRENCY.name} instead, if you'd rather.</p></div>` + wallet();
+}
+$("salv").addEventListener("click", (e) => { const c = e.target.closest("[data-salv]"); if (c) { const i = ME.stash.findIndex((x) => x.id === c.dataset.salv), it = ME.stash[i]; if (it && (it.r < 2 || confirm(`Salvage ${NAME(it)} for ${R.salvageEssence(it)} ${R.ESSENCE.name}?`))) send({ op: "salvage", i }); hideTip(); return; }
+  const a = e.target.closest("[data-salvall]"); if (a && !a.disabled) send({ op: "salvage", all: +a.dataset.salvall }); });
+$("salv").addEventListener("pointermove", (e) => { const c = e.target.closest("[data-salv]"); if (c) { const it = ME.stash.find((x) => x.id === c.dataset.salv); if (it) return showTip(itemTip(it, `Click to salvage for ${R.salvageEssence(it)} ${R.ESSENCE.name}`), e); } hideTip(); });
+$("salv").addEventListener("pointerleave", hideTip);
+
+/* ---------- HEXA, THE ENCHANTER: pick an item (what you wear, then the bag), pick one of its lines, pay Essence; it becomes a new line, and
+   that line stays the one you can reroll (the brief's rule). Legendaries and set pieces aren't hers yet. */
+let EN_ID = null;
+function renderEnch() {
+  if (!ME?.style) return; const all = allMine(); if (EN_ID && !all.some((x) => x.id === EN_ID)) EN_ID = null;
+  const worn = R.SLOTS.filter((s) => ME.worn?.[s]).map((s) => ME.worn[s]), it = all.find((x) => x.id === EN_ID);
+  let work = `<div class="work"><b style="font:800 14px Cinzel,serif;color:#ffe7b0">Pick an item</b><p style="margin:6px 0 0">Choose one line on a Magic or Rare item and Hexa rerolls it into a different one, for ${R.ESSENCE.name}. <b style="color:#d8b4ff">Once chosen, that line is the only one she'll reroll on that item</b>, so pick the one you want gone.</p><p class="note">Legendaries and set pieces keep their lines, for now.</p></div>`;
+  if (it) { const cost = R.ENCHANT.cost(it), ok = it.r === 1 || it.r === 2;
+    work = `<div class="work"><b style="color:${RCOL[it.r]};font:800 15px Cinzel,serif">${esc(NAME(it))}</b><div class="base" style="color:#8a7a60">${it.slot} · item level ${it.ilvl}</div>` +
+      (!ok ? `<p>${it.r ? "Legendaries and set pieces keep their lines, for now." : "A Common item has no line to change."}</p>` : it.lines.map((l, i) => { const locked = it.rr != null && it.rr !== i; return `<div class="ln2 ${it.rr === i ? "rr" : ""}"><span>${R.sayLine(l)}${it.rr === i ? `<br><small style="color:#9a7ac0">the rerollable line</small>` : locked ? `<br><small style="color:#56657a">fixed</small>` : ""}</span><span class="acts">${locked ? "" : `<button type="button" class="a" data-ench="${i}" ${(ME.essence || 0) < cost ? "disabled" : ""}>Reroll · ${cost}</button>`}</span></div>`; }).join("")) + `</div>`; }
+  $("ench").innerHTML = `<div class="pick">${worn.length ? `<h5>Wearing</h5>${pickCells(worn, EN_ID, "data-eni")}` : ""}<h5>Bag</h5>${pickCells(ME.stash || [], EN_ID, "data-eni") || `<span class="note" style="grid-column:1/-1">Nothing in the bag.</span>`}</div>${work}` + wallet();
+}
+$("ench").addEventListener("click", (e) => { const c = e.target.closest("[data-eni]"); if (c) { EN_ID = c.dataset.eni; hideTip(); return renderEnch(); }
+  const a = e.target.closest("[data-ench]"); if (a && !a.disabled && EN_ID) send({ op: "enchant", id: EN_ID, line: +a.dataset.ench }); });
+pickerTips($("ench"), "data-eni");
+
+/* ---------- TRADE, FACE TO FACE: ask from a player's menu; both put things on the table; both Accept (any change clears both); the offers
+   lock; both Confirm; the server swaps everything in one step. Your offer is resent whole on every change. */
+let TRADE = null, TRADE_ASK = null, trAskT = 0;
+const trOffer = () => TRADE?.me || { items: [], crowns: 0 };
+const trSend = (o) => send({ op: "trade", what: "offer", tid: TRADE.tid, items: o.items, crowns: o.crowns });
+function gotTrade(m) {
+  if (m.what === "asked") { TRADE_ASK = m.from; $("tradeAskTxt").textContent = `${m.from.name} wants to trade.`; $("tradeAsk").hidden = false; clearTimeout(trAskT); trAskT = setTimeout(() => { $("tradeAsk").hidden = true; }, 55000); return; }
+  if (m.what === "closed") { TRADE = null; $("tradeWin").hidden = true; hideTip(); tip(m.why || "The trade is closed.", 4); lootLine(m.why || "The trade is closed.", m.done ? "good" : "sys"); return; }
+  TRADE = m.t; if (m.what === "open") { closeAll(); $("tradeWin").hidden = false; } renderTrade();
+}
+$("trYes").addEventListener("click", () => { if (TRADE_ASK) send({ op: "trade", what: "yes", from: TRADE_ASK.id }); $("tradeAsk").hidden = true; });
+$("trNo").addEventListener("click", () => { if (TRADE_ASK) send({ op: "trade", what: "no", from: TRADE_ASK.id }); $("tradeAsk").hidden = true; });
+function renderTrade() {
+  if (!TRADE) return; const T = TRADE, o = T.me, locked = T.stage !== "open", st = ME.stash || [];
+  $("trWith").textContent = `with ${T.with.name}`;
+  $("trMine").className = `trside ${T.ready.me ? "ok" : ""}`; $("trTheirs").className = `trside ${T.ready.them ? "ok" : ""}`;
+  $("trMine").innerHTML = `<h5>You give ${T.ready.me ? "<small>accepted</small>" : ""}</h5><div class="trbag">${Array.from({ length: Math.max(32, st.length) }, (_, i) => { const it = st[i]; return it ? `<button type="button" class="cell r${it.r} ${o.items.includes(it.id) ? "on" : ""}" data-tri="${it.id}" ${locked ? "disabled" : ""}><img src="${F}${it.icon}" alt=""></button>` : `<div class="cell blank"></div>`; }).join("")}</div>
+    <div class="trrow">${R.CURRENCY.name} <input type="number" min="0" max="${ME.crowns}" id="trCrowns" value="${o.crowns}" ${locked ? "disabled" : ""}> <span class="note">of ${ME.crowns.toLocaleString()}</span></div>
+    <p class="note" style="margin:6px 0 0">Click items in your bag to put them on the table. What you wear can't be traded.</p>`;
+  const th = T.them, list = [...th.full.map((it) => `<div data-trt="${it.id}"><img src="${F}${it.icon}" alt=""><span style="color:${RCOL[it.r || 0]}">${esc(NAME(it))}</span></div>`), th.crowns ? `<div><img src="${F}${R.CURRENCY.icon}" alt="">${th.crowns.toLocaleString()} ${R.CURRENCY.name}</div>` : "", ].filter(Boolean);
+  $("trTheirs").innerHTML = `<h5>${esc(T.with.name)} gives ${T.ready.them ? "<small>accepted</small>" : ""}</h5><div class="trlist">${list.join("") || `<span class="note">Nothing yet.</span>`}</div>`;
+  $("trSays").textContent = T.stage === "confirm" ? (T.confirm.me ? `Waiting for ${T.with.name} to confirm.` : "Both accepted: the offers are locked. Check them, then Confirm.") : T.ready.me ? `Waiting for ${T.with.name} to accept.` : T.ready.them ? `${T.with.name} has accepted. Accept to lock the offers.` : "Put things on the table, then Accept. Any change clears both accepts.";
+  $("trReady").hidden = locked; $("trReady").disabled = T.ready.me; $("trConfirm").hidden = !locked; $("trConfirm").disabled = T.confirm.me;
+}
+$("trMine").addEventListener("click", (e) => { if (!TRADE || TRADE.stage !== "open") return; const it = e.target.closest("[data-tri]"), o = structuredClone(trOffer());
+  if (it) { const id = it.dataset.tri; o.items = o.items.includes(id) ? o.items.filter((x) => x !== id) : [...o.items, id]; trSend(o); } });
+$("trMine").addEventListener("change", (e) => { if (e.target.id !== "trCrowns" || !TRADE) return; const o = structuredClone(trOffer()); o.crowns = Math.max(0, Math.min(ME.crowns, Math.floor(+e.target.value || 0))); trSend(o); });
+$("trMine").addEventListener("pointermove", (e) => { const it = e.target.closest("[data-tri]"); const x = it && ME.stash.find((q) => q.id === it.dataset.tri); if (x) showTip(itemTip(x, trOffer().items.includes(x.id) ? "On the table: click to take it back" : "Click to put it on the table"), e); else hideTip(); });
+$("trTheirs").addEventListener("pointermove", (e) => { const it = e.target.closest("[data-trt]"); const x = it && TRADE?.them.full.find((q) => q.id === it.dataset.trt); if (x) showTip(itemTip(x, ""), e); else hideTip(); });
+for (const id of ["trMine", "trTheirs"]) $(id).addEventListener("pointerleave", hideTip);
+$("trReady").addEventListener("click", () => { if (TRADE) send({ op: "trade", what: "ready", tid: TRADE.tid }); });
+$("trConfirm").addEventListener("click", () => { if (TRADE) send({ op: "trade", what: "confirm", tid: TRADE.tid }); });
+for (const id of ["trCancel", "trX"]) $(id).addEventListener("click", () => { if (TRADE) send({ op: "trade", what: "cancel", tid: TRADE.tid }); });
+
+/* ---------- ADMIN (admins only; the server checks every request): Players, Days, Log */
+const ADM = { tab: "players", q: "", found: [], days: null, log: null, msg: "" };
+const adm = (what, extra = {}) => send({ op: "admin", what, ...extra });
+function admTab(t) { ADM.tab = t; for (const b of document.querySelectorAll(".admtabs [data-at]")) b.setAttribute("aria-selected", String(b.dataset.at === t)); if (t === "days") adm("stats", { days: 7 }); if (t === "log") adm("log"); renderAdmin(); }
+document.querySelector(".admtabs").addEventListener("click", (e) => { const b = e.target.closest("[data-at]"); if (b) admTab(b.dataset.at); });
+function gotAdmin(m) {
+  if (m.what === "find") ADM.found = m.found || [];
+  else if (m.what === "stats") ADM.days = m.days || [];
+  else if (m.what === "log") ADM.log = m.log || [];
+  else { ADM.msg = m.error ? `<span class="admmsg bad">${esc(m.error)}</span>` : `<span class="admmsg">${esc(admSaid(m))}</span>`; if (m.char) ADM.found = ADM.found.map((c) => (c.id === m.char.id ? m.char : c)); }
+  if (!$("admWin").hidden) renderAdmin();
+}
+/* what an admin change did, in words */
+function admSaid(m) { const d = m.did || {}, who = m.char?.name || "them", give = m.what === "grant"; if (d.crowns != null) return `${give ? "Gave" : "Took"} ${Math.abs(d.crowns).toLocaleString()} ${R.CURRENCY.name} ${give ? "to" : "from"} ${who}.`; if (d.chip) return `${give ? "Gave" : "Took"} ${Math.abs(d.n)} ${R.CHIPS[d.chip]?.name || d.chip} ${give ? "to" : "from"} ${who}.`; return `${give ? "Gave" : "Took"} ${d.item} ${give ? "to" : "from"} ${who}.`; }
+const DAYROWS = [["Who played", (d) => d.players], ["Visits", "enters"], ["New characters", (d) => Object.entries(d.c).filter(([k]) => k.startsWith("new.")).reduce((a, [, v]) => a + v, 0)],
+  ["#Runs"], ["Started", "runs.started"], ["Cleared", "runs.end.cleared"], ["Left", "runs.end.left"], ["Died", "runs.end.died"], ["Cut short", "runs.end.interrupted"], ["Kills", "kills"], ["XP", "xp"],
+  ["#Gold"], ["From runs", "crowns.runs"], ["From selling", "crowns.sold"], ["Spent at Dex", "spent.dex"],
+  ["#Essence"], ["From salvage", "essence.salvage"], ["Spent at Hexa", "essence.spent"], ["Enchants", "enchants"],
+  ["#Items"], ["Common", "items.common"], ["Magic", "items.magic"], ["Rare", "items.rare"], ["Legendary", "items.legendary"], ["Set", "items.set"], ["Lost to a full bag", "items.lost"], ["Salvaged", "items.salvaged"], ["Sold", "items.sold"], ["Bought from Dex", "gear.bought"],
+  ["#Potions"], ["Brought home", (d) => Object.entries(d.c).filter(([k]) => k.startsWith("potions.found.")).reduce((a, [, v]) => a + v, 0)], ["Drunk", (d) => Object.entries(d.c).filter(([k]) => k.startsWith("potions.used.")).reduce((a, [, v]) => a + v, 0)], ["Bought", (d) => Object.entries(d.c).filter(([k]) => k.startsWith("potions.bought.")).reduce((a, [, v]) => a + v, 0)],
+  ["#Rifts"], ["Runs", (d) => Object.entries(d.c).filter(([k]) => k.startsWith("rifts.run.")).reduce((a, [, v]) => a + v, 0)], ["First clears", (d) => Object.entries(d.c).filter(([k]) => k.startsWith("rifts.cleared.")).reduce((a, [, v]) => a + v, 0)], ["Highest run", (d) => Math.max(0, ...Object.entries(d.c).filter(([k]) => k.startsWith("rifts.run.")).map(([k]) => +k.split(".")[2]))],
+  ["#Admin"], ["Grants", "admin.grant"], ["Takes", "admin.take"]];
+function renderAdmin() {
+  const B = $("admBody");
+  if (ADM.tab === "days") { if (!ADM.days) { B.innerHTML = "Loading…"; return; } const ds = ADM.days;
+    B.innerHTML = `<table class="admtbl"><tr><th></th>${ds.map((d) => `<th>${d.day.slice(5)}</th>`).join("")}</tr>${DAYROWS.map(([label, f]) => label.startsWith("#") ? `<tr class="h"><td colspan="${ds.length + 1}">${label.slice(1)}</td></tr>` : `<tr><td>${label}</td>${ds.map((d) => { const v = typeof f === "function" ? f(d) : d.c[f] || 0; return `<td>${v ? v.toLocaleString() : "·"}</td>`; }).join("")}</tr>`).join("")}</table><p class="note">Chicago days, newest first. Counted on the arena server; kept with the nightly backups.</p>`; return; }
+  if (ADM.tab === "log") { if (!ADM.log) { B.innerHTML = "Loading…"; return; } B.innerHTML = ADM.log.length ? `<table class="admtbl">${ADM.log.map((l) => `<tr><td>${new Date(l.t).toLocaleString()}</td><td style="text-align:left">${esc(l.by)} ${l.what === "grant" ? "gave" : "took from"} ${esc(l.to)}: ${esc(l.crowns != null ? `${Math.abs(l.crowns)} Crowns` : l.essence != null ? `${Math.abs(l.essence)} Essence` : l.potion ? `${Math.abs(l.n)} ${R.POTIONS[l.potion]?.name || l.potion}` : l.item || "")}</td></tr>`).join("")}</table>` : `<p class="note">No admin changes yet.</p>`; return; }
+  const slots = R.SLOTS.map((x) => `<option>${x}</option>`).join(""), rar = R.RARITY.slice(0, 3).map((r, i) => `<option value="${i}">${r.name}</option>`).join(""),
+    legs = Object.entries(R.LEGENDARIES).map(([k, U]) => `<option value="${k}">${esc(U.name)}</option>`).join(""), sets = Object.entries(R.SETS).map(([k, S0]) => `<option value="${k}">${esc(S0.name)}</option>`).join(""), pots = Object.entries(R.POTIONS).map(([k, P0]) => `<option value="${k}">${esc(P0.name)}</option>`).join("");
+  B.innerHTML = `<div class="row" style="display:flex;gap:6px"><input id="admQ" placeholder="Find a character by name" value="${esc(ADM.q)}" style="flex:1"><button type="button" class="a" id="admFind">Find</button></div>${ADM.msg || ""}` +
+    (ADM.found.length ? ADM.found.map((c) => `<div class="admcard" data-id="${esc(c.id)}"><h5>${esc(c.name)} <small style="font:700 12px Lora,serif;color:#a89070">· level ${c.level} ${c.style ? R.STYLES[c.style].name : "(no class)"} · ${c.online ? "online" : "offline"} · ${c.runs || 0} runs · areas cleared ${c.cleared.join(", ") || "none"}</small></h5>
+      <div class="row"><b style="color:#ffd84a">${c.crowns.toLocaleString()} Gold</b> · <b style="color:#d8b4ff">${(c.essence || 0).toLocaleString()} Essence</b> · potions: ${Object.entries(c.potions || {}).map(([k, n]) => `${n} ${R.POTIONS[k]?.name || k}`).join(", ") || "none"} · highest Rift ${c.rift || 0} · perks: ${(c.perks || []).map((k) => PERKS[k]?.[0] || k).join(", ") || "none"}</div>
+      <div class="row"><input type="number" min="1" value="100" data-f="crowns" style="width:90px"> Gold <button type="button" class="a" data-act="grant" data-k="crowns">Give</button><button type="button" class="a" data-act="take" data-k="crowns">Take</button>
+        · <input type="number" min="1" value="50" data-f="essence" style="width:80px"> Essence <button type="button" class="a" data-act="grant" data-k="essence">Give</button><button type="button" class="a" data-act="take" data-k="essence">Take</button>
+        · <input type="number" min="1" value="5" data-f="n" style="width:60px"> <select data-f="potion">${pots}</select> <button type="button" class="a" data-act="grant" data-k="potion">Give</button><button type="button" class="a" data-act="take" data-k="potion">Take</button></div>
+      <div class="row">An item: <select data-f="slot">${slots}</select> item level <input type="number" min="1" max="80" value="${Math.max(1, c.level)}" data-f="ilvl" style="width:60px"> <select data-f="r">${rar}</select> <button type="button" class="a" data-act="grant" data-k="item">Give</button></div>
+      <div class="row">A legendary: <select data-f="lg">${legs}</select> <button type="button" class="a" data-act="grant" data-k="legendary">Give</button> · a set piece: <select data-f="s">${sets}</select> (the slot above) <button type="button" class="a" data-act="grant" data-k="setpc">Give</button></div>
+      <div class="admitems">${[...Object.values(c.worn || {}).map((it) => ({ it, worn: true })), ...(c.stash || []).map((it) => ({ it }))].map(({ it, worn }) => `<div><img src="${F}${it.icon}" alt=""><span style="color:${RCOL[it.r || 0]}">${esc(NAME(it))}${worn ? " (worn)" : ""}</span><button type="button" class="a" data-act="take" data-k="item" data-item="${esc(it.id || "")}">Take</button></div>`).join("") || `<span class="note">Nothing in the bag.</span>`}</div></div>`).join("")
+      : ADM.q ? `<p class="note">Nobody by that name.</p>` : `<p class="note">Search for someone to see their character and give or take things.</p>`);
+}
+$("admBody").addEventListener("click", (e) => {
+  if (e.target.id === "admFind") { ADM.q = $("admQ").value.trim(); ADM.msg = ""; adm("find", { name: ADM.q }); return; }
+  const b = e.target.closest("[data-act]"); if (!b) return; const card = b.closest(".admcard"), id = card.dataset.id, v = (f) => card.querySelector(`[data-f="${f}"]`).value;
+  const k = b.dataset.k, extra = k === "crowns" ? { crowns: +v("crowns") } : k === "essence" ? { essence: +v("essence") } : k === "potion" ? { potion: v("potion"), n: +v("n") } : b.dataset.item ? { itemId: b.dataset.item }
+    : k === "legendary" ? { item: { r: 3, lg: v("lg"), ilvl: +v("ilvl") } } : k === "setpc" ? { item: { r: 4, s: v("s"), slot: v("slot"), ilvl: +v("ilvl") } } : { item: { slot: v("slot"), ilvl: +v("ilvl"), r: +v("r") } };
+  if (b.dataset.act === "take" && b.dataset.item && !confirm("Take this item away from them?")) return;
+  adm(b.dataset.act, { id, ...extra });
+});
+$("admBody").addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.id === "admQ") { ADM.q = e.target.value.trim(); ADM.msg = ""; adm("find", { name: ADM.q }); } });
 
 /* ---------- STATS: an advanced view of the character (EastScape's Character window, the arena's numbers) */
 function renderStats() {
@@ -820,15 +1033,19 @@ function renderStats() {
   const done = new Set(ME.progress?.cleared || []), open = openArea();
   $("statSub").textContent = `${esc(ME.name)} · ${C.name} · ${R.SEASON.name}`;
   $("statBody").innerHTML = `
-    <div class="stsec"><h4>Character</h4>${row("Class", C.name)}${row("Level", `${lvl} <small>/ ${R.LEVEL.cap}</small>`)}${row("Experience", `${xp.toLocaleString()} / ${need.toLocaleString()}`, `${pc(xp / need)} to level ${lvl + 1}`)}${row("Skill points", `${ME.points - (ME.tree || []).length} to spend · ${ME.points} in all`)}${row(R.CURRENCY.name, ME.crowns.toLocaleString())}${row("Runs this season", ME.runs || 0)}${row("Ascendancy", `${C.asc.map((a) => R.ASCENDANCIES[a].name).join(" or ")} <small>(later)</small>`)}</div>
-    <div class="stsec"><h4>Offence</h4>${row("Damage per hit", g.dmg, `${g.flatDmg} × ${pc(1 + g.pdmg)}`)}${row("from your level", g.src.dmg, "", true)}${row("from gear", `+${g.src.gearDmg}`, "", true)}${row("Increased damage", `+${pc(g.pdmg)}`, "tree, gear, perks")}${row("Skill speed", `+${pc(g.speed)}`, "at most 50%")}${row("Critical strike", `${pc(g.crit)} chance, ×${g.critX}`)}${row("Projectiles", g.bolts)}${row("Pierce", g.pierce)}${row("Life leech", pc(g.leech))}</div>
-    <div class="stsec"><h4>Defence</h4>${row("Health", g.maxHp)}${row("base for your class", g.src.hp, "", true)}${row("from the tree", `+${pc(TG.hp)}`, "", true)}${row("from gear", `+${g.src.gearHp}`, "", true)}${row("Armour", g.def)}${row("Damage reduction", pc(g.tough), "armour ÷ (armour + 60), at most 60%")}${row("Dodge", `0.3 s, every ${g.dodgeCd.toFixed(2)} s`)}</div>
+    <div class="stsec"><h4>Character</h4>${row("Class", C.name)}${row("Level", `${lvl} <small>/ ${R.LEVEL.cap}</small>`)}${row("Experience", `${xp.toLocaleString()} / ${need.toLocaleString()}`, `${pc(xp / need)} to level ${lvl + 1}`)}${row("Skill points", `${ME.points - (ME.tree || []).length} to spend · ${ME.points} in all`)}${row(R.CURRENCY.name, ME.crowns.toLocaleString())}${row(R.ESSENCE.name, (ME.essence || 0).toLocaleString(), "from salvage, for the Enchanter")}${row("Runs this season", ME.runs || 0)}${row("Ascendancy", `${C.asc.map((a) => R.ASCENDANCIES[a].name).join(" or ")} <small>(later)</small>`)}</div>
+    <div class="stsec"><h4>Offence</h4>${row("Damage per hit", g.dmg, `${g.flatDmg} × ${pc(1 + g.pdmg)}`)}${row("from your level", g.src.dmg, "", true)}${row("from gear", `+${g.src.gearDmg}`, "", true)}${row("Increased damage", `+${pc(g.pdmg)}`, "tree, gear, perks")}${row("Skill speed", `+${pc(g.speed)}`, "at most 50%")}${row("Critical strike", `${pc(g.crit)} chance, ×${+g.critX.toFixed(2)}`)}${row("Projectiles", g.bolts)}${row("Pierce", g.pierce)}${row("Life leech", pc(g.leech))}${g.double ? row("Hits that land twice", pc(g.double)) : ""}${g.lifeKill || g.lifeKillPct ? row("Health on a kill", `${g.lifeKill ? `+${g.lifeKill}` : ""}${g.lifeKill && g.lifeKillPct ? " and " : ""}${g.lifeKillPct ? `${pc(g.lifeKillPct)} of your maximum` : ""}`) : ""}${g.manaKill || g.manaKillPct ? row("Mana on a kill", `${g.manaKill ? `+${g.manaKill}` : ""}${g.manaKill && g.manaKillPct ? " and " : ""}${g.manaKillPct ? `${pc(g.manaKillPct)} of your maximum` : ""}`) : ""}</div>
+    <div class="stsec"><h4>Defence</h4>${row("Health", g.maxHp)}${row("base for your class", g.src.hp, "", true)}${row("from the tree", `+${pc(TG.hp)}`, "", true)}${row("from gear", `+${g.src.gearHp}`, "", true)}${row("Armour", g.def)}${row("Damage reduction", pc(g.tough), g.toughPlus ? `armour, ${g.toughPlus > 0 ? "+" : ""}${pc(g.toughPlus)} from powers and buffs` : "armour ÷ (armour + 60), at most 60%")}${row("Dodge", `0.3 s, every ${g.dodgeCd.toFixed(2)} s`)}</div>
     <div class="stsec"><h4>Resources and utility</h4>${row("Mana", g.payHp ? "none" : g.maxMp, g.payHp ? "skills cost health" : `${g.src.mp} base`)}${row("Mana regeneration", g.payHp ? "—" : `${g.mpRegen.toFixed(1)} a second`)}${row("Movement speed", pc(g.spd))}${row("More item drops", `+${pc(g.find)}`)}${row(`More ${R.CURRENCY.name}`, `+${pc(g.crownsPct)}`)}${row("Keystones", keyst.join(", ") || "none")}</div>
     <div class="stsec" style="grid-column:1/-1"><h4>Skills <small>on your bar</small></h4><table class="sttbl"><tr><th>Skill</th><th class="n">Per hit</th><th class="n">Hits</th><th class="n">Cost</th><th class="n">Cooldown</th><th class="n">Damage a second</th></tr>${skills}</table><p class="note" style="margin:6px 0 0">Damage a second assumes one target, every hit landing, crits averaged in.</p></div>
+    <div class="stsec"><h4>Powers and sets <small>legendary powers and set bonuses</small></h4>${(() => { const GP = R.gearPowers(ME.worn), out = [];
+      for (const pw of GP.list) out.push(`<div class="strow"><span style="color:${pw.kind === "set" ? "#5ab4ff" : "#ffcf3a"}">${esc(pw.from)}</span><b style="font-weight:700">${esc(pw.says)}</b></div>`);
+      for (const [s2, n] of Object.entries(GP.sets)) { const nx = R.SETS[s2].bonus.find(([need]) => need > n); if (nx) out.push(`<div class="strow sub"><span style="color:#56657a">${esc(R.SETS[s2].name)}: ${n} of ${Object.keys(R.SETS[s2].pieces).length}</span><b style="font-weight:700;color:#56657a">at ${nx[0]}: ${esc(nx[1])}</b></div>`); }
+      return out.join("") || `<p class="note" style="margin:0">None yet. Legendaries (gold) carry a power; two or four pieces of a set (blue) turn its bonuses on.</p>`; })()}</div>
     <div class="stsec"><h4>Perks <small>one per first clear, kept all season</small></h4><div class="chipl">${(ME.perks || []).map((k) => `<span title="${PERKS[k]?.[1] || ""}">${PERKS[k]?.[0] || k}</span>`).join("") || `<span style="background:#1a140e;box-shadow:none;color:#a89070">None yet</span>`}</div></div>
     <div class="stsec"><h4>Campaign and season</h4><div class="camp">${AREAS.map((a) => `<div class="${a.n === open && !done.has(a.n) ? "now" : a.n > open ? "lock" : ""}"><span>Act ${a.act} · ${a.name} <span style="color:#7a6a50">· lvl ${a.alvl}</span></span><b>${done.has(a.n) ? "cleared" : a.n === open ? "open" : "locked"}</b></div>`).join("") +
-      R.CAMPAIGN.filter((a) => a.todo).map((a) => `<div class="lock"><span>Act ${a.act} · ${a.name.replace(/ \(.*/, "")}</span><b>later</b></div>`).join("") + `<div class="lock"><span>Maps (tiers 1-${R.MAPS.tiers})</span><b>after the campaign</b></div>`}</div>
-      <table class="board" style="margin-top:8px">${(ME.board || []).length ? ME.board.slice(0, 10).map((r, i) => `<tr class="${r.id === ME.id ? "me" : ""}"><td>${i + 1}</td><td>${esc(r.name)}</td><td class="n">Lv ${r.level}</td><td class="n">area ${r.cleared}</td></tr>`).join("") : `<tr><td class="note">Nobody has cleared anything yet.</td></tr>`}</table></div>`;
+      R.CAMPAIGN.filter((a) => a.todo).map((a) => `<div class="lock"><span>Act ${a.act} · ${a.name.replace(/ \(.*/, "")}</span><b>later</b></div>`).join("") + `<div class="${(ME.progress?.cleared || []).includes(R.RIFTS.unlock) ? "now" : "lock"}"><span>The Rifts (endless)</span><b>${ME.progress?.rift ? `Rift ${ME.progress.rift} cleared` : (ME.progress?.cleared || []).includes(R.RIFTS.unlock) ? "open" : "after the campaign"}</b></div>`}</div>
+      <table class="board" style="margin-top:8px">${(ME.board || []).length ? ME.board.slice(0, 10).map((r, i) => `<tr class="${r.id === ME.id ? "me" : ""}"><td>${i + 1}</td><td>${esc(r.name)}</td><td class="n">Lv ${r.level}</td><td class="n">${r.rift ? `Rift ${r.rift}` : `area ${r.cleared}`}</td></tr>`).join("") : `<tr><td class="note">Nobody has cleared anything yet.</td></tr>`}</table></div>`;
 }
 
 /* ---------- THE SKILL TREE (T) */
@@ -888,7 +1105,7 @@ function paintFloor() {
     else { if (t === "v") { f(X, Y, T, T, "#0e0c16"); f(X, Y, T, 3, "#2a2638"); } else { f(X, Y, T, T, (x + y) % 2 ? "#34313e" : "#2c2a36"); f(X, Y, T, 1, "#1e1c28"); f(X, Y, 1, T, "#1e1c28"); } }
     if (t === "e") { f(X, Y, T, T, "#0a0810"); f(X + 2, Y + 2, T - 4, T - 4, "#1c1826"); }
   }
-  for (const ob of S.room.objs) { const X = ob.x * T, Y = ob.y * T; if (ob.k === "torch" && TORCH.complete) o.drawImage(TORCH, X + 2, Y - 14, 13, 40); if (ob.k === "sarc" && SARC.complete) o.drawImage(SARC, X - 6, Y - 36, 28, 53); if (ob.k === "bones" && BONES.complete) o.drawImage(BONES, X + 3, Y + 4, 9, 10); if (ob.k === "chest" && CHEST.complete) o.drawImage(CHEST, X - 8, Y - 16, 32, 32); if (ob.k === "door" && GATE.complete) o.drawImage(GATE, X - 7, Y - 40, 30, 55); }
+  for (const ob of S.room.objs) { const X = ob.x * T, Y = ob.y * T; if (ob.k === "torch" && TORCH.complete) o.drawImage(TORCH, X + 2, Y - 14, 13, 40); if (ob.k === "sarc" && SARC.complete) o.drawImage(SARC, X - 6, Y - 36, 28, 53); if (ob.k === "bones" && BONES.complete) o.drawImage(BONES, X + 3, Y + 4, 9, 10); if (ob.k === "chest" && CHEST.complete) o.drawImage(CHEST, X - 8, Y - 16, 32, 32); if (ob.k === "anvil" && ANVIL.complete && ANVIL.naturalWidth) o.drawImage(ANVIL, X - 4, Y - 6, 24, 24); if (ob.k === "door" && GATE.complete) o.drawImage(GATE, X - 7, Y - 40, 30, 55); }
   return c;
 }
 const strip = (im, frame, x, y, size, rot = 0) => { if (!im.complete || !im.naturalWidth) return false; const n = Math.max(1, Math.round(im.naturalWidth / 72)), f = Math.floor(frame) % n; cx.save(); cx.translate(x, y); if (rot) cx.rotate(rot); cx.drawImage(im, f * 72, 0, 72, 72, -size / 2, -size / 2, size, size); cx.restore(); return true; };
@@ -902,7 +1119,7 @@ function draw(now = performance.now()) {
   for (const f of S.fx) if (f.kind === "tele") { cx.strokeStyle = `rgba(255,80,60,${f.t * 3})`; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(f.x, f.y - 5, f.big ? 34 : 16, 0, Math.PI * 2); cx.stroke(); } else if (f.kind === "line") { cx.strokeStyle = `rgba(255,120,80,${f.t * 2.5})`; cx.lineWidth = 1.5; cx.setLineDash([4, 4]); cx.beginPath(); cx.moveTo(f.x, f.y - 5); cx.lineTo(f.x + Math.cos(f.a) * 240, f.y - 5 + Math.sin(f.a) * 240); cx.stroke(); cx.setLineDash([]); }
   for (const z of S.zones) { if (z.kind === "rain") { cx.strokeStyle = "rgba(255,226,122,.55)"; cx.lineWidth = 1; cx.beginPath(); cx.arc(z.x, z.y, z.r, 0, Math.PI * 2); cx.stroke(); for (let i = 0; i < 3; i++) { const a = hashRand(i, Math.floor(z.t * 8), 3) * Math.PI * 2, rr = hashRand(i, Math.floor(z.t * 8), 7) * z.r; strip(fxImg(z.art), z.t * 20 + i * 3, z.x + Math.cos(a) * rr, z.y + Math.sin(a) * rr - 4, 18); } }
     else { const armed = z.t > 0.4; cx.strokeStyle = armed ? "rgba(158,240,160,.8)" : "rgba(158,240,160,.35)"; cx.lineWidth = 1.2; cx.setLineDash([2, 2]); cx.beginPath(); cx.arc(z.x, z.y, z.r, 0, Math.PI * 2); cx.stroke(); cx.setLineDash([]); strip(fxImg(z.art), 2, z.x, z.y - 3, 12); } }
-  for (const d of S.drops) { const bob = Math.sin(d.t * 6) * 1.2; if (d.chip) { const im = img(F + R.CHIPS[d.chip].icon); if (im.complete) cx.drawImage(im, d.x - 6, d.y - 12 + bob, 12, 12); continue; } if (d.crowns) { if (CROWN.complete) cx.drawImage(CROWN, d.x - 6, d.y - 11 + bob, 12, 12); continue; } const im = img(F + d.item.icon); if (im.complete) cx.drawImage(im, d.x - 7, d.y - 14 + bob, 14, 14); }
+  for (const d of S.drops) { const bob = Math.sin(d.t * 6) * 1.2; if (d.pot) { const im = img(F + R.POTIONS[d.pot].icon); if (im.complete) cx.drawImage(im, d.x - 6, d.y - 12 + bob, 12, 12); continue; } if (d.crowns) { if (CROWN.complete) cx.drawImage(CROWN, d.x - 6, d.y - 11 + bob, 12, 12); continue; } const im = img(F + d.item.icon); if (im.complete) cx.drawImage(im, d.x - 7, d.y - 14 + bob, 14, 14); }
   const others = othersNow();
   const all = [...S.mobs.map((m) => ({ y: m.y, m })), ...S.room.objs.filter((o) => o.k === "npc").map((o) => ({ y: (o.y + 1) * T, npc: o })), ...others.map((o) => ({ y: o.y, o })), { y: S.p.y, p: true }].sort((a, b) => a.y - b.y);
   for (const o of all) {
@@ -968,7 +1185,8 @@ addEventListener("pointerup", () => (mouse.down = false));
 addEventListener("keydown", (e) => { if (/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName || "")) return; const k = e.key.toLowerCase();
   if (k === "enter") { e.preventDefault(); setChat(true); chatView(false); $("chatIn").focus(); return; }
   if (!e.repeat && k === "i") return toggleWin("invWin"); if (!e.repeat && k === "t") return toggleWin("treeWin"); if (!e.repeat && k === "c") return toggleWin("statWin");
-  if (k === "escape") { if (craftChip) setCraft(null); else if (!$("pmenu").hidden) $("pmenu").hidden = true; else if (WINS.some((id) => !$(id).hidden)) closeAll(); else if (chatOpen) setChat(false); return; }
+  if (k === "escape") { if (!$("pmenu").hidden) $("pmenu").hidden = true; else if (WINS.some((id) => !$(id).hidden)) closeAll(); else if (chatOpen) setChat(false); return; }
+  if (!e.repeat && (k === "4" || k === "5")) { e.preventDefault(); return quaff(k === "4" ? "health" : "mana"); }
   if (["w", "a", "s", "d", " ", "q", "e", "1", "2", "3", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) { e.preventDefault(); keys.add(k); } });
 addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase())); addEventListener("blur", () => { keys.clear(); mouse.down = false; });
 draw();
