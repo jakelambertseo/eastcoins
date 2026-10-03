@@ -155,6 +155,11 @@ export function createSim(R) {
     return g;
   }
   const cdOf = (k, g) => Math.max(0.08, SK[k].cd * (1 - Math.min(0.5, g.speed)) * (1 - Math.min(0.4, g.cdr || 0)) - (k === "nova" ? g.ringCd : 0));
+  /* TIMED BUFFS (2026-10-03, the classes): p.buffs = { k: until (the run's clock) }. R.BUFFS says what each does. */
+  const buffed = (p, k, t) => !!(p?.buffs && p.buffs[k] > t);
+  const cdNow = (k, g, p, t) => cdOf(k, g) * (buffed(p, "rev", t) ? 1 / (1 + R.BUFFS.rev.speed) : 1);
+  /** how much less a player takes right now: the biggest of a War Cry and any buff that cuts */
+  const cutOf = (p, t) => { let cut = p?.cry > 0 ? SK.war_cry.cut : 0; for (const [k, B] of Object.entries(R.BUFFS)) if (B.cut && buffed(p, k, t)) cut = Math.max(cut, B.cut); return cut; };
   /** the fastest a character can legitimately move, px/s (dodge and dash are short bursts on top of this) */
   const topSpeed = (g) => 92 * g.spd;
 
@@ -277,26 +282,51 @@ export function createSim(R) {
      VISUAL mode (the browser drawing its own or a party member's cast) makes the same shapes but never hurts anything: hits come from the server. */
   function castOn(st, p, k, ang, ax, ay, ev, visual) {
     const g = p.g, s = SK[k]; if (!s) return;
-    const dmg = g.dmg * s.mult, ox = p.x, oy = p.y - 7, shot = (a, o) => st.pb.push({ x: ox, y: oy, vx: Math.cos(a) * o.speed, vy: Math.sin(a) * o.speed, t: o.life || 1.4, f: 0, dmg, ox, oy, hits: new Set(), by: p.id, vis: !!visual, ...o });
+    const dmg = g.dmg * s.mult * (buffed(p, "pact", st.t) ? 1 + R.BUFFS.pact.dmg : 1), ox = p.x, oy = p.y - 7, shot = (a, o) => st.pb.push({ x: ox, y: oy, vx: Math.cos(a) * o.speed, vy: Math.sin(a) * o.speed, t: o.life || 1.4, f: 0, dmg, ox, oy, hits: new Set(), by: p.id, vis: !!visual, ...o });
     const n = g.bolts, fx = st.fx;
-    if (s.kind === "bolt") for (let i = 0; i < n; i++) shot(ang + (i - (n - 1) / 2) * 0.14, { speed: s.speed, art: s.fx, pierce: g.pierce, el: "arcane" });
+    if (s.kind === "bolt") for (let i = 0; i < n; i++) shot(ang + (i - (n - 1) / 2) * 0.14, { speed: s.speed, art: s.fx, pierce: (s.pierce || 0) + g.pierce, el: s.el || "arcane", dot: s.dot || null });
     else if (s.kind === "ring") { for (let i = 0; i < g.ring; i++) shot((i / g.ring) * Math.PI * 2, { speed: s.speed, art: s.fx, big: true, life: 1.1, pierce: g.pierce, el: "fire" }); fx?.push({ kind: "boom", x: p.x, y: p.y - 5, t: 0.5, big: true }); }
     else if (s.kind === "lance") for (let i = 0; i < n; i++) shot(ang + (i - (n - 1) / 2) * 0.14, { speed: s.speed, art: s.fx, pierce: s.pierce + g.pierce, slow: s.slow, lance: true, el: "frost" });
-    else if (s.kind === "chain") shot(ang, { speed: s.speed, art: s.fx, jumps: s.jumps, range: s.range * T, chain: true, el: "storm" });
+    else if (s.kind === "chain") shot(ang, { speed: s.speed, art: s.fx, jumps: s.jumps, range: s.range * T, chain: true, el: s.el || "storm", heal: s.heal || 0 });
     else if (s.kind === "arrow") for (let i = 0; i < n; i++) shot(ang + (i - (n - 1) / 2) * 0.1, { speed: s.speed, arrow: true, pierce: g.pierce, life: 1.1 });
-    else if (s.kind === "fan") { const c = s.count + n - 1; for (let i = 0; i < c; i++) shot(ang + (i - (c - 1) / 2) * s.spread, { speed: s.speed, arrow: true, pierce: g.pierce, life: 0.9 }); }
+    else if (s.kind === "fan") { const c = s.count + n - 1; for (let i = 0; i < c; i++) shot(ang + (i - (c - 1) / 2) * s.spread, { speed: s.speed, arrow: true, pierce: g.pierce, life: s.life || 0.9 }); }
     else if (s.kind === "rain" || s.kind === "trap") { const dx = ax - p.x, dy = ay - p.y, d = Math.hypot(dx, dy) || 1, r = Math.min(d, s.range * T);
       st.zones.push({ kind: s.kind, x: p.x + (dx / d) * r, y: p.y + (dy / d) * r, r: s.radius * T, t: 0, dmg, next: 0.35, ticks: s.ticks || 0, every: s.every || 0, life: s.life || 2, root: s.root || 0, art: s.fx, by: p.id, vis: !!visual }); }
-    else if (s.kind === "arc" || s.kind === "slam") { const reach = s.reach * T, half = s.width / 2;
-      if (!visual) for (const m of st.mobs) { if (m.hp <= 0) continue; const dx = m.x - p.x, dy = m.y - 6 - p.y, d = Math.hypot(dx, dy); if (d > reach + m.d.r) continue; let da = Math.atan2(dy, dx) - ang; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) <= half || d < m.d.r + 4) hit(st, m, dmg, { stun: s.stun }, p.id, ev); }
-      fx?.push({ kind: "slash", x: p.x, y: p.y - 6, a: ang, half, r: reach, t: 0.16, max: 0.16, big: s.kind === "slam" }); if (s.kind === "slam") fx?.push({ kind: "boom", x: p.x + Math.cos(ang) * reach * 0.6, y: p.y - 6 + Math.sin(ang) * reach * 0.6, t: 0.45, big: true }); }
+    else if (s.kind === "arc" || s.kind === "slam" || s.kind === "spin") { const reach = s.reach * T, half = s.kind === "spin" ? Math.PI : s.width / 2;
+      if (!visual) for (const m of st.mobs) { if (m.hp <= 0) continue; const dx = m.x - p.x, dy = m.y - 6 - p.y, d = Math.hypot(dx, dy); if (d > reach + m.d.r) continue; let da = Math.atan2(dy, dx) - ang; da = Math.atan2(Math.sin(da), Math.cos(da)); if (Math.abs(da) <= half || d < m.d.r + 4) hit(st, m, dmg, { stun: s.stun, el: s.el || null }, p.id, ev); }
+      fx?.push({ kind: "slash", x: p.x, y: p.y - 6, a: ang, half, r: reach, t: 0.16, max: 0.16, big: s.kind === "slam", spin: s.kind === "spin" }); if (s.kind === "slam") fx?.push({ kind: "boom", x: p.x + Math.cos(ang) * reach * 0.6, y: p.y - 6 + Math.sin(ang) * reach * 0.6, t: 0.45, big: true }); }
     else if (s.kind === "dash") {
       if (visual) { const t = 0.18, sp = (s.dist * T) / t; p.dash = { t }; p.vx = Math.cos(ang) * sp; p.vy = Math.sin(ang) * sp; p.inv = Math.max(p.inv || 0, t + 0.05); }
       else { /* the server sweeps the line the dash will travel (stopping at a wall) and hits everything along it, once */
         const end = { x: p.x, y: p.y, vx: Math.cos(ang) * s.dist * T, vy: Math.sin(ang) * s.dist * T }; for (let i = 0; i < 10; i++) moveCircle(st.room.g, end, 5, 0.1);
-        for (const m of st.mobs) { if (m.hp <= 0) continue; if (segDist(m.x, m.y - 6, p.x, p.y, end.x, end.y) < m.d.r + 8) hit(st, m, dmg, {}, p.id, ev); }
+        for (const m of st.mobs) { if (m.hp <= 0) continue; if (segDist(m.x, m.y - 6, p.x, p.y, end.x, end.y) < m.d.r + 8) { hit(st, m, dmg, {}, p.id, ev); if (s.knock) { const sx = -Math.sin(ang), sy = Math.cos(ang), side = Math.sign((m.x - p.x) * sx + (m.y - 6 - p.y) * sy) || 1; m.vx += (Math.cos(ang) + sx * side * 0.6) * s.knock; m.vy += (Math.sin(ang) + sy * side * 0.6) * s.knock; } } }   /* the Truck throws them forward, and off to whichever side of the road they were on */
         p.dashTo = { x: end.x, y: end.y }; }
     }
+    /* THE NEW KINDS (2026-10-03, the classes) */
+    else if (s.kind === "leap") {   /* a dash, then a landing that hits everything round the spot */
+      const end = { x: p.x, y: p.y, vx: Math.cos(ang) * s.dist * T, vy: Math.sin(ang) * s.dist * T }; for (let i = 0; i < 10; i++) moveCircle(st.room.g, end, 5, 0.1);
+      if (visual) { const t = 0.22, sp = Math.hypot(end.x - p.x, end.y - p.y) / t; const a2 = Math.atan2(end.y - p.y, end.x - p.x); p.dash = { t }; p.vx = Math.cos(a2) * sp; p.vy = Math.sin(a2) * sp; p.inv = Math.max(p.inv || 0, t + 0.05); }
+      else { for (const m of st.mobs) if (m.hp > 0 && Math.hypot(m.x - end.x, m.y - 6 - end.y) < s.radius * T + m.d.r) hit(st, m, dmg, { stun: 0.4 }, p.id, ev); p.dashTo = { x: end.x, y: end.y }; }
+      fx?.push({ kind: "boom", x: end.x, y: end.y - 4, t: 0.45, big: true, delay: 0.2 }); }
+    else if (s.kind === "beam") {   /* a held line from you, as far as it reaches; everything along it is hit */
+      const len = s.range * T, ex = p.x + Math.cos(ang) * len, ey = oy + Math.sin(ang) * len, mult = buffed(p, "over", st.t) ? R.BUFFS.over.beam : 1;
+      if (!visual) for (const m of st.mobs) { if (m.hp <= 0) continue; if (segDist(m.x, m.y - 6, p.x, oy, ex, ey) < m.d.r + 4) hit(st, m, dmg * mult, { el: "laser" }, p.id, ev); }
+      fx?.push({ kind: "beam", x: p.x, y: oy, x2: ex, y2: ey, t: 0.12, max: 0.12, big: mult > 1 }); }
+    else if (s.kind === "cloud") {   /* an area that works on everything in it, every `every`, for `life`: poison, fire, a curse, leeches */
+      const dx = ax - p.x, dy = ay - p.y, d = Math.hypot(dx, dy) || 1, r = Math.min(d, s.range * T);
+      st.zones.push({ kind: "cloud", x: p.x + (dx / d) * r, y: p.y + (dy / d) * r, r: s.radius * T, t: 0, dmg, next: 0.2, every: s.every, life: s.life, el: s.el || "poison", curse: s.curse || 0, slow: s.slow || 0, leech: s.leech || 0, art: s.fx, by: p.id, vis: !!visual }); }
+    else if (s.kind === "strike") {   /* lands where you aim and goes off after `delay` */
+      const dx = ax - p.x, dy = ay - p.y, d = Math.hypot(dx, dy) || 1, r = Math.min(d, s.range * T);
+      st.zones.push({ kind: "strike", x: p.x + (dx / d) * r, y: p.y + (dy / d) * r, r: s.radius * T, t: 0, dmg, delay: s.delay, el: s.el || null, art: s.fx, by: p.id, vis: !!visual }); }
+    else if (s.kind === "buff") { (p.buffs ||= {})[s.buff] = st.t + s.dur; if (!visual && s.hpCost) p.hp = Math.max(1, p.hp - Math.round(p.g.maxHp * s.hpCost)); fx?.push({ kind: "cry", x: p.x, y: p.y - 8, t: 0.5, r: 24 }); }
+    else if (s.kind === "heal") { if (!visual) for (const q of (st.players instanceof Map ? [...st.players.values()] : st.players || [])) { if (!q.alive || Math.hypot(q.x - p.x, q.y - p.y) > s.range * T) continue; q.hp = Math.min(q.g.maxHp, q.hp + Math.round(q.g.maxHp * s.heal)); ev.push({ t: "healed", id: q.id, n: Math.round(q.g.maxHp * s.heal) }); } fx?.push({ kind: "cry", x: p.x, y: p.y - 8, t: 0.6, r: s.range * T, green: true }); }
+    else if (s.kind === "summon") { if (!visual) { st.minions ||= []; const mine = st.minions.filter((q) => q.owner === p.id && q.k === s.minion); const made = [];
+      for (let i = 0; i < s.count; i++) { const q = makeMinion(st, p, s.minion, st.seqMinion = (st.seqMinion || 0) + 1); q.life = s.life; st.minions.push(q); made.push(q); }
+      const all = st.minions.filter((q) => q.owner === p.id && q.k === s.minion); if (all.length > s.max) for (const q of all.slice(0, all.length - s.max)) q.gone = true;   /* the oldest go when there are too many */
+      ev.push({ t: "minion", add: made.map(minionTuple) }); } fx?.push({ kind: "cry", x: p.x, y: p.y - 8, t: 0.5, r: 20, green: true }); }
+    else if (s.kind === "corpse") {   /* the nearest corpse to your aim goes up; nothing happens if there's none in range */
+      const c = (st.corpses || []).map((q) => ({ q, d: Math.hypot(q.x - ax, q.y - ay) })).filter((x) => x.d < s.range * T).sort((a, b) => a.d - b.d)[0]?.q;
+      if (c) { if (!visual) { for (const m of st.mobs) if (m.hp > 0 && Math.hypot(m.x - c.x, m.y - 6 - c.y) < s.radius * T + m.d.r) hit(st, m, dmg, { el: "poison" }, p.id, ev); st.corpses = st.corpses.filter((q) => q !== c); ev.push({ t: "corpse", x: r1(c.x), y: r1(c.y) }); } fx?.push({ kind: "boom", x: c.x, y: c.y - 4, t: 0.45, big: true }); } }
     else if (s.kind === "cry") { p.cry = s.dur; if (!visual) for (const m of st.mobs) if (m.hp > 0 && Math.hypot(m.x - p.x, m.y - p.y) < s.range * T) { if (!m.awake) { wake(st, m); ev.push({ t: "wake", m: m.id }); } m.taunt = s.dur; m.tauntBy = p.id; }
       fx?.push({ kind: "cry", x: p.x, y: p.y - 8, t: 0.6, r: s.range * T }); }
   }
@@ -305,19 +335,50 @@ export function createSim(R) {
   function hit(st, m, base, opt, by, ev) {
     if (m.hp <= 0) return 0;
     if (!m.awake) { wake(st, m); ev.push({ t: "wake", m: m.id }); if (m.d.summon && !m.summoned) { m.summoned = true; ev.push({ t: "summon", m: m.id, n: m.d.summon }); } }
-    if (m.shield > 0) { m.shield--; ev.push({ t: "block", m: m.id, left: m.shield }); return 0; }   /* a Shielded elite: the first hits bounce */
-    const p = st.byId?.(by), g = p?.g || { crit: 0.06, critX: 1.5 }, rnd = st.rand || Math.random, crit = rnd() < g.crit, twice = g.double > 0 && rnd() < g.double;
+    if (m.shield > 0 && !opt.pure) { m.shield--; ev.push({ t: "block", m: m.id, left: m.shield }); return 0; }   /* a Shielded elite: the first hits bounce */
+    const p = st.byId?.(by), g = p?.g || { crit: 0.06, critX: 1.5 }, rnd = st.rand || Math.random, crit = !opt.pure && rnd() < g.crit, twice = !opt.pure && g.double > 0 && rnd() < g.double;
     /* elemental lines add to every hit in proportion to the skill (a 1.6x skill carries 1.6x the fire), and the biggest element colours the hit */
     let extra = 0, top = null, tv = 0; for (const [k, v] of Object.entries(g.elem || {})) if (v > 0) { extra += v; if (v > tv) { tv = v; top = k; } }
-    if (extra) extra *= g.dmg ? base / g.dmg : 1;
-    const n = Math.max(1, Math.round((base + extra) * (crit ? g.critX : 1) * (twice ? 2 : 1) * (1 - (m.d.armor || 0))));   /* "lands twice" (a legendary's power) is one hit for double; an Armored elite takes less */
+    if (extra && !opt.pure) extra *= g.dmg ? base / g.dmg : 1; else extra = 0;
+    const n = Math.max(1, Math.round((base + extra) * (crit ? g.critX : 1) * (twice ? 2 : 1) * (1 - (m.d.armor || 0)) * (m.cursed > 0 ? R.CURSE : 1)));   /* "lands twice" (a legendary's power) is one hit for double; an Armored elite takes less */
     m.hp -= n; ev.push({ t: "hit", m: m.id, n, c: crit ? 1 : 0, ...(twice ? { d: 1 } : {}), el: opt.el || top || null, by });
     if (opt.slow) m.slow = Math.max(m.slow, opt.slow); if (opt.stun) m.stun = Math.max(m.stun, opt.stun); if (opt.root) m.root = Math.max(m.root, opt.root);
     if (g.elem?.frost > 0 && rnd() < R.ELEMENT.frost.slow) m.slow = Math.max(m.slow, R.ELEMENT.frost.slowFor);
     if (g.elem?.storm > 0 && !m.d.boss && rnd() < R.ELEMENT.storm.stun) m.stun = Math.max(m.stun, R.ELEMENT.storm.stunFor);
-    st.hooks?.dealt?.(by, n);
+    st.hooks?.dealt?.(by, n, opt);
+    if (opt.dot && !opt.pure) (m.dots ||= []).push({ left: opt.dot.ticks, every: opt.dot.every, next: opt.dot.every, dmg: Math.max(1, Math.round(base * opt.dot.mult)), by, el: opt.el || "poison" });   /* poison: more hits to come */
     if (m.hp <= 0) { m.hp = 0; ev.push({ t: "kill", m: m.id, by }); st.hooks?.killed?.(m, by); }
     return n;
+  }
+  /** poison and burning tick (the server): each dot on a monster hits again on its clock, plainly (no crit, no element, no shield) */
+  function dotStep(st, dt, ev) {
+    for (const m of st.mobs) { if (m.hp <= 0 || !m.dots?.length) continue; if (m.cursed > 0) m.cursed -= dt;
+      for (const d of m.dots) { d.next -= dt; if (d.next <= 0) { d.next += d.every; d.left--; hit(st, m, d.dmg, { el: d.el, pure: true }, d.by, ev); if (m.hp <= 0) break; } }
+      m.dots = m.dots.filter((d) => d.left > 0); }
+    for (const m of st.mobs) if (m.cursed > 0 && !m.dots?.length) m.cursed -= dt;
+  }
+  /* ------------------------------------------------------------ MINIONS (summons): they fight for their owner. Each chases the nearest awake monster
+     within ten tiles of its owner, else heels; it hits on its own clock and the hit is credited to the owner (XP, drops, leech). Melee monsters
+     swing at a minion in their reach. A minion lives `life` seconds. The server runs this; the page only draws what the snapshots say. */
+  function minionStep(st, dt, ev) {
+    const alive = st.players.filter((p) => p.alive);
+    for (const n of st.minions) {
+      const own = alive.find((p) => p.id === n.owner); n.life -= dt; n.cd -= dt;
+      if (!own || n.life <= 0 || n.hp <= 0) { n.gone = true; continue; }
+      let tgt = null, best = T * 10; for (const m of st.mobs) { if (m.hp <= 0 || !m.awake) continue; const dd = Math.hypot(m.x - own.x, m.y - own.y); if (dd < best) { best = dd; tgt = m; } }
+      const to = tgt ? tgt : { x: own.x + Math.cos(n.seat) * 22, y: own.y + Math.sin(n.seat) * 22 }, dx = to.x - n.x, dy = to.y - n.y, dd = Math.hypot(dx, dy) || 1;
+      const reach = tgt ? tgt.d.r + n.r + 2 : 4;
+      if (dd > reach) { n.vx = (dx / dd) * n.spd; n.vy = (dy / dd) * n.spd; moveCircle(st.room.g, n, Math.min(6, n.r), dt); } else { n.vx = n.vy = 0; if (tgt && n.cd <= 0) { n.cd = n.every; hit(st, tgt, n.dmg, {}, n.owner, ev); ev.push({ t: "mhit", n: n.id }); } }
+      for (const m of st.mobs) { if (m.hp <= 0 || !m.awake || !m.d.melee) continue; if (Math.hypot(m.x - n.x, m.y - n.y) < m.d.r + n.r + 3) { m.minionAt = (m.minionAt || 0) - dt; if (m.minionAt <= 0) { m.minionAt = 0.9; n.hp -= Math.round(m.d.max * 0.6); ev.push({ t: "mhurt", n: n.id, hp: Math.max(0, n.hp) }); } } }
+      n.t += dt;
+    }
+    for (const n of st.minions) if (n.hp <= 0 && !n.gone) n.gone = true;
+    const gone = st.minions.filter((n) => n.gone); if (gone.length) { ev.push({ t: "mgone", ids: gone.map((n) => n.id) }); st.minions = st.minions.filter((n) => !n.gone); }
+  }
+  /** make a minion for a player: its numbers a share of the owner's */
+  function makeMinion(st, p, k, id) {
+    const M = R.MINIONS[k], seat = Math.random() * Math.PI * 2;
+    return { id, owner: p.id, k, x: p.x + Math.cos(seat) * 14, y: p.y + Math.sin(seat) * 14, vx: 0, vy: 0, hp: Math.round(p.g.maxHp * M.hp), maxHp: Math.round(p.g.maxHp * M.hp), dmg: Math.max(1, Math.round(p.g.dmg * M.dmg)), spd: M.spd, r: M.r, every: M.every, cd: 0.3, life: 0, seat, t: 0 };
   }
   /** projectiles fly: pierce, chain, slow, Point Blank. A visual one stops on the first monster it meets and hurts nothing. */
   function projStep(st, dt, ev) {
@@ -326,7 +387,7 @@ export function createSim(R) {
       if (!flies(st.room.g, Math.floor(b.x / T), Math.floor(b.y / T))) { b.t = 0; continue; }
       for (const m of st.mobs) if (m.hp > 0 && !b.hits.has(m.id) && Math.hypot(m.x - b.x, m.y - 6 - b.y) < m.d.r + (b.big ? 6 : 4)) {
         b.hits.add(m.id);
-        if (!b.vis) { let dm = b.dmg; const p = st.byId?.(b.by); if (b.arrow && p?.g.rules.has("point_blank")) { const fl = Math.hypot(b.x - b.ox, b.y - b.oy); dm *= fl < 3 * T ? 1.5 : fl > 7 * T ? 0.7 : 1; } hit(st, m, dm, { slow: b.slow, el: b.el }, b.by, ev); }
+        if (!b.vis) { let dm = b.dmg; const p = st.byId?.(b.by); if (b.arrow && p?.g.rules.has("point_blank")) { const fl = Math.hypot(b.x - b.ox, b.y - b.oy); dm *= fl < 3 * T ? 1.5 : fl > 7 * T ? 0.7 : 1; } hit(st, m, dm, { slow: b.slow, el: b.el, dot: b.dot || null, heal: b.heal || 0 }, b.by, ev); }
         if (b.chain && b.jumps > 0) { let best = null, bd = b.range; for (const o of st.mobs) if (o.hp > 0 && !b.hits.has(o.id)) { const dd = Math.hypot(o.x - m.x, o.y - m.y); if (dd < bd) { bd = dd; best = o; } }
           if (best) { b.jumps--; const a = Math.atan2(best.y - m.y, best.x - m.x), sp = Math.hypot(b.vx, b.vy); st.fx?.push({ kind: "zap", x: m.x, y: m.y - 6, x2: best.x, y2: best.y - 6, t: 0.15 }); b.x = m.x; b.y = m.y - 6; b.vx = Math.cos(a) * sp; b.vy = Math.sin(a) * sp; b.t = 0.6; break; } }
         if ((b.pierce || 0) > 0) { b.pierce--; continue; } b.t = 0; break;
@@ -338,12 +399,15 @@ export function createSim(R) {
   function zoneStep(st, dt, ev) {
     for (const z of st.zones) { z.t += dt;
       if (z.kind === "rain") { if (z.t >= z.next && z.ticks > 0) { z.ticks--; z.next += z.every; if (!z.vis) for (const m of st.mobs) if (m.hp > 0 && Math.hypot(m.x - z.x, m.y - z.y) < z.r + m.d.r * 0.5) hit(st, m, z.dmg, {}, z.by, ev); } if (z.ticks <= 0 && z.t > z.next) z.done = true; }
+      else if (z.kind === "cloud") { if (z.t >= z.next) { z.next += z.every; if (!z.vis) for (const m of st.mobs) if (m.hp > 0 && Math.hypot(m.x - z.x, m.y - z.y) < z.r + m.d.r * 0.5) { if (z.curse) m.cursed = Math.max(m.cursed || 0, z.curse); if (z.slow) m.slow = Math.max(m.slow, z.slow); if (z.dmg > 0) { const n = hit(st, m, z.dmg, { el: z.el, pure: true }, z.by, ev); if (z.leech && n) st.hooks?.heal?.(z.by, Math.round(n * z.leech)); } } } if (z.t >= z.life) z.done = true; }
+      else if (z.kind === "strike") { if (z.t >= z.delay) { if (!z.vis) for (const m of st.mobs) if (m.hp > 0 && Math.hypot(m.x - z.x, m.y - z.y) < z.r + m.d.r * 0.5) hit(st, m, z.dmg, { el: z.el }, z.by, ev); st.fx?.push({ kind: "boom", x: z.x, y: z.y - 4, t: 0.45, big: true }); z.done = true; } }
       else if (z.kind === "trap" && z.t > 0.4) { if (st.mobs.some((m) => m.hp > 0 && Math.hypot(m.x - z.x, m.y - z.y) < z.r + m.d.r * 0.5)) { if (!z.vis) for (const m of st.mobs) if (m.hp > 0 && Math.hypot(m.x - z.x, m.y - z.y) < z.r * 1.6) hit(st, m, z.dmg, { root: z.root }, z.by, ev); st.fx?.push({ kind: "boom", x: z.x, y: z.y, t: 0.45 }); z.done = true; } else if (z.t > z.life) z.done = true; } }
     st.zones = st.zones.filter((z) => !z.done);
   }
   /** a room is done when its monsters are (or, in a boss room, the boss is) */
   const roomClear = (room, mobs) => (room.packs.some((p) => p.boss) ? !mobs.some((m) => m.d.boss && m.hp > 0) : !mobs.some((m) => m.hp > 0));
 
-  return { T, COLS, ROWS, W, H, SLOT_KEYS, AREAS, areaOf, rng, walk, passable, flies, THEMES, themeFor, makeLounge, makeRoom, openExit, moveCircle, standable, statsFor, cdOf, topSpeed,
+  const minionTuple = (n) => [n.id, n.owner, n.k, r1(n.x), r1(n.y), Math.max(0, n.hp), n.maxHp];
+  return { T, COLS, ROWS, W, H, SLOT_KEYS, AREAS, areaOf, rng, walk, passable, flies, THEMES, themeFor, makeLounge, buffed, cdNow, cutOf, dotStep, minionStep, makeMinion, minionTuple, makeRoom, openExit, moveCircle, standable, statsFor, cdOf, topSpeed,
     spawnMobs, PARTY_HP, mobStep, flowField, clearLine, maxHitIn, castOn, hit, projStep, zoneStep, roomClear, segDist, shoot };
 }

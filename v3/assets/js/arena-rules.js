@@ -39,23 +39,68 @@ export const LEVEL = { cap: 60,
   base: (l) => ({ hp: 50 + l * 6, mp: 40 + l * 3, dmg: 4 + Math.floor(l * 0.6) }) };
 
 /* ------------------------------------------------------------ classes: three styles, two ascendancies each (the owner: "Melee, archery, magic (each with 2 sub classes / ascendencies)") */
+/* ELEVEN CLASSES (2026-10-03, the owner: "alternative classes and subclasses for players that arent the tradition mage, arch and melee ...
+   redneck, necromancer, laser guy, plague doctor, chainsaw man, warlock, amazon, soldier"). Each is a style: a start skill, three more on its
+   branch of the tree, its own weapon, two ascendancies (later), and its own eight-facing model (`model`: cls_<style>_<dir>.png, PixelLab).
+   Three mechanics were built for them and are shared: SUMMONS (minions that fight for you), DOTS (poison and burning that tick), BEAMS (a
+   held line), plus buffs, heals, auras, delayed strikes, corpses. mods: health, mana, armour, movement against the level's base numbers. */
 export const STYLES = {
-  melee:   { name: "Melee",   icon: "items/skill_melee.png",   portrait: "items/bronze_gladius.png", start: "cleave",      weapon: "Gladius", asc: ["gladiator", "juggernaut"],
-    blurb: "Up close. Wide swings that hit the whole pack, a dash through the line, and the most health and armour of the three.",
+  melee:   { name: "Warrior",   icon: "items/skill_melee.png",   portrait: "items/bronze_gladius.png", start: "cleave",      weapon: "Gladius", asc: ["gladiator", "juggernaut"], model: "cls_melee",
+    blurb: "Up close. Wide swings that hit the whole pack, a dash through the line, and the most health and armour.",
     mods: { hp: 1.3, mp: 0.6, def: 15 } },
-  archery: { name: "Archery", icon: "items/skill_archery.png", portrait: "items/yewlogs_shortbow.png", start: "quick_shot",  weapon: "Bow", asc: ["deadeye", "trapper"],
+  archery: { name: "Ranger",    icon: "items/skill_archery.png", portrait: "items/yewlogs_shortbow.png", start: "quick_shot",  weapon: "Bow", asc: ["deadeye", "trapper"], model: "cls_archery",
     blurb: "From range, moving. Fast arrows, fans of them, and traps and rain to hold a pack where you want it.",
     mods: { hp: 1.0, mp: 0.8, def: 5, move: 0.05 } },
-  magic:   { name: "Magic",   icon: "items/skill_magic.png",   portrait: "items/yewlogs_wand.png",   start: "arcane_bolt", weapon: "Wand", asc: ["elementalist", "occultist"],
+  magic:   { name: "Mage",      icon: "items/skill_magic.png",   portrait: "items/yewlogs_wand.png",   start: "arcane_bolt", weapon: "Wand", asc: ["elementalist", "occultist"], model: "cls_magic",
     blurb: "Glass and power. The biggest hits and the biggest mana pool, for the least health: kill it before it reaches you.",
-    mods: { hp: 0.85, mp: 1.4, def: 0 } } };
+    mods: { hp: 0.85, mp: 1.4, def: 0 } },
+  redneck: { name: "Redneck",   icon: "items/skill_strength.png", portrait: "items/w_redneck.png", start: "buckshot", weapon: "Shotgun", asc: ["moonshiner", "houndmaster"], model: "cls_redneck",
+    blurb: "A shotgun, a jug of moonshine, a truck and a dog. Close, loud and rude.",
+    mods: { hp: 1.15, mp: 0.7, def: 8 } },
+  necromancer: { name: "Necromancer", icon: "items/skill_wizardry.png", portrait: "items/w_necromancer.png", start: "bone_spear", weapon: "Bone Staff", asc: ["lich", "bonelord"], model: "cls_necromancer",
+    blurb: "Every kill is an army. Raise skeletons, curse the living, and blow the dead up in their faces.",
+    mods: { hp: 0.9, mp: 1.3, def: 0 } },
+  laser:   { name: "Laser Guy", icon: "items/skill_tinkering.png", portrait: "items/w_laser.png", start: "beam", weapon: "Laser", asc: ["overclocker", "commander"], model: "cls_laser",
+    blurb: "Hold the button. A beam that melts the line, an overcharge, a reflector, and a strike from orbit.",
+    mods: { hp: 0.9, mp: 1.3, def: 2 } },
+  plague:  { name: "Plague Doctor", icon: "items/skill_alchemy.png", portrait: "items/w_plague.png", start: "syringe", weapon: "Cane", asc: ["alchemist", "pestilence"], model: "cls_plague",
+    blurb: "Poison that keeps working after you've moved on, leeches that feed you, and a tincture that heals the party.",
+    mods: { hp: 1.0, mp: 1.2, def: 3 } },
+  chainsaw: { name: "Chainsaw Man", icon: "items/skill_woodcutting.png", portrait: "items/w_chainsaw.png", start: "rip", weapon: "Chainsaw", asc: ["berserker", "lumberjack"], model: "cls_chainsaw",
+    blurb: "It never stops. Rip, rev, spin through the pack, carve a line through the rest.",
+    mods: { hp: 1.25, mp: 0.6, def: 10, move: 0.05 } },
+  warlock: { name: "Warlock",   icon: "items/skill_magic.png", portrait: "items/w_warlock.png", start: "drain", weapon: "Grimoire", asc: ["hellbinder", "bloodmage"], model: "cls_warlock",
+    blurb: "Pays in blood. A drain that heals, hexes, a pact that trades health for power, and an imp.",
+    mods: { hp: 0.95, mp: 1.3, def: 0 } },
+  amazon:  { name: "Amazon",    icon: "items/skill_attack.png", portrait: "items/w_amazon.png", start: "javelin", weapon: "Javelin", asc: ["valkyrie", "spearmaiden"], model: "cls_amazon",
+    blurb: "Javelins that go through two, a charged strike, a shield wall, and a leap that lands on the pack.",
+    mods: { hp: 1.15, mp: 0.8, def: 10, move: 0.05 } },
+  soldier: { name: "Soldier",   icon: "items/skill_defence.png", portrait: "items/w_soldier.png", start: "rifle", weapon: "Rifle", asc: ["commando", "engineer"], model: "cls_soldier",
+    blurb: "Rifle, grenades, a barrage called in, and the sense to dig in.",
+    mods: { hp: 1.05, mp: 0.9, def: 6 } } };
 export const ASCENDANCIES = {
   gladiator:    { style: "melee",   name: "Gladiator",    does: "fast hits, bleeds, a crowd that cheers: every kill in a pack makes the next one quicker" },
   juggernaut:   { style: "melee",   name: "Juggernaut",   does: "slow and unstoppable: armour, stun, and a slam that knocks packs flat" },
   deadeye:      { style: "archery", name: "Deadeye",      does: "range and pierce: one arrow through the whole line" },
   trapper:      { style: "archery", name: "Trapper",      does: "the field kits made a class: snares, flares and traps that fight for you" },
   elementalist: { style: "magic",   name: "Elementalist", does: "fire, frost, storm and sun: switch elements to hit what a monster is weak to" },
-  occultist:    { style: "magic",   name: "Occultist",    does: "the void: curses, a black hole, health paid for power" } };
+  occultist:    { style: "magic",   name: "Occultist",    does: "the void: curses, a black hole, health paid for power" },
+  moonshiner:   { style: "redneck", name: "Moonshiner",   does: "the jug: bigger fires, longer burns, and a drink that makes you meaner" },
+  houndmaster:  { style: "redneck", name: "Houndmaster",  does: "two dogs, bigger, and they drag what they bite" },
+  lich:         { style: "necromancer", name: "Lich",     does: "you can't die while a skeleton stands; curses spread" },
+  bonelord:     { style: "necromancer", name: "Bonelord", does: "more skeletons, bone armour, and a knight among them" },
+  overclocker:  { style: "laser",   name: "Overclocker",  does: "the beam splits and never cools; overcharge lasts" },
+  commander:    { style: "laser",   name: "Orbital Commander", does: "strikes from orbit, bigger and more often, and a drone" },
+  alchemist:    { style: "plague",  name: "Alchemist",    does: "every potion heals the party; clouds last and heal you" },
+  pestilence:   { style: "plague",  name: "Pestilence",   does: "poison spreads from the dying, and stacks" },
+  berserker:    { style: "chainsaw", name: "Berserker",   does: "the lower your health the faster you cut, and you can't be stopped" },
+  lumberjack:   { style: "chainsaw", name: "Lumberjack",  does: "every swing fells more: wider rips, trees and all" },
+  hellbinder:   { style: "warlock", name: "Hellbinder",   does: "two imps, and the hex burns" },
+  bloodmage:    { style: "warlock", name: "Blood Mage",   does: "spells cost health and hit like it; drain heals the party" },
+  valkyrie:     { style: "amazon",  name: "Valkyrie",     does: "the leap again and again, and allies near you take less" },
+  spearmaiden:  { style: "amazon",  name: "Spearmaiden",  does: "javelins that return, pierce everything, and crit" },
+  commando:     { style: "soldier", name: "Commando",     does: "faster everything; grenades on the move" },
+  engineer:     { style: "soldier", name: "Engineer",     does: "a turret that fights for you, and barrages that come back" } };
 /* when an ascendancy is chosen and how its points come: a trial at the end of each act (3 acts, 2 points each) */
 export const ASC_POINTS = { perTrial: 2, trials: 3 };
 
@@ -77,8 +122,62 @@ export const SKILLS = {
   dash_strike: { style: "melee",   name: "Dash Strike",    kind: "dash",   mult: 1.8,  mp: 12,  cd: 2,    dist: 5, fx: null, icon: "items/skill_agility.png",   does: "dash where you aim and hit everything on the way" },
   ground_slam: { style: "melee",   name: "Ground Slam",    kind: "slam",   mult: 2.0,  mp: 25,  cd: 5,    reach: 3, width: 1.6, stun: 1.2, fx: "fx/spell_explosion.png", icon: "items/skill_strength.png", does: "a cone that stuns for a second" },
   war_cry:     { style: "melee",   name: "War Cry",        kind: "cry",    mult: 0,    mp: 20,  cd: 10,   dur: 4, cut: 0.4, range: 6, fx: null, icon: "items/skill_defence.png",   does: "pulls everything nearby to you, and you take 40% less for four seconds" },
+  /* redneck */
+  buckshot:    { style: "redneck", name: "Buckshot",       kind: "fan",    mult: 0.55, mp: 0,   cd: 0.5,  count: 6, spread: 0.2, speed: 320, life: 0.32, fx: null, icon: "items/skill_strength.png", does: "six pellets, close, where you aim" },
+  moonshine:   { style: "redneck", name: "Moonshine",      kind: "cloud",  mult: 0.35, mp: 18,  cd: 5,    radius: 1.8, life: 4, every: 0.4, range: 6, el: "fire", fx: "fx/spell_firewall.png", icon: "items/whiskey.png", does: "a jug of fire on an area for four seconds" },
+  truck:       { style: "redneck", name: "Truck",          kind: "dash",   mult: 1.6,  mp: 14,  cd: 4,    dist: 6, knock: 180, fx: null, icon: "items/skill_agility.png", does: "dash where you aim and knock everything flying" },
+  ol_blue:     { style: "redneck", name: "Ol' Blue",       kind: "summon", mult: 0,    mp: 25,  cd: 12,   minion: "hound", count: 1, max: 1, life: 24, fx: null, icon: "pet_jarlhound.png", does: "your dog, for twenty-four seconds" },
+  /* necromancer */
+  bone_spear:  { style: "necromancer", name: "Bone Spear", kind: "lance",  mult: 1.3,  mp: 2,   cd: 0.3,  speed: 340, pierce: 2, fx: "fx/spell_spikes.png", icon: "items/skill_wizardry.png", does: "a spear of bone through two monsters" },
+  raise_dead:  { style: "necromancer", name: "Raise Dead", kind: "summon", mult: 0,    mp: 30,  cd: 8,    minion: "skeleton", count: 3, max: 5, life: 25, fx: null, icon: "items/bones.png", does: "three skeletons that fight for you, five at most" },
+  curse:       { style: "necromancer", name: "Curse",      kind: "cloud",  mult: 0,    mp: 15,  cd: 6,    radius: 2.2, life: 5, every: 0.5, range: 7, curse: 1.5, slow: 1, fx: "fx/spell_blackhole.png", icon: "items/skill_magic.png", does: "an area where monsters are slowed and take 25% more" },
+  corpse_explosion: { style: "necromancer", name: "Corpse Explosion", kind: "corpse", mult: 2.6, mp: 20, cd: 2, radius: 2.2, range: 7, fx: "fx/spell_explosion.png", icon: "items/skull_wand.png", does: "the nearest corpse to your aim blows up" },
+  /* laser guy */
+  beam:        { style: "laser",   name: "Beam",           kind: "beam",   mult: 0.32, mp: 1,   cd: 0.1,  range: 7, fx: null, icon: "items/skill_tinkering.png", does: "a held beam that hits everything along it" },
+  overcharge:  { style: "laser",   name: "Overcharge",     kind: "buff",   mult: 0,    mp: 30,  cd: 12,   buff: "over", dur: 5, fx: null, icon: "items/part_sparks.png", does: "the beam hits twice as hard for five seconds" },
+  reflector:   { style: "laser",   name: "Reflector",      kind: "buff",   mult: 0,    mp: 20,  cd: 9,    buff: "reflect", dur: 3, fx: null, icon: "items/skill_defence.png", does: "take 60% less for three seconds" },
+  orbital:     { style: "laser",   name: "Orbital Strike", kind: "strike", mult: 4.5,  mp: 35,  cd: 8,    radius: 2.2, delay: 1.2, range: 8, fx: "fx/spell_sunstrike.png", icon: "items/skill_wizardry.png", does: "a strike from orbit where you aim, a second later" },
+  /* plague doctor */
+  syringe:     { style: "plague",  name: "Syringe",        kind: "bolt",   mult: 0.8,  mp: 1.5, cd: 0.25, speed: 300, el: "poison", dot: { ticks: 3, every: 0.7, mult: 0.5 }, fx: "fx/spell_bolt.png", icon: "items/small_vial.png", does: "a dart that poisons: three more hits after the first" },
+  plague_cloud: { style: "plague", name: "Plague Cloud",   kind: "cloud",  mult: 0.3,  mp: 20,  cd: 5,    radius: 2.2, life: 5, every: 0.5, range: 7, el: "poison", fx: "fx/spell_blackhole.png", icon: "items/sporecap.png", does: "a cloud that poisons everything in it for five seconds" },
+  leeches:     { style: "plague",  name: "Leeches",        kind: "cloud",  mult: 0.25, mp: 18,  cd: 7,    radius: 1.8, life: 4, every: 0.5, range: 6, el: "poison", leech: 1.0, fx: null, icon: "items/lanternroot.png", does: "a patch of leeches: what they take, you get" },
+  tincture:    { style: "plague",  name: "Tincture",       kind: "heal",   mult: 0,    mp: 30,  cd: 10,   heal: 0.35, range: 6, fx: null, icon: "items/pot_salve2.png", does: "heals everyone within six tiles for a third of their health" },
+  /* chainsaw man */
+  rip:         { style: "chainsaw", name: "Rip",           kind: "arc",    mult: 1.3,  mp: 0,   cd: 0.3,  reach: 1.8, width: 1.1, fx: null, icon: "items/skill_woodcutting.png", does: "a fast cut in front of you" },
+  rev:         { style: "chainsaw", name: "Rev",           kind: "buff",   mult: 0,    mp: 12,  cd: 10,   buff: "rev", dur: 5, fx: null, icon: "items/skill_agility.png", does: "40% faster skills for five seconds" },
+  spin:        { style: "chainsaw", name: "Spin",          kind: "spin",   mult: 1.1,  mp: 6,   cd: 0.5,  reach: 1.9, fx: null, icon: "items/skill_strength.png", does: "a full turn that hits everything around you" },
+  carve:       { style: "chainsaw", name: "Carve Through", kind: "dash",   mult: 2.0,  mp: 14,  cd: 3,    dist: 5, fx: null, icon: "items/skill_attack.png", does: "dash where you aim, cutting everything on the way" },
+  /* warlock */
+  drain:       { style: "warlock", name: "Drain",          kind: "chain",  mult: 0.9,  mp: 2,   cd: 0.3,  speed: 320, jumps: 3, range: 5, heal: 0.2, el: "arcane", fx: "fx/spell_bolt.png", icon: "items/skill_magic.png", does: "jumps to three more; a fifth of the damage heals you" },
+  hex:         { style: "warlock", name: "Hex",            kind: "cloud",  mult: 0.25, mp: 15,  cd: 6,    radius: 2, life: 4, every: 0.5, range: 7, el: "arcane", curse: 1.5, slow: 1, fx: "fx/spell_blackhole.png", icon: "items/markedcard.png", does: "slows, hurts, and makes them take 25% more" },
+  blood_pact:  { style: "warlock", name: "Blood Pact",     kind: "buff",   mult: 0,    mp: 0,   cd: 14,   buff: "pact", dur: 6, hpCost: 0.15, fx: null, icon: "items/skill_hp.png", does: "pay 15% of your health: +40% damage for six seconds" },
+  imp:         { style: "warlock", name: "Imp",            kind: "summon", mult: 0,    mp: 25,  cd: 12,   minion: "imp", count: 1, max: 1, life: 20, fx: null, icon: "items/pot_ember.png", does: "an imp, for twenty seconds" },
+  /* amazon */
+  javelin:     { style: "amazon",  name: "Javelin",        kind: "lance",  mult: 1.1,  mp: 0,   cd: 0.35, speed: 360, pierce: 2, fx: "fx/spell_spikes.png", icon: "items/skill_attack.png", does: "a javelin through two monsters" },
+  charged_strike: { style: "amazon", name: "Charged Strike", kind: "arc",  mult: 2.2,  mp: 10,  cd: 1.5,  reach: 2.0, width: 1.0, stun: 0.6, el: "storm", fx: null, icon: "items/skill_strength.png", does: "a heavy strike that stuns for a moment" },
+  shield_wall: { style: "amazon",  name: "Shield Wall",    kind: "buff",   mult: 0,    mp: 15,  cd: 10,   buff: "wall", dur: 3, fx: null, icon: "items/bronze_shield.png", does: "take 70% less for three seconds" },
+  leap:        { style: "amazon",  name: "Leap",           kind: "leap",   mult: 2.0,  mp: 20,  cd: 5,    dist: 6, radius: 1.8, fx: "fx/spell_explosion.png", icon: "items/skill_agility.png", does: "leap where you aim and land on everything there" },
+  /* soldier */
+  rifle:       { style: "soldier", name: "Rifle",          kind: "bolt",   mult: 1.0,  mp: 0,   cd: 0.2,  speed: 440, pierce: 0, fx: "fx/spell_bolt.png", icon: "items/skill_defence.png", does: "a shot where you aim" },
+  grenade:     { style: "soldier", name: "Grenade",        kind: "strike", mult: 2.2,  mp: 10,  cd: 3,    radius: 1.8, delay: 0.8, range: 7, el: "fire", fx: "fx/spell_explosion.png", icon: "items/skill_mining.png", does: "lands where you aim and goes off a moment later" },
+  barrage:     { style: "soldier", name: "Barrage",        kind: "rain",   mult: 0.5,  mp: 25,  cd: 6,    radius: 2.2, ticks: 8, every: 0.22, range: 9, fx: "fx/spell_explosion.png", icon: "items/skill_fletching.png", does: "called in on an area, eight rounds" },
+  fortify:     { style: "soldier", name: "Fortify",        kind: "buff",   mult: 0,    mp: 15,  cd: 9,    buff: "fort", dur: 4, fx: null, icon: "items/skill_defence.png", does: "dig in: take 40% less for four seconds" },
   /* everyone */
   dodge:       { style: null,      name: "Dodge",          kind: "dodge",  mult: 0,    mp: 0,   cd: 1.2, fx: null, icon: "items/skill_agility.png",   does: "0.3 s with no hitbox" } };
+/* MINIONS (summons): their numbers are a share of their owner's, so they grow with the build. art is EastScape's. */
+export const MINIONS = {
+  skeleton: { name: "Skeleton",  art: "cryptguard",    hp: 0.45, dmg: 0.55, spd: 72, r: 7, every: 0.9, scale: 0.8, tint: "#9ef0a0" },
+  hound:    { name: "Ol' Blue",  art: "pet_jarlhound", hp: 0.7,  dmg: 0.8,  spd: 98, r: 6, every: 0.7, scale: 1.0 },
+  imp:      { name: "Imp",       art: "furnaceimp",    hp: 0.4,  dmg: 0.9,  spd: 84, r: 6, every: 0.8, scale: 0.7 } };
+/* BUFFS: what a timed buff does (the sim reads these) */
+export const BUFFS = {
+  over:    { name: "Overcharge",  beam: 2 },
+  reflect: { name: "Reflector",   cut: 0.6 },
+  rev:     { name: "Rev",         speed: 0.4 },
+  pact:    { name: "Blood Pact",  dmg: 0.4 },
+  wall:    { name: "Shield Wall", cut: 0.7 },
+  fort:    { name: "Fortify",     cut: 0.4 } };
+export const CURSE = 1.25;   /* a cursed monster takes this much more */
 
 /* ------------------------------------------------------------ the tree (the owner: "Skills unlock on a tree"). One point a level from level 2.
    A hub in the middle and a branch per class, all three the same SHAPE (so the pacing is the same): your class's start is free; three skills
@@ -89,15 +188,31 @@ const BRANCH = [   /* [id suffix, kind, u, v, links (suffixes; "hub" is the midd
   ["4", "small", 4, -1.5, ["2", "6"]], ["5", "notable", 4, 1.5, ["3", "7"]], ["6", "small", 5, -1, ["4", "8"]], ["7", "small", 5, 1, ["5", "9"]],
   ["8", "skill", 6, -1, ["6", "10"]], ["9", "skill", 6, 1, ["7", "10"]], ["10", "notable", 7, 0, ["8", "9", "11"]], ["11", "keystone", 8, 0, ["10"]]];
 const GRANTS = {
+  redneck: { 0: { skill: "buckshot" }, 1: { hp: 0.06 }, 2: { skill: "moonshine" }, 3: { def: 8 }, 4: { dmg: 0.08 }, 5: { hp: 0.12, dmg: 0.08, name: "Hold My Beer" }, 6: { speed: 0.06 }, 7: { hp: 0.08 },
+    8: { skill: "truck" }, 9: { skill: "ol_blue" }, 10: { dmg: 0.15, leech: 0.02, name: "Buckshot Breakfast" }, 11: { dmg: 0.25, hp: -0.1, name: "Hair Trigger", says: "+25% damage, 10% less health" } },
+  necromancer: { 0: { skill: "bone_spear" }, 1: { mp: 0.08 }, 2: { skill: "raise_dead" }, 3: { mpRegen: 0.2 }, 4: { dmg: 0.08 }, 5: { mp: 0.1, dmg: 0.1, name: "Grave Robber" }, 6: { hp: 0.06 }, 7: { dmg: 0.08 },
+    8: { skill: "curse" }, 9: { skill: "corpse_explosion" }, 10: { dmg: 0.15, mpRegen: 0.2, name: "Deathless" }, 11: { hp: 0.3, def: -5, name: "Bone Armour", says: "+30% health, 5 less armour" } },
+  laser: { 0: { skill: "beam" }, 1: { mp: 0.08 }, 2: { skill: "overcharge" }, 3: { mpRegen: 0.2 }, 4: { dmg: 0.08 }, 5: { dmg: 0.12, mpRegen: 0.15, name: "Coolant" }, 6: { mp: 0.1 }, 7: { dmg: 0.08 },
+    8: { skill: "reflector" }, 9: { skill: "orbital" }, 10: { dmg: 0.18, name: "Focusing Lens" }, 11: { pierce: 2, speed: 0.1, name: "Split Beam", says: "Projectiles pierce two more; 10% faster skills" } },
+  plague: { 0: { skill: "syringe" }, 1: { hp: 0.06 }, 2: { skill: "plague_cloud" }, 3: { mp: 0.08 }, 4: { dmg: 0.08 }, 5: { leech: 0.02, dmg: 0.1, name: "Bedside Manner" }, 6: { mpRegen: 0.15 }, 7: { dmg: 0.08 },
+    8: { skill: "leeches" }, 9: { skill: "tincture" }, 10: { dmg: 0.15, hp: 0.08, name: "Virulent" }, 11: { leech: 0.04, hp: 0.15, name: "Physician", says: "+4% leech, +15% health" } },
+  chainsaw: { 0: { skill: "rip" }, 1: { hp: 0.06 }, 2: { skill: "rev" }, 3: { def: 10 }, 4: { speed: 0.06 }, 5: { hp: 0.15, def: 10, name: "Thick Skin" }, 6: { dmg: 0.08 }, 7: { speed: 0.06 },
+    8: { skill: "spin" }, 9: { skill: "carve" }, 10: { dmg: 0.15, leech: 0.02, name: "Sawdust" }, 11: { speed: 0.2, def: -10, name: "Full Throttle", says: "20% faster skills, 10 less armour" } },
+  warlock: { 0: { skill: "drain" }, 1: { mp: 0.08 }, 2: { skill: "hex" }, 3: { hp: 0.06 }, 4: { dmg: 0.08 }, 5: { leech: 0.02, dmg: 0.1, name: "Soul Tax" }, 6: { mpRegen: 0.15 }, 7: { dmg: 0.08 },
+    8: { skill: "blood_pact" }, 9: { skill: "imp" }, 10: { dmg: 0.18, name: "Infernal Contract" }, 11: { rule: "blood_magic", name: "Blood Magic", says: "Spells cost health instead of mana, and you have 40% more health" } },
+  amazon: { 0: { skill: "javelin" }, 1: { hp: 0.06 }, 2: { skill: "charged_strike" }, 3: { def: 10 }, 4: { dmg: 0.08 }, 5: { pierce: 1, dmg: 0.1, name: "Spear Arm" }, 6: { move: 0.05 }, 7: { hp: 0.08 },
+    8: { skill: "shield_wall" }, 9: { skill: "leap" }, 10: { dmg: 0.15, def: 10, name: "Shield Maiden" }, 11: { bolts: 1, name: "Twin Javelins", says: "+1 projectile" } },
+  soldier: { 0: { skill: "rifle" }, 1: { dmg: 0.06 }, 2: { skill: "grenade" }, 3: { def: 6 }, 4: { speed: 0.06 }, 5: { dmg: 0.12, def: 6, name: "Marksman" }, 6: { hp: 0.08 }, 7: { dmg: 0.08 },
+    8: { skill: "barrage" }, 9: { skill: "fortify" }, 10: { pierce: 1, dmg: 0.12, name: "Armour Piercing" }, 11: { rule: "point_blank", name: "Point Blank", says: "Shots hit 50% harder up close and 30% weaker far away" } },
   melee: { 0: { skill: "cleave" }, 1: { hp: 0.06 }, 2: { skill: "dash_strike" }, 3: { def: 10 }, 4: { dmg: 0.08 }, 5: { hp: 0.15, def: 15, name: "Iron Hide" }, 6: { speed: 0.06 }, 7: { hp: 0.08 },
     8: { skill: "war_cry" }, 9: { skill: "ground_slam" }, 10: { dmg: 0.15, leech: 0.02, name: "Bloodlust" }, 11: { rule: "iron_will", name: "Iron Will", says: "Skills cost health instead of mana, and you have 30% more health" } },
   archery: { 0: { skill: "quick_shot" }, 1: { speed: 0.05 }, 2: { skill: "split_arrow" }, 3: { move: 0.05 }, 4: { dmg: 0.08 }, 5: { dmg: 0.12, pierce: 1, name: "Eagle Eye" }, 6: { dmg: 0.08 }, 7: { speed: 0.06 },
     8: { skill: "rain" }, 9: { skill: "snare_trap" }, 10: { bolts: 1, name: "Full Quiver" }, 11: { rule: "point_blank", name: "Point Blank", says: "Arrows hit 50% harder up close and 30% weaker far away" } },
   magic: { 0: { skill: "arcane_bolt" }, 1: { mp: 0.08 }, 2: { skill: "nova" }, 3: { mpRegen: 0.2 }, 4: { dmg: 0.08 }, 5: { dmg: 0.12, mpRegen: 0.2, name: "Focus" }, 6: { mp: 0.1 }, 7: { dmg: 0.08 },
     8: { skill: "frost_lance" }, 9: { skill: "chain_spark" }, 10: { dmg: 0.18, name: "Overcharge" }, 11: { rule: "blood_magic", name: "Blood Magic", says: "Spells cost health instead of mana, and you have 40% more health" } } };
-const DIR = { melee: -Math.PI / 2, archery: Math.PI / 6, magic: (5 * Math.PI) / 6 };   /* up, down-right, down-left */
-const PRE = { melee: "m", archery: "a", magic: "g" };
-export const TREE = { pointsPerLevel: 1, nodes: { hub: { style: null, kind: "hub", x: 0, y: 0, links: ["m0", "a0", "g0"], grants: { hp: 0.04 } } } };
+const PRE = { melee: "m", archery: "a", magic: "g", redneck: "r", necromancer: "n", laser: "l", plague: "p", chainsaw: "c", warlock: "w", amazon: "z", soldier: "s" };
+const DIR = Object.fromEntries(Object.keys(PRE).map((k, i, all) => [k, -Math.PI / 2 + (i * 2 * Math.PI) / all.length]));   /* eleven branches round the hub */
+export const TREE = { pointsPerLevel: 1, nodes: { hub: { style: null, kind: "hub", x: 0, y: 0, links: Object.values(PRE).map((p) => p + "0"), grants: { hp: 0.04 } } } };
 for (const [style, pre] of Object.entries(PRE)) for (const [id, kind, u, v, links] of BRANCH) {
   const a = DIR[style], x = Math.cos(a) * u * 1.15 - Math.sin(a) * v, y = Math.sin(a) * u * 1.15 + Math.cos(a) * v;
   TREE.nodes[pre + id] = { style, kind, x: Math.round(x * 100) / 100, y: Math.round(y * 100) / 100, links: links.map((l) => (l === "hub" ? "hub" : pre + l)), grants: GRANTS[style][id] };
@@ -139,6 +254,7 @@ export function baseFor(slot, ilvl, style = "magic") {
   if (slot === "weapon") {
     if (style === "archery") return { slot, style, tier: t.k, name: `${TITLE(t.k)} Bow`, icon: `items/${t.wood}_shortbow.png`, implicit: { dmg: 3 + i * 3 } };
     if (style === "melee")   return { slot, style, tier: t.k, name: `${TITLE(t.k)} Gladius`, icon: `items/${GLADIUS[t.k] || "bronze"}_gladius.png`, implicit: { dmg: 4 + i * 3 } };
+    if (STYLES[style] && STYLES[style].portrait.startsWith("items/w_")) return { slot, style, tier: t.k, name: `${TITLE(t.k)} ${STYLES[style].weapon}`, icon: STYLES[style].portrait, implicit: { dmg: 3 + i * 3 } };   /* the new classes: one icon, the tier in the name */
     return { slot, style: "magic", tier: t.k, name: `${TITLE(t.k)} Wand`, icon: `items/${t.wood}_wand.png`, implicit: { dmg: 3 + i * 3 } };
   }
   if (slot === "offhand") return { slot, style: null, tier: t.k, name: `${TITLE(t.k)} Shield`, icon: `items/${SHIELD[t.k] || "bronze"}_shield.png`, implicit: { def: 2 + i * 2 } };
