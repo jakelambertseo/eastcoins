@@ -91,6 +91,8 @@ async function handle(context) {
 
   // a ban also ends a live EastScape session; the game holds its own socket, so it has to be told
   if (banned) context.waitUntil?.(kickFromEastscape(context.env, user.twitch_id));
+  // (2026-10-03) and East Arena's, which is its own server (arena-worker) with its own socket
+  if (banned) context.waitUntil?.(kickFromArena(context.env, user.twitch_id));
 
   return json({
     ok: true,
@@ -105,4 +107,12 @@ async function kickFromEastscape(env, id) {
   const base = String(env.ESCAPE_WORKER_URL || "").trim().replace(/\/$/, ""), key = String(env.ESCAPE_KEY || "").trim();
   if (!base || !key) return;
   try { await fetch(`${base}/kick?id=${encodeURIComponent(String(id))}`, { method: "POST", headers: { "X-Escape-Key": key } }); } catch (e) { /* game unreachable */ }
+}
+
+// (2026-10-03) East Arena's server. ARENA_KEY is a Pages secret matching the arena Worker's ARENA_KEY; until it is set this does nothing,
+// and a banned player is still refused at their next login because the site will not issue them a ticket.
+async function kickFromArena(env, id) {
+  const base = String(env.ARENA_WORKER_URL || "https://arena.eastcoin.vip").trim().replace(/\/$/, ""), key = String(env.ARENA_KEY || "").trim();
+  if (!key) return;
+  try { await fetch(`${base}/kick?id=${encodeURIComponent(String(id))}`, { method: "POST", headers: { "X-Arena-Key": key } }); } catch (e) { /* arena unreachable */ }
 }
