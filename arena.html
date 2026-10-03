@@ -226,7 +226,8 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 .btn{display:inline-block;margin:10px 4px 0;padding:10px 24px;border:0;border-radius:9px;background:linear-gradient(#ffe27a,#c8963a);box-shadow:0 0 0 2px #5a3a1a,0 4px 0 #6a4a18;font:900 15px Lora,serif;color:#2a1a10;cursor:pointer}.btn:active{transform:translateY(2px);box-shadow:0 0 0 2px #5a3a1a,0 2px 0 #6a4a18}
 .note{font:600 12.5px Lora,serif;color:#a89070}
 .pick{display:grid;gap:6px;margin-top:8px}.pick button{display:grid;gap:2px;justify-items:start;text-align:left;padding:8px 12px;border:0;border-radius:8px;background:#14100c;box-shadow:inset 0 0 0 1.5px #c8963a;font:800 13.5px Lora,serif;color:#ffe7b0;cursor:pointer}.pick button small{font:600 12px Lora,serif;color:#b8a888}.pick button:hover{background:#2a1a10}
-.classes{display:grid;grid-template-columns:repeat(3,minmax(0,250px));gap:14px;justify-content:center;margin-top:14px;text-align:left}
+.classes{display:grid;grid-template-columns:repeat(4,minmax(0,230px));gap:10px;justify-content:center;margin-top:12px;text-align:left;max-height:calc(100vh - 160px);overflow-y:auto;padding:4px}
+@media (max-width:1100px){.classes{grid-template-columns:repeat(3,minmax(0,230px))}}
 @media (max-width:860px){.classes{grid-template-columns:1fr}}
 .cls{display:grid;grid-template-rows:auto auto 1fr auto;gap:8px;padding:14px;border:0;border-radius:14px;background:linear-gradient(#3a2414,#20140a);box-shadow:0 0 0 2px #8a6428,0 10px 24px rgba(0,0,0,.5);color:#e0d0b8;cursor:pointer;text-align:left;font:600 13px/1.45 Lora,serif;transition:transform .12s,box-shadow .12s}
 .cls:hover{transform:translateY(-4px);box-shadow:0 0 0 3px #ffd84a,0 0 30px rgba(255,216,74,.25),0 10px 24px rgba(0,0,0,.5)}
@@ -309,8 +310,8 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 <div class="tipbox" id="tipBox" hidden></div>
 <div class="veil" id="veil"><span>Connecting to the server…</span></div>
 <script type="module">
-import * as R from "/v3/assets/js/arena-rules.js?v=10";   /* the arena's own rules: items, monsters, levels, classes, skills, the tree (shared with the Worker) */
-import { createSim } from "/v3/assets/js/arena-sim.js?v=7";
+import * as R from "/v3/assets/js/arena-rules.js?v=11";   /* the arena's own rules: items, monsters, levels, classes, skills, the tree (shared with the Worker) */
+import { createSim } from "/v3/assets/js/arena-sim.js?v=8";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=20";   /* EastScape's sounds, by name (the owner, 2026-10-03: "they all exist on eastscape already"); on/off and volume are the browser's, shared with EastScape */
 const snd = (name, o) => { try { SFX.play(name, o); } catch (e) { /* no audio here */ } };
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;   /* the fight itself, the same code the server runs (handed the rules, so they load once) */
@@ -410,6 +411,9 @@ const DIRS = ["east", "north-east", "north", "north-west", "west", "south-west",
 const GROUND = { grass: { im: img(`${F}t_wildg.png`), r: [0, 64, 64, 64] }, dirt: { im: img(`${F}t_wildb.png`), r: [0, 0, 128, 128] }, snow: { im: img(`${F}t_snow.png`), r: [64, 24, 48, 48] } };
 const BIG = { tree: ["x_pine1", "x_pine2", "x_pine3"].map((k) => img(`${F}${k}.png`)), pine: ["fz_pine1", "fz_pine2"].map((k) => img(`${F}${k}.png`)), rock: ["x_boulder1", "x_boulder2"].map((k) => img(`${F}${k}.png`)), cliff: ["x_rock3", "x_rock1"].map((k) => img(`${F}${k}.png`)), frock: [img(`${F}fz_rock1.png`)] };
 const DECOR = { tuft: ["x_tuft1", "x_tuft2", "x_tuft3"].map((k) => img(`${F}${k}.png`)), shrub: ["x_shrub1", "x_shrub2", "x_shrub1"].map((k) => img(`${F}${k}.png`)), crystal: ["fz_crystal1", "fz_crystal2", "fz_crystal3"].map((k) => img(`${F}${k}.png`)) };
+/* (2026-10-03) EVERY CLASS HAS ITS OWN MODEL (cls_<style>_<dir>.png, PixelLab); the six everyday looks are the fallback until one loads */
+const modelOf = (style, look, dir) => { const M = R.STYLES[style]?.model; if (M) { const im = img(`${F}${M}_${dir}.png`); if (!im.failed) { im.onerror = () => { im.failed = true; }; if (im.complete && im.naturalWidth) return im; if (!im.complete) return null; } } return img(`${F}look${look}_${dir}.png`); };
+const MINART = {}; for (const [k, M] of Object.entries(R.MINIONS)) MINART[k] = img(`${F}${M.art}.png`);
 const ANVIL = img(`${F}o_anvil.png`), SHRINE = img(`${F}o_shrine.png`), LOOTCHEST = img(`${F}o_cryptloot.png`), FLOOR = img(`${F}t_crypt.png`), WALL = img(`${F}t_cryptwall.png`), TORCH = img(`${F}o_crypttorch.png`), SARC = img(`${F}o_sarcophagus.png`), BONES = img(`${F}o_bonepile.png`), GATE = img(`${F}o_cryptgate.png`), CHEST = img(`${F}o_chest.png`);
 const BOOM = img(`${FX}spell_explosion.png`), ARROW = img(`${F}items/bronze_arrow.png`);
 for (const S_ of Object.values(R.SKILLS)) { if (S_.fx) img(F.replace("flat/", "") + S_.fx); img(F + S_.icon); }
@@ -432,7 +436,7 @@ function showClasses(reset = false) {
   resetting = reset; const L1 = R.LEVEL.base(1);
   $("classes").innerHTML = Object.entries(R.STYLES).map(([k, C]) => {
     const st = SK[C.start], tree = Object.values(R.TREE.nodes).filter((n) => n.style === k && n.kind === "skill").map((n) => SK[n.grants.skill].name);
-    return `<button type="button" class="cls" data-cls="${k}"><div class="por"><img class="st" src="${F}${C.icon}" alt=""><img class="me" src="${F}look${ME.look}_south.png" alt=""><img class="wp" src="${F}${C.portrait}" alt=""></div>
+    return `<button type="button" class="cls" data-cls="${k}"><div class="por"><img class="st" src="${F}${C.icon}" alt=""><img class="me" src="${F}${C.model ? `${C.model}_south.png` : `look${ME.look}_south.png`}" onerror="this.src='${F}look${ME.look}_south.png'" alt=""><img class="wp" src="${F}${C.portrait}" onerror="this.hidden=true" alt=""></div>
       <h3>${C.name}</h3><div class="bl">${C.blurb}</div>
       <div class="facts"><span>Starts with <b>${st.name}</b>: ${st.does}</span><span>Learns <b>${tree.join(", ")}</b></span><span>Health <b>${Math.round(L1.hp * C.mods.hp)}</b> · Mana <b>${Math.round(L1.mp * C.mods.mp)}</b>${C.mods.def ? ` · Armour <b>+${C.mods.def}</b>` : ""}</span><span>Ascendancies later: <b>${C.asc.map((a) => R.ASCENDANCIES[a].name).join("</b> or <b>")}</b></span></div>
       <span class="go">Play as ${C.name}</span></button>`; }).join("");
@@ -626,6 +630,7 @@ function runHello(h) {
   S.p.x = me.x; S.p.y = me.y; S.p.vx = S.p.vy = 0; S.p.hp = me.hp; S.p.mp = me.mp; S.p.inv = 0.6;
   S.others = new Map(); for (const q of h.players) if (q.id !== ME.id) S.others.set(q.id, mkOther(q));
   S.drops = (h.drops || []).map((d) => ({ ...d, t: 0 }));
+  S.minions = new Map(); for (const t of h.minions || []) addMinion(t); S.corpses = [];
   renderTray(); $("orbbar").hidden = false; $("orbbar").classList.remove("lounge"); $("menu").hidden = false; $("ovStart").hidden = true; $("ovEnd").hidden = true;
   hudName(); renderParty(); startLoop();
 }
@@ -640,10 +645,12 @@ function runSnap(m) {
   const ts = m.t;
   for (const [id, x, y, hp, fl] of m.m) { const mob = S.mobMap.get(id); if (!mob) continue; pushBuf(mob.buf, ts, x, y); if (mob.buf.length > 8) mob.buf.shift(); mob.hp = hp; mob.awake = !!(fl & 1); mob.slow = fl & 2 ? 1 : 0; mob.stun = fl & 4 ? 1 : 0; }
   for (const [id, x, y, d, hp, maxHp, alive] of m.p) { if (id === ME.id) continue; const o = S.others.get(id); if (!o) continue; pushBuf(o.buf, ts, x, y); if (o.buf.length > 8) o.buf.shift(); o.d = d; o.hp = hp; o.maxHp = maxHp; o.alive = !!alive; }
+  if (m.n) { const seen = new Set(); for (const t of m.n) { seen.add(t[0]); const q = S.minions?.get(t[0]); if (q) { pushBuf(q.buf, ts, t[3], t[4]); if (q.buf.length > 8) q.buf.shift(); q.hp = t[5]; q.maxHp = t[6]; } else addMinion(t); } for (const id of [...(S.minions || new Map()).keys()]) if (!seen.has(id)) S.minions.delete(id); }
   RUN.srvHp = m.me.hp; RUN.srvMp = m.me.mp; RUN.pendH = RUN.pendH.filter((x) => x.s > m.me.hs); RUN.pendC = RUN.pendC.filter((x) => x.s > m.me.cs);
   if (S.dying && RUN.srvHp > 0 && !RUN.pendH.length) S.dying = false;   /* the server didn't agree you died: carry on */
   partyBars();
 }
+function addMinion([id, owner, k, x, y, hp, maxHp]) { if (!S.minions) S.minions = new Map(); S.minions.set(id, { id, owner, k, x, y, hp, maxHp, buf: [[srvNow(), x, y]], vx: 0, vy: 0, t: Math.random() * 3, flash: 0 }); }
 function runEv(e) {
   const m = e.m != null ? S.mobMap.get(e.m) : null;
   if (e.t === "shot") { S.eb.push({ x: e.x, y: e.y, vx: e.vx, vy: e.vy, r: e.r, dmg: e.dmg, delay: e.delay, boss: e.boss, t: 6 }); if (S.eb.length > 400) S.eb.splice(0, S.eb.length - 400); if (m && !(e.delay > 0.05)) { m.flash = Math.max(m.flash, 0.1); if (!S.fx.some((f) => f.kind === "muzzle" && f.m === m.id)) S.fx.push({ kind: "muzzle", m: m.id, x: e.x, y: e.y, t: 0.18, max: 0.18, boss: !!e.boss }); } }
@@ -651,19 +658,26 @@ function runEv(e) {
   else if (e.t === "tele") { if (m) S.fx.push(e.ring ? { kind: "tele", x: m.x, y: m.y, t: 0.3, big: true } : { kind: "line", x: m.x, y: m.y, a: e.a, t: 0.35 }); }
   else if (e.t === "hit") { if (m) { m.hp = Math.max(0, m.hp - e.n); m.flash = 0.09; addNum(m, e.n, !!e.c, e.el); hitFeel(m, e); } }
   else if (e.t === "kill") { if (m) { S.kills++; S.fx.push({ kind: "boom", x: m.x, y: m.y - 5, t: 0.45, big: m.d.boss }); m.hp = 0;
+    (S.corpses ||= []).push({ x: m.x, y: m.y, t: S.t }); if (S.corpses.length > 12) S.corpses.shift();
     S.fx.push({ kind: "corpse", art: m.d.art, x: m.x, y: m.y, flip: m.vx < 0, s: (img(`${F}${m.d.art}.png`).naturalWidth / 2 || 34) * (m.d.elite ? R.ELITE.scale : 1), t: 0.55, max: 0.55 });
     { const bits = []; for (let i = 0; i < (m.d.boss ? 16 : 7); i++) { const b = Math.random() * Math.PI * 2, v = 30 + Math.random() * 40; bits.push({ vx: Math.cos(b) * v, vy: Math.sin(b) * v - 40 }); } S.fx.push({ kind: "sparks", x: m.x, y: m.y - 8, t: 0.5, max: 0.5, col: m.d.art === "cryptghost" ? "#bfe6ff" : "#e8e0cc", bits }); } snd("mob_die", { rate: m.d.boss ? 0.6 : 1, vol: e.by === ME.id ? 1 : 0.5 }); if (m.d.boss) shake(0.4); S.mobs = S.mobs.filter((x) => x !== m); S.mobMap.delete(m.id); if (m.d.boss) { $("bossBar").hidden = true; tip(`${m.d.name} is down.`, 3); } } }
   else if (e.t === "exit") { SIM.openExit(S.room); floorCache = null; tip("The last room is clear. The way out is open on the east wall.", 4); snd("task_done"); }
   else if (e.t === "spawn") { for (const tup of e.mobs) { const q = mkMob(tup); q.awake = true; q.seen = true; S.mobs.push(q); S.mobMap.set(q.id, q); S.fx.push({ kind: "num", x: q.x, y: q.y - 24, text: "!", t: 0.6, red: true }); } snd("mob_swing", { rate: 0.8 }); }
   else if (e.t === "block") { if (m) { m.shield = e.left; m.flash = 0.05; S.fx.push({ kind: "num", x: m.x, y: m.y - 26, text: "BLOCKED", t: 0.6 }); snd("guard", { vol: 0.7 }); } }
   else if (e.t === "flee") { if (m) { S.mobs = S.mobs.filter((x) => x !== m); S.mobMap.delete(m.id); lootLine("The Treasure Goblin got away.", "bad"); snd("lose", { vol: 0.5 }); } }
+  else if (e.t === "minion") { for (const t of e.add || []) addMinion(t); snd("spell_void", { vol: 0.5 }); }
+  else if (e.t === "mgone") { for (const id of e.ids || []) { const q = S.minions?.get(id); if (q) { S.fx.push({ kind: "sparks", x: q.x, y: q.y - 8, t: 0.4, max: 0.4, col: "#e8e0cc", bits: [...Array(5)].map(() => ({ vx: (Math.random() - 0.5) * 50, vy: -20 - Math.random() * 30 })) }); S.minions.delete(id); } } }
+  else if (e.t === "mhit") { const q = S.minions?.get(e.n); if (q) q.lunge = 0.2; }
+  else if (e.t === "mhurt") { const q = S.minions?.get(e.n); if (q) { q.hp = e.hp; q.flash = 0.1; } }
+  else if (e.t === "healed") { const at = e.id === ME.id ? S.p : S.others.get(e.id); if (at) S.fx.push({ kind: "num", x: at.x, y: at.y - 30, text: `+${e.n}`, t: 1, green: true }); if (e.id === ME.id) { RUN.srvHp = Math.min(S.g.maxHp, RUN.srvHp + e.n); snd("spell_buff", { vol: 0.6 }); } }
+  else if (e.t === "corpse") { S.corpses = (S.corpses || []).filter((c) => Math.hypot(c.x - e.x, c.y - e.y) > 4); S.fx.push({ kind: "boom", x: e.x, y: e.y - 4, t: 0.45, big: true }); shake(0.15, 3); snd("hit", { rate: 0.5, vol: 0.9 }); }
   else if (e.t === "enrage") { if (m) { m.flash = 0.2; S.fx.push({ kind: "num", x: m.x, y: m.y - 40, text: "ENRAGED!", t: 1.4, red: true }); shake(0.3, 4); snd("mob_swing", { rate: 0.5, vol: 1 }); lootLine(`${m.d.name} is enraged.`, "bad"); } }
   else if (e.t === "used") { S.used.push(e.what); if (e.what === "shrine") { if (e.by === ME.id) { snd("spell_buff"); S.fx.push({ kind: "num", x: S.p.x, y: S.p.y - 34, text: "+25% DAMAGE · HEALED", t: 1.4, gold: true }); lootLine("The shrine heals you: +25% damage for this room.", "good"); } }
     else { snd("ui_open"); lootLine("The chest was cursed: an ambush!", "bad"); if (e.by === ME.id) snd("jackpot", { vol: 0.4 }); } }
 }
 /* THE LANDING (EastScape's combat pass, here): a hit is heard by what it was, the monster flinches away from whoever hit it, sparks fly,
    a crit thumps and shakes a touch. Other people's hits are quieter. */
-const SPARK = { fire: "#ff9a4a", frost: "#bfe6ff", storm: "#d8ecff", arcane: "#d8b4ff" };
+const SPARK = { fire: "#ff9a4a", frost: "#bfe6ff", storm: "#d8ecff", arcane: "#d8b4ff", poison: "#9ef0a0", laser: "#7ee0ff" };
 function hitFeel(m, e) {
   const mine = e.by === ME.id, from = mine ? S.p : S.others.get(e.by), a = from ? Math.atan2(m.y - from.y, m.x - from.x) : Math.random() * Math.PI * 2;
   m.knock = { t: 0.14, max: 0.14, a };
@@ -672,6 +686,8 @@ function hitFeel(m, e) {
   S.fx.push({ kind: "sparks", x: m.x, y: m.y - 9, t: 0.32, max: 0.32, col, bits });
   const style = mine ? ME.style : S.others.get(e.by)?.style, vol = mine ? 1 : 0.35;
   if (e.c) { snd("crit", { vol }); if (mine) shake(0.14); }
+  else if (e.el === "poison") snd("splash", { vol: vol * 0.35, rate: 1.6 });
+  else if (e.el === "laser") snd("spell_storm", { vol: vol * 0.3, rate: 1.6 });
   else if (e.el) snd("hit", { vol: vol * 0.7, rate: e.el === "frost" ? 1.4 : e.el === "storm" ? 1.25 : 1.15 });
   else snd(style === "archery" ? "arrow_hit" : "hit", { vol });
 }
@@ -727,7 +743,8 @@ let tipT = 0; function tip(t, secs = 0.1) { $("tip").textContent = t; $("tip").h
 function tryCast(k, ang) {
   const p = S.p, g = S.g, s = SK[k]; if (!s || (S.cd[k] || 0) > 0 || !RUN) return false;
   const cost = s.mp; if (g.payHp ? p.hp <= cost + 1 : p.mp < cost) return false;
-  S.cd[k] = SIM.cdOf(k, g); const sq = ++RUN.castSeq; RUN.pendC.push({ s: sq, cost });
+  if (s.kind === "corpse" && !(S.corpses || []).some((c) => Math.hypot(c.x - mouse.x, c.y - mouse.y) < s.range * T)) { tip("No corpse near your aim.", 1); return false; }
+  S.cd[k] = SIM.cdNow(k, g, p, S.t); const sq = ++RUN.castSeq; RUN.pendC.push({ s: sq, cost });
   p.g = g; SIM.castOn(S, p, k, ang, mouse.x, mouse.y, [], true);   /* the shared cast reads the caster's numbers from p.g; a dash or a cry also sets p.dash / p.cry here */
   castFeel(p, s, ang);
   rsend({ op: "cast", k, a: Math.round(ang * 1000) / 1000, ax: Math.round(mouse.x), ay: Math.round(mouse.y), s: sq });
@@ -741,12 +758,21 @@ function castFeel(p, s, ang) {
   else if (k === "cry") snd("spell_buff");
   else if (k === "arrow" || k === "fan" || k === "rain") { p.lunge = { t: 0.18, max: 0.18, a: ang, d: -2 }; snd("bow_release", { rate: k === "rain" ? 0.85 : 1.1 }); }
   else if (k === "trap") snd("cast");
+  else if (k === "beam") snd("spell_storm", { vol: 0.22, rate: 1.4 });
+  else if (k === "cloud") snd(s.el === "fire" ? "spell_fire" : "splash", { vol: 0.6 });
+  else if (k === "strike") snd("cast", { rate: 0.8 });
+  else if (k === "buff") snd("spell_buff");
+  else if (k === "heal") snd("spell_buff", { rate: 1.2 });
+  else if (k === "summon") snd("spell_void", { vol: 0.7 });
+  else if (k === "corpse") snd("spell_void", { rate: 1.3 });
+  else if (k === "spin") { p.lunge = { t: 0.3, max: 0.3, a: ang, d: 2 }; snd("swing", { rate: 1.2 }); }
+  else if (k === "leap") { snd("swing", { rate: 0.9 }); shake(0.1, 2); }
   else { p.glow = 0.16; snd("spell_cast", { vol: 0.8 }); const el = { bolt: "spell_arcane", ring: "spell_fire", lance: "spell_frost", chain: "spell_storm" }[k]; if (el) snd(el, { vol: 0.55 }); }
 }
 /* a hit on you: this page decides it (so a dodge you saw counts); the server checks it and owns your health */
 function hurtMe(raw) {
   if (!RUN || S.dying) return;
-  const p = S.p, cut = p.cry > 0 ? SK.war_cry.cut : 0, took = Math.max(1, Math.round(raw * (1 - S.g.tough) * (1 - cut))), sq = ++RUN.hurtSeq;
+  const p = S.p, cut = SIM.cutOf(p, S.t), took = Math.max(1, Math.round(raw * (1 - S.g.tough) * (1 - cut))), sq = ++RUN.hurtSeq;
   RUN.pendH.push({ s: sq, took }); p.inv = 0.5; p.hurt = 0.25; snd("hurt"); if (took >= S.g.maxHp / 4) shake(0.22, 4);
   if (S.nums.length >= 70) S.nums.shift(); S.nums.push({ m: null, x: p.x, y: p.y - 30, n: took, crit: false, me: true, jx: 0, jy: 0, at: S.t, life: 0.8 });
   rsend({ op: "hurt", raw: Math.round(raw), s: sq });
@@ -893,7 +919,7 @@ function step(dt) {
 }
 function trayTick() {
   trayEls ||= [...$("tray").querySelectorAll("[data-sk]")];
-  for (const el of trayEls) { const k = el.dataset.sk, cd = k === "dodge" ? Math.max(0, S.p.dodgeCd / S.g.dodgeCd) : Math.max(0, (S.cd[k] || 0) / SIM.cdOf(k, S.g)); el.lastElementChild.style.setProperty("--cd", `${Math.min(1, cd) * 100}%`);
+  for (const el of trayEls) { const k = el.dataset.sk, cd = k === "dodge" ? Math.max(0, S.p.dodgeCd / S.g.dodgeCd) : Math.max(0, (S.cd[k] || 0) / SIM.cdNow(k, S.g, S.p, S.t)); el.lastElementChild.style.setProperty("--cd", `${Math.min(1, cd) * 100}%`);
     const cost = SK[k].mp; el.classList.toggle("dry", cost > 0 && (S.g.payHp ? S.p.hp <= cost + 1 : S.p.mp < cost)); }
 }
 function orbs() { const p = S.p, g = S.g; $("oHp").style.setProperty("--p", `${Math.max(0, Math.min(100, (p.hp / g.maxHp) * 100))}%`); $("oHpN").textContent = Math.max(0, Math.ceil(p.hp)); $("oMp").style.setProperty("--p", `${g.payHp ? 0 : Math.max(0, Math.min(100, (p.mp / g.maxMp) * 100))}%`); $("oMpN").textContent = g.payHp ? "—" : Math.floor(p.mp); }
@@ -950,7 +976,7 @@ function renderInv() {
   if (!ME?.style) return; const worn = ME.worn || {}, st = ME.stash || [], C = R.STYLES[ME.style];
   renderPots();
   $("invSub").textContent = `${C.name} · level ${ME.level}`;
-  $("doll").innerHTML = `<div class="doll-fig"><img src="${F}look${ME.look}_south.png" alt=""><span>${esc(ME.name)}</span></div>` + R.SLOTS.map((s) => { const it = worn[s];
+  $("doll").innerHTML = `<div class="doll-fig"><img src="${F}${R.STYLES[ME.style]?.model ? `${R.STYLES[ME.style].model}_south.png` : `look${ME.look}_south.png`}" onerror="this.src='${F}look${ME.look}_south.png'" alt=""><span>${esc(ME.name)}</span></div>` + R.SLOTS.map((s) => { const it = worn[s];
     return `<button type="button" class="cell ${it ? `r${it.r}` : "empty"}" style="grid-area:${s}" data-worn="${s}" aria-label="${it ? esc(it.base) : s}"><img src="${F}${it ? it.icon : SLOT_ICON[s]}" alt="">${it ? "" : `<small>${s}</small>`}</button>`; }).join("");
   $("invGrid").innerHTML = Array.from({ length: Math.max(BAG_CELLS, st.length) }, (_, i) => { const it = st[i]; return it ? `<button type="button" class="cell r${it.r}" data-inv="${i}" aria-label="${esc(it.base)}"><img src="${F}${it.icon}" alt=""></button>` : `<div class="cell blank"></div>`; }).join("");
   const carrying = S && !S.over && S.kind === "dungeon" ? S.foundN || 0 : 0;
@@ -1230,16 +1256,23 @@ function draw(now = performance.now()) {
     const ph = Math.floor(now / 350); cx.fillStyle = S.room.theme === "frozen" ? "rgba(255,255,255,.5)" : "rgba(160,210,255,.45)"; for (const [x, y] of S.waterTiles) if ((x * 7 + y * 13 + ph) % 9 === 0) cx.fillRect(x * T + 2 + (ph % 3) * 3, y * T + 4 + ((x + ph) % 3) * 4, 6, 1); }   /* glints that drift */
   /* telegraphs and ground effects, under everything */
   for (const f of S.fx) if (f.kind === "tele") { cx.strokeStyle = `rgba(255,80,60,${f.t * 3})`; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(f.x, f.y - 5, f.big ? 34 : 16, 0, Math.PI * 2); cx.stroke(); } else if (f.kind === "line") { cx.strokeStyle = `rgba(255,120,80,${f.t * 2.5})`; cx.lineWidth = 1.5; cx.setLineDash([4, 4]); cx.beginPath(); cx.moveTo(f.x, f.y - 5); cx.lineTo(f.x + Math.cos(f.a) * 240, f.y - 5 + Math.sin(f.a) * 240); cx.stroke(); cx.setLineDash([]); }
-  for (const z of S.zones) { if (z.kind === "rain") { cx.strokeStyle = "rgba(255,226,122,.55)"; cx.lineWidth = 1; cx.beginPath(); cx.arc(z.x, z.y, z.r, 0, Math.PI * 2); cx.stroke(); for (let i = 0; i < 3; i++) { const a = hashRand(i, Math.floor(z.t * 8), 3) * Math.PI * 2, rr = hashRand(i, Math.floor(z.t * 8), 7) * z.r; strip(fxImg(z.art), z.t * 20 + i * 3, z.x + Math.cos(a) * rr, z.y + Math.sin(a) * rr - 4, 18); } }
+  for (const z of S.zones) { if (z.kind === "cloud") { const col = z.el === "fire" ? "255,154,74" : z.el === "arcane" ? "216,180,255" : "158,240,160", a = z.t < 0.3 ? z.t / 0.3 : z.t > z.life - 0.5 ? Math.max(0, (z.life - z.t) / 0.5) : 1; cx.fillStyle = `rgba(${col},${0.2 * a})`; cx.beginPath(); cx.arc(z.x, z.y, z.r, 0, Math.PI * 2); cx.fill(); cx.fillStyle = `rgba(${col},${0.6 * a})`; for (let i = 0; i < 6; i++) { const b = (S.t * 0.8 + i / 6) % 1, ang2 = i * 1.05 + z.x; cx.beginPath(); cx.arc(z.x + Math.cos(ang2) * z.r * 0.6 * (0.5 + b * 0.5), z.y - b * 14 + Math.sin(ang2) * z.r * 0.3, 2 - b, 0, Math.PI * 2); cx.fill(); } continue; }
+    if (z.kind === "strike") { const k = Math.min(1, z.t / z.delay); cx.strokeStyle = `rgba(255,96,80,${0.4 + 0.6 * k})`; cx.lineWidth = 1.5; cx.setLineDash([3, 3]); cx.beginPath(); cx.arc(z.x, z.y, z.r, 0, Math.PI * 2); cx.stroke(); cx.setLineDash([]); cx.beginPath(); cx.arc(z.x, z.y, z.r * (1 - k), 0, Math.PI * 2); cx.stroke(); continue; }
+    if (z.kind === "rain") { cx.strokeStyle = "rgba(255,226,122,.55)"; cx.lineWidth = 1; cx.beginPath(); cx.arc(z.x, z.y, z.r, 0, Math.PI * 2); cx.stroke(); for (let i = 0; i < 3; i++) { const a = hashRand(i, Math.floor(z.t * 8), 3) * Math.PI * 2, rr = hashRand(i, Math.floor(z.t * 8), 7) * z.r; strip(fxImg(z.art), z.t * 20 + i * 3, z.x + Math.cos(a) * rr, z.y + Math.sin(a) * rr - 4, 18); } }
     else { const armed = z.t > 0.4; cx.strokeStyle = armed ? "rgba(158,240,160,.8)" : "rgba(158,240,160,.35)"; cx.lineWidth = 1.2; cx.setLineDash([2, 2]); cx.beginPath(); cx.arc(z.x, z.y, z.r, 0, Math.PI * 2); cx.stroke(); cx.setLineDash([]); strip(fxImg(z.art), 2, z.x, z.y - 3, 12); } }
   for (const d of S.drops) { const bob = Math.sin(d.t * 6) * 1.2; if (d.pot) { const im = img(F + R.POTIONS[d.pot].icon); if (im.complete) cx.drawImage(im, d.x - 6, d.y - 12 + bob, 12, 12); continue; } if (d.crowns) { if (CROWN.complete) cx.drawImage(CROWN, d.x - 6, d.y - 11 + bob, 12, 12); continue; } const im = img(F + d.item.icon); if (im.complete) cx.drawImage(im, d.x - 7, d.y - 14 + bob, 14, 14); }
   const others = othersNow();
-  const all = [...S.mobs.map((m) => ({ y: m.y, m })), ...S.room.objs.filter((o) => o.k === "npc").map((o) => ({ y: (o.y + 1) * T, npc: o })), ...S.room.objs.filter((o) => BIG[o.k]).map((o) => ({ y: (o.y + 1) * T - 2, big: o })), ...others.map((o) => ({ y: o.y, o })), { y: S.p.y, p: true }].sort((a, b) => a.y - b.y);
+  const all = [...S.mobs.map((m) => ({ y: m.y, m })), ...[...(S.minions || new Map()).values()].map((q) => ({ y: q.y, mi: q })), ...S.room.objs.filter((o) => o.k === "npc").map((o) => ({ y: (o.y + 1) * T, npc: o })), ...S.room.objs.filter((o) => BIG[o.k]).map((o) => ({ y: (o.y + 1) * T - 2, big: o })), ...others.map((o) => ({ y: o.y, o })), { y: S.p.y, p: true }].sort((a, b) => a.y - b.y);
   for (const o of all) {
+    if (o.mi) { const q = o.mi, M = R.MINIONS[q.k], im = MINART[q.k], s2 = (im.naturalWidth / 2 || 34) * M.scale; q.flash -= 1 / 60; if (q.lunge > 0) q.lunge -= 1 / 60;
+      cx.fillStyle = "rgba(0,0,0,.3)"; cx.beginPath(); cx.ellipse(q.x, q.y + 2, M.r, M.r * 0.4, 0, 0, Math.PI * 2); cx.fill();
+      cx.save(); cx.translate(q.x + (q.lunge > 0 ? Math.sin((1 - q.lunge / 0.2) * Math.PI) * 3 : 0), q.y); if (q.vx < 0) cx.scale(-1, 1); if (M.tint) cx.filter = "hue-rotate(60deg) saturate(1.4) brightness(1.1)"; if (q.flash > 0) cx.filter = "brightness(2)";
+      if (im.complete && im.naturalWidth) cx.drawImage(im, -s2 / 2, -s2 + 4, s2, s2); cx.filter = "none"; cx.restore();
+      if (q.hp < q.maxHp) { cx.fillStyle = "#200"; cx.fillRect(q.x - 7, q.y - s2 - 1, 14, 2); cx.fillStyle = q.owner === ME.id ? "#9ef0a0" : "#ffd84a"; cx.fillRect(q.x - 7, q.y - s2 - 1, 14 * (q.hp / q.maxHp), 2); } continue; }
     if (o.big) { const ob = o.big, list = BIG[ob.k], im = list[(ob.v || 0) % list.length]; if (im.complete && im.naturalWidth) { const h = ob.k === "tree" ? 56 : ob.k === "pine" ? 60 : ob.k === "cliff" ? 30 : ob.k === "frock" ? 22 : 24, w = Math.round(im.naturalWidth * (h / im.naturalHeight)); cx.fillStyle = "rgba(0,0,0,.3)"; cx.beginPath(); cx.ellipse((ob.x + 0.5) * T, (ob.y + 1) * T - 2, Math.max(8, w / 2.6), 4, 0, 0, Math.PI * 2); cx.fill(); cx.drawImage(im, (ob.x + 0.5) * T - w / 2, (ob.y + 1) * T - h, w, h); } continue; }
     if (o.npc) { const im = img(`${F}${o.npc.art}_south.png`); if (im.complete && im.naturalWidth) cx.drawImage(im, (o.npc.x + 0.5) * T - 17, (o.npc.y + 1) * T - 31, 34, 34); continue; }
-    if (o.o) { const q = o.o, im = img(`${F}look${q.look}_${DIRS[q.d] || "south"}.png`); cx.fillStyle = "rgba(0,0,0,.32)"; cx.beginPath(); cx.ellipse(q.x, q.y + 1, 7, 3, 0, 0, Math.PI * 2); cx.fill(); if (im.complete && im.naturalWidth) cx.drawImage(im, q.x - 17, q.y - 31, 34, 34); continue; }
-    if (o.p) { const p = S.p, im = img(`${F}look${ME.look}_${DIRS[p.dir]}.png`); cx.fillStyle = "rgba(0,0,0,.32)"; cx.beginPath(); cx.ellipse(p.x, p.y + 1, 7, 3, 0, 0, Math.PI * 2); cx.fill(); if (p.dodging > 0 || p.dash) cx.globalAlpha = 0.55; if (p.hurt > 0) cx.filter = "brightness(2) sepia(1) saturate(6) hue-rotate(-40deg)"; else if (p.glow > 0) cx.filter = "brightness(1.5)";
+    if (o.o) { const q = o.o, im = modelOf(q.style, q.look, DIRS[q.d] || "south") || img(`${F}look${q.look}_${DIRS[q.d] || "south"}.png`); cx.fillStyle = "rgba(0,0,0,.32)"; cx.beginPath(); cx.ellipse(q.x, q.y + 1, 7, 3, 0, 0, Math.PI * 2); cx.fill(); if (im.complete && im.naturalWidth) cx.drawImage(im, q.x - 17, q.y - 31, 34, 34); continue; }
+    if (o.p) { const p = S.p, im = modelOf(ME.style, ME.look, DIRS[p.dir]) || img(`${F}look${ME.look}_${DIRS[p.dir]}.png`); cx.fillStyle = "rgba(0,0,0,.32)"; cx.beginPath(); cx.ellipse(p.x, p.y + 1, 7, 3, 0, 0, Math.PI * 2); cx.fill(); if (p.dodging > 0 || p.dash) cx.globalAlpha = 0.55; if (p.hurt > 0) cx.filter = "brightness(2) sepia(1) saturate(6) hue-rotate(-40deg)"; else if (p.glow > 0) cx.filter = "brightness(1.5)";
       if (p.cry > 0) { cx.strokeStyle = `rgba(255,216,74,${0.35 + 0.2 * Math.sin(S.t * 10)})`; cx.lineWidth = 1.5; cx.beginPath(); cx.ellipse(p.x, p.y - 1, 9, 4, 0, 0, Math.PI * 2); cx.stroke(); }
       const L = p.lunge, lk = L ? Math.sin((1 - L.t / L.max) * Math.PI) * L.d : 0, lx = L ? Math.cos(L.a) * lk : 0, ly = L ? Math.sin(L.a) * lk : 0;   /* a swing lunges, a bow steps back on the draw */
       if (im.complete && im.naturalWidth) cx.drawImage(im, p.x - 17 + lx, p.y - 31 + ly, 34, 34); cx.filter = "none"; cx.globalAlpha = 1;
@@ -1266,10 +1299,12 @@ function draw(now = performance.now()) {
   for (const f of S.fx) {
     if (f.kind === "boom") { const n = BOOM.naturalWidth / 72 || 1, fr = Math.min(n - 1, Math.floor((1 - f.t / 0.45) * n)), s = f.big ? 80 : 36; if (BOOM.complete && BOOM.naturalWidth) cx.drawImage(BOOM, fr * 72, 0, 72, 72, f.x - s / 2, f.y - s / 2, s, s); }
     else if (f.kind === "corpse") { const k = 1 - f.t / f.max, im = img(`${F}${f.art}.png`); if (im.complete && im.naturalWidth) { cx.save(); cx.globalAlpha = 0.9 * (1 - k); cx.translate(f.x, f.y + k * 6); if (f.flip) cx.scale(-1, 1); cx.rotate((f.flip ? -1 : 1) * k * 1.2); cx.drawImage(im, -f.s / 2, -f.s + 4, f.s, f.s * (1 - k * 0.3)); cx.restore(); } }
+    else if (f.kind === "beam") { const k = f.t / f.max, w = f.big ? 7 : 4; cx.strokeStyle = `rgba(90,220,255,${0.35 * k})`; cx.lineWidth = w * 2.2; cx.lineCap = "round"; cx.beginPath(); cx.moveTo(f.x, f.y); cx.lineTo(f.x2, f.y2); cx.stroke(); cx.strokeStyle = `rgba(230,250,255,${0.95 * k})`; cx.lineWidth = w; cx.beginPath(); cx.moveTo(f.x, f.y); cx.lineTo(f.x2, f.y2); cx.stroke(); cx.lineCap = "butt"; }
     else if (f.kind === "muzzle") { const k = 1 - f.t / f.max; cx.strokeStyle = f.boss ? `rgba(255,90,58,${1 - k})` : `rgba(255,176,74,${1 - k})`; cx.lineWidth = 2; cx.beginPath(); cx.arc(f.x, f.y, 3 + k * 9, 0, Math.PI * 2); cx.stroke(); }
+    else if (f.kind === "slash" && f.spin) { const k = 1 - f.t / f.max; cx.strokeStyle = `rgba(255,220,160,${1 - k})`; cx.lineWidth = 3; cx.beginPath(); cx.arc(f.x, f.y, f.r * (0.7 + k * 0.3), f.a + k * 6.3, f.a + k * 6.3 + 2.2); cx.stroke(); }
     else if (f.kind === "slash") { const k = 1 - f.t / f.max; cx.strokeStyle = f.red ? `rgba(255,96,80,${1 - k})` : f.big ? `rgba(255,190,120,${1 - k})` : `rgba(255,248,224,${1 - k})`; cx.lineWidth = f.big ? 4 : 3; cx.beginPath(); cx.arc(f.x, f.y, f.r * (0.65 + k * 0.35), f.a - f.half, f.a + f.half); cx.stroke(); }
     else if (f.kind === "zap") { cx.strokeStyle = `rgba(200,230,255,${f.t * 6})`; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(f.x, f.y); const mx = (f.x + f.x2) / 2 + (Math.random() - 0.5) * 8, my = (f.y + f.y2) / 2 + (Math.random() - 0.5) * 8; cx.lineTo(mx, my); cx.lineTo(f.x2, f.y2); cx.stroke(); }
-    else if (f.kind === "cry") { const k = 1 - f.t / 0.6; cx.strokeStyle = `rgba(255,216,74,${1 - k})`; cx.lineWidth = 2; cx.beginPath(); cx.arc(f.x, f.y, f.r * k, 0, Math.PI * 2); cx.stroke(); }
+    else if (f.kind === "cry") { const k = 1 - f.t / 0.6; cx.strokeStyle = f.green ? `rgba(158,240,160,${1 - k})` : `rgba(255,216,74,${1 - k})`; cx.lineWidth = 2; cx.beginPath(); cx.arc(f.x, f.y, f.r * k, 0, Math.PI * 2); cx.stroke(); }
     else if (f.kind === "sparks") { const k = 1 - f.t / f.max; cx.fillStyle = f.col; cx.globalAlpha = 1 - k; for (const b of f.bits) cx.fillRect(Math.round(f.x + b.vx * k * f.max * 2.2) - 1, Math.round(f.y + (b.vy * k + 60 * k * k) * f.max * 2.2) - 1, 2, 2); cx.globalAlpha = 1; }
   }
   cx.restore();
@@ -1277,6 +1312,8 @@ function draw(now = performance.now()) {
   cx.font = "800 11.5px Lora, Georgia, serif"; cx.textAlign = "center"; cx.textBaseline = "middle";
   for (const q of others) { const mine = PARTY?.members.some((m) => m.id === q.id), x = sx(q.x), y = sy(q.y - 34), w2 = Math.ceil(cx.measureText(q.name).width) + 10;
     cx.fillStyle = "rgba(8,6,4,.7)"; cx.fillRect(Math.round(x - w2 / 2), Math.round(y - 8), w2, 16); cx.fillStyle = mine ? "#ffd84a" : "#e8e0cc"; cx.fillText(q.name, x, y + 0.5); }
+  if (S.kind === "dungeon") { const on = Object.entries(S.p.buffs || {}).filter(([, u]) => u > S.t); if (on.length) { cx.font = "800 10.5px Lora, Georgia, serif"; cx.fillStyle = "#ffe7b0"; cx.fillText(on.map(([k, u]) => `${R.BUFFS[k]?.name || k} ${Math.ceil(u - S.t)}s`).join(" · "), sx(S.p.x), sy(S.p.y - 46)); cx.font = "800 11.5px Lora, Georgia, serif"; }
+    if (ME.style === "necromancer") for (const c of S.corpses || []) { const x = sx(c.x), y = sy(c.y); cx.strokeStyle = "rgba(158,240,160,.5)"; cx.lineWidth = 1; cx.beginPath(); cx.arc(x, y, 5 + Math.sin(S.t * 4) * 1.5, 0, Math.PI * 2); cx.stroke(); } }
   for (const m of S.mobs) { if (!(m.d.elite || m.d.flee) || m.hp <= 0 || !m.awake) continue; const name = m.d.flee ? "Treasure Goblin!" : m.d.name, x = sx(m.x), y = sy(m.y - (m.d.elite ? 46 : 36)), w2 = Math.ceil(cx.measureText(name).width) + 10;
     cx.fillStyle = "rgba(8,6,4,.75)"; cx.fillRect(Math.round(x - w2 / 2), Math.round(y - 8), w2, 16); cx.fillStyle = m.d.flee ? "#ffd84a" : R.ELITES[m.d.elite[0]].col; cx.fillText(name, x, y + 0.5); }
   cx.textBaseline = "alphabetic";
