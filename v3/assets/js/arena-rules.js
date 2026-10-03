@@ -29,13 +29,13 @@ export const SEASON = { id: "S1", name: "Season 1", days: 28, offDays: 3, levelC
    called `crowns` (its first name, 2026-10-03): every save, op and tally uses it, so the NAME changed and the field did not. */
 export const CURRENCY = { key: "crowns", name: "Gold", one: "Gold", icon: "items/coins.png",
   drop: (mlvl) => Math.max(1, Math.round(1 + mlvl * 0.35)),   /* a pile: about a third of the monster's level */
-  pileChance: 0.35 };
+  pileChance: 0.18 };   /* (was 0.35: packs are four times the size now) */
 export const ESSENCE = { key: "essence", name: "Essence", icon: "items/stardust.png", ex: "What's left of a salvaged piece. The Enchanter works in it." };
 
 /* ------------------------------------------------------------ the character: its own level, its own numbers. NOTHING from EastScape. */
 export const LEVEL = { cap: 60,
   xpFor: (l) => Math.round(30 * Math.pow(l, 2.15)),   /* to go from l to l + 1: Act 1 is ~10 levels in an evening, 60 is a month */
-  killXp: (mlvl, plvl) => { const base = 3 + mlvl * 1.6, gap = plvl - mlvl; return Math.max(1, Math.round(base * (gap > 5 ? Math.max(0.1, 1 - (gap - 5) * 0.15) : 1))); },
+  killXp: (mlvl, plvl) => { const base = 1.5 + mlvl * 0.8, gap = plvl - mlvl;   /* (halved on 2026-10-03 with packs four times the size) */ return Math.max(1, Math.round(base * (gap > 5 ? Math.max(0.1, 1 - (gap - 5) * 0.15) : 1))); },
   base: (l) => ({ hp: 50 + l * 6, mp: 40 + l * 3, dmg: 4 + Math.floor(l * 0.6) }) };
 
 /* ------------------------------------------------------------ classes: three styles, two ascendancies each (the owner: "Melee, archery, magic (each with 2 sub classes / ascendencies)") */
@@ -229,7 +229,12 @@ export const MONSTERS = {
   /* (2026-10-03, the brief's "Treasure Goblin") runs from you, never fights, gone in GOBLIN.flees seconds; a kill pays like a chest */
   goblin: { name: "Treasure Goblin", art: "dgoblin",    type: "flee",   hp: 1.4, dmg: 0,   spd: 62, r: 8,  acc: 520, flee: true, fleeFor: 14 } };
 /** a monster's numbers at an area level */
-export const monsterAt = (k, alvl) => { const M = MONSTERS[k], hp = Math.round((14 + alvl * 6) * M.hp), dmg = Math.round((3 + alvl * 0.9) * M.dmg); return { ...M, k, lvl: alvl, hp, maxHp: hp, max: dmg }; };
+/* PACKS (2026-10-03, the owner: "pack sizes should be at least quadrupled, with random 1 off monsters here and there"): 10-16 a pack (it was
+   3-5), three packs a room, and 4-7 strays asleep on their own. The trash scaled down to match (TRASH: 55% health, 75% damage, half the XP
+   a kill, fewer piles and drops per kill), so a room is about twice the fight it was and the drops per room about double, not four times. */
+export const PACK = { size: [10, 16], packs: 3, strays: [4, 7] };
+export const TRASH = { hp: 0.55, dmg: 0.75 };
+export const monsterAt = (k, alvl) => { const M = MONSTERS[k], hp = Math.round((14 + alvl * 6) * M.hp * (M.boss ? 1 : TRASH.hp)), dmg = Math.round((3 + alvl * 0.9) * M.dmg * (M.boss ? 1 : TRASH.dmg)); return { ...M, k, lvl: alvl, hp, maxHp: hp, max: dmg }; };
 
 /* ------------------------------------------------------------ ELITES (2026-10-03, the brief: "Elites ... Fast, Armored, Vampiric, Explosive, ... Storm, Summoner,
    Shielded. Limit stacking. Early: 1 modifier. Mid: 2. Deep endgame: maximum 3."). A pack may carry one elite: a bigger, named monster with
@@ -470,7 +475,7 @@ export function enchant(it, i, rnd = Math.random) {
 export const POTIONS = {
   health: { name: "Health Potion", icon: "items/pot_salve1.png", heal: 0.5, key: "4", ex: "Half your health back. Salt, mostly." },
   mana:   { name: "Mana Potion",   icon: "items/pot_star.png",   mana: 0.5, key: "5", ex: "Half your mana back. Bottled on a clear night." } };
-export const POTION_CD = 6, POTION_MAX = 20, POTION_CHANCE = 0.06;   /* per kill, per player (a boss always drops one) */
+export const POTION_CD = 6, POTION_MAX = 20, POTION_CHANCE = 0.035;   /* per kill, per player (a boss always drops one) */
 export const POTION_SHOP = { health: 10, mana: 10 };   /* Gold each, at Dex */
 export function potionDrop(rnd = Math.random, { boss = false, find = 0 } = {}) { if (!boss && rnd() >= POTION_CHANCE * (1 + find)) return null; return rnd() < 0.65 ? "health" : "mana"; }
 

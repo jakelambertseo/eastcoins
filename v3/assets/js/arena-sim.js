@@ -19,8 +19,11 @@ export function createSim(R) {
   const areaOf = (n) => R.areaOf(n);   /* a campaign area or a map tier (101-110) */
   /** a seeded generator (Park-Miller): the same seed gives the same numbers in every browser and on the server */
   const rng = (seed) => { let s = (Math.abs(Math.floor(seed)) % 2147483646) + 1; return () => (s = (s * 16807) % 2147483647) / 2147483647; };
-  const walk = (g, x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && g[y][x] === ".";
+  /* TILES: "." floor, "b" a bridge (floor over water), "e" an exit, "v" wall, "#" an object, "~" water, "t" a tree, "r" rock. Feet cross floor
+     and bridges; shots and sight cross water too (`flies`), so an archer on one bank and a ghost on the other can trade. */
+  const walk = (g, x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && (g[y][x] === "." || g[y][x] === "b");
   const passable = (g, x, y) => walk(g, x, y) || g[y]?.[x] === "e";
+  const flies = (g, x, y) => walk(g, x, y) || g[y]?.[x] === "~" || g[y]?.[x] === "e";
 
   /* ------------------------------------------------------------ rooms: EastScape's grid (44 x 26 at 16 px), the Crypt's stone */
   const blankGrid = () => Array.from({ length: ROWS }, (_, y) => Array.from({ length: COLS }, (_, x) => (x === 0 || x === COLS - 1 || y <= 1 || y === ROWS - 1 ? "v" : ".")));
@@ -36,29 +39,86 @@ export function createSim(R) {
     g[13][COLS - 1] = "e"; objs.push({ k: "door", x: COLS - 1, y: 13, to: "campaign", name: "The campaign" });
     return { g, objs, packs: [], kind: "lounge" };
   }
-  /** room i of a run: walls with gaps, pillars, bones, packs. Pure function of (seed, area, i). */
+  /* ------------------------------------------------------------ LAYOUTS (2026-10-03, the owner: "dungeon layouts, they are very consistant and
+     repetitive now ... randomness, different themes, water in some, bridges, trees, cliffs, things you have to maneuver around, but keep it
+     open so users can get around quickly"). Five themes; a run picks one from its seed (the first area is always the Cellars, the second the
+     Flooded Cellars, so the campaign teaches both). Every room is still a pure function of (seed, area, room), so the page builds the same
+     one the server fights in. The door approaches on the middle rows stay clear, and after everything is placed `ensureReach` carves a way
+     from the left door to the right door and to every pack, bridging water and felling trees as needed: a room can never be sealed. */
+  const THEMES = {
+    crypt:   { name: "The Cellars",         ground: "crypt", top: "wall" },
+    flooded: { name: "The Flooded Cellars", ground: "crypt", top: "wall",  water: true },
+    wood:    { name: "The Pine Wood",       ground: "grass", top: "trees" },
+    cliffs:  { name: "The Cliffs",          ground: "dirt",  top: "rocks" },
+    frozen:  { name: "The Frozen Reach",    ground: "snow",  top: "pines", water: true } };
+  const themeFor = (AR, seed) => { if (AR.n === 1 || AR.n === 3) return "crypt"; if (AR.n === 2) return "flooded"; const keys = Object.keys(THEMES), r = rng(seed * 31 + 7); r(); r(); return keys[Math.floor(r() * keys.length)]; };   /* (the LCG's first draws follow a small seed: skip two) */
+  /** carve a way from (x, y) towards (tx, ty): water gets a bridge, anything else becomes floor (and loses its object) */
+  function carve(g, objs, x, y, tx, ty) {
+    const open = (cx, cy) => { if (cx <= 0 || cx >= COLS - 1 || cy <= 1 || cy >= ROWS - 1) return; const t = g[cy][cx]; if (t === "." || t === "b" || t === "e") return; g[cy][cx] = t === "~" ? "b" : "."; const k = objs.findIndex((o) => o.x === cx && o.y === cy && o.k !== "door"); if (k >= 0) objs.splice(k, 1); };
+    open(x, y); while (x !== tx) { x += x < tx ? 1 : -1; open(x, y); }
+    while (y !== ty) { y += y < ty ? 1 : -1; open(x, y); }
+  }
+  /** the left door reaches the right door and every target; where it doesn't, a way is carved */
+  function ensureReach(g, objs, targets) {
+    for (let pass = 0; pass < 3; pass++) {
+      const d = flowField(g, 1, 13); let fixed = 0;
+      for (const [x, y] of targets) if (d[y * COLS + x] < 0) { carve(g, objs, x, y, 1, 13); fixed++; }
+      if (!fixed) return;
+    }
+  }
+  /** room i of a run: a themed layout, packs, strays, the room's event. Pure function of (seed, area, i). */
   function makeRoom(seed, n, i, mods = []) {
-    const AR = areaOf(n), rnd = rng(seed + i * 977), g = blankGrid(), objs = [], packs = [];
-    const nWalls = 2 + (i % 2), xs = [];
-    for (let k = 0; k < nWalls; k++) { const x = 8 + Math.floor(((k + 0.5) / nWalls) * (COLS - 16)) + Math.floor(rnd() * 4) - 2; xs.push(x); const gap = 5 + Math.floor(rnd() * (ROWS - 12)), gh = 4 + Math.floor(rnd() * 3); for (let y = 2; y < ROWS - 1; y++) if (y < gap || y >= gap + gh) g[y][x] = "v"; }
-    for (let k = 0; k < 4; k++) { const x = 4 + Math.floor(rnd() * (COLS - 9)), y = 4 + Math.floor(rnd() * (ROWS - 9)); if (xs.some((wx) => Math.abs(wx - x) < 3) || Math.abs(y - 13) < 2) continue; g[y][x] = g[y][x + 1] = g[y + 1][x] = g[y + 1][x + 1] = "v"; }
-    for (let k = 0; k < 6; k++) { const x = 3 + Math.floor(rnd() * (COLS - 6)), y = 3 + Math.floor(rnd() * (ROWS - 5)); if (g[y][x] === "." && Math.abs(y - 13) > 1) { g[y][x] = "#"; objs.push({ k: rnd() < 0.3 ? "sarc" : "bones", x, y }); } }
-    for (let x = 5; x < COLS - 5; x += 7 + Math.floor(rnd() * 3)) objs.push({ k: "torch", x, y: 1 });
+    const AR = areaOf(n), rnd = rng(seed + i * 977), g = blankGrid(), objs = [], packs = [], theme = themeFor(AR, seed), TH = THEMES[theme];
+    const nearDoors = (x, y) => Math.abs(y - 13) <= 2 && (x < 6 || x > COLS - 7);
+    const put = (x, y, t, obj) => { if (x <= 0 || x >= COLS - 1 || y <= 1 || y >= ROWS - 1 || nearDoors(x, y) || g[y][x] !== ".") return false; g[y][x] = t; if (obj) objs.push({ ...obj, x, y }); return true; };
+    const blob = (cx, cy, count, t, mk) => { let x = cx, y = cy; for (let k = 0; k < count; k++) { put(x, y, t, mk ? mk(k) : null); x += Math.floor(rnd() * 3) - 1; y += Math.floor(rnd() * 3) - 1; } };
+    const at = (lo, hi) => lo + Math.floor(rnd() * (hi - lo + 1));
+    if (theme === "crypt" || theme === "flooded") {
+      const nWalls = theme === "crypt" ? 2 + (i % 2) : 1, xs = [];
+      for (let k = 0; k < nWalls; k++) { const x = 8 + Math.floor(((k + 0.5) / nWalls) * (COLS - 16)) + Math.floor(rnd() * 4) - 2; xs.push(x); const gap = 5 + Math.floor(rnd() * (ROWS - 13)), gh = 6 + Math.floor(rnd() * 3); for (let y = 2; y < ROWS - 1; y++) if (y < gap || y >= gap + gh) g[y][x] = "v"; }   /* gaps of 6-8 (were 4-6): a pack of sixteen has to fit through */
+      for (let k = 0; k < (theme === "crypt" ? 4 : 2); k++) { const x = 4 + Math.floor(rnd() * (COLS - 9)), y = 4 + Math.floor(rnd() * (ROWS - 9)); if (xs.some((wx) => Math.abs(wx - x) < 3) || Math.abs(y - 13) < 2) continue; g[y][x] = g[y][x + 1] = g[y + 1][x] = g[y + 1][x + 1] = "v"; }
+      for (let k = 0; k < 6; k++) { const x = 3 + Math.floor(rnd() * (COLS - 6)), y = 3 + Math.floor(rnd() * (ROWS - 5)); if (g[y][x] === "." && Math.abs(y - 13) > 1) { g[y][x] = "#"; objs.push({ k: rnd() < 0.3 ? "sarc" : "bones", x, y }); } }
+      for (let x = 5; x < COLS - 5; x += 7 + Math.floor(rnd() * 3)) objs.push({ k: "torch", x, y: 1 });
+      if (theme === "flooded") {   /* one or two channels with bridges, and a pool */
+        for (let c = 0, nb = at(1, 2); c < nb; c++) {
+          if (rnd() < 0.5) { const y0 = at(4, ROWS - 9), h = at(2, 3); for (let x = 2; x < COLS - 2; x++) for (let y = y0; y < y0 + h; y++) if (!nearDoors(x, y) && g[y][x] === ".") g[y][x] = "~";
+            for (let b = 0, nbr = at(2, 3); b < nbr; b++) { const bx = at(4, COLS - 7); for (let y = y0; y < y0 + h; y++) for (let x = bx; x < bx + 3; x++) if (g[y][x] === "~") g[y][x] = "b"; } }
+          else { const x0 = at(8, COLS - 12), w = at(2, 3); for (let y = 2; y < ROWS - 1; y++) for (let x = x0; x < x0 + w; x++) if (!nearDoors(x, y) && g[y][x] === ".") g[y][x] = "~";
+            for (let b = 0, nbr = at(2, 3); b < nbr; b++) { const by = at(3, ROWS - 6); for (let x = x0; x < x0 + w; x++) for (let y = by; y < by + 3; y++) if (g[y]?.[x] === "~") g[y][x] = "b"; } } }
+        blob(at(6, COLS - 7), at(4, ROWS - 5), at(5, 9), "~");
+      }
+    } else if (theme === "wood") {   /* clumps of pines to go round, a few boulders, grass underfoot */
+      for (let c = 0, nc = at(6, 9); c < nc; c++) blob(at(4, COLS - 5), at(3, ROWS - 4), at(2, 5), "t", () => ({ k: "tree", v: Math.floor(rnd() * 3) }));
+      for (let k = 0; k < 3; k++) put(at(4, COLS - 5), at(3, ROWS - 4), "r", { k: "rock", v: Math.floor(rnd() * 2) });
+      for (let k = 0; k < 12; k++) { const x = at(2, COLS - 3), y = at(2, ROWS - 2); if (g[y][x] === ".") objs.push({ k: rnd() < 0.5 ? "tuft" : "shrub", x, y, v: Math.floor(rnd() * 3), decor: true }); }
+    } else if (theme === "cliffs") {   /* slanted ledges with gaps, boulders, bare ground */
+      for (let c = 0, nc = at(2, 3); c < nc; c++) { const base = 8 + Math.floor(((c + 0.5) / nc) * (COLS - 16)) + at(-2, 2), slope = (rnd() - 0.5) * 0.5, gaps = []; for (let gk = 0, ng = at(2, 3); gk < ng; gk++) gaps.push([at(3, ROWS - 7), at(3, 5)]);
+        for (let y = 2; y < ROWS - 1; y++) { if (gaps.some(([gy, gh]) => y >= gy && y < gy + gh)) continue; const gx = base + Math.round((y - 13) * slope); put(gx, y, "r", { k: "cliff", v: Math.floor(rnd() * 2) }); put(gx + 1, y, "r", { k: "cliff", v: Math.floor(rnd() * 2) }); } }
+      for (let k = 0; k < 4; k++) put(at(4, COLS - 5), at(3, ROWS - 4), "r", { k: "rock", v: Math.floor(rnd() * 2) });
+      for (let k = 0; k < 8; k++) { const x = at(2, COLS - 3), y = at(2, ROWS - 2); if (g[y][x] === ".") objs.push({ k: "tuft", x, y, v: Math.floor(rnd() * 3), decor: true }); }
+    } else if (theme === "frozen") {   /* frozen pools, pines, rocks, crystals, snow underfoot */
+      for (let c = 0, nc = at(2, 3); c < nc; c++) blob(at(6, COLS - 7), at(4, ROWS - 5), at(8, 16), "~");
+      for (let k = 0, nk = at(6, 10); k < nk; k++) put(at(3, COLS - 4), at(3, ROWS - 4), "t", { k: "pine", v: Math.floor(rnd() * 2) });
+      for (let k = 0; k < 3; k++) put(at(4, COLS - 5), at(3, ROWS - 4), "r", { k: "frock", v: 0 });
+      for (let k = 0; k < 5; k++) { const x = at(2, COLS - 3), y = at(2, ROWS - 2); if (g[y][x] === ".") objs.push({ k: "crystal", x, y, v: Math.floor(rnd() * 3), decor: true }); }
+    }
     for (let y = 11; y <= 15; y++) { g[y][1] = "."; g[y][COLS - 2] = "."; }
     g[13][0] = "e"; objs.push({ k: "door", x: 0, y: 13, to: "back", name: i === 0 ? "The stairs up to the Lounge" : "Back a room" });
     const last = i === AR.rooms - 1;
     if (!last) { g[13][COLS - 1] = "e"; objs.push({ k: "door", x: COLS - 1, y: 13, to: "next", name: "Deeper" }); }
-    const np = (last && AR.boss ? 2 : 3) + R.extraPacks(mods);   /* a map's Crowded modifier adds a pack */
-    for (let k = 0; k < np; k++) { let x, y, tries = 0; do { x = 10 + Math.floor(rnd() * (COLS - 14)); y = 3 + Math.floor(rnd() * (ROWS - 6)); tries++; } while (tries < 50 && !(walk(g, x, y) && walk(g, x + 1, y) && walk(g, x, y + 1) && walk(g, x - 1, y)));
-      const kinds = i === 0 ? AR.pool.filter((q) => q !== "golem") : AR.pool, size = 3 + Math.floor(rnd() * 3), mobs = []; for (let j = 0; j < size; j++) mobs.push(kinds[Math.floor(rnd() * kinds.length)]);
+    const np = (last && AR.boss ? 2 : R.PACK.packs) + R.extraPacks(mods), spot = () => { let x, y, tries = 0; do { x = 10 + Math.floor(rnd() * (COLS - 14)); y = 3 + Math.floor(rnd() * (ROWS - 6)); tries++; } while (tries < 50 && !(walk(g, x, y) && walk(g, x + 1, y) && walk(g, x, y + 1) && walk(g, x - 1, y))); return [x, y]; };
+    for (let k = 0; k < np; k++) { const [x, y] = spot();
+      const kinds = i === 0 ? AR.pool.filter((q) => q !== "golem") : AR.pool, size = at(R.PACK.size[0], R.PACK.size[1]), mobs = []; for (let j = 0; j < size; j++) mobs.push(kinds[Math.floor(rnd() * kinds.length)]);
       packs.push({ x, y, mobs }); }
-    if (last && AR.boss) packs.push({ x: COLS - 8, y: 13, mobs: [AR.boss], boss: true });
+    for (let k = 0, ns = at(R.PACK.strays[0], R.PACK.strays[1]); k < ns; k++) { const [x, y] = spot(); if (walk(g, x, y)) packs.push({ x, y, mobs: [AR.pool[Math.floor(rnd() * AR.pool.length)]], stray: true }); }   /* the odd one, on its own */
+    if (last && AR.boss) { for (let y = 11; y <= 15; y++) for (let x = COLS - 11; x <= COLS - 5; x++) if (g[y][x] !== "." && g[y][x] !== "e") { g[y][x] = "."; const k = objs.findIndex((o) => o.x === x && o.y === y && o.k !== "door"); if (k >= 0) objs.splice(k, 1); } packs.push({ x: COLS - 8, y: 13, mobs: [AR.boss], boss: true }); }   /* the boss's ground is clear */
     /* the room's event, if it has one: a shrine or a cursed chest on a free tile, or a goblin as a pack of one */
     let event = null;
     if (!last && rnd() < R.EVENTS.chance) { const kind = R.EVENTS.kinds[Math.floor(rnd() * R.EVENTS.kinds.length)];
       let x, y, tries = 0; do { x = 8 + Math.floor(rnd() * (COLS - 12)); y = 4 + Math.floor(rnd() * (ROWS - 8)); tries++; } while (tries < 60 && !(walk(g, x, y) && walk(g, x + 1, y) && walk(g, x - 1, y) && walk(g, x, y + 1) && walk(g, x, y - 1) && !packs.some((pk) => Math.abs(pk.x - x) < 4 && Math.abs(pk.y - y) < 4)));
       if (tries < 60) { event = kind; if (kind === "goblin") packs.push({ x, y, mobs: ["goblin"], goblin: true }); else { g[y][x] = "#"; objs.push({ k: kind, x, y, name: kind === "shrine" ? "A shrine" : "A cursed chest" }); } } }
-    return { g, objs, packs, kind: "dungeon", last, n, i, event };
+    ensureReach(g, objs, [[COLS - 2, 13], ...packs.map((pk) => [pk.x, pk.y]), ...objs.filter((o) => o.k === "shrine" || o.k === "chest").map((o) => [o.x - 1, o.y])]);
+    return { g, objs, packs, kind: "dungeon", last, n, i, event, theme };
   }
   /** the exit a cleared last room opens (the same tile on both sides) */
   const openExit = (room) => { if (room.objs.some((o) => o.to === "out")) return; room.g[13][COLS - 1] = "e"; room.objs.push({ k: "door", x: COLS - 1, y: 13, to: "out", name: "The way out" }); };
@@ -103,13 +163,14 @@ export function createSim(R) {
   const PARTY_HP = 0.75;
   function spawnMobs(room, alvl, partySize, seq0 = 1, mods = [], tier = 0, btier = 0) {
     const rnd = rng((room.n || 1) * 7919 + room.i * 104729 + 17), mobs = []; let id = seq0;
-    room.packs.forEach((pk, pi) => { const eliteAt = !pk.boss && !pk.goblin && rnd() < R.ELITE.chance(tier) ? 0 : -1, emods = eliteAt >= 0 ? R.rollElite(tier, rnd) : null;   /* one elite per pack, now and then */
+    room.packs.forEach((pk, pi) => { const eliteAt = !pk.boss && !pk.goblin && !pk.stray && rnd() < R.ELITE.chance(tier) ? 0 : -1, emods = eliteAt >= 0 ? R.rollElite(tier, rnd) : null;   /* one elite per pack, now and then */
       pk.mobs.forEach((k, j) => {
       const d = R.mobDef(k, alvl, mods, tier, btier); d.melee = d.type === "melee";   /* a Rift's tier and modifiers, and the boss's tier, baked in */
       if (j === eliteAt) R.eliteDef(d, emods);
       const hp = Math.round(d.hp * (1 + PARTY_HP * Math.max(0, partySize - 1)));
-      const a = (j / pk.mobs.length) * Math.PI * 2, rr = d.boss ? 0 : 10 + j * 3;
-      mobs.push({ id: id++, k, d, hp, maxHp: hp, x: (pk.x + 0.5) * T + Math.cos(a) * rr, y: (pk.y + 0.5) * T + Math.sin(a) * rr, vx: 0, vy: 0, t: rnd() * 3, pat: 1 + rnd(), awake: false, pack: pi, slow: 0, root: 0, stun: 0, taunt: 0, tauntBy: null, shield: d.shield || 0, elite: d.elite || null });
+      const a = j * 2.4, rr = d.boss ? 0 : 8 + Math.floor(j / 6) * 10;   /* a spiral: six to a ring, so sixteen fit */
+      let mx = (pk.x + 0.5) * T + Math.cos(a) * rr, my = (pk.y + 0.5) * T + Math.sin(a) * rr; if (!walk(room.g, Math.floor(mx / T), Math.floor(my / T))) { mx = (pk.x + 0.5) * T; my = (pk.y + 0.5) * T; }   /* never born inside a tree */
+      mobs.push({ id: id++, k, d, hp, maxHp: hp, x: mx, y: my, vx: 0, vy: 0, t: rnd() * 3, pat: 1 + rnd(), awake: false, pack: pi, slow: 0, root: 0, stun: 0, taunt: 0, tauntBy: null, shield: d.shield || 0, elite: d.elite || null });
     }); });
     return mobs;
   }
@@ -143,7 +204,7 @@ export function createSim(R) {
   function clearLine(g, ax, ay, bx, by) {
     const len = Math.hypot(bx - ax, by - ay), n = Math.max(1, Math.ceil(len / 6));
     for (let i = 1; i < n; i++) { const k = i / n, x = ax + (bx - ax) * k, y = ay + (by - ay) * k;
-      for (const [ox, oy] of [[0, 0], [-4, 0], [4, 0]]) if (!walk(g, Math.floor((x + ox) / T), Math.floor((y + oy) / T))) return false; }
+      for (const [ox, oy] of [[0, 0], [-4, 0], [4, 0]]) if (!flies(g, Math.floor((x + ox) / T), Math.floor((y + oy) / T))) return false; }
     return true;
   }
   /** where a monster should head for its target: the target itself if it can see it, else the centre of the next tile along the path */
@@ -184,7 +245,7 @@ export function createSim(R) {
       if (d.keep && dist < d.keep && go.seen && !(m.taunt > 0)) { ax = -(dx / dist) * d.acc; ay = -(dy / dist) * d.acc; }
       if (d.flee) { ax = -(dx / dist) * d.acc + Math.sin(m.t * 3) * 120; ay = -(dy / dist) * d.acc + Math.cos(m.t * 3) * 120; }
       if (d.boss && dist < 80 && go.seen) { ax *= -0.4; ay *= -0.4; }
-      for (const o of st.mobs) if (o !== m && o.awake && o.hp > 0) { const ox = m.x - o.x, oy = m.y - o.y, od = Math.hypot(ox, oy); if (od < m.d.r + o.d.r + 4 && od > 0) { ax += (ox / od) * 500; ay += (oy / od) * 500; } }
+      for (const o of st.mobs) if (o !== m && o.awake && o.hp > 0) { const ox = m.x - o.x, oy = m.y - o.y, od = Math.hypot(ox, oy); if (od < m.d.r + o.d.r + 2 && od > 0) { ax += (ox / od) * 320; ay += (oy / od) * 320; } }   /* (softer since the packs grew: a crowd bunches rather than jams a gap) */
       m.vx += ax * dt; m.vy += ay * dt; m.vx *= Math.pow(0.88, dt * 60); m.vy *= Math.pow(0.88, dt * 60);
       const top = d.spd * (m.slow > 0 ? 0.5 : 1), ms = Math.hypot(m.vx, m.vy); if (ms > top) { m.vx *= top / ms; m.vy *= top / ms; }
       if (m.root > 0) { m.vx = m.vy = 0; } else moveCircle(st.room.g, m, Math.min(7, d.r), dt);
@@ -262,7 +323,7 @@ export function createSim(R) {
   function projStep(st, dt, ev) {
     for (const b of st.pb) {
       b.x += b.vx * dt; b.y += b.vy * dt; b.t -= dt; b.f += dt * 24;
-      if (!walk(st.room.g, Math.floor(b.x / T), Math.floor(b.y / T))) { b.t = 0; continue; }
+      if (!flies(st.room.g, Math.floor(b.x / T), Math.floor(b.y / T))) { b.t = 0; continue; }
       for (const m of st.mobs) if (m.hp > 0 && !b.hits.has(m.id) && Math.hypot(m.x - b.x, m.y - 6 - b.y) < m.d.r + (b.big ? 6 : 4)) {
         b.hits.add(m.id);
         if (!b.vis) { let dm = b.dmg; const p = st.byId?.(b.by); if (b.arrow && p?.g.rules.has("point_blank")) { const fl = Math.hypot(b.x - b.ox, b.y - b.oy); dm *= fl < 3 * T ? 1.5 : fl > 7 * T ? 0.7 : 1; } hit(st, m, dm, { slow: b.slow, el: b.el }, b.by, ev); }
@@ -283,6 +344,6 @@ export function createSim(R) {
   /** a room is done when its monsters are (or, in a boss room, the boss is) */
   const roomClear = (room, mobs) => (room.packs.some((p) => p.boss) ? !mobs.some((m) => m.d.boss && m.hp > 0) : !mobs.some((m) => m.hp > 0));
 
-  return { T, COLS, ROWS, W, H, SLOT_KEYS, AREAS, areaOf, rng, walk, passable, makeLounge, makeRoom, openExit, moveCircle, standable, statsFor, cdOf, topSpeed,
+  return { T, COLS, ROWS, W, H, SLOT_KEYS, AREAS, areaOf, rng, walk, passable, flies, THEMES, themeFor, makeLounge, makeRoom, openExit, moveCircle, standable, statsFor, cdOf, topSpeed,
     spawnMobs, PARTY_HP, mobStep, flowField, clearLine, maxHitIn, castOn, hit, projStep, zoneStep, roomClear, segDist, shoot };
 }
