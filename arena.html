@@ -309,8 +309,8 @@ html,body{margin:0;height:100%;background:#0b0a09;color:#e8e0cc;font-family:Lora
 <div class="tipbox" id="tipBox" hidden></div>
 <div class="veil" id="veil"><span>Connecting to the server…</span></div>
 <script type="module">
-import * as R from "/v3/assets/js/arena-rules.js?v=9";   /* the arena's own rules: items, monsters, levels, classes, skills, the tree (shared with the Worker) */
-import { createSim } from "/v3/assets/js/arena-sim.js?v=6";
+import * as R from "/v3/assets/js/arena-rules.js?v=10";   /* the arena's own rules: items, monsters, levels, classes, skills, the tree (shared with the Worker) */
+import { createSim } from "/v3/assets/js/arena-sim.js?v=7";
 import * as SFX from "/v3/assets/js/eastscape-sfx.js?v=20";   /* EastScape's sounds, by name (the owner, 2026-10-03: "they all exist on eastscape already"); on/off and volume are the browser's, shared with EastScape */
 const snd = (name, o) => { try { SFX.play(name, o); } catch (e) { /* no audio here */ } };
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;   /* the fight itself, the same code the server runs (handed the rules, so they load once) */
@@ -406,6 +406,10 @@ connect();
 const F = "/v3/assets/img/glad/flat/", FX = "/v3/assets/img/glad/fx/";
 const IMG = {}; const img = (p) => IMG[p] || (IMG[p] = Object.assign(new Image(), { src: p }));
 const DIRS = ["east", "north-east", "north", "north-west", "west", "south-west", "south", "south-east"];
+/* the grounds are EastScape's 128 px textures, not sheets of variants: each is tiled 1:1 from a clean window of it (the grass's dirt patch and the snow's drawn edges left out) */
+const GROUND = { grass: { im: img(`${F}t_wildg.png`), r: [0, 64, 64, 64] }, dirt: { im: img(`${F}t_wildb.png`), r: [0, 0, 128, 128] }, snow: { im: img(`${F}t_snow.png`), r: [64, 24, 48, 48] } };
+const BIG = { tree: ["x_pine1", "x_pine2", "x_pine3"].map((k) => img(`${F}${k}.png`)), pine: ["fz_pine1", "fz_pine2"].map((k) => img(`${F}${k}.png`)), rock: ["x_boulder1", "x_boulder2"].map((k) => img(`${F}${k}.png`)), cliff: ["x_rock3", "x_rock1"].map((k) => img(`${F}${k}.png`)), frock: [img(`${F}fz_rock1.png`)] };
+const DECOR = { tuft: ["x_tuft1", "x_tuft2", "x_tuft3"].map((k) => img(`${F}${k}.png`)), shrub: ["x_shrub1", "x_shrub2", "x_shrub1"].map((k) => img(`${F}${k}.png`)), crystal: ["fz_crystal1", "fz_crystal2", "fz_crystal3"].map((k) => img(`${F}${k}.png`)) };
 const ANVIL = img(`${F}o_anvil.png`), SHRINE = img(`${F}o_shrine.png`), LOOTCHEST = img(`${F}o_cryptloot.png`), FLOOR = img(`${F}t_crypt.png`), WALL = img(`${F}t_cryptwall.png`), TORCH = img(`${F}o_crypttorch.png`), SARC = img(`${F}o_sarcophagus.png`), BONES = img(`${F}o_bonepile.png`), GATE = img(`${F}o_cryptgate.png`), CHEST = img(`${F}o_chest.png`);
 const BOOM = img(`${FX}spell_explosion.png`), ARROW = img(`${F}items/bronze_arrow.png`);
 for (const S_ of Object.values(R.SKILLS)) { if (S_.fx) img(F.replace("flat/", "") + S_.fx); img(F + S_.icon); }
@@ -603,10 +607,10 @@ function onRun(m) {
 const mkMob = ([id, k, x, y, hp, maxHp, awake, elite, shield]) => { const d = R.mobDef(k, S.area.alvl, S.mods || [], S.area.tier || 0, S.btier || 0); d.melee = d.type === "melee"; if (elite) R.eliteDef(d, elite); return { id, k, d, x, y, hp, maxHp, awake: !!awake, buf: [[srvNow(), x, y]], flash: 0, numK: 0, t: Math.random() * 3, vx: 0, vy: 0, slow: 0, stun: 0, root: 0, elite: elite || null, shield: shield || 0 }; };
 const mkOther = (q) => ({ id: q.id, name: q.name, style: q.style, x: q.x, y: q.y, d: 6, hp: q.hp, maxHp: q.maxHp, alive: q.alive !== false, buf: [[srvNow(), q.x, q.y]], look: lookOf(q.id, q.name), g: SIM.statsFor({ style: q.style, level: 1 }) });
 function setRunRoom(rv, exit) {
-  S.roomI = rv.i; S.room = SIM.makeRoom(S.seed, S.area.n, rv.i, S.mods || []); if (exit) SIM.openExit(S.room); floorCache = null; S.used = rv.used || [];
+  S.roomI = rv.i; S.room = SIM.makeRoom(S.seed, S.area.n, rv.i, S.mods || []); if (exit) SIM.openExit(S.room); floorCache = null; S.used = rv.used || []; S.waterTiles = null;
   if (S.room.event === "goblin") lootLine("A Treasure Goblin is in this room. Catch it before it runs.", "loot"); else if (S.room.event) lootLine(`${S.room.event === "shrine" ? "A shrine" : "A cursed chest"} is in this room (E to use it).`, "sys");
   S.mobs = rv.mobs.map(mkMob); S.mobMap = new Map(S.mobs.map((m) => [m.id, m])); S.pb = []; S.zones = []; S.eb = []; S.fx = []; S.nums = []; S.drops = [];
-  $("hWave").textContent = `Room ${rv.i + 1} of ${S.area.rooms}`; $("where").textContent = `${S.area.rift ? "The Rifts" : `Act ${S.area.act}`} · ${S.area.name} · room ${rv.i + 1}`;
+  $("hWave").textContent = `Room ${rv.i + 1} of ${S.area.rooms}`; $("where").textContent = `${S.area.rift ? "The Rifts" : `Act ${S.area.act}`} · ${S.area.name} · ${SIM.THEMES[S.room.theme]?.name || ""} · room ${rv.i + 1}`;
   $("hMods").textContent = (S.mods || []).map((k) => R.MAP_MODS[k].name).join(" · ");
   $("hRooms").innerHTML = [...Array(S.area.rooms).keys()].map((k) => `<i class="${k < rv.i ? "done" : k === rv.i ? "now" : ""}"></i>`).join("");
   $("bossBar").hidden = true;
@@ -642,11 +646,13 @@ function runSnap(m) {
 }
 function runEv(e) {
   const m = e.m != null ? S.mobMap.get(e.m) : null;
-  if (e.t === "shot") { S.eb.push({ x: e.x, y: e.y, vx: e.vx, vy: e.vy, r: e.r, dmg: e.dmg, delay: e.delay, boss: e.boss, t: 6 }); if (S.eb.length > 400) S.eb.splice(0, S.eb.length - 400); }
+  if (e.t === "shot") { S.eb.push({ x: e.x, y: e.y, vx: e.vx, vy: e.vy, r: e.r, dmg: e.dmg, delay: e.delay, boss: e.boss, t: 6 }); if (S.eb.length > 400) S.eb.splice(0, S.eb.length - 400); if (m && !(e.delay > 0.05)) { m.flash = Math.max(m.flash, 0.1); if (!S.fx.some((f) => f.kind === "muzzle" && f.m === m.id)) S.fx.push({ kind: "muzzle", m: m.id, x: e.x, y: e.y, t: 0.18, max: 0.18, boss: !!e.boss }); } }
   else if (e.t === "wake") { if (m && !m.seen) { m.seen = true; m.awake = true; S.fx.push({ kind: "num", x: m.x, y: m.y - 24, text: "!", t: 0.6, red: true }); if (m.d.boss) $("bossBar").hidden = false; } }
   else if (e.t === "tele") { if (m) S.fx.push(e.ring ? { kind: "tele", x: m.x, y: m.y, t: 0.3, big: true } : { kind: "line", x: m.x, y: m.y, a: e.a, t: 0.35 }); }
   else if (e.t === "hit") { if (m) { m.hp = Math.max(0, m.hp - e.n); m.flash = 0.09; addNum(m, e.n, !!e.c, e.el); hitFeel(m, e); } }
-  else if (e.t === "kill") { if (m) { S.kills++; S.fx.push({ kind: "boom", x: m.x, y: m.y - 5, t: 0.45, big: m.d.boss }); m.hp = 0; snd("mob_die", { rate: m.d.boss ? 0.6 : 1, vol: e.by === ME.id ? 1 : 0.5 }); if (m.d.boss) shake(0.4); S.mobs = S.mobs.filter((x) => x !== m); S.mobMap.delete(m.id); if (m.d.boss) { $("bossBar").hidden = true; tip(`${m.d.name} is down.`, 3); } } }
+  else if (e.t === "kill") { if (m) { S.kills++; S.fx.push({ kind: "boom", x: m.x, y: m.y - 5, t: 0.45, big: m.d.boss }); m.hp = 0;
+    S.fx.push({ kind: "corpse", art: m.d.art, x: m.x, y: m.y, flip: m.vx < 0, s: (img(`${F}${m.d.art}.png`).naturalWidth / 2 || 34) * (m.d.elite ? R.ELITE.scale : 1), t: 0.55, max: 0.55 });
+    { const bits = []; for (let i = 0; i < (m.d.boss ? 16 : 7); i++) { const b = Math.random() * Math.PI * 2, v = 30 + Math.random() * 40; bits.push({ vx: Math.cos(b) * v, vy: Math.sin(b) * v - 40 }); } S.fx.push({ kind: "sparks", x: m.x, y: m.y - 8, t: 0.5, max: 0.5, col: m.d.art === "cryptghost" ? "#bfe6ff" : "#e8e0cc", bits }); } snd("mob_die", { rate: m.d.boss ? 0.6 : 1, vol: e.by === ME.id ? 1 : 0.5 }); if (m.d.boss) shake(0.4); S.mobs = S.mobs.filter((x) => x !== m); S.mobMap.delete(m.id); if (m.d.boss) { $("bossBar").hidden = true; tip(`${m.d.name} is down.`, 3); } } }
   else if (e.t === "exit") { SIM.openExit(S.room); floorCache = null; tip("The last room is clear. The way out is open on the east wall.", 4); snd("task_done"); }
   else if (e.t === "spawn") { for (const tup of e.mobs) { const q = mkMob(tup); q.awake = true; q.seen = true; S.mobs.push(q); S.mobMap.set(q.id, q); S.fx.push({ kind: "num", x: q.x, y: q.y - 24, text: "!", t: 0.6, red: true }); } snd("mob_swing", { rate: 0.8 }); }
   else if (e.t === "block") { if (m) { m.shield = e.left; m.flash = 0.05; S.fx.push({ kind: "num", x: m.x, y: m.y - 26, text: "BLOCKED", t: 0.6 }); snd("guard", { vol: 0.7 }); } }
@@ -872,12 +878,12 @@ function step(dt) {
      coming (EastScape's mob_swing), then lunges; the blow lands only if you're still in reach, so a dodge you saw counts. It used to land the
      instant a monster touched you. A knocked monster's flinch counts down here too. */
   for (const m of S.mobs) { interp(m, rt); m.flash -= dt; m.t += dt; if (m.knock) { m.knock.t -= dt; if (m.knock.t <= 0) m.knock = null; }
-    if (m.wind > 0) { m.wind -= dt; if (m.wind <= 0) { m.windCd = 0.5; if (!frozen && m.hp > 0 && m.stun <= 0 && p.inv <= 0 && Math.hypot(p.x - m.x, p.y - m.y) < m.d.r + 10) hurtMe(Math.round(m.d.max * 0.6)); } }
+    if (m.wind > 0) { m.wind -= dt; if (m.wind <= 0) { m.windCd = 0.5; const a = Math.atan2(p.y - m.y, p.x - m.x); S.fx.push({ kind: "slash", x: m.x, y: m.y - 6, a, half: 0.8, r: m.d.r + 10, t: 0.14, max: 0.14, red: true }); if (!frozen && m.hp > 0 && m.stun <= 0 && p.inv <= 0 && Math.hypot(p.x - m.x, p.y - m.y) < m.d.r + 10) hurtMe(Math.round(m.d.max * 0.6)); } }
     else { m.windCd = (m.windCd || 0) - dt; if (!frozen && m.awake && m.d.melee && m.hp > 0 && m.stun <= 0 && m.windCd <= 0 && Math.hypot(p.x - m.x, p.y - m.y) < m.d.r + 7) { m.wind = m.windMax = 0.3; snd("mob_swing", { rate: m.d.boss ? 0.7 : 1 }); } } }
   for (const o of S.others.values()) interp(o, rt);
   /* your skills fly here for the look of it; the server says what they hit */
   SIM.projStep(S, dt, []); SIM.zoneStep(S, dt, []);
-  for (const b of S.eb) { if (b.delay > 0) { b.delay -= dt; continue; } b.x += b.vx * dt; b.y += b.vy * dt; b.t -= dt; if (!SIM.walk(S.room.g, Math.floor(b.x / T), Math.floor(b.y / T))) { b.t = 0; continue; } if (!frozen && p.inv <= 0 && Math.hypot(p.x - b.x, p.y - 1 - b.y) < 3.5 + b.r) { hurtMe(b.dmg); b.t = 0; } }
+  for (const b of S.eb) { if (b.delay > 0) { b.delay -= dt; continue; } b.x += b.vx * dt; b.y += b.vy * dt; b.t -= dt; if (!SIM.flies(S.room.g, Math.floor(b.x / T), Math.floor(b.y / T))) { b.t = 0; continue; } if (!frozen && p.inv <= 0 && Math.hypot(p.x - b.x, p.y - 1 - b.y) < 3.5 + b.r) { hurtMe(b.dmg); b.t = 0; } }
   S.eb = S.eb.filter((b) => b.t > 0);
   for (const d of S.drops) { d.t += dt; if (!frozen && Math.hypot(p.x - d.x, p.y - d.y) < 12) requestPick(d); }
   if (!frozen && p.hp <= 0 && RUN) { S.dying = true; tip("…", 1); }
@@ -1180,19 +1186,33 @@ addEventListener("resize", () => { if (!$("treeWin").hidden) renderTree(); });
 
 /* ============================================================ drawing: the room at the game's scale, sprites at their own size */
 const hashRand = (x, y, s) => { let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+/* the floor, painted once a room: the theme's ground, water and bridges, the outer edge as the theme's wall, trees, rocks, pines; the
+   decor (tufts, shrubs, crystals) that nothing stands on. The crypt keeps its stone. */
 function paintFloor() {
   const c = document.createElement("canvas"); c.width = W * A; c.height = H * A; const o = c.getContext("2d"); o.imageSmoothingEnabled = false; o.scale(A, A);
-  const g = S.room.g, f = (x, y, w, h, col) => { o.fillStyle = col; o.fillRect(x, y, w, h); };
-  f(0, 0, W, H, "#0e0c12");
+  const g = S.room.g, f = (x, y, w, h, col) => { o.fillStyle = col; o.fillRect(x, y, w, h); }, TH = SIM.THEMES[S.room.theme] || SIM.THEMES.crypt, GR = GROUND[TH.ground], crypt = TH.ground === "crypt";
+  f(0, 0, W, H, crypt ? "#0e0c12" : TH.ground === "snow" ? "#9fb6c8" : TH.ground === "dirt" ? "#4a3a28" : "#2c4a24");
+  const WATER = TH.ground === "snow" ? "#a9d4ea" : "#163a5a", WATER2 = TH.ground === "snow" ? "#d6ecf6" : "#2a5a80";
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
     const X = x * T, Y = y * T, t = g[y][x];
     if (y === 0) continue;
-    if (y === 1 || (t === "v" && y === ROWS - 1) || (t === "v" && (x === 0 || x === COLS - 1))) { if (WALL.complete && WALL.naturalWidth && y === 1) { const k = hashRand(x, 0, 41) < 0.7 ? x % 5 : 8 + (x % 4); o.drawImage(WALL, (k % 8) * 64, Math.floor(k / 8) * 64, 64, 64, X, Y - T, T, T * 2); } else { f(X, Y - T, T, T * 2, "#16131f"); } if (y !== 1) f(X, Y, T, T, "#0e0c16"); continue; }
-    if (FLOOR.complete && FLOOR.naturalWidth) { const wall = t === "v", r = hashRand(x, y, 9), r2 = hashRand(x, y, 5) < 0.5 ? 0 : 1, col = wall ? (r < 0.7 ? 6 : 7) : r < 0.86 ? 0 : r < 0.9 ? 5 : r < 0.935 ? 1 : r < 0.97 ? 2 : r < 0.988 ? 3 : 4;
-      o.drawImage(FLOOR, col * 32, r2 * 32, 32, 32, X, Y, T, T); if (wall) { f(X, Y, 1, T, "rgba(0,0,0,.45)"); f(X + T - 1, Y, 1, T, "rgba(0,0,0,.45)"); if (g[y + 1]?.[x] !== "v") f(X, Y + T, T, 3, "rgba(0,0,0,.35)"); } else if (g[y][x - 1] === "v") f(X, Y, 3, T, "rgba(0,0,0,.28)"); }
-    else { if (t === "v") { f(X, Y, T, T, "#0e0c16"); f(X, Y, T, 3, "#2a2638"); } else { f(X, Y, T, T, (x + y) % 2 ? "#34313e" : "#2c2a36"); f(X, Y, T, 1, "#1e1c28"); f(X, Y, 1, T, "#1e1c28"); } }
+    if (crypt) {
+      if (y === 1 || (t === "v" && y === ROWS - 1) || (t === "v" && (x === 0 || x === COLS - 1))) { if (WALL.complete && WALL.naturalWidth && y === 1) { const k = hashRand(x, 0, 41) < 0.7 ? x % 5 : 8 + (x % 4); o.drawImage(WALL, (k % 8) * 64, Math.floor(k / 8) * 64, 64, 64, X, Y - T, T, T * 2); } else { f(X, Y - T, T, T * 2, "#16131f"); } if (y !== 1) f(X, Y, T, T, "#0e0c16"); continue; }
+      if (FLOOR.complete && FLOOR.naturalWidth) { const wall = t === "v", r = hashRand(x, y, 9), r2 = hashRand(x, y, 5) < 0.5 ? 0 : 1, col = wall ? (r < 0.7 ? 6 : 7) : r < 0.86 ? 0 : r < 0.9 ? 5 : r < 0.935 ? 1 : r < 0.97 ? 2 : r < 0.988 ? 3 : 4;
+        o.drawImage(FLOOR, col * 32, r2 * 32, 32, 32, X, Y, T, T); if (wall) { f(X, Y, 1, T, "rgba(0,0,0,.45)"); f(X + T - 1, Y, 1, T, "rgba(0,0,0,.45)"); if (g[y + 1]?.[x] !== "v") f(X, Y + T, T, 3, "rgba(0,0,0,.35)"); } else if (g[y][x - 1] === "v") f(X, Y, 3, T, "rgba(0,0,0,.28)"); }
+      else { if (t === "v") { f(X, Y, T, T, "#0e0c16"); f(X, Y, T, 3, "#2a2638"); } else { f(X, Y, T, T, (x + y) % 2 ? "#34313e" : "#2c2a36"); f(X, Y, T, 1, "#1e1c28"); f(X, Y, 1, T, "#1e1c28"); } }
+    } else {
+      if (GR?.im.complete && GR.im.naturalWidth) { const [sx0, sy0, sw, sh] = GR.r; o.drawImage(GR.im, sx0 + ((x * T) % sw), sy0 + ((y * T) % sh), T, T, X, Y, T, T); if (hashRand(x, y, 23) < 0.06) f(X + 4, Y + 6, 2, 2, "rgba(0,0,0,.12)"); }
+      if (t === "v") { f(X, Y, T, T, "rgba(0,0,0,.55)"); }   /* the edge: dark, with the theme's wall drawn over it below */
+    }
+    if (t === "~") { f(X, Y, T, T, WATER); if (TH.ground === "snow" && hashRand(x, y, 29) < 0.25) f(X + 2 + Math.floor(hashRand(x, y, 31) * 6), Y + 2 + Math.floor(hashRand(x, y, 37) * 6), 5, 2, "rgba(255,255,255,.5)");
+      if (hashRand(x, y, 13) < 0.35) f(X + 3, Y + 5 + Math.floor(hashRand(x, y, 17) * 8), 7, 1, WATER2); if (g[y - 1]?.[x] !== "~" && g[y - 1]?.[x] !== "b") f(X, Y, T, 2, "rgba(0,0,0,.35)"); }
+    if (t === "b") { f(X, Y, T, T, "#6a4a2a"); for (let k = 2; k < T; k += 4) f(X, Y + k, T, 1, "#4a3018"); f(X, Y, 1, T, "#8a6a3a"); f(X + T - 1, Y, 1, T, "#8a6a3a"); }
     if (t === "e") { f(X, Y, T, T, "#0a0810"); f(X + 2, Y + 2, T - 4, T - 4, "#1c1826"); }
   }
+  if (!crypt) { const top = TH.top === "trees" ? BIG.tree : TH.top === "pines" ? BIG.pine : BIG.cliff;   /* the far edge: a line of the theme's wall */
+    for (let x = 0; x < COLS; x += 2) { const im = top[x % top.length]; if (im.complete && im.naturalWidth) { const h = TH.top === "rocks" ? 36 : 48, w = Math.round(im.naturalWidth * (h / im.naturalHeight)); o.drawImage(im, x * T + 16 - w / 2, 2 * T - h, w, h); } } }
+  for (const ob of S.room.objs) { const X = ob.x * T, Y = ob.y * T; if (ob.decor) { const list = DECOR[ob.k]; const im = list?.[ob.v % list.length]; if (im?.complete && im.naturalWidth) { const h = ob.k === "crystal" ? 14 : ob.k === "shrub" ? 20 : 12, w = Math.round(im.naturalWidth * (h / im.naturalHeight)); o.drawImage(im, X + 8 - w / 2, Y + T - h, w, h); } } }
   for (const ob of S.room.objs) { const X = ob.x * T, Y = ob.y * T; if (ob.k === "torch" && TORCH.complete) o.drawImage(TORCH, X + 2, Y - 14, 13, 40); if (ob.k === "sarc" && SARC.complete) o.drawImage(SARC, X - 6, Y - 36, 28, 53); if (ob.k === "bones" && BONES.complete) o.drawImage(BONES, X + 3, Y + 4, 9, 10); if (ob.k === "chest" && CHEST.complete) o.drawImage(CHEST, X - 8, Y - 16, 32, 32); if (ob.k === "anvil" && ANVIL.complete && ANVIL.naturalWidth) o.drawImage(ANVIL, X - 4, Y - 6, 24, 24);
     if ((ob.k === "shrine" || ob.k === "chest") && !(S.used || []).includes(ob.k)) { o.fillStyle = ob.k === "shrine" ? "rgba(158,240,160,.22)" : "rgba(255,154,74,.22)"; o.beginPath(); o.ellipse(X + 8, Y + 14, 16, 7, 0, 0, Math.PI * 2); o.fill(); }
     if (ob.k === "shrine" && SHRINE.complete && SHRINE.naturalWidth) o.drawImage(SHRINE, X - 8, Y - 24, 32, 40); if (ob.k === "chest" && LOOTCHEST.complete && LOOTCHEST.naturalWidth) o.drawImage(LOOTCHEST, X - 6, Y - 14, 28, 30); if (ob.k === "door" && GATE.complete) o.drawImage(GATE, X - 7, Y - 40, 30, 55); }
@@ -1206,17 +1226,20 @@ function draw(now = performance.now()) {
   if (!floorCache) floorCache = paintFloor();
   const shk = shakeUntil > now ? shakeAmp : 0; if (shk === 0) shakeAmp = 0;
   cx.save(); cx.translate(view.ox + (shk ? (Math.random() - 0.5) * 2 * shk : 0), view.oy + (shk ? (Math.random() - 0.5) * 2 * shk : 0)); cx.scale(view.s, view.s); cx.drawImage(floorCache, 0, 0, W, H);
+  if (S.room.theme && SIM.THEMES[S.room.theme]?.water) { if (!S.waterTiles) { S.waterTiles = []; for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (S.room.g[y][x] === "~") S.waterTiles.push([x, y]); }
+    const ph = Math.floor(now / 350); cx.fillStyle = S.room.theme === "frozen" ? "rgba(255,255,255,.5)" : "rgba(160,210,255,.45)"; for (const [x, y] of S.waterTiles) if ((x * 7 + y * 13 + ph) % 9 === 0) cx.fillRect(x * T + 2 + (ph % 3) * 3, y * T + 4 + ((x + ph) % 3) * 4, 6, 1); }   /* glints that drift */
   /* telegraphs and ground effects, under everything */
   for (const f of S.fx) if (f.kind === "tele") { cx.strokeStyle = `rgba(255,80,60,${f.t * 3})`; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(f.x, f.y - 5, f.big ? 34 : 16, 0, Math.PI * 2); cx.stroke(); } else if (f.kind === "line") { cx.strokeStyle = `rgba(255,120,80,${f.t * 2.5})`; cx.lineWidth = 1.5; cx.setLineDash([4, 4]); cx.beginPath(); cx.moveTo(f.x, f.y - 5); cx.lineTo(f.x + Math.cos(f.a) * 240, f.y - 5 + Math.sin(f.a) * 240); cx.stroke(); cx.setLineDash([]); }
   for (const z of S.zones) { if (z.kind === "rain") { cx.strokeStyle = "rgba(255,226,122,.55)"; cx.lineWidth = 1; cx.beginPath(); cx.arc(z.x, z.y, z.r, 0, Math.PI * 2); cx.stroke(); for (let i = 0; i < 3; i++) { const a = hashRand(i, Math.floor(z.t * 8), 3) * Math.PI * 2, rr = hashRand(i, Math.floor(z.t * 8), 7) * z.r; strip(fxImg(z.art), z.t * 20 + i * 3, z.x + Math.cos(a) * rr, z.y + Math.sin(a) * rr - 4, 18); } }
     else { const armed = z.t > 0.4; cx.strokeStyle = armed ? "rgba(158,240,160,.8)" : "rgba(158,240,160,.35)"; cx.lineWidth = 1.2; cx.setLineDash([2, 2]); cx.beginPath(); cx.arc(z.x, z.y, z.r, 0, Math.PI * 2); cx.stroke(); cx.setLineDash([]); strip(fxImg(z.art), 2, z.x, z.y - 3, 12); } }
   for (const d of S.drops) { const bob = Math.sin(d.t * 6) * 1.2; if (d.pot) { const im = img(F + R.POTIONS[d.pot].icon); if (im.complete) cx.drawImage(im, d.x - 6, d.y - 12 + bob, 12, 12); continue; } if (d.crowns) { if (CROWN.complete) cx.drawImage(CROWN, d.x - 6, d.y - 11 + bob, 12, 12); continue; } const im = img(F + d.item.icon); if (im.complete) cx.drawImage(im, d.x - 7, d.y - 14 + bob, 14, 14); }
   const others = othersNow();
-  const all = [...S.mobs.map((m) => ({ y: m.y, m })), ...S.room.objs.filter((o) => o.k === "npc").map((o) => ({ y: (o.y + 1) * T, npc: o })), ...others.map((o) => ({ y: o.y, o })), { y: S.p.y, p: true }].sort((a, b) => a.y - b.y);
+  const all = [...S.mobs.map((m) => ({ y: m.y, m })), ...S.room.objs.filter((o) => o.k === "npc").map((o) => ({ y: (o.y + 1) * T, npc: o })), ...S.room.objs.filter((o) => BIG[o.k]).map((o) => ({ y: (o.y + 1) * T - 2, big: o })), ...others.map((o) => ({ y: o.y, o })), { y: S.p.y, p: true }].sort((a, b) => a.y - b.y);
   for (const o of all) {
+    if (o.big) { const ob = o.big, list = BIG[ob.k], im = list[(ob.v || 0) % list.length]; if (im.complete && im.naturalWidth) { const h = ob.k === "tree" ? 56 : ob.k === "pine" ? 60 : ob.k === "cliff" ? 30 : ob.k === "frock" ? 22 : 24, w = Math.round(im.naturalWidth * (h / im.naturalHeight)); cx.fillStyle = "rgba(0,0,0,.3)"; cx.beginPath(); cx.ellipse((ob.x + 0.5) * T, (ob.y + 1) * T - 2, Math.max(8, w / 2.6), 4, 0, 0, Math.PI * 2); cx.fill(); cx.drawImage(im, (ob.x + 0.5) * T - w / 2, (ob.y + 1) * T - h, w, h); } continue; }
     if (o.npc) { const im = img(`${F}${o.npc.art}_south.png`); if (im.complete && im.naturalWidth) cx.drawImage(im, (o.npc.x + 0.5) * T - 17, (o.npc.y + 1) * T - 31, 34, 34); continue; }
-    if (o.o) { const q = o.o, im = img(`${F}look${q.look}_${DIRS[q.d] || "south"}.png`); if (im.complete && im.naturalWidth) cx.drawImage(im, q.x - 17, q.y - 31, 34, 34); continue; }
-    if (o.p) { const p = S.p, im = img(`${F}look${ME.look}_${DIRS[p.dir]}.png`); if (p.dodging > 0 || p.dash) cx.globalAlpha = 0.55; if (p.hurt > 0) cx.filter = "brightness(2) sepia(1) saturate(6) hue-rotate(-40deg)"; else if (p.glow > 0) cx.filter = "brightness(1.5)";
+    if (o.o) { const q = o.o, im = img(`${F}look${q.look}_${DIRS[q.d] || "south"}.png`); cx.fillStyle = "rgba(0,0,0,.32)"; cx.beginPath(); cx.ellipse(q.x, q.y + 1, 7, 3, 0, 0, Math.PI * 2); cx.fill(); if (im.complete && im.naturalWidth) cx.drawImage(im, q.x - 17, q.y - 31, 34, 34); continue; }
+    if (o.p) { const p = S.p, im = img(`${F}look${ME.look}_${DIRS[p.dir]}.png`); cx.fillStyle = "rgba(0,0,0,.32)"; cx.beginPath(); cx.ellipse(p.x, p.y + 1, 7, 3, 0, 0, Math.PI * 2); cx.fill(); if (p.dodging > 0 || p.dash) cx.globalAlpha = 0.55; if (p.hurt > 0) cx.filter = "brightness(2) sepia(1) saturate(6) hue-rotate(-40deg)"; else if (p.glow > 0) cx.filter = "brightness(1.5)";
       if (p.cry > 0) { cx.strokeStyle = `rgba(255,216,74,${0.35 + 0.2 * Math.sin(S.t * 10)})`; cx.lineWidth = 1.5; cx.beginPath(); cx.ellipse(p.x, p.y - 1, 9, 4, 0, 0, Math.PI * 2); cx.stroke(); }
       const L = p.lunge, lk = L ? Math.sin((1 - L.t / L.max) * Math.PI) * L.d : 0, lx = L ? Math.cos(L.a) * lk : 0, ly = L ? Math.sin(L.a) * lk : 0;   /* a swing lunges, a bow steps back on the draw */
       if (im.complete && im.naturalWidth) cx.drawImage(im, p.x - 17 + lx, p.y - 31 + ly, 34, 34); cx.filter = "none"; cx.globalAlpha = 1;
@@ -1227,6 +1250,8 @@ function draw(now = performance.now()) {
     if (m.wind > 0) { const k = 1 - m.wind / m.windMax, l = k < 0.7 ? -3 * (k / 0.7) : -3 + 11 * ((k - 0.7) / 0.3), dx = S.p.x - m.x, dy = S.p.y - m.y, dd = Math.hypot(dx, dy) || 1; ox += (dx / dd) * l; oy += (dy / dd) * l; }
     if (d.elite) { const col = R.ELITES[d.elite[0]].col, pulse = 0.5 + 0.3 * Math.sin(S.t * 5); cx.strokeStyle = hexA(col, pulse); cx.lineWidth = 2; cx.beginPath(); cx.ellipse(m.x, m.y + 2, d.r + 6, (d.r + 6) * 0.45, 0, 0, Math.PI * 2); cx.stroke(); cx.fillStyle = hexA(col, 0.12 * pulse); cx.fill(); }
     if (d.flee) { cx.fillStyle = hexA("#ffd84a", 0.5 + 0.3 * Math.sin(S.t * 8)); for (let i = 0; i < 3; i++) { const a = S.t * 4 + i * 2.1; cx.beginPath(); cx.arc(m.x + Math.cos(a) * 9, m.y - 20 + Math.sin(a) * 3, 1.5, 0, Math.PI * 2); cx.fill(); } }
+    cx.fillStyle = "rgba(0,0,0,.32)"; cx.beginPath(); cx.ellipse(m.x, m.y + 2, Math.max(5, d.r * 0.9), Math.max(2, d.r * 0.38), 0, 0, Math.PI * 2); cx.fill();   /* a shadow */
+    if (d.elite && m.awake) { cx.fillStyle = R.ELITES[d.elite[0]].col; for (let i = 0; i < 3; i++) { const k = (S.t * 0.7 + i / 3) % 1; cx.globalAlpha = 1 - k; cx.fillRect(Math.round(m.x + Math.sin(S.t * 2 + i * 2.1) * 8) - 1, Math.round(m.y - 4 - k * 28) - 1, 2, 2); } cx.globalAlpha = 1; }   /* motes rising off an elite */
     cx.save(); cx.translate(m.x + ox, m.y + bob + oy); if (m.vx < 0) cx.scale(-1, 1); if (!m.awake) cx.globalAlpha = 0.85;
     if (m.flash > 0) cx.filter = "brightness(2.2)"; else if (m.slow > 0) cx.filter = "hue-rotate(160deg) saturate(1.6)";
     if (im.complete && im.naturalWidth) cx.drawImage(im, -s / 2, -s + 4, s, s); else { cx.fillStyle = "#a04030"; cx.fillRect(-d.r, -d.r * 2, d.r * 2, d.r * 2); }
@@ -1240,7 +1265,9 @@ function draw(now = performance.now()) {
   for (const b of S.eb) { if (b.delay > 0) continue; cx.fillStyle = b.boss ? "#ff5a3a" : "#ffb04a"; cx.shadowColor = cx.fillStyle; cx.shadowBlur = 6; cx.beginPath(); cx.arc(b.x, b.y, b.r, 0, Math.PI * 2); cx.fill(); cx.shadowBlur = 0; cx.fillStyle = "#fff8e0"; cx.beginPath(); cx.arc(b.x, b.y, b.r * 0.45, 0, Math.PI * 2); cx.fill(); }
   for (const f of S.fx) {
     if (f.kind === "boom") { const n = BOOM.naturalWidth / 72 || 1, fr = Math.min(n - 1, Math.floor((1 - f.t / 0.45) * n)), s = f.big ? 80 : 36; if (BOOM.complete && BOOM.naturalWidth) cx.drawImage(BOOM, fr * 72, 0, 72, 72, f.x - s / 2, f.y - s / 2, s, s); }
-    else if (f.kind === "slash") { const k = 1 - f.t / f.max; cx.strokeStyle = f.big ? `rgba(255,190,120,${1 - k})` : `rgba(255,248,224,${1 - k})`; cx.lineWidth = f.big ? 4 : 3; cx.beginPath(); cx.arc(f.x, f.y, f.r * (0.65 + k * 0.35), f.a - f.half, f.a + f.half); cx.stroke(); }
+    else if (f.kind === "corpse") { const k = 1 - f.t / f.max, im = img(`${F}${f.art}.png`); if (im.complete && im.naturalWidth) { cx.save(); cx.globalAlpha = 0.9 * (1 - k); cx.translate(f.x, f.y + k * 6); if (f.flip) cx.scale(-1, 1); cx.rotate((f.flip ? -1 : 1) * k * 1.2); cx.drawImage(im, -f.s / 2, -f.s + 4, f.s, f.s * (1 - k * 0.3)); cx.restore(); } }
+    else if (f.kind === "muzzle") { const k = 1 - f.t / f.max; cx.strokeStyle = f.boss ? `rgba(255,90,58,${1 - k})` : `rgba(255,176,74,${1 - k})`; cx.lineWidth = 2; cx.beginPath(); cx.arc(f.x, f.y, 3 + k * 9, 0, Math.PI * 2); cx.stroke(); }
+    else if (f.kind === "slash") { const k = 1 - f.t / f.max; cx.strokeStyle = f.red ? `rgba(255,96,80,${1 - k})` : f.big ? `rgba(255,190,120,${1 - k})` : `rgba(255,248,224,${1 - k})`; cx.lineWidth = f.big ? 4 : 3; cx.beginPath(); cx.arc(f.x, f.y, f.r * (0.65 + k * 0.35), f.a - f.half, f.a + f.half); cx.stroke(); }
     else if (f.kind === "zap") { cx.strokeStyle = `rgba(200,230,255,${f.t * 6})`; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(f.x, f.y); const mx = (f.x + f.x2) / 2 + (Math.random() - 0.5) * 8, my = (f.y + f.y2) / 2 + (Math.random() - 0.5) * 8; cx.lineTo(mx, my); cx.lineTo(f.x2, f.y2); cx.stroke(); }
     else if (f.kind === "cry") { const k = 1 - f.t / 0.6; cx.strokeStyle = `rgba(255,216,74,${1 - k})`; cx.lineWidth = 2; cx.beginPath(); cx.arc(f.x, f.y, f.r * k, 0, Math.PI * 2); cx.stroke(); }
     else if (f.kind === "sparks") { const k = 1 - f.t / f.max; cx.fillStyle = f.col; cx.globalAlpha = 1 - k; for (const b of f.bits) cx.fillRect(Math.round(f.x + b.vx * k * f.max * 2.2) - 1, Math.round(f.y + (b.vy * k + 60 * k * k) * f.max * 2.2) - 1, 2, 2); cx.globalAlpha = 1; }
@@ -1265,7 +1292,7 @@ function drawMini() {
   const mc = $("mini"); if (!S?.room) { mc.hidden = true; return; } mc.hidden = false;
   const c = mc.getContext("2d"), g = S.room.g; c.clearRect(0, 0, mc.width, mc.height);
   c.save(); c.setTransform(mc.width / COLS, 0, 0, mc.height / ROWS, 0, 0);
-  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { const t = g[y]?.[x], col = t === "v" ? null : t === "#" || t === "b" ? "#4a4038" : t === "e" ? "#c8963a" : "#3b4a35"; if (!col) continue; c.fillStyle = col; c.fillRect(x, y, 1, 1); }
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { const t = g[y]?.[x], col = t === "v" ? null : t === "~" ? "#1d3550" : t === "t" ? "#1e3a1a" : t === "r" ? "#4a4040" : t === "#" || t === "b" ? "#4a4038" : t === "e" ? "#c8963a" : "#3b4a35"; if (!col) continue; c.fillStyle = col; c.fillRect(x, y, 1, 1); }
   if (S.kind === "dungeon") for (const m of S.mobs) { if (m.hp <= 0) continue; c.fillStyle = "rgba(190,60,50,.85)"; c.fillRect(m.x / T, m.y / T, 1, 1); }
   for (const q of othersNow()) { c.fillStyle = "#ffd24a"; c.fillRect(q.x / T - 0.5, q.y / T - 0.5, 2, 2); }
   const px = S.p.x / T, py = S.p.y / T; c.fillStyle = "#1a1a1a"; c.fillRect(px - 1, py - 1, 3, 3); c.fillStyle = "#fff"; c.fillRect(px - 0.5, py - 0.5, 2, 2);
