@@ -8,11 +8,13 @@
    which every bet endpoint calls. */
 
 import { json, fail, getSessionUser } from "../picks/_lib.js";
-import { ensurePot, publicPot, rangesFor, winnerOf, viewerStake } from "./_pot.js";
+import { ensurePot, publicPot, rangesFor, winnerOf, viewerStake, POT_OFF } from "./_pot.js";
 
 export async function onRequestGet(context) {
   const db = context.env.PICKS_DB;
   if (!db) return fail("NO_DB", "Casino is offline right now.", 503);
+  // Switched off: no reads at all. `off` is what the page draws from.
+  if (POT_OFF) return json({ ok: true, now: Date.now(), pot: { off: true, day: "", amount: 0, play: 0, ceiling: 1, floor: 0, players: 0, yours: 0, share: 0, status: "OFF" } });
   await ensurePot(db);
 
   const day = new URL(context.request.url).searchParams.get("day");

@@ -184,8 +184,14 @@ export const winnerOf = (ranges, draw) => ranges.find((r) => draw >= r.from && d
 
 /* ---------------- settlement ---------------- */
 
+/* OFF since 2026-10-03, by the owner: "people are abusing them". With this
+   set no pot is ever claimed or paid, and the page draws "Turned off due to
+   abuse" instead of the meter. Flip it back to reopen; nothing else moved. */
+export const POT_OFF = true;
+
 /** Called after a stake lands. Pays the day's pot if its line has been crossed. */
 export async function settlePot(env, db, now = Date.now()) {
+  if (POT_OFF) return null;
   await ensurePot(db);
   const pot = await potFor(db, now);
   if (!pot || pot.status !== "OPEN") return null;

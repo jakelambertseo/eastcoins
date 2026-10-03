@@ -7,7 +7,7 @@
 import { getSessionUser, json, fail } from "../picks/_lib.js";
 import { ensureGames, GAMES, chicagoDay, board, recordFor, myScore, champions, seedFor } from "./_games.js";
 import { ensureHelmet, parseGuesses, MAX_GUESSES } from "./helmet/_helmet.js";
-import { ensureGold, goldState, winnerFor } from "./gold/_gold.js";
+import { ensureGold, goldState, winnerFor, GOLD_OFF } from "./gold/_gold.js";
 
 export async function onRequestGet(context) {
   const db = context.env.PICKS_DB;
@@ -43,7 +43,7 @@ export async function onRequestGet(context) {
     if (g.key === "gold") {
       entry.open = Boolean(goldSeed && (await goldState(db, day, goldSeed, now)));
       entry.winner = goldWinner;
-      entry.state = goldWinner ? `${goldWinner.user.displayName} took it` : entry.open ? "It's up right now" : "Still to come";
+      entry.state = GOLD_OFF ? "Turned off due to abuse" : goldWinner ? `${goldWinner.user.displayName} took it` : entry.open ? "It's up right now" : "Still to come";
     }
     games.push(entry);
   }

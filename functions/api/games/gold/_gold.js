@@ -20,6 +20,10 @@ import { dayBounds } from "../../casino/_pot.js";
 import { fraction } from "../_games.js";
 
 export const WINDOW_MS = 2 * 60 * 1000;
+/* OFF since 2026-10-03, by the owner: "people are abusing them". The
+   button never opens (so the bell never carries it) and a press is
+   refused. Flip it back to reopen. */
+export const GOLD_OFF = true;
 // Somewhere between mid-morning and last orders, Central.
 const FROM_HOUR = 10;
 const TO_HOUR = 22.5;
@@ -69,6 +73,7 @@ export async function winnerFor(db, day) {
  * DUE — that would turn a surprise into an alarm clock.
  */
 export async function goldState(db, day, seed, now = Date.now()) {
+  if (GOLD_OFF) return null;
   const at = await triggerFor(day, seed);
   const open = now >= at && now < at + WINDOW_MS;
   if (!open) return null;

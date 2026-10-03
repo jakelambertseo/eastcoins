@@ -6,11 +6,12 @@
 
 import { getSessionUser, json, fail } from "../../picks/_lib.js";
 import { ensureGames, seedFor, chicagoDay, saveScore, board } from "../_games.js";
-import { ensureGold, triggerFor, winnerFor, scoreFor, WINDOW_MS } from "./_gold.js";
+import { ensureGold, triggerFor, winnerFor, scoreFor, WINDOW_MS, GOLD_OFF } from "./_gold.js";
 
 export async function onRequestPost(context) {
   const db = context.env.PICKS_DB;
   if (!db) return fail("NO_DB", "The Game Room is offline.", 503);
+  if (GOLD_OFF) return fail("OFF", "Turned off due to abuse.", 409);
   await ensureGames(db);
   await ensureGold(db);
 

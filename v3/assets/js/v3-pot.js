@@ -134,9 +134,29 @@
           : `${nums(pot.play)} ZC of play today. Play once and you're in the draw.`;
   }
 
+  /* Switched off (2026-10-03, by the owner: people were abusing it). Every
+     place the Jackpot is drawn says so, and nothing polls. Set OFF to false
+     when the server's POT_OFF is turned back. */
+  const OFF = true;
+  const OFF_TEXT = "Turned off due to abuse";
+  function drawOff(box, pill) {
+    box.replaceChildren();
+    if (pill) {
+      box.classList.add("paid");
+      const b = el("b", null, OFF_TEXT); b.style.fontSize = ".78em";
+      box.append(el("small", null, "Daily Jackpot"), b);
+      box.title = `The Daily Jackpot: ${OFF_TEXT}.`;
+      return;
+    }
+    const head = el("div", "pot-k");
+    head.append(el("span", "pot-dot off"), el("span", null, "The Daily Jackpot"));
+    box.append(head, el("p", "pot-note", OFF_TEXT + "."));
+  }
+
   function mount(container, { compact = false, pill = false } = {}) {
     const box = el(pill ? "span" : "section", pill ? "cas-jack" : `cf-card pot${compact ? " compact" : ""}`);
     container.append(box);
+    if (OFF) { drawOff(box, pill); return () => {}; }
     const last = cached();
     if (pill) drawPill(box, last);
     else if (last) draw(box, last, compact); else skeleton(box, compact);
