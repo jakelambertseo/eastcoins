@@ -213,3 +213,58 @@ export const MAPS = { tiers: 10, alvlAt: (tier) => 20 + tier * 4, note: "generat
 export const PERKS = { bolt: ["One more projectile", "every shot fires one more in a spread"], dmg: ["+15% damage", "everything you do"], speed: ["+10% move speed", "you and your dodge"], dodge: ["Quicker dodge", "the roll comes back 25% sooner"],
   hp: ["+25 health", "for the season"], leech: ["3% leech", "of damage dealt heals you"], blast: ["Bigger blast", "the area skill hits wider and comes back a second sooner"], rare: ["Lucky", "drops 20% more often"] };
 export const PERKS_MAX = 8;
+
+/* ------------------------------------------------------------ THE SAVE (2026-10-03). The arena is live, so real characters exist. Every saved character
+   carries `v`, the SAVE_V it was last written at; the server upgrades an older one step by step when it loads (arena-worker/src/arena.js
+   `migrate`), so the season's data can change without breaking anyone mid-month. Bump SAVE_V and add a step there for any change to the shape. */
+export const SAVE_V = 2;
+
+/* ------------------------------------------------------------ CRAFTING CURRENCY (the owner, 2026-10-03: "crowns and crafting items/currency, just like
+   diablo/poe/last epoch/chronicon"). Crowns are money; these are the orbs. Each does ONE thing to one item, they stack in their own pouch
+   (not the bag), they drop for each player separately, and they trade. EastScape's casino art: chips, dice, a marked card, a horseshoe.
+   weight: how often each is the one that drops (out of the total). Dex sells the common three for Crowns: the economy's main sink. */
+export const CHIPS = {
+  lucky:     { name: "Lucky Chip",   icon: "items/chip_free.png",   weight: 40, does: "makes a Plain item Lucky: one or two lines" },
+  dice:      { name: "Devil's Dice", icon: "items/devils_dice.png", weight: 24, does: "rerolls every line on a Lucky, Hot or Jackpot item" },
+  hot:       { name: "Hot Chip",     icon: "items/chip_red.png",    weight: 14, does: "makes a Lucky item Hot: three or four lines" },
+  black:     { name: "Black Chip",   icon: "items/chip_black.png",  weight: 10, does: "takes every line off an item: back to Plain" },
+  card:      { name: "Marked Card",  icon: "items/markedcard.png",  weight: 7,  does: "rerolls the numbers on an item's lines, keeping the lines" },
+  horseshoe: { name: "Horseshoe",    icon: "items/horseshoe.png",   weight: 4,  does: "adds one line to an item that has room for another" },
+  jackpot:   { name: "Jackpot Chip", icon: "items/chip_gold.png",   weight: 1,  does: "makes a Hot item a Jackpot: four or five lines" } };
+export const CHIP_CHANCE = 0.05;   // per kill, per player (bosses always drop two)
+/** which chip drops (or null), for one kill and one player */
+export function chipDrop(rnd = Math.random, { boss = false, find = 0 } = {}) {
+  if (!boss && rnd() >= CHIP_CHANCE * (1 + find)) return null;
+  let x = rnd() * Object.values(CHIPS).reduce((a, c) => a + c.weight, 0);
+  for (const [k, c] of Object.entries(CHIPS)) { x -= c.weight; if (x < 0) return k; }
+  return "lucky";
+}
+/* Dex, the Lounge's cashier: Crowns for the common chips (prices in Crowns). The economy's sink: Crowns come in from every kill and salvage. */
+export const SHOP = { lucky: 20, black: 40, dice: 60 };
+/* refunding tree points costs Crowns after level 10 (adding is always free): the second sink, and it makes a build a decision */
+export const RESPEC = { freeUntil: 10, perPoint: (level) => 5 + level * 2 };
+export const respecCost = (level, refunded) => (level < RESPEC.freeUntil ? 0 : Math.max(0, refunded) * RESPEC.perPoint(level));
+
+/* fresh lines for an item: n affixes its slot can roll at its level, never one it already has */
+function rollLines(slot, ilvl, n, have, rnd) {
+  const pool = Object.keys(AFFIXES).filter((id) => AFFIXES[id].slots.includes(slot) && affixTier(id, ilvl) && !have.some((l) => l.id === id)), out = [];
+  for (let i = 0; i < n && pool.length; i++) { const id = pool.splice(Math.floor(rnd() * pool.length), 1)[0], [, a, b] = affixTier(id, ilvl); out.push({ id, v: a + Math.floor(rnd() * (b - a + 1)) }); }
+  return out;
+}
+const countIn = ([lo, hi], rnd) => lo + Math.floor(rnd() * (hi - lo + 1));
+/** use a chip on an item. Returns { item } (a new object; id and history are the server's business) or { err } saying why not. */
+export function craft(it, k, rnd = Math.random) {
+  if (!CHIPS[k]) return { err: "That isn't a crafting item." };
+  if (!validItem(it)) return { err: "That item can't be crafted." };
+  const r = it.r | 0, lines = it.lines.map((l) => ({ ...l })), out = (nr, nl) => ({ item: { ...it, r: nl.length ? nr : 0, lines: nl } });
+  const name = RARITY[r].name;
+  if (k === "lucky") return r === 0 ? out(1, rollLines(it.slot, it.ilvl, countIn(RARITY[1].lines, rnd), [], rnd)) : { err: "A Lucky Chip only works on a Plain item." };
+  if (k === "hot") { if (r !== 1) return { err: "A Hot Chip only works on a Lucky item." }; const want = countIn(RARITY[2].lines, rnd); return out(2, lines.concat(rollLines(it.slot, it.ilvl, Math.max(0, want - lines.length), lines, rnd))); }
+  if (k === "jackpot") { if (r !== 2) return { err: "A Jackpot Chip only works on a Hot item." }; const want = countIn(RARITY[3].lines, rnd); return out(3, lines.concat(rollLines(it.slot, it.ilvl, Math.max(1, want - lines.length), lines, rnd))); }
+  if (r === 0) return { err: `A ${CHIPS[k].name} needs an item with lines: use a Lucky Chip first.` };
+  if (k === "black") return out(0, []);
+  if (k === "dice") return out(r, rollLines(it.slot, it.ilvl, countIn(RARITY[r].lines, rnd), [], rnd));
+  if (k === "card") return out(r, lines.map((l) => { const [, a, b] = affixTier(l.id, it.ilvl); return { id: l.id, v: a + Math.floor(rnd() * (b - a + 1)) }; }));
+  if (k === "horseshoe") { if (lines.length >= RARITY[r].lines[1]) return { err: `A ${name} item can't hold another line.` }; const add = rollLines(it.slot, it.ilvl, 1, lines, rnd); if (!add.length) return { err: "There's no line left this item can roll." }; return out(r, lines.concat(add)); }
+  return { err: "That does nothing." };
+}
