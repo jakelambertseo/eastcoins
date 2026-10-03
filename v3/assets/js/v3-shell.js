@@ -102,8 +102,17 @@
      fetched, so a visitor at the door downloads none of the code behind
      it. Every casino room is listed, not only the floor, because a link
      to a game page is as direct a way in as the floor is. Movies & TV
-     keeps its own check inside its view. */
+     keeps its own check inside its view.
+
+     The Sports home, the watch page and the Green Room joined on
+     2026-10-03: guests were spending the server on presence beats, the
+     schedule and the music room that members are meant to have. The watch
+     page is gated with the home page, or a pasted stream link would be
+     the way round it. */
   const MEMBERS_ONLY = {
+    events: ["EastCoin is for members", "Log in with Twitch to see tonight's games and watch with chat."],
+    watch: ["Watching is for members", "Log in with Twitch to watch this game with the community."],
+    music: ["The Green Room is for members", "Log in with Twitch to listen, request songs and react with the room."],
     multiview: ["MultiView is for members", "Log in with Twitch to watch several streams at once."],
     picks: ["Picks is for members", "Log in with Twitch to make picks and follow the ledger."],
     casino: ["The casino is for members", "Log in with Twitch to play with your ZCoins."],
@@ -111,8 +120,15 @@
   };
   for (const room of ["flip", "wheel", "race", "hilo", "mines", "plinko", "scratch", "grind", "roulette", "standing"]) MEMBERS_ONLY[room] = MEMBERS_ONLY.casino;
 
-  function memberGate(route) {
-    const [title, line] = MEMBERS_ONLY[route];
+  // True once the first session read has finished, whether it worked or
+  // not. A read that FAILED leaves the session unknown, and a door that
+  // waits for it then has to say so rather than wait again: re-awaiting
+  // an already-settled promise is a microtask loop that froze the tab.
+  let sessionSettled = false;
+
+  function memberGate(route, unsure) {
+    const [title, plain] = MEMBERS_ONLY[route];
+    const line = unsure ? "We couldn't check your login just now. Try again, or log in with Twitch." : plain;
     const box = document.createElement("section");
     box.className = "sc-gate";
     const logo = document.createElement("img");
@@ -123,6 +139,17 @@
     a.className = "login-btn"; a.textContent = "Log in with Twitch";
     a.href = "/api/picks/auth/twitch/start?returnTo=" + encodeURIComponent(location.pathname + location.search);
     box.append(logo, h, p, a);
+    if (unsure) {
+      const again = document.createElement("button");
+      again.type = "button"; again.className = "login-btn"; again.textContent = "Try again";
+      again.style.marginLeft = "8px";
+      again.addEventListener("click", () => {
+        again.disabled = true;
+        window.ECV3.sessionReady = loadSession();
+        window.ECV3.sessionReady.catch(() => null).then(() => render());
+      });
+      box.append(again);
+    }
     return box;
   }
 
@@ -401,6 +428,13 @@
     // Until the session read lands, hold the space rather than guess.
     const gated = Object.prototype.hasOwnProperty.call(MEMBERS_ONLY, state.route);
     const sessionKnown = state.session !== null;
+    if (gated && !sessionKnown && sessionSettled) {
+      if (currentView) { currentView.unmount?.(); currentView = null; }
+      els.view.replaceChildren(memberGate(state.route, true));
+      document.body.dataset.route = state.route;
+      document.title = TITLES[state.route] || "EastCoin";
+      return;
+    }
     if (gated && !sessionKnown) {
       if (currentView) { currentView.unmount?.(); currentView = null; }
       els.view.replaceChildren();
@@ -1046,4 +1080,5 @@
   // Views that draw differently for the person logged in (their own
   // profile) wait on this rather than racing the first session read.
   window.ECV3.sessionReady = loadSession();
+  window.ECV3.sessionReady.catch(() => null).then(() => { sessionSettled = true; });
 })();

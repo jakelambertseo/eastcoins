@@ -41,6 +41,10 @@ const json = (body, status = 200) => Response.json(body, { status, headers: { "C
 export async function onRequestPost(context) {
   const db = context.env.PICKS_DB;
   if (!db) return json({ ok: false }, 503);
+  // Members only (2026-10-03): a guest's beat is answered and not stored.
+  // The new page sends none; this is for tabs still running the old code.
+  const user = await getSessionUser(db, context.request);
+  if (!user) return json({ ok: true, guest: true });
   await ensure(db);
 
   let body = {};
@@ -54,7 +58,6 @@ export async function onRequestPost(context) {
   const srv = String(body.srv || "").replace(/[^a-zA-Z0-9_:.\/-]/g, "").slice(0, 40);
   if (!client) return json({ ok: false, code: "NO_CLIENT" }, 400);
 
-  const user = await getSessionUser(db, context.request);
   const now = Date.now();
   await db
     .prepare(`INSERT INTO site_presence (client_id, user_id, place, detail, ref, srv, seen_at) VALUES (?, ?, ?, ?, ?, ?, ?)

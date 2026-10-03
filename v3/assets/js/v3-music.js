@@ -909,9 +909,13 @@
   }
 
   /** Puts the dock up or takes it down, from what is wanted and where we are. */
+  // The Green Room is members only (2026-10-03), and so is its dock: a
+  // guest with the switch remembered from an old visit does not join the
+  // room from the corner. Until the session read lands, nothing connects.
+  function signedIn() { return Boolean(window.ECV3?.state?.session?.user?.login); }
   function syncDock() {
     syncDockButton();
-    const show = dockWanted && !pageMounted;
+    const show = dockWanted && !pageMounted && signedIn();
     if (!show) {
       teardownDock();
       // Nobody is listening from this tab any more: leave the room so the
@@ -2139,7 +2143,10 @@
     syncDockButton();
     // Remembered from last time: a page that is not the Green Room gets
     // the dock straight away. The Green Room itself mounts its own player.
-    if (dockWanted && window.ECV3.state?.route !== "music") syncDock();
+    if (dockWanted && window.ECV3.state?.route !== "music") {
+      syncDock();
+      Promise.resolve(window.ECV3.sessionReady).catch(() => null).then(() => { if (window.ECV3.state?.route !== "music") syncDock(); });
+    }
   }
   boot();
 

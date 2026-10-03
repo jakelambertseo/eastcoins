@@ -38,6 +38,13 @@
   // Hidden tabs still beat: someone with the Green Room in a background
   // tab is still in the Green Room.
   let lastSrv = "";
+  // Members only (2026-10-03): a guest is at the door of every page that
+  // beats, so a guest's tab sends nothing. The first beat waits for the
+  // session read rather than going out before anyone knows who this is.
+  function isGuest() {
+    const s = window.ECV3?.state?.session;
+    return s !== null && s !== undefined && !s.user?.login;
+  }
   async function beat(where, detail, ref, srv) {
     if (where && where !== lastWhere) { lastDetail = ""; lastRef = ""; lastSrv = ""; }
     if (srv !== undefined) lastSrv = String(srv || "");
@@ -47,6 +54,7 @@
     lastWhere = where || lastWhere || window.ECV3?.state?.route || "events";
     if (detail !== undefined) lastDetail = String(detail || "");
     if (ref !== undefined) lastRef = String(ref || "");
+    if (isGuest()) return;
     try {
       await fetch("/api/presence", {
         method: "POST", credentials: "include", keepalive: true,
@@ -81,8 +89,8 @@
 
   window.setInterval(() => beat(), BEAT_MS);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) beat(); });
-  // First beat as soon as this script is up, from the shell's route.
-  beat();
+  // First beat once the session is known, from the shell's route.
+  Promise.resolve(window.ECV3?.sessionReady).catch(() => null).then(() => beat());
 
   /* ---------------------------------------------------------- the strip */
 
