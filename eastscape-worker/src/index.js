@@ -1115,7 +1115,7 @@ export class World {
     else if (wtOb && wtOb.gp && !G.HOLD.kits) { act = this.kitGrappleStart(S, pl, wtOb); if (!act) return; }   /* (2026-10-02, v1.2) FIELD KITS: kits.js */
     else if (m.kind === "snare" && !G.HOLD.kits) { act = this.kitSnareStart(S, pl, m); if (!act) return; }
     else if (m.kind === "pick" || (wtOb && (wtOb.sc || wtOb.bw || wtOb.t === "lockbox") && !G.HOLD.thief2)) { act = this.wtStart(S, pl, m, f); if (!act) return; }
-    else if (m.kind === "pvp") { if (!S.def.pvp) return; const T = this.pls.get(String(m.id)); if (!T || T === pl || T.C.scene !== S.key) return; act = { kind: "pvp", id: T.id, x: T.x, y: T.y, name: T.name }; }
+    else if (m.kind === "pvp") { if (!S.def.pvp) return; const T = this.pls.get(String(m.id)); if (!T || T === pl || T.C.scene !== S.key) return; act = { kind: "pvp", id: T.id, x: T.x, y: T.y, name: T.name, reach: G.reachOfHeld(C) }; }   /* (2026-10-03, the owner, with a bow: "it seems like its walking me in close") the walk below uses act.reach, and a player target had none: every archer and mage was walked to arm's length before pvpSwing ever checked their range. Now the held weapon's reach, as a monster target gets. */
     else if (m.kind === "ground") { const it = S.ground.find((x) => x.id === m.id); if (it) act = { kind: "ground", id: it.id, x: it.x, y: it.y, name: G.ITEMS[it.k].name }; }
     else if (m.kind === "mob") {
       const mob = S.mobs.find((x) => x.id === m.id && !x.dead); if (!mob) return;
