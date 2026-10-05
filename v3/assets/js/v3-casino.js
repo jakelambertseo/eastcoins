@@ -368,7 +368,7 @@
         clock = `${left}s`;
         hot = inBets;
       } else if (g.work) {
-        phase = g.inRound ? `${g.inRound} on shift` : "Clock in any time";
+        phase = g.inRound ? `Open · ${g.inRound} begging` : "Open";
         hot = Boolean(g.inRound);
       } else if (g.pvp) {
         if (g.lobby) {
@@ -388,11 +388,7 @@
       r.clock.textContent = clock;
 
       const cap = Number(data.me?.playsCap || 0);
-      if (g.work && g.closed) {
-        // (2026-09-29) The Grind is closed: the card says so, and its page points at EastScape.
-        r.plays.hidden = false; r.plays.textContent = "Closed"; r.plays.classList.add("out");
-        r.plays.title = "The Grind is closed. Check out EastScape instead.";
-      } else if (g.work) {
+      if (g.work) {
         // Not plays: whether a shift is open, and if not, when it will be.
         const gr = data.me?.grind;
         r.plays.hidden = !gr;
@@ -401,7 +397,7 @@
           const waits = jobs.map((j) => (j.nextShiftAt ? Date.parse(j.nextShiftAt) - now : 0));
           const open = waits.filter((w) => w <= 0).length;
           const soonest = Math.min(...waits.filter((w) => w > 0));
-          r.plays.textContent = gr.working ? "On a shift" : open ? (jobs.length === 1 ? "Shift open" : `${open} job${open === 1 ? "" : "s"} open`) : `Next shift in ${soonest >= 3600000 ? `${Math.floor(soonest / 3600000)}h ${Math.ceil((soonest % 3600000) / 60000)}m` : `${Math.ceil(soonest / 60000)}m`}`;
+          r.plays.textContent = gr.working ? "On a shift" : open ? (jobs.length === 1 ? "Open" : `${open} job${open === 1 ? "" : "s"} open`) : `Next shift in ${soonest >= 3600000 ? `${Math.floor(soonest / 3600000)}h ${Math.ceil((soonest % 3600000) / 60000)}m` : `${Math.ceil(soonest / 60000)}m`}`;
           r.plays.classList.toggle("out", !open && !gr.working);
           r.plays.title = "1 ZC a line, up to 15 ZC an hour, for anyone under 50 ZC.";
         }

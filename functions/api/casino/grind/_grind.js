@@ -16,8 +16,8 @@
    What keeps it honest. This is the only thing in the casino that
    makes ZCoins out of nothing, so:
 
-     · the SERVER grades every line (typedRight) and takes at most one
-       per msPerUnit (2.5 s, a very fast typist), so a script can work
+     · the SERVER grades every line (typedRight, an exact match) and takes at most one
+       per msPerUnit (1 s: nobody types the line that fast, so only a script ever meets it), so a script can work
        it but never faster than a person. The page refuses pastes and any
        text that lands several characters at once; the clock and the cap
        are what actually hold;
@@ -49,14 +49,13 @@ const HOUR_MS = 60 * 60 * 1000;
 
 export const PHRASE = "I am broke as shit and need Zcoins";
 export const JOBS = {
-  type: { key: "type", name: "Beg for ZCoins", units: HOUR_CAP / PAY_PER_LINE, unitName: "lines", pay: PAY_PER_LINE, hourCap: HOUR_CAP, msPerUnit: 2500, phrase: PHRASE }
+  type: { key: "type", name: "Beg for ZCoins", units: HOUR_CAP / PAY_PER_LINE, unitName: "lines", pay: PAY_PER_LINE, hourCap: HOUR_CAP, msPerUnit: 1000, phrase: PHRASE }
 };
 export const DEFAULT_JOB = "type";
 export const jobOf = (key) => JOBS[String(key || DEFAULT_JOB)] || null;
 
-/** Did they type the line? Case, spacing, a curly apostrophe and full stops or ! at the end don't matter; every word does. */
-const norm = (t) => String(t || "").toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, " ").trim().replace(/[.!]+$/, "").trim();
-export const typedRight = (text) => norm(text) === norm(PHRASE);
+/** Did they type the line? EXACTLY, capitals and single spaces included (the owner, 2026-10-05: "disallow errors, it must be typed correctly"). */
+export const typedRight = (text) => String(text || "") === PHRASE;
 
 let ready = false;
 export async function ensureGrind(db) {

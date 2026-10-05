@@ -23,7 +23,7 @@
 
   const K = window.ECCasino;
   const POLL_MS = 20000;
-  const DEFAULT_JOB = { key: "type", name: "Beg for ZCoins", units: 15, unitName: "lines", pay: 1, hourCap: 15, msPerUnit: 2500, phrase: "I am broke as shit and need Zcoins" };
+  const DEFAULT_JOB = { key: "type", name: "Beg for ZCoins", units: 15, unitName: "lines", pay: 1, hourCap: 15, msPerUnit: 1000, phrase: "I am broke as shit and need Zcoins" };
   // Paydays from the jobs that were retired still show in the list.
   const OLD_JOBS = { clicks: "100 clicks", sort: "chips sorted" };
 
@@ -51,9 +51,8 @@
   const nextAt = () => (state().nextShiftAt ? Date.parse(state().nextShiftAt) : 0);
   const cooling = () => !shift() && nextAt() > Date.now();
 
-  // The same rule the server uses (typedRight in _grind.js): every word, case and spacing aside.
-  const norm = (t) => String(t || "").toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, " ").trim().replace(/[.!]+$/, "").trim();
-  const isRight = (t) => norm(t) === norm(job().phrase);
+  // The same rule the server uses (typedRight in _grind.js): exactly the line, capitals and spaces included.
+  const isRight = (t) => String(t || "") === job().phrase;
 
   function setState(patch) {
     if (!data?.me) return;
@@ -120,6 +119,16 @@
       return;
     }
     prevLen = len;
+    // No errors allowed: a character that isn't the next one in the line
+    // throws the line away, and it is typed again from the start.
+    if (!job().phrase.startsWith(refs.input.value)) {
+      refs.input.value = "";
+      prevLen = 0;
+      flash(refs.box, "bad");
+      paintLine(true);
+      refs.hint.textContent = "Typo — start the line again. It has to be exact, capitals and all.";
+      return;
+    }
     paintLine();
     if (isRight(refs.input.value)) send();
   }
@@ -208,12 +217,12 @@
   }
 
   /* The phrase above the box, lit up as far as what's typed matches it. */
-  function paintLine() {
+  function paintLine(keepHint = false) {
     if (!refs.phrase) return;
     const target = job().phrase;
     const typed = refs.input?.value || "";
     let ok = 0;
-    while (ok < typed.length && ok < target.length && typed[ok].toLowerCase() === target[ok].toLowerCase()) ok += 1;
+    while (ok < typed.length && ok < target.length && typed[ok] === target[ok]) ok += 1;
     const wrong = typed.length > ok;
     refs.phrase.replaceChildren(
       K.el("span", "grd-typed", target.slice(0, ok)),
@@ -221,7 +230,7 @@
       K.el("span", null, target.slice(ok + 1))
     );
     refs.box.classList.toggle("off", wrong);
-    if (!holdTimer || !isRight(typed)) refs.hint.textContent = wrong ? "Backspace — that's not what it says." : "Type the line. It sends itself when it's right.";
+    if (!keepHint && (!holdTimer || !isRight(typed))) refs.hint.textContent = "Type it exactly. One typo and the line starts over.";
   }
 
   /* ---------------------------------------------------------- page */
@@ -267,8 +276,11 @@
     const stage = K.el("section", "cf-stage grd-stage");
     refs.phase = K.el("div", "cf-phase", "");
 
+    /* (2026-10-05) No big round button any more: it was the click game's,
+       and it made the page look like that game. The line and the box are
+       always on screen; one ordinary button under them clocks in. */
     const shop = K.el("div", "grd-shop grd-typeshop");
-    refs.btn = K.el("button", "grd-btn");
+    refs.btn = K.el("button", "btn primary grd-start");
     refs.btn.type = "button";
     refs.btnLabel = K.el("b", null, "Clock in");
     refs.btnSub = K.el("small", null, "");
@@ -296,10 +308,10 @@
     refs.floaters.setAttribute("aria-hidden", "true");
     refs.box.append(refs.input, refs.floaters);
     refs.hint = K.el("small", "grd-hint", "");
-    refs.desk.append(refs.phrase, refs.box, refs.hint);
+    refs.desk.append(refs.phrase, refs.box, refs.hint, refs.btn);
 
     refs.meter = meter();
-    shop.append(refs.btn, refs.desk, refs.meter.node);
+    shop.append(refs.desk, refs.meter.node);
 
     refs.note = K.el("p", "cf-note grd-note", "");
     stage.append(refs.phase, shop, refs.note);
@@ -319,9 +331,9 @@
     const list = K.el("ul", "grd-rules");
     for (const line of [
       `Under ${cfg().brokeLine} ZC when you clock in.`,
-      `Type "${DEFAULT_JOB.phrase}". Every word counts; capitals don't.`,
+      `Type "${DEFAULT_JOB.phrase}" exactly, capitals and all. One typo and that line starts over.`,
       `Every right line pays ${DEFAULT_JOB.pay} ZC on the spot, up to ${DEFAULT_JOB.hourCap} ZC in any hour.`,
-      `The foreman reads one line every couple of seconds. No pasting — type it.`
+      `No pasting — type it.`
     ]) list.append(K.el("li", null, line));
     rules.append(list);
 
@@ -390,8 +402,8 @@
     const me = data?.me || null;
     if (data?.config?.closed) return { label: "Closed", sub: "", disabled: true, phase: "Not taking shifts right now", phaseCls: "bad", note: "The Grind is closed for now." };
     if (!data?.config?.canWork) return { label: "Closed", sub: "", disabled: true, phase: "Not taking shifts right now", phaseCls: "bad", note: "The wallet isn't connected, so there's nobody to pay you. Check back soon." };
-    if (cooling()) return { label: mmss(nextAt() - Date.now()), sub: "until a line pays again", disabled: true, phase: "That's the hour", phaseCls: "", note: `You've begged your ${fmt(cap())} ZC this hour. Go spend it.` };
-    if (me?.eligible === false) return { label: "Not today", sub: `for under ${c.brokeLine} ZC`, disabled: true, phase: "You're doing fine", phaseCls: "", note: `You've got ${fmt(me.balance)} ZC. The Grind is for anyone under ${c.brokeLine} — come back if the tables go cold.` };
+    if (cooling()) return { label: `Next line pays in ${mmss(nextAt() - Date.now())}`, sub: "", disabled: true, phase: "That's the hour", phaseCls: "", note: `You've begged your ${fmt(cap())} ZC this hour. Go spend it.` };
+    if (me?.eligible === false) return { label: "Not today", sub: `Only for under ${c.brokeLine} ZC`, disabled: true, phase: "You're doing fine", phaseCls: "", note: `You've got ${fmt(me.balance)} ZC. The Grind is for anyone under ${c.brokeLine} — come back if the tables go cold.` };
     const left = hour().left ?? cap();
     return { label: "Clock in", sub: `${j.pay} ZC a line · ${left} left this hour`, disabled: busy, phase: "Ready when you are", phaseCls: "open", note: `Checked when you clock in: you need to be under ${c.brokeLine} ZC.` };
   }
@@ -407,7 +419,9 @@
     const h = hour();
     paintMeter(refs.meter, Math.min(cap(), Number(h.earned || 0)), cap(), j.pay);
     refs.btn.hidden = Boolean(s);
-    refs.desk.hidden = !s;
+    refs.input.disabled = !s;
+    refs.input.placeholder = s ? "" : "Clock in to start typing";
+    refs.hint.hidden = !s;
     if (s) {
       refs.phase.textContent = "On shift";
       refs.phase.className = "cf-phase open";
@@ -415,7 +429,6 @@
     } else {
       const f = idleFace();
       refs.btn.disabled = f.disabled;
-      refs.btn.classList.toggle("resting", f.disabled && !busy);
       refs.btnLabel.textContent = f.label;
       refs.btnSub.textContent = f.sub;
       refs.btn.setAttribute("aria-label", f.label);

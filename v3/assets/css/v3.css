@@ -5420,6 +5420,10 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .grd-typebox .grd-floaters{inset:auto 0 100% 0;height:0}
 .grd-typebox .grd-float{top:0}
 .grd-hint{text-align:center;color:var(--muted);font-size:.8rem;min-height:1.2em}
+.grd-start{flex:none;height:auto;min-height:46px;padding:10px 18px;gap:10px;font-size:1rem;flex-wrap:wrap}
+.grd-start small{font-weight:700;font-size:.78rem;opacity:.8}
+.grd-start:disabled{cursor:default;color:var(--muted);border-color:var(--line);background:var(--panel-2)}
+.grd-input:disabled{opacity:.55;cursor:not-allowed}
 @keyframes grd-ok{0%{box-shadow:0 0 0 3px rgba(240,180,41,.9)}100%{box-shadow:0 0 0 1px var(--line)}}
 @keyframes grd-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 @media (prefers-reduced-motion:reduce){.grd-typebox.ok,.grd-typebox.bad{animation:none}}
