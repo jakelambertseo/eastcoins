@@ -493,7 +493,10 @@
   }
 
   const NFL_MONTHS = new Set([9, 10, 11, 12, 1]);
+  /* (2026-10-05) Off with the Sports page's football-only mode (FOOTBALL_ONLY in v3-events.js): baseball is on every day,
+     so the "no betting on baseball" note and the NFL-only wording go. Return the day test below to bring them back. */
   function nflDayNow() {
+    return false;
     const ct = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }));
     return (ct.getDay() === 0 || ct.getDay() === 1) && NFL_MONTHS.has(ct.getMonth() + 1);
   }

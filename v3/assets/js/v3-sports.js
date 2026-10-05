@@ -93,7 +93,9 @@
      MultiView picker) so every count agrees, and again in grouped() so
      nothing can slip past. */
 
-  const HIDDEN_SPORTS = new Set(["football", "motor-sports", "rugby", "cricket"]);
+  /* Empty since 2026-10-05 (the owner: "turn on all baseball games and other streams"): soccer, motorsport, rugby and
+     cricket show again. It held "football" (soccer), "motor-sports", "rugby", "cricket"; put keys back to hide them. */
+  const HIDDEN_SPORTS = new Set([]);
 
   // 24/7 cartoon channels the provider lists beside the games (2026-09-16).
   // Matched on the title, so a new one of these needs its name added here.

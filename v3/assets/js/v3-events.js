@@ -367,7 +367,11 @@
     const now = Date.now();
     return now >= start - NFL_LEAD && now - start < 4 * 60 * 60 * 1000;
   }
+  /* OFF since 2026-10-05, by the owner: "turn on all baseball games and other streams". Every stream shows every day,
+     football days included. Set it back to true to bring the football-only Sundays and Mondays back. */
+  const FOOTBALL_ONLY = false;
   function nflSundayNow() {
+    if (!FOOTBALL_ONLY) return false;
     try { if (new URL(location.href).searchParams.get("allsports") === "1") return false; } catch { /* fine */ }
     const ct = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }));
     // Sundays and Mondays. WHEN on those days is decided by the games themselves (nflGameOnOrSoon, at the call site), so
