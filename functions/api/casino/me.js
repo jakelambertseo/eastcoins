@@ -81,7 +81,7 @@ export async function onRequestGet(context) {
           jobs[k] = { nextShiftAt: next ? new Date(next).toISOString() : null, working: Boolean(working) };
         }));
         // Top-level fields are the first job, for a floor page from before the second.
-        me.grind = { nextShiftAt: jobs.clicks.nextShiftAt, working: Object.values(jobs).some((j) => j.working), jobs };
+        me.grind = { nextShiftAt: jobs.type.nextShiftAt, working: Object.values(jobs).some((j) => j.working), jobs };
       } catch { me.grind = null; }
     }
   } catch { me = null; }

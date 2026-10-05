@@ -401,9 +401,9 @@
           const waits = jobs.map((j) => (j.nextShiftAt ? Date.parse(j.nextShiftAt) - now : 0));
           const open = waits.filter((w) => w <= 0).length;
           const soonest = Math.min(...waits.filter((w) => w > 0));
-          r.plays.textContent = gr.working ? "On a shift" : open ? `${open} job${open === 1 ? "" : "s"} open` : `Next job in ${soonest >= 3600000 ? `${Math.floor(soonest / 3600000)}h ${Math.ceil((soonest % 3600000) / 60000)}m` : `${Math.ceil(soonest / 60000)}m`}`;
+          r.plays.textContent = gr.working ? "On a shift" : open ? (jobs.length === 1 ? "Shift open" : `${open} job${open === 1 ? "" : "s"} open`) : `Next shift in ${soonest >= 3600000 ? `${Math.floor(soonest / 3600000)}h ${Math.ceil((soonest % 3600000) / 60000)}m` : `${Math.ceil(soonest / 60000)}m`}`;
           r.plays.classList.toggle("out", !open && !gr.working);
-          r.plays.title = "One shift of each job every 4 hours, for anyone under 50 ZC.";
+          r.plays.title = "1 ZC a line, up to 15 ZC an hour, for anyone under 50 ZC.";
         }
       } else if (cap && data.me?.played) {
         const left = Math.max(0, cap - Number(data.me.played[g.key] || 0));

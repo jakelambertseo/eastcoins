@@ -8,7 +8,7 @@
 
 import { getSessionUser, readBalance, walletWritesEnabled } from "../../picks/_lib.js";
 import { ensureSchema, touchPresence, roomFor } from "../_engine.js";
-import { ensureGrind, workingShift, nextShiftAt, recordFor, publicShift, config, JOBS, BROKE_LINE } from "./_grind.js";
+import { ensureGrind, workingShift, nextShiftAt, recordFor, publicShift, hourFor, config, JOBS, BROKE_LINE } from "./_grind.js";
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 const GRIND = { key: "grind" };
@@ -26,9 +26,9 @@ export async function onRequestGet(context) {
   const [room, recent] = await Promise.all([
     roomFor(db, GRIND, now),
     db.prepare(
-      `SELECT s.id, s.job, s.payout, s.done_at, u.twitch_id, u.twitch_login, u.display_name, u.avatar_url
+      `SELECT s.id, s.job, s.payout, s.done_at, s.updated_at, u.twitch_id, u.twitch_login, u.display_name, u.avatar_url
          FROM grind_shifts s JOIN users u ON u.twitch_id = s.user_id
-        WHERE s.status = 'PAID' ORDER BY s.done_at DESC LIMIT 20`
+        WHERE s.payout > 0 ORDER BY s.updated_at DESC LIMIT 20`
     ).all()
   ]);
 
@@ -36,11 +36,12 @@ export async function onRequestGet(context) {
   if (user) {
     const wantBalance = new URL(context.request.url).searchParams.get("balance") === "1";
     const keys = Object.keys(JOBS);
-    const [shifts, nexts, record, balance] = await Promise.all([
+    const [shifts, nexts, record, balance, hour] = await Promise.all([
       Promise.all(keys.map((k) => workingShift(db, user.id, k))),
       Promise.all(keys.map((k) => nextShiftAt(db, user.id, k, now))),
       recordFor(db, user.id),
-      wantBalance ? readBalance(context.env, user.login) : Promise.resolve(undefined)
+      wantBalance ? readBalance(context.env, user.login) : Promise.resolve(undefined),
+      hourFor(db, user.id, now)
     ]);
     const jobs = {};
     for (let i = 0; i < keys.length; i += 1) {
@@ -49,9 +50,9 @@ export async function onRequestGet(context) {
     me = {
       id: String(user.id),
       jobs,
-      // The first job at the top level, for a page loaded before the second job.
-      shift: jobs.clicks.shift,
-      nextShiftAt: jobs.clicks.nextShiftAt,
+      hour,
+      shift: jobs.type.shift,
+      nextShiftAt: jobs.type.nextShiftAt,
       ...record
     };
     // Only present when it was asked for, so the page can tell "not read"
@@ -72,7 +73,7 @@ export async function onRequestGet(context) {
       id: r.id,
       job: r.job || "clicks",
       payout: Number(r.payout),
-      at: String(r.done_at).replace(" ", "T") + "Z",
+      at: String(r.done_at || r.updated_at).replace(" ", "T") + "Z",
       user: { id: String(r.twitch_id), login: String(r.twitch_login).toLowerCase(), displayName: String(r.display_name || r.twitch_login), avatar: String(r.avatar_url || "") }
     }))
   });

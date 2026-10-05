@@ -3,66 +3,62 @@
 
      /?view=grind
 
-   Work, not a bet. Anyone under the broke line can clock in to either
-   job, once an hour each:
+   Work, not a bet. Anyone under the broke line can clock in and beg:
 
-     Clock in        press one button a hundred times — 5 ZC
-     Sort the Chips  put 35 chips in the tray for their suit — 15 ZC
+     Beg for ZCoins  type "I am broke as shit and need Zcoins" — 1 ZC a
+                     line, up to 15 ZC in any rolling hour
 
-   The server does the counting for both. Clicks are counted here the
-   moment they happen so the bar feels instant and handed in in small
-   batches; only what the server CREDITS leaves the queue, so the bar
-   never runs backwards. Chips go one at a time: the server grades each
-   and tells the page the next one, and a wrong tray locks the trays for
-   a second.
+   (2026-10-05) It replaced both earlier jobs, Clock in (100 clicks) and
+   Sort the Chips, which were deleted. The server grades every line and
+   takes at most one per msPerUnit, so the page checks a line before it
+   sends it (a typo never costs a request), sends it the moment it
+   matches, and holds a fast typist's next line until the server will
+   take it. No pasting: the paste and drop events are refused, and any
+   input that lands more than a couple of characters at once (a paste
+   by any route, autofill, an extension) empties the box. The server's
+   clock and cap are what actually hold.
    ============================================================ */
 (() => {
   "use strict";
 
   const K = window.ECCasino;
   const POLL_MS = 20000;
-  const FLUSH_MS = 350;
-  const SUITS = ["♠", "♥", "♦", "♣"];
-  const SUIT_NAMES = ["spades", "hearts", "diamonds", "clubs"];
-  const DEFAULT_JOBS = {
-    clicks: { key: "clicks", name: "Clock in", units: 100, unitName: "clicks", pay: 5, msPerUnit: 120, batchMax: 25 },
-    sort: { key: "sort", name: "Sort the Chips", units: 35, unitName: "chips", pay: 15, msPerUnit: 300, penaltyMs: 1000 }
-  };
+  const DEFAULT_JOB = { key: "type", name: "Beg for ZCoins", units: 15, unitName: "lines", pay: 1, hourCap: 15, msPerUnit: 2500, phrase: "I am broke as shit and need Zcoins" };
+  // Paydays from the jobs that were retired still show in the list.
+  const OLD_JOBS = { clicks: "100 clicks", sort: "chips sorted" };
 
   let root = null;
   let refs = {};
   let data = null;
-  let job = null;           // the job on screen
   let pollTimer = 0;
   let tickTimer = 0;
-  let flushTimer = 0;
-  let queued = 0;           // clicks made here that the server has not credited
-  let inFlight = false;
+  let holdTimer = 0;
   let busy = false;
-  let sorting = false;      // a chip is on its way to the server
-  let lastSortAt = 0;
-  let lockUntil = 0;        // a wrong tray locks the trays until here
-  let lockTimer = 0;
-  let onKey = null;
+  let sending = false;
+  let lastSentAt = 0;
   let toast = () => {};
   let pop = () => {};
   let ledgerPage = 1;
+  let prevLen = 0;          // the box's length before the last input, to catch text that arrives all at once
 
   const fmt = K.fmt;
-  const cfg = () => data?.config || { brokeLine: 50, cooldownMinutes: 240, jobs: DEFAULT_JOBS };
-  /* "every 4 hours" / "an hour", from whatever the server says the cooldown is */
-  const every = () => { const m = Number(cfg().cooldownMinutes) || 240; return m === 60 ? "an hour" : m % 60 === 0 ? `every ${m / 60} hours` : `every ${m} minutes`; };
-  const waitText = () => { const m = Number(cfg().cooldownMinutes) || 240; return m % 60 === 0 ? `${m / 60} hour${m === 60 ? "" : "s"}` : `${m} minutes`; };
-  const jobCfg = (k) => cfg().jobs?.[k] || DEFAULT_JOBS[k];
-  const jobState = (k) => data?.me?.jobs?.[k] || { shift: null, nextShiftAt: null };
-  const shiftOf = (k) => jobState(k).shift || null;
-  const nextAtOf = (k) => (jobState(k).nextShiftAt ? Date.parse(jobState(k).nextShiftAt) : 0);
-  const coolingOf = (k) => !shiftOf(k) && nextAtOf(k) > Date.now();
+  const cfg = () => data?.config || { brokeLine: 50, hourCap: 15, payPerLine: 1, jobs: { type: DEFAULT_JOB } };
+  const cap = () => Number(cfg().hourCap) || DEFAULT_JOB.hourCap;
+  const hour = () => data?.me?.hour || { earned: 0, cap: cap(), left: cap() };
+  const job = () => cfg().jobs?.type || DEFAULT_JOB;
+  const state = () => data?.me?.jobs?.type || { shift: null, nextShiftAt: null };
+  const shift = () => state().shift || null;
+  const nextAt = () => (state().nextShiftAt ? Date.parse(state().nextShiftAt) : 0);
+  const cooling = () => !shift() && nextAt() > Date.now();
 
-  function setJobState(k, patch) {
+  // The same rule the server uses (typedRight in _grind.js): every word, case and spacing aside.
+  const norm = (t) => String(t || "").toLowerCase().replace(/[‘’]/g, "'").replace(/\s+/g, " ").trim().replace(/[.!]+$/, "").trim();
+  const isRight = (t) => norm(t) === norm(job().phrase);
+
+  function setState(patch) {
     if (!data?.me) return;
     data.me.jobs = data.me.jobs || {};
-    data.me.jobs[k] = { ...jobState(k), ...patch };
+    data.me.jobs.type = { ...state(), ...patch };
   }
 
   async function load({ balance = false } = {}) {
@@ -70,15 +66,10 @@
     try {
       const payload = await fetch(`/api/casino/grind/state${balance ? "?balance=1" : ""}`, { credentials: "include" }).then((r) => r.json());
       if (!payload?.ok) throw new Error(payload?.code || "state");
-      // A balance read is sticky: a plain poll does not carry one, and
-      // eligibility should not flicker back to "unknown" between them.
+      // A balance read is sticky: a plain poll does not carry one.
       const keep = data?.me && data.me.balance !== undefined ? { balance: data.me.balance, eligible: data.me.eligible } : null;
       data = payload;
       if (data.me && data.me.balance === undefined && keep) Object.assign(data.me, keep);
-      // On arrival, open the job that has a shift running.
-      if (!job) job = shiftOf("sort") && !shiftOf("clicks") ? "sort" : "clicks";
-      const s = shiftOf("sort");
-      if (s?.waitMs) holdTrays(s.waitMs);
       render();
     } catch {
       if (refs.status) refs.status.textContent = "Reconnecting…";
@@ -93,161 +84,120 @@
     }).then((r) => r.json()).catch(() => null);
   }
 
-  async function clockIn(k) {
-    if (busy) return;
+  async function clockIn() {
+    if (busy || shift() || cooling() || data?.me?.eligible === false) return;
     busy = true; render();
     try {
-      const payload = await post("start", { job: k });
+      const payload = await post("start", { job: "type" });
       if (!data) return;
       if (!payload?.ok) {
         toast(payload?.message || "Couldn't clock you in.", true);
         await load({ balance: true });
         return;
       }
-      setJobState(k, { shift: payload.shift });
+      setState({ shift: payload.shift });
       if (payload.balance != null) { data.me.balance = payload.balance; data.me.eligible = true; }
-      lastSortAt = Date.now();
-      toast(k === "sort" ? `Belt's running. ${jobCfg("sort").units} chips and it's payday.` : "Clocked in. A hundred and it's payday.");
-    } finally { busy = false; if (data) render(); }
-  }
-
-  /** The job's main button when no shift is running: clock in, or nothing while it cannot. */
-  function startPressed(k) {
-    if (shiftOf(k)) return;
-    // The last clicks of a shift land after payday but before the button
-    // has redrawn; they must not try to clock in again.
-    if (coolingOf(k) || data?.me?.eligible === false) return;
-    clockIn(k);
-  }
-
-  /* ---------------------------------------------------------- clocking in */
-
-  function press() {
-    return;   /* (2026-09-29) The Grind is closed: see CLOSED in functions/api/casino/grind/_grind.js */
-    const s = shiftOf("clicks");
-    if (!s) { startPressed("clicks"); return; }
-    const room = jobCfg("clicks").units - s.clicks - queued;
-    if (room <= 0) return;
-    queued += 1;
-    bump();
-    render();
-    if (queued >= jobCfg("clicks").batchMax) flush();
-    else if (!flushTimer) flushTimer = window.setTimeout(flush, FLUSH_MS);
-  }
-
-  async function flush() {
-    window.clearTimeout(flushTimer);
-    flushTimer = 0;
-    const s = shiftOf("clicks");
-    if (!s || !queued || inFlight) return;
-    const sent = Math.min(queued, jobCfg("clicks").batchMax);
-    inFlight = true;
-    let retryIn = FLUSH_MS;
-    try {
-      const payload = await post("work", { id: s.id, clicks: sent });
-      if (!data) return;
-      // A dropped connection loses nothing: the clicks stay queued.
-      if (!payload) { retryIn = 2000; return; }
-      queued = Math.max(0, queued - Number(payload.credited || 0));
-      if (payload.shift) setJobState("clicks", { shift: payload.shift.status === "WORKING" ? payload.shift : null });
-      const left = shiftOf("clicks") ? jobCfg("clicks").units - shiftOf("clicks").clicks : 0;
-      queued = Math.min(queued, Math.max(0, left));
-      if (payload.throttled && !payload.credited) retryIn = 400;
-      if (payload.paid) {
-        queued = 0;
-        setJobState("clicks", { shift: null, nextShiftAt: payload.nextShiftAt || null });
-        render();
-        if (payload.balance != null) window.ECV3?.setWallet?.(payload.balance);
-        pop({ won: true, big: false, amount: payload.payout, headline: "Payday", detail: `A hundred clicks, ${fmt(payload.payout)} ZC. Next shift in ${waitText()}.` });
-        window.ECV3?.refreshSession?.();
-        await load({ balance: true });
-      } else if (payload.code === "PAYOUT_FAILED") {
-        queued = 0;
-        setJobState("clicks", { shift: null, nextShiftAt: payload.nextShiftAt || null });
-        toast(payload.message, true);
-      }
+      lastSentAt = Date.now();
+      toast(`Start begging. Every line is ${job().pay} ZC, up to ${cap()} this hour.`);
     } finally {
-      inFlight = false;
-      if (data) {
-        render();
-        if (queued && shiftOf("clicks")) flushTimer = window.setTimeout(flush, retryIn);
-      }
+      busy = false;
+      if (data) { render(); refs.input?.focus(); }
     }
   }
 
-  /* The button gives back something for every press: a squash and a
-     "+1" that floats off, capped so a fast clicker cannot pile nodes up. */
-  function bump() {
-    const b = refs.btn;
-    if (!b) return;
-    b.classList.remove("hit");
-    void b.offsetWidth;
-    b.classList.add("hit");
-    if (refs.floaters.childElementCount > 12) return;
-    const f = K.el("span", "grd-float", "+1");
-    f.style.setProperty("--dx", `${Math.round((Math.random() - 0.5) * 90)}px`);
-    f.addEventListener("animationend", () => f.remove());
-    refs.floaters.append(f);
-  }
+  /* ---------------------------------------------------------- typing */
 
-  /* ---------------------------------------------------------- sorting */
-
-  function holdTrays(ms) {
-    lockUntil = Date.now() + ms;
-    // Restart the drain so every recount shows its whole second.
-    if (refs.lockBar) {
-      refs.lockBar.style.animation = "none";
-      void refs.lockBar.offsetWidth;
-      refs.lockBar.style.animation = `grd-drain ${ms}ms linear forwards`;
+  function onType() {
+    // Typed, not pasted: a real keystroke adds one character (two for some
+    // keyboards' accents). Anything bigger arriving at once is thrown out.
+    const len = refs.input.value.length;
+    if (len - prevLen > 2) {
+      refs.input.value = "";
+      prevLen = 0;
+      flash(refs.box, "bad");
+      toast("No pasting. Beg properly.", true);
+      paintLine();
+      return;
     }
-    window.clearTimeout(lockTimer);
-    lockTimer = window.setTimeout(() => { lockUntil = 0; if (data) render(); }, ms + 20);
+    prevLen = len;
+    paintLine();
+    if (isRight(refs.input.value)) send();
   }
 
-  async function sortInto(suit) {
-    const s = shiftOf("sort");
-    if (!s || sorting || !data) return;
-    const now = Date.now();
-    if (now < lockUntil) return;
-    // The server takes one chip per msPerUnit; so does the page, so a
-    // quick hand never sees a chip refused.
-    if (now - lastSortAt < jobCfg("sort").msPerUnit) return;
-    sorting = true;
-    lastSortAt = now;
-    const tray = refs.trays?.[suit];
+  /** Sends the line in the box, now or as soon as the server will take one. */
+  function send() {
+    const s = shift();
+    if (!s || sending || !isRight(refs.input.value)) return;
+    const wait = lastSentAt + job().msPerUnit - Date.now();
+    if (wait > 0) {
+      window.clearTimeout(holdTimer);
+      holdTimer = window.setTimeout(send, wait + 30);
+      refs.hint.textContent = "Easy — the foreman reads one line every few seconds…";
+      return;
+    }
+    submit(s);
+  }
+
+  async function submit(s) {
+    sending = true;
+    lastSentAt = Date.now();
+    const text = refs.input.value;
     try {
-      const payload = await post("sort", { id: s.id, suit });
+      const payload = await post("type", { id: s.id, text });
       if (!data) return;
-      if (!payload) { toast("Lost the connection — sort that one again.", true); return; }
-      if (payload.shift) setJobState("sort", { shift: payload.shift.status === "WORKING" ? payload.shift : null });
-      if (payload.result === "sorted") {
-        flash(tray, "ok");
-        refs.chip?.classList.remove("in");
-        void refs.chip?.offsetWidth;
-        refs.chip?.classList.add("in");
+      if (!payload) { toast("Lost the connection — that line wasn't counted. Press Enter to try again.", true); return; }
+      if ("shift" in payload) setState({ shift: payload.shift && payload.shift.status === "WORKING" ? payload.shift : null });
+      if (payload.hour && data.me) data.me.hour = payload.hour;
+      if (payload.result === "typed") {
+        refs.input.value = "";
+        prevLen = 0;
+        flash(refs.box, "ok");
         if (payload.paid) {
-          setJobState("sort", { shift: null, nextShiftAt: payload.nextShiftAt || null });
-          render();
+          float(`+${fmt(payload.payout)} ZC`);
           if (payload.balance != null) window.ECV3?.setWallet?.(payload.balance);
-          pop({ won: true, big: false, amount: payload.payout, headline: "Payday", detail: `${jobCfg("sort").units} chips sorted, ${fmt(payload.payout)} ZC. Next shift in ${waitText()}.` });
-          window.ECV3?.refreshSession?.();
-          await load({ balance: true });
+          if (data.me && payload.balance != null) data.me.balance = payload.balance;
+          if (!payload.shift) {
+            // That was the hour's cap: the shift is over.
+            setState({ shift: null, nextShiftAt: payload.nextShiftAt || null });
+            render();
+            pop({ won: true, big: false, amount: hour().earned || cap(), headline: "That's the hour", detail: `${fmt(cap())} ZC begged this hour. The next line pays at ${new Date(nextAt() || Date.now()).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.` });
+            window.ECV3?.refreshSession?.();
+            await load({ balance: true });
+          }
         }
-      } else if (payload.result === "miss") {
-        flash(tray, "bad");
-        holdTrays(payload.shift?.waitMs || jobCfg("sort").penaltyMs || 1000);
-      } else if (payload.result === "wait") {
-        holdTrays(payload.shift?.waitMs || 300);
+      } else if (payload.result === "capped") {
+        setState({ shift: null, nextShiftAt: payload.nextShiftAt || null });
+        toast(`You've begged your ${fmt(cap())} ZC this hour.`, true);
+      } else if (payload.result === "slow") {
+        // The page and the server disagree on the clock by a moment: try again when it says.
+        lastSentAt = Date.now() - job().msPerUnit + (payload.shift?.waitMs || 500);
+        window.clearTimeout(holdTimer);
+        holdTimer = window.setTimeout(send, (payload.shift?.waitMs || 500) + 30);
+      } else if (payload.result === "typo") {
+        flash(refs.box, "bad");
+        toast("That's not quite it. Every word counts.", true);
       } else if (payload.result === "over" || payload.result === "stale") {
         await load();
       } else if (payload.code === "PAYOUT_FAILED") {
-        setJobState("sort", { shift: null, nextShiftAt: payload.nextShiftAt || null });
+        refs.input.value = "";
+        prevLen = 0;
         toast(payload.message, true);
+      } else if (!payload.ok) {
+        toast(payload.message || "That line didn't go through.", true);
       }
     } finally {
-      sorting = false;
-      if (data) render();
+      sending = false;
+      if (data) { render(); paintLine(); }
     }
+  }
+
+  /* A "+1 ZC" that floats off the box, capped so a quick typist cannot pile nodes up. */
+  function float(text) {
+    if (!refs.floaters || refs.floaters.childElementCount > 6) return;
+    const f = K.el("span", "grd-float", text);
+    f.style.setProperty("--dx", `${Math.round((Math.random() - 0.5) * 120)}px`);
+    f.addEventListener("animationend", () => f.remove());
+    refs.floaters.append(f);
   }
 
   function flash(node, kind) {
@@ -255,6 +205,23 @@
     node.classList.remove("ok", "bad");
     void node.offsetWidth;
     node.classList.add(kind);
+  }
+
+  /* The phrase above the box, lit up as far as what's typed matches it. */
+  function paintLine() {
+    if (!refs.phrase) return;
+    const target = job().phrase;
+    const typed = refs.input?.value || "";
+    let ok = 0;
+    while (ok < typed.length && ok < target.length && typed[ok].toLowerCase() === target[ok].toLowerCase()) ok += 1;
+    const wrong = typed.length > ok;
+    refs.phrase.replaceChildren(
+      K.el("span", "grd-typed", target.slice(0, ok)),
+      K.el("span", wrong ? "grd-wrong" : "grd-cursor", target.slice(ok, ok + 1)),
+      K.el("span", null, target.slice(ok + 1))
+    );
+    refs.box.classList.toggle("off", wrong);
+    if (!holdTimer || !isRight(typed)) refs.hint.textContent = wrong ? "Backspace — that's not what it says." : "Type the line. It sends itself when it's right.";
   }
 
   /* ---------------------------------------------------------- page */
@@ -276,13 +243,7 @@
     coin.height = 18;
     const line = K.el("span", "grd-poor-line");
     line.append(document.createTextNode(`(<${cfg().brokeLine} `), coin, document.createTextNode(")"));
-    /* (2026-09-29, the owner: "close The Grind ... a message on the page thats highlighted that says 'The Grind is closed. Check out
-       EastScape instead.' hyperlink eastscape, and put it where the 'only for the poors' button is and remove that") The same loud sign,
-       saying something else; the shifts below it are hidden and the server refuses to start one (CLOSED in functions/api/casino/grind). */
-    poor.classList.add("grd-closed");
-    const es = document.createElement("a"); es.href = "/eastscape"; es.textContent = "EastScape";
-    poor.append(document.createTextNode("The Grind is closed. Check out "), es, document.createTextNode(" instead."));
-    void line;
+    poor.append(K.el("b", null, "Only for poors!"), line);
     // The emote beside the title, sized and placed like the casino floor's.
     const h1 = K.el("h1", null, "The Grind");
     const emote = document.createElement("img");
@@ -293,7 +254,8 @@
     // A dead CDN link must not leave a broken-image box beside the title.
     emote.addEventListener("error", () => emote.remove());
     h1.append(emote);
-    copy.append(h1, poor);   /* (2026-09-29) the "Broke? Pick up a shift" line went with the Grind */
+    copy.append(h1, poor,
+      K.el("p", null, `Broke? Beg for it. Every line you type is ${DEFAULT_JOB.pay} ZC, up to ${DEFAULT_JOB.hourCap} an hour, for anyone under ${cfg().brokeLine} — a way back to the tables, not a job.`));
     head.append(copy);
     const right = K.el("div", "cas-headright");
     refs.status = K.el("span", "cf-status", "Connecting…");
@@ -302,78 +264,45 @@
     page.append(head);
 
     const grid = K.el("div", "cf-grid");
-    grid.hidden = true;   /* (2026-09-29) The Grind is closed: no shifts to show */
     const stage = K.el("section", "cf-stage grd-stage");
     refs.phase = K.el("div", "cf-phase", "");
 
-    // The two jobs.
-    const jobs = K.el("div", "grd-jobs");
-    jobs.setAttribute("role", "tablist");
-    refs.jobBtns = {};
-    for (const k of ["clicks", "sort"]) {
-      const b = K.el("button", "grd-job");
-      b.type = "button";
-      b.setAttribute("role", "tab");
-      const name = K.el("b", null, DEFAULT_JOBS[k].name);
-      const pay = K.el("span", "grd-job-pay");
-      const sub = K.el("small", null, "");
-      b.append(name, pay, sub);
-      b.addEventListener("click", () => { job = k; render(); });
-      refs.jobBtns[k] = { b, pay, sub };
-      jobs.append(b);
-    }
-
-    // Clock in: one big button.
-    const clickShop = K.el("div", "grd-shop");
-    const btnWrap = K.el("div", "grd-btnwrap");
+    const shop = K.el("div", "grd-shop grd-typeshop");
     refs.btn = K.el("button", "grd-btn");
     refs.btn.type = "button";
     refs.btnLabel = K.el("b", null, "Clock in");
     refs.btnSub = K.el("small", null, "");
     refs.btn.append(refs.btnLabel, refs.btnSub);
-    refs.btn.addEventListener("click", press);
+    refs.btn.addEventListener("click", clockIn);
+
+    refs.desk = K.el("div", "grd-desk");
+    refs.phrase = K.el("p", "grd-phrase");
+    refs.phrase.setAttribute("aria-hidden", "true");
+    refs.box = K.el("div", "grd-typebox");
+    refs.input = document.createElement("input");
+    refs.input.type = "text";
+    refs.input.className = "grd-input";
+    refs.input.autocomplete = "off";
+    refs.input.spellcheck = false;
+    refs.input.setAttribute("autocapitalize", "off");
+    refs.input.setAttribute("autocorrect", "off");
+    refs.input.maxLength = 120;
+    refs.input.setAttribute("aria-label", `Type: ${DEFAULT_JOB.phrase}`);
+    refs.input.addEventListener("input", onType);
+    refs.input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); if (isRight(refs.input.value)) send(); else { flash(refs.box, "bad"); } } });
+    for (const ev of ["paste", "drop"]) refs.input.addEventListener(ev, (e) => { e.preventDefault(); toast("No pasting. Beg properly.", true); });
+    refs.input.addEventListener("beforeinput", (e) => { if (/^insertFrom(Paste|Drop|Yank)|insertReplacementText/.test(e.inputType || "")) { e.preventDefault(); toast("No pasting. Beg properly.", true); } });
     refs.floaters = K.el("div", "grd-floaters");
     refs.floaters.setAttribute("aria-hidden", "true");
-    btnWrap.append(refs.btn, refs.floaters);
-    refs.clickMeter = meter();
-    clickShop.append(btnWrap, refs.clickMeter.node);
-    refs.clickShop = clickShop;
+    refs.box.append(refs.input, refs.floaters);
+    refs.hint = K.el("small", "grd-hint", "");
+    refs.desk.append(refs.phrase, refs.box, refs.hint);
 
-    // Sort the Chips: a belt with one chip on it, and four trays.
-    const sortShop = K.el("div", "grd-shop grd-sortshop");
-    refs.sortBtn = K.el("button", "grd-btn");
-    refs.sortBtn.type = "button";
-    refs.sortBtnLabel = K.el("b", null, "Start");
-    refs.sortBtnSub = K.el("small", null, "");
-    refs.sortBtn.append(refs.sortBtnLabel, refs.sortBtnSub);
-    refs.sortBtn.addEventListener("click", () => startPressed("sort"));
-    const belt = K.el("div", "grd-belt");
-    refs.chip = K.el("div", "grd-chip in");
-    refs.chipSym = K.el("span", null, "");
-    refs.chip.append(refs.chipSym);
-    refs.chip.setAttribute("aria-live", "polite");
-    belt.append(refs.chip);
-    refs.belt = belt;
-    const trays = K.el("div", "grd-trays");
-    refs.trays = SUITS.map((sym, i) => {
-      const t = K.el("button", `grd-tray t${i}`);
-      t.type = "button";
-      t.setAttribute("aria-label", `${SUIT_NAMES[i]} tray (key ${i + 1})`);
-      t.append(K.el("b", null, sym), K.el("small", null, String(i + 1)));
-      t.addEventListener("click", () => sortInto(i));
-      trays.append(t);
-      return t;
-    });
-    refs.trayRow = trays;
-    refs.lock = K.el("div", "grd-lock");
-    refs.lockBar = K.el("i");
-    refs.lock.append(K.el("span", null, "Wrong tray — recount"), refs.lockBar);
-    refs.sortMeter = meter();
-    sortShop.append(refs.sortBtn, belt, trays, refs.lock, refs.sortMeter.node);
-    refs.sortShop = sortShop;
+    refs.meter = meter();
+    shop.append(refs.btn, refs.desk, refs.meter.node);
 
     refs.note = K.el("p", "cf-note grd-note", "");
-    stage.append(refs.phase, jobs, clickShop, sortShop, refs.note);
+    stage.append(refs.phase, shop, refs.note);
     grid.append(stage);
 
     const col = K.el("div", "cf-side-col");
@@ -389,10 +318,10 @@
     rules.append(K.el("h2", null, "How it works"));
     const list = K.el("ul", "grd-rules");
     for (const line of [
-      `Under ${cfg().brokeLine} ZC when you clock in, for either job.`,
-      `Clock in: ${DEFAULT_JOBS.clicks.units} clicks pays ${DEFAULT_JOBS.clicks.pay} ZC. The foreman counts about eight a second.`,
-      `Sort the Chips: ${DEFAULT_JOBS.sort.units} chips into their suit's tray pays ${DEFAULT_JOBS.sort.pay} ZC. A wrong tray costs a second. Keys 1–4 work too.`,
-      `One shift of each job ${every()}, counted from when that shift finished.`
+      `Under ${cfg().brokeLine} ZC when you clock in.`,
+      `Type "${DEFAULT_JOB.phrase}". Every word counts; capitals don't.`,
+      `Every right line pays ${DEFAULT_JOB.pay} ZC on the spot, up to ${DEFAULT_JOB.hourCap} ZC in any hour.`,
+      `The foreman reads one line every couple of seconds. No pasting — type it.`
     ]) list.append(K.el("li", null, line));
     rules.append(list);
 
@@ -418,6 +347,7 @@
     pop = K.makePop(page);
     toast = K.makeToast(page);
     root.append(page);
+    paintLine();
   }
 
   function meter() {
@@ -440,11 +370,11 @@
 
   function paintMeter(m, done, units, pay) {
     m.count.textContent = String(done);
-    m.of.textContent = ` / ${units}`;
+    m.of.textContent = ` / ${units} ZC this hour`;
     m.fill.style.width = `${(100 * done) / units}%`;
     m.bar.setAttribute("aria-valuemax", String(units));
     m.bar.setAttribute("aria-valuenow", String(done));
-    K.withCoins(m.pay, `Pays [[${pay}]]`);
+    K.withCoins(m.pay, `Pays [[${pay}]] a line`);
   }
 
   function mmss(ms) {
@@ -453,100 +383,50 @@
     return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
   }
 
-  /** What a job's big button and the stage copy say when no shift is running. */
-  function idleFace(k) {
+  /** What the big button and the stage copy say when no shift is running. */
+  function idleFace() {
     const c = cfg();
-    const j = jobCfg(k);
+    const j = job();
     const me = data?.me || null;
-    if (!data?.config?.canWork) return { label: "Closed", sub: "", disabled: true, resting: true, phase: "Not taking shifts right now", phaseCls: "bad", note: "The wallet isn't connected, so there's nobody to pay you. Check back soon." };
-    if (coolingOf(k)) return { label: mmss(nextAtOf(k) - Date.now()), sub: "until your next shift", disabled: true, resting: true, phase: "Shift done", phaseCls: "", note: `One ${j.name} shift ${every()}.${coolingOf(k === "clicks" ? "sort" : "clicks") ? " Go spend it." : ` The other job's still open.`}` };
-    if (me?.eligible === false) return { label: "Not today", sub: `for under ${c.brokeLine} ZC`, disabled: true, resting: true, phase: "You're doing fine", phaseCls: "", note: `You've got ${fmt(me.balance)} ZC. The Grind is for anyone under ${c.brokeLine} — come back if the tables go cold.` };
-    return { label: k === "sort" ? "Start sorting" : "Clock in", sub: `${j.units} ${j.unitName} · ${j.pay} ZC`, disabled: busy, resting: false, phase: "Ready when you are", phaseCls: "open", note: `Checked when you clock in: you need to be under ${c.brokeLine} ZC.` };
+    if (data?.config?.closed) return { label: "Closed", sub: "", disabled: true, phase: "Not taking shifts right now", phaseCls: "bad", note: "The Grind is closed for now." };
+    if (!data?.config?.canWork) return { label: "Closed", sub: "", disabled: true, phase: "Not taking shifts right now", phaseCls: "bad", note: "The wallet isn't connected, so there's nobody to pay you. Check back soon." };
+    if (cooling()) return { label: mmss(nextAt() - Date.now()), sub: "until a line pays again", disabled: true, phase: "That's the hour", phaseCls: "", note: `You've begged your ${fmt(cap())} ZC this hour. Go spend it.` };
+    if (me?.eligible === false) return { label: "Not today", sub: `for under ${c.brokeLine} ZC`, disabled: true, phase: "You're doing fine", phaseCls: "", note: `You've got ${fmt(me.balance)} ZC. The Grind is for anyone under ${c.brokeLine} — come back if the tables go cold.` };
+    const left = hour().left ?? cap();
+    return { label: "Clock in", sub: `${j.pay} ZC a line · ${left} left this hour`, disabled: busy, phase: "Ready when you are", phaseCls: "open", note: `Checked when you clock in: you need to be under ${c.brokeLine} ZC.` };
   }
 
   function render() {
     if (!refs.btn) return;
     const me = data?.me || null;
-    if (!job) job = "clicks";
+    const j = job();
+    const s = shift();
 
     refs.status.textContent = data ? (data.room?.length ? `${data.room.length} on the floor` : "Quiet shift") : "Connecting…";
 
-    // Job tabs
-    for (const k of ["clicks", "sort"]) {
-      const t = refs.jobBtns[k];
-      const j = jobCfg(k);
-      const s = shiftOf(k);
-      t.b.classList.toggle("on", job === k);
-      t.b.setAttribute("aria-selected", String(job === k));
-      K.withCoins(t.pay, `[[${j.pay}]]`);
-      t.sub.textContent = s ? `On shift · ${Math.min(j.units, s.done + (k === "clicks" ? queued : 0))}/${j.units}` : coolingOf(k) ? `Next in ${mmss(nextAtOf(k) - Date.now())}` : me?.eligible === false ? "Under 50 ZC only" : "Open";
-      t.b.classList.toggle("resting", coolingOf(k));
-    }
-
-    refs.clickShop.hidden = job !== "clicks";
-    refs.sortShop.hidden = job !== "sort";
-
-    if (job === "clicks") {
-      const j = jobCfg("clicks");
-      const s = shiftOf("clicks");
-      const done = s ? Math.min(j.units, s.clicks + queued) : coolingOf("clicks") ? j.units : 0;
-      paintMeter(refs.clickMeter, done, j.units, j.pay);
-      refs.btn.classList.toggle("working", Boolean(s));
-      if (s) {
-        refs.btn.disabled = false;
-        refs.btn.classList.remove("resting");
-        refs.btnLabel.textContent = "Grind";
-        refs.btnSub.textContent = queued > 12 ? "counting…" : `${j.units - done} to go`;
-        refs.btn.setAttribute("aria-label", `Grind — ${done} of ${j.units}`);
-        refs.phase.textContent = "On shift";
-        refs.phase.className = "cf-phase open";
-        refs.note.textContent = "Keep clicking. Leave and come back — the shift waits for you.";
-      } else {
-        const f = idleFace("clicks");
-        refs.btn.disabled = f.disabled;
-        refs.btn.classList.toggle("resting", f.resting);
-        refs.btnLabel.textContent = f.label;
-        refs.btnSub.textContent = f.sub;
-        refs.btn.setAttribute("aria-label", f.label);
-        refs.phase.textContent = f.phase;
-        refs.phase.className = `cf-phase ${f.phaseCls}`.trim();
-        refs.note.textContent = f.note;
-      }
+    const h = hour();
+    paintMeter(refs.meter, Math.min(cap(), Number(h.earned || 0)), cap(), j.pay);
+    refs.btn.hidden = Boolean(s);
+    refs.desk.hidden = !s;
+    if (s) {
+      refs.phase.textContent = "On shift";
+      refs.phase.className = "cf-phase open";
+      refs.note.textContent = `${Math.max(0, cap() - Number(h.earned || 0))} ZC left this hour${s.misses ? ` · ${s.misses} botched` : ""}. Leave and come back — the shift waits for you.`;
     } else {
-      const j = jobCfg("sort");
-      const s = shiftOf("sort");
-      const locked = Date.now() < lockUntil;
-      paintMeter(refs.sortMeter, s ? s.done : coolingOf("sort") ? j.units : 0, j.units, j.pay);
-      refs.sortBtn.hidden = Boolean(s);
-      refs.belt.hidden = !s;
-      refs.trayRow.hidden = !s;
-      refs.lock.hidden = !(s && locked);
-      if (s) {
-        const chip = Number.isInteger(s.chip) ? s.chip : null;
-        refs.chip.className = `grd-chip${chip === null ? "" : ` c${chip}`}${refs.chip.classList.contains("in") ? " in" : ""}`;
-        refs.chipSym.textContent = chip === null ? "·" : SUITS[chip];
-        refs.chip.setAttribute("aria-label", chip === null ? "No chip" : `${SUIT_NAMES[chip]} chip`);
-        refs.trayRow.classList.toggle("jam", locked);
-        for (const t of refs.trays) t.disabled = locked || sorting;
-        refs.phase.textContent = locked ? "Recounting" : "On shift";
-        refs.phase.className = `cf-phase ${locked ? "bad" : "open"}`;
-        refs.note.textContent = `${j.units - s.done} to go${s.misses ? ` · ${s.misses} in the wrong tray` : ""}. Keys 1–4 sort too.`;
-      } else {
-        const f = idleFace("sort");
-        refs.sortBtn.disabled = f.disabled;
-        refs.sortBtn.classList.toggle("resting", f.resting);
-        refs.sortBtnLabel.textContent = f.label;
-        refs.sortBtnSub.textContent = f.sub;
-        refs.sortBtn.setAttribute("aria-label", f.label);
-        refs.phase.textContent = f.phase;
-        refs.phase.className = `cf-phase ${f.phaseCls}`.trim();
-        refs.note.textContent = f.note;
-      }
+      const f = idleFace();
+      refs.btn.disabled = f.disabled;
+      refs.btn.classList.toggle("resting", f.disabled && !busy);
+      refs.btnLabel.textContent = f.label;
+      refs.btnSub.textContent = f.sub;
+      refs.btn.setAttribute("aria-label", f.label);
+      refs.phase.textContent = f.phase;
+      refs.phase.className = `cf-phase ${f.phaseCls}`.trim();
+      refs.note.textContent = f.note;
     }
 
-    // Your shifts (its coin icons would flash too if rebuilt every click)
-    const when = (k) => (shiftOf(k) ? "on one now" : coolingOf(k) ? mmss(nextAtOf(k) - Date.now()) : "now");
-    const youSig = me ? [me.shifts, me.earned, when("clicks"), when("sort")].join("|") : "";
+    // Your shifts (its coin icons would flash too if rebuilt every second)
+    const when = s ? "on one now" : cooling() ? mmss(nextAt() - Date.now()) : "now";
+    const youSig = me ? [me.shifts, me.earned, when, h.earned].join("|") : "";
     if (youSig !== refs.youSig) {
       refs.youSig = youSig;
       refs.youList.replaceChildren();
@@ -563,15 +443,13 @@
         refs.youList.append(
           row("Shifts", String(me.shifts || 0)),
           row("Earned", K.zc(me.earned || 0)),
-          row("Clock in", when("clicks")),
-          row("Sorting", when("sort"))
+          row("This hour", K.zc(h.earned || 0)),
+          row("Next shift", when)
         );
       }
     }
 
-    // On the floor. render() runs on every click, so the lists below are
-    // rebuilt only when what they show changes: replacing an avatar <img>
-    // makes it flash even when the picture is cached.
+    // On the floor: rebuilt only when it changes, or the avatars flash.
     const room = data?.room || [];
     refs.roomCount.textContent = room.length ? String(room.length) : "";
     const roomSig = room.map((u) => u.login + "|" + u.avatar + "|" + u.displayName).join(",");
@@ -597,12 +475,12 @@
     if (!recent.length) refs.ledgerList.append(K.el("p", "cf-empty", "Nobody has worked a shift yet."));
     const pg = K.pageOf(recent, ledgerPage, 10);
     for (const e of pg.slice) {
-      const j = jobCfg(e.job || "clicks");
+      const what = OLD_JOBS[e.job] || `${fmt(e.payout)} line${e.payout === 1 ? "" : "s"} begged`;
       const r = K.el("div", `cf-row won${me && e.user.id === me.id ? " me" : ""}`);
       r.append(K.avatar(e.user, "cf-av"));
       const who = K.el("div", "cf-who");
       who.append(K.nameLink(e.user));
-      who.append(K.el("small", null, `${j.units} ${j.unitName === "chips" ? "chips sorted" : j.unitName} · ${new Date(e.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`));
+      who.append(K.el("small", null, `${what} · ${new Date(e.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}`));
       r.append(who);
       const res = K.el("span", "cf-res nums up");
       res.append(K.el("span", "cf-tag win", "PAID"), K.zc(e.payout, { sign: true }));
@@ -617,43 +495,23 @@
       root = container;
       document.title = "The Grind — EastCoin Casino";
       window.ECPresence?.beat("grind");
-      job = null;
       build();
       load({ balance: true });
-      pollTimer = window.setInterval(() => { if (!inFlight && !queued && !sorting) load(); }, POLL_MS);
-      // Countdowns tick on the page between polls; a clock that runs out reloads.
+      pollTimer = window.setInterval(() => { if (!sending) load(); }, POLL_MS);
+      // The countdown ticks on the page between polls; a clock that runs out reloads.
       tickTimer = window.setInterval(() => {
         if (!data?.me) return;
-        let expired = false;
-        for (const k of ["clicks", "sort"]) {
-          const at = nextAtOf(k);
-          if (at && !shiftOf(k) && at <= Date.now()) { setJobState(k, { nextShiftAt: null }); expired = true; }
-        }
-        if (coolingOf("clicks") || coolingOf("sort")) render();
-        if (expired) load({ balance: true });
+        const at = nextAt();
+        if (at && !shift() && at <= Date.now()) { setState({ nextShiftAt: null }); load({ balance: true }); return; }
+        if (cooling()) render();
       }, 1000);
-      // Keys 1-4 sort, when the belt is on screen. Holding a key does not repeat.
-      onKey = (e) => {
-        if (job !== "sort" || !shiftOf("sort") || e.repeat || e.altKey || e.ctrlKey || e.metaKey) return;
-        if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName || "")) return;
-        const n = "1234".indexOf(e.key);
-        if (n < 0) return;
-        e.preventDefault();
-        sortInto(n);
-      };
-      document.addEventListener("keydown", onKey);
     },
     unmount() {
       window.clearInterval(pollTimer);
       window.clearInterval(tickTimer);
-      window.clearTimeout(flushTimer);
-      window.clearTimeout(lockTimer);
-      pollTimer = 0; tickTimer = 0; flushTimer = 0; lockTimer = 0;
-      if (onKey) document.removeEventListener("keydown", onKey);
-      onKey = null;
-      // Clicks still queued are sent on the way out, not dropped.
-      if (queued && shiftOf("clicks")) flush();
-      data = null; refs = {}; queued = 0; lockUntil = 0; sorting = false;
+      window.clearTimeout(holdTimer);
+      pollTimer = 0; tickTimer = 0; holdTimer = 0;
+      data = null; refs = {}; sending = false; busy = false;
       document.title = "EastCoin";
     }
   };

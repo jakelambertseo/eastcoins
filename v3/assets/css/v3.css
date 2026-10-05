@@ -5405,5 +5405,23 @@ body:has(.mdock) .goldbtn{bottom:auto;top:calc(var(--nav-h) + 14px)}
 .grd-poor .zcoin-mark{width:18px;height:18px;display:inline-block;vertical-align:-3px}
 @keyframes grd-poor{0%,100%{transform:rotate(-2deg) scale(1)}50%{transform:rotate(-2deg) scale(1.04)}}
 @media (prefers-reduced-motion:reduce){.grd-poor{animation:none}}
+/* (2026-10-05) The Grind's typing job: the phrase lights up as far as it is typed right, the box shakes on a wrong line */
+.grd-desk{width:min(560px,100%);display:flex;flex-direction:column;align-items:stretch;gap:10px}
+.grd-phrase{margin:0;text-align:center;font-family:var(--display);font-weight:800;font-size:clamp(1.05rem,2.6vw,1.45rem);line-height:1.35;color:var(--muted);letter-spacing:.01em}
+.grd-phrase .grd-typed{color:var(--gold)}
+.grd-phrase .grd-cursor{border-bottom:3px solid var(--gold);color:#fff}
+.grd-phrase .grd-wrong{background:rgba(200,32,58,.55);color:#fff;border-radius:3px}
+.grd-typebox{position:relative;border-radius:12px;box-shadow:0 0 0 1px var(--line)}
+.grd-typebox.off{box-shadow:0 0 0 2px rgba(200,32,58,.8)}
+.grd-typebox.ok{animation:grd-ok .35s ease-out}
+.grd-typebox.bad{animation:grd-shake .3s ease-in-out}
+.grd-input{width:100%;box-sizing:border-box;padding:14px 16px;border:0;border-radius:12px;background:rgba(0,0,0,.35);color:#fff;font:600 1.1rem/1.2 var(--body,inherit);outline:none}
+.grd-input:focus{box-shadow:0 0 0 2px var(--gold)}
+.grd-typebox .grd-floaters{inset:auto 0 100% 0;height:0}
+.grd-typebox .grd-float{top:0}
+.grd-hint{text-align:center;color:var(--muted);font-size:.8rem;min-height:1.2em}
+@keyframes grd-ok{0%{box-shadow:0 0 0 3px rgba(240,180,41,.9)}100%{box-shadow:0 0 0 1px var(--line)}}
+@keyframes grd-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.grd-typebox.ok,.grd-typebox.bad{animation:none}}
 /* (2026-09-29) The Grind is closed: the same sign, pointing at EastScape */
 .grd-poor.grd-closed{font-size:1.1rem;padding:9px 16px}.grd-poor.grd-closed a{color:#8a0f22;text-decoration:underline;text-underline-offset:3px}.grd-poor.grd-closed a:hover{color:#c8203a}

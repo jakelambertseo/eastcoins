@@ -1,14 +1,14 @@
-/* POST /api/casino/grind/start  { job: "clicks" | "sort" }
+/* POST /api/casino/grind/start  { job: "type" }
 
    Clocks in for a job. Refused signed out, when the wallet is not
-   configured, inside the hour after the caller's last shift AT THAT JOB,
-   and when they are not under the broke line (read live from
+   configured, when the caller has already earned the hour's cap, and
+   when they are not under the broke line (read live from
    StreamElements). A shift already being worked at that job is handed
    back rather than doubled. Nothing is charged. */
 
 import { getSessionUser, walletWritesEnabled, readBalance, newId, json, fail } from "../../picks/_lib.js";
-import { ensureSchema, touchPresence, randomSeed } from "../_engine.js";
-import { ensureGrind, workingShift, nextShiftAt, publicShift, jobOf, BROKE_LINE, SHIFT_COOLDOWN_MS, CLOSED } from "./_grind.js";
+import { ensureSchema, touchPresence } from "../_engine.js";
+import { ensureGrind, workingShift, nextShiftAt, publicShift, jobOf, BROKE_LINE, HOUR_CAP, CLOSED } from "./_grind.js";
 
 const GRIND = { key: "grind" };
 
@@ -36,7 +36,7 @@ export async function onRequestPost(context) {
   if (next) {
     const mins = Math.ceil((next - now) / 60000);
     const wait = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins} minute${mins === 1 ? "" : "s"}`;
-    return fail("COOLDOWN", `One ${job.name} shift every ${Math.round(SHIFT_COOLDOWN_MS / 3600000)} hours — your next one opens in ${wait}.`, 429);
+    return fail("COOLDOWN", `You've begged your ${HOUR_CAP} ZC this hour — the next line pays in ${wait}.`, 429);
   }
 
   const balance = await readBalance(context.env, user.login);
@@ -48,7 +48,7 @@ export async function onRequestPost(context) {
   const id = newId("gr");
   try {
     await db.prepare(`INSERT INTO grind_shifts (id, user_id, job, seed, balance_at_start, last_click_ms) VALUES (?, ?, ?, ?, ?, ?)`)
-      .bind(id, user.id, job.key, job.key === "sort" ? randomSeed() : null, balance, now).run();
+      .bind(id, user.id, job.key, null, balance, now).run();
   } catch {
     // Two "clock in" presses at once: the unique index let one through.
     const again = await workingShift(db, user.id, job.key);
