@@ -529,7 +529,9 @@
     // Football days: the same rule the Sports page keeps (Sunday and
     // Monday, September to January, Chicago time) — say up front that
     // nothing else takes bets, so an empty baseball tab is not a bug.
-    if (nflDayNow()) wrap.append(el("p", "sundaynote picks-note", "🏈 No betting on baseball or anything else except for football on Sundays and Mondays."));
+    /* (2026-10-04) only while football is OPEN or being played: once the night's NFL is settled the note goes, as the owner
+       asked ("turn on ... betting now that football is done for the night"). */
+    if (nflDayNow() && local.markets.some((m) => m.sport === "american-football" && (m.state === "OPEN" || m.state === "LOCKED"))) wrap.append(el("p", "sundaynote picks-note", "🏈 No betting on baseball or anything else except for football on Sundays and Mondays."));
 
     if (local.failed || !openNow.length) {
       const empty = el("div", "empty");

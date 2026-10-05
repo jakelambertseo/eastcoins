@@ -69,7 +69,11 @@
       // NFL Sunday: football only. Everything else is still there on
       // Picks; this is just what the cards show.
       const football = nflSundayNow() ? kept.filter(isNflSunday) : [];
-      local.nflSunday = football.length > 0;
+      /* ...but only while an NFL GAME is on or about to be (2026-10-04, the owner: "turn on all of the rest of the streams
+         ... now that football is done for the night"). It used to run by the clock alone, all Sunday and Monday until 10:30 PM,
+         so the room lost every other stream after the night game ended and all of Monday daytime. RedZone and NFL Network
+         listings don't count: they sit in the list all day. */
+      local.nflSunday = football.some(nflGameOnOrSoon);
       local.matches = local.nflSunday ? football : kept;
       local.loaded = true;
       // Only a genuine provider failure counts as failed. An empty but
@@ -355,15 +359,21 @@
      page shows everything as usual. ?allsports=1 shows everything on
      any day, for a look. */
   const NFL_MONTHS = new Set([9, 10, 11, 12, 1]);
+  /* An NFL matchup that starts within NFL_LEAD or started under four hours ago (the same window isLive uses for the cards). */
+  const NFL_LEAD = 90 * 60 * 1000;
+  function nflGameOnOrSoon(m) {
+    const start = Number(m?.date) || 0;
+    if (!start || !isNfl(m)) return false;
+    const now = Date.now();
+    return now >= start - NFL_LEAD && now - start < 4 * 60 * 60 * 1000;
+  }
   function nflSundayNow() {
     try { if (new URL(location.href).searchParams.get("allsports") === "1") return false; } catch { /* fine */ }
     const ct = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" }));
-    // Sunday all day, and Monday until the night game is done — 10:30 PM
-    // Central, when Monday Night Football is over and the room wants its
-    // baseball back. Nothing else needs a football-only screen after that.
+    // Sundays and Mondays. WHEN on those days is decided by the games themselves (nflGameOnOrSoon, at the call site), so
+    // Sunday morning, the gap after the night game and Monday daytime all show every stream.
     if (!NFL_MONTHS.has(ct.getMonth() + 1)) return false;
-    if (ct.getDay() === 0) return true;
-    return ct.getDay() === 1 && ct.getHours() * 60 + ct.getMinutes() < 22 * 60 + 30;
+    return ct.getDay() === 0 || ct.getDay() === 1;
   }
   const nflDayIsMonday = () => new Date(new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })).getDay() === 1;
   const isNflSunday = (m) => Sports.footballRank(m) === 0 || isRedZone(m) || /^ppv-nfl-/.test(String(m?.id || "")) || /nfl/i.test(String(m?.title || ""));
