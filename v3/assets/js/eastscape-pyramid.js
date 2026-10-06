@@ -11,6 +11,7 @@ function createPyramid(env){const{G,R,SFX,send,esc,$}=env,C=R.PYRAMID,T=C.tiers[
 .py-coil.me{color:#ff8a7a;animation:pyPulse .8s ease-in-out infinite}
 @keyframes pyPulse{0%,100%{opacity:1}50%{opacity:.55}}
 @media (prefers-reduced-motion:reduce){.py-coil.me{animation:none}}
+.dg-rec{display:inline!important;color:#9a3412;font-weight:800}   /* (2026-10-06, the owner: the needs-level text is hard to read) dark on parchment, and inline: the tier's <b> rule is a block */
 .py-tier{display:flex;gap:10px;align-items:center;padding:9px 11px;margin-bottom:6px;border-radius:7px;background:rgba(0,0,0,.07)}
 .py-tier>div{flex:1}.py-tier b{display:block}.py-tier small{color:#6a5c4e;display:block;margin-top:2px}
 /* the Go-in button styles itself: .lk-btn in the page stylesheet is only a margin-left helper and nothing
@@ -38,7 +39,7 @@ function createPyramid(env){const{G,R,SFX,send,esc,$}=env,C=R.PYRAMID,T=C.tiers[
       <div class="py-grid">${rows.map(r=>`<div class="py-it${hot(r)?" rare":""}">${pic(r)}<b>${esc(nm(r))}</b><em>${r.n?`${esc(r.n)} &middot; `:""}${pct(r)}</em></div>`).join("")}</div></div>`}function renderDoor(){css();if(!winEl){winEl=document.createElement("section");winEl.className="win";winEl.id="pyrWin";winEl.hidden=true;winEl.style.width="min(520px,calc(100% - 28px))";winEl.setAttribute("aria-label","The Great Pyramid");winEl.innerHTML=`<div class="win-head"><b><img src="/v3/assets/img/glad/flat/ui/g_sands.png?v=1" alt="" class="topi">The Great Pyramid</b><small>A party dungeon. Something very old is at the top.</small><button type="button" class="win-x" aria-label="Close">×</button></div><div class="win-body" id="pyrBody"></div>`;$("jukeWin").parentElement.append(winEl);winEl.querySelector(".win-x").addEventListener("click",()=>{SFX.play("ui_close");winEl.hidden=true})}const d=last||{},me=env.me(),you=env.you();const lvl=G.lvlOf(me,"melee"),tix=G.tixIn(me||{inv:[]});const n=d.partyN||1,lead=d.lead!==false;const okParty=d.solo||n>=C.party[0]&&n<=C.party[1];const left=Math.max(0,C.runsPaid-(d.runs|0));const can=okParty&&lead&&lvl>=T.lvl&&tix>=T.ante&&d.live!==false;$("pyrBody").innerHTML=`
       <div class="jk-msg">${d.solo?"<b>No party.</b> You're an admin, so you may go in alone to test it.":n>=C.party[0]?`<b>Your party: ${n}.</b>`:`<b>You need a party of ${C.party[0]} to ${C.party[1]}.</b> Click a player and invite them.`}</div>
       <div class="py-tier">
-        <div><b>${esc(T.name)}</b><small>Combat ${T.lvl}+ at the door · <b style="color:#ffd23f">bring ${T.rec}</b> to the fight</small></div>
+        <div><b>${esc(T.name)}</b><small>Combat ${T.lvl}+ at the door · <b class="dg-rec">bring ${T.rec}</b> to the fight</small></div>
         <div style="flex:0 0 auto;text-align:right">${TIX} <b>${T.ante.toLocaleString()}</b><small>each</small></div>
         <button type="button" class="lk-btn" data-go="1"${can?"":" disabled"}>Go in</button>
       </div>
@@ -46,7 +47,7 @@ function createPyramid(env){const{G,R,SFX,send,esc,$}=env,C=R.PYRAMID,T=C.tiers[
            paragraphs became four LINES. Everything cut was either already on the row above — the Combat and
            bring numbers are in the tier row two lines up — or detail for the wiki, not for a door somebody is
            standing at with a party waiting. The rule for anything added here: one line, or it goes in the wiki. -->
-      <div class="jk-msg" style="opacity:.85">Under <b style="color:#ffd23f">${T.rec}</b> you land about one swing in ten.</div>
+      <div class="jk-msg" style="opacity:.85">Under <b class="dg-rec">${T.rec}</b> you land about one swing in ten.</div>
       <div class="jk-msg">${left?`<b>${left} paid run${left===1?"":"s"} left today.</b>`:"<b>Paid runs used</b> &mdash; a clear pays a quarter today."} Clear a chamber, its door opens. The lever opens the tomb.</div>
       <div class="jk-msg" style="opacity:.85">Fewer tickets than the Crypt. The <b>chest</b> is the reason.</div>
       ${d.live===false?`<div class="jk-msg"><b>Not open yet.</b> Admins only until a party has tested it.</div>`:""}
