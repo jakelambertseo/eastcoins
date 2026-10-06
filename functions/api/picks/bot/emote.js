@@ -2,13 +2,15 @@
    !addemote / !removeemote — put a 7TV emote on zwades' channel
    straight from chat (2026-09-30).
 
-   ANYONE CAN ADD OR REMOVE ONE FOR 250 ZCOINS; ONLY ZWADES IS FREE
-   (the owner, 2026-09-30; bootypaper pays too, by his own call). ANY
+   ANYONE CAN ADD ONE FOR 75 ZCOINS (ADD_PRICE; 250 until 2026-10-05,
+   the owner: "make !addemote cost 75 zcoins instead") AND REMOVE ONE
+   FOR 250 (REMOVE_PRICE); ONLY ZWADES IS FREE (the owner, 2026-09-30;
+   bootypaper pays too, by his own call). ANY
    emote with a working 7TV link goes on: no NSFW or "not publicly
    listed" filter, by the owner's call. A PAID REMOVAL CAN'T TOUCH AN
    EMOTE ADDED IN THE LAST 24 HOURS (PROTECT_MS, from 7TV's own addedAt,
-   so it covers emotes added any way at all): somebody who just paid 250
-   gets a day of it. Zwades removes anything, any time, free.
+   so it covers emotes added any way at all): somebody who just paid for
+   one gets a day of it. Zwades removes anything, any time, free.
    StreamElements fills the sender from the real chat message (botGate
    in _bot.js), so "!addemote ... as zwades" can't mean anything.
 
@@ -18,7 +20,7 @@
         balance), so a refusal never touches the wallet;
      2. a WAGER_DEBIT keyed STORE:EMOTE:<user>:<emote> (retryKey, so a
         retry gets a fresh key and a double-send can't charge twice);
-     3. then 7TV is asked to add it. If 7TV says no, the 250 goes straight
+     3. then 7TV is asked to add it. If 7TV says no, the price goes straight
         back (COMPENSATING_REFUND). If 7TV's answer is LOST (a network
         error), the channel is read again before deciding: in the set =
         paid for, not in it = refunded. Nobody pays for an emote that
@@ -34,7 +36,7 @@
    A paid removal is the same path with the key STORE:EMOTEOFF:<user>:<emote>.
    The STORE: prefix is also what puts it on a profile's store line.
 
-     !addemote https://7tv.app/emotes/01ABC…            add it (250 ZC, free for zwades)
+     !addemote https://7tv.app/emotes/01ABC…            add it (75 ZC, free for zwades)
      !addemote https://7tv.app/emotes/01ABC… newName    add it renamed
      !removeemote peepoClap                             remove by name (250 ZC, free for zwades)
      !removeemote https://7tv.app/emotes/01ABC…         or by link
@@ -63,7 +65,8 @@ import { walletWritesEnabled, readBalance, moveBalance, beginOperation, finishOp
 const GQL = "https://api.7tv.app/v4/gql";
 const CHANNEL_TWITCH_ID = "215028532";            // zwades on Twitch (7TV user 01KXEPYPN1X8M68ABH7QR10PAH)
 const FREE = new Set(["zwades"]);          // adds and removes without paying, and ignores the 24 hours
-export const PRICE = 250;
+export const ADD_PRICE = 75;
+export const REMOVE_PRICE = 250;
 export const PROTECT_MS = 24 * 60 * 60 * 1000;   // a paid removal can't touch an emote this new
 
 /** A 7TV emote id out of whatever was pasted: a 7tv.app page, the old site, a CDN image, or a bare id. */
@@ -149,7 +152,7 @@ export async function onRequestGet(context) {
   if (!String(env.SEVENTV_TOKEN || "").trim()) return say("7TV isn't hooked up yet: the site needs a 7TV editor token (SEVENTV_TOKEN).");
 
   const words = gate.args.split(/\s+/).filter(Boolean);
-  if (!words.length) return say(op === "add" ? `${who} paste a 7TV link after it: !addemote https://7tv.app/emotes/… (${PRICE} ZC)` : `${who} say which one: !removeemote <name> (${PRICE} ZC)`);
+  if (!words.length) return say(op === "add" ? `${who} paste a 7TV link after it: !addemote https://7tv.app/emotes/… (${ADD_PRICE} ZC)` : `${who} say which one: !removeemote <name> (${REMOVE_PRICE} ZC)`);
   const db = env.PICKS_DB;
   if (!db) return say(`${who} emotes are offline right now. Nothing was charged.`);
 
@@ -177,8 +180,8 @@ export async function onRequestGet(context) {
         done = true; await note(env, gate.login, "remove", emoteId, name);
         return say(`Removed ${name} from the channel (${Math.max(0, set.count - 1)}/${set.capacity}).`);
       }
-      const out = await charge(env, db, gate, who, { keyBase: `STORE:EMOTEOFF:`, emoteId, name, verb: "removing", act, check: gone, logOp: "remove",
-        success: (left) => `${who} removed ${name} from the channel for ${PRICE} ZC (${Math.max(0, set.count - 1)}/${set.capacity}).${left}` });
+      const out = await charge(env, db, gate, who, { keyBase: `STORE:EMOTEOFF:`, price: REMOVE_PRICE, emoteId, name, verb: "removing", act, check: gone, logOp: "remove",
+        success: (left) => `${who} removed ${name} from the channel for ${REMOVE_PRICE} ZC (${Math.max(0, set.count - 1)}/${set.capacity}).${left}` });
       done = out.ok; return say(out.text);
     } finally { if (!done) await release(db, emoteId); }
   }
@@ -214,15 +217,15 @@ export async function onRequestGet(context) {
       done = true; await note(env, gate.login, "add", emote.id, name);
       return say(`Added ${name} to the channel (${set.count + 1}/${set.capacity}).`);
     }
-    const out = await charge(env, db, gate, who, { keyBase: `STORE:EMOTE:`, emoteId: emote.id, name, verb: "adding", act, check: landed, logOp: "add",
-      success: (left) => `${who} added ${name} to the channel for ${PRICE} ZC (${set.count + 1}/${set.capacity}).${left}` });
+    const out = await charge(env, db, gate, who, { keyBase: `STORE:EMOTE:`, price: ADD_PRICE, emoteId: emote.id, name, verb: "adding", act, check: landed, logOp: "add",
+      success: (left) => `${who} added ${name} to the channel for ${ADD_PRICE} ZC (${set.count + 1}/${set.capacity}).${left}` });
     done = out.ok; return say(out.text);
   } finally { if (!done) await release(db, emote.id); }
 }
 
 /* ---- THE MONEY PATH (see the header), shared by paid adds and paid removals. Runs only while this request holds the emote.
    `act` asks 7TV to do it; `check` answers "did it happen?" when 7TV's answer was lost. Returns { ok, text }. */
-async function charge(env, db, gate, who, { keyBase, emoteId, name, verb, act, check, logOp, success }) {
+async function charge(env, db, gate, who, { keyBase, price: PRICE, emoteId, name, verb, act, check, logOp, success }) {
   const fin = (ok, text) => ({ ok, text });
   if (!walletWritesEnabled(env)) return fin(false, `${who} ZCoin payments aren't set up right now. Nothing was charged.`);
   const user = await findOrCreateUser(db, { login: gate.login, twitchId: gate.twitchId, displayName: gate.displayName }, env);
