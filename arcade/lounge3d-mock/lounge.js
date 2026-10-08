@@ -973,9 +973,10 @@ const keys = {};
    in and out (kept in this browser); V switches to your own eyes and back. */
 const ZOOM = { min: 3, max: 15, step: 1.5, def: 9 };
 let camZoom = ZOOM.def, fpView = false;
-try { const z = Number(localStorage.getItem("ec_lounge_zoom")); if (z >= ZOOM.min && z <= ZOOM.max) camZoom = z; } catch {}
+try { const z = Number(localStorage.getItem("ec_lounge_zoom")); if (z >= ZOOM.min && z <= ZOOM.max) camZoom = z; fpView = localStorage.getItem("ec_lounge_fp") === "1"; } catch {}   // (your V choice is kept too)
+const saveFp = () => { try { localStorage.setItem("ec_lounge_fp", fpView ? "1" : "0"); } catch {} };
 function zoomBy(d) {
-  if (fpView && d > 0) { fpView = false; camZoom = ZOOM.min; }   // - out of first person comes back to the closest view
+  if (fpView && d > 0) { fpView = false; camZoom = ZOOM.min; saveFp(); }   // - out of first person comes back to the closest view
   else camZoom = clamp(camZoom + d, ZOOM.min, ZOOM.max);
   try { localStorage.setItem("ec_lounge_zoom", String(camZoom)); } catch {}
 }
@@ -987,7 +988,7 @@ addEventListener("keydown", (e) => {
   if (e.code === "KeyR" && EX.restart?.()) return;
   if (e.code === "Equal" || e.code === "NumpadAdd") { zoomBy(-ZOOM.step); return; }
   if (e.code === "Minus" || e.code === "NumpadSubtract") { zoomBy(ZOOM.step); return; }
-  if (e.code === "KeyV") { fpView = !fpView; A.notify(fpView ? "First person: V to step back out." : "Third person.", "👁️"); return; }
+  if (e.code === "KeyV") { fpView = !fpView; saveFp(); A.notify(fpView ? "First person: V to step back out." : "Third person.", "👁️"); return; }
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
   if (e.code === "KeyE" && near) use(near);
 });
