@@ -20,7 +20,7 @@ import * as Models from "../climb3d-mock/models.js?v=2";
 import * as Arcade from "../arcade-kit/arcade.js?v=10";
 import { CHARS, CHAR_NAMES, HATS, RADIO, HOCKEY, hkSeat, hkClampMallet } from "/v3/assets/js/arcade-rules.js?v=3";
 import { openTable } from "../poker3d-mock/table.js?v=2";
-import { buildExtras } from "./extras.js?v=19";
+import { buildExtras } from "./extras.js?v=20";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -131,14 +131,20 @@ const leds = [];
       const f = (i + 0.5) / n, x = ax + (bx - ax) * f + nx * 0.02, z = az + (bz - az) * f + nz * 0.02;
       for (const y of [0.18, 5.2]) {
         if (y < 1 && skip?.(x, z)) continue;   // no strip across the arch's floor
-        const m = new THREE.Mesh(new THREE.BoxGeometry(Math.abs(nx) ? 0.05 : SEG - 0.08, 0.05, Math.abs(nz) ? 0.05 : SEG - 0.08), basic(0xffffff)); m.position.set(x, y, z); scene.add(m);
-        leds.push({ m, u: run + i });
+        leds.push({ x, y, z, sx: Math.abs(nx) ? 0.05 : SEG - 0.08, sz: Math.abs(nz) ? 0.05 : SEG - 0.08, u: run + i });
       }
     }
     run += n;
   };
+  // (2026-10-08) every strip is one instance of one mesh: ~130 draw calls became one. Colours are per instance, set each frame below.
   edge(-W, -D, W, -D, 0, 1); edge(W, -D, W, D, -1, 0, (x, z) => z > PO0 && z < PO1); edge(W, D, -W, D, 0, -1, (x) => (x > OX0 && x < OX1) || (x > BO0 && x < BO1)); edge(-W, D, -W, -D, 1, 0, (x, z) => z > CO0 && z < CO1);
+  const inst = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.05, 1), basic(0xffffff), leds.length);
+  leds.forEach((L, k) => inst.setMatrixAt(k, new THREE.Matrix4().compose(new V3(L.x, L.y, L.z), new THREE.Quaternion(), new V3(L.sx, 1, L.sz))));
+  inst.frustumCulled = false; scene.add(inst); leds.inst = inst;
 }
+const _ledC = new THREE.Color();
+function paintLeds(t) { for (let k = 0; k < leds.length; k++) leds.inst.setColorAt(k, _ledC.setHSL((((leds[k].u * 0.035 - t * 0.08) % 1) + 1) % 1, 1, LED_L)); leds.inst.instanceColor.needsUpdate = true; }
+paintLeds(0);
 for (const [x, z, c] of [[-W + 0.05, -0.4, COL.cyan], [-W + 0.05, 9, COL.pink], [W - 0.05, 8.5, COL.purple]]) {
   const t = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 4.2, 8), tube(c)); t.position.set(x, 2.8, z); scene.add(t);
 }
@@ -512,13 +518,15 @@ const CAGE = new V3(4, 0, 9.85), CAGE_AT = new V3(4, 0, 8.4);
   function can(col) { const g = new THREE.Group(); const c = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.12, 14), std(col, { metalness: 0.6, roughness: 0.3 })); c.position.y = 0.06; g.add(c); const t = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.005, 14), std(0xcccccc, { metalness: 0.8, roughness: 0.3 })); t.position.y = 0.122; g.add(t); return g; }
   function cup() { const g = new THREE.Group(); const c = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.032, 0.12, 16, 1, true), std(0xd0182a, { side: THREE.DoubleSide })); c.position.y = 0.06; g.add(c); const r = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.004, 6, 16), std(0xffffff)); r.rotation.x = Math.PI / 2; r.position.y = 0.12; g.add(r); return g; }
   const stripes = canvasTex(256, 64, (c, w, h) => { for (let i = 0; i < 16; i++) { c.fillStyle = i % 2 ? "#ffffff" : "#d0182a"; c.fillRect(i * 16, 0, 16, h); } });
-  const kernel = std(0xfff2c0, { roughness: 0.9 });
+  const kernel = std(0xfff2c0, { roughness: 0.9 }), KERNEL = new THREE.IcosahedronGeometry(0.022, 0);
   function popcorn(full = true) {
     const g = new THREE.Group(); const b = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.07, 0.2, 18, 1, true), new THREE.MeshStandardMaterial({ map: stripes, side: THREE.DoubleSide, roughness: 0.8 })); b.position.y = 0.1; g.add(b);
-    for (let k = 0; k < (full ? 26 : 8); k++) { const p = new THREE.Mesh(new THREE.IcosahedronGeometry(0.022, 0), kernel); const a = Math.random() * 7, r = Math.random() * 0.08; p.position.set(Math.cos(a) * r, 0.19 + Math.random() * (full ? 0.06 : 0.01), Math.sin(a) * r); g.add(p); }
+    const n = full ? 26 : 8, ks = new THREE.InstancedMesh(KERNEL, kernel, n);   // the kernels: one draw, not 26
+    for (let k = 0; k < n; k++) { const a = Math.random() * 7, r = Math.random() * 0.08; ks.setMatrixAt(k, new THREE.Matrix4().makeTranslation(Math.cos(a) * r, 0.19 + Math.random() * (full ? 0.06 : 0.01), Math.sin(a) * r)); }
+    ks.frustumCulled = false; g.add(ks);
     return g;
   }
-  function spill(x, z, n = 9) { for (let k = 0; k < n; k++) { const p = new THREE.Mesh(new THREE.IcosahedronGeometry(0.022, 0), kernel); p.position.set(x + rnd(-0.35, 0.35), 0.02, z + rnd(-0.25, 0.25)); scene.add(p); } }
+  function spill(x, z, n = 9) { const ks = new THREE.InstancedMesh(KERNEL, kernel, n); for (let k = 0; k < n; k++) ks.setMatrixAt(k, new THREE.Matrix4().makeTranslation(x + rnd(-0.35, 0.35), 0.02, z + rnd(-0.25, 0.25))); ks.frustumCulled = false; scene.add(ks); }
   function pizzaBox() {
     const g = new THREE.Group(), card = std(0xe8dcc2, { roughness: 0.95 });
     const base = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.04, 0.42), card); base.position.y = 0.02; g.add(base);
@@ -573,7 +581,7 @@ function hatMesh(key) {
   return g;
 }
 function makePerson(look, name, color, avatar = null) {
-  const g = new THREE.Group();
+  const g = new THREE.Group(); g.userData.mover = true;   // people walk between rooms: room culling leaves them alone
   const ch = Models.char(look.model, 1.6);
   if (ch) { ch.obj.rotation.y = Math.PI; g.add(ch.obj); }
   const h = hatMesh(look.hat); h.position.y = 1.72; g.add(h);
@@ -842,6 +850,53 @@ const EX = buildExtras({ THREE, scene, camera, canvas, A, Sfx, me, R, D, W, COL,
   PK_X0: AX0, PK_X1: AX1, PK_Z1: AZ1,
   nameColor: Arcade.nameColor, botsOn: () => bots.length > 0, setYaw: (y) => { camYaw = y; }, CO0, CO1, COH });
 applyQuality();   // the new rooms' lights join the budget
+
+/* ROOM CULLING (2026-10-08, the owner: "FPS is starting to drop"). Measured first: only 30-50k triangles in view, but up to 858 draw
+   calls and 20 lights, because every room was drawn, and every light was shaded, through the walls. Now each room's things sit on that
+   room's camera LAYER, and a room is drawn only if the camera is in it or one of its openings is in view from a room that is (so you
+   still see through every arch and door). A light belongs to the room it hangs in, so its cost goes with the room. The far world
+   (stadium, hills, trees) is drawn only when the outdoors is. Anything that straddles rooms (walls, roofs, ceilings, the sky, the
+   ground) and anything that moves between them (people) stays on layer 0, always drawn. Layers, not .visible, so nothing that hides
+   and shows itself is overridden. */
+const ROOMS3D = (() => {
+  const R0 = (n) => REGIONS.find((g) => g.name === n);
+  const zones = [{ n: "lounge", r: [R0("lounge")] }, { n: "poker", r: [R0("poker")] }, { n: "bar", r: [R0("bar")] }, { n: "casino", r: [R0("casino")] }, { n: "out", r: [R0("patio"), R0("dash")] }, { n: "world", r: [] }].filter((z) => z.n === "world" || z.r.every(Boolean));
+  zones.forEach((z, i) => { z.layer = i + 1; });
+  const Z = Object.fromEntries(zones.map((z) => [z.n, z]));
+  const B = (x0, x1, y0, y1, z0, z1) => new THREE.Box3(new V3(x0, y0, z0), new V3(x1, y1, z1));
+  // the openings between rooms
+  const portals = [["lounge", "poker", B(OX0, OX1, 0, OPEN_H, D - 0.3, D + 0.3)], ["lounge", "bar", B(BO0, BO1, 0, BOH, D - 0.3, D + 0.3)],
+    ["lounge", "casino", B(-W - 0.3, -W + 0.3, 0, COH, CO0, CO1)], ["lounge", "out", B(W - 0.3, W + 0.3, 0, POH, PO0, PO1)]
+  ].filter(([a, b]) => Z[a] && Z[b]);   // (the far world comes with the outdoors: see update)
+  const inRect = (b, g, e = 0.06) => b.min.x >= g.x0 - e && b.max.x <= g.x1 + e && b.min.z >= g.z0 - e && b.max.z <= g.z1 + e;
+  const touches = (b) => REGIONS.some((g) => b.max.x > g.x0 - 1 && b.min.x < g.x1 + 1 && b.max.z > g.z0 - 1 && b.min.z < g.z1 + 1);
+  const box = new THREE.Box3(); let n = 0;
+  for (const o of [...scene.children]) {
+    if (o.userData.mover || o === camera) continue;
+    let zone = null;
+    if (o.isLight && !(o.isPointLight || o.isSpotLight)) continue;   // the sky and the key light (and its shadows) light every room
+    if (o.isLight) { const p = o.position; zone = zones.find((z) => z.r.some((g) => p.x >= g.x0 && p.x <= g.x1 && p.z >= g.z0 && p.z <= g.z1)); }
+    else {
+      box.setFromObject(o); if (box.isEmpty()) continue;
+      zone = zones.find((z) => z.r.some((g) => inRect(box, g)));
+      if (!zone && Z.world && !touches(box)) zone = Z.world;
+    }
+    if (zone) { o.traverse((c) => c.layers.set(zone.layer)); if (o.isLight && o.target) o.target.layers.set(zone.layer); n++; }
+  }
+  const fr = new THREE.Frustum(), pm = new THREE.Matrix4();
+  let lastMask = -1;
+  function update(camPos, mePos) {
+    const at = (p) => zones.find((z) => z.r.some((g) => p.x >= g.x0 && p.x <= g.x1 && p.z >= g.z0 && p.z <= g.z1));
+    const on = new Set([at(mePos)?.n, at(camPos)?.n].filter(Boolean)); if (!on.size) on.add("lounge");
+    if (on.has("out")) on.add("world");
+    pm.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); fr.setFromProjectionMatrix(pm);
+    for (let grew = true; grew;) { grew = false; for (const [a, b, bx] of portals) for (const [x, y] of [[a, b], [b, a]]) if (on.has(x) && !on.has(y) && fr.intersectsBox(bx)) { on.add(y); grew = true; } }
+    let mask = 1; for (const z of zones) if (on.has(z.n)) mask |= 1 << z.layer;
+    if (mask !== lastMask) { lastMask = mask; camera.layers.mask = mask; }
+    return on;
+  }
+  return { update, zones, count: n, all: () => { lastMask = -1; camera.layers.enableAll(); } };
+})();
 let pokerOpen = null;
 const fmt = (n) => Number(n).toLocaleString();
 function pokerLobby(tb) {
@@ -938,7 +993,7 @@ addEventListener("keydown", (e) => {
 });
 addEventListener("keyup", (e) => { keys[e.code] = false; if (EX.active()) EX.key(e, false); });
 addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
-canvas.addEventListener("pointerdown", (e) => { Sfx.ensure(); if (EX.active()) { EX.pointer("move", e); EX.pointer("down", e); canvas.focus({ preventScroll: true }); return; } if (hkSide() >= 0) { hkAim(e); canvas.focus(); return; } dragging = true; dragId = e.pointerId; lastX = e.clientX; lastY = e.clientY; canvas.focus(); });
+canvas.addEventListener("pointerdown", (e) => { Sfx.ensure(); if (EX.active()) { EX.pointer("move", e); EX.pointer("down", e); canvas.focus({ preventScroll: true }); return; } if (hkSide() >= 0) { hkAim(e); canvas.focus(); return; } if (EX.click(e)) { canvas.focus({ preventScroll: true }); return; } dragging = true; dragId = e.pointerId; lastX = e.clientX; lastY = e.clientY; canvas.focus(); });
 addEventListener("pointerup", (e) => { if (e.pointerId === dragId) dragging = false; });
 addEventListener("pointercancel", (e) => { if (e.pointerId === dragId) dragging = false; });
 canvas.addEventListener("pointermove", (e) => { if (EX.active()) EX.pointer("move", e); else if (hkSide() >= 0) hkAim(e); });
@@ -1067,10 +1122,11 @@ function frame(now) {
   else _look.set(me.p.x, me.p.y + 1.1, me.p.z);
   if (!fpView || EX.active() || hkSide() >= 0) camera.position.lerp(_cam, 0.15);
   camera.lookAt(_look);
+  camera.updateMatrixWorld(); ROOMS3D.update(camera.position, me.p);   // which rooms to draw (see ROOM CULLING)
 
   // the lights. The LED colour runs slowly round the room; the bulbs chase at 3 steps a second (no faster: photosensitivity)
   if (!CALM) {
-    for (const L of leds) L.m.material.color.setHSL((((L.u * 0.035 - t * 0.08) % 1) + 1) % 1, 1, LED_L);
+    paintLeds(t);
     for (const S of spots) S.s.target.position.set(Math.sin(t * 0.35 + S.ph) * 9, 0, Math.cos(t * 0.27 + S.ph * 1.3) * 6 + 1);
     chaseT += dt; if (chaseT > 1 / 3) { chaseT = 0; chaseStep++; for (let k = 0; k < bulbPos.length; k++) bulbs.setColorAt(k, (k + chaseStep) % 3 === 0 ? BULB_ON : BULB_OFF); bulbs.instanceColor.needsUpdate = true; }
     signLight.intensity = 7 + Math.sin(t * 1.3) * 1.2;
@@ -1081,7 +1137,7 @@ function frame(now) {
     // the jukebox's tubes breathe while a station is on
     const on = Boolean(A.radio), k = on ? 0.75 + Math.sin(t * 4) * 0.25 : 0.35;
     jukeLights.forEach((m, i) => { if (m.isLight) { if (m.visible) m.intensity = on ? 3 + Math.sin(t * 4) * 1.5 : 1.5; } else m.material.color.set(i === 0 ? COL.orange : COL.pink).multiplyScalar(0.62 * k); });
-  } else for (const L of leds) L.m.material.color.setHSL((L.u * 0.035) % 1, 1, LED_L);
+  } else paintLeds(0);
   boardT -= dt; if (boardT <= 0) setBoard(boardIdx + 1);
 
   // offline only: pretend notices from around the arcade (live, these ride the bell's existing request)
@@ -1094,4 +1150,4 @@ renderOnline();
 $("loadStat").textContent = `opened in ${loadMs} ms`;
 canvas.focus();
 requestAnimationFrame(frame);
-window.__lounge = { me, A, remote, clerk, camera, LIGHTS, applyQuality, qualityNow, EX, wallet, get bots() { return bots; }, cabs, use, setBoard, cam: (y, p) => { camYaw = y; camPitch = p; } };
+window.__lounge = { me, A, remote, clerk, camera, renderer, scene, ROOMS3D, LIGHTS, applyQuality, qualityNow, EX, wallet, get bots() { return bots; }, cabs, use, setBoard, cam: (y, p) => { camYaw = y; camPitch = p; } };

@@ -13,7 +13,7 @@
    Polling: the wheel's and coin's state are asked for only while you're in this room and the tab is visible (one request a second
    between them), the slots' jackpot every 15 s; nothing at all from anywhere else in the lounge. */
 export function buildCasino(ctx) {
-  const { THREE, scene, A, Sfx, me, R, W, WALK, REGIONS, block, std, basic, canvasTex, tickers, spots, clamp, esc, CALM, keep, CO0, CO1, COH } = ctx;
+  const { THREE, scene, camera, canvas, A, Sfx, me, R, W, WALK, REGIONS, block, std, basic, canvasTex, tickers, spots, clamp, esc, CALM, keep, CO0, CO1, COH } = ctx;
   const X0 = -W - 14, X1 = -W, Z0 = -14, Z1 = 2, H = 5;
   WALK.push([X1 - R - 0.2, X1 + R + 0.2, CO0 + R, CO1 - R], [X0 + R, X1 - R, Z0 + R, Z1 - R]);
   REGIONS.push({ name: "casino", x0: X0, x1: X1 - 0.01, z0: Z0, z1: Z1, ceil: H });
@@ -180,6 +180,7 @@ export function buildCasino(ctx) {
     wheel.sign(wheelLines());
     if (isOpen("wheel")) A.redrawCustom();
   }
+  async function betWheel(pick, wager) { const r = await api("/api/casino/wheel/bet", { pick, wager }); if (r.ok) { if (r.balance != null) zc = r.balance; Sfx.play("checkpoint"); A.notify(`${wager} ZC on ${pick}. Good luck!`, "🎡", "lime"); onWheel(await api("/api/casino/wheel/state")); } return r; }
   function openWheel() {
     const st = () => wheel.state;
     betWindow("wheel", "THE WHEEL",
@@ -188,7 +189,7 @@ export function buildCasino(ctx) {
           ${mine ? ` You have <b>${mine.wager} ZC on ${mine.pick}</b>.` : ""} Red or black pays about ×2.03, the gold sliver ×60 (each spin's own edge, 96 to 104%, multiplies in when it settles).
           ${s?.me ? ` ${Math.max(0, (s.config?.maxPerHour || 10) - (s.me.betsThisHour || 0))} plays left this hour.` : ""}</p>`; },
       () => { const s = st(), open = s?.round?.phase === "bets" && !s?.me?.bet; return [{ key: "red", label: "🔴 Red", off: !open }, { key: "black", label: "⚫ Black", cls: "ghost", off: !open }, { key: "gold", label: "🟡 Gold ×60", cls: "yellow", off: !open }]; },
-      async (pick, wager) => { const r = await api("/api/casino/wheel/bet", { pick, wager }); if (r.ok) { Sfx.play("checkpoint"); A.notify(`${wager} ZC on ${pick}. Good luck!`, "🎡", "lime"); onWheel(await api("/api/casino/wheel/state")); } return r; });
+      betWheel);
   }
   spots.push({ kind: "wheel", x: X0 + 3.9, z: WH.z, r: 2.2, label: () => `<kbd>E</kbd> The Wheel: place a bet`, use: openWheel });
 
@@ -234,6 +235,7 @@ export function buildCasino(ctx) {
     coin.sign(coinLines());
     if (isOpen("coin")) A.redrawCustom();
   }
+  async function betCoin(side, wager) { const r = await api("/api/coin/bet", { side, wager }); if (r.ok) { if (r.balance != null) zc = r.balance; Sfx.play("checkpoint"); A.notify(`${wager} ZC on ${side}.`, "🪙", "lime"); onCoin(await api("/api/coin/state")); } return r; }
   function openCoin() {
     const st = () => coin.state;
     betWindow("coin", "COIN FLIP",
@@ -241,7 +243,7 @@ export function buildCasino(ctx) {
         return `<p class="ak-note">${!rd ? "Finding the coin…" : rd.phase === "bets" ? `It flips in <b>${left(rd.flipsAt)}s</b>.` : "No more bets: it's in the air. The next round opens in a few seconds."}
           ${mine ? ` You have <b>${mine.wager} ZC on ${mine.side}</b>.` : ""} Call it right and it pays ×2. ${s?.me ? `${Math.max(0, (s.config?.maxPerHour || 10) - (s.me.betsThisHour || 0))} plays left this hour.` : ""}</p>`; },
       () => { const s = st(), open = s?.round?.phase === "bets" && !s?.me?.bet; return [{ key: "heads", label: "Heads", off: !open }, { key: "tails", label: "Tails", cls: "ghost", off: !open }]; },
-      async (side, wager) => { const r = await api("/api/coin/bet", { side, wager }); if (r.ok) { Sfx.play("checkpoint"); A.notify(`${wager} ZC on ${side}.`, "🪙", "lime"); onCoin(await api("/api/coin/state")); } return r; });
+      betCoin);
   }
   spots.push({ kind: "coin", x: CN.x, z: CN.z, r: 2.1, label: () => `<kbd>E</kbd> Coin Flip: heads or tails`, use: openCoin });
 
@@ -280,28 +282,30 @@ export function buildCasino(ctx) {
     plinko.balls.push({ b, pts, i: 0, u: 0, done: () => { done?.(bucket); const m = plinko.buckets[bucket]; m.material.color.setHex(0xffffff); setTimeout(() => m.material.color.setHex(0xbbbbbb), 900); }, life: 1.2 });
   }
   async function plinkoState() { const s = await api("/api/casino/plinko/state"); if (s.ok) { plinko.state = s; plinko.next = s.nextHash; } return s; }
+  async function dropPlinko(stake) {
+    if (plinko.pending) return { ok: false, message: "One drop at a time." };
+    plinko.pending = true; const r = await api("/api/casino/plinko/drop", { stake }); plinko.pending = false;
+    if (!r.ok) return r;
+    plinko.next = r.nextHash; if (r.balance != null) zc = r.balance; Sfx.play("go"); if (isOpen("plinko")) A.closeWindow();
+    const d = r.drop;
+    dropBall(d.path, 0xffcc33, () => {
+      const prof = d.payout - d.stake;
+      popup(`×${+Number(d.multiplier).toFixed(2)}`, d.multiplier >= 4 ? "#ff3ea5" : prof >= 0 ? "#ffcc33" : "#9aa3c7", PK.x, PK.top - PK.rows * PK.rh + 0.5, PK.z + 0.3);
+      if (prof > 0) { Sfx.play(d.multiplier >= 4 ? "finish" : "checkpoint"); A.notify(`Plinko paid ${fmt(d.payout)} ZC (×${+Number(d.multiplier).toFixed(2)}).`, "🔴", d.multiplier >= 4 ? "gold" : "lime"); }
+      else A.notify(`×${+Number(d.multiplier).toFixed(2)}: ${fmt(d.payout)} ZC back from ${d.stake}.`, "🔴");
+      plinkoState();
+    });
+    plinko.balls[plinko.balls.length - 1].mine = true;
+    A.send?.({ t: "cshow", g: "plinko", path: d.path, x: +Number(d.multiplier).toFixed(2) });
+    return r;
+  }
   function openPlinko() {
     if (!plinko.state) plinkoState().then(() => { if (isOpen("plinko")) A.redrawCustom(); });
     betWindow("plinko", "PLINKO",
       () => { const s = plinko.state; return `<p class="ak-note">Twelve rows, thirteen buckets: ×25 at the edges, ×0.3 in the middle, everything else pays. ${s?.me ? `${Math.max(0, (s.config?.maxPerHour || 10) - (s.me.dropsThisHour || 0))} drops left this hour.` : ""}</p>
-        <p class="ak-note" style="word-break:break-all">Your next drop's seed is sealed: <code>${esc((plinko.next || "…").slice(0, 24))}…</code></p>`; },
+    <p class="ak-note" style="word-break:break-all">Your next drop's seed is sealed: <code>${esc((plinko.next || "…").slice(0, 24))}…</code></p>`; },
       () => [{ key: "drop", label: "Drop the ball", cls: "yellow", off: plinko.balls.some((b) => b.mine) }],
-      async (_, stake) => {
-        const r = await api("/api/casino/plinko/drop", { stake });
-        if (!r.ok) return r;
-        plinko.next = r.nextHash; Sfx.play("go"); A.closeWindow();
-        const d = r.drop;
-        dropBall(d.path, 0xffcc33, () => {
-          const prof = d.payout - d.stake;
-          popup(`×${+Number(d.multiplier).toFixed(2)}`, d.multiplier >= 4 ? "#ff3ea5" : prof >= 0 ? "#ffcc33" : "#9aa3c7", PK.x, PK.top - PK.rows * PK.rh + 0.5, PK.z + 0.3);
-          if (prof > 0) { Sfx.play(d.multiplier >= 4 ? "finish" : "checkpoint"); A.notify(`Plinko paid ${fmt(d.payout)} ZC (×${+Number(d.multiplier).toFixed(2)}).`, "🔴", d.multiplier >= 4 ? "gold" : "lime"); }
-          else A.notify(`×${+Number(d.multiplier).toFixed(2)}: ${fmt(d.payout)} ZC back from ${d.stake}.`, "🔴");
-          plinkoState();
-        });
-        plinko.balls[plinko.balls.length - 1].mine = true;
-        A.send?.({ t: "cshow", g: "plinko", path: d.path, x: +Number(d.multiplier).toFixed(2) });
-        return r;
-      });
+      (_, stake) => dropPlinko(stake));
   }
   spots.push({ kind: "plinko", x: PK.x, z: PK.z + 1.4, r: 1.6, label: () => `<kbd>E</kbd> Plinko: drop a ball`, use: openPlinko });
 
@@ -333,14 +337,15 @@ export function buildCasino(ctx) {
       const top = canvasTex(512, 160, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#" + col.toString(16).padStart(6, "0")); gr.addColorStop(1, "#1a1030"); c.fillStyle = gr; c.fillRect(0, 0, w, h); c.textAlign = "center"; c.textBaseline = "middle"; c.font = "70px Bungee"; c.lineWidth = 8; c.strokeStyle = "#0c0410"; c.strokeText("LUCKY 7", w / 2, h / 2); c.fillStyle = "#fff"; c.fillText("LUCKY 7", w / 2, h / 2); });
       const mq = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 0.5), [std(0x1a1030), std(0x1a1030), std(0x1a1030), std(0x1a1030), basic(0xdddddd, { map: top }), std(0x1a1030)]); mq.position.set(0, 2.5, -0.1); g.add(mq);
       mk(new THREE.PlaneGeometry(1.0, 0.62), basic(0x0c0410), 0, 1.75, 0.152, g);
-      const reels = [0, 1, 2].map((i) => { const t = stripTex(); t.offset.y = offFor((i * 4 + n) % STRIP.length); const m = mk(new THREE.PlaneGeometry(0.28, 0.5), basic(0xffffff, { map: t }), (i - 1) * 0.31, 1.75, 0.156, g); return { t, m, spinning: false, v: 0, stopAt: 0, time: 0, target: 0 }; });
+      const reels = [0, 1, 2].map((i) => { const t = stripTex(); t.offset.y = offFor((i * 4 + n) % STRIP.length); const m = mk(new THREE.PlaneGeometry(0.28, 0.5), basic(0x8a8a8a, { map: t }),   // (2026-10-08: white bloomed into a glare on high quality)
+        (i - 1) * 0.31, 1.75, 0.156, g); return { t, m, spinning: false, v: 0, stopAt: 0, time: 0, target: 0 }; });
       mk(new THREE.BoxGeometry(1.0, 0.025, 0.02), basic(0xff3ea5), 0, 1.75, 0.16, g);   // the pay line
       const lever = new THREE.Group(); lever.position.set(0.66, 1.3, 0.05); g.add(lever);
       mk(new THREE.CylinderGeometry(0.025, 0.025, 0.6, 8), std(0xbfc6d6, { metalness: 0.8, roughness: 0.25 }), 0, 0.3, 0, lever);
       mk(new THREE.SphereGeometry(0.07, 12, 8), basic(0xff2a3a), 0, 0.62, 0, lever);
       mk(new THREE.BoxGeometry(0.9, 0.05, 0.2), std(0x2a1a44), 0, 1.12, 0.3, g);
       block(x, Z1 - 0.55, 1.4, 0.9);
-      slots.machines.push({ n, x, z: Z1 - 0.55, reels, lever, pull: 0, busy: false, who: null });
+      slots.machines.push({ n, g, x, z: Z1 - 0.55, reels, lever, pull: 0, busy: false, who: null });
     });
     slots.sign = board(4.6, 0.8, 1100, 190, (MX[0] + MX[2]) / 2, 3.55, Z1 - 0.32, Math.PI, "#ff3ea5");
   }
@@ -350,26 +355,28 @@ export function buildCasino(ctx) {
     mc.reels.forEach((r, i) => { r.spinning = true; r.v = 3.2; r.stopAt = 1.1 + i * 0.45; r.time = 0; r.target = STRIP.indexOf(reels[i]) + (i % 2 ? SYMS.length : 0); r.done = i === 2 ? done : null; });
   }
   async function slotsState() { const s = await api("/api/casino/slots/state"); if (s.ok) { slots.state = s; slots.pot = s.pot; slots.sign(potLines()); } return s; }
+  async function spinSlots(mc, stake) {
+    if (mc.busy) return { ok: false, message: "That machine is still spinning." };
+    mc.busy = true; const r = await api("/api/casino/slots/spin", { stake });
+    if (!r.ok) { mc.busy = false; return r; }
+    if (r.balance != null) zc = r.balance; if (isOpen("slots")) A.closeWindow(); const sp = r.spin; if (r.pot) { slots.pot = r.pot; slots.sign(potLines()); }
+    spinMachine(mc, sp.reels, () => {
+      mc.busy = false;
+      if (sp.jackpot > 0) { popup("JACKPOT!", "#ffcc33", mc.x, 3.0, mc.z - 0.6); A.notify(`JACKPOT! Three 7s paid ${fmt(sp.payout)} ZC!`, "🎰", "gold"); Sfx.play("finish"); }
+      else if (sp.payout > 0) { popup(`+${fmt(sp.payout)}`, sp.profit > 0 ? "#ffcc33" : "#9aa3c7", mc.x, 2.8, mc.z - 0.6); Sfx.play(sp.profit > 0 ? "checkpoint" : "beep"); A.notify(`${sp.reels.join(" · ")}: ${fmt(sp.payout)} ZC back.`, "🎰", sp.profit > 0 ? "lime" : ""); }
+      else A.notify(`${sp.reels.join(" · ")}. Nothing this time.`, "🎰");
+      slotsState();
+    });
+    A.send?.({ t: "cshow", g: "slots", m: mc.n, reels: sp.reels, x: sp.jackpot > 0 ? 999 : +Number(sp.multiplier).toFixed(2) });
+    return r;
+  }
   function openSlots(mc) {
     if (!slots.state) slotsState().then(() => { if (isOpen("slots")) A.redrawCustom(); });
     betWindow("slots", "LUCKY 7 SLOTS",
       () => { const s = slots.state; return `<p class="ak-note">Three of a kind pays: 💎 ×50, ⭐ ×25, 🔔 ×12, 🍋 ×6, 🍒 ×4, and two cherries pay a little. <b>Three 7s win the jackpot</b>${slots.pot ? ` (<b>${fmt(slots.pot.amount)} ZC</b> right now; a 20 ZC spin takes all of it)` : ""}. Every spin feeds it.
-        ${s?.me ? ` ${Math.max(0, (s.config?.maxPerHour || 10) - (s.me.played || 0))} spins left this hour.` : ""}</p>`; },
+    ${s?.me ? ` ${Math.max(0, (s.config?.maxPerHour || 10) - (s.me.played || 0))} spins left this hour.` : ""}</p>`; },
       () => [{ key: "spin", label: "Pull the lever", cls: "yellow", off: mc.busy }],
-      async (_, stake) => {
-        const r = await api("/api/casino/slots/spin", { stake });
-        if (!r.ok) return r;
-        A.closeWindow(); const sp = r.spin; if (r.pot) { slots.pot = r.pot; slots.sign(potLines()); }
-        spinMachine(mc, sp.reels, () => {
-          mc.busy = false;
-          if (sp.jackpot > 0) { popup("JACKPOT!", "#ffcc33", mc.x, 3.0, mc.z - 0.6); A.notify(`JACKPOT! Three 7s paid ${fmt(sp.payout)} ZC!`, "🎰", "gold"); Sfx.play("finish"); }
-          else if (sp.payout > 0) { popup(`+${fmt(sp.payout)}`, sp.profit > 0 ? "#ffcc33" : "#9aa3c7", mc.x, 2.8, mc.z - 0.6); Sfx.play(sp.profit > 0 ? "checkpoint" : "beep"); A.notify(`${sp.reels.join(" · ")}: ${fmt(sp.payout)} ZC back.`, "🎰", sp.profit > 0 ? "lime" : ""); }
-          else A.notify(`${sp.reels.join(" · ")}. Nothing this time.`, "🎰");
-          slotsState();
-        });
-        A.send?.({ t: "cshow", g: "slots", m: mc.n, reels: sp.reels, x: sp.jackpot > 0 ? 999 : +Number(sp.multiplier).toFixed(2) });
-        return r;
-      });
+      (_, stake) => spinSlots(mc, stake));
   }
   for (const mc of slots.machines) spots.push({ kind: "slots", x: mc.x, z: mc.z - 1.0, r: 0.85, label: () => mc.busy ? "Spinning…" : `<kbd>E</kbd> Play the slots`, use: () => { if (!mc.busy) openSlots(mc); } });
 
@@ -381,6 +388,85 @@ export function buildCasino(ctx) {
       const mc = slots.machines[m.m] || slots.machines[0]; if (mc.busy) return;
       spinMachine(mc, m.reels, () => { mc.busy = false; if (m.x >= 999) popup(`${m.name}: JACKPOT!`, "#ffcc33", mc.x, 3.0, mc.z - 0.6); else if (m.x > 0) popup(`${m.name} ×${m.x}`, "#19e3ff", mc.x, 2.8, mc.z - 0.6); });
     }
+  }
+
+  /* ================================================================== BUTTONS ON THE GAMES (2026-10-08, the owner: "can we add actual
+     betting buttons on the slot machines, click to spin the lever, same with the other casino games as well?"). Click or tap a button on
+     the game itself: the small gold ones pick the stake, the big ones bet it at once, through the same functions the E window uses. A
+     click only counts from where you'd stand to play (REACH), so a stray click across the room can never spend anything. */
+  const REACH = 3.2, clickables = [], ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  ray.layers.enableAll();   // (room culling puts the casino on its own layer)
+  const say = (r) => { if (r && !r.ok) A.notify(esc(r.message || "That didn't go through."), "⚠️", "pink"); };
+  // a push button: base, lit cap, and a label on top that reads the right way up for someone standing at `face` (radians: 0 = +z, PI/2 = +x)
+  function button(parent, { x, y, z, w = 0.15, d = 0.15, col, text, face = 0, onClick, big = false }) {
+    const g = new THREE.Group(); g.position.set(x, y, z); parent.add(g);
+    mk(new THREE.BoxGeometry(w + 0.03, 0.03, d + 0.03), std(0x0c0410, { roughness: 0.5 }), 0, 0.015, 0, g);
+    const cap = mk(new THREE.BoxGeometry(w, 0.04, d), std(col, { emissive: col, emissiveIntensity: 0.5, roughness: 0.35 }), 0, 0.05, 0, g);
+    const side = Math.abs(Math.sin(face)) > 0.5, along = side ? d : w, across = side ? w : d;   // the label runs left to right for the reader
+    const t = canvasTex(256, Math.max(64, Math.round((256 * across) / along)), (c, W2, H2) => {
+      c.textAlign = "center"; c.textBaseline = "middle"; c.font = `${big ? 60 : 76}px Bungee`; c.lineWidth = 10; c.strokeStyle = "rgba(0,0,0,.75)";
+      c.strokeText(text, W2 / 2, H2 / 2 + 4, W2 - 16); c.fillStyle = "#fff"; c.fillText(text, W2 / 2, H2 / 2 + 4, W2 - 16);
+    });
+    const lb = mk(new THREE.PlaneGeometry(along, across), basic(0xffffff, { map: t, transparent: true }), 0, 0.072, 0, g); lb.rotation.set(-Math.PI / 2, 0, face);
+    const item = { g, y0: y, meshes: [cap, lb], onClick, press: 0, set(on) { cap.material.emissiveIntensity = on ? 1.1 : 0.12; cap.position.y = on ? 0.058 : 0.05; } };
+    clickables.push(item); return item;
+  }
+  // one stake per game: every row for that game (all three slot machines) keeps in step
+  const rows = {};
+  const stakeRow = (id, parent, at, face) => {
+    const items = STAKES.map((v, k) => button(parent, { ...at[k], col: 0xc9a227, text: String(v), face, onClick: () => { stakeOf[id] = v; for (const row of rows[id]) row.forEach((it, j) => it.set(STAKES[j] === v)); Sfx.play("beep"); } }));
+    items.forEach((it, j) => it.set(STAKES[j] === stakeOf[id])); (rows[id] ||= []).push(items); return items;
+  };
+  const consoleBox = (x, z, w, d) => { mk(new THREE.BoxGeometry(w, 1.0, d), std(0x1a0810, { roughness: 0.5 }), x, 0.5, z); mk(new THREE.BoxGeometry(w + 0.06, 0.05, d + 0.06), std(0xc9a227, { metalness: 0.8, roughness: 0.3 }), x, 1.025, z); block(x, z, w, d); };
+  // the wheel: along the betting rail, the stakes and then red / black / gold (you stand east of it)
+  {
+    const rx = X0 + 3.2, y = 1.05, F = Math.PI / 2;
+    stakeRow("wheel", scene, [-7.35, -7.12, -6.89, -6.66].map((z) => ({ x: rx, y, z })), F);
+    const bet = (pick) => async () => {
+      const rd = wheel.state?.round;
+      if (!rd || rd.phase !== "bets") return A.notify(`No more bets: the next round opens in ${rd ? left(rd.endsAt) : "a few "}s.`, "🎡");
+      if (wheel.state?.me?.bet) return A.notify(`You're already on ${wheel.state.me.bet.pick} this round.`, "🎡");
+      say(await betWheel(pick, stakeOf.wheel));
+    };
+    button(scene, { x: rx, y, z: -6.15, w: 0.3, d: 0.42, col: 0xc8102e, text: "RED", face: F, big: true, onClick: bet("red") });
+    button(scene, { x: rx, y, z: -5.6, w: 0.3, d: 0.42, col: 0x2a2a3a, text: "BLACK", face: F, big: true, onClick: bet("black") });
+    button(scene, { x: rx, y, z: -5.05, w: 0.3, d: 0.42, col: 0xffcc33, text: "GOLD", face: F, big: true, onClick: bet("gold") });
+  }
+  // the coin: a little console beside the pedestal (you stand east of it)
+  {
+    const cx = CN.x + 1.5, F = Math.PI / 2; consoleBox(cx, CN.z, 0.5, 1.9);
+    stakeRow("coin", scene, [-0.78, -0.55, -0.32, -0.09].map((dz) => ({ x: cx, y: 1.05, z: CN.z + dz })), F);
+    const bet = (side) => async () => {
+      const rd = coin.state?.round;
+      if (!rd || rd.phase !== "bets") return A.notify(`It's in the air: the next round opens in ${rd ? left(rd.endsAt) : "a few "}s.`, "🪙");
+      if (coin.state?.me?.bet) return A.notify(`You're already on ${coin.state.me.bet.side} this round.`, "🪙");
+      say(await betCoin(side, stakeOf.coin));
+    };
+    button(scene, { x: cx, y: 1.05, z: CN.z + 0.3, w: 0.3, d: 0.34, col: 0xd8a630, text: "HEADS", face: F, big: true, onClick: bet("heads") });
+    button(scene, { x: cx, y: 1.05, z: CN.z + 0.72, w: 0.3, d: 0.34, col: 0x8a5a0a, text: "TAILS", face: F, big: true, onClick: bet("tails") });
+  }
+  // plinko: a console in front of the cabinet (you stand south of it)
+  {
+    const cz = PK.z + 1.05; consoleBox(PK.x, cz, 1.6, 0.45);
+    stakeRow("plinko", scene, [-0.66, -0.43, -0.2, 0.03].map((dx) => ({ x: PK.x + dx, y: 1.05, z: cz })), 0);
+    button(scene, { x: PK.x + 0.45, y: 1.05, z: cz, w: 0.5, d: 0.28, col: 0xff3ea5, text: "DROP", big: true, onClick: async () => say(await dropPlinko(stakeOf.plinko)) });
+  }
+  // slots: the stakes and SPIN on each machine's deck, and the lever itself (in the machine's own frame, where you stand at local +z)
+  for (const mc of slots.machines) {
+    stakeRow("slots", mc.g, [-0.36, -0.2, -0.04, 0.12].map((lx) => ({ x: lx, y: 1.145, z: 0.3, w: 0.13, d: 0.13 })), 0);
+    const spin = async () => say(await spinSlots(mc, stakeOf.slots));
+    button(mc.g, { x: 0.32, y: 1.145, z: 0.3, w: 0.22, d: 0.15, col: 0xff2a3a, text: "SPIN", big: true, onClick: spin });
+    clickables.push({ g: mc.lever, y0: null, meshes: mc.lever.children.slice(), onClick: spin, press: 0, set() {} });
+  }
+  function click(e) {
+    const r = canvas.getBoundingClientRect(); if (!r.width) return false;
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera);
+    const hits = ray.intersectObjects(clickables.flatMap((c) => c.meshes), false); if (!hits.length) return false;
+    const item = clickables.find((c) => c.meshes.includes(hits[0].object)); if (!item) return false;
+    const at = item.g.getWorldPosition(new THREE.Vector3());
+    if (Math.hypot(at.x - me.p.x, at.z - me.p.z) > REACH) { A.notify("Walk up to it to play.", "👆"); return true; }
+    if (item.y0 !== null) item.press = 0.16;
+    item.onClick(); return true;
   }
 
   /* ================================================================== every frame */
@@ -428,9 +514,10 @@ export function buildCasino(ctx) {
       }
     }
     for (let i = popups.length - 1; i >= 0; i--) { const p = popups[i]; p.life -= dt; p.s.position.y += dt * 0.5; p.s.material.opacity = Math.min(1, p.life); if (p.life <= 0) { scene.remove(p.s); p.s.material.map.dispose(); popups.splice(i, 1); } }
+    for (const c of clickables) if (c.press > 0) { c.press = Math.max(0, c.press - dt); c.g.position.y = c.y0 - (c.press > 0 ? 0.02 : 0); }   // a pushed button dips
     // the wheel's rim bulbs chase while it spins
     if (!CALM && wheel.bulbs) wheel.bulbs.rotation.z = wheel.spin ? -t * 3 : 0;
   });
 
-  return { onShow, wheel, coin, plinko, slots, dropBall, spinMachine, onWheel, onCoin, inRoom, X0, X1, Z0, Z1 };
+  return { click, clickables, onShow, wheel, coin, plinko, slots, dropBall, spinMachine, onWheel, onCoin, inRoom, X0, X1, Z0, Z1 };
 }

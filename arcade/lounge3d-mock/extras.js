@@ -10,8 +10,8 @@
    fish) so a result can't be made up, the way it runs air hockey. Tickets come from and go to the lounge's preview wallet.
 
    buildExtras(ctx) -> { spots, step(dt, t), cam(pos, look), active(), key(e, down), pointer(type, e) }  (see lounge.js) */
-import { buildDash } from "./dash.js?v=1";
-import { buildCasino } from "./casino.js?v=1";
+import { buildDash } from "./dash.js?v=2";
+import { buildCasino } from "./casino.js?v=2";
 
 export function buildExtras(ctx) {
   const { THREE, scene, camera, canvas, A, Sfx, me, R, D, W, COL, HEX, box, std, basic, tube, canvasTex, block, keep, makePerson, rnd, pick, clamp, esc, WALK, REGIONS, HOOKS, wallet, tstate, CALM } = ctx;
@@ -637,7 +637,7 @@ export function buildExtras(ctx) {
     pointer(type, e) { mode?.pointer?.(type, e); },
     key(e, down) { if (down && e.code === "KeyQ") return endMode(); mode?.key?.(e, down); },
     leave: endMode,
-    onDash: (m) => DASHC.onDash(m), restart: () => !mode && DASHC.restart(), dash: DASHC, onShow: (m) => CASINO.onShow(m), casino: CASINO,
+    onDash: (m) => DASHC.onDash(m), restart: () => !mode && DASHC.restart(), dash: DASHC, onShow: (m) => CASINO.onShow(m), click: (e) => !mode && CASINO.click(e), casino: CASINO,
     get mode() { return mode; }   // for tests
   };
 }

@@ -139,7 +139,7 @@ export function buildDash(ctx) {
   const store = { get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
   let ghostRun = store.get("ec_dash_ghost");   // {ms, f: [x, y, z] every 0.1 s}
   const ghost = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 1.0, 4, 10), new THREE.MeshBasicMaterial({ color: 0x19e3ff, transparent: true, opacity: 0.32, depthWrite: false }));
-  ghost.visible = false; scene.add(ghost);
+  ghost.visible = false; ghost.userData.mover = true; scene.add(ghost);
 
   function startRun() { run.state = "run"; run.t = 0; run.bell = null; run.frames = []; run.ft = 0; hud.hidden = false; $h("r").textContent = ""; $h("s").textContent = "Down the left lane, ring the bell"; $h("v").textContent = ""; Sfx.play("go"); }
   function stopRun(why) { run.state = "idle"; ghost.visible = false; if (why) { $h("r").textContent = why; run.hide = 2.5; } else hud.hidden = true; }
