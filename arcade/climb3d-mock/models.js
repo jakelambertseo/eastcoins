@@ -33,6 +33,21 @@ export async function loadAll(onProgress) {
 }
 export const has = (k) => Boolean(cache[k]);
 
+/* (2026-10-08) Loading only what a game needs. loadSome({ key: url }) loads a chosen set (the lounge: its own stripped characters, three
+   clips each, and only the ones on screen); ensure(key, url) fetches one on demand, once, and resolves when it's ready, so a person
+   whose character isn't here yet can be built and filled in a moment later. Both share loadAll's cache. */
+const pending = {};
+export function ensure(k, url) {
+  if (cache[k]) return Promise.resolve(cache[k]);
+  if (!pending[k]) pending[k] = new GLTFLoader().loadAsync(url).then((g) => { g.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); cache[k] = g; return g; })
+    .catch((e) => { console.warn("model failed", k, e); cache[k] = null; return null; }).finally(() => { delete pending[k]; });
+  return pending[k];
+}
+export async function loadSome(map, onProgress) {
+  let done = 0; const keys = Object.keys(map);
+  await Promise.all(keys.map((k) => ensure(k, map[k]).then(() => onProgress?.(++done / keys.length))));
+}
+
 /** A static model fitted to `size` (its biggest side), `height`, or an exact `box` [x, y, z]; sat on y = 0 and centred on x/z. */
 export function get(k, { size, height, box, emissive } = {}) {
   const g = cache[k]; if (!g) return null;

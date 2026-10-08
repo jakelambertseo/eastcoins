@@ -17,7 +17,7 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { Sfx } from "../parkour3d-mock/look.js?v=2";
-import * as Models from "../climb3d-mock/models.js?v=2";
+import * as Models from "../climb3d-mock/models.js?v=3";
 import * as Arcade from "../arcade-kit/arcade.js?v=10";
 import { CHARS, CHAR_NAMES, HATS, RADIO, HOCKEY, hkSeat, hkClampMallet } from "/v3/assets/js/arcade-rules.js?v=3";
 import { openTable } from "../poker3d-mock/table.js?v=2";
@@ -43,11 +43,28 @@ const HEX = (c) => "#" + c.toString(16).padStart(6, "0");
 const LED_L = 0.3;   // LED strip lightness (the owner: "lower the LED brightness some"; was 0.55)
 
 $("hudMsg").textContent = "Powering up…";
-const t0 = performance.now();
-await Promise.all([Models.loadAll((k) => { $("hudMsg").textContent = `Powering up… ${Math.round(k * 100)}%`; }),
-  document.fonts.load("40px Bungee"), document.fonts.load("40px Monoton"), document.fonts.load("600 20px Rubik")]);
+const t0 = performance.now(), marks = {};
+/* LOADING FAST (2026-10-08, the owner: "unplayable if it doesn't load quickly for users with subpar computers"). Measured first: 3.2 MB
+   a visit, of which 1.5 MB was six characters at 241 KB each (30 animations apiece; the lounge plays three), 1 MB was the Climb's
+   dungeon props the lounge never draws, and on the live site the models were served max-age=0, so all of it came down again every
+   time. Now: the lounge has its own characters (tools/strip-glb.mjs: idle, walk and jump only, ~40 KB each) under models/chars/, loads
+   only the ones on screen at the start (yours, Sydney's, Lucky's) and the rest after the first frame, the fonts can't hold the build
+   past three seconds, the shaders are compiled before the first frame rather than during it, the textures are drawn smaller on a
+   machine that was slow last time (TEXQ), and "auto" quality starts at medium and steps UP when the frames are comfortably fast, so a
+   weak machine never spends its first seconds at the dearest setting. _headers holds /arcade/ models and scripts for a year. */
+const CHAR_URL = (k) => new URL(`./models/chars/character-${k.replace("char-", "")}.glb?v=1`, import.meta.url).href;
+const settings = { ...Arcade.DEFAULT_SETTINGS, ...((() => { try { return JSON.parse(localStorage.getItem("ecArcadeSettings") || "null") || {}; } catch { return {}; } })()) };   // (the shell reads the same key; a chosen quality must be known before the build)
+let shadowEvery = 1, frameNo = 0;
+let autoQ = (() => { try { const q = localStorage.getItem("ec_lounge_autoq"); if (q === "low" || q === "medium" || q === "high") return q; } catch {} return "medium"; })();
+const qualityNow = () => (settings.quality === "auto" ? autoQ : settings.quality);
+const TEXQ = { high: 1, medium: 0.75, low: 0.5 }[qualityNow()] || 1;
+const myLook0 = (() => { try { return JSON.parse(localStorage.getItem("ecPlayer") || "null")?.model; } catch { return null; } })();
+const firstChars = [...new Set([myLook0, "char-female-d", "char-male-e"].filter((k) => CHARS.includes(k)))];
+const withTimeout = (p, ms) => Promise.race([p, new Promise((ok) => setTimeout(ok, ms))]);
+await Promise.all([Models.loadSome(Object.fromEntries(firstChars.map((k) => [k, CHAR_URL(k)])), (k) => { $("hudMsg").textContent = `Powering up… ${Math.round(k * 100)}%`; }),
+  withTimeout(Promise.all([document.fonts.load("40px Bungee"), document.fonts.load("40px Monoton"), document.fonts.load("600 20px Rubik")]), 3000)]);
 const carpetImg = await new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = "../arcade-kit/carpet.svg"; });
-const loadMs = Math.round(performance.now() - t0);
+const loadMs = Math.round(performance.now() - t0); marks.load = loadMs; const tBuild = performance.now();
 $("hudMsg").textContent = "";
 
 const readSave = (k) => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch { return null; } };
@@ -100,7 +117,13 @@ const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o });
 const tube = (c) => basic(new THREE.Color(c).multiplyScalar(0.62));   // neon tubes, a little under full so the glow doesn't flood
 const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, ...o });
 function box(w, h, d, mat, x, y, z, parent = scene) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; parent.add(m); return m; }
-function canvasTex(w, h, draw) { const c = document.createElement("canvas"); c.width = w; c.height = h; draw(c.getContext("2d"), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; }
+function canvasTex(w, h, draw) {   // drawn at TEXQ of the asked size on a machine that was slow last time (the drawing code never knows)
+  const tT = performance.now(); marks.texN = (marks.texN || 0) + 1;
+  const c = document.createElement("canvas"); c.width = Math.max(8, Math.round(w * TEXQ)); c.height = Math.max(8, Math.round(h * TEXQ));
+  const g = c.getContext("2d"); if (TEXQ !== 1) g.scale(c.width / w, c.height / h); draw(g, w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = TEXQ >= 1 ? 4 : TEXQ >= 0.75 ? 2 : 1;
+  marks.tex = Math.round((marks.tex || 0) + performance.now() - tT); return t;
+}
 
 /* ---- the carpet: the kit's tile, drawn big so it stays sharp, glowing under the blacklight */
 {
@@ -584,11 +607,13 @@ function hatMesh(key) {
 }
 function makePerson(look, name, color, avatar = null) {
   const g = new THREE.Group(); g.userData.mover = true;   // people walk between rooms: room culling leaves them alone
-  const ch = Models.char(look.model, 1.6);
-  if (ch) { ch.obj.rotation.y = Math.PI; g.add(ch.obj); }
   const h = hatMesh(look.hat); h.position.y = 1.72; g.add(h);
   let tag = null; if (name) { tag = makeLabel(name, color, avatar); tag.position.y = 2.2; g.add(tag); }   // your own name would only cover the view
-  scene.add(g); return { g, ch, tag };
+  scene.add(g); const mesh = { g, ch: null, tag };
+  const dress = () => { const ch = Models.char(look.model, 1.6); if (ch) { ch.obj.rotation.y = Math.PI; g.add(ch.obj); mesh.ch = ch; } };
+  if (Models.has(look.model)) dress();
+  else Models.ensure(look.model, CHAR_URL(look.model)).then(() => { if (g.parent) dress(); });   // not here yet: hat and name now, the body when it lands
+  return mesh;
 }
 function dropPerson(mesh) { scene.remove(mesh.g); if (mesh.tag) { const i = labels.indexOf(mesh.tag); if (i >= 0) labels.splice(i, 1); mesh.tag.material.map.dispose(); } }
 function pushOut(p, r) {
@@ -609,7 +634,6 @@ function pushOut(p, r) {
 }
 
 /* ------------------------------------------------------------------ the shell: who you are, the menu, chat, settings, the jukebox */
-const settings = { ...Arcade.DEFAULT_SETTINGS };
 const me = { p: new V3(0, R, 1), v: new V3(), facing: Math.PI, grounded: true, slide: false, slideT: 0, slideCd: 0, landT: 9 };
 if (new URLSearchParams(location.search).get("at") === "poker") me.p.set(-8, R, 12.4);   // the old poker page sends you here
 const remote = new Map();   // id -> { p, mesh, target, f, a }
@@ -677,8 +701,6 @@ function addRemote(p) {
   r.mesh.g.visible = p.room === "lounge";
   remote.set(p.id, r);
 }
-let autoQ = "high";   // what "auto" has settled on
-const qualityNow = () => (settings.quality === "auto" ? autoQ : settings.quality);
 function applyQuality() {
   const q = qualityNow(), maxRank = q === "low" ? 1 : q === "medium" ? 2 : 3;
   let off = 0;
@@ -686,8 +708,9 @@ function applyQuality() {
   sky.intensity = AMBIENT + off * 0.04;   // the room gets a little more general light for every light turned off
   bloom.enabled = settings.glow && q !== "low";
   renderer.shadowMap.enabled = q !== "low";
+  renderer.shadowMap.autoUpdate = q === "high"; shadowEvery = q === "high" ? 1 : 2;   // medium: the shadow pass (a second draw of the visible rooms) runs every other frame
   key.shadow.mapSize.set(q === "high" ? 2048 : 1024, q === "high" ? 2048 : 1024); key.shadow.map?.dispose(); key.shadow.map = null;
-  renderer.setPixelRatio(q === "low" ? 0.75 : q === "medium" ? 1 : Math.min(2, window.devicePixelRatio || 1));
+  renderer.setPixelRatio(q === "low" ? 0.75 : q === "medium" ? 1 : Math.min(1.5, window.devicePixelRatio || 1));   // (high was 2: four times the pixels on a retina screen)
   canvas.width = 0;
   A.fpsNote?.(`${settings.quality === "auto" ? "auto→" : ""}${q} · ${LIGHTS.filter((L) => L.l.visible).length} lights`);
 }
@@ -849,10 +872,12 @@ function stepHockey(dt) {
    Mockup: the wallet lives in this page; on the site it is THE ticket wallet EastScape uses, and the cashier is the site's exchange. */
 const wallet = { tickets: 12450, zc: 340, out24: 0, cap: 100, rate: 1000 };
 for (const o of [scene.userData.puck, ...(scene.userData.mallets || []), scene.userData.claw, ...jukeLights]) if (o) o.userData.live = true;   // they move or change colour: never merged
+marks.lounge = Math.round(performance.now() - tBuild); let tPhase = performance.now();
 const EX = buildExtras({ THREE, scene, camera, canvas, A, Sfx, me, R, D, W, COL, HEX, box, std, basic, tube, canvasTex, block, keep, makePerson, rnd, pick, clamp, esc, WALK, REGIONS, HOOKS, wallet, tstate, CALM,
   PK_X0: AX0, PK_X1: AX1, PK_Z1: AZ1,
   nameColor: Arcade.nameColor, botsOn: () => bots.length > 0, setYaw: (y) => { camYaw = y; }, CO0, CO1, COH });
 applyQuality();   // the new rooms' lights join the budget
+marks.extras = Math.round(performance.now() - tPhase); tPhase = performance.now();
 
 /* ROOM CULLING (2026-10-08, the owner: "FPS is starting to drop"). Measured first: only 30-50k triangles in view, but up to 858 draw
    calls and 20 lights, because every room was drawn, and every light was shaded, through the walls. Now each room's things sit on that
@@ -910,6 +935,7 @@ const ROOMS3D = (() => {
    material that's changed later (a texture swapped in: the high-score board, a cabinet's screen), since those are kept unique. The
    other files mark their own moving parts live (the casino's wheel, coin, reels, levers and buttons; the Dash's sweepers and bell; the
    patio's flames and blimp), and the bar games corner isn't merged at all: skee-ball, darts and pong move their pieces. */
+marks.cull = Math.round(performance.now() - tPhase); tPhase = performance.now();
 const MERGED = (() => {
   scene.updateMatrixWorld(true);
   const keep = new Set(["position", "normal", "uv"]), cands = [];
@@ -928,11 +954,12 @@ const MERGED = (() => {
   const canon = new Map();
   for (const o of cands) { const k = matKey(o.material); if (!canon.has(k)) canon.set(k, o.material); o.userData.mat = canon.get(k); }
   const groups = new Map();
-  for (const o of cands) { const k = [o.layers.mask, o.userData.mat.uuid, o.castShadow, o.receiveShadow].join("|"); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(o); }
+  // (indexed and unindexed geometry can't share a merge; they're grouped apart, and every mesh keeps its index: unrolling them tripled the vertices)
+  for (const o of cands) { const k = [o.layers.mask, o.userData.mat.uuid, o.castShadow, o.receiveShadow, o.geometry.index ? "i" : "n"].join("|"); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(o); }
   let before = 0, after = 0;
   for (const list of groups.values()) {
     if (list.length < 2) continue;
-    const geos = list.map((o) => { let g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone(); for (const a of Object.keys(g.attributes)) if (!keep.has(a)) g.deleteAttribute(a); g.morphAttributes = {}; g.clearGroups(); g.applyMatrix4(o.matrixWorld); return g; });
+    const geos = list.map((o) => { const g = o.geometry.clone(); for (const a of Object.keys(g.attributes)) if (!keep.has(a)) g.deleteAttribute(a); g.morphAttributes = {}; g.clearGroups(); g.applyMatrix4(o.matrixWorld); return g; });
     const merged = mergeGeometries(geos, false); if (!merged) continue;
     const m = new THREE.Mesh(merged, list[0].userData.mat); m.layers.mask = list[0].layers.mask; m.castShadow = list[0].castShadow; m.receiveShadow = list[0].receiveShadow;
     m.matrixAutoUpdate = false; scene.add(m);
@@ -942,8 +969,8 @@ const MERGED = (() => {
   }
   return { before, after };
 })();
-// build every shader now, with every room in view, rather than in the middle of a walk (each first look at a room used to stall)
-ROOMS3D.all(); renderer.compile(scene, camera);
+marks.merge = Math.round(performance.now() - tPhase);
+// (every shader is built once the scene is complete, just before the first frame: see the end of the file)
 let pokerOpen = null;
 const fmt = (n) => Number(n).toLocaleString();
 function pokerLobby(tb) {
@@ -1120,14 +1147,18 @@ function step(dt) {
 /* ------------------------------------------------------------------ the frame */
 const _cam = new V3(), _look = new V3(), _c = new THREE.Color();
 let last = performance.now(), noteT = 5, chaseT = 0, chaseStep = 0, scrT = 0, scrPhase = 1;
-const perf = { n: 0, slow: 0, from: 0 };
+const perf = { n: 0, slow: 0, fast: 0, ups: 0 };
 function measure(rawMs) {
-  if (settings.quality !== "auto" || autoQ === "low" || document.hidden) return;
+  if (settings.quality !== "auto" || document.hidden) return;
   perf.n++; if (perf.n < 40) return;                  // let the scene settle (shaders, textures) first
   if (rawMs > 24) perf.slow++;                          // slower than ~40 fps
+  if (rawMs < 12) perf.fast = (perf.fast || 0) + 1;     // comfortably over 60
   if (perf.n >= 220) {
-    if (perf.slow / (perf.n - 40) > 0.4) { autoQ = autoQ === "high" ? "medium" : "low"; applyQuality(); A.notify(`Switched to ${autoQ} quality for smoother play (Settings to change it).`, "⚙️"); }
-    perf.n = 0; perf.slow = 0;
+    const seen = perf.n - 40, step = ["low", "medium", "high"], i = step.indexOf(autoQ);
+    if (perf.slow / seen > 0.4 && i > 0) { autoQ = step[i - 1]; applyQuality(); A.notify(`Switched to ${autoQ} quality for smoother play (Settings to change it).`, "⚙️"); }
+    else if (perf.fast / seen > 0.9 && i < 2 && perf.ups < 2) { autoQ = step[i + 1]; perf.ups = (perf.ups || 0) + 1; applyQuality(); }   // quietly, and at most twice a visit
+    try { localStorage.setItem("ec_lounge_autoq", autoQ); } catch {}   // next visit starts here, with its textures drawn to match
+    perf.n = 0; perf.slow = 0; perf.fast = 0;
   }
 }
 function frame(now) {
@@ -1191,11 +1222,17 @@ function frame(now) {
   // offline only: pretend notices from around the arcade (live, these ride the bell's existing request)
   if (bots.length) { noteT -= dt; if (noteT <= 0) { noteT = rnd(12, 20); const o = pick(bots); const n = Math.floor(Math.random() * 4);
     A.notify([`<b>${o.name}</b> reached floor ${Math.floor(rnd(40, 99))} of The Climb`, `<b>${o.name}</b> rang the bell at the top! 👑`, `Your Climb record was beaten by <b>${o.name}</b>`, `<b>${o.name}</b> caught a Golden Trophy Bass`][n], ["🧗", "🔔", "⚠️", "🎣"][n], ["", "gold", "pink", "lime"][n]); } }
+  if (shadowEvery > 1) renderer.shadowMap.needsUpdate = (++frameNo % shadowEvery) === 0;
   composer.render();
   requestAnimationFrame(frame);
 }
 renderOnline();
-$("loadStat").textContent = `opened in ${loadMs} ms`;
+marks.build = Math.round(performance.now() - tBuild);
+{ const t = performance.now(); ROOMS3D.all(); await renderer.compileAsync(scene, camera); marks.shaders = Math.round(performance.now() - t); }
+$("loadStat").textContent = `opened in ${loadMs + marks.build + marks.shaders} ms (models ${loadMs}, build ${marks.build}, shaders ${marks.shaders}, ${qualityNow()})`;
+console.log("lounge load (ms)", marks);   // the build's parts: lounge, extras (bar, patio, world, Dash, casino), cull, merge
 canvas.focus();
 requestAnimationFrame(frame);
-window.__lounge = { me, A, remote, clerk, camera, renderer, scene, ROOMS3D, MERGED, LIGHTS, applyQuality, qualityNow, EX, wallet, get bots() { return bots; }, cabs, use, setBoard, cam: (y, p) => { camYaw = y; camPitch = p; } };
+// the other characters, for whoever walks in, once the room is up
+setTimeout(() => { for (const k of CHARS) if (!Models.has(k)) Models.ensure(k, CHAR_URL(k)); }, 1500);
+window.__lounge = { me, A, remote, clerk, camera, renderer, scene, ROOMS3D, MERGED, marks, LIGHTS, applyQuality, qualityNow, EX, wallet, get bots() { return bots; }, cabs, use, setBoard, cam: (y, p) => { camYaw = y; camPitch = p; } };

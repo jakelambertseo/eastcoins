@@ -66,3 +66,19 @@
 
 /v3/assets/fonts/*
   Cache-Control: public, max-age=31536000, immutable
+
+# The arcade (2026-10-08: the lounge, The Climb, their kit). Every script and sheet carries ?v=N (the bump is the invalidation) and a
+# model or image changes by taking a new name, so all of it is held for a year. Before this the characters were served
+# max-age=0 and re-downloaded (1.5 MB) on every visit. The pages themselves (/arcade/<game>/) stay must-revalidate.
+/arcade/*.js
+  Cache-Control: public, max-age=31536000, immutable
+/arcade/*.css
+  Cache-Control: public, max-age=31536000, immutable
+/arcade/*.glb
+  Cache-Control: public, max-age=31536000, immutable
+/arcade/*.png
+  Cache-Control: public, max-age=31536000, immutable
+/arcade/*.svg
+  Cache-Control: public, max-age=31536000, immutable
+/arcade/*.webp
+  Cache-Control: public, max-age=31536000, immutable
