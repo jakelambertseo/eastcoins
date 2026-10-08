@@ -2,7 +2,7 @@
 
    THE BAR GAMES CORNER, through an open arch in the lounge's south-east wall: two skee-ball lanes (PvE: free, pays tickets), darts and beer
    pong (PvP: staked in tickets, here against a bot), and a shuffleboard that's out of order.
-   THE PATIO, through the lounge's east wall: a night garden with string lights, a fire pit, fireflies, and a pond with a dock. Fishing is
+   THE PATIO, through the lounge's east wall: a garden in daylight with a fire pit, and a pond with a dock. Fishing is
    PvE and pays tickets; the biggest catches go on the board by the dock.
 
    Every game here is a MODE: walk up, press E, and it takes the camera and the controls until you leave (Q, or the Leave button). The games
@@ -151,7 +151,7 @@ export function buildExtras(ctx) {
     for (const z of [PO0 - 0.6, PO1 + 0.6]) { const gl = mesh(new THREE.BoxGeometry(0.05, POH - 0.2, 1.1), new THREE.MeshStandardMaterial({ color: 0x9be8ff, transparent: true, opacity: 0.18, roughness: 0.05 }), W + 0.32, (POH - 0.2) / 2, z); gl.castShadow = false; }
     const s = plaque("PATIO", 3, 0.7, { glow: "#b6ff2e", fill: "#efffd0" }); s.position.set(W - 0.02, POH + 0.75, (PO0 + PO1) / 2); s.rotation.y = -Math.PI / 2; scene.add(s);
     // grass, with a little variety in it
-    const grass = canvasTex(512, 512, (g, w, h) => { g.fillStyle = "#0d2a14"; g.fillRect(0, 0, w, h); for (let k = 0; k < 3500; k++) { g.fillStyle = pick(["#123a1c", "#0a2210", "#1a4a24", "#0f3018"]); g.fillRect(Math.random() * w, Math.random() * h, 2, 5 + Math.random() * 6); } });
+    const grass = canvasTex(512, 512, (g, w, h) => { g.fillStyle = "#4a8a38"; g.fillRect(0, 0, w, h); for (let k = 0; k < 3500; k++) { g.fillStyle = pick(["#5a9a44", "#3f7a30", "#6aaa52", "#447f34"]); g.fillRect(Math.random() * w, Math.random() * h, 2, 5 + Math.random() * 6); } });
     grass.wrapS = grass.wrapT = THREE.RepeatWrapping; grass.repeat.set((PX1 - PX0) / 4, (PZ1 - PZ0) / 4);
     const gr = mesh(new THREE.PlaneGeometry(PX1 - PX0 + 2, PZ1 - PZ0 + 2), new THREE.MeshStandardMaterial({ map: grass, roughness: 1 }), (PX0 + PX1) / 2, 0.001, (PZ0 + PZ1) / 2); gr.rotation.x = -Math.PI / 2;
     // the deck by the door
@@ -160,17 +160,17 @@ export function buildExtras(ctx) {
     const deck = mesh(new THREE.BoxGeometry(5.5, 0.12, 9.5), new THREE.MeshStandardMaterial({ map: planks, roughness: 0.8 }), W + 2.75, 0.06, -8.2);
     const dock = mesh(new THREE.BoxGeometry(DOCK.x1 - DOCK.x0 + 0.2, 0.1, DOCK.z1 - DOCK.z0), new THREE.MeshStandardMaterial({ map: planks, roughness: 0.8 }), (DOCK.x0 + DOCK.x1) / 2, 0.12, (DOCK.z0 + DOCK.z1) / 2);
     for (const x of [DOCK.x0 + 1, DOCK.x1 - 0.1]) for (const z of [DOCK.z0 + 0.05, DOCK.z1 - 0.05]) mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.6, 8), std(0x3a2410), x, 0.05, z);
-    // the pond: a muddy bank, dark water with moonlight drifting across it, lily pads and reeds
+    // the pond: a muddy bank, water with the light drifting across it, lily pads and reeds
     const bank = mesh(new THREE.CircleGeometry(1, 48), std(0x1a140c, { roughness: 1 }), POND.cx, 0.006, POND.cz); bank.rotation.x = -Math.PI / 2; bank.scale.set(POND.rx + 0.45, POND.rz + 0.45, 1);
-    const shine = canvasTex(256, 256, (g, w, h) => { g.fillStyle = "#000"; g.fillRect(0, 0, w, h); for (let k = 0; k < 90; k++) { g.fillStyle = `rgba(180,210,255,${0.1 + Math.random() * 0.3})`; g.fillRect(Math.random() * w, Math.random() * h, 6 + Math.random() * 30, 1.5); } });
+    const shine = canvasTex(256, 256, (g, w, h) => { g.fillStyle = "#000"; g.fillRect(0, 0, w, h); for (let k = 0; k < 90; k++) { g.fillStyle = `rgba(255,255,255,${0.1 + Math.random() * 0.35})`; g.fillRect(Math.random() * w, Math.random() * h, 6 + Math.random() * 30, 1.5); } });
     shine.wrapS = shine.wrapT = THREE.RepeatWrapping; shine.repeat.set(2, 2);
-    const water = mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshStandardMaterial({ color: 0x0a2236, roughness: 0.12, metalness: 0.5, emissive: 0xffffff, emissiveMap: shine, emissiveIntensity: 0.35 }), POND.cx, 0.012, POND.cz);
+    const water = mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshStandardMaterial({ color: 0x3a8aaa, roughness: 0.08, metalness: 0.35, emissive: 0xffffff, emissiveMap: shine, emissiveIntensity: 0.22 }), POND.cx, 0.012, POND.cz);
     water.rotation.x = -Math.PI / 2; water.scale.set(POND.rx, POND.rz, 1); water.receiveShadow = true; POND.water = water; POND.shine = shine;
-    for (let k = 0; k < 9; k++) { const a = rnd(0, 7), rr = rnd(0.35, 0.85); const pad = mesh(new THREE.CircleGeometry(0.22, 12, 0.3, Math.PI * 1.85), std(0x1f5a28), POND.cx + Math.cos(a) * POND.rx * rr, 0.02, POND.cz + Math.sin(a) * POND.rz * rr); pad.rotation.x = -Math.PI / 2; }
+    for (let k = 0; k < 9; k++) { const a = rnd(0, 7), rr = rnd(0.35, 0.85); const pad = mesh(new THREE.CircleGeometry(0.22, 12, 0.3, Math.PI * 1.85), std(0x3a8a3a), POND.cx + Math.cos(a) * POND.rx * rr, 0.02, POND.cz + Math.sin(a) * POND.rz * rr); pad.rotation.x = -Math.PI / 2; }
     for (let k = 0; k < 26; k++) { const a = rnd(0, 7), x = POND.cx + Math.cos(a) * (POND.rx + rnd(-0.1, 0.3)), z = POND.cz + Math.sin(a) * (POND.rz + rnd(-0.1, 0.3)); if (x < DOCK.x1 + 0.6 && Math.abs(z - (DOCK.z0 + DOCK.z1) / 2) < 1.2) continue; const h = rnd(0.6, 1.1); mesh(new THREE.CylinderGeometry(0.012, 0.015, h, 5), std(0x3a5a20), x, h / 2, z); mesh(new THREE.CapsuleGeometry(0.03, 0.14, 4, 6), std(0x4a2a14), x, h - 0.05, z); }
     for (let k = 0; k < 16; k++) { const a = rnd(0, 7); const rk = mesh(new THREE.DodecahedronGeometry(rnd(0.12, 0.3), 0), std(0x4a4a50, { roughness: 0.9 }), POND.cx + Math.cos(a) * (POND.rx + 0.4), 0.05, POND.cz + Math.sin(a) * (POND.rz + 0.4)); rk.rotation.set(rnd(0, 3), rnd(0, 3), 0); }
     // trees and bushes round the edge, low-poly
-    const trunkM = std(0x3a2414, { roughness: 1 }), leafM = [std(0x14361c, { roughness: 1 }), std(0x1a4422, { roughness: 1 }), std(0x0f2a16, { roughness: 1 })];
+    const trunkM = std(0x3a2414, { roughness: 1 }), leafM = [std(0x2f6a2a, { roughness: 1 }), std(0x3a7a32, { roughness: 1 }), std(0x285a24, { roughness: 1 })];
     const treeAt = [[PX1 - 1.2, -20.5], [PX1 - 1.5, -15], [PX1 - 1.1, -8.5], [PX1 - 1.6, -2], [W + 4, PZ0 + 1.2], [W + 9, PZ0 + 1.0], [W + 13.5, PZ0 + 1.6], [W + 7.5, -1.2], [W + 12, -0.9], [W + 15, -17.5]];
     for (const [x, z] of treeAt) { const h = rnd(2.6, 4); mesh(new THREE.CylinderGeometry(0.12, 0.18, h * 0.4, 7), trunkM, x, h * 0.2, z); for (let k = 0; k < 3; k++) mesh(new THREE.ConeGeometry(1.2 - k * 0.3, h * 0.45, 7), pick(leafM), x, h * 0.4 + k * h * 0.22, z); block(x, z, 0.5, 0.5); }
     for (let k = 0; k < 14; k++) { const x = rnd(PX0 + 6.2, PX1 - 0.6), z = pick([rnd(PZ0 + 0.5, PZ0 + 2.5), rnd(PZ1 - 2.2, PZ1 - 0.4)]); mesh(new THREE.IcosahedronGeometry(rnd(0.35, 0.6), 0), pick(leafM), x, 0.3, z); }
@@ -190,34 +190,26 @@ export function buildExtras(ctx) {
       mesh(new THREE.BoxGeometry(0.6, 0.06, 0.55), m, 0, 0.36, 0, g); const back = mesh(new THREE.BoxGeometry(0.6, 0.7, 0.06), m, 0, 0.72, -0.3, g); back.rotation.x = -0.35;
       for (const sx of [-0.32, 0.32]) mesh(new THREE.BoxGeometry(0.08, 0.05, 0.6), m, sx, 0.55, 0.02, g); for (const sx of [-0.25, 0.25]) for (const sz of [-0.22, 0.22]) mesh(new THREE.BoxGeometry(0.05, 0.36, 0.05), m, sx, 0.18, sz, g); block(x, z, 0.7, 0.7); };
     [[0, 0xd04a3a], [1.6, 0x2a7ad0], [3.2, 0xe8c040], [4.7, 0x3aa060]].forEach(([a, c]) => chair(FIRE.x + Math.cos(a) * 1.6, FIRE.z + Math.sin(a) * 1.6, Math.atan2(FIRE.x - (FIRE.x + Math.cos(a) * 1.6), FIRE.z - (FIRE.z + Math.sin(a) * 1.6)), c));
-    // string lights: posts and sagging wires of bulbs (they glow; they aren't lights)
-    const POSTS = [[W + 0.4, -12.6], [W + 5.4, -12.6], [W + 5.4, -3.6], [W + 0.4, -3.6], [W + 5.4, -19.8], [W + 0.6, -19.8]];
-    for (const [x, z] of POSTS) mesh(new THREE.CylinderGeometry(0.05, 0.06, 3.2, 8), std(0x2a2018), x, 1.6, z);
-    const RUNS = [[0, 1], [1, 2], [2, 3], [0, 3], [1, 4], [4, 5], [5, 0], [0, 2]];
-    const bulbM = [], bulbs = [];
-    for (const [a, b] of RUNS) {
-      const [ax, az] = POSTS[a], [bx, bz] = POSTS[b], n = Math.round(Math.hypot(bx - ax, bz - az) / 0.45), pts = [];
-      for (let k = 0; k <= n; k++) { const t = k / n, y = 3.1 - Math.sin(Math.PI * t) * 0.55; pts.push(new V3(ax + (bx - ax) * t, y, az + (bz - az) * t)); if (k && k < n) bulbM.push(new THREE.Matrix4().makeTranslation(ax + (bx - ax) * t, y - 0.07, az + (bz - az) * t)); }
-      scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x111111 })));
-    }
-    const bi = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 8, 6), basic(0xffd890), bulbM.length); bulbM.forEach((m, k) => bi.setMatrixAt(k, m)); scene.add(bi);
     // a cooler and some empties on the deck
-    mesh(new THREE.BoxGeometry(0.6, 0.38, 0.38), std(0xd0182a, { roughness: 0.5 }), W + 4.6, 0.31, -5.0); mesh(new THREE.BoxGeometry(0.62, 0.06, 0.4), std(0xffffff), W + 4.6, 0.53, -5.0);
+    mesh(new THREE.BoxGeometry(0.6, 0.38, 0.38), std(0xd0182a, { roughness: 0.5 }), W + 4.6, 0.31, -5.0); mesh(new THREE.BoxGeometry(0.62, 0.06, 0.4), std(0xd8d8d8), W + 4.6, 0.53, -5.0);
     block(W + 4.6, -5.0, 0.7, 0.45);
-    // the night: a moon, stars over the garden, cool moonlight, fireflies
-    const moon = new THREE.Sprite(new THREE.SpriteMaterial({ map: canvasTex(128, 128, (g, w) => { const gr = g.createRadialGradient(w / 2, w / 2, 10, w / 2, w / 2, w / 2); gr.addColorStop(0, "#fffbe8"); gr.addColorStop(0.45, "#f0ecd8"); gr.addColorStop(0.5, "rgba(240,236,216,.25)"); gr.addColorStop(1, "rgba(240,236,216,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, w); }), fog: false, depthWrite: false }));
-    moon.scale.setScalar(9); moon.position.set(W + 38, 30, -34); scene.add(moon);
-    const sp = []; for (let k = 0; k < 500; k++) sp.push(rnd(W - 20, W + 70), rnd(14, 45), rnd(-70, 25));
-    const stars = new THREE.Points(new THREE.BufferGeometry().setAttribute("position", new THREE.Float32BufferAttribute(sp, 3)), new THREE.PointsMaterial({ color: 0xffffff, size: 0.18, fog: false, transparent: true, opacity: 0.85 })); scene.add(stars);
-    const moonLight = keep(new THREE.PointLight(0xa8c0ff, 0.9, 40, 0), 1); moonLight.position.set(W + 9, 14, -11); scene.add(moonLight);
-    const ff = canvasTex(32, 32, (g, w) => { const gr = g.createRadialGradient(w / 2, w / 2, 1, w / 2, w / 2, w / 2); gr.addColorStop(0, "rgba(220,255,140,1)"); gr.addColorStop(1, "rgba(220,255,140,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, w); });
-    const flies = []; for (let k = 0; k < 22; k++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: ff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); s.scale.setScalar(0.16); s.position.set(rnd(PX0 + 3, PX1 - 1), rnd(0.4, 1.8), rnd(PZ0 + 2, PZ1 - 2)); scene.add(s); flies.push({ s, ph: rnd(0, 6), x: s.position.x, y: s.position.y, z: s.position.z }); }
+    /* DAYTIME (2026-10-07, the owner: "make the outside area light outside as well and remove the fireflies/string lights"). A sky
+       round the garden (painted panels, unlit and unfogged, so they read the same from anywhere), a sun in it, and one wide warm
+       spotlight from high above that lights the garden like daylight without reaching into the lounge. */
+    const skyTex = canvasTex(64, 512, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#1f5fc8"); gr.addColorStop(0.65, "#4f9ae6"); gr.addColorStop(1, "#9fd0f2"); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+    const cloudTex = canvasTex(1024, 512, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#1f5fc8"); gr.addColorStop(0.65, "#4f9ae6"); gr.addColorStop(1, "#9fd0f2"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+      for (let k = 0; k < 9; k++) { const cx = rnd(60, w - 60), cy = rnd(60, h * 0.55); for (let j = 0; j < 7; j++) { g.fillStyle = "rgba(255,255,255,.75)"; g.beginPath(); g.ellipse(cx + rnd(-70, 70), cy + rnd(-14, 14), rnd(30, 60), rnd(16, 28), 0, 0, 7); g.fill(); } } });
+    const skyM = (tex) => new THREE.MeshBasicMaterial({ map: tex, color: 0xeeeeee, fog: false, side: THREE.DoubleSide });   // kept under the bloom threshold, or the sky glows white
+    for (const [w, h, x, y, z, ry] of [[70, 30, PX1 + 9, 13, -11, -Math.PI / 2], [60, 30, W + 16, 13, PZ0 - 9, 0], [60, 30, W + 16, 13, PZ1 + 9, Math.PI]]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), skyM(cloudTex)); m.position.set(x, y, z); m.rotation.y = ry; scene.add(m); }
+    { const top = new THREE.Mesh(new THREE.PlaneGeometry(70, 70), skyM(skyTex)); top.rotation.x = Math.PI / 2; top.position.set(W + 16, 28, -11); scene.add(top); }
+    const sun = new THREE.Sprite(new THREE.SpriteMaterial({ map: canvasTex(128, 128, (g, w) => { const gr = g.createRadialGradient(w / 2, w / 2, 6, w / 2, w / 2, w / 2); gr.addColorStop(0, "#fffef0"); gr.addColorStop(0.3, "#fff6c8"); gr.addColorStop(1, "rgba(255,240,180,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, w); }), fog: false, depthWrite: false }));
+    sun.scale.setScalar(7); sun.material.color.setScalar(0.85); sun.position.set(PX1 + 8.5, 20, -16); scene.add(sun);
+    const daylight = keep(new THREE.SpotLight(0xfff2dc, 2.4, 0, 0.62, 0.55, 0), 1); daylight.position.set(W + 8, 30, -11); daylight.target.position.set(W + 8, 0, -11); scene.add(daylight); scene.add(daylight.target);
     tickers.push((dt, t) => {
       if (CALM) return;
       shine.offset.x = t * 0.01; shine.offset.y = t * 0.006;
       for (const { f, ph } of flames) { const k = 0.85 + Math.sin(t * 11 + ph) * 0.12 + Math.sin(t * 17 + ph * 2) * 0.06; f.scale.set(1, k, 1); }
       if (fireLight.visible) fireLight.intensity = 5.5 + Math.sin(t * 13) * 0.8 + Math.sin(t * 7.3) * 0.6;
-      for (const fl of flies) { fl.s.position.set(fl.x + Math.sin(t * 0.4 + fl.ph) * 0.8, fl.y + Math.sin(t * 0.9 + fl.ph * 2) * 0.25, fl.z + Math.cos(t * 0.33 + fl.ph) * 0.8); fl.s.material.opacity = 0.35 + 0.65 * Math.max(0, Math.sin(t * 1.3 + fl.ph * 3)); }
     });
     // the catch board by the dock
     const cbC = document.createElement("canvas"); cbC.width = 512; cbC.height = 400; const cbT = new THREE.CanvasTexture(cbC); cbT.colorSpace = THREE.SRGBColorSpace;
@@ -252,7 +244,7 @@ export function buildExtras(ctx) {
     if (hud) return hud;
     const st = document.createElement("style");
     st.textContent = `.mg{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:5;display:grid;justify-items:center;gap:8px;padding:12px 18px;border-radius:14px;background:rgba(10,6,20,.9);box-shadow:inset 0 0 0 2px var(--ak-line),0 10px 30px rgba(0,0,0,.5);min-width:min(420px,calc(100% - 28px));color:var(--ak-text);font:500 14px var(--ak-body);text-align:center}
-.mg[hidden]{display:none}.mg h4{margin:0;font:400 18px var(--ak-disp)}.mg .row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}.mg .k{color:var(--ak-dim);font-size:12.5px}
+.mg[hidden]{display:none}.mg.side{left:auto;right:12px;transform:none;min-width:0;width:min(300px,calc(100% - 90px));padding:10px 12px;gap:6px;font-size:13px}.mg.side .meter{width:100%}.mg.side h4{font-size:15px}.mg h4{margin:0;font:400 18px var(--ak-disp)}.mg .row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}.mg .k{color:var(--ak-dim);font-size:12.5px}
 .mg .meter{width:260px;height:12px;border-radius:6px;background:#0a0614;box-shadow:inset 0 0 0 1.5px var(--ak-line);overflow:hidden}.mg .meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ak-lime),var(--ak-yellow),var(--ak-red))}
 .mg .big{font:400 26px var(--ak-disp);color:var(--ak-yellow)}.mg .score{display:flex;gap:16px}.mg .score b{font:400 20px var(--ak-disp)}
 .mg-reel{position:relative;width:300px;height:30px;border-radius:15px;background:#0a2236;box-shadow:inset 0 0 0 2px var(--ak-cyan)}.mg-reel .zone{position:absolute;top:3px;bottom:3px;border-radius:12px;background:rgba(182,255,46,.35);box-shadow:inset 0 0 0 2px var(--ak-lime)}.mg-reel .fish{position:absolute;top:2px;font-size:20px;transform:translateX(-50%)}
@@ -268,7 +260,7 @@ export function buildExtras(ctx) {
     return hud;
   }
   function pop(text, ms = 1100) { const p = document.createElement("div"); p.className = "mg-pop"; p.textContent = text; document.querySelector(".stage").append(p); setTimeout(() => p.remove(), ms); }
-  function startMode(m) { if (mode) return; mode = m; hudEl().hidden = false; badge.hidden = false; ctx.onMode?.(true); $prompt(""); m.start(); }
+  function startMode(m) { if (mode) return; mode = m; hudEl().hidden = false; badge.hidden = false; hud.classList.toggle("side", Boolean(m.first)); /* first-person games keep the middle of the screen clear */ ctx.onMode?.(true); $prompt(""); m.start(); }
   function endMode() { if (!mode) return; mode.end?.(); mode = null; hud.hidden = true; badge.hidden = true; hud.innerHTML = ""; ctx.onMode?.(false); A.setWhere(""); canvas.focus({ preventScroll: true }); }
   const $prompt = (s) => { const hp = document.getElementById("hudPrompt"); hp.innerHTML = s; hp.dataset.l = s; };
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
@@ -288,8 +280,9 @@ export function buildExtras(ctx) {
       flying = { t: 0, u, v, p: power }; lane.ball.visible = true; power = 0; draw();
     };
     return {
+      first: true,
       start() { placeMe(lane.stand.x, lane.stand.z, Math.PI); A.setWhere("playing skee-ball"); draw(); drawSkeeScore(lane, 0, 9); },
-      cam(pos, look) { pos.set(lane.g.position.x, 1.85, lane.g.position.z - 1.15); look.set(lane.g.position.x, 1.2, lane.g.position.z + SKEE.L + 0.4); return true; },
+      cam(pos, look) { pos.set(lane.g.position.x, 2.05, lane.g.position.z - 0.55); look.set(lane.g.position.x, 1.25, lane.g.position.z + SKEE.L + 0.55); return true; },
       pointer(type, e) { if (type === "move") { const r = canvas.getBoundingClientRect(); aim = ((e.clientX - r.left) / r.width) * 2 - 1; } else if (type === "down") holding = true; else if (type === "up") { if (holding) toss(); holding = false; } },
       key(e, down) { if (e.code === "Space") { if (down && !holding) holding = true; else if (!down && holding) { holding = false; toss(); } } if (down && (e.code === "KeyA" || e.code === "ArrowLeft")) aim = Math.max(-1, aim - 0.15); if (down && (e.code === "KeyD" || e.code === "ArrowRight")) aim = Math.min(1, aim + 0.15); },
       step(dt) {
@@ -343,6 +336,7 @@ export function buildExtras(ctx) {
     };
     const begin = () => { if (wallet.tickets < STAKE) { A.notify("Not enough tickets: Lucky sells them.", "🎟️", "pink"); return false; } wallet.tickets -= STAKE; started = true; round = 1; turn = "me"; left = 3; mine = 0; theirs = 0; for (const d of darts.splice(0)) scene.remove(d); draw(); return true; };
     return {
+      first: true,
       start() { placeMe(DART.at.x, DART.oche - 0.3, Math.PI); A.setWhere("throwing darts"); if (!begin()) { hud.innerHTML = `<h4>DARTS</h4><div class="k">You need ${STAKE} 🎟️ to play bigrig.</div><div class="row"><button type="button" class="ak-btn sm ghost" data-mg="leave">Leave</button></div>`; } },
       cam(pos, look) { pos.set(DART.at.x, 1.78, DART.oche - 0.4); look.set(DART.at.x, DART.at.y, DART.at.z); return true; },
       pointer(type, e) {
@@ -392,6 +386,7 @@ export function buildExtras(ctx) {
       hud.innerHTML = `<h4>${won ? "YOU WIN" : "HEARTLARVA WINS"}</h4><div class="k">${won ? `You take the pot: ${STAKE * 2} 🎟️` : "Drink up. Rematch?"}</div><div class="row"><button type="button" class="ak-btn sm" data-mg="again">Rack 'em · ${STAKE} 🎟️</button><button type="button" class="ak-btn sm ghost" data-mg="leave">Leave</button></div>`; };
     const begin = () => { if (wallet.tickets < STAKE) { A.notify("Not enough tickets: Lucky sells them.", "🎟️", "pink"); return false; } wallet.tickets -= STAKE; resetCups(); started = true; turn = "me"; draw(); return true; };
     return {
+      first: true,
       start() { placeMe(PONG.at.x, PONG.at.z - PONG.half - 0.45, Math.PI); A.setWhere("playing beer pong"); if (!begin()) hud.innerHTML = `<h4>BEER PONG</h4><div class="k">You need ${STAKE} 🎟️.</div><div class="row"><button type="button" class="ak-btn sm ghost" data-mg="leave">Leave</button></div>`; },
       cam(pos, look) { pos.set(PONG.at.x, 1.75, PONG.at.z - PONG.half - 0.95); look.set(PONG.at.x, 0.75, PONG.at.z + 0.7); return true; },
       pointer(type, e) {
@@ -491,7 +486,13 @@ export function buildExtras(ctx) {
   return {
     spots,
     active: () => Boolean(mode),
-    step(dt, t) { for (const f of tickers) f(dt, t); for (let i = anims.length - 1; i >= 0; i--) if (!anims[i](dt)) anims.splice(i, 1); const off = ctx.botsOn(); for (const p of crowd) { p.g.visible = off; p.ch?.update(dt); } mode?.step(dt, t); },
+    step(dt, t) {
+      for (const f of tickers) f(dt, t); for (let i = anims.length - 1; i >= 0; i--) if (!anims[i](dt)) anims.splice(i, 1);
+      const off = ctx.botsOn(), fp = Boolean(mode?.first);
+      for (const p of crowd) { p.g.visible = off && !(fp && Math.hypot(p.g.position.x - me.p.x, p.g.position.z - me.p.z) < 2.2); p.ch?.update(dt); }
+      mode?.step(dt, t);
+    },
+    firstPerson: () => Boolean(mode?.first),   // the lounge hides you, and anyone right beside you, while this is true
     cam(pos, look) { return mode?.cam ? mode.cam(pos, look) : false; },
     pointer(type, e) { mode?.pointer?.(type, e); },
     key(e, down) { if (down && e.code === "KeyQ") return endMode(); mode?.key?.(e, down); },

@@ -20,7 +20,7 @@ import * as Models from "../climb3d-mock/models.js?v=2";
 import * as Arcade from "../arcade-kit/arcade.js?v=9";
 import { CHARS, CHAR_NAMES, HATS, RADIO, HOCKEY, hkSeat, hkClampMallet } from "/v3/assets/js/arcade-rules.js?v=2";
 import { openTable } from "../poker3d-mock/table.js?v=2";
-import { buildExtras } from "./extras.js?v=7";
+import { buildExtras } from "./extras.js?v=13";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -962,6 +962,11 @@ function frame(now) {
   if (bots.length) stepBots(dt); else stepRemote(dt);
   stepHockey(dt);
   EX.step(dt, t);
+  // first-person games (skee-ball, darts, beer pong): your character, and anyone standing right by you, step out of the shot
+  { const fp = EX.firstPerson(); me.mesh.g.visible = !fp;
+    const near2 = (g) => fp && Math.hypot(g.position.x - me.p.x, g.position.z - me.p.z) < 2.2;
+    for (const b of bots) if (!b.inGame) b.mesh.g.visible = !near2(b.mesh.g);
+    for (const r of remote.values()) if (r.p.room === "lounge") r.mesh.g.visible = !near2(r.mesh.g); }
   const g = me.mesh.g; g.position.set(me.p.x, me.p.y - R, me.p.z); let dy = me.facing - g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); g.rotation.y += dy * 0.3;
   { const dx = me.p.x - clerk.g.position.x, dz = me.p.z - clerk.g.position.z, want = Math.hypot(dx, dz) < 6 ? Math.atan2(dx, dz) : Math.PI / 2;
     let d = want - clerk.g.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); clerk.g.rotation.y += d * Math.min(1, dt * 4); clerk.ch?.update(dt); lucky.ch?.update(dt);
