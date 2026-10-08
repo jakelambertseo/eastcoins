@@ -10,6 +10,8 @@
    fish) so a result can't be made up, the way it runs air hockey. Tickets come from and go to the lounge's preview wallet.
 
    buildExtras(ctx) -> { spots, step(dt, t), cam(pos, look), active(), key(e, down), pointer(type, e) }  (see lounge.js) */
+import { buildDash } from "./dash.js?v=1";
+
 export function buildExtras(ctx) {
   const { THREE, scene, camera, canvas, A, Sfx, me, R, D, W, COL, HEX, box, std, basic, tube, canvasTex, block, keep, makePerson, rnd, pick, clamp, esc, WALK, REGIONS, HOOKS, wallet, tstate, CALM } = ctx;
   const V3 = THREE.Vector3;
@@ -136,7 +138,7 @@ export function buildExtras(ctx) {
   }
 
   /* ================================================================== THE PATIO */
-  const PX0 = W, PX1 = W + 16, PZ0 = -22, PZ1 = 0, PO0 = -10.6, PO1 = -5.8, POH = 3.6;
+  const PX0 = W, PX1 = W + 16, PZ0 = -22, PZ1 = 0, PO0 = -10.6, PO1 = -5.8, POH = 3.6, GATE0 = W + 4, GATE1 = W + 12;   // GATE: where the Dash leaves the garden (dash.js)
   ctx.PATIO = { PO0, PO1, POH };
   WALK.push([W - R, W + R, PO0 + R, PO1 - R], [PX0 + R, PX1 - R, PZ0 + R, PZ1 - R]);
   REGIONS.push({ name: "patio", x0: PX0, x1: PX1, z0: PZ0, z1: PZ1, open: true });
@@ -193,14 +195,14 @@ export function buildExtras(ctx) {
     for (let k = 0; k < 16; k++) { const a = rnd(0, 7); const rk = mesh(new THREE.DodecahedronGeometry(rnd(0.12, 0.3), 0), std(0x4a4a50, { roughness: 0.9 }), POND.cx + Math.cos(a) * (POND.rx + 0.4), 0.05, POND.cz + Math.sin(a) * (POND.rz + 0.4)); rk.rotation.set(rnd(0, 3), rnd(0, 3), 0); }
     // trees and bushes round the edge, low-poly
     const trunkM = std(0x3a2414, { roughness: 1 }), leafM = [std(0x2f6a2a, { roughness: 1 }), std(0x3a7a32, { roughness: 1 }), std(0x285a24, { roughness: 1 })];
-    const treeAt = [[PX1 - 1.2, -20.5], [PX1 - 1.5, -15], [PX1 - 1.1, -8.5], [PX1 - 1.6, -2], [W + 4, PZ0 + 1.2], [W + 9, PZ0 + 1.0], [W + 13.5, PZ0 + 1.6], [W + 7.5, -1.2], [W + 12, -0.9], [W + 15, -17.5]];
+    const treeAt = [[PX1 - 0.9, -17.6], [PX1 - 1.5, -15], [PX1 - 1.1, -8.5], [PX1 - 1.6, -2], [W + 13.5, PZ0 + 1.6], [W + 7.5, -1.2], [W + 12, -0.9], [W + 15, -17.5]];
     for (const [x, z] of treeAt) { const h = rnd(2.6, 4); mesh(new THREE.CylinderGeometry(0.12, 0.18, h * 0.4, 7), trunkM, x, h * 0.2, z); for (let k = 0; k < 3; k++) mesh(new THREE.ConeGeometry(1.2 - k * 0.3, h * 0.45, 7), pick(leafM), x, h * 0.4 + k * h * 0.22, z); block(x, z, 0.5, 0.5); }
-    for (let k = 0; k < 14; k++) { const x = rnd(PX0 + 6.2, PX1 - 0.6), z = pick([rnd(PZ0 + 0.5, PZ0 + 2.5), rnd(PZ1 - 2.2, PZ1 - 0.4)]); mesh(new THREE.IcosahedronGeometry(rnd(0.35, 0.6), 0), pick(leafM), x, 0.3, z); }
+    for (let k = 0; k < 14; k++) { const x = rnd(PX0 + 6.2, PX1 - 0.6), z = pick([rnd(PZ0 + 0.5, PZ0 + 2.5), rnd(PZ1 - 2.2, PZ1 - 0.4)]); if (z < PZ0 + 3 && x > GATE0 - 1 && x < GATE1 + 1) continue; mesh(new THREE.IcosahedronGeometry(rnd(0.35, 0.6), 0), pick(leafM), x, 0.3, z); }
     // a low fence round the garden
     const posts = []; const fenceAt = (x, z) => posts.push(new THREE.Matrix4().makeTranslation(x, 0.45, z));
-    for (let x = PX0 + 0.5; x <= PX1; x += 1.6) { fenceAt(x, PZ0); fenceAt(x, PZ1); } for (let z = PZ0; z <= PZ1; z += 1.6) fenceAt(PX1, z);
+    for (let x = PX0 + 0.5; x <= PX1; x += 1.6) { if (x < GATE0 - 0.1 || x > GATE1 + 0.1) fenceAt(x, PZ0); fenceAt(x, PZ1); }   // a gap in the north fence: the Dash for (let z = PZ0; z <= PZ1; z += 1.6) fenceAt(PX1, z);
     const pm = new THREE.InstancedMesh(new THREE.BoxGeometry(0.1, 0.9, 0.1), std(0x5a3a20), posts.length); posts.forEach((m, k) => pm.setMatrixAt(k, m)); scene.add(pm);
-    for (const [w, d, x, z] of [[PX1 - PX0, 0.06, (PX0 + PX1) / 2, PZ0], [PX1 - PX0, 0.06, (PX0 + PX1) / 2, PZ1], [0.06, PZ1 - PZ0, PX1, (PZ0 + PZ1) / 2]]) for (const y of [0.35, 0.75]) box(w, 0.08, d, std(0x6a4428), x, y, z);
+    for (const [w, d, x, z] of [[GATE0 - PX0, 0.06, (PX0 + GATE0) / 2, PZ0], [PX1 - GATE1, 0.06, (GATE1 + PX1) / 2, PZ0], [PX1 - PX0, 0.06, (PX0 + PX1) / 2, PZ1], [0.06, PZ1 - PZ0, PX1, (PZ0 + PZ1) / 2]]) for (const y of [0.35, 0.75]) box(w, 0.08, d, std(0x6a4428), x, y, z);
     // the fire pit, with chairs round it
     const FIRE = new V3(W + 3.5, 0, -17.2);
     for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; const st = mesh(new THREE.DodecahedronGeometry(0.16, 0), std(0x55555c, { roughness: 0.9 }), FIRE.x + Math.cos(a) * 0.62, 0.1, FIRE.z + Math.sin(a) * 0.62); st.rotation.set(a, a, 0); }
@@ -248,6 +250,7 @@ export function buildExtras(ctx) {
         const a = rnd(0, Math.PI * 2), r = rnd(30, 75), x = c.x + Math.cos(a) * r, z = c.z + Math.sin(a) * r;
         if (x < W + 3 && z > -16 && z < 24) continue;                       // not on the building
         if (Math.hypot(x - 140, z + 85) < 50) continue;       // nor on the stadium
+        if (x > GATE0 - 6 && x < GATE1 + 6 && z < PZ0 + 2 && z > PZ0 - 82) continue;   // nor on the Dash
         const h = rnd(4, 9), q = new THREE.Quaternion(), sc = new V3(h / 6, h / 6, h / 6);
         trunks.push(new THREE.Matrix4().compose(new V3(x, h * 0.12, z), q, new V3(1, h / 4, 1)));
         tops.push(new THREE.Matrix4().compose(new V3(x, h * 0.55, z), q, sc));
@@ -362,6 +365,8 @@ export function buildExtras(ctx) {
     B.catches.sort((a, b) => b.kg - a.kg).slice(0, 5).forEach((c, k) => { const y = 140 + k * 52; g.textAlign = "left"; g.fillStyle = k ? "#f4ecff" : "#ffd400"; g.font = "600 26px Rubik"; g.fillText(`${k + 1}. ${c.name}`, 30, y); g.font = "500 18px Rubik"; g.fillStyle = "#b8a888"; g.fillText(c.fish, 52, y + 22); g.textAlign = "right"; g.fillStyle = "#9affb0"; g.font = "28px Bungee"; g.fillText(`${c.kg.toFixed(1)} kg`, w - 30, y + 6); });
     B.cbT.needsUpdate = true;
   }
+
+  const DASHC = buildDash({ ...ctx, tickers, spots, PZ0 });
 
   /* ================================================================== people in the new rooms (offline only, like the lounge's bots) */
   const crowd = [];
@@ -630,6 +635,7 @@ export function buildExtras(ctx) {
     pointer(type, e) { mode?.pointer?.(type, e); },
     key(e, down) { if (down && e.code === "KeyQ") return endMode(); mode?.key?.(e, down); },
     leave: endMode,
+    onDash: (m) => DASHC.onDash(m), restart: () => !mode && DASHC.restart(), dash: DASHC,
     get mode() { return mode; }   // for tests
   };
 }

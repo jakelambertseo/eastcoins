@@ -102,3 +102,20 @@ export function hkStep(h, dt) {
   }
   return ev;
 }
+
+/* THE DASH (2026-10-07, the owner: "a back and forth speed course connected to the patio ... a leaderboard", then "daily ticket prize for
+   highest of the day (Ends at 10pm CST) with a visible leaderboard at the start"). A track out of the patio's north gate: down one lane,
+   ring the bell, back up the other. Best time of the day wins `prize` tickets; a day runs 10 PM to 10 PM Central and is named by the
+   date it ends on. The page times the run; the server keeps the board and refuses times no person could run (`minMs`, the bell split).
+   The prize is RECORDED, not paid, until the shared ticket wallet moves to the database. */
+export const DASH = { prize: 5000, endHour: 22, minMs: 8000, maxMs: 180000, bellMin: 0.3, bellMax: 0.7, top: 10, gapMs: 4000 };
+// the Chicago calendar date for a moment, as YYYY-MM-DD
+const chicagoDate = (ms) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms));
+// which Dash day a moment belongs to: from 10 PM Central on, it's already tomorrow's
+export function dashDay(ms) { return chicagoDate(ms + (24 - DASH.endHour) * 3600e3); }
+// when the Dash day holding `ms` ends (the next 10 PM Central), found by stepping, so daylight saving can't fool it
+export function dashEnds(ms) {
+  const day = dashDay(ms); let lo = ms, hi = ms + 25 * 3600e3;
+  while (hi - lo > 1000) { const mid = Math.floor((lo + hi) / 2); if (dashDay(mid) === day) lo = mid; else hi = mid; }
+  return hi;
+}

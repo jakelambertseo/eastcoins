@@ -18,9 +18,9 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { Sfx } from "../parkour3d-mock/look.js?v=2";
 import * as Models from "../climb3d-mock/models.js?v=2";
 import * as Arcade from "../arcade-kit/arcade.js?v=10";
-import { CHARS, CHAR_NAMES, HATS, RADIO, HOCKEY, hkSeat, hkClampMallet } from "/v3/assets/js/arcade-rules.js?v=2";
+import { CHARS, CHAR_NAMES, HATS, RADIO, HOCKEY, hkSeat, hkClampMallet } from "/v3/assets/js/arcade-rules.js?v=3";
 import { openTable } from "../poker3d-mock/table.js?v=2";
-import { buildExtras } from "./extras.js?v=17";
+import { buildExtras } from "./extras.js?v=18";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -29,6 +29,13 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const G = -26, JUMP = 9.4, RUN = 6.4, ACC = 40, R = 0.45;
+/* SLIDE-HOP (2026-10-07, the owner: "users can shift key to slide hop and pick up speed", everywhere in the lounge). Shift while running
+   drops you into a slide: a small kick (`start`), then it bleeds speed slowly (`decay`, much faster once it's gone on past `long`). Jump
+   out of a slide and you keep the speed plus `hop`; in the air you keep it and can steer. Slide again within `window` of landing and the
+   kick is bigger (`perfect`): chaining slide, hop, slide on the beat is how you go fast (about 14 m/s, against a run of 6.4); a sloppy
+   chain settles near 7 (tight timing holds ~13.5, decent ~11.5: tools/lounge3d-mock had a scratch sim of this). On the ground without a slide, speed over a run drains at `drain` per second. `cd` stops Shift-mashing on the
+   spot from adding speed: the kick only comes back after that long out of a slide, and the drain eats more than it gives. */
+const SL = { min: 3, start: 0.9, perfect: 1.1, window: 0.3, decay: 0.35, long: 1.4, hop: 0.4, max: 15, steer: 1.8, airSteer: 2.6, drain: 5, cd: 0.5 };
 const CALM = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const COL = { pink: 0xff2d95, cyan: 0x19e3ff, lime: 0xb6ff2e, yellow: 0xffd400, orange: 0xff7a1a, purple: 0x9b5cff, red: 0xff3b4e };
 const HEX = (c) => "#" + c.toString(16).padStart(6, "0");
@@ -589,10 +596,10 @@ function pushOut(p, r) {
 
 /* ------------------------------------------------------------------ the shell: who you are, the menu, chat, settings, the jukebox */
 const settings = { ...Arcade.DEFAULT_SETTINGS };
-const me = { p: new V3(0, R, 1), v: new V3(), facing: Math.PI, grounded: true };
+const me = { p: new V3(0, R, 1), v: new V3(), facing: Math.PI, grounded: true, slide: false, slideT: 0, slideCd: 0, landT: 9 };
 if (new URLSearchParams(location.search).get("at") === "poker") me.p.set(-8, R, 12.4);   // the old poker page sends you here
 const remote = new Map();   // id -> { p, mesh, target, f, a }
-const tstate = { x: 0, y: 0, jump: false };   // the shell's thumbstick and buttons write here (phones)
+const tstate = { x: 0, y: 0, jump: false, slide: false };   // the shell's thumbstick and buttons write here (phones)
 let bots = [];
 const A = await Arcade.start({
   stage: document.querySelector(".stage"), room: "lounge", title: "The Lounge", where: "", localUnlocks,
@@ -601,8 +608,8 @@ const A = await Arcade.start({
     📻 the <b>jukebox</b> picks the station the whole arcade hears · 🧸 the <b>claw</b>, and 🏒 <b>air hockey</b> (for two, once the room is live).</p>
     <p><b>Enter</b> opens the chat, <b>Esc</b> the menu, <b>M</b> mutes.</p>`,
   lookHint: "Talk to Sydney at the prize counter to change your character and hat.",
-  touch: { state: tstate, buttons: [{ id: "use", label: "E", cls: "alt", tap: () => { if (EX?.active()) EX.key({ code: "KeyE" }, true); else if (near) use(near); } }, { id: "jump", label: "JUMP" }] },
-  onHello: () => { if (A.hello?.hockey) onHk({ ...A.hello.hockey, top: A.hello.hockeyTop });  for (const b of bots) dropPerson(b.mesh); bots = []; for (const p of A.people.values()) addRemote(p); renderOnline(); renderOutfit(); },
+  touch: { state: tstate, buttons: [{ id: "use", label: "E", cls: "alt", tap: () => { if (EX?.active()) EX.key({ code: "KeyE" }, true); else if (near) use(near); } }, { id: "slide", label: "SLIDE", cls: "alt" }, { id: "jump", label: "JUMP" }] },
+  onHello: () => { if (A.hello?.hockey) onHk({ ...A.hello.hockey, top: A.hello.hockeyTop }); if (A.hello?.dash) EX?.onDash(A.hello.dash);  for (const b of bots) dropPerson(b.mesh); bots = []; for (const p of A.people.values()) addRemote(p); renderOnline(); renderOutfit(); },
   onOffline: () => { startBots(); renderOnline(); },
   onJoin: (p) => { addRemote(p); renderOnline(); },
   onLeave: (id) => { const r = remote.get(id); if (r) { dropPerson(r.mesh); remote.delete(id); } renderOnline(); },
@@ -615,6 +622,7 @@ const A = await Arcade.start({
   onMessage: (m) => {
     if (m.t === "hkf") { hk.prev = hk.s; hk.s = m.s; if (m.e === "hit") Sfx.play("beep"); }
     else if (m.t === "hk") onHk(m);
+    else if (m.t === "dash" || m.t === "dashr") EX.onDash(m);
   },
   onDisconnect: () => { for (const r of remote.values()) dropPerson(r.mesh); remote.clear(); renderOnline(); },
   onLeaving: () => { entering = true; }
@@ -725,13 +733,14 @@ function stepBots(dt) {
   }
 }
 // real people: ease toward where the server last put them
-const ANIMS = ["idle", "walk", "jump"];
+const ANIMS = ["idle", "walk", "jump", "idle"];   // 3: sliding (drawn low, see squash)
+const squash = (m, on, dt) => { const g = m.g; g.scale.y += ((on ? 0.55 : 1) - g.scale.y) * Math.min(1, dt * 14); if (m.tag) { m.tag.scale.y = 0.45 / g.scale.y; m.tag.position.y = 2.2 / g.scale.y; } };   // the name tag keeps its shape
 function stepRemote(dt) {
   for (const r of remote.values()) {
     const g = r.mesh.g; if (!g.visible) continue;
     g.position.lerp(r.target, Math.min(1, dt * 12));
     let dy = r.f - g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); g.rotation.y += dy * Math.min(1, dt * 12);
-    r.mesh.ch?.play(ANIMS[r.a] || "idle"); r.mesh.ch?.update(dt);
+    r.mesh.ch?.play(ANIMS[r.a] || "idle"); r.mesh.ch?.update(dt); squash(r.mesh, r.a === 3, dt);
   }
 }
 
@@ -826,7 +835,7 @@ function stepHockey(dt) {
 const wallet = { tickets: 12450, zc: 340, out24: 0, cap: 100, rate: 1000 };
 const EX = buildExtras({ THREE, scene, camera, canvas, A, Sfx, me, R, D, W, COL, HEX, box, std, basic, tube, canvasTex, block, keep, makePerson, rnd, pick, clamp, esc, WALK, REGIONS, HOOKS, wallet, tstate, CALM,
   PK_X0: AX0, PK_X1: AX1, PK_Z1: AZ1,
-  nameColor: Arcade.nameColor, botsOn: () => bots.length > 0 });
+  nameColor: Arcade.nameColor, botsOn: () => bots.length > 0, setYaw: (y) => { camYaw = y; } });
 applyQuality();   // the new rooms' lights join the budget
 let pokerOpen = null;
 const fmt = (n) => Number(n).toLocaleString();
@@ -905,6 +914,7 @@ addEventListener("keydown", (e) => {
   if (document.activeElement !== canvas || A.windowOpen() || pokerOpen) return; Sfx.ensure();
   if (EX.active()) { EX.key(e, true); if (e.code === "Space") e.preventDefault(); return; }
   keys[e.code] = true;
+  if (e.code === "KeyR" && EX.restart?.()) return;
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
   if (e.code === "KeyE" && near) use(near);
 });
@@ -948,11 +958,29 @@ function step(dt) {
   const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) - tstate.y, s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + tstate.x;
   const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw), rx = Math.cos(camYaw), rz = -Math.sin(camYaw);
   let x = fx * f + rx * s, z = fz * f + rz * s; const l = Math.hypot(x, z); if (l > 1) { x /= l; z /= l; }
-  me.v.x += clamp(x * RUN - me.v.x, -ACC * dt, ACC * dt); me.v.z += clamp(z * RUN - me.v.z, -ACC * dt, ACC * dt);
-  const jump = Boolean(keys.Space || tstate.jump); if (jump && !jumpWas && me.grounded) { me.v.y = JUMP; me.grounded = false; Sfx.play("jump"); } jumpWas = jump;
-  if (l > 0.1) me.facing = Math.atan2(x, z) + Math.PI;
+  // slide-hop (see SL)
+  let hs = Math.hypot(me.v.x, me.v.z);
+  const want = l > 0.1 ? Math.atan2(x, z) : null, slideKey = Boolean(keys.ShiftLeft || keys.ShiftRight || tstate.slide);
+  const steer = (rate) => { if (want === null || hs < 0.1) return; let h = Math.atan2(me.v.x, me.v.z); h += clamp(Math.atan2(Math.sin(want - h), Math.cos(want - h)), -rate * dt, rate * dt); me.v.x = Math.sin(h) * hs; me.v.z = Math.cos(h) * hs; };
+  const setSpeed = (v) => { if (hs > 1e-3) { me.v.x *= v / hs; me.v.z *= v / hs; } hs = v; };
+  me.landT += dt; me.slideCd = Math.max(0, me.slideCd - dt);
+  if (!me.slide && me.grounded && slideKey && hs > SL.min) {
+    me.slide = true; me.slideT = 0;
+    const kick = (me.slideCd > 0 ? 0 : SL.start) + (me.landT < SL.window ? SL.perfect : 0);
+    if (kick) setSpeed(Math.min(SL.max, Math.max(hs, hs + kick))); Sfx.play(me.landT < SL.window ? "go" : "dive");
+  }
+  const jump = Boolean(keys.Space || tstate.jump), jumped = jump && !jumpWas && me.grounded; jumpWas = jump;
+  if (me.slide) {
+    me.slideT += dt; steer(SL.steer); setSpeed(hs * Math.exp(-(me.slideT > SL.long ? 3 : SL.decay) * dt));
+    if (jumped) setSpeed(Math.min(SL.max, hs + SL.hop));
+    if (jumped || !slideKey || !me.grounded || hs < SL.min * 0.7) { me.slide = false; me.slideCd = SL.cd; }
+  } else if (hs > RUN + 0.2) {   // carrying speed: on the ground it drains, in the air it's kept; either way you can steer it
+    if (me.grounded) { steer(4); setSpeed(Math.max(RUN, hs - SL.drain * dt)); } else steer(SL.airSteer);
+  } else { me.v.x += clamp(x * RUN - me.v.x, -ACC * dt, ACC * dt); me.v.z += clamp(z * RUN - me.v.z, -ACC * dt, ACC * dt); }
+  if (jumped) { me.v.y = JUMP; me.grounded = false; Sfx.play("jump"); }
+  if (me.slide) me.facing = Math.atan2(me.v.x, me.v.z) + Math.PI; else if (l > 0.1) me.facing = Math.atan2(x, z) + Math.PI;
   me.v.y += G * dt; me.p.addScaledVector(me.v, dt);
-  if (me.p.y <= R) { me.p.y = R; me.v.y = 0; me.grounded = true; }
+  if (me.p.y <= R) { if (!me.grounded) me.landT = 0; me.p.y = R; me.v.y = 0; me.grounded = true; }
   pushOut(me.p, R);
   near = null; let best = 1e9;
   const consider = (kind, x2, z2, rad, extra = {}) => { const d = Math.hypot(me.p.x - x2, me.p.z - z2); if (d < rad && d < best) { best = d; near = { kind, ...extra }; } };
@@ -965,7 +993,7 @@ function step(dt) {
   const hp = $("hudPrompt"); if (hp.dataset.l !== label) { hp.dataset.l = label; hp.innerHTML = label; }
   A.setWhere(near ? (near.kind === "ex" ? ({ skee: "at skee-ball", darts: "at the darts", pong: "at beer pong", fish: "by the pond", fire: "by the fire" })[near.it.kind] || "" : near.kind === "cab" ? `at ${near.gm.name.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase())}` : doing[near.kind] || "") : "");
   const sp = Math.hypot(me.v.x, me.v.z);
-  A.sendPos(me.p.x, me.p.y, me.p.z, me.facing, !me.grounded ? 2 : sp > 0.6 ? 1 : 0);
+  A.sendPos(me.p.x, me.p.y, me.p.z, me.facing, me.slide ? 3 : !me.grounded ? 2 : sp > 0.6 ? 1 : 0);
 }
 
 /* ------------------------------------------------------------------ the frame */
@@ -999,7 +1027,9 @@ function frame(now) {
   { const dx = me.p.x - clerk.g.position.x, dz = me.p.z - clerk.g.position.z, want = Math.hypot(dx, dz) < 6 ? Math.atan2(dx, dz) : Math.PI / 2;
     let d = want - clerk.g.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); clerk.g.rotation.y += d * Math.min(1, dt * 4); clerk.ch?.update(dt); lucky.ch?.update(dt);
     if (!CALM) { clerkMark.position.y = 2.7 + Math.sin(t * 2.4) * 0.07; clerkMark.rotation.y = t * 1.5; } }
-  const sp = Math.hypot(me.v.x, me.v.z); me.mesh.ch?.play(!me.grounded ? "jump" : sp > 0.6 ? "walk" : "idle"); me.mesh.ch?.update(dt);
+  const sp = Math.hypot(me.v.x, me.v.z); me.mesh.ch?.play(me.slide ? "idle" : !me.grounded ? "jump" : sp > 0.6 ? "walk" : "idle"); me.mesh.ch?.update(dt); squash(me.mesh, me.slide, dt);
+  // speed widens the view a little (slide-hop, boost pads)
+  { const fov = 58 + clamp((sp - RUN) / 9, 0, 1) * 12; if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * Math.min(1, dt * 5); camera.updateProjectionMatrix(); } }
   const ox = Math.sin(camYaw) * Math.cos(camPitch), oz = Math.cos(camYaw) * Math.cos(camPitch); let dist = 9;
   const RG = REGIONS.find((g) => me.p.x >= g.x0 && me.p.x <= g.x1 && me.p.z >= g.z0 && me.p.z <= g.z1) || REGIONS[0];
   const RX0 = RG.x0, RX1 = RG.x1, RZ0 = RG.z0, RZ1 = RG.z1;
