@@ -149,7 +149,28 @@ export function buildExtras(ctx) {
   });
   {
     // the door: wide glass sliders pushed open, PATIO in neon over it
-    for (const z of [PO0 - 0.6, PO1 + 0.6]) { const gl = mesh(new THREE.BoxGeometry(0.05, POH - 0.2, 1.1), new THREE.MeshStandardMaterial({ color: 0x9be8ff, transparent: true, opacity: 0.18, roughness: 0.05 }), W + 0.32, (POH - 0.2) / 2, z); gl.castShadow = false; }
+    /* THE DOORS (2026-10-07, the owner: "add open glass doors to the patio entrance"): a dark metal frame round the opening, and two tall
+       French doors, each a metal frame with two panes, swung out and folded back against the outside wall. */
+    const metal = std(0x23262e, { metalness: 0.6, roughness: 0.35 }), glass = new THREE.MeshStandardMaterial({ color: 0xbfe8ff, transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0.1, depthWrite: false });
+    const fx = W + 0.16;
+    for (const z of [PO0, PO1]) mesh(new THREE.BoxGeometry(0.34, POH, 0.12), metal, fx, POH / 2, z);           // jambs
+    mesh(new THREE.BoxGeometry(0.34, 0.14, PO1 - PO0 + 0.12), metal, fx, POH - 0.07, (PO0 + PO1) / 2);    // header
+    mesh(new THREE.BoxGeometry(0.34, 0.03, PO1 - PO0), metal, fx, 0.015, (PO0 + PO1) / 2);                // threshold
+    const leafW = (PO1 - PO0) / 2, leafH = POH - 0.16;
+    // side +1: hinged on the north jamb, the leaf reaching south across the opening when shut; -1: the south one, reaching north.
+    // Opened outward and round to nearly flat against the outside wall: the leaf's reach (0, 0, side) turns to (small +x, 0, -side).
+    function door(hingeZ, side) {
+      const pivot = new THREE.Group(); pivot.position.set(W + 0.33, 0, hingeZ); scene.add(pivot);
+      const leaf = new THREE.Group(); leaf.position.z = side * leafW / 2; pivot.add(leaf);
+      const bar = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), metal); m.position.set(x, y, z); m.castShadow = true; leaf.add(m); };
+      bar(0.06, leafH, 0.08, 0, leafH / 2, -leafW / 2 + 0.04); bar(0.06, leafH, 0.08, 0, leafH / 2, leafW / 2 - 0.04);   // stiles
+      bar(0.06, 0.08, leafW, 0, 0.04, 0); bar(0.06, 0.08, leafW, 0, leafH - 0.04, 0); bar(0.06, 0.06, leafW, 0, leafH * 0.45, 0);   // rails
+      for (const [y0, y1] of [[0.08, leafH * 0.45 - 0.03], [leafH * 0.45 + 0.03, leafH - 0.08]]) { const g = new THREE.Mesh(new THREE.BoxGeometry(0.015, y1 - y0, leafW - 0.16), glass); g.position.set(0, (y0 + y1) / 2, 0); leaf.add(g); }
+      const handle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.32, 0.03), std(0xc9a227, { metalness: 0.8, roughness: 0.25 })); handle.position.set(0.05, 1.05, side * (leafW / 2 - 0.16)); leaf.add(handle);   // at the free edge
+      pivot.rotation.y = side * (Math.PI - 0.15);
+      return pivot;
+    }
+    door(PO0, 1); door(PO1, -1);
     const s = plaque("PATIO", 3, 0.7, { glow: "#b6ff2e", fill: "#efffd0" }); s.position.set(W - 0.02, POH + 0.75, (PO0 + PO1) / 2); s.rotation.y = -Math.PI / 2; scene.add(s);
     // grass, with a little variety in it
     const grass = canvasTex(512, 512, (g, w, h) => { g.fillStyle = "#4a8a38"; g.fillRect(0, 0, w, h); for (let k = 0; k < 3500; k++) { g.fillStyle = pick(["#5a9a44", "#3f7a30", "#6aaa52", "#447f34"]); g.fillRect(Math.random() * w, Math.random() * h, 2, 5 + Math.random() * 6); } });

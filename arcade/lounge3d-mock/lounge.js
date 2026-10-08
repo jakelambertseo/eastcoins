@@ -20,7 +20,7 @@ import * as Models from "../climb3d-mock/models.js?v=2";
 import * as Arcade from "../arcade-kit/arcade.js?v=10";
 import { CHARS, CHAR_NAMES, HATS, RADIO, HOCKEY, hkSeat, hkClampMallet } from "/v3/assets/js/arcade-rules.js?v=2";
 import { openTable } from "../poker3d-mock/table.js?v=2";
-import { buildExtras } from "./extras.js?v=14";
+import { buildExtras } from "./extras.js?v=15";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -466,6 +466,23 @@ const CAGE = new V3(4, 0, 9.85), CAGE_AT = new V3(4, 0, 8.4);
 
     block(tx, tz, 1.6, 1.6);
   }
+}
+
+/* ---- TWO PLANTS (2026-10-07, the owner: "lets add 1-2 plants around the lounge"): a snake plant by the patio doors and a potted palm in
+   the corner by the poker room's arch, both in glossy black pots with a neon ring. */
+{
+  const pot = (x, z, ring) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.24, 0.55, 20), std(0x111116, { roughness: 0.25, metalness: 0.3 })); p.position.set(x, 0.275, z); p.castShadow = p.receiveShadow = true; scene.add(p);
+    const r = new THREE.Mesh(new THREE.TorusGeometry(0.315, 0.018, 6, 28), tube(ring)); r.rotation.x = Math.PI / 2; r.position.set(x, 0.5, z); scene.add(r);
+    const soil = new THREE.Mesh(new THREE.CircleGeometry(0.29, 18), std(0x2a1a10, { roughness: 1 })); soil.rotation.x = -Math.PI / 2; soil.position.set(x, 0.53, z); scene.add(soil); block(x, z, 0.7, 0.7); };
+  // the snake plant: tall sword leaves, dark green with lighter edges
+  { const x = 14.1, z = -5.0; pot(x, z, COL.lime); const leafM = [std(0x2f6a34, { roughness: 0.6 }), std(0x3f7f3a, { roughness: 0.6 }), std(0x56903c, { roughness: 0.6 })];
+    for (let k = 0; k < 11; k++) { const h = rnd(0.7, 1.3), a = (k / 11) * Math.PI * 2 + rnd(-0.2, 0.2), rr = rnd(0.02, 0.16);
+      const lf = new THREE.Mesh(new THREE.ConeGeometry(0.075, h, 4), pick(leafM)); lf.scale.z = 0.25; lf.position.set(x + Math.cos(a) * rr, 0.53 + h / 2, z + Math.sin(a) * rr); lf.rotation.set(Math.sin(a) * 0.18, a, Math.cos(a) * 0.18); lf.castShadow = true; scene.add(lf); } }
+  // the palm: a short trunk and arching fronds
+  { const x = -13.9, z = 9.9; pot(x, z, COL.pink); const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, 1.1, 8), std(0x6a4a2a, { roughness: 0.9 })); trunk.position.set(x, 1.08, z); trunk.castShadow = true; scene.add(trunk);
+    const frondM = std(0x2f7a3a, { roughness: 0.7 });
+    for (let k = 0; k < 8; k++) { const a = (k / 8) * Math.PI * 2, g = new THREE.Group(); g.position.set(x, 1.6, z); g.rotation.y = a; scene.add(g);
+      const fr = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 6), frondM); fr.scale.set(0.16, 0.035, 1); fr.position.set(0, -0.12, 0.42); fr.rotation.x = 0.45; fr.castShadow = true; g.add(fr); } }
 }
 
 /* ---- LIVED IN (the owner: "a few items on the ground... that make the lounge feel somewhat lived in. Beer, popcorn, etc"): bottles and
