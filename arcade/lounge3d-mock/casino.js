@@ -86,8 +86,8 @@ export function buildCasino(ctx) {
     A.openCustom({
       title, html,
       onClick: async (b) => {
-        if (b.dataset.stake) { stakeOf[id] = Number(b.dataset.stake); A.redrawCustom(); return; }
-        if (b.dataset.bet) { b.disabled = true; const r = await onBet(b.dataset.bet, stakeOf[id]); msg = r && !r.ok ? r.message || "That didn't go through." : ""; if (r?.balance != null) zc = r.balance; if (A.windowOpen()) A.redrawCustom(); }
+        if (b.dataset.stake) { setStake(id, Number(b.dataset.stake)); A.redrawCustom(); return; }
+        if (b.dataset.bet) { b.disabled = true; const r = await onBet(b.dataset.bet, stakeOf[id]); msg = r && !r.ok ? r.message || "That didn't go through." : ""; if (r?.balance != null) zc = r.balance; for (const list of Object.values(boards)) for (const bd of list) bd.draw(); if (A.windowOpen()) A.redrawCustom(); }
       }
     });
   }
@@ -396,7 +396,7 @@ export function buildCasino(ctx) {
      click only counts from where you'd stand to play (REACH), so a stray click across the room can never spend anything. */
   const REACH = 3.2, clickables = [], ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   ray.layers.enableAll();   // (room culling puts the casino on its own layer)
-  const say = (r) => { if (r && !r.ok) A.notify(esc(r.message || "That didn't go through."), "⚠️", "pink"); };
+  const say = (r) => { if (r && !r.ok) A.notify(esc(r.message || "That didn't go through."), "⚠️", "pink"); for (const list of Object.values(boards)) for (const bd of list) bd.draw(); };   // (a bet's new balance shows on the boards)
   // a push button: base, lit cap, and a label on top that reads the right way up for someone standing at `face` (radians: 0 = +z, PI/2 = +x)
   function button(parent, { x, y, z, w = 0.15, d = 0.15, col, text, face = 0, onClick, big = false }) {
     const g = new THREE.Group(); g.position.set(x, y, z); parent.add(g);
@@ -411,51 +411,90 @@ export function buildCasino(ctx) {
     const item = { g, y0: y, meshes: [cap, lb], onClick, press: 0, set(on) { cap.material.emissiveIntensity = on ? 1.1 : 0.12; cap.position.y = on ? 0.058 : 0.05; } };
     clickables.push(item); return item;
   }
-  // one stake per game: every row for that game (all three slot machines) keeps in step
-  const rows = {};
-  const stakeRow = (id, parent, at, face) => {
-    const items = STAKES.map((v, k) => button(parent, { ...at[k], col: 0xc9a227, text: String(v), face, onClick: () => { stakeOf[id] = v; for (const row of rows[id]) row.forEach((it, j) => it.set(STAKES[j] === v)); Sfx.play("beep"); } }));
-    items.forEach((it, j) => it.set(STAKES[j] === stakeOf[id])); (rows[id] ||= []).push(items); return items;
-  };
+  /* CONTROL BOARDS (2026-10-08, the owner, after Gamble With Your Friends: "a betting board/control board on every game", with the
+     keypad and the MIN / HALF / MAX keys "way smaller"). One board per game, the same layout everywhere, tilted towards you: a small
+     keypad on the left (type a stake; C clears, the arrow takes a digit back), a lit display over three small MIN / ½ / MAX keys in the
+     middle, and the game's own big buttons on the right. Stakes run 1 to 20 ZC (the casino's limit): type more and it reads MAX 20.
+     One stake per game, so the three slot machines' boards keep in step, and the E window's stake chips move them too. */
+  const MAX_STAKE = STAKES[STAKES.length - 1], boards = {};
+  const entryOf = {};   // what's been typed, per game
+  function setStake(id, v, note = "") { stakeOf[id] = clamp(Math.round(v) || 1, 1, MAX_STAKE); for (const bd of boards[id] || []) bd.draw(note); if (isOpen(id)) A.redrawCustom(); }
+  function controlBoard(id, parent, { x, y, z, face, actions }) {
+    const KEY = 0.034, KS = 0.04, MID = 0.22, DEPTH = 0.2, M = 0.022, GAP = 0.028;
+    const actW = actions.reduce((n, a) => n + (a.w || 0.16), 0) + (actions.length - 1) * 0.02;
+    const WID = M + KS * 3 + GAP + MID + GAP + actW + M;
+    const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = face; parent.add(g);
+    const deck = new THREE.Group(); deck.rotation.x = 0.28; deck.position.y = 0.05; g.add(deck);   // tilted towards you
+    mk(new THREE.BoxGeometry(WID, 0.03, DEPTH), std(0x120a1c, { roughness: 0.45, metalness: 0.3 }), 0, 0, 0, deck);
+    mk(new THREE.BoxGeometry(WID + 0.012, 0.012, DEPTH + 0.012), std(0xc9a227, { metalness: 0.8, roughness: 0.3 }), 0, -0.012, 0, deck);
+    mk(new THREE.BoxGeometry(WID * 0.9, 0.05, 0.05), std(0x120a1c), 0, -0.035, -DEPTH * 0.35, g);   // a stem to the console under it
+    const top = 0.015;
+    let cx = -WID / 2 + M;
+    // the keypad: 1-9, then C, 0 and a step back
+    const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "←"];
+    KEYS.forEach((k, i) => {
+      const c = i % 3, r = Math.floor(i / 3);
+      button(deck, { x: cx + KS / 2 + c * KS, y: top, z: -KS * 1.5 + r * KS, w: KEY, d: KEY, col: k === "C" ? 0xd0182a : 0xe8e4f0, text: k, onClick: () => {
+        let e = entryOf[id] || "";
+        if (k === "C") { entryOf[id] = ""; return setStake(id, 1, "CLEAR"); }
+        e = k === "←" ? e.slice(0, -1) : (e + k).replace(/^0+/, "");
+        const over = Number(e) > MAX_STAKE; if (over) e = String(MAX_STAKE);   // past the limit it stays at the limit
+        entryOf[id] = e; setStake(id, Number(e) || 1, over ? `MAX ${MAX_STAKE}` : "");
+        Sfx.play("beep");
+      } });
+    });
+    cx += KS * 3 + GAP;
+    // the display, with MIN / ½ / MAX under it
+    const dc = document.createElement("canvas"); dc.width = 512; dc.height = 200; const dt2 = new THREE.CanvasTexture(dc); dt2.colorSpace = THREE.SRGBColorSpace;
+    const disp = mk(new THREE.PlaneGeometry(MID, 0.085), basic(0xb4b4b4, { map: dt2 }), cx + MID / 2, top + 0.002, -0.045, deck); disp.rotation.x = -Math.PI / 2;
+    [["MIN", 1], ["½", Math.round(MAX_STAKE / 2)], ["MAX", MAX_STAKE]].forEach(([t, v], k) => button(deck, { x: cx + MID / 6 + (k * MID) / 3, y: top, z: 0.055, w: 0.062, d: 0.032, col: 0xffb020, text: t, onClick: () => { entryOf[id] = ""; setStake(id, v); Sfx.play("beep"); } }));
+    cx += MID + GAP;
+    // the game's own buttons
+    for (const a of actions) { const w = a.w || 0.16; button(deck, { x: cx + w / 2, y: top, z: 0, w, d: 0.15, col: a.col, text: a.text, big: true, onClick: a.onClick }); cx += w + 0.02; }
+    const bd = {
+      draw(note = "") {
+        const c = dc.getContext("2d"), W2 = dc.width, H2 = dc.height;
+        c.fillStyle = "#020a04"; c.fillRect(0, 0, W2, H2); c.strokeStyle = "#1f3a26"; c.lineWidth = 8; c.strokeRect(4, 4, W2 - 8, H2 - 8);
+        c.textBaseline = "middle"; c.textAlign = "left"; c.font = "34px Bungee"; c.fillStyle = "#3ad06a"; c.fillText("BET", 26, 52);
+        c.textAlign = "right"; c.font = "30px Bungee"; c.fillStyle = note ? "#ffb020" : "#2a8a48"; c.fillText(note || (zc === null ? `1 - ${MAX_STAKE} ZC` : `BAL ${fmt(zc)}`), W2 - 26, 52);
+        c.textAlign = "center"; c.font = "104px Bungee"; c.shadowColor = "#3aff7a"; c.shadowBlur = 18; c.fillStyle = "#7affa6"; c.fillText(`${stakeOf[id]} ZC`, W2 / 2, 138); c.shadowBlur = 0;
+        dt2.needsUpdate = true;
+      }
+    };
+    bd.draw(); (boards[id] ||= []).push(bd); return bd;
+  }
   const consoleBox = (x, z, w, d) => { mk(new THREE.BoxGeometry(w, 1.0, d), std(0x1a0810, { roughness: 0.5 }), x, 0.5, z); mk(new THREE.BoxGeometry(w + 0.06, 0.05, d + 0.06), std(0xc9a227, { metalness: 0.8, roughness: 0.3 }), x, 1.025, z); block(x, z, w, d); };
-  // the wheel: along the betting rail, the stakes and then red / black / gold (you stand east of it)
+  // the wheel: a board on the betting rail (you stand east of it)
   {
-    const rx = X0 + 3.2, y = 1.05, F = Math.PI / 2;
-    stakeRow("wheel", scene, [-7.35, -7.12, -6.89, -6.66].map((z) => ({ x: rx, y, z })), F);
     const bet = (pick) => async () => {
       const rd = wheel.state?.round;
       if (!rd || rd.phase !== "bets") return A.notify(`No more bets: the next round opens in ${rd ? left(rd.endsAt) : "a few "}s.`, "🎡");
       if (wheel.state?.me?.bet) return A.notify(`You're already on ${wheel.state.me.bet.pick} this round.`, "🎡");
       say(await betWheel(pick, stakeOf.wheel));
     };
-    button(scene, { x: rx, y, z: -6.15, w: 0.3, d: 0.42, col: 0xc8102e, text: "RED", face: F, big: true, onClick: bet("red") });
-    button(scene, { x: rx, y, z: -5.6, w: 0.3, d: 0.42, col: 0x2a2a3a, text: "BLACK", face: F, big: true, onClick: bet("black") });
-    button(scene, { x: rx, y, z: -5.05, w: 0.3, d: 0.42, col: 0xffcc33, text: "GOLD", face: F, big: true, onClick: bet("gold") });
+    controlBoard("wheel", scene, { x: X0 + 3.2, y: 1.05, z: -6, face: Math.PI / 2, actions: [
+      { text: "RED", col: 0xc8102e, onClick: bet("red") }, { text: "BLACK", col: 0x2a2a3a, onClick: bet("black") }, { text: "GOLD", col: 0xffcc33, onClick: bet("gold") }] });
   }
-  // the coin: a little console beside the pedestal (you stand east of it)
+  // the coin: a console beside the pedestal (you stand east of it)
   {
-    const cx = CN.x + 1.5, F = Math.PI / 2; consoleBox(cx, CN.z, 0.5, 1.9);
-    stakeRow("coin", scene, [-0.78, -0.55, -0.32, -0.09].map((dz) => ({ x: cx, y: 1.05, z: CN.z + dz })), F);
+    const cx = CN.x + 1.5; consoleBox(cx, CN.z, 0.5, 1.9);
     const bet = (side) => async () => {
       const rd = coin.state?.round;
       if (!rd || rd.phase !== "bets") return A.notify(`It's in the air: the next round opens in ${rd ? left(rd.endsAt) : "a few "}s.`, "🪙");
       if (coin.state?.me?.bet) return A.notify(`You're already on ${coin.state.me.bet.side} this round.`, "🪙");
       say(await betCoin(side, stakeOf.coin));
     };
-    button(scene, { x: cx, y: 1.05, z: CN.z + 0.3, w: 0.3, d: 0.34, col: 0xd8a630, text: "HEADS", face: F, big: true, onClick: bet("heads") });
-    button(scene, { x: cx, y: 1.05, z: CN.z + 0.72, w: 0.3, d: 0.34, col: 0x8a5a0a, text: "TAILS", face: F, big: true, onClick: bet("tails") });
+    controlBoard("coin", scene, { x: cx, y: 1.05, z: CN.z, face: Math.PI / 2, actions: [{ text: "HEADS", col: 0xd8a630, onClick: bet("heads") }, { text: "TAILS", col: 0x8a5a0a, onClick: bet("tails") }] });
   }
   // plinko: a console in front of the cabinet (you stand south of it)
   {
     const cz = PK.z + 1.05; consoleBox(PK.x, cz, 1.6, 0.45);
-    stakeRow("plinko", scene, [-0.66, -0.43, -0.2, 0.03].map((dx) => ({ x: PK.x + dx, y: 1.05, z: cz })), 0);
-    button(scene, { x: PK.x + 0.45, y: 1.05, z: cz, w: 0.5, d: 0.28, col: 0xff3ea5, text: "DROP", big: true, onClick: async () => say(await dropPlinko(stakeOf.plinko)) });
+    controlBoard("plinko", scene, { x: PK.x, y: 1.05, z: cz, face: 0, actions: [{ text: "DROP", col: 0xff3ea5, w: 0.22, onClick: async () => say(await dropPlinko(stakeOf.plinko)) }] });
   }
-  // slots: the stakes and SPIN on each machine's deck, and the lever itself (in the machine's own frame, where you stand at local +z)
+  // slots: a board on each machine's deck, and the lever (in the machine's own frame, where you stand at local +z)
   for (const mc of slots.machines) {
-    stakeRow("slots", mc.g, [-0.36, -0.2, -0.04, 0.12].map((lx) => ({ x: lx, y: 1.145, z: 0.3, w: 0.13, d: 0.13 })), 0);
     const spin = async () => say(await spinSlots(mc, stakeOf.slots));
-    button(mc.g, { x: 0.32, y: 1.145, z: 0.3, w: 0.22, d: 0.15, col: 0xff2a3a, text: "SPIN", big: true, onClick: spin });
+    controlBoard("slots", mc.g, { x: 0, y: 1.14, z: 0.32, face: 0, actions: [{ text: "SPIN", col: 0xff2a3a, onClick: spin }] });
     clickables.push({ g: mc.lever, y0: null, meshes: mc.lever.children.slice(), onClick: spin, press: 0, set() {} });
   }
   function click(e) {

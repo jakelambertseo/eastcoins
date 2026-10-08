@@ -21,7 +21,7 @@ import * as Models from "../climb3d-mock/models.js?v=2";
 import * as Arcade from "../arcade-kit/arcade.js?v=10";
 import { CHARS, CHAR_NAMES, HATS, RADIO, HOCKEY, hkSeat, hkClampMallet } from "/v3/assets/js/arcade-rules.js?v=3";
 import { openTable } from "../poker3d-mock/table.js?v=2";
-import { buildExtras } from "./extras.js?v=21";
+import { buildExtras } from "./extras.js?v=22";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);

@@ -11,7 +11,7 @@
 
    buildExtras(ctx) -> { spots, step(dt, t), cam(pos, look), active(), key(e, down), pointer(type, e) }  (see lounge.js) */
 import { buildDash } from "./dash.js?v=3";
-import { buildCasino } from "./casino.js?v=3";
+import { buildCasino } from "./casino.js?v=4";
 
 export function buildExtras(ctx) {
   const { THREE, scene, camera, canvas, A, Sfx, me, R, D, W, COL, HEX, box, std, basic, tube, canvasTex, block, keep, makePerson, rnd, pick, clamp, esc, WALK, REGIONS, HOOKS, wallet, tstate, CALM } = ctx;
