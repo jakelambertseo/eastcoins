@@ -34,7 +34,7 @@ export const GAMES = [
   { room: "party", name: "Party Mix", href: "../partymix3d-mock/", icon: "🎉", col: "var(--ak-pink)" }
 ];
 
-export const DEFAULT_SETTINGS = { master: 0.8, sfx: 0.8, music: 0.4, mute: false, musicInGames: true, glow: true, quality: "auto", names: true, camSens: 1, invertY: false, chatOpen: true };
+export const DEFAULT_SETTINGS = { master: 0.8, sfx: 0.8, music: 0.4, mute: false, musicInGames: true, glow: true, quality: "auto", showFps: true, names: true, camSens: 1, invertY: false, chatOpen: true };
 const SET_KEY = "ecArcadeSettings";
 
 export async function start(opts) {
@@ -54,7 +54,7 @@ export async function start(opts) {
   stage.classList.add("ak-stage");
   const hud = document.createElement("div"); hud.className = "ak-hud";
   hud.innerHTML = `
-    <div class="ak-hud-tl"><button type="button" class="ak-btn sm ak-menubtn" data-act="menu" title="Menu (Esc)">☰ MENU</button><span class="ak-roomchip">${esc(opts.title || ROOMS[room]?.name || "")}</span></div>
+    <div class="ak-hud-tl"><button type="button" class="ak-btn sm ak-menubtn" data-act="menu" title="Menu (Esc)">☰ MENU</button><span class="ak-roomchip">${esc(opts.title || ROOMS[room]?.name || "")}</span><span class="ak-fps" hidden></span></div>
     <div class="ak-toasts ak-toasts-hud"></div>
     <div class="ak-hud-tr"><button type="button" class="ak-np" data-act="radio" hidden></button>
       <button type="button" class="ak-whobtn" data-act="who" aria-expanded="false" title="Who's online"><span class="ak-dot"></span><b>1</b> online</button><span class="ak-me"></span>
@@ -168,7 +168,7 @@ export async function start(opts) {
         <section><p class="ak-eyebrow">Sound</p>${toggle("mute", "Mute everything", "M")}${slider("master", "Master")}${slider("sfx", "Effects")}${slider("music", "Jukebox")}${toggle("musicInGames", "Jukebox in the games", "the lounge's station follows you")}</section>
         <section><p class="ak-eyebrow">Graphics</p>${toggle("glow", "Neon glow", "turn off on a slow machine")}
           <div class="ak-set"><span>Quality</span><span class="ak-seg">${["auto", "low", "medium", "high"].map((v) => `<button type="button" class="ak-chip${settings.quality === v ? " on" : ""}" data-qual="${v}">${v}</button>`).join("")}</span></div>
-          ${toggle("names", "Names over heads")}</section>
+          ${toggle("names", "Names over heads")}${toggle("showFps", "Show FPS", "frames per second, top left")}</section>
         <section><p class="ak-eyebrow">Camera</p><label class="ak-set"><span>Look speed</span><input type="range" min="40" max="200" value="${Math.round(settings.camSens * 100)}" data-set="camSens" data-scale="100"><output>${settings.camSens.toFixed(1)}×</output></label>${toggle("invertY", "Invert up and down")}</section>
         <section><p class="ak-eyebrow">Your look</p><p class="ak-note">${esc(opts.lookHint || "Your character and hat are changed at the prize counter in the lounge.")}</p></section>
       </div>`;
@@ -369,6 +369,25 @@ export async function start(opts) {
       const up = () => { el.classList.remove("on"); st[b.id] = false; };
       el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up); el.addEventListener("contextmenu", (e) => e.preventDefault());
     }
+  }
+
+  /* THE FPS COUNTER (2026-10-07, the owner: "add a fps counter so i can see how much fps this is getting"). Counts the browser's frames
+     (the game draws on every one), shows frames per second, the slowest frame in the last half second, and whatever the game adds with
+     A.fpsNote() (the lounge: its quality level and lights). Switch: Settings → Graphics → Show FPS. */
+  {
+    const el = q(".ak-fps"); let n = 0, from = performance.now(), prev = from, worst = 0, note = "";
+    A.fpsNote = (t) => { note = t; };
+    const tick = (now) => {
+      n++; worst = Math.max(worst, now - prev); prev = now;
+      if (now - from >= 500) {
+        const fps = Math.round((n * 1000) / (now - from)), col = fps >= 50 ? "var(--ak-lime)" : fps >= 30 ? "var(--ak-yellow)" : "var(--ak-red)";
+        el.hidden = !settings.showFps;
+        if (settings.showFps) el.innerHTML = `<b style="color:${col}">${fps}</b> FPS · worst ${Math.round(worst)} ms${note ? ` · ${esc(note)}` : ""}`;
+        n = 0; from = now; worst = 0;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   }
 
   connect();

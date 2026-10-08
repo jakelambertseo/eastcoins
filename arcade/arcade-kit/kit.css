@@ -344,3 +344,6 @@ html.ak-embed .ak-room::before { display: none; }
 .ak-tbtn.alt { width: 60px; height: 60px; font-size: 13px; background: radial-gradient(circle at 40% 32%, #b8ffe9, var(--ak-lime) 50%, #5f8a10); color: #0f1a04; box-shadow: 0 5px 0 #3a5a08, 0 0 16px rgba(182, 255, 46, .45); }
 .ak-tbtn.on { transform: translateY(4px); box-shadow: 0 2px 0 #6a0a3c, 0 0 24px rgba(255, 45, 149, .8); }
 .ak-touching .ak-hud-tr .ak-me b { max-width: 70px; }
+.ak-fps { padding: 5px 10px; border-radius: 999px; background: rgba(10, 6, 20, .78); font: 600 12px var(--ak-body); color: var(--ak-dim); box-shadow: inset 0 0 0 1.5px var(--ak-line); white-space: nowrap; }
+.ak-fps[hidden] { display: none; }
+.ak-fps b { font: 400 13px var(--ak-disp); }

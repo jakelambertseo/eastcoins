@@ -17,10 +17,10 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { Sfx } from "../parkour3d-mock/look.js?v=2";
 import * as Models from "../climb3d-mock/models.js?v=2";
-import * as Arcade from "../arcade-kit/arcade.js?v=9";
+import * as Arcade from "../arcade-kit/arcade.js?v=10";
 import { CHARS, CHAR_NAMES, HATS, RADIO, HOCKEY, hkSeat, hkClampMallet } from "/v3/assets/js/arcade-rules.js?v=2";
 import { openTable } from "../poker3d-mock/table.js?v=2";
-import { buildExtras } from "./extras.js?v=13";
+import { buildExtras } from "./extras.js?v=14";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -82,7 +82,7 @@ const OX0 = -12, OX1 = -4, OPEN_H = 4, AX0 = -14.5, AX1 = -1.5, AZ1 = D + 11;
 const BO0 = 8.2, BO1 = 14.2, BOH = 4, PO0 = -10.6, PO1 = -5.8, POH = 3.6;
 /* where you can walk (boxes: [x0, x1, z0, z1], shrunk by your radius when used), the rooms the camera keeps inside, and extra rules
    (the pond). extras.js adds its rooms to these. */
-const WALK = [], REGIONS = [{ name: "lounge", x0: -W, x1: W, z0: -D, z1: D }, { name: "poker", x0: AX0, x1: AX1, z0: D, z1: AZ1 }], HOOKS = [];
+const WALK = [], REGIONS = [{ name: "lounge", x0: -W, x1: W, z0: -D, z1: D, ceil: WALL_H }, { name: "poker", x0: AX0, x1: AX1, z0: D, z1: AZ1, ceil: 5 }], HOOKS = [];
 const OBST = [];   // [x0, x1, z0, z1]: things you walk round
 const block = (x, z, w, d) => OBST.push([x - w / 2, x + w / 2, z - d / 2, z + d / 2]);
 const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -142,9 +142,18 @@ const sign = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.76), basic(0xffffff, {
 sign.position.set(0, 4.6, -D + 0.02); scene.add(sign);
 const signLight = keep(new THREE.PointLight(COL.pink, 8, 12, 1.6), 2); signLight.position.set(0, 4.4, -D + 1.6); scene.add(signLight);
 
+/* ---- CEILINGS (2026-10-07: the patio's sky showed through the open tops of the rooms). Dark, one-sided (facing down): from inside you see a
+   ceiling; the follow camera stays under it (REGIONS.ceil). */
+function ceiling(x0, x1, z0, z1, y, col = 0x0a0614) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0), new THREE.MeshStandardMaterial({ color: col, roughness: 1 }));
+  m.rotation.x = Math.PI / 2; m.position.set((x0 + x1) / 2, y, (z0 + z1) / 2); scene.add(m); return m;
+}
+ceiling(-W - 0.3, W + 0.3, -D - 0.3, D + 0.3, WALL_H);
+ceiling(AX0 - 0.3, AX1 + 0.3, D, AZ1 + 0.3, 5, 0x120610);
+
 /* ---- sweeping coloured spots from above */
 const spots = [COL.pink, COL.cyan, COL.purple].map((c, i) => {
-  const s = keep(new THREE.SpotLight(c, 50, 26, 0.32, 0.6, 1.2), 3); s.position.set(-8 + i * 8, 9, 1); scene.add(s); scene.add(s.target);
+  const s = keep(new THREE.SpotLight(c, 50, 26, 0.32, 0.6, 1.2), 3); s.position.set(-8 + i * 8, WALL_H - 0.2, 1); scene.add(s); scene.add(s.target);
   return { s, ph: i * 2.1 };
 });
 
@@ -640,6 +649,7 @@ function applyQuality() {
   key.shadow.mapSize.set(q === "high" ? 2048 : 1024, q === "high" ? 2048 : 1024); key.shadow.map?.dispose(); key.shadow.map = null;
   renderer.setPixelRatio(q === "low" ? 0.75 : q === "medium" ? 1 : Math.min(2, window.devicePixelRatio || 1));
   canvas.width = 0;
+  A.fpsNote?.(`${settings.quality === "auto" ? "auto→" : ""}${q} · ${LIGHTS.filter((L) => L.l.visible).length} lights`);
 }
 A.onSettings((s) => {
   Object.assign(settings, s);
@@ -979,6 +989,7 @@ function frame(now) {
   if (ox > 0.01) dist = Math.min(dist, (RX1 - 0.5 - me.p.x) / ox); if (ox < -0.01) dist = Math.min(dist, (RX0 + 0.5 - me.p.x) / ox);
   if (oz > 0.01) dist = Math.min(dist, (RZ1 - 0.5 - me.p.z) / oz); if (oz < -0.01) dist = Math.min(dist, (RZ0 + 0.5 - me.p.z) / oz);
   dist = Math.max(2.5, dist);
+  if (RG.ceil && Math.sin(camPitch) > 0.05) dist = Math.max(1.6, Math.min(dist, (RG.ceil - 0.35 - me.p.y - 1.4) / Math.sin(camPitch)));   // indoors, under the ceiling
   _cam.set(me.p.x + ox * dist, me.p.y + 1.4 + Math.sin(camPitch) * dist, me.p.z + oz * dist);
   if (EX.cam(_cam, _look)) { /* a game is driving the camera */ }
   else if (hkSide() >= 0) { const sd = hkSide() ? 1 : -1; _cam.set(HOCKEY.at.x + sd * 2.9, 2.35, HOCKEY.at.z); _look.set(HOCKEY.at.x - sd * 0.25, 0.7, HOCKEY.at.z); }

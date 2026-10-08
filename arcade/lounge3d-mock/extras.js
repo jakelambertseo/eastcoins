@@ -30,7 +30,7 @@ export function buildExtras(ctx) {
   const BX0 = 7, BX1 = W, BZ1 = D + 9, BO0 = 8.2, BO1 = 14.2, BOH = 4;
   ctx.BAR = { BO0, BO1, BOH };
   WALK.push([BO0 + R, BO1 - R, D - R, D + R], [BX0 + R, BX1 - R, D + R, BZ1 - R]);
-  REGIONS.push({ name: "bar", x0: BX0, x1: BX1, z0: D, z1: BZ1 });
+  REGIONS.push({ name: "bar", x0: BX0, x1: BX1, z0: D, z1: BZ1, ceil: 5 });
   {
     // a checkered bar floor, wood below the dado rail, and a cyan neon line round the top
     const tex = canvasTex(256, 256, (g) => { for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { g.fillStyle = (i + j) % 2 ? "#14101c" : "#241a30"; g.fillRect(i * 64, j * 64, 64, 64); } });
@@ -45,6 +45,7 @@ export function buildExtras(ctx) {
     const s = plaque("BAR GAMES", 5.4, 1.05); s.position.set((BO0 + BO1) / 2, BOH + 0.95, D - 0.02); s.rotation.y = Math.PI; scene.add(s);
     const beer = plaque("COLD BEER", 2.8, 0.6, { glow: "#ff7a1a", fill: "#ffe0b0", px: 110 }); beer.position.set(BX0 + 0.04, 3.1, D + 6.2); beer.rotation.y = Math.PI / 2; scene.add(beer);
     const lamp = keep(new THREE.PointLight(0xffd0a0, 6, 9, 1.6), 2); lamp.position.set(10.5, 3.6, D + 5.5); scene.add(lamp);
+    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(BX1 - BX0 + 0.6, BZ1 - D + 0.3), new THREE.MeshStandardMaterial({ color: 0x0a1018, roughness: 1 })); ceil.rotation.x = Math.PI / 2; ceil.position.set((BX0 + BX1) / 2, 5, (D + BZ1) / 2 + 0.15); scene.add(ceil);
   }
   /* ---- skee-ball: two lanes along the east wall, each a group facing +z (you stand at its open end) */
   const SKEE = { lanes: [], L: 3.1 };
@@ -200,8 +201,10 @@ export function buildExtras(ctx) {
     const cloudTex = canvasTex(1024, 512, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#1f5fc8"); gr.addColorStop(0.65, "#4f9ae6"); gr.addColorStop(1, "#9fd0f2"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
       for (let k = 0; k < 9; k++) { const cx = rnd(60, w - 60), cy = rnd(60, h * 0.55); for (let j = 0; j < 7; j++) { g.fillStyle = "rgba(255,255,255,.75)"; g.beginPath(); g.ellipse(cx + rnd(-70, 70), cy + rnd(-14, 14), rnd(30, 60), rnd(16, 28), 0, 0, 7); g.fill(); } } });
     const skyM = (tex) => new THREE.MeshBasicMaterial({ map: tex, color: 0xeeeeee, fog: false, side: THREE.DoubleSide });   // kept under the bloom threshold, or the sky glows white
-    for (const [w, h, x, y, z, ry] of [[70, 30, PX1 + 9, 13, -11, -Math.PI / 2], [60, 30, W + 16, 13, PZ0 - 9, 0], [60, 30, W + 16, 13, PZ1 + 9, Math.PI]]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), skyM(cloudTex)); m.position.set(x, y, z); m.rotation.y = ry; scene.add(m); }
-    { const top = new THREE.Mesh(new THREE.PlaneGeometry(70, 70), skyM(skyTex)); top.rotation.x = Math.PI / 2; top.position.set(W + 16, 28, -11); scene.add(top); }
+    // (only round the patio: earlier they ran over and through the building, and the sky showed inside)
+    const SX0 = W + 0.2, SX1 = PX1 + 9, SZ0 = PZ0 - 9, SZ1 = PZ1 + 9;
+    for (const [w, h, x, y, z, ry] of [[SZ1 - SZ0, 30, SX1, 13, (SZ0 + SZ1) / 2, -Math.PI / 2], [SX1 - SX0, 30, (SX0 + SX1) / 2, 13, SZ0, 0], [SX1 - SX0, 30, (SX0 + SX1) / 2, 13, SZ1, Math.PI]]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), skyM(cloudTex)); m.position.set(x, y, z); m.rotation.y = ry; scene.add(m); }
+    { const top = new THREE.Mesh(new THREE.PlaneGeometry(SX1 - SX0, SZ1 - SZ0), skyM(skyTex)); top.rotation.x = Math.PI / 2; top.position.set((SX0 + SX1) / 2, 28, (SZ0 + SZ1) / 2); scene.add(top); }
     const sun = new THREE.Sprite(new THREE.SpriteMaterial({ map: canvasTex(128, 128, (g, w) => { const gr = g.createRadialGradient(w / 2, w / 2, 6, w / 2, w / 2, w / 2); gr.addColorStop(0, "#fffef0"); gr.addColorStop(0.3, "#fff6c8"); gr.addColorStop(1, "rgba(255,240,180,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, w); }), fog: false, depthWrite: false }));
     sun.scale.setScalar(7); sun.material.color.setScalar(0.85); sun.position.set(PX1 + 8.5, 20, -16); scene.add(sun);
     const daylight = keep(new THREE.SpotLight(0xfff2dc, 2.4, 0, 0.62, 0.55, 0), 1); daylight.position.set(W + 8, 30, -11); daylight.target.position.set(W + 8, 0, -11); scene.add(daylight); scene.add(daylight.target);
